@@ -66,7 +66,16 @@ RAP_VOCAL_SOURCE = "gunnhild"
 #
 # Filtered against the catalogue at use, because a slug that does not resolve
 # renders instrumental while the log still prints rap=<slug>.
-DEMO_RAP_ROTATION = %w[store_p haisam_johann angelo_johann slum_village].freeze
+DEMO_RAP_ROTATION = %w[store_p haisam_johann angelo_johann slum_village jonas_v gunnhild].freeze
+
+# How many entry points into one take a catalogue of tracks may use.
+#
+# Each rotation slug resolves to exactly one catalogue entry, so it is one
+# audio file. Six files over a 451-track demo is still the same voice many
+# times over; this decides how far apart two of those land in the
+# performance. Part of the fit's cache key, so raising it costs renders
+# rather than invalidating what is already on disk.
+RAP_VOCAL_VARIANTS = ENV.fetch("RAP_VOCAL_VARIANTS", "24").to_i.clamp(1, 512)
 
 # Whether the launch environment explicitly asked for no vocals.
 #

@@ -563,7 +563,32 @@ def rap_vocal_resolved_key_shift(entry, vocal_path, progression)
   rap_vocal_key_shift(chroma, key_weights)
 end
 
-def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil, progression: nil)
+# Where in the take this track enters.
+#
+# The offset above is computed from the take alone -- densest region, snapped
+# to the vocal's own bar grid -- so it is the same for every track using that
+# take. Four takes over a 451-track demo put the same rap on roughly fifty
+# tracks each, entering at the same word.
+#
+# Walks `variant` phrases further in and wraps, so a short performance still
+# yields new material across a long catalogue. Phrase starts rather than raw
+# seconds, so an entry still lands at the top of a line and not mid-word.
+def rap_vocal_variant_offset(base, variant, phrases:, vocal_path:)
+  starts = Array(phrases).filter_map { |p| (p["start"] || p[:start])&.to_f }.sort
+  if starts.empty?
+    rhythm = frame_energy(vocal_path, highpass: 300, lowpass: 6000)
+    starts = peak_frames(rhythm[:frames], rhythm[:hop_seconds]).map { |p| p[:time].to_f }.sort
+  end
+  return base if starts.empty?
+
+  ahead = starts.select { |s| s >= base }
+  ahead = starts if ahead.empty?
+  ahead[variant.to_i % ahead.size]
+rescue StandardError
+  base
+end
+
+def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil, progression: nil, variant: 0)
   bar_offset ||= ENV["RAP_VOCAL_OFFSET"]&.to_f
   entry = rap_vocal_resolve(slug_or_path)
   vocal_path = entry.is_a?(Hash) ? entry["vocal_path"] : entry
@@ -649,6 +674,8 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil, progressio
            [rap_vocal_best_bar_offset(vocal_path, vocal_bpm, phrases:), phrase_start].max
          end
   end
+  variant = variant.to_i
+  ss = rap_vocal_variant_offset(ss, variant, phrases:, vocal_path:) if variant.positive? && !bar_offset
   out_dir = File.dirname(vocal_path)
   # Transposed into the beat's key in stage 1 below. Resolved here because the
   # shift has to be part of the filename: bpm+bars alone named the same file for
@@ -656,7 +683,10 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil, progressio
   # won and the second silently reused a fit built for someone else's harmony.
   key_shift = rap_vocal_resolved_key_shift(entry, vocal_path, progression)
   key_tag = key_shift.zero? ? "" : format("_key%+d", key_shift)
-  fit_path = File.join(out_dir, "fit_#{beat_bpm.round}_#{n_bars}bars#{key_tag}.wav")
+  # variant is part of the name because the fit is cached on this path: without
+  # it two tracks at one tempo and key were handed the same rendered vocal.
+  variant_tag = variant.positive? ? "_v#{variant}" : ""
+  fit_path = File.join(out_dir, "fit_#{beat_bpm.round}_#{n_bars}bars#{key_tag}#{variant_tag}.wav")
   # Already-isolated → light polish only (no second heavy makeup that re-lifts bleed).
   # Fresh/unclean → full voice-only isolation.
   voice_chain = isolated ? rap_vocal_voice_polish_filter : rap_vocal_isolation_filter

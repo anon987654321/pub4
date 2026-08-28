@@ -977,7 +977,11 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
   end
   if (rap_slug = rap_vocal_stream_slug)
     begin
-      fit = rap_vocal_fit!(rap_slug, beat_bpm: cfg[:bpm], n_bars:, progression: cfg[:progression])
+      # A different point in the performance per track. Keyed on track and
+      # slug together so one track does not enter two voices at the same word.
+      variant = stable_hash("#{cfg[:track]}/#{rap_slug}") % RAP_VOCAL_VARIANTS
+      fit = rap_vocal_fit!(rap_slug, beat_bpm: cfg[:bpm], n_bars:, progression: cfg[:progression],
+                           variant:)
       if fit && File.file?(fit)
         rap_tmp = "#{destination}.rap#{File.extname(destination)}"
         mix_rap_vocal_layer!(destination, fit, rap_tmp, beat_bpm: cfg[:bpm])
