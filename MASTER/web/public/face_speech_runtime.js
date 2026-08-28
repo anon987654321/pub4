@@ -752,21 +752,29 @@ function scheduleTtsTick(delay) {
   tts.retryTimer = setTimeout(() => { tts.retryTimer = null; ttsTick(); }, delay || 600);
 }
 
+// The server voice is the default now, and the browser voice is the escape.
+//
+// It was the other way round on the grounds that speechSynthesis starts
+// immediately and the server has a latency floor a reply waits on. Operator,
+// 2026-08-28: that floor is not large enough to be worth the voice, and what
+// people actually hear is whatever face their browser shipped.
+//
+// Both switches still work and both now mean "give me the browser one":
+// ?hq_voice=0, or master:voice-mode-hq set to "0".
 function highQualityVoiceEnabled() {
-  if (new URLSearchParams(window.location.search).get('hq_voice') === '1') return true;
-  try { return localStorage.getItem('master:voice-mode-hq') === '1'; } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:hq_voice_read", err); }
-  return false;
+  if (new URLSearchParams(window.location.search).get('hq_voice') === '0') return false;
+  try { return localStorage.getItem('master:voice-mode-hq') !== '0'; } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:hq_voice_storage", err); }
+  return true;
 }
 function browserTtsFallbackAllowed() {
-  // Browser speechSynthesis is the default everywhere, not a fallback: it
-  // starts speaking immediately and costs the VPS nothing, and the server's
-  // TTS latency floor is what a reply waits on. The "high-quality voice"
-  // toggle opts back into Osman/Pernille and accepts that wait.
+  // The browser voice is the fallback now, not the default. It starts speaking
+  // immediately and costs the VPS nothing, which is why it led for a while --
+  // but the server's latency floor turned out not to be large enough to be
+  // worth giving up the voice for, and what a visitor heard instead was
+  // whatever face their browser happened to ship.
   //
-  // This was scoped to Voice Mode, on the reasoning that only a live
-  // conversation cannot afford the latency. But typed chat pays the same
-  // wait for the same sentence, and the person who typed it is watching the
-  // screen while it is paid.
+  // This still returns true whenever the server voice is switched off, so the
+  // fallback path below is unchanged and a failed synthesis still speaks.
   if (!highQualityVoiceEnabled()) return true;
   if (new URLSearchParams(window.location.search).get('tts_fallback') === '1') return true;
   try { return localStorage.getItem('master:tts-fallback') === '1'; } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:fallback_allowed_read", err); }
