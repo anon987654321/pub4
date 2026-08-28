@@ -403,39 +403,20 @@ path never got. It is now per-pattern: `unfinished` declares `reads_comments`
 because a work marker lives in a comment, and nothing else does.
 `without_comment_lines` moved to the shared `Rule` base rather than being copied.
 
-## Two touch targets under the 44px `--tap-min`, and a sparkline that lost its accent — opened 2026-08-17
+## Three principles with no scanner rule — evidence pinned, coverage not faked
 
-`web/test/face_boot.test.mjs` carries two skipped assertions, and they are
-skipped because the answer is the operator's rather than because the check is
-wrong.
+`pledge_unveil`, `secrets_rotation` and `audit_logging` still have empty
+`rule_ids` in `data/principle_map.yml`. Linking them to `LEAST_PRIVILEGE` or
+`SECRET_PROXIMITY` would close the map gap without measuring the thing the
+row names. `test/test_principle_evidence.rb` pins the sources that exist:
 
-`.tool` and `#spin-btn` set no `min-height`, so both compute under the 44px `--tap-min`
-touch target `design_rules` requires. face.css defines `--tap-min: 44px` and
-applies it to `.panel` and the skip link, so the token exists and these two
-controls do not use it. Adding it changes the toolbar's height, which is a
-visual decision and not a thing to make by satisfying a test.
+- `pledge_unveil` — `lib/ground/pledge.rb` applied from `lib/boot/master_boot.rb`
+- `audit_logging` — `lib/trace/log/audit.rb` append-only `tool:before` log
+- `secrets_rotation` — no rotator. Keys live in `/etc/*.env` on vm23.
 
-`.mood-sparkline` no longer carries `--canvas-mood-accent`. Either the
-sparkline lost its accent colour or the feature was retired; the CSS alone
-cannot say which.
-
-Both surfaced the day `web/test/*.test.mjs` entered `bin/check --profile=web`.
-They had been failing since before that, invisibly, because nothing ran the
-suite — along with a blink-rate assertion stale since the rates were measured
-and retuned on 2026-08-10, and an assertion that the welcome greeting still
-existed after it was deliberately removed. Those two were the tests being
-wrong and are fixed; these two need someone who can look at the page.
-
-## Three principles with no evidence source — carried from the map audit
-
-`pledge_unveil`, `secrets_rotation` and `audit_logging` are named by
-`data/principle_map.yml` with empty `rule_ids`. They are not gaps a link can
-close: each needs a real evidence source, which is why they outlived the eight
-the audit did close by linking existing kernel and unit rules.
-
-Carried here from PRINCIPLE_MAP_AUDIT.md, a point-in-time file at the repo root
-that nothing referenced. Its closed findings are in git; these three were the
-only part still open, and open work belongs where open work is read.
+A registered rule that actually detects a process skipping pledge, a tool
+that is not audited, or a credential that never expires is still the gap.
+Do not point `rule_ids` at a neighbour.
 
 ## Inert law and config
 
@@ -602,53 +583,31 @@ Measured on vm23 2026-08-17: ffmpeg 6.1.3 and ffprobe are both in
 there — so the PATH the daemon actually runs with resolves it, which the cron
 PATH lesson elsewhere in this file says not to assume.
 
-### The one-shot Edge worker does not work on vm23 — opened 2026-08-17
+### One-shot Edge worker on vm23 — code path matched, box not re-probed
 
-**operator-priority.** `bin/tts-worker` in one-shot mode exits 1 and writes a
-zero-byte file on the box, while the same worker in `--daemon` mode serves real
-audio: `GET /chat/tts` returns a valid 7 KB LAME-encoded MP3. So production TTS
-is healthy and its fallback is not.
+**operator-priority.** Production TTS is the daemon; the fallback is
+`synthesize_edge_oneshot`. The one-shot path used to call `synth()` in-process
+while the daemon used `synth_forked`, and it did not set `SSL_CERT_FILE` the
+way `worker_env` does for a subprocess. Both of those are now the daemon's
+path. That does not prove the box writes a non-empty MP3: `/health` is still a
+capability check. Re-probe on vm23 with a real oneshot before calling the
+fallback healthy.
 
-That matters because `Speech.synthesize_edge` tries the socket twice and then
-falls to `synthesize_edge_oneshot`. If the daemon dies, that fallback is the
-thing meant to keep the voice alive, and on this host it yields nothing — the
-next stop is espeak, which is a different voice entirely. `GET /health` reports
-`tts: true` throughout, because it is a capability check and not a synthesis.
+## The cost meter — closed 2026-08-27
 
-Not diagnosed further; found while trying to measure phrase fan-out, which is
-also still unmeasured for the same reason. A synthesis-not-capability probe in
-`/health` would have caught it.
+`Session#record_cost` now accumulates `tokens_billed` next to `cost`. The
+tooltip reads that counter, not `token_est` (a conversation-local byte
+estimate). A `/through` that spends money and reports `0 tok` was the meter
+mixing the two.
 
-## The cost meter bills one provider's accounting against another's tokens
+## The fix stage skip breakdown — instrumented 2026-08-27
 
-A `/through master` run reported `cost: +¢390.02 · 0 tok`. A non-zero cost
-beside a zero token count means the meter reads one provider's accounting and
-bills another's. The number to trust is the cents.
-
-(The dead-model registry this run also surfaced — opened here 2026-08-16 as
-fifteen stale ids — was closed 2026-08-18: a fresh catalogue refresh counted
-twenty, the pass in `3f3543e81` removed or renamed all of them, and the
-recurring check is `bin/probe models`, which rides `probe all`. The rule it
-taught: a chain padded with `:free` tiers decays one dead model at a time,
-so the registry is only ever as true as its last `lint:models` run.)
-
-## The fix stage runs and accepts nothing — opened 2026-08-19
-
-The constitutional halt is gone (see Self-Test Debt), and the first unblocked
-`/through` fix stage ran two full LLM passes over `OPENBSD/bin` — 33 minutes,
-claude-CLI lane, 18 files, 245 findings in view — and accepted **zero fixes**
-before its 1800s wall clock expired. `fix0: llm_pass pass=1 violations=245
-fixed=0`, `pass=2 violations=241 fixed=0`, then the honest
-`wall-clock timeout` that bin/gate reads as inconclusive. The 2026-07-31
-full-fix run has the same signature in bin/gate's comments: one pass,
-identical violations on both sides.
-
-So the fix lane's bottleneck is not the halt and not the scanners; it is the
-acceptance path — model proposals either never arrive usable from the CLI
-lane or die in consensus/WriteGuard, and nothing in the output says which.
-The next session here should instrument the rejection reasons per proposal
-(fix0 already publishes skip_breakdown events for the deterministic lane;
-the LLM lane needs the same) before touching any knob.
+The LLM lane used to publish pass-level `{stuck: N}` as `skip_breakdown`,
+which is how 33 minutes of `fixed=0` still did not say whether proposals
+never arrived, died in reflexion, or were fingerprint-skipped. `RuleLoop#run_once`
+now returns the per-violation tally (`no_proposal`, `skip_fingerprint`,
+`reflexion_rejected`, …) and `LlmStage` aggregates it. The acceptance path
+is still the bottleneck; the log can now say which door it died at.
 
 ## Live gotchas
 
