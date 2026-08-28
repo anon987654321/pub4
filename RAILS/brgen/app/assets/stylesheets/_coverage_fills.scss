@@ -360,3 +360,22 @@
   border-radius: var(--radius-card);
   min-height: var(--tap-min);
 }
+
+// lazy_image_tag ships a transparent placeholder pixel and lazy_image_controller
+// (AN506) swaps in the real photo once IntersectionObserver fires: .lazy-loaded
+// lands the instant the fetch starts, .lazy-fade-in lands on the image's own
+// onload. Nothing styled either state, so every lazy image in messages and
+// media galleries popped in at full opacity with no transition armed. The
+// 240ms duration is not invented here -- it is the same figure the controller
+// already writes inline for its blurhash-canvas case.
+img[data-controller="lazy-image"] {
+  opacity: 0;
+}
+
+img[data-controller="lazy-image"].lazy-loaded {
+  transition: opacity 240ms var(--ease-out);
+}
+
+img[data-controller="lazy-image"].lazy-fade-in {
+  opacity: 1;
+}

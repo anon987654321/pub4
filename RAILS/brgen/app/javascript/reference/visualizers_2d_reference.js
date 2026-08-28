@@ -1,4 +1,7 @@
 // Reference only. Not loaded, not imported, not compiled into anything.
+// css_coverage: ok — the classList calls below belong to markup that never
+// runs (see the next paragraph), so Pub4::CssCoverageLint should not read
+// this file's toggles as live undefined-class references.
 //
 // The seven visualisers below -- infinity grid, cymatic waves, fractal cascade,
 // vortex nest, neural web, cosmic emanation, hypergrid spiral -- lived in

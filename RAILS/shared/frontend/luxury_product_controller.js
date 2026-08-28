@@ -5,10 +5,6 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = ["photo"]
 
-  connect() {
-    this.element.classList.add("luxury-product-ready")
-  }
-
   // Gentle zoom on image hover (no heavy animation)
   photoTargetConnected(element) {
     element.addEventListener("mouseenter", () => {
