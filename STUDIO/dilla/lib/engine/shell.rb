@@ -234,7 +234,63 @@ rescue StandardError
   nil
 end
 
+# --detach on any command: run it in its own session and return the shell.
+#
+# A render outlives the thing that started it. nohup only ignores SIGHUP, so a
+# terminal or agent session going away still takes the render down with the
+# process group -- four long renders died that way in one night, one of them
+# 65 tracks in. Process.setsid leaves the group entirely.
+#
+# A flag rather than a command, because it applies to all of them and because
+# a second name for `demo-all` is a second thing to remember.
+def dilla_detach_if_asked!
+  return unless ENV["DILLA_DETACH"] == "1"
+
+  # Cleared in this process before the re-exec inherits the environment, or the
+  # child detaches again, and again.
+  ENV.delete("DILLA_DETACH")
+  USER_PINNED_ENV.delete("DILLA_DETACH") if defined?(USER_PINNED_ENV)
+  name = (ARGV.first || "demo").gsub(/[^A-Za-z0-9-]/, "_")
+  log = File.expand_path("~/dilla_logs/#{name}_#{Time.now.strftime('%m%d_%H%M%S')}.log")
+  FileUtils.mkdir_p(File.dirname(log))
+  command = [RbConfig.ruby, ENGINE_FILE, *ARGV]
+  pid = fork do
+    Process.setsid
+    # Second fork so the detached run is not a session leader either, and can
+    # never reacquire a controlling terminal.
+    fork do
+      $stdin.reopen(File::NULL)
+      $stdout.reopen(log, "a")
+      $stdout.sync = true
+      $stderr.reopen($stdout)
+      exec(*command)
+    end
+    exit!(0)
+  end
+  Process.wait(pid)
+  puts "detached — log #{log}"
+  exit 0
+end
+
+# Anything already coming out of the speakers, stopped.
+#
+# Two renders playing at once is not a mix, it is two beats, and nothing here
+# prevented it: play_audio spawned a player and returned, so a second call
+# simply added a second one. It happened often enough that stopping the last
+# one by hand became part of using the tool.
+#
+# Runs before this process spawns its own player, so every match is someone
+# else's -- including a player left behind by a session that has since gone.
+def stop_other_players!
+  %w[afplay ffplay].each do |bin|
+    system("pkill", "-x", bin, out: File::NULL, err: File::NULL)
+  end
+rescue StandardError
+  nil
+end
+
 def play_audio(path, loop: false)
+  stop_other_players!
   tool = playback_tool
   unless tool
     msg = "afplay or ffplay required"

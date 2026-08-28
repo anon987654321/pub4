@@ -94,8 +94,15 @@ module DillaKnobs
   ENGINE_WRITTEN = %w[
     DILLA_RENDER_SEED
     DILLA_USER_PINNED_KEYS
-    DILLA_STREAM_LAUNCHED
   ].freeze
+
+  # DILLA_STREAM_LAUNCHED is deliberately NOT on that list, though the engine
+  # does write it (stream.rb, twice). It fails both criteria above: it is not an
+  # output of a render, and the operator does set it -- stream.rb reads it as
+  # "I already have a shell, do not open Terminal.app", which is the only way to
+  # run a continuous stream from an agent shell on macOS. Listing it here meant
+  # using the documented escape hatch printed a warning telling you not to, and
+  # believing that warning let stream() spawn a Terminal window and exit.
 
   # Truthy spellings a flag accepts. SAMPLE_LOOP_ON already learned this lesson
   # for one knob; the validator applies it to every knob whose sites compare

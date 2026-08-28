@@ -18,22 +18,25 @@
 # wav_Map is deliberately NOT turned on here. It needs an image, and there is no
 # sensible default picture; pass WAV_MAP=<path> and it joins the layer.
 #
-# The defaults are conservative on purpose. Copy Machine replaces the bed, which
-# is the loudest sampled thing in a render, so it gets three copies rather than
-# the six its own default suggests, and the LPG blends at 0.7 rather than fully.
-# The layer is meant to be audible as texture, not as an effect.
+# The layer sits where the operator asked for it: audible as an effect, not as
+# texture. Copy Machine runs the six copies its own default suggests, the LPG
+# blends fully with a longer and droopier decay, and the voice stack doubles.
+#
+# It was conservative before -- three copies, 0.7 blend -- on the reasoning that
+# Copy Machine replaces the bed and the bed is the loudest sampled thing in a
+# render. That reasoning is sound and the numbers were still too quiet to hear.
 RINGTONE_LAYER_DEFAULTS = {
-  "COPY_MACHINE" => "3",
+  "COPY_MACHINE" => "6",
   "COPY_MACHINE_FAMILY" => "harmonic",
-  "COPY_MACHINE_REVERSE" => "0.18",
-  "COPY_MACHINE_WIDTH" => "0.85",
-  "COPY_MACHINE_DRIFT" => "180",
+  "COPY_MACHINE_REVERSE" => "0.35",
+  "COPY_MACHINE_WIDTH" => "1.0",
+  "COPY_MACHINE_DRIFT" => "320",
   "LPG" => "1",
-  "LPG_BLEND" => "0.7",
-  "LPG_DEPTH" => "0.9",
-  "LPG_DECAY_MS" => "240",
-  "LPG_DROOP" => "2.2",
-  "VOICE_STACK" => "3",
+  "LPG_BLEND" => "1.0",
+  "LPG_DEPTH" => "1.0",
+  "LPG_DECAY_MS" => "360",
+  "LPG_DROOP" => "3.0",
+  "VOICE_STACK" => "6",
 }.freeze
 
 def ringtone_layer_enabled? = ENV.fetch("RINGTONE_LAYER", "0") != "0"

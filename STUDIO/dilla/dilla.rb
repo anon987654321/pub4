@@ -551,6 +551,9 @@ end
 # line. ENV still works (flags win when both are set) — the flags exist so the
 # contract is visible in `help` and greppable, not to replace the env interface.
 FLAG_ENV = {
+  # Not a render setting: read by dilla_detach_if_asked! at the entry point,
+  # which re-execs into its own session and returns the shell.
+  "detach" => "DILLA_DETACH",
   "track" => "TRACK", "progression" => "PROGRESSION", "sonitex" => "SONITEX_PRESET",
   "analog-chain" => "ANALOG_CHAIN", "sidechain" => "SIDECHAIN", "bars" => "BARS",
   "bpm" => "BPM", "swing" => "SWING", "voicing" => "VOICING", "kicks" => "KICKS",
@@ -1111,6 +1114,10 @@ if __FILE__ == $PROGRAM_NAME
   if ENV["DILLA_KNOB_CHECK"] != "0"
     DillaKnobs.validate.each { |problem| dmesg_warn("knob: #{problem}") }
   end
+
+  # Before the command is read, so --detach works with every one of them and
+  # the re-exec carries the rest of ARGV through untouched.
+  dilla_detach_if_asked!
 
   cmd = ARGV.shift
   if cmd.nil?
