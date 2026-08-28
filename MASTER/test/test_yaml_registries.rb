@@ -8,7 +8,7 @@ DATA = File.expand_path("../data", __dir__)
 
 YAML_SPECS = {
   "attention_context.yml"        => { required_keys: %w[protocol fields rendering when_to_emit], arrays: [] },
-  "patterns.yml"                 => { required_keys: %w[gh openbsd zsh infer prompt_archaeology repo_topics], arrays: [] },
+  "patterns.yml"                 => { required_keys: %w[gh zsh infer prompt_archaeology repo_topics], arrays: [] },
 }.freeze
 
 PATTERNS_NAMESPACES = {
