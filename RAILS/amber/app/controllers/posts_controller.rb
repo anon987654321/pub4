@@ -67,5 +67,14 @@ class PostsController < ApplicationController
     redirect_to(posts_path, alert: t("shared.flash.not_authorized")) unless @post.user == Current.user
   end
 
-  def post_params = params.require(:post).permit(:body, :outfit_id, :item_id, :anonymous)
+  def post_params
+    permitted = params.require(:post).permit(:body, :outfit_id, :item_id, :anonymous)
+    if permitted[:outfit_id].present? && Current.user.outfits.where(id: permitted[:outfit_id]).none?
+      permitted[:outfit_id] = nil
+    end
+    if permitted[:item_id].present? && Current.user.items.where(id: permitted[:item_id]).none?
+      permitted[:item_id] = nil
+    end
+    permitted
+  end
 end

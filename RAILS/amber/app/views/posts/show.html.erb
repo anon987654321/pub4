@@ -4,7 +4,7 @@
 <%= turbo_stream_from @post %>
 <article>
   <header class="feed-post-meta feed-post-byline">
-    <span class="author"><%= @post.user.email_address.split("@").first %></span>
+    <span class="author"><%= @post.author_name %></span>
     <%# time_ago, not time_ago_in_words: Norwegian marks a past span on both
         sides ("for 2 måneder siden"), so the suffix cannot be appended. The
         timeago Stimulus controller that used to hang off this tag is gone —
