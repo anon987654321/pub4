@@ -51,7 +51,17 @@ the two starred steps are non-obvious and cost a boot each to find.
 1. **Skeleton** under `engines/v/`:
    - `brgen-v.gemspec` — `spec.name = "brgen-v"`, `spec.files = Dir["{app,config,db,lib}/**/*"]`, `add_dependency "rails"`, `add_dependency "pub4-shared"`.
    - `lib/v.rb` — `require "v/version"; require "v/engine"`.
-   - `lib/v/version.rb`, `lib/v/engine.rb` — the engine class **mirrors `Shared::Engine`**: `isolate_namespace Ns`, `<<` (never `+=`) on `config.autoload_paths` (Rails 8.1 freezes those arrays mid-boot), `config.paths["db/migrate"] <<`, and initializers that `append_view_path` and push `app/assets/stylesheets` + `app/javascript` onto `config.assets.paths`.
+   - `lib/v/version.rb`, `lib/v/engine.rb` — the engine class is
+     `isolate_namespace Ns` and `include Shared::VerticalEngine`, nothing else.
+     That module (`shared/lib/shared/vertical_engine.rb`) is the boot shape all
+     six verticals share: `<<` (never `+=`) on `config.autoload_paths` because
+     Rails 8.1 freezes those arrays mid-boot, `config.paths["db/migrate"] <<`,
+     and initializers that `append_view_path` and push `app/assets/stylesheets`
+     + `app/javascript` onto `config.assets.paths`. It derives every path from
+     the including class's own `root` and names its initializers after the
+     namespace, so `Dating::Engine` still registers `dating.view_paths`.
+     Each vertical wrote that body out by hand until 2026-08-28, when six
+     copies that differed only in the module name became one.
 
 2. **★ Gemfile** — `gem 'brgen-v', path: 'engines/v', require: 'v'`.
    The `require:` is load-bearing. Bundler auto-requires a dashed path gem by its
