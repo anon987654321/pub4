@@ -2,6 +2,7 @@
 
 class OutfitsController < ApplicationController
   include Shared::LiveSearchable
+  include WardrobeGuards
 
   before_action :require_real_user
   before_action :set_outfit, only: %i[show edit update destroy like reorder share wear]
@@ -155,13 +156,11 @@ class OutfitsController < ApplicationController
   end
 
   def authorize!
-    redirect_to(outfits_path, alert: t("shared.flash.not_authorized")) unless @outfit.user_id == Current.user&.id
+    require_wardrobe_owner!(@outfit, outfits_path)
   end
 
   def authorize_view!
-    return if WardrobeVisibilityPolicy.new(viewer: Current.user, owner: @outfit.user).can_view_wardrobe?
-
-    redirect_to(outfits_path, alert: t("shared.flash.not_authorized"))
+    require_wardrobe_view!(@outfit, outfits_path)
   end
 
   def outfit_params

@@ -2,6 +2,7 @@
 
 class ItemsController < ApplicationController
   include Shared::LiveSearchable
+  include WardrobeGuards
 
   before_action :require_real_user
   before_action :set_item, only: %i[show edit update destroy spark_joy clear_joy declutter wear archive restore]
@@ -183,13 +184,11 @@ class ItemsController < ApplicationController
   end
 
   def authorize!
-    redirect_to(items_path, alert: t("shared.flash.not_authorized")) unless @item.user_id == Current.user&.id
+    require_wardrobe_owner!(@item, items_path)
   end
 
   def authorize_view!
-    return if WardrobeVisibilityPolicy.new(viewer: Current.user, owner: @item.user).can_view_wardrobe?
-
-    redirect_to(items_path, alert: t("shared.flash.not_authorized"))
+    require_wardrobe_view!(@item, items_path)
   end
 
   def apply_lifecycle_filter(scope)
