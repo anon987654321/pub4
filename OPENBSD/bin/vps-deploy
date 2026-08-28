@@ -245,7 +245,7 @@ fi
 
 port=$(ruby34 -ryaml -e 'puts YAML.safe_load(File.read("'"$repo"'/RAILS/apps.yml")).dig("apps","'"$app"'","port")')
 up_ok=0
-for i in {1..30}; do
+for i in {1..150}; do
   curl -fsS "http://127.0.0.1:${port}/up" >/dev/null 2>&1 && { up_ok=1; break; }
   sleep 2
 done
@@ -294,7 +294,7 @@ fi
 # no such pass at all, which is the common case. Reported, not silent — a
 # service that needed restoring is a fact about the box worth seeing.
 restored=()
-for other in amber bsdports litestream; do
+for other in amber bsdports; do
   [[ $other == "$app" ]] && continue
   doas rcctl get "$other" >/dev/null 2>&1 || continue          # not configured here
   doas rcctl check "$other" >/dev/null 2>&1 && continue        # already up

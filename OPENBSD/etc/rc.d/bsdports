@@ -60,7 +60,7 @@ if [ "$1" = "start" ] || [ "$1" = "restart" ]; then
     # restart until it's kicked — same fix already used by MASTER's rc.d script.
     _i=0
     _up_ok=0
-    while [ "$_i" -lt 30 ]; do
+    while [ "$_i" -lt 300 ]; do
       curl -fsS "http://127.0.0.1:${PORT}/up" >/dev/null 2>&1 && { _up_ok=1; break; }
       sleep 1
       _i=$((_i + 1))
