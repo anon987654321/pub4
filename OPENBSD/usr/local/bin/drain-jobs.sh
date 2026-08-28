@@ -111,6 +111,10 @@ fi
 for app in brgen amber bsdports; do
   [ -d "/home/$app/app" ] || continue
   [ -f "/home/$app/app/storage/production_queue.sqlite3" ] || continue
+  if [ "$app" = brgen ] && rcctl check brgen_jobs >/dev/null 2>&1; then
+    echo "$(stamp) brgen skipped: brgen_jobs is running"
+    continue
+  fi
 
   counts=$(queue_counts "$app") || counts=""
   due=$(field "$counts" 1)

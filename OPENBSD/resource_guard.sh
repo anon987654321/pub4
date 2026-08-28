@@ -34,7 +34,7 @@ CORE="master brgen"
 # per amber-deploy-hazards it is not currently backing anything up), so losing
 # it costs nothing visible. bsdports is a low-traffic ports index. amber is a
 # real app with real users and goes last.
-OPTIONAL="litestream bsdports amber"
+OPTIONAL="bsdports amber"
 # vm23 is 1 vCPU (hw.ncpu=1) — load=1.0 just means the single core is fully
 # busy, which is routine, not an emergency. Calm baseline ~0.5-1.4,
 # restart-storm transient ~3-7, genuine OOM crisis ~4.6 sustained.

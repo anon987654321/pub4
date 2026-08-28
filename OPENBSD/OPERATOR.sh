@@ -455,7 +455,7 @@ stage_1() {
   # Without it TTS produced un-concatenated or unconverted audio on the VPS with
   # no error anywhere — working on a Mac and silently degrading in production,
   # which is the worst failure shape. See MASTER/DEBT.md "Host TTS Binaries".
-  pkg_add -U ldns-utils ruby%3.4 litestream zap zsh fish neovim tmux fontconfig fzf ripgrep fd espeak ffmpeg 2>/tmp/pkg_add.log \
+  pkg_add -U ldns-utils ruby%3.4 zap zsh fish neovim tmux fontconfig fzf ripgrep fd espeak ffmpeg 2>/tmp/pkg_add.log \
     || { log ERROR "pkg_add failed. See /tmp/pkg_add.log"; exit 1 }
 
   [[ -f /etc/rc.conf.local && $(<"/etc/rc.conf.local") == *"pf=NO"* ]] && log WARN "pf disabled in rc.conf.local"
@@ -576,25 +576,6 @@ stage_1() {
   chmod 640 /etc/acme/letsencrypt_privkey.pem
 
   install_static etc/acme-client.conf /etc/acme-client.conf
-  for domain_entry in $ALL_DOMAINS; do
-    typeset domain=${domain_entry%%:*}
-    typeset subdomains=${domain_entry#*:}
-    [[ $subdomains = $domain ]] && subdomains=""
-    {
-      print -r -- "domain \"$domain\" {"
-      if [[ -n $subdomains ]]; then
-        typeset altnames="\"$domain\""
-        for sub in ${(s:,:)subdomains}; do altnames="$altnames \"$sub.$domain\""; done
-        print -r -- "  alternative names { $altnames }"
-      fi
-      print -r -- "  domain key \"/etc/ssl/private/$domain.key\""
-      print -r -- "  domain full chain certificate \"/etc/ssl/$domain.fullchain.pem\""
-      print -r -- "  sign with letsencrypt"
-      print -r -- "  challengedir \"/var/www/acme\""
-      print -r -- "}"
-      print -r -- ""
-    } >> /etc/acme-client.conf
-  done
   acme-client -n -f /etc/acme-client.conf || { log ERROR "acme-client.conf invalid"; exit 1 }
 
   for domain_entry in $ALL_DOMAINS; do
@@ -684,17 +665,14 @@ setup_mail_client() {
 }
 
 setup_litestream() {
-  log INFO "Setting up litestream"
+  # Not in OpenBSD ports and rcctl-disabled on purpose so `rcctl ls failed`
+  # stays empty. Install the config for the day a replica exists; do not enable.
+  log INFO "litestream config only — service stays disabled"
   mkdir -p /var/backups/litestream
   install_template etc/litestream.yml /etc/litestream.yml
   install_template etc/rc.d/litestream /etc/rc.d/litestream
   chmod 755 /etc/rc.d/litestream
-  /usr/sbin/rcctl enable litestream
-  /usr/sbin/rcctl restart litestream || /usr/sbin/rcctl start litestream \
-    || { log ERROR "litestream failed"; exit 1 }
-  sleep 2
-  typeset _c; _c=$(/usr/sbin/rcctl check litestream)
-  [[ $_c == *"litestream(ok)"* ]] || { log ERROR "litestream not running"; exit 1 }
+  /usr/sbin/rcctl disable litestream 2>/dev/null || true
 }
 
 bootstrap_rails_app() {
@@ -789,55 +767,7 @@ configure_relayd() {
     ln -sf /etc/ssl/private/${parent}.key    /etc/ssl/private/${dom}.key
   done
 
-  {
-    print -r -- "log connection errors"
-    print -r -- "interval 120"
-    print -r -- "timeout 30000"
-    print -r -- ""
-    for backend in ${(k)BACKEND_PORT}; do
-      print -r -- "table <${backend}> { 127.0.0.1 }"
-    done
-    print -r -- ""
-    print -r -- "http protocol \"https_proxy\" {"
-    for dom in ${(k)DOMAIN_BACKEND}; do
-      [[ -L /etc/ssl/${dom}.crt ]] && print -r -- "  tls keypair \"${dom}\""
-    done
-    print -r -- "  match request header set \"X-Forwarded-Proto\" value \"https\""
-    print -r -- "  match request header set \"X-Forwarded-For\" value \"\$REMOTE_ADDR\""
-    print -r -- "  match response header set \"Strict-Transport-Security\" value \"max-age=31536000; includeSubDomains; preload\""
-    print -r -- "  match response header set \"Referrer-Policy\" value \"strict-origin\""
-    print -r -- "  match response header set \"X-Content-Type-Options\" value \"nosniff\""
-    print -r -- "  match response header set \"X-XSS-Protection\" value \"0\""
-    print -r -- "  # No global X-Frame-Options — MASTER uses CSP frame-ancestors for brgen/amber embeds."
-    print -r -- "  match response header set \"Permissions-Policy\" value \"accelerometer=(self), camera=(), geolocation=(self), gyroscope=(self), magnetometer=(), microphone=(self), payment=(), usb=()\""
-    print -r -- "  match response header remove \"X-Frame-Options\""
-    print -r -- "  match response header remove \"Server\""
-    print -r -- "  http websockets"
-    for dom in ${(k)DOMAIN_BACKEND}; do
-      backend=${DOMAIN_BACKEND[$dom]}
-      print -r -- "  match request header \"Host\" value \"${dom}\" forward to <${backend}>"
-      for entry in $ALL_DOMAINS; do
-        [[ ${entry%%:*} == $dom ]] || continue
-        rest=${entry#*:}
-        [[ $rest == $dom ]] && break
-        for sub in ${(s:,:)rest}; do
-          [[ -n ${DOMAIN_BACKEND[${sub}.${dom}]:-} ]] && continue
-          print -r -- "  match request header \"Host\" value \"${sub}.${dom}\" forward to <${backend}>"
-        done
-        break
-      done
-    done
-    print -r -- "  pass"
-    print -r -- "}"
-    print -r -- ""
-    print -r -- "relay \"https_in\" {"
-    print -r -- "  listen on 0.0.0.0 port 443 tls"
-    print -r -- "  protocol \"https_proxy\""
-    for backend in ${(k)BACKEND_PORT}; do
-      print -r -- "  forward to <${backend}> port ${BACKEND_PORT[$backend]} check http \"/up\" code 200"
-    done
-    print -r -- "}"
-  } > /etc/relayd.conf
+  install_static etc/relayd.conf /etc/relayd.conf
 
   relayd -n -f /etc/relayd.conf || { log ERROR "relayd.conf invalid"; exit 1 }
   /usr/sbin/rcctl enable relayd
