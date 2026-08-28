@@ -44,7 +44,7 @@ class ApplicationController < ActionController::Base
   def require_verified_email
     return if Current.user.nil? || Current.user.try(:guest?) || Current.user.email_verified?
 
-    message = t("verify.needed", default: "Confirm your email before posting — check your inbox.")
+    message = t("verify.needed")
     respond_to do |format|
       format.html { redirect_back fallback_location: main_app.root_path, alert: message }
       format.any  { head :forbidden }

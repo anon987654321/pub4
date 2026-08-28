@@ -14,3 +14,12 @@ nb:
     dilla_sketches: "Dilla-skisser / beats"
     synced_position: "Synkronisert posisjon:"
     youtube_player_aria: "YouTube-spiller"
+    track_created: "Spor lastet opp"
+    track_updated: "Spor oppdatert"
+    track_deleted: "Spor fjernet"
+    imports_queued:
+      one: "%{count} sporimport i kø"
+      other: "%{count} sporimporter i kø"
+    tracks_uploaded:
+      one: "%{count} spor lastet opp"
+      other: "%{count} spor lastet opp"

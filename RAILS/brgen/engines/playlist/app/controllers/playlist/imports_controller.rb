@@ -10,7 +10,7 @@ module Playlist
       return if performed?
 
       results = ::Playlist::TrackImport.new(user: Current.user, playlist: @playlist).call(params[:urls])
-      redirect_to playlist_path(@playlist), notice: "#{results.size} track imports queued"
+      redirect_to playlist_path(@playlist), notice: t("playlist.imports_queued", count: results.size)
     end
 
     private

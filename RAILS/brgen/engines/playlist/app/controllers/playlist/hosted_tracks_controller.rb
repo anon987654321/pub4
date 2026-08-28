@@ -31,7 +31,7 @@ class Playlist::HostedTracksController < Playlist::BaseController
         t.audio_file.attach(file)
         t.save ? t : nil
       end.compact
-      redirect_to hosted_tracks_path, notice: "#{created.size} tracks uploaded"
+      redirect_to hosted_tracks_path, notice: t("playlist.tracks_uploaded", count: created.size)
     else
       @track = Playlist::Track.new(track_params.except(:audio_file))
       @track.user = Current.user if @track.respond_to?(:user=)
@@ -39,7 +39,7 @@ class Playlist::HostedTracksController < Playlist::BaseController
       @track.artwork.attach(params[:track][:artwork]) if params.dig(:track, :artwork).present?
 
       if @track.save
-        redirect_to hosted_track_path(@track), notice: t("playlist.track_created", default: "Track uploaded")
+        redirect_to hosted_track_path(@track), notice: t("playlist.track_created")
       else
         render :new, status: :unprocessable_entity
       end
@@ -54,7 +54,7 @@ class Playlist::HostedTracksController < Playlist::BaseController
       @track.replace_audio!(params[:track][:audio_file], actor: Current.user)
     end
     if @track.update(track_params.except(:audio_file))
-      redirect_to hosted_track_path(@track), notice: t("playlist.track_updated", default: "Track updated")
+      redirect_to hosted_track_path(@track), notice: t("playlist.track_updated")
     else
       render :edit, status: :unprocessable_entity
     end
@@ -62,7 +62,7 @@ class Playlist::HostedTracksController < Playlist::BaseController
 
   def destroy
     @track.destroy
-    redirect_to hosted_tracks_path, notice: t("playlist.track_deleted", default: "Track removed")
+    redirect_to hosted_tracks_path, notice: t("playlist.track_deleted")
   end
 
   private

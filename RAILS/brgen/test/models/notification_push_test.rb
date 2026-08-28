@@ -51,7 +51,7 @@ class NotificationPushTest < ActiveSupport::TestCase
   test "a kind with no stored title still derives its sentence" do
     notification = @user.notifications.create!(kind: "follow", actor: @seller)
 
-    assert_match(/followed you/, notification.title)
+    assert_equal I18n.t("notifications.sentences.follow", name: @seller.display_name), notification.title
   end
 
   test "order and alert are pushable, and a bare custom notification is not" do

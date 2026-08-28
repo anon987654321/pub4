@@ -68,14 +68,14 @@ class Marketplace::Order < ApplicationRecord
     raise "order cannot be accepted" unless open_offer?
 
     update!(status: "accepted")
-    deliver_notification(buyer_record, title: "Offer accepted", body: "Your offer for #{listing_title} was accepted.", source: self, kind: "order")
+    deliver_notification(buyer_record, title: I18n.t("marketplace.order_notification.offer_accepted"), body: I18n.t("marketplace.order_notification.offer_accepted_body", title: listing_title), source: self, kind: "order")
   end
 
   def decline!
     raise "order cannot be declined" unless open_offer?
 
     update!(status: "declined")
-    deliver_notification(buyer_record, title: "Offer declined", body: "Your offer for #{listing_title} was declined.", source: self, kind: "order")
+    deliver_notification(buyer_record, title: I18n.t("marketplace.order_notification.offer_declined"), body: I18n.t("marketplace.order_notification.offer_declined_body", title: listing_title), source: self, kind: "order")
   end
 
   def open_offer?
@@ -139,8 +139,8 @@ class Marketplace::Order < ApplicationRecord
     return unless transitioned
 
     title = listing_title
-    deliver_notification(seller, title: "Payment received", body: "Payment for #{title} cleared.", source: self, kind: "order")
-    deliver_notification(buyer_record, title: "Payment confirmed", body: "Your payment for #{title} is confirmed.", source: self, kind: "order")
+    deliver_notification(seller, title: I18n.t("marketplace.order_notification.payment_received"), body: I18n.t("marketplace.order_notification.payment_received_body", title: title), source: self, kind: "order")
+    deliver_notification(buyer_record, title: I18n.t("marketplace.order_notification.payment_confirmed"), body: I18n.t("marketplace.order_notification.payment_confirmed_body", title: title), source: self, kind: "order")
     PartnerMarketing.attribute_order!(self, visitor_digest: nil)
   end
 
@@ -176,7 +176,7 @@ class Marketplace::Order < ApplicationRecord
       shipped_at: Time.current
     )
     detail = tracking_code.presence ? "#{listing_title} — #{carrier.presence || 'Tracking'}: #{tracking_code}" : listing_title
-    deliver_notification(buyer_record, title: "On its way", body: detail, source: self, kind: "order")
+    deliver_notification(buyer_record, title: I18n.t("marketplace.order_notification.on_its_way"), body: detail, source: self, kind: "order")
   end
 
   # Returnable only against a shop. The right to send a purchase back is a right
@@ -207,7 +207,7 @@ class Marketplace::Order < ApplicationRecord
 
   def mark_delivered!
     update!(fulfilment_status: "delivered", delivered_at: Time.current)
-    deliver_notification(buyer_record, title: "Delivered", body: listing_title, source: self, kind: "order")
+    deliver_notification(buyer_record, title: I18n.t("marketplace.order_notification.delivered"), body: listing_title, source: self, kind: "order")
   end
 
   private

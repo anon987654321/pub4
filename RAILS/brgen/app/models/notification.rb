@@ -54,22 +54,16 @@ class Notification < ApplicationRecord
     stored = self[:title]
     return stored if stored.present?
 
-    actor_name = actor&.display_name || "Someone"
-    case kind
-    when "follow" then "#{actor_name} followed you"
-    when "like", "reaction" then "#{actor_name} reacted to your post"
-    when "mention" then "#{actor_name} mentioned you"
-    when "reply" then "#{actor_name} replied to your comment"
-    when "message" then "New message from #{actor_name}"
-    when "match" then "It's a match with #{actor_name}"
-    else "New notification"
-    end
+    actor_name = strict_safe(:actor)&.display_name || I18n.t("notifications.someone")
+    key = "notifications.sentences.#{kind}"
+    I18n.t(key, name: actor_name, default: I18n.t("notifications.sentences.generic"))
   end
 
   def body
     stored = self[:body]
     return stored if stored.present?
 
-    notifiable.try(:content).presence || notifiable.try(:body).presence || ""
+    record = association(:notifiable).loaded? ? notifiable : nil
+    record.try(:content).presence || record.try(:body).presence || ""
   end
 end

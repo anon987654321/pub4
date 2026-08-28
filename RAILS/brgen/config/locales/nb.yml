@@ -191,6 +191,29 @@ nb:
     unread_count:
       one: "%{count} ulest"
       other: "%{count} uleste"
+    someone: Noen
+    kinds:
+      mention: Omtalt
+      match: Treff
+      message: Meldinger
+      reply: Svar
+      like: Likes
+      reaction: Reaksjoner
+      follow: Følgere
+      order: Ordrer
+      alert: Varsler
+      custom: Annet
+    sentences:
+      follow: "%{name} fulgte deg"
+      like: "%{name} reagerte på innlegget ditt"
+      reaction: "%{name} reagerte på innlegget ditt"
+      mention: "%{name} nevnte deg"
+      reply: "%{name} svarte på kommentaren din"
+      message: "Ny melding fra %{name}"
+      match: "Det er et treff med %{name}"
+      generic: Nytt varsel
+  verify:
+    needed: Bekreft e-posten din før du poster — sjekk innboksen.
   tv:
     feed:
       title: Strøm

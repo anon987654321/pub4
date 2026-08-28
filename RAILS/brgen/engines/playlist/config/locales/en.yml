@@ -14,3 +14,12 @@ en:
     dilla_sketches: "Dilla sketches / beats"
     synced_position: "Synced position:"
     youtube_player_aria: "YouTube player"
+    track_created: "Track uploaded"
+    track_updated: "Track updated"
+    track_deleted: "Track removed"
+    imports_queued:
+      one: "%{count} track import queued"
+      other: "%{count} track imports queued"
+    tracks_uploaded:
+      one: "%{count} track uploaded"
+      other: "%{count} tracks uploaded"

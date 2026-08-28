@@ -191,6 +191,29 @@ en:
     unread_count:
       one: "%{count} unread"
       other: "%{count} unread"
+    someone: Someone
+    kinds:
+      mention: Mentions
+      match: Matches
+      message: Messages
+      reply: Replies
+      like: Likes
+      reaction: Reactions
+      follow: Follows
+      order: Orders
+      alert: Alerts
+      custom: Other
+    sentences:
+      follow: "%{name} followed you"
+      like: "%{name} reacted to your post"
+      reaction: "%{name} reacted to your post"
+      mention: "%{name} mentioned you"
+      reply: "%{name} replied to your comment"
+      message: "New message from %{name}"
+      match: "It's a match with %{name}"
+      generic: New notification
+  verify:
+    needed: Confirm your email before posting — check your inbox.
   tv:
     feed:
       title: Feed
