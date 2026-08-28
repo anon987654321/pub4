@@ -108,10 +108,8 @@ deploy_tracked_app() {
   rails_runtime_gate "$APP_NAME" "$APP_DIR" || { deploy_status "$app_name" "runtime gate" "failed"; exit 1; }
   if [[ ${DEMO_SEED_ON_DEPLOY:-0} == 1 ]]; then
     deploy_status "$app_name" "demo seed"
-    if [[ $app_name == brgen ]]; then
-      seed_bergen_demo_as_app "$APP_DIR"
-    elif [[ $app_name == amber ]]; then
-      seed_amber_demo_as_app "$APP_DIR"
+    if [[ $app_name == brgen || $app_name == amber ]]; then
+      seed_demo_as_app "$APP_NAME" "$APP_DIR"
     fi
   fi
   deploy_status "$app_name" "restart"

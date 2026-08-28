@@ -132,18 +132,15 @@ db_seed_as_app() {
     || log_warn "db:seed skipped for ${app_name}"
 }
 
-# seed_bergen_demo_as_app — credible brgen.no feed (no Faker flood)
-seed_bergen_demo_as_app() {
-  local app_dir=$1 secret
-  secret=$(app_secret_for brgen)
-  ${_PRIV} sh -c "su -m brgen -c 'cd ${app_dir} && SECRET_KEY_BASE=${secret} RAILS_ENV=production bundle34 exec rails brgen:demo_seed'" \
-    || log_warn "brgen:demo_seed skipped"
-}
-
-# seed_amber_demo_as_app — public demo capsule wardrobe for guests
-seed_amber_demo_as_app() {
-  local app_dir=$1 secret
-  secret=$(app_secret_for amber)
-  ${_PRIV} sh -c "su -m amber -c 'cd ${app_dir} && SECRET_KEY_BASE=${secret} RAILS_ENV=production bundle34 exec rails amber:demo_seed'" \
-    || log_warn "amber:demo_seed skipped"
+# seed_demo_as_app APP_NAME APP_DIR — the guest-facing demo content each app
+# publishes: brgen's credible city feed (no Faker flood), amber's public capsule
+# wardrobe. Both are idempotent rake tasks named <app>:demo_seed, and the app
+# name is also the unix user and the /etc/<app>.env owner, so one argument fixes
+# all three. A failure is a warning: demo content missing is worse than the
+# deploy stopping, but not much worse.
+seed_demo_as_app() {
+  local app_name=$1 app_dir=$2 secret
+  secret=$(app_secret_for "$app_name")
+  ${_PRIV} sh -c "su -m ${app_name} -c 'cd ${app_dir} && SECRET_KEY_BASE=${secret} RAILS_ENV=production bundle34 exec rails ${app_name}:demo_seed'" \
+    || log_warn "${app_name}:demo_seed skipped"
 }
