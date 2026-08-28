@@ -6,10 +6,17 @@ the agent contract, and live-operation safety in one place.
 
 ## Repo layout
 
-`MASTER/`, `RAILS/`, `OPENBSD/`, `OPENBSD/` at the repo root, plus dotfolders. Canonical
+`MASTER/`, `RAILS/`, `OPENBSD/`, `STUDIO/` at the repo root, plus dotfolders. Canonical
 inventories: `RAILS/apps.yml`, `OPENBSD/deploy_inventory.json`. Deploy gates (`integrity_gate.rb`,
-`verify_deploy_identity.rb`, `deploy_inventory.json`) and recovery pens (`archive/`, `quarantine/`) live
-at `OPENBSD/` top level.
+`verify_deploy_identity.rb`, `deploy_inventory.json`) live at `OPENBSD/` top level, and so does the
+one recovery pen that exists, `quarantine/`.
+
+There is no `archive/`, in `OPENBSD/` or at the repo root. The name still appears in prose —
+`tools/tree.rb` prints `archive/recovery` as a DRIFT line, `deploy_all.sh`'s header cites
+`archive/recovery/manifest.json` — but it is a pub3-era path and nothing in this repo creates it.
+`extract_legacy_installers.sh` reads it as an optional source and logs `missing source` when it is
+absent, which is what it does today. Do not go looking for the directory; read those mentions as
+document-only.
 
 ## Deployment map
 
@@ -231,15 +238,19 @@ initializer said `(self)`.
 
 ## Deploy-all disambiguation
 
-Two “deploy everything” paths on vm23 — pick deliberately:
+Four scripts read as “do everything”, and they do four different things. Pick deliberately:
 
 | Script | CI | Scope | When |
 |--------|----|-------|------|
 | `zsh OPENBSD/vps_ci_all.sh` | **Yes** — serial `vps_ci.sh` per app | brgen, amber, bsdports | Normal code change; tests must pass |
 | `zsh OPENBSD/vps_production_push.sh` | **No** — sets `SKIP_CI=1` | master + brgen + amber | Fast hotfix; skips test gate |
+| `zsh OPENBSD/deploy_all.sh` | **No** | Runs from a workstation: syncs pub4 to vm23 and runs `OPERATOR.sh`, so it reapplies `/etc`, relayd and the services, not just app code. `--per-app` also runs each `RAILS/<app>/<app>.sh` | The box's config has drifted or a fresh install needs redoing — not for shipping a code change |
+| `doas ksh OPENBSD/start_all_apps.sh` | **No** — not a deploy at all | Enables and starts master, brgen, amber, bsdports, restarts relayd, then `health_check.rb --all-ready-apps` | Recovery. It writes `/var/db/pub4_all_apps`, which pins the four against `resource_guard.sh` shedding |
 
 `vps_production_push.sh` is the footgun under pressure: it restarts production without running CI.
-Use `vps_ci_all.sh` unless you explicitly need the fast path and accept the risk.
+Use `vps_ci_all.sh` unless you explicitly need the fast path and accept the risk. `deploy_all.sh` is
+the wider footgun — it rewrites box config on the way past, so reach for it only when that is the
+thing you want.
 
 ## Occasional operator tools
 
@@ -252,6 +263,8 @@ dead one until it is written down.
 | `ruby OPENBSD/sync.rb` (as `doas ruby34`) | vm23 | Mirror live `/etc` config **back into** `OPENBSD/`, with secret redaction. The repo→live direction is well travelled; this is the return leg, and skipping it is how `relayd.conf` drifted for weeks (see the warning under *OpenBSD deploy*). |
 | `ruby OPENBSD/ptr_openbsd_amsterdam.rb --ip … --hostname …` | anywhere | Set the PTR record via openbsd.amsterdam's `ptr4`/`ptr6` endpoints. Needed only if the VM's IP changes; `--apply` actually writes. |
 | `zsh OPENBSD/vps_run_remote.sh` | workstation | Bootstrap a *fresh* VM: copies `vps_install_all.sh` up through the server4 hypervisor jump and runs it. Not for routine deploys — use `vps-deploy`. |
+| `ksh OPENBSD/manual_master_deploy.ksh` | vm23, under tmux | Fallback when `vps_deploy_master.sh` stalls. It pkills the stuck deploy and its precompile, then precompiles MASTER web, runs the `master_web_assets` gate, restarts master and relayd, and probes `/up`. Output goes to `/tmp/master_manual.log`, not the terminal — `tail -f` it. |
+| `zsh OPENBSD/bin/deploy-diff.sh` | workstation | Read-only diff of vm23's `/etc/pf.conf`, `/etc/relayd.conf` and `/etc/master.env.sample` against `OPENBSD/etc/`. It reports drift and changes nothing in either direction; `sync.rb` above is what pulls the live side back into the repo. |
 
 ## Self-healing cron (vm23)
 
@@ -385,7 +398,18 @@ Any file changed on the VPS under `OPENBSD/` must be copied back to git and comm
 - relayd/domain drift: run `RAILS/gates/runner.rb domain_alignment` and
   `OPENBSD/deploy_smoke_gate.rb` before restarting relayd.
 - pf lockout: use the server4 console and flush the `bruteforce` table; do not keep reconnecting.
-- Silent TTS: verify `edge-tts` or `espeak` exists before debugging web routes.
+- Silent TTS: `checks.tts` on `https://ai.brgen.no/health` is the authority, and it already gates
+  the deploy — `health_check.rb` fails on `checks.tts false`, `MASTER/web`'s health controller
+  503s the whole endpoint on it, and `bin/check-vps` runs both. On the source side
+  `RAILS/gates/runner.rb production` runs `MasterTtsGate`, which pins the worker, the supervisor's
+  bundle isolation and `rc.d/master`'s `ensure_daemon!`, and probes for a host backend when
+  `MASTER_TTS_REQUIRE_HOST_BACKEND=1`. It is a capability check
+  (`MASTER/bin/tts-worker` executable *and* EventMachine built with SSL, or espeak at
+  `/usr/bin/espeak` or `/usr/local/bin/espeak`), not socket liveness — the daemon socket is spun
+  up per synthesis. So `checks.tts true` with a silent tap is a web-route or audio-graph problem,
+  not a missing binary. Do not go hunting for an `edge-tts` CLI: `Speech.edge_tts_available?`
+  never consults one — edge TTS is the `rb-edge-tts` gem, reached only through the worker.
+  `OPERATOR.sh` `pkg_add`s espeak, which is the fallback path.
 
 ## Patch examples
 
