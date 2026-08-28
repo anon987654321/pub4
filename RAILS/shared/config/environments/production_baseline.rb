@@ -6,7 +6,9 @@ def apply_production_baseline(config, hosts:, mailer_host: nil, vapid_note: nil,
 
   config.secret_key_base = ENV.fetch("SECRET_KEY_BASE") if secret_key_base && ENV["SECRET_KEY_BASE"].present?
 
-  config.yjit = true if config.respond_to?(:yjit=)
+  # vm23 is 1 GB. rc.d exports RUBY_YJIT_ENABLE=0; Rails would otherwise call
+  # RubyVM::YJIT.enable at the end of boot and undo that decision.
+  config.yjit = false if config.respond_to?(:yjit=)
 
   config.enable_reloading = false
   config.eager_load = true

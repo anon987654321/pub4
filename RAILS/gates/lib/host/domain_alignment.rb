@@ -210,6 +210,7 @@ module Deploy
       # Everything else is the same word in every city.
       subs = [marketplace_subdomain, *COMMON_SUBAPPS]
       subs << "ai" if domain == "brgen.no"
+      subs << "trymbot" if domain == "brgen.no"
       subs.uniq
     end
 
