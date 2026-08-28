@@ -525,8 +525,14 @@ class VisualEngine {
   }
 
   resize() {
-    const vw = Math.max(1, window.innerWidth)
-    const vh = Math.max(1, window.innerHeight)
+    // The canvas is position:fixed inset:0, so its box is the layout viewport,
+    // which window.innerWidth/Height is not: on a phone they differ by the
+    // browser chrome, and on a desktop with a classic scrollbar by its width.
+    // Sizing the buffer from the window stretched the tunnel by that delta and
+    // skewed the pointer mapping below, which divides by these same numbers.
+    const rect = this.canvas.getBoundingClientRect()
+    const vw = Math.max(1, Math.round(rect.width) || window.innerWidth)
+    const vh = Math.max(1, Math.round(rect.height) || window.innerHeight)
     // Cap both axes by one shared factor so the buffer's aspect keeps matching
     // the stretched element's; clamping them independently would squash it.
     const cap = Math.min(1, BUFFER_MAX_W / vw, BUFFER_MAX_H / vh)
