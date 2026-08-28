@@ -7,4 +7,11 @@
 # the promotion to the shared baseline; nothing pinned, imported, or
 # referenced them by the brgen-local path. Deleted the brgen copies, kept
 # shared's.
-duplicate_sets: 41
+#
+# 41 -> 39, 2026-08-28: the trymbot retirement and the MASTER dedupe pass took
+# the last copies of four files out of the tree. Measured in a clean worktree,
+# not in the shared checkout -- there the three db schema files read as three
+# extra duplicate sets, because another session has them regenerated and
+# uncommitted and this tool reads content from disk while taking its paths
+# from git ls-files.
+duplicate_sets: 39
