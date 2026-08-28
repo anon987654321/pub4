@@ -415,7 +415,7 @@ class TestCLI < Minitest::Test
     root = Dir.mktmpdir # not a git checkout, so the changed-files footer stays quiet
     cli = Master::CLI::CLI.new(container: @container.merge(config: {}, root:))
     @session.expect(:cost, 0.0)
-    @session.expect(:token_est, 0)
+    @session.expect(:tokens_billed, 0)
 
     capture_io { cli.send(:display_result, result: Master::Result.ok(rendered: "42"), accumulated: "42", streamed: true) }
     assert cli.instance_variable_get(:@last_ok)
