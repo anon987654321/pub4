@@ -42,12 +42,6 @@ module Pub4
       Environment.ruby_mismatch_message
     end
 
-    def run_gate(script, *args, chdir: Environment.repo_root(__dir__))
-      cmd = [gate_ruby, script, *args]
-      out, status = Open3.capture2e(*cmd, chdir:)
-      [status.success?, out]
-    end
-
     def executable?(name)
       _, status = Open3.capture2e("command", "-v", name)
       status.success?
