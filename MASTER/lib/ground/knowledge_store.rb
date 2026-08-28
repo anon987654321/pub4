@@ -84,6 +84,49 @@ module Master
       RSI_CORRECTION_MIN = 3
       RSI_PROVIDER_MIN = 3
 
+      # The three tables this store owns, in `ensure_schema` order. The first
+      # entry is also replayed on its own by the fix_outcomes rebuild below,
+      # so keep fix_outcomes first.
+      SCHEMA_STATEMENTS = [
+        <<~SQL,
+          CREATE TABLE IF NOT EXISTS fix_outcomes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ts INTEGER NOT NULL,
+            rule TEXT NOT NULL,
+            file_type TEXT NOT NULL,
+            outcome TEXT NOT NULL CHECK (outcome IN ('fixed', 'stuck', 'skipped'))
+          );
+          CREATE INDEX IF NOT EXISTS idx_fix_rule ON fix_outcomes(rule);
+          CREATE INDEX IF NOT EXISTS idx_fix_ts ON fix_outcomes(ts);
+        SQL
+        <<~SQL,
+          CREATE TABLE IF NOT EXISTS strategy_outcomes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ts INTEGER NOT NULL,
+            trigger TEXT NOT NULL,
+            strategy TEXT NOT NULL,
+            outcome TEXT NOT NULL,
+            confidence REAL NOT NULL DEFAULT 0.5,
+            reuse_count INTEGER NOT NULL DEFAULT 0,
+            UNIQUE(trigger, strategy)
+          );
+          CREATE INDEX IF NOT EXISTS idx_strat_trigger ON strategy_outcomes(trigger);
+        SQL
+        <<~SQL,
+          CREATE TABLE IF NOT EXISTS feedback_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ts INTEGER NOT NULL,
+            event_type TEXT NOT NULL,
+            dimension TEXT NOT NULL,
+            value TEXT,
+            metadata TEXT
+          );
+          CREATE INDEX IF NOT EXISTS idx_fb_ts ON feedback_events(ts);
+          CREATE INDEX IF NOT EXISTS idx_fb_dimension ON feedback_events(dimension);
+        SQL
+      ].freeze
+      private_constant :SCHEMA_STATEMENTS
+
       def initialize(root:)
         @db = open_db(root)
         @db.results_as_hash = true
@@ -236,7 +279,7 @@ module Master
 
       def ensure_schema
         migrate_fix_outcomes_skipped_value!
-        KnowledgeSchema::STATEMENTS.each { |statement| @db.execute_batch(statement) }
+        SCHEMA_STATEMENTS.each { |statement| @db.execute_batch(statement) }
       end
 
       # fix_outcomes' CHECK constraint originally only allowed ('fixed',
@@ -254,7 +297,7 @@ module Master
         @db.execute_batch(<<~SQL)
           ALTER TABLE fix_outcomes RENAME TO fix_outcomes_pre_skipped;
         SQL
-        KnowledgeSchema::STATEMENTS.first.then { |statement| @db.execute_batch(statement) }
+        SCHEMA_STATEMENTS.first.then { |statement| @db.execute_batch(statement) }
         @db.execute_batch(<<~SQL)
           INSERT INTO fix_outcomes (id, ts, rule, file_type, outcome)
             SELECT id, ts, rule, file_type, outcome FROM fix_outcomes_pre_skipped;

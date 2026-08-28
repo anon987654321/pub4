@@ -1,12 +1,21 @@
 # frozen_string_literal: true
 
+require "fileutils"
 require "open3"
-require_relative "web_secret"
+require "securerandom"
+require "yaml"
 require_relative "../voice/tts_supervisor"
 
 module Master
   module CLI
     module WebServer
+      # Minimum accepted length (chars) for an existing key -- looser than
+      # SECRET_BYTES since SecureRandom.hex(n) produces 2n hex chars, so a
+      # freshly generated secret is 128 chars while 64 remains acceptable
+      # for one supplied some other way.
+      MIN_SECRET_LENGTH = 64
+      SECRET_BYTES = 64
+
       module_function
 
       def start(config, io: $stderr)
@@ -36,7 +45,7 @@ module Master
         sleep 0.5
         count = ENV.fetch("FALCON_COUNT", "2")
         env = spawn_env(web_dir).merge(
-          "RAILS_ENV" => "production", "SECRET_KEY_BASE" => WebSecret.stable(config),
+          "RAILS_ENV" => "production", "SECRET_KEY_BASE" => stable_secret(config),
         )
         spawn(
           env, Gem.ruby, "-S", "bundle", "exec", "falcon", "serve",
@@ -45,6 +54,32 @@ module Master
         )
         io.puts "web: http://#{host}:#{port}"
       end
+
+      # Rails refuses to boot in production without a stable SECRET_KEY_BASE,
+      # so a generated one is written back to .master/config.yml; the rescue
+      # keeps a config the process cannot persist from blocking the server,
+      # at the cost of a session that does not survive a restart.
+      def stable_secret(config)
+        return config["web_secret_key_base"] if config["web_secret_key_base"].to_s.length >= MIN_SECRET_LENGTH
+
+        secret = SecureRandom.hex(SECRET_BYTES)
+        config["web_secret_key_base"] = secret
+        persist_secret(secret)
+        secret
+      rescue StandardError
+        SecureRandom.hex(SECRET_BYTES)
+      end
+      private_class_method :stable_secret
+
+      def persist_secret(secret)
+        config_path = File.join(Master::ROOT, ".master", "config.yml")
+        FileUtils.mkdir_p(File.dirname(config_path))
+        existing = YAML.safe_load_file(config_path, permitted_classes: [Symbol], aliases: true) rescue {}
+        tmp_path = "#{config_path}.tmp"
+        File.write(tmp_path, existing.merge("web_secret_key_base" => secret).to_yaml)
+        File.rename(tmp_path, config_path)
+      end
+      private_class_method :persist_secret
 
       # Same bug class already found and fixed for TtsSupervisor: the parent
       # MASTER process's own BUNDLE_GEMFILE/BUNDLE_PATH/RUBYLIB point at

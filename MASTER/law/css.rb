@@ -125,7 +125,7 @@ Law.define(:NO_MULTIPLE_LANGUAGES) do
   # distinction Law.conduct already draws for law/. web_rules.rb carries an ERB
   # regex, an operator message reading "<tag><%= … %></tag>" and advice about
   # auto-escaped <%= %>; none is a template, all three are about one.
-  path_exclude %r{/(?:knowledge_store|knowledge_schema|catalog_index)\.rb\z|/memory/search\.rb\z|/review/scan/rules/|/db/migrate/}
+  path_exclude %r{/(?:knowledge_store|catalog_index)\.rb\z|/memory/search\.rb\z|/review/scan/rules/|/db/migrate/}
   # A regex that matches `<%` is not ERB, and a string naming a heredoc tag is
   # not a heredoc. Unmasked this flagged the scanner's own ERB detectors, the
   # source-masking constants and css_coverage_lint's comment stripper — 35 of 72
