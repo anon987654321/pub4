@@ -20,15 +20,15 @@ require "json"
 
 module Pub4
   module RuleReach
-    ROOT = File.expand_path("..", __dir__)
-    CEILING = File.join(ROOT, "data", "rule_reach.yml")
+    MASTER_DIR = File.expand_path("..", __dir__)
+    CEILING = File.join(MASTER_DIR, "data", "rule_reach.yml")
 
     module_function
 
     def rules
-      $LOAD_PATH.unshift(File.join(ROOT, "lib")) unless $LOAD_PATH.include?(File.join(ROOT, "lib"))
+      $LOAD_PATH.unshift(File.join(MASTER_DIR, "lib")) unless $LOAD_PATH.include?(File.join(MASTER_DIR, "lib"))
       require "master"
-      Master.flatten_rules(Master.load_rules(root: ROOT).fetch("rules", {}))
+      Master.flatten_rules(Master.load_rules(root: MASTER_DIR).fetch("rules", {}))
     end
 
     # A rule is mechanical if something can run it. law/ is one of those places
@@ -42,7 +42,7 @@ module Pub4
     # per natural language — so a grep saw none of them and called two live,
     # proving, firing laws unreachable. Loading is what running does.
     def enacted
-      dir = File.join(ROOT, "law")
+      dir = File.join(MASTER_DIR, "law")
       return Set.new unless Dir.exist?(dir)
 
       require File.join(dir, "law")
@@ -71,7 +71,7 @@ module Pub4
     def registry_ids
       require "review/scan/rule_dsl"
       Master::Review::Scan::Rule.registry
-        .filter_map { |klass| Master::Review::Scan::RuleFactory.registry_id(klass, root: ROOT)&.upcase }
+        .filter_map { |klass| Master::Review::Scan::RuleFactory.registry_id(klass, root: MASTER_DIR)&.upcase }
         .to_set
     rescue StandardError
       Set.new

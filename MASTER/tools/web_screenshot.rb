@@ -6,8 +6,8 @@ require "open3"
 require "optparse"
 require "shellwords"
 
-ROOT = File.expand_path("..", __dir__)
-DEFAULT_OUT = File.join(ROOT, "reports", "screenshots", "home.png")
+MASTER_DIR = File.expand_path("..", __dir__)
+DEFAULT_OUT = File.join(MASTER_DIR, "reports", "screenshots", "home.png")
 
 options = {
   url: nil,

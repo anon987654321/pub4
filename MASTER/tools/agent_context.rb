@@ -17,7 +17,7 @@
 
 module Pub4
   module AgentContext
-    ROOT = File.expand_path("..", __dir__)
+    MASTER_DIR = File.expand_path("..", __dir__)
     BLOCKING = %i[veto critical error].freeze
 
     module_function
@@ -34,19 +34,19 @@ module Pub4
     # list of what actually blocks is an instruction.
     def blocking_rules
       load_master
-      Master.flatten_rules(Master.load_rules(root: ROOT).fetch("rules", {}))
+      Master.flatten_rules(Master.load_rules(root: MASTER_DIR).fetch("rules", {}))
             .select { |rule| BLOCKING.include?(rule["severity"].to_s.to_sym) }
             .filter_map { |rule| rule["id"] }.sort
     end
 
     def load_master
-      $LOAD_PATH.unshift(File.join(ROOT, "lib")) unless $LOAD_PATH.include?(File.join(ROOT, "lib"))
+      $LOAD_PATH.unshift(File.join(MASTER_DIR, "lib")) unless $LOAD_PATH.include?(File.join(MASTER_DIR, "lib"))
       require "master"
     end
 
     def coverage
       load_master
-      Master::Review::Scan::RuleRegistryAudit.new(root: ROOT).call.coverage_line
+      Master::Review::Scan::RuleRegistryAudit.new(root: MASTER_DIR).call.coverage_line
     rescue StandardError => e
       "rule coverage unavailable (#{e.class})"
     end
@@ -55,7 +55,7 @@ module Pub4
     # semantically: a hook has milliseconds, and an exact-word hit on a lesson
     # filename is a better signal than an embedding at this size.
     def lessons(query)
-      dir = File.join(ROOT, "data", "lessons")
+      dir = File.join(MASTER_DIR, "data", "lessons")
       return [] unless Dir.exist?(dir) && query
 
       words = query.downcase.scan(/[a-z]{4,}/).uniq

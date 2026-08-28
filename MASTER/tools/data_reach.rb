@@ -22,8 +22,8 @@ require "yaml"
 
 module Pub4
   module DataReach
-    ROOT = File.expand_path("..", __dir__)
-    CEILING = File.join(ROOT, "data", "data_reach.yml")
+    MASTER_DIR = File.expand_path("..", __dir__)
+    CEILING = File.join(MASTER_DIR, "data", "data_reach.yml")
 
     CODE_GLOBS = %w[lib/**/*.rb core/**/*.rb web/app/**/*.rb web/config/**/*.rb
                     bin/* tools/**/*.rb test/**/*.rb spec/**/*.rb law/*.rb Rakefile].freeze
@@ -31,13 +31,13 @@ module Pub4
     module_function
 
     def code
-      @code ||= Dir.glob(CODE_GLOBS.map { |g| File.join(ROOT, g) })
+      @code ||= Dir.glob(CODE_GLOBS.map { |g| File.join(MASTER_DIR, g) })
                    .select { |f| File.file?(f) }
                    .map { |f| File.read(f) }.join
     end
 
     def unnamed
-      Dir.glob(File.join(ROOT, "data", "*.yml")).sort.flat_map do |path|
+      Dir.glob(File.join(MASTER_DIR, "data", "*.yml")).sort.flat_map do |path|
         doc = begin
           YAML.safe_load_file(path, aliases: true)
         rescue StandardError
