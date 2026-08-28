@@ -56,30 +56,32 @@ class DashboardController < ApplicationController
     }
   end
 
-  def repair_queue(root)
-    paths = %w[runtime/failures.jsonl runtime/repair_queue.json runtime/telemetry/failures.jsonl]
-    paths.filter_map do |rel|
+  # Both file panels read a fixed candidate list, skip whatever this checkout
+  # does not have, and describe each hit. An unreadable file drops the whole
+  # panel rather than the request: a dashboard missing one card still loads.
+  def file_panel(root, relative_paths, context:)
+    relative_paths.filter_map do |rel|
       path = File.join(root, rel)
       next unless File.file?(path)
 
-      lines = File.readlines(path).map(&:chomp).last(8)
-      { path: rel, count: File.size(path), recent: lines }
+      yield(rel, path)
     end
   rescue StandardError => e
-    Master::Ground::Swallow.log(e, context: "Dashboard.log_listing")
+    Master::Ground::Swallow.log(e, context:)
     []
   end
 
-  def rsi_inbox(root)
-    paths = %w[runtime/improvements.md runtime/rsi_improvements.md runtime/soul_proposals.md]
-    paths.filter_map do |rel|
-      path = File.join(root, rel)
-      next unless File.file?(path)
+  def repair_queue(root)
+    file_panel(root, %w[runtime/failures.jsonl runtime/repair_queue.json runtime/telemetry/failures.jsonl],
+               context: "Dashboard.log_listing") do |rel, path|
+      { path: rel, count: File.size(path), recent: File.readlines(path).map(&:chomp).last(8) }
+    end
+  end
 
+  def rsi_inbox(root)
+    file_panel(root, %w[runtime/improvements.md runtime/rsi_improvements.md runtime/soul_proposals.md],
+               context: "Dashboard.file_excerpts") do |rel, path|
       { path: rel, bytes: File.size(path), excerpt: File.read(path)[0, 400] }
     end
-  rescue StandardError => e
-    Master::Ground::Swallow.log(e, context: "Dashboard.file_excerpts")
-    []
   end
 end

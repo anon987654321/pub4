@@ -63,20 +63,15 @@ class TtsController < ApplicationController
   end
 
   def status
-    job = TtsJob.find(params[:job].to_s)
+    job = readable_job
     return head(:not_found) unless job
-    return head(:not_found) if job.pending? && !TtsJob.owned?(params[:job].to_s, conversation_id)
 
-    TtsJob.materialize!(job) if job.pending?
     tts_job_response(job)
   end
 
   def stream
-    job = TtsJob.find(params[:job].to_s)
+    job = readable_job
     return head(:not_found) unless job
-    return head(:not_found) if job.pending? && !TtsJob.owned?(params[:job].to_s, conversation_id)
-
-    TtsJob.materialize!(job) if job.pending?
 
     if job.ready?
       bytes = job.bytes
@@ -109,6 +104,20 @@ class TtsController < ApplicationController
 
   def web_logger
     @web_logger ||= WebEventLogger.new(container[:bus])
+  end
+
+  # The job a `status` or `stream` request is allowed to see, materialized if it
+  # was still pending. nil covers all three refusals — no such job, and a pending
+  # job belonging to another conversation, which is a 404 rather than a 403 so a
+  # caller cannot probe for job ids it does not own.
+  def readable_job
+    job_id = params[:job].to_s
+    job = TtsJob.find(job_id)
+    return if job.nil?
+    return if job.pending? && !TtsJob.owned?(job_id, conversation_id)
+
+    TtsJob.materialize!(job) if job.pending?
+    job
   end
 
   def tts_voice_and_style(text)

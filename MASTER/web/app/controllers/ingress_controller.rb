@@ -87,20 +87,9 @@ class IngressController < ApplicationController
     if raw.nil? || raw.empty?
       raw = JSON.parse(request.body.read) if request.content_type.to_s.include?("json")
     end
-    deep_symbolize(raw.is_a?(Hash) ? raw : {})
+    (raw.is_a?(Hash) ? raw : {}).deep_symbolize_keys
   rescue JSON::ParserError
     {}
-  end
-
-  def deep_symbolize(obj)
-    case obj
-    when Hash
-      obj.each_with_object({}) { |(key, value), out| out[key.to_sym] = deep_symbolize(value) }
-    when Array
-      obj.map { |item| deep_symbolize(item) }
-    else
-      obj
-    end
   end
 
   def ingress_response(result, metadata)

@@ -271,19 +271,12 @@ class ChatController < ApplicationController
   end
 
   def stream_smoke_reply(input)
-    response.headers["Content-Type"] = "text/event-stream"
-    response.headers["Cache-Control"] = "no-cache"
-    response.headers["X-Accel-Buffering"] = "no"
     body = case input.to_s.strip.downcase
            when "ping" then "pong"
            when "pong" then "ping"
            else "ok"
            end
-    response.stream.write(": connected\n\n")
-    response.stream.write("data: #{body}\n\n")
-    response.stream.write("data: [DONE]\n\n")
-  ensure
-    response.stream.close
+    stream_plain(body)
   end
 
 end
