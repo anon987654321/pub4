@@ -189,23 +189,6 @@ module Master
         state[:streamed] = true
       end
 
-      def stream_chunk_handler(accumulated, state)
-        handler = CLI::StreamAccumulator.new(accumulated).handler do |text|
-          if state[:thinking_shown] && $stdout.isatty
-            stop_thinking_indicator
-            print "\r\e[K"
-            state[:thinking_shown] = false
-          end
-          unless state[:streamed]
-            puts @refs.renderer.speaker_tag
-          end
-          print text
-          $stdout.flush
-          state[:streamed] = true
-        end
-        handler
-      end
-
       def cli_felt_sense
         mood = @last_ok ? "focused" : "tense"
         mood = "curious" if @refs.session.phase == :discover
