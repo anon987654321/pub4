@@ -1,7 +1,10 @@
 ---
-# 43 -> 44: index_outbound_clicks_on_user.rb, one identical migration in each of
-# the three apps. Same shape as the create_outbound_clicks triplet already
-# counted here — three apps with three databases genuinely need the migration
-# three times, and the duplication is the monorepo working as intended rather
-# than a file to collapse.
-duplicate_sets: 44
+# 44 -> 41: brgen/vendor/javascript carried its own byte-identical copies of
+# three @stimulus-components files (sortable, animated-number,
+# character-counter) that shared/config/importmap_baseline.rb already pins to
+# shared/vendor/javascript, on brgen's own config.assets.paths via
+# Shared::Engine's shared.vendor_javascript initializer. Leftover from before
+# the promotion to the shared baseline; nothing pinned, imported, or
+# referenced them by the brgen-local path. Deleted the brgen copies, kept
+# shared's.
+duplicate_sets: 41
