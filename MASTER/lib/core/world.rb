@@ -209,8 +209,39 @@ module Master::Core
       Observation.no("critique: #{e.class}: #{e.message}")
     end
 
+    # Credential files, by name, inside the workspace.
+    #
+    # within() stops a path leaving root and says nothing about what sits
+    # inside it. A .env or a credentials file in the tree was readable, and
+    # reading one puts the secret in the transcript, where the constitution's
+    # promise that no credential reaches disk or the transcript no longer
+    # holds. Keys live in /etc/*.env on the box for this reason; this is the
+    # same rule applied to the checkout.
+    #
+    # Name-based, so it holds for a file the agent has not read yet. Content
+    # scanning cannot: by the time there is content to scan, the read has
+    # happened.
+    # `private` alone refused private_notes_test.rb, and a bare `keys?` let
+    # api_keys.txt through by anchoring before the prefix. So: the word has to
+    # be a whole leading component of the name, and `key` may carry one
+    # qualifier in front of it -- api_key, private_key -- which keeps
+    # keyboard.js, tokenizer.rb and environment.rb readable.
+    SECRET_BASENAME = /
+      \A(?:
+        \.env |
+        (?:credentials?|secrets?|tokens?)(?:[._-]|\z) |
+        (?:[a-z0-9]+[._-])?keys?(?:[._-]|\z) |
+        id_(?:rsa|dsa|ecdsa|ed25519)
+      )
+    /xi
+
+    def secret_path?(path)
+      SECRET_BASENAME.match?(File.basename(path.to_s))
+    end
+
     # Paths are sandboxed to root; nothing escapes the workspace.
     def within(path)
+      raise "credential path refused: #{path}" if secret_path?(path)
       abs = File.expand_path(path, @root)
       raise "path escapes workspace: #{path}" unless under_root?(abs, @root)
 

@@ -15,6 +15,40 @@ class WorldTest < Minitest::Test
     Dir.mktmpdir { |root| yield Master::Core::World.new(root:), root }
   end
 
+  # within() stops a path leaving root and said nothing about what sits inside
+  # it, so a credential file in the checkout was readable and its contents
+  # landed in the transcript.
+  def test_read_refuses_credential_files_inside_the_workspace
+    %w[.env .env.production credentials.yml secrets.json id_rsa api_keys.txt].each do |name|
+      with_world do |world, root|
+        File.write(File.join(root, name), "SECRET=hunter2\n")
+        obs = world.perform(E.read(name))
+        refute obs.ok?, "#{name} was readable"
+        refute_includes obs.message.to_s, "hunter2"
+      end
+    end
+  end
+
+  def test_write_refuses_credential_files
+    with_world do |world, root|
+      obs = world.perform(E.write(".env", "SECRET=hunter2\n"))
+      refute obs.ok?
+      refute File.exist?(File.join(root, ".env"))
+    end
+  end
+
+  # The rule is the file's own name, not the word anywhere in the path: a
+  # directory called secrets_handling/ or a file named environment.rb is
+  # ordinary source and refusing it would make the agent useless in this tree.
+  def test_ordinary_files_that_merely_resemble_secrets_still_read
+    %w[environment.rb keyboard.js private_notes_test.rb tokenizer.rb].each do |name|
+      with_world do |world, root|
+        File.write(File.join(root, name), "ok\n")
+        assert world.perform(E.read(name)).ok?, "#{name} was refused"
+      end
+    end
+  end
+
   def test_read_returns_file_contents
     with_world do |world, root|
       File.write(File.join(root, "a.txt"), "hello\n")
