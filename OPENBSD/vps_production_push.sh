@@ -26,7 +26,7 @@ if [[ ${DEMO_SEED_ON_DEPLOY:-1} == 1 ]]; then
   # shellcheck disable=SC1091
   source "${repo}/RAILS/_core.sh"
   source "${repo}/RAILS/_database.sh"
-  seed_bergen_demo_as_app /home/brgen/app
+  seed_demo_as_app brgen /home/brgen/app
 fi
 
 echo "==> amber"
