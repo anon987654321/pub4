@@ -253,6 +253,14 @@ def dilla_detach_if_asked!
   name = (ARGV.first || "demo").gsub(/[^A-Za-z0-9-]/, "_")
   log = File.expand_path("~/dilla_logs/#{name}_#{Time.now.strftime('%m%d_%H%M%S')}.log")
   FileUtils.mkdir_p(File.dirname(log))
+  # Declare the real pin set across the re-exec, the way the stream restart
+  # does. Without it the child inherits this process's whole environment --
+  # including everything apply_best_defaults! has already written -- and
+  # USER_PINNED_ENV in the child reads all of it as operator intent. BARS=32
+  # laundered into a pin that way and every detached demo rendered 32 bars
+  # whatever it was asked for. dilla.rb's own header describes this exact
+  # failure for the stream restart.
+  ENV["DILLA_USER_PINNED_KEYS"] = dilla_pinned_keys_decl
   command = [RbConfig.ruby, ENGINE_FILE, *ARGV]
   pid = fork do
     Process.setsid

@@ -786,8 +786,16 @@ DISPATCH = {
   # bars of each named style finishes in minutes. It is no longer what a bare
   # invoke gives you, because "the demo" means the full catalogue.
   "showcase" => -> { showcase_demo! },
+  # USER_PINNED_ENV, not ENV, for the bar count in all three demo commands.
+  # apply_best_defaults! writes BARS=32 before any of them run, so `ENV["BARS"]`
+  # is always set and the default after it was unreachable: every demo rendered
+  # 32 bars whatever the command promised, and demo-quick took five minutes a
+  # pass to do what it exists to do in one. USER_PINNED_ENV is the environment
+  # as it stood at load, so it answers the question actually being asked --
+  # did the operator set this -- rather than is the key set. Same distinction
+  # stream.rb draws, for the same reason.
   "demo-all" => lambda do
-    bars = (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || ENV["BARS"] || "12"
+    bars = (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || USER_PINNED_ENV["BARS"] || "12"
     out = ARGV.shift
     demo_all(bars.to_i, out)
   end,
@@ -795,7 +803,7 @@ DISPATCH = {
   # BARS is read here rather than left to apply_best_defaults!, which sets 32 and
   # would otherwise silently override the 12 this and demo-all both default to.
   "demo-each" => lambda do
-    bars = (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || ENV["BARS"] || "12"
+    bars = (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || USER_PINNED_ENV["BARS"] || "12"
     ENV["DEMO_EACH"] = "1"
     ENV["BARS"] = bars.to_s
     demo_all(bars.to_i)
@@ -807,7 +815,7 @@ DISPATCH = {
   # roughly six minutes each way — so a change can be heard while the previous
   # one is still fresh. Use demo-all for a final pass.
   "demo-quick" => lambda do
-    bars = (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || ENV["BARS"] || "8"
+    bars = (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || USER_PINNED_ENV["BARS"] || "8"
     out = ARGV.shift || File.join(ROOT, "demo_quick.wav")
     n = (ENV["DEMO_QUICK_TRACKS"] || "12").to_i.clamp(2, 84)
     order = demo_all_order
@@ -816,12 +824,6 @@ DISPATCH = {
     step = [order.length / n, 1].max
     ENV["DEMO_TRACKS"] = order.each_slice(step).map(&:first).first(n).join(",")
     ENV["DEMO_MP3"] ||= "0"
-    # BARS, not just the argument. apply_best_defaults! sets 32, and something
-    # downstream reads the knob rather than what demo_all was handed -- so
-    # `demo-quick 8` rendered 32-bar tracks and took five minutes to do what it
-    # promises in one. demo-each carries the same line for the same reason;
-    # this is the sibling that was missed.
-    ENV["BARS"] = bars.to_s
     demo_all(bars.to_i, out)
   end,
   "live_now" => -> { live_now },
