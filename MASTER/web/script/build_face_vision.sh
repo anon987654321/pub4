@@ -1,6 +1,7 @@
 #!/bin/sh
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+. "$ROOT/script/bundle_size.sh"
 PUB="$ROOT/public"
 OUT="$PUB/face_vision.bundle.js"
 {
@@ -12,6 +13,4 @@ OUT="$PUB/face_vision.bundle.js"
     echo ""
   done
 } > "$OUT"
-RAW=$(wc -c < "$OUT" | tr -d ' ')
-GZ=$(gzip -c "$OUT" | wc -c | tr -d ' ')
-echo "face_vision.bundle.js raw=${RAW} gzip=${GZ}"
+report_bundle_size "$OUT"

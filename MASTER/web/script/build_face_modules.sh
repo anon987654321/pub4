@@ -1,6 +1,7 @@
 #!/bin/sh
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+. "$ROOT/script/bundle_size.sh"
 OUT="$ROOT/public/face.modules.bundle.js"
 ENTRY="$ROOT/script/face_modules_entry.js"
 npx --yes esbuild@0.25.9 "$ENTRY" \
@@ -9,6 +10,4 @@ npx --yes esbuild@0.25.9 "$ENTRY" \
   --platform=browser \
   --target=es2020 \
   --outfile="$OUT"
-RAW=$(wc -c < "$OUT" | tr -d ' ')
-GZ=$(gzip -c "$OUT" | wc -c | tr -d ' ')
-echo "face.modules.bundle.js raw=${RAW} gzip=${GZ}"
+report_bundle_size "$OUT"
