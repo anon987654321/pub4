@@ -24,12 +24,6 @@ nb:
     email: "E-post"
     password: "Passord"
     forgot_password: "Glemt passord?"
-    options: "Innloggingsvalg"
-    or_email: "eller e-post"
-    with_vipps: "Logg inn med Vipps"
-    with_google: "Logg inn med Google"
-    with_snapchat: "Logg inn med Snapchat"
-    with_github: "Logg inn med GitHub"
     forgot_title: "Glemt passord?"
     forgot_lead: "Vi sender en lenke for å sette nytt passord."
     email_reset: "Send tilbakestilling på e-post"
@@ -39,11 +33,6 @@ nb:
     new_password: "Nytt passord"
     save_password: "Lagre passord"
     confirm_password: "Bekreft passord"
-  chat:
-    title: "chat"
-    close: "Lukk"
-    loading: "Laster…"
-    sign_in_inbox: "Logg inn for innboks, eller chat anonymt på Brgen."
   notifications:
     title: "Varsler"
     mark_all: "Merk alle som lest"
@@ -127,7 +116,6 @@ nb:
   actions:
     all_categories: "Alle kategorier"
     all_maintainers: "Alle maintainere"
-    delete: "Slett"
   pwa:
     search_ports: "Søk porter"
     search: "Søk"

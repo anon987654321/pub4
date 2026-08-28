@@ -24,12 +24,6 @@ en:
     email: "Email"
     password: "Password"
     forgot_password: "Forgot password?"
-    options: "Sign in options"
-    or_email: "or email"
-    with_vipps: "Sign in with Vipps"
-    with_google: "Sign in with Google"
-    with_snapchat: "Sign in with Snapchat"
-    with_github: "Sign in with GitHub"
     forgot_title: "Forgot your password?"
     forgot_lead: "We will email a link to set a new password."
     email_reset: "Email reset instructions"
@@ -39,11 +33,6 @@ en:
     new_password: "New password"
     save_password: "Save password"
     confirm_password: "Confirm password"
-  chat:
-    title: "chat"
-    close: "Close"
-    loading: "Loading…"
-    sign_in_inbox: "Sign in for this app’s inbox, or chat anonymously on Brgen."
   notifications:
     title: "Notifications"
     mark_all: "Mark all read"
@@ -129,7 +118,6 @@ en:
   actions:
     all_categories: "All categories"
     all_maintainers: "All maintainers"
-    delete: "Delete"
   pwa:
     search_ports: "Search ports"
     search: "Search"
