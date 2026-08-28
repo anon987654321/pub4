@@ -102,19 +102,19 @@ module Master
       # One pass: scan → fix each violating file once → return { fixed:, status: }.
       def run_once(files)
         violations = scan_files(files)
-        return { fixed: 0, status: :clean } if violations.empty?
+        return { fixed: 0, status: :clean, breakdown: {} } if violations.empty?
 
         fixed = fix_batch(violations)
         status = pass_outcome(fixed)
         record_outcomes(files, status)
         @bus&.publish("rule_loop:pass", rule: @rule.id, violations: violations.size, fixed:, status:)
-        { fixed:, status: }
+        { fixed:, status:, breakdown: @batch_breakdown || {} }
       rescue StandardError => e
         @bus&.publish("rule_loop:error", rule: @rule.id, error: e.message)
         # Bus-only meant a crashed rule pass was indistinguishable from a
         # quiet one in the dmesg stream the operator actually reads.
         Master::Trace::Dmesg.status("fix0", "rule_error rule=#{@rule.id} #{e.class}: #{e.message[0, 90]}")
-        { fixed: 0, status: :error }
+        { fixed: 0, status: :error, breakdown: { error: 1 } }
       end
 
       private

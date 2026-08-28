@@ -19,7 +19,7 @@ module Master
         # documented (feedback_policy.rs, issue #236) after making the same
         # mistake. :skipped is still recorded (queryable) but excluded from
         # fix_quality's denominator entirely.
-        OUTCOMES = %i[applied no_proposal reflexion_rejected rejected skip_confidence skip_fingerprint].freeze
+        OUTCOMES = %i[applied no_proposal reflexion_rejected consensus_rejected rejected skip_confidence skip_fingerprint].freeze
 
         def fix_batch(violations)
           results = violations.uniq { |violation| violation[:file] }.map { |violation| fix_violation(violation) }
@@ -35,13 +35,12 @@ module Master
         # a pass whose proposals all die in review are different problems, and
         # `fixed=0` says neither.
         def log_outcome_breakdown(results)
+          @batch_breakdown = {}
           return if results.empty?
 
           tally = results.tally
-          parts = OUTCOMES.filter_map do |outcome|
-            count = tally[outcome].to_i
-            "#{outcome}=#{count}" if count.positive?
-          end
+          @batch_breakdown = tally
+          parts = tally.filter_map { |outcome, count| "#{outcome}=#{count}" if count.positive? }
           Master::Trace::Dmesg.status("fix0", "outcome rule=#{@rule.id} total=#{results.size} #{parts.join(" ")}")
         end
 

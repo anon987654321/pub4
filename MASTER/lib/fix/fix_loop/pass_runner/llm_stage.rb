@@ -29,16 +29,26 @@ module Master
 
           def run_dependency_levels(runnable, files:, pass:, rule_violations:, deadline:)
             fixed = 0
+            breakdown = Hash.new(0)
             @rule_order.dependency_levels(runnable).each do |group|
               break if deadline && Time.now >= deadline
               break if circuit_open?
               results = run_rule_group(group:, files:, pass:, rule_violations:)
               results.each do |rule, result|
-                @violation_counts[rule.id] += result[:fixed]
-                fixed += result[:fixed]
+                @violation_counts[rule.id] += result[:fixed].to_i
+                fixed += result[:fixed].to_i
+                tallied = result[:breakdown]
+                if tallied.nil? || tallied.empty?
+                  breakdown[result[:status] || :unknown] += 1
+                else
+                  tallied.each { |outcome, count| breakdown[outcome] += count }
+                end
                 @bus&.publish("fix_loop:rule_result", pass:, rule: rule.id, **result)
               end
             end
+            parts = breakdown.map { |status, count| "#{status}=#{count}" }.join(" ")
+            Master::Trace::Dmesg.status("fix0", "llm_skip_breakdown pass=#{pass} #{parts}") unless breakdown.empty?
+            @bus&.publish("fix_loop:skip_breakdown", pass:, **breakdown.transform_keys(&:to_sym)) unless breakdown.empty?
             fixed
           end
 
