@@ -665,7 +665,7 @@ DISPATCH = {
   abort "missing #{path}" unless File.file?(path)
   sidecar = "#{path}.timing.json"
   previous = (JSON.parse(File.read(sidecar), symbolize_names: true) if File.file?(sidecar))
-  report = pocket_timing_report(path, bpm:)
+  report = DillaTiming.pocket_timing_report(path, bpm:)
   report[:roles].each do |role, st|
     if st[:hits].to_i.zero?
       puts format("  %-6s no hits detected", role)
@@ -676,7 +676,7 @@ DISPATCH = {
   end
   if previous
     puts "  --- delta against the previous measurement of this file ---"
-    pocket_timing_delta(report, previous).each do |role, d|
+    DillaTiming.pocket_timing_delta(report, previous).each do |role, d|
       puts format("  %-6s mean %+7.2f ms  stddev %+7.2f  hits %+d", role, d[:mean_ms], d[:stddev_ms], d[:hits])
     end
   end

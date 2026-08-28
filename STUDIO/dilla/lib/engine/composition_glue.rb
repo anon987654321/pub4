@@ -89,7 +89,7 @@ def time_of_day_swing_offset
 end
 
 def dilla_resolve_config
-  ringtone_layer_apply_env!
+  RingtoneLayer.ringtone_layer_apply_env!
   cfg = enhanced_resolve_config
   cfg = apply_profile_mash!(cfg)
   cfg = apply_form_to_cfg!(cfg)

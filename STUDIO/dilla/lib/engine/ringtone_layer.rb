@@ -25,43 +25,52 @@
 # It was conservative before -- three copies, 0.7 blend -- on the reasoning that
 # Copy Machine replaces the bed and the bed is the loudest sampled thing in a
 # render. That reasoning is sound and the numbers were still too quiet to hear.
-RINGTONE_LAYER_DEFAULTS = {
-  "COPY_MACHINE" => "6",
-  "COPY_MACHINE_FAMILY" => "harmonic",
-  "COPY_MACHINE_REVERSE" => "0.35",
-  "COPY_MACHINE_WIDTH" => "1.0",
-  "COPY_MACHINE_DRIFT" => "320",
-  "LPG" => "1",
-  "LPG_BLEND" => "1.0",
-  "LPG_DEPTH" => "1.0",
-  "LPG_DECAY_MS" => "360",
-  "LPG_DROOP" => "3.0",
-  "VOICE_STACK" => "6",
-}.freeze
+#
+# Wrapped in RingtoneLayer: dilla_resolve_config is the only external caller and
+# it runs long after every part has loaded, so the qualified name costs nothing
+# there. module_function keeps ringtone_layer_apply_env! callable bare from
+# inside this module, which is what the load-time call at the bottom needs.
+module RingtoneLayer
+  module_function
 
-def ringtone_layer_enabled? = ENV.fetch("RINGTONE_LAYER", "0") != "0"
+  RINGTONE_LAYER_DEFAULTS = {
+    "COPY_MACHINE" => "6",
+    "COPY_MACHINE_FAMILY" => "harmonic",
+    "COPY_MACHINE_REVERSE" => "0.35",
+    "COPY_MACHINE_WIDTH" => "1.0",
+    "COPY_MACHINE_DRIFT" => "320",
+    "LPG" => "1",
+    "LPG_BLEND" => "1.0",
+    "LPG_DEPTH" => "1.0",
+    "LPG_DECAY_MS" => "360",
+    "LPG_DROOP" => "3.0",
+    "VOICE_STACK" => "6",
+  }.freeze
 
-# Applied from dilla_resolve_config so every entry point gets it -- a render, the
-# demo, the stream -- rather than only the one that remembered to call it.
-def ringtone_layer_apply_env!
-  return false unless ringtone_layer_enabled?
-  return false if @ringtone_layer_applied
+  def ringtone_layer_enabled? = ENV.fetch("RINGTONE_LAYER", "0") != "0"
 
-  @ringtone_layer_applied = true
-  RINGTONE_LAYER_DEFAULTS.each { |k, v| ENV[k] ||= v }
-  true
+  # Applied from dilla_resolve_config so every entry point gets it -- a render, the
+  # demo, the stream -- rather than only the one that remembered to call it.
+  def ringtone_layer_apply_env!
+    return false unless ringtone_layer_enabled?
+    return false if @ringtone_layer_applied
+
+    @ringtone_layer_applied = true
+    RINGTONE_LAYER_DEFAULTS.each { |k, v| ENV[k] ||= v }
+    true
+  end
+
+  def ringtone_layer_describe
+    return "ringtone layer: off" unless ringtone_layer_enabled?
+
+    on = RINGTONE_LAYER_DEFAULTS.keys.map { |k| "#{k}=#{ENV[k]}" }
+    on << "WAV_MAP=#{File.basename(ENV['WAV_MAP'].to_s)}" if File.file?(ENV["WAV_MAP"].to_s)
+    "ringtone layer: #{on.join(' ')}"
+  end
+
+  # Applied at load rather than from dilla_resolve_config, because the render does
+  # not go through that function -- wiring it there set the knobs in a process the
+  # render never asked, and the devices ran on their own fallbacks while the log
+  # said the layer was on. Load time is the only point every entry share.
+  ringtone_layer_apply_env!
 end
-
-def ringtone_layer_describe
-  return "ringtone layer: off" unless ringtone_layer_enabled?
-
-  on = RINGTONE_LAYER_DEFAULTS.keys.map { |k| "#{k}=#{ENV[k]}" }
-  on << "WAV_MAP=#{File.basename(ENV['WAV_MAP'].to_s)}" if File.file?(ENV["WAV_MAP"].to_s)
-  "ringtone layer: #{on.join(' ')}"
-end
-
-# Applied at load rather than from dilla_resolve_config, because the render does
-# not go through that function -- wiring it there set the knobs in a process the
-# render never asked, and the devices ran on their own fallbacks while the log
-# said the layer was on. Load time is the only point every entry share.
-ringtone_layer_apply_env!
