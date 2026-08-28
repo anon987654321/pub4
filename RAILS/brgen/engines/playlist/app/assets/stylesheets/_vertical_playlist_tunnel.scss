@@ -19,6 +19,15 @@
   z-index: 1;
   touch-action: manipulation;
   background: var(--color-bg);
+  /* A canvas is a replaced element, so inset:0 anchors it at each edge but
+     does not stretch it: width and height stay auto, which for a replaced
+     element means its intrinsic size -- the drawing buffer. That is capped
+     at BUFFER_MAX_W 960 for fill rate, so the tunnel painted a 960px box in
+     the corner of a wide screen and looked like it rendered at a third.
+     MASTER/web/public/face.css sizes its own full-bleed canvas the same way. */
+  display: block;
+  width: 100dvw;
+  height: 100dvh;
 }
 
 .radio-header {
@@ -30,6 +39,10 @@
 }
 
 .radio-header h1 {
+  /* The brand face, as shared/_layout_chrome.scss sets it for the same
+     wordmark. This inherited --font from .radio-tunnel, so "brgen" read in
+     the body face here and the brand face everywhere else in the app. */
+  font-family: var(--font-brand, var(--font));
   font-size: var(--text-xl);
   font-weight: var(--weight-bold);
   margin: 0;
