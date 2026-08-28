@@ -1236,6 +1236,7 @@ en:
     return_refused_body: The seller refused the return.
     return_received_title: The seller has it back
     return_received_body: The refund follows.
+    return_refunded_body: The refund has been sent.
     return_statuses:
       requested: Return requested
       approved: Return approved

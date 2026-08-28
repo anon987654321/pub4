@@ -103,6 +103,7 @@ pin "pub4/network_aware", to: "network_aware_controller.js"
 pin "pub4/media_exclusive", to: "media_exclusive_controller.js"
 pin "pub4/haptics", to: "haptics_controller.js"
 pin "pub4/geolocation", to: "geolocation_controller.js"
+pin "pub4/viewport_aware", to: "viewport_aware_controller.js"
 pin "pwa/offline_store", to: "pwa_offline_store.js"
 # Only @stimulus-components/carousel imports this, and carousel appears on one
 # surface in the whole family (amber shared/_wardrobe_showcase). Lazy-registered

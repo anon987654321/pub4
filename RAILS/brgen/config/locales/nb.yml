@@ -1239,6 +1239,7 @@ nb:
     return_refused_body: Selgeren avslo returen.
     return_received_title: Selgeren har den tilbake
     return_received_body: Pengene kommer etterpå.
+    return_refunded_body: Pengene er sendt tilbake.
     return_statuses:
       requested: Retur bedt om
       approved: Retur godkjent

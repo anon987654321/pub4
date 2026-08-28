@@ -241,4 +241,16 @@ class LayoutContractTest < Minitest::Test
     assert_includes controller, "if (this.zoneValue > 0)",
                     "the zone guard is what makes an unset zone silent — keep them described together"
   end
+
+  def test_theme_root_uses_dynamic_viewport_height
+    brgen = File.read(File.join(ROOT, "brgen/app/assets/stylesheets/_root.scss"))
+    amber = File.read(File.join(ROOT, "amber/app/assets/stylesheets/_variables.scss"))
+    assert_match(/\.theme-root\s*\{\s*min-height:\s*100dvh/, brgen)
+    assert_match(/\.theme-root\s*\{\s*min-height:\s*100dvh/, amber)
+  end
+
+  def test_messenger_dock_reads_keyboard_inset
+    css = File.read(File.join(ROOT, "brgen/app/assets/stylesheets/_vertical_messenger_thread.scss"))
+    assert_includes css, "var(--keyboard-inset"
+  end
 end

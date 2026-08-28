@@ -35,6 +35,9 @@
      rhythm allowlist; the two disagree above 48. */
   --top-band-block: calc(var(--chrome-inset-block) + 48px);
   --page-gutter: clamp(16px, 5vw, 48px);
+  /* Filled by viewport-aware from visualViewport. env(keyboard-inset-height)
+     is the Chromium VirtualKeyboard API and stays 0 on iOS. */ 
+  --keyboard-inset: 0px;
   --feed-max: 600px;
   --measure-body: 66ch;
 }

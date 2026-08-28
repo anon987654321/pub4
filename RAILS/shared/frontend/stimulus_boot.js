@@ -54,6 +54,7 @@ import NetworkAware from "pub4/network_aware"
 import MediaExclusive from "pub4/media_exclusive"
 import Haptics from "pub4/haptics"
 import Geolocation from "pub4/geolocation"
+import ViewportAware from "pub4/viewport_aware"
 
 const COMPONENT_REGISTRATIONS = [
   ["auto-submit", AutoSubmit],
@@ -201,6 +202,7 @@ export function bootPub4Stimulus(application) {
   application.register("network-aware", NetworkAware)
   application.register("haptics", Haptics)
   application.register("geolocation", Geolocation)
+  application.register("viewport-aware", ViewportAware)
   // The in-feed affiliate band tilts under the pointer. Registered here rather
   // than in one app since the band itself is shared now.
   application.register("parallax-tilt", ParallaxTilt)

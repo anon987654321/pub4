@@ -137,7 +137,7 @@ body.vertical-messenger #messages article img {
 
 body.vertical-messenger #new_message {
   position: sticky;
-  bottom: max(var(--space-3), env(safe-area-inset-bottom));
+  bottom: max(var(--space-3), env(safe-area-inset-bottom), var(--keyboard-inset, 0px));
   padding: var(--space-3);
   border-radius: var(--radius);
   background: var(--msg-surface);

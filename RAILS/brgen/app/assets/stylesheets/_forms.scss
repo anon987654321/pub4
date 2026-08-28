@@ -72,7 +72,7 @@
 
 @media (max-width: 767px) { // scan: intentional — narrow-screen exception band in a banded system (wave C ruling: inverting is a redesign)
   .compose-box {
-    padding-bottom: calc(var(--space-2) + env(keyboard-inset-height, 0px));
+    padding-bottom: calc(var(--space-2) + max(env(keyboard-inset-height, 0px), var(--keyboard-inset, 0px)));
   }
 }
 

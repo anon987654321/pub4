@@ -32,11 +32,25 @@ export default class extends Controller {
     this.measure()
     this.onResize = () => this.measure()
     window.addEventListener("resize", this.onResize, { passive: true })
+    // Phone: no hover, so the band sat still. Production Permissions-Policy
+    // already allows gyroscope=(self); this listens, it does not prompt.
+    this.onOrient = (event) => {
+      if (this.reduced || event.gamma == null) return
+      this.pointerX = this.centerX + (event.gamma / 45) * this.halfW
+      this.pointerY = this.centerY + (((event.beta || 45) - 45) / 45) * this.halfH
+      if (this.frame) return
+      this.frame = requestAnimationFrame(() => {
+        this.frame = null
+        this.apply()
+      })
+    }
+    window.addEventListener("deviceorientation", this.onOrient, { passive: true })
   }
 
   disconnect() {
     if (this.frame) cancelAnimationFrame(this.frame)
     if (this.onResize) window.removeEventListener("resize", this.onResize)
+    if (this.onOrient) window.removeEventListener("deviceorientation", this.onOrient)
     if (this.motion && this.onMotion) this.motion.removeEventListener("change", this.onMotion)
   }
 
