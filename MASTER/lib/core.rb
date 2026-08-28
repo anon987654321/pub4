@@ -47,15 +47,30 @@ module Master::Core
   # about a tree that no longer exists. Proof counts only the current generation.
   Evidence = Data.define(:kind, :ok, :score, :detail, :at, :generation)
 
-  # A Verdict is the Constitution's answer to an Effect. The Core sees two
-  # shapes; the third is internal to a single rule:
-  #   Allow(effect:)       perform this effect (possibly rewritten by a rule)
-  #   Block(reason:, by:)  it must not happen; the agent observes and adapts
+  # A Verdict is the Constitution's answer to an Effect. The Core sees three
+  # shapes; the fourth is internal to a single rule:
+  #   Allow(effect:)         perform this effect (possibly rewritten by a rule)
+  #   Block(reason:, by:)    it must not happen; the agent observes and adapts
+  #   Request(effect:, ...)  a person decides, and the fold waits for them
   # A rule may also return Revise to rewrite the effect for the rules after it.
+  #
+  # Request exists because allow-or-refuse is not the whole of policy. The
+  # World has been able to ask a person a question since it gained do_ask, and
+  # no rule could produce a verdict that reached it -- so a rule facing an
+  # effect that is dangerous in one context and routine in another had to
+  # guess, permanently, on the agent's behalf. The sandbox rule is the case in
+  # point: it can deny a command or stay silent, and has nowhere to put "this
+  # one needs a human".
+  #
+  # `by` names the rule, as it does on Block, so an approval prompt can say
+  # what is asking.
   module Verdict
     Allow = Data.define(:effect)
     Revise = Data.define(:effect, :by)
     Block = Data.define(:reason, :by)
+    Request = Data.define(:effect, :prompt, :reason, :by) do
+      def initialize(effect:, prompt:, by:, reason: nil) = super
+    end
   end
 
   # What the World reports after performing an Effect. The agent reacts to this,

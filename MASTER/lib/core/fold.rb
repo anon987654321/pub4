@@ -36,6 +36,9 @@ module Master::Core
           observation = Observation.no("refused by #{by}: #{reason}")
           @memory.record(effect, observation)
           emit(turn, effect, observation)
+        in Verdict::Request(effect: asked, prompt:, reason:, by:)
+          done = approve(turn, asked, prompt:, reason:, by:)
+          return done if done
         in Verdict::Allow(effect: admitted)
           done = apply(turn, admitted)
           return done if done
@@ -45,7 +48,32 @@ module Master::Core
       Done.new(reason: :max_turns, turns: @max_turns, summary: nil)
     end
 
-    private
+private
+
+    # A rule wants a person to decide. The question goes through the World like
+    # any other effect, so a surface that cannot ask -- a daemon, a test --
+    # answers no by saying it has no surface, and the effect does not happen.
+    # Refusing on no answer rather than proceeding is the only safe default:
+    # the rule already judged this dangerous enough to interrupt for.
+    #
+    # The refusal is recorded as an observation, so the agent sees why it was
+    # stopped and can choose another route, exactly as it does for a Block.
+    def approve(turn, effect, prompt:, reason:, by:)
+      answer = @world.perform(Effect.ask(prompt))
+      return apply(turn, effect) if answer.ok? && affirmative?(answer.detail)
+
+      detail = ["#{by} needs approval", reason, answer.ok? ? nil : answer.detail].compact.join(": ")
+      observation = Observation.no(detail)
+      @memory.record(effect, observation)
+      emit(turn, effect, observation)
+      nil
+    end
+
+    # Anything that is not a clear yes is a no.
+    def affirmative?(answer)
+      %w[y yes ja ok approve allow].include?(answer.to_s.strip.downcase)
+    end
+
 
     # The admitted half of the loop. Returns Done when the effect ends the fold
     # and nil to take another turn — extracted from `run` so that method stays

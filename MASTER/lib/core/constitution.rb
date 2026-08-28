@@ -59,6 +59,9 @@ module Master::Core
 
         case rule.judge.call(effect, memory)
         in Verdict::Block => b then return b
+        # Returned as it stands rather than carried on, because the rules after
+        # this one would judge an effect a person has not agreed to yet.
+        in Verdict::Request => r then return r
         in Verdict::Revise(effect: revised) then effect = revised
         else next
         end
@@ -164,11 +167,30 @@ module Master::Core
     # commands — so treating :ask as a refusal would stop the fold running its own
     # tests. Io::Shell made the same call for the same reason; this keeps the two
     # gates saying the same thing rather than inventing a second opinion.
+    # The sandbox answers one of three things, and the third is new:
+    #
+    #   nil                 nothing to say; later rules decide
+    #   "reason"            deny, as before
+    #   { ask: "reason" }   a person decides
+    #
+    # A Hash rather than another String, because a deny reason and an ask reason
+    # would otherwise be the same value meaning opposite things. A sandbox that
+    # only ever returns a String or nil keeps exactly its old behaviour.
     def self.sandboxed_exec_rule(sandbox)
       Rule.new(id: :sandboxed_exec, verbs: %i[exec], judge: lambda { |effect, _memory|
-        reason = sandbox.call(Array(effect.args[:argv]).map(&:to_s)) or next nil
+        answer = sandbox.call(Array(effect.args[:argv]).map(&:to_s)) or next nil
 
-        Verdict::Block.new(reason: "sandbox denied: #{reason}", by: :sandboxed_exec)
+        if answer.is_a?(Hash) && answer[:ask]
+          command = Array(effect.args[:argv]).join(" ")
+          next Verdict::Request.new(
+            effect:,
+            prompt: "run `#{command}`? (#{answer[:ask]})",
+            reason: answer[:ask].to_s,
+            by: :sandboxed_exec,
+          )
+        end
+
+        Verdict::Block.new(reason: "sandbox denied: #{answer}", by: :sandboxed_exec)
       })
     end
 
