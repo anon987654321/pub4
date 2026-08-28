@@ -379,6 +379,7 @@ if(pv){
   <%= javascript_include_tag(*FaceAssets.group("shell_manifest"), defer: true) %>
   <script src="<%= asset_path("master_events.js") %>" defer></script>
   <script src="<%= asset_path("shortcut_sheet.js") %>" defer></script>
+  <script src="<%= asset_path("viewport_inset.js") %>" defer></script>
   <script nonce="<%= content_security_policy_nonce %>">
     fetch('/runtime/config').then((r) => r.ok ? r.json() : null).then((cfg) => {
       if (cfg && typeof cfg === 'object') {

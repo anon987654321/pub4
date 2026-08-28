@@ -114,3 +114,4 @@ shell_manifest:
 shell_late:
   - master_events.js
   - shortcut_sheet.js
+  - viewport_inset.js

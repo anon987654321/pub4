@@ -2040,17 +2040,9 @@ function bindOrientation() {
     if (e.beta  != null) State.tiltY = (e.beta - 45) / 90;
   }, { passive: true });
 }
-async function requestMotionPermission() {
-  if (typeof DeviceOrientationEvent !== 'undefined' &&
-      typeof DeviceOrientationEvent.requestPermission === 'function') {
-    try { if ((await DeviceOrientationEvent.requestPermission()) === 'granted') bindOrientation(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:orientation_permission", err); }
-  } else if (window.DeviceOrientationEvent) {
-    bindOrientation();
-  }
-}
 
 let lastShake = 0, lastAccel = [0, 0, 0];
-if (window.DeviceMotionEvent) {
+function bindMotion() {
   window.addEventListener('devicemotion', (e) => {
     const a = e.accelerationIncludingGravity || e.acceleration;
     if (!a) return;
@@ -2063,6 +2055,22 @@ if (window.DeviceMotionEvent) {
       morphCurrent = Math.max(0, morphCurrent - 0.6); morphTarget = 1.0;
     }
   }, { passive: true });
+}
+
+async function requestSensorPermission(Ctor, label) {
+  if (typeof Ctor === 'undefined') return false;
+  if (typeof Ctor.requestPermission === 'function') {
+    try { return (await Ctor.requestPermission()) === 'granted'; }
+    catch (err) { window.MASTER_LOG?.warn?.(`face_runtime:${label}_permission`, err); return false; }
+  }
+  return true;
+}
+
+async function requestMotionPermission() {
+  const orientOk = await requestSensorPermission(window.DeviceOrientationEvent, 'orientation');
+  const motionOk = await requestSensorPermission(window.DeviceMotionEvent, 'motion');
+  if (orientOk) bindOrientation();
+  if (motionOk) bindMotion();
 }
 
 // FA24 pinch-to-zoom

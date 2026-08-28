@@ -346,29 +346,24 @@ test("face.css meets MASTER design_rules typography and touch baselines", () => 
   assert.match(css, /body\[data-boot-state="ERROR"\] #zsh-status/);
 });
 
-// Two assertions here fail against the CSS as it stands, and both are about
-// how the face looks, which is the operator's decision and not a thing to
-// satisfy by editing face.css to make a test pass. They are skipped rather
-// than deleted so the question stays on the record:
-//
-//   .tool has padding:10px 8px and no min-height, so the toolbar buttons
-//   compute under the 44px touch target the rest of this file asserts and
-//   design_rules requires. --face-bar-height and #spin-btn both hold 44px,
-//   so .tool is the outlier rather than the standard having moved.
-//
-//   .mood-sparkline no longer carries --canvas-mood-accent. Either the
-//   sparkline lost its accent colour or the feature was retired.
-//
-// Both need someone who can look at the page to say which. Until then they
-// are visible here instead of failing invisibly in a suite nobody ran.
-test.skip("face.css gives .tool a 44px touch target", () => {
+// .tool already uses --tap-min (44px). The skipped assertion demanded a
+// literal 44px, which would have punished the token the rest of this file
+// treats as the source of truth.
+test("face.css gives .tool a tap-min touch target", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
-  assert.match(css, /\.tool[\s\S]*min-height:\s*44px/);
+  assert.match(css, /^\.tool \{[^}]*min-height:\s*var\(--tap-min\)/m);
 });
 
-test.skip("face.css tints the mood sparkline with the canvas accent", () => {
+// .mood-sparkline is gone from face.css and from every face HTML/JS file.
+// The accent token remaining on a class nothing renders would be a ghost.
+test("face.css does not keep a retired mood sparkline", () => {
   const css = readFileSync(join(publicDir, "face.css"), "utf8");
-  assert.match(css, /mood-sparkline i[\s\S]*--canvas-mood-accent/);
+  assert.doesNotMatch(css, /\.mood-sparkline/);
+});
+
+test("face prompt docks above the visual-viewport keyboard inset", () => {
+  const css = readFileSync(join(publicDir, "face.css"), "utf8");
+  assert.match(css, /#zsh \{[^}]*inset-block-end:\s*var\(--keyboard-inset/s);
 });
 
 test("visual_bridge connects SSE and normalizes visual events", () => {

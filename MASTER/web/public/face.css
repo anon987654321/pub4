@@ -786,7 +786,7 @@ body.mission-control a:focus-visible {
 #zsh {
   position: fixed;
   inset-inline: 0;
-  inset-block-end: 0;
+  inset-block-end: var(--keyboard-inset, 0px);
   display: flex;
   align-items: center;
   min-height: calc(var(--face-bar-height) + var(--safe-bottom));
