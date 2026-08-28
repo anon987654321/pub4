@@ -1,16 +1,10 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require_relative "support/fake_config"
 
 class TestChitchatAgentRouting < Minitest::Test
-  class FakeConfig
-    def initialize(model = "z-ai/glm-4.5-air:free", task_type = :general)
-      @model = model
-      @task_type = task_type
-    end
-
-    attr_reader :model, :task_type
-  end
+  FakeConfig = Master::TestSupport::FakeConfig
 
   def setup
     @router = Master::CLI::Routing::ModelRouter.new(

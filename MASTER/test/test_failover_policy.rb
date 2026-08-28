@@ -1,19 +1,14 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require_relative "support/fake_config"
 
 # data/models.yml's fallback_policy block was inert three ways at once: the key
 # was written bare as `on:` so YAML 1.1 parsed it as the boolean true, nothing
 # anywhere read `fallback_policy`, and the category names it listed were not
 # categories this codebase produces. These tests pin all three.
 class TestFailoverPolicy < Minitest::Test
-  class FakeConfig
-    def initialize(model = "z-ai/glm-4.5-air:free")
-      @model = model
-    end
-
-    attr_reader :model
-  end
+  FakeConfig = Master::TestSupport::FakeConfig
 
   def models_yml
     Master.load_yaml(File.join(Master::ROOT, "data", "models.yml"))

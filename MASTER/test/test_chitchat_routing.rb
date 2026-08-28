@@ -1,15 +1,10 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require_relative "support/fake_config"
 
 class TestChitchatRouting < Minitest::Test
-  class FakeConfig
-    def initialize(model = "z-ai/glm-4.5-air:free")
-      @model = model
-    end
-
-    attr_reader :model
-  end
+  FakeConfig = Master::TestSupport::FakeConfig
 
   def test_models_yml_maps_chitchat_to_free_tier
     routes = Master.load_yaml(File.join(Master::ROOT, "data", "models.yml")).fetch("routes", {})
