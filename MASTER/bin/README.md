@@ -25,7 +25,6 @@ Operator entrypoints for the constitutional runtime. Run from `MASTER/` unless n
 | `smoke` | Boot/wiring smoke |
 | `smoke-web` | Face HTTP smoke |
 | `snapshot` | Workspace snapshot |
-| `status` | Runtime status summary |
 | `sync-env` | Sync env files from templates |
 | `test-safety` | Test harness safety checks |
 | `tts-bootstrap` | Start TTS worker stack |
