@@ -322,7 +322,10 @@ module Deploy
     private
 
     def missing_gem?(output)
-      output.to_s.match?(/cannot load such file|Could not find .* in locally installed gems|Gem::/)
+      text = output.to_s
+      return false if text.match?(%r{cannot load such file -- \S+/})
+
+      text.match?(/cannot load such file|Could not find .* in locally installed gems|Gem::/)
     end
 
     # Returns [combined_output, status]; status is nil when the probe was killed

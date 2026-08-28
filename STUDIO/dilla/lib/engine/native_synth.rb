@@ -135,7 +135,7 @@ end
 SAW_HARMONIC_CAP = (ENV["SAW_HARMONICS"] || 8).to_i.clamp(2, 24)
 
 def band_limited_saw_expr(frequency, drift)
-  nyquist = SAMPLE_RATE / 2.0
+  nyquist = PAD_RENDER_SAMPLE_RATE / 2.0
   n_max = [(nyquist / frequency).floor, SAW_HARMONIC_CAP].min
   n_max = 1 if n_max < 1
   (1..n_max).map do |n|

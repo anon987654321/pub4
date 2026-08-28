@@ -111,9 +111,9 @@ def learned_drum_steps(role)
   grid = eng.dig("drum_grids", track) || eng.dig("drum_grids", eng.dig("track_aliases", track))
   return unless grid.is_a?(Hash)
   case role
-  when :kicks then Array(grid["kicks"] || grid[:kicks])
-  when :snares then Array(grid["snares"] || grid[:snares])
-  when :hats then Array(grid["hats"] || grid[:hats])
+  when :kicks then Array(grid["kicks"] || grid["wonky_kicks"] || grid["flylo_kicks"] || grid[:kicks])
+  when :snares then Array(grid["snares"] || grid["wonky_snares"] || grid["flylo_snares"] || grid[:snares])
+  when :hats then Array(grid["hats"] || grid["wonky_hats"] || grid["flylo_hats"] || grid[:hats])
   end
 end
 

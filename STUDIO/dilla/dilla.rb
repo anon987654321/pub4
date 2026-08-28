@@ -452,7 +452,7 @@ def album_stem(src, title, index, out_dir)
   chain = "volume=#{gain}dB," \
           "alimiter=limit=#{10**(ALBUM_TARGET_TP / 20.0)}:level=disabled," \
           "aresample=44100:out_sample_fmt=s16:dither_method=triangular_hp"
-  `ffmpeg -hide_banner -nostats -y -i "#{staged}" -af "#{chain}" -ac 2 "#{dest}" 2>&1`
+  Open3.capture2e("ffmpeg", "-hide_banner", "-nostats", "-y", "-i", staged, "-af", chain, "-ac", "2", dest)
   FileUtils.rm_f(staged)
 
   after = album_loudness(dest)
@@ -474,9 +474,9 @@ def album_stage_mid_side(src, side_cut, index, out_dir)
           "[m_b]pan=mono|c0=0.5*c0-0.5*c1,volume=#{side_cut}dB[sid];" \
           "[mid][sid]join=inputs=2:channel_layout=stereo[ms];" \
           "[ms]pan=stereo|c0=c0+c1|c1=c0-c1,"
-  command = "ffmpeg -hide_banner -nostats -y -i \"#{src}\" " \
-            "-filter_complex \"[0:a]#{graph}anull[o]\" -map \"[o]\" -ac 2 -ar 44100 \"#{staged}\" 2>&1"
-  `#{command}`
+  Open3.capture2e("ffmpeg", "-hide_banner", "-nostats", "-y", "-i", src,
+                  "-filter_complex", "[0:a]#{graph}anull[o]", "-map", "[o]",
+                  "-ac", "2", "-ar", "44100", staged)
   staged
 end
 
@@ -493,10 +493,9 @@ def album_trim_to_target(stems)
     next stem if trim.abs < 0.1
 
     dest = stem.sub(".wav", "_lvl.wav")
-    command = "ffmpeg -hide_banner -nostats -y -i \"#{stem}\" " \
-              "-af \"volume=#{trim}dB,alimiter=limit=#{10**(ALBUM_TARGET_TP / 20.0)}:level=disabled\" " \
-              "-ac 2 -ar 44100 \"#{dest}\" 2>&1"
-    `#{command}`
+    Open3.capture2e("ffmpeg", "-hide_banner", "-nostats", "-y", "-i", stem,
+                    "-af", "volume=#{trim}dB,alimiter=limit=#{10**(ALBUM_TARGET_TP / 20.0)}:level=disabled",
+                    "-ac", "2", "-ar", "44100", dest)
     dest
   end
 end
@@ -518,14 +517,14 @@ def album_stitch(stems, dest)
 
   script = File.join(Dir.tmpdir, "album_graph.txt")
   File.write(script, graph)
-  inputs = stems.map { |stem| "-i \"#{stem}\"" }.join(" ")
-  system("ffmpeg -hide_banner -loglevel error -y #{inputs} -filter_complex_script #{script} " \
-         "-map \"[lim]\" -c:a libmp3lame -q:a 0 \"#{dest}\"")
+  argv = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y"]
+  stems.each { |stem| argv << "-i" << stem }
+  argv += ["-filter_complex_script", script, "-map", "[lim]", "-c:a", "libmp3lame", "-q:a", "0", dest]
+  system(*argv)
 end
 
 def album_master(dest)
   out_dir = File.join(ROOT, "renders", "mastered")
-  FileUtils.rm_rf(out_dir)
   FileUtils.mkdir_p(out_dir)
 
   puts format("%-24s %7s %7s   %7s %7s %7s", "track", "S/M in", "LUFS in", "S/M out", "LUFS", "peak")

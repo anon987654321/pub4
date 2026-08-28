@@ -14,7 +14,11 @@ def wonky_quantize_onsets(onsets, bpm, window: 0.05)
   bar_frames = ((60.0 / bpm) * 4.0 / window).round
   step_frames = [bar_frames / 16.0, 1.0].max
   tally = Hash.new(0)
-  onsets.each { |f| tally[((f % bar_frames) / step_frames).round % 16] += 1 }
+  onsets.each do |f|
+    step = ((f % bar_frames) / step_frames).round
+    step = 15 if step >= 16
+    tally[step] += 1
+  end
   tally
 end
 
