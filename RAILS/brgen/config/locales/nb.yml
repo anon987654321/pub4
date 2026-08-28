@@ -33,12 +33,7 @@ nb:
       event: "%-d. %b kl. %H:%M"
   hello: Hei
   legal:
-    aria: Juridisk og informasjon
-    privacy: Personvern
-    terms: Vilkår
-    cookies: Informasjonskapsler
     site_id_label: TradeDoubler nettsted-ID
-    contact_label: Kontakt
   app:
     name: Brgen
   feed:
@@ -140,9 +135,7 @@ nb:
     save_password: Lagre passord
   chat:
     roster: I denne kanalen
-    title: chat
     nearby_tab: nærheten
-    close: Lukk
     loading: Laster rommet…
     lobby_title: By-lobby
     lobby_body: Anonym chat uten GPS. Del posisjon når som helst for det hyperlokale
@@ -153,19 +146,11 @@ nb:
     refresh_location: Oppdater posisjon
     city_lobby: by-lobby
     sign_in_inbox: Logg inn for denne appens innboks, eller chat anonymt på Brgen.
-    open_brgen: Åpne Brgen-chat
-    open_brgen_channel: 'Åpne #brgen'
-    open_inbox: Åpne innboksen for å lese og sende meldinger i denne appen.
-    open_messages: Åpne meldinger
-    on_brgen: Chat på Brgen
     recovery_body: Kunne ikke åpne hjørnerommet. Bruk by-lobbyen i stedet — ingen
       registrering.
     placeholder: Melding som %{handle}…
     channel_placeholder: Melding i %{name} som %{handle}…
-    dm_placeholder: Send en melding…
-    message_label: Melding
     log_label: Meldinger
-    anon: anon
     posting_as: Poster som
     no_signup: ingen registrering
     anyone_join: Alle kan bli med — ingen registrering.
@@ -374,8 +359,6 @@ nb:
     title: Søk i Brgen
     placeholder: Søk innlegg, annonser, TV, spillelister…
     label: Søk i alle flater
-    query: Søkeord
-    submit: Søk
     posts: Søk innlegg…
     posts_label: Søk innlegg
     communities: Søk fellesskap…
@@ -395,14 +378,10 @@ nb:
     playlist_label: Søk spillelister
     tv: Søk kanaler og videoer…
     tv_label: Søk TV
-    results_for:
-      one: "%{count} treff for «%{query}»"
-      other: "%{count} treff for «%{query}»"
   messages:
     anonymous: "anon"
     from_aria: Melding fra %{name}
     disappears_in: forsvinner om %{time}
-    title: Meldinger
     new_message: Ny melding
     rooms_label: "Rom"
     message_action: "Send melding"
@@ -416,7 +395,6 @@ nb:
     # ever stops defining it; edit the shared copy to change what renders.
     empty_body: Send en melding for å starte.
     push_body_disappearing: Ny melding
-    read: lest
     edited: "endret"
     back_all: "← alle"
     back_channels: "← kanaler"
@@ -430,7 +408,6 @@ nb:
     pinned: Festet
     search_title: Søk i meldinger
     actions: Meldingsvalg
-    reply: Svar
     replying_to: "Svarer %{name}"
     editing: Rediger melding
     unsend: Angre
@@ -461,16 +438,6 @@ nb:
     search: Søk
   comments:
     sort_label: Sorter kommentarer
-    placeholder: Hva tenker du?
-    submit: Kommenter
-    reply_placeholder: Svar…
-    reply: Svar
-    empty_body: Vær den første til å svare — gjester kan kommentere uten konto.
-    write_reply: Skriv et svar
-    ai_summary: Vis AI-sammendrag (via MASTER)
-  theme:
-    region: Tema
-    toggle: Bytt til lyst tema
   push:
     enable: Slå på varsler
   partner:
@@ -627,7 +594,6 @@ nb:
     new: Nytt innlegg
     guest_sign_in: " for å bruke navnet ditt."
     posting_as_anon: Poster som
-    submit: Post
     text_optional: Tekst (valgfritt)
   empty:
     find_people: Finn folk i feeden
@@ -708,33 +674,16 @@ nb:
     all_orders: Alle ordrer
     all_drivers: Alle sjåfører
     all_cuisines: Alle kjøkken
-    save: Lagre
-    send: Send
-    cancel: Avbryt
     edit: Rediger
     back: Tilbake
     open: Åpne
     review: Gjennomgå
     reorder: Bestill på nytt
-    delete: Slett
-    remove: Fjern
-    update: Oppdater
-    create: Opprett
-    follow: Følg
-    unfollow: Avfølg
-    like: Lik
-    unlike: Fjern lik
-    report: Rapporter
-    message: Melding
-    mark_read: Merk som lest
-    confirm_delete: Slette?
     copyable_text: Tekst som kopieres
     select_all: Velg alle
     select_all_reports: Velg alle rapporter
     reload: Last inn på nytt
   pages:
-    account: Konto
-    two_factor: Tofaktorautentisering
     cart: Handlekurv
     my_orders: Mine ordrer
     all_posts: Alle innlegg
@@ -766,7 +715,6 @@ nb:
     score: Poengsum
     upvote: Stem opp
     downvote: Stem ned
-    share: Del
     share_post: Del innlegg
     view_community: Se fellesskap
     about: Om
@@ -1391,8 +1339,6 @@ nb:
     also_in_city: Også i %{city}
   newsletter:
     unsubscribe_link: "Meld av"
-    email_placeholder: din@epost.com
-    subscribe: Abonner
     title: Byoppdateringer
     body: Nyheter og tilbud fra byen din, én gang i uken.
     marketing_consent: Jeg godtar å motta tilbud og partnerforslag (valgfritt, avmeld
@@ -1793,8 +1739,6 @@ nb:
     following:
       one: følger %{count}
       other: følger %{count}
-  showcase:
-    devices: Appen på skrivebord og mobil
   admin:
     reports_title: Moderasjonsrapporter
     moderation: Admin / moderering

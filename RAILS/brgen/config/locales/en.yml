@@ -33,12 +33,7 @@ en:
       event: "%b %-d at %H:%M"
   hello: Hello
   legal:
-    aria: Legal and information
-    privacy: Privacy
-    terms: Terms
-    cookies: Cookies
     site_id_label: TradeDoubler Site ID
-    contact_label: Contact
   app:
     name: Brgen
   feed:
@@ -140,9 +135,7 @@ en:
     save_password: Save password
   chat:
     roster: In this channel
-    title: chat
     nearby_tab: nearby
-    close: Close
     loading: Loading the room…
     lobby_title: City lobby
     lobby_body: Anonymous chat without GPS. Share location anytime for the hyperlocal
@@ -153,19 +146,11 @@ en:
     refresh_location: Refresh location
     city_lobby: city lobby
     sign_in_inbox: Sign in for this app’s inbox, or chat anonymously on Brgen.
-    open_brgen: Open Brgen chat
-    open_brgen_channel: 'Open #brgen'
-    open_inbox: Open your inbox to read and send messages on this app.
-    open_messages: Open messages
-    on_brgen: Chat on Brgen
     recovery_body: Could not open the corner room. Use the city lobby instead — no
       signup.
     placeholder: Message as %{handle}…
     channel_placeholder: Message %{name} as %{handle}…
-    dm_placeholder: Send a message…
-    message_label: Message
     log_label: Messages
-    anon: anon
     posting_as: Posting as
     no_signup: no signup
     anyone_join: Anyone can join — no signup.
@@ -373,8 +358,6 @@ en:
     title: Search Brgen
     placeholder: Search posts, listings, TV, playlists…
     label: Search all verticals
-    query: Search query
-    submit: Search
     posts: Search posts…
     posts_label: Post search
     communities: Search communities…
@@ -394,14 +377,10 @@ en:
     playlist_label: Playlist search
     tv: Search channels and videos…
     tv_label: TV search
-    results_for:
-      one: "%{count} result for “%{query}”"
-      other: "%{count} results for “%{query}”"
   messages:
     anonymous: "anon"
     from_aria: Message from %{name}
     disappears_in: disappears in %{time}
-    title: Messages
     new_message: New message
     rooms_label: "Rooms"
     message_action: "Message"
@@ -415,7 +394,6 @@ en:
     # ever stops defining it; edit the shared copy to change what renders.
     empty_body: Send a message to get started.
     push_body_disappearing: New message
-    read: read
     edited: "edited"
     back_all: "← all"
     back_channels: "← channels"
@@ -429,7 +407,6 @@ en:
     pinned: Pinned
     search_title: Search messages
     actions: Message actions
-    reply: Reply
     replying_to: "Replying to %{name}"
     editing: Edit message
     unsend: Unsend
@@ -460,16 +437,6 @@ en:
     search: Search
   comments:
     sort_label: Sort comments
-    placeholder: What do you think?
-    submit: Comment
-    reply_placeholder: Reply…
-    reply: Reply
-    empty_body: Be the first to reply — guests can comment without an account.
-    write_reply: Write a reply
-    ai_summary: Show AI summary (via MASTER)
-  theme:
-    region: Theme
-    toggle: Toggle light theme
   push:
     enable: Enable notifications
   partner:
@@ -625,7 +592,6 @@ en:
     new: New post
     guest_sign_in: " to use your name."
     posting_as_anon: Posting as
-    submit: Post
     text_optional: Text (optional)
   empty:
     find_people: Find people in the feed
@@ -707,33 +673,16 @@ en:
     all_orders: All orders
     all_drivers: All drivers
     all_cuisines: All cuisines
-    save: Save
-    send: Send
-    cancel: Cancel
     edit: Edit
     back: Back
     open: Open
     review: Review
     reorder: Reorder
-    delete: Delete
-    remove: Remove
-    update: Update
-    create: Create
-    follow: Follow
-    unfollow: Unfollow
-    like: Like
-    unlike: Unlike
-    report: Report
-    message: Message
-    mark_read: Mark read
-    confirm_delete: Delete?
     copyable_text: Text to copy
     select_all: Select all
     select_all_reports: Select all reports
     reload: Reload
   pages:
-    account: Account
-    two_factor: Two-factor authentication
     cart: Your Cart
     my_orders: My Orders
     all_posts: All posts
@@ -764,7 +713,6 @@ en:
     score: Post score
     upvote: Upvote
     downvote: Downvote
-    share: Share
     share_post: Share post
     view_community: View community
     about: About
@@ -1388,8 +1336,6 @@ en:
     also_in_city: Also in %{city}
   newsletter:
     unsubscribe_link: "Unsubscribe"
-    email_placeholder: your@email.com
-    subscribe: Subscribe
     title: City updates
     body: News and deals from your city, once a week.
     marketing_consent: I agree to receive deals and partner offers (optional, unsubscribe
@@ -1787,8 +1733,6 @@ en:
     following:
       one: following %{count}
       other: following %{count}
-  showcase:
-    devices: The app on desktop and mobile
   admin:
     reports_title: Moderation reports
     moderation: Admin / moderation
