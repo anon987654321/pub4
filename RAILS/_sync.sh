@@ -26,12 +26,6 @@ sync_tree() {
   ${_PRIV} find "${dst%/}" -name '._*' -delete 2>/dev/null || true
 }
 
-already_done() {
-  local sentinel=$1
-  [[ -f $sentinel ]] && { log_warn "Already set up ($sentinel exists). Skipping."; return 0; }
-  return 1
-}
-
 # overlay_shared_initializers APP_DIR — shared config wins over stale per-app copies
 overlay_shared_initializers() {
   local app_dir=$1

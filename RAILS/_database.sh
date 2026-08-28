@@ -147,14 +147,3 @@ seed_amber_demo_as_app() {
   ${_PRIV} sh -c "su -m amber -c 'cd ${app_dir} && SECRET_KEY_BASE=${secret} RAILS_ENV=production bundle34 exec rails amber:demo_seed'" \
     || log_warn "amber:demo_seed skipped"
 }
-
-db_setup() {
-  log "Setting up database"
-  RAILS_ENV=production bin/rails db:create db:migrate
-  log_ok "Database ready"
-}
-
-db_migrate() {
-  RAILS_ENV=${RAILS_ENV:-production} bin/rails db:migrate
-  log_ok "Migrations complete"
-}

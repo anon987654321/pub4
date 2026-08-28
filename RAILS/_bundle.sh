@@ -9,13 +9,6 @@ bundle_exec() {
   "$bundle_bin" "$@"
 }
 
-bundle_install() {
-  bundle check 2>/dev/null && { log_ok "bundle ok (no install needed)"; return 0; }
-  log "bundle install"
-  bundle install --jobs=2 2>&1 | tail -5
-  log_ok "bundle install done"
-}
-
 add_gem() {
   local gem=$1 ver=${2:-}
   if ! grep -q "\"${gem}\"" Gemfile 2>/dev/null; then
