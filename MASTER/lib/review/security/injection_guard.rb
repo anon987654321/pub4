@@ -4,7 +4,6 @@ module Master
   module Review
     module Security
       class InjectionGuard
-        LEGACY_PATH = File.join(Master::ROOT, "data", "injection_patterns.yml")
         PATTERNS_PATH = Master.data_path("patterns.yml")
 
         DEFAULTS = {
@@ -75,10 +74,7 @@ module Master
         def injection_data
           patterns = Master.load_yaml(PATTERNS_PATH) || {}
           merged = patterns["injection"]
-          return merged if merged.is_a?(Hash) && !merged.empty?
-          return Master.load_yaml(LEGACY_PATH) if File.exist?(LEGACY_PATH)
-
-          nil
+          merged if merged.is_a?(Hash) && !merged.empty?
         end
       end
     end
