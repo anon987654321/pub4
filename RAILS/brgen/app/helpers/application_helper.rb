@@ -30,32 +30,21 @@ module ApplicationHelper
 
     return image_tag(attachment, alt: alt, **image_options) unless attachment.respond_to?(:variant)
 
-    widths = Array(widths).map(&:to_i).uniq.sort
-    largest = widths.last
-    webp_srcset = widths.map do |width|
-      "#{main_app.url_for(attachment.variant(resize_to_limit: [ width, width ], format: :webp))} #{width}w"
-    end.join(", ")
-    fallback_srcset = widths.map do |width|
-      "#{main_app.url_for(attachment.variant(resize_to_limit: [ width, width ]))} #{width}w"
-    end.join(", ")
-
-    content_tag(:picture) do
-      safe_join(
-        [
-          tag.source(type: "image/webp", srcset: webp_srcset, sizes: sizes),
-          image_tag(
-            # main_app.url_for: rendered inside isolated engines (tv/marketplace cards),
-            # image_tag would otherwise resolve the variant against engine routes that
-            # do not own ActiveStorage → to_model on VariantWithRecord. See ENGINES.md.
-            main_app.url_for(attachment.variant(resize_to_limit: [ largest, largest ])),
-            alt: alt,
-            srcset: fallback_srcset,
-            sizes: sizes,
-            **image_options
-          )
-        ]
-      )
-    end
+    # main_app.url_for on both hooks: these render inside isolated engines
+    # (tv/marketplace cards), and image_tag would otherwise resolve the variant
+    # against engine routes that do not own ActiveStorage → to_model on
+    # VariantWithRecord. See ENGINES.md. The <picture> itself is
+    # Shared::UiHelper#responsive_picture_tag, which amber renders too.
+    through_main_app = ->(variant) { main_app.url_for(variant) }
+    responsive_picture_tag(
+      attachment,
+      alt: alt,
+      widths: widths,
+      sizes: sizes,
+      srcset_url: through_main_app,
+      img_src: through_main_app,
+      **image_options
+    )
   end
 
   def safe_http_link(label, url)

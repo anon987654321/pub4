@@ -219,6 +219,51 @@ module Shared
       width && height ? { width:, height: } : {}
     end
 
+    # The <picture> both brgen and amber build over an ActiveStorage attachment:
+    # a webp <source> srcset, a fallback srcset on the <img>, and whatever the
+    # caller already resolved through image_dimensions above. It lives here
+    # rather than in either app because a third app can only reach it here:
+    # bsdports has no app/helpers directory and renders entirely out of this
+    # engine.
+    #
+    # The two URL hooks are the point of the parameterisation, not decoration.
+    # brgen renders these inside isolated engines (marketplace, tv, takeaway and
+    # the rest are mounted engines — see brgen/ENGINES.md), so it has to resolve
+    # every variant through main_app: engine routes do not own ActiveStorage and
+    # to_model on a VariantWithRecord fails there. amber has no engines and
+    # resolves through the ambient url_for, handing image_tag the variant object
+    # itself rather than a string. Collapsing either side onto the other breaks
+    # that app, so both stay callers' business.
+    #
+    #   srcset_url — callable, variant -> URL string, used for both srcsets
+    #   img_src    — callable, largest variant -> whatever image_tag should get;
+    #                omitted, image_tag receives the variant itself
+    def responsive_picture_tag(attachment, alt:, widths:, sizes:, srcset_url:, img_src: nil, **image_options)
+      widths = Array(widths).map(&:to_i).uniq.sort
+      largest = attachment.variant(resize_to_limit: [ widths.last, widths.last ])
+      webp_srcset = widths.map do |width|
+        "#{srcset_url.call(attachment.variant(resize_to_limit: [ width, width ], format: :webp))} #{width}w"
+      end.join(", ")
+      fallback_srcset = widths.map do |width|
+        "#{srcset_url.call(attachment.variant(resize_to_limit: [ width, width ]))} #{width}w"
+      end.join(", ")
+
+      content_tag(:picture) do
+        safe_join(
+          [
+            tag.source(type: "image/webp", srcset: webp_srcset, sizes:),
+            image_tag(
+              img_src ? img_src.call(largest) : largest,
+              alt:,
+              srcset: fallback_srcset,
+              sizes:,
+              **image_options,
+            ),
+          ],
+        )
+      end
+    end
+
     # A localised relative time, whole. Fourteen views wrote
     # `<%= time_ago_in_words(x) %> ago`, which prints the Rails-localised span
     # and then an English word: every brgen post page read "rundt 2 måneder

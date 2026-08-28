@@ -74,33 +74,23 @@ end
 
     return image_tag(attachment, alt: alt, **image_options) unless attachment.respond_to?(:variant)
 
+    # The named-variant path is amber's alone — brgen preprocesses no presets —
+    # so it stays in front of the shared <picture>, never inside it.
     if widths.blank? && named_variant_preset?(attachment, preset)
       return named_responsive_image_tag(attachment, alt: alt, preset: preset, sizes: sizes, **image_options)
     end
 
-    widths = Array(widths.presence || [ 400, 800, 1_200 ]).map(&:to_i).uniq.sort
-    largest = widths.last
-    webp_srcset = widths.map do |width|
-      "#{url_for(attachment.variant(resize_to_limit: [ width, width ], format: :webp))} #{width}w"
-    end.join(", ")
-    fallback_srcset = widths.map do |width|
-      "#{url_for(attachment.variant(resize_to_limit: [ width, width ]))} #{width}w"
-    end.join(", ")
-
-    content_tag(:picture) do
-      safe_join(
-        [
-          tag.source(type: "image/webp", srcset: webp_srcset, sizes: sizes),
-          image_tag(
-            attachment.variant(resize_to_limit: [ largest, largest ]),
-            alt: alt,
-            srcset: fallback_srcset,
-            sizes: sizes,
-            **image_options
-          )
-        ]
-      )
-    end
+    # Ambient url_for, and image_tag gets the variant object: amber mounts no
+    # engines, so there is no main_app indirection to route around the way
+    # brgen needs one.
+    responsive_picture_tag(
+      attachment,
+      alt: alt,
+      widths: widths.presence || [ 400, 800, 1_200 ],
+      sizes: sizes,
+      srcset_url: ->(variant) { url_for(variant) },
+      **image_options
+    )
   end
 
   def current_creator_profile

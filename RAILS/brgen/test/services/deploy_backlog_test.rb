@@ -514,9 +514,14 @@ assert_includes haystack, "turbo_prefetch: false",
   def test_responsive_images_are_served_as_lazy_webp_pictures
     helper_source = read_source(File.join(ROOT, "amber/app/helpers/application_helper.rb"))
     assert_includes helper_source, "responsive_image_url"
-    assert_includes helper_source, "content_tag(:picture)"
-    assert_includes helper_source, 'type: "image/webp"'
     assert_includes helper_source, 'loading: "lazy"'
+    # The <picture> itself is Shared::UiHelper#responsive_picture_tag, which
+    # brgen and amber both call and bsdports could — amber keeps only its
+    # named-variant preset branch and the url_for strategy it hands over.
+    assert_includes helper_source, "responsive_picture_tag("
+    picture_source = read_source(File.join(ROOT, "shared/app/helpers/shared/ui_helper.rb"))
+    assert_includes picture_source, "content_tag(:picture)"
+    assert_includes picture_source, 'type: "image/webp"'
     assert_includes read_source(File.join(ROOT, "amber/app/views/items/show.html.erb")), "responsive_image_tag photo"
     # The dressing room composition moved into a partial when the guest landing
     # page started rendering the same mannequin.
