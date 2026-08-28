@@ -44,6 +44,18 @@ class ApplicationController < ActionController::Base
 
   private
 
+  # SameSite=Strict is site-scoped (eTLD+1). brgen.no and ai.brgen.no are the
+  # same site, so a skipped CSRF token is not an origin check. POST from a
+  # sibling host is refused unless Origin matches this host.
+  def require_same_origin!
+    origin = request.origin.presence
+    if origin
+      head :forbidden unless origin == request.base_url
+    elsif request.headers["Sec-Fetch-Site"].to_s == "cross-site"
+      head :forbidden
+    end
+  end
+
   # nb unless the browser asks for something this app has.
   #
   # Set per request, not once at boot: I18n.locale is per-thread state that

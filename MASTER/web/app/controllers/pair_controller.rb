@@ -2,6 +2,7 @@
 
 class PairController < ApplicationController
   skip_before_action :verify_authenticity_token, only: %i[create issue destroy]
+  before_action :require_same_origin!, only: %i[create issue destroy]
   skip_before_action :require_container!
   before_action :enforce_pair_redeem_rate_limit, only: :create
   before_action :require_authenticated!, only: %i[issue list destroy]

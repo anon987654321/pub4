@@ -9,6 +9,7 @@ class ChatController < ApplicationController
 
   # CSRF guarded by SameSite=Strict session cookie set in AuthTier.
   skip_before_action :verify_authenticity_token, only: :command
+  before_action :require_same_origin!, only: :command
   # Face shell renders immediately; container finishes booting in the background (~90s on VPS).
   # Metrics returns 401/503 JSON — must not hit the HTML warming gate first.
   skip_before_action :require_container!, only: %i[index metrics metrics_prometheus]

@@ -40,6 +40,7 @@ class EventsController < ApplicationController
     response.stream.write("event: trace\ndata: #{JSON.generate(trace_id:)}\n\n")
 
     bus      = container[:bus]
+    mine     = conversation_id
     received = Queue.new
     sub      = bus.subscribe("*") do |ev|
       received << { t: Time.now.to_f, type: ev[:event], data: ev }
@@ -59,7 +60,7 @@ class EventsController < ApplicationController
       else
         event = received.pop(true) rescue nil
         next unless event
-        next if visitor_tier && !visitor_safe_event?(event)
+        next if visitor_tier && !visitor_safe_event?(event, mine)
 
         payload = visitor_tier ? visitor_safe_payload(event) : event
         response.stream.write("data: #{payload.to_json}\n\n")
@@ -74,9 +75,14 @@ class EventsController < ApplicationController
 
   private
 
-  def visitor_safe_event?(event)
+  def visitor_safe_event?(event, mine)
     type = event[:type].to_s
-    type.match?(VISITOR_SAFE_PREFIX)
+    return false unless type.match?(VISITOR_SAFE_PREFIX)
+    return true unless type.match?(/\A(?:tts:|pipeline:stage)/i)
+
+    data = event[:data]
+    conv = data.is_a?(Hash) ? (data[:conversation] || data["conversation"]) : nil
+    conv.present? && conv == mine
   end
 
   # tts:* is on the visitor-safe prefix so the orb can pulse, but the job id

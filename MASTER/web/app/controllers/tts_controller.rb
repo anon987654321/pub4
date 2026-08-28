@@ -8,6 +8,10 @@ class TtsController < ApplicationController
     text = params[:text].to_s.strip
     return head(:bad_request) if text.empty?
 
+    with_master_fiber { synthesize(text) }
+  end
+
+  def synthesize(text)
     voice_locked = ActiveModel::Type::Boolean.new.cast(params[:voice_locked]) == true
     style_locked = ActiveModel::Type::Boolean.new.cast(params[:style_locked]) == true
     voice_key, synth_style, rate, pitch = tts_voice_and_style(text)
