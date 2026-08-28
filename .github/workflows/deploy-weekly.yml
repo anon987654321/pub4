@@ -1,6 +1,9 @@
 name: Deploy Weekly Integrity
 
-# Run on vm23 via cron (preferred) or manual dispatch when billing allows GitHub scheduling.
+# The integrity pass runs on vm23, not on a GitHub runner — it needs the box's
+# live services, certs and relayd. This workflow is a signpost to that, which is
+# why its only job echoes the command rather than running one, and why it has no
+# schedule to restore.
 # On VPS: add OPENBSD/vps_weekly_integrity.sh to root crontab (weekly, off-peak).
 on:
   workflow_dispatch:

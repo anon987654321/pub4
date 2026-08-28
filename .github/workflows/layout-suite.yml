@@ -1,13 +1,18 @@
 name: Layout suite + app smoke
 
 # Design craft gates + inventory /up contract.
-# If GitHub billing blocks auto-runs, use workflow_dispatch or local:
+#
+# Manual dispatch only. The GitHub Actions billing lock that first paused this
+# job was cleared on 2026-07-18; the push/pull_request block below was left
+# commented out and never restored, so nothing outside this file is holding it.
+#
+# The same gates locally:
 #   GATE_AUTOFIX=0 ruby RAILS/gates/runner.rb layout_suite
 #   sh OPENBSD/bin/smoke-apps.sh
 
 on:
   workflow_dispatch:
-  # Uncomment when billing allows:
+  # Uncomment to auto-run:
   # push:
   #   paths:
   #     - "RAILS/**"

@@ -1,6 +1,8 @@
 name: MASTER Tests
 
-# push/pull_request triggers restored (billing lock cleared).
+# Auto-runs on push and PR. The GitHub Actions billing lock that once paused
+# every workflow in this directory was cleared on 2026-07-18, and these triggers
+# were restored with it.
 #
 # Local: cd MASTER && bin/check --profile=full
 # Or: OPENBSD/bin/check --profile=contributor && cd MASTER && bin/check --profile=agent
