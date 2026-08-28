@@ -2,7 +2,7 @@
 schema: 1
 apps:
   brgen:
-    digest: a19ee632b04f9e47
+    digest: 90d55bd01fc714cc
     routes:
       rails/pwa#offline:
       - "/offline"
@@ -130,11 +130,15 @@ apps:
       - "/users/:id/edit"
       users#show:
       - "/users/:id"
+      invites#show:
+      - "/i/:token"
       conversations#search:
       - "/conversations/search"
       conversations#index:
       - "/"
       - "/conversations"
+      conversations#new:
+      - "/conversations/new"
       conversations#show:
       - "/conversations/:id"
       group_conversations#new:
