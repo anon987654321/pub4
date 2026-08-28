@@ -28,4 +28,13 @@
 # sample_rates=44100 and breaks every render; USE_THEN never checked that the
 # intermediate is used once, and applying it to its own findings introduced
 # three NameErrors. Read the law before acting on the count.
-findings: 169
+#
+# 194 -> 154. Twenty-five of those were one file: brgen's static Dilla Lab page
+# aliases document.getElementById to `$`, which is the name jQuery takes, so
+# NO_JQUERY read twenty-five getElementById calls as jQuery selectors. The
+# alias is gone rather than the law, because a helper wearing the name of the
+# library a law forbids is a trap for the next reader as much as for the
+# scanner. The remaining fifteen are mechanical and behaviour-identical:
+# symbol-to-proc, safe navigation, two numeric literals, and seven runs of
+# alignment spaces in STUDIO/dilla.
+findings: 154
