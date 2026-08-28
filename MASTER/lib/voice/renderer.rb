@@ -22,7 +22,7 @@ module Master
 
       include GitStatus
       include SystemInfo
-      include RendererPromptComponents
+      include PromptComponents
       include TextFormatting
 
       def initialize(config:)
