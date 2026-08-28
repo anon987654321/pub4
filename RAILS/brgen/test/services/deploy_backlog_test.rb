@@ -196,6 +196,7 @@ class DeployBacklogTest < Minitest::Test
     review = read_source(File.join(ROOT, "brgen/app/models/marketplace/review.rb"))
     listings_controller = read_source(File.join(ROOT, "brgen/app/controllers/marketplace/listings_controller.rb"))
     reviews_controller = read_source(File.join(ROOT, "brgen/app/controllers/marketplace/reviews_controller.rb"))
+    geo_stamp = read_source(File.join(ROOT, "shared/app/services/shared/review_geo_stamp.rb"))
     routes = read_source(File.join(ROOT, "brgen/config/routes.rb"))
     index = read_source(File.join(ROOT, "brgen/app/views/marketplace/listings/index.html.erb"))
     card = read_source(File.join(ROOT, "brgen/app/views/marketplace/listings/_card.html.erb"))
@@ -217,7 +218,12 @@ class DeployBacklogTest < Minitest::Test
     assert_includes listings_controller, "@listing_distances"
     assert_includes listings_controller, "Marketplace::Listing.radius_from"
     assert_includes reviews_controller, "Marketplace::ReviewsController"
-    assert_includes reviews_controller, "reviewer_lat"
+    # The reviewer's coordinates are still stamped onto the review at create
+    # time; the four lines that do it moved to Shared::ReviewGeoStamp, which
+    # takeaway's reviews controller calls the same way.
+    assert_includes reviews_controller, "Shared::ReviewGeoStamp.apply!"
+    assert_includes geo_stamp, "reviewer_lat"
+    assert_includes geo_stamp, "reviewer_lng"
     assert_includes routes, "resources :reviews, only: %i[create]"
     assert_includes index, ":radius_km"
     assert_includes card, "marketplace.distance_km"

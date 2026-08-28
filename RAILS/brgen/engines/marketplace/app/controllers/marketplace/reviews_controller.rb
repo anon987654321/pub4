@@ -6,10 +6,7 @@ class Marketplace::ReviewsController < Marketplace::BaseController
 
   def create
     review = @listing.reviews.build(review_params.merge(user: Current.user))
-    if Current.user.latitude.present?
-      review.reviewer_lat = Current.user.latitude
-      review.reviewer_lng = Current.user.longitude
-    end
+    Shared::ReviewGeoStamp.apply!(review, Current.user)
 
     if review.save
       redirect_to listing_path(@listing), notice: t("flash.marketplace.review_saved")
