@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "open3"
 
 # Every path an entry-point script resolves at load time must exist on disk.
 #
@@ -41,12 +42,17 @@ class TestEntrypointRequires < Minitest::Test
   REPO_ROOT = File.expand_path("..", MASTER_ROOT)
   LIB = File.join(MASTER_ROOT, "lib")
 
-  # A literal path a script builds but does not expect to find: it creates the
-  # path itself before use. Each entry carries the reason, and the test below
-  # fails if the path starts existing, so an exemption cannot outlive its
-  # subject the way `data/` exemptions have.
+  # A tracked path a script builds but does not expect to find: it creates the
+  # path itself before use. Each entry names the script that does, and the test
+  # below fails when that script stops creating it -- which is when the
+  # exemption stops being true. Asserting the path is *missing* instead would
+  # have been a gate that fails as soon as someone runs the tool.
+  #
+  # Gitignored paths need no entry: runtime state is absent from a fresh
+  # checkout by definition, and this list would collect one line per socket and
+  # cache file for no reading.
   CREATED_AT_RUNTIME = {
-    "MASTER/reports/cleanup" => "bin/cleanup FileUtils.mkdir_p's its own report directory",
+    "MASTER/reports/cleanup" => "bin/cleanup",
   }.freeze
 
   # Top-level directories under MASTER/lib. A `require "x/y"` whose first segment
@@ -119,17 +125,19 @@ class TestEntrypointRequires < Minitest::Test
   # script computes from __dir__. Resolving those roots is the only way to see a
   # path that moved out from under a literal.
   def test_literal_paths_built_from_a_computed_root_exist
-    missing = ruby_entrypoints.flat_map do |script, source|
+    candidates = ruby_entrypoints.flat_map do |script, source|
       literal_paths(script, source).filter_map do |path|
-        rel = relative(path)
         # A glob is a query, not a path: matching nothing is an empty list, not a
         # crash, so it is not this gate's defect class.
         next if path.include?("*")
-        next if File.exist?(path) || CREATED_AT_RUNTIME.key?(rel)
+        next if File.exist?(path) || CREATED_AT_RUNTIME.key?(relative(path))
 
-        "#{relative(script)} builds #{rel}, which does not exist"
+        [script, path]
       end
     end
+    ignored = gitignored(candidates.map(&:last))
+    missing = candidates.reject { |_, path| ignored.include?(path) }
+                        .map { |script, path| "#{relative(script)} builds #{relative(path)}, which does not exist" }
 
     assert_empty missing, <<~MESSAGE
       An entry-point script builds a literal path that is not on disk. Nothing
@@ -141,13 +149,17 @@ class TestEntrypointRequires < Minitest::Test
   end
 
   def test_runtime_created_exemptions_are_still_necessary
-    live = CREATED_AT_RUNTIME.keys.select { |rel| File.exist?(File.join(REPO_ROOT, rel)) }
+    stale = CREATED_AT_RUNTIME.reject do |rel, creator|
+      script = File.join(REPO_ROOT, "MASTER", "bin", File.basename(creator))
+      File.file?(script) && File.read(script).match?(/mkdir_p/)
+    end
 
-    assert_empty live, <<~MESSAGE
-      A CREATED_AT_RUNTIME exemption names a path that now exists. Drop the entry
-      -- an exemption that outlives its subject is a hole in a gate nobody can see.
+    assert_empty stale.keys, <<~MESSAGE
+      A CREATED_AT_RUNTIME exemption names a script that no longer creates the
+      path. Drop the entry -- an exemption that outlives its subject is a hole in
+      a gate nobody can see.
 
-      #{live.join("\n")}
+      #{stale.map { |rel, creator| "#{rel} (was created by #{creator})" }.join("\n")}
     MESSAGE
   end
 
@@ -161,6 +173,25 @@ class TestEntrypointRequires < Minitest::Test
   end
 
   private
+
+  # Runtime state -- sockets, caches, .master/ -- is absent from a fresh
+  # checkout and present here only because something has run. Reading git's own
+  # answer keeps this gate the same colour in both places; the first version of
+  # it was green locally and red in a clean worktree for exactly this reason.
+  def gitignored(paths)
+    return Set.new if paths.empty?
+
+    out, status = Open3.capture2e("git", "check-ignore", "--stdin", chdir: REPO_ROOT,
+                                                                    stdin_data: paths.join("\n"))
+    # 0 = some ignored, 1 = none ignored; anything else means git could not answer
+    # and this filter must not silently pass the whole list.
+    raise "git check-ignore failed: #{out}" unless [0, 1].include?(status.exitstatus)
+
+    # check-ignore echoes each path back in the form it was given, and it is
+    # given absolute ones. expand_path against the root leaves those alone and
+    # still resolves a relative answer, so the set matches either way.
+    out.split("\n").map { |path| File.expand_path(path.strip, REPO_ROOT) }.to_set
+  end
 
   # Roots a script assigns from __dir__, then every File.join off one of them
   # whose segments are all string literals. A join with a variable segment names
