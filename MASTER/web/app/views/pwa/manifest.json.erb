@@ -5,9 +5,9 @@
   every request while this one drifted. Deleting the file is what makes the
   route real, and the route is what lets the manifest vary by host.
 %>{
-  "name": "<%= Trymbot.brand(request) || "brgen" %>",
-  "short_name": "<%= Trymbot.brand(request) || "brgen" %>",
-  "description": "<%= Trymbot.on?(request) ? "Roboten som lærer bort Ruby og musikk." : "Constitutional AI agent" %>",
+  "name": "brgen",
+  "short_name": "brgen",
+  "description": "Constitutional AI agent",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -25,11 +25,10 @@
     { "src": "/icon.svg", "sizes": "any",     "type": "image/svg+xml" },
     { "src": "/icon.png", "sizes": "192x192", "type": "image/png" },
     { "src": "/icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
-  ]<% unless Trymbot.on?(request) %>,
-  <%# Not offered on the kid's host: two of the three open operator surfaces. %>
+  ],
   "shortcuts": [
     { "name": "Chat", "short_name": "Chat", "url": "/", "description": "Open MASTER chat" },
     { "name": "Focus face", "short_name": "Focus", "url": "/?focus=1", "description": "Face-only focus mode" },
     { "name": "Mission control", "short_name": "Dashboard", "url": "/dashboard", "description": "Runtime observability" }
-  ]<% end %>
+  ]
 }

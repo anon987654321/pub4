@@ -62,10 +62,7 @@ class ApplicationController < ActionController::Base
   # survives into the next request served on the same thread, so one English
   # visitor would otherwise leave the following Norwegian one on :en.
   def set_locale
-    # One host is pinned rather than negotiated. Trymbot speaks Norwegian to a
-    # Norwegian child, and a phone set to English would otherwise put English
-    # chrome around a robot answering in Norwegian.
-    I18n.locale = Trymbot.on?(request) ? :nb : preferred_locale
+    I18n.locale = preferred_locale
   end
 
   # Accept-Language, highest q first, matched on the primary subtag so nb-NO and

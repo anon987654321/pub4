@@ -723,11 +723,11 @@ class TestWebUI < Minitest::Test
                  "public/face.runtime.js differs from its sources at equal length"
   end
 
-  # The request-scoped persona note is the only path by which a host other than
-  # ai.brgen.no reaches the model's system prompt. Asserted through the builder
-  # rather than by reading the line that sets it, because the failure this
-  # guards against is a note nothing reads: the tab, the manifest and the voice
-  # would all still be right, and only the words would be MASTER's.
+  # The request-scoped persona note is the only path by which a caller can put
+  # words in front of the model's system prompt for one request. Asserted
+  # through the builder rather than by reading the line that sets it, because
+  # the failure this guards against is a note nothing reads: setting it would
+  # still look right at every call site and the prompt would be unchanged.
   def test_persona_note_reaches_the_dynamic_prompt
     probe = Class.new do
       include Master::Review::PromptFilter
@@ -740,7 +740,7 @@ class TestWebUI < Minitest::Test
 
     Fiber[:master_persona_note] = "Persona note probe."
     assert_includes probe.dynamic_prompt.to_s, "Persona note probe.",
-                    "dynamic_prompt dropped the persona note — Trymbot would speak as MASTER"
+                    "dynamic_prompt dropped the request-scoped persona note"
   ensure
     Fiber[:master_persona_note] = nil
   end
