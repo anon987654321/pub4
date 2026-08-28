@@ -173,7 +173,14 @@ module Pub4
 # are unattributed: the shared .sidebar, .widgets and .widget-search rules all
 # stayed live because amber still renders them, so the remainder is not there.
 # Recorded rather than chased, and recorded rather than hidden.
-BASELINES = { "undefined_class" => 4, "unused_selector" => 156 }.freeze
+# unused_selector 156 -> 154 on 2026-08-28. Not work anyone did on the CSS: the
+# viewport pass added markup that names two selectors this counted orphaned.
+# The ceiling follows it down because slack here is the failure the ratchet is
+# for -- room the next change grows into without anyone seeing it.
+#
+# undefined_class stays at 4 and currently reads 10. That is real debt, not
+# slack, and it is being worked separately; do not close the gap by raising it.
+BASELINES = { "undefined_class" => 4, "unused_selector" => 154 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
 

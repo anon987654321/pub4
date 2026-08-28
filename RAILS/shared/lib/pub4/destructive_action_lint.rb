@@ -47,7 +47,13 @@ module Pub4
     # entry. A handful are moderation actions where a prompt is the right answer.
     # That split is per-site judgement, which is what the register said all along;
     # what it lacked was a number that could not drift while nobody looked.
-    BASELINES = { "unconfirmed_destroy" => 30 }.freeze
+#
+# 30 -> 29 on 2026-08-28. The detector now reads what the register counted
+# by hand, and a ceiling above the real number is room the next change
+# grows into silently, so it follows the measurement down. Which site left
+# is not attributed: several views moved in the same window and the drop is
+# one of them, which is worth less than the ceiling being true.
+BASELINES = { "unconfirmed_destroy" => 29 }.freeze
 
     Finding = Struct.new(:kind, :file, :line, :detail)
 
