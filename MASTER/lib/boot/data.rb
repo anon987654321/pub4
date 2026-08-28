@@ -16,12 +16,12 @@ module Master
       Timeout.timeout(YAML_LOAD_TIMEOUT_S) do
         YAML.safe_load_file(path, aliases: true, symbolize_names:) || default
       end
-    rescue Psych::Exception, Errno::ENOENT, Errno::EACCES => e
+    rescue Errno::ENOENT, Errno::EACCES => e
       warn("load_yaml: #{e.message}")
       default
-    rescue Timeout::Error => e
+    rescue Psych::Exception, Timeout::Error => e
       warn("load_yaml: #{path}: #{e.message}")
-      default
+      raise
     end
 
     def validate_data!(root: ROOT, bus: nil)

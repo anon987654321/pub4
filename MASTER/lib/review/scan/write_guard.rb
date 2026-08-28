@@ -43,7 +43,7 @@ module Master
           Verdict.new(introduced: findings(path:, content:).select { |f| (before[key(f)] -= 1).negative? })
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "WriteGuard#verdict", severity: :load_bearing, path:)
-          Verdict.new(introduced: [])
+          Verdict.new(introduced: [{ rule: :write_guard_error, line: 0, message: e.message, severity: :error }])
         end
 
         private

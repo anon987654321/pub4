@@ -44,7 +44,7 @@ module Master
             data.fetch("veto_patterns", {})
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "VetoPatternRule.load_patterns", severity: :load_bearing)
-            {}
+            raise
           end
         end
       end
