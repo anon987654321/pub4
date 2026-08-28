@@ -45,8 +45,6 @@ class GoogleEnhancedConversionsJob < ApplicationJob
   def find_order(order_id)
     if defined?(Marketplace::Order)
       Marketplace::Order.find_by(id: order_id)
-    elsif defined?(MarketplaceOrder)
-      MarketplaceOrder.find_by(id: order_id)
     else
       # Fallback: caller passes a duck-typed object in tests
       nil

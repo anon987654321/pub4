@@ -3,7 +3,6 @@
 class Reaction < ApplicationRecord
   # Engine-ized Shared (tranche10)
   tracks_activity created: "ReactionCreated", source_vertical: "social"
-  include Shared::Notifiable
 
   KINDS = %w[like love laugh wow sad angry local].freeze
 

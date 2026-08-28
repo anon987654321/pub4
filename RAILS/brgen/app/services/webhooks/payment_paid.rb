@@ -6,11 +6,7 @@ module Webhooks
     module_function
 
     def find_order_by_id(id)
-      if defined?(Marketplace::Order)
-        Marketplace::Order.find_by(id: id)
-      elsif defined?(MarketplaceOrder)
-        MarketplaceOrder.find_by(id: id)
-      end
+      Marketplace::Order.find_by(id: id) if defined?(Marketplace::Order)
     end
 
     def find_checkout_by_id(id)
