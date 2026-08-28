@@ -90,7 +90,7 @@ ownership:
   tools/:
     purpose: creative and utility scripts outside core deploy
     risk: medium
-    check: MASTER/tools/bin/verify
+    check: MASTER/tools/verify
   archive/:
     purpose: historical restore notes
     risk: low
