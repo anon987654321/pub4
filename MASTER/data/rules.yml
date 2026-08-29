@@ -4111,3 +4111,22 @@ stale_namespaces:
 
 # Merged from former auth_profiles.yml — auth profile lanes (OAuth/CLI before
 # API keys, OpenCrabs/OpenClaw pattern).
+
+# How MASTER writes a business plan, and prices what it sells. Distilled from the
+# Innovasjon Norge pitch in README.md and its sources. A plan has to survive a
+# board fact-checking it: every number a real estimate, every claim mapped to a
+# criterion below.
+business_plan:
+  lead: purple_cow            # open bold, naming the one remarkable thing; fitting in is failing (Godin)
+  structure: [idea, business, ask, horizon, proof]   # five tight movements — hierarchy and whitespace (Bringhurst)
+  numbers: accurate_estimates_only                    # never a placeholder or a figure the plan cannot defend
+  scope: honest                                        # say plainly what the ask does NOT cover
+  criteria: [innovation, scalability, internationalisation, value_creation, sustainability]
+  # Monetisation follows the same rule: sell the remarkable thing people seek out
+  # and tell others about — not a safe product pushed by ads. Price the purple
+  # cow, and let word of mouth from the right early users carry it (Godin).
+  monetisation: purple_cow
+  sources:
+    - "Robert Bringhurst, The Elements of Typographic Style — hierarchy and whitespace"
+    - "Seth Godin, Purple Cow — be remarkable or be invisible; the same rule prices what you sell"
+    - "Innovasjon Norge startup grant criteria — en.innovasjonnorge.no/article/startups"
