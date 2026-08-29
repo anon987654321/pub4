@@ -52,12 +52,16 @@ meta:
 # seventeen garments needs the garment to be the only variable, and a model's
 # face is the first thing an eye goes to. It also means amber ships no
 # likeness at all, which is the honest default for someone else's clothes.
+# Kept short on purpose. It is prepended to all seventeen garments, so every
+# token it spends is spent seventeen times -- and at its first length the amber
+# prompts ran to 101 tokens. FLUX carries the full text on T5 and would not
+# have truncated, but the SDXL fallback lane is CLIP-only at 77 and would have
+# silently dropped the tail, which is where the camera and the aperture are.
 mannequin: >-
-  A featureless light grey humanoid mannequin, #C8C9CC matte polymer, smooth
-  Tesla-bot proportions with no face and no hair, standing relaxed in direct
-  morning sunlight against a warm off-white #F2EFE9 seamless backdrop, hard sun
-  from camera-left throwing a crisp shadow to the right, shot on a Hasselblad
-  X2D with a 90mm at f/5.6 from three metres, full length, centred
+  A faceless light grey #C8C9CC matte humanoid robot mannequin, Tesla-bot
+  proportions, standing in hard morning sun against a warm off-white #F2EFE9
+  backdrop, shadow thrown camera-right, Hasselblad X2D 90mm at f/5.6 from three
+  metres, full length
 
 # The dating app, and it is Ragnhild all the way down.
 #
