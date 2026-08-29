@@ -2622,6 +2622,13 @@ class TestDilla < Minitest::Test
       output = File.join(dir, "pins.wav")
       env = { "BARS" => "2", "SONITEX" => "heavy", "PAD_VOL" => "60", "DILLA_OUTPUT_DIR" => dir }
       env["DILLA_SCRATCH_DIR"] = File.join(dir, "scratch")
+      # This process has already loaded the engine, so its own ENV carries what the
+      # engine writes at load -- eleven COPY_MACHINE/LPG/VOICE_STACK keys since the
+      # ringtone layer defaulted on. A child inherits those and reads them as things
+      # the caller typed. DILLA_USER_PINNED_KEYS is the declaration dilla.rb offers
+      # for exactly an environment that is not a clean shell, so the run states its
+      # pin set the way a restart does.
+      env["DILLA_USER_PINNED_KEYS"] = env.keys.join(",")
       _out, err, status = Open3.capture3(env, RbConfig.ruby, ENGINE, "dilla", output)
       assert status.success?, "the render must succeed before its manifest means anything: #{err}"
 
