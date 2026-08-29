@@ -4,7 +4,7 @@ Deploy and VPS policy. Agent/runtime policy lives in `MASTER/DECISIONS.md`.
 
 ## No Fourth Public App Until brgen Boundaries Hold (2026-07)
 
-**Status:** accepted  
+**Status:** accepted
 **Context:** brgen already hosts many verticals (social, marketplace, dating, playlist, takeaway, TV, maps, live, messenger) in one deployable Rails app. Historical restarts (aight → ai3 → pub2 → pub3 → pub4) repeatedly expanded surface before isolation and shared contracts were boring.
 
 **Decision:** Do not add a **fourth public Rails app** (beyond brgen, amber, bsdports) until:
