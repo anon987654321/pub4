@@ -1,25 +1,19 @@
 name: RAILS Tests
 
-# Manual dispatch only. The GitHub Actions billing lock that first paused these
-# jobs was cleared on 2026-07-18; the push/pull_request block below was left
-# commented out and never restored with master-tests.yml's. Nothing outside this
-# file is holding it, so uncommenting is all that is needed — do not read the
-# comment-out as an external block.
+# Runs on every push to main and on pull requests, the same as master-tests.yml.
+# RAILS validated on each push is what makes small frequent pushes safe — the
+# alternative, hoarding a week of work for one mega-push, is how a late failure
+# strands everything.
 #
 # Local equivalent:
 #   cd RAILS/<app> && bundle exec bin/ci
 # Or via root: OPENBSD/bin/check-rails --profile=contributor
 # Full: ruby RAILS/gates/runner.rb domain_alignment production etc.
 on:
+  push:
+    branches: [main]
+  pull_request:
   workflow_dispatch:
-  # push:
-  #   paths:
-  #     - "RAILS/**"
-  #     - ".github/workflows/rails-tests.yml"
-  # pull_request:
-  #   paths:
-  #     - "RAILS/**"
-  #     - ".github/workflows/rails-tests.yml"
 
 jobs:
   test:
