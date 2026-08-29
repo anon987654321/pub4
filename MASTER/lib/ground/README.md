@@ -1,9 +1,13 @@
 # Ground
 
-Axioms, law resolution, memory/evidence store, and sandbox policy rules.
+**Ground is where MASTER's law stops being a document and becomes something the
+runtime can ask a question of.** Axioms, law resolution, the memory and evidence
+store, and the sandbox policy all live here, and `lib/master.rb` loads them
+before anything else can run.
 
-- `rules.rb`, `law_resolver.rb` — kernel-tier rule concepts (not the removed `kernel/` dir)
-- `axioms/` — Rails doctrine and platform pillars
-- `repo_mining/` — reference cluster catalogs for audits
+`rules.rb` and `law_resolver.rb` hold the rule concepts themselves. `axioms/`
+carries the Rails doctrine and the platform pillars. `repo_mining/` keeps the
+reference cluster catalogs an audit compares against.
 
-Loaded early by `lib/master.rb`; most rules are data-driven via `data/rules.yml`.
+Almost nothing here is a rule written in Ruby. The rules are data, in
+`data/rules.yml`, and this directory is the machinery that resolves them.

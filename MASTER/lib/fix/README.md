@@ -1,17 +1,22 @@
-# Loop architecture map
+# Fix
 
-The loop subsystem implements the runtime feedback architectures described in the project docs.
+**A scanner that only reports is half a system; fix is the other half.** It scans,
+repairs, verifies, and commits, and every mutation it makes is reversible before
+it makes it.
 
-- `fix_loop.rb` and `fix_loop/`: iterative scan, repair, verification, and commit passes.
-- `fix_attempt.rb`, `violation.rb`, `severity.rb`, `constants.rb`: fix-loop value objects and shared thresholds.
-- `rule_loop.rb`: one-rule convergence with candidate scoring and regression checks.
-- `watch_loop.rb` and `watcher.rb`: file-change-driven scans.
-- `heartbeat.rb`: scheduled health and self-application checks.
-- `homeostat.rb`: runtime pressure and adaptive behavior.
-- `governor.rb`: rate/throughput limiting across loop runs.
-- `self_check.rb`: self-application safety checks before a loop mutates its own source.
-- `diff_stager.rb`, `patch_applier.rb`, and `rollback.rb`: reversible mutation path.
-- `conflict_resolver.rb`: competing-fix resolution.
-- `propose_tree.rb`: proposal evolution path.
+`fix_loop.rb` and `fix_loop/` run the iterative pass. `fix_attempt.rb`,
+`violation.rb`, `severity.rb` and `constants.rb` are the value objects and the
+shared thresholds that pass carries. `rule_loop.rb` converges one rule at a time,
+scoring candidates and checking for regressions. `watch_loop.rb` and `watcher.rb`
+scan on file change; `heartbeat.rb` scans on a schedule.
 
-The numbered architecture labels in older comments are historical navigation aids; these filenames are canonical.
+Three files hold the pressure back. `homeostat.rb` reads runtime pressure and
+adapts. `governor.rb` limits rate and throughput across runs. `self_check.rb`
+stands in front of the one dangerous case, a loop about to mutate its own source.
+
+The reversible path is `diff_stager.rb`, `patch_applier.rb` and `rollback.rb`.
+`conflict_resolver.rb` settles two fixes that want the same lines, and
+`propose_tree.rb` is where a proposal evolves before either of them sees it.
+
+The filenames are canonical. Any numbered architecture label you find in a
+comment names nothing that exists.

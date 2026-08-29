@@ -267,6 +267,6 @@ paused (via its own `/var/db/pub4_all_apps` flag) after a threshold
 mismatch caused a brief full outage during a routine multi-app restart —
 see `OPENBSD/resource_guard.sh`'s header comment for the full story before
 re-enabling or retuning it. Restarting more than one or two of these apps
-back-to-back will spike load into the 4-7 range for a few minutes purely
+back-to-back spikes load into the 4–7 range for a few minutes purely
 from cold-start warm-up; that's expected, not a crisis, as long as swap
 isn't also climbing.

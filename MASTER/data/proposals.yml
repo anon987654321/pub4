@@ -128,7 +128,7 @@ proposals:
       no production path. Either wire decide() into Io::Shell or fold its
       patterns into the BLOCKLIST; both change what the shell tool refuses, so
       it is an operator decision rather than a refactor.
-    note: >
+
       Wired into Io::Shell#preflight_error as sandbox_error, :deny only — :ask is
       decide()'s default arm and @governor already owns approval. Two tests in
       test_runtime_hardening.rb assert the wiring rather than the policy: six denied

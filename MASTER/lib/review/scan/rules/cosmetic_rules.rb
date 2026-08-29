@@ -10,6 +10,13 @@ module Master
 
         ABBREV_IDENT_RE = /\b(?:def|class|module|\|)\s+.*\b(tmp|idx|cfg|ctx|num|val|obj|str|arr|buf|temp|ret)\b/.freeze
         EN_DASH_RANGE_RE = /\b\d+\s?-\s?\d+\b/.freeze
+        # Three things wear the shape of a range without being one, and this tree is
+        # full of all three: an ISO date is a single day, a model or version id is a
+        # name, and a hyphen inside a regex character class or a code span is syntax.
+        # Blank them before looking, or the rule reports the repo's own decision log
+        # as a typography defect — 200 of 207 findings over the tracked markdown were
+        # dates, and one was `claude-opus-4-8`.
+        EN_DASH_NOT_A_RANGE = %r{`[^`]*`|\b\d{4}-\d{2}(?:-\d{2})?\b|\[[^\]]*\]|[A-Za-z][\w.]*-\d[\w.]*(?:-[\w.]+)*}.freeze
 
         module_function
 
@@ -108,7 +115,7 @@ module Master
           src.each_line.with_index(1).filter_map do |line, number|
             stripped = line.strip
             next if stripped.start_with?("#", "//", "detect_lexical:", "- id:")
-            next unless stripped.match?(EN_DASH_RANGE_RE)
+            next unless stripped.gsub(EN_DASH_NOT_A_RANGE, " ").match?(EN_DASH_RANGE_RE)
             next if stripped.match?(/^\s*-\s+\w/) # YAML list item
             finding(line: number, message: "numeric range — use en dash: 45–75 not 45-75")
           end

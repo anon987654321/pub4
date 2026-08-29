@@ -105,6 +105,4 @@ When tracking these projects:
 - arXiv: Search "constitutional AI", "code governance", "LLM alignment"
 - Trending: GitHub Trending by language (Ruby, Python, Go)
 
----
-
-Last updated: 2026-07-14
+Last reviewed against the live sources on 2026-07-14
