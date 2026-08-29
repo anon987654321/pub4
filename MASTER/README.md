@@ -94,7 +94,7 @@ amount of engineering and validation in between, maybe a spacecraft.
 
 #### 🧭 Running it
 
-Install the dependencies and start [the master command](bin/master). The
+Install the dependencies and start [MASTER](bin/master). The
 operator commands sit beside it, and the deploy notes are in [the OpenBSD
 folder](../OPENBSD). Read [START_HERE](START_HERE.md), then [AGENTS](AGENTS.md),
 to work inside it; [DECISIONS](DECISIONS.md) explains anything that looks strange
