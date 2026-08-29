@@ -108,6 +108,12 @@ that is what `git log` and the decision records are for.
 
 ## House rules
 
+**Every README carries one voice.** It opens with a bold, visionary paragraph, then
+plain Strunk & White prose a regular person follows — no code blocks, no lists, no
+tables — and it passes `bin/pub4 lint`, the same rules it points to. Redo a folder's
+README before you push that folder, so the door to it is never stale. `MASTER/README.md`
+is the reference.
+
 **Ruby and zsh, not GNU text tools.** `sed`, `awk`, `find`, `head`, `tail`, `wc`,
 `perl` and `python` are banned in agent shell calls and committed scripts: BSD
 variants break GNU idioms and this repo deploys to OpenBSD. Use `ruby -e`, zsh
