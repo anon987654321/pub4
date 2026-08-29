@@ -4962,56 +4962,6 @@ def arrange_loop_progression(pads, needed_chords, _cfg)
   [looped, phases]
 end
 
-# The pool the loop rotates through instead of repeating one progression eight
-# times. All four documented transcriptions are centred on C — Slum Village in C
-# minor, Flying Lotus in C major — so the movement between them is parallel
-# major/minor, the modal interchange both producers actually used, not a key
-# jump. A render that stays on one four-chord loop for two minutes is the exact
-# "sounds the same the whole way through" the operator heard; rotating whole
-# progressions across the sections is what fixes it. Off with PROG_ROTATE=0,
-# which falls straight back to arrange_loop_progression.
-PROG_ROTATION_POOL = %i[
-  slum_village_intro_documented flylo_camel_documented
-  slum_village_players_documented flylo_beginners_falafel_documented
-].freeze
-
-def prog_rotation_enabled? = ENV.fetch("PROG_ROTATE", "1") != "0"
-
-# Concatenate whole progressions from the pool, one after another, until the
-# section length is filled, then trim. Each progression keeps its own chords, so
-# the harmony genuinely changes section to section rather than looping. Returns
-# nil when fewer than two of the pool resolve (e.g. ARTIST_VERIFIED_ONLY hides
-# them), so the caller falls back to the single-progression loop.
-def arrange_rotating_progressions(needed_chords, _cfg)
-  # Resolve each pool name to its OWN chords. dilla_progression is wrong here: it
-  # reads ENV["PROGRESSION"] first and would hand back the default track for every
-  # name. safe_producer_progression takes the name directly, and voice-leading it
-  # matches the pad shape arrange_loop_progression would have produced.
-  pool = PROG_ROTATION_POOL.filter_map do |name|
-    pads = safe_producer_progression(name)
-    pads && pads.length >= 2 ? [name, voice_led_pad_progression(pads)] : nil
-  end
-  return nil if pool.length < 2
-
-  out = []
-  phases = []
-  cycle = 0
-  while out.length < needed_chords
-    _name, pads = pool[cycle % pool.length]
-    pads.each do |chord|
-      out << chord
-      phases << (cycle.zero? ? :exposition : :main)
-    end
-    cycle += 1
-  end
-  out = out.first(needed_chords)
-  phases = phases.first(needed_chords)
-  (1..[2, phases.length].min).each { |k| phases[-k] = :recapitulation }
-  dmesg("prog rotation: #{pool.map { |n, _| n }.join(' → ')} over #{out.length} chords",
-        unit: "harm0", parent: "dilla0")
-  [out, phases]
-end
-
 def log_progression_phases!(track, bpm, pads, phases)
   log_progression!(track, bpm, pads, phases)
 end
@@ -6560,7 +6510,7 @@ end
 # four_seven; a sample that already has air needs far less or none.
 SAMPLE_EXCITE_MIX = (ENV["SAMPLE_EXCITE"] || "0").to_f.clamp(0.0, 1.0)
 SAMPLE_EXCITE_HZ = (ENV["SAMPLE_EXCITE_HZ"] || "2200").to_f
-SAMPLE_EXCITE_DRIVE = (ENV["SAMPLE_EXCITE_DRIVE"] || "1.0").to_f.clamp(1.0, 20.0)
+SAMPLE_EXCITE_DRIVE = (ENV["SAMPLE_EXCITE_DRIVE"] || "1.8").to_f.clamp(1.0, 20.0)
 SAMPLE_EXCITE_CHARACTER = (ENV["SAMPLE_EXCITE_CHARACTER"] || "even").to_s.downcase
 
 def sample_excite_shaper
@@ -15947,18 +15897,15 @@ def speak_over_track!(mp3_path, duration, _bpm = 90.0)
   rate = speech_tts_rate
   pitch = speech_tts_pitch
   segments = []
-  # Seeded so narration lands the same way under a RENDER_SEED pin; unpinned it
-  # falls back to the clock exactly as before.
-  rng = render_rng("speech")
   # Never talk right at t=0 — that reads as a scripted "intro" every time a
   # track starts/loops. Let the track establish itself first.
-  t = 10.0 + rng.rand * 14.0
+  t = 10.0 + rand * 14.0
   idx = 0
   max_seg = speech_max_segments
   while t < duration
     break if max_seg && idx >= max_seg
     talk_len = speech_talk_length
-    text = continuous_speech_text(talk_len, seed: idx + rng.rand(100_000))
+    text = continuous_speech_text(talk_len, seed: idx + rand(100_000))
     seg_path = "#{mp3_path}.voice#{idx}.mp3"
     ok = false
     Open3.popen2(Gem.ruby, TTS_WORKER, voice, rate, pitch, seg_path) do |stdin, _stdout, wait|
@@ -16254,11 +16201,7 @@ DILLA_STYLE_DEFAULTS = {
   "PAD_ATTACK" => "90",
   "PAD_RELEASE" => "1800",
   "PAD_LEGATO_VAR" => "1",
-  # 0 takes the single-pass morph render path, where the pad program actually
-  # changes chord to chord (morph_patch_for_chord). At 1 the multi-layer stack
-  # renderer bypasses the morph entirely, so the synth type never moved however
-  # many morph knobs were set — the "same synth sound" the whole way through.
-  "PAD_LAYERS" => "0",
+  "PAD_LAYERS" => "1",
   # Quieter choir so Rhodes/Prophet aren't buried under oohs.
   # Vocals off by default. RAP_VOCAL=<slug> or CHOIR_VOX=1 re-enables.
   "CHOIR_VOX" => "0",
@@ -16361,13 +16304,9 @@ DILLA_STYLE_DEFAULTS = {
   "PAD_TEXTURE" => "1",
   "STREAM_CREATIVE_FREEDOM" => "1",
   "SIDECHAIN_STYLE" => "wonky",
-  # Was donuts_warm + vinyl_hot — tape saturation stacked on a hot vinyl chain on
-  # top of the console strip and the exciter, so much drive the synths crushed
-  # into one indistinct wall. subtle Sonitex over the gentlest tape voicing lets
-  # the parts through: smooth silk, not overdrive.
-  "SONITEX" => "subtle",
-  "SONITEX_PRESET" => "subtle",
-  "ANALOG_CHAIN" => "cassette",
+  "SONITEX" => "donuts_warm",
+  "SONITEX_PRESET" => "donuts_warm",
+  "ANALOG_CHAIN" => "vinyl_hot",
   "DRUM_PRESET" => "dilla_slight",
   # Quieter drum bus — kit sits under pads/vox (~−3…−4 dB vs previous hot path).
   "WONKY_OVERLAY_GAIN" => "0.95",
@@ -17985,7 +17924,11 @@ end
 # turned on without an ear on it. The cost is disk, and the crate is the
 # place that has been expensive rather than this.
 def export_render_stems!(destination, drum_tmp, harmonic_tmp, events, duration, cfg, use_stem_harmony:)
-  return unless ENV["STEM_EXPORT"] != "0" || ENV["KEEP_STEMS"] != "0"
+  # && , not ||. The line above says "unless STEM_EXPORT=0 or KEEP_STEMS=0",
+  # which is this: write only when neither is off. As an || it skipped only
+  # when BOTH were "0", so setting either one alone did nothing and every
+  # render left a <name>_stems directory behind whatever the caller asked.
+  return unless ENV["STEM_EXPORT"] != "0" && ENV["KEEP_STEMS"] != "0"
   stem_dir = File.join(File.dirname(destination), "#{File.basename(destination, '.*')}_stems")
   FileUtils.mkdir_p(stem_dir)
   FileUtils.cp(drum_tmp, File.join(stem_dir, "drums.wav")) if File.exist?(drum_tmp)
@@ -26453,9 +26396,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
                                          when :la_beat
                                            arrange_la_beat_progression(pads, needed_chords, cfg)
                                          when :loop
-                                           lp = (prog_rotation_enabled? &&
-                                                 arrange_rotating_progressions(needed_chords, cfg)) ||
-                                                arrange_loop_progression(pads, needed_chords, cfg)
+                                           lp = arrange_loop_progression(pads, needed_chords, cfg)
                                            [lp[0], lp[1], nil]
                                          else
                                            fp = arrange_fugue_progression(pads, needed_chords, cfg)
@@ -31335,7 +31276,7 @@ TAPE_LOSS_HZ = (ENV["TAPE_LOSS_HZ"] || 0).to_f.clamp(0.0, 20_000.0)
 # point, and is not reproducible by running the same stage on the mix.
 # 0.22. Left and right run as separate instances one seed apart, which is the
 # whole reason this exists — see the note below on why it is not mono.
-CONSOLE_STRIP = (ENV["CONSOLE_STRIP"] || 0.06).to_f.clamp(0.0, 1.0)
+CONSOLE_STRIP = (ENV["CONSOLE_STRIP"] || 0.22).to_f.clamp(0.0, 1.0)
 
 # Left and right run as separate instances, offset by one seed. On a desk a
 # stereo pair IS two channels, built to the same design and measuring
