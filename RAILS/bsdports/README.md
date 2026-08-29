@@ -1,27 +1,15 @@
 # bsdports
 
-OpenBSD ports search — FTS5 live search, dependencies, advisories, maintainers.
+**Search the whole OpenBSD ports tree as fast as you can type.** bsdports is
+full-text live search over ports with their dependencies, advisories and
+maintainers, on Rails 8.1, SQLite with FTS5, Falcon, Hotwire and relayd.
 
-## Stack
+Deploy it with `doas zsh RAILS/bsdports/bsdports.sh`, then prove it answers on
+port 47312 at `/up` and `/health`. Both, not one: relayd keeps terminating TLS
+after the app has gone, so a site that looks up from outside can be a closed port
+underneath.
 
-Rails 8.1 · SQLite · Falcon · Hotwire · OpenBSD relayd
-
-## Deploy
-
-```zsh
-doas zsh RAILS/bsdports/bsdports.sh
-curl -fsS http://127.0.0.1:47312/up
-curl -fsS http://127.0.0.1:47312/health
-```
-
-## Status
-
-Feature matrix: `apps.yml` → `bsdports`.
-
-```zsh
-# Sync import from local tree (OpenBSD VPS: /usr/ports)
-PLATFORM=openbsd BSDPORTS_TREE_PATH=/usr/ports bin/rails ports:import_now
-
-# Queue nightly-style import
-bin/rails ports:import
-```
+The ports data arrives by import. `bin/rails ports:import_now` with
+`PLATFORM=openbsd` and `BSDPORTS_TREE_PATH=/usr/ports` reads a local tree
+immediately; `bin/rails ports:import` queues the nightly-style run instead. What
+the app is meant to do, as against what it does, is `apps.yml` under `bsdports`.

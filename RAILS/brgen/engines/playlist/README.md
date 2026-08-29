@@ -1,31 +1,26 @@
 # brgen playlist
 
-Music-sharing and listening vertical for brgen, served at `playlist.<city>`
-(`playlist.brgen.no`, `playlist.lsangeles.com`). A mountable Rails engine — see
-[`../../ENGINES.md`](../../ENGINES.md). Topology: [`../../AGENTS.md`](../../AGENTS.md).
+**Music is better when someone is listening with you.** playlist is a mountable
+Rails engine served at `playlist.<city>` — `playlist.brgen.no`,
+`playlist.lsangeles.com`. `../../ENGINES.md` is the recipe; `../../AGENTS.md` is
+the topology.
 
-## What it is
+Users build playlists and sets, import hosted tracks, and collaborate on them.
+Synchronised listening parties let people hear the same thing at the same time,
+with party chat and timestamped comments against the audio. `DillaSketch` ties a
+track to the studio's dilla engine so `render_audio` can generate one. Likes and
+listens drive discovery.
 
-Users build playlists and sets, import hosted tracks, and collaborate on them;
-synchronized **listening parties** let people listen together with party chat and
-timestamped comments. `DillaSketch` ties tracks to the studio/dilla engine for
-generated audio (`render_audio`). Likes and listens drive discovery.
+The `playlist_` tables, prefixed by `isolate_namespace Playlist`, are `Playlist`,
+`Track`, `PlaylistTrack`, `Set`, `SetTrack`, `Collaboration`, `ListeningParty`,
+`PartyMessage`, `Listen`, `Like`, `TimestampedComment`, `DillaSketch` and
+`AudioVersion`.
 
-## Models (`playlist_*` tables)
+Routes are drawn on `Playlist::Engine` and mounted under `constraints(subdomain:
+PLAYLIST_SUBDOMAINS)`. Playlists and sets nest tracks, collaborations and dilla
+sketches; sets add likes and a `listening_party` with its party messages;
+`hosted_tracks` and `listens` round out import and playback.
 
-`Playlist`, `Track`, `PlaylistTrack`, `Set`, `SetTrack`, `Collaboration`,
-`ListeningParty`, `PartyMessage`, `Listen`, `Like`, `TimestampedComment`,
-`DillaSketch`, `AudioVersion`.
-
-## Routes
-
-Drawn on `Playlist::Engine`, mounted under `constraints(subdomain: PLAYLIST_SUBDOMAINS)`.
-Playlists and sets nest tracks, collaborations, and dilla sketches; sets add
-likes and a `listening_party` with party messages; `hosted_tracks` and `listens`
-round out import and playback.
-
-## Boundaries
-
-Depends on `pub4-shared` for `User`, auth, tenancy, and the design system.
-`isolate_namespace Playlist` gives the `playlist_` table prefix; the host reaches
-its helpers as `playlist.playlist_url(…, subdomain: "playlist")`.
+The engine depends on `pub4-shared` for `User`, authentication, tenancy and the
+design system. The host reaches its helpers as `playlist.playlist_url(…,
+subdomain: "playlist")`.

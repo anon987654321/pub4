@@ -1,6 +1,6 @@
 # Amazon Associates — go-live for brgen.no
 
-You already have Associates approval in **Sweden, Netherlands, France** (and others).  
+You already have Associates approval in **Sweden, Netherlands, France** (and others).
 PA-API is dead; we use **tags now** + **Creators API** once you have 10 qualifying sales / 30 days.
 
 ## 1. ENV (VPS `/etc/brgen.env` or equivalent)
@@ -32,8 +32,8 @@ Legacy aliases still accepted: `AMAZON_ACCESS_KEY` / `AMAZON_SECRET_KEY` map to 
 
 Replace:
 
-- `RAILS/shared/app/services/shared/amazon_associates.rb` ← new file in this folder  
-- Add `RAILS/brgen/lib/tasks/affiliate_amazon.rake` ← new rake tasks  
+- `RAILS/shared/app/services/shared/amazon_associates.rb` ← new file in this folder
+- Add `RAILS/brgen/lib/tasks/affiliate_amazon.rake` ← new rake tasks
 
 `Shared::AmazonMarketplace` already has SE/NL/FR/DE — no change required unless you want different SERVED_BY defaults.
 
@@ -58,7 +58,7 @@ AmazonAssociates.seed_asins!([
 ])
 ```
 
-Links are built via `Shared::AmazonMarketplace.product_url` with the correct tag.  
+Links are built via `Shared::AmazonMarketplace.product_url` with the correct tag.
 They appear through the existing `Affiliate.deals` → sidebar like TradeDoubler.
 
 Drive traffic → get **10 qualifying sales in 30 days** → Creators API unlocks.
@@ -76,19 +76,19 @@ bin/rails affiliate:import          # pulls Amazon + TradeDoubler
 
 ## 5. Norway readers
 
-- No `amazon.no`.  
-- `Shared::AmazonMarketplace` maps `NO → DE` by default.  
+- No `amazon.no`.
+- `Shared::AmazonMarketplace` maps `NO → DE` by default.
 - If you prefer SE for Nordic users, set `AMAZON_MARKET=SE` and ensure `AMAZON_ASSOCIATE_TAG_SE` is set (you have SE approval).
 
 ## 6. Checklist
 
-- [ ] Set `AMAZON_ASSOCIATE_TAG_SE` / `_NL` / `_FR` (and DE if approved)  
-- [ ] `bin/rails affiliate:amazon_status` shows tags  
-- [ ] Seed a small set of high-intent ASINs  
-- [ ] Confirm sidebar shows non-placeholder Amazon rows  
-- [ ] Confirm a test click lands on the right storefront with `?tag=`  
-- [ ] After 10 sales: create Creators API credential (EU / 3.2)  
-- [ ] Set Creators ENV → `affiliate:import`  
+- [ ] Set `AMAZON_ASSOCIATE_TAG_SE` / `_NL` / `_FR` (and DE if approved)
+- [ ] `bin/rails affiliate:amazon_status` shows tags
+- [ ] Seed a small set of high-intent ASINs
+- [ ] Confirm sidebar shows non-placeholder Amazon rows
+- [ ] Confirm a test click lands on the right storefront with `?tag=`
+- [ ] After 10 sales: create Creators API credential (EU / 3.2)
+- [ ] Set Creators ENV → `affiliate:import`
 
 ## Files in this package
 

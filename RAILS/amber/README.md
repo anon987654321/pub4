@@ -1,80 +1,74 @@
 # amber
 
-Wardrobe intelligence — garments, outfits, the KonMari declutter loop, a style
-timeline, and recommendations that can explain themselves.
+**A wardrobe that knows what is in it, what you actually wear, and what it is
+guessing at.** amber holds garments and outfits, runs the KonMari declutter loop,
+keeps a style timeline, and makes recommendations that can say where they came
+from. Rails 8.1 on SQLite behind Falcon, with Hotwire, Active Storage and relayd,
+on port 61352.
 
-Regenerated 2026-08-11 against the tree rather than against the last README:
-21 services, 8 jobs, 30 controllers, 31 models, 35 test files.
+Deploy it with `doas zsh RAILS/amber/amber.sh` and prove it on
+`http://127.0.0.1:61352/up`. Check the port and not the site: every deploy of any
+app sheds amber, and relayd keeps answering TLS while it is down, so the failure
+arrives as `curl 000` rather than a 5xx. `ALLOW_AMBER_DOWN=1` waives that check
+in `deploy-smoke.sh` where being down is the policy.
 
-## Stack
+`default_locale` is `:nb`, with `:en` available and a switcher in the footer.
+Chrome, empty states and every controller flash go through I18n. The app's own
+copy is in `config/locales/nb.yml` and `en.yml` under `flash:`; the sentences the
+shared engine owns, `not_authorized` and `rate_limited`, come from
+`shared.flash.*`. `raise_on_missing_translations` is on in test, so a key that
+does not resolve fails a run instead of rendering a span nobody reads.
 
-Rails 8.1 · SQLite · Falcon · Hotwire · Active Storage · OpenBSD relayd · port 61352
+### What each claim actually rests on
 
-## Deploy
+The declutter loop is complete: a joy score, challenges, last-chance outfits, and
+a thirty-day box in `DeclutterHygieneJob`. The photo pipeline is
+`WardrobeMediaJob` — variants, portrait polish, colour — and not an ML cut-out.
+`RemoveBackgroundJob` and `SegmentGarmentImageJob` are deprecated shells that
+remove nothing and segment nothing; they mark an honest status, no-op, and exist
+only for queues still in flight. `EmbedGarmentJob` is an alias of
+`FingerprintGarmentJob`, and there are no embeddings anywhere: a fingerprint is a
+local `zlib` CRC over the image bytes, which finds a re-upload and never a
+lookalike. `DuplicateDetector` follows from that — it groups on an exact
+`duplicate_key`, so two similar shirts are not duplicates to it.
 
-```zsh
-doas zsh RAILS/amber/amber.sh
-curl -fsS http://127.0.0.1:61352/up
-```
+The intelligence is honest about being heuristic. Real AI runs through OpenRouter
+on `google/gemini-2.0-flash-001` when `OPENROUTER_API_KEY` is set, and
+deterministic heuristics run otherwise, with the UI saying which one answered.
+`TasteRanker` combines declared `StylePreference` rows with joy, wear count,
+recency and life phase at fixed weights — a model, not a learned one.
+`StyleAssistant` produces the daily look deterministically per user and date,
+weather-aware, and persists nothing until you save it. The weather itself is
+open-meteo for Bergen alone, its latitude and longitude constants, cached fifteen
+minutes with negative caching and bounded at two seconds to connect and three to
+read, because it sits in front of the dashboard.
 
-Every deploy of any app sheds amber, and relayd keeps answering TLS while it is
-down — so the failure looks like `curl 000`, not a 5xx. Check the port directly.
-`ALLOW_AMBER_DOWN=1` waives it in `deploy-smoke.sh` when that is the policy.
+The scores are targets rather than judgements. `WardrobeGap` compares your closet
+against fixed essentials counts per category. The sustainability score scales and
+caps wear count and adds a bonus for sparking joy; it is not a lifecycle
+assessment. Tips come from `WardrobeAnalytics` nudges and from
+`ClosetOrganization`'s care, storage, zoning and restraint registers, each naming
+the principle it is applying. Style sessions carry a calendar and a status and
+nothing more. There are no store feeds at all: amber imports no product feed, and
+`ShopTheLook` ranks the affiliate links you added yourself — its remote half
+needs `TRADEDOUBLER_TOKEN`, which lives on brgen, and it says so when that half
+is dark.
 
-## Heir / low-ops
+### Guests, and the gate that is not one
 
-See **[HEIR.md](./HEIR.md)** — what runs alone, health checks, env keys, honesty map.
+`User` carries a `guest` column, so an anonymous visitor gets a soft
+`Current.user` and can use the product without signing up.
+`allow_unauthenticated_access` is therefore a no-op here, and logs that it is in
+development and test; `require_real_user` is the identity gate that means
+anything. `Shared::PruneGuestUsersJob` prunes the guest rows nightly.
 
-## Language
+Two things are fragile. amber shares one 1 GB box with brgen, bsdports and
+MASTER, and needs roughly twenty seconds to signal ready — under load Falcon
+kills the worker before that window closes, which reads as a broken app and is
+not one. And the Litestream replicas are on the same disk, so there is no
+off-host copy of the database. That one is tracked, not solved.
 
-`default_locale` is `:nb`, with `:en` available and a switcher in the footer. Chrome,
-empty states and — since 2026-08-11 — every controller flash go through I18n; the
-app's own copy lives in `config/locales/{nb,en}.yml` under `flash:`, and the
-sentences the engine owns (`not_authorized`, `rate_limited`) come from
-`shared.flash.*`. `config.i18n.raise_on_missing_translations` is on in test, so a
-key that does not resolve is a failure rather than a span nobody reads.
-
-## Honesty
-
-The point of this table is that each row names the mechanism, so a claim cannot
-quietly outgrow it.
-
-| Claim | Reality |
-|---|---|
-| Joy + declutter | Full loop — score, challenges, last-chance outfits, and a 30-day box in `DeclutterHygieneJob` |
-| Photo pipeline | `WardrobeMediaJob`: variants, portrait polish, colour. Not ML cut-out |
-| `RemoveBackgroundJob`, `SegmentGarmentImageJob` | **Deprecated shells.** They remove nothing and segment nothing; they mark an honest status and no-op. Kept only for in-flight queues |
-| `EmbedGarmentJob` | An alias of `FingerprintGarmentJob`. There are no embeddings |
-| Fingerprint | Local CRC over the image bytes (`zlib`). Not a semantic embedding, so it finds re-uploads, not lookalikes |
-| Duplicates | `DuplicateDetector` groups on an exact `duplicate_key`. Two similar shirts are not duplicates to it |
-| AI | OpenRouter (`google/gemini-2.0-flash-001`) when `OPENROUTER_API_KEY` is set; deterministic heuristics otherwise, and the UI says which |
-| Taste model | `TasteRanker` — declared `StylePreference` rows plus joy, wear count, recency and life phase. Fixed weights, not learned |
-| Daily look | `StyleAssistant` — deterministic per user and date, weather-aware, persists nothing until you save it |
-| Weather | open-meteo for Bergen only (lat/lng are constants), 15-minute cache with negative caching, 2s connect / 3s read. It is in front of the dashboard, so it is bounded on purpose |
-| Wardrobe gaps | `WardrobeGap` compares against fixed essentials counts per category. A target, not a judgement about you |
-| Sustainability score | A heuristic: wear count scaled and capped, plus a bonus for sparking joy. Not a lifecycle assessment |
-| Tips | `WardrobeAnalytics` nudges plus `ClosetOrganization`'s care/storage/zoning/restraint registers, each naming its principle |
-| Store feeds | None. Amber imports no product feed; `ShopTheLook` ranks the affiliate links you added, and needs `TRADEDOUBLER_TOKEN` (which lives on brgen) for the remote half — it says when that half is dark |
-| Style sessions | Calendar and status only |
-
-## Guests
-
-`User` has a `guest` column, so anonymous visitors get a soft `Current.user` and can
-use the product without signing up. Two consequences worth knowing:
-`allow_unauthenticated_access` is a **no-op here** — it logs that in development and
-test — and `require_real_user` is the actual identity gate. Guest rows are pruned
-nightly by `Shared::PruneGuestUsersJob`.
-
-## Where it is fragile
-
-- **One box, 1 GB.** amber shares vm23 with brgen, bsdports and MASTER. It needs
-  about twenty seconds to signal ready, and Falcon kills the worker if that misses
-  its health-check window under load — which reads as a broken app and is not one.
-- **Litestream replicas are same-disk.** There is no off-host copy of the database
-  yet. That is tracked, not solved.
-
-## Integration
-
-Components and layers: **[ARCHITECTURE.md](./ARCHITECTURE.md)**. Shapes that look
-like bugs and are not: **[DECISIONS.md](./DECISIONS.md)**. Shared tokens and
-concerns: `RAILS/shared/WIRING_NOTES.md`. Feature matrix: `RAILS/apps.yml` → `amber`.
+`HEIR.md` covers what runs alone, the health checks, the env keys and the honesty
+map. `ARCHITECTURE.md` has the components and layers, `DECISIONS.md` the shapes
+that look like bugs and are not, and `RAILS/shared/WIRING_NOTES.md` the shared
+tokens and concerns. The feature matrix is `RAILS/apps.yml` under `amber`.

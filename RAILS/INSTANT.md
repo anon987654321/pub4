@@ -19,8 +19,6 @@ Solid Cache/Cable/Queue, Pagy in 13 controllers, importmap with no CDN pins,
 and — the number that shapes half this list — **zero fragment caches in any
 view** and **two conditional-GET responses in the whole of brgen**.
 
----
-
 ## A · Measure first, because the instrument is usually wrong (1–13)
 
 This tree's stated dominant defect is that measurement code is wrong more often
@@ -276,8 +274,6 @@ The cheapest millisecond is the one the reader never waits through.
      `prefers-reduced-motion`.
 134. One motion vocabulary across the three apps, in the shared tokens, so a
      reader crossing hosts does not cross timing curves.
-
----
 
 ## What not to do
 

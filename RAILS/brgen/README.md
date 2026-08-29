@@ -1,85 +1,60 @@
 # brgen
 
-Hyperlocal city network. **One Rails process, many hosts.** Agent map: `AGENTS.md`.
+**A social network with no global timeline, because the city you live in is the
+only feed that ever mattered.** brgen is one Rails process serving many hosts.
+Rails 8.1 on SQLite behind Falcon, with Hotwire, Solid Queue, Solid Cache and
+relayd. `AGENTS.md` is the agent map.
 
-A city is an apex. The apex is the social feed. Each vertical is a namespaced
-subapp on a subdomain of **that** apex, not a path and not a second deploy.
-This is true of every row in `Brgen::DomainRegistry::ENTRIES`, not only Bergen
-and LA: apexes are the city with a vowel dropped (`brgen.no`, `oshlo.no`,
-`lsangeles.com`, `lndon.uk`, `chcago.us`, …).
+A city is an apex, and the apex is the social feed. Each vertical is a namespaced
+subapp on a subdomain of *that* apex — not a path, and not a second deploy. That
+holds for every row in `Brgen::DomainRegistry::ENTRIES` and not only for Bergen
+and Los Angeles. An apex is the city with a vowel dropped: `brgen.no`,
+`oshlo.no`, `lsangeles.com`, `lndon.uk`, `chcago.us`.
 
-| Bergen | Los Angeles | Code |
-|---|---|---|
-| brgen.no | lsangeles.com | host `app/` (feed) |
-| markedsplass.brgen.no | marketplace.lsangeles.com | `engines/marketplace` |
-| dating.brgen.no | dating.lsangeles.com | `engines/dating` |
-| takeaway.brgen.no | takeaway.lsangeles.com | `engines/takeaway` |
-| tv.brgen.no | tv.lsangeles.com | `engines/tv` |
-| maps.brgen.no | maps.lsangeles.com | `engines/maps` |
-| playlist.brgen.no | playlist.lsangeles.com | `engines/playlist` |
-| messenger.brgen.no | messenger.lsangeles.com | host routes |
+The host app serves the apex feed. Six mountable engines under `engines/` serve
+the rest: marketplace, dating, takeaway, tv, maps and playlist, each on the
+subdomain of its own name. Messenger is not an engine — it is host routes on
+`messenger.<apex>`. The marketplace subdomain is the one localised word,
+`markedsplass` in Norway, `marketplace` in the United States, `marktplatz` in
+Germany; the others are the same word everywhere. `ai.brgen.no` is MASTER and not
+a vertical at all.
 
-Tenant: `acts_as_tenant` on `city_id`, from the apex. Marketplace subdomain is
-localized (`markedsplass` / `marketplace` / `marktplatz`); the others are the
-same word everywhere. Full city list: `Brgen::DomainRegistry`. `ai.brgen.no` is
-MASTER, not a vertical.
+Tenancy is `acts_as_tenant` on `city_id`, taken from the apex.
+`Brgen::DomainRegistry` resolves the city from the hostname, each apex is an
+isolated experience with no cross-city switcher, and development defaults to
+Bergen. Shared concerns arrive through `pub4-shared`. The backlog is `apps.yml`
+under `brgen.features`; the parity gaps against the apps brgen is measured by,
+and the four features whose tables exist with nothing reading them, are in
+`../TODO.md`.
 
-## Stack
+Seeding draws curated Bergen content from `Brgen::BergenDemoSeeder` and its bulk
+volume from `Brgen::PlausibleContent` — Norwegian copy, real Bergen streets and
+bydeler, category-consistent listings — rather than raw Faker. `SEED_SCALE`
+defaults to 10 in development, and `SKIP_BERGEN_DEMO=1` leaves the curated set
+out. Per-city users get names in the city's own language through
+`Brgen::CityContent.with_faker_locale`. Set `Faker::Config.locale` on its own and
+you get English instead, because Faker's data is region-tagged as `nb-NO` while
+the app declares only bare locales.
 
-Rails 8.1 · SQLite · Falcon · Hotwire · Solid Queue/Cache · relayd
+`AffiliateProduct` is the persisted inventory, and the deals sidebar reads that
+table rather than calling out on every render. Real import is blocked until
+brgen.no is an approved TradeDoubler publisher — apply as a publisher first, then
+per advertiser programme — so `affiliate:import` needs `TRADEDOUBLER_TOKEN` and
+does nothing without it. `affiliate:health` reports counts, staleness and token
+status; `affiliate:seed_placeholders` and `affiliate:drop_placeholders` work
+offline. A placeholder row carries `placeholder: true`, is excluded from `.real`,
+and is labelled in the UI. It is never payable inventory.
+
+`bin/rails test` needs no environment variables. `Pub4::DeployPaths` resolves the
+`studio/` and `MASTER/` scripts from the checkout it lives in, through
+`Rails.root` and then its own `__dir__`, falling back to the deployed
+`/home/dev/pub4` layout last. Set `PUB4_ROOT` or `PUB4_RAILS_ROOT` only to point
+at a different tree than the one the code was loaded from.
+
+### Bringing it up
 
 ```zsh
 doas zsh RAILS/brgen/brgen.sh
 curl -fsS http://127.0.0.1:38182/up
 curl -fsS http://127.0.0.1:38182/health
 ```
-
-## Cities
-
-`Brgen::DomainRegistry` resolves city from hostname (`oshlo.no`, `lsangeles.com`, `brgen.no`, …). Each apex is an isolated experience — no cross-city switcher. Dev defaults to Bergen.
-
-Shared concerns via `pub4-shared`. Backlog: `apps.yml` → `brgen.features`.
-Parity gaps against the apps brgen is measured by — and the four features whose
-tables exist with nothing reading them — are in `../TODO.md`.
-
-## Seeds
-
-```zsh
-bin/rails db:seed                  # dev default SEED_SCALE=10
-SEED_SCALE=1 bin/rails db:seed     # fast replant
-SKIP_BERGEN_DEMO=1 bin/rails db:seed
-```
-
-Curated Bergen content lives in `Brgen::BergenDemoSeeder`; the bulk volume draws
-from `Brgen::PlausibleContent` (Norwegian copy, real Bergen streets/bydeler,
-category-consistent listings) rather than raw Faker. Per-city users are named in
-the city's own language via `Brgen::CityContent.with_faker_locale` — set
-`Faker::Config.locale` on its own and you get English, because Faker's data is
-region-tagged (`nb-NO`) while the app only declares bare locales.
-
-## Affiliate
-
-```zsh
-bin/rails affiliate:health              # counts, staleness, token status
-bin/rails affiliate:import              # needs TRADEDOUBLER_TOKEN
-bin/rails affiliate:seed_placeholders   # flagged demo rows, no network
-bin/rails affiliate:drop_placeholders
-```
-
-`AffiliateProduct` is the persisted inventory; the deals sidebar reads the table
-rather than calling out per render. Real import is blocked until brgen.no is an
-approved TradeDoubler publisher (apply as publisher, then per advertiser
-programme). Placeholder rows carry `placeholder: true`, are excluded from
-`.real`, and are labelled in the UI — they are never payable inventory.
-
-## Tests
-
-```zsh
-bin/rails test
-```
-
-No env vars needed. `Pub4::DeployPaths` resolves `studio/` and `MASTER/` scripts
-from the checkout it lives in (via `Rails.root`, else its own `__dir__`), falling
-back to the deployed `/home/dev/pub4` layout last. Set `PUB4_ROOT` /
-`PUB4_RAILS_ROOT` only to point at a *different* tree than the one the code is
-loaded from.

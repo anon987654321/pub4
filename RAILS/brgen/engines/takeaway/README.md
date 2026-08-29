@@ -1,29 +1,21 @@
 # brgen takeaway
 
-Food-ordering and delivery vertical for brgen, served at `takeaway.<city>`
-(`takeaway.brgen.no`, `takeaway.lsangeles.com`). A mountable Rails engine — see
-[`../../ENGINES.md`](../../ENGINES.md). Topology: [`../../AGENTS.md`](../../AGENTS.md).
+**Dinner, from the restaurant three streets over.** takeaway is a mountable Rails
+engine served at `takeaway.<city>` — `takeaway.brgen.no`,
+`takeaway.lsangeles.com`. `../../ENGINES.md` is the recipe; `../../AGENTS.md` is
+the topology.
 
-## What it is
+Local restaurants list menus, diners build orders and favourite the places they
+come back to and leave reviews, and delivery drivers pick up and fulfil. The
+`takeaway_` tables, prefixed by `isolate_namespace Takeaway`, are `Restaurant`,
+`MenuItem`, `Order`, `OrderItem`, `DeliveryDriver`, `FavoriteRestaurant` and
+`Review`.
 
-Local restaurants list menus; diners build orders, favorite restaurants, and
-leave reviews; delivery drivers pick up and fulfill orders. Ordering is the
-original takeaway subapp's "items and orders" flow, now its own engine.
+Routes are drawn on `Takeaway::Engine` and mounted under `constraints(subdomain:
+TAKEAWAY_SUBDOMAINS)`. Root is the restaurant index; restaurants nest menu items,
+orders, reviews and a favourite toggle; `delivery_drivers` and top-level `orders`
+carry the fulfilment and order-status side.
 
-## Models (`takeaway_*` tables)
-
-`Restaurant`, `MenuItem`, `Order`, `OrderItem`, `DeliveryDriver`,
-`FavoriteRestaurant`, `Review`.
-
-## Routes
-
-Drawn on `Takeaway::Engine`, mounted under `constraints(subdomain: TAKEAWAY_SUBDOMAINS)`.
-Root is the restaurant index; restaurants nest menu items, orders, reviews, and a
-favorite toggle; `delivery_drivers` and top-level `orders` cover the fulfillment
-and order-status side.
-
-## Boundaries
-
-Depends on `pub4-shared` for `User`, auth, tenancy, and the design system.
-`isolate_namespace Takeaway` gives the `takeaway_` table prefix; the host reaches
-its helpers as `takeaway.restaurant_url(…, subdomain: "takeaway")`.
+The engine depends on `pub4-shared` for `User`, authentication, tenancy and the
+design system. The host reaches its helpers as `takeaway.restaurant_url(…,
+subdomain: "takeaway")`.

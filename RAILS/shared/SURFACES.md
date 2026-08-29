@@ -46,7 +46,7 @@ consistency campaign; enforcement lives in `visual_contract_lint`,
 
 - **Buttons** — dash-spelled, one family in `_zen_shell.scss`:
   `btn` base + compound variants `.btn.btn-primary/-ghost/-danger/-sm`, plus
-  `btn-link`, `btn-block`, `btn-share`. Variants are compound (0-2-0) so an
+  `btn-link`, `btn-block`, `btn-share`. Variants are compound (`0-2-0`) so an
   app's later `.btn` base is a dialect skin that can never beat them; ghost ink
   is `inherit` (wscons stays green). `btn_vocabulary` lint holds the set at
   zero strays. brgen's accent-painted base is its dialect; amber's small-button

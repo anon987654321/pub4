@@ -1,48 +1,41 @@
 # brgen marketplace
 
-Amazon-style multi-seller storefront for brgen, served at the marketplace
-subdomain (localized per country: `markedsplass.brgen.no`,
-`marketplace.lsangeles.com` — see `Brgen::DomainRegistry::SUBAPP_ALIASES`).
-A mountable Rails engine — see [`../../ENGINES.md`](../../ENGINES.md).
-Topology: [`../../AGENTS.md`](../../AGENTS.md).
+**Every listing in brgen lives here, the shop's product and the chair someone is
+selling alike.** marketplace is a mountable Rails engine served at the
+marketplace subdomain, localised per country — `markedsplass.brgen.no`,
+`marketplace.lsangeles.com`, resolved through
+`Brgen::DomainRegistry::SUBAPP_ALIASES`. `../../ENGINES.md` is the recipe;
+`../../AGENTS.md` is the topology.
 
-## What it is
+Store owners post product listings across categories, buyers add them to a cart
+and check out through Stripe or Vipps, and both sides leave reviews. Deals and
+saved searches aid discovery, and `favorite` bookmarks a listing.
 
-**Every listing in brgen lives here**, casual and transactional alike. Shop owners
-(`Store`) post product `Listing`s across `Categories`, buyers add them to a cart
-and `Checkout` (Stripe/Vipps via `webhooks`), and both sides leave `Review`s.
-`Deal`s and `SavedSearch`es aid discovery; `favorite` bookmarks a listing.
-
-The two tiers are one model, not two places. `Listing belongs_to :store,
-optional: true` — with a store it is a shop's product, without one it is a person
-selling a chair. Only the first is built out: the seeds always attach a store,
+The two tiers are one model rather than two places. `Listing belongs_to :store,
+optional: true`: with a store it is a shop's product, without one it is a person
+selling a chair. Only the first is built out. The seeds always attach a store,
 there is no separate casual surface, and the storefront chrome wraps both.
 
-This paragraph used to say the casual tier was "in the host app". It is not.
+Nothing casual lives in the host app either, so do not go looking for it there.
 `brgen/app/models/marketplace.rb` is a table-name-prefix module and the host has
-no listing model at all, so a reader following that sentence goes looking for
-something that was never written. What *is* Craigslist-shaped about brgen is the
-access model rather than the catalogue: `ListingPolicy` lets anyone list without
-signing up, and `Shared::Authentication` gives anonymous visitors a soft
-`Current.user` to do it with. The taxonomy is consumer goods — electronics,
-clothing, furniture, vehicles, services — with no housing, jobs or gigs.
+no listing model at all. What is Craigslist-shaped about brgen is the access
+model rather than the catalogue: `ListingPolicy` lets anyone list without signing
+up, and `Shared::Authentication` gives an anonymous visitor a soft `Current.user`
+to do it with. The taxonomy is consumer goods — electronics, clothing, furniture,
+vehicles, services — with no housing, jobs or gigs.
 
-## Models (`marketplace_*` tables)
-
-`Store`, `Listing`, `Category`, `Order`, `Review`, `Deal`, `ListingFavorite`,
+The `marketplace_` tables, prefixed by `isolate_namespace Marketplace`, are
+`Store`, `Listing`, `Category`, `Order`, `Review`, `Deal`, `ListingFavorite` and
 `SavedSearch`.
 
-## Routes
-
-Drawn on `Marketplace::Engine`, mounted under `constraints(subdomain: MARKETPLACE_SUBDOMAINS)`.
-Listings nest orders, reviews, and a favorite toggle; `cart`/`checkout` drive the
-Amazon-like purchase flow; `webhooks/{stripe,vipps}` receive PSP callbacks. The
-Solidus commerce engine mounts at `/solidus` only when `SOLIDUS_MARKETPLACE=1` and
-the gem is installed — native `Marketplace::*` stays the public storefront until an
+Routes are drawn on `Marketplace::Engine` and mounted under
+`constraints(subdomain: MARKETPLACE_SUBDOMAINS)`. Listings nest orders, reviews
+and a favourite toggle; `cart` and `checkout` drive the purchase flow; and
+`webhooks/stripe` and `webhooks/vipps` receive the payment callbacks. The Solidus
+commerce engine mounts at `/solidus` only when `SOLIDUS_MARKETPLACE=1` and the
+gem is installed — native `Marketplace::*` stays the public storefront until an
 explicit cutover.
 
-## Boundaries
-
-Depends on `pub4-shared` for `User`, auth, tenancy, and the design system.
-`isolate_namespace Marketplace` gives the `marketplace_` table prefix; the host
-reaches its helpers as `marketplace.listing_url(…, subdomain: "markedsplass")`.
+The engine depends on `pub4-shared` for `User`, authentication, tenancy and the
+design system. The host reaches its helpers as `marketplace.listing_url(…,
+subdomain: "markedsplass")`.

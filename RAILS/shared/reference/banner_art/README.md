@@ -1,35 +1,29 @@
-# Banner art (CodePen export, recovered 2026-08-13)
+# Banner art
 
-Three 300x300 sponsored-banner units — marketplace, dating, playlist — plus the
-original of the dating heart. Recovered from a gist after being lost; kept here
-whole rather than only in the form that is wired, so the next person has the
-source and not a reconstruction.
+**The source, not a reconstruction of it.** Three 300×300 sponsored-banner units
+— marketplace, dating, playlist — plus the original of the dating heart, kept
+here whole rather than only in the form that is wired, so the next person opens
+what was actually drawn. Recovered from gist
+anon987654321/290153d185fa76944a91159270f72ec7, pen ogLWRJL, at
+https://codepen.io/license/pen/ogLWRJL.
 
-Source: gist anon987654321/290153d185fa76944a91159270f72ec7
-(CodePen pen ogLWRJL, https://codepen.io/license/pen/ogLWRJL)
+One of the four is live. `dating/home/_heart.html.erb` renders the dating heart,
+and the placeholder comment that asked for "the exact snippet ... when ready" was
+asking for this one.
 
-## What is wired
+The other three each cost something. The marketplace unit pulls two images from
+i.imgur.com, and an external host is both a CSP problem and an availability one,
+so self-host before wiring it. The playlist unit's scifi iris eye and floating
+particle field are pure css-doodle and would drop straight in, but its `.ml15`
+letter reveal and spinning `.lp` need anime.js, which this tree does not carry.
+The pen as a whole loads css-doodle, Swiper and anime.js from cdnjs, and brgen
+self-hosts css-doodle at `/vendor/css-doodle.min.js` and pins nothing — seven CDN
+pins once cost a page 537 requests, so vendor anything new the same way.
 
-`dating/home/_heart.html.erb` renders the dating heart. Its placeholder comment
-asked for "the exact snippet ... when ready"; this is that snippet.
+`<footer class="bankid">Protected by BankID</footer>` sits here too. Neither its
+markup nor its CSS is in the dating intro any more; git has both if the badge is
+wanted back.
 
-## What is not, and what it would cost
-
-- **marketplace** — pulls two images from i.imgur.com. External hosts are a CSP
-  and availability problem; self-host before wiring.
-- **playlist** — the scifi/iris eye and the floating-particle field are pure
-  css-doodle and would drop in, but the `.ml15` letter reveal and the spinning
-  `.lp` need anime.js, which this tree does not carry.
-- The pen loads css-doodle, Swiper and anime.js from cdnjs. brgen self-hosts
-  css-doodle at `/vendor/css-doodle.min.js` and pins nothing to a CDN — seven
-  CDN pins once cost a page 537 requests. Vendor anything new the same way.
-- `<footer class="bankid">Protected by BankID</footer>` is here too. Its markup
-  was removed from the dating intro on 2026-08-12 (d35b40ec0) and its CSS
-  deleted as dead on 2026-08-13 (16370042a). Both are recoverable from git if
-  the badge is wanted back.
-
-## Second heart
-
-index.html keeps a commented-out alternate: `points: 1000`, `scale: .34`,
-`s: sqrt.abs.cos(t) / (sin(t) + 1.6)` — a different parametrisation of the same
-shape. Preserved deliberately; it is a variant, not dead code.
+`index.html` also keeps a commented-out alternate heart — `points: 1000`, `scale:
+.34`, `s: sqrt.abs.cos(t) / (sin(t) + 1.6)` — a different parametrisation of the
+same shape. It is preserved deliberately. It is a variant, not dead code.

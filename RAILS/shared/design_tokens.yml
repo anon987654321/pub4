@@ -145,10 +145,10 @@ face_root:
     border_strong: "color-mix(in srgb, var(--face-fg) 24%, transparent)"
     hover_tint: "color-mix(in srgb, var(--face-fg) 8%, transparent)"
   layout:
-    # The HUD type ramp and tap floor (2026-08-22): face.css cannot read the
-    # RAILS --text-* ladder, so these ARE its ladder; tap-min was cited by
-    # #photo-button since it was written and never defined — an inert
-    # declaration that measured 18px on a compose control.
+    # The HUD type ramp and tap floor: face.css cannot read the RAILS --text-*
+    # ladder, so these ARE its ladder. tap-min is also an alias of shared_chrome,
+    # so the face HUD and the RAILS tab chrome share one floor; #photo-button
+    # cites it, and undefined it measured 18px on a compose control.
     tap-min: 44px
     hud-lg: 13px
     hud-md: 11px
@@ -158,9 +158,8 @@ face_root:
     radius-md: "0"
     radius-lg: "0"
     radius-pill: "0"
-    # Aliases of shared_chrome so face HUD and RAILS tab/chrome share one floor.
-    # chrome-inset is emitted once in generate_face_root_css (before --inset-*).
-    tap-min: "44px"
+    # More aliases of shared_chrome. chrome-inset is emitted once in
+    # generate_face_root_css, before --inset-*.
     face-bar-height: "44px"
     bar-height: "44px"
     hud-tier-status: "calc(var(--face-bar-height) + var(--safe-bottom) + 8px)"

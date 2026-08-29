@@ -30,30 +30,30 @@ apps:
     features:
       core:
         - { name: User model + auth,                                       status: done }
-        - { name: Community (slug, name, description),                     status: done }
-        - { name: Post (title, content, hot/fresh/top scopes),             status: done }
-        - { name: Comment (threaded, polymorphic, controversial scope),    status: done }
-        - { name: Vote / Like (polymorphic, karma side-effect),            status: done }
+        - { name: "Community (slug, name, description)",                   status: done }
+        - { name: "Post (title, content, hot/fresh/top scopes)",           status: done }
+        - { name: "Comment (threaded, polymorphic, controversial scope)",  status: done }
+        - { name: "Vote / Like (polymorphic, karma side-effect)",          status: done }
         - { name: Hashtag + Tagging join,                                  status: done }
         - { name: Mention model,                                           status: done }
         - { name: Votable concern,                                         status: done }
         - { name: Hotwire broadcasts_refreshes,                            status: done }
         - { name: OmniAuth (Vipps / Google / Snapchat),                       status: done, notes: "google/github/vipps/snapchat providers in omniauth.rb; Shared::OmniauthCallbacksController persists external_identities" }
-        - { name: Reaction (polymorphic on posts/messages, ActionCable),    status: done }
-        - { name: Follow (self-join, no self-follows, notifications),       status: done }
-        - { name: Notification (like/follow/custom, mark_as_read),          status: done }
-        - { name: DirectMessage (conversation_between, mark_as_read),       status: done }
+        - { name: "Reaction (polymorphic on posts/messages, ActionCable)",  status: done }
+        - { name: "Follow (self-join, no self-follows, notifications)",     status: done }
+        - { name: "Notification (like/follow/custom, mark_as_read)",        status: done }
+        - { name: "DirectMessage (conversation_between, mark_as_read)",     status: done }
         - { name: full-text search (SQLite FTS5),                           status: done, notes: "posts_fts + marketplace live search + /search global endpoint" }
         - { name: reading_time_minutes on posts,                            status: done, notes: "Post#reading_time_minutes on post card + show" }
         - { name: city-scoped subdomain routing,                           status: done, notes: "DomainRegistry + city switcher UI" }
         - { name: proximity / geolocation filtering,                       status: done, notes: "nearby#index, locations#update, geolocation Stimulus, dating radius filter" }
         - { name: moderation tools,                                        status: done, notes: "ModerationWorkflow, admin/reports, ModerationReport, ModerationFlag, TrustScore" }
         - { name: media pipeline (Active Storage variants),                status: done, notes: "Shared::MediaProcessable + MediaProcessingJob on post/listing/dating/message/playlist/takeaway/tv; responsive_image_tag + blurhash" }
-        - { name: identity + trust primitives (OAuth subjects, merge, reputation), status: done, notes: "identity_providers, external_identities, account_merges, trust_signals; wired via OmniAuth callbacks + TrustScore" }
+        - { name: "identity + trust primitives (OAuth subjects, merge, reputation)", status: done, notes: "identity_providers, external_identities, account_merges, trust_signals; wired via OmniAuth callbacks + TrustScore" }
         - { name: photo/multimodal upload (visitor allowed on public surface), status: done, notes: "intentionally open for chat vision; see WIRING_NOTES.md" }
         - { name: unified Activity graph emission,                         status: done, notes: "ActivityTrackable + EventEmitter across playlist/marketplace/takeaway/tv/dating verticals; see WIRING_NOTES.md" }
-        - { name: shared model concerns (Notifiable, ActivityTrackable, GeoLocatable, Votable, Commentable, Taggable promoted), status: done, notes: "reduced local duplication/sprawl; see shared/app/models/concerns/shared/ + WIRING_NOTES" }
-        - { name: MASTER frontend/cosmetic scan rules (web_rules, cosmetic_rules, FrontendAuditor), status: done, notes: "scan_profiles.cosmetic + frontend_production_gate + frontend_auditor_gate" }
+        - { name: "shared model concerns (Notifiable, ActivityTrackable, GeoLocatable, Votable, Commentable, Taggable promoted)", status: done, notes: "reduced local duplication/sprawl; see shared/app/models/concerns/shared/ + WIRING_NOTES" }
+        - { name: "MASTER frontend/cosmetic scan rules (web_rules, cosmetic_rules, FrontendAuditor)", status: done, notes: "scan_profiles.cosmetic + frontend_production_gate + frontend_auditor_gate" }
         - { name: Reddit scrape seed (rephrase + Strunk & White),          status: done, notes: "RedditSeed + ContentRewriter + StrunkWhitePass" }
         - { name: SEO / affiliate / newsletter kit (shared),                 status: done, notes: "Shared::SeoKit, json_ld, affiliate_disclosure, newsletter_cta" }
         - { name: affiliate inventory persistence (AffiliateProduct),         status: done, notes: "affiliate_products table + upsert_from_feed! + rake affiliate:{import,health,seed_placeholders,drop_placeholders}; deals read the table, not a live call per render" }
@@ -65,14 +65,14 @@ apps:
         - { name: AI feed ranking,                                         status: planned, agent: ignore }
         - { name: creator monetization,                                    status: planned, agent: ignore }
         - { name: maps surface,                                            status: done, notes: "maps. subdomain, Places index/show, Mapbox home" }
-        - { name: Events (city listing, RSVP, capacity, cancellation),      status: done, notes: "Event + EventRsvp; upcoming keeps running multi-day events; three-way RSVP because interested is the majority answer on every event platform; cancel! notifies attendees rather than deleting; emits EventCreated to the city strip" }
-        - { name: Stories (24h ephemeral media, viewer set, sweep),          status: done, notes: "Story + StoryView; expires_at is stored so alive/label/sweep read one column; alive hides an expired story before the sweep runs; seen is a set not a log; capture=environment for camera-first; coarse area inherited from the position locations#update already stored" }
-        - { name: Tier 3 parity (basket, dating ranking, takeaway hours, messenger edit, listing expiry), status: done, notes: "Marketplace::Checkout above the per-listing offers with addresses and fulfilment; Dating ranked_for + Hinge prompts replacing ORDER BY RANDOM(); Takeaway::OpeningHour + tips + scheduling; message reply/edit/unsend; listing expiry as a scope with renewal. See TODO.md Tier 3." }
+        - { name: "Events (city listing, RSVP, capacity, cancellation)",    status: done, notes: "Event + EventRsvp; upcoming keeps running multi-day events; three-way RSVP because interested is the majority answer on every event platform; cancel! notifies attendees rather than deleting; emits EventCreated to the city strip" }
+        - { name: "Stories (24h ephemeral media, viewer set, sweep)",        status: done, notes: "Story + StoryView; expires_at is stored so alive/label/sweep read one column; alive hides an expired story before the sweep runs; seen is a set not a log; capture=environment for camera-first; coarse area inherited from the position locations#update already stored" }
+        - { name: "Tier 3 parity (basket, dating ranking, takeaway hours, messenger edit, listing expiry)", status: done, notes: "Marketplace::Checkout above the per-listing offers with addresses and fulfilment; Dating ranked_for + Hinge prompts replacing ORDER BY RANDOM(); Takeaway::OpeningHour + tips + scheduling; message reply/edit/unsend; listing expiry as a scope with renewal. See TODO.md Tier 3." }
         - { name: ActivityPub federation (outbound half),                    status: done, notes: "WebFinger, NodeInfo, actor/outbox/followers, verified inbox, HTTP signatures, per-inbox delivery with retry. A city is the instance: every lookup resolves against the requested host. Inbound Create/Announce/Like are verified, recorded and dropped — storing remote content needs media proxying and a moderation model ModerationReport does not have. See TODO.md 2.1." }
-        - { name: Community governance (roles, rules, flair, privacy, per-community mod queue), status: done, notes: "community_memberships.role member/moderator/owner with last-owner protection; owner-only appointment; restricted = whole city reads, members post; queue derived from the community posts because ModerationReport is polymorphic with no community_id" }
-        - { name: Messenger depth (pins, inbox search, forward, group threads, link previews, voice notes), status: done, notes: "ConversationPin + Conversation::INBOX_ORDER puts pinned first; conversations#search over titles and bodies; messages#forward; group_conversations + group_members with an owner; LinkPreview + LinkPreviewFetchJob behind OutboundHttp's SSRF guard; voice_recorder Stimulus records to an attachment. Conversation.direct_between never matched before this, so every pair of users kept getting a new DM thread" }
-        - { name: Crossposting, community wiki, story replies and streaks, status: done, notes: "crossposts#create with already_crossposted and same_as_source refusals; CommunityWikiPage + CommunityWikiRevision with a per-community edit policy; story replies land in the DM thread; StoryStreak counts consecutive days" }
-        - { name: Federation, the remaining outbound half, status: done, notes: "Fediverse::FollowRemote resolves a handle over WebFinger and sends Follow; FediBlock is an instance blocklist read on inbox and on delivery. Inbound Create/Announce is still verified-and-dropped — see TODO.md 2.1" }
+        - { name: "Community governance (roles, rules, flair, privacy, per-community mod queue)", status: done, notes: "community_memberships.role member/moderator/owner with last-owner protection; owner-only appointment; restricted = whole city reads, members post; queue derived from the community posts because ModerationReport is polymorphic with no community_id" }
+        - { name: "Messenger depth (pins, inbox search, forward, group threads, link previews, voice notes)", status: done, notes: "ConversationPin + Conversation::INBOX_ORDER puts pinned first; conversations#search over titles and bodies; messages#forward; group_conversations + group_members with an owner; LinkPreview + LinkPreviewFetchJob behind OutboundHttp's SSRF guard; voice_recorder Stimulus records to an attachment. Conversation.direct_between never matched before this, so every pair of users kept getting a new DM thread" }
+        - { name: "Crossposting, community wiki, story replies and streaks", status: done, notes: "crossposts#create with already_crossposted and same_as_source refusals; CommunityWikiPage + CommunityWikiRevision with a per-community edit policy; story replies land in the DM thread; StoryStreak counts consecutive days" }
+        - { name: "Federation, the remaining outbound half", status: done, notes: "Fediverse::FollowRemote resolves a handle over WebFinger and sends Follow; FediBlock is an instance blocklist read on inbox and on delivery. Inbound Create/Announce is still verified-and-dropped — see TODO.md 2.1" }
       subapp_tv:
         - { name: "Tv::Channel (slug, avatar, banner, subscribers_count)", status: done, notes: "patch_tv_models.sh" }
         - { name: "Tv::Video (status machine, duration_formatted)", status: done }
@@ -91,7 +91,7 @@ apps:
         - { name: "Dating::Like (user, liked_user)", status: done }
         - { name: "Dating::Dislike (user, disliked_user)", status: done }
         - { name: "Dating::Match (Matchmaking — mutual likes)", status: done }
-        - { name: swipe UI (Turbo Streams, Stimulus),                       status: done }
+        - { name: "swipe UI (Turbo Streams, Stimulus)",                     status: done }
         - { name: city + radius filter,                                     status: done, notes: "Matchmaking radius_km + neighborhood scope" }
         - { name: match → messaging handoff,                                status: done, notes: "Dating::Match#announce_match → Conversation.find_or_create_direct" }
         - { name: photos on profile,                                        status: done, notes: "has_many_attached photos, edit purge, ProfileMediaJob variants" }
@@ -153,7 +153,7 @@ apps:
     public: true
     features:
       core:
-        - { name: Item (title, color, size, material, texture, brand, price, category, sku, release_date, stock_quantity, available, user), status: done, notes: pub4 version adds mood/occasion/life_phase/times_worn on top }
+        - { name: "Item (title, color, size, material, texture, brand, price, category, sku, release_date, stock_quantity, available, user)", status: done, notes: pub4 version adds mood/occasion/life_phase/times_worn on top }
         - { name: cost_per_wear calculation, status: done }
         - { name: wear! increment, status: done }
         - { name: aging_unworn / never_worn scopes,                        status: done }
@@ -185,7 +185,7 @@ apps:
         - { name: social feed,                                             status: done, notes: "posts#index, posts#feed, posts#show with comments" }
         - { name: affiliate commerce links,                                status: done, notes: "AffiliateLink model + item show CRUD + ShopTheLook suggestions" }
         - { name: shop smarter page,                                       status: done, notes: "items#shopping_list: gaps + duplicates-before-you-buy + every affiliate link you own, grouped by merchant, rel=nofollow noopener sponsored. Store-feed half is the 'global trends' planned item — the page says so instead of showing an empty section." }
-        - { name: style sessions (calendar status, not video),             status: done, notes: "live_streams table/UI renamed honestly; no WebRTC/RTMP" }
+        - { name: "style sessions (calendar status, not video)",           status: done, notes: "live_streams table/UI renamed honestly; no WebRTC/RTMP" }
         - { name: locale negotiation + switcher (nb/en),                   status: done, notes: "LocalizedRequest concern: ?locale= > session > Accept-Language (by q) > :nb, plus a footer switcher. available_locales had carried en since the app was built with nothing able to reach it. Rules engines (ClosetOrganization/TasteRanker/WardrobeAnalytics/WardrobeGap/DuplicateDetector) translated too." }
         - { name: structured data on public pages,                         status: done, notes: "AmberSchemaHelper: ItemList + Product on /demo and the guest home, Article on posts#show. Uses demo URLs, not /items/:id, which is behind auth. Shared schema_url_for now emits absolute URLs." }
       planned:
@@ -213,8 +213,8 @@ apps:
     features:
       core:
         - { name: Platform (name) — OpenBSD/FreeBSD/NetBSD,                  status: done, notes: "platforms table seeded openbsd/freebsd/netbsd" }
-        - { name: Category (name, platform),                                status: done, notes: "categories.platform_id scoped slug" }
-        - { name: Port (name, summary, url, description, category, platform), status: done, notes: "ports.platform_id + pkgpath unique per platform; comment field is OpenBSD COMMENT" }
+        - { name: "Category (name, platform)",                              status: done, notes: "categories.platform_id scoped slug" }
+        - { name: "Port (name, summary, url, description, category, platform)", status: done, notes: "ports.platform_id + pkgpath unique per platform; comment field is OpenBSD COMMENT" }
         - { name: Dependency model,                                         status: done }
         - { name: SecurityAdvisory model,                                   status: done }
         - { name: Maintainer model,                                         status: done }
