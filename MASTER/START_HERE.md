@@ -46,7 +46,7 @@ High-risk boundaries: `data/soul.yml`, `data/rules.yml`, `lib/master.rb`, `lib/c
 | Deploy / Rails | `OPENBSD/bin/check-rails --profile=contributor` |
 | Operator / release | `MASTER/bin/pub4 status` then `OPENBSD/bin/check-full` |
 
-**Do not optimize away:** the fold spine's independence from the rest of `lib/` — `lib/core*` requires nothing outside its own namespace, held by `test/core/test_no_lib_backedges.rb`; deferred WebGL until primer tap; constitution self-scan debt during unrelated UI work.
+**Do not optimize away:** the fold spine's independence from the rest of `lib/` — `lib/core*` requires nothing outside its own namespace, held by `test/test_core_no_lib_backedges.rb`; deferred WebGL until primer tap; constitution self-scan debt during unrelated UI work.
 
 ## Do Not Touch (unless the task requires it)
 
@@ -58,7 +58,7 @@ had one consumer between them. A conclusion does not rot loudly. A test does.
 `rake lint:do_not_touch` checks that every entry below carries one and that the
 gates it names exist.
 
-1. `lib/core.rb` and `lib/core/` are the fold spine, and they must not require the rest of `lib/`. The two-spine *directory* split ended 2026-08-12 (`docs/SEVERANCE.md`); the dependency direction it was protecting did not, and is now a test rather than a folder boundary. `core_files: 7` in `data/spine.yml` makes a new concept a design decision — raised from 6 on 2026-08-12 for `Proof`, the first raise since the spine was written. — gate: `test/core/test_no_lib_backedges.rb`, `rake lint:spine`
+1. `lib/core.rb` and `lib/core/` are the fold spine, and they must not require the rest of `lib/`. The two-spine *directory* split ended 2026-08-12 (`docs/SEVERANCE.md`); the dependency direction it was protecting did not, and is now a test rather than a folder boundary. `core_files: 7` in `data/spine.yml` makes a new concept a design decision — raised from 6 on 2026-08-12 for `Proof`, the first raise since the spine was written. — gate: `test/test_core_no_lib_backedges.rb`, `rake lint:spine`
 2. `knowledge/` is local-only — do not commit without updating `SearchKnowledge`. — gate: `rake security_sweep`
 3. WebGL / face boot stays deferred until primer tap. — gate: `rake test:web_ui`, `test/test_web_ui.rb`
 4. `RAILS/apps.horizon.yml` is agent-ignore horizon — do not implement unprompted. — no gate: a horizon file is a list of things deliberately not built, so there is no artefact to assert on; the failure mode is an agent building one, which only a reader of the diff can catch.

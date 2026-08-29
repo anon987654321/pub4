@@ -19,7 +19,7 @@ require "open3"
 #
 # So every entry carries one of:
 #
-#   — gate: `rake lint:spine`, `test/core/test_no_lib_backedges.rb`
+#   — gate: `rake lint:spine`, `test/test_core_no_lib_backedges.rb`
 #   — no gate: <why the claim cannot be mechanically held>
 #
 # and this checks that the named rake tasks and files actually exist. A gate

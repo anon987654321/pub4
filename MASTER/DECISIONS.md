@@ -29,7 +29,7 @@ Three shapes here look wrong from outside and are not:
 - **The Constitution takes the scanner as a parameter.** `Constitution.load`
   accepts `verify:` and `lib/cli/core_bridge.rb` supplies it. A `require` would
   have been shorter and would have put `lib/review/` inside the fold spine,
-  which `test/core/test_no_lib_backedges.rb` exists to prevent.
+  which `test/test_core_no_lib_backedges.rb` exists to prevent.
 
 Six stages were deleted to pay for it, and every one was constructed nowhere or
 only by another of the six. `Stages::Guard` scanned messages for prompt
@@ -61,7 +61,7 @@ thing that command ever did that ran.
 
 Two things the old split was carrying, and where each went:
 
-- **The dependency direction survives, as a test.** The fold must not reach into the application spine. That was enforced by a directory boundary and is now enforced by `test/core/test_no_lib_backedges.rb`, which names the fold's files explicitly and fails if any of them requires a sibling under `lib/`. It also asserts it found the files at all, since a glob that matches nothing passes silently.
+- **The dependency direction survives, as a test.** The fold must not reach into the application spine. That was enforced by a directory boundary and is now enforced by `test/test_core_no_lib_backedges.rb`, which names the fold's files explicitly and fails if any of them requires a sibling under `lib/`. It also asserts it found the files at all, since a glob that matches nothing passes silently.
 - **`core_files` survives, counted differently.** `lib/{core.rb,core/*.rb}` — the directory plus the entrypoint beside it. Globbing only `lib/core/` would have read one under the ceiling and handed out a free concept. It stood at 6 through the merge and was raised to 7 <!-- cite: data/spine.yml#spine.core_files --> on 2026-08-12 for `Proof`.
 
 What the merge removed, beyond a directory: `MASTER/bin/master-core` put `core/` on `$LOAD_PATH` and called `require "master"`, so which of the two `master.rb` files won was decided by load-path order. `bin/nsaudit` had to hand-require the second spine so the first one's constants would resolve. Both are gone.

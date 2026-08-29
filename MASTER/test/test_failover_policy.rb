@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require_relative "support/fake_config"
+require_relative "support_fake_config"
 
 # data/models.yml's fallback_policy block was inert three ways at once: the key
 # was written bare as `on:` so YAML 1.1 parsed it as the boolean true, nothing

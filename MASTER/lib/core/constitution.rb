@@ -411,7 +411,7 @@ module Master::Core
     end
 
     # The surface is load, admit, and immutable_paths_rule — which
-    # test/core/test_immutable_paths.rb builds directly. The rest are rule
+    # test/test_core_immutable_paths.rb builds directly. The rest are rule
     # factories `default_rules` calls and nothing else does, verified against
     # lib/, test/, spec/, tools/, bin/ and web/.
     #
