@@ -2,7 +2,7 @@
 
 <!-- loop.mp4 is committed and embedded via its raw.githubusercontent URL, which
      GitHub's README CSP allows, so it plays with no login and no upload step. -->
-<video src="https://raw.githubusercontent.com/anon987654321/pub4/main/MASTER/loop.mp4" autoplay loop muted playsinline width="360"></video>
+<video src="https://raw.githubusercontent.com/anon987654321/pub4/main/MASTER/loop.mp4" poster="https://raw.githubusercontent.com/anon987654321/pub4/main/MASTER/loop_poster.png" autoplay loop muted playsinline width="360"></video>
 
 **MASTER is the first artificial intelligence written in pure Ruby that governs
 itself by law, not by hope — grown in Norway, to run its own mind on power drawn
