@@ -85,7 +85,7 @@ STREAM_LEAD_VOICE_ROTATION = %w[
   guitar steel sitar world horn brass bass steelpan watermelon
 ].freeze
 
-STREAM_PAD_VOICE_ROTATION = %w[blend rhodes moog prophet].freeze
+STREAM_PAD_VOICE_ROTATION = %w[blend rhodes moog prophet juno].freeze
 
 # Which defaults table last touched each ENV key, and how (fill vs force) —
 # multiple tables (DILLA_BEST_DEFAULTS, RENDER_MODE_DEFAULTS,
