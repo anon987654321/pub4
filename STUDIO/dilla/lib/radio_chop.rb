@@ -597,12 +597,28 @@ module RadioChop
   # keep < candidates on purpose. The cheap scan proposes generously and the
   # expensive measurements dispose: separation is what makes the vocal-dominance
   # and key readings answerable, so the real rejections can only happen after it.
+  # The crate names every fetch `source.wav` under a directory that carries the
+  # identity, so the filename alone slugs six different records to `source_01` --
+  # and write_loops! clears `<slug_base>_*` before it writes, so a second chop
+  # would delete the first one's rack. Where the basename carries nothing, the
+  # directory does.
+  GENERIC_BASENAMES = %w[source audio track input mix].freeze
+
+  def slug_for(src)
+    base = slugify(File.basename(src, ".*"))
+    base = slugify(File.basename(File.dirname(src))) if base.empty? || GENERIC_BASENAMES.include?(base)
+    base = "chop" if base.empty?
+    base[0, 24]
+  end
+
+  def slugify(text) = text.to_s.downcase.gsub(/[^a-z0-9]+/, "_").gsub(/\A_+|_+\z/, "")
+
   def ingest!(src = DEFAULT_SOURCE, demucs:, deep:, key_probe: nil, label: nil,
               candidates: 16, keep: 8, span: 30.0, scratch: nil, fresh: false)
     raise "no such source: #{src}" unless File.file?(src)
     raise "demucs required — pip install demucs" if demucs.nil? || demucs.empty?
 
-    slug_base = File.basename(src, ".*").downcase.gsub(/[^a-z0-9]+/, "_").delete_prefix("_")[0, 24]
+    slug_base = slug_for(src)
     # Under scratch/, never under samples/. Sixteen cuts through a 6-stem model
     # is ~300 MB of intermediate wav, and samples/ is a tracked directory --
     # left there it is one `git add -A` from the history.

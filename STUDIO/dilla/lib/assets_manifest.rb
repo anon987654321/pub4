@@ -130,10 +130,16 @@ module DillaAssets
 
       kit = env["EXTERNAL_KIT"].to_s
       unless kit.empty?
-        kit_dir = File.join(external_kit_cache, "drum-samples", kit)
-        unless Dir.exist?(kit_dir)
-          problems << "EXTERNAL_KIT=#{kit} is not in #{relative_home(external_kit_cache)} — " \
-                      "the render would fall back to the synthesized kit, which is a different sound"
+        # A kit the engine builds from oneshots it already ships is never in the
+        # download cache, and looking for it there refuses a render that would
+        # have been correct. external_kit_resolvable? answers for both sources,
+        # beside the installer whose branches it mirrors, so a third source is
+        # one edit rather than two.
+        unless external_kit_resolvable?(kit)
+          problems << "EXTERNAL_KIT=#{kit} does not resolve — not in " \
+                      "#{relative_home(external_kit_cache)}, and not a builtin kit whose " \
+                      "oneshots are here; the render would fall back to the synthesized " \
+                      "kit, which is a different sound"
         end
       end
 

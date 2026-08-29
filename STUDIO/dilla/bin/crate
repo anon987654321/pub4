@@ -41,7 +41,13 @@ module Crate
   STEMS = File.join(ROOT, "stems")
   LOOPS = File.join(ROOT, "loops")
 
-  DEMUCS = File.expand_path("../scratch/venv-demucs/bin/demucs", __dir__)
+  # The venv dilla.rb declares as DEMUX_VENV_DIR, then whatever is on PATH. A
+  # single hardcoded path made `crate split` unreachable: it named a scratch/
+  # venv that has never existed here, so the one command that turns a fetched
+  # source into stems died on its own guard.
+  DEMUCS = [File.expand_path("../tools/venv-demucs/bin/demucs", __dir__),
+            File.expand_path("../scratch/venv-demucs/bin/demucs", __dir__)]
+           .find { |p| File.executable?(p) } || "demucs"
   MODEL = ENV.fetch("CRATE_DEMUCS_MODEL", "htdemucs_6s")
 
   # YouTube answers a plain yt-dlp request with HTTP 403 on the audio stream
@@ -106,10 +112,18 @@ module Crate
 
   # --- split ---------------------------------------------------------------
 
+  # DEMUCS is either an absolute venv path or the bare name to be found on PATH,
+  # so one File.executable? cannot answer for both.
+  def demucs_ready?
+    return File.executable?(DEMUCS) if DEMUCS.include?("/")
+
+    system("command", "-v", DEMUCS, out: File::NULL, err: File::NULL)
+  end
+
   def split(slug)
     source = File.join(SOURCES, slug, "source.wav")
     die("no source for #{slug} — fetch it first") unless File.file?(source)
-    die("demucs not found at #{DEMUCS}") unless File.executable?(DEMUCS)
+    die("demucs not found (#{DEMUCS}) — python3 -m venv tools/venv-demucs && tools/venv-demucs/bin/pip install demucs") unless demucs_ready?
 
     out = File.join(STEMS, slug)
     return puts("crate: #{slug} already split") if Dir.exist?(out) && !Dir.empty?(out)
