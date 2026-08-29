@@ -136,6 +136,12 @@ module Pub4
        master_row("namespace", "data/namespace_ceilings.yml", "files declaring no module or class") do
          require File.join(MASTER, "tools/namespace_ratchet")
          [Pub4::NamespaceRatchet.measure.values.sum, Pub4::NamespaceRatchet.ceilings.values.sum]
+       end,
+       *%w[lone_dirs stutter vague_names].map do |kind|
+         master_row("sprawl.#{kind}", "data/sprawl_census.yml", "the shape of the tree, in all four of them") do
+           require File.join(MASTER, "tools/sprawl_census")
+           [Pub4::SprawlCensus.counts.fetch(kind), Pub4::SprawlCensus.ceilings.fetch(kind)]
+         end
        end].compact
     end
 
