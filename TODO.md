@@ -978,28 +978,13 @@ list still called them open). **A finding is a hypothesis; re-measure before
 working from one.**
 
 
-What brgen would need to read as a peer of TikTok, Snapchat, Mastodon, x.com,
-Reddit, Craigslist and Facebook, and its verticals as peers of Amazon/Temu,
-Tinder/Hinge, DoorDash/Foodora and Messenger.
-
 Scope is brgen and its engines. amber and bsdports are not measured against
 consumer apps, and their planned work stays in `apps.horizon.yml`. Paths below
 are relative to `RAILS/`.
 
-This file is **not** a second feature inventory. `apps.yml` is feature truth and
-`apps.horizon.yml` holds aspirational items marked `agent: ignore`. Everything
-below is a gap that neither file records, verified against the tree on
-2026-08-19 — mostly because `apps.yml` records a feature as `done` when the
-model exists, and several of these models exist with nothing reading or writing
-them.
-
-Several entries were themselves stale by 2026-08-18: price-drop alerts, takeaway
-push, and the courier, event and story map layers were all built while this file
-still listed them as open. A finding is a hypothesis; re-measure before working
-from one.
-
-An item leaves this file when a check proves it, not when it stops being
-mentioned.
+Verified against the tree on 2026-08-19. The reason a gap can exist at all is
+that `apps.yml` records a feature as `done` when the model exists, and several
+of those models exist with nothing reading or writing them.
 
 ---
 
