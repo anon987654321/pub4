@@ -35,3 +35,5 @@ knowledge/
 # just that a probe ran.
 .constitutional_violations.jsonl
 .constitutional_locks/
+loop.mp4
+loop.wav
