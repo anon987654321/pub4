@@ -521,6 +521,13 @@ themselves.
   `test/test_security_defaults.rb`. Its worst case was worse than inert: the
   ingress rate limit was *also* hardcoded in `IngressController`, so file and code
   could disagree in silence.
+- `data/patterns.yml` — **closed** for three keys. `gh`, `sweep_techniques` and
+  `vocabulary` had no reader and are gone; `violation_priors` and
+  `stale_namespaces` had one and were in the wrong file, so they sit in
+  `rules.yml` beside the rules that read them. `data_reach` drops 49 to 46 and
+  holds there. A first pass by grep called six keys dead: `prompt_archaeology`,
+  `repo_topics` and `refusal_templates` have readers that the pattern missed,
+  which is why `data_reach` is the instrument and grep is not.
 
 - `data/tts.yml` and the whole Transcendent path — **open**, and the largest
   instance found so far. `Voice::Speech` has exactly three consumers —
@@ -579,6 +586,37 @@ So the honest scope is per-file and by hand, with a two-direction test, the way
 `limits.yml` and `security.yml` were each closed. A repo-wide gate would
 need a baseline carrying a written reason for all 49, which is a decision about
 49 sections rather than a mechanical step.
+
+### The shape of the tree
+
+`sprawl_census` counts three things over every tracked file in all four trees,
+and `bin/pub4 measure` carries them: a directory holding one file, a name that
+repeats its parent, and a name that says nothing on its own. `FILE_SPRAWL` in
+the scan registry measures the first two for MASTER's `.rb` files and skips
+`law/`, `core/`, `test/` and `spec/`, so it reports zero here and means only
+that.
+
+Priced rather than fixed, because a ceiling that prices a known cost is what
+makes the next arrival a `+1`:
+
+- **53 one-file directories.** Most are Rails test convention mirroring `app/`,
+  and `MASTER/spec/` has five of its own. Neither is wrong; both are countable.
+- **7 uninformative names.** Four are Zeitwerk's: `lib/io/base.rb` is named
+  after the constant it defines, so the finding is that the *concept* is called
+  `Base`, which is a design decision and not a rename. The three that are
+  actionable are `STUDIO/test/helper.rb`, `STUDIO/test/dilla/helper.rb` and
+  `STUDIO/test/tools/helper.rb` — three different helpers at three depths
+  sharing one name, which reads as ambiguous in a stack trace. Flattening them
+  to `studio_helper.rb`, `dilla_helper.rb` and `tools_helper.rb` costs one pass
+  and is held off only because STUDIO carries another session's work.
+
+Calibrate a new kind against a real file before adding it. The first pass
+called 130 RAILS paths too deep and 26 names vague, and every one was the rule
+misreading a path Zeitwerk requires — the same way 596 of 981 design findings
+died. Stutter took three attempts before it separated `dilla/dilla.rb`, which
+reads correctly at a command line, from `lib/cli/cli.rb`, which held
+`Master::CLI::CLI`. What tells them apart is whether the file declares the name
+twice.
 
 ### Top-level ROOT
 
