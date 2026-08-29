@@ -56,7 +56,18 @@ pub4_source_ceilings:
   # Lowered when the per-tree backlog files were consolidated into the repo-root
   # TODO.md (which sits in no tree and so counts toward none): MASTER -1 (DEBT.md),
   # RAILS -2 (TODO.md, BLOCKERS.md), OPENBSD -1 (data/debt.yml).
-  MASTER: 1037
+  # 1037 -> 1038 accounts for lib/autonomy/dream_loop.rb, which ca0d8d104 added
+  # without raising this. Named rather than absorbed: the note at the top of
+  # this file says a raise that swallows another change's unaccounted growth is
+  # how the ratchet dies, and naming the file is what makes this accounting
+  # rather than swallowing.
+  #
+  # STUDIO is over by one too and is NOT raised here. Its overage is
+  # free_midi_chords.yml (committed) plus lib/engine/album_signature.rb
+  # (untracked) less lora/curate.rb (deleted, uncommitted) -- two thirds of it
+  # is work nobody has landed, and a ceiling raised to fit uncommitted files
+  # is the swallowing the note warns about.
+  MASTER: 1038
   RAILS: 2359
   OPENBSD: 106
   STUDIO: 220
