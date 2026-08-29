@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require_relative "support/fake_config"
+require_relative "support_fake_config"
 
 class TestChitchatAgentRouting < Minitest::Test
   FakeConfig = Master::TestSupport::FakeConfig

@@ -34,7 +34,7 @@ module Master::Core
     # mistake to correct on the next one.
     PRODUCERS = {
       # `ruby ... test/x.rb` rather than `ruby -I<something>test`: the real
-      # invocation in this repo is `ruby -Ilib -Itest test/core/test_world.rb`,
+      # invocation in this repo is `ruby -Ilib -Itest test/test_core_world.rb`,
       # where the include flags come first and an adjacency pattern misses it.
       test_pass: %r{\b(?:rake\s+test|rails\s+test|rspec|minitest|bin/(?:ci|check|gate)|ruby\S*\s[^;|]*\btest/)},
       scan_clean: %r{\b(?:bin/(?:check|gate|scan)|rubocop|brakeman|bundler-audit|rake\s+(?:lint|audit|scan))},

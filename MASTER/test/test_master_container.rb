@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require_relative "support/master_container"
+require_relative "support_master_container"
 
 # Smoke tests for the with_master_container helper itself.
 class TestMasterContainer < Minitest::Test

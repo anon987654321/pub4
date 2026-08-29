@@ -12,7 +12,7 @@
 # loader as the rest of `lib/`, which is what the path-to-constant mapping
 # already wanted: `lib/core.rb` → `Master::Core`, `lib/core/fold.rb` →
 # `Master::Core::Fold`. The fold still depends on nothing in `lib/` outside its
-# own namespace — `test/core/test_no_lib_backedges.rb` is what holds that, and
+# own namespace — `test/test_core_no_lib_backedges.rb` is what holds that, and
 # it is the part of the two-spine split that was carrying real weight.
 module Master::Core
   # An Effect is something the agent wants to do. Nothing reaches the world
