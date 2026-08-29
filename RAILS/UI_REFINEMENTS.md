@@ -28,11 +28,6 @@ _Last applied: 2026-08-01 (dead-wiring pass: install-prompt finally styled, pwa-
 ### C · brgen shell
 - Nav swiper `tablist`/`tab`/`aria-selected` + arrow-key roving tabindex
 - Active underline + scroll-snap; 44px min hit
-- City carousel → real `https://{domain}/` links; pause on reduced-motion + hidden tab
-  — landed and **wrong**: 29 of those hosts do not resolve, so this row shipped a
-  network that is not there onto every pageview. See `TODO.md`
-  `brgen_city_carousel_links_dead`. A landed row and a wrong-but-landed row look
-  identical from a checklist, which is why this file cannot be the only record.
 - Vertical accents single map in `_vertical_shell` only (no ui_refinements re-write)
 - Graphite elevation (`#17161c` / `#211f28`) instead of pure black
 - Flash/toast flat cards; post measure 66ch; skeleton utility; high-contrast media query

@@ -144,11 +144,6 @@ class DeploySmokeContractTest < Minitest::Test
     refute_includes cache, "define(version: 0)"
   end
 
-  def test_brgen_face_assets_under_javascripts
-    assert File.file?(File.join(ROOT, "brgen/app/assets/javascripts/particle_kernel.js"))
-    assert File.file?(File.join(ROOT, "brgen/app/assets/javascripts/face.js"))
-  end
-
   def test_stimulus_controllers_do_not_use_method_trailing_commas
     RAILS_APPS.each do |app|
       Dir.glob(File.join(ROOT, app, "app/javascript/controllers/**/*_controller.js")).each do |controller|

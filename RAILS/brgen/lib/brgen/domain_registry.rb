@@ -132,12 +132,6 @@ module Brgen
       brgen.no oshlo.no stvanger.no trndheim.no cardff.uk edinbrgh.uk frankfrt.de
     ].freeze
 
-    # fetch, not [], so a domain deleted from ENTRIES takes the page down here
-    # rather than silently shrinking the city network to whatever still matches.
-    def self.live_entries
-      LIVE_DOMAINS.map { |domain| ENTRIES_BY_DOMAIN.fetch(domain) }
-    end
-
     def self.production_hosts
       ENTRIES.flat_map { |entry| [ entry.domain, /.*\.#{Regexp.escape(entry.domain)}\z/ ] }.uniq
     end
