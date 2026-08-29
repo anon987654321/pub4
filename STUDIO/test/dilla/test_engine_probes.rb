@@ -783,11 +783,11 @@ class TestDilla < Minitest::Test
   def test_flylo_camel_learned_drum_grid_registers
     result = eval_in_engine(<<~RUBY)
       grid = BUILTIN_LEARNED_ENGINE.dig("drum_grids", "quartal_west_coast")
-      kicks = grid["flylo_kicks"]
-      snares = grid["flylo_snares"]
+      kicks = grid["wonky_kicks"]
+      snares = grid["wonky_snares"]
       puts JSON.generate(
         bpm: grid&.dig("bpm"),
-        builtin: grid["flylo_kicks"] == FLYLO_CAMEL_DRUM_GRID["flylo_kicks"],
+        builtin: grid["wonky_kicks"] == POLY_TEMPORAL_DRUM_GRID["wonky_kicks"],
         kicks: kicks,
         snares: snares,
         kick_count: kicks&.length,
@@ -808,7 +808,7 @@ class TestDilla < Minitest::Test
       ENV["DILLA_STREAMING"] = "1"
       remove_instance_variable(:@learned_engine_cache) if instance_variable_defined?(:@learned_engine_cache)
       apply_dilla_style!(force: true)
-      grid = flylo_drum_grid_for(ENV["TRACK"])
+      grid = wonky_drum_grid_for(ENV["TRACK"])
       puts JSON.generate(
         mode: ENV["RENDER_MODE"],
         track: ENV["TRACK"],
@@ -822,9 +822,9 @@ class TestDilla < Minitest::Test
         pocket_drums: dilla_pocket_drums_enabled?,
         kicks_enabled: kicks_enabled?,
         grid_bpm: grid&.dig("bpm"),
-        flylo_kicks: grid&.dig("flylo_kicks"),
-        flylo_snares: grid&.dig("flylo_snares"),
-        drums_only: flylo_drums_only?,
+        wonky_kicks: grid&.dig("wonky_kicks"),
+        wonky_snares: grid&.dig("wonky_snares"),
+        drums_only: wonky_drums_only?,
         progression: load_learned_engine.dig("progressions", ENV["TRACK"])&.length
       )
     RUBY
@@ -851,9 +851,9 @@ class TestDilla < Minitest::Test
     return unless result.fetch("grid_bpm")
 
     assert_equal 92, result.fetch("grid_bpm")
-    assert_includes result.fetch("flylo_kicks"), 0
-    assert_includes result.fetch("flylo_snares"), 4
-    assert_includes result.fetch("flylo_snares"), 12
+    assert_includes result.fetch("wonky_kicks"), 0
+    assert_includes result.fetch("wonky_snares"), 4
+    assert_includes result.fetch("wonky_snares"), 12
   end
 
   def test_la_beat_progression_varies_chords_and_lengths
@@ -870,7 +870,7 @@ class TestDilla < Minitest::Test
       names = arranged.map { |c| c[:name] }
       beat_p = 60.0 / cfg[:bpm]
       @render_chord_bar_lens = lens
-      ENV["FLYLO_DRUM_OVERLAY"] = "1"
+      ENV["WONKY_DRUM_OVERLAY"] = "1"
       events = dilla_schedule(n_bars, beat_p, arranged, chord_bars: cfg[:chord_bars],
                               phrase_bars: cfg[:phrase_bars], swing: cfg[:swing], feel: cfg[:feel],
                               timing: cfg[:timing], quintuplet: cfg[:quintuplet], chord_phases: phases)
@@ -886,7 +886,7 @@ class TestDilla < Minitest::Test
         pad_events: events[:pad].length,
         pad_unique: pad_names.uniq.length,
         index_unique: indices.uniq.length,
-        flylo_kick: events[:flylo_kick]&.length || 0
+        wonky_kick: events[:wonky_kick]&.length || 0
       )
     RUBY
     # 8, not 12. resolve_chord_bars doubles every preset's chord_bars on the
@@ -903,7 +903,7 @@ class TestDilla < Minitest::Test
     assert_operator result.fetch("lens_variety"), :>=, 2
     assert_operator result.fetch("pad_unique"), :>=, 3
     assert_operator result.fetch("index_unique"), :>=, 4
-    assert_operator result.fetch("flylo_kick"), :>, 0
+    assert_operator result.fetch("wonky_kick"), :>, 0
   end
 
   def test_dilla_neosoul_aydin_bach_progressions_resolve
@@ -2051,7 +2051,11 @@ class TestDilla < Minitest::Test
   def test_flylo_drum_overlay_schedules_dual_bus_events
     result = eval_in_engine(<<~RUBY)
       %w[RENDER_MODE CAMEL_DRUM_LOCK PRODUCER_MODE].each { |k| ENV.delete(k) }
-      ENV["FLYLO_DRUM_OVERLAY"] = "1"
+      ENV["WONKY_DRUM_OVERLAY"] = "1"
+      # Dead switch: nothing in lib reads QUINT_HATS under either prefix, so
+      # this sets nothing and the quint assertion below passes because quint
+      # is never scheduled at all. Left as-is rather than renamed -- a
+      # differently-named dead switch is not an improvement. See TODO.md.
       ENV["FLYLO_QUINT_HATS"] = "1"
       ENV["KICKS"] = "1"
       ENV["CAMEL_DRUM_LOCK"] = "0"
@@ -2060,36 +2064,36 @@ class TestDilla < Minitest::Test
       beat_p = 60.0 / 88.0
       events = dilla_schedule(8, beat_p, pads, chord_bars: 2, feel: :timeless, swing: 57.0)
       puts JSON.generate(
-        flylo_kick: events[:flylo_kick]&.length.to_i,
-        flylo_hat: events[:flylo_hat]&.length.to_i,
-        flylo_snare: events[:flylo_snare]&.length.to_i,
+        wonky_kick: events[:wonky_kick]&.length.to_i,
+        wonky_hat: events[:wonky_hat]&.length.to_i,
+        wonky_snare: events[:wonky_snare]&.length.to_i,
         # Quint/perc intentionally omitted (sparse overlay — no spam).
-        flylo_quint: events[:flylo_quint]&.length.to_i,
-        enabled: flylo_drum_overlay_enabled?
+        wonky_quint: events[:wonky_quint]&.length.to_i,
+        enabled: wonky_drum_overlay_enabled?
       )
     RUBY
     assert result.fetch("enabled")
-    assert_operator result.fetch("flylo_kick"), :>, 0
-    assert_operator result.fetch("flylo_hat"), :>, 0
-    assert_operator result.fetch("flylo_snare"), :>, 0
-    assert_equal 0, result.fetch("flylo_quint"), "sparse overlay skips quint spam"
+    assert_operator result.fetch("wonky_kick"), :>, 0
+    assert_operator result.fetch("wonky_hat"), :>, 0
+    assert_operator result.fetch("wonky_snare"), :>, 0
+    assert_equal 0, result.fetch("wonky_quint"), "sparse overlay skips quint spam"
   end
 
-  def test_stream_iterate_evolve_flylo_drums_returns_notes
+  def test_stream_iterate_evolve_wonky_drums_returns_notes
     result = eval_in_engine(<<~RUBY)
-      ENV["FLYLO_DRUM_OVERLAY"] = "1"
+      ENV["WONKY_DRUM_OVERLAY"] = "1"
       ENV["DILLA_STREAMING"] = "1"
       ENV["STREAM_ITERATE"] = "1"
-      ENV["STREAM_FLYLO_EVERY"] = "1"
+      ENV["STREAM_WONKY_EVERY"] = "1"
       @stream_iterate_count = 2
-      notes = stream_iterate_evolve_flylo_drums!
+      notes = stream_iterate_evolve_wonky_drums!
       puts JSON.generate(
         notes: notes,
-        gain: ENV["FLYLO_OVERLAY_GAIN"],
-        grid: ENV["FLYLO_GRID_BIAS"]
+        gain: ENV["WONKY_OVERLAY_GAIN"],
+        grid: ENV["WONKY_GRID_BIAS"]
       )
     RUBY
-    assert result.fetch("notes").any? { |n| n.start_with?("flylo_gain=") }
+    assert result.fetch("notes").any? { |n| n.start_with?("wonky_gain=") }
     assert result.fetch("gain").to_s.length.positive?
     assert result.fetch("grid").to_s.length.positive?
   end
