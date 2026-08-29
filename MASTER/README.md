@@ -1,9 +1,8 @@
 # MASTER
 
-<!-- HERO: GitHub embeds video only from a user-attachments URL, never a relative
-     path. Drag MASTER/loop.mp4 into any issue/PR comment, then paste the resulting
-     https://github.com/user-attachments/assets/… URL into the src below. -->
-<video src="https://github.com/user-attachments/assets/REPLACE-WITH-UPLOADED-loop.mp4" autoplay loop muted playsinline width="360"></video>
+<!-- loop.mp4 is committed and embedded via its raw.githubusercontent URL, which
+     GitHub's README CSP allows, so it plays with no login and no upload step. -->
+<video src="https://raw.githubusercontent.com/anon987654321/pub4/main/MASTER/loop.mp4" autoplay loop muted playsinline width="360"></video>
 
 **MASTER is the first artificial intelligence written in pure Ruby that governs
 itself by law, not by hope — grown in Norway, to run its own mind on power drawn
@@ -73,15 +72,28 @@ Wake it with one line and it comes up like an old Unix machine, telling you what
 it is and what it runs on.
 
 ```console
-$ ssh dev@brgen.no
-$ cd MASTER && MASTER_BOOT_STATUS=1 bundle exec ruby bin/master
-master: boot safe=1 web=0
-master: background=0 watch=0
-master: loop= owner=none
-master: budget valid=true slot=unknown
-master: aesthetic=brutalist
-master: motd scan: 228 rules, self-test on boot
-master: ready dmesg=preserved
+$ cd MASTER && bin/cli
+hw0 at mainbus0: Mac14,2
+cpu0 at mainbus0: Apple M2
+mem0: 8192MB avail
+Darwin Kernel Version 25.5.0: RELEASE_ARM64_T8112
+
+MASTER (CONSTITUTIONAL) #e1c923b69: Sat Aug 29 18:40:36 CEST 2026
+    mac@Mac.lan:/Users/mac/Documents/GitHub/pub4/MASTER
+runtime0: arm64-darwin25 ruby 3.4.9 zsh
+aesthetic0: brutalist
+model0: claude-opus-4-8
+rev0: e1c923b69
+soul0: 2.7.0
+imports0: soul rules limits state patterns openbsd
+orders0: 3 active
+security0: pledge unavailable
+web0: https://ai.brgen.no/
+modules0: ground trace voice now loop judge reach ok
+mode0: safe · full · cli · no-autofix   loop=   owner=none   posture=balanced
+boot0: 1333ms
+
+master@Mac.lan ready
 ```
 
 Every change a model wants runs through one loop: it proposes an effect, the
