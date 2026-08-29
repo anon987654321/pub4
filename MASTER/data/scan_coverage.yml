@@ -36,14 +36,17 @@ scan_coverage:
   # and the argument is the part that rots.
   exempt:
     bin: >-
-      Held out by the scanner, not by a judgment that it should be. Every
-      executable here is extensionless by convention, and SCAN_GLOB
-      matches on extension -- 1 of 29 files in bin/ is reachable by it, so
-      listing bin/ as a scanned root would claim coverage that does not
-      happen. It is recorded as exempt so the gap is arguable rather than
-      invisible: gate, check, pub4 and master are the most load-bearing
-      scripts in the repo and no rule has ever read one. Closing it means
-      teaching the scanner to select by shebang as well as by extension.
+      Exempt because listing it as scanned would be inert, not because
+      nothing reads it. The two entry points into the same scanner
+      disagree here: the /scan CLI passes glob "**/*"
+      (lib/cli/scan_request.rb) and reads all 29 files in bin/, while
+      Fix::SelfCheck calls scan_dir with no override and gets SCAN_GLOB,
+      which matches on extension and reaches 1 of 29 -- every executable
+      here is extensionless by convention. roots is what SelfCheck reads,
+      so moving bin/ there would declare coverage that SCAN_GLOB still
+      will not deliver. A full /scan already reports 103 findings across
+      18 of these files, gate, check and pub4 among them, and nothing acts
+      on them. Closing this means one glob, not one list entry.
     test: >-
       Tests are the instrument, not the subject. Scanning them makes every
       fixture that deliberately contains a violation into a violation, which is
