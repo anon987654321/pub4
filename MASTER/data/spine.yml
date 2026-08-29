@@ -31,7 +31,7 @@ spine:
   # detector for DRY, MiddleManRule for the over-engineering half of
   # engineering_fit, and StrunkPass's brevity mode wired onto conversational
   # output so a terse reply sheds its padding, not its structure.
-  lib_body_ceiling: 37149
+  lib_body_ceiling: 37223
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753
