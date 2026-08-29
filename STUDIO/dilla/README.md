@@ -5,11 +5,12 @@
 master, and write an mp3 or a wav. Everything runs locally through `ffmpeg` and
 `fluidsynth`: nothing is uploaded, and nothing is fetched at render time.
 
-The suite is `STUDIO/test/dilla/`, run as `cd STUDIO && rake test:dilla`, or bare
-`rake` for the gate and every suite. Check the path you are given before you
-trust a green run — this line once named a file that had not existed since the
-suite moved, so it sent an operator to validate nothing and read the result as
-passing.
+The suite is `STUDIO/test/test_dilla_*.rb`, which is the glob `rake test:dilla`
+expands in `STUDIO/Rakefile`; bare `rake` runs the gate and every suite. Check
+the path you are given before you trust a green run. This line has been wrong
+twice — once naming a file that had not existed for months, once naming a
+directory that has never existed — and both times it sent an operator to
+validate nothing and read the result as passing.
 
 ENV knobs, the switch reference and the render path in detail are in
 `ENV_AND_RENDER.md`. Operator scripts, `redo_nine.sh` among them, live under
