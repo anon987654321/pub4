@@ -301,20 +301,24 @@ real logic:
   ActionController. It previously did not, which is why every app carried
   copies — and why amber and bsdports were rendering Rails' *generated stub*
   mailer layout, shadowing the designed one, while brgen was not.
+- `FingerprintsController`, `PasswordsMailer` and `lib/tasks/visits.rake` exist
+  once, in the engine. The first two are top-level constants, resolved by bare
+  name from a host route set and from `Shared::PasswordResetJob`; the rake tasks
+  reach every app because `Rails::Engine#run_tasks_blocks` loads the engine's
+  `lib/tasks/**/*.rake`.
+- `jox_logo_controller.js` lives in `frontend/` and registers through
+  `LAZY_COMPONENTS`, so amber and bsdports get the logo animation and brgen,
+  which has no such logo, pays one importmap line and no fetch.
 
 Deliberately left duplicated:
 
 - **Framework-required host constants**: `SessionsController`,
-  `PasswordsController`, `ReactionsController`, `FingerprintsController`,
+  `PasswordsController`, `ReactionsController`,
   `DraftsController`, `Authentication`, the four reflexes,
   `ApplicationCable::Channel`, `Current`, `Session`,
   `controllers/{index,application,application_controller}.js`. These are
   already one-line delegations to the engine; routing, Zeitwerk and
   StimulusReflex resolve them by bare constant, so the file has to exist.
-- **`jox_logo_controller.js`** (48 lines, amber + bsdports). The shared
-  Stimulus baseline is registered for *all* apps in `frontend/stimulus_boot.js`.
-  Promoting product-specific branding there would ship a jox logo controller to
-  brgen, which does not have that logo. Two copies beats one wrong dependency.
 
 ## Vertical ownership (2026-08-10)
 

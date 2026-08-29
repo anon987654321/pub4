@@ -14,4 +14,14 @@
 # extra duplicate sets, because another session has them regenerated and
 # uncommitted and this tool reads content from disk while taking its paths
 # from git ls-files.
-duplicate_sets: 39
+#
+# 39 -> 35: four files that existed twice in RAILS now exist once, in the
+# shared engine — fingerprints_controller.rb and passwords_mailer.rb (amber +
+# brgen), lib/tasks/visits.rake (amber + brgen), jox_logo_controller.js (amber
+# + bsdports). The engine already reached all three apps for each of them: a
+# top-level constant in shared/app resolves by bare name, Rails::Engine loads
+# the engine lib/tasks, and stimulus_boot registers the logo only where the
+# element appears. Measured in a clean worktree; the shared checkout reads
+# three higher because another session has the db schema files regenerated and
+# uncommitted.
+duplicate_sets: 35

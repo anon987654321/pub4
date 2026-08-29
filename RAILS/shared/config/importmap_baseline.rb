@@ -104,6 +104,10 @@ pin "pub4/media_exclusive", to: "media_exclusive_controller.js"
 pin "pub4/haptics", to: "haptics_controller.js"
 pin "pub4/geolocation", to: "geolocation_controller.js"
 pin "pub4/viewport_aware", to: "viewport_aware_controller.js"
+# amber and bsdports carry the jox logo and brgen does not, so this is pinned
+# for all three and registered only where the element appears — see
+# LAZY_COMPONENTS in stimulus_boot.js.
+pin "pub4/jox_logo", to: "jox_logo_controller.js", preload: false
 pin "pwa/offline_store", to: "pwa_offline_store.js"
 # Only @stimulus-components/carousel imports this, and carousel appears on one
 # surface in the whole family (amber shared/_wardrobe_showcase). Lazy-registered

@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+# The read surface for Shared::VisitCount, in the engine because the counter is:
+# Rails::Engine#run_tasks_blocks loads lib/tasks/**/*.rake, so every host app
+# gets these tasks from this one copy.
+#
 # The read surface for Shared::VisitCount. A rake task rather than a dashboard
 # page: the question this answers — which of seven city domains anyone reaches —
 # is asked when deciding where to spend effort, not continuously, and a page
@@ -9,7 +13,7 @@ namespace :visits do
   task :hosts, [ :days ] => :environment do |_, args|
     days = (args[:days].presence || 30).to_i
     since = days.days.ago.to_date
-    by_host = Shared::VisitCount.by_host(since: since)
+    by_host = Shared::VisitCount.by_host(since:)
     total = by_host.values.sum
 
     puts "Visits since #{since} (#{days} days)"
@@ -30,7 +34,7 @@ namespace :visits do
   task :routes, %i[host days] => :environment do |_, args|
     days = (args[:days].presence || 30).to_i
     since = days.days.ago.to_date
-    by_route = Shared::VisitCount.by_route(host: args[:host].presence, since: since)
+    by_route = Shared::VisitCount.by_route(host: args[:host].presence, since:)
 
     puts "Routes since #{since}#{args[:host].present? ? " on #{args[:host]}" : ""}"
     next puts("  (nothing recorded yet)") if by_route.empty?

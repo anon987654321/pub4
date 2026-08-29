@@ -13,10 +13,6 @@ class AppDuplicationTest < Minitest::Test
   APPS = %w[amber brgen bsdports].freeze
   MAX_DUPLICATED_LINES = 12
 
-  # amber + bsdports share a logo animation brgen has no use for; registering it
-  # in the shared Stimulus baseline would ship it to all three.
-  ALLOWED = ["app/javascript/controllers/jox_logo_controller.js"].freeze
-
   def duplicates
     by_path = Hash.new { |hash, key| hash[key] = [] }
     APPS.each do |app|
@@ -26,8 +22,6 @@ class AppDuplicationTest < Minitest::Test
     end
 
     by_path.flat_map do |relative, paths|
-      next [] if ALLOWED.include?(relative)
-
       paths.group_by { |path| File.read(path) }
            .select { |_body, same| same.size > 1 }
            .map { |body, same| [relative, body.lines.size, same.size] }
@@ -39,13 +33,5 @@ class AppDuplicationTest < Minitest::Test
 
     assert_empty offenders.map { |relative, lines, count| "#{relative} (#{lines} lines x#{count})" },
                  "identical in more than one app and big enough to extract into RAILS/shared"
-  end
-
-  # If the allow-list outlives the file it excuses, drop the entry.
-  def test_allow_list_entries_still_exist
-    ALLOWED.each do |relative|
-      assert APPS.any? { |app| File.file?(File.join(ROOT, app, relative)) },
-             "#{relative} is allow-listed but no app has it"
-    end
   end
 end

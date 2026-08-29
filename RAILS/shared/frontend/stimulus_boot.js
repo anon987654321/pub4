@@ -110,8 +110,14 @@ const COMPONENT_REGISTRATIONS = [
 // server-rendered text. Its only possible effect was to overwrite localised
 // Norwegian with date-fns English, so the controller, the eighteen
 // declarations and the date-fns pin all went together.
+//
+// jox-logo is here for the opposite reason: not a CDN cost but a product one.
+// amber and bsdports share the animated logo mark and brgen has no such logo,
+// so a static import would ship branding to an app that cannot render it. Lazy
+// registration costs brgen one importmap line and no fetch.
 const LAZY_COMPONENTS = [
-  ["carousel", () => import("@stimulus-components/carousel")]
+  ["carousel", () => import("@stimulus-components/carousel")],
+  ["jox-logo", () => import("pub4/jox_logo")]
 ]
 
 // Register `name` the first time the document contains an element asking for it.
