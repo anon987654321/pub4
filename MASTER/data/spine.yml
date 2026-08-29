@@ -777,3 +777,15 @@ spine:
   # delegator on Memory, which was the forwarding this split existed to avoid.
   # lib/ net 0.
   core_files: 7
+
+# The coarse sprawl net over all four trees: one source-file ceiling each, so a
+# new file anywhere fails `bin/pub4 measure` until it folds into an existing one
+# or the ceiling is raised here with the reason in the commit. dilla's engine has
+# a finer per-part guard in STUDIO/gate.rb; this counts the whole repo the
+# constitution keeps calling sprawling and nothing had ever counted. On-disk
+# source files (code, style, markup, config, docs), vendored/generated excluded.
+pub4_source_ceilings:
+  MASTER: 1038
+  RAILS: 2361
+  OPENBSD: 107
+  STUDIO: 220

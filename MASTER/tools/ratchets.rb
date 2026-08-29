@@ -65,7 +65,7 @@ module Pub4
     module_function
 
     def all(deep: false)
-      rows = spine_rows + master_yaml_rows + rails_lint_rows +
+      rows = spine_rows + master_yaml_rows + rails_lint_rows + pub4_growth_rows +
              file_length_rows + coverage_rows
       # The placeholders only when the real numbers are not being fetched, or
       # every css_budget rule would appear twice under --deep.
@@ -175,6 +175,32 @@ module Pub4
       $LOAD_PATH.unshift(File.join(MASTER, "lib")) unless $LOAD_PATH.include?(File.join(MASTER, "lib"))
       require "master"
       Master::Review::Scan::CodeMetrics.body_lines_in(File.join(MASTER, "lib"))
+    end
+
+    # pub4-wide sprawl guard: a source-file ceiling per tree, read from the same
+    # spine.yml. A new file anywhere puts a tree OVER and fails; a deletion puts
+    # it SLACK and also fails, so a win only lands when its ceiling is lowered to
+    # lock it — the exact discipline that keeps sprawl from regrowing into slack.
+    # Pure Ruby, so it stays in fast mode and runs before every commit.
+    TREE_EXCLUDE = %r{/(\.git|node_modules|tmp|log|renders|stems|samples|scratch|project|crate|venv|\.venv|site-packages|vendor|storage|\.cache|builds|coverage|\.master|knowledge|output)/|/public/assets/}
+    TREE_SOURCE_EXT = %w[.rb .rake .erb .scss .css .js .mjs .yml .yaml .md .sh .ksh .exp .html .json].freeze
+
+    def pub4_growth_rows
+      ceilings = YAML.safe_load_file(File.join(MASTER, "data/spine.yml")).fetch("pub4_source_ceilings")
+      ceilings.map do |tree, ceiling|
+        Row.new(name: "growth.#{tree.downcase}", current: tree_source_count(File.join(ROOT, tree)),
+                ceiling: ceiling, direction: :down, source: "MASTER/data/spine.yml",
+                note: "on-disk source files; a new file folds in or raises this")
+      end
+    rescue StandardError => e
+      [Row.new(name: "growth", current: nil, ceiling: nil, direction: :down,
+               source: "MASTER/data/spine.yml", note: "unreadable: #{e.class}")]
+    end
+
+    def tree_source_count(dir)
+      Dir.glob(File.join(dir, "**", "*"), File::FNM_DOTMATCH).count do |path|
+        File.file?(path) && path !~ TREE_EXCLUDE && TREE_SOURCE_EXT.include?(File.extname(path).downcase)
+      end
     end
 
     # The RAILS lints, each a Pub4 module with its own BASELINES.
