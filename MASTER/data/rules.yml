@@ -3178,6 +3178,57 @@ design_rules:
       - resources
       - prompts
       action: Prefer standard tool bridges over bespoke glue when integrating design automation.
+  # How this house draws dimension. Applies to every surface in every tree --
+  # MASTER's face, brgen's radio tunnel, and anything either of them grows into.
+  #
+  # The illusion is carried by MOTION, not by shading. A field of flat points,
+  # each one a screen-space sprite, reads as a solid volume the moment it rotates
+  # coherently: the eye reconstructs the form from parallax alone. That is the
+  # kinetic depth effect, demonstrated by Wallach and O'Connell in 1953, and it is
+  # the whole technique. There is no lighting model to get wrong because there is
+  # no surface to light.
+  #
+  # This is a house style AND the cheap answer, which is why it is a rule rather
+  # than a preference. A point cloud needs one vertex buffer, a vertex shader that
+  # projects and sets gl_PointSize, and a fragment shader that draws a soft dot.
+  # A mesh renderer needs a scene graph, a material system and blend modes -- which
+  # is most of what a 3D library is, and is why the face carries a patched THREE
+  # build whose patch nobody wrote down.
+  kinetic_depth:
+    technique: point_cloud
+    principle: >-
+      Depth is implied by coherent motion, never by shaded surfaces. Flat 2D
+      points that move together read as one solid volume; this is the kinetic
+      depth effect and it is the house way of drawing dimension.
+    depth_cues:
+      - parallax_under_rotation
+      - point_size_attenuation_with_distance
+      - brightness_and_alpha_falloff
+      - density
+    forbidden:
+      - lit_meshes
+      - material_systems
+      - per_surface_shading
+    renderer: raw_webgl_points
+    action: >-
+      Draw dimension as a field of projected points. Reach for gl.POINTS and two
+      short shaders before reaching for a 3D library, and never introduce a
+      scene graph to solve a problem a point cloud already solves.
+    exceptions: >-
+      MASTER's face still uses THREE for its wireframe mesh. That is history
+      rather than intent, and the migration path is already open --
+      web/public/particle_kernel.js calls itself the Pixel Field kernel and says
+      it exists to replace ad-hoc particle loops in face, codebase and ecology one
+      at a time. It is 2D today: its cells carry x, y, vx, vy and no z, and it
+      draws through getContext("2d"). Adding a depth axis and a gl.POINTS
+      renderer is the work; rewriting a mesh by hand is not.
+    already_correct: >-
+      brgen's radio tunnel (app/javascript/radio_brgen_tunnel.js) is raw WebGL
+      with a 2D fallback and no library at all. It is the reference
+      implementation, not the exception.
+    constraint_that_still_holds: >-
+      Deferred WebGL boot is sacred (DECISIONS.md). A point cloud is cheaper than
+      a mesh, which makes the primer gate easier to honour, not optional.
   visual_design:
     semantics:
       reject_arbitrary_decoration: true
