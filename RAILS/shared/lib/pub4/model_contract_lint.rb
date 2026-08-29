@@ -5,7 +5,7 @@ require_relative "baseline_ratchet"
 module Pub4
   # What a model promises, measured instead of counted by hand.
   #
-  # Both numbers below sat in OPENBSD/data/debt.yml as bare figures — "104
+  # Both numbers below sat in TODO.md as bare figures — "104
   # associations with no inverse_of", "11 models with no validations" — with the
   # entry itself warning that no committed tool reproduces them and that "an
   # unfalsifiable number is how a register row outlives its subject". A plain

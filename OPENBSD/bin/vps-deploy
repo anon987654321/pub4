@@ -146,7 +146,7 @@ fi
 # exactly when that matters — it is the moment the repo becomes the box.
 #
 # Advisory, not blocking, and deliberately so: six configs differ today
-# (debt.yml, etc_drift_six_configs), three of them rc.d files that start
+# (TODO.md, etc_drift_six_configs), three of them rc.d files that start
 # production services, so a hard gate here would refuse every deploy until an
 # unrelated backlog is cleared. Make it blocking when that row closes; a warning
 # that names a number is still the difference between knowing and not.
@@ -157,7 +157,7 @@ if [[ -x /usr/local/bin/config_drift_gate.rb ]]; then
     drift_count=$(/usr/local/bin/ruby34 -e \
       'print File.read("/tmp/vps-deploy-drift.out").scan(/: DRIFT -/).size' 2>/dev/null)
     print "vps-deploy: $app WARNING — ${drift_count:-?} config(s) in /etc differ from the repo being deployed"
-    print "vps-deploy: $app see /tmp/vps-deploy-drift.out (debt.yml: etc_drift_six_configs)"
+    print "vps-deploy: $app see /tmp/vps-deploy-drift.out (TODO.md: etc_drift_six_configs)"
   fi
 fi
 

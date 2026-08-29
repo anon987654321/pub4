@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-# DEBT.md, Test coverage: no test named PatchApplier. It shells out to patch(1) and
+# TODO.md, Test coverage: no test named PatchApplier. It shells out to patch(1) and
 # is the mechanism every diff-mode autofix goes through, so "rejects malformed or
 # no-op patches; never applies blindly" needs to be more than a comment.
 class PatchApplierTest < Minitest::Test

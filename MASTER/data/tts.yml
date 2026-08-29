@@ -5,7 +5,7 @@
 # synthesize_streaming_to_file, which goes socket -> oneshot -> espeak and never
 # reaches Transcendent. The only door in is Speech.synthesize, whose only caller
 # is synthesize_audio, whose only caller is synthesize_bytes, which nothing calls.
-# So every key below, the engine chain included, is inert. See MASTER/DEBT.md
+# So every key below, the engine chain included, is inert. See TODO.md
 # ("Transcendent TTS is unreached") before believing a value here describes
 # production, and MASTER/DECISIONS.md for why it is not simply wired up.
 #

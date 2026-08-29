@@ -104,7 +104,7 @@ module Master
         end
 
       # NULL_BLINDNESS lives once, in law/ (domain files) — the second
-      # retired twin (see DEBT.md). This block's regex matched IS NULL, the
+      # retired twin (see TODO.md). This block's regex matched IS NULL, the
       # correct form its own message prescribed, and needed a path exemption
       # to stop reporting the fixer that emits that string as a repair. The
       # law version detects `= NULL`, proves itself on fixtures the inverted
@@ -118,7 +118,7 @@ module Master
 # under the same id (a SINGULARITY violation) and added no coverage worth keeping.
 
       # UNBOUNDED_RETRY lives once, in law/ (domain files) — the first of the
-      # 72 law/registry twins retired (see DEBT.md). The narrowing this block
+      # 72 law/registry twins retired (see TODO.md). The narrowing this block
       # learned — keyword not symbol, not predicate, not identifier, not regex
       # alternation, not a line continuation — moved into the law's detector
       # with each shape pinned as a good fixture, which is what the registry
@@ -159,7 +159,7 @@ module Master
       # A placeholder "etc" is lowercase, bare, and not part of a path. Being loose
       # about that (/\betc\.?\b/i) matched `require "etc"`, `Etc.nprocessors` and
       # every /etc/… deploy path — 12 of selfcheck's 71 findings, none real. See
-      # DEBT.md, Scanner noise.
+      # TODO.md, Scanner noise.
         PLACEHOLDER_ETC = %r{(?<![\w/])etc\.?(?![\w/])}
         STDLIB_ETC_REQUIRE = /\brequire\s+["']etc["']/
 

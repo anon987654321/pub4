@@ -12,7 +12,7 @@ module Master
     # `lateral` and `narrow_to_wide` zooms this class rejected, and this class
     # allowed `repair`, `checkpoint` and `review` acts the file does not name.
     # A protocol file whose only reader was a schema test is a protocol nothing
-    # obeys, which is the shape DEBT.md calls inert config.
+    # obeys, which is the shape TODO.md calls inert config.
     class AttentionContext
       DATA = File.expand_path("../../data/attention_context.yml", __dir__)
 

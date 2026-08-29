@@ -3,22 +3,23 @@
 
 require "open3"
 require "socket"
-require "yaml"
 
 ROOT = File.expand_path("..", __dir__)
 REPO = File.expand_path("..", ROOT)
-DEBT = File.join(REPO, "OPENBSD", "data", "debt.yml")
+# The per-tree backlog files were consolidated into the repo-root TODO.md; open
+# operator debt lives in its OPENBSD section, one item per "<!-- open-debt -->"
+# marker line.
+BACKLOG = File.join(REPO, "TODO.md")
 
 def capture(*cmd, chdir: REPO)
   out, status = Open3.capture2e(*cmd, chdir:)
   status.success? ? out.strip : nil
 end
 
-def debt_open
-  return [] unless File.file?(DEBT)
+def open_debt_count
+  return 0 unless File.file?(BACKLOG)
 
-  data = YAML.safe_load(File.read(DEBT)) || {}
-  Array(data["open"])
+  File.readlines(BACKLOG).count { |line| line.strip == "<!-- open-debt -->" }
 end
 
 def port_open?(port)
@@ -49,10 +50,7 @@ puts "repo: #{REPO}"
 puts "branch: #{branch} @ #{commit} (#{dirty} dirty, #{behind} behind upstream)"
 puts
 
-open_items = debt_open
-puts "OPENBSD/data/debt.yml open: #{open_items.size}"
-open_items.first(8).each { |item| puts "  - [#{item['id']}] #{item['summary']}" }
-puts "  …" if open_items.size > 8
+puts "backlog: TODO.md — #{open_debt_count} open operator-debt item(s) (OPENBSD section)"
 puts
 
 puts "feature inventory: RAILS/apps.yml (horizon: apps.horizon.yml)"

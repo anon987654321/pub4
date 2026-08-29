@@ -2,7 +2,7 @@
 
 require "minitest/autorun"
 
-# OPENBSD/data/debt.yml, brgen_allow_unauthenticated_access_is_a_noop: in an app
+# TODO.md, brgen_allow_unauthenticated_access_is_a_noop: in an app
 # whose User has a `guest` column, Shared::Authentication.allow_unauthenticated_access
 # does nothing, and that is deliberate — guests get a soft Current.user so the
 # product is usable without signup, and require_real_user is the identity gate.
@@ -17,7 +17,7 @@ require "minitest/autorun"
 class AuthNoopIsAudibleTest < Minitest::Test
   SOURCE = File.expand_path("../shared/app/controllers/concerns/shared/authentication.rb", __dir__)
 
-  # DEBT.md, Scanner Conventions 1: a rule and the paragraph explaining the rule
+  # TODO.md, Scanner Conventions 1: a rule and the paragraph explaining the rule
   # contain the same words. The comment above the guard says "silent no-op", so an
   # assertion over the raw file would pass on the explanation of the fix rather
   # than the fix.

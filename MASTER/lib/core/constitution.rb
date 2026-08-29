@@ -418,7 +418,7 @@ module Master::Core
     # Declared rather than merely true: `private` marks a position in the
     # instance-method stream and class methods never enter it, so this class read
     # as 16 public methods under ABSTRACTION no matter how it was arranged. That
-    # is the idiom being measured, not the surface — see DEBT.md, "The fold spine
+    # is the idiom being measured, not the surface — see TODO.md, "The fold spine
     # had never been scanned". Unlike Memory, this class did not need splitting:
     # its count was the idiom, and Memory's was the design.
     private_class_method :default_rules, :immutable_hit?, :no_secret_rule, :ruby_parses_rule, :scan_clean_rule,

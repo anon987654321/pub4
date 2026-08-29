@@ -4,7 +4,7 @@ require "test_helper"
 require "minitest/mock"
 
 # "Pending media" is a promise, and on vm23 it is one amber cannot keep: no Solid
-# Queue supervisor is resident for this app (debt.yml multi_app_ram — 1 GB, one
+# Queue supervisor is resident for this app (TODO.md multi_app_ram — 1 GB, one
 # resident worker, and it is brgen's), so the rc.d footer measured 103 jobs
 # enqueued and 0 finished. A garment uploaded today shows "Pending media" for as
 # long as the account exists.

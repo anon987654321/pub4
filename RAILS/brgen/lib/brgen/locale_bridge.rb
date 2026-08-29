@@ -21,7 +21,7 @@ module Brgen
   #
   # The stubs are deleted rather than kept unrouted: a locale file nothing loads
   # is the inert-config shape this tree keeps finding. Filling them is a
-  # translation budget and a product decision — RAILS/TODO.md carries it — and
+  # translation budget and a product decision — TODO.md carries it — and
   # until then these cities get one language, consistently.
   module LocaleBridge
     NORDIC = %i[nb is da sv fi].freeze

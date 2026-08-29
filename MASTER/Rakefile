@@ -43,7 +43,7 @@ task :studio_gate do
   #
   # Subprocess specifically, because MASTER requires nothing from the sibling
   # trees and the gate requires OPENBSD/lib/gate_result. That independence is
-  # deliberate (OPENBSD/data/debt.yml: gate_result_is_a_shared_kernel_filed_
+  # deliberate (TODO.md: gate_result_is_a_shared_kernel_filed_
   # under_deploy) and a rake task is not a reason to spend it.
   gate = File.expand_path("../STUDIO/gate.rb", __dir__)
   if File.file?(gate)
@@ -619,7 +619,7 @@ namespace :lint do
     # Every entry below names a duplicate this task tolerates and why; an
     # entry that stops matching is a hole in the gate and fails the task
     # (EXEMPTIONS_EXPIRE). "open:" entries are known debt with a collapse
-    # recorded in DEBT.md — tolerated so the gate can land, never permanent.
+    # recorded in TODO.md — tolerated so the gate can land, never permanent.
     known = {
       "- web/app/views/chat/index.html.erb" =>
         "shared file reference, not a fact — agent_map and council both point at the chat view",
@@ -717,7 +717,7 @@ namespace :constitution do
 end
 
 # LOC ratchet — budgets live in data/limits.yml under loc_body_budgets, and this
-# task is that key's reader. limits.yml is the file DEBT.md names for holding 44
+# task is that key's reader. limits.yml is the file TODO.md names for holding 44
 # keys with no reader, so a budget nothing read would have been the 45th.
 #
 # Budgets only ever shrink. A diff that grows a subsystem past its budget fails

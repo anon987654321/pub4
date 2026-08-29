@@ -11,7 +11,7 @@ module Shared
   #
   # Single-use: every token carries a `jti` and `verify` claims it in the app's
   # cache before returning a payload. Without that, the 120-second TTL was the only
-  # limit on replay (OPENBSD/data/debt.yml:
+  # limit on replay (TODO.md:
   # rails_coverage_contract_is_tautological, "sso_token also has no replay/nonce
   # protection on its 120s token") — an SSO URL in a referrer header, a proxy log,
   # or shoulder-surfed off a screen was a working login for anyone holding it, as

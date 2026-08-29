@@ -12,13 +12,10 @@ ownership:
     purpose: intentional architecture decisions
     risk: medium
     check: bin/check
-  DEBT.md:
-    purpose: known debt separated from actionable TODO
-    risk: medium
-    check: bin/check --profile=agent
-  ../OPENBSD/data/debt.yml:
-    purpose: canonical open operator debt (BACKLOG.yml was removed 2026-07-07;
-      features live in RAILS/apps.yml, debt here, operator recipes in
+  ../TODO.md:
+    purpose: consolidated repo-wide backlog (per-tree DEBT.md, RAILS/TODO.md,
+      RAILS/BLOCKERS.md and OPENBSD/data/debt.yml were folded in; features live
+      in RAILS/apps.yml, horizon in RAILS/apps.horizon.yml, operator recipes in
       ../OPENBSD/data/operator.yml)
     risk: medium
     check: MASTER/bin/pub4 status

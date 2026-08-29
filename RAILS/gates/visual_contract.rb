@@ -328,7 +328,7 @@ path = File.expand_path("../visual_contract/#{app}-manifest.json", __dir__)
 File.write(path, JSON.pretty_generate(generated_at: Time.now.utc.iso8601, results:) + "\n")
 
 # This used to end at `puts "ok: captured …"` with exit 0 no matter what the
-# capture measured (OPENBSD/data/debt.yml: rails_gates_not_wired —
+# capture measured (TODO.md: rails_gates_not_wired —
 # "visual_contract_gate computes drift/a11y counts and never exits non-zero").
 # A gate that sees a 500 on the sign-in page and reports "ok" is a report.
 verdict = VisualContractGate.grade(

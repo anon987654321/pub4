@@ -3,7 +3,7 @@
 require_relative "../test_helper"
 require "tmpdir"
 
-# DEBT.md, Test coverage: no test named AtomicWrite. Every durable write in the
+# TODO.md, Test coverage: no test named AtomicWrite. Every durable write in the
 # runtime goes through it — standing orders state, memory, findings — so a
 # half-written file here is a corrupted runtime, and the failure path (leaving a
 # .master_atomic_ temp behind on error) was never exercised.

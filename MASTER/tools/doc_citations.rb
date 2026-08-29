@@ -2,7 +2,7 @@
 
 # Prose that quotes a number data/ owns must quote the number data/ holds.
 #
-# DEBT.md carried a copy of data/spine.yml's raise log — "38,294, allowance 1 of
+# TODO.md carried a copy of data/spine.yml's raise log — "38,294, allowance 1 of
 # 2" — while spine.yml had ratcheted to 38,285 and cleared the log. Two sources,
 # one drifted, which is the failure that register describes in its own words two
 # sections further down. Within a day of it being fixed, DECISIONS.md was left

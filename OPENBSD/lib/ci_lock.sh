@@ -5,7 +5,7 @@
 # It used to live at /var/tmp/pub4-ci.lock, created by
 #   doas sh -c "touch /var/tmp/pub4-ci.lock; chmod 666 /var/tmp/pub4-ci.lock"
 # — a fixed, predictable path in a world-writable directory, chmod'ed by root
-# with no -h/-P (OPENBSD/data/debt.yml:
+# with no -h/-P (TODO.md:
 # secrets_in_process_argv_and_world_readable_home). Any local account could
 # pre-plant a symlink at that name and redirect the root chmod onto a file of its
 # choosing. `PUB4_CI_LOCK` being env-overridable made it worse: the caller chose

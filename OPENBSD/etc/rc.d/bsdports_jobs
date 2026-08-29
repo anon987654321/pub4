@@ -22,7 +22,7 @@
 #   PruneGuestUsersJob     141,753 guest rows older than a week, unpruned.
 #   Turbo broadcast jobs   1520 on brgen; every live update routed through a job
 #                          rather than an inline broadcast has not arrived.
-#   DatabaseSnapshotJob    debt.yml calls this the only thing backing up
+#   DatabaseSnapshotJob    TODO.md calls this the only thing backing up
 #                          production.sqlite3. It has never taken a snapshot.
 #   digests, rollups, newsletters, search reindex, cache and cable health checks
 #
@@ -66,7 +66,7 @@ rc_reload=NO
 rc_cmd $1
 
 # Enabling this is an operator decision, and the reason is vm23 rather than the
-# code. The box is 1 GB and 1 vCPU; debt.yml's multi_app_ram entry records that
+# code. The box is 1 GB and 1 vCPU; TODO.md's multi_app_ram entry records that
 # it already cannot keep master + brgen + amber resident, and resource_guard
 # shed amber and bsdports twice on 2026-08-12 alone. A Solid Queue worker is
 # another resident Ruby process with the whole app loaded in it.

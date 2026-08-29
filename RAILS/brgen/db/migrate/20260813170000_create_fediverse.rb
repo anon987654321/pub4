@@ -8,7 +8,7 @@
 # Scope of this first pass: a brgen account can be followed from anywhere in the
 # fediverse and its public posts deliver outward. Pulling remote timelines *in*
 # is a much larger surface (remote media proxying, remote content moderation)
-# and is deliberately not here — see RAILS/TODO.md 2.1.
+# and is deliberately not here — see TODO.md 2.1.
 class CreateFediverse < ActiveRecord::Migration[8.1]
   def change
     # Signing keys are per local user. Generated lazily on first use rather than

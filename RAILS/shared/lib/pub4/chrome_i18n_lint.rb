@@ -111,7 +111,7 @@ module Pub4
       # on a tree three sessions were editing, and both immediately measured +1
       # against their own new floor. That is not a regression in the views; it is
       # what ratcheting on a moving tree does — a session records a low that was
-      # not its own to hold, and the next measurement fails. MASTER/DEBT.md's
+      # not its own to hold, and the next measurement fails. TODO.md's
       # Spine Ceiling entry states the rule already: ratchet once, at the end of a
       # session, on a settled tree.
       #

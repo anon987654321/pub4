@@ -96,7 +96,7 @@ class TrackedSecretsTest < Minitest::Test
     assert_empty readers,
                  "something now reads Rails credentials:\n  #{readers.join("\n  ")}\n" \
                  "Deleting credentials.yml.enc assumed no reader. Re-key and supply " \
-                 "the master.key out of band instead — see OPENBSD/data/debt.yml " \
+                 "the master.key out of band instead — see TODO.md " \
                  "committed_rails_master_key_public_repo."
   end
 end

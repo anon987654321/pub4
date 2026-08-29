@@ -4,7 +4,7 @@ require "minitest/autorun"
 
 # A control a keyboard cannot reach, and a role that promises one.
 #
-# This exists because OPENBSD/data/debt.yml's rails_audit_backlog_2026_08_10 says,
+# This exists because TODO.md's rails_audit_backlog_2026_08_10 says,
 # of its own twelve rows, that "the first move on any of these is to name the
 # instrument, not to fix a count: an unfalsifiable number is how a register row
 # outlives its subject". Its a11y row read "3 div/span elements carrying a click

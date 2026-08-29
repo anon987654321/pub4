@@ -49,7 +49,7 @@ module Deploy
     # Surfaces where the chat tab legitimately is not in the bottom-right corner,
     # each with the reason. This list is the gate: a deviation that is not here
     # fails, and an entry here whose reason has evaporated is the exemption
-    # problem MASTER/DEBT.md describes, so removing one is as much a fix as
+    # problem TODO.md describes, so removing one is as much a fix as
     # adding one.
     CHAT_EXCEPTIONS = {
       # The dating splash is a bare swipe surface and the widget floated over

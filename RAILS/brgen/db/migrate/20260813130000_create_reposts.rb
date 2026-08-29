@@ -7,7 +7,7 @@
 # took it back.
 #
 # (shared/_action_bar.html.erb carries a second copy of the button, but no view
-# in any of the three apps renders that partial — see RAILS/TODO.md 1.1.)
+# in any of the three apps renders that partial — see TODO.md 1.1.)
 class CreateReposts < ActiveRecord::Migration[8.1]
   def change
     create_table :reposts do |t|

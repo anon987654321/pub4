@@ -1,6 +1,6 @@
 # Rails apps
 
-3 active production Rails 8.1 apps under one shared engine. **Source of truth: `apps.yml`.** Horizon/aspirational work lives separately in `apps.horizon.yml`. Per-app notes: `<app>/AGENTS.md`. Debt: `MASTER/DEBT.md`, operator debt in `OPENBSD/data/debt.yml`.
+3 active production Rails 8.1 apps under one shared engine. **Source of truth: `apps.yml`.** Horizon/aspirational work lives separately in `apps.horizon.yml`. Per-app notes: `<app>/AGENTS.md`. Backlog and debt: the repo-root `TODO.md`.
 
 brgen is **one process, many hosts**: every city apex in
 `Brgen::DomainRegistry` (feed) plus namespaced engines on subdomains
@@ -128,8 +128,7 @@ forwarding), declared with `script:` instead of `require:`/`class:`.
 directly, which avoids re-running nested master gates when `production` and
 `rails_runtime` both run under `--all`; `GATE_SKIP_NESTED=1` gets the same skip
 from `runner.rb production`, declared on that gate as an `env_flags:` row.
-Horizon `apps.yml` features remain `agent: ignore` — see `MASTER/DEBT.md` /
-`OPENBSD/data/debt.yml`.
+Horizon `apps.yml` features remain `agent: ignore` — see the repo-root `TODO.md`.
 
 `gates/visual_contract.rb` defines the seeded desktop, compact, and mobile crawl for each app's happy, empty, error, and offline states. Under an app bundle, add `--capture --app <name> --base <url>` to write screenshots plus a manifest containing route, status, title, screenshot SHA-256, console errors, and accessibility violations. `runner.rb` forwards `--capture` when `VISUAL_CAPTURE=1` (optional `VISUAL_CAPTURE_APP`, `VISUAL_CAPTURE_BASE`). Running via `runner.rb --all` without capture only validates route/lens data shapes — not a visual regression pass.
 
@@ -286,9 +285,10 @@ ruby34 OPENBSD/health_check.rb --public --all-ready-apps
 
 Rails uses `Pub4::DeployPaths` to resolve MASTER media tools from a source checkout or a VPS copy-tree; never assume `Rails.root/../../postpro`. Newsletter hero rendering can use the same postpro/repligen pair as MASTER. Keep provider tokens in the app's `/etc/<app>.env`; do not add them to Rails credentials or source. MASTER's natural-language media routing is local to the agent runtime, while Rails callers should use the shared service boundary so jobs remain observable and retryable.
 
-**Blockers:** `BLOCKERS.md` — four entries, each with owner, unblock criteria,
-and the check that covers it. Kept there rather than here because two of the
-five sentences this section used to carry had gone stale unnoticed.
+**Blockers:** the repo-root `TODO.md`, RAILS "Deploy blockers" — four entries,
+each with owner, unblock criteria, and the check that covers it. Kept there
+rather than here because two of the five sentences this section used to carry
+had gone stale unnoticed.
 
 **Deploy:**
 
@@ -321,7 +321,7 @@ Three endpoints answered 500 in production while 148 simulated pages passed, bec
 - **Tests:** model coverage for brgen `Dating::Match`, `Marketplace::Order`, `Takeaway::Order`, `Vote`; amber `Outfit`, `WardrobeItem`, `Connection`; bsdports `User`; plus `shared_wiring_gate_test.rb` and gate contracts.
 - **Deploy scripts:** the `@core.sh` / `@database.sh` / `@runtime_gate.sh` / `@scaffold.sh` / `@service.sh` / `@sync.sh` / `@deploy.sh` backward-compat shims have been retired; `_*.sh` are the canonical scripts.
 
-**Debt / horizon** (see `MASTER/DEBT.md`, `OPENBSD/data/debt.yml`, `apps.horizon.yml`): `release`/`rails_runtime`/`visual_contract` still subprocess; `apps.yml` `planned` + `agent: ignore` (pgvector, live streaming, monetization). Solidus: Gemfile flag + mount stub ready — full `solidus:install` is staging-only (not on 1GB vm23). Deploy smoke: `sh OPENBSD/bin/deploy-smoke.sh`. Mutation request specs: brgen `vertical_mutations_test`, amber `wardrobe_mutations_test`, bsdports `port_mutations_test`. Family contracts run via `OPENBSD/bin/check-rails` and `check-full`.
+**Debt / horizon** (see the repo-root `TODO.md` and `apps.horizon.yml`): `release`/`rails_runtime`/`visual_contract` still subprocess; `apps.yml` `planned` + `agent: ignore` (pgvector, live streaming, monetization). Solidus: Gemfile flag + mount stub ready — full `solidus:install` is staging-only (not on 1GB vm23). Deploy smoke: `sh OPENBSD/bin/deploy-smoke.sh`. Mutation request specs: brgen `vertical_mutations_test`, amber `wardrobe_mutations_test`, bsdports `port_mutations_test`. Family contracts run via `OPENBSD/bin/check-rails` and `check-full`.
 
 ## Deploy scripts
 

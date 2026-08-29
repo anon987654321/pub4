@@ -23,7 +23,7 @@ failures << "installed targets" unless runner.run("installed targets", RUBY, "OP
 failures << "ports" unless runner.run("ports", RUBY, "RAILS/gates/runner.rb", "port_inventory")
 # dns_zones was registered in RAILS/gates/gates.yml and invoked by nothing — the
 # only one of the 47 that no script in this repo named, so `runner.rb --all`
-# being uncalled (data/debt.yml: rails_gates_not_wired) meant it had never run.
+# being uncalled (TODO.md: rails_gates_not_wired) meant it had never run.
 # It belongs here rather than in check-rails: what it compares is
 # OPENBSD/var/nsd/zones against what bin/render_dns.rb generates, plus a live
 # query to our own nameserver. Nothing about it is a Rails concern except the

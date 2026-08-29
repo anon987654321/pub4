@@ -828,7 +828,7 @@ guidance:
   # ENV MASTER_DMESG=0 disables; MASTER_DMESG=1 forces on.
 
 # LOC ratchet budgets — reader: `rake loc_budget` (Rakefile). This key exists
-# because data/limits.yml is the file DEBT.md names for having 44 of 94
+# because data/limits.yml is the file TODO.md names for having 44 of 94
 # second-level keys with no reader; a budget nothing reads would have been the
 # 45th. Set to measured actuals at introduction (2026-08-09).
 #
@@ -854,7 +854,7 @@ guidance:
 #
 # `core: 916` is gone rather than corrected-in-place. It budgeted `MASTER/core`,
 # which has never existed — the spine is `lib/core` — and the task skipped a
-# missing path silently, so the one invariant DEBT.md calls load-bearing had a
+# missing path silently, so the one invariant TODO.md calls load-bearing had a
 # budget line that never evaluated. The task aborts on a missing path now.
 # lib/trace RAISED 2681 -> 2699 on 2026-08-25, and it is the first raise this
 # file has taken, so it should be argued rather than noted. The eighteen lines
@@ -865,7 +865,7 @@ guidance:
 # so lib/ is eight lines lighter overall and lint:spine ratcheted 38966 ->
 # 38962. Extraction is what the header asks for and extraction is what this is;
 # the number moved because the unit cannot express it.
-# THIRD RAISE IN ONE DAY, and DEBT.md is right that the count is the signal.
+# THIRD RAISE IN ONE DAY, and TODO.md is right that the count is the signal.
 # lib/trace +18 for namespaces, law +27 for a rule that can fire, lib/review
 # +47 for CodeMetrics.namespace_lines and the paragraph explaining it. Each is
 # argued; the pattern still deserves naming.

@@ -5,7 +5,7 @@ require_relative "baseline_ratchet"
 module Pub4
   # A destructive control that asks nothing before it fires.
   #
-  # The third of the uninstrumented rows in OPENBSD/data/debt.yml's
+  # The third of the uninstrumented rows in TODO.md's
   # rails_audit_backlog — "29 destructive links with no confirmation
   # interstitial" — a hand count with no committed tool behind it.
   #

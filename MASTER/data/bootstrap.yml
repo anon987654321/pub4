@@ -30,5 +30,5 @@ sections:
     VPS: dev@46.23.89.226, ruby34, bundle34. Deploy: OPENBSD/RUNBOOK.md. Full rule index: data/CANON.md (generated).
   deploy: |-
     RAILS/<app>/ is a full Rails 8 tree (app/views, config, db) — not a stub. <app>.sh copies it to /home/<app>/app on vm23.
-    Feature truth: RAILS/apps.yml. Debt: OPENBSD/data/debt.yml. Horizon (agent ignore): apps.horizon.yml.
+    Feature truth: RAILS/apps.yml. Debt: TODO.md. Horizon (agent ignore): apps.horizon.yml.
     MASTER/bin/pub4 status · MASTER/bin/pub4 vps deploy <app> · OPENBSD/bin/post-pull-checklist after git pull on VPS.

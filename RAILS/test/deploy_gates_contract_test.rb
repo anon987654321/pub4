@@ -108,7 +108,7 @@ class DeployGatesContractTest < Minitest::Test
 
   # A registered gate that nothing runs.
   #
-  # `runner.rb --all` exists and is called by nothing (OPENBSD/data/debt.yml:
+  # `runner.rb --all` exists and is called by nothing (TODO.md:
   # rails_gates_not_wired), so a gate is only ever run if some script names it or
   # names the composite that covers it. dns_zones was the one that neither
   # applied to: registered in gates.yml, complete, and never once executed. When
@@ -281,7 +281,7 @@ class DeployGatesContractTest < Minitest::Test
     assert File.exist?(File.join(ROOT, "apps.horizon.yml"))
     assert File.exist?(File.join(REPO_ROOT, "OPENBSD", "RECIPES.md"))
     assert File.exist?(File.join(REPO_ROOT, "RAILS", "deploy.sh"))
-    assert File.exist?(File.join(OPENBSD_ROOT, "data", "debt.yml"))
+    assert File.exist?(File.join(REPO_ROOT, "TODO.md"))
     assert File.exist?(File.join(OPENBSD_ROOT, "data", "operator.yml"))
     assert File.exist?(File.join(REPO_ROOT, "bin", "pub4"))
     assert File.exist?(File.join(REPO_ROOT, "RAILS", "apps.yml"))

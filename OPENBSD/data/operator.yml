@@ -26,7 +26,7 @@ app_layout:
 single_source_of_truth:
   features: RAILS/apps.yml
   horizon: RAILS/apps.horizon.yml
-  debt: OPENBSD/data/debt.yml
+  debt: TODO.md
   deploy_identity: OPENBSD/deploy_inventory.json
 
 recipes:

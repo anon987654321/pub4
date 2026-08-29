@@ -26,7 +26,7 @@ module ApplicationHelper
 # "Pending media" is only true while something is going to pick the job up.
 #
 # amber enqueues its media work — polish, fingerprinting, analysis — and on
-# vm23 no Solid Queue supervisor is resident for this app: OPENBSD/data/debt.yml
+# vm23 no Solid Queue supervisor is resident for this app: TODO.md
 # records the decision (1 GB, exactly one resident worker, brgen_jobs) and the
 # rc.d footer measured 103 jobs enqueued and 0 finished. So a garment uploaded
 # today shows "Pending media" and will show it forever, and the person who

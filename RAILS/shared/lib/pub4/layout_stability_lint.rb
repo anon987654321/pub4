@@ -118,7 +118,7 @@ module Pub4
     # it: it read the class attribute on the tag itself, and in that markup the
     # tag carries no class at all — the reservation hangs off the wrapping span.
     # It reported a correctly sized 48x48 queue thumbnail as unreserved, which
-    # is DEBT.md's Scanner Convention 1 exactly: a check that reports correct
+    # is TODO.md's Scanner Convention 1 exactly: a check that reports correct
     # code gets the correct code changed.
     def wrapper_classes
       @wrapper_classes ||= begin

@@ -2,7 +2,7 @@
 
 require_relative "../../test_helper"
 
-# DEBT.md, Test coverage: no test named Permissions. This module is the tool
+# TODO.md, Test coverage: no test named Permissions. This module is the tool
 # blocklist and the safe/guarded/dangerous tier table — a pure function over
 # strings, so the only way it can be wrong is a hole nobody looked for.
 class PermissionsTest < Minitest::Test

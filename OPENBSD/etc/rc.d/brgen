@@ -19,7 +19,7 @@ daemon="/bin/ksh"
 # /etc/brgen.env for hours doing nothing while push failed silently. Any key
 # added to the file now works without editing this script. Still NOT
 # interpolated into daemon_flags, where it landed in falcon's ps(1) argv for any
-# local account to read (debt.yml secrets_in_process_argv). /etc/brgen.env is
+# local account to read (TODO.md secrets_in_process_argv). /etc/brgen.env is
 # root:brgen 640. PUB4_ROOT/PUB4_RAILS_ROOT are not secrets and stay inline.
 # SOLID_QUEUE_IN_PUMA=true was here and is gone. In-Puma mode is a Puma plugin;
 # this app runs under Falcon and has no config/puma.rb, so no plugin ever loaded

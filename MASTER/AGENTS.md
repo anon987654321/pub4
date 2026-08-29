@@ -21,7 +21,7 @@ Touch-map: `data/agent_map.yml`. Law sections live in `data/rules.yml`. Work is 
 
 Run the smallest proof in `START_HERE.md` "Checks by change type". On failure: `bin/check --profile=agent --format=brief`.
 
-`--profile=agent` may fail on known debt tagged `agent-ignore` in `DEBT.md`. Do not chase scan noise on unrelated patches.
+`--profile=agent` may fail on known debt tagged `agent-ignore` in the repo-root `TODO.md`. Do not chase scan noise on unrelated patches.
 
 ## Do not touch
 

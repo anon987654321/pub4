@@ -108,7 +108,7 @@ module Pub4
 
     # Comments blanked, line numbering preserved.
     #
-    # DEBT.md, Scanner Conventions 1, walked into on the first run of this file:
+    # TODO.md, Scanner Conventions 1, walked into on the first run of this file:
     # shared/_responsive.scss opens with a paragraph explaining why a rule is NO
     # LONGER wrapped in `@media (max-width: 768px)`, and the lint reported that
     # sentence as a colliding bound. A check that reads its own documentation
@@ -129,7 +129,7 @@ module Pub4
     # same eight characters in both, and the lint reported two correct container
     # queries in _zen_shell as unrecognised viewport widths.
     #
-    # That is the shape this repo's own DEBT.md calls Scanner Convention 1 and
+    # That is the shape this repo's own TODO.md calls Scanner Convention 1 and
     # breakpoint_lint already learned once with comments: a check that reports
     # correct code gets the correct code changed. The header's note that the
     # three tolerated edges "are gone from the sheets" is true of one of them.

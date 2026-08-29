@@ -4,7 +4,7 @@ require "minitest/autorun"
 
 # controller_coverage_contract_test.rb and model_coverage_contract_test.rb assert
 # that source files contain particular class/def strings. They never boot Rails and
-# never call a method, so they pass against a body of `raise` — OPENBSD/data/debt.yml
+# never call a method, so they pass against a body of `raise` — TODO.md
 # calls them tautological and it is right. What they cannot express is the number
 # that matters: how much of each app has a test at all.
 #

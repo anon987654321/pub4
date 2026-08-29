@@ -86,7 +86,7 @@ planned:
   # Risky tool-call shapes to refuse. Implementing these needs a tool-call risk
   # classifier; the one that existed (lib/cli/routing/risk_classifier.rb) was
   # deleted as an orphan on 2026-07-30 precisely because nothing called it. Do not
-  # restore it without deciding who calls it — see DEBT.md.
+  # restore it without deciding who calls it — see TODO.md.
   tools:
     custom:
       enabled: true

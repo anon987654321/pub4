@@ -217,7 +217,7 @@ STUDIO/dilla/samples/dug/**/*.wav
 # None of the three had ever been committed when this went in, so ignoring them
 # is sufficient. If one ever is, ignoring will not remove it — that needs a
 # history rewrite, and the entry to read first is
-# home_partition_full_from_git_history in OPENBSD/data/debt.yml.
+# home_partition_full_from_git_history in TODO.md (OPENBSD operator debt).
 *ikke-dele*
 *ikke_dele*
 

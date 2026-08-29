@@ -65,7 +65,7 @@ autoload:
   # Declare a constant outside Master::, so the path cannot imply the name.
   defines_a_foreign_namespace:
     # RubyLLM::Providers::Bedrock -- pre-defines the constant so ruby_llm never
-    # autoloads openssl.so. Load-bearing; see DEBT.md.
+    # autoloads openssl.so. Load-bearing; see TODO.md.
     - io/bedrock_stub.rb
     - io/ruby_llm_patch.rb
     # Pub4:: -- shared with RAILS and OPENBSD, its own tool, not Master::Pub4.

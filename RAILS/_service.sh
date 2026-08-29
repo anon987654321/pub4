@@ -54,7 +54,7 @@ install_rcd() {
 # during a restart (ca_dispatch_relay: invalid relay hash -> lost child ->
 # parent terminating) and took every site on the box down for nine minutes; the
 # deploy that triggered it had logged relayd(ok) seconds earlier, because the
-# only check ran before the restart. RAILS/BLOCKERS.md #2 records that as open
+# only check ran before the restart. TODO.md #2 records that as open
 # with "nothing yet re-checks liveness after the restart". This is that check.
 #
 # The two failure shapes are distinguishable and it is worth saying which one

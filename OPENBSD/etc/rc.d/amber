@@ -20,7 +20,7 @@ daemon="/bin/ksh"
 # SECRET_KEY_BASE is sourced from /etc/amber.env at runtime by the app user and
 # re-exported (the file holds a bare KEY=value, which `.` sets un-exported) —
 # NOT interpolated into daemon_flags, where it landed in falcon's ps(1) argv for
-# any local account to read (debt.yml secrets_in_process_argv). The env file is
+# any local account to read (TODO.md secrets_in_process_argv). The env file is
 # root:amber 640, so only amber and root can read it (not dev-via-wheel, not
 # another app user). Proven on bsdports first.
 # SOLID_QUEUE_IN_PUMA=true was here and is gone. In-Puma mode is a Puma plugin;

@@ -5,7 +5,7 @@ require "tmpdir"
 require "fileutils"
 require "open3"
 
-# DEBT.md, Test coverage: no test named GitOperations. It is the runtime's only
+# TODO.md, Test coverage: no test named GitOperations. It is the runtime's only
 # git surface — status, ahead/behind, and the mutation half (add/commit/push/
 # reset --hard/tag/fetch) that autocommit and the deploy path drive.
 #

@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 
-# DEBT.md, Scanner noise: "38 of rake selfcheck's 76 findings are false positives
+# TODO.md, Scanner noise: "38 of rake selfcheck's 76 findings are false positives
 # from two rules: COMPLETION_THEATER matches require \"etc\", Etc.nprocessors and
 # /etc/* paths; STALE_NAMESPACE flags every legitimate Master::CLI::* reference
 # because \b matches before ::."
@@ -360,7 +360,7 @@ end
   # race_conditions was `if.*\n.*=.*\n.*if` and scan_lines feeds one line at a
   # time, so it needed three lines and could never see two. Deleted 2026-08-12
   # after never having fired; check-then-act detection needs an AST rule and is
-  # tracked in DEBT.md. This asserts it is gone rather than silently dead.
+  # tracked in TODO.md. This asserts it is gone rather than silently dead.
   # A newline inside a negated class — `[^`\n]*` — is the opposite: it says "stay
   # on this line". Only a \n outside a character class demands one. The first
   # version of this test missed that and failed on two healthy patterns, which is
@@ -594,7 +594,7 @@ end
   end
 
   # `@transforms << :bare_rescue` in the autofixer that repairs bare rescues was an
-  # error-severity finding against itself, recorded in DEBT.md as noise rather than
+  # error-severity finding against itself, recorded in TODO.md as noise rather than
   # fixed. A symbol is not a rescue clause.
   def test_a_symbol_named_bare_rescue_is_not_a_bare_rescue
     refute_includes bridge_findings("  @transforms << :bare_rescue\n"), "FAIL_VISIBLY"

@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-# OPENBSD/data/debt.yml, rails_coverage_contract_is_tautological: "shared/sso_token
+# TODO.md, rails_coverage_contract_is_tautological: "shared/sso_token
 # ... has zero tests; sso_token also has no replay/nonce protection on its 120s
 # token." Both are addressed here — the tests came first and the replay test is the
 # one that failed before the jti landed.

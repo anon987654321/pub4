@@ -21,7 +21,7 @@ daemon="/bin/ksh"
 # SECRET_KEY_BASE is sourced from /etc/bsdports.env at runtime, by the app user,
 # inside the exec — NOT interpolated into daemon_flags. Interpolation baked the
 # 128-hex secret into the falcon process's ksh argv, readable by any local
-# account via `ps auxww` (OPENBSD/data/debt.yml secrets_in_process_argv). The
+# account via `ps auxww` (TODO.md secrets_in_process_argv). The
 # env file is root:bsdports 640, so only bsdports (and root) can read it, which
 # also stops a foothold in another app user — or dev — reading this secret at
 # rest. The `. /etc/bsdports.env` below is a literal path, not a secret.

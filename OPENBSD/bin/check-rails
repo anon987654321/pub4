@@ -50,7 +50,7 @@ source_gates = [
   ["schema", "schema_migration"],
   ["asset freshness", "generated_asset"],
   # Previously invoked by no runner, deploy script or CI entrypoint at all
-  # (OPENBSD/data/debt.yml: rails_gates_not_wired) — they only ever ran when
+  # (TODO.md: rails_gates_not_wired) — they only ever ran when
   # someone remembered to call them by hand, which meant in practice they did
   # not run. All four are static source checks, same shape as the gates above,
   # and all four pass as of 2026-07-27.

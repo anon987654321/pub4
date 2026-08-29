@@ -163,7 +163,7 @@ veto_patterns:
     # KNOWN GAP, and it is the important one: this cannot see interpolation
     # inside a heredoc, because scan_lines is per line and the `<<~SQL` line
     # carries no `#{`. Catching SQL built across lines needs an AST rule, not a
-    # lexical veto. Tracked in DEBT.md rather than pretended away here.
+    # lexical veto. Tracked in TODO.md rather than pretended away here.
     detect: (?:execute|query)\w*\s*\(\s*(["'])(?:(?!\1).)*#\{
     apply: parameterize
     violates_law: ROBUSTNESS
@@ -1425,7 +1425,7 @@ rules:
     autofix: false
     # (?<![\w:.]) so a symbol or method named :bare_rescue is not a bare rescue.
     # `@transforms << :bare_rescue` in the autofixer that repairs bare rescues had
-    # been an error-severity finding against itself, recorded in DEBT.md as noise.
+    # been an error-severity finding against itself, recorded in TODO.md as noise.
     detect_lexical: ~ # folded into another rule; no detector of its own
     folded_into: FAIL_VISIBLY # same detector; one law, two ids
     fix: Rescue StandardError or a specific class.
@@ -2125,7 +2125,7 @@ rules:
     # Same regex as BARE_RESCUE above, deliberately kept in step rather than
     # deduplicated: FAIL_VISIBLY is a soul.yml code_rule and BARE_RESCUE is a style
     # rule, so which one survives is a constitutional question, filed in
-    # OPENBSD/data/debt.yml as `two_rules_share_one_rescue_regex`.
+    # TODO.md as `two_rules_share_one_rescue_regex`.
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     detect_semantic: Does this code swallow exceptions or fail silently?
     fix: Catch specific errors, log context, re-raise or return Result.

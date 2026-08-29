@@ -177,8 +177,8 @@ Do not "fix" the asymmetry by aligning the three defaults.
 
 ## Transcendent Is Not Wired To The Streaming Path (2026-08-17)
 
-The Transcendent engine chain is unreached — see `DEBT.md`, "Inert law and
-config". The obvious repair is to call it from `synthesize_streaming_to_file`,
+The Transcendent engine chain is unreached — see `TODO.md`, the MASTER debt
+records, "Inert law and config". The obvious repair is to call it from `synthesize_streaming_to_file`,
 and that is wrong as stated: `Transcendent.synthesize` returns a finished file,
 while the streaming path exists to hand `TtsJob` progressive chunks through
 `on_chunk` so audio starts before synthesis ends. Wiring one to the other means

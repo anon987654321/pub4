@@ -56,7 +56,6 @@ module Deploy
       "RAILS/CLAUDE.md" => "prose: the shed-vs-outage triage note",
       "OPENBSD/CLAUDE.md" => "prose: same triage note",
       "OPENBSD/RUNBOOK.md" => "prose: operator reference",
-      "OPENBSD/data/debt.yml" => "prose: dated incident records, deliberately frozen",
       "RAILS/gates/PAGE_SIM.md" => "generated report",
     }.freeze
 

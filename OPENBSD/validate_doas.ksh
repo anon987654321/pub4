@@ -69,7 +69,7 @@ install_doas_conf_from_repo() {
 
   # The staging file was /tmp/doas.conf.install.$$ — a PID-predictable name in a
   # world-writable directory, written and copied by root with no -h/-P
-  # (OPENBSD/data/debt.yml: root_dot_sources_dev_owned_repo_every_5min). Winning that
+  # (TODO.md: root_dot_sources_dev_owned_repo_every_5min). Winning that
   # race let a local account decide what root wrote into /etc/doas.conf, which is
   # root code execution by definition. mktemp in the root-owned 0700 backup
   # directory removes the vector rather than trying to outrun it.

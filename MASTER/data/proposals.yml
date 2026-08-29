@@ -191,11 +191,11 @@ proposals:
       so it wants a PUB4_CROSS_TREE commit to tidy a directory that is not untidy.
       Third, this ledger row said it waits on a boundary decision. That decision was
       already made and closed on 2026-08-13: OPENBSD/DECISIONS.md, "OPENBSD/lib/
-      Owns The Gate Kernel, On Purpose", with data/debt.yml recording that a
+      Owns The Gate Kernel, On Purpose", with TODO.md recording that a
       repo-level shared kernel was considered and rejected. Revisit when a fifth
       consumer appears, which is the trigger that entry names — not before, and not
       for a rename.
-    refuted_by: OPENBSD/data/debt.yml gate_result_is_a_shared_kernel_filed_under_deploy
+    refuted_by: TODO.md gate_result_is_a_shared_kernel_filed_under_deploy
 
   - id: de-fr-nl-locales-are-five-keys
     tree: RAILS
@@ -350,7 +350,7 @@ proposals:
       build, bin and operator. www and sshd are the ones that matter: they are
       where a relayd or sshd compromise lands, and from there the digests and OTP
       secrets of every brgen user are a plain file read.
-      This is the blind spot in debt.yml
+      This is the blind spot in TODO.md
       secrets_in_process_argv_and_world_readable_home, closed 2026-08-22. That
       entry tightened /home/dev to 710 dev:_pub4ci and left /home/<app> at 755:
       the checkout was protected and the live data was not.

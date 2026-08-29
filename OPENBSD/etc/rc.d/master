@@ -40,7 +40,7 @@ daemon_flags="-c 'cd /home/dev/pub4/MASTER/web && set -a && . /etc/master.env &&
 # This was daemon_user="dev", and dev's doas rule is nopass with no command
 # scoping, so any code execution inside the process serving ai.brgen.no was root
 # without a password — the one app on this box whose daemon_user was not its own
-# user. debt.yml has called that operator-priority since it was written, and the
+# user. TODO.md has called that operator-priority since it was written, and the
 # fix it names is a dedicated user, not doas command rules (DECISIONS.md,
 # "/etc/doas.conf installs only on a deliberate root run").
 #

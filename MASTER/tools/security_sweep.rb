@@ -9,7 +9,7 @@ require "open3"
 # one, so the two collided: Ruby warned and let the second assignment win, which
 # means whichever loaded last silently gave the other the wrong repo root.
 # The warning was the only thing standing between that and a sweep of the wrong
-# tree reporting clean. See DEBT.md, "Top-level ROOT".
+# tree reporting clean. See TODO.md, "Top-level ROOT".
 SWEEP_ROOT = File.expand_path("../..", __dir__)
 QUARANTINE = File.join(SWEEP_ROOT, "OPENBSD", "quarantine", "virus_museum")
 

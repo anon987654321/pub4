@@ -6,7 +6,7 @@
 # VPS safety gate, 80 assertions -- reachable from no entrypoint in the repo.
 # They passed. They had always passed, because they had never run. bin/check's
 # own comments record the same thing happening to test:subsystems, and
-# OPENBSD/data/debt.yml records it for four RAILS gates under
+# TODO.md records it for four RAILS gates under
 # `rails_gates_not_wired`.
 #
 # This asserts every test file is reachable from some entrypoint.

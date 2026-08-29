@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-# DEBT.md, Test coverage: no test named SsrfGuard. It is the only thing standing
+# TODO.md, Test coverage: no test named SsrfGuard. It is the only thing standing
 # between a prompt-injection payload and the runtime's own internal network, and
 # its whole contract is a list of ranges — the cheapest possible thing to get
 # wrong silently and the cheapest possible thing to pin.

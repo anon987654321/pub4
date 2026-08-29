@@ -7,7 +7,7 @@ require_relative "../lib/guard_state"
 #
 # relayd answers TLS on their behalf while they are down, so the outage reads as
 # a hang rather than a 5xx and every other check on the box passes.
-# OPENBSD/data/debt.yml has carried "amber_bsdports_stop_and_stay_down" for
+# TODO.md has carried "amber_bsdports_stop_and_stay_down" for
 # exactly this, and each occurrence was found by a person noticing amber was off
 # — including 2026-08-14, when two concurrent deploys shed both and the guard
 # did not bring either back.

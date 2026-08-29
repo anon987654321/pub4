@@ -13,7 +13,7 @@ module Deploy
   #
   # That is the gap this closes. Not "the guard is broken" — it is slow enough
   # that the apps are down for hours, which is how
-  # OPENBSD/data/debt.yml's "amber_bsdports_stop_and_stay_down" keeps getting
+  # TODO.md's "amber_bsdports_stop_and_stay_down" keeps getting
   # reopened by whoever notices amber is off.
   #
   # This asks the observable question — is something the guard shed still not

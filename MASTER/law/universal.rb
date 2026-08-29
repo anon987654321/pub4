@@ -283,7 +283,7 @@ end
 # Git already holds that, per line, with an author and a message, and never
 # drifts from it; a comment holding the same thing is a second copy that decays
 # the first time someone edits the code and not the paragraph above it. The homes
-# for a reason worth re-reading are DECISIONS.md and DEBT.md.
+# for a reason worth re-reading are DECISIONS.md and TODO.md.
 #
 # Narrow on purpose. "Measured 2026-08-11: /home is at 89%" is evidence for a
 # present claim and stays. What this catches is a dated change verb and the

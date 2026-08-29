@@ -35,7 +35,7 @@ module Pub4
       parts = doc.split("/")
       roots << File.join(ROOT, parts[0]) if parts.size > 1              # MASTER, RAILS, OPENBSD
       roots << File.join(ROOT, parts[0], parts[1]) if parts.size > 2    # RAILS/shared, RAILS/brgen
-      # MASTER/DEBT.md writes "voice/engines.rb" for MASTER/lib/voice/engines.rb.
+      # TODO.md writes "voice/engines.rb" for MASTER/lib/voice/engines.rb.
       roots << File.join(ROOT, parts[0], "lib") if parts.size > 1
       # Rails view/partial mentions ("home/index", "comments/form") resolve under app/views.
       roots << File.join(dir, "app/views") << File.join(ROOT, parts[0], parts[1].to_s, "app/views")
@@ -112,7 +112,7 @@ module Pub4
     end
 
     # A line recording that something was deleted is doing its job by naming a
-    # path that no longer exists. DEBT.md, SEVERANCE.md and restoration notes are
+    # path that no longer exists. TODO.md, SEVERANCE.md and restoration notes are
     # built out of such lines; failing them would delete the record a second time.
     # Also covers assertions of absence -- "no config/master.key in git",
     # "stimulus_components.js must not return" -- where the path existing is the
@@ -148,7 +148,7 @@ module Pub4
     # `untracked_dirs` finds them by walking the disk, which works on a machine
     # that has booted the app and on the deploy host, and fails everywhere else:
     # in a fresh clone or a new `MASTER/bin/pub4 worktree` they have never been created,
-    # so START_HERE's `web/storage/` and `web/log/` and DEBT.md's `public/assets`
+    # so START_HERE's `web/storage/` and `web/log/` and TODO.md's `public/assets`
     # were reported as documents pointing at nothing.
     #
     # That is a check whose verdict depends on which checkout it runs in, which

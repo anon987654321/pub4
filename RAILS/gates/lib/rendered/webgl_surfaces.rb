@@ -12,7 +12,7 @@ module Deploy
   # Chrome with --disable-gpu, which turns WebGL off outright, so MapLibre and
   # the MASTER face both measure as an empty canvas. A gate built on that
   # instrument would pass or fail for reasons that have nothing to do with the
-  # map — RAILS/TODO.md section 4 is this, and it is an instrument problem
+  # map — TODO.md section 4 is this, and it is an instrument problem
   # rather than a feature gap.
   #
   # This session opts into SwiftShader. Software GL is slow and rasterises text

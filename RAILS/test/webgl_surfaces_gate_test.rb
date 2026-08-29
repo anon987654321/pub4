@@ -4,7 +4,7 @@ require "minitest/autorun"
 require "yaml"
 require_relative "../gates/lib/rendered/webgl_surfaces"
 
-# RAILS/TODO.md section 4: the rendered gates launch Chrome with --disable-gpu,
+# TODO.md section 4: the rendered gates launch Chrome with --disable-gpu,
 # which turns WebGL off outright, so MapLibre and the MASTER face both measure
 # as an empty canvas. Nothing asserted that a WebGL surface ever drew, and
 # nothing could — a gate built on that instrument would have passed or failed

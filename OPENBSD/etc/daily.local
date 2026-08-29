@@ -59,7 +59,7 @@ fi
 # Nothing about that is loud. Amber::GarmentSilhouette#png returns nil and logs
 # one line when vips cannot read the SVG it generates, the seeder carries on, and
 # the garment cut-outs are simply absent — a feature that stops existing rather
-# than an error anyone is paged for. This is the detection debt.yml asks for
+# than an error anyone is paged for. This is the detection TODO.md asks for
 # under libvips_local_build; the recovery is `make reinstall` in
 # /usr/ports/graphics/libvips, whose package is kept at
 # /usr/ports/packages/amd64/all/libvips-8.14.5.tgz.

@@ -2,7 +2,7 @@
 
 # Prose is where the drift always happens, because nothing parses prose.
 #
-# DEBT.md held a copy of spine.yml's raise log and drifted from it. The commit
+# TODO.md held a copy of spine.yml's raise log and drifted from it. The commit
 # that fixed that (f34907d40) says so in its own message — and within a day
 # DECISIONS.md was left claiming a rebaseline to 38823 against spine.yml's
 # 38811, by the session that had just read the fix. Twice in two days, same

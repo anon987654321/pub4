@@ -78,7 +78,7 @@ private
     # The admitted half of the loop. Returns Done when the effect ends the fold
     # and nil to take another turn — extracted from `run` so that method stays
     # under DENSITY's 20 code lines without the fold gaining a seventh file,
-    # which `core_files: 6` makes a design decision. See DEBT.md, "The fold spine
+    # which `core_files: 6` makes a design decision. See TODO.md, "The fold spine
     # had never been scanned".
     def apply(turn, admitted)
       if admitted.done?

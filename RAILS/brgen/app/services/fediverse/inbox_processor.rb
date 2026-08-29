@@ -94,7 +94,7 @@ module Fediverse
       :unfollowed
     end
 
-    # Remote posts are not ingested in this pass — see RAILS/TODO.md 2.1. The
+    # Remote posts are not ingested in this pass — see TODO.md 2.1. The
     # activity is recorded (so a redelivery is a duplicate rather than a
     # reprocess) and dropped, which is honest: pretending to accept content we
     # do not store would leave the sender believing it arrived.

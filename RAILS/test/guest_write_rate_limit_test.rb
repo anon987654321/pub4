@@ -6,7 +6,7 @@ require "minitest/autorun"
 #
 # Found by asking the narrow version of a question the 2026-08-10 audit asked
 # too broadly. That audit counted "64 controllers with a create and no
-# rate_limit" and the entry in OPENBSD/data/debt.yml says so itself: "the subset
+# rate_limit" and the entry in TODO.md says so itself: "the subset
 # worth doing is the write endpoints a guest can reach, not all 64 at an
 # arbitrary threshold." Most of the 64 are behind authentication, where the
 # account is the limit. Fourteen were guest-adjacent; three were genuinely

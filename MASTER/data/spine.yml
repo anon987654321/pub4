@@ -53,7 +53,10 @@ spine:
 # a finer per-part guard in STUDIO/gate.rb. On-disk source files (code, style,
 # markup, config, docs), vendored/generated excluded.
 pub4_source_ceilings:
-  MASTER: 1038
-  RAILS: 2361
-  OPENBSD: 107
+  # Lowered when the per-tree backlog files were consolidated into the repo-root
+  # TODO.md (which sits in no tree and so counts toward none): MASTER -1 (DEBT.md),
+  # RAILS -2 (TODO.md, BLOCKERS.md), OPENBSD -1 (data/debt.yml).
+  MASTER: 1037
+  RAILS: 2359
+  OPENBSD: 106
   STUDIO: 220

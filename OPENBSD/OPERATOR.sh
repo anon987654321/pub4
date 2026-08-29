@@ -454,7 +454,7 @@ stage_1() {
   # the WAV->MP3 conversion on `ffmpeg?` and returns *quietly* when it is absent.
   # Without it TTS produced un-concatenated or unconverted audio on the VPS with
   # no error anywhere — working on a Mac and silently degrading in production,
-  # which is the worst failure shape. See MASTER/DEBT.md "Host TTS Binaries".
+  # which is the worst failure shape. See TODO.md "Host TTS Binaries".
   pkg_add -U ldns-utils ruby%3.4 zap zsh fish neovim tmux fontconfig fzf ripgrep fd espeak ffmpeg 2>/tmp/pkg_add.log \
     || { log ERROR "pkg_add failed. See /tmp/pkg_add.log"; exit 1 }
 
@@ -705,7 +705,7 @@ bootstrap_rails_app() {
   # root:<app> 640, not root:wheel: the rc.d script sources /etc/<app>.env at
   # runtime *as the app user* (su -l resets the environment, so the secret cannot
   # be interpolated into daemon_flags without landing in falcon's ps(1) argv —
-  # readable by any local account; see rc.d/<app> and debt.yml
+  # readable by any local account; see rc.d/<app> and TODO.md
   # secrets_in_process_argv). Group-<app> lets only that app (and root) read it,
   # so a foothold in another app user — or dev, which is in wheel — can no longer
   # read this secret at rest.

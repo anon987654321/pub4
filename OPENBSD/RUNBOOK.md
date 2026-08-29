@@ -310,7 +310,7 @@ ALLOW_AMBER_DOWN=1 sh OPENBSD/bin/deploy-smoke.sh
 
 Checks `rcctl` (when present), localhost `/up` ports (master 53187, brgen 38182,
 amber 61352), public HTTPS, free-RAM warning, and brgen homepage regressions.
-See `OPENBSD/data/debt.yml` → `multi_app_ram` for the three-app memory ceiling.
+See `TODO.md` (OPENBSD operator debt) → `multi_app_ram` for the three-app memory ceiling.
 Restart order when recovering: **master → brgen → amber → relayd**.
 
 ## vps_console.exp modes
@@ -421,7 +421,7 @@ script, says only "restarted stuff", or runs the full installer from macOS.
 
 - Run `ruby34 OPENBSD/health_check.rb --public --all-ready-apps`.
 - Copy any live `/etc` changes back into `OPENBSD/etc/`.
-- Record persistent lessons in `OPENBSD/data/debt.yml` or `OPENBSD/DECISIONS.md`.
+- Record persistent lessons in the repo-root `TODO.md` or `OPENBSD/DECISIONS.md`.
 
 ## Launch wipe (demo data -> cold start)
 

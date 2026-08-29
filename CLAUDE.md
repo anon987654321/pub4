@@ -20,7 +20,8 @@ renamed.
 | `OPENBSD/` | The deploy pipeline and the VPS runbook. Production is one box, `vm23`. | `MASTER/bin/pub4 vps state` |
 | `STUDIO/` | Media tools. **dilla** makes beats, **postpro** grades images, **repligen**/**lora** generate. | `ruby STUDIO/dilla/dilla.rb` |
 
-Nothing else sits at the repo root but this file.
+Nothing else sits at the repo root but this file and `TODO.md`, the single
+repo-wide backlog (every per-tree debt/TODO/blocker list was folded into it).
 
 ## Commands
 
@@ -126,4 +127,4 @@ generated assets. Keys live in `/etc/*.env` on the VPS.
 | RAILS CSS or visual work | `RAILS/shared/WIRING_NOTES.md`, then `RAILS/shared/LAYOUT.md` |
 | brgen's city hosts and verticals | `RAILS/brgen/AGENTS.md` |
 | Why something odd is deliberate | `MASTER/DECISIONS.md`, `OPENBSD/DECISIONS.md` |
-| Known debt, and what not to chase | `MASTER/DEBT.md`, `OPENBSD/data/debt.yml` |
+| The backlog: parity gaps, blockers, debt, what not to chase | `TODO.md` (repo root) |

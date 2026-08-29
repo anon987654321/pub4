@@ -118,7 +118,7 @@ RUBY = ruby_cmd
 BUNDLE = bundle_cmd
 
 # A missing Bundler used to `exit 0` on the whole gate — the exact shape
-# GateResult's third state exists to prevent (OPENBSD/data/debt.yml:
+# GateResult's third state exists to prevent (TODO.md:
 # rails_gates_not_wired, "release_gate exits 0 when bundler is missing"). Two
 # thirds of this gate needs no Bundler at all: eight plain-ruby contract tests
 # and four in-process gate classes. Those still run; only the per-app dartsass

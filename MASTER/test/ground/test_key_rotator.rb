@@ -2,7 +2,7 @@
 
 require_relative "../test_helper"
 
-# DEBT.md, Test coverage: no test named KeyRotator. It decides which OpenRouter key
+# TODO.md, Test coverage: no test named KeyRotator. It decides which OpenRouter key
 # every free-tier call uses, and its "single key makes every method a no-op"
 # contract is the kind of thing that quietly becomes false.
 class KeyRotatorTest < Minitest::Test

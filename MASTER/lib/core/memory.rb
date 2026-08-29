@@ -56,7 +56,7 @@ module Master::Core
     end
 
     # Only host_memory_mb calls it. `private` cannot reach a `def self.` — see
-    # CodeMetrics.public_method_count and DEBT.md, "The fold spine had never been
+    # CodeMetrics.public_method_count and TODO.md, "The fold spine had never been
     # scanned".
     private_class_method :detect_host_memory_mb
 

@@ -113,7 +113,7 @@ module Pub4
     # Ordered: the most specific spelling wins, so a `require_relative` line is
     # not also reported as a bare mention.
     def classify(line, path)
-      # Prose cannot break. A constant named in DEBT.md or DECISIONS.md is a
+      # Prose cannot break. A constant named in TODO.md or DECISIONS.md is a
       # record of a decision, not a caller, and counting it as one puts every
       # well-documented file above the threshold — which would make the number
       # at the bottom of this report useless exactly where the repo is at its

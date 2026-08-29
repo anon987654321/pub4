@@ -48,8 +48,8 @@ decision, not a gap. Do not close it.
 **Context:** `Deploy::GateResult` lives in `OPENBSD/lib/` and RAILS requires it at
 53 sites — with `deploy_inventory` (16) and `utf8` (5), 74 requires across the
 tree boundary. RAILS's whole 59-file gate framework is built on a type owned by
-the deploy tree, and the directory names say the opposite. `data/debt.yml`
-(`gate_result_is_a_shared_kernel_filed_under_deploy`) measured that in 2026-08
+the deploy tree, and the directory names say the opposite. The operator debt
+register (`gate_result_is_a_shared_kernel_filed_under_deploy`) measured that in 2026-08
 and named the two ways out: extract a repo-level shared kernel, or write this
 entry. It stayed unwritten, and 2026-08-13 added `gate_ledger.rb` beside
 `gate_result.rb` — so the choice was being made by accretion instead.
@@ -63,7 +63,7 @@ them.
 three files, and the dependency it would remove is one RAILS already has and
 does not suffer from. The real asymmetry is the other way and worth keeping:
 **MASTER requires nothing from either tree** — it reads their data (`apps.yml`,
-`debt.yml`) and shells out to their scripts, but no `require_relative` crosses
+`TODO.md`) and shells out to their scripts, but no `require_relative` crosses
 into it. That independence is what a shared kernel would quietly erode, because
 a kernel is exactly the thing everything ends up requiring.
 
@@ -133,8 +133,8 @@ Two related traps found the same day:
 
 ## `/etc/doas.conf` Installs Only On A Deliberate Root Run (2026-08-02)
 
-**Status:** accepted. Moved here from `data/debt.yml`, where it was the tail of a
-closed entry — it is policy, not debt.
+**Status:** accepted. Moved here from the old OPENBSD/data/debt.yml register,
+where it was the tail of a closed entry — it is policy, not debt.
 
 dev's rule is a five-variable `setenv` allowlist
 (`I_UNDERSTAND_DNS_WIPE`, `I_UNDERSTAND_CONSOLE_RISK`, `RUN_PRODUCTION_SEEDS`,

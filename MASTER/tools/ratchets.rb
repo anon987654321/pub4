@@ -391,7 +391,7 @@ module Pub4
       current = output[pattern, 1]&.to_i
       Row.new(name: name, current: current, ceiling: ceiling, direction: :down,
               source: "#{dir}: #{command}",
-              note: ceiling.nil? ? "no recorded ceiling — see MASTER/DEBT.md" : nil)
+              note: ceiling.nil? ? "no recorded ceiling — see TODO.md" : nil)
     end
 
     def relative_to_root(path)

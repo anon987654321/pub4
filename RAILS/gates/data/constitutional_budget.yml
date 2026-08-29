@@ -2,12 +2,12 @@
 # MASTER/data/spine.yml: the number only ever ratchets down.
 #
 # The gate used to route every finding to result.warn and fail only when the scan
-# output matched a crash marker (OPENBSD/data/debt.yml: rails_gates_not_wired —
+# output matched a crash marker (TODO.md: rails_gates_not_wired —
 # "constitutional_scan_gate downgrades all findings to warnings"). Four full
 # MASTER scans, twenty-one minutes, and a green result no matter what they found.
 #
 # Chasing zero is not the goal and never was — these are design-craft rules over
-# three shipping Rails apps, and DEBT.md's Constitution Scan Debt entry says so.
+# three shipping Rails apps, and TODO.md's Constitution Scan Debt entry says so.
 # What a ceiling buys is the thing a warning cannot: a change that adds findings
 # fails, and lowering a number is a commit someone signs.
 #

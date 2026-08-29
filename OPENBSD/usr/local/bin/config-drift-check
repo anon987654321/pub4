@@ -13,7 +13,7 @@ require "open3"
 # execution from a dev-owned tree and reverted any hand-hardening of the live
 # file. doas policy is installed only by OPERATOR.sh now. This job stays a
 # read-only drift *detector* — it must never write privileged config. See
-# OPENBSD/data/debt.yml root_dot_sources_dev_owned_repo and stale_ci_cleanup.ksh.
+# TODO.md root_dot_sources_dev_owned_repo and stale_ci_cleanup.ksh.
 
 failures = []
 

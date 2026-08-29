@@ -139,7 +139,7 @@ module Deploy
     # So: comments are stripped before matching, the export must be absent
     # rather than present, and the worker rc.d that really runs the supervisor
     # has to exist and invoke it. Whether it is enabled on the box is an
-    # operator decision (vm23 is 1 GB — see debt.yml multi_app_ram); this gate
+    # operator decision (vm23 is 1 GB — see TODO.md multi_app_ram); this gate
     # reads the tree, so it asserts the script, not the rcctl state.
     def check_job_supervisor(app_failures, name)
       web_rcd = File.join(ROOT, "OPENBSD", "etc", "rc.d", name)

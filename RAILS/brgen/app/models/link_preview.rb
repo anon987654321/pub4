@@ -5,7 +5,7 @@
 # An image would mean either hotlinking the remote file — which tells that
 # server the IP of every reader of the thread — or proxying and storing it,
 # which is remote media hosting with the moderation and disk problems that
-# come with it. RAILS/TODO.md 2.1 defers the same problem for federation; a
+# come with it. TODO.md 2.1 defers the same problem for federation; a
 # chat preview is not the place to take it on.
 class LinkPreview < ApplicationRecord
   STATUSES = %w[pending ok failed].freeze

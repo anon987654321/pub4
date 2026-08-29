@@ -67,7 +67,7 @@ module Deploy
     end
 
     # Compares a target's finding count against its recorded ceiling. Chasing zero
-    # is explicitly not the goal here (DEBT.md, Constitution Scan Debt) — what the
+    # is explicitly not the goal here (TODO.md, Constitution Scan Debt) — what the
     # ceiling buys is that adding findings fails and lowering the number is a
     # deliberate commit, which is what routing everything to warn could not do.
     def judge_count(name, count)

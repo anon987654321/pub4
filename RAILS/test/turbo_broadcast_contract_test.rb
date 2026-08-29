@@ -5,7 +5,7 @@ require "minitest/autorun"
 # A Turbo broadcast that names a partial which does not exist does not raise where
 # anyone sees it. `broadcast_*_later_to` enqueues a job; the job raises
 # ActionView::MissingTemplate inside Solid Queue; the page simply never updates.
-# OPENBSD/data/debt.yml called this out as "several Turbo broadcasts use implicit
+# TODO.md called this out as "several Turbo broadcasts use implicit
 # to_partial_path with no matching partial" — there were more than several, and the
 # reasons split into two very different groups.
 #

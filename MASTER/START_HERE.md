@@ -65,7 +65,7 @@ gates it names exist.
 5. VPS: one app CI/deploy at a time on vm23. — no gate: concurrency on a remote host, enforced by the deploy lock on vm23 rather than by anything in this repo; a local check would assert against state it cannot see.
 6. Secrets in `/etc/*.env` on VPS — never commit keys or generated assets. — gate: `rake security_sweep`, `RAILS/test/tracked_secrets_test.rb`
 7. After `git pull` on vm23, run `vps-deploy` before expecting live health. — no gate: an ordering rule for two commands run on the VPS; nothing in the repo observes whether the box was deployed after its last pull.
-8. Feature truth: `RAILS/apps.yml`; debt: `OPENBSD/data/debt.yml`. — gate: `RAILS/gates/lib/source/apps_yml.rb`
+8. Feature truth: `RAILS/apps.yml`; backlog and debt: repo-root `TODO.md`. — gate: `RAILS/gates/lib/source/apps_yml.rb`
 9. Never autonomously run `vmctl console/stop/start` or kill `cu` on server4 — see `OPENBSD/RUNBOOK.md`. — no gate: a prohibition on an action, not a property of the tree; the guard is the human-only env var in item 11.
 10. Production VM is vm23 only (`dev@brgen.no`). — no gate: a deployment fact about the world; the repo cannot assert which host is production, only which one its scripts name.
 11. `I_UNDERSTAND_CONSOLE_RISK=1` and `I_UNDERSTAND_DNS_WIPE=1` are human-only gates. — gate: `OPENBSD/vps_safety_gate.rb`
@@ -96,7 +96,7 @@ Rules live in one file because rules split across several grow definitions that 
 
 - UI/face topology, event registry, routing notes — consolidated behind `RuntimeCatalog.load(section)`.
 
-Documents outside `data/` that nothing links to are found by nobody — this sentence was the only thing linking two of them, which is not the same as being read. The principle-map audit is gone: its eight closed gaps are in git and its three open ones are in `DEBT.md`, where open work is looked for. The rest live under `docs/`: `REPAIR_PLAYBOOKS.md` for a red gate, `UI_POLISH_PLAYBOOK.md` for visual authority, `GITHUB_WATCH.md` for external projects worth reading.
+Documents outside `data/` that nothing links to are found by nobody — this sentence was the only thing linking two of them, which is not the same as being read. The principle-map audit is gone: its eight closed gaps are in git and its three open ones are in the repo-root `TODO.md`, where open work is looked for. The rest live under `docs/`: `REPAIR_PLAYBOOKS.md` for a red gate, `UI_POLISH_PLAYBOOK.md` for visual authority, `GITHUB_WATCH.md` for external projects worth reading.
 
 **Tier 4 — Prose (3 allowed markdown files in `data/`):**
 
@@ -108,7 +108,7 @@ Documents outside `data/` that nothing links to are found by nobody — this sen
 
 - `bootstrap.yml`, `project_context.yml`, `patterns.yml`, etc. — operational memory. Consolidation target: fold into `patterns.yml` per the 2026-05 defrag plan in `project_context.yml`.
 
-**Target end state:** 4 law YAMLs + 1 patterns + registries + 1 runtime catalog + 3 data markdown stubs. Top-level MASTER markdown: this file + `README.md` stub + `DEBT.md` / `DECISIONS.md` / `EXAMPLES.md` / `REPAIR_PLAYBOOKS.md` only when they hold living entries.
+**Target end state:** 4 law YAMLs + 1 patterns + registries + 1 runtime catalog + 3 data markdown stubs. Top-level MASTER markdown: this file + `README.md` stub + `DECISIONS.md` / `EXAMPLES.md` / `REPAIR_PLAYBOOKS.md` only when they hold living entries (the debt register moved to the repo-root `TODO.md`).
 
 OPENBSD mirror: `OPENBSD/START_HERE.md` + `OPENBSD/RUNBOOK.md` — not duplicate MASTER law.
 
@@ -138,6 +138,6 @@ Far-away visual tree with noise pruned and alignment notes. Do this before mergi
 - Read the target file and nearby tests.
 - Check `PATH_OWNERSHIP.yml` for risk.
 - Prefer small patches; run the smallest check that proves the work.
-- Update `DECISIONS.md` or `DEBT.md` when settling ambiguity.
+- Update `DECISIONS.md` or the repo-root `TODO.md` when settling ambiguity.
 - Face boot: read `web/CLAUDE.md` first.
 - RAILS app CSS/visual work: read `RAILS/shared/WIRING_NOTES.md`'s "Visual design system" section first — x.com is the base reference, tokens live in `RAILS/shared/app/assets/stylesheets/_dialect_tokens.scss`, and the flat-only (no shadow/blur/glow) rule applies repo-wide.

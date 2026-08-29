@@ -12,9 +12,9 @@ ownership:
     purpose: production runbook
     risk: high
     check: OPENBSD/bin/check
-  data/debt.yml:
-    purpose: canonical open operator debt (BACKLOG.yml was removed 2026-07-07;
-      features live in RAILS/apps.yml, debt here, operator recipes in
+  ../TODO.md:
+    purpose: consolidated repo-wide backlog (operator debt folded in from the old
+      data/debt.yml; features live in RAILS/apps.yml, operator recipes in
       data/operator.yml)
     risk: medium
     check: MASTER/bin/pub4 status

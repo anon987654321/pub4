@@ -3,7 +3,7 @@
 require_relative "../test_helper"
 require "fileutils"
 
-# DEBT.md, Test coverage: no test named StandingOrders. This is the runtime's
+# TODO.md, Test coverage: no test named StandingOrders. This is the runtime's
 # autonomous scheduler — it decides, unattended, which commands run and how often,
 # including event-triggered ones with regex filters. Nothing pinned any of it.
 #
