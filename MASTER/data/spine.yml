@@ -85,4 +85,8 @@ pub4_source_ceilings:
   # This deliberately leaves STUDIO one over. That one is not mine --
   # lib/engine/album_signature.rb is untracked, so raising for it would fit
   # the ceiling to a file nobody has landed.
-  STUDIO: 222
+  # 222 -> 224 for lora/_toolkit/run_seed_media_colab.rb and the seed_media.ipynb
+  # it generates. The notebook is committed because Colab opens a notebook from a
+  # public repo URL and cannot be handed one any other way, and the generator is
+  # committed because the notebook says edits belong in it.
+  STUDIO: 224
