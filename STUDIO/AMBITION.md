@@ -14,8 +14,6 @@ Grounded in `PHOTOGRAPHY.md` (the four layers), the Replicate survey in
 do today. Marked **[cheap]** when it is an afternoon, **[deep]** when it is a
 project, **[yours]** when it is a decision rather than work.
 
----
-
 ## A. The chain engine — repligen's missing spine (1–24)
 
 Today repligen is single-shot: one model, optionally one `--postpro` handoff.
@@ -237,8 +235,6 @@ are the proxies that are not.
 166. Keep one frame from each era as a reference of where the look has been.
 167. Write down what "spectacular" turned out to mean, once there are examples — it will not be what it sounds like now.
 168. Decide what is worth showing anyone, which is a different question from all of the above and the only one that finally matters. **[yours]**
-
----
 
 ## Where I would start
 

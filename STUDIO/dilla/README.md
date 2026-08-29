@@ -1,44 +1,31 @@
 # Dilla
 
-A beat engine in Ruby. One file, `dilla.rb`, with helpers under `lib/`. It
-generates harmony, programs drums, plays sampled loops against them, mixes,
-masters, and writes an mp3 or wav. Everything runs locally through `ffmpeg` and
-`fluidsynth` — nothing is uploaded and nothing is fetched at render time.
+**A beat engine that never phones home.** `dilla.rb` and the helpers under
+`lib/` generate harmony, program drums, play sampled loops against them, mix,
+master, and write an mp3 or a wav. Everything runs locally through `ffmpeg` and
+`fluidsynth`: nothing is uploaded, and nothing is fetched at render time.
 
-Tests: `cd STUDIO && rake test:dilla` (or bare `rake` for the gate and every
-suite). The line here named `MASTER/test/test_dilla.rb`, which has not existed
-since the suite moved to `STUDIO/test/dilla/` — so it sent an operator to
-validate nothing and read the result as passing.
+The suite is `STUDIO/test/dilla/`, run as `cd STUDIO && rake test:dilla`, or bare
+`rake` for the gate and every suite. Check the path you are given before you
+trust a green run — this line once named a file that had not existed since the
+suite moved, so it sent an operator to validate nothing and read the result as
+passing.
 
-ENV knobs and the render path in detail: `ENV_AND_RENDER.md`. Operator scripts,
-including `redo_nine.sh`, live under `scripts/`.
-
-```sh
-cd STUDIO/dilla
-ruby dilla.rb out.wav 18                 # one render, 18 bars
-TRACK=kembara_rindu ruby dilla.rb out.wav 18
-ruby dilla.rb                            # showcase_demo! → demo.wav
-ruby dilla.rb stream                     # continuous stream
-ruby dilla.rb help
-```
-
----
+ENV knobs, the switch reference and the render path in detail are in
+`ENV_AND_RENDER.md`. Operator scripts, `redo_nine.sh` among them, live under
+`scripts/`.
 
 ## What happens during a render
 
-```
-progression  ──►  theory refine  ──►  pads · bass · leads ──┐
-                                                            │
-sampled loop ──►  varispeed · chop · vary · EQ ─────────────┤
-                                                            ├──►  bus analog
-drum grid    ──►  microtiming · swing · dirt · duck ────────┘      (saturation
-                                                                    per channel)
-                                                                        │
-        sonitex tape ──► analog chain ──► loudnorm ──► tape hysteresis
-                                       ──► tilt ──► dropout ──► mono bass
-```
+Harmony comes first: a progression is refined by the theory operators and
+becomes pads, bass and leads. A sampled loop is varispeeded, chopped, varied and
+EQd alongside it. The drum grid gets its microtiming, swing, dirt and ducking.
+Those three meet at the analog bus, which saturates each channel separately, and
+the sum goes through sonitex tape, the analog chain, loudness normalisation, tape
+hysteresis, tilt, dropout and mono bass, in that order. `ENV_AND_RENDER.md` draws
+it.
 
-Four things are worth knowing about that order.
+Four things about that order are worth knowing.
 
 **Per-channel saturation happens before summing.** A desk saturates every
 channel on the way in, so each source makes its own harmonics and those
@@ -58,20 +45,17 @@ normaliser exists to flatten.
 **The harmonic guard runs before arrangement**, so if it mutes the tonal layers
 nothing downstream has to be unpicked.
 
----
-
 ## Samples
 
 `TRACK_SAMPLE_LOOPS` holds the loops. Each carries its own tempo and its own
 low-end and top-end correction, because the loops differ and one global value is
 wrong for whichever loop it was not tuned against.
 
-| track | source | tempo | key (fit) | hp / shelf / lp |
-|---|---|---|---|---|
-| `kembara_rindu` | 4-bar Ableton loop | 92 | C minor (0.71) | 90 / −7 / 5600 |
-| `semua_untuk_mu` | 0:36–0:46 of the source | 96 | G minor (0.836) | 45 / 0 / 5200 |
-| `lo_borges` | first 4 bars | 114 | D major (0.697) | 60 / −3 / 6000 |
-| `rauingar` | own recording, 2 bars | 92 | C♯ minor (0.70) | 60 / −3 / 6200 |
+`kembara_rindu` is a four-bar Ableton loop at 92 BPM, C minor at fit 0.71,
+corrected 90 / −7 / 5600. `semua_untuk_mu` is 0:36–0:46 of its source at 96, G
+minor at 0.836, corrected 45 / 0 / 5200. `lo_borges` is the first four bars at
+114, D major at 0.697, corrected 60 / −3 / 6000. `rauingar` is an own recording,
+two bars at 92, C♯ minor at 0.70, corrected 60 / −3 / 6200.
 
 Older ingest names (`four_seven`, `nightbus`, `dmaj_open`) still resolve through
 `TRACK_SAMPLE_LOOP_ALIASES`, including for layer-profile lookup.
@@ -79,17 +63,9 @@ Older ingest names (`four_seven`, `nightbus`, `dmaj_open`) still resolve through
 ### Restoring a loop
 
 `samples/` and `crate/` are gitignored, so a lost checkout loses the audio and
-keeps every decision made about it. Drop the file back at the path the table's
-track name gives and nothing else is needed — `demo_sampled_order` reads the
-disk, so a restored loop rejoins the demo on the next run:
-
-| track | file |
-|---|---|
-| `kembara_rindu` | `samples/kembara_rindu/loop.wav` |
-| `semua_untuk_mu` | `samples/semua_untuk_mu/loop.wav` |
-| `lo_borges` | `samples/lo_borges/loop.wav` |
-| `rauingar` | `samples/rauingar/loop.wav` |
-| `arat_swost_wolet` | `samples/arat_swost_wolet/loop.wav` |
+keeps every decision made about it. Drop the file back at
+`samples/<track>/loop.wav` and nothing else is needed: `demo_sampled_order` reads
+the disk, so a restored loop rejoins the demo on the next run.
 
 `crate/` is what makes a restore cheap, and it is worth keeping whole. For
 `semua_untuk_mu` it holds `sources/` (the fetched `source.wav` plus a `fetch.txt`
@@ -99,8 +75,8 @@ cut itself and its variants). Restoring from that is a copy, with no re-fetch an
 no re-separation — and `fetch.txt`'s duration is what proves the source is the
 same upload the cut was measured against, which a fresh search cannot promise.
 
-Verify a restore by rendering it: the loop should report the tempo and key this
-table gives. `semua_untuk_mu` reads Eb major at fit 0.82 against the 0.79 in
+Verify a restore by rendering it: the loop should report the tempo and key
+named above. `semua_untuk_mu` reads Eb major at fit 0.82 against the 0.79 in
 `sample_loops.rb`, and 96 BPM, which is close enough to identify the passage and
 not close enough to be a coincidence.
 
@@ -108,8 +84,8 @@ not close enough to be a coincidence.
 
 Onset and energy detection finds where something *changes*, which is not where a
 musical phrase *starts*. It put `semua_untuk_mu` 22 seconds early, on the end of
-a spoken intro. Given a boundary the analysis is reliable and will confirm or
-refute it — key fit 0.27 for the detector's cut against 0.836 for the operator's.
+a spoken intro. Given a boundary the analysis is reliable and confirms or refutes
+it — key fit 0.27 for the detector's cut against 0.836 for the operator's.
 Asked to find one, it is not.
 
 Where two analyses disagree on tempo, loop the candidates and measure the seam:
@@ -119,9 +95,6 @@ between the onset sweep and a self-similarity peak — self-similarity finds the
 shortest thing that repeats, which is not necessarily the bar.
 
 ### `chop` — a long recording into a rack of beds
-
-    ruby dilla.rb chop [path]     # default samples/ubrukte_samples.mp3
-    ruby dilla.rb chop list
 
 Scan the whole recording, propose windows that are loud, steady and carrying
 more energy outside the speech band than inside it, run **demucs `htdemucs_6s`**
@@ -160,23 +133,17 @@ Off-air radio is **not licensed material**, and chopping it does not clear it.
 Every row carries `rights: unlicensed`, so a beat built on one can be identified
 before release rather than after. `lib/crate_dig.rb` is the route that clears.
 
----
-
 ## Drums
 
 ~60 presets in `lib/producer_dna.rb`, in categories that are deliberately
 kept apart. Being able to say which a grid is matters more than having more.
 
-| category | examples | what it means |
-|---|---|---|
-| transcribed | `four_seven`, `transcribed_soul_nine` | measured off a recording |
-| constructed | `dilla_donuts`, `flylo_zodiac`, `boom_bap`, `soul_shuffle` | built to a described feel |
-| pack import | `pack_729_1..6` | extracted from licensed MIDI |
-| push pads | `push_four`, `push_sparse` | straight and sparse on purpose |
-| expansion | `afro_clave`, `euclid_five`, `ghost_cloud`, … | more pockets, same backbeat rule |
-
-Export every grid as GM MIDI clips: `ruby dilla.rb export-midi` → `samples/midi/`.
-Re-import a pack folder: `ruby dilla.rb import-midi samples/midi/boom_bap`.
+A transcribed grid — `four_seven`, `transcribed_soul_nine` — was measured off a
+recording. A constructed one — `dilla_donuts`, `flylo_zodiac`, `boom_bap`,
+`soul_shuffle` — was built to a described feel. `pack_729_1` through `_6` were
+extracted from licensed MIDI. `push_four` and `push_sparse` are straight and
+sparse on purpose. The expansion set — `afro_clave`, `euclid_five`,
+`ghost_cloud` and the rest — adds pockets under the same backbeat rule.
 
 **The backbeat stays on 4 and 12.** Every transcription in the file says so.
 What makes these records sound the way they do is `MICROTIMING_MS` — snare
@@ -196,105 +163,6 @@ BPM: kick 0.0, snare +12.4, hat +16.1, ghost +17.6, perc +21.2 ms. Take the
 locked kick away and it stops reading as feel and starts reading as unsteady
 tempo.
 
----
-
-## Switches
-
-Sample handling:
-
-| switch | what |
-|---|---|
-| `HARMONIC_KEEP=1` | transpose generated pads onto the loop's detected key |
-| `HARMONIC_SHUFFLE=1` | order chords so the top voice traces one arc |
-| `ORGANIC_VARY=1` | rebuild the bed as N differing passes — `-stream_loop` is bit-identical, and nothing acoustic is |
-| `LOOP_CHOP_SLICES=8` | cut each pass into slices and rotate them; the loop becomes material rather than a part |
-| `SAMPLE_LOOP_VARISPEED` | pitch follows tempo, as a record does (default on) |
-| `SAMPLE_LOOP_SEMITONES` | pitch **without** changing tempo |
-| `SAMPLE_FM=1` | audio-rate vibrato = real FM sidebands, floored at 700 Hz so chord tones are untouched |
-| `SAMPLE_SCALE=1` | layer the loop at degrees of its own key |
-| `LOOP_WOW_CENTS` | tape instability on the loop only, never the kit |
-| `LOOP_DELAY_BEATS` | tempo-synced echo (1.5 = dotted-8th) |
-
-Two loops as one instrument — `DILLA_XSAMPLE` names the partner:
-
-| switch | what |
-|---|---|
-| `DILLA_XCONVOLVE=1` | one loop becomes the room the other plays in |
-| `DILLA_XGATE=1` | one loop's harmony driven by the other's rhythm (`amultiply`, not a gate) |
-
-Drums:
-
-| switch | what |
-|---|---|
-| `DRUM_PRESET` | any drum preset key (`ruby -e` / `DRUM_PRESET=boom_bap`) |
-| `NO_QUANTIZE=1` | quantise off entirely |
-| `SWING_ROLE_SPREAD` | how far the per-voice lean spreads |
-| `WONKY_DRUM_OVERLAY=1` | Camel dual-bus: sub at 55/110/180, top at 3.5k/6.5k/9k |
-| `WONKY_TOP_DIRT` | phaser/flanger/crush on cymbals, kick untouched |
-| `WONKY_HAT_DUCK` | duck the top bus by the kick bus |
-| `DRUM_FIELD_LAYER` | room tone under the kit, ducked by it |
-
-Movement and master. The analog stages are **on by default** as of 2026-07-31 —
-every one of them shipped built and set to `0`, so nothing this engine rendered
-had ever been through them. Set a switch to `0` to get the old behaviour back.
-
-| switch | default | what |
-|---|---|---|
-| `BUS_ANALOG` | `0.3` | per-channel saturation plus small phase offsets, so buses don't sum coherently |
-| `CONSOLE_STRIP` | `0.35` | per-channel desk model; L and R run one seed apart, which is the point |
-| `TAPE_HYSTERESIS` | `0.25` | Jiles-Atherton, RK4 — path-dependent, unlike every other stage |
-| `TAPE_BIAS` | `1.0` | 1 = original loop; lower = less bias, wider hysteresis (ChowTape) |
-| `TAPE_LOSS_HZ` | `0` | spacing/loss lowpass into JA; 0 is off, 14000 is the analog start |
-| `TAPE_WOW_MS` | `0.6` | Ornstein-Uhlenbeck flutter |
-| `SONITEX_MIX` / `_DISTORTION` / `_VINYL` / `_TONE` / `_NOISE` / `_SAMPLING` | `1` | STX-1260 section wet amount; `SONITEX_SAMPLING=0` is crush off, tone stays |
-| `MASTER_SMOOTH_DB` | `2.0` | takes 2 dB out of the presence band; the stage that answers "harsh" |
-| `SMOOTH_ANALOG` | `1` | drop patches on metallic GM programs (chromatic percussion, 94, 98, 99, 103) |
-| `MASTER_TILT_DB` | `0` | negative = darker; lows up as highs come down |
-| `MONO_BASS_HZ` | — | sum below N to mono |
-| `ORGANIC_BREATH` / `ORGANIC_SWELL` | `0` | correlated loudness+brightness; phrase swell |
-| `DILLA_DROPOUT_EVERY` | — | silence just before every Nth downbeat |
-| `DILLA_DRONE` / `DILLA_TAPE_STOP` | `0` | stretched bed; platter brake |
-
-Arps and groove:
-
-| switch | default | what |
-|---|---|---|
-| `NO_ARP` | `1` | held chords and melodic lead phrases; covers **three** separate arp paths |
-| `GROOVE_FEEL` | `boom_bap` | `boom_bap` / `dilla_drag` / `camel` — per-voice tick offsets at 96 PPQ |
-| `BASS_FEEL` | `1` | let the bass take the feel's offset instead of sitting on the grid |
-
-`NO_ARP` reaches `pad_arp_mode`, `lead_true_arp_mode?` and `lead_events_scale_arp`.
-It was added covering only the first, which meant pads went quiet and the leads
-kept arpeggiating — and `STREAM_STYLE_SAFE` and `stream_iterate` both set
-`LEAD_FORCE_ARP=1` per track, so the forced flag won every time.
-
-Vocals (`RAP_VOCAL=<slug>`, `0` to disable):
-
-| switch | what |
-|---|---|
-| `RAP_VOCAL_SNAP` | place sung lines on the grid instead of stretching |
-| `RAP_VOCAL_LEAN_MS` | drag each line behind the beat, plus a fixed walk |
-| `RAP_VOCAL_SWELL` | reverse pre-swell arriving on each line's downbeat |
-
-Snapping exists because a freely-sung take has no tempo to stretch onto. Across
-source BPMs 96–128 against a 92 beat, one take landed 31/20/19/18/25/14% of its
-onsets on the grid against a ~20% random baseline — slowing it made alignment
-*worse*. Placing lines instead took line starts to 87% on grid at a 5 ms median.
-
----
-
-## Other commands
-
-```sh
-ruby dilla.rb crate                    # 38 synthesised one-shots and textures
-ruby dilla.rb import-midi <dir>        # MIDI drum clips -> 16-step grids
-ruby dilla.rb beauty <file>            # harmony score and recommendations
-ruby dilla.rb quality <file>           # LUFS, true peak, harshness, sub/kick
-ruby dilla.rb separate <file>          # demucs 4-stem
-```
-
----
-
 ## Controls that are not what they look like
 
 Each of these cost real debugging time. They are listed because the failures
@@ -305,7 +173,7 @@ were all silent — the code ran, returned success, and did nothing.
   `resolved_drum_mix_weight` reads a pinned `DRUM_VOL` when `DRUM_MIX_WEIGHT`
   was not pinned. Prefer `DRUM_MIX_WEIGHT` / `DRUM_BUS_VOL` / `DRUM_BUS_GAIN`
   in new recipes.
-- **`KICK_GAIN` will not fix a loud low end** if the loop is making it. Muting
+- **`KICK_GAIN` does not fix a loud low end** the loop is making. Muting
   the kick moved the 40–100 Hz band by 0.0 dB; muting the loop moved it 4.0 dB.
   Reach for `SAMPLE_LOOP_HP` first.
 - **`asoftclip` needs `oversample`.** Without it the harmonics it makes above
@@ -426,10 +294,30 @@ most of a 9 dB drum improvement came from lowering other buses, not raising the
 drums. A loop with crowded mids cannot be beaten by pushing drums into them.
 
 **A filter can be wired correctly, run without error, and be transparent.** Only
-measuring the output catches it, and adjusting parameters never will, because
-the parameters were never the problem.
+measuring the output catches it, and adjusting parameters never does, because the
+parameters were never the problem.
 
 **Sections were unreachable, not missing.** The arrangement cycle was floored at
 16 bars while a 16-bar render has a 9-bar body, so breakdown and build never
 fired below about 21 bars — every short render was intro, main, outro. The
 machinery had been there all along.
+
+## Running it
+
+```sh
+cd STUDIO/dilla
+ruby dilla.rb out.wav 18                 # one render, 18 bars
+TRACK=kembara_rindu ruby dilla.rb out.wav 18
+ruby dilla.rb                            # showcase_demo! → demo.wav
+ruby dilla.rb stream                     # continuous stream
+ruby dilla.rb help
+
+ruby dilla.rb chop [path]                # default samples/ubrukte_samples.mp3
+ruby dilla.rb chop list
+ruby dilla.rb crate                      # 38 synthesised one-shots and textures
+ruby dilla.rb export-midi                # every grid as GM MIDI, to samples/midi/
+ruby dilla.rb import-midi <dir>          # MIDI drum clips back into 16-step grids
+ruby dilla.rb beauty <file>              # harmony score and recommendations
+ruby dilla.rb quality <file>             # LUFS, true peak, harshness, sub/kick
+ruby dilla.rb separate <file>            # demucs 4-stem
+```

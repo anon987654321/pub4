@@ -24,8 +24,6 @@ Inspect after a path that records provenance:
 ruby dilla.rb config-provenance
 ```
 
----
-
 ## ENV layer order
 
 Lower layers only **soft-fill** (set if empty). Later **force** overwrites.
@@ -62,8 +60,6 @@ Lower layers only **soft-fill** (set if empty). Later **force** overwrites.
 `STREAM_PUNCH=1` or `STREAM_COMFORT=0`. One-shot comfort: `DILLA_COMFORT=1`.
 
 **`DILLA_RAW=1`:** skip `apply_best_defaults!` soft fills — operator ENV only.
-
----
 
 ## Table map
 
@@ -138,7 +134,88 @@ capability that is off, or a default that surprises:
 Full DNA is large (mix bus dB, harmonic stem weights). Prefer
 `config-provenance` after a render over memorizing every key.
 
----
+## Switches, by what they touch
+
+Sample handling:
+
+| switch | what |
+|---|---|
+| `HARMONIC_KEEP=1` | transpose generated pads onto the loop's detected key |
+| `HARMONIC_SHUFFLE=1` | order chords so the top voice traces one arc |
+| `ORGANIC_VARY=1` | rebuild the bed as N differing passes — `-stream_loop` is bit-identical, and nothing acoustic is |
+| `LOOP_CHOP_SLICES=8` | cut each pass into slices and rotate them; the loop becomes material rather than a part |
+| `SAMPLE_LOOP_VARISPEED` | pitch follows tempo, as a record does (default on) |
+| `SAMPLE_LOOP_SEMITONES` | pitch **without** changing tempo |
+| `SAMPLE_FM=1` | audio-rate vibrato = real FM sidebands, floored at 700 Hz so chord tones are untouched |
+| `SAMPLE_SCALE=1` | layer the loop at degrees of its own key |
+| `LOOP_WOW_CENTS` | tape instability on the loop only, never the kit |
+| `LOOP_DELAY_BEATS` | tempo-synced echo (1.5 = dotted-8th) |
+
+Two loops as one instrument — `DILLA_XSAMPLE` names the partner:
+
+| switch | what |
+|---|---|
+| `DILLA_XCONVOLVE=1` | one loop becomes the room the other plays in |
+| `DILLA_XGATE=1` | one loop's harmony driven by the other's rhythm (`amultiply`, not a gate) |
+
+Drums:
+
+| switch | what |
+|---|---|
+| `DRUM_PRESET` | any drum preset key (`ruby -e` / `DRUM_PRESET=boom_bap`) |
+| `NO_QUANTIZE=1` | quantise off entirely |
+| `SWING_ROLE_SPREAD` | how far the per-voice lean spreads |
+| `WONKY_DRUM_OVERLAY=1` | Camel dual-bus: sub at 55/110/180, top at 3.5k/6.5k/9k |
+| `WONKY_TOP_DIRT` | phaser/flanger/crush on cymbals, kick untouched |
+| `WONKY_HAT_DUCK` | duck the top bus by the kick bus |
+| `DRUM_FIELD_LAYER` | room tone under the kit, ducked by it |
+
+Movement and master. The analog stages are **on by default**. Every one of them
+shipped built and set to `0`, so for a long time nothing this engine rendered had
+ever been through them. Set a switch to `0` for that older, drier behaviour.
+
+| switch | default | what |
+|---|---|---|
+| `BUS_ANALOG` | `0.3` | per-channel saturation plus small phase offsets, so buses don't sum coherently |
+| `CONSOLE_STRIP` | `0.35` | per-channel desk model; L and R run one seed apart, which is the point |
+| `TAPE_HYSTERESIS` | `0.25` | Jiles-Atherton, RK4 — path-dependent, unlike every other stage |
+| `TAPE_BIAS` | `1.0` | 1 = original loop; lower = less bias, wider hysteresis (ChowTape) |
+| `TAPE_LOSS_HZ` | `0` | spacing/loss lowpass into JA; 0 is off, 14000 is the analog start |
+| `TAPE_WOW_MS` | `0.6` | Ornstein-Uhlenbeck flutter |
+| `SONITEX_MIX` / `_DISTORTION` / `_VINYL` / `_TONE` / `_NOISE` / `_SAMPLING` | `1` | STX-1260 section wet amount; `SONITEX_SAMPLING=0` is crush off, tone stays |
+| `MASTER_SMOOTH_DB` | `2.0` | takes 2 dB out of the presence band; the stage that answers "harsh" |
+| `SMOOTH_ANALOG` | `1` | drop patches on metallic GM programs (chromatic percussion, 94, 98, 99, 103) |
+| `MASTER_TILT_DB` | `0` | negative = darker; lows up as highs come down |
+| `MONO_BASS_HZ` | — | sum below N to mono |
+| `ORGANIC_BREATH` / `ORGANIC_SWELL` | `0` | correlated loudness+brightness; phrase swell |
+| `DILLA_DROPOUT_EVERY` | — | silence just before every Nth downbeat |
+| `DILLA_DRONE` / `DILLA_TAPE_STOP` | `0` | stretched bed; platter brake |
+
+Arps and groove:
+
+| switch | default | what |
+|---|---|---|
+| `NO_ARP` | `1` | held chords and melodic lead phrases; covers **three** separate arp paths |
+| `GROOVE_FEEL` | `boom_bap` | `boom_bap` / `dilla_drag` / `camel` — per-voice tick offsets at 96 PPQ |
+| `BASS_FEEL` | `1` | let the bass take the feel's offset instead of sitting on the grid |
+
+`NO_ARP` reaches `pad_arp_mode`, `lead_true_arp_mode?` and `lead_events_scale_arp`.
+It was added covering only the first, which meant pads went quiet and the leads
+kept arpeggiating — and `STREAM_STYLE_SAFE` and `stream_iterate` both set
+`LEAD_FORCE_ARP=1` per track, so the forced flag won every time.
+
+Vocals (`RAP_VOCAL=<slug>`, `0` to disable):
+
+| switch | what |
+|---|---|
+| `RAP_VOCAL_SNAP` | place sung lines on the grid instead of stretching |
+| `RAP_VOCAL_LEAN_MS` | drag each line behind the beat, plus a fixed walk |
+| `RAP_VOCAL_SWELL` | reverse pre-swell arriving on each line's downbeat |
+
+Snapping exists because a freely-sung take has no tempo to stretch onto. Across
+source BPMs 96–128 against a 92 beat, one take landed 31/20/19/18/25/14% of its
+onsets on the grid against a ~20% random baseline — slowing it made alignment
+*worse*. Placing lines instead took line starts to 87% on grid at a 5 ms median.
 
 ## One-shot render path
 
@@ -152,6 +229,20 @@ TRACK=pedal_e_descent PROGRESSION=pedal_e_descent ruby dilla.rb dilla /tmp/beat.
 1. Destination + bars
 2. Best defaults (unless `DILLA_RAW`) + style DNA
 3. `render_dilla(dest, bars)`
+
+### The shape of a render
+
+```
+progression  ──►  theory refine  ──►  pads · bass · leads ──┐
+                                                            │
+sampled loop ──►  varispeed · chop · vary · EQ ─────────────┤
+                                                            ├──►  bus analog
+drum grid    ──►  microtiming · swing · dirt · duck ────────┘      (saturation
+                                                                    per channel)
+                                                                        │
+        sonitex tape ──► analog chain ──► loudnorm ──► tape hysteresis
+                                       ──► tilt ──► dropout ──► mono bass
+```
 
 ### 2. `render_dilla` (core)
 
@@ -177,8 +268,6 @@ sidechain amix → sonitex → analog → heuristics → loudnorm
 
 `Shared::DillaProcessor.render_to_file!` → engine → Active Storage.
 
----
-
 ## Stream rotation
 
 - **Progressions:** full pack (priority first: `pedal_e_descent`, neo-soul, untitled, …)
@@ -194,8 +283,6 @@ SPEAK=0 ruby dilla.rb demo-all 12 demo.wav
 # resume skips existing parts; DEMO_FORCE=1 re-renders all
 # DEMO_TRACK_TIMEOUT=150 DEMO_ALBUM_NORM=1
 ```
-
----
 
 ## Provenance debugging
 
@@ -231,8 +318,6 @@ SPEAK=0 BARS=4 ruby -e '
   print_config_provenance
 '
 ```
-
----
 
 ## Related files
 

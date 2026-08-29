@@ -1,20 +1,16 @@
 # STUDIO
 
-Four media tools that share one conviction: **a claim about an image or a sound
-is worth nothing until something measures it.**
+**A claim about an image or a sound is worth nothing until something measures
+it.** Four media tools share that conviction. `dilla/` builds beats, Detroit in
+its lean and genre-agnostic in intent. `postpro/` is the house grade, analog
+photographic emulation for stills and video. `repligen/` generates images, and
+chains radically different models to do it. `lora/` trains person-specific
+fine-tunes, so a name survives across worlds. Each keeps its own contract in its
+own README.
 
-| Tool | What it is | Contract |
-|---|---|---|
-| `dilla/` | beat construction — Detroit lean, genre-agnostic in intent | `dilla/README.md` |
-| `postpro/` | the house grade: analog photographic emulation for stills and video | `postpro/README.md` |
-| `repligen/` | image generation, and long chains of radically different models | `repligen/README.md` |
-| `lora/` | person-specific fine-tunes, so a name survives across worlds | `lora/README.md` |
-
-Two documents carry the theory rather than the code: `PHOTOGRAPHY.md` (what
-makes a photograph good, in four layers) and `AMBITION.md` (168 proposals, and
-which of them are built).
-
----
+Two documents carry the theory rather than the code: `PHOTOGRAPHY.md`, on what
+makes a photograph good, in four layers, and `AMBITION.md`, 168 proposals and
+which of them are built.
 
 ## Read this part first
 
@@ -51,8 +47,6 @@ gate instead.
 **Ruby and zsh, not GNU text tools.** `sed`, `awk`, `find`, `head`, `tail`,
 `wc`, `perl` and `python` are banned in shell calls and committed scripts. BSD
 variants break GNU idioms and this repo deploys to OpenBSD.
-
----
 
 ## What we know about prompting
 
@@ -95,8 +89,6 @@ of hours and needs no dataset.
 early access: video and robot-action first, image "in the coming weeks",
 open-weight Dev last. There is no FLUX 3 LoRA path. A FLUX.1-dev LoRA is not a
 FLUX 2 adapter either — the base generation is a decision, not a setting.
-
----
 
 ## The analog emulation, and how deep it actually goes
 
@@ -160,21 +152,16 @@ delta, not the value.** If the film emulation is doing what it claims, texture
 rises and clipping falls. When it does the opposite, that is a bug report.
 
 `rescue.rb` is the honest half. `PHOTOGRAPHY.md` splits a photograph into four
-layers, and a grade can reach exactly one:
-
-| Layer | Reachable? |
-|---|---|
-| geometry — perspective from shooting too close | **no**, at any effort |
-| light — the pattern the key made | partly, as tonality |
-| expression — the moment | **no** |
-| optical — plastic skin, clipping, cast, digital cleanliness | **yes** |
+layers, and a grade reaches exactly one of them. Geometry — the perspective that
+comes of shooting too close — is unreachable at any effort, and so is
+expression, which is the moment. Light, the pattern the key made, is reachable
+partly, as tonality. Only the optical layer is fully reachable: plastic skin,
+clipping, cast, digital cleanliness.
 
 So `rescue` names what it cannot fix every single time, detected or not. Their
 absence from a report would read as their absence from the photograph, and
 neither is measurable from pixels. "Reshoot at three metres" is a more useful
 answer than a grade that was never going to work.
-
----
 
 ## LoRA, in one screen
 
@@ -213,8 +200,6 @@ practical rule follows from that one sentence.
   8% that `caption_dropout_rate` empties on purpose.
 - **Edit every caption by hand.** The token is knowable; what is *in* the picture
   is not measurable from pixels, and a guessed caption teaches the wrong word.
-
----
 
 ## Checks
 

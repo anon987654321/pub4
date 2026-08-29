@@ -1,42 +1,26 @@
 # Repligen
 
-Repligen is MASTER's noninteractive Replicate boundary. It generates images,
-downloads a result when an output path is requested, searches the provider
-catalog, synchronizes a bounded local catalog, and reports catalog statistics.
-It never installs gems, scrapes the website, or stores credentials in the
+**A photograph is a set of decisions, and repligen makes each of them
+nameable.** It is MASTER's noninteractive Replicate boundary: it generates
+images, downloads a result when an output path is asked for, searches the
+provider catalog, synchronises a bounded local one, and reports statistics on
+it. It never installs gems, scrapes the website, or stores credentials in the
 repository.
 
-MASTER normally chooses it from natural language, so users do not need these
-commands. The CLI remains useful for diagnostics:
+MASTER usually chooses it from natural language, so nobody needs to type these
+commands. They stay useful for diagnostics, and the last section of this file
+lists them.
 
-```sh
-ruby STUDIO/repligen/repligen.rb generate --prompt "Bergen rain, 35mm documentary photograph" --output .master/media/bergen.webp
-ruby STUDIO/repligen/repligen.rb search flux --limit 100
-ruby STUDIO/repligen/repligen.rb sync --limit 250
-ruby STUDIO/repligen/repligen.rb stats
-ruby STUDIO/repligen/repligen.rb capabilities
-ruby STUDIO/repligen/repligen.rb vocab-check
-```
-
-Every example here said `MASTER/tools/repligen.rb` until 2026-07-30 — a path
-the file left on 2026-07-25, and one it never had anyway (it was
-`MASTER/tools/repligen/repligen.rb`). The script's own requires were stale in
-the same way and aborted the whole file with a LoadError on line 12, which is
-why nobody noticed the README.
+Check the paths before you trust them. Every example in this file once named a
+script location the file had left days earlier, and one it had never had at all.
+The script's own requires were stale the same way and aborted it with a
+LoadError on line 12 — which is why nobody noticed the README.
 
 ## Structured fields
 
 The free-text `--prompt` is the subject. Everything else about the photograph
 composes onto it from named vocabularies, so a house style is a set of flags
 rather than a paragraph to remember:
-
-```sh
-ruby STUDIO/repligen/repligen.rb generate \
-  --prompt "a fisherman on a dock" \
-  --stock hp5 --lens 85mm --distance portrait --camera-height eye \
-  --lighting rembrandt --weather drizzle --time-of-day blue_hour \
-  --batch 6 --dry-run
-```
 
 `--stock` 23 values, `--lens` 14, `--lighting` 20, `--weather` 12,
 `--time-of-day` 11, `--distance` 8, `--camera-height` 7. Spelling is normalised
@@ -86,16 +70,16 @@ that shape.
 the default `flux-1.1-pro`, has no such input, and `stable-diffusion-3.5-large`
 dropped the one SD3 had — its live schema is prompt / aspect_ratio / cfg /
 image / prompt_strength / steps / seed / output_format / output_quality, and
-nothing else. The capability table said otherwise until 2026-08-11, and because
-it was the only entry claiming support it was the only one for which the
-positive fallback was suppressed, a `negative_prompt` key the model does not
-have was sent, and the sidecar recorded `negative_prompt_sent: true`.
+nothing else. The capability table is the place that gets this wrong: while it
+claimed support for one model, that was the only entry whose positive fallback
+was suppressed, so a `negative_prompt` key the model does not have went out and
+the sidecar recorded `negative_prompt_sent: true` for it.
 
 Repligen assembles an anti-plastic-skin negative anyway, so it asks for the
 opposite in the affirmative (`POSITIVE_SKIN_GUIDANCE`) and says on stderr that
 it is doing so. The provenance sidecar records `negative_prompt_sent` alongside
-the text: before 2026-07-30 it recorded the negative as though it had been
-applied when `build_input`'s `input_keys` filter had dropped it.
+the text, because recording the negative on its own says nothing about whether
+`build_input`'s `input_keys` filter dropped it on the way out.
 
 ## Preview and final
 
@@ -104,7 +88,8 @@ applied when `build_input`'s `input_keys` filter had dropped it.
 override `REPLIGEN_MODEL`, which is the asymmetry it exists for: the
 environment variable is how a session stays in preview, and `--final` is how
 one image leaves it — now at 4 MP, with raw mode when the request is a
-photograph. Until 2026-08-11 `--final` was parsed into an option nothing read.
+photograph. `vocab-check` covers it, because `--final` spent a while parsed into
+an option nothing read.
 
 ## Batches
 
@@ -144,12 +129,6 @@ while dropping a setting is much harder to notice than a 422 — and the cost of
 that is that it goes stale silently: the tests check the table against itself,
 so provider drift surfaces in production or not at all.
 
-```sh
-cd STUDIO
-rake repligen:schema_audit                                   # table vs. live schemas
-rake repligen:schema_suggest MODEL=black-forest-labs/flux-2-max   # an entry to paste
-```
-
 Neither runs as part of `rake`. Both need the network and a token, and a check
 that cannot run says so rather than passing.
 
@@ -157,14 +136,12 @@ that cannot run says so rather than passing.
 carries no deprecation notice. But the six declared models are a generation
 behind what Replicate now leads with, and none of these is named here:
 
-| model | why it might matter |
-|---|---|
-| `black-forest-labs/flux-2-max` | BFL's current highest-fidelity image model |
-| `bytedance/seedream-5-pro` | flagship text-to-image **and** editing in one model |
-| `google/nano-banana-2` | fast generation with conversational editing |
-| `openai/gpt-image-2` | sharp text rendering inside the image |
-| `krea/krea-2-medium` | expressive illustration, anime, painterly |
-| `prunaai/p-image` | sub-second generation |
+`black-forest-labs/flux-2-max` is BFL's current highest-fidelity image model.
+`bytedance/seedream-5-pro` is flagship text-to-image and editing in one.
+`google/nano-banana-2` generates fast and edits conversationally.
+`openai/gpt-image-2` renders sharp text inside the image. `krea/krea-2-medium`
+is expressive illustration, anime and painterly work. `prunaai/p-image`
+generates in under a second.
 
 The shape of the field moved as well as the names: editing is now a mode of the
 flagship models rather than a separate one, which is a different arrangement
@@ -176,3 +153,24 @@ operator call. `schema_suggest` is here so that when the decision is made, the
 input keys come off the provider instead of out of somebody's memory — the one
 thing that must never be guessed, since guessing them breaks the refusal that
 makes the table worth keeping.
+
+## Running it
+
+```sh
+ruby STUDIO/repligen/repligen.rb generate --prompt "Bergen rain, 35mm documentary photograph" --output .master/media/bergen.webp
+ruby STUDIO/repligen/repligen.rb search flux --limit 100
+ruby STUDIO/repligen/repligen.rb sync --limit 250
+ruby STUDIO/repligen/repligen.rb stats
+ruby STUDIO/repligen/repligen.rb capabilities
+ruby STUDIO/repligen/repligen.rb vocab-check
+
+ruby STUDIO/repligen/repligen.rb generate \
+  --prompt "a fisherman on a dock" \
+  --stock hp5 --lens 85mm --distance portrait --camera-height eye \
+  --lighting rembrandt --weather drizzle --time-of-day blue_hour \
+  --batch 6 --dry-run
+
+cd STUDIO
+rake repligen:schema_audit                                        # table vs. live schemas
+rake repligen:schema_suggest MODEL=black-forest-labs/flux-2-max   # an entry to paste
+```

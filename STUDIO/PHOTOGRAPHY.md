@@ -9,8 +9,6 @@ The useful finding is that these four layers fail independently, and only one of
 them is postpro's to fix. Knowing which is which is the difference between
 grading a photograph and trying to grade a mistake.
 
----
-
 ## 1. Geometry — decided before anything else, and postpro cannot touch it
 
 **Focal length does not distort a face. Distance does.** An 85mm lens is not
@@ -103,8 +101,6 @@ film did to light, and what film did to light is the opposite of what a
 diffusion model omits. Grain restores micro-texture. Halation restores the
 bleed around a specular highlight that a rendered image lacks. An H&D curve
 restores the shoulder that makes highlights roll rather than clip.
-
----
 
 ## So: can postpro make a bad photo good?
 
