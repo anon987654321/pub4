@@ -12,14 +12,16 @@
 #   ruby gates/probes/focus_walk_probe.rb <url> [steps]
 
 require_relative "../support/cdp_session"
+require_relative "../lib/fleet"
 require "json"
 
-PAGES = {
-  "brgen home" => "http://127.0.0.1:38182/",
-  "amber home" => "http://127.0.0.1:61352/",
-  "bsdports home" => "http://127.0.0.1:47312/",
-  "face" => "http://127.0.0.1:53187/",
-}.freeze
+PAGES = Fleet.urls({
+  # Routes, not numbers -- see the note in tap_target_probe.
+  "brgen home" => %w[brgen /],
+  "amber home" => %w[amber /],
+  "bsdports home" => %w[bsdports /],
+  "face" => %w[master /],
+}).freeze
 
 CHECK = <<~JS
   (() => {

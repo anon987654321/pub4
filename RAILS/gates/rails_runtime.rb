@@ -11,7 +11,12 @@ ROOT = File.expand_path("../..", __dir__)
 $LOAD_PATH.unshift(File.join(ROOT, "MASTER", "lib"))
 require "pub4/ruby_runner"
 require "pub4/environment"
-require_relative "lib/production"
+# lib/host/production, not lib/production: the file moved when the gates were
+# sorted into host/live/meta/rendered/research/source, and this was the one
+# caller the move missed. A subprocess gate that cannot load is a gate that
+# measures nothing, and it fails at require time rather than at a check, so
+# the composite reported a failure that named no finding.
+require_relative "lib/host/production"
 
 RAILS_ROOT = File.join(ROOT, "RAILS")
 APPS_YML = File.join(RAILS_ROOT, "apps.yml")

@@ -4,6 +4,7 @@ require "minitest/autorun"
 require "net/http"
 require "socket"
 require "yaml"
+require_relative "../gates/lib/fleet"
 
 # Per-app function + layout inventory. Each YAML row is one falsifiable check:
 # a file must contain (or omit) a marker, or a live GET must render one.
@@ -17,7 +18,10 @@ class FunctionLayoutTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   DATA = File.join(ROOT, "test", "data", "function_layout")
   APPS = %w[brgen amber bsdports].freeze
-  PORTS = { "brgen" => 38182, "amber" => 61352, "bsdports" => 47312 }.freeze
+# From apps.yml rather than restated here. A literal map is a second
+# inventory, and a test carrying one asserts against a number that can stop
+# being true without the test noticing.
+PORTS = Fleet.app_ports
 
   def inventories
     @inventories ||= APPS.to_h do |app|
