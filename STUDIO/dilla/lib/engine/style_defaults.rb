@@ -145,18 +145,16 @@ DILLA_STYLE_DEFAULTS = {
   # the leads destroying everything: three arp layers over the chords the pads
   # were already holding, at close to twice their level.
   #
-  # MELODIC_LEAD=1 is the one remaining lead: the counter-line. The table used
-  # to leave this at 0 while the comment said 1, so a direct render still had
-  # no lead at all and only demo-each's steady path produced the line.
-  #
-  # HARMONY_LEAD, SCALE_LEAD and CREATIVE_LEAD stay 0: the counter-line answers
-  # the chords, and that only works if nothing else talks over them. LEAD_ARP
-  # stays available for anyone who wants the old stack back explicitly.
-  "HARMONY_LEAD" => "0",
-  "SCALE_LEAD" => "0",
+  # MELODIC_LEAD=1 is the counter-line that answers the chords. HARMONY_LEAD,
+  # SCALE_LEAD and LEAD_ARP ride on top of it: the signature lead is an arpeggio
+  # locked to the progression's own scale — the ringtone-lead voice — sitting
+  # over the counter-line rather than replacing it. CREATIVE_LEAD stays 0 so the
+  # arp follows the harmony instead of improvising against it.
+  "HARMONY_LEAD" => "1",
+  "SCALE_LEAD" => "1",
   "CREATIVE_LEAD" => "0",
   "MELODIC_LEAD" => "1",
-  "LEAD_ARP" => "0",
+  "LEAD_ARP" => "1",
   "LEAD_ARP_MODE" => "wonky_spiral",
   "LEAD_VOICE" => "soul_prophet",
   "EXPERIMENTAL_LEADS" => "0",
