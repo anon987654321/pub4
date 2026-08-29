@@ -51,9 +51,31 @@ module Pub4
     # silent shrink visible.
     def self.ruby_count(dir)
       @counts ||= {}
-      @counts[dir] ||= Dir.glob(File.join(MASTER, dir, "**", "*.rb")).count do |path|
-        NOT_SOURCE.none? { |skip| path.include?("/#{skip}/") }
+      @counts[dir] ||= ruby_files(dir).size
+    end
+
+    # Ruby is what a Ruby interpreter runs, not what ends in .rb.
+    #
+    # This globbed "**/*.rb" alone, and every executable in bin/ is extensionless
+    # by convention -- so bin/ counted zero Ruby files, failed ruby_dir?, never
+    # entered ruby_dirs, and could not be reported as unclassified. The directory
+    # holding gate, check, pub4 and master was in neither list, and the one file
+    # whose job is to say so could not see it.
+    def self.ruby_files(dir)
+      Dir.glob(File.join(MASTER, dir, "**", "*")).select do |path|
+        next false unless File.file?(path) && !File.symlink?(path)
+        next false unless NOT_SOURCE.none? { |skip| path.include?("/#{skip}/") }
+
+        File.extname(path) == ".rb" || ruby_shebang?(path)
       end
+    end
+
+    # One line, not the file. A shebang is the first line or it is absent.
+    def self.ruby_shebang?(path)
+      first = File.open(path, "rb") { |io| io.readline(chomp: true) }
+      first.start_with?("#!") && first.include?("ruby")
+    rescue EOFError, ArgumentError, Errno::EACCES, Errno::ENOENT
+      false
     end
 
     def self.run
@@ -63,7 +85,7 @@ module Pub4
 
       (ruby_dirs - roots - exempt.keys).each do |dir|
         findings << { "kind" => "unclassified", "dir" => dir, "files" => ruby_count(dir),
-                      "message" => "holds #{ruby_count(dir)} .rb file(s) and is in neither " \
+                      "message" => "holds #{ruby_count(dir)} Ruby file(s) and is in neither " \
                                    "scan_coverage.roots nor scan_coverage.exempt" }
       end
 

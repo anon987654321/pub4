@@ -35,6 +35,15 @@ scan_coverage:
   # because "exempt: true" records the exemption without recording the argument,
   # and the argument is the part that rots.
   exempt:
+    bin: >-
+      Held out by the scanner, not by a judgment that it should be. Every
+      executable here is extensionless by convention, and SCAN_GLOB
+      matches on extension -- 1 of 29 files in bin/ is reachable by it, so
+      listing bin/ as a scanned root would claim coverage that does not
+      happen. It is recorded as exempt so the gap is arguable rather than
+      invisible: gate, check, pub4 and master are the most load-bearing
+      scripts in the repo and no rule has ever read one. Closing it means
+      teaching the scanner to select by shebang as well as by extension.
     test: >-
       Tests are the instrument, not the subject. Scanning them makes every
       fixture that deliberately contains a violation into a violation, which is

@@ -68,4 +68,29 @@ class TestScanCoverage < Minitest::Test
              "#{path} is outside every scanned root — the fold is exempt from its own law again"
     end
   end
+  # bin/ held gate, check, pub4 and master and appeared in neither list, and this
+  # file could not report it: ruby_count globbed "**/*.rb", every executable there
+  # is extensionless, so the count was zero, ruby_dir? said no, and the directory
+  # never reached the comparison. A blind spot in the instrument reads exactly
+  # like a clean tree.
+  def test_extensionless_ruby_counts_as_ruby
+    counted = Pub4::ScanCoverage.ruby_count("bin")
+
+    assert_operator counted, :>, 20,
+                    "bin/ holds Ruby with a shebang and no .rb suffix; counting " \
+                    "by extension alone reports #{counted} and hides the directory"
+  end
+
+  def test_every_directory_holding_ruby_is_visible_to_the_comparison
+    Dir.children(Pub4::ScanCoverage::MASTER).each do |child|
+      next unless File.directory?(File.join(Pub4::ScanCoverage::MASTER, child))
+      next if Pub4::ScanCoverage::NOT_SOURCE.include?(child)
+      next unless Pub4::ScanCoverage.ruby_count(child).positive?
+
+      assert_includes Pub4::ScanCoverage.ruby_dirs, child,
+                      "#{child}/ holds Ruby but never enters ruby_dirs, so it can " \
+                      "be in neither list without this gate saying so"
+    end
+  end
+
 end
