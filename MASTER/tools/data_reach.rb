@@ -36,8 +36,19 @@ module Pub4
                    .map { |f| File.read(f) }.join
     end
 
+    # Both ends, because they fail in opposite directions. An empty code corpus
+    # matches no key and reports every one of them, which is loud. An empty data
+    # corpus has no keys to report and passes clean, which is the quiet one and
+    # the reason this exists.
+    def check_corpus!(data_files)
+      abort("data_reach: no data/*.yml found -- a report of zero unnamed keys read nothing") if data_files.empty?
+      abort("data_reach: the code corpus is empty, so every key reads as unnamed") if code.empty?
+
+      data_files
+    end
+
     def unnamed
-      Dir.glob(File.join(MASTER_DIR, "data", "*.yml")).sort.flat_map do |path|
+      check_corpus!(Dir.glob(File.join(MASTER_DIR, "data", "*.yml")).sort).flat_map do |path|
         doc = begin
           YAML.safe_load_file(path, aliases: true)
         rescue StandardError

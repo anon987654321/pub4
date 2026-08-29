@@ -103,6 +103,21 @@ module Pub4
       tracked.select { |f| VAGUE.include?(File.basename(f, File.extname(f))) }.sort
     end
 
+    # A census that reads nothing reports nothing and passes. STUDIO's gate did
+    # exactly that for the length of a worktree: VENDORED matched the absolute
+    # path, every file was excluded, and it announced inconclusive rather than
+    # failing. corpus is the floor -- the size the last ratchet saw -- so a
+    # collapsed corpus refuses instead of reporting a clean tree.
+    def corpus_floor = ceilings.fetch("corpus", 0)
+
+    def check_corpus!
+      n = tracked.size
+      return n if n.positive? && n >= corpus_floor / 2
+
+      abort("sprawl_census: read #{n} tracked files against a floor of #{corpus_floor} — " \
+            "the corpus collapsed, so nothing below this line measured the tree")
+    end
+
     def counts
       { "lone_dirs" => lone_dirs.size, "stutter" => stutter.size, "vague_names" => vague_names.size }
     end
@@ -112,6 +127,7 @@ module Pub4
     end
 
     def run(ratchet: false, list: false)
+      check_corpus!
       now = counts
       recorded = ceilings
       now.each { |k, v| puts "sprawl_census: #{k} #{v} (ceiling #{recorded.fetch(k, v)})" }
@@ -126,7 +142,8 @@ module Pub4
 
       over = now.select { |k, v| v > recorded.fetch(k, v) }
       if ratchet && now.any? { |k, v| v < recorded.fetch(k, v) }
-        File.write(CEILINGS, recorded.merge(now) { |_, old, new| [old, new].min }.to_yaml)
+        merged = recorded.merge(now) { |_, old, new| [old, new].min }
+        File.write(CEILINGS, merged.merge("corpus" => tracked.size).to_yaml)
         puts "sprawl_census: recorded a new low"
         return 0
       end

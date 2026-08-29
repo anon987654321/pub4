@@ -26,7 +26,8 @@ module Pub4
     module_function
 
     def sets
-      files = `git -C #{ROOT} ls-files -z`.split("\0").reject { |f| f.start_with?("STUDIO/") }
+      files = check_corpus!(`git -C #{ROOT} ls-files -z`.split("\0"))
+              .reject { |f| f.start_with?("STUDIO/") }
       by = Hash.new { |h, k| h[k] = [] }
       files.each do |f|
         path = File.join(ROOT, f)
@@ -34,6 +35,17 @@ module Pub4
         by[[Digest::SHA256.file(path).hexdigest, File.size(path)]] << f
       end
       by.select { |_, v| v.size > 1 }
+    end
+
+    # Same reason as the ceiling itself: a census that reads nothing finds no
+    # duplicates and passes. `git ls-files` coming back empty -- a wrong root, a
+    # git that failed -- looks exactly like a clean tree from here, which is how
+    # STUDIO gate spent a worktree reporting on a corpus of zero files.
+    def check_corpus!(files)
+      return files if files.size >= 500
+
+      abort("dup_census: git ls-files returned #{files.size} paths -- the corpus " \
+            "collapsed, so a report of zero duplicates measured nothing")
     end
 
     def ceiling
