@@ -22,6 +22,7 @@
 # Input is a flat directory of <key>.png or <key>.jpg. Anything whose stem is not
 # a key in seed_media.yml is reported and skipped rather than guessed at.
 
+require "rbconfig"
 require "yaml"
 require "fileutils"
 require "json"
@@ -91,17 +92,22 @@ known.each do |frame|
   end
 
   FileUtils.mkdir_p(media_dir)
-  # postpro writes beside its input, so the frame is copied to its destination
-  # first and graded in place. The alternative — grade in the render directory
-  # and move the result — leaves the operator's download folder full of files
-  # that look like the deliverable.
-  FileUtils.cp(frame, out)
-  ok = system(RbConfig.ruby, POSTPRO, out, "--preset", preset, "--quiet",
+  # --input/--output, the same invocation Shared::PostproProcessor uses, because
+  # that one is known to work headlessly. Passing the file positionally drops
+  # postpro into its interactive picker, which in a script means it hangs or
+  # exits having done nothing -- and the frame it was handed is still there
+  # afterwards, ungraded and indistinguishable from a graded one.
+  ok = system(RbConfig.ruby, POSTPRO,
+              "--input", frame, "--output", out, "--preset", preset,
               out: File::NULL, err: File::NULL)
-  # A failed grade is reported and the ungraded frame kept, because an
-  # ungraded photograph is a worse picture and a missing one is a picsum
-  # fallback that looks like success.
-  warn "postpro failed for #{key} (#{preset}) — keeping the ungraded frame" unless ok
+  ok &&= File.exist?(out) && File.size?(out).to_i.positive?
+
+  # A failed grade keeps the ungraded frame rather than nothing, because a
+  # missing file falls through to picsum and looks seeded. Reported either way.
+  unless ok
+    FileUtils.cp(frame, out)
+    warn "postpro failed for #{key} (#{preset}) — kept the ungraded frame"
+  end
 
   installed[catalog_path][key] = true
   puts format("  %-32s -> %s [%s]%s", key, out.sub("#{ROOT}/", ""), preset, ok ? "" : " UNGRADED")
