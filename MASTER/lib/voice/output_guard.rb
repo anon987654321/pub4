@@ -21,7 +21,6 @@ module Master
 
       def initialize(rules: nil)
         @rules = rules || Ground::Rules.new
-        @preserve = @rules.preserve
         soul = @rules.data(:soul) || {}
         # Under "absolute", where soul.yml actually nests it. There is no
         # top-level anti_simulation key, so this dug nothing and @evidence has
@@ -35,7 +34,6 @@ module Master
         return text.to_s if text.to_s.empty?
 
         out = text.to_s
-        out = preserve_diagnostic_structure(out) if diagnostic_context?(context)
         out = append_evidence_hint(out, context) unless evidence_present?(out, context)
         out
       end
@@ -55,17 +53,6 @@ module Master
 
       def diagnostic_context?(context)
         context == :diagnostic || context == :scan_report
-      end
-
-      def preserve_diagnostic_structure(text)
-        # Read as a number from the key that holds one. This used to run /\d+/
-        # over `diagnostic_output`, whose value is a sentence with no digits, so
-        # the match was always nil and the floor was permanently the fallback.
-        min_lines = (@preserve["diagnostic_min_lines"] || @preserve[:diagnostic_min_lines]).to_i
-        min_lines = 2 if min_lines < 2
-        lines = text.lines
-        return text if lines.size >= min_lines
-        text
       end
 
       def collapsed_diagnostic?(text)

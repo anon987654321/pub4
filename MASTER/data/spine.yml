@@ -706,7 +706,12 @@ spine:
   # without a model — the tree's semantic-DRY was LLM-only and sampled, so a
   # keyless scan found none. 42 lines buy the detector; 6 of the 48 over the old
   # ceiling predate this change and are folded in here rather than left dangling.
-  lib_body_ceiling: 37107
+  #
+  # RATCHETED 2026-08-29, 37107 -> 37098. output_guard's preserve_diagnostic_
+  # structure returned its input on both branches — a no-op the collapsed_
+  # diagnostic? validator and the output-format prompt already cover — so it
+  # left with its @preserve read and its orphaned diagnostic_min_lines key.
+  lib_body_ceiling: 37098
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753
