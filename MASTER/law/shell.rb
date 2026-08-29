@@ -102,7 +102,10 @@ Law.define(:STRICT_MODE_ZSH) do
   # dilla's redo_nine.sh needs one: aborting on the first non-zero exit would
   # kill the other eight renders, which is the opposite of a batch script's job.
   absent %r{scan:\s*intentional}
-  detect { |text| text.start_with?("#!") && !text.match?(/^\s*set\s+-[eE]/) }
+  # Only a shell shebang, not any shebang: a #!/usr/bin/env ruby script has no
+  # set -euo pipefail to add, and flagging one is the false positive an
+  # extensionless bin/ tool trips when its language cannot be read from a suffix.
+  detect { |text| text.match?(%r{\A#![^\n]*\b(?:sh|bash|zsh|ksh|dash)\b}) && !text.match?(/^\s*set\s+-[eE]/) }
   fix "Add 'set -euo pipefail' after shebang."
   bad <<~X
     #!/usr/bin/env zsh
