@@ -115,4 +115,32 @@ class TestRenderSeed < Minitest::Test
       assert_instance_of Random, send(:render_rng, "evolve", drift: 5)
     end
   end
+
+  # SEED_TEXT is the other half of the same promise, and it was broken the same
+  # way: it derived from String#hash, which Ruby randomises per process, so the
+  # one knob whose whole purpose is a repeatable seed named a different seed
+  # every run — and SWING and BPM, derived from the same value, moved with it.
+  # A digest is stable where a hash is not, and this is what says so.
+  def test_seed_text_names_the_same_seed_in_every_process
+    expected = Digest::SHA256.hexdigest("bergen regn").to_i(16) % (1 << 62)
+
+    assert_equal expected, DillaSeeds.stable_seed("bergen regn")
+    assert_equal DillaSeeds.stable_seed("bergen regn"), DillaSeeds.stable_seed("bergen regn")
+    refute_equal DillaSeeds.stable_seed("bergen regn"), DillaSeeds.stable_seed("bergen sol")
+  end
+
+  # The derived knobs are the reason this matters past the seed: an operator who
+  # pins the text has pinned the groove and the tempo too.
+  def test_seed_text_pins_swing_and_bpm_with_it
+    keys = %w[SEED_TEXT GEN_SEED SWING BPM]
+    runs = 2.times.map do
+      with_env(keys.zip([ "bergen regn", nil, nil, nil ]).to_h) do
+        DillaSeeds.apply_text_seed!
+        ENV.values_at("GEN_SEED", "SWING", "BPM")
+      end
+    end
+
+    assert_equal runs.first, runs.last
+    refute_includes runs.first, nil, "a pinned text must fill all three"
+  end
 end
