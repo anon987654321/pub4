@@ -172,21 +172,18 @@ module Pub4
 # .sidebar-dropdown, .sidebar-dropdown-menu and .sidebar-card__head. Three more
 # are unattributed: the shared .sidebar, .widgets and .widget-search rules all
 # stayed live because amber still renders them, so the remainder is not there.
+# Ceilings, and they only fall.
+#
+# undefined_class holds at zero: every class markup names has a reader, so the
+# next one that does not is a real finding on the day it lands rather than a
+# number someone argues about later.
+#
+# unused_selector is not zero because visualizers_2d_reference.js is preserved
+# source that nothing loads, imports or compiles -- its own header says so --
+# and it carries this file's sanctioned opt-out marker. Its class names are out
+# of the used set, so rules elsewhere that only it referenced read as orphans.
 # Recorded rather than chased, and recorded rather than hidden.
-# undefined_class 4 -> 0 and unused_selector 154 -> 156, both 2026-08-28, in one
-# change that closed the whole undefined_class gap rather than part of it.
-#
-# Zero is the honest floor now, and it is worth keeping: every class markup
-# names has a reader, so the next one that does not is a real finding on the
-# day it lands rather than a number someone argues about later.
-#
-# The two selectors that stopped being read are the cost of that, and they are
-# not new dead CSS. visualizers_2d_reference.js is preserved source that is not
-# loaded, imported or compiled anywhere -- its own header says so -- and it now
-# carries this file`s sanctioned opt-out marker. Excluding it took its class
-# names out of the used set, so two rules elsewhere that only it referenced
-# became orphans. Recorded rather than chased, and recorded rather than hidden.
-BASELINES = { "undefined_class" => 0, "unused_selector" => 156 }.freeze
+BASELINES = { "undefined_class" => 0, "unused_selector" => 154 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
 

@@ -254,19 +254,6 @@ time {
   align-items: center;
 }
 
-/* City carousel as interactive links */
-.city-carousel a.carousel-slide {
-  color: inherit;
-  text-decoration: none;
-  opacity: 0.55;
-}
-.city-carousel a.carousel-slide.active,
-.city-carousel a.carousel-slide:focus-visible {
-  opacity: 1;
-  outline: var(--focus-ring, 2px solid var(--accent));
-  outline-offset: 2px;
-}
-
 /* Vote punch */
 .feed-action:active {
   transform: scale(0.94);

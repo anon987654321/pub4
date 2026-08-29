@@ -39,10 +39,6 @@ $brgen-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, H
   --upvote: var(--accent);
   --downvote: oklch(58% 0.15 30);
   --z-canvas: 0;
-  /* Decorative-only (pointer-events: none) chrome -- must stay below
-     --z-ui (90, nav_swiper's grip) so it never visually buries the one
-     element in this band that's actually interactive/functional. */
-  --z-carousel: 5;
   --z-splash: 1000;
   --focus-ring: 2px solid var(--accent);
 }
@@ -222,9 +218,9 @@ a.brgen-logo-mark,
      black rectangle and elementFromPoint at its own centre returned the "front"
      .nav_link -- the brand corner navigated to front instead of home.
 
-     By the rule stated for --z-carousel above ("must stay below --z-ui so it
-     never visually buries the one element in this band that's actually
-     interactive"), the brand belongs above: it is a link, and it is the one
+     Decorative chrome stays below --z-ui (90, nav_swiper's grip) so it never
+     buries the interactive element in that band. The brand is the other case:
+     it belongs above, because it is a link, and it is the one
      piece of chrome that is identical on every surface. .nav_swiper_bar's
      padding-inline keeps nav items clear of this footprint at rest, and its
      left-edge mask fades them out as they scroll under it. */

@@ -96,13 +96,11 @@ const COMPONENT_REGISTRATIONS = [
 //
 // "carousel" here means this one swiper-backed package, and the only element
 // asking for it is amber's shared/_wardrobe_showcase. It does NOT mean brgen has
-// no carousels -- brgen has four, and all of them are hand-rolled and touch
-// neither this controller nor swiper: the city network nav bar (#cityCarousel,
-// driven by brgen_shell_controller + face.js), the media gallery and dating
-// swipe (swipe_controller, data-swipe-mode-value="carousel"), and playlist's
-// immersive view, which reuses the city carousel as its logo. So the deferral
-// costs brgen nothing today, but adopting this package on any brgen surface
-// puts jsdelivr back on that page -- vendor swiper first if that happens.
+// no carousels -- brgen's are hand-rolled and touch neither this controller nor
+// swiper: the media gallery and dating swipe (swipe_controller,
+// data-swipe-mode-value="carousel"). So the deferral costs brgen nothing today,
+// but adopting this package on any brgen surface puts jsdelivr back on that
+// page -- vendor swiper first if that happens.
 //
 // timeago was the second entry here until 2026-08-12. It read
 // data-timeago-datetime-value; no view in any app ever set that attribute, so

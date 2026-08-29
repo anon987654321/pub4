@@ -31,9 +31,7 @@
 
     const motionScale=()=>typeof matchMedia==="function"&&matchMedia("(prefers-reduced-motion: reduce)").matches?.35:1;
 
-    class SimpleCarousel{constructor(e,i=2800){this.slides=Array.from(e.querySelectorAll(".carousel-slide"));this.i=0;this.n=this.slides.length;if(this.n>1)this.t=setInterval(()=>this.next(),i)}next(){this.slides[this.i].classList.remove("active");this.i=(this.i+1)%this.n;this.slides[this.i].classList.add("active")}}
 
-    new SimpleCarousel(document.getElementById("cityCarousel"));
 
     const YOUTUBE_TRACKS=[
 

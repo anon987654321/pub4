@@ -236,7 +236,6 @@ html {
 
 /* Reduced motion — keep identity, kill ambient */
 @media (prefers-reduced-motion: reduce) {
-  .city-carousel,
   .skeleton {
     animation: none !important;
   }

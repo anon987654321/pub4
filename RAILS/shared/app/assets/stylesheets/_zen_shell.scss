@@ -661,13 +661,3 @@ body:has(dialog[data-dialog-target="dialog"][open]) {
   }
 }
 
-/* City carousel as default logo (reintegrated from pub4/index.html history) */
-.logo-carousel { font-size: var(--text-xs); line-height: 1.5; }
-.logo-carousel .swiper-wrapper { align-items: center; }
-.logo-slide {
-  font-family: ui-monospace, monospace;
-  color: var(--text-dim, #aaa);
-  white-space: nowrap;
-  padding: 0 4px;
-  opacity: 0.85;
-}
