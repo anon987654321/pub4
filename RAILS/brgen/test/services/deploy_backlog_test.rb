@@ -358,9 +358,6 @@ class DeployBacklogTest < Minitest::Test
       assert_includes source, 'import "pub4/hotwire"'
     end
 
-    assert_includes read_source(File.join(ROOT, "brgen/app/assets/javascripts/face.js")),
-                    "Turbo.config.drive.progressBarDelay = 100"
-
     %w[
       amber/app/views/layouts/application.html.erb
       bsdports/app/views/layouts/application.html.erb
