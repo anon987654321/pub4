@@ -10,13 +10,13 @@ rule is accretion and dies." Three weeks of commits falsified that:
 | `lib/` | 39,696 lines | 47,732 | **+8,022** |
 | `core/` | 823 lines | 823 | **0** |
 
-`review` +1,979, `cli` +1,519, `ground` +1,503, `io` +731, `voice` +638,
-`fix` +497 — every subsystem the chart listed as dying, growing. That is not a
-failure of discipline; it is what shipping an interactive agent looks like. But
-a plan nothing has moved toward in three weeks is a description of the past, so
-it is written as one here, and `DECISIONS.md` — which already frames the two
-spines as deliberate and permanent — is the standing policy. The two documents
-used to contradict each other, with `AGENTS.md` pointing agents at this one.
+`review` +1,979, `cli` +1,519, `ground` +1,503, `io` +731, `voice` +638, `fix`
++497 — every subsystem the chart listed as dying, growing. That is not a failure
+of discipline; it is what shipping an interactive agent looks like. But a plan
+nothing has moved toward in three weeks is a description of the past, so it is
+written as one here, and `DECISIONS.md` — which already frames the two spines as
+deliberate and permanent — is the standing policy. The two documents used to
+contradict each other, with `AGENTS.md` pointing agents at this one.
 
 ## The four concepts
 
@@ -44,10 +44,10 @@ used to assert and never measured.
 - **Media generation**: ~9.3k lines / 141 files — video, LoRA, comfyui,
   repligen, postpro, social_sim, motion_critique, their CLI/boot wiring, tools
   and assets. Kept the dual-use `ReplicateClient` + `replicate_kokoro` TTS
-  (production voice) and `SubdomainOrchestrator` (deploy). Re-severed
-  2026-07-14 (`76b11fec4`) after a 2026-07-08→09 reintroduction; confirmed
-  permanent by operator decision 2026-07-15. If the Ragnhild LoRA loop needs
-  generation again, express it as `core/world.rb` handlers — do not restore
+  (production voice) and `SubdomainOrchestrator` (deploy). Re-severed 2026-07-14
+  (`76b11fec4`) after a 2026-07-08→09 reintroduction; confirmed permanent by
+  operator decision 2026-07-15. If the Ragnhild LoRA loop needs generation
+  again, express it as `core/world.rb` handlers — do not restore
   `lib/io/lora_pipeline.rb` or `video_chain.rb`.
 - **Five dead subsystems**: `eval_harness`, `prompt_evolver`, `system_pressure`,
   `soul_proposals`, `opportunity_surface`.
@@ -82,8 +82,8 @@ decides.
   high-risk requires the `critique` verb (in-process `Deliberation` tribunal)
   before `done`. The Constitution enforces ideation notes and council clearance.
 - **Runtime** (2026-07-09): `build_runtime` replaced `build_pipeline`; container
-  `:pipeline` is a `TurnPipeline` adapter over `TurnRouter`, and legacy stages no
-  longer boot. `lib/cli/pipeline.rb` remains for smoke tests only.
+  `:pipeline` is a `TurnPipeline` adapter over `TurnRouter`, and legacy stages
+  no longer boot. `lib/cli/pipeline.rb` remains for smoke tests only.
 - **Lean boot** (2026-07-09): default; `MASTER_FULL_BOOT=1` for the full
   swarm/council_stage/graph fan-out/propose_tree. VPS rc.d already sets
   `MASTER_WATCHER=0`, `MASTER_AUTOFIX=0`.

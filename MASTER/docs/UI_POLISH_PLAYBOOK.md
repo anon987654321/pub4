@@ -1,8 +1,9 @@
 # UI polish playbook (family + MASTER)
 
-Authority: `MASTER/data/rules.yml` → `design_rules.ui_polish` + `design_rules.pixel_perfection`.
-RAILS CI ratchets under `RAILS/shared/lib/pub4/*_lint.rb`.
-Scan rules: `MASTER/lib/review/scan/rules/surface_rules.rb`.
+Authority: `MASTER/data/rules.yml` → `design_rules.ui_polish` +
+`design_rules.pixel_perfection`. RAILS CI ratchets under
+`RAILS/shared/lib/pub4/*_lint.rb`. Scan rules:
+`MASTER/lib/review/scan/rules/surface_rules.rb`.
 
 MASTER (council / fix_loop / aesthetic scan) should **run this playbook**, not
 re-invent polish. Never raise lint baselines to silence new debt.
@@ -15,9 +16,9 @@ Default scope for polish and product UI work:
 2. **amber** — luxury shell, feed compose, wardrobe CTAs
 3. **MASTER web** — face chat (`/`) + mission control; embed host in brgen/amber
 
-Do not expand polish into bsdports or studio unless the task names them.
-Shared engine changes must keep all three hosts green (layout tokens, social
-locales, comments, master_embed).
+Do not expand polish into bsdports or studio unless the task names them. Shared
+engine changes must keep all three hosts green (layout tokens, social locales,
+comments, master_embed).
 
 ### Triangle a11y floor
 
@@ -32,15 +33,17 @@ locales, comments, master_embed).
 ## Order
 
 1. **Flat UI** — strip ornamental `box-shadow` / blur (`GATE_AUTOFIX=1` or
-   `gate_autofix#strip_flat_violations`). Prefer border + `var(--surface-elevated)`.
+   `gate_autofix#strip_flat_violations`). Prefer border +
+   `var(--surface-elevated)`.
 2. **Chrome i18n** — empty titles and search placeholders via `t("empty.*")` /
    `t("search.*")` with nb+en keys. Lint: `chrome_i18n_lint.rb`.
-3. **Empty CTAs** — `shared/empty_state` with `action:` or
-   `<%# empty_state: no-action-ok %>`. Lint: `empty_state_lint.rb`.
-4. **Type tokens** — page headers `font-size: var(--text-title, 1.25rem)  <!-- font_size_title -->` and
-   `font-family: var(--font)`. Autofix: raw `20px` → `--line-height` token.
-5. **Space-not-lines** — list/grid cards: no hairline box; gap + elevated surface.
-   Forms and bsdports CRT hairlines stay.
+3. **Empty CTAs** — `shared/empty_state` with `action:` or `<%# empty_state:
+   no-action-ok %>`. Lint: `empty_state_lint.rb`.
+4. **Type tokens** — page headers `font-size: var(--text-title, 1.25rem) <!--
+   font_size_title -->` and `font-family: var(--font)`. Autofix: raw `20px` →
+   `--line-height` token.
+5. **Space-not-lines** — list/grid cards: no hairline box; gap + elevated
+   surface. Forms and bsdports CRT hairlines stay.
 6. **Verify** — `ruby RAILS/shared/lib/pub4/chrome_i18n_lint.rb`, empty/adhoc
    lints, `layout_suite` / `css_constitution`.
 
@@ -89,4 +92,5 @@ GATE_AUTOFIX=1 ruby RAILS/gates/runner.rb layout_suite
 | `actions.*` | Empty CTAs and shared action labels |
 | `install.*` | PWA install prompt |
 
-When adding a vertical empty or search field: add nb+en keys first, then wire `t()`, then confirm `chrome_i18n_lint` stays at baseline 0.
+When adding a vertical empty or search field: add nb+en keys first, then wire
+`t()`, then confirm `chrome_i18n_lint` stays at baseline 0.

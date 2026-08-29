@@ -49,14 +49,26 @@ module Pub4
     MIN_REASON = 20
 
     def self.entries
-      @entries ||= begin
-        lines = File.readlines(DOC)
-        start = lines.index { |line| line.match?(HEADING) }
-        raise "START_HERE.md has no 'Do Not Touch' heading" unless start
+      @entries ||= parse(File.readlines(DOC))
+    end
 
-        rest = lines[(start + 1)..]
-        stop = rest.index { |line| line.start_with?("## ") } || rest.size
-        rest[0...stop].filter_map { |line| line.match(ENTRY)&.captures }
+    # An entry is its whole paragraph, not its first line. Prose here wraps at 80
+    # columns like the rest of the tree, so reading one line drops the gate
+    # reference off any entry long enough to need two, and an entry that names its
+    # gate on the second line then reports as naming none. Separate from `entries`
+    # so a test can hand it a wrapped list instead of the live document.
+    def self.parse(lines)
+      start = lines.index { |line| line.match?(HEADING) }
+      raise "START_HERE.md has no 'Do Not Touch' heading" unless start
+
+      rest = lines[(start + 1)..]
+      stop = rest.index { |line| line.start_with?("## ") } || rest.size
+      rest[0...stop].each_with_object([]) do |line, acc|
+        if (match = line.match(ENTRY))
+          acc << match.captures
+        elsif !acc.empty? && !line.strip.empty?
+          acc.last[1] = "#{acc.last[1]} #{line.strip}"
+        end
       end
     end
 

@@ -1,6 +1,7 @@
 # Examples
 
-Examples are part of the contract. Prefer matching these shapes over inventing a new ritual.
+Examples are part of the contract. Prefer matching these shapes over inventing a
+new ritual.
 
 ## Good Patch Shape
 
@@ -23,7 +24,8 @@ Known debt: rake selftest still fails on existing ROBUSTNESS/LINEARITY/ABSTRACTI
 
 - Renames several registries because they look similar.
 - Moves `knowledge/` without updating `SearchKnowledge`.
-- Runs no checks because the edit was "docs only" while changing executable guidance.
+- Runs no checks because the edit was "docs only" while changing executable
+  guidance.
 - Marks TODO items complete without evidence.
 
 Closeout to avoid:
@@ -55,7 +57,8 @@ Scanner false positive: SQL detector flagged as SQL injection; needs scanner exe
 - [x] Fix constitution scan.
 ```
 
-This hides the count, the command, and whether findings were fixed or merely reclassified.
+This hides the count, the command, and whether findings were fixed or merely
+reclassified.
 
 ## Good Refusal To Refactor
 
@@ -69,4 +72,5 @@ I am folding `data/design_rules.yml` into `data/rules.yml`. It has a distinct co
 Merged all rule-like YAML into one file for simplicity.
 ```
 
-This violates PROXIMITY unless each live consumer was changed deliberately and tested.
+This violates PROXIMITY unless each live consumer was changed deliberately and
+tested.

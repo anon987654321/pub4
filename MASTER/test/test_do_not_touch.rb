@@ -37,6 +37,30 @@ class TestDoNotTouch < Minitest::Test
                     "every named task would look missing or every one would look present"
   end
 
+  # The parser read one line per entry, so wrapping an entry to the tree's own
+  # 80-column prose width moved its gate reference out of view and the entry
+  # reported as naming no gate. Eight of twelve failed that way at once.
+  def test_a_wrapped_entry_keeps_its_gate
+    doc = <<~MD.lines
+      ## Do Not Touch (unless the task requires it)
+
+      1. `lib/core.rb` and `lib/core/` are the fold spine, and they must not
+         reach into the application half of `lib/`. — gate:
+         `test/test_core_no_lib_backedges.rb`
+      2. Secrets live in `/etc/*.env` on the VPS. — no gate: a fact about a
+         remote host that nothing in this repo can observe.
+
+      ## Next Section
+    MD
+
+    parsed = Pub4::DoNotTouch.parse(doc)
+
+    assert_equal 2, parsed.size
+    assert_includes parsed[0][1], "test_core_no_lib_backedges.rb"
+    assert_includes parsed[1][1], "remote host"
+    assert_empty parsed.flat_map { |number, text| Pub4::DoNotTouch.check(number, text) }
+  end
+
   # Both halves must be able to fail, or the gate is decorative.
   def test_a_missing_gate_is_a_finding
     assert_empty Pub4::DoNotTouch.check("1", "something — gate: `rake lint:spine`")

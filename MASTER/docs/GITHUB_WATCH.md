@@ -1,11 +1,13 @@
 # GitHub Projects to Monitor
 
-This file tracks public GitHub projects relevant to MASTER's architecture, constitutional AI, code governance, and Ruby agent development.
+This file tracks public GitHub projects relevant to MASTER's architecture,
+constitutional AI, code governance, and Ruby agent development.
 
 ## Constitutional AI & LLM Frameworks
 
 ### Priority 1: Official Anthropic
-- **anthropic-ai/constitution-ai** — Official Constitutional AI framework and research
+- **anthropic-ai/constitution-ai** — Official Constitutional AI framework and
+  research
   - Watch for: Principle updates, alignment techniques, prompt patterns
   - URL: https://github.com/anthropic-ai/constitution-ai
 
@@ -66,11 +68,13 @@ This file tracks public GitHub projects relevant to MASTER's architecture, const
 - **sorbet/sorbet** — Ruby type system and governance
   - Watch for: Violation categorization, type rule patterns
 
-- **thoughtbot/factory_bot** — Test fixture pattern (governance through structure)
+- **thoughtbot/factory_bot** — Test fixture pattern (governance through
+  structure)
   - Watch for: Design patterns that enforce intent
 
 ### Priority 7: Ruby Agent Projects (THIN ECOSYSTEM)
-**NOTE**: Ruby lacks a major agent framework. MASTER may be a reference implementation.
+**NOTE**: Ruby lacks a major agent framework. MASTER may be a reference
+implementation.
 - Monitor Python equivalents (LangChain, AutoGPT) for patterns
 - Track any new Ruby agent projects that emerge
 - Consider pub4/MASTER as a potential "Ruby Agent Reference" publication
@@ -82,12 +86,14 @@ This file tracks public GitHub projects relevant to MASTER's architecture, const
 - Scaling Constitutional AI — https://ar5iv.labs.arxiv.org/html/2310.06692
 
 ### Code Quality & Metrics
-- McCabe Cyclomatic Complexity (1976) — https://en.wikipedia.org/wiki/Cyclomatic_complexity
+- McCabe Cyclomatic Complexity (1976) —
+  https://en.wikipedia.org/wiki/Cyclomatic_complexity
 - Code Review Best Practices — https://ar5iv.labs.arxiv.org/html/2104.07896
 - Cognitive Load in Programming — https://ar5iv.labs.arxiv.org/html/2107.03127
 
 ### LLM Code Generation
-- Signal-to-Noise in Generated Code — https://ar5iv.labs.arxiv.org/html/2310.19102
+- Signal-to-Noise in Generated Code —
+  https://ar5iv.labs.arxiv.org/html/2310.19102
 - Token Efficiency in LLM Calls — https://ar5iv.labs.arxiv.org/html/2305.15092
 
 ## Contribution Guidelines
@@ -97,7 +103,8 @@ When tracking these projects:
 1. **Weekly pulse check** — Star/fork counts, recent major releases
 2. **Rule pattern extraction** — New governance patterns applicable to MASTER
 3. **Documentation link** — Add relevant links to data/soul.yml or DECISIONS.md
-4. **Integration assessment** — Decide if pattern should be imported or referenced
+4. **Integration assessment** — Decide if pattern should be imported or
+   referenced
 
 ## Quick Search Tips
 
