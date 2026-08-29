@@ -22,7 +22,7 @@ class TestStudioGate < Minitest::Test
 
   def test_every_declared_tree_matches_real_files
     GATE::TREES.each do |tree|
-      matches = Dir[File.join(GATE::ROOT, tree[:glob])].reject { |p| p.match?(GATE::VENDORED) }
+      matches = Dir[File.join(GATE::ROOT, tree[:glob])].reject { |p| GATE.vendored?(p) }
       refute_empty matches, "#{tree[:name]}'s glob #{tree[:glob]} matches nothing, so it checks nothing"
     end
   end
@@ -89,7 +89,7 @@ class TestStudioGate < Minitest::Test
     refute_empty files
     assert_includes files, File.join(GATE::ROOT, "dilla", "dilla.rb")
     assert_includes files, File.join(GATE::ROOT, "gate.rb")
-    assert_empty files.select { |p| p.match?(GATE::VENDORED) }
+    assert_empty files.select { |p| GATE.vendored?(p) }
     assert_equal files.sort, files, "the corpus is unordered, so failures come out in a different order each run"
   end
 

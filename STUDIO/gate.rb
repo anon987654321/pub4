@@ -107,6 +107,15 @@ module Deploy
     # the sponsor rule MASTER/data/spine.yml already uses for lib/.
     ENGINE_PART_CEILING = 81
 
+    # VENDORED is matched against the path inside STUDIO, never the absolute
+    # one. Matched absolutely it excluded every file in a checkout living under
+    # a directory named tmp or project -- a worktree under /private/tmp emptied
+    # the corpus, and the gate reported on nothing. One owner for the question,
+    # because the test asked it separately and got its own answer.
+    def self.vendored?(path, root: ROOT)
+      "/#{path.to_s.delete_prefix("#{root}/")}".match?(VENDORED)
+    end
+
     def self.run(...) = new(...).run
 
     # trees/dilla are injected only by the self-check below, which points a
@@ -135,7 +144,7 @@ module Deploy
 
     # Every first-party Ruby file in STUDIO, absolute, sorted.
     def source_files
-      Dir[File.join(@root, "**", "*.rb")].reject { |path| path.match?(VENDORED) }.sort
+      Dir[File.join(@root, "**", "*.rb")].reject { |path| StudioGate.vendored?(path, root: @root) }.sort
     end
 
     private
