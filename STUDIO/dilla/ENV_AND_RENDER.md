@@ -105,7 +105,7 @@ drum chops, `GROOVE_DNA=cosmogramma`, quartal voicing, dub_chamber chain.
 | `STREAM_NORMALIZE` / `STREAM_LUFS` | Loudnorm target |
 | `SPEAK` | TTS over beat (`0` product default) |
 | `STREAM_DRUM_ROTATE` | Cycle drum preset/pocket each stream slot |
-| `FLYLO_DRUM_OVERLAY` / `DRUM_CHOPS` | Off by default (sparse soul kit) |
+| `WONKY_DRUM_OVERLAY` / `DRUM_CHOPS` | Off by default (sparse soul kit) |
 | `FM_DRUMS` | On (`1`) — FM kit is the default replacement |
 | `DILLA_RAW` | Skip best soft defaults |
 | `GROOVE_ENGINE` / `POCKET_DNA` | Pocket humanize (default on) |

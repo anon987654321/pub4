@@ -229,9 +229,9 @@ Drums:
 | `DRUM_PRESET` | any drum preset key (`ruby -e` / `DRUM_PRESET=boom_bap`) |
 | `NO_QUANTIZE=1` | quantise off entirely |
 | `SWING_ROLE_SPREAD` | how far the per-voice lean spreads |
-| `FLYLO_DRUM_OVERLAY=1` | Camel dual-bus: sub at 55/110/180, top at 3.5k/6.5k/9k |
-| `FLYLO_TOP_DIRT` | phaser/flanger/crush on cymbals, kick untouched |
-| `FLYLO_HAT_DUCK` | duck the top bus by the kick bus |
+| `WONKY_DRUM_OVERLAY=1` | Camel dual-bus: sub at 55/110/180, top at 3.5k/6.5k/9k |
+| `WONKY_TOP_DIRT` | phaser/flanger/crush on cymbals, kick untouched |
+| `WONKY_HAT_DUCK` | duck the top bus by the kick bus |
 | `DRUM_FIELD_LAYER` | room tone under the kit, ducked by it |
 
 Movement and master. The analog stages are **on by default** as of 2026-07-31 —
