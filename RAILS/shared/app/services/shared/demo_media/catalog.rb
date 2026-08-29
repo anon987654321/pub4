@@ -40,8 +40,18 @@ module Shared
           return candidate if candidate.file?
         end
 
-        fallback = Rails.root.join("config/demo_media/bergen.yml")
-        fallback if fallback.file?
+        # default.yml before bergen.yml, because the last fallback in a shared
+        # engine has to be nameable by an app that is not a city. amber has no
+        # city_record, so every lookup there landed on a file called bergen.yml
+        # inside the wardrobe app -- which either does not exist, and the catalog
+        # silently becomes picsum, or exists under a name that lies about what is
+        # in it.
+        %w[default bergen].each do |name|
+          candidate = Rails.root.join("config/demo_media/#{name}.yml")
+          return candidate if candidate.file?
+        end
+
+        nil
       end
 
       def file_path(relative, catalog: nil)
