@@ -1,0 +1,412 @@
+# Every photograph the three RAILS apps seed with, as a prompt.
+#
+# Sibling to shoots.yml and built on the same conviction: a prompt names a real
+# light, a real distance and a real subject, because that is the part a
+# diffusion model can act on. "Beautiful lighting" gets the average of
+# everything it has seen.
+#
+# The seeds already know how to use these. Shared::DemoMedia tries
+# DemoMedia::Catalog first and only falls through to picsum when a key is
+# missing, and attach_remote_postpro! grades whatever it gets. So the pipeline
+# is: render here, postpro, write the file into config/demo_media/<city>.yml as
+# a `file:` entry, and the seeders pick it up with no change at all.
+#
+# Three populations, three rules, and they do not mix:
+#
+#   dating   Ragnhild, every one of them, from her own adapter. Operator's call
+#            2026-08-29 -- the joke is that the whole app is obviously her, and
+#            these are the selfies she has been promised for years.
+#   amber    No face anywhere. One mannequin, every garment, so seventeen items
+#            are comparable rather than seventeen unrelated stock photographs.
+#   scene    No adapter. The picture comes from what the post actually says --
+#            a thread about fog over Vagen gets fog over Vagen, not "Norway".
+#
+# Prompting follows STUDIO/README.md, which is measured rather than folklore:
+# Subject + Action + Style + Context with the subject first; 30-80 words, a real
+# ceiling and not a style note; hex codes instead of colour words; a named body
+# and aperture; and subject DISTANCE, because perspective distortion is a
+# function of distance alone and no grade corrects a face shot from 40 cm.
+#
+# No negative prompts anywhere. FLUX has no negative conditioning, so what would
+# have been a negative is folded into the positive instead.
+
+meta:
+  base: flux1-dev
+  # nf4 on a free Colab T4: 16 GB of Turing with no bf16 cannot hold FLUX.1-dev's
+  # 23.8 GB fp16, which is the whole reason colab_render.ipynb fell back to SDXL.
+  # Quantised it fits, renders slower, and is still FLUX and still her adapter.
+  quantize: nf4
+  guidance: 3.5
+  steps: 28
+  # Set per entry where it matters; this is the fallback.
+  aspect_ratio: "3:2"
+  postpro: landscape
+
+# One mannequin for the whole wardrobe, stated once.
+#
+# Operator direction 2026-08-29: neutral and faceless. Not a headless dress form
+# and not a person -- a light grey humanoid robot, Tesla-bot proportions, matte
+# and featureless, standing in real sunshine. The garment is refitted onto it.
+#
+# Faceless is the point rather than a limitation. A wardrobe app comparing
+# seventeen garments needs the garment to be the only variable, and a model's
+# face is the first thing an eye goes to. It also means amber ships no
+# likeness at all, which is the honest default for someone else's clothes.
+mannequin: >-
+  A featureless light grey humanoid mannequin, #C8C9CC matte polymer, smooth
+  Tesla-bot proportions with no face and no hair, standing relaxed in direct
+  morning sunlight against a warm off-white #F2EFE9 seamless backdrop, hard sun
+  from camera-left throwing a crisp shadow to the right, shot on a Hasselblad
+  X2D with a 90mm at f/5.6 from three metres, full length, centred
+
+# The dating app, and it is Ragnhild all the way down.
+#
+# TRIGGER comes from ragnhild/subject.env and the adapter is
+# weights/ragnhild/ragnhild.safetensors, already on disk at 218 MB. Each entry
+# changes styling, setting and light and nothing else, which is exactly what a
+# subject LoRA is for -- one face held across twelve situations.
+#
+# The bios these attach to were written for twelve different people, several of
+# them men. That mismatch is deliberate and is the joke; it is not a defect to
+# be tidied up later.
+dating:
+  lora: ragnhild
+  lora_weight: 0.85
+  aspect_ratio: "4:5"
+  postpro: portrait
+  # Two to three metres on every one. A dating profile shot at arm's length
+  # reads as a phone selfie because it IS one, and that is a projection rather
+  # than a rendering -- no grade reaches it.
+  profiles:
+    bergen-dating-anders: >-
+      TRIGGER standing in a school corridor at the end of the day, holding a
+      stack of exercise books, half-smiling at the camera, overcast north light
+      through tall windows, 50mm at f/2.8 from two and a half metres
+    bergen-dating-emilie: >-
+      TRIGGER on a wooden dock in a thick #1B3A5C wool sweater, wet hair, laughing
+      with her eyes closed, flat grey Bergen overcast, sea behind her out of
+      focus, 85mm at f/2 from three metres
+    bergen-dating-hanne: >-
+      TRIGGER in work overalls and a headtorch, leaning on a van door, deadpan
+      straight to camera, low sun raking from camera-right, 50mm at f/2.8 from
+      two and a half metres
+    bergen-dating-henrik: >-
+      TRIGGER in a rain shell on the Ulriken trail, hood down, wind in her hair,
+      mid-laugh, thin cloud diffusing a low sun behind her, city far below and
+      soft, 85mm at f/2.2 from three metres
+    bergen-dating-ingrid: >-
+      TRIGGER in a concert hall foyer in a black polo neck, holding a programme,
+      warm #E8C87A tungsten spill from above and behind, calm and amused,
+      85mm at f/1.8 from two and a half metres
+    bergen-dating-jonas: >-
+      TRIGGER in a yellow #F2C230 oilskin on a boat deck, one hand on the rail,
+      squinting into salt spray, hard overcast, harbour cranes soft behind,
+      50mm at f/4 from three metres
+    bergen-dating-live: >-
+      TRIGGER on a Bybanen platform at dusk, denim jacket, holding a paper
+      transit map upside down, deliberately unimpressed, cool #7FA6C9 platform
+      light with warm carriage windows behind, 50mm at f/2 from three metres
+    bergen-dating-magnus: >-
+      TRIGGER in telemark ski gear on a snowfield, goggles pushed up, sunburnt
+      nose, grinning, flat bright overcast on snow, 85mm at f/2.8 from three
+      metres
+    bergen-dating-marte: >-
+      TRIGGER at a standing desk covered in sticky notes, hoodie, one eyebrow
+      raised at the camera, cool north window light from camera-left, two
+      monitors dark behind, 50mm at f/2 from two and a half metres
+    bergen-dating-per: >-
+      TRIGGER backstage against a flight case, leather jacket, arms folded, half
+      lit by a warm #E0A458 practical from camera-right, deep shadow to the left,
+      85mm at f/1.8 from two and a half metres
+    bergen-dating-silje: >-
+      TRIGGER on a forest trail in running kit, hands on knees, laughing while
+      out of breath, dappled low sun through pine, 85mm at f/2.2 from three
+      metres
+    bergen-dating-sofie: >-
+      TRIGGER in chef whites in a stainless kitchen before service, arms crossed,
+      tired and pleased, hard overhead fluorescent softened by steam, 50mm at
+      f/2.8 from three metres
+
+# Everything else. No adapter, no face where a face is not the subject.
+#
+# Each caption is derived from the post, listing or menu it illustrates, because
+# a thread about fog over Vagen deserves fog over Vagen. The `from` line records
+# which seeded text the prompt was written against, so a reader can check the
+# picture against its reason instead of taking my word for it.
+scenes:
+  bergen-floyen-morning:
+    from: "Sol på Fløyen — tok Fløibanen opp før jobb, utsikten over Vågen i morgensola"
+    aspect_ratio: "3:2"
+    prompt: >-
+      The view over Vågen harbour from Fløyen at 8am, low September sun coming in
+      almost level from the east, wooden rooftops and white hulls catching it,
+      long blue shadows still on the water, one bench in the near foreground,
+      shot on a Nikon Z8 with 35mm at f/8, clear cold air
+
+  bergen-bryggen-rain:
+    from: "Regnværsdag på Bryggen — sitter på Kaffebrenneriet og hører regnet mot taket"
+    prompt: >-
+      The Hanseatic wooden facades at Bryggen in heavy rain, ochre and oxblood
+      boards darkened to #6B4A32 by water, rain visibly falling and bouncing off
+      the cobbles, one figure under an umbrella far down the row, flat grey light,
+      35mm at f/4, wet reflections carrying the colour
+
+  bergen-fog-vagen:
+    from: "Tåke over Vågen — gikk over Bryggen i tjukk tåke, føltes som en annen by"
+    prompt: >-
+      Thick sea fog sitting on Vågen so the far shore is gone entirely, masts and
+      a crane emerging as grey silhouettes, water flat and colourless, a single
+      warm #E8B54A quayside lamp burning through it, shot on a Nikon Z8 with 85mm
+      at f/4, almost monochrome
+
+  bergen-damsgardsfjellet:
+    from: "Damsgårdsfjellet ved solnedgang — helt rått lys over Puddefjorden"
+    prompt: >-
+      The ridge of Damsgårdsfjellet at sunset looking down over Puddefjorden, the
+      whole fjord surface beaten copper #C4703A, city grid coming on in the
+      valley below, heather and wet rock in the near foreground, 35mm at f/8,
+      strong side light from a sun already touching the horizon
+
+  bergen-ulriken-trail:
+    from: "Ulriken i kveld — rolig tempo, kanskje mat på toppen"
+    prompt: >-
+      A worn stone-and-root path climbing Ulriken in evening light, two walkers
+      small and far up the trail, Bergen laid out below through thin haze, low
+      sun behind the ridge rimming the grass, 35mm at f/5.6, warm on the rock and
+      cool in the shadow
+
+  bergen-hiking:
+    from: "Løypeforslag for 7-fjellsturen — dele etappen i to dager"
+    prompt: >-
+      A high bare ridge between two of Bergen's seven mountains, cairn in the
+      middle distance, fjord visible on both sides, low cloud crossing below the
+      path, a rucksack set down on rock in the foreground, 28mm at f/8, wide
+      overcast light
+
+  bergen-lungegaardsvann:
+    from: "Nye sykkelstier langs Store Lungegårdsvann — nye lys gjør det tryggere"
+    prompt: >-
+      A new asphalt cycle path curving along Store Lungegårdsvann at blue hour,
+      fresh white line markings, new lamp standards throwing overlapping pools of
+      #F0D9A8 light, still black water reflecting them, one cyclist blurred by a
+      long exposure, 35mm at f/4
+
+  bergen-fish-market:
+    from: "Fisketorget lørdag — reker, blåskjell og litt laks"
+    prompt: >-
+      A Fisketorget stall on a Saturday, crushed ice banked up with prawns,
+      blue-black mussels and a cut side of salmon, price cards handwritten, the
+      vendor's hands in frame reaching for a scoop, overcast daylight under a
+      canvas canopy, 50mm at f/4 from two metres
+
+  bergen-bakery:
+    from: "Beste kanelbolle i sentrum? Baker Hansen mot Godt Brød"
+    prompt: >-
+      A tray of Norwegian cinnamon buns just out of the oven on a bakery counter,
+      pearl sugar and dark caramelised edges, one broken open showing the spiral,
+      warm side light from a shop window, marble surface, 50mm macro at f/2.8
+      from half a metre
+
+  bergen-brunch:
+    from: "Kolonialen brunch — verdt prisen? Vurderer å ta med foreldre søndag"
+    prompt: >-
+      A Sunday brunch table from above, scrambled eggs with cured ham, sourdough,
+      coffee in heavy ceramic, two hands reaching in from opposite sides, linen
+      napkin, soft north window light, 35mm at f/4 shot straight down
+
+  bergen-concert-hall:
+    from: "Grieghallen i helgen — Beethoven med Bergen Filharmoniske"
+    prompt: >-
+      The interior of a modernist concert hall before a symphony concert, warm
+      wood panelling and rows of empty red seats, stage lit and set with music
+      stands and a grand piano, house lights still up, 24mm at f/5.6 from the
+      rear stalls, warm #E4C88F pools against cool shadow
+
+  bergen-logen:
+    from: "Standup på Logen denne uken — open mic"
+    prompt: >-
+      A single microphone on a stand in a hard spotlight on a small ornate
+      theatre stage, brick back wall, the room beyond entirely dark, dust visible
+      in the beam, 85mm at f/2 from six metres, one hard key and nothing else
+
+  bergen-radio-night:
+    from: "Radio Bergen-playlisten er oppe — perfekt til nattbuss hjem"
+    prompt: >-
+      The window of a night bus running through Bergen, city lights streaked by
+      motion outside, a phone showing a paused playlist reflected faintly in the
+      glass, interior lit only by cold #9FB8CF ceiling strips, 35mm at f/2,
+      rain beading on the outside of the pane
+
+  bergen-pepperkakebyen:
+    from: "Pepperkakebyen — skal dit med søster og to barn"
+    prompt: >-
+      A miniature gingerbread town in a darkened hall, dozens of small
+      illuminated houses on a low table, warm #FFB870 light glowing out of every
+      tiny window, a child's silhouette leaning in from the left, 35mm at f/2.8,
+      the light source entirely inside the models
+
+  bergen-dog-park:
+    from: "Hundepark anbefalinger? Ny hund i familien"
+    prompt: >-
+      A fenced dog run on a wet autumn morning, two dogs mid-run across churned
+      grass, owners talking under the trees at the far end, low flat light and
+      bare branches, 85mm at f/2.8 from eight metres, motion in the near dog
+
+  bergen-place-bryggen:
+    from: "Place: Bryggen"
+    prompt: >-
+      The Bryggen wharf frontage straight on in even daylight, the full run of
+      pointed gables in ochre, oxblood and cream, cobbled quay empty in the
+      foreground, 35mm at f/8 from across the water, clean architectural framing
+
+  bergen-place-fisketorget:
+    from: "Place: Fisketorget"
+    prompt: >-
+      The Fisketorget market square from the quay, red and white stall canopies
+      in a row, harbour water on the left, low mountains behind the rooftops,
+      overcast even light, 35mm at f/8
+
+  bergen-place-floybanen:
+    from: "Place: Fløibanen"
+    prompt: >-
+      A blue funicular carriage climbing its track through pine and rock, steel
+      rails converging up the slope, the harbour visible far below through the
+      trees, overcast, 50mm at f/5.6 from beside the track
+
+  bergen-place-grieghallen:
+    from: "Place: Grieghallen"
+    prompt: >-
+      A large modernist concert hall exterior at dusk, angular glass and pale
+      stone, interior lights warm #F0CE94 behind the full-height glazing, wet
+      forecourt reflecting them, 24mm at f/8, deep blue sky
+
+  bergen-place-lungegaardsvann:
+    from: "Place: Store Lungegårdsvann"
+    prompt: >-
+      A rectangular city lake on a still morning, the water a flat mirror holding
+      the buildings on its far bank, a fountain plume in the middle, park path
+      curving along the near edge, 35mm at f/8, soft even light
+
+  bergen-place-nordnesparken:
+    from: "Place: Nordnesparken"
+    prompt: >-
+      A headland park with mown grass running to a low sea wall, mature trees on
+      the right, open fjord and a passing ferry beyond, benches facing the water,
+      late afternoon side light, 35mm at f/8
+
+  bergen-place-ulriken:
+    from: "Place: Ulriken"
+    prompt: >-
+      The summit of Ulriken with its mast and cable-car station, bare rock and
+      low scrub, the city and fjord system spread out far below under broken
+      cloud, 24mm at f/8, hard high light with fast-moving shadow
+
+  bergen-place-vilvite:
+    from: "Place: VilVite"
+    prompt: >-
+      A bright modern science centre interior, primary-coloured interactive
+      exhibits, a child's hand on a large brass wheel, glass roof throwing even
+      daylight down, 24mm at f/4, clean and busy
+
+  bergen-takeaway-fishme:
+    from: "Menu: reker på briks, blåskjell i hvitvin, fisk og chips"
+    aspect_ratio: "1:1"
+    prompt: >-
+      Fresh cold-water prawns piled on a wooden board with lemon halves and a
+      bowl of aioli, brown bread and butter at the edge, hard daylight from
+      camera-left, 50mm macro at f/4 from 60 cm, shells wet and specular
+
+  bergen-takeaway-potetkjelleren:
+    from: "Menu: margherita, pepperoni, quattro formaggi"
+    aspect_ratio: "1:1"
+    prompt: >-
+      A margherita pizza straight from a wood oven on a steel peel, blistered
+      leopard-spotted crust, fior di latte pooling, whole basil leaves, hard
+      light from the oven mouth at camera-right, 50mm at f/4 shot from 45 degrees
+
+  bergen-takeaway-dyvekes:
+    from: "Menu: bergensk fiskesuppe, pinnekjøtt"
+    aspect_ratio: "1:1"
+    prompt: >-
+      A bowl of creamy Bergen fish soup, pale #F0E4CE broth with prawns, carrot
+      julienne and dill on top, heavy stoneware bowl on a dark oak table, warm
+      window light from behind, 50mm macro at f/4 from 50 cm, steam visible
+
+  bergen-takeaway-colonialen:
+    from: "Menu: rømmegrøt med sukker og kanel"
+    aspect_ratio: "1:1"
+    prompt: >-
+      A bowl of Norwegian sour cream porridge, a well of melted butter in the
+      centre, cinnamon and sugar dusted across the surface, worn silver spoon,
+      dark wood, soft side light from a north window, 50mm macro at f/4 from
+      50 cm
+
+  bergen-macbook:
+    from: "Marketplace: MacBook Air M1, pent brukt"
+    aspect_ratio: "4:3"
+    prompt: >-
+      A used silver laptop closed on a plain light oak desk, lid showing faint
+      handling marks under raking light, charger coiled beside it, shot honestly
+      for a private classified listing, soft window light from camera-left,
+      50mm at f/5.6 from one metre
+
+  bergen-bike-sale:
+    from: "Marketplace: brukt sykkel, Bergen sentrum"
+    aspect_ratio: "4:3"
+    prompt: >-
+      A used city bicycle leaning against a painted wooden wall, worn saddle and
+      scuffed frame, rear rack and mudguards, photographed square on for a
+      classified listing, flat overcast daylight, 35mm at f/5.6 from two metres
+
+  bergen-sofa:
+    from: "Marketplace: IKEA sofa, hentes Fana"
+    aspect_ratio: "4:3"
+    prompt: >-
+      A grey three-seat fabric sofa in a lived-in living room, cushions slightly
+      compressed, a folded blanket on one arm, photographed for a private
+      listing, daylight from a window out of frame to the right, 28mm at f/5.6
+
+  bergen-stroller:
+    from: "Marketplace: barnevogn, god stand"
+    aspect_ratio: "4:3"
+    prompt: >-
+      A navy pram standing in a bright hallway, hood up, wheels clean, small
+      scuffs on the frame visible, photographed plainly for a private listing,
+      even daylight from a glazed door, 35mm at f/5.6 from two metres
+
+  bergen-skis:
+    from: "Marketplace: telemarkski + støvler"
+    aspect_ratio: "4:3"
+    prompt: >-
+      A pair of telemark skis stood upright against a garage wall with the boots
+      on the concrete beside them, bases showing use, bindings visible,
+      photographed for a classified listing, cool daylight through an open door,
+      35mm at f/5.6
+
+# The wardrobe. Every garment on the one mannequin above, so the clothes are the
+# only thing that changes between seventeen photographs.
+#
+# `garment` is appended to the mannequin clause at render time rather than
+# written out seventeen times, because the mannequin is the constant and
+# restating it is how two of the seventeen would end up subtly different.
+amber:
+  aspect_ratio: "4:5"
+  postpro: portrait
+  garments:
+    amber-ivory-silk-dress: "wearing an ivory #F3EDE2 silk slip dress on the bias, thin straps, hem to mid-calf, fabric catching the sun with a soft sheen"
+    amber-camel-wrap-coat: "wearing a camel #B08556 wool wrap coat, belted at the waist, wide notch lapel, hem below the knee"
+    amber-black-ankle-boots: "wearing black #1A1A1A leather pointed-toe ankle boots with a block heel, shot as a three-quarter length crop from the knee down"
+    amber-oatmeal-cashmere: "wearing an oatmeal #D8CDBB cashmere crew neck, slightly oversized, sleeves pushed to the forearm"
+    amber-charcoal-trousers: "wearing charcoal #3A3B3F wide-leg wool trousers with a pressed centre crease, breaking once over the shoe"
+    amber-navy-blazer: "wearing a navy #23304A oversized single-breasted blazer, shoulders dropped, one button fastened"
+    amber-white-trainers: "wearing white #F2F2EF leather trainers, gum sole, shot as a crop from the knee down"
+    amber-breton-tee: "wearing a Breton tee, #F0EDE6 and #23304A horizontal stripes, boat neck, three-quarter sleeve"
+    amber-indigo-jeans: "wearing indigo #2C3E5C straight-leg jeans, full length, visible selvedge at the cuff"
+    amber-rust-shirtdress: "wearing a rust #A85A32 linen shirtdress, belted, sleeves rolled, hem mid-calf, linen visibly creased"
+    amber-sage-midi-skirt: "wearing a sage #A8B49A pleated midi skirt, knife pleats falling straight, hem mid-calf"
+    amber-blush-satin-blouse: "wearing a blush #E6C9C1 satin blouse, soft drape, hidden placket, the sheen breaking across the folds"
+    amber-oatmeal-beanie: "wearing an oatmeal #D8CDBB ribbed wool beanie, shot as a head-and-shoulders crop"
+    amber-tan-crossbody: "wearing a tan #A97B4F structured leather crossbody bag on a thin strap, bag square to camera at the hip"
+    amber-gold-hoops: "wearing slim gold #C9A227 hoop earrings, shot as a tight head crop, hoops catching the sun"
+    amber-cateye-sunglasses: "wearing black #1A1A1A acetate cat-eye sunglasses, shot as a tight head crop, sun reflected in the lenses"
+    amber-sage-shorts: "wearing sage #A8B49A linen shorts, mid-thigh, turned-up cuff, linen visibly creased"
