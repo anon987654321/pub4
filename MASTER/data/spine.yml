@@ -57,6 +57,12 @@ pub4_source_ceilings:
   # TODO.md (which sits in no tree and so counts toward none): MASTER -1 (DEBT.md),
   # RAILS -2 (TODO.md, BLOCKERS.md), OPENBSD -1 (data/debt.yml).
   # 1037 -> 1038 accounts for lib/autonomy/dream_loop.rb, which ca0d8d104 added
+  #
+  # 1038 -> 1040 is tools/sprawl_census.rb and data/sprawl_census.yml, named
+  # the same way. Two files to measure whether the tree is growing files is a
+  # trade this line is the right place to record: FILE_SPRAWL sees only
+  # MASTER's .rb and skips law/, core/, test/ and spec/, so nothing counted
+  # shape in RAILS, OPENBSD or STUDIO at all.
   # without raising this. Named rather than absorbed: the note at the top of
   # this file says a raise that swallows another change's unaccounted growth is
   # how the ratchet dies, and naming the file is what makes this accounting
@@ -67,7 +73,7 @@ pub4_source_ceilings:
   # (untracked) less lora/curate.rb (deleted, uncommitted) -- two thirds of it
   # is work nobody has landed, and a ceiling raised to fit uncommitted files
   # is the swallowing the note warns about.
-  MASTER: 1038
+  MASTER: 1040
   RAILS: 2359
   OPENBSD: 106
   STUDIO: 220
