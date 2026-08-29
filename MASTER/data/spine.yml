@@ -26,11 +26,12 @@
 
 spine:
   # Non-blank, non-comment lines across lib/**/*.rb, minus the Zeitwerk wrappers.
-  # Present sponsors: cross_file_analysis's structural-clone detector (the
-  # deterministic path for semantic DRY a keyless scan can run) and StrunkPass's
-  # brevity mode, wired onto conversational output so a terse reply sheds its
-  # padding, not its structure.
-  lib_body_ceiling: 37110
+  # Present sponsors, all the same shape — a rule that could only be judged by a
+  # model now judged deterministically: cross_file_analysis's structural-clone
+  # detector for DRY, MiddleManRule for the over-engineering half of
+  # engineering_fit, and StrunkPass's brevity mode wired onto conversational
+  # output so a terse reply sheds its padding, not its structure.
+  lib_body_ceiling: 37149
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753

@@ -747,6 +747,66 @@ module Master
           end
         end
 
+        # Over-engineering, the deterministic half of engineering_fit: a class
+        # whose every method only forwards to one other object carries a name and
+        # a file and nothing else. Callers could hold that object directly. :info,
+        # because a facade that adds a boundary on purpose is the exception the
+        # reviewer decides — the rule surfaces the shape, not the verdict.
+        class MiddleManRule < Rule
+          MIN_METHODS = 3
+
+          def initialize
+            super()
+            @id = "MIDDLE_MAN"
+            @description = "a class that only forwards to one object adds a name, not behaviour"
+            @severity = :info
+            @rule_tags = %i[ENGINEERING_FIT ABSTRACTION]
+            @auto_fix = false
+          end
+
+          def check_ast(ast, _code, path:)
+            return [] unless ast
+
+            class_nodes(ast).filter_map do |node|
+              # initialize holds the delegate; it assigns, it does not forward, so
+              # counting it would exempt every wrapper that has a constructor.
+              defs = Array(node.body&.body).grep(Prism::DefNode).reject { |def_node| def_node.name == :initialize }
+              next if defs.size < MIN_METHODS
+
+              receivers = defs.map { |def_node| forwarded_receiver(def_node) }
+              next if receivers.any?(&:nil?) || receivers.uniq.size != 1
+
+              finding(line: node.location.start_line,
+                message: "#{node.name} forwards all #{defs.size} methods to #{receivers.first} — inline it, or let callers hold #{receivers.first} directly")
+            end
+          end
+
+          private
+
+          def class_nodes(node, acc = [])
+            return acc unless node.is_a?(Prism::Node)
+
+            acc << node if node.is_a?(Prism::ClassNode)
+            node.compact_child_nodes.each { |child| class_nodes(child, acc) }
+            acc
+          end
+
+          # The one object a def forwards to, or nil the moment it does anything else.
+          def forwarded_receiver(def_node)
+            body = def_node.body
+            return nil unless body.is_a?(Prism::StatementsNode) && body.body.size == 1
+
+            call = body.body.first
+            return nil unless call.is_a?(Prism::CallNode) && call.receiver
+
+            receiver = call.receiver
+            return receiver.name.to_s if receiver.is_a?(Prism::InstanceVariableReadNode)
+            return receiver.name.to_s if receiver.is_a?(Prism::CallNode) && receiver.receiver.nil? && receiver.arguments.nil?
+
+            nil
+          end
+        end
+
         StructuralRules = Module.new
       end
     end
