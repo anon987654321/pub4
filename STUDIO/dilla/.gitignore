@@ -19,3 +19,6 @@ demo.wav.dilla
 # scratch/, where its own venv .gitignore happened to cover it -- protection
 # that would not extend to the next tool put beside it.
 tools/
+
+# the one keeper render — the only audio file dilla/ root holds
+loop.wav

@@ -15785,15 +15785,18 @@ def speak_over_track!(mp3_path, duration, _bpm = 90.0)
   rate = speech_tts_rate
   pitch = speech_tts_pitch
   segments = []
+  # Seeded so narration lands the same way under a RENDER_SEED pin; unpinned it
+  # falls back to the clock exactly as before.
+  rng = render_rng("speech")
   # Never talk right at t=0 — that reads as a scripted "intro" every time a
   # track starts/loops. Let the track establish itself first.
-  t = 10.0 + rand * 14.0
+  t = 10.0 + rng.rand * 14.0
   idx = 0
   max_seg = speech_max_segments
   while t < duration
     break if max_seg && idx >= max_seg
     talk_len = speech_talk_length
-    text = continuous_speech_text(talk_len, seed: idx + rand(100_000))
+    text = continuous_speech_text(talk_len, seed: idx + rng.rand(100_000))
     seg_path = "#{mp3_path}.voice#{idx}.mp3"
     ok = false
     Open3.popen2(Gem.ruby, TTS_WORKER, voice, rate, pitch, seg_path) do |stdin, _stdout, wait|

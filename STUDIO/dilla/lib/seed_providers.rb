@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "digest"
 require "json"
 require "net/http"
 require "uri"
@@ -22,18 +23,24 @@ module DillaSeeds
     cfg
   end
 
+  # SEED_TEXT names a seed by its text, so the same text must name the same seed
+  # in every process. Ruby randomises String#hash per process (a security
+  # default), so it cannot carry that promise; a SHA-256 digest is stable across
+  # runs. SWING and BPM are derived from the same value, so they were drifting too.
+  def stable_seed(text) = Digest::SHA256.hexdigest(text.to_s).to_i(16) % (1 << 62)
+
   def render_seed
     base = ENV["GEN_SEED"]&.to_i
     return base if base&.positive?
     text = ENV["SEED_TEXT"].to_s
-    return text.hash.abs % 1_000_000 if text.length.positive?
+    return stable_seed(text) % 1_000_000 if text.length.positive?
     rand(1_000_000)
   end
 
   def apply_text_seed!
     text = ENV["SEED_TEXT"]
     return unless text && !text.empty?
-    h = text.hash.abs
+    h = stable_seed(text)
     ENV["GEN_SEED"] ||= h.to_s
     ENV["SWING"] ||= (52 + (h % 11)).to_s
     ENV["BPM"] ||= (84 + (h % 18)).to_s
