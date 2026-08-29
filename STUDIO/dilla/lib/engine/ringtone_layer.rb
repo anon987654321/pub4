@@ -47,7 +47,9 @@ module RingtoneLayer
     "VOICE_STACK" => "6",
   }.freeze
 
-  def ringtone_layer_enabled? = ENV.fetch("RINGTONE_LAYER", "0") != "0"
+  # On by default: the ringtone.tools foley — the bleeps, bloops and space-echoed
+  # texture — is part of the signature, not a flag someone has to remember.
+  def ringtone_layer_enabled? = ENV.fetch("RINGTONE_LAYER", "1") != "0"
 
   # Applied from dilla_resolve_config so every entry point gets it -- a render, the
   # demo, the stream -- rather than only the one that remembered to call it.
