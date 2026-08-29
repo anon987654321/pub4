@@ -189,13 +189,49 @@ render_cell = <<~PYTHON
   # training either. Same constraint, one step earlier.
   dating = spec["dating"]
   SUBJECT = dating["lora"]
+  # Looked for by path first, then by search. The mount is authenticated as the
+  # operator, so a recursive walk of their own Drive is the reliable way to find
+  # a file they uploaded without having to be told where they put it.
+  #
+  # The share link is deliberately NOT hardcoded here. A Drive file ID in a
+  # public repo is the same disclosure as committing the weights: anyone reading
+  # this file could fetch her likeness. The mount needs no link.
   ADAPTER_CANDIDATES = [
       f"/content/drive/MyDrive/lora/{SUBJECT}/{SUBJECT}.safetensors",
       f"/content/drive/MyDrive/lora/{SUBJECT}/weights/{SUBJECT}.safetensors",
-      f"/content/drive/MyDrive/seed_media/{SUBJECT}.safetensors",
+      f"/content/drive/MyDrive/{SUBJECT}.safetensors",
   ]
   ADAPTER_CANDIDATES += sorted(glob.glob(f"/content/drive/MyDrive/lora/{SUBJECT}/*.safetensors"))
   ADAPTER = next((p for p in ADAPTER_CANDIDATES if os.path.exists(p)), None)
+
+  if not ADAPTER:
+      print(f"not at the expected paths — searching MyDrive for *.safetensors …")
+      found = glob.glob("/content/drive/MyDrive/**/*.safetensors", recursive=True)
+      # The subject's name in the filename or its directory wins; failing that,
+      # the largest file, since a subject adapter is hundreds of MB and a stray
+      # embedding is kilobytes.
+      named = [p for p in found if SUBJECT.lower() in p.lower()]
+      pool = named or found
+      if pool:
+          ADAPTER = max(pool, key=os.path.getsize)
+          print(f"found {len(found)} adapter(s); using {ADAPTER}")
+          if not named:
+              print(f"warn: none named '{SUBJECT}' — this is the largest one, check the face")
+
+  if ADAPTER:
+      # Say which base it was trained against before spending a GPU on it. An
+      # SDXL adapter in a FLUX pipeline attaches nothing and renders strangers,
+      # which is a failure that produces files and looks like success.
+      import json as _json
+      with open(ADAPTER, "rb") as _f:
+          _n = int.from_bytes(_f.read(8), "little")
+          _meta = _json.loads(_f.read(_n)).get("__metadata__", {})
+      _base = _meta.get("ss_base_model_version", "unknown")
+      _steps = _meta.get("training_info", "")
+      print(f"ok: adapter base={_base} {_steps}")
+      if "sdxl" not in _base.lower():
+          print(f"warn: base is {_base}, and this pass builds an SDXL pipeline.")
+          print("warn: if she has been retrained on FLUX, render her in the FLUX pass instead.")
 
   if ADAPTER:
       from diffusers import StableDiffusionXLPipeline, AutoencoderKL
