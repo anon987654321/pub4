@@ -147,6 +147,50 @@ a:hover { text-decoration: underline; }
 }
 
 
+/* The gutter the wordmark reserves, sized from the wordmark.
+
+   _layout_chrome publishes --brand-mark-inline as a flat 4.75rem, which is
+   right for amber and bsdports: their marks are one fixed word. brgen's is a
+   city domain, so it is 8 glyphs on brgen.no and 13 on lsangeles.com, and the
+   flat number was already too narrow for the longest city before .no and .com
+   joined the mark. A link under the mark stops being clickable — that is the
+   failure the variable exists to prevent — so brgen sizes it instead of
+   inheriting it.
+
+   0.64 is the measured worst-case glyph advance, and measuring is the only
+   reason it is not 0.53. The mark does not render in --font-brand here: the
+   rule below is `a.brgen-logo-mark` at (0,1,1) and sets `font: ... var(--font)`,
+   which outranks the shared .brand-mark's var(--font-brand) at (0,1,0), so on
+   brgen the wordmark is system-ui. system-ui on macOS is SF Pro, which switches
+   optical size around 20px — so "brgen.no" measured 83.3px at a 20.25px font and
+   84.1px at 16.875px: wider type at the smaller size. A factor derived from
+   Helvetica Neue (0.503 em/glyph) under-reserved by 11px at 390px and put the
+   first nav link under the wordmark.
+
+   So 0.64 covers 84.1 / (8 x 16.875). It over-reserves on desktop, where there
+   is width to spare, and is right on the phone, where there is not. Narrowing it
+   is safe only once the typeface above is settled — that is a live question, not
+   a closed one.
+
+   The clamp is the same one .brand-mark sets its own type in, so the gutter
+   widens and narrows exactly when the mark does rather than being right at one
+   viewport. 0.5rem is the mark's own 4px inline padding, both sides.
+
+   --chrome-inset and --safe-left are in the sum because the gutter has to clear
+   where the mark ENDS, not how wide it is: the mark is inset 12px from the edge
+   before it draws a glyph. Leaving them out reserved 95px against a mark whose
+   right edge was at 104px, and the first nav link sat under the wordmark at
+   390px — the same failure, 9px smaller, that put this variable here.
+
+   --brand-mark-glyphs comes from the layout, which is the only place that
+   knows the label. The 9 fallback covers a mark rendered without it. */
+:root {
+  --brand-mark-inline: calc(
+var(--chrome-inset, 12px) + var(--safe-left, 0px) +
+var(--brand-mark-glyphs, 9) * 0.64 * clamp(0.9375rem, 2.8vw, 1.125rem) + 0.5rem
+  );
+}
+
 /* --brand-mark-inline and --chrome-toggle-inline moved to _layout_chrome.scss
    with the shared .brand-mark that owns them, so they are declared once for all
    three apps rather than in brgen only. The reasoning that earned them is kept

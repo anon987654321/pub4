@@ -24,7 +24,24 @@
     the three that are designed light -- rendered on the dark palette while
     their accents stayed tuned for the light one. ApplicationHelper#surface_theme
     holds the mapping. %>
-<html lang="<%= Current.locale || I18n.locale %>" dir="ltr" data-theme="<%= surface_theme %>" class="chrome-hidden">
+<%# --brand-mark-glyphs is how the gutter learns the wordmark's length.
+
+    The mark is a city domain, so it is not one width: brgen.no draws 8
+    glyphs and lsangeles.com 13, and --brand-mark-inline is the gutter every
+    other piece of top chrome clears. Measured in Chrome at the clamp's
+    ceiling, 700 Helvetica Neue at -0.03em: brgen 55px, brgen.no 80px,
+    lsangeles.com 125px, against a 4.75rem (76px) reservation. So the mark
+    already overflowed its own gutter on the longest city before the TLD was
+    added, and adding it put brgen.no over too. A link under the mark stops
+    being clickable, which is the failure that put the variable here.
+
+    A count rather than a width, because the width is the clamp's business —
+    _root.scss multiplies this by the same clamp the mark itself is set in, so
+    the gutter tracks the type at every viewport instead of being right at one.
+    It goes on <html> because --brand-mark-inline is declared on :root and a
+    custom property only inherits downward. %>
+<html lang="<%= Current.locale || I18n.locale %>" dir="ltr" data-theme="<%= surface_theme %>" class="chrome-hidden"
+      style="--brand-mark-glyphs: <%= brand_mark_fragments[:label].to_s.length %>">
 <head>
   <meta charset="utf-8">
   <%= tag.meta name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" %>

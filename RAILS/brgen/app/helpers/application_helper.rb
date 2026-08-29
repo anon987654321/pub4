@@ -90,42 +90,61 @@ module ApplicationHelper
     Rails.application.config.x.master_web_url
   end
 
-  # Primary vertical navigation for the pull-down swiper. front → home feed;
-  # AI → the shared MASTER face; the rest are per-city verticals on subdomains.
-  def brgen_nav_items
-    domain = Current.domain
-    # Operator order, 2026-08-17: Front AI Markedsplass Playlist Dating Takeaway
-    # TV Maps Messenger. The marketplace is named in Norwegian here because that
-    # is the name on its own host — markedsplass.brgen.no — and the bar is the one
-    # place all nine names sit together, so one of them reading in English was the
-    # only one that did.
-    [
-      [ "front", main_app.root_path ],
-      # live (the hyperlocal anonymous layer) is off this bar per operator, 2026-08-17.
-      # The surface stays — its route, controller and rate limit are untouched, and
-      # _mobile_chrome and nearby still link to it. It is not one of the nine names.
-      [ "AI", brgen_ai_url ],
-      [ "markedsplass", "//#{marketplace_host}/" ],
-      [ "playlist", "//playlist.#{domain}/" ],
-      [ "dating", "//dating.#{domain}/" ],
-      [ "takeaway", "//takeaway.#{domain}/" ],
-      [ "TV", "//tv.#{domain}/" ],
-      [ "maps", "//maps.#{domain}/" ],
-      [ "messenger", "//messenger.#{domain}/" ],
-      [ "channels", main_app.channels_path ],
-      *(authenticated? ? [] : [ [ "sign up", main_app.new_user_path ] ])
-    ]
-  end
+# Primary vertical navigation for the swiper. front → home feed; AI → the
+# shared MASTER face; the rest are per-city verticals on subdomains.
+#
+# Operator order, 2026-08-29: front AI Radio Marketplace Takeaway Messenger
+# Maps TV. Eight entries, and the bar is now exactly those eight — dating,
+# channels and sign up came off it. Channels stays in _mobile_chrome and sign
+# up on the sign-in page; dating is reachable from a user's own profile and by
+# its own host, and losing its bar entry was the operator's call knowing that.
+#
+# Each row is [slug, label, href], not [label, href]. The slug is what decides
+# the active entry and what a test can name; the label is display text and now
+# varies by locale, so comparing it to Current.subapp would have made the
+# active underline appear only for readers whose language happened to match
+# the token. "Radio" is the playlist vertical — the label the operator wants on
+# the bar — so its slug stays `playlist`, which is what Current.subapp reports.
+def brgen_nav_items
+  domain = Current.domain
+  [
+    [ "front",       nav_label("front"),       main_app.root_path ],
+    # live (the hyperlocal anonymous layer) is off this bar per operator, 2026-08-17.
+    # The surface stays — its route, controller and rate limit are untouched, and
+    # _mobile_chrome and nearby still link to it.
+    [ "ai",          nav_label("ai"),          brgen_ai_url ],
+    [ "playlist",    nav_label("radio"),       "//playlist.#{domain}/" ],
+    # nb keeps markedsplass, which is the name on the host itself; en reads
+    # Marketplace. The 2026-08-17 note that argued for one Norwegian label in an
+    # otherwise English bar is answered by the bar having no fixed language now.
+    [ "marketplace", nav_label("marketplace"), "//#{marketplace_host}/" ],
+    [ "takeaway",    nav_label("takeaway"),    "//takeaway.#{domain}/" ],
+    [ "messenger",   nav_label("messenger"),   "//messenger.#{domain}/" ],
+    [ "maps",        nav_label("maps"),        "//maps.#{domain}/" ],
+    [ "tv",          nav_label("tv"),          "//tv.#{domain}/" ]
+  ]
+end
 
-  VERTICAL_NAV_LABELS = %w[markedsplass dating playlist TV takeaway maps messenger].freeze
+# The bar's own label namespace, kept apart from nav.* so that renaming what
+# the swiper calls a surface cannot move the wording in the mobile drawer or
+# the footer, which name the same places for different readers.
+def nav_label(slug) = t("nav.vertical.#{slug}")
 
-  # brgen_nav_items chunked into two Hick's-law-sized groups for the swiper:
-  # platform links, then the seven verticals. Keeps each group at or under 7
-  # peer choices instead of one flat 10-11 item row.
-  def brgen_nav_groups
-    verticals, platform = brgen_nav_items.partition { |label, _| VERTICAL_NAV_LABELS.include?(label) }
-    [ [ "brgen", platform ], [ "explore", verticals ] ]
-  end
+# Which entry wears the rule. Current.subapp is a symbol on a vertical host and
+# nil on the apex, where the surface is the front feed.
+def nav_item_active?(slug) = slug == (active_vertical.to_s.presence || "front")
+
+# Only this one is new, and only this one is a badge: it marks the surface that
+# did not exist last month. Delete the key and the badge disappears with it —
+# nothing else has to change, which is the property a "new!" needs to have,
+# because the day it stops being true is a day nobody is looking at this file.
+NAV_BADGED_SLUGS = %w[ai].freeze
+
+def nav_item_badge(slug)
+  return unless NAV_BADGED_SLUGS.include?(slug)
+
+  t("nav.vertical_badge_new", default: nil).presence
+end
 
   def active_vertical
     Current.subapp || inferred_vertical_from_controller
@@ -173,12 +192,18 @@ module ApplicationHelper
   # nav already says better: the swiper marks the active vertical, and the page
   # itself is the answer. Operator decision 2026-08-27.
   #
-  # A single-length mark also retires the gutter arithmetic it needed. The
-  # reservation, the narrow-width TLD drop and the overflow bound in
-  # _layout_chrome all existed because this string varied per host.
+  # The mark carries the TLD — brgen.no, not brgen (operator, 2026-08-29). That
+  # is not a walk back of the paragraph above: what was wrong there was printing
+  # the *host*, so a reader on markedsplass saw markedsplass.brgen.no where a
+  # logo goes and the mark changed width per surface. The domain is the brand.
+  # It is the same string on every surface of a city, and it is what is on the
+  # stickers.
+  #
+  # Still one length per city rather than one per host, so the gutter arithmetic
+  # stays retired. --brand-mark-inline does have to cover three more glyphs;
+  # _layout_chrome carries that measurement.
   def brand_mark_fragments
-    domain = Current.domain.presence || "brgen.no"
-    { label: domain.split(".").first }
+    { label: Current.domain.presence || "brgen.no" }
   end
 
   # Where the mark goes when you click it.

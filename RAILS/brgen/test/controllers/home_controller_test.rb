@@ -70,24 +70,47 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
   # The verticals stay reachable from root, and reachable exactly once.
   #
   # This asserted a .feed-tab row in the layout's .feed-header. That row listed
-  # subapp_nav_items -- the same seven verticals brgen_nav_groups already puts in
-  # the always-visible .nav_swiper_bar immediately above it -- so root shipped two
-  # sticky horizontal scrollers at top:0 offering the same destinations. The row
-  # is gone; the swiper is the primary nav (WIRING_NOTES "Layout"). The count
-  # assertion is the part that would have caught the duplicate in the first place.
+  # subapp_nav_items -- the same verticals brgen_nav_items already puts in the
+  # .nav_swiper_bar immediately above it -- so root shipped two sticky horizontal
+  # scrollers at top:0 offering the same destinations. The row is gone; the
+  # swiper is the primary nav (WIRING_NOTES "Layout"). The count assertion is the
+  # part that would have caught the duplicate in the first place.
+  #
+  # By href rather than by label, which is the change 2026-08-29 forced: the
+  # labels are localised now and this suite runs in nb, so matching on "Radio"
+  # or "Marketplace" would assert the English strings against a Norwegian page.
+  # An href is the same in every language and is what a reader actually needs to
+  # be true.
   def test_root_offers_the_verticals_once
     host! "brgen.no"
     get root_url
     assert_response :success
 
-    %w[markedsplass dating playlist TV takeaway maps messenger].each do |vertical|
-      assert_match(/class="nav_link[^"]*"[^>]*>#{Regexp.escape(vertical)}/, response.body,
+    %w[playlist marketplace takeaway messenger maps tv].each do |vertical|
+      assert_match(%r{class="nav_link[^"]*"[^>]*href="//#{vertical}\.brgen\.no/"}, response.body,
                    "#{vertical} should be reachable from the nav swiper")
     end
 
     assert_equal 1, response.body.scan(/class="nav_swiper_bar"/).size
     assert_equal 0, response.body.scan(/class="feed-tabs"/).size,
                  "root must not carry a second nav scroller duplicating the swiper"
+  end
+
+  # Exactly one entry carries the rule, and on the apex it is front. The class is
+  # what paints it and aria-current is what announces it, so both are asserted --
+  # the two have come apart before.
+  def test_root_marks_exactly_one_active_entry
+    host! "brgen.no"
+    get root_url
+    assert_response :success
+
+    bar = response.body[/<nav id="nav_sections".*?<\/nav>/m]
+    refute_nil bar, "the nav swiper should render on root"
+
+    verticals = bar[/nav_swiper_group--verticals.*?<\/div>/m]
+    refute_nil verticals, "the eight verticals should render as one group"
+    assert_equal 1, verticals.scan(/class="nav_link active"/).size
+    assert_equal 1, verticals.scan(/aria-current="page"/).size
   end
 
   def test_guest_root_can_open_master_embed

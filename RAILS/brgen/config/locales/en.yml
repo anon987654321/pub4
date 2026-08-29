@@ -47,6 +47,19 @@ en:
     advanced_post: Advanced post with photo
     your_feed: Your feed
   nav:
+    # The eight names on the swiper. Their own namespace, so renaming what the
+    # bar calls a surface cannot move the wording in the mobile drawer or the
+    # footer, which name the same places for different readers.
+    vertical:
+      front: Front
+      ai: AI
+      radio: Radio
+      marketplace: Marketplace
+      takeaway: Takeaway
+      messenger: Messenger
+      maps: Maps
+      tv: TV
+    vertical_badge_new: "new!"
     group_discover: "Discover"
     group_inbox: "Inbox"
     group_city: "The city"
