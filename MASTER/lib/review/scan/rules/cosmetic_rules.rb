@@ -204,6 +204,10 @@ module Master
             findings << finding(line: index + 1, message: "README carries a table — say it in a sentence") if line.match?(/\A\s*\|.*\|\s*\z/)
           end
           lead = src.sub(/\A#\s+[^\n]+\n+/, "").lstrip
+          # A hero image or video (and its HTML comment) may sit between the
+          # title and the opening line — skip it before checking the opening is
+          # bold, so the face can lead the page and the prose still has to.
+          lead = lead.sub(%r{\A(?:<!--.*?-->\s*|<(?:video|img|picture|p)\b[^>]*>.*?(?:</(?:video|picture|p)>|/?>)\s*)+}m, "").lstrip
           findings << finding(line: 1, message: "README opening is not bold — lead with one bold, visionary sentence") unless lead.empty? || lead.start_with?("**")
           findings
         end

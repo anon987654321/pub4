@@ -1,4 +1,7 @@
-# MASTER ⚡
+# MASTER
+
+<!-- HERO: drop the GitHub user-attachments URL for loop.mp4 in here after uploading it -->
+<video src="loop.mp4" autoplay loop muted playsinline width="360"></video>
 
 **MASTER is the first artificial intelligence built in pure Ruby that governs
 itself by law — not by hope, not by vibes, not by a prayer that the model
@@ -12,9 +15,6 @@ It's built like an embryo — one small, self-checking core that grows into
 whatever body a mission needs. Today that body is a Rails process and a terminal
 you talk to in plain sentences. The aim is bigger: an operating system for
 intelligence itself.
-
-<!-- HERO: drop the GitHub user-attachments URL for loop.mp4 in here after uploading it -->
-<video src="loop.mp4" autoplay loop muted playsinline width="360"></video>
 
 ⚖️ &nbsp; 🤖 &nbsp; 🛰️ &nbsp; 🌍 &nbsp; 🛡️
 
