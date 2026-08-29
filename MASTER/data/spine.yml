@@ -700,7 +700,13 @@ spine:
   # .code_lines_in, superseded by body_lines_in when the unit changed; and
   # FailureTaxonomy's three back-compat pattern readers, whose Fix::Constants
   # consumers are gone.
-  lib_body_ceiling: 37059
+  #
+  # RAISED 2026-08-29, 37059 -> 37107. Sponsored: a normalized-AST clone
+  # detector in cross_file_analysis.rb, so DRY fires on shared method structure
+  # without a model — the tree's semantic-DRY was LLM-only and sampled, so a
+  # keyless scan found none. 42 lines buy the detector; 6 of the 48 over the old
+  # ceiling predate this change and are folded in here rather than left dangling.
+  lib_body_ceiling: 37107
   # Raw-line history, kept so the drift stays legible across the unit change.
   # These are NOT comparable to lib_code_ceiling.
   lib_raw_at_switch: 47753

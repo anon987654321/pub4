@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "digest"
+require "prism"
 require "set"
 
 module Master
@@ -24,6 +25,7 @@ module Master
           findings.concat(duplicate_glob_patterns(files))
           findings.concat(magic_number_spread(files))
           findings.concat(copy_paste_blocks(files))
+          findings.concat(structural_clones(files))
           findings.concat(parallel_hierarchies(files))
           findings.concat(scattered_config(files))
           findings.concat(sprawl(files))
@@ -141,6 +143,59 @@ module Master
 
             build("COPY_PASTE_BLOCK", "same #{BLOCK_LINES}+ line block recurs in #{distinct_files(occurrences)} files — extract a module or template")
           end
+        end
+
+        # copy_paste_blocks catches a block someone pasted verbatim; it misses
+        # the same method rewritten with different names and literals — the clone
+        # that survives a rename, which is most real DRY. Fingerprinting a def by
+        # its node TYPES alone, with every identifier and literal dropped, makes
+        # those two methods hash equal, so DRY fires on shared structure rather
+        # than shared spelling — and it needs no model, so it runs on a keyless
+        # tree where the semantic pass returns nothing.
+        CLONE_RUBY = %w[.rb .rake].freeze
+        CLONE_MIN_MASS = 24 # nodes in a def body; below this it is an accessor, not logic
+        CLONE_MIN_FILES = 2
+
+        def structural_clones(files)
+          groups = Hash.new { |hash, key| hash[key] = [] }
+          files.each do |path, code|
+            next unless CLONE_RUBY.include?(File.extname(path))
+            next if code.match?(/scan:\s*intentional\b/)
+
+            each_def(Prism.parse(code).value) do |node|
+              shape = node_shape(node.body)
+              next if shape.length < CLONE_MIN_MASS
+
+              groups[Digest::SHA256.hexdigest(shape.join(">"))] << [path, node.name.to_s]
+            end
+          rescue StandardError => e
+            Master::Ground::Swallow.log(e, context: "CrossFileAnalysis.structural_clones", path:)
+          end
+          groups.values.filter_map do |sites|
+            files_hit = sites.map(&:first).uniq
+            next if files_hit.size < CLONE_MIN_FILES
+
+            names = sites.map(&:last).uniq.first(3).join(", ")
+            build("DRY", "#{sites.size} methods share one structure (#{names}) across #{files_hit.size} files — extract the shared shape")
+          end
+        end
+
+        def each_def(node, &block)
+          return unless node.is_a?(Prism::Node)
+
+          yield node if node.is_a?(Prism::DefNode)
+          node.compact_child_nodes.each { |child| each_def(child, &block) }
+        end
+
+        # Node classes only, pre-order. Identifiers and literals are leaf
+        # attributes on the node rather than child nodes, so they never reach
+        # the shape — which is exactly what lets a rename hash equal.
+        def node_shape(node, acc = [])
+          return acc unless node.is_a?(Prism::Node)
+
+          acc << node.class.name.split("::").last
+          node.compact_child_nodes.each { |child| node_shape(child, acc) }
+          acc
         end
 
         def parallel_hierarchies(files)

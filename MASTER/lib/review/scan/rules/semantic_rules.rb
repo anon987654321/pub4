@@ -70,7 +70,13 @@ module Master
             response = @agent.ask(prompt, operation: :scan_adversarial).to_s
             parse_findings(response)
           rescue StandardError => e
-            [] if e.message.to_s =~ /missing configuration|api.?key|unauthorized|no.*provider/i
+            # A missing key is the offline case and stays quiet; any other error
+            # is a real fault that must surface rather than read as "no findings".
+            # Either way the answer is [], never the nil the bare `if` returned.
+            unless e.message.to_s =~ /missing configuration|api.?key|unauthorized|no.*provider/i
+              Master::Ground::Swallow.log(e, context: "#{self.class}#check", severity: :load_bearing, path:)
+            end
+            []
           end
 
           private
@@ -129,7 +135,13 @@ module Master
             @cache[cache_key] = findings
             findings
           rescue StandardError => e
-            [] if e.message.to_s =~ /missing configuration|api.?key|unauthorized|no.*provider/i
+            # A missing key is the offline case and stays quiet; any other error
+            # is a real fault that must surface rather than read as "no findings".
+            # Either way the answer is [], never the nil the bare `if` returned.
+            unless e.message.to_s =~ /missing configuration|api.?key|unauthorized|no.*provider/i
+              Master::Ground::Swallow.log(e, context: "#{self.class}#check", severity: :load_bearing, path:)
+            end
+            []
           end
 
           private
