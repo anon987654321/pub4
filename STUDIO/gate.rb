@@ -99,6 +99,14 @@ module Deploy
 
     PROBE_TIMEOUT = Integer(ENV.fetch("STUDIO_PROBE_TIMEOUT", "60"))
 
+    # dilla grows one lib/engine part per feature — top-level defs on Object in a
+    # load order ENGINE_PARTS pins by hand — and nothing stopped the next feature
+    # becoming the next file instead of folding into a sibling. This is that stop:
+    # the part count is a ceiling. A new part fails the gate until its author
+    # folds it into an existing part or raises this with the reason in the commit,
+    # the sponsor rule MASTER/data/spine.yml already uses for lib/.
+    ENGINE_PART_CEILING = 81
+
     def self.run(...) = new(...).run
 
     # trees/dilla are injected only by the self-check below, which points a
@@ -119,6 +127,7 @@ module Deploy
 
       check_parse(files)
       check_inventory(files)
+      check_growth(files)
       check_entry_points
       self_check
       @result
@@ -162,6 +171,20 @@ module Deploy
       end
       @result.checked!(2)
       check_orphans(files)
+    end
+
+    # Prevention, where the other checks are detection: they fail once a part is
+    # already dead or unlisted; this fails the moment a new part is added at all.
+    def check_growth(files)
+      parts = files.count { |path| path.include?("/dilla/lib/engine/") }
+      @result.checked!(1)
+      return if parts <= ENGINE_PART_CEILING
+
+      @result.fail(
+        "studio growth: dilla has #{parts} engine parts against a ceiling of " \
+        "#{ENGINE_PART_CEILING} — fold the new feature into an existing part, or " \
+        "raise ENGINE_PART_CEILING in gate.rb with why in the commit"
+      )
     end
 
     def check_orphans(files)
