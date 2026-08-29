@@ -4469,6 +4469,118 @@ module RingtoneLayer
 end
 
 # --------------------------------------------------------------------------
+# engine part: full_engine
+# --------------------------------------------------------------------------
+
+# DILLA_FULL=1 — the built work is on, without a wall of flags.
+#
+# 156 of this engine's 405 ENV switches defaulted off, and the README already
+# names the pattern: "A feature can be fully built, correct, documented — and
+# switched off." Five analog stages shipped that way and were turned on in
+# 2026-07-31; this is the same correction for everything else additive.
+#
+# It is NOT every switch, and it cannot be, because "all of them" is not a
+# reachable state. Many are mutually exclusive — NO_LEAD against MELODIC_LEAD,
+# SMOOTH_DRUMS against HARD_DRUMS, TEMPO_ACCEL against TEMPO_RAMP,
+# TECHNO_HARMONY and GENRE_HARMONY on the same line. Several are subtractive by
+# design (STRIPDOWN, ELEMENT_STRIP, DRUM_DROP). Several are operational rather
+# than musical (DILLA_QUIET, DEBUG_NO_LOUDNORM, CHOP_FRESH), and turning those
+# on breaks the master or deletes cached work.
+#
+# So this is the additive set: layers that add material, movement or colour and
+# do not contradict each other. The style forks — hate/techno, punk, electronium
+# — stay off, because each replaces the renderer rather than adding to it, and
+# they are chosen per track.
+#
+# ||= throughout, so the layer is a starting position and not an override:
+# DRUMS=0 on the command line still wins. DILLA_FULL=0 restores the old silence.
+module FullEngine
+  module_function
+
+  FULL_ENGINE_DEFAULTS = {
+    # Drums. Off by default was a deliberate choice for the sofa mix, and the
+    # operator's standing instruction is the opposite: fresh drums, never a
+    # default take. drum_bus_mapping is the one choke point these run through.
+    "DRUMS" => "1",
+# Five switches are deliberately NOT here, and the reason is measured.
+#
+# WONKY_DRUM_OVERLAY, WONKY_TOP_DIRT, WONKY_HAT_DUCK and DRUM_FIELD_LAYER
+# stack low end on a mix that already has a bed in it: on an 8-bar probe at a
+# pinned seed they moved sub from -30.8 to -25.5 dB and body from -22.2 to
+# -23.3. MASTER_WIDTH was worse -- it widens above 300 Hz, taking energy out
+# of the correlated mids while leaving the sub where it is, and on its own it
+# accounted for 7.2 dB of an 11.1 dB swing in the sub-to-body relationship.
+# All five together inverted that relationship by 20 dB: sub-forward, and
+# hollow exactly where this music lives.
+#
+# The README says the same thing from the other side -- a loop with crowded
+# mids cannot be beaten by pushing drums into them, and most of a 9 dB drum
+# improvement came from lowering other buses rather than raising drums.
+#
+# Good switches, and per-track decisions: whether there is room for a sub bus
+# depends on the bed under it.
+    # The off-kilter feel the engine is named for. The README is explicit that
+    # it comes from NO_QUANTIZE and per-voice lean, not from a big swing number.
+    "NO_QUANTIZE" => "1",
+
+    # Harmony that follows the sample instead of fighting it. HARMONIC_KEEP
+    # transposes the generated pads onto the loop's detected key; SHUFFLE orders
+    # the chords so the top voice traces one arc.
+    "HARMONIC_KEEP" => "1",
+    "HARMONIC_SHUFFLE" => "1",
+
+    # The bed as material rather than a part. -stream_loop is bit-identical and
+    # nothing acoustic is, so ORGANIC_VARY rebuilds it as differing passes and
+    # LOOP_CHOP_SLICES cuts and rotates them.
+    "ORGANIC_VARY" => "1",
+    "LOOP_CHOP_SLICES" => "8",
+    "SAMPLE_FM" => "1",
+    "SAMPLE_SCALE" => "1",
+
+    # Melodic lead phrases rather than an arpeggiator. NO_ARP is already 1 and
+    # covers all three arp paths; this is what plays instead.
+    "MELODIC_LEAD" => "1",
+    "PAD_LEGATO_VAR" => "1",
+    "LEAD_MORPH" => "1",
+    "SYNTH_MORPH" => "1",
+
+    # Extra voices. Additive layers, each its own instrument.
+    "CHORAL_PADS" => "1",
+    "FLUTES" => "1",
+    "BREATH_PERC" => "1",
+    "EUCLIDEAN_HATS" => "1",
+
+    # Mix and master. Buses group the mix into kit/harmonic/low/texture so the
+    # per-channel saturation has something to work across; the width and the
+    # heuristics are the last stage.
+    "DILLA_MIX_BUSES" => "1",
+    "MASTER_HEURISTICS" => "1",
+  }.freeze
+
+  def full_engine_enabled? = ENV.fetch("DILLA_FULL", "1") != "0"
+
+  def full_engine_apply_env!
+    return false unless full_engine_enabled?
+    return false if @full_engine_applied
+
+    @full_engine_applied = true
+    FULL_ENGINE_DEFAULTS.each { |k, v| ENV[k] ||= v }
+    true
+  end
+
+  def full_engine_describe
+    return "full engine: off" unless full_engine_enabled?
+
+    "full engine: #{FULL_ENGINE_DEFAULTS.keys.map { |k| "#{k}=#{ENV[k]}" }.join(' ')}"
+  end
+
+  # At load, for the reason RingtoneLayer states directly above: the render does
+  # not go through dilla_resolve_config, so wiring it there sets knobs in a
+  # process the render never asks, and the log claims a layer that never ran.
+  full_engine_apply_env!
+end
+
+# --------------------------------------------------------------------------
 # engine part: progression_build
 # --------------------------------------------------------------------------
 #
