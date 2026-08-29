@@ -74,7 +74,10 @@ pub4_source_ceilings:
   # is work nobody has landed, and a ceiling raised to fit uncommitted files
   # is the swallowing the note warns about.
   MASTER: 1040
-  RAILS: 2359
+  # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
+  # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
+  # it belongs beside the other probes and folds into nothing.
+  RAILS: 2360
   OPENBSD: 106
   # 220 -> 222 for lora/seed_media.yml and lora/_toolkit/install_seed_media.rb,
   # the prompt set for every seeded photograph and the script that grades and

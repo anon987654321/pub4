@@ -114,7 +114,21 @@ module Pub4
       rules = law # loads Master before the map below is read
       counts = Hash.new(0)
       files.each do |path|
-        text = considered(path, File.read(path, encoding: "UTF-8").scrub)
+        # The file list and the reads are two moments, and this is a shared
+        # checkout: a file listed a second ago can be gone by the time it is
+        # opened. That crashed the whole census on
+        # STUDIO/dilla/demo.mp3.quality.json while another session was deleting
+        # it -- a tool that reports a number for the tree dying because the tree
+        # moved. Skipped rather than rescued blind: a file that is gone
+        # contributes no findings, which is the right answer, and anything else
+        # unreadable still raises.
+        next unless File.file?(path)
+
+        text = begin
+          considered(path, File.read(path, encoding: "UTF-8").scrub)
+        rescue Errno::ENOENT
+          next
+        end
         lang = Master::FILE_LANGUAGE_MAP[File.extname(path)]&.to_sym
         rules.each_value do |rule|
           next if rule.semantic? || !rule.applies?(path, lang)
