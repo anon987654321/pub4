@@ -50,28 +50,39 @@ markdown = <<~MARKDOWN
 
   **Runtime → Change runtime type → T4 GPU** before running.
 
-  Set `HF_TOKEN` in the sidebar (🔑) to a token that has accepted the
-  [FLUX.1-dev licence](https://huggingface.co/black-forest-labs/FLUX.1-dev).
-  A token without it downloads a 403 that surfaces hundreds of lines later
-  inside diffusers, so the setup cell checks for it before anything else.
+  Set `HF_TOKEN` in the sidebar (🔑). SDXL is not licence-gated and needs no
+  token, but the setup cell keeps the check so a later `SEED_MEDIA_BASE=flux`
+  run fails on a missing licence here rather than four hundred lines into a
+  download.
 
-  Two models, because they cannot be one. Ragnhild's adapter says
-  `ss_base_model_version: sdxl_1.0` in its own metadata and its tensors are
-  `lora_te1_`/`lora_unet_` names that do not exist in a FLUX transformer — she
-  was trained on SDXL because a free T4 cannot hold FLUX.1-dev for training
-  either. Loading her into FLUX would attach nothing and render twelve
-  strangers.
+  SDXL for all of them, and that is the hardware rather than a preference.
 
-  1. **dating** — #{counts[:dating]} frames, **SDXL** + her adapter at weight
-     #{spec.dig('dating', 'lora_weight')}. Released before FLUX loads, so 16 GB
-     never has to hold both.
-  2. **scenes** — #{counts[:scenes]} frames, **FLUX.1-dev** nf4, no adapter
-  3. **amber** — #{counts[:amber]} frames, **FLUX.1-dev** nf4, the one mannequin
+  FLUX.1-dev cannot be **loaded** on a free Colab, never mind fitted in VRAM.
+  Its shards are 23.8 GB of fp16 and diffusers materialises them in host RAM
+  before quantisation can move anything to the card; this box has 12.7 GB and
+  the kernel dies at `Loading checkpoint shards`. nf4 does not help — the model
+  has to exist before it can be made smaller. `colab_session.rb:136` records
+  the same two deaths from the training lane.
 
-  The adapter is **not in the clone** and never will be: `STUDIO/lora/*/weights/`
-  is gitignored, because a 218 MB likeness does not belong in a public repo. Put
-  `ragnhild.safetensors` in `MyDrive/lora/ragnhild/` before running, or the
-  dating pass names every path it tried and skips.
+  Ragnhild's adapter is SDXL anyway (`ss_base_model_version: sdxl_1.0`), for
+  exactly the same reason one step earlier, so the dating pass was never going
+  to be FLUX.
+
+  1. **dating** — #{counts[:dating]} frames, her adapter at weight
+     #{spec.dig('dating', 'lora_weight')}
+  2. **scenes** — #{counts[:scenes]} frames, adapter detached
+  3. **amber** — #{counts[:amber]} frames, the one mannequin
+
+  One pipeline for all three: the adapter is detached between passes rather
+  than the model reloaded.
+
+  `SEED_MEDIA_BASE=flux` switches to FLUX on a high-RAM runtime, where the
+  load actually fits. On free Colab it will be killed.
+
+  The adapter is **not in the clone** and never will be:
+  `STUDIO/lora/*/weights/` is gitignored, because a 218 MB likeness does not
+  belong in a public repo. Put `ragnhild.safetensors` anywhere in your Drive —
+  the render cell searches for it.
 
   Roughly 20–40 s a frame on a T4 at nf4, so about half an hour of GPU plus the
   model download. Output goes to Drive; a disconnect costs the frames since the
@@ -92,9 +103,15 @@ token_cell = <<~PYTHON
       os.environ["HF_TOKEN"] = getpass.getpass("HF token (FLUX.1-dev licence accepted): ")
   assert os.environ.get("HF_TOKEN"), "no HF token"
 
-  # Fail here, not four hundred lines into a download. A token that has not
-  # accepted the licence gets 403 on the weights and the traceback names a
-  # missing file rather than a missing acceptance.
+  # Checked, not enforced -- unless FLUX is actually the base.
+  #
+  # SDXL is not licence-gated and needs no token, so refusing the run over a
+  # FLUX licence would block the default path on the terms of a model it does
+  # not use. That is check_hf_flux_access.rb's own recorded bug, which blocked
+  # SDXL renders on machines with no HF credentials at all.
+  #
+  # It still fails hard when SEED_MEDIA_BASE=flux, because there the 403 arrives
+  # hundreds of lines later inside diffusers, named as a missing file.
   import urllib.request
   req = urllib.request.Request(
       "https://huggingface.co/api/models/black-forest-labs/FLUX.1-dev",
@@ -103,9 +120,12 @@ token_cell = <<~PYTHON
       urllib.request.urlopen(req).read(1)
       print("ok: FLUX.1-dev reachable with this token")
   except Exception as e:
-      raise SystemExit(
-          "FLUX.1-dev is not reachable with this token. Accept the licence at "
-          "https://huggingface.co/black-forest-labs/FLUX.1-dev and rerun. " + str(e))
+      msg = ("FLUX.1-dev is not reachable with this token. Accept the licence at "
+             "https://huggingface.co/black-forest-labs/FLUX.1-dev")
+      if os.environ.get("SEED_MEDIA_BASE", "sdxl").lower() == "flux":
+          raise SystemExit(msg + " — required because SEED_MEDIA_BASE=flux. " + str(e))
+      print("note:", msg)
+      print("note: not needed for the SDXL default; continuing.")
 PYTHON
 
 drive_cell = <<~PYTHON
@@ -153,11 +173,28 @@ setup_cell = <<~PYTHON
 PYTHON
 
 render_cell = <<~PYTHON
-  import gc, glob, os, yaml, torch
+  import gc, glob, json, os, yaml, torch
 
   SPEC = "/content/pub4/STUDIO/lora/seed_media.yml"
   spec = yaml.safe_load(open(SPEC))
-  DTYPE = torch.float16  # T4 is Turing (sm_75) and has no bf16 at all.
+  DTYPE = torch.float16  # Turing has no bf16.
+
+  # SDXL for all sixty-one, and this is the same conclusion the training lane
+  # reached rather than a new opinion.
+  #
+  # FLUX.1-dev cannot be LOADED here, never mind fitted in VRAM. Its shards are
+  # 23.8 GB of fp16 and diffusers materialises them in host RAM before
+  # quantisation can move anything to the card; a free Colab has 12.7 GB and the
+  # kernel is killed at "Loading checkpoint shards". nf4 does not help, because
+  # the model has to exist before it can be made smaller. colab_session.rb line
+  # 136 records the same two deaths.
+  #
+  # add_swap puts 24 GB on the scratch disk and lets the loader spill, which
+  # sometimes works and sometimes meets a container that refuses swapon. So FLUX
+  # is opt-in rather than the default: SEED_MEDIA_BASE=flux on a high-RAM
+  # runtime. The default is the one that produces photographs tonight.
+  BASE = os.environ.get("SEED_MEDIA_BASE", "sdxl").lower()
+  print(f"ok: base = {BASE}")
 
   RATIOS = {"3:2": (1216, 832), "4:5": (896, 1120), "1:1": (1024, 1024), "4:3": (1152, 864)}
 
@@ -169,83 +206,63 @@ render_cell = <<~PYTHON
       if os.path.exists(path):          # Resume is free; a disconnect is not.
           print("skip", key); return
       w, h = size_for(ratio)
-      image = pipe(prompt=prompt, width=w, height=h,
-                   generator=torch.Generator("cpu").manual_seed(seed), **kw).images[0]
-      image.save(path)
+      img = pipe(prompt=prompt, width=w, height=h,
+                 generator=torch.Generator("cpu").manual_seed(seed), **kw).images[0]
+      img.save(path)
       print("ok", key, f"{w}x{h}")
 
-  def teardown(pipe):
-      del pipe
-      gc.collect(); torch.cuda.empty_cache()
+  def adapter_base(path):
+      with open(path, "rb") as f:
+          n = int.from_bytes(f.read(8), "little")
+          meta = json.loads(f.read(n)).get("__metadata__", {})
+      return meta.get("ss_base_model_version", "unknown"), meta.get("training_info", "")
 
-  # ---------------------------------------------------------------- pass 1
-  # Dating, on SDXL, because that is the model Ragnhild's adapter was trained
-  # against -- its own metadata says ss_base_model_version: sdxl_1.0, and its
-  # tensors are lora_te1_/lora_unet_ names that do not exist in a FLUX
-  # transformer. Loading it into FLUX would not fail usefully; it would attach
-  # nothing and render twelve strangers.
-  #
-  # She was trained on SDXL because a free T4 cannot hold FLUX.1-dev for
-  # training either. Same constraint, one step earlier.
+  # ------------------------------------------------------------- the adapter
   dating = spec["dating"]
   SUBJECT = dating["lora"]
-  # Looked for by path first, then by search. The mount is authenticated as the
-  # operator, so a recursive walk of their own Drive is the reliable way to find
-  # a file they uploaded without having to be told where they put it.
-  #
-  # The share link is deliberately NOT hardcoded here. A Drive file ID in a
-  # public repo is the same disclosure as committing the weights: anyone reading
-  # this file could fetch her likeness. The mount needs no link.
-  ADAPTER_CANDIDATES = [
+  # Looked for by path, then by search. The mount is authenticated as the
+  # operator, so walking their own Drive finds a file they uploaded by hand
+  # without anyone having to say where it went. The share link is deliberately
+  # not hardcoded: a Drive file ID in a public repo discloses her likeness as
+  # surely as committing the weights would.
+  CANDIDATES = [
       f"/content/drive/MyDrive/lora/{SUBJECT}/{SUBJECT}.safetensors",
-      f"/content/drive/MyDrive/lora/{SUBJECT}/weights/{SUBJECT}.safetensors",
       f"/content/drive/MyDrive/{SUBJECT}.safetensors",
   ]
-  ADAPTER_CANDIDATES += sorted(glob.glob(f"/content/drive/MyDrive/lora/{SUBJECT}/*.safetensors"))
-  ADAPTER = next((p for p in ADAPTER_CANDIDATES if os.path.exists(p)), None)
-
+  CANDIDATES += sorted(glob.glob(f"/content/drive/MyDrive/lora/{SUBJECT}/*.safetensors"))
+  ADAPTER = next((p for p in CANDIDATES if os.path.exists(p)), None)
   if not ADAPTER:
-      print(f"not at the expected paths — searching MyDrive for *.safetensors …")
+      print("searching MyDrive for *.safetensors …")
       found = glob.glob("/content/drive/MyDrive/**/*.safetensors", recursive=True)
-      # The subject's name in the filename or its directory wins; failing that,
-      # the largest file, since a subject adapter is hundreds of MB and a stray
-      # embedding is kilobytes.
       named = [p for p in found if SUBJECT.lower() in p.lower()]
       pool = named or found
       if pool:
           ADAPTER = max(pool, key=os.path.getsize)
-          print(f"found {len(found)} adapter(s); using {ADAPTER}")
+          print(f"found {len(found)}; using {ADAPTER}")
           if not named:
-              print(f"warn: none named '{SUBJECT}' — this is the largest one, check the face")
+              print(f"warn: none named '{SUBJECT}' — largest wins, check the face")
 
-  if ADAPTER:
-      # Say which base it was trained against before spending a GPU on it. An
-      # SDXL adapter in a FLUX pipeline attaches nothing and renders strangers,
-      # which is a failure that produces files and looks like success.
-      import json as _json
-      with open(ADAPTER, "rb") as _f:
-          _n = int.from_bytes(_f.read(8), "little")
-          _meta = _json.loads(_f.read(_n)).get("__metadata__", {})
-      _base = _meta.get("ss_base_model_version", "unknown")
-      _steps = _meta.get("training_info", "")
-      print(f"ok: adapter base={_base} {_steps}")
-      if "sdxl" not in _base.lower():
-          print(f"warn: base is {_base}, and this pass builds an SDXL pipeline.")
-          print("warn: if she has been retrained on FLUX, render her in the FLUX pass instead.")
+  # --------------------------------------------------------------- the model
+  from diffusers import StableDiffusionXLPipeline, AutoencoderKL
+  # The fp16-fix VAE, not SDXL's own: the original overflows in fp16 and decodes
+  # to black. render_config.rb names the same repo for the same reason.
+  vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=DTYPE)
+  pipe = StableDiffusionXLPipeline.from_pretrained(
+      "stabilityai/stable-diffusion-xl-base-1.0",
+      vae=vae, torch_dtype=DTYPE, variant="fp16", use_safetensors=True)
+  pipe.enable_model_cpu_offload()
+  pipe.set_progress_bar_config(disable=True)
+  KW = dict(guidance_scale=6.0, num_inference_steps=30)
+  print("ok: SDXL loaded")
 
+  # ------------------------------------------------------------------ pass 1
   if ADAPTER:
-      from diffusers import StableDiffusionXLPipeline, AutoencoderKL
-      # The fp16-fix VAE, not SDXL's own: the original overflows in fp16 and
-      # decodes to black. render_config.rb names the same repo for the same
-      # reason.
-      vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=DTYPE)
-      sd = StableDiffusionXLPipeline.from_pretrained(
-          "stabilityai/stable-diffusion-xl-base-1.0",
-          vae=vae, torch_dtype=DTYPE, variant="fp16", use_safetensors=True)
-      sd.enable_model_cpu_offload()
-      sd.set_progress_bar_config(disable=True)
-      sd.load_lora_weights(ADAPTER, adapter_name="subject")
-      sd.set_adapters(["subject"], adapter_weights=[dating["lora_weight"]])
+      base, steps = adapter_base(ADAPTER)
+      print(f"ok: adapter base={base} {steps}")
+      if "sdxl" not in base.lower():
+          print(f"warn: adapter is {base}, this pipeline is SDXL — the face will not attach")
+      pipe.load_lora_weights(ADAPTER, adapter_name="subject")
+      pipe.set_adapters(["subject"], adapter_weights=[dating["lora_weight"]])
 
       env_path = f"/content/pub4/STUDIO/lora/{SUBJECT}/subject.env"
       trigger, descriptor = SUBJECT, ""
@@ -255,62 +272,37 @@ render_cell = <<~PYTHON
                   trigger = line.split("=", 1)[1].strip().strip('"').strip("'")
               if line.startswith("DESCRIPTOR="):
                   descriptor = line.split("=", 1)[1].strip().strip('"').strip("'")
-      print("ok: SDXL + adapter loaded, trigger =", trigger)
+      # trigger then descriptor, the order shoots.rb composes: the trigger
+      # carries the face and the descriptor anchors age and colouring, which with
+      # a light adapter is most of the likeness.
+      who = f"{trigger}, {descriptor}" if descriptor else trigger
+      print("ok: adapter attached, subject =", who)
 
-      subject_clause = f"{trigger}, {descriptor}" if descriptor else trigger
       for i, (key, prompt) in enumerate(dating["profiles"].items()):
-          render(sd, key, prompt.replace("TRIGGER", subject_clause),
-                 dating["aspect_ratio"], 1000 + i,
-                 guidance_scale=6.0, num_inference_steps=30)
-      teardown(sd)
-      print("ok: dating pass complete, SDXL released")
+          render(pipe, key, prompt.replace("TRIGGER", who), dating["aspect_ratio"], 1000 + i, **KW)
+
+      # Unloaded, not torn down. The scenes and garments must have no subject in
+      # them, but they can share this pipeline -- reloading SDXL to drop one
+      # adapter would cost minutes for nothing.
+      pipe.delete_adapters("subject")
+      gc.collect(); torch.cuda.empty_cache()
+      print("ok: dating done, adapter detached")
   else:
       print("SKIPPED dating — no adapter found. Looked in:")
-      for p in ADAPTER_CANDIDATES:
+      for p in CANDIDATES:
           print("   ", p)
       print("")
-      print(f"  Put {SUBJECT}.safetensors in MyDrive/lora/{SUBJECT}/ and rerun.")
-      print("  It is gitignored on purpose — a 218 MB likeness does not belong")
-      print("  in a public repo — so the clone will never carry it.")
+      print(f"  Put {SUBJECT}.safetensors anywhere in MyDrive and rerun.")
 
-  # ------------------------------------------------------- passes 2 and 3
-  # Scenes and garments on FLUX.1-dev, loaded only now: SDXL is already gone, so
-  # the 16 GB does not have to hold both.
-  from diffusers import FluxPipeline, BitsAndBytesConfig, FluxTransformer2DModel
-  from transformers import T5EncoderModel, BitsAndBytesConfig as TfBnb
-
-  MODEL = "black-forest-labs/FLUX.1-dev"
-  # Transformer AND T5 quantised, both necessary: nf4 puts the transformer near
-  # 6.5 GB, but T5-XXL is another 9 GB in fp16 and 16 GB will not hold both plus
-  # activations.
-  nf4 = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type="nf4",
-                           bnb_4bit_compute_dtype=DTYPE)
-  transformer = FluxTransformer2DModel.from_pretrained(
-      MODEL, subfolder="transformer", quantization_config=nf4, torch_dtype=DTYPE)
-  text_encoder_2 = T5EncoderModel.from_pretrained(
-      MODEL, subfolder="text_encoder_2",
-      quantization_config=TfBnb(load_in_4bit=True, bnb_4bit_quant_type="nf4",
-                                bnb_4bit_compute_dtype=DTYPE),
-      torch_dtype=DTYPE)
-  flux = FluxPipeline.from_pretrained(
-      MODEL, transformer=transformer, text_encoder_2=text_encoder_2, torch_dtype=DTYPE)
-  flux.enable_model_cpu_offload()
-  flux.set_progress_bar_config(disable=True)
-  print("ok: FLUX.1-dev loaded nf4")
-
-  FLUX_KW = dict(guidance_scale=spec["meta"]["guidance"],
-                 num_inference_steps=spec["meta"]["steps"])
-
+  # ------------------------------------------------------------ passes 2 & 3
   for i, (key, entry) in enumerate(spec["scenes"].items()):
-      render(flux, key, entry["prompt"], entry.get("aspect_ratio"), 2000 + i, **FLUX_KW)
+      render(pipe, key, entry["prompt"], entry.get("aspect_ratio"), 2000 + i, **KW)
 
-  # The mannequin clause is prepended rather than repeated in each entry, so
-  # seventeen garments share one mannequin instead of seventeen slightly
-  # different ones.
+  # The mannequin clause is prepended rather than repeated per entry, so all
+  # seventeen garments share one mannequin instead of seventeen near-misses.
   amber = spec["amber"]
   for i, (key, garment) in enumerate(amber["garments"].items()):
-      render(flux, key, spec["mannequin"] + ", " + garment,
-             amber["aspect_ratio"], 3000 + i, **FLUX_KW)
+      render(pipe, key, spec["mannequin"] + ", " + garment, amber["aspect_ratio"], 3000 + i, **KW)
 
   made = len([f for f in os.listdir(OUT) if f.endswith(".png")])
   print("")
