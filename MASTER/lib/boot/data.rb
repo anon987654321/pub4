@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "date"
+
 module Master
   # YAML loading, validation, and rule-shard composition for Master.*.
   module MasterData
@@ -14,7 +16,7 @@ module Master
       raise "yaml too large: #{path}" if File.exist?(path) && File.size(path) > MAX_CONSTITUTION_BYTES
 
       Timeout.timeout(YAML_LOAD_TIMEOUT_S) do
-        YAML.safe_load_file(path, aliases: true, symbolize_names:) || default
+        YAML.safe_load_file(path, aliases: true, symbolize_names:, permitted_classes: [Date, Time]) || default
       end
     rescue Errno::ENOENT, Errno::EACCES => e
       warn("load_yaml: #{e.message}")

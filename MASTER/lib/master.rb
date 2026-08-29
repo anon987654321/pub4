@@ -35,7 +35,7 @@ module Master
   BUNDLE_BIN = RUBY_PLATFORM.include?("openbsd") ? "bundle34" : "bundle"
   MIN_API_KEY_LENGTH_HEURISTIC = 20
   MAX_CONSTITUTION_BYTES = 10 * 1024 * 1024
-  YAML_LOAD_TIMEOUT_S = 5
+  YAML_LOAD_TIMEOUT_S = 20
   # The OpenRouter default and :free-pool head are Master.openrouter_default
   # and Master.free_primary_model (boot/runtime.rb) — readers of providers.yml
   # and models.yml through the sanctioned loaders. They were constants here,
