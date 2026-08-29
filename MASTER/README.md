@@ -59,11 +59,12 @@ model running on the machine itself when the network's gone dark.
 When the tree goes quiet, MASTER dreams. It reads one of its own rules, searches
 the world for how that rule is best understood, ties it back to the code that
 should follow it, and — down a sealed, gated path — fixes one thing. And it
-*makes*. Ask in plain words for a photograph of Bergen in the rain, a J Dilla
-beat, or a graded film look, and it routes you to the studio tools sitting right
-beside it. The beats in this repo are real: a flipped record under fresh FM
-drums, an arpeggio locked to the chord scale, played from a library of a hundred
-and ninety real progressions.
+*makes*. Ask in plain words for a photograph of Bergen in the rain, a [J Dilla
+beat](../STUDIO/dilla), or a graded film look, and it routes you to [the studio
+tools](../STUDIO) sitting right beside it. The beats in this repo are real: a
+flipped record under fresh FM drums, an arpeggio locked to the chord scale,
+played from a library of a hundred and ninety real
+[progressions](https://github.com/ldrolez/free-midi-chords).
 
 ### 🧬 The bigger picture — an embryo, not an app
 
@@ -77,8 +78,8 @@ that.
 
 It reasons in capabilities, not gadgets — observe, navigate, move, grasp,
 communicate, inspect, repair — and every body implements those in its own way.
-So `move()` nudges a cursor or fires a thruster, and the mind above it never has
-to care which. Nothing gets manufactured on a whim: physical bodies sit
+So the same order — move — nudges a cursor in one body and fires a thruster in
+another, and the mind above never has to care which. Nothing gets manufactured on a whim: physical bodies sit
 behind hard authorization, resource, and safety walls, simulated and validated
 long before anything is ever built.
 
@@ -93,11 +94,12 @@ amount of engineering and validation in between, maybe a spacecraft.
 
 #### 🧭 Running it
 
-Install the dependencies and start `bin/master`. Operator commands live under
-`bin/pub4`; deploy notes are in the OpenBSD folder. Read START_HERE, then AGENTS,
-to work inside it; DECISIONS explains anything that looks strange on purpose; and
-everything still on the table lives in one backlog at the top of the repo.
-Licensed MIT.
+Install the dependencies and start [the master command](bin/master). The
+operator commands sit beside it, and the deploy notes are in [the OpenBSD
+folder](../OPENBSD). Read [START_HERE](START_HERE.md), then [AGENTS](AGENTS.md),
+to work inside it; [DECISIONS](DECISIONS.md) explains anything that looks strange
+on purpose; and everything still on the table lives in [one backlog](../TODO.md)
+at the top of the repo. Licensed MIT.
 
 ###### 🔬 Under the hood
 
