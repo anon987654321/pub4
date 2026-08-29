@@ -29,6 +29,7 @@ module Master
       ).freeze
 
       def self.call(text) = new.call(text)
+      def self.brevity(text) = new.brevity(text)
 
       def call(text)
         prose = text.to_s.strip
@@ -37,7 +38,31 @@ module Master
         prune_mixed(prose).gsub(/\s+/, " ").strip
       end
 
+      # Padding only — sycophancy openers, preambles, endings, hedges — with
+      # markdown, code fences and line breaks left intact. call() is the TTS
+      # strip that also flattens layout into one line; brevity is what a commit
+      # message, a comment or chat output can pass through without losing a code
+      # block or a deliberate break. It removes the fake warmth, not the real
+      # content, so it serves brevity and warmth at once rather than trading one
+      # for the other.
+      def brevity(text)
+        prose = text.to_s
+        return "" if prose.strip.empty?
+
+        prose.split(FENCE_RE).map do |segment|
+          segment.start_with?("```") ? segment : trim_padding(segment)
+        end.join.strip
+      end
+
       private
+
+      def trim_padding(text)
+        cleaned = text.sub(SYCOPHANCY_RE, "")
+        rules.fetch("preambles", []).each { |phrase| cleaned = cleaned.sub(/\A\s*#{Regexp.escape(phrase)}\s*/i, "") }
+        rules.fetch("endings", []).each { |phrase| cleaned = cleaned.sub(/\s*#{Regexp.escape(phrase)}\s*\z/i, "") }
+        rules.fetch("hedges", []).each { |hedge| cleaned = cleaned.gsub(/\b#{Regexp.escape(hedge)}\b\s*/i, "") }
+        cleaned
+      end
 
       def prune_mixed(text)
         text.split(FENCE_RE).map do |segment|
@@ -45,15 +70,10 @@ module Master
         end.join
       end
 
+      # The TTS strip is the brevity strip plus markdown removal, so it reuses the
+      # one rather than restating its four passes.
       def strip_all(text)
-        cleaned = text.sub(SYCOPHANCY_RE, "")
-        rules.fetch("preambles", []).each { |phrase| cleaned = cleaned.sub(/\A\s*#{Regexp.escape(phrase)}\s*/i, "") }
-        rules.fetch("endings", []).each { |phrase| cleaned = cleaned.sub(/\s*#{Regexp.escape(phrase)}\s*\z/i, "") }
-        rules.fetch("hedges", []).each do |hedge|
-          cleaned = cleaned.gsub(/\b#{Regexp.escape(hedge)}\b\s*/i, "")
-        end
-
-        cleaned
+        trim_padding(text)
           .gsub(HEADER_RE, "")
           .gsub(BOLD_RE, '\1')
           .gsub(ITALIC_RE, '\1')

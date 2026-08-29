@@ -5,6 +5,7 @@ require "pastel"
 require "socket"
 require_relative "../ground/host_budget"
 require_relative "aesthetic"
+require_relative "strunk_pass"
 require_relative "renderer/git_status"
 require_relative "renderer/system_info"
 require_relative "renderer/text_formatting"
@@ -49,7 +50,12 @@ module Master
       end
 
       def render(content, mode: :plain)
-        text = output_guard.sanitize(beautify(content.to_s), context: output_context(mode))
+        context = output_context(mode)
+        text = output_guard.sanitize(beautify(content.to_s), context:)
+        # Conversational output only: strip the padding a terse reply does not
+        # need, leaving diagnostic and dmesg output whole. MASTER_BREVITY=0 opts
+        # out if the strip ever eats something that mattered.
+        text = StrunkPass.brevity(text) if context == :routine && ENV["MASTER_BREVITY"] != "0"
         case mode
         when :error then @p.red("err: #{text}")
         when :success then @p.bright_red("ok: #{text}")
