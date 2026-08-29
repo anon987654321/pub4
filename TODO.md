@@ -87,7 +87,8 @@ calling a MASTER finding new: it very often is not.
 
 
 What is open in MASTER, plus the scanner conventions this codebase keeps
-relearning. Deploy and RAILS debt is `OPENBSD/data/debt.yml`.
+relearning. Deploy debt is the OPENBSD section below; RAILS debt is the RAILS
+section.
 
 How a closed item leaves this file: it goes, and if it taught a rule the rule
 moves to `DECISIONS.md` or to the "Scanner Conventions" section below. The
@@ -1703,7 +1704,7 @@ This file is the single home for these. `README.md` used to carry the list as
 five unowned sentences under "Media integration"; two of them had gone stale
 without anyone noticing, which is the argument for giving them a file with
 enough structure that staleness shows. Operator-side debt is **not** duplicated
-here — that lives in `OPENBSD/data/debt.yml` and stays there.
+here — it is the OPENBSD section of this file and stays there.
 
 A blocker leaves this file when its unblock criteria are met, not when it stops
 being mentioned.
@@ -1733,8 +1734,9 @@ must not perform.
 
 **Checked by:** `domain_alignment` compares `ALL_DOMAINS` against
 `Brgen::DomainRegistry` and asserts a keypair exists for the four live apexes.
-Nothing checks the city apexes are actually reachable — that is deliberate, see
-the city-domain entry in `OPENBSD/data/debt.yml`.
+Nothing checks the city apexes are actually reachable — that is deliberate: the
+seven live cities sit behind `domain_alignment`, and the half that is registrar
+money belongs to the domain expiry watch rather than to a gate.
 
 ---
 
@@ -1991,7 +1993,13 @@ always described, now with numbers that cannot drift while nobody looks.
 
 <!-- open-debt -->
 
-BARE_RESCUE in the line scope of data/rules.yml and FAIL_VISIBLY in the unit scope carry the identical detect_lexical, the identical severity (error) and the same fix advice in different words, so every bare rescue in this tree is two findings. Both were edited in step on 2026-08-12 when the regex was corrected for symbols and comments, which is the maintenance cost the duplication buys. Not collapsed on my own judgement: FAIL_VISIBLY is a soul.yml `absolute.rules` entry and BARE_RESCUE is a borrowed style-guide rule, so deciding which one keeps the regex — or whether the constitutional principle should be measured by something other than a line-level regex at all — is a constitutional question and needs the operator. It is the same shape as EMPTY_RESCUE, which WAS collapsed the same day because nothing constitutional was attached to it: 37 findings, 0 unique. See MASTER/DEBT.md "Scanner noise".
+BARE_RESCUE in the line scope of data/rules.yml and FAIL_VISIBLY in the unit scope carry the identical detect_lexical, the identical severity (error) and the same fix advice in different words, so every bare rescue in this tree is two findings. Both were edited in step on 2026-08-12 when the regex was corrected for symbols and comments, which is the maintenance cost the duplication buys. Not collapsed on my own judgement: FAIL_VISIBLY is a soul.yml `absolute.rules` entry and BARE_RESCUE is a borrowed style-guide rule, so deciding which one keeps the regex — or whether the constitutional principle should be measured by something other than a line-level regex at all — is a constitutional question and needs the operator. It is the same shape as EMPTY_RESCUE, which WAS collapsed the same day because nothing constitutional was attached to it: 37 findings, 0 unique. See "Scanner noise" in the MASTER section.
+
+#### `bsdports_org_delegated_to_parking`  — tag: operator-priority
+
+<!-- open-debt -->
+
+open 2026-08-25, registrar-side. bsdports.org does not resolve: the .org registry delegates it to ns1/2/3.expireddomain.hyp.net — Domeneshop's parking servers — which publish no A record. Confirmed against b0.org.afilias-nst.org, not a cached resolver. The registration is ours and paid to 2027-08-08, and whois shows autoRenewPeriod, so the shape is: it lapsed on 2026-08-08, Domeneshop moved the nameservers to parking, the registration auto-renewed, and the nameservers were never put back. Everything downstream still believes in it — relayd holds a keypair and a Host match, a valid certificate sits at /etc/ssl/bsdports.org.fullchain.pem to Nov 10 2026, RUNBOOK.md names https://bsdports.org as the URL, OPERATOR.sh probes it, rcctl says ok and the app answers 200 on 47312. It has simply been dark. Fix is one registrar change: set the nameservers at Domeneshop to ns.hyp.net and ns.brgen.no, which is what brgen.no uses. Do it before Nov 10 or the certificate renewal fails too — acme-client needs the name to resolve here for HTTP-01. Nothing we had could have caught this: domain_watch takes its population from nsd.conf and bsdports.org is not a zone we serve, and the expiry watch reads expiry, which is paid. dns_zones now asks a public resolver whether each app domain points at 46.23.89.226, and fails on this one.
 
 ### Debt — resolved records and what not to chase
 
@@ -2049,7 +2057,7 @@ Closed 2026-08-12. Pub4::AssetUrlLint reads every url() in a stylesheet or an in
 
 ##### `rails_no_breakpoint_token`
 
-Closed 2026-08-11. design_tokens.yml has a `viewport` scale (480/576/640/768/ 1265/1280, each with the count that justifies it) and Pub4::BreakpointLint enforces it, pinned by RAILS/test/breakpoint_lint_test.rb. It cannot be a CSS custom property — `@media (min-width: var(--x))` is invalid CSS — so the numbers stay in the stylesheets and the lint is what makes them single-sourced. The measurement corrected the entry twice. The real defect was not the 767/768-style pairs, which are a correct exclusive scheme: it was that 640, 768 and 1265 were EACH used as both a floor and a ceiling somewhere in the family, 26 sites in total, so at exactly those three widths two blocks matched and bundle order decided which won. Fixed by moving the six colliding max-bounds down one pixel, keeping the interpretation the min-width author had declared. A seventh apparent site was a comment in shared/_responsive.scss explaining why a rule is no longer wrapped in the query it quotes — the lint now strips comments, which is the convention in MASTER/DEBT.md it had just walked into. Also fixed: brgen/_root's compose control banded from 769px while the rest of the family treats 768 as the tablet edge, so at exactly 768px it fell through to base styling. Residue is 3 unknown edges (700px in marketplace nav, 400 and 600 in zen shell), which are design decisions rather than typos and live in the lint's baseline as a number that can only fall.
+Closed 2026-08-11. design_tokens.yml has a `viewport` scale (480/576/640/768/ 1265/1280, each with the count that justifies it) and Pub4::BreakpointLint enforces it, pinned by RAILS/test/breakpoint_lint_test.rb. It cannot be a CSS custom property — `@media (min-width: var(--x))` is invalid CSS — so the numbers stay in the stylesheets and the lint is what makes them single-sourced. The measurement corrected the entry twice. The real defect was not the 767/768-style pairs, which are a correct exclusive scheme: it was that 640, 768 and 1265 were EACH used as both a floor and a ceiling somewhere in the family, 26 sites in total, so at exactly those three widths two blocks matched and bundle order decided which won. Fixed by moving the six colliding max-bounds down one pixel, keeping the interpretation the min-width author had declared. A seventh apparent site was a comment in shared/_responsive.scss explaining why a rule is no longer wrapped in the query it quotes — the lint now strips comments, which is the convention in "Scanner conventions" it had just walked into. Also fixed: brgen/_root's compose control banded from 769px while the rest of the family treats 768 as the tablet edge, so at exactly 768px it fell through to base styling. Residue is 3 unknown edges (700px in marketplace nav, 400 and 600 in zen shell), which are design decisions rather than typos and live in the lint's baseline as a number that can only fall.
 
 ##### `brgen_allow_unauthenticated_access_is_a_noop`
 
@@ -2167,10 +2175,6 @@ closed 2026-08-22: /home/dev is 710 dev:_pub4ci (app users traverse by group, pr
 
 closed 2026-08-22: every sub-item done; both apps survived three full deploy chains on 2026-08-21/22 and the armed uptime-check watches every 5 minutes.
 
-##### `brgen_city_carousel_links_dead`
-
-closed 2026-08-22: 7 cities live behind the domain_alignment gate; the registrar-money half lives in the domain expiry watch, the empty-city content question in the launch-wipe runbook.
-
 ##### `rails_gates_not_wired`
 
 closed 2026-08-22: the deploy host now sets GATE_REQUIRE_LIVE=1 for the deep tier (check-rails detects /etc/rc.d/brgen), so a closed port fails instead of reading green; dns_zones was already in check-openbsd.
@@ -2190,10 +2194,6 @@ closed 2026-08-22 with the decision: brgen_jobs runs resident (four processes re
 ##### `gates_have_no_precision_ledger`
 
 closed 2026-08-22: outcome ledger + fail-open landed earlier; the known-bad-fixture ask becomes doctrine in OPENBSD/DECISIONS.md — every NEW gate carries its fixture pair, existing gates get one when touched (tap_target_probe and focus_walk_probe are the exemplars).
-
-##### `bsdports_org_delegated_to_parking`
-
-open 2026-08-25, registrar-side. bsdports.org does not resolve: the .org registry delegates it to ns1/2/3.expireddomain.hyp.net — Domeneshop's parking servers — which publish no A record. Confirmed against b0.org.afilias-nst.org, not a cached resolver. The registration is ours and paid to 2027-08-08, and whois shows autoRenewPeriod, so the shape is: it lapsed on 2026-08-08, Domeneshop moved the nameservers to parking, the registration auto-renewed, and the nameservers were never put back. Everything downstream still believes in it — relayd holds a keypair and a Host match, a valid certificate sits at /etc/ssl/bsdports.org.fullchain.pem to Nov 10 2026, RUNBOOK.md names https://bsdports.org as the URL, OPERATOR.sh probes it, rcctl says ok and the app answers 200 on 47312. It has simply been dark. Fix is one registrar change: set the nameservers at Domeneshop to ns.hyp.net and ns.brgen.no, which is what brgen.no uses. Do it before Nov 10 or the certificate renewal fails too — acme-client needs the name to resolve here for HTTP-01. Nothing we had could have caught this: domain_watch takes its population from nsd.conf and bsdports.org is not a zone we serve, and the expiry watch reads expiry, which is paid. dns_zones now asks a public resolver whether each app domain points at 46.23.89.226, and fails on this one.
 
 ---
 
