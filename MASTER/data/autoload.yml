@@ -2,8 +2,8 @@
 #
 # This was five ad-hoc lists inside lib/master.rb -- an array, a lone extra
 # ignore, a glob with an inline exception, a second array, and a third array --
-# with no reason recorded against any entry. Adding a file to lib/cli/cli/ broke
-# boot with an error that did not explain itself.
+# with no reason recorded against any entry. Adding a file to a directory whose
+# parts reopen one class broke boot with an error that did not explain itself.
 #
 # Every path here is a file Zeitwerk *cannot* load, not a file someone chose not
 # to name properly: it reopens a constant defined elsewhere, declares a foreign
@@ -15,16 +15,16 @@ autoload:
   # constant the file does not define, which is exactly what Zeitwerk rejects.
   # Splitting a large class across files is the point; these are its parts.
   reopens_a_constant_defined_elsewhere:
-    # Master::CLI::CLI -- the REPL, split by concern. container.rb is NOT here:
-    # it defines Master::CLI::CLI::Container and autoloads normally.
-    - cli/cli/background_scan.rb
-    - cli/cli/bridge_run.rb
-    - cli/cli/command_ops.rb
-    - cli/cli/command_handlers.rb
-    - cli/cli/repl_flow.rb
-    - cli/cli/result_display.rb
-    - cli/cli/signals.rb
-    - cli/cli/thinking_indicator.rb
+    # Master::CLI::Session -- the REPL, split by concern. container.rb is NOT here:
+    # it defines Master::CLI::Session::Container and autoloads normally.
+    - cli/session/background_scan.rb
+    - cli/session/bridge_run.rb
+    - cli/session/command_ops.rb
+    - cli/session/command_handlers.rb
+    - cli/session/repl_flow.rb
+    - cli/session/result_display.rb
+    - cli/session/signals.rb
+    - cli/session/thinking_indicator.rb
     # Master::CLI::CommandRegistry -- one file per command family. command.rb
     # and formatter.rb define their own constants and are left autoloadable.
     - cli/command_registry/agent_commands.rb

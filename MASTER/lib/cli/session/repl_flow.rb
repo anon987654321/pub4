@@ -4,7 +4,7 @@ require_relative "command_handlers"
 
 module Master
   module CLI
-    class CLI
+    class Session
       private
 
       def set_visitor_mode_if_unauthenticated

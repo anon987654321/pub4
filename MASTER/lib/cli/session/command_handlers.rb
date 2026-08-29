@@ -4,7 +4,7 @@ require_relative "../command_registry/formatter"
 
 module Master
   module CLI
-    class CLI
+    class Session
       private
 
       def run_help(command = nil)

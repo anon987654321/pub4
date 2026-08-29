@@ -4,7 +4,7 @@ require_relative "../stream_accumulator"
 
 module Master
   module CLI
-    class CLI
+    class Session
       SPIN_FRAMES = ["\u00B7", "\u2219", "\u2022", "\u25CF"].freeze
       SPIN_INTERVAL = 0.25
       DMESG_IGNORE = %w[bus:subscribe bus:unsubscribe ring:write].freeze

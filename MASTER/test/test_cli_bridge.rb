@@ -18,7 +18,7 @@ class CLIBridgeTest < Minitest::Test
     renderer.define_singleton_method(:speaker_tag) { "agent> " }
     agent = Struct.new(:model).new("test-model")
     session = Struct.new(:budget_max, :cost, :token_est, :tokens_billed, :phase, :messages).new(0, 0.0, 0, 0, :work, [])
-    Master::CLI::CLI.new(
+    Master::CLI::Session.new(
       container: {
         session:,
         agent:,

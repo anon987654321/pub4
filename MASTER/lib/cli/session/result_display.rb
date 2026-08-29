@@ -2,7 +2,7 @@
 
 module Master
   module CLI
-    class CLI
+    class Session
       private
 
       def display_result(result:, accumulated:, streamed:)

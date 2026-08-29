@@ -51,12 +51,12 @@ module Master
       Ground::Pledge.stage2_lock!
       CLI::WebServer.start(container[:config])
       CLI::BootBanner.print
-      CLI::CLI.new(container:)
+      CLI::Session.new(container:)
     end
 
     def boot_fast(root: Dir.pwd)
       prepare_runtime!
-      CLI::CLI.new(container: Builder.build_fast(root:))
+      CLI::Session.new(container: Builder.build_fast(root:))
     end
   end
 end

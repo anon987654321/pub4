@@ -14,7 +14,7 @@
 #
 #   "a folder must not share a name with a file inside it" flags a normal Ruby
 #   idiom. rexml/rexml.rb, drb/drb.rb and mail/mail.rb all do it, and so do
-#   law/law.rb and lib/cli/cli.rb.
+#   law/law.rb and lib/cli/session.rb.
 #
 #   ruby MASTER/tools/rule_hygiene.rb
 #   ruby MASTER/tools/rule_hygiene.rb --json

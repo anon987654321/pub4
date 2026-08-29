@@ -2,7 +2,7 @@
 
 module Master
   module CLI
-    class CLI
+    class Session
       private
 
       def start_background_loop

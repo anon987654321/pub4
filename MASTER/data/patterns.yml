@@ -1076,7 +1076,9 @@ stale_namespaces:
       new: data/patterns.yml#zsh
   stale_constants:
     - old: Master::CLI
-      new: Master::CLI::CLI
+      new: Master::CLI::Session
+    - old: Master::CLI::CLI
+      new: Master::CLI::Session
     - old: Master::Pipeline
       new: Master::CLI::Pipeline
     - old: Master::Stages
