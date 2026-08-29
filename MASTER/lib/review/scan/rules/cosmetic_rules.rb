@@ -187,6 +187,20 @@ module Master
                     message: "comment restates the line below it — delete it, or say why instead of what")
           end
         end
+
+        RuleDSL.rule :README_PROSE,
+          severity: :info, tags: %i[TYPOGRAPHY DOMAIN_LANGUAGE], applies_to: %i[markdown],
+          description: "a README is prose — a bold visionary opening, no fences, lists or tables" do |src, path:|
+          next [] unless path.to_s.end_with?("README.md")
+          findings = []
+          src.each_line.with_index(1) do |line, number|
+            findings << finding(line: number, message: "README carries a code block — a README is prose, not a reference; the code belongs in the file it documents") if line.start_with?("```")
+            findings << finding(line: number, message: "README carries a table — say it in a sentence") if line.match?(/\A\s*\|.*\|\s*\z/)
+          end
+          lead = src.sub(/\A#\s+[^\n]+\n+/, "").lstrip
+          findings << finding(line: 1, message: "README opening is not bold — lead with one bold, visionary sentence") unless lead.empty? || lead.start_with?("**")
+          findings
+        end
       end
     end
   end
