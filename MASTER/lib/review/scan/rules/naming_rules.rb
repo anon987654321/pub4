@@ -3,7 +3,7 @@
 module Master
   module Review
     module Scan
-      stale_config = (Master.load_yaml(Master.data_path("patterns.yml")) || {})["stale_namespaces"] || {}
+      stale_config = (Master.load_yaml(Master.data_path("rules.yml")) || {})["stale_namespaces"] || {}
       stale_constants = Array(stale_config["stale_constants"]).filter_map { |row| row["old"] if row.is_a?(Hash) }
       # A retired name counts only as a whole constant path. `\b` sits between a
       # letter and a colon, so /\bMaster::CLI\b/ matched inside every legitimate
@@ -21,7 +21,7 @@ module Master
           # exemption named stale_namespace_rule.rb, which no longer exists.
           next [] if stale_constants.empty? || path.end_with?("naming_rules.rb")
 
-          scan_lines(source, stale_pattern, message: "retired constant — use data/patterns.yml#stale_namespaces replacement")
+          scan_lines(source, stale_pattern, message: "retired constant — use data/rules.yml#stale_namespaces replacement")
         end
     end
   end

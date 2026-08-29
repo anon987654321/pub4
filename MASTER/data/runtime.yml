@@ -53,7 +53,7 @@ cognitive_spine:
     role: commit-history mining for lost repair logic
   - path: tools/contracts/runtime_event.yml
     role: contract for append-only event emission
-  - path: data/patterns.yml#stale_namespaces
+  - path: data/rules.yml#stale_namespaces
     role: migration registry for stale constants
   spine_flow:
   - workflow

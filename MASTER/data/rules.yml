@@ -3883,3 +3883,231 @@ rails_stack:
     - "Stimulus — client-side interactivity"
     - "StimulusReflex — opt-in for advanced RPC reactive features"
 
+# Rule inputs, not operational data. violation_priors orders which rule the fix
+# loop reaches for first; stale_namespaces is the corpus NAMING's retired-constant
+# check scans for. Both are read by a rule, so they live beside the rules.
+# prior_p: base probability a random file contains this violation (0.0-1.0).
+# language_modifiers: multiplicative adjustments per language (1.0 = neutral).
+# FixLoop#ordered_rules uses (prior_p x posterior) as secondary sort key after
+# violation_counts. High-probability rules run early; rules that have never
+# fired on a given extension are deprioritised. Posterior is updated at
+# runtime from observed violation counts; this holds the cold-start priors only.
+violation_priors:
+  DRY:
+    prior_p: 0.60
+    language_modifiers: { ruby: 1.2, yaml: 0.8, html: 0.9, css: 1.0, js: 1.1 }
+  LINEARITY:
+    prior_p: 0.55
+    language_modifiers: { ruby: 1.3, js: 1.2, html: 0.7, yaml: 0.6 }
+  PROXIMITY:
+    prior_p: 0.50
+    language_modifiers: { ruby: 1.2, js: 1.1, html: 0.8 }
+  SINGULARITY:
+    prior_p: 0.45
+    language_modifiers: { ruby: 1.3, js: 1.1 }
+  DENSITY:
+    prior_p: 0.40
+    language_modifiers: { ruby: 1.2, js: 1.0 }
+  ABSTRACTION:
+    prior_p: 0.35
+    language_modifiers: { ruby: 1.1, js: 1.0 }
+  FLATNESS:
+    prior_p: 0.35
+    language_modifiers: { ruby: 1.2, yaml: 1.3, html: 1.4 }
+  NAMING:
+    prior_p: 0.55
+    language_modifiers: { ruby: 1.2, js: 1.1, yaml: 0.9 }
+  ROBUSTNESS:
+    prior_p: 0.45
+    language_modifiers: { ruby: 1.3, js: 1.2 }
+  IMMUTABILITY:
+    prior_p: 0.30
+    language_modifiers: { ruby: 1.2, js: 1.1 }
+  DEAD_CODE:
+    prior_p: 0.35
+    language_modifiers: { ruby: 1.2, js: 1.1, css: 1.3 }
+  REFLOW:
+    prior_p: 0.40
+    language_modifiers: { ruby: 1.1, yaml: 1.2, markdown: 1.3 }
+  HOIST_CONSTANTS:
+    prior_p: 0.45
+    language_modifiers: { ruby: 1.3, js: 1.2 }
+  SIMPLICITY:
+    prior_p: 0.50
+    language_modifiers: { ruby: 1.2, yaml: 1.1, html: 0.9 }
+  COHESION:
+    prior_p: 0.45
+    language_modifiers: { ruby: 1.2, js: 1.1 }
+  DECOUPLING:
+    prior_p: 0.40
+    language_modifiers: { ruby: 1.3, js: 1.1 }
+  CLARITY_READABILITY:
+    prior_p: 0.55
+    language_modifiers: { ruby: 1.1, yaml: 1.0, markdown: 1.2 }
+  CONSISTENCY:
+    prior_p: 0.50
+    language_modifiers: { ruby: 1.1, css: 1.3, yaml: 1.2 }
+  REUSABILITY:
+    prior_p: 0.45
+    language_modifiers: { ruby: 1.2, js: 1.1 }
+  ECONOMY_EFFICIENCY:
+    prior_p: 0.35
+    language_modifiers: { ruby: 1.1, js: 1.0 }
+  RESILIENCE_ROBUSTNESS:
+    prior_p: 0.40
+    language_modifiers: { ruby: 1.3, js: 1.1 }
+  FEEDBACK_MONITORING:
+    prior_p: 0.30
+    language_modifiers: { ruby: 1.2, js: 1.0 }
+  CONSTRAINT_AFFORDANCE:
+    prior_p: 0.25
+    language_modifiers: { ruby: 1.2 }
+  HIERARCHY:
+    prior_p: 0.30
+    language_modifiers: { ruby: 1.1, yaml: 1.2 }
+  BALANCE_SYMMETRY:
+    prior_p: 0.20
+    language_modifiers: { css: 1.4, html: 1.3, ruby: 0.9 }
+  ACTIVE_VOICE:
+    prior_p: 0.60
+    language_modifiers: { markdown: 1.4, yaml: 1.1, ruby: 1.0 }
+  OMIT_NEEDLESS:
+    prior_p: 0.65
+    language_modifiers: { markdown: 1.4, ruby: 1.1, yaml: 1.0 }
+  PARALLEL_STRUCTURE:
+    prior_p: 0.35
+    language_modifiers: { markdown: 1.3, yaml: 1.2, ruby: 1.0 }
+  FEATURE_ENVY:
+    prior_p: 0.25
+    language_modifiers: { ruby: 1.3, js: 1.1 }
+  DATA_CLUMPS:
+    prior_p: 0.20
+    language_modifiers: { ruby: 1.2 }
+  SWITCH_STATEMENTS:
+    prior_p: 0.30
+    language_modifiers: { ruby: 1.3, js: 1.4 }
+  TEMPORARY_FIELD:
+    prior_p: 0.20
+    language_modifiers: { ruby: 1.2 }
+  ALTERNATIVE_CLASSES:
+    prior_p: 0.15
+    language_modifiers: { ruby: 1.2 }
+  THREAD_SAFETY:
+    prior_p: 0.15
+    language_modifiers: { ruby: 1.5 }
+  LOCK_ORDER:
+    prior_p: 0.08
+    language_modifiers: { ruby: 1.5 }
+  CALLBACK_HELL:
+    prior_p: 0.20
+    language_modifiers: { js: 1.8, ruby: 0.4 }
+  FIRE_AND_FORGET:
+    prior_p: 0.18
+    language_modifiers: { ruby: 1.3, js: 1.2 }
+  SECRET_PROXIMITY:
+    prior_p: 0.08
+    language_modifiers: { ruby: 1.3, yaml: 1.5, env: 2.0 }
+  OVERPERMISSION:
+    prior_p: 0.15
+    language_modifiers: { ruby: 1.2, yaml: 1.3 }
+  INPUT_TRUST:
+    prior_p: 0.12
+    language_modifiers: { ruby: 1.4, js: 1.4, html: 1.2 }
+  BREAKING_CHANGE:
+    prior_p: 0.10
+    language_modifiers: { ruby: 1.3 }
+  IMPLICIT_CONTRACT:
+    prior_p: 0.20
+    language_modifiers: { ruby: 1.2 }
+  CHATTY_API:
+    prior_p: 0.15
+    language_modifiers: { ruby: 1.2, js: 1.1 }
+  QUERY_SMELL:
+    prior_p: 0.20
+    language_modifiers: { ruby: 1.4 }
+  SCHEMA_DRIFT:
+    prior_p: 0.10
+    language_modifiers: { ruby: 1.3, yaml: 1.2 }
+  NULL_BLINDNESS:
+    prior_p: 0.15
+    language_modifiers: { ruby: 1.3 }
+  UNBOUNDED_RETRY:
+    prior_p: 0.20
+    language_modifiers: { ruby: 1.3, js: 1.1 }
+  MISSING_TIMEOUT:
+    prior_p: 0.25
+    language_modifiers: { ruby: 1.4, js: 1.2 }
+  OBSERVABILITY_GAP:
+    prior_p: 0.35
+    language_modifiers: { ruby: 1.2, js: 1.1 }
+  STALE_EXAMPLE:
+    prior_p: 0.30
+    language_modifiers: { markdown: 1.4, yaml: 1.1 }
+  UNDOCUMENTED_EXCEPTION:
+    prior_p: 0.40
+    language_modifiers: { ruby: 1.3 }
+  IMPERATIVE_TITLE:
+    prior_p: 0.55
+    language_modifiers: { markdown: 1.5, yaml: 1.2 }
+  MAGIC_COLOR:
+    prior_p: 0.45
+    language_modifiers: { css: 1.6, html: 1.3 }
+  SPECIFICITY_CREEP:
+    prior_p: 0.30
+    language_modifiers: { css: 1.5 }
+  VIEWPORT_BLINDNESS:
+    prior_p: 0.35
+    language_modifiers: { css: 1.4, html: 1.2 }
+  REGISTER_STABILITY:
+    prior_p: 0.45
+    language_modifiers: { text: 1.3, markdown: 1.2 }
+  DENSITY_GRADUATION:
+    prior_p: 0.40
+    language_modifiers: { text: 1.3, markdown: 1.2 }
+  LENGTH_CALIBRATION:
+    prior_p: 0.50
+    language_modifiers: { text: 1.3, markdown: 1.2 }
+  ERROR_SURFACE_IMMEDIATELY:
+    prior_p: 0.35
+    language_modifiers: { text: 1.2, ruby: 1.1 }
+
+# Merged from former stale_namespaces.yml — retired data paths and constants
+# enforced by the stale namespace audit.
+stale_namespaces:
+  stale_data_files:
+    - old: data/workflow.yml
+      new: data/limits.yml
+    - old: data/standing_orders.yml
+      new: data/state.yml
+    - old: data/ruby_style.yml
+      new: data/rules.yml#style
+    - old: data/injection_patterns.yml
+      new: data/patterns.yml#injection
+    - old: data/zsh.yml
+      new: data/patterns.yml#zsh
+  stale_constants:
+    - old: Master::CLI
+      new: Master::CLI::Session
+    - old: Master::CLI::CLI
+      new: Master::CLI::Session
+    - old: Master::Pipeline
+      new: Master::CLI::Pipeline
+    - old: Master::Stages
+      new: Master::CLI::Stages
+    - old: Master::Speech
+      new: Master::Voice::Speech
+    - old: Master::Personality
+      new: Master::Voice::Personality
+    - old: Master::Swarm
+      new: Master::Review::Swarm
+    - old: Master::Scan
+      new: Master::Review::Scan
+    - old: Master::Council
+      new: Master::Review::Council
+    - old: Master::Session
+      new: Master::Trace::Session
+    - old: Master::Axioms
+      new: Master::Ground::Rules
+
+# Merged from former auth_profiles.yml — auth profile lanes (OAuth/CLI before
+# API keys, OpenCrabs/OpenClaw pattern).

@@ -99,7 +99,7 @@ end
   # --- STALE_NAMESPACE ----------------------------------------------------
 
   def stale_pairs
-    config = (Master.load_yaml(Master.data_path("patterns.yml")) || {})["stale_namespaces"] || {}
+    config = (Master.load_yaml(Master.data_path("rules.yml")) || {})["stale_namespaces"] || {}
     Array(config["stale_constants"]).select { |row| row.is_a?(Hash) }
   end
 
