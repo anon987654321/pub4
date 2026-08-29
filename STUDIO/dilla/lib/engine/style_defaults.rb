@@ -187,7 +187,7 @@ DILLA_STYLE_DEFAULTS = {
   "DRUM_PRESENCE_DB" => "1.5",
   # Pads a bit more present now that drums are stepped back.
   "HARM_MIX_WEIGHT" => "1.12",
-  "HARM_BUS_VOL" => "1.4",
+  "HARM_BUS_VOL" => "1.25",
   "HARM_BODY_DB" => "2.2",
   "HARM_MID_DB" => "1.8",
   "HARM_PRESENCE_DB" => "1.6",
@@ -199,8 +199,8 @@ DILLA_STYLE_DEFAULTS = {
   "WONKY_CHORD_DUCK" => "0.9",
   "HARMONIC_PADS_WEIGHT" => "1.12",
   "HARMONIC_PADS_VOLUME" => "1.2",
-  # Louder pad bed so Rhodes/Prophet read over kit (was 62 — too shy).
-  "PAD_VOL" => "86",
+  # The pad bed sits back under the voice and the lead, not out over a kit.
+  "PAD_VOL" => "74",
   # Lead must cut over the stacked pad bed.
   "HARMONIC_SCALE_LEAD_WEIGHT" => "1.25",
   "HARMONIC_SCALE_LEAD_VOLUME" => "1.55",
