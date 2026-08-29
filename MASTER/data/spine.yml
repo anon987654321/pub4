@@ -76,4 +76,13 @@ pub4_source_ceilings:
   MASTER: 1040
   RAILS: 2359
   OPENBSD: 106
-  STUDIO: 220
+  # 220 -> 222 for lora/seed_media.yml and lora/_toolkit/install_seed_media.rb,
+  # the prompt set for every seeded photograph and the script that grades and
+  # files what comes back from it. Two files, both named, neither foldable:
+  # the prompts are data and the installer is the only thing that writes a
+  # catalogue row.
+  #
+  # This deliberately leaves STUDIO one over. That one is not mine --
+  # lib/engine/album_signature.rb is untracked, so raising for it would fit
+  # the ceiling to a file nobody has landed.
+  STUDIO: 222
