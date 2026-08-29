@@ -51,10 +51,15 @@ surface. Two surfaces, no third.
 
 ## Five traps, in the order they will bite you
 
-1. **The checkout is shared.** Several agents edit this tree at once. `git commit -a`
-   sweeps up someone else's half-finished work, and `git push` publishes every
-   commit beneath yours. Take `MASTER/bin/pub4 worktree <name>`, or at minimum
-   commit path-scoped: `git commit -- <paths>` with no prior `git add`.
+1. **The checkout is shared, so take a worktree by default.** Several agents edit
+   this tree at once. `git commit -a` sweeps up someone else's half-finished work,
+   and `git push` publishes every commit beneath yours. Prefer `MASTER/bin/pub4
+   worktree <name>` for any change past a trivial one-file edit — a clean tree with
+   no other session's dirt is worth the setup, and it is how this file was last
+   edited. Merge it back and delete the worktree and its branch in the same
+   session; a lingering worktree is its own hazard. Writing straight to main is the
+   exception now — and when you do, commit path-scoped: `git commit -- <paths>`
+   with no prior `git add`.
 2. **Strict loading is on in every environment.** Reading a lazy association off a
    record fetched by id raises, in test and production both. Associations carrying
    a `:destroy` cascade are exempt (`Shared::CascadingAssociationsLoad`), which is
