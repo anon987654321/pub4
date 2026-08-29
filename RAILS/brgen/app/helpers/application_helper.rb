@@ -134,42 +134,49 @@ def nav_label(slug) = t("nav.vertical.#{slug}")
 # nil on the apex, where the surface is the front feed.
 def nav_item_active?(slug) = slug == (active_vertical.to_s.presence || "front")
 
-# Only this one is new, and only this one is a badge: it marks the surface that
-# did not exist last month. Delete the key and the badge disappears with it —
-# nothing else has to change, which is the property a "new!" needs to have,
-# because the day it stops being true is a day nobody is looking at this file.
-NAV_BADGED_SLUGS = %w[ai].freeze
+  # Only this one is new, and only this one is a badge: it marks the surface that
+  # did not exist last month. Delete the key and the badge disappears with it —
+  # nothing else has to change, which is the property a "new!" needs to have,
+  # because the day it stops being true is a day nobody is looking at this file.
+  NAV_BADGED_SLUGS = %w[ai].freeze
 
-def nav_item_badge(slug)
-  return unless NAV_BADGED_SLUGS.include?(slug)
+  def nav_item_badge(slug)
+    return unless NAV_BADGED_SLUGS.include?(slug)
 
-  t("nav.vertical_badge_new", default: nil).presence
-end
+    t("nav.vertical_badge_new", default: nil).presence
+  end
 
   def active_vertical
     Current.subapp || inferred_vertical_from_controller
   end
 
-  # Which theme a surface is, decided per vertical rather than per visitor
-  # (operator, 2026-08-24). These are product decisions — markedsplass and
-  # takeaway are storefronts and read light, the media and social surfaces read
-  # dark — not preferences, so prefers-color-scheme does not get a vote.
-  #
-  # The layout used to hardcode data-theme="dark" for every surface, which
-  # pinned the three light verticals to the wrong palette: markedsplass measured
-  # a dark ground under the light tokens its own accents are tuned against.
-  # Anything not listed inherits brgen's dark default.
-  #
-  # maps rejoined on 2026-08-24 with its basemap. The note here used to say the
-  # MapLibre basemap was dark and that pinning the dialect dark was therefore
-  # correct. It was not: the app loads openfreemap positron, background
-  # rgb(242,243,240), and loaded liberty at #f8f4f0 before that. Both light. The
-  # shell was drawing dark chrome around a light map.
-  LIGHT_VERTICALS = %i[marketplace maps takeaway].freeze
+# Light, on every surface — operator, 2026-08-29, because that is what a social
+# network looks like.
+#
+# This retires the per-vertical split of 2026-08-24, and the reasoning there is
+# worth setting out because it was good and only its premise changed. That
+# decision said the theme is a property of the surface, not of the visitor:
+# markedsplass and takeaway are storefronts and read light, the media and
+# social surfaces read dark, so prefers-color-scheme got no vote. It was
+# answering a real bug — the layout hardcoded dark for everything and pinned
+# three light verticals to a palette their accents were never tuned against.
+#
+# What changed is the answer, not the mechanism: one light default across all
+# eight, so a reader moving front → Radio → Marketplace does not cross three
+# palettes. And the mechanism that decision argued for is exactly what makes
+# the new answer cheap — the layout still writes an explicit data-theme, so the
+# OS still gets no vote and nothing flashes dark before going light.
+#
+# A reader who wants dark still has it. The toggle writes localStorage and
+# _theme_bootstrap restores it before paint; a default is not the only option.
+#
+# A constant rather than a literal in the layout, because this is a product
+# decision and a decision should have somewhere to live. If a surface ever
+# needs its own theme again, the exception goes here, where it will be legible
+# as one.
+DEFAULT_SURFACE_THEME = "light"
 
-  def surface_theme
-    LIGHT_VERTICALS.include?(active_vertical&.to_sym) ? "light" : "dark"
-  end
+def surface_theme = DEFAULT_SURFACE_THEME
 
   # The wordmark names the host it is actually on.
   #
