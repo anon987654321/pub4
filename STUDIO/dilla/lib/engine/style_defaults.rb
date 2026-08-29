@@ -35,8 +35,8 @@ DILLA_PAD_RELEASE_CEILING = (ENV["PAD_RELEASE_CEILING"] || 2200).to_i
 
 DILLA_STYLE_DEFAULTS = {
   # Ethan Hein exact Get Dis Money slash cycle (artist-verified).
-  "TRACK" => "pedal_e_descent",
-  "PROGRESSION" => "pedal_e_descent",
+  "TRACK" => "slum_village_intro_documented",
+  "PROGRESSION" => "slum_village_intro_documented",
   # BPM deliberately NOT set here (pedal_e_descent's own TRACK_PRESETS entry
   # already has bpm: 92, so this was redundant for the default track and a
   # real bug for every other one: resolve_bpm checks ENV["BPM"] before
@@ -61,8 +61,10 @@ DILLA_STYLE_DEFAULTS = {
   "LEARNED_PROGRESSION" => "0",
   # A rotatable single voice, not a fixed stack. PAD_LAYER_STACKS switch the pad
   # synth cycle off (patch.rb), so a stack is the same Rhodes/Prophet every
-  # render; blend lets STREAM_ROTATE_SYNTH cycle the pad through the lineage.
-  "PAD_VOICE" => "blend",
+  # render; a single analog voice lets STREAM_ROTATE_SYNTH cycle the pad. moog is
+  # the fat analog opposite of the Rhodes/Prophet electric-piano stack — an
+  # unmistakably different starting voice for the rotation.
+  "PAD_VOICE" => "moog",
   # Held pads; arps live on the lead stem (stream rotates LEAD_ARP_MODE).
   "PAD_ARP_MODE" => "held",
   "PAD_ATTACK" => "90",
