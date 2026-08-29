@@ -947,7 +947,9 @@ REACH_EXCLUDED = %w[device_cmds.rb arrangement.rb].freeze
 
 def test_every_device_is_reachable_from_a_render
   unreachable = DEVICE_MODULES.reject do |mod, own|
-    Dir[File.join(DillaSources.root, "lib", "**", "*.rb")].any? do |path|
+    # The entry carries the engine now, so a glob over lib/ alone searches the
+    # support modules and none of the renderers, buses or schedulers.
+    ([DillaSources.entry] + Dir[File.join(DillaSources.root, "lib", "**", "*.rb")]).any? do |path|
       next false if File.expand_path(path) == File.expand_path(File.join(DillaSources.root, own))
       next false if REACH_EXCLUDED.include?(File.basename(path))
 

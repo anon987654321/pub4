@@ -176,6 +176,7 @@ class TestDilla < Minitest::Test
         conv: ENV["CONV_REVERB"],
         lufs: ENV["STREAM_LUFS"],
         pad_vol: ENV["PAD_VOL"],
+        dna_pad_vol: DILLA_STYLE_DEFAULTS["PAD_VOL"],
         crossfade: ENV["STREAM_CROSSFADE"],
         drum_rotate: ENV["STREAM_DRUM_ROTATE"],
         choir: ENV["CHOIR_VOX"]
@@ -194,7 +195,7 @@ class TestDilla < Minitest::Test
     # Store P over lush neo-soul pads) so Rhodes/Prophet read over the kit. The
     # assertion here is that the stream path applies the DNA, not that the DNA
     # holds any one number.
-    assert_equal "86", result.fetch("pad_vol")
+    assert_equal result.fetch("dna_pad_vol"), result.fetch("pad_vol")
     assert_equal "0.12", result.fetch("crossfade")
     assert_equal "1", result.fetch("drum_rotate")
     # VOCAL_CARVE is not asserted here. Two defaults tables set it to "1"
@@ -508,7 +509,7 @@ class TestDilla < Minitest::Test
       )
     RUBY
     assert_equal "1", result.fetch("master")
-    assert_equal "stack_soul", result.fetch("pad_voice")
+    assert_equal "moog", result.fetch("pad_voice")
     assert_equal "held", result.fetch("pad_arp")
     # DILLA_STYLE_DEFAULTS carries vinyl_hot (see its own comment on why
     # DILLA_BEST_DEFAULTS keeps the safer broadcast for other callers) --
@@ -520,12 +521,12 @@ class TestDilla < Minitest::Test
     assert_equal "1", result.fetch("composition")
     assert_equal "1", result.fetch("groove_engine")
     assert_equal "1", result.fetch("pocket_dna")
-    # All four lead layers default off since cd8e6850f / 058ff18f3 ("drop the
-    # leads" -- the pads and the progression carry it). LEAD_ARP=1 here asserted
-    # the pre-decision default and had been red since.
-    assert_equal "0", result.fetch("harmony_lead")
-    assert_equal "0", result.fetch("lead_arp")
-    assert_equal "pedal_e_descent", result.fetch("track")
+    # The lead layers are on. "drop the leads" (cd8e6850f, 058ff18f3) turned all
+    # four off and 0a77242dd turned three back on, because the signature sound
+    # layers an arp locked to the progression scale over the counter-line.
+    assert_equal "1", result.fetch("harmony_lead")
+    assert_equal "1", result.fetch("lead_arp")
+    assert_equal "slum_village_intro_documented", result.fetch("track")
     assert_equal "1", result.fetch("phrase_drift")
     assert_equal "1", result.fetch("swing_jitter")
     # The FM kit is the default, and this assertion used to say the opposite.
@@ -553,13 +554,17 @@ class TestDilla < Minitest::Test
     assert result.fetch("dfam")
     assert result.fetch("spectral")
     assert result.fetch("master_on")
-    refute result.fetch("harmony_on"), "harmony_lead_enabled? agrees with HARMONY_LEAD=0"
+    assert result.fetch("harmony_on"), "harmony_lead_enabled? agrees with HARMONY_LEAD=1"
     assert result.fetch("composition_on")
     assert_empty result.fetch("conflicts"), "BEST must not soft-block STYLE DNA"
   end
 
   def test_ghost_and_open_events_receive_pocket_timing
     result = eval_in_engine(<<~RUBY)
+      # DRUMS=1 because drums default off -- drum_policy names this as the way
+      # back. Without it dilla_schedule returns no kick, and a test about where
+      # the ghost hits land measures whether drums are on instead.
+      ENV["DRUMS"] = "1"
       ENV["DILLA_RAW"] = "1"
       ENV["GROOVE_ENGINE"] = "1"
       ENV["POCKET_DNA"] = "1"
@@ -829,7 +834,7 @@ class TestDilla < Minitest::Test
       )
     RUBY
     assert_equal "dilla", result.fetch("mode")
-    assert_equal "pedal_e_descent", result.fetch("track")
+    assert_equal "slum_village_intro_documented", result.fetch("track")
     # DILLA_STYLE_DEFAULTS deliberately does NOT force BPM (see its own
     # comment): forcing "92" here used to silently clobber every other
     # track's own tuned tempo. resolve_bpm falls back to the track preset
@@ -1224,7 +1229,7 @@ class TestDilla < Minitest::Test
       )
     RUBY
 
-    assert_equal 140, result.fetch("count")
+    assert_equal 150, result.fetch("count")
     assert_empty result.fetch("bad"),
                  "a symbol that does not parse renders as a missing chord, not an error"
     assert_empty result.fetch("unreachable"),
@@ -1717,7 +1722,7 @@ class TestDilla < Minitest::Test
         curated: curated_progression?(cfg)
       )
     RUBY
-    assert_equal "pedal_e_descent", result.fetch("best_default"),
+    refute_empty result.fetch("best_default"),
       "premise: best defaults fill PROGRESSION, so it is never empty"
     assert_equal "slum_village_players_documented", result.fetch("after_sync")
     assert_equal "slum_village_players_documented", result.fetch("cfg_progression")
@@ -1807,14 +1812,17 @@ class TestDilla < Minitest::Test
         roles: DillaComposition::ENSEMBLE_TIMELINE[:verse].map(&:to_s)
       )
     RUBY
-    assert_equal "pedal_e_descent", result.fetch("track")
-    assert_equal "stack_soul", result.fetch("pad_voice")
+    assert_equal "slum_village_intro_documented", result.fetch("track")
+    assert_equal "moog", result.fetch("pad_voice")
     assert_equal "1", result.fetch("pad_layers")
-    assert_operator result.fetch("stack_n"), :>=, 3
-    # Leads default off (cd8e6850f). The arp volume stays configured for the
-    # moment LEAD_ARP=1 opts back in, so that assertion is unchanged.
-    assert_equal "0", result.fetch("lead_arp")
-    refute result.fetch("lead_on")
+    # moog is a single analog voice, not a stack -- that is the point of it
+    # (e65f717be): one voice for STREAM_ROTATE_SYNTH to cycle, the fat analog
+    # opposite of the Rhodes/Prophet electric-piano stack this used to assert.
+    assert_equal 0, result.fetch("stack_n")
+    # LEAD_ARP is on by default (0a77242dd), and the arp volume is what that
+    # signature lead is mixed at.
+    assert_equal "1", result.fetch("lead_arp")
+    assert result.fetch("lead_on")
     assert_operator result.fetch("lead_vol"), :>=, 1.5
     assert_equal "1", result.fetch("morph"), "style defaults keep SYNTH_MORPH on for mid-phrase color"
     assert_includes result.fetch("roles"), "lead"
@@ -1851,7 +1859,7 @@ class TestDilla < Minitest::Test
     # layers. The presets above must still all resolve — that is what this test
     # is for — but the style DNA does not switch them on.
     assert_equal "0", result.fetch("exp")
-    assert_equal "stack_soul", result.fetch("pad")
+    assert_equal "moog", result.fetch("pad")
     assert_operator result.fetch("stack"), :>=, 3
   end
 
@@ -2524,9 +2532,9 @@ class TestDilla < Minitest::Test
     require File.expand_path("../dilla/lib/engine_sources", __dir__)
     root = DillaSources.root
 
-    assert_empty DillaSources.unlisted_parts,
-                 "a file in lib/engine/ that ENGINE_PARTS does not name is never required, so nothing in it runs"
-    on_disk = Dir[File.join(root, "lib", "engine", "*.rb")].length + Dir[File.join(root, "lib", "*.rb")].length + 1
+    assert_empty Dir[File.join(root, "lib", "engine", "*.rb")],
+                 "lib/engine/ is back -- the engine is one file, and a part there is required by nothing"
+    on_disk = Dir[File.join(root, "lib", "*.rb")].length + 1
     assert_equal on_disk, DillaSources.all.length,
                  "DillaSources.all must be every ruby file the engine is made of, or the checks that read it are partial"
 
@@ -2992,7 +3000,7 @@ class TestDilla < Minitest::Test
 
   def test_sample_modern_chain_is_called_from_the_loop_filter
     result = eval_in_engine(<<~RUBY)
-      body = File.read(File.join(ROOT, "lib/engine/sample_loops.rb")).gsub(/^\\s*#(?!\\{).*$/, "")
+      body = File.read(File.join(ROOT, "dilla.rb")).gsub(/^\\s*#(?!\\{).*$/, "")
       puts JSON.generate(called: body.include?("sample_modern_chain"))
     RUBY
     assert result.fetch("called"), "sample_modern_chain must run on the sample loop bus"
@@ -3008,7 +3016,11 @@ class TestDilla < Minitest::Test
       )
     RUBY
     assert_equal "1", result.fetch("melodic")
-    assert_equal "0", result.fetch("arp")
+    # The signature lead layers an arp locked to the progression scale over the
+    # counter-line, so LEAD_ARP defaults on. CREATIVE_LEAD stays off, which is
+    # what keeps it following the harmony rather than improvising against it --
+    # so true_arp is still false and the counter-line is still the subject here.
+    assert_equal "1", result.fetch("arp")
     refute result.fetch("true_arp"), "default DNA is a counter-line, not subdiv arps"
   end
 

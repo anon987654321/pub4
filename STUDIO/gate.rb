@@ -99,13 +99,11 @@ module Deploy
 
     PROBE_TIMEOUT = Integer(ENV.fetch("STUDIO_PROBE_TIMEOUT", "60"))
 
-    # dilla grows one lib/engine part per feature — top-level defs on Object in a
-    # load order ENGINE_PARTS pins by hand — and nothing stopped the next feature
-    # becoming the next file instead of folding into a sibling. This is that stop:
-    # the part count is a ceiling. A new part fails the gate until its author
-    # folds it into an existing part or raises this with the reason in the commit,
-    # the sponsor rule MASTER/data/spine.yml already uses for lib/.
-    ENGINE_PART_CEILING = 81
+    # dilla's support modules under lib/ are the one place file count can still
+    # grow, so this is the ceiling that replaced ENGINE_PART_CEILING when the 81
+    # engine parts folded into dilla.rb. A new module fails the gate until its
+    # author folds it into a sibling or raises this with the reason in the commit.
+    DILLA_SUPPORT_CEILING = 41
 
     # VENDORED is matched against the path inside STUDIO, never the absolute
     # one. Matched absolutely it excluded every file in a checkout living under
@@ -160,39 +158,42 @@ module Deploy
       end
     end
 
-    # Two directions, because they fail differently. A part on disk that
-    # ENGINE_PARTS does not name is never required, so it is dead however good it
-    # looks. A part ENGINE_PARTS names that is not on disk stops the engine at
-    # load — caught by the load probe too, but named here in the terms of the
-    # list rather than as a LoadError.
+    # A name DillaSources carries with no file behind it stops the engine at
+    # load. The other direction -- a file on disk that nothing requires -- is not
+    # expressible any more: the engine is one file, so there is no list for a
+    # part to be missing from.
     def check_inventory(files)
       return check_orphans(files) unless @dilla
-
-      @dilla.unlisted_parts.each do |path|
-        @result.fail(
-          "studio inventory: #{rel(path)} is in lib/engine/ but not in ENGINE_PARTS — " \
-          "nothing requires it, so it is dead code that still parses"
-        )
-      end
 
       @dilla.all.reject { |path| File.file?(path) }.each do |path|
         @result.fail("studio inventory: DillaSources names #{rel(path)}, which is not on disk")
       end
-      @result.checked!(2)
+      @result.checked!(1)
       check_orphans(files)
     end
 
-    # Prevention, where the other checks are detection: they fail once a part is
-    # already dead or unlisted; this fails the moment a new part is added at all.
+    # Prevention, where the other checks are detection. This counted parts under
+    # dilla/lib/engine/ against a ceiling of 81; that directory is gone, so the
+    # count is now zero and the check would pass having measured nothing. It
+    # guards the two ways the sprawl comes back instead: the split returning, and
+    # the support modules growing in its place.
     def check_growth(files)
-      parts = files.count { |path| path.include?("/dilla/lib/engine/") }
-      @result.checked!(1)
-      return if parts <= ENGINE_PART_CEILING
+      @result.checked!(2)
+      returned = files.select { |path| path.include?("/dilla/lib/engine/") }
+      unless returned.empty?
+        @result.fail(
+          "studio growth: dilla/lib/engine/ is back (#{returned.length} file(s)) — the engine " \
+          "is one file, and a new feature folds into it rather than reopening the split"
+        )
+      end
+
+      support = files.count { |path| path =~ %r{/dilla/lib/[^/]+\.rb\z} }
+      return if support <= DILLA_SUPPORT_CEILING
 
       @result.fail(
-        "studio growth: dilla has #{parts} engine parts against a ceiling of " \
-        "#{ENGINE_PART_CEILING} — fold the new feature into an existing part, or " \
-        "raise ENGINE_PART_CEILING in gate.rb with why in the commit"
+        "studio growth: dilla has #{support} support modules against a ceiling of " \
+        "#{DILLA_SUPPORT_CEILING} — fold the new one into a sibling, or raise " \
+        "DILLA_SUPPORT_CEILING in gate.rb with why in the commit"
       )
     end
 

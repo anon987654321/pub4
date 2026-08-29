@@ -159,7 +159,7 @@ class TestAudioGraphParity < Minitest::Test
   # channel to :master by accident and read as working, so the names are checked
   # against the ones the renderer can actually emit.
   def test_every_mapped_name_is_a_label_some_clause_emits
-    source = File.read(File.join(DillaSources.root, "lib", "engine", "render_dilla.rb"))
+    source = File.read(DillaSources.entry)
     DILLA_MIX_BUS_MAP.each_key do |name|
       assert_includes source, "[#{name}]", "DILLA_MIX_BUS_MAP names [#{name}], which render_dilla never emits"
     end

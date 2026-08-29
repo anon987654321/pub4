@@ -10,7 +10,7 @@ require_relative "../dilla/lib/engine_sources"
 # gave three different answers. The parse check ran over a corpus that excluded
 # every lib/*.rb file; provenance's glob went a level deeper and, when the
 # engine split into lib/engine/, dropped 484 of 610 knobs out of every manifest
-# without failing anything.
+# without failing anything. The split is gone; the corpus question is not.
 class TestEngineSources < Minitest::Test
   def test_it_loads_with_no_dependencies
     # If this file ever grows a require of dilla.rb, ROOT, or a gem, the gate
@@ -22,16 +22,17 @@ class TestEngineSources < Minitest::Test
     assert_empty requires, "engine_sources.rb grew a dependency; it is the one file that must have none"
   end
 
-  def test_every_declared_part_is_on_disk
-    missing = DillaSources.parts.reject { |path| File.file?(path) }
-    assert_empty missing, "ENGINE_PARTS names files the engine will die requiring: #{missing.inspect}"
+  def test_every_declared_file_is_on_disk
+    missing = DillaSources.all.reject { |path| File.file?(path) }
+    assert_empty missing, "DillaSources names files the engine will die requiring: #{missing.inspect}"
   end
 
-  # The other direction: a part on disk that nothing requires is dead code that
-  # still parses, which is the shape an autofix leaves behind.
-  def test_nothing_in_the_engine_directory_is_unreferenced
-    assert_empty DillaSources.unlisted_parts,
-                 "in lib/engine/ but not in ENGINE_PARTS, so nothing requires it"
+  # The split is gone, and it does not come back quietly. A part under
+  # lib/engine/ was dead the moment ENGINE_PARTS stopped naming it; now the
+  # directory itself is the finding, because the engine is one file.
+  def test_the_engine_directory_does_not_come_back
+    assert_empty Dir[File.join(DillaSources.root, "lib", "engine", "*.rb")],
+                 "lib/engine/ is back — a new feature folds into dilla.rb rather than reopening the split"
   end
 
   def test_the_corpus_covers_the_entry_point_and_the_support_files
@@ -43,11 +44,13 @@ class TestEngineSources < Minitest::Test
     assert_equal all.size, all.uniq.size, "a file is checked twice, which is how two answers stay in agreement"
   end
 
-  def test_the_part_order_is_declared_once_and_is_load_bearing
-    # Constants in these files are computed at load time from ones above them,
-    # so the list is an ordering, not a set. Nothing else may re-derive it.
-    assert_equal DillaSources::ENGINE_PARTS, DillaSources::ENGINE_PARTS.uniq,
-                 "a part required twice re-evaluates constants computed from the ones above it"
+  def test_the_engine_is_one_file
+    # The order the 81 parts loaded in was load-bearing -- constants computed at
+    # load time from ones above them -- so it is now the order they sit in.
+    entry = File.read(DillaSources.entry)
+
+    assert_operator entry.lines.size, :>, 20_000, "the engine is inline; a small entry means it split again"
+    refute_match(%r{require_relative "lib/engine/}, entry, "the entry requires a part that should be inline")
   end
 
   def test_every_file_in_the_corpus_is_readable_ruby
