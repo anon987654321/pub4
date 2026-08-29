@@ -1,6 +1,8 @@
 # Amber — heir / operator one-pager
 
-Amber is a **social fashion** app (`amber.brgen.no`) — feed, follows, outfits and a wardrobe, sharing the same social stack as brgen. Day-to-day it should run without engineering. This page is for the person who inherits stewardship.
+Amber is a **social fashion** app (`amber.brgen.no`) — feed, follows, outfits
+and a wardrobe, sharing the same social stack as brgen. Day-to-day it should run
+without engineering. This page is for the person who inherits stewardship.
 
 ## What you do
 
@@ -9,7 +11,8 @@ Amber is a **social fashion** app (`amber.brgen.no`) — feed, follows, outfits 
 3. Keep bills paid: VPS + domain.
 4. If the site is down, tell a technical contact (see below).
 
-You do **not** need to process photos, score declutter decisions, or restart servers on a normal week.
+You do **not** need to process photos, score declutter decisions, or restart
+servers on a normal week.
 
 ## What runs itself
 
@@ -30,7 +33,8 @@ curl -fsS https://amber.brgen.no/up
 sh OPENBSD/bin/uptime-check.sh
 ```
 
-Red `/up` → technical contact restarts in order: **master → brgen → amber → relayd**.
+Red `/up` → technical contact restarts in order: **master → brgen → amber →
+relayd**.
 
 ## Secrets that keep AI smart
 
@@ -40,15 +44,18 @@ Red `/up` → technical contact restarts in order: **master → brgen → amber 
 | `OPENROUTER_API_KEY` | LLM joy analysis, vision outfits, capsule LLM path |
 | `AMBER_ENABLE_MASTER_PHOTO=1` | Optional MASTER look photography (off by default) |
 
-Without OpenRouter, Amber still works: **heuristics and rules** (joy from wear, rule-based outfits, local capsule). Buttons say so in the UI.
+Without OpenRouter, Amber still works: **heuristics and rules** (joy from wear,
+rule-based outfits, local capsule). Buttons say so in the UI.
 
 ## Honesty map (so you are not sold vapor)
 
 - **Photo polish** — yes. ML cut-out / segment — no (planned).
-- **Fingerprint** — local CRC for change detection. Real embeddings / lookalike search — planned.
+- **Fingerprint** — local CRC for change detection. Real embeddings / lookalike
+  search — planned.
 - **Analytics tips** — rule coach, not AI.
 - **Style sessions** — schedule/status, not live video.
-- **KonMari loop** — real: joy, challenges, last-chance outfits, box, release paths.
+- **KonMari loop** — real: joy, challenges, last-chance outfits, box, release
+  paths.
 
 ## When to call tech
 

@@ -1,10 +1,12 @@
 # UI refinements — applied
 
 Implementations for the 2026-07-18 proposal list plus the 2026-07-19 visual
-opportunity pass. Canonical tokens: `RAILS/shared/design_tokens.yml`.
-Ship verification: visual_contract + deploy.
+opportunity pass. Canonical tokens: `RAILS/shared/design_tokens.yml`. Ship
+verification: visual_contract + deploy.
 
-_Last applied: 2026-08-01 (dead-wiring pass: install-prompt finally styled, pwa-standalone and offline-feed implemented in the shared engine, global `/` + ⌘K, token drift asserted against the committed tree)._
+_Last applied: 2026-08-01 (dead-wiring pass: install-prompt finally styled,
+pwa-standalone and offline-feed implemented in the shared engine, global `/` +
+⌘K, token drift asserted against the committed tree)._
 
 ## Applied clusters
 
@@ -14,7 +16,8 @@ _Last applied: 2026-08-01 (dead-wiring pass: install-prompt finally styled, pwa-
 - Social + luxury scales aligned with 2xs / success / warning / info
 - Intent named: social soft vs face/bsdports CRT-flat zeros
 - Light mode indigo/graphite (not Twitter blue)
-- `vertical_accents` single source map (marketplace taupe, dating teal, maps cool blue, messenger slate-indigo)
+- `vertical_accents` single source map (marketplace taupe, dating teal, maps
+  cool blue, messenger slate-indigo)
 
 ### B · MASTER face (boot contract preserved)
 - Primer phosphor title + mono consent styling (`face.css`)
@@ -28,9 +31,11 @@ _Last applied: 2026-08-01 (dead-wiring pass: install-prompt finally styled, pwa-
 ### C · brgen shell
 - Nav swiper `tablist`/`tab`/`aria-selected` + arrow-key roving tabindex
 - Active underline + scroll-snap; 44px min hit
-- Vertical accents single map in `_vertical_shell` only (no ui_refinements re-write)
+- Vertical accents single map in `_vertical_shell` only (no ui_refinements
+  re-write)
 - Graphite elevation (`#17161c` / `#211f28`) instead of pure black
-- Flash/toast flat cards; post measure 66ch; skeleton utility; high-contrast media query
+- Flash/toast flat cards; post measure 66ch; skeleton utility; high-contrast
+  media query
 - Content-visibility with taller intrinsic for media cards
 - Form error slot; empty-state partial; tap highlight accent; safe-area padding
 - Messenger flat solid bubbles + mono timestamps + 44px send
@@ -56,7 +61,8 @@ _Last applied: 2026-08-01 (dead-wiring pass: install-prompt finally styled, pwa-
 - Error pages graphite/indigo dialect (not Twitter blue)
 - Edge grips 44px hit area; forced-colors ported into x_shell
 - Search skeleton loading shell
-- WIRING_NOTES dialect truth (soft social / CRT face+bsdports / single-column + edge swiper)
+- WIRING_NOTES dialect truth (soft social / CRT face+bsdports / single-column +
+  edge swiper)
 
 ## 2026-07-20 polish wave (landed)
 
@@ -123,9 +129,10 @@ _Last applied: 2026-08-01 (dead-wiring pass: install-prompt finally styled, pwa-
 
 ## 2026-08-01 dead-wiring pass (landed)
 
-Everything here rendered, raised nothing, and did nothing — the failure shape this
-file's checklists cannot catch, because a landed row and an inert one look identical
-from the outside. Full accounting in `TODO.md`, `rails_silent_wiring_breaks`.
+Everything here rendered, raised nothing, and did nothing — the failure shape
+this file's checklists cannot catch, because a landed row and an inert one look
+identical from the outside. Full accounting in `TODO.md`,
+`rails_silent_wiring_breaks`.
 
 | Item | Status |
 |------|--------|
@@ -163,7 +170,8 @@ from the outside. Full accounting in `TODO.md`, `rails_silent_wiring_breaks`.
 | SCSS `_ui_refinements*` merge into domain partials | Next touch Boy Scout |
 | Horizon features (pgvector, live video, Solidus full) | `apps.horizon.yml` agent-ignore |
 
-These are tracked in the repo-root `TODO.md` / `apps.horizon.yml` when they grow past polish.
+These are tracked in the repo-root `TODO.md` / `apps.horizon.yml` when they grow
+past polish.
 
 ## How to re-verify
 

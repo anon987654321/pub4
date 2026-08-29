@@ -15,9 +15,9 @@ rather than work.
 
 Grounded in what these three apps actually run today: Turbo 8 with
 `turbo_refreshes_with :morph`, 30 Stimulus controllers across the three apps,
-Solid Cache/Cable/Queue, Pagy in 13 controllers, importmap with no CDN pins,
-and — the number that shapes half this list — **zero fragment caches in any
-view** and **two conditional-GET responses in the whole of brgen**.
+Solid Cache/Cable/Queue, Pagy in 13 controllers, importmap with no CDN pins, and
+— the number that shapes half this list — **zero fragment caches in any view**
+and **two conditional-GET responses in the whole of brgen**.
 
 ## A · Measure first, because the instrument is usually wrong (1–13)
 
@@ -33,8 +33,9 @@ something here is running.
    crosses a ceiling — a ratchet, like every other gate here. **[deep]**
 4. Real User Monitoring for the three Core Web Vitals via `PerformanceObserver`,
    posted to a `web_vitals` table. Lab numbers on a Mac are not vm23 on a phone.
-5. Record **INP**, not FID. FID measured how fast the first tap was acknowledged;
-   INP measures every interaction, which is the thing being complained about.
+5. Record **INP**, not FID. FID measured how fast the first tap was
+   acknowledged; INP measures every interaction, which is the thing being
+   complained about.
 6. Log the **slowest 1% of interactions with their target element**, so "the app
    feels slow" becomes "the compose button takes 340 ms".
 7. `rack-mini-profiler` is already in the Gemfile — confirm it is mounted in
@@ -56,9 +57,10 @@ something here is running.
 
 14. **`data-turbo-prefetch` on hover/touchstart** for the nav bar's eight
     destinations and every feed link. Turbo 8 ships this; it is off by default
-    on nothing, but the app sets it to `false` in one place and never on. A
-    65 ms hover before a click is 65 ms of free head start. **[cheap]**
-15. Prefetch on `mousedown` rather than `click` — worth ~80 ms and costs nothing.
+    on nothing, but the app sets it to `false` in one place and never on. A 65
+    ms hover before a click is 65 ms of free head start. **[cheap]**
+15. Prefetch on `mousedown` rather than `click` — worth ~80 ms and costs
+    nothing.
 16. **`data-turbo-preload` on the top ten destinations**, so they are in the
     Turbo cache before the first click. **[cheap]**
 17. Cap preload to what a 1 GB box can serve; preloading everything is a
@@ -68,12 +70,13 @@ something here is running.
 19. Extend morphing to the feed so a new post arrives without losing scroll
     position or an open composer. **[cheap]**
 20. `data-turbo-permanent` on the nav bar, the theme toggle and the player, so
-    they survive a navigation without re-initialising. Three exist already;
-    the nav bar is not one of them.
+    they survive a navigation without re-initialising. Three exist already; the
+    nav bar is not one of them.
 21. **Instant back/forward** via Turbo's restoration cache — verify it is not
     being defeated by a `data-turbo-cache="false"` somewhere broad.
-22. Render a **cached preview frame** on navigation start, then replace it. Turbo
-    does this; make sure the preview is not visually identical to a blank page.
+22. Render a **cached preview frame** on navigation start, then replace it.
+    Turbo does this; make sure the preview is not visually identical to a blank
+    page.
 23. Frame-level navigation for the feed's sort tabs, so Hot/New/Following swap a
     list rather than a document. **[cheap]**
 24. `turbo_frame_tag` with `loading: "lazy"` for below-fold panels — sidebar
@@ -81,14 +84,16 @@ something here is running.
 25. Eager frames for above-fold content, lazy for everything else, decided by a
     single helper rather than per view.
 26. **Cross-document View Transitions** for same-origin navigations. Zero today.
-    Two CSS rules give the feed→post navigation a shared-element morph. **[cheap]**
+    Two CSS rules give the feed→post navigation a shared-element morph.
+    **[cheap]**
 27. Name the post's image and title as view-transition targets so they animate
     into the detail page instead of cutting.
 28. View transitions on the theme toggle, so light↔dark crossfades instead of
     snapping. **[cheap]**
 29. Guard every transition behind `prefers-reduced-motion` — 37 such blocks
     already exist, so the convention is set. **[built]**
-30. **Turbo Drive progress bar** styled once in `shared/_shell.scss`. **[built]**
+30. **Turbo Drive progress bar** styled once in `shared/_shell.scss`.
+    **[built]**
 31. Delay the progress bar to 500 ms. Shown immediately it advertises slowness
     on requests that would have felt instant.
 32. Restore scroll position per-frame, not per-document, on the messenger and
@@ -96,21 +101,22 @@ something here is running.
 33. Make the eight verticals cross-host `target="_blank"` navigations *feel*
     like same-app moves by pre-warming DNS: `<link rel="dns-prefetch">` and
     `preconnect` for the seven subdomains. **[cheap]**
-34. `preconnect` costs a socket each — measure before shipping all seven on a
-    1 GB box.
+34. `preconnect` costs a socket each — measure before shipping all seven on a 1
+    GB box.
 35. Speculation Rules API as a progressive enhancement over Turbo's prefetch,
     for browsers that have it.
-36. A **back-navigation cache warm**: when a reader opens a post, keep the feed's
-    DOM rather than re-fetching on return.
-37. Kill any full-page reload that Turbo could have handled — audit every
-    `data: { turbo: false }`; each is a document load, and there are several.
+36. A **back-navigation cache warm**: when a reader opens a post, keep the
+    feed's DOM rather than re-fetching on return.
+37. Kill any full-page reload that Turbo could have handled — audit every `data:
+    { turbo: false }`; each is a document load, and there are several.
 
 ## C · The waiting problem — optimistic UI (38–60)
 
 The cheapest millisecond is the one the reader never waits through.
 
-38. **Optimistic vote counts.** The arrow flips and the number increments on tap;
-    the request reconciles. Voting is the most-repeated interaction in the app.
+38. **Optimistic vote counts.** The arrow flips and the number increments on
+    tap; the request reconciles. Voting is the most-repeated interaction in the
+    app.
 39. Optimistic follow/unfollow, with a rollback on failure.
 40. Optimistic reactions on messages and comments.
 41. Optimistic post submission — the post appears in the feed greyed, then
@@ -127,8 +133,8 @@ The cheapest millisecond is the one the reader never waits through.
     a felt problem, not just a metric).
 48. `aria-busy` on regions that are loading, so the experience is the same for a
     screen-reader user.
-49. **Blurhash placeholders** — the job, the helper and a Stimulus controller all
-    exist. **[built]**
+49. **Blurhash placeholders** — the job, the helper and a Stimulus controller
+    all exist. **[built]**
 50. Verify blurhash actually reaches the feed card. Built and unreached is this
     repo's most common finding.
 51. Lazy-load images below the fold — only 8 usages across brgen and shared for
@@ -168,8 +174,8 @@ The cheapest millisecond is the one the reader never waits through.
 71. Audit the 50 `includes` calls against the actual N+1s — some are almost
     certainly loading associations the view no longer renders.
 72. `select` only the columns the view uses on wide tables.
-73. Cursor pagination instead of offset for the infinite feed; `OFFSET 10000`
-    is a table scan. Pagy supports it. **[deep]**
+73. Cursor pagination instead of offset for the infinite feed; `OFFSET 10000` is
+    a table scan. Pagy supports it. **[deep]**
 74. Index every column the feed's ordering and filtering touches, verified with
     `EXPLAIN` rather than assumed.
 75. Move blurhash, image variants, notifications and federation delivery off the
@@ -187,8 +193,8 @@ The cheapest millisecond is the one the reader never waits through.
     server think-time. **[deep]**
 83. Cache warm after deploy — the first reader should not pay for the cold
     cache. The keep-warm script exists for the boot storm; extend it.
-84. Keep the cold-start problem in view: vm23 measured 12.19 s cold against
-    0.40 s warm on an idle box. No front-end work survives that.
+84. Keep the cold-start problem in view: vm23 measured 12.19 s cold against 0.40
+    s warm on an idle box. No front-end work survives that.
 85. Consider a read replica or a materialised view for the city trending feed.
     **[deep]** **[yours]**
 86. Rate-limit expensive endpoints so one reader cannot make the app slow for

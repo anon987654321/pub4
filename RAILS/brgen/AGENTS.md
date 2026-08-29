@@ -42,18 +42,19 @@ messenger, playlist are the same English token on every city.
 **Not a brgen subapp.** `ai.brgen.no` is MASTER (`MASTER/web`), different rc.d.
 `amber.brgen.no` is a separate Rails app. Do not mount either here.
 
-Recipe for engines: `ENGINES.md`. Feature inventory: `RAILS/apps.yml`.
-Local verticals need `Host: dating.brgen.no` (etc.); `dating.localhost` 404s
-because the registry keys off city apexes, not localhost.
+Recipe for engines: `ENGINES.md`. Feature inventory: `RAILS/apps.yml`. Local
+verticals need `Host: dating.brgen.no` (etc.); `dating.localhost` 404s because
+the registry keys off city apexes, not localhost.
 
 ## Deploy
 
 Full Rails 8 app in this directory. `brgen.sh` copy-tree deploys to
 `/home/brgen/app` on vm23. Port **38182**. Shared engine: `RAILS/shared`.
 
-- Golden checks: `OPENBSD/bin/check-rails --profile=contributor`; scan via
-  `cd MASTER && bundle exec ruby bin/cli` → `/scan RAILS/brgen`.
-- VPS: `MASTER/bin/pub4 vps deploy brgen --remote` (serial — never parallel with other apps).
+- Golden checks: `OPENBSD/bin/check-rails --profile=contributor`; scan via `cd
+  MASTER && bundle exec ruby bin/cli` → `/scan RAILS/brgen`.
+- VPS: `MASTER/bin/pub4 vps deploy brgen --remote` (serial — never parallel with
+  other apps).
 - Do not: enable `force_ssl` behind relayd; edit `OPENBSD/deploy_inventory.json`
   without updating `apps.yml`; add a fourth public Rails app
   (`OPENBSD/DECISIONS.md`).

@@ -1,7 +1,7 @@
 # Page UI/UX simulations
 
-Full-matrix user simulation for every full-page Rails surface in the **focus triangle**
-(brgen · amber · MASTER web).
+Full-matrix user simulation for every full-page Rails surface in the **focus
+triangle** (brgen · amber · MASTER web).
 
 ## Run
 
@@ -37,8 +37,8 @@ Discovered from non-partial `*.html.erb` views + MASTER public HTML.
 | master |     5 |     5 |   0 |
 | **Σ**  | **137** |  |  |
 
-Snapshot: `gates/data/page_sim_inventory.yml` (regenerated each run).
-Report: `gates/data/page_sim_report.yml`.
+Snapshot: `gates/data/page_sim_inventory.yml` (regenerated each run). Report:
+`gates/data/page_sim_report.yml`.
 
 ## What each page is checked for
 
@@ -116,6 +116,8 @@ form labels) are fixed in the same pass:
 
 ## Status notes
 
-- **Source floor**: 137/137 templates simulated; hard + residual-EN soft = 0 when last clean.
+- **Source floor**: 137/137 templates simulated; hard + residual-EN soft = 0
+  when last clean.
 - **Live matrix**: requires Falcon (or equivalent) on the triangle ports.
-- **bsdports** intentionally out of focus triangle; still has its own flow/geometry rows.
+- **bsdports** intentionally out of focus triangle; still has its own
+  flow/geometry rows.

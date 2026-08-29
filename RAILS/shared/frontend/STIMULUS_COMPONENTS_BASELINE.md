@@ -1,14 +1,15 @@
 # Shared Stimulus Components baseline
 
 Recovered from `DEPLOY/rails/shared/frontend/STIMULUS_COMPONENTS_BASELINE.md`,
-deleted at `ee3a56e33`. Unlike the amber architecture record, this one did **not**
-survive verbatim — the install shape it prescribed is now a gate failure. What
-follows is the current contract; the divergences are listed at the end so the old
-text is not restored by someone who finds it in history.
+deleted at `ee3a56e33`. Unlike the amber architecture record, this one did
+**not** survive verbatim — the install shape it prescribed is now a gate
+failure. What follows is the current contract; the divergences are listed at the
+end so the old text is not restored by someone who finds it in history.
 
-Enforced by `Deploy::StimulusComponentsGate` (`RAILS/gates/lib/source/stimulus_components.rb`),
-run as `ruby RAILS/gates/runner.rb stimulus_components`. That class is the source
-of truth. This document explains it; it does not redefine it.
+Enforced by `Deploy::StimulusComponentsGate`
+(`RAILS/gates/lib/source/stimulus_components.rb`), run as `ruby
+RAILS/gates/runner.rb stimulus_components`. That class is the source of truth.
+This document explains it; it does not redefine it.
 
 ## Packages are vendored, not fetched
 
@@ -31,8 +32,8 @@ undefined. Any dynamic `import()` behind a preloaded pin is decorative.
 
 The two CDN pins that remain are deliberate and documented in place:
 `@rails/request.js` from jsDelivr (its ESM build uses extensionless relative
-imports that a browser cannot resolve; the `dist` bundle can), and brgen's Tiptap
-pair from esm.sh at `preload: false`.
+imports that a browser cannot resolve; the `dist` bundle can), and brgen's
+Tiptap pair from esm.sh at `preload: false`.
 
 ## Registration
 
@@ -41,15 +42,15 @@ these names to appear in it: `password-visibility`, `nested-form`,
 `rails-nested-form`, `carousel`, `character-counter`, `checkbox-select-all`,
 `dialog`, `read-more`, `textarea-autogrow`.
 
-**The gate fails on two of those today, for different reasons.** It looks for the
-quoted string `"rails-nested-form"`; the boot file imports
+**The gate fails on two of those today, for different reasons.** It looks for
+the quoted string `"rails-nested-form"`; the boot file imports
 `@stimulus-components/rails-nested-form` and registers it under the short name
 `nested-form` (`stimulus_boot.js:17`, `:66`), so the package is wired and the
-check still misses it — an instrument fault, not a wiring gap. `dialog` is a real
-gap: nothing is vendored under that name and nothing registers it. Resolving
-these means either vendoring `dialog` and matching the gate to the registered
-spelling, or narrowing `REQUIRED_BOOT`. Until then this gate is red, and a red
-gate that nobody can make green gets ignored.
+check still misses it — an instrument fault, not a wiring gap. `dialog` is a
+real gap: nothing is vendored under that name and nothing registers it.
+Resolving these means either vendoring `dialog` and matching the gate to the
+registered spelling, or narrowing `REQUIRED_BOOT`. Until then this gate is red,
+and a red gate that nobody can make green gets ignored.
 
 `shared/frontend/stimulus_components.js` is deprecated and the gate fails if the
 file reappears. The old document pointed at it as the ESM bootstrap for
@@ -87,7 +88,8 @@ user-facing action tokens.
 ## What changed since the deleted version
 
 - **Install shape.** The old text prescribed `esm.sh` pins for eleven packages.
-  All are vendored now, and restoring those pins reintroduces the preload problem.
+  All are vendored now, and restoring those pins reintroduces the preload
+  problem.
 - **`stimulus_components.js`.** Named as the bootstrap for "direct module apps";
   now a gate failure if present.
 - **Component list.** The old list of 19 packages to standardize on was a wish

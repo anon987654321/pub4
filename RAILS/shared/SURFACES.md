@@ -39,26 +39,26 @@ consistency campaign; enforcement lives in `visual_contract_lint`,
 - Immersive vs browsable is load-bearing and CSS-encoded
   (`body[class*="vertical-"]` hides feed chrome). Naming it in markup
   (`data-shell=`) is a queued refinement, not yet built.
-- Any bar at the bottom edge publishes its height into `--tab-bar-h` so
-  floating widgets clear it (playlist's transport is the model).
+- Any bar at the bottom edge publishes its height into `--tab-bar-h` so floating
+  widgets clear it (playlist's transport is the model).
 
 ## Component families (closed sets)
 
-- **Buttons** — dash-spelled, one family in `_zen_shell.scss`:
-  `btn` base + compound variants `.btn.btn-primary/-ghost/-danger/-sm`, plus
-  `btn-link`, `btn-block`, `btn-share`. Variants are compound (`0-2-0`) so an
-  app's later `.btn` base is a dialect skin that can never beat them; ghost ink
-  is `inherit` (wscons stays green). `btn_vocabulary` lint holds the set at
-  zero strays. brgen's accent-painted base is its dialect; amber's small-button
-  overrides ride dual solo+compound selectors.
+- **Buttons** — dash-spelled, one family in `_zen_shell.scss`: `btn` base +
+  compound variants `.btn.btn-primary/-ghost/-danger/-sm`, plus `btn-link`,
+  `btn-block`, `btn-share`. Variants are compound (`0-2-0`) so an app's later
+  `.btn` base is a dialect skin that can never beat them; ghost ink is `inherit`
+  (wscons stays green). `btn_vocabulary` lint holds the set at zero strays.
+  brgen's accent-painted base is its dialect; amber's small-button overrides
+  ride dual solo+compound selectors.
 - **Icons** — `Shared::UiHelper#icon` + the sprite partial, rendered by all
   three app layouts behind `config.x.icon_sprite` (2026-08-21; amber's theme
   toggle had been referencing symbols it never included). The face's icons are
   queued for the same namespace.
 - **Empty states** — `shared/empty_state` with `action:` CTA, both lint
   directions at zero. The `○` glyph is a queued dialect slot.
-- **Cards** — `_post_card` (card/prose variants) is the anatomy; `_feed_card`
-  is the compact row. Wider adoption (amber posts, engine cards onto tv's
+- **Cards** — `_post_card` (card/prose variants) is the anatomy; `_feed_card` is
+  the compact row. Wider adoption (amber posts, engine cards onto tv's
   aspect-poster grammar) is the recorded refactor queue below.
 - **Scrims** — `--scrim-45..72`; unification to fewer densities awaits the
   operator's eye.
@@ -80,12 +80,12 @@ consistency campaign; enforcement lives in `visual_contract_lint`,
 ## Queued refactors (recorded, ratchet-held, unscheduled)
 
 Token: face joins fleet token names (a face.part*.txt session — the
---c-*/--x-text namespace is read by the GENERATED bundles. The tap-test
-fence LIFTED 2026-08-22: the local face failing to boot under triangle was
-nothing deeper than MASTER/web's bundle never installed under the pinned
-3.4.9 — one bundle install, four surfaces up, face answers 200); shared
-edge scale; radius-scale parameter per dialect; scrim unification (operator's
-eye). Components: card-grid still needs a second real consumer.
+--c-*/--x-text namespace is read by the GENERATED bundles. The tap-test fence
+LIFTED 2026-08-22: the local face failing to boot under triangle was nothing
+deeper than MASTER/web's bundle never installed under the pinned 3.4.9 — one
+bundle install, four surfaces up, face answers 200); shared edge scale;
+radius-scale parameter per dialect; scrim unification (operator's eye).
+Components: card-grid still needs a second real consumer.
 
 The component sitting ran 2026-08-21; most of the queue refuted the
 purchasable-row way:
@@ -95,8 +95,8 @@ purchasable-row way:
   family, same responsive widths) — now `marketplace/_card_media`. The card
   BODIES stay local (a deal leads with its discount, a listing with its meta
   row). Cross-engine (maps place-card, tv-card, event-card) refuted: duration
-  overlays, time chips and address lines are structural differences — a
-  phrase in common, not an anatomy.
+  overlays, time chips and address lines are structural differences — a phrase
+  in common, not an anatomy.
 - **chat anatomy refuted**: the four message partials are four animals — an
   87-line IRC/DM hybrid with receipts and expiry, a one-line party message, a
   deliberately minimal stream-chat line with its own broadcast contract, and
@@ -104,40 +104,39 @@ purchasable-row way:
 - **event-row refuted**: events/_event and activity_events/_event render
   different models (Event vs polymorphic activity); nothing to unify.
 - **trust strip dropped from the queue**: no view consumer exists at all —
-  TrustSignal/TrustScore are model/service only. A component with zero
-  consumers is not queued, it is unbuilt.
-**Refuted on examination (2026-08-21): purchasable-row** — takeaway's
-form-quantity row, the cart's remove-action row and the listing card share a
-phrase (name · price), not an anatomy; one partial serving all three would be
-a parameter soup shallower than three clear local rows. The face's 52-finding
-debt closed the same day (26 were a line-blind REDUCED_MOTION twin filing
-against face.css's own reset; the primer fade capped at 300ms; the rest were
-fences stated inline).
+  TrustSignal/TrustScore are model/service only. A component with zero consumers
+  is not queued, it is unbuilt. **Refuted on examination (2026-08-21):
+  purchasable-row** — takeaway's form-quantity row, the cart's remove-action row
+  and the listing card share a phrase (name · price), not an anatomy; one
+  partial serving all three would be a parameter soup shallower than three clear
+  local rows. The face's 52-finding debt closed the same day (26 were a
+  line-blind REDUCED_MOTION twin filing against face.css's own reset; the primer
+  fade capped at 300ms; the rest were fences stated inline).
 
 ## Tap-target sweep (gates/probes/tap_target_probe.rb) — first run 2026-08-22
 
-The 2026-08-17 hand-found pair is an instrument now: every interactive
-element on 7 pages against the fleet's own --tap-min, in a 390x844 mobile
-viewport over CDP. Landed from the first run: face clean (its --tap-min was
-CITED but never defined — the button drew at 18px; the drawn square is a
-::before inside a 44px button now), legal footer links grown by invisible
-padding, brgen's shadow copy of _site_legal_footer deleted (it was masking
-the shared one), the theme toggle's label carries the 44px box.
+The 2026-08-17 hand-found pair is an instrument now: every interactive element
+on 7 pages against the fleet's own --tap-min, in a 390x844 mobile viewport over
+CDP. Landed from the first run: face clean (its --tap-min was CITED but never
+defined — the button drew at 18px; the drawn square is a ::before inside a 44px
+button now), legal footer links grown by invisible padding, brgen's shadow copy
+of _site_legal_footer deleted (it was masking the shared one), the theme
+toggle's label carries the 44px box.
 
 Verdicts, recorded not forced:
-- brgen author links (42x21) — feed density vs tap size is the operator's
-  call; the same invisible-padding trick would work if wanted.
+- brgen author links (42x21) — feed density vs tap size is the operator's call;
+  the same invisible-padding trick would work if wanted.
 - amber nav row (35px) and author links — amber's active session's design.
-- bsdports .port-name rows (12px) — the index-density identity; one line
-  per port IS the surface. Deliberate, stays.
+- bsdports .port-name rows (12px) — the index-density identity; one line per
+  port IS the surface. Deliberate, stays.
 
 ## Stylesheet size budget (auditor css_file_size, 200 lines) — stance 2026-08-22
 
-Ten sheets exceed it. Not one queue: _zen_shell (474) and _minimal (459)
-are BASE LAYERS — one file is their design, splitting them scatters the
-cascade story; _dialect_tokens (200+) holds tokens AND theme mixins and is
-the one with a real seam (tokens vs mixins) if anyone splits anything.
-face.css (1282) is the whole face by construction. The app sheets
-(_chrome_polish 324, _marketplace 251, _vertical_playlist 378, amber
-_brand 378) are section-seamed and splittable when their surfaces are next
-open; the auditor keeps counting so none of this grows silently.
+Ten sheets exceed it. Not one queue: _zen_shell (474) and _minimal (459) are
+BASE LAYERS — one file is their design, splitting them scatters the cascade
+story; _dialect_tokens (200+) holds tokens AND theme mixins and is the one with
+a real seam (tokens vs mixins) if anyone splits anything. face.css (1282) is the
+whole face by construction. The app sheets (_chrome_polish 324, _marketplace
+251, _vertical_playlist 378, amber _brand 378) are section-seamed and splittable
+when their surfaces are next open; the auditor keeps counting so none of this
+grows silently.

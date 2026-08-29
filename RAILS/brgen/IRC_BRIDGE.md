@@ -2,16 +2,17 @@
 
 A pure-Ruby IRC gateway that maps brgen's city channels onto the real IRC
 protocol, so someone on Libera.Chat / EFnet / Undernet / Newnet can point a
-client at brgen and land in the same `#brgen` room a phone browser sees. Messages
-cross both ways; the modes (`@` op / `+` voice) and roster we already built map
-straight onto IRC's `MODE` and `NAMES`.
+client at brgen and land in the same `#brgen` room a phone browser sees.
+Messages cross both ways; the modes (`@` op / `+` voice) and roster we already
+built map straight onto IRC's `MODE` and `NAMES`.
 
 ## What's built (and tested)
 
 - `lib/brgen/irc/message.rb` — parse/build one IRC protocol line.
 - `lib/brgen/irc/session.rb` — a connection state machine: `NICK`/`USER`
   registration, `JOIN`, `PART`, `PRIVMSG`, `NAMES`, `PING`, `QUIT`, plus `#poll`
-  for relaying web-side messages. No sockets — unit-tested against a fake bridge.
+  for relaying web-side messages. No sockets — unit-tested against a fake
+  bridge.
 - `lib/brgen/irc/bridge.rb` — the seam to brgen's models: channel lookup
   (`Conversation.find_or_create_channel`), posting (`Message.create!` via a
   per-nick bridged user), history, roster (with `@`/`+`), and web→IRC deltas.

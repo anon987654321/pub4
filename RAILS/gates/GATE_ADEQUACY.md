@@ -1,12 +1,17 @@
 # Gate suite adequacy (perfectionist bar)
 
-Assessment date: 2026-08-01. Scope: RAILS family (brgen + verticals, amber, bsdports) + MASTER web UI.
+Assessment date: 2026-08-01. Scope: RAILS family (brgen + verticals, amber,
+bsdports) + MASTER web UI.
 
 ## Verdict
 
 **Strong professional floor. Not yet “perfectionist complete.”**
 
-What we have is among the denser Rails UI gate suites: source ratchets, multi-step journeys, full-page inventory sims, geometry/reflow, keyboard + mobile floors, mutation tests. A perfectionist still needs authenticated personas, denser residual-EN chrome, reliable CDP under load, and MASTER face in every browser leaf.
+What we have is among the denser Rails UI gate suites: source ratchets,
+multi-step journeys, full-page inventory sims, geometry/reflow, keyboard +
+mobile floors, mutation tests. A perfectionist still needs authenticated
+personas, denser residual-EN chrome, reliable CDP under load, and MASTER face in
+every browser leaf.
 
 ## Coverage map
 
@@ -26,16 +31,34 @@ What we have is among the denser Rails UI gate suites: source ratchets, multi-st
 
 ## Gaps a perfectionist would still flag
 
-1. **Authenticated personas** — no signed-in walk of cart checkout, dating matches, sell form submit, amber wardrobe mutations.
-2. **Residual EN chrome** — measured 2026-08-01 instead of guessed at. `chrome_i18n_lint` now has an `aria_label` rule (both `aria-label="…"` and `aria: { label: "…" }`) and reports per kind: empty titles 0, search placeholders 0, hardcoded aria-labels **172** across the three apps and the shared engine. The aria baseline is 172 rather than 0 because closing it needs Norwegian copy, not a regex; it may only ratchet down, and `RAILS/test/chrome_i18n_lint_test.rb` fails both when a kind exceeds its baseline and when a baseline has been beaten and not lowered. Until then, a screen-reader user on `:nb` hears English for those 172 labels — which is the gap, now with a number on it.
-3. **CDP reliability** — long rendered_suite + cold Falcon → timeouts; mobile/keyboard must not green-wash (inconclusive when &lt;3 surfaces measured).
-4. **MASTER face browser leaf** — not first-class in mobile_flow preferred set / geometry_surfaces.
-5. **Auth + :id pages** — page_sim source-only for show/edit; no seeded live IDs.
-6. **visual_contract capture** — needs `VISUAL_CAPTURE=1` + running apps; default run only validates matrix shape.
-7. **bsdports** — out of product focus triangle but still a Rails app; must appear in family `--all`.
+1. **Authenticated personas** — no signed-in walk of cart checkout, dating
+   matches, sell form submit, amber wardrobe mutations.
+2. **Residual EN chrome** — measured 2026-08-01 instead of guessed at.
+   `chrome_i18n_lint` now has an `aria_label` rule (both `aria-label="…"` and
+   `aria: { label: "…" }`) and reports per kind: empty titles 0, search
+   placeholders 0, hardcoded aria-labels **172** across the three apps and the
+   shared engine. The aria baseline is 172 rather than 0 because closing it
+   needs Norwegian copy, not a regex; it may only ratchet down, and
+   `RAILS/test/chrome_i18n_lint_test.rb` fails both when a kind exceeds its
+   baseline and when a baseline has been beaten and not lowered. Until then, a
+   screen-reader user on `:nb` hears English for those 172 labels — which is the
+   gap, now with a number on it.
+3. **CDP reliability** — long rendered_suite + cold Falcon → timeouts;
+   mobile/keyboard must not green-wash (inconclusive when &lt;3 surfaces
+   measured).
+4. **MASTER face browser leaf** — not first-class in mobile_flow preferred set /
+   geometry_surfaces.
+5. **Auth + :id pages** — page_sim source-only for show/edit; no seeded live
+   IDs.
+6. **visual_contract capture** — needs `VISUAL_CAPTURE=1` + running apps;
+   default run only validates matrix shape.
+7. **bsdports** — out of product focus triangle but still a Rails app; must
+   appear in family `--all`.
 8. **No network/perf budget** — no LCP/INP or request waterfall gate.
-9. **No screen-reader path** — landmarks yes; no axe/full a11y tree walk beyond visual_contract capture helpers.
-10. **gate_mutation** does not prove mobile_flow / page_simulation catch defects yet.
+9. **No screen-reader path** — landmarks yes; no axe/full a11y tree walk beyond
+   visual_contract capture helpers.
+10. **gate_mutation** does not prove mobile_flow / page_simulation catch defects
+    yet.
 
 ## Perfectionist run recipe
 

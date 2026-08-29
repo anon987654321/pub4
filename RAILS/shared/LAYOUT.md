@@ -4,13 +4,14 @@ MASTER face and all RAILS apps share one **layout chrome** contract. Dialects
 (social / luxury / wscons / face CRT) restyle color, type, and radius. They must
 not invent a second z-scale, skip-link, tap floor, or main landmark pattern.
 
-Source of truth: `shared/design_tokens.yml` → `shared_chrome` + `face_root.layout`.
-CSS: `shared/app/assets/stylesheets/_layout_chrome.scss` (RAILS), face `:root`
-generated into `MASTER/web/public/face.css`.
+Source of truth: `shared/design_tokens.yml` → `shared_chrome` +
+`face_root.layout`. CSS: `shared/app/assets/stylesheets/_layout_chrome.scss`
+(RAILS), face `:root` generated into `MASTER/web/public/face.css`.
 
 ## Focus triangle (active product surface)
 
-Primary product work targets these three only (unless explicitly scoped elsewhere):
+Primary product work targets these three only (unless explicitly scoped
+elsewhere):
 
 | Surface | Role |
 |---------|------|
@@ -47,16 +48,19 @@ Social primitives (shared engine):
 2. First focusable: `.skip-link` → primary content
 3. `main` with `id` + `role="main"`
 4. CSS vars present (all defined in `_dialect_tokens.scss`, values from
-   `design_tokens.yml`): `--chrome-inset` (0.75rem), `--tap-min` / `--bar-height` (44px),
-   `--z-canvas`…`--z-skip` (shared ladder), `--safe-*`
+   `design_tokens.yml`): `--chrome-inset` (0.75rem), `--tap-min` /
+   `--bar-height` (44px), `--z-canvas`…`--z-skip` (shared ladder), `--safe-*`
 5. Interactive primary controls ≥ 44px tall
-6. No second box-shadow elevation language (flat UI); face popover exception only
+6. No second box-shadow elevation language (flat UI); face popover exception
+   only
 
 ## Shared primitives
 
-- `.skip-link` — hard-hidden until `:focus-visible`, corner at chrome-inset + safe-area
+- `.skip-link` — hard-hidden until `:focus-visible`, corner at chrome-inset +
+  safe-area
 - `.page-header` — title + optional actions, measure-capped
-- `.app-shell` / `.layout` — document column (RAILS); face uses full-viewport canvas
+- `.app-shell` / `.layout` — document column (RAILS); face uses full-viewport
+  canvas
 - `main#main-content` — page gutter via `--page-gutter` unless inside `.layout`
 
 ## What may diverge
