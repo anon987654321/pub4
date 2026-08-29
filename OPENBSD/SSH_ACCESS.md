@@ -1,6 +1,8 @@
 # SSH access — workstation, VMM host, VM, GitHub
 
-Operator notes from live verification and [OpenBSD Amsterdam](https://www.openbsd.amsterdam) docs research (2026-06-25). Canonical network table remains in `README.md`.
+Operator notes from live verification and [OpenBSD
+Amsterdam](https://www.openbsd.amsterdam) docs research (2026-06-25). Canonical
+network table remains in `README.md`.
 
 ## Architecture
 
@@ -23,7 +25,8 @@ Verified on host (`ssh server4`):
 vm23   owner: dev   state: running
 ```
 
-Provider pattern: **s{server}vm{vmid}** → this VM is **s4vm23** (server 4, vm 23).
+Provider pattern: **s{server}vm{vmid}** → this VM is **s4vm23** (server 4, vm
+23).
 
 ## Workstation `~/.ssh/config`
 
@@ -67,9 +70,15 @@ The deployment key (`id_ed25519_brgen`) is **not** the same file on Mac vs VM.
 
 Same path, different key material. Do not overwrite one with the other.
 
-**GitHub from Mac:** copy the VM's GitHub key to `~/.ssh/id_ed25519_github` (separate identity file). Adding the Mac deployment pubkey to GitHub via `gh ssh-key add` failed on 2026-06-25 because `gh` token on the VM is expired (`HTTP 401`). Re-auth: `ssh brgen` → `gh auth login` → `gh ssh-key add -t "Mac" ~/.ssh/id_ed25519_brgen.pub` (from Mac, pipe pubkey), or add manually at GitHub → Settings → SSH keys.
+**GitHub from Mac:** copy the VM's GitHub key to `~/.ssh/id_ed25519_github`
+(separate identity file). Adding the Mac deployment pubkey to GitHub via `gh
+ssh-key add` failed on 2026-06-25 because `gh` token on the VM is expired (`HTTP
+401`). Re-auth: `ssh brgen` → `gh auth login` → `gh ssh-key add -t "Mac"
+~/.ssh/id_ed25519_brgen.pub` (from Mac, pipe pubkey), or add manually at GitHub
+→ Settings → SSH keys.
 
-Public deployment key (safe to share): see `priv/ssh/id_ed25519_brgen.pub` in repo.
+Public deployment key (safe to share): see `priv/ssh/id_ed25519_brgen.pub` in
+repo.
 
 ## VMM host (server4)
 
@@ -80,7 +89,8 @@ ssh -e none -p 31415 -o VerifyHostKeyDNS=yes dev@server4.openbsd.amsterdam
 # or: ssh server4
 ```
 
-Same username + pubkey as the VM. User is in `_vmdusers` for socket access to `vmd`.
+Same username + pubkey as the VM. User is in `_vmdusers` for socket access to
+`vmd`.
 
 ```zsh
 vmctl status vm23
@@ -90,7 +100,8 @@ vmctl start -c vm23
 doas pkill -9 -xf "vmd: vm23"   # hung VM ([known.html](https://www.openbsd.amsterdam/known.html))
 ```
 
-`OPENBSD/vps_console*.exp` scripts require `I_UNDERSTAND_CONSOLE_RISK=1` (see `OPENBSD/RUNBOOK.md`).
+`OPENBSD/vps_console*.exp` scripts require `I_UNDERSTAND_CONSOLE_RISK=1` (see
+`OPENBSD/RUNBOOK.md`).
 
 Recovery when VM SSH is pf-blocked:
 
@@ -107,15 +118,19 @@ ssh brgen
 cd /home/dev/pub4 && git pull --ff-only
 ```
 
-- OpenBSD **7.8** on VM (provider ships **7.9** — see [upgrade.html](https://www.openbsd.amsterdam/upgrade.html)).
-- Initial root password (fresh installs): `awk '{print $NF}' ~/.ssh/authorized_keys`
-- PTR / rDNS from inside VM only: [ptr.html](https://www.openbsd.amsterdam/ptr.html) (`ptr4` / `ptr6` token API)
-- Backup: [backup.html](https://www.openbsd.amsterdam/backup.html) — `openrsync` over the
-  `Host wingman1` stanza in dev's `~/.ssh/config`. **Port 31415, not 22** — the host pings
-  from 1 ms away and refuses 22, so a missing `Port` line reads as "the backup server is
-  down". That line was absent, and `backup_priv.sh` passed the FQDN rather than the alias,
-  which bypassed the stanza's user, key and host-key policy as well. Both fixed 2026-08-12;
-  the account's `backup/` directory was empty, so nothing had ever been stored.
+- OpenBSD **7.8** on VM (provider ships **7.9** — see
+  [upgrade.html](https://www.openbsd.amsterdam/upgrade.html)).
+- Initial root password (fresh installs): `awk '{print $NF}'
+  ~/.ssh/authorized_keys`
+- PTR / rDNS from inside VM only:
+  [ptr.html](https://www.openbsd.amsterdam/ptr.html) (`ptr4` / `ptr6` token API)
+- Backup: [backup.html](https://www.openbsd.amsterdam/backup.html) — `openrsync`
+  over the `Host wingman1` stanza in dev's `~/.ssh/config`. **Port 31415, not
+  22** — the host pings from 1 ms away and refuses 22, so a missing `Port` line
+  reads as "the backup server is down". That line was absent, and
+  `backup_priv.sh` passed the FQDN rather than the alias, which bypassed the
+  stanza's user, key and host-key policy as well. Both fixed 2026-08-12; the
+  account's `backup/` directory was empty, so nothing had ever been stored.
 
 ## OpenBSD Amsterdam doc index
 
@@ -135,8 +150,10 @@ cd /home/dev/pub4 && git pull --ff-only
 
 From [setup.html](https://www.openbsd.amsterdam/setup.html):
 
-- Physical Dell hosts (`server1` … `server29`, etc.) each run up to 40 VMs via `vmm`/`vmd`.
-- VM config: qcow2 disk, static MAC, DHCP fixed lease, autoinstall + `siteXX.tgz`.
+- Physical Dell hosts (`server1` … `server29`, etc.) each run up to 40 VMs via
+  `vmm`/`vmd`.
+- VM config: qcow2 disk, static MAC, DHCP fixed lease, autoinstall +
+  `siteXX.tgz`.
 - SSHFP records in DNS — use `-o VerifyHostKeyDNS=yes` on first connect to host.
 - €71/year base VM: 1G RAM, 50G disk, dedicated IPv4 + IPv6 /64.
 
