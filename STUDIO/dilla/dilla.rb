@@ -1819,12 +1819,16 @@ SYNTH_PATCH_CATALOG = [
   # through a resonant filter, and its character is the resonance: a peak steep
   # enough to be a pitch of its own, sitting just above the note. Duophonic, so
   # it belongs on a lead rather than a pad.
+  # Its asoftclip runs oversample=1, matching grade_analog and for the reason
+  # measured there: on this ffmpeg (8.1.1) oversample>=2 costs about 5.8 dB with
+  # no gain compensation and generates no harmonics, so it attenuates rather than
+  # anti-aliases. Measured at param=1.35: -24.5 dB at 1, -30.3 dB at 4.
   { id: :arp_odyssey, role: :lead, program: 81, bank: 0, sf2: :default,
     weight: 2.2, native: nil, mix: 1.1, octave: 0, gate: 0.82,
     arp_styles: %i[up updown pingpong],
     fx: "equalizer=f=1400:t=q:w=1.1:g=6.5,equalizer=f=320:t=o:w=1:g=2.4," \
         "chorus=0.5:0.6:14|18:0.2|0.15:0.18|0.14:1.8|2.2," \
-        "asoftclip=type=tanh:param=1.35:oversample=4,equalizer=f=6200:t=h:w=1:g=-2.5," \
+        "asoftclip=type=tanh:param=1.35:oversample=1,equalizer=f=6200:t=h:w=1:g=-2.5," \
         "aecho=0.9:0.35:38|76:0.18|0.1" },
   # The Roland VP-330 is a choir and a string section behind a triple-chorus
   # ensemble, and the ensemble IS the instrument -- three BBD lines at different
