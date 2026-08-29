@@ -4871,9 +4871,13 @@ def prog_rotation_enabled? = ENV.fetch("PROG_ROTATE", "1") != "0"
 # nil when fewer than two of the pool resolve (e.g. ARTIST_VERIFIED_ONLY hides
 # them), so the caller falls back to the single-progression loop.
 def arrange_rotating_progressions(needed_chords, _cfg)
+  # Resolve each pool name to its OWN chords. dilla_progression is wrong here: it
+  # reads ENV["PROGRESSION"] first and would hand back the default track for every
+  # name. safe_producer_progression takes the name directly, and voice-leading it
+  # matches the pad shape arrange_loop_progression would have produced.
   pool = PROG_ROTATION_POOL.filter_map do |name|
-    pads = curated_progression_pads(name)
-    pads && [name, pads]
+    pads = safe_producer_progression(name)
+    pads && pads.length >= 2 ? [name, voice_led_pad_progression(pads)] : nil
   end
   return nil if pool.length < 2
 
