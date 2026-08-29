@@ -27,6 +27,19 @@ refusal with a reason, never a quiet patch behind your back. It is written in
 pure Ruby, deploys to OpenBSD, and needs no cloud to judge a codebase — which
 means it can run anywhere, including on hardware we own.
 
+### 💎 Why pure Ruby
+
+Nearly all of modern AI is written in Python — chosen for its libraries, not its
+clarity. MASTER is written in pure Ruby, and that is the whole point, not
+nostalgia. Ruby reads like intention: a program says what it means, and a person
+can follow it without a manual. That legibility is what makes a *constitution*
+possible at all — you cannot govern a system by law if no human can read the law,
+or the code it judges. Where the field bolts safety on afterward, in a language
+built for machines, MASTER makes the rules themselves plain enough to argue with.
+A self-governing intelligence has to be readable to be trustworthy, and Ruby is
+the most readable language we have. Ninety-nine percent of AI is Python; MASTER
+is the one written to be understood.
+
 ### 🔁 What it does
 
 You hand MASTER a sentence and it scans, fixes, criticizes, and reviews, circling
@@ -74,14 +87,19 @@ stay in Norway.
 
 ### 💰 The ask
 
-We are seeking **Commercialisation funding from Innovasjon Norge** — Phase 1 on
-the order of one million kroner, with a path to Phase 2 up to roughly five
-million, and the startup loan (up to two million kroner) alongside it. Honestly
-scoped: that grant does not build a mountain datacentre — a full facility is
-later-stage project finance in the tens of millions of euros. What it funds is
-the fundable near-term: finishing MASTER as a product, a feasibility study for
-the fjord site, and a first pilot compute pod proving the green economics on real
-Norwegian power. The datacentres are the growth roadmap the pilot unlocks.
+We are seeking roughly **six million kroner from Innovasjon Norge** —
+Commercialisation Phase 1 near one million, a path to Phase 2 up to four million,
+and the startup loan of up to two million alongside. Honestly scoped, that does
+not build a mountain datacentre; a full facility is later-stage project finance
+in the tens of millions of euros. What this money funds is the near-term, and
+here is roughly where it goes. About three million kroner covers the software and
+a team of three to four engineers across the first two years. About two million
+funds the fjord feasibility study and a first pilot compute pod — a few hundred
+kilowatts in a container, proving the green economics on real Norwegian power.
+And about one million stands up a small 3D-printing and robotics bench, where the
+embryo takes its first physical body: prototype hardware, CAD, and a printer. The
+full datacentres, and the California and Malaysia edge nodes, are the growth
+roadmap the pilot unlocks, on separate capital.
 
 Year one, commercialise the software and complete the fjord feasibility. Year
 two, stand up the pilot pod inside a Norwegian mine site and win first export
