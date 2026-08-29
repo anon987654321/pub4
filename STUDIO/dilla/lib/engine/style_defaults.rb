@@ -59,8 +59,10 @@ DILLA_STYLE_DEFAULTS = {
   "VOICING" => "rootless",
   "VOICE_LEAD_PADS" => "1",
   "LEARNED_PROGRESSION" => "0",
-  # Rhodes + Prophet stack (Galaxy EP + Supersaw poly) — see PAD_LAYER_STACKS.
-  "PAD_VOICE" => "stack_soul",
+  # A rotatable single voice, not a fixed stack. PAD_LAYER_STACKS switch the pad
+  # synth cycle off (patch.rb), so a stack is the same Rhodes/Prophet every
+  # render; blend lets STREAM_ROTATE_SYNTH cycle the pad through the lineage.
+  "PAD_VOICE" => "blend",
   # Held pads; arps live on the lead stem (stream rotates LEAD_ARP_MODE).
   "PAD_ARP_MODE" => "held",
   "PAD_ATTACK" => "90",
