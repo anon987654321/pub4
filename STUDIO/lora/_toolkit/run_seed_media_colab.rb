@@ -198,8 +198,24 @@ render_cell = <<~PYTHON
   # Pass 1 — dating. The adapter is loaded once for the whole pass and unloaded
   # after, because two thirds of this set must render without it.
   dating = spec["dating"]
-  ADAPTER = "/content/pub4/STUDIO/lora/ragnhild/weights/ragnhild/ragnhild.safetensors"
-  if os.path.exists(ADAPTER):
+  # The adapter is NOT in the clone. STUDIO/lora/*/weights/ is gitignored -- the
+  # checkpoints are 218 MB and they are a person's likeness, so the repo is the
+  # wrong home for them and Drive is where the training notebook already puts
+  # them. Looked for in Drive first, in the same per-subject directory
+  # LORA_PERSIST_DIR names, then in the clone in case someone put one there.
+  SUBJECT = dating["lora"]
+  ADAPTER_CANDIDATES = [
+      f"/content/drive/MyDrive/lora/{SUBJECT}/{SUBJECT}.safetensors",
+      f"/content/drive/MyDrive/lora/{SUBJECT}/weights/{SUBJECT}.safetensors",
+      f"/content/drive/MyDrive/seed_media/{SUBJECT}.safetensors",
+      f"/content/pub4/STUDIO/lora/{SUBJECT}/weights/{SUBJECT}/{SUBJECT}.safetensors",
+  ]
+  # Any checkpoint in the Drive persist dir, newest last, so a run that trained
+  # further does not need this list edited.
+  import glob
+  ADAPTER_CANDIDATES += sorted(glob.glob(f"/content/drive/MyDrive/lora/{SUBJECT}/*.safetensors"))
+  ADAPTER = next((p for p in ADAPTER_CANDIDATES if os.path.exists(p)), None)
+  if ADAPTER:
       # set_adapters, never fuse_lora. Fusing writes the adapter into the base
       # weights, and these are nf4 -- bitsandbytes 4-bit layers cannot be
       # written back into, so fuse raises partway through the dating pass, on
@@ -226,10 +242,14 @@ render_cell = <<~PYTHON
       gc.collect(); torch.cuda.empty_cache()
       print("ok: dating pass complete, adapter unloaded")
   else:
-      # Named loudly. Rendering these on the base model produces twelve strangers
-      # that look like a result and are not one.
-      print("SKIPPED dating: no adapter at", ADAPTER)
-
+      # Named loudly, and with the fix in it. Rendering these on the base
+      # model produces twelve strangers that look like a result and are not.
+      print("SKIPPED dating — no adapter found. Looked in:")
+      for p in ADAPTER_CANDIDATES:
+          print("   ", p)
+      print("")
+      print(f"  Put {SUBJECT}.safetensors in MyDrive/lora/{SUBJECT}/ and rerun this cell.")
+      print("  It is gitignored on purpose, so the clone will never carry it.")
   # Pass 2 — scenes. No adapter, no face where a face is not the subject.
   for i, (key, entry) in enumerate(spec["scenes"].items()):
       render(key, entry["prompt"], entry.get("aspect_ratio"), 2000 + i)
