@@ -38,10 +38,17 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     # an assertion here is testing the locale, not the markup.
     assert_includes response.body, I18n.t("nav.ai_assistant", locale: :nb)
     assert_includes response.body, "form-submit-blank"
-    # The chip is labelled "sign up". Sending it to sign-in made a new visitor
-    # fill a form they have no account for. The sign-in page does link onward
-    # to /users/new — this skips the extra hop.
-    assert_includes response.body, new_user_path
+    # No sign-up link on root any more, and that is a decision rather than a
+    # regression that slipped through: the "sign up" chip rode the nav bar, and
+    # the bar became exactly eight verticals on 2026-08-29 (operator).
+    #
+    # It costs what the note here used to say it saved. A new visitor reaches
+    # /users/new through the sign-in page now, which is the extra hop the chip
+    # existed to skip, and nothing else on root offers one -- _mobile_chrome's
+    # overflow carries sign_in, not sign_up. Asserted in the negative so that
+    # putting a sign-up path back is a change someone makes deliberately.
+    assert_not_includes response.body, %(href="#{new_user_path}"),
+                        "root offers no sign-up link since the bar became the eight verticals"
   end
 
   test "a feed card frame does not swallow the title click" do
@@ -86,9 +93,12 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     get root_url
     assert_response :success
 
-    %w[playlist marketplace takeaway messenger maps tv].each do |vertical|
-      assert_match(%r{class="nav_link[^"]*"[^>]*href="//#{vertical}\.brgen\.no/"}, response.body,
-                   "#{vertical} should be reachable from the nav swiper")
+    # markedsplass, not marketplace: the subdomain is per-city and Norwegian on
+    # a .no city, which is the whole reason the bar's label for it is a locale
+    # question rather than a string. helper_test pins the host itself.
+    %w[playlist markedsplass takeaway messenger maps tv].each do |host|
+      assert_match(%r{class="nav_link[^"]*"[^>]*href="//#{host}\.brgen\.no/"}, response.body,
+                   "#{host} should be reachable from the nav swiper")
     end
 
     assert_equal 1, response.body.scan(/class="nav_swiper_bar"/).size
