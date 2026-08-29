@@ -17,14 +17,13 @@ module Master
   RuleDSL.rule :NO_PUTS,
     severity: :warning, tags: %i[CLEAN_CODE], applies_to: %i[ruby],
     description: "no bare puts in library code" do |src, path:|
-    # `/cli/cli` was `/now/cli` until 2026-08-12. lib/now/ was renamed to lib/cli/
-    # (693d2630d) and this exemption kept pointing at the old address, so 105
-    # findings appeared in selfcheck's largest actionable bucket — every one of
-    # them in lib/cli/, 100 in lib/cli/cli/, all of them decisions this rule's
-    # author had already made and the rename silently undid. An exemption that
-    # outlives its subject is a hole in a gate; one whose subject moves out from
-    # under it is a gate that starts firing on what it exempted.
-    next [] if path.to_s.match?(%r{/exe/|/spec/|/bin/|/cli/cli})
+    # The REPL prints for a living, so the path it lives at is exempt. This
+    # exemption carries the whole of lib/cli/session/ -- 100 deliberate puts --
+    # and it has to move whenever that directory does. An exemption whose
+    # subject moves out from under it is a gate that starts firing on exactly
+    # what it exempted: when lib/now/ became lib/cli/ and this address stayed,
+    # 105 findings arrived in selfcheck's largest actionable bucket overnight.
+    next [] if path.to_s.match?(%r{/exe/|/spec/|/bin/|/cli/session})
     scan_lines(src, /^\s*puts\b(?!\s*\()/, message: "bare puts — use event bus or logger")
   end
 

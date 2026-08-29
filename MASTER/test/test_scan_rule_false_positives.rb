@@ -271,10 +271,10 @@ end
   # It read `/now/cli` and lib/now/ was renamed to lib/cli/ in 693d2630d. The
   # exemption kept pointing at the old address, so 105 findings appeared in
   # selfcheck's largest actionable bucket — every one in lib/cli/, 100 of them in
-  # lib/cli/cli/, all of them decisions the rule's author had already made.
+  # lib/cli/session/, all of them decisions the rule's author had already made.
 
   def test_no_puts_still_exempts_the_cli_entry_layer
-    assert_empty findings(:NO_PUTS, %(  puts "hello"\n), path: "lib/cli/cli/repl_flow.rb")
+    assert_empty findings(:NO_PUTS, %(  puts "hello"\n), path: "lib/cli/session/repl_flow.rb")
     assert_empty findings(:NO_PUTS, %(  puts "hello"\n), path: "MASTER/bin/master")
   end
 

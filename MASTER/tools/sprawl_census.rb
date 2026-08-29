@@ -68,10 +68,10 @@ module Pub4
              .values.flatten.sort
     end
 
-    # dilla/dilla.rb is the tool named after its folder and reads correctly at
-    # the command line. cli/cli.rb is Master::CLI::CLI, which says it three
-    # times. The entry point is the one that is also executable or is required
-    # by name from outside its own directory.
+    # A repeated word is not automatically a stutter. dilla/dilla.rb is the tool
+    # named after its folder and reads correctly at a command line, and
+    # law/law.rb is how Ruby finds the Law namespace. entry_point? below is
+    # what separates those from a file that says the name twice over.
     def stutter
       tracked.select do |f|
         parts = f.split("/")
@@ -89,7 +89,7 @@ module Pub4
 
       # The repeated word is only a stutter when the file says it twice: once
       # for the namespace and again for the thing inside it, which is how
-      # lib/cli/cli.rb comes to hold Master::CLI::CLI. Said once, it is a module
+      # lib/cli/session.rb comes to hold Master::CLI::Session. Said once, it is a module
       # root and how Ruby finds the namespace at all -- law/law.rb declares Law.
       # Said not at all, the file is a script and its folder is named after the
       # tool, which is `ruby STUDIO/dilla/dilla.rb` reading correctly.

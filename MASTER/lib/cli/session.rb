@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-require_relative "cli/container"
-require_relative "cli/signals"
-require_relative "cli/command_ops"
-require_relative "cli/thinking_indicator"
-require_relative "cli/result_display"
-require_relative "cli/background_scan"
-require_relative "cli/repl_flow"
-require_relative "cli/bridge_run"
+require_relative "session/container"
+require_relative "session/signals"
+require_relative "session/command_ops"
+require_relative "session/thinking_indicator"
+require_relative "session/result_display"
+require_relative "session/background_scan"
+require_relative "session/repl_flow"
+require_relative "session/bridge_run"
 
 require "open3"
 require "reline"
@@ -17,7 +17,7 @@ require "fileutils"
 
 module Master
   module CLI
-    class CLI
+    class Session
       CONFIG = (Master.load_yaml(Master.data_path("patterns.yml")) || {}).fetch("cli", {}).freeze
       IDLE_SLEEP_DEFAULT = CONFIG.fetch("idle_sleep_seconds", 60)
       REPLAY_TURNS = CONFIG.fetch("replay_turns", 5)
@@ -40,7 +40,7 @@ module Master
 
       def initialize(container:)
         @container = container
-        @refs = CLI::Container.from_hash(container)
+        @refs = Container.from_hash(container)
         Reline::HISTORY.clear
         load_cli_history
         setup_completion

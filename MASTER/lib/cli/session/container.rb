@@ -2,7 +2,7 @@
 
 module Master
   module CLI
-    class CLI
+    class Session
       Container = Struct.new(
         :session, :agent, :renderer, :logging, :undo, :config, :pipeline,
         :scanner, :root, :diff_stager, :bus, :watch_loop,

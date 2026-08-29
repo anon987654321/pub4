@@ -7,7 +7,7 @@ require "json"
 
 module Master
   module CLI
-    class CLI
+    class Session
       private
 
       def run_snapshot
@@ -91,7 +91,7 @@ end
 
 module Master
   module CLI
-    class CLI
+    class Session
       private
 
       def run_restart

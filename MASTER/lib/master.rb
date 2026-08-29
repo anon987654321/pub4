@@ -134,7 +134,8 @@ module Master
 
   # data/autoload.yml lists what Zeitwerk must not load, grouped by why. This
   # was five lists in this file with no reason recorded against any entry, so
-  # adding a file under lib/cli/cli/ broke boot with an error that did not
+  # adding a file under a directory whose parts reopen one class broke boot
+  # with an error that did not
   # explain itself. `rake lint:autoload` proves every entry is still necessary.
   def self.autoload_ignores(root: ROOT)
     YAML.safe_load_file(File.join(root, "data", "autoload.yml")).fetch("autoload").values.flatten
