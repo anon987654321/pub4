@@ -527,6 +527,26 @@ Law.define(:MONKEY_PATCH_CORE) do
   good "module StringHelpers"
 end
 
+# Clean Code — a class name is a noun that carries domain meaning. The
+# deterministic floor under DOMAIN_LANGUAGE and LOAD_BEARING_NAMES, which
+# otherwise only a model judges: a class or module named nothing but a noise
+# word says only that code lives here, which the file already said. Bare names
+# only — a domain qualifier redeems it, so UserManager and PaymentHelper pass
+# and only standalone Manager, Utils, Misc do not. :info, narrow on purpose,
+# because naming rules earn their width by not crying wolf.
+Law.define(:NOISE_NAME) do
+  source "Clean Code — class names are domain nouns, not noise words"
+  severity :info
+  languages %i[ruby]
+  path_exclude %r{/test/|/spec/|/fixtures/}
+  detect do |line|
+    line.match?(/\A\s*(?:class|module)\s+(?:[A-Z]\w*::)*(?:Manager|Utils?|Utilit(?:y|ies)|Misc|Stuff|Things?|Handlers|Foo|Bar|Baz|Te?mp)\b\s*(?:<.*)?\z/)
+  end
+  fix "Name it for the domain: what does it manage, hold, or do? SubscriptionBilling, not Manager."
+  bad "class Manager"
+  good "class SubscriptionBilling"
+end
+
 # Polished Ruby Programming: __dir__ is the modern spelling and survives
 # symlinks the way the old idiom does not.
 Law.define(:DIRNAME_FILE) do
