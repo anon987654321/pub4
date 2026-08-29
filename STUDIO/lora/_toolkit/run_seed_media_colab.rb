@@ -123,6 +123,23 @@ setup_cell = <<~PYTHON
           "git clone --depth 1 --branch #{BRANCH} https://github.com/#{REPO}.git /content/pub4",
           shell=True, check=True)
   print("ok: toolkit and prompts at /content/pub4")
+
+  # Assert the GPU before anything expensive believes it has one.
+  #
+  # Without this the notebook installs, clones, downloads twenty gigabytes and
+  # then renders on the CPU, where a 12B transformer is minutes per step -- so
+  # the first sign of a missed Runtime -> T4 is a frame that never arrives.
+  # Colab also nags about an idle GPU while these setup cells run, which is
+  # correct and means nothing; this is the check that does mean something.
+  import torch
+  if not torch.cuda.is_available():
+      raise SystemExit(
+          "no CUDA device. Runtime -> Change runtime type -> T4 GPU, then rerun. "
+          "Do not switch to a standard runtime: FLUX.1-dev on CPU is minutes per step.")
+  free, total = torch.cuda.mem_get_info()
+  print(f"ok: {torch.cuda.get_device_name(0)}, {total / 1e9:.1f} GB total, {free / 1e9:.1f} GB free")
+  if total < 14e9:
+      print("warn: under 14 GB — nf4 fits a 16 GB T4 with little to spare")
 PYTHON
 
 render_cell = <<~PYTHON
