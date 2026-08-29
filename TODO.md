@@ -26,6 +26,14 @@ before the finding.
 An item leaves this file when a check proves it, not when it stops being
 mentioned.
 
+`WISHLIST.md`, beside this file, is the other half and not a second copy of it.
+It is forward work from one day's findings, numbered and short. This file is the
+standing record with the reasoning, including everything already closed. So a
+closed item belongs here and an open, new one belongs there, and where the two
+touch the same subject only one of them carries it and points at the other by
+number. Two backlogs saying the same thing is the defect this repo keeps writing
+down.
+
 ---
 
 ## MASTER
@@ -54,6 +62,25 @@ before being listed — genuinely missing, not already built under another name.
 **Already exist — do not re-list these as todo:** `LONG_PARAMETER_LIST`,
 `PRIMITIVE_OBSESSION`, `FEATURE_ENVY`, `COUPLER_SMELLS`, `LAZY_CLASS`,
 `SPECULATIVE_GENERALITY`, `NO_SHOTGUN_SURGERY`, `TEMPORAL_COUPLING`.
+
+Re-checked 2026-08-30, and the absence claim holds with one trap in it.
+`DATA_CLUMPS`, plural, **is** in `data/rules.yml` — as a `violation_priors`
+row and as a node in `data/rule_deps.yml`, where `PRIMITIVE_OBSESSION` is
+ordered `after: [DATA_CLUMPS]`. No rule carries that id in either population,
+so the prior is never read and the ordering never applies; `RuleOrder#topo_sort`
+skips a dependency whose id names no loaded rule. So the detector below is
+genuinely unbuilt, and building it as `DATA_CLUMP` singular leaves the existing
+prior and dep node pointing at nothing. Name it `DATA_CLUMPS` and both wake up,
+or delete those two rows in the same pass.
+
+Both of those tables hold more names than the rule populations do, and how
+many is not settled here: three separate attempts at that census gave three
+answers, because `Rule.registry` is short until `RuleDSL` is touched and short
+again until the rule files are required, and because `violation_priors` mixes
+rule ids with principle names like `ABSTRACTION` and `DENSITY` that live in a
+different namespace. The count is a sitting of its own with an owner. What is
+recorded here is only the part that survived every version of the instrument:
+`DATA_CLUMPS` names no rule, in either table.
 
 #### Larger AST work — multi-session projects
 
@@ -599,16 +626,19 @@ that.
 Priced rather than fixed, because a ceiling that prices a known cost is what
 makes the next arrival a `+1`:
 
-- **53 one-file directories.** Most are Rails test convention mirroring `app/`,
-  and `MASTER/spec/` has five of its own. Neither is wrong; both are countable.
-- **7 uninformative names.** Four are Zeitwerk's: `lib/io/base.rb` is named
-  after the constant it defines, so the finding is that the *concept* is called
-  `Base`, which is a design decision and not a rename. The three that are
-  actionable are `STUDIO/test/helper.rb`, `STUDIO/test/dilla/helper.rb` and
-  `STUDIO/test/tools/helper.rb` — three different helpers at three depths
-  sharing one name, which reads as ambiguous in a stack trace. Flattening them
-  to `studio_helper.rb`, `dilla_helper.rb` and `tools_helper.rb` costs one pass
-  and is held off only because STUDIO carries another session's work.
+- **52 one-file directories**, against a ceiling of 53. Most are Rails test
+  convention mirroring `app/`, and `MASTER/spec/` has five of its own. Neither
+  is wrong; both are countable. Read the live figure from
+  `MASTER/bin/pub4 measure`, not from here — the number in this paragraph is
+  the kind that goes stale in a day.
+- **7 uninformative names, now 4.** Four are Zeitwerk's: `lib/io/base.rb` is
+  named after the constant it defines, so the finding is that the *concept* is
+  called `Base`, which is a design decision and not a rename. The three that
+  were actionable — `STUDIO/test/helper.rb`, `STUDIO/test/dilla/helper.rb` and
+  `STUDIO/test/tools/helper.rb`, three different helpers at three depths sharing
+  one name, ambiguous in a stack trace — are flattened to `studio_helper.rb`,
+  `dilla_helper.rb` and `tools_helper.rb`. Checked 2026-08-29:
+  `Dir["STUDIO/**/helper.rb"]` is empty and the three new names are in place.
 
 Calibrate a new kind against a real file before adding it. The first pass
 called 130 RAILS paths too deep and 26 names vague, and every one was the rule
@@ -650,10 +680,24 @@ followed: a plain `require` resolves against `$LOAD_PATH`, which depends on how
 the process was started, and guessing at it would produce a gate that is wrong
 in both directions.
 
-`test_dilla.rb` is the other half of this and is worth moving regardless: a test
-in MASTER that loads STUDIO's entry point breaks whenever STUDIO refactors, which
-it did (`engine_source` undefined, 2026-08-12). It should read `ENGINE_SOURCES`
-or live in STUDIO.
+**The cross-tree test is still here, under a different name — re-measured
+2026-08-29.** `test_dilla.rb` is gone, so that half of the entry read as closed;
+it is not. `MASTER/test/test_radio_bergen_study.rb:6` requires
+`../../STUDIO/dilla/dilla`, and through it reads
+`RAILS/brgen/config/radio_bergen/tracks.yml` — one test file reaching into two
+other trees. It had already broken the way this entry predicted: it asserted
+`assert_equal 9, local_count` while the manifest had grown to 30 rows when radio
+bergen started serving its own catalogue, so `rake test` in MASTER was red for a
+change made in RAILS, naming the growth as the regression.
+
+Fixed by asserting the invariant instead of the instance — the study covers
+every row the manifest holds, counted from the manifest — which is Scanner
+Convention 5 below applied to a count rather than a name. Mutation-checked:
+truncating `catalog_rows` to five rows fails it.
+
+What is still open is the coupling, not the count. A test in MASTER that loads
+STUDIO's entry point to read RAILS's data breaks whenever any of the three moves;
+it belongs in STUDIO, beside the module it exercises.
 
 ### Test coverage
 
@@ -1088,7 +1132,9 @@ watched-through view above 500 page opens) and
 `test/controllers/tv_watch_time_test.rb` (a viewer can only write their own
 event; the page carries the progress URL).
 
-**Still open:** the vertical feed that would consume this ranking — see 2.5.
+**Closed.** The vertical feed this ranking exists for is 2.5, and it is built:
+`tv_feed_test.rb` asserts one viewer who watched a clip through outranks 500
+page opens, which is this entry's watch-time columns doing the work.
 
 #### 1.3 `Marketplace::SavedSearch` never ran itself — **done**
 
@@ -1232,8 +1278,26 @@ city-strip on the home page that now carries `EventCreated`.
 **Check:** `brgen/test/models/event_test.rb` (12) and
 `brgen/test/controllers/events_controller_test.rb` (9).
 
-**Still open:** recurring events, ticketing beyond an external link, and an
-event's own map pin on the maps engine (it has coordinates; nothing draws them).
+**The map pin is built, and was already checked.** `Maps::HomeController#events_layer`
+draws every published event that has not finished, has coordinates, and starts
+inside a seven-day horizon — a map that reaches further ahead is a wall of pins
+rather than an answer to "what is on near me".
+
+**Check:** `brgen/test/controllers/maps_layers_test.rb` (6), which covers all
+four layers: an event with coordinates is pinned, one beyond the horizon is
+not, a place carries its own name rather than the string "Map point", an
+expired story is gone, and a courier is drawn for the customer waiting on that
+order and for nobody else.
+
+Recorded because closing this line cost a wrong turn worth more than the line:
+the check was hunted for by grepping the test tree for `events_layer` and
+`points_json`, neither of which a test that reads `data-map-points-value` off
+the rendered page contains. Searching for the implementation's vocabulary
+inside a test that speaks the browser's is the same instrument error as
+searching for the noun when only the verb is written — 1.2 above records the
+first instance of it, in this same subsystem.
+
+**Still open:** recurring events, and ticketing beyond an external link.
 
 #### 2.3 No Story / ephemeral media (Snapchat) — **done**
 
@@ -1402,8 +1466,16 @@ viewer who watched a clip through outranks 500 page opens.
 
 Live streaming stays blocked — see "Blocked" below.
 
-**Still open:** sounds/remix as a first-class object (a video has no audio
-identity, so there is nothing to browse "more of"), and duets.
+**Closed, and the line here was the last to know.** `Sequencing` below has
+recorded tv sounds as done since 2026-08-20 while this paragraph still called
+them open — two statements about the same subject in one file, disagreeing.
+`Tv::Sound` is the audio identity: a clip that names no
+sound becomes the origin of its own, a second clip reuses it and the count
+follows, and the sound page is the "more of this" surface. A duet names its
+original and inherits its sound, and a video may refuse answers. Deleting the
+source clip leaves the sound, or every remix loses its parent with it.
+
+**Check:** `brgen/test/controllers/tv_sounds_and_duets_test.rb` (6).
 
 ---
 
@@ -1451,10 +1523,24 @@ the next buyer has too.
 
 **Check:** `brgen/test/controllers/marketplace_questions_test.rb` (3).
 
-**Still open:** product variants (size/colour — a real schema, not a column),
-returns, seller payouts, wishlist, and search facets. Temu-flavoured
-work is still cheap on top of `Marketplace::Deal`: countdown flash deals,
-coupons, referral credit, bundle pricing.
+**Depth is built.** `Marketplace::Variant` + `VariantOption` are the real
+schema this entry asked for rather than a column; `Marketplace::Return` and
+`Marketplace::Payout` are the money half, and the payout rules are the part
+worth keeping: paying does not enqueue a payout, delivery does, a release with
+no Stripe stays pending rather than reading as sent, and a received return
+voids a pending payout without claiming a refund Stripe has not confirmed.
+`ListingFacets` counts what remains once a facet is picked — ignoring its own
+filter, respecting the others — and the saved list is `/wishlist`, not
+`/saved`, because the host declares `saved` before it mounts the engine.
+
+**Check:** `brgen/test/controllers/marketplace_variants_test.rb`,
+`marketplace_returns_test.rb`, `marketplace_saved_and_facets_test.rb`, and
+`brgen/test/models/marketplace_payout_test.rb` (5).
+
+**Still open:** the Temu-flavoured work on top of `Marketplace::Deal`.
+`starts_at`/`ends_at` and the `active` scope are there and nothing renders a
+countdown from them; coupons, referral credit and bundle pricing have no model
+at all.
 
 Solidus remains blocked — see below — so all of this is native-path work.
 
@@ -1512,8 +1598,18 @@ match) and is left alone. Empty rewind is a flash, not a 404.
 **Check:** `brgen/test/controllers/dating_rewind_test.rb` (last pass undone,
 a like is not).
 
-**Still open:** super-like and boost (both purchases — `apps.horizon.yml` has
-them as `agent: ignore`), photo verification, daily picks.
+**Verification and daily picks are built.** `Dating::Verification` asks for a
+named pose and carries it into the review, requires a selfie, and allows one
+open request at a time; only the configured admin reviews, and a blank admin
+address makes nobody a reviewer rather than everybody. `Dating::DailyPick`
+draws once and stays put for the day, and does not repeat a face already shown
+this week — a picks list that reshuffles on reload is the same defect the deck
+had before it was ranked.
+
+**Check:** `brgen/test/controllers/dating_verification_and_picks_test.rb` (6).
+
+**Still open:** super-like and boost, both purchases — `apps.horizon.yml` has
+them as `agent: ignore`.
 
 #### Takeaway (DoorDash / Foodora) — **hours, tips, scheduling done**
 
@@ -1548,9 +1644,21 @@ and `brgen/test/controllers/takeaway_order_again_test.rb` (copy, skip-empty).
 **The live courier map is built** — see 1.4; the maps engine draws the viewer's
 own courier while the order is out for delivery.
 
-**Still open:** group orders, and web push on each `transition_to!` is now on
-the path: `order` is in `PUSHABLE_KINDS`, so a transition reaches a lock screen
-rather than only the in-app list.
+**Group orders are built.** The host opens the ticket and gets a token rather
+than an id — a numeric id in a link people forward around is an invitation to
+read the next table's order — anyone with the link adds their own line, a line
+can be taken back only by whoever added it, and a confirmed ticket takes no
+more. Shares name what each person owes without the delivery fee, because
+splitting a fee four ways is a decision the host makes, not one the app makes
+for them.
+
+**Check:** `brgen/test/controllers/takeaway_group_orders_test.rb` (6).
+
+Web push on each `transition_to!` is on the path too: `order` is in
+`PUSHABLE_KINDS`, so a transition reaches a lock screen rather than only the
+in-app list.
+
+**Still open:** nothing in this entry.
 
 #### Messenger — **reply, edit and unsend done**
 
@@ -1705,32 +1813,26 @@ with its blocker rather than left implied:
 
 1. **Inbound federation** — accepting remote posts, which is a moderation and
    spam problem before it is a code one.
-2. **Seller payouts and PSP refund transfer** — the money leaves the platform,
-   and there is no transfer to make it with.
+2. **Seller payouts and PSP refund transfer** — the code half landed:
+   `Marketplace::Payout` and `Payments::StripeTransfer` enqueue on delivery and
+   fail closed, so a payout with no Connect account or no key stays pending with
+   a reason rather than reading as sent. What is left is not code — it is a
+   Stripe Connect account per seller and a platform balance to transfer from.
 3. **The anonymised contact relay** — inbound mail routing on vm23.
 4. **Live streaming, Solidus, pgvector** — infrastructure, listed under Blocked.
 
 ### Deploy blockers
 
-The four things that stop a RAILS deploy from being a one-command
-operation, each with what happens today, what would have to change, and
-what already checks it. The former `RAILS/BLOCKERS.md`. A blocker leaves
-this list when its unblock criteria are met, not when it stops being
-mentioned.
+What stops a RAILS deploy from being a one-command operation, each with what
+happens today, what has to change, and what already checks it. The former
+`RAILS/BLOCKERS.md`. A blocker leaves this list when its unblock
+criteria are met, not when it stops being mentioned.
 
-
-The four things that stop a RAILS deploy from being a one-command operation,
-each with what actually happens today, what would have to change, and what
-already checks it.
-
-This file is the single home for these. `README.md` used to carry the list as
-five unowned sentences under "Media integration"; two of them had gone stale
-without anyone noticing, which is the argument for giving them a file with
-enough structure that staleness shows. Operator-side debt is **not** duplicated
-here — it is the OPENBSD section of this file and stays there.
-
-A blocker leaves this file when its unblock criteria are met, not when it stops
-being mentioned.
+This is the single home for them. `README.md` used to carry the list as five
+unowned sentences under "Media integration"; two of them had gone stale without
+anyone noticing, which is the argument for giving them a place with enough
+structure that staleness shows. Operator-side debt is **not** duplicated here —
+it is the OPENBSD section of this file and stays there.
 
 ---
 
@@ -1795,28 +1897,35 @@ relayd down; both refused is the app, not relayd.
 
 ---
 
-### 3. Production seeds are opt-in — under two different names
+### 3. Production seeds are opt-in — under two different names — **closed**
 
-**Status:** open. The README named one variable; the deploy path reads two
-others.
+**Status:** closed 2026-08-29. Its own unblock criteria were already met and
+the status line had not been re-read; that is the failure this list exists to
+prevent, so the entry stays with the rule it taught rather than being deleted.
 
-- `OPERATOR.sh` gates its seeding on `RUN_PRODUCTION_SEEDS=1`.
-- `RAILS/_deploy.sh` gates its two seed steps on `SEED_ON_DEPLOY=1` and
-  `DEMO_SEED_ON_DEPLOY=1`.
+The defect was that the README named one variable and the deploy path read two
+others: `OPERATOR.sh` gates its seeding on `RUN_PRODUCTION_SEEDS=1`, while
+`RAILS/_deploy.sh` gates its two seed steps on `SEED_ON_DEPLOY=1` and
+`DEMO_SEED_ON_DEPLOY=1`. So the documented name was inert: setting it and
+watching the deploy succeed produced no seeds and no complaint.
 
-`RAILS/_deploy.sh` now treats `RUN_PRODUCTION_SEEDS=1` as an alias for
-`SEED_ON_DEPLOY=1`, so the name the README documents is no longer inert.
-The two paths still exist: OPERATOR seeds once on first install, deploy.sh
-seeds on each deploy that asks. That split is deliberate.
+`RAILS/_deploy.sh:98` now promotes `RUN_PRODUCTION_SEEDS=1` to
+`SEED_ON_DEPLOY=1`, so the documented name reaches the gate it claims to open.
+The two paths still exist and that split is deliberate: OPERATOR seeds once on
+first install, `_deploy.sh` seeds on each deploy that asks for it. The
+criteria read "one name, **or** a documented reason the two paths seed
+differently" — the alias plus that sentence is the second answer, not a partial
+first one.
 
 **Owner:** RAILS.
 
-**Unblock criteria**
+**Proof:** `grep -n RUN_PRODUCTION_SEEDS RAILS/_deploy.sh` reports the promotion
+at line 98, immediately above the `SEED_ON_DEPLOY` gate at 101 it feeds.
 
-- One name, or a documented reason the two paths seed differently. The
-  alias is the documented reason.
-
-**Checked by:** `RAILS/_deploy.sh` reads `RUN_PRODUCTION_SEEDS`.
+The rule, which generalises past this entry: **an alias is a fix only where the
+documented name is the one that gets promoted.** Aliasing the other way — making
+the internal name accept the documented one's value — leaves the README
+describing a variable nothing reads, with the check still green.
 
 ---
 
@@ -2023,6 +2132,10 @@ BARE_RESCUE in the line scope of data/rules.yml and FAIL_VISIBLY in the unit sco
 <!-- open-debt -->
 
 open 2026-08-25, registrar-side. bsdports.org does not resolve: the .org registry delegates it to ns1/2/3.expireddomain.hyp.net — Domeneshop's parking servers — which publish no A record. Confirmed against b0.org.afilias-nst.org, not a cached resolver. The registration is ours and paid to 2027-08-08, and whois shows autoRenewPeriod, so the shape is: it lapsed on 2026-08-08, Domeneshop moved the nameservers to parking, the registration auto-renewed, and the nameservers were never put back. Everything downstream still believes in it — relayd holds a keypair and a Host match, a valid certificate sits at /etc/ssl/bsdports.org.fullchain.pem to Nov 10 2026, RUNBOOK.md names https://bsdports.org as the URL, OPERATOR.sh probes it, rcctl says ok and the app answers 200 on 47312. It has simply been dark. Fix is one registrar change: set the nameservers at Domeneshop to ns.hyp.net and ns.brgen.no, which is what brgen.no uses. Do it before Nov 10 or the certificate renewal fails too — acme-client needs the name to resolve here for HTTP-01. Nothing we had could have caught this: domain_watch takes its population from nsd.conf and bsdports.org is not a zone we serve, and the expiry watch reads expiry, which is paid. dns_zones now asks a public resolver whether each app domain points at 46.23.89.226, and fails on this one.
+STILL OPEN 2026-08-29, and this row owns it — `WISHLIST.md` 104 names the same
+registrar change and points here rather than restating it. `dns_zones` also
+fails on nine domains that are past expiry, which is `WISHLIST.md` 103: money at
+a registrar, not code, and not a finding to re-open under a second name here.
 
 ### Debt — resolved records and what not to chase
 
@@ -2248,20 +2361,34 @@ or `__FILE__`, which shift a directory level when a file moves — the bug that
 broke three tests during the first fold, and the reason to do the second one
 deliberately rather than as a tail-end.
 
-### `SEED_TEXT` names a seed that changes every run — open
+### `SEED_TEXT` names a seed that changes every run — closed
 
-`lib/seed_providers.rb` derives it as `text.hash.abs % 1_000_000`, and Ruby
+`lib/seed_providers.rb` derived it as `text.hash.abs % 1_000_000`, and Ruby
 randomises `String#hash` per process. Three runs of the same text: 479615,
-227034, 205911. So the one knob whose whole purpose is a repeatable seed has
-never produced one, and `apply_text_seed!` derives `SWING` and `BPM` from the
-same unstable value, so those move with it. `Digest::SHA256` is stable across
-processes where `String#hash` is not.
+227034, 205911. So the one knob whose whole purpose is a repeatable seed never
+produced one, and `apply_text_seed!` derives `SWING` and `BPM` from the same
+value, so the groove and the tempo drifted with it.
 
-Two more sites fall back to the unseeded global RNG when nothing is pinned
-(`dilla.rb`'s render-seed fallback and the same shape in `seed_providers`), and
-one seeds speech text from it. Everything else is already deterministic: 62
-`Random.new(seed)` and 91 `obj.rand` against three bare `Kernel#rand`, and
-`srand` is never called. Pinning is four call sites, not a rewrite.
+`DillaSeeds.stable_seed` is a SHA-256 digest now, which is stable across
+processes where `String#hash` is not, and the code says why at the definition.
+The fix landed without a check, which is how it goes back: nothing about
+`String#hash` looks wrong, and a wrong pin renders as a plausible take.
+
+**Check:** `STUDIO/test/test_dilla_render_seed.rb` —
+`test_seed_text_names_the_same_seed_in_every_process` reproduces the digest
+from its own definition rather than from a run, and
+`test_seed_text_pins_swing_and_bpm_with_it` asserts the two derived knobs land
+on the same values twice. Mutation-checked: restoring `text.to_s.hash.abs %
+1_000_000` fails the first.
+
+**Re-measured 2026-08-29 and not a defect:** the unpinned fallbacks. With
+nothing pinned, `render_seed` draws from the global RNG on purpose — a fresh
+take is the point, and the house rule is that speakers never get a rerun.
+The census over `STUDIO/dilla/**/*.rb` with tests excluded stands at 112
+`Random.new(seed)` and 136 `obj.rand` against three bare `Kernel#rand`, with
+`srand` never called; determinism is what a pin buys, not the default. The
+earlier 62/91 was the same census before the engine folded into `dilla.rb`, so
+compare the ratio and not the count.
 
 ### A load-time default read as an operator pin — closed
 
