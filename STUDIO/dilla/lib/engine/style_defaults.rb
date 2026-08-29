@@ -279,7 +279,9 @@ DILLA_BEST_DEFAULTS = DILLA_STYLE_DEFAULTS.slice(
 ).merge(
   "DILLA_DEEP" => "1",
   "SOUL_ENRICH" => "1",
-  "REHARM_LOOP" => "0",
+  # Progressions rotate by default: a bare render moves through the curated pack
+  # rather than sitting on one, so no command-line flag is needed to hear variety.
+  "REHARM_LOOP" => "1",
   "CREEPY_PATCHES" => "0",
   # donuts_warm's hf_rolloff/groove_wear_lp sit at 2200/2600Hz (see the
   # "not a 2 kHz blanket" comment on its donuts_soul sibling) and its
