@@ -705,9 +705,23 @@ class VisualEngine {
     gl.uniform1f(u.uTime, this.time)
     gl.uniform1f(u.uZ, this.zOffset)
     gl.uniform1f(u.uFov, this.config.fov)
-    // Ring radius is expressed against the capped buffer rather than a fixed 75,
-    // so the tunnel fills the frame identically at every size.
-    gl.uniform1f(u.uRadius, Math.min(this.w, this.h) * 0.22)
+    // Ring radius scales with the buffer DIAGONAL, not its smaller side.
+    //
+    // min(w, h) sized the tunnel to whichever axis was shorter, which on any
+    // landscape window is the height -- so the rings were scaled to fit
+    // vertically and could never reach the sides. At 960x540 that is a ring
+    // diameter of 25% of the width against 44% of the height, and the tunnel
+    // sat in the middle of the frame with the window showing past it. The
+    // comment here used to claim it "fills the frame identically at every
+    // size"; it filled PROPORTIONALLY at every size, which is a different
+    // thing and is why the visualiser covered about two thirds of the window.
+    //
+    // The diagonal is the dimension that guarantees corner coverage whatever
+    // the aspect: half of it is the distance from centre to corner. 0.19 puts
+    // the near rings just past that, so the tunnel bleeds off every edge
+    // rather than ending inside the frame, and it stays right in portrait,
+    // where sizing by the larger side alone would not.
+    gl.uniform1f(u.uRadius, Math.hypot(this.w, this.h) * 0.19)
     gl.uniform2f(u.uResolution, this.w, this.h)
     gl.uniform2f(u.uCenter, this.centerNow.x, this.centerNow.y)
     gl.uniform1f(u.uBass, this.bass || 0)
@@ -740,7 +754,7 @@ class VisualEngine {
     ctx.fillRect(0, 0, this.w, this.h)
     const { fov } = this.config
     const span = fov * 2
-    const radius = Math.min(this.w, this.h) * 0.22 * (1 + (this.bass || 0) * 0.18) * (this.breath || 1)
+    const radius = Math.hypot(this.w, this.h) * 0.19 * (1 + (this.bass || 0) * 0.18) * (this.breath || 1)
     const c = this.centerNow
     for (let i = 0; i < this.pointCount; i++) {
       const z = ((this.cpuRingT[i] * span + this.zOffset) % span + span) % span - fov
