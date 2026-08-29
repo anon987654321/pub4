@@ -6448,7 +6448,7 @@ end
 # four_seven; a sample that already has air needs far less or none.
 SAMPLE_EXCITE_MIX = (ENV["SAMPLE_EXCITE"] || "0").to_f.clamp(0.0, 1.0)
 SAMPLE_EXCITE_HZ = (ENV["SAMPLE_EXCITE_HZ"] || "2200").to_f
-SAMPLE_EXCITE_DRIVE = (ENV["SAMPLE_EXCITE_DRIVE"] || "1.8").to_f.clamp(1.0, 20.0)
+SAMPLE_EXCITE_DRIVE = (ENV["SAMPLE_EXCITE_DRIVE"] || "1.2").to_f.clamp(1.0, 20.0)
 SAMPLE_EXCITE_CHARACTER = (ENV["SAMPLE_EXCITE_CHARACTER"] || "even").to_s.downcase
 
 def sample_excite_shaper
@@ -31215,7 +31215,7 @@ TAPE_LOSS_HZ = (ENV["TAPE_LOSS_HZ"] || 0).to_f.clamp(0.0, 20_000.0)
 # point, and is not reproducible by running the same stage on the mix.
 # 0.22. Left and right run as separate instances one seed apart, which is the
 # whole reason this exists — see the note below on why it is not mono.
-CONSOLE_STRIP = (ENV["CONSOLE_STRIP"] || 0.22).to_f.clamp(0.0, 1.0)
+CONSOLE_STRIP = (ENV["CONSOLE_STRIP"] || 0.14).to_f.clamp(0.0, 1.0)
 
 # Left and right run as separate instances, offset by one seed. On a desk a
 # stereo pair IS two channels, built to the same design and measuring
