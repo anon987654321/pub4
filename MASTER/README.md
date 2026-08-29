@@ -1,76 +1,110 @@
 # MASTER ⚡
 
 **MASTER is the first artificial intelligence built in pure Ruby that governs
-itself by law, not by hope.** Most systems let an AI act first and
-inspect the damage after. MASTER inverts it: the model may only propose, and
-nothing is saved until a written constitution has approved it.
+itself by law — not by hope, not by vibes, not by a prayer that the model
+behaves.** Most systems let an AI act first and inspect the wreckage after.
+MASTER flips the whole thing on its head: the model only ever *proposes*, and
+nothing touches disk until a written constitution signs off. It thinks out loud,
+shows every move, and answers to a rulebook it can read but can't rewrite on a
+whim.
 
-It is built like an embryo — a small, self-checking core, grown over time into
-machines that build their own parts, clear the debris orbiting the Earth, and
-keep the people it serves safe. For now it is a program you talk
-to in plain sentences; its aim is the operating system for intelligence itself.
+It's built like an embryo — one small, self-checking core that grows into
+whatever body a mission needs. Today that body is a Rails process and a terminal
+you talk to in plain sentences. The aim is bigger: an operating system for
+intelligence itself.
 
-⚖️ 🤖 🛰️ 🌍 🛡️ ✨ 🔥
+<!-- HERO: drop the GitHub user-attachments URL for loop.mp4 in here after uploading it -->
+<video src="loop.mp4" autoplay loop muted playsinline width="360"></video>
 
-## ⚖️ Law before every write
+⚖️ &nbsp; 🤖 &nbsp; 🛰️ &nbsp; 🌍 &nbsp; 🛡️
+
+### ⚖️ Law before every write
 
 MASTER keeps thinking and deciding apart. A model — Claude, or one of several it
-swaps between — proposes a change. Before it becomes a file, it must pass the
-constitution: an unbreakable law, a set of working rules, and executable laws
-that carry their own right and wrong examples and re-check themselves at every
-boot. What breaks the constitution is refused with a reason, never quietly
-patched.
+swaps between — proposes a change. Before that change becomes a file it has to
+clear the constitution: one unbreakable law, a set of working rules, and
+executable laws that carry their own right-and-wrong examples and re-check
+themselves every time the thing boots. Break the constitution and you get a
+refusal with a reason. Never a quiet little patch behind your back.
 
-## 🔁 The loop
+##### 🔁 The loop
 
-You give MASTER a sentence, and it scans, fixes, criticizes, and reviews,
-circling until nothing new turns up. The scan is not a model guessing; it is
-exact checks that read a file's shape and measure it against named principles —
-an idea written twice, a class that only forwards, a name that says nothing, a
-step too long to hold in the head. They need no model, so MASTER judges a whole
-codebase offline, and holds any other AI assistant to the same law.
+You hand MASTER a sentence. It scans, fixes, criticizes, and reviews, circling
+until nothing new turns up. The scan isn't a model guessing — it's exact checks
+that read a file's shape and measure it against named principles: an idea written
+twice, a class that only forwards, a name that says nothing, a step too long to
+hold in your head. No model required, so it judges a whole codebase offline, and
+holds every other AI assistant to the same law.
 
-## 🏛️ The council
+🌙 &nbsp; 💭 &nbsp; ✨ &nbsp; 🔮
 
-When a change deserves more than a checklist, MASTER convenes a panel: an
-architect, a caretaker, a performance mind, an ethicist, a designer. Each
+### 🏛️ The council
+
+When a change deserves more than a checklist, MASTER pulls up a panel: an
+architect, a caretaker, a performance head, an ethicist, a designer. Each one
 reasons through its own lens, each can run on a different model, and each argues
-against the change before a judge weighs what survives. It is a debate, not a
-vote, and the best idea usually arrives long after the eighth.
+*against* the change before a judge weighs what's left standing. It's a debate,
+not a vote — and the best idea usually shows up long after the eighth.
 
-🌙 💭 ✨ 🔮 🎨 🎵 📷 🎬
+#### 🔊 Voice, out loud
 
-## 🔊 Voice and transparency
+MASTER talks warm but short, the flattery and throat-clearing stripped before you
+hear a word. It shows its work like an old Unix box booting — every file, every
+step, every reason scrolling past in plain view. And it's never left without a
+way to think: an account if it has one, a signed-in browser if it doesn't, a
+model running on the machine itself when the network's gone dark.
 
-MASTER speaks warmly but briefly, the flattery and throat-clearing stripped
-before you hear a word. It shows its work like an old Unix machine's boot log:
-every file, every step, every reason scrolls past in plain view. And it is never
-left without a way to think — an account if it has one, a signed-in browser if
-not, a model on the machine itself when the network is gone.
+###### 🌙 It dreams, and it makes things
 
-## 🌙 Dreaming and making
+When the tree goes quiet, MASTER dreams. It reads one of its own rules, searches
+the world for how that rule is best understood, ties it back to the code that
+should follow it, and — down a sealed, gated path — fixes one thing. And it
+*makes*. Ask in plain words for a photograph of Bergen in the rain, a [J Dilla
+beat](../STUDIO/dilla), or a graded film look, and it routes you to [the studio
+tools](../STUDIO) sitting right beside it. The beats in this repo are real: a
+flipped record under fresh FM drums, an arpeggio locked to the chord scale,
+played from a library of a hundred and ninety real
+[progressions](https://github.com/ldrolez/free-midi-chords).
 
-When the tree falls quiet, MASTER dreams — it reads one of its rules,
-searches the world for how that rule is best understood, connects it to the code
-that should follow it, and along a sealed, gated path, fixes one. And it makes things. Ask
-in plain words for a photograph of Bergen in the rain, a
-J Dilla beat, or a graded film look, and it routes the request to the studio
-tools beside it.
+### 🧬 The bigger picture — an embryo, not an app
 
-## 🧭 Running it
+Here's the part that sounds like science fiction until you read the code. MASTER
+isn't trying to be a better coding agent. It's a **persistent intelligence whose
+body is replaceable.** Its identity, memory, world model, mission, and safety
+policy live in the core. A *body* is an interchangeable way to act in some
+environment — a browser, a Rails app, a GitHub account today; a rover, a drone,
+an underwater vehicle tomorrow; an orbital tug clearing debris the day after
+that.
 
-Install the dependencies and start `bin/master`; the operator commands live
-under `bin/pub4`; the deploy notes are in the OpenBSD folder. Read START_HERE,
-then AGENTS, to work inside it; DECISIONS explains anything surprising; and
-everything still to do lives in one backlog at the top of the repository.
-Licensed MIT.
+It reasons in capabilities, not gadgets — observe, navigate, move, grasp,
+communicate, inspect, repair — and every body implements those in its own way.
+So the same order — move — nudges a cursor in one body and fires a thruster in
+another, and the mind above never has to care which. Nothing gets manufactured on a whim: physical bodies sit
+behind hard authorization, resource, and safety walls, simulated and validated
+long before anything is ever built.
 
-🚀 ⚡ 🌟 💫
+The ladder runs from digital embryo, to software agent, to simulated agent, to a
+first physical prototype, to a specialized worker, to orbital systems, to
+coordinated fleets — and the early rungs are all software you can write today.
+The flying saucer was never the goal. It's just one possible phenotype of the
+embryo. Today a Rails process. Tomorrow a robot. Eventually, with an enormous
+amount of engineering and validation in between, maybe a spacecraft.
 
-## 🔬 Under the hood
+🚀 &nbsp; ⚡ &nbsp; 🌟 &nbsp; 💫 &nbsp; 🛸
+
+#### 🧭 Running it
+
+Install the dependencies and start [MASTER](bin/master). The
+operator commands sit beside it, and the deploy notes are in [the OpenBSD
+folder](../OPENBSD). Read [START_HERE](START_HERE.md), then [AGENTS](AGENTS.md),
+to work inside it; [DECISIONS](DECISIONS.md) explains anything that looks strange
+on purpose; and everything still on the table lives in [one backlog](../TODO.md)
+at the top of the repo. Licensed MIT.
+
+###### 🔬 Under the hood
 
 You reach the box and wake it with one line, and it comes up the way an old Unix
-machine does — announcing what it is, what it runs on, and how much of itself it
+machine does — telling you what it is, what it runs on, and how much of itself it
 can see.
 
 ```console
@@ -85,9 +119,9 @@ bundle    ok (MASTER+web satisfied)
 code      index built · 872 files · 8239 symbols
 ```
 
-The heart behind that prompt is smaller than it looks. Every change a model
-wants runs through one loop — it proposes an effect, the constitution admits it,
-and only an allowed effect ever touches a file:
+The heart behind that prompt is smaller than it looks. Every change a model wants
+runs through one loop — it proposes an effect, the constitution admits it, and
+only an allowed effect ever touches a file:
 
 ```ruby
 def run(goal)
@@ -108,7 +142,7 @@ def run(goal)
 end
 ```
 
-Three verdicts, and only three. A Block is a refusal with a reason, never a
-quiet patch. A Request stops the loop to ask a person. An Allow applies the
-effect against a checkpoint it can undo the moment the effect errs. Propose,
-judge, allow or refuse — everything past that is detail.
+Three verdicts, only three. A Block is a refusal with a reason, never a quiet
+patch. A Request stops the loop to ask a person. An Allow applies the effect
+against a checkpoint it can undo the second the effect errs. Propose, judge,
+allow or refuse — everything past that is detail.

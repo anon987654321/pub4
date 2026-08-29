@@ -1158,15 +1158,21 @@ euclid_sparse: {
     },
   }.freeze
 
-  # Additive entries sourced from dilla_reference.yml (documented Slum
-  # Village / Flying Lotus track analysis) — merged in rather than hand-typed
-  # here so the sourcing/citation stays in one place. Existing named profiles
-  # above are never overwritten by this.
+  # Additive entries merged in rather than hand-typed here so the sourcing stays
+  # in one place: dilla_reference.yml (documented Slum Village / Flying Lotus
+  # track analysis) and free_midi_chords.yml (mood-tagged progressions converted
+  # from ldrolez/free-midi-chords, MIT). Existing named profiles above are never
+  # overwritten by these.
   def self.load_documented_progressions
-    path = File.expand_path("../dilla_reference.yml", __dir__)
-    return {} unless File.file?(path)
+    paths = [
+      File.expand_path("../dilla_reference.yml", __dir__),
+      File.expand_path("../free_midi_chords.yml", __dir__),
+    ].select { |candidate| File.file?(candidate) }
+    return {} if paths.empty?
 
-    entries = YAML.safe_load_file(path)["documented_progressions"] || {}
+    entries = paths.each_with_object({}) do |candidate, acc|
+      acc.merge!(YAML.safe_load_file(candidate)["documented_progressions"] || {})
+    end
     entries.each_with_object({}) do |(key, e), out|
       producer = e["producer"].to_sym
       wonky = producer == :wonky
@@ -1181,7 +1187,7 @@ euclid_sparse: {
       }
     end
   rescue StandardError, Psych::Exception => e
-    warn "dilla_reference.yml: documented progressions not loaded (#{e.message})"
+    warn "documented progressions not loaded (#{e.message})"
     {}
   end
 
