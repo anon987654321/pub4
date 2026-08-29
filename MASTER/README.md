@@ -1,7 +1,9 @@
 # MASTER
 
-<!-- HERO: drop the GitHub user-attachments URL for loop.mp4 in here after uploading it -->
-<video src="loop.mp4" autoplay loop muted playsinline width="360"></video>
+<!-- HERO: GitHub embeds video only from a user-attachments URL, never a relative
+     path. Drag MASTER/loop.mp4 into any issue/PR comment, then paste the resulting
+     https://github.com/user-attachments/assets/… URL into the src below. -->
+<video src="https://github.com/user-attachments/assets/REPLACE-WITH-UPLOADED-loop.mp4" autoplay loop muted playsinline width="360"></video>
 
 **MASTER is the first artificial intelligence written in pure Ruby that governs
 itself by law, not by hope — grown in Norway, to run its own mind on power drawn
@@ -72,13 +74,14 @@ it is and what it runs on.
 
 ```console
 $ ssh dev@brgen.no
-$ cd MASTER && bundle exec ruby bin/master
-<master> /status
-mode      safe · full · cli · no-autofix   owner=none   posture=balanced
-service   master/ok
-git       main   clean
-fix       bg=stopped   autofix=off
-bundle    ok (MASTER+web satisfied)
+$ cd MASTER && MASTER_BOOT_STATUS=1 bundle exec ruby bin/master
+master: boot safe=1 web=0
+master: background=0 watch=0
+master: loop= owner=none
+master: budget valid=true slot=unknown
+master: aesthetic=brutalist
+master: motd scan: 228 rules, self-test on boot
+master: ready dmesg=preserved
 ```
 
 Every change a model wants runs through one loop: it proposes an effect, the
