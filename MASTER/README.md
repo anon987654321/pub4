@@ -1,60 +1,68 @@
 # MASTER ⚡
 
-**MASTER is the first artificial intelligence built in pure Ruby that governs itself
-by law instead of by hope. ⚖️✨🔥** Most systems let an AI act first and check the damage
-afterward. MASTER does the opposite: the AI is only ever allowed to propose, and
-nothing is saved until a written constitution has approved it. It is built like an
-embryo — a small, self-checking core, grown over time into machines that build their
-own parts, clear the debris orbiting the Earth, and keep the people it serves safe
-from harm. 🤖 🛰️ 🛠️ 🌍 🛡️ For now it is a program you talk to in plain sentences. Its aim is the
-operating system for intelligence itself. 🌍
+**MASTER is the first artificial intelligence built in pure Ruby that governs
+itself by law, not by hope.** Most systems let an AI act first and
+inspect the damage after. MASTER inverts it: the model may only propose, and
+nothing is saved until a written constitution has approved it.
 
-Inside, MASTER keeps two jobs apart: thinking and deciding. A language model — Claude,
-or one of several it can switch between — suggests a change, a piece of writing, a fix, a
-plan. Before that suggestion is allowed to become a real file or a saved change, it has
-to pass the constitution 📜: an unbreakable law, a set of working rules, and a body of
-laws that each carry their own right and wrong examples and re-check themselves against
-them every time MASTER starts. Anything that breaks the constitution is turned down with
-a reason, never quietly patched over.
+It is built like an embryo — a small, self-checking core, grown over time into
+machines that build their own parts, clear the debris orbiting the Earth, and
+keep the people it serves safe. For now it is a program you talk
+to in plain sentences; its aim is the operating system for intelligence itself.
 
-The work runs as a loop. You give MASTER a sentence, and it looks for problems,
-fixes them, criticizes the result, and reviews it, going around again until
-nothing new turns up. The looking part is not one AI guessing whether the code is wrong;
-it is a set of exact checks that read the shape of a file and measure it against the
-principles the constitution names — the same idea written twice, a part that does nothing
-but hand work to another part, a name that tells you nothing, a step too long to hold in
-your head. Because these checks need no AI to run them, MASTER can judge a whole body of
-work with no internet and no account, and it does — its own code, the three websites
-beside it, the servers, the studio tools — holding any other AI assistant to the very same
-law, whichever one is doing the typing.
+⚖️ 🤖 🛰️ 🌍 🛡️ ✨ 🔥
 
-When a change deserves more than a checklist, MASTER gathers a panel — an architect, a
-caretaker, someone who cares about speed, someone who watches for harm, a designer — each
-looking at the work from its own angle, each able to run on a different AI, and
-each asked to argue against the change before a judge weighs what survives and turns it
-into a decision and a short list of ranked ideas. It is a debate, not a show of hands,
-and the best idea usually arrives long after the eighth, so the panel keeps going.
+## ⚖️ Law before every write
 
-MASTER speaks, and it listens. Its face on the web shows what it is doing, and its
-voice is warm but brief — the empty flattery and throat-clearing an AI tends to add are
-stripped out before you ever hear or read a word. It shows its work the way an old Unix
-machine shows its start-up messages: every file it touches, every step, every reason
-scrolls past in plain view, so nothing is hidden from the person it serves. And it is
-never left without a way to think. If it has an account it uses it; if not, it falls
-back to a browser you have already signed into; and if the machine is cut off from the
-network, it uses a model kept on the machine itself, slowing down rather than stopping.
+MASTER keeps thinking and deciding apart. A model — Claude, or one of several it
+swaps between — proposes a change. Before it becomes a file, it must pass the
+constitution: an unbreakable law, a set of working rules, and executable laws
+that carry their own right and wrong examples and re-check themselves at every
+boot. What breaks the constitution is refused with a reason, never quietly
+patched.
 
-It has begun to work while no one is watching. When things fall quiet, MASTER dreams 🌙 💭 ✨ 🔮: it
-reads one of its own rules, searches the wider world for how that rule is best
-understood, connects it to the code that ought to follow it, suggests improvements, and —
-along a careful path that keeps its work sealed off until the result comes out clean —
-fixes one. And it makes things. 🎨 🎵 📷 🎬 🎹 Ask it in plain words for a photograph of Bergen in
-the rain 📷, a J Dilla beat 🎵, or a film-graded look 🎬, and it hands the request to the
-studio tools beside it and saves the result away from the source, while talking about
-photography or Dilla stays an ordinary conversation.
+## 🔁 The loop
 
-To run MASTER, install its dependencies and start `bin/master`; the operator commands
-live under `bin/pub4`; the deploy instructions are in the OpenBSD folder. Anyone working
-inside it should read START_HERE first, then AGENTS; the reasons behind anything
-surprising are in DECISIONS; and everything still to do lives in one backlog file at the
-top of the repository. Licensed MIT. 🚀 ⚡ 🌟 💫
+You give MASTER a sentence, and it scans, fixes, criticizes, and reviews,
+circling until nothing new turns up. The scan is not a model guessing; it is
+exact checks that read a file's shape and measure it against named principles —
+an idea written twice, a class that only forwards, a name that says nothing, a
+step too long to hold in the head. They need no model, so MASTER judges a whole
+codebase offline, and holds any other AI assistant to the same law.
+
+## 🏛️ The council
+
+When a change deserves more than a checklist, MASTER convenes a panel: an
+architect, a caretaker, a performance mind, an ethicist, a designer. Each
+reasons through its own lens, each can run on a different model, and each argues
+against the change before a judge weighs what survives. It is a debate, not a
+vote, and the best idea usually arrives long after the eighth.
+
+🌙 💭 ✨ 🔮 🎨 🎵 📷 🎬
+
+## 🔊 Voice and transparency
+
+MASTER speaks warmly but briefly, the flattery and throat-clearing stripped
+before you hear a word. It shows its work like an old Unix machine's boot log:
+every file, every step, every reason scrolls past in plain view. And it is never
+left without a way to think — an account if it has one, a signed-in browser if
+not, a model on the machine itself when the network is gone.
+
+## 🌙 Dreaming and making
+
+When the tree falls quiet, MASTER dreams — it reads one of its rules,
+searches the world for how that rule is best understood, connects it to the code
+that should follow it, and along a sealed, gated path, fixes one. And it makes things. Ask
+in plain words for a photograph of Bergen in the rain, a
+J Dilla beat, or a graded film look, and it routes the request to the studio
+tools beside it.
+
+## 🧭 Running it
+
+Install the dependencies and start `bin/master`; the operator commands live
+under `bin/pub4`; the deploy notes are in the OpenBSD folder. Read START_HERE,
+then AGENTS, to work inside it; DECISIONS explains anything surprising; and
+everything still to do lives in one backlog at the top of the repository.
+Licensed MIT.
+
+🚀 ⚡ 🌟 💫
