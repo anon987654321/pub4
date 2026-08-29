@@ -16,12 +16,20 @@ class RadioBergenStudyUnitTest < Minitest::Test
     RadioBergenStudy.define_singleton_method(:analyze_audio, original) if original
   end
 
+  # The invariant is that the study covers the whole manifest, not that the
+  # manifest holds a particular number of rows. brgen's catalogue grows, so a
+  # literal count here pins RAILS data from MASTER's test directory and fails
+  # naming that growth as the regression.
   def test_studies_all_manifest_tracks
+    manifest = RadioBergenStudy.load_manifest
+    local = Array(manifest["local_mp3"]).length
+    youtube = Array(manifest.dig("external_reference", "youtube")).length
     data = with_fast_audio_analysis { RadioBergenStudy.study! }
 
-    assert_operator data.dig("meta", "track_count").to_i, :>=, 25
-    assert_equal 9, data.dig("meta", "local_count")
-    assert_operator data.dig("meta", "youtube_count").to_i, :>=, 18
+    assert_operator local, :>, 0, "the manifest must carry local tracks for this to measure anything"
+    assert_equal local + youtube, data.dig("meta", "track_count")
+    assert_equal local, data.dig("meta", "local_count")
+    assert_equal youtube, data.dig("meta", "youtube_count")
   end
 
   def test_maps_j_dilla_to_dilla_dna
