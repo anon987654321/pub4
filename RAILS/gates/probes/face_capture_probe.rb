@@ -7,9 +7,16 @@
 #   ruby gates/probes/face_capture_probe.rb --frames 200       # a sequence
 #   ruby gates/probes/face_capture_probe.rb --url http://127.0.0.1:53187/
 #
-# Why this exists: loop.mp4 was recorded and came back black. Not a bug in the
-# recorder and not a bug in the face — the face refuses to exist until someone
-# taps it.
+# Why this exists: the face refuses to exist until someone taps it, so anything
+# that records the page without tapping records the primer screen.
+#
+# It is worth being exact about the symptom, because the obvious guess is wrong.
+# A capture that misses the face does not come back black -- the primer screen
+# is dark but lit, and the sparse dot field is dark even when correct, so both
+# look black at a glance and MEAN luminance rounds to zero for either. Measure
+# max and percent-lit instead. The 131s loop.mp4 that this probe replaced was
+# not black at all: frames 40 seconds apart were byte-identical at 1.15% lit,
+# a single drawn frame held for the length of the video.
 #
 # index.html.erb line 34 is the whole story:
 #
@@ -119,10 +126,21 @@ Deploy::CdpSession.open(webgl: true, timeout: options[:timeout]) do |cdp|
   loop do
     ready = state.call
     break if ready["failed"]
-    # A renderer that never appears is the 2D path, which is a legitimate
-    # outcome rather than a failure — face.part1.txt sets '2d mode' when
-    # WebGL is absent. Both count as drawn.
-    break if ready["primer"] && (ready["frames"].to_i.positive? || !ready["renderer"])
+    # Wait for MASTER_FACE to EXIST before judging anything about it.
+    #
+    # This read `primer && (frames > 0 || !renderer)`, and on a surface with
+    # data-primer="auto" the primer has already fired before the first poll
+    # while the runtime is still loading. MASTER_FACE is undefined then, so
+    # renderer is false, so !renderer is true, so the loop broke on iteration
+    # one -- and the guard below aborted saying the runtime never loaded. The
+    # probe refused a face that was seconds from drawing.
+    #
+    # The !renderer clause exists to accept the 2D path, which is a real
+    # outcome: face.part1.txt sets "2d mode" when WebGL is absent. But
+    # "no renderer" and "no runtime yet" both report renderer=false, and only
+    # `present` separates them.
+    break if ready["present"] && ready["primer"] &&
+             (ready["frames"].to_i.positive? || !ready["renderer"])
     break if Time.now > deadline
 
     sleep 0.1
