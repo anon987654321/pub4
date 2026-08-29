@@ -4850,6 +4850,52 @@ def arrange_loop_progression(pads, needed_chords, _cfg)
   [looped, phases]
 end
 
+# The pool the loop rotates through instead of repeating one progression eight
+# times. All four documented transcriptions are centred on C — Slum Village in C
+# minor, Flying Lotus in C major — so the movement between them is parallel
+# major/minor, the modal interchange both producers actually used, not a key
+# jump. A render that stays on one four-chord loop for two minutes is the exact
+# "sounds the same the whole way through" the operator heard; rotating whole
+# progressions across the sections is what fixes it. Off with PROG_ROTATE=0,
+# which falls straight back to arrange_loop_progression.
+PROG_ROTATION_POOL = %i[
+  slum_village_intro_documented flylo_camel_documented
+  slum_village_players_documented flylo_beginners_falafel_documented
+].freeze
+
+def prog_rotation_enabled? = ENV.fetch("PROG_ROTATE", "1") != "0"
+
+# Concatenate whole progressions from the pool, one after another, until the
+# section length is filled, then trim. Each progression keeps its own chords, so
+# the harmony genuinely changes section to section rather than looping. Returns
+# nil when fewer than two of the pool resolve (e.g. ARTIST_VERIFIED_ONLY hides
+# them), so the caller falls back to the single-progression loop.
+def arrange_rotating_progressions(needed_chords, _cfg)
+  pool = PROG_ROTATION_POOL.filter_map do |name|
+    pads = curated_progression_pads(name)
+    pads && [name, pads]
+  end
+  return nil if pool.length < 2
+
+  out = []
+  phases = []
+  cycle = 0
+  while out.length < needed_chords
+    _name, pads = pool[cycle % pool.length]
+    pads.each do |chord|
+      out << chord
+      phases << (cycle.zero? ? :exposition : :main)
+    end
+    cycle += 1
+  end
+  out = out.first(needed_chords)
+  phases = phases.first(needed_chords)
+  (1..[2, phases.length].min).each { |k| phases[-k] = :recapitulation }
+  dmesg("prog rotation: #{pool.map { |n, _| n }.join(' → ')} over #{out.length} chords",
+        unit: "harm0", parent: "dilla0")
+  [out, phases]
+end
+
 def log_progression_phases!(track, bpm, pads, phases)
   log_progression!(track, bpm, pads, phases)
 end
@@ -26283,7 +26329,9 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
                                          when :la_beat
                                            arrange_la_beat_progression(pads, needed_chords, cfg)
                                          when :loop
-                                           lp = arrange_loop_progression(pads, needed_chords, cfg)
+                                           lp = (prog_rotation_enabled? &&
+                                                 arrange_rotating_progressions(needed_chords, cfg)) ||
+                                                arrange_loop_progression(pads, needed_chords, cfg)
                                            [lp[0], lp[1], nil]
                                          else
                                            fp = arrange_fugue_progression(pads, needed_chords, cfg)
