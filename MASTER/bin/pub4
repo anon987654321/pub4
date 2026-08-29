@@ -24,7 +24,7 @@ def usage
       bin/pub4 vps logs <app> [--lines N] [--remote]
       bin/pub4 post-pull
       bin/pub4 measure [--deep] [--json]
-      bin/pub4 lint [<path>...]       judge files by MASTER's laws, no model (default: changed vs HEAD)
+      bin/pub4 lint [--staged] [--changed-lines] [<path>...]  judge files by MASTER's laws, no model
       bin/pub4 test [<path>...]       smallest complete proof for the paths (default: dirty files)
       bin/pub4 land -m <msg> <path>...  commit, rebase, re-check, push
       bin/pub4 worktree <name>        own checkout + branch, so agents never share an index
@@ -73,12 +73,35 @@ when "lint"
   # against HEAD is.
   require "master"
   require "review/scan/infra_helpers"
+  # --changed-lines judges only the lines this diff added, so a file's standing
+  # debt does not block the commit that merely touched it — the shape a
+  # pre-commit hook wants.
+  changed_only = !ARGV.delete("--changed-lines").nil?
+  # --staged reads the index (what this commit includes), the scope a pre-commit
+  # hook wants; without it, the whole working tree against HEAD.
+  diff_base = ARGV.delete("--staged").nil? ? "HEAD" : "--cached"
   scanner = Master::Review::Scan::InfraHelpers.build_scanner(root: Master::ROOT, agent: nil)
-  targets = ARGV.empty? ? `git -C #{ROOT} diff --name-only HEAD`.lines.map { |l| File.join(ROOT, l.chomp) } : ARGV
+  changed, = Open3.capture2e("git", "-C", ROOT, "diff", "--name-only", diff_base)
+  targets = ARGV.empty? ? changed.lines.map { |line| File.join(ROOT, line.chomp) } : ARGV
   files = targets.flat_map { |t| File.directory?(t) ? Dir.glob(File.join(t, "**/*")) : [t] }.select { |p| File.file?(p) }
+  touched = nil
+  if changed_only
+    touched = Hash.new { |hash, key| hash[key] = [] }
+    current = nil
+    hunks, = Open3.capture2e("git", "-C", ROOT, "diff", "-U0", diff_base)
+    hunks.each_line do |diff_line|
+      current = File.join(ROOT, diff_line[6..].chomp) if diff_line.start_with?("+++ b/")
+      next unless current && (hunk = diff_line.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/))
+
+      start = hunk[1].to_i
+      touched[current].concat((start...(start + (hunk[2] || "1").to_i)).to_a)
+    end
+  end
   findings = files.flat_map do |path|
     result = scanner.scan(path, depth: :deep)
-    (result.ok? ? Array(result.value!) : []).map { |finding| [path, finding] }
+    rows = result.ok? ? Array(result.value!) : []
+    rows = rows.select { |finding| touched.fetch(path, []).include?(finding[:line]) } if touched
+    rows.map { |finding| [path, finding] }
   end
   if findings.empty?
     puts "lint: clean — #{files.size} file(s), no law broken"
