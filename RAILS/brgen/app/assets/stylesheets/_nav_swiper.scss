@@ -8,6 +8,16 @@
    is fixed chrome and .app-shell is inset below it by --nav-swiper-h, so
    nothing starts underneath it. Content still scrolls *under* the bar, which is
    what the opaque background is for. */
+/* The active rule's colour and weight, declared here because they are this
+   bar's own and nothing else in the app draws them. Both themes take the same
+   red: #d62828 is dark enough to hold against #ffffff and saturated enough to
+   read against #000000, which a lighter coral does not do in both directions.
+   Operator choice, 2026-08-29. */
+:root {
+  --nav-rule: #d62828;
+  --nav-rule-w: 3px;
+}
+
 .nav_swiper {
   position: fixed;
   inset-block-start: 0;
@@ -105,17 +115,64 @@
 
 .nav_swiper_bar::-webkit-scrollbar { display: none; }
 
-/* One continuous run. The two role="group" wrappers stay for assistive tech —
-   they carry the "brgen" / "explore" labels — but they are visually seamless, so
-   the bar reads as a single swiper rather than two chunks with a rule between
-   them. The divider that used to sit here was one of the 17 lines removed. */
+/* One continuous run. The Hick's-law grouping is gone — the bar is eight
+   entries, which is the size the grouping existed to buy — so the only groups
+   left are the verticals and, on the front page, the feed orderings. */
 .nav_swiper_group {
   display: flex;
   flex: 0 0 auto;
 }
 
+/* Pipes between the eight, and only between them.
+
+   ::before rather than markup, for two reasons that both matter. A screen
+   reader would otherwise announce "pipe" between every destination, and
+   aria-hidden on eight separator spans is eight chances to forget one. And
+   :first-child gives the leading edge for free, so no entry has to know
+   whether it is first — which is what breaks the moment the order changes,
+   and the order here has changed twice.
+
+   --border is the token, not a literal: it is #333 on the black ground and
+   #d9d9d9 on the light one, which is the dark-grey / light-grey pair the
+   separator wants, and it is already the colour every other hairline in the
+   app draws in. Operator, 2026-08-29.
+
+   The pipe sits in the padding rather than adding width, so the 44px tap
+   target the run is tuned around is untouched. */
+.nav_swiper_group--verticals .nav_link + .nav_link::before {
+  content: "|";
+  /* Taken out of flow and hung on the seam.
+
+     Two negative-margin versions came before this one, and both were wrong in a
+     way the rendered bar showed and the rule did not. Half a padding left the
+     pipe inside the link's box, so an active link's rule ran under the
+     separator and the underline read a character too long. A full padding
+     cleared the box but put the pipe hard against the following word -- the bar
+     read "|Radio |Marketplace" rather than "Radio | Marketplace", because a
+     margin can move a glyph left but cannot also hold the text after it away.
+
+     Absolute is what says the thing meant all along: the separator is part of
+     neither word. inset-inline-start: 0 is the seam, because adjacent flex
+     items share a border edge and the visible gap is the two links' padding
+     either side of it -- so the border edge IS the middle of the gap. The
+     translate centres the glyph on that line in both axes, and being out of
+     flow it costs the run no width and cannot be caught by the active link's
+     inset shadow. */
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block-start: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--border);
+  font-weight: var(--weight-normal);
+  /* Never the hover or active colour: the pipe is furniture, and a separator
+     that lights up with the link beside it reads as part of the word. */
+  pointer-events: none;
+}
+
 .nav_link {
   flex: 0 0 auto;
+  /* Containing block for the separator hung on this link's leading seam. */
+  position: relative;
   /* Tighter than the old space-4 both ways: twelve destinations in a drawer, so
      the run should cost as little width as it can while keeping the 44px tap
      target that comes from min-height in _chrome_polish. */
@@ -133,9 +190,48 @@
 
 .nav_link:hover { color: var(--text); background: var(--hover); text-decoration: none; }
 
-/* Active state is weight and colour, not an underline. aria-current carries it
-   for assistive tech; the 2px border-bottom this replaces was a line. */
-.nav_link.active { color: var(--text); font-weight: var(--weight-bold); }
+/* Active state is a thick red rule under the entry, and exactly one entry
+   wears it — operator, 2026-08-29. This reverses the note that used to sit
+   here arguing weight and colour over a line: with eight peers all set in
+   --weight-bold, weight cannot mark one of them, and colour alone was doing
+   the job at --text against --text-dim, which is a contrast step a reader
+   scanning a row does not register.
+
+   #d62828 is a token rather than a literal because it is a brand decision and
+   will be asked for again. It is deliberately NOT --danger (#e46151): that is
+   the destructive-action colour, and a nav marker sharing it would make "you
+   are here" and "this deletes something" say the same thing.
+
+   box-shadow, not border-bottom: a border adds 3px to the box and would push
+   the eight links 3px off the vertical centre they share with the wordmark,
+   which is the alignment rendered_invariants measures. An inset shadow paints
+   inside the box the link already has. */
+.nav_link.active {
+  color: var(--text);
+  box-shadow: inset 0 calc(var(--nav-rule-w) * -1) 0 0 var(--nav-rule);
+}
+
+/* The badge on a new surface.
+
+   It takes --nav-rule rather than a colour of its own, and that is worth
+   stating because the rule under the active entry is the same red: "new" and
+   "you are here" are both this bar saying look here, and the two only ever
+   land on one entry together when the new surface is also the one being read
+   — where one red is the right answer. What red must not also mean here is
+   --danger; see the note on the active rule.
+
+   <sup> rather than a ::after because it is content: a reader who cannot see
+   the colour is still told the surface is new. Sized in em so it tracks the
+   link's own type, and superscripted so it does not stretch the link's box
+   and cost the run its height. */
+.nav_link_badge {
+  margin-inline-start: var(--space-3xs, 0.125rem);
+  font-size: 0.6em;
+  font-weight: var(--weight-bold);
+  color: var(--nav-rule);
+  letter-spacing: 0;
+  vertical-align: super;
+}
 
 @media (prefers-reduced-motion: reduce) {
   *,

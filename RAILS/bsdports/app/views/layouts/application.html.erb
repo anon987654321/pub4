@@ -1,5 +1,17 @@
 <!DOCTYPE html>
-<html lang="<%= I18n.locale %>">
+<%# data-theme="light" is the default, and it is written rather than left to
+    the OS — operator, 2026-08-29.
+    
+    Without it this app has no theme attribute at all, so the shared token
+    sheet's `@media (prefers-color-scheme: dark)` block decides, and a reader
+    whose machine prefers dark gets a dark app. "Light by default" has to mean
+    light on a dark-mode Mac too, or it means nothing.
+    
+    It is an attribute rather than a media query so there is exactly one
+    mechanism: _theme_bootstrap overwrites this from localStorage before paint
+    if the reader has chosen, so a saved preference still wins and nothing
+    flashes. %>
+<html lang="<%= I18n.locale %>" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">

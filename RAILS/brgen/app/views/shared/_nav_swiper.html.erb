@@ -17,41 +17,57 @@
      data-nav-autohide-zone-value="64"
      data-nav-autohide-hide-on-scroll-value="true"
      data-nav-autohide-hidden-class="nav_swiper--hidden">
-  <%# These are links that navigate — /channels, another host entirely — and
-      there is no tabpanel anywhere on the page. Dressing them as
-      role="tablist" > role="group" > role="tab" produced three axe violations at
-      once: the group broke the tablist's required children, the tabs lost their
-      required tablist parent through it, and role="tablist" on <nav> overrode
-      the navigation landmark, so everything inside stopped counting as landmark
+  <%# These are links that navigate — another host entirely — and there is no
+      tabpanel anywhere on the page. Dressing them as role="tablist" >
+      role="group" > role="tab" produced three axe violations at once: the group
+      broke the tablist's required children, the tabs lost their required
+      tablist parent through it, and role="tablist" on <nav> overrode the
+      navigation landmark, so everything inside stopped counting as landmark
       content. It is a navigation bar, so it says so; aria-current marks the
-      active entry, which is the correct signal for a nav and was already here.
-      Roving tabindex went with the tab roles: a tablist is one tab stop by
-      design, but a nav should let Tab reach every link. %>
+      active entry, which is the correct signal for a nav.
+
+      One flat run, no groups — operator, 2026-08-29. The two Hick's-law groups
+      were carrying nothing visible since the divider between them came out, and
+      the bar is eight entries now rather than eleven, which is the size the
+      grouping existed to buy. %>
   <nav id="nav_sections" class="nav_swiper_bar" aria-label="<%= t("a11y.sections") %>" data-brgen-shell-target="navSections">
-    <% brgen_nav_groups.each do |group_label, items| %>
-      <div class="nav_swiper_group" role="group" aria-label="<%= group_label.capitalize %>">
-        <% items.each do |label, href| %>
-          <% active = label.downcase == (active_vertical.to_s.presence || "front") %>
-          <%# Every entry opens in a new tab — operator instruction 2026-08-10.
-              rel="noopener" is not optional with target="_blank": without it the
-              opened page gets a window.opener handle back into this one. The
-              verticals are separate hosts, so this is cross-origin.
-              aria-label carries the "new tab" fact, because a sighted user gets
-              it from the tab appearing and a screen-reader user gets nothing. %>
-          <%= link_to label, href,
-                class: "nav_link#{" active" if active}",
-                target: "_blank",
-                rel: "noopener",
-                "aria-label": t("nav.opens_new_tab", label: label, default: "%{label} (opens in a new tab)"),
-                "aria-current": ("page" if active) %>
+    <div class="nav_swiper_group nav_swiper_group--verticals">
+      <% brgen_nav_items.each do |slug, label, href| %>
+        <% active = nav_item_active?(slug) %>
+        <%# Every entry opens in a new tab — operator instruction 2026-08-10.
+            rel="noopener" is not optional with target="_blank": without it the
+            opened page gets a window.opener handle back into this one. The
+            verticals are separate hosts, so this is cross-origin.
+            aria-label carries the "new tab" fact, because a sighted user gets
+            it from the tab appearing and a screen-reader user gets nothing. %>
+        <%= link_to href,
+              class: "nav_link#{" active" if active}",
+              target: "_blank",
+              rel: "noopener",
+              "aria-label": t("nav.opens_new_tab", label: label, default: "%{label} (opens in a new tab)"),
+              "aria-current": ("page" if active) do %>
+          <%= label %>
+          <%# The badge is inside the link so it cannot be separated from what it
+              qualifies, and it is a <sup> because that is what it is: a mark on
+              a word. Its text is real content, not a ::after — a reader who
+              cannot see the colour still gets told the surface is new, and the
+              aria-label above already names the destination, so this reads as
+              the qualifier it is rather than as part of the place name. %>
+          <% if (badge = nav_item_badge(slug)) %>
+            <sup class="nav_link_badge"><%= badge %></sup>
+          <% end %>
         <% end %>
-      </div>
-    <% end %>
+      <% end %>
+    </div>
     <%# Hot and New are orderings of the front page, so they ride the bar that is
         already the wayfinding rather than a second row beneath it: root carries
         exactly one horizontal scroller and test_root_offers_the_verticals_once
         pins that. Front page only — on a vertical these would order a feed that
-        is not on screen. These navigate in place, so no target="_blank". %>
+        is not on screen. These navigate in place, so no target="_blank".
+
+        Its own group, and deliberately not carrying the separators: the pipes
+        say "these are the eight places", and a feed ordering is not one of
+        them. %>
     <% if !vertical_surface? && authenticated? %>
       <% hot = params[:sort].blank? && params[:feed].blank? %>
       <div class="nav_swiper_group" role="group" aria-label="<%= t("home.feed_sort", default: "Feed") %>">

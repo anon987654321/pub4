@@ -145,18 +145,16 @@ DILLA_STYLE_DEFAULTS = {
   # the leads destroying everything: three arp layers over the chords the pads
   # were already holding, at close to twice their level.
   #
-  # MELODIC_LEAD=1 is the one remaining lead: the counter-line. The table used
-  # to leave this at 0 while the comment said 1, so a direct render still had
-  # no lead at all and only demo-each's steady path produced the line.
-  #
-  # HARMONY_LEAD, SCALE_LEAD and CREATIVE_LEAD stay 0: the counter-line answers
-  # the chords, and that only works if nothing else talks over them. LEAD_ARP
-  # stays available for anyone who wants the old stack back explicitly.
-  "HARMONY_LEAD" => "0",
-  "SCALE_LEAD" => "0",
+  # MELODIC_LEAD=1 is the counter-line that answers the chords. HARMONY_LEAD,
+  # SCALE_LEAD and LEAD_ARP ride on top of it: the signature lead is an arpeggio
+  # locked to the progression's own scale — the ringtone-lead voice — sitting
+  # over the counter-line rather than replacing it. CREATIVE_LEAD stays 0 so the
+  # arp follows the harmony instead of improvising against it.
+  "HARMONY_LEAD" => "1",
+  "SCALE_LEAD" => "1",
   "CREATIVE_LEAD" => "0",
   "MELODIC_LEAD" => "1",
-  "LEAD_ARP" => "0",
+  "LEAD_ARP" => "1",
   "LEAD_ARP_MODE" => "wonky_spiral",
   "LEAD_VOICE" => "soul_prophet",
   "EXPERIMENTAL_LEADS" => "0",
@@ -189,7 +187,7 @@ DILLA_STYLE_DEFAULTS = {
   "DRUM_PRESENCE_DB" => "1.5",
   # Pads a bit more present now that drums are stepped back.
   "HARM_MIX_WEIGHT" => "1.12",
-  "HARM_BUS_VOL" => "1.4",
+  "HARM_BUS_VOL" => "1.25",
   "HARM_BODY_DB" => "2.2",
   "HARM_MID_DB" => "1.8",
   "HARM_PRESENCE_DB" => "1.6",
@@ -201,8 +199,8 @@ DILLA_STYLE_DEFAULTS = {
   "WONKY_CHORD_DUCK" => "0.9",
   "HARMONIC_PADS_WEIGHT" => "1.12",
   "HARMONIC_PADS_VOLUME" => "1.2",
-  # Louder pad bed so Rhodes/Prophet read over kit (was 62 — too shy).
-  "PAD_VOL" => "86",
+  # The pad bed sits back under the voice and the lead, not out over a kit.
+  "PAD_VOL" => "74",
   # Lead must cut over the stacked pad bed.
   "HARMONIC_SCALE_LEAD_WEIGHT" => "1.25",
   "HARMONIC_SCALE_LEAD_VOLUME" => "1.55",
@@ -281,7 +279,9 @@ DILLA_BEST_DEFAULTS = DILLA_STYLE_DEFAULTS.slice(
 ).merge(
   "DILLA_DEEP" => "1",
   "SOUL_ENRICH" => "1",
-  "REHARM_LOOP" => "0",
+  # Progressions rotate by default: a bare render moves through the curated pack
+  # rather than sitting on one, so no command-line flag is needed to hear variety.
+  "REHARM_LOOP" => "1",
   "CREEPY_PATCHES" => "0",
   # donuts_warm's hf_rolloff/groove_wear_lp sit at 2200/2600Hz (see the
   # "not a 2 kHz blanket" comment on its donuts_soul sibling) and its

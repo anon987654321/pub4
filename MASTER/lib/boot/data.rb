@@ -82,7 +82,10 @@ module Master
 
     def yaml_errors(paths, root)
       paths.each_with_object({}) do |path, errors|
-        YAML.safe_load_file(path, aliases: true)
+        # Same permitted classes as load_yaml — a file that loads must also
+        # validate, or a legitimate Date (data/recovery/legacy_manifest.yml)
+        # reads as a boot error on every start while loading fine.
+        YAML.safe_load_file(path, aliases: true, permitted_classes: [Date, Time])
       rescue Psych::Exception => e
         errors[path.delete_prefix("#{root}/")] = e.message.lines.first.to_s.strip
       end

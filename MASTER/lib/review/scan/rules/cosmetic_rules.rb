@@ -190,14 +190,24 @@ module Master
 
         RuleDSL.rule :README_PROSE,
           severity: :info, tags: %i[TYPOGRAPHY DOMAIN_LANGUAGE], applies_to: %i[markdown],
-          description: "a README is prose — a bold visionary opening, no fences, lists or tables" do |src, path:|
+          description: "a README is prose — a bold visionary opening, tables never, code only under the final heading" do |src, path:|
           next [] unless path.to_s.end_with?("README.md")
           findings = []
-          src.each_line.with_index(1) do |line, number|
-            findings << finding(line: number, message: "README carries a code block — a README is prose, not a reference; the code belongs in the file it documents") if line.start_with?("```")
-            findings << finding(line: number, message: "README carries a table — say it in a sentence") if line.match?(/\A\s*\|.*\|\s*\z/)
+          lines = src.lines
+          # A demonstration — a terminal transcript, one prized source excerpt —
+          # earns its place once the argument is made, under the closing heading.
+          # A fence before that chops the flowing prose the rest of this rule
+          # exists to protect; a table chops it anywhere.
+          last_heading = lines.rindex { |line| line.start_with?("## ") } || -1
+          lines.each_with_index do |line, index|
+            findings << finding(line: index + 1, message: "a code block interrupts the prose — a demonstration belongs under the final heading, not mid-argument") if line.start_with?("```") && index < last_heading
+            findings << finding(line: index + 1, message: "README carries a table — say it in a sentence") if line.match?(/\A\s*\|.*\|\s*\z/)
           end
           lead = src.sub(/\A#\s+[^\n]+\n+/, "").lstrip
+          # A hero image or video (and its HTML comment) may sit between the
+          # title and the opening line — skip it before checking the opening is
+          # bold, so the face can lead the page and the prose still has to.
+          lead = lead.sub(%r{\A(?:<!--.*?-->\s*|<(?:video|img|picture|p)\b[^>]*>.*?(?:</(?:video|picture|p)>|/?>)\s*)+}m, "").lstrip
           findings << finding(line: 1, message: "README opening is not bold — lead with one bold, visionary sentence") unless lead.empty? || lead.start_with?("**")
           findings
         end

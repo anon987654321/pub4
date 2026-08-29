@@ -20,28 +20,37 @@
   gap: 0.5rem;
 }
 
-/* openbsd_wscons — green terminal identity (UI_REFINEMENTS §E) */
+/* Light, like the other two apps — operator, 2026-08-29.
+   
+   This was openbsd_wscons: #000000 ground, #63c363 text, the console's own
+   green, with --text-secondary hand-picked at #499149 because the #3d7a3d
+   before it failed WCAG AA on all three surfaces it sat on. That identity is
+   deliberately gone, and the operator chose that knowing what it cost — a
+   package browser that looked like the machine it describes.
+   
+   What survives is everything that was not the colour: JetBrains Mono, the
+   zero radii, the dense type scale. A port listing is tabular data and reads
+   better in a mono face on any ground, and the square corners are the same
+   argument. So this is a palette swap rather than a redesign, and putting the
+   terminal back is a matter of restoring the eight colour tokens below.
+   
+   The palette itself comes from app-root-tokens and the shared light
+   semantics, which is what "like any other app" means here: no bsdports light
+   theme was ever designed, and inventing one to sit under this change would be
+   a look nobody has approved. The two status ambers are the exception — they
+   were chosen to warn against black and are unreadable on white, so they are
+   re-picked here against the light ground rather than inherited. */
 :root {
-  /* wscons status ambers — stale data warns in the console's own voice. */
-  --status-stale-border: #b7791f;
-  --status-stale-text: #f6c453;
   @include x.app-root-tokens;
-  --bg: #000000;
-  --surface: #000000;
-  --surface-elevated: #0a140a;
-  --search-bg: #0f1a0f;
-  --text: #63c363;
-  /* Was #3d7a3d, which failed WCAG AA on every surface it sits on: 4.05 on
-     --bg, 3.62 on --surface-elevated, 4.45 on --search-bg, all against the 4.5
-     floor at 10-11px. #499149 clears all three (5.43/4.86/4.62) and stays a
-     dimmer green than --text #63c363, so the two-tier terminal palette holds. */
-  --text-secondary: #499149;
-  --border: #1a3a1a;
-  --hover: rgba(99, 195, 99, 0.1);
-  --accent: #63c363;
-  --danger: #ff6b6b;
+  /* wscons status ambers, re-picked for a light ground. The originals
+     (#b7791f border, #f6c453 text) were tuned to glow on #000000; #f6c453 on
+     white measures 1.7:1, which is not a warning, it is invisible. These clear
+     AA against --bg #ffffff at the small sizes this app sets. */
+  --status-stale-border: #a1660a;
+  --status-stale-text: #6b4405;
+  color-scheme: light;
   --font: "JetBrains Mono", ui-monospace, monospace;
-  /* rem (not px) so CRT density keeps auditor body_font_px floor */
+  /* rem (not px) so the dense listing keeps the auditor's body_font_px floor */
   --font-size: var(--text-xs);
   --line-height: 1rem;
   --radius-pill: 0;
@@ -49,7 +58,6 @@
   --radius-sm: 0;
   --radius-md: 0;
   --focus-ring: 2px solid var(--accent);
-  color-scheme: dark;
   background: var(--bg);
   color: var(--text);
   font-family: var(--font);

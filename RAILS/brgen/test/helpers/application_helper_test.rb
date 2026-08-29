@@ -167,15 +167,66 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_equal :messenger, helper.inferred_vertical_from_controller
   end
 
-  test "brgen_nav_items includes channels" do
+  # The bar is eight entries in one order — operator, 2026-08-29. Named here
+  # rather than counted, because the failure this catches is a vertical quietly
+  # falling off the only chrome that reaches it, which a count cannot see.
+  #
+  # Slugs, not labels: the labels are localised now, so a test written against
+  # them would pass in en and fail in nb, and this app defaults to nb.
+  test "the nav bar is the eight verticals, in order" do
     Current.domain = "brgen.no"
     # authenticated? is mixed in from Authentication in controllers; stub for helper unit tests.
     def authenticated? = true
-    items = brgen_nav_items
-    labels = items.map(&:first)
-    assert_includes labels, "channels"
-    channels = items.find { |label, _| label == "channels" }
-    assert_equal channels_path, channels.last
+
+    assert_equal %w[front ai playlist marketplace takeaway messenger maps tv],
+                 brgen_nav_items.map(&:first)
+  end
+
+  # dating, channels and sign up came off the bar on 2026-08-29. Pinned so that
+  # putting one back is a decision someone makes on purpose.
+  test "the nav bar carries no dating, channels or sign up" do
+    Current.domain = "brgen.no"
+    def authenticated? = false
+
+    slugs = brgen_nav_items.map(&:first)
+    %w[dating channels sign_up].each { |gone| refute_includes slugs, gone }
+  end
+
+  # Radio is the playlist vertical wearing the name the operator gave the bar.
+  # The slug has to stay `playlist` because that is what Current.subapp reports,
+  # and it is what decides which entry wears the active rule.
+  test "Radio is the playlist vertical, and still points at it" do
+    Current.domain = "brgen.no"
+    def authenticated? = true
+
+    slug, label, href = brgen_nav_items.find { |s, _, _| s == "playlist" }
+    assert_equal "playlist", slug
+    assert_equal "Radio", label
+    assert_equal "//playlist.brgen.no/", href
+  end
+
+  # The active entry is decided by slug against Current.subapp, never by the
+  # display string. Comparing labels worked only while they were English.
+  test "the active entry follows the subapp, not the label" do
+    Current.subapp = nil
+    assert nav_item_active?("front"), "the apex is the front feed"
+    refute nav_item_active?("playlist")
+
+    Current.subapp = :playlist
+    assert nav_item_active?("playlist"), "Radio wears the rule on playlist.brgen.no"
+    refute nav_item_active?("front")
+  end
+
+  # Exactly one entry wears the rule, whichever surface is being read.
+  test "one entry is active at a time" do
+    Current.domain = "brgen.no"
+    def authenticated? = true
+
+    [ nil, :playlist, :marketplace, :maps, :tv ].each do |subapp|
+      Current.subapp = subapp
+      active = brgen_nav_items.map(&:first).count { |slug| nav_item_active?(slug) }
+      assert_equal 1, active, "expected one active entry on #{subapp.inspect}, got #{active}"
+    end
   end
 
   test "notification_href opens match and follow targets" do
@@ -213,22 +264,23 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_equal post_path(post), notification_href(n)
   end
 
-  # The wordmark is the city, on every host. It was the literal "brgen"
-  # everywhere once, so Oslo and Frankfurt wore Bergen's name; it then went
-  # the other way and rendered whole hostnames on verticals. It is the city
-  # and nothing else now, which is one shape rather than three.
+  # The wordmark is the city domain, on every host. It was the literal "brgen"
+  # everywhere once, so Oslo and Frankfurt wore Bergen's name; it then went the
+  # other way and rendered whole hostnames on verticals; then it dropped to the
+  # bare city label. It is the domain now — brgen.no, oshlo.no, lsangeles.com —
+  # which is one shape per city and the string that is on the stickers.
   test "brand mark on a city apex is that city, not brgen" do
     Current.domain = "oshlo.no"
     Current.subapp = nil
 
-    assert_equal({ label: "oshlo" }, brand_mark_fragments)
+    assert_equal({ label: "oshlo.no" }, brand_mark_fragments)
   end
 
   test "brand mark on the bergen apex is unchanged" do
     Current.domain = "brgen.no"
     Current.subapp = nil
 
-    assert_equal({ label: "brgen" }, brand_mark_fragments)
+    assert_equal({ label: "brgen.no" }, brand_mark_fragments)
   end
 
   test "brand mark on a vertical is still just the city" do
@@ -239,7 +291,7 @@ class ApplicationHelperTest < ActionView::TestCase
     # It used to render the whole host -- quiet "markedsplass.", bold "brgen",
     # quiet ".no". That prints a URL where a logo goes, and the nav swiper
     # already marks which vertical is active. Operator decision 2026-08-27.
-    assert_equal({ label: "brgen" }, brand_mark_fragments)
+    assert_equal({ label: "brgen.no" }, brand_mark_fragments)
   end
 
   # Every city is a peer — the mark leaves for whichever city the request
@@ -269,6 +321,6 @@ class ApplicationHelperTest < ActionView::TestCase
     Current.subapp = :marketplace
     request.host = "marketplace.lsangeles.com"
 
-    assert_equal({ label: "lsangeles" }, brand_mark_fragments)
+    assert_equal({ label: "lsangeles.com" }, brand_mark_fragments)
   end
 end

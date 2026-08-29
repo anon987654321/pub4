@@ -47,6 +47,23 @@ nb:
     advanced_post: Utvidet innlegg med bilde
     your_feed: Din strøm
   nav:
+    # The eight names on the swiper. Their own namespace, so renaming what the
+    # bar calls a surface cannot move the wording in the mobile drawer or the
+    # footer, which name the same places for different readers.
+    #
+    # markedsplass stays Norwegian here because that is the name on its own
+    # host — markedsplass.brgen.no. en reads Marketplace. radio is the playlist
+    # vertical under the name the bar gives it.
+    vertical:
+      front: Forsiden
+      ai: AI
+      radio: Radio
+      marketplace: Markedsplass
+      takeaway: Takeaway
+      messenger: Messenger
+      maps: Kart
+      tv: TV
+    vertical_badge_new: "nytt!"
     group_discover: "Oppdag"
     group_inbox: "Innboks"
     group_city: "Byen"

@@ -90,67 +90,93 @@ module ApplicationHelper
     Rails.application.config.x.master_web_url
   end
 
-  # Primary vertical navigation for the pull-down swiper. front → home feed;
-  # AI → the shared MASTER face; the rest are per-city verticals on subdomains.
-  def brgen_nav_items
-    domain = Current.domain
-    # Operator order, 2026-08-17: Front AI Markedsplass Playlist Dating Takeaway
-    # TV Maps Messenger. The marketplace is named in Norwegian here because that
-    # is the name on its own host — markedsplass.brgen.no — and the bar is the one
-    # place all nine names sit together, so one of them reading in English was the
-    # only one that did.
-    [
-      [ "front", main_app.root_path ],
-      # live (the hyperlocal anonymous layer) is off this bar per operator, 2026-08-17.
-      # The surface stays — its route, controller and rate limit are untouched, and
-      # _mobile_chrome and nearby still link to it. It is not one of the nine names.
-      [ "AI", brgen_ai_url ],
-      [ "markedsplass", "//#{marketplace_host}/" ],
-      [ "playlist", "//playlist.#{domain}/" ],
-      [ "dating", "//dating.#{domain}/" ],
-      [ "takeaway", "//takeaway.#{domain}/" ],
-      [ "TV", "//tv.#{domain}/" ],
-      [ "maps", "//maps.#{domain}/" ],
-      [ "messenger", "//messenger.#{domain}/" ],
-      [ "channels", main_app.channels_path ],
-      *(authenticated? ? [] : [ [ "sign up", main_app.new_user_path ] ])
-    ]
-  end
+# Primary vertical navigation for the swiper. front → home feed; AI → the
+# shared MASTER face; the rest are per-city verticals on subdomains.
+#
+# Operator order, 2026-08-29: front AI Radio Marketplace Takeaway Messenger
+# Maps TV. Eight entries, and the bar is now exactly those eight — dating,
+# channels and sign up came off it. Channels stays in _mobile_chrome and sign
+# up on the sign-in page; dating is reachable from a user's own profile and by
+# its own host, and losing its bar entry was the operator's call knowing that.
+#
+# Each row is [slug, label, href], not [label, href]. The slug is what decides
+# the active entry and what a test can name; the label is display text and now
+# varies by locale, so comparing it to Current.subapp would have made the
+# active underline appear only for readers whose language happened to match
+# the token. "Radio" is the playlist vertical — the label the operator wants on
+# the bar — so its slug stays `playlist`, which is what Current.subapp reports.
+def brgen_nav_items
+  domain = Current.domain
+  [
+    [ "front",       nav_label("front"),       main_app.root_path ],
+    # live (the hyperlocal anonymous layer) is off this bar per operator, 2026-08-17.
+    # The surface stays — its route, controller and rate limit are untouched, and
+    # _mobile_chrome and nearby still link to it.
+    [ "ai",          nav_label("ai"),          brgen_ai_url ],
+    [ "playlist",    nav_label("radio"),       "//playlist.#{domain}/" ],
+    # nb keeps markedsplass, which is the name on the host itself; en reads
+    # Marketplace. The 2026-08-17 note that argued for one Norwegian label in an
+    # otherwise English bar is answered by the bar having no fixed language now.
+    [ "marketplace", nav_label("marketplace"), "//#{marketplace_host}/" ],
+    [ "takeaway",    nav_label("takeaway"),    "//takeaway.#{domain}/" ],
+    [ "messenger",   nav_label("messenger"),   "//messenger.#{domain}/" ],
+    [ "maps",        nav_label("maps"),        "//maps.#{domain}/" ],
+    [ "tv",          nav_label("tv"),          "//tv.#{domain}/" ]
+  ]
+end
 
-  VERTICAL_NAV_LABELS = %w[markedsplass dating playlist TV takeaway maps messenger].freeze
+# The bar's own label namespace, kept apart from nav.* so that renaming what
+# the swiper calls a surface cannot move the wording in the mobile drawer or
+# the footer, which name the same places for different readers.
+def nav_label(slug) = t("nav.vertical.#{slug}")
 
-  # brgen_nav_items chunked into two Hick's-law-sized groups for the swiper:
-  # platform links, then the seven verticals. Keeps each group at or under 7
-  # peer choices instead of one flat 10-11 item row.
-  def brgen_nav_groups
-    verticals, platform = brgen_nav_items.partition { |label, _| VERTICAL_NAV_LABELS.include?(label) }
-    [ [ "brgen", platform ], [ "explore", verticals ] ]
+# Which entry wears the rule. Current.subapp is a symbol on a vertical host and
+# nil on the apex, where the surface is the front feed.
+def nav_item_active?(slug) = slug == (active_vertical.to_s.presence || "front")
+
+  # Only this one is new, and only this one is a badge: it marks the surface that
+  # did not exist last month. Delete the key and the badge disappears with it —
+  # nothing else has to change, which is the property a "new!" needs to have,
+  # because the day it stops being true is a day nobody is looking at this file.
+  NAV_BADGED_SLUGS = %w[ai].freeze
+
+  def nav_item_badge(slug)
+    return unless NAV_BADGED_SLUGS.include?(slug)
+
+    t("nav.vertical_badge_new", default: nil).presence
   end
 
   def active_vertical
     Current.subapp || inferred_vertical_from_controller
   end
 
-  # Which theme a surface is, decided per vertical rather than per visitor
-  # (operator, 2026-08-24). These are product decisions — markedsplass and
-  # takeaway are storefronts and read light, the media and social surfaces read
-  # dark — not preferences, so prefers-color-scheme does not get a vote.
-  #
-  # The layout used to hardcode data-theme="dark" for every surface, which
-  # pinned the three light verticals to the wrong palette: markedsplass measured
-  # a dark ground under the light tokens its own accents are tuned against.
-  # Anything not listed inherits brgen's dark default.
-  #
-  # maps rejoined on 2026-08-24 with its basemap. The note here used to say the
-  # MapLibre basemap was dark and that pinning the dialect dark was therefore
-  # correct. It was not: the app loads openfreemap positron, background
-  # rgb(242,243,240), and loaded liberty at #f8f4f0 before that. Both light. The
-  # shell was drawing dark chrome around a light map.
-  LIGHT_VERTICALS = %i[marketplace maps takeaway].freeze
+# Light, on every surface — operator, 2026-08-29, because that is what a social
+# network looks like.
+#
+# This retires the per-vertical split of 2026-08-24, and the reasoning there is
+# worth setting out because it was good and only its premise changed. That
+# decision said the theme is a property of the surface, not of the visitor:
+# markedsplass and takeaway are storefronts and read light, the media and
+# social surfaces read dark, so prefers-color-scheme got no vote. It was
+# answering a real bug — the layout hardcoded dark for everything and pinned
+# three light verticals to a palette their accents were never tuned against.
+#
+# What changed is the answer, not the mechanism: one light default across all
+# eight, so a reader moving front → Radio → Marketplace does not cross three
+# palettes. And the mechanism that decision argued for is exactly what makes
+# the new answer cheap — the layout still writes an explicit data-theme, so the
+# OS still gets no vote and nothing flashes dark before going light.
+#
+# A reader who wants dark still has it. The toggle writes localStorage and
+# _theme_bootstrap restores it before paint; a default is not the only option.
+#
+# A constant rather than a literal in the layout, because this is a product
+# decision and a decision should have somewhere to live. If a surface ever
+# needs its own theme again, the exception goes here, where it will be legible
+# as one.
+DEFAULT_SURFACE_THEME = "light"
 
-  def surface_theme
-    LIGHT_VERTICALS.include?(active_vertical&.to_sym) ? "light" : "dark"
-  end
+def surface_theme = DEFAULT_SURFACE_THEME
 
   # The wordmark names the host it is actually on.
   #
@@ -173,12 +199,18 @@ module ApplicationHelper
   # nav already says better: the swiper marks the active vertical, and the page
   # itself is the answer. Operator decision 2026-08-27.
   #
-  # A single-length mark also retires the gutter arithmetic it needed. The
-  # reservation, the narrow-width TLD drop and the overflow bound in
-  # _layout_chrome all existed because this string varied per host.
+  # The mark carries the TLD — brgen.no, not brgen (operator, 2026-08-29). That
+  # is not a walk back of the paragraph above: what was wrong there was printing
+  # the *host*, so a reader on markedsplass saw markedsplass.brgen.no where a
+  # logo goes and the mark changed width per surface. The domain is the brand.
+  # It is the same string on every surface of a city, and it is what is on the
+  # stickers.
+  #
+  # Still one length per city rather than one per host, so the gutter arithmetic
+  # stays retired. --brand-mark-inline does have to cover three more glyphs;
+  # _layout_chrome carries that measurement.
   def brand_mark_fragments
-    domain = Current.domain.presence || "brgen.no"
-    { label: domain.split(".").first }
+    { label: Current.domain.presence || "brgen.no" }
   end
 
   # Where the mark goes when you click it.

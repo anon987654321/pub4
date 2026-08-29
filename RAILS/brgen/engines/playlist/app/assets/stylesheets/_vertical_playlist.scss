@@ -374,27 +374,30 @@ body.vertical-playlist .playlist-index {
    facts that had to be kept equal by hand. Now there is one. */
 body.vertical-playlist {
   --transport-bar-h: 60px;
-  --tab-bar-h: var(--transport-bar-h);
+  /* The bar floats a --space-4 gap above the footer, so anything that clears the
+     tab area (the chat dock) clears the bar plus that gap. */
+  --tab-bar-h: calc(var(--transport-bar-h) + var(--space-4));
 }
 
 .playlist-transport-bar {
   position: fixed;
-  inset-inline: 0;
-  inset-block-end: 0;
+  /* Floats free above the footer: a gap on every side lifts it off all four
+     viewport edges, so it reads as a rounded rectangle rather than a bar welded
+     to the bottom. The safe-area inset rides on the bottom gap. */
+  inset-inline: var(--space-4);
+  inset-block-end: calc(var(--space-4) + var(--safe-bottom, 0px));
+  max-inline-size: 30rem;
+  margin-inline: auto;
   z-index: var(--z-toast, 1100);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-4);
   block-size: var(--transport-bar-h);
-  padding: 0 var(--space-4) var(--safe-bottom, 0px);
-  /* Slightly rounded, and only at the top: the bar meets the viewport edge on
-     three sides, so rounding those would show the page behind it. Page corners
-     stay square — see the layout. */
-  border-start-start-radius: var(--radius-md);
-  border-start-end-radius: var(--radius-md);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-md);
   background: var(--surface-elevated);
-  border-block-start: 1px solid var(--border);
+  border: 1px solid var(--border);
   color: var(--text);
   transition: transform var(--transition-normal, 300ms) var(--ease-out);
 }

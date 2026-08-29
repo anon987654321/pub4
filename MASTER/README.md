@@ -1,60 +1,165 @@
 # MASTER
 
-**MASTER is the first artificial intelligence built in pure Ruby that governs itself
-by law instead of by hope.** Most systems let an AI act first and check the damage
-afterward. MASTER does the opposite: the AI is only ever allowed to propose, and
-nothing is saved until a written constitution has approved it. It is built like an
-embryo — a small, self-checking core, grown over time into machines that build their
-own parts, clear the debris orbiting the Earth, and keep the people it serves safe from
-harm. For now it is a program you talk to in plain sentences. Its aim is the operating
-system for intelligence itself.
+<!-- HERO: drop the GitHub user-attachments URL for loop.mp4 in here after uploading it -->
+<video src="loop.mp4" autoplay loop muted playsinline width="360"></video>
 
-Inside, MASTER keeps two jobs apart: thinking and deciding. A language model — Claude, or
-one of several it can switch between — suggests a change, a piece of writing, a fix, a
-plan. Before that suggestion is allowed to become a real file or a saved change, it has
-to pass the constitution: an unbreakable law, a set of working rules, and a body of laws
-that each carry their own right and wrong examples and re-check themselves against them
-every time MASTER starts. Anything that breaks the constitution is turned down with a
-reason, never quietly patched over.
+**MASTER is the first artificial intelligence written in pure Ruby that governs
+itself by law, not by hope — and the seed of a Norwegian company that runs its
+own intelligence on its own green power.** Most systems let a model act first and
+inspect the wreckage after. MASTER inverts that: the model only proposes, and
+nothing touches disk until a written constitution approves it. It thinks out
+loud, shows every move, and answers to a rulebook it can read but never rewrite.
 
-The work runs as a loop. You give MASTER a sentence, and it looks for problems, fixes
-them, criticizes the result, and reviews it, going around again until nothing new turns
-up. The looking part is not one AI deciding whether the code is wrong; it is a set of
-exact checks that read the shape of a file and measure it against the principles the
-constitution names — the same idea written twice, a part that does nothing but hand work
-to another part, a name that tells you nothing, a step too long to hold in your head.
-Because these checks need no AI to run them, MASTER can judge a whole body of work with
-no internet and no account, and it does — its own code, the three websites beside it, the
-servers, the studio tools — and it holds any other AI assistant to the very same law,
-whichever one is doing the typing.
+This document is both the project and its business plan — the technology below,
+and the case for building it in Norway with support from
+[Innovasjon Norge](https://en.innovasjonnorge.no/article/startups).
 
-When a change deserves more than a checklist, MASTER gathers a panel — an architect, a
-caretaker, someone who cares about speed, someone who watches for harm, a designer — each
-looking at the work from its own angle, each able to run on a different AI, and each asked
-to argue against the change before a judge weighs what survives and turns it into a
-decision and a short list of ranked ideas. It is a debate, not a show of hands, and the
-best idea usually arrives long after the eighth, so the panel keeps going.
+⚖️ &nbsp; 🤖 &nbsp; 🌍 &nbsp; ⚡ &nbsp; 🛡️
 
-MASTER speaks, and it listens. Its face on the web shows what it is doing, and its voice
-is warm but brief — the empty flattery and throat-clearing an AI tends to add are
-stripped out before you ever hear or read a word. It shows its work the way an old Unix
-machine shows its start-up messages: every file it touches, every step, every reason
-scrolls past in plain view, so nothing is hidden from the person it serves. And it is
-never left without a way to think. If it has an account it uses it; if not, it falls back
-to a browser you have already signed into; and if the machine is cut off from the
-network, it uses a model kept on the machine itself, slowing down rather than stopping.
+### 💡 The innovation
 
-It has begun to work while no one is watching. When things fall quiet, MASTER dreams: it
-reads one of its own rules, searches the wider world for how that rule is best
-understood, connects it to the code that ought to follow it, suggests improvements, and —
-along a careful path that keeps its work sealed off until the result comes out clean —
-fixes one. And it makes things. Ask it in plain words for a photograph of Bergen in the
-rain, a J Dilla beat, or a film-graded look, and it hands the request to the studio tools
-beside it and saves the result away from the source, while talking about photography or
-Dilla stays an ordinary conversation.
+Every other AI assistant asks you to trust it. MASTER is built so you do not have
+to. Thinking and deciding are kept apart: a model proposes a change, and before
+that change becomes a file it must clear a constitution — an unbreakable law,
+working rules, and executable laws that carry their own right-and-wrong examples
+and recheck themselves at every boot. Break the constitution and you get a
+refusal with a reason, never a quiet patch behind your back. It is written in
+pure Ruby, deploys to OpenBSD, and needs no cloud to judge a codebase — which
+means it can run anywhere, including on hardware we own.
 
-To run MASTER, install its dependencies and start `bin/master`; the operator commands
-live under `bin/pub4`; the deploy instructions are in the OpenBSD folder. Anyone working
-inside it should read START_HERE first, then AGENTS; the reasons behind anything
-surprising are in DECISIONS; and everything still to do lives in one backlog file at the
-top of the repository. Licensed MIT.
+### 💎 Why pure Ruby
+
+Nearly all of modern AI is written in Python — chosen for its libraries, not its
+clarity. MASTER is written in pure Ruby, and that is the whole point, not
+nostalgia. Ruby reads like intention: a program says what it means, and a person
+can follow it without a manual. That legibility is what makes a *constitution*
+possible at all — you cannot govern a system by law if no human can read the law,
+or the code it judges. Where the field bolts safety on afterward, in a language
+built for machines, MASTER makes the rules themselves plain enough to argue with.
+A self-governing intelligence has to be readable to be trustworthy, and Ruby is
+the most readable language we have. Ninety-nine percent of AI is Python; MASTER
+is the one written to be understood.
+
+### 🔁 What it does
+
+You hand MASTER a sentence and it scans, fixes, criticizes, and reviews, circling
+until nothing new turns up. The scan is not a model guessing; it is exact checks
+that read a file's shape against named principles. When a change deserves more
+than a checklist, MASTER convenes a panel — an architect, a caretaker, a
+performance mind, an ethicist, a designer — each on its own model, each arguing
+before a judge. And it makes things: ask in plain words for a photograph of
+Bergen in the rain, a [J Dilla beat](../STUDIO/dilla), or a graded film look, and
+it routes you to [the studio tools](../STUDIO) beside it.
+
+### 🌍 The market, and why now
+
+The world is spending more on machine intelligence than on almost anything else,
+and nearly all of it runs on electricity in large buildings. Global data-centre
+investment now runs past 250 billion US dollars a year, most of it driven by AI,
+and the binding constraint is no longer chips — it is power, and clean power most
+of all. That is the opening. A sovereign, self-governing AI that runs on cheap
+green electricity is both a better product and a cheaper one.
+
+### 🏔️ Three homes for the compute
+
+MASTER's intelligence needs somewhere to live, and where it lives is the whole
+advantage.
+
+A datacentre in **California** puts MASTER next to the American market and the
+frontier labs. A second in **Malaysia** reaches South-East Asia on tropical-grid
+economics and a fast-growing customer base. But the heart of it sits **inside a
+mountain on a Norwegian fjord** — the same model Norway already proves at scale
+with [Lefdal Mine](https://www.lefdalmine.com) and Green Mountain. Norway's grid
+is about 98 percent renewable hydropower, among the cheapest in Europe, and fjord
+water holds near 8 °C all year, so a mountain hall cools itself for free. That
+pushes power-usage effectiveness toward 1.1, against a global average near 1.5 —
+roughly a third less energy for the same compute, at a third less carbon. Green
+by geography, not by offset.
+
+### 🇳🇴 What Norway gets
+
+A Norwegian company owning both the intelligence and the infrastructure it runs
+on. Realistically that is six to ten skilled jobs within three years — engineers,
+operators, studio staff — and export revenue from selling governed AI and green
+compute abroad, into exactly the California and South-East Asia markets the
+datacentres reach. The intellectual property, the carbon savings, and the value
+stay in Norway.
+
+### 💰 The ask
+
+We are seeking roughly **six million kroner from Innovasjon Norge** —
+Commercialisation Phase 1 near one million, a path to Phase 2 up to four million,
+and the startup loan of up to two million alongside. Honestly scoped, that does
+not build a mountain datacentre; a full facility is later-stage project finance
+in the tens of millions of euros. What this money funds is the near-term, and
+here is roughly where it goes. About three million kroner covers the software and
+a team of three to four engineers across the first two years. About two million
+funds the fjord feasibility study and a first pilot compute pod — a few hundred
+kilowatts in a container, proving the green economics on real Norwegian power.
+And about one million stands up a small 3D-printing and robotics bench, where the
+embryo takes its first physical body: prototype hardware, CAD, and a printer. The
+full datacentres, and the California and Malaysia edge nodes, are the growth
+roadmap the pilot unlocks, on separate capital.
+
+Year one, commercialise the software and complete the fjord feasibility. Year
+two, stand up the pilot pod inside a Norwegian mine site and win first export
+customers. Year three, scale the fjord hall and add the California and Malaysia
+edge nodes.
+
+🚀 &nbsp; ⚡ &nbsp; 🌟 &nbsp; 🏔️
+
+### 🧬 The horizon
+
+The near-term is a company. The long-term is stranger, and it is why the
+architecture is shaped the way it is. MASTER is built like an embryo — one small
+core of identity, memory, and safety that takes on whatever body a mission needs.
+Today that body is software on green Norwegian power. The same design reaches, in
+time and with enormous engineering between, toward machines that clear orbital
+debris or microplastic from the sea. The flying saucer was never the goal; it is
+one distant phenotype of the embryo. What we are asking Norway to fund is the
+first rung: the intelligence, and the clean ground it stands on.
+
+#### 🔬 Under the hood
+
+You reach the box and wake it with one line, and it comes up like an old Unix
+machine — telling you what it is, what it runs on, and how much of itself it
+sees.
+
+```console
+$ ssh dev@brgen.no
+$ cd MASTER && bundle exec ruby bin/master
+<master> /status
+mode      safe · full · cli · no-autofix   owner=none   posture=balanced
+service   master/ok   master(ok)
+git       main   clean
+bundle    ok (MASTER+web satisfied)
+code      index built · 872 files · 8239 symbols
+```
+
+The heart behind that prompt is smaller than it looks. Every change a model wants
+runs through one loop: it proposes an effect, the constitution admits it, and
+only an allowed effect touches a file.
+
+```ruby
+def run(goal)
+  @memory.note(:goal, goal)
+
+  @max_turns.times do |turn|
+    effect = @model.propose(@memory.context, verbs: @world.verbs)
+
+    case @law.admit(effect, @memory)
+    in Verdict::Block(reason:, by:)      then emit(turn, effect, refused(reason, by))
+    in Verdict::Request(effect:, prompt:) then return done if (done = approve(turn, effect, prompt:))
+    in Verdict::Allow(effect: admitted)   then return done if (done = apply(turn, admitted))
+    end
+  end
+end
+```
+
+Three verdicts, only three. A Block refuses with a reason. A Request stops to ask
+a person. An Allow applies the effect against a checkpoint it can undo the moment
+it errs. Propose, judge, allow or refuse — everything past that is detail.
+
+To work inside it, read [START_HERE](START_HERE.md), then [AGENTS](AGENTS.md);
+[DECISIONS](DECISIONS.md) explains anything that looks strange on purpose, and the
+open work lives in [one backlog](../TODO.md). Licensed MIT.

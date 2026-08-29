@@ -110,9 +110,9 @@ end
 def harm_space_echo
   return nil unless ENV.fetch("SPACE_ECHO", "1") != "0"
 
-  Outboard.space_echo(time_ms: ENV.fetch("SPACE_ECHO_MS", "240").to_f,
-                      feedback: ENV.fetch("SPACE_ECHO_FB", "0.45").to_f,
-                      mix: ENV.fetch("SPACE_ECHO_MIX", "0.3").to_f)
+  Outboard.space_echo(time_ms: ENV.fetch("SPACE_ECHO_MS", "260").to_f,
+                      feedback: ENV.fetch("SPACE_ECHO_FB", "0.55").to_f,
+                      mix: ENV.fetch("SPACE_ECHO_MIX", "0.4").to_f)
 end
 
 def build_harm_bus_filter(idx, duration, _cfg, sonic, harm_fade_start, harm_fade_dur, beat_p, _n_bars)
