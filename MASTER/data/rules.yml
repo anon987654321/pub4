@@ -4130,3 +4130,18 @@ business_plan:
     - "Robert Bringhurst, The Elements of Typographic Style — hierarchy and whitespace"
     - "Seth Godin, Purple Cow — be remarkable or be invisible; the same rule prices what you sell"
     - "Innovasjon Norge startup grant criteria — en.innovasjonnorge.no/article/startups"
+
+# The house style for every markdown document — MASTER's and the CLI agents'.
+# Tadao Ando in text: brutalist, ultra-minimal, unpredictable. Concrete over
+# ornament; negative space over density. Fewer sections than feel necessary,
+# each heading a plane, each paragraph load-bearing. The composition is
+# irregular by design so the page reads as a built thing regardless of its
+# words. No decorative rules, no filler.
+markdown_style:
+  aesthetic: tadao_ando   # brutalist · ultra-minimal · unpredictable · negative space
+  applies_to: [MASTER, claude, grok, codex]
+  rules:
+    - fewer sections than feel necessary; cut before you add
+    - irregular composition — vary heading levels and paragraph length
+    - negative space is structure, not waste
+    - concrete over ornament; delete anything decorative
