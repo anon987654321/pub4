@@ -72,7 +72,16 @@ module Deploy
         id: :stimulus_progressive,
         principle: "stimulus_progressive / progressive_enhancement",
         meaning: "Behavior via Stimulus data-controller, not jQuery CDN apps",
-        paths: %w[brgen/app/views amber/app/views bsdports/app/views],
+        # The engine views render inside brgen but live outside brgen/app, so a
+        # brgen/app/views scan never saw the 71 vertical pages — the blind spot
+        # that let the sub-apps drift. Enumerated per engine because the path
+        # resolver takes literal directories, not globs.
+        paths: %w[
+          brgen/app/views amber/app/views bsdports/app/views
+          brgen/engines/dating/app/views brgen/engines/maps/app/views
+          brgen/engines/marketplace/app/views brgen/engines/playlist/app/views
+          brgen/engines/takeaway/app/views brgen/engines/tv/app/views
+        ],
         forbidden: /jquery(\.min)?\.js|cdn\.jsdelivr\.net\/npm\/jquery/i,
         allow_path: nil,
       },

@@ -163,11 +163,14 @@ module Deploy
       end
     end
 
-    # One row per host app, because the engine's view is a different page in each.
+    # One row per host app, because the engine's view is a different page in each
+    # — and an app keeping its own copy of a shared view renders that copy, so the
+    # row must grade the file Rails resolves, not the shared original underneath.
     def shared_pages
       SHARED_PAGES.flat_map do |parts, row|
-        abs = File.join(SHARED_ROOT, "#{parts.join("/")}.html.erb")
+        shared_abs = File.join(SHARED_ROOT, "#{parts.join("/")}.html.erb")
         Array(row[:apps] || %w[brgen amber bsdports]).map do |app|
+          abs = app_override(app, parts) || shared_abs
           {
             id: "#{app}/shared/#{parts.join("/")}",
             app: app,
@@ -181,6 +184,12 @@ module Deploy
           }
         end
       end
+    end
+
+    # The app-local copy Rails renders in preference to the shared engine view.
+    def app_override(app, parts)
+      candidate = File.join(ROOT, "RAILS", app, "app", "views", "#{parts.join("/")}.html.erb")
+      candidate if File.exist?(candidate)
     end
 
     # A shared page nobody declared is a page no simulation ever loads — which is how
