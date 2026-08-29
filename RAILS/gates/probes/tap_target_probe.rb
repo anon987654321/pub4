@@ -15,16 +15,20 @@
 # skipped. display:none/zero-rect elements are invisible, not undersized.
 
 require_relative "../support/cdp_session"
+require_relative "../lib/fleet"
 
-PAGES = {
-  "brgen home" => "http://127.0.0.1:38182/",
-  "brgen post feed" => "http://127.0.0.1:38182/posts",
-  "marketplace" => "http://127.0.0.1:38182/?vertical=marketplace",
-  "amber home" => "http://127.0.0.1:61352/",
-  "amber items" => "http://127.0.0.1:61352/items",
-  "bsdports home" => "http://127.0.0.1:47312/",
-  "face" => "http://127.0.0.1:53187/",
-}.freeze
+PAGES = Fleet.urls({
+  # Routes, not numbers. This map restated the whole fleet, which
+  # port_inventory flags as a second inventory -- the class of drift that
+  # once left a probe reporting an app's health under another app's port.
+  "brgen home" => %w[brgen /],
+  "brgen post feed" => %w[brgen /posts],
+  "marketplace" => ["brgen", "/?vertical=marketplace"],
+  "amber home" => %w[amber /],
+  "amber items" => %w[amber /items],
+  "bsdports home" => %w[bsdports /],
+  "face" => %w[master /],
+}).freeze
 
 JS = <<~JS
   (() => {
