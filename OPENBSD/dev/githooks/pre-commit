@@ -135,19 +135,19 @@ end
 
 # The constitution, applied to what is about to land. Opt-in because building the
 # scanner boots the runtime and this hook fires on every commit in a shared tree:
-# PUB4_LINT=1 makes the rules MASTER documents for coding agents something git
+# LINT=1 makes the rules MASTER documents for coding agents something git
 # enforces on any of them, rather than something claude, grok or codex has to
 # remember. --changed-lines scopes it to the lines this commit adds, so a file's
 # standing debt never blocks the change that merely touched it. A launch failure
 # (no bundle here) proceeds; only a real finding refuses.
-if ENV["PUB4_LINT"] == "1" && ENV["PUB4_LINT_SKIP"] != "1"
+if ENV["LINT"] == "1" && ENV["LINT_SKIP"] != "1"
   pub4 = File.expand_path("../../../MASTER/bin/pub4", __dir__)
   master = File.expand_path("../../../MASTER", __dir__)
   ran = system("bundle", "exec", "ruby", pub4, "lint", "--staged", "--changed-lines", chdir: master)
   if ran == false
     warn ""
     warn "pre-commit: REFUSED — bin/pub4 lint found violations in the lines you staged."
-    warn "  Fix them, or bypass this one commit: PUB4_LINT_SKIP=1 git commit -- <paths>"
+    warn "  Fix them, or bypass this one commit: LINT_SKIP=1 git commit -- <paths>"
     warn ""
     exit 1
   end
