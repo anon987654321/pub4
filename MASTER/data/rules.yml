@@ -114,22 +114,11 @@ beauty:
     wabi_sabi: imperfect_authentic
     ma: emptiness_pause
     kanso: eliminate_essence
-anti_goals:
-- replace_human_judgment
-- enforce_style_preferences
-- optimize_for_speed
-- support_every_language
-- be_easy_to_use
 success_criteria:
 - every_output_respects_axioms
 - council_surfaces_real_concerns_not_theater
 - system_applies_to_itself_without_exception
 - engineers_trust_judgment_over_time
-failure_modes:
-  rubber_stamp: council approves everything — adversarial role lost
-  blocks_everything: council vetoes every proposal — gridlock, no shipping
-  self_violation: MASTER produces output it would itself reject — recursive quality
-    broken
 self_test:
   laws_apply_to_self:
     ROBUSTNESS: scan lib/ for bare_rescue + missing timeouts
@@ -255,55 +244,6 @@ veto_patterns:
     detect: (?:system|exec)\s*\(\s*(["'])(?:(?!\1).)*#\{|%x[\{(\[<][^)}\]>]*#\{|(?<!`)`(?!`)(?![^`\n]*Shellwords\.escape)(?=[^`\n]*#\{)[^`\n]*\s[^`\n]*`|Open3\.\w+\s*\(\s*(["'])(?:(?!\2).)*\s(?:(?!\2).)*#\{
     apply: add_safe_nav
     violates_law: ROBUSTNESS
-structural_ops:
-  preserve_note: These keep getting deleted in self-runs — DO NOT REMOVE.
-  verify_after_each: true
-  ops:
-    merge:
-      desc: combine similar logic
-      risk: medium
-      verify: merged logic identical
-      supports_law: SINGULARITY
-    semantic_regroup:
-      desc: reorganize logically
-      risk: low
-      verify: functionality unchanged
-      supports_law: PROXIMITY
-    defrag:
-      desc: consolidate fragments
-      risk: low
-      verify: all fragments accessible
-      supports_law: PROXIMITY
-    decouple:
-      desc: separate concerns
-      risk: high
-      verify: interfaces preserved
-      supports_law: ABSTRACTION
-    hoist:
-      desc: move to proper scope
-      risk: medium
-      verify: scope correct
-      supports_law: PROXIMITY
-    flatten:
-      desc: reduce nesting
-      risk: medium
-      verify: logic flow identical
-      supports_law: LINEARITY
-    delete:
-      desc: remove dead code
-      risk: high
-      verify: truly dead, no references
-      supports_law: DENSITY
-    expand:
-      desc: extract for clarity
-      risk: low
-      verify: extracted correctly
-      supports_law: ABSTRACTION
-    reduce_noise:
-      desc: clean messy lines
-      risk: low
-      verify: formatting only, no logic
-      supports_law: DENSITY
 anti_patterns:
   forbidden:
   - pattern: eval\(.*user.*\)
@@ -395,12 +335,6 @@ phantom_recovery:
   - discard last response, reset context to last successful checkpoint
   - switch model tier (escalate or fall back) on second occurrence
   - publish phantom:detected event, halt loop on third
-library_verify:
-  pre_flight_checks:
-  - Gemfile.lock contains the gem at the expected version
-  - require_relative path exists on disk
-  - binary on PATH (which / command -v) before shell-out
-  fail_action: Result.err :missing_dependency; do not retry without human
 failure_taxonomy:
   transient:
     examples:
