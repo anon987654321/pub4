@@ -6448,7 +6448,7 @@ end
 # four_seven; a sample that already has air needs far less or none.
 SAMPLE_EXCITE_MIX = (ENV["SAMPLE_EXCITE"] || "0").to_f.clamp(0.0, 1.0)
 SAMPLE_EXCITE_HZ = (ENV["SAMPLE_EXCITE_HZ"] || "2200").to_f
-SAMPLE_EXCITE_DRIVE = (ENV["SAMPLE_EXCITE_DRIVE"] || "1.2").to_f.clamp(1.0, 20.0)
+SAMPLE_EXCITE_DRIVE = (ENV["SAMPLE_EXCITE_DRIVE"] || "1.0").to_f.clamp(1.0, 20.0)
 SAMPLE_EXCITE_CHARACTER = (ENV["SAMPLE_EXCITE_CHARACTER"] || "even").to_s.downcase
 
 def sample_excite_shaper
@@ -16142,7 +16142,11 @@ DILLA_STYLE_DEFAULTS = {
   "PAD_ATTACK" => "90",
   "PAD_RELEASE" => "1800",
   "PAD_LEGATO_VAR" => "1",
-  "PAD_LAYERS" => "1",
+  # 0 takes the single-pass morph render path, where the pad program actually
+  # changes chord to chord (morph_patch_for_chord). At 1 the multi-layer stack
+  # renderer bypasses the morph entirely, so the synth type never moved however
+  # many morph knobs were set — the "same synth sound" the whole way through.
+  "PAD_LAYERS" => "0",
   # Quieter choir so Rhodes/Prophet aren't buried under oohs.
   # Vocals off by default. RAP_VOCAL=<slug> or CHOIR_VOX=1 re-enables.
   "CHOIR_VOX" => "0",
@@ -16245,9 +16249,13 @@ DILLA_STYLE_DEFAULTS = {
   "PAD_TEXTURE" => "1",
   "STREAM_CREATIVE_FREEDOM" => "1",
   "SIDECHAIN_STYLE" => "wonky",
-  "SONITEX" => "donuts_warm",
-  "SONITEX_PRESET" => "donuts_warm",
-  "ANALOG_CHAIN" => "vinyl_hot",
+  # Was donuts_warm + vinyl_hot — tape saturation stacked on a hot vinyl chain on
+  # top of the console strip and the exciter, so much drive the synths crushed
+  # into one indistinct wall. subtle Sonitex over the gentlest tape voicing lets
+  # the parts through: smooth silk, not overdrive.
+  "SONITEX" => "subtle",
+  "SONITEX_PRESET" => "subtle",
+  "ANALOG_CHAIN" => "cassette",
   "DRUM_PRESET" => "dilla_slight",
   # Quieter drum bus — kit sits under pads/vox (~−3…−4 dB vs previous hot path).
   "WONKY_OVERLAY_GAIN" => "0.95",
@@ -31215,7 +31223,7 @@ TAPE_LOSS_HZ = (ENV["TAPE_LOSS_HZ"] || 0).to_f.clamp(0.0, 20_000.0)
 # point, and is not reproducible by running the same stage on the mix.
 # 0.22. Left and right run as separate instances one seed apart, which is the
 # whole reason this exists — see the note below on why it is not mono.
-CONSOLE_STRIP = (ENV["CONSOLE_STRIP"] || 0.14).to_f.clamp(0.0, 1.0)
+CONSOLE_STRIP = (ENV["CONSOLE_STRIP"] || 0.06).to_f.clamp(0.0, 1.0)
 
 # Left and right run as separate instances, offset by one seed. On a desk a
 # stereo pair IS two channels, built to the same design and measuring
