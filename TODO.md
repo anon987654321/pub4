@@ -2250,6 +2250,54 @@ agent work in this tree:
   but techno/soul/jazz must blend as parameters). That direction is a design
   goal, not a backlog item to close unprompted.
 
+### The engine is one file
+
+dilla.rb carries the 81 parts that were under `lib/engine/`, in the order they
+were required, because that order was load-bearing. 129 ruby files to 48.
+`DillaSources` still defines the corpus and it is now the entry plus the 41
+support modules; `STUDIO/gate.rb` fails if `lib/engine/` reappears, and
+`DILLA_SUPPORT_CEILING` caps the modules that could grow in its place.
+
+Not done: the 41 `lib/*.rb` are still separate. Fourteen of them use `__dir__`
+or `__FILE__`, which shift a directory level when a file moves — the bug that
+broke three tests during the first fold, and the reason to do the second one
+deliberately rather than as a tail-end.
+
+### `SEED_TEXT` names a seed that changes every run — open
+
+`lib/seed_providers.rb` derives it as `text.hash.abs % 1_000_000`, and Ruby
+randomises `String#hash` per process. Three runs of the same text: 479615,
+227034, 205911. So the one knob whose whole purpose is a repeatable seed has
+never produced one, and `apply_text_seed!` derives `SWING` and `BPM` from the
+same unstable value, so those move with it. `Digest::SHA256` is stable across
+processes where `String#hash` is not.
+
+Two more sites fall back to the unseeded global RNG when nothing is pinned
+(`dilla.rb`'s render-seed fallback and the same shape in `seed_providers`), and
+one seeds speech text from it. Everything else is already deterministic: 62
+`Random.new(seed)` and 91 `obj.rand` against three bare `Kernel#rand`, and
+`srand` is never called. Pinning is four call sites, not a rewrite.
+
+### A load-time default read as an operator pin — closed
+
+`test_provenance_separates_what_the_operator_pinned_from_what_the_engine_filled`
+passed alone and failed in the suite, which looked like a test leaking ENV. It
+was not: every ENV helper in the dilla tests restores in an `ensure`. The
+engine writes eleven `COPY_MACHINE`/`LPG`/`VOICE_STACK` keys into ENV at load,
+and has done since the ringtone layer defaulted on. A process that has loaded
+the engine therefore carries them, and the render child inherits them, where
+`USER_PINNED_ENV` — the whole environment unless `DILLA_USER_PINNED_KEYS`
+narrows it — counts them as things the caller typed.
+
+The narrowing is the mechanism dilla.rb already offers for an environment that
+is not a clean shell, so the test declares its pin set the way a restart does.
+Worth knowing generally: anything that loads the engine and then spawns a
+render inherits the engine's own defaults as pins.
+
+The six `sonmi451_probe_*` loops with no preset are local crate state: the slugs
+appear only in gitignored `scratch/`, so that test may be measuring one machine
+rather than the repo.
+
 ---
 
 ## Cross-cutting programs
