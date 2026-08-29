@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "helper"
+require_relative "dilla_helper"
 
 # The pocket is this table. Every role that falls through SWING_ROLE_SCALE gets
 # 1.0 -- the hi-hat's lean -- which is how the four busiest melodic roles came

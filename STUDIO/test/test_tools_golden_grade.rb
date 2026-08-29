@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-require_relative "../helper"
+require_relative "studio_helper"
 require "vips"
 require "tmpdir"
 require "open3"
 require "rbconfig"
 require "digest"
-require_relative "../../postpro/uncanny"
+require_relative "../postpro/uncanny"
 
 # What a grade DOES, not merely that it did something.
 #
@@ -31,7 +31,7 @@ require_relative "../../postpro/uncanny"
 # without saying whether highlights now clip, which is the only part anyone
 # needs to decide about.
 class TestGoldenGrade < Minitest::Test
-  POSTPRO = File.expand_path("../../postpro/postpro.rb", __dir__)
+  POSTPRO = File.expand_path("../postpro/postpro.rb", __dir__)
   SEED = "42"
 
   # One preset per family rather than all 57: these shell out and each costs

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "helper"
+require_relative "dilla_helper"
 
 # Parity with the graph render_dilla builds by hand.
 #

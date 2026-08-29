@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "helper"
+require_relative "tools_helper"
 Studio::Tools.load_tool("postpro/postpro.rb")
 
 # postpro is a film emulation: fourteen stocks, each a row in six parallel

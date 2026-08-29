@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "helper"
+require_relative "dilla_helper"
 
 # The devices, and the two properties that decide whether they are real.
 #

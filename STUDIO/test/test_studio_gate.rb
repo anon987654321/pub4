@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "helper"
+require_relative "studio_helper"
 require "open3"
 require "rbconfig"
 require "digest"
@@ -146,7 +146,7 @@ class TestStudioGate < Minitest::Test
 # it broke was invisible to every other kind of check. The restoration existed,
 # was correct, was called, and ran at the wrong moment:
 #
-#   test/helper.rb requires minitest/autorun, which registers an at_exit that
+#   test/studio_helper.rb requires minitest/autorun, which registers an at_exit that
 #   RUNS THE SUITE. `at_exit` handlers run LIFO, so an at_exit registered after
 #   that one fires FIRST -- before any test has run. The restore was therefore
 #   putting back files nothing had touched yet, every run, for its whole life,
@@ -176,7 +176,7 @@ class TestStudioGate < Minitest::Test
       # inside a test, which is exactly what loading the engine does.
       probe = File.join(dir, "test_dirty.rb")
       File.write(probe, <<~RUBY)
-        require #{File.expand_path("helper.rb", __dir__).inspect}
+        require #{File.expand_path("studio_helper.rb", __dir__).inspect}
         class TestDirty < Minitest::Test
           def test_writes_engine_state
             File.binwrite(#{TARGET.inspect}, "{\\"dirtied_by\\": \\"the restoration guard\\"}")
@@ -189,7 +189,7 @@ class TestStudioGate < Minitest::Test
       assert status.success?, "the probe suite failed: #{err}#{out}"
       assert_equal original, File.binread(TARGET),
                    "a test run dirtied #{File.basename(TARGET)} and the suite did not put it back — " \
-                   "check that test/helper.rb registers restore_engine_state! with Minitest.after_run " \
+                   "check that test/studio_helper.rb registers restore_engine_state! with Minitest.after_run " \
                    "and not with a bare at_exit, which runs BEFORE the tests"
     end
   ensure
@@ -201,7 +201,7 @@ class TestStudioGate < Minitest::Test
   # real guard; this one names the cause, so a failure says what to fix rather
   # than only that something is wrong.
   def test_the_restore_is_registered_where_it_runs_after_the_suite
-    source = File.read(File.expand_path("helper.rb", __dir__))
+    source = File.read(File.expand_path("studio_helper.rb", __dir__))
 
     assert_match(/Minitest\.after_run\s*\{\s*Studio\.restore_engine_state!/, source,
                  "restore_engine_state! must be registered with Minitest.after_run — a bare at_exit " \
@@ -217,12 +217,12 @@ class TestStudioGate < Minitest::Test
     # its hook was REMOVED mentions Minitest.after_run by name. A ratchet that
     # reads prose reports the documentation of a fix as the fix's absence, and
     # dilla's own wiring ratchets strip comments for exactly this reason.
-    duplicates = Dir[File.expand_path("dilla/test_*.rb", __dir__)].select do |path|
+    duplicates = Dir[File.expand_path("test_dilla_*.rb", __dir__)].select do |path|
       File.read(path).gsub(/^\s*#(?!\{).*$/, "").match?(/Minitest\.after_run|STATE_AT_LOAD/)
     end
 
     assert_empty duplicates.map { |p| File.basename(p) },
-                 "a second state-restoration hook has come back; test/helper.rb owns this"
+                 "a second state-restoration hook has come back; test/studio_helper.rb owns this"
   end
 
 end

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "helper"
+require_relative "dilla_helper"
 
 # The measurement side. Every "the low end is 3 dB hot" claim this engine has
 # ever made came out of parse_volumedetect, and it reads ffmpeg's log by

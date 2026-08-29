@@ -10,27 +10,30 @@ require "rake/testtask"
 # was enough to make repligen's self-check assertion read postpro's method.
 #
 # dilla's files share one process deliberately: the engine takes half a second
-# to load and the six files under test/dilla have no name of their own to
+# to load and the dilla files have no name of their own to
 # collide over.
 Rake::TestTask.new("test:dilla") do |t|
   t.libs << "test"
-  t.test_files = FileList["test/dilla/test_*.rb"]
+  t.test_files = FileList["test/test_dilla_*.rb"]
   t.warning = false
 end
 
-TOOL_SUITES = FileList["test/tools/test_*.rb"].map { |path| File.basename(path, ".rb").sub(/\Atest_/, "") }
+TOOL_SUITES = FileList["test/test_tools_*.rb"].map { |path| File.basename(path, ".rb").sub(/\Atest_tools_/, "") }
 
 TOOL_SUITES.each do |tool|
   Rake::TestTask.new("test:#{tool}") do |t|
     t.libs << "test"
-    t.test_files = ["test/tools/test_#{tool}.rb"]
+    t.test_files = ["test/test_tools_#{tool}.rb"]
     t.warning = false
   end
 end
 
 Rake::TestTask.new("test:gate") do |t|
   t.libs << "test"
-  t.test_files = FileList["test/test_*.rb"]
+  # Named, not globbed. test/test_*.rb now reaches the dilla and tool files as
+  # well, and one process for all three is the name collision the task split
+  # above exists to prevent.
+  t.test_files = ["test/test_studio_gate.rb"]
   t.warning = false
 end
 

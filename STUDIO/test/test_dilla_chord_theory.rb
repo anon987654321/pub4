@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "helper"
+require_relative "dilla_helper"
 
 # Two CHORD_TEMPLATES tables live in this engine -- chord_theory.rb's and
 # DillaLofiMachine's -- with different coverage and, until recently, one

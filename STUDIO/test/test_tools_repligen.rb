@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "helper"
+require_relative "tools_helper"
 Studio::Tools.load_tool("repligen/repligen.rb")
 
 # repligen builds an API request out of seven controlled vocabularies and a

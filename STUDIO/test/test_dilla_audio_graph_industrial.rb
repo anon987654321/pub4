@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "helper"
+require_relative "dilla_helper"
 
 # Parity for the second renderer, and the one the spine exists to rescue.
 #

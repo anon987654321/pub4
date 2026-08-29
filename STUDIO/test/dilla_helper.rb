@@ -5,7 +5,7 @@
 # method and runs no command -- which is the same property STUDIO/gate.rb's
 # load probe depends on, tested directly in test_engine_sources.rb.
 
-require_relative "../helper"
+require_relative "studio_helper"
 
 # Silence the boot chatter; the engine writes a dmesg banner on load.
 DILLA_BOOT_ENV = {
@@ -15,4 +15,4 @@ DILLA_BOOT_ENV = {
 }.freeze
 DILLA_BOOT_ENV.each { |key, value| ENV[key] ||= value }
 
-require_relative "../../dilla/dilla"
+require_relative "../dilla/dilla"

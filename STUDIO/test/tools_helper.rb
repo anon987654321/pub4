@@ -5,7 +5,7 @@
 # in a separate process from dilla (see Rakefile) because all three define
 # top-level constants and several names collide.
 
-require_relative "../helper"
+require_relative "studio_helper"
 
 module Studio
   module Tools

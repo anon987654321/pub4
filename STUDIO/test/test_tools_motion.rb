@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require_relative "../helper"
+require_relative "studio_helper"
 require "tmpdir"
 require "digest"
 require "stringio"
 require "open3"
-require_relative "../../postpro/motion"
+require_relative "../postpro/motion"
 
 # postpro on video. The grade is the same code that runs on stills — that is
 # the design, not an implementation detail, because a video graded one way and

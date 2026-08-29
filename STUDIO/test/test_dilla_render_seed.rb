@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "helper"
+require_relative "dilla_helper"
 
 # RENDER_SEED is the engine's one reproducibility claim, and it has been wrong
 # twice: once because ffmpeg's anoisesrc drew a fresh seed per process at 31

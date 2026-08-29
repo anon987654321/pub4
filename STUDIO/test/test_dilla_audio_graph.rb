@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "helper"
+require_relative "dilla_helper"
 
 # The spine has one job at this stage: emit the filter_complex render_dilla
 # already emits. Until that is pinned as text, "it routes the same" is a claim

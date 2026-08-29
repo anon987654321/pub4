@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative "../helper"
-require_relative "../../repligen/chain"
+require_relative "studio_helper"
+require_relative "../repligen/chain"
 
 # repligen refuses an option a model does not accept rather than letting the API
 # ignore it, because a request that "works" while silently dropping a setting is

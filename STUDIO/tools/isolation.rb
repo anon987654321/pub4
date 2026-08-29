@@ -44,7 +44,7 @@ class StudioIsolation
     @io = io
   end
 
-  def files = Dir.glob(File.join(ROOT, "test", "dilla", "test_*.rb")).sort
+  def files = Dir.glob(File.join(ROOT, "test", "test_dilla_*.rb")).sort
 
   # Parsed out of the source rather than asked of Minitest, so this needs no
   # cooperation from the suite and cannot be defeated by a runner that dies

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "helper"
+require_relative "dilla_helper"
 
 # Song form comes in through two knobs that disagree about precedence
 # (SECTION_MAP wins over FORM) and one memoised reader, and the memo is on the

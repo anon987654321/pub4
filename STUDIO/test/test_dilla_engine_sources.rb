@@ -3,8 +3,8 @@
 # Deliberately does NOT load the engine. DillaSources exists so provenance and
 # this suite can ask what the engine is made of without booting it, and a test
 # that required dilla.rb first would not be testing that property.
-require_relative "../helper"
-require_relative "../../dilla/lib/engine_sources"
+require_relative "studio_helper"
+require_relative "../dilla/lib/engine_sources"
 
 # Five pieces of code used to answer "which files is the engine made of" and
 # gave three different answers. The parse check ran over a corpus that excluded
