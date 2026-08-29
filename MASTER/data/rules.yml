@@ -523,6 +523,10 @@ learned_smells:
   pattern: "(?<![\\w.])(?<!= )(?<!: )(?!19\\d{2}(?![\\d.]))(?!20\\d{2}(?![\\d.]))\\d{2,}(?![\\w.])"
   confidence: 0.85
   autofix: extract_named_constant
+  # A named constant is a thing you extract in code, not in prose. Without this
+  # the pattern fires on any number in a markdown transcript or a data file,
+  # where "extract a constant" is not an available move.
+  mediums: [ruby, javascript, html, zsh]
 # long_line was removed 2026-08-12. It restated the registered LONG_LINE rule as a
 # raw regex and produced 334 findings across lib/, of which THREE landed on a line
 # no other rule reports — and all three are in lib/io/llm.rb, which LONG_LINE

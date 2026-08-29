@@ -66,3 +66,49 @@ everything still to do lives in one backlog at the top of the repository.
 Licensed MIT.
 
 🚀 ⚡ 🌟 💫
+
+## 🔬 Under the hood
+
+You reach the box and wake it with one line, and it comes up the way an old Unix
+machine does — announcing what it is, what it runs on, and how much of itself it
+can see.
+
+```console
+$ ssh dev@brgen.no
+$ cd MASTER && bundle exec ruby bin/master
+<master> /status
+mode      safe · full · cli · no-autofix   owner=none   posture=balanced
+service   master/ok   master(ok)
+git       main   clean
+fix       bg=stopped   autofix=off
+bundle    ok (MASTER+web satisfied)
+code      index built · 872 files · 8239 symbols
+```
+
+The heart behind that prompt is smaller than it looks. Every change a model
+wants runs through one loop — it proposes an effect, the constitution admits it,
+and only an allowed effect ever touches a file:
+
+```ruby
+def run(goal)
+  @memory.note(:goal, goal)
+
+  @max_turns.times do |turn|
+    effect = @model.propose(@memory.context, verbs: @world.verbs)
+
+    case @law.admit(effect, @memory)
+    in Verdict::Block(reason:, by:)
+      emit(turn, effect, Observation.no("refused by #{by}: #{reason}"))
+    in Verdict::Request(effect:, prompt:, reason:, by:)
+      return done if (done = approve(turn, effect, prompt:, reason:, by:))
+    in Verdict::Allow(effect: admitted)
+      return done if (done = apply(turn, admitted))
+    end
+  end
+end
+```
+
+Three verdicts, and only three. A Block is a refusal with a reason, never a
+quiet patch. A Request stops the loop to ask a person. An Allow applies the
+effect against a checkpoint it can undo the moment the effect errs. Propose,
+judge, allow or refuse — everything past that is detail.
