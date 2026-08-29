@@ -24,6 +24,7 @@ def usage
       bin/pub4 vps logs <app> [--lines N] [--remote]
       bin/pub4 post-pull
       bin/pub4 measure [--deep] [--json]
+      bin/pub4 lint [<path>...]       judge files by MASTER's laws, no model (default: changed vs HEAD)
       bin/pub4 test [<path>...]       smallest complete proof for the paths (default: dirty files)
       bin/pub4 land -m <msg> <path>...  commit, rebase, re-check, push
       bin/pub4 worktree <name>        own checkout + branch, so agents never share an index
@@ -63,6 +64,31 @@ when "measure"
   rows = Pub4::Ratchets.all(deep:)
   puts ARGV.include?("--json") ? Pub4::Ratchets.json(rows) : Pub4::Ratchets.render(rows)
   exit(Pub4::Ratchets.ok?(rows) ? 0 : 1)
+when "lint"
+  # Inheritance made mechanical. The same deterministic rules MASTER runs on
+  # itself — every lexical and AST rule plus law/, no model, no autofix — judge
+  # whatever files an agent touched, so claude, grok or codex can run it on a
+  # diff before committing and be held to the constitution regardless of which
+  # tool typed the change. Paths given are scanned as named; with none, the diff
+  # against HEAD is.
+  require "master"
+  require "review/scan/infra_helpers"
+  scanner = Master::Review::Scan::InfraHelpers.build_scanner(root: Master::ROOT, agent: nil)
+  targets = ARGV.empty? ? `git -C #{ROOT} diff --name-only HEAD`.lines.map { |l| File.join(ROOT, l.chomp) } : ARGV
+  files = targets.flat_map { |t| File.directory?(t) ? Dir.glob(File.join(t, "**/*")) : [t] }.select { |p| File.file?(p) }
+  findings = files.flat_map do |path|
+    result = scanner.scan(path, depth: :deep)
+    (result.ok? ? Array(result.value!) : []).map { |finding| [path, finding] }
+  end
+  if findings.empty?
+    puts "lint: clean — #{files.size} file(s), no law broken"
+    exit 0
+  end
+  findings.sort_by { |path, finding| [path, finding[:line].to_i] }.each do |path, finding|
+    puts "  #{path.sub("#{ROOT}/", "")}:#{finding[:line]} #{finding[:message]}"
+  end
+  puts "lint: #{findings.size} finding(s) across #{findings.map(&:first).uniq.size} file(s)"
+  exit 1
 when "land"
   # Commit, rebase onto origin/main, re-check, push — in that order, because the
   # order is where it goes wrong.
