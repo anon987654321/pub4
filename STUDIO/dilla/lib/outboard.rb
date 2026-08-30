@@ -141,8 +141,9 @@ module Outboard
   # transformer cores saturate asymmetrically, and a desk full of them reads as
   # warm rather than as harsh. Measured: 2nd harmonic -54.1 dB, 3rd -75.4 dB.
   # A sixth of the triode's distortion -- audible across a whole mix, inaudible
-  # on any one sound, which is what a console does.
-  def neve_80(drive: 8, offset: 0.18, param: 1.6, lf_db: 1.2)
+  # on any one sound, which is what a console does. 3.2 dB of pre-clip gain is
+  # the transformer still speaking: silk, not grit.
+  def neve_80(drive: 3.2, offset: 0.12, param: 1.4, lf_db: 0.8)
     "equalizer=f=55:t=q:w=0.8:g=#{lf_db}," \
       "volume=#{drive}dB,dcshift=shift=#{offset}," \
       "asoftclip=type=tanh:param=#{param}:oversample=4," \

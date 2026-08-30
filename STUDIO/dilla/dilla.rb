@@ -15503,7 +15503,7 @@ def analog_smooth_filter(input_tag, out_tag: "smoothed", strength: nil)
   # oversample stays at 1. Measured on this ffmpeg (8.1.1), oversample=2 costs
   # 5.8 dB of level with no gain compensation and generates no harmonics, so it
   # was pure attenuation that loudnorm would have handed straight back.
-  drive = (3.0 * s).round(1)
+  drive = (0.8 * s).round(1)
   "[#{input_tag}]highpass=f=30:p=2," \
     "equalizer=f=85:t=q:w=1.0:g=#{boom}," \
     "equalizer=f=3200:t=q:w=1.2:g=#{harsh}," \
@@ -15966,7 +15966,8 @@ def master_readme_speech_text
   body = body.gsub(/^\s*#+\s*/, "")
   body = body.gsub(/\[([^\]]+)\]\([^)]+\)/, '\1')
   body = body.gsub(/[*_`]/, "")
-  body.lines.map(&:strip).reject { |line| line.empty? || line.match?(/\A[\p{Emoji}\s.]+\z/) }.join(" ").gsub(/\s+/, " ").strip
+  spoken = body.lines.map(&:strip).reject { |line| line.empty? || line.match?(/\A[\p{Emoji}\s.]+\z/) }.join(" ").gsub(/\s+/, " ").strip
+  spoken.gsub(/Innovasjon Norge/i, "Innovation Norway")
 end
 
 def write_readme_tts!(dest)
@@ -15999,7 +16000,7 @@ README_LOOP_DEFAULTS = {
   "SPEAK" => "1",
   "SCRAMBLE_SPEECH" => "0",
   "SPEAK_QUIRK" => "0",
-  "SPEAK_RATE" => "+0%",
+  "SPEAK_RATE" => "-22%",
   "STEM_EXPORT" => "1",
   "KEEP_STEMS" => "1",
   "COMPOSITION" => "1",
@@ -26879,7 +26880,7 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
 
   if analog_idx
     filt << apply_section_envelope(
-      "[#{analog_idx}:a]aformat=channel_layouts=stereo,highpass=f=70,lowpass=f=6800," \
+      "[#{analog_idx}:a]aformat=channel_layouts=stereo,highpass=f=70,lowpass=f=2800," \
       "atrim=0:#{duration},apad=whole_dur=#{duration},asetpts=PTS-STARTPTS[analogpad]",
       # :pad, not :harm. This call asked for :harm and the default table says
       # nothing about :harm, so it has always returned the chain untouched --
@@ -26890,14 +26891,14 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
       :pad, n_bars, beat_p * 4.0
     )
     mix_labels << "[analogpad]"
-    mix_weights << ENV.fetch("ANALOG_PAD_WEIGHT", "0.62").to_s
+    mix_weights << ENV.fetch("ANALOG_PAD_WEIGHT", "0.44").to_s
     dmesg("analog pad: #{ENV.fetch('ANALOG_PAD_PATCH', 'warm_pad')} on real oscillators",
           unit: "harm0", parent: "dilla0")
   end
   if stem_map[:mids]
     pan_fx = cfg[:stereo_pan] ? ",apulsator=mode=sine:hz=#{pan_hz}:amount=0.38" : ""
     filt << "[#{stem_map[:mids]}:a]aformat=channel_layouts=stereo,atempo=#{stem_tempo},atrim=0:#{duration},asetpts=PTS-STARTPTS," \
-             "lowpass=f=3400,volume='#{pad_gate}':eval=frame,aphaser=speed=0.11:decay=0.4#{pan_fx}[padbed]"
+             "lowpass=f=2600,volume='#{pad_gate}':eval=frame,aphaser=speed=0.07:decay=0.22#{pan_fx}[padbed]"
     mix_labels << "[padbed]"
     mix_weights << "0.82"
   end

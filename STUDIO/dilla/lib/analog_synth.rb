@@ -230,7 +230,7 @@ module AnalogSynth
     # opening over a second and a half so the chord arrives rather than starts.
     warm_pad: {
       waves: %i[saw saw square], detune: [-8.0, 9.0, 0.0], octaves: [0, 0, -1],
-      cutoff: 700.0, env_amount: 1400.0, resonance: 0.3, drive: 1.05,
+      cutoff: 520.0, env_amount: 900.0, resonance: 0.18, drive: 0.88,
       amp: Envelope.new(attack: 0.35, decay: 1.0, sustain: 0.8, release: 1.2),
       filter_env: Envelope.new(attack: 1.5, decay: 1.5, sustain: 0.6, release: 1.0),
     },
