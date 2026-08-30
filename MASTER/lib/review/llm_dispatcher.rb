@@ -40,6 +40,7 @@ module Master
       # latency for the same total throughput, so MAX_CONCURRENT buys nothing
       # here and costs margin.
       CLAUDE_CLI_TIMEOUT_S = 300
+      AGY_CLI_TIMEOUT_S = 300
       CLAUDE_RE = /\Aclaude-|anthropic\/claude/i.freeze
       VISION_RE = /gemini-[12]|claude|gpt-4o|gpt-4\.1|llama-4|qwen.*vl|pixtral|gemma-[34]|vision/i.freeze
       NON_VISION_RE = /glm|nemotron|deepseek(?!.*vl)|qwen3-next|gpt-oss|phi-4/i.freeze
@@ -149,6 +150,7 @@ module Master
         value
       end
 
+      def agy_model?(model_id) = model_id.to_s.start_with?("agy:") || model_id.to_s == "agy"
       def claude_cli_model?(model_id) = model_id.to_s.start_with?("claude-cli:")
       def web_chat_model?(model_id) = model_id.to_s.start_with?("web-chat:")
       def tool_capable?(model_id) = TOOL_CAPABLE_RE.match?(model_id.to_s.downcase)
@@ -217,12 +219,56 @@ module Master
 
       def send_llm_request(selected_model, messages, system: nil, stream: false, image: nil, temperature: nil, &blk)
         sys = system || system_prompt
+        return send_agy_cli(selected_model.delete_prefix("agy:"), messages, sys:, stream:, &blk) if agy_model?(selected_model)
         return send_claude_cli(selected_model.delete_prefix("claude-cli:"), messages, sys:) if claude_cli_model?(selected_model)
         return send_web_chat(selected_model.delete_prefix("web-chat:"), messages, sys:) if web_chat_model?(selected_model)
         if !tool_capable?(selected_model) && @tools.any?
           return react_tool_loop(selected_model, messages, sys:, stream:, image:, &blk)
         end
         send_ruby_llm(selected_model, messages, sys:, stream:, image:, temperature:, &blk)
+      end
+
+      def send_agy_cli(model_alias, messages, sys:, stream: false, &blk)
+        CLI_SLOTS.pop
+        agy_bin = find_agy_bin
+        prompt = text_prompt_for(messages)
+        full_prompt = sys && !sys.empty? ? "#{sys}\n\n---\n\n#{prompt}" : prompt
+        args = [agy_bin, "-p", full_prompt, "--output-format", "text"]
+        if model_alias && !model_alias.empty? && model_alias != "auto" && model_alias != "agy"
+          args += ["--model", model_alias]
+        end
+        timeout_s = agy_cli_timeout_s
+        out, err, status = capture3_with_timeout(timeout_s, *args)
+        return Result.err("agy: #{err.strip}", category: :provider_error) unless status.success?
+        res = out.strip
+        blk&.call(res) if stream && block_given?
+        Result.ok(res)
+      rescue Timeout::Error
+        Result.err("agy: timed out after #{timeout_s}s", category: :timeout)
+      rescue StandardError => e
+        Result.err("agy: #{e.message}", category: :provider_error)
+      ensure
+        CLI_SLOTS << true
+      end
+
+      def find_agy_bin
+        if ENV["AGY_BIN"] && File.file?(ENV["AGY_BIN"]) && File.executable?(ENV["AGY_BIN"])
+          return ENV["AGY_BIN"]
+        end
+        home_bin = File.expand_path("~/.local/bin/agy")
+        return home_bin if File.file?(home_bin) && File.executable?(home_bin)
+
+        ENV["PATH"].to_s.split(File::PATH_SEPARATOR).each do |dir|
+          candidate = File.join(dir, "agy")
+          return candidate if File.file?(candidate) && File.executable?(candidate)
+        end
+        "agy"
+      end
+
+      def agy_cli_timeout_s
+        Integer(ENV.fetch("MASTER_AGY_CLI_TIMEOUT", AGY_CLI_TIMEOUT_S.to_s))
+      rescue ArgumentError
+        AGY_CLI_TIMEOUT_S
       end
 
       # At most two claude subprocesses at once, process-wide. The latency

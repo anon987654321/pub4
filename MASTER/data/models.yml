@@ -6,7 +6,7 @@ routing:
   strategy: weighted
   escalation_enabled: true
   escalation_tier: strong
-  provider: grok
+  provider: agy
 
 weights: &weights
   quality: 0.50
@@ -48,6 +48,26 @@ defaults: &model_defaults
   context_window: 128000
 
 model_defs:
+  agy_auto: &agy_auto
+    id: agy:auto
+    <<: *model_defaults
+    context_window: 1000000
+    score: { quality: 0.99, speed: 0.95, cost: 1.0 }
+  agy_gemini_pro: &agy_gemini_pro
+    id: agy:gemini-2.5-pro
+    <<: *model_defaults
+    context_window: 1000000
+    score: { quality: 0.98, speed: 0.85, cost: 1.0 }
+  agy_gemini_flash: &agy_gemini_flash
+    id: agy:gemini-2.5-flash
+    <<: *model_defaults
+    context_window: 1000000
+    score: { quality: 0.92, speed: 0.98, cost: 1.0 }
+  agy_gemini_flash_thinking: &agy_gemini_flash_thinking
+    id: agy:gemini-3.7-flash-thinking
+    <<: *model_defaults
+    context_window: 1000000
+    score: { quality: 0.99, speed: 0.88, cost: 1.0 }
   gemini_flash: &gemini_flash
     id: gemini-2.5-flash
     <<: *model_defaults
@@ -154,6 +174,7 @@ ollama_phi: &ollama_phi
 
 models:
   grok_primary:
+    - *agy_auto
     - *nemotron_super
   keyless:
     - *web_chat_grok
@@ -161,13 +182,20 @@ models:
     - *web_chat_kimi
     - *web_chat_gemini
   default:
+    - *agy_auto
+    - *agy_gemini_flash
     - *nemotron_super
     - *gemini_flash_openrouter
   primary:
+    - *agy_auto
+    - *agy_gemini_pro
     - *claude_cli_opus
     - *claude_opus_api
     - *nemotron_super
   strong:
+    - *agy_auto
+    - *agy_gemini_pro
+    - *agy_gemini_flash_thinking
     - *claude_cli_opus
     - *claude_opus_api
     - *deepseek_reasoner
@@ -179,9 +207,11 @@ models:
     - *gemini_flash
     - *command_r_plus
   vision:
+    - *agy_auto
     - *gemini_flash
     - *claude_sonnet
   medium:
+    - *agy_auto
     - *deepseek_chat
     - *gemini_flash_openrouter
     - *mistral_large
@@ -189,14 +219,18 @@ models:
     - *nemotron_super
     - *command_r_plus
   cheap:
+    - *agy_gemini_flash
     - *gemini_flash_openrouter
     - *gemini_flash
     - *mistral_small
   fast:
+    - *agy_gemini_flash
+    - *agy_auto
     - *grok_4_3
     - *gemini_flash
     - *gemini_flash_openrouter
   free:
+    - *agy_auto
     - *nemotron_super
   claude_code:
     - *claude_cli_sonnet
@@ -221,6 +255,8 @@ routes:
   vision: vision
 
 tool_capable_prefixes:
+  - "agy"
+  - "agy:"
   - claude
   - claude-cli
   - gpt-4

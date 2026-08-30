@@ -17,6 +17,7 @@ module Master
 
       def discover!
         @loaded = []
+        load_antigravity_skills
         load_directory_skills
         load_registry_skills({})
         @loaded = sort_by_recency(@loaded)
@@ -64,6 +65,31 @@ module Master
       end
 
       private
+
+      def load_antigravity_skills
+        require_relative "../ground/antigravity"
+        discovery = Master::Ground::Antigravity::Discovery.new(cwd: @root, workspace_root: @root)
+        roots = discovery.workspace_customization_roots
+        declared = discovery.declared_skills_entries
+        return if roots.empty? && declared.empty? && @root != Master::ROOT
+
+        coordinator = Master::Ground::Antigravity::Coordinator.new(cwd: @root, workspace_root: @root)
+        coordinator.skills.discover!.each do |skill|
+          next if find(skill[:name])
+
+          @loaded << {
+            name: skill[:name],
+            description: skill[:description],
+            triggers: Array(skill.dig(:meta, "triggers")),
+            body: skill[:body],
+            dir: skill[:dir],
+            has_ruby: Dir.glob(File.join(skill[:dir], "*.rb")).any?,
+            source: skill[:source],
+          }
+        end
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "skills.load_antigravity", event_bus: @bus)
+      end
 
       def load_registry_skills(_seen)
         path = File.join(@root, "data", REGISTRY_PATH)

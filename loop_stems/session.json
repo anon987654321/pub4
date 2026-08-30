@@ -1,0 +1,297 @@
+{
+  "track": "slum_village_intro_documented",
+  "performer": "yancey",
+  "groove_dna": "donuts",
+  "generation": 59,
+  "best_score": 68.13,
+  "motifs": [
+    {
+      "id": "hook",
+      "degrees": [
+        0,
+        2,
+        1
+      ],
+      "rhythm": [
+        1.0,
+        0.5,
+        0.5,
+        1.0
+      ],
+      "state": "A_double_prime"
+    },
+    {
+      "id": "bass_motif",
+      "degrees": [
+        0,
+        0,
+        2,
+        1
+      ],
+      "rhythm": [
+        1.0,
+        1.0,
+        0.5,
+        0.5
+      ],
+      "state": "A_double_prime"
+    }
+  ],
+  "callbacks": [
+    {
+      "bar": "0",
+      "motif_id": "hook",
+      "state": "A"
+    },
+    {
+      "bar": "16",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "32",
+      "motif_id": "hook",
+      "state": "A_double_prime"
+    },
+    {
+      "bar": "48",
+      "motif_id": "hook",
+      "state": "A_prime"
+    },
+    {
+      "bar": "32",
+      "motif_id": "hook",
+      "state": "A_prime"
+    }
+  ],
+  "tension_curve": [
+    0.05,
+    0.1431,
+    0.738,
+    0.5719,
+    0.7196,
+    0.6476,
+    0.4512,
+    0.1166
+  ],
+  "arrangement": [
+    {
+      "bar": "0",
+      "section": "intro"
+    },
+    {
+      "bar": "1",
+      "section": "intro"
+    },
+    {
+      "bar": "2",
+      "section": "intro"
+    },
+    {
+      "bar": "3",
+      "section": "intro"
+    },
+    {
+      "bar": "4",
+      "section": "intro"
+    },
+    {
+      "bar": "5",
+      "section": "intro"
+    },
+    {
+      "bar": "6",
+      "section": "verse"
+    },
+    {
+      "bar": "7",
+      "section": "verse"
+    },
+    {
+      "bar": "8",
+      "section": "verse"
+    },
+    {
+      "bar": "9",
+      "section": "verse"
+    },
+    {
+      "bar": "10",
+      "section": "verse"
+    },
+    {
+      "bar": "11",
+      "section": "verse"
+    },
+    {
+      "bar": "12",
+      "section": "hook"
+    },
+    {
+      "bar": "13",
+      "section": "hook"
+    },
+    {
+      "bar": "14",
+      "section": "hook"
+    },
+    {
+      "bar": "15",
+      "section": "hook"
+    },
+    {
+      "bar": "16",
+      "section": "hook"
+    },
+    {
+      "bar": "17",
+      "section": "hook"
+    },
+    {
+      "bar": "18",
+      "section": "verse"
+    },
+    {
+      "bar": "19",
+      "section": "verse"
+    },
+    {
+      "bar": "20",
+      "section": "verse"
+    },
+    {
+      "bar": "21",
+      "section": "verse"
+    },
+    {
+      "bar": "22",
+      "section": "verse"
+    },
+    {
+      "bar": "23",
+      "section": "verse"
+    },
+    {
+      "bar": "24",
+      "section": "bridge"
+    },
+    {
+      "bar": "25",
+      "section": "bridge"
+    },
+    {
+      "bar": "26",
+      "section": "bridge"
+    },
+    {
+      "bar": "27",
+      "section": "bridge"
+    },
+    {
+      "bar": "28",
+      "section": "bridge"
+    },
+    {
+      "bar": "29",
+      "section": "bridge"
+    },
+    {
+      "bar": "30",
+      "section": "solo"
+    },
+    {
+      "bar": "31",
+      "section": "solo"
+    },
+    {
+      "bar": "32",
+      "section": "solo"
+    },
+    {
+      "bar": "33",
+      "section": "solo"
+    },
+    {
+      "bar": "34",
+      "section": "solo"
+    },
+    {
+      "bar": "35",
+      "section": "solo"
+    },
+    {
+      "bar": "36",
+      "section": "breakdown"
+    },
+    {
+      "bar": "37",
+      "section": "breakdown"
+    },
+    {
+      "bar": "38",
+      "section": "breakdown"
+    },
+    {
+      "bar": "39",
+      "section": "breakdown"
+    },
+    {
+      "bar": "40",
+      "section": "breakdown"
+    },
+    {
+      "bar": "41",
+      "section": "breakdown"
+    },
+    {
+      "bar": "42",
+      "section": "hook"
+    },
+    {
+      "bar": "43",
+      "section": "hook"
+    },
+    {
+      "bar": "44",
+      "section": "hook"
+    },
+    {
+      "bar": "45",
+      "section": "hook"
+    },
+    {
+      "bar": "46",
+      "section": "hook"
+    },
+    {
+      "bar": "47",
+      "section": "hook"
+    }
+  ],
+  "critique_log": [
+    {
+      "gen": 0,
+      "score": 68.13,
+      "critique": {
+        "groove": 70,
+        "harmony": 80,
+        "hook": 95,
+        "variation": 52,
+        "stereo": 88,
+        "lufs": 65
+      }
+    },
+    {
+      "gen": 1,
+      "score": 67.62,
+      "critique": {
+        "groove": 70,
+        "harmony": 80,
+        "hook": 95,
+        "variation": 55,
+        "stereo": 88,
+        "lufs": 65
+      }
+    }
+  ]
+}

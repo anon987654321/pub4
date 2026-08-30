@@ -1,5 +1,5 @@
 {
-  "track": "pedal_e_descent",
+  "track": "slum_village_intro_documented",
   "performer": "yancey",
   "groove_dna": "donuts",
   "generation": 59,
@@ -106,6 +106,102 @@
     {
       "bar": "7",
       "section": "verse"
+    },
+    {
+      "bar": "8",
+      "section": "hook"
+    },
+    {
+      "bar": "9",
+      "section": "hook"
+    },
+    {
+      "bar": "10",
+      "section": "hook"
+    },
+    {
+      "bar": "11",
+      "section": "hook"
+    },
+    {
+      "bar": "12",
+      "section": "verse"
+    },
+    {
+      "bar": "13",
+      "section": "verse"
+    },
+    {
+      "bar": "14",
+      "section": "verse"
+    },
+    {
+      "bar": "15",
+      "section": "verse"
+    },
+    {
+      "bar": "16",
+      "section": "bridge"
+    },
+    {
+      "bar": "17",
+      "section": "bridge"
+    },
+    {
+      "bar": "18",
+      "section": "bridge"
+    },
+    {
+      "bar": "19",
+      "section": "bridge"
+    },
+    {
+      "bar": "20",
+      "section": "solo"
+    },
+    {
+      "bar": "21",
+      "section": "solo"
+    },
+    {
+      "bar": "22",
+      "section": "solo"
+    },
+    {
+      "bar": "23",
+      "section": "solo"
+    },
+    {
+      "bar": "24",
+      "section": "breakdown"
+    },
+    {
+      "bar": "25",
+      "section": "breakdown"
+    },
+    {
+      "bar": "26",
+      "section": "breakdown"
+    },
+    {
+      "bar": "27",
+      "section": "breakdown"
+    },
+    {
+      "bar": "28",
+      "section": "hook"
+    },
+    {
+      "bar": "29",
+      "section": "hook"
+    },
+    {
+      "bar": "30",
+      "section": "hook"
+    },
+    {
+      "bar": "31",
+      "section": "hook"
     }
   ],
   "critique_log": [

@@ -110,10 +110,10 @@ module Master::Core
     # were 105 points from a single kind of proof — the threshold exists to demand
     # several independent kinds, and repetition is not independence.
     #
-    # What this deliberately does NOT fix: the kind is still whatever the model
-    # labelled the exec with, so `exec(["true"], evidence: "test_pass")` still
-    # scores 35. Binding a kind to the commands that can legitimately produce it
-    # is the real answer and is a policy table, not a one-line predicate.
+    # The third narrowing is not here: whether the kind is earned at all is
+    # PRODUCERS' job, checked in record_evidence before anything reaches this
+    # sum. By the time a score is added up it is already a kind some command
+    # capable of producing it actually produced.
     def evidence_score
       @evidence.select { |e| e.ok && e.generation == @generation }
                .group_by(&:kind)

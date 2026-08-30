@@ -1,0 +1,63 @@
+{
+  "duration_seconds": 87.912,
+  "bit_rate": 1411207,
+  "schema": "dilla.master.v1",
+  "path": "/Users/mac/Documents/GitHub/pub4/loop.wav",
+  "delivery": "wav",
+  "integrated_lufs": -19.0,
+  "true_peak_dbtp": -6.12,
+  "harmony_score": 88,
+  "harmony_breakdown": {
+    "overall": 88,
+    "extension": 100,
+    "register": 56,
+    "motion": 100,
+    "clash": 100
+  },
+  "progression_chord_names": [
+    "Cm9",
+    "Bb13",
+    "Ebmaj7",
+    "Fm9",
+    "Cm9",
+    "Bb13",
+    "Ebmaj7",
+    "Fm9",
+    "Cm9"
+  ],
+  "harshness": {
+    "harshness": -21.3,
+    "needs_notch": false,
+    "body_db": -20.2,
+    "presence_db": -41.5,
+    "air_db": -49.4
+  },
+  "sub_kick_balance": {
+    "low_mid_delta": -0.1,
+    "recommendation": "ok"
+  },
+  "ml_notes": null,
+  "loudness_range_lu": 8.2,
+  "mono_rms_db": -17.2,
+  "spectral_rms_db": {
+    "low": -20.3,
+    "body": -20.2,
+    "mid": -20.2,
+    "presence": -41.5,
+    "high": -47.9,
+    "air": -49.4
+  },
+  "stereo_phase_correlation": 0.97532,
+  "target": {
+    "integrated_lufs": "-20.5..-12.5",
+    "true_peak_max_dbtp": -1.0
+  },
+  "warnings": [],
+  "capabilities": [
+    196,
+    197,
+    198,
+    199,
+    200
+  ]
+}

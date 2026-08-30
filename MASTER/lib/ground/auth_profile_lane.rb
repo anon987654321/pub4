@@ -33,6 +33,13 @@ module Master
         cmd = lane.fetch("command", lane["binary"]).to_s
         return false if cmd.empty?
         return false if cmd == "claude" && ENV["MASTER_NO_CLAUDE_CLI"] == "1"
+        return false if cmd == "agy" && ENV["MASTER_NO_AGY_CLI"] == "1"
+
+        if cmd == "agy"
+          return true if ENV["AGY_BIN"] && File.file?(ENV["AGY_BIN"]) && File.executable?(ENV["AGY_BIN"])
+          home_agy = File.expand_path("~/.local/bin/agy")
+          return true if File.file?(home_agy) && File.executable?(home_agy)
+        end
 
         ENV["PATH"].to_s.split(File::PATH_SEPARATOR).any? do |dir|
           exe = File.join(dir, cmd)

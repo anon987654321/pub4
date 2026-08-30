@@ -8,10 +8,17 @@ module Master
         # CLI binary, keyless web-chat, live free-tier catalog) — separate
         # from ModelRouter's own preference/escalation/failover logic.
         module ProviderAvailability
-          # Grok API when XAI key is present; subscription Opus when claude binary exists;
+          # agy CLI when agy binary exists; Grok API when XAI key is present; subscription Opus when claude binary exists;
           # browser web-chat when keyless. Paid APIs stay in flattened tiers for escalation.
           def primary_models
             models = []
+            if agy_cli_available?
+              models.concat(
+                Array(@rules.dig("models", "primary")).filter_map { |m| m["id"] }
+                  .select { |id| id.to_s.start_with?("agy:") || id.to_s == "agy" },
+              )
+              models << "agy:auto" if models.empty?
+            end
             models.concat(grok_api_models) if grok_api_available?
             models.concat(keyless_web_chat_models) if keyless_mode?
             if claude_cli_available?
@@ -21,6 +28,26 @@ module Master
               )
             end
             models.uniq
+          end
+
+          def agy_cli_available?
+            return false if ENV["MASTER_NO_AGY_CLI"] == "1"
+            return @agy_cli_available unless @agy_cli_available.nil?
+            @agy_cli_available = !find_agy_executable.nil?
+          end
+
+          def find_agy_executable
+            if ENV["AGY_BIN"] && File.file?(ENV["AGY_BIN"]) && File.executable?(ENV["AGY_BIN"])
+              return ENV["AGY_BIN"]
+            end
+            home_bin = File.expand_path("~/.local/bin/agy")
+            return home_bin if File.file?(home_bin) && File.executable?(home_bin)
+
+            ENV["PATH"].to_s.split(File::PATH_SEPARATOR).each do |dir|
+              candidate = File.join(dir, "agy")
+              return candidate if File.file?(candidate) && File.executable?(candidate)
+            end
+            nil
           end
 
           def grok_api_models

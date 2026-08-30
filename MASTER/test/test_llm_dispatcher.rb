@@ -191,6 +191,52 @@ end
     assert_operator state[:max], :>=, 2, "stub never overlapped — the probe is not measuring concurrency"
   end
 
+  def test_agy_model_predicate
+    dispatcher, = build_dispatcher
+    assert dispatcher.agy_model?("agy:auto")
+    assert dispatcher.agy_model?("agy:gemini-2.5-pro")
+    assert dispatcher.agy_model?("agy")
+    refute dispatcher.agy_model?("claude-cli:claude-opus-4-8")
+    refute dispatcher.agy_model?("openai/gpt-4o")
+  end
+
+  def test_send_agy_cli_returns_timeout_error
+    dispatcher, = build_dispatcher
+    def dispatcher.capture3_with_timeout(_timeout_s, *_args, **)
+      raise Timeout::Error
+    end
+    result = dispatcher.send(:send_agy_cli, "auto", [{ role: "user", content: "hi" }], sys: nil)
+    assert_instance_of Master::Result::Err, result
+    assert_equal :timeout, result.category
+    expected = Master::Review::LLMDispatcher.const_get(:AGY_CLI_TIMEOUT_S)
+    assert_match(/timed out after #{expected}s/, result.message)
+  end
+
+  def test_send_agy_cli_success
+    dispatcher, = build_dispatcher
+    ok_status = Struct.new(:success?).new(true)
+    captured_args = nil
+    dispatcher.define_singleton_method(:capture3_with_timeout) do |_t, *args, **|
+      captured_args = args
+      ["AGY OUTPUT", "", ok_status]
+    end
+    result = dispatcher.send(:send_agy_cli, "gemini-2.5-pro", [{ role: "user", content: "hello" }], sys: "be helpful")
+    assert_instance_of Master::Result::Ok, result
+    assert_equal "AGY OUTPUT", result.value!
+    assert_includes captured_args, "-p"
+    assert_includes captured_args, "--model"
+    assert_includes captured_args, "gemini-2.5-pro"
+  end
+
+  def test_agy_cli_timeout_reads_env_override
+    dispatcher, = build_dispatcher
+    old = ENV["MASTER_AGY_CLI_TIMEOUT"]
+    ENV["MASTER_AGY_CLI_TIMEOUT"] = "15"
+    assert_equal 15, dispatcher.send(:agy_cli_timeout_s)
+  ensure
+    old.nil? ? ENV.delete("MASTER_AGY_CLI_TIMEOUT") : ENV["MASTER_AGY_CLI_TIMEOUT"] = old
+  end
+
   private
 
   def build_dispatcher

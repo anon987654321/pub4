@@ -15515,8 +15515,9 @@ def analog_smooth_filter(input_tag, out_tag: "smoothed", strength: nil)
   boom = (-1.6 * s).round(1)
   harsh = (-1.5 * s).round(1)
   air = (-2.0 * s).round(1)
-  # Drive into the clipper and back out, rather than lowering its threshold.
+  # Tone only: a highpass, three bells and a deesser. No saturation here.
   #
+<<<<<<< Updated upstream
   # asoftclip's threshold is absolute, and this stage runs before loudnorm, so a
   # fixed threshold rounds a hot mix and does nothing at all to a quiet one.
   # Pre-gain fixes the relationship: only peaks within `drive` dB of full scale
@@ -15527,11 +15528,19 @@ def analog_smooth_filter(input_tag, out_tag: "smoothed", strength: nil)
   # 5.8 dB of level with no gain compensation and generates no harmonics, so it
   # was pure attenuation that loudnorm would have handed straight back.
   drive = (0.8 * s).round(1)
+=======
+  # It carried a soft clipper at threshold=1:output=1, which reduced nothing --
+  # its whole contribution was harmonics -- and it sat in series ahead of
+  # neve_80's asymmetric clipper on the same signal. Two clippers with a
+  # limiter between them is the stacking the layered kick already warns about,
+  # one level up: the second shapes what the first flattened, and the limiters
+  # after them work on harmonics instead of transients. neve_80 is the one
+  # saturation stage the master keeps.
+>>>>>>> Stashed changes
   "[#{input_tag}]highpass=f=30:p=2," \
     "equalizer=f=85:t=q:w=1.0:g=#{boom}," \
     "equalizer=f=3200:t=q:w=1.2:g=#{harsh}," \
     "deesser=i=#{(0.18 * s).round(2)}:m=0.4:f=0.55:s=o," \
-    "volume=#{drive}dB,asoftclip=type=tanh:threshold=1:output=1:oversample=1,volume=-#{drive}dB," \
     "equalizer=f=8000:t=h:w=4000:g=#{air}[#{out_tag}]"
 end
 

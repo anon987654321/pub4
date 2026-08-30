@@ -840,6 +840,15 @@ cron_jobs:
 auth_profiles:
   schema: 1
   lanes:
+    - id: agy_cli
+      kind: cli
+      command: agy
+      priority: 0
+      models:
+        - agy:auto
+        - agy:gemini-2.5-pro
+        - agy:gemini-2.5-flash
+        - agy:gemini-3.7-flash-thinking
     - id: claude_cli
       kind: cli
       command: claude

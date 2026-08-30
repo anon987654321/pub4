@@ -65,6 +65,12 @@ module Deploy
         owner: "single-file tool",
       },
       {
+        name: "trymbot",
+        glob: "trymbot/**/*.rb",
+        entry: "trymbot/trymbot.rb",
+        owner: "single-file tool",
+      },
+      {
         name: "lora",
         glob: "lora/**/*.rb",
         entry: nil,

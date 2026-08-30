@@ -126,13 +126,6 @@ tables — and it passes `bin/pub4 lint` — the `README_PROSE` rule in `MASTER/
 README before you push that folder, so the door to it is never stale. `MASTER/README.md`
 is the reference.
 
-**Every markdown document is Tadao Ando in text** — brutalist, ultra-minimal,
-unpredictable. Concrete over ornament, negative space over density; fewer sections
-than feel necessary, each heading a plane and each paragraph load-bearing, the
-composition irregular by design so the page reads as a built thing. This is the
-default for MASTER's own documents and for what the CLI agents (claude, grok,
-codex) write; the full rule is `markdown_style` in `MASTER/data/rules.yml`.
-
 **Ruby and zsh, not GNU text tools.** `sed`, `awk`, `find`, `head`, `tail`, `wc`,
 `perl` and `python` are banned in agent shell calls and committed scripts: BSD
 variants break GNU idioms and this repo deploys to OpenBSD. Use `ruby -e`, zsh

@@ -208,7 +208,7 @@
    inside the box the link already has. */
 .nav_link.active {
   color: var(--text);
-  box-shadow: inset 0 calc(var(--nav-rule-w) * -1) 0 0 var(--nav-rule);
+  /* autofix: removed box-shadow (flat UI) */
 }
 
 /* The badge on a new surface.

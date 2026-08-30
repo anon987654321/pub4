@@ -91,7 +91,21 @@ module Master
       ENV[env_var].to_s.length >= minimum
     end
 
+    def agy_cli_available?
+      return false if ENV["MASTER_NO_AGY_CLI"] == "1"
+      return true if ENV["AGY_BIN"] && File.file?(ENV["AGY_BIN"]) && File.executable?(ENV["AGY_BIN"])
+
+      home_bin = File.expand_path("~/.local/bin/agy")
+      return true if File.file?(home_bin) && File.executable?(home_bin)
+
+      ENV["PATH"].to_s.split(File::PATH_SEPARATOR).any? do |dir|
+        exe = File.join(dir, "agy")
+        File.file?(exe) && File.executable?(exe)
+      end
+    end
+
     def default_model
+      return "agy:auto" if agy_cli_available?
       return "grok-4.3" if api_key_present?("XAI_API_KEY") && !api_key_present?("OPENROUTER_API_KEY")
       return free_primary_model if api_key_present?("OPENROUTER_API_KEY")
       return "deepseek-chat" if api_key_present?("DEEPSEEK_API_KEY")
@@ -102,6 +116,8 @@ module Master
     end
 
     def any_api_key_present?
+      return true if agy_cli_available?
+
       api_key_specs.any? { |_attr, env_var, minimum| ENV[env_var].to_s.length >= minimum }
     end
 
@@ -123,7 +139,7 @@ module Master
     def no_api_key_message
       return keyless_message if keyless_llm_enabled?
 
-      "I'm not wired to any LLM yet. Set OPENROUTER_API_KEY or XAI_API_KEY in " \
+      "I'm not wired to any LLM yet. Install Antigravity CLI (agy) or set OPENROUTER_API_KEY / XAI_API_KEY in " \
         "~/.config/master/env (or /etc/master.env on OpenBSD) and restart. " \
         "Or enable keyless mode: MASTER_KEYLESS=1 (browser chat at zero cost)."
     end

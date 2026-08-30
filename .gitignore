@@ -269,3 +269,6 @@ STUDIO/lora/*/weights/
 # Claude Code per-machine permission allowlist. settings.json is the shared
 # one; this file names local paths and belongs to the checkout, not the repo.
 .claude/settings.local.json
+
+*_BACKUP.LOG
+*_BACKUP.INDEX

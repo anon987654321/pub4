@@ -14,6 +14,8 @@ project/learnings/vocals/**/*.wav
 # A sidecar for a render that is not tracked is not tracked either.
 demo.wav
 demo.wav.dilla
+demo.mp3
+demo.mp3.dilla
 
 # Installed tools. The demucs virtualenv is 23,783 files and was living in
 # scratch/, where its own venv .gitignore happened to cover it -- protection
