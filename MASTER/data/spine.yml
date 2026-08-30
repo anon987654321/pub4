@@ -82,7 +82,12 @@ pub4_source_ceilings:
   # and passwords_mailer.rb (amber + brgen), lib/tasks/visits.rake (amber + brgen)
   # and jox_logo_controller.js (amber + bsdports) each became one engine file where
   # there were two. Eight app files out, four engine files in.
-  RAILS: 2356
+  #
+  # 2356 -> 2358 is destroy_cascade_examples.rb and user_auth_examples.rb, the
+  # engine-owned copies of the two tests that had been living once per app.
+  # Two files against three copies of the same assertion; brgen keeps the
+  # behavioural destroy cases on top of the include.
+  RAILS: 2358
   OPENBSD: 106
   # 220 -> 222 for lora/seed_media.yml and lora/_toolkit/install_seed_media.rb,
   # the prompt set for every seeded photograph and the script that grades and
