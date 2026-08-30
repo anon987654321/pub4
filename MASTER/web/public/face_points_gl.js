@@ -496,7 +496,8 @@ void main() {
       gl.uniform1f(uniform.uYaw, view.yaw);
       gl.uniform1f(uniform.uPitch, view.pitch);
       gl.uniform1f(uniform.uFov, 2.6);
-      gl.uniform1f(uniform.uScale, Math.min(internalW, internalH) * 0.30);
+      const fill = document.body?.dataset.portrait === "1" ? 0.58 : 0.30;
+      gl.uniform1f(uniform.uScale, Math.min(internalW, internalH) * fill);
       gl.uniform1f(uniform.uDepth, 0.6);
       // The face's own ink: bone-warm near, cooled and dimmed toward the back.
       gl.uniform3f(uniform.uInkFar, 0.42, 0.40, 0.36);

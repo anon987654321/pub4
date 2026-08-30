@@ -324,6 +324,7 @@ if(pv){
       // only job was to collect a click.
       try{
         var q=new URLSearchParams(location.search||'');
+        if(q.get('portrait')==='1') document.body.dataset.portrait='1';
         if(q.get('primer')!=='1'&&document.body.dataset.primer!=='keep'){
           document.body.classList.add('primer-autostart');
           if(p){p.setAttribute('aria-hidden','true');p.tabIndex=-1;}

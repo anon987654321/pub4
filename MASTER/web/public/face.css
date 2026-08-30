@@ -1540,6 +1540,21 @@ canvas#face,
    width: fit-content and inset-inline-end: auto together are what stop a fixed
    box spanning the viewport — without them the whole top strip becomes a link
    home and swallows taps on everything up there. */
+/* Portrait take: only the field. The mark and the prompt are chrome, and a
+   recording of the face is a recording of the field. */
+body[data-portrait="1"] .brand-mark,
+body[data-portrait="1"] .top-left-logo,
+body[data-portrait="1"] #zsh,
+body[data-portrait="1"] #mic-dot,
+body[data-portrait="1"] #chat-log,
+body[data-portrait="1"] .face-controls,
+body[data-portrait="1"] #primer,
+body[data-portrait="1"] #tts-live,
+body[data-portrait="1"] .skip-link,
+body[data-portrait="1"] #ascii-star {
+  display: none !important;
+}
+
 .brand-mark {
   position: fixed;
   z-index: var(--z-chrome);
