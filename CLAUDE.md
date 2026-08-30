@@ -26,6 +26,9 @@ repo-wide backlog (every per-tree debt/TODO/blocker list was folded into it).
 ## Commands
 
 ```zsh
+MASTER/bin/pub4 gate                 # every gate in the repo, fixing as it goes
+MASTER/bin/pub4 gate --explain       # the ladder, without running it
+MASTER/bin/pub4 gate --scan-only     # the same ladder, writing nothing
 MASTER/bin/pub4 status               # what is dirty, per tree
 MASTER/bin/pub4 test                 # the suites
 MASTER/bin/pub4 measure              # every ratchet, current vs ceiling
@@ -42,6 +45,15 @@ ruby RAILS/gates/runner.rb --all     # every RAILS gate
 Run the smallest check that proves the work, and do not report done without its
 output. `--profile=agent` may fail on known debt tagged `agent-ignore`; do not
 chase scan noise on unrelated patches.
+
+`bin/pub4 gate` is the whole ladder in one command: the scanner over all four
+trees with autofix on, every RAILS gate, every suite, the ratchets, the sprawl
+census, and last the council. It writes by default and says which files each
+stage changed, under that stage's name, so a bad fix is attributable to the
+stage that made it. Everything already modified when it starts is listed first
+and excluded, because this checkout is shared. A tier it could not reach —
+today the council, whose provider answers "Insufficient credits" — is reported
+as skipped and exits 3 rather than counting as a pass.
 
 `MASTER/bin/master "<instruction>"` is the repo-wide instruction surface — the
 runtime booted so `data/soul.yml` and the sibling trees all resolve. Bare
