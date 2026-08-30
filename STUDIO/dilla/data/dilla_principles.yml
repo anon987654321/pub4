@@ -1,0 +1,166 @@
+# dilla_principles.yml — restored from Downloads/dilla.yml
+# Research spec: aesthetic and workflow principles. Separate from
+# dilla_reference.yml, which holds documented progressions and loss gates.
+version: 0.1.0
+status: draft
+purpose: >
+  Research-backed knowledge specification describing the aesthetic,
+  workflow, and musical principles associated with J Dilla. This file
+  distinguishes documented evidence from inference and is intended to
+  guide AI systems toward creating original music inspired by these
+  principles rather than imitation.
+
+metadata:
+  evidence_levels:
+    documented: "Supported by interviews, Dilla Time, collaborators, or primary sources."
+    consensus: "Broad producer consensus."
+    analysis: "Derived from careful musical analysis."
+    hypothesis: "Reasonable inference requiring validation."
+
+identity:
+  artist: J Dilla
+  legal_name: James Dewitt Yancey
+  birthplace: Detroit, Michigan
+  core_values:
+    - groove_over_precision
+    - emotion_over_complexity
+    - transformation_over_reproduction
+    - restraint_over_density
+
+philosophy:
+  principles:
+    - Every instrument owns its own sense of time.
+    - Groove emerges from relationships between events.
+    - Silence is musical material.
+    - Sampling transforms memory into something new.
+    - Remove notes before adding notes.
+    - Preserve humanity over perfection.
+
+historical_context:
+  influences:
+    detroit:
+      - Motown
+      - James Jamerson
+      - Amp Fiddler
+      - Slum Village
+    jazz:
+      - Ahmad Jamal
+      - Herbie Hancock
+      - Roy Ayers
+      - Donald Byrd
+      - Weldon Irvine
+    funk:
+      - Bernard Purdie
+      - Clyde Stubblefield
+      - Zigaboo Modeliste
+
+groove_engine:
+  objective: >
+    Produce independent rhythmic layers that repeatedly converge and diverge
+    while remaining danceable.
+  rules:
+    - Avoid identical timing offsets on every hit.
+    - Favor phrase-level drift over random jitter.
+    - Model kick, snare, hats, bass, and samples as independent clocks.
+    - Preserve intentional asymmetry.
+    - Do not rely on a fixed swing percentage.
+
+sampling_engine:
+  philosophy:
+    - Choose emotionally compelling material.
+    - Transform more than copy.
+    - Preserve texture when possible.
+  operations:
+    - chop
+    - resample
+    - pitch
+    - filter
+    - reverse_tail
+    - truncate
+    - layer
+
+harmony:
+  goals:
+    - ambiguity
+    - color
+    - warmth
+    - incomplete_resolution
+  preferences:
+    - extended_chords
+    - rootless_voicings
+    - suspended_motion
+    - modal_borrowing
+
+drums:
+  priorities:
+    - head_nod
+    - conversational_kick_snare
+    - dynamic_velocity
+    - ghost_notes
+
+bass:
+  relationship:
+    follows:
+      - groove
+      - harmony
+    not:
+      - rigid_grid
+
+arrangement:
+  patterns:
+    - introduce_small_changes
+    - remove_elements
+    - filter_transitions
+    - surprise_without_breaking_flow
+
+mixing:
+  goals:
+    - warmth
+    - depth
+    - punch
+    - clarity
+  avoid:
+    - over_limiting
+    - excessive_brightness
+    - sterile_perfection
+
+critic:
+  scorecard:
+    groove: 0.0
+    humanity: 0.0
+    emotional_depth: 0.0
+    originality: 0.0
+    restraint: 0.0
+  acceptance:
+    groove: ">=0.95"
+    humanity: ">=0.90"
+    emotional_depth: ">=0.90"
+
+anti_patterns:
+  - quantize_everything
+  - maximize_loudness
+  - overcompress
+  - copy_reference_track
+  - endless_layering
+  - predictable_arrangement
+
+generation_pipeline:
+  - collect_influences
+  - establish_groove
+  - add_harmony
+  - transform_samples
+  - simplify
+  - critique
+  - humanize
+  - simplify_again
+  - final_review
+
+bibliography:
+  primary:
+    - "Dan Charnas: Dilla Time"
+    - "Interviews with Questlove"
+    - "Interviews with Karriem Riggins"
+    - "Interviews with Amp Fiddler"
+  note: >
+    This specification intentionally separates documented facts from
+    analytical inference and should evolve as new research appears.
