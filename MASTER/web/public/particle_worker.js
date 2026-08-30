@@ -2,11 +2,16 @@
 (() => {
   "use strict";
 
-  const FIELDS_PER_CELL = 12;
+  // The same layout particle_kernel.js declares, restated because a Worker
+  // cannot see that scope. It is the stride for a pool transferred in from the
+  // main thread, so a narrower copy here does not merely skip the depth axis —
+  // it reads every field of every cell from the wrong offset.
+  const FIELDS_PER_CELL = 14;
   const FIELD = {
     x: 0, y: 1, vx: 2, vy: 3,
     kind: 4, zone: 5, confidence: 6, pressure: 7,
-    valence: 8, arousal: 9, attention: 10, age: 11
+    valence: 8, arousal: 9, attention: 10, age: 11,
+    z: 12, vz: 13
   };
 
   function hydratePool(payload) {
@@ -45,6 +50,8 @@
       pool.cells[base + FIELD.vy] *= velDamp;
       pool.cells[base + FIELD.x] += pool.cells[base + FIELD.vx] * dt;
       pool.cells[base + FIELD.y] += pool.cells[base + FIELD.vy] * dt;
+      pool.cells[base + FIELD.vz] *= velDamp;
+      pool.cells[base + FIELD.z] += pool.cells[base + FIELD.vz] * dt;
       pool.cells[base + FIELD.age] += dt;
       pool.cells[base + FIELD.attention] = Math.max(0, (pool.cells[base + FIELD.attention] || 0) - attnDecay * dt);
       const cellDecay = pool.decay[i] * decayScale * (1.0 + (1 - confidence) * 0.12);

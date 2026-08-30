@@ -48,6 +48,11 @@ face_vision_deferred:
   - face_vision.bundle.js
   - cognition_ecology.js
   - cognition_ecology_render.js
+  # The gl.POINTS half of the same world. It asks for a WebGL context the moment
+  # it runs, so it belongs in this group and no earlier: the deferred loader
+  # waits for primer:ready, which is the only point at which the shell's
+  # getContext gate stops returning null.
+  - face_points_gl.js
 
 # Non-module assets addressed by name in MASTER_ASSET_PATHS.
 singletons:

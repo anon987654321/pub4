@@ -7,11 +7,25 @@
 (() => {
   "use strict";
 
-  const FIELDS_PER_CELL = 12;
+  // z and vz are appended at 12 and 13 rather than inserted, so every existing
+  // index is untouched and nothing that already reads this pool changes. A cell
+  // spawned without a z sits at 0, which is the focal plane -- so the 2D callers
+  // that predate depth keep behaving exactly as they did.
+  //
+  // Depth is here because a face made of flat points reads as a solid the moment
+  // it moves coherently: parallax alone carries the volume. That is the kinetic
+  // depth effect, and design_rules.kinetic_depth is where the house says so.
+  //
+  // particle_worker.js carries its own copy of this layout, because a Worker
+  // cannot see this scope. The two must widen together: the worker strides a
+  // transferred pool by its own FIELDS_PER_CELL, so a mismatch reads every
+  // field of every cell from the wrong offset.
+  const FIELDS_PER_CELL = 14;
   const FIELD = {
     x: 0, y: 1, vx: 2, vy: 3,
     kind: 4, zone: 5, confidence: 6, pressure: 7,
-    valence: 8, arousal: 9, attention: 10, age: 11
+    valence: 8, arousal: 9, attention: 10, age: 11,
+    z: 12, vz: 13
   };
 
   function createPool(capacity) {
@@ -37,6 +51,8 @@
     pool.cells[base + FIELD.arousal] = props.arousal || 0;
     pool.cells[base + FIELD.attention] = props.attention || 0;
     pool.cells[base + FIELD.age] = 0;
+    pool.cells[base + FIELD.z] = props.z || 0;
+    pool.cells[base + FIELD.vz] = props.vz || 0;
     pool.decay[i] = props.decay || 0.01;
     pool.alive[i] = 1;
     return i;
@@ -97,6 +113,8 @@
       pool.cells[base + FIELD.vy] *= velDamp;
       pool.cells[base + FIELD.x] += pool.cells[base + FIELD.vx] * dt;
       pool.cells[base + FIELD.y] += pool.cells[base + FIELD.vy] * dt;
+      pool.cells[base + FIELD.vz] *= velDamp;
+      pool.cells[base + FIELD.z] += pool.cells[base + FIELD.vz] * dt;
       pool.cells[base + FIELD.age] += dt;
       pool.cells[base + FIELD.attention] = Math.max(0, (pool.cells[base + FIELD.attention] || 0) - attnDecay * dt);
       const cellDecay = pool.decay[i] * decayScale * (1.0 + (1 - confidence) * 0.12);
