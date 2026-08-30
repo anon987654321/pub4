@@ -819,9 +819,14 @@ body.zen #zsh.revealed { opacity: .96; pointer-events: auto; transform: none; }
 
 body #zsh.live,
 body:not(.face-ready) #zsh.live {
-  opacity: 1;
+  opacity: 0.42;
   pointer-events: auto;
   transform: none;
+  background: transparent;
+}
+body #zsh.live:focus-within {
+  opacity: 1;
+  background: black;
 }
 #zsh .pp { color: color-mix(in srgb, var(--c-danger) 82%, transparent); font-weight: 700; }
 #zsh .sep, #zsh .sep2 { color: var(--face-muted); margin-inline-end: 0.4ch; }

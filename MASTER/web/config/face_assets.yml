@@ -58,6 +58,7 @@ face_vision_deferred:
 singletons:
   threeModule: three.face.module.js
   faceVisionBundle: face_vision.bundle.js
+  faceAvatar: face_avatar.png
   faceRuntime: face.runtime.js
   visemePacks: viseme_packs.json
   clusterMiner: cluster_miner.js

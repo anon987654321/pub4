@@ -109,12 +109,12 @@ void main() {
     return program;
   }
 
-  // 900 rather than a denser field, because spatial_repulsion_2d has a 0.06
-  // radius: at this count the mean spacing across a 0.46 shell is just wider
-  // than that, so neighbours mostly leave each other alone and the repulsion
-  // reads as surface texture. At 1400 every cell had several neighbours inside
-  // the radius and the shell drove itself apart.
-  const CAPACITY = 900;
+  // Skull cells come from the avatar's ink; tunnel cells are a sparse ring
+  // field behind it. 700 + 400 stays under the 0.06 repulsion radius that
+  // blew a 1400-cell shell apart.
+  const SKULL = 700;
+  const TUNNEL = 400;
+  const CAPACITY = SKULL + TUNNEL;
   const FLOATS_PER_POINT = 4;
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -182,6 +182,60 @@ void main() {
     if (gl) gl.viewport(0, 0, internalW, internalH);
   }
 
+  // Ink of new_avatar.png (public/face_avatar.png): dark pixels become the
+  // skull surface. The tunnel is the radio_brgen rings, laid behind that
+  // mask rather than filling the viewport on their own.
+  //
+  // Era is the human-evolution axis this renderer exists to show. -1 is a
+  // prognathic vault (ape), 0 is the avatar as drawn, +1 is a globular
+  // cranium and a receding jaw — the trend from Australopithecus through
+  // sapiens, continued. It breathes; it is not a slider.
+  function eraAt(now) {
+    return Math.sin(now * 0.00007);
+  }
+
+  function evolve(x, y, z, era) {
+    const future = Math.max(0, era);
+    const ape = Math.max(0, -era);
+    const vault = 1 + future * 0.34;
+    const jaw = 1 - future * 0.30 + ape * 0.18;
+    const yScale = y < 0 ? vault : jaw;
+    return [
+      x * (1 + ape * 0.14),
+      y * yScale,
+      z * (1 + ape * 0.22) - ape * 0.12 + future * 0.08
+    ];
+  }
+
+  function sampleAvatarInk(img) {
+    const size = 96;
+    const node = document.createElement("canvas");
+    node.width = size;
+    node.height = size;
+    const ctx = node.getContext("2d");
+    ctx.drawImage(img, 0, 0, size, size);
+    const data = ctx.getImageData(0, 0, size, size).data;
+    const ink = [];
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const i = (y * size + x) * 4;
+        const lum = data[i] * 0.3 + data[i + 1] * 0.59 + data[i + 2] * 0.11;
+        if (lum < 90) ink.push([(x + 0.5) / size, (y + 0.5) / size]);
+      }
+    }
+    return ink;
+  }
+
+  function loadAvatar() {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      const paths = window.MASTER_ASSET_PATHS || {};
+      img.src = paths.faceAvatar || "/face_avatar.png";
+    });
+  }
+
   // A hollow shell with an interior scatter. The shell gives the silhouette its
   // edge and the scatter fills it, so the field is densest where the volume is
   // deepest — density is the fourth depth cue and it is seeded here rather than
@@ -190,31 +244,60 @@ void main() {
   // The cells do not decay. This field is a body rather than a burst: a cell
   // that dies leaves a hole in the silhouette, and refilling holes is a second
   // mechanism doing the job the first one broke.
-  function seedVolume() {
+  function seedVolume(img) {
     const K = kernel();
     if (!K) return;
     pool = K.createPool(CAPACITY);
     home = new Float32Array(CAPACITY * 3);
-    const shellCount = Math.round(CAPACITY * 0.62);
-    for (let i = 0; i < CAPACITY; i++) {
-      // Fibonacci-sphere latitudes: an even shell needs no rejection sampling.
-      const t = (i + 0.5) / CAPACITY;
-      const phi = Math.acos(1 - 2 * t);
-      const theta = Math.PI * (1 + Math.sqrt(5)) * i;
-      const radius = i < shellCount ? 0.46 : 0.46 * Math.cbrt(Math.random());
-      const x = Math.sin(phi) * Math.cos(theta) * radius;
-      const y = Math.cos(phi) * radius * 1.18;
-      const z = Math.sin(phi) * Math.sin(theta) * radius;
+    const ink = img ? sampleAvatarInk(img) : [];
+    for (let i = 0; i < SKULL; i++) {
+      let x;
+      let y;
+      let z;
+      if (ink.length) {
+        const [u, v] = ink[i % ink.length];
+        x = (u - 0.5) * 0.92;
+        y = (v - 0.48) * 1.05;
+        const r = Math.hypot(x, y);
+        z = Math.sqrt(Math.max(0, 0.22 - r * r)) * (i % 3 === 0 ? -1 : 1);
+      } else {
+        const t = (i + 0.5) / SKULL;
+        const phi = Math.acos(1 - 2 * t);
+        const theta = Math.PI * (1 + Math.sqrt(5)) * i;
+        const radius = i < SKULL * 0.62 ? 0.46 : 0.46 * Math.cbrt(Math.random());
+        x = Math.sin(phi) * Math.cos(theta) * radius;
+        y = Math.cos(phi) * radius * 1.18;
+        z = Math.sin(phi) * Math.sin(theta) * radius;
+      }
       home[i * 3] = x;
       home[i * 3 + 1] = y;
       home[i * 3 + 2] = z;
       K.spawn(pool, x, y, {
         z,
         confidence: 0.55 + Math.random() * 0.45,
-        attention: i < shellCount ? 0.9 : 0.5,
+        attention: 0.9,
         arousal: 0.2,
-        // Effectively immortal. The kernel treats a falsy decay as its 0.01
-        // default, so "no decay" has to be spelled as a number this small.
+        decay: 1e-7
+      });
+    }
+    // Warp-tunnel rings, the same FOV scroll radio_brgen_tunnel.js uses, parked
+    // behind the skull so the mask reads as a creature looking down a throat.
+    for (let i = 0; i < TUNNEL; i++) {
+      const ring = Math.floor(i / 20);
+      const ang = (i % 20) / 20 * Math.PI * 2;
+      const z = -0.35 - ring * 0.11;
+      const radius = 0.22 + ring * 0.03;
+      const x = Math.cos(ang) * radius;
+      const y = Math.sin(ang) * radius * 0.82;
+      const idx = SKULL + i;
+      home[idx * 3] = x;
+      home[idx * 3 + 1] = y;
+      home[idx * 3 + 2] = z;
+      K.spawn(pool, x, y, {
+        z,
+        confidence: 0.35,
+        attention: 0.4,
+        arousal: 0.1,
         decay: 1e-7
       });
     }
@@ -241,9 +324,21 @@ void main() {
       if (!pool.alive[i]) continue;
       const base = i * stride;
       const h = i * 3;
-      let dx = pool.cells[base + F.x] - home[h];
-      let dy = pool.cells[base + F.y] - home[h + 1];
-      let dz = pool.cells[base + F.z] - home[h + 2];
+      const era = eraAt(previous);
+      let hx = home[h];
+      let hy = home[h + 1];
+      let hz = home[h + 2];
+      if (i < SKULL) {
+        const evolved = evolve(hx, hy, hz, era);
+        hx = evolved[0];
+        hy = evolved[1];
+        hz = evolved[2];
+      } else {
+        hz += ((previous * 0.00012) % 1.4) - 0.7;
+      }
+      let dx = pool.cells[base + F.x] - hx;
+      let dy = pool.cells[base + F.y] - hy;
+      let dz = pool.cells[base + F.z] - hz;
       dx *= 1 - SPRING;
       dy *= 1 - SPRING;
       dz *= 1 - SPRING;
@@ -260,9 +355,9 @@ void main() {
         pool.cells[base + F.vy] *= 0.4;
         pool.cells[base + F.vz] *= 0.4;
       }
-      pool.cells[base + F.x] = home[h] + dx;
-      pool.cells[base + F.y] = home[h + 1] + dy;
-      pool.cells[base + F.z] = home[h + 2] + dz;
+      pool.cells[base + F.x] = hx + dx;
+      pool.cells[base + F.y] = hy + dy;
+      pool.cells[base + F.z] = hz + dz;
     }
   }
 
@@ -422,13 +517,13 @@ void main() {
     requestAnimationFrame(frame);
   }
 
-  function boot() {
+  function boot(img) {
     if (!kernel()) return;
     canvas = document.getElementById("face-points") ?? makeCanvas();
     resize();
     if (!initGL()) return;
     resize();
-    seedVolume();
+    seedVolume(img);
     window.addEventListener("resize", resize, { passive: true });
     window.addEventListener("master:visual", (event) => ingest(event?.detail ?? {}), { passive: true });
     document.addEventListener("visibilitychange", () => { if (!document.hidden) ensureFrame(); }, { passive: true });
@@ -441,5 +536,5 @@ void main() {
     ensureFrame();
   }
 
-  boot();
+  loadAvatar().then(boot);
 })();
