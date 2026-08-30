@@ -131,7 +131,13 @@ module Deploy
             next
           end
           @desync = true if started
-          raise Timeout, "websocket read timeout#{started ? " mid-frame" : ""}"
+          # CdpSession::Timeout, not Timeout. Bare `Timeout` resolves to the
+          # stdlib module here — every sibling raise in this file qualifies the
+          # constant — and `raise <Module>` is a TypeError, so a websocket read
+          # timeout crashed the run with "exception class/object expected"
+          # instead of raising what CdpSession#send_cmd rescues. The reconnect
+          # path written for exactly this transient had never run.
+          raise CdpSession::Timeout, "websocket read timeout#{started ? " mid-frame" : ""}"
         end
 
         chunk = @socket.read_nonblock(count - out.bytesize, exception: false)
