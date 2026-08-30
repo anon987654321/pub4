@@ -104,12 +104,19 @@ module Master
             write_progress_snapshot(unit:, done:, total:, viol_total:, dirty:, top:, elapsed:, eta_s:)
           end
 
+          # An operator reads this line as the verdict, so a tier that could
+          # not run has to appear on it. Without `skipped`, a scan where a
+          # provider spend limit silently removed the whole semantic tier
+          # prints the same "complete=true violations=0" as a scan that
+          # actually looked.
           def log_scan_completion(unit:, done:, total:, viol_total:, dirty:, elapsed:)
-            Master::Trace::Dmesg.kv(
-              unit,
+            fields = {
               complete: true, files: total, violations: viol_total,
-              dirty_files: dirty, elapsed_s: elapsed.round
-            )
+              dirty_files: dirty, elapsed_s: elapsed.round,
+            }
+            skipped = Master::Ground::QuotaGate.report
+            fields[:skipped] = skipped if skipped
+            Master::Trace::Dmesg.kv(unit, **fields)
           end
 
           def checkpoint_step(total)

@@ -4,6 +4,7 @@ require "json"
 require "net/http"
 require "uri"
 require_relative "../ground/failure_taxonomy"
+require_relative "../ground/quota_gate"
 # model_exists?, cancel_prediction and cancel_training all rescue into
 # Ground::Swallow, and nothing required it. Under a full MASTER boot something
 # else had loaded it first; loaded standalone -- which is how STUDIO/repligen
@@ -140,6 +141,14 @@ module Master
       # A 4xx other than 429 means the request itself is wrong and retrying
       # retries repeat the same failure.
       TransientError = Class.new(StandardError)
+      # A spend limit. The status codes alone could not tell this apart: a
+      # 402 already fell through to the plain raise and was handled correctly
+      # by accident, but Replicate also answers 429 when the account is out of
+      # budget rather than merely too fast — and TRANSIENT_STATUS reads every
+      # 429 as a throttle, so those were retried three times with backoff to
+      # buy the same refusal three times. Named so the retry loop can tell a
+      # wait that will help from one that cannot.
+      ExhaustedError = Class.new(StandardError)
 
       CONFIG_PATH = File.expand_path("~/.config/repligen/config.json").freeze
       BASE = "https://api.replicate.com/v1"
@@ -302,15 +311,31 @@ module Master
             end
             code = res.code.to_i
             return JSON.parse(res.body) if code.between?(200, 299)
-            raise TransientError, "Replicate API #{code}: #{res.body}" if TRANSIENT_STATUS.include?(code)
 
-            raise "Replicate API #{code}: #{res.body}"
+            message = "Replicate API #{code}: #{res.body}"
+            raise ExhaustedError, message if exhausted?(code, res.body)
+            raise TransientError, message if TRANSIENT_STATUS.include?(code)
+
+            raise message
+          rescue ExhaustedError => e
+            # Out of the retry loop entirely, and onto the gate: no wait inside
+            # this run makes the account solvent, and the caller needs to know
+            # the capability is gone rather than that one call failed.
+            Master::Ground::QuotaGate.trip!(source: "replicate", message: e.message, model: uri.path)
+            raise
           rescue TransientError, Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNRESET, Errno::ETIMEDOUT => e
             last_error = e.message
             sleep(Master::Ground::FailureTaxonomy.backoff_seconds(attempt)) if attempt < attempts - 1
           end
         end
         raise last_error
+      end
+
+      # 402 is unambiguous. Beyond it, the body is the only thing that
+      # separates "you are going too fast" from "you have no budget", and both
+      # arrive as 429.
+      def exhausted?(code, body)
+        code == 402 || Master::Ground::QuotaGate.exhaustion?(body.to_s)
       end
 
       def cancel_prediction(id)

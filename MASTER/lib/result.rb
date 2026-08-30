@@ -34,7 +34,7 @@ module Master
     module ErrClassification
       # Worth trying again as-is, or after a wait: the failure is in the
       # environment rather than in what was asked.
-      RETRIABLE = %i[infrastructure timeout provider_error llm_failure llm_call_failure rate_limit].freeze
+      RETRIABLE = %i[infrastructure timeout provider_error llm_failure llm_call_failure rate_limit exhausted].freeze
 
       # Retrying reproduces it. Either the request is wrong, the answer is no, or
       # the operation is over.
@@ -83,6 +83,7 @@ module Master
       timeout: "operation exceeded deadline",
       rate_limit: "tier rate limit exceeded",
       budget: "cost limit hit",
+      exhausted: "paid provider spend limit — the tier could not run (Ground::QuotaGate)",
       policy: "blocked by policy / kernel rule",
       shutdown: "user quit / shutdown requested",
       abort: "operation aborted",

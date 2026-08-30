@@ -31,7 +31,7 @@ spine:
   # detector for DRY, MiddleManRule for the over-engineering half of
   # engineering_fit, and StrunkPass's brevity mode wired onto conversational
   # output so a terse reply sheds its padding, not its structure.
-  lib_body_ceiling: 37236
+  lib_body_ceiling: 37464
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753
@@ -40,7 +40,18 @@ spine:
   introduced: "2026-07-30"
   # Raises standing since the last fall. lint:spine refuses another once this
   # reaches consecutive_raises_allowed; a genuine fall clears it.
-  raised: []
+  raised:
+  - >-
+    lib/ground/quota_gate.rb and the paths that read it. A paid provider limit
+    was discovered once per persona and once per file, and the tier it deleted
+    left no mark on the verdict, so a run that could not review reported the
+    same as one that did. The lines buy three things nothing else held. The
+    limit is now its own failure class rather than a rate limit, one trip
+    serves the whole process instead of N refusals bought at N call sites, and
+    the skipped tier travels with the result so a summary cannot fold "could
+    not run" into "passed". They also buy the resume — the gate re-probes on
+    the taxonomy's own backoff, so the tier comes back without a code change or
+    an operator remembering a reset.
   consecutive_raises_allowed: 2
   # A tripwire on new top-level concepts in the fold, not on line count. Counted
   # as lib/{core.rb,core/*.rb} — the entrypoint plus the directory — so the glob
@@ -73,7 +84,16 @@ pub4_source_ceilings:
   # (untracked) less lora/curate.rb (deleted, uncommitted) -- two thirds of it
   # is work nobody has landed, and a ceiling raised to fit uncommitted files
   # is the swallowing the note warns about.
-  MASTER: 1040
+  #
+  # 1040 -> 1038 is a fall, not a raise. After face_points_gl.js, MASTER
+  # measured 1036 against a ceiling of 1040. quota_gate.rb and
+  # test/test_quota_gate.rb take it to 1038. Named, both of them: the gate is
+  # the one place that answers "is the paid tier reachable right now", and it
+  # folds into neither failure_taxonomy.rb (which classifies and holds no
+  # state) nor model_skip_cache.rb (which parks one endpoint and cannot speak
+  # for a tier). Locking the number here is what stops the remaining two files
+  # of slack from being spent without an argument.
+  MASTER: 1038
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
   # it belongs beside the other probes and folds into nothing.

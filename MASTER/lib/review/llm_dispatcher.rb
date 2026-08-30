@@ -344,6 +344,11 @@ module Master
 
       def record_provider_outcome(model, status, latency_ms: nil, error: nil)
         Ground::ModelQuota.record(model) if status == :success
+        # Every model call in the tree passes here, so this is the one place a
+        # provider limit can be observed to have lifted. A paid call that came
+        # back is the only evidence that matters; the gate re-probes on its own
+        # backoff and this is what closes the loop when the probe succeeds.
+        Ground::QuotaGate.clear! if status == :success
         unless status == :success
           Ground::ModelSkipCache.skip!(model, reason: error || status.to_s, category: status)
         end

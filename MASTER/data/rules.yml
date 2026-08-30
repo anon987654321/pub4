@@ -336,6 +336,15 @@ phantom_recovery:
   - switch model tier (escalate or fall back) on second occurrence
   - publish phantom:detected event, halt loop on third
 failure_taxonomy:
+  # A paid provider spend limit — out of credit, over quota. No examples key:
+  # the pattern is Fix::Constants::EXHAUSTED_RE, because the examples grammar
+  # (word_word -> word[ ._-]?word) cannot express the bare HTTP 402 this failure
+  # often arrives as. max_retries is 0 because an in-place retry cannot succeed;
+  # recovery is Ground::QuotaGate re-probing on FailureTaxonomy.backoff_seconds,
+  # not a retry count here.
+  exhausted:
+    strategy: pause_and_reprobe
+    max_retries: 0
   transient:
     examples:
     - network_timeout

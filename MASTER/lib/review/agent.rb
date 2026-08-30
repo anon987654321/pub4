@@ -66,7 +66,7 @@ module Master
 
       def ask(prompt, context: nil, operation: nil, image: nil, temperature: nil)
         messages = Array(context) + [{ role: "user", content: filter_prompt(apply_reasoning_mode(prompt)) }]
-        selected_model = operation ? model_for(operation:) : routed_models.first
+        selected_model = live_model(operation ? model_for(operation:) : routed_models.first)
         result = @dispatcher.send_with_cache(selected_model, messages, stream: false, image:, temperature:)
         result = retry_on_broke_lane(result, selected_model, messages, image:, temperature:)
         raise StandardError, result.message if result.is_a?(Master::Result::Err)
@@ -82,7 +82,7 @@ SINGLE_CALL_FAILOVER = %i[budget rate_limit timeout no_api_key].freeze
 
       def ask_once(prompt, system: nil, model: nil, image: nil, temperature: nil)
         messages = [{ role: "user", content: filter_prompt(prompt) }]
-        chosen = model || self.model
+        chosen = live_model(model || self.model)
         result = @dispatcher.send_with_cache(chosen, messages, system: filter_prompt(system), stream: false, image:, temperature:)
         result = retry_on_broke_lane(result, chosen, messages, system: filter_prompt(system), image:, temperature:)
         raise StandardError, result.message if result.is_a?(Master::Result::Err)
@@ -130,10 +130,46 @@ end
         return result unless result.is_a?(Master::Result::Err) && single_call_failover_categories.include?(result.category)
 
         fallback = single_call_fallback_model
-        return result unless fallback && fallback != chosen
+        # Nothing left to hop to, so this stops being one model's problem and
+        # becomes the tier's: recorded on the gate, which is what the council
+        # and the semantic rules ask before spending the next call.
+        unless fallback && fallback != chosen
+          Ground::QuotaGate.trip_if_limited(source: "agent single-shot", message: result.message, model: chosen)
+          return result
+        end
 
         @bus&.publish("llm:ask_once_failover", from: chosen, to: fallback, category: result.category)
-        @dispatcher.send_with_cache(fallback, messages, system:, stream: false, image:, temperature:)
+        hopped = @dispatcher.send_with_cache(fallback, messages, system:, stream: false, image:, temperature:)
+        if hopped.is_a?(Master::Result::Err)
+          Ground::QuotaGate.trip_if_limited(source: "agent single-shot", message: hopped.message, model: fallback)
+        else
+          # The lane that answered is not the lane that was routed to. Recorded
+          # rather than quietly accepted: a council whose personas ran on a
+          # substitute model is worth far more than one that did not run, and
+          # worth nothing at all if the verdict does not say so.
+          Ground::QuotaGate.substituted(from: chosen, to: fallback)
+        end
+        hopped
+      end
+
+      # Route around a model the skip cache has already parked for a spend
+      # limit or a refused key. The single-shot doors ask once per persona and
+      # once per file, so without this the same dead endpoint is bought
+      # twenty-six times to learn one fact. Only quota and auth categories
+      # divert: a timeout or a 5xx wants the same lane again, which is what the
+      # in-place retry above exists for.
+      DIVERT_CATEGORIES = %i[budget quota_exceeded auth_error no_api_key].freeze
+
+      def live_model(selected)
+        return selected unless DIVERT_CATEGORIES.include?(Ground::ModelSkipCache.skip_category(selected))
+
+        fallback = single_call_fallback_model
+        return selected unless fallback && fallback != selected
+
+        @bus&.publish("llm:skip_cache_hop", from: selected, to: fallback,
+                                            reason: Ground::ModelSkipCache.skip_reason(selected))
+        Ground::QuotaGate.substituted(from: selected, to: fallback)
+        fallback
       end
 
       # The claude_code chain's head — read through ModelRouter, the one

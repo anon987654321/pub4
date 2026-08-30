@@ -13,6 +13,26 @@ module Master
           end
 
           def agent? = !@agent.nil?
+
+          # The semantic tier is the only rule tier that spends money, so it is
+          # the only one a provider spend limit can silently delete. Returning
+          # [] on every file without recording why is what makes a run of
+          # unscanned files read as a clean bill of health, so the skip is
+          # named on the gate before it is taken.
+          def quota_paused?
+            return false unless Master::Ground::QuotaGate.blocked?
+
+            Master::Ground::QuotaGate.skipped("semantic rules")
+            true
+          end
+
+          # A model call came back with a spend limit or a refused key. Trip
+          # once for the whole tier rather than once per file: 4,663 identical
+          # log entries is what this rule population produced the last time a
+          # per-file failure was recorded per file.
+          def note_model_failure(error)
+            Master::Ground::QuotaGate.trip_if_limited(source: "semantic rule #{@id}", message: error.message)
+          end
         end
 
         # Steelman-first red-team: the model must defend the code before it can attack it.
@@ -62,6 +82,7 @@ module Master
 
           def check(code, path:)
             return [] unless @agent
+            return [] if quota_paused?
             return [] unless (lang = language(path))
 
             prompt = format(PROMPT_TEMPLATE, path: File.basename(path),
@@ -73,7 +94,9 @@ module Master
             # A missing key is the offline case and stays quiet; any other error
             # is a real fault that must surface rather than read as "no findings".
             # Either way the answer is [], never the nil the bare `if` returned.
-            unless e.message.to_s =~ /missing configuration|api.?key|unauthorized|no.*provider/i
+            # A spend limit is neither: it is a tier-wide pause, recorded once
+            # on the gate so the run says the tier did not run.
+            unless note_model_failure(e) || e.message.to_s =~ /missing configuration|api.?key|unauthorized|no.*provider/i
               Master::Ground::Swallow.log(e, context: "#{self.class}#check", severity: :load_bearing, path:)
             end
             []
@@ -125,6 +148,7 @@ module Master
 
           def check(code, path:)
             return [] unless language(path) && @agent
+            return [] if quota_paused?
 
             reload_semantic_rules_if_stale
             cache_key = semantic_cache_key(path, code)
@@ -138,7 +162,9 @@ module Master
             # A missing key is the offline case and stays quiet; any other error
             # is a real fault that must surface rather than read as "no findings".
             # Either way the answer is [], never the nil the bare `if` returned.
-            unless e.message.to_s =~ /missing configuration|api.?key|unauthorized|no.*provider/i
+            # A spend limit is neither: it is a tier-wide pause, recorded once
+            # on the gate so the run says the tier did not run.
+            unless note_model_failure(e) || e.message.to_s =~ /missing configuration|api.?key|unauthorized|no.*provider/i
               Master::Ground::Swallow.log(e, context: "#{self.class}#check", severity: :load_bearing, path:)
             end
             []
@@ -314,6 +340,7 @@ module Master
 
           def check(code, path:)
             return [] unless path.end_with?(".rb") && @agent
+            return [] if quota_paused?
             pairs = extract_pairs(code)
             return [] if pairs.empty?
             response = @agent.ask(build_prompt(pairs, path), operation: :scan_comment_drift).to_s
@@ -329,6 +356,8 @@ module Master
             # compete with when someone finally reads the log. Absence is
             # cosmetic and recorded once; misbehaviour stays load-bearing and
             # recorded every time.
+            return [] if note_model_failure(e)
+
             severity = absent_capability?(e) ? :cosmetic : :load_bearing
             return [] if severity == :cosmetic && @capability_absent
 

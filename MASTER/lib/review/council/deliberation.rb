@@ -122,6 +122,13 @@ module Master
           active = active_personas(personas)
           return Result.err("council: no personas, or no provider key", category: :validation) if active.empty? || !Master.any_api_key_present?
 
+          # The gate answers before the panel is convened, not per persona.
+          # Blocked here means the provider said "out of credit" recently
+          # enough that the re-probe is not due yet; the council is a paid
+          # tier, so it is skipped and says so rather than spending 26 calls
+          # to relearn one fact.
+          return exhausted_error if Ground::QuotaGate.blocked?
+
           context = reflexion_context(context)
           feedback = collect_feedback(active, code, context)
           quorum = quorum_error(feedback)
@@ -132,6 +139,7 @@ module Master
 
           append_judge_synthesis(feedback:, code:, context:)
           publish_confidence(feedback)
+          announce_substitution
           Result.ok(feedback)
         rescue StandardError => e
           Result.err("council: #{e.message}", category: :unknown)
@@ -177,10 +185,45 @@ module Master
           # operator into the per-persona log lines to learn that the answer
           # was "OpenRouter is out of credits" — the reasons were already
           # collected one layer down, and the error is where they get read.
+          #
+          # A spend limit gets its own category so a chain stage can branch on
+          # "this tier could not run" instead of parsing prose, and so the
+          # verdict never folds "could not run" into "timed out".
+          limited = Ground::QuotaGate.tripped?
           Result.err(
-            "council: quorum not reached (#{feedback.size}/#{@personas.size})#{failure_summary}",
-            category: :timeout,
+            "council: quorum not reached (#{feedback.size}/#{@personas.size})" \
+            "#{failure_summary}#{quota_note}",
+            category: limited ? Ground::QuotaGate::CATEGORY : :timeout,
           )
+        end
+
+        # The council did not run and the answer is not "clean". Carries the
+        # gate's own report so the reason and the re-probe ETA travel with the
+        # verdict rather than living only in a log line.
+        def exhausted_error
+          Ground::QuotaGate.skipped("council")
+          Result.err("council: #{Ground::QuotaGate.report}", category: Ground::QuotaGate::CATEGORY)
+        end
+
+        # A panel that answered on a stand-in model declares it on the pass as
+        # well as on the failure. Two councils that ran on different models are
+        # not two readings of the same thing, and silence here is what would
+        # let them compare as though they were.
+        def announce_substitution
+          note = Ground::QuotaGate.substitution_note
+          return unless note
+
+          @bus&.publish("council:substituted", swaps: Ground::QuotaGate.substitutions)
+          Master::Trace::Dmesg.status("council0", note)
+        end
+
+        # Appended unconditionally: both halves are nil on a healthy run. The
+        # substitution half stands alone, because a panel that answered on a
+        # stand-in model has something to declare even when nothing tripped.
+        def quota_note
+          Ground::QuotaGate.skipped("council") if Ground::QuotaGate.tripped?
+          parts = [Ground::QuotaGate.report, Ground::QuotaGate.substitution_note].compact
+          parts.empty? ? "" : " — #{parts.join(" — ")}"
         end
 
         def failure_summary
@@ -221,20 +264,26 @@ module Master
         end
 
         def collect_parallel(code:, context:, personas: @personas)
-          return [] if circuit_open?
+          return [] if circuit_open? || Ground::QuotaGate.blocked?
 
           deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + TOTAL_BUDGET_S
-          personas.each_slice(MAX_CONCURRENT).flat_map do |batch|
+          personas.each_slice(MAX_CONCURRENT).each_with_object([]) do |batch, feedback|
+            # A batch already in flight cannot be recalled, but the batches
+            # after it can: one confirmed spend limit ends the round rather
+            # than buying the same refusal 22 more times.
+            break feedback if Ground::QuotaGate.blocked?
+
             threads = batch.map do |persona|
               Thread.new { ask_persona(persona:, code:, context:) }
             end
-            threads.filter_map { |thread| join_or_kill(thread, deadline) }
+            feedback.concat(threads.filter_map { |thread| join_or_kill(thread, deadline) })
           end
         end
 
         def collect_sequential(code:, context:, personas: @personas)
           deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + TOTAL_BUDGET_S
           personas.each_with_object([]) do |persona, feedback|
+            break feedback if Ground::QuotaGate.blocked?
             break feedback if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline || circuit_open?(persona)
 
             turn_context = feedback.empty? ? context : "#{context}\n\nprior turns:\n#{format_prior_turns(feedback)}"
@@ -272,6 +321,11 @@ module Master
         end
 
         def ask_persona(persona:, code:, context:)
+          # Checked here as well as per batch: the four threads of a batch
+          # queue behind the dispatcher's CLI slots, so the ones still waiting
+          # when the first comes back refused can be spared their own refusal.
+          return quota_skipped(persona) if Ground::QuotaGate.blocked?
+
           model = persona.respond_to?(:model) ? persona.model : nil
           temperature = persona.respond_to?(:temperature) ? persona.temperature : nil
           prompt = build_prompt(persona:, code:, context:)
@@ -284,10 +338,35 @@ module Master
           @bus&.publish(:council_feedback, entry)
           entry
         rescue StandardError => e
-          @bus&.publish("council:persona_error", persona: persona.name, error: e.message)
-          Master::Trace::Dmesg.status("council0", "persona_error persona=#{persona.name} #{e.class}: #{e.message}")
-          @persona_failures_lock.synchronize { @persona_failures << failure_reason(e.message) }
+          note_persona_failure(persona, e)
           nil
+        end
+
+        # A persona that never got asked. Tallied apart from the ones that did,
+        # so "quorum not reached" distinguishes calls that failed from calls
+        # that were deliberately not spent.
+        def quota_skipped(persona)
+          @bus&.publish("council:persona_skipped", persona: persona.name, reason: :quota)
+          @persona_failures_lock.synchronize { @persona_failures << "skipped_spend_limit" }
+          nil
+        end
+
+        # One spend limit is one fact about the account, not N facts about N
+        # personas. QuotaGate announces the first and returns false to everyone
+        # after it, so the remaining personas only add to the tally — which is
+        # what the operator reads anyway.
+        def note_persona_failure(persona, error)
+          @bus&.publish("council:persona_error", persona: persona.name, error: error.message)
+          limited = Ground::QuotaGate.trip_if_limited(
+            source: "council persona #{persona.name}", message: error.message,
+            model: (persona.model if persona.respond_to?(:model)),
+          )
+          unless limited
+            Master::Trace::Dmesg.status(
+              "council0", "persona_error persona=#{persona.name} #{error.class}: #{error.message}"
+            )
+          end
+          @persona_failures_lock.synchronize { @persona_failures << failure_reason(error.message) }
         end
 
         def persona_entry(persona, response, model)

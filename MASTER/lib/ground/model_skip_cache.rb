@@ -54,6 +54,14 @@ module Master
         @mutex.synchronize { @skips[model.to_s]&.dig(:reason) }
       end
 
+      # Why the model is parked, as the symbol the Result carried. A caller
+      # that must decide whether to route around this model or merely retry it
+      # needs the kind, not the prose: a spend limit or a refused key wants a
+      # different lane, a timeout wants the same one again.
+      def skip_category(model)
+        @mutex.synchronize { @skips[model.to_s]&.dig(:category)&.to_sym }
+      end
+
       def filter(models)
         Array(models).reject { |model| skipped?(model) }
       end
