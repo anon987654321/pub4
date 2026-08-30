@@ -15690,7 +15690,7 @@ end
 # --- Live playback ---
 
 # Render a short preview and play it immediately via ffplay.
-TTS_WORKER = File.expand_path("../../bin/tts-worker", ROOT)
+TTS_WORKER = File.expand_path("../../MASTER/bin/tts-worker", ROOT)
 # Funny-but-clear Edge voices — avoid heavy pitch/effects that hurt intelligibility.
 SPEECH_VOICES = %w[en-US-AndrewNeural en-US-GuyNeural en-US-BrianMultilingualNeural].freeze
 SPEECH_VOICE_DEFAULT = "en-US-AndrewNeural"
@@ -15891,8 +15891,8 @@ end
 
 def speech_over_track_enabled?
   return false if ENV["SPEAK"] == "0"
-  # Was auto-on whenever DILLA_STREAMING=1; now requires explicit SPEAK=1.
-  ENV["SPEAK"] == "1"
+  # Bare `ruby dilla.rb` turns SPEAK on. Stream still has to ask.
+  ENV["SPEAK"] == "1" || ENV["SPEAK"].to_s.empty?
 end
 
 def speak_over_track!(mp3_path, duration, _bpm = 90.0)
@@ -15951,6 +15951,79 @@ def speak_over_track!(mp3_path, duration, _bpm = 90.0)
   mp3_path
 ensure
   segments&.each { |s| FileUtils.rm_f(s[:path]) } # scan: intentional — removes only the temp files this method rendered
+end
+
+# The README, spoken. Stripped of the video tag, the fences, and the
+# markdown so Edge TTS reads the argument, not the markup.
+def master_readme_speech_text
+  path = File.expand_path("../../MASTER/README.md", ROOT)
+  body = File.read(path)
+  body = body.sub(/<!--.*?-->/m, "")
+  body = body.sub(/<video[\s\S]*?<\/video>/i, "")
+  body = body.sub(/\A#\s*MASTER\s*/, "")
+  body = body.split(/^#### /).first.to_s
+  body = body.gsub(/```[\s\S]*?```/, "")
+  body = body.gsub(/^\s*#+\s*/, "")
+  body = body.gsub(/\[([^\]]+)\]\([^)]+\)/, '\1')
+  body = body.gsub(/[*_`]/, "")
+  body.lines.map(&:strip).reject { |line| line.empty? || line.match?(/\A[\p{Emoji}\s.]+\z/) }.join(" ").gsub(/\s+/, " ").strip
+end
+
+def write_readme_tts!(dest)
+  text = master_readme_speech_text
+  abort "dilla: MASTER/README.md produced no speakable prose" if text.length < 40
+  FileUtils.mkdir_p(File.dirname(dest))
+  mp3 = dest.sub(/\.wav\z/i, ".mp3")
+  voice = speech_tts_voice
+  rate = speech_tts_rate
+  pitch = speech_tts_pitch
+  ok = false
+  Open3.popen2(Gem.ruby, TTS_WORKER, voice, rate, pitch, mp3) do |stdin, _stdout, wait|
+    stdin.write(text)
+    stdin.close
+    ok = wait.value.success?
+  end
+  abort "dilla: README TTS failed (#{voice})" unless ok && File.size?(mp3).to_i > 500
+  if dest.end_with?(".wav")
+    sh! "ffmpeg", "-y", "-i", mp3, "-ac", "2", "-ar", "44100", dest
+    FileUtils.rm_f(mp3)
+  else
+    FileUtils.mv(mp3, dest)
+  end
+  dest
+end
+
+# Bare invoke. Every mix/speech/stem knob the README loop needs is on here
+# so `ruby dilla.rb` is the whole command — no flags, no ENV.
+README_LOOP_DEFAULTS = {
+  "SPEAK" => "1",
+  "SCRAMBLE_SPEECH" => "0",
+  "SPEAK_QUIRK" => "0",
+  "SPEAK_RATE" => "+0%",
+  "STEM_EXPORT" => "1",
+  "KEEP_STEMS" => "1",
+  "COMPOSITION" => "1",
+  "DILLA_QUALITY_GATE" => "1",
+  "LISTEN_PASSES" => "2",
+  "MOTIF_RECALL" => "1",
+  "LAYER_KICK" => "1",
+  "BACKBEAT_CLAP" => "1",
+  "HARMONY_LEAD" => "1",
+  "BARS" => "8",
+}.freeze
+
+def readme_loop!
+  force_env!(README_LOOP_DEFAULTS, label: "README_LOOP_DEFAULTS")
+  ENV["RENDER_MODE"] = "record" if ENV["RENDER_MODE"].to_s.empty?
+  apply_render_mode!
+  dest = File.join(OUTPUT_DIR, "loop.wav")
+  tts = File.join(OUTPUT_DIR, "tts.wav")
+  n_bars = ENV.fetch("BARS", "8").to_i
+  dmesg("readme TTS -> #{File.basename(tts)}", unit: "speech0", parent: "dilla0")
+  write_readme_tts!(tts)
+  dmesg("readme loop #{n_bars} bars -> #{File.basename(dest)}", unit: "loop0", parent: "dilla0")
+  render_dilla(dest, n_bars)
+  dest
 end
 
 # --------------------------------------------------------------------------
@@ -27474,8 +27547,8 @@ def help
   puts <<~HELP
     Dilla Lab — unified audio engine (#{ROOT})
 
-    DEFAULT (no command — finite catalogue showcase to demo.wav)
-      ruby dilla.rb                    Bare invoke: showcase_demo! (every named track, a few bars)
+    DEFAULT (no command — loop.wav + tts.wav of MASTER/README.md)
+      ruby dilla.rb                    Bare invoke: readme_loop! (stems, speech, quality gate)
       ruby dilla.rb stream [bars]      Continuous stream (speakers via afplay/ffplay)
       ruby dilla.rb out.wav [bars]     One-shot render to path (not stream)
       ruby dilla.rb dilla [out] [bars] One-shot kit-forward render
@@ -27518,7 +27591,7 @@ def help
       DILLA_FORCE_TERMINAL=1         macOS: open Terminal.app for speaker playback
       KICKS=1 (default in stream)      Layered 808-style kicks in the drum bus
       KICK_GAIN=0.88 (style DNA wins after stream extra defaults)
-      SPEAK=0 (stream default)         TTS off; SPEAK=1 overlays pickup lines
+      SPEAK=1 (bare default)           README TTS to tts.wav; SPEAK=0 skips it
       SPEAK_VOICE=en-US-AndrewNeural   Funny-clear voice (GuyNeural also works)
       SPEAK_RATE=-48%                  Slower speech (default in stream)
       SPEAK=0                          Beat only — skip speech overlay
@@ -34339,6 +34412,7 @@ DISPATCH = {
     name = ARGV.shift or abort "usage: ruby dilla.rb balance <#{BALANCE_VARIANTS.keys.join("|")}>"
     render_balance(name)
   end,
+  "loop" => -> { readme_loop! },
   # Every record in the demo crate against three progressions.
   "demo" => -> { generate_demo },
   # Master the tracklist in data/album_tracks.yml into one crossfaded record.
@@ -34401,25 +34475,11 @@ if __FILE__ == $PROGRAM_NAME
 
   cmd = ARGV.shift
   if cmd.nil?
-    # Bare invoke: render demo.wav showcasing every named style/progression,
-    # a few bars each. Used to default to stream() (an infinite live-playback
-    # loop needing afplay/ffplay + real speakers) -- that's still available
-    # explicitly via `ruby dilla.rb stream`, but convention-over-configuration
-    # means the zero-args path should finish and produce a real file, runnable
-    # headless/over SSH, not hang forever waiting on an audio device.
-    # Bare invoke renders THE demo -- every progression, every synth emulation,
-    # the timing work, the whole catalogue -- not a short showcase of it.
-    #
-    # It used to call showcase_demo!, a few bars of each named style. That is a
-    # different and much smaller artifact, and the difference was invisible from
-    # the command line: both wrote a demo and both finished. So "render the demo"
-    # and "render the demo" meant two things depending on which one you knew
-    # about, and the operator had to ask for demo-all by name every time to get
-    # the one that showcases the engine.
-    #
-    # `ruby dilla.rb demo-all` still works and is the same call. showcase_demo! is
-    # still reachable as `ruby dilla.rb showcase`.
-    demo_all
+    # Bare invoke: loop.wav of the engine and tts.wav of MASTER/README.md.
+    # Every mix/speech/stem knob that path needs is already on, so the
+    # command line is empty. `ruby dilla.rb demo-all` still renders the
+    # catalogue; `ruby dilla.rb stream` is still the live speaker loop.
+    readme_loop!
   elsif render_output_path?(cmd) && !DISPATCH.key?(cmd)
     ARGV.unshift(cmd)
     default_render!
