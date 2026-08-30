@@ -66,7 +66,7 @@ module Pub4
 
     def all(deep: false)
       rows = spine_rows + master_yaml_rows + rails_lint_rows + pub4_growth_rows +
-             file_length_rows + coverage_rows
+             entrypoint_rows + file_length_rows + coverage_rows
       # The placeholders only when the real numbers are not being fetched, or
       # every css_budget rule would appear twice under --deep.
       rows += deep ? css_constitution_rows : css_budget_rows
@@ -201,6 +201,33 @@ module Pub4
     rescue StandardError => e
       [Row.new(name: "growth", current: nil, ceiling: nil, direction: :down,
                source: "MASTER/data/spine.yml", note: "unreadable: #{e.class}")]
+    end
+
+    # The count CLAUDE.md's "two surfaces, no third" asserts. It was prose, so it
+    # rotted from 2 to 28 in silence; this is the reader that makes it fail.
+    # Executables directly under a tree's own bin/, so a Rails app's generated
+    # bin/rails and a STUDIO tool's private bin/ are not mistaken for surfaces.
+    def entrypoint_rows
+      ceilings = YAML.safe_load_file(File.join(MASTER, "data/spine.yml")).fetch("pub4_entrypoint_ceilings")
+      ceilings.map do |tree, ceiling|
+        Row.new(name: "entrypoints.#{tree.downcase}", current: entrypoint_count(tree),
+                ceiling: ceiling, direction: :down, source: "MASTER/data/spine.yml",
+                note: "commands the tree offers; folding one in is how this falls")
+      end
+    rescue StandardError => e
+      [Row.new(name: "entrypoints", current: nil, ceiling: nil, direction: :down,
+               source: "MASTER/data/spine.yml", note: "unreadable: #{e.class}")]
+    end
+
+    # Tracked, not on-disk: an untracked script in a shared checkout is another
+    # session's scratch and not a surface this repo offers anyone.
+    def entrypoint_count(tree)
+      out, status = Open3.capture2e("git", "-C", ROOT, "ls-files", "-z", "#{tree}/bin")
+      return nil unless status.success?
+
+      out.split("\0").count do |path|
+        path.count("/") == 2 && File.executable?(File.join(ROOT, path))
+      end
     end
 
     def tree_source_count(dir)

@@ -9,7 +9,11 @@
 #   contributor  fast: unit suite + data singularity
 #   agent        law/agent changes: selftest + data singularity
 #   web          the face: static web UI (+ live web when MASTER_WEB_LIVE=1)
-#   full         operator-grade gate: bin/ci + bin/probe all + rake audit
+#   ci           what GitHub Actions runs; MASTER_CI_FULL/WEB/BROWSER widen it
+#   full         operator-grade gate: ci + bin/probe all + rake audit
+#
+# `bin/pub4 gate` runs this as one stage of the repo-wide chain, alongside the
+# scanner, the RAILS gates, the ratchets and the sprawl census.
 #
 # Steps compose from two makers (rake / bin), so a new profile is one line of data.
 
@@ -25,7 +29,7 @@ BUNDLE = Pub4::RubyRunner.bundle_cmd
 profile = "operator"
 format = "human"
 OptionParser.new do |parser|
-  parser.banner = "usage: bin/check [--profile operator|contributor|agent|web|full] [--format human|brief]"
+  parser.banner = "usage: bin/check [--profile operator|contributor|agent|web|ci|full] [--format human|brief]"
   parser.on("--profile=NAME") { |value| profile = value }
   parser.on("--format=NAME") { |value| format = value }
 end.parse!
@@ -49,6 +53,37 @@ node_bin = ENV["PATH"].to_s.split(File::PATH_SEPARATOR).push("/usr/local/bin")
 # /fix step rewrites the whole shared worktree, and until STUDIO/gate.rb there
 # was nothing in any profile that noticed. It costs ~3s: parse is in-process AST
 # and the two load probes are about a second each.
+
+# One list of CI steps, not two.
+#
+# `bin/ci` kept its own copy of these rake tasks beside this file's profiles:
+# the same seven steps declared twice, free to drift, and `--profile=full`
+# shelled out to that copy — so full ran selftest and core_smoke once through
+# bin/ci and again through `rake audit`, and paid for both. bin/ci is this
+# profile now, and full composes the list rather than re-running the script.
+#
+# The three MASTER_CI_* widenings are the workflow's, kept here because the
+# workflow sets them and this is where the steps they add are declared.
+ci_steps = [rake["test"], rake["test:core"], rake["test:subsystems"], rake["spec"],
+            rake["selftest"], rake["lint:data_singularity"], rake["core_smoke"]]
+ci_steps += [run_bin["smoke"], rake["selfcheck"], rake["constitution"]] if ENV["MASTER_CI_FULL"] == "1"
+ci_steps += [rake["test:web"], rake["test:integration_web"]] if ENV["MASTER_CI_WEB"] == "1"
+if ENV["MASTER_CI_BROWSER"] == "1"
+  webgl = File.join(ROOT, "web", "script", "probe_webgl_guard.mjs")
+  if node_bin && File.file?(webgl)
+    # The probe reads this itself; without it a machine with no browser reports
+    # a pass having launched nothing.
+    ENV["PROBE_REQUIRE_BROWSER"] ||= "1"
+    ci_steps << ["webgl probe", node_bin, webgl]
+  else
+    warn "check[ci]: webgl probe skipped — #{node_bin ? "missing #{webgl}" : 'no node'}"
+  end
+end
+
+# rake audit already runs selftest, core_smoke and constitution, so full lists
+# the CI steps that audit does not cover rather than the whole of ci.
+full_ci = ci_steps.reject { |step| ["selftest", "core_smoke", "constitution"].include?(step.first) }
+
 PROFILES = {
   "operator"    => [rake["test"], rake["spec"], rake["test:subsystems"], rake["security_sweep"],
                     rake["test:core"], rake["lint:data_singularity"], rake["lint:dedup"], rake["studio"]],
@@ -65,7 +100,8 @@ PROFILES = {
   "web"         => [["web ui static", RUBY, "-Ilib:test", "test/test_web_ui.rb"],
                     *(node_bin ? [["web ui behaviour", node_bin, "--test", *Dir[File.join(ROOT, "web/test/*.test.mjs")].sort]] : []),
                     *(web_live ? [rake["test:web"], rake["test:integration_web"]] : [])],
-  "full"        => [run_bin["ci"], run_bin["probe", "all"], rake["audit"]],
+  "ci"          => ci_steps,
+  "full"        => [*full_ci, run_bin["probe", "all"], rake["audit"]],
 }.freeze
 
 # line count awareness (soul SIMPLEST_WORKS, file warn 200/hard 300)

@@ -18,6 +18,7 @@ def usage
     pub4 — repo-wide operator surface
 
     Usage:
+      bin/pub4 gate [--scan-only] [--only=a,b] [--list]  every gate in the repo, fixing as it goes
       bin/pub4 status [--json]
       bin/pub4 vps state [--json] [--remote]
       bin/pub4 vps deploy <app|master> [--remote]
@@ -52,6 +53,23 @@ end
 
 command = ARGV.shift
 case command
+when "gate"
+  # The whole ladder, autofixing, in one invocation — the default way to find
+  # out whether this repo is conformant. The stages and the reasoning behind
+  # their order live in lib/pub4/gate_chain.rb.
+  #
+  # It writes by default, because a scanner that finds a fixable defect and
+  # leaves it is a scanner whose findings someone has to walk back to later.
+  # --scan-only measures and writes nothing; every stage says which files it
+  # changed, under its own name, so a bad fix is attributable to the stage that
+  # made it rather than to the diff as a whole.
+  require "pub4/gate_chain"
+  scan_only = !ARGV.delete("--scan-only").nil? || ENV["PUB4_GATE_SCAN_ONLY"] == "1"
+  # --explain is the same question people actually ask before starting an hour
+  # of gates: what is this going to run.
+  list = !ARGV.delete("--list").nil? || !ARGV.delete("--explain").nil?
+  only = ARGV.filter_map { |arg| arg[/\A--only=(.+)\z/, 1] }.flat_map { |value| value.split(",") }
+  exit Pub4::GateChain.run(scan_only:, only:, list:)
 when "status", nil
   json = ARGV.include?("--json")
   puts Pub4::StatusReport.new(root: ROOT).render(json:)
@@ -252,7 +270,12 @@ when "test"
               .split("\0").filter_map { |l| l[3..] }
   end
   trees = paths.map { |p| p.split("/").first(2) }
-  abort("pub4 test: STUDIO belongs to its own session — run its checks there") if trees.any? { |t| t.first == "STUDIO" }
+  # A skip, not a refusal. STUDIO belongs to its own session, but this derives
+  # its scope from `git status` in a checkout several sessions share — so one
+  # untracked render under STUDIO/ used to abort the command outright and the
+  # other three trees went untested, which in a shared tree is most of the time.
+  studio, trees = trees.partition { |tree| tree.first == "STUDIO" }
+  warn("pub4 test: skipping #{studio.size} STUDIO path(s) — that tree runs its own checks") if studio.any?
 
   jobs = []
   rails_parts = trees.select { |t| t.first == "RAILS" }.map(&:last).uniq
@@ -274,7 +297,13 @@ when "test"
     runner = 'Dir["test/test_*.rb"].sort.each { |f| system(RbConfig.ruby, f) || abort(f) }'
     jobs << ["OPENBSD minitests", ["ruby", "-e", runner], File.join(ROOT, "OPENBSD"), {}]
   end
-  abort("pub4 test: no suite maps to #{paths.first(3).join(', ')}") if jobs.empty?
+  if jobs.empty?
+    if trees.empty? && studio.any?
+      abort("pub4 test: every path given is STUDIO's — run `rake studio` from MASTER, or name a path elsewhere")
+    end
+
+    abort("pub4 test: no suite maps to #{paths.first(3).join(', ')}")
+  end
 
   failed = jobs.reject do |name, cmd, dir, env|
     puts "== #{name}"

@@ -121,11 +121,6 @@ def check_provider_catalog
   Check.new(name: "provider-catalog", ok: File.exist?(path), detail: File.exist?(path) ? path : "missing")
 end
 
-def check_safety_tests
-  path = File.join(ROOT, "bin", "test-safety")
-  Check.new(name: "test-safety", ok: File.exist?(path), detail: File.exist?(path) ? path : "missing")
-end
-
 $LOAD_PATH.unshift File.join(ROOT, "lib")
 require "master" rescue nil
 
@@ -156,7 +151,6 @@ checks = [
   check_model_quota,
   check_cache_efficiency,
   check_provider_catalog,
-  check_safety_tests,
 ]
 
 puts "MASTER doctor"

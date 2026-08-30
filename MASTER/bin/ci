@@ -1,74 +1,19 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require "open3"
+# The name GitHub Actions, bin/preflight and the vm23 runbook all invoke, over
+# the step list bin/check owns.
+#
+# The steps themselves lived here in a second copy — the same rake tasks
+# bin/check's profiles name, maintained separately and free to drift, with
+# `bin/check --profile=full` shelling out to this file and so paying for
+# selftest and core_smoke twice. One registry now: this resolves to
+# `bin/check --profile=ci`, and MASTER_CI_FULL, MASTER_CI_WEB and
+# MASTER_CI_BROWSER still widen it exactly as before.
+#
+# Kept as a script rather than folded away because the callers are outside this
+# repo's reach: a workflow file, a zsh preflight and an operator's muscle memory.
+
 require "rbconfig"
 
-ROOT = File.expand_path("..", __dir__)
-REPO = File.expand_path("..", ROOT)
-RUBY = RbConfig.ruby
-
-def run_step(name, *cmd, chdir: ROOT, env: nil)
-  print "ci: #{name.ljust(24)} "
-  $stdout.flush
-  env_vars = env ? ENV.to_h.merge(env) : ENV.to_h
-  # Rake steps go through bundler. Without it they resolve against whatever
-  # gems happen to be activated, and `rake test` died on a json version clash
-  # partway through — reporting 177 runs where the same task under bundler
-  # reports 1245, and calling that a CI result. A gate that runs a fifth of the
-  # suite is worse than one that does not run.
-  cmd = ["bundle", "exec", *cmd[2..]] if cmd[0] == RUBY && cmd[1] == "-S"
-  out, status = Open3.capture2e(env_vars, *cmd, chdir: chdir)
-  if status.success?
-    puts "ok"
-    true
-  else
-    puts "fail"
-    warn out unless out.empty?
-    false
-  end
-end
-
-failures = []
-
-failures << "test" unless run_step("rake test", RUBY, "-S", "rake", "test")
-failures << "test:core" unless run_step("rake test:core", RUBY, "-S", "rake", "test:core")
-failures << "test:subsystems" unless run_step("rake test:subsystems", RUBY, "-S", "rake", "test:subsystems")
-failures << "spec" unless run_step("rake spec", RUBY, "-S", "rake", "spec")
-failures << "selftest" unless run_step("rake selftest", RUBY, "-S", "rake", "selftest")
-failures << "data_singularity" unless run_step("rake lint:data_singularity", RUBY, "-S", "rake", "lint:data_singularity")
-# Through the rake task, which is the one place the path and the -I flag are
-# spelled once. This called ROOT/core/spec/core_smoke.rb directly; core/ was
-# folded into lib/ on 2026-08-12 and the file has been at spec/core_smoke.rb
-# since, so the step raised LoadError on every run — meaning bin/ci, and with
-# it `bin/check --profile=full`, could not pass for eleven days.
-failures << "core_smoke" unless run_step("core smoke", RUBY, "-S", "rake", "core_smoke")
-
-if ENV["MASTER_CI_FULL"] == "1"
-  failures << "smoke" unless run_step("smoke", File.join(ROOT, "bin", "smoke"))
-  failures << "selfcheck" unless run_step("selfcheck", RUBY, "-S", "rake", "selfcheck")
-  failures << "constitution" unless run_step("constitution", RUBY, "-S", "rake", "constitution")
-end
-
-if ENV["MASTER_CI_WEB"] == "1"
-  failures << "test:web" unless run_step("rake test:web", RUBY, "-S", "rake", "test:web")
-  failures << "test:integration_web" unless run_step("rake test:integration_web", RUBY, "-S", "rake", "test:integration_web")
-end
-
-if ENV["MASTER_CI_BROWSER"] == "1"
-  probe = File.join(ROOT, "web", "script", "probe_webgl_guard.mjs")
-  if File.file?(probe)
-    env = { "PROBE_REQUIRE_BROWSER" => "1" }
-    failures << "webgl_probe" unless run_step("webgl probe", "node", probe, env: env)
-  else
-    warn "ci: webgl probe skipped — missing #{probe}"
-  end
-end
-
-if failures.empty?
-  puts "ci: clean"
-  exit 0
-end
-
-puts "ci: #{failures.size} failure(s): #{failures.join(', ')}"
-exit 1
+exec(RbConfig.ruby, File.join(__dir__, "check"), "--profile=ci", *ARGV)

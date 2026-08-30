@@ -1,6 +1,17 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# The scan/fix/critique/review pass over all four trees — two stages of the
+# repo-wide chain, not the chain itself. `MASTER/bin/pub4 gate` is the chain:
+# it runs this for the lexical and semantic tiers, then the RAILS gates, the
+# suites, the ratchets and the sprawl census, and attributes every file each
+# stage changed. Run this directly to work on the scanner alone.
+#
+#   ruby bin/gate                      lexical + semantic, full-fix
+#   ruby bin/gate --scan-only          measures, writes nothing
+#   ruby bin/gate --lexical-only       law/ and the scan registry, no council
+#   ruby bin/gate --semantic-only      /critique and /review; exit 3 = not measured
+
 require "open3"
 
 ROOT = File.expand_path("..", __dir__)
@@ -31,23 +42,41 @@ SAFE_ENV = {
 # Prefer SCAN_ONLY=1 in CI/preflight.
 SCAN_ONLY = ENV["MASTER_GATE_SCAN_ONLY"] == "1" || ARGV.include?("--scan-only")
 
+# Two tiers, selectable, because only one of them can currently reach a verdict.
+#
+# The lexical tier is law/ and the scan registry: deterministic detectors, no
+# model, and the half that autofixes. The semantic tier is /critique and
+# /review, which reach the council and therefore a provider — and the provider
+# answers "Insufficient credits", so every semantic stage is inconclusive.
+#
+# Interleaved, as they were, that dead tier aborted the run and the
+# deterministic half which had just passed went unreported. `bin/pub4 gate`
+# runs them as separate stages for exactly that reason, and reports an
+# unreachable semantic tier as skipped rather than as a pass or a failure.
+TIER = if ARGV.include?("--lexical-only")
+         :lexical
+       elsif ARGV.include?("--semantic-only")
+         :semantic
+       else
+         :both
+       end
+
+# One path per invocation: /scan takes a single target, so each tree gets its
+# own pass.
+def lines_for(path)
+  lexical = SCAN_ONLY ? ["/scan --no-autofix #{path}"] : ["/scan #{path}", "/fix #{path}", "/scan #{path}"]
+  semantic = SCAN_ONLY ? ["/critique #{path}"] : ["/critique #{path}", "/review #{path}"]
+  case TIER
+  when :lexical then lexical
+  when :semantic then semantic
+  else lexical + semantic
+  end
+end
+
 COMMANDS = {
-  master: (
-    if SCAN_ONLY
-      ["/scan --no-autofix .", "/critique ."].freeze
-    else
-      [
-        "/scan .",
-        "/fix .",
-        "/scan .",
-        "/critique .",
-        "/review .",
-      ].freeze
-    end
-  ),
+  master: lines_for(".").freeze,
   # DEPLOY was renamed to RAILS + OPENBSD (OPERATOR was later folded into
-  # OPENBSD). /scan takes one path per invocation, so each former DEPLOY
-  # child gets its own pass.
+  # OPENBSD).
   #
   # STUDIO added 2026-08-11. CLAUDE.md names four sibling trees and this list
   # carried two, so dilla, lora, postpro and repligen -- 57 tracked Ruby files
@@ -58,14 +87,9 @@ COMMANDS = {
   # Caveat for the FULL pass, not scan-only: scanner.rb SKIP_PATH_SEGMENTS
   # skips `cache` but not `.cache`, so /fix would descend into STUDIO's
   # generated lora/**/.cache/** copies. Read the printed diff before
-  # committing; do not commit rewrites of generated caches.
-  deploy: %w[../RAILS ../OPENBSD ../STUDIO].flat_map { |path|
-    if SCAN_ONLY
-      ["/scan --no-autofix #{path}", "/critique #{path}"]
-    else
-      ["/scan #{path}", "/fix #{path}", "/scan #{path}", "/critique #{path}", "/review #{path}"]
-    end
-  }.freeze,
+  # committing; do not commit rewrites of generated caches. `bin/pub4 gate`
+  # names any such path in its own report and refuses to call the run clean.
+  deploy: %w[../RAILS ../OPENBSD ../STUDIO].flat_map { |path| lines_for(path) }.freeze,
 }.freeze
 
 def run_command(*argv, chdir: ROOT)
@@ -140,7 +164,19 @@ def run_master_line(line)
   return unless hit
 
   evidence = stdout.lines.grep(hit).map(&:strip).first
-  abort "err: #{line} exited 0 but reached no verdict: #{evidence}"
+  inconclusive! "#{line} exited 0 but reached no verdict: #{evidence}"
+end
+
+# Nothing measured is neither a pass nor a verdict about the tree, and RAILS'
+# gate runner already spells that third state 3. A semantic-only run exits 3 so
+# its caller can report the tier as skipped; every other mode keeps aborting,
+# because there the tier that went blind is the one that was supposed to work.
+def inconclusive!(message)
+  if TIER == :semantic
+    warn "gate: semantic tier reached no verdict — #{message}"
+    exit 3
+  end
+  abort "err: #{message}"
 end
 
 # capture2e, with a wall clock. Streams into a buffer so a stage killed at the
@@ -156,9 +192,9 @@ def capture_with_timeout(line)
       wait.join(10) || Process.kill("KILL", wait.pid)
       reader.join(5)
       puts buffer
-      abort "err: #{line} produced no verdict in #{STAGE_TIMEOUT}s and was killed — " \
-            "#{buffer.empty? ? 'it printed nothing at all' : "it printed #{buffer.lines.length} line(s)"}. " \
-            "Nothing was measured; raise MASTER_GATE_STAGE_TIMEOUT only if you know the stage was working."
+      inconclusive! "#{line} produced no verdict in #{STAGE_TIMEOUT}s and was killed — " \
+                    "#{buffer.empty? ? 'it printed nothing at all' : "it printed #{buffer.lines.length} line(s)"}. " \
+                    "Nothing was measured; raise MASTER_GATE_STAGE_TIMEOUT only if you know the stage was working."
     end
     reader.join
     return [buffer, wait.value]
@@ -202,14 +238,21 @@ def assert_clean(*paths)
   ERR
 end
 
-puts "gate: mode=#{SCAN_ONLY ? 'scan-only' : 'full-fix'}"
+puts "gate: mode=#{SCAN_ONLY ? 'scan-only' : 'full-fix'} tier=#{TIER}"
+
+# Only the lexical tier writes. The diff prints for it in either mode — in
+# scan-only that is the tell that a step which promised to measure has written —
+# and the clean-tree assertion belongs to full-fix alone. A semantic-only pass
+# asserts nothing about the tree, because it fails on whatever the lexical stage
+# before it just fixed.
+lexical = TIER != :semantic
 
 COMMANDS[:master].each { |line| run_master_line(line) }
-git_diff("MASTER")
-assert_clean("MASTER") unless SCAN_ONLY
+git_diff("MASTER") if lexical
+assert_clean("MASTER") if lexical && !SCAN_ONLY
 
 COMMANDS[:deploy].each { |line| run_master_line(line) }
-git_diff("RAILS", "OPENBSD", "STUDIO", "MASTER")
-assert_clean("RAILS", "OPENBSD", "STUDIO", "MASTER") unless SCAN_ONLY
+git_diff("RAILS", "OPENBSD", "STUDIO", "MASTER") if lexical
+assert_clean("RAILS", "OPENBSD", "STUDIO", "MASTER") if lexical && !SCAN_ONLY
 
 puts SCAN_ONLY ? "ok: MASTER gate scan-only complete" : "ok: MASTER gate clean"
