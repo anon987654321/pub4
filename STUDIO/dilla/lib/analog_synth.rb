@@ -234,6 +234,22 @@ module AnalogSynth
       amp: Envelope.new(attack: 0.35, decay: 1.0, sustain: 0.8, release: 1.2),
       filter_env: Envelope.new(attack: 1.5, decay: 1.5, sustain: 0.6, release: 1.0),
     },
+    # Juno-106 chorus bed: two saws a few cents apart, filter left fairly open,
+    # slow swell. Röyksopp keep a Juno in the room for this exact job.
+    juno_pad: {
+      waves: %i[saw saw], detune: [-11.0, 13.0], octaves: [0, 0],
+      cutoff: 980.0, env_amount: 700.0, resonance: 0.14, drive: 0.82,
+      amp: Envelope.new(attack: 0.55, decay: 0.8, sustain: 0.82, release: 1.6),
+      filter_env: Envelope.new(attack: 1.8, decay: 1.2, sustain: 0.7, release: 1.2),
+    },
+    # Prophet-6 stack: saw plus a triangle an octave up, a little resonance so
+    # the filter speaks. Flying Lotus names the Prophet 6 as the versatile one.
+    prophet_pad: {
+      waves: %i[saw triangle saw], detune: [-5.0, 0.0, 7.0], octaves: [0, 1, 0],
+      cutoff: 640.0, env_amount: 1100.0, resonance: 0.28, drive: 0.9,
+      amp: Envelope.new(attack: 0.22, decay: 0.9, sustain: 0.75, release: 1.1),
+      filter_env: Envelope.new(attack: 0.9, decay: 1.4, sustain: 0.5, release: 0.9),
+    },
   }.freeze
 
   # -------------------------------------------------------------- the engine

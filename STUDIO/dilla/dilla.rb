@@ -3243,8 +3243,14 @@ def pad_synth_cycle_enabled?
   synth_cycle_enabled? || synth_morph_enabled?
 end
 
+# Rhodes is Dilla's sampled EP, Prophet is Flying Lotus's named analogue, blend
+# carries the Juno/DX-7 pair Röyksopp keep in the room. The analog pad rotates
+# the same three as oscillator patches (warm_pad / prophet_pad / juno_pad).
+LOOP_PAD_VOICES = %i[rhodes prophet blend].freeze
+ANALOG_PAD_ROTATE = %i[warm_pad prophet_pad juno_pad].freeze
+
 def morph_voice_at(event_idx)
-  voices = PAD_VOICE_MORPH_VOICES
+  voices = ENV["LOOP_PAD_ROTATE"] == "1" ? LOOP_PAD_VOICES : PAD_VOICE_MORPH_VOICES
   base = ENV["PAD_VOICE"]&.downcase&.to_sym
   offset = voices.index(base) || 0
   voices[(offset + event_idx) % voices.length]
@@ -7201,6 +7207,17 @@ end
 # gets depth -- the soundfont has the detail of a real instrument and this has
 # the movement a recording cannot have, because its filter opens on every chord.
 #
+def drum_loop_source
+  raw = ENV["DRUM_LOOP"].to_s.strip
+  return if raw == "0"
+
+  candidates = []
+  candidates << raw unless raw.empty?
+  candidates << File.join(SAMPLE_DIR, "drums", "techno_drums.mp3")
+  candidates << File.expand_path("~/Downloads/techno_drums.mp3")
+  candidates.find { |path| File.file?(path) }
+end
+
 # warm_pad is the patch: two detuned saws and a square an octave down, filter
 # opening over a second and a half, so the chord arrives rather than starts.
 def analog_pad_file(pads, cfg, n_bars, beat_p)
@@ -7224,8 +7241,14 @@ def analog_pad_file(pads, cfg, n_bars, beat_p)
   end
   return nil if notes.empty?
 
+  named = ENV["ANALOG_PAD_PATCH"].to_s.strip
+  patch = if named.empty?
+            ANALOG_PAD_ROTATE[stable_hash("analogpad:#{cfg[:track]}") % ANALOG_PAD_ROTATE.length]
+          else
+            named.to_sym
+          end
   AnalogSynth.render!(notes, dest: dilla_render_tmp("analogpad"),
-                      patch: ENV.fetch("ANALOG_PAD_PATCH", "warm_pad").to_sym,
+                      patch: patch,
                       duration: (n_bars * bar) + 2.0,
                       seed: stable_hash("analogpad:#{cfg[:track]}"))
 end
@@ -16011,6 +16034,15 @@ README_LOOP_DEFAULTS = {
   "BACKBEAT_CLAP" => "1",
   "HARMONY_LEAD" => "1",
   "BARS" => "8",
+  "SYNTH_CYCLE" => "1",
+  "SYNTH_MORPH" => "1",
+  "LOOP_PAD_ROTATE" => "1",
+  "ANALOG_PAD" => "1",
+  "SPACE_ECHO" => "1",
+  "PAD_LAYERS" => "1",
+  "LEARNED_PROGRESSION" => "1",
+  "DRUM_LOOP" => File.join(SAMPLE_DIR, "drums", "techno_drums.mp3"),
+  "DRUM_LOOP_SEMITONES" => "-2.5",
 }.freeze
 
 def readme_loop!
@@ -26646,6 +26678,12 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
 
   command = ["ffmpeg", "-y", "-i", drum_tmp]
   idx = 1
+  drum_loop_idx = nil
+  if (dlpath = drum_loop_source)
+    command += ["-stream_loop", "-1", "-i", dlpath]
+    drum_loop_idx = idx
+    idx += 1
+  end
   unless use_stem_harmony
     command += ["-i", harmonic_tmp]
     idx += 1
@@ -26767,11 +26805,23 @@ sample_drives_pads!(harmonic_tmp, sample_loop_for(ENV["TRACK"])&.dig(:path),
   # branch tied both to a preset flag: a track with sidechain off got neither a
   # crisp kit nor a key to carve the sampled bed with, for no musical reason.
   drum_label = "[drums]"
+  if drum_loop_idx
+    semis = ENV.fetch("DRUM_LOOP_SEMITONES", "-2.5").to_f.clamp(-12.0, 12.0)
+    ratio = 2.0**(semis / 12.0)
+    filt << "[#{drum_loop_idx}:a]aformat=channel_layouts=stereo," \
+            "asetrate=#{(SAMPLE_RATE * ratio).round},aresample=#{SAMPLE_RATE}," \
+            "atempo=#{(1.0 / ratio).round(5)}," \
+            "atrim=0:#{duration},apad=whole_dur=#{duration},asetpts=PTS-STARTPTS[drumloop]"
+    filt << "#{drum_label}[drumloop]amix=inputs=2:weights=0.70 1.05:normalize=0[drums_looped]"
+    drum_label = "[drums_looped]"
+    dmesg("drum loop #{File.basename(drum_loop_source)} #{format('%+.1f', semis)} st",
+          unit: "drum0", parent: "dilla0")
+  end
   if ENV["DRUM_FORWARD"] != "0"
     # Three taps off the kit, not two. [dr_key] carves the sampled bed and
     # [dr_bass] moves the bass out of the kick's way; both are tied off below if
     # their consumer is absent.
-    filt << "[drums]asplit=3[dr_raw][dr_key][dr_bass]"
+    filt << "#{drum_label}asplit=3[dr_raw][dr_key][dr_bass]"
     filt << "[dr_raw]#{drum_crisp_chain || 'anull'}[drums_c]"
     drum_label = "[drums_c]"
   end
