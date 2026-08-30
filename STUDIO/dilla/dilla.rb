@@ -15517,26 +15517,6 @@ def analog_smooth_filter(input_tag, out_tag: "smoothed", strength: nil)
   air = (-2.0 * s).round(1)
   # Tone only: a highpass, three bells and a deesser. No saturation here.
   #
-<<<<<<< Updated upstream
-  # asoftclip's threshold is absolute, and this stage runs before loudnorm, so a
-  # fixed threshold rounds a hot mix and does nothing at all to a quiet one.
-  # Pre-gain fixes the relationship: only peaks within `drive` dB of full scale
-  # get rounded, whatever the mix level, which is the level-dependent behaviour
-  # the analog stage is imitating in the first place.
-  #
-  # oversample stays at 1. Measured on this ffmpeg (8.1.1), oversample=2 costs
-  # 5.8 dB of level with no gain compensation and generates no harmonics, so it
-  # was pure attenuation that loudnorm would have handed straight back.
-  drive = (0.8 * s).round(1)
-=======
-  # It carried a soft clipper at threshold=1:output=1, which reduced nothing --
-  # its whole contribution was harmonics -- and it sat in series ahead of
-  # neve_80's asymmetric clipper on the same signal. Two clippers with a
-  # limiter between them is the stacking the layered kick already warns about,
-  # one level up: the second shapes what the first flattened, and the limiters
-  # after them work on harmonics instead of transients. neve_80 is the one
-  # saturation stage the master keeps.
->>>>>>> Stashed changes
   "[#{input_tag}]highpass=f=30:p=2," \
     "equalizer=f=85:t=q:w=1.0:g=#{boom}," \
     "equalizer=f=3200:t=q:w=1.2:g=#{harsh}," \
