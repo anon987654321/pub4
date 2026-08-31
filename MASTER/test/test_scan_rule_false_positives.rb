@@ -623,4 +623,42 @@ end
   def test_ascii_dividers_in_lib_prose_still_fire
     refute_empty findings(:NO_ASCII_LINE_ART, "# ===== section =====\n")
   end
+
+  # --- learned smells read code, not comments ----------------------------
+  # meta_rules.rb#findings_for_smell matched the smell regex against raw lines,
+  # so magic_number scored every number in a comment (6,318 findings, sampled
+  # 100% comment prose) and future_tense every "would"/"could" in a rationale
+  # note. skip_comments in rules.yml now blanks comment-only lines for those two
+  # content smells. Opt-in, because a whitespace smell like trailing_ws must
+  # still read the raw line — blanking a comment to spaces would otherwise make
+  # every comment look like trailing whitespace. All three directions asserted.
+
+  def smell_findings(smell_id, source, path: "lib/example.rb")
+    rule = scanner.rules.find { |r| r.id.to_s == "LEARNED_SMELLS" } || raise("LEARNED_SMELLS not registered")
+    Array(rule.check(source, path: File.join(Master::ROOT, path)))
+      .select { |f| (f[:rule_id] || f[:rule]).to_s == smell_id.to_s }
+  end
+
+  def test_magic_number_ignores_numbers_in_comments
+    assert_empty smell_findings("magic_number", "# retry after 4200 ms, port 8080\n")
+  end
+
+  def test_magic_number_still_fires_on_code
+    refute_empty smell_findings("magic_number", "schedule(4200)\n")
+  end
+
+  def test_future_tense_ignores_modal_verbs_in_comments
+    assert_empty smell_findings("future_tense", "# this would break if anyone could reorder it\n")
+  end
+
+  def test_future_tense_still_fires_in_code
+    refute_empty smell_findings("future_tense", "status = \"it will retry\"\n")
+  end
+
+  def test_skip_comments_leaves_whitespace_smells_reading_raw_lines
+    assert_empty smell_findings("trailing_ws", "# a clean comment line\n"),
+      "a clean comment must not read as trailing whitespace once masked"
+    refute_empty smell_findings("trailing_ws", "# comment with real trailing space   \n"),
+      "trailing_ws must still see raw trailing whitespace on a comment line"
+  end
 end

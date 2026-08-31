@@ -159,7 +159,18 @@ module Master
             pattern = smell_pattern(smell)
             return [] unless pattern
 
-            code.each_line.with_index(1).filter_map do |line, line_number|
+            # A content smell is a raw regex, so on raw lines it matches its own
+            # subject in prose: magic_number fired on every number in a comment
+            # (6,318 findings, sampled 100% comment text) and future_tense on
+            # "would"/"could" in rationale comments. Such a smell opts into
+            # skip_comments and its comment-only lines are blanked to spaces
+            # (length-preserving, so line numbers still land). Opt-in, because a
+            # whitespace or layout smell like trailing_ws MUST read the raw line
+            # — blanking a comment to spaces would make every comment look like
+            # trailing whitespace.
+            source = smell["skip_comments"] ? without_comment_lines(code) : code
+            source.each_line.with_index(1).filter_map do |line, line_number|
+              next if line.match?(/scan:\s*intentional\b/)
               next unless line.match?(pattern)
 
               rule_id = smell["id"].to_s

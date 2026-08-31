@@ -519,6 +519,10 @@ learned_smells:
   confidence: 0.7
   autofix: create_issue
 - id: magic_number
+  # A number in a comment is prose about a number, not a magic literal — the
+  # bare regex scored 6,318 findings, sampled 100% comment text. skip_comments
+  # blanks comment-only lines before matching (meta_rules.rb#findings_for_smell).
+  skip_comments: true
   # Was "\b\d{2,}\b" — any two-digit-or-longer run anywhere, which is 4318
   # findings across the tree and is mostly years, versions, timestamps and
   # numbers that already have names.
@@ -552,6 +556,10 @@ learned_smells:
   confidence: 0.99
   autofix: delete_phrase
 - id: future_tense
+  # Anti-simulation is about hedging in OUTPUT; a rationale comment saying a
+  # change "would break X" is describing the past, not simulating. skip_comments
+  # keeps the rule off comment prose (1,667 code findings, sampled comments).
+  skip_comments: true
   pattern: "\\b(?:will|would|might|could|perhaps|seems|appears)\\b"
   confidence: 0.95
   autofix: rewrite_indicative
