@@ -84,24 +84,19 @@ module Master
           end
         end
 
+        # A rule with no front matter is still a rule: the filename is its name and
+        # it is always on. A rule whose front matter will not parse loses every
+        # declared field, which reads downstream as a rule that declares nothing, so
+        # Frontmatter.split logs that one as load-bearing.
         def parse_rule_file(path)
           content = File.read(path, encoding: "UTF-8")
-          match = content.match(/\A---\s*\n(.*?)\n---\s*\n?(.*)\z/m)
+          parsed = Frontmatter.split(content, context: "antigravity.rules.frontmatter", path:)
+          fallback = File.basename(path, ".md")
+          return { name: fallback, trigger: "always_on", body: content.strip, path:, meta: {} } unless parsed
 
-          if match
-            meta = begin
-              YAML.safe_load(match[1], aliases: false) || {}
-            rescue StandardError
-              {}
-            end
-            body = match[2].to_s.strip
-            name = meta["name"] || File.basename(path, ".md")
-            trigger = meta.fetch("trigger", "always_on").to_s
-            { name:, trigger:, body:, path:, meta: }
-          else
-            name = File.basename(path, ".md")
-            { name:, trigger: "always_on", body: content.strip, path:, meta: {} }
-          end
+          meta, body = parsed
+          { name: meta["name"] || fallback, trigger: meta.fetch("trigger", "always_on").to_s,
+            body:, path:, meta: }
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "antigravity.rules.parse", path:)
           nil

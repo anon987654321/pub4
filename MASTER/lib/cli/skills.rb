@@ -146,10 +146,7 @@ module Master
 
       def parse_skill_file(path)
         source = File.read(path, encoding: "UTF-8")
-        match = source.match(/\A---\s*\n(.*?)\n---\s*\n?(.*)\z/m)
-        return [{}, ""] unless match
-
-        [YAML.safe_load(match[1], aliases: false) || {}, match[2].to_s.strip]
+        Master::Ground::Frontmatter.split(source, context: "cli.skills.frontmatter", path:) || [{}, ""]
       end
 
       def sort_by_recency(skills)

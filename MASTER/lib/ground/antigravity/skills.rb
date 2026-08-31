@@ -116,41 +116,29 @@ module Master
 
         def parse_skill_file(skill_file, skill_dir, source)
           content = File.read(skill_file, encoding: "UTF-8")
-          match = content.match(/\A---\s*\n(.*?)\n---\s*\n?(.*)\z/m)
-          return nil unless match
+          # Load-bearing inside split: `name` comes out of that hash and the caller
+          # drops the skill when it is empty, so a typo would silently unregister the
+          # skill rather than report a broken one.
+          parsed = Frontmatter.split(content, context: "antigravity.skills.frontmatter", skill_file:)
+          return nil unless parsed
 
-          meta = begin
-            YAML.safe_load(match[1], aliases: false) || {}
-          rescue StandardError
-            {}
-          end
+          meta, body = parsed
           name = meta["name"].to_s
           return nil if name.empty?
 
-          description = meta["description"].to_s
-          body = match[2].to_s.strip
-
-          has_scripts = File.directory?(File.join(skill_dir, "scripts"))
-          has_references = File.directory?(File.join(skill_dir, "references"))
-          has_examples = File.directory?(File.join(skill_dir, "examples"))
-          has_resources = File.directory?(File.join(skill_dir, "resources"))
-
-          {
-            name:,
-            description:,
-            body:,
-            dir: skill_dir,
-            skill_file:,
-            source:,
-            has_scripts:,
-            has_references:,
-            has_examples:,
-            has_resources:,
-            meta:,
-          }
+          { name:, description: meta["description"].to_s, body:, dir: skill_dir,
+            skill_file:, source:, meta:, **resource_flags(skill_dir) }
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "antigravity.skills.parse", skill_file:)
           nil
+        end
+
+        # Which optional subdirectories a skill ships, as the four keys the skill hash
+        # carries. Progressive disclosure reads these to decide what to offer.
+        def resource_flags(dir)
+          %w[scripts references examples resources].to_h do |kind|
+            [:"has_#{kind}", File.directory?(File.join(dir, kind))]
+          end
         end
 
         def read_skill_body(skill)
