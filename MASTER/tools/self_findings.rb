@@ -139,9 +139,36 @@ module Pub4
       counts.reject { |_, v| v.zero? }.sort_by { |_, v| -v }.to_h
     end
 
-    def ceiling = YAML.safe_load_file(CEILING).fetch("findings")
+    def recorded = YAML.safe_load_file(CEILING) || {}
+    def ceiling = recorded.fetch("findings")
 
-    def run(json: false)
+    # Per-rule counts behind the total. A census that records one integer can
+    # say "over by twelve" and never which rules moved, so the number arrives
+    # with nothing to act on: attributing the 2026-08-31 overage meant checking
+    # out the commit that set the baseline and diffing two runs by hand.
+    # Absent, attribution is unavailable and `report_drift` says so rather than
+    # reporting no movement, which is a different claim.
+    def recorded_by_rule = recorded["by_rule"].is_a?(Hash) ? recorded["by_rule"] : {}
+
+    # Which rules moved since the baseline, and by how much.
+    def report_drift(counts)
+      known = recorded_by_rule
+      if known.empty?
+        puts "self_findings: no by_rule recorded with the baseline — run --ratchet at or below it to make the next rise attributable"
+        return
+      end
+
+      moved = (known.keys | counts.keys).sort.filter_map do |id|
+        before, after = known[id].to_i, counts[id].to_i
+        next if before == after
+
+        format("  %-26s %4d -> %4d  %+d", id, before, after, after - before)
+      end
+      puts moved.empty? ? "self_findings: no rule moved since the baseline" : "self_findings: rules that moved since the baseline:"
+      moved.each { |line| puts line }
+    end
+
+    def run(json: false, ratchet: false)
       counts = by_rule
       total = counts.values.sum
       return (puts JSON.pretty_generate(total: total, by_rule: counts)) || true if json
@@ -149,6 +176,12 @@ module Pub4
       puts "self_findings: #{total} across #{files.size} files from #{law.size} rules"
       counts.first(10).each { |id, n| puts format("  %-26s %5d", id, n) }
       over = total > ceiling
+      report_drift(counts) if over
+      if ratchet && total <= ceiling
+        File.write(CEILING, { "findings" => total, "by_rule" => counts.sort.to_h }.to_yaml)
+        puts "self_findings: recorded #{total} with its per-rule counts"
+        return true
+      end
       warn "self_findings: exceeds baseline — #{total} > #{ceiling}" if over
       !over
     end
@@ -158,6 +191,6 @@ end
 require "yaml"
 
 if $PROGRAM_NAME == __FILE__
-  ok = Pub4::SelfFindings.run(json: ARGV.include?("--json"))
+  ok = Pub4::SelfFindings.run(json: ARGV.include?("--json"), ratchet: ARGV.include?("--ratchet"))
   exit(ok ? 0 : 1)
 end
