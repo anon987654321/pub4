@@ -258,6 +258,44 @@ now is the invariant either policy has to satisfy — never offered when the
 binary is absent, never ahead of a configured key, and still present behind one,
 because ranked below is not the same as gone.
 
+### self_findings is over by twelve, attributed by rule — 2026-08-31
+
+167 against a baseline of 154, and the number said nothing else. Attributing it
+meant checking out `01d5cc414` — the commit that set 154 — and diffing two full
+runs by hand, which is the third time today a census has cost twenty minutes for
+want of a member list. What moved:
+
+    SAFE_NAVIGATION            0 ->   4   +4
+    NO_MULTIPLE_LANGUAGES      5 ->   7   +2
+    GUARD_CLAUSE              27 ->  28   +1
+    IMMUTABLE                  0 ->   1   +1
+    NO_CHANGELOG_COMMENT      14 ->  15   +1
+    PROSE_OMIT_QUALIFIERS     19 ->  20   +1
+    RUBY_NUMERIC_UNDERSCORE    0 ->   1   +1
+    SQUINT_TEST                4 ->   5   +1
+
+The baseline was 154 and the tree measured 155 at that commit, so it was
+already over by one when it was recorded. All four `SAFE_NAVIGATION` hits are in
+`RAILS/gates/probes/face_capture_probe.rb`; the `NO_MULTIPLE_LANGUAGES` rise is
+spread across `RAILS/shared/lib/pub4/*_lint.rb`.
+
+**The ceiling is not raised.** These are twelve real violations in committed
+code, and absorbing them is the swallowing `spine.yml` warns about — a raise
+must name what the lines buy, and "somebody else's findings" is not that. The
+row stays red until they are fixed, which is what it is for.
+
+Not this session's: checked, rather than assumed. Of the located hits, the only
+file this session touched is `STUDIO/dilla/dilla.rb`, whose four findings sit at
+lines 5282, 12825, 20395 and 32730 — none of them the comment restored here at
+15518.
+
+The instrument is fixed, third application after `data_reach` and `rule_audit`:
+`data/self_findings.yml` now carries `by_rule` beside the total, an over run
+prints which rules moved, and a total-only baseline reports that attribution is
+unavailable rather than "no rule moved" — different claims, and the confusion
+the old format could not avoid. `MASTER/test/test_self_findings_drift.rb` holds
+it, mutation-verified.
+
 ### data_reach is over by two, and now says which two — 2026-08-31
 
 `data_reach` sits at 48 against a ceiling of 46, and until today that was the

@@ -130,7 +130,13 @@ pub4_source_ceilings:
   # mutation — hardcoding the four rules in the builder turns three of its eight
   # red. It folds into no existing test; nothing else here reads a rules.yml
   # section into a prompt and checks the file is the source.
-  MASTER: 1046
+  # 1046 -> 1047 is test/test_self_findings_drift.rb. Third census in this tree
+  # to record a bare integer, after data_reach and rule_audit, and the one where
+  # the detail already existed and was thrown away: by_rule has always returned
+  # a rule => count hash. The test holds that a total-only baseline says
+  # attribution is unavailable rather than "no rule moved", which are different
+  # claims and the confusion the old format could not avoid.
+  MASTER: 1047
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
   # it belongs beside the other probes and folds into nothing.
