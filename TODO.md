@@ -258,38 +258,43 @@ now is the invariant either policy has to satisfy — never offered when the
 binary is absent, never ahead of a configured key, and still present behind one,
 because ranked below is not the same as gone.
 
-### Four slack ceilings nobody has ever been told about — opened 2026-08-31
+### Four slack ceilings, recorded — closed 2026-08-31
 
 `TestRatchets#test_no_ratchet_is_slack` skips when the measured trees are dirty,
-and the reasoning in its own comment is right: this checkout is shared, the
-advice is "write this transient number down permanently", and on 2026-08-15
-following it would have recorded a figure 121 lines below the committed truth
-because another session was mid-delete.
+and the reasoning in its own comment is sound: the advice is "write this
+transient number down permanently", and on 2026-08-15 following it would have
+recorded a figure 121 lines below the committed truth while another session was
+mid-delete.
 
-The consequence was not noticed. This checkout is *always* dirty — it was dirty
-for every run of this suite in living memory — so the assertion has been
-skipping rather than passing, and `1 failures, 1 skips` reads at a glance like
-one problem. Run from a clean worktree on 2026-08-31 it fails immediately and
-names four ceilings that have been slack for an unknown length of time:
+What nobody noticed is that this checkout is *always* dirty, so the assertion
+had been skipping rather than passing for its whole life — `1 failures, 1 skips`
+reads at a glance like one problem. Run from a clean worktree it fails at once
+and names four ceilings with room in them. All four were falls that had happened
+and never been recorded:
 
-    rule_reach          56 / 57    lower it in MASTER/data/rule_reach.yml
-    namespace            4 / 77    lower it in MASTER/data/namespace_ceilings.yml
-    sprawl.lone_dirs    51 / 53    lower it in MASTER/data/sprawl_census.yml
-    growth.studio      138 / 224   lower it in MASTER/data/spine.yml
+    rule_reach        57 -> 56    tools/rule_reach.rb --ratchet
+    sprawl.lone_dirs  53 -> 51    tools/sprawl_census.rb --ratchet
+    namespace         77 -> 4     tools/namespace_ratchet.rb --ratchet
+    growth.studio    224 -> 138   MASTER/data/spine.yml, by hand
 
-None of them is this session's: all four measure the same on a clean checkout of
-`origin/main`. Two are one- and two-point falls that their own tools can record
-(`rule_reach.rb --ratchet`, the sprawl census). Two are not routine and want an
-owner: `namespace` has 73 points of room, and `growth.studio` has 86 because
-dilla's engine folded from `lib/engine/` into one file — lowering that to 138
-means the next STUDIO file fails `measure` on the day it is written, which may
-well be the intent and is not an agent's call to make silently.
+Each of the first three was recorded by its own tool rather than hand-edited,
+which is the difference between a measurement and an assertion. The namespace
+number is a single row moving: `STUDIO/dilla/lib` from 74 to 1, because dilla's
+engine folded from `lib/engine/` into `dilla.rb`. `growth.studio` is the same
+event counted the other way — 81 parts to one file, 129 ruby files to 48 — and
+it is the largest fall this repo has recorded: 86 files of room the next change
+could have grown into without an argument.
 
-The general lesson is the one this file keeps writing down in other words: **a
-skip is not a pass, and a suite that skips its own invariant under the
-condition that always holds has stopped asserting it.** Same shape as the gate's
-inconclusive stages. Worth asking of every other skip in the suite whether its
-guard condition is the normal state.
+The consequence is deliberate and is the point. The next STUDIO file now fails
+`bin/pub4 measure` on the day it is written and wants a named raise in
+`spine.yml`, which is what a ceiling of 224 had stopped doing.
+
+The lesson is the one this file keeps rewriting in other words: **a skip is not
+a pass, and an assertion whose guard condition is the normal state has stopped
+asserting.** Same shape as the gate's inconclusive stages, and worth asking of
+every other skip in the suite. Recorded from a clean worktree at `1bcb58524`,
+which is the condition the assertion itself asks for — the shared tree cannot
+answer this question and never could.
 
 ### `bin/gate --explain` is not a dry run — opened 2026-08-31
 

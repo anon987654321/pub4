@@ -158,7 +158,19 @@ pub4_source_ceilings:
   # it generates. The notebook is committed because Colab opens a notebook from a
   # public repo URL and cannot be handed one any other way, and the generator is
   # committed because the notebook says edits belong in it.
-  STUDIO: 224
+  # 224 -> 138 is a fall, not a raise, and it is the largest one this file has
+  # recorded. dilla's engine folded from lib/engine/ into dilla.rb — 81 parts to
+  # one file, 129 ruby files to 48 — and the ceiling was never lowered to match,
+  # so STUDIO has been carrying 86 files of room the next change could grow into
+  # without argument. That is the defect the note at the top of this file names,
+  # measured rather than argued: `test_no_ratchet_is_slack` had never reported
+  # it, because it skips on a dirty tree and this checkout is always dirty.
+  #
+  # Recorded from a clean worktree at 1bcb58524, which is the condition that
+  # assertion asks for. The next STUDIO file now fails `measure` on the day it
+  # is written and wants a named raise here — which is the point, and is what
+  # 224 had stopped doing.
+  STUDIO: 138
 
 # Executable files directly under each tree's own bin/ — the number CLAUDE.md's
 # "two surfaces, no third" makes a claim about while nothing counted it. MASTER
