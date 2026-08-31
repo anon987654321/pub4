@@ -371,41 +371,58 @@ fine. Verify what a grep matched before asserting a runtime consequence; this
 file has said so before and it was still nearly got wrong twice in one hour, by
 two sessions.
 
-### Neither scanning tier can reach a verdict — opened 2026-08-31
+### The lexical tier reaches a verdict — closed 2026-08-31
 
-With the boot crash above fixed, `bin/pub4 gate --scan-only` gets a running
-scanner for the first time and the stage now fails a different way: `/scan
---no-autofix .` over MASTER printed 226 lines and was killed at
-`MASTER_GATE_STAGE_TIMEOUT` (1200s) without a verdict. So the ladder's first
-rung has still never reported a lexical result — it has only changed which
-sentence it says while not reporting one, and raising the timeout is explicitly
-not the move until somebody knows where the time goes.
+`bin/pub4 gate --scan-only` used to fail its first stage two different ways in
+one day: before the boot crash was fixed it died instantly, and after, `/scan
+--no-autofix .` printed 226 lines and was killed at the 1200s stage timeout
+without a verdict. It now finishes the whole of MASTER in **155 seconds** and
+reports one: 8387 violations across 1094 files.
 
-The council tier does the same thing, one stage later: `/critique .` printed 151
-lines and was killed at the same 1200s. Before the boot fix it failed instantly
-with "Insufficient credits"; it now reaches the runtime and runs out of clock
-instead. So the same shape twice, and whatever the answer is below, it is worth
-two stages rather than one.
+The first diagnosis in this entry was wrong and is kept because the way it was
+wrong is the lesson. It said the cost was "not in the rules that were timed",
+having measured the whole 142-rule scanner at 0.08s on a representative Ruby
+file. That measurement was real and the conclusion did not follow: the scanner
+was built with `agent: nil`, and the three model-backed rules answer `return []
+unless @agent`, so the timing excluded precisely the rules that cost the time.
+The instrument was verified and then read as covering something it had switched
+off. It pointed at `ScanLive.snapshot!` and `CrossFileAnalysis`, which are not
+the problem.
 
-What was measured, so the next attempt does not start from zero. Per-file rule
-cost is not the explanation: the whole scanner, 142 rules including the external
-linters and the law bridge, costs **0.08s** on a representative Ruby file
-(`lib/boot/runtime.rb`), of which `ast_omission` is 0.044s and everything else
-rounds to nothing. Markdown and YAML are cheaper still — 0.01s and 0.02s across
-all 128 zero-argument rules. At that rate MASTER's 1089 files are about ninety
-seconds, not twenty minutes. The scan's own progress line tells the same story
-from the other side: it reported `eta=50s` at file 30 and `eta=2843s` at file
-55, so the cost is not per-file-uniform and is not in the rules that were timed.
-Look next at what runs *between* files — `ScanLive.snapshot!` writes a report to
-disk on every hit, and `CrossFileAnalysis` re-reads the whole corpus at the end.
+What it actually was, measured on `lib/io`, 46 files, through `bin/cli`:
 
-The four detectors added the same day are not the cause, and were measured
-before being kept: 0.33s across 200 files for all four, against 2.24s for the
-128 zero-argument rules over the same files. That is a larger share than four
-rules should hold (14.6% for 3% of the rules) and the reason is architectural
-rather than theirs — `Rule#check` calls `Prism.parse` per rule, so a file is
-parsed 128 times. The parse cache in "larger AST work" below is the fix, and it
-would pay for far more than these four.
+    as shipped                      5 files in 395s, killed at the timeout
+    agent withheld from the rules   390s complete, ¢115 and 77k tokens
+    council also suppressed          12s complete, no model cost
+
+Two causes, both of them a model where the caller expected none.
+`AdversarialRule` sends a per-file red-team prompt, and `builder/ai_boot.rb`
+hands the scanner an agent, so every file was a round trip — 79s each on this
+machine. And `/scan <path>` is not a scan: it runs the whole `ThroughPipeline`,
+whose `default_critique?` was hardcoded `true`, so a council deliberation ran
+inside it. Of that 390s, the two scan phases were 32s and `crit0` was **354.8s**
+— 91% of a "scan" was a critique nobody asked for, and `bin/gate` runs
+`/critique` separately as the tier that owns it, so it ran twice.
+
+Both are off under `MASTER_SCAN_DETERMINISTIC=1`, which `bin/gate` now sets in
+`SAFE_ENV` beside the two switches that already meant "measure, do not write".
+It is opt-in and an ordinary `/scan` is unchanged. It withholds the agent rather
+than adding a way to disable a rule, so the model-backed rules switch off
+through the guard they already carry.
+`MASTER/test/test_scan_deterministic_mode.rb` holds both halves, the default,
+and the fact that `bin/gate` still asks for it — a switch nothing requests is
+the same as no switch.
+
+The gate's header had said this all along: "the lexical tier is law/ and the
+scan registry: deterministic detectors, no model". It was documentation of an
+intention, not of the runtime, and nothing compared the two. **A tier that
+describes itself is not measured; the description was right and the wiring never
+matched it.**
+
+Still open, and not this: `/critique` itself remains model-bound and slow, which
+is correct — it is the semantic tier and it is supposed to reach a provider. It
+was killed at the same 1200s timeout in the same run. That number is about the
+provider, not about the gate.
 
 ### Tag Legend
 
