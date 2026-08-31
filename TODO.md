@@ -406,6 +406,16 @@ one whose name is shorter. Either teach `bin/gate` the flag or have it refuse an
 argument it does not know — an unrecognised flag that silently becomes "run
 everything and write" is the shape of this the next agent will also get wrong.
 
+<<<<<<< HEAD
+`bin/gate` now knows `--explain` and prints the same ladder `bin/pub4 gate
+--explain` does, and exits 0 having run nothing. The half that matters more is
+the other one: an argument it does not recognise is now an error rather than
+something ignored. Falling through to the default meant falling through to
+`mode=full-fix apply=yes`, so the failure mode of a typo was a writing pass over
+four trees.
+
+=======
+>>>>>>> origin/main
 ### The scanner refactor in flight had lost its skip list — closed 2026-08-31
 
 Not committed, and not this session's: as of 2026-08-31 the shared checkout
@@ -491,7 +501,11 @@ is why the tree looks healthy until something asks for a rule:
 Committed `HEAD` is fine and a worktree at the same commit boots and scans
 normally, so scan work has to be proved in one until this lands or is reverted.
 
+<<<<<<< HEAD
+### The Codex cluster, landed or removed — closed 2026-08-31
+=======
 ### The uplift cluster, landed or removed — closed 2026-08-31
+>>>>>>> origin/main
 
 The Codex working tree the two entries above describe was reconciled rather than
 left in flight. It was more broken than either entry knew, and the extra damage
@@ -583,6 +597,155 @@ instead of a backend block that never existed.
 
 The bytes of everything removed are outside the tree, not only in git.
 
+<<<<<<< HEAD
+### The constitution refused every write outside MASTER — closed 2026-08-31
+
+`79373e7d1` gave `PATH_OWNERSHIP.yml` a reader, which it had wanted for a long
+time. The rule that reads it, `PathPurposeRule`, computes the directory it is
+judging as `path.delete_prefix("#{@root}/")` — and for any path that is not
+under `@root`, `delete_prefix` is a no-op. `rel` stayed absolute,
+`shallowest_gap` walked up to the empty string, and every file in `RAILS/`,
+`OPENBSD/` and `STUDIO/` drew
+
+    PATH_PURPOSE: / has no entry in PATH_OWNERSHIP.yml
+
+The rule's severity is `:error` — deliberately, and its own comment argues for
+it — and `WriteGuard` blocks on error. So for the hour this stood, MASTER's
+constitution refused every write to three of the four trees, and two
+`test_write_guard` cases plus `test_write_file_creates_file` went red saying so.
+`PATH_OWNERSHIP.yml` describes MASTER's tree and says nothing about its
+siblings, so the rule now returns nothing for a path outside the root rather
+than a finding it has no basis for.
+
+Worth keeping for the shape rather than the bug: the rule was correct about
+MASTER, tested against MASTER, and wrong everywhere else, because the one input
+it never received was a path from another tree. `Scanner::PathFilter`'s comments
+record the same lesson twice — a list "spelled relative to MASTER, and matched
+relative to whatever root the scan was given".
+
+### Two censuses that could not attribute, and one that ratcheted upward — 2026-08-31
+
+**`self_findings` records its members now.** It recorded an integer, so
+"166 > 154" had no thread to pull; naming the twelve meant checking out the
+commit that set the ceiling, running the census there, and diffing two lists by
+hand. That is the gap `data_reach` closed the same day, and this is the same
+close: `RULE path:line` per finding, seeded at parity as well as on a fall,
+`--ratchet` added, and a `report_delta` that says which arrived and which left.
+Absent members it says attribution is unavailable rather than calling every
+finding an arrival.
+
+The twelve, once named, were: four in `dilla.rb` and one in `trymbot.rb`
+(`used to be`, `simply`), a dated `RATCHETED 2026-08-03` lead in
+`constitutional_budget.yml`, a guard-clause method body in `json_config.rb`, a
+`uri && uri.host` in `settings.rb`, seven in `face_capture_probe.rb`, one in
+`run_seed_media_colab.rb`, and one in a brgen reference file.
+
+Five of those were the instrument. `face_capture_probe.rb` is a Ruby file whose
+job is to evaluate JavaScript over CDP, and the Ruby laws read its heredoc
+bodies as Ruby: `SAFE_NAVIGATION` asked for `f&.dbgFrames` inside a JS object
+literal, which is not JavaScript at all and would have broken the probe if
+autofixed. `run_seed_media_colab.rb` writes a Python notebook and `IMMUTABLE`
+asked a Python dict to `.freeze`. These carried `scan: intentional` with the
+reason for a few hours, and four of the six no longer need to: `e065ee2b8`
+landed `SourceMasking.without_foreign_heredocs`, which blanks a heredoc whose
+tag names another language before a Ruby law reads it, and that is the general
+answer to the same defect. The two that stay are on the heredoc *openers*, for
+`NO_MULTIPLE_LANGUAGES` — noticing a second language is the whole of that law,
+so masking must not hide the opener from it. A marker that suppresses nothing
+is a standing exemption for whatever real finding lands on that line next, and
+the Python one was worse: its trailing comment pushed the line past
+`SQUINT_TEST`, so it created a finding while suppressing none. Measured, not
+assumed — stripping all six and re-running the census moved exactly two.
+`visualizers_2d_reference.js` opens with "Reference only. Not loaded, not
+imported, not compiled into anything" and already carried an opt-out for a
+second linter that had read it as live; `app/javascript/reference/` joined
+`PathFilter`, which is the claim `RAILS/shared/reference` already makes.
+
+151 now, and the ceiling records its members.
+
+**`reader_singularity --ratchet` could raise a ceiling.** Its own comment says
+"Only ever down" and the comment was the whole enforcement: `ratchet!` wrote
+today's counts whatever they were. Run to clear one file's slack, it silently
+took `rules.yml` from 10 to 11 and laundered a reader that had just arrived into
+the baseline — observed here, on this session's own run. It now writes the
+minimum of recorded and measured per file, and names every ceiling it held
+instead of swallowing the refusal. `data_reach` and the new `self_findings`
+guard the same way; those two were already correct.
+
+**`rules.yml` gained an eleventh reader** in the same commit —
+`naming_rules.rb` loaded the file directly for `stale_namespaces`. `Master.law`
+is the one reader, so it goes through that.
+
+### Two declarations with no reader, wired — 2026-08-31
+
+`data_reach` was over its ceiling by exactly two, and the two were
+`rules.yml#business_plan` and `rules.yml#markdown_style` — restored after a
+read-modify-write clobbered them, and never given a reader. The census's own
+instruction is "wire a reader or delete the block".
+
+`markdown_style` was codified "across MASTER and the agents" and read by
+nothing, so every session wrote markdown against an aesthetic the file declared
+and no prompt carried. It is a line in the persona prompt now, beside
+`beauty` and the design thresholds, through the same mechanism.
+
+`business_plan` declares the shape of the pitch, and `MASTER/README.md` is the
+pitch. `test/test_business_plan_structure.rb` holds them together: one section
+per declared movement, the named movements in the declared order, and the ask
+reaching the grant criteria the `sources` list names. Four of the five movements
+name themselves in a heading; `proof` shows rather than names, so the section
+count carries it and its wording is left alone. Verified by mutation —
+renaming "The ask" turns it red.
+
+### `FileProcessor` named a constant it never required — closed 2026-08-31
+
+`semantic_rule?` referenced `Rules::SemanticRule`, which only exists once
+`review/scan/rule_dsl` has loaded the registry. The runtime happens to load it
+first; `require "master"` on its own does not. So every `Scanner#scan` from a
+caller that had not gone through the registry died with
+`scan failed: uninitialized constant`, reported by the rescue as a scan failure
+rather than a missing require, and four `test_scanner` cases had been red on it.
+Guarded with `defined?`; the `id == "semantic"` half was always the general
+answer.
+
+`test_scanner`'s streaming assertion was also stale: it expected
+`complete=yes files=1 violations=1` against a completion line that has always
+read `complete=true violations=1 dirty_files=1 elapsed=0s`. Realigned to what
+the reporter emits, keeping both counts.
+
+### Still open after this session
+
+- **`data/rules.yml` is 35 body lines over its budget**, and the 35 have a name.
+  102 lines came out: a row whose id `law/` owns is rejected by
+  `YamlDeclarativeRule` before any detector field is read, so the `languages`,
+  `path_match`, `requires_absent` and `whole_file` those rows carried scoped a
+  detector that is not there — the scope is stated once more, correctly, in the
+  law file. Removal only, and proved by the three censuses that read this file
+  reporting identical numbers after it: a field whose removal moves no
+  measurement was measuring nothing.
+
+  That leaves 3714 against 3679, and the remainder is the 37-line `pwa:` block
+  `3f5447c17` added to `design_rules` an hour earlier. So the file was at its
+  ceiling once the dead declarations went, and what is over is one deliberate
+  addition rather than accumulated fat. `limits.yml` says "Measured once at the
+  rename. Down only from here", so this is an owner's call between shrinking the
+  `pwa:` block and moving a ceiling that predates a consolidation it never
+  measured — not something to settle by finding 35 more lines to cut.
+
+  Two more duplications sit in the same rows and were left: `fix` and `source`
+  repeat what the law file declares, but `/why <RULE_ID>` reads both out of
+  `rules.yml` rather than out of `law/`. Converging `WhyExplainer` onto the law
+  is the move that makes those safe to remove; doing it in the other order
+  empties a live surface.
+- **Three growth ratchets are over, and were over when this session opened**:
+  `spine.lib_body_ceiling` 39173/37464, `growth.master` 1064/1045 and
+  `growth.studio` 146/138. The first measurement of the day read 39209, 1081 and
+  146, so removing the Codex cluster moved two of them and none of them is
+  close. Each needs a fold rather than a raise, and none is a one-sitting job.
+- **Four worktrees are live** — `pub4-fixfind`, `pub4-master-audit`,
+  `pub4-merge`, `pub4-rails`, three of them dirty, all touched within two hours.
+  `AGENTS.md` says to remove a worktree in the session that made it; none of
+  these is this session's, so they are named rather than removed.
+=======
 ### `bin/gate --explain` is a dry run, and unknown flags are refused — closed 2026-08-31
 
 `bin/gate` now knows `--explain` and prints the same ladder `bin/pub4 gate
@@ -591,6 +754,7 @@ the other one: an argument it does not recognise is now an error rather than
 something ignored. Falling through to the default meant falling through to
 `mode=full-fix apply=yes`, so the failure mode of a typo was a writing pass over
 four trees.
+>>>>>>> origin/main
 
 ### The lexical tier reaches a verdict — closed 2026-08-31
 
@@ -3208,6 +3372,85 @@ than implied across four.
   most of it is gated on hardware; the section below says what is buildable now
   and what is not.
 
+<<<<<<< HEAD
+## The wish list, read against the tree — 2026-08-31
+
+`uplift_summary.txt` sat untracked at the root: the owner's own words, six
+numbered layers. It is folded here and the file removed, because a wish list at
+a root that holds two files is the same "second backlog" this file's preamble
+names. Each layer below is what the tree actually holds against it, so the next
+reader does not re-audit.
+
+One word about the word. That file called the whole thing an "uplift", and the
+six layers are not one job: making the tree legible (1 and 6), making a stated
+rule enforceable (2 and 5), and collapsing duplication (3). An umbrella that
+vague is how three of the six came to be already built without anyone checking —
+so the umbrella is dropped here rather than renamed, and the layers are read one
+at a time. Where this tree needs a word for the third of those it already has
+two. `collapse` is a rule id — `COLLAPSE_BEFORE_ADDING`, declared and with no
+detector, which is its own entry below. `fold` is what `lib/core/` and
+`rake lint:spine` mean, and it is enforced.
+
+**1 · Orientation — a map and a glossary. Done.** The map already existed and
+is reached from `AGENTS.md`: `data/agent_map.yml` routes by topic,
+`START_HERE.md` is the contract, `OPENBSD/tools/tree.rb` draws the layout. The
+glossary did not. One arrived during the Codex cluster and was removed with it —
+five entries, three of them terms this repo does not use ("Gravity Debt", "The
+Bridge"), which is what a glossary written from outside a tree looks like.
+
+The replacement is a section of `AGENTS.md` rather than a file, because
+`COLLAPSE_BEFORE_ADDING` applies to documents too and its reader is the agent
+already reading that file. It defines the words that mean one thing here and
+something else everywhere else — law versus rule, conduct, twin, intentional
+marker, fold and spine, ratchet and census, inconclusive, verdict, tier, the
+triangle, vertical, the face — and every entry names the file behind it, so a
+claim about one can be checked. Three of them were wrong on the first pass and
+the tree said so: `face.part4.txt` does not exist, brgen has six engines and not
+five, and the intentional marker is honoured by `Rule#scan_lines` as well as by
+the law engine. Related: **`tree.rb` on entry** and **Onboarding** above.
+
+**2 · Guardrail — traps out of documentation and into hooks.** Done, and before
+the wish list was written. `OPENBSD/dev/githooks/` holds all three guards, they
+are installed through `core.hooksPath` by `bin/pub4 hooks`, and
+`OPENBSD/test/test_githooks.rb` runs them through real git in a throwaway
+repository. The cluster's `bin/pre-commit-hook.sh` and `bin/trap_check` were a
+second copy of the first two thirds of that, using `wc` and `grep`, which the
+house rules ban in committed scripts.
+
+**3 · Technical debt — decompose the God Classes in Scanner and Dispatcher.**
+Scanner is done: 466 lines to 139, with `PathFilter`, `ProgressReporter` and
+`Transport` beside it in `engines/`. The record of how that went is above and it
+is the cautionary half of this layer — an extraction that carries a method out
+and puts a stub back is worse than the class it replaced. Dispatcher was already
+done: `llm_dispatcher.rb` is 410 lines over `react_loop`, `ruby_llm_sender` and
+`tool_registry`. What is actually large now is `structural_rules.rb` at 814 and
+`surface_rules.rb` at 635, and both are registries of independent rules rather
+than classes with gravity, so neither is the same problem.
+
+**4 · Face and body — normalise the deploy pipeline between Rails and
+OpenBSD.** Open, and the sharpest piece of it is already recorded: every deploy
+sheds amber and bsdports while relayd keeps answering TLS on their closed ports,
+so the outage reads as a hang. `OPENBSD/deploy_smoke_gate.rb` now checks the
+named-table-plus-forward shape `relayd.conf` actually uses rather than a backend
+block that never existed, which is a start on the same surface.
+
+**5 · Studio — asset versioning to protect irreplaceable renders.** Half built
+and worth knowing which half. Every render already writes a `.dilla` provenance
+sidecar naming its seed, its knobs and its assets, and `dilla where` /
+`dilla knobs` read them back; `DILLA_FROZEN` pins a take for A/B. What is
+missing is the protection rather than the record: nothing refuses to write over
+an existing take, and `RENDER_SEED` does not fully pin — about 0.012 dB of
+run-to-run spread — so a "re-render the same thing" recovery is not available
+either. A refusal at the write site is the buildable piece.
+
+**6 · Future agent — optimise the repo for LLM-native navigation.** This is
+layer 1 plus the standing complaint that the gap here is discoverability rather
+than features. The concrete moves already named: the glossary, `tree.rb` on
+entry, the profile matrix published in one place, and one name for one job — the
+entry-point ratchet in `spine.yml` is what keeps the last of those honest.
+
+=======
+>>>>>>> origin/main
 ## Aegis, seaborne
 
 Aegis is the proactive-bodyguard concept: passive sensing, active analysis,

@@ -33,7 +33,7 @@ Nothing measures the gap, which is how 2 became 28 without a single failure.
 11. `bin/check --profile=agent` "may fail on known debt" — a profile whose failure carries no information teaches people to ignore it.
 12. Publish the profile matrix somewhere a reader can see which profile runs which suite without reading three scripts.
 13. Retire `master-core` or say in one line how it differs from `master`.
-14. An `--explain` flag on the chain that prints what it will run before running it. **[cheap]**
+14. An `--explain` flag on the chain that prints what it will run before running it. `bin/gate` knows it, and refuses a flag it does not know rather than falling through to full-fix. **[done]**
 
 ## B · Gates that measure nothing (15–30)
 
@@ -67,7 +67,7 @@ The tree's own README names this: "A feature can be fully built, correct, docume
 35. amber shipped **no `config/demo_media/` at all**, so all 17 garments fell through to random picsum stock. **[done]**
 36. `DemoMedia::Catalog`'s last fallback was a file named `bergen.yml` under any app's root — amber has no `city_record`, so every lookup there hunted for a city it is not in. **[done]**
 37. `FLYLO_DRUM_OVERLAY`, `FLYLO_TOP_DIRT`, `FLYLO_HAT_DUCK` were documented in dilla's README after `lib/` had renamed them to `WONKY_*`. Operators were setting switches nothing read. **[done]**
-38. A check that every ENV name in a README is read somewhere in that tree's source. **[cheap]**
+38. A check that every ENV name in a README is read somewhere in that tree's source. `MASTER/test/test_readme_env_names.rb`, over MASTER, OPENBSD and dilla. **[done]**
 39. `FLYLO_QUINT_HATS` is read by nothing under either prefix — a genuinely dead switch, annotated rather than renamed.
 40. The assertion under it passes because quint is never scheduled at all. A test that passes for the wrong reason is worse than one that fails.
 41. `repligen` is a Replicate client and there is no Replicate access. The whole tool is unreachable. **[yours]**
@@ -98,9 +98,9 @@ Half of these were mine, in one day.
 61. My first capture probe read `window.face` instead of `window.MASTER_FACE`, got undefined for both fields, and could not tell that apart from the legitimate 2D path. It reported success on a page that had drawn nothing. **[done]**
 62. Any probe reading a global should fail loudly when the global is absent, never treat absence as a valid state.
 63. Four separate patches failed on heredoc indentation because `<<~` strips the common margin. Line-index edits, or explicit indentation, for anything touching an indented block.
-64. `dup_census` records only an integer, so there is no way to diff *which* duplicates are new. The same is true of `data_reach`.
-65. Record the member list beside the count in every census ratchet. Without it, "over by two" cannot be attributed. **[cheap]**
-66. That gap cost real time today: I could not tell whether two new unread keys were mine.
+64. `dup_census` records only an integer, so there is no way to diff *which* duplicates are new. The same is true of `data_reach`. All three censuses record members now — `data_reach`, `self_findings` and `dup_census`. **[done]**
+65. Record the member list beside the count in every census ratchet. Without it, "over by two" cannot be attributed. **[done]**
+66. That gap cost real time today: I could not tell whether two new unread keys were mine. They were `business_plan` and `markdown_style`; both have readers now.
 
 ## E · A shared checkout is a hazard (67–79)
 
