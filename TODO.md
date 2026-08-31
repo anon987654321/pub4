@@ -391,7 +391,7 @@ every other skip in the suite. Recorded from a clean worktree at `1bcb58524`,
 which is the condition the assertion itself asks for — the shared tree cannot
 answer this question and never could.
 
-### `bin/gate --explain` is not a dry run — opened 2026-08-31
+### `bin/gate --explain` was not a dry run — closed 2026-08-31
 
 `MASTER/bin/pub4 gate --explain` prints the ladder without running it, and
 `CLAUDE.md` says so. `MASTER/bin/gate --explain` does **not**: the flag is not in
@@ -406,7 +406,7 @@ one whose name is shorter. Either teach `bin/gate` the flag or have it refuse an
 argument it does not know — an unrecognised flag that silently becomes "run
 everything and write" is the shape of this the next agent will also get wrong.
 
-### The scanner refactor in flight has lost its skip list — opened 2026-08-31
+### The scanner refactor in flight had lost its skip list — closed 2026-08-31
 
 Not committed, and not this session's: as of 2026-08-31 the shared checkout
 carries an uncommitted extraction of `Scanner` — `scanner.rb` down from 466
@@ -490,6 +490,107 @@ is why the tree looks healthy until something asks for a rule:
 
 Committed `HEAD` is fine and a worktree at the same commit boots and scans
 normally, so scan work has to be proved in one until this lands or is reverted.
+
+### The uplift cluster, landed or removed — closed 2026-08-31
+
+The Codex working tree the two entries above describe was reconciled rather than
+left in flight. It was more broken than either entry knew, and the extra damage
+is worth writing down because none of it announced itself.
+
+**What was actually wrong with the Scanner extraction.** The stubbed
+`skip_path?` was the finding that got attention, but twelve constants and three
+methods left the tree with it, not one. `scan_dir` referenced `SCAN_GLOB` and
+`scan_dir` is what `/scan` calls, so the scanner raised `NameError` on every
+directory scan — not the silent skip-list regression the entry predicted, a
+total outage of the scan path. `scan_since` passed a `Result` where its callee
+wanted the array inside it. `Transport` read `POOL_SIZE`, `SCAN_SINCE_EXT` and
+`GC_EVERY_N_ITERATIONS`, none of which it defined: constant lookup in a mixin is
+lexical, so a constant left behind on `Scanner` is not one the mixin can see.
+`GIT_TIMEOUT_SECONDS` was silently raised from 5 to 30. `ProgressReporter` kept
+the signatures of `write_progress_snapshot` and `finding_rule_id` and dropped
+their bodies, so the streaming snapshot wrote nothing and every finding's rule
+id came back as an object rather than a string.
+
+The decomposition itself was the right idea and is kept. The skip list is now
+`Scanner::PathFilter` in `lib/review/scan/engines/path_filter.rb` — its own
+concern, with the comments that record what each entry cost somebody, and
+`Scanner.skip_path?` delegates so `Rakefile`, `FileCollector`, `SelfTest` and
+`work_commands_status` keep the API they already call.
+
+**`law_bridge_rule.rb` had been emptied, and that was the larger loss.** All 58
+lines of the bridge were replaced with a `check_ast` returning `[]`. That is the
+whole `law/` tier — 44 executable rules across nine files, each proved against
+its own fixture at load — reporting nothing, through a rule that still
+registered and still looked alive. Removing `def self.auto_build? = false` with
+it also registered a second copy under the same id, which is what
+`test_rule_ids_unique` caught. Restored from `HEAD`.
+
+**`rule.rb`'s first line was a `require_relative` above the magic comment**,
+which demotes `# frozen_string_literal: true` to an ordinary comment for the
+whole file. The require pulled in `lib/review/constitution/`, which nothing in
+`rule.rb` names. Both gone.
+
+**`lib/master.rb` gained a second `def self.law`**, zero-arg, 68 lines above the
+real `law(section, root:)` that `Design::Thresholds`, `WhyExplainer` and three
+tests call. Ruby redefines rather than complains, so it was dead on arrival and
+would have been read as the accessor by the next person to grep for one.
+
+**The rest of the cluster was already built, under other names.** This is the
+pattern this file keeps recording, so the mapping is written out rather than
+summarised: `rails_i18n_rule.rb` re-attempted `law/html.rb`'s `I18N_COVERAGE`,
+which already carries three hardening comments for the false positives the new
+regex reintroduced, plus `surface_rules`' chrome check and the RAILS
+`chrome_i18n_lint` gate. `bin/norwegianize` was a fourth. `external_gate_rules.rb`
+shelled out to `check-rails`, `integrity_gate.rb` and `STUDIO/gate.rb` from
+inside the scanner's thread pool, keyed on the scanner reaching its own source
+file — `bin/pub4 gate` is that cross-tree health check and has been.
+`bin/pre-commit-hook.sh` and `bin/trap_check` duplicated `OPENBSD/dev/githooks/`,
+which is installed through `core.hooksPath` and has had real-git tests since
+this morning; the new pair also used `wc` and `grep`, which the house rules ban
+in committed scripts. `bin/deploy` plus `lib/io/deploy/orchestrator.rb`
+duplicated `bin/pub4 vps deploy`. `lib/review/constitution/law.rb` re-modelled
+`rules.yml`'s `laws:` section, which `Ground::LawResolver` already models with
+priorities — and became an eleventh reader of `rules.yml` against a ceiling of
+ten, which is the ratchet that caught it. `lib/review/propose.rb`,
+`lib/review/proposal/`, `lib/review/prompt/builder.rb`, `lib/command_ops.rb`,
+`lib/io/ops/` and `lib/io/git/client.rb` were placeholders with invented bodies
+and no caller; `Proposal::Validator.validate` returned `Result.ok(true)` and
+`propose.rb` guarded on it with `unless`, so the rejection branch could not
+fire, and `Git::Client.commit` built `git commit -- <paths> -m <msg>`, which
+reads `-m` as a pathspec. All removed. `data/soul.yml` forbids exactly this
+shape under `anti_simulation`, and the removal is the enforcement.
+
+**Three root files went with them.** `GLOSSARY.md` and `ONBOARDING.md` defined
+terms this repo does not use ("Gravity Debt", "The Bridge") and restated
+`CLAUDE.md` in shorter words; root `DECISIONS.md` was a third index. The real
+records had been moved to `MASTER/data/archive/decisions/` — byte-identical, so
+nothing was lost, but `CLAUDE.md` points readers at `MASTER/DECISIONS.md` and
+`OPENBSD/DECISIONS.md` and both had stopped existing there. Restored to the
+paths that are documented, archive removed rather than kept as a second copy.
+`MASTER/AGENTS.md` (124 lines to 14) and `MASTER/README.md` (124 to 18) were
+restored for the same reason: the rewrite undid the two `WISHLIST.md` items
+marked **[done]** the day before, and the new README was lists and LaTeX arrows
+in the one file the `README_PROSE` rule names as its reference.
+
+**Two broken clones**, `pub4/` and `pub4_new/`, each a `.git` with no worktree
+and a branch git calls broken, were at the repo root. Removed.
+
+What is kept from the cluster: the `engines/` decomposition, repaired;
+`lib/voice/playback.rb`, which is the reader the Edge TTS stack never had and is
+wired from `result_display.rb`; and `OPENBSD/deploy_smoke_gate.rb`'s rewrite,
+which matches the named-table-plus-forward shape `relayd.conf` actually uses
+instead of a backend block that never existed.
+
+The bytes of everything removed are outside the tree, not only in git.
+
+### `bin/gate --explain` is a dry run, and unknown flags are refused — closed 2026-08-31
+
+`bin/gate` now knows `--explain` and prints the same ladder `bin/pub4 gate
+--explain` does, and exits 0 having run nothing. The half that matters more is
+the other one: an argument it does not recognise is now an error rather than
+something ignored. Falling through to the default meant falling through to
+`mode=full-fix apply=yes`, so the failure mode of a typo was a writing pass over
+four trees.
 
 ### The lexical tier reaches a verdict — closed 2026-08-31
 
@@ -3102,3 +3203,132 @@ than implied across four.
   and no `claude` CLI are present.
 - **PWA banner.** The install-prompt / add-to-home-screen affordance across the
   three Rails apps.
+- **Aegis, seaborne.** A safety agent for the water, and the first body the
+  embryo could plausibly take. It is a program rather than a feature because
+  most of it is gated on hardware; the section below says what is buildable now
+  and what is not.
+
+## Aegis, seaborne
+
+Aegis is the proactive-bodyguard concept: passive sensing, active analysis,
+preemptive action. Written for a city it is a hard build and a poor business.
+Written for the water it is a narrower build with paying customers, and it is
+the case where this runtime's offline-first design stops being a preference and
+becomes the product.
+
+**The urban threat model does not port.** It assumes an adversary who is human,
+intentional, and three seconds away, in a place with dense infrastructure. At
+sea the threat is environmental and indifferent, the timescale is twenty minutes
+to twelve hours, rescue latency is hours rather than minutes, and connectivity
+is absent by default rather than merely degraded. Every intervention that
+depends on deceiving a person — the synthetic phone call, the fake system
+update, the lit-street route — has no one to deceive and nowhere to walk. Gait
+analysis, proximity tailing and weapon identification go with them.
+
+What survives is small and gets much stronger. Immersion and sudden-deceleration
+detection replace the acoustic and gait tiers. The last-known-position heartbeat,
+a footnote in the urban spec because the city has signal, becomes the entire
+value proposition. The forensic packet already has a regulatory home, because
+voyage data recording is mandated on commercial vessels and is currently dumb.
+
+**Man overboard is the anchor, and the only one worth starting from.** It maps
+onto the existing pipeline almost unchanged: immersion plus acceleration anomaly
+triggers, biometrics confirm the wearer is alive, an AIS-MOB and satellite burst
+carries position, and the packet is the record. It is far more tractable than
+the urban case because there is no intent to model and no adversary adapting to
+the detector, and it drops the whole privacy surface with them. Existing MOB
+beacons are pull-cord or water-contact triggers with no discrimination and no
+prediction. The gap a model actually fills is drift: cold-water displacement is
+predictable from sea state and current, and a search wants the probable position
+twenty minutes from now, not the position at the moment of the fall.
+
+**The gate is hardware, not software.** A phone cannot host this — salt,
+immersion, battery, and the fact that it rides in a pocket rather than against
+skin. The sensing substrate has to become a wearable or a vessel-mounted box
+before any of the sensing tiers are worth writing. So the order is: prove the
+tier-one anomaly stack on phones on land, where iteration is cheap, then port
+detection to marine hardware, where the regulation and the budgets are. The
+urban build is the laboratory, not the product.
+
+**Do not scaffold the sensing tiers yet.** Stub sensors, placeholder threat
+classes and a maritime module wired to nothing would be this tree's dominant
+defect committed deliberately, and `data/soul.yml` forbids it under
+anti_simulation. Nothing in this program is written until it has a reader.
+
+The one piece buildable today with no hardware and no speculation is the drift
+model: a pure function from entry position, sea state, current and elapsed time
+to a probable-position ellipse, testable against published search-and-rescue
+drift data. It is useful on its own to anyone running a search, it is the part
+with real intellectual content, and it is falsifiable — which the rest is not
+until there is a device. Start there or start nowhere.
+
+Norway is the place to do it: the fishing fleet, the aquaculture pens, the
+offshore wind buildout, Sjøfartsdirektoratet, and an Innovasjon Norge case that
+argues far more readily for maritime safety than for a constitutional runtime.
+It is the same pitch as `MASTER/README.md` makes, with a body attached.
+
+## From the 2026-08-31 session
+
+Raised while building the audio-driven README loop and the file-discipline
+rules. Each was found by measurement, and each is left with what it would take
+to finish rather than a bare title.
+
+- **`bin/check` does not load.** `lib/review/constitution.rb:9` declares
+  `class Constitution`; `lib/review/constitution/validator.rb:5` declares
+  `module Constitution`. Both untracked, from a scanner-extraction session. The
+  whole MASTER gate is down until one of them yields, so nothing in this tree
+  can be verified at the gate — only at the unit level.
+- **`Scanner.skip_path?` is a stub returning `false`.** The extraction carried
+  it out of `scanner.rb` and a placeholder went back in, inverting the default:
+  the scanner now walks `node_modules`, `vendor` and `.cache`. Eight symbols
+  are gone from the tree — `SKIP_PATH_SEGMENTS`, `SKIP_PATH_FRAGMENTS`,
+  `SKIP_PATH_SUFFIXES`, `SKIP_PATH_PREFIXES`, `SKIP_RELATIVE_PATHS`,
+  `VENDORED_ASSET`, `relative_segments`, `relative_path`. Any recent clean scan
+  measured something other than what it claimed.
+- **`rules.yml` refactor, held.** Aggressively DRYing the 4,215-line law is
+  unverifiable while the gate is down and the scanner mis-scans. It wants both
+  entries above fixed first, then a measured pass.
+- **Three outboard units are in no rack.** `freq_shift`, `phase_rotate` and
+  `hedd_triode` are built and dispatchable in `Outboard.chain` — the `when`
+  arms exist — but no rack names them, so those arms are dead. They are also
+  the most advanced processing in the tree, which is what makes it worth
+  either wiring them into a rack or deleting the arms.
+- **Six Sonitex knobs have no reader.** `SONITEX_MIX`, `_DISTORTION`,
+  `_VINYL`, `_TONE`, `_NOISE`, `_SAMPLING` are documented with defaults,
+  `dilla.rb` tells operators to run them, and nothing reads any of them. Wiring
+  them changes rendered sound, so correcting the docs is the smaller move.
+- **`Policy.default_volume` has no reader.** `+40%` in `data/voice.yml`,
+  hardcoded again at `lib/voice/policy.rb:20`, exposed at `:65`, consumed
+  nowhere — not by `browser_payload`, not by the worker. Left inert
+  deliberately: wiring it changes how MASTER sounds, which is an operator's
+  call. That file's own header is a long account of a voice value living in
+  more places than the one that changed; this would be the third entry.
+- **`strunk.apply_to` has no reader.** `data/voice.yml` lists
+  `[prose, comments, documentation, strings]` and nothing consults it, so the
+  filename rules added this session enforce naming instead. Either give the
+  list a reader or delete it.
+- **Merge the three techno renderers.** `render_industrial`,
+  `render_hate_techno` and `render_techno` share `techno_harmony_roots` and the
+  schedule builders but hold genuinely different arrangements, and
+  `dilla.rb:815` records that giving industrial its own target was "a sound
+  decision, not a gap." Read all three before cutting; merging on surface
+  similarity flattens the arrangements into one sound.
+- **`dilla.rb` is 34,545 lines.** `GLOSSARY.md` defines gravity debt as a file
+  over 300 lines; this exceeds it by 115x and holds 71% of the engine against
+  `lib/`'s 41 files and 14,263 lines. Split along the seams it already has —
+  the renderers, the ENV default tables, the SMF writers, the patch registries.
+  The direction is out of the monolith, not into it.
+- **RAILS token discipline, from the joi.com study.** Three patterns worth
+  taking, none of them ornament: colours composed from a named opacity scale
+  rather than hardcoded alpha, line-height bound to a semantic role rather than
+  a size, and one spacing primitive with `calc` multiples instead of ten
+  hardcoded steps. Do not take the 8-step radius scale, the rounded cards or a
+  webfont — `--font-brand` is a deliberate zero-byte stack.
+- **Flatten `STUDIO/dilla/renders/` into the dilla root.** Operator's
+  instruction. It needs `.gitignore` rules to follow the files, since
+  `renders/` is currently ignored wholesale, and `dilla.rb`'s hardcoded
+  `File.join(ROOT, "renders", ...)` defaults move with them.
+- **`MASTER/README.md` fails `README_PROSE`.** It was cut to headers, bullets,
+  a code block and a LaTeX arrow; the rule in `cosmetic_rules.rb` wants one
+  voice in plain prose. The long Innovasjon Norge pitch that was deleted is
+  also where the seaborne Aegis case would sit.
