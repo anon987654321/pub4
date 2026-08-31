@@ -99,7 +99,22 @@ pub4_source_ceilings:
   # stages may write, and its third state. Two files against five invocations
   # nobody ran together. bin/test-safety went the other way in the same commit
   # and costs nothing here, having no extension to count.
-  MASTER: 1040
+  # 1040 -> 1044 is four test files, one per thing that had no test at all:
+  # test_provider_key_wiring.rb (providers.yml naming a RubyLLM setter the
+  # installed gem has no method for — the runtime did not boot for a day),
+  # test_agy_reachability.rb (agy ids leading a fallback chain on machines with
+  # no agy binary, and the four keyless assertions that passed or failed by
+  # host), test_circuit_breaker_states.rb (the closed, open, half_open and
+  # recovered states, which the unified handoff's 3.2 asked for) and
+  # test_smell_detectors.rb (the four new detectors, each with the source it
+  # must flag and the source it must not). None folds into a sibling: the four
+  # subjects share no fixture and no setup.
+  #
+  # A raise to 1044 and not to 1052, deliberately. MASTER measures 1052, and the
+  # eight above 1044 are growth this change did not make and cannot account for.
+  # Raising to fit them is the swallowing the note above warns about, so the row
+  # stays red with the overage that is actually unexplained.
+  MASTER: 1044
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
   # it belongs beside the other probes and folds into nothing.
@@ -114,7 +129,14 @@ pub4_source_ceilings:
   # Two files against three copies of the same assertion; brgen keeps the
   # behavioural destroy cases on top of the include.
   RAILS: 2358
-  OPENBSD: 106
+  # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
+  # that are the whole defence against a shared index, and nothing tested any of
+  # them — a hook that stopped firing looks exactly like a week in which nobody
+  # made the mistake. It runs all three through real git in a throwaway
+  # repository, because a hook is installed behaviour: a unit test of its logic
+  # would not catch a lost chmod or a core.hooksPath pointing elsewhere. It
+  # folds into no existing OPENBSD test; every one of those is about the box.
+  OPENBSD: 107
   # 220 -> 222 for lora/seed_media.yml and lora/_toolkit/install_seed_media.rb,
   # the prompt set for every seeded photograph and the script that grades and
   # files what comes back from it. Two files, both named, neither foldable:

@@ -197,6 +197,103 @@ module Master
           end
         end
 
+        # A bare `true` at a call site names nothing. `shadow_lift(path, true)`
+        # is a riddle whose answer is in another file; `shadow_lift(path,
+        # preserve_blacks: true)` is not. The positional boolean default is the
+        # shape that produces it, and it is the shape the fix removes.
+        #
+        # Keyword parameters are exempt: `def render(path, cache: true)` already
+        # forces the call site to say what is true, which is the whole point.
+        class BooleanTrapRule < Rule
+          def initialize
+            super()
+            @id = "BOOLEAN_TRAP"
+            @description = "a positional boolean parameter makes every call site a riddle"
+            @severity = :info
+            @rule_tags = %i[API DOMAIN_LANGUAGE]
+            @auto_fix = false
+          end
+
+          def check_ast(ast, _code, path:)
+            return [] if ast.nil? || path.to_s.match?(%r{/(?:test|spec|fixtures)/})
+
+            each_node(ast, Prism::DefNode).flat_map do |def_node|
+              params = def_node.parameters
+              next [] unless params
+
+              Array(params.optionals).filter_map do |opt|
+                literal = opt.value
+                next unless literal.is_a?(Prism::TrueNode) || literal.is_a?(Prism::FalseNode)
+
+                finding(line: def_node.location.start_line,
+                  message: "#{def_node.name}(#{opt.name} = #{literal.is_a?(Prism::TrueNode)}) — the call site passes a bare boolean; make it `#{opt.name}:`")
+              end
+            end
+          end
+        end
+
+        # DATA_CLUMPS, plural, because that spelling was already in the tree:
+        # data/rules.yml carries a `violation_priors` row under it and
+        # data/rule_deps.yml orders PRIMITIVE_OBSESSION `after: [DATA_CLUMPS]`.
+        # Neither could do anything, because RuleOrder#topo_sort skips a
+        # dependency whose id names no loaded rule and the prior is only read for
+        # a rule that exists. Naming this one DATA_CLUMP, singular, would have
+        # left both pointing at nothing for a second time.
+        #
+        # Two exclusions, both measured against this tree rather than guessed.
+        # Identical signatures are one interface implemented many times —
+        # check_ast(ast, code, path:) is a contract, and reporting its nine
+        # implementers reports the interface working. Overlapping windows over
+        # the same set of signatures are one clump seen through three frames, so
+        # the longest run wins. Without either, the count was 81; with them, 48.
+        class DataClumpsRule < Rule
+          MIN_CLUMP = 3
+          MIN_SIGNATURES = 3
+
+          def initialize
+            super()
+            @id = "DATA_CLUMPS"
+            @description = "the same parameters travelling together are a record struggling to be born"
+            @severity = :info
+            @rule_tags = %i[BLOATERS DOMAIN_MODELING]
+            @auto_fix = false
+          end
+
+          def check_ast(ast, _code, path:)
+            return [] if ast.nil? || path.to_s.match?(%r{/(?:test|spec|fixtures)/})
+
+            signatures = each_node(ast, Prism::DefNode).filter_map do |def_node|
+              # An underscored parameter is one the body does not use, so it
+              # travels with the others by accident rather than by meaning.
+              names = parameter_names(def_node).reject { |name| name.start_with?("_") }
+              [def_node, names] if names.size >= MIN_CLUMP
+            end
+            return [] if signatures.size < MIN_SIGNATURES
+
+            longest_runs(runs_by_window(signatures)).filter_map do |run, pairs|
+              next if pairs.size < MIN_SIGNATURES || pairs.map(&:last).uniq.size == 1
+
+              finding(line: pairs.map { |def_node, _names| def_node.location.start_line }.min,
+                message: "#{run.join(", ")} travel together through #{pairs.size} signatures — give them one object")
+            end
+          end
+
+          private
+
+          def runs_by_window(signatures)
+            runs = Hash.new { |hash, key| hash[key] = [] }
+            signatures.each do |def_node, names|
+              names.each_cons(MIN_CLUMP) { |run| runs[run] << [def_node, names] }
+            end
+            runs
+          end
+
+          def longest_runs(runs)
+            runs.group_by { |_run, pairs| pairs.map { |def_node, _names| def_node.location.start_line }.sort }
+                .values.map { |group| group.max_by { |run, _pairs| run.size } }.to_h
+          end
+        end
+
         class CouplerRule < Rule
           MESSAGE_CHAIN = /\b\w+(?:\.\w+){4,}/
           INTIMACY = /\.(?:instance_variable_get|instance_variable_set|send|public_send)\s*\(/

@@ -80,6 +80,29 @@ module Master
           )
         end
 
+        # Every node of one Prism type, in source order. Ten rules in
+        # structural_rules.rb carry a private `visit` that does this, which is
+        # the copy-paste TODO.md's "one shared AST-walk helper" names; those ten
+        # are their own sitting. This exists so rules written after it are not
+        # copies eleven through fourteen.
+        def each_node(node, type, acc = [])
+          return acc unless node.is_a?(Prism::Node)
+
+          acc << node if node.is_a?(type)
+          node.compact_child_nodes.each { |child| each_node(child, type, acc) }
+          acc
+        end
+
+        # The parameter names a def declares, positional then keyword, in the
+        # order they are written.
+        def parameter_names(def_node)
+          params = def_node.parameters
+          return [] unless params
+
+          (Array(params.requireds) + Array(params.optionals) + Array(params.keywords))
+            .filter_map { |param| param.name&.to_s if param.respond_to?(:name) }
+        end
+
         def scan_lines(code, pattern, message:, fix: nil)
           code.each_line.with_index(1).filter_map do |line, num|
             # The law engine honours the same marker: a line that declares
