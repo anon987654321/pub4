@@ -1,10 +1,6 @@
-<<<<<<< Updated upstream
 # dilla_principles.yml — restored from Downloads/dilla.yml
 # Research spec: aesthetic and workflow principles. Separate from
 # dilla_reference.yml, which holds documented progressions and loss gates.
-=======
-# dilla.yml
->>>>>>> Stashed changes
 version: 0.1.0
 status: draft
 purpose: >

@@ -15515,8 +15515,10 @@ def analog_smooth_filter(input_tag, out_tag: "smoothed", strength: nil)
   boom = (-1.6 * s).round(1)
   harsh = (-1.5 * s).round(1)
   air = (-2.0 * s).round(1)
-  # Tone only: a highpass, three bells and a deesser. No saturation here.
-  #
+  # Tone only: a highpass, three bells and a deesser. No saturation here: the
+  # soft clipper this stage carried sat in series ahead of neve_80's asymmetric
+  # clipper on the same signal, and two clippers with a limiter between them
+  # leave the limiters working on harmonics instead of transients.
   "[#{input_tag}]highpass=f=30:p=2," \
     "equalizer=f=85:t=q:w=1.0:g=#{boom}," \
     "equalizer=f=3200:t=q:w=1.2:g=#{harsh}," \
