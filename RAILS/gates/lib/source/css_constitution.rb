@@ -35,6 +35,17 @@ module Deploy
     IMPORTANT = /!important\b/
     REDUCED_MOTION = /@media[^{]*prefers-reduced-motion/
     SPACING = /\b(?:margin|padding|gap|row-gap|column-gap|inset)(?:-(?:top|right|bottom|left|inline|block)(?:-(?:start|end))?)?\s*:\s*([^;{]+)/
+# A number inside a var() fallback is the token's own declared value, not a
+# spacing literal anyone chose. `calc(var(--chrome-inset, 12px) +
+# var(--tap-min, 44px) + var(--space-1, 4px))` names three tokens and no
+# numbers, and scanning the raw declaration counted all three — so writing
+# the compliant form scored a rhythm finding. --tap-min made it worse: 44 is
+# tap_min, it is on layout_rules.grid.allowed_spacing_px and on
+# design_tokens scale.space_px, and it is absent from the
+# pixel_perfection.eight_px_rhythm list this gate actually reads, so the
+# one number guaranteed to appear in a tap-target fallback was the one
+# number the allowlist rejected.
+VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
     HEX = /#[0-9a-fA-F]{3,8}\b/
     COMMENT = %r{\A\s*(?://|/\*|\*)}
 
@@ -278,7 +289,7 @@ module Deploy
         motion_depth = nil if motion_depth && depth <= motion_depth
         next if allowed.empty?
 
-        spacing = line.match(SPACING)
+        spacing = line.gsub(VAR_FALLBACK, "var()").match(SPACING)
         next unless spacing
 
         spacing[1].scan(/(-?\d+(?:\.\d+)?)px/).flatten.each do |value|
