@@ -3061,11 +3061,14 @@ design_rules:
     grid:
       columns: 12
       base_unit_px: 8
-      # Subset used by surface_rules eight_px_rhythm. Full membership is
-      # RAILS/shared/design_tokens.yml scale.space_px (incl. 12/20/28/36/40/44…).
+      # The same membership as pixel_perfection.eight_px_rhythm, which is the
+      # copy the css_constitution gate reads. Full membership is the source
+      # below; this is the subset the rhythm rules enforce, and it stayed out
+      # of step with its twin on 0 and 44 until 2026-08-31.
       # Do not invent steps outside that scale; prefer tokens over literals.
       source: RAILS/shared/design_tokens.yml#scale.space_px
       allowed_spacing_px:
+      - 0
       - 4
       - 8
       - 12
@@ -3453,6 +3456,16 @@ design_rules:
     - 'backdrop-filter\s*:'
     - 'text-shadow\s*:'
     forbid_arbitrary_radius_px_above: 16
+    # This list and layout_rules.grid.allowed_spacing_px are one axis written
+    # twice, and they disagreed on exactly two members: this one carried 0 and
+    # not 44, that one carried 44 and not 0. Both are in the declared source,
+    # RAILS/shared/design_tokens.yml scale.space_px, so both belong in both.
+    #
+    # 44 is the sharper of the two. It is tap_min -- shared_chrome names it,
+    # every tap target is built from it, and a var(--tap-min, 44px) fallback
+    # puts it in front of this allowlist constantly. The name says eight, but
+    # 4, 12, 20 and 44 are not multiples of 8 either; this is the 4px grid with
+    # chosen steps, and 44 was the one step missing between 40 and 48.
     eight_px_rhythm:
     - 0
     - 4
@@ -3463,6 +3476,7 @@ design_rules:
     - 24
     - 32
     - 40
+    - 44
     - 48
     - 64
     - 96
@@ -3769,7 +3783,11 @@ style:
     # 56/60px, which design_rules.yml's eight_px_rhythm (the rule real code
     # actually enforces, per Master::Design::Thresholds) rejects. Matches
     # design_rules.yml now instead of a looser, unenforced rule of its own.
-    units_spacing: "design_rules.yml pixel_perfection.eight_px_rhythm: 4/8/12/16/20/24/32/40/48/64/96px only"
+    # Names the list rather than copying it. Spelling the members out here made
+    # this a third restatement of one axis, and it was already the stalest of the
+    # three: it carried neither 0 nor 44 while the two lists it claimed to quote
+    # disagreed about exactly those two.
+    units_spacing: "design_rules.yml pixel_perfection.eight_px_rhythm (see that list; 0 and 44 included)"
     forbidden:
       - "!important except for utility overrides"
       - inline_style_attributes
