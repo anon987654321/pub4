@@ -291,6 +291,55 @@ condition that always holds has stopped asserting it.** Same shape as the gate's
 inconclusive stages. Worth asking of every other skip in the suite whether its
 guard condition is the normal state.
 
+### `bin/gate --explain` is not a dry run — opened 2026-08-31
+
+`MASTER/bin/pub4 gate --explain` prints the ladder without running it, and
+`CLAUDE.md` says so. `MASTER/bin/gate --explain` does **not**: the flag is not in
+its ARGV handling at all, so it is ignored and the script starts an ordinary run
+at `mode=full-fix ... apply=yes`. Reached for on the strength of the documented
+flag on the other surface, in a shared checkout, and killed a few seconds in;
+nothing had been written that time, which is luck rather than design, because
+full-fix is the mode that runs `/fix` over four trees.
+
+Two surfaces, one flag name, opposite behaviour, and the dangerous one is the
+one whose name is shorter. Either teach `bin/gate` the flag or have it refuse an
+argument it does not know — an unrecognised flag that silently becomes "run
+everything and write" is the shape of this the next agent will also get wrong.
+
+### The scanner refactor in flight has lost its skip list — opened 2026-08-31
+
+Not committed, and not this session's: as of 2026-08-31 the shared checkout
+carries an uncommitted extraction of `Scanner` — `scanner.rb` down from 466
+lines to 139, with `ProgressReporter` and `Transport` moved to untracked
+`lib/review/scan/engines/`. It parses and the scanner still builds with all 142
+rules. Recorded here rather than fixed, because it is someone else's working
+tree; two other sessions were asked and neither owns it.
+
+What matters if it lands as written: `skip_path?` is `return false # Default
+skip behavior`, and `SKIP_PATH_SEGMENTS`, `SKIP_PATH_SUFFIXES` and
+`SKIP_PATH_PREFIXES` are gone from the tree entirely — not moved into
+`engines/`, not anywhere. Measured on the working copy against committed HEAD:
+
+    Scanner.skip_path?(".../node_modules/x.rb")   false, was true
+    Scanner.skip_path?(".../vendor/x.rb")         false, was true
+    Scanner.skip_path?(".../.cache/x.rb")         false, was true
+
+So the scanner would stop skipping anything: `node_modules`, `vendor`, `.cache`,
+`public/assets`, `builds`. Findings against generated code, a scan slower than
+the one already timing out above, and — the one that costs something
+irreversible — `bin/gate`'s full mode runs `/fix`, so it would rewrite STUDIO's
+generated `lora/**/.cache/**` copies. `bin/gate` already carries a comment at
+line 87 warning about exactly that, and this removes the guard the warning
+assumes.
+
+It does **not** crash, and the distinction is the whole point: a first pass at
+this claimed `bin/gate` would `NameError` on the missing constants, which a
+`grep` for `SKIP_PATH_` appears to support. The single surviving occurrence in
+the repo is that line-87 comment — prose, not a reference — and `bin/gate` runs
+fine. Verify what a grep matched before asserting a runtime consequence; this
+file has said so before and it was still nearly got wrong twice in one hour, by
+two sessions.
+
 ### Neither scanning tier can reach a verdict — opened 2026-08-31
 
 With the boot crash above fixed, `bin/pub4 gate --scan-only` gets a running
