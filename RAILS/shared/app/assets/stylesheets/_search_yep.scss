@@ -32,6 +32,12 @@
 .search.active {
   background-color: white;
   border-color: white;
+  /* The lift is what tells you the box took focus — without it the state change
+     is a background swap you can miss. Stripped once by a flat-UI pass over the
+     whole tree, which did not honour the pen allowlist this file sits in and
+     that the four gates carrying PEN_ALLOW exist to enforce. Restored at the
+     pen's exact value. */
+  box-shadow: rgba(0, 0, 0, 0.25) 0px 1px 8px 0px;
 }
 
 .search.active {
