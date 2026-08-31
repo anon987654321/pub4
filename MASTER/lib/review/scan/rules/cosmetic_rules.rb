@@ -8,6 +8,23 @@ module Master
         #   MEASURE_OPTIMUM
         # (test_scan_rule_contracts proves each reaches findings through the bridge).
 
+        # What may stand between a README's title and its opening sentence: an HTML
+        # comment, a void media tag, or a wrapped media element with a real closing tag.
+        #
+        # Three branches because the previous single one demanded a closing `>` after
+        # every tag, and `<img …>` has none — so `.*?` ran off looking for one, the
+        # alternation failed, and the branch matched nothing. MASTER/README.md, the file
+        # CLAUDE.md names as the reference for this rule, therefore failed it: the bold
+        # check ran against `<img src="loop.gif">`. A rule that cannot see the thing it
+        # was written to permit is the shape law/ refuses in the lexical case.
+        HERO = %r{
+          \A(?:
+            <!--.*?-->\s*                                    |
+            <(?:img|source|br|hr)\b[^>]*/?>\s*               |
+            <(?:video|picture|p|div|a)\b[^>]*>.*?</(?:video|picture|p|div|a)>\s*
+          )+
+        }mx.freeze
+
         ABBREV_IDENT_RE = /\b(?:def|class|module|\|)\s+.*\b(tmp|idx|cfg|ctx|num|val|obj|str|arr|buf|temp|ret)\b/.freeze
         EN_DASH_RANGE_RE = /\b\d+\s?-\s?\d+\b/.freeze
         # Three things wear the shape of a range without being one, and this tree is
@@ -218,7 +235,7 @@ module Master
           # A hero image or video (and its HTML comment) may sit between the
           # title and the opening line — skip it before checking the opening is
           # bold, so the face can lead the page and the prose still has to.
-          lead = lead.sub(%r{\A(?:<!--.*?-->\s*|<(?:video|img|picture|p)\b[^>]*>.*?(?:</(?:video|picture|p)>|/?>)\s*)+}m, "").lstrip
+          lead = lead.sub(HERO, "").lstrip
           findings << finding(line: 1, message: "README opening is not bold — lead with one bold, visionary sentence") unless lead.empty? || lead.start_with?("**")
           findings
         end
