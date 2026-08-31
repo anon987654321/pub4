@@ -1,7 +1,9 @@
 ---
 name: pub_restore_contract
-source_repo: anon987654321/pub
-target_repo: anon987654321/pub4
+# source_repo and target_repo live once, in data/recovery/legacy_manifest.yml,
+# which this file already names under checks.file_presence. Both keys stood here
+# too, with the same two values and no reader in either tree — a second copy that
+# could only drift. lint:data_singularity and lint:dedup both failed on the pair.
 updated: "2026-06-26"
 layout_note: >-
   Paths naming DEPLOY/ predate its split into RAILS/, OPENBSD/ and STUDIO/.
