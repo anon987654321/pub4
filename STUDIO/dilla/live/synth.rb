@@ -19,13 +19,18 @@ require "shellwords"
 # which is what a console does and why summed material glues.
 def sonitex(bits:, lo:, hi:, drive:)
   "volume=#{drive},acrusher=bits=#{bits}:mode=log:aa=1," \
-    "highpass=f=#{lo},lowpass=f=#{hi},alimiter=limit=0.97"
+    "highpass=f=#{lo},lowpass=f=#{hi},alimiter=limit=0.99"
 end
 
 def vcs(depth:, smear:)
   # aphaser's delay floor is 0.1; under it nothing is audible and the knob only
   # appears to turn.
-  "aphaser=in_gain=0.6:out_gain=0.72:delay=#{smear}:decay=#{depth}:speed=0.5," \
+  # aphaser is not unity: in_gain and out_gain multiply, so 0.6 x 0.72 is a
+  # 7dB cut per instance and three instances threw away 22dB before the limiter
+  # ever saw the signal. Makeup here rather than at the master, so each console
+  # stage stays level-neutral and the weights above mean what they say.
+  "aphaser=in_gain=0.75:out_gain=0.85:delay=#{smear}:decay=#{depth}:speed=0.5," \
+    "volume=1.9," \
     "aecho=0.9:0.25:#{smear.round}:0.08"
 end
 
@@ -50,13 +55,33 @@ Dir.chdir(D)
 beds = Dir.glob("samples/chopped/*/loop.wav")
 abort "no beds" if beds.empty?
 bed = beds.sample
+# 0.92-0.96: a semitone and a half down at the deep end. Never none.
+DRAG = (0.92 + rand * 0.04).round(4)
 slug = File.basename(File.dirname(bed))
 
-bpm  = 84 + rand(14)
-beat = (60.0 / bpm).round(4)
-step = (beat / 2).round(4)   # eighths
-sxt  = (beat / 4).round(4)   # sixteenths
-bar  = (beat * 4).round(4)
+# The grid comes from the record, not from a random number.
+#
+# chop cuts on bar lines, so a loop's duration is its tempo: one bar is the
+# whole loop divided by however many bars it holds. The rack's loops.json only
+# ever carries the last chop's entries, so the length is measured off the file
+# instead -- ffprobe is the one reader that cannot go stale.
+#
+# And the drag moves the tempo with the pitch. asetrate slows the sample, so a
+# bar that was T seconds is now T/DRAG, and a kit built on the undragged figure
+# would run ahead of the record all night. This is what warping the drums to the
+# flow of the sample actually means.
+raw = `/opt/homebrew/bin/ffprobe -v quiet -show_entries format=duration -of csv=p=0 #{bed.shellescape}`.to_f
+raw = 3.0 if raw <= 0.2
+# Whole bars only, and the reading that lands in a tempo a human would count.
+bars_in_loop = [1, 2, 4, 8].min_by do |b|
+  implied = (b * 4 * 60.0) / (raw / DRAG)
+  implied.between?(76, 104) ? (implied - 90).abs : 1_000 + (implied - 90).abs
+end
+bar   = ((raw / DRAG) / bars_in_loop).round(4)
+beat  = (bar / 4).round(4)
+step  = (beat / 2).round(4)   # eighths
+sxt   = (beat / 4).round(4)   # sixteenths
+bpm   = (60.0 / beat).round(1)
 total = 96
 
 # Voicings, not scale runs. Each step is a chord built from one slice: root,
@@ -80,7 +105,6 @@ prog = PROGRESSIONS.sample
 slice_at = (rand * 2.2).round(3)
 # 0.92-0.96: a semitone and a half down at the deep end, a third of one
 # at the shallow. Never none.
-DRAG = (0.92 + rand * 0.04).round(4)
 reverse = rand < 0.28 # a reversed chop, sometimes
 
 inputs = []
@@ -138,27 +162,39 @@ hat_hits   = (0...8).map { |i| (i * step * 1000).round + (i.odd? ? 34 : 0) + jit
 place = lambda do |idx, label, filt, hits|
   out = ["[#{idx}:a]#{filt}[#{label}_s]"]
   out << "[#{label}_s]asplit=#{hits.size}#{(0...hits.size).map { |k| "[#{label}x#{k}]" }.join}"
-  hits.each_with_index { |ms, k| out << "[#{label}x#{k}]adelay=#{ms}|#{ms}[#{label}p#{k}]" }
+  # adelay refuses a negative delay, and the jitter that makes the drums drunk
+  # can push a hit on the one below zero. Clamped here rather than at every call
+  # site, so no future pattern can reintroduce it: the graph either builds or it
+  # does not, and an intermittent failure is the worst kind.
+  hits.each_with_index do |ms, k|
+    d = [ms, 0].max.round
+    out << "[#{label}x#{k}]adelay=#{d}|#{d}[#{label}p#{k}]"
+  end
   out << "#{(0...hits.size).map { |k| "[#{label}p#{k}]" }.join}amix=inputs=#{hits.size}:normalize=0[#{label}]"
   out
 end
 
-graph += place.call(n, "kk", "volume=1.5,afade=t=out:st=0.02:d=0.29,lowpass=f=92", kick_hits)
-graph += place.call(n + 1, "sn", "volume=0.95,afade=t=out:st=0.005:d=0.22,bandpass=f=1750:width_type=h:w=1500", snare_hits)
+graph += place.call(n, "kk", "volume=1.9,afade=t=out:st=0.015:d=0.24,lowpass=f=180,acrusher=bits=12:mode=log:aa=1", kick_hits)
+graph += place.call(n + 1, "sn", "volume=1.5,afade=t=out:st=0.004:d=0.19,bandpass=f=1900:width_type=h:w=2600,volume=1.4", snare_hits)
 graph += place.call(n + 2, "gh", "volume=0.24,afade=t=out:st=0.003:d=0.09,bandpass=f=2400:width_type=h:w=1800", ghost_hits)
 graph += place.call(n + 3, "hh", "volume=0.26,afade=t=out:st=0.002:d=0.048,highpass=f=7200", hat_hits)
 
 inputs << "-stream_loop -1 -i #{bed.shellescape}"
 bed_i = inputs.size - 1
-graph << "[#{bed_i}:a]asetrate=44100*#{DRAG},aresample=44100,atrim=0:#{bar}," \
-                "volume=0.30,lowpass=f=5200,aecho=0.8:0.7:60:0.3[under]"
+graph << "[#{bed_i}:a]asetrate=44100*#{DRAG},aresample=44100,atrim=0:#{(bar * bars_in_loop).round(4)}," \
+                "volume=0.42,lowpass=f=5200,aecho=0.8:0.7:60:0.3," \
+        "#{sonitex(bits: 13, lo: 60, hi: 7200, drive: 1.1)}," \
+        "#{vcs(depth: 0.55, smear: 1.1)}[under]"
 
-graph << "[kk][sn][gh][hh]amix=inputs=4:weights=1.6 1.3 0.7 0.75:normalize=0[kit_raw]"
+graph << "[kk][sn][gh][hh]amix=inputs=4:weights=2.8 2.4 1.1 1.0:normalize=0[kit_raw]"
 graph << "[kit_raw]#{sonitex(bits: 11, lo: 42, hi: 12000, drive: 1.18)}," \
          "#{vcs(depth: 0.42, smear: 2.1)}[kit]"
 
-graph << "[phrase][under][kit]amix=inputs=3:weights=0.52 0.22 1.45:" \
-         "normalize=0:duration=longest,atrim=0:#{bar},asetpts=N/SR/TB[barmix]"
+graph << "[phrase][under][kit]amix=inputs=3:weights=0.30 0.14 3.4:" \
+         "normalize=0:duration=longest," \
+        "#{vcs(depth: 0.38, smear: 1.7)}," \
+        "#{sonitex(bits: 12, lo: 40, hi: 13000, drive: 1.12)}," \
+        "atrim=0:#{bar},asetpts=N/SR/TB[barmix]"
 
 # Arrangement, not a loop on repeat: the phrase steps back for eight bars in the
 # middle so the kit and the record carry it, then returns. A beat that never
@@ -169,23 +205,31 @@ graph << "[barmix]aloop=loop=-1:size=#{(bar * 44100).round},atrim=0:#{total}," \
          "volume='if(between(t,#{drop_from},#{drop_to}),0.55,1.0)':eval=frame," \
          "vibrato=f=1.7:d=0.14," \
          "acompressor=threshold=0.4:ratio=3.2:attack=9:release=210[body]"
-graph << "[#{crackle_i}:a]highpass=f=2200,volume=0.5[crackle]"
-graph << "[body][crackle]amix=inputs=2:weights=1 0.30:normalize=0:duration=first," \
-         "#{sonitex(bits: 10, lo: 46, hi: 11000, drive: 1.06)}," \
-         "#{vcs(depth: 0.3, smear: 3.0)}," \
-         "alimiter=limit=0.94,aformat=sample_rates=44100:channel_layouts=stereo[out]"
+graph << "[#{crackle_i}:a]highpass=f=2200,volume=0.9," \
+                "#{vcs(depth: 0.6, smear: 0.9)}[crackle]"
+graph << "[body][crackle]amix=inputs=2:weights=1 0.34:normalize=0:duration=first," \
+         "#{vcs(depth: 0.34, smear: 2.4)}," \
+         "#{sonitex(bits: 10, lo: 46, hi: 11500, drive: 1.1)}," \
+         "#{vcs(depth: 0.26, smear: 3.6)}," \
+         "aecho=0.85:0.7:83|151|229:0.20|0.12|0.06," \
+         "tremolo=f=#{(2.0 / bar).round(3)}:d=0.10," \
+         "treble=g=3:f=6500,bass=g=4:f=95," \
+         "dynaudnorm=f=200:g=9:p=0.94:m=18," \
+         "volume=2.4," \
+         "alimiter=limit=0.98:level=disabled," \
+         "aformat=sample_rates=44100:channel_layouts=stereo[out]"
 
 journal!(
-  at: Time.now.utc.iso8601, bed: slug, bpm: bpm, progression: prog,
+  at: Time.now.utc.iso8601, bed: slug, bpm: bpm, drag: DRAG, bars_in_loop: bars_in_loop, progression: prog,
   chop_at: slice_at, reversed: reverse, bar_s: bar,
   weights: { phrase: 0.52, under: 0.22, kit: 1.45 },
   drums: { kick_ms: kick_hits, snare_ms: snare_hits, ghost_ms: ghost_hits, hat_ms: hat_hits },
-  sonitex: [12, 11, 10], vcs: 3, rig: "live/synth.rb"
+  sonitex: [13, 12, 12, 11, 10], vcs: 6, rig: "live/synth.rb"
 )
 
 cmd = "#{FF} -nostdin -loglevel error #{inputs.join(" ")} " \
       "-filter_complex #{graph.join("; ").shellescape} -map \"[out]\" -f wav -"
-warn "▶ #{slug}  #{bpm}bpm  #{prog.map { |c| c ? "#{c[0]}#{c[1]}" : "." }.join(" ")}" \
+warn "▶ #{slug}  #{bpm}bpm (#{bars_in_loop}bar loop, drag #{DRAG})  #{prog.map { |c| c ? "#{c[0]}#{c[1]}" : "." }.join(" ")}" \
      "#{reverse ? "  REV" : ""}  chop@#{slice_at}s"
 exec("/bin/zsh", "-c",
      "#{cmd} 2>/dev/null | /opt/homebrew/bin/ffplay -nodisp -autoexit -loglevel quiet -i - 2>/dev/null")
