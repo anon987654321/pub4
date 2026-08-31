@@ -144,7 +144,13 @@ module Master
 
       def default_apply?(*) = true
 
-      def default_critique?(*) = true
+# MASTER_SCAN_DETERMINISTIC=1 means "no model in this pass", and the
+# council is the largest model call in it. Measured on lib/io, 46 files:
+# the two scan phases cost 32s and this deliberation cost 354.8s, so 91%
+# of a /scan was a critique the caller had not asked for. `bin/gate` then
+# runs /critique again as its own separate stage, which is the tier that
+# is supposed to own it.
+def default_critique?(*) = ENV["MASTER_SCAN_DETERMINISTIC"] != "1"
 
       def target_aliases
         {

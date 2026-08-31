@@ -33,6 +33,12 @@ SAFE_ENV = {
   "MASTER_BACKGROUND" => "0",
   "MASTER_AUTOFIX" => "0",
   "MASTER_SCAN_AUTOFIX" => "0",
+  # The third one, and the reason the lexical stage never reported. The header
+  # above calls this tier deterministic; the runtime hands its scanner an agent,
+  # so AdversarialRule sent a per-file prompt and 46 files projected to ~3200s
+  # against a 1200s stage timeout. Withholding the agent is what "no model"
+  # actually takes.
+  "MASTER_SCAN_DETERMINISTIC" => "1",
   "MASTER_WATCH" => "0",
   "MASTER_WATCHER" => "0",
   "MASTER_HEARTBEAT" => "0",

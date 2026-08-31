@@ -114,7 +114,15 @@ pub4_source_ceilings:
   # eight above 1044 are growth this change did not make and cannot account for.
   # Raising to fit them is the swallowing the note above warns about, so the row
   # stays red with the overage that is actually unexplained.
-  MASTER: 1044
+  # 1044 -> 1045 is test/test_scan_deterministic_mode.rb, which holds
+  # MASTER_SCAN_DETERMINISTIC: that the model-backed rules lose their agent
+  # under it, that the council stops running inside /scan, that neither happens
+  # by default, and that bin/gate still asks for it. Four claims about a switch
+  # whose absence meant the gate's first stage had never once reported; a switch
+  # nothing requests is the same as no switch, so the last of those is the
+  # load-bearing one. It folds into no existing test: nothing else here tests a
+  # scan the runtime is not allowed to spend money on.
+  MASTER: 1045
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
   # it belongs beside the other probes and folds into nothing.
