@@ -48,14 +48,14 @@ def check_relayd(failures)
   end
 
   failures << "relayd: master backend missing" unless relayd.include?("forward to <master>")
-  
+
   # Source master port from inventory instead of magic number
   master_port = 53187 # default fallback
   if File.file?(master_json)
     master_entry = standalone.find { |e| e["name"] == "master" }
     master_port = master_entry["port"] if master_entry
   end
-  
+
   failures << "relayd: master missing http /up check" unless relayd.match?(/\bforward to <master>\b.*?\bport\s+#{master_port}\b.*?check http "/up"/)
 end
 
@@ -84,7 +84,7 @@ def check_apps_production(failures)
     # Fix: /up check was performance theater (matching /upload)
     failures << "#{name}: production.rb missing /up host_authorization exclude" unless text.match?(/\b\/up\b/)
     failures << "#{name}: production.rb missing /health host_authorization exclude" unless text.match?(/\b\/health\b/)
-    
+
     routes = File.join(RAILS_ROOT, name, "config", "routes.rb")
     failures << "#{name}: routes must load shared fleet health endpoint" if File.file?(routes) && !File.read(routes).include?("fleet.rb")
   end
