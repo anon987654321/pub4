@@ -2,6 +2,9 @@
 
 require "json"
 require "fileutils"
+# For slug_for: the record's stems live under the directory that slug names, and
+# both modules have to agree on how a source path becomes that name.
+require_relative "radio_chop"
 
 # The voices we were throwing away.
 #
@@ -21,7 +24,8 @@ require "fileutils"
 # loop was taken from, out of the vocal stem instead of the instrumental one.
 module VocalChop
   ROOT = File.expand_path("..", __dir__)
-  WORK = File.join(ROOT, "scratch", "chop_work", "htdemucs_6s")
+  WORK = File.join(ROOT, "scratch", "chop_work")
+  MODEL_DIR = "htdemucs_6s"
   MANIFEST = File.join(ROOT, "samples", "chopped", "loops.json")
   SAMPLE_RATE = 44_100
 
@@ -38,13 +42,18 @@ module VocalChop
     JSON.parse(File.read(MANIFEST))["loops"] || []
   end
 
-  # Which thirty-second cut contains this moment of the broadcast.
+  # Which thirty-second cut of THIS record contains this moment of it.
   #
   # Cut directories are named for where they start and how long they run, both
   # in tenths of a second: cut_001650_0300 begins at 165.0 seconds and lasts 30.
-  # Reading the name back is enough to find the one covering any timestamp.
-  def cut_for(second)
-    Dir[File.join(WORK, "cut_*")].each do |dir|
+  # The name carries the offset and nothing else, so the record has to come from
+  # the directory above it. Searched flat across every record's stems, a lookup
+  # by timestamp alone returns whichever record was chopped last and happens to
+  # run that long -- one record's voice cut against another record's loop, with
+  # nothing in the result saying so.
+  def cut_for(second, source)
+    slug = RadioChop.slug_for(source.to_s)
+    Dir[File.join(WORK, slug, MODEL_DIR, "cut_*")].each do |dir|
       m = File.basename(dir).match(/\Acut_(\d{6})_(\d{4})\z/)
       next unless m
 
@@ -66,7 +75,13 @@ module VocalChop
     level = loop_entry.dig("dropped_db", "vocals").to_f
     return { slug: loop_entry["slug"], skipped: "quiet (#{level.round(1)} dB)" } if level < MIN_VOCAL_DB
 
-    found = cut_for(loop_entry["source_start_sec"].to_f)
+    # No source on the row, no lookup. A row that cannot name its record is one
+    # the registry was rebuilt for rather than chopped, and guessing the record
+    # is the failure this method exists to prevent.
+    source = loop_entry["source"].to_s
+    return { slug: loop_entry["slug"], skipped: "row names no source" } if source.empty?
+
+    found = cut_for(loop_entry["source_start_sec"].to_f, source)
     return { slug: loop_entry["slug"], skipped: "no cached cut" } unless found
 
     dir, offset = found

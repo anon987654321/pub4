@@ -7117,18 +7117,23 @@ end
 # Off by default, and the reason matters more than the switch.
 #
 # A flip cuts a record into pieces and plays a new line from them. That is
-# Dilla's method and it is right for the records he used, where a piece was
-# itself a musical unit -- a chord stab, a bass note, a horn hit. Cut those up
-# and reorder them and you get a new tune out of old parts.
+# Dilla's method, and on the records he used a piece was itself a musical unit
+# -- a chord stab, a bass note, a horn hit. The SP-1200 is why: twelve bits at
+# 26 kHz across eight pads is about ten seconds of memory, so the unit could
+# not be longer than a hit. Cut hits up, reorder them, and a new tune comes out
+# of old parts.
 #
-# These chops are not that. They are flowing melodic passages off an Ethiopian
-# broadcast, and the reason they are worth having is the melody running through
-# them. Cutting a melody into sixteen fragments and reordering by pitch destroys
-# the one thing that made it beautiful; what comes back has the right notes in
-# the wrong order. Played straight, the loop is better, and the operator's
-# judgement on hearing both was blunt about it.
+# What is in the crate is not cut that way, and that is a fact about the
+# chopper rather than about the records. radio_chop's best_trim hunts for a
+# repeat period between 2 and 14 seconds, so what it registers is one to eight
+# bars -- a loop, whose worth is the melody running through it. Cutting a
+# melody into sixteen fragments and reordering by pitch destroys the one thing
+# that made it beautiful; what comes back has the right notes in the wrong
+# order. Played straight the loop is better, and the operator's judgement on
+# hearing both was blunt about it.
 #
-# So the loop plays, as it did. FLIP=1 for records where chopping is the point.
+# So the loop plays. FLIP=1 for records where chopping is the point, and this
+# is the switch to revisit if the crate is ever cut into hits.
 def flip_loop_entry(entry, cfg, pads, n_bars)
   return entry unless ENV["FLIP"] == "1"
   return entry if entry.nil? || !File.file?(entry[:path].to_s)
@@ -29916,8 +29921,9 @@ def chop_ingest!
     "python3 -m venv #{DEMUX_VENV_DIR} && " \
     "#{DEMUX_VENV_DIR}/bin/pip install demucs"
 
+  source = src ? File.expand_path(src) : RadioChop::DEFAULT_SOURCE
   RadioChop.ingest!(
-    src ? File.expand_path(src) : RadioChop::DEFAULT_SOURCE,
+    source,
     demucs: cmd,
     deep: RadioBergenStudy::DeepAudio,
     key_probe: method(:sample_key),
@@ -29928,9 +29934,15 @@ def chop_ingest!
     # search correlates a candidate against the material that follows it, so a
     # 30s window is what makes a 14s loop answerable at all.
     span: ENV.fetch("CHOP_SPAN", "30").to_f,
-    scratch: scratch_path("chop_work"),
+    # Per source, because the cut and stem caches are keyed on the window's
+    # offset alone. Pointed at one shared directory they hand a record whatever
+    # the previous record left at the same decisecond, and twenty-eight groups of
+    # the crate are byte-identical wavs under different records' names for that
+    # reason. RadioChop's own default is already per source; this is the caller
+    # that overrode it.
+    scratch: scratch_path(File.join("chop_work", RadioChop.slug_for(source))),
     # Separation is the expensive step and its output is keyed by the window it
-    # came from, so a re-run to re-tune the scoring reuses it. CHOP_FRESH=1
+    # came from, so a re-run over the same source reuses it. CHOP_FRESH=1
     # throws it away, which is what you want after changing the span or the
     # source. Not a `--flag`: apply_flags! validates the whole `--` namespace
     # before dispatch and rejects anything not in its table.

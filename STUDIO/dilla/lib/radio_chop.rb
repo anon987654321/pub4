@@ -658,7 +658,14 @@ module RadioChop
     # Under scratch/, never under samples/. Sixteen cuts through a 6-stem model
     # is ~300 MB of intermediate wav, and samples/ is a tracked directory --
     # left there it is one `git add -A` from the history.
-    work = scratch || File.join(ROOT, "scratch", "chop_work")
+    # One directory per source. The cut and stem caches below are both keyed on
+    # a filename that carries the window's offset and nothing about the record it
+    # was taken from, so a single shared directory hands record B the cut and the
+    # separation record A made at the same decisecond. Twenty-eight groups of the
+    # crate's 161 racks are byte-identical wavs wearing different records' names
+    # because of it -- Barney Kessel, Gorillaz and "Gimme the Flu" all carrying
+    # one loop. The offset names the window; the directory has to name the record.
+    work = scratch || File.join(ROOT, "scratch", "chop_work", slug_base)
     FileUtils.rm_rf(work) if fresh
     FileUtils.mkdir_p(work)
 
@@ -671,9 +678,10 @@ module RadioChop
     # Named for the window they came from, in deciseconds, not for their position
     # in this run's candidate list. That is what makes the resume below safe:
     # cand_00 means nothing across two runs whose scans disagreed, while
-    # cut_000310_0300 is the same thirty seconds of the same broadcast either
-    # time, so reusing its stems cannot silently attach one window's separation
-    # to another window's audio.
+    # cut_000310_0300 is the same thirty seconds of the same recording either
+    # time -- but only within `work`, which is why `work` is per-source. The
+    # offset identifies the window and the directory identifies the record; the
+    # cache is safe on the pair and on neither half alone.
     cuts = proposed.map do |cand|
       dest = File.join(work, format("cut_%06d_%04d.wav", (cand[:start] * 10).round, (span * 10).round))
       unless File.file?(dest)
