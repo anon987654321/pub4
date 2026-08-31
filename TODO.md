@@ -234,7 +234,7 @@ result is evidence. `MASTER/test/test_agy_reachability.rb` now pins both
 directions with a real executable stub, because a reachability check that is
 only ever exercised one way is the half that was already true.
 
-### The lexical stage cannot reach a verdict — opened 2026-08-31
+### Neither scanning tier can reach a verdict — opened 2026-08-31
 
 With the boot crash above fixed, `bin/pub4 gate --scan-only` gets a running
 scanner for the first time and the stage now fails a different way: `/scan
@@ -243,6 +243,12 @@ scanner for the first time and the stage now fails a different way: `/scan
 rung has still never reported a lexical result — it has only changed which
 sentence it says while not reporting one, and raising the timeout is explicitly
 not the move until somebody knows where the time goes.
+
+The council tier does the same thing, one stage later: `/critique .` printed 151
+lines and was killed at the same 1200s. Before the boot fix it failed instantly
+with "Insufficient credits"; it now reaches the runtime and runs out of clock
+instead. So the same shape twice, and whatever the answer is below, it is worth
+two stages rather than one.
 
 What was measured, so the next attempt does not start from zero. Per-file rule
 cost is not the explanation: the whole scanner, 142 rules including the external
