@@ -371,6 +371,26 @@ fine. Verify what a grep matched before asserting a runtime consequence; this
 file has said so before and it was still nearly got wrong twice in one hour, by
 two sessions.
 
+Something in the same cluster **does** crash now, and it is the file that tests
+the scan rules. Untracked `lib/review/constitution.rb` opens `class
+Constitution` and requires `constitution/law.rb`, `parser.rb` and
+`validator.rb`, all three of which open `module Constitution` — so loading it
+raises `TypeError: Constitution is not a class`. Modified `lib/review/scan/rule.rb`
+reaches it: a `require_relative "../constitution/law"` was inserted as line 1,
+above `# frozen_string_literal: true`, which also demotes that magic comment to
+an ordinary one — the directive only counts inside the leading comment block.
+
+The effect is not narrow, and a first reading of it here said it was. What
+cannot load is `review/scan/rule_dsl`, which loads the whole rule registry, so
+**`bin/cli` does not boot in this checkout** and neither does anything that
+reaches the scanner through it. `require "master"` alone still succeeds, which
+is why the tree looks healthy until something asks for a rule:
+
+    cd MASTER && bundle exec ruby -Ilib -e 'require "master"; require "review/scan/rule_dsl"; puts "ok"'
+
+Committed `HEAD` is fine and a worktree at the same commit boots and scans
+normally, so scan work has to be proved in one until this lands or is reverted.
+
 ### The lexical tier reaches a verdict — closed 2026-08-31
 
 `bin/pub4 gate --scan-only` used to fail its first stage two different ways in
@@ -455,6 +475,68 @@ does not reach — a string-aware mask is the next step. And `magic_number`'s
 (`x = 3600`), while flagging prose; dropping that lookbehind is a scope-widening
 change kept out of the noise fix. **agent-ignore** the comment-sited counts on any
 scan taken before `e447f9b69`.
+
+### The re-census, and the third loudest rule was matching an operator — 2026-08-31
+
+The census above, re-run at `1bcb58524` through the same instrument so the two
+numbers compare: **3,598 files, 24,811 firings**, 141 of 142 rules, 102s. Down
+3,567 from 28,378, and `magic_number` (6,318 → 4,165) with `future_tense`
+(1,888 → 454) account for 3,587 of that — the `skip_comments` fix and nothing
+else. Between them they now land on a comment line five times out of 4,619.
+
+`MASTER_SCAN_DETERMINISTIC=1` was set for the run and changed none of it.
+`InfraHelpers.build_scanner(root:)` already defaults `agent: nil`, so a census
+driven through `Scanner#scan` was never model-bound; the switch buys back the
+CLI path, `/scan <path>`, which runs the whole `ThroughPipeline`. The run header
+prints `agent=nil` either way, and that is the thing to read rather than the
+flag — a switch set is not a switch that did anything.
+
+**What this census does not cover.** It drives `scan_dir`, which globs
+`SCAN_GLOB`, and an extension is what that glob matches: `Gemfile`, `Rakefile`
+and the forty-odd `bin/` entry points have none, so no rule has ever read them
+here. The CLI path dispatches over a broader population and counts 1,094 files
+under MASTER against this census's 1,022 — both right about different sets, and
+`bin/` is the half the gate actually scans. For rule quality this set is the
+cleaner one; for "what does the gate see", it is not the number to quote.
+
+**Where "lands on a comment" lies.** Scoring every finding by whether its line
+starts with a comment marker makes `FILE_SPRAWL` 100% comment-sited and
+`SMALL_FILES` 63%. Both are file-scope rules that anchor at line 1, and line 1
+of a Ruby file is `# frozen_string_literal: true`. The metric measured the
+anchor. `todo_comment`, `TODO_FIXME` and `veto_patterns` score high for the
+other non-reason: reading comments is their job.
+
+`NO_ASCII_LINE_ART` (636) was the real one and it is fixed here. Its pattern is
+`(?:^|\s)(?:={3,}|-{3,}|_{3,})(?:\s|$)`, and `a === b` — JavaScript's identity
+operator, Ruby's case-equality — is exactly three `=` with a space each side.
+**486 of 636** were `mode === "speaking"` and its like, three quarters of
+everything the rule reported. An operand on both sides is what separates the
+operator from a decoration: a real divider has nothing to its right, and no
+dropped line carried a run of four or more. The 150 that survive are all
+`# ---- section ----`. `test_identity_comparison_is_not_a_divider` holds both
+directions, including `# === section ===` still firing.
+
+Still raw, now with numbers rather than a sample:
+
+- **`DOUBLE_QUOTES_RUBY`, 1,534** — the second loudest rule in the tree and
+  close to all instrument. 591 are single quotes nested inside `#{}` of a
+  double-quoted string (`"#{list.join(', ')}"`); 680 more are lines that already
+  carry a double-quoted string, mostly SQL with `'literals'` in it. Of the 241
+  that are a standalone single-quoted literal, the ones read are regex sources
+  in `cli/stages/infer.rb`, where single quotes are the *correct* choice because
+  `\b` inside double quotes is a backspace. A string-aware mask is still the
+  next step, and it has to know that much.
+- **`duplicate_code`, 629** — its pattern is `\b(?:copy|duplicate|same as)\b`.
+  It does not detect duplication; it detects the word. 432 of 629 land on
+  comment, YAML or Markdown prose, and among them are the comments in
+  `rules.yml` explaining why `n_plus_one` was deleted — for matching the fix
+  keywords instead of the problem, which is this same defect. It rides alongside
+  the real `COPY_PASTE_BLOCK`. `rules.yml:552` claims it passes the uniqueness
+  test the `long_line` deletion used; testing that claim is what decides between
+  a `skip_comments` flag and a fourth deletion.
+- **`TYPOGRAPHY_DISCIPLINE`, 382** — 37 are Markdown table delimiter rows
+  (`|------|------|`), which are required syntax rather than typography. The
+  rest are `# ----` section separators, which is what the rule is for.
 
 ### Tag Legend
 
