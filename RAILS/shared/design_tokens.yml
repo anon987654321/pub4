@@ -75,6 +75,58 @@ shared_chrome:
   page_gutter: "clamp(16px, 5vw, 48px)"
   feed_max: "600px"
 
+# The one geometry. Measured from joi.com on 2026-08-31 at 1440x900 with images
+# and media blocked, then moulded to this repo's law. Structure lives here and
+# is shared by every app; colour stays in the dialect blocks below, which is why
+# merging the three dialects did not mean deleting them.
+#
+# Kept, because each beats what stood here:
+#   opacity ladder  a tokenised alpha scale composed into colour, instead of
+#                   hand-typed rgba() literals. The tree had no equivalent axis.
+#   two radii       cards at one step, controls fully round. 104 measured
+#                   elements carried the card radius and 48 the pill; nothing
+#                   else but avatars. This family ran four card radii.
+#   control block   44px tall, 8px internal gap, pill, hairline border. 44 is
+#                   already tap_min here, so the measurement met the law.
+#   tile grid       equal tracks, wide row gap, narrow column gap — what makes
+#                   a dense catalogue scan as rows rather than as a mosaic.
+#
+# Rejected, with the reason, because a measurement is not a mandate:
+#   10px root       its whole rem ladder hangs off html font-size 10px. brgen
+#                   sets 18px (see chrome_inset above); rescaling moves every
+#                   rem in three apps.
+#   shadow depth    its elevation is glow and drop shadow throughout.
+#                   css_constitution FLAT_PATTERN forbids all of it and this
+#                   family elevates with borders.
+#   2px / 6px gaps  its base grid. Ours is 8px with a 4px hairline.
+#   absolute leading it leads in px. design_rules line_height forbid_absolute_px
+#                   is true, and px leading does not inherit through an 18px root.
+#   weight 500      its body weight, 100 from normal against a min_weight_delta
+#                   of 200 — a step you cannot see.
+#   the palette     hot rose on near-black, for a product that is not this one.
+system:
+  # A grid track, not a spacing value, so the rhythm lint does not measure it.
+  tile_min: "224px"
+  tile_gap_row: "24px"
+  tile_gap_col: "8px"
+  control_height: "44px"
+  control_pad_inline: "16px"
+  control_gap: "8px"
+  # One card radius for the whole family. 16 (social), 14 and 10 (luxury) were
+  # three answers to one question, and neither 14 nor 10 is on scale.radius_px.
+  radius_card: "12px"
+  # Named by weight rather than by use, so a surface picks a density instead of
+  # inventing an rgba(). Consumed as rgb(from ... / var(--opacity-*)).
+  opacity:
+    hairline: "0.05"
+    faint: "0.08"
+    subtle: "0.1"
+    soft: "0.12"
+    medium: "0.2"
+    half: "0.4"
+    strong: "0.6"
+    heavy: "0.8"
+
 # Luxury minimalist additions for wardrobe/product UIs (Aesop/Toteme/Nécessaire inspired)
 # Warm neutrals, generous spacing, refined typography. Use in amber + shared product views.
 luxury:
