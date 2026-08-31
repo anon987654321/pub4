@@ -37,5 +37,22 @@
 # judged against no file of its own is untested, not clean.
 blind: 0
 saturated: 0
-silent: 23
+# 23 -> 24 is NOISE_NAME, and it is the good direction. Identified by running
+# this audit at b81baea1c — the commit that recorded 23 — and diffing the two
+# name lists, because the ceiling is a bare integer and "over by one" otherwise
+# names nothing. Nothing else moved: no rule left the silent set.
+#
+# It is silent because the tree obeys it. Verified rather than assumed, since a
+# broken detector reads identically from here: it still fires on `class Manager`
+# and `module Utils`, and stays correctly quiet on `class PaymentHelper` and
+# `class SubscriptionBilling`, which is the domain-qualifier exemption the law
+# documents. A grep for its pattern over MASTER, RAILS, OPENBSD and STUDIO finds
+# no match in ordinary source at this commit or at b81baea1c.
+#
+# What is NOT established: which file it last fired on. The corpus moved 696 ->
+# 709 files and the detector set 74 -> 75 between the two commits, so this is
+# churn in the sample as much as in the tree, and the exact departure was not
+# chased. The header above already says a silent rule is a property of the
+# sample as often as of the rule, and is not evidence of a defect on its own.
+silent: 24
 
