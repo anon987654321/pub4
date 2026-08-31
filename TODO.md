@@ -638,6 +638,75 @@ Still raw, now with numbers rather than a sample:
   (`|------|------|`), which are required syntax rather than typography. The
   rest are `# ----` section separators, which is what the rule is for.
 
+### `/scan`'s autofix corrupts code — opened 2026-08-31, do not run it on a tree
+
+Trialled on `RAILS/gates` alone before turning it loose on RAILS's 2,326 files.
+It wrote three files and **two of the three are damage**:
+
+    RAILS/gates/support/design_metrics.rb
+    -  brgen/engines/*/app/assets/stylesheets/*.scss
+    +  brgen/engines/*/app/assets/stylesheets/*.scss,
+
+`TRAILING_COMMAS` fired inside a `%w[]` array, where a comma is a literal
+character and not a separator. The glob now ends in a comma and matches nothing,
+so `light_only_vertical_keys` would report a clean tree having read no file.
+
+    RAILS/gates/support/geometry_probe/walk.js
+    -  return seen[sel] === 1 ? sel : sel + '[' + seen[sel] + ']';
+    +  return seen[sel] === 1 ? sel : `${sel}[${seen}`[sel] + ']';
+
+The template-literal rewrite mangled a three-term concatenation: it closes the
+template early, then indexes the resulting string by `sel`. Every duplicate
+selector key becomes `"undefined]"`. **`node --check` passes** — a silent
+semantic corruption that survives a syntax check is the worst shape this has,
+and it is the shape a tree-wide unattended run would have written everywhere.
+
+Both reverted. The third change, a blank line in `webgl_surfaces.rb`, was
+harmless. One in three.
+
+This is the same autofix already recorded as having broken dilla, postpro and
+MASTER's chat; what is new is a reproducible pair with a named cause, so the two
+rules can be fixed rather than the tool distrusted wholesale. Until then, scan
+with `--no-autofix` and read the findings.
+
+Two smaller findings from the same attempt, both about the surface rather than
+the rules. `/scan <path>` passed as a **command-line argument** prints nothing
+and exits 0 — it silently does nothing, and a no-op that reports success is how
+a tier gets believed. Only pipe mode runs it: `echo "/scan ../RAILS" | bin/cli`.
+And paths resolve relative to `MASTER/`, because `bin/master` chdirs there
+before handing the instruction over, so a sibling tree is `../RAILS` and a bare
+`RAILS` matches nothing — which is the other half of why the silent no-op is
+dangerous.
+
+### A tree-wide sweep overrode the pen allowlist — closed 2026-08-31
+
+`shared/app/assets/stylesheets/_search_yep.scss` recreates CodePen vYroQxg and
+says in its own first two lines that a recreation keeps its exact values. Four
+gates carry a `PEN_ALLOW` list naming it — `gate_autofix`, `css_constitution`,
+`user_flow`, `frontend_auditor` — so that a rule pass cannot rewrite values that
+are not this repo's to choose.
+
+`8ac5b4080 RAILS: strip flat-UI rule violations (box-shadow)` stripped its
+`box-shadow` anyway. What went with it was the focus affordance: `.search.focus`
+and `.search.active` still swapped to white, but the lift that says the box took
+focus was gone, so on a light page the state change is nearly invisible.
+Restored at the pen's exact value; `css_constitution` passes with it, which is
+the allowlist working and the evidence that the sweep was the thing out of
+contract.
+
+The lesson is not about one shadow. An allowlist that four gates enforce did not
+bind the sweep that ran outside them, and nothing failed when it was crossed —
+so check that a tree-wide pass consults the exemptions before trusting that it
+did.
+
+Still open on that component: the pen's `.search.active #live_results` rule —
+the results fused into the box, `border-top`, `padding: 0 24px`, block links —
+has no equivalent, because `#search_suggestions` renders as a *sibling* of
+`.search` rather than inside it. Nesting it is the faithful fix and keeps the
+Turbo Stream target intact, but it moves shared markup and the recorded
+`bsdports-empty_results-desktop` snapshot is keyed on `#search_suggestions>p`.
+Owner's call, not a sweep's.
+
 ### Tag Legend
 
 - **agent-ignore** — do not chase during narrow patches (constitution scan noise, horizon features).
