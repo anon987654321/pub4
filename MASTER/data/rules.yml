@@ -3551,6 +3551,43 @@ design_rules:
       autofix + CI ratchets over one-off manual style. Never raise lint baselines
       to silence new debt.
 
+  pwa:
+    philosophy:
+      performance_is_the_design: true
+      offline_is_a_designed_state: true
+      radical_lightness: true
+      action: Treat speed, the offline state, and data cost as design surfaces, not
+        engineering afterthoughts. The apps already ship a manifest, a service worker
+        and offline controllers; the budget is what is missing.
+    weight:
+      ceiling_lives_in: RAILS/gates/data/, in the css_budget.yml ratchet shape —
+        a number measured from a real run that only ever ratchets down.
+      measured_2026_08_31: tracked application.css is 204KB brgen, 110KB amber,
+        64KB bsdports. JS builds are gitignored (RAILS/*/public/assets/), so only
+        the CSS is reproducible outside a build.
+      action: Set a ceiling from a run of this tree, never from another product's
+        published figure — Pinterest's 150KB and Tinder's 20KB CSS describe their
+        trees, not this one, and a ceiling nothing measured is a wish. A budget
+        nothing enforces is a comment.
+    offline_first:
+      queue_writes_for_background_sync: true
+      cache_read_paths: true
+      design_the_disconnected_screen: true
+      action: The network-loss state earns the same care as the happy path. Starbucks
+        fills a cart offline and sends it on reconnect; Trivago answers a dropped
+        connection with a branded playable maze rather than an error.
+    user_agency_over_data:
+      honour_save_data_header: true
+      placeholder_before_full_asset: true
+      state_the_cost_before_the_download: true
+      action: Let the reader decide when to spend data, and say what it costs first.
+        Twitter Lite renders 1KB blurred thumbnails and fetches the full asset on tap.
+    native_grade_motion:
+      target_fps: 60
+      virtualize_long_feeds: true
+      optimistic_render_from_cache: true
+      action: Render only the visible slice of a feed, and paint a detail view from
+        cached data before the fetch returns, so navigation never shows a spinner.
 # No operator_principles section here, and no standing orders anywhere in this
 # file. Orders about how to work — sweep to convergence, run the gate yourself,
 # one SSH session, restart after a deploy — are not properties of source text, so
