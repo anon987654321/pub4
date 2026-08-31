@@ -2,7 +2,6 @@
 
 require_relative "../command_registry/formatter"
 
-
 require "json"
 
 module Master

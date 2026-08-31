@@ -74,7 +74,6 @@ private
       %w[y yes ja ok approve allow].include?(answer.to_s.strip.downcase)
     end
 
-
     # The admitted half of the loop. Returns Done when the effect ends the fold
     # and nil to take another turn — extracted from `run` so that method stays
     # under DENSITY's 20 code lines without the fold gaining a seventh file,

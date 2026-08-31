@@ -2,7 +2,6 @@
 
 require "timeout"
 
-
 module Master
   module Review
     module Swarm

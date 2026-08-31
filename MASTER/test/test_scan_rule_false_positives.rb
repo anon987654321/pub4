@@ -46,7 +46,6 @@ class TestScanRuleFalsePositives < Minitest::Test
     assert_match(/code lines/, hits.first[:message])
   end
 
-
 # --- DOUBLE_BRACKET ----------------------------------------------------
 # [[ ]] is a keyword in zsh and bash, not in POSIX sh — telling an sh
 # script to use it is a syntax error prescription.

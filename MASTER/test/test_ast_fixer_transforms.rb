@@ -200,7 +200,7 @@ class TestAstFixerTransforms < Minitest::Test
       # frozen_string_literal: true
 
       FAILURES = []
-      APPS = %w[amber brgen]
+      APPS = %w[amber brgen].freeze
 
       def record(msg)
         FAILURES << msg

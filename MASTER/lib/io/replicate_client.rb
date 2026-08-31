@@ -13,7 +13,6 @@ require_relative "../ground/quota_gate"
 # something has already gone wrong.
 require_relative "../ground/swallow"
 
-
 module Master
   module Io
     class ReplicateClient

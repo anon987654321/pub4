@@ -3,7 +3,6 @@
 require "sqlite3"
 require "json"
 
-
 module Master
   module Ground
     class KnowledgeStore

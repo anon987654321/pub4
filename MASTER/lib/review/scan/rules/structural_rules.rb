@@ -2,7 +2,6 @@
 
 require "prism"
 
-
 module Master
   module Review
     module Scan

@@ -2,7 +2,6 @@
 
 require "open3"
 
-
 module Master
   module Io
     class GitOperations

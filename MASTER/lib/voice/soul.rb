@@ -4,7 +4,6 @@ require "fileutils"
 require "open3"
 require "pathname"
 
-
 module Master
   module Voice
     class Soul

@@ -6,7 +6,6 @@ require "timeout"
 require_relative "cross_file_analysis"
 require_relative "file_processor"
 
-
 module Master
   module Review
     module Scan
