@@ -96,11 +96,15 @@ tts:
   # why Pernille was reset to +0Hz rather than inheriting this. Coming back to
   # Osman restores his own measurement rather than carrying hers.
   default_pitch: "-35Hz"
+  # No default_volume. The daemon protocol is {voice,rate,pitch,text} and
+  # RbEdgeTTS::Communicate takes rate: and pitch: only, so a volume here was
+  # read by nothing for as long as it existed. Adding one back means
+  # extending the worker protocol first, and that changes how loud MASTER
+  # is, which is an operator decision rather than a wiring one.
   # edge-tts --volume. The browser chain is the other half of "louder"
   # (face_speech_runtime.js: masterGain 1.9 -> 3.4, partial no longer played at
   # 0.85); this raises the synthesised signal itself rather than only its
   # playback gain, so the two do not fight for the same headroom.
-  default_volume: "+40%"
 
 voice:
   style: openbsd_dmesg

@@ -155,6 +155,11 @@ module Master
           "output_never: #{Array(constitution["banned_output"]).join(', ')}",
           "opener_never: #{Array(strunk["preambles"]).first(4).join(' / ')}",
           "closer_never: #{Array(strunk["endings"]).first(3).join(' / ')}",
+          # code_preambles sat beside preambles and endings and reached no
+          # prompt, so the two the model was told to avoid were enforced and
+          # the filler comments were not -- which is the noise that actually
+          # arrives in generated code.
+          "comment_never: #{Array(strunk["code_preambles"]).first(4).join(' / ')}",
           "evidence_only: show diff or file content; never assert; active voice",
           anti_simulation_line(anti_simulation),
           "</master_constitution>",
@@ -425,6 +430,7 @@ module Master
           hick_line(design),
           forbidden_css_line(design),
           beauty_line,
+          markdown_style_line,
         ].compact
         return if lines.empty?
 
@@ -457,6 +463,21 @@ module Master
         return if Array(forbidden).empty?
 
         "Forbidden CSS: #{Array(forbidden).join(', ')} -- flat UI only; exceptions need a documented, scoped reason (design_rules.pixel_perfection.exception_policy)."
+      end
+
+      # rules.yml markdown_style was codified for MASTER and the three coding
+      # agents it names, and then read by nothing — data_reach counted it as one
+      # of the two unnamed keys that put that census over its ceiling. Every
+      # session writes markdown; the aesthetic that governs it belongs in the
+      # same prompt as the design thresholds, not only in a file a scan reads.
+      def markdown_style_line
+        md = @rules.data(:rules)["markdown_style"]
+        return unless md.is_a?(Hash)
+
+        rules = Array(md["rules"])
+        return if rules.empty?
+
+        "Markdown: #{rules.join('; ')} (rules.markdown_style, aesthetic #{md['aesthetic']})."
       end
 
       def beauty_line

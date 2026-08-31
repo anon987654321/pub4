@@ -1101,8 +1101,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Add ''# frozen_string_literal: true'' as first line.'
-    languages:
-    - ruby
   - id: SINGLE_PRIVATE_SECTION
     source: Ruby Style Guide / RuboCop Style/AccessModifierDeclarations
     name: One private keyword at bottom
@@ -1111,8 +1109,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use a single 'private' keyword with methods below it.
-    languages:
-    - ruby
   - id: STRICT_MODE_ZSH
     source: Shell strict mode set -euo pipefail (Google Shell Style Guide)
     name: set -euo pipefail at script top
@@ -1121,8 +1117,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Add 'set -euo pipefail' after shebang.
-    languages:
-    - zsh
   - id: HTML_LANG
     source: WCAG 3.1.1 Language of Page (W3C/WAI)
     name: lang attribute on <html>
@@ -1141,8 +1135,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use <header>, <footer>, <nav>, <main>, <aside>, <article>, <section>.
-    languages:
-    - html
   - id: MOBILE_FIRST
     source: Mobile First (Luke Wroblewski, 2011)
     name: Mobile-first media queries
@@ -1151,8 +1143,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use min-width (mobile-first, progressive enhancement).
-    languages:
-    - css
   - id: NO_IMPORT_SCSS
     source: Sass best practice — @use over @import (Sass team)
     name: Replace @import with @use/@forward
@@ -1161,8 +1151,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: "@import is deprecated. Use @use/@forward."
-    languages:
-    - scss
   - id: NO_IMPORTANT
     source: CSS best practice — avoid !important (MDN)
     name: No !important
@@ -1220,9 +1208,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Replace literal with t('.key').
-    languages:
-    - html
-    path_match: "/app/views/"
   - id: STRICT_LOADING_MISSING
     source: Rails strict_loading — N+1 prevention (Rails Guides)
     name: AR model lacks strict_loading_by_default
@@ -1230,12 +1215,7 @@ rules:
     severity: info
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
-    requires_absent: "\\bstrict_loading_by_default\\b"
-    whole_file: true
     fix: Add `self.strict_loading_by_default = true` to surface missing eager-loads.
-    languages:
-    - ruby
-    path_match: "/app/models/"
   - id: RATE_LIMITING_MISSING
     source: OWASP API Security — rate limiting
     name: Sensitive controller missing rate_limit/throttle
@@ -1243,12 +1223,7 @@ rules:
     severity: error
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
-    requires_absent: rate_limit|throttle
-    whole_file: true
     fix: Add rate_limit/throttle to sensitive actions.
-    languages:
-    - ruby
-    path_match: "/app/controllers/"
   - id: MIGRATION_ADD_REFERENCE_NO_FK
     source: 'Rails migrations — foreign_key: true (Strong Migrations)'
     name: 'add_reference without foreign_key:'
@@ -1257,9 +1232,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Add `foreign_key: true` to enforce referential integrity.'
-    languages:
-    - ruby
-    path_match: "/db/migrate/"
   - id: MIGRATION_REMOVE_COLUMN
     source: Strong Migrations — safe column removal (Andrew Kane)
     name: remove_column is destructive
@@ -1268,9 +1240,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Document safety/backfill path before removing a column.
-    languages:
-    - ruby
-    path_match: "/db/migrate/"
   - id: MIGRATION_FIND_OR_CREATE_BY
     source: Rails best practice — find_or_create_by races
     name: find_or_create_by needs unique index
@@ -1279,9 +1248,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Back find_or_create_by with a unique index to prevent duplicates.
-    languages:
-    - ruby
-    path_match: "/db/migrate/"
   line:
   - id: NO_JQUERY
     source: RAILS/shared frontend convention
@@ -1291,7 +1257,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Replace the selector call with a Stimulus target or querySelector.
-    languages: [javascript, html]
   - id: NO_INLINE_ASSETS_IN_SHELL
     source: RAILS/shared frontend convention
     name: Shell scripts do not carry markup or style
@@ -1300,7 +1265,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Move the markup into app/views and the style into a tracked stylesheet.
-    languages: [zsh]
   - id: EXPLICIT
     source: The Zen of Python — explicit is better than implicit (Tim Peters)
     name: Explicit contracts over implicit coupling
@@ -1325,8 +1289,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Flatten to: return ... unless condition'
-    languages:
-    - ruby
   - id: SAFE_NAVIGATION
     source: Ruby Style Guide / RuboCop Style/SafeNavigation
     name: Use &. consistently
@@ -1335,8 +1297,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Rewrite to x&.foo&.bar
-    languages:
-    - ruby
   - id: EACH_WITH_OBJECT
     source: Ruby Style Guide / RuboCop Style/EachWithObject
     name: Prefer each_with_object over inject when seeding a fresh empty collection
@@ -1366,8 +1326,6 @@ rules:
       (a rebuilt string, a running total, a folded hash) — each_with_object
       discards that return value and the fold becomes a no-op. If in doubt, leave
       reduce alone.
-    languages:
-    - ruby
   - id: KEYWORD_ARGS
     source: Ruby Style Guide — keyword args over options hash
     name: Keyword arguments for 3+ parameters
@@ -1386,8 +1344,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Use Array(x) instead of x.nil? ? [] : x'
-    languages:
-    - ruby
   - id: PERCENT_LITERAL
     source: Ruby Style Guide — %w/%i array literals
     name: Use %i[] and %w[] for symbol/string arrays
@@ -1396,8 +1352,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use %i[a b c] for symbol arrays.
-    languages:
-    - ruby
   - id: HASH_FETCH
     source: Ruby Style Guide — Hash#fetch over [] for required keys
     name: Prefer Hash#fetch over [] with ||
@@ -1416,8 +1370,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use .transform_values { |v| ... }
-    languages:
-    - ruby
   - id: USE_THEN
     source: Ruby idiom — Object#then (yield_self) for pipelines
     name: Use .then for pipeline transforms
@@ -1426,8 +1378,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Chain with .then { |r| next_step(r) }
-    languages:
-    - ruby
   - id: RESCUE_ON_DEF
     source: Ruby Style Guide — rescue in method definitions
     name: Move begin/rescue to def line
@@ -1436,8 +1386,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Put rescue directly on the def block.
-    languages:
-    - ruby
   - id: BARE_RESCUE
     source: Ruby Style Guide / RuboCop Lint/RescueException — no bare rescue
     name: Never rescue bare or rescue Exception
@@ -1510,8 +1458,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Rewrite to obj?.foo?.bar
-    languages:
-    - javascript
   - id: NULLISH_COALESCING
     source: ECMAScript 2020 — nullish coalescing (??)
     name: Use ?? over || for defaults
@@ -1520,8 +1466,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use ?? when 0 or '' are valid values.
-    languages:
-    - javascript
   - id: TEMPLATE_LITERALS
     source: Airbnb JS Style Guide — template literals (ES6)
     name: Use template literals over concatenation
@@ -1530,8 +1474,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use `Hello ${name}!` template literals.
-    languages:
-    - javascript
   - id: ASYNC_AWAIT
     source: ECMAScript 2017 — async/await over raw promises
     name: Prefer async/await over .then chains
@@ -1540,8 +1482,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use async/await for readability.
-    languages:
-    - javascript
   - id: FOR_OF
     source: Airbnb JS Style Guide — for...of over for...in
     name: Use for...of instead of for...in for arrays
@@ -1550,8 +1490,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: for...in iterates prototype properties. Use for...of.
-    languages:
-    - javascript
   - id: QUOTE_VARIABLES
     source: ShellCheck / Google Shell Style Guide — quote variables
     name: Always quote $variables
@@ -1580,8 +1518,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use $(command) — nestable and readable.
-    languages:
-    - zsh
   - id: IMG_ALT
     source: WCAG 1.1.1 Non-text Content (W3C/WAI)
     name: Require alt on every <img>
@@ -1600,8 +1536,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use <button>. Accessible by default.
-    languages:
-    - html
   - id: ARIA_INTERACTIVE
     source: WAI-ARIA (W3C) — roles for interactive elements
     name: ARIA on non-semantic interactive elements
@@ -1610,8 +1544,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Add role= and tabindex= for accessibility.
-    languages:
-    - html
   - id: LAZY_IMAGES
     source: Web performance — loading="lazy" (web.dev / MDN)
     name: loading="lazy" on below-fold images
@@ -1630,8 +1562,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Extract to CSS class.
-    languages:
-    - html
   - id: LOGICAL_PROPERTIES
     source: CSS Logical Properties and Values (W3C)
     name: Prefer logical properties for RTL support
@@ -1640,8 +1570,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use margin-inline-start/end, padding-inline-start/end.
-    languages:
-    - css
   - id: CLAMP_TYPOGRAPHY
     source: CSS fluid typography — clamp() (web.dev)
     name: Use clamp() for fluid typography
@@ -1650,8 +1578,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Use font-size: clamp(1rem, 2.5vw, 1.5rem).'
-    languages:
-    - css
   - id: MEANINGFUL_NAMES
     source: Clean Code — meaningful names (Robert C. Martin)
     name: Names reveal intent
@@ -1922,8 +1848,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use const (default) or let (when reassigned).
-    languages:
-    - javascript
   - id: JS_MODULE_SIZE
     source: JS module size discipline (style)
     name: JS files over 300 lines — split at module boundaries
@@ -1942,8 +1866,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Add <meta charset=UTF-8> as first element in <head>.
-    languages:
-    - html
   - id: ARIA_LABELS
     source: WCAG 4.1.2 Name, Role, Value (W3C/WAI)
     name: Interactive controls need accessible names
@@ -1973,8 +1895,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Target bare tags in SCSS; remove __block__element classes from ERB.
-    languages:
-    - html
   - id: UTILITY_CLASS_SOUP
     source: style.yml html.forbidden.framework_class_explosion
     name: No framework utility class explosion
@@ -1983,8 +1903,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Move layout to SCSS with bare tag targeting.
-    languages:
-    - html
   - id: SKIP_TO_MAIN
     source: WCAG 2.4.1 Bypass Blocks / style.yml accessibility
     name: Layouts expose skip link to main content
@@ -1993,8 +1911,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Add skip link to #main-content in layout.'
-    languages:
-    - html
   - id: NO_LONG_TRANSITION
     source: style.yml motion budget / FrontendRuleSet MOTION
     name: UI transitions stay under 300ms
@@ -2003,8 +1919,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Keep transitions ≤300ms.
-    languages:
-    - css
   - id: REDUCED_MOTION
     source: WCAG 2.3.3 Animation from Interactions
     name: Animations respect prefers-reduced-motion
@@ -2044,8 +1958,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Rename to snake_case: def fetchAlbum -> def fetch_album.'
-    languages:
-    - ruby
   - id: RUBY_CAMEL_CLASS
     source: Ruby Style Guide / RuboCop Naming/ClassAndModuleCamelCase
     name: Classes and modules use CamelCase, no underscores
@@ -2054,8 +1966,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Rename to CamelCase: class Album_store -> class AlbumStore.'
-    languages:
-    - ruby
   - id: RUBY_SCREAMING_CONST
     source: Ruby Style Guide / RuboCop Naming/ConstantName
     name: Value constants use SCREAMING_SNAKE_CASE
@@ -2065,8 +1975,6 @@ rules:
     detect_semantic: Is a non-class/non-module constant named in any case other than
       SCREAMING_SNAKE_CASE?
     fix: 'Rename: MaxRetries -> MAX_RETRIES. CamelCase is for classes/modules only.'
-    languages:
-    - ruby
   - id: RUBY_NUMERIC_UNDERSCORE
     source: Ruby Style Guide / RuboCop Style/NumericLiterals
     name: Separate large numeric literals with underscores
@@ -2075,8 +1983,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Group digits in threes: 1000000 -> 1_000_000.'
-    languages:
-    - ruby
   - id: RUBY_SYMBOL_TO_PROC
     source: Ruby Style Guide / RuboCop Style/SymbolProc
     name: Use &:method for single-method blocks
@@ -2085,8 +1991,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Collapse { |x| x.name } -> (&:name).
-    languages:
-    - ruby
   - id: RUBY_BLOCK_DELIMITER
     source: Ruby Style Guide / RuboCop Style/BlockDelimiters
     name: Braces for single-line blocks, do/end for multi-line
@@ -2095,8 +1999,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Single-line block on one line -> use { }. Reserve do/end for multi-line.
-    languages:
-    - ruby
   - id: RUBY_TERNARY_NOT_NESTED
     source: Ruby Style Guide / RuboCop Style/NestedTernaryOperator
     name: No nested ternaries; ternary only for simple single conditionals
@@ -2126,8 +2028,6 @@ rules:
     autofix: false
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Bound running-text columns to ~66ch (≈ 33rem), not wide px values.
-    languages:
-    - css
   unit:
   - id: SIMPLEST_WORKS
     source: XP — do the simplest thing that could possibly work (Ward Cunningham)
@@ -2396,8 +2296,6 @@ rules:
     detect_lexical: ~ # migrated to law/ (domain files; find by id)
     detect_semantic: Are mutable objects shared across threads or scopes?
     fix: Freeze collections. Use frozen/const by default.
-    languages:
-    - ruby
   - id: PURE_FUNCTIONS
     source: Functional programming — referential transparency
     name: Same input, same output

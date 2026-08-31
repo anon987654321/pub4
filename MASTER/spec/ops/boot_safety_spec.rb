@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "../../lib/master"
 
 class BootSafetySpec < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
@@ -10,15 +11,51 @@ class BootSafetySpec < Minitest::Test
   MASTER_BOOT = File.join(ROOT, "lib", "boot", "master_boot.rb")
   CLI = File.join(ROOT, "bin", "cli")
 
+  # Called, not grepped. This asserted seven string literals in runtime.rb, so
+  # it passed whether or not apply_process_defaults! ever set anything — the
+  # exact shape TestSourceAssertions counts. Running it in a clean environment
+  # and reading ENV back proves the defaults land, and proves the opt-out and
+  # the "||=" semantics with them.
   def test_master_boot_sets_safe_defaults
-    source = File.read(MASTER_RUNTIME)
-    assert_includes source, "def apply_process_defaults!"
-    assert_includes source, '"MASTER_SAFE_MODE" => "1"'
-    assert_includes source, '"MASTER_AUTOFIX" => "0"'
-    assert_includes source, '"MASTER_WATCH" => "0"'
-    assert_includes source, '"MASTER_WATCHER" => "0"'
-    assert_includes source, '"MASTER_HEARTBEAT" => "0"'
-    assert_includes source, '"MASTER_DRIFT" => "0"'
+    with_clean_process_env do
+      Master.apply_process_defaults!
+
+      Master::MasterRuntime::PROCESS_DEFAULTS.each do |key, value|
+        assert_equal value, ENV.fetch(key, nil), "#{key} was not defaulted"
+      end
+    end
+  end
+
+  def test_an_operator_set_value_survives_the_defaults
+    with_clean_process_env do
+      ENV["MASTER_AUTOFIX"] = "1"
+      Master.apply_process_defaults!
+
+      assert_equal "1", ENV.fetch("MASTER_AUTOFIX"),
+                   "the defaults overwrote a value the operator set"
+    end
+  end
+
+  def test_the_unsafe_opt_out_applies_nothing
+    with_clean_process_env do
+      ENV["MASTER_UNSAFE_PROCESS_DEFAULTS"] = "1"
+      Master.apply_process_defaults!
+
+      assert_nil ENV.fetch("MASTER_SAFE_MODE", nil),
+                 "MASTER_UNSAFE_PROCESS_DEFAULTS=1 still applied the safe defaults"
+    end
+  end
+
+  # Every key the defaults touch, plus the opt-out and the loop var
+  # apply_master_loop! reads, cleared and restored around the block.
+  def with_clean_process_env
+    keys = Master::MasterRuntime::PROCESS_DEFAULTS.keys +
+           %w[MASTER_UNSAFE_PROCESS_DEFAULTS MASTER_LOOP]
+    saved = keys.to_h { |key| [key, ENV.fetch(key, nil)] }
+    keys.each { |key| ENV.delete(key) }
+    yield
+  ensure
+    saved.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
   end
 
   def test_master_boot_installs_process_guards

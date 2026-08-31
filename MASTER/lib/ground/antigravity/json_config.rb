@@ -63,13 +63,10 @@ module Master
         end
 
         def resolve_path(path_str)
-          if path_str.start_with?("/")
-            path_str
-          elsif path_str.start_with?("~/")
-            File.expand_path(path_str)
-          else
-            File.expand_path(path_str, @workspace_root)
-          end
+          return path_str if path_str.start_with?("/")
+          return File.expand_path(path_str) if path_str.start_with?("~/")
+
+          File.expand_path(path_str, @workspace_root)
         end
 
         private

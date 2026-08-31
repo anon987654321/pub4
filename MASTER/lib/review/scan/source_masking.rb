@@ -185,6 +185,49 @@ module Master
       out
     end
 
+    # A heredoc whose tag names another language is not Ruby, and a Ruby law
+    # must not read it.
+    #
+    # `cdp.evaluate(<<~JS)` in RAILS/gates/probes/face_capture_probe.rb holds
+    # `f && f.primerFired` — correct JavaScript, and four SAFE_NAVIGATION
+    # findings telling it to use Ruby's `&.`, which JavaScript does not have.
+    # TODO.md records the same shape costing more: RUBY_NUMERIC_UNDERSCORE fired
+    # inside ffmpeg filter strings, where its fix writes 44_100 into
+    # sample_rates=44100 and breaks every render.
+    #
+    # The tag is the author's own statement about the body, and this tree makes
+    # it 42 times for JS, 66 for SQL and 14 for PYTHON. RUBY is deliberately not
+    # in the list — it is Ruby and the laws should read it — and neither are
+    # TEXT, PROMPT, MSG or MD, which are prose the prose laws are meant to see.
+    #
+    # Blanked to spaces with newlines kept, like every other mask here, so a
+    # finding's line number still points at real source.
+    FOREIGN_HEREDOC_TAGS = %w[JS JAVASCRIPT TS SQL PYTHON HTML CSS SCSS JSON SH ZSH BASH XML SVG GLSL].freeze
+    FOREIGN_HEREDOC_OPEN = /<<[-~]?['"]?(#{FOREIGN_HEREDOC_TAGS.join("|")})['"]?(?![A-Z0-9_])/
+
+    def without_foreign_heredocs(code)
+      lines = code.lines
+      closing = nil
+      lines.map do |line|
+        if closing
+          if line.strip == closing
+            closing = nil
+            line
+          else
+            line.gsub(/[^\n]/, " ")
+          end
+        else
+          closing = Regexp.last_match(1) if line.match(FOREIGN_HEREDOC_OPEN)
+          line
+        end
+  end.join
+end
+
+# Also a module method: tools/self_findings.rb needs it without being a
+# Rule, and every other mask here is only ever reached through one.
+module_function :without_foreign_heredocs
+public :without_foreign_heredocs
+
     NAMED_ATTR = /aria-label\s*=|aria-labelledby\s*=|\btitle\s*=|\bid\s*=/
     CONTROL_ELEMENT = %r{
       <(button|select|textarea)\b(?:"[^"]*"|'[^']*'|[^<>"'])*>(.*?)</\1>

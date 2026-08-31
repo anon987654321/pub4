@@ -357,6 +357,15 @@ module Master
             return [] if owned.empty?
             return [] if path.to_s.match?(SKIP_RE)
 
+            # PATH_OWNERSHIP.yml describes MASTER's tree and says nothing about
+            # its siblings, so it cannot judge them. Without this the prefix
+            # strip below was a no-op for any path outside the root: `rel` stayed
+            # absolute, `shallowest_gap` walked up to "", and every file in
+            # RAILS, OPENBSD and STUDIO drew `PATH_PURPOSE: / has no entry`. At
+            # severity :error that is a WriteGuard block, so the constitution
+            # refused every write outside MASTER for as long as it stood.
+            return [] unless under_root?(path)
+
             rel = path.to_s.delete_prefix("#{@root}/")
             dir = File.dirname(rel)
             return [] if dir == "." || covered?(rel, dir)
@@ -370,6 +379,11 @@ module Master
           end
 
           private
+
+          def under_root?(path)
+            expanded = File.expand_path(path.to_s)
+            expanded == @root || expanded.start_with?(@root + File::SEPARATOR)
+          end
 
           def shallowest_gap(dir)
             parts = dir.split("/")

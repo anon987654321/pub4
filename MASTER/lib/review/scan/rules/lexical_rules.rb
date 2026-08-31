@@ -46,6 +46,8 @@ module Master
 
   RuleDSL.rule :TRAILING_WHITESPACE,
     severity: :info, tags: %i[HYGIENE],
+    fires: "value = 1   \n",
+    does_not_fire: "value = 1\n\n",
     description: "trailing whitespace" do |src, path:|
     src.each_line.with_index(1).filter_map do |line, n|
       finding(line: n, message: "trailing whitespace") if line.match?(/[ \t]+\n?\z/)
@@ -102,6 +104,8 @@ module Master
 
   RuleDSL.rule :CONSECUTIVE_BLANK_LINES,
     severity: :info, tags: %i[HYGIENE],
+    fires: "a = 1\n\n\nb = 2\n",
+    does_not_fire: "a = 1\n\nb = 2\n",
     description: "no consecutive blank lines" do |src, path:|
     findings = []
     prev_blank = false

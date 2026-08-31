@@ -11,6 +11,7 @@
 #   ruby bin/gate --scan-only          measures, writes nothing
 #   ruby bin/gate --lexical-only       law/ and the scan registry, no council
 #   ruby bin/gate --semantic-only      /critique and /review; exit 3 = not measured
+#   ruby bin/gate --explain            prints the ladder, runs nothing
 
 require "open3"
 
@@ -43,6 +44,23 @@ SAFE_ENV = {
   "MASTER_WATCHER" => "0",
   "MASTER_HEARTBEAT" => "0",
 }.freeze
+
+# An unrecognised argument used to be ignored, and being ignored here means
+# "run everything and write": `bin/gate --explain` was reached for on the
+# strength of the documented flag on `bin/pub4 gate`, and started a full-fix
+# pass over four trees. The flag that reads as a dry run on one surface must not
+# be the dangerous one on the other, so this surface knows it too — and refuses
+# anything it does not know rather than defaulting to the writing mode.
+KNOWN_FLAGS = %w[--scan-only --lexical-only --semantic-only --explain --help -h].freeze
+unknown = ARGV.reject { |arg| KNOWN_FLAGS.include?(arg) }
+unless unknown.empty?
+  warn "gate: unknown argument#{"s" if unknown.size > 1}: #{unknown.join(" ")}"
+  warn "gate: known flags are #{KNOWN_FLAGS.join(" ")}"
+  warn "gate: refusing rather than falling through to full-fix, which writes"
+  exit 2
+end
+
+EXPLAIN = ARGV.include?("--explain") || ARGV.include?("--help") || ARGV.include?("-h")
 
 # Full chain mutates the tree via /fix, and only via /fix -- see SAFE_ENV above.
 # Prefer SCAN_ONLY=1 in CI/preflight.
@@ -90,9 +108,12 @@ COMMANDS = {
   # and the gate reported the repo clean on the strength of three quarters of
   # it. A gate whose target list is shorter than the repo is not a gate.
   #
-  # Caveat for the FULL pass, not scan-only: scanner.rb SKIP_PATH_SEGMENTS
-  # skips `cache` but not `.cache`, so /fix would descend into STUDIO's
-  # generated lora/**/.cache/** copies. Read the printed diff before
+  # Caveat for the FULL pass, not scan-only: /fix writes wherever the scan
+  # walked, so what it cannot reach is Scanner::PathFilter's skip list and
+  # nothing else. `.cache` and `scratch` are on it, which is what keeps /fix
+  # out of STUDIO's generated lora/**/.cache/** copies and out of dilla's
+  # demucs virtualenv; a 2026-08-31 refactor stubbed `skip_path?` to `false`
+  # and that guard was gone with no other sign. Read the printed diff before
   # committing; do not commit rewrites of generated caches. `bin/pub4 gate`
   # names any such path in its own report and refuses to call the run clean.
   deploy: %w[../RAILS ../OPENBSD ../STUDIO].flat_map { |path| lines_for(path) }.freeze,
@@ -245,6 +266,15 @@ def assert_clean(*paths)
 end
 
 puts "gate: mode=#{SCAN_ONLY ? 'scan-only' : 'full-fix'} tier=#{TIER}"
+
+if EXPLAIN
+  COMMANDS.each do |name, lines|
+    puts "  #{name}:"
+    lines.each { |line| puts "    bin/cli #{line}" }
+  end
+  puts "gate: --explain, so nothing above was run"
+  exit 0
+end
 
 # Only the lexical tier writes. The diff prints for it in either mode — in
 # scan-only that is the tell that a step which promised to measure has written —

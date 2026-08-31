@@ -31,3 +31,34 @@
 # sortable / animated-number / character-counter set above. Measured in a
 # clean worktree after that deletion.
 duplicate_sets: 30
+members:
+- MASTER/web/Rakefile | RAILS/amber/Rakefile | RAILS/bsdports/Rakefile | RAILS/shared/Rakefile
+- MASTER/web/bin/setup | RAILS/shared/bin/setup
+- MASTER/web/config/initializers/filter_parameter_logging.rb | RAILS/shared/config/initializers/filter_parameter_logging.rb
+- MASTER/web/config/initializers/inflections.rb | RAILS/shared/config/initializers/inflections.rb
+- MASTER/web/public/icon.png | RAILS/shared/public/icon.png
+- RAILS/amber/.rubocop.yml | RAILS/brgen/.rubocop.yml | RAILS/bsdports/.rubocop.yml
+- RAILS/amber/app/javascript/controllers/index.js | RAILS/brgen/app/javascript/controllers/index.js | RAILS/bsdports/app/javascript/controllers/index.js
+- RAILS/amber/bin/ci | RAILS/bsdports/bin/ci | RAILS/shared/bin/ci
+- RAILS/amber/bin/setup | RAILS/bsdports/bin/setup
+- RAILS/amber/config.ru | RAILS/bsdports/config.ru
+- RAILS/amber/config/boot.rb | RAILS/bsdports/config/boot.rb | RAILS/shared/config/boot.rb
+- RAILS/amber/config/cable.yml | RAILS/brgen/config/cable.yml
+- RAILS/amber/config/cache.yml | RAILS/brgen/config/cache.yml
+- RAILS/amber/config/storage.yml | RAILS/brgen/config/storage.yml | RAILS/bsdports/config/storage.yml | RAILS/shared/config/storage.yml
+- RAILS/amber/db/migrate/20260504180350_create_users.rb | RAILS/brgen/db/migrate/20260311162114_create_users.rb | RAILS/bsdports/db/migrate/20260501020807_create_users.rb
+- RAILS/amber/db/migrate/20260504180352_create_sessions.rb | RAILS/brgen/db/migrate/20260311162121_create_sessions.rb | RAILS/bsdports/db/migrate/20260501020818_create_sessions.rb
+- RAILS/amber/db/migrate/20260709120000_add_shared_auth_fields_to_users.rb | RAILS/brgen/db/migrate/20260709120000_add_shared_auth_fields_to_users.rb | RAILS/bsdports/db/migrate/20260709120000_add_shared_auth_fields_to_users.rb
+- RAILS/amber/db/migrate/20260811120000_create_outbound_clicks.rb | RAILS/brgen/db/migrate/20260811120000_create_outbound_clicks.rb | RAILS/bsdports/db/migrate/20260811120000_create_outbound_clicks.rb
+- RAILS/amber/db/migrate/20260825121000_index_outbound_clicks_on_user.rb | RAILS/brgen/db/migrate/20260825121000_index_outbound_clicks_on_user.rb | RAILS/bsdports/db/migrate/20260825121000_index_outbound_clicks_on_user.rb
+- RAILS/amber/test/importmap_external_hosts_test.rb | RAILS/brgen/test/importmap_external_hosts_test.rb | RAILS/bsdports/test/importmap_external_hosts_test.rb
+- RAILS/amber/test/models/destroy_cascade_test.rb | RAILS/bsdports/test/models/destroy_cascade_test.rb
+- RAILS/amber/test/models/user_test.rb | RAILS/bsdports/test/models/user_test.rb
+- RAILS/brgen/app/javascript/controllers/application.js | RAILS/bsdports/app/javascript/controllers/application.js
+- RAILS/brgen/db/migrate/20260625140000_create_anonymous_post_quotas.rb | RAILS/shared/db/migrate/20260625140000_create_anonymous_post_quotas.rb
+- RAILS/bsdports/public/404.html | RAILS/shared/public/404.html
+- RAILS/bsdports/public/422.html | RAILS/shared/public/422.html
+- RAILS/bsdports/public/500.html | RAILS/shared/public/500.html
+- RAILS/gates/data/layout_snapshots/brgen-conversations-desktop.json | RAILS/gates/data/layout_snapshots/brgen-messenger-desktop.json
+- RAILS/gates/data/layout_snapshots/bsdports-home-desktop.json | RAILS/gates/data/layout_snapshots/bsdports-ports_index-desktop.json
+- RAILS/gates/data/layout_snapshots/bsdports-home-mobile.json | RAILS/gates/data/layout_snapshots/bsdports-ports_index-mobile.json

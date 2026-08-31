@@ -14,6 +14,7 @@
 #
 #   ruby MASTER/tools/self_findings.rb
 #   ruby MASTER/tools/self_findings.rb --json
+#   ruby MASTER/tools/self_findings.rb --ratchet  # record a new low, with its members
 
 require "English"
 require "json"
@@ -99,20 +100,40 @@ module Pub4
     # findings under law/ were laws quoting themselves. With conduct applied it
     # is 0, which is the honest number: those lines declare evidence.
     def considered(path, text)
-      path.include?("/MASTER/law/") ? ::Law.conduct(text) : text
+base = path.include?("/MASTER/law/") ? ::Law.conduct(text) : text
+# A Ruby law reading a <<~JS or <<~SQL body reports on a language it does
+# not govern. See SourceMasking#without_foreign_heredocs.
+return base unless path.end_with?(".rb", ".rake")
+
+Master::Review::Scan::SourceMasking.without_foreign_heredocs(base)
     end
 
-    # Memoized for the same reason `files` is, and it matters more here: the
-    # corpus is 2871 files against 72 rules, and TestRatchets asks five separate
-    # questions of it in one process. Rescanning per question put every one of
-    # them over the test's timeout. The tree does not change inside a run.
+    # Counted from the members rather than tallied alongside them, so the
+    # summary and the attribution list can never disagree about a number.
     def by_rule
-      @by_rule ||= scan_corpus
+      members.each_with_object(Hash.new(0)) { |member, counts| counts[member.split(" ", 2).first] += 1 }
+             .sort_by { |_, n| -n }.to_h
+    end
+
+    # The members behind the count, `RULE path:line`, one per finding.
+    # Memoized for the same reason `files` is, and it matters more here: the
+    # corpus is 2869 files against 122 rules, and TestRatchets asks five
+    # separate questions of it in one process. Rescanning per question put
+    # every one of them over the test timeout. The tree does not change
+    # inside a run.
+    #
+    # A census that records only an integer can say "over by twelve" and never
+    # which twelve, so the number arrives with no thread to pull — the same gap
+    # data_reach closed on 2026-08-31, and the reason that one could name its
+    # two keys while this one could only report a delta. Sorted, so two runs of
+    # an unchanged tree produce the same list and a diff means a change.
+    def members
+      @members ||= scan_corpus
     end
 
     def scan_corpus
       rules = law # loads Master before the map below is read
-      counts = Hash.new(0)
+      found = []
       files.each do |path|
         # The file list and the reads are two moments, and this is a shared
         # checkout: a file listed a second ago can be gone by the time it is
@@ -130,25 +151,32 @@ module Pub4
           next
         end
         lang = Master::FILE_LANGUAGE_MAP[File.extname(path)]&.to_sym
+        relative = path.delete_prefix("#{ROOT}/")
         rules.each_value do |rule|
           next if rule.semantic? || !rule.applies?(path, lang)
 
-          counts[rule.id.to_s] += rule.scan(text, file: path).size
+          rule.scan(text, file: path).each { |hit| found << "#{rule.id} #{relative}:#{hit.line}" }
         end
       end
-      counts.reject { |_, v| v.zero? }.sort_by { |_, v| -v }.to_h
+      found.sort
     end
 
     def recorded = YAML.safe_load_file(CEILING) || {}
+
     def ceiling = recorded.fetch("findings")
 
-    # Per-rule counts behind the total. A census that records one integer can
-    # say "over by twelve" and never which rules moved, so the number arrives
-    # with nothing to act on: attributing the 2026-08-31 overage meant checking
-    # out the commit that set the baseline and diffing two runs by hand.
-    # Absent, attribution is unavailable and `report_drift` says so rather than
-    # reporting no movement, which is a different claim.
+    # Two attributions, because they answer different questions and both were
+    # wanted on the same day. `by_rule` says which rules moved and by how much,
+    # which is what you read first. `members` says which lines, which is what
+    # you act on. A census recording one integer can say "over by twelve" and
+    # name neither, and naming them meant checking out the commit that set the
+    # baseline and diffing two runs by hand.
+    #
+    # Absent, attribution is unavailable and the report says so rather than
+    # reporting no movement — a different claim.
     def recorded_by_rule = recorded["by_rule"].is_a?(Hash) ? recorded["by_rule"] : {}
+
+    def recorded_members = Array(recorded["members"])
 
     # Which rules moved since the baseline, and by how much.
     def report_drift(counts)
@@ -168,22 +196,60 @@ module Pub4
       moved.each { |line| puts line }
     end
 
+    # Which lines arrived and which left.
+    def report_delta(current)
+      if recorded_members.empty?
+        puts "self_findings: no members recorded — line attribution unavailable; run --ratchet to seed it"
+        return
+      end
+
+      arrived = current - recorded_members
+      left = recorded_members - current
+      puts "self_findings: #{arrived.size} arrived, #{left.size} left"
+      arrived.each { |member| puts "  + #{member}" }
+      left.each { |member| puts "  - #{member}" }
+    end
+
     def run(json: false, ratchet: false)
+      current = members
       counts = by_rule
-      total = counts.values.sum
+      total = current.size
       return (puts JSON.pretty_generate(total: total, by_rule: counts)) || true if json
 
       puts "self_findings: #{total} across #{files.size} files from #{law.size} rules"
       counts.first(10).each { |id, n| puts format("  %-26s %5d", id, n) }
       over = total > ceiling
-      report_drift(counts) if over
-      if ratchet && total <= ceiling
-        File.write(CEILING, { "findings" => total, "by_rule" => counts.sort.to_h }.to_yaml)
-        puts "self_findings: recorded #{total} with its per-rule counts"
+      # <=, not <, so a census sitting exactly at its ceiling can record its
+      # attribution without having to fall first — the same reason data_reach
+      # seeds at parity. A census already over cannot: a baseline containing the
+      # overage would report it as known and hide exactly what is wanted.
+      if ratchet && !over
+        # Read before the write: `ceiling` re-reads the file, so asking after
+        # writing always answers with the number just written, and every fall
+        # reports itself as a re-record.
+        previous = ceiling
+        File.write(CEILING, rewritten_ceiling(total, counts, current))
+        puts "self_findings: #{total < previous ? "recorded #{total} as the new low" : "re-recorded #{total}"}, with its rules and its members"
         return true
       end
-      warn "self_findings: exceeds baseline — #{total} > #{ceiling}" if over
+
+      if over
+        warn "self_findings: exceeds baseline — #{total} > #{ceiling}"
+        report_drift(counts)
+        report_delta(current)
+      end
       !over
+    end
+
+    # The prose above `findings:` is most of this file and records what each past
+    # move cost somebody, so it is preserved rather than regenerated. A bare
+    # to_yaml dump of the ceiling eats all of it, which is how the dup_census
+    # ceiling lost thirty lines of history the first time it recorded members.
+    def rewritten_ceiling(total, counts, current)
+      prose = File.read(CEILING).sub(/^findings: .*\n(?:by_rule:\n(?:  \S+: \d+\n)*)?(?:members:\n(?:  - .*\n)*)?\z/, "")
+      by_rule = counts.sort.to_h.map { |id, n| "  #{id}: #{n}\n" }.join
+      members = current.map { |m| "  - #{m}\n" }.join
+      "#{prose}findings: #{total}\nby_rule:\n#{by_rule}members:\n#{members}"
     end
   end
 end

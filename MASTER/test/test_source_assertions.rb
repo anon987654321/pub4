@@ -22,7 +22,7 @@ require_relative "test_helper"
 # spec/ops/boot_safety_spec.rb (16, the whole file).
 class TestSourceAssertions < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  BASELINE = 227
+  BASELINE = 224
 
   # An assertion whose subject is the text of a file rather than a value the
   # code produced. `source`, `src` and `body` are this repo's names for that

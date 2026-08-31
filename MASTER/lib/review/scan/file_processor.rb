@@ -200,9 +200,17 @@ module Master
           rules.flat_map { |rule| run_rule(rule:, code:, ast:, path:) }
         end
 
+        # `defined?` rather than a bare constant: this file is reachable from
+        # `require "master"` alone, and Rules::SemanticRule only exists once
+        # review/scan/rule_dsl has loaded the registry. Naming it unguarded
+        # turned every scan on that path into "scan failed: uninitialized
+        # constant", which reads as a broken file rather than a missing require.
         def semantic_rule?(rule)
-          rule.is_a?(Master::Review::Scan::Rules::SemanticRule) ||
-            (rule.respond_to?(:id) && rule.id.to_s == "semantic")
+          semantic_class = defined?(Master::Review::Scan::Rules::SemanticRule) &&
+                           Master::Review::Scan::Rules::SemanticRule
+          return true if semantic_class && rule.is_a?(semantic_class)
+
+          rule.respond_to?(:id) && rule.id.to_s == "semantic"
         end
 
         def annotate_findings(findings, fingerprint:)

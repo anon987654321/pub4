@@ -65,7 +65,7 @@ module Master
           return true if allowlist.empty?
 
           uri = URI.parse(url) rescue nil
-          return false unless uri && uri.host
+          return false unless uri&.host
 
           allowlist.any? { |pattern| File.fnmatch?(pattern, uri.host) }
         end

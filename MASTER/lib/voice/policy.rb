@@ -17,7 +17,6 @@ module Master
         "stream_live_default" => true,
         "default_rate" => "-22%",
         "default_pitch" => "-35Hz",
-        "default_volume" => "+40%",
       }.freeze
 
       module_function
@@ -62,10 +61,6 @@ module Master
 
       # edge-tts --volume. Raises the synthesised signal itself, so the browser
       # chain is not the only place loudness comes from.
-      def default_volume
-        data["default_volume"].to_s
-      end
-
       def browser_payload
         {
           single_voice: single_voice_key.to_s,

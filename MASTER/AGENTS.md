@@ -94,6 +94,81 @@ failure. Check the gate before chasing its verdict.
 **When you cannot verify, stop and say so.** An unverified claim costs more than
 an unfinished task, because the next reader builds on it.
 
+## The words that mean something specific here
+
+Not general vocabulary. Each of these means one thing in this tree and something
+else everywhere else, and each has a file behind it, so a claim about one can be
+checked rather than believed.
+
+**Law** and **rule** are not synonyms. A *law* is an executable detector in
+`law/*.rb` that carries a `bad` and a `good` fixture and proves itself against
+both before it is allowed to judge anything — 122 of them, reaching the scanner
+through `LawBridgeRule`. A *rule* is a row in `data/rules.yml` or a class in
+`lib/review/scan/rules/`, and neither has to prove anything to load. Where an id
+exists in both, the law wins: `YamlDeclarativeRule` rejects the row before
+reading it.
+
+**Conduct** is what `Law.conduct` does to a law file before laws judge `law/`.
+A law necessarily contains the pattern it forbids — in its detector, its fix
+line and its bad fixture — so those are blanked, newlines kept, and the file is
+read as declaration rather than as the thing it declares.
+
+**Twin.** One rule id implemented in two places. Every silent drift the
+2026-08-21 campaign found was a twin: two implementations under one name, one of
+them quietly wrong. Retiring a twin means deleting the copy and leaving a note
+where it stood.
+
+**Intentional marker.** A line carrying `scan: intentional` opts that line out
+of every law and of every registry rule that scans through `Rule#scan_lines`,
+and must carry the reason beside it. It is the sanctioned way to
+say "this finding is correct and the code is right anyway". A marker that
+suppresses nothing is worse than none: it is a standing exemption for whatever
+real finding lands on that line next.
+
+**The fold** and **the spine** are `lib/core/` — the small set of files the
+runtime is built out of, where a new top-level concept is a design change rather
+than a line-count question. `data/spine.yml` holds both invariants, and
+`rake lint:spine` fails when either moves.
+
+**Ratchet** and **census**. A *census* counts a property over the tree —
+duplicate files, unread data keys, findings, readers per file. A *ratchet* is a
+census with a recorded ceiling that only ever falls, so the next regression
+cannot arrive silently. Every census here records its members beside the count,
+because a ceiling that says "over by two" and cannot name the two leaves the
+next reader deriving the pair by hand.
+
+**Inconclusive** is the third gate state, and the one that matters. A gate that
+could not measure — no Chrome, no booted app, no deploy stamps — is neither a
+pass nor a failure, and reporting it as a pass is the worst failure this suite
+has: it claims the code was reviewed when nothing was read. In-process gates say
+it with `GateResult#inconclusive!`, subprocesses with exit 3.
+
+**Verdict.** What the constitution answers a proposed effect with, and there are
+four: `Block` refuses with a reason, `Request` stops to ask a person, `Revise`
+hands back an amended effect, `Allow` applies it against a checkpoint. Nothing
+touches disk on any other path.
+
+**Tier.** Two meanings, both live. `bin/gate` runs a *lexical* tier (law and the
+scan registry, deterministic, no model) and a *semantic* tier (`/critique` and
+`/review`, which reach a provider); the semantic one is currently unreachable
+and reports as skipped rather than clean. On a `rules.yml` row, `tier:` is the
+rule's category — `clean_code`, `style`, `safety` — and is what resolves a
+conflict between two rules firing on one line.
+
+**The triangle** is `RAILS/bin/triangle`: brgen, amber, bsdports and the MASTER
+face, booted locally on the ports every gate probes. Without it the live half of
+the suite passes having measured nothing.
+
+**Vertical.** One of brgen's mounted Rails engines — `RAILS/brgen/engines/`
+holds tv, dating, takeaway, playlist, marketplace and maps. Each is a named app on its own subdomain, not a section
+of brgen, and "brgen" alone means the main city app only.
+
+**The face** is MASTER's WebGL front end at `ai.brgen.no`. Its runtime is
+generated: `web/public/face.part*.txt` are the sources and
+`web/public/face.runtime.js` is the build, which says in its own first line not
+to edit it by hand. Editing the build is a fix that survives until the next
+`assets:build_face_runtime` and then vanishes.
+
 ## Pick your topic
 
 | Task | Read |

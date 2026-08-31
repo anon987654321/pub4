@@ -3,4 +3,4 @@
 # can, which is where every instrument defect this campaign found was hiding.
 # The number only ratchets down: a new RuleDSL rule must carry its examples,
 # and retro-fitting one lowers this by hand.
-without_fixtures: 94
+without_fixtures: 91

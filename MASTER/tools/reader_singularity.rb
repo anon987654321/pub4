@@ -91,22 +91,35 @@ module Pub4
         "findings" => findings }
     end
 
-    # Only ever down: record today's counts as the new ceiling.
+    # Only ever down, per file: the minimum of what is recorded and what is
+    # measured. A writer that took today's counts whatever they were made a
+    # --ratchet run aimed at one file's slack raise another's ceiling and
+    # launder new debt into the baseline — rules.yml 10 to 11, 2026-08-31.
+    # Per file, the minimum of what is recorded and what is measured.
     def self.ratchet!
-      lows = readers.transform_values(&:size).select { |_, count| count > 1 }.sort.to_h
+      current = readers.transform_values(&:size).select { |_, count| count > 1 }.sort.to_h
+      recorded = ceilings
+      refused = current.select { |name, count| recorded.key?(name) && count > recorded[name] }
+      lows = current.to_h { |name, count| [name, recorded.key?(name) ? [count, recorded[name]].min : count] }
+
       body = YAML.safe_load_file(CEILINGS)
       body["reader_singularity"]["ceiling"] = lows
       header = File.read(CEILINGS).split(/^reader_singularity:/).first
       File.write(CEILINGS, header + YAML.dump(body).sub(/\A---\n/, ""))
-      lows
+      [lows, refused]
     end
   end
 end
 
 if $PROGRAM_NAME == __FILE__
   if ARGV.include?("--ratchet")
-    lows = Pub4::ReaderSingularity.ratchet!
+    lows, refused = Pub4::ReaderSingularity.ratchet!
     puts "reader_singularity: recorded #{lows.size} multi-reader file(s), #{lows.values.sum} sites"
+    # Named, not swallowed: a refusal is the ratchet holding, and the file it
+    # held for is the one that just gained a reader.
+    refused.each do |name, count|
+      puts "reader_singularity: held #{name} at #{lows[name]} — measured #{count}, which would have been a raise"
+    end
     exit 0
   end
 

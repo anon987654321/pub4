@@ -3,7 +3,11 @@
 module Master
   module Review
     module Scan
-      stale_config = (Master.load_yaml(Master.data_path("rules.yml")) || {})["stale_namespaces"] || {}
+      stale_config = begin
+        Master.law("stale_namespaces")
+      rescue KeyError
+        {}
+      end
       stale_constants = Array(stale_config["stale_constants"]).filter_map { |row| row["old"] if row.is_a?(Hash) }
       # A retired name counts only as a whole constant path. `\b` sits between a
       # letter and a colon, so /\bMaster::CLI\b/ matched inside every legitimate
@@ -216,6 +220,8 @@ module Master
         # is not yet understood.
         RuleDSL.rule :FILE_SEQUENCE_NAME,
           severity: :warning,
+          does_not_fire: "class AddThing < ActiveRecord::Migration[8.0]; end\n",
+          example_path: "/repo/db/migrate/20260101000000_add_thing_v2.rb",
           tags: %i[LOAD_BEARING_NAMES DOMAIN_LANGUAGE],
           applies_to: %i[ruby],
           autofix: false,
@@ -248,6 +254,8 @@ module Master
         # Ruby structure, and base.rb accounted for 3 of 6 findings, all false.
         RuleDSL.rule :FILE_VAGUE_NAME,
           severity: :info,
+          does_not_fire: "module FormatHelper; end\n",
+          example_path: "/repo/app/helpers/format_helper.rb",
           tags: %i[LOAD_BEARING_NAMES DOMAIN_LANGUAGE],
           applies_to: %i[ruby],
           autofix: false,

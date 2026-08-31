@@ -85,7 +85,14 @@ module Master
         def web_boot_sources
           {
             topologies: Master.load_yaml(Master.data_path("topologies.yml"), default: {}),
-            visual: Master.load_yaml(Master.data_path("ops", "visual.yml"), default: {}),
+            # data/ops/visual.yml was deleted on purpose in 68ca272e0: it had
+            # drifted on all five values against visual_governor.js, which is
+            # now the one place the limits live. The read outlived it and
+            # printed "load_yaml: No such file" on every boot and every test
+            # run. The key stays — the browser payload and
+            # test_ground_runtime_catalog both expect it — and is empty,
+            # because that is what the source is.
+            visual: {},
             tts: Master.load_yaml(Master.data_path("tts.yml"), default: {}),
           }
         end

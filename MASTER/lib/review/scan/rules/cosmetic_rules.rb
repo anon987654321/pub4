@@ -131,12 +131,16 @@ module Master
 
         RuleDSL.rule :TAB_CHARACTER,
           severity: :warning, tags: %i[HYGIENE],
+          fires: "def call\n\tvalue\nend\n",
+          does_not_fire: "def call\n  value\nend\n",
           description: "tabs forbidden — use two spaces" do |src, path:|
           scan_lines(src, /\t/, message: "tab character — indent with two spaces")
         end
 
         RuleDSL.rule :FINAL_NEWLINE,
           severity: :info, tags: %i[HYGIENE],
+          fires: "puts 1",
+          does_not_fire: "puts 1\n",
           description: "files end with a single newline" do |src, path:|
           next [] if src.empty? || src.end_with?("\n")
           [finding(line: src.lines.size, message: "missing final newline at EOF")]
