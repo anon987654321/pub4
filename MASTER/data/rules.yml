@@ -3661,7 +3661,6 @@ style:
       - "prism for Ruby parsing"
     outsource_to_gems_caveat: "Evaluate gem quality first: maintained, tested, minimal footprint."
 
-
   shell:
     decorations_forbidden:
       - "=== banner ===" # no ASCII section banners

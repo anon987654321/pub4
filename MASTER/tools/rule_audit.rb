@@ -72,7 +72,7 @@ module Pub4
       # and NO_VAR and NO_COLUMN_ALIGN were reported silent while this
       # directory broke them. Top level only: web/public/vendor and
       # web/public/models are vendored, and BUILD_OUTPUT is generated.
-      "MASTER/web/public/*.js"
+      "MASTER/web/public/*.js",
     ].freeze
 
     # esbuild writes these from web/script/build_*.sh. Minified third-party
@@ -188,7 +188,6 @@ module Pub4
       end
 
       puts "rule_audit: #{found[:silent].size} rule(s) fired on nothing here — #{found[:silent].join(', ')}" unless found[:silent].empty?
-
 
       found[:fixture_blindness].empty? && found[:saturation].empty?
     end

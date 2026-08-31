@@ -8,7 +8,6 @@ require "set"
 require "time"
 require "yaml"
 
-
 module Master
   module Review
     class RepoEcology

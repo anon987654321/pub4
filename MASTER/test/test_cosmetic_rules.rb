@@ -21,7 +21,7 @@ class TestCosmeticRules < Minitest::Test
       "The push landed on 2026-08-10 and reverted on 2026-08-12.\n",
       "model0: claude-opus-4-8\n",
       "MAGIC_NUMBER is /(?:[2-9]|[1-9])/\n",
-      "It ran flux-1.1-pro-ultra instead.\n"
+      "It ran flux-1.1-pro-ultra instead.\n",
     ].each do |line|
       assert_empty rule("EN_DASH_RANGE").check(line, path: "README.md"), line
     end

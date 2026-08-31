@@ -16,10 +16,6 @@
     return window.MASTEREcology;
   }
 
-
-
-
-
   function drawMemories(dt, E) {
     const { memories, ctx, internalW, internalH } = E;
     for (let i = memories.length - 1; i >= 0; i--) {
@@ -42,7 +38,6 @@
 // draw; what is gone is the pretence that they are connected.
     }
   }
-
 
   let previous = performance.now();
   let ecologyFrameActive = false;

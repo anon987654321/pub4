@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-
 module Master
   class Result
     # Functor/monad composition for Result::Err — all three are identity

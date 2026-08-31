@@ -158,7 +158,6 @@ module Master::Core
     CREDENTIAL_ENV_RX = /KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL|SESSION|COOKIE|SALT|CERT|PRIVATE|
                          \A(?:AWS|GOOGLE|GCP|AZURE|STRIPE|TWILIO|SENDGRID|VAPID|DATABASE_URL)/xi
 
-
     # commit is path-scoped, and refuses to run without paths.
     #
     # `git commit -m msg` commits THE INDEX, which in this repo is shared: the

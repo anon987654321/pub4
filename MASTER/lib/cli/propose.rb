@@ -5,7 +5,6 @@ require "json"
 require "time"
 require_relative "../ground/bias_guard"
 
-
 require "open3"
 require "set"
 

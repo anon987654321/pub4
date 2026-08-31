@@ -4,7 +4,6 @@ require "prism"
 require "set"
 require "monitor"
 
-
 module Master
   module Review
     class CodeIndex

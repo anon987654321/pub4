@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-
 module Master
   module Ground
     class Rules

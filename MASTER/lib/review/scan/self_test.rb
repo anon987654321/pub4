@@ -2,7 +2,6 @@
 
 require_relative "rule_dsl"
 
-
 module Master
   module Review
     module Scan

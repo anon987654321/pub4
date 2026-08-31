@@ -4,7 +4,6 @@ require "yaml"
 require "fileutils"
 require_relative "atomic_write"
 
-
 module Master
   module Ground
     class Config

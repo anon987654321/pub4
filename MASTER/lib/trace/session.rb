@@ -3,7 +3,6 @@
 require "json"
 require "fileutils"
 
-
 module Master
   module Trace
     class Session

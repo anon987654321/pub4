@@ -2,7 +2,6 @@
 
 require "set"
 
-
 module Master
   module Ground
     class StandingOrders
