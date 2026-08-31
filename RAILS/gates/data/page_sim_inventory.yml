@@ -1,7 +1,7 @@
 ---
 generated_note: Snapshot of Deploy::PageInventory.all — regenerate via page_simulation
   gate
-count: 188
+count: 204
 pages:
 - id: brgen/activity_events/index
   app: brgen
@@ -99,12 +99,60 @@ pages:
   action: show
   persona: guest
   needs_id: true
+- id: brgen/communities/wiki/edit
+  app: brgen
+  view: RAILS/brgen/app/views/communities/wiki/edit.html.erb
+  host: brgen.no
+  path: "/communities/:community_id/wiki/:id/edit"
+  action: edit
+  persona: auth
+  needs_id: true
+- id: brgen/communities/wiki/index
+  app: brgen
+  view: RAILS/brgen/app/views/communities/wiki/index.html.erb
+  host: brgen.no
+  path: "/communities/:community_id/wiki"
+  action: index
+  persona: guest
+  needs_id: true
+- id: brgen/communities/wiki/new
+  app: brgen
+  view: RAILS/brgen/app/views/communities/wiki/new.html.erb
+  host: brgen.no
+  path: "/communities/:community_id/wiki/new"
+  action: new
+  persona: auth
+  needs_id: true
+- id: brgen/communities/wiki/show
+  app: brgen
+  view: RAILS/brgen/app/views/communities/wiki/show.html.erb
+  host: brgen.no
+  path: "/communities/:community_id/wiki/:id"
+  action: show
+  persona: guest
+  needs_id: true
 - id: brgen/conversations/index
   app: brgen
   view: RAILS/brgen/app/views/conversations/index.html.erb
   host: brgen.no
   path: "/"
   action: index
+  persona: guest
+  needs_id: false
+- id: brgen/conversations/new
+  app: brgen
+  view: RAILS/brgen/app/views/conversations/new.html.erb
+  host: brgen.no
+  path: "/conversations/new"
+  action: new
+  persona: auth
+  needs_id: false
+- id: brgen/conversations/search
+  app: brgen
+  view: RAILS/brgen/app/views/conversations/search.html.erb
+  host: brgen.no
+  path: "/conversations/search"
+  action: search
   persona: guest
   needs_id: false
 - id: brgen/conversations/show
@@ -147,6 +195,22 @@ pages:
   action: show
   persona: guest
   needs_id: true
+- id: brgen/fediverse/follows/index
+  app: brgen
+  view: RAILS/brgen/app/views/fediverse/follows/index.html.erb
+  host: brgen.no
+  path: "/fediverse_follows"
+  action: index
+  persona: guest
+  needs_id: false
+- id: brgen/group_conversations/new
+  app: brgen
+  view: RAILS/brgen/app/views/group_conversations/new.html.erb
+  host: brgen.no
+  path: "/groups/new"
+  action: new
+  persona: auth
+  needs_id: false
 - id: brgen/hashtags/show
   app: brgen
   view: RAILS/brgen/app/views/hashtags/show.html.erb
@@ -363,6 +427,14 @@ pages:
   action: index
   persona: auth
   needs_id: false
+- id: brgen/dating/picks/index
+  app: brgen
+  view: RAILS/brgen/engines/dating/app/views/dating/picks/index.html.erb
+  host: dating.brgen.no
+  path: "/picks"
+  action: index
+  persona: guest
+  needs_id: false
 - id: brgen/dating/profiles/edit
   app: brgen
   view: RAILS/brgen/engines/dating/app/views/dating/profiles/edit.html.erb
@@ -386,6 +458,22 @@ pages:
   path: "/profile"
   action: show
   persona: guest
+  needs_id: false
+- id: brgen/dating/verifications/index
+  app: brgen
+  view: RAILS/brgen/engines/dating/app/views/dating/verifications/index.html.erb
+  host: dating.brgen.no
+  path: "/verifications"
+  action: index
+  persona: guest
+  needs_id: false
+- id: brgen/dating/verifications/new
+  app: brgen
+  view: RAILS/brgen/engines/dating/app/views/dating/verifications/new.html.erb
+  host: dating.brgen.no
+  path: "/verifications/new"
+  action: new
+  persona: auth
   needs_id: false
 - id: brgen/maps/home/index
   app: brgen
@@ -451,6 +539,14 @@ pages:
   action: show
   persona: guest
   needs_id: true
+- id: brgen/marketplace/favorites/index
+  app: brgen
+  view: RAILS/brgen/engines/marketplace/app/views/marketplace/favorites/index.html.erb
+  host: markedsplass.brgen.no
+  path: "/wishlist"
+  action: index
+  persona: guest
+  needs_id: false
 - id: brgen/marketplace/listings/edit
   app: brgen
   view: RAILS/brgen/engines/marketplace/app/views/marketplace/listings/edit.html.erb
@@ -537,6 +633,14 @@ pages:
   host: markedsplass.brgen.no
   path: "/shops/:id"
   action: show
+  persona: guest
+  needs_id: true
+- id: brgen/marketplace/variants/index
+  app: brgen
+  view: RAILS/brgen/engines/marketplace/app/views/marketplace/variants/index.html.erb
+  host: markedsplass.brgen.no
+  path: "/listings/:listing_id/variants"
+  action: index
   persona: guest
   needs_id: true
 - id: brgen/playlist/hosted_tracks/edit
@@ -666,6 +770,14 @@ pages:
   path: "/delivery_drivers/:id"
   action: show
   persona: guest
+  needs_id: true
+- id: brgen/takeaway/group_orders/show
+  app: brgen
+  view: RAILS/brgen/engines/takeaway/app/views/takeaway/group_orders/show.html.erb
+  host: takeaway.brgen.no
+  path: "/group/:id"
+  action: show
+  persona: auth
   needs_id: true
 - id: brgen/takeaway/orders/index
   app: brgen
@@ -816,6 +928,22 @@ pages:
   view: RAILS/brgen/engines/tv/app/views/tv/shows/show.html.erb
   host: tv.brgen.no
   path: "/channels/:channel_slug/shows/:slug"
+  action: show
+  persona: guest
+  needs_id: true
+- id: brgen/tv/sounds/index
+  app: brgen
+  view: RAILS/brgen/engines/tv/app/views/tv/sounds/index.html.erb
+  host: tv.brgen.no
+  path: "/sounds"
+  action: index
+  persona: guest
+  needs_id: false
+- id: brgen/tv/sounds/show
+  app: brgen
+  view: RAILS/brgen/engines/tv/app/views/tv/sounds/show.html.erb
+  host: tv.brgen.no
+  path: "/sounds/:id"
   action: show
   persona: guest
   needs_id: true
@@ -1341,7 +1469,7 @@ pages:
   needs_id: false
 - id: amber/shared/passwords/new
   app: amber
-  view: RAILS/shared/app/views/passwords/new.html.erb
+  view: RAILS/amber/app/views/passwords/new.html.erb
   host:
   path: "/passwords/new"
   action: new
@@ -1365,7 +1493,7 @@ pages:
   needs_id: true
 - id: amber/shared/passwords/edit
   app: amber
-  view: RAILS/shared/app/views/passwords/edit.html.erb
+  view: RAILS/amber/app/views/passwords/edit.html.erb
   host:
   path: "/passwords/:token/edit"
   action: edit
@@ -1381,7 +1509,7 @@ pages:
   needs_id: true
 - id: brgen/shared/notifications/index
   app: brgen
-  view: RAILS/shared/app/views/notifications/index.html.erb
+  view: RAILS/brgen/app/views/notifications/index.html.erb
   host:
   path: "/notifications"
   action: index
