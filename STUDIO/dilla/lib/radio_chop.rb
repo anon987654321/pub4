@@ -3,6 +3,7 @@
 require_relative "frozen_state"
 require "fileutils"
 require "json"
+require_relative "sample_worth"
 require "open3"
 require "time"
 
@@ -214,7 +215,9 @@ module RadioChop
 
     sorted = full.first(frames).sort
     median = sorted[sorted.length / 2]
-    floor = median - 5.0
+    # -12, not -5: the best region measured in a real source sat 4.8dB under
+    # the median, within 0.2dB of being discarded before it was looked at.
+    floor = median - 12.0
 
     per_window = (span / window).ceil
     # Stride of one second. Finer buys nothing -- the trim below re-places the
@@ -700,17 +703,49 @@ module RadioChop
     trim = best_trim(pcm, envelope(inst), rate: ANALYSIS_RATE, onsets:, cut_sec: span)
     return nil unless trim
 
+    # Scored on the instrumental, not the source: drums and vocal are gone by
+    # here, and a chord-register term measured before separation reports on a
+    # mix that is not the one that gets played.
+    worth = sample_worth_for(inst, trim, dropped)
+
     cand.merge(
       instrumental: inst, bpm: trim[:bpm], kept_db:, dropped:,
       trim:,
-      # Self-similarity leads, at a weight that puts its 0..1 range on the same
-      # scale as the others: the question a sample bed has to answer is whether
-      # the passage repeats, and everything else is a qualifier on a yes. Then
-      # the scan's musicality, the rejoin cost, and how much of the record
-      # survived separation.
-      score: ((trim[:self_similarity] * 10.0) + cand[:musicality] -
+      # Two questions, equally weighted. Self-similarity asks whether the
+      # passage repeats; sample_worth asks whether it is worth hearing. Only
+      # the first was ever asked, which is why the racks come back seamless
+      # and dull.
+      #
+      # Both are 0..1 at weight 10, which is what the old comment claimed
+      # about "the same scale as the others" and did not have:
+      # cand[:musicality] is an unbounded dB difference and outvoted the
+      # self-similarity term it was written to qualify. musicality stays in
+      # propose as the talk filter -- it is not lost, it stops ranking.
+      sample_worth: worth,
+      score: ((trim[:self_similarity] * 10.0) + (worth * 10.0) -
               (trim[:cost] * 2.0) + (kept_db / 2.0)).round(3),
     )
+  end
+
+  # g_vocal reads dropped_db.vocals, which measure computes a dozen lines
+  # above and already writes to the registry. A fresh volumedetect pass would
+  # be a second source for one fact, and the stems are guaranteed present here.
+  def sample_worth_for(inst, trim, dropped)
+    contour = DillaSampleWorth.contour(inst)
+    return 0.35 unless contour
+
+    terms = DillaSampleWorth.terms(contour, from: trim[:start], dur: trim[:length])
+    return 0.35 unless terms
+
+    gates = DillaSampleWorth.gates(contour, from: trim[:start], dur: trim[:length],
+                                   vocals_db: dropped && dropped["vocals"])
+    conf = DillaSampleWorth.confidence(contour[:frames].map { |fr| fr[:tonal] })
+    row = DillaSampleWorth.score_all([{ terms:, gates: }], conf:).first
+    row ? row[:sw] : 0.35
+  rescue StandardError
+    # A scorer that cannot measure must not stop a chop. 0.35 is the flat
+    # harmony contribution: neither a reward nor a veto.
+    0.35
   end
 
   def write_loops!(ranked, src:, slug_base:, label:, key_probe: nil)
@@ -752,6 +787,10 @@ module RadioChop
         "self_similarity" => m[:trim][:self_similarity],
         "period_multiple" => m[:trim][:period_multiple],
         "rejoin_db" => m[:trim][:level_db],
+        # Persisted raw, never as a rank: the rank is within-source by
+        # construction, so once the registry accumulates across records a
+        # persisted rank column is cross-source-incomparable in a new way.
+        "sample_worth" => m[:sample_worth],
         "kept_db" => m[:kept_db],
         # e.g. {"drums" => -21.4, "vocals" => -18.9} -- each removed stem's level
         # against the instrumental that replaced it.
@@ -765,9 +804,26 @@ module RadioChop
       }.merge(key_fields(dest, key_probe).transform_keys(&:to_s))
     end
 
-    data = { "version" => 1, "ingested_at" => Time.now.utc.iso8601, "loops" => loops }
-    DillaFrozen.write_json(REGISTRY, data)
-    puts "chop: #{loops.length} loops -> #{REGISTRY.sub("#{ROOT}/", '')}"
+# Merge, not replace. The registry is the only index the engine has: a slug
+# absent from it is a bed the stream and the demo cannot reach, however many
+# loop.wavs sit under DEST. Writing this run's rows alone made every earlier
+# record unreachable the moment a second source was chopped -- 161 playable
+# directories on disk against 5 registered -- which reads as the engine
+# ignoring the crate and falling back to its built-in progressions.
+#
+# This run's own slugs are dropped first, so a re-chop of the same record
+# replaces its rows rather than doubling them, matching the rm_rf above.
+# Rows whose wav has gone are dropped too, for the reason registered_loops
+# gives: a bed that quietly does not play is the hardest absence to notice.
+kept = Array(registry["loops"]).reject do |row|
+  slug = row["slug"].to_s
+  abs = File.absolute_path?(row["path"].to_s) ? row["path"].to_s : File.join(ROOT, row["path"].to_s)
+  slug.start_with?("#{slug_base}_") || !File.file?(abs)
+end
+merged = (kept + loops).sort_by { |row| row["slug"].to_s }
+data = { "version" => 1, "ingested_at" => Time.now.utc.iso8601, "loops" => merged }
+DillaFrozen.write_json(REGISTRY, data)
+puts "chop: #{loops.length} new, #{kept.length} kept -> #{merged.length} registered"
     loops
   end
 
