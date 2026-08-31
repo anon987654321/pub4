@@ -258,6 +258,49 @@ now is the invariant either policy has to satisfy — never offered when the
 binary is absent, never ahead of a configured key, and still present behind one,
 because ranked below is not the same as gone.
 
+### data_reach is over by two, and now says which two — 2026-08-31
+
+`data_reach` sits at 48 against a ceiling of 46, and until today that was the
+whole of what anyone knew. The ceiling file recorded a bare integer, so "over by
+two" had no thread to pull and the next reader would have re-derived the list of
+48 by hand to find a pair. `WISHLIST.md` 64–65 asked for the fix and called it
+cheap; it was, and it had simply never been done.
+
+The pair, identified by checking out `a17a30b3f` — the commit that recorded 46 —
+running the census there and diffing the member lists:
+
+    + rules.yml#business_plan
+    + rules.yml#markdown_style
+
+Nothing left. Both are substantive blocks (`business_plan` carries lead,
+structure, numbers, scope, criteria, monetisation, sources; `markdown_style`
+carries aesthetic, applies_to, rules) and nothing outside `data/` names either.
+They are the two sections `WISHLIST.md` 67 records: a session read `rules.yml`,
+another committed to it, and the first one's write reverted these two. They were
+restored, correctly — and never wired to a reader, so the census has counted
+them ever since.
+
+**Not resolved here, deliberately.** The two options are wiring a reader or
+deleting the block, and `rules.yml` is second in the authority order. Deleting a
+business-plan spec and a markdown style guide is an owner's call, and inventing
+readers for them is feature work with a design behind it. What was owed was the
+attribution, and that is now paid.
+
+The instrument is fixed so this cannot recur: the ceiling file carries its
+members beside the count, `--ratchet` seeds them at parity as well as on a fall,
+and a count-only ceiling reports that attribution is unavailable rather than
+claiming zero arrivals — "nothing new" and "I cannot tell" are the two answers
+that must never be confused.
+`MASTER/test/test_data_reach_attribution.rb` holds it, mutation-verified.
+
+One limit, stated because the first version of the comment overstated it: this
+does not help a census that is *already* over. Such a census cannot record
+anything without either moving the ceiling or writing a baseline that includes
+the overage, and a baseline containing the two keys that are over would report
+them as known and hide exactly what is wanted. While over, attribution comes
+from diffing against the commit that set the ceiling, as above. `dup_census`
+still records a bare integer and wants the same treatment.
+
 ### Four slack ceilings, recorded — closed 2026-08-31
 
 `TestRatchets#test_no_ratchet_is_slack` skips when the measured trees are dirty,
