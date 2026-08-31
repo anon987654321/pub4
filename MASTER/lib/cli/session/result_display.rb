@@ -63,6 +63,7 @@ module Master
         if streamed
           puts
           puts
+          spoken = accumulated
         else
           print "\r\e[K" if $stdout.isatty
           text = success_text(ok)
@@ -73,7 +74,12 @@ module Master
           puts @refs.renderer.speaker_tag
           output_text(text)
           puts
+          spoken = text
         end
+        # The reply is printed before it is spoken, and speaking does not block
+        # the prompt. A routine success returns above and stays silent: "ok" is
+        # not worth a synthesis.
+        Master::Voice::Playback.speak(spoken)
         print_cost_tooltip
         print_pipeline_timings
         print_parallel_errors_footer(ok)
