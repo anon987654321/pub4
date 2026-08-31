@@ -76,20 +76,9 @@ module Master
 
     # Head of models.grok_primary — the declared :free pool this runtime routes
     # first when an OpenRouter key is present.
-    #
-    # Skipping the agy entries is not a preference, it is reachability. That
-    # pool now leads with agy:auto, which is not an API model at all but the
-    # Antigravity CLI, reached by executing a binary. The only caller is
-    # default_model, and it reaches this line *after* `return "agy:auto" if
-    # agy_cli_available?` has already declined — so every call that got here was
-    # a call on a machine with no agy binary, and it answered "agy:auto"
-    # regardless. ProviderAvailability#grok_api_models had the same hole by a
-    # different path.
     def free_primary_model(root: ROOT)
-      @grok_primary_ids ||= Array(load_yaml(File.join(root, "data", "models.yml"))
-                                    .dig("models", "grok_primary")).filter_map { |model| model["id"] }
-      reachable = agy_cli_available? ? @grok_primary_ids : @grok_primary_ids.grep_v(/\Aagy(?::|\z)/)
-      reachable.first
+      @free_primary_model ||= load_yaml(File.join(root, "data", "models.yml"))
+                              .dig("models", "grok_primary")&.first&.fetch("id")
     end
 
     def api_key_specs(root: ROOT)
@@ -116,11 +105,16 @@ module Master
     end
 
     def default_model
-      return "agy:auto" if agy_cli_available?
+      # A configured API key is a paid, health-checked route; the agy CLI is a
+      # local convenience that answers "quota reached" when its subscription is
+      # spent. Prefer a working key over agy so a dead agy subscription cannot
+      # make agy:auto the default and stall every LLM-backed rule. agy stays a
+      # first-class route below, chosen when no key is present.
       return "grok-4.3" if api_key_present?("XAI_API_KEY") && !api_key_present?("OPENROUTER_API_KEY")
       return free_primary_model if api_key_present?("OPENROUTER_API_KEY")
       return "deepseek-chat" if api_key_present?("DEEPSEEK_API_KEY")
       return "gemini-2.5-flash" if api_key_present?("GOOGLE_API_KEY") || api_key_present?("GEMINI_API_KEY")
+      return "agy:auto" if agy_cli_available?
       return "web-chat:grok" if keyless_llm_enabled?
 
       openrouter_default

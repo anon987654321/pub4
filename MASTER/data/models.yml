@@ -174,7 +174,6 @@ ollama_phi: &ollama_phi
 
 models:
   grok_primary:
-    - *agy_auto
     - *nemotron_super
   keyless:
     - *web_chat_grok
@@ -182,20 +181,13 @@ models:
     - *web_chat_kimi
     - *web_chat_gemini
   default:
-    - *agy_auto
-    - *agy_gemini_flash
     - *nemotron_super
     - *gemini_flash_openrouter
   primary:
-    - *agy_auto
-    - *agy_gemini_pro
     - *claude_cli_opus
     - *claude_opus_api
     - *nemotron_super
   strong:
-    - *agy_auto
-    - *agy_gemini_pro
-    - *agy_gemini_flash_thinking
     - *claude_cli_opus
     - *claude_opus_api
     - *deepseek_reasoner
@@ -207,11 +199,9 @@ models:
     - *gemini_flash
     - *command_r_plus
   vision:
-    - *agy_auto
     - *gemini_flash
     - *claude_sonnet
   medium:
-    - *agy_auto
     - *deepseek_chat
     - *gemini_flash_openrouter
     - *mistral_large
@@ -219,18 +209,14 @@ models:
     - *nemotron_super
     - *command_r_plus
   cheap:
-    - *agy_gemini_flash
     - *gemini_flash_openrouter
     - *gemini_flash
     - *mistral_small
   fast:
-    - *agy_gemini_flash
-    - *agy_auto
     - *grok_4_3
     - *gemini_flash
     - *gemini_flash_openrouter
   free:
-    - *agy_auto
     - *nemotron_super
   claude_code:
     - *claude_cli_sonnet

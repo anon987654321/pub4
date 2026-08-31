@@ -13,12 +13,10 @@ class TestKeylessRouting < Minitest::Test
       MASTER_KEYLESS MASTER_WEB_CHAT MASTER_NO_CLAUDE_CLI MASTER_NO_AGY_CLI
     ].to_h { |key| [key, ENV[key]] }
     @saved_env.each_key { |key| ENV.delete(key) }
-    # Both CLIs, not just one. default_model returns "agy:auto" before it
-    # looks at any key, and any_api_key_present? is true whenever the
-    # Antigravity binary is on PATH — so every assertion in this file about
-    # having no provider passed or failed according to whether the machine
-    # running it happened to have agy installed. All four failed here and
-    # passed in CI, which is the worst way for a test to be wrong.
+    # Neutralize both local subscription CLIs so these tests grade keyless and
+    # API-key routing in isolation from whichever CLI binary happens to be
+    # installed on the machine running them. agy's own routing is covered by
+    # test_agy_reachability.
     ENV["MASTER_NO_CLAUDE_CLI"] = "1"
     ENV["MASTER_NO_AGY_CLI"] = "1"
   end

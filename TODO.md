@@ -218,11 +218,29 @@ and `ModelRouter#fallback_chain` led with four agy ids that could only be failed
 over one at a time.
 
 What hid it: `MASTER_NO_AGY_CLI` exists and both `agy_cli_available?` methods
-honour it, so the guard looked complete. The ids arrived by a different path,
-where nothing asked. Fixed in one place rather than four, next to the same
-question about web chat — the chain is assembled from every `models.*` tier,
-`grok_primary`, the auth lanes and `primary_models`, so a per-table guard leaves
-three tables unguarded.
+honour it, so the guard looked complete. The ids arrived by paths that never
+asked.
+
+Fixed at the data source, and not by the session that found it. Two sessions hit
+this within the same hour from opposite directions — this one measuring
+reachability, `2a686f1d4` measuring cost — and the second is the better fix for
+both: `data/models.yml` no longer prepends the agy anchors to any tier
+(`grok_primary`, `default`, `primary`, `strong`, `vision`, `medium`, `fast`,
+`free`, `cheap`), and `default_model`, `primary_models` and
+`AuthProfileLane#models_for_router` now lead with a configured API key. Its
+reason is one this side had not considered and is the stronger of the two: a
+key is a paid, health-checked lane, while the CLI answers "quota reached" when
+its subscription is spent, so a dead CLI at the head of the chain stalls every
+LLM-backed rule.
+
+The reachability guards written here were dropped rather than kept beside it —
+a `reject` at chain assembly and a filter in `free_primary_model`. Measured
+before deleting, which is the only reason it is safe to say: with both removed,
+the two absence assertions still pass, because a tier with no agy anchor cannot
+hand one out and `primary_models` already guards its own agy branch. Two
+mechanisms for one fact is the duplication this repo keeps writing down; the
+property is held by `test_agy_reachability.rb` instead, and reverting the data
+fix turns four of its ten red.
 
 The same fact ran the other way in the test suite, which is how it surfaced.
 `test_keyless_routing.rb` cleared eight API keys and `MASTER_NO_CLAUDE_CLI` in
@@ -232,7 +250,13 @@ Antigravity binary on PATH. They failed here and pass in CI, which is the worst
 way for a test to be wrong: the suite disagrees with itself by host and neither
 result is evidence. `MASTER/test/test_agy_reachability.rb` now pins both
 directions with a real executable stub, because a reachability check that is
-only ever exercised one way is the half that was already true.
+only ever exercised one way is the half that was already true. Its ordering
+assertions were rewritten in the same pass: they encoded "agy leads", which was
+this tree's behaviour and is now deliberately not, and a test that pins a policy
+its owner has just reversed is an obstacle rather than a guard. What it asserts
+now is the invariant either policy has to satisfy — never offered when the
+binary is absent, never ahead of a configured key, and still present behind one,
+because ranked below is not the same as gone.
 
 ### Four slack ceilings nobody has ever been told about — opened 2026-08-31
 
