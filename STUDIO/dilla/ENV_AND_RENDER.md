@@ -182,7 +182,7 @@ ever been through them. Set a switch to `0` for that older, drier behaviour.
 | `TAPE_BIAS` | `1.0` | 1 = original loop; lower = less bias, wider hysteresis (ChowTape) |
 | `TAPE_LOSS_HZ` | `0` | spacing/loss lowpass into JA; 0 is off, 14000 is the analog start |
 | `TAPE_WOW_MS` | `0.6` | Ornstein-Uhlenbeck flutter |
-| `SONITEX_MIX` / `_DISTORTION` / `_VINYL` / `_TONE` / `_NOISE` / `_SAMPLING` | `1` | STX-1260 section wet amount; `SONITEX_SAMPLING=0` is crush off, tone stays |
+| `SONITEX_MIX` / `_DISTORTION` / `_VINYL` / `_TONE` / `_NOISE` / `_SAMPLING` | — | **No reader.** Setting these changes nothing; use `SONITEX` / `SONITEX_PRESET` |
 | `MASTER_SMOOTH_DB` | `2.0` | takes 2 dB out of the presence band; the stage that answers "harsh" |
 | `SMOOTH_ANALOG` | `1` | drop patches on metallic GM programs (chromatic percussion, 94, 98, 99, 103) |
 | `MASTER_TILT_DB` | `0` | negative = darker; lows up as highs come down |

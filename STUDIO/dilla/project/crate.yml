@@ -1,0 +1,397 @@
+# The crate — what the samples are dug from.
+#
+# samples/ and crate are the same thing, and neither is in git: the audio is
+# large, and some of it is not ours to redistribute. That was the right call
+# and it stayed right until 2026-08-31, when the whole checkout went to the
+# Trash and the Trash was emptied. Everything tracked came back from origin in
+# minutes. samples/ did not come back at all, because the only record of what
+# was in it lived inside samples/ — samples/dug/provenance.json, ignored along
+# with the audio it described.
+#
+# So provenance lives here instead, outside the ignore, and this file is the
+# one thing that makes the crate reproducible. The audio stays out of git; what
+# it was dug from does not.
+#
+# Re-dig with dilla's own pipeline, not by hand:
+#
+#   ruby dilla.rb source <url>        yt-dlp capture
+#   ruby dilla.rb demux <url> deep    6-stem demucs
+#   ruby dilla.rb chop <path>         bar-aligned loops into samples/chopped/
+#
+# `duration_s: ~` and `title: NA` mean YouTube no longer serves that id. Nine
+# of the sixty-one were already gone when this was captured; they are kept
+# listed rather than dropped, because a crate that quietly shrinks is a crate
+# nobody can audit.
+source: https://www.youtube.com/playlist?list=PLPoGPpix5g2KWUWAsBOY_I4Xh7Fn1JP3x
+captured: '2026-08-31'
+entries: 61
+available: 52
+runtime_minutes: 409
+crate:
+- id: 4IoicMEEkBI
+  url: https://youtu.be/4IoicMEEkBI
+  title: Ted Taylor - Be Ever Wonderful (1978 Version)
+  uploader: foreal
+  duration_s: 255
+  available: true
+- id: qSelDtWvEdE
+  url: https://youtu.be/qSelDtWvEdE
+  title: Dave Jones - Down In The Dumps [UK] Psych Ambient, Synth Prog (1983)
+  uploader: Music for empty rooms
+  duration_s: 267
+  available: true
+- id: 8ZfH2KmCZsg
+  url: https://youtu.be/8ZfH2KmCZsg
+  title: Flying Lotus - Aqua Teen Instrumental
+  uploader: Dan P. Harris
+  duration_s: 47
+  available: true
+- id: BR9hT2kOJhU
+  url: https://youtu.be/BR9hT2kOJhU
+  title: Estrada Branca
+  uploader: Till Broenner
+  duration_s: 216
+  available: true
+- id: FjTAqxCbT1g
+  url: https://youtu.be/FjTAqxCbT1g
+  title: Andrzej Koszinski - Eurocrime 1 Hijacking Of Savoy
+  uploader: rrbeats2004
+  duration_s: 156
+  available: true
+- id: pq1P3waC57w
+  url: https://youtu.be/pq1P3waC57w
+  title: Henri Salvador / Pauvre Jésus-Christ
+  uploader: Vinyle Archéologie
+  duration_s: 188
+  available: true
+- id: cEgqswFJiU0
+  url: https://youtu.be/cEgqswFJiU0
+  title: Barbara Moore - St. Catherines Monastery
+  uploader: StumbledOnThis
+  duration_s: 165
+  available: true
+- id: kKLzVv4hb8w
+  url: https://youtu.be/kKLzVv4hb8w
+  title: OSC - "Ambient Time" - Adventure Time Inspired Ambient Music - Full Album
+  uploader: OSC
+  duration_s: 2280
+  available: true
+- id: dXTDmWUtkPg
+  url: https://youtu.be/dXTDmWUtkPg
+  title: HENRIK DEBICH - Opadajcy windokrg
+  uploader: André Navarro II
+  duration_s: 225
+  available: true
+- id: XnCnsQ1X6oU
+  url: https://youtu.be/XnCnsQ1X6oU
+  title: THE CHARLIE MUNRO QUARTET - When I look at you
+  uploader: André Navarro II
+  duration_s: 155
+  available: true
+- id: ze_Q_kdgm7s
+  url: https://youtu.be/ze_Q_kdgm7s
+  title:
+  uploader:
+  duration_s:
+  available: false
+- id: ENV5CqXo_aM
+  url: https://youtu.be/ENV5CqXo_aM
+  title: Brian Bennett & Alan Hawkshaw - Library LP Synthesis.
+  uploader: marscape1
+  duration_s: 895
+  available: true
+- id: uASNuE3IeFY
+  url: https://youtu.be/uASNuE3IeFY
+  title: Gorillaz - Electric Shock (feat. Hypnotic Brass Ensemble) [Unreleased Demo]
+  uploader: blueheaven
+  duration_s: 111
+  available: true
+- id: VyeLFCL2t1M
+  url: https://youtu.be/VyeLFCL2t1M
+  title: Soulride - Mr Radio
+  uploader: NeoFunkyman1
+  duration_s: 334
+  available: true
+- id: dX2VYgVaXnM
+  url: https://youtu.be/dX2VYgVaXnM
+  title: GIANNI MARCHETTI - Amore a contraluce
+  uploader: André Navarro II
+  duration_s: 155
+  available: true
+- id: vIGIkaXgB-M
+  url: https://youtu.be/vIGIkaXgB-M
+  title: J. C. CAPON / C. ESCOUDÉ - L'Eau
+  uploader: André Navarro II
+  duration_s: 380
+  available: true
+- id: aTq6-fqaIJw
+  url: https://youtu.be/aTq6-fqaIJw
+  title: ORF Orchestra - Remembering Romantic Times
+  uploader: Ricardo Maraña
+  duration_s: 194
+  available: true
+- id: 6-XiZvTnbpM
+  url: https://youtu.be/6-XiZvTnbpM
+  title:
+  uploader:
+  duration_s:
+  available: false
+- id: F_F6kqt8jX4
+  url: https://youtu.be/F_F6kqt8jX4
+  title: Barney Kessel & I Marc 4 - Lison
+  uploader: Ricardo Maraña
+  duration_s: 228
+  available: true
+- id: OVlJCE2q4VU
+  url: https://youtu.be/OVlJCE2q4VU
+  title: Supreme Jubilees - It 'll All Be Over 1979 Soul Gospel
+  uploader: BLAST777
+  duration_s: 183
+  available: true
+- id: Tn0-SrLlG0s
+  url: https://youtu.be/Tn0-SrLlG0s
+  title: Familiar Ground
+  uploader: The Cinematic Orchestra
+  duration_s: 275
+  available: true
+- id: JO4YV-_YY8s
+  url: https://youtu.be/JO4YV-_YY8s
+  title: JEAN CARNE   MYSTIC STRANGER
+  uploader: TheRAREGROOVEMAN
+  duration_s: 287
+  available: true
+- id: 2tYQRzOFbHA
+  url: https://youtu.be/2tYQRzOFbHA
+  title: Quincy Jones - What´s Going On
+  uploader: Magnum F. Nobre
+  duration_s: 597
+  available: true
+- id: eMxJLNBsMXM
+  url: https://youtu.be/eMxJLNBsMXM
+  title: MELODY STEWART   I MUST SAY GOODBYE
+  uploader: TheRAREGROOVEMAN
+  duration_s: 287
+  available: true
+- id: Ld6qxWyRLEc
+  url: https://youtu.be/Ld6qxWyRLEc
+  title:
+  uploader:
+  duration_s:
+  available: false
+- id: JmgAGozUfK8
+  url: https://youtu.be/JmgAGozUfK8
+  title: leave it
+  uploader: james king
+  duration_s: 151
+  available: true
+- id: l90ShermeKQ
+  url: https://youtu.be/l90ShermeKQ
+  title: Days Of Wine And Roses
+  uploader: Wes Montgomery
+  duration_s: 227
+  available: true
+- id: l0lQ8ODwN60
+  url: https://youtu.be/l0lQ8ODwN60
+  title: Gainsbourg Confidentiel - 10 No no thank's no
+  uploader: INTEGRALE MUSIC
+  duration_s: 149
+  available: true
+- id: Eanu8McR0F4
+  url: https://youtu.be/Eanu8McR0F4
+  title: Naima - Pucho & His Latin Soul Brothers
+  uploader: Psiconauta Flute Music
+  duration_s: 442
+  available: true
+- id: dx3SLzJxdXY
+  url: https://youtu.be/dx3SLzJxdXY
+  title: Andre Tschaskowski - Moonset 2
+  uploader: Ricardo Maraña
+  duration_s: 107
+  available: true
+- id: xMsRVQMm8oE
+  url: https://youtu.be/xMsRVQMm8oE
+  title: Actraiser Soundtrack - North Wall
+  uploader: yuzokoshiromusic
+  duration_s: 165
+  available: true
+- id: uyGnGd4TGcg
+  url: https://youtu.be/uyGnGd4TGcg
+  title: The Crate League - Rhodes Gold Vol. 1 Sample Pack + MIDI Files
+  uploader: Drum Broker
+  duration_s: 240
+  available: true
+- id: 9VgsXsfZjjw
+  url: https://youtu.be/9VgsXsfZjjw
+  title:
+  uploader:
+  duration_s:
+  available: false
+- id: sEeYb19gDIw
+  url: https://youtu.be/sEeYb19gDIw
+  title: 'Mr. Blue '
+  uploader: " Hiroshi Fukumura"
+  duration_s:
+  available: true
+- id: 3y5bJr4d-ow
+  url: https://youtu.be/3y5bJr4d-ow
+  title: ＶＨＳ　ＪＡＰＡＮ II (Vaporwave Mix with VISUALS)
+  uploader: b r h m
+  duration_s: 5050
+  available: true
+- id: SQTk4RLbbXQ
+  url: https://youtu.be/SQTk4RLbbXQ
+  title: Hiatus Kaiyote - 09 Fingerprints
+  uploader: Trashcanlicker
+  duration_s: 257
+  available: true
+- id: yILIUu4lnhk
+  url: https://youtu.be/yILIUu4lnhk
+  title: After Hours - I Don't Wanna Cry
+  uploader: Soulbr0ther
+  duration_s: 186
+  available: true
+- id: FJzZ6zIJZzo
+  url: https://youtu.be/FJzZ6zIJZzo
+  title: James brown - blind man can see it (extended)
+  uploader: coluche1212
+  duration_s: 443
+  available: true
+- id: TFY4j41y1tI
+  url: https://youtu.be/TFY4j41y1tI
+  title:
+  uploader:
+  duration_s:
+  available: false
+- id: njvQG1x8ofM
+  url: https://youtu.be/njvQG1x8ofM
+  title: Tranquillity (Remastered 1994)
+  uploader: Bobby Hutcherson - Topic
+  duration_s: 304
+  available: true
+- id: 9JfqLQWh1vM
+  url: https://youtu.be/9JfqLQWh1vM
+  title:
+  uploader:
+  duration_s:
+  available: false
+- id: FoBCG18RtgM
+  url: https://youtu.be/FoBCG18RtgM
+  title: '"Wrapped Up Tried Up Tangeled Up"  MInister Thomas Whitfield & The Whitfield
+    Company'
+  uploader: Gospel Tunes
+  duration_s: 539
+  available: true
+- id: u0LWLf92Vow
+  url: https://youtu.be/u0LWLf92Vow
+  title: '▶ "One Step Beyond" Music: "Weird".'
+  uploader: One-Step-Beyond
+  duration_s: 174
+  available: true
+- id: ADaoQizLQDA
+  url: https://youtu.be/ADaoQizLQDA
+  title: East Flatbush Project - A Madman's Dream /Can't Hold It Back
+  uploader: Deeper
+  duration_s: 600
+  available: true
+- id: ADaoQizLQDA
+  url: https://youtu.be/ADaoQizLQDA
+  title: East Flatbush Project - A Madman's Dream /Can't Hold It Back
+  uploader: Deeper
+  duration_s: 600
+  available: true
+- id: cnalQXmso_8
+  url: https://youtu.be/cnalQXmso_8
+  title: Murderer Barrington Levy - Lyrics
+  uploader: Zion Music
+  duration_s: 221
+  available: true
+- id: ODeqIOd33v4
+  url: https://youtu.be/ODeqIOd33v4
+  title:
+  uploader:
+  duration_s:
+  available: false
+- id: hwUEDGbbH8A
+  url: https://youtu.be/hwUEDGbbH8A
+  title: gimme the flu
+  uploader: neokCS
+  duration_s: 304
+  available: true
+- id: KdPTjswCGQI
+  url: https://youtu.be/KdPTjswCGQI
+  title: SO IN LOVE WITH YOU / LEROY HUTSON
+  uploader: Sun. Hutchney サン・ハッチニー
+  duration_s: 171
+  available: true
+- id: rWwqcn55mXc
+  url: https://youtu.be/rWwqcn55mXc
+  title: Runnin' Out Of Fools
+  uploader: Isaac Hayes
+  duration_s: 353
+  available: true
+- id: knd8dXhhgWc
+  url: https://youtu.be/knd8dXhhgWc
+  title: The Look Of Love by Isaac Hayes from To Be Continued
+  uploader: Isaac Hayes
+  duration_s: 674
+  available: true
+- id: 8KkqC0L5ecc
+  url: https://youtu.be/8KkqC0L5ecc
+  title: IMPACTO CINCO - Carmen, Carmen
+  uploader: André Navarro II
+  duration_s: 190
+  available: true
+- id: tJcyiADls_Q
+  url: https://youtu.be/tJcyiADls_Q
+  title:
+  uploader:
+  duration_s:
+  available: false
+- id: 1n4QrxWJ7ng
+  url: https://youtu.be/1n4QrxWJ7ng
+  title:
+  uploader:
+  duration_s:
+  available: false
+- id: 7xIFVEih5w4
+  url: https://youtu.be/7xIFVEih5w4
+  title: The O'Jays - Who Am I
+  uploader: Adagiosoulb4flesh
+  duration_s: 313
+  available: true
+- id: PMwyIW424yU
+  url: https://youtu.be/PMwyIW424yU
+  title: Strange Games & Things (Original Long Version)
+  uploader: The Love Unlimited Orchestra - Topic
+  duration_s: 513
+  available: true
+- id: T8bwmv0EK14
+  url: https://youtu.be/T8bwmv0EK14
+  title: Movin' On - BOB JAMES / EARL KLUGH
+  uploader: Swit
+  duration_s: 452
+  available: true
+- id: B9TzPJK138k
+  url: https://youtu.be/B9TzPJK138k
+  title: Boney James ~ Metropolis (1992) Smooth Jazz
+  uploader: 2chann
+  duration_s: 278
+  available: true
+- id: ilj-3T7O7f8
+  url: https://youtu.be/ilj-3T7O7f8
+  title: The Lady Wants To Know - Michael Franks (1977)
+  uploader: djbuddylovecooljazz
+  duration_s: 278
+  available: true
+- id: kNouC98IVfI
+  url: https://youtu.be/kNouC98IVfI
+  title: KC Da Rookee - First Draft (Instrumental)
+  uploader: KaoZ BORn
+  duration_s: 242
+  available: true
+- id: wYLqPFNVKEc
+  url: https://youtu.be/wYLqPFNVKEc
+  title: 2DROTS vs ДИНАМО! ИСТОРИЧЕСКИЙ МАТЧ на ВТБ АРЕНЕ
+  uploader: 2DROTS
+  duration_s: 3064
+  available: true

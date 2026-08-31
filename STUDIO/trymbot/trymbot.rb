@@ -9,7 +9,7 @@
 # over the MASTER web tier. Telegram replaces the host: no certificate, no
 # relayd line, no fifth process on vm23. The bot long-polls, so it opens no
 # port and needs no inbound route — it runs on the Mac when it is running, and
-# is simply offline when it is not.
+# is offline when it is not.
 #
 # Nothing here reaches into MASTER. The brief below is the whole of Trymbot.
 

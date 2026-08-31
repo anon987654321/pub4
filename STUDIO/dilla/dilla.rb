@@ -5279,8 +5279,8 @@ end
 
 # Struck objects, built the way struck objects actually behave.
 #
-# Every voice below used to be white noise or plain sines under one exponential
-# decay, and that is audibly not what a drum is. Three things separate a
+# White noise or plain sines under one exponential decay is audibly not what a
+# drum is, so no voice below is built that way. Three things separate a
 # synthesised hit from a sampled one, and all three are cheap to fix:
 #
 #   BAND LIMITING. Raw noise and raw squares carry energy past Nyquist, which
@@ -12822,7 +12822,7 @@ end
 #
 # Two renders playing at once is not a mix, it is two beats, and nothing here
 # prevented it: play_audio spawned a player and returned, so a second call
-# simply added a second one. It happened often enough that stopping the last
+# added a second one. It happened often enough that stopping the last
 # one by hand became part of using the tool.
 #
 # Runs before this process spawns its own player, so every match is someone
@@ -20392,7 +20392,7 @@ voice_stack_every = (ENV["DEMO_VOICE_STACK_EVERY"] || "3").to_i
   # made. On 2026-08-27 a 36:57 master finished with its provenance filed under a
   # wav that no longer existed and a session.json five hours older than the
   # render, so what made it could not be recovered at all. Seeds rotate per run;
-  # an unreproducible master with no manifest is simply lost.
+  # an unreproducible master with no manifest is lost.
   if mp3
     DillaProvenance.record_assembly!(
       mp3, parts:,
@@ -32727,12 +32727,12 @@ def mix_rap_vocal_layer!(beat_path, vocal_path, dest, beat_bpm: nil)
     "treble=g=#{mix[:sparkle_db]}:f=9000:width_type=o:width=1.2," \
     "#{mix[:deess].positive? ? "deesser=i=#{mix[:deess].round(2)}:m=0.5:f=0.18," : ''}" \
     "volume=#{mix[:vocal_vol]}[v0]",
-    # The vocal keys a duck on the beat. Both halves of this used to be one
-    # fixed amix into a limiter, and that is why the voice came and went: the
-    # weights are constant, so when the beat thickens the SUM rises, the limiter
-    # pulls the whole sum down, and the vocal — the smaller part of it — goes
-    # down with the beat. Thin the beat out again and the voice reappears. It
-    # was never the vocal moving; it was the bed moving under a shared limiter.
+    # The vocal keys a duck on the beat, because one fixed amix into a shared
+    # limiter makes the voice come and go: the weights are constant, so when
+    # the beat thickens the SUM rises, the limiter pulls the whole sum down,
+    # and the vocal — the smaller part of it — goes down with the beat. Thin
+    # the beat out again and the voice reappears. Nothing moved the vocal;
+    # the bed moved under a limiter they share.
     #
     # Turning the voice up is the wrong repair. Level is what drives the limiter,
     # so a louder vocal makes the pumping worse and adds the hardness that reads

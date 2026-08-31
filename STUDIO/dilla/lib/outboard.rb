@@ -810,6 +810,24 @@ module Outboard
     liquid: %i[liquid_surface liquid_submerge liquid_flow liquid_wobble neve_80 la2a pultec_air console_sum gml_matte mono_bass],
 
     dub: %i[delay_throw spring_reverb space_echo pultec_low_dub dub_phaser neve_80 la2a console_sum dub_darken mono_bass],
+
+    # FOUNDRY. The three units nothing named: hedd_triode, freq_shift and
+    # phase_rotate were built, given live `when` arms in chain, and left in no
+    # rack -- so the arms were dead and the most unusual processing in this file
+    # was unreachable. A new rack rather than an edit to an existing one,
+    # because naming them inside donuts or dub would change a sound someone
+    # already chose.
+    #
+    # Order is the argument. hedd_triode first: tube drive belongs on the source,
+    # before anything smears it. freq_shift second and small -- afreqshift moves
+    # every partial by the same NUMBER of Hz rather than the same ratio, so it
+    # breaks the harmonic series instead of transposing it, and at 12 Hz that
+    # reads as metal rather than as a wrong note. phase_rotate after, because
+    # rotating phase on an already-inharmonic signal is what widens it without
+    # a chorus. Then the ordinary console: neve, optical compression, sum. And
+    # mono_bass last and non-negotiable, since everything above it moves phase
+    # and a club system folds the bottom to mono anyway.
+    foundry: %i[hedd_triode freq_shift phase_rotate neve_80 la2a console_sum mono_bass],
   }.freeze
 
   DEFAULT_RACK = :donuts
