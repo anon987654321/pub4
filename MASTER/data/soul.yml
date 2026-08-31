@@ -4,7 +4,7 @@
 # Negotiable sections: soul propose -> soul approve -> bump version.
 
 schema: 1
-version: "2.7.0"
+version: "2.8.0"
 persona: anchor
 voice: ms-MY-OsmanNeural
 language:
@@ -43,6 +43,13 @@ prompt_ordering:
   - master_constitution_absolute
   - master_priority
   - master_constitution_kernel
+  # add_disclaimer builds one of these two per persona, and neither was ordered,
+  # so ordered_sections dropped both: a medic's standing medical disclaimer and
+  # any persona's own. The builder logged it as load-bearing on every boot and
+  # nothing read the log. They sit with the refusal policy because all three
+  # constrain what the reply may say.
+  - master_medical_disclaimer
+  - master_special_disclaimer
   - master_refusal_policy
   - master_attention
   - master_style
@@ -116,6 +123,10 @@ hooks:
       event: hooks:convergence
 
 evolution_log:
+  - version: "2.8.0"
+    date: "2026-08-31"
+    change: order the two disclaimer sections — the builder built them and prompt_ordering dropped them, so no persona disclaimer ever reached a model
+    author: dev
   - version: "2.7.0"
     date: "2026-08-18"
     change: rename absolute.code_rules to absolute.rules — laws and rules are one kind of thing, and a third name for it was noise
