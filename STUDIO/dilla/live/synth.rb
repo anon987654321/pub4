@@ -12,6 +12,8 @@ require "json"
 require "time"
 require "shellwords"
 
+D = "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla"
+
 # Sonitex STX-1260 and Nasty VCS, as chains rather than as plugins. Multiple
 # instances deliberately: one instance is a colour and three are a sound. The
 # 1260 is the 12-bit sampler lineage -- bit reduction, a hard band limit, drive
@@ -48,13 +50,28 @@ rescue StandardError
   nil # a journal that cannot write must not stop the music
 end
 
-D = "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla"
 FF = "/opt/homebrew/bin/ffmpeg"
 Dir.chdir(D)
 
 beds = Dir.glob("samples/chopped/*/loop.wav")
 abort "no beds" if beds.empty?
-bed = beds.sample
+
+# Least recently played, not random. Random repeats: with fifty racks it played
+# the same four beds inside ten minutes, which reads as a short loop rather than
+# as a crate. The journal already records what played and when, so it is also the
+# play history -- one file, two jobs, no second source to drift.
+played = Hash.new(0)
+begin
+  File.foreach(File.join(D, "project", "liveset.jsonl")).with_index do |line, i|
+    slug = line[/"bed":"([^"]+)"/, 1]
+    played[slug] = i if slug # later line wins: this is recency, not a count
+  end
+rescue StandardError
+  nil
+end
+# Never-played beds sort first (-1), then oldest-played, and a little jitter so
+# two racks cut from the same record do not always arrive back to back.
+bed = beds.min_by { |b| [played.fetch(File.basename(File.dirname(b)), -1), rand] }
 # 0.92-0.96: a semitone and a half down at the deep end. Never none.
 DRAG = (0.92 + rand * 0.04).round(4)
 slug = File.basename(File.dirname(bed))
@@ -86,20 +103,27 @@ total = 96
 
 # Voicings, not scale runs. Each step is a chord built from one slice: root,
 # a colour tone and an extension, so the sample states harmony it never had.
+# Downward only. Pitching a sample UP thins it and speeds it -- the chipmunk
+# sound -- and nothing in this lineage does it. The same chords voiced BELOW the
+# root instead: an octave down puts the colour tone under the fundamental, which
+# is where a sampler lands when you play the pads left of centre. Every interval
+# here is zero or negative, and the drag sits under all of it.
 VOICINGS = {
-  min7:  [0, 3, 10],
-  maj9:  [0, 4, 14],
-  min9:  [0, 3, 14],
-  sus4:  [0, 5, 10],
-  min11: [0, 3, 17],
+  min7:  [0, -9, -2],    # root, b3 an octave down, b7 a tone below the root
+  maj9:  [0, -8, -10],   # root, 3rd down an octave, 9th further under
+  min9:  [0, -9, -10],
+  sus4:  [0, -7, -2],
+  min11: [0, -9, -7],
 }.freeze
 # Movement with rests in it. nil is a rest, and the rests are what make the
 # rest of it read as playing.
+# Roots move down too, or the phrase climbs out of the register the drag put it
+# in. Nothing rises above the sample's own pitch.
 PROGRESSIONS = [
-  [[0, :min7], nil, [5, :min9], [3, :maj9], nil, [-2, :sus4], [0, :min7], nil],
-  [[0, :min9], [3, :min7], nil, [7, :sus4], [5, :maj9], nil, [3, :min7], [0, :min11]],
-  [[7, :min7], nil, [5, :min9], nil, [3, :maj9], [0, :min7], nil, [-4, :sus4]],
-  [[0, :min11], [0, :min11], nil, [-2, :maj9], [3, :min7], nil, [5, :min9], nil],
+  [[0, :min7], nil, [-5, :min9], [-3, :maj9], nil, [-2, :sus4], [0, :min7], nil],
+  [[0, :min9], [-3, :min7], nil, [-7, :sus4], [-5, :maj9], nil, [-3, :min7], [0, :min11]],
+  [[-7, :min7], nil, [-5, :min9], nil, [-3, :maj9], [0, :min7], nil, [-4, :sus4]],
+  [[0, :min11], [0, :min11], nil, [-2, :maj9], [-3, :min7], nil, [-5, :min9], nil],
 ].freeze
 prog = PROGRESSIONS.sample
 slice_at = (rand * 2.2).round(3)
@@ -114,7 +138,7 @@ live   = []
 prog.each_with_index do |cell, i|
   next if cell.nil?
   semi, voicing = cell
-  ratios = VOICINGS.fetch(voicing).map { |iv| ((2.0**((semi + iv) / 12.0)) * DRAG).round(6) }
+  ratios = VOICINGS.fetch(voicing).map { |iv| [((2.0**((semi + iv) / 12.0)) * DRAG), DRAG].min.round(6) }
   longest = (step * ratios.max * 1.8).round(4)
   inputs << "-ss #{slice_at} -t #{longest} -i #{bed.shellescape}"
   idx = inputs.size - 1
