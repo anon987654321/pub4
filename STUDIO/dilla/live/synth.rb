@@ -69,9 +69,26 @@ begin
 rescue StandardError
   nil
 end
-# Never-played beds sort first (-1), then oldest-played, and a little jitter so
-# two racks cut from the same record do not always arrive back to back.
-bed = beds.min_by { |b| [played.fetch(File.basename(File.dirname(b)), -1), rand] }
+# Beauty first, then recency. project/sample_worth.json ranks every rack by the
+# seven-term scorer -- tonal centre, overtone organisation, consonance below
+# 1kHz, voicing density, chord-register presence, whether the bed holds, and how
+# thin the arrangement is against the record's own habit. chop ranks candidates
+# by seam cost, which finds seamless regions; this asks whether they are worth
+# hearing, which is a different question and the one that was never asked.
+#
+# Verified independent of level: Pearson(sw, rms_db) = 0.082 across 122 unique
+# racks, so this is not loudness wearing a new name.
+worth = begin
+  JSON.parse(File.read(File.join(D, "project", "sample_worth.json")))["slugs"]
+rescue StandardError
+  {}
+end
+# The top half by beauty, then least-recently-played within it -- so the rig
+# works through the good regions rather than ranking once and repeating the
+# winner all night. Below eight racks the filter has nothing to choose from.
+ranked = beds.sort_by { |b| -worth.fetch(File.basename(File.dirname(b)), 0.35).to_f }
+pool = ranked.size >= 8 ? ranked.first((ranked.size * 0.5).ceil) : ranked
+bed = pool.min_by { |b| [played.fetch(File.basename(File.dirname(b)), -1), rand] }
 # 0.92-0.96: a semitone and a half down at the deep end. Never none.
 DRAG = (0.92 + rand * 0.04).round(4)
 slug = File.basename(File.dirname(bed))
@@ -244,7 +261,7 @@ graph << "[body][crackle]amix=inputs=2:weights=1 0.34:normalize=0:duration=first
          "aformat=sample_rates=44100:channel_layouts=stereo[out]"
 
 journal!(
-  at: Time.now.utc.iso8601, bed: slug, bpm: bpm, drag: DRAG, bars_in_loop: bars_in_loop, progression: prog,
+  at: Time.now.utc.iso8601, bed: slug, sample_worth: worth.fetch(slug, nil), bpm: bpm, drag: DRAG, bars_in_loop: bars_in_loop, progression: prog,
   chop_at: slice_at, reversed: reverse, bar_s: bar,
   weights: { phrase: 0.52, under: 0.22, kit: 1.45 },
   drums: { kick_ms: kick_hits, snare_ms: snare_hits, ghost_ms: ghost_hits, hat_ms: hat_hits },
@@ -253,7 +270,7 @@ journal!(
 
 cmd = "#{FF} -nostdin -loglevel error #{inputs.join(" ")} " \
       "-filter_complex #{graph.join("; ").shellescape} -map \"[out]\" -f wav -"
-warn "▶ #{slug}  #{bpm}bpm (#{bars_in_loop}bar loop, drag #{DRAG})  #{prog.map { |c| c ? "#{c[0]}#{c[1]}" : "." }.join(" ")}" \
+warn "▶ #{slug}  sw=#{format("%.2f", worth.fetch(slug, 0).to_f)}  #{bpm}bpm (#{bars_in_loop}bar loop, drag #{DRAG})  #{prog.map { |c| c ? "#{c[0]}#{c[1]}" : "." }.join(" ")}" \
      "#{reverse ? "  REV" : ""}  chop@#{slice_at}s"
 exec("/bin/zsh", "-c",
      "#{cmd} 2>/dev/null | /opt/homebrew/bin/ffplay -nodisp -autoexit -loglevel quiet -i - 2>/dev/null")
