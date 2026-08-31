@@ -1,23 +1,25 @@
 /* Tise-style product tiles — photo wall, price first, whole card is the link. */
 
+/* The row gap is wide and the column gap is narrow, which is the one thing the
+   measured reference does that a uniform gap cannot: it binds each row into a
+   line of goods the eye scans across, and separates the rows from each other.
+   A single gap value makes the same tiles read as a mosaic, where no direction
+   is the reading direction.
+
+   The tracks are px, not rem. brgen sets its root to 18px, so the 11.5rem and
+   13.75rem this carried resolved to 207px and 247.5px — the second of those
+   puts every track edge on a half pixel, which is what PIXEL_EXACT is about. */
 .deal-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-2);
+  column-gap: var(--tile-gap-col);
+  row-gap: var(--tile-gap-row);
   padding: var(--space-3) var(--space-4) var(--space-6);
 }
 
 @media (min-width: 768px) {
   .deal-grid {
-    grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr));
-    gap: var(--space-3);
-  }
-}
-
-@media (min-width: 1265px) {
-  .deal-grid {
-    grid-template-columns: repeat(auto-fill, minmax(13.75rem, 1fr));
-    gap: var(--space-4);
+    grid-template-columns: repeat(auto-fill, minmax(var(--tile-min), 1fr));
   }
 }
 
@@ -97,7 +99,7 @@ a.deal-card:hover,
   padding: var(--space-2) var(--space-3) var(--space-3);
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: var(--space-1);
   min-width: 0;
 }
 

@@ -58,7 +58,10 @@
 # not a licence.
 schema: 1
 rules:
-  important: 66
+  # 66 -> 60, measured. Nothing targeted these; the count was already 60 when
+  # the geometry merge measured it, so six had been fixed by other work and the
+  # ceiling had not followed. Left at 66 it re-admits them one at a time.
+  important: 60
   # 89 -> 90 (2026-08-22). One line, and it is arithmetic rather than drift:
   # MASTER/web/public/chat_upload.css:30 insets #photo-button's ::before by
   # 13px, which is exactly how an 18px drawn square centres inside a 44px tap
@@ -78,7 +81,12 @@ rules:
   # So it is banked and named, not waved through. If the bar should sit on the
   # grid, snap those four and run with GATE_CSS_RATCHET=1 — the number goes
   # back down and this paragraph goes with it.
-  rhythm: 91
+  # 91 -> 90. Not a snapped value: the gate was counting the numbers inside
+  # var() fallbacks as spacing literals, so the calc() in
+  # brgen/_search_palette.scss scored a finding for using three tokens
+  # correctly. See VAR_FALLBACK in css_constitution.rb. One finding, and it
+  # was the instrument rather than the stylesheet.
+  rhythm: 90
   # 150 -> 151 on 2026-08-11, and this one is a ceiling raise rather than a
   # measurement, so it is worth being exact about what it is.
   #
@@ -96,7 +104,9 @@ rules:
   # use-sites at the worn :root tokens they already matched (#0f1a0f search-bg,
   # #1a3a1a border, #0a140a surface-elevated). Same paint; the literals left
   # the count.
-  magic_hex: 140
+  # 140 -> 138, measured, same shape as important above: two literals left the
+  # tree without a sitting aimed at them.
+  magic_hex: 138
   # Token pairs below WCAG AA (4.5:1) and in the AA..AAA band, as design_metrics
   # counts them. style.yml declares wcag_2_2_aaa; body text earns it (12.51:1
   # dark, 16.26:1 light) and the secondary/accent tier does not. The vertical
@@ -116,7 +126,24 @@ rules:
   # "outside design_tokens.yml" instead. Declaring it moved the same two pairs
   # from invisible to counted. Removing the token puts this back to 41 and the
   # debt back out of sight, which is the trade this file exists to refuse.
-  contrast_below_aaa: 43
+  # 43 -> 45 on 2026-08-31, and this is a raise, so it carries its reason.
+  #
+  # The tree did not get worse. Every colour that moved since 969024b7b moved
+  # darker or sideways: brgen_old_light.text_secondary #666666 to #545454,
+  # openbsd_wscons.text_secondary #63c363 to #499149, vertical_accents.maps
+  # light #5b8fd4 to #5585c5. Nothing was lightened; no token added or removed.
+  #
+  # The two new pairs are brgen_old_light.text_secondary on surface_elevated
+  # (#f2f2f2) and on search_bg (#f0f0f0). At #666666 they scored 5.13 and 5.04,
+  # already inside this band — but the token did not reach a pixel, so the
+  # metric could not enumerate them. Painted pairs go 84 to 88 across that one
+  # change. The darkening is what made them countable.
+  #
+  # So this is the light_danger trade one paragraph up, arriving by paint-reach
+  # instead of by declaration: an improvement that raises the number because it
+  # brings debt into view. Forcing 43 means lightening secondary text until the
+  # metric stops seeing it, which is the trade this file exists to refuse.
+  contrast_below_aaa: 45
   # These two are what gives design_rules.yml's `typography` block a reader.
   # type_scale counts font-size literals off the --text-* ladder in
   # _tokens.scss; weight_ladder counts font-weight literals off

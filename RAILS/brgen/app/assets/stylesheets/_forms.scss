@@ -3,7 +3,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-2) var(--space-5);
+  /* One control block with the shared .btn, which this used to restate at a
+     different size: --space-5 is 1.25rem, and brgen roots at 18px, so the
+     inline padding rendered at 22.5px here and 20px everywhere else. The
+     token is absolute for that reason. What stays brgen is the fill below —
+     a dialect skins the button, it does not resize it. */
+  gap: var(--control-gap);
+  padding: 0 var(--control-pad-inline);
   background: var(--accent);
   color: var(--accent-ink);
   border: none;
@@ -13,7 +19,7 @@
   cursor: pointer;
   transition: opacity var(--transition-fast) var(--ease-out);
   text-decoration: none;
-  min-height: var(--tap-min);
+  min-height: var(--control-h);
 }
 
 .btn:hover { opacity: .88; text-decoration: none; }

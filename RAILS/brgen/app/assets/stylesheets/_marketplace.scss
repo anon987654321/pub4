@@ -95,16 +95,19 @@
   margin-top: var(--space-4);
 }
 
+/* Same catalogue geometry as .deal-grid — a store tile and a deal tile are the
+   same object, and they were sized by two different ladders. */
 .store-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-3);
+  column-gap: var(--tile-gap-col);
+  row-gap: var(--tile-gap-row);
   padding: var(--space-4);
 }
 
 @media (min-width: 768px) {
   .store-grid {
-    grid-template-columns: repeat(auto-fill, minmax(13.75rem, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(var(--tile-min), 1fr));
   }
 }
 

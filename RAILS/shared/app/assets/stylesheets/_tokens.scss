@@ -57,7 +57,7 @@
      citer. */
   --text-display: 2.2rem;
     /* Every step here sits on design_rules.yml's 8px rhythm
-       ([0,4,8,12,16,20,24,32,40,48,64,96]px) — steps 7/9/11/13/14/15 used to
+       ([0,4,8,12,16,20,24,32,40,44,48,64,96]px) — steps 7/9/11/13/14/15 used to
        fill the scale out to a smooth 0.25rem stride (28/36/44/52/56/60px),
        none of which are on the rhythm. Removed rather than snapped to the
        nearest step, since nothing should be reaching for a step number that
@@ -78,6 +78,32 @@
        moved between subapps of one site. --feed-max (600px) stays separate — that
        is the single-column reading measure, a different job. */
     --container-max: 1280px;
+/* The alpha ladder, from design_tokens system.opacity. Composed into colour
+   rather than typed as literals: rgb(from var(--text) r g b / var(--opacity-subtle))
+   gives a tint that tracks the theme, where rgba(255,255,255,.1) is a light
+   theme painted into a dark one. Named by density, so a surface picks a
+   weight instead of inventing a value. */
+--opacity-hairline: 0.05;
+--opacity-faint: 0.08;
+--opacity-subtle: 0.1;
+--opacity-soft: 0.12;
+--opacity-medium: 0.2;
+--opacity-half: 0.4;
+--opacity-strong: 0.6;
+--opacity-heavy: 0.8;
+/* The control block, from design_tokens system. One height for every
+   button, input, chip and select in the family, so a row of mixed controls
+   shares a baseline. 44px is tap_min, which the measurement independently
+   agreed with. */
+--control-h: 44px;
+--control-pad-inline: 16px;
+--control-gap: 8px;
+/* The catalogue grid, from design_tokens system. A wide row gap against a
+   narrow column gap is what makes a dense grid read as rows of goods rather
+   than as a mosaic; equal tracks keep every tile the same object. */
+--tile-min: 224px;
+--tile-gap-row: 24px;
+--tile-gap-col: 8px;
     --transition-fast: 180ms;
     --transition-normal: 300ms;
     /* soul.yml aesthetic_rules CINEMA_PALETTE asks for cubic-bezier easing on

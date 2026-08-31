@@ -72,7 +72,10 @@
 .wardrobe_showcase_track {
   display: flex;
   width: max-content;
-  animation: wardrobe_showcase_drift 46s linear infinite;
+/* --ease-linear is a true linear written as a bezier, which is what _tokens
+   keeps it for: a marquee runs continuously, so any curve puts a visible
+   stutter at each cycle boundary. Same motion, named. */
+animation: wardrobe_showcase_drift 46s var(--ease-linear) infinite;
 }
 
 .wardrobe_showcase_row_reverse .wardrobe_showcase_track {

@@ -92,6 +92,18 @@ module Deploy
         paths: %w[brgen/app],
         required_any: [
           /NotConfigured|not configured|payment not configured|STRIPE_SECRET|VIPPS_.*KEY/i,
+          # A file may satisfy this by delegating rather than by spelling it.
+          # stripe_refund.rb opens submit! with StripeCheckout.ensure!, which
+          # raises NotConfigured when the key is absent -- so it is fail-closed,
+          # and it named none of the words above. That is the shape CLAUDE.md
+          # records for the dead-file census that searched for context_provider
+          # while every caller wrote the constant: a detector that only reads the
+          # inline spelling reports the abstraction as the defect.
+          #
+          # Tight on purpose. It wants a call to a named guard on a constant, in
+          # a scope that is payments services only, where ensure! is the
+          # convention. Measured: it moves stripe_refund.rb and no other file.
+          /(?:^|\s)[A-Z]\w*\.ensure!/,
         ],
         scope_glob: "**/payments/**/*.rb",
       },

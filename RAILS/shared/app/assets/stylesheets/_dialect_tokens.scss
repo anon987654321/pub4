@@ -69,8 +69,13 @@
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-pill: 9999px;
-  --radius-card: 16px;
-  --radius-lg: 16px;
+/* One card radius for the family, from design_tokens system.radius_card.
+   This role rendered at four values across the tree: 16 here, 14 in luxury,
+   8 in the brgen_old port and 0 in bsdports. The last two are declared
+   identities and keep their step; luxury had no reason and its 14 was not
+   on scale.radius_px at all. */
+--radius-card: 12px;
+--radius-lg: 12px;
   --sidebar-width: 275px;
   --feed-max: 600px;
 }
@@ -128,10 +133,11 @@
      failed both contrast models rather than WCAG alone. */
   --accent: #7c6c53;
   --danger: #a7473b;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-card: 14px;
-  --radius-lg: 14px;
+/* The radius fork is gone. 6, 10 and 14 were amber-only, none of them on
+   scale.radius_px, and nothing recorded a reason — a wardrobe card and a
+   marketplace card are the same object at different tilts. amber now
+   inherits the family ladder and keeps its palette, which is the whole of
+   what made it luxury. */
 }
 
 @mixin luxury-dark-tokens {
