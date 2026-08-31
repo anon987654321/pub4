@@ -39,25 +39,73 @@ down.
 ## MASTER
 ### Rule and AST-detector backlog
 
-Forward work. Deterministic detectors to add to `MASTER/lib/review/scan/rules/`,
-following the `MiddleManRule` / `NOISE_NAME` pattern landed 2026-08-29. Each
-gives a currently semantic-only concept a keyless detector. All six below were
-verified absent from `data/rules.yml`, `law/`, and `lib/review/scan/rules/`
-before being listed — genuinely missing, not already built under another name.
+Deterministic detectors in `MASTER/lib/review/scan/rules/`, following the
+`MiddleManRule` / `NOISE_NAME` pattern landed 2026-08-29. Each gives a
+currently semantic-only concept a keyless detector. All six were verified absent
+from `data/rules.yml`, `law/`, and `lib/review/scan/rules/` before being listed —
+genuinely missing, not already built under another name.
 
-- **`BOOLEAN_TRAP`** — a method taking a bare boolean positional argument
-  (`def foo(x, true_or_false)` called as `foo(x, true)`), where the call site
-  reads as a riddle because the flag has no name.
-- **`DATA_CLUMP`** — the same three-or-more parameters appearing in the same
-  order across three-or-more signatures, i.e. a record struggling to be born.
-- **`LAYER_CAKE`** — a call chain that only forwards. Extends `MIDDLE_MAN` from
-  a single delegating method to a chain of them.
-- **`DEAD_ABSTRACTION`** — a module or base class with one implementer or fewer
-  tree-wide: an abstraction that abstracts over nothing.
-- **`TYPE_IN_NAME`** — a name ending in `_string` / `_array` / `_hash` /
-  `_object` / `_list`, encoding the type into the identifier.
-- **`NUMBERED_NAME`** — a name carrying a bare sequence number: `process2`,
-  `data1`, `handler_v2`.
+Four of the six are built, 2026-08-31. Each was drafted, measured against all
+four trees, and narrowed against the false positives that measurement found
+before it was allowed into the registry — the numbers below are what that cost,
+and they are in the rules' own comments so the next reader does not re-derive
+them. `MASTER/test/test_smell_detectors.rb` holds each one twice: a source it
+must flag and a source it must not, because an exemption nothing tests is a
+comment.
+
+- **`BOOLEAN_TRAP`** — **done**. A positional parameter defaulting to a boolean;
+  keywords are exempt, since `cache: true` already makes the call site say what
+  is true. 1 finding tree-wide (`postpro.rb` `shadow_lift`). Narrow on purpose.
+- **`DATA_CLUMPS`** — **done**, and note the plural, for the reason the
+  paragraph below already gave: the prior in `data/rules.yml` and the
+  `rule_deps.yml` node both name `DATA_CLUMPS`, and both now resolve. 48
+  findings across 30 files, down from 81 before two exclusions: identical
+  signatures are one interface implemented many times rather than a clump —
+  `check_ast(ast, code, path:)` is a contract, and its nine implementers were 33
+  of the original findings — and overlapping windows over the same signatures
+  are one clump seen three times, so the longest run wins.
+- **`TYPE_IN_NAME`** — **done**. 44 findings across 24 files, down from 85.
+  Three exclusion classes, each a measured false positive: `to_hash`/`from_hash`
+  is the Ruby conversion protocol, a digest is spelled `_hash` too (`prev_hash`
+  renamed to `prev` loses the only thing the name said), and `_list` is a domain
+  noun as often as a type. `old_string`/`new_string` are exempt because they are
+  the edit-tool schema this runtime hands a model — an external contract, like
+  `to_hash`.
+- **`NUMBERED_NAME`** — **done**, but only for numbered *siblings*: a name whose
+  stem appears in the same file with a different number. 5 findings, all of them
+  `mix_v7` through `mix_v11` in `dilla.rb`. Without the sibling requirement it
+  found 15, of which `fet1176`, `fairchild670` and `stc8` are the names of real
+  hardware — an 1176 compressor, a Fairchild 670, a Coles STC-8 — and `inv3` and
+  `normalize_to_y1` are maths. A lone number in a name is usually a fact about
+  the world. Locals were measured and dropped for the same reason: 114 findings,
+  nearly all dilla and postpro, where `t1` and `d8` are the notation the DSP is
+  transcribed from and `prev2` is the sample two frames back.
+
+The other two are **measured and blocked on the cross-file index**, which is the
+larger AST work listed below. This is not a guess about them; both were built as
+drafts and run over the tree:
+
+- **`LAYER_CAKE`** — a chain of sibling methods each of which only forwards.
+  Built and measured at both plausible depths. At three links, which is the
+  honest reading of "a call chain that only forwards", this tree has **none** —
+  and a rule that fires on nothing joins `rule_audit.silent`, which is already
+  over its ceiling. At two links it finds 9, and reading them says why that
+  threshold is wrong: three are `rescue_handlers.rb` naming one exception each
+  before forwarding to `render_http_error`, which is the shape `rescue_from`
+  requires, and the rest (`ok? -> ok`, `unwrap -> value!`) are aliases. A
+  two-link forward is an alias, not a cake. The finding underneath: a real layer
+  cake spans files — controller to service to repository — and no per-file rule
+  can see it. It waits on the symbol index.
+- **`DEAD_ABSTRACTION`** — same answer, arrived at the same way. Measured
+  tree-wide with a throwaway cross-file census. The class half is precise and
+  almost empty: 4 classes declare an abstract method (a body that is only `raise
+  NotImplementedError`), and exactly **1** has fewer than two implementers —
+  `MASTER/lib/io/gateway.rb:5`, with none. The module half is a false-positive
+  machine and must not ship as written: 367 of 419 modules that define methods
+  are "included at most once", because nearly every module in this tree is a
+  `module_function` namespace rather than a mixin, so the census measures
+  Zeitwerk's file-to-constant mapping and calls it a dead abstraction. One real
+  finding does not pay for a rule; the single `Gateway` is worth a look by hand.
 
 **Already exist — do not re-list these as todo:** `LONG_PARAMETER_LIST`,
 `PRIMITIVE_OBSESSION`, `FEATURE_ENVY`, `COUPLER_SMELLS`, `LAZY_CLASS`,
@@ -122,6 +170,99 @@ moves to `DECISIONS.md` or to the "Scanner Conventions" section below. The
 narrative of *how* something was fixed is what `git log` is for — this file was
 660 lines on 2026-08-11 and most of it was fix history for work already done,
 which made the open items hard to find and let four of them go stale unnoticed.
+
+### The runtime did not boot at all — closed 2026-08-31
+
+`MASTER/data/providers.yml` gave `agy` a `ruby_llm_key: agy_api_key`. `agy` is
+the Antigravity CLI — `command: agy`, reached by executing a binary, and its
+`env` names `AGY_BIN`/`ANTIGRAVITY_BIN`, which are paths rather than keys — so
+RubyLLM has no `agy_api_key=` and never had. The same row carried
+`min_key_length: 0`, and `apply_api_keys` gated on `key.length >= minimum`, so
+the unset `AGY_BIN` satisfied `"".length >= 0` and the setter was sent on every
+boot. `RubyLLM.configure` raised `NoMethodError` inside `Master::Builder.build`,
+so `bin/cli` died before it had done anything, and with it `/scan`, `/critique`
+and `/review` — every command the gate's lexical and council tiers run.
+`bin/pub4 gate --scan-only` reported `lexical FAILED — err: MASTER command
+failed: /scan --no-autofix .` with the stack trace of a scan that had not
+started.
+
+The second half was quieter and would have outlived the first. `min_key_length:
+0` also made `any_api_key_present?` unfalsifiable: it is `specs.any? { ENV[var]
+.to_s.length >= minimum }`, and one row with a zero minimum answers true for
+every machine, key or no key. So `keyless_llm_enabled?` could never engage on
+its own, `no_api_key` was unreachable, and the council believed it had a
+provider. Fixed in `key_present?`, one predicate all three readers share: an
+unset env var is not a key, whatever the minimum.
+
+`apply_api_keys` now skips a `ruby_llm_key` the installed gem has no setter for
+and names the env var it skipped, so the next provider this tree adds ahead of
+its gem support costs a warning instead of the runtime.
+`MASTER/test/test_provider_key_wiring.rb` holds it by asking
+`RubyLLM::Configuration` rather than restating what it offers, so a ruby_llm
+upgrade that renames a setter fails here and names the provider.
+
+The rule: **a config value that makes a check answer the same way every time is
+worse than a missing check**, because the check goes on being cited. The other
+one: a `>=` against a zero floor is not a test.
+
+### An unreachable CLI led every fallback chain — closed 2026-08-31
+
+Found by the same thread as the boot crash, one table over. `agy` is the only
+entry in the routing data that is not an API model: it names the Antigravity
+CLI, reached by executing a binary. `models.grok_primary` leads with `agy:auto`,
+and both places that hand out ids from that pool did so without asking whether
+the binary exists. So on a machine with no agy installed, `Master.default_model`
+answered `"agy:auto"` whenever an OpenRouter key was present — reached, note,
+only *after* `return "agy:auto" if agy_cli_available?` had already declined —
+and `ModelRouter#fallback_chain` led with four agy ids that could only be failed
+over one at a time.
+
+What hid it: `MASTER_NO_AGY_CLI` exists and both `agy_cli_available?` methods
+honour it, so the guard looked complete. The ids arrived by a different path,
+where nothing asked. Fixed in one place rather than four, next to the same
+question about web chat — the chain is assembled from every `models.*` tier,
+`grok_primary`, the auth lanes and `primary_models`, so a per-table guard leaves
+three tables unguarded.
+
+The same fact ran the other way in the test suite, which is how it surfaced.
+`test_keyless_routing.rb` cleared eight API keys and `MASTER_NO_CLAUDE_CLI` in
+setup but not `MASTER_NO_AGY_CLI`, so four of its nine assertions passed or
+failed according to whether the machine running them happened to have the
+Antigravity binary on PATH. They failed here and pass in CI, which is the worst
+way for a test to be wrong: the suite disagrees with itself by host and neither
+result is evidence. `MASTER/test/test_agy_reachability.rb` now pins both
+directions with a real executable stub, because a reachability check that is
+only ever exercised one way is the half that was already true.
+
+### The lexical stage cannot reach a verdict — opened 2026-08-31
+
+With the boot crash above fixed, `bin/pub4 gate --scan-only` gets a running
+scanner for the first time and the stage now fails a different way: `/scan
+--no-autofix .` over MASTER printed 226 lines and was killed at
+`MASTER_GATE_STAGE_TIMEOUT` (1200s) without a verdict. So the ladder's first
+rung has still never reported a lexical result — it has only changed which
+sentence it says while not reporting one, and raising the timeout is explicitly
+not the move until somebody knows where the time goes.
+
+What was measured, so the next attempt does not start from zero. Per-file rule
+cost is not the explanation: the whole scanner, 142 rules including the external
+linters and the law bridge, costs **0.08s** on a representative Ruby file
+(`lib/boot/runtime.rb`), of which `ast_omission` is 0.044s and everything else
+rounds to nothing. Markdown and YAML are cheaper still — 0.01s and 0.02s across
+all 128 zero-argument rules. At that rate MASTER's 1089 files are about ninety
+seconds, not twenty minutes. The scan's own progress line tells the same story
+from the other side: it reported `eta=50s` at file 30 and `eta=2843s` at file
+55, so the cost is not per-file-uniform and is not in the rules that were timed.
+Look next at what runs *between* files — `ScanLive.snapshot!` writes a report to
+disk on every hit, and `CrossFileAnalysis` re-reads the whole corpus at the end.
+
+The four detectors added the same day are not the cause, and were measured
+before being kept: 0.33s across 200 files for all four, against 2.24s for the
+128 zero-argument rules over the same files. That is a larger share than four
+rules should hold (14.6% for 3% of the rules) and the reason is architectural
+rather than theirs — `Rule#check` calls `Prism.parse` per rule, so a file is
+parsed 128 times. The parse cache in "larger AST work" below is the fix, and it
+would pay for far more than these four.
 
 ### Tag Legend
 
@@ -2348,6 +2489,32 @@ agent work in this tree:
   but techno/soul/jazz must blend as parameters). That direction is a design
   goal, not a backlog item to close unprompted.
 
+### A conflict resolved by deleting both sides — closed 2026-08-31
+
+`3e2f32f76` committed live merge-conflict markers into three files, and
+`5378ae21a` — "Fix syntax errors in dilla engine and outboard lib" — cleared two
+of them by deleting the whole conflict block. In `outboard.rb` that block
+contained the `def neve_80(...)` line itself, so the method's body was left
+loose in the module and the method's `end` closed `module Outboard`. dilla could
+not be parsed at all after that, which took `MASTER/test/test_radio_bergen_study.rb`
+with it, which took `rake test` with it: the entire MASTER suite could not load,
+and `bin/pub4 gate` reported it as "suites: 2/7 green" without naming a cause.
+
+Restored with the operator choosing the drive, because the two sides were
+different rendered-sound defaults (3.2 dB against 4, and neither matched the 8
+that `fc9b13651` last committed cleanly) and picking one is exactly the
+judgement the standing constraint above reserves. `dilla.rb`'s conflict had
+resolved coherently on its own — the deleted side defined a `drive` local the
+surviving filter chain never reads — so only its orphaned comment marker needed
+restoring, with the reason from the side that won. `dilla_principles.yml` still
+carried its markers unresolved, and both sides of that one were header comments.
+
+The rule: **deleting a conflict block is not resolving it.** A conflict spans
+whole lines, and the line above `=======` is as often a `def` as a comment.
+`ruby -c` on every file the diff touches is the check that would have caught
+this in the same minute; nothing in the ladder ran it, because the ladder's own
+first stage was down for a different reason the same day.
+
 ### The engine is one file
 
 dilla.rb carries the 81 parts that were under `lib/engine/`, in the order they
@@ -2411,6 +2578,59 @@ appear only in gitignored `scratch/`, so that test may be measuring one machine
 rather than the repo.
 
 ---
+
+## The unified handoff, read against the tree — 2026-08-31
+
+`CLAUDE_OPUS_UNIFIED_HANDOFF.md` arrived at the repo root in `8dfe41309` as an
+implementation brief. It is 302 lines and it stops mid-list, at
+"pagination/filtering;" under section 7 — the file is truncated, so anything the
+author intended after the Rails test matrix is not in this repository at all.
+It is also a fourth file at a root that `CLAUDE.md` says holds two, and most of
+its asks restate this file or `WISHLIST.md` in different words, which is the
+"two backlogs saying the same thing" defect the preamble here names. It is left
+in place rather than folded or deleted, because that is an owner's call; what
+follows is the audit, so the next reader does not do it again.
+
+Its own first instruction — "reconcile every change against the current tree
+before applying it, do not blindly paste historical snippets" — is what this
+audit is. Two of its premises did not survive that reconciliation.
+
+**3.2, the circuit-breaker hazard — done, and its premise was already stale.**
+The brief asks after a `Stoplight::Light` NameError and says to check the tree
+rather than assume. Checked: `Stoplight` appears nowhere — not in `lib/`, not in
+the `Gemfile`, not in `Gemfile.lock`. There is no hazard to repair and no stale
+reference to remove. The half that was real is the one it names second: test the
+replacement's states. `Master::Io::CircuitBreaker` is hand-rolled and its two
+existing tests covered the rate limiter and the per-model registry, so the
+closed -> open -> half_open -> closed machine, the eight-failure threshold, the
+thirty-second cooldown and the recovery had nothing holding them.
+`MASTER/test/test_circuit_breaker_states.rb` holds all four now, plus the two
+error classes that must *not* open it (a provider rate limit, an absent key) and
+the state file that survives the process. Verified by mutation: four separate
+breaks in the implementation each turn it red.
+
+**4, multi-agent safety — done.** "Where hooks already exist, test them as
+executable behaviour rather than documenting them only" was the sharpest line in
+the brief, and it was exactly right. `OPENBSD/dev/githooks/` holds the three
+guards that are the whole defence against trap one, and nothing tested any of
+them. A hook that stopped firing looks identical to a week in which nobody made
+the mistake. `OPENBSD/test/test_githooks.rb` runs all three through real git in
+a throwaway repository — real commits, a real bare remote, a real push — because
+a hook is installed behaviour and unit-testing its logic would not catch a lost
+chmod, a bad shebang, or a `core.hooksPath` pointing somewhere else. It covers
+every case the brief lists (cross-tree refusal and its override, multi-commit
+push refusal and its override, the clean single-commit path, the diagnostic
+output) and three the brief did not: the half-landed move, STUDIO session
+ownership, and that an absent session ledger reads as "unknown" rather than
+accusing every commit of being foreign.
+
+**3.1, 3.3, 3.4, 3.5, 3.6, 5, 6, 7 — open, and each is a sitting.** These are
+programs, not tasks: boundary validation for every data contract, the
+require-order graph, snapshot rollback, autoloop fencing, dead-session startup,
+routing resilience, and a full Rails audit with a test matrix. Where they touch
+something this file already tracks, this file is the record and the brief is a
+restatement — do not open a second row for the same work under the brief's
+numbering.
 
 ## Cross-cutting programs
 
