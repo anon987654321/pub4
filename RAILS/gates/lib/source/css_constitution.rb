@@ -109,6 +109,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
       @tally = { "important" => [], "rhythm" => [], "magic_hex" => [], "type_scale" => [], "weight_ladder" => [] }
       files.each { |path| scan(path) }
       judge_budgets
+      check_weight
       @result
     end
 
@@ -150,6 +151,51 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
 
       body = File.read(BUDGET_PATH)
       File.write(BUDGET_PATH, body.sub(/^  #{Regexp.escape(rule)}: \d+$/, "  #{rule}: #{count}"))
+    end
+
+    # Weight is a size, not a count, so it cannot ride the @tally shape above:
+    # judge_budgets compares hits.size against a ceiling and there are no hits to
+    # count here. The contract is otherwise identical -- over the ceiling fails,
+    # under it warns, and GATE_CSS_RATCHET=1 records the new low.
+    #
+    # app/assets/builds/application.css is the only stylesheet this gate can weigh
+    # reproducibly. RAILS/*/public/assets/ is gitignored, so the compiled JS is
+    # whatever the local machine last built; weighing it would fail on the wrong
+    # laptop rather than on the wrong commit.
+    def check_weight
+      ceilings = weight_ceilings
+      return @result.warn("css_constitution weight: no weight_kb in css_budget.yml") if ceilings.empty?
+
+      ceilings.each do |app, ceiling|
+        built = File.join(RAILS, app, "app", "assets", "builds", "application.css")
+        next @result.warn("css_constitution weight: #{app} has no built application.css") unless File.file?(built)
+
+        kb = (File.size(built) / 1024.0).ceil
+        if kb > ceiling
+          @result.fail("css_constitution weight: #{app} application.css is #{kb}KB, over its " \
+                       "#{ceiling}KB ceiling (+#{kb - ceiling}) -- cut it, or record a new ceiling with a reason")
+        elsif kb < ceiling
+          @result.warn("css_constitution weight: #{app} is #{kb}KB, under its #{ceiling}KB ceiling " \
+                       "(-#{ceiling - kb}) -- GATE_CSS_RATCHET=1 records the new low")
+          ratchet_weight(app, kb)
+        else
+          @result.warn("css_constitution weight: #{app} at its #{ceiling}KB ceiling")
+        end
+      end
+    end
+
+    def weight_ceilings
+      YAML.safe_load_file(BUDGET_PATH)&.dig("weight_kb") || {}
+    rescue StandardError => e
+      warn "css_constitution: weight budget unreadable (#{e.class}) -- weight runs unbudgeted"
+      {}
+    end
+
+    def ratchet_weight(app, kb)
+      return unless GateResult.flag?("GATE_CSS_RATCHET")
+
+      body = File.read(BUDGET_PATH)
+      File.write(BUDGET_PATH, body.sub(/^  #{Regexp.escape(app)}: \d+$/, "  #{app}: #{kb}"))
     end
 
     # This replaces a check that read design_rules.touch.target_min_px and

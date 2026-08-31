@@ -177,3 +177,22 @@ rules:
   # if the mark is ever cut to the ladder, run with GATE_CSS_RATCHET=1.
   type_scale: 0
   weight_ladder: 2
+
+# Built-stylesheet weight, in kilobytes, per app. Same ratchet as the counts
+# above: measured from the tree, never from another product's published figure,
+# and it only goes down.
+#
+# Only app/assets/builds/application.css is measurable here. RAILS/*/public/assets/
+# is gitignored, so the compiled JS bundles (1.5-2MB an app) are whatever the
+# local machine last built and cannot be judged without a build step in CI. A
+# ceiling over a file the gate cannot reproduce is a number that fails on the
+# wrong machine, so JS stays out until the build is part of the run.
+#
+# Seeded 2026-08-31 from the tracked builds: brgen 203.6KB, amber 110.2KB,
+# bsdports 64.1KB, each rounded up to the next whole KB. Nothing was measured
+# as debt and nothing is being waved through — this is the first reading, and
+# what it buys is that the next change cannot add weight silently.
+weight_kb:
+  brgen: 206
+  amber: 111
+  bsdports: 65
