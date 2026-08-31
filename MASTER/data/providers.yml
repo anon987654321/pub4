@@ -2,8 +2,6 @@
 schema: 1
 agy:
   env: [AGY_BIN, ANTIGRAVITY_BIN]
-  ruby_llm_key: agy_api_key
-  min_key_length: 0
   command: agy
   strengths: [reasoning, coding, long_context, multimodal, agentic]
   default_model: agy:auto

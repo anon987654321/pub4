@@ -148,8 +148,11 @@ module Master
 
     def apply_api_keys(config)
       api_key_specs.each do |attribute, env_var, minimum|
+        setter = "#{attribute}="
+        next unless config.respond_to?(setter)
+
         key = ENV[env_var].to_s
-        config.public_send("#{attribute}=", key) if key.length >= minimum
+        config.public_send(setter, key) if key.length >= minimum
       end
     end
 
