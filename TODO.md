@@ -280,11 +280,25 @@ another committed to it, and the first one's write reverted these two. They were
 restored, correctly — and never wired to a reader, so the census has counted
 them ever since.
 
-**Not resolved here, deliberately.** The two options are wiring a reader or
-deleting the block, and `rules.yml` is second in the authority order. Deleting a
-business-plan spec and a markdown style guide is an owner's call, and inventing
-readers for them is feature work with a design behind it. What was owed was the
-attribution, and that is now paid.
+**`markdown_style` is wired, 2026-08-31; `business_plan` is not.** They looked
+alike from the census and are not. `markdown_style` declares its own audience —
+`applies_to: [MASTER, claude, grok, codex]`, every agent that writes markdown
+here — and the runtime already had the place it belonged:
+`PersonalityPromptBuilder#add_contextual_sections`, beside `add_language_style`
+and `add_design_rules`. Its neighbour `add_attention` carries a comment
+describing the identical defect about `attention_context.yml`: a section that
+specified where it should be used, and nothing used it. So this was not a new
+feature, it was a missing wire, and the four rules now reach the built system
+prompt at a cost of five lines.
+
+`business_plan` is left alone, and the difference is the point: there is no
+business-plan feature anywhere in the tree. Wiring a reader would mean inventing
+the product the spec describes, which is not a census's business to prompt. It
+stays counted, and deleting it remains an owner's call — `rules.yml` is second
+in the authority order.
+
+`data_reach` is 47 against 46 as a result. Still over, by the one key that
+cannot be honestly resolved without a decision.
 
 The instrument is fixed so this cannot recur: the ceiling file carries its
 members beside the count, `--ratchet` seeds them at parity as well as on a fall,

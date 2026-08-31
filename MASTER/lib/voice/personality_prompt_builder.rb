@@ -42,7 +42,34 @@ module Master
         add_rules(sections)
         add_attention(sections)
         add_language_style(sections)
+        add_markdown_style(sections)
         add_design_rules(sections)
+      end
+
+      # The markdown_style section of data/rules.yml, which had no reader.
+      #
+      # Same shape as add_attention above: a section that names its own audience
+      # and was never consulted. Its applies_to lists MASTER, claude, grok and
+      # codex — every agent that writes markdown in this repo — and nothing in
+      # the tree named the key, so the aesthetic it declares reached no prompt
+      # and each agent invented its own house style. data_reach has counted it
+      # as unread since it was restored after the 2026-08 read-modify-write that
+      # reverted it.
+      #
+      # Read from the section rather than restated here, so adding a rule to the
+      # yaml changes what the model is told. That is the whole reason the
+      # section exists rather than a paragraph in a prompt.
+      def add_markdown_style(sections)
+        style = @rules.data(:markdown_style)
+        return unless style.is_a?(Hash)
+
+        rules = Array(style["rules"]).map(&:to_s).reject(&:empty?)
+        return if rules.empty?
+
+        aesthetic = style["aesthetic"].to_s.tr("_", " ").strip
+        heading = aesthetic.empty? ? "Markdown you write:" : "Markdown you write follows the #{aesthetic} aesthetic:"
+        lines = [heading, *rules.map { |rule| "- #{rule}" }]
+        sections["master_style"] = [sections["master_style"], lines.join("\n")].compact.join("\n")
       end
 
       # The breadcrumb protocol, from the file that defines it.
