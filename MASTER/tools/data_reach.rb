@@ -62,19 +62,44 @@ module Pub4
       end
     end
 
-    def ceiling
-      File.exist?(CEILING) ? YAML.safe_load_file(CEILING).fetch("unnamed", 0) : 0
+    def recorded
+      return {} unless File.exist?(CEILING)
+
+      YAML.safe_load_file(CEILING) || {}
     end
+
+    def ceiling = recorded.fetch("unnamed", 0)
+
+    # The members behind the count. A census that records only an integer can
+    # say "over by two" and never which two, so the number arrives with no
+    # thread to pull and the next reader re-derives the whole list by hand.
+    # Absent, attribution is simply unavailable and the report says so rather
+    # than guessing.
+    def recorded_members = Array(recorded["members"])
 
     def run(ratchet: false)
       out = unnamed
       puts "data_reach: #{out.size} top-level keys no code names (ceiling #{ceiling})"
-      if ratchet && out.size < ceiling
-        File.write(CEILING, { "unnamed" => out.size }.to_yaml)
-        puts "data_reach: recorded #{out.size} as the new low"
+      # <=, not <, so a census sitting exactly at its ceiling can record its
+      # members without having to fall first. That is the common case for a
+      # ratchet that is holding, and it seeds the attribution for the next rise.
+      #
+      # It does NOT help a census that is already over, which cannot record
+      # anything without either moving the ceiling or writing a baseline that
+      # includes the overage — and a baseline containing the two keys that are
+      # over would report them as known and hide exactly what is wanted. When
+      # the census is over, attribution comes from diffing against the commit
+      # that set the ceiling; that is how business_plan and markdown_style were
+      # identified on 2026-08-31.
+      if ratchet && out.size <= ceiling
+        File.write(CEILING, { "unnamed" => out.size, "members" => out.sort }.to_yaml)
+        verb = out.size < ceiling ? "recorded #{out.size} as the new low" : "re-recorded #{out.size}"
+        puts "data_reach: #{verb}, with its members"
         return 0
       end
       return 0 unless out.size > ceiling
+
+      report_new(out)
 
       # All of them, not the first 15. A census that names a third of what it
       # counted leaves the rest invisible: this printed 15 of 55, so the forty
@@ -83,6 +108,22 @@ module Pub4
       # is the one thing it must not say.
       out.each { |k| puts "  #{k} — no code names this key; wire a reader or delete the block" }
       1
+    end
+
+    # Which of them are new since the low was recorded. This is the whole reason
+    # the member list is stored: over-by-two is actionable and a bare 48 is not.
+    def report_new(out)
+      known = recorded_members
+      if known.empty?
+        puts "data_reach: no members recorded with the ceiling — run --ratchet once to make the next rise attributable"
+        return
+      end
+
+      arrived = out - known
+      left = known - out
+      puts "data_reach: #{arrived.size} arrived since the low was recorded:"
+      arrived.each { |k| puts "  + #{k}" }
+      puts "data_reach: #{left.size} of the recorded members are gone (#{left.join(', ')})" unless left.empty?
     end
   end
 end
