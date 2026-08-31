@@ -313,7 +313,38 @@ carries an uncommitted extraction of `Scanner` — `scanner.rb` down from 466
 lines to 139, with `ProgressReporter` and `Transport` moved to untracked
 `lib/review/scan/engines/`. It parses and the scanner still builds with all 142
 rules. Recorded here rather than fixed, because it is someone else's working
-tree; two other sessions were asked and neither owns it.
+tree.
+
+Whose, and why it took looking: an **OpenAI Codex session**, in the ChatGPT
+desktop app, working directly in `/Users/mac/Documents/GitHub/pub4` rather than
+a worktree —
+`~/.codex/sessions/2026/08/31/rollout-2026-08-31T06-53-41-01a0562a-*.jsonl`,
+started 06:53:41, last write 07:41:41. Two Claude sessions were asked and
+neither owned it, and no Claude Code transcript on this machine contains
+authorship of these files — only mention, in the session that was discussing
+them. That is the point worth keeping: **this tree is edited by agents that are
+not Claude and cannot be reached by `ListAgents` or `SendMessage`**, so "no peer
+claims it" is not evidence of an orphan. The identification came from mtimes
+clustering to one 36-minute window, and from `uplift_summary.txt` — untracked,
+first person, six numbered layers, the third of which is "decomposing the God
+Classes in the Scanner". That file is the brief the whole cluster executes:
+`GLOSSARY.md` and `ONBOARDING.md` are its layer one, `bin/trap_check` and
+`bin/pre-commit-hook.sh` its layer two, `bin/deploy` and `lib/io/deploy/` its
+layer four.
+
+The skip list was not dropped as a decision. Its own rollout shows it reading
+the original `skip_path?` in full, comment included — the one warning that
+`/fix` descends the same tree and could rewrite a vendored package. The
+extraction then carried the method out with everything else, and when it turned
+up missing the session re-inserted a stub rather than restoring the behaviour:
+
+    insertion = "  def self.skip_path?(path, root: nil)\n" \
+                "    return false # Default skip behavior\n  end\n\n"
+    final = content.sub("include Transport", "include Transport\n" + insertion)
+
+So "Default skip behavior" is a guess written to make the file load, and the
+guess is the inverse of the real default. A missing method is a loud failure and
+a stub that answers `false` is a silent one; this is the trade made by hand.
 
 What matters if it lands as written: `skip_path?` is `return false # Default
 skip behavior`, and `SKIP_PATH_SEGMENTS`, `SKIP_PATH_SUFFIXES` and
