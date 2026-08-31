@@ -19,6 +19,18 @@ ownership:
       ../OPENBSD/data/operator.yml)
     risk: medium
     check: MASTER/bin/pub4 status
+  law/:
+    purpose: the constitution as code — one domain file per body of law
+    risk: critical
+    check: bin/check --profile=agent
+  lib/:
+    purpose: runtime source; every subdirectory declares its own purpose below
+    risk: high
+    check: bin/check
+  web/:
+    purpose: the Rails face — chat shell, TTS endpoints, WebGL face assets
+    risk: high
+    check: bin/check --profile=web
   bin/:
     purpose: executable entry points and validation wrappers
     risk: high

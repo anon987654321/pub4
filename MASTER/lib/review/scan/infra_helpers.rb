@@ -32,7 +32,7 @@ module Master
           %w[
             CoChangeCouplingRule RuleCoverageRule RubocopRule ReekRule InterconnectRule
             YamlDeclarativeRule VetoPatternRule LawBridgeRule SemanticRule AdversarialRule CommentDriftRule AstOmissionRule
-            LibRootDisciplineRule FileSprawlRule
+            LibRootDisciplineRule FileSprawlRule PathPurposeRule
           ].each do |name|
             klass = Review::Scan::Rules.const_get(name)
             scanner.add_rule(Review::Scan::RuleFactory.build(klass, root:, agent:, ecology:))

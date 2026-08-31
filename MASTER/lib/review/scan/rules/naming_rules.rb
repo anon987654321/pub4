@@ -196,3 +196,75 @@ module Master
     end
   end
 end
+
+# FILE_SEQUENCE_NAME and FILE_VAGUE_NAME — the two filename detectors. Both are
+# about the file's own name rather than anything inside it, so neither needs an
+# AST; they read `path` and ignore `source`.
+#
+# rules.yml#beauty already asks for `meaningful_names_intention_revealing` and
+# `kanso: eliminate_essence`. Nothing enforced either on a filename, and the
+# 2026-08-31 session produced capture_final2.rb, capture_final3.rb and
+# frames_final2/ in one sitting — names that record the order they were made in
+# and throw away the thing that actually differed (a keep-alive, then trusted
+# input).
+module Master
+  module Review
+    module Scan
+      module Rules
+        # A sequence word is a timestamp wearing a name. If two files differ,
+        # the name says how; if it cannot, they are one file or the difference
+        # is not yet understood.
+        RuleDSL.rule :FILE_SEQUENCE_NAME,
+          severity: :warning,
+          tags: %i[LOAD_BEARING_NAMES DOMAIN_LANGUAGE],
+          applies_to: %i[ruby],
+          autofix: false,
+          description: "a filename records what a thing is, never where it sat in a sequence" do |_src, path:|
+            stem = File.basename(path.to_s, ".*")
+            # db/migrate is timestamp-keyed by Rails and versioned API dirs are
+            # a public contract; neither is a name someone chose loosely.
+            next [] if path.to_s.match?(%r{/(?:db/migrate|node_modules|vendor)/|/v\d+/})
+
+            # The sibling requirement, borrowed from NUMBERED_NAME above, is what
+            # makes this measurable rather than noisy. Without it: 5 findings,
+            # all false — upgrade_to_v1_10_generator.rb and
+            # new_framework_defaults_8_0.rb are Rails names where the version IS
+            # the subject, and backup.rb is a plain noun. A sequence word only
+            # lies when a sibling shares the stem and carries a different one.
+            hit = stem[/_((?:final|latest|new|old|copy|bak|tmp|temp)\d*|v?\d+)\z/, 1]
+            next [] unless hit
+
+            base = stem.sub(/_#{Regexp.escape(hit)}\z/, "")
+            siblings = Dir.glob(File.join(File.dirname(path.to_s), "#{base}*.rb")).map { |f| File.basename(f, ".*") }
+            next [] if siblings.size < 2
+
+            [finding(line: 1, message: "FILE_SEQUENCE_NAME: #{File.basename(path)} — " \
+                                       "'#{hit}' says when, not what; name the difference")]
+          end
+
+        # A category is not a thing. util/manager/handler name the shape of a box
+        # rather than what is in it, so the next reader must open it. base, common,
+        # shared and core_ext were in this list and came out: all four are ordinary
+        # Ruby structure, and base.rb accounted for 3 of 6 findings, all false.
+        RuleDSL.rule :FILE_VAGUE_NAME,
+          severity: :info,
+          tags: %i[LOAD_BEARING_NAMES DOMAIN_LANGUAGE],
+          applies_to: %i[ruby],
+          autofix: false,
+          description: "a filename names its subject, not a category" do |_src, path:|
+            stem = File.basename(path.to_s, ".*")
+            # Rails resolves *_helper.rb and application_* by name, so those are
+            # framework contracts rather than chosen names.
+            next [] if path.to_s.match?(%r{/(?:node_modules|vendor|db/migrate)/}) ||
+                       stem.end_with?("_helper") || stem.start_with?("application_")
+
+            hit = stem[/(?:\A|_)(misc|util|utils|stuff|things|manager|handler)(?:_|\z)/, 1]
+            next [] unless hit
+
+            [finding(line: 1, message: "FILE_VAGUE_NAME: #{File.basename(path)} — " \
+                                       "'#{hit}' is a category; name the subject")]
+          end
+      end
+    end
+  end
+end

@@ -316,6 +316,82 @@ module Master
 
           def relative(path) = path.delete_prefix("#{@root}/")
         end
+
+        # PATH_PURPOSE — PATH_OWNERSHIP.yml states what every path in this tree
+        # is for, its risk, and the check that governs it. Nothing read it, so a
+        # new directory cost nothing and declared nothing: the 2026-08-31 session
+        # created renders/sweep/, frames_final2/ and frames_final3/ without one
+        # of them saying what it held. A directory with no ownership entry is a
+        # namespace nobody has taken responsibility for.
+        #
+        # Reported per directory rather than per file, because the fix is one
+        # entry, not one per member. Scratch and generated trees are out of
+        # scope: they are working residue, not structure.
+        class PathPurposeRule < Rule
+          SKIP_RE = %r{/(?:test|spec|fixtures|node_modules|vendor|tmp|log|scratch|frames?_|renders?)/|/\.}
+          def self.auto_build? = false
+
+          def initialize(root: Master::ROOT)
+            super()
+            @id = "PATH_PURPOSE"
+            @description = "every directory declares its purpose in PATH_OWNERSHIP.yml"
+            # error, not warning: WriteGuard blocks on veto/critical/error, and a
+            # directory nobody has taken responsibility for is exactly what
+            # should be refused at write time rather than reported afterwards.
+            @severity = :error
+            @auto_fix = false
+            @rule_tags = %i[ONE_SOURCE COLLAPSE_BEFORE_ADDING]
+            @root = File.expand_path(root)
+          end
+
+          def owned
+            @owned ||= begin
+              y = Master.load_yaml(File.join(@root, "PATH_OWNERSHIP.yml")) || {}
+              Array((y["ownership"] || {}).keys)
+            rescue StandardError
+              []
+            end
+          end
+
+          def check(_code, path:)
+            return [] if owned.empty?
+            return [] if path.to_s.match?(SKIP_RE)
+
+            rel = path.to_s.delete_prefix("#{@root}/")
+            dir = File.dirname(rel)
+            return [] if dir == "." || covered?(rel, dir)
+
+            # One entry covers a whole subtree, so name the shallowest gap
+            # rather than every level beneath it: web/ once, not web/app/,
+            # web/app/models/ and eleven more under it.
+            top = shallowest_gap(dir)
+            [finding(line: 1, message: "PATH_PURPOSE: #{top}/ has no entry in PATH_OWNERSHIP.yml — " \
+                                       "declare its purpose and risk, or put these files under a path that has one")]
+          end
+
+          private
+
+          def shallowest_gap(dir)
+            parts = dir.split("/")
+            (1..parts.size).each do |n|
+              candidate = parts.first(n).join("/")
+              return candidate unless covered?(candidate, candidate)
+            end
+            dir
+          end
+
+          # A key is a file, a directory prefix, or a glob (web/public/face.part*.txt).
+          def covered?(rel, dir)
+            owned.any? do |key|
+              k = key.to_s.delete_prefix("./")
+              next true if k == rel
+              next true if k.end_with?("/") && "#{dir}/".start_with?(k)
+              next true if k.include?("*") && File.fnmatch?(k, rel)
+
+              false
+            end
+          end
+        end
       end
     end
   end

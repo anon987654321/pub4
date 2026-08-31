@@ -14,7 +14,9 @@ module Master
         key = id.to_s.strip
         return if key.empty?
 
-        law(key) ||
+        path_ownership(key) ||
+          design_law(key) ||
+          law(key) ||
           registry_rule(key) ||
           soul_rule(key) ||
           scan_rule(key) ||
@@ -23,6 +25,65 @@ module Master
       end
 
       private
+
+      # A path, not a rule id. An agent mid-task cannot re-read 4,215 lines of
+      # rules.yml, so the question it actually has is "what governs this file".
+      # PATH_OWNERSHIP.yml has answered that all along and had no reader.
+      def path_ownership(key)
+        return unless key.include?("/") || File.exist?(File.join(@root, key))
+
+        owned = (Master.load_yaml(File.join(@root, "PATH_OWNERSHIP.yml")) || {})["ownership"] || {}
+        return if owned.empty?
+
+        rel = key.to_s.delete_prefix("#{@root}/").delete_prefix("./")
+        hit = owned.find { |k, _| covers?(k.to_s, rel) }
+        return uncovered(rel) unless hit
+
+        name, meta = hit
+        [
+          "path: #{name}",
+          ("  purpose: #{meta['purpose']}" if meta.is_a?(Hash) && meta["purpose"]),
+          ("  risk: #{meta['risk']}" if meta.is_a?(Hash) && meta["risk"]),
+          ("  check: #{meta['check']}" if meta.is_a?(Hash) && meta["check"]),
+        ].compact.join("\n")
+      end
+
+      def covers?(k, rel)
+        return true if k == rel
+        return true if k.end_with?("/") && "#{rel}/".start_with?(k)
+        return true if k.include?("*") && File.fnmatch?(k, rel)
+
+        false
+      end
+
+      # Silence here would read as "nothing governs this", which is the opposite
+      # of what an undeclared path means.
+      def uncovered(rel)
+        "path: #{rel}\n  purpose: UNDECLARED — no entry in PATH_OWNERSHIP.yml\n" \
+          "  fix: add one naming its purpose and risk, or move these files under a path that has one\n" \
+          "  rule: PATH_PURPOSE"
+      end
+
+      # The design law. It sits at rules.yml#beauty, line 92 of 4,215, and an
+      # agent finds it only if a human points -- which is how it was found on
+      # 2026-08-31. Ando, Rams and Zen govern every visual decision in this tree
+      # and nothing surfaced them.
+      def design_law(key)
+        return unless %w[beauty design design_law aesthetic].include?(key.downcase)
+
+        b = rules["beauty"] || {}
+        return if b.empty?
+
+        lines = ["design law (data/rules.yml#beauty) — governs every visual decision:"]
+        b.each do |group, values|
+          lines << "  #{group}:"
+          case values
+          when Hash then values.each { |k, v| lines << "    #{k}: #{v}" }
+          else Array(values).each { |v| lines << "    #{v}" }
+          end
+        end
+        lines.join("\n")
+      end
 
       # Master.load_rules, not a private re-read. This method used to load
       # rules.yml and then overwrite base["rules"] with its own copy of the
