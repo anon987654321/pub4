@@ -211,6 +211,13 @@ end
       %(# constant from lib/review and depending on its load order\n),
       %(text + "\\n... [truncated]"\n),
       %(scan_lines(src, /\\b(TODO|FIXME|HACK|XXX)\\b/, message: "unresolved marker")\n),
+      # The backlog CLAUDE.md sends every reader to. `\b` holds before the dot, so
+      # the filename read as a marker, at :veto — 59 of the 81 marker lines under
+      # MASTER are this and nothing else. The first line below is the real
+      # failover_config one; the pin above stops a word short of what fired.
+      %(# constant from lib/review and depending on its load order. See TODO.md,\n),
+      %(# for a reason worth re-reading are DECISIONS.md and TODO.md.\n),
+      %(  # TYPE_IN_NAME and NUMBERED_NAME, the two naming detectors from TODO.md's\n),
     ].each do |source|
       assert_empty findings(:veto_patterns, source),
                    "#{source.inspect} is ordinary Ruby, not unfinished work"
@@ -222,6 +229,9 @@ end
     refute_empty findings(:veto_patterns, %(# TODO: wire this up\n))
     refute_empty findings(:veto_patterns, %(  # FIXME broken since the merge\n))
     refute_empty findings(:veto_patterns, %(def stub\n  ...\nend\n))
+    # The lookahead sits on the marker, not on the line, so a real marker still
+    # vetoes on a line that also cites the backlog.
+    refute_empty findings(:veto_patterns, %(# TODO: wire this up, see TODO.md\n))
   end
 
   # --- learned_smells must not restate a registered rule ------------------

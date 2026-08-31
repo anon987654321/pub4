@@ -58,7 +58,9 @@ module Master
     severity: :info, tags: %i[COMPLETENESS], autofix: false,
     description: "unresolved work markers" do |src, path:|
     next [] if path.to_s.include?("/review/scan/rules/")
-    scan_lines(src, /\b(TODO|FIXME|HACK|XXX)\b/, message: "unresolved marker — resolve or delete")
+    # The lookahead keeps TODO.md, the repo-wide backlog, from reading as a
+    # marker — see data/rules.yml `unfinished`, which learned this at :veto.
+    scan_lines(src, /\b(TODO|FIXME|HACK|XXX)\b(?!\.md)/, message: "unresolved marker — resolve or delete")
   end
 
   RuleDSL.rule :RESCUE_EXCEPTION,

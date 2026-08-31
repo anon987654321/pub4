@@ -203,7 +203,14 @@ veto_patterns:
     #
     # Pinned in both directions in test/test_scan_rule_false_positives.rb, per
     # that file's own rule: a narrowing has to prove what it still catches.
-    detect: "#[^\\n]*\\b(TODO|FIXME)\\b|^\\s*\\.\\.\\.\\s*$"
+
+    # Narrowed a third time, by the same measurement. `\b` holds between the O and
+    # the dot, so `TODO.md` — the backlog CLAUDE.md tells every agent to cite — read
+    # as a work marker. Every veto it raised across lib/ and law/ was that filename,
+    # none was unfinished work, so the rule punished the house rule that sends a
+    # reader there. The lookahead sits on the marker rather than on the line, so
+    # `# TODO: fix, and see TODO.md` still vetoes on the marker.
+    detect: "#[^\\n]*\\b(TODO|FIXME)\\b(?!\\.md)|^\\s*\\.\\.\\.\\s*$"
     # The only veto pattern that means to read comments — a marker lives in one.
     # Every other pattern is about code, and a comment describing shell safety or
     # SQL injection is documentation, not the thing. See VetoPatternRule.
@@ -515,7 +522,10 @@ learned_smells:
 # is the definition of the defect. That reasoning lives on in the registered
 # rule and in test_debug_output_ignores_a_local_named_p, which pins it.
 - id: todo_comment
-  pattern: "\\b(?:TODO|FIXME|HACK)\\b"
+  # `\b` holds before the dot, so TODO.md read as a marker: 59 of the 81 marker
+  # lines under MASTER are that filename and nothing else. The veto pattern
+  # `unfinished` and the registry's TODO_FIXME carry the same lookahead.
+  pattern: "\\b(?:TODO|FIXME|HACK)\\b(?!\\.md)"
   confidence: 0.7
   autofix: create_issue
 - id: magic_number
