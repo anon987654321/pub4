@@ -59,9 +59,25 @@ module Master
         envs.any? { |var| Master.api_key_present?(var.to_s) }
       end
 
+      API_KEY_LANES = %w[
+        OPENROUTER_API_KEY XAI_API_KEY DEEPSEEK_API_KEY GOOGLE_API_KEY
+        GEMINI_API_KEY ANTHROPIC_API_KEY OPENAI_API_KEY MISTRAL_API_KEY
+      ].freeze
+
+      def api_key_lane_present?
+        API_KEY_LANES.any? { |var| Master.api_key_present?(var) }
+      end
+
       def models_for_router(router)
         from_lanes = load_lanes.flat_map { |lane| lane_available?(lane) ? Array(lane["models"]) : [] }
-        (from_lanes + router.primary_models).map(&:to_s).uniq
+        primary = router.primary_models
+        # OAuth/CLI-before-key ordering saves paid tokens only while the CLI lane
+        # can actually answer. agy answers "quota reached" when its subscription
+        # is spent, and a dead CLI lane at the head of the chain stalls every
+        # LLM-backed rule. With a real API key present, lead with those models;
+        # with no key, keep the subscription-before-key order.
+        ordered = api_key_lane_present? ? (primary + from_lanes) : (from_lanes + primary)
+        ordered.map(&:to_s).uniq
       end
     end
   end

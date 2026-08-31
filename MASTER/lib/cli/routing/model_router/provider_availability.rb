@@ -8,18 +8,22 @@ module Master
         # CLI binary, keyless web-chat, live free-tier catalog) — separate
         # from ModelRouter's own preference/escalation/failover logic.
         module ProviderAvailability
-          # agy CLI when agy binary exists; Grok API when XAI key is present; subscription Opus when claude binary exists;
-          # browser web-chat when keyless. Paid APIs stay in flattened tiers for escalation.
+          # Grok/OpenRouter API when a key is present; then the agy CLI when its
+          # binary exists; subscription Opus when claude binary exists; browser
+          # web-chat when keyless. A configured API key leads because it is a
+          # paid, health-checked lane — the agy CLI answers "quota reached" when
+          # its subscription is spent, so prepending it made agy:auto the active
+          # model and stalled every LLM-backed rule. Paid APIs stay in flattened
+          # tiers for escalation.
           def primary_models
             models = []
-            if agy_cli_available?
-              models.concat(
-                Array(@rules.dig("models", "primary")).filter_map { |m| m["id"] }
-                  .select { |id| id.to_s.start_with?("agy:") || id.to_s == "agy" },
-              )
-              models << "agy:auto" if models.empty?
-            end
             models.concat(grok_api_models) if grok_api_available?
+            if agy_cli_available?
+              agy_ids = Array(@rules.dig("models", "primary")).filter_map { |m| m["id"] }
+                .select { |id| id.to_s.start_with?("agy:") || id.to_s == "agy" }
+              agy_ids << "agy:auto" if agy_ids.empty?
+              models.concat(agy_ids)
+            end
             models.concat(keyless_web_chat_models) if keyless_mode?
             if claude_cli_available?
               models.concat(

@@ -105,11 +105,16 @@ module Master
     end
 
     def default_model
-      return "agy:auto" if agy_cli_available?
+      # A configured API key is a paid, health-checked route; the agy CLI is a
+      # local convenience that answers "quota reached" when its subscription is
+      # spent. Prefer a working key over agy so a dead agy subscription cannot
+      # make agy:auto the default and stall every LLM-backed rule. agy stays a
+      # first-class route below, chosen when no key is present.
       return "grok-4.3" if api_key_present?("XAI_API_KEY") && !api_key_present?("OPENROUTER_API_KEY")
       return free_primary_model if api_key_present?("OPENROUTER_API_KEY")
       return "deepseek-chat" if api_key_present?("DEEPSEEK_API_KEY")
       return "gemini-2.5-flash" if api_key_present?("GOOGLE_API_KEY") || api_key_present?("GEMINI_API_KEY")
+      return "agy:auto" if agy_cli_available?
       return "web-chat:grok" if keyless_llm_enabled?
 
       openrouter_default
