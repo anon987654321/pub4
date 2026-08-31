@@ -624,6 +624,17 @@ end
     refute_empty findings(:NO_ASCII_LINE_ART, "# ===== section =====\n")
   end
 
+  # `===` with an operand each side is an operator, not a decoration: three
+  # quarters of this rule's findings across the four trees were JavaScript
+  # identity comparisons. Both directions, because the divider it is named for
+  # is exactly three `=` too when it is written `# === section ===`.
+  def test_identity_comparison_is_not_a_divider
+    assert_empty findings(:NO_ASCII_LINE_ART, "if (mode === \"speaking\") return;\n", path: "web/public/face.js")
+    assert_empty findings(:NO_ASCII_LINE_ART, "return p === 'fixed' || p === 'sticky'\n", path: "lib/example.rb")
+    refute_empty findings(:NO_ASCII_LINE_ART, "# === section ===\n")
+    refute_empty findings(:NO_ASCII_LINE_ART, "// --- model ------------------\n", path: "web/public/face.js")
+  end
+
   # --- learned smells read code, not comments ----------------------------
   # meta_rules.rb#findings_for_smell matched the smell regex against raw lines,
   # so magic_number scored every number in a comment (6,318 findings, sampled

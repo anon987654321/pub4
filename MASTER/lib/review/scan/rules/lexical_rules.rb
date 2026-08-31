@@ -159,6 +159,15 @@ module Master
     findings
   end
 
+  # `a === b` is JavaScript's identity operator and Ruby's case-equality, and it
+  # is exactly three `=` with a space each side — which is what the divider
+  # pattern below matches. 486 of this rule's 636 findings across the four trees
+  # were `mode === "speaking"` and its like, three quarters of everything it
+  # reported. An operand on both sides is what separates the operator from a
+  # decoration: a real divider has nothing to its right, or is a longer run, and
+  # no dropped line carried a run of four or more.
+  IDENTITY_COMPARISON = /[\w)\]}'"]\s*===\s*[\w({\[!'"@$:]/
+
   RuleDSL.rule :NO_ASCII_LINE_ART,
     severity: :warning, tags: %i[BE_CONCISE],
     description: "ASCII divider decorations" do |src, path:|
@@ -167,7 +176,8 @@ module Master
     scan_lines(src, /(?:^|\s)(?:={3,}|-{3,}|_{3,})(?:\s|$)/, message: "remove ASCII divider decorations").reject do |finding|
       line = src.lines[finding[:line].to_i - 1].to_s
       path.to_s.end_with?(".yml", ".yaml") && line.strip == "---" ||
-        line.match?(/\b(assert|refute|expect|must_|wont_)/)
+        line.match?(/\b(assert|refute|expect|must_|wont_)/) ||
+        line.match?(IDENTITY_COMPARISON)
     end
   end
 
