@@ -136,7 +136,18 @@ pub4_source_ceilings:
   # a rule => count hash. The test holds that a total-only baseline says
   # attribution is unavailable rather than "no rule moved", which are different
   # claims and the confusion the old format could not avoid.
-  MASTER: 1047
+  # 1047 -> 1049 restores lib/review/scan/constitution_triage.rb and its test.
+  # e3489813c deleted both as unused while the Rakefile was calling the class,
+  # which left `rake constitution` -- and so `rake audit` and `bin/check
+  # --profile=full` -- dead at LoadError. This ceiling was recorded after that
+  # deletion, so the two files are room this change has to account for rather
+  # than room it is taking back.
+  #
+  # To 1049 and not to 1064, on the grounds the 1044 note above already states:
+  # the rest is growth this change did not make and cannot explain, and raising
+  # to swallow it is what this file's header forbids. The row stays red on the
+  # overage that is actually unexplained.
+  MASTER: 1049
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
   # it belongs beside the other probes and folds into nothing.
