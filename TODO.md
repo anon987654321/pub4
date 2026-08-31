@@ -407,6 +407,38 @@ rather than theirs — `Rule#check` calls `Prism.parse` per rule, so a file is
 parsed 128 times. The parse cache in "larger AST work" below is the fix, and it
 would pay for far more than these four.
 
+### The loudest scanner rules were reading their own comments — closed 2026-08-31
+
+With the boot and routing fixes above the scanner runs again, so a full census
+was possible for the first time in a while — driven per file around the
+non-termination bug above (`Scanner#scan` direct, not the CLI, which still hangs
+at the stage timeout). 3,597 files across the four trees, 28,378 rule firings,
+141 of 142 rules firing. But the source line under each hit says most of it is
+instrument: sampled, the top rules land on prose. `magic_number` (6,318) matched
+every two-digit run in a comment — `# measured across 596 findings` — and
+`future_tense` (1,888) every "would"/"could" in a rationale note. Two rules,
+about a third of everything reported.
+
+The cause was one method. `magic_number` and `future_tense` are `learned_smells`
+in `rules.yml`, run by `meta_rules.rb#findings_for_smell`, which matched each
+regex against raw lines. `veto_patterns` and the declarative lexical bridge both
+read `without_comment_lines` for exactly this reason; the learned-smell path did
+not. Fixed at `e447f9b69` with an opt-in `skip_comments` flag that blanks
+comment-only lines before matching, set on those two. Opt-in, not default,
+because `trailing_ws` is a learned smell too and must read the raw line — a
+default-mask draft blanked comments to spaces and ballooned `trailing_ws` on
+postpro.rb from ~0 to 967. postpro.rb went 371 → 302 findings, `magic_number`
+141 → 90 (the rest are real code numbers). `test_scan_rule_false_positives`
+carries both directions plus the whitespace guard.
+
+Two of the four loudest are still raw: `DOUBLE_QUOTES_RUBY` and `SIMULATION` fire
+on single-quotes and modal verbs inside *string literals*, which `without_comment_lines`
+does not reach — a string-aware mask is the next step. And `magic_number`'s
+`(?<!= )` lookbehind makes it skip the one genuine case, an assigned literal
+(`x = 3600`), while flagging prose; dropping that lookbehind is a scope-widening
+change kept out of the noise fix. **agent-ignore** the comment-sited counts on any
+scan taken before `e447f9b69`.
+
 ### Tag Legend
 
 - **agent-ignore** — do not chase during narrow patches (constitution scan noise, horizon features).
