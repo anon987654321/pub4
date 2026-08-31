@@ -20,8 +20,13 @@ renamed.
 | `OPENBSD/` | The deploy pipeline and the VPS runbook. Production is one box, `vm23`. | `MASTER/bin/pub4 vps state` |
 | `STUDIO/` | Media tools. **dilla** makes beats, **postpro** grades images, **repligen**/**lora** generate. | `ruby STUDIO/dilla/dilla.rb` |
 
-Nothing else sits at the repo root but this file and `TODO.md`, the single
-repo-wide backlog (every per-tree debt/TODO/blocker list was folded into it).
+Nothing else sits at the repo root but this file, `TODO.md` — the single
+repo-wide backlog (every per-tree debt/TODO/blocker list was folded into it) —
+and `WISHLIST.md`, the forward-work companion `TODO.md` points at. Build output
+never sits at the root whatever the tool's default: dilla writes to `$PWD`
+unless `DILLA_OUTPUT_DIR` says otherwise, and one session's renders lived at the
+root for weeks because of it. They belong under
+`STUDIO/dilla/renders/<seed>/`.
 
 ## Commands
 

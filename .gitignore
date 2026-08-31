@@ -137,8 +137,20 @@ STUDIO/dilla/project/learnings/vocals/**/*.wav
 STUDIO/dilla/project/learnings/vocals/**/*.flac
 STUDIO/dilla/project/learnings/vocals/**/*.raw
 
-# Engine output
-STUDIO/dilla/renders/
+# Engine output. The audio under renders/ is NOT tracked -- a render reproduces
+# from its seed and the repo is not where 15MB takes belong, the same split the
+# vocals section above makes. The record of a render IS tracked: the .dilla
+# sidecars, the quality.json measurement, the stem motifs/session json, and the
+# README saying what a session directory is.
+#
+# A full session sat at the repo root until 2026-08-31, which is how the
+# root-invariant rule in CLAUDE.md learned about renders at all: dilla writes to
+# $PWD unless DILLA_OUTPUT_DIR says otherwise.
+STUDIO/dilla/renders/**
+!STUDIO/dilla/renders/**/
+!STUDIO/dilla/renders/**/*.md
+!STUDIO/dilla/renders/**/*.json
+!STUDIO/dilla/renders/**/*.dilla
 STUDIO/dilla/demo*.wav
 STUDIO/dilla/demo*.mp3
 # No rendered audio is tracked, demo.mp3 and RELEASE.mp3 included (operator,
