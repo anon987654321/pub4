@@ -40,6 +40,8 @@ class TestEcosystemFeatures < Minitest::Test
     infra = { session: Master::Trace::Session.new, config: {}, root: Master::ROOT, bus: nil }
     ai = { agent: nil }
     registry = Master::CLI::CommandRegistry.build(infra:, ai:, root: Master::ROOT)
-    assert_equal %w[clear commit doctor help model pair rollback status through undo], registry.keys.sort
+    # /why joins the surface: its handler, its Trace::WhyExplainer and its place
+    # in the next-action chips all existed; only the registration was missing.
+    assert_equal %w[clear commit doctor help model pair rollback status through undo why], registry.keys.sort
   end
 end

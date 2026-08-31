@@ -171,11 +171,14 @@ module Master
         puts @refs.renderer.render("  next: #{chips.join(" ")}", mode: :dim)
       end
 
+      # Only commands the registry answers. This offered [/fix], [/why] and [/last]
+      # unconditionally and three of the four were unknown commands, so the line
+      # whose whole job is to name the next open door named three closed ones.
+      # Filtering against the live list keeps it honest as commands move.
       def next_action_chips
-        base = ["[/undo]", "[/why]", "[/last]"]
+        offered = %w[fix undo why last].select { |name| SLASH_COMMANDS.include?("/#{name}") }
         current = violations_count
-        base.unshift("[/fix #{current}v]") if current.positive?
-        base
+        offered.map { |name| name == "fix" ? "[/fix #{current}v]" : "[/#{name}]" }
       end
 
       def violations_count

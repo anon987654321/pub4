@@ -45,6 +45,7 @@ module Master
           "model" => command(:dispatch_model, d[:agent], d[:config], d[:metrics], d[:root]),
           "pair" => command(:dispatch_pair, root),
           "doctor" => command(:dispatch_doctor, root),
+          "why" => command(:dispatch_why, d[:agent], d[:root]),
           "help" => command(:help_text, nil),
         }
       end

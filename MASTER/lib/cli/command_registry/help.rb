@@ -45,6 +45,11 @@ module Master
           summary: "clear the session transcript",
           detail: ["/clear — does not undo file changes."],
         },
+        "why" => {
+          summary: "what a rule says, and where it comes from",
+          detail: ["/why <law|scan_rule|anti_pattern|style.key> — Trace::WhyExplainer looks it",
+                   "up in law/ and data/rules.yml, and asks the model only when nothing matches."],
+        },
       }.freeze
 
       def help_text(command = nil)
