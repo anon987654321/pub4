@@ -50,7 +50,7 @@ def check_relayd(failures)
   failures << "relayd: master backend missing" unless relayd.include?("forward to <master>")
 
   # Source master port from inventory instead of magic number
-  master_port = 53187 # default fallback
+  master_port = 53_187 # default fallback
   if File.file?(master_json)
     master_entry = standalone.find { |e| e["name"] == "master" }
     master_port = master_entry["port"] if master_entry
