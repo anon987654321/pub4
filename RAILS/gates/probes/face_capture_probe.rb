@@ -34,7 +34,7 @@
 #      window._primerFired, and the page exposes its own opener at line 289 --
 #      window.__MASTER_PRIMER_TAP__. So no trusted event is needed and calling
 #      that function is the honest way in. (A keypress is kept as a fallback,
-#      and Input.dispatchKeyEvent IS trusted, which matters for anything really
+#      and Input.dispatchKeyEvent IS trusted, which matters for anything
 #      gated on user activation -- audio -- but WebGL here is not.)
 #
 #   2. Headless Chrome has no GPU. Even once the gate lifts, context creation
@@ -77,7 +77,7 @@ Deploy::CdpSession.open(webgl: true, timeout: options[:timeout]) do |cdp|
   cdp.navigate(url, settle: 0.6)
 
   state = lambda do
-    JSON.parse(cdp.evaluate(<<~JS).to_s)
+    JSON.parse(cdp.evaluate(<<~JS).to_s) # scan: intentional — a CDP probe evaluates JavaScript by definition
       (function(){
         // window.MASTER_FACE, not window.face. Reading the wrong global gives
         // undefined for both fields, which reads as "no renderer, no frames" --
@@ -111,7 +111,7 @@ Deploy::CdpSession.open(webgl: true, timeout: options[:timeout]) do |cdp|
   # for keydown (index.html.erb:305, :309), and Input.dispatchKeyEvent IS
   # trusted, which matters for anything genuinely gated on user activation --
   # audio, for one -- even though WebGL here is not.
-  tapped = cdp.evaluate(<<~JS).to_s
+  tapped = cdp.evaluate(<<~JS).to_s # scan: intentional — a CDP probe evaluates JavaScript by definition
     (function(){
       var go = window.__MASTER_PRIMER_TAP__ || window.__MASTER_PRIMER_GO__;
       if (typeof go === "function") { go(); return "called"; }

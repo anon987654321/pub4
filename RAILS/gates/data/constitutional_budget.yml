@@ -26,9 +26,9 @@ targets:
   # `return … if` misread; the two flagged `system(...)` calls use the safe
   # arg-array form). Chasing them is explicitly not the goal; the ratchet still
   # guards against the next regression.
-  # RATCHETED 2026-08-03 (2833s, all four targets): brgen 411 -> 329, amber
-  # 207 -> 164, bsdports 100 -> 95, shared 213 -> 182. Nothing was fixed to earn
-  # these; the 2026-08-02 numbers were recorded from a run in which amber never
+  # The four targets below (brgen 329, amber 164, bsdports 95, shared 182) are
+  # measured values from a 2833s run over all four, not values anything was
+  # fixed to earn. The numbers they replaced came from a run in which amber never
   # scanned. The gate grepped its whole output for LoadError/SyntaxError/
   # uninitialized constant/No such file BEFORE reading the violation count, so a
   # *finding* quoting one of those phrases read as a crash of the scan itself.

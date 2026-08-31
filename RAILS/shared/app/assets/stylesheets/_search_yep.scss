@@ -44,6 +44,20 @@
   border-radius: 16px;
 }
 
+/* The pen's `.search.active #live_results`. Its results are anchors stacked
+   inside the box, sharing its surface, divided from the input by one rule and
+   aligned to the input's own 24px gutter. :not(:empty) because .active is set
+   from the result count and the suggestion slot can be empty at that moment —
+   a border on an empty div is a stray line under the input. */
+.search.active #search_suggestions:not(:empty) {
+  border-top: 1px solid #ccc;
+  padding: 0 24px;
+}
+
+.search.active #search_suggestions:not(:empty) a {
+  display: block;
+}
+
 
 
 /* Map existing live-search markup onto the same surface. */

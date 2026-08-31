@@ -36,10 +36,15 @@
     </div>
   <% end %>
   <span class="visually-hidden" role="status" aria-live="polite" data-live-search-target="status"></span>
-</div>
 
-<div id="search_suggestions">
-  <% if local_assigns.fetch(:show_suggestions, true) && respond_to?(:search_suggestions) && search_suggestions.present? %>
-    <%= render "shared/search_suggestions", suggestions: search_suggestions %>
-  <% end %>
+  <%# Inside .search, not beside it: the pen fuses the results into the box when
+      it is active, which is what the 30px pill collapsing to a 16px rectangle
+      is for. Sitting outside, the radius change had nothing to open onto. The
+      id is unchanged — live_searchable.rb replaces this node by id over Turbo
+      Stream, and a nested target replaces the same. %>
+  <div id="search_suggestions">
+    <% if local_assigns.fetch(:show_suggestions, true) && respond_to?(:search_suggestions) && search_suggestions.present? %>
+      <%= render "shared/search_suggestions", suggestions: search_suggestions %>
+    <% end %>
+  </div>
 </div>
