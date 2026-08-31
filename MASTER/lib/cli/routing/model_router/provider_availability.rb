@@ -54,6 +54,18 @@ module Master
             Array(@rules.dig("models", "grok_primary")).filter_map { |m| m["id"] }
           end
 
+          # agy ids are not API models. They name the Antigravity CLI, which is
+          # reached by executing a binary, so on a machine without one they can
+          # only be failed over. They arrive in the chain from four tables —
+          # every models.* tier, grok_primary, the auth lanes and primary_models
+          # — so the question is asked once, where the chain is assembled, next
+          # to the same question about web chat.
+          def unreachable_agy?(id)
+            return false if agy_cli_available?
+
+            id.to_s.start_with?("agy:") || id.to_s == "agy"
+          end
+
           def grok_api_available?
             Master.api_key_present?("XAI_API_KEY") || Master.api_key_present?("OPENROUTER_API_KEY")
           end

@@ -76,9 +76,20 @@ module Master
 
     # Head of models.grok_primary — the declared :free pool this runtime routes
     # first when an OpenRouter key is present.
+    #
+    # Skipping the agy entries is not a preference, it is reachability. That
+    # pool now leads with agy:auto, which is not an API model at all but the
+    # Antigravity CLI, reached by executing a binary. The only caller is
+    # default_model, and it reaches this line *after* `return "agy:auto" if
+    # agy_cli_available?` has already declined — so every call that got here was
+    # a call on a machine with no agy binary, and it answered "agy:auto"
+    # regardless. ProviderAvailability#grok_api_models had the same hole by a
+    # different path.
     def free_primary_model(root: ROOT)
-      @free_primary_model ||= load_yaml(File.join(root, "data", "models.yml"))
-                              .dig("models", "grok_primary")&.first&.fetch("id")
+      @grok_primary_ids ||= Array(load_yaml(File.join(root, "data", "models.yml"))
+                                    .dig("models", "grok_primary")).filter_map { |model| model["id"] }
+      reachable = agy_cli_available? ? @grok_primary_ids : @grok_primary_ids.grep_v(/\Aagy(?::|\z)/)
+      reachable.first
     end
 
     def api_key_specs(root: ROOT)
@@ -88,7 +99,7 @@ module Master
     def api_key_present?(env_var, root: ROOT)
       spec = api_key_specs(root:).find { |_attr, candidate, _minimum| candidate == env_var }
       minimum = spec ? spec.last : MIN_API_KEY_LENGTH_HEURISTIC
-      ENV[env_var].to_s.length >= minimum
+      key_present?(ENV[env_var], minimum)
     end
 
     def agy_cli_available?
@@ -118,7 +129,7 @@ module Master
     def any_api_key_present?
       return true if agy_cli_available?
 
-      api_key_specs.any? { |_attr, env_var, minimum| ENV[env_var].to_s.length >= minimum }
+      api_key_specs.any? { |_attr, env_var, minimum| key_present?(ENV[env_var], minimum) }
     end
 
     def context_window(model = nil, root: ROOT)
@@ -146,10 +157,30 @@ module Master
 
     private
 
+    # An unset env var is never a key. Written as a bare length test this read
+    # `"".length >= 0`, so a provider declaring `min_key_length: 0` reported a
+    # key present on every boot and any_api_key_present? could not return false:
+    # keyless mode never engaged and the no_api_key path was unreachable.
+    def key_present?(value, minimum)
+      key = value.to_s
+      !key.empty? && key.length >= minimum
+    end
+
+    # A providers.yml row can name a ruby_llm_key this gem version has no setter
+    # for. Sending it anyway raises NoMethodError inside RubyLLM.configure, which
+    # aborts the whole runtime boot over one dormant provider. Skip it, and say
+    # which key was ignored rather than failing silently.
     def apply_api_keys(config)
       api_key_specs.each do |attribute, env_var, minimum|
-        key = ENV[env_var].to_s
-        config.public_send("#{attribute}=", key) if key.length >= minimum
+        next unless key_present?(ENV[env_var], minimum)
+
+        setter = "#{attribute}="
+        unless config.respond_to?(setter)
+          warn("providers.yml: RubyLLM has no #{setter} — #{env_var} ignored")
+          next
+        end
+
+        config.public_send(setter, ENV[env_var].to_s)
       end
     end
 

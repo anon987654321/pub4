@@ -62,6 +62,7 @@ module Master
                   else
                     (paid_or_subscription + [pref] + all + continuity_models + [@config.model]).uniq
                   end
+          chain = chain.reject { |id| unreachable_agy?(id) }
           chain = Ground::ModelSkipCache.filter(chain)
           ranked = @provider_health ? @provider_health.rank(chain) : chain
           Ground::ModelSkipCache.filter(ranked)

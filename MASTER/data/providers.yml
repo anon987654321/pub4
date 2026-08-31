@@ -1,9 +1,13 @@
 ---
 schema: 1
+# agy is the Antigravity CLI, not a RubyLLM provider: `command` is how it is
+# reached and AGY_BIN/ANTIGRAVITY_BIN name a binary, not an API key. It carries
+# no `ruby_llm_key` for that reason. It used to carry `agy_api_key`, which is
+# not an attribute RubyLLM::Configuration has, so apply_api_keys raised
+# NoMethodError on every boot and nothing in MASTER started. Availability is
+# Master.agy_cli_available?, which looks for the executable.
 agy:
   env: [AGY_BIN, ANTIGRAVITY_BIN]
-  ruby_llm_key: agy_api_key
-  min_key_length: 0
   command: agy
   strengths: [reasoning, coding, long_context, multimodal, agentic]
   default_model: agy:auto

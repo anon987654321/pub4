@@ -10,10 +10,17 @@ class TestKeylessRouting < Minitest::Test
     @saved_env = %w[
       XAI_API_KEY OPENROUTER_API_KEY ANTHROPIC_API_KEY OPENAI_API_KEY
       DEEPSEEK_API_KEY GOOGLE_API_KEY GEMINI_API_KEY MISTRAL_API_KEY
-      MASTER_KEYLESS MASTER_WEB_CHAT MASTER_NO_CLAUDE_CLI
+      MASTER_KEYLESS MASTER_WEB_CHAT MASTER_NO_CLAUDE_CLI MASTER_NO_AGY_CLI
     ].to_h { |key| [key, ENV[key]] }
     @saved_env.each_key { |key| ENV.delete(key) }
+    # Both CLIs, not just one. default_model returns "agy:auto" before it
+    # looks at any key, and any_api_key_present? is true whenever the
+    # Antigravity binary is on PATH — so every assertion in this file about
+    # having no provider passed or failed according to whether the machine
+    # running it happened to have agy installed. All four failed here and
+    # passed in CI, which is the worst way for a test to be wrong.
     ENV["MASTER_NO_CLAUDE_CLI"] = "1"
+    ENV["MASTER_NO_AGY_CLI"] = "1"
   end
 
   def teardown
