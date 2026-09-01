@@ -88,7 +88,10 @@ Two things the old split was carrying, and where each went:
 What the merge removed, beyond a directory: `MASTER/bin/master-core` put `core/`
 on `$LOAD_PATH` and called `require "master"`, so which of the two `master.rb`
 files won was decided by load-path order. `bin/nsaudit` had to hand-require the
-second spine so the first one's constants would resolve. Both are gone.
+second spine so the first one's constants would resolve. The two files survive
+but as nothing special: the dangerous half of each — the `unshift "../core"`
+that made the load-path order decide the winner — is gone, and both are now the
+ordinary `lib/core.rb` entrypoint.
 
 `lib_code_ceiling` was rebaselined 38285 → 38811 and **not** recorded as a
 raise: 554 code lines moved in, `lib/` reports +526, so excluding the moved

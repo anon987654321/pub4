@@ -118,7 +118,6 @@ module Master::Core
 
       # Model-chosen env used to ride through (LD_PRELOAD, PATH, …). The
       # constitution only inspects argv. Inherit nothing from the effect.
-      _ignored_env = env
       seconds = timeout.to_i
       seconds = EXEC_TIMEOUT if seconds <= 0 || seconds > EXEC_TIMEOUT
 
@@ -299,11 +298,6 @@ module Master::Core
       raw ? out : out.strip
     end
 
-    def apply_patch(patch)
-      out, status = bounded_capture2e("git", "-C", @root, "apply", "--binary", "-", stdin_data: patch)
-      raise out.strip unless status.success?
-    end
-
     private
 
     # Bounded subprocess call with a hard timeout, which means killing the child
@@ -371,14 +365,6 @@ module Master::Core
       false
     rescue Errno::ECHILD
       true
-    end
-
-    # Bounded like every other git call here. This is rollback's no-HEAD path;
-    # leaving it on raw Open3 meant a wedged git could hang rollback forever,
-    # which is exactly the failure the bound exists to prevent.
-    def apply_patch_reverse(patch)
-      out, status = bounded_capture2e("git", "-C", @root, "apply", "--reverse", "--binary", "-", stdin_data: patch)
-      raise out.strip unless status.success?
     end
 
     # Only a write names its target up front. exec can touch anything, and git
