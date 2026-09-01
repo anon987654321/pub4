@@ -45,9 +45,6 @@
   --bar-height: 44px;
   --hud-tier-status: calc(var(--face-bar-height) + var(--safe-bottom) + 8px);
   --hud-tier-caption: calc(var(--face-bar-height) + var(--safe-bottom) + var(--tap-min));
-  /* canvas-only knobs: read via getComputedStyle in face.runtime.js, not consumed by any CSS rule below */
-  --face-particle-size: 0.019;
-  --face-glow-scale: 1.22;
   --face-phosphor-decay: 0.80;
   --transition-fast: 180ms;
   --transition-normal: 300ms;

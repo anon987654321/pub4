@@ -219,8 +219,8 @@ face_root:
     # Additive-blending budget: ~17k points; raising size/glow/decay together
     # (the 2026-07-09 "pristine detail tier": 0.024/1.38/0.88) overflows the
     # framebuffer into a solid white oval. These are the last-known-good values.
-    face-particle-size: "0.019"
-    face-glow-scale: "1.22"
+    # Particle size was fixed at one pixel (FACE_POINT_IS_ONE_PIXEL); the
+    # additive glow pass was retired, so neither is a runtime-read token.
     face-phosphor-decay: "0.80"
     transition-fast: "180ms"
     transition-normal: "300ms"
