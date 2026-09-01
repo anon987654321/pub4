@@ -1,11 +1,5 @@
 ---
-# Top-level data keys no code names. Measured by tools/data_reach.rb.
-#
-# 46 -> 44 for recovery_pub.yml's source_repo and target_repo, declared
-# identically in data/recovery/legacy_manifest.yml and read by nothing in either
-# tree. A ceiling above the real count is room the next change grows into
-# without failing anything, so it follows the number down.
-unnamed: 44
+unnamed: 43
 members:
 - agent_taxonomy.yml#toolset_groups
 - attention_context.yml#runtime_uses
@@ -35,7 +29,6 @@ members:
 - providers.yml#mistral
 - recovery_pub.yml#agent_prompt
 - recovery_pub.yml#layout_note
-- rule_hygiene.yml#cross_population_duplicates
 - rules.yml#schema_metadata
 - runtime.yml#cognitive_spine
 - runtime.yml#collaboration
