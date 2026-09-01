@@ -53,7 +53,7 @@ Conceptual gaps identified during system analysis.
 - **Soul Amendment Workflow:** A formal "Constitutional Audit" process to test new `soul.yml` rules against historical commits before adoption.
 
 ## Global Federation Proposal (The "City-State" Model)
-Proposed by Ling 3.0 Flash Fin Free via OpenCode Zen to evolve pub4 from a single-box fortress to a global network.
+Proposed by Nemotron 3.5 Lightning to evolve pub4 from a single-box fortress to a global network.
 
 - **Constitution-as-a-Service:** Elevate `MASTER` to a Central Control Plane. City-boxes pull `soul.yml` and `rules.yml` via API to ensure global legal synchronization.
 - **Sovereign-Cell Architecture:** Deploy the `RAILS` stack as isolated "Cells" (one box per city). Scale by replicating cells rather than expanding a single monolith.
