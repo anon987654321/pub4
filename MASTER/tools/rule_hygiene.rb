@@ -25,7 +25,6 @@ require "json"
 module Pub4
   module RuleHygiene
     MASTER = File.expand_path("..", __dir__)
-    CEILING = File.join(MASTER, "data", "rule_hygiene.yml")
 
     module_function
 
@@ -115,7 +114,10 @@ module Pub4
            .sort_by { |h| h[:rule] }
     end
 
-    def ceilings = YAML.safe_load_file(CEILING)
+    def ceilings
+      master_rules # boots the runtime, so Master.law resolves
+      Master.law("rule_ratchets", root: MASTER).fetch("hygiene")
+    end
 
     def report
       { id_case_collisions: id_case_collisions,

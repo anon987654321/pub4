@@ -1,6 +1,0 @@
-# Registry rules carrying no fires:/does_not_fire: worked example, counted by
-# test/test_rule_fixtures.rb. law/ rules cannot load without fixtures; these
-# can, which is where every instrument defect this campaign found was hiding.
-# The number only ratchets down: a new RuleDSL rule must carry its examples,
-# and retro-fitting one lowers this by hand.
-without_fixtures: 91

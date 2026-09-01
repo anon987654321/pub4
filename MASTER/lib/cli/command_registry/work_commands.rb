@@ -245,7 +245,7 @@ module Master
           rule = rule_class.new
           rule.id.upcase
         end.uniq
-        graph = (Master.load_yaml(File.join(root, "data", "rule_deps.yml")) || {})["deps"] || {}
+        graph = Master.law("rule_deps", root:)
         graph_after_rules = graph.values.flat_map { |v| Array(v["after"]) }
         graphed = (graph.keys + graph_after_rules).map(&:to_s).uniq
         (registered - graphed).sort

@@ -61,7 +61,7 @@ module Master
             .map { |klass| RuleFactory.build(klass, root: @root).id.to_s }
             .to_set
           registry = registry.map { |id| id.to_s.downcase }.to_set
-          deps = Master.load_yaml(File.join(@root, "data", "rule_deps.yml")).dig("deps") || {}
+          deps = Master.law("rule_deps", root: @root)
           graphed = deps.keys.map { |k| k.to_s.downcase }.to_set
           registry.reject { |id| graphed.include?(id) }.sort
         end

@@ -88,6 +88,13 @@ module Pub4
 
     module_function
 
+    # Read through Master.law so this file gains no loader of its own; `law`
+    # below has already required the runtime by the time anything asks.
+    def ceilings
+      law
+      ::Master.law("rule_ratchets", root: MASTER).fetch("audit")
+    end
+
     def law
       unless defined?(::Law)
         require File.join(MASTER, "lib", "master")

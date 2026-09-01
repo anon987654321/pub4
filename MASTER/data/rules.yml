@@ -4175,3 +4175,221 @@ markdown_style:
     - irregular composition — vary heading levels and paragraph length
     - negative space is structure, not waste
     - concrete over ornament; delete anything decorative
+
+# The dependency graph FixLoop's topological sort reads. A rule under `after`
+# must not run before its dependencies finish, or one rule's fix reintroduces
+# another's violation.
+#
+# A rule listed under 'after' must not run before all its dependencies complete.
+# This prevents fix cascades where rule A's fix re-introduces rule B's violation.
+
+rule_deps:
+
+  # Structural operations: flatten nesting before decoupling (flattening
+  # exposes the hidden coupling that DECOUPLE then targets).
+  DECOUPLE:
+    after: [FLATTEN, LINEARITY]
+
+  # Hoist constants before merge — merged code references the hoisted constant.
+  MERGE:
+    after: [HOIST_CONSTANTS, HOIST]
+
+  # Kill dead code before defrag — defragging dead code wastes effort.
+  DEFRAG:
+    after: [DEAD_CODE, SPECULATIVE_GENERALITY]
+
+  # Fix small-files violations before feature_envy — moving a method to
+  # its right class only makes sense when both files are well-sized.
+  FEATURE_ENVY:
+    after: [SMALL_FILES, SMALL_FUNCTIONS]
+
+  # Remove data clumps before primitive obsession — bundling into objects
+  # subsumes the primitive check.
+  PRIMITIVE_OBSESSION:
+    after: [DATA_CLUMPS]
+
+  # Fix switch statements (type dispatch) after removing middle men —
+  # middle men often hide the type dispatch.
+  SWITCH_STATEMENTS:
+    after: [MIDDLE_MAN]
+
+  # Comment drift after all structural changes — restructured code needs
+  # comment review, not before.
+  COMMENTS_AS_DEODORANT:
+    after: [DEFRAG, MERGE, FLATTEN, EXTRACT]
+
+  # Strunk rules after all structural operations — prose quality is a
+  # final-pass concern.
+  OMIT_NEEDLESS:
+    after: [DEFRAG, REFLOW]
+  ACTIVE_VOICE:
+    after: [OMIT_NEEDLESS]
+  PARALLEL_STRUCTURE:
+    after: [ACTIVE_VOICE]
+
+  # Reflow after all density changes.
+  REFLOW:
+    after: [MERGE, FLATTEN, DEFRAG]
+
+  # Bayesian/RL priors updated last — they need the post-fix violation
+  # counts from all other rules.
+  PATTERN_EXTRACTION:
+    after: [DEFRAG, MERGE, DECOUPLE, FLATTEN]
+
+  # Scanner rule ordering — structural before style, security before polish.
+  bare_rescue:
+    after: [fail_visibly]
+  silent_rescue:
+    after: [bare_rescue]
+  god_class:
+    after: [small_functions, nesting_depth]
+  long_method:
+    after: [nesting_depth]
+  n_plus_one:
+    after: [find_each]
+  yaml_declarative:
+    after: [semantic]
+  veto_patterns:
+    after: [yaml_declarative]
+  semantic:
+    after: [rubocop, reek]
+  adversarial:
+    after: [semantic, comment_drift]
+  comment_drift:
+    after: [ast_omission]
+  ast_omission:
+    after: [co_change_coupling]
+  co_change_coupling:
+    after: [interconnect]
+  interconnect:
+    after: [rule_coverage]
+  DRY:
+    after: [MERGE, DEFRAG]
+  KISS:
+    after: [FLATTEN, long_method]
+  SRP:
+    after: [FEATURE_ENVY, god_class]
+  CQS:
+    after: [SRP]
+
+  # SOLID literal proxies (OPEN_CLOSED/LISKOV/INTERFACE_SEGREGATION/
+  # DEPENDENCY_INVERSION): all judge class/method boundaries, so they must
+  # not run before SRP settles what "one class" even means here.
+  OPEN_CLOSED:
+    after: [SRP]
+  LISKOV:
+    after: [SRP, god_class]
+  INTERFACE_SEGREGATION:
+    after: [SRP]
+  DEPENDENCY_INVERSION:
+    after: [FEATURE_ENVY, SRP]
+  html_lang:
+    after: [meta_charset]
+  no_inline_styles:
+    after: [magic_color]
+
+# What the audits of the rules themselves are allowed to find.
+#
+# Four files held these — rule_audit.yml, rule_hygiene.yml, rule_reach.yml and
+# rule_fixture_debt.yml — one ceiling apiece, beside the rules they measure but
+# not with them. Named rule_ratchets rather than rule_ceilings because
+# design_baseline.yml already owns that key and lint:data_singularity refuses
+# one top-level key in two data files; ratchet is also the truer word.
+#
+# Every reader already loads this file or boots the runtime that does, so they
+# are read through Master.law and add no second loader.
+rule_ratchets:
+  audit:
+    # Ceilings for tools/rule_audit.rb — the audit of the rules, not of the tree.
+    #
+    # blind and saturated are 0 and must stay 0. They are not a backlog: a rule whose
+    # fixtures only pass because a fixture is read differently from a real file, or
+    # one that flags most of what it reads, produces findings that mean nothing, and
+    # it looks green from the inside. FROZEN_STRING_LITERAL sat at 423 of 423 while
+    # passing prove! at every boot.
+    #
+    # silent is a real number and it moves in both directions. A rule that fires on
+    # nothing here is usually a CSS or JavaScript law over a mostly-Ruby corpus,
+    # which is a property of the sample rather than of the rule — so it is recorded
+    # rather than fixed, and it moves when the corpus or the rule set does. It is a
+    # ceiling so that a rule going quiet is visible; it is not evidence of a defect
+    # on its own.
+    #
+    # 19 -> 24 as the tree got cleaner, which is the direction this counter cannot
+    # read. MEANINGFUL_NAMES, WHY_NOT_WHAT, NO_COLUMN_ALIGN, STRICT_LOADING_MISSING
+    # and NO_CHANGELOG_COMMENT all stopped finding anything because their findings
+    # were fixed or their detector was narrowed to what it is actually about — and
+    # a rule that finds nothing because nothing is left is the goal. Read the names
+    # before reading the number.
+    #
+    # NO_CHANGELOG_COMMENT held exactly three hits in this corpus, one each in
+    # rescue_handlers.rb, prune_guest_users_job.rb and _responsive.scss. All three
+    # said what the code used to be; each now states why it is what it is.
+    #
+    # 25 -> 23 by widening the corpus to MASTER/web/public/*.js rather than by
+    # touching a rule. FACE_POINT_IS_ONE_PIXEL and NO_WEBGL_GLOW_PASS govern those
+    # files and nothing else, and the corpus stopped at RAILS's Stimulus
+    # controllers — so the audit called two laws silent without having opened a
+    # file either one judges. Both are still silent, because the face obeys them.
+    # The two that came off the list are NO_VAR and NO_COLUMN_ALIGN, which were
+    # never silent: viewport_inset.js declares seven `var`s, and chat.js,
+    # codebase.js, face.runtime.js and face_semantics.js align their assignments
+    # into columns. That is the same shape as the scss glob fixed earlier — a law
+    # judged against no file of its own is untested, not clean.
+    blind: 0
+    saturated: 0
+    # 23 -> 24 is NOISE_NAME, and it is the good direction. Identified by running
+    # this audit at b81baea1c — the commit that recorded 23 — and diffing the two
+    # name lists, because the ceiling is a bare integer and "over by one" otherwise
+    # names nothing. Nothing else moved: no rule left the silent set.
+    #
+    # It is silent because the tree obeys it. Verified rather than assumed, since a
+    # broken detector reads identically from here: it still fires on `class Manager`
+    # and `module Utils`, and stays correctly quiet on `class PaymentHelper` and
+    # `class SubscriptionBilling`, which is the domain-qualifier exemption the law
+    # documents. A grep for its pattern over MASTER, RAILS, OPENBSD and STUDIO finds
+    # no match in ordinary source at this commit or at b81baea1c.
+    #
+    # What is NOT established: which file it last fired on. The corpus moved 696 ->
+    # 709 files and the detector set 74 -> 75 between the two commits, so this is
+    # churn in the sample as much as in the tree, and the exact departure was not
+    # chased. The header above already says a silent rule is a property of the
+    # sample as often as of the rule, and is not evidence of a defect on its own.
+    silent: 24
+
+
+  hygiene:
+    # Ceilings for tools/rule_hygiene.rb.
+    #
+    # id_case_collisions: bare_rescue/BARE_RESCUE and eight_px_rhythm/EIGHT_PX_RHYTHM.
+    # Two ids differing only by case are two rules to a registry and one rule to a
+    # reader, so findings, priors and exemptions split across the pair.
+    #
+    # alias_shadows_live_rule: DRY claims duplicate_code, which is still its own
+    # rule. One of the two is a fold nobody finished; closing it means deleting the
+    # absorbed rule or dropping the alias, and that is a decision per pair.
+    #
+    # missing_metadata: 16 rules declare neither tier nor severity, so every count
+    # that groups by either omits them without saying so. It was 43 until the 27
+    # operator_principles entries moved to soul.yml, where conduct belongs and where
+    # a tier and a severity were never the right shape for them.
+    id_case_collisions: 2
+    alias_shadows_live_rule: 1
+    missing_metadata: 16
+
+    # cross_population_duplicates: one id defined in two places, in two wordings,
+    # with no way to tell which governs. FAIL_VISIBLY had three. Resolve one by
+    # keeping the wording where the detector is; a population that only restates it
+    # is the copy.
+    cross_population_duplicates: 21
+
+  reach:
+    unreachable: 56
+
+  fixture_debt:
+    # Registry rules carrying no fires:/does_not_fire: worked example, counted by
+    # test/test_rule_fixtures.rb. law/ rules cannot load without fixtures; these
+    # can, which is where every instrument defect this campaign found was hiding.
+    # The number only ratchets down: a new RuleDSL rule must carry its examples,
+    # and retro-fitting one lowers this by hand.
+    without_fixtures: 91

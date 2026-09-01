@@ -21,7 +21,7 @@ require "json"
 module Pub4
   module RuleReach
     MASTER_DIR = File.expand_path("..", __dir__)
-    CEILING = File.join(MASTER_DIR, "data", "rule_reach.yml")
+    CEILING = File.join(MASTER_DIR, "data", "rules.yml")
 
     module_function
 
@@ -85,7 +85,10 @@ module Pub4
 
     def unreachable(all = rules) = all - mechanical(all) - prompted(all)
 
-    def ceiling = File.exist?(CEILING) ? YAML.safe_load_file(CEILING).fetch("unreachable", 0) : 0
+    def ceiling
+      rules # boots the runtime, so Master.law resolves
+      Master.law("rule_ratchets", root: MASTER_DIR).dig("reach", "unreachable") || 0
+    end
 
     def run(ratchet: false, json: false)
       all = rules
@@ -115,7 +118,14 @@ puts "rule_reach: raise its severity so the prompt keeps it, give it a detect_le
     end
 
     def record(count)
-      File.write(CEILING, { "unreachable" => count }.to_yaml)
+      # A line rewrite, not a YAML dump: rules.yml is mostly the argument for
+      # its numbers, and to_yaml would write the numbers and drop the argument.
+      lines = File.readlines(CEILING)
+      i = lines.index { |line| line.match?(/^\s+unreachable: \d+\s*$/) }
+      raise "rules.yml: no rule_ratchets.reach.unreachable line" unless i
+
+      lines[i] = lines[i].sub(/\d+/) { count.to_s }
+      File.write(CEILING, lines.join)
       puts "rule_reach: recorded #{count} as the new low"
       0
     end

@@ -79,27 +79,24 @@ module Pub4
     # a row whose current IS its ceiling is a row that can never fail, which is
     # the shape of defect the rest of this file exists to catch.
     def master_yaml_rows
-      [master_row("rule_reach", "data/rule_reach.yml", "rules no configuration can run") do
+      [master_row("rule_reach", "data/rules.yml", "rules no configuration can run") do
          require File.join(MASTER, "tools/rule_reach")
-         [Pub4::RuleReach.unreachable.size, YAML.safe_load_file(File.join(MASTER, "data/rule_reach.yml")).fetch("unreachable")]
+         [Pub4::RuleReach.unreachable.size, Pub4::RuleReach.ceiling]
        end,
        # Three rows rather than one, because they are three different facts and
        # collapsing them would let a rule go blind while another stops being
        # silent and the total holds still.
-       master_row("rule_audit.blind", "data/rule_audit.yml", "rules proved on input their subjects never get") do
+       master_row("rule_audit.blind", "data/rules.yml", "rules proved on input their subjects never get") do
          require File.join(MASTER, "tools/rule_audit")
-         [Pub4::RuleAudit.audit[:fixture_blindness].size,
-          YAML.safe_load_file(File.join(MASTER, "data/rule_audit.yml")).fetch("blind")]
+         [Pub4::RuleAudit.audit[:fixture_blindness].size, Pub4::RuleAudit.ceilings.fetch("blind")]
        end,
-       master_row("rule_audit.saturated", "data/rule_audit.yml", "rules flagging most of what they read") do
+       master_row("rule_audit.saturated", "data/rules.yml", "rules flagging most of what they read") do
          require File.join(MASTER, "tools/rule_audit")
-         [Pub4::RuleAudit.audit[:saturation].size,
-          YAML.safe_load_file(File.join(MASTER, "data/rule_audit.yml")).fetch("saturated")]
+         [Pub4::RuleAudit.audit[:saturation].size, Pub4::RuleAudit.ceilings.fetch("saturated")]
        end,
-       master_row("rule_audit.silent", "data/rule_audit.yml", "rules firing on nothing in the corpus") do
+       master_row("rule_audit.silent", "data/rules.yml", "rules firing on nothing in the corpus") do
          require File.join(MASTER, "tools/rule_audit")
-         [Pub4::RuleAudit.audit[:silent].size,
-          YAML.safe_load_file(File.join(MASTER, "data/rule_audit.yml")).fetch("silent")]
+         [Pub4::RuleAudit.audit[:silent].size, Pub4::RuleAudit.ceilings.fetch("silent")]
        end,
        master_row("autofix_reach.dangling", "data/autofix_reach.yml", "rules naming a transform nothing implements") do
          require File.join(MASTER, "tools/autofix_reach")
@@ -109,15 +106,15 @@ module Pub4
          require File.join(MASTER, "tools/autofix_reach")
          [Pub4::AutofixReach.bare_true.size, Pub4::AutofixReach.ceilings.fetch("bare_true")]
        end,
-       master_row("rule_hygiene.id_case_collisions", "data/rule_hygiene.yml", "ids differing only by case") do
+       master_row("rule_hygiene.id_case_collisions", "data/rules.yml", "ids differing only by case") do
          require File.join(MASTER, "tools/rule_hygiene")
          [Pub4::RuleHygiene.report[:id_case_collisions].size, Pub4::RuleHygiene.ceilings.fetch("id_case_collisions")]
        end,
-       master_row("rule_hygiene.alias_shadows_live_rule", "data/rule_hygiene.yml", "aliases naming a rule that still exists") do
+       master_row("rule_hygiene.alias_shadows_live_rule", "data/rules.yml", "aliases naming a rule that still exists") do
          require File.join(MASTER, "tools/rule_hygiene")
          [Pub4::RuleHygiene.report[:alias_shadows_live_rule].size, Pub4::RuleHygiene.ceilings.fetch("alias_shadows_live_rule")]
        end,
-       master_row("rule_hygiene.missing_metadata", "data/rule_hygiene.yml", "rules with neither tier nor severity") do
+       master_row("rule_hygiene.missing_metadata", "data/rules.yml", "rules with neither tier nor severity") do
          require File.join(MASTER, "tools/rule_hygiene")
          [Pub4::RuleHygiene.report[:missing_metadata].size, Pub4::RuleHygiene.ceilings.fetch("missing_metadata")]
        end,

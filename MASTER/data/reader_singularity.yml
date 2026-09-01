@@ -25,7 +25,6 @@ reader_singularity:
     agent_taxonomy.yml: 2
     models.yml: 9
     patterns.yml: 7
-    rule_deps.yml: 2
     rules.yml: 10
     soul.yml: 8
     tools.yml: 2

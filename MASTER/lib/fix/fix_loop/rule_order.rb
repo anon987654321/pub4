@@ -8,7 +8,6 @@ module Master
     class FixLoop
       class RuleOrder
         TIER2_QUALITY_RULE_IDS = %w[DRY KISS SRP].freeze
-        DEPS_PATH = File.join(Master::ROOT, "data", "rule_deps.yml").freeze
         PRIORS_PATH = File.join(Master::ROOT, "data", "rules.yml").freeze
         AGE_PATH = File.join("data", "violation_age.yml").freeze
         SKIP_DIRS_RE = %r{/(\.git|vendor|tmp|var|node_modules|\.bundle|coverage|log|dist|knowledge)/}.freeze
@@ -118,8 +117,7 @@ module Master
         def load_deps
           @deps_cache ||=
             begin
-              data = Master.load_yaml(DEPS_PATH)
-              (data&.dig("deps") || {}).transform_values { |v| Array(v["after"] || []) }
+              Master.law("rule_deps").transform_values { |v| Array(v["after"] || []) }
             rescue StandardError => e
               Master::Ground::Swallow.log(e, context: "fix_loop.load_deps", event_bus: @bus)
               {}
