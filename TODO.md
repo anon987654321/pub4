@@ -2497,21 +2497,9 @@ Raised while building the audio-driven README loop and the file-discipline
 rules. Each was found by measurement, and each is left with what it would take
 to finish rather than a bare title.
 
-- **`bin/check` does not load.** `lib/review/constitution.rb:9` declares
-  `class Constitution`; `lib/review/constitution/validator.rb:5` declares
-  `module Constitution`. Both untracked, from a scanner-extraction session. The
-  whole MASTER gate is down until one of them yields, so nothing in this tree
-  can be verified at the gate — only at the unit level.
-- **`Scanner.skip_path?` is a stub returning `false`.** The extraction carried
-  it out of `scanner.rb` and a placeholder went back in, inverting the default:
-  the scanner now walks `node_modules`, `vendor` and `.cache`. Eight symbols
-  are gone from the tree — `SKIP_PATH_SEGMENTS`, `SKIP_PATH_FRAGMENTS`,
-  `SKIP_PATH_SUFFIXES`, `SKIP_PATH_PREFIXES`, `SKIP_RELATIVE_PATHS`,
-  `VENDORED_ASSET`, `relative_segments`, `relative_path`. Any recent clean scan
-  measured something other than what it claimed.
-- **`rules.yml` refactor, held.** Aggressively DRYing the 4,215-line law is
-  unverifiable while the gate is down and the scanner mis-scans. It wants both
-  entries above fixed first, then a measured pass.
+- **`rules.yml` refactor.** Aggressively DRYing the law wants a measured pass.
+  It was held while the gate was down and the scanner mis-scanned; both of
+  those closed on 2026-09-01, so the block is gone and only the work remains.
 - **Three outboard units are in no rack.** `freq_shift`, `phase_rotate` and
   `hedd_triode` are built and dispatchable in `Outboard.chain` — the `when`
   arms exist — but no rack names them, so those arms are dead. They are also
@@ -2572,6 +2560,43 @@ to finish rather than a bare title.
   139 because it is the pen's own divider. If/when the pen is re-tokenised, use
   an existing border token or a named pen token and ratchet `magic_hex` down
   with `GATE_CSS_RATCHET=1`.
+
+### From the 2026-09-01 session sweep
+
+Fifty-seven session transcripts read back against the tree, asking of each
+whether its work is present here. Almost all of it is: the 2026-08-31 tree loss
+was made good by the `pub4-rescue` snapshot, and a file-level diff of that
+snapshot against this checkout leaves nothing of substance behind. These are
+what the sweep found still open, each verified against the tree rather than
+taken from the transcript that raised it.
+
+- **Nothing watches the DR backup's freshness.** `OPENBSD/bin/dr-pull` failed
+  every night from 2026-08-26 to 2026-09-01 and no one knew: it writes a log
+  nothing reads, and its only consumer is the operator opening the directory.
+  The break itself is fixed, but the silence is the more durable defect. The
+  cheapest guard is a freshness assertion in a check that already runs — fail
+  when the newest `~/pub4-dr/<stamp>/` is older than two days. Until that
+  exists, a second week of no off-box copy looks exactly like a working one.
+- **`brgen` and `bsdports` have no authorization matrix.** `amber` has
+  `test/integration/authorization_matrix_test.rb`, built after `/items/new`
+  served an anonymous 200 with every gate green; the other two apps still rely
+  on journeys where twelve steps accept `[200, 302, 303]` — "renders the form to
+  a stranger" and "sends them to sign in" scoring the same. Port the matrix, add
+  one authenticated journey per app that writes and asserts the write landed,
+  and turn `requires_data` into a failure with a seed step rather than a skip.
+- **`bin/sine_stream.rb:967` is the last un-oversampled `asoftclip`.** Every
+  other saturation site in dilla runs `oversample=4` or `8`; this one runs the
+  ffmpeg default and aliases above Nyquist. It is left alone deliberately —
+  changing it changes how the stream sounds, which is the operator's ear and not
+  a gate's. Worth an A/B before it moves.
+- **brgen's `Gemfile.lock` says `BUNDLED WITH 2.7.2`; amber and bsdports say
+  `4.0.7`.** One fleet, two bundler majors. Harmless until the box resolves the
+  older one, which is the kind of thing that surfaces mid-deploy.
+- **The 61-track crate fetch was abandoned at 2.** `~/dilla-crate-incoming`
+  holds two FLACs and three fetch scripts from the 2026-08-31 rebuild, which
+  finished by another route — `samples/chopped/` has 162 entries. Either resume
+  that fetch deliberately or delete the staging directory; a half-finished
+  download beside a finished crate reads as the crate.
 
 ---
 
