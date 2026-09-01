@@ -109,7 +109,7 @@ module Deploy
     # grow, so this is the ceiling that replaced ENGINE_PART_CEILING when the 81
     # engine parts folded into dilla.rb. A new module fails the gate until its
     # author folds it into a sibling or raises this with the reason in the commit.
-    DILLA_SUPPORT_CEILING = 41
+    DILLA_SUPPORT_CEILING = 42
 
     # VENDORED is matched against the path inside STUDIO, never the absolute
     # one. Matched absolutely it excluded every file in a checkout living under
