@@ -176,7 +176,7 @@ Master::Review::Scan::SourceMasking.without_foreign_heredocs(base)
     # reporting no movement — a different claim.
     def recorded_by_rule = recorded["by_rule"].is_a?(Hash) ? recorded["by_rule"] : {}
 
-    def recorded_members = Array(recorded["members"])
+    def recorded_members = Array(recorded["finding_members"])
 
     # Which rules moved since the baseline, and by how much.
     def report_drift(counts)
@@ -246,10 +246,10 @@ Master::Review::Scan::SourceMasking.without_foreign_heredocs(base)
     # to_yaml dump of the ceiling eats all of it, which is how the dup_census
     # ceiling lost thirty lines of history the first time it recorded members.
     def rewritten_ceiling(total, counts, current)
-      prose = File.read(CEILING).sub(/^findings: .*\n(?:by_rule:\n(?:  \S+: \d+\n)*)?(?:members:\n(?:  - .*\n)*)?\z/, "")
+      prose = File.read(CEILING).sub(/^findings: .*\n(?:by_rule:\n(?:  \S+: \d+\n)*)?(?:finding_members:\n(?:  - .*\n)*)?\z/, "")
       by_rule = counts.sort.to_h.map { |id, n| "  #{id}: #{n}\n" }.join
       members = current.map { |m| "  - #{m}\n" }.join
-      "#{prose}findings: #{total}\nby_rule:\n#{by_rule}members:\n#{members}"
+      "#{prose}findings: #{total}\nby_rule:\n#{by_rule}finding_members:\n#{members}"
     end
   end
 end

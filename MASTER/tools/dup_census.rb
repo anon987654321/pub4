@@ -59,7 +59,7 @@ module Pub4
     # hand — the gap data_reach and self_findings both closed on 2026-08-31.
     # One line per set, its paths sorted and joined, so two runs of an
     # unchanged tree produce the same list.
-    def recorded_members = Array(recorded["members"])
+    def recorded_members = Array(recorded["duplicate_members"])
 
     def members(sets) = sets.values.map { |paths| paths.sort.join(" | ") }.sort
 
@@ -79,8 +79,8 @@ module Pub4
 # the first time this wrote members. Preserved, not regenerated.
 def rewritten_ceiling(count, member_list)
   existing = File.exist?(CEILING) ? File.read(CEILING) : "---\n"
-  prose = existing.sub(/^duplicate_sets: .*\n(?:members:\n(?:- .*\n)*)?\z/, "")
-  "#{prose}duplicate_sets: #{count}\nmembers:\n#{member_list.map { |m| "- #{m}\n" }.join}"
+  prose = existing.sub(/^duplicate_sets: .*\n(?:duplicate_members:\n(?:- .*\n)*)?\z/, "")
+  "#{prose}duplicate_sets: #{count}\nduplicate_members:\n#{member_list.map { |m| "- #{m}\n" }.join}"
 end
 
     def run(ratchet: false, list: false)

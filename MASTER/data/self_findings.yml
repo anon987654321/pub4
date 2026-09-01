@@ -38,7 +38,7 @@
 # symbol-to-proc, safe navigation, two numeric literals, and seven runs of
 # alignment spaces in STUDIO/dilla.
 findings: 151
-members:
+finding_members:
   - BARE_DIV_WRAPPER RAILS/brgen/public/dilla/dilla.html:35
   - BARE_DIV_WRAPPER RAILS/brgen/public/dilla/dilla.html:45
   - BLANK_LINE_RUN RAILS/brgen/app/views/shared/_feed_compose.html.erb:1

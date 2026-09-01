@@ -31,7 +31,7 @@
 # sortable / animated-number / character-counter set above. Measured in a
 # clean worktree after that deletion.
 duplicate_sets: 30
-members:
+duplicate_members:
 - MASTER/web/Rakefile | RAILS/amber/Rakefile | RAILS/bsdports/Rakefile | RAILS/shared/Rakefile
 - MASTER/web/bin/setup | RAILS/shared/bin/setup
 - MASTER/web/config/initializers/filter_parameter_logging.rb | RAILS/shared/config/initializers/filter_parameter_logging.rb
