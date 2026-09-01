@@ -4,7 +4,6 @@ module Master
   module Review
     module Security
       class InjectionGuard
-        PATTERNS_PATH = Master.data_path("patterns.yml")
 
         DEFAULTS = {
           prompt_injection: [
@@ -72,8 +71,7 @@ module Master
         end
 
         def injection_data
-          patterns = Master.load_yaml(PATTERNS_PATH) || {}
-          merged = patterns["injection"]
+          merged = Master.law("injection")
           merged if merged.is_a?(Hash) && !merged.empty?
         end
       end

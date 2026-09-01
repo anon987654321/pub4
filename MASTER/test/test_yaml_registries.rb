@@ -8,7 +8,10 @@ DATA = File.expand_path("../data", __dir__)
 
 YAML_SPECS = {
   "attention_context.yml"        => { required_keys: %w[protocol fields rendering when_to_emit], arrays: [] },
-  "patterns.yml"                 => { required_keys: %w[zsh infer prompt_archaeology repo_topics], arrays: [] },
+  "patterns.yml"                 => { required_keys: %w[infer prompt_archaeology repo_topics], arrays: [] },
+  # zsh, injection and refusal_templates moved to rules.yml: they are law, and
+  # patterns.yml is the register for what is not. The guarantee moved with them.
+  "rules.yml"                    => { required_keys: %w[zsh injection refusal_templates laws rules], arrays: [] },
 }.freeze
 
 PATTERNS_NAMESPACES = {

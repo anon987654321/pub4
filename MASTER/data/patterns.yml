@@ -3,94 +3,6 @@
 # Each top-level key is a namespace.
 ---
 schema: 1
-zsh:
-  forbidden_commands:
-  - command: awk
-    replacement: 'zsh array/string field splitting: ${${(s:,:)line}[4]}'
-  - command: sed
-    replacement: 'zsh parameter expansion: ${var//search/replace}'
-  - command: tr
-    replacement: 'zsh case conversion: ${(L)var} ${(U)var}'
-  - command: grep
-    replacement: 'zsh pattern matching: ${(M)arr:#*pattern*}'
-  - command: cut
-    replacement: 'zsh field splitting: ${${(s:delim:)var}[N]}'
-  - command: head
-    replacement: 'zsh array slicing: ${arr[1,10]}'
-  - command: tail
-    replacement: 'zsh array slicing: ${arr[-5,-1]}'
-  - command: uniq
-    replacement: 'zsh unique flag: ${(u)arr}'
-  - command: sort
-    replacement: 'zsh sort flags: ${(o)arr} (asc) / ${(O)arr} (desc)'
-  - command: bash
-    replacement: zsh — never use bash
-  - command: find
-    replacement: 'zsh glob qualifiers: **/*.rb(.)'
-  - command: wc
-    replacement: 'zsh length/count: ${#var} / ${#arr}'
-  - command: sudo
-    replacement: doas on OpenBSD
-  native_patterns:
-    string_replace: "${var//find/replace}"
-    case_lower: "${(L)var}"
-    case_upper: "${(U)var}"
-    trim_whitespace: "${${var##[[:space:]]#}%%[[:space:]]#}"
-    split_to_array: "${(s:delim:)var}"
-    array_join: "${(j:,:)arr}"
-    array_unique: "${(u)arr}"
-    array_sort_asc: "${(o)arr}"
-    array_sort_desc: "${(O)arr}"
-    array_reverse: "${(Oa)arr}"
-    array_filter_match: "${(M)arr:#*pattern*}"
-    array_filter_exclude: "${arr:#*pattern*}"
-    remove_crlf: "${var//$'\\r'/}"
-  exceptions:
-  - Complex regex requiring PCRE
-  - Multi‑file operations beyond globbing
-  - Binary data processing
-  banned_commands:
-  - python
-  - bash
-  - sed
-  - awk
-  - tr
-  - wc
-  - head
-  - tail
-  - cut
-  - find
-  - sudo
-  auto_remediation:
-    awk: "${${(s: :)line}[n]}"
-    sed: "${var//old/new}"
-    tr: "${(U)var} or ${(L)var}"
-    wc: "${#lines}"
-    head: "${lines[1,n]}"
-    tail: "${lines[-n,-1]}"
-    grep: "${(M)lines:#*pattern*}"
-    cut: "${${(s:delim:)var}[N]}"
-    sort: "${(o)arr} or ${(O)arr}"
-    find: "**/*.ext(.)"
-    sudo: doas
-  token_economics:
-    philosophy: 'Replacing multi‑tool shell pipelines with pure Zsh parameter expansion
-      eliminates process boundaries, collapses multiple grammars into one, reduces
-      reasoning entropy for LLMs, and converts runtime overhead into in‑memory transforms
-      — saving both tokens and wall‑clock time.
-
-      '
-    example_bad:
-      code: awk -F, '{print $4}' | sed 's/\r//g' | tr '[:upper:]' '[:lower:]'
-      cost: 3 grammars, pipes + subshells, I/O transformations
-    example_good:
-      code: cleaned=${var//$'\r'/}; lower=${(L)cleaned}; fourth=${${(s:,:)lower}[4]}
-      cost: One grammar, one evaluation model, no process boundaries
-    benefit: Model reasons locally instead of globally across pipeline
-  ssh_reading:
-    rule: cat path — read the whole file once, never stitch output with grep/head/tail
-    rationale: Partial reads yield partial (wrong) changes. Same rule as workflow
-      and rules.yml PRESERVE_FIRST.
 infer:
   commands:
     sweep:
@@ -767,29 +679,6 @@ repo_topics:
     - Paper-to-cluster summarizer.
     - Implementation-readiness scoring.
 
-# Merged from former injection_patterns.yml — prompt/shell injection detection.
-injection:
-  prompt_injection:
-  - "ignore (?:previous|all|your) instructions"
-  - "disregard (?:your )?(?:system )?prompt"
-  - "you are now (?:a|an|in)"
-  - "pretend (?:to be|you are|you're)"
-  - "new instructions:"
-  - "\\[SYSTEM\\]"
-  - "###\\s*SYSTEM"
-  - "(?:act|behave|respond) as (?:if )?(?:you (?:are|were)|a|an) (?!assistant|helpful)"
-  - "override (?:your )?(?:safety|guidelines|rules|instructions)"
-  - "jailbreak"
-  - "forget (?:everything|all|your)"
-  - "override (?:axiom|principle|rule)"
-  - "disregard (?:axiom|principle|rule|safety)"
-  - "new system prompt"
-  shell_injection:
-    multiline_pattern: "```(?:bash|sh|zsh|shell)\\n.*?(?:rm\\s+-rf|curl\\b.*?\\|\\s*(?:bash|sh)\\b|wget\\b.*?\\|\\s*(?:bash|sh)\\b)"
-  modes:
-    permissive: "match -> block; no match -> pass"
-    default_deny: "match -> block; no match -> require explicit allowlist token"
-
 # Merged from former sweep_prompts.yml — structural sweep techniques.
 closings:
   - "Signing off."
@@ -933,19 +822,6 @@ heartbeat:
     interval_seconds: 1800
     enabled: false
     description: Paired-workspace pulse. Replies HEARTBEAT_OK when nothing needs a nudge.
-
-# Merged from former refusal_templates.yml — refusal scaffolding when MASTER
-# cannot or should not act. Source: OpenAI / Anthropic system-prompt
-# reunification (#74). Loaded by PersonalityPromptBuilder#add_refusal_policy.
-refusal_templates:
-  capability_disclosure:
-    no_internet_yet: "MASTER reads local data and runs local tools; no live web access in this turn"
-    no_secret_creation: "MASTER does not generate secrets; bring your own and rotate via signify"
-    no_silent_destruction: "MASTER will not run irreversible commands without explicit user confirmation"
-  refusal_phrasing:
-    style: "decline once, propose alternative once, stop"
-    forbidden: ["I'm sorry but I cannot", "as an AI", "I'd be happy to", filler_apology]
-    example_good: "Out of scope: production push during freeze. Alternative: branch-only commit, deploy after Friday."
 
 # Merged from former vocabulary.yml — sacred user-spoken terms. Historical intent
 # was for scan rules and rename tooling to refuse rewriting these, but no code

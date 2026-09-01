@@ -295,7 +295,7 @@ module Master
       end
 
       def zsh_style_lines
-        zsh = @rules.data(:patterns)["zsh"] || @rules.data(:zsh_patterns)
+        zsh = @rules.data(:zsh) || @rules.data(:zsh_patterns)
         return [] unless zsh.is_a?(Hash) && !zsh.empty?
 
         banned = Array(zsh["banned_commands"]).join(", ")
@@ -506,7 +506,7 @@ module Master
       end
 
       def add_refusal_policy(sections)
-        refusal = @rules.data(:patterns)["refusal_templates"]
+        refusal = @rules.data(:refusal_templates)
         return unless refusal.is_a?(Hash)
 
         phrasing = refusal["refusal_phrasing"] || {}
