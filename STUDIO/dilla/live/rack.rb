@@ -12,6 +12,7 @@
 # 1260 is the 12-bit sampler lineage -- bit reduction, a hard band limit, drive
 # into that limit. VCS is a summing colour, applied wherever things are added,
 # which is what a console does and why summed material glues.
+require "fileutils"
 require "json"
 require "time"
 require "shellwords"
@@ -25,6 +26,23 @@ module Rack
   WORTH = File.join(D, "project", "sample_worth.json")
 
   module_function
+
+  # A pass has to be nameable, or these are not sets.
+  #
+  # An Ableton set opens the same way every time; that is most of what a set is.
+  # Everything that varies here -- which bed, how far it drags, which
+  # progression, where the slice is taken, how drunk each hit is -- comes out of
+  # one PRNG, so one number names the whole pass. LIVE_SEED replays it.
+  #
+  # The bed is pinned separately by LIVE_BED and not by the seed alone. pick_bed
+  # reads the journal for recency, and the journal grows every pass, so the same
+  # seed lands on a different record tomorrow. A number that names a pass has to
+  # name it next week too.
+  def seed!
+    n = (ENV["LIVE_SEED"] || Random.new_seed % 2_147_483_647).to_i
+    srand(n)
+    n
+  end
 
   def sonitex(bits:, lo:, hi:, drive:)
     "volume=#{drive},acrusher=bits=#{bits}:mode=log:aa=1," \
@@ -96,10 +114,22 @@ module Rack
     beds = Dir.glob(File.join(D, "samples", "chopped", "*", "loop.wav"))
     abort "no beds" if beds.empty?
     slug_of = ->(b) { File.basename(File.dirname(b)) }
+    if (want = ENV["LIVE_BED"].to_s) && !want.empty?
+      pinned = beds.find { |b| slug_of.call(b) == want }
+      abort "no such bed: #{want}" unless pinned
+
+      return [pinned, want, worth.fetch(want, nil)]
+    end
     ranked = beds.sort_by { |b| -worth.fetch(slug_of.call(b), 0.35).to_f }
     pool = ranked.size >= 8 ? ranked.first((ranked.size * 0.5).ceil) : ranked
     seen = recency
-    bed = pool.min_by { |b| [seen.fetch(slug_of.call(b), -1), rand] }
+    # Its own generator, not the seeded stream. The tiebreak between two equally
+    # stale beds is not part of what a seed names -- and if it drew from the main
+    # stream, pinning the bed on replay would skip that draw and shift every
+    # choice after it, so the same seed would come back at a different drag with
+    # a different progression. Measured exactly that before it was separated.
+    @tiebreak ||= Random.new
+    bed = pool.min_by { |b| [seen.fetch(slug_of.call(b), -1), @tiebreak.rand] }
     [bed, slug_of.call(bed), worth.fetch(slug_of.call(bed), nil)]
   end
 
@@ -158,10 +188,15 @@ module Rack
   # surface the whole thing sits on, so they share a grain no two generators
   # would. ffmpeg splits the input for the second reader on its own.
   def drunk_kit(n, inputs, graph, beat:, bar:, step:, sxt:, total:)
+    # anoisesrc seeds itself from the clock unless told otherwise, so without
+    # these three the snare, the ghost and the crackle are different noise every
+    # run and a replayed seed comes back with every number identical and the
+    # audio not. Derived from the pass seed so they follow it.
+    s = ->(k) { "seed=#{(rand * 2_147_483_647).to_i + k}" }
     inputs << "-f lavfi -t 0.32 -i sine=f=52:d=0.32"
-    inputs << "-f lavfi -t 0.24 -i anoisesrc=c=pink:d=0.24"
-    inputs << "-f lavfi -t 0.05 -i anoisesrc=c=white:d=0.05"
-    inputs << "-f lavfi -t #{total} -i anoisesrc=c=pink:d=#{total}:a=0.006"
+    inputs << "-f lavfi -t 0.24 -i anoisesrc=c=pink:d=0.24:#{s.call(1)}"
+    inputs << "-f lavfi -t 0.05 -i anoisesrc=c=white:d=0.05:#{s.call(2)}"
+    inputs << "-f lavfi -t #{total} -i anoisesrc=c=pink:d=#{total}:a=0.006:#{s.call(3)}"
 
     jit = ->(ms) { (rand * ms * 2 - ms).round(1) }
     hits = {
@@ -183,11 +218,23 @@ module Rack
     { hits: hits, crackle_i: n + 3 }
   end
 
+  # Plays, unless LIVE_RENDER_TO names a file, in which case it writes one.
+  # Keeping a pass and hearing it have to be the same code path or the take is
+  # not the thing that was played.
   def play!(inputs, graph, banner)
     warn banner
     cmd = "#{FF} -nostdin -loglevel error #{inputs.join(' ')} " \
-          "-filter_complex #{graph.join('; ').shellescape} -map \"[out]\" -f wav -"
-    exec("/bin/zsh", "-c",
-         "#{cmd} 2>/dev/null | #{FFPLAY} -nodisp -autoexit -loglevel quiet -i - 2>/dev/null")
+          "-filter_complex #{graph.join('; ').shellescape} -map \"[out]\""
+    dest = ENV["LIVE_RENDER_TO"].to_s
+    if dest.empty?
+      exec("/bin/zsh", "-c",
+           "#{cmd} -f wav - 2>/dev/null | #{FFPLAY} -nodisp -autoexit -loglevel quiet -i - 2>/dev/null")
+    else
+      FileUtils.mkdir_p(File.dirname(dest))
+      ok = system("/bin/zsh", "-c", "#{cmd} -y #{dest.shellescape}")
+      abort "render failed" unless ok
+
+      warn "kept #{dest}"
+    end
   end
 end

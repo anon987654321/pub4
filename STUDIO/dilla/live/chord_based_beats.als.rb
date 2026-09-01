@@ -19,6 +19,7 @@ require_relative "../dilla"
 require_relative "rack"
 
 TOTAL = 96
+SEED = Rack.seed!
 # A2 to A3. The beat sets pitch a record down and never above its own note;
 # there is no record here to stay under, so the equivalent discipline is a low
 # register and a ceiling -- a synthesised chord voiced high is the one thing in
@@ -154,7 +155,7 @@ graph << "[body][crackle]amix=inputs=2:weights=1 0.30:normalize=0:duration=first
          "aformat=sample_rates=44100:channel_layouts=stereo[out]"
 
 Rack.journal!(
-  at: Time.now.utc.iso8601, set: "chord_based_beats", bed: nil, progression_name: name.to_s,
+  at: Time.now.utc.iso8601, seed: SEED, set: "chord_based_beats", bed: nil, progression_name: name.to_s,
   progression: symbols, bpm: bpm, bar_s: bar, chord_s: chord_s,
   weights: { phrase: 0.62, kit: 2.9, crackle: 0.30 },
   drums: { kick_ms: hits[:kick], snare_ms: hits[:snare], ghost_ms: hits[:ghost], hat_ms: hits[:hat] },

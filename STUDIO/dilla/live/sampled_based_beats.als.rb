@@ -12,6 +12,7 @@
 require_relative "rack"
 
 TOTAL = 96
+SEED = Rack.seed!
 
 bed, slug, sw = Rack.pick_bed
 # 0.92-0.96: a semitone and a half down at the deep end, a third of one at the
@@ -130,7 +131,7 @@ graph << "[body][crackle]amix=inputs=2:weights=1 0.34:normalize=0:duration=first
          "aformat=sample_rates=44100:channel_layouts=stereo[out]"
 
 Rack.journal!(
-  at: Time.now.utc.iso8601, set: "sampled_based_beats", bed: slug, sample_worth: sw,
+  at: Time.now.utc.iso8601, seed: SEED, set: "sampled_based_beats", bed: slug, sample_worth: sw,
   bpm: g[:bpm], drag: DRAG, bars_in_loop: g[:bars_in_loop], progression: prog,
   chop_at: slice_at, reversed: reverse, bar_s: bar,
   weights: { phrase: 0.30, under: 0.14, kit: 3.4 },

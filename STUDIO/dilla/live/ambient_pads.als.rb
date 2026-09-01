@@ -13,6 +13,7 @@
 require_relative "rack"
 
 TOTAL = 180
+SEED = Rack.seed!
 # Deeper than the beat sets. Their 0.92-0.96 keeps a bed danceable; a pad is
 # allowed to sit a whole tone under the record, and the slower it runs the more
 # of the tail you hear, which is the material this set is made of.
@@ -89,17 +90,30 @@ graph << "[#{bed_i}:a]asetrate=44100*#{(DRAG * 0.5).round(6)},aresample=44100," 
          "#{Rack.sonitex(bits: 12, lo: 40, hi: 2600, drive: 1.0)}," \
          "#{Rack.vcs(depth: 0.6, smear: 3.2)}[under]"
 
-inputs << "-f lavfi -t #{TOTAL} -i anoisesrc=c=pink:d=#{TOTAL}:a=0.010"
+# Seeded, for the reason drunk_kit gives: unseeded noise makes a replayed
+# pass identical in every number and different in the audio.
+inputs << "-f lavfi -t #{TOTAL} -i anoisesrc=c=pink:d=#{TOTAL}:a=0.010:seed=#{(rand * 2_147_483_647).to_i}"
 air_i = inputs.size - 1
 graph << "[#{air_i}:a]lowpass=f=4200,volume=0.7,#{Rack.vcs(depth: 0.5, smear: 4.0)}[air]"
 
 phrase_s = (hold * prog.size).round(4)
 graph << "[phrase][under]amix=inputs=2:weights=1.0 0.5:normalize=0:duration=first," \
          "atrim=0:#{phrase_s},asetpts=N/SR/TB[cycle]"
+# Split and concatenated, not aloop'd.
+#
+# The beat sets loop one bar -- about 120 000 samples -- and aloop reproduces
+# that exactly. A pad cycle is four chords of two bars, 1.5 million samples, and
+# at that size aloop stops being reproducible: the same seed and a
+# byte-identical filtergraph rendered two takes that differed at -17 dBFS RMS
+# against a -18.7 dB signal, which is not rounding, it is a different take.
+# Bisected to this filter and to nothing else in the graph. Copying the cycle
+# the number of times the block needs costs nothing and is exact.
+cycles = (TOTAL / phrase_s).ceil
+graph << "[cycle]asplit=#{cycles}#{(0...cycles).map { |k| "[cy#{k}]" }.join}"
 # One slow breath across the whole block rather than a tremolo rate:
 # 1/(phrase*2) puts the swell either side of the loop point, so the place the
 # cycle restarts is the place it is quietest.
-graph << "[cycle]aloop=loop=-1:size=#{(phrase_s * 44100).round},atrim=0:#{TOTAL}," \
+graph << "#{(0...cycles).map { |k| "[cy#{k}]" }.join}concat=n=#{cycles}:v=0:a=1,atrim=0:#{TOTAL}," \
          "volume='0.72+0.28*sin(2*PI*t/#{(phrase_s * 2).round(3)})':eval=frame," \
          "vibrato=f=0.28:d=0.06," \
          "acompressor=threshold=0.5:ratio=2.4:attack=180:release=900[body]"
@@ -114,7 +128,7 @@ graph << "[body][air]amix=inputs=2:weights=1 0.30:normalize=0:duration=first," \
          "aformat=sample_rates=44100:channel_layouts=stereo[out]"
 
 Rack.journal!(
-  at: Time.now.utc.iso8601, set: "ambient_pads", bed: slug, sample_worth: sw,
+  at: Time.now.utc.iso8601, seed: SEED, set: "ambient_pads", bed: slug, sample_worth: sw,
   bpm: g[:bpm], drag: DRAG, bars_in_loop: g[:bars_in_loop], progression: prog,
   chop_at: slice_at, hold_s: hold, bar_s: bar, drums: nil,
   weights: { phrase: 1.0, under: 0.5, air: 0.30 },
