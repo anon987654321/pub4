@@ -52,9 +52,24 @@ end
 
 def pc_of(letter, acc) = (NOTE_PC.fetch(letter) + (acc == "b" ? -1 : acc == "#" ? 1 : 0)) % 12
 
+# The curated shortlist, not everything the engine can name.
+#
+# CHORD_PROGRESSIONS is 401 rows and drawing from all of them is the wrong
+# instrument: 147 of the playable ones are DEVICE_PROGRESSIONS, which exist so a
+# specific harmonic move can be reached for by name and include the plain
+# textbook furniture -- axis_major is C G Am F and doo_wop_fifties is C Am F G.
+# CURATED_PROGRESSIONS is the researched shortlist and its own header says what
+# it selects for: they loop cleanly, and fugue development and heavy pedal or
+# bitonal writing are kept out. That is exactly the question a set asks, since a
+# progression here is heard round and round for 96 seconds rather than passed
+# through once. ARTIST_VERIFIED_PROGRESSIONS joins it because a transcription
+# from a record is at least as trustworthy as a shortlist.
+#
 # Four or eight chords. Two is a vamp with no arc and sixteen outruns a
 # 96-second block at this tempo, so both are left to the full renderer.
-name, symbols = CHORD_PROGRESSIONS.select { |_, v| [4, 8].include?(v.length) }.to_a.sample
+POOL = (CURATED_PROGRESSIONS + ARTIST_VERIFIED_PROGRESSIONS.keys).uniq.freeze
+name = POOL.select { |k| v = CHORD_PROGRESSIONS[k]; v && [4, 8].include?(v.length) }.sample
+symbols = CHORD_PROGRESSIONS.fetch(name)
 chords = symbols.filter_map { |s| [s, parse_chord(s)] if parse_chord(s) }
 
 # No record, so no record to take a tempo from. 82-94 is where the crate sits
