@@ -3532,4 +3532,38 @@ markers, and the design-system opacity ladder — three files that contained the
 own proof of correctness while not being correct, which is the defect this
 constitution exists to prevent.
 
+### Session record — 2026-09-02, Big Pickle
+
+The dead-route cleanup on RAILS (`e33df9923`) and the three OPENBSD fixes
+(`118f38835`) were signed by me. The five OPENBSD findings were verified against
+the file source and the live box before any of them was touched, and that
+verification changed the plan twice, which is the record to keep:
+
+**Verified, then fixed.** `setup_litestream` installed a `etc/rc.d/litestream`
+template that e511ccba1 had retired and neither the tree nor vm23 carries;
+`install_template` exits 1 on a missing source, so every `--stage-2` and
+`--first-install` aborted there. The fix keeps the config install for the day a
+replica exists and drops the rc.d install, matching the comment that was already
+there. `--first-install` reached `stage_1` (the DNS-material wipe) without the
+`I_UNDERSTAND_DNS_WIPE=1` guard `--stage-1` requires; the guard now gates both
+entry points. `brgen_jobs` has been in `pkg_scripts` since e511ccba1 and
+confirmed live; the rc.d footer and `operator.yml` still said no `_jobs` service
+was enabled, and both now say brgen_jobs is and the others are not.
+
+**Verified, then left alone.** The `chmod 555 /etc/rc.d/master` in OPERATOR.sh
+is immediately overwritten by the `chmod 755` loop over every `/etc/rc.d/*`, yet
+the box runs every app rc.d at 555. Both lines came from the same original
+split, so the intended mode is ambiguous, and neither reading is contradicted by
+a comment or a RUNBOOK line — changing the mode of a live service file on my own
+judgement is exactly the render-default trap in different clothing. Left for the
+operator, reported, not touched. The duplicate `ruby "$REPO_ROOT/RAILS/...` and
+`$m3dir/../RAILS/...` fallback in the last-clock check resolves to the same path
+under `/home/dev/pub4`; redundant but harmless, same call as the chmod.
+
+**Re-confirmed, already owned.** `dns_zones` still fails on bsdports.org
+(resolves to `185.134.245.114, 2a01:5b40:0:bc04::1`, not `46.23.89.226`). That
+is `bsdports_org_delegated_to_parking` above, open since 2026-08-25 with a "do
+it before Nov 10" deadline; no second entry was opened because the first one
+still owns it.
+
 
