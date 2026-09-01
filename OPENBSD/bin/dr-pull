@@ -11,8 +11,10 @@
 # because it needs nothing but the ssh access the Mac already has:
 #
 #   1. On vm23, `sqlite3 ... "VACUUM INTO ..."` writes a CONSISTENT snapshot
-#      of every production*.sqlite3 (the db files are world-readable; VACUUM
-#      INTO holds a read transaction, so a live writer cannot tear it).
+#      of every production*.sqlite3 (VACUUM INTO holds a read transaction, so a
+#      live writer cannot tear it). It runs under `doas`, because
+#      /home/<app>/app/storage is 0750 app:app and the ssh user cannot so much
+#      as stat what is inside it.
 #   2. The snapshots stream back in one tar over ssh.
 #   3. Every pulled db must pass PRAGMA integrity_check on the Mac — a backup
 #      nobody has opened is a hope, not a backup.
@@ -30,6 +32,7 @@ require "fileutils"
 require "time"
 
 HOST = ENV.fetch("PUB4_SSH_HOST", "dev@brgen.no")
+SSH_USER = HOST.include?("@") ? HOST.split("@").first : ENV.fetch("USER", "dev")
 KEY = File.expand_path(ENV.fetch("PUB4_SSH_KEY", "~/.ssh/id_ed25519_brgen"))
 DEST = File.expand_path(ENV.fetch("PUB4_DR_DIR", "~/pub4-dr"))
 KEEP = Integer(ENV.fetch("PUB4_DR_KEEP", "14"))
@@ -73,12 +76,30 @@ FileUtils.mkdir_p(target)
 # mode=ro is load-bearing: the dbs run WAL, and a plain open as dev tries to
 # create the -shm sidecar it cannot write. A read-only URI open snapshots
 # cleanly while writers keep writing.
+#
+# Every app reports its own outcome and the chain is not `&&`-joined. It was,
+# and on 2026-08-25 storage/ went 0750 app:app: `[ -f ]` as the ssh user read
+# false for all three, the chain exited non-zero with nothing on stderr, and
+# seven consecutive nights logged "snapshot failed on vm23" and no reason. A
+# backup that stops is going to stop quietly, so the reason has to be in the
+# line that says it stopped.
 snap_cmd = APPS.map { |app|
   db = "/home/#{app}/app/storage/production.sqlite3"
-  "[ -f #{db} ] && /usr/local/bin/sqlite3 \"file:#{db}?mode=ro\" \"VACUUM INTO '/tmp/dr/#{app}-production.sqlite3'\""
-}.join(" && ")
-out, status = ssh("rm -rf /tmp/dr && mkdir -p /tmp/dr && #{snap_cmd} && ls -l /tmp/dr")
+  out = "/tmp/dr/#{app}-production.sqlite3"
+  "if doas test -f #{db}; then " \
+    "doas /usr/local/bin/sqlite3 \"file:#{db}?mode=ro\" \"VACUUM INTO '#{out}'\" " \
+    "|| echo \"PROBLEM #{app}: VACUUM INTO failed\"; " \
+  "else echo \"PROBLEM #{app}: no database at #{db}\"; fi"
+}.join("; ")
+# The snapshots are written by root and read back by the ssh user's tar.
+out, status = ssh(
+  "rm -rf /tmp/dr && mkdir -p /tmp/dr && { #{snap_cmd}; } && " \
+  "doas chown #{SSH_USER} /tmp/dr/*.sqlite3 2>/dev/null; ls -l /tmp/dr",
+)
 abort("dr-pull: snapshot failed on vm23\n#{out}") unless status.success?
+
+problems = out.lines.grep(/^PROBLEM /).map(&:strip)
+abort("dr-pull: #{problems.size} of #{APPS.size} database(s) did not snapshot\n#{problems.join("\n")}") unless problems.empty?
 
 tar, status = Open3.capture2("ssh", "-o", "BatchMode=yes", "-i", KEY, HOST, "tar -C /tmp/dr -cf - .")
 abort("dr-pull: tar stream failed") unless status.success? && !tar.empty?
