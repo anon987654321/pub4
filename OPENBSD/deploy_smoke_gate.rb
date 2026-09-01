@@ -11,17 +11,11 @@ RELAYD = File.join(ROOT, "OPENBSD", "etc", "relayd.conf")
 APPS_YML = File.join(RAILS_ROOT, "apps.yml")
 
 def assert_forward(relayd_text, failures, name, port, domain)
-  # Bind to the specific backend block for this app to avoid substring false positives
-  # Look for a block starting with 'backend "name"' and ending with '}'
-  block = relayd_text.match(/backend\s+"#{name}".*?^}/m)
-  if block.nil?
-    failures << "relayd: missing backend block for #{name}"
-    return
-  end
-
-  content = block[0]
-  failures << "relayd: missing forward port #{port} for #{name}" unless content.match?(/\bport\s+#{port}\b/)
-  failures << "relayd: missing Host route for #{domain} in #{name}" unless content.match?(/\b#{Regexp.escape(domain)}\b/)
+  # relayd uses a named table plus a forward line in the relay, not a named
+  # backend block. Check both halves against the same service name.
+  failures << "relayd: missing backend table <#{name}>" unless relayd_text.match?(/^table\s+<#{Regexp.escape(name)}>\s+\{/)
+  failures << "relayd: missing forward port #{port} for #{name}" unless relayd_text.match?(/^\s*forward to <#{Regexp.escape(name)}> port #{port} check http "\/up"/)
+  failures << "relayd: missing Host route for #{domain} in #{name}" unless relayd_text.match?(/^\s*match request header "Host" value "#{Regexp.escape(domain)}" forward to <#{Regexp.escape(name)}>/)
 end
 
 def check_relayd(failures)
@@ -41,22 +35,17 @@ def check_relayd(failures)
 
   master_json = File.join(ROOT, "OPENBSD", "deploy_inventory.json")
   if File.file?(master_json)
-    standalone = JSON.parse(File.read(master_json)).fetch("standalone_apps", [])
-    standalone.each do |entry|
+    inventory = JSON.parse(File.read(master_json))
+    Array(inventory.fetch("standalone_apps", [])).each do |entry|
       assert_forward(relayd, failures, entry.fetch("name"), entry.fetch("port"), entry.fetch("domain"))
     end
+
+    if (master_entry = inventory.dig("master_face"))
+      master_port = master_entry.fetch("port")
+      failures << "relayd: master backend missing" unless relayd.include?("forward to <master>")
+      failures << "relayd: master missing http /up check" unless relayd.include?("forward to <master> port #{master_port} check http \"/up\"")
+    end
   end
-
-  failures << "relayd: master backend missing" unless relayd.include?("forward to <master>")
-
-  # Source master port from inventory instead of magic number
-  master_port = 53_187 # default fallback
-  if File.file?(master_json)
-    master_entry = standalone.find { |e| e["name"] == "master" }
-    master_port = master_entry["port"] if master_entry
-  end
-
-  failures << "relayd: master missing http /up check" unless relayd.match?(/\bforward to <master>\b.*?\bport\s+#{master_port}\b.*?check http "/up"/)
 end
 
 def check_master_rc(failures)
@@ -82,8 +71,8 @@ def check_apps_production(failures)
     failures << "#{name}: production.rb has force_ssl" if text.match?(/\bconfig\.force_ssl\s*=\s*true\b/)
     failures << "#{name}: production.rb missing host #{domain}" unless text.match?(/\b#{Regexp.escape(domain)}\b/)
     # Fix: /up check was performance theater (matching /upload)
-    failures << "#{name}: production.rb missing /up host_authorization exclude" unless text.match?(/\b\/up\b/)
-    failures << "#{name}: production.rb missing /health host_authorization exclude" unless text.match?(/\b\/health\b/)
+    failures << "#{name}: production.rb missing /up host_authorization exclude" unless text.include?("/up")
+    failures << "#{name}: production.rb missing /health host_authorization exclude" unless text.include?("/health")
 
     routes = File.join(RAILS_ROOT, name, "config", "routes.rb")
     failures << "#{name}: routes must load shared fleet health endpoint" if File.file?(routes) && !File.read(routes).include?("fleet.rb")
