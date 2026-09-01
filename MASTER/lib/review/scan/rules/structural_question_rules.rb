@@ -234,7 +234,7 @@ module Master
 
         # DATA_CLUMPS, plural, because that spelling was already in the tree:
         # data/rules.yml carries a `violation_priors` row under it and
-        # data/rule_deps.yml orders PRIMITIVE_OBSESSION `after: [DATA_CLUMPS]`.
+        # data/rules.yml rule_deps orders PRIMITIVE_OBSESSION `after: [DATA_CLUMPS]`.
         # Neither could do anything, because RuleOrder#topo_sort skips a
         # dependency whose id names no loaded rule and the prior is only read for
         # a rule that exists. Naming this one DATA_CLUMP, singular, would have
@@ -319,7 +319,7 @@ module Master
           end
         end
 
-        # Split from CouplerRule 2026-07-12: rule_deps.yml's SRP entry already
+        # Split from CouplerRule 2026-07-12: rules.yml's rule_deps SRP entry already
         # referenced FEATURE_ENVY as its own id (SRP: after: [FEATURE_ENVY,
         # god_class]) — a dangling reference, since the check previously lived
         # under COUPLER_SMELLS. This gives it a real matching id and a single

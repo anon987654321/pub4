@@ -185,7 +185,7 @@ module Master
       def dep_graph_line(root)
         gap = ungraphed_rules(root)
         tail = gap.empty? ? " (complete)" : " — #{gap.first(8).join(", ")}"
-        "rule dep-graph: #{gap.size} rule(s) absent from rule_deps.yml#{tail}"
+        "rule dep-graph: #{gap.size} rule(s) absent from rules.yml rule_deps#{tail}"
       end
 
       def dispatch_rules(ctx: nil)
