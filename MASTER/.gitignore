@@ -37,3 +37,9 @@ knowledge/
 .constitutional_locks/
 loop.mp4
 loop.wav
+
+# reports/ is generated output — PATH_OWNERSHIP.yml calls it "regenerate, do not
+# hand-edit", the scanner skips it, and web/script/screenshot_calibrate.rb writes
+# it. Twelve calibration files from one 2026-07-16 run were tracked; the same rule
+# already covers RAILS/visual_contract/*.png in the root ignore file.
+reports/screenshots/
