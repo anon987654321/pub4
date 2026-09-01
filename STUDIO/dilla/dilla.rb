@@ -4730,8 +4730,7 @@ end
 def progression_from_engine(sonic, _fallback_mode)
   chord_names = sonic&.dig("harmonic", "engine_chords")
   if chord_names&.any?
-    return chord_names.map do |n|
-    end.compact
+    return chord_names.filter_map { |n| resolve_pad_chord_symbol(n) }
   end
   name = sonic&.dig("harmonic", "engine_progression")&.to_sym
   return unless name && CHORD_PROGRESSIONS.key?(name)
@@ -33121,7 +33120,12 @@ module DillaElectronium
     module_function
 
     def rng
-      @rng ||= Random.new((ENV["SEED"] || ENV["GEN_SEED"] || Process.pid).to_i)
+      # RENDER_SEED is the engine's one reproducibility claim (DillaProvenance
+      # sets it before any command runs), so the composer must draw from it or
+      # an electronium .mid/.mp3 is not reproducible under the pinned seed.
+      # SEED/GEN_SEED stay as library-use fallbacks where provenance did not
+      # run; Process.pid is the last resort and makes the render unreproducible.
+      @rng ||= Random.new((ENV["RENDER_SEED"] || ENV["SEED"] || ENV["GEN_SEED"] || Process.pid).to_i)
     end
 
     def offset_ticks(type)

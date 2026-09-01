@@ -61,6 +61,14 @@ module DillaHarmony
 
   module_function
 
+  # djb2, not String#hash. Ruby randomises String#hash per process, so these
+  # had seeded the same track name with a different number on every run and
+  # the render was never the same twice — the same per-process reproducibility
+  # fault dfam_engine.rb and the twenty-six dilla.rb sites corrected.
+  def stable_hash(text)
+    text.to_s.each_byte.reduce(5381) { |a, b| ((a * 33) + b) % 4_294_967_296 }
+  end
+
   def remember_progression(chords)
     @last_progression_chords = chords
   end
@@ -316,7 +324,7 @@ module DillaHarmony
     return pads unless soul_profile?(cfg[:track])
     pool = KEY_BORROW[key_sym_for(cfg)]
     return pads unless pool&.any?
-    rng = Random.new(cfg[:track].to_s.hash.abs + pads.length)
+    rng = Random.new(stable_hash(cfg[:track]) + pads.length)
     pads.map.with_index do |ch, i|
       next ch unless (i % 8) == 6 && rng.rand < 0.45
       borrowed = pool[rng.rand(pool.length)]
@@ -342,7 +350,7 @@ module DillaHarmony
 
   def insert_secondary_dominants(pads, cfg)
     return pads if pads.length < 4 || !soul_profile?(cfg[:track])
-    rng = Random.new(cfg[:track].to_s.hash.abs + 99)
+    rng = Random.new(stable_hash(cfg[:track]) + 99)
     out = pads.dup
     [6, 7].each do |idx|
       next if idx >= out.length
@@ -371,7 +379,7 @@ module DillaHarmony
   def reharm_every_fourth_loop(pads, cfg)
     return pads unless soul_profile?(cfg[:track]) && ENV["REHARM_LOOP"] == "1"
     return pads if pads.length < 4
-    rng = Random.new(cfg[:track].to_s.hash.abs)
+    rng = Random.new(stable_hash(cfg[:track]))
     pads.map.with_index do |ch, i|
       next ch unless (i % 4) == 3 && rng.rand < 0.4
       sym = ch[:name].to_s
@@ -394,7 +402,7 @@ module DillaHarmony
     skip_passing = curated || (soul && ENV["SOUL_ENRICH"] != "1")
     use_rootless = !curated && soul
 
-    rng = Random.new((cfg[:track].to_s.hash.abs % 100_000) + pads.length)
+    rng = Random.new((stable_hash(cfg[:track]) % 100_000) + pads.length)
     voicing = cfg[:voicing] || :spread
     recap_voicing = CONTRAST_VOICINGS.fetch(voicing, :drop2)
     out = []

@@ -211,7 +211,7 @@ module DillaComposition
 
     def seed_motifs!
       return unless @motifs.empty?
-      rng = Random.new(@track.to_s.hash.abs)
+      rng = Random.new(stable_hash(@track))
       hook = MotifCell.new(id: "hook", degrees: [0, 2, 1, 3].first(rng.rand(3..4)),
                            rhythm: [1.0, 0.5, 0.5, 1.0])
       bass = MotifCell.new(id: "bass_motif", degrees: [0, 0, 2, 1], rhythm: [1.0, 1.0, 0.5, 0.5])
@@ -347,6 +347,13 @@ module DillaComposition
       # session/jam/evolve/critique/listen_loop command (same fallback style as
       # load_playlist_catalog, promoted_profiles.json, learned_engine.json).
       new(track: default_track, n_bars:)
+    end
+
+    # djb2, not String#hash — Ruby randomises String#hash per process, so this
+    # seeded the motif pool from a different number on every run and the same
+    # track never arranged the same twice.
+    def stable_hash(text)
+      text.to_s.each_byte.reduce(5381) { |a, b| ((a * 33) + b) % 4_294_967_296 }
     end
   end
 

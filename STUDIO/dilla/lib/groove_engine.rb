@@ -194,6 +194,13 @@ module DillaGroove
   KICK_SAMPLE_CYCLE = %i[kick ind_kick kick kick].freeze
   module_function
 
+  # djb2, not Symbol/String#hash. Ruby randomises both per process (SipHash),
+  # so role.hash seeded the Markov RNG from a different number on every run
+  # and the same bar/role never stroked the same way twice.
+  def stable_hash(text)
+    text.to_s.each_byte.reduce(5381) { |a, b| ((a * 33) + b) % 4_294_967_296 }
+  end
+
   def enabled?
     ENV["GROOVE_ENGINE"] != "0"
   end
@@ -672,9 +679,9 @@ module DillaGroove
     flat = pool.flatten.uniq
     return flat if flat.empty?
     return flat unless enabled? && ENV["MARKOV_DRUMS"] != "0"
-    key = [role, flat.hash].join(":")
+    key = [role, stable_hash(flat)].join(":")
     matrix = markov_cache[key] ||= build_markov_from_pool(flat)
-    rng = Random.new((bar * 1009) + role.hash.abs)
+    rng = Random.new((bar * 1009) + stable_hash(role))
     seed_step = flat[bar % flat.length]
     extra = matrix.dig(seed_step)&.sample(random: rng) || flat[(bar + 1) % flat.length]
     (flat + [seed_step, extra]).uniq.sort

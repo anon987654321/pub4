@@ -7,7 +7,6 @@ module DillaMl
   def groove_synced_vinyl(ghost_count, kick_count, base: 0.06)
     base = base.to_f
     return 0.0 if base <= 0.0
-    DillaMaster.groove_vinyl_level(ghost_count, kick_count) if defined?(DillaMaster)
     g = ghost_count.to_f / [kick_count, 1].max
     # Honor low bases (e.g. VINYL=10 → ~0.018); do not force a 0.04 floor of hiss.
     lo = [base * 0.85, 0.008].max
