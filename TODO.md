@@ -2536,3 +2536,19 @@ to finish rather than a bare title.
   a code block and a LaTeX arrow; the rule in `cosmetic_rules.rb` wants one
   voice in plain prose. The long Innovasjon Norge pitch that was deleted is
   also where the seaborne Aegis case would sit.
+
+## From the 2026-09-01 audit
+
+- **Live RAILS gates still measure too little.** `user_flow`, `first_screen`,
+  `payment_honesty`, `content_honesty` and several rendered gates skip when the
+  app ports are closed. Run the suite once with `GATE_REQUIRE_LIVE=1`,
+  `GATE_STRICT_INCONCLUSIVE=1` and `GATE_STRICT_ERRORS=1` on a host where brgen,
+  amber and bsdports are listening, then record any findings that only appear live.
+- **Nine domains are expired.** Renew `brmingham.uk`, `cardff.uk`, `denvr.us`,
+  `dnver.us`, `edinbrgh.uk`, `glasgw.uk`, `lverpool.uk`, `mnchester.uk` and
+  `wshingtondc.com`, then refresh the expiry snapshot with
+  `OPENBSD/bin/domain_watch.rb --update`.
+- **The yep search pen still owns a magic hex.** `#ccc` is currently banked at
+  139 because it is the pen's own divider. If/when the pen is re-tokenised, use
+  an existing border token or a named pen token and ratchet `magic_hex` down
+  with `GATE_CSS_RATCHET=1`.
