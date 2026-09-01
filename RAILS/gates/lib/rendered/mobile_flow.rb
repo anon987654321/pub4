@@ -90,7 +90,7 @@ module Deploy
 
     # Triangle + every brgen vertical root — mobile is where subapps feel alien.
     PREFERRED = %w[
-      brgen/core brgen/live brgen/nearby brgen/marketplace brgen/marketplace_cart
+      brgen/core brgen/nearby brgen/marketplace brgen/marketplace_cart
       brgen/dating brgen/playlist brgen/tv brgen/takeaway brgen/maps brgen/messenger
       brgen/channels brgen/conversations brgen/search brgen/communities
       amber/home amber/wardrobe amber/feed amber/sign_in

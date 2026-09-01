@@ -520,7 +520,7 @@ module Deploy
       probes = [
         { host: "brgen.no", path: "/", selector: ".tab-item, .compose-btn, a.tab-item" },
         { host: "markedsplass.brgen.no", path: "/", selector: "#navBar a, .deal-fav, .btn" },
-        { host: "brgen.no", path: "/live", selector: ".feed-action, .btn, .live-compose input[type=submit]" },
+        { host: "brgen.no", path: "/nearby", selector: ".btn, .nearby-locate-actions button" },
       ]
 
       options = Selenium::WebDriver::Chrome::Options.new

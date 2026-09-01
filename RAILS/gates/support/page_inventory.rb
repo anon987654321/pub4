@@ -433,8 +433,8 @@ module Deploy
       case parts
       when %w[home index] then return [host, "/", "index"]
       when %w[sessions new] then return [host, "/session/new", "new"]
-      when %w[live index] then return [host, "/live", "index"]
       when %w[search index] then return [host, "/search", "index"]
+      # live folded into nearby in 76612fd0b — /live is a redirect, no view tree.
       when %w[nearby widget] then return [host, "/nearby/widget", "widget"]
       when %w[messages new]
         # No standalone GET /messages/new — DMs open via conversations

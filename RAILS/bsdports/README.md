@@ -5,7 +5,7 @@ full-text live search over ports with their dependencies, advisories and
 maintainers, on Rails 8.1, SQLite with FTS5, Falcon, Hotwire and relayd.
 
 Deploy it with `doas zsh RAILS/bsdports/bsdports.sh`, then prove it answers on
-port 47312 at `/up` and `/health`. Both, not one: relayd keeps terminating TLS
+`127.0.0.1:47312/up` and `/health`. Both, not one: relayd keeps terminating TLS
 after the app has gone, so a site that looks up from outside can be a closed port
 underneath.
 

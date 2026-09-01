@@ -2,8 +2,9 @@
 
 **Three production apps, one shared engine, and one process that answers to a
 hundred hostnames.** brgen is the city network, amber is wardrobe intelligence,
-bsdports is ports search. All three run Rails 8.1 on SQLite behind Falcon and
-relayd, on Ruby 3.4, with `config.assume_ssl` on and no `force_ssl`. Feature
+bsdports is ports search — 3 active production Rails apps, matching `apps.yml`.
+All three run Rails 8.1 on SQLite behind Falcon and relayd, on Ruby 3.4, with
+`config.assume_ssl` on and no `force_ssl`. Feature
 truth is `apps.yml`; ports and domains are there too, so nothing here restates
 them.
 

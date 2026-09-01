@@ -85,10 +85,10 @@ module Deploy
     private
 
     def pick_surfaces
-      # Prefer high-traffic triangle surfaces first (home/live/wardrobe/feed),
+      # Prefer high-traffic triangle surfaces first (home/nearby/wardrobe/feed),
       # then fill remaining slots so keyboard order is not only auth forms.
       preferred = %w[
-        brgen/core brgen/live brgen/nearby brgen/marketplace brgen/session_new
+        brgen/core brgen/nearby brgen/marketplace brgen/session_new
         amber/home amber/wardrobe amber/feed amber/sign_in
       ]
       desktop = GeometryProbe.surfaces

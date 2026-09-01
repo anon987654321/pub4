@@ -38,11 +38,14 @@ module Deploy
         path: "/",
         host: "markedsplass.brgen.no",
       },
+      # The live surface folded into the apex feed in 76612fd0b: /live became a
+      # redirect to the geo room, and the Jodel note grammar now renders in
+      # home/live_search_results. Probe the feed that replaced it.
       {
         exemplar: nil,
         quality_surface: :live,
         app: "brgen",
-        path: "/live",
+        path: "/",
         host: "brgen.no",
       },
       {
