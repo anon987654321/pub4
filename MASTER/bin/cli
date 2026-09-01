@@ -95,9 +95,6 @@ end
 fast_boot = ARGV.include?("--fast") || ENV["MASTER_FAST"] == "1"
 require "ground/host_budget"
 Master::Ground::HostBudget.warn_or_reap_suspended!
-# Wire new tracker (from kimi patch)
-config = Master::Ground::Config.new(Dir.pwd) rescue nil
-tracker = Master::Ground::HostBudgetTracker.new(config) if config
 Master::CLI::BootBanner.print unless fast_boot
 if $stdin.tty? && !fast_boot
   cli = Master.boot(root: Dir.pwd)

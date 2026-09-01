@@ -43,9 +43,9 @@ web_live = ENV["MASTER_WEB_LIVE"] == "1"
 node_bin = ENV["PATH"].to_s.split(File::PATH_SEPARATOR).push("/usr/local/bin")
                       .map { |dir| File.join(dir, "node") }.find { |p| File.executable?(p) }
 
-# test:subsystems ran in no profile but full (i.e. only through bin/ci), so the 14
-# files under test/{cli,io,fix,lib} were skipped by the gate START_HERE.md tells
-# contributors to run. rake test's glob is test/test_*.rb and does not reach them.
+# test:subsystems groups the cli/io/fix suites for a focused run, and the step
+# is in the operator and contributor profiles and the ci list so a break there
+# is caught by the gates contributors actually run, not only under full.
 # 17s, measured 2026-08-01.
 # rake["studio"] is in agent as well as the two heavy profiles, and it is the
 # only step that is. The agent profile is what runs around law and fix-loop work,

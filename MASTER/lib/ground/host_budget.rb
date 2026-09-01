@@ -127,50 +127,5 @@ module Master
         ENV["MASTER_WEB"] == "1"
       end
     end
-
-    # Enhanced HostBudgetTracker class (integrated from kimi.ai PATCH 8/9).
-    # Provides mutex, events, serialization, per-file tracking.
-    class HostBudgetTracker
-      attr_reader :spent, :max, :warn_at, :max_per_file, :req_max, :file_spends
-
-      def initialize(config, event_bus: nil)
-        @bus = event_bus
-        @max = config.budget_max.to_f
-        @warn_at = config.warn_at.to_f
-        @max_per_file = config.max_per_file.to_f
-        @req_max = config.req_max.to_f
-        @spent = 0.0
-        @file_spends = Hash.new(0.0)
-        @mutex = Mutex.new
-      end
-
-      def spend(amount, file: nil, model: nil)
-        @mutex.synchronize do
-          amount = amount.to_f
-          @spent += amount
-          if file
-            @file_spends[file] += amount
-            if @file_spends[file] > @max_per_file
-              return Result.err("file budget exceeded: #{file}", category: :budget)
-            end
-          end
-          if @spent > @max
-            return Result.err("total budget exceeded: #{@spent.round(4)} > #{@max}", category: :budget)
-          end
-          Result.ok(spent: @spent, remaining: @max - @spent)
-        end
-      end
-
-      def remaining = @mutex.synchronize { @max - @spent }
-      def fraction_spent = @mutex.synchronize { @spent / @max }
-      def warn_threshold? = @mutex.synchronize { @spent >= @max * @warn_at }
-      def exhausted? = @mutex.synchronize { @spent >= @max }
-      def reset!
-        @mutex.synchronize do
-          @spent = 0.0
-          @file_spends.clear
-        end
-      end
-    end
   end
 end

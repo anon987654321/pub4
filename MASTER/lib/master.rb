@@ -72,7 +72,6 @@ module Master
   def self.operator_path(*parts) = File.join(OPENBSD_ROOT, *parts)
   def self.rails_path(*parts) = File.join(RAILS_ROOT, *parts)
   def self.openbsd_path(*parts) = File.join(OPENBSD_ROOT, *parts)
-  def self.deploy_path(*parts) = operator_path(*parts)
   def self.tool_path(*parts) = File.join(TOOLS_ROOT, *parts)
   def self.data_path(*parts) = File.join(DATA, *parts)
   # The one reader of data/rules.yml. A missing section raises rather than
