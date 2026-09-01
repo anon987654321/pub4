@@ -2187,6 +2187,67 @@ or `__FILE__`, which shift a directory level when a file moves — the bug that
 broke three tests during the first fold, and the reason to do the second one
 deliberately rather than as a tail-end.
 
+
+### The crate — opened 2026-09-01
+
+The chop cache was keyed on a window's offset and not on the record, fixed in
+`003e0a9f9`. What follows is what that fix does not repair and what looking for
+it turned up. The preset half of this subject is `WISHLIST.md` 100–101 and is
+not restated here.
+
+- **Forty-one of the crate's forty-two sources are gone.** `samples/dug/` holds
+  one file. They were gitignored on the reasoning that dug audio is
+  "re-fetchable from the network", and nothing recorded a URL — not
+  `provenance.json`, not one of the 161 loop sidecars, which carry only the
+  reproduce command and so name a path that no longer exists. Only the titles
+  survive, in the slugs. Re-fetching by title returns *a* upload, not the one
+  that was cut, so offsets and mastering will not match and no loop is
+  reproducible from its sidecar. One record is the exception:
+  `henrik_debich`, whose separated stems outlived its source in
+  `scratch/chop_work/` and were moved under their slug rather than orphaned.
+  The forward half of this — record the URL at fetch time — is cheap and is not
+  yet done.
+- **Thirty-eight of 161 racks are another record's audio under the wrong name.**
+  123 unique wavs, 28 collision groups; Barney Kessel, Gorillaz and "Gimme the
+  Flu" share one loop. The cache fix stops it recurring and repairs none of it:
+  reattributing a rack needs the source that made it, and the sources are the
+  entry above. The registry can be deduplicated to 123 by checksum — that is
+  measurement — but which of the names in a group is the true one cannot be
+  recovered, so the honest move is to drop the duplicates and keep whichever
+  rack the worth table already scored.
+- **153 of 161 racks were cut by the seam test that preferred mid-phrase.**
+  `28225f2c9` fixed it and re-cut only the OSC eight, saying plainly that the
+  rest is re-cut or left alone. Re-cutting is blocked by the missing sources, so
+  the only source-free remedy is rotating each loop onto its strongest downbeat,
+  which is content-preserving because a rack is one whole period. Measured over
+  the crate: current downbeat mean +1.17 dB against +2.86 for the re-cut eight,
+  108 of the 153 sitting under 1 dB. **The measure needs a floor before it is
+  acted on** — several of the largest apparent gains are a quiet tail scoring as
+  a downbeat, not a bar line, and one rack starts at -57 dB.
+- **148 registry rows carry only what a wav can be asked for.** The rebuild that
+  recovered the crate after the registry was clobbered reconstructed bpm from
+  each file's own duration and voicing from its spectrum, and `key` was measured
+  back on 2026-09-01. `source`, `source_start_sec`, `self_similarity` and
+  `rejoin_db` are gone for those rows and cannot be recomputed without the
+  source. `vocal_chop` skips a row that cannot name its record rather than
+  guessing, which is why those 148 have no vocal chop available.
+- **`DRUM_LOOP` falls back to `~/Downloads`.** `drum_loop_source`
+  (`dilla.rb:7215`) resolves to `File.expand_path("~/Downloads/techno_drums.mp3")`
+  when the samples copy is absent, and the samples copy is absent. A render
+  therefore depends on a file outside the repo, and the one there is industrial
+  techno, which the crate rules exclude. Naming the replacement is an operator's
+  call because it changes rendered sound.
+- **`test_dilla_audio_graph_parity.rb` is stale against the engine.** Four
+  failures, reproduced at HEAD in a throwaway worktree with no working-tree
+  changes: the test expects one flat `amix` and the engine emits the bus-routed
+  `kit_sum`/`harmonic_sum`/`low_sum`/`texture_sum` graph. The test is wrong, not
+  the code, but which of the two is authoritative is a sound question.
+- **Three engine tests exceed their 90 s timeout under suite load.**
+  `test_smoke_two_bar_render`, `test_provenance_separates` and
+  `test_dilla_frozen_reads` each pass in about 23 s run alone and time out
+  inside `rake test`. Not a defect in what they measure; the budget does not
+  survive a loaded machine, and a green subset here proves only that.
+
 ## The unified handoff, read against the tree — 2026-08-31
 
 `CLAUDE_OPUS_UNIFIED_HANDOFF.md` arrived at the repo root in `8dfe41309` as an
