@@ -10,12 +10,12 @@ laws:
     - input_validation
     - resource_management
     research:
-    - name: IEEE Top 10 Security Vulnerabilities in Code
-      url: https://ar5iv.labs.arxiv.org/html/2006.03281
-    - name: OWASP Top 10
-      url: https://owasp.org/Top10
-    - name: Defensive Programming
-      url: https://github.com/google/styleguide
+      - name: "IEEE Top 10 Security Vulnerabilities in Code"
+        url: "https://ar5iv.labs.arxiv.org/html/2006.03281"
+      - name: "OWASP Top 10"
+        url: "https://owasp.org/Top10"
+      - name: "Defensive Programming"
+        url: "https://github.com/google/styleguide"
   SINGULARITY:
     priority: 2
     principle: One source of truth; no duplication; data integrity.
@@ -24,10 +24,10 @@ laws:
     - consistency
     - data_integrity
     research:
-    - name: DRY Principle (Andrew Hunt, David Thomas)
-      url: https://pragprog.com/titles/pragddd/the-pragmatic-programmer
-    - name: Database Normalization Theory
-      url: https://en.wikipedia.org/wiki/Database_normalization
+      - name: "DRY Principle (Andrew Hunt, David Thomas)"
+        url: "https://pragprog.com/titles/pragddd/the-pragmatic-programmer"
+      - name: "Database Normalization Theory"
+        url: "https://en.wikipedia.org/wiki/Database_normalization"
   LINEARITY:
     priority: 3
     principle: Sequential flow; minimal branches; clear path.
@@ -36,10 +36,10 @@ laws:
     - nesting
     - complexity
     research:
-    - name: Cyclomatic Complexity (McCabe 1976)
-      url: https://en.wikipedia.org/wiki/Cyclomatic_complexity
-    - name: Cognitive Load in Code
-      url: https://ar5iv.labs.arxiv.org/html/2107.03127
+      - name: "Cyclomatic Complexity (McCabe 1976)"
+        url: "https://en.wikipedia.org/wiki/Cyclomatic_complexity"
+      - name: "Cognitive Load in Code"
+        url: "https://ar5iv.labs.arxiv.org/html/2107.03127"
   PROXIMITY:
     priority: 4
     principle: Related code together; cohesive modules.
@@ -48,10 +48,10 @@ laws:
     - coupling
     - modules
     research:
-    - name: Cohesion and Coupling (Yourdon & Constantine)
-      url: https://en.wikipedia.org/wiki/Cohesion_(computer_science)
-    - name: SOLID Principles
-      url: https://en.wikipedia.org/wiki/SOLID
+      - name: "Cohesion and Coupling (Yourdon & Constantine)"
+        url: "https://en.wikipedia.org/wiki/Cohesion_(computer_science)"
+      - name: "SOLID Principles"
+        url: "https://en.wikipedia.org/wiki/SOLID"
   ABSTRACTION:
     priority: 5
     principle: Right level; no leaky abstractions; appropriate hiding.
@@ -60,10 +60,10 @@ laws:
     - encapsulation
     - apis
     research:
-    - name: Leaky Abstractions (Joel Spolsky)
-      url: https://www.joelonsoftware.com/2002/11/11/the-law-of-leaky-abstractions
-    - name: Interface Design Patterns
-      url: https://en.wikipedia.org/wiki/Interface_segregation_principle
+      - name: "Leaky Abstractions (Joel Spolsky)"
+        url: "https://www.joelonsoftware.com/2002/11/11/the-law-of-leaky-abstractions"
+      - name: "Interface Design Patterns"
+        url: "https://en.wikipedia.org/wiki/Interface_segregation_principle"
   DENSITY:
     priority: 6
     principle: Information dense; no noise; signal not noise.
@@ -72,10 +72,10 @@ laws:
     - comments
     - naming
     research:
-    - name: Elements of Style (Strunk & White)
-      url: https://www.gutenberg.org/ebooks/37134
-    - name: Signal-to-Noise Ratio in Code
-      url: https://ar5iv.labs.arxiv.org/html/2310.19102
+      - name: "Elements of Style (Strunk & White)"
+        url: "https://www.gutenberg.org/ebooks/37134"
+      - name: "Signal-to-Noise Ratio in Code"
+        url: "https://ar5iv.labs.arxiv.org/html/2310.19102"
 engineering_fit:
   classify: 'For every problem, decide: under-engineered, over-engineered, or perfectly
     engineered — and say why.'
@@ -86,6 +86,9 @@ engineering_fit:
   fit: Solution matches the load and the failure modes — no slack, no shortfall.
   why_required: State the load the artifact carries (users, edge cases, lifetimes,
     blast radius). The verdict follows from the load.
+# Output-text bias patterns (scanned by the RuleDSL text scanner). Distinct from
+# data/biases.yml's decision-proposal biases (confirmation/sunk-cost/authority),
+# which BiasGuard reads separately — same word, two different pipeline stages.
 beauty:
   typography_bringhurst:
   - choose_appropriate_typeface_for_function
@@ -126,8 +129,8 @@ self_test:
     DENSITY: no method > long_method threshold in lib/
     KERNEL_ADHERENCE: infra_helpers.rb wiring layer present; rule adherence >= 35%
     PRINCIPLE_MAP: every rule id named by data/principle_map.yml resolves to a registered
-      rule, and every covered principle names at least one. The reverse direction
-      — every registered rule traced by some principle — is `rake lint:principle_trace`,
+      rule, and every covered principle names at least one. The reverse direction —
+      every registered rule traced by some principle — is `rake lint:principle_trace`,
       a ratcheting ceiling, because it has never been zero.
   fail_action: publish self_violation event; refuse autoloop fixes that don't restore
     the law
@@ -137,15 +140,114 @@ veto_patterns:
     apply: move_to_env
     violates_law: ROBUSTNESS
   sql_injection:
+    # Was `execute|query.*#\{`. The alternation binds as `(execute)|(query.*#\{)`,
+    # so the bare word `execute` anywhere on a line was an unconditional merge
+    # blocker. 87 findings in lib/, every one read and classified, 0 real:
+    #
+    #   `def execute_resync`, `execute_job`, `pre_execute?`, `phase: "post_execute"`
+    #   `@db.execute(sql, [args])` — the parameterized form this rule prescribes
+    #   `@db.execute(<<~SQL, args)` — likewise, via heredoc
+    #   `"context: gathering for query=#{query[0, 60]}"` — a log line
+    #   `# Unsafe shell never executes.` — a comment
+    #
+    # The one candidate that looked real was `WHERE #{where.join(" AND ")}` in
+    # ground/knowledge_store/feedback_events.rb. Checked: provider_errors_query
+    # builds `where` from the literals "event_type = ?" and "dimension = ?" and
+    # puts every value in `args`. Parameterized. Also a false positive.
+    #
+    # Now: execute/query called with a quoted string that carries an
+    # interpolation. Backreferenced quoting, `(["'])(?:(?!\1).)*`, so that
+    # `query("... name='#{name}'")` — a single quote inside a double-quoted SQL
+    # string, which is the classic injection shape — is not skipped.
+    #
+    # KNOWN GAP, and it is the important one: this cannot see interpolation
+    # inside a heredoc, because scan_lines is per line and the `<<~SQL` line
+    # carries no `#{`. Catching SQL built across lines needs an AST rule, not a
+    # lexical veto. Tracked in TODO.md rather than pretended away here.
     detect: (?:execute|query)\w*\s*\(\s*(["'])(?:(?!\1).)*#\{
     apply: parameterize
     violates_law: ROBUSTNESS
   unfinished:
+    # Was "\\.\\.\\.|TODO|FIXME|pending", which fired 119 times in lib/ and was
+    # wrong 119 times. Measured 2026-08-12, every finding read and classified:
+    #
+    #   49  the word "pending" — @pending, the "pending" order state in
+    #       VALID_STATES, and the substring inside depending / spending
+    #   41  an ellipsis in prose or in documented syntax — "\n... [truncated]",
+    #       %i[...], for...of, require(...).permit(...)
+    #   26  Ruby's exclusive range operator — lines[0...-1], (1...lines.length)
+    #    3  the source of the rules that detect TODO/FIXME, quoting it
+    #
+    # Zero real unfinished work, at :veto — the strongest severity there is.
+    # 119 false vetoes do not gate anything; they teach the reader that a veto is
+    # noise, which costs more than the rule was ever worth.
+    #
+    # Narrowed rather than deleted — the intent is right, only the reach was
+    # wrong. Three clauses, each doing one thing:
+    #
+    #   #[^\n]*\b(TODO|FIXME)\b   a marker in a comment, which is what a marker
+    #                             is. The last three false vetoes were TODO
+    #                             inside the regex literals of the rules that
+    #                             detect TODO; none has a `#` before it.
+    #   ^\s*\.\.\.\s*$            a stubbed body — `...` alone on its line. This
+    #                             is the shape lexical TODO_FIXME does not have,
+    #                             and the reason to keep a veto here at all.
+    #   (pending removed)         a legitimate order state in this codebase
+    #                             (VALID_STATES) and a substring of depending
+    #                             and spending. No narrowing rescues a word.
+    #
+    # The comment clause deliberately does not carry TODO_FIXME's hardcoded
+    # `path.include?("/review/scan/rules/")` exemption. Copying an exemption into
+    # a second file is how the two drift; being precise about what a marker looks
+    # like needs no exemption at all.
+    #
+    # Pinned in both directions in test/test_scan_rule_false_positives.rb, per
+    # that file's own rule: a narrowing has to prove what it still catches.
+
+    # Narrowed a third time, by the same measurement. `\b` holds between the O and
+    # the dot, so `TODO.md` — the backlog CLAUDE.md tells every agent to cite — read
+    # as a work marker. Every veto it raised across lib/ and law/ was that filename,
+    # none was unfinished work, so the rule punished the house rule that sends a
+    # reader there. The lookahead sits on the marker rather than on the line, so
+    # `# TODO: fix, and see TODO.md` still vetoes on the marker.
     detect: "#[^\\n]*\\b(TODO|FIXME)\\b(?!\\.md)|^\\s*\\.\\.\\.\\s*$"
+    # The only veto pattern that means to read comments — a marker lives in one.
+    # Every other pattern is about code, and a comment describing shell safety or
+    # SQL injection is documentation, not the thing. See VetoPatternRule.
     reads_comments: true
     apply: complete_or_track
     violates_law: ROBUSTNESS
   unsafe_calls:
+    # Interpolation is the arbitrary-code-execution risk. `system("cmd", arg, arg)`
+    # is the safe arg-array form style.yml prescribes as the FIX for this, so
+    # vetoing it too was a contradiction and the source's biggest false positive.
+    # Every clause requires a `#{...}` reaching a shell.
+    #
+    # Narrowed again 2026-08-12, 23 findings in lib/ -> 3, all 20 removed ones
+    # read and classified first:
+    #
+    #    9  a markdown fence inside a Ruby string — "```#{lang}", "```\n#{code}"
+    #    6  a markdown code span in prose — "task `#{topic}`", "- `#{path}` (…)"
+    #    2  backticks whose content is Shellwords.escape'd, which is the fix
+    #    2  Open3 in the arg-array form, which is also the fix
+    #    1  "`#{body}`", a string being wrapped in backticks for display
+    #
+    # Three changes. The backtick clause now needs a SINGLE backtick — `(?<!`)`(?!`)`
+    # — which drops every triple-fence; it needs a space inside the backticks, so a
+    # bare `#{path}` code span is not a command; and it refuses Shellwords.escape.
+    # Open3 now only fires when the FIRST argument is one quoted string holding both
+    # a space and an interpolation, which is the shape that reaches a shell — the
+    # old `\([^)]*#\{` matched interpolation in any argument of the safe form.
+    #
+    # The quoted-string clauses use a backreference, `(["'])(?:(?!\1).)*`, instead
+    # of `["'][^"']*`. The old class stopped at the first quote of EITHER kind, so
+    # `system("rm -rf '#{dir}'")` — a shell string quoting an interpolated path,
+    # which is exactly the dangerous case — did not match at all.
+    #
+    # What survives in lib/, and should: ps with an interpolated $USER
+    # (ground/host_budget.rb), a wholly interpolated command
+    # (trace/snapshot_collector.rb), and an interpolated interpreter path
+    # (voice/engines.rb). Two take their value from ENV.
     detect: (?:system|exec)\s*\(\s*(["'])(?:(?!\1).)*#\{|%x[\{(\[<][^)}\]>]*#\{|(?<!`)`(?!`)(?![^`\n]*Shellwords\.escape)(?=[^`\n]*#\{)[^`\n]*\s[^`\n]*`|Open3\.\w+\s*\(\s*(["'])(?:(?!\2).)*\s(?:(?!\2).)*#\{
     apply: add_safe_nav
     violates_law: ROBUSTNESS
@@ -173,6 +275,11 @@ anti_patterns:
   - pattern: speculative_generality
     reason: yagni_in_disguise
 principle_priorities:
+  # tier1/append_only, show_cost, degrade_gracefully and tier2/least_power,
+  # open_closed, liskov, interface_segregation, dependency_inversion,
+  # test_first, skeleton_first and tier3/user_friendly restored 2026-07-12
+  # from data/axioms.jsonl (deleted — superseded by this section) after a
+  # gap audit found no equivalent principle recorded anywhere else.
   tier1_critical:
   - evidence: "@assumption -> validate"
   - reversible: "@irreversible -> add_rollback"
@@ -217,6 +324,18 @@ phantom_recovery:
     text_repetition_loop: same 60-char span repeats >= 3 times
     xml_tool_call_failure: "<tool> open without close OR malformed JSON in args"
     empty_tool_response: tool returned nil twice in a row
+  # Detected and reported, but never counted toward the halt ladder below.
+  #
+  # Three of the four detectors name a malfunction: output that loops, a tool
+  # call that will not parse, a tool that answered nothing twice. Discarding,
+  # escalating the model tier and finally halting are all sane answers to those.
+  #
+  # gaslighting_preamble is not one of them. It is a style rule — soul.yml's
+  # anti_simulation, already enforced by voice/output_guard, review/prompt_filter,
+  # ground/maturity_scorecard and the personality prompt — and its pattern matches
+  # any reply opening "I can", "I would", "Let me" or "Sure,". A model writing
+  # ordinary English is working, not malfunctioning, so letting it spend the
+  # ladder ends the conversation for a phrasing preference.
   style_only:
   - gaslighting_preamble
   recovery:
@@ -224,6 +343,12 @@ phantom_recovery:
   - switch model tier (escalate or fall back) on second occurrence
   - publish phantom:detected event, halt loop on third
 failure_taxonomy:
+  # A paid provider spend limit — out of credit, over quota. No examples key:
+  # the pattern is Fix::Constants::EXHAUSTED_RE, because the examples grammar
+  # (word_word -> word[ ._-]?word) cannot express the bare HTTP 402 this failure
+  # often arrives as. max_retries is 0 because an in-place retry cannot succeed;
+  # recovery is Ground::QuotaGate re-probing on FailureTaxonomy.backoff_seconds,
+  # not a retry count here.
   exhausted:
     strategy: pause_and_reprobe
     max_retries: 0
@@ -259,12 +384,20 @@ evidence_scoring:
     profiling_data: 10
   pass_threshold: 80
   block_threshold: 50
+  # What can actually produce each kind of proof. The kind used to be whatever the
+  # model wrote in the effect, so exec(["true"], evidence: "test_pass") was worth
+  # 35 and four of them ended the turn — the fold graded its own paper. A command
+  # that does not run the tests cannot be a passing test run.
+  #
+  # Unmatched scores nothing rather than blocking the effect: the fold may run what
+  # it likes, it just cannot claim credit for it. Mirrors Master::Core::Proof
+  # PRODUCERS, which is the Ruby source, and a test pins the two together.
   producers:
-    test_pass: rake\s+test|rails\s+test|rspec|minitest|bin/(?:ci|check|gate)|ruby\S*\s[^;|]*\btest/
-    scan_clean: bin/(?:check|gate|scan)|rubocop|brakeman|bundler-audit|rake\s+(?:lint|audit|scan)
-    code_review: bin/(?:review|critique)|rake\s+(?:review|critique)
-    log_analysis: journalctl|dmesg|rcctl|/var/log|\.log\b
-    profiling_data: benchmark|stackprof|ruby-prof|memory_profiler|--profile
+    test_pass: 'rake\s+test|rails\s+test|rspec|minitest|bin/(?:ci|check|gate)|ruby\S*\s[^;|]*\btest/'
+    scan_clean: 'bin/(?:check|gate|scan)|rubocop|brakeman|bundler-audit|rake\s+(?:lint|audit|scan)'
+    code_review: 'bin/(?:review|critique)|rake\s+(?:review|critique)'
+    log_analysis: 'journalctl|dmesg|rcctl|/var/log|\.log\b'
+    profiling_data: 'benchmark|stackprof|ruby-prof|memory_profiler|--profile'
 schema_metadata:
   optional_fields:
     reversibility: free | cheap | surgical | impossible
@@ -290,9 +423,16 @@ paths:
   tree:
     max_depth: 2
     max_lines: 200
+  # Paths the agent may never write or stage. The constitution it is judged by
+  # and the spine that folds its effects must not be rewritable by an effect.
+  # Prefix match; a trailing "/" marks a directory subtree.
   immutable:
   - data/rules.yml
   - data/soul.yml
+  # Both entries, not just the directory: the fold spine moved to lib/core/ on
+  # 2026-08-12 and its entrypoint is lib/core.rb, which holds VERBS, Effect and
+  # Secret. A `lib/core/` entry alone would leave the closed verb set writable
+  # by an effect — the exact rewrite this rule exists to block.
   - lib/core.rb
   - lib/core/
 thresholds:
@@ -357,6 +497,10 @@ prediction_engine:
   nesting_depth:
     confidence: 0.92
     autofix: extract_method
+# Three sets of patterns the law reads directly: what a shell may not run, what
+# an injection attempt looks like, and how a refusal has to read. They were in
+# patterns.yml among the MOTD copy, the cron jobs and the webhook endpoints;
+# only these three are law, so only these three moved.
 zsh:
   forbidden_commands:
   - command: awk
@@ -445,44 +589,42 @@ zsh:
     rule: cat path — read the whole file once, never stitch output with grep/head/tail
     rationale: Partial reads yield partial (wrong) changes. Same rule as workflow
       and rules.yml PRESERVE_FIRST.
+
+# Merged from former injection_patterns.yml — prompt/shell injection detection.
 injection:
   prompt_injection:
-  - ignore (?:previous|all|your) instructions
-  - disregard (?:your )?(?:system )?prompt
-  - you are now (?:a|an|in)
-  - pretend (?:to be|you are|you're)
-  - 'new instructions:'
+  - "ignore (?:previous|all|your) instructions"
+  - "disregard (?:your )?(?:system )?prompt"
+  - "you are now (?:a|an|in)"
+  - "pretend (?:to be|you are|you're)"
+  - "new instructions:"
   - "\\[SYSTEM\\]"
   - "###\\s*SYSTEM"
   - "(?:act|behave|respond) as (?:if )?(?:you (?:are|were)|a|an) (?!assistant|helpful)"
-  - override (?:your )?(?:safety|guidelines|rules|instructions)
-  - jailbreak
-  - forget (?:everything|all|your)
-  - override (?:axiom|principle|rule)
-  - disregard (?:axiom|principle|rule|safety)
-  - new system prompt
+  - "override (?:your )?(?:safety|guidelines|rules|instructions)"
+  - "jailbreak"
+  - "forget (?:everything|all|your)"
+  - "override (?:axiom|principle|rule)"
+  - "disregard (?:axiom|principle|rule|safety)"
+  - "new system prompt"
   shell_injection:
     multiline_pattern: "```(?:bash|sh|zsh|shell)\\n.*?(?:rm\\s+-rf|curl\\b.*?\\|\\s*(?:bash|sh)\\b|wget\\b.*?\\|\\s*(?:bash|sh)\\b)"
   modes:
-    permissive: match -> block; no match -> pass
-    default_deny: match -> block; no match -> require explicit allowlist token
+    permissive: "match -> block; no match -> pass"
+    default_deny: "match -> block; no match -> require explicit allowlist token"
+
+# Merged from former refusal_templates.yml — refusal scaffolding when MASTER
+# cannot or should not act. Source: OpenAI / Anthropic system-prompt
+# reunification (#74). Loaded by PersonalityPromptBuilder#add_refusal_policy.
 refusal_templates:
   capability_disclosure:
-    no_internet_yet: MASTER reads local data and runs local tools; no live web access
-      in this turn
-    no_secret_creation: MASTER does not generate secrets; bring your own and rotate
-      via signify
-    no_silent_destruction: MASTER will not run irreversible commands without explicit
-      user confirmation
+    no_internet_yet: "MASTER reads local data and runs local tools; no live web access in this turn"
+    no_secret_creation: "MASTER does not generate secrets; bring your own and rotate via signify"
+    no_silent_destruction: "MASTER will not run irreversible commands without explicit user confirmation"
   refusal_phrasing:
-    style: decline once, propose alternative once, stop
-    forbidden:
-    - I'm sorry but I cannot
-    - as an AI
-    - I'd be happy to
-    - filler_apology
-    example_good: 'Out of scope: production push during freeze. Alternative: branch-only
-      commit, deploy after Friday.'
+    style: "decline once, propose alternative once, stop"
+    forbidden: ["I'm sorry but I cannot", "as an AI", "I'd be happy to", filler_apology]
+    example_good: "Out of scope: production push during freeze. Alternative: branch-only commit, deploy after Friday."
 learned_smells:
 - id: bare_rescue
   pattern: "^\\s*rescue\\s*(?:=>|;|$)"
@@ -496,25 +638,65 @@ learned_smells:
   pattern: "[ \\t]+$"
   confidence: 0.99
   autofix: strip_trailing_whitespace
+# debug_output was removed 2026-08-12, for the same reason as long_line above and
+# with the same evidence. It carried the SAME id as the registered DEBUG_OUTPUT
+# rule, so their findings were not even distinguishable in a report — where
+# long_line at least differed by case. The registered rule is :error with a
+# working autofix; this copy was :warning with `autofix: remove_debug_call`, a
+# name that appears nowhere but in this file.
+#
+# Its own comment said the narrowing had to carry "the same operator exclusions
+# the DEBUG_OUTPUT Ruby rule carries" — two regexes kept in step by hand, which
+# is the definition of the defect. That reasoning lives on in the registered
+# rule and in test_debug_output_ignores_a_local_named_p, which pins it.
 - id: todo_comment
+  # `\b` holds before the dot, so TODO.md read as a marker: 59 of the 81 marker
+  # lines under MASTER are that filename and nothing else. The veto pattern
+  # `unfinished` and the registry's TODO_FIXME carry the same lookahead.
   pattern: "\\b(?:TODO|FIXME|HACK)\\b(?!\\.md)"
   confidence: 0.7
   autofix: create_issue
 - id: magic_number
+  # A number in a comment is prose about a number, not a magic literal — the
+  # bare regex scored 6,318 findings, sampled 100% comment text. skip_comments
+  # blanks comment-only lines before matching (meta_rules.rb#findings_for_smell).
   skip_comments: true
+  # Was "\b\d{2,}\b" — any two-digit-or-longer run anywhere, which is 4318
+  # findings across the tree and is mostly years, versions, timestamps and
+  # numbers that already have names.
+  #
+  # cross_file_analysis.rb's MAGIC_NUMBER learned this on 2026-07-31 and carries
+  # the exemptions: skip years, and skip a literal that sits on the right of a
+  # constant assignment or a keyword, because "PATTERN_CACHE_MAX = 512" is the
+  # fix this rule recommends and firing on it made the count go up. The
+  # declarative twin never got them. It does now — the same three exemptions a
+  # single pattern can express.
   pattern: "(?<![\\w.])(?<!= )(?<!: )(?!19\\d{2}(?![\\d.]))(?!20\\d{2}(?![\\d.]))\\d{2,}(?![\\w.])"
   confidence: 0.85
   autofix: extract_named_constant
-  mediums:
-  - ruby
-  - javascript
-  - html
-  - zsh
+  # A named constant is a thing you extract in code, not in prose. Without this
+  # the pattern fires on any number in a markdown transcript or a data file,
+  # where "extract a constant" is not an available move.
+  mediums: [ruby, javascript, html, zsh]
+# long_line was removed 2026-08-12. It restated the registered LONG_LINE rule as a
+# raw regex and produced 334 findings across lib/, of which THREE landed on a line
+# no other rule reports — and all three are in lib/io/llm.rb, which LONG_LINE
+# deliberately exempts. So the copy was 331 duplicates plus a quiet override of an
+# exemption, reported at :warning where the real rule says :info and with the id as
+# its whole message.
+#
+# The same test the EMPTY_RESCUE deletion used: how many findings are unique to it.
+# Every other entry in this list passes that test — magic_number, future_tense,
+# duplicate_code, sycophancy and todo_comment are the only implementations of what
+# they detect, which is why this is a deletion of one entry and not of the layer.
 - id: sycophancy
   pattern: "\\b(?:absolutely|certainly|of course|happy to help)\\b"
   confidence: 0.99
   autofix: delete_phrase
 - id: future_tense
+  # Anti-simulation is about hedging in OUTPUT; a rationale comment saying a
+  # change "would break X" is describing the past, not simulating. skip_comments
+  # keeps the rule off comment prose (1,667 code findings, sampled comments).
   skip_comments: true
   pattern: "\\b(?:will|would|might|could|perhaps|seems|appears)\\b"
   confidence: 0.95
@@ -523,6 +705,12 @@ learned_smells:
   pattern: "\\b(?:copy|duplicate|same as)\\b"
   confidence: 0.75
   autofix: extract_shared_method
+# god_class/n_plus_one learned_smells removed 2026-07-12: god_class's regex
+# (^\s*class\b) matched every class declaration with zero signal, riding
+# alongside the real AST-based NO_GOD_CLASS rule (structural_rules.rb:78);
+# n_plus_one's regex matched the FIX keywords (includes/preload/eager_load),
+# not the problem, riding alongside the real N_PLUS_ONE rule
+# (universal_rules.rb:40). Both were redundant, one was backwards.
 rules:
   codebase:
   - id: PRESERVE_FIRST
@@ -714,16 +902,13 @@ rules:
     detect_structural: god_class
     fix: Decompose into focused classes.
   - id: FILE_SPRAWL
-    source: soul.yml COLLAPSE_BEFORE_ADDING / FLAT_HIERARCHY — operator standing instruction,
-      clean minimal tree
+    source: soul.yml COLLAPSE_BEFORE_ADDING / FLAT_HIERARCHY — operator standing instruction, clean minimal tree
     name: One-file directories and tiny files merge into their owners
     tier: structure
     severity: warning
     autofix: false
     detect_structural: file_sprawl
-    fix: Hoist the only file in a directory into its parent; absorb files under 25
-      code lines into their closest owner. Fold requires, Zeitwerk names and tests
-      in the same change.
+    fix: Hoist the only file in a directory into its parent; absorb files under 25 code lines into their closest owner. Fold requires, Zeitwerk names and tests in the same change.
   - id: NO_SHOTGUN_SURGERY
     source: 'Refactoring code smell: Shotgun Surgery (Fowler)'
     name: One change should not require edits in many files
@@ -748,8 +933,8 @@ rules:
     severity: info
     autofix: false
     detect_semantic: Is this building infrastructure without an end-to-end path? Is
-      this business plan elaborating budgets before proving the revenue model? Is
-      this research paper expanding methodology before demonstrating the finding?
+      this business plan elaborating budgets before proving the revenue model? Is this
+      research paper expanding methodology before demonstrating the finding?
     fix: Wire the simplest end-to-end path first. Prove it works. Then add depth.
   - id: ORTHOGONALITY
     source: The Pragmatic Programmer — orthogonality (Hunt & Thomas)
@@ -757,9 +942,9 @@ rules:
     tier: architecture
     severity: warning
     autofix: false
-    detect_semantic: Does changing one aspect force changes in unrelated aspects?
-      Does reformatting break content? Does modifying one gene's expression alter
-      another pathway?
+    detect_semantic: Does changing one aspect force changes in unrelated aspects? Does
+      reformatting break content? Does modifying one gene's expression alter another
+      pathway?
     fix: Decouple dimensions. Database changes should not require UI changes. Style
       should not affect structure.
   - id: TRANSFORMATIONS
@@ -779,8 +964,8 @@ rules:
     severity: warning
     autofix: false
     detect_semantic: Is this module shallow — complex interface, trivial implementation?
-      Does this form ask 40 questions for a simple task? Does this clause require
-      five cross-references?
+      Does this form ask 40 questions for a simple task? Does this clause require five
+      cross-references?
     fix: Simple interface, rich implementation. A deep module does much with little
       ceremony.
   - id: INFORMATION_HIDING
@@ -791,8 +976,7 @@ rules:
     autofix: false
     detect_semantic: Is implementation detail leaking across boundaries? Would changing
       an internal decision force changes elsewhere?
-    fix: Encapsulate each decision in one module. If it changes, only that module
-      changes.
+    fix: Encapsulate each decision in one module. If it changes, only that module changes.
   - id: DIFFERENT_LAYER_DIFFERENT_ABSTRACTION
     source: A Philosophy of Software Design (Ousterhout)
     name: Each layer speaks a different language than its neighbors
@@ -828,10 +1012,10 @@ rules:
     tier: architecture
     severity: info
     autofix: false
-    detect_semantic: Is complexity pushed up to the caller instead of absorbed by
-      the implementation?
-    fix: Absorb complexity into the implementation. The caller should not need to
-      know how it works.
+    detect_semantic: Is complexity pushed up to the caller instead of absorbed by the
+      implementation?
+    fix: Absorb complexity into the implementation. The caller should not need to know
+      how it works.
   - id: ETC
     source: ETC 'Easier To Change' — The Pragmatic Programmer (Hunt & Thomas)
     name: Easier To Change — the meta-value behind every principle
@@ -840,8 +1024,7 @@ rules:
     autofix: false
     detect_semantic: Does this design decision make the system harder to change? Does
       this contract make renegotiation unnecessarily difficult?
-    fix: Choose the option that keeps more options open. Decoupled, parameterized,
-      replaceable.
+    fix: Choose the option that keeps more options open. Decoupled, parameterized, replaceable.
   - id: BROKEN_WINDOWS
     source: The Pragmatic Programmer — software entropy / broken windows
     name: Zero tolerance for visible decay
@@ -896,8 +1079,8 @@ rules:
     autofix: false
     detect_semantic: Are tests only checking specific examples instead of universal
       properties? Is QA only sampling instead of testing invariants?
-    fix: Define properties that must always hold. Generate many inputs. Verify the
-      property survives all.
+    fix: Define properties that must always hold. Generate many inputs. Verify the property
+      survives all.
   - id: EXPLICIT_TRADEOFF
     source: Polished Ruby Programming (Jeremy Evans, 2021) — trade-offs over absolutes
     name: Justify implementation choices by context, not as universally best
@@ -906,10 +1089,10 @@ rules:
     autofix: false
     detect_semantic: Where several valid implementations exist (data structure, error
       strategy, sync vs async, inheritance vs composition), is the chosen one justified
-      by stated context (access pattern, cardinality, failure mode, scale) rather
-      than presented as the one right way?
-    fix: 'State the trade-off: name the access pattern or failure mode that makes
-      this choice fit here. Avoid ''always''/''never'' where context decides.'
+      by stated context (access pattern, cardinality, failure mode, scale) rather than
+      presented as the one right way?
+    fix: 'State the trade-off: name the access pattern or failure mode that makes this
+      choice fit here. Avoid ''always''/''never'' where context decides.'
   - id: LEAST_PRIVILEGE
     source: Saltzer & Schroeder (1975) — principle of least privilege
     name: Grant the minimum authority needed, for the shortest time
@@ -964,9 +1147,9 @@ rules:
     tier: kernel
     severity: error
     autofix: false
-    detect_semantic: Can an invalid combination of fields/values be constructed at
-      all? Are invariants enforced by runtime checks that could be forgotten instead
-      of by the data's shape?
+    detect_semantic: Can an invalid combination of fields/values be constructed at all?
+      Are invariants enforced by runtime checks that could be forgotten instead of by
+      the data's shape?
     fix: Reshape the data so the invalid state cannot be expressed; replace defensive
       checks with structural impossibility.
   - id: PARSE_DONT_VALIDATE
@@ -1026,8 +1209,8 @@ rules:
     tier: kernel
     severity: error
     autofix: false
-    detect_semantic: Does this file perform expensive operations (API calls, disk
-      IO) without checking preconditions?
+    detect_semantic: Does this file perform expensive operations (API calls, disk IO)
+      without checking preconditions?
     fix: Guard clause before costly work. Estimate cost. Confirm if destructive.
   - id: SMALL_FILES
     source: Clean Code — small classes/files (Robert C. Martin)
@@ -1054,7 +1237,7 @@ rules:
     tier: core
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Add ''# frozen_string_literal: true'' as first line.'
   - id: SINGLE_PRIVATE_SECTION
     source: Ruby Style Guide / RuboCop Style/AccessModifierDeclarations
@@ -1062,7 +1245,7 @@ rules:
     tier: design
     severity: info
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use a single 'private' keyword with methods below it.
   - id: STRICT_MODE_ZSH
     source: Shell strict mode set -euo pipefail (Google Shell Style Guide)
@@ -1070,7 +1253,7 @@ rules:
     tier: core
     severity: error
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Add 'set -euo pipefail' after shebang.
   - id: HTML_LANG
     source: WCAG 3.1.1 Language of Page (W3C/WAI)
@@ -1078,7 +1261,7 @@ rules:
     tier: accessibility
     severity: error
     autofix: true
-    detect_lexical:
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: Add lang="en" or appropriate locale.
     languages:
     - html
@@ -1088,7 +1271,7 @@ rules:
     tier: accessibility
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use <header>, <footer>, <nav>, <main>, <aside>, <article>, <section>.
   - id: MOBILE_FIRST
     source: Mobile First (Luke Wroblewski, 2011)
@@ -1096,7 +1279,7 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use min-width (mobile-first, progressive enhancement).
   - id: NO_IMPORT_SCSS
     source: Sass best practice — @use over @import (Sass team)
@@ -1104,7 +1287,7 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: "@import is deprecated. Use @use/@forward."
   - id: NO_IMPORTANT
     source: CSS best practice — avoid !important (MDN)
@@ -1112,7 +1295,7 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # the registry (lib/review/scan/rules/web_rules.rb), not law/
     fix: Restructure selectors to avoid specificity bankruptcy.
     languages:
     - css
@@ -1122,7 +1305,7 @@ rules:
     tier: aesthetic
     severity: info
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     detect_semantic: Does this file have dense blocks with no visual breaks, or ragged
       indentation?
     fix: One blank line between sections, never more than two consecutive.
@@ -1132,8 +1315,8 @@ rules:
     tier: aesthetic
     severity: info
     autofix: true
-    detect_lexical:
-    folded_into: SQUINT_TEST
+    detect_lexical: ~ # folded into another rule; no detector of its own
+    folded_into: SQUINT_TEST # same detector; one law, two ids
     fix: One blank line between sections, never more than two.
   - id: NO_MULTIPLE_LANGUAGES
     source: MASTER-native (one language per file)
@@ -1141,7 +1324,7 @@ rules:
     tier: clean_code
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     detect_semantic: Does this file embed multiple languages or notations? Does this
       document mix incompatible frameworks?
     fix: One language per layer. Separate into distinct files or clearly demarcated
@@ -1161,7 +1344,7 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Replace literal with t('.key').
   - id: STRICT_LOADING_MISSING
     source: Rails strict_loading — N+1 prevention (Rails Guides)
@@ -1169,7 +1352,7 @@ rules:
     tier: design
     severity: info
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Add `self.strict_loading_by_default = true` to surface missing eager-loads.
   - id: RATE_LIMITING_MISSING
     source: OWASP API Security — rate limiting
@@ -1177,7 +1360,7 @@ rules:
     tier: security
     severity: error
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Add rate_limit/throttle to sensitive actions.
   - id: MIGRATION_ADD_REFERENCE_NO_FK
     source: 'Rails migrations — foreign_key: true (Strong Migrations)'
@@ -1185,7 +1368,7 @@ rules:
     tier: robustness
     severity: error
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Add `foreign_key: true` to enforce referential integrity.'
   - id: MIGRATION_REMOVE_COLUMN
     source: Strong Migrations — safe column removal (Andrew Kane)
@@ -1193,7 +1376,7 @@ rules:
     tier: robustness
     severity: error
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Document safety/backfill path before removing a column.
   - id: MIGRATION_FIND_OR_CREATE_BY
     source: Rails best practice — find_or_create_by races
@@ -1201,7 +1384,7 @@ rules:
     tier: robustness
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Back find_or_create_by with a unique index to prevent duplicates.
   line:
   - id: NO_JQUERY
@@ -1210,7 +1393,7 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Replace the selector call with a Stimulus target or querySelector.
   - id: NO_INLINE_ASSETS_IN_SHELL
     source: RAILS/shared frontend convention
@@ -1218,7 +1401,7 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Move the markup into app/views and the style into a tracked stylesheet.
   - id: EXPLICIT
     source: The Zen of Python — explicit is better than implicit (Tim Peters)
@@ -1242,7 +1425,7 @@ rules:
     tier: clean_code
     severity: info
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Flatten to: return ... unless condition'
   - id: SAFE_NAVIGATION
     source: Ruby Style Guide / RuboCop Style/SafeNavigation
@@ -1250,7 +1433,7 @@ rules:
     tier: style
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Rewrite to x&.foo&.bar
   - id: EACH_WITH_OBJECT
     source: Ruby Style Guide / RuboCop Style/EachWithObject
@@ -1258,18 +1441,36 @@ rules:
     tier: style
     severity: warning
     autofix: false
-    detect_lexical:
-    fix: Only when the argument is a literal {} or [] that the block mutates in place.
-      Do NOT rewrite reduce/inject whose block returns the next accumulator (a rebuilt
-      string, a running total, a folded hash) — each_with_object discards that return
-      value and the fold becomes a no-op. If in doubt, leave reduce alone.
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
+    # Narrow on purpose, and the narrowing is load-bearing rather than pedantic.
+    #
+    # The two forms are not interchangeable: each_with_object yields the object
+    # and ignores the block's value, reduce threads the block's return value into
+    # the next step. Swapping them is only safe when the accumulator is a fresh
+    # empty collection the block mutates in place. Where the block *returns* the
+    # next accumulator — a rewritten string, a running total — the swap silently
+    # makes every step a no-op.
+    #
+    # That is not hypothetical. The LLM fix sweep applied this rule twice to
+    # AstFixer#apply_transforms, whose accumulator is the rewritten source, and
+    # both times reduced all thirteen AST transforms to no-ops (5d8d49401,
+    # 8962ce5f7). The lexical detector never matched that line — it requires a
+    # literal `{}` or `[]` — so the sweep was acting on the rule's name alone.
+    # Hence the name and fix text now state the precondition instead of implying
+    # the forms are equivalent.
+    fix: >-
+      Only when the argument is a literal {} or [] that the block mutates in place.
+      Do NOT rewrite reduce/inject whose block returns the next accumulator
+      (a rebuilt string, a running total, a folded hash) — each_with_object
+      discards that return value and the fold becomes a no-op. If in doubt, leave
+      reduce alone.
   - id: KEYWORD_ARGS
     source: Ruby Style Guide — keyword args over options hash
     name: Keyword arguments for 3+ parameters
     tier: style
     severity: info
     autofix: false
-    folded_into: FEW_ARGUMENTS
+    folded_into: FEW_ARGUMENTS # same parameter-list count; one rule, two ids
     fix: Use keyword arguments for clarity and safety.
     languages:
     - ruby
@@ -1279,7 +1480,7 @@ rules:
     tier: style
     severity: info
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Use Array(x) instead of x.nil? ? [] : x'
   - id: PERCENT_LITERAL
     source: Ruby Style Guide — %w/%i array literals
@@ -1287,7 +1488,7 @@ rules:
     tier: style
     severity: info
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use %i[a b c] for symbol arrays.
   - id: HASH_FETCH
     source: Ruby Style Guide — Hash#fetch over [] for required keys
@@ -1295,7 +1496,7 @@ rules:
     tier: style
     severity: info
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: Use hash.fetch(:key, default) for nil-vs-false safety.
     languages:
     - ruby
@@ -1305,7 +1506,7 @@ rules:
     tier: style
     severity: info
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use .transform_values { |v| ... }
   - id: USE_THEN
     source: Ruby idiom — Object#then (yield_self) for pipelines
@@ -1313,7 +1514,7 @@ rules:
     tier: style
     severity: info
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Chain with .then { |r| next_step(r) }
   - id: RESCUE_ON_DEF
     source: Ruby Style Guide — rescue in method definitions
@@ -1321,7 +1522,7 @@ rules:
     tier: style
     severity: info
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Put rescue directly on the def block.
   - id: BARE_RESCUE
     source: Ruby Style Guide / RuboCop Lint/RescueException — no bare rescue
@@ -1329,8 +1530,11 @@ rules:
     tier: safety
     severity: error
     autofix: false
-    detect_lexical:
-    folded_into: FAIL_VISIBLY
+    # (?<![\w:.]) so a symbol or method named :bare_rescue is not a bare rescue.
+    # `@transforms << :bare_rescue` in the autofixer that repairs bare rescues had
+    # been an error-severity finding against itself, recorded in TODO.md as noise.
+    detect_lexical: ~ # folded into another rule; no detector of its own
+    folded_into: FAIL_VISIBLY # same detector; one law, two ids
     fix: Rescue StandardError or a specific class.
     languages:
     - ruby
@@ -1340,7 +1544,7 @@ rules:
     tier: performance
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: Add .includes(:association).
     languages:
     - rails
@@ -1350,7 +1554,7 @@ rules:
     tier: performance
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: 'Use .find_each(batch_size: 1000).'
     languages:
     - rails
@@ -1360,7 +1564,7 @@ rules:
     tier: safety
     severity: error
     autofix: true
-    detect_lexical:
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: update_attribute skips validations. Use update!
     languages:
     - rails
@@ -1370,7 +1574,7 @@ rules:
     tier: performance
     severity: info
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: Use .pluck(:column) to avoid AR object instantiation.
     languages:
     - rails
@@ -1380,7 +1584,7 @@ rules:
     tier: style
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: Use const unless the variable is reassigned.
     languages:
     - javascript
@@ -1390,7 +1594,7 @@ rules:
     tier: style
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Rewrite to obj?.foo?.bar
   - id: NULLISH_COALESCING
     source: ECMAScript 2020 — nullish coalescing (??)
@@ -1398,7 +1602,7 @@ rules:
     tier: style
     severity: info
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use ?? when 0 or '' are valid values.
   - id: TEMPLATE_LITERALS
     source: Airbnb JS Style Guide — template literals (ES6)
@@ -1406,7 +1610,7 @@ rules:
     tier: style
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use `Hello ${name}!` template literals.
   - id: ASYNC_AWAIT
     source: ECMAScript 2017 — async/await over raw promises
@@ -1414,7 +1618,7 @@ rules:
     tier: style
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use async/await for readability.
   - id: FOR_OF
     source: Airbnb JS Style Guide — for...of over for...in
@@ -1422,7 +1626,7 @@ rules:
     tier: safety
     severity: error
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: for...in iterates prototype properties. Use for...of.
   - id: QUOTE_VARIABLES
     source: ShellCheck / Google Shell Style Guide — quote variables
@@ -1430,7 +1634,7 @@ rules:
     tier: safety
     severity: error
     autofix: true
-    detect_lexical:
+    detect_lexical: ~ # the registry (lib/review/scan/rules/js_rules.rb), not law/
     fix: Use "$VAR" to prevent word splitting.
     languages:
     - zsh
@@ -1440,7 +1644,7 @@ rules:
     tier: safety
     severity: warning
     autofix: true
-    detect_lexical:
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: Use [[ ... ]] for safe conditionals.
     languages:
     - zsh
@@ -1450,7 +1654,7 @@ rules:
     tier: style
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use $(command) — nestable and readable.
   - id: IMG_ALT
     source: WCAG 1.1.1 Non-text Content (W3C/WAI)
@@ -1458,7 +1662,7 @@ rules:
     tier: accessibility
     severity: error
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # the registry (lib/review/scan/rules/web_rules.rb), not law/
     fix: Add alt= attribute.
     languages:
     - html
@@ -1468,7 +1672,7 @@ rules:
     tier: accessibility
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use <button>. Accessible by default.
   - id: ARIA_INTERACTIVE
     source: WAI-ARIA (W3C) — roles for interactive elements
@@ -1476,7 +1680,7 @@ rules:
     tier: accessibility
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Add role= and tabindex= for accessibility.
   - id: LAZY_IMAGES
     source: Web performance — loading="lazy" (web.dev / MDN)
@@ -1484,7 +1688,7 @@ rules:
     tier: performance
     severity: info
     autofix: true
-    detect_lexical:
+    detect_lexical: ~ # the registry (lib/review/scan/rules/web_rules.rb), not law/
     fix: Add loading="lazy".
     languages:
     - html
@@ -1494,7 +1698,7 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Extract to CSS class.
   - id: LOGICAL_PROPERTIES
     source: CSS Logical Properties and Values (W3C)
@@ -1502,7 +1706,7 @@ rules:
     tier: design
     severity: info
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use margin-inline-start/end, padding-inline-start/end.
   - id: CLAMP_TYPOGRAPHY
     source: CSS fluid typography — clamp() (web.dev)
@@ -1510,7 +1714,7 @@ rules:
     tier: design
     severity: info
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Use font-size: clamp(1rem, 2.5vw, 1.5rem).'
   - id: MEANINGFUL_NAMES
     source: Clean Code — meaningful names (Robert C. Martin)
@@ -1518,7 +1722,7 @@ rules:
     tier: clarity
     severity: info
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use domain-specific names. user_profile, error_message.
   - id: WHY_NOT_WHAT
     source: Clean Code / Code Complete — comments explain why, not what
@@ -1526,7 +1730,7 @@ rules:
     tier: clarity
     severity: info
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Comments should explain intent, not restate the code.
   - id: DEAD_CODE
     source: Refactoring — remove dead code (Fowler) / Clean Code
@@ -1534,7 +1738,7 @@ rules:
     tier: clean_code
     severity: warning
     autofix: true
-    detect_lexical:
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: Remove code after return/exit/raise/throw.
   - id: TRAILING_COMMAS
     source: Ruby/JS style — trailing commas in multiline literals
@@ -1550,7 +1754,7 @@ rules:
     tier: aesthetic
     severity: info
     autofix: true
-    detect_lexical:
+    detect_lexical: ~ # the registry (lib/review/scan/rules/universal_rules.rb), not law/
     fix: Use ellipsis, em dash, curly quotes in UI strings.
   - id: SILENCE_ON_SUCCESS
     source: Unix philosophy — Rule of Silence (no news is good news)
@@ -1566,7 +1770,7 @@ rules:
     tier: interface
     severity: info
     autofix: true
-    detect_lexical:
+    detect_lexical: ~ # the registry (lib/review/scan/rules/universal_rules.rb), not law/
     fix: No ASCII separators. No box drawing. Whitespace is the layout tool.
   - id: PRECOMPUTE_MATH
     source: MASTER-native (precompute constant math)
@@ -1609,10 +1813,10 @@ rules:
     autofix: false
     detect_semantic: Does this code use generic programming terms (manager, handler,
       processor, data) instead of domain terms (patient, invoice, genome, verdict)?
-      Does this legal document use lay terms where precise legal terms exist? Does
-      this medical report use colloquial language instead of standard nomenclature?
-    fix: Use the ubiquitous language of the domain. Every domain has precise terms
-      — use them.
+      Does this legal document use lay terms where precise legal terms exist? Does this
+      medical report use colloquial language instead of standard nomenclature?
+    fix: Use the ubiquitous language of the domain. Every domain has precise terms —
+      use them.
   - id: LOAD_BEARING_NAMES
     source: Clean Code — names carry intent (Robert C. Martin)
     name: Names carry structural weight — choose them to bear it
@@ -1621,8 +1825,8 @@ rules:
     autofix: false
     detect_semantic: Are names vague, generic, or misleading? Does 'data' mean input,
       output, or both? Does 'process' mean validate, transform, or persist? Does 'miscellaneous'
-      appear as a category? In law, are terms used loosely that have precise legal
-      meaning? In medicine, is a diagnosis vague where a specific code exists?
+      appear as a category? In law, are terms used loosely that have precise legal meaning?
+      In medicine, is a diagnosis vague where a specific code exists?
     fix: Names are load-bearing walls. They define how people think about the system.
       Choose names that carry the full weight of their meaning.
   - id: ERROR_CONTEXT
@@ -1632,10 +1836,10 @@ rules:
     severity: warning
     autofix: false
     detect_semantic: Does this error message lack context about where and why it occurred?
-      Does this rejection letter fail to state which requirement was not met? Does
-      this lab result omit which sample or protocol produced the anomaly?
-    fix: Wrap low-level errors with domain context. State what was attempted, what
-      failed, and what to do next.
+      Does this rejection letter fail to state which requirement was not met? Does this
+      lab result omit which sample or protocol produced the anomaly?
+    fix: Wrap low-level errors with domain context. State what was attempted, what failed,
+      and what to do next.
   - id: COMMENTS_AS_DEODORANT
     source: Refactoring — comments as deodorant (Fowler/Beck)
     name: Explanations that mask bad structure instead of fixing it
@@ -1655,8 +1859,8 @@ rules:
     autofix: false
     detect_semantic: Does this interface reject valid inputs that differ only in form?
       Does it emit outputs with more precision or structure than callers need? Does
-      this protocol refuse valid encodings? Does this form reject data that could
-      be safely normalized?
+      this protocol refuse valid encodings? Does this form reject data that could be
+      safely normalized?
     fix: Accept broadly, emit precisely. Validate structure not style. Normalize on
       the way in.
   - id: HYRUM
@@ -1678,9 +1882,9 @@ rules:
     severity: warning
     autofix: false
     detect_semantic: Does this abstraction force the caller to know about implementation
-      details? Does the interface require knowledge of underlying protocols, data
-      formats, or failure modes it was supposed to hide? Does this clause invoke legal
-      theory the reader must independently research?
+      details? Does the interface require knowledge of underlying protocols, data formats,
+      or failure modes it was supposed to hide? Does this clause invoke legal theory
+      the reader must independently research?
     fix: Plan for the leak. Document what leaks. Make the happy path abstracted, the
       edge cases explicit.
   - id: TEMPORAL_COUPLING
@@ -1689,10 +1893,10 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_semantic: Does this require callers to call methods in a specific order
-      without enforcing it? Is there an implicit initialization sequence that crashes
-      if violated? Does this workflow assume steps execute in a fixed order without
-      encoding that order?
+    detect_semantic: Does this require callers to call methods in a specific order without
+      enforcing it? Is there an implicit initialization sequence that crashes if violated?
+      Does this workflow assume steps execute in a fixed order without encoding that
+      order?
     fix: 'Enforce sequencing structurally: pass initialized objects, not bare instances.
       Use builder pattern. Make invalid order unrepresentable.'
   - id: HUMBLE_OBJECT
@@ -1702,8 +1906,8 @@ rules:
     severity: info
     autofix: false
     detect_semantic: Is business logic mixed with IO, UI rendering, or external API
-      calls making it untestable? Is decision logic tangled with presentation in a
-      way that forces integration tests where unit tests would suffice?
+      calls making it untestable? Is decision logic tangled with presentation in a way
+      that forces integration tests where unit tests would suffice?
     fix: Extract the logic into a pure object (Humble Object). Keep the IO shell thin
       and untested; test the logic object exhaustively.
   - id: FULL_BY_DEFAULT
@@ -1712,14 +1916,14 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     detect_semantic: Does this API expose a 'do less' tier (shallow/standard/quick/lite/basic)
       alongside a 'do full' tier — where every real user always picks the full one?
-      If so, it's a fake choice. Either drop the lower tier and make full the only
-      mode, or, if a real cost tradeoff exists, name the tiers honestly (e.g. lexical|structural|semantic)
+      If so, it's a fake choice. Either drop the lower tier and make full the only mode,
+      or, if a real cost tradeoff exists, name the tiers honestly (e.g. lexical|structural|semantic)
       so the cost actually being paid is surfaced.
-    fix: Drop the degraded tier. If a real cost tradeoff exists, rename to surface
-      the cost (lexical < structural < semantic), not the result quality.
+    fix: Drop the degraded tier. If a real cost tradeoff exists, rename to surface the
+      cost (lexical < structural < semantic), not the result quality.
   - id: PATTERN_EXTRACTION
     source: MASTER-native (extract recurring structure)
     name: File is 80% of the way to a named design pattern
@@ -1733,8 +1937,8 @@ rules:
     - ruby
     detect_semantic: 'Is this file close to instantiating a known pattern from {Strategy,
       Decorator, Pipeline, Visitor, Builder, Observer, Command, State, Adapter, NullObject}?
-      Only flag when extraction would genuinely reduce complexity — never propose
-      a pattern that adds ceremony for its own sake. Format: PATTERN:LINE:short reason.'
+      Only flag when extraction would genuinely reduce complexity — never propose a
+      pattern that adds ceremony for its own sake. Format: PATTERN:LINE:short reason.'
     fix: Extract toward the named pattern only if the resulting code is simpler than
       the current shape; otherwise leave it.
   - id: NULL_BLINDNESS
@@ -1743,7 +1947,7 @@ rules:
     tier: safety
     severity: error
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use IS NULL / IS NOT NULL in SQL; .nil? in Ruby.
   - id: SECRET_PROXIMITY
     source: OWASP — no hardcoded secrets/credentials
@@ -1751,7 +1955,7 @@ rules:
     tier: security
     severity: error
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Move secret to environment variable or secrets manager.
   - id: MAGIC_COLOR
     source: CSS design tokens — no hardcoded color values
@@ -1759,7 +1963,7 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # the registry (lib/review/scan/rules/js_rules.rb), not law/
     fix: Reference a CSS custom property or design token.
     languages:
     - css
@@ -1772,7 +1976,7 @@ rules:
     tier: reliability
     severity: error
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Add max_attempts cap and exponential backoff.
   - id: NO_VAR
     source: Airbnb JS Style Guide — no var (ES6 let/const)
@@ -1780,7 +1984,7 @@ rules:
     tier: safety
     severity: error
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use const (default) or let (when reassigned).
   - id: JS_MODULE_SIZE
     source: JS module size discipline (style)
@@ -1798,7 +2002,7 @@ rules:
     tier: correctness
     severity: error
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Add <meta charset=UTF-8> as first element in <head>.
   - id: ARIA_LABELS
     source: WCAG 4.1.2 Name, Role, Value (W3C/WAI)
@@ -1806,7 +2010,7 @@ rules:
     tier: accessibility
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # the registry (lib/review/scan/rules/web_rules.rb), not law/
     fix: Add aria-label, aria-labelledby, or id paired with <label for>.
     languages:
     - html
@@ -1816,8 +2020,8 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_lexical:
-    folded_into: SEMANTIC_ELEMENTS
+    detect_lexical: ~ # the registry (lib/review/scan/rules/web_rules.rb), not law/
+    folded_into: SEMANTIC_ELEMENTS # same detector; one law, two ids
     fix: Use semantic landmarks; flatten nesting beyond three divs.
     languages:
     - html
@@ -1827,7 +2031,7 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Target bare tags in SCSS; remove __block__element classes from ERB.
   - id: UTILITY_CLASS_SOUP
     source: style.yml html.forbidden.framework_class_explosion
@@ -1835,7 +2039,7 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Move layout to SCSS with bare tag targeting.
   - id: SKIP_TO_MAIN
     source: WCAG 2.4.1 Bypass Blocks / style.yml accessibility
@@ -1843,7 +2047,7 @@ rules:
     tier: accessibility
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Add skip link to #main-content in layout.'
   - id: NO_LONG_TRANSITION
     source: style.yml motion budget / FrontendRuleSet MOTION
@@ -1851,7 +2055,7 @@ rules:
     tier: performance
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Keep transitions ≤300ms.
   - id: REDUCED_MOTION
     source: WCAG 2.3.3 Animation from Interactions
@@ -1859,7 +2063,7 @@ rules:
     tier: accessibility
     severity: info
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # the registry (lib/review/scan/rules/web_rules.rb), not law/
     fix: 'Add @media (prefers-reduced-motion: reduce) override.'
     languages:
     - css
@@ -1881,7 +2085,7 @@ rules:
     tier: density
     severity: info
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Remove padding; one space before operators. Column alignment decays and hides
       diffs.
   - id: RUBY_SNAKE_METHODS
@@ -1890,7 +2094,7 @@ rules:
     tier: clean_code
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Rename to snake_case: def fetchAlbum -> def fetch_album.'
   - id: RUBY_CAMEL_CLASS
     source: Ruby Style Guide / RuboCop Naming/ClassAndModuleCamelCase
@@ -1898,7 +2102,7 @@ rules:
     tier: clean_code
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Rename to CamelCase: class Album_store -> class AlbumStore.'
   - id: RUBY_SCREAMING_CONST
     source: Ruby Style Guide / RuboCop Naming/ConstantName
@@ -1915,7 +2119,7 @@ rules:
     tier: clarity
     severity: info
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Group digits in threes: 1000000 -> 1_000_000.'
   - id: RUBY_SYMBOL_TO_PROC
     source: Ruby Style Guide / RuboCop Style/SymbolProc
@@ -1923,7 +2127,7 @@ rules:
     tier: density
     severity: info
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Collapse { |x| x.name } -> (&:name).
   - id: RUBY_BLOCK_DELIMITER
     source: Ruby Style Guide / RuboCop Style/BlockDelimiters
@@ -1931,7 +2135,7 @@ rules:
     tier: clarity
     severity: info
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Single-line block on one line -> use { }. Reserve do/end for multi-line.
   - id: RUBY_TERNARY_NOT_NESTED
     source: Ruby Style Guide / RuboCop Style/NestedTernaryOperator
@@ -1939,7 +2143,7 @@ rules:
     tier: clarity
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: Expand nested ternary to if/elsif/else or a case.
     languages:
     - ruby
@@ -1949,7 +2153,7 @@ rules:
     tier: aesthetic
     severity: info
     autofix: true
-    detect_lexical:
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: 'Ranges take an en dash, not a hyphen: 45-75 -> 45–75.'
     languages:
     - prose
@@ -1960,7 +2164,7 @@ rules:
     tier: aesthetic
     severity: info
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Bound running-text columns to ~66ch (≈ 33rem), not wide px values.
   unit:
   - id: SIMPLEST_WORKS
@@ -1977,7 +2181,11 @@ rules:
     tier: kernel
     severity: error
     autofix: false
-    detect_lexical:
+    # Same regex as BARE_RESCUE above, deliberately kept in step rather than
+    # deduplicated: FAIL_VISIBLY is a soul.yml code_rule and BARE_RESCUE is a style
+    # rule, so which one survives is a constitutional question, filed in
+    # TODO.md as `two_rules_share_one_rescue_regex`.
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     detect_semantic: Does this code swallow exceptions or fail silently?
     fix: Catch specific errors, log context, re-raise or return Result.
   - id: BE_CONCISE
@@ -2000,8 +2208,7 @@ rules:
     detect_semantic: Are two units expressing the same idea twice?
     fix: MERGE or DEFRAG. Pass the difference as an argument; never copy a block to
       vary one literal.
-    tension: DRY conflicts with WET/AHA — singularity wins for data, DRY wins for
-      code.
+    tension: DRY conflicts with WET/AHA — singularity wins for data, DRY wins for code.
   - id: KISS
     source: KISS — Keep It Simple (Kelly Johnson, U.S. Navy 1960)
     name: Keep It Simple
@@ -2023,6 +2230,11 @@ rules:
     tier: principle
     severity: warning
     autofix: false
+    # The id does not repeat "principle": the P in POLA is already that word, and
+    # a doubled synonym belongs least of all in the rule against names that
+    # surprise their reader. Astonishment over surprise matches the source line
+    # and the acronym; surprise is the more natural English and is an alias.
+    # Aliases exist because an id appears in findings, exemptions and priors.
     aliases:
     - pola
     - pola_principle
@@ -2065,8 +2277,8 @@ rules:
     tier: solid
     severity: warning
     autofix: false
-    detect_structural: module with 8+ public methods included by 2+ classes in the
-      same file — see InterfaceSegregationRule (same-file heuristic; cross-file inclusion
+    detect_structural: module with 8+ public methods included by 2+ classes in the same
+      file — see InterfaceSegregationRule (same-file heuristic; cross-file inclusion
       stays semantic-only)
     detect_semantic: Does this interface force implementors to stub unused methods?
     fix: Split into smaller role-based interfaces.
@@ -2112,7 +2324,7 @@ rules:
     tier: design
     severity: warning
     autofix: true
-    detect_lexical:
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     detect_semantic: Does this code reach through multiple objects?
     fix: Add delegate method. Talk only to direct collaborators.
   - id: COMPOSITION_OVER_INHERITANCE
@@ -2137,7 +2349,7 @@ rules:
     tier: clean_code
     severity: warning
     autofix: true
-    detect_lexical:
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: Group into keyword arguments or parameter object.
     languages:
     - ruby
@@ -2219,7 +2431,7 @@ rules:
     tier: functional
     severity: info
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     detect_semantic: Are mutable objects shared across threads or scopes?
     fix: Freeze collections. Use frozen/const by default.
   - id: PURE_FUNCTIONS
@@ -2236,10 +2448,9 @@ rules:
     tier: refactoring
     severity: info
     autofix: false
-    detect_structural: method with 4+ params matching common primitive-hint names
-      (id/name/type/status/count/...) — see PrimitiveObsessionRule (single-method
-      heuristic; genuine false-positive risk on generic-but-unrelated primitives,
-      semantic check is the real filter)
+    detect_structural: method with 4+ params matching common primitive-hint names (id/name/type/status/count/...)
+      — see PrimitiveObsessionRule (single-method heuristic; genuine false-positive
+      risk on generic-but-unrelated primitives, semantic check is the real filter)
     detect_semantic: Are primitives used where a value object would be clearer?
     fix: Create a value object.
   - id: FEATURE_ENVY
@@ -2251,8 +2462,8 @@ rules:
     detect_structural: method's dominant receiver is called 4+ times, more than local
       (@ivar/self) access — see FeatureEnvyRule (single-method heuristic, same-file
       only)
-    detect_semantic: Is this method more interested in another object's data than
-      its own?
+    detect_semantic: Is this method more interested in another object's data than its
+      own?
     fix: Move the method (or the envious part of it) to the object it talks to most.
   - id: MESSAGE_CHAIN
     source: 'Refactoring code smell: Message Chains (Fowler)'
@@ -2260,8 +2471,8 @@ rules:
     tier: refactoring
     severity: warning
     autofix: true
-    detect_lexical:
-    folded_into: LAW_OF_DEMETER
+    detect_lexical: ~ # folded into another rule; no detector of its own
+    folded_into: LAW_OF_DEMETER # same detector; one law, two ids
     fix: Talk only to immediate collaborators.
   - id: MIDDLE_MAN
     source: 'Refactoring code smell: Middle Man (Fowler)'
@@ -2397,13 +2608,12 @@ rules:
     detect_semantic: Is the same prompt sent multiple times without caching?
     fix: Hash prompt, cache response with bounded TTL.
   - id: GUARD_EXPENSIVE_OPS
-    source: MASTER-native (guard expensive operations); Nielsen heuristic 5, error
-      prevention
+    source: MASTER-native (guard expensive operations); Nielsen heuristic 5, error prevention
     name: Confirm before costly or destructive operations
     tier: safety
     severity: error
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     detect_semantic: Does this execute an expensive or destructive operation without
       confirmation?
     fix: Cost estimate before execution. Require opt-in for danger.
@@ -2413,9 +2623,9 @@ rules:
     tier: clean_code
     severity: warning
     autofix: false
-    detect_lexical:
-    detect_semantic: Does a boolean cause this unit to do two different things? In
-      a contract, does one condition branch into contradictory obligations?
+    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
+    detect_semantic: Does a boolean cause this unit to do two different things? In a
+      contract, does one condition branch into contradictory obligations?
     fix: Split into two distinct units. Each does one thing.
   - id: NO_OUTPUT_ARGUMENTS
     source: Clean Code — no output arguments (Robert C. Martin)
@@ -2423,8 +2633,8 @@ rules:
     tier: clean_code
     severity: warning
     autofix: false
-    detect_semantic: Does this modify its arguments instead of returning a result?
-      Does this clause silently alter a definition from a prior section?
+    detect_semantic: Does this modify its arguments instead of returning a result? Does
+      this clause silently alter a definition from a prior section?
     fix: Return the result. Leave inputs untouched.
   - id: NO_SELECTOR_ARGUMENTS
     source: FlagArgument (Martin Fowler) / Clean Code
@@ -2432,8 +2642,8 @@ rules:
     tier: clean_code
     severity: warning
     autofix: false
-    detect_semantic: Is an argument used as a switch to select between behaviors?
-      Does a field mean different things in different contexts?
+    detect_semantic: Is an argument used as a switch to select between behaviors? Does
+      a field mean different things in different contexts?
     fix: Separate functions, separate types, separate document sections.
   - id: DESIGN_BY_CONTRACT
     source: Design by Contract (Bertrand Meyer, Eiffel/OOSC)
@@ -2487,8 +2697,8 @@ rules:
     tier: ux
     severity: warning
     autofix: false
-    detect_semantic: Does this perform work without reporting progress? Does this
-      protocol lack checkpoints?
+    detect_semantic: Does this perform work without reporting progress? Does this protocol
+      lack checkpoints?
     fix: Close the loop. Every action produces feedback. Every milestone gets measured.
   - id: DATA_CLASS
     source: 'Refactoring code smell: Data Class (Fowler)'
@@ -2514,8 +2724,8 @@ rules:
     tier: refactoring
     severity: info
     autofix: false
-    detect_semantic: Does this variant ignore most of what it inherits? Does this
-      addendum negate most of the base agreement?
+    detect_semantic: Does this variant ignore most of what it inherits? Does this addendum
+      negate most of the base agreement?
     fix: Use composition instead of inheritance.
   - id: PROSE_ACTIVE_VOICE
     source: Strunk, Elements of Style (1918) Rule 10 — use the active voice
@@ -2523,7 +2733,7 @@ rules:
     tier: density
     severity: info
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     detect_semantic: Does this sentence use passive voice where active would be shorter
       and clearer?
     fix: 'Recast active: ''the bug was fixed by X'' -> ''X fixed the bug''.'
@@ -2532,8 +2742,7 @@ rules:
     - markdown
     - ruby
   - id: PROSE_POSITIVE_FORM
-    source: Strunk, Elements of Style (1918) Rule 11 — put statements in positive
-      form
+    source: Strunk, Elements of Style (1918) Rule 11 — put statements in positive form
     name: State assertions in positive form
     tier: density
     severity: info
@@ -2551,7 +2760,7 @@ rules:
     tier: density
     severity: warning
     autofix: false
-    detect_lexical:
+    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Delete the qualifier; let the verb or noun carry the weight.
     languages:
     - prose
@@ -2564,8 +2773,8 @@ rules:
     tier: clarity
     severity: info
     autofix: false
-    detect_semantic: Do items in this list or series mix grammatical forms (noun,
-      verb phrase, clause) where one form should hold throughout?
+    detect_semantic: Do items in this list or series mix grammatical forms (noun, verb
+      phrase, clause) where one form should hold throughout?
     fix: 'Make series elements match: all imperatives, or all nouns, never a blend.'
     languages:
     - prose
@@ -2603,8 +2812,7 @@ rules:
     detect_semantic: Does this comment/commit/message violate a maxim — say more or
       less than needed (quantity), assert the unverified (quality), drift off-point
       (relation), or read unclearly/out of order (manner)?
-    fix: Trim to what is needed, assert only the verified, stay on point, order it
-      plainly.
+    fix: Trim to what is needed, assert only the verified, stay on point, order it plainly.
     languages:
     - prose
     - markdown
@@ -2617,9 +2825,9 @@ rules:
     mode: violation
     languages:
     - ruby
-    detect_semantic: If this is a Rails controller, flag actions that own business
-      rules, multi-model orchestration, or heavy queries instead of delegating to
-      models/services. Cite method names. If not a controller or already thin, CLEAN.
+    detect_semantic: If this is a Rails controller, flag actions that own business rules,
+      multi-model orchestration, or heavy queries instead of delegating to models/services.
+      Cite method names. If not a controller or already thin, CLEAN.
   - id: RAILS_VIEW_PURITY
     name: Views present assigns and hold no business logic
     autofix: false
@@ -2629,9 +2837,9 @@ rules:
     languages:
     - html
     - erb
-    detect_semantic: If this is a Rails view/partial, flag non-presentation logic
-      (queries, persistence, multi-step condition trees that belong in helpers/models).
-      Prefer CLEAN when the view only presents assigns.
+    detect_semantic: If this is a Rails view/partial, flag non-presentation logic (queries,
+      persistence, multi-step condition trees that belong in helpers/models). Prefer
+      CLEAN when the view only presents assigns.
   - id: AESTHETIC_FLAT_SEMANTIC
     name: Flat surfaces on an 8px rhythm, no ornamental depth
     autofix: false
@@ -2659,54 +2867,92 @@ rules:
     detect_semantic: Apply Dieter Rams useful/understandable/unobtrusive/honest/thorough
       to this UI surface. Flag dishonest progress, missing empty/error states, chrome
       that competes with content. CLEAN if solid.
+
+# Prose law vocabulary, one entry per natural language.
+#
+# Strunk's rules describe a shape, not an English word list: an intensifier
+# that adds emphasis and no information, a passive that hides its actor. Every
+# language with those has its own words for them, and holding the words inside
+# the detector made law/prose.rb English-only by accident. Held here, a second
+# language is a data edit — `ids` names the laws it generates, and law/prose.rb
+# defines one per entry.
+#
+# `paths` is load-bearing rather than decoration. Norwegian `bare` (only) is an
+# English word this tree uses constantly — "a bare regex", "bare true", "a bare
+# div" — so a vocabulary let loose outside the files its language is written in
+# returns nothing but false positives. Each entry names where it is spoken.
+#
+# `keep` holds the senses that are not the defect: the same word doing
+# contrastive, comparative, temporal or determiner work. Every pattern in it
+# was earned against a measured false positive, and law/prose.rb carries the
+# count and the evidence for each.
+#
+# The same principle in code and in design is not repeated here. A needless
+# parameter is DEAD_CODE, needless ornament is the design_rules below, and one
+# statement of a rule is the point.
 prose:
   en:
-    spoken_in: "."
-    file_languages:
-    - markdown
-    - ruby
+    spoken_in: '.'
+    file_languages: [markdown, ruby]
+    # Where the language is written inside those files. English here is the
+    # prose in comments, so the detector has to skip the code around them;
+    # `values` reads a locale file, where the strings are the prose and the keys
+    # are not.
     reads: comments
     ids:
       qualifiers: PROSE_OMIT_QUALIFIERS
       passive: PROSE_ACTIVE_VOICE
     fixtures:
-      qualifiers:
-        bad: "# This is very fast."
-        good: "# This is fast."
+      qualifiers: { bad: '# This is very fast.', good: '# This is fast.' }
       passive:
-        bad: "# The bug was fixed by the maintainer."
-        good: "# The maintainer fixed the bug."
-    leeches:
-    - very
-    - rather
-    - really
-    - quite
-    - pretty
-    - somewhat
-    - just
-    - basically
-    - simply
+        bad: '# The bug was fixed by the maintainer.'
+        good: '# The maintainer fixed the bug.'
+    # `actually` and `literally` are absent on purpose. Both read as leeches
+    # and neither is one here: they are contrastive, setting what is against
+    # what was claimed, which is this repo's recurring subject. 85 and 4 hits
+    # respectively, every one of them that use.
+    leeches: [very, rather, really, quite, pretty, somewhat, just, basically, simply]
     keep:
-    - rather than
-    - rather\s*$
-    - just (?:as|because|before|after|when)
-    - "(?:not|never)\\s+(?:just|simply|only)"
-    - n't\s+(?:just|simply|only)
-    - just\s+(?:been\s+)?(?:\w+ed|wore|worn|set|sent|seen|written|wrote|read|made|got|put|left|took|taken|came|went|said|found|ran|saw|built|began|gave|given|held|kept|lost|met|paid|ran|shown|told|thought)
-    - "(?:had|has|have|was|were)\\s+just\\s+(?:been\\s+)?\\w+"
-    - "(?:the|this|that|its) very"
-    - just\s+(?:enough|about|above|below|over|under|short|past|now|then)
-    - "(?:not|never|n't|hardly)\\s+(?:quite|really)"
-    - simply because
-    - "\\bpretty-\\w"
+      - 'rather than'                              # a contrast, not a degree
+      - 'rather\s*$'                               # "rather than" wrapped mid-phrase
+      - 'just (?:as|because|before|after|when)'    # a comparison
+      - '(?:not|never)\s+(?:just|simply|only)'     # a negation
+      - 'n''t\s+(?:just|simply|only)'
+      # English past participles are not all -ed, and the temporal sense is the
+      # commonest one this tree uses: "what you just wore", "the first response
+      # just set", "a profile they had just seen".
+      - 'just\s+(?:been\s+)?(?:\w+ed|wore|worn|set|sent|seen|written|wrote|read|made|got|put|left|took|taken|came|went|said|found|ran|saw|built|began|gave|given|held|kept|lost|met|paid|ran|shown|told|thought)'
+      # English past participles are not all -ed. "a profile they had just seen",
+      # "the line was just written", "had just been sent" are all the temporal
+      # sense, and an auxiliary in front of `just` is what marks it.
+      - '(?:had|has|have|was|were)\s+just\s+(?:been\s+)?\w+'
+      - '(?:the|this|that|its) very'               # a determiner picking a thing out
+      # Measured against STUDIO's 138. `just` before a position or a quantity
+      # measures rather than minimises — "pads land just under the kit", "just
+      # enough to stop the DC step popping", "harmonics from the content just
+      # below the cliff".
+      - 'just\s+(?:enough|about|above|below|over|under|short|past|now|then)'
+      # `quite` after a negation means fully, so cutting it says the opposite:
+      # "the piano body GM never quite nails" would become a claim that GM never
+      # nails it at all.
+      - '(?:not|never|n''t|hardly)\s+(?:quite|really)'
+      - 'simply because'                           # a cause, not a manner
+      # An adverb modifies the next word across a space. `pretty-printed` is one
+      # word and the rule's sense of `pretty` is not in it.
+      - '\bpretty-\w'
     passive:
-      auxiliary: "(?:was|were|been)"
-      participle: "(?:\\w+ly\\s+)?\\w+ed"
-      agent: by(?!\s+(?:ear|feel|hand|eye|design|accident|default|mistake|now|then)\b)
+      auxiliary: '(?:was|were|been)'
+      participle: '(?:\w+ly\s+)?\w+ed'
+      # `by` marks an agent here, but the same word marks a manner: "tuned by
+      # feel", "transcribed by ear", "measured by hand". Those say how the thing
+      # was done rather than who did it, and there is no active voice to move
+      # them to — "feel tuned the sigma" is not a sentence.
+      agent: 'by(?!\s+(?:ear|feel|hand|eye|design|accident|default|mistake|now|then)\b)'
   nb:
-    spoken_in: "(?:\\A|[/.])nb\\.yml\\z"
-    file_languages:
-    - yaml
+    # Bokmål reaches the tree through the Rails locale files and nowhere else;
+    # every comment in the repo is English. Scoped there, `bare` is Norwegian.
+    spoken_in: '(?:\A|[/.])nb\.yml\z'
+    file_languages: [yaml]
     reads: values
     ids:
       qualifiers: PROSE_OMIT_QUALIFIERS_NB
@@ -2718,21 +2964,28 @@ prose:
       passive:
         bad: 'notis: Feilen ble rettet av vedlikeholderen'
         good: 'notis: Vedlikeholderen rettet feilen'
-    leeches:
-    - veldig
-    - svært
-    - ganske
-    - nokså
-    - temmelig
-    - virkelig
-    - simpelthen
+    # `egentlig` and `faktisk` are held out for the same reason `actually` is:
+    # both mark a contrast with what was assumed rather than grading anything.
+    #
+    # `bare` is held out on measured evidence. It reads as English `just` and
+    # carries the same split, but in this tree the restrictive sense is the only
+    # one present: all 11 hits were "du kan bare slette dine egne kommentarer",
+    # "bare medlemmer poster", "Dating er bare for voksne". Bokmål has no other
+    # word for that "only", so deleting it inverts the sentence — the copy stops
+    # saying what a reader may not do. English `just` keeps its place because
+    # the merely sense does appear there; here it does not.
+    leeches: [veldig, svært, ganske, nokså, temmelig, virkelig, simpelthen]
     keep:
-    - heller enn
-    - ikke bare
+      - 'heller enn'          # rather than
+      - 'ikke bare'           # not only
+    # Bokmål builds the periphrastic passive with bli/ble/blitt and marks the
+    # agent with `av`, which is the same shape the English rule judges.
     passive:
-      auxiliary: "(?:ble|blitt)"
-      participle: "\\w+(?:et|dd|tt|t)"
-      agent: av
+      auxiliary: '(?:ble|blitt)'
+      participle: '\w+(?:et|dd|tt|t)'
+      agent: 'av'
+
+# Folded from data/design_rules.yml — one file for all rules.
 design_rules:
   typography:
     line_length:
@@ -2741,17 +2994,18 @@ design_rules:
       ideal_ch: 66
       mobile_min_ch: 35
       mobile_max_ch: 50
+      # The x.com-shaped feed is a short measure on purpose: --feed-max 600px at
+      # brgen's 18px root is ~45ch, not 66. Legal/prose keeps ideal_ch. Worn
+      # measure is geometry_type.rb reading worn_type.profiles, not this token.
       feed_min_ch: 35
       feed_max_ch: 55
-      action: Flag readable prose blocks outside range. Prefer max-width in ch units.
-        Count worn characters, not the CSS token.
+      action: Flag readable prose blocks outside range. Prefer max-width in ch units. Count worn characters, not the CSS token.
     line_height:
-      allowed:
-      - 1
-      - 1.25
-      - 1.4
-      - 1.5
-      - 1.6
+      # Must match RAILS/shared/design_tokens.yml scale.line_height and ScaleLint.
+      # Off-scale values (1.45, 1.55, 1.3, …) are debt — do not invent new ones.
+      # PRESERVE_THEN_IMPROVE_NEVER_BREAK: absolute px line-heights on :root stay
+      # until a measured screenshot pass; unitless steps only for new prose rules.
+      allowed: [1, 1.25, 1.4, 1.5, 1.6]
       body_min: 1.4
       body_max: 1.6
       body_accessibility_min: 1.5
@@ -2762,11 +3016,10 @@ design_rules:
       long_line_threshold_ch: 60
       long_line_min: 1.5
       forbid_absolute_px: true
-      action: 'Use only allowed unitless steps. Prefer 1.5 for prose, 1.25 for titles,
+      action: >
+        Use only allowed unitless steps. Prefer 1.5 for prose, 1.25 for titles,
         1.6 for relaxed quotes. Flag absolute px line-heights and off-scale ratios.
         Cross-check RAILS Pub4::ScaleLint baselines before inventing a step.
-
-        '
     type_scale:
       default_ratio: 1.25
       marketing_ratio: 1.333
@@ -2797,50 +3050,29 @@ design_rules:
       max_font_sizes: 8
       action: Ensure hierarchy is visible by size, weight, placement, or contrast.
     optical_margins:
+      # Bringhurst: geometric box edge ≠ optical text edge.
       hanging_punctuation: true
       list_marker_hang: true
       blockquote_border_in_margin: true
       measure_css_token: "--measure"
       measure_ideal_ch: 66
-      apply_to:
-      - prose
-      - editorial
-      - legal
-      - post_show
-      do_not_apply_to:
-      - feed_card
-      - nav
-      - marketplace_tile
-      - chrome
-      action: 'Prefer hanging-punctuation on prose; hang list markers and quote rules
+      apply_to: [prose, editorial, legal, post_show]
+      do_not_apply_to: [feed_card, nav, marketplace_tile, chrome]
+      action: >
+        Prefer hanging-punctuation on prose; hang list markers and quote rules
         into the margin so the text edge reads true. Wire max-width: var(--measure)
         (66ch) on continuous reading surfaces, not on dense social chrome.
-
-        '
     micro:
       orphans: 3
       widows: 3
       hyphens: auto
-      hyphenate_limit_chars:
-      - 6
-      - 3
-      - 2
+      hyphenate_limit_chars: [6, 3, 2]
       hyphenate_limit_lines: 2
-      default_features:
-      - kern
-      - liga
-      - clig
-      - onum
-      - pnum
+      default_features: [kern, liga, clig, onum, pnum]
       contextual_features:
-        abbreviations:
-        - smcp
-        - c2sc
-        tables:
-        - lnum
-        - tnum
-        all_caps:
-        - case
+        abbreviations: [smcp, c2sc]
+        tables: [lnum, tnum]
+        all_caps: [case]
       body_numerals: oldstyle-nums
       table_numerals: tabular-nums
       river_word_spacing_em: -0.05
@@ -2848,17 +3080,12 @@ design_rules:
       justify_never_on_mobile: true
       quotes: locale
       norwegian_guillemets: true
-      print_margins:
-      - 2
-      - 3
-      - 4
-      - 6
-      void_target: 0.7
-      action: 'Enable OpenType kern/liga/clig/onum/pnum on prose; oldstyle-nums in
-        body, tabular-nums in tables; hyphens auto with 6/3/2 limits; orphans/widows
-        3. Reader is Design::Thresholds.micro_typography.
-
-        '
+      print_margins: [2, 3, 4, 6]
+      void_target: 0.70
+      action: >
+        Enable OpenType kern/liga/clig/onum/pnum on prose; oldstyle-nums in
+        body, tabular-nums in tables; hyphens auto with 6/3/2 limits;
+        orphans/widows 3. Reader is Design::Thresholds.micro_typography.
     accessibility:
       normal_text_contrast: 7.0
       large_text_contrast: 4.5
@@ -2870,6 +3097,11 @@ design_rules:
     grid:
       columns: 12
       base_unit_px: 8
+      # The same membership as pixel_perfection.eight_px_rhythm, which is the
+      # copy the css_constitution gate reads. Full membership is the source
+      # below; this is the subset the rhythm rules enforce, and it stayed out
+      # of step with its twin on 0 and 44 until 2026-08-31.
+      # Do not invent steps outside that scale; prefer tokens over literals.
       source: RAILS/shared/design_tokens.yml#scale.space_px
       allowed_spacing_px:
       - 0
@@ -2885,8 +3117,7 @@ design_rules:
       - 48
       - 64
       - 96
-      action: Prefer 8px rhythm and 12-column structure; allow 4px for hairline adjustments.
-        Full scale in design_tokens.
+      action: Prefer 8px rhythm and 12-column structure; allow 4px for hairline adjustments. Full scale in design_tokens.
     proportion:
       golden_ratio: 1.618
       split_main_ratio: 0.618
@@ -2898,8 +3129,7 @@ design_rules:
       paragraph_margin_em: 1.5
       section_padding_min_rem: 4
       section_padding_max_rem: 8
-      action: Padding should not exceed separation between unrelated groups; use gap
-        before margin hacks.
+      action: Padding should not exceed separation between unrelated groups; use gap before margin hacks.
     reading_patterns:
       text_heavy: f_pattern
       landing_page: z_pattern
@@ -2924,8 +3154,7 @@ design_rules:
       absence_is_material: true
       remove_until_nothing_left_to_remove: true
       less_but_better: true
-      action: Prefer absence, typography, alignment, and whitespace over ornamental
-        UI.
+      action: Prefer absence, typography, alignment, and whitespace over ornamental UI.
     swiss_style:
       left_aligned_ragged_right: true
       sans_serif_default: Inter
@@ -2944,7 +3173,7 @@ design_rules:
       card_padding_px: 24
       section_gap_px: 48
       hero_breathing_room_px: 96
-      content_width: min(66ch, 100% - 3rem)
+      content_width: min(66ch, 100% - 3rem)  # aligned with typography.line_length.ideal_ch / --measure
       action: Space communicates grouping; whitespace must clarify relationships.
     color:
       max_palette_roles: 4
@@ -2992,8 +3221,7 @@ design_rules:
       visual_regression: BackstopJS
       max_iterations: 5
       target_score: 95
-      action: Capture, compare, critique, patch, and repeat until differences are
-        intentional.
+      action: Capture, compare, critique, patch, and repeat until differences are intentional.
     mcp:
       enabled_targets:
       - filesystem
@@ -3005,39 +3233,58 @@ design_rules:
       - tools
       - resources
       - prompts
-      action: Prefer standard tool bridges over bespoke glue when integrating design
-        automation.
+      action: Prefer standard tool bridges over bespoke glue when integrating design automation.
+  # How this house draws dimension. Applies to every surface in every tree --
+  # MASTER's face, brgen's radio tunnel, and anything either of them grows into.
+  #
+  # The illusion is carried by MOTION, not by shading. A field of flat points,
+  # each one a screen-space sprite, reads as a solid volume the moment it rotates
+  # coherently: the eye reconstructs the form from parallax alone. That is the
+  # kinetic depth effect, demonstrated by Wallach and O'Connell in 1953, and it is
+  # the whole technique. There is no lighting model to get wrong because there is
+  # no surface to light.
+  #
+  # This is a house style AND the cheap answer, which is why it is a rule rather
+  # than a preference. A point cloud needs one vertex buffer, a vertex shader that
+  # projects and sets gl_PointSize, and a fragment shader that draws a soft dot.
+  # A mesh renderer needs a scene graph, a material system and blend modes -- which
+  # is most of what a 3D library is, and is why the face carries a patched THREE
+  # build whose patch nobody wrote down.
   kinetic_depth:
     technique: point_cloud
-    principle: Depth is implied by coherent motion, never by shaded surfaces. Flat
-      2D points that move together read as one solid volume; this is the kinetic depth
-      effect and it is the house way of drawing dimension.
+    principle: >-
+      Depth is implied by coherent motion, never by shaded surfaces. Flat 2D
+      points that move together read as one solid volume; this is the kinetic
+      depth effect and it is the house way of drawing dimension.
     depth_cues:
-    - parallax_under_rotation
-    - point_size_attenuation_with_distance
-    - brightness_and_alpha_falloff
-    - density
+      - parallax_under_rotation
+      - point_size_attenuation_with_distance
+      - brightness_and_alpha_falloff
+      - density
     forbidden:
-    - lit_meshes
-    - material_systems
-    - per_surface_shading
+      - lit_meshes
+      - material_systems
+      - per_surface_shading
     renderer: raw_webgl_points
-    action: Draw dimension as a field of projected points. Reach for gl.POINTS and
-      two short shaders before reaching for a 3D library, and never introduce a scene
-      graph to solve a problem a point cloud already solves.
-    exceptions: 'MASTER''s face still uses THREE for its wireframe mesh. That is history
-      rather than intent, and the migration path is already open -- web/public/particle_kernel.js
-      calls itself the Pixel Field kernel and says it exists to replace ad-hoc particle
-      loops in face, codebase and ecology one at a time. It is 2D today: its cells
-      carry x, y, vx, vy and no z, and it draws through getContext("2d"). Adding a
-      depth axis and a gl.POINTS renderer is the work; rewriting a mesh by hand is
-      not.'
-    already_correct: brgen's radio tunnel (app/javascript/radio_brgen_tunnel.js) is
-      raw WebGL with a 2D fallback and no library at all. It is the reference implementation,
-      not the exception.
-    constraint_that_still_holds: Deferred WebGL boot is sacred (DECISIONS.md). A point
-      cloud is cheaper than a mesh, which makes the primer gate easier to honour,
-      not optional.
+    action: >-
+      Draw dimension as a field of projected points. Reach for gl.POINTS and two
+      short shaders before reaching for a 3D library, and never introduce a
+      scene graph to solve a problem a point cloud already solves.
+    exceptions: >-
+      MASTER's face still uses THREE for its wireframe mesh. That is history
+      rather than intent, and the migration path is already open --
+      web/public/particle_kernel.js calls itself the Pixel Field kernel and says
+      it exists to replace ad-hoc particle loops in face, codebase and ecology one
+      at a time. It is 2D today: its cells carry x, y, vx, vy and no z, and it
+      draws through getContext("2d"). Adding a depth axis and a gl.POINTS
+      renderer is the work; rewriting a mesh by hand is not.
+    already_correct: >-
+      brgen's radio tunnel (app/javascript/radio_brgen_tunnel.js) is raw WebGL
+      with a 2D fallback and no library at all. It is the reference
+      implementation, not the exception.
+    constraint_that_still_holds: >-
+      Deferred WebGL boot is sacred (DECISIONS.md). A point cloud is cheaper than
+      a mesh, which makes the primer gate easier to honour, not optional.
   visual_design:
     semantics:
       reject_arbitrary_decoration: true
@@ -3094,34 +3341,24 @@ design_rules:
     sparklines_no_frames_or_ticks: true
     action: Remove non-data ink unless it adds comprehension.
   automated_css_analysis:
+    # Each flag should name an enforcer. Flags without enforce: are guidance only.
     checks:
     - id: off_scale_line_height
-      enforce:
-      - LINE_HEIGHT_ON_SCALE
-      - Pub4::ScaleLint
+      enforce: [LINE_HEIGHT_ON_SCALE, Pub4::ScaleLint]
     - id: absolute_line_height
-      enforce:
-      - LINE_HEIGHT_ON_SCALE
-      - Pub4::ScaleLint
+      enforce: [LINE_HEIGHT_ON_SCALE, Pub4::ScaleLint]
     - id: measure_bounds
-      enforce:
-      - geometry_type worn_type.profiles
+      enforce: [geometry_type worn_type.profiles]
     - id: hanging_list_markers
-      enforce:
-      - geometry_type check_hanging
+      enforce: [geometry_type check_hanging]
     - id: micro_typography
-      enforce:
-      - Design::Thresholds.micro_typography
+      enforce: [Design::Thresholds.micro_typography]
     - id: touch_target
-      enforce:
-      - TOUCH_TARGET_MIN
+      enforce: [TOUCH_TARGET_MIN]
     - id: eight_px_rhythm
-      enforce:
-      - surface_rules spacing scan
-      - Pub4::ScaleLint
+      enforce: [surface_rules spacing scan, Pub4::ScaleLint]
     - id: chrome_i18n
-      enforce:
-      - Pub4::ChromeI18nLint
+      enforce: [Pub4::ChromeI18nLint]
     flag:
     - line length outside typography.line_length bounds
     - line height below typography.line_height.body_min for prose
@@ -3152,19 +3389,22 @@ design_rules:
       target_min_px: 44
       target_recommended_px: 48
       primary_action_min_px: 48
-      action: Flag interactive controls smaller than 44px; prefer 48px for primary
-        actions.
+      action: Flag interactive controls smaller than 44px; prefer 48px for primary actions.
     hick:
       max_visible_choices: 7
       nav_items_warn: 9
-      action: Flag navigation or action groups with more than 7 peer choices without
-        progressive disclosure.
+      action: Flag navigation or action groups with more than 7 peer choices without progressive disclosure.
     chunking:
       max_items_per_group: 7
       action: Group long lists; flag flat menus over 7±2 items.
     progressive_disclosure:
       require_advanced_hidden: true
       action: Advanced/secondary controls should start collapsed or on secondary surfaces.
+
+  # Worn type — what the visitor sees, not what the stylesheet declares.
+  # Reader: RAILS/gates/support/geometry_type.rb (and GeometryProbe TYPE_WALK).
+  # MASTER/lib/design/thresholds.rb#worn_profile is the Ruby face.
+  # A profile with no reader is inert; test_design_rules_worn_type.rb holds that.
   worn_type:
     type_scale_ratio: 1.25
     type_scale_tolerance_px: 1.5
@@ -3172,7 +3412,7 @@ design_rules:
     hanging_marker_max_inset_px: 0
     golden_split:
       min: 0.55
-      max: 0.7
+      max: 0.70
     profiles:
       feed:
         measure_min_ch: 35
@@ -3227,11 +3467,10 @@ design_rules:
         empty_min_pct: 20
         empty_max_pct: 80
         accents_max: 2
-    action: 'Judge each surface under its profile. Count worn characters, computed
-      sizes, baselines, tabular figures, accent hues, empty ratio, and main/aside
-      split. Do not grep stylesheets for these.
-
-      '
+    action: >
+      Judge each surface under its profile. Count worn characters, computed
+      sizes, baselines, tabular figures, accent hues, empty ratio, and
+      main/aside split. Do not grep stylesheets for these.
   pixel_perfection:
     forbidden_css:
     - box-shadow
@@ -3240,6 +3479,10 @@ design_rules:
     - backdrop-filter
     - glassmorphism
     - soft glow
+    # The last two are the WebGL spellings of "soft glow". They belong in this
+    # key because it is read into the design prompt, so the model is told the ban
+    # rather than only scanned for it; FACE_POINT_IS_ONE_PIXEL and
+    # NO_WEBGL_GLOW_PASS in law/javascript.rb are what enforce them.
     - additive second pass behind a point cloud
     - gl_PointSize above 1.0
     forbidden_patterns:
@@ -3249,6 +3492,16 @@ design_rules:
     - 'backdrop-filter\s*:'
     - 'text-shadow\s*:'
     forbid_arbitrary_radius_px_above: 16
+    # This list and layout_rules.grid.allowed_spacing_px are one axis written
+    # twice, and they disagreed on exactly two members: this one carried 0 and
+    # not 44, that one carried 44 and not 0. Both are in the declared source,
+    # RAILS/shared/design_tokens.yml scale.space_px, so both belong in both.
+    #
+    # 44 is the sharper of the two. It is tap_min -- shared_chrome names it,
+    # every tap target is built from it, and a var(--tap-min, 44px) fallback
+    # puts it in front of this allowlist constantly. The name says eight, but
+    # 4, 12, 20 and 44 are not multiples of 8 either; this is the 4px grid with
+    # chosen steps, and 44 was the one step missing between 40 and 48.
     eight_px_rhythm:
     - 0
     - 4
@@ -3270,14 +3523,12 @@ design_rules:
       scope: single named component, not a blanket relaxation
       must_document_at_point_of_use: true
       must_state_reason: true
-      action: A forbidden pattern may be used for one specific, named element when
-        flatness would remove its only legible depth or affordance cue -- document
-        the reason in a comment where the exception lives, the same way a one-off
-        structural exception gets documented, rather than relaxing the rule generally
-        or leaving it unexplained.
-    action: 'Pixel-perfect flat UI: no blur/glow/shadow ornament; spacing on 8px rhythm;
-      tokens over magic colors. Exceptions follow exception_policy -- scoped and documented,
-      not silent.'
+      action: A forbidden pattern may be used for one specific, named element when flatness
+        would remove its only legible depth or affordance cue -- document the reason in
+        a comment where the exception lives, the same way a one-off structural exception
+        gets documented, rather than relaxing the rule generally or leaving it unexplained.
+    action: 'Pixel-perfect flat UI: no blur/glow/shadow ornament; spacing on 8px rhythm; tokens over magic
+      colors. Exceptions follow exception_policy -- scoped and documented, not silent.'
   rams_checklist:
     useful: Does this control or surface serve a concrete user goal?
     understandable: Is hierarchy and affordance obvious without decoration?
@@ -3285,61 +3536,57 @@ design_rules:
     honest: Does UI state match system state without fake progress?
     thorough: Are empty, loading, error, and reduced-motion states designed?
     action: Score UI diffs against Rams criteria in council and aesthetic scan tags.
+
+  # Family UI polish playbook — MASTER scanners + RAILS CI ratchets apply these.
+  # Implemented 2026-07-31 polish waves; keep automated so re-introduction fails.
   ui_polish:
     default_locale: nb
-    available_locales:
-    - nb
-    - en
+    available_locales: [nb, en]
     chrome_i18n:
-      action: 'Shell and empty/search chrome must use I18n t() keys (empty.*, search.*,
+      action: >
+        Shell and empty/search chrome must use I18n t() keys (empty.*, search.*,
         nav.*, auth.*). Hardcoded English "No …" titles and "Search …" placeholders
-        are debt. Ratchet: RAILS/shared/lib/pub4/chrome_i18n_lint.rb (CI). Opt-out:
-        <%# chrome_i18n: ok %> above the line.
-
-        '
+        are debt. Ratchet: RAILS/shared/lib/pub4/chrome_i18n_lint.rb (CI).
+        Opt-out: <%# chrome_i18n: ok %> above the line.
       empty_partial: shared/empty_state
       empty_requires_action: true
       empty_cta_lint: RAILS/shared/lib/pub4/empty_state_lint.rb
       adhoc_empty_lint: RAILS/shared/lib/pub4/adhoc_empty_lint.rb
     space_not_lines:
-      action: 'List/grid cards separate with gap + surface elevation, not hairline
-        box borders. Forms and CRT dialect (bsdports) may keep 1px borders. Prefer
-        border: 0; background: var(--surface-elevated).
-
-        '
+      action: >
+        List/grid cards separate with gap + surface elevation, not hairline
+        box borders. Forms and CRT dialect (bsdports) may keep 1px borders.
+        Prefer border: 0; background: var(--surface-elevated).
     type_tokens:
-      action: 'Page titles use var(--text-title, 1.25rem) and var(--font). Do not
-        hardcode font-size: 20px for headers. Dialect fonts (Caprasimo luxury, JetBrains
+      action: >
+        Page titles use var(--text-title, 1.25rem) and var(--font). Do not hardcode
+        font-size: 20px for headers. Dialect fonts (Caprasimo luxury, JetBrains
         mono CRT) only on named brand surfaces.
-
-        '
       tokens:
         text_title: 1.25rem
         text_display: 1.75rem
         page_header_min_height: 48px
     flat_ui:
-      action: 'No ornamental box-shadow/text-shadow/backdrop-filter/filter blur. Floating
-        chrome uses 1px border + elevated surface. GATE_AUTOFIX strips shadows. Exception
-        policy under pixel_perfection.exception_policy.
-
-        '
+      action: >
+        No ornamental box-shadow/text-shadow/backdrop-filter/filter blur.
+        Floating chrome uses 1px border + elevated surface. GATE_AUTOFIX strips
+        shadows. Exception policy under pixel_perfection.exception_policy.
     btn_aliases:
-      action: 'Family supports both btn-primary and btn--primary (and btn-ghost /
+      action: >
+        Family supports both btn-primary and btn--primary (and btn-ghost /
         btn--ghost). Empty-state CTAs should emit both class names.
-
-        '
     playbook_order:
-    - strip_flat_ui_shadows
-    - wire_empty_search_to_t
-    - align_page_header_type_tokens
-    - space_not_lines_list_cards
-    - verify_empty_state_cta_lint
-    - verify_chrome_i18n_lint
-    action: 'When polishing RAILS or MASTER/web UI, run this playbook. Prefer mechanical
+      - strip_flat_ui_shadows
+      - wire_empty_search_to_t
+      - align_page_header_type_tokens
+      - space_not_lines_list_cards
+      - verify_empty_state_cta_lint
+      - verify_chrome_i18n_lint
+    action: >
+      When polishing RAILS or MASTER/web UI, run this playbook. Prefer mechanical
       autofix + CI ratchets over one-off manual style. Never raise lint baselines
       to silence new debt.
 
-      '
   pwa:
     philosophy:
       performance_is_the_design: true
@@ -3349,15 +3596,15 @@ design_rules:
         engineering afterthoughts. The apps already ship a manifest, a service worker
         and offline controllers; the budget is what is missing.
     weight:
-      ceiling_lives_in: RAILS/gates/data/, in the css_budget.yml ratchet shape — a
-        number measured from a real run that only ever ratchets down.
-      measured_2026_08_31: tracked application.css is 204KB brgen, 110KB amber, 64KB
-        bsdports. JS builds are gitignored (RAILS/*/public/assets/), so only the CSS
-        is reproducible outside a build.
+      ceiling_lives_in: RAILS/gates/data/, in the css_budget.yml ratchet shape —
+        a number measured from a real run that only ever ratchets down.
+      measured_2026_08_31: tracked application.css is 204KB brgen, 110KB amber,
+        64KB bsdports. JS builds are gitignored (RAILS/*/public/assets/), so only
+        the CSS is reproducible outside a build.
       action: Set a ceiling from a run of this tree, never from another product's
         published figure — Pinterest's 150KB and Tinder's 20KB CSS describe their
-        trees, not this one, and a ceiling nothing measured is a wish. A budget nothing
-        enforces is a comment.
+        trees, not this one, and a ceiling nothing measured is a wish. A budget
+        nothing enforces is a comment.
     offline_first:
       queue_writes_for_background_sync: true
       cache_read_paths: true
@@ -3370,943 +3617,907 @@ design_rules:
       placeholder_before_full_asset: true
       state_the_cost_before_the_download: true
       action: Let the reader decide when to spend data, and say what it costs first.
-        Twitter Lite renders 1KB blurred thumbnails and fetches the full asset on
-        tap.
+        Twitter Lite renders 1KB blurred thumbnails and fetches the full asset on tap.
     native_grade_motion:
       target_fps: 60
       virtualize_long_feeds: true
       optimistic_render_from_cache: true
       action: Render only the visible slice of a feed, and paint a detail view from
         cached data before the fetch returns, so navigation never shows a spinner.
+# No operator_principles section here, and no standing orders anywhere in this
+# file. Orders about how to work — sweep to convergence, run the gate yourself,
+# one SSH session, restart after a deploy — are not properties of source text, so
+# no detector can match one and this catalogue is the wrong registry for them.
+# They are conduct rules in law/practice.rb, which PersonalityPromptBuilder#add_rules
+# emits whole as master_style; filed here they were cut to 480 characters.
 style:
+  # Ruby, shell, and git style rules enforced by MASTER.
+  # Scan rules reference these; Personality injects them into every LLM system prompt.
+  # Authoritative upstream clones: script/clone_style_guides.sh → knowledge/style_guides/
+  # Codified index: data/runtime.yml#style_guides (ruby/rails/js/css/seo gates)
+
+  # Rules that are not about any one medium. line_order declares
+  # applies_to: [ruby, yaml, erb, js, css, html, sh, md] — every medium this
+  # repo writes — and sat inside the Ruby bucket declaring it; comment
+  # discipline, identifier naming and the blank-line limit are the same shape.
+  # Filed by language, applied everywhere: the bucket was the wrong axis.
   universal:
-    comments_max_lines: 1
-    comments_require_why: true
-    comments_reassess_on_touch: true
+
+    comments_max_lines: 1           # class/module/method comments: 1 line or none
+    comments_require_why: true      # only add when WHY is non-obvious (hidden constraint, workaround)
+    comments_reassess_on_touch: true  # every edit re-reads each comment in the file: delete if obvious,
+                             # rewrite Strunk-and-White style if kept (active voice, omit needless
+                             # words, concrete verbs, one line). No grandfathered fluff.
     comments_forbidden:
-    - what_comments
-    - yard_doc_blocks
-    - section_separators
-    - numbered_steps
-    - multi_line_prose
-    line_order_rule: Inverted Pyramid — reorder lines/blocks so the most important
-      content comes first.
-    line_order_rationale: Reader who stops at the top third still has the gist. Public
-      API > primary behavior > helpers > privates > edge cases.
+      - what_comments      # never describe what the code does — identifiers do that
+      - yard_doc_blocks    # no # Public:, # Returns, # param - style blocks
+      - section_separators # no # ----, # ====, # ---- Public API ---- etc.
+      - numbered_steps     # no # 1., # 2. inline step comments
+      - multi_line_prose   # cut verbosity; one line survives, paragraph does not
+
+    line_order_rule: "Inverted Pyramid — reorder lines/blocks so the most important content comes first."
+    line_order_rationale: "Reader who stops at the top third still has the gist. Public API > primary behavior > helpers > privates > edge cases."
     line_order_sequence:
-    - frozen_string_literal + requires
-    - module/class declaration + headline docstring (≤1 line)
-    - public API methods, ordered by call-frequency / importance
-    - primary algorithm or main loop
-    - private helpers in order of dependency
-    - constants and lookup tables (unless small enough to inline at top)
-    - edge-case handlers, rescue branches, fallback paths
-    line_order_applies_to:
-    - ruby
-    - yaml
-    - erb
-    - js
-    - css
-    - html
-    - sh
-    - md
-    line_order_enforced_by: sweep IMPORTANCE_ORDER technique; council Maintainer +
-      Layperson personas
-    naming_spell_out: true
-    naming_paths_rule: Rails-parameterized slug density — snake_case paths; each token
-      a concrete noun or verb; Strunk omit needless words.
-    naming_paths_inspired_by: ActiveSupport::Inflector#parameterize (meaning and density,
-      not hyphen separator)
+      - "frozen_string_literal + requires"
+      - "module/class declaration + headline docstring (≤1 line)"
+      - "public API methods, ordered by call-frequency / importance"
+      - "primary algorithm or main loop"
+      - "private helpers in order of dependency"
+      - "constants and lookup tables (unless small enough to inline at top)"
+      - "edge-case handlers, rescue branches, fallback paths"
+    line_order_applies_to: [ruby, yaml, erb, js, css, html, sh, md]
+    line_order_enforced_by: "sweep IMPORTANCE_ORDER technique; council Maintainer + Layperson personas"
+
+    naming_spell_out: true        # no abbreviations: index not idx, signature not sig, temporary_path not tmp
+    naming_paths_rule: "Rails-parameterized slug density — snake_case paths; each token a concrete noun or verb; Strunk omit needless words."
+    naming_paths_inspired_by: "ActiveSupport::Inflector#parameterize (meaning and density, not hyphen separator)"
     naming_paths_format: snake_case
     naming_paths_max_tokens: 4
-    naming_paths_forbidden_tokens:
-    - main
-    - misc
-    - base
-    - util
-    - helper
-    - handlers
-    - handler
-    - manager
-    - service
-    - object
-    - thing
-    - stuff
-    - tmp
-    - old
-    - new
-    - copy
-    - final
-    - v2
-    - data
-    - info
-    naming_paths_examples_good:
-    - crawl_browser
-    - domain_alignment_gate
-    - browser_probe_support
-    - operator_principles
-    naming_paths_examples_bad:
-    - misc_util
-    - cbp
-    - foo_helper
-    - main_base
-    - util_service
+    naming_paths_forbidden_tokens: [main, misc, base, util, helper, handlers, handler, manager, service, object, thing, stuff, tmp, old, new, copy, final, v2, data, info]
+    naming_paths_examples_good: [crawl_browser, domain_alignment_gate, browser_probe_support, operator_principles]
+    naming_paths_examples_bad: [misc_util, cbp, foo_helper, main_base, util_service]
     naming_forbidden_abbreviations:
-    - idx
-    - sig
-    - tmp
-    - buf
-    - val
-    - ret
-    - obj
-    - str
-    - arr
-    - num
-    - cnt
-    - ptr
-    - msg
-    naming_rule: Spell identifiers out. Domain names can be short (id, url, ip) —
-      abbreviations cannot.
-    blank_lines_max_consecutive: 1
+      - idx
+      - sig
+      - tmp
+      - buf
+      - val
+      - ret
+      - obj
+      - str
+      - arr
+      - num
+      - cnt
+      - ptr
+      - msg   # unless it IS the domain term (e.g., a Message object named msg is ok if short-lived)
+    naming_rule: "Spell identifiers out. Domain names can be short (id, url, ip) — abbreviations cannot."
+
+    blank_lines_max_consecutive: 1     # no double blank lines anywhere
+
   ruby:
-    quotes: double
-    frozen_string: true
+    quotes: double  # always double-quoted strings; single only inside regex or '\1' backrefs
+    frozen_string: true  # every .rb file must start with # frozen_string_literal: true
+
     bugs_to_avoid:
-    - pattern: Dir.chdir
-      reason: process-wide; thread-unsafe in multi-threaded agents
-      fix: pass -C root to git; expand paths with File.expand_path
-    - pattern: 'Prism.parse(src, freeze: true)'
-      reason: 'freeze: kwarg dropped in Ruby 3.4'
-      fix: Prism.parse(src)
-    - pattern: next if condition inside flat_map
-      reason: next if returns nil into flat_map, producing nil entries in output
-      fix: next [] if condition
-    - pattern: rescue => e (multi-line bare rescue)
-      reason: unclear; explicitly name StandardError for clarity
-      fix: rescue StandardError => e
-    - pattern: rescue nil (inline rescue returning nil)
-      reason: inline rescue already catches StandardError; rescue nil is correct idiom
-      note: do NOT change to rescue StandardError — that returns the class object,
-        not nil
-    - pattern: "@bus&.publish(...) || value"
-      reason: when bus is present, returns bus result (truthy), masking the real value
-      fix: call @bus&.publish(...) on its own line; return value separately
-    - pattern: backtick shell commands with interpolation
-      reason: shell injection risk
-      fix: Open3.capture2e('cmd', '-flag', arg) with arg arrays
-    - pattern: system/Open3 with string interpolation
-      reason: shell injection risk
-      fix: Open3.capture2e(*%w[cmd -flag], variable) with separate arguments
-    - pattern: mutate state before publishing event that reads old state
-      reason: event receives new state instead of previous state
-      fix: capture prev = current before mutation; use prev in publish/return
-    prefer_string_methods_rule: Prefer start_with? / include? / end_with? / split
-      over regex when string methods suffice.
-    prefer_string_methods_rationale: Regex is expressive but noisy. Use it when patterns
-      require it, not as a default.
+      - pattern: "Dir.chdir"
+        reason: "process-wide; thread-unsafe in multi-threaded agents"
+        fix: "pass -C root to git; expand paths with File.expand_path"
+
+      - pattern: "Prism.parse(src, freeze: true)"
+        reason: "freeze: kwarg dropped in Ruby 3.4"
+        fix: "Prism.parse(src)"
+
+      - pattern: "next if condition inside flat_map"
+        reason: "next if returns nil into flat_map, producing nil entries in output"
+        fix: "next [] if condition"
+
+      - pattern: "rescue => e (multi-line bare rescue)"
+        reason: "unclear; explicitly name StandardError for clarity"
+        fix: "rescue StandardError => e"
+
+      - pattern: "rescue nil (inline rescue returning nil)"
+        reason: "inline rescue already catches StandardError; rescue nil is correct idiom"
+        note: "do NOT change to rescue StandardError — that returns the class object, not nil"
+
+      - pattern: "@bus&.publish(...) || value"
+        reason: "when bus is present, returns bus result (truthy), masking the real value"
+        fix: "call @bus&.publish(...) on its own line; return value separately"
+
+      - pattern: "backtick shell commands with interpolation"
+        reason: "shell injection risk"
+        fix: "Open3.capture2e('cmd', '-flag', arg) with arg arrays"
+
+      - pattern: "system/Open3 with string interpolation"
+        reason: "shell injection risk"
+        fix: "Open3.capture2e(*%w[cmd -flag], variable) with separate arguments"
+
+      - pattern: "mutate state before publishing event that reads old state"
+        reason: "event receives new state instead of previous state"
+        fix: "capture prev = current before mutation; use prev in publish/return"
+
+    prefer_string_methods_rule: "Prefer start_with? / include? / end_with? / split over regex when string methods suffice."
+    prefer_string_methods_rationale: "Regex is expressive but noisy. Use it when patterns require it, not as a default."
     prefer_string_methods_prefer:
-    - str.start_with?(prefix)        over  str.match?(/^prefix/)
-    - str.include?(substr)           over  str.match?(/substr/)
-    - str.end_with?(suffix)          over  str.match?(/suffix$/)
-    - str.split(sep, n)              over  str.scan(/pattern/)
+      - "str.start_with?(prefix)        over  str.match?(/^prefix/)"
+      - "str.include?(substr)           over  str.match?(/substr/)"
+      - "str.end_with?(suffix)          over  str.match?(/suffix$/)"
+      - "str.split(sep, n)              over  str.scan(/pattern/)"
     prefer_string_methods_still_use_regex_for:
-    - 'Character classes: /[a-z]/, /\d+/'
-    - Anchored multiline patterns
-    - Alternation with more than 2 branches
-    outsource_to_gems_rule: If a well-maintained gem solves the problem correctly,
-      use it. Do not reimplement.
-    outsource_to_gems_rationale: Gems carry tests, edge cases, and maintenance. Home-grown
-      duplicates carry bugs.
+      - 'Character classes: /[a-z]/, /\d+/'
+      - "Anchored multiline patterns"
+      - "Alternation with more than 2 branches"
+
+    outsource_to_gems_rule: "If a well-maintained gem solves the problem correctly, use it. Do not reimplement."
+    outsource_to_gems_rationale: "Gems carry tests, edge cases, and maintenance. Home-grown duplicates carry bugs."
     outsource_to_gems_examples:
-    - flay for AST-level duplicate detection
-    - reek for code smell analysis
-    - rubocop for style enforcement
-    - prism for Ruby parsing
-    outsource_to_gems_caveat: 'Evaluate gem quality first: maintained, tested, minimal
-      footprint.'
+      - "flay for AST-level duplicate detection"
+      - "reek for code smell analysis"
+      - "rubocop for style enforcement"
+      - "prism for Ruby parsing"
+    outsource_to_gems_caveat: "Evaluate gem quality first: maintained, tested, minimal footprint."
+
   shell:
     decorations_forbidden:
-    - "=== banner ==="
-    - "--- separator ---"
-    - "*** header ***"
-    - emoji in print/echo output
-    - numbered step comments
-    credentials_forbidden: true
-    prefer:
-    - pure zsh parameter expansion over external tools (see zsh_patterns.yml)
-    - Open3.capture2e with arg arrays in Ruby over shell interpolation
-    - File.expand_path over pwd + concatenation
-    - print -r -- "$(<file)" to read files in zsh (not cat, not bare < file via SSH
-      — triggers pager)
-    - 'lines=("${(@f)$(<file)}") for line arrays; last 50: print -l $lines[-50,-1]'
-  git:
-    commit_style_voice: active
-    commit_style_format: |-
-      type: short summary
+      - "=== banner ===" # no ASCII section banners
+      - "--- separator ---"
+      - "*** header ***"
+      - "emoji in print/echo output"  # no ✅ ❌ 🚀 etc. in scripts
+      - "numbered step comments"      # no # Step 1:, # Phase 2: etc.
 
-      Body if needed.
+    credentials_forbidden: true  # never hardcode passwords/tokens in scripts
+
+    prefer:
+      - "pure zsh parameter expansion over external tools (see zsh_patterns.yml)"
+      - "Open3.capture2e with arg arrays in Ruby over shell interpolation"
+      - "File.expand_path over pwd + concatenation"
+      - "print -r -- \"$(<file)\" to read files in zsh (not cat, not bare < file via SSH — triggers pager)"
+      - "lines=(\"${(@f)$(<file)}\") for line arrays; last 50: print -l $lines[-50,-1]"
+
+  git:
+    commit_style_voice: active           # "Fix bug" not "Fixed bug", "Add feature" not "Added feature"
+    commit_style_format: "type: short summary\n\nBody if needed."
     commit_style_subject_max: 72
-    commit_style_no_what_if_diff_shows: true
-    commit_style_separate_concerns: true
+    commit_style_no_what_if_diff_shows: true  # don't describe what changed if the diff makes it obvious
+    commit_style_separate_concerns: true      # don't mix bug fixes with style changes in one commit
+
     forbidden:
-    - Dir.chdir in Ruby before git commands
-    - string-interpolated git commands
-    - rm -rf in deploy scripts without explicit guard
+      - "Dir.chdir in Ruby before git commands"
+      - "string-interpolated git commands"
+      - "rm -rf in deploy scripts without explicit guard"
+
+  # No operator directives under style: — they are conduct rules in law/practice.rb.
+  # The block that stood here duplicated this file's own ruby.comments.reassess_on_touch
+  # and html/css sections.
+
   erb:
     html_safe: explicit_only_after_sanitize
     partials: locals_over_instance_variables
-    content_for:
-    - title
-    - description
-    - head
-    - json_ld
-    - widgets
-    - scripts
-    helpers:
-    - tag
-    - class_names
-    - dom_id
-    - sanitize
-    forbidden:
-    - raw_user_html_safe
-    - heredoc_views
-    - inline_script_blocks
-    - bem_classes
-    - utility_class_soup
+    content_for: [title, description, head, json_ld, widgets, scripts]
+    helpers: [tag, class_names, dom_id, sanitize]
+    forbidden: [raw_user_html_safe, heredoc_views, inline_script_blocks, bem_classes, utility_class_soup]
     on_edit:
-    - flatten_if_divitis
-    - extract_repeated_to_partial
-    - wire_i18n_for_literals
-    - strip_flat_ui_shadows
-    - wire_empty_search_to_t
-    - align_page_header_type_tokens
-    - space_not_lines_list_cards
+      - flatten_if_divitis
+      - extract_repeated_to_partial
+      - wire_i18n_for_literals
+      # Family polish (design_rules.ui_polish / MASTER/docs/UI_POLISH_PLAYBOOK.md)
+      - strip_flat_ui_shadows
+      - wire_empty_search_to_t
+      - align_page_header_type_tokens
+      - space_not_lines_list_cards
+
+  # Conversation directives — how MASTER addresses the user. Operator_directives
+  # above shape MASTER's coding work; these shape its dialogue, voice, and
+  # social register. Personality injects them verbatim into the system prompt.
   conversation_directives:
-  - Track what the user already knows; don't restate background they've established
-    this session.
-  - Use the user's name when they've shared it; never invent one.
-  - When the user asks X, surface adjacent Y they likely also want — don't wait to
-    be asked.
-  - Mirror the user's politeness register; terse to terse, formal to formal, profane
-    to profane.
-  - When uncertain about intent, ask one focused question instead of guessing and
-    acting.
-  - After a heavy exchange, respect silence; don't fill space with unprompted new
-    threads.
-  - 'Note relational milestones in memory: first share of X, breakthroughs, recurring
-    concerns.'
-  - Disagree gracefully and concretely; never sycophantically agree to keep rapport.
-  - Calibrate humor to the user's register; never humor a tense moment.
-  - When looping the same point, acknowledge it; don't restate.
-  - 'Trust differs by domain: high in OpenBSD/Ruby, lower in subjective UI/voice calls
-    — say so.'
+    - "Track what the user already knows; don't restate background they've established this session."
+    - "Use the user's name when they've shared it; never invent one."
+    - "When the user asks X, surface adjacent Y they likely also want — don't wait to be asked."
+    - "Mirror the user's politeness register; terse to terse, formal to formal, profane to profane."
+    - "When uncertain about intent, ask one focused question instead of guessing and acting."
+    - "After a heavy exchange, respect silence; don't fill space with unprompted new threads."
+    - "Note relational milestones in memory: first share of X, breakthroughs, recurring concerns."
+    - "Disagree gracefully and concretely; never sycophantically agree to keep rapport."
+    - "Calibrate humor to the user's register; never humor a tense moment."
+    - "When looping the same point, acknowledge it; don't restate."
+    - "Trust differs by domain: high in OpenBSD/Ruby, lower in subjective UI/voice calls — say so."
+
+  # html, css, typography, nielsen, a11y — restored from master4.yml/master7.yml
+  # (universal_quality_framework v66)
+
   html:
     semantic_only: true
-    bare_tag_targeting: true
+    bare_tag_targeting: true        # nav a not .nav__link; section, article, aside, etc.
     forbidden:
-    - divitis
-    - class_attribute_when_tag_targetable
-    - non_semantic_markup
-    - copy_paste_html
-    - framework_class_explosion
+      - divitis                     # no excessive nesting; no styling-only divs
+      - class_attribute_when_tag_targetable
+      - non_semantic_markup
+      - copy_paste_html
+      - framework_class_explosion   # no class="row col-md-6 mt-4 px-2 d-flex" soup
     landmarks:
-    - header
-    - nav
-    - main
-    - article
-    - section
-    - aside
-    - footer
+      - header
+      - nav
+      - main
+      - article
+      - section
+      - aside
+      - footer
     forms_label_required: every input has a label
     forms_input_type_specific: email/url/tel/date — never bare type=text
-    forms_autocomplete: set autocomplete on every meaningful input
+    forms_autocomplete: "set autocomplete on every meaningful input"
+
   css:
-    targeting: bare_tag_first
-    layer_order:
-    - base
-    - components
-    - utilities
+    targeting: bare_tag_first        # tag selectors > attribute selectors > id; class only when nothing else fits
+    layer_order: [base, components, utilities]
     custom_properties: ":root with --safe-top, --safe-right, --safe-bottom, --safe-left"
-    units_length: rem
-    units_typography: rem with clamp() for fluid type
-    units_spacing: design_rules.yml pixel_perfection.eight_px_rhythm (see that list;
-      0 and 44 included)
+    units_length: rem                    # px only for borders <2px and 1px hairlines
+    units_typography: "rem with clamp() for fluid type"
+    # Was "rem multiples of .25 (4px grid)" -- silently allowed 28/36/44/52/
+    # 56/60px, which design_rules.yml's eight_px_rhythm (the rule real code
+    # actually enforces, per Master::Design::Thresholds) rejects. Matches
+    # design_rules.yml now instead of a looser, unenforced rule of its own.
+    # Names the list rather than copying it. Spelling the members out here made
+    # this a third restatement of one axis, and it was already the stalest of the
+    # three: it carried neither 0 nor 44 while the two lists it claimed to quote
+    # disagreed about exactly those two.
+    units_spacing: "design_rules.yml pixel_perfection.eight_px_rhythm (see that list; 0 and 44 included)"
     forbidden:
-    - "!important except for utility overrides"
-    - inline_style_attributes
-    - vendor_prefixes_in_2026
-    - framework_class_bloat
-    perf_content_visibility: auto on long-scroll sections
-    perf_will_change: only when actually animating, then remove
+      - "!important except for utility overrides"
+      - inline_style_attributes
+      - vendor_prefixes_in_2026     # autoprefixer or skip
+      - framework_class_bloat
+    perf_content_visibility: "auto on long-scroll sections"
+    perf_will_change: "only when actually animating, then remove"
+
   typography:
-    style: swiss
-    families_sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-      Arial, sans-serif
-    families_mono: ui-monospace, Menlo, Consolas, monospace
+    style: swiss                     # objective, hierarchical, generous whitespace
+    # Was "Helvetica, Arial, system-ui, sans-serif" -- didn't match either
+    # design_rules.yml's stated default (Inter) or what the RAILS apps
+    # actually ship (shared/_dialect_tokens.scss's real stack, below). Synced to
+    # the real shipped stack rather than picking a third, different value.
+    families_sans: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
+    families_mono: "ui-monospace, Menlo, Consolas, monospace"
     scale_base: 16px
-    scale_ratio: 1.25
-    leading: 1.5
-    measure: 65ch
+    scale_ratio: 1.25                    # major-third
+    leading: 1.5                     # body
+    measure: 65ch                    # ideal line length
     rules:
-    - one type family per surface (mono OR sans, not both unless purposeful)
-    - size hierarchy via scale — never arbitrary px values
-    - color contrast >= WCAG 2.2 AAA on body text (7:1)
-    - 'tracking: tighten display, loosen all-caps (.08em)'
-    - no centered body copy; left-align for left-to-right languages
+      - "one type family per surface (mono OR sans, not both unless purposeful)"
+      - "size hierarchy via scale — never arbitrary px values"
+      - "color contrast >= WCAG 2.2 AAA on body text (7:1)"
+      - "tracking: tighten display, loosen all-caps (.08em)"
+      - "no centered body copy; left-align for left-to-right languages"
+
   accessibility:
+    # Body text earns AAA in both modes (12.51:1 dark, 16.26:1 light, measured
+    # 2026-08-03). The secondary/accent tier does not, and saying "AAA" flatly made
+    # a blanket claim the palette has never met. The live number is a ceiling in
+    # RAILS/gates/data/css_budget.yml (contrast_below_aa / contrast_below_aaa) so it
+    # falls rather than drifts; design_rules.yml keeps 7.0 as the target it moves toward.
     target: wcag_2_2_aa_with_aaa_body_text
     requirements:
-    - keyboard_navigation_complete
-    - focus_visible_always
-    - aria_only_when_html_insufficient
-    - reduced_motion_respected
-    - color_scheme_respected
-    - color_not_only_signal
-    - text_resizable_to_200pct
-    - skip_to_main_link
-    - alt_text_meaningful_or_empty
+      - keyboard_navigation_complete
+      - focus_visible_always
+      - aria_only_when_html_insufficient
+      - reduced_motion_respected         # @media (prefers-reduced-motion: reduce)
+      - color_scheme_respected           # @media (prefers-color-scheme: dark)
+      - color_not_only_signal
+      - text_resizable_to_200pct
+      - skip_to_main_link
+      - alt_text_meaningful_or_empty
     forbidden:
-    - tabindex_above_zero
-    - autoplay_media_with_sound
-    - removing_focus_outline_without_replacement
-    - text_in_images_for_meaning
+      - tabindex_above_zero
+      - autoplay_media_with_sound
+      - removing_focus_outline_without_replacement
+      - text_in_images_for_meaning
+
   parametric_design:
-    principle: components vary along measured axes (density, scale, contrast) — not
-      by copy-paste variants
+    principle: "components vary along measured axes (density, scale, contrast) — not by copy-paste variants"
     examples:
-    - 'spacing: --gap-{xs,sm,md,lg,xl} = .25/.5/1/2/4 rem'
-    - 'color: oklch with hue/chroma/lightness vars; light+dark via lightness flip'
-    - 'type: clamp(min, fluid, max) per scale step, no per-breakpoint overrides'
+      - "spacing: --gap-{xs,sm,md,lg,xl} = .25/.5/1/2/4 rem"
+      - "color: oklch with hue/chroma/lightness vars; light+dark via lightness flip"
+      - "type: clamp(min, fluid, max) per scale step, no per-breakpoint overrides"
+
   cultural_sensitivity:
-    text_direction: honor dir=rtl; mirror layouts; logical properties (margin-inline-start)
-    locale_specific: use Intl.DateTimeFormat / NumberFormat; never assume MM/DD/YYYY
-    color_meaning: red=danger is Western; verify per locale
-    imagery: diverse representation; avoid culture-specific idioms in core UI
+    text_direction: "honor dir=rtl; mirror layouts; logical properties (margin-inline-start)"
+    locale_specific: "use Intl.DateTimeFormat / NumberFormat; never assume MM/DD/YYYY"
+    color_meaning: "red=danger is Western; verify per locale"
+    imagery: "diverse representation; avoid culture-specific idioms in core UI"
+# The Rails stack this fleet runs. Lifted out of style.ruby on 2026-08-22:
+# versions, gem APIs and StimulusReflex patterns are stack truth, not a style
+# rule, and burying them under style.ruby put 58 of the file's leaf values
+# three and four levels deep inside a block about how to write Ruby.
 rails_stack:
-  rails: 8.1.3.1
-  turbo_rails: 2.0.23
-  stimulus: 3.x
-  pagy: 43.x
-  stimulus_reflex: '3.5'
-  asset_pipeline: propshaft
-  javascript: importmap
-  queue: solid_queue
-  cache: solid_cache
-  cable: solid_cable
-  authentication: rails generate authentication
-  database: sqlite3
+  # Current stable versions (May 2026)
+  rails: "8.1.3.1"
+  turbo_rails: "2.0.23"    # 9 actions: append prepend before after replace update remove morph refresh
+  stimulus: "3.x"          # static targets, values, outlets API
+  pagy: "43.x"             # Pagy::OPTIONS (not Pagy::DEFAULT — redesigned API in 43.0)
+  stimulus_reflex: "3.5"   # complementary to Turbo; opt-in only for advanced reactive features
+
+  asset_pipeline: propshaft  # default in Rails 8; do not use Sprockets
+  javascript: importmap      # default; esbuild only when CSS-in-JS components needed
+  queue: solid_queue         # SQLite-backed by default
+  cache: solid_cache         # SQLite-backed by default
+  cable: solid_cable         # SQLite-backed by default
+
+  authentication: "rails generate authentication"  # built-in, no devise
+  database: sqlite3          # default; PostgreSQL only when explicitly required
+
   pagy_api:
-    backend: include Pagy::Backend
-    frontend: include Pagy::Frontend
-    options: Pagy::OPTIONS[:limit] = 25
-    overflow: Pagy::OPTIONS[:overflow] = :last_page
+    backend:  "include Pagy::Backend"   # in ApplicationController
+    frontend: "include Pagy::Frontend"  # in ApplicationHelper
+    options:  "Pagy::OPTIONS[:limit] = 25"  # NOT Pagy::DEFAULT (that was 8.x)
+    overflow: "Pagy::OPTIONS[:overflow] = :last_page"
+
   turbo_stream_actions:
-  - append
-  - prepend
-  - before
-  - after
-  - replace
-  - update
-  - remove
-  - morph
-  - refresh
+    - append
+    - prepend
+    - before
+    - after
+    - replace
+    - update
+    - remove
+    - morph   # morphs DOM — preserves element state; opt-in via data-turbo-permanent
+    - refresh  # triggers full page refresh with morphing
+
   stimulus_api:
-    targets: static targets = ["name"]
-    values: 'static values = { url: String }'
-    outlets: static outlets = ["other"]
-    lifecycle:
-    - connect
-    - disconnect
-    - initialize
+    targets: "static targets = [\"name\"]"       # auto-generates nameTarget, nameTargets, hasNameTarget
+    values:  "static values = { url: String }"   # auto-generates urlValue, hasUrlValue, urlValueChanged
+    outlets: "static outlets = [\"other\"]"      # cross-controller communication
+    lifecycle: [connect, disconnect, initialize]  # + nameTargetConnected/Disconnected
+
   stimulus_components:
-    source: https://stimulus-components.com
-    install: bin/importmap pin @stimulus-components/<name>
+    source: "https://stimulus-components.com"
+    install: "bin/importmap pin @stimulus-components/<name>"
     available:
-    - name: character-counter
-      use: post/comment character limits
-    - name: clipboard
-      use: copy URL/code to clipboard
-    - name: dialog
-      use: modal dialogs, confirmations
-    - name: dropdown
-      use: nav menus, user menus
-    - name: notification
-      use: toast alerts
-    - name: carousel
-      use: image galleries, product photos
-    - name: sortable
-      use: drag-reorder lists
-    - name: rails-nested-form
-      use: dynamic has-many form fields
-    - name: password-visibility
-      use: show/hide password toggle
+      - { name: character-counter, use: "post/comment character limits" }
+      - { name: clipboard, use: "copy URL/code to clipboard" }
+      - { name: dialog, use: "modal dialogs, confirmations" }
+      - { name: dropdown, use: "nav menus, user menus" }
+      - { name: notification, use: "toast alerts" }
+      - { name: carousel, use: "image galleries, product photos" }
+      - { name: sortable, use: "drag-reorder lists" }
+      - { name: rails-nested-form, use: "dynamic has-many form fields" }
+      - { name: password-visibility, use: "show/hide password toggle" }
+
+  # Default StimulusReflex stack — Julian Rubisch's pattern set.
+  # Install for every new Rails 8 + StimulusReflex 3.5 app unless explicitly opted out.
   stimulus_reflex_stack:
-    cubism: resource-scoped presence (who's-here, typing indicators) over Kredis
-    futurism: lazy-load expensive list rows; futurize(@record) placeholder + IntersectionObserver
-    optimism: real-time ActiveModel validation broadcast as selector morphs (drop-in)
-    all_futures: Redis-backed virtual ActiveModel for facets/wizards without session
-      bloat
-    solder: auto-cache <details>/accordion open state per [user, key]
-    cable_ready_callbacks: after_create_commit / after_update_commit CableReady DSL
-      on AR models
+    cubism:                 "resource-scoped presence (who's-here, typing indicators) over Kredis"
+    futurism:               "lazy-load expensive list rows; futurize(@record) placeholder + IntersectionObserver"
+    optimism:               "real-time ActiveModel validation broadcast as selector morphs (drop-in)"
+    all_futures:            "Redis-backed virtual ActiveModel for facets/wizards without session bloat"
+    solder:                 "auto-cache <details>/accordion open state per [user, key]"
+    cable_ready_callbacks:  "after_create_commit / after_update_commit CableReady DSL on AR models"
+
   stimulus_reflex_patterns:
     morph_heuristics:
-      page_morph: spans multiple regions OR want regular controller render. Always
-        scope with data-reflex-root.
-      selector_morph: single element, side-stepping the controller. Inline edit, list-item
-        update, validation hint.
-      nothing_morph: no DOM patch — only CableReady ops or dispatch_event to a Stimulus
-        controller.
-    tool_choice: Turbo for anything covered by an HTTP verb (navigation, forms). StimulusReflex
-      for everything else.
+      page_morph:     "spans multiple regions OR want regular controller render. Always scope with data-reflex-root."
+      selector_morph: "single element, side-stepping the controller. Inline edit, list-item update, validation hint."
+      nothing_morph:  "no DOM patch — only CableReady ops or dispatch_event to a Stimulus controller."
+    tool_choice: "Turbo for anything covered by an HTTP verb (navigation, forms). StimulusReflex for everything else."
     cable_ready_ops:
-      morph: 'list bodies — pass children_only: true'
-      inner_html: form reset (morph won't clear inputs)
-      insert_adjacent_html: infinite scroll, append-only feeds
-      outer_html: Futurism replacement, inline-edit toggle
-      dispatch_event: nothing morphs that kick a Stimulus controller
-      add_css_class: validation hints (Optimism-style)
-      set_focus: post-edit UX
+      morph:                "list bodies — pass children_only: true"
+      inner_html:           "form reset (morph won't clear inputs)"
+      insert_adjacent_html: "infinite scroll, append-only feeds"
+      outer_html:           "Futurism replacement, inline-edit toggle"
+      dispatch_event:       "nothing morphs that kick a Stimulus controller"
+      add_css_class:        "validation hints (Optimism-style)"
+      set_focus:            "post-edit UX"
     anti_patterns:
-    - mutating state via GET — REST violation
-    - hidden form + Turbo Stream for state — flickers; SR fits better
-    - inline render in reflex — always partials/components, never heredocs
-    - overusing connect lifecycle — prefer Outlets and useIntersection
-    - morph to clear form inputs — use inner_html
-    - class attributes where a tag selector works
-    - hardcoded step counts in wizards
-    - session-backed wizard state on multi-server — use kredis or all_futures
+      - "mutating state via GET — REST violation"
+      - "hidden form + Turbo Stream for state — flickers; SR fits better"
+      - "inline render in reflex — always partials/components, never heredocs"
+      - "overusing connect lifecycle — prefer Outlets and useIntersection"
+      - "morph to clear form inputs — use inner_html"
+      - "class attributes where a tag selector works"
+      - "hardcoded step counts in wizards"
+      - "session-backed wizard state on multi-server — use kredis or all_futures"
     named_patterns:
-      infinite_scroll: InfiniteScrollReflex#load_more + sentinel div + insert_adjacent_html
-        before sentinel
-      inline_edit: ToggleReflex toggles show ↔ edit partial via selector morph
-      wizard: WizardReflex#step dispatching on @current_step; state in kredis or all_futures
-      nested_form: NestedFormReflex#add_fields uses .build + fields_for; needs accepts_nested_attributes_for
-      validation_inline: Optimism + debounced:input event (not raw input — prevents
-        flooding)
-      autosave: Submittable concern; before_reflex branches create/update via element.dataset.signed_id
+      infinite_scroll:    "InfiniteScrollReflex#load_more + sentinel div + insert_adjacent_html before sentinel"
+      inline_edit:        "ToggleReflex toggles show ↔ edit partial via selector morph"
+      wizard:             "WizardReflex#step dispatching on @current_step; state in kredis or all_futures"
+      nested_form:        "NestedFormReflex#add_fields uses .build + fields_for; needs accepts_nested_attributes_for"
+      validation_inline:  "Optimism + debounced:input event (not raw input — prevents flooding)"
+      autosave:           "Submittable concern; before_reflex branches create/update via element.dataset.signed_id"
+
   core_web_vitals:
-    lcp: "<2.0s"
-    inp: responsive
-    cls: "< 0.1"
-    font_display: swap
+    lcp: "<2.0s"   # Largest Contentful Paint (tightened from 2.5s in March 2026)
+    inp: "responsive"  # Interaction to Next Paint
+    cls: "< 0.1"   # no layout shifts — set explicit width/height on images and embeds
+    font_display: "swap"  # font-display: swap in all font-face rules
+
   rubocop_omakase:
-    quotes: double
-    hash_syntax: modern
-    trailing_commas: true
-    method_calls: Foo.method not Foo::method
-    test_assertions: assert_not not assert !
+    quotes: double       # double-quoted strings everywhere in app/
+    hash_syntax: modern  # { a: :b } not { :a => :b }
+    trailing_commas: true  # in multi-line arrays/hashes/arguments
+    method_calls: "Foo.method not Foo::method"
+    test_assertions: "assert_not not assert !"
+
   realtime_hierarchy:
-  - Turbo Drive — full-page navigation
-  - Turbo Frames — scoped page updates
-  - Turbo Streams — server-push DOM operations
-  - Stimulus — client-side interactivity
-  - StimulusReflex — opt-in for advanced RPC reactive features
+    - "Turbo Drive — full-page navigation"
+    - "Turbo Frames — scoped page updates"
+    - "Turbo Streams — server-push DOM operations"
+    - "Stimulus — client-side interactivity"
+    - "StimulusReflex — opt-in for advanced RPC reactive features"
+
+# Rule inputs, not operational data. violation_priors orders which rule the fix
+# loop reaches for first; stale_namespaces is the corpus NAMING's retired-constant
+# check scans for. Both are read by a rule, so they live beside the rules.
+# prior_p: base probability a random file contains this violation (0.0-1.0).
+# language_modifiers: multiplicative adjustments per language (1.0 = neutral).
+# FixLoop#ordered_rules uses (prior_p x posterior) as secondary sort key after
+# violation_counts. High-probability rules run early; rules that have never
+# fired on a given extension are deprioritised. Posterior is updated at
+# runtime from observed violation counts; this holds the cold-start priors only.
 violation_priors:
   DRY:
-    prior_p: 0.6
-    language_modifiers:
-      ruby: 1.2
-      yaml: 0.8
-      html: 0.9
-      css: 1.0
-      js: 1.1
+    prior_p: 0.60
+    language_modifiers: { ruby: 1.2, yaml: 0.8, html: 0.9, css: 1.0, js: 1.1 }
   LINEARITY:
     prior_p: 0.55
-    language_modifiers:
-      ruby: 1.3
-      js: 1.2
-      html: 0.7
-      yaml: 0.6
+    language_modifiers: { ruby: 1.3, js: 1.2, html: 0.7, yaml: 0.6 }
   PROXIMITY:
-    prior_p: 0.5
-    language_modifiers:
-      ruby: 1.2
-      js: 1.1
-      html: 0.8
+    prior_p: 0.50
+    language_modifiers: { ruby: 1.2, js: 1.1, html: 0.8 }
   SINGULARITY:
     prior_p: 0.45
-    language_modifiers:
-      ruby: 1.3
-      js: 1.1
+    language_modifiers: { ruby: 1.3, js: 1.1 }
   DENSITY:
-    prior_p: 0.4
-    language_modifiers:
-      ruby: 1.2
-      js: 1.0
+    prior_p: 0.40
+    language_modifiers: { ruby: 1.2, js: 1.0 }
   ABSTRACTION:
     prior_p: 0.35
-    language_modifiers:
-      ruby: 1.1
-      js: 1.0
+    language_modifiers: { ruby: 1.1, js: 1.0 }
   FLATNESS:
     prior_p: 0.35
-    language_modifiers:
-      ruby: 1.2
-      yaml: 1.3
-      html: 1.4
+    language_modifiers: { ruby: 1.2, yaml: 1.3, html: 1.4 }
   NAMING:
     prior_p: 0.55
-    language_modifiers:
-      ruby: 1.2
-      js: 1.1
-      yaml: 0.9
+    language_modifiers: { ruby: 1.2, js: 1.1, yaml: 0.9 }
   ROBUSTNESS:
     prior_p: 0.45
-    language_modifiers:
-      ruby: 1.3
-      js: 1.2
+    language_modifiers: { ruby: 1.3, js: 1.2 }
   IMMUTABILITY:
-    prior_p: 0.3
-    language_modifiers:
-      ruby: 1.2
-      js: 1.1
+    prior_p: 0.30
+    language_modifiers: { ruby: 1.2, js: 1.1 }
   DEAD_CODE:
     prior_p: 0.35
-    language_modifiers:
-      ruby: 1.2
-      js: 1.1
-      css: 1.3
+    language_modifiers: { ruby: 1.2, js: 1.1, css: 1.3 }
   REFLOW:
-    prior_p: 0.4
-    language_modifiers:
-      ruby: 1.1
-      yaml: 1.2
-      markdown: 1.3
+    prior_p: 0.40
+    language_modifiers: { ruby: 1.1, yaml: 1.2, markdown: 1.3 }
   HOIST_CONSTANTS:
     prior_p: 0.45
-    language_modifiers:
-      ruby: 1.3
-      js: 1.2
+    language_modifiers: { ruby: 1.3, js: 1.2 }
   SIMPLICITY:
-    prior_p: 0.5
-    language_modifiers:
-      ruby: 1.2
-      yaml: 1.1
-      html: 0.9
+    prior_p: 0.50
+    language_modifiers: { ruby: 1.2, yaml: 1.1, html: 0.9 }
   COHESION:
     prior_p: 0.45
-    language_modifiers:
-      ruby: 1.2
-      js: 1.1
+    language_modifiers: { ruby: 1.2, js: 1.1 }
   DECOUPLING:
-    prior_p: 0.4
-    language_modifiers:
-      ruby: 1.3
-      js: 1.1
+    prior_p: 0.40
+    language_modifiers: { ruby: 1.3, js: 1.1 }
   CLARITY_READABILITY:
     prior_p: 0.55
-    language_modifiers:
-      ruby: 1.1
-      yaml: 1.0
-      markdown: 1.2
+    language_modifiers: { ruby: 1.1, yaml: 1.0, markdown: 1.2 }
   CONSISTENCY:
-    prior_p: 0.5
-    language_modifiers:
-      ruby: 1.1
-      css: 1.3
-      yaml: 1.2
+    prior_p: 0.50
+    language_modifiers: { ruby: 1.1, css: 1.3, yaml: 1.2 }
   REUSABILITY:
     prior_p: 0.45
-    language_modifiers:
-      ruby: 1.2
-      js: 1.1
+    language_modifiers: { ruby: 1.2, js: 1.1 }
   ECONOMY_EFFICIENCY:
     prior_p: 0.35
-    language_modifiers:
-      ruby: 1.1
-      js: 1.0
+    language_modifiers: { ruby: 1.1, js: 1.0 }
   RESILIENCE_ROBUSTNESS:
-    prior_p: 0.4
-    language_modifiers:
-      ruby: 1.3
-      js: 1.1
+    prior_p: 0.40
+    language_modifiers: { ruby: 1.3, js: 1.1 }
   FEEDBACK_MONITORING:
-    prior_p: 0.3
-    language_modifiers:
-      ruby: 1.2
-      js: 1.0
+    prior_p: 0.30
+    language_modifiers: { ruby: 1.2, js: 1.0 }
   CONSTRAINT_AFFORDANCE:
     prior_p: 0.25
-    language_modifiers:
-      ruby: 1.2
+    language_modifiers: { ruby: 1.2 }
   HIERARCHY:
-    prior_p: 0.3
-    language_modifiers:
-      ruby: 1.1
-      yaml: 1.2
+    prior_p: 0.30
+    language_modifiers: { ruby: 1.1, yaml: 1.2 }
   BALANCE_SYMMETRY:
-    prior_p: 0.2
-    language_modifiers:
-      css: 1.4
-      html: 1.3
-      ruby: 0.9
+    prior_p: 0.20
+    language_modifiers: { css: 1.4, html: 1.3, ruby: 0.9 }
   ACTIVE_VOICE:
-    prior_p: 0.6
-    language_modifiers:
-      markdown: 1.4
-      yaml: 1.1
-      ruby: 1.0
+    prior_p: 0.60
+    language_modifiers: { markdown: 1.4, yaml: 1.1, ruby: 1.0 }
   OMIT_NEEDLESS:
     prior_p: 0.65
-    language_modifiers:
-      markdown: 1.4
-      ruby: 1.1
-      yaml: 1.0
+    language_modifiers: { markdown: 1.4, ruby: 1.1, yaml: 1.0 }
   PARALLEL_STRUCTURE:
     prior_p: 0.35
-    language_modifiers:
-      markdown: 1.3
-      yaml: 1.2
-      ruby: 1.0
+    language_modifiers: { markdown: 1.3, yaml: 1.2, ruby: 1.0 }
   FEATURE_ENVY:
     prior_p: 0.25
-    language_modifiers:
-      ruby: 1.3
-      js: 1.1
+    language_modifiers: { ruby: 1.3, js: 1.1 }
+  DATA_CLUMPS:
+    prior_p: 0.20
+    language_modifiers: { ruby: 1.2 }
   SWITCH_STATEMENTS:
-    prior_p: 0.3
-    language_modifiers:
-      ruby: 1.3
-      js: 1.4
+    prior_p: 0.30
+    language_modifiers: { ruby: 1.3, js: 1.4 }
   TEMPORARY_FIELD:
-    prior_p: 0.2
-    language_modifiers:
-      ruby: 1.2
+    prior_p: 0.20
+    language_modifiers: { ruby: 1.2 }
   ALTERNATIVE_CLASSES:
     prior_p: 0.15
-    language_modifiers:
-      ruby: 1.2
+    language_modifiers: { ruby: 1.2 }
   THREAD_SAFETY:
     prior_p: 0.15
-    language_modifiers:
-      ruby: 1.5
+    language_modifiers: { ruby: 1.5 }
   LOCK_ORDER:
     prior_p: 0.08
-    language_modifiers:
-      ruby: 1.5
+    language_modifiers: { ruby: 1.5 }
   CALLBACK_HELL:
-    prior_p: 0.2
-    language_modifiers:
-      js: 1.8
-      ruby: 0.4
+    prior_p: 0.20
+    language_modifiers: { js: 1.8, ruby: 0.4 }
   FIRE_AND_FORGET:
     prior_p: 0.18
-    language_modifiers:
-      ruby: 1.3
-      js: 1.2
+    language_modifiers: { ruby: 1.3, js: 1.2 }
   SECRET_PROXIMITY:
     prior_p: 0.08
-    language_modifiers:
-      ruby: 1.3
-      yaml: 1.5
-      env: 2.0
+    language_modifiers: { ruby: 1.3, yaml: 1.5, env: 2.0 }
   OVERPERMISSION:
     prior_p: 0.15
-    language_modifiers:
-      ruby: 1.2
-      yaml: 1.3
+    language_modifiers: { ruby: 1.2, yaml: 1.3 }
   INPUT_TRUST:
     prior_p: 0.12
-    language_modifiers:
-      ruby: 1.4
-      js: 1.4
-      html: 1.2
+    language_modifiers: { ruby: 1.4, js: 1.4, html: 1.2 }
   BREAKING_CHANGE:
-    prior_p: 0.1
-    language_modifiers:
-      ruby: 1.3
+    prior_p: 0.10
+    language_modifiers: { ruby: 1.3 }
   IMPLICIT_CONTRACT:
-    prior_p: 0.2
-    language_modifiers:
-      ruby: 1.2
+    prior_p: 0.20
+    language_modifiers: { ruby: 1.2 }
   CHATTY_API:
     prior_p: 0.15
-    language_modifiers:
-      ruby: 1.2
-      js: 1.1
+    language_modifiers: { ruby: 1.2, js: 1.1 }
   QUERY_SMELL:
-    prior_p: 0.2
-    language_modifiers:
-      ruby: 1.4
+    prior_p: 0.20
+    language_modifiers: { ruby: 1.4 }
   SCHEMA_DRIFT:
-    prior_p: 0.1
-    language_modifiers:
-      ruby: 1.3
-      yaml: 1.2
+    prior_p: 0.10
+    language_modifiers: { ruby: 1.3, yaml: 1.2 }
   NULL_BLINDNESS:
     prior_p: 0.15
-    language_modifiers:
-      ruby: 1.3
+    language_modifiers: { ruby: 1.3 }
   UNBOUNDED_RETRY:
-    prior_p: 0.2
-    language_modifiers:
-      ruby: 1.3
-      js: 1.1
+    prior_p: 0.20
+    language_modifiers: { ruby: 1.3, js: 1.1 }
   MISSING_TIMEOUT:
     prior_p: 0.25
-    language_modifiers:
-      ruby: 1.4
-      js: 1.2
+    language_modifiers: { ruby: 1.4, js: 1.2 }
   OBSERVABILITY_GAP:
     prior_p: 0.35
-    language_modifiers:
-      ruby: 1.2
-      js: 1.1
+    language_modifiers: { ruby: 1.2, js: 1.1 }
   STALE_EXAMPLE:
-    prior_p: 0.3
-    language_modifiers:
-      markdown: 1.4
-      yaml: 1.1
+    prior_p: 0.30
+    language_modifiers: { markdown: 1.4, yaml: 1.1 }
   UNDOCUMENTED_EXCEPTION:
-    prior_p: 0.4
-    language_modifiers:
-      ruby: 1.3
+    prior_p: 0.40
+    language_modifiers: { ruby: 1.3 }
   IMPERATIVE_TITLE:
     prior_p: 0.55
-    language_modifiers:
-      markdown: 1.5
-      yaml: 1.2
+    language_modifiers: { markdown: 1.5, yaml: 1.2 }
   MAGIC_COLOR:
     prior_p: 0.45
-    language_modifiers:
-      css: 1.6
-      html: 1.3
+    language_modifiers: { css: 1.6, html: 1.3 }
   SPECIFICITY_CREEP:
-    prior_p: 0.3
-    language_modifiers:
-      css: 1.5
+    prior_p: 0.30
+    language_modifiers: { css: 1.5 }
   VIEWPORT_BLINDNESS:
     prior_p: 0.35
-    language_modifiers:
-      css: 1.4
-      html: 1.2
+    language_modifiers: { css: 1.4, html: 1.2 }
   REGISTER_STABILITY:
     prior_p: 0.45
-    language_modifiers:
-      text: 1.3
-      markdown: 1.2
+    language_modifiers: { text: 1.3, markdown: 1.2 }
   DENSITY_GRADUATION:
-    prior_p: 0.4
-    language_modifiers:
-      text: 1.3
-      markdown: 1.2
+    prior_p: 0.40
+    language_modifiers: { text: 1.3, markdown: 1.2 }
   LENGTH_CALIBRATION:
-    prior_p: 0.5
-    language_modifiers:
-      text: 1.3
-      markdown: 1.2
+    prior_p: 0.50
+    language_modifiers: { text: 1.3, markdown: 1.2 }
   ERROR_SURFACE_IMMEDIATELY:
     prior_p: 0.35
-    language_modifiers:
-      text: 1.2
-      ruby: 1.1
+    language_modifiers: { text: 1.2, ruby: 1.1 }
+
+# Merged from former stale_namespaces.yml — retired data paths and constants
+# enforced by the stale namespace audit.
 stale_namespaces:
   stale_data_files:
-  - old: data/workflow.yml
-    new: data/limits.yml
-  - old: data/standing_orders.yml
-    new: data/state.yml
-  - old: data/ruby_style.yml
-    new: data/rules.yml#style
-  - old: data/injection_patterns.yml
-    new: data/patterns.yml#injection
-  - old: data/zsh.yml
-    new: data/patterns.yml#zsh
+    - old: data/workflow.yml
+      new: data/limits.yml
+    - old: data/standing_orders.yml
+      new: data/state.yml
+    - old: data/ruby_style.yml
+      new: data/rules.yml#style
+    - old: data/injection_patterns.yml
+      new: data/patterns.yml#injection
+    - old: data/zsh.yml
+      new: data/patterns.yml#zsh
   stale_constants:
-  - old: Master::CLI
-    new: Master::CLI::Session
-  - old: Master::CLI::CLI
-    new: Master::CLI::Session
-  - old: Master::Pipeline
-    new: Master::CLI::Pipeline
-  - old: Master::Stages
-    new: Master::CLI::Stages
-  - old: Master::Speech
-    new: Master::Voice::Speech
-  - old: Master::Personality
-    new: Master::Voice::Personality
-  - old: Master::Swarm
-    new: Master::Review::Swarm
-  - old: Master::Scan
-    new: Master::Review::Scan
-  - old: Master::Council
-    new: Master::Review::Council
-  - old: Master::Session
-    new: Master::Trace::Session
-  - old: Master::Axioms
-    new: Master::Ground::Rules
+    - old: Master::CLI
+      new: Master::CLI::Session
+    - old: Master::CLI::CLI
+      new: Master::CLI::Session
+    - old: Master::Pipeline
+      new: Master::CLI::Pipeline
+    - old: Master::Stages
+      new: Master::CLI::Stages
+    - old: Master::Speech
+      new: Master::Voice::Speech
+    - old: Master::Personality
+      new: Master::Voice::Personality
+    - old: Master::Swarm
+      new: Master::Review::Swarm
+    - old: Master::Scan
+      new: Master::Review::Scan
+    - old: Master::Council
+      new: Master::Review::Council
+    - old: Master::Session
+      new: Master::Trace::Session
+    - old: Master::Axioms
+      new: Master::Ground::Rules
+
+# Merged from former auth_profiles.yml — auth profile lanes (OAuth/CLI before
+# API keys, OpenCrabs/OpenClaw pattern).
+
+# How MASTER writes a business plan, and prices what it sells. Distilled from the
+# Innovasjon Norge pitch in README.md and its sources. A plan has to survive a
+# board fact-checking it: every number a real estimate, every claim mapped to a
+# criterion below.
 business_plan:
-  lead: purple_cow
-  structure:
-  - idea
-  - business
-  - ask
-  - horizon
-  - proof
-  numbers: accurate_estimates_only
-  scope: honest
-  criteria:
-  - innovation
-  - scalability
-  - internationalisation
-  - value_creation
-  - sustainability
+  lead: purple_cow            # open bold, naming the one remarkable thing; fitting in is failing (Godin)
+  structure: [idea, business, ask, horizon, proof]   # five tight movements — hierarchy and whitespace (Bringhurst)
+  numbers: accurate_estimates_only                    # never a placeholder or a figure the plan cannot defend
+  scope: honest                                        # say plainly what the ask does NOT cover
+  criteria: [innovation, scalability, internationalisation, value_creation, sustainability]
+  # Monetisation follows the same rule: sell the remarkable thing people seek out
+  # and tell others about — not a safe product pushed by ads. Price the purple
+  # cow, and let word of mouth from the right early users carry it (Godin).
   monetisation: purple_cow
   sources:
-  - Robert Bringhurst, The Elements of Typographic Style — hierarchy and whitespace
-  - Seth Godin, Purple Cow — be remarkable or be invisible; the same rule prices what
-    you sell
-  - Innovasjon Norge startup grant criteria — en.innovasjonnorge.no/article/startups
+    - "Robert Bringhurst, The Elements of Typographic Style — hierarchy and whitespace"
+    - "Seth Godin, Purple Cow — be remarkable or be invisible; the same rule prices what you sell"
+    - "Innovasjon Norge startup grant criteria — en.innovasjonnorge.no/article/startups"
+
+# The house style for every markdown document — MASTER's and the CLI agents'.
+# Tadao Ando in text: brutalist, ultra-minimal, unpredictable. Concrete over
+# ornament; negative space over density. Fewer sections than feel necessary,
+# each heading a plane, each paragraph load-bearing. The composition is
+# irregular by design so the page reads as a built thing regardless of its
+# words. No decorative rules, no filler.
 markdown_style:
-  aesthetic: tadao_ando
-  applies_to:
-  - MASTER
-  - claude
-  - grok
-  - codex
+  aesthetic: tadao_ando   # brutalist · ultra-minimal · unpredictable · negative space
+  applies_to: [MASTER, claude, grok, codex]
   rules:
-  - fewer sections than feel necessary; cut before you add
-  - irregular composition — vary heading levels and paragraph length
-  - negative space is structure, not waste
-  - concrete over ornament; delete anything decorative
+    - fewer sections than feel necessary; cut before you add
+    - irregular composition — vary heading levels and paragraph length
+    - negative space is structure, not waste
+    - concrete over ornament; delete anything decorative
+
+# The dependency graph FixLoop's topological sort reads. A rule under `after`
+# must not run before its dependencies finish, or one rule's fix reintroduces
+# another's violation.
+#
+# A rule listed under 'after' must not run before all its dependencies complete.
+# This prevents fix cascades where rule A's fix re-introduces rule B's violation.
+
 rule_deps:
+
+  # Structural operations: flatten nesting before decoupling (flattening
+  # exposes the hidden coupling that DECOUPLE then targets).
   DECOUPLE:
-    after:
-    - FLATTEN
-    - LINEARITY
+    after: [FLATTEN, LINEARITY]
+
+  # Hoist constants before merge — merged code references the hoisted constant.
   MERGE:
-    after:
-    - HOIST_CONSTANTS
-    - HOIST
+    after: [HOIST_CONSTANTS, HOIST]
+
+  # Kill dead code before defrag — defragging dead code wastes effort.
   DEFRAG:
-    after:
-    - DEAD_CODE
-    - SPECULATIVE_GENERALITY
+    after: [DEAD_CODE, SPECULATIVE_GENERALITY]
+
+  # Fix small-files violations before feature_envy — moving a method to
+  # its right class only makes sense when both files are well-sized.
   FEATURE_ENVY:
-    after:
-    - SMALL_FILES
-    - SMALL_FUNCTIONS
+    after: [SMALL_FILES, SMALL_FUNCTIONS]
+
+  # Remove data clumps before primitive obsession — bundling into objects
+  # subsumes the primitive check.
   PRIMITIVE_OBSESSION:
-    after: []
+    after: [DATA_CLUMPS]
+
+  # Fix switch statements (type dispatch) after removing middle men —
+  # middle men often hide the type dispatch.
   SWITCH_STATEMENTS:
-    after:
-    - MIDDLE_MAN
+    after: [MIDDLE_MAN]
+
+  # Comment drift after all structural changes — restructured code needs
+  # comment review, not before.
   COMMENTS_AS_DEODORANT:
-    after:
-    - DEFRAG
-    - MERGE
-    - FLATTEN
-    - EXTRACT
+    after: [DEFRAG, MERGE, FLATTEN, EXTRACT]
+
+  # Strunk rules after all structural operations — prose quality is a
+  # final-pass concern.
   OMIT_NEEDLESS:
-    after:
-    - DEFRAG
-    - REFLOW
+    after: [DEFRAG, REFLOW]
   ACTIVE_VOICE:
-    after:
-    - OMIT_NEEDLESS
+    after: [OMIT_NEEDLESS]
   PARALLEL_STRUCTURE:
-    after:
-    - ACTIVE_VOICE
+    after: [ACTIVE_VOICE]
+
+  # Reflow after all density changes.
   REFLOW:
-    after:
-    - MERGE
-    - FLATTEN
-    - DEFRAG
+    after: [MERGE, FLATTEN, DEFRAG]
+
+  # Bayesian/RL priors updated last — they need the post-fix violation
+  # counts from all other rules.
   PATTERN_EXTRACTION:
-    after:
-    - DEFRAG
-    - MERGE
-    - DECOUPLE
-    - FLATTEN
+    after: [DEFRAG, MERGE, DECOUPLE, FLATTEN]
+
+  # Scanner rule ordering — structural before style, security before polish.
   bare_rescue:
-    after:
-    - fail_visibly
+    after: [fail_visibly]
   silent_rescue:
-    after:
-    - bare_rescue
+    after: [bare_rescue]
   god_class:
-    after:
-    - small_functions
-    - nesting_depth
+    after: [small_functions, nesting_depth]
   long_method:
-    after:
-    - nesting_depth
+    after: [nesting_depth]
   n_plus_one:
-    after:
-    - find_each
+    after: [find_each]
   yaml_declarative:
-    after:
-    - semantic
+    after: [semantic]
   veto_patterns:
-    after:
-    - yaml_declarative
+    after: [yaml_declarative]
   semantic:
-    after:
-    - rubocop
-    - reek
+    after: [rubocop, reek]
   adversarial:
-    after:
-    - semantic
-    - comment_drift
+    after: [semantic, comment_drift]
   comment_drift:
-    after:
-    - ast_omission
+    after: [ast_omission]
   ast_omission:
-    after:
-    - co_change_coupling
+    after: [co_change_coupling]
   co_change_coupling:
-    after:
-    - interconnect
+    after: [interconnect]
   interconnect:
-    after:
-    - rule_coverage
+    after: [rule_coverage]
   DRY:
-    after:
-    - MERGE
-    - DEFRAG
+    after: [MERGE, DEFRAG]
   KISS:
-    after:
-    - FLATTEN
-    - long_method
+    after: [FLATTEN, long_method]
   SRP:
-    after:
-    - FEATURE_ENVY
-    - god_class
+    after: [FEATURE_ENVY, god_class]
   CQS:
-    after:
-    - SRP
+    after: [SRP]
+
+  # SOLID literal proxies (OPEN_CLOSED/LISKOV/INTERFACE_SEGREGATION/
+  # DEPENDENCY_INVERSION): all judge class/method boundaries, so they must
+  # not run before SRP settles what "one class" even means here.
   OPEN_CLOSED:
-    after:
-    - SRP
+    after: [SRP]
   LISKOV:
-    after:
-    - SRP
-    - god_class
+    after: [SRP, god_class]
   INTERFACE_SEGREGATION:
-    after:
-    - SRP
+    after: [SRP]
   DEPENDENCY_INVERSION:
-    after:
-    - FEATURE_ENVY
-    - SRP
+    after: [FEATURE_ENVY, SRP]
   html_lang:
-    after:
-    - meta_charset
+    after: [meta_charset]
   no_inline_styles:
-    after:
-    - magic_color
+    after: [magic_color]
+
+# What the audits of the rules themselves are allowed to find.
+#
+# Four files held these — rule_audit.yml, rule_hygiene.yml, rule_reach.yml and
+# rule_fixture_debt.yml — one ceiling apiece, beside the rules they measure but
+# not with them. Named rule_ratchets rather than rule_ceilings because
+# design_baseline.yml already owns that key and lint:data_singularity refuses
+# one top-level key in two data files; ratchet is also the truer word.
+#
+# Every reader already loads this file or boots the runtime that does, so they
+# are read through Master.law and add no second loader.
 rule_ratchets:
   audit:
+    # Ceilings for tools/rule_audit.rb — the audit of the rules, not of the tree.
+    #
+    # blind and saturated are 0 and must stay 0. They are not a backlog: a rule whose
+    # fixtures only pass because a fixture is read differently from a real file, or
+    # one that flags most of what it reads, produces findings that mean nothing, and
+    # it looks green from the inside. FROZEN_STRING_LITERAL sat at 423 of 423 while
+    # passing prove! at every boot.
+    #
+    # silent is a real number and it moves in both directions. A rule that fires on
+    # nothing here is usually a CSS or JavaScript law over a mostly-Ruby corpus,
+    # which is a property of the sample rather than of the rule — so it is recorded
+    # rather than fixed, and it moves when the corpus or the rule set does. It is a
+    # ceiling so that a rule going quiet is visible; it is not evidence of a defect
+    # on its own.
+    #
+    # 19 -> 24 as the tree got cleaner, which is the direction this counter cannot
+    # read. MEANINGFUL_NAMES, WHY_NOT_WHAT, NO_COLUMN_ALIGN, STRICT_LOADING_MISSING
+    # and NO_CHANGELOG_COMMENT all stopped finding anything because their findings
+    # were fixed or their detector was narrowed to what it is actually about — and
+    # a rule that finds nothing because nothing is left is the goal. Read the names
+    # before reading the number.
+    #
+    # NO_CHANGELOG_COMMENT held exactly three hits in this corpus, one each in
+    # rescue_handlers.rb, prune_guest_users_job.rb and _responsive.scss. All three
+    # said what the code used to be; each now states why it is what it is.
+    #
+    # 25 -> 23 by widening the corpus to MASTER/web/public/*.js rather than by
+    # touching a rule. FACE_POINT_IS_ONE_PIXEL and NO_WEBGL_GLOW_PASS govern those
+    # files and nothing else, and the corpus stopped at RAILS's Stimulus
+    # controllers — so the audit called two laws silent without having opened a
+    # file either one judges. Both are still silent, because the face obeys them.
+    # The two that came off the list are NO_VAR and NO_COLUMN_ALIGN, which were
+    # never silent: viewport_inset.js declares seven `var`s, and chat.js,
+    # codebase.js, face.runtime.js and face_semantics.js align their assignments
+    # into columns. That is the same shape as the scss glob fixed earlier — a law
+    # judged against no file of its own is untested, not clean.
     blind: 0
     saturated: 0
+    # 23 -> 24 is NOISE_NAME, and it is the good direction. Identified by running
+    # this audit at b81baea1c — the commit that recorded 23 — and diffing the two
+    # name lists, because the ceiling is a bare integer and "over by one" otherwise
+    # names nothing. Nothing else moved: no rule left the silent set.
+    #
+    # It is silent because the tree obeys it. Verified rather than assumed, since a
+    # broken detector reads identically from here: it still fires on `class Manager`
+    # and `module Utils`, and stays correctly quiet on `class PaymentHelper` and
+    # `class SubscriptionBilling`, which is the domain-qualifier exemption the law
+    # documents. A grep for its pattern over MASTER, RAILS, OPENBSD and STUDIO finds
+    # no match in ordinary source at this commit or at b81baea1c.
+    #
+    # What is NOT established: which file it last fired on. The corpus moved 696 ->
+    # 709 files and the detector set 74 -> 75 between the two commits, so this is
+    # churn in the sample as much as in the tree, and the exact departure was not
+    # chased. The header above already says a silent rule is a property of the
+    # sample as often as of the rule, and is not evidence of a defect on its own.
     silent: 24
+
+
   hygiene:
+    # Ceilings for tools/rule_hygiene.rb.
+    #
+    # id_case_collisions: bare_rescue/BARE_RESCUE and eight_px_rhythm/EIGHT_PX_RHYTHM.
+    # Two ids differing only by case are two rules to a registry and one rule to a
+    # reader, so findings, priors and exemptions split across the pair.
+    #
+    # alias_shadows_live_rule: DRY claims duplicate_code, which is still its own
+    # rule. One of the two is a fold nobody finished; closing it means deleting the
+    # absorbed rule or dropping the alias, and that is a decision per pair.
+    #
+    # missing_metadata: 16 rules declare neither tier nor severity, so every count
+    # that groups by either omits them without saying so. It was 43 until the 27
+    # operator_principles entries moved to soul.yml, where conduct belongs and where
+    # a tier and a severity were never the right shape for them.
     id_case_collisions: 2
     alias_shadows_live_rule: 1
     missing_metadata: 16
+
+    # cross_population_duplicates: one id defined in two places, in two wordings,
+    # with no way to tell which governs. FAIL_VISIBLY had three. Resolve one by
+    # keeping the wording where the detector is; a population that only restates it
+    # is the copy.
     cross_population_duplicates: 21
+
   reach:
     unreachable: 56
+
   fixture_debt:
+    # Registry rules carrying no fires:/does_not_fire: worked example, counted by
+    # test/test_rule_fixtures.rb. law/ rules cannot load without fixtures; these
+    # can, which is where every instrument defect this campaign found was hiding.
+    # The number only ratchets down: a new RuleDSL rule must carry its examples,
+    # and retro-fitting one lowers this by hand.
     without_fixtures: 91
