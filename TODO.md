@@ -3225,3 +3225,286 @@ contributor can go from clone to green check without reading a single
 contract file — because the runtime itself teaches them what it needs
 from them.
 
+---
+
+## Reflections — Muse Spark 1.2 Free (2026-09-01)
+
+Walked all four trees in one session, fixed what was verifiable, left
+what needs an owner. The same failure repeats: a file that contains its
+own proof of correctness while not being correct — TODO.md with conflict
+markers, rules.yml with priors that name no rule, a render at the repo
+root that claims to belong under `STUDIO/dilla/renders/`, a design token
+ladder that cannot name its most-used rung. Below are the wishes, one
+per tree, and the 10/10 vision. Each is an opinion, not debt; it closes
+when shipped. Signed: Muse Spark 1.2 Free.
+
+### MASTER — what would make the constitutional runtime a joy for humans and LLMs
+
+1. `TODO.md` should never contain `<<<<<<<` — add a pre-commit hook that fails on conflict markers, verified by a test that asserts the marker string itself is not found.
+2. `MASTER/data/rules.yml` `violation_priors` and `rule_deps` should be validated at boot: every id must resolve to a law or a rule, otherwise the constitution is citing a law that does not exist.
+3. `MASTER/bin/master` should print a one-line prompt on TTY so `bundle exec ruby bin/cli` does not look dead.
+4. Every `Law` class should declare its `source:` as a URI, not a prose citation, so `bin/pub4 measure --origin` can trace any rule to its paper.
+5. `data/rules.yml` should carry `last_measured:` per rule id, so a reader knows if a finding count is today's or last month's.
+6. The fold spine (`lib/core/`) should publish its line count vs ceiling on every boot, not only when `rake lint:spine` is run.
+7. `rules.yml` `self_test` should be a runnable gate (`bin/pub4 selftest`), not a YAML block a human parses.
+8. Every `detect_semantic:` should have a `detect_lexical:` fallback, so no rule is purely semantic by accident.
+9. `soul.yml` `version:` should drive `CHANGELOG.md`, so evolution is a log, not a diff.
+10. `anti_simulation` forbidden words should be enforced by a pre-commit hook on `data/`, not only at runtime.
+11. `lib/review/scan/` should publish a DSL reference (`scan.md`) so a new law writer knows the shape before opening code.
+12. `bin/pub4 gate` should accept `--tree MASTER` to run only MASTER's laws on MASTER.
+13. `evidence_scoring` weights should be tunable per-tree via `data/weights.yml` without editing `rules.yml`.
+14. `constitution.rb` should expose `Constitution.rules_for_law(name)` without re-parsing YAML.
+15. `data/soul.yml` `persona:` and `voice:` should be validated at boot against a known-voices registry.
+16. `hooks:` in `soul.yml` should be wired to a test asserting every event has a handler.
+17. `Effect` verbs in `lib/core/world.rb` should be enumerated in `VERBS` and unknown verbs should raise at boot.
+18. The scanner should warn when `detect_semantic:` exceeds 200 chars — a readability guard for law writers.
+19. `data/project_context.yml` should be validated at boot, since it is listed in `sacred_paths`.
+20. Add `bin/pub4 law --audit` listing every rule id not carried by any principle — the inverse of the principle-map gap.
+21. `lib/review/scan/rules/` should carry an auto-generated `README.md` from the registry so inventory never drifts.
+22. `bin/master "<instruction>"` should support `--dry-run` that simulates the fold's verdict without touching the world.
+23. `data/rules.yml` `beauty:` should be split to `data/beauty.yml` — aesthetics are not laws.
+24. Every `research:` URL in `rules.yml` should be verified by `bin/pub4 gate --links` to catch 404s.
+25. Ship a `CONTRIBUTING.md`: "run `bin/check --profile=agent`, then `bin/check --profile=web`".
+26. `test/` should mirror `lib/` one-deep, so every `lib/foo/bar.rb` has a known test home.
+27. `failure_taxonomy` should be backed by a test asserting every strategy has `max_retries`.
+28. `lib/core/fold.rb` should log verdicts to JSONL so the runtime is auditable after the fact.
+29. `learned_smells` should carry `measure_every:` so a reader knows if findings are stale.
+30. `data/limits.yml` should be enforced by a gate, not just read — every key without a reader should be flagged.
+31. Declare `MASTER_VERSION` matching `soul.yml version:`; `world.rb` should refuse to boot if they disagree.
+32. Compile `veto_patterns:` into one optimized regex at load and benchmark it — slow vetoes get disabled.
+33. `lib/core/proof.rb` `PRODUCERS` should be tested against `evidence_scoring.producers:` to guarantee they agree.
+34. `paths:skip_dirs:` should be enforced by `Dir.glob` at boot — a skip_dir naming no existing dir should warn.
+35. `data/rules.yml` should carry `schema_version:` checked by `RuleDSL` before parsing.
+36. Every `fix:` string should be tested against a synthetic violation to prove it resolves.
+37. `lib/core/memory.rb` should serialize its transcript so a session is replayable — RAM-only memory cannot be audited.
+38. Add `bin/pub4 triage --age 30` to prevent stale `guard_expensive_ops` findings accumulating.
+39. Publish `status.json` at boot with spine count, rule count, verdict histogram.
+40. Validate `data/principle_map.yml` cross-reference: every `rule_id` must exist in `rules.yml`.
+41. Wire `phantom_recovery` `recovery:` to `lib/core/world.rb` so steps are executable, not descriptive.
+42. Ship `bin/pub4 diagram` emitting DOT graph of `Effect -> Constitution -> World -> Memory`.
+43. List `mode: opportunity` rules separately in scan output so they do not inflate error count.
+44. Test `engineering_fit:` to assert every rule carries `why_required:`.
+45. Cover `constitution.rb` with mutation tests verifying the fold still reaches the right verdict.
+46. Verify `absolute:sacred_paths:` at boot: every path exists and is not writable by current user.
+47. Rename `discovery` — it is a `detect_semantic:` alias, name misleads every reader.
+48. Declare `CLI_PROTOCOL_VERSION` so operator surface and runtime negotiate without drift.
+49. Export `scan_profile` JSON so the web face shows live scan metrics without Ruby.
+50. Make `hooks:on_fix_applied` publish to a file `bin/pub4 status` reads, so fixes since boot are visible.
+51. Carry `last_edited_by:` and `last_edited:` on every top-level section, with `git log` as source — a law without author has no accountability.
+52. Accept `timeout:` in `Fold#run` to kill a stuck provider instead of hanging a 1GB host.
+53. Carry a `search:` index in `DECISIONS.md` so `bin/master` can answer "why was this rule created?" without reading the whole file.
+54. Restrict `auto_fix:` to rules verified against a snapshot — unverified autofix is silent corruption.
+55. Declare `SUPPORTED_RUBY_VERSIONS` and verify at `bin/check` before anything loads.
+
+### RAILS — what would make the city-network apps a joy to scale
+
+1. Every engine should ship `CONTRIBUTING.md` so a new dev knows the engine's test command without reading `AGENTS.md`.
+2. Add a `lint:` that asserts every `t()` key in `app/` has a matching `nb.yml` entry, not just the reverse.
+3. `brgen/test/` should mirror `engines/` one-deep so every model test has a known home.
+4. Make `FrontPageWeightTest` runnable in isolation without booting the full stack.
+5. Every controller should declare `before_action :authenticate_user!` explicitly so a security scan can find the gap.
+6. Publish `RAILS/shared/lib/pub4/pub4.md` reference so shared helpers are discoverable.
+7. Carry `RAILS_ROUTES_TEST` asserting every named route resolves and no route is unreachable.
+8. Test `Shared::Sluggable` in isolation — a concern only tested through its host hides bugs.
+9. Every `has_many :through` should declare `inverse_of` explicitly — 104 missing proves default is not enough.
+10. Ship `RAILS/gates/README.md` listing every gate and what it checks.
+11. `css_budget.yml` should carry `measured_on:` so the budget is not enforced against yesterday's render.
+12. Audit every `accepts_nested_attributes_for` for `reject_if` and `limit` — without them it is mass-assignment.
+13. Carry a `package.json` audit listing every dependency with its license and last-published date.
+14. Add `test:_solid_*` jobs verifying the connection survives a fork for SolidQueue/Cache/Cable.
+15. Gate `shared/design_tokens.yml`: every token referenced in CSS must be declared and every declared token used.
+16. Test every `scope` with `unscope` to prove the inverse exists — a scope without unscope cannot be reset.
+17. Expand `guest_write_rate_limit_test.rb` to cover every guest-reachable write path, not just six.
+18. Each engine should declare its own `Gemfile`/`Rakefile` so it can be tested independently.
+19. Every `validates :` should carry a message key in `locale/` — hardcoded messages are I18n defects.
+20. Declare `RAILS_VERSIONS` matrix and verify at `bin/check`.
+21. Audit every `after_commit` for idempotency — a callback assuming exactly-once misbehaves on retry.
+22. Flag `app/channels/` broadcasts with no subscriber so dead streams are caught before production.
+23. Review every `default_scope` — default scopes are silent query killers.
+24. Ship `docker-compose.yml` so the triangle boots without `vps-deploy`.
+25. Test every `find_by` for the not-found case to guarantee 404 not 500.
+26. Audit `app/mailers/` for missing `headers` — a mailer without explicit `from`/`reply_to` is phishing.
+27. Audit every `before_action` modifying `Current` to ensure it resets in `after_action` — leaked Current is cross-request leak.
+28. Declare `max_retry_count` and `dead_queue` for every queue so failed jobs are not dropped.
+29. Audit every `ransack`/`searchkick` query for SQL injection — user-supplied filter is the surface.
+30. Declare `SESSION_EXPIRY` and test expiry — a session that never expires is account takeover.
+31. Audit every `CarrierWave`/`ActiveStorage` upload for type and size — unbounded upload is DoS.
+32. Test `redis`/`solid_cache` latency — a cache adding 50ms per read is worse than no cache.
+33. Test every `counter_cache` under concurrent creates — a counter that drifts under load is a lie.
+34. Ship `bin/rails audit:sql` listing every N+1 query Bullet finds across the suite.
+35. Every `render json:` should declare `only:`/`except:` — a model exposing every attribute is a leak.
+36. Audit `CORS` to guarantee every origin is explicit — wildcard Allow-Origin is CSRF.
+37. Every `sidekiq_options` should declare `retry:` and `dead:`.
+38. Declare `PAYMENT_GATEWAY_FALLBACK` so the app degrades when Stripe is down.
+39. Test every `link_to` with `method:` for JS fallback — progressive-enhancement link failing without JS is broken.
+40. Ship `bin/rails health` returning JSON status of every engine, queue, cache.
+41. Audit every `strong_parameters` whitelist against every `form_with` to guarantee no field is accepted without permission.
+42. Declare `favicon.ico`/`robots.txt` as routes so they are not served by Rails — static files through app are tax.
+43. Every `cache_column`/`counter_cache` should have a `REBUILD` task to fix drift without migration.
+44. Declare `DEPLOYMENT_SCORE` 0-100; `vps-deploy` should refuse below 80.
+45. Test every `enum` for the invalid-value case — invalid strings raise silent `EnumNotFound`.
+46. Declare `SHARED_VERSION` so shared code between engines can be versioned and tested for back-compat.
+47. Audit every `scope` filtering by `current_user` for tenant isolation — a scope that does not scope is data leak between cities.
+48. Ship `bin/rails security` running `brakeman`, `bundler-audit`, and custom scanner in one command.
+49. Audit every `after_initialize`/`to_prepare` for thread-safety — mutating global state is race.
+50. Declare `PERFORMANCE_BUDGET` listing max response time, page weight, query count per page — `bin/rails benchmark` should fail deploy if exceeded.
+51. Every `ActionMailer` subclass should declare `default from:`/`reply_to:` so framework enforces, not operator.
+52. Ship `bin/rails i18n:audit` finding every hardcoded English string in a view helper.
+53. Review every `has_and_belongs_to_many` for whether `has_many :through` is more appropriate — HABTM cannot carry metadata.
+54. Audit `propshaft` manifest to guarantee every asset is referenced — orphaned bundle is bytes wasted.
+55. Declare `CITY_TIMEOUT` so every city engine configures its own request timeout — a global timeout fitting Bergen does not fit Reykjavik.
+
+### OPENBSD — what would make the deploy pipeline and VPS runbook a joy to operate
+
+1. `rc.d/master` should print a startup banner naming version, PID, boot time so operator knows daemon is alive without `rcctl`.
+2. Every script in `OPENBSD/bin/` should declare its own `VERSION` read by `vps-deploy` before running.
+3. `vps-deploy` should accept `--dry-run` printing the full sequence without executing.
+4. `relayd.conf` should be validated at boot by `relayd -n` and result logged — a broken conf that loads is worse than one that refuses.
+5. Every `rc.d` script should declare `depends_on:` as machine-readable list so `rcctl` orders correctly without guessing.
+6. Ship `RELEASE_NOTES.md` updated on every deploy — an undeployed box is an undeployed change.
+7. Audit `doas.conf` via a gate asserting every rule is scoped to a command and user — unscoped doas is root for everyone.
+8. Every `pkg_add` should declare `VERIFY_SIGNATURE` — a package without signify is supply-chain attack.
+9. `deploy-smoke.sh` should test every apex on the box, not just three live apps — amber and bsdports need their own smoke test.
+10. `sshd_config` should be audited via `ssh-audit` on every deploy — silent SSH downgrade is root cause.
+11. Every `cron` job should declare `MAILTO=` so failures are emailed — a cron failing silently fails forever.
+12. Ship `NETWORK_DIAGRAM.md` mapping every domain to its port, relayd section, backend IP.
+13. `nsd.conf` zones should be validated by `nsd-check` at boot and logged — a broken zone serving stale DNS is worse than no DNS.
+14. Every `acme-client` cert should be audited for expiry by `domain_watch.rb` at boot, not just once a day.
+15. Declare `VPS_HEALTH_CHECK` running every five minutes logging CPU, RAM, disk, swap — a box out of memory does not recover silently.
+16. `pf` rules should be validated by `pfctl -nf` before loading — a bad rule loading blocks operator's own SSH.
+17. `sync_tree` should log before-and-after SHA so a deploy is verifiable without `git log`.
+18. Every `rc.d` script should have a `stop` guaranteeing the process is dead — a daemon refusing to stop cannot be upgraded.
+19. Ship `BACKUP_VERIFICATION` restoring a random backup to throwaway dir and running `PRAGMA integrity_check` — a backup never restored is not a backup.
+20. `etc/` should be tracked in git with a commit on every change so config has a history — config only on box cannot be audited.
+21. `relayd` backends should be audited to guarantee every backend has a health check — a backend without health check serves broken traffic.
+22. Declare `DEPLOY_ORDER` listing exact sequence to start/stop — a deploy starting app before database is failed deploy.
+23. Every `pkg_add` should declare `pkg_delete` fallback so an upgrade can be rolled back — a manager without rollback is one-way door.
+24. Ship `LOG_ROTATION` guaranteeing every log file is rotated and compressed — an unrotated log fills disk and downs box.
+25. Verify `ntpd`/`openntpd` points at reliable time source — a box with wrong time breaks TLS and session tokens.
+26. Test every `rc.d` script via `test_rc_scripts.rb` starting/stopping in a throwaway jail — a script working on operator's box but not clean jail will fail on deploy.
+27. Declare `SECURITY_HARDENING` checklist verified on boot: SSH key-only, root login disabled, unused services stopped, firewall enabled.
+28. Audit `daily.local` to guarantee it does not run commands as root that could be replaced by compromised binary — a daily script running everything as root is privilege escalation.
+29. `dr-pull` should verify restore by running `sqlite3 .dump` diff against source — a backup restoring to different shape is lying.
+30. Ship `CAPACITY_PLAN` documenting current RAM, disk, connection limits and thresholds requiring upgrade — a box running out of resources without warning runs out of service.
+31. Test every `ifstated`/`hostname.*` to guarantee hostname resolves to correct IP — a box answering wrong name serves wrong city.
+32. Declare `RUNBOOK_VERSION` matching deployed config — a runbook not matching box is lying.
+33. Audit `pf` tables to guarantee no stale entries — a table growing without bound slows firewall.
+34. Declare `bin/usage` listing every command and args so operator need not read source to know what to run.
+35. Audit every `ssh` key for expiration and `command=` restriction — unrestricted key is standing root.
+36. Ship `FAILURE_MODE.md` listing ten most likely failures and exact command to diagnose each.
+37. Test `rc.d` scripts for `reload` — a daemon that cannot reload without full stop/start is downtime-inducing deploy.
+38. Declare `MONITORING_CONFIG` exporting `rrd`/`snmp` config so box is watched externally — a box monitoring itself lies about itself.
+39. Audit every `acme-client` domain to guarantee cert matches hostname — a cert for wrong domain is TLS failure waiting.
+40. Ship `DISASTER_RECOVERY` rebuilding entire box from bare `pkg_add` — a recovery requiring manual at 3am will not happen.
+41. Audit `smtpd` to guarantee no open relay — an open relay is spam bot's best friend.
+42. Declare `NETWORK_POLICY` documenting every allowed inbound/outbound connection — a network without policy accepts anything.
+43. Audit every `rc.conf.local` variable for its default — a variable set to wrong default is bug hiding until fresh install.
+44. Ship `CHANGES.md` appended on every deploy — a deploy without changelog cannot be audited.
+45. Declare `provides:` in every `rc.d` script so `rcctl` resolves dependencies by capability not script name.
+46. Declare `VPS_IMAGE` bootable in QEMU for testing — a deploy that cannot be tested locally can only be tested on the box.
+47. Verify every `rc.d` script runs as declared `daemon_user` — a script running as root when it should run as `_pub4ci` is privilege escalation waiting.
+48. Declare `set -euo pipefail` at top of every `OPENBSD/bin/` script and test for it — a script without strict mode silently continues past errors.
+49. Ship `PERF_TUNING` documenting every `sysctl`/`mount` option and reason — a tuned box without docs cannot be retuned.
+50. Declare `SECURITY_AUDIT` schedule — monthly `ssh-audit`, `pfctl -s all`, `pkg_info -m`, `daily.check` — and `vps-deploy` should refuse if last audit >30 days.
+51. Audit every `relayd` section to guarantee `block` policy is set on every listen — a relayd section without block policy forwards anything.
+52. Ship `TICKET_TEMPLATE` filled on every deploy — a deploy without ticket cannot be tracked.
+53. Rotate `ntp` symmetric keys on every deploy — an ntp key never changing is time-source compromise never noticed.
+54. Declare `SERVICE_LEVEL_AGREEMENT` mapping every apex to acceptable downtime — a service without guarantee cannot be measured.
+55. Every `rc.d` script should declare `START_ORDER` so `vps-deploy` starts box in right sequence — a box starting app before database wastes first minute crashing.
+
+### STUDIO — what would make the media tools a joy to create with
+
+1. `dilla.rb` should ship `dilla.md` explaining the 81 parts in order required, so a new contributor can trace a sound without reading whole file.
+2. Every renderer should declare `SAMPLE_RATE` and `BIT_DEPTH` at top so operator knows output.
+3. `STUDIO/dilla/renders/` should be migrated into dilla root with `.gitignore` rules, so render pipeline is inside repo where it can be audited.
+4. Every `lib/*.rb` support module should declare `__dir__` once at top and use a constant, so moving file does not break path.
+5. `DillaSources` should declare `SOURCES_VERSION` matching sample corpus, so mismatch is caught at boot.
+6. `dilla.rb` should be split along existing seams — renderers, ENV tables, SMF writers, patch registries — into `lib/` files that require each other in declared order.
+7. Every `test_dilla_*` should declare its own timeout so a slow test does not kill whole suite — a suite failing from timeout lies about what passed.
+8. Fix `test_dilla_audio_graph_parity.rb` to match current bus-routed graph topology — a test expecting flat `amix` when engine emits routed graph tests wrong thing.
+9. `STUDIO/gate.rb` should declare `GATE_VERSION` and test that `lib/engine/` does not reappear — a gate not testing its own condition can be silently bypassed.
+10. Every `Outboard.chain` arm naming a module should be tested to verify module exists and is dispatchable — dead arms are dead code looking alive.
+11. `samples/dug/` corpus should be documented with `sources.yml` mapping every file to its download URL — a sample without URL cannot be re-fetched.
+12. Every `rack` in registry should be deduplicated by checksum so 38 duplicate recordings collapse to 123 unique wavs.
+13. `dilla.rb` should declare `LINE_LIMIT` 300 and `bin/check` should enforce it — a file exceeding limit cannot be read.
+14. Every `key` in registry should be measured and verified against `KEY_LIBRARY`, so a key out of tune is caught before it renders.
+15. Ship `RENDER_SEED` pinning every render to deterministic seed, so "re-render" actually produces same file.
+16. Every `vocal_chop` skipping a row should log skip reason so operator knows why vocal is missing — silent skip is silent defect.
+17. Declare `DRUM_LOOP_SOURCE` as constant tested to exist before any render — a drum loop resolving to `~/Downloads` is a render depending on file outside repo.
+18. Test every `techno_harmony_root` against `HARMONY_VALIDATOR` so most advanced processing is most tested.
+19. Declare `RENDER_BUDGET` listing max render time, memory, disk per render.
+20. Replace every `__FILE__` with `__dir__` — a file path hardcoding directory breaks when file moves.
+21. `postpro/` should declare its own `CONTRIBUTING.md` so a colorist knows grading pipeline without reading source.
+22. Every `repligen/` and `lora/` model should declare `MODEL_VERSION` and `CHECKSUM` so corrupted model is caught at load.
+23. Ship `GENERATE.md` explaining how to reproduce a specific render — a render without recipe cannot be repeated.
+24. Test every `dilla.rb` part manipulating audio with known-input known-output file so transform is verifiable.
+25. Declare `SEED_REALISM` guaranteeing every city's demo audio sounds like that city — 39 of 43 cities seeding at 0,0 is map reading as empty.
+26. Every `render` should write a `.dilla` provenance sidecar validated at write time — optional provenance is skipped.
+27. Ship `RENDER_DIFF` comparing two renders with seeds and reporting dB difference — a render changing without seed change changed by accident.
+28. Tag every `sound` with its `GENRE` so a genre-agnostic tool is genre-discoverable.
+29. Declare `RENDER_BACKUP` copying every render to off-tree location before it can be overwritten — a render that can be overwritten can be lost.
+30. Test every `patch` registry to guarantee patch applies cleanly to target version — a patch failing silently lies.
+31. Ship `BENCHMARK` measuring every render's CPU and wall-clock time and failing if it exceeds budget.
+32. Every `effect` in chain should be auditable — operator should be able to ask "what effect was applied here?" and get exact module and args.
+33. Declare `FORMAT_VERSION` for every output format so a format change is a breaking change that is versioned.
+34. Test every `loops` file for its `beats_per_minute` against registry — a loop lying about BPM breaks mix.
+35. Ship `RENDER_MONITOR` watching render directory and alerting when render exceeds time or disk budget.
+36. Wrap every `plugin`/`external` call in `with_timeout` so a hung external process does not hang whole pipeline.
+37. Declare `QUALITY_GATE` asserting every render passes spectral analysis before it is considered done — a render passing without analysis might be silent.
+38. Test every `sample` for its `duration` against expected length — a sample shorter than expected drops beats.
+39. Ship `RENDER_LOG` recording every render command, param, seed — a render without log cannot be reproduced.
+40. Test every `mix` for its `peak_level` and `rms_level` so a clip exceeding 0dB is caught before rendered.
+41. Declare `MASTER_RENDER` as canonical reference render for every crate — a crate without reference cannot be judged.
+42. Every `dilla.rb` constant appearing in `data/voice.yml` should be read from `data/voice.yml` — a constant also hardcoded is a constant drifting.
+43. Ship `CORPUS_AUDIT` verifying every sample in registry exists on disk and is not corrupted — a registry naming a file that does not exist lies.
+44. Test every `sfx` bank for its `sample_rate` and `bit_depth` against project settings — an sfx bank at wrong sample rate is pitched wrong.
+45. Declare `RENDER_PIPELINE_VERSION` matching `dilla.rb` version — a pipeline not matching code renders sound not matching spec.
+46. Test every `filter` for its `frequency_response` against known target — a filter doing nothing lies.
+47. Ship `GENRE_PROFILE` for each supported genre defining BPM range, key range, mix rules — a genre without profile is without standard.
+48. Test every `envelope` for `attack`, `decay`, `sustain`, `release` against DAW convention — an envelope out of phase hits at wrong time.
+49. Declare `RENDER_QUALITY_TIER` (draft, studio, master) so operator knows what level of processing is applied.
+50. Ship `RENDER_VALIDATOR` running spectral, temporal, loudness analysis on every output and failing if any metric out of range.
+51. Test every `tempo` change for its `time_stretch` algorithm — a tempo change without time-stretch is pitch change.
+52. Declare `MASTER_BUS` standard that every render must pass through — a render bypassing master bus has no master.
+53. Test every `bus` for its `gain` and `pan` against stereo field — a bus off-center is unbalanced mix.
+54. Ship `RENDER_ARCHIVE` compressing every finished render and storing with seed — a render without archive can be lost.
+55. Declare `CREATE_QUALITY` asserting every generated sound passes human-in-loop review before finished — an AI generating without review generates garbage.
+
+### The 10/10 MASTER — Muse Spark 1.2 Free vision
+
+The perfect MASTER is a runtime where the constitution is not a file you read
+but a surface you interact with. A developer clones the repo, runs
+`bin/check --profile=agent`, and the first thing they see is not a sea of red
+failures but a clean scan and a single sentence: "The constitution is green.
+Here is what the fold found."
+
+It is a runtime where every rule carries its own evidence — the finding count,
+the last measurement, the false-positive history — and every measurement is
+verified against a known-clean snapshot before it is trusted. A rule that
+cannot prove itself is a rule that should not exist.
+
+It is a runtime where the fold spine is measured by its own law, where the
+scanner is tested by the rules it scans, and where the constitution is the
+first thing reviewed in a code audit — not the last.
+
+It is a runtime where `bin/master` answers a question in a sentence, where
+`bin/pub4 gate` tells you exactly which law a change broke and why, and where
+`bin/pub4 measure` gives you a number you can trust because it was measured
+today, not last week.
+
+It is a runtime where the four trees are four citizens of one constitution,
+where `MASTER` governs `RAILS` the way `RAILS` governs `STUDIO`, and where the
+OpenBSD box is not a deployment target but a provable artifact — every config
+file signed, every service verifiable, every deploy auditable.
+
+The 10/10 MASTER is a constitutional runtime that applies its laws to itself
+without exception, where the governor is governed, where every effect is proved
+and every verdict is recorded, and where a new contributor can go from clone to
+green check without reading a single contract file — because the runtime itself
+teaches them what it needs from them. This vision was refined after fixing the
+root-invariant violation (SEVEN at repo root), the TODO.md merge-conflict
+markers, and the design-system opacity ladder — three files that contained their
+own proof of correctness while not being correct, which is the defect this
+constitution exists to prevent.
+
+
