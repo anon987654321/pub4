@@ -215,7 +215,6 @@ positives worth not re-discovering — those are guards, not history.
   `pub4-merge`, `pub4-rails`, three of them dirty, all touched within two hours.
   `AGENTS.md` says to remove a worktree in the session that made it; none of
   these is this session's, so they are named rather than removed.
-=======
 ### `/scan`'s autofix corrupts code — opened 2026-08-31, do not run it on a tree
 
 Trialled on `RAILS/gates` alone before turning it loose on RAILS's 2,326 files.
@@ -2357,7 +2356,6 @@ than implied across four.
   most of it is gated on hardware; the section below says what is buildable now
   and what is not.
 
-<<<<<<< HEAD
 ## The wish list, read against the tree — 2026-08-31
 
 `uplift_summary.txt` sat untracked at the root: the owner's own words, six
@@ -2434,8 +2432,6 @@ than features. The concrete moves already named: the glossary, `tree.rb` on
 entry, the profile matrix published in one place, and one name for one job — the
 entry-point ratchet in `spine.yml` is what keeps the last of those honest.
 
-=======
->>>>>>> origin/main
 ## Aegis, seaborne
 
 Aegis is the proactive-bodyguard concept: passive sensing, active analysis,
