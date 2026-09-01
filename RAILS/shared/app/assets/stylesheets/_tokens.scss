@@ -82,7 +82,13 @@
    rather than typed as literals: rgb(from var(--text) r g b / var(--opacity-subtle))
    gives a tint that tracks the theme, where rgba(255,255,255,.1) is a light
    theme painted into a dark one. Named by density, so a surface picks a
-   weight instead of inventing a value. */
+   weight instead of inventing a value.
+
+   --opacity-whisper is this family's own rung and is on no reference. It is
+   the tree's most-repeated density: six dialects paint --hover-subtle at 3%,
+   below the lightest tint either reference carries. A ladder that cannot name
+   the rung its own sheets use most is a ladder those sheets go on ignoring. */
+--opacity-whisper: 0.03;
 --opacity-hairline: 0.05;
 --opacity-faint: 0.08;
 --opacity-subtle: 0.1;

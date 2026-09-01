@@ -25,8 +25,8 @@
   --text: #{$text};
   --text-secondary: #{$text-secondary};
   --border: #{$border};
-  --hover: color-mix(in srgb, var(--text) 10%, transparent);
-  --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
+  --hover: rgb(from var(--text) r g b / var(--opacity-subtle));
+  --hover-subtle: rgb(from var(--text) r g b / var(--opacity-whisper));
   --accent: #{$accent};
   // Ink for anything painting ON --accent. --bg is right for the shared indigo
   // (5.15:1 dark, 5.81:1 light) and wrong for every brgen vertical accent, which
@@ -99,8 +99,8 @@
   --text: #{$text};
   --text-secondary: #{$text-secondary};
   --border: #{$border};
-  --hover: color-mix(in srgb, var(--text) 10%, transparent);
-  --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
+  --hover: rgb(from var(--text) r g b / var(--opacity-subtle));
+  --hover-subtle: rgb(from var(--text) r g b / var(--opacity-whisper));
   --accent: #{$accent};
   --accent-ink: #{$bg};
   --danger: #{$danger};
@@ -127,8 +127,8 @@
   --text: #2c2824;
   --text-secondary: #6b665f;
   --border: #e6e0d8;
-  --hover: color-mix(in srgb, var(--text) 10%, transparent);
-  --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
+  --hover: rgb(from var(--text) r g b / var(--opacity-subtle));
+  --hover-subtle: rgb(from var(--text) r g b / var(--opacity-whisper));
   /* Darkened by 2 to clear APCA Lc 75.1 from 74.2 — the only amber colour that
      failed both contrast models rather than WCAG alone. */
   --accent: #7c6c53;
@@ -148,8 +148,8 @@
   --text: #e8e4dc;
   --text-secondary: #8a8278;
   --border: #3a3630;
-  --hover: color-mix(in srgb, var(--text) 10%, transparent);
-  --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
+  --hover: rgb(from var(--text) r g b / var(--opacity-subtle));
+  --hover-subtle: rgb(from var(--text) r g b / var(--opacity-whisper));
   --accent: #a38b6f;
   --danger: #ea6453;
 }
@@ -173,8 +173,8 @@
      reads too bright, #b4b4b4 is the Lc 60 tier. */
   --text-secondary: #cfcfcf;
   --border: #333333;
-  --hover: color-mix(in srgb, var(--text) 10%, transparent);
-  --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
+  --hover: rgb(from var(--text) r g b / var(--opacity-subtle));
+  --hover-subtle: rgb(from var(--text) r g b / var(--opacity-whisper));
   --accent: #f2f2f2;
   --danger: #e46151;
   // No --font here. It was `Arial, Helvetica, sans-serif` in both this mixin and
@@ -213,8 +213,8 @@
    whole palette was reported against grounds it never renders on. */
 --text-secondary: #545454;
   --border: #d9d9d9;
-  --hover: color-mix(in srgb, var(--text) 8%, transparent);
-  --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
+  --hover: rgb(from var(--text) r g b / var(--opacity-faint));
+  --hover-subtle: rgb(from var(--text) r g b / var(--opacity-whisper));
   --accent: #1a1a1a;
   --danger: #b24c3f;
   // See the dark twin above: the typeface is declared once, in _root.scss.

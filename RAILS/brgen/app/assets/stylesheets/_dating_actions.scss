@@ -83,13 +83,13 @@
 }
 
 .swipe-action--pass {
-  background: color-mix(in srgb, var(--dating-pass) 12%, transparent);
+  background: rgb(from var(--dating-pass) r g b / var(--opacity-soft));
   border-color: color-mix(in srgb, var(--dating-pass) 45%, transparent);
   color: var(--dating-pass);
 }
 
 .swipe-action--like {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--dating-accent) 20%, transparent), color-mix(in srgb, var(--dating-accent-warm) 20%, transparent));
+  background: linear-gradient(135deg, rgb(from var(--dating-accent) r g b / var(--opacity-medium)), rgb(from var(--dating-accent-warm) r g b / var(--opacity-medium)));
   border-color: color-mix(in srgb, var(--dating-accent) 55%, transparent);
   color: var(--dating-accent);
 }

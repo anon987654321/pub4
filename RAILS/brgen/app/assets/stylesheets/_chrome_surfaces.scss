@@ -47,12 +47,12 @@
 }
 
 .flash-notice {
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  background: rgb(from var(--accent) r g b / var(--opacity-soft));
   border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
 }
 
 .flash-alert {
-  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  background: rgb(from var(--danger) r g b / var(--opacity-soft));
   border: 1px solid color-mix(in srgb, var(--danger) 28%, transparent);
 }
 

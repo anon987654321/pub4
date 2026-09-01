@@ -401,7 +401,7 @@ input[type="checkbox"].toggle:checked {
 
 input[type="radio"]:checked + label {
   border-color: var(--color-midtone);
-  background: rgb(from var(--color-midtone) r g b / 0.12);
+  background: rgb(from var(--color-midtone) r g b / var(--opacity-soft));
 }
 
 .dropzone {
@@ -414,7 +414,7 @@ input[type="radio"]:checked + label {
 
 .dropzone.drag-over {
   border-color: var(--color-midtone);
-  background: rgb(from var(--color-midtone) r g b / 0.08);
+  background: rgb(from var(--color-midtone) r g b / var(--opacity-faint));
 }
 
 progress {

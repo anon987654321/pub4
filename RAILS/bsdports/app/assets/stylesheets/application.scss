@@ -492,7 +492,7 @@ kbd { padding: 0.12rem 4px; border: 1px solid var(--border); border-bottom-width
 .skeleton {
   border-radius: 0;
   min-height: 0.75rem;
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  background: rgb(from var(--accent) r g b / var(--opacity-soft));
   border: 1px solid var(--border);
 }
 

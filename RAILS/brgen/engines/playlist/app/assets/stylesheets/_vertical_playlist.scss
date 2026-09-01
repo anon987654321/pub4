@@ -177,7 +177,7 @@ body.vertical-playlist .playlist-index {
 }
 
 .playlist-queue-item.is-active {
-  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  background: rgb(from var(--color-accent) r g b / var(--opacity-faint));
 }
 
 /* Player chrome — header, stage, queue, comments */
