@@ -85,7 +85,7 @@ module Master
         # An operator reads this line as the verdict, so a tier that could
         # not run has to appear on it. Without `skipped`, a scan where a
         # provider spend limit silently removed the whole semantic tier
-        # prints the same "complete=true violations=0" as a scan that
+        # prints the same "complete=yes violations=0" as a scan that
         # actually looked.
         def log_scan_completion(unit:, done:, total:, viol_total:, dirty:, elapsed:)
           fields = {

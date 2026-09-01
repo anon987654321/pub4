@@ -4,7 +4,10 @@ require "minitest/autorun"
 
 class WebScreenshotSpec < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
-  TOOL = File.join(ROOT, "bin", "web-screenshot")
+  # 8a6fb839c moved the tool out of bin/ and renamed it; this spec kept
+  # pointing at the old path, so four assertions about a real contract were
+  # failing on File.read rather than on anything the tool does.
+  TOOL = File.join(ROOT, "tools", "web_screenshot.rb")
 
   def source
     File.read(TOOL)

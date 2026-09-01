@@ -14,8 +14,9 @@ class VisualGovernorSpec < Minitest::Test
 
   def test_visual_governor_caps_fps_and_particles
     source = File.read(GOVERNOR)
-    assert_includes source, "const maxFps = 24"
-    assert_includes source, "const maxParticles = 200"
+    # let, not const: the reduced-motion and battery clamps below reassign it.
+    assert_includes source, "let maxFps = 24"
+    assert_includes source, "let maxParticles = 200"
     assert_includes source, "window.MASTER_VISUAL_LIMITS"
   end
 
