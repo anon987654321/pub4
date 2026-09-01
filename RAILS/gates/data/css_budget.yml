@@ -106,7 +106,13 @@ rules:
   # the count.
   # 140 -> 138, measured, same shape as important above: two literals left the
   # tree without a sitting aimed at them.
-  magic_hex: 138
+  #
+  # 138 -> 139 on 2026-09-01: 24c9844e5 ("the Ruby laws were reading a CDP
+  # probe's JavaScript as Ruby") added `_search_yep.scss`'s suggestion divider
+  # at the pen's own #ccc. That file is in the PEN_ALLOW list, so the literal
+  # is counted deliberately rather than treated as palette drift. If the pen
+  # is ever re-tokenised, run with GATE_CSS_RATCHET=1 to bring this back down.
+  magic_hex: 139
   # Token pairs below WCAG AA (4.5:1) and in the AA..AAA band, as design_metrics
   # counts them. style.yml declares wcag_2_2_aaa; body text earns it (12.51:1
   # dark, 16.26:1 light) and the secondary/accent tier does not. The vertical
