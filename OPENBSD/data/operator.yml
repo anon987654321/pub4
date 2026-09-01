@@ -10,8 +10,9 @@ stack:
   app_server: Falcon only on vm23 (falcon serve in rc.d). No Puma in production.
   solid_queue: >-
     The supervisor is its own process, started by the per-app rc.d/<app>_jobs service
-    (rake solid_queue:start). Each exists and none is enabled — vm23 is 1 GB, so
-    enabling one is an operator decision; read the footer of OPENBSD/etc/rc.d/<app>_jobs.
+    (rake solid_queue:start). brgen_jobs is enabled on vm23 (2026-08-25, e511ccba1);
+    amber_jobs and bsdports_jobs are not — vm23 is 1 GB, so enabling each is an
+    operator decision; read the footer of OPENBSD/etc/rc.d/<app>_jobs.
     SOLID_QUEUE_IN_PUMA is a Puma-plugin variable needing config/puma.rb, which no app
     has, so under Falcon it starts nothing; RAILS/gates/lib/host/production.rb fails the
     deploy gate if an rc.d sets it.

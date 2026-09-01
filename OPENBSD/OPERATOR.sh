@@ -667,12 +667,11 @@ setup_mail_client() {
 setup_litestream() {
   # Not in OpenBSD ports and rcctl-disabled on purpose so `rcctl ls failed`
   # stays empty. Install the config for the day a replica exists; do not enable.
+  # There is no rc.d/litestream template: the service was retired from boot in
+  # e511ccba1 and installing a missing template would abort stage_2.
   log INFO "litestream config only — service stays disabled"
   mkdir -p /var/backups/litestream
   install_template etc/litestream.yml /etc/litestream.yml
-  install_template etc/rc.d/litestream /etc/rc.d/litestream
-  chmod 755 /etc/rc.d/litestream
-  /usr/sbin/rcctl disable litestream 2>/dev/null || true
 }
 
 bootstrap_rails_app() {
@@ -925,6 +924,10 @@ Rare:
       deploy_live
       ;;
     --first-install)
+      [[ ${I_UNDERSTAND_DNS_WIPE:-0} == 1 ]] || {
+        log ERROR "first_install rewrites DNS material; rerun with I_UNDERSTAND_DNS_WIPE=1 if this is intentional"
+        exit 1
+      }
       ruby34 "${SCRIPT_DIR}/verify_openbsd_idempotency.rb" || exit 1
       ruby34 "${SCRIPT_DIR}/verify_deploy_identity.rb" || exit 1
       stage_1

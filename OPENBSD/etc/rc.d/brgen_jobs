@@ -1,5 +1,6 @@
 #!/bin/ksh
-# Solid Queue worker for brgen. NOT enabled by default — see the footer.
+# Solid Queue worker for brgen. Enabled on vm23 since 2026-08-25 (e511ccba1) —
+# the one resident worker this box can hold. See the footer for the memory case.
 #
 # Every app's rc.d exported SOLID_QUEUE_IN_PUMA=true. In-Puma mode is a Puma
 # plugin; all three apps run under Falcon and not one of them has a
@@ -65,17 +66,19 @@ rc_reload=NO
 
 rc_cmd $1
 
-# Enabling this is an operator decision, and the reason is vm23 rather than the
-# code. The box is 1 GB and 1 vCPU; TODO.md's multi_app_ram entry records that
-# it already cannot keep master + brgen + amber resident, and resource_guard
-# shed amber and bsdports twice on 2026-08-12 alone. A Solid Queue worker is
-# another resident Ruby process with the whole app loaded in it.
+# Enabling more workers is an operator decision, and the reason is vm23 rather
+# than the code. The box is 1 GB and 1 vCPU; TODO.md's multi_app_ram entry
+# records that it already cannot keep master + brgen + amber resident, and
+# resource_guard shed amber and bsdports twice on 2026-08-12 alone. One Solid
+# Queue worker (brgen_jobs) is enabled; a second is another resident Ruby
+# process with the whole brgen app loaded in it.
 #
-# When you have decided about the memory:
+# When you have decided about the memory and want the others (amber_jobs,
+# bsdports_jobs), enable one the same way:
 #
-#   doas rcctl enable brgen_jobs
-#   doas rcctl start brgen_jobs
-#   doas rcctl set brgen_jobs status on
+#   doas rcctl enable <app>_jobs
+#   doas rcctl start <app>_jobs
+#   doas rcctl set <app>_jobs status on
 #
 # Then confirm it took, because a registered process is the only proof:
 #
