@@ -145,6 +145,21 @@ generated assets. Keys live in `/etc/*.env` on the VPS.
 **Production is vm23 only** (`dev@brgen.no`). One app CI/deploy at a time. After
 `git pull` on the box, run `vps-deploy` before expecting live health.
 
+## Response style
+
+Answer in one or two sentences unless detail is requested. Lead with the
+outcome or action. No preamble, summary, or filler. Use bullets only for
+files, commands, or lists.
+
+## Writing style
+
+**Strunk & White — The Elements of Style.** Plain prose, no filler. Lead with
+the outcome. Use active voice. Use definite, specific, concrete language. Omit
+needless words. Put emphatic words at the end. Keep related words together.
+Avoid fancy words. Revise and rewrite. Do not overwrite. Do not overstate. Do
+not explain too much. Use figures of speech sparingly. Prefer the standard to
+the offbeat. Make sure the reader knows who is speaking. Use orthodox spelling.
+
 ## Where the rest lives
 
 | Working on | Read |
