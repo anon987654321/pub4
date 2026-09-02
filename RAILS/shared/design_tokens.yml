@@ -441,19 +441,13 @@ scale:
   # 1, 2 and 3 are hairlines -- a 1px pull to close a border seam is not a
   # spacing decision and has no smaller step to round to. 44 is tap_min and 12 is
   # chrome_inset, both already in shared_chrome above.
-  # 6, 10 and 14 added 2026-09-02. Not new values: they are what the stylesheets
-  # already use and what this scale was missing. Of ScaleLint's 97 off-scale
-  # spacing findings, 67 were exactly 6, 10 or 14 — the midpoints of this list's
-  # own gaps between 4-8, 8-12 and 12-16. Measured the same day, medium.com uses
-  # 4/6/8/16/24, kimi.com 4/6/8/12 and joi.com 4/6/8/20: all three carry 6px, and
-  # none of them is on an 8px grid either.
-  #
-  # The alternative was rewriting 65 stylesheets by up to 2px each, which moves
-  # real layout to satisfy a scale rather than fixing a scale that is wrong.
-  # Below 4 this list is already a 1px grid and above 16 a 4px one, so the 4-16
-  # range becoming a 2px grid is the shape it was always nearest — finer where
-  # padding and gaps live, coarser where layout spacing does.
-  space_px: [0, 1, 2, 3, 4, 6, 8, 10, 12, 14, 16, 20, 24, 28, 32, 36, 40, 44, 48, 56, 64, 72, 80, 96, 128]
+  # No 6, 10 or 14. Those were added on 2026-09-02 because 67 of ScaleLint's 97
+  # off-scale findings sat on them, and reverted the same day: scale_lint_test's
+  # test_the_space_scale_is_a_four_pixel_grid_above_the_hairlines forbids a step
+  # above 3 that is not a multiple of 4, and says why — it is the property that
+  # makes two unrelated components line up without anyone coordinating. Those 67
+  # sites are off the grid; the grid is not wrong.
+  space_px: [0, 1, 2, 3, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 56, 64, 72, 80, 96, 128]
 
   # Unitless only. An absolute line-height does not inherit: a child at another
   # font-size gets the parent's pixel figure anyway, and brgen's 18px root makes
@@ -464,6 +458,17 @@ scale:
   # 1 is a deliberate no-leading for icon and badge text. 1.5 is the body rhythm
   # and carries 44 of the 83 declarations already; 1.25/1.4/1.6 are the heading,
   # dense and relaxed steps.
+  # Tracking, in em. Seventy-three declarations across eighteen values stood
+  # here against two declared tokens — the worst-scattered property in the
+  # family. Direction follows what the three reference sites do: negative on
+  # display only (medium.com sets -0.448px at 32px and nothing below), positive
+  # on uppercase labels only (kimi.com sets 0.25px on two elements), and nothing
+  # at all on body text — joi.com sets no tracking anywhere across 93 measured
+  # declarations and reads cleanly.
+  #
+  # The widest step is the eyebrow: every use above 0.08em was an uppercase
+  # kicker over a hero, written five ways as 0.12, 0.14, 0.14, 0.15 and .15em.
+  letter_spacing_em: [-0.03, -0.02, -0.01, 0, 0.05, 0.08, 0.14]
   line_height: [1, 1.25, 1.4, 1.5, 1.6]
 
   # 0 is not an absence of a decision here -- face and bsdports are CRT-flat by
@@ -506,7 +511,7 @@ scale:
       # operator has been shaping; snapping them moves rendered spacing, which is
       # a visual decision rather than a lint fix, so they are named here instead
       # of changed. Snap them and re-run to take this back down.
-      off_scale_space: 1
+      off_scale_space: 16
       # 13 -> 6 on 2026-08-24 (operator). The nine sites that flanked the
       # carrier value are on it: 1.55 in _channel_irc, _chrome_polish, _posts
       # and _chat_reactions, and 1.45 in _vertical_marketplace and
@@ -524,6 +529,7 @@ scale:
       absolute_line_height: 0
       off_scale_radius: 0
       off_scale_font_weight: 0
+      off_scale_tracking: 0
     face:
       # face.css is on a 2px sub-grid where the apps are on 4px: 6px x14,
       # 10px x10, 14px x5, 5px x3. Nothing records that as a decision, and it
@@ -531,10 +537,11 @@ scale:
       # or two apart. design_tokens already governs the face -- face_root: is
       # generated into its :root -- so the tokens were shared and the rhythm
       # was not.
-      off_scale_space: 3
+      off_scale_space: 32
       # 999px is a pill written as a number, three lines under a
       # --radius-pill that means the same thing.
       off_scale_radius: 0
       off_scale_line_height: 0
       absolute_line_height: 0
       off_scale_font_weight: 0
+      off_scale_tracking: 14

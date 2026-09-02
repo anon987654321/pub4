@@ -6,7 +6,7 @@ body.vertical-maps .page-header {
 
 body.vertical-maps .page-header h1 {
   font-weight: var(--weight-bold);
-  letter-spacing: -0.03em;
+  letter-spacing: var(--tracking-tightest);
 }
 
 body.vertical-maps article.place {
@@ -29,7 +29,7 @@ body.vertical-maps article.place dt {
   color: var(--maps-muted);
   font-size: var(--text-xs);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--tracking-wide);
 }
 
 body.vertical-maps article.place dd {
@@ -59,14 +59,14 @@ body.vertical-maps .map-browse-link {
 body.vertical-maps .place-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2-5);
+  gap: var(--space-2);
   max-width: min(100%, 720px);
   margin: 0 auto;
   padding: 0 16px max(24px, env(safe-area-inset-bottom));
 }
 
 body.vertical-maps .place-card {
-  padding: var(--space-3-5) 1rem;
+  padding: var(--space-3) 1rem;
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.04); // scan: intentional — white-alpha lift on the maps night shell
   border: 0;

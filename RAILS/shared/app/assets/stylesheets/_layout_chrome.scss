@@ -79,7 +79,7 @@ body[data-layout="document"] {
   margin: 0;
   font-size: var(--font-size-title, 1.25rem);
   font-weight: var(--weight-heavy);
-  letter-spacing: -0.02em;
+  letter-spacing: var(--tracking-tighter);
   line-height: 1.25;
 }
 
@@ -202,7 +202,7 @@ main[role="main"] {
    JetBrains Mono on bsdports, whose --font is monospace by design. A
    logotype that exists in print does not follow an app's UI-font choice. */
 font: var(--weight-heavy) clamp(0.9375rem, 2.8vw, 1.125rem) / 1 var(--font-brand, var(--font));
-  letter-spacing: -0.03em;
+  letter-spacing: var(--tracking-tightest);
   color: var(--text);
   text-decoration: none;
   text-rendering: optimizeLegibility;

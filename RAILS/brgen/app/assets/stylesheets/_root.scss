@@ -144,7 +144,7 @@ a:hover { text-decoration: underline; }
 /* Wordmark is lowercase "brgen" (MASTER .top-left-logo) — pure type only. */
 .brand-text {
   text-transform: none;
-  letter-spacing: -0.03em;
+  letter-spacing: var(--tracking-tightest);
   font-weight: var(--weight-heavy);
 }
 
@@ -248,7 +248,7 @@ a.brgen-logo-mark,
   min-width: var(--tap-min);
   padding: 0.25rem 4px;
   font: var(--weight-heavy) clamp(0.9375rem, 2.8vw, 1.125rem) / 1 var(--font);
-  letter-spacing: -0.03em;
+  letter-spacing: var(--tracking-tightest);
   color: var(--text);
   text-decoration: none;
   text-rendering: optimizeLegibility;

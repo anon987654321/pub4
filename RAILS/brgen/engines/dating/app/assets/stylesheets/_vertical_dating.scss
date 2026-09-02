@@ -18,7 +18,7 @@
 .match-overlay-eyebrow {
   color: var(--text-secondary);
   font-size: var(--text-sm);
-  letter-spacing: 0.05em;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
 }
 

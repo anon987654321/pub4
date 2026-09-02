@@ -22,7 +22,7 @@ body.vertical-dating header h1 {
   font-family: var(--font);
   font-weight: var(--weight-bold);
   font-size: clamp(1.5rem, 5vw, 1.875rem);
-  letter-spacing: -0.03em;
+  letter-spacing: var(--tracking-tightest);
   margin: var(--space-1) 0 0;
 }
 

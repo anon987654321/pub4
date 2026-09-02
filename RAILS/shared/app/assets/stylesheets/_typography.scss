@@ -19,8 +19,13 @@
   --leading-snug: 1.4;
   --leading-normal: 1.5;
   --leading-loose: 1.6;
+  --tracking-tightest: -0.03em;
+  --tracking-tighter: -0.02em;
   --tracking-tight: -0.01em;
   --tracking-normal: 0;
+  --tracking-wide: 0.05em;
+  --tracking-wider: 0.08em;
+  --tracking-widest: 0.14em;   /* uppercase eyebrows over a hero */
 }
 
 .prose,

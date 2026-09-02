@@ -41,7 +41,7 @@ body.vertical-takeaway main {
 body.vertical-takeaway .page-header h1 {
   font-size: var(--text-xl);
   font-weight: var(--weight-heavy);
-  letter-spacing: -0.03em;
+  letter-spacing: var(--tracking-tightest);
   color: var(--text);
 }
 
@@ -94,7 +94,7 @@ body.vertical-takeaway .eta-badge {
   font-size: var(--text-xs);
   font-weight: var(--weight-bold);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--tracking-wide);
   background: var(--food-eta-bg);
   color: var(--food-dash);
 }

@@ -30,7 +30,7 @@
   font-family: var(--font);
   font-size: clamp(2.75rem, 12vw, 4.5rem);
   font-weight: var(--weight-bold);
-  letter-spacing: -0.03em;
+  letter-spacing: var(--tracking-tightest);
   line-height: 1.5;
   text-transform: lowercase;
   color: var(--dating-ink);
@@ -75,7 +75,7 @@
    a Vipps Login is not billed per use the way a BankID verification is. */
 .dating-intro-vipps {
   font-weight: var(--weight-bold);
-  letter-spacing: -0.02em;
+  letter-spacing: var(--tracking-tighter);
   /* Vipps orange, their one brand constant. A literal because it is a
      trademark value rather than a palette choice: no theme may recolour it and
      no token should invite one to. */

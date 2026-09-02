@@ -140,7 +140,7 @@
 .radio-start-eyebrow {
   margin: 0;
   font: 10px/1.4 var(--font-mono);
-  letter-spacing: 0.15em;
+  letter-spacing: var(--tracking-widest);
   text-transform: uppercase;
   color: var(--color-accent);
   pointer-events: none;
@@ -233,7 +233,7 @@
 .radio-library-header h2 {
   margin: 0;
   font-size: var(--text-base);
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
   color: var(--color-muted);
 }

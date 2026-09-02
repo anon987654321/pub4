@@ -20,7 +20,7 @@
   font-size: var(--text-xs);
   text-transform: uppercase;
   /* All-caps earns tracking; lowercase prose does not. */
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-wider);
   color: var(--text-secondary);
 }
 

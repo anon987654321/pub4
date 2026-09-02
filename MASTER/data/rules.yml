@@ -3103,15 +3103,12 @@ design_rules:
       # of step with its twin on 0 and 44 until 2026-08-31.
       # Do not invent steps outside that scale; prefer tokens over literals.
       source: RAILS/shared/design_tokens.yml#scale.space_px
-      # 6, 10 and 14 joined scale.space_px on 2026-09-02; this subset follows it.
+      # Reverted with scale.space_px on 2026-09-02; the 4px grid above 3 is tested.
       allowed_spacing_px:
       - 0
       - 4
-      - 6
       - 8
-      - 10
       - 12
-      - 14
       - 16
       - 20
       - 24
@@ -3506,15 +3503,12 @@ design_rules:
     # puts it in front of this allowlist constantly. The name says eight, but
     # 4, 12, 20 and 44 are not multiples of 8 either; this is the 4px grid with
     # chosen steps, and 44 was the one step missing between 40 and 48.
-    # 6, 10 and 14 joined scale.space_px on 2026-09-02; this subset follows it.
+    # Reverted with scale.space_px on 2026-09-02; the 4px grid above 3 is tested.
     eight_px_rhythm:
     - 0
     - 4
-    - 6
     - 8
-    - 10
     - 12
-    - 14
     - 16
     - 20
     - 24

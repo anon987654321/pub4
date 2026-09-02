@@ -50,7 +50,7 @@
   padding: 0.625rem var(--space-4);
   min-height: var(--tap-min);
   font: var(--text-xs)/1 var(--font-mono, ui-monospace, monospace);
-  letter-spacing: 0.02em;
+  letter-spacing: var(--tracking-normal);
   cursor: pointer;
 }
 
@@ -213,7 +213,7 @@
   border: 1px solid var(--border, #46435a);
   border-radius: 0;
   color: var(--text, #d8d6e0);
-  padding: 0.5rem var(--space-2-5);
+  padding: 0.5rem var(--space-2);
   min-height: var(--tap-min);
   max-height: 6.5rem;
   font-family: var(--font);
@@ -340,7 +340,7 @@
   align-items: center;
   justify-content: center;
   min-height: var(--tap-min);
-  padding: 0.5rem var(--space-3-5);
+  padding: 0.5rem var(--space-3);
   border: 1px solid var(--border, #46435a);
   border-radius: 0;
   background: var(--bg, #17161c);

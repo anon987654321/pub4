@@ -13,13 +13,13 @@
   padding: var(--space-4) var(--space-4) var(--space-2);
   font-size: var(--text-title);
   font-weight: var(--weight-heavy);
-  letter-spacing: -0.02em;
+  letter-spacing: var(--tracking-tighter);
 }
 
 /* brgen wordmark, top-left of the feed -- same weight/tracking as MASTER's
    own .top-left-logo treatment, just sized for the feed header context. */
 .feed-brand-mark {
-  letter-spacing: -0.03em;
+  letter-spacing: var(--tracking-tightest);
   text-transform: none;
 }
 

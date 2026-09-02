@@ -42,7 +42,7 @@ body.auth-surface {
   margin: 0 0 var(--space-2, 0.5rem);
   font-size: var(--text-xl);
   font-weight: var(--weight-heavy);
-  letter-spacing: -0.02em;
+  letter-spacing: var(--tracking-tighter);
   color: var(--text);
 }
 
@@ -91,7 +91,7 @@ body.auth-surface {
 .auth-form .password-field input {
   width: 100%;
   min-height: var(--tap-min);
-  padding: var(--space-2-5) 0.75rem;
+  padding: var(--space-2) 0.75rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm, 8px);
   background: var(--search-bg, var(--surface));

@@ -119,7 +119,7 @@
 .match-overlay__eyebrow {
   margin: 0 0 var(--space-1);
   text-transform: uppercase;
-  letter-spacing: .15em;
+  letter-spacing: var(--tracking-widest);
   font-size: var(--text-xs);
   color: var(--text-secondary);
 }

@@ -221,7 +221,7 @@
   font-size: clamp(1.35rem, 3vw, 1.75rem);
   font-weight: var(--weight-normal);
   margin-block: 0;
-  letter-spacing: -0.01em;
+  letter-spacing: var(--tracking-tight);
 }
 
 /* ch, not rem: 32rem is 640px at amber's root and the measure the type
@@ -281,7 +281,7 @@
 .amber-footer-cols h2 {
   font-size: var(--luxury-font-meta);
   font-weight: var(--weight-bold);
-  letter-spacing: 0.05em;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   color: var(--luxury-muted);
   margin-bottom: var(--luxury-space-xs);
@@ -331,7 +331,7 @@
 
 body {
   line-height: var(--line-height-relaxed);
-  letter-spacing: 0.01em;
+  letter-spacing: var(--tracking-normal);
 }
 
 .brand,
@@ -384,7 +384,7 @@ h1, .display, .wordmark {
   place-items: center;
   text-transform: uppercase;
   font-size: var(--text-xs);
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-wider);
   min-height: 8rem;
   aspect-ratio: 3 / 4;
   border: var(--elev-1);
@@ -470,7 +470,7 @@ h1, .display, .wordmark {
 .look-rail .eyebrow {
   font-size: var(--text-xs);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--tracking-wide);
   color: var(--text-secondary);
 }
 

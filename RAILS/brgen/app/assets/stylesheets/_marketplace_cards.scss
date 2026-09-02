@@ -84,7 +84,7 @@ a.deal-card:hover,
   font: var(--weight-bold) var(--text-xs) / 1 var(--font);
   padding: 0.25rem 0.5rem;
   border-radius: var(--radius-sm);
-  letter-spacing: 0.05em;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
 }
 

@@ -42,7 +42,7 @@ body.vertical-messenger .page-header {
 body.vertical-messenger .page-header h1 {
   font-size: clamp(1.5rem, 5vw, 1.875rem);
   font-weight: var(--weight-bold);
-  letter-spacing: -0.03em;
+  letter-spacing: var(--tracking-tightest);
   margin: 0;
 }
 

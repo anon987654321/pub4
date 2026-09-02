@@ -233,7 +233,7 @@ footer {
 .chips {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-1-5);
+  gap: var(--space-1);
 }
 
 .chip {
@@ -267,7 +267,7 @@ footer {
 .form select {
   border: 0;
   border-radius: var(--radius);
-  padding: var(--space-1-5) var(--space-2-5);
+  padding: var(--space-1) var(--space-2);
   font: inherit;
   color: var(--black);
   background: var(--search-bg);
@@ -430,7 +430,7 @@ footer {
 .feed-card-name {
   color: var(--text);
   font-weight: var(--weight-bold);
-  letter-spacing: -0.01em;
+  letter-spacing: var(--tracking-tight);
   font-size: var(--text-base); /* ~15px for name */
 }
 .feed-card-handle {
@@ -447,7 +447,7 @@ footer {
   font-size: var(--text-base); /* 15px */
   font-weight: var(--weight-normal);
   line-height: 1.5;
-  letter-spacing: -0.01em;
+  letter-spacing: var(--tracking-tight);
   margin: 0 0 8px;
   color: var(--text);
 }

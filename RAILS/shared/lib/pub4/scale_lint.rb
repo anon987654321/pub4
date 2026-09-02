@@ -168,6 +168,7 @@ module Pub4
     def radius_px = @radius_px ||= scale.fetch("radius_px").map { |v| Float(v) }
 
     def line_heights = @line_heights ||= scale.fetch("line_height").map { |v| Float(v) }
+    def letter_spacings = @letter_spacings ||= scale.fetch("letter_spacing_em").map { |v| Float(v) }
 
     def font_weights = @font_weights ||= scale.fetch("font_weight").map { |v| Integer(v) }
 
@@ -201,6 +202,8 @@ module Pub4
         check_radius(file, line, prop, value)
       when "line-height"
         check_line_height(file, line, prop, value)
+      when "letter-spacing"
+        check_letter_spacing(file, line, prop, value)
       when "font-weight"
         check_font_weight(file, line, prop, value)
       else
@@ -227,6 +230,20 @@ module Pub4
       return [] if line_heights.include?(Float(bare))
 
       [ Finding.new(file, line, "off_scale_line_height", bare, prop) ]
+    end
+
+    # em only. A px tracking does not scale with the type it tracks and a unitless
+    # one is not a length: both are off the scale by being the wrong kind of value
+    # rather than the wrong size. `normal` is the initial value, not a step.
+    def check_letter_spacing(file, line, prop, value)
+      bare = strip_computed(value).strip
+      return [] if bare.empty? || bare == "normal" || bare.match?(UNMEASURABLE)
+
+      m = bare.match(/\A(-?\.?[\d.]+)em\z/)
+      return [ Finding.new(file, line, "off_scale_tracking", bare, prop) ] unless m
+      return [] if letter_spacings.include?(Float(m[1]))
+
+      [ Finding.new(file, line, "off_scale_tracking", bare, prop) ]
     end
 
     def check_font_weight(file, line, prop, value)

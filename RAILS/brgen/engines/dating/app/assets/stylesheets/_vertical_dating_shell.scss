@@ -120,7 +120,7 @@ body.vertical-dating .nearby-chat-widget {
   font-family: var(--font);
   font-size: clamp(1rem, 3.8vw, 1.125rem);
   font-weight: var(--weight-bold);
-  letter-spacing: -0.01em;
+  letter-spacing: var(--tracking-tight);
   color: var(--dating-ink);
 }
 

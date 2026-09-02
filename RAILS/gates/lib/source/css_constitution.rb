@@ -241,6 +241,17 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
       end
     end
 
+    # name -> em, read from the file that declares the tokens. Without this the
+    # check below sees var(--tracking-wide) as "no letter-spacing at all" and
+    # fails every rule that correctly uses the token instead of a literal.
+    def tracking_ladder
+      @tracking_ladder ||= begin
+        file = token_path("_typography.scss")
+        body = File.file?(file) ? File.read(file) : ""
+        body.scan(/(--tracking-[\w-]+)\s*:\s*(-?[\d.]+)em\s*;/).to_h { |n, v| [ n, v.to_f ] }
+      end
+    end
+
     def weight_ladder
       @weight_ladder ||= begin
         body = File.file?(token_path("_dialect_tokens.scss")) ? File.read(token_path("_dialect_tokens.scss")) : ""
@@ -491,7 +502,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
       each_declaration_block(strip_comments(body)) do |block, line_no|
         next unless block.match?(UPPERCASE)
 
-        tracking = block[LETTER_SPACING, 1]
+        tracking = block[LETTER_SPACING, 1] || tracking_from_token(block)
         if tracking.nil?
           @result.fail("css_constitution caps_tracking: #{rel}:#{line_no} sets uppercase with no " \
                        "letter-spacing (floor #{floor}em)")
@@ -510,6 +521,16 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
     # this tree writes SCSS nested inside @media and body.vertical-* wrappers —
     # and only the innermost block is a rule. Yielding enclosing blocks too would
     # let a sibling's letter-spacing vouch for an untracked uppercase rule.
+    # The em a var(--tracking-*) resolves to, as a string so the caller's numeric
+    # comparisons are unchanged. An unknown token returns nil and is reported as
+    # untracked, which is the safe direction: a name nothing declares sets nothing.
+    def tracking_from_token(block)
+      name = block[/letter-spacing\s*:\s*var\(\s*(--tracking-[\w-]+)/, 1] or return nil
+      value = tracking_ladder[name] or return nil
+
+      value.to_s
+    end
+
     def each_declaration_block(body)
       lines = body.lines
       opens = []

@@ -13,7 +13,7 @@
   margin: 0;
   font: var(--text-xs)/1.4 ui-monospace, monospace;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--tracking-widest);
   color: var(--text-dim, var(--text-secondary));
 }
 
@@ -21,7 +21,7 @@
   margin: 0;
   font-size: clamp(1.5rem, 4vw, 2rem);
   font-weight: var(--weight-heavy);
-  letter-spacing: -0.02em;
+  letter-spacing: var(--tracking-tighter);
 }
 
 .offline-page-lead {

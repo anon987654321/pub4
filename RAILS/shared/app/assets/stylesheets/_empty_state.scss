@@ -54,7 +54,7 @@
   font-weight: var(--weight-bold);
   font-family: var(--font);
   color: var(--text, var(--text));
-  letter-spacing: -0.01em;
+  letter-spacing: var(--tracking-tight);
 }
 
 .empty-state-body,
@@ -120,7 +120,7 @@ body[data-theme="wscons"] .empty-state,
 
 .search-skeleton-lines {
   display: grid;
-  gap: var(--space-1-5);
+  gap: var(--space-1);
 }
 
 .search-skeleton-line {

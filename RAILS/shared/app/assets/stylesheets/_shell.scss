@@ -313,7 +313,7 @@ main[role="main"] {
   font-family: var(--font);
   font-size: var(--text-lg);
   font-weight: var(--weight-bold, 700);
-  letter-spacing: -0.03em;
+  letter-spacing: var(--tracking-tightest);
   text-transform: none;
 }
 .sidebar nav {

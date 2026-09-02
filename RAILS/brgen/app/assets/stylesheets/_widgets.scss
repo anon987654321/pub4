@@ -66,9 +66,9 @@
 .compose-actions span { font-family: "Twemoji Mozilla", "Apple Color Emoji", "Segoe UI Emoji", sans-serif; }
 article h2 { font-size: var(--text-base); font-weight: var(--weight-bold); margin-bottom: 4px; }
 article p { color: var(--text-dim); font-size: var(--text-base); }
-article mark { background: var(--hover); color: var(--text-dim); padding: 1px 4px; font: var(--text-xs)/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .06em; border-radius: var(--radius); }
+article mark { background: var(--hover); color: var(--text-dim); padding: 1px 4px; font: var(--text-xs)/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: var(--tracking-wide); border-radius: var(--radius); }
 
-.live-badge { display: inline-block; background: var(--hover); color: var(--text-dim); font: var(--text-xs)/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .06em; padding: 1px 8px; border-radius: var(--radius); margin-inline-end: 8px; }
+.live-badge { display: inline-block; background: var(--hover); color: var(--text-dim); font: var(--text-xs)/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: var(--tracking-wide); padding: 1px 8px; border-radius: var(--radius); margin-inline-end: 8px; }
 
 .video-player { width: 100%; max-height: 420px; background: #000; display: block; } // scan: intentional — letterbox behind video is black in every theme
 

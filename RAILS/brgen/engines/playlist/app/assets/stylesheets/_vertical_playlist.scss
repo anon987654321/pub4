@@ -192,7 +192,7 @@ body.vertical-playlist .playlist-index {
 .playlist-top-eyebrow {
   margin: 0 0 4px;
   font: 10px/1.4 var(--font-mono);
-  letter-spacing: 0.14em;
+  letter-spacing: var(--tracking-widest);
   text-transform: uppercase;
   color: var(--color-muted);
 }
@@ -292,7 +292,7 @@ body.vertical-playlist .playlist-index {
 .playlist-queue-heading {
   margin: var(--space-6) 0 var(--space-4);
   font-size: var(--text-sm);
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
   color: var(--color-muted);
 }

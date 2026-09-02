@@ -71,7 +71,7 @@
   font-size: var(--text-xs);
   font-weight: var(--weight-bold);
   // 0.08em: typography.letter_spacing.all_caps_min_em is 0.05 and max is 0.15.
-  letter-spacing: 0.08em;
+  letter-spacing: var(--tracking-wider);
   text-transform: uppercase;
   color: var(--text-secondary);
 }
