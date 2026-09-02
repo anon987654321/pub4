@@ -67,9 +67,9 @@
 .post-actions a:hover { color: var(--accent); background: var(--hover); text-decoration: none; }
 
 .post_body { color: var(--text); line-height: var(--leading-loose); font-size: var(--text-base); }
-.post_body p { margin: 0 0 1.2em; }
+.post_body p { margin: 0 0 var(--space-5); }
 .post_body p:last-child { margin-bottom: 0; }
-.post_body ul, .post_body ol { margin: 0 0 1.2em; padding-inline-start: 1.5em; }
+.post_body ul, .post_body ol { margin: 0 0 var(--space-5); padding-inline-start: 1.5em; }
 .post_body ul { list-style: disc; }
 .post_body ol { list-style: decimal; }
 .post_body li { margin-bottom: 4px; }

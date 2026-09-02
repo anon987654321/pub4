@@ -88,7 +88,7 @@ body.vertical-playlist .playlist-index {
        is 18px, not 16px, so --text-xs/--text-sm are 13.5px/15.75px here rather
        than the 12px/14px they read as. */
     font-size: clamp(12px, 3vw, 14px);
-    padding: 0.2rem 0.5rem;
+    padding: var(--space-1) 0.5rem;
   }
 }
 

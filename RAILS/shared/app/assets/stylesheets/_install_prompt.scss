@@ -55,7 +55,7 @@
 .install-prompt-primary,
 .install-prompt-secondary {
   min-height: var(--tap-min);
-  padding: 0 0.9rem;
+  padding: 0 var(--space-3-5);
   border: 1px solid var(--border, #46435a);
   border-radius: var(--radius-sm, 8px);
   font: var(--weight-bold) 0.875rem/1 var(--font);

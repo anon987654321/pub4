@@ -215,7 +215,7 @@ footer {
 
 .badge {
   display: inline-block;
-  padding: 0.1rem 0.5rem;
+  padding: var(--space-0-5) 0.5rem;
   border-radius: var(--radius-pill);
   font-size: var(--text-xs);
 }
@@ -233,11 +233,11 @@ footer {
 .chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: var(--space-1-5);
 }
 
 .chip {
-  padding: 0.25rem 0.7rem;
+  padding: 0.25rem var(--space-3);
   background: var(--hover);
   border-radius: var(--radius-pill);
   font-size: var(--text-xs);
@@ -252,7 +252,7 @@ footer {
 .form .field {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: var(--space-1);
   margin-bottom: 0.75rem;
 }
 
@@ -267,7 +267,7 @@ footer {
 .form select {
   border: 0;
   border-radius: var(--radius);
-  padding: 0.4rem 0.6rem;
+  padding: var(--space-1-5) var(--space-2-5);
   font: inherit;
   color: var(--black);
   background: var(--search-bg);

@@ -58,7 +58,7 @@ body.vertical-messenger #messages.channel-log article {
   border: 0;
   border-radius: 0;
 
-  padding-block: 0.09rem;
+  padding-block: var(--space-0-5);
   padding-inline: var(--irc-hang) 0;
   text-indent: calc(-1 * var(--irc-hang));
 }
@@ -82,7 +82,7 @@ body.vertical-messenger #messages.channel-log article > header {
   flex-wrap: nowrap;
   align-items: baseline;
   vertical-align: baseline;
-  gap: 0.4rem;
+  gap: var(--space-1-5);
   margin: 0;
   padding: 0;
   font-family: inherit;

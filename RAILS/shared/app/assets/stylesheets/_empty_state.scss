@@ -120,7 +120,7 @@ body[data-theme="wscons"] .empty-state,
 
 .search-skeleton-lines {
   display: grid;
-  gap: 0.4rem;
+  gap: var(--space-1-5);
 }
 
 .search-skeleton-line {

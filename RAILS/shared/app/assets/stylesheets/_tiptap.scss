@@ -80,7 +80,7 @@
 
 .tiptap_area p { margin: 0 0 0.5em; }
 .tiptap_area p:last-child { margin-bottom: 0; }
-.tiptap_area ul { list-style: disc; padding-inline-start: 1.4em; margin: 0 0 0.5em; }
+.tiptap_area ul { list-style: disc; padding-inline-start: var(--space-6); margin: 0 0 0.5em; }
 
 .tiptap_toolbar { display: flex; gap: 4px; }
 

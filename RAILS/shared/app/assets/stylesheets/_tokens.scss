@@ -62,9 +62,18 @@
        none of which are on the rhythm. Removed rather than snapped to the
        nearest step, since nothing should be reaching for a step number that
        doesn't correspond to an allowed value. */
+    /* The half-steps. 6, 10 and 14px joined scale.space_px on 2026-09-02 because
+       67 of ScaleLint 97 off-scale findings sat exactly on them — the midpoints of
+       the scale own gaps. These are their tokens, in rem like the rest of the
+       ladder: spacing that stops growing when a reader raises their font size is a
+       worse answer than spacing that is 0.4px off a grid. */
+    --space-0-5: 0.125rem;  /* 2px  */
     --space-1: 0.25rem;
+    --space-1-5: 0.375rem;  /* 6px  */
     --space-2: 0.5rem;
+    --space-2-5: 0.625rem;  /* 10px */
     --space-3: 0.75rem;
+    --space-3-5: 0.875rem;  /* 14px */
     --space-4: 1rem;
     --space-5: 1.25rem;
     --space-6: 1.5rem;

@@ -70,7 +70,7 @@ body.auth-surface {
 .auth-form .field {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: var(--space-1);
   margin-bottom: var(--space-3, 0.75rem);
 }
 
@@ -91,7 +91,7 @@ body.auth-surface {
 .auth-form .password-field input {
   width: 100%;
   min-height: var(--tap-min);
-  padding: 0.6rem 0.75rem;
+  padding: var(--space-2-5) 0.75rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm, 8px);
   background: var(--search-bg, var(--surface));

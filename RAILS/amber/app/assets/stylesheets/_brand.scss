@@ -451,7 +451,7 @@ h1, .display, .wordmark {
   font-weight: var(--weight-bold);
   color: var(--accent);
   border: var(--elev-1);
-  padding: 0.15rem 0.45rem;
+  padding: var(--space-0-5) var(--space-2);
   border-radius: var(--radius-sm, 6px);
 }
 

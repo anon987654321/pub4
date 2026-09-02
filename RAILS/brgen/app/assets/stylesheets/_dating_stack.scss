@@ -15,7 +15,7 @@
   background: var(--dating-card, var(--surface));
   border: 1px solid var(--dating-border, var(--border));
   border-radius: var(--radius-lg);
-  padding: 0.65rem;
+  padding: var(--space-2-5);
   transition: transform 220ms var(--ease-spring), opacity 180ms var(--ease-out), border-color 180ms var(--ease-out);
   overflow: hidden;
 }
@@ -77,7 +77,7 @@
 .swipe-stamp {
   position: absolute;
   top: 1.25rem;
-  padding: 4px 0.65rem;
+  padding: 4px var(--space-2-5);
   border: 3px solid currentColor;
   border-radius: var(--radius-sm);
   font: var(--weight-heavy) 1.5rem / 1 var(--font);

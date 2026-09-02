@@ -112,7 +112,7 @@ html.chrome-hidden .tab-bar {
   margin-inline: auto;
   z-index: calc(var(--z-nav, 80) + 1);
   width: min(20rem, calc(100vw - 2rem));
-  padding: 0.75rem 0.9rem;
+  padding: 0.75rem var(--space-3-5);
   background: var(--surface-elevated, var(--surface2, #211f28));
   border: 0;
   border-radius: var(--radius-sm, 8px);
@@ -127,7 +127,7 @@ html.chrome-hidden .tab-bar {
   /* Capped in ch: design_rules.typography.line_length wants prose inside the
      measure, and this ran past it. */
   max-width: var(--measure-narrow, 45ch);
-  margin: 0 0 0.65rem;
+  margin: 0 0 var(--space-2-5);
   font-size: var(--text-sm);
   line-height: 1.4;
 }
@@ -141,7 +141,7 @@ html.chrome-hidden .tab-bar {
 .tab-bar-coach-show {
   min-height: var(--tap-min);
   min-width: var(--tap-min);
-  padding: 0.4rem 0.75rem;
+  padding: var(--space-1-5) 0.75rem;
   border-radius: var(--radius-sm, 8px);
   /* Fill, not outline. These two buttons were the last eight lines on the
      rendered front page (measured 390x844: 8 visible borders, all of them

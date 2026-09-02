@@ -178,7 +178,7 @@
 }
 
 .radio-archaeology-line + .radio-archaeology-line {
-  margin-top: 0.2rem;
+  margin-top: var(--space-1);
 }
 
 @keyframes radio-pulse {
