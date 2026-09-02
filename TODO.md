@@ -2482,20 +2482,21 @@ snapshot against this checkout leaves nothing of substance behind. These are
 what the sweep found still open, each verified against the tree rather than
 taken from the transcript that raised it.
 
-- **The authorization matrices are built; one follow-on is not.** `brgen` and
-  `bsdports` now carry `test/integration/authorization_matrix_test.rb` beside
-  amber's, each mutation-checked: removing the guard from `CommunitiesController`
-  makes brgen's report `GET /communities/new as guest must NOT be served — got
-  200`, the same shape as the amber bug that started this. Suites green with
-  them in — bsdports 102 runs, brgen 967, zero failures. `requires_data` is
-  promotable now too: `flow_journey.rb` files an empty dataset as `inconclusive!`
-  rather than `warn`, so `GATE_STRICT_INCONCLUSIVE=1` fails a run that measured
-  nothing instead of printing about it. Still open: **one authenticated journey
-  per app that writes and asserts the write landed** — the matrices prove a door
-  opens, not that what went through it arrived. Two matrix rows are scoped to
-  the guest half on purpose and say why in the file: bsdports' `crossref_cves`
-  reaches an external service, and brgen's `reports#create` wants a signed
-  GlobalID before it consults any gate.
+- **The three journey-gate follow-ons are done; the live half is undemonstrated.**
+  `brgen` and `bsdports` carry `test/integration/authorization_matrix_test.rb`
+  beside amber's, mutation-checked. `requires_data` is `inconclusive!` rather
+  than `warn`, so `GATE_STRICT_INCONCLUSIVE=1` fails a run that measured
+  nothing. And `flows.yml` has three signed-in writing journeys, which it had
+  none of: 55 steps, all GET, no flow declaring an actor. What is **not** shown
+  is any of them passing against a running app — they need an account on
+  whatever database is up, so each names `FLOW_<APP>_EMAIL` /
+  `FLOW_<APP>_PASSWORD` and reports unchecked without them. Boot the triangle,
+  seed an account per app, export the pairs, and run
+  `ruby RAILS/gates/runner.rb flow_journey` to close this properly. Until then
+  the mechanics are unit-proven — CSRF from meta and hidden field, one level of
+  param nesting, the 303 verb switch over a real socket, the credential
+  placeholder that leaves a `$`-leading password alone — and the journeys
+  themselves have never run.
 - **`bin/sine_stream.rb:967` is the last un-oversampled `asoftclip`.** Every
   other saturation site in dilla runs `oversample=4` or `8`; this one runs the
   ffmpeg default and aliases above Nyquist. It is left alone deliberately —
