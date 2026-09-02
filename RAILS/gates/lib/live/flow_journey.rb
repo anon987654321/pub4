@@ -142,7 +142,13 @@ module Deploy
 
     def check_assertions(flow, captures)
       if unseeded?(flow, captures)
-        @result.warn(
+        # inconclusive!, not warn. Both print, but only unchecked is what
+        # GATE_STRICT_INCONCLUSIVE promotes to a failure, and "the invariants
+        # did not run" is the definition of nothing measured. Filed as a warning
+        # it was unpromotable in every mode, so a run that meant to demand a
+        # seeded dataset had no way to say so and bsdports_search_narrows scored
+        # green against an empty catalogue.
+        @result.inconclusive!(
           "flow:#{flow["id"]} skipped invariants — #{Array(flow["requires_data"]).join('/')} is 0, " \
           "the dataset is empty (seed the app to make this journey meaningful)"
         )
