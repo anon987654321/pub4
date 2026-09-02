@@ -19,7 +19,7 @@
   cursor: pointer;
   transition: opacity var(--transition-fast) var(--ease-out);
   text-decoration: none;
-  min-height: var(--control-h);
+  min-height: var(--tap-min);
 }
 
 .btn:hover { opacity: .88; text-decoration: none; }

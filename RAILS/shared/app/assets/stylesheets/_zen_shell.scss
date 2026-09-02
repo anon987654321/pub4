@@ -95,11 +95,11 @@ select {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  /* The control block, from design_tokens system. These three were already 8px,
-     44px and 16px by coincidence rather than by contract — the measurement
-     agreed with what stood here, so this names the source instead of moving it. */
+  /* The control block. Height is --tap-min, the 44px touch target this tree
+     already had; the inline padding and gap are absolute because the space
+     scale is rem and brgen roots at 18px. */
   gap: var(--control-gap);
-  min-height: var(--control-h);
+  min-height: var(--tap-min);
   padding: 0 var(--control-pad-inline);
   border-radius: var(--radius-pill);
   border: 1px solid transparent;

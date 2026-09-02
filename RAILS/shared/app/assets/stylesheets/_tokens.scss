@@ -97,19 +97,24 @@
 --opacity-half: 0.4;
 --opacity-strong: 0.6;
 --opacity-heavy: 0.8;
-/* The control block, from design_tokens system. One height for every
-   button, input, chip and select in the family, so a row of mixed controls
-   shares a baseline. 44px is tap_min, which the measurement independently
-   agreed with. */
---control-h: 44px;
---control-pad-inline: 16px;
---control-gap: 8px;
-/* The catalogue grid, from design_tokens system. A wide row gap against a
-   narrow column gap is what makes a dense grid read as rows of goods rather
-   than as a mosaic; equal tracks keep every tile the same object. */
---tile-min: 224px;
---tile-gap-row: 24px;
---tile-gap-col: 8px;
+    /* The control block, from design_tokens system. Height is --tap-min, which
+       this tree has used for a 44px touch target since long before this block
+       existed: 126 uses across the three apps, and design.tap_min is what each
+       app's function_layout fixture names. A control must be tappable, so the
+       touch target IS the control height and a second token at the same value
+       would be a second answer to one question.
+
+       The inline padding and gap are absolute because the space scale is rem and
+       brgen roots at 18px: --space-4 is 18px there and 16px everywhere else, and
+       a control that changes width per app is not one control. */
+    --control-pad-inline: 16px;
+    --control-gap: 8px;
+    /* The catalogue grid, from design_tokens system. A wide row gap against a
+       narrow column gap is what makes a dense grid read as rows of goods rather
+       than as a mosaic; equal tracks keep every tile the same object. */
+    --tile-min: 224px;
+    --tile-gap-row: 24px;
+    --tile-gap-col: 8px;
     --transition-fast: 180ms;
     --transition-normal: 300ms;
     /* soul.yml aesthetic_rules CINEMA_PALETTE asks for cubic-bezier easing on

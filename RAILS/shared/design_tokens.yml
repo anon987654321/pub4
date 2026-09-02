@@ -109,7 +109,8 @@ system:
   tile_min: "224px"
   tile_gap_row: "24px"
   tile_gap_col: "8px"
-  control_height: "44px"
+  # No control_height here: tap_min above is that number, used 126 times. A
+  # control must be tappable, so the touch target IS the control height.
   control_pad_inline: "16px"
   control_gap: "8px"
   # One card radius for the whole family. 16 (social), 14 and 10 (luxury) were
