@@ -97,7 +97,13 @@ html, body {
  *
  * 18px is what this app asked for — see --font-size above, "the real 2014
  * mobile.css body base, this app's own deliberate size". It has not been getting
- * it. body inherits rather than restating, so the pair cannot drift again. */
+ * it. body inherits rather than restating, so the pair cannot drift again.
+ *
+ * Set with the `font` shorthand, which is worth knowing because it is invisible
+ * to the obvious search: grep for `font-size:` on html and brgen appears to set
+ * no root size at all, so rem looks like it resolves against the browser default.
+ * It does not — this line is the 18px that thirty-odd comments across the tree,
+ * design_tokens.yml, DECISIONS.md and ScaleLint all refer to. */
 html {
   font: var(--font-size)/var(--line-height) var(--font);
 }
