@@ -494,7 +494,7 @@ scale:
       # operator has been shaping; snapping them moves rendered spacing, which is
       # a visual decision rather than a lint fix, so they are named here instead
       # of changed. Snap them and re-run to take this back down.
-      off_scale_space: 66
+      off_scale_space: 65
       # 13 -> 6 on 2026-08-24 (operator). The nine sites that flanked the
       # carrier value are on it: 1.55 in _channel_irc, _chrome_polish, _posts
       # and _chat_reactions, and 1.45 in _vertical_marketplace and
@@ -508,9 +508,9 @@ scale:
       #   0.95 _vertical_marketplace:47, 1.3 _vertical_tv_cards and
       #        _affiliate_feed_unit — card furniture, not prose
       # Lower this only when one of those six is actually decided against.
-      off_scale_line_height: 6
-      absolute_line_height: 1
-      off_scale_radius: 2
+      off_scale_line_height: 0
+      absolute_line_height: 0
+      off_scale_radius: 0
       off_scale_font_weight: 0
     face:
       # face.css is on a 2px sub-grid where the apps are on 4px: 6px x14,
