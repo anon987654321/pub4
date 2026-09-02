@@ -36,7 +36,7 @@ visible.
 Nothing measures the gap, which is how 2 became 28 without a single failure.
 
 1. A ratchet on entry-point count, per tree, in `spine.yml` beside the source-file ceilings. **[cheap]**
-2. Break the `check` ↔ `ci` cycle. `bin/check` invokes `bin/ci`; `bin/ci` invokes `bin/check`. Its own comment records the cycle meaning neither could pass for eleven days.
+2. Break the `check` ↔ `ci` cycle. **[done]** `bin/ci` is now nineteen lines that `exec` `bin/check --profile=ci`; one registry, and the double payment for selftest and core_smoke is gone. Kept as a script because its callers — a workflow file, `bin/preflight`, an operator's muscle memory — are outside this repo's reach.
 3. Fold the twelve verification commands — check, gate, ci, audit, dogfood, preflight, probe, smoke, smoke-web, test-safety, doctor, nsaudit — into the two sanctioned surfaces. **[deep]**
 4. Delete `bin/master`. It is 75 lines, 34 of them comment, and six of behaviour: a `chdir`, one env var, one argument rewrite, `exec bin/cli`.
 5. Move that `chdir` into `bin/cli` by resolving its root from `__dir__` rather than `Dir.pwd`, which is the thing the wrapper exists to paper over. **[cheap]**

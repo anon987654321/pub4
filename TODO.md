@@ -2435,10 +2435,6 @@ to finish rather than a bare title.
   deliberately: wiring it changes how MASTER sounds, which is an operator's
   call. That file's own header is a long account of a voice value living in
   more places than the one that changed; this would be the third entry.
-- **`strunk.apply_to` has no reader.** `data/voice.yml` lists
-  `[prose, comments, documentation, strings]` and nothing consults it, so the
-  filename rules added this session enforce naming instead. Either give the
-  list a reader or delete it.
 - **Merge the three techno renderers.** `render_industrial`,
   `render_hate_techno` and `render_techno` share `techno_harmony_roots` and the
   schedule builders but hold genuinely different arrangements, and
@@ -2460,10 +2456,6 @@ to finish rather than a bare title.
   instruction. It needs `.gitignore` rules to follow the files, since
   `renders/` is currently ignored wholesale, and `dilla.rb`'s hardcoded
   `File.join(ROOT, "renders", ...)` defaults move with them.
-- **`MASTER/README.md` fails `README_PROSE`.** It was cut to headers, bullets,
-  a code block and a LaTeX arrow; the rule in `cosmetic_rules.rb` wants one
-  voice in plain prose. The long Innovasjon Norge pitch that was deleted is
-  also where the seaborne Aegis case would sit.
 
 ## From the 2026-09-01 audit
 
@@ -2490,13 +2482,6 @@ snapshot against this checkout leaves nothing of substance behind. These are
 what the sweep found still open, each verified against the tree rather than
 taken from the transcript that raised it.
 
-- **Nothing watches the DR backup's freshness.** `OPENBSD/bin/dr-pull` failed
-  every night from 2026-08-26 to 2026-09-01 and no one knew: it writes a log
-  nothing reads, and its only consumer is the operator opening the directory.
-  The break itself is fixed, but the silence is the more durable defect. The
-  cheapest guard is a freshness assertion in a check that already runs — fail
-  when the newest `~/pub4-dr/<stamp>/` is older than two days. Until that
-  exists, a second week of no off-box copy looks exactly like a working one.
 - **`brgen` and `bsdports` have no authorization matrix.** `amber` has
   `test/integration/authorization_matrix_test.rb`, built after `/items/new`
   served an anonymous 200 with every gate green; the other two apps still rely
@@ -2509,9 +2494,16 @@ taken from the transcript that raised it.
   ffmpeg default and aliases above Nyquist. It is left alone deliberately —
   changing it changes how the stream sounds, which is the operator's ear and not
   a gate's. Worth an A/B before it moves.
-- **brgen's `Gemfile.lock` says `BUNDLED WITH 2.7.2`; amber and bsdports say
-  `4.0.7`.** One fleet, two bundler majors. Harmless until the box resolves the
-  older one, which is the kind of thing that surfaces mid-deploy.
+- **brgen's `Gemfile.lock` was written by a different bundler major than the
+  box resolves with.** vm23 runs ruby 3.4.9 with bundler **4.0.17**; amber and
+  bsdports record `BUNDLED WITH 4.0.7`, brgen records `2.7.2`. brgen also
+  writes its `RUBY VERSION` as `3.4.9p82` where the others write `3.4.9`,
+  which is the older bundler's format — so the whole lockfile, not just the
+  footer, came from 2.x. Not fixed here on purpose: the body was resolved by
+  the bundler that wrote it, `vps-deploy` installs from it on a 1 GB box, and
+  `vps_gemfile_lock_drift` already records that a Mac-written lock against
+  BSD-only gems is how this breaks. Re-resolving is a deploy-day change with
+  a rollback plan, not a footer edit.
 - **The 61-track crate fetch was abandoned at 2.** `~/dilla-crate-incoming`
   holds two FLACs and three fetch scripts from the 2026-08-31 rebuild, which
   finished by another route — `samples/chopped/` has 162 entries. Either resume
