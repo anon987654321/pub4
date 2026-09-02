@@ -35,7 +35,7 @@ visible.
 `MASTER/bin` holds 28 entry points. `CLAUDE.md:50` says "Two surfaces, no third."
 Nothing measures the gap, which is how 2 became 28 without a single failure.
 
-1. A ratchet on entry-point count, per tree, in `spine.yml` beside the source-file ceilings. **[cheap]**
+1. A ratchet on entry-point count, per tree, in `spine.yml` beside the source-file ceilings. **[done]** `pub4_entrypoint_ceilings` in `spine.yml`, read by `entrypoint_rows` in `tools/ratchets.rb`, which counts *tracked* executables directly under each tree's own `bin/` — so another session's untracked scratch is not mistaken for a surface, and a Rails app's generated `bin/rails` is not either. MASTER 27, OPENBSD 17, RAILS 2, STUDIO 0.
 2. Break the `check` ↔ `ci` cycle. **[done]** `bin/ci` is now nineteen lines that `exec` `bin/check --profile=ci`; one registry, and the double payment for selftest and core_smoke is gone. Kept as a script because its callers — a workflow file, `bin/preflight`, an operator's muscle memory — are outside this repo's reach.
 3. Fold the twelve verification commands — check, gate, ci, audit, dogfood, preflight, probe, smoke, smoke-web, test-safety, doctor, nsaudit — into the two sanctioned surfaces. **[deep]**
 4. Delete `bin/master`. It is 75 lines, 34 of them comment, and six of behaviour: a `chdir`, one env var, one argument rewrite, `exec bin/cli`.
@@ -43,8 +43,8 @@ Nothing measures the gap, which is how 2 became 28 without a single failure.
 6. Grep every caller before deleting any entry point — `OPENBSD/`, `RAILS/gates/gates.yml`, rc.d scripts on the box. A command with no callers in this repo may still be in a cron line on vm23.
 7. One name for one job: `bin/gate` *is* the scan→fix→critique→review chain and does not say so in its name.
 8. A test that fails when a doc's stated invariant stops being true. "Two surfaces, no third" was prose, so it rotted silently. **[deep]**
-9. `bin/pub4 test` with no arguments runs **nothing** when STUDIO is dirty — it derives scope from `git status` and aborts on sight of a STUDIO path. In a shared checkout that is most of the time.
-10. Make that refusal a skip with a warning, so the other three trees still run.
+9. `bin/pub4 test` with no arguments runs **nothing** when STUDIO is dirty. **[done]** It partitions STUDIO paths out and warns, rather than aborting on sight of one; the other three trees now run. The abort survives only for the case where STUDIO is the *only* dirty tree, which is a correct report of nothing to do rather than the bug.
+10. Make that refusal a skip with a warning, so the other three trees still run. **[done]** With #9.
 11. `bin/check --profile=agent` "may fail on known debt" — a profile whose failure carries no information teaches people to ignore it.
 12. Publish the profile matrix somewhere a reader can see which profile runs which suite without reading three scripts.
 13. Retire `master-core` or say in one line how it differs from `master`.
