@@ -438,8 +438,10 @@ flows:
   #
   # They need an account on whatever database is running, so each names the
   # environment it wants rather than carrying a credential. Unset, the flow is
-  # reported unchecked and GATE_STRICT_INCONCLUSIVE fails the run; it is never
-  # counted as a pass. Seed an account, export the pair, and the journey runs:
+  # named in the gate's "Not checked" list and never counted as having passed --
+  # but the gate still passes on the journeys that did run, in strict mode too,
+  # because GATE_STRICT_INCONCLUSIVE promotes only a gate that measured nothing
+  # at all. Seed an account, export the pair, and the journey runs:
   #
   #   FLOW_BSDPORTS_EMAIL=you@example.no FLOW_BSDPORTS_PASSWORD=... \
   #     ruby RAILS/gates/runner.rb user_flow

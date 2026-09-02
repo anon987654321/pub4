@@ -45,6 +45,12 @@ module Deploy
           next
         end
         ran += 1
+        # A journey that ran is a check that ran. Without this the gate could
+        # never report PASSED: `measured_nothing?` reads checks_ran, nothing here
+        # ever raised it, and one skipped precondition then spoke for the whole
+        # run — 25 journeys green and the verdict line said "checked nothing".
+        # That is the same defect checked! was added for in human_walkthrough.
+        @result.checked!
         run_flow(flow, port)
       end
       @result.warn("flow_journey: ran #{ran}/#{flows.size} journeys") if ran.positive?
@@ -57,9 +63,18 @@ module Deploy
     # gate probes whatever database happens to be running. Hardcoding a login
     # would be a credential in git that works on one machine; inventing one
     # would need the gate to write to a database it does not own. So the flow
-    # names the environment it wants and reports inconclusive without it —
-    # unchecked, not passed, because a writing journey that did not run is
-    # exactly what GATE_STRICT_INCONCLUSIVE exists to catch.
+    # names the environment it wants and is recorded unchecked without it, by
+    # name, in the gate's "Not checked" list.
+    #
+    # Unchecked is NOT blocking here, and measuring that live is what corrected
+    # the first version of this comment. GATE_STRICT_INCONCLUSIVE promotes only
+    # `measured_nothing?` -- checks_ran zero -- so a run that exercises 25
+    # journeys and skips one passes in either mode. gate_result.rb says why in
+    # as many words: promoting at record time made a gate that ran fifty checks
+    # and skipped one hard-fail on the deploy host. So the guarantee is narrower
+    # than it looks and is worth stating plainly: the skipped journey is named
+    # in the output every run and never counted as having passed, and noticing
+    # it is still a person's job.
     def credentials_for(flow)
       keys = Array(flow["requires_credentials"])
       return {} if keys.empty?

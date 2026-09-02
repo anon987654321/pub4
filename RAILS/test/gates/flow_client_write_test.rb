@@ -86,9 +86,12 @@ class FlowClientWriteTest < Minitest::Test
     assert_equal({ "password" => "$ecret" }, resolved)
   end
 
-  # Without credentials the flow must be unchecked rather than passed:
-  # GATE_STRICT_INCONCLUSIVE is what turns "the write never ran" into a
-  # failure, and a warning would have been unpromotable in every mode.
+  # Without credentials the flow is unchecked rather than passed. That is
+  # weaker than it first reads and the live run is what showed it:
+  # GATE_STRICT_INCONCLUSIVE promotes only a gate that measured *nothing*,
+  # so a run that skips this one journey and passes 25 others still passes.
+  # What unchecked buys is that the journey is named in the output every
+  # run and never counted among the passes.
   def test_a_flow_missing_its_credentials_is_unchecked_not_passed
     @gate.instance_variable_set(:@result, Deploy::GateResult.new)
     flow = { "id" => "signed_in_write", "requires_credentials" => %w[FLOW_NOT_SET_ANYWHERE] }
