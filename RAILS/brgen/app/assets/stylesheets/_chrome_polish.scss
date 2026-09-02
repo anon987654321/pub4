@@ -181,7 +181,6 @@ aside:not([class]) > h2 {
    them here at the same values was pure redundant CSS output, not an
    override (verified: shared's values are byte-identical to what was here). */
 :root {
-  --space-2xs: 0.25rem;
   --color-info: #5b9fd4;
   --elev-1: 1px solid var(--border, var(--border));
   --measure-body: 66ch;
@@ -244,7 +243,7 @@ time {
 
 /* .nav_swiper_bar's scroll-snap now lives with the rest of the bar in
    _nav_swiper.scss. It was here, later in the @use order, and its
-   `scroll-padding-inline: var(--space-2xs)` outranked the brand inset -- so the
+   `scroll-padding-inline: var(--space-1)` outranked the brand inset -- so the
    snap engine pulled the first .nav_link back under the fixed wordmark and
    cancelled the padding that was supposed to clear it. One owner per property. */
 .nav_link {
@@ -275,8 +274,8 @@ body.vertical-tv .tv-poster {
 }
 body.vertical-tv .duration-chip {
   position: absolute;
-  inset-block-end: var(--space-2xs);
-  inset-inline-end: var(--space-2xs);
+  inset-block-end: var(--space-1);
+  inset-inline-end: var(--space-1);
   padding: var(--space-0-5) 4px;
   font: var(--weight-bold) var(--text-xs)/1 var(--font-mono, ui-monospace, monospace);
   background: var(--scrim-72);

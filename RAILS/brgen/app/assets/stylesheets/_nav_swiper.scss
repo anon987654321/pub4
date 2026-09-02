@@ -89,7 +89,7 @@
   margin-inline: var(--nav-clear);
   justify-content: safe center;
   scroll-snap-type: x proximity;
-  scroll-padding-inline: var(--brand-mark-inline) var(--space-2xs);
+  scroll-padding-inline: var(--brand-mark-inline) var(--space-1);
   background: var(--bg);
   /* Fades BOTH edges, and the two do different jobs.
      Right: the "there is more, drag me" signal the operator asked for.
@@ -225,7 +225,7 @@
    link's own type, and superscripted so it does not stretch the link's box
    and cost the run its height. */
 .nav_link_badge {
-  margin-inline-start: var(--space-3xs, 0.125rem);
+  margin-inline-start: var(--space-0-5);
   font-size: 0.6em;
   font-weight: var(--weight-bold);
   color: var(--nav-rule);

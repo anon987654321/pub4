@@ -18,15 +18,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-sm);
-  margin-block: var(--space-md);
+  gap: var(--space-3);
+  margin-block: var(--space-6);
 }
 
 .pager-link {
   display: inline-flex;
   align-items: center;
   min-height: var(--tap-min);
-  padding-inline: var(--space-sm);
+  padding-inline: var(--space-3);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text);
@@ -67,21 +67,21 @@
 }
 
 .feed-post-media {
-  margin-block-start: var(--space-xs);
+  margin-block-start: var(--space-2);
 }
 
 // Comment row.
 .comment-actions {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--space-2);
 }
 
 .comment-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xs);
-  margin-block-start: var(--space-xs);
+  gap: var(--space-2);
+  margin-block-start: var(--space-2);
 }
 
 // Vipps sign-in. The brand colour is Vipps's own and belongs to them, so this only
@@ -91,7 +91,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2xs, var(--space-xs));
+  gap: var(--space-1);
   min-height: var(--tap-min);
   width: 100%;
 }
@@ -100,14 +100,14 @@
 // labelled, because an unlabelled ad beside real listings is indistinguishable from
 // editorial content.
 .ad-slot {
-  margin-block: var(--space-md);
+  margin-block: var(--space-6);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: var(--space-xs);
+  padding: var(--space-2);
 }
 
 .ad-slot-label {
-  margin: 0 0 var(--space-2xs, var(--space-xs));
+  margin: 0 0 var(--space-1);
   font-size: var(--text-sm);
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -117,7 +117,7 @@
 .site-verify-id,
 .site-verify-contact {
   display: inline-block;
-  margin-inline-end: var(--space-sm);
+  margin-inline-end: var(--space-3);
 }
 
 // The MASTER face embedded in an app surface. An iframe carries a border and an

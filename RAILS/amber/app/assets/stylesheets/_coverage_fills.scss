@@ -30,41 +30,41 @@
 .wardrobe-items {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
-  gap: var(--space-sm);
+  gap: var(--space-3);
 }
 
 .wardrobe-card {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2xs, var(--space-xs));
+  gap: var(--space-1);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: var(--space-xs);
+  padding: var(--space-2);
 }
 
 .wardrobe-item {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: var(--space-3);
 }
 
 .wardrobe-detail {
   display: grid;
-  gap: var(--space-xs);
+  gap: var(--space-2);
 }
 
 .wardrobe-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-xs);
-  margin-block-start: var(--space-sm);
+  gap: var(--space-2);
+  margin-block-start: var(--space-3);
 }
 
 .wardrobe-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: var(--space-3);
   max-width: var(--measure-body);
 }
 
@@ -72,19 +72,19 @@
 .declutter-page,
 .wardrobe-items,
 .outfit-visual {
-  margin-block-end: var(--space-md);
+  margin-block-end: var(--space-6);
 }
 
 .outfit-visual {
   display: grid;
-  gap: var(--space-xs);
+  gap: var(--space-2);
 }
 
 .luxury-meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--space-2);
   color: var(--text-secondary);
 }
 
@@ -114,29 +114,29 @@
 .nested-form-wrapper {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xs);
+  gap: var(--space-2);
 }
 
 .nested-field {
   display: flex;
   flex-wrap: wrap;
   align-items: end;
-  gap: var(--space-xs);
+  gap: var(--space-2);
   border-block-end: 1px solid var(--border);
-  padding-block-end: var(--space-xs);
+  padding-block-end: var(--space-2);
 }
 
 // Histogram figure — .viz carries the frame, this is the column variant.
 .viz-columns {
   display: grid;
-  gap: var(--space-xs);
+  gap: var(--space-2);
 }
 
 // Affiliate list on the shopping page.
 .shop-links {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2xs, var(--space-xs));
+  gap: var(--space-1);
 }
 
 .shop-feed-note {

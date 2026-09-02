@@ -144,7 +144,7 @@
 .amber-logo-banner--nav {
   justify-content: space-between;
   align-items: center;
-  padding-inline: var(--space-sm, 0.75rem) var(--chrome-toggle-inline);
+  padding-inline: var(--space-3) var(--chrome-toggle-inline);
   min-height: var(--bar-height, 44px);
 }
 
@@ -174,7 +174,7 @@
 .amber-nav-actions {
   display: flex;
   align-items: center;
-  gap: var(--space-sm, 0.5rem);
+  gap: var(--space-3);
 }
 
 /* Guest hero still uses the same logo mark full-bleed */
@@ -182,8 +182,8 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: var(--space-lg);
-  padding: var(--space-xl) 0 var(--space-lg);
+  gap: var(--space-8);
+  padding: var(--space-12) 0 var(--space-8);
   text-align: center;
 }
 
@@ -238,7 +238,7 @@
 .amber-guest-hero .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-sm);
+  gap: var(--space-3);
   justify-content: center;
   margin: 0;
 }
@@ -313,7 +313,6 @@
 /* Amber luxury refinements (UI_REFINEMENTS §D) */
 
 :root {
-  --space-2xs: 0.25rem;
   --line-height-relaxed: 1.6;
   --letter-display: 0.04em;
   --focus-ring: 2px solid var(--accent);
@@ -352,7 +351,7 @@ h1, .display, .wordmark {
 .items-grid,
 .wardrobe-grid {
   display: grid;
-  gap: var(--space-md, 1.5rem);
+  gap: var(--space-6);
   grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
 }
 .items-grid > :first-child,
@@ -458,10 +457,10 @@ h1, .display, .wordmark {
 /* Look rail */
 .look-rail {
   display: flex;
-  gap: var(--space-sm, 0.75rem);
+  gap: var(--space-3);
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  padding-block: var(--space-sm);
+  padding-block: var(--space-3);
 }
 .look-rail > * {
   flex: 0 0 auto;

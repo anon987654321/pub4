@@ -5,8 +5,8 @@
 .form .field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xs);
-  margin-bottom: var(--space-md);
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
 }
 
 .form input,
@@ -14,15 +14,15 @@
 .form textarea {
   border: 1px solid var(--color-extra-light-grey);
   border-radius: var(--radius-xs);
-  padding: var(--space-sm);
+  padding: var(--space-3);
   font: inherit;
 }
 
 .form .actions {
   display: flex;
-  gap: var(--space-sm);
+  gap: var(--space-3);
   align-items: center;
-  margin-top: var(--space-lg);
+  margin-top: var(--space-8);
 }
 
 .media-picker {

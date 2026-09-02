@@ -185,7 +185,7 @@
      intrinsic width wider than a phone, and an unconstrained track hands it
      that width instead of the row it is in. */
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-2xs);
+  gap: var(--space-1);
 }
 .field .error,
 .field .helper {

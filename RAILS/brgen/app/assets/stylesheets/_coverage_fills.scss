@@ -9,13 +9,13 @@
 
 // Profile activity feed.
 .profile-activity {
-  margin-block-start: var(--space-md);
+  margin-block-start: var(--space-6);
 }
 
 .activity-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xs);
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -29,7 +29,7 @@
 .tag-cloud {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-xs);
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -41,7 +41,7 @@
 .partner-membership {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: var(--space-3);
   max-width: var(--measure-body);
 }
 
@@ -57,7 +57,7 @@
 
 // Place hero image on the maps surface.
 .place-hero {
-  margin: 0 0 var(--space-sm);
+  margin: 0 0 var(--space-3);
 }
 
 .place-hero__image {
@@ -71,8 +71,8 @@
 // shape of an error block without inventing a colour — --danger is the token the
 // dialects already define for it.
 .form-errors {
-  margin: 0 0 var(--space-sm);
-  padding-inline-start: var(--space-md);
+  margin: 0 0 var(--space-3);
+  padding-inline-start: var(--space-6);
   color: var(--danger);
 }
 
@@ -80,8 +80,8 @@
   display: flex;
   flex-wrap: wrap;
   align-items: end;
-  gap: var(--space-xs);
-  margin-block-end: var(--space-sm);
+  gap: var(--space-2);
+  margin-block-end: var(--space-3);
 }
 
 // Surfaces shipped after the 2026-08-11 fill: Event, Story, community

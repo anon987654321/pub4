@@ -6,7 +6,7 @@ main[role="main"] {
 }
 
 .flash {
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-3) var(--space-6);
   border-bottom: 1px solid var(--border);
 
   &--error,
@@ -22,7 +22,7 @@ main[role="main"] {
 h1,
 h2 {
   /* On-scale leading only (1.25). PRESERVE existing weights/faces. */
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--space-3);
   font-family: var(--font);
   font-weight: var(--weight-heavy);
   line-height: var(--leading-tight, 1.25);
@@ -31,30 +31,30 @@ h2 {
 }
 
 main#main-content > :first-child:not(.flash) {
-  margin-block-start: var(--space-lg);
+  margin-block-start: var(--space-8);
 }
 
 main#main-content > section,
 main#main-content > header {
-  margin-block-end: var(--space-xl);
+  margin-block-end: var(--space-12);
 }
 
 main#main-content header > nav {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-sm);
-  margin-block-start: var(--space-md);
+  gap: var(--space-3);
+  margin-block-start: var(--space-6);
 }
 
 @media (max-width: 639px) { // scan: intentional — narrow-screen exception band in a banded system (wave C ruling: inverting is a redesign)
   main#main-content {
-    padding-inline: var(--space-md);
+    padding-inline: var(--space-6);
   }
 
   main#main-content header > nav {
     flex-wrap: nowrap;
     overflow-x: auto;
-    padding-block-end: var(--space-xs);
+    padding-block-end: var(--space-2);
     scrollbar-width: thin;
   }
 

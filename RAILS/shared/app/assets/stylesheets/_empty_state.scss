@@ -5,7 +5,7 @@
 .empty-state {
   display: grid;
   justify-items: center;
-  gap: var(--space-2xs, 0.25rem);
+  gap: var(--space-1);
   padding: var(--space-6, 2rem) var(--space-4, 1rem);
   text-align: center;
   border: 0;
@@ -23,7 +23,7 @@
   place-items: center;
   width: 2.5rem;
   height: 2.5rem;
-  margin-block-end: var(--space-2xs, 0.25rem);
+  margin-block-end: var(--space-1);
   border: 0;
   border-radius: var(--radius-pill, 9999px);
   background: var(--hover-subtle, color-mix(in srgb, var(--text) 6%, transparent));
@@ -38,7 +38,7 @@
   content: "○";
   display: grid;
   place-items: center;
-  margin: 0 auto var(--space-2xs, 0.25rem);
+  margin: 0 auto var(--space-1);
   width: 2.5rem;
   height: 2.5rem;
   border: 0;
