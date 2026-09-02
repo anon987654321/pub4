@@ -522,7 +522,7 @@ scale:
       off_scale_space: 32
       # 999px is a pill written as a number, three lines under a
       # --radius-pill that means the same thing.
-      off_scale_radius: 2
-      off_scale_line_height: 1
+      off_scale_radius: 0
+      off_scale_line_height: 0
       absolute_line_height: 0
       off_scale_font_weight: 0

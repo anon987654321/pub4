@@ -322,7 +322,7 @@ body[data-face-pip="1"][data-face-pip-corner="bottom-right"] canvas {
 #zsh-wave span {
   width: 3px;
   height: 4px;
-  border-radius: 999px;
+  border-radius: 2px; /* clamps to 1.5px on this 3x4px span — the pill idiom, on scale */
   background: var(--c-accent);
   transform-origin: center bottom;
   transition: height 90ms var(--ease-linear), opacity 90ms var(--ease-linear), transform 90ms var(--ease-linear);
@@ -616,7 +616,7 @@ body.face-ready .primer-voice { display: none; }
 }
 
 #chat-log::-webkit-scrollbar { width: 6px; height: 6px; }
-#chat-log::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--face-fg) 28%, transparent); border-radius: 3px; }
+#chat-log::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--face-fg) 22%, transparent); border-radius: 4px; }
 
 #chat-log:not(:empty) { pointer-events: auto; }
 .message { position:relative; margin-bottom: 8px; white-space: pre-wrap; word-break: break-word; scroll-snap-align: start; animation: msgIn 220ms var(--ease-spring) both; }
@@ -1012,7 +1012,7 @@ body[data-council-persona]::after { content:attr(data-council-persona); position
 #zsh input,#zsh .pp,#zsh .sep,#zsh .sep2 { font-feature-settings:'liga' 0; }
 
 /* #65 Line-height breathe during speaking */
-body[data-mode="speaking"] .msg-body { line-height:1.62; transition:line-height .6s var(--ease-out); }
+body[data-mode="speaking"] .msg-body { line-height:1.6; transition:line-height .6s var(--ease-out); }
 
 /* #66 Letter-spacing expand during thinking */
 body[data-mode="thinking"] #zsh-status { letter-spacing:.32em; }
