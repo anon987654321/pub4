@@ -2482,13 +2482,20 @@ snapshot against this checkout leaves nothing of substance behind. These are
 what the sweep found still open, each verified against the tree rather than
 taken from the transcript that raised it.
 
-- **`brgen` and `bsdports` have no authorization matrix.** `amber` has
-  `test/integration/authorization_matrix_test.rb`, built after `/items/new`
-  served an anonymous 200 with every gate green; the other two apps still rely
-  on journeys where twelve steps accept `[200, 302, 303]` — "renders the form to
-  a stranger" and "sends them to sign in" scoring the same. Port the matrix, add
-  one authenticated journey per app that writes and asserts the write landed,
-  and turn `requires_data` into a failure with a seed step rather than a skip.
+- **The authorization matrices are built; one follow-on is not.** `brgen` and
+  `bsdports` now carry `test/integration/authorization_matrix_test.rb` beside
+  amber's, each mutation-checked: removing the guard from `CommunitiesController`
+  makes brgen's report `GET /communities/new as guest must NOT be served — got
+  200`, the same shape as the amber bug that started this. Suites green with
+  them in — bsdports 102 runs, brgen 967, zero failures. `requires_data` is
+  promotable now too: `flow_journey.rb` files an empty dataset as `inconclusive!`
+  rather than `warn`, so `GATE_STRICT_INCONCLUSIVE=1` fails a run that measured
+  nothing instead of printing about it. Still open: **one authenticated journey
+  per app that writes and asserts the write landed** — the matrices prove a door
+  opens, not that what went through it arrived. Two matrix rows are scoped to
+  the guest half on purpose and say why in the file: bsdports' `crossref_cves`
+  reaches an external service, and brgen's `reports#create` wants a signed
+  GlobalID before it consults any gate.
 - **`bin/sine_stream.rb:967` is the last un-oversampled `asoftclip`.** Every
   other saturation site in dilla runs `oversample=4` or `8`; this one runs the
   ffmpeg default and aliases above Nyquist. It is left alone deliberately —
