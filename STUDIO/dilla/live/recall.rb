@@ -68,6 +68,10 @@ abort(seed ? "no pass with seed #{seed}" : "nothing in the journal yet") unless 
 
 env = { "LIVE_SEED" => row["seed"].to_s }
 env["LIVE_BED"] = row["bed"].to_s if row["bed"]
+# The kit is part of the take, not part of the environment. Replaying a
+# sampled pass under whatever LIVE_KIT happens to be exported would come back
+# with different drums and the same seed printed over them.
+env["LIVE_KIT"] = row["kit"].to_s if row["kit"]
 label = "#{row['set']} #{row['seed']}"
 
 if keep
