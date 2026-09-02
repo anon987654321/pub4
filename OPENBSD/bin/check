@@ -23,6 +23,12 @@ failures << "phantom_fk" unless runner.run("phantom fk", RUBY, "RAILS/gates/runn
 failures << "domain_align" unless runner.run("domain align", RUBY, "RAILS/gates/runner.rb", "domain_alignment")
 failures << "openbsd_smoke" unless runner.run("openbsd smoke", RUBY, "OPENBSD/deploy_smoke_gate.rb")
 
+# The only copy of production data that leaves vm23 is dr-pull's, and it stopped
+# for seven nights without anything noticing. This asks how old the newest pull
+# is; it skips on any machine without the directory, so it costs nothing
+# anywhere but the operator's Mac, which is the one place it can be true.
+failures << "dr_freshness" unless runner.run("dr freshness", RUBY, "OPENBSD/bin/dr-pull", "--check")
+
 # OPENBSD/test was reachable from no entrypoint at all (MASTER/tools/runs.rb):
 # four files covering the gate library, health check, restore scripts and the VPS
 # safety gate, 80 assertions, running nowhere. They pass, and passing tests that

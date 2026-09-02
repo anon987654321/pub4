@@ -38,8 +38,45 @@ DEST = File.expand_path(ENV.fetch("PUB4_DR_DIR", "~/pub4-dr"))
 KEEP = Integer(ENV.fetch("PUB4_DR_KEEP", "14"))
 APPS = %w[brgen amber bsdports].freeze
 
+STALE_AFTER_DAYS = Integer(ENV.fetch("PUB4_DR_STALE_DAYS", "2"))
+
 def ssh(cmd)
   Open3.capture2e("ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=20", "-i", KEY, HOST, cmd)
+end
+
+# --check answers one question: how old is the newest pull? Nothing asked it
+# between 2026-08-26 and 2026-09-01, so a snapshot that had stopped working
+# looked exactly like one that was working -- seven nights of "snapshot failed
+# on vm23" in a log with no reader. The pull itself is only half a backup; the
+# other half is somebody noticing when it stops.
+#
+# A missing directory is a skip, not a failure. This runs from the repo's local
+# gate, and every machine that is not the operator's Mac correctly has no pulls.
+if ARGV.include?("--check")
+  unless Dir.exist?(DEST)
+    puts "dr-pull: skip — no #{DEST} on this machine"
+    exit 0
+  end
+
+  pulls = Dir.children(DEST).select { |name| File.directory?(File.join(DEST, name)) && name.match?(/\A\d{8}-\d{4}\z/) }
+  # An empty stamp directory is what a failed pull leaves behind, so a pull
+  # counts only once it holds a database.
+  landed = pulls.select { |name| !Dir.glob(File.join(DEST, name, "*.sqlite3")).empty? }.sort
+  if landed.empty?
+    warn "dr-pull: FAIL — #{DEST} holds no pull with a database in it (#{pulls.size} stamp dir(s))"
+    exit 1
+  end
+
+  newest = landed.last
+  age_days = ((Time.now - File.mtime(File.join(DEST, newest))) / 86_400).floor
+  if age_days > STALE_AFTER_DAYS
+    warn "dr-pull: FAIL — newest pull #{newest} is #{age_days} days old, over #{STALE_AFTER_DAYS}. " \
+         "Run `ruby OPENBSD/bin/dr-pull` and read #{DEST}/dr-pull.log for why it stopped."
+    exit 1
+  end
+
+  puts "dr-pull: ok — newest pull #{newest}, #{age_days} day(s) old, #{landed.size} kept"
+  exit 0
 end
 
 if ARGV.include?("--install-launchd")
