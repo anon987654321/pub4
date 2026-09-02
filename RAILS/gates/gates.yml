@@ -122,6 +122,12 @@ css_constitution:
   pass: "CSS constitution gate passed (all stylesheets)."
   covered_by: layout_suite
 
+scale_ratchet:
+  require: lib/source/scale_ratchet
+  class: Deploy::ScaleRatchetGate
+  pass: "Spacing, leading, radius and weight are on the declared scale."
+  covered_by: layout_suite
+
 css_minify_integrity:
   require: lib/source/css_minify_integrity
   class: Deploy::CssMinifyIntegrityGate
