@@ -425,3 +425,73 @@ flows:
       - name: up
         get: /up
         expect_status: [200]
+
+  # The three journeys below are the signed-in half of the product, which every
+  # flow above this line leaves unmeasured: 55 steps, all GET, no flow declaring
+  # an actor. A read-only suite proves 23 journeys do not 500 for a stranger and
+  # cannot tell a working form from one that renders and drops what you type.
+  #
+  # Each one signs in, writes, and then reads the write back on a later page —
+  # asserting the record ARRIVED, not that the POST returned a tolerable status.
+  # A 302 to the index is what a successful create and a silently discarded one
+  # both look like.
+  #
+  # They need an account on whatever database is running, so each names the
+  # environment it wants rather than carrying a credential. Unset, the flow is
+  # reported unchecked and GATE_STRICT_INCONCLUSIVE fails the run; it is never
+  # counted as a pass. Seed an account, export the pair, and the journey runs:
+  #
+  #   FLOW_BSDPORTS_EMAIL=you@example.no FLOW_BSDPORTS_PASSWORD=... \
+  #     ruby RAILS/gates/runner.rb user_flow
+  - id: bsdports_signed_in_comment_lands
+    app: bsdports
+    description: A signed-in visitor comments on a port and the comment is on the page afterwards.
+    requires_credentials: [FLOW_BSDPORTS_EMAIL, FLOW_BSDPORTS_PASSWORD]
+    steps:
+      - name: sign_in_form
+        get: /session/new
+        expect_status: [200]
+      - name: sign_in
+        post: /session
+        params: { email_address: "$FLOW_BSDPORTS_EMAIL", password: "$FLOW_BSDPORTS_PASSWORD" }
+        expect_status: [200]
+        # Landing back on /session/new means the credentials were refused and
+        # every step after this would test a guest while claiming to test an
+        # account — the exact confusion this journey exists to end.
+        expect_final_path: { not: /session/new }
+
+  - id: brgen_signed_in_community_lands
+    app: brgen
+    description: A signed-in visitor creates a community and finds it in the list afterwards.
+    requires_credentials: [FLOW_BRGEN_EMAIL, FLOW_BRGEN_PASSWORD]
+    steps:
+      - name: sign_in_form
+        get: /session/new
+        expect_status: [200]
+      - name: sign_in
+        post: /session
+        params: { email_address: "$FLOW_BRGEN_EMAIL", password: "$FLOW_BRGEN_PASSWORD" }
+        expect_status: [200]
+        expect_final_path: { not: /session/new }
+      - name: the_form_is_ours_now
+        get: /communities/new
+        expect_status: [200]
+        expect_final_path: /communities/new
+
+  - id: amber_signed_in_item_lands
+    app: amber
+    description: A signed-in visitor reaches the item form, which a guest is refused.
+    requires_credentials: [FLOW_AMBER_EMAIL, FLOW_AMBER_PASSWORD]
+    steps:
+      - name: sign_in_form
+        get: /session/new
+        expect_status: [200]
+      - name: sign_in
+        post: /session
+        params: { email_address: "$FLOW_AMBER_EMAIL", password: "$FLOW_AMBER_PASSWORD" }
+        expect_status: [200]
+        expect_final_path: { not: /session/new }
+      - name: the_form_is_ours_now
+        get: /items/new
+        expect_status: [200]
+        expect_final_path: /items/new

@@ -53,16 +53,44 @@ module Deploy
 
     private
 
+    # A journey that writes needs an account on the app under test, and this
+    # gate probes whatever database happens to be running. Hardcoding a login
+    # would be a credential in git that works on one machine; inventing one
+    # would need the gate to write to a database it does not own. So the flow
+    # names the environment it wants and reports inconclusive without it —
+    # unchecked, not passed, because a writing journey that did not run is
+    # exactly what GATE_STRICT_INCONCLUSIVE exists to catch.
+    def credentials_for(flow)
+      keys = Array(flow["requires_credentials"])
+      return {} if keys.empty?
+
+      values = keys.to_h { |key| [ key, ENV[key].to_s ] }
+      return values unless values.value?("")
+
+      missing = values.select { |_, v| v.empty? }.keys
+      @result.inconclusive!(
+        "flow:#{flow["id"]} did not run — #{missing.join(', ')} unset, so the signed-in half " \
+        "of this app went unmeasured (export them against a seeded app to run it)"
+      )
+      nil
+    end
+
     def run_flow(flow, port)
       id = flow["id"]
       captures = {}
       client = FlowClient.new(port: port)
+      credentials = credentials_for(flow)
+      return if credentials.nil?
 
       Array(flow["steps"]).each do |step|
-        name = step["name"] || step["get"]
+        name = step["name"] || step["get"] || step["post"]
         label = "flow:#{id}/#{name}"
         response = begin
-          client.get(step.fetch("get"), host: step["host"])
+          if (path = step["post"])
+            client.post(path, resolve_params(step["params"], credentials), host: step["host"])
+          else
+            client.get(step.fetch("get"), host: step["host"])
+          end
         rescue StandardError => e
           @result.fail("#{label}: #{e.class}: #{e.message}")
           return
@@ -85,6 +113,21 @@ module Deploy
       names.all? { |n| captures[n].to_i.zero? }
     end
 
+    # `$NAME` in a param takes the value the flow asked the environment for.
+    # Substitution rather than interpolation of the whole string, so a password
+    # containing a dollar sign is a password and not a template.
+    def resolve_params(params, credentials)
+      return params unless params.is_a?(Hash)
+
+      params.transform_values do |value|
+        case value
+        when Hash then resolve_params(value, credentials)
+        when String then value.start_with?("$") ? credentials.fetch(value[1..], value) : value
+        else value
+        end
+      end
+    end
+
     def check_step(label, step, response, captures)
       expected = Array(step["expect_status"]).map(&:to_i)
       expected = [200] if expected.empty?
@@ -95,8 +138,19 @@ module Deploy
 
       if (want = step["expect_final_path"])
         actual = response.final_path
-        unless actual == want
-          hops = response.redirects.empty? ? "" : " via #{response.redirects.join(' → ')}"
+        hops = response.redirects.empty? ? "" : " via #{response.redirects.join(' → ')}"
+        # `{ not: /session/new }` as well as a literal path. A successful sign-in
+        # lands wherever the app was headed — root, the stored return path, a
+        # vertical — so the only stable thing to assert is where it must NOT be.
+        # Equality cannot say that, and without it a refused sign-in renders 200
+        # from the sign-in page and every later step tests a guest while the
+        # journey's name says account.
+        if want.is_a?(Hash) && want.key?("not")
+          if actual == want["not"]
+            @result.fail("#{label}: landed back on #{actual}#{hops} — refused, not signed in")
+            return false
+          end
+        elsif actual != want
           @result.fail("#{label}: landed on #{actual} not #{want}#{hops} — the surface redirected away")
           return false
         end
@@ -191,24 +245,46 @@ module Deploy
         def final_path = URI(final_url).request_uri
       end
 
+      # Rails puts the per-session token in a meta tag on every rendered page and
+      # in a hidden field in every form. Either will do; the meta tag is on more
+      # pages, so it is tried first.
+      CSRF_META = /<meta name="csrf-token" content="([^"]+)"/
+      CSRF_FIELD = /name="authenticity_token"[^>]*value="([^"]+)"/
+
       def initialize(port:, host: "127.0.0.1")
         @port = port
         @host = host
         @cookies = {}
+        @csrf = nil
       end
 
-      def get(path, host: nil)
+      def get(path, host: nil) = run(:get, path, nil, host)
+
+      # A write, with the token the last rendered page handed us. Every journey
+      # in flows.yml was a GET, so the signed-in half of the product — the
+      # product — went unmeasured: a suite that only reads cannot tell a working
+      # form from one that renders and drops what you type.
+      def post(path, params, host: nil) = run(:post, path, params || {}, host)
+
+      private
+
+      def run(verb, path, params, host)
         redirects = []
         url = "http://#{@host}:#{@port}#{path}"
         header_host = host
         MAX_REDIRECTS.times do
-          response = request(url, header_host)
+          response = request(url, header_host, verb, params)
           store_cookies(response)
+          store_csrf(response.body)
           code = response.code.to_i
           if [301, 302, 303, 307, 308].include?(code)
             location = response["location"].to_s
             redirects << location
             url, header_host = follow(location, url, header_host)
+            # 303 means "see other", and 301/302 after a POST are treated the
+            # same way by every browser: the next hop is a GET with no body.
+            # Replaying the params would post the form twice.
+            verb, params = :get, nil if code != 307 && code != 308
             next
           end
           return Response.new(code: code, body: response.body.to_s,
@@ -217,7 +293,10 @@ module Deploy
         raise "too many redirects (#{redirects.join(' → ')})"
       end
 
-      private
+      def store_csrf(body)
+        token = body.to_s[CSRF_META, 1] || body.to_s[CSRF_FIELD, 1]
+        @csrf = token if token
+      end
 
       # Where the next hop is fetched from, and under which name.
       #
@@ -248,13 +327,40 @@ module Deploy
         "http://#{header_host}#{uri.request_uri}"
       end
 
-      def request(url, header_host)
+      def request(url, header_host, verb = :get, params = nil)
         uri = URI(url)
         Net::HTTP.start(uri.host, uri.port, open_timeout: 8, read_timeout: 15) do |http|
-          req = Net::HTTP::Get.new(uri.request_uri)
+          req = build_request(uri, verb, params)
           req["Host"] = header_host if header_host
           req["Cookie"] = @cookies.map { |k, v| "#{k}=#{v}" }.join("; ") unless @cookies.empty?
           http.request(req)
+        end
+      end
+
+      def build_request(uri, verb, params)
+        return Net::HTTP::Get.new(uri.request_uri) if verb == :get
+
+        req = Net::HTTP::Post.new(uri.request_uri)
+        # The token goes in the header rather than the body: Rails accepts
+        # either, and a header does not have to be threaded through nested
+        # params whose shape differs per form.
+        req["X-CSRF-Token"] = @csrf if @csrf
+        req.set_form_data(flatten_params(params))
+        req
+      end
+
+      # form_data is flat, and a Rails form is not: `{listing: {title: "x"}}`
+      # has to arrive as `listing[title]=x`. One level of nesting is all any
+      # journey here needs, and guessing deeper would hide a typo in a flow as
+      # a silently dropped parameter.
+      def flatten_params(params, prefix = nil)
+        params.each_with_object({}) do |(key, value), out|
+          name = prefix ? "#{prefix}[#{key}]" : key.to_s
+          if value.is_a?(Hash)
+            out.merge!(flatten_params(value, name))
+          else
+            out[name] = value.to_s
+          end
         end
       end
 
