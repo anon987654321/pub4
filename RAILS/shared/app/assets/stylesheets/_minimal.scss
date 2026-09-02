@@ -64,7 +64,7 @@ body {
   html,
   body {
     font-size: var(--root-scale-wide, 21px); /* the large-screen rem base — snapping it to a ladder step would rescale every rem in the system */
-    line-height: 28px;
+    line-height: var(--leading-snug);
   }
 }
 
@@ -524,7 +524,7 @@ footer {
   width: 100%;
   height: auto;
   aspect-ratio: 16 / 9;
-  border-radius: 6px;
+  border-radius: var(--radius-xs);
   margin-bottom: 8px;
   flex: none;
 }

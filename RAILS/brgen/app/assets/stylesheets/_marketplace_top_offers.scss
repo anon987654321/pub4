@@ -28,7 +28,7 @@
   font-size: clamp(1.35rem, 3.5vw, 1.75rem);
   font-weight: var(--weight-bold);
   letter-spacing: -0.03em;
-  line-height: 1.15;
+  line-height: var(--leading-tight);
   color: var(--text);
 }
 

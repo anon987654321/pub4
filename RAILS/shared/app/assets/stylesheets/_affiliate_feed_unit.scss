@@ -67,7 +67,7 @@
   position: relative;
   z-index: 1;
   font-size: var(--text-xs);
-  line-height: 1.3;
+  line-height: var(--leading-tight);
 }
 
 /* The image runs to the tile edge, so the label needs its own ground rather
