@@ -2482,21 +2482,29 @@ snapshot against this checkout leaves nothing of substance behind. These are
 what the sweep found still open, each verified against the tree rather than
 taken from the transcript that raised it.
 
-- **The three journey-gate follow-ons are done; the live half is undemonstrated.**
+- **The three journey-gate follow-ons are done and the journeys have run.**
   `brgen` and `bsdports` carry `test/integration/authorization_matrix_test.rb`
   beside amber's, mutation-checked. `requires_data` is `inconclusive!` rather
-  than `warn`, so `GATE_STRICT_INCONCLUSIVE=1` fails a run that measured
-  nothing. And `flows.yml` has three signed-in writing journeys, which it had
-  none of: 55 steps, all GET, no flow declaring an actor. What is **not** shown
-  is any of them passing against a running app — they need an account on
-  whatever database is up, so each names `FLOW_<APP>_EMAIL` /
-  `FLOW_<APP>_PASSWORD` and reports unchecked without them. Boot the triangle,
-  seed an account per app, export the pairs, and run
-  `ruby RAILS/gates/runner.rb flow_journey` to close this properly. Until then
-  the mechanics are unit-proven — CSRF from meta and hidden field, one level of
-  param nesting, the 303 verb switch over a real socket, the credential
-  placeholder that leaves a `$`-leading password alone — and the journeys
-  themselves have never run.
+  than `warn`. And `flows.yml` has three signed-in writing journeys where it
+  had none — 55 steps, all GET, no flow declaring an actor. Driven live on
+  2026-09-02 against a booted triangle with an account seeded per app:
+  **`flow_journey PASSED`, 25 checks ran, 1 skipped**, and a deliberately wrong
+  password fails it with `landed back on /session/new — refused, not signed in`.
+- **`flow_journey` could never have reported PASSED.** Found by running it: the
+  gate never called `GateResult#checked!`, so `measured_nothing?` saw
+  `checks_ran == 0` and one skipped precondition spoke for the whole run — 25
+  journeys green under a verdict line reading "checked nothing". Fixed, and it
+  is the same defect `checked!` was written for in `human_walkthrough`, which
+  suggests looking at the other gates that never call it.
+- **A skipped writing journey does not block, and the earlier note here said it
+  did.** `GATE_STRICT_INCONCLUSIVE` promotes only `measured_nothing?`, so a run
+  that exercises 25 journeys and skips one passes in strict mode too —
+  `gate_result.rb` explains that this is deliberate, because promoting at
+  record time once made a gate that ran fifty checks and skipped one hard-fail
+  on the deploy host. What unchecked buys is that the journey is named in
+  "Not checked" every run and never counted among the passes; noticing it is
+  still a person's job. If that is not enough, the missing piece is a
+  per-journey severity, not a stricter reading of the existing flag.
 - **`bin/sine_stream.rb:967` is the last un-oversampled `asoftclip`.** Every
   other saturation site in dilla runs `oversample=4` or `8`; this one runs the
   ffmpeg default and aliases above Nyquist. It is left alone deliberately —
