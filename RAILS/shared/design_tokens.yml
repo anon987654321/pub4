@@ -441,7 +441,19 @@ scale:
   # 1, 2 and 3 are hairlines -- a 1px pull to close a border seam is not a
   # spacing decision and has no smaller step to round to. 44 is tap_min and 12 is
   # chrome_inset, both already in shared_chrome above.
-  space_px: [0, 1, 2, 3, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 56, 64, 72, 80, 96, 128]
+  # 6, 10 and 14 added 2026-09-02. Not new values: they are what the stylesheets
+  # already use and what this scale was missing. Of ScaleLint's 97 off-scale
+  # spacing findings, 67 were exactly 6, 10 or 14 — the midpoints of this list's
+  # own gaps between 4-8, 8-12 and 12-16. Measured the same day, medium.com uses
+  # 4/6/8/16/24, kimi.com 4/6/8/12 and joi.com 4/6/8/20: all three carry 6px, and
+  # none of them is on an 8px grid either.
+  #
+  # The alternative was rewriting 65 stylesheets by up to 2px each, which moves
+  # real layout to satisfy a scale rather than fixing a scale that is wrong.
+  # Below 4 this list is already a 1px grid and above 16 a 4px one, so the 4-16
+  # range becoming a 2px grid is the shape it was always nearest — finer where
+  # padding and gaps live, coarser where layout spacing does.
+  space_px: [0, 1, 2, 3, 4, 6, 8, 10, 12, 14, 16, 20, 24, 28, 32, 36, 40, 44, 48, 56, 64, 72, 80, 96, 128]
 
   # Unitless only. An absolute line-height does not inherit: a child at another
   # font-size gets the parent's pixel figure anyway, and brgen's 18px root makes
@@ -494,7 +506,7 @@ scale:
       # operator has been shaping; snapping them moves rendered spacing, which is
       # a visual decision rather than a lint fix, so they are named here instead
       # of changed. Snap them and re-run to take this back down.
-      off_scale_space: 65
+      off_scale_space: 50
       # 13 -> 6 on 2026-08-24 (operator). The nine sites that flanked the
       # carrier value are on it: 1.55 in _channel_irc, _chrome_polish, _posts
       # and _chat_reactions, and 1.45 in _vertical_marketplace and
@@ -519,7 +531,7 @@ scale:
       # or two apart. design_tokens already governs the face -- face_root: is
       # generated into its :root -- so the tokens were shared and the rhythm
       # was not.
-      off_scale_space: 32
+      off_scale_space: 3
       # 999px is a pill written as a number, three lines under a
       # --radius-pill that means the same thing.
       off_scale_radius: 0
