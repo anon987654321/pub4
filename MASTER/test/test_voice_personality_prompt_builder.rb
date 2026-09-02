@@ -25,7 +25,19 @@ class TestPersonalityPromptBuilder < Minitest::Test
     refute_includes core_prompt, "<master_style>"
   end
 
-  def test_core_context_keeps_constitution_and_output_contract
+  # voice.yml's strunk block carries apply_to, never_apply_to and safeguards.
+# All three had no reader, so the prompt banned preambles and hedges without
+# ever saying what they were banned from -- and an unscoped ban on "will",
+# "could" and "might" is a ban on the words an algorithm's own comment needs.
+def test_strunk_scope_reaches_the_constitution
+  prompt = Master::Voice::Personality.new(:anchor).system_prompt(context: :core)
+
+  assert_includes prompt, "style_applies_to: prose, comments, documentation, strings"
+  assert_includes prompt, "style_never_touches: code_logic, algorithms, data_structures"
+  assert_includes prompt, "style_safeguards: never_delete_variable_names"
+end
+
+def test_core_context_keeps_constitution_and_output_contract
     persona = Master::Voice::Personality.new(:medic)
     core_prompt = persona.system_prompt(context: :core)
 

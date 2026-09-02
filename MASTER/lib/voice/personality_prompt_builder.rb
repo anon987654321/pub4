@@ -160,9 +160,28 @@ module Master
           # the filler comments were not -- which is the noise that actually
           # arrives in generated code.
           "comment_never: #{Array(strunk["code_preambles"]).first(4).join(' / ')}",
+          strunk_scope_line(strunk),
           "evidence_only: show diff or file content; never assert; active voice",
           anti_simulation_line(anti_simulation),
           "</master_constitution>",
+        ].compact.join("\n")
+      end
+
+      # The three lines above say what never to write and never said where, and
+      # voice.yml has carried the answer with no reader: apply_to, never_apply_to
+      # and safeguards. Unscoped, a ban on hedges and preambles reads as a ban on
+      # the words an algorithm's own comment needs, which is the mistake
+      # anti_simulation_line below had to be narrowed for in its own turn.
+      def strunk_scope_line(strunk)
+        applies = Array(strunk["apply_to"])
+        never = Array(strunk["never_apply_to"])
+        safeguards = Array(strunk["safeguards"])
+        return if applies.empty? && never.empty? && safeguards.empty?
+
+        [
+          ("style_applies_to: #{applies.join(', ')}" unless applies.empty?),
+          ("style_never_touches: #{never.join(', ')}" unless never.empty?),
+          ("style_safeguards: #{safeguards.join(', ')}" unless safeguards.empty?),
         ].compact.join("\n")
       end
 
