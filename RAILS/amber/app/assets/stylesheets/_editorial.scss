@@ -58,11 +58,3 @@
   max-width: var(--measure-narrow, 45ch);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
-  }
-}

@@ -121,11 +121,3 @@
   border-color: color-mix(in srgb, var(--dating-pass) 55%, transparent);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
-  }
-}

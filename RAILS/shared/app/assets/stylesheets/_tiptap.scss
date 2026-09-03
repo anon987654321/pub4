@@ -101,11 +101,3 @@
 
 .tiptap_btn:hover { color: var(--text); background: var(--hover); }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
-  }
-}

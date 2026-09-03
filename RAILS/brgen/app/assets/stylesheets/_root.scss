@@ -128,8 +128,6 @@ a:hover { text-decoration: underline; }
   outline-offset: 2px;
 }
 
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
-
 /* Brgen-specific shell tweaks on top of the shared x shell. */
 /* Inset below the permanent nav. The bar is fixed chrome at y=0, and this
    shell is the scroll container -- without the offset main starts at y=0 and
@@ -147,7 +145,6 @@ a:hover { text-decoration: underline; }
   letter-spacing: var(--tracking-tightest);
   font-weight: var(--weight-heavy);
 }
-
 
 /* The gutter the wordmark reserves, sized from the wordmark.
 

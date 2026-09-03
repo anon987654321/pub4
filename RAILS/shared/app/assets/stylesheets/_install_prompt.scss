@@ -87,12 +87,3 @@
   padding-bottom: var(--safe-bottom, 0px);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
-  }
-}
-

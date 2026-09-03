@@ -188,15 +188,6 @@ input[type=file]::file-selector-button {
 input:focus, textarea:focus, select:focus { background: var(--hover); }
 textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
-  }
-}
-
 /* Where a crosspost came from, where it also went, and the control that sends
    it somewhere new. Quiet lines around the post body — the post is the page. */
 .post-crosspost-source,

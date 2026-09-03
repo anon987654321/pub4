@@ -52,15 +52,6 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
-  }
-}
-
 /* The community's own reference pages. Reading measure for the body, the
    history quiet under it — the page is what someone came for. */
 .wiki-page .prose {

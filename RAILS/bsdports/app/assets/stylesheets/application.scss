@@ -519,11 +519,3 @@ article > header {
   a { text-decoration: underline; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
-  }
-}

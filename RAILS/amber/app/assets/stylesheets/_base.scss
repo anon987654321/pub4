@@ -50,15 +50,6 @@ a {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
-  }
-}
-
 /* Unread message: the same two-signal state the notification list wears —
    weight and a leading accent dot; the "unread" word in the meta line is
    the third, textual signal. */

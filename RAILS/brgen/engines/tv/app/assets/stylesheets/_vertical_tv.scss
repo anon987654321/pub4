@@ -112,15 +112,6 @@ body.vertical-tv .show-card:hover {
   background: var(--hover-subtle);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
-  }
-}
-
 // Measured by Pub4::CssCoverageLint 2026-08-11.
 .episode-link {
   display: flex;

@@ -41,11 +41,3 @@
 .splash .hint { color: var(--text-dim); font-size: var(--text-xs); letter-spacing: var(--tracking-wide); }
 .splash a { color: inherit; }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
-  }
-}

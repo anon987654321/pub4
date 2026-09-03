@@ -155,11 +155,3 @@ label.compose-action {
 label.compose-action:hover { color: var(--text); }
 .compose-hint { font-size: var(--font-size); margin: var(--space-2) 0 0; }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
-  }
-}

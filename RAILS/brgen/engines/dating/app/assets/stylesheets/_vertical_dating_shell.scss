@@ -124,11 +124,3 @@ body.vertical-dating .nearby-chat-widget {
   color: var(--dating-ink);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
-  }
-}

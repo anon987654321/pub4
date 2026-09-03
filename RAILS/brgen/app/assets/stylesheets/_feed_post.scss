@@ -191,15 +191,6 @@
   resize: vertical;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
-  }
-}
-
 /* PRESERVE_THEN_IMPROVE action bar — mobile optical distribution.
    Spaces and taps on scale (4 / 8 / 44). Line-heights on scale only. */
 .feed-action-form {

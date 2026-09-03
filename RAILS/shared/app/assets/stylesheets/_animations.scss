@@ -23,11 +23,21 @@
   animation-delay: calc(var(--delay) * 40ms);
 }
 
+// The one reduced-motion reset in the family. _stack.scss and _stack_brgen.scss
+// both @forward this file ahead of every component sheet, so each app bundle
+// carries it once and no component needs to restate it — thirty copies of these
+// five lines were removed on 2026-09-03 and the compiled CSS was unchanged but
+// for their absence.
+//
+// scroll-behavior belongs here because `animation: none` does not reach it: a
+// sheet that sets `scroll-behavior: smooth` (brgen _dating_media) still animates
+// scrolling under a reduce preference unless this line overrides it.
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation: none !important;
     transition: none !important;
+    scroll-behavior: auto !important;
   }
 }

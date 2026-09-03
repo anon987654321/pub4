@@ -468,11 +468,3 @@ main[role="main"] {
   margin-inline-start: auto;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
-  }
-}
