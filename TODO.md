@@ -2176,6 +2176,44 @@ agent work in this tree:
   but techno/soul/jazz must blend as parameters). That direction is a design
   goal, not a backlog item to close unprompted.
 
+### The crate — what 2026-09-02 established about it
+
+Measured while answering a question about disk, and the numbers are worse than
+the question was.
+
+- **160 of the crate's 161 sources no longer exist.** Every rack's sidecar
+  names the file it was chopped from; exactly one, `samples/dug/arat_swost_wolet.mp3`,
+  is still on disk. `samples/dug/` was gitignored, so the 2026-08-31 tree loss
+  took it and the reclone could not bring it back. The 2-second loops in
+  `samples/chopped/` are now the only surviving audio from those records.
+- **The crate is in no backup.** `STUDIO/dilla/.gitignore:11` ignores
+  `samples/` wholesale — zero racks are tracked — and `OPENBSD/bin/dr-pull`
+  copies the three production databases and nothing else. So 12 minutes of
+  irreplaceable audio lives on exactly one disk, which is the state
+  `samples/dug/` was in the day before it went. **This is the open item**: pull
+  `samples/` to the same rotated off-box location dr-pull already uses, or
+  somewhere the operator names.
+- **37 duplicate racks were deleted 2026-09-02, on the operator's instruction.**
+  `radio_chop.rb:664` records the cause: one shared work directory keyed cuts on
+  the window's offset alone, so record B was handed the cut record A made at the
+  same decisecond. 161 racks carried 123 unique loops; Barney Kessel, Gorillaz
+  and "Gimme the Flu" were one wav under four names. The fix (a directory per
+  source) was already in; the damage was not, and none of it could be re-chopped
+  because all 66 affected sources are gone.
+  The rule was: keep every rack the liveset names, then the earliest
+  `rendered_at` in each group — the rack whose own chop run made the audio,
+  since the later ones only reused its cached cut. A dry run caught the rule
+  deleting `andrzej_koszinski_eurocr_01`, a live bed, because a *second* rack in
+  its group was also a bed and won on age; keeping every named rack is why one
+  duplicate pair deliberately survives. 124 racks now, 123 unique, all 22
+  liveset beds resolve.
+- **`scratch/chop_work` was deleted with them** — 2,144 files, 5.4 GB, the
+  Henryk Debich windows and their six-stem separations. It was never wired into
+  the liveset (the rig globs `samples/chopped/*/`), and its one consumer, the
+  chop cache, is unreachable because `RadioChop.chop` scans the source before it
+  consults the cache and that source is gone. It was still 67 minutes of audio
+  against the crate's 12, and it is not recoverable.
+
 ### The engine is one file
 
 dilla.rb carries the 81 parts that were under `lib/engine/`, in the order they
