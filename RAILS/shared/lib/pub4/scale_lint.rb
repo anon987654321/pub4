@@ -170,6 +170,17 @@ module Pub4
     def line_heights = @line_heights ||= scale.fetch("line_height").map { |v| Float(v) }
     def letter_spacings = @letter_spacings ||= scale.fetch("letter_spacing_em").map { |v| Float(v) }
 
+    # name -> weight, read from the stylesheet that declares the tokens. Without
+    # it a weight reaching an element through var(--weight-heavy) is invisible to
+    # a check that only reads literals.
+    def weight_tokens
+      @weight_tokens ||= begin
+        file = File.join(REPO_ROOT, "RAILS/shared/app/assets/stylesheets/_dialect_tokens.scss")
+        body = File.file?(file) ? File.read(file) : ""
+        body.scan(/(--weight-[\w-]+)\s*:\s*(\d+)\s*;/).to_h { |n, v| [ n, v.to_i ] }
+      end
+    end
+
     def font_weights = @font_weights ||= scale.fetch("font_weight").map { |v| Integer(v) }
 
     DECLARATION = /(?<prop>[-a-z]+)\s*:\s*(?<value>[^;{}]+)[;}]/
@@ -248,6 +259,7 @@ module Pub4
 
     def check_font_weight(file, line, prop, value)
       bare = strip_computed(value).strip
+      bare = weight_tokens[value[/--weight-[\w-]+/]].to_s if value.include?("var(--weight-")
       return [] unless bare.match?(/\A\d+\z/)
       return [] if font_weights.include?(Integer(bare))
 
