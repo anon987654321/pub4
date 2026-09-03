@@ -711,6 +711,14 @@ learned_smells:
 # n_plus_one's regex matched the FIX keywords (includes/preload/eager_load),
 # not the problem, riding alongside the real N_PLUS_ONE rule
 # (universal_rules.rb:40). Both were redundant, one was backwards.
+# A rule with no detect_* key has no detector in this file. Look for it by id:
+# most live in law/ (one file per domain), the rest in the scanner registry
+# under lib/review/scan/rules/. A few are folded into another rule and are
+# reported under that rule's id — those carry folded_into.
+#
+# They were each written here as `detect_lexical: ~` with that sentence after
+# it, 87 times. The key is read for truthiness everywhere it is read at all,
+# so nil said exactly what absent says.
 rules:
   codebase:
   - id: PRESERVE_FIRST
@@ -1237,7 +1245,6 @@ rules:
     tier: core
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Add ''# frozen_string_literal: true'' as first line.'
   - id: SINGLE_PRIVATE_SECTION
     source: Ruby Style Guide / RuboCop Style/AccessModifierDeclarations
@@ -1245,7 +1252,6 @@ rules:
     tier: design
     severity: info
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use a single 'private' keyword with methods below it.
   - id: STRICT_MODE_ZSH
     source: Shell strict mode set -euo pipefail (Google Shell Style Guide)
@@ -1253,7 +1259,6 @@ rules:
     tier: core
     severity: error
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Add 'set -euo pipefail' after shebang.
   - id: HTML_LANG
     source: WCAG 3.1.1 Language of Page (W3C/WAI)
@@ -1261,7 +1266,6 @@ rules:
     tier: accessibility
     severity: error
     autofix: true
-    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: Add lang="en" or appropriate locale.
     languages:
     - html
@@ -1271,7 +1275,6 @@ rules:
     tier: accessibility
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use <header>, <footer>, <nav>, <main>, <aside>, <article>, <section>.
   - id: MOBILE_FIRST
     source: Mobile First (Luke Wroblewski, 2011)
@@ -1279,7 +1282,6 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use min-width (mobile-first, progressive enhancement).
   - id: NO_IMPORT_SCSS
     source: Sass best practice — @use over @import (Sass team)
@@ -1287,7 +1289,6 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: "@import is deprecated. Use @use/@forward."
   - id: NO_IMPORTANT
     source: CSS best practice — avoid !important (MDN)
@@ -1295,7 +1296,6 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_lexical: ~ # the registry (lib/review/scan/rules/web_rules.rb), not law/
     fix: Restructure selectors to avoid specificity bankruptcy.
     languages:
     - css
@@ -1305,7 +1305,6 @@ rules:
     tier: aesthetic
     severity: info
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     detect_semantic: Does this file have dense blocks with no visual breaks, or ragged
       indentation?
     fix: One blank line between sections, never more than two consecutive.
@@ -1315,7 +1314,6 @@ rules:
     tier: aesthetic
     severity: info
     autofix: true
-    detect_lexical: ~ # folded into another rule; no detector of its own
     folded_into: SQUINT_TEST # same detector; one law, two ids
     fix: One blank line between sections, never more than two.
   - id: NO_MULTIPLE_LANGUAGES
@@ -1324,7 +1322,6 @@ rules:
     tier: clean_code
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     detect_semantic: Does this file embed multiple languages or notations? Does this
       document mix incompatible frameworks?
     fix: One language per layer. Separate into distinct files or clearly demarcated
@@ -1344,7 +1341,6 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Replace literal with t('.key').
   - id: STRICT_LOADING_MISSING
     source: Rails strict_loading — N+1 prevention (Rails Guides)
@@ -1352,7 +1348,6 @@ rules:
     tier: design
     severity: info
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Add `self.strict_loading_by_default = true` to surface missing eager-loads.
   - id: RATE_LIMITING_MISSING
     source: OWASP API Security — rate limiting
@@ -1360,7 +1355,6 @@ rules:
     tier: security
     severity: error
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Add rate_limit/throttle to sensitive actions.
   - id: MIGRATION_ADD_REFERENCE_NO_FK
     source: 'Rails migrations — foreign_key: true (Strong Migrations)'
@@ -1368,7 +1362,6 @@ rules:
     tier: robustness
     severity: error
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Add `foreign_key: true` to enforce referential integrity.'
   - id: MIGRATION_REMOVE_COLUMN
     source: Strong Migrations — safe column removal (Andrew Kane)
@@ -1376,7 +1369,6 @@ rules:
     tier: robustness
     severity: error
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Document safety/backfill path before removing a column.
   - id: MIGRATION_FIND_OR_CREATE_BY
     source: Rails best practice — find_or_create_by races
@@ -1384,7 +1376,6 @@ rules:
     tier: robustness
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Back find_or_create_by with a unique index to prevent duplicates.
   line:
   - id: NO_JQUERY
@@ -1393,7 +1384,6 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Replace the selector call with a Stimulus target or querySelector.
   - id: NO_INLINE_ASSETS_IN_SHELL
     source: RAILS/shared frontend convention
@@ -1401,7 +1391,6 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Move the markup into app/views and the style into a tracked stylesheet.
   - id: EXPLICIT
     source: The Zen of Python — explicit is better than implicit (Tim Peters)
@@ -1425,7 +1414,6 @@ rules:
     tier: clean_code
     severity: info
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Flatten to: return ... unless condition'
   - id: SAFE_NAVIGATION
     source: Ruby Style Guide / RuboCop Style/SafeNavigation
@@ -1433,7 +1421,6 @@ rules:
     tier: style
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Rewrite to x&.foo&.bar
   - id: EACH_WITH_OBJECT
     source: Ruby Style Guide / RuboCop Style/EachWithObject
@@ -1441,7 +1428,6 @@ rules:
     tier: style
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     # Narrow on purpose, and the narrowing is load-bearing rather than pedantic.
     #
     # The two forms are not interchangeable: each_with_object yields the object
@@ -1480,7 +1466,6 @@ rules:
     tier: style
     severity: info
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Use Array(x) instead of x.nil? ? [] : x'
   - id: PERCENT_LITERAL
     source: Ruby Style Guide — %w/%i array literals
@@ -1488,7 +1473,6 @@ rules:
     tier: style
     severity: info
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use %i[a b c] for symbol arrays.
   - id: HASH_FETCH
     source: Ruby Style Guide — Hash#fetch over [] for required keys
@@ -1496,7 +1480,6 @@ rules:
     tier: style
     severity: info
     autofix: false
-    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: Use hash.fetch(:key, default) for nil-vs-false safety.
     languages:
     - ruby
@@ -1506,7 +1489,6 @@ rules:
     tier: style
     severity: info
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use .transform_values { |v| ... }
   - id: USE_THEN
     source: Ruby idiom — Object#then (yield_self) for pipelines
@@ -1514,7 +1496,6 @@ rules:
     tier: style
     severity: info
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Chain with .then { |r| next_step(r) }
   - id: RESCUE_ON_DEF
     source: Ruby Style Guide — rescue in method definitions
@@ -1522,7 +1503,6 @@ rules:
     tier: style
     severity: info
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Put rescue directly on the def block.
   - id: BARE_RESCUE
     source: Ruby Style Guide / RuboCop Lint/RescueException — no bare rescue
@@ -1533,7 +1513,6 @@ rules:
     # (?<![\w:.]) so a symbol or method named :bare_rescue is not a bare rescue.
     # `@transforms << :bare_rescue` in the autofixer that repairs bare rescues had
     # been an error-severity finding against itself, recorded in TODO.md as noise.
-    detect_lexical: ~ # folded into another rule; no detector of its own
     folded_into: FAIL_VISIBLY # same detector; one law, two ids
     fix: Rescue StandardError or a specific class.
     languages:
@@ -1544,7 +1523,6 @@ rules:
     tier: performance
     severity: warning
     autofix: false
-    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: Add .includes(:association).
     languages:
     - rails
@@ -1554,7 +1532,6 @@ rules:
     tier: performance
     severity: warning
     autofix: false
-    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: 'Use .find_each(batch_size: 1000).'
     languages:
     - rails
@@ -1564,7 +1541,6 @@ rules:
     tier: safety
     severity: error
     autofix: true
-    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: update_attribute skips validations. Use update!
     languages:
     - rails
@@ -1574,7 +1550,6 @@ rules:
     tier: performance
     severity: info
     autofix: false
-    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: Use .pluck(:column) to avoid AR object instantiation.
     languages:
     - rails
@@ -1584,7 +1559,6 @@ rules:
     tier: style
     severity: warning
     autofix: false
-    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: Use const unless the variable is reassigned.
     languages:
     - javascript
@@ -1594,7 +1568,6 @@ rules:
     tier: style
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Rewrite to obj?.foo?.bar
   - id: NULLISH_COALESCING
     source: ECMAScript 2020 — nullish coalescing (??)
@@ -1602,7 +1575,6 @@ rules:
     tier: style
     severity: info
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use ?? when 0 or '' are valid values.
   - id: TEMPLATE_LITERALS
     source: Airbnb JS Style Guide — template literals (ES6)
@@ -1610,7 +1582,6 @@ rules:
     tier: style
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use `Hello ${name}!` template literals.
   - id: ASYNC_AWAIT
     source: ECMAScript 2017 — async/await over raw promises
@@ -1618,7 +1589,6 @@ rules:
     tier: style
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use async/await for readability.
   - id: FOR_OF
     source: Airbnb JS Style Guide — for...of over for...in
@@ -1626,7 +1596,6 @@ rules:
     tier: safety
     severity: error
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: for...in iterates prototype properties. Use for...of.
   - id: QUOTE_VARIABLES
     source: ShellCheck / Google Shell Style Guide — quote variables
@@ -1634,7 +1603,6 @@ rules:
     tier: safety
     severity: error
     autofix: true
-    detect_lexical: ~ # the registry (lib/review/scan/rules/js_rules.rb), not law/
     fix: Use "$VAR" to prevent word splitting.
     languages:
     - zsh
@@ -1644,7 +1612,6 @@ rules:
     tier: safety
     severity: warning
     autofix: true
-    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: Use [[ ... ]] for safe conditionals.
     languages:
     - zsh
@@ -1654,7 +1621,6 @@ rules:
     tier: style
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use $(command) — nestable and readable.
   - id: IMG_ALT
     source: WCAG 1.1.1 Non-text Content (W3C/WAI)
@@ -1662,7 +1628,6 @@ rules:
     tier: accessibility
     severity: error
     autofix: false
-    detect_lexical: ~ # the registry (lib/review/scan/rules/web_rules.rb), not law/
     fix: Add alt= attribute.
     languages:
     - html
@@ -1672,7 +1637,6 @@ rules:
     tier: accessibility
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use <button>. Accessible by default.
   - id: ARIA_INTERACTIVE
     source: WAI-ARIA (W3C) — roles for interactive elements
@@ -1680,7 +1644,6 @@ rules:
     tier: accessibility
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Add role= and tabindex= for accessibility.
   - id: LAZY_IMAGES
     source: Web performance — loading="lazy" (web.dev / MDN)
@@ -1688,7 +1651,6 @@ rules:
     tier: performance
     severity: info
     autofix: true
-    detect_lexical: ~ # the registry (lib/review/scan/rules/web_rules.rb), not law/
     fix: Add loading="lazy".
     languages:
     - html
@@ -1698,7 +1660,6 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Extract to CSS class.
   - id: LOGICAL_PROPERTIES
     source: CSS Logical Properties and Values (W3C)
@@ -1706,7 +1667,6 @@ rules:
     tier: design
     severity: info
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use margin-inline-start/end, padding-inline-start/end.
   - id: CLAMP_TYPOGRAPHY
     source: CSS fluid typography — clamp() (web.dev)
@@ -1714,7 +1674,6 @@ rules:
     tier: design
     severity: info
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Use font-size: clamp(1rem, 2.5vw, 1.5rem).'
   - id: MEANINGFUL_NAMES
     source: Clean Code — meaningful names (Robert C. Martin)
@@ -1722,7 +1681,6 @@ rules:
     tier: clarity
     severity: info
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use domain-specific names. user_profile, error_message.
   - id: WHY_NOT_WHAT
     source: Clean Code / Code Complete — comments explain why, not what
@@ -1730,7 +1688,6 @@ rules:
     tier: clarity
     severity: info
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Comments should explain intent, not restate the code.
   - id: DEAD_CODE
     source: Refactoring — remove dead code (Fowler) / Clean Code
@@ -1738,7 +1695,6 @@ rules:
     tier: clean_code
     severity: warning
     autofix: true
-    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: Remove code after return/exit/raise/throw.
   - id: TRAILING_COMMAS
     source: Ruby/JS style — trailing commas in multiline literals
@@ -1754,7 +1710,6 @@ rules:
     tier: aesthetic
     severity: info
     autofix: true
-    detect_lexical: ~ # the registry (lib/review/scan/rules/universal_rules.rb), not law/
     fix: Use ellipsis, em dash, curly quotes in UI strings.
   - id: SILENCE_ON_SUCCESS
     source: Unix philosophy — Rule of Silence (no news is good news)
@@ -1770,7 +1725,6 @@ rules:
     tier: interface
     severity: info
     autofix: true
-    detect_lexical: ~ # the registry (lib/review/scan/rules/universal_rules.rb), not law/
     fix: No ASCII separators. No box drawing. Whitespace is the layout tool.
   - id: PRECOMPUTE_MATH
     source: MASTER-native (precompute constant math)
@@ -1916,7 +1870,6 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     detect_semantic: Does this API expose a 'do less' tier (shallow/standard/quick/lite/basic)
       alongside a 'do full' tier — where every real user always picks the full one?
       If so, it's a fake choice. Either drop the lower tier and make full the only mode,
@@ -1947,7 +1900,6 @@ rules:
     tier: safety
     severity: error
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use IS NULL / IS NOT NULL in SQL; .nil? in Ruby.
   - id: SECRET_PROXIMITY
     source: OWASP — no hardcoded secrets/credentials
@@ -1955,7 +1907,6 @@ rules:
     tier: security
     severity: error
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Move secret to environment variable or secrets manager.
   - id: MAGIC_COLOR
     source: CSS design tokens — no hardcoded color values
@@ -1963,7 +1914,6 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_lexical: ~ # the registry (lib/review/scan/rules/js_rules.rb), not law/
     fix: Reference a CSS custom property or design token.
     languages:
     - css
@@ -1976,7 +1926,6 @@ rules:
     tier: reliability
     severity: error
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Add max_attempts cap and exponential backoff.
   - id: NO_VAR
     source: Airbnb JS Style Guide — no var (ES6 let/const)
@@ -1984,7 +1933,6 @@ rules:
     tier: safety
     severity: error
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Use const (default) or let (when reassigned).
   - id: JS_MODULE_SIZE
     source: JS module size discipline (style)
@@ -2002,7 +1950,6 @@ rules:
     tier: correctness
     severity: error
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Add <meta charset=UTF-8> as first element in <head>.
   - id: ARIA_LABELS
     source: WCAG 4.1.2 Name, Role, Value (W3C/WAI)
@@ -2010,7 +1957,6 @@ rules:
     tier: accessibility
     severity: warning
     autofix: false
-    detect_lexical: ~ # the registry (lib/review/scan/rules/web_rules.rb), not law/
     fix: Add aria-label, aria-labelledby, or id paired with <label for>.
     languages:
     - html
@@ -2020,7 +1966,6 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_lexical: ~ # the registry (lib/review/scan/rules/web_rules.rb), not law/
     folded_into: SEMANTIC_ELEMENTS # same detector; one law, two ids
     fix: Use semantic landmarks; flatten nesting beyond three divs.
     languages:
@@ -2031,7 +1976,6 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Target bare tags in SCSS; remove __block__element classes from ERB.
   - id: UTILITY_CLASS_SOUP
     source: style.yml html.forbidden.framework_class_explosion
@@ -2039,7 +1983,6 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Move layout to SCSS with bare tag targeting.
   - id: SKIP_TO_MAIN
     source: WCAG 2.4.1 Bypass Blocks / style.yml accessibility
@@ -2047,7 +1990,6 @@ rules:
     tier: accessibility
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Add skip link to #main-content in layout.'
   - id: NO_LONG_TRANSITION
     source: style.yml motion budget / FrontendRuleSet MOTION
@@ -2055,7 +1997,6 @@ rules:
     tier: performance
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Keep transitions ≤300ms.
   - id: REDUCED_MOTION
     source: WCAG 2.3.3 Animation from Interactions
@@ -2063,7 +2004,6 @@ rules:
     tier: accessibility
     severity: info
     autofix: false
-    detect_lexical: ~ # the registry (lib/review/scan/rules/web_rules.rb), not law/
     fix: 'Add @media (prefers-reduced-motion: reduce) override.'
     languages:
     - css
@@ -2085,7 +2025,6 @@ rules:
     tier: density
     severity: info
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Remove padding; one space before operators. Column alignment decays and hides
       diffs.
   - id: RUBY_SNAKE_METHODS
@@ -2094,7 +2033,6 @@ rules:
     tier: clean_code
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Rename to snake_case: def fetchAlbum -> def fetch_album.'
   - id: RUBY_CAMEL_CLASS
     source: Ruby Style Guide / RuboCop Naming/ClassAndModuleCamelCase
@@ -2102,7 +2040,6 @@ rules:
     tier: clean_code
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Rename to CamelCase: class Album_store -> class AlbumStore.'
   - id: RUBY_SCREAMING_CONST
     source: Ruby Style Guide / RuboCop Naming/ConstantName
@@ -2119,7 +2056,6 @@ rules:
     tier: clarity
     severity: info
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: 'Group digits in threes: 1000000 -> 1_000_000.'
   - id: RUBY_SYMBOL_TO_PROC
     source: Ruby Style Guide / RuboCop Style/SymbolProc
@@ -2127,7 +2063,6 @@ rules:
     tier: density
     severity: info
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Collapse { |x| x.name } -> (&:name).
   - id: RUBY_BLOCK_DELIMITER
     source: Ruby Style Guide / RuboCop Style/BlockDelimiters
@@ -2135,7 +2070,6 @@ rules:
     tier: clarity
     severity: info
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Single-line block on one line -> use { }. Reserve do/end for multi-line.
   - id: RUBY_TERNARY_NOT_NESTED
     source: Ruby Style Guide / RuboCop Style/NestedTernaryOperator
@@ -2143,7 +2077,6 @@ rules:
     tier: clarity
     severity: warning
     autofix: false
-    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: Expand nested ternary to if/elsif/else or a case.
     languages:
     - ruby
@@ -2153,7 +2086,6 @@ rules:
     tier: aesthetic
     severity: info
     autofix: true
-    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: 'Ranges take an en dash, not a hyphen: 45-75 -> 45–75.'
     languages:
     - prose
@@ -2164,7 +2096,6 @@ rules:
     tier: aesthetic
     severity: info
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Bound running-text columns to ~66ch (≈ 33rem), not wide px values.
   unit:
   - id: SIMPLEST_WORKS
@@ -2185,7 +2116,6 @@ rules:
     # deduplicated: FAIL_VISIBLY is a soul.yml code_rule and BARE_RESCUE is a style
     # rule, so which one survives is a constitutional question, filed in
     # TODO.md as `two_rules_share_one_rescue_regex`.
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     detect_semantic: Does this code swallow exceptions or fail silently?
     fix: Catch specific errors, log context, re-raise or return Result.
   - id: BE_CONCISE
@@ -2324,7 +2254,6 @@ rules:
     tier: design
     severity: warning
     autofix: true
-    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     detect_semantic: Does this code reach through multiple objects?
     fix: Add delegate method. Talk only to direct collaborators.
   - id: COMPOSITION_OVER_INHERITANCE
@@ -2349,7 +2278,6 @@ rules:
     tier: clean_code
     severity: warning
     autofix: true
-    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     fix: Group into keyword arguments or parameter object.
     languages:
     - ruby
@@ -2431,7 +2359,6 @@ rules:
     tier: functional
     severity: info
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     detect_semantic: Are mutable objects shared across threads or scopes?
     fix: Freeze collections. Use frozen/const by default.
   - id: PURE_FUNCTIONS
@@ -2471,7 +2398,6 @@ rules:
     tier: refactoring
     severity: warning
     autofix: true
-    detect_lexical: ~ # folded into another rule; no detector of its own
     folded_into: LAW_OF_DEMETER # same detector; one law, two ids
     fix: Talk only to immediate collaborators.
   - id: MIDDLE_MAN
@@ -2613,7 +2539,6 @@ rules:
     tier: safety
     severity: error
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     detect_semantic: Does this execute an expensive or destructive operation without
       confirmation?
     fix: Cost estimate before execution. Require opt-in for danger.
@@ -2623,7 +2548,6 @@ rules:
     tier: clean_code
     severity: warning
     autofix: false
-    detect_lexical: ~ # lives in the registry (law twin retired 2026-08-21)
     detect_semantic: Does a boolean cause this unit to do two different things? In a
       contract, does one condition branch into contradictory obligations?
     fix: Split into two distinct units. Each does one thing.
@@ -2733,7 +2657,6 @@ rules:
     tier: density
     severity: info
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     detect_semantic: Does this sentence use passive voice where active would be shorter
       and clearer?
     fix: 'Recast active: ''the bug was fixed by X'' -> ''X fixed the bug''.'
@@ -2760,7 +2683,6 @@ rules:
     tier: density
     severity: warning
     autofix: false
-    detect_lexical: ~ # migrated to law/ (domain files; find by id)
     fix: Delete the qualifier; let the verb or noun carry the weight.
     languages:
     - prose
