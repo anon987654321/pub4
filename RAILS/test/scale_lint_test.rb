@@ -230,6 +230,25 @@ class ScaleLintTest < Minitest::Test
     refute LINT.opted_out?(lines, 3)
   end
 
+  # The test above proves the helper and nothing else, which is how every opt-out
+  # in the tree stayed inert: findings read the copy source_lines had blanked, so
+  # `// scale: ok` was spaces by the time opted_out? looked for it. This one
+  # crosses the real path.
+  def test_an_opt_out_written_in_a_real_stylesheet_silences_that_line
+    marked = LINT.stylesheets.flat_map do |path|
+      File.readlines(path, encoding: "UTF-8").each_with_index.filter_map do |line, index|
+        [ LINT.rel(path), index + 1 ] if line.include?(LINT::OPT_OUT)
+      end
+    end
+    refute_empty marked, "no opt-out left in the tree; this test would prove nothing"
+
+    silenced = marked.flat_map { |file, line| [ [ file, line ], [ file, line + 1 ] ] }
+    loud = LINT.findings.select { |finding| silenced.include?([ finding.file, finding.line ]) }
+
+    assert_empty loud.map { |f| "#{f.file}:#{f.line} #{f.property}: #{f.value}" },
+                 "an opted-out line still reported"
+  end
+
   # --- line-height --------------------------------------------------------
 
   def test_an_absolute_line_height_is_reported_as_its_own_kind

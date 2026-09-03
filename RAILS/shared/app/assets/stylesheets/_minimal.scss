@@ -95,7 +95,7 @@ nav {
   padding: 0.5rem 1rem;
   background: var(--white);
   transform: translateY(-100%);
-  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: transform var(--transition-normal) cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 nav.nav-visible {
@@ -271,7 +271,7 @@ footer {
   font: inherit;
   color: var(--black);
   background: var(--search-bg);
-  transition: background var(--transition-fast, 180ms) var(--ease-out);
+  transition: background var(--transition-fast, var(--transition-fast)) var(--ease-out);
 }
 
 .form input:focus,

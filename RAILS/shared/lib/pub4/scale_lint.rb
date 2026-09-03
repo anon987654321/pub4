@@ -169,6 +169,7 @@ module Pub4
 
     def line_heights = @line_heights ||= scale.fetch("line_height").map { |v| Float(v) }
     def letter_spacings = @letter_spacings ||= scale.fetch("letter_spacing_em").map { |v| Float(v) }
+    def durations = @durations ||= scale.fetch("duration_ms").map { |v| Float(v) }
 
     # name -> weight, read from the stylesheet that declares the tokens. Without
     # it a weight reaching an element through var(--weight-heavy) is invisible to
@@ -187,9 +188,14 @@ module Pub4
 
     def findings
       stylesheets.flat_map do |path|
+        # Two views of the same file. Declarations are read from the copy with
+        # comments blanked, so a commented-out rule is not a declaration; the
+        # opt-out is read from the raw copy, because `// scale: ok` is itself a
+        # comment and blanking it left every opt-out in the tree inert.
+        raw = File.readlines(path, encoding: "UTF-8")
         lines = source_lines(path)
         lines.each_with_index.flat_map do |line, index|
-          next [] if opted_out?(lines, index)
+          next [] if opted_out?(raw, index)
 
           line.to_enum(:scan, DECLARATION).map { Regexp.last_match }
               .flat_map { |m| check(rel(path), index + 1, m[:prop], m[:value].strip) }
@@ -213,6 +219,8 @@ module Pub4
         check_radius(file, line, prop, value)
       when "line-height"
         check_line_height(file, line, prop, value)
+      when "transition", "transition-duration"
+        check_duration(file, line, prop, value)
       when "letter-spacing"
         check_letter_spacing(file, line, prop, value)
       when "font-weight"
@@ -246,6 +254,24 @@ module Pub4
     # em only. A px tracking does not scale with the type it tracks and a unitless
     # one is not a length: both are off the scale by being the wrong kind of value
     # rather than the wrong size. `normal` is the initial value, not a step.
+    # A transition written as a literal rather than as the token that already holds
+    # that number. A duration reaching an element through var(--transition-fast) is
+    # blanked by strip_computed and never gets here, which is the point: the token
+    # is the way to write a duration and this reports the ways that are not.
+    #
+    # Zero is not a step. `visibility 0s linear 220ms` turns visibility off at once
+    # on purpose, and a scale has nothing to say about a duration of none.
+    def check_duration(file, line, prop, value)
+      steps(value).filter_map do |step|
+        next unless (m = step.match(/\A(\d*\.?\d+)(ms|s)\z/))
+
+        ms = m[2] == "s" ? Float(m[1]) * 1000 : Float(m[1])
+        next if ms.zero? || durations.include?(ms)
+
+        Finding.new(file, line, "off_scale_duration", step, prop)
+      end
+    end
+
     def check_letter_spacing(file, line, prop, value)
       bare = strip_computed(value).strip
       return [] if bare.empty? || bare == "normal" || bare.match?(UNMEASURABLE)

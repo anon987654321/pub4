@@ -16,7 +16,7 @@
   border: 1px solid var(--dating-border, var(--border));
   border-radius: var(--radius-lg);
   padding: var(--space-2);
-  transition: transform 220ms var(--ease-spring), opacity 180ms var(--ease-out), border-color 180ms var(--ease-out);
+  transition: transform 220ms var(--ease-spring), opacity var(--transition-fast) var(--ease-out), border-color var(--transition-fast) var(--ease-out);
   overflow: hidden;
 }
 
@@ -84,7 +84,7 @@
   letter-spacing: var(--tracking-wider);
   opacity: 0;
   transform: rotate(-18deg) scale(0.85);
-  transition: opacity 140ms var(--ease-out), transform 180ms var(--ease-spring);
+  transition: opacity 140ms var(--ease-out), transform var(--transition-fast) var(--ease-spring);
   pointer-events: none;
 }
 

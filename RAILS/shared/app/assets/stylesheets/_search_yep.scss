@@ -8,6 +8,7 @@
   border: 1px solid #ccc;
   border-radius: var(--radius-pill);
   font-size: var(--text-lg);
+  /* scale: ok — a recreation keeps its exact values, see line 2 */
   transition: all 100ms var(--ease-in-out);
 }
 

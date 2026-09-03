@@ -399,7 +399,7 @@ body.vertical-playlist {
   background: var(--surface-elevated);
   border: 1px solid var(--border);
   color: var(--text);
-  transition: transform var(--transition-normal, 300ms) var(--ease-out);
+  transition: transform var(--transition-normal, var(--transition-normal)) var(--ease-out);
 }
 
 /* Retired, not removed: it slides out of the viewport and keeps its place in

@@ -150,7 +150,7 @@ a.feed-tab { text-decoration: none; }
 label.compose-action {
   opacity: 1;
   cursor: pointer;
-  transition: color var(--transition-fast, 180ms) var(--ease-out);
+  transition: color var(--transition-fast, var(--transition-fast)) var(--ease-out);
 }
 label.compose-action:hover { color: var(--text); }
 .compose-hint { font-size: var(--font-size); margin: var(--space-2) 0 0; }

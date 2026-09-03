@@ -25,7 +25,7 @@
   text-align: left;
   font: inherit;
   color: var(--text-secondary);
-  transition: background var(--transition-fast, 180ms) var(--ease-out), border-color var(--transition-fast, 180ms) var(--ease-out);
+  transition: background var(--transition-fast, var(--transition-fast)) var(--ease-out), border-color var(--transition-fast, var(--transition-fast)) var(--ease-out);
 }
 
 .compose-trigger:hover {

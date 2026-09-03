@@ -59,7 +59,7 @@
   gap: 4px;
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--transition-fast, 140ms) var(--ease-out);
+  transition: opacity var(--transition-fast) var(--ease-out);
 }
 
 li:hover .msg_reaction_picker,

@@ -520,6 +520,14 @@ scale:
   # here or moving --weight-heavy to 700, and that is a design decision about
   # what the heaviest step should look like, not a lint fix.
   font_weight: [400, 500, 600, 700]
+  # The two durations _tokens.scss names: --transition-fast and --transition-normal.
+  # rules.yml NO_LONG_TRANSITION caps a transition at 300ms, so --transition-normal
+  # is the ceiling as well as the slow step.
+  #
+  # This scale governs transitions only. An animation duration is a different
+  # quantity — a shimmer loop runs for 1.4s and is not a slow transition — and
+  # nothing here has anything to say about it.
+  duration_ms: [180, 300]
 
   # Measured, never raised to silence a finding. Same contract as
   # BreakpointLint::BASELINES and the chrome_i18n_lint baselines.
@@ -570,6 +578,13 @@ scale:
       off_scale_radius: 0
       off_scale_font_weight: 31
       off_scale_tracking: 0
+      # Measured 2026-09-03, the first time duration was measured at all.
+      # Twelve of the twenty are 160ms, which is --transition-fast (180ms)
+      # written 20ms apart. Whether those are one step or two is a design
+      # decision about how a hover should feel, so they are named here
+      # rather than snapped. The rest appear once each: 240, 220, 140,
+      # 120, 200 and 250ms, and 150ms twice.
+      off_scale_duration: 20
     face:
       # face.css is on a 2px sub-grid where the apps are on 4px: 6px x14,
       # 10px x10, 14px x5, 5px x3. Nothing records that as a decision, and it
@@ -585,3 +600,8 @@ scale:
       absolute_line_height: 0
       off_scale_font_weight: 0
       off_scale_tracking: 14
+      # Measured 2026-09-03. The face keeps its own timings — .09s and .15s
+      # steps(4,end) belong to a terminal that redraws in character cells,
+      # not to the apps four-step transition ladder. Recorded so the tail
+      # cannot grow, not as a queue of edits.
+      off_scale_duration: 33

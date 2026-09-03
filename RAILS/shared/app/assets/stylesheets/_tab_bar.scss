@@ -177,7 +177,7 @@ html.chrome-hidden .tab-bar {
   padding: 0.75rem;
   color: var(--text);
   touch-action: manipulation;
-  transition: background var(--transition-fast, 180ms) var(--ease-out);
+  transition: background var(--transition-fast, var(--transition-fast)) var(--ease-out);
 }
 .tab-item:hover {
   background: var(--hover);

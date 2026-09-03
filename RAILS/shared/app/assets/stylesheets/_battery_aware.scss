@@ -13,6 +13,7 @@
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    // scale: ok — a kill switch, not a step on the duration scale
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
