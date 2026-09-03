@@ -3881,7 +3881,7 @@ style:
     scale_base: 16px
     scale_ratio: 1.25                    # major-third
     leading: 1.5                     # body
-    measure: 65ch                    # ideal line length
+    measure: 66ch                    # ideal line length, = line_length.ideal_ch
     rules:
       - "one type family per surface (mono OR sans, not both unless purposeful)"
       - "size hierarchy via scale — never arbitrary px values"
