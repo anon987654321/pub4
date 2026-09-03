@@ -434,6 +434,28 @@ vertical_accents:
 # Like `viewport:`, this is a declared set that a lint asserts the sheets obey,
 # not a variable the sheets consume.
 scale:
+  # Three apps, three root sizes. 1rem is not one length in this family:
+  #
+  #   amber      16px, and 18px at >=1280px
+  #              _base.scss sets html font-size to --text-lg inside that query
+  #   brgen      18px
+  #              _root.scss sets html { font: var(--font-size)/... } and its
+  #              --font-size is --text-lg. Written with the `font` shorthand, so
+  #              a search for `font-size:` on html finds nothing.
+  #   bsdports   12px
+  #              application.scss sets :root font-size to --font-size, and its
+  #              --font-size is --text-xs, for CRT density.
+  #
+  # So --space-4, which is 1rem, renders 12px in bsdports and 18px in brgen — a
+  # 50% spread on one token. That is why the control block, the tile tracks, the
+  # chrome insets and the iOS input floor are all absolute px rather than rem, and
+  # each of those carries its own version of this reason locally. This is the
+  # shared one.
+  #
+  # It is not a defect to fix by unifying the roots: each is deliberate, and
+  # bsdports' 12px is the whole visual identity of a CRT-dense port listing. It is
+  # a fact to reason from. A rem step is right where the thing should scale with
+  # the app's own text; an absolute step is right where it must not.
   # Powers-of-two-ish, in px. rem is normalised at 16 for membership: 0.75rem and
   # 12px are the same design decision written twice, which is what shared_chrome
   # says when it explains why chrome_inset is absolute.
