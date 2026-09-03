@@ -30,7 +30,7 @@ body.vertical-marketplace .layout {
    express — hence the two clamps rather than one. */
 .market-hero {
   padding: var(--space-6, 2rem) var(--space-4) var(--space-5, 1.5rem);
-  max-width: var(--measure-body, 66ch);
+  max-width: var(--measure);
 }
 
 /* The id is carried under protest. `main#main-content > header h1` in

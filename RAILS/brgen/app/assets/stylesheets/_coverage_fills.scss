@@ -42,7 +42,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  max-width: var(--measure-body);
+  max-width: var(--measure);
 }
 
 // Media gallery thumbnail link. The anchor is the hit target, so it carries the tap
@@ -155,7 +155,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
-  max-width: var(--measure-body);
+  max-width: var(--measure);
 }
 
 .event-hero {
@@ -241,7 +241,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  max-width: var(--measure-body);
+  max-width: var(--measure);
 }
 
 .story-viewer-head {
@@ -263,7 +263,7 @@
 
 .story-caption {
   margin: 0;
-  max-width: var(--measure-body);
+  max-width: var(--measure);
 }
 
 .story-ring-nav {
@@ -276,7 +276,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  max-width: var(--measure-body);
+  max-width: var(--measure);
 }
 
 .community-rules ol {

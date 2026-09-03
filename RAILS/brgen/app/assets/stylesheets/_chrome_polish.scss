@@ -4,7 +4,7 @@
 /* Guest/city home orientation — sits above the feed, not under an AI hero. */
 .city-home-intro {
   padding: var(--space-4, 1rem) 0 var(--space-3, 0.75rem);
-  max-width: var(--measure-body, 66ch);
+  max-width: var(--measure);
 }
 
 .city-home-paths a:hover,
@@ -183,7 +183,6 @@ aside:not([class]) > h2 {
 :root {
   --color-info: #5b9fd4;
   --elev-1: 1px solid var(--border, var(--border));
-  --measure-body: 66ch;
   --tap-min: 44px;
 }
 
@@ -231,7 +230,7 @@ time {
 /* Post body measure */
 .post-body,
 .article-body {
-  max-width: var(--measure-body);
+  max-width: var(--measure);
 }
 
 /* Nav swiper active underline already present — strengthen + peek */

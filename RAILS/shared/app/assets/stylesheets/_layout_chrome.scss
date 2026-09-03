@@ -39,7 +39,6 @@
      is the Chromium VirtualKeyboard API and stays 0 on iOS. */ 
   --keyboard-inset: 0px;
   --feed-max: 600px;
-  --measure-body: 66ch;
 }
 
 /* One refresh gesture, not two. The document is the scroll container on every
@@ -72,7 +71,7 @@ body[data-layout="document"] {
   justify-content: space-between;
   gap: var(--space-3, 0.75rem);
   margin-block-end: var(--space-4, 1rem);
-  max-width: var(--measure-body, 66ch);
+  max-width: var(--measure);
 }
 
 .page-header h1 {
@@ -85,7 +84,7 @@ body[data-layout="document"] {
 
 .page-header p {
   margin: 0.25rem 0 0;
-  max-width: var(--measure-body, 66ch);
+  max-width: var(--measure);
 }
 
 /* Prose / lead blocks share one measure with face HUD caption width discipline. */
@@ -93,7 +92,7 @@ body[data-layout="document"] {
 .city-home-intro,
 .auth-form-lead,
 .vertical-purpose {
-  max-width: var(--measure-body, 66ch);
+  max-width: var(--measure);
 }
 
 /* Touch floor — buttons and primary nav hits (geometry gate also measures this).

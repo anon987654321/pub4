@@ -45,6 +45,12 @@
   -webkit-hyphens: auto;
   hanging-punctuation: first allow-end last;
   text-wrap: pretty;
+  // design_rules micro: hyphenate-limit-chars 6/3/2 so `auto` does not break a
+  // short word or leave a two-letter stub, and orphans/widows 3 for the paged
+  // case, where a single trailing line is the defect the rule names.
+  hyphenate-limit-chars: 6 3 2;
+  orphans: 3;
+  widows: 3;
 
   p + p {
     margin-block-start: var(--space-3, 0.75rem);

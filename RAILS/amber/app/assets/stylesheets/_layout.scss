@@ -27,7 +27,7 @@ h2 {
   font-weight: var(--weight-heavy);
   line-height: var(--leading-tight, 1.25);
   letter-spacing: var(--tracking-tight, -0.01em);
-  max-width: var(--measure-wide, 75ch);
+  max-width: var(--measure-wide);
 }
 
 main#main-content > :first-child:not(.flash) {

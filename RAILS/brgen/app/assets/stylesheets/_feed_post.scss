@@ -253,7 +253,7 @@
 
 .feed-post-show .post_body,
 .feed-post-show .post-body {
-  max-width: var(--measure, 66ch);
+  max-width: var(--measure);
   font-size: var(--text-base);
   line-height: var(--leading-normal, 1.5);
   letter-spacing: var(--tracking-normal, 0);
@@ -262,7 +262,7 @@
 }
 
 .feed-post-show h1 {
-  max-width: var(--measure-wide, 75ch);
+  max-width: var(--measure-wide);
   line-height: var(--leading-tight, 1.25);
   letter-spacing: var(--tracking-tight, -0.01em);
 }

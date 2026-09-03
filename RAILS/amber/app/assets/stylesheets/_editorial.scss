@@ -13,16 +13,12 @@
   background: var(--hover-subtle);
 }
 
+/* shared/_typography.scss already sets the measure, size, leading, colour,
+   tracking, hanging punctuation and hyphenation on these two classes. The
+   face is the one thing amber says about them that shared does not. */
 .feed-post-body,
 .feed-post-prose {
-  max-width: var(--measure, 66ch);
-  font-size: var(--text-base);
-  line-height: var(--leading-normal, 1.5);
-  color: var(--text);
   font-family: var(--font);
-  letter-spacing: var(--tracking-normal, 0);
-  hanging-punctuation: first allow-end last;
-  hyphens: auto;
 }
 
 .feed-post-meta,
@@ -31,7 +27,7 @@
   line-height: var(--leading-tight, 1.25);
   color: var(--text-dim);
   margin-bottom: var(--space-2, 0.5rem);
-  max-width: var(--measure, 66ch);
+  max-width: var(--measure);
 }
 
 .feed-post-meta-author {
@@ -48,13 +44,13 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface2);
-  max-width: var(--measure, 66ch);
+  max-width: var(--measure);
 }
 
 /* The card may run to the full measure; its copy may not — this paragraph
    measured 64ch against a feed profile that wants 50. */
 .newsletter-cta p,
 .subscribe-box p {
-  max-width: var(--measure-narrow, 45ch);
+  max-width: var(--measure-narrow);
 }
 

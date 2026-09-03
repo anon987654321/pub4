@@ -227,7 +227,7 @@
 /* ch, not rem: 32rem is 640px at amber's root and the measure the type
    actually sets is counted in characters, which is what the gate reads. */
 .amber-guest-hero .body {
-  max-width: var(--measure-narrow, 45ch);
+  max-width: var(--measure-narrow);
   margin-inline: auto;
   color: var(--text-dim);
   margin-block: 0;

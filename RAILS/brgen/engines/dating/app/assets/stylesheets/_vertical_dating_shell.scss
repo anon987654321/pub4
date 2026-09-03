@@ -113,7 +113,7 @@ body.vertical-dating .nearby-chat-widget {
 .dating-intro-hint {
   margin: 0 auto;
   text-align: start;
-  max-width: var(--measure-narrow, 45ch);
+  max-width: var(--measure-narrow);
   padding-top: clamp(48px, 12vh, 96px);
   /* Was a hand-written stack with Inter LAST, so it rendered system-ui and the
      Inter in it never had a chance to apply. */
