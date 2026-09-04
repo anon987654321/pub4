@@ -498,28 +498,18 @@ scale:
   # steps, and the lint does not measure them.
   radius_px: [0, 2, 4, 8, 12, 16]
 
-  # The four weights the loaded faces actually carry. A weight outside this set
-  # is synthesised by the browser, which is a different glyph shape than the one
-  # the design was drawn against.
-  # A contradiction, recorded rather than resolved. _dialect_tokens.scss sets
-  # --weight-heavy: 800 and argues for it: design_rules wants 200 between steps
-  # so a difference is visible, and 400/600/800 is the only even ladder that
-  # gives it. This list says 800 is not one of the weights the loaded faces
-  # carry, so the browser synthesises it — a different glyph shape than the one
+  # The five weights the type ramp steps through. A weight outside this set is
+  # synthesised by the browser, which is a different glyph shape than the one
   # the design was drawn against.
   #
-  # Both are right about their own half. The loaded webfonts (Caprasimo 400,
-  # JetBrainsMono Regular and Bold) genuinely have no 800; the default --font is
-  # system-ui, where Apple platforms do carry a real Heavy. So whether a given
-  # element gets a drawn 800 or a smeared one depends on which stack it renders
-  # in, and neither declaration is wrong where it was written.
-  #
-  # 31 declarations use it: brgen 20, shared 10, amber 1. ScaleLint sees them
-  # now — it resolved only literals until 2026-09-03 and reported zero — and the
-  # baseline holds the count where it is. Resolving it means either adding 800
-  # here or moving --weight-heavy to 700, and that is a design decision about
-  # what the heaviest step should look like, not a lint fix.
-  font_weight: [400, 500, 600, 700]
+  # 800 is here because the ladder in use is 400/600/800: design_rules asks for
+  # 200 between steps so a difference is visible, and that is the only even
+  # ladder giving it. It is a drawn Heavy in system-ui, which is what --font
+  # resolves to for body text on Apple platforms; the two loaded webfonts
+  # (Caprasimo 400, JetBrainsMono Regular and Bold) synthesise it instead. The
+  # heaviest step is defined by the stack it usually renders in, and the 31
+  # declarations using --weight-heavy are on scale rather than baselined.
+  font_weight: [400, 500, 600, 700, 800]
   # The two durations _tokens.scss names: --transition-fast and --transition-normal.
   # rules.yml NO_LONG_TRANSITION caps a transition at 300ms, so --transition-normal
   # is the ceiling as well as the slow step.
@@ -576,7 +566,7 @@ scale:
       off_scale_line_height: 0
       absolute_line_height: 0
       off_scale_radius: 0
-      off_scale_font_weight: 31
+      off_scale_font_weight: 0
       off_scale_tracking: 0
       # Measured 2026-09-03, the first time duration was measured at all.
       # Twelve of the twenty are 160ms, which is --transition-fast (180ms)
