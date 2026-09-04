@@ -1,0 +1,57 @@
+{
+  "at": "2026-09-01T11:42:45Z",
+  "seed": 1133818290,
+  "set": "chord_based_beats",
+  "bed": null,
+  "progression_name": "lydian_augmented_haze",
+  "progression": [
+    "Cmaj9",
+    "Cmaj7#5",
+    "Fmaj7#11",
+    "Dm9",
+    "Gmaj9",
+    "Cmaj7#5",
+    "Am9",
+    "Cmaj9"
+  ],
+  "bpm": 86.8,
+  "bar_s": 2.7648,
+  "chord_s": 1.3824,
+  "weights": {
+    "phrase": 0.62,
+    "kit": 2.9,
+    "crackle": 0.3
+  },
+  "drums": {
+    "kick_ms": [
+      0,
+      1732.9
+    ],
+    "snare_ms": [
+      708.4,
+      2089.1
+    ],
+    "ghost_ms": [
+      1542.5,
+      2580.3
+    ],
+    "hat_ms": [
+      -3.8,
+      374.6,
+      691.5,
+      1076.6,
+      1385.3,
+      1758.3,
+      2077.0,
+      2457.6
+    ]
+  },
+  "sonitex": [
+    12,
+    12,
+    11,
+    10
+  ],
+  "vcs": 6,
+  "rig": "live/chord_based_beats.als.rb"
+}
