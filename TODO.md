@@ -2356,6 +2356,9 @@ than implied across four.
 - **Bringhurst typography codification.** Turn the typographic rules the design
   system already half-follows into enforced tokens and a gate, rather than
   convention.
+- **The layout pass.** Roughly 178 proposals from a study of joi.com, kimi.com
+  and medium.com, worked one category at a time; about sixty are closed. Its own
+  section below carries the state and the doctrine it produced.
 - **Web-face redo.** The MASTER web face (WebGL + TTS) wants a rebuild; see the
   web-face notes in the MASTER debt records for the current failure map.
 - **README consolidation.** The per-tree READMEs overlap and drift; one pass to
@@ -2372,6 +2375,84 @@ than implied across four.
   embryo could plausibly take. It is a program rather than a feature because
   most of it is gated on hardware; the section below says what is buildable now
   and what is not.
+
+## The layout pass — opened 2026-09-02
+
+A study of joi.com, kimi.com and medium.com, read against this tree, produced
+roughly 178 proposals. They are worked one category at a time, and about sixty
+are closed. The list itself lived in a conversation and was never written down,
+so perhaps forty of the closed items are recoverable only from `git log` and
+another forty of the open ones are gone. That is the defect this file exists to
+prevent, and it is recorded here rather than quietly repaired: what follows is
+what survived, not a copy of the original.
+
+What the pass has actually taught, which is worth more than the list:
+
+- **Most proposals were not problems.** Of the three raised against motion, two
+  were already satisfied — `transition: all` was two sites rather than a
+  pattern, and `REDUCED_MOTION` was met. The real defect was thirty byte-
+  identical copies of one reduced-motion reset, which no proposal named.
+- **A finding against the design system is usually a finding against the
+  instrument.** `--transition-fast` looked undeclared in every bundle until the
+  resolver was found to follow `@use` and not `@forward`; `.42s` read as 42000ms
+  until the regex was fixed. Compile the three apps before and after, and
+  compare, rather than trusting a scan.
+- **A value-preserving snap is a fix; a value-changing one is a decision.**
+  160ms is `--transition-fast` written 20ms apart, and whether those are one
+  step or two is a question about how a hover should feel. Off-scale values that
+  cannot be moved without changing the render are recorded as baselines with the
+  argument written down, never snapped to silence the lint.
+
+### Closed
+
+- **Motion**, 14. Thirty duplicate reduced-motion resets collapsed to the one in
+  `_animations.scss`, with `scroll-behavior: auto` promoted into it because
+  `animation: none` does not reach it (`4211c4ebb`).
+- **Measure**, 10. `--measure-body` was a second name for `--measure`'s 66ch,
+  declared three times and used seventeen; collapsed across sixteen files, and
+  `rules.yml` corrected from 65ch to 66ch (`e2dc94299`, `a85160ee7`).
+- **Weight discipline.** `--weight-heavy: 800` is now the top of
+  `scale.font_weight` rather than an exception to it: the ramp in use is
+  400/600/800, which is the only even ladder meeting `min_weight_delta: 200`,
+  and system-ui carries a drawn Heavy. Retired the last 31-finding baseline
+  (`1e32bd964`).
+- **Elevation and hairline**, and **bsdports**. Both finished rather than
+  skipped: one `box-shadow` across 106 stylesheets, and zero auditor warnings.
+
+### Open, by category
+
+Counts are what remained when each category was last read; re-measure before
+working from one.
+
+- **Grid and tiles** — 14, not started.
+- **Surface and colour** — 12, not started.
+- **Mobile** — 12, not started.
+- **Controls** — 10 left.
+- **brgen** — 9 left.
+- **Radius** — 6 left.
+- **amber** — 5 left.
+- **Instrument** — 4 left.
+
+### Held open deliberately
+
+- **Duration baselines.** 20 off-scale durations in the apps and 33 in the face,
+  recorded rather than snapped. Twelve of the twenty are 160ms. The face keeps
+  its own timings — `.09s` and `.15s` `steps(4,end)` belong to a terminal
+  redrawing in character cells, not to the apps' four-step ladder.
+- **Four face transitions exceed `NO_LONG_TRANSITION`.** `face.css:380` at
+  1200ms, `:635` at 1800ms, `:867` at 400ms, `:1015` at 600ms, and
+  `chat_upload.css:42,48` at 420ms each. Left alone: this is the operator's own
+  face timing, and the rule caps UI transitions, not a deliberate slow reveal.
+
+### Where the ratchet stands, 2026-09-04
+
+Every kind sits exactly on its baseline, which is what a ratchet with no slack
+looks like: `off_scale_duration` 53 (apps 20, face 33), `off_scale_space` 48
+(apps 16, face 32), `off_scale_tracking` 14 (all face). Radius, line-height and
+font-weight are at zero on both surfaces. `RAILS/shared/design_tokens.yml` holds
+the baselines and the argument for each; the contract is that none is ever
+raised to silence a new finding, and a staleness test forces a lowering when one
+is beaten.
 
 ## The wish list, read against the tree — 2026-08-31
 
@@ -2489,7 +2570,9 @@ to finish rather than a bare title.
   rather than hardcoded alpha, line-height bound to a semantic role rather than
   a size, and one spacing primitive with `calc` multiples instead of ten
   hardcoded steps. Do not take the 8-step radius scale, the rounded cards or a
-  webfont — `--font-brand` is a deliberate zero-byte stack.
+  webfont — `--font-brand` is a deliberate zero-byte stack. Line-height landed:
+  both surfaces read zero off-scale. The other two are open, and belong to the
+  layout pass rather than to this entry — check there before starting either.
 - **Flatten `STUDIO/dilla/renders/` into the dilla root.** Operator's
   instruction. It needs `.gitignore` rules to follow the files, since
   `renders/` is currently ignored wholesale, and `dilla.rb`'s hardcoded
