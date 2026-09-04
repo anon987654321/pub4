@@ -900,7 +900,11 @@ loc_body_budgets:
   lib/trace: 1999
   lib/voice: 3181
   law: 852
-  data/rules.yml: 3679
+  # Re-measured 2026-09-04 at 3832, the one entry in this table that went up.
+  # It grew by consolidation, not by prose: 86eaff4cf and ff7e93a82 folded six
+  # deleted files into rules.yml, so the lines crossed a file boundary the
+  # 3679 measurement was taken before. Down only from 3832.
+  data/rules.yml: 3832
 
 # Loop/process budgets — moved from data/ops/process.yml; reader is Ops::ProcessBudget.
 process:
