@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "review/scan/rule_dsl"
 
 class TestVetoPatternRule < Minitest::Test
   def test_detects_secret_pattern
