@@ -902,9 +902,16 @@ loc_body_budgets:
   law: 852
   # The one entry in this table that goes up, and only ever by consolidation.
   # 86eaff4cf, ff7e93a82 and the 2026-09-04 fold moved eight deleted files into
-  # rules.yml; those lines crossed a file boundary, they were not written. Down
-  # only from 3944, and a raise needs the commit that folded something in.
-  data/rules.yml: 3944
+  # rules.yml; those lines crossed a file boundary, they were not written. A
+  # raise needs the commit that folded something in.
+  #
+  # 3944 -> 3690 by deleting declarations no reader consults: 55 violation_priors
+  # rows and 24 rule_deps keys naming ids the scanner never builds, seven autofix
+  # claims naming transforms implemented nowhere, a duplicate zsh remediation
+  # table, and four smaller blocks. Every rule census reads identically across the
+  # change — 228 rules, the same hygiene, reach and audit numbers — which is the
+  # proof the lines measured nothing.
+  data/rules.yml: 3690
 
 # Loop/process budgets — moved from data/ops/process.yml; reader is Ops::ProcessBudget.
 process:

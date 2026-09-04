@@ -114,11 +114,6 @@ beauty:
     wabi_sabi: imperfect_authentic
     ma: emptiness_pause
     kanso: eliminate_essence
-success_criteria:
-- every_output_respects_axioms
-- council_surfaces_real_concerns_not_theater
-- system_applies_to_itself_without_exception
-- engineers_trust_judgment_over_time
 self_test:
   laws_apply_to_self:
     ROBUSTNESS: scan lib/ for bare_rescue + missing timeouts
@@ -401,15 +396,16 @@ evidence_scoring:
     code_review: 'bin/(?:review|critique)|rake\s+(?:review|critique)'
     log_analysis: 'journalctl|dmesg|rcctl|/var/log|\.log\b'
     profiling_data: 'benchmark|stackprof|ruby-prof|memory_profiler|--profile'
+# The two optional fields a rule or a learned smell may carry, and where they
+# land. Both reach Finding.build from semantic_rules.rb and meta_rules.rb, so a
+# value written here is visible on the finding. time_horizon and a provenance
+# sub-block were declared beside them and read by nothing at all — not by the
+# scanner, the council, or a gate — so the schema described three fields and
+# governed two.
 schema_metadata:
   optional_fields:
     reversibility: free | cheap | surgical | impossible
-    time_horizon: review | deploy | incident
     blast_radius: 'files_touched: integer'
-    provenance:
-      added_in_commit: sha
-      rationale: string
-      last_revised: iso8601
 paths:
   skip_dirs:
   - ".git"
@@ -504,6 +500,17 @@ prediction_engine:
 # an injection attempt looks like, and how a refusal has to read. They were in
 # patterns.yml among the MOTD copy, the cron jobs and the webhook endpoints;
 # only these three are law, so only these three moved.
+#
+# banned_commands is the enforced list — Io::Shell reads it and warns on a match,
+# and the personality prompt names it. forbidden_commands is the reference table
+# the same commands are explained by. They are not the same membership and the
+# difference is deliberate rather than drift: python is banned and has no zsh
+# replacement to offer, while grep, uniq and sort are explained here without
+# being warned about, since a scan pipeline uses all three legitimately.
+#
+# auto_remediation was a third statement of the same axis — eleven rows of
+# command to zsh expansion, which is forbidden_commands' replacement column with
+# the prose cut — and no reader. Deleted rather than kept in step by hand.
 zsh:
   forbidden_commands:
   - command: awk
@@ -562,18 +569,6 @@ zsh:
   - cut
   - find
   - sudo
-  auto_remediation:
-    awk: "${${(s: :)line}[n]}"
-    sed: "${var//old/new}"
-    tr: "${(U)var} or ${(L)var}"
-    wc: "${#lines}"
-    head: "${lines[1,n]}"
-    tail: "${lines[-n,-1]}"
-    grep: "${(M)lines:#*pattern*}"
-    cut: "${${(s:delim:)var}[N]}"
-    sort: "${(o)arr} or ${(O)arr}"
-    find: "**/*.ext(.)"
-    sudo: doas
   token_economics:
     philosophy: 'Replacing multi‑tool shell pipelines with pure Zsh parameter expansion
       eliminates process boundaries, collapses multiple grammars into one, reduces
@@ -628,15 +623,20 @@ refusal_templates:
     style: "decline once, propose alternative once, stop"
     forbidden: ["I'm sorry but I cannot", "as an AI", "I'd be happy to", filler_apology]
     example_good: "Out of scope: production push during freeze. Alternative: branch-only commit, deploy after Friday."
+# `autofix:` here is a claim tools/autofix_reach.rb checks and the runtime never
+# reads: LearnedSmellsRule declares autofix: false for the rule and Finding.build
+# is handed no autofix at all. Seven of the eight named a transform implemented
+# nowhere — rescue_standard_error, add_frozen_string_literal, create_issue,
+# extract_named_constant, delete_phrase, rewrite_indicative,
+# extract_shared_method — so the gate reported seven promises no code could keep.
+# Only strip_trailing_whitespace names something real, and it is the one left.
 learned_smells:
 - id: bare_rescue
   pattern: "^\\s*rescue\\s*(?:=>|;|$)"
   confidence: 0.98
-  autofix: rescue_standard_error
 - id: frozen_string
   pattern: "\\bString\\.new\\b|%q\\(|%Q\\("
   confidence: 0.99
-  autofix: add_frozen_string_literal
 - id: trailing_ws
   pattern: "[ \\t]+$"
   confidence: 0.99
@@ -658,7 +658,6 @@ learned_smells:
   # `unfinished` and the registry's TODO_FIXME carry the same lookahead.
   pattern: "\\b(?:TODO|FIXME|HACK)\\b(?!\\.md)"
   confidence: 0.7
-  autofix: create_issue
 - id: magic_number
   # A number in a comment is prose about a number, not a magic literal — the
   # bare regex scored 6,318 findings, sampled 100% comment text. skip_comments
@@ -676,7 +675,6 @@ learned_smells:
   # single pattern can express.
   pattern: "(?<![\\w.])(?<!= )(?<!: )(?!19\\d{2}(?![\\d.]))(?!20\\d{2}(?![\\d.]))\\d{2,}(?![\\w.])"
   confidence: 0.85
-  autofix: extract_named_constant
   # A named constant is a thing you extract in code, not in prose. Without this
   # the pattern fires on any number in a markdown transcript or a data file,
   # where "extract a constant" is not an available move.
@@ -695,7 +693,6 @@ learned_smells:
 - id: sycophancy
   pattern: "\\b(?:absolutely|certainly|of course|happy to help)\\b"
   confidence: 0.99
-  autofix: delete_phrase
 - id: future_tense
   # Anti-simulation is about hedging in OUTPUT; a rationale comment saying a
   # change "would break X" is describing the past, not simulating. skip_comments
@@ -703,11 +700,9 @@ learned_smells:
   skip_comments: true
   pattern: "\\b(?:will|would|might|could|perhaps|seems|appears)\\b"
   confidence: 0.95
-  autofix: rewrite_indicative
 - id: duplicate_code
   pattern: "\\b(?:copy|duplicate|same as)\\b"
   confidence: 0.75
-  autofix: extract_shared_method
 # god_class/n_plus_one learned_smells removed 2026-07-12: god_class's regex
 # (^\s*class\b) matched every class declaration with zero signal, riding
 # alongside the real AST-based NO_GOD_CLASS rule (structural_rules.rb:78);
@@ -1229,7 +1224,6 @@ rules:
     tier: clean_code
     severity: warning
     autofix: false
-    detect_lexical:
     detect_structural: file_silhouette
     fix: Split at module boundaries.
   - id: CONSISTENT_FILE_STRUCTURE
@@ -1889,7 +1883,7 @@ rules:
     autofix: false
     principle: Crystallize emergent shape into a name; the right pattern compresses
       code and makes intent legible.
-    medium:
+    languages:
     - ruby
     detect_semantic: 'Is this file close to instantiating a known pattern from {Strategy,
       Decorator, Pipeline, Visitor, Builder, Observer, Command, State, Adapter, NullObject}?
@@ -3977,199 +3971,38 @@ rails_stack:
 # violation_counts. High-probability rules run early; rules that have never
 # fired on a given extension are deprioritised. Posterior is updated at
 # runtime from observed violation counts; this holds the cold-start priors only.
+#
+# A key here must be the id of a rule the scanner builds, spelled exactly.
+# RuleOrder#ordered does `priors.dig(r.id, "prior_p")` against the scanner's own
+# rule objects, so a key naming anything else weights nothing. It held 59 keys
+# and 4 of them resolved: the other 55 were the six law names, principle names
+# from a different namespace (SIMPLICITY, COHESION, HIERARCHY), and smell names
+# no rule carries. TODO.md recorded that census as unsettled because three
+# earlier attempts gave three answers — Rule.registry is short until RuleDSL is
+# touched, and shorter still until the rule files load. Asking the reader
+# settles it: build the scanner, read `@rules`, compare ids.
 violation_priors:
-  DRY:
-    prior_p: 0.60
-    language_modifiers: { ruby: 1.2, yaml: 0.8, html: 0.9, css: 1.0, js: 1.1 }
-  LINEARITY:
-    prior_p: 0.55
-    language_modifiers: { ruby: 1.3, js: 1.2, html: 0.7, yaml: 0.6 }
-  PROXIMITY:
-    prior_p: 0.50
-    language_modifiers: { ruby: 1.2, js: 1.1, html: 0.8 }
-  SINGULARITY:
-    prior_p: 0.45
-    language_modifiers: { ruby: 1.3, js: 1.1 }
-  DENSITY:
-    prior_p: 0.40
-    language_modifiers: { ruby: 1.2, js: 1.0 }
-  ABSTRACTION:
-    prior_p: 0.35
-    language_modifiers: { ruby: 1.1, js: 1.0 }
-  FLATNESS:
-    prior_p: 0.35
-    language_modifiers: { ruby: 1.2, yaml: 1.3, html: 1.4 }
-  NAMING:
-    prior_p: 0.55
-    language_modifiers: { ruby: 1.2, js: 1.1, yaml: 0.9 }
-  ROBUSTNESS:
-    prior_p: 0.45
-    language_modifiers: { ruby: 1.3, js: 1.2 }
-  IMMUTABILITY:
-    prior_p: 0.30
-    language_modifiers: { ruby: 1.2, js: 1.1 }
   DEAD_CODE:
     prior_p: 0.35
     language_modifiers: { ruby: 1.2, js: 1.1, css: 1.3 }
-  REFLOW:
-    prior_p: 0.40
-    language_modifiers: { ruby: 1.1, yaml: 1.2, markdown: 1.3 }
-  HOIST_CONSTANTS:
-    prior_p: 0.45
-    language_modifiers: { ruby: 1.3, js: 1.2 }
-  SIMPLICITY:
-    prior_p: 0.50
-    language_modifiers: { ruby: 1.2, yaml: 1.1, html: 0.9 }
-  COHESION:
-    prior_p: 0.45
-    language_modifiers: { ruby: 1.2, js: 1.1 }
-  DECOUPLING:
-    prior_p: 0.40
-    language_modifiers: { ruby: 1.3, js: 1.1 }
-  CLARITY_READABILITY:
-    prior_p: 0.55
-    language_modifiers: { ruby: 1.1, yaml: 1.0, markdown: 1.2 }
-  CONSISTENCY:
-    prior_p: 0.50
-    language_modifiers: { ruby: 1.1, css: 1.3, yaml: 1.2 }
-  REUSABILITY:
-    prior_p: 0.45
-    language_modifiers: { ruby: 1.2, js: 1.1 }
-  ECONOMY_EFFICIENCY:
-    prior_p: 0.35
-    language_modifiers: { ruby: 1.1, js: 1.0 }
-  RESILIENCE_ROBUSTNESS:
-    prior_p: 0.40
-    language_modifiers: { ruby: 1.3, js: 1.1 }
-  FEEDBACK_MONITORING:
-    prior_p: 0.30
-    language_modifiers: { ruby: 1.2, js: 1.0 }
-  CONSTRAINT_AFFORDANCE:
-    prior_p: 0.25
-    language_modifiers: { ruby: 1.2 }
-  HIERARCHY:
-    prior_p: 0.30
-    language_modifiers: { ruby: 1.1, yaml: 1.2 }
-  BALANCE_SYMMETRY:
-    prior_p: 0.20
-    language_modifiers: { css: 1.4, html: 1.3, ruby: 0.9 }
-  ACTIVE_VOICE:
-    prior_p: 0.60
-    language_modifiers: { markdown: 1.4, yaml: 1.1, ruby: 1.0 }
-  OMIT_NEEDLESS:
-    prior_p: 0.65
-    language_modifiers: { markdown: 1.4, ruby: 1.1, yaml: 1.0 }
-  PARALLEL_STRUCTURE:
-    prior_p: 0.35
-    language_modifiers: { markdown: 1.3, yaml: 1.2, ruby: 1.0 }
   FEATURE_ENVY:
     prior_p: 0.25
     language_modifiers: { ruby: 1.3, js: 1.1 }
   DATA_CLUMPS:
     prior_p: 0.20
     language_modifiers: { ruby: 1.2 }
-  SWITCH_STATEMENTS:
-    prior_p: 0.30
-    language_modifiers: { ruby: 1.3, js: 1.4 }
-  TEMPORARY_FIELD:
-    prior_p: 0.20
-    language_modifiers: { ruby: 1.2 }
-  ALTERNATIVE_CLASSES:
-    prior_p: 0.15
-    language_modifiers: { ruby: 1.2 }
-  THREAD_SAFETY:
-    prior_p: 0.15
-    language_modifiers: { ruby: 1.5 }
-  LOCK_ORDER:
-    prior_p: 0.08
-    language_modifiers: { ruby: 1.5 }
-  CALLBACK_HELL:
-    prior_p: 0.20
-    language_modifiers: { js: 1.8, ruby: 0.4 }
-  FIRE_AND_FORGET:
-    prior_p: 0.18
-    language_modifiers: { ruby: 1.3, js: 1.2 }
-  SECRET_PROXIMITY:
-    prior_p: 0.08
-    language_modifiers: { ruby: 1.3, yaml: 1.5, env: 2.0 }
-  OVERPERMISSION:
-    prior_p: 0.15
-    language_modifiers: { ruby: 1.2, yaml: 1.3 }
-  INPUT_TRUST:
-    prior_p: 0.12
-    language_modifiers: { ruby: 1.4, js: 1.4, html: 1.2 }
-  BREAKING_CHANGE:
-    prior_p: 0.10
-    language_modifiers: { ruby: 1.3 }
-  IMPLICIT_CONTRACT:
-    prior_p: 0.20
-    language_modifiers: { ruby: 1.2 }
-  CHATTY_API:
-    prior_p: 0.15
-    language_modifiers: { ruby: 1.2, js: 1.1 }
-  QUERY_SMELL:
-    prior_p: 0.20
-    language_modifiers: { ruby: 1.4 }
-  SCHEMA_DRIFT:
-    prior_p: 0.10
-    language_modifiers: { ruby: 1.3, yaml: 1.2 }
-  NULL_BLINDNESS:
-    prior_p: 0.15
-    language_modifiers: { ruby: 1.3 }
-  UNBOUNDED_RETRY:
-    prior_p: 0.20
-    language_modifiers: { ruby: 1.3, js: 1.1 }
-  MISSING_TIMEOUT:
-    prior_p: 0.25
-    language_modifiers: { ruby: 1.4, js: 1.2 }
-  OBSERVABILITY_GAP:
-    prior_p: 0.35
-    language_modifiers: { ruby: 1.2, js: 1.1 }
-  STALE_EXAMPLE:
-    prior_p: 0.30
-    language_modifiers: { markdown: 1.4, yaml: 1.1 }
-  UNDOCUMENTED_EXCEPTION:
-    prior_p: 0.40
-    language_modifiers: { ruby: 1.3 }
-  IMPERATIVE_TITLE:
-    prior_p: 0.55
-    language_modifiers: { markdown: 1.5, yaml: 1.2 }
   MAGIC_COLOR:
     prior_p: 0.45
     language_modifiers: { css: 1.6, html: 1.3 }
-  SPECIFICITY_CREEP:
-    prior_p: 0.30
-    language_modifiers: { css: 1.5 }
-  VIEWPORT_BLINDNESS:
-    prior_p: 0.35
-    language_modifiers: { css: 1.4, html: 1.2 }
-  REGISTER_STABILITY:
-    prior_p: 0.45
-    language_modifiers: { text: 1.3, markdown: 1.2 }
-  DENSITY_GRADUATION:
-    prior_p: 0.40
-    language_modifiers: { text: 1.3, markdown: 1.2 }
-  LENGTH_CALIBRATION:
-    prior_p: 0.50
-    language_modifiers: { text: 1.3, markdown: 1.2 }
-  ERROR_SURFACE_IMMEDIATELY:
-    prior_p: 0.35
-    language_modifiers: { text: 1.2, ruby: 1.1 }
-
 # Merged from former stale_namespaces.yml — retired data paths and constants
 # enforced by the stale namespace audit.
+# NamingRule reads stale_constants and nothing else here. stale_data_files sat
+# beside it with no reader, and had gone stale itself: two of its five rows
+# redirected data/injection_patterns.yml and data/zsh.yml to data/patterns.yml,
+# which stopped holding either of them when injection and zsh moved into this
+# file. A staleness table nobody reads cannot be corrected by anything, and this
+# one was pointing the reader it never had at the wrong file.
 stale_namespaces:
-  stale_data_files:
-    - old: data/workflow.yml
-      new: data/limits.yml
-    - old: data/standing_orders.yml
-      new: data/state.yml
-    - old: data/ruby_style.yml
-      new: data/rules.yml#style
-    - old: data/injection_patterns.yml
-      new: data/patterns.yml#injection
-    - old: data/zsh.yml
-      new: data/patterns.yml#zsh
   stale_constants:
     - old: Master::CLI
       new: Master::CLI::Session
@@ -4235,26 +4068,19 @@ markdown_style:
 # must not run before its dependencies finish, or one rule's fix reintroduces
 # another's violation.
 #
-# A rule listed under 'after' must not run before all its dependencies complete.
-# This prevents fix cascades where rule A's fix re-introduces rule B's violation.
-
+# Every id here, key and target alike, must be one the scanner builds.
+# `RuleOrder#topo_sort` does `next unless id_map[dep_id]`, so an edge naming
+# anything else is skipped in silence — it reads as an ordering and imposes
+# none. The graph held 35 keys and 37 distinct targets; 18 keys and 22 targets
+# named nothing, and eleven more keys ordered themselves entirely behind dead
+# names, which is the same as no edge at all. What is left is every edge that
+# was ever in force. Nothing was reordered, only stated truthfully.
+#
+# The two vocabularies that produced the dead half are worth naming so they are
+# not reintroduced: FLATTEN, MERGE, DEFRAG, EXTRACT and HOIST are fix-operation
+# verbs rather than rule ids, and DRY, KISS and SRP are principle names carried
+# by no rule the scanner builds.
 rule_deps:
-
-  # Structural operations: flatten nesting before decoupling (flattening
-  # exposes the hidden coupling that DECOUPLE then targets).
-  DECOUPLE:
-    after: [FLATTEN, LINEARITY]
-
-  # Hoist constants before merge — merged code references the hoisted constant.
-  MERGE:
-    after: [HOIST_CONSTANTS, HOIST]
-
-  # Kill dead code before defrag — defragging dead code wastes effort.
-  DEFRAG:
-    after: [DEAD_CODE, SPECULATIVE_GENERALITY]
-
-  # Fix small-files violations before feature_envy — moving a method to
-  # its right class only makes sense when both files are well-sized.
   FEATURE_ENVY:
     after: [SMALL_FILES, SMALL_FUNCTIONS]
 
@@ -4262,46 +4088,6 @@ rule_deps:
   # subsumes the primitive check.
   PRIMITIVE_OBSESSION:
     after: [DATA_CLUMPS]
-
-  # Fix switch statements (type dispatch) after removing middle men —
-  # middle men often hide the type dispatch.
-  SWITCH_STATEMENTS:
-    after: [MIDDLE_MAN]
-
-  # Comment drift after all structural changes — restructured code needs
-  # comment review, not before.
-  COMMENTS_AS_DEODORANT:
-    after: [DEFRAG, MERGE, FLATTEN, EXTRACT]
-
-  # Strunk rules after all structural operations — prose quality is a
-  # final-pass concern.
-  OMIT_NEEDLESS:
-    after: [DEFRAG, REFLOW]
-  ACTIVE_VOICE:
-    after: [OMIT_NEEDLESS]
-  PARALLEL_STRUCTURE:
-    after: [ACTIVE_VOICE]
-
-  # Reflow after all density changes.
-  REFLOW:
-    after: [MERGE, FLATTEN, DEFRAG]
-
-  # Bayesian/RL priors updated last — they need the post-fix violation
-  # counts from all other rules.
-  PATTERN_EXTRACTION:
-    after: [DEFRAG, MERGE, DECOUPLE, FLATTEN]
-
-  # Scanner rule ordering — structural before style, security before polish.
-  bare_rescue:
-    after: [fail_visibly]
-  silent_rescue:
-    after: [bare_rescue]
-  god_class:
-    after: [small_functions, nesting_depth]
-  long_method:
-    after: [nesting_depth]
-  n_plus_one:
-    after: [find_each]
   yaml_declarative:
     after: [semantic]
   veto_patterns:
@@ -4318,31 +4104,8 @@ rule_deps:
     after: [interconnect]
   interconnect:
     after: [rule_coverage]
-  DRY:
-    after: [MERGE, DEFRAG]
-  KISS:
-    after: [FLATTEN, long_method]
-  SRP:
-    after: [FEATURE_ENVY, god_class]
-  CQS:
-    after: [SRP]
-
-  # SOLID literal proxies (OPEN_CLOSED/LISKOV/INTERFACE_SEGREGATION/
-  # DEPENDENCY_INVERSION): all judge class/method boundaries, so they must
-  # not run before SRP settles what "one class" even means here.
-  OPEN_CLOSED:
-    after: [SRP]
-  LISKOV:
-    after: [SRP, god_class]
-  INTERFACE_SEGREGATION:
-    after: [SRP]
   DEPENDENCY_INVERSION:
-    after: [FEATURE_ENVY, SRP]
-  html_lang:
-    after: [meta_charset]
-  no_inline_styles:
-    after: [magic_color]
-
+    after: [FEATURE_ENVY]
 # What the audits of the rules themselves are allowed to find.
 #
 # Four files held these — rule_audit.yml, rule_hygiene.yml, rule_reach.yml and
