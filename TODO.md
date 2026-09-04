@@ -455,7 +455,13 @@ the same long line.
 
 ### Scanner noise
 
-`rake selfcheck` is **31 violations across 7 rules** (re-measured 2026-08-19
+**Re-measured 2026-09-04: 7 violations across 3 rules.** The located list and the
+one finding worth fixing first are under "From the 2026-09-04 MASTER audit"
+below. The triage that follows is kept because the reasoning transfers — it is
+how each of the 31 was classified, and three of those classes are why the number
+fell — but the numbers in it are 2026-08-19 and are no longer the tree.
+
+`rake selfcheck` was **31 violations across 7 rules** (measured 2026-08-19
 after the law-fixture pass and the first twin retirement), every one triaged:
 
 - `SILENT_RESCUE` 12 — the standing track above.
@@ -1253,8 +1259,76 @@ bigger number, and none of these has been paid. `law/` at 89% over is the one to
 open first: the twin census closed in 2026-08 retired 42 duplicated rules and the
 file set has grown back past where the budget was set.
 
+#### `rake selfcheck` is 7 across 3 rules, and one is law failing open
+
+The **Scanner noise** section above records 31 across 7, re-measured 2026-08-19.
+It is now 7 across 3, and the seven have locations — which the gate itself will
+not give you, see the instrument note below.
+
+| rule | where |
+|---|---|
+| `SILENT_RESCUE` | `lib/review/scan/rules/meta_rules.rb:351`, `lib/ground/antigravity/skills.rb:158`, `lib/trace/session.rb:77`, `lib/voice/renderer/system_info.rb:120` |
+| `NO_GOD_CLASS` | `lib/autonomy/event_store.rb:16` (14 public methods), `lib/review/llm_dispatcher.rb:14` (11) |
+| `COMPLETION_THEATER` | `lib/review/scan/ast_fixer.rb:75` |
+
+**`meta_rules.rb:351` is the one to fix first, because it is a shape this repo
+has already closed once.** `owned` reads `PATH_OWNERSHIP.yml` and rescues to
+`[]`, so an unreadable or malformed ownership file retires the rule's entire
+corpus in silence and the scan reports the tree clean having judged nothing.
+That is character-for-character the `VetoPatternRule#load_patterns` defect closed
+on 2026-08-15 — "law failing open rather than ordinary swallowing" — and the fix
+is the same one: report through `Swallow.log(..., severity: :load_bearing)`.
+
+`trace/session.rb:77` swallows a failed quarantine of a corrupt session file, so
+the corruption stays in place with nothing said. `antigravity/skills.rb:158` is
+the plain shape on a YAML read. `voice/renderer/system_info.rb:120` returns an
+empty module list; **another session had that file open when this audit ran, so
+leave it to them.**
+
+`ast_fixer.rb:75` is very likely the documented false-positive class — a scanner
+source describing the defect it detects, counted deliberately since 2026-08-15 —
+but it was not read line by line here, so it is triage rather than a finding.
+
 #### Instrument notes
 
+- **`rake selfcheck` reports a count with no locations.** `SelfCheck::Report`
+  exposes `total`, `by_rule`, `by_severity` and `error` and no findings list, so
+  the gate can say "7 violations across 3 rules" and cannot say where. Acting on
+  it means re-running the scanner by hand. `ERROR_CONTEXT` is the rule it fails:
+  an error must carry enough context to locate its origin. The task also prints
+  its own label twice — `selfcheck: selfcheck: 7 violation(s)`.
+- **Getting the locations by hand needs two unwraps and a Hash.** `Scanner#scan_dir`
+  returns `Result::Ok([[path, Result::Ok([...])], ...])` and the findings inside
+  are plain Hashes with symbol keys, not `Finding` objects — `f.rule` raises,
+  `h[:rule]` works. Three attempts died on that before the count matched the
+  gate's. Anyone writing a one-off census over the scanner should start from:
+
+  ```ruby
+  pairs = sc.scan_dir(File.join(Master::ROOT, "lib")).value
+  all = pairs.flat_map { |path, res| Array(res.value).map { |h| h.merge(path:) } }
+  ```
+
+- **`tools/data_reach.rb` cannot tell which file a reader opened.** Its test is
+  whether the key name appears anywhere in first-party code, so `success_criteria`
+  counted as reached for as long as it existed — `lib/ground/phase_gates.rb:133`
+  names it, reading session state rather than `rules.yml`. The 35 at the ceiling
+  is a floor on the real number, not the number. The 2026-08-12 entry above
+  already explains why a stricter version is not buildable; this is the direction
+  of its error, which that entry does not state.
+- **Two sweeps for the bug shapes `style.ruby.bugs_to_avoid` names found
+  nothing, and one instrument was wrong.** No `@bus&.publish(...) || value` in
+  `lib`, `bin`, `web` or `tools`. The only `Dir.chdir` is `bin/master:74`, which
+  is the documented cause of the `/scan RAILS` path trap already recorded above.
+  Four `next if` inside a `flat_map` turned out to be four `filter_map`s
+  (`graph_retriever.rb:37`, `repo_ecology.rb:373`, `command_guard.rb:25`,
+  `snapshot/collector.rb:99`) — `filter_map` drops the nil correctly, and a
+  proximity-based grep cannot tell the two apart. Do not re-list them.
+- **"A test that never names a `Master::` constant" is not a hollow-test
+  detector.** It flags 38 files, and the bulk are gates that legitimately read
+  files rather than constants — `doc_paths`, `doc_numbers`,
+  `constant_collisions`, `security_sweep`. Same false-positive rate as the dead
+  file census. The one hollow test found this session was found by reading the
+  subject, not by a pattern: `test_fix_loop_priorities.rb` above.
 - **The rule-id census is settled, and the earlier three answers are all
   explainable.** Build the scanner and read `@rules` — that is the collection
   `RuleOrder` receives from `ai_boot.rb:122`, and `r.id` is a `String`. It holds
