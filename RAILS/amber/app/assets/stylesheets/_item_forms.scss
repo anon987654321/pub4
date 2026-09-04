@@ -38,7 +38,7 @@
 
 .media-picker-preview {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-xs), 1fr));
   gap: 0.5rem;
 }
 

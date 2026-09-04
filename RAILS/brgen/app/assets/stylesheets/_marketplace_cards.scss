@@ -19,7 +19,7 @@
 
 @media (min-width: 768px) {
   .deal-grid {
-    grid-template-columns: repeat(auto-fill, minmax(var(--tile-min), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-xl), 1fr));
   }
 }
 

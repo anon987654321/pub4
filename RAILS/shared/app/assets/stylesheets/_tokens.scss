@@ -115,10 +115,27 @@
        a control that changes width per app is not one control. */
     --control-pad-inline: 16px;
     --control-gap: 8px;
-    /* The catalogue grid, from design_tokens system. A wide row gap against a
-       narrow column gap is what makes a dense grid read as rows of goods rather
-       than as a mosaic; equal tracks keep every tile the same object. */
-    --tile-min: 224px;
+    /* The tile ladder: how narrow a column may get before auto-fill drops one.
+       Nineteen tile grids were writing this nineteen ways -- 72, 108, 140, 160,
+       180, 192, 220, 224, 260 and 280px, four of them as rem, and 9rem in an
+       engine meant 162px because brgen roots at 18px while amber roots at 16
+       and raises to 18 above 1280. Two tiles four pixels apart are not a
+       decision anyone made.
+
+       Six steps, each a width the design already used, each on the 4px grid.
+       px rather than rem on purpose: a tile is an object of a fixed size, and
+       amber's root shift would otherwise make the same grid hold a different
+       number of them above 1280px.
+
+       --tile-min-xl is the catalogue step; --tile-gap-row and --tile-gap-col
+       below pair with it. A wide row gap against a narrow column gap is what
+       makes a dense grid read as rows of goods rather than as a mosaic. */
+    --tile-min-xs: 72px;
+    --tile-min-sm: 108px;
+    --tile-min-md: 160px;
+    --tile-min-lg: 192px;
+    --tile-min-xl: 224px;
+    --tile-min-2xl: 280px;
     --tile-gap-row: 24px;
     --tile-gap-col: 8px;
     --transition-fast: 180ms;

@@ -267,7 +267,7 @@
 
 .amber-footer-cols {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(var(--tile-min-md), 1fr));
   gap: var(--luxury-space-lg);
   max-width: 640px;
 }
@@ -352,7 +352,7 @@ h1, .display, .wordmark {
 .wardrobe-grid {
   display: grid;
   gap: var(--space-6);
-  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-md), 1fr));
 }
 .items-grid > :first-child,
 .wardrobe-grid > :first-child {

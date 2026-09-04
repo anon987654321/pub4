@@ -24,7 +24,7 @@
 
 .match-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-md), 1fr));
   gap: var(--space-3);
   margin: 0;
   padding: 0;
@@ -52,7 +52,7 @@
   list-style: none;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-md), 1fr));
   gap: var(--space-3);
 }
 

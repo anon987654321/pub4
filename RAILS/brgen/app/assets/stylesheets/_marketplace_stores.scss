@@ -15,7 +15,7 @@
 .store-grid,
 .listing-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-2xl), 1fr));
   gap: var(--space-3);
 }
 
