@@ -110,6 +110,48 @@ inferring "this is my tree, so this is my commit" was wrong twice on 2026-08-10,
 when three sessions were in `RAILS/` at once. Read the commit body before
 claiming or disclaiming one.
 
+## Mirror MASTER: hold its law before you write under it
+
+MASTER judges every effect against a constitution. You write in the same tree,
+so you are held to the same one, and the only way to be held to a rule is to
+know it. Skimming the file is not knowing it.
+
+**Read the law once per session, one rule at a time, before the first edit.**
+Sequentially, each rule on its own — id, what it forbids, the fix it names, and
+the exemption it carries. The exemption is the half that gets skipped and the
+half that was earned against a measured false positive. Stop on each and hold
+it before moving to the next.
+
+The order is the authority order, and it is not long:
+
+1. `MASTER/data/soul.yml` — the kernel. Absolutes, work rules, anti-simulation.
+   It outranks everything below, including this file.
+2. `MASTER/data/rules.yml` — 228 declared rules, in four scopes: codebase,
+   file, line, unit. Read `laws` first, the six in priority order, then the
+   corpus.
+3. `MASTER/law/*.rb` — the domain law, about 118 rules, each with a worked
+   example it must flag and one it must not. Those two examples are the rule.
+4. `MASTER/lib/review/scan/rules/*.rb` — the registry, about 98 more.
+
+Enumerate them rather than trusting a memory of them:
+
+```zsh
+ruby -ryaml -e 'd=YAML.safe_load_file("MASTER/data/rules.yml"); d["rules"].each { |scope, rs| rs.each { |r| puts "#{scope} #{r["id"]}: #{r["name"]}" } }'
+```
+
+You have it when you can name the rule that governs a line you are about to
+write without opening the file. Until then, open the file.
+
+**A rule you cannot state is a rule you will break**, and the breakage is
+usually the exemption rather than the rule — every scan noise entry in
+`TODO.md` is somebody who knew the rule and not what it spares.
+
+Two cautions from the tree itself. `data/rules.yml` and `data/soul.yml` are
+`paths.immutable`: read them, never let an effect write them. And a rule
+declared there may have no detector — 78 of the 228 carry none and resolve
+through `law/` or a fold — so the file is the law, not the scanner's coverage
+of it.
+
 ## Two habits this repo learned the hard way
 
 **Verify the instrument before the finding.** Naive pattern-matching over this
@@ -147,9 +189,21 @@ generated assets. Keys live in `/etc/*.env` on the VPS.
 
 ## Response style
 
-Answer in one or two sentences unless detail is requested. Lead with the
-outcome or action. No preamble, summary, or filler. Use bullets only for
-files, commands, or lists.
+Every character earns its place. Answer in one or two sentences; three is a
+long reply. Lead with the outcome. Cut preamble, summary, restatement and any
+sentence the reader could have written themselves.
+
+Say what changed and what it cost. Numbers belong in the commit message, not
+here. Name a file only when the reader must open it. Bullets for files,
+commands and lists — never for prose.
+
+Detail is on request, not by default. A finding gets one sentence and a
+pointer; the reasoning lives in the commit and in `TODO.md`. When something is
+uncertain, say so in a clause, not a paragraph.
+
+Replies are spoken aloud through MASTER's TTS, so they are heard before they
+are read. Write for the ear: short sentences, no hashes, no code fences, no
+bare identifiers where a plain word does the job.
 
 ## Writing style
 
