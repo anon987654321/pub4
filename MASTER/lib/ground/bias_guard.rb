@@ -3,7 +3,6 @@
 module Master
   module Ground
     class BiasGuard
-      BIAS_PATH = "data/biases.yml".freeze
       SEVERITY_WEIGHT = { critical: 4.0, error: 3.0, warning: 2.0, info: 1.0 }.freeze
 
       def initialize(root: Master::ROOT)
@@ -23,10 +22,10 @@ module Master
         )
       end
 
-      # The patterns live in data/biases.yml beside the countermeasure they earn.
-      # They were fourteen lines of Ruby here, which meant adding a bias took two
-      # edits and the yml drifted from what actually fired — the spec-versus-
-      # enforcement split this guard exists to notice in other people's work.
+      # The patterns live in rules.yml under `biases`, beside the countermeasure
+      # they earn. Ruby here would mean adding a bias took two edits and the data
+      # drifting from what actually fires -- the spec-versus-enforcement split this
+      # guard exists to notice in other people’s work.
       #
       # `clears` is the evidence that acquits: a proposal that measured something
       # is not accused of calling it small.
@@ -65,8 +64,7 @@ module Master
       end
 
       def load_biases
-        path = File.join(@root, BIAS_PATH)
-        File.exist?(path) ? Master.load_yaml(path) : {}
+        Master.load_rules(root: @root).fetch("biases", {})
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "BiasGuard.load_biases")
         {}

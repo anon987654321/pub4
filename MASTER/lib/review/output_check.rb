@@ -16,7 +16,7 @@ module Master
       Finding = Data.define(:category, :pattern, :line, :severity, :excerpt)
 
       def self.load(root: Master::ROOT)
-        new(Master.load_yaml(File.join(root, "data", "llm_output_rules.yml")))
+        new(Master.load_rules(root:).fetch("llm_output_rules", {}))
       end
 
       def initialize(rules)

@@ -77,7 +77,6 @@ module Master
 
       def call
         memory = Ground::Memory.new(root: @root)
-        evidence = Ground::Evidence.load(root: @root)
         personality = Voice::Personality.new(@config["persona"]&.to_sym || Voice::Personality::DEFAULT,
                                              root: @root, homeostat: @homeostat)
         learnings = Ground::KnowledgeStore.new(root: @root)
@@ -86,7 +85,7 @@ module Master
         law_resolver = Ground::LawResolver.new
         preserve_user_intent = Ground::PreserveUserIntent.new(root: @root)
         failure_taxonomy = Ground::FailureTaxonomy.new
-        { memory:, evidence:, personality:, learnings:,
+        { memory:, personality:, learnings:,
           ground_truth:, library_verify:, law_resolver:,
           preserve_user_intent:, failure_taxonomy: }
       end

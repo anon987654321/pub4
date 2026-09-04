@@ -22,7 +22,7 @@ module Pub4
       slashes: "lib/cli/command_registry.rb",
       help: "lib/cli/command_registry/help.rb",
       personas: "data/council.yml",
-      biases: "data/biases.yml",
+      biases: "data/rules.yml",
       constitution: "lib/core/constitution.rb",
       law_files: nil,
     }.freeze
@@ -46,7 +46,7 @@ module Pub4
         slashes: slashes(read("lib/cli/command_registry.rb", ref)),
         help: slashes(read("lib/cli/command_registry/help.rb", ref)),
         personas: personas(read("data/council.yml", ref)),
-        biases: biases(read("data/biases.yml", ref)),
+        biases: biases(read("data/rules.yml", ref)),
         constitution: rule_ids(read("lib/core/constitution.rb", ref)),
         law_files: law_files(ref),
       }
@@ -71,7 +71,7 @@ module Pub4
     def biases(text)
       return [] if text.to_s.empty?
 
-      YAML.safe_load(text, aliases: true).keys.map(&:to_s).sort
+      (YAML.safe_load(text, aliases: true)["biases"] || {}).keys.map(&:to_s).sort
     end
 
     def rule_ids(text)

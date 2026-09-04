@@ -769,31 +769,6 @@ cli:
   multiline_max_lines: 500
   history_limit: 2000
 
-# Merged from former evidence.yml — runtime evidence policy loaded by Master::Ground::Evidence.
-evidence:
-  schema: 1
-  sources:
-    test_pass: { trust: 0.95, verify: "exit_code == 0" }
-    static_analysis: { trust: 0.80, verify: "exit_code == 0" }
-    scan_clean: { trust: 0.80, verify: "violations.empty?" }
-    type_check: { trust: 0.75, verify: "exit_code == 0" }
-    doc_link: { trust: 0.60, verify: "status == 200 and claim_present" }
-    git_blame: { trust: 0.55, verify: "attributed" }
-    user_assertion: { trust: 0.40, verify: "confirmed" }
-    llm_consensus: { trust: 0.35, verify: "at least two distinct providers" }
-  required_for: [modification, merge, security_fix, schema_change]
-  combine:
-    model: independent_probabilities
-    min_total_trust: 0.75
-    require_at_least_one_strong: true
-  artifacts_required:
-    file_read: [sha256_prefix, byte_count]
-    modification: [unified_diff]
-    completion: [exit_code, stdout_tail]
-  audit:
-    log_to: .master/evidence.jsonl
-    retention_days: 90
-
 # Merged from former heartbeat.yml — heartbeat jobs, all disabled. Schedule-based
 # maintenance removed. These actions are now triggered by events or manual
 # slash commands: prune_memory -> /dreams, self_test -> auto_default standing

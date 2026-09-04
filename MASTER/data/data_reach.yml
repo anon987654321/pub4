@@ -1,16 +1,8 @@
 ---
-unnamed: 43
+unnamed: 35
 members:
 - agent_taxonomy.yml#toolset_groups
 - attention_context.yml#runtime_uses
-- biases.yml#anchoring_bias
-- biases.yml#authority_bias
-- biases.yml#availability_bias
-- biases.yml#premature_optimization
-- biases.yml#recency_bias
-- biases.yml#simulation_bias
-- biases.yml#sunk_cost_bias
-- biases.yml#sycophancy
 - council.yml#auto_trigger_patterns
 - council.yml#mcp_persona_slots
 - council.yml#voice_samples

@@ -15,7 +15,7 @@ class TestSchemaCheck < Minitest::Test
 
       assert result.err?
       assert_match(/council.yml: expected v1, found v2/, result.message)
-      assert_match(/llm_output_rules.yml: expected v1, found \(missing\)/, result.message)
+      assert_match(%r{rules.yml: expected v1, found \(missing\)}, result.message)
     end
   end
 end

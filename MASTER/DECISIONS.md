@@ -217,10 +217,9 @@ four back into a single hash before any scanner saw them. The split was
 proximity for readers, not for code, and it cost a directory plus a merge step
 that could disagree with itself.
 
-`data/llm_output_rules.yml` and `data/rule_deps.yml` **do** each have separate
-consumers (`Master::Design`, `Master::Review::OutputCheck`,
-`Master::Fix::FixLoop`) and stay where they are. That part of the old entry was
-right and is not affected.
+`data/llm_output_rules.yml`, `data/rule_deps.yml` and `data/biases.yml` were
+kept out on that argument -- each has its own consumer. They folded anyway, on
+2026-09-04, for the reason the next paragraph already gave.
 
 `data/design_rules.yml` had one too, and folded anyway: proximity to a consumer
 is worth less than a single definition. Split from `style.yml`, it defined

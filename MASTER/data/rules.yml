@@ -87,8 +87,8 @@ engineering_fit:
   why_required: State the load the artifact carries (users, edge cases, lifetimes,
     blast radius). The verdict follows from the load.
 # Output-text bias patterns (scanned by the RuleDSL text scanner). Distinct from
-# data/biases.yml's decision-proposal biases (confirmation/sunk-cost/authority),
-# which BiasGuard reads separately — same word, two different pipeline stages.
+# the `biases` block below (confirmation/sunk-cost/authority), which BiasGuard
+# reads for decision proposals — same word, two different pipeline stages.
 beauty:
   typography_bringhurst:
   - choose_appropriate_typeface_for_function
@@ -375,6 +375,9 @@ failure_taxonomy:
     - half_committed_state
     strategy: human_intervention
     checkpoint_before: true
+# The only evidence model in the repo. Weights sum, a threshold ends the turn,
+# and producers say which command can earn each kind -- Master::Core::Proof is
+# the Ruby source and a test pins the two together.
 evidence_scoring:
   weights:
     test_pass: 35
@@ -4445,3 +4448,131 @@ rule_ratchets:
     # The number only ratchets down: a new RuleDSL rule must carry its examples,
     # and retro-fitting one lowers this by hand.
     without_fixtures: 91
+
+# What a decision proposal is checked against before it is offered, by
+# Master::Ground::BiasGuard. `detect` accuses, `clears` acquits: a proposal
+# that measured something is not accused of calling it small. `compounds_with`
+# names the chains, so a proposal carrying two links of one reports it as one
+# note rather than two unrelated-looking ones.
+biases:
+  confirmation_bias:
+    countermeasure: Generate three counter-arguments before accepting a fix that only
+      confirms the scanner result.
+    detect: "\\b(fix|violation|same fix|still carries|scanner result)\\b"
+    clears: "\\b(alternative|tradeoff|counter|review|why)\\b"
+  sunk_cost_bias:
+    countermeasure: Compare the current path against a simpler rollback or rewrite before
+      investing more effort.
+    detect: "\\b(continue|more|again|retry)\\b"
+    clears: "\\brollback|simpler|stop\\b"
+  authority_bias:
+    countermeasure: Treat named tools and models as fallible; require local evidence
+      before accepting their output.
+    detect: "\\b(llm|model|scanner|rubocop|reek)\\b"
+    clears: "\\bevidence|local|test|scan:"
+  recency_bias:
+    countermeasure: Prioritize severity x frequency x age, not most-recent findings
+      alone.
+    detect: "\\b(latest|just added|newest)\\b"
+    clears: "\\bseverity|age|frequency\\b"
+  sycophancy:
+    countermeasure: Disagree when evidence conflicts with the operator preference; state
+      the conflict and the safer path.
+    detect: "\\b(great idea|absolutely|of course|as you wish)\\b"
+    clears: "\\brisk|tradeoff|however|but\\b"
+  simulation_bias:
+    countermeasure: Replace future-tense promises with executed commands, diffs, or
+      test output before claiming done.
+    detect: "\\b(will fix|would work|should pass|going to|plan to)\\b"
+    clears: "\\bdiff|passed|exit|sha256|applied\\b"
+  anchoring_bias:
+    countermeasure: Regenerate at least one alternative fix that ignores the first proposed
+      patch shape.
+    detect: "\\b(first approach|initial fix|as before)\\b"
+    clears: "\\balternative|option b|second pass\\b"
+  availability_bias:
+    countermeasure: Search the repo for similar settled patterns before inventing a
+      new structure.
+    detect: "\\b(new (file|class|module|pattern))\\b"
+    clears: "\\bexisting|reuse|search|found\\b"
+  premature_optimization:
+    countermeasure: Prove a measured bottleneck before complexity for speed.
+    detect: "\\b(cache|optimize|perf|benchmark)\\b"
+    clears: "\\bmeasured|profile|hot path|n\\+\\s*1\\b"
+  aesthetic_neglect:
+    countermeasure: For UI/views/CSS changes, run aesthetic profile scan and check spacing,
+      type, flatness, and touch targets before ship.
+    detect: "\\b(view|scss|css|ui|erb|face)\\b"
+    clears: "\\baesthetic|spacing|contrast|touch|flat|token\\b"
+  optimism_bias:
+    countermeasure: State the estimate as evidence, not intent — a timing, a measured
+      run, a count. An unmeasured "this is small" is the same claim as "this is done".
+    compounds_with:
+    - dunning_kruger_bias
+    - sunk_cost_bias
+    detect: "\\b(quick|trivial|simple fix|just a|minor|small change)\\b"
+    clears: "\\bmeasured|took|lines|ran|timed\\b"
+  dunning_kruger_bias:
+    countermeasure: Require evidence proportional to stated confidence; in an unfamiliar
+      subsystem read its tests before proposing a change to it.
+    compounds_with:
+    - optimism_bias
+    - authority_bias
+    detect: "\\b(obviously|clearly|straightforward|any \\w+ would)\\b"
+    clears: "\\btest|read|evidence|checked|verified\\b"
+  bandwagon_bias:
+    countermeasure: Evaluate the popular option against this repo constraints before
+      adopting it; a gem or pattern being standard elsewhere is not evidence it fits
+      here.
+    compounds_with:
+    - authority_bias
+    - confirmation_bias
+    detect: "\\b(standard|common practice|everyone|idiomatic|best practice)\\b"
+    clears: "\\bhere|this repo|constraint|measured|because\\b"
+  framing_bias:
+    countermeasure: Restate the problem in at least one other form before deciding;
+      a fix that only works under the first framing is a fix to the sentence, not the
+      defect.
+    compounds_with:
+    - anchoring_bias
+    - confirmation_bias
+    detect: "\\b(the real (problem|issue)|actually about|boils down to)\\b"
+    clears: "\\balternativ|another (way|reading)|reframe|or it is\\b"
+  survivorship_bias:
+    countermeasure: Study the failures and the paths that never shipped, not only the
+      green cases that survived selection.
+    compounds_with:
+    - availability_bias
+    - recency_bias
+    detect: "\\b(always works|never fails|every (time|case)|proven pattern)\\b"
+    clears: "\\bfail(ed|ure)|missed|never shipped|counterexample\\b"
+
+# Regexes Master::Review::OutputCheck matches against MASTER's own final
+# output. The category names carry the severity, which lives in the reader:
+# hallucination, refusal_failure and toxicity_surface are errors, hedging and
+# bias_surface warnings. A category the reader does not know is ignored.
+llm_output_rules:
+  hallucination:
+    - "i (?:created|added|wrote) `[^`]+\\.(?:rb|yml|md|js)`"
+    - "(?:the command )?(?:produced|returned|output)(?:ed|s)? .{0,80}(?:as expected|successfully)"
+    - "(?:the|this) `[A-Z][A-Za-z0-9_:]+#\\w+` method (?:returns|provides|gives)"
+
+  refusal_failure:
+    - "(?:i'?ll|i will|let me|sure,? i'?ll) (?:run|execute|apply|commit) .{0,80}(?<!done)$"
+    - "(?:applying|running|committing) (?:the |this |that )?(?:patch|fix|change) now\\."
+
+  hedge_violation:
+    - "\\b(?:will|would|could|might)\\s+(?:probably|possibly|likely|maybe)\\b"
+    - "\\b(?:should|ought to)\\s+work\\b"
+
+  bias_surface:
+    - "\\b(?:women|men|girls|boys) (?:naturally|typically|usually) (?:better|worse|more|less)"
+    - "\\b(?:elderly|young people|millennials|boomers) (?:can'?t|don'?t|never|always)"
+
+  toxicity_surface:
+    - "\\b(?:stupid|idiot|moron|retard|dumb)\\b.{0,40}(?:user|person|you)"
+    - "(?:kill|hurt|attack) (?:yourself|themselves)"
+
+  refusal_failure_unhelpful:
+    - "(?:i (?:cannot|can'?t)|sorry,? i (?:cannot|can'?t)) help with that\\.?$"
+    - "as an ai language model"
