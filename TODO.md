@@ -2869,6 +2869,11 @@ What the pass has actually taught, which is worth more than the list:
   name, and the mechanism had already caused a 1.23:1 contrast bug that the
   comment above them documented. The alpha ladder was the one scale nothing
   measured, and its two hand-kept copies had drifted by a step (`67ec62871`).
+- **Mobile**, 12. Ten were not problems -- the tree already writes dvh, guards
+  touch and reads safe-area everywhere. The two that were: `--tap-min` spent the
+  law's 44px from five hand-written copies with nothing comparing them to the
+  rule, and eighty-three var() fallbacks named the token they fell back from,
+  three of which were hiding an alpha from the ratchet (`21ba3e7ca`).
 - **Elevation and hairline**, and **bsdports**. Both finished rather than
   skipped: one `box-shadow` across 106 stylesheets, and zero auditor warnings.
 
@@ -2877,7 +2882,6 @@ What the pass has actually taught, which is worth more than the list:
 Counts are what remained when each category was last read; re-measure before
 working from one.
 
-- **Mobile** — 12, not started.
 - **Controls** — 10 left.
 - **brgen** — 9 left.
 - **Radius** — 6 left.
@@ -2969,10 +2973,37 @@ named here rather than edited.
 - **`prefer_monochrome_with_one_accent` has no reader** while
   `max_palette_roles: 4` beside it is read by `design_metrics`. The same
   part-read block shape the grid pass found in `layout_rules`.
+
+### Mobile, what it found and what it did not — 2026-09-05
+
+Ten of the twelve proposals were not problems, which is the pattern by now and
+worth recording so nobody re-derives it. The tree writes `100dvh` twenty-six
+times against one `100vh` (now none), guards touch with `touch-action` fifteen
+times and `overscroll-behavior` twelve, reads `safe-area-inset` in eighty-nine
+places, and has no `text-align: justify` anywhere. The mobile hygiene is done.
+
+- **Sticky hover is not a defect here, and this is why.** 122 `:hover`
+  declarations across 52 files, and only four `@media (hover: ...)` guards —
+  which reads alarming until the hovers are classified. Eighty-two only repaint,
+  thirty declare nothing that matters on touch, and the ten that move or reveal
+  are all opacity or transform nudges. `.edge-grip` even carries a
+  `@media (hover: none)` permanent affordance beside its hover. No menu, no
+  reveal, nothing that strands a tap. Re-classify before re-opening this.
+- **`justify_never_on_mobile` has no reader and nothing to catch.** The rule is
+  satisfied by a tree that never writes justify; a check would measure zero
+  forever. Left as doctrine.
+- **`target_recommended_px: 48` has no reader** while `target_min_px: 44` beside
+  it is read by four gates and now by a test. The third part-read block, after
+  `layout_rules` and `color`.
+- **`width: min(360px, 100vw)` in `_nearby_chat_widget.scss`** is the same class
+  as the `100vh` fixed here: `100vw` includes the scrollbar gutter, so on a
+  desktop with a classic scrollbar the panel is wider than the viewport. One
+  site, and `100%` or `100dvw` would both do — but which is a question about
+  that panel, not a mechanical swap.
 ### Where the ratchet stands, 2026-09-04
 
 Every kind sits exactly on its baseline, which is what a ratchet with no slack
-looks like: `off_scale_opacity` 64 (apps 26, face 38), `off_scale_duration` 53
+looks like: `off_scale_opacity` 67 (apps 29, face 38), `off_scale_duration` 53
 (apps 20, face 33), `off_scale_space` 48 (apps 16, face 32),
 `off_scale_tracking` 14 (all face). Radius, line-height and font-weight are at
 zero on both surfaces. `RAILS/shared/design_tokens.yml` holds
