@@ -1346,10 +1346,61 @@ Master::Review::Scan::RuleDSL                  # what InfraHelpers touches
 Master::Review::Scan::Rules::AstOmissionRule   # resolves
 ```
 
-The fix is one line per file — touch `RuleDSL` in `setup` before naming the
-class, which is what the scanner itself does. Left undone here because it is a
-different task from the one this session was given, and it should be verified
-per file rather than swept.
+**Fixed 2026-09-05.** The load is one line per file, `require
+"review/scan/rule_dsl"`, which is what `test_smell_detectors.rb` already does.
+That is where the interesting part started rather than ended: two of the three
+then passed while asserting only that the rule responds to `check` and returns
+an Array, which every `Rule` subclass does by inheritance. Erroring files that
+become green files measuring nothing are worse than erroring files, because they
+now read as coverage.
+
+So both were rewritten against what the rules actually decide, with the
+collaborator injected so neither needs repository history:
+
+- **`co_change_coupling`** — its judgement is three filters, and each is asserted
+  in both directions: a cross-module peer at the threshold is reported with its
+  weight, one below it is not, a same-module peer is never reported however
+  heavy (that is cohesion, the thing it must not flag), and only the heaviest
+  three are named. Any ecology answering `co_change_graph` will do.
+- **`ast_omission`** — a fake guard supplies the omissions, so the mapping, the
+  two guard clauses and the rescue are all pinned. One assertion is that a
+  non-Ruby path does not cost a git call at all, because a guard clause that
+  returns empty and one that never runs look identical from outside.
+
+Both were mutation-checked before being believed, per "a green first run is the
+least informative outcome available". Inverting the module filter, lowering the
+weight threshold, taking four peers instead of three, reversing the sort,
+dropping the `.rb` guard, passing the absolute path instead of the relative one,
+reporting only the first omission, dropping the last-seen date, and making the
+rescue re-raise — nine mutations, nine caught. The veto test was already real
+and catches a neutered `secrets` pattern.
+
+#### `rule_coverage` examines one of sixteen rule files and is wrong about it
+
+Found while checking whether that gate had been reading the three broken files
+as covered. It had not, because it never looked at them.
+
+`RuleCoverageRule` exists so that "every Rule subclass has a matching test file;
+gaps mean untested enforcement". Two lines decide what it sees
+(`lib/review/scan/rules/meta_rules.rb:66,69`), and each is wrong for this tree:
+
+- It returns early unless the path ends `_rule.rb`. **One file in
+  `lib/review/scan/rules/` does**, `law_bridge_rule.rb`. The other fifteen are
+  `*_rules.rb`, plural — `meta_rules.rb`, `graph_rules.rb`, `ruby_rules.rb` and
+  the rest — and are never examined. They hold nearly every rule class there is.
+- For the one file it does examine, it globs `test/**/<base>_test.rb`. MASTER's
+  convention is `test_<base>.rb`: **283 files match `test_*.rb` and 1 matches
+  `*_test.rb`.** So it looks for a name this tree does not use.
+
+Run over all sixteen, it reports exactly one finding —
+`rule_coverage: no test file found for law_bridge_rule` — and
+`test/test_law_bridge_rule.rb` is right there. Fifteen skipped, one false
+positive, nothing correct.
+
+Not fixed here. Correcting the glob and the suffix is two lines, and it will
+then report the real gaps for the first time, which is a count somebody has to
+triage rather than a change to slip into a test-loading fix. Worth doing: it is
+the gate that would have caught these three files having no working test at all.
 
 **`rake test` cannot complete on a dev Mac at all**, which is why three dead
 test files went unnoticed. Its loader aborts on `cannot load such file --
