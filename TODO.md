@@ -2683,6 +2683,12 @@ What the pass has actually taught, which is worth more than the list:
   400/600/800, which is the only even ladder meeting `min_weight_delta: 200`,
   and system-ui carries a drawn Heavy. Retired the last 31-finding baseline
   (`1e32bd964`).
+- **Grid and tiles**, 14. Nineteen tile grids gave nineteen answers to how
+  narrow a column may get, four of them in rem against two different roots;
+  six steps now, ten grids moved, none by more than 20px (`b7760ac8c`).
+  Thirteen tokens the tree asked for were declared nowhere -- the fallback
+  always won, and one had none, so `.tv-feed-title` shipped with no
+  font-size. Two lints could not read their own opt-out (`b49b2c82d`).
 - **Elevation and hairline**, and **bsdports**. Both finished rather than
   skipped: one `box-shadow` across 106 stylesheets, and zero auditor warnings.
 
@@ -2691,7 +2697,6 @@ What the pass has actually taught, which is worth more than the list:
 Counts are what remained when each category was last read; re-measure before
 working from one.
 
-- **Grid and tiles** — 14, not started.
 - **Surface and colour** — 12, not started.
 - **Mobile** — 12, not started.
 - **Controls** — 10 left.
@@ -2711,6 +2716,55 @@ working from one.
   `chat_upload.css:42,48` at 420ms each. Left alone: this is the operator's own
   face timing, and the rule caps UI transitions, not a deliberate slow reveal.
 
+
+### Grid and tiles, what it left open — 2026-09-04
+
+The tile ladder landed and the undeclared tokens are gone. Three findings from
+the same pass are open, each measured and none of them a guess.
+
+- **The generated-asset gate cannot see a stale committed build.** It compares
+  mtimes and working-tree dirtiness, and its own comment says why that is
+  supposed to be enough: "with a clean tree the committed build is by
+  construction the one built from the committed sources." It is not. The
+  committed bsdports `application.css` carried `--radius-card: 16px` from a
+  `social` dialect no stylesheet emits any more, while its sources said 12px,
+  with the gate green over it. A content check was drafted and withdrawn rather
+  than shipped: comparing declared values per property reports every dialect as
+  drift, because `--bg: #{$bg}` resolves a SCSS variable at build time and the
+  literal never appears in the stylesheet. Two designs that would work — resolve
+  SCSS variable defaults the way `fallback_drift_lint.collect_from_scss`
+  already does, or rebuild into a scratch tree and compare checksums, which is
+  sound because dart-sass output is byte-identical across repeated builds
+  (verified). The second is heavier and exact; the first is cheap and
+  approximate.
+
+- **Seven `layout_rules` keys have no reader.** `grid.columns: 12`,
+  `whitespace.gap_over_margin`, `whitespace.paragraph_margin_em`,
+  `whitespace.section_padding_min_rem` and `_max_rem`,
+  `proportion.split_sidebar_ratio`, and `pixel_perfection.visible_grid_optional`
+  — plus `card_padding_px: 24`. Their neighbours are read:
+  `grid.base_unit_px` and `allowed_spacing_px` by `design_metrics` and
+  `rendered_geometry`, `touch.target_min_px` by three gates,
+  `proportion.split_main_ratio` by `geometry_type`,
+  `whitespace.internal_not_greater_than_external` by `rendered_geometry`. So
+  this is not a block nobody reads; it is a block read in parts, where the
+  unread parts look enforced and are not. `_dating_stack.scss:129` cites
+  `gap_over_margin` by name in a comment, which is the honest way to follow a
+  rule nothing checks. Two of the seven are cheaply checkable — a grid or flex
+  container whose direct children carry margins, and a card whose padding is not
+  24px — and the rest are doctrine that should read as doctrine.
+
+- **`--border-strong` is declared only in `MASTER/web/public/face.css`.**
+  brgen's composer asked for it twice and got its `var(--border)` fallback both
+  times, which is now written directly. The intent — a border stronger than the
+  default one — has no token in RAILS. Naming one is a design decision, not a
+  lint fix.
+
+Two more dead indirections sit in the face, outside this lint's reach:
+`face.css:372` asks for `--x-font` (the `x_` prefix was retired from the design
+system) and `:399` for `--c-mic-off`. Both resolve to their fallbacks. The face
+is one-theme by design and its colour lines are the operator's, so they are
+named here rather than edited.
 ### Where the ratchet stands, 2026-09-04
 
 Every kind sits exactly on its baseline, which is what a ratchet with no slack
