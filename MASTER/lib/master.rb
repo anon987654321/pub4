@@ -85,6 +85,23 @@ module Master
     @law.fetch(section.to_s) { raise KeyError, "data/rules.yml has no #{section}: section" }
   end
 
+  # The design blocks are rules like any other now: `tier: design` with the old
+  # nested section under `config`. This rebuilds the map they used to form, so
+  # everything that dug design_rules by block name still reaches its key.
+  def self.design_rules(root: ROOT)
+    flatten_rules(law("rules", root:))
+      .select { |rule| rule.is_a?(Hash) && rule["tier"] == "design" && rule["config"].is_a?(Hash) }
+      .to_h { |rule| [ rule["id"].to_s.downcase, rule["config"] ] }
+  end
+
+  # One path into it, so a key that moves breaks in one place rather than in the
+  # nineteen files that each dug the section themselves:
+  # `Master.design("layout_rules", "touch", "target_min_px")`.
+  def self.design(*path, root: ROOT)
+    config = design_rules(root:)
+    path.empty? ? config : config.dig(*path.map(&:to_s))
+  end
+
   def self.limits_path = data_file("limits.yml", "workflow.yml")
   def self.state_path = data_file("state.yml", "standing_orders.yml")
 

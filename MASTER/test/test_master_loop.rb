@@ -40,7 +40,7 @@ class TestMasterLoop < Minitest::Test
     refute File.exist?(Master.data_path("operator_principles.yml"))
     refute File.exist?(Master.data_path("design_rules.yml"))
     assert Master.law("style").key?("typography")
-    assert Master.law("design_rules").key?("worn_type")
+    assert Master.design_rules.key?("worn_type")
   end
 
   # The operator's standing orders live in soul.yml, not in the catalogue the

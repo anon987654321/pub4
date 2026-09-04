@@ -2,10 +2,10 @@
 
 module Master
   module Design
-    # The design_rules section of data/rules.yml, for scanners and UI critique.
+    # The design-tier rules of data/rules.yml, for scanners and UI critique.
     class Thresholds
       def self.load(root: Master::ROOT)
-        Master.law("design_rules", root:)
+        Master.design_rules(root:)
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Design::Thresholds.load")
         {}
