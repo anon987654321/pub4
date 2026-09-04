@@ -18,7 +18,7 @@
 .channel-list .channel-card {
   border: 0;
   border-radius: var(--radius-md, 12px);
-  background: var(--surface-elevated, var(--surface-elevated));
+  background: var(--surface-elevated);
 }
 
 .channel-card-link {
@@ -31,7 +31,7 @@
 }
 
 .channel-card-link:hover {
-  background: var(--hover, var(--hover));
+  background: var(--hover);
   text-decoration: none;
 }
 
@@ -39,12 +39,12 @@
   font-weight: var(--weight-bold);
   font-size: var(--text-lg);
   letter-spacing: var(--tracking-tight);
-  color: var(--accent, var(--accent));
+  color: var(--accent);
 }
 
 .channel-blurb {
   font-size: var(--text-base);
-  color: var(--text, var(--text));
+  color: var(--text);
   line-height: 1.4;
 }
 
@@ -76,7 +76,7 @@
 
 .channel-back {
   font-size: var(--text-sm);
-  color: var(--text-secondary, var(--text-secondary));
+  color: var(--text-secondary);
   text-decoration: none;
   min-height: var(--tap-min);
   display: inline-flex;
@@ -84,7 +84,7 @@
 }
 
 .channel-back:hover {
-  color: var(--accent, var(--accent));
+  color: var(--accent);
 }
 
 .channel-log {
@@ -102,19 +102,19 @@
   position: sticky;
   bottom: max(var(--space-3, 0.75rem), env(safe-area-inset-bottom));
   padding: var(--space-3, 0.75rem);
-  border: 1px solid var(--border, var(--border));
+  border: 1px solid var(--border);
   border-radius: var(--radius-md, 12px);
-  background: var(--surface-elevated, var(--surface-elevated));
+  background: var(--surface-elevated);
 }
 
 .channel-composer textarea {
   width: 100%;
   min-height: 4rem;
   resize: vertical;
-  border: 1px solid var(--border, var(--border));
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm, 8px);
-  background: var(--bg, var(--bg));
-  color: var(--text, var(--text));
+  background: var(--bg);
+  color: var(--text);
   padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
   font: inherit;
 }
@@ -132,8 +132,8 @@
 }
 
 /* Bot messages read apart from anonymous lurkers: accented handle + faint tint. */
-.channel-log article[data-bot] { border-inline-start: 2px solid var(--accent, var(--accent)); padding-inline-start: var(--space-2, 0.5rem); }
-.channel-log article[data-bot] header span:first-child { color: var(--accent, var(--accent)); font-weight: var(--weight-bold); }
+.channel-log article[data-bot] { border-inline-start: 2px solid var(--accent); padding-inline-start: var(--space-2, 0.5rem); }
+.channel-log article[data-bot] header span:first-child { color: var(--accent); font-weight: var(--weight-bold); }
 
 /* Live-activity signal on channel cards */
 .channel-live { color: oklch(70% 0.17 145); font-weight: var(--weight-bold); }

@@ -21,7 +21,7 @@ body.vertical-playlist {
   // #8a879c matched no real definition of --text-secondary — a stale hex from
   // an older palette. fallback_drift_lint never caught it because its glob
   // stopped at <app>/app/assets, and the verticals moved into engines/.
-  --color-muted: var(--text-secondary, var(--text-secondary));
+  --color-muted: var(--text-secondary);
   --color-overlay: color-mix(in srgb, var(--bg) 92%, transparent);
   --color-elevated: var(--surface-elevated, #211f28);
   --transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -399,7 +399,7 @@ body.vertical-playlist {
   background: var(--surface-elevated);
   border: 1px solid var(--border);
   color: var(--text);
-  transition: transform var(--transition-normal, var(--transition-normal)) var(--ease-out);
+  transition: transform var(--transition-normal) var(--ease-out);
 }
 
 /* Retired, not removed: it slides out of the viewport and keeps its place in

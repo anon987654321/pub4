@@ -149,7 +149,7 @@ main[role="main"] {
      sits under the brand mark (brgen intro put "Hjem" beneath the logo). */
   padding-block-start: calc(var(--top-band-block) + var(--safe-top, 0px));
   background: var(--bg);
-  transition: transform var(--transition-normal, var(--transition-normal)) var(--ease-out, cubic-bezier(0.32, 0.72, 0, 1));
+  transition: transform var(--transition-normal) var(--ease-out, cubic-bezier(0.32, 0.72, 0, 1));
   pointer-events: auto;
 }
 .sidebar { inset-inline-start: 0; transform: translateX(-100%); }
@@ -245,7 +245,7 @@ main[role="main"] {
   z-index: 1;
   cursor: pointer;
   opacity: 0.18;
-  transition: opacity var(--transition-fast, var(--transition-fast)) var(--ease-out);
+  transition: opacity var(--transition-fast) var(--ease-out);
 }
 @media (hover: none) {
   /* Touch has no hover — keep a soft permanent affordance. */
@@ -261,7 +261,7 @@ main[role="main"] {
   font-size: var(--text-xl);
   line-height: 1;
   color: var(--text-secondary);
-  transition: color var(--transition-fast, var(--transition-fast)) var(--ease-out), opacity var(--transition-fast, var(--transition-fast)) var(--ease-out);
+  transition: color var(--transition-fast) var(--ease-out), opacity var(--transition-fast) var(--ease-out);
 }
 .edge-grip-start {
   inset-inline-start: 0;
@@ -297,7 +297,7 @@ main[role="main"] {
   background: transparent !important;
   color: var(--text);
   margin: 4px 0 8px;
-  transition: opacity var(--transition-fast, var(--transition-fast)) var(--ease-out);
+  transition: opacity var(--transition-fast) var(--ease-out);
 }
 .brand:hover,
 .brand:focus,
@@ -340,7 +340,7 @@ main[role="main"] {
   color: var(--text-secondary);
   font-size: var(--text-title, 1.25rem);
   font-weight: var(--weight-normal);
-  transition: background var(--transition-fast, var(--transition-fast)) var(--ease-out), color var(--transition-fast, var(--transition-fast)) var(--ease-out);
+  transition: background var(--transition-fast) var(--ease-out), color var(--transition-fast) var(--ease-out);
   width: fit-content;
   white-space: nowrap;
 }
@@ -380,7 +380,7 @@ main[role="main"] {
   font-weight: var(--weight-bold);
   touch-action: manipulation;
   cursor: pointer;
-  transition: opacity var(--transition-fast, var(--transition-fast)) var(--ease-out);
+  transition: opacity var(--transition-fast) var(--ease-out);
   text-decoration: none;
 }
 .compose-btn:hover {
@@ -415,7 +415,7 @@ main[role="main"] {
   padding: 0.375rem 0.75rem;
   font-size: var(--text-xs);
   line-height: 1.4;
-  color: var(--text, var(--text));
+  color: var(--text);
   background: var(--surface-elevated, var(--surface));
   /* Floating chrome separates by surface, not by rule. */
   border: 0;
@@ -452,7 +452,7 @@ main[role="main"] {
 }
 
 .hotkey-focus {
-  outline: 2px solid var(--accent, var(--accent, currentColor));
+  outline: 2px solid var(--accent, currentColor);
   outline-offset: 2px;
 }
 

@@ -271,7 +271,7 @@ footer {
   font: inherit;
   color: var(--black);
   background: var(--search-bg);
-  transition: background var(--transition-fast, var(--transition-fast)) var(--ease-out);
+  transition: background var(--transition-fast) var(--ease-out);
 }
 
 .form input:focus,

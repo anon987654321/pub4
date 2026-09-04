@@ -576,7 +576,11 @@ scale:
       # glass -- playlist at 94%, maps at 92%, tv at 78% -- where the number is
       # the pane's own opacity and moving it is a decision about that surface,
       # not a lint fix. Recorded rather than snapped for that reason.
-      off_scale_opacity: 26
+      # 26 -> 29 on 2026-09-05, both instrument. Three color-mix values carried a
+      # comma inside the colour argument -- var(--accent, var(--accent)) 18% --
+      # and the pattern stopped at the first comma, so it never saw the alpha
+      # behind them. Nothing changed on screen; the check learned to read.
+      off_scale_opacity: 29
       # Measured 2026-09-03, the first time duration was measured at all.
       # Twelve of the twenty are 160ms, which is --transition-fast (180ms)
       # written 20ms apart. Whether those are one step or two is a design

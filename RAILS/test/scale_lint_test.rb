@@ -1,3 +1,4 @@
+require "yaml"
 # frozen_string_literal: true
 
 require "minitest/autorun"
@@ -19,6 +20,7 @@ require_relative "../shared/lib/pub4/scale_lint"
 class ScaleLintTest < Minitest::Test
   LINT = Pub4::ScaleLint
   TOKENS_SCSS = File.expand_path("../shared/app/assets/stylesheets/_tokens.scss", __dir__)
+  RULES_YML = File.expand_path("../../MASTER/data/rules.yml", __dir__)
 
   def counts = @counts ||= LINT.counts
 
@@ -328,5 +330,26 @@ class ScaleLintTest < Minitest::Test
     refute_empty declared, "no --opacity-* declarations found; this test would prove nothing"
     assert_equal LINT.scale.fetch("opacity").map { |v| Float(v) }.sort, declared.sort,
                  "_tokens.scss and design_tokens.yml scale.opacity disagree"
+  end
+
+  # 44 is law -- layout_rules.touch.target_min_px in rules.yml -- and --tap-min
+  # is how the stylesheets spend it. It was hand-written in five places, three of
+  # them app :root blocks restating what shared already gave them, and nothing
+  # compared any of them to the rule. The same shape as the opacity ladder: a
+  # constant copied out of its source and left to drift.
+  def test_tap_min_matches_the_law
+    law = YAML.safe_load_file(RULES_YML, aliases: true)
+              .dig("design_rules", "layout_rules", "touch", "target_min_px")
+    refute_nil law, "layout_rules.touch.target_min_px is gone from rules.yml"
+
+    declared = LINT.stylesheets.flat_map do |path|
+      File.readlines(path, encoding: "UTF-8").filter_map do |line|
+        "#{LINT.rel(path)}  #{Regexp.last_match(1)}" if line =~ /^\s*--tap-min:\s*(\S+);/
+      end
+    end
+
+    refute_empty declared, "no --tap-min declaration found; this test would prove nothing"
+    off = declared.reject { |d| d.end_with?("#{law}px") }
+    assert_empty off, "--tap-min disagrees with layout_rules.touch.target_min_px (#{law}px)"
   end
 end

@@ -53,7 +53,7 @@ body.auth-surface {
   margin: 0 0 var(--space-4, 1rem);
   font-size: var(--text-sm);
   line-height: 1.5;
-  color: var(--text-secondary, var(--text-secondary));
+  color: var(--text-secondary);
 }
 
 .auth-form-lead a {
@@ -142,7 +142,7 @@ body.auth-surface {
   gap: 4px 0.5rem;
   font-size: var(--text-sm);
   line-height: 1.4;
-  color: var(--text-secondary, var(--text-secondary));
+  color: var(--text-secondary);
 }
 
 /* "Create account" is the second most-pressed control on this page and
@@ -164,7 +164,7 @@ body.auth-surface {
 }
 
 .auth-form-footer-sep {
-  color: var(--text-secondary, var(--text-secondary));
+  color: var(--text-secondary);
   opacity: 0.7;
   user-select: none;
 }
@@ -189,7 +189,7 @@ body.auth-surface {
   gap: var(--space-3, 0.75rem);
   margin: 0 0 var(--space-4, 1rem);
   font-size: var(--text-sm);
-  color: var(--text-secondary, var(--text-secondary));
+  color: var(--text-secondary);
 }
 
 .oauth-divider::before,

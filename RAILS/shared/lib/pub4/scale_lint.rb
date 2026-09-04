@@ -241,7 +241,10 @@ module Pub4
     # alpha step would be a colour decision wearing a lint's clothes.
     ALPHA_RGBA = /rgba?\(\s*[^)]*?,\s*(\d*\.?\d+)\s*\)/
     ALPHA_SLASH = %r{(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch)\([^)]*?/\s*(\d*\.?\d+)\s*\)}
-    ALPHA_MIX = /color-mix\(\s*in\s+[\w-]+\s*,\s*[^,]+?\s+(\d+(?:\.\d+)?)%\s*,\s*transparent\s*\)/
+    # The colour argument may itself contain a comma -- var(--x, #fff), rgb(0,0,0)
+    # -- so this cannot stop at the first one. `color-mix(in <space>,` anchors the
+    # front and `N%, transparent)` the back; everything between is the colour.
+    ALPHA_MIX = /color-mix\(\s*in\s+[\w-]+\s*,\s*.+?\s+(\d+(?:\.\d+)?)%\s*,\s*transparent\s*\)/
 
     def check_alpha(file, line, prop, value)
       found = value.scan(ALPHA_RGBA).flatten.map { |a| [ a, Float(a) ] } +

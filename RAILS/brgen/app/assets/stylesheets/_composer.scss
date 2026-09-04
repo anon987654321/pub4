@@ -25,7 +25,7 @@
   text-align: left;
   font: inherit;
   color: var(--text-secondary);
-  transition: background var(--transition-fast, var(--transition-fast)) var(--ease-out), border-color var(--transition-fast, var(--transition-fast)) var(--ease-out);
+  transition: background var(--transition-fast) var(--ease-out), border-color var(--transition-fast) var(--ease-out);
 }
 
 .compose-trigger:hover {
@@ -64,7 +64,7 @@
      surface value and a full-strength border -- no drop shadow, which
      css_constitution.flat_ui refuses and which this design system does not
      use anywhere else. */
-  background: var(--surface-elevated, var(--surface-elevated));
+  background: var(--surface-elevated);
   color: var(--text);
   overflow: hidden;
   /* Sits high rather than dead-centre, so it lands nearer the trigger than the

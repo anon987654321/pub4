@@ -89,7 +89,7 @@
     margin-inline: 0;
     padding-inline-start: var(--space-4, 1rem);
     border-inline-start: 2px solid var(--border);
-    color: var(--text-secondary, var(--text-secondary));
+    color: var(--text-secondary);
     max-width: var(--measure);
     line-height: var(--leading-loose);
   }
@@ -101,7 +101,7 @@
 .editorial-meta {
   font-size: var(--text-sm);
   line-height: var(--leading-tight);
-  color: var(--text-secondary, var(--text-secondary));
+  color: var(--text-secondary);
   letter-spacing: var(--tracking-normal);
   max-width: var(--measure);
 }

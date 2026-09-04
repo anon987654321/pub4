@@ -25,7 +25,7 @@
   flex-direction: column;
   gap: var(--sp, 8px);
   padding: 0.75rem 1rem;
-  background: var(--surface-elevated, var(--surface-elevated, #211f28));
+  background: var(--surface-elevated, #211f28);
   border: 1px solid var(--border, #46435a);
   border-radius: var(--radius-card, 16px);
   color: var(--text, #d8d6e0);
@@ -43,7 +43,7 @@
   margin: 0;
   font-size: var(--text-sm);
   line-height: 1.5;
-  color: var(--text-secondary, var(--text-secondary));
+  color: var(--text-secondary);
 }
 
 .install-prompt-actions {
@@ -64,7 +64,7 @@
 
 .install-prompt-secondary {
   background: transparent;
-  color: var(--text-secondary, var(--text-secondary));
+  color: var(--text-secondary);
 }
 
 /* Family primary is inverted type-on-background, not an accent fill — see
@@ -76,7 +76,7 @@
 }
 
 .install-prompt-secondary:hover { color: var(--text, #d8d6e0); }
-.install-prompt-primary:hover { border-color: var(--text-secondary, var(--text-secondary)); }
+.install-prompt-primary:hover { border-color: var(--text-secondary); }
 
 /* Installed launches: pwa_standalone_controller.js stamps this on <html>. There
    is nothing left to install, and the OS home indicator now sits where the

@@ -182,8 +182,7 @@ aside:not([class]) > h2 {
    override (verified: shared's values are byte-identical to what was here). */
 :root {
   --color-info: #5b9fd4;
-  --elev-1: 1px solid var(--border, var(--border));
-  --tap-min: 44px;
+  --elev-1: 1px solid var(--border);
 }
 
 /* G · a11y floor + touch targets */
@@ -236,7 +235,7 @@ time {
 /* Nav swiper active underline already present — strengthen + peek */
 .nav_link.active {
   border-bottom-width: 2px;
-  border-bottom-color: var(--accent, var(--accent));
+  border-bottom-color: var(--accent);
   font-weight: var(--weight-bold);
 }
 

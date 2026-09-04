@@ -14,7 +14,7 @@
   font: var(--text-xs)/1.4 ui-monospace, monospace;
   text-transform: uppercase;
   letter-spacing: var(--tracking-widest);
-  color: var(--text-secondary, var(--text-secondary));
+  color: var(--text-secondary);
 }
 
 .offline-page h1 {
@@ -26,7 +26,7 @@
 
 .offline-page-lead {
   margin: 0;
-  color: var(--text-secondary, var(--text-secondary));
+  color: var(--text-secondary);
   font-size: var(--text-base);
   line-height: 1.5;
   max-width: 36em;
@@ -40,9 +40,9 @@
   min-width: var(--tap-min);
   margin-block-start: var(--space-4, 1rem);
   padding: 0.5rem 1.25rem;
-  border: 1px solid var(--border, var(--border));
+  border: 1px solid var(--border);
   border-radius: var(--radius-pill, 9999px);
-  background: var(--accent, var(--accent, #5b4fc4));
+  background: var(--accent, #5b4fc4);
   color: var(--bg, #17161c);
   font-weight: var(--weight-bold);
   font-size: var(--text-base);
@@ -50,7 +50,7 @@
 }
 
 .offline-page-retry:focus-visible {
-  outline: 2px solid var(--accent, var(--accent));
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -64,14 +64,14 @@
 
 .offline-page-item {
   padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
-  border: 1px solid var(--border, var(--border));
+  border: 1px solid var(--border);
   border-radius: var(--radius-card, 0);
-  background: var(--surface-elevated, var(--surface-elevated));
+  background: var(--surface-elevated);
   font-size: var(--text-base);
 }
 
 .offline-page-item a {
-  color: var(--text, var(--text));
+  color: var(--text);
   text-decoration: none;
 }
 
