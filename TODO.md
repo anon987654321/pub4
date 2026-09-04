@@ -1322,6 +1322,87 @@ Found by getting it wrong twice, which is why the instrument note below exists.
 On this Mac everything is installed and synthesis works; the defect is that the
 probe would not have told me if it were not.
 
+#### Three test files have been erroring, and `rake test` cannot see them
+
+Found 2026-09-05 by running every test file individually, which is not what
+`rake test` does. **277 of 283 files pass; six fail, and all six fail identically
+on an unmodified `origin/main`.** Three of the six share one cause and it is
+worth a fix:
+
+    test/test_ast_omission_rule.rb        3 errors
+    test/test_co_change_coupling_rule.rb  3 errors
+    test/test_veto_pattern_rule.rb        1 error
+
+Each is `NameError: uninitialized constant …Rules::AstOmissionRule`, and the
+class is not missing — `AstOmissionRule` is in `lib/review/scan/rules/meta_rules.rb:9`,
+`CoChangeCouplingRule` in `graph_rules.rb:128`, `VetoPatternRule` in
+`yaml_bridge_rules.rb:8`. Zeitwerk maps one file to one constant, so a class in
+a multi-class rule file is only defined once something loads that file, and the
+tests name the constant cold. Proved both directions:
+
+```ruby
+Master::Review::Scan::Rules::AstOmissionRule   # NameError
+Master::Review::Scan::RuleDSL                  # what InfraHelpers touches
+Master::Review::Scan::Rules::AstOmissionRule   # resolves
+```
+
+The fix is one line per file — touch `RuleDSL` in `setup` before naming the
+class, which is what the scanner itself does. Left undone here because it is a
+different task from the one this session was given, and it should be verified
+per file rather than swept.
+
+**`rake test` cannot complete on a dev Mac at all**, which is why three dead
+test files went unnoticed. Its loader aborts on `cannot load such file --
+rack/test` from `test/test_web_ui.rb` before running anything, because the web
+Rails bundle is not installable here — `Could not find rails-8.1.3.1 …` in both
+checkouts. So the local signal for "do the tests pass" has been a task that
+stops before it starts. Run the files individually until that is fixed:
+
+```zsh
+for f in test/**/test_*.rb; do ruby -Ilib -Itest $f; done
+```
+
+The other three failures are separate and pre-existing: `test_reach_exec.rb`
+(1 error), `test_security_sweep.rb` (1 failure), and `test_ratchets.rb`, which
+is the record below.
+
+#### Five ratchets are over, not three
+
+`test/test_ratchets.rb` names them, measured 2026-09-05:
+
+    spine.lib_body_ceiling  39085/37464
+    self_findings             162/151
+    growth.master            1053/1047
+    growth.rails             2363/2358
+    growth.studio             153/138
+
+The **Still open after this session** record above lists three of these and
+predates `self_findings` and `growth.rails` joining them. Nothing here is new
+debt from this session's work beyond what the next paragraph admits; the entry
+is corrected so the count is not read as stable.
+
+`autofix_reach.dangling` was the sixth, in the other direction — a ceiling of 7
+above a real number of 0, which the same test calls slack because it is room the
+next change grows into silently. `efc96832f` emptied it and did not lower it.
+Lowered to 0 and it stays there.
+
+#### The TTS probe fix is paid for out of two budgets that were already over
+
+Named rather than buried, because `limits.yml` says a breach is paid by
+extraction or deletion and this one is not. `edge_tts_ready?`, the memo and the
+worker probe add **35 body lines to `lib/voice`** (3330 → 3365 against 3181) and
+the same 35 to `spine.lib_body_ceiling`. No ceiling was raised.
+
+The honest reason it is not paid: `lib/voice` is 149 over because roughly 1,500
+lines of it are the Transcendent path that the **Inert law and config** entry
+records as reached by nothing, and every candidate for deletion still has
+external references — `Speech.available?`, `synthesize_bytes`,
+`synthesize_audio`, `WarmErratic`, `Melody` and `Transcendent` all resolve to
+callers, mostly tests. Checked before claiming otherwise. Paying this breach is
+the Transcendent decision that entry already assigns to an owner, and taking 35
+lines out of somewhere unrelated to make a number look right would be the
+accounting the budget exists to prevent.
+
 #### Instrument notes
 
 - **There is no `edge-tts` binary to look for, and the gem is spelled with
