@@ -528,7 +528,14 @@ module Master
         class OpenClosedRule < Rule
           MIN_BRANCHES = 3
           TYPE_PREDICATE = /\.(class|type|kind)\b/
-          TYPE_CHECK = /\b(is_a\?|instance_of\?)\b/
+          # No trailing \b. A word boundary needs a word character on one side,
+          # and `?` is not one — so `\bis_a\?\b` required a word character right
+          # after the question mark, which no call has: `is_a?(Header)` and
+          # `is_a? Header` both continue with a non-word character. The clause
+          # could not match any spelling of the method it names, so half of what
+          # the description promises has never fired. The leading \b stays and
+          # does work, keeping `foo_is_a?` out.
+          TYPE_CHECK = /\b(is_a\?|instance_of\?)/
 
           def initialize
             super()

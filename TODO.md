@@ -1414,7 +1414,7 @@ rule agreed on the same 14 classes, and six mutations are caught by
 `test/test_rule_coverage_rule.rb` — including the exact regression to
 `_rule.rb`, which was the old behaviour.
 
-#### Thirteen rule classes have no test that names them
+#### Nine rule classes have no test that names them
 
 What the gate above reports now that it can see. Not new debt; it has been there
 and was invisible.
@@ -1426,33 +1426,61 @@ and was invisible.
     FileLayoutRule            structural_rules.rb
     CyclomaticComplexityRule  structural_rules.rb
     DataClassRule             structural_rules.rb
-    OpenClosedRule            structural_rules.rb
-    LiskovRule                structural_rules.rb
-    DependencyInversionRule   structural_rules.rb
-    InterfaceSegregationRule  structural_rules.rb
     MiddleManRule             structural_rules.rb
     YamlDeclarativeRule       yaml_bridge_rules.rb
 
-`RuleCoverageRule` was the fourteenth and now has one.
+It was fourteen. `RuleCoverageRule` got a test with the fix above, and the four
+SOLID proxies got `test/test_solid_rules.rb` — see the record below, which is
+why writing them first was worth it.
 
-**Start with the four SOLID proxies** — `OPEN_CLOSED`, `LISKOV`,
-`INTERFACE_SEGREGATION`, `DEPENDENCY_INVERSION`. `data/rules.yml` documents each
-one's detector as a heuristic and says so in its own words: "same-file
-heuristic; cross-file inclusion stays semantic-only", "module with 8+ public
-methods included by 2+ classes in the same file". A rule that admits in writing
-that it approximates, and that nothing tests, is the combination most likely to
-be quietly wrong. `MiddleManRule` and `FeatureEnvyRule` are the same shape and
-`rules.yml` grants `FEATURE_ENVY` a "genuine false-positive risk" note of its
-own.
+**`MiddleManRule` and `FeatureEnvyRule` are next**, being the same shape as the
+four that just paid out: `rules.yml` documents `FEATURE_ENVY` as a "single-method
+heuristic, same-file only" and grants it a false-positive risk note of its own.
 
 `YamlDeclarativeRule` is a special case and should not get a test that merely
 passes: it compiles nothing, because no rule carries `detect_lexical` any more.
 Testing it against a fixture would assert a path production never takes. Settle
 whether the bridge stays first — that question is above.
 
-The house shape is the one `test_smell_detectors.rb` uses and the two rewritten
+The house shape is the one `test_smell_detectors.rb` uses and the three written
 this session follow: a source the rule must flag and a source it must not,
 because a detector tested only for firing proves nothing about what it exempts.
+
+#### The four SOLID proxies fire on almost nothing, and one half of one could not fire at all
+
+Measured 2026-09-05 over **2,470 Ruby files across all four trees**, which is a
+wider corpus than `rule_audit`'s 713:
+
+    OPEN_CLOSED            3     RAILS/brgen/app/helpers/application_helper.rb:400 and two others
+    LISKOV                 0
+    DEPENDENCY_INVERSION   0
+    INTERFACE_SEGREGATION  0
+
+Three of four silent, and until `test/test_solid_rules.rb` nothing could tell
+which of the two readings was true — the tree has none of these shapes, or the
+detectors cannot see them. A rule that cannot see its subject is indistinguishable
+from a rule with nothing to report, which is the whole reason `rule_audit`
+carries a `silent` ceiling. **Settled: all four fire on a source built to violate
+them**, so the silence is the sample. `LISKOV`'s zero is largely structural — it
+only sees a parent declared in the same file, and almost every subclass here
+inherits across files. That limit is pinned as a test of its own so the silence
+is never read as a clean bill of health.
+
+**`OPEN_CLOSED`'s `is_a?` clause had never fired**, and could not. `TYPE_CHECK`
+was `/\b(is_a\?|instance_of\?)\b/`, and a trailing `\b` needs a word character
+beside it while `?` is not one — so it required a word character immediately
+after the question mark, which no call site has. `is_a?(Header)` and `is_a? Header`
+both continue with a non-word character and both failed. So half of what the
+description promises, "case/when **or is_a? chains**", was dead from the start.
+
+Fixed by dropping the trailing boundary, and the fix is free: repo-wide findings
+go 3 → 3, because no `case` anywhere dispatches on `is_a?` across three or more
+branches. The leading `\b` stays and does real work, keeping `foo_is_a?` out.
+
+This is the same trap already recorded twice in this file — `TODO.md` read as a
+work marker because `\b` holds between the `O` and the dot. **Any `\b` next to
+punctuation is worth re-reading**; it is the third time it has cost something
+here.
 
 **`rake test` cannot complete on a dev Mac at all**, which is why three dead
 test files went unnoticed. Its loader aborts on `cannot load such file --
