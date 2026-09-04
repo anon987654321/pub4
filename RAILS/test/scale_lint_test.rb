@@ -3,6 +3,7 @@ require "yaml"
 
 require "minitest/autorun"
 require_relative "../shared/lib/pub4/scale_lint"
+require_relative "../shared/lib/pub4/master_design"
 
 # The rhythm axis, ratcheted.
 #
@@ -20,7 +21,6 @@ require_relative "../shared/lib/pub4/scale_lint"
 class ScaleLintTest < Minitest::Test
   LINT = Pub4::ScaleLint
   TOKENS_SCSS = File.expand_path("../shared/app/assets/stylesheets/_tokens.scss", __dir__)
-  RULES_YML = File.expand_path("../../MASTER/data/rules.yml", __dir__)
 
   def counts = @counts ||= LINT.counts
 
@@ -338,8 +338,7 @@ class ScaleLintTest < Minitest::Test
   # compared any of them to the rule. The same shape as the opacity ladder: a
   # constant copied out of its source and left to drift.
   def test_tap_min_matches_the_law
-    law = YAML.safe_load_file(RULES_YML, aliases: true)
-              .dig("design_rules", "layout_rules", "touch", "target_min_px")
+    law = Pub4::MasterDesign.dig("layout_rules", "touch", "target_min_px")
     refute_nil law, "layout_rules.touch.target_min_px is gone from rules.yml"
 
     declared = LINT.stylesheets.flat_map do |path|

@@ -3,6 +3,7 @@
 require "yaml"
 require_relative "../../../../OPENBSD/lib/gate_result"
 require_relative "../../support/gate_autofix"
+require_relative "../../../shared/lib/pub4/master_design"
 
 module Deploy
   # Every SCSS/CSS under RAILS apps + shared must pass MASTER design constitution.
@@ -97,7 +98,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
 
     def run_once
       @result = GateResult.new
-      @design = ((YAML.safe_load_file(MASTER_DESIGN, aliases: true) if File.file?(MASTER_DESIGN)) || {})["design_rules"] || {}
+      @design = Pub4::MasterDesign.blocks(MASTER_DESIGN)
       check_tap_token
 
       files = css_files

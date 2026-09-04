@@ -1,3 +1,4 @@
+require_relative "master_design"
 # frozen_string_literal: true
 
 require "yaml"
@@ -47,15 +48,7 @@ module Pub4
       end
     end
 
-    def load_design_rules
-      candidates = [
-        ENV["PUB4_RAILS_ROOT"] && File.join(File.dirname(ENV["PUB4_RAILS_ROOT"]), "MASTER/data/rules.yml"),
-        "/home/dev/pub4/MASTER/data/rules.yml",
-        File.expand_path("../../../../MASTER/data/rules.yml", __dir__),
-      ].compact
-      path = candidates.find { |c| File.readable?(c) }
-      path && (YAML.safe_load_file(path, aliases: true) || {})["design_rules"]
-    end
+    def load_design_rules = Pub4::MasterDesign.blocks
 
     def design_tokens_path
       File.expand_path("../../design_tokens.yml", __dir__)
