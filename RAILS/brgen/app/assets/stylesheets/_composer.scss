@@ -64,7 +64,7 @@
      surface value and a full-strength border -- no drop shadow, which
      css_constitution.flat_ui refuses and which this design system does not
      use anywhere else. */
-  background: var(--surface2, var(--surface-elevated));
+  background: var(--surface-elevated, var(--surface-elevated));
   color: var(--text);
   overflow: hidden;
   /* Sits high rather than dead-centre, so it lands nearer the trigger than the

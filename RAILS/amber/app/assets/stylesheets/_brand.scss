@@ -229,7 +229,7 @@
 .amber-guest-hero .body {
   max-width: var(--measure-narrow);
   margin-inline: auto;
-  color: var(--text-dim);
+  color: var(--text-secondary);
   margin-block: 0;
   font-size: var(--text-sm);
   line-height: var(--line-height);
@@ -249,7 +249,7 @@
 }
 
 .amber-guest-secondary a {
-  color: var(--text-dim);
+  color: var(--text-secondary);
   text-decoration: none;
   font-weight: var(--weight-bold);
 }

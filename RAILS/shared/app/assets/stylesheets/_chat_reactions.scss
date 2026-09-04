@@ -160,7 +160,7 @@ li:focus-within .msg_reaction_picker {
 .comment.comment_item header {
   font-size: var(--text-sm);
   line-height: 1.5;
-  color: var(--text-dim, var(--text-secondary));
+  color: var(--text-secondary, var(--text-secondary));
   margin-bottom: var(--space-1, 0.25rem);
 }
 .comment-author {

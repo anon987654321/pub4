@@ -8,8 +8,8 @@
 
 .community-list li {
   padding: 0.75rem 1rem;
-  background: var(--surface2);
-  border-radius: var(--radius);
+  background: var(--surface-elevated);
+  border-radius: var(--radius-card);
   transition: background var(--transition-fast) var(--ease-out);
 }
 
@@ -47,7 +47,7 @@
   }
 
   time {
-    color: var(--text-dim);
+    color: var(--text-secondary);
     font-size: var(--text-sm);
   }
 }

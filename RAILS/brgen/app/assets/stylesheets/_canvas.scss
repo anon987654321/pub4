@@ -19,7 +19,7 @@
 .splash[hidden] { display: none; }
 .splash h2 { margin: 0 0 8px; font-size: clamp(2.5rem, 12vw, 5rem); font-weight: var(--weight-heavy); color: var(--text); letter-spacing: var(--tracking-tightest); transition: transform var(--transition-fast) var(--ease-out); }
 .splash h2.clicked { transform: scale(1.02); }
-.splash .tagline { color: var(--text-dim); font-size: clamp(0.9rem, 2.8vw, 1.05rem); margin: 0 0 var(--space-6); max-width: 28em; line-height: 1.5; }
+.splash .tagline { color: var(--text-secondary); font-size: clamp(0.9rem, 2.8vw, 1.05rem); margin: 0 0 var(--space-6); max-width: 28em; line-height: 1.5; }
 .splash .chips { display: flex; flex-wrap: wrap; gap: var(--space-1); justify-content: center; margin-bottom: var(--space-6); }
 .splash .chip {
   padding: var(--space-1) .75rem;
@@ -28,7 +28,7 @@
   font: 10px/1.35 ui-monospace, monospace;
   text-transform: uppercase;
   letter-spacing: var(--tracking-wider);
-  color: var(--text-dim);
+  color: var(--text-secondary);
   transition: color var(--transition-fast) var(--ease-out), border-color var(--transition-fast) var(--ease-out), background var(--transition-fast) var(--ease-out);
 }
 
@@ -38,6 +38,6 @@
   border-color: var(--accent);
   background: var(--hover-subtle);
 }
-.splash .hint { color: var(--text-dim); font-size: var(--text-xs); letter-spacing: var(--tracking-wide); }
+.splash .hint { color: var(--text-secondary); font-size: var(--text-xs); letter-spacing: var(--tracking-wide); }
 .splash a { color: inherit; }
 

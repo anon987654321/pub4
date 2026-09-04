@@ -116,17 +116,6 @@ system:
   # One card radius for the whole family. 16 (social), 14 and 10 (luxury) were
   # three answers to one question, and neither 14 nor 10 is on scale.radius_px.
   radius_card: "12px"
-  # Named by weight rather than by use, so a surface picks a density instead of
-  # inventing an rgba(). Consumed as rgb(from ... / var(--opacity-*)).
-  opacity:
-    hairline: "0.05"
-    faint: "0.08"
-    subtle: "0.1"
-    soft: "0.12"
-    medium: "0.2"
-    half: "0.4"
-    strong: "0.6"
-    heavy: "0.8"
 
 # Luxury minimalist additions for wardrobe/product UIs (Aesop/Toteme/Nécessaire inspired)
 # Warm neutrals, generous spacing, refined typography. Use in amber + shared product views.
@@ -510,6 +499,19 @@ scale:
   # heaviest step is defined by the stack it usually renders in, and the 31
   # declarations using --weight-heavy are on scale rather than baselined.
   font_weight: [400, 500, 600, 700, 800]
+  # The alpha ladder, named by weight so a surface picks a density instead of
+  # inventing an rgba(). Consumed as rgb(from <colour> r g b / var(--opacity-*)),
+  # which tints with the theme where a literal rgba does not.
+  #
+  # It sat under `system:` until 2026-09-05, read by nothing, hand-copied into
+  # _tokens.scss -- and the copies had already drifted: the stylesheet carried a
+  # ninth step, whisper, that the source of truth did not list. Here it is one of
+  # the seven ladders ScaleLint measures, and a test pins the stylesheet to it.
+  #
+  # A blend is not an alpha. color-mix(in srgb, X 22%, var(--surface)) mixes two
+  # opaque colours and 22% is a ratio between them, not a transparency; those are
+  # left to the colour work and are not measured here.
+  opacity: [0.03, 0.05, 0.08, 0.1, 0.12, 0.2, 0.4, 0.6, 0.8]
   # The two durations _tokens.scss names: --transition-fast and --transition-normal.
   # rules.yml NO_LONG_TRANSITION caps a transition at 300ms, so --transition-normal
   # is the ceiling as well as the slow step.
@@ -568,6 +570,13 @@ scale:
       off_scale_radius: 0
       off_scale_font_weight: 0
       off_scale_tracking: 0
+      # Measured 2026-09-05, the first time alpha was measured at all. Twenty-six
+      # values, and the shape is not one backlog: eleven are chrome and card
+      # washes between 6% and 45%, and the rest are the three engines that paint
+      # glass -- playlist at 94%, maps at 92%, tv at 78% -- where the number is
+      # the pane's own opacity and moving it is a decision about that surface,
+      # not a lint fix. Recorded rather than snapped for that reason.
+      off_scale_opacity: 26
       # Measured 2026-09-03, the first time duration was measured at all.
       # Twelve of the twenty are 160ms, which is --transition-fast (180ms)
       # written 20ms apart. Whether those are one step or two is a design
@@ -590,6 +599,10 @@ scale:
       absolute_line_height: 0
       off_scale_font_weight: 0
       off_scale_tracking: 14
+      # Measured 2026-09-05. The face composes almost every colour from
+      # --face-fg and --c-text through color-mix, so it carries more of these
+      # than the apps do and they are the medium rather than the debt.
+      off_scale_opacity: 38
       # Measured 2026-09-03. The face keeps its own timings — .09s and .15s
       # steps(4,end) belong to a terminal that redraws in character cells,
       # not to the apps four-step transition ladder. Recorded so the tail

@@ -16,7 +16,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: var(--surface2);
+  background: var(--surface-elevated);
   flex: 0 0 40px;
   overflow: hidden;
 }
@@ -39,7 +39,7 @@
   align-items: baseline;
   gap: 4px;
   font-size: var(--text-sm);
-  color: var(--text-dim);
+  color: var(--text-secondary);
   margin-bottom: 4px;
   flex-wrap: wrap;
   line-height: 1.5;
@@ -50,7 +50,7 @@
   font-size: var(--text-base);
 }
 .feed-card-handle { color: var(--text); opacity: 0.75; }
-.feed-card-time { color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.feed-card-time { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
 .feed-card-text {
   font-size: var(--text-base);
   line-height: 1.5;
@@ -93,7 +93,7 @@
   display: flex;
   align-items: center;
   gap: 0;
-  color: var(--text-dim);
+  color: var(--text-secondary);
   font-size: var(--text-sm);
   margin-top: 8px;
   flex-wrap: wrap;

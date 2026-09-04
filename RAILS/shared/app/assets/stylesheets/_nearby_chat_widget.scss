@@ -36,7 +36,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--surface2, var(--surface-elevated, #211f28));
+  background: var(--surface-elevated, var(--surface-elevated, #211f28));
   /* The elevated surface is the separation. Three edges of hairline around a
      44px tab was the most line-per-pixel chrome on the page. */
   border: 0;
@@ -55,7 +55,7 @@
 }
 
 .nearby-chat-widget-tab:hover {
-  border-color: var(--text-dim, var(--text-secondary));
+  border-color: var(--text-secondary, var(--text-secondary));
 }
 
 .nearby-chat-widget-panel {
@@ -66,7 +66,7 @@
   height: min(460px, calc(100vh - 48px));
   display: flex;
   flex-direction: column;
-  background: var(--surface2, var(--surface-elevated, #211f28));
+  background: var(--surface-elevated, var(--surface-elevated, #211f28));
   border: 1px solid var(--border, #46435a);
   border-block-end: 0;
   border-inline-end: 0;
@@ -154,14 +154,14 @@
   padding: 0.625rem 0.875rem;
   border-bottom: 1px solid var(--border, #46435a);
   font: var(--weight-bold) var(--text-xs)/1 var(--font-mono, ui-monospace, monospace);
-  color: var(--text-dim, var(--text-secondary));
+  color: var(--text-secondary, var(--text-secondary));
   flex-shrink: 0;
 }
 
 .nearby-chat-widget-close {
   background: none;
   border: none;
-  color: var(--text-dim, var(--text-secondary));
+  color: var(--text-secondary, var(--text-secondary));
   cursor: pointer;
   font-size: var(--text-lg);
   line-height: 1;
@@ -268,7 +268,7 @@
 
 .nearby-chat-widget-empty p {
   margin: 0;
-  color: var(--text-dim, var(--text-secondary));
+  color: var(--text-secondary, var(--text-secondary));
 }
 
 .nearby-chat-widget-status {
@@ -278,7 +278,7 @@
   font-size: var(--text-sm);
   line-height: 1.4;
   border-bottom: 1px solid var(--border, #46435a);
-  color: var(--text-dim, var(--text-secondary));
+  color: var(--text-secondary, var(--text-secondary));
 }
 
 .nearby-chat-widget-status[hidden] {
@@ -350,7 +350,7 @@
 }
 
 .nearby-chat-widget-cta:hover {
-  border-color: var(--text-dim, var(--text-secondary));
+  border-color: var(--text-secondary, var(--text-secondary));
   text-decoration: none;
 }
 

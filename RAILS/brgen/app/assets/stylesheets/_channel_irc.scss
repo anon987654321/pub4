@@ -98,7 +98,7 @@ body.vertical-messenger #messages.channel-log article > header {
 /* Header order in the ERB is nick, time, chips. IRC reads time first. */
 body.vertical-messenger #messages.channel-log article > header time {
   order: -1;
-  color: var(--text-secondary, var(--text-dim));
+  color: var(--text-secondary, var(--text-secondary));
   font-variant-numeric: tabular-nums;
   opacity: 0.75;
 }
@@ -174,7 +174,7 @@ body.vertical-messenger .channel-room-header h1 {
 body.vertical-messenger .channel-room-header .channel-topic {
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: var(--text-xs);
-  color: var(--text-secondary, var(--text-dim));
+  color: var(--text-secondary, var(--text-secondary));
 }
 
 /* Names list, mono so the modes line up with the log. */
@@ -191,7 +191,7 @@ body.vertical-messenger .roster-nick {
    the field keeps its edge and the box around it becomes a surface. */
 .channel-composer {
   border: 0;
-  background: var(--surface-elevated, var(--surface2));
+  background: var(--surface-elevated, var(--surface-elevated));
 }
 
 .channel-composer textarea {

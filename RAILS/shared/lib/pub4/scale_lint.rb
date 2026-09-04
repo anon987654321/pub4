@@ -212,7 +212,7 @@ module Pub4
     end
 
     def check(file, line, prop, value)
-      case prop
+      check_alpha(file, line, prop, value) + case prop
       when *SPACE_PROPS
         off_scale_lengths(value, space_px).map { |v| Finding.new(file, line, "off_scale_space", v, prop) }
       when "border-radius"
@@ -229,6 +229,33 @@ module Pub4
         []
       end
     end
+
+    # Alpha is not a property, so unlike every other axis here this runs on the
+    # value of any declaration. It arrives four ways: rgba()'s fourth argument,
+    # the slash form in rgb()/hsl(), and color-mix against `transparent`, which
+    # is an alpha written as a mix. A value already reading a token is on scale
+    # by construction and never re-examined.
+    #
+    # color-mix against an OPAQUE colour is deliberately not read. There 22% is
+    # the ratio between two colours, not a transparency, and snapping it to an
+    # alpha step would be a colour decision wearing a lint's clothes.
+    ALPHA_RGBA = /rgba?\(\s*[^)]*?,\s*(\d*\.?\d+)\s*\)/
+    ALPHA_SLASH = %r{(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch)\([^)]*?/\s*(\d*\.?\d+)\s*\)}
+    ALPHA_MIX = /color-mix\(\s*in\s+[\w-]+\s*,\s*[^,]+?\s+(\d+(?:\.\d+)?)%\s*,\s*transparent\s*\)/
+
+    def check_alpha(file, line, prop, value)
+      found = value.scan(ALPHA_RGBA).flatten.map { |a| [ a, Float(a) ] } +
+              value.scan(ALPHA_SLASH).flatten.map { |a| [ a, Float(a) ] } +
+              value.scan(ALPHA_MIX).flatten.map { |p| [ "#{p}%", Float(p) / 100 ] }
+
+      found.filter_map do |written, alpha|
+        next if alpha.zero? || alpha == 1.0 || opacity.include?(alpha)
+
+        Finding.new(file, line, "off_scale_opacity", written, prop)
+      end
+    end
+
+    def opacity = @opacity ||= scale.fetch("opacity").map { |v| Float(v) }
 
     # A percentage radius is a circle or a pill, not a step -- 50% and 100% are
     # shapes and the scale has nothing to say about them.

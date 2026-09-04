@@ -18,6 +18,7 @@ require_relative "../shared/lib/pub4/scale_lint"
 # nothing here moves a pixel.
 class ScaleLintTest < Minitest::Test
   LINT = Pub4::ScaleLint
+  TOKENS_SCSS = File.expand_path("../shared/app/assets/stylesheets/_tokens.scss", __dir__)
 
   def counts = @counts ||= LINT.counts
 
@@ -314,5 +315,18 @@ class ScaleLintTest < Minitest::Test
       assert_operator finding.line, :>, 0
       assert_operator finding.line, :<=, File.readlines(path).size, "#{finding.file}:#{finding.line} is past EOF"
     end
+  end
+
+  # The ladder lived under `system:` with no reader, hand-copied into
+  # _tokens.scss, and the copies drifted: the stylesheet carried a ninth step,
+  # whisper, that the source of truth did not list. Two hand-maintained copies of
+  # one scale is the defect this file exists to catch on every other axis.
+  def test_the_stylesheet_declares_exactly_the_opacity_ladder
+    declared = File.readlines(TOKENS_SCSS, encoding: "UTF-8")
+                   .filter_map { |line| Float(Regexp.last_match(1)) if line =~ /--opacity-[\w-]+:\s*([\d.]+);/ }
+
+    refute_empty declared, "no --opacity-* declarations found; this test would prove nothing"
+    assert_equal LINT.scale.fetch("opacity").map { |v| Float(v) }.sort, declared.sort,
+                 "_tokens.scss and design_tokens.yml scale.opacity disagree"
   end
 end

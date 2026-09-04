@@ -16,9 +16,9 @@
   align-items: center;
   gap: 8px;
   /* Flat UI (design_rules pixel_perfection): no box-shadow; separation via surface + border */
-  background: var(--surface-elevated, var(--surface2));
+  background: var(--surface-elevated, var(--surface-elevated));
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-card);
   padding: 0.75rem 1rem;
   pointer-events: all;
   animation: nearby-in 280ms cubic-bezier(.34, 1.56, .64, 1) both;
@@ -35,7 +35,7 @@
   width: 8px;
   height: 8px;
   border-radius: var(--radius-sm);
-  background: var(--text-dim);
+  background: var(--text-secondary);
   flex-shrink: 0;
   animation: pulse-dot 1.8s var(--ease-in-out) infinite;
 }
@@ -50,7 +50,7 @@
 .nearby-alert-close {
   background: none;
   border: none;
-  color: var(--text-dim);
+  color: var(--text-secondary);
   cursor: pointer;
   font-size: var(--text-sm);
   padding: 4px 4px;
@@ -63,7 +63,7 @@
 .btn-share {
   background: transparent;
   border: 1px solid var(--border);
-  color: var(--text-dim);
+  color: var(--text-secondary);
   border-radius: var(--radius-pill);
   padding: 0.25rem 0.75rem; /* 4px / 12px — eight_px_rhythm */
   font-size: var(--text-sm);
@@ -71,7 +71,7 @@
   transition: color var(--transition-fast) var(--ease-out), border-color var(--transition-fast) var(--ease-out);
 }
 
-.btn-share:hover { color: var(--text); border-color: var(--text-dim); }
+.btn-share:hover { color: var(--text); border-color: var(--text-secondary); }
 
 /* Nearby chat widget styles live in shared/_shell_widgets.scss (fleet-wide). */
 

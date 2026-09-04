@@ -6,7 +6,7 @@
   inset-inline-end: 0;
   display: flex;
   min-height: 54px;
-  background: var(--surface2);
+  background: var(--surface-elevated);
   z-index: var(--z-nav);
   padding-bottom: var(--safe-bottom);
 }
@@ -73,7 +73,7 @@
   min-height: 220px;
   max-height: 72vh;
   padding: var(--space-2) var(--space-4) calc(20px + var(--safe-bottom));
-  background: var(--surface2);
+  background: var(--surface-elevated);
   border-top-left-radius: var(--radius-card);
   border-top-right-radius: var(--radius-card);
   transform: translateY(100%);
@@ -116,7 +116,7 @@
   display: block;
   padding: 0.875rem 0.75rem;
   border-radius: var(--radius-sm);
-  background: var(--surface2);
+  background: var(--surface-elevated);
   color: var(--text);
   text-decoration: none;
 }

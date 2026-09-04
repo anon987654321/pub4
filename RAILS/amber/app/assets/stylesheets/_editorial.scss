@@ -25,7 +25,7 @@
 .feed-post-byline {
   font-size: var(--text-sm);
   line-height: var(--leading-tight, 1.25);
-  color: var(--text-dim);
+  color: var(--text-secondary);
   margin-bottom: var(--space-2, 0.5rem);
   max-width: var(--measure);
 }
@@ -43,7 +43,7 @@
   padding: var(--space-4, 1rem);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: var(--surface2);
+  background: var(--surface-elevated);
   max-width: var(--measure);
 }
 

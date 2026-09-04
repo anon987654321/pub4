@@ -9,7 +9,7 @@
 
 .feed-card-meta {
   font-size: var(--text-sm);
-  color: var(--text-dim);
+  color: var(--text-secondary);
   margin: 4px 0;
   line-height: 1.5;
 }
@@ -38,7 +38,7 @@
 // of eight and no worse either way.
 /* Space, not hairlines — elevated surface only (family "separation is space"). */
 .feed-card:is(.listing, .deal, .store, .community, .match, .playlist, .tv, .takeaway) {
-  background: var(--surface2);
+  background: var(--surface-elevated);
   border: 0;
   border-radius: var(--radius-card);
   margin-bottom: 0;

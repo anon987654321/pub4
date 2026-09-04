@@ -71,7 +71,7 @@
   inset-block-end: var(--space-2);
   inset-inline-end: var(--space-3);
   font-size: var(--text-xs);
-  color: var(--text-dim);
+  color: var(--text-secondary);
   opacity: 0;
   transition: opacity var(--transition-fast) var(--ease-out);
 }
@@ -92,8 +92,8 @@
   justify-content: center;
   background: none;
   border: 0;
-  border-radius: var(--radius);
-  color: var(--text-dim);
+  border-radius: var(--radius-card);
+  color: var(--text-secondary);
   cursor: pointer;
   font-size: var(--text-base);
   transition: color var(--transition-fast) var(--ease-out), background var(--transition-fast) var(--ease-out);

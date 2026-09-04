@@ -139,7 +139,7 @@ body.vertical-messenger #new_message {
   position: sticky;
   bottom: max(var(--space-3), env(safe-area-inset-bottom), var(--keyboard-inset, 0px));
   padding: var(--space-3);
-  border-radius: var(--radius);
+  border-radius: var(--radius-card);
   background: var(--msg-surface);
   border: 1px solid var(--msg-border);
 }

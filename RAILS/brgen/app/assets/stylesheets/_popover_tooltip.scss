@@ -27,7 +27,7 @@
   inset-inline-start: 50%;
   inset-block-end: calc(100% + 12px);
   transform: translateX(-50%);
-  background: var(--surface2);
+  background: var(--surface-elevated);
   color: var(--text);
   font-size: var(--text-xs, 0.75rem);
   font-weight: var(--weight-bold);
@@ -45,6 +45,6 @@
   top: 100%;
   transform: translateX(-50%);
   border: 6px solid transparent;
-  border-top-color: var(--surface2);
+  border-top-color: var(--surface-elevated);
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35)); // scan: intentional — the author's recorded 2026-07-21 exception: the arrow's only depth cue
 }

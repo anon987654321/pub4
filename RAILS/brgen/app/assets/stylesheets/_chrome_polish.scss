@@ -58,7 +58,7 @@
   border-inline-start: 3px solid var(--accent);
   font-size: var(--text-sm);
   line-height: 1.5;
-  color: var(--text-dim);
+  color: var(--text-secondary);
 }
 
 .feed-post-show {
@@ -99,7 +99,7 @@
 
 .feed-post-show-meta {
   font-size: var(--text-sm);
-  color: var(--text-dim);
+  color: var(--text-secondary);
   margin-bottom: var(--space-2);
 }
 
@@ -111,7 +111,7 @@
 
 .post-show-aside {
   padding: var(--space-4);
-  color: var(--text-dim);
+  color: var(--text-secondary);
   font-size: var(--text-sm);
 }
 

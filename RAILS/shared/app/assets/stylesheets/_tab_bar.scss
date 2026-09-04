@@ -59,7 +59,7 @@ html.chrome-hidden .tab-bar {
   margin-inline: auto;
   border: 0;
   background: transparent;
-  color: var(--text-dim, var(--text-secondary));
+  color: var(--text-secondary, var(--text-secondary));
   cursor: pointer;
   touch-action: manipulation;
 }
@@ -113,7 +113,7 @@ html.chrome-hidden .tab-bar {
   z-index: calc(var(--z-nav, 80) + 1);
   width: min(20rem, calc(100vw - 2rem));
   padding: 0.75rem var(--space-3);
-  background: var(--surface-elevated, var(--surface2, #211f28));
+  background: var(--surface-elevated, var(--surface-elevated, #211f28));
   border: 0;
   border-radius: var(--radius-sm, 8px);
   font-family: var(--font);

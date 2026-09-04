@@ -14,7 +14,7 @@
   font: var(--text-xs)/1.4 ui-monospace, monospace;
   text-transform: uppercase;
   letter-spacing: var(--tracking-widest);
-  color: var(--text-dim, var(--text-secondary));
+  color: var(--text-secondary, var(--text-secondary));
 }
 
 .offline-page h1 {
@@ -26,7 +26,7 @@
 
 .offline-page-lead {
   margin: 0;
-  color: var(--text-dim, var(--text-secondary));
+  color: var(--text-secondary, var(--text-secondary));
   font-size: var(--text-base);
   line-height: 1.5;
   max-width: 36em;
@@ -66,7 +66,7 @@
   padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
   border: 1px solid var(--border, var(--border));
   border-radius: var(--radius-card, 0);
-  background: var(--surface2, var(--surface-elevated));
+  background: var(--surface-elevated, var(--surface-elevated));
   font-size: var(--text-base);
 }
 

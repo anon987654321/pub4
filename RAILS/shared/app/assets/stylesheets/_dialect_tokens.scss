@@ -34,14 +34,6 @@
   // carry light ink themselves. _vertical_shell.scss overrides this per vertical.
   --accent-ink: #{$bg};
   --danger: #{$danger};
-  // --surface2/--text-dim are compat aliases that app-root-tokens also declares
-  // at :root. A custom property holding var(--x) resolves against the element
-  // it is DECLARED on, so the :root copy stays light even where a scoped block
-  // overrides --surface-elevated — which left brgen/maps painting the chat tab
-  // on #eeedf3 while its ink had gone dark (1.23:1). Redeclaring them inside the
-  // dialect makes a scoped @include complete on its own.
-  --surface2: var(--surface-elevated);
-  --text-dim: var(--text-secondary);
   // --font moved to app-root-tokens. This is a *palette* mixin, and carrying the
   // typeface in it meant any surface that pinned a palette also reset the
   // typeface. body.vertical-maps pins dark so its basemap and the shared widgets
@@ -104,14 +96,6 @@
   --accent: #{$accent};
   --accent-ink: #{$bg};
   --danger: #{$danger};
-  // --surface2/--text-dim are compat aliases that app-root-tokens also declares
-  // at :root. A custom property holding var(--x) resolves against the element
-  // it is DECLARED on, so the :root copy stays light even where a scoped block
-  // overrides --surface-elevated — which left brgen/maps painting the chat tab
-  // on #eeedf3 while its ink had gone dark (1.23:1). Redeclaring them inside the
-  // dialect makes a scoped @include complete on its own.
-  --surface2: var(--surface-elevated);
-  --text-dim: var(--text-secondary);
 }
 
 // Amber luxury dialect (Aesop/Toteme warm paper) — design_tokens.yml luxury:
@@ -226,11 +210,10 @@
   --radius-lg: 8px;
 }
 
-// Non-token application aliases layered over either dialect theme. The
-// dialect mixins (dark-tokens, light-tokens, brgen-old-dark-tokens, etc.)
-// now set --bg/--text/--accent/etc. directly -- no more --x- prefixed raw
-// layer to alias here. --surface2/--text-dim/--radius stay as compat names
-// for their many existing call sites, now pointing at the renamed sources.
+// What an app root sets over a dialect palette: the typeface, and nothing
+// that a palette should be able to change as a side effect. The dialect
+// mixins set --bg/--text/--accent directly, so there is no raw layer to
+// alias over.
 @mixin app-root-tokens {
   // The typeface, declared once per app root rather than inside a palette.
   // Every app takes this default; anything that only pins a palette — a
@@ -274,9 +257,6 @@
   --tab-bar-h: var(--bar-height);
   --page-gutter: clamp(16px, 5vw, 48px);
   --feed-max: 600px;
-  --surface2: var(--surface-elevated);
-  --text-dim: var(--text-secondary);
-  --radius: var(--radius-card);
   --sp: 8px;
   --z-app: var(--z-chrome);
   --z-nav: var(--z-ui);

@@ -12,7 +12,7 @@
   text-align: center;
   font: 0.875rem/1 var(--font);
   font-weight: var(--weight-bold);
-  color: var(--text-dim);
+  color: var(--text-secondary);
   transition: background var(--transition-fast) var(--ease-out), color var(--transition-fast) var(--ease-out);
   white-space: nowrap;
 }
@@ -27,7 +27,7 @@
 .sort-tab:hover { background: var(--hover); color: var(--text); text-decoration: none; }
 .sort-tab.active { color: var(--text); font-weight: var(--weight-bold); }
 
-.empty { color: var(--text-dim); padding: 32px 12px; text-align: center; font-size: var(--text-sm); }
+.empty { color: var(--text-secondary); padding: 32px 12px; text-align: center; font-size: var(--text-sm); }
 @media (min-width: 768px) {
   .empty { padding: 40px 16px; font-size: var(--text-base); }
 }
@@ -65,10 +65,10 @@
 .monogram--5 { background: #5f4b32; color: #fff; } // scan: intentional — categorical avatar palette; the colour is the definition
 .compose-actions span { font-family: "Twemoji Mozilla", "Apple Color Emoji", "Segoe UI Emoji", sans-serif; }
 article h2 { font-size: var(--text-base); font-weight: var(--weight-bold); margin-bottom: 4px; }
-article p { color: var(--text-dim); font-size: var(--text-base); }
-article mark { background: var(--hover); color: var(--text-dim); padding: 1px 4px; font: var(--text-xs)/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: var(--tracking-wide); border-radius: var(--radius); }
+article p { color: var(--text-secondary); font-size: var(--text-base); }
+article mark { background: var(--hover); color: var(--text-secondary); padding: 1px 4px; font: var(--text-xs)/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: var(--tracking-wide); border-radius: var(--radius-card); }
 
-.live-badge { display: inline-block; background: var(--hover); color: var(--text-dim); font: var(--text-xs)/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: var(--tracking-wide); padding: 1px 8px; border-radius: var(--radius); margin-inline-end: 8px; }
+.live-badge { display: inline-block; background: var(--hover); color: var(--text-secondary); font: var(--text-xs)/1.4 ui-monospace, monospace; text-transform: uppercase; letter-spacing: var(--tracking-wide); padding: 1px 8px; border-radius: var(--radius-card); margin-inline-end: 8px; }
 
 .video-player { width: 100%; max-height: 420px; background: #000; display: block; } // scan: intentional — letterbox behind video is black in every theme
 

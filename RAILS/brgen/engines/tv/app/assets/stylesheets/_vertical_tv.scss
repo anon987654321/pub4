@@ -183,7 +183,7 @@ body.vertical-tv .show-card:hover {
   margin: 0;
 }
 
-.tv-feed-channel { margin: 0; color: var(--text-dim); }
+.tv-feed-channel { margin: 0; color: var(--text-secondary); }
 
 @media (prefers-reduced-motion: reduce) {
   .tv-feed-scroller { scroll-behavior: auto; }

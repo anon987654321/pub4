@@ -182,7 +182,7 @@
      run can afford the width and the primary nav should read as primary. */
   font: var(--text-lg)/1 var(--font);
   font-weight: var(--weight-bold);
-  color: var(--text-dim);
+  color: var(--text-secondary);
   white-space: nowrap;
   transition: color var(--transition-fast) var(--ease-in-out),
               background var(--transition-fast) var(--ease-in-out);
