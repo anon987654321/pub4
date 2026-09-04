@@ -2813,6 +2813,11 @@ What the pass has actually taught, which is worth more than the list:
   Thirteen tokens the tree asked for were declared nowhere -- the fallback
   always won, and one had none, so `.tv-feed-title` shipped with no
   font-size. Two lints could not read their own opt-out (`b49b2c82d`).
+- **Surface and colour**, 12. Three compat aliases -- --surface2, --text-dim
+  and --radius -- were 104 call sites and seven declarations of a second
+  name, and the mechanism had already caused a 1.23:1 contrast bug that the
+  comment above them documented. The alpha ladder was the one scale nothing
+  measured, and its two hand-kept copies had drifted by a step (`67ec62871`).
 - **Elevation and hairline**, and **bsdports**. Both finished rather than
   skipped: one `box-shadow` across 106 stylesheets, and zero auditor warnings.
 
@@ -2821,7 +2826,6 @@ What the pass has actually taught, which is worth more than the list:
 Counts are what remained when each category was last read; re-measure before
 working from one.
 
-- **Surface and colour** — 12, not started.
 - **Mobile** — 12, not started.
 - **Controls** — 10 left.
 - **brgen** — 9 left.
@@ -2889,12 +2893,38 @@ Two more dead indirections sit in the face, outside this lint's reach:
 system) and `:399` for `--c-mic-off`. Both resolve to their fallbacks. The face
 is one-theme by design and its colour lines are the operator's, so they are
 named here rather than edited.
+
+### Surface and colour, what it left open — 2026-09-05
+
+- **Sixty-four off-scale alphas, now measured.** apps 26, face 38, recorded as
+  baselines rather than snapped. Eleven of the apps' twenty-six are chrome and
+  card washes between 6% and 45% and could go on the ladder for a small visible
+  change each; the rest are the three engines that paint glass — playlist at
+  94%, maps at 92%, tv at 78% — where the number is that pane's own opacity and
+  moving it is a decision about the surface.
+- **Twenty-two color-mix blends are a separate axis and deliberately unmeasured.**
+  `color-mix(in srgb, X 22%, var(--surface))` mixes two opaque colours; 22% is a
+  ratio between them, not a transparency. Fourteen distinct ratios. A tint ladder
+  would be a real design decision, not a lint.
+- **`large_text_contrast: 4.5` has no reader.** `design_metrics` enforces
+  `normal_text_contrast` (AAA 7.0) on every token pair, large text included, so
+  large text is currently held to a stricter bar than WCAG asks. That is a
+  defensible choice and an unread key; one of the two should change.
+- **`visual_contract_lint` hardcodes 4.5 and 3.0** rather than reading the
+  thresholds from `rules.yml`, where the law says 7.0 for normal text. It is the
+  lint that runs in CI on every app; `design_metrics` is the gate that enforces
+  AAA. Both currently pass, so nothing is broken — but the CI lint would not
+  notice a pair falling from 7.0 to 4.6.
+- **`prefer_monochrome_with_one_accent` has no reader** while
+  `max_palette_roles: 4` beside it is read by `design_metrics`. The same
+  part-read block shape the grid pass found in `layout_rules`.
 ### Where the ratchet stands, 2026-09-04
 
 Every kind sits exactly on its baseline, which is what a ratchet with no slack
-looks like: `off_scale_duration` 53 (apps 20, face 33), `off_scale_space` 48
-(apps 16, face 32), `off_scale_tracking` 14 (all face). Radius, line-height and
-font-weight are at zero on both surfaces. `RAILS/shared/design_tokens.yml` holds
+looks like: `off_scale_opacity` 64 (apps 26, face 38), `off_scale_duration` 53
+(apps 20, face 33), `off_scale_space` 48 (apps 16, face 32),
+`off_scale_tracking` 14 (all face). Radius, line-height and font-weight are at
+zero on both surfaces. `RAILS/shared/design_tokens.yml` holds
 the baselines and the argument for each; the contract is that none is ever
 raised to silence a new finding, and a staleness test forces a lowering when one
 is beaten.
