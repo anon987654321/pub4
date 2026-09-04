@@ -16,7 +16,7 @@ body.vertical-dating {
      value and it was the default, which put it on a dark card at APCA Lc 22.2
      and WCAG 3.47 — below AA. No theme branch: the surface has one theme. */
   --dating-accent-ink: var(--dating-accent);
-  --dating-accent-warm: var(--vertical-dating-accent-warm, #ff5500);
+  --dating-accent-warm: #ff5500;
   --dating-pass: var(--danger);
   background: var(--dating-bg);
   color: var(--dating-ink);

@@ -30,7 +30,7 @@
 
 .compose-trigger:hover {
   background: var(--hover);
-  border-color: var(--border-strong, var(--border));
+  border-color: var(--border);
 }
 
 .compose-trigger-prompt {
@@ -56,7 +56,7 @@
   width: min(500px, calc(100vw - var(--space-4) * 2));
   max-height: min(90vh, 760px);
   padding: 0;
-  border: 1px solid var(--border-strong, var(--border));
+  border: 1px solid var(--border);
   border-radius: var(--radius-md, var(--radius-sm));
   /* --surface-elevated sits a hair off the page value, which is right for a
      card in the feed and wrong for a modal: against a dimmed backdrop the
@@ -202,7 +202,7 @@
   background: transparent;
   color: var(--text);
   cursor: pointer;
-  font-size: var(--text-md, 1rem);
+  font-size: var(--text-base);
 }
 
 .composer-body .tiptap_btn:hover { background: var(--hover); }

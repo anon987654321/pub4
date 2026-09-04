@@ -186,4 +186,23 @@ class LayoutStabilityLintTest < Minitest::Test
       assert_includes LINT::BASELINES.keys, finding.kind
     end
   end
+
+  # The opt-out was read from the comment-stripped copy, so a marker -- itself a
+  # comment -- was blanked before anything looked for it. ScaleLint carried the
+  # same bug and three real markers turned out to silence nothing. This asserts
+  # through the tree rather than a fixture, because a fixture is what passed
+  # last time.
+  def test_a_reserved_marker_written_in_a_real_view_silences_that_tag
+    marked = LINT.views.flat_map do |path|
+      File.readlines(path, encoding: "UTF-8").each_with_index.filter_map do |line, index|
+        [ LINT.rel(path), index + 2 ] if line.include?(LINT::RESERVED)
+      end
+    end
+    refute_empty marked, "no reserved: marker left in the tree; this test would prove nothing"
+
+    loud = LINT.findings.select { |finding| marked.include?([ finding.file, finding.line ]) }
+
+    assert_empty loud.map { |finding| "#{finding.file}:#{finding.line} #{finding.detail}" },
+                 "a tag marked reserved is still reported"
+  end
 end

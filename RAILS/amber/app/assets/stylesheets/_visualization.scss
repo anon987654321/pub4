@@ -111,7 +111,7 @@
 
 .viz-column {
   display: grid;
-  grid-template-rows: auto var(--viz-plot-height, 140px) auto;
+  grid-template-rows: auto 140px auto;
   justify-items: center;
   min-width: 0;
 }

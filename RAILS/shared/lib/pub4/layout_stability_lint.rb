@@ -39,6 +39,11 @@ module Pub4
     RAILS_ROOT = File.expand_path("../../..", __dir__)
     OPT_OUT = "layout: ok"
 
+    # What the four dressing-room overlays and the affiliate tile already say
+    # in prose: the box is reserved by an absolutely positioned container, not
+    # by the tag. Five of these were written before anything read them.
+    RESERVED = "reserved:"
+
     SKIP = %r{/(node_modules|vendor|builds|public/assets|tmp)/}
 
     # A declaration that gives the box a size before its content arrives.
@@ -80,9 +85,15 @@ module Pub4
 
     def source_lines(path) = strip_comments(File.read(path, encoding: "UTF-8")).lines
 
-    def opted_out?(lines, index)
-      [ lines[index], index.positive? ? lines[index - 1] : nil ]
-        .compact.any? { |line| line.include?(OPT_OUT) }
+    # Two views of the same file. Findings are read from the copy with comments
+    # blanked, so a commented-out rule is not a finding; the opt-out is read
+    # from the raw copy, because `// layout: ok` and `<%# reserved: %>` are
+    # themselves comments and blanking them leaves every opt-out in the tree
+    # inert. ScaleLint carried this exact bug until 2026-09-03, when three
+    # markers turned out to have been silencing nothing.
+    def opted_out?(raw, index, marker = OPT_OUT)
+      [ raw[index], index.positive? ? raw[index - 1] : nil ]
+        .compact.any? { |line| line.include?(marker) }
     end
 
     # Class names whose CSS reserves a box.
@@ -156,9 +167,10 @@ module Pub4
 
     def media_findings
       views.flat_map do |path|
+        raw = File.readlines(path, encoding: "UTF-8")
         lines = source_lines(path)
         lines.each_with_index.flat_map do |line, index|
-          next [] if opted_out?(lines, index)
+          next [] if opted_out?(raw, index) || opted_out?(raw, index, RESERVED)
 
           # Six lines of lead-in. An ERB wrapper and the tag it wraps are
           # normally within two or three; six is slack for a conditional and a
@@ -178,9 +190,10 @@ module Pub4
 
     def transition_findings
       stylesheets.flat_map do |path|
+        raw = File.readlines(path, encoding: "UTF-8")
         lines = source_lines(path)
         lines.each_with_index.flat_map do |line, index|
-          next [] if opted_out?(lines, index)
+          next [] if opted_out?(raw, index)
 
           line.scan(TRANSITION).flatten.flat_map do |value|
             named = LAYOUT_PROPS.select { |prop| value.match?(/(?<![-\w])#{Regexp.escape(prop)}(?![-\w])/) }
@@ -217,8 +230,8 @@ module Pub4
     #
     # unreserved_media is the number that matters and the one worth driving to
     # zero: every one of them is a photo whose box is 0px until it arrives.
-    # layout_transition is three sites -- two `all` and one `width` -- which is
-    # low enough that the next one is a new one rather than a backlog.
+    # layout_transition is two sites, low enough that the next one is a new one
+    # rather than a backlog.
     # font_without_display is already zero: all ten @font-face blocks declare it.
     BASELINES = {
       # 34 -> 26. Eight of the original findings were the lint reading its own
@@ -239,8 +252,12 @@ module Pub4
       # it, and guessing which of the last week's commits sized those two images
       # would put a wrong sentence in a file whose whole value is being right
       # about numbers.
-      "unreserved_media" => 18,
-      "layout_transition" => 3,
+      # 19 -> 15 on 2026-09-04: the four dressing-room overlays say `reserved:`
+      # in prose above each tag, and nothing read it. `.zone img` sizes them at
+      # 100%/100% inside an absolute box, but the reservation is SCSS-nested, so
+      # wrapper_classes cannot see it and the marker is the honest answer.
+      "unreserved_media" => 15,
+      "layout_transition" => 2,
       "font_without_display" => 0,
     }.freeze
   end

@@ -18,7 +18,7 @@
   border-radius: var(--radius-pill);
   background: linear-gradient(
     145deg,
-    var(--amber-grad-1, color-mix(in srgb, var(--accent) 25%, var(--surface))),
+    color-mix(in srgb, var(--accent) 25%, var(--surface)),
     color-mix(in srgb, var(--accent) 12%, var(--surface)) 58%,
     var(--search-bg, var(--surface-elevated))
   );

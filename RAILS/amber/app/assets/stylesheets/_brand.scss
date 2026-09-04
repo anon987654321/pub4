@@ -68,10 +68,10 @@
   height: 100%;
   background: radial-gradient(
     circle at var(--gradient-x) var(--gradient-y),
-    var(--amber-grad-1, #ffb999) 0%,
-    var(--amber-grad-2, #e6cce6) 33%,
-    var(--amber-grad-3, #cce6cc) 66%,
-    var(--amber-grad-4, #99e6e6) 100%
+    #ffb999 0%,
+    #e6cce6 33%,
+    #cce6cc 66%,
+    #99e6e6 100%
   );
   animation: moveGradient 20s infinite var(--ease-out, cubic-bezier(0.25, 0.1, 0.25, 1));
 }
