@@ -87,7 +87,6 @@ module Master
       include RuleAccessors
       include RulePromptBlocks
 
-      RULES_SUBDIR = "rules"
       DATA_ALIASES = {
         workflow: %w[limits workflow],
         # The path is the style block itself: these accessors dig into it for
@@ -107,7 +106,6 @@ module Master
         @voice_path = Master.data_file("voice.yml")
         @data = load_yaml(@rules_path) || {}
         @voice_data = load_yaml(@voice_path) || {}
-        @data["rules"] = load_split_rules
         # limits.yml is no longer parsed here. It was loaded on every Rules
         # construction purely to back two accessors nobody called; the callers that
         # do want it (scan_request, fix_loop, mode_posture) each read it themselves,
@@ -152,7 +150,6 @@ module Master
       end
 
       def all_rules = @all_rules ||= Master.flatten_rules(@data["rules"]).freeze
-      def rules_for_scope(scope) = (@data.dig("rules", scope.to_s) || []).freeze
 
       def lookup(id)
         id_str = id.to_s
@@ -176,15 +173,6 @@ module Master
       def resolve_data_path(key)
         stems = DATA_ALIASES.fetch(key, [key.to_s])
         stems.map { |stem| File.join(@data_dir, "#{stem}.yml") }.find { |candidate| File.exist?(candidate) }
-      end
-
-      def load_split_rules
-        dir = File.join(@data_dir, RULES_SUBDIR)
-        return @data["rules"] || {} unless File.directory?(dir)
-        Dir.glob(File.join(dir, "*.yml")).sort.each_with_object({}) do |f, merged|
-          data = load_yaml(f) || {}
-          data.each { |scope, rules| (merged[scope] ||= []).concat(Array(rules)) }
-        end
       end
 
       def load_yaml(path)

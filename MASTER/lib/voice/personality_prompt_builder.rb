@@ -403,7 +403,7 @@ module Master
       # out. Grouping also keeps the list at ten rather than twelve: #1 is
       # claimed by both SYSTEM_STATUS and FEEDBACK_LOOPS.
       def heuristics_style_line
-        by_number = Array(@rules.data(:rules)&.dig("rules", "unit"))
+        by_number = Array(@rules.data(:rules)&.dig("rules"))
                     .select { |r| r["source"].to_s.include?("Nielsen") }
                     .group_by { |r| r["source"][/[Hh]euristic #?(\d+)/, 1] }
                     .reject { |number, _| number.nil? }

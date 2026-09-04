@@ -718,7 +718,6 @@ learned_smells:
 # it, 87 times. The key is read for truthiness everywhere it is read at all,
 # so nil said exactly what absent says.
 rules:
-  codebase:
   - id: PRESERVE_FIRST
     source: MASTER-native constitutional kernel rule
     name: Never break working code
@@ -1208,7 +1207,6 @@ rules:
       one-liners; a god object beside thin structs) with no intermediate level?
     fix: Introduce the missing intermediate level so structure changes gradually from
       system to line.
-  file:
   - id: GUARD_EXPENSIVE
     source: MASTER-native (guard expensive operations)
     name: Check preconditions before costly work
@@ -1374,7 +1372,6 @@ rules:
     severity: warning
     autofix: false
     fix: Back find_or_create_by with a unique index to prevent duplicates.
-  line:
   - id: NO_JQUERY
     source: RAILS/shared frontend convention
     name: Use a Stimulus controller or the DOM API, not jQuery
@@ -2094,7 +2091,6 @@ rules:
     severity: info
     autofix: false
     fix: Bound running-text columns to ~66ch (≈ 33rem), not wide px values.
-  unit:
   - id: SIMPLEST_WORKS
     source: XP — do the simplest thing that could possibly work (Ward Cunningham)
     name: Fewest moving parts that solve the problem
