@@ -1615,6 +1615,131 @@ accounting the budget exists to prevent.
   `rules.yml`. A grep for the key name finds the file and says nothing about
   which document it came from.
 
+### Tooling I wanted while doing the work above — 2026-09-05
+
+Written from one long session spent inside the rule system: the rules file, the
+fix loop's ordering, the coverage gate, the TTS probe, and tests for fifteen rule
+classes. Every item is something that cost time in that session rather than
+something that sounds good, and each says what it cost. Two candidates were cut
+on checking, which is the point of checking: `bin/pub4 measure` already prints
+every ratchet with its ceiling **and** names slack beneath one, so both wishes I
+had about ratchets were already built. Read that command before wishing for
+anything in its neighbourhood.
+
+They are ordered by how much time each would have saved.
+
+**1. A mutation harness — `rake mutate[test_file]`.** Hand-rolled five times in
+one session, as inline Ruby that rewrites a rule, runs its test, and restores
+the file. It earned its place every time: it caught **three tests that were green
+for the wrong reason**, and two of those looked completely convincing. This
+repo's own doctrine already says "a green first run is the least informative
+outcome available" and "every check added was mutated six ways and watched to
+fail before being believed" — the practice is written down and the tool is not.
+Flipping comparison operators, moving numeric constants by one, inverting
+`reject`/`select`, and deleting guard clauses would have found all three
+automatically. Without it the practice depends on whoever is at the keyboard
+remembering to do it by hand.
+
+**2. One documented way to get findings out of the scanner.** Three attempts
+died before the fourth worked. `rule.check(code, path:)` returns `Finding`
+objects; `Scanner#scan_dir` returns `Result::Ok([[path, Result::Ok([...])], …])`
+whose findings are plain Hashes with symbol keys, so `f.rule` raises where
+`h[:rule]` works. Two shapes for one concept, and neither is written down.
+`Fix::SelfCheck#full` returns a third thing again — a report of counts with no
+findings at all. **A `Scanner#findings(paths)` returning a flat array of
+`Finding` would delete a whole class of wasted attempt**, and the instrument note
+above exists only because I could not find one.
+
+**3. `rake test` that runs on a dev Mac.** Its loader aborts on `cannot load such
+file -- rack/test` from one web test before running anything, because the web
+Rails bundle does not install here. So the single command that answers "do the
+tests pass" has been a no-op locally, and that is how **three test files sat
+erroring without anyone noticing**. Splitting the web tests behind their own task
+— or skipping them when the bundle is absent, loudly — turns the default command
+back into a real answer. I ran the whole suite by looping over files instead,
+which works and which nobody should have to invent twice.
+
+**4. Locations in every gate's output, not counts.** `rake selfcheck` says
+"7 violation(s) across 3 rule(s)" and will not say where, because
+`SelfCheck::Report` carries `total`, `by_rule` and `by_severity` and no findings.
+Acting on it means re-running the scanner by hand, which is item 2, which is why
+these two compound. `ERROR_CONTEXT` is the repo's own rule for this: an error has
+to carry enough context to locate its origin. The same output also prints its own
+label twice — `selfcheck: selfcheck: 7 violation(s)`.
+
+**5. `bin/pub4 rule <ID>` — run one rule over a corpus and print what it finds.**
+Written by hand four times this session, and it is what turned an unanswerable
+question into a settled one: running the four SOLID proxies over 2,470 files
+showed three of them find nothing anywhere, and that number is what made writing
+their tests obviously worth doing. It is also the fastest way to price a rule
+change before making it — the `is_a?` fix was safe to take because the same loop
+showed repo-wide findings going 3 → 3. A `--corpus MASTER|all` flag and a count
+is the whole feature.
+
+**6. A lint over the rule corpus's own regexes.** `\b` next to punctuation has
+now cost this repo three separate incidents: `TODO.md` read as a work marker
+twice, and `OPEN_CLOSED`'s `is_a?` clause which **could never match any spelling
+of the method it names** and had been dead since it was written. A word boundary
+needs a word character beside it, so `\bis_a\?\b` requires one straight after the
+question mark and no call site has one. The rules are data; a check over
+`detect_lexical`, `law/` patterns and the constants in `lib/review/scan/rules/`
+for a `\b` adjacent to a non-word character would have caught all three. It is a
+narrow, mechanical check with a proven hit rate of three.
+
+**7. Every registry rule proves it can fire.** `law/` already refuses to load a
+rule without worked fixtures, and the registry does not — `rule_ratchets.fixture_debt`
+records 91 rules without them. The cost is exactly the ambiguity this session had
+to resolve by hand: `rule_audit` reports 24 rules firing on nothing and cannot
+say whether the tree is clean or the detector is blind. **A rule that carries one
+source it must flag answers that at load time**, permanently, for every future
+reader. Extend the law/ requirement to new registry rules, and let the ratchet
+retire the existing 91.
+
+**8. One class per rule file, or a documented way to reach a class in a
+multi-class one.** Zeitwerk maps a file to one constant, so naming
+`Rules::AstOmissionRule` cold raises `NameError` while the class plainly exists.
+This bit four times: three test files had been erroring for it, and my own probe
+of `YamlDeclarativeRule` failed the same way and I mistook it for a missing
+class. The fix in a test is one line, `require "review/scan/rule_dsl"`, and it is
+discoverable only by reading a test that already does it.
+
+**9. A finish-the-worktree command.** `bin/pub4 worktree <name>` sets one up well.
+Nothing helps at the other end, where the sequence is fetch, rebase, re-verify,
+fast-forward main, remove the worktree, delete the branch, push. I ran it six
+times by hand and the ordering matters: merging to local main before pushing is
+what let **another session's push carry two of my commits up before I had decided
+to publish them**, twice. `bin/pub4 worktree finish` doing that sequence — or
+pushing the branch instead of merging — would close the hazard the contract
+already documents but cannot currently prevent.
+
+**10. A gate on the test-naming convention.** `RuleCoverageRule` globbed
+`<base>_test.rb` while MASTER names tests `test_<base>.rb`, 283 files to 1, and
+so reported a false positive about a test sitting right there. One convention,
+asserted once, would have made that impossible. The repo has `lint:autoload` as
+the shape to copy: it does not merely read its list, it asserts every entry still
+resolves.
+
+**11. Progress on the long gates.** A full-suite sweep is twenty minutes with no
+output until it finishes, so a run that has hung and a run that is working look
+identical — which is the same "absence read as evidence" family the Scanner
+Conventions above are about, pointed at the operator. A file counter would do.
+
+**12. `data_reach` should say which file the reader opened.** Its test is whether
+a key's name appears anywhere in first-party code, so `success_criteria` counted
+as reached for as long as it existed while its only namesake reads session state
+from a different document. The 35 at the ceiling is a floor on the real number.
+The 2026-08-12 entry above is right that a strict version is not buildable; a
+version that checks the reader mentions **the same file** is narrower than that
+and would have caught this one.
+
+**13. Somewhere to put a fact about the tree that is not a rule.** Three things
+learned this session have no home: the scanner's Result shape, that
+`bundler/setup` rewrites `Gemfile.lock` and so poisons any mtime-keyed cache
+built around it, and the Zeitwerk multi-class trap. They are in TODO.md because
+that is where things go, and none is a backlog item — they are things a person
+needs *before* starting, not work anybody will close. `START_HERE.md` is close to
+the right place and is about orientation rather than traps.
+
 ## RAILS
 ### Parity gaps — forward work
 
