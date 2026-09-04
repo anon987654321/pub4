@@ -1414,37 +1414,50 @@ rule agreed on the same 14 classes, and six mutations are caught by
 `test/test_rule_coverage_rule.rb` — including the exact regression to
 `_rule.rb`, which was the old behaviour.
 
-#### Nine rule classes have no test that names them
+#### Every rule class now has a test — `rule_coverage` reads 0
 
-What the gate above reports now that it can see. Not new debt; it has been there
-and was invisible.
+Closed 2026-09-05, from fourteen. `RuleCoverageRule` came with the gate fix, the
+four SOLID proxies with `test_solid_rules.rb`, and the last nine in one pass:
 
-    InterconnectRule          graph_rules.rb
-    PathPurposeRule           meta_rules.rb
-    CommentDriftRule          semantic_rules.rb
-    FeatureEnvyRule           structural_question_rules.rb
-    FileLayoutRule            structural_rules.rb
-    CyclomaticComplexityRule  structural_rules.rb
-    DataClassRule             structural_rules.rb
-    MiddleManRule             structural_rules.rb
-    YamlDeclarativeRule       yaml_bridge_rules.rb
+    test_structural_shape_rules.rb  FileLayout, CyclomaticComplexity, DataClass, MiddleMan
+    test_feature_envy_rule.rb       FeatureEnvy
+    test_path_purpose_rule.rb       PathPurpose
+    test_interconnect_rule.rb       Interconnect
+    test_comment_drift_rule.rb      CommentDrift
+    test_yaml_declarative_rule.rb   YamlDeclarative
 
-It was fourteen. `RuleCoverageRule` got a test with the fix above, and the four
-SOLID proxies got `test/test_solid_rules.rb` — see the record below, which is
-why writing them first was worth it.
+All in the house shape — a source the rule must flag and a source it must not —
+and every threshold pinned from both sides, because a boundary is where a rule
+is most likely to be off by one.
 
-**`MiddleManRule` and `FeatureEnvyRule` are next**, being the same shape as the
-four that just paid out: `rules.yml` documents `FEATURE_ENVY` as a "single-method
-heuristic, same-file only" and grants it a false-positive risk note of its own.
+**Three tests passed for the wrong reason and were caught by mutating the rule
+they cover.** That is the entire value of the practice and it is worth keeping
+the examples:
 
-`YamlDeclarativeRule` is a special case and should not get a test that merely
-passes: it compiles nothing, because no rule carries `detect_lexical` any more.
-Testing it against a fixture would assert a path production never takes. Settle
-whether the bridge stays first — that question is above.
+- `FEATURE_ENVY`'s counterweight test used four neighbour calls, which is below
+  the rule's floor of five — so the floor exempted it and the counterweight was
+  never consulted. Deleting `count > local` from the rule left the test green.
+- `CYCLOMATIC_COMPLEXITY`'s boolean-operator test used ten terms, which is nine
+  operators and lands exactly on the limit rather than over it. The rule was
+  right and the test was wrong.
+- `CommentDrift`'s invented-index test asserted that a bad index yields nothing,
+  which is true either way: with the bounds check because the pair is nil,
+  without it because the resulting `NoMethodError` is swallowed by the rule's own
+  rescue and takes every finding in the file with it. Asserted now with a real
+  index beside the invented one, which is what separates a guard from a crash.
 
-The house shape is the one `test_smell_detectors.rb` uses and the three written
-this session follow: a source the rule must flag and a source it must not,
-because a detector tested only for firing proves nothing about what it exempts.
+**One mutation is knowingly uncaught.** Turning
+`return [] if note_model_failure(e)` into a bare `return []` changes only a
+quota trip and a log severity; both paths return no findings, and the difference
+is invisible from outside. Asserting it would mean reaching into the rule's
+internals. Recorded rather than faked.
+
+`YamlDeclarativeRule` got the treatment its special case needed rather than a
+test that passes because there is nothing to do. The mechanism is proved against
+a rules corpus written for the purpose, and the live corpus's emptiness is a
+separate, dated assertion: **the day somebody declares a `detect_lexical` again,
+that test fails and asks whether the bridge is still wanted**, instead of the
+rule staying a path nothing takes.
 
 #### The four SOLID proxies fire on almost nothing, and one half of one could not fire at all
 
