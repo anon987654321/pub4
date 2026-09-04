@@ -699,7 +699,7 @@ body.mission-control .page-header {
   justify-content: space-between;
   gap: 0.75rem;
   margin-bottom: 1rem;
-  max-width: var(--measure-body, 66ch);
+  max-width: 66ch;
 }
 body.mission-control h1 {
   font-size: 14px;
