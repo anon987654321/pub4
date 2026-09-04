@@ -1397,10 +1397,62 @@ Run over all sixteen, it reports exactly one finding —
 `test/test_law_bridge_rule.rb` is right there. Fifteen skipped, one false
 positive, nothing correct.
 
-Not fixed here. Correcting the glob and the suffix is two lines, and it will
-then report the real gaps for the first time, which is a count somebody has to
-triage rather than a change to slip into a test-loading fix. Worth doing: it is
-the gate that would have caught these three files having no working test at all.
+**Fixed 2026-09-05.** It examines every `.rb` under `lib/review/scan/rules/`,
+finds each `class XxxRule < Rule` in it, and asks whether any file in `test/`
+mentions that class or its rule id.
+
+Coverage is a mention rather than a file named after the class, and that is the
+load-bearing choice. The tests that exercise these rules mostly do it in bulk —
+`test_smell_detectors.rb` and `test_scan_rule_false_positives.rb` reach rules by
+id through the scanner — so demanding a file per class would report those as
+uncovered and rebuild the same false-positive machine pointing the other way.
+The matcher is deliberately loose for the same reason: class name, id, and the
+id in either case all count, so what it still reports is a real gap.
+
+Cross-checked before it was believed. A hand census written separately from the
+rule agreed on the same 14 classes, and six mutations are caught by
+`test/test_rule_coverage_rule.rb` — including the exact regression to
+`_rule.rb`, which was the old behaviour.
+
+#### Thirteen rule classes have no test that names them
+
+What the gate above reports now that it can see. Not new debt; it has been there
+and was invisible.
+
+    InterconnectRule          graph_rules.rb
+    PathPurposeRule           meta_rules.rb
+    CommentDriftRule          semantic_rules.rb
+    FeatureEnvyRule           structural_question_rules.rb
+    FileLayoutRule            structural_rules.rb
+    CyclomaticComplexityRule  structural_rules.rb
+    DataClassRule             structural_rules.rb
+    OpenClosedRule            structural_rules.rb
+    LiskovRule                structural_rules.rb
+    DependencyInversionRule   structural_rules.rb
+    InterfaceSegregationRule  structural_rules.rb
+    MiddleManRule             structural_rules.rb
+    YamlDeclarativeRule       yaml_bridge_rules.rb
+
+`RuleCoverageRule` was the fourteenth and now has one.
+
+**Start with the four SOLID proxies** — `OPEN_CLOSED`, `LISKOV`,
+`INTERFACE_SEGREGATION`, `DEPENDENCY_INVERSION`. `data/rules.yml` documents each
+one's detector as a heuristic and says so in its own words: "same-file
+heuristic; cross-file inclusion stays semantic-only", "module with 8+ public
+methods included by 2+ classes in the same file". A rule that admits in writing
+that it approximates, and that nothing tests, is the combination most likely to
+be quietly wrong. `MiddleManRule` and `FeatureEnvyRule` are the same shape and
+`rules.yml` grants `FEATURE_ENVY` a "genuine false-positive risk" note of its
+own.
+
+`YamlDeclarativeRule` is a special case and should not get a test that merely
+passes: it compiles nothing, because no rule carries `detect_lexical` any more.
+Testing it against a fixture would assert a path production never takes. Settle
+whether the bridge stays first — that question is above.
+
+The house shape is the one `test_smell_detectors.rb` uses and the two rewritten
+this session follow: a source the rule must flag and a source it must not,
+because a detector tested only for firing proves nothing about what it exempts.
 
 **`rake test` cannot complete on a dev Mac at all**, which is why three dead
 test files went unnoticed. Its loader aborts on `cannot load such file --

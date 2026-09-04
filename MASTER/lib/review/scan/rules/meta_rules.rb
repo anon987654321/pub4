@@ -62,14 +62,50 @@ module Master
             @test_dir = File.join(root, "test")
           end
 
-          def check(_code, path:)
-            return [] unless path.include?("/review/scan/rules/") && path.end_with?("_rule.rb")
+          # Asks the question the description asks — has this Rule subclass a
+          # test — rather than whether a file is named after it.
+          #
+          # It used to require the path end `_rule.rb` and look for
+          # `<base>_test.rb`. One file in sixteen ends `_rule.rb`; the rest are
+          # `*_rules.rb` and hold nearly every rule there is. And MASTER names
+          # tests `test_<base>.rb`, 283 files to 1, so the glob described a
+          # convention this tree does not use. Over all sixteen files it
+          # produced one finding, and `test/test_law_bridge_rule.rb` existed.
+          # Fifteen skipped, one false positive, nothing correct.
+          #
+          # Coverage is a mention anywhere in test/, of the class or of its id,
+          # because the tests that exercise these rules mostly do it in bulk —
+          # test_smell_detectors.rb and test_scan_rule_false_positives.rb reach
+          # rules by id through the scanner. Requiring a file per class would
+          # report those as uncovered, which is the false-positive machine the
+          # old shape already was, pointed the other way.
+          def check(code, path:)
+            return [] unless path.include?("/review/scan/rules/") && path.end_with?(".rb")
 
-            base = File.basename(path, ".rb")
-            test_glob = File.join(@test_dir, "**", "#{base}_test.rb")
-            return [] if Dir.glob(test_glob).any?
+            subclasses(code).reject { |name, id| covered?(name, id) }
+              .map { |name, _| finding(line: 1, message: "rule_coverage: no test names #{name}") }
+          end
 
-            [finding(line: 1, message: "rule_coverage: no test file found for #{base}")]
+          private
+
+          def subclasses(code)
+            code.enum_for(:scan, /^\s*class (\w+Rule) < Rule\b/).map do
+              name = Regexp.last_match(1)
+              [name, code[Regexp.last_match.end(0), 2000][/@id\s*=\s*["']([\w.]+)["']/, 1]]
+            end
+          end
+
+          def covered?(name, id)
+            needles = [name, id, id&.downcase, id&.upcase].compact.uniq
+            test_sources.any? { |src| needles.any? { |needle| src.include?(needle) } }
+          end
+
+          # Read once per scan. Sixteen rule files against ~280 test files is
+          # 4,500 reads without this.
+          def test_sources
+            @test_sources ||= Dir.glob(File.join(@test_dir, "**", "*.rb")).map do |file|
+              File.read(file, encoding: "UTF-8", invalid: :replace)
+            end
           end
         end
       end
