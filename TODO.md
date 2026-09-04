@@ -1289,8 +1289,51 @@ leave it to them.**
 source describing the defect it detects, counted deliberately since 2026-08-15 —
 but it was not read line by line here, so it is triage rather than a finding.
 
+#### `edge_tts_available?` checks two of the worker's four preconditions
+
+`lib/voice/speech.rb:107` is `worker_executable? && eventmachine_ssl_available?`.
+`bin/tts-worker` requires five things before it can speak: `bundler/setup`,
+`eventmachine`, **`rb_edge_tts`** and **`faye/websocket`** (lines 51–54). The two
+gems are unchecked, so on a host where either is missing from the resolved bundle
+the probe answers true and the worker dies at `require`.
+
+That matters most at `/health`. `web/app/controllers/health_controller.rb:54`
+returns this predicate as `tts_healthy?`, and the comment above it reasons
+carefully about avoiding a **false negative** — the daemon socket is reaped
+between syntheses, so requiring a live socket 503'd a working host. The fix was
+right and it bought a false positive at the other end: a host that cannot
+synthesise at all now reports TTS healthy. There is no third state.
+
+The live synthesis path degrades, but not to the engine that would work.
+`synthesize_streaming_to_file_unlocked` (speech.rb:308–320) goes socket, then
+one-shot, then espeak, then returns false. The `say` fallback that any Mac would
+satisfy is only in `Engines::DEFAULT_CHAIN`, and the one caller of
+`Engines.attempt?` is `lib/voice/transcendent.rb:160` — the half of the voice
+stack the **Inert law and config** entry above already records as reached by
+nothing. So the chain that knows about `say` is unreachable, and the path that
+runs does not know about it.
+
+Wanted: the probe asserts every requirement the worker has, ideally by asking the
+worker rather than by a second list that drifts from it — a `--selftest` flag on
+`bin/tts-worker` is the shape, since the requires are already written there once.
+`/health` should distinguish "cannot synthesise" from "socket not up".
+
+Found by getting it wrong twice, which is why the instrument note below exists.
+On this Mac everything is installed and synthesis works; the defect is that the
+probe would not have told me if it were not.
+
 #### Instrument notes
 
+- **There is no `edge-tts` binary to look for, and the gem is spelled with
+  hyphens.** MASTER never shells out to an `edge-tts` executable — it runs
+  `bin/tts-worker` under its own bundle, and the dependency is the Ruby gem
+  `rb-edge-tts`, pinned to a git source in the root `Gemfile` at 1.0.1. Two
+  checks said TTS was unavailable here and both were the instrument: `command -v
+  edge-tts` looks for something that never existed, and a grep for
+  `rb_edge_tts` misses `gem "rb-edge-tts"` because the require spells it with
+  underscores and the Gemfile with hyphens. The ground truth is one command —
+  `echo hi | ruby bin/tts-worker en-GB-RyanNeural +0% +0Hz /tmp/x.mp3` — and it
+  writes a real MP3.
 - **`rake selfcheck` reports a count with no locations.** `SelfCheck::Report`
   exposes `total`, `by_rule`, `by_severity` and `error` and no findings list, so
   the gate can say "7 violations across 3 rules" and cannot say where. Acting on
