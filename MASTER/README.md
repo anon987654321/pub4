@@ -73,27 +73,33 @@ it is and what it runs on.
 
 ```console
 $ cd MASTER && bin/cli
-hw0 at mainbus0: Mac14,2
-cpu0 at mainbus0: Apple M2
-mem0: 8192MB avail
-Darwin Kernel Version 25.5.0: RELEASE_ARM64_T8112
 
-MASTER (CONSTITUTIONAL) #e1c923b69: Sat Aug 29 18:40:36 CEST 2026
+MASTER 2.8.0 (CONSTITUTIONAL) #8021: Fri Sep  4 17:39:16 CEST 2026
     mac@Mac.lan:/Users/mac/Documents/GitHub/pub4/MASTER
-runtime0: arm64-darwin25 ruby 3.4.9 zsh
-aesthetic0: brutalist
-model0: claude-opus-4-8
-rev0: e1c923b69
-soul0: 2.7.0
-imports0: soul rules limits state patterns openbsd
-orders0: 3 active
-security0: pledge unavailable
-web0: https://ai.brgen.no/
-modules0: ground trace voice now loop judge reach ok
-mode0: safe · full · cli · no-autofix   loop=   owner=none   posture=balanced
-boot0: 1333ms
+real mem = 8589934592 (8192MB)
+avail mem = 1813561344 (1729MB)
+mainbus0 at root: Mac14,2
+cpu0 at mainbus0: Apple M2
+kern0 at mainbus0: Darwin 25.5.0 arm64
+ruby0 at mainbus0: ruby 4.0.5 arm64-darwin25
+shell0 at mainbus0: zsh, user mac
+soul0 at mainbus0: constitution rev 2.8.0
+soul0: imports soul rules limits state patterns openbsd
+soul0: 3 orders active
+model0 at mainbus0: nemotron-3-super-120b-a12b
+model0: openrouter, 128.0k context
+mode0 at mainbus0: safe, visitor, cli
+mode0: no-autofix, loop none, owner none, posture balanced
+aesthetic0 at mode0: brutalist
+module0 at mainbus0: autonomy boot builder cli core design fix ground io ops pub4 rails review trace voice
+web0 at mainbus0: https://ai.brgen.no
+pledge0 at mainbus0: unavailable
+root on master0 (169570c86) boot 2652ms
 
 master@Mac.lan ready
+boot0: constitution ok, agent ok, scan active
+model nemotron-3-super-120b-a12b, ctx 0/128.0k
+~/Documents/GitHub/pub4/MASTER main (discover) %
 ```
 
 Every change a model wants runs through one loop: it proposes an effect, the

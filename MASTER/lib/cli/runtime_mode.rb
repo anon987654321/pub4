@@ -15,7 +15,7 @@ module Master
         visitor = visitor_tier?(config) ? "visitor" : "full"
         web = ENV.fetch("MASTER_WEB", "0") == "1" ? "web" : "cli"
         loops = loop_line
-        "#{safe} · #{visitor} · #{web} · #{loops}"
+        "#{safe}, #{visitor}, #{web}, #{loops}"
       end
 
       def visitor_tier?(config)
@@ -32,10 +32,10 @@ module Master
         rescue StandardError
           "balanced"
         end
-        "#{autofix} loop=#{slot.fetch(:selected, "none")} owner=#{owner} posture=#{posture}"
+        "#{autofix}, loop #{slot[:selected] || "none"}, owner #{owner}, posture #{posture}"
       rescue StandardError
         autofix = ENV["MASTER_AUTOFIX"] == "1" ? "autofix" : "no-autofix"
-        "#{autofix} loop=none"
+        "#{autofix}, loop none"
       end
     end
   end

@@ -5,6 +5,8 @@ require_relative "command_handlers"
 module Master
   module CLI
     class Session
+      CONTEXT_STEP = 10_000
+
       private
 
       def set_visitor_mode_if_unauthenticated
@@ -33,46 +35,37 @@ module Master
         @refs.renderer.render("#{@refs.renderer.prompt_token} ", mode: :dim)
       end
 
+      # One zsh line, and above it a state line only when the state moved.
       def normal_prompt
-        status = status_row_if_changed
-        sugg = suggested_next_prompt
-        tokens = @refs.session.token_est
-        prompt_lines = @refs.renderer.prompt_line(
+        state, prompt = @refs.renderer.prompt_line(
           @refs.agent.model, @refs.session.phase,
-          last_ok: @last_ok, violations: violations_count, tokens:, cost: @refs.session.cost
+          last_ok: @last_ok, violations: violations_count,
+          tokens: @refs.session.token_est, cost: @refs.session.cost
         )
-        [
-          (status if status),
-          (@refs.renderer.render("  ↳ #{sugg}", mode: :dim) if sugg),
-          prompt_lines.first,
-          prompt_lines.last,
-        ].compact.join("\n")
+        [(state if state_changed?), prompt].compact.join("\n")
       end
 
-      def status_row_if_changed
+      # Context grows every turn, so it counts as movement only by the step —
+      # otherwise the state line would print on every prompt and be a status bar
+      # again.
+      def state_changed?
         state = {
-          turns: @refs.session.messages.size,
           violations: violations_count,
           model: @refs.agent.model,
-          cost: @refs.session.cost.to_f.round(4),
+          phase: @refs.session.phase,
+          context: @refs.session.token_est.to_i / CONTEXT_STEP,
+          cost: @refs.session.cost.to_f.round(2),
         }
-        return if @last_status_state == state
+        return false if @last_status_state == state
 
         @last_status_state = state
-        @refs.renderer.status_row(uptime: @refs.renderer.uptime, turns: state[:turns], violations: state[:violations])
-      end
-
-      def suggested_next_prompt
-        rows = proposer.call.first(3)
-        return if rows.empty?
-
-        @last_suggestion = rows.first[:action]
-        rows.each_with_index.map { |row, i| "#{i + 1}. #{row[:action]} (#{row[:reason]})" }.join("  ")
+        true
       end
 
       def accept_top_suggestion
+        @last_suggestion ||= proposer.call.first&.fetch(:action, nil)
         return unless @last_suggestion
-        puts @refs.renderer.render("↳ #{@last_suggestion}", mode: :dim)
+        puts @refs.renderer.render("next: #{@last_suggestion}", mode: :dim)
         proposer.acted(@last_suggestion) if proposer.respond_to?(:acted)
         handle_repl_line(@last_suggestion)
       end

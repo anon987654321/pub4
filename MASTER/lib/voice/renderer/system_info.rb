@@ -7,6 +7,8 @@ module Master
     class Renderer
       module SystemInfo
         IMPORT_YMLS = %w[soul rules style limits state patterns openbsd].freeze
+        MEGABYTE = 1_048_576
+        FREE_PAGE_KINDS = %w[free inactive speculative].freeze
 
         private
 
@@ -62,19 +64,60 @@ module Master
           ["dmesg unavailable"]
         end
 
+        # dmesg's own order: memory first, then the device tree from root down.
         def macos_hw_lines
-          lines = []
-          model = sysctl_value("hw.model")
-          cpu = sysctl_value("machdep.cpu.brand_string")
-          mem = sysctl_value("hw.memsize")
-          version = sysctl_value("kern.version")&.lines&.first&.strip
-          lines << "hw0 at mainbus0: #{model}" if model
-          lines << "cpu0 at mainbus0: #{cpu}" if cpu
-          lines << "mem0: #{mem.to_i / 1_048_576}MB avail" if mem
-          lines << version if version
-          lines
+          (memory_lines + device_lines).compact
         rescue StandardError => _e
           Master::Ground::Swallow.log(_e, context: "SystemInfo.macos_hw_lines")
+          []
+        end
+
+        def memory_lines
+          real = sysctl_value("hw.memsize").to_i
+          return [] unless real.positive?
+
+          lines = ["real mem = #{real} (#{real / MEGABYTE}MB)"]
+          avail = available_memory_bytes
+          lines << "avail mem = #{avail} (#{avail / MEGABYTE}MB)" if avail.positive?
+          lines
+        end
+
+        def device_lines
+          model = sysctl_value("hw.model")
+          cpu = sysctl_value("machdep.cpu.brand_string")
+          [
+            ("mainbus0 at root: #{model}" if model),
+            ("cpu0 at mainbus0: #{cpu}" if cpu),
+            kernel_line,
+          ]
+        end
+
+        def kernel_line
+          type = sysctl_value("kern.ostype")
+          release = sysctl_value("kern.osrelease")
+          return unless type && release
+
+          "kern0 at mainbus0: #{type} #{release} #{sysctl_value('hw.machine')}".rstrip
+        end
+
+        # vm_stat is the only honest free-memory source on Darwin: hw.usermem
+        # reports a 32-bit remnant, a fifth of the real figure on this machine.
+        def available_memory_bytes
+          stdout, _stderr, status = Master::Io::Exec.capture3("vm_stat")
+          return 0 unless status.success?
+
+          page = stdout[/page size of (\d+) bytes/, 1].to_i
+          page * FREE_PAGE_KINDS.sum { |kind| stdout[/^Pages #{kind}:\s+(\d+)\./, 1].to_i }
+        rescue StandardError => _e
+          0
+        end
+
+        # The banner used to name modules that were renamed a release ago, so
+        # read the tree instead of a literal.
+        def module_names
+          lib = File.join(Master::ROOT, "lib")
+          Dir.children(lib).select { |e| File.directory?(File.join(lib, e)) }.sort
+        rescue StandardError => _e
           []
         end
 

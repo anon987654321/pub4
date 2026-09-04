@@ -17,9 +17,6 @@ module Master
     class Renderer
       BOOT_DMESG_LINES = 10
       MS_PER_SEC = 1000
-      TOKEN_BUDGET = 8000
-      BAR_CELLS = 12
-      BAR_FRACTIONS = ["\u00A0", "\u258F", "\u258E", "\u258D", "\u258C", "\u258B", "\u258A", "\u2589", "\u2588"].freeze
 
       include GitStatus
       include SystemInfo
@@ -44,9 +41,9 @@ module Master
       end
 
       def boot_wayfinding(constitution:, agent:, scan:)
-        parts = [constitution ? "constitution ✓" : "constitution ·", agent ? "agent ✓" : "agent ·"]
-        parts << { done: "ready ✓", active: "scan…" }.fetch(scan, "ready ·")
-        d("boot: #{parts.join(' · ')}")
+        parts = ["constitution #{constitution ? "ok" : "pending"}", "agent #{agent ? "ok" : "pending"}"]
+        parts << { done: "scan ok", active: "scan active" }.fetch(scan, "scan pending")
+        d("boot0: #{parts.join(", ")}")
       end
 
       def render(content, mode: :plain)
