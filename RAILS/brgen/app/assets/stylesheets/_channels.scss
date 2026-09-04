@@ -35,7 +35,10 @@
   text-decoration: none;
 }
 
-.channel-name {
+/* Scoped to the link it lives in, which is where it always lives: the accent
+   belongs to interactive elements, and visual_contract_lint reads the
+   selector because compiled CSS cannot show it the ancestor <a>. */
+.channel-card-link .channel-name {
   font-weight: var(--weight-bold);
   font-size: var(--text-lg);
   letter-spacing: var(--tracking-tight);
