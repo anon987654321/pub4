@@ -113,24 +113,22 @@ drafts and run over the tree:
 `PRIMITIVE_OBSESSION`, `FEATURE_ENVY`, `COUPLER_SMELLS`, `LAZY_CLASS`,
 `SPECULATIVE_GENERALITY`, `NO_SHOTGUN_SURGERY`, `TEMPORAL_COUPLING`.
 
-Re-checked 2026-08-30, and the absence claim holds with one trap in it.
-`DATA_CLUMPS`, plural, **is** in `data/rules.yml` — as a `violation_priors`
-row and as a node in `data/rule_deps.yml`, where `PRIMITIVE_OBSESSION` is
-ordered `after: [DATA_CLUMPS]`. No rule carries that id in either population,
-so the prior is never read and the ordering never applies; `RuleOrder#topo_sort`
-skips a dependency whose id names no loaded rule. So the detector below is
-genuinely unbuilt, and building it as `DATA_CLUMP` singular leaves the existing
-prior and dep node pointing at nothing. Name it `DATA_CLUMPS` and both wake up,
-or delete those two rows in the same pass.
+**Closed 2026-09-04, and it closed the right way round.** The advice was to name
+the detector `DATA_CLUMPS` so the prior and the dep node would wake up, and that
+is what happened: the rule is built, the scanner carries the id, and both rows
+now resolve. `violation_priors["DATA_CLUMPS"]` weights it and
+`PRIMITIVE_OBSESSION after: [DATA_CLUMPS]` orders it.
 
-Both of those tables hold more names than the rule populations do, and how
-many is not settled here: three separate attempts at that census gave three
-answers, because `Rule.registry` is short until `RuleDSL` is touched and short
-again until the rule files are required, and because `violation_priors` mixes
-rule ids with principle names like `ABSTRACTION` and `DENSITY` that live in a
-different namespace. The count is a sitting of its own with an owner. What is
-recorded here is only the part that survived every version of the instrument:
-`DATA_CLUMPS` names no rule, in either table.
+The census the paragraph deferred is settled too, in `72a8cfae8`. Three attempts
+gave three answers because three different instruments were being used, and each
+is right about its own question — `Rule.registry` is short until `RuleDSL` is
+touched, a regex over `law/` and the rule DSL sources sees ids the scanner never
+builds, and only one of them answers "does this key weight anything". That one
+is: build the scanner and read `@rules`, which is the collection `RuleOrder`
+receives. It holds 145 String ids. Measured that way, `violation_priors` had 59
+keys of which 4 resolved and `rule_deps` had 35 of which 17 did; the dead rows
+are gone and both headers now state the invariant. See "From the 2026-09-04
+MASTER audit" below.
 
 #### Larger AST work — multi-session projects
 
@@ -163,7 +161,15 @@ positives worth not re-discovering — those are guards, not history.
 
 ### Still open after this session
 
-- **`data/rules.yml` is 35 body lines over its budget**, and the 35 have a name.
+- **`data/rules.yml` is under its budget as of 2026-09-04** — 3690 against a
+  ceiling ratcheted from 3944 in `72a8cfae8`, which removed 254 body lines of
+  declaration no reader consults. The record below is kept for its method, which
+  is the part that transfers: a field whose removal moves no measurement was
+  measuring nothing, and the proof is three censuses reading identically across
+  the change. The `pwa:` question it ends on is answered — the block stayed and
+  the room was found elsewhere.
+
+  What it said at the time: **`data/rules.yml` is 35 body lines over its budget**, and the 35 have a name.
   102 lines came out: a row whose id `law/` owns is rejected by
   `YamlDeclarativeRule` before any detector field is read, so the `languages`,
   `path_match`, `requires_absent` and `whole_file` those rows carried scoped a
@@ -308,8 +314,14 @@ moved to meet it" rather than as "the spine held".
 
 **agent-ignore** — triage only when the task explicitly targets scan rules.
 
-`rake selftest` reports **0 findings, re-measured 2026-08-19**. The 1 of
-2026-08-18 — `god class Constitution is 348 lines` — closed the way the
+`rake selftest` reports **12 findings, re-measured 2026-09-04** — 1 LINEARITY, 2
+ABSTRACTION, 9 DENSITY, and 0 for every other law. It was 0 on 2026-08-19, and
+six of the twelve are in `lib/ground/antigravity/`, a directory that did not
+exist when that measurement was taken. The table and the reasoning are under
+"From the 2026-09-04 MASTER audit" below; this section keeps the history of how
+the count was driven to 0 the first time, because the method is what transfers.
+
+The 1 of 2026-08-18 — `god class Constitution is 348 lines` — closed the way the
 2026-08-12 idiom findings did: the count was the instrument, not the design.
 NO_GOD_CLASS's line branch measured raw AST span, charging for rationale
 comments — the counter DENSITY and lint:spine each already retired for the
@@ -325,9 +337,11 @@ true for the commit that carries it and no further: it has been 0, 1, 2, 3, 6 an
 7 on different days of the same fortnight, and a "clean since" claim in
 `START_HERE.md` was already stale once.
 
-`test/test_heartbeat.rb:44` (`self_test_heartbeat_publishes_clean_scan_metrics`)
-fails *because* this count is non-zero — a symptom of this track, not an
-independent defect.
+`test/test_heartbeat.rb` passes at the count above — 7 runs, 12 assertions, 0
+failures on 2026-09-04. The note here that
+`self_test_heartbeat_publishes_clean_scan_metrics` fails *because* the count is
+non-zero no longer holds, so the count is not gated by that test and a
+non-zero `selftest` is currently visible only to whoever runs the task.
 
 Triage each new finding as: true violation to fix / scanner false positive / rule
 exemption needed / rule threshold too strict / known debt to leave alone.
@@ -1066,19 +1080,198 @@ the attempt.
   `load_rules`, which merged them back before any scanner saw them.
 - Local `knowledge/` corpus and generated `output/` artifacts.
 - Deferred WebGL boot.
-- **The gap between 181 registry classes and 225 declared rules.** Checked
+- **The gap between the registry classes and the declared rules.** Checked
   2026-08-12 on the theory that the difference was inert law — declared rules
   nothing implements, which would be this file's dominant defect class at the
-  constitutional layer. It is not. **Every one of the 225 has a detection path**:
-  118 semantic-only, 69 registry+lexical, 7 lexical-only through the YAML bridge,
-  and the rest combinations. Zero with none. `RuleRegistryAudit` already measures
-  the split, `SelfTest` reads it, and `test_rule_registry_audit.rb` pins it.
-  What the check did produce is the line below.
+  constitutional layer. It is not: every declared rule has a detection path, in
+  the corpus, in `law/`, or by `folded_into` naming the rule that reports for it.
+  `RuleRegistryAudit` measures the split, `SelfTest` reads it, and
+  `test_rule_registry_audit.rb` pins it. Re-measured 2026-09-04 at 228 declared
+  and 145 built, with the split now 141 semantic, 15 structural, 78 carrying no
+  detector field and resolving through `law/` or a fold. **The "7 lexical-only
+  through the YAML bridge" in the original wording is 0** — see the audit section
+  above; that half is a live question, the no-inert-law conclusion is not.
 - Media-generation severance: re-severed 2026-07-14 (`76b11fec4`), confirmed
   permanent 2026-07-15. `docs/SEVERANCE.md` is the source of truth. If the LoRA
   training loop needs generation capability again, express it as
   `lib/core/world.rb` handlers per the original absorption plan — do not restore
   the deleted `io/lora_pipeline.rb` / `video_chain.rb`.
+
+### From the 2026-09-04 MASTER audit
+
+Opened by reading `data/rules.yml` end to end and asking, for each declaration,
+which line of Ruby consults it. Everything below was measured against this tree
+rather than inferred, and the command that measured it is named so the next
+reader can re-run it instead of re-deriving it. The cleanup that came out of the
+same sitting is `72a8cfae8`; what is here is what that commit did **not** close.
+
+#### The Antigravity adapter is 960 lines reached through one method
+
+`lib/ground/antigravity/` is ten files and 960 non-blank non-comment lines.
+`Coordinator` is constructed at exactly one site, `lib/cli/skills.rb:76`, and
+that site uses one thing: `coordinator.skills.discover!`. Its constructor
+eagerly builds nine subsystems — Rules, Skills, Hooks, Plugins, Mcp, Settings,
+Subagents, Artifacts, Discovery — and every other public method on it has zero
+callers outside its own directory:
+
+    system_prompt_context  before_tool  after_tool  before_invocation
+    after_invocation  on_stop  active_rules_prompt  prompt_catalog
+
+Each measured with `grep -rn "\b<name>\b" lib bin web tools test` filtered to
+exclude `lib/ground/antigravity/`; all eight return zero. So the hook lifecycle,
+the rules-into-prompt path, the plugin, MCP, settings, subagent and artifact
+surfaces are built on every skills load and called by nothing.
+
+Two things make this worth a sitting rather than a note. `lib/ground` is **938
+body lines over its budget** (6837 against 5899 in `limits.yml`), and this
+subsystem is 960 — the overage is almost exactly this directory. And **six of
+the twelve current `rake selftest` findings are inside it**: the one LINEARITY
+finding, and five of the nine DENSITY ones.
+
+The decision is whether the unreached surface is a half-landed integration to
+finish or a speculative adapter to delete. Do not answer it by deleting on
+sight: `Discovery` and `Skills` are live, and the file naming
+`OPENBSD/etc/rc.d/master` in the `data/tts.yml` entry above is the warning about
+how a subsystem can look configured and be unreached in exactly this shape.
+
+#### `rake selftest` is 12, and the record above says 0
+
+The **Self-Test Debt** section is corrected in place rather than left as a second
+source, but the delta deserves its own record because it is a regression, not
+drift in an instrument. It was 0 on 2026-08-19. Today:
+
+| law | count | where |
+|---|---|---|
+| LINEARITY | 1 | `lib/ground/antigravity/rules.rb:39` |
+| ABSTRACTION | 2 | `lib/autonomy/event_store.rb:16` (14 public methods), `lib/review/llm_dispatcher.rb:14` (11) |
+| DENSITY | 9 | five in `lib/ground/antigravity/`, plus `lib/cli/session/result_display.rb:62`, `lib/fix/fix_loop/pass_runner/llm_stage.rb:30` |
+
+`ROBUSTNESS`, `SINGULARITY`, `PROXIMITY`, `KERNEL_ADHERENCE` and `PRINCIPLE_MAP`
+are all 0. The two ABSTRACTION findings are the same shape the fold spine's
+`Constitution` had — check whether the public count is measuring an idiom before
+splitting anything, the way `private_class_method` closed that one.
+
+#### The tier2 ordering guarantee has never applied
+
+`lib/fix/fix_loop/rule_order.rb:10` declares
+`TIER2_QUALITY_RULE_IDS = %w[DRY KISS SRP]`, and twelve lines of comment above
+the sort explain why tier2 must stay "a strict lexicographic primary key" rather
+than fold into the additive score. **The scanner builds no rule with any of
+those three ids**, so `tier2?` returns false for every rule and the primary key
+is constant. Measured through the reader:
+
+```ruby
+sc = Master::Review::Scan::InfraHelpers.build_scanner(root: Master::ROOT)
+ids = sc.instance_variable_get(:@rules).map(&:id)   # 145 ids, all like "NO_DEBUG"
+%w[DRY KISS SRP] & ids                              # => []
+```
+
+`test/test_fix_loop_priorities.rb:19` is green over it because it builds its own
+`Struct.new(:id, :severity)` rules named literally `"DRY"`, `"KISS"` and `"SRP"`.
+That is Scanner Convention 5 in a new place: the test asserts the instance it
+constructed rather than the invariant, so it cannot tell a working guarantee from
+one whose ids nobody carries. The fix is either to name the three rules that
+should be tier2 — `SIMPLEST_WORKS`, `BE_CONCISE` and `SRP`'s real detector are
+the candidates — or to delete the concept and the comment together.
+
+#### The YAML lexical bridge now compiles nothing
+
+`YamlDeclarativeRule` exists to wire `detect_lexical` entries that no Ruby class
+already covers, and **0 of 228 rules carry `detect_lexical`** (`d69ed3a59`
+removed 87 nil ones; the last real one went with `72a8cfae8`). So the class, its
+mtime-staleness reload, its uncompilable-regex reporting and
+`RuleFactory.bridge_class?` are a path that cannot fire. `RuleRegistryAudit`
+already reports it without drawing the conclusion: `lexical wired 0`,
+`lexical unwired 0`.
+
+Not proposed for deletion here. It is the declared escape hatch for adding a
+lexical rule without writing a class, and `rake lint:rule_reach` counts on the
+category existing. What is wrong is that nothing says the hatch is empty — decide
+whether the corpus should regain lexical rules or the bridge should go.
+
+#### A `languages:` scope on a semantic rule is inert
+
+36 rules declare `languages:`. `SemanticRule.from_yaml`
+(`lib/review/scan/rules/semantic_rules.rb:211`) maps each rule to `prompt`,
+`severity`, `mode`, `reversibility` and `blast_radius` — and drops the rest, so
+the language list reaches nothing. The only reader it ever had is the lexical
+bridge above, which is now empty. A rule that says it applies to `css` is asked
+about every file.
+
+This is why `PATTERN_EXTRACTION` carried `medium: [ruby]` for as long as it did
+without anyone noticing the key was misspelled: the correctly spelled key is
+just as unread. `72a8cfae8` renamed it for consistency and closed nothing.
+
+#### Rule-corpus debt the ratchets already price, listed so it is one place
+
+Each is the current output of a gate that passes because its ceiling accommodates
+the number. None is new; what is new is that they are together.
+
+- **12 rules claim `autofix: true` and have no detector** — `HTML_LANG`,
+  `WHITESPACE_PUNCTUATION`, `NO_UPDATE_ATTRIBUTE`, `QUOTE_VARIABLES`,
+  `DOUBLE_BRACKET`, `LAZY_IMAGES`, `DEAD_CODE`, `TYPOGRAPHIC_EXCELLENCE`,
+  `TYPOGRAPHY_DISCIPLINE`, `EN_DASH_RANGE`, `FEW_ARGUMENTS`, `MESSAGE_CHAIN`.
+  Cannot be found, so cannot be fixed. `rake lint:autofix_reach`.
+- **31 rules say `autofix: true` and name no transform.** One names a transform.
+  Since `72a8cfae8` every named transform is implemented, so what remains in this
+  category is rules whose autofix claim is a bare boolean.
+- **24 rules fire on nothing in this corpus** (ceiling 24, so the gate is at its
+  limit). The header in `rule_ratchets.audit` is right that silence is usually a
+  property of the sample — but `FROZEN_STRING_LITERAL`, `MEANINGFUL_NAMES` and
+  `WHY_NOT_WHAT` are in the list *and* in the 78 rules that carry no detector
+  field at all, which is a different reason for silence and worth separating.
+- **16 rules declare neither tier nor severity**, so every count grouped by
+  either omits them silently. **20 cross-population duplicates** — one id defined
+  in two places in two wordings. **2 id case collisions**:
+  `bare_rescue`/`BARE_RESCUE` and `eight_px_rhythm`/`EIGHT_PX_RHYTHM`. **DRY
+  claims the alias `duplicate_code`, which is still its own live rule** — a fold
+  nobody finished. `rake lint:rule_hygiene`.
+- **`rule_deps` gaps gate nothing.** `RuleRegistryAudit#ungraphed_rule_ids`
+  reports every registry rule absent from the graph, `/rules deps` prints the
+  count, and no ceiling in `rule_ratchets` and no task failure follows from it.
+  The number rose when `72a8cfae8` deleted the keys that named nothing, which is
+  the honest direction and reads like a regression.
+
+#### `zsh` keeps four reference tables and one is enforced
+
+After `72a8cfae8` removed the duplicate `auto_remediation`, `zsh` still holds
+`native_patterns`, `exceptions`, `token_economics` and `ssh_reading` with no
+reader anywhere in `lib`, `bin`, `tools`, `web` or the Rakefile. Only
+`banned_commands` is enforced (`lib/io/shell.rb:27`, and it warns rather than
+refuses) and only it reaches the prompt. The content is good and CLAUDE.md's
+"Ruby and zsh, not GNU text tools" rule points at exactly this material, so the
+move is to wire it into `zsh_style_lines` rather than delete it — but a rule
+nothing reads is not a rule.
+
+#### Nine of sixteen line budgets are over, and `law/` is nearly double
+
+`rake loc_budget`, measured this session: `law` 1609/852, `lib/pub4` 691/470,
+`lib/ground` 6837/5899, `lib/core` 769/682, `lib/boot` 264/227, `lib/trace`
+2053/1999, `lib/voice` 3330/3181, `lib/review` 10228/9765, `lib/fix` 2652/2643.
+`limits.yml` says a breach is paid by extraction or deletion and never by a
+bigger number, and none of these has been paid. `law/` at 89% over is the one to
+open first: the twin census closed in 2026-08 retired 42 duplicated rules and the
+file set has grown back past where the budget was set.
+
+#### Instrument notes
+
+- **The rule-id census is settled, and the earlier three answers are all
+  explainable.** Build the scanner and read `@rules` — that is the collection
+  `RuleOrder` receives from `ai_boot.rb:122`, and `r.id` is a `String`. It holds
+  145 ids. A `Rule.registry` walk gives 142 because bridge classes are rejected;
+  a regex over `law/*.rb` and `lib/review/scan/rules/*.rb` for `Law.define(:X)`
+  and `RuleDSL.rule :x` gives 215 with mixed case, which is what
+  `tools/rule_hygiene.rb` uses and why its numbers differ. All three are correct
+  for their own question. For "does this key weight anything", only the first is.
+- **Five rules carry no detector and no obvious class, and all five are
+  accounted for** — do not re-list them. `WHITESPACE_PUNCTUATION`,
+  `KEYWORD_ARGS`, `BARE_RESCUE` and `MESSAGE_CHAIN` each carry `folded_into:`
+  naming the rule that reports for them, and `PROSE_OMIT_QUALIFIERS` is generated
+  by `law/prose.rb` from the `prose.en.ids` mapping rather than declared.
+- **`success_criteria` looked live and was not.** `lib/ground/phase_gates.rb:133`
+  reads `@state["success_criteria"]`, and `@state` is loaded session state, not
+  `rules.yml`. A grep for the key name finds the file and says nothing about
+  which document it came from.
 
 ## RAILS
 ### Parity gaps — forward work
