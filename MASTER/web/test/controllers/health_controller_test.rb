@@ -62,6 +62,31 @@ class HealthControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # A 503 that will not say what broke sends the operator back to re-derive it
+  # on a box that is already failing, and the reason is the whole value of
+  # asking the worker: `cannot load such file -- rb_edge_tts` names the fix.
+  test "a tts outage reports why, not just false" do
+    with_check(:tts_healthy?, false) do
+      with_check(:tts_blocker, "worker selftest exited 1: cannot load such file -- rb_edge_tts") do
+        get "/health"
+
+        assert_response :service_unavailable
+        body = JSON.parse(response.body)
+        assert_includes body.dig("blocked", "tts").to_s, "rb_edge_tts"
+      end
+    end
+  end
+
+  # The healthy payload keeps its shape. Callers parse this on an interval from
+  # two places in the browser, and a key that appears only sometimes is a key
+  # every one of them has to guard.
+  test "a healthy response carries no blocked key" do
+    get "/health"
+
+    assert_response :success
+    refute JSON.parse(response.body).key?("blocked")
+  end
+
   test "rails health check is exempt from container warmup" do
     Rails.application.config.x.master_container = nil
 

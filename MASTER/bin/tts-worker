@@ -2,9 +2,10 @@
 # frozen_string_literal: true
 #
 # TTS worker — runs EventMachine in isolation from Falcon Async fibers.
-# Two modes:
+# Three modes:
 #   one-shot: tts-worker VOICE RATE PITCH OUT_PATH < text
 #   daemon:   tts-worker --daemon SOCKET_PATH
+#   selftest: tts-worker --selftest — exit 0 and print versions if it could speak
 #
 # Daemon protocol: one JSON request per connection — {voice,rate,pitch,text}\n
 # — followed by raw MP3 bytes back, then EOF. Single-threaded; serialised by
@@ -145,6 +146,21 @@ def require_eventmachine_ssl!
   exit 69
 end
 
+# Answers "could this worker speak" by being the worker. Reaching this line
+# means bundler resolved against MASTER's Gemfile and every require above
+# succeeded, so the preconditions are proved by execution rather than restated
+# in a caller that drifts from them. Speech.edge_tts_ready? spawns this.
+if ARGV[0] == "--selftest"
+  require_eventmachine_ssl!
+  versions = {
+    "ruby" => RUBY_VERSION,
+    "eventmachine" => (EventMachine::VERSION rescue "?"),
+    "rb_edge_tts" => (RbEdgeTTS::VERSION rescue "?"),
+  }
+  puts "tts-worker: ok #{versions.map { |k, v| "#{k}=#{v}" }.join(' ')}"
+  exit 0
+end
+
 if ARGV[0] == "--daemon"
   require_eventmachine_ssl!
   sock_path = ARGV[1] or abort "tts-worker --daemon: missing SOCKET_PATH"
@@ -227,6 +243,7 @@ voice, rate, pitch, out_path = ARGV
 if [voice, rate, pitch, out_path].any?(&:nil?)
   warn "tts-worker: usage: tts-worker VOICE RATE PITCH OUT_PATH < text"
   warn "                   tts-worker --daemon SOCKET_PATH"
+  warn "                   tts-worker --selftest"
   exit 64
 end
 $stdin.set_encoding(Encoding::UTF_8)

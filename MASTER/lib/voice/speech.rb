@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "digest"
 require "securerandom"
 require "fileutils"
 require "open3"
@@ -25,7 +26,14 @@ module Master
       # at all. Scale the budget with text length instead of a flat cap.
       WORKER_TIMEOUT_PER_CHAR = 0.05
       WORKER_TIMEOUT_MAX = 180
+      # The selftest only boots bundler and requires: 0.26s warm on a dev Mac,
+      # measured over three runs. Generous enough for a cold 1-vCPU vm23 under
+      # swap, and it is paid once per process because the answer is memoised.
+      SELFTEST_TIMEOUT_S = 15
       @last_error = nil
+      @selftest_mutex = Mutex.new
+      @selftest_stamp = nil
+      @selftest_blocker = nil
       # One mutex per pool slot, not one global mutex — ac0146eac serialized
       # synthesis when TtsSupervisor pool_size was 1, so a single mutex was
       # harmless. Pool_size later defaulted to 2 ("for parallel synth"), but
@@ -104,12 +112,67 @@ module Master
         edge_tts_available? || !espeak_path.nil? || Engines.replicate_token?
       end
 
+      # Cheap and deliberately incomplete: the two preconditions a caller can
+      # test without spawning anything. It gates the synthesis path, which runs
+      # per utterance and must not pay for a subprocess, and where a wrong yes
+      # costs one failed attempt and a fallback. Ask edge_tts_ready? where a
+      # wrong yes is reported to somebody.
       def edge_tts_available?
         worker_executable? && eventmachine_ssl_available?
       end
 
+      # The whole precondition set, asked of the worker instead of restated
+      # here. bin/tts-worker also requires rb_edge_tts and faye/websocket, and
+      # listing those in a second place is how the two drift — so --selftest
+      # proves them by reaching its own exit. Memoised against the worker and
+      # the lockfile, because the answer only changes when one of them does.
+      def edge_tts_ready?
+        edge_tts_blocker.nil?
+      end
+
+      # Why the worker could not speak, or nil. The reason is the point: a
+      # health endpoint that says false without saying why sends its reader
+      # back to re-derive it.
+      def edge_tts_blocker
+        @selftest_mutex.synchronize do
+          stamp = selftest_stamp
+          next @selftest_blocker if @selftest_stamp == stamp
+
+          @selftest_stamp = stamp
+          @selftest_blocker = probe_worker_selftest
+        end
+      end
+
       def worker_executable?
         File.executable?(WORKER)
+      end
+
+      # The lockfile is keyed by content, not mtime, and that is load-bearing:
+      # the worker's own `bundler/setup` touches Gemfile.lock, so an mtime key
+      # is invalidated by the very probe it is memoising and every call spawns
+      # again. Measured — two consecutive calls both cost a full subprocess.
+      # The worker script is keyed by mtime because nothing writes to it.
+      def selftest_stamp
+        lock = File.join(Master::ROOT, "Gemfile.lock")
+        [
+          File.exist?(WORKER) ? File.mtime(WORKER).to_i : 0,
+          File.exist?(lock) ? Digest::SHA256.file(lock).hexdigest : "",
+        ]
+      end
+
+      def probe_worker_selftest
+        return "worker is not executable at #{WORKER}" unless worker_executable?
+
+        _out, err, status = Master::Io::Exec.capture3(
+          TtsSupervisor.daemon_env(Master::ROOT), Gem.ruby, WORKER, "--selftest",
+          chdir: Master::ROOT, timeout: SELFTEST_TIMEOUT_S
+        )
+        return nil if status.success?
+
+        detail = err.to_s.lines.map(&:strip).reject(&:empty?).first
+        "worker selftest exited #{status.exitstatus}#{": #{detail}" if detail}"
+      rescue StandardError => e
+        "worker selftest could not run: #{e.class}: #{e.message}"
       end
 
       def espeak_path

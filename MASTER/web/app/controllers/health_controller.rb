@@ -38,7 +38,12 @@ class HealthController < ActionController::API
                "unavailable"
              end
     http = critical_ok ? :ok : :service_unavailable
-    render json: { status:, checks:, deploy: deploy_confidence }, status: http
+    body = { status:, checks:, deploy: deploy_confidence }
+    # Only when it is down, so the healthy payload keeps its shape and its size.
+    # relayd discards a response whose headers pass 8 KB; this is body rather
+    # than header, and one line rather than the worker's whole stderr.
+    body[:blocked] = { tts: tts_blocker } if !checks[:tts] && tts_blocker
+    render json: body, status: http
   end
 
   private
@@ -46,14 +51,30 @@ class HealthController < ActionController::API
   def tts_healthy?
     return true if Rails.env.test?
 
-    # Capability check, not socket liveness. The worker + EventMachine-with-SSL
-    # are what make synthesis possible; the daemon socket is spun up on
-    # demand (and can be reaped under load on the 1-vCPU host), so requiring a
+    # Capability check, not socket liveness. The daemon socket is spun up on
+    # demand and can be reaped under load on the 1-vCPU host, so requiring a
     # live socket here produced a false negative — tts reported down between
     # syntheses while synthesis worked fine, 503'ing /health.
-    Master::Voice::Speech.edge_tts_available?
+    #
+    # It asks the worker rather than edge_tts_available?, which tests two of
+    # the worker's preconditions and not the two that are gems. Correcting the
+    # false negative had bought a false positive at the other end: a host whose
+    # bundle is missing rb_edge_tts answered true here and could not speak.
+    # edge_tts_ready? spawns `tts-worker --selftest`, memoised on the worker
+    # and the lockfile's contents, so this costs one subprocess per process.
+    Master::Voice::Speech.edge_tts_ready?
   rescue StandardError => _
     false
+  end
+
+  # Why TTS is down, when it is. A critical check that 503s without saying what
+  # broke makes the reader re-derive it on a box that is already failing.
+  def tts_blocker
+    return nil if Rails.env.test?
+
+    Master::Voice::Speech.edge_tts_blocker
+  rescue StandardError => e
+    "blocker probe failed: #{e.class}"
   end
 
   def replicate_healthy?
