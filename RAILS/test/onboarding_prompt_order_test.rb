@@ -82,12 +82,13 @@ class OnboardingPromptOrderTest < Minitest::Test
     end
   end
 
-  def test_install_does_not_wait_for_a_post
+  def test_install_does_not_wait_for_chrome_or_a_post
     body = File.read(File.join(ROOT, INSTALL))
 
     refute_match(/install-prompt-value/, body,
                  "a first visit that only reads must still be able to install")
     assert_includes body, "beforeinstallprompt"
-    assert_includes body, "iosManual"
+    assert_includes body, "pointer: coarse"
+    assert_includes body, "this.phone()"
   end
 end

@@ -124,6 +124,7 @@ nb:
     body: "Portersøk og advisories — åpne fra hjem-skjermen."
     ios_safari: "Del → Legg til på Hjem-skjerm."
     ios_chrome: "Åpne i Safari, så Del → Legg til på Hjem-skjerm."
+    android: "Chrome-menyen (⋮) → Installer app."
     not_now: "Ikke nå"
     action: "Installer"
   pagination:

@@ -1404,6 +1404,7 @@ en:
     body: Live notes, marketplace, and nearby — one tap from your home screen.
     ios_safari: Share → Add to Home Screen.
     ios_chrome: Open in Safari, then Share → Add to Home Screen.
+    android: "Chrome menu (⋮) → Install app."
     not_now: Not now
     action: Install
   mailer:
