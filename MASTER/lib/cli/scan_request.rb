@@ -29,13 +29,13 @@ module Master
       end
 
       def call
-        profile, rule_filter, severity_filter = resolve_profile
-        Result.new(pairs: collect_pairs, profile:, rule_filter:, severity_filter:)
+        @profile, @rule_filter, @severity_filter = resolve_profile
+        Result.new(pairs: collect_pairs, profile: @profile, rule_filter: @rule_filter, severity_filter: @severity_filter)
       end
 
       private
 
-      attr_reader :scanner, :root, :arg, :depth, :autofix
+      attr_reader :scanner, :root, :arg, :depth, :autofix, :rule_filter
 
       def collect_pairs
         target = target_arg
@@ -47,19 +47,31 @@ module Master
         return "scan failed: no such target: #{target}" if target && !File.directory?(target)
 
         dir = target || root
-        scan_dir = scanner.scan_dir(dir, depth:, glob: "**/*", stream: true, autofix:, autofix_root: root)
+        scan_dir = scanner.scan_dir(
+          dir, depth:, glob: "**/*", stream: true,
+          autofix:, autofix_root: root, rules: selected_rules
+        )
         scan_dir.ok? ? scan_dir.value! : "scan failed"
       end
 
       # One file is the same contract as a directory walk: scan, and if autofix
       # is on, write the mechanical transforms before the caller sees the pair.
       def file_pairs(target)
-        result = scanner.scan(target, depth:)
+        result = scanner.scan(target, depth:, rules: selected_rules)
         if autofix && scanner.respond_to?(:autofix_one)
           applied = scanner.autofix_one(target, result, root:)
-          result = scanner.scan(target, depth:) if applied.any?
+          result = scanner.scan(target, depth:, rules: selected_rules) if applied.any?
         end
         [[target, result]]
+      end
+
+      # limits.yml said profiles "filter the report". The walk still ran every
+      # rule, so `/through aesthetic master` spent hours on CONFIG_HIERARCHY.
+      # The filter is the walk: the report then describes what actually ran.
+      def selected_rules
+        return unless rule_filter && scanner.respond_to?(:rules)
+
+        scanner.rules.select { |rule| rule_filter.include?(rule.id.to_s) }
       end
 
       def target_arg

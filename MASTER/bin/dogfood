@@ -48,10 +48,9 @@ env = ENV.to_h.merge(
 
 script = [
   "/help",
-  "hello",
-  "what is next?",
-  "/cost",
-  "/cmd",
+  "/status",
+  "/doctor",
+  "/why FILE_SPRAWL",
   "/exit",
 ].join("\n") + "\n"
 

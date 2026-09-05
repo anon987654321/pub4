@@ -15,7 +15,7 @@ class TestScanAutofix < Minitest::Test
       @scan_calls = 0
     end
 
-    def scan(_path, depth: :deep)
+    def scan(_path, depth: :deep, **)
       @scan_calls += 1
       findings = @findings_by_pass.shift || []
       Master::Result.ok(findings)
@@ -127,7 +127,7 @@ class TestScanAutofix < Minitest::Test
       path = File.join(root, "example.rb")
       File.write(path, "class Example\nend\n")
       scanner = Master::Review::Scan::Scanner.new(rules: [FakeRule.new("FROZEN_LITERAL", true)])
-      def scanner.scan(_path, depth: :deep)
+      def scanner.scan(_path, depth: :deep, **)
         @scan_n = (@scan_n || 0) + 1
         if @scan_n.odd?
           Master::Result.ok([{ rule: "FROZEN_LITERAL", message: "missing frozen", line: 1 }])

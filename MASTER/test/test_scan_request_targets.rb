@@ -72,4 +72,23 @@ class TestScanRequestTargets < Minitest::Test
     assert_equal false, apply
     assert_equal "../RAILS", path
   end
+
+  def test_aesthetic_profile_walks_only_aesthetic_rules
+    scanner = RecordingScanner.new
+    def scanner.rules
+      [Struct.new(:id).new("CONFIG_HIERARCHY"), Struct.new(:id).new("ANTI_DIVITIS")]
+    end
+    scanner.instance_variable_set(:@rule_ids, nil)
+    def scanner.scan_dir(dir, **opts)
+      @dirs << dir
+      @rule_ids = Array(opts[:rules]).map { |rule| rule.id.to_s }
+      Master::Result.ok([])
+    end
+    def scanner.rule_ids = @rule_ids
+
+    Master::CLI::ScanRequest.new(scanner:, root: Master::ROOT, arg: "aesthetic").call
+
+    refute_includes scanner.rule_ids, "CONFIG_HIERARCHY"
+    assert_includes scanner.rule_ids, "ANTI_DIVITIS"
+  end
 end

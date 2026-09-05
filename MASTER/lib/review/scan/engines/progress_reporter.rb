@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "json"
+require "fileutils"
+
 module Master
   module Review
     module Scan
@@ -37,9 +40,45 @@ module Master
           unit = @scan_progress[:unit] || "scan0"
 
           log_scan_hit(unit:, done:, total:, rel:, count:, eta_s:)
+          append_scan_hits_jsonl(path, findings)
           log_scan_checkpoint(unit:, done:, total:, viol_total:, dirty:, top:, elapsed:, eta_s:)
           log_scan_completion(unit:, done:, total:, viol_total:, dirty:, elapsed:) if done == total
           @bus&.publish("scan:progress", done:, total:, path: rel, violations: count, eta_s:, top: top.to_h)
+        end
+
+        # One line per finding, appended as the file is judged, so a 16-hour
+        # walk is not a list you have to relocate afterwards.
+        def append_scan_hits_jsonl(path, findings)
+          return if findings.empty?
+
+          file = File.join(Master::ROOT, ".master", "scan_hits.jsonl")
+          FileUtils.mkdir_p(File.dirname(file))
+          File.open(file, "a") do |io|
+            findings.each do |finding|
+              io.puts({
+                path: path.to_s,
+                line: finding_line(finding),
+                rule: finding_rule_id(finding),
+                message: finding_message(finding),
+              }.to_json)
+            end
+          end
+        rescue StandardError
+          nil
+        end
+
+        def finding_line(finding)
+          return finding.line if finding.respond_to?(:line)
+          return finding[:line] if finding.respond_to?(:[])
+
+          nil
+        end
+
+        def finding_message(finding)
+          return finding.message if finding.respond_to?(:message)
+          return finding[:message] if finding.respond_to?(:[])
+
+          nil
         end
 
         def update_scan_progress_state(count, rule_hits)

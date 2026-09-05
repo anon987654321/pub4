@@ -47,12 +47,12 @@ module Master
           @file_processor.call(path:, depth:, rules: rules || active_rules(depth))
         end
 
-        def scan_dir(dir, depth: :deep, glob: SCAN_GLOB, stream: false, autofix: false, autofix_root: nil)
+        def scan_dir(dir, depth: :deep, glob: SCAN_GLOB, stream: false, autofix: false, autofix_root: nil, rules: nil)
           validate_depth!(depth)
           paths = Dir.glob(File.join(dir, glob)).select { |path| scannable_path?(path, dir) }
           reset_scan_progress(paths.size) if stream
           pairs = parallel_map(paths) { |path, idx|
-            scan_one(dir:, path:, depth:, stream:, index: idx, autofix:, autofix_root:)
+            scan_one(dir:, path:, depth:, stream:, index: idx, autofix:, autofix_root:, rules:)
           }
           pairs.concat(cross_file_pairs(dir, paths))
           Result.ok(prune_violation_objects(pairs))
@@ -93,6 +93,10 @@ module Master
           self
         end
 
+        def skip_semantic!
+          @file_processor.skip_semantic! if @file_processor.respond_to?(:skip_semantic!)
+        end
+
         private
 
         def findings_for(path, depth:)
@@ -125,12 +129,12 @@ module Master
           status.success? ? out.strip : nil
         end
 
-        def scan_one(dir:, path:, depth:, stream:, index: nil, autofix: false, autofix_root: nil)
+        def scan_one(dir:, path:, depth:, stream:, index: nil, autofix: false, autofix_root: nil, rules: nil)
           sleep @file_sleep_s if @file_sleep_s > 0
-          file_result = scan(path, depth:)
+          file_result = scan(path, depth:, rules:)
           applied = autofix ? autofix_one(path, file_result, root: autofix_root || dir) : []
           if applied.any?
-            file_result = scan(path, depth:)
+            file_result = scan(path, depth:, rules:)
             emit_autofixed(dir:, path:, applied:) if stream
           end
           emit_scan_progress(dir:, path:, file_result:) if stream

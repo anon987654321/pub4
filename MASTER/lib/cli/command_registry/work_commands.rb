@@ -283,6 +283,7 @@ module Master
 
       def scan_pass(scanner:, root:, clean_arg:, dry_run:, no_autofix:, do_autofix:, holder:)
         ScanLive.banner(target: clean_arg.empty? ? root : clean_arg, profile: nil, dry_run:, autofix: do_autofix)
+        scanner.skip_semantic! if dry_run && scanner.respond_to?(:skip_semantic!)
 
         request = ScanRequest.new(scanner:, root:, arg: clean_arg, autofix: do_autofix).call
         return request.pairs if request.pairs.is_a?(String)

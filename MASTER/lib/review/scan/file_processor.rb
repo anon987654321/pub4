@@ -22,8 +22,13 @@ module Master
         # tree ask the same questions and their reports can be compared.
         SEMANTIC_SAMPLE = ENV.fetch("MASTER_SCAN_SEMANTIC_SAMPLE", "0.1").to_f
 
-        def initialize(event_bus: nil)
+        def initialize(event_bus: nil, skip_semantic: false)
           @bus = event_bus
+          @skip_semantic = skip_semantic
+        end
+
+        def skip_semantic!
+          @skip_semantic = true
         end
 
         def call(path:, depth:, rules:)
@@ -159,10 +164,15 @@ module Master
         # size. Keeping it, but sampling a deterministic slice so clean files are
         # not permanently exempt, and saying so when a file is skipped.
         def semantic_due?(findings, path)
+          return false if @skip_semantic
           return true unless findings.empty?
-          return false if SEMANTIC_SAMPLE <= 0
+          return false if semantic_sample <= 0
 
-          Digest::SHA256.hexdigest(sample_key(path))[0, 8].to_i(16) % 1000 < (SEMANTIC_SAMPLE * 1000).round
+          Digest::SHA256.hexdigest(sample_key(path))[0, 8].to_i(16) % 1000 < (semantic_sample * 1000).round
+        end
+
+        def semantic_sample
+          ENV.fetch("MASTER_SCAN_SEMANTIC_SAMPLE", SEMANTIC_SAMPLE.to_s).to_f
         end
 
         # Relative to the repo, not the absolute path: keyed on the latter, two

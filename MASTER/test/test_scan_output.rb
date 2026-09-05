@@ -15,7 +15,7 @@ class TestScanOutput < Minitest::Test
       @scan_calls = 0
     end
 
-    def scan(_path, depth: :deep)
+    def scan(_path, depth: :deep, **)
       @scan_calls += 1
       findings = @findings_by_pass.shift || []
       Master::Result.ok(findings)
