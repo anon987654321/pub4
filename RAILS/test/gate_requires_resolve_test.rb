@@ -18,6 +18,11 @@ require "minitest/autorun"
 # would boot Chrome and hit the network.
 class GateRequiresResolveTest < Minitest::Test
   GATES = File.expand_path("../gates", __dir__)
+  TREES = {
+    "RAILS/gates" => GATES,
+    "MASTER/lib" => File.expand_path("../../MASTER/lib", __dir__),
+    "OPENBSD" => File.expand_path("../../OPENBSD", __dir__),
+  }.freeze
 
   # `require_relative "x"` resolves against the requiring file's directory, and
   # matches x.rb or a directory named x. Interpolated paths are skipped rather
@@ -26,26 +31,39 @@ class GateRequiresResolveTest < Minitest::Test
   def each_relative_require
     return to_enum(:each_relative_require) unless block_given?
 
-    Dir.glob(File.join(GATES, "**", "*.rb")).sort.each do |file|
-      dir = File.dirname(file)
-      File.readlines(file).each_with_index do |line, index|
-        next if line.lstrip.start_with?("#")
-        next unless (match = line.match(/require_relative\s+["']([^"'#]+)["']/))
+    TREES.each do |label, root|
+      Dir.glob(File.join(root, "**", "*.rb")).sort.each do |file|
+        dir = File.dirname(file)
+        heredoc = nil
+        File.readlines(file).each_with_index do |line, index|
+          if (marker = line[ /<<[~-]?['"]?(\w+)/, 1 ])
+            heredoc = marker
+            next
+          end
+          if heredoc && line.match?(/\A\s*#{Regexp.escape(heredoc)}\s*\z/)
+            heredoc = nil
+            next
+          end
+          next if heredoc
+          next if line.lstrip.start_with?("#")
+          next unless (match = line.match(/require_relative\s+["']([^"'#]+)["']/))
 
-        yield(file, index + 1, match[1], dir)
+          yield(label, file, index + 1, match[1], dir)
+        end
       end
     end
   end
 
   def test_every_gate_require_relative_resolves
-    broken = each_relative_require.reject do |_file, _line, target, dir|
+    broken = each_relative_require.reject do |_label, _file, _line, target, dir|
       path = File.expand_path(target, dir)
       File.exist?("#{path}.rb") || File.directory?(path)
     end
 
-    assert_empty broken.map { |file, line, target, _dir|
-      "#{file.sub("#{GATES}/", 'gates/')}:#{line} requires #{target.inspect}, which does not exist"
-    }, "a gate that cannot load measures nothing, and fails without naming a finding"
+    assert_empty broken.map { |label, file, line, target, _dir|
+      root = TREES.fetch(label)
+      "#{file.sub("#{root}/", "#{label}/")}:#{line} requires #{target.inspect}, which does not exist"
+    }, "a file that cannot load measures nothing, and fails without naming a finding"
   end
 
   # The runner names each gate's file in gates.yml. A row pointing at a file that
