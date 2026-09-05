@@ -1967,6 +1967,20 @@ the courier's, not the city's: publishing every rider's would be tracking people
 who never agreed to it, and the person waiting for the food is the only one who
 needs it.
 
+#### 1.5 Mention had a table and no writer — **done**
+
+`Post has_many :mentions` resolved and stayed empty, while
+`Notification::KINDS` already carried `mention` and the inbox ranked it first.
+`Shared::Mentionable` now writes the join from `@username` in title and content
+— the same `after_save` shape as `Shared::Taggable#sync_hashtags` — skips self
+and unknown handles, and notifies only for new rows. An email address is not a
+mention.
+
+**Check:** `brgen/test/models/mention_test.rb`.
+
+**Closed 2026-09-05.** `Stream` still has no writer. Live streaming is blocked
+and that table stays.
+
 ---
 
 ### Tier 2 — structurally absent
