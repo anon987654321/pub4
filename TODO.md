@@ -3245,6 +3245,15 @@ What the pass has actually taught, which is worth more than the list:
 - **Measure**, 10. `--measure-body` was a second name for `--measure`'s 66ch,
   declared three times and used seventeen; collapsed across sixteen files, and
   `rules.yml` corrected from 65ch to 66ch (`e2dc94299`, `a85160ee7`).
+  It came back on 2026-09-05 and the route in is worth knowing:
+  `layout_contract_test` still asserted the retired spelling in
+  `_dialect_tokens.scss`, so the collapse left a red test behind and the obvious
+  way to make it green was to re-declare the twin. `design_tokens.yml`'s
+  `measure_body` key reads like a token the CSS forgot to emit and is not — it
+  is YAML `design_metrics` reads. **A retirement is not finished while a test
+  still names the retired thing.** The assertion asks the real question now: the
+  measure is declared exactly once, in `_typography.scss`, under one name, and a
+  second declaration anywhere in the four stylesheet trees fails (`cd09222b0`).
 - **Weight discipline.** `--weight-heavy: 800` is now the top of
   `scale.font_weight` rather than an exception to it: the ramp in use is
   400/600/800, which is the only even ladder meeting `min_weight_delta: 200`,
