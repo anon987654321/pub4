@@ -208,7 +208,10 @@ module Pub4
       # were noise that only made this number worse — 27 call sites, and the
       # count fell by 7 net because the tiptap rollout added its own before this
       # pass removed them all.
-"translate_default" => 181,
+      # -> 177 (2026-09-05). Two of the four are the PWA banner and install
+      # prompt losing their fallbacks; the count is also honest now that
+      # comment_or_opt_out? stopped excusing any line with a comment above it.
+      "translate_default" => 177,
     }.freeze
 
     # Kept for callers that referenced the old single number.

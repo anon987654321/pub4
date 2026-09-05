@@ -63,7 +63,8 @@ class CoverageRatchetTest < Minitest::Test
     # models 22 -> 23: `5f3580ec9 hoist one-file test dirs` moved a model test
     # onto the basename this ratchet resolves, and the floor did not move with
     # it — the same direction the 19 above was caught in.
-    "brgen" => { "controllers" => 21, "models" => 23 },
+    # models 23 -> 24: mention_test.rb arrived with the Mention writer.
+    "brgen" => { "controllers" => 21, "models" => 24 },
     # models 1 -> 8 on 2026-08-16. bsdports had one model test (user) against
     # thirteen models, and it was the smallest tree in the repo — Port, the record
     # everything else hangs off, had nothing naming it. Writing them found two
