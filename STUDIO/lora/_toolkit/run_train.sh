@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-. "$(dirname -- "$0")/lib.sh"
+. "$(dirname -- "$0")/toolkit.sh"
 
 config="$(mktemp "${TMPDIR:-/tmp}/${SUBJECT}_train_XXXXXX").yaml"
 trap 'rm -f "$config"' EXIT INT TERM

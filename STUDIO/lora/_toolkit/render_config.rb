@@ -5,7 +5,7 @@ require "optparse"
 require "yaml"
 require "pathname"
 
-# The subject is chosen by the wrapper that invoked this (see _toolkit/lib.sh):
+# The subject is chosen by the wrapper that invoked this (see _toolkit/toolkit.sh):
 # SUBJECT_DIR points at STUDIO/lora/<subject>, and subject.env there
 # names SUBJECT, MODEL and TRIGGER.
 SUBJECT = ENV.fetch("SUBJECT") { abort "run a subject wrapper, not this script directly" }

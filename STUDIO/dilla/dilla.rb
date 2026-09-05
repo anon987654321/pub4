@@ -3706,7 +3706,7 @@ module RadioBergenStudy
   },
 }.freeze
 
-  DOSSIERS_PATH = File.expand_path("../../reports/radio_bergen_track_dossiers.yml", ROOT).freeze
+  DOSSIERS_PATH = File.expand_path("../../MASTER/data/radio_bergen_track_dossiers.yml", ROOT).freeze
 
   module DeepAudio
       module_function
@@ -31582,7 +31582,7 @@ MASTER_TILT_PIVOT = (ENV["MASTER_TILT_PIVOT"] || 700).to_i
 
 # Top-end smoothing -- the thing that makes a mix read as calm rather than
 # distorted, and the most consistent single trait across the 29 reference
-# tracks in MASTER/reports/radio_bergen_track_dossiers.yml.
+# tracks in MASTER/data/radio_bergen_track_dossiers.yml.
 #
 # Nine of those dossiers describe the same move in different words: "master
 # lowpass ~3.6 kHz" (Camel, Massage Situation), "high shelf rolled ~9 kHz"

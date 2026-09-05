@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-. "$(dirname -- "$0")/lib.sh"
+. "$(dirname -- "$0")/toolkit.sh"
 
 mode="all"
 skip_postpro=0

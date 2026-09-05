@@ -160,7 +160,7 @@ task :isolation do
   # all three were found by running one test on its own after a hunch; this does
   # it for all of them. Not part of `rake`: one process per test is minutes, and
   # a check nobody will wait for is a check nobody runs.
-  require_relative "tools/isolation"
+  require_relative "isolation"
   failures = StudioIsolation.run(pattern: ENV["TEST"])
   exit(1) unless failures.zero?
 end

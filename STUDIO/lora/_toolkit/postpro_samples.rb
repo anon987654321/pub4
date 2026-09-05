@@ -10,7 +10,7 @@ require "shellwords"
 
 ROOT = Pathname.new(__dir__).expand_path.freeze
 # _toolkit -> lora. This resolved to the repo root, three levels too high, which
-# went unnoticed because lib.sh always passes --input-dir and --output-dir.
+# went unnoticed because toolkit.sh always passes --input-dir and --output-dir.
 LORA = ROOT.join("..").expand_path.freeze
 IMAGE_EXT = %w[.jpg .jpeg .png .webp].freeze
 SKIP_PREFIX = ["#{ENV.fetch("SUBJECT", "")}_final_", "hf_flux_"].freeze

@@ -234,7 +234,7 @@ lora/
 │   ├── curate.rb — decides which photographs earn a place, and prepares them
 │   ├── render_config.rb — writes the training YAML for the machine you are on
 │   ├── run_generate.sh — the dispatcher. Every `./lora --flag` lands here.
-│   ├── lib.sh — shared shell helpers: paths, config rendering
+│   ├── toolkit.sh — shared shell helpers: paths, config rendering
 │   ├── run_train.sh — local and RunPod training
 │   ├── run_train_colab.rb — writes the Colab notebook
 │   ├── colab_session.rb — what that notebook runs once it is on Colab

@@ -67,7 +67,7 @@ def sh!(*command)
   abort "warn: failed: #{command.join(' ')}"
 end
 
-# subject.env is shell — lib.sh sources it — so a value with spaces must be
+# subject.env is shell — toolkit.sh sources it — so a value with spaces must be
 # quoted there, and a Ruby reader that splits on "=" has to strip the quotes back
 # off or they become part of the value.
 def subject_env

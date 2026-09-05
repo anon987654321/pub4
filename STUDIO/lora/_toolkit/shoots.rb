@@ -62,7 +62,7 @@ def subject_env(subject)
   end]
 end
 
-# subject.env is shell, and lib.sh sources it. So a value containing spaces has
+# subject.env is shell, and toolkit.sh sources it. So a value containing spaces has
 # to be quoted, and a Ruby reader that splits on "=" and stops has to take the
 # quotes back off or they reach the prompt as characters.
 #

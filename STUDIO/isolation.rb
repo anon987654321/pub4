@@ -30,7 +30,7 @@ require "rbconfig"
 #   isolation-only failure   the test needs setup a neighbour happens to do,
 #                            so it is asserting less than it claims
 class StudioIsolation
-  ROOT = File.expand_path("..", __dir__)
+  ROOT = File.expand_path(__dir__)
   RUBY = RbConfig.ruby
 
   Outcome = Struct.new(:name, :file, :alone, :suite, keyword_init: true)

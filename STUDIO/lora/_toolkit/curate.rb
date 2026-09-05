@@ -323,7 +323,7 @@ module Lora
 
     # `<subject>/dataset`, and named here because `into:` had no default and the
     # first set prepared by this file went to `dataset_1024` — a directory no
-    # lane reads. `_toolkit/lib.sh` and `run_train_kaggle.rb` both resolve
+    # lane reads. `_toolkit/toolkit.sh` and `run_train_kaggle.rb` both resolve
     # `SUBJECT_DIR/dataset` and nothing resolves anything else, so a set written
     # anywhere else is invisible: the Kaggle lane reported "dataset missing" for
     # a dataset that was sitting beside the directory it looked in.
