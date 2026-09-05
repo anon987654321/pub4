@@ -3214,7 +3214,9 @@ the same pass are open, each measured and none of them a guess.
   `split_sidebar_ratio` (must sum with `split_main_ratio` to 1), and
   `visible_grid_optional`. `prefer_monochrome_with_one_accent` is read next to
   `max_palette_roles`. The CSS scans for children-with-margin and card padding
-  other than 24px are still unbuilt.
+  other than 24px landed 2026-09-05 as `css_constitution` tallies
+  `child_margin` (floor 0, pens skipped) and `card_padding` (1:
+  `_minimal.scss` `.card { padding: 1rem }`, a look decision).
 
 - **`--border-strong` is declared only in `MASTER/web/public/face.css`.**
   brgen's composer asked for it twice and got its `var(--border)` fallback both
