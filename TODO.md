@@ -1236,20 +1236,14 @@ splitting anything, the way `private_class_method` closed that one.
 the scanner ids that actually exist. The test asserts those ids are on the live
 scanner, not on a Struct it constructed.
 
-#### The YAML lexical bridge now compiles nothing
+#### The YAML lexical bridge now compiles nothing — closed 2026-09-05
 
-`YamlDeclarativeRule` exists to wire `detect_lexical` entries that no Ruby class
-already covers, and **0 of 228 rules carry `detect_lexical`** (`d69ed3a59`
-removed 87 nil ones; the last real one went with `72a8cfae8`). So the class, its
-mtime-staleness reload, its uncompilable-regex reporting and
-`RuleFactory.bridge_class?` are a path that cannot fire. `RuleRegistryAudit`
-already reports it without drawing the conclusion: `lexical wired 0`,
-`lexical unwired 0`.
-
-Not proposed for deletion here. It is the declared escape hatch for adding a
-lexical rule without writing a class, and `rake lint:rule_reach` counts on the
-category existing. What is wrong is that nothing says the hatch is empty — decide
-whether the corpus should regain lexical rules or the bridge should go.
+`YamlDeclarativeRule` remains the escape hatch for a `detect_lexical` with no
+Ruby class, and `rake lint:rule_reach` still counts on the category. The
+corpus carries 0 such rows. `RuleRegistryAudit` now prints `lexical hatch
+empty` when both wired and unwired are 0, so the idle hatch is a named
+finding rather than two zeros a reader has to add up. The hatch stays; what
+was missing was saying it is idle.
 
 #### A `languages:` scope on a semantic rule was inert — closed 2026-09-05
 
