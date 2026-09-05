@@ -2950,14 +2950,11 @@ rules:
       grid:
         columns: 12
         base_unit_px: 8
-        # The same membership as pixel_perfection.eight_px_rhythm, which is the
-        # copy the css_constitution gate reads. Full membership is the source
-        # below; this is the subset the rhythm rules enforce, and it stayed out
-        # of step with its twin on 0 and 44 until 2026-08-31.
-        # Do not invent steps outside that scale; prefer tokens over literals.
+        # Canonical membership. pixel_perfection.eight_px_rhythm aliases this
+        # list; they drifted on 0 and 44 when they were two copies. Source:
+        # RAILS/shared/design_tokens.yml#scale.space_px.
         source: RAILS/shared/design_tokens.yml#scale.space_px
-        # Reverted with scale.space_px on 2026-09-02; the 4px grid above 3 is tested.
-        allowed_spacing_px:
+        allowed_spacing_px: &eight_px_rhythm
         - 0
         - 4
         - 8
@@ -2998,8 +2995,8 @@ rules:
         rag: right
         action: Use asymmetry and alignment before decoration.
       touch:
-        target_min_px: 44
-        target_recommended_px: 48
+        target_min_px: &touch_min_px 44
+        target_recommended_px: &touch_recommended_px 48
         thumb_zone_primary_actions: bottom_center
         action: Flag critical mobile interactions in unreachable top corners.
   - id: ULTRAMINIMALISM
@@ -3275,9 +3272,9 @@ rules:
     autofix: false
     config:
       fitts:
-        target_min_px: 44
-        target_recommended_px: 48
-        primary_action_min_px: 48
+        target_min_px: *touch_min_px
+        target_recommended_px: *touch_recommended_px
+        primary_action_min_px: *touch_recommended_px
         action: Flag interactive controls smaller than 44px; prefer 48px for primary actions.
       hick:
         max_visible_choices: 7
@@ -3389,33 +3386,11 @@ rules:
       - 'text-shadow\s*:'
       - filter\s*:\s*[^;]*blur\s*\(
       - 'backdrop-filter\s*:'
-      - 'text-shadow\s*:'
       forbid_arbitrary_radius_px_above: 16
-      # This list and layout_rules.grid.allowed_spacing_px are one axis written
-      # twice, and they disagreed on exactly two members: this one carried 0 and
-      # not 44, that one carried 44 and not 0. Both are in the declared source,
-      # RAILS/shared/design_tokens.yml scale.space_px, so both belong in both.
-      #
-      # 44 is the sharper of the two. It is tap_min -- shared_chrome names it,
-      # every tap target is built from it, and a var(--tap-min, 44px) fallback
-      # puts it in front of this allowlist constantly. The name says eight, but
-      # 4, 12, 20 and 44 are not multiples of 8 either; this is the 4px grid with
-      # chosen steps, and 44 was the one step missing between 40 and 48.
-      # Reverted with scale.space_px on 2026-09-02; the 4px grid above 3 is tested.
-      eight_px_rhythm:
-      - 0
-      - 4
-      - 8
-      - 12
-      - 16
-      - 20
-      - 24
-      - 32
-      - 40
-      - 44
-      - 48
-      - 64
-      - 96
+      # Same list as layout_rules.grid.allowed_spacing_px — one axis, one
+      # spelling. 44 is tap_min; the name says eight, but 4, 12, 20 and 44
+      # are on the 4px grid too.
+      eight_px_rhythm: *eight_px_rhythm
       magic_color_hex_ban_inline: true
       image_smoothing_enabled: false
       exception_policy:

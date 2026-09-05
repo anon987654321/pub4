@@ -41,6 +41,18 @@ class TestPrincipleMapRuntime < Minitest::Test
     assert_operator min, :>=, 44
   end
 
+  def test_layout_rules_and_pixel_perfection_share_one_spacing_list
+    design = Master.design_rules(root: @root)
+    grid = design.dig("layout_rules", "grid", "allowed_spacing_px")
+    rhythm = design.dig("pixel_perfection", "eight_px_rhythm")
+    fitts = design.dig("ux_laws", "fitts", "target_min_px")
+    touch = design.dig("layout_rules", "touch", "target_min_px")
+
+    assert_equal grid, rhythm
+    assert_equal touch, fitts
+    assert_equal 44, touch
+  end
+
   def test_aesthetic_rules_register
     require_relative "../lib/review/scan/rule_dsl"
     ids = Master::Review::Scan::Rule.registry.filter_map do |k|

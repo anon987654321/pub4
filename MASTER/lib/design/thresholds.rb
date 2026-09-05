@@ -27,8 +27,8 @@ module Master
       private_class_method :dig
 
       def self.touch_min_px(root: Master::ROOT)
-        dig("ux_laws", "fitts", "target_min_px", root:) ||
-          dig("layout_rules", "touch", "target_min_px", root:) || 44
+        # layout_rules.touch and ux_laws.fitts are one YAML value (&touch_min_px).
+        dig("layout_rules", "touch", "target_min_px", root:) || 44
       end
 
       def self.max_visible_choices(root: Master::ROOT)
@@ -68,9 +68,9 @@ module Master
       end
 
       def self.eight_px_rhythm(root: Master::ROOT)
+        # pixel_perfection.eight_px_rhythm aliases layout_rules.grid.allowed_spacing_px.
         dig("pixel_perfection", "eight_px_rhythm", root:) ||
-          dig("layout_rules", "grid", "allowed_spacing_px", root:) ||
-          [0, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 96]
+          [0, 4, 8, 12, 16, 20, 24, 32, 40, 44, 48, 64, 96]
       end
     end
   end
