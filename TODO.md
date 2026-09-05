@@ -226,19 +226,17 @@ and it is the shape a tree-wide unattended run would have written everywhere.
 Both reverted. The third change, a blank line in `webgl_surfaces.rb`, was
 harmless. One in three.
 
-This is the same autofix already recorded as having broken dilla, postpro and
-MASTER's chat; what is new is a reproducible pair with a named cause, so the two
-rules can be fixed rather than the tool distrusted wholesale. Until then, scan
-with `--no-autofix` and read the findings.
+The `%w[]` trailing-comma rewrite is pinned: `percent_word_array_close?` skips
+`%w %W %i %I`, and `test_trailing_commas_skip_percent_word_arrays` holds both
+directions. The template-literal call-site corruption was already closed
+(`convert_string_concat` declines a chain followed by `(`). Other autofix
+transforms can still mangle; `--no-autofix` remains the safe default on an
+unattended tree until each transform has that shape of test.
 
-Two smaller findings from the same attempt, both about the surface rather than
-the rules. `/scan <path>` passed as a **command-line argument** prints nothing
-and exits 0 — it silently does nothing, and a no-op that reports success is how
-a tier gets believed. Only pipe mode runs it: `echo "/scan ../RAILS" | bin/cli`.
-And paths resolve relative to `MASTER/`, because `bin/master` chdirs there
-before handing the instruction over, so a sibling tree is `../RAILS` and a bare
-`RAILS` matches nothing — which is the other half of why the silent no-op is
-dangerous.
+Pipe mode used to ignore ARGV, so `bin/cli /scan RAILS` with no TTY printed
+nothing and exited 0. It honors the argument now, then stdin. Paths still
+resolve after `bin/master` chdirs into MASTER, so a sibling tree is `../RAILS`
+or the `rails` alias.
 
 ### Tag Legend
 
@@ -1157,28 +1155,11 @@ are all 0. The two ABSTRACTION findings are the same shape the fold spine's
 `Constitution` had — check whether the public count is measuring an idiom before
 splitting anything, the way `private_class_method` closed that one.
 
-#### The tier2 ordering guarantee has never applied
+#### The tier2 ordering guarantee — closed 2026-09-05
 
-`lib/fix/fix_loop/rule_order.rb:10` declares
-`TIER2_QUALITY_RULE_IDS = %w[DRY KISS SRP]`, and twelve lines of comment above
-the sort explain why tier2 must stay "a strict lexicographic primary key" rather
-than fold into the additive score. **The scanner builds no rule with any of
-those three ids**, so `tier2?` returns false for every rule and the primary key
-is constant. Measured through the reader:
-
-```ruby
-sc = Master::Review::Scan::InfraHelpers.build_scanner(root: Master::ROOT)
-ids = sc.instance_variable_get(:@rules).map(&:id)   # 145 ids, all like "NO_DEBUG"
-%w[DRY KISS SRP] & ids                              # => []
-```
-
-`test/test_fix_loop_priorities.rb:19` is green over it because it builds its own
-`Struct.new(:id, :severity)` rules named literally `"DRY"`, `"KISS"` and `"SRP"`.
-That is Scanner Convention 5 in a new place: the test asserts the instance it
-constructed rather than the invariant, so it cannot tell a working guarantee from
-one whose ids nobody carries. The fix is either to name the three rules that
-should be tier2 — `SIMPLEST_WORKS`, `BE_CONCISE` and `SRP`'s real detector are
-the candidates — or to delete the concept and the comment together.
+`TIER2_QUALITY_RULE_IDS` is now `%w[NO_GOD_CLASS FEATURE_ENVY FEW_ARGUMENTS]`,
+the scanner ids that actually exist. The test asserts those ids are on the live
+scanner, not on a Struct it constructed.
 
 #### The YAML lexical bridge now compiles nothing
 
@@ -1238,16 +1219,11 @@ the number. None is new; what is new is that they are together.
   The number rose when `72a8cfae8` deleted the keys that named nothing, which is
   the honest direction and reads like a regression.
 
-#### `zsh` keeps four reference tables and one is enforced
+#### `zsh` reference tables — closed 2026-09-05
 
-After `72a8cfae8` removed the duplicate `auto_remediation`, `zsh` still holds
-`native_patterns`, `exceptions`, `token_economics` and `ssh_reading` with no
-reader anywhere in `lib`, `bin`, `tools`, `web` or the Rakefile. Only
-`banned_commands` is enforced (`lib/io/shell.rb:27`, and it warns rather than
-refuses) and only it reaches the prompt. The content is good and CLAUDE.md's
-"Ruby and zsh, not GNU text tools" rule points at exactly this material, so the
-move is to wire it into `zsh_style_lines` rather than delete it — but a rule
-nothing reads is not a rule.
+`zsh_style_lines` now reaches `forbidden_commands`, `native_patterns`,
+`ssh_reading` and `token_economics` as well as `banned_commands`.
+`banned_commands` is still the only list `Io::Shell` warns on.
 
 #### Nine of sixteen line budgets are over, and `law/` is nearly double
 
@@ -1259,35 +1235,18 @@ bigger number, and none of these has been paid. `law/` at 89% over is the one to
 open first: the twin census closed in 2026-08 retired 42 duplicated rules and the
 file set has grown back past where the budget was set.
 
-#### `rake selfcheck` is 7 across 3 rules, and one is law failing open
+#### `rake selfcheck` locations and three silent rescues — closed 2026-09-05
 
-The **Scanner noise** section above records 31 across 7, re-measured 2026-08-19.
-It is now 7 across 3, and the seven have locations — which the gate itself will
-not give you, see the instrument note below.
+`SelfCheck::Report` now carries `findings` with path and line, and the task
+prints that summary once (the `selfcheck: selfcheck:` prefix is gone).
+`Scanner#findings(paths)` is the flat API; `tools/example_scan.rb` uses it.
 
-| rule | where |
-|---|---|
-| `SILENT_RESCUE` | `lib/review/scan/rules/meta_rules.rb:351`, `lib/ground/antigravity/skills.rb:158`, `lib/trace/session.rb:77`, `lib/voice/renderer/system_info.rb:120` |
-| `NO_GOD_CLASS` | `lib/autonomy/event_store.rb:16` (14 public methods), `lib/review/llm_dispatcher.rb:14` (11) |
-| `COMPLETION_THEATER` | `lib/review/scan/ast_fixer.rb:75` |
-
-**`meta_rules.rb:351` is the one to fix first, because it is a shape this repo
-has already closed once.** `owned` reads `PATH_OWNERSHIP.yml` and rescues to
-`[]`, so an unreadable or malformed ownership file retires the rule's entire
-corpus in silence and the scan reports the tree clean having judged nothing.
-That is character-for-character the `VetoPatternRule#load_patterns` defect closed
-on 2026-08-15 — "law failing open rather than ordinary swallowing" — and the fix
-is the same one: report through `Swallow.log(..., severity: :load_bearing)`.
-
-`trace/session.rb:77` swallows a failed quarantine of a corrupt session file, so
-the corruption stays in place with nothing said. `antigravity/skills.rb:158` is
-the plain shape on a YAML read. `voice/renderer/system_info.rb:120` returns an
-empty module list; **another session had that file open when this audit ran, so
-leave it to them.**
-
-`ast_fixer.rb:75` is very likely the documented false-positive class — a scanner
-source describing the defect it detects, counted deliberately since 2026-08-15 —
-but it was not read line by line here, so it is triage rather than a finding.
+Three of the four `SILENT_RESCUE` sites now report through
+`Swallow.log(..., severity: :load_bearing)`: `PathPurposeRule#owned`,
+`antigravity/skills.rb#load_usage`, `Session#quarantine_corrupt_session!`.
+`voice/renderer/system_info.rb` was left for the session that held the file.
+`NO_GOD_CLASS` on EventStore and LlmDispatcher, and `COMPLETION_THEATER` on
+`ast_fixer.rb`, remain.
 
 #### `edge_tts_available?` checks two of the worker's four preconditions
 
@@ -1615,44 +1574,14 @@ accounting the budget exists to prevent.
   `rules.yml`. A grep for the key name finds the file and says nothing about
   which document it came from.
 
-### MASTER cannot be asked to read a file — 2026-09-05
+### MASTER cannot be asked to read a file — closed 2026-09-05
 
-Found by asking it to critique `CLAUDE.md`. Three separate causes, each measured.
-
-**"read CLAUDE.md" routes to a toolset with no file access.**
-`Ground::IntentRouter#classify` returns `:unknown` for it, `TurnRouter#casual?`
-treats `:unknown` as conversation, and `casual_reply` talks straight to the agent
-with visitor-scoped tools — `AskLlm` and `WebSearch`, per the comment at
-`turn_router.rb:137`. So the plainest possible file request reaches a model that
-has no way to open one, and the only honest answer left to it is to ask for the
-text. That is what it did, after spending **45 cents and 30,002 tokens**.
-
-    Master::Ground::IntentRouter.new.classify("read CLAUDE.md")   # => :unknown
-
-Longer phrasings escape it — the same request with a clause attached classifies
-as `:codify_policy` — which makes the failure intermittent by wording, the worst
-kind to diagnose from a transcript.
-
-**`Io::ReadFile` exists and is wired.** `lib/io/read_file.rb`, built in
-`lib/builder.rb:18`, dispatched in `lib/review/llm_dispatcher.rb:52`. The model's
-own account of having no file tool was true of its turn and false of the runtime,
-which is worth noting: **a model's report of its own capabilities is evidence
-about the toolset it was handed, not about the tree.**
-
-**`agent_taxonomy.yml#toolset_groups` declares the groups and nothing reads it.**
-It names `build: [read_file, str_replace, write_file, ast_edit, atomic_write,
-batch_replace]`, which is exactly the set the failing turn wanted. Already
-counted in `data_reach.yml` as one of the 35 unread keys; what is new is knowing
-what its absence costs. Wiring the router to select a group by intent is the
-shape the file already assumes.
-
-**`bin/master "<instruction>"` printed nothing and exited 0.** Same silent no-op
-as `/scan <path>` recorded above, now confirmed for the documented repo-wide
-instruction surface. `CLAUDE.md` calls that command the way in.
-
-Not established: whether the pipe run was in visitor mode. `Fiber[:master_visitor]`
-is set when the config carries no `web_token`, and that would reach `casual_reply`
-by a second road. Either way the toolset is the same and so is the fix.
+Two causes, both closed. `IntentRouter` classifies `read CLAUDE.md` as
+`inspect_repo`, so it is not casual. Local CLI is the operator surface and no
+longer sets `Fiber[:master_visitor]` for a missing `web_token` — that flag is
+web-request only. Pipe mode honors ARGV. `Tool::Profile` reads
+`agent_taxonomy.yml#toolset_groups`. Visitors on ai.brgen.no still cannot reach
+the Fold.
 
 ### Tooling I wanted while doing the work above — 2026-09-05
 
@@ -1667,63 +1596,26 @@ anything in its neighbourhood.
 
 They are ordered by how much time each would have saved.
 
-**1. A mutation harness — `rake mutate[test_file]`.** Hand-rolled five times in
-one session, as inline Ruby that rewrites a rule, runs its test, and restores
-the file. It earned its place every time: it caught **three tests that were green
-for the wrong reason**, and two of those looked completely convincing. This
-repo's own doctrine already says "a green first run is the least informative
-outcome available" and "every check added was mutated six ways and watched to
-fail before being believed" — the practice is written down and the tool is not.
-Flipping comparison operators, moving numeric constants by one, inverting
-`reject`/`select`, and deleting guard clauses would have found all three
-automatically. Without it the practice depends on whoever is at the keyboard
-remembering to do it by hand.
+**1. A mutation harness — done.** `rake mutate[lib/foo.rb,test/test_foo.rb]`
+flips comparators, nudges integers, inverts reject/select, runs the test,
+restores. Survivors fail the task.
 
-**2. One documented way to get findings out of the scanner.** Three attempts
-died before the fourth worked. `rule.check(code, path:)` returns `Finding`
-objects; `Scanner#scan_dir` returns `Result::Ok([[path, Result::Ok([...])], …])`
-whose findings are plain Hashes with symbol keys, so `f.rule` raises where
-`h[:rule]` works. Two shapes for one concept, and neither is written down.
-`Fix::SelfCheck#full` returns a third thing again — a report of counts with no
-findings at all. **A `Scanner#findings(paths)` returning a flat array of
-`Finding` would delete a whole class of wasted attempt**, and the instrument note
-above exists only because I could not find one.
+**2. One documented way to get findings out of the scanner — done.**
+`Scanner#findings(paths)` returns a flat array of hashes with `:path`.
+`tools/example_scan.rb` is the worked example. `scan`/`scan_dir` still return
+the nested Result shape.
 
-**3. `rake test` that runs on a dev Mac.** Its loader aborts on `cannot load such
-file -- rack/test` from one web test before running anything, because the web
-Rails bundle does not install here. So the single command that answers "do the
-tests pass" has been a no-op locally, and that is how **three test files sat
-erroring without anyone noticing**. Splitting the web tests behind their own task
-— or skipping them when the bundle is absent, loudly — turns the default command
-back into a real answer. I ran the whole suite by looping over files instead,
-which works and which nobody should have to invent twice.
+**3. `rake test` that runs on a dev Mac — done.** `test_web_ui.rb` sits with
+`test_browser.rb` and `test_web_http.rb` behind `rake test:web_ui`. The default
+glob no longer aborts on `rack/test`.
 
-**4. Locations in every gate's output, not counts.** `rake selfcheck` says
-"7 violation(s) across 3 rule(s)" and will not say where, because
-`SelfCheck::Report` carries `total`, `by_rule` and `by_severity` and no findings.
-Acting on it means re-running the scanner by hand, which is item 2, which is why
-these two compound. `ERROR_CONTEXT` is the repo's own rule for this: an error has
-to carry enough context to locate its origin. The same output also prints its own
-label twice — `selfcheck: selfcheck: 7 violation(s)`.
+**4. Locations in every gate's output — done for selfcheck.** The report carries
+findings with path and line, and the task prints that summary once.
 
-**5. `bin/pub4 rule <ID>` — run one rule over a corpus and print what it finds.**
-Written by hand four times this session, and it is what turned an unanswerable
-question into a settled one: running the four SOLID proxies over 2,470 files
-showed three of them find nothing anywhere, and that number is what made writing
-their tests obviously worth doing. It is also the fastest way to price a rule
-change before making it — the `is_a?` fix was safe to take because the same loop
-showed repo-wide findings going 3 → 3. A `--corpus MASTER|all` flag and a count
-is the whole feature.
+**5. `bin/pub4 rule <ID>` — done.** `--corpus MASTER|all` and optional paths.
 
-**6. A lint over the rule corpus's own regexes.** `\b` next to punctuation has
-now cost this repo three separate incidents: `TODO.md` read as a work marker
-twice, and `OPEN_CLOSED`'s `is_a?` clause which **could never match any spelling
-of the method it names** and had been dead since it was written. A word boundary
-needs a word character beside it, so `\bis_a\?\b` requires one straight after the
-question mark and no call site has one. The rules are data; a check over
-`detect_lexical`, `law/` patterns and the constants in `lib/review/scan/rules/`
-for a `\b` adjacent to a non-word character would have caught all three. It is a
-narrow, mechanical check with a proven hit rate of three.
+**6. A lint over the rule corpus's own regexes — done.** `rake lint:word_boundary`
+flags `\b` glued to escaped punctuation. Currently clean.
 
 **7. Every registry rule proves it can fire.** `law/` already refuses to load a
 rule without worked fixtures, and the registry does not — `rule_ratchets.fixture_debt`
@@ -1734,50 +1626,27 @@ source it must flag answers that at load time**, permanently, for every future
 reader. Extend the law/ requirement to new registry rules, and let the ratchet
 retire the existing 91.
 
-**8. One class per rule file, or a documented way to reach a class in a
-multi-class one.** Zeitwerk maps a file to one constant, so naming
-`Rules::AstOmissionRule` cold raises `NameError` while the class plainly exists.
-This bit four times: three test files had been erroring for it, and my own probe
-of `YamlDeclarativeRule` failed the same way and I mistook it for a missing
-class. The fix in a test is one line, `require "review/scan/rule_dsl"`, and it is
-discoverable only by reading a test that already does it.
+**8. One class per rule file — documented.** `AGENTS.md` now says
+`require "review/scan/rule_dsl"` is the load that defines a class in a
+multi-class rule file. Zeitwerk still maps one file to one constant.
 
-**9. A finish-the-worktree command.** `bin/pub4 worktree <name>` sets one up well.
-Nothing helps at the other end, where the sequence is fetch, rebase, re-verify,
-fast-forward main, remove the worktree, delete the branch, push. I ran it six
-times by hand and the ordering matters: merging to local main before pushing is
-what let **another session's push carry two of my commits up before I had decided
-to publish them**, twice. `bin/pub4 worktree finish` doing that sequence — or
-pushing the branch instead of merging — would close the hazard the contract
-already documents but cannot currently prevent.
+**9. A finish-the-worktree command — done.** `bin/pub4 worktree finish` rebases
+onto origin/main and pushes the branch. It does not merge to local main and
+does not push main.
 
-**10. A gate on the test-naming convention.** `RuleCoverageRule` globbed
-`<base>_test.rb` while MASTER names tests `test_<base>.rb`, 283 files to 1, and
-so reported a false positive about a test sitting right there. One convention,
-asserted once, would have made that impossible. The repo has `lint:autoload` as
-the shape to copy: it does not merely read its list, it asserts every entry still
-resolves.
+**10. A gate on the test-naming convention — done.** `rake lint:test_naming`
+asserts MASTER/test is `test_*.rb`, not `*_test.rb`.
 
-**11. Progress on the long gates.** A full-suite sweep is twenty minutes with no
-output until it finishes, so a run that has hung and a run that is working look
-identical — which is the same "absence read as evidence" family the Scanner
-Conventions above are about, pointed at the operator. A file counter would do.
+**11. Progress on the long gates — done for the two long runners.**
+`RAILS/gates/runner.rb --all` prints `N/M name`. `bin/pub4 gate` prints
+`gate: N/M stage`. Individual suites inside a stage are still silent.
 
-**12. `data_reach` should say which file the reader opened.** Its test is whether
-a key's name appears anywhere in first-party code, so `success_criteria` counted
-as reached for as long as it existed while its only namesake reads session state
-from a different document. The 35 at the ceiling is a floor on the real number.
-The 2026-08-12 entry above is right that a strict version is not buildable; a
-version that checks the reader mentions **the same file** is narrower than that
-and would have caught this one.
+**12. `data_reach` same-file check — done.** It reports keys named in code that
+never mentions their yaml file, separately from the unnamed ceiling.
 
-**13. Somewhere to put a fact about the tree that is not a rule.** Three things
-learned this session have no home: the scanner's Result shape, that
-`bundler/setup` rewrites `Gemfile.lock` and so poisons any mtime-keyed cache
-built around it, and the Zeitwerk multi-class trap. They are in TODO.md because
-that is where things go, and none is a backlog item — they are things a person
-needs *before* starting, not work anybody will close. `START_HERE.md` is close to
-the right place and is about orientation rather than traps.
+**13. Facts that are not rules — done.** They live in `MASTER/AGENTS.md` under
+Working alone: scanner findings hashes, bundler/setup rewriting the lock,
+Zeitwerk multi-class.
 
 ## RAILS
 ### Parity gaps — forward work
@@ -2311,10 +2180,11 @@ filter, respecting the others — and the saved list is `/wishlist`, not
 `marketplace_returns_test.rb`, `marketplace_saved_and_facets_test.rb`, and
 `brgen/test/models/marketplace_payout_test.rb` (5).
 
-**Still open:** the Temu-flavoured work on top of `Marketplace::Deal`.
-`starts_at`/`ends_at` and the `active` scope are there and nothing renders a
-countdown from them; coupons, referral credit and bundle pricing have no model
-at all.
+**Countdown is built.** `Deal#ends_in` is the remaining seconds, or nil with no
+end or after it; the card and the show page render `marketplace.deals.ends_in`
+through `distance_of_time_in_words`. No extra Stimulus.
+
+**Still open:** coupons, referral credit and bundle pricing have no model at all.
 
 Solidus remains blocked — see below — so all of this is native-path work.
 
@@ -2944,8 +2814,9 @@ not restated here.
   reproducible from its sidecar. One record is the exception:
   `henrik_debich`, whose separated stems outlived its source in
   `scratch/chop_work/` and were moved under their slug rather than orphaned.
-  The forward half of this — record the URL at fetch time — is cheap and is not
-  yet done.
+  New fetches record the HTTP URL: `CrateDig.archive_entry` / `ccmixter_entry`
+  store `url`, `record!` refuses an entry without one, and the chop sidecar
+  copies it from crate provenance. The 160 already-missing sources stay gone.
 - **Thirty-eight of 161 racks are another record's audio under the wrong name.**
   123 unique wavs, 28 collision groups; Barney Kessel, Gorillaz and "Gimme the
   Flu" share one loop. The cache fix stops it recurring and repairs none of it:
@@ -2976,11 +2847,9 @@ not restated here.
   therefore depends on a file outside the repo, and the one there is industrial
   techno, which the crate rules exclude. Naming the replacement is an operator's
   call because it changes rendered sound.
-- **`test_dilla_audio_graph_parity.rb` is stale against the engine.** Four
-  failures, reproduced at HEAD in a throwaway worktree with no working-tree
-  changes: the test expects one flat `amix` and the engine emits the bus-routed
-  `kit_sum`/`harmonic_sum`/`low_sum`/`texture_sum` graph. The test is wrong, not
-  the code, but which of the two is authoritative is a sound question.
+- **`test_dilla_audio_graph_parity.rb` follows the engine.** Bus routing is
+  opt-in (`DILLA_MIX_BUSES=1`); the default path is still a flat amix, and the
+  test asserts both.
 - **Three engine tests exceed their 90 s timeout under suite load.**
   `test_smoke_two_bar_render`, `test_provenance_separates` and
   `test_dilla_frozen_reads` each pass in about 23 s run alone and time out
@@ -3049,9 +2918,8 @@ than implied across four.
 - **Realtime wiring.** Dead brgen / bsdports / amber Turbo broadcasts — streams
   written to with no subscriber on the other end. Wire the consumers or record
   the explicit no-broadcast decision per stream.
-- **Seed realism.** 39 of 43 cities seed at coordinates `0,0`; the demo data
-  reads as empty or wrong on the map. Give each city real coordinates and a
-  plausible population.
+- **Seed realism.** Coordinates and timezones for every DomainRegistry city
+  live in `CitySeed::COORDINATES` / `TIME_ZONES`. Population is still unset.
 - **Bringhurst typography codification.** Turn the typographic rules the design
   system already half-follows into enforced tokens and a gate, rather than
   convention.
@@ -3178,21 +3046,13 @@ the same pass are open, each measured and none of them a guess.
   (verified). The second is heavier and exact; the first is cheap and
   approximate.
 
-- **Seven `layout_rules` keys have no reader.** `grid.columns: 12`,
-  `whitespace.gap_over_margin`, `whitespace.paragraph_margin_em`,
-  `whitespace.section_padding_min_rem` and `_max_rem`,
-  `proportion.split_sidebar_ratio`, and `pixel_perfection.visible_grid_optional`
-  — plus `card_padding_px: 24`. Their neighbours are read:
-  `grid.base_unit_px` and `allowed_spacing_px` by `design_metrics` and
-  `rendered_geometry`, `touch.target_min_px` by three gates,
-  `proportion.split_main_ratio` by `geometry_type`,
-  `whitespace.internal_not_greater_than_external` by `rendered_geometry`. So
-  this is not a block nobody reads; it is a block read in parts, where the
-  unread parts look enforced and are not. `_dating_stack.scss:129` cites
-  `gap_over_margin` by name in a comment, which is the honest way to follow a
-  rule nothing checks. Two of the seven are cheaply checkable — a grid or flex
-  container whose direct children carry margins, and a card whose padding is not
-  24px — and the rest are doctrine that should read as doctrine.
+- **Seven `layout_rules` keys, three now read.** `design_metrics` reads
+  `gap_over_margin`, `card_padding_px`, and `target_recommended_px` (must be
+  ≥ `target_min_px`). `prefer_monochrome_with_one_accent` is read next to
+  `max_palette_roles`. Still unread: `grid.columns`, `paragraph_margin_em`,
+  `section_padding_min_rem`/`_max_rem`, `split_sidebar_ratio`,
+  `visible_grid_optional`. The CSS scans for children-with-margin and
+  card padding other than 24px are still unbuilt.
 
 - **`--border-strong` is declared only in `MASTER/web/public/face.css`.**
   brgen's composer asked for it twice and got its `var(--border)` fallback both
@@ -3218,18 +3078,17 @@ named here rather than edited.
   `color-mix(in srgb, X 22%, var(--surface))` mixes two opaque colours; 22% is a
   ratio between them, not a transparency. Fourteen distinct ratios. A tint ladder
   would be a real design decision, not a lint.
-- **`large_text_contrast: 4.5` has no reader.** `design_metrics` enforces
-  `normal_text_contrast` (AAA 7.0) on every token pair, large text included, so
-  large text is currently held to a stricter bar than WCAG asks. That is a
-  defensible choice and an unread key; one of the two should change.
-- **`visual_contract_lint` hardcodes 4.5 and 3.0** rather than reading the
-  thresholds from `rules.yml`, where the law says 7.0 for normal text. It is the
-  lint that runs in CI on every app; `design_metrics` is the gate that enforces
+- **`large_text_contrast` is read.** `visual_contract_lint` takes its text floor
+  from that key (AA 4.5). `design_metrics` still enforces `normal_text_contrast`
+  (AAA 7.0) on every token pair, large text included — a stricter bar than WCAG
+  asks, and a choice, not an unread key.
+- **`visual_contract_lint` hardcodes 3.0** for UI/accent pairs. Text now reads
+  `large_text_contrast`. Raising the CI floor to AAA 7.0 would flood the
+  compiled bundles; `design_metrics` is the gate that enforces
   AAA. Both currently pass, so nothing is broken — but the CI lint would not
   notice a pair falling from 7.0 to 4.6.
-- **`prefer_monochrome_with_one_accent` has no reader** while
-  `max_palette_roles: 4` beside it is read by `design_metrics`. The same
-  part-read block shape the grid pass found in `layout_rules`.
+- **`prefer_monochrome_with_one_accent` is read** next to `max_palette_roles`
+  in `design_metrics`. The numeric cap is the check.
 
 ### Mobile, what it found and what it did not — 2026-09-05
 
@@ -3249,14 +3108,10 @@ places, and has no `text-align: justify` anywhere. The mobile hygiene is done.
 - **`justify_never_on_mobile` has no reader and nothing to catch.** The rule is
   satisfied by a tree that never writes justify; a check would measure zero
   forever. Left as doctrine.
-- **`target_recommended_px: 48` has no reader** while `target_min_px: 44` beside
-  it is read by four gates and now by a test. The third part-read block, after
-  `layout_rules` and `color`.
-- **`width: min(360px, 100vw)` in `_nearby_chat_widget.scss`** is the same class
-  as the `100vh` fixed here: `100vw` includes the scrollbar gutter, so on a
-  desktop with a classic scrollbar the panel is wider than the viewport. One
-  site, and `100%` or `100dvw` would both do — but which is a question about
-  that panel, not a mechanical swap.
+- **`target_recommended_px` is read.** `design_metrics` requires it ≥
+  `target_min_px`.
+- **`width: min(360px, 100%)` in `_nearby_chat_widget.scss`.** Was 100vw, which
+  includes the scrollbar gutter. 100% of the positioned containing block.
 ### Where the ratchet stands, 2026-09-04
 
 Every kind sits exactly on its baseline, which is what a ratchet with no slack
@@ -3329,14 +3184,11 @@ so the outage reads as a hang. `OPENBSD/deploy_smoke_gate.rb` now checks the
 named-table-plus-forward shape `relayd.conf` actually uses rather than a backend
 block that never existed, which is a start on the same surface.
 
-**5 · Studio — asset versioning to protect irreplaceable renders.** Half built
-and worth knowing which half. Every render already writes a `.dilla` provenance
-sidecar naming its seed, its knobs and its assets, and `dilla where` /
-`dilla knobs` read them back; `DILLA_FROZEN` pins a take for A/B. What is
-missing is the protection rather than the record: nothing refuses to write over
-an existing take, and `RENDER_SEED` does not fully pin — about 0.012 dB of
-run-to-run spread — so a "re-render the same thing" recovery is not available
-either. A refusal at the write site is the buildable piece.
+**5 · Studio — asset versioning to protect irreplaceable renders.** The write
+site refuses an existing named take unless `DILLA_OVERWRITE=1`; scratch and
+stream demo.wav still overwrite. `render_seed` now honors `RENDER_SEED` when
+GEN_SEED and SEED_TEXT are unset. About 0.012 dB of run-to-run spread remains,
+so a bit-identical re-render is still not available.
 
 **6 · Future agent — optimise the repo for LLM-native navigation.** This is
 layer 1 plus the standing complaint that the gap here is discoverability rather
@@ -3358,10 +3210,9 @@ to finish rather than a bare title.
   arms exist — but no rack names them, so those arms are dead. They are also
   the most advanced processing in the tree, which is what makes it worth
   either wiring them into a rack or deleting the arms.
-- **Six Sonitex knobs have no reader.** `SONITEX_MIX`, `_DISTORTION`,
-  `_VINYL`, `_TONE`, `_NOISE`, `_SAMPLING` are documented with defaults,
-  `dilla.rb` tells operators to run them, and nothing reads any of them. Wiring
-  them changes rendered sound, so correcting the docs is the smaller move.
+- **Six Sonitex knobs have no reader.** Docs now say so: `ENV_AND_RENDER.md`,
+  the README, and `dilla.rb`'s ENV help. Wiring them still changes rendered
+  sound. Use `SONITEX` / `SONITEX_PRESET`.
 - **`Policy.default_volume` has no reader.** `+40%` in `data/voice.yml`,
   hardcoded again at `lib/voice/policy.rb:20`, exposed at `:65`, consumed
   nowhere — not by `browser_payload`, not by the worker. Left inert
