@@ -189,10 +189,34 @@ positives worth not re-discovering — those are guards, not history.
   is the move that makes those safe to remove; doing it in the other order
   empties a live surface.
 - **Four ratchets are over, re-measured 2026-09-05**: `spine.lib_body_ceiling`
-  38657/37464, `growth.master` 1061/1047, `growth.rails` 2371/2358 and
+  38626/37464, `growth.master` 1061/1047, `growth.rails` 2371/2358 and
   `growth.studio` 155/138. Every one that is left counts size, which is the
   shape worth knowing: what remains is folding, and folding is a sitting rather
   than a fix.
+
+  **Extraction cannot pay `spine.lib_body_ceiling`, and this file said it could.**
+  The counter is non-blank non-comment lines across `lib/**/*.rb` minus the
+  Zeitwerk wrappers, so splitting `speech.rb` into two files under `lib/voice`
+  moves the lines and adds a `def` and an `end` — the number goes up. Only three
+  things move it: deleting code nothing reaches, collapsing a real duplicate, or
+  a sponsored raise, which `spine.yml` allows "in a commit that names what the
+  lines buy" and caps with `consecutive_raises_allowed`.
+
+  What de-duplication is actually worth here was measured rather than guessed.
+  `CrossFileAnalysis` over `lib/` names six DRY pairs; three are collapsed (the
+  finding-shape accessor written four times, a dead `mtimes`/`quiescent?` pair,
+  and `load_data` written twice) for **31 lines against an overage of 1,162**.
+  The other three are judgement: `read_js` is byte-identical in two `lib/rails`
+  files and the only home is a new mixin, which costs `growth.master` a file to
+  save four lines; `grade_for`/`band_for` and `markdown_files`/`files` match on
+  shape and not on meaning. `CROSS_FILE_DRY`'s 22-file `File.read` and the
+  `MAGIC_NUMBER_SPREAD` rows save nothing at all — a shared reader is still one
+  call per site.
+
+  So the arithmetic is: this is not a de-duplication problem. The only
+  line-counts of the right order are `lib/autonomy` at 400 (the wire-or-delete
+  decision above) and `lib/review` at 622 over its own budget, and neither is a
+  sitting somebody finishes in an afternoon.
 
   Six of the ten rows that were over closed the same day. `self_findings` is at
   151 from 165 — two findings were in the scanner itself, and the other twelve
