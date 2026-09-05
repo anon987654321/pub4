@@ -70,7 +70,7 @@ class AuthorizationMatrixTest < ActionDispatch::IntegrationTest
     # signing rather than of the gate. The refusal is the security property and
     # `before_action :require_real_user` carries no `only:`, so the guest row
     # covers every action on the controller.
-    [ "/reports",         :post, :redirect, :guest_only, { reason: "spam" } ],
+    [ "/reports",         :post, :redirect, :guest_only, { reason: "spam" } ]
   ].freeze
 
   # Surfaces deliberately open to anyone, listed rather than skipped, so
@@ -83,7 +83,7 @@ class AuthorizationMatrixTest < ActionDispatch::IntegrationTest
     [ "/stories",      :get ],
     [ "/search",       :get ],
     [ "/session/new",  :get ],
-    [ "/users/new",    :get ],
+    [ "/users/new",    :get ]
   ].freeze
 
   def sign_in!

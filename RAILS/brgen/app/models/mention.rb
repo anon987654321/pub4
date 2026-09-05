@@ -10,4 +10,3 @@ class Mention < ApplicationRecord
     text.to_s.scan(/(?<![a-zA-Z0-9_])@([a-zA-Z0-9_]+)/).flatten.uniq
   end
 end
-
