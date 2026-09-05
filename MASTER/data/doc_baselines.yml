@@ -1,5 +1,6 @@
 # Doc-drift baselines — dimension and path exemptions with reasons.
-# Was doc_numbers_baseline.yml + doc_paths_baseline.yml (one reader each).
+# Was doc_numbers_baseline.yml + doc_paths_baseline.yml (one reader each),
+# and doc_paths: then had none at all until test_doc_paths.rb read it.
 doc_numbers:
   RAILS/UI_REFINEMENTS.md:
   - value: 44px
@@ -33,9 +34,49 @@ doc_paths:
       definition. Repairing the reference would erase the decision.
 
       '
+  - path: data/llm_output_rules.yml
+    why: 'A decision record naming the data file this repo folded into data/rules.yml.
+      The record is what says the fold happened, so it has to be able to name what
+      was folded; rewriting it to cite rules.yml would delete the fact it exists to
+      carry.
+
+      '
+  - path: data/rule_deps.yml
+    why: 'A decision record naming the data file this repo folded into data/rules.yml.
+      The record is what says the fold happened, so it has to be able to name what
+      was folded; rewriting it to cite rules.yml would delete the fact it exists to
+      carry.
+
+      '
+  - path: data/biases.yml
+    why: 'A decision record naming the data file this repo folded into data/rules.yml.
+      The record is what says the fold happened, so it has to be able to name what
+      was folded; rewriting it to cite rules.yml would delete the fact it exists to
+      carry.
+
+      '
   MASTER/EXAMPLES.md:
   - path: data/design_rules.yml
     why: 'The worked example of this judgement, quoting the same file for the same
       reason as the DECISIONS.md entry above.
+
+      '
+  MASTER/START_HERE.md:
+  - path: web/public/assets/
+    why: 'A generated web directory, absent from a clean checkout and gitignored.
+      Same class as MASTER/output/ and MASTER/knowledge/ in test_doc_paths'' repo-wide
+      list, but cited by this document alone.
+
+      '
+  - path: web/storage/
+    why: 'A generated web directory, absent from a clean checkout and gitignored.
+      Same class as MASTER/output/ and MASTER/knowledge/ in test_doc_paths'' repo-wide
+      list, but cited by this document alone.
+
+      '
+  - path: web/log/
+    why: 'A generated web directory, absent from a clean checkout and gitignored.
+      Same class as MASTER/output/ and MASTER/knowledge/ in test_doc_paths'' repo-wide
+      list, but cited by this document alone.
 
       '

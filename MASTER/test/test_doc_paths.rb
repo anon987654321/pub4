@@ -51,17 +51,62 @@ class TestDocPaths < Minitest::Test
     return false unless candidate.include?("/") || candidate.match?(/\.\w{1,5}\z/)
 
     head = candidate.split("/").first
-    TREES.include?(head) || File.exist?(File.join(REPO, head))
+    return true if TREES.include?(head) || File.exist?(File.join(REPO, head))
+
+    # A head that exists beside the document. MASTER/DECISIONS.md writes
+    # `data/rules.yml` and means MASTER's, which resolved against the repo root
+    # as a `data` tree that does not exist — so every citation a MASTER or
+    # OPENBSD document made of its own subdirectory was dropped before it was
+    # checked. Seven stale ones were sitting behind that, four of them in the
+    # decision records.
+    dir = File.dirname(@current_doc.to_s)
+    dir != "." && File.exist?(File.join(REPO, dir, head))
+  end
+
+  # Per-document exemptions, each with the argument for it, in
+  # MASTER/data/doc_baselines.yml under `doc_paths:`. KNOWN_ABSENT above is
+  # repo-wide and needs no reason — there is nothing to say about output/ and
+  # knowledge/ — while a path one document may cite and another may not is a
+  # judgement somebody has to defend.
+  #
+  # That file had no reader. `data_reach` reported `doc_baselines.yml#doc_paths`
+  # as a key no code names and was right: this test carried its own list and
+  # three careful paragraphs governed nothing. The rows are still correct — a
+  # public key .gitignore explicitly un-ignores and has not been added yet, and
+  # two decision records naming the design_rules.yml they record the folding of.
+  BASELINE = File.expand_path("../data/doc_baselines.yml", __dir__)
+
+  def exempt_for(doc)
+    @exempt ||= YAML.safe_load_file(BASELINE)["doc_paths"] || {}
+    Array(@exempt[doc]).filter_map { |row| row["path"] }
   end
 
   def cited_paths(doc)
+    @current_doc = doc
+    exempt = KNOWN_ABSENT + exempt_for(doc)
     File.read(File.join(REPO, doc))
         .scan(/`([^`\s]+)`/).flatten
         .map { |c| c.sub(/[.,;:)]+\z/, "") }
         .reject { |c| c.match?(/[*${}<]/) }
-        .reject { |c| KNOWN_ABSENT.include?(c) }
+        .reject { |c| exempt.include?(c) }
         .select { |c| repo_path?(c) }
         .uniq
+  end
+
+  # An exemption for a document nobody checks governs nothing, and an exemption
+  # naming a path that has appeared is one the tree has outgrown. Both are how
+  # the baseline stopped being read in the first place.
+  def test_every_exemption_still_has_a_subject
+    baseline = YAML.safe_load_file(BASELINE)["doc_paths"] || {}
+    stale = baseline.flat_map do |doc, rows|
+      Array(rows).filter_map do |row|
+        next "#{doc}: no such document" unless File.exist?(File.join(REPO, doc))
+
+        "#{doc}: #{row["path"]} exists now — drop the exemption" if resolves?(row["path"], doc)
+      end
+    end
+
+    assert_empty stale.uniq, "doc_baselines.yml doc_paths entries with nothing to exempt:\n  #{stale.uniq.join("\n  ")}"
   end
 
   # A citation resolves from the repo root, from the document's own directory,
