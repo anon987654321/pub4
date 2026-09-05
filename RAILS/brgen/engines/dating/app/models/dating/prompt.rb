@@ -8,7 +8,8 @@
 # nothing, and prompts are what give it something to point at.
 class Dating::Prompt < ApplicationRecord
   belongs_to :profile, class_name: "Dating::Profile"
-  has_many :likes, class_name: "Dating::Like", foreign_key: :dating_prompt_id, dependent: :nullify
+  has_many :likes, class_name: "Dating::Like", foreign_key: :dating_prompt_id, dependent: :nullify,
+           inverse_of: :dating_prompt
 
   # A fixed list, deliberately. Free-text questions become a second bio, and the
   # point of a prompt is that everyone answers the same odd question differently.

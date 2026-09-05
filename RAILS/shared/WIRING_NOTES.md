@@ -85,8 +85,15 @@ Reactions use `Shared::ReactionToggle`.
 
 ## Shared concerns
 
-Models: `Shared::Reactable`, `Followable`, `Votable`, `Commentable`,
-`Notifiable`, `ActivityTrackable`, `GeoLocatable`, `StrictSafeAssociations`.
+Models: `Shared::Reactable`, `Votable`, `Commentable`, `Notifiable`,
+`ActivityTrackable`, `GeoLocatable`, `StrictSafeAssociations`.
+
+There is no `Followable`. It declared `has_many :follows_received, as:
+:followable` against a `follows` table that has no polymorphic columns in either
+app — both model following as user to user, `follower` and `followed` in brgen,
+`follower` and `followee` in amber — so the association could only ever raise.
+Nothing included it. Following stays per-app until the two schemas agree, which
+is the Deferred DRY note at the end of this file.
 
 **Strict loading is on everywhere — mind the after-write reads.**
 `ApplicationRecord` sets `strict_loading_by_default = true` for *all*

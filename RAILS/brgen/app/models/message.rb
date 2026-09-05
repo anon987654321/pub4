@@ -7,6 +7,8 @@ class Message < ApplicationRecord
   include Shared::Notifiable
   include Shared::Reactable
   belongs_to :conversation
+  # model_contract: no-inverse-ok — User collects conversations, not messages;
+  # a user's messages are always read through one.
   belongs_to :sender, class_name: "User", foreign_key: :sender_id
   has_many :message_receipts, dependent: :destroy
   # A reply points at what it answers. In a channel with several

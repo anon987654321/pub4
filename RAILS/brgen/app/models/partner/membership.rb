@@ -10,8 +10,10 @@ class Partner::Membership < ApplicationRecord
 
   belongs_to :program, class_name: "Partner::Program"
   belongs_to :user
-  has_many :clicks, class_name: "Partner::Click", foreign_key: :membership_id, dependent: :destroy
-  has_many :conversions, class_name: "Partner::Conversion", foreign_key: :membership_id, dependent: :restrict_with_error
+  has_many :clicks, class_name: "Partner::Click", foreign_key: :membership_id, dependent: :destroy,
+           inverse_of: :membership
+  has_many :conversions, class_name: "Partner::Conversion", foreign_key: :membership_id,
+           dependent: :restrict_with_error, inverse_of: :membership
 
   STATUSES = %w[pending approved rejected suspended].freeze
 

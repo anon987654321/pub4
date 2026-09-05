@@ -12,7 +12,8 @@ class Partner::Program < ApplicationRecord
   self.table_name = "partner_programs"
 
   belongs_to :store, class_name: "Marketplace::Store"
-  has_many :memberships, class_name: "Partner::Membership", foreign_key: :program_id, dependent: :destroy
+  has_many :memberships, class_name: "Partner::Membership", foreign_key: :program_id, dependent: :destroy,
+           inverse_of: :program
   has_many :partners, through: :memberships, source: :user
   has_many :conversions, through: :memberships, source: :conversions
 

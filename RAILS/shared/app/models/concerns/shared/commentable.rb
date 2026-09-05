@@ -6,7 +6,7 @@ module Shared
     extend ActiveSupport::Concern
 
     included do
-      has_many :comments, as: :commentable, dependent: :destroy, strict_loading: false
+      has_many :comments, as: :commentable, dependent: :destroy, strict_loading: false, inverse_of: :commentable
     end
 
     def root_comments = comments.where(parent_id: nil)

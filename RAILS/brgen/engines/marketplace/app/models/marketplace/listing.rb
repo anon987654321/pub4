@@ -12,7 +12,7 @@ class Marketplace::Listing < ApplicationRecord
   belongs_to :user
   belongs_to :store, class_name: "Marketplace::Store", optional: true
   belongs_to :category, class_name: "Marketplace::Category",
-             foreign_key: :category_id, optional: true
+             foreign_key: :category_id, optional: true, inverse_of: :listings
   # :restrict_with_error, not :destroy -- an order is a financial record and a
   # buyer's receipt, and the seller who withdraws a listing does not own the
   # buyer's half of it. Operator decision 2026-08-09.
@@ -30,9 +30,9 @@ class Marketplace::Listing < ApplicationRecord
   # right to erasure. Anonymising the seller and keeping the order is the usual
   # answer; that is a product decision, not this file's.
   has_many :orders, class_name: "Marketplace::Order",
-           foreign_key: :listing_id, dependent: :restrict_with_error
+           foreign_key: :listing_id, dependent: :restrict_with_error, inverse_of: :listing
   has_many :favorites, class_name: "Marketplace::ListingFavorite",
-           foreign_key: :listing_id, dependent: :destroy
+           foreign_key: :listing_id, dependent: :destroy, inverse_of: :listing
   has_many :deals, class_name: "Marketplace::Deal", dependent: :destroy
   has_many :reviews, class_name: "Marketplace::Review", dependent: :destroy
   # Public questions and the seller's answers — see Marketplace::Question for

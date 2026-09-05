@@ -26,7 +26,9 @@ module Shared
     # id (which is every controller `destroy` action) raised
     # StrictLoadingViolationError.
     included do
-      has_many :reactions, as: :reactable, dependent: :destroy, strict_loading: false if Shared::Reactable.backed?
+      if Shared::Reactable.backed?
+        has_many :reactions, as: :reactable, dependent: :destroy, strict_loading: false, inverse_of: :reactable
+      end
     end
 
     def reacted_by?(user, kind: "like")

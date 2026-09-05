@@ -7,7 +7,7 @@ module Shared
     extend ActiveSupport::Concern
 
     included do
-      has_many :votes, as: :votable, dependent: :destroy, strict_loading: false
+      has_many :votes, as: :votable, dependent: :destroy, strict_loading: false, inverse_of: :votable
     end
 
     # Every one of these used to issue SQL unconditionally. `votes.sum(:value)`,

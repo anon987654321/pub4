@@ -12,7 +12,7 @@ class Playlist::Playlist < ApplicationRecord
   include Shared::GeoLocatable
   belongs_to :user
   has_many :playlist_tracks, class_name: "Playlist::PlaylistTrack",
-           foreign_key: :playlist_playlist_id, dependent: :destroy
+           foreign_key: :playlist_playlist_id, dependent: :destroy, inverse_of: :playlist
   has_many :tracks, through: :playlist_tracks, class_name: "Playlist::Track",
            source: :track
   has_many :collaborations, class_name: "Playlist::Collaboration", dependent: :destroy

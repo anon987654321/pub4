@@ -5,7 +5,7 @@ class Tv::Broadcast < ApplicationRecord
   include Tv::ChannelTenanted
   tracks_activity created: "BroadcastScheduled", updated: "BroadcastUpdated", source_vertical: "tv", actor: :user
 
-  belongs_to :channel, class_name: "Tv::Channel", foreign_key: :tv_channel_id
+  belongs_to :channel, class_name: "Tv::Channel", foreign_key: :tv_channel_id, inverse_of: :broadcasts
   belongs_to :user
   has_one_attached :thumbnail
   process_media_variants :thumbnail, variants: {

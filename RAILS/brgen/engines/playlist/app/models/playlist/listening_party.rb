@@ -11,7 +11,8 @@ module Playlist
     belongs_to :set, class_name: "Playlist::Set", foreign_key: :playlist_set_id, inverse_of: :listening_party
     belongs_to :host, class_name: "User"
     belongs_to :current_track, class_name: "Playlist::Track", optional: true
-    has_many :party_messages, class_name: "Playlist::PartyMessage", foreign_key: :listening_party_id, dependent: :destroy
+    has_many :party_messages, class_name: "Playlist::PartyMessage", foreign_key: :listening_party_id,
+             dependent: :destroy, inverse_of: :listening_party
 
     validates :status, inclusion: { in: STATUSES }
     validates :join_code, presence: true, uniqueness: true

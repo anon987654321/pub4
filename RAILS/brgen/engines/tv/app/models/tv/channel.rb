@@ -10,10 +10,14 @@ class Tv::Channel < ApplicationRecord
   include Shared::Reactable
 
   belongs_to :user
-  has_many :videos,        class_name: "Tv::Video",        foreign_key: :tv_channel_id, dependent: :destroy
-  has_many :shows,         class_name: "Tv::Show",         foreign_key: :channel_id, dependent: :destroy
-  has_many :broadcasts,    class_name: "Tv::Broadcast",    foreign_key: :tv_channel_id, dependent: :destroy
-  has_many :subscriptions, class_name: "Tv::Subscription", foreign_key: :tv_channel_id, dependent: :destroy
+  has_many :videos,        class_name: "Tv::Video",        foreign_key: :tv_channel_id, dependent: :destroy,
+                           inverse_of: :channel
+  has_many :shows,         class_name: "Tv::Show",         foreign_key: :channel_id, dependent: :destroy,
+                           inverse_of: :channel
+  has_many :broadcasts,    class_name: "Tv::Broadcast",    foreign_key: :tv_channel_id, dependent: :destroy,
+                           inverse_of: :channel
+  has_many :subscriptions, class_name: "Tv::Subscription", foreign_key: :tv_channel_id, dependent: :destroy,
+                           inverse_of: :channel
   has_many :subscribers,   through: :subscriptions, source: :user
   has_one_attached :banner
   has_one_attached :avatar

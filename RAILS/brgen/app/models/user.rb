@@ -124,7 +124,7 @@ class User < ApplicationRecord
     follows_as_follower.find_by(followed: other)&.destroy
   end
 
-  has_many :blocks_as_blocker, class_name: "Block", foreign_key: :blocker_id, dependent: :destroy
+  has_many :blocks_as_blocker, class_name: "Block", foreign_key: :blocker_id, dependent: :destroy, inverse_of: :blocker
   has_many :blocked_users, through: :blocks_as_blocker, source: :blocked
 
   def block!(other)

@@ -20,14 +20,19 @@ class User < ApplicationRecord
   has_many :declutter_reviews, dependent: :destroy
   has_many :declutter_challenges, dependent: :destroy
   has_many :declutter_outcomes, dependent: :destroy
-  has_many :connections_requested, class_name: "Connection", foreign_key: :requester_id, dependent: :destroy
-  has_many :connections_received, class_name: "Connection", foreign_key: :addressee_id, dependent: :destroy
+  has_many :connections_requested, class_name: "Connection", foreign_key: :requester_id, dependent: :destroy,
+           inverse_of: :requester
+  has_many :connections_received, class_name: "Connection", foreign_key: :addressee_id, dependent: :destroy,
+           inverse_of: :addressee
   has_many :live_streams, dependent: :destroy
-  has_many :sent_messages, class_name: "Message", foreign_key: :sender_id, dependent: :destroy
-  has_many :received_messages, class_name: "Message", foreign_key: :recipient_id, dependent: :destroy
+  has_many :sent_messages, class_name: "Message", foreign_key: :sender_id, dependent: :destroy, inverse_of: :sender
+  has_many :received_messages, class_name: "Message", foreign_key: :recipient_id, dependent: :destroy,
+           inverse_of: :recipient
 
-  has_many :follows_as_follower, class_name: "Follow", foreign_key: :follower_id, dependent: :destroy
-  has_many :follows_as_followee, class_name: "Follow", foreign_key: :followee_id, dependent: :destroy
+  has_many :follows_as_follower, class_name: "Follow", foreign_key: :follower_id, dependent: :destroy,
+           inverse_of: :follower
+  has_many :follows_as_followee, class_name: "Follow", foreign_key: :followee_id, dependent: :destroy,
+           inverse_of: :followee
   has_many :following,       through: :follows_as_follower, source: :followee
   has_many :followers,       through: :follows_as_followee, source: :follower
   has_many :sessions,        dependent: :destroy, inverse_of: :user

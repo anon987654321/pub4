@@ -10,14 +10,14 @@ class Playlist::Track < ApplicationRecord
   include Shared::Reactable
   belongs_to :user, optional: true
   has_many :playlist_tracks, class_name: "Playlist::PlaylistTrack",
-           foreign_key: :playlist_track_id, dependent: :destroy
+           foreign_key: :playlist_track_id, dependent: :destroy, inverse_of: :track
   has_many :playlists, through: :playlist_tracks, class_name: "Playlist::Playlist"
   has_many :listens, class_name: "Playlist::Listen",
-           foreign_key: :playlist_track_id, dependent: :destroy
+           foreign_key: :playlist_track_id, dependent: :destroy, inverse_of: :track
   has_many :timestamped_comments, class_name: "Playlist::TimestampedComment",
-           foreign_key: :track_id, dependent: :destroy
+           foreign_key: :track_id, dependent: :destroy, inverse_of: :track
   has_many :audio_versions, class_name: "Playlist::AudioVersion",
-           foreign_key: :track_id, dependent: :destroy
+           foreign_key: :track_id, dependent: :destroy, inverse_of: :track
   has_one_attached :audio_file
   has_one_attached :artwork
   process_media_variants :artwork, variants: {

@@ -5,8 +5,10 @@ class Marketplace::Category < ApplicationRecord
   include Shared::Reactable
   include Shared::Notifiable
   belongs_to :parent, class_name: "Marketplace::Category", optional: true
-  has_many :children, class_name: "Marketplace::Category", foreign_key: :parent_id, dependent: :nullify
-  has_many :listings, class_name: "Marketplace::Listing", foreign_key: :category_id, dependent: :nullify
+  has_many :children, class_name: "Marketplace::Category", foreign_key: :parent_id, dependent: :nullify,
+           inverse_of: :parent
+  has_many :listings, class_name: "Marketplace::Listing", foreign_key: :category_id, dependent: :nullify,
+           inverse_of: :category
 
   validates :name, :slug, presence: true
   validates :slug, uniqueness: true

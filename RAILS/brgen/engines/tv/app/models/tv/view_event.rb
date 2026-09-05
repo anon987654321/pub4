@@ -4,7 +4,7 @@ class Tv::ViewEvent < ApplicationRecord
   tracks_activity created: "TvVideoViewed", source_vertical: "tv", visibility: "private", actor: :user
 
   belongs_to :user
-  belongs_to :video, class_name: "Tv::Video", foreign_key: :tv_video_id
+  belongs_to :video, class_name: "Tv::Video", foreign_key: :tv_video_id, inverse_of: :view_events
 
   # A view counts as watched-through at 90%. Players rarely reach the final
   # frame — the last timeupdate fires short of duration, and trailing silence

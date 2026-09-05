@@ -10,13 +10,15 @@ module Playlist
     include Shared::Reactable
     include Shared::Notifiable
     belongs_to :user
-    has_many :set_tracks, class_name: "Playlist::SetTrack", foreign_key: :playlist_set_id, dependent: :destroy
+    has_many :set_tracks, class_name: "Playlist::SetTrack", foreign_key: :playlist_set_id, dependent: :destroy,
+             inverse_of: :set
     has_many :tracks, through: :set_tracks, source: :track, class_name: "Playlist::Track"
     has_many :collaborations, class_name: "Playlist::Collaboration", dependent: :destroy
     has_many :collaborators, through: :collaborations, source: :user
     has_many :dilla_sketches, class_name: "Playlist::DillaSketch", dependent: :destroy
     has_many :likes, class_name: "Playlist::Like", dependent: :destroy
-    has_one :listening_party, class_name: "Playlist::ListeningParty", foreign_key: :playlist_set_id, dependent: :destroy
+    has_one :listening_party, class_name: "Playlist::ListeningParty", foreign_key: :playlist_set_id,
+            dependent: :destroy, inverse_of: :set
 
     validates :name, presence: true
     validates :privacy, inclusion: { in: PRIVACY_LEVELS }, allow_blank: true
