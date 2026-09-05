@@ -55,14 +55,14 @@ module Pub4
     # semantically: a hook has milliseconds, and an exact-word hit on a lesson
     # filename is a better signal than an embedding at this size.
     def lessons(query)
-      dir = File.join(MASTER_DIR, "data", "lessons")
-      return [] unless Dir.exist?(dir) && query
+      return [] unless query
+
+      path = File.join(MASTER_DIR, "data", "pub_archive_restore.yml")
+      return [] unless File.file?(path)
 
       words = query.downcase.scan(/[a-z]{4,}/).uniq
-      Dir.glob(File.join(dir, "*.yml")).select do |path|
-        name = File.basename(path, ".yml").tr("_", " ")
-        words.any? { |w| name.include?(w) }
-      end
+      name = File.basename(path, ".yml").tr("_", " ")
+      words.any? { |w| name.include?(w) } ? [path] : []
     end
 
     def render(query = nil)

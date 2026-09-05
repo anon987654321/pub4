@@ -109,7 +109,11 @@ module Master
       def clear_last_error! = (@last_error = nil)
 
       def available?
-        edge_tts_available? || !espeak_path.nil? || Engines.replicate_token?
+        edge_tts_available? || !espeak_path.nil? || Engines.replicate_token? || say_available?
+      end
+
+      def say_available?
+        Engines.available?("say", {})
       end
 
       # Cheap and deliberately incomplete: the two preconditions a caller can
@@ -290,7 +294,10 @@ module Master
           return path if path
         end
 
-        synthesize_espeak(text_str) if espeak_path
+        path = synthesize_espeak(text_str) if espeak_path
+        return path if path
+
+        synthesize_say(text_str)
       end
 
       def try_transcendent_synthesis(text_str, mode, voice:, style:, rate:, pitch:, voice_locked:, style_locked:)
@@ -576,6 +583,20 @@ module Master
         cleanup_failed_audio(audio_path)
       rescue StandardError => e
         warn_tts("espeak error: #{e.class}: #{e.message}")
+        cleanup_failed_audio(audio_path)
+      end
+
+      # Classic path used to die after espeak. Engines.synth_say is the Mac
+      # fallback Transcendent already had, and a workstation without Edge or
+      # espeak was silent for no reason of its own.
+      def synthesize_say(text)
+        audio_path = "/tmp/m_tts_#{SecureRandom.hex(8)}.mp3"
+        return audio_path if Engines.synth_say(text, audio_path) && File.size?(audio_path)
+
+        warn_tts("say failed or produced empty audio")
+        cleanup_failed_audio(audio_path)
+      rescue StandardError => e
+        warn_tts("say error: #{e.class}: #{e.message}")
         cleanup_failed_audio(audio_path)
       end
 

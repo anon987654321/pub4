@@ -18,7 +18,7 @@ require_relative "test_helper"
 # Measured 2026-08-23: 231 across 42 files, then 228 when
 # spec/ops/source_loop_guards_spec.rb stopped grepping for its guards and
 # started calling them. The worst concentrations are
-# test_web_ui.rb (41), spec/tools/lifecycle_tools_spec.rb (17) and
+# test_web_ui.rb (41), spec/lifecycle_tools_spec.rb (17) and
 # spec/ops/boot_safety_spec.rb (16, the whole file).
 class TestSourceAssertions < Minitest::Test
   ROOT = File.expand_path("..", __dir__)

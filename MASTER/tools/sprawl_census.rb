@@ -38,6 +38,9 @@ module Pub4
       %r{/db/(?:migrate|[a-z]+_migrate)/},
       %r{/config/(?:environments|initializers|locales)/},
       %r{/app/(?:channels|controllers|helpers|jobs|mailers|models|reflexes|views|javascript|assets|services|policies|serializers)/},
+      # rails test:system globs test/system; a hoist lands the file in the unit
+      # suite (DEFAULT_TEST_EXCLUDE misses it) and drops it from test:system.
+      %r{/test/system/},
       %r{/(?:bin|lib/tasks|public|storage|log|vendor|node_modules|knowledge|output)/},
       # The locale code and the daemon's config name are not ours to choose.
       %r{/locales/[a-z]{2}(?:-[A-Z]{2})?\.yml\z},

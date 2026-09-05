@@ -164,7 +164,7 @@ ownership:
       convergence evidence gate) — distinct from script/'s style/canon gates
       and bin/'s runtime entry points
     risk: medium
-    check: ruby -Ilib:test spec/tools/lifecycle_tools_spec.rb
+    check: ruby -Ilib:test spec/lifecycle_tools_spec.rb
   script/:
     purpose: style guide sync and canon generation gates run from Rakefile
     risk: medium

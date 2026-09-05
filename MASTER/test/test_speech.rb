@@ -75,7 +75,9 @@ class TestSpeech < Minitest::Test
   def test_available_uses_real_backend_guards
     Master::Voice::Speech.stub(:edge_tts_available?, false) do
       Master::Voice::Speech.stub(:espeak_path, nil) do
-        refute Master::Voice::Speech.available?
+        Master::Voice::Speech.stub(:say_available?, false) do
+          refute Master::Voice::Speech.available?
+        end
       end
     end
   end
@@ -146,6 +148,20 @@ class TestSpeech < Minitest::Test
         Master::Voice::Speech.stub(:espeak_path, "/usr/local/bin/espeak") do
           Master::Voice::Speech.stub(:synthesize_espeak, "/tmp/fallback.wav") do
             assert_equal "/tmp/fallback.wav", Master::Voice::Speech.synthesize("hello")
+          end
+        end
+      end
+    end
+  end
+
+  def test_synthesize_falls_back_to_say_when_edge_and_espeak_miss
+    Master::Voice::Speech.stub(:try_transcendent_synthesis, [false, nil]) do
+      Master::Voice::Speech.stub(:available?, true) do
+        Master::Voice::Speech.stub(:edge_tts_available?, false) do
+          Master::Voice::Speech.stub(:espeak_path, nil) do
+            Master::Voice::Speech.stub(:synthesize_say, "/tmp/say-fallback.mp3") do
+              assert_equal "/tmp/say-fallback.mp3", Master::Voice::Speech.synthesize("hello")
+            end
           end
         end
       end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 ENV["RAILS_ENV"] ||= "test"
-ENV["MASTER_AUTH_CONFIG"] ||= File.expand_path("fixtures/master_auth_config.yml", __dir__)
+ENV["MASTER_AUTH_CONFIG"] ||= File.expand_path("master_auth_config.yml", __dir__)
 require_relative "../config/environment"
 require "rails/test_help"
 

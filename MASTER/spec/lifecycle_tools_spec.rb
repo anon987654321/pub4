@@ -3,7 +3,7 @@
 require "minitest/autorun"
 
 class LifecycleToolsSpec < Minitest::Test
-  ROOT = File.expand_path("../..", __dir__)
+  ROOT = File.expand_path("..", __dir__)
 
   def read_tool(name)
     File.read(File.join(ROOT, "bin", name))

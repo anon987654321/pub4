@@ -119,7 +119,7 @@ gates it names exist.
 
 ## Data File Budget (why so many YAML files)
 
-`data/` is 43 yml at the root plus `lessons/` as of 2026-08-19, after the
+`data/` is YAML at the root as of 2026-08-19, after the
 2026-05 defrag plan's Tier-5 pass, the rule-shard fold, and the
 one-item-directory collapse (agents/ was empty, harnesses/ and skills/ had no
 reader, prompts/ ops/ security/ templates/ web/ each held one item now folded to
