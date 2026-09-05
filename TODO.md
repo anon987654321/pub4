@@ -188,17 +188,23 @@ positives worth not re-discovering — those are guards, not history.
   `rules.yml` rather than out of `law/`. Converging `WhyExplainer` onto the law
   is the move that makes those safe to remove; doing it in the other order
   empties a live surface.
-- **Six ratchets are over, re-measured 2026-09-05 after the antigravity
-  collapse**: `spine.lib_body_ceiling` 38668/37464, `self_findings` 165/151,
-  `data_reach` 36/35, `growth.master` 1061/1047, `growth.rails` 2366/2358 and
-  `growth.studio` 155/138. `spine.lib_body_ceiling` fell 636 net — 695 back from
-  the collapse, 59 spent on rule fixtures — and `growth.master` six files, which
-  is what a fold looks like; every other row moved by one or two. The three
-  RAILS rows that were over — `model_contract.uninferrable_inverse` 54,
-  `model_contract.no_validations` 9 and
-  `destructive_action.unconfirmed_destroy` 29 — are all 0 and their floors are
-  0. Each remaining one needs a
-  fold rather than a raise, and none is a one-sitting job. Read the live figures
+- **Four ratchets are over, re-measured 2026-09-05**: `spine.lib_body_ceiling`
+  38657/37464, `growth.master` 1061/1047, `growth.rails` 2371/2358 and
+  `growth.studio` 155/138. Every one that is left counts size, which is the
+  shape worth knowing: what remains is folding, and folding is a sitting rather
+  than a fix.
+
+  Six of the ten rows that were over closed the same day. `self_findings` is at
+  151 from 165 — two findings were in the scanner itself, and the other twelve
+  were a frozen-literal comment that sat under a `require` and so declared
+  nothing, six dilla files that had none, and a broadcast script that says in a
+  marker why strict mode would end the broadcast. `data_reach` is at 35 because
+  `doc_baselines.yml#doc_paths` gained the reader it never had. The three RAILS
+  rows — `model_contract.uninferrable_inverse` 54, `model_contract.no_validations`
+  9 and `destructive_action.unconfirmed_destroy` 29 — are 0 against floors of 0.
+
+  `spine.lib_body_ceiling` fell 636 net: 695 back from the antigravity collapse,
+  59 spent on rule fixtures. `growth.master` fell six files. Read the live figures
   from `MASTER/bin/pub4 measure`; the list here has been three, then five, then
   six on three consecutive readings, so its value is the shape and not the
   numbers. `data_reach` fell 37 to 36 when `three_mirror_redundancy` gained a
@@ -741,20 +747,33 @@ themselves.
   `repo_topics` and `refusal_templates` have readers that the pattern missed,
   which is why `data_reach` is the instrument and grep is not.
 
-- `data/tts.yml` and the whole Transcendent path — **open**, and the largest
-  instance found so far. `Voice::Speech` has exactly three consumers —
-  `health_controller`, `tts_controller`, `TtsJob` — and all three enter through
-  `synthesize_streaming_to_file`, which goes socket → oneshot → espeak and never
-  reaches `Transcendent`. The only door in is `Speech.synthesize`, whose only
-  caller is `synthesize_audio`, whose only caller is `synthesize_bytes`, which
-  nothing calls. So `Transcendent`, `Melody`, `Emotion`, the five-engine chain,
-  `replicate_kokoro` and `WarmErratic`'s prosody table are all unreached by
-  anything running: roughly 1,500 lines that look configured and live.
-  The tell was a comment, as usual — `data/tts.yml` claimed
-  `OPENBSD/etc/rc.d/master` sets `MASTER_TTS_MODE=classic`, and that variable is
-  set nowhere, in the repo or in `/etc/master.env` on vm23. A control that does
-  not exist, described over a subsystem nothing reaches.
+- `data/tts.yml` and the whole Transcendent path — **the web half stands; the
+  "1,500 unreached lines" does not, re-measured 2026-09-05.** What is still true
+  is the web: `Voice::Speech`'s three web consumers — `health_controller`,
+  `tts_controller`, `TtsJob` — all enter through `synthesize_streaming_to_file`,
+  which goes socket → oneshot → espeak and never reaches `Transcendent`. And the
+  tell that opened this is still the best example in the file: `data/tts.yml`
+  claimed `OPENBSD/etc/rc.d/master` sets `MASTER_TTS_MODE=classic`, and that
+  variable is set nowhere, in the repo or in `/etc/master.env` on vm23 — a
+  control that does not exist, described over a path nothing web-side reaches.
   `DECISIONS.md` records why it is not simply wired to the streaming path.
+
+  What has changed is the conclusion. `Speech.synthesize`'s only caller is no
+  longer `synthesize_audio`: `Voice::Playback.synthesize` calls it with
+  `Policy.default_rate` and `default_pitch`, and `Playback.speak` is how
+  `Cli::Session::ResultDisplay` speaks every reply. `Transcendent.synthesize`
+  is `bin/tts-speak`'s only line. So the CLI's voice runs through exactly the
+  code this entry called unreached, and deleting "the Transcendent path" on the
+  strength of this paragraph would take MASTER's spoken reply with it.
+
+  `synthesize_bytes` is the part that survives the correction: tests call it,
+  nothing else does. One method, not a subsystem.
+
+  **Do not use this entry as a source for the `lib/voice` budget.** A name-based
+  census over `lib/voice` reports seven files with no `Voice::`-qualified
+  reference outside the directory — `Enrich`, `ProductionDna`, `StrunkPass` and
+  the four `Renderer::` mixins, 601 lines — and every one of them is reached
+  from inside it, three of them by `include`. The instrument was the prefix.
 
 What is open is the class, not an instance. When you find one: find the reader
 before trusting a config key, and **add the gate, not just the fix** — a
@@ -1608,15 +1627,20 @@ extraction or deletion and this one is not. `edge_tts_ready?`, the memo and the
 worker probe add **35 body lines to `lib/voice`** (3330 → 3365 against 3181) and
 the same 35 to `spine.lib_body_ceiling`. No ceiling was raised.
 
-The honest reason it is not paid: `lib/voice` is 149 over because roughly 1,500
-lines of it are the Transcendent path that the **Inert law and config** entry
-records as reached by nothing, and every candidate for deletion still has
-external references — `Speech.available?`, `synthesize_bytes`,
-`synthesize_audio`, `WarmErratic`, `Melody` and `Transcendent` all resolve to
-callers, mostly tests. Checked before claiming otherwise. Paying this breach is
-the Transcendent decision that entry already assigns to an owner, and taking 35
-lines out of somewhere unrelated to make a number look right would be the
-accounting the budget exists to prevent.
+The honest reason it is not paid, corrected 2026-09-05: it is not a Transcendent
+deletion waiting for an owner. That reading came from the **Inert law and config**
+entry, which has been re-measured and no longer supports it — `Playback` calls
+`Speech.synthesize` for every spoken CLI reply and `bin/tts-speak` calls
+`Transcendent.synthesize`, so the "1,500 unreached lines" are the code MASTER
+speaks with. `synthesize_bytes` is the one method tests reach and nothing else
+does.
+
+So `lib/voice` is over its budget with no dead weight in it, which makes this an
+extraction rather than a deletion, and a real sitting rather than a decision
+somebody can make in a sentence. `speech.rb` at 475 and
+`personality_prompt_builder.rb` at 390 are where to open it. Taking 35 lines out
+of somewhere unrelated to make the number look right would be the accounting the
+budget exists to prevent.
 
 #### The 2026-09-05 pass costs `growth.master` two files and `growth.studio` one
 
