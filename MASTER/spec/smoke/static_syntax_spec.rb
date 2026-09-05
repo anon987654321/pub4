@@ -9,8 +9,8 @@ class StaticSyntaxSpec < Minitest::Test
 
   def test_yaml_files_parse
     Dir.glob(File.join(ROOT, "data", "**", "*.yml")).each do |path|
-      # Date and Time, because both house loaders permit them
-      # (Boot::Data.load_yaml, Autonomy::Schema.load_yaml). Without them this
+      # Date and Time, because the house loader permits them
+      # (Boot::Data.load_yaml). Without them this
       # asserted a stricter contract than any real reader uses and failed on
       # recovery/legacy_manifest.yml, which every reader loads fine.
       YAML.safe_load_file(path, aliases: true, permitted_classes: [Date, Time])

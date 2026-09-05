@@ -217,8 +217,11 @@ module Master
         # ongoing, unresolved tension; this at least stops lib/ root itself
         # from silently accumulating new files with no deliberate decision.
         class LibRootDisciplineRule < Rule
+          # autonomy.rb left the list with the subsystem it named. An allowance
+          # for a file nobody can add back is the exemption-outlives-its-subject
+          # shape this repo keeps writing down.
           ALLOWED_ROOT_FILES = %w[
-            autonomy.rb builder.rb core.rb master.rb pressure_engine.rb
+            builder.rb core.rb master.rb pressure_engine.rb
             result.rb security_error.rb unwrap_error.rb
           ].freeze
 

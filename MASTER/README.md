@@ -91,7 +91,7 @@ model0: openrouter, 128.0k context
 mode0 at mainbus0: safe, visitor, cli
 mode0: no-autofix, loop none, owner none, posture balanced
 aesthetic0 at mode0: brutalist
-module0 at mainbus0: autonomy boot builder cli core design fix ground io ops pub4 rails review trace voice
+module0 at mainbus0: boot builder cli core design fix ground io ops pub4 rails review trace voice
 web0 at mainbus0: https://ai.brgen.no
 pledge0 at mainbus0: unavailable
 root on master0 (169570c86) boot 2652ms
