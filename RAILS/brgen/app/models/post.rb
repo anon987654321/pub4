@@ -8,6 +8,7 @@ class Post < ApplicationRecord
   include Shared::Votable
   include Shared::Commentable
   include Shared::Taggable
+  include Shared::Mentionable
   include Shared::Reactable
   include Shared::MediaProcessable
   tracks_activity created: "PostCreated", source_vertical: "social", actor: :user
@@ -30,7 +31,6 @@ class Post < ApplicationRecord
   belongs_to :user
   belongs_to :community, optional: true
 
-  has_many :mentions, as: :mentionable, dependent: :destroy
   has_many :reposts, dependent: :destroy
   has_many :reposters, through: :reposts, source: :user
   # The same content in a second community, with its own comment thread. A

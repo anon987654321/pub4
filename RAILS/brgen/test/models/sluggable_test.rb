@@ -29,6 +29,11 @@ class SluggableTest < ActiveSupport::TestCase
     assert_equal "samme-tittel-2", b.slug
   end
 
+  test "underscores in the title become hyphens so the slug stays url-safe" do
+    post = Post.create!(title: "Hei @mn_named på Bryggen", user: @user)
+    assert_equal "hei-mn-named-pa-bryggen", post.slug
+  end
+
   test "blank-derived titles fall back to a stable base slug" do
     post = Post.create!(title: "!!!", user: @user)
     assert_match(/\Aitem(-\d+)?\z/, post.slug)

@@ -38,7 +38,10 @@ module Shared
       return if slug.present?
 
       source = self.class.sluggable_source
-      base = respond_to?(source) ? send(source).to_s.parameterize : ""
+      # parameterize keeps underscores, and the url-safe regex below does not,
+      # so a title that names @mn_named (every seeded username uses one) would
+      # fail validation rather than become a hyphenated slug.
+      base = respond_to?(source) ? send(source).to_s.parameterize.tr("_", "-") : ""
       base = "item" if base.blank?
 
       scope = self.class.unscoped
