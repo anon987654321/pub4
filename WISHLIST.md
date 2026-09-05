@@ -39,15 +39,15 @@ Nothing measures the gap, which is how 2 became 28 without a single failure.
 2. Break the `check` ↔ `ci` cycle. **[done]** `bin/ci` is now nineteen lines that `exec` `bin/check --profile=ci`; one registry, and the double payment for selftest and core_smoke is gone. Kept as a script because its callers — a workflow file, `bin/preflight`, an operator's muscle memory — are outside this repo's reach.
 3. Fold the twelve verification commands — check, gate, ci, audit, dogfood, preflight, probe, smoke, smoke-web, test-safety, doctor, nsaudit — into the two sanctioned surfaces. **[deep]**
 4. Delete `bin/master`. It is 75 lines, 34 of them comment, and six of behaviour: a `chdir`, one env var, one argument rewrite, `exec bin/cli`.
-5. Move that `chdir` into `bin/cli` by resolving its root from `__dir__` rather than `Dir.pwd`, which is the thing the wrapper exists to paper over. **[cheap]**
+5. Move that `chdir` into `bin/cli` by resolving its root from `__dir__` rather than `Dir.pwd`, which is the thing the wrapper exists to paper over. **[done]** `bin/cli` chdirs to its parent before boot. `bin/master` still does the same chdir for callers that go through it.
 6. Grep every caller before deleting any entry point — `OPENBSD/`, `RAILS/gates/gates.yml`, rc.d scripts on the box. A command with no callers in this repo may still be in a cron line on vm23.
 7. One name for one job: `bin/gate` *is* the scan→fix→critique→review chain and does not say so in its name.
 8. A test that fails when a doc's stated invariant stops being true. "Two surfaces, no third" was prose, so it rotted silently. **[deep]**
 9. `bin/pub4 test` with no arguments runs **nothing** when STUDIO is dirty. **[done]** It partitions STUDIO paths out and warns, rather than aborting on sight of one; the other three trees now run. The abort survives only for the case where STUDIO is the *only* dirty tree, which is a correct report of nothing to do rather than the bug.
 10. Make that refusal a skip with a warning, so the other three trees still run. **[done]** With #9.
 11. `bin/check --profile=agent` "may fail on known debt" — a profile whose failure carries no information teaches people to ignore it.
-12. Publish the profile matrix somewhere a reader can see which profile runs which suite without reading three scripts.
-13. Retire `master-core` or say in one line how it differs from `master`.
+12. Publish the profile matrix somewhere a reader can see which profile runs which suite without reading three scripts. **[done]** The matrix is the comment block at the top of `MASTER/bin/check`.
+13. Retire `master-core` or say in one line how it differs from `master`. **[done]** The file's first line: fold spine only; `bin/master` boots the full runtime.
 14. An `--explain` flag on the chain that prints what it will run before running it. `bin/gate` knows it, and refuses a flag it does not know rather than falling through to full-fix. **[done]**
 
 ### B · Gates that measure nothing (15–30)
@@ -62,7 +62,7 @@ The worst failure here is not a red gate. It is a green one.
 20. `runner.rb` takes whatever `ruby` is on PATH and prints one warning. Make the version mismatch fatal — app-bundle gates then fail for the interpreter and read as findings. **[done]** `abort`, not `warn`.
 21. Boot the triangle automatically for gates that need it, or fail rather than skip.
 22. `flow_journey` skipped 23 live checks and `rendered_suite` 32; both reported inconclusive and neither failed.
-23. `deploy_drift` "checked nothing — 1 precondition missing" and never says which precondition.
+23. `deploy_drift` "checked nothing — 1 precondition missing" and never says which precondition. **[done]** It names the missing git checkout or the missing stamp dir.
 24. Name the missing precondition in every inconclusive line. **[done]** The live and rendered gates already name Chrome, closed ports, missing sass, empty sitemaps. No remaining `inconclusive!` without a reason.
 25. A red gate naming no finding should say "this gate could not load" rather than printing an empty failure list.
 26. `visual_contract` baselines are gitignored and overwritten on read, so a regression reports once and becomes the baseline.
@@ -146,7 +146,7 @@ Half of these were mine, in one day.
 88. `check_hf_flux_access.rb` documents its own bug: it blocked SDXL renders on the licence terms of a model they do not use. My notebook reproduced that bug independently. **[done]**
 89. When a tool documents a mistake, check whether the sibling tool makes it too.
 90. `domain_watch.rb --update` cannot run on macOS — it shells to `/usr/bin/timeout`. So the snapshot can only be refreshed on the box, and nothing says so.
-91. State a tool's host requirements in its usage line, not in a stack trace.
+91. State a tool's host requirements in its usage line, not in a stack trace. **[done]** `domain_watch.rb --update` says it needs `/usr/bin/timeout` and to run on vm23.
 92. `spine.yml` warns that a raise absorbing another change's growth kills the ratchet. Every raise today names its file. Make naming mandatory. **[cheap]**
 
 ### G · Sound, and the things that only measure (93–102)
