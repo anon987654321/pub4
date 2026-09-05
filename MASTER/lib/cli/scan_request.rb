@@ -20,11 +20,12 @@ module Master
 
       Result = Struct.new(:pairs, :profile, :rule_filter, :severity_filter, keyword_init: true)
 
-      def initialize(scanner:, root:, arg:, depth: :deep)
+      def initialize(scanner:, root:, arg:, depth: :deep, autofix: false)
         @scanner = scanner
         @root = root
         @arg = arg.to_s.strip
         @depth = depth
+        @autofix = autofix
       end
 
       def call
@@ -34,11 +35,11 @@ module Master
 
       private
 
-      attr_reader :scanner, :root, :arg, :depth
+      attr_reader :scanner, :root, :arg, :depth, :autofix
 
       def collect_pairs
         target = target_arg
-        return [[target, scanner.scan(target, depth:)]] if target && File.file?(target)
+        return file_pairs(target) if target && File.file?(target)
         # A target that was asked for and does not resolve must not quietly
         # become the root — that fallback is how `/scan ../RAILS` measured
         # MASTER and called it RAILS. bin/gate reads this prefix as
@@ -46,8 +47,19 @@ module Master
         return "scan failed: no such target: #{target}" if target && !File.directory?(target)
 
         dir = target || root
-        scan_dir = scanner.scan_dir(dir, depth:, glob: "**/*", stream: true)
+        scan_dir = scanner.scan_dir(dir, depth:, glob: "**/*", stream: true, autofix:, autofix_root: root)
         scan_dir.ok? ? scan_dir.value! : "scan failed"
+      end
+
+      # One file is the same contract as a directory walk: scan, and if autofix
+      # is on, write the mechanical transforms before the caller sees the pair.
+      def file_pairs(target)
+        result = scanner.scan(target, depth:)
+        if autofix && scanner.respond_to?(:autofix_one)
+          applied = scanner.autofix_one(target, result, root:)
+          result = scanner.scan(target, depth:) if applied.any?
+        end
+        [[target, result]]
       end
 
       def target_arg

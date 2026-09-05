@@ -284,7 +284,7 @@ module Master
       def scan_pass(scanner:, root:, clean_arg:, dry_run:, no_autofix:, do_autofix:, holder:)
         ScanLive.banner(target: clean_arg.empty? ? root : clean_arg, profile: nil, dry_run:, autofix: do_autofix)
 
-        request = ScanRequest.new(scanner:, root:, arg: clean_arg).call
+        request = ScanRequest.new(scanner:, root:, arg: clean_arg, autofix: do_autofix).call
         return request.pairs if request.pairs.is_a?(String)
 
         pairs, profile, rule_filter, severity_filter = request.pairs, request.profile, request.rule_filter, request.severity_filter
@@ -314,6 +314,13 @@ module Master
       end
 
       def run_scan_autofix_phase(scanner:, root:, clean_arg:, pairs:, do_autofix:, dry_run:, no_autofix:)
+        streamed = scanner.respond_to?(:stream_autofixes) ? Array(scanner.stream_autofixes) : []
+        if streamed.any?
+          autofixes = streamed.map { |applied| { path: applied.path, transforms: applied.transforms } }
+          ScanLive.emit("autofix applied during scan files=#{autofixes.size}")
+          return [pairs, autofixes]
+        end
+
         autofixes = []
         if pairs.any? && do_autofix
           ScanLive.emit("autofix applying on auto_fix findings…")

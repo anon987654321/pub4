@@ -8,6 +8,7 @@ require_relative "file_processor"
 require_relative "engines/path_filter"
 require_relative "engines/progress_reporter"
 require_relative "engines/transport"
+require_relative "mechanical_autofix"
 
 module Master
   module Review
@@ -36,18 +37,23 @@ module Master
           @mutex = Mutex.new
           @file_sleep_s = file_sleep_s.to_f
           @file_processor = FileProcessor.new(event_bus: @bus)
+          @stream_autofixes = []
         end
+
+        attr_reader :stream_autofixes
 
         def scan(path, depth: :deep, rules: nil)
           validate_depth!(depth)
           @file_processor.call(path:, depth:, rules: rules || active_rules(depth))
         end
 
-        def scan_dir(dir, depth: :deep, glob: SCAN_GLOB, stream: false)
+        def scan_dir(dir, depth: :deep, glob: SCAN_GLOB, stream: false, autofix: false, autofix_root: nil)
           validate_depth!(depth)
           paths = Dir.glob(File.join(dir, glob)).select { |path| scannable_path?(path, dir) }
           reset_scan_progress(paths.size) if stream
-          pairs = parallel_map(paths) { |path, idx| scan_one(dir:, path:, depth:, stream:, index: idx) }
+          pairs = parallel_map(paths) { |path, idx|
+            scan_one(dir:, path:, depth:, stream:, index: idx, autofix:, autofix_root:)
+          }
           pairs.concat(cross_file_pairs(dir, paths))
           Result.ok(prune_violation_objects(pairs))
         rescue StandardError => e
@@ -119,14 +125,34 @@ module Master
           status.success? ? out.strip : nil
         end
 
-        def scan_one(dir:, path:, depth:, stream:, index: nil)
+        def scan_one(dir:, path:, depth:, stream:, index: nil, autofix: false, autofix_root: nil)
           sleep @file_sleep_s if @file_sleep_s > 0
           file_result = scan(path, depth:)
+          applied = autofix ? autofix_one(path, file_result, root: autofix_root || dir) : []
+          if applied.any?
+            file_result = scan(path, depth:)
+            emit_autofixed(dir:, path:, applied:) if stream
+          end
           emit_scan_progress(dir:, path:, file_result:) if stream
           [path, file_result]
         rescue StandardError => e
           @bus&.publish("scanner:thread_error", path:, index:, error: e.message)
           [path, Result.err(e.message, category: :infrastructure)]
+        end
+
+        def autofix_one(path, file_result, root:)
+          applied = MechanicalAutofix.new(scanner: self, root:, event_bus: @bus).apply([[path, file_result]])
+          return [] if applied.empty?
+
+          @mutex.synchronize { @stream_autofixes.concat(applied) }
+          applied
+        end
+
+        def emit_autofixed(dir:, path:, applied:)
+          rel = path.sub(dir, "").delete_prefix("/")
+          transforms = applied.flat_map { |row| Array(row.transforms) }.uniq.first(8).join(" ")
+          unit = @scan_progress&.dig(:unit) || @through_scan_unit || "scan0"
+          Master::Trace::Dmesg.status(unit, "autofixed #{rel} #{transforms}")
         end
 
         def cross_file_pairs(dir, paths)

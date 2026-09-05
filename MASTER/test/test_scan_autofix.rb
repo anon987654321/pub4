@@ -21,7 +21,7 @@ class TestScanAutofix < Minitest::Test
       Master::Result.ok(findings)
     end
 
-    def scan_dir(path, depth:, glob: "**/*", stream: false)
+    def scan_dir(path, depth:, glob: "**/*", stream: false, **)
       @scan_calls += 1
       findings = @findings_by_pass.shift || []
       Master::Result.ok([[File.join(path, "example.rb"), Master::Result.ok(findings)]])
@@ -117,5 +117,29 @@ class TestScanAutofix < Minitest::Test
   def test_help_documents_through_dry_run
     detail = Master::CLI::CommandRegistry.help_text("through")
     assert_includes detail, "--dry-run"
+  end
+
+  # The old pass walked the whole tree, then fixed, then walked it again.
+  # A finding must be written on the file that just produced it, before the
+  # walker moves on — otherwise the operator relocates it hours later.
+  def test_scan_dir_writes_the_fix_before_returning_the_file
+    Dir.mktmpdir do |root|
+      path = File.join(root, "example.rb")
+      File.write(path, "class Example\nend\n")
+      scanner = Master::Review::Scan::Scanner.new(rules: [FakeRule.new("FROZEN_LITERAL", true)])
+      def scanner.scan(_path, depth: :deep)
+        @scan_n = (@scan_n || 0) + 1
+        if @scan_n.odd?
+          Master::Result.ok([{ rule: "FROZEN_LITERAL", message: "missing frozen", line: 1 }])
+        else
+          Master::Result.ok([])
+        end
+      end
+
+      result = scanner.scan_dir(root, autofix: true, autofix_root: root)
+      assert result.ok?
+      assert_includes File.read(path), "# frozen_string_literal: true"
+      assert_equal 1, scanner.stream_autofixes.size
+    end
   end
 end

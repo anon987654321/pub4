@@ -21,7 +21,7 @@ class TestScanOutput < Minitest::Test
       Master::Result.ok(findings)
     end
 
-    def scan_dir(path, depth:, glob: "**/*", stream: false)
+    def scan_dir(path, depth:, glob: "**/*", stream: false, **)
       @scan_calls += 1
       findings = @findings_by_pass.shift || []
       Master::Result.ok([[File.join(path, "example.rb"), Master::Result.ok(findings)]])

@@ -10,7 +10,8 @@ module Master
           summary: "scan → fix → critique a path",
           detail: [
             "/through [path] — aesthetic scan, deep scan, fix, re-scan, critique.",
-            "Or just say the path. --dry-run previews without writing.",
+            "Or just say the path. Mechanical autofix writes on each file as it is",
+            "scanned; --dry-run / --no-autofix preview without writing.",
           ],
         },
         "status" => {
