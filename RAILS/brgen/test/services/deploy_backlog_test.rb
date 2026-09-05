@@ -10,6 +10,17 @@ require_relative "../../../shared/app/services/shared/queue_failure_summary"
 class DeployBacklogTest < Minitest::Test
   include SourceReader
 
+  # Every assertion in this file and in InfiniteScrollWiringTest reads a file
+  # through ROOT, so ROOT resolving anywhere else turns the lot into ENOENT — 39
+  # errors and 1043 assertions that never ran, on any checkout that is not
+  # /home/dev/pub4. The box hits the first candidate, so the box never saw it.
+  # Named here rather than left to the reads, because a wrong ROOT fails as a
+  # missing file and reads as a missing file.
+  def test_root_resolves_to_the_rails_tree
+    assert File.directory?(File.join(ROOT, "shared", "app")), "ROOT=#{ROOT} has no shared/app"
+    assert File.directory?(File.join(ROOT, "brgen", "app")), "ROOT=#{ROOT} has no brgen/app"
+    assert_equal "RAILS", File.basename(ROOT)
+  end
 
   def test_shared_cache_policy_exposes_explicit_ttls
     assert_equal 300, Shared::CachePolicy.ttl_for(:feed_fragment)

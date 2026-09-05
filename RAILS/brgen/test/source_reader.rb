@@ -19,7 +19,12 @@ module SourceReader
         # silently check month-old file contents instead of failing loudly).
         "/home/dev/pub4/RAILS",
         "/home/#{app}/pub4-rails/RAILS",
-        File.expand_path("../../..", __dir__)
+        # This file is RAILS/brgen/test/source_reader.rb, so RAILS is two levels
+        # up, not three. At three it resolved to the repo root, where no `shared`
+        # exists, both `find` guards missed and the chain fell through to the
+        # wrong path — 39 errors in brgen's suite on every checkout that is not
+        # /home/dev/pub4, which is why the box never saw it.
+        File.expand_path("../..", __dir__)
       ]
       candidates.find { |path| File.readable?(File.join(path, "shared", "app")) } ||
         candidates.find { |path| File.directory?(File.join(path, "shared")) } ||

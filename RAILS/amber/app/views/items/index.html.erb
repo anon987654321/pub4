@@ -1,6 +1,11 @@
 <% content_for :title, t("pages.wardrobe") %>
 <%# empty_state: coverage-ok — the wardrobe list and its empty state render in items/_live_search_results %>
-<%= turbo_stream_from "items" %>
+<%# No turbo_stream_from "items": Item declines broadcasts_refreshes on purpose,
+    and says why at the callback — a 1-CPU VPS, and the media and AI pipelines
+    touch an item many times per upload. Subscribing to a stream nothing writes
+    opens an ActionCable connection per viewer of the busiest page in the app and
+    delivers nothing. Outfit and PlannedOutfit do broadcast, and their index
+    pages subscribe; this one is the pair that never matched. %>
 
 <section data-controller="filter" role="region" aria-label="<%= t("wardrobe.items_region") %>">
   <header role="banner" aria-label="<%= t("wardrobe.header") %>">

@@ -28,8 +28,23 @@ class Notification < ApplicationRecord
   # a saved search finally matching — which is the case a push is for.
   PUSHABLE_KINDS = %w[message match reply mention follow order alert].freeze
 
+  # No broadcast. `broadcast_prepend_to "brgen:notifications:<user_id>"` stood
+  # here and nothing subscribes to that stream — not a view, not a controller,
+  # not a stream source. It is `broadcast_prepend_to`, not `_later_to`, so every
+  # notification rendered notifications/_notification synchronously on the
+  # request that created it and published the result to a dead channel: on every
+  # message, match, reply, mention, follow, order and alert, on a 1 GB box.
+  #
+  # Removed rather than wired, which is the same call Shared::Reaction,
+  # Shared::Notification and Shared::ReviewCase carry, and the reason amber's
+  # Item declines broadcasts_refreshes. Wiring it is not a one-line subscription:
+  # the target would be #notification_list, which renders notifications/_grouped_list,
+  # so a prepended row lands above the first group header. Making it live means
+  # deciding whether a new notification joins a group or sits outside one —
+  # a surface decision, not a lint fix. NotificationDeliveryJob still carries the
+  # same call and is enqueued by nothing; its own header holds the box check that
+  # lets it go, and this line goes with it.
   after_create_commit do
-    broadcast_prepend_to "brgen:notifications:#{user_id}"
     WebPushJob.perform_later(id) if PUSHABLE_KINDS.include?(kind)
   end
 

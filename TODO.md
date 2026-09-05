@@ -975,11 +975,12 @@ Three facts with no home of their own, kept because each was expensive to find.
 
 ### Scanner Conventions
 
-Six shapes of one defect: **each converts the absence of a property into
+Seven shapes of one defect: **each converts the absence of a property into
 evidence of it.** A gate, a test or a reader accepts something that merely looks
 like the thing it was checking for, and the result is a defect that arrives
-carrying its own certificate of compliance. All five were found in the same week
-of 2026-08, in different subsystems, by different sessions.
+carrying its own certificate of compliance. Six were found in one week of
+2026-08, in different subsystems, by different sessions; the seventh in RAILS on
+2026-09-05, and it had been costing a thousand assertions a run.
 
 #### 1. A comment outlives the rule it explains
 
@@ -1104,7 +1105,31 @@ make belongs to the same family as the four above — the absence of a property
 reported as evidence of it — and the remedy is the same: assert the outcome, not
 the attempt.
 
-#### What follows from all six
+#### 7. A root constant that resolves one level too high
+
+`RAILS/brgen/test/source_reader.rb` computed the tree as
+`File.expand_path("../../..", __dir__)`. The file is at `RAILS/brgen/test/`, so
+that is the repo root and not `RAILS/`. Two guards in the same expression were
+supposed to catch it — the chain only accepts a candidate holding `shared/app`,
+then one holding `shared` — and both missed, so it fell through to
+`candidates.last`, which is the wrong path it had just rejected. A fallback that
+ends in "use the last one anyway" is not a fallback.
+
+The cost was 39 errors and one failure in brgen's suite, and the number that
+matters is the other one: **974 runs carrying 3,486 assertions became 974 runs
+carrying 4,529**. A thousand assertions had never run on any checkout that is
+not `/home/dev/pub4`, which is the first candidate and why the box never saw it.
+The suite is green now, and the two verticals it re-armed —
+`InfiniteScrollWiringTest` and `DeployBacklogTest` — are the ones that read
+source rather than exercise it.
+
+Same family as `Pub4::OperatorDocs::ROOT`, recorded above at four levels instead
+of three, and the remedy is the one that entry named: **assert the resolution,
+not the reads.** `test_root_resolves_to_the_rails_tree` checks that ROOT holds
+`shared/app` and `brgen/app` and is called `RAILS`, because a wrong root fails as
+a missing file and reads as a missing file.
+
+#### What follows from all seven
 
 - **A new gate's first run must be against a known-bad input, not a clean tree.**
   A green first run is the least informative outcome available: it is equally
@@ -3020,9 +3045,32 @@ Larger efforts that span trees or do not belong to any single one. Each is a
 program with its own sitting, listed so they are visible in one place rather
 than implied across four.
 
-- **Realtime wiring.** Dead brgen / bsdports / amber Turbo broadcasts — streams
-  written to with no subscriber on the other end. Wire the consumers or record
-  the explicit no-broadcast decision per stream.
+- **Realtime wiring — instrumented and down to one recorded exception, 2026-09-05.**
+  `turbo_broadcast_contract_test.rb` already asked whether a broadcast has a
+  partial. It now reads every *named* stream from both ends, and two pairs had
+  never matched: `brgen:notifications:*`, written on every notification create by
+  a synchronous `broadcast_prepend_to` and read nowhere, and `items`, subscribed
+  by amber's busiest page against a model that declines `broadcasts_refreshes` on
+  purpose. Both removed, each with the reason at the site. The one tolerated
+  entry is `NotificationDeliveryJob`, which is enqueued by nothing and kept only
+  until vm23 confirms no queued row names it; `UNREAD_STREAMS` carries it and
+  fails if it stops being true.
+
+  Literal streams only, and that is the whole of the instrument's honesty:
+  `broadcast_refresh_to self` names its stream at runtime, and guessing which
+  view subscribes to `@conversation` is how a census reports the shape of the
+  tree and calls it a defect. Three false positives died on the way and each is
+  worth not re-deriving — the ERB comment recording a dropped subscription read
+  as the subscription, `broadcast_refresh_to` was outside the DOM-verb pattern so
+  three quarters of amber's streams read as orphans, and
+  `Turbo::StreamsChannel.broadcast_append_to(` puts its stream literal on the
+  next line, which made `LocationsController` silent and the layout's
+  `nearby_alerts` subscription an orphan. Mutation-checked in all three
+  directions: a new dead broadcast, a stale `UNREAD_STREAMS` entry, and a
+  restored orphan subscription each turn it red.
+
+  What is left is the dynamic half, deliberately: a stream named by an object
+  rather than a string needs a runtime instrument, not a wider regex.
 - **Seed realism.** Coordinates and timezones for every DomainRegistry city
   live in `CitySeed::COORDINATES` / `TIME_ZONES`. Population is still unset.
 - **Bringhurst typography codification.** Turn the typographic rules the design

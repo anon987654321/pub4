@@ -173,4 +173,113 @@ class TurboBroadcastContractTest < Minitest::Test
 
     assert_empty hits, "enqueueing a broadcast while no worker runs:\n#{hits.join("\n")}"
   end
+
+  # Every named stream, read from both ends.
+  #
+  # The tests above ask whether a broadcast has a partial, and whether three
+  # named streams stayed unsubscribed. Neither asks the general question, and
+  # two pairs had never matched — invisible from either end alone, because one
+  # end is a model and the other a view:
+  #
+  #   brgen:notifications:*  written on every notification create, read nowhere
+  #   items                  subscribed by amber's busiest page, written nowhere
+  #
+  # Literal streams only, and that is the whole of the instrument's honesty.
+  # `broadcast_refresh_to self` and `broadcast_append_to conversation` name their
+  # stream at runtime; guessing which view subscribes to `@conversation` is how a
+  # census reports the shape of the tree and calls it a defect. Interpolation
+  # collapses to `*`, so "brgen:matches:#{user.id}" written in a model and
+  # "brgen:matches:#{Current.user.id}" read in a layout are one name.
+  #
+  # Ruby is scanned across app/ rather than app/models: nearby_alerts_* is
+  # written by LocationsController through Turbo::StreamsChannel, and a
+  # models-only scan called the layout's subscription dead.
+  # Wider than BROADCAST above, which names the DOM verbs. broadcast_refresh_to
+  # carries a stream name too, and leaving it out made the census report amber's
+  # outfits and planned_outfits subscriptions as orphans — the instrument
+  # answering for three quarters of the fleet's named streams.
+  # The line names the call; the stream name may be on the next one.
+  # `Turbo::StreamsChannel.broadcast_append_to(` puts its literal a line down,
+  # and requiring the two together read LocationsController as silent and the
+  # layout's nearby_alerts subscription as an orphan.
+  ANY_BROADCAST_LINE = /broadcast_\w*to\b/
+  ANY_BROADCAST = /broadcast_\w*to\s*\(?\s*"([^"]*)"/m
+
+  # A stream written with no reader, tolerated with the reason. Each entry is a
+  # claim; an entry that stops matching is a hole in the gate and fails below.
+  UNREAD_STREAMS = {
+    "brgen:notifications:*" =>
+      "NotificationDeliveryJob is enqueued by nothing and kept only until vm23 confirms no " \
+      "queued row names it — see the job's header. Its broadcast goes when the class does.",
+  }.freeze
+
+  def normalise(stream) = stream.gsub(/\#\{[^}]*\}/, "*")
+
+  def ruby_sources
+    @ruby_sources ||= APPS.flat_map { |app| Dir.glob(File.join(ROOT, app, "app/**/*.rb")) } +
+                      APPS.flat_map { |app| Dir.glob(File.join(ROOT, app, "engines/*/app/**/*.rb")) } +
+                      Dir.glob(File.join(ROOT, "shared/app/**/*.rb"))
+  end
+
+  def view_sources
+    @view_sources ||= APPS.flat_map { |app| Dir.glob(File.join(ROOT, app, "app/views/**/*.erb")) } +
+                      APPS.flat_map { |app| Dir.glob(File.join(ROOT, app, "engines/*/app/views/**/*.erb")) } +
+                      Dir.glob(File.join(ROOT, "shared/app/views/**/*.erb"))
+  end
+
+  def named_broadcasts
+    ruby_sources.flat_map do |path|
+      lines = File.readlines(path)
+      lines.each_index.filter_map do |index|
+        next if lines[index].strip.start_with?("#")
+        next unless lines[index].match?(ANY_BROADCAST_LINE)
+
+        stream = lines[index, 4].join[ANY_BROADCAST, 1]
+        { stream: normalise(stream), at: "#{path.sub("#{ROOT}/", '')}:#{index + 1}" } if stream
+      end
+    end
+  end
+
+  # ERB comments blanked first, and length-preserving so line numbers still land.
+  # The note explaining why a subscription was dropped names the call it dropped,
+  # so a raw scan read the explanation as the thing — the failure mode this repo
+  # has recorded four times, and it fired here on the first run.
+  def without_erb_comments(source)
+    source.gsub(/<%#.*?%>/m) { |match| match.gsub(/[^\n]/, " ") }
+  end
+
+  def named_subscriptions
+    view_sources.flat_map do |path|
+      without_erb_comments(File.read(path)).each_line.with_index.filter_map do |line, index|
+        stream = line[/turbo_stream_from\s+"([^"]*)"/, 1]
+        { stream: normalise(stream), at: "#{path.sub("#{ROOT}/", '')}:#{index + 1}" } if stream
+      end
+    end
+  end
+
+  def test_the_census_still_sees_both_ends
+    assert_operator named_broadcasts.size, :>=, 8, "the broadcast scan stopped matching"
+    assert_operator named_subscriptions.size, :>=, 8, "the subscription scan stopped matching"
+  end
+
+  def test_every_named_broadcast_has_a_subscriber
+    read = named_subscriptions.map { |row| row[:stream] }.uniq
+    unread = named_broadcasts.reject { |row| read.include?(row[:stream]) }
+    surprises = unread.reject { |row| UNREAD_STREAMS.key?(row[:stream]) }
+
+    assert_empty surprises.map { |row| "#{row[:at]} writes #{row[:stream]}, nothing subscribes" },
+                 "wire the reader, or record the stream in UNREAD_STREAMS with the reason"
+
+    stale = UNREAD_STREAMS.keys - unread.map { |row| row[:stream] }
+    assert_empty stale, "these are no longer written or now have a reader — drop them from UNREAD_STREAMS"
+  end
+
+  def test_every_subscription_has_a_broadcaster
+    written = named_broadcasts.map { |row| row[:stream] }.uniq
+    orphans = named_subscriptions.reject { |row| written.include?(row[:stream]) }
+
+    assert_empty orphans.map { |row| "#{row[:at]} subscribes to #{row[:stream]}, nothing writes it" },
+                 "a subscription to a stream nothing writes opens a connection per viewer and " \
+                 "delivers nothing — drop it, or write the stream"
+  end
 end
