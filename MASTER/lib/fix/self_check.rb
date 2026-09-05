@@ -9,11 +9,20 @@ module Master
 
       Report = Data.define(:total, :by_rule, :by_severity, :error, :findings) do
         def clean? = total.zero? && error.nil?
-        def summary
+
+        # The headline on its own, so a caller that has already printed the
+        # located findings can fail with the count rather than repeating them.
+        def line
           return "selfcheck: failed — #{error}" if error
           return "selfcheck: clean" if clean?
 
-          lines = ["selfcheck: #{total} violation(s) across #{by_rule.size} rule(s)"]
+          "selfcheck: #{total} violation(s) across #{by_rule.size} rule(s)"
+        end
+
+        def summary
+          return line if error || clean?
+
+          lines = [line]
           Array(findings).first(20).each do |item|
             lines << "  #{item[:path]}:#{item[:line]} #{item[:rule]}"
           end

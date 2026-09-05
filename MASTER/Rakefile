@@ -170,7 +170,7 @@ task :selfcheck do
        "error/critical only, across #{Master.scan_roots.join(', ')}"
   report = Master::Fix::SelfCheck.new(root: __dir__).quick
   puts report.summary
-  abort report.summary unless report.clean?
+  abort report.line unless report.clean?
 end
 
 desc "Eager-load all Zeitwerk-managed constants"
@@ -320,15 +320,24 @@ namespace :lint do
 
     # A file that reopens a constant must not define its own path-implied one --
     # otherwise it is autoloadable and the ignore is hiding a naming mistake.
+    #
+    # The whole nesting, not the basename: lib/review/scan/engines/path_filter.rb
+    # opens `module PathFilter` and the basename check called that autoloadable,
+    # while Zeitwerk wants Scan::Engines::PathFilter and the file declares
+    # Scan::PathFilter. `rake autoload` was red on a name this lint called clean.
+    inflector = Master::LOADER.inflector
     groups.fetch("reopens_a_constant_defined_elsewhere").each do |relative|
       next unless relative.end_with?(".rb")
 
       path = File.join(__dir__, "lib", relative)
       next unless File.file?(path)
 
-      expected = Master::LOADER.inflector.camelize(File.basename(relative, ".rb"), path)
-      if File.read(path).match?(/^\s*(class|module)\s+#{Regexp.escape(expected)}\b/)
-        problems << "#{relative}: defines #{expected}, so Zeitwerk can load it — drop the ignore"
+      expected = ["Master", *File.dirname(relative).split("/").reject { |part| part == "." },
+                  File.basename(relative, ".rb")]
+      expected = [expected.first, *expected.drop(1).map { |part| inflector.camelize(part, path) }]
+      opened = File.read(path).scan(/^\s*(?:class|module)\s+([A-Z][\w:]*)/).flatten
+      if opened.first(expected.size) == expected
+        problems << "#{relative}: defines #{expected.join("::")}, so Zeitwerk can load it — drop the ignore"
       end
     end
 

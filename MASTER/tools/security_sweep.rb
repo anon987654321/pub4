@@ -31,10 +31,17 @@ PASSWORD_ASSIGNMENT = /(?<![a-z_])password\s*[:=]\s*["']([^"'\[\]]{8,})["']/i
 PLACEHOLDERS = /\A(?:password123|changeme|example|secret|\[your password\])\z/i
 # Prose, not a credential: one word or hyphenated words with no digit or symbol.
 PROSE_VALUE = /\A[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'’\-]*[?.!]?\z/
+# A value that is nothing but an indirection names where the credential comes
+# from; the credential itself lives in the environment or a locale file.
+# RAILS/gates/data/flows.yml posts "$FLOW_AMBER_PASSWORD" to a login form, and a
+# sweep that reads a variable name as the secret it stands for is the same
+# always-noise failure the i18n strings above already caused once.
+INDIRECTION = /\A(?:\$\{?[A-Za-z_]\w*\}?|%\{[^}]+\}|<%=[^%]*%>|\#\{[^}]+\})\z/
 
 def secretish_password?(value)
   return false if value.match?(/\s/)          # "Forgot password?" — copy, not a credential
   return false if value.match?(PLACEHOLDERS)
+  return false if value.match?(INDIRECTION)
   return false if value.match?(PROSE_VALUE) && value.length < 16
 
   true

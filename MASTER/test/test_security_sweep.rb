@@ -46,6 +46,23 @@ class TestSecuritySweep < Minitest::Test
     refute_empty hits(%(password: "correcthorsebatterystaple"))
   end
 
+  def test_ignores_a_value_that_is_only_an_indirection
+    [
+      %(password: "$FLOW_AMBER_PASSWORD"),
+      %(password: "${DEPLOY_PASSWORD}"),
+      %(password: "%{account_password}"),
+      %(password: "<%= credentials.password %>"),
+    ].each do |line|
+      assert_empty hits(line), "should not flag #{line.inspect}"
+    end
+  end
+
+  # The exemption is the whole value, not a prefix of it: a credential with a
+  # variable glued to the front is still a credential.
+  def test_an_indirection_beside_a_literal_is_still_suspicious
+    refute_empty hits(%(password: "$PREFIX-hunter2!xyz"))
+  end
+
   def test_the_committed_locale_files_are_clean_under_the_rule
     repo = File.expand_path("../..", __dir__)
     Dir.glob(File.join(repo, "RAILS", "*", "config", "locales", "*.yml")).each do |path|

@@ -34,22 +34,34 @@ module Master
               break if deadline && Time.now >= deadline
               break if circuit_open?
               results = run_rule_group(group:, files:, pass:, rule_violations:)
-              results.each do |rule, result|
-                @violation_counts[rule.id] += result[:fixed].to_i
-                fixed += result[:fixed].to_i
-                tallied = result[:breakdown]
-                if tallied.nil? || tallied.empty?
-                  breakdown[result[:status] || :unknown] += 1
-                else
-                  tallied.each { |outcome, count| breakdown[outcome] += count }
-                end
-                @bus&.publish("fix_loop:rule_result", pass:, rule: rule.id, **result)
-              end
+              fixed += tally_rule_results(results, breakdown:, pass:)
             end
-            parts = breakdown.map { |status, count| "#{status}=#{count}" }.join(" ")
-            Master::Trace::Dmesg.status("fix0", "llm_skip_breakdown pass=#{pass} #{parts}") unless breakdown.empty?
-            @bus&.publish("fix_loop:skip_breakdown", pass:, **breakdown.transform_keys(&:to_sym)) unless breakdown.empty?
+            report_skip_breakdown(breakdown, pass:)
             fixed
+          end
+
+          # A rule that reported no breakdown of its own counts once under its
+          # status, so every rule contributes exactly one row either way.
+          def tally_rule_results(results, breakdown:, pass:)
+            results.sum do |rule, result|
+              @violation_counts[rule.id] += result[:fixed].to_i
+              tallied = result[:breakdown]
+              if tallied.nil? || tallied.empty?
+                breakdown[result[:status] || :unknown] += 1
+              else
+                tallied.each { |outcome, count| breakdown[outcome] += count }
+              end
+              @bus&.publish("fix_loop:rule_result", pass:, rule: rule.id, **result)
+              result[:fixed].to_i
+            end
+          end
+
+          def report_skip_breakdown(breakdown, pass:)
+            return if breakdown.empty?
+
+            parts = breakdown.map { |status, count| "#{status}=#{count}" }.join(" ")
+            Master::Trace::Dmesg.status("fix0", "llm_skip_breakdown pass=#{pass} #{parts}")
+            @bus&.publish("fix_loop:skip_breakdown", pass:, **breakdown.transform_keys(&:to_sym))
           end
 
           def publish_llm_pass_status(pass:, deadline:)

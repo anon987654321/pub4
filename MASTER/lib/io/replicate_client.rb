@@ -304,30 +304,32 @@ module Master
       def request(req, uri, attempts: 3)
         last_error = nil
         attempts.times do |attempt|
-          begin
-            res = Net::HTTP.start(uri.host, uri.port, use_ssl: true, read_timeout: 120) do |http|
-              http.request(req)
-            end
-            code = res.code.to_i
-            return JSON.parse(res.body) if code.between?(200, 299)
-
-            message = "Replicate API #{code}: #{res.body}"
-            raise ExhaustedError, message if exhausted?(code, res.body)
-            raise TransientError, message if TRANSIENT_STATUS.include?(code)
-
-            raise message
-          rescue ExhaustedError => e
-            # Out of the retry loop entirely, and onto the gate: no wait inside
-            # this run makes the account solvent, and the caller needs to know
-            # the capability is gone rather than that one call failed.
-            Master::Ground::QuotaGate.trip!(source: "replicate", message: e.message, model: uri.path)
-            raise
-          rescue TransientError, Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNRESET, Errno::ETIMEDOUT => e
-            last_error = e.message
-            sleep(Master::Ground::FailureTaxonomy.backoff_seconds(attempt)) if attempt < attempts - 1
-          end
+          return attempt_request(req, uri)
+        rescue ExhaustedError => e
+          # Out of the retry loop entirely, and onto the gate: no wait inside
+          # this run makes the account solvent, and the caller needs to know
+          # the capability is gone rather than that one call failed.
+          Master::Ground::QuotaGate.trip!(source: "replicate", message: e.message, model: uri.path)
+          raise
+        rescue TransientError, Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNRESET, Errno::ETIMEDOUT => e
+          last_error = e.message
+          sleep(Master::Ground::FailureTaxonomy.backoff_seconds(attempt)) if attempt < attempts - 1
         end
         raise last_error
+      end
+
+      def attempt_request(req, uri)
+        res = Net::HTTP.start(uri.host, uri.port, use_ssl: true, read_timeout: 120) do |http|
+          http.request(req)
+        end
+        code = res.code.to_i
+        return JSON.parse(res.body) if code.between?(200, 299)
+
+        message = "Replicate API #{code}: #{res.body}"
+        raise ExhaustedError, message if exhausted?(code, res.body)
+        raise TransientError, message if TRANSIENT_STATUS.include?(code)
+
+        raise message
       end
 
       # 402 is unambiguous. Beyond it, the body is the only thing that

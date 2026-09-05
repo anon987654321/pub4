@@ -63,7 +63,11 @@ module Master
               }.to_json)
             end
           end
-        rescue StandardError
+        rescue StandardError => e
+          # Load-bearing: this file is the only record a long walk leaves behind,
+          # and a swallowed write makes an empty log and a clean run look alike.
+          Master::Ground::Swallow.log(e, context: "ProgressReporter.append_scan_hits_jsonl",
+                                         severity: :load_bearing, path: path.to_s)
           nil
         end
 

@@ -2,6 +2,11 @@
 
 require "open3"
 require "timeout"
+# Exec is standalone-loadable on purpose -- it is the subprocess primitive, so
+# anything that shells out may reach it before a runtime boot -- and both of its
+# rescue paths call Swallow. Without this require the swallow raises NameError
+# and the timeout path never kills the process group it exists to kill.
+require_relative "../ground/swallow"
 
 module Master
   module Io

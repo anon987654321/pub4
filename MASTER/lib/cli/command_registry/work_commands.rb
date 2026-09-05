@@ -322,24 +322,27 @@ module Master
           return [pairs, autofixes]
         end
 
-        autofixes = []
-        if pairs.any? && do_autofix
-          ScanLive.emit("autofix applying on auto_fix findings…")
-          autofixes = apply_scan_autofixes(scanner:, root:, pairs:)
-          if autofixes.any?
-            transforms = autofixes.flat_map { |a| Array(a[:transforms]) }.uniq.first(8).join(" ")
-            ScanLive.emit("autofixed files=#{autofixes.size} transforms=#{transforms}")
-            ScanLive.emit("pass2 re-scan after autofix…")
-            rescanned = ScanRequest.new(scanner:, root:, arg: clean_arg).call
-            pairs = rescanned.pairs unless rescanned.pairs.is_a?(String)
-          else
-            ScanLive.emit("autofix none applied (no auto_fix hits or no transforms)")
-          end
-        elsif dry_run
-          ScanLive.emit("autofix skipped dry_run=yes")
-        elsif no_autofix
-          ScanLive.emit("autofix skipped --no-autofix")
+        return apply_and_rescan(scanner:, root:, clean_arg:, pairs:) if pairs.any? && do_autofix
+
+        ScanLive.emit(dry_run ? "autofix skipped dry_run=yes" : "autofix skipped --no-autofix") if dry_run || no_autofix
+        [pairs, []]
+      end
+
+      # Pass 2: the findings the fixer wrote are the reason to look again, so a
+      # rescan only happens when something was actually applied.
+      def apply_and_rescan(scanner:, root:, clean_arg:, pairs:)
+        ScanLive.emit("autofix applying on auto_fix findings…")
+        autofixes = apply_scan_autofixes(scanner:, root:, pairs:)
+        if autofixes.empty?
+          ScanLive.emit("autofix none applied (no auto_fix hits or no transforms)")
+          return [pairs, autofixes]
         end
+
+        transforms = autofixes.flat_map { |a| Array(a[:transforms]) }.uniq.first(8).join(" ")
+        ScanLive.emit("autofixed files=#{autofixes.size} transforms=#{transforms}")
+        ScanLive.emit("pass2 re-scan after autofix…")
+        rescanned = ScanRequest.new(scanner:, root:, arg: clean_arg).call
+        pairs = rescanned.pairs unless rescanned.pairs.is_a?(String)
         [pairs, autofixes]
       end
 

@@ -80,6 +80,10 @@ module Master
         # the prompt. A routine success returns above and stays silent: "ok" is
         # not worth a synthesis.
         Master::Voice::Playback.speak(spoken)
+        print_reply_footers(ok)
+      end
+
+      def print_reply_footers(ok)
         print_cost_tooltip
         print_pipeline_timings
         print_parallel_errors_footer(ok)

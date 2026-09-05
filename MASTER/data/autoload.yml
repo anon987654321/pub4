@@ -56,6 +56,12 @@ autoload:
     - review/scan/rules/universal_rules.rb
     - review/scan/rules/web_rules.rb
     - review/scan/rules/yaml_bridge_rules.rb
+    # Master::Review::Scan -- the scanner's three engines, split by concern and
+    # required by scanner.rb. The directory groups them; it is not a namespace,
+    # and each file declares the constant one level up.
+    - review/scan/engines/path_filter.rb
+    - review/scan/engines/progress_reporter.rb
+    - review/scan/engines/transport.rb
     # Master::Builder module functions, split out of builder.rb.
     - builder/ai_boot.rb
     - builder/boot_phases.rb

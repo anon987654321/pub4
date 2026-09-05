@@ -73,8 +73,7 @@ module Master
         declared = discovery.declared_skills_entries
         return if roots.empty? && declared.empty? && @root != Master::ROOT
 
-        coordinator = Master::Ground::Antigravity::Coordinator.new(cwd: @root, workspace_root: @root)
-        coordinator.skills.discover!.each do |skill|
+        Master::Ground::Antigravity::Skills.new(discovery:).discover!.each do |skill|
           next if find(skill[:name])
 
           @loaded << {

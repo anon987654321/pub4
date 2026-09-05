@@ -2,8 +2,16 @@
 
 # Mutate a Ruby source, run its test, restore. A green test that stays green
 # after the comparison it claims to cover is inverted is a test of nothing.
+#
+# Candidates come from Prism's token stream, not from a regex over the text.
+# A regex reads a numbered list in a comment ("# 1. Workspace Project") and the
+# 8 in "UTF-8" as integers, and `sub` then rewrites the first one in the file
+# rather than the one in the code — so a well-documented file reported survivors
+# for mutations that changed nothing a test could see. A gate whose failure is
+# always noise is a gate people learn to skip.
 
 require "fileutils"
+require "prism"
 require "tmpdir"
 
 src = File.expand_path(ARGV[0].to_s)
@@ -12,31 +20,53 @@ abort("usage: ruby tools/mutate.rb <source.rb> <test.rb>") unless File.file?(src
 
 root = File.expand_path("..", __dir__)
 original = File.read(src)
+tokens = Prism.lex(original).value.map(&:first)
+
+FLIP = { "==" => "!=", "!=" => "==", "<=" => ">", ">=" => "<", "<" => ">=", ">" => "<=" }.freeze
+INTEGER_BUDGET = 8
+
+def rewrite(source, token, text)
+  source.dup.tap { |s| s[token.location.start_offset...token.location.end_offset] = text }
+end
+
+def label(token, text)
+  "#{text} at line #{token.location.start_line}"
+end
+
 mutations = []
 
-original.scan(/\s(==|!=|<=|>=|<|>)\s/).flatten.uniq.each do |op|
-  flip = { "==" => "!=", "!=" => "==", "<=" => ">", ">=" => "<", "<" => ">=", ">" => "<=" }[op]
-  next unless flip && original.include?(" #{op} ")
+seen_operators = {}
+tokens.each do |token|
+  flip = FLIP[token.value]
+  next unless flip && !seen_operators[token.value]
 
-  mutations << ["flip #{op}", original.sub(" #{op} ", " #{flip} ")]
+  seen_operators[token.value] = true
+  mutations << [label(token, "flip #{token.value}"), rewrite(original, token, flip)]
 end
-original.scan(/\b(\d+)\b/).flatten.uniq.first(8).each do |n|
-  next if n.to_i.zero?
 
-  mutations << ["#{n}+1", original.sub(/\b#{n}\b/, (n.to_i + 1).to_s)]
+tokens.select { |token| token.type == :INTEGER && token.value.to_i.positive? }
+      .first(INTEGER_BUDGET)
+      .each { |token| mutations << [label(token, "#{token.value}+1"), rewrite(original, token, (token.value.to_i + 1).to_s)] }
+
+# A receiver's `.reject` and `.select`, never a local of that name.
+tokens.each_cons(2) do |dot, call|
+  next unless dot.type == :DOT && call.type == :IDENTIFIER
+
+  swap = { "reject" => "select", "select" => "reject" }[call.value]
+  next unless swap
+
+  mutations << [label(call, "#{call.value}→#{swap}"), rewrite(original, call, swap)]
 end
-mutations << ["reject→select", original.sub(".reject", ".select")] if original.match?(/\.reject\b/)
-mutations << ["select→reject", original.sub(".select", ".reject")] if original.match?(/\.select\b/)
 
 survivors = []
-mutations.each do |label, mutated|
+mutations.each do |name, mutated|
   next if mutated == original
 
   begin
     File.write(src, mutated)
     ok = system(RbConfig.ruby, "-Ilib", "-Itest", test,
                 chdir: root, out: File::NULL, err: File::NULL)
-    survivors << label if ok
+    survivors << name if ok
   ensure
     File.write(src, original)
   end
@@ -46,5 +76,5 @@ if survivors.empty?
   exit 0
 end
 
-survivors.each { |label| puts "  survived: #{label}" }
+survivors.each { |name| puts "  survived: #{name}" }
 abort "mutate: #{survivors.size}/#{mutations.size} mutation(s) survived — the test does not catch them"

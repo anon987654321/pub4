@@ -33,7 +33,7 @@ module Master
 
         # Discovers all active customization directories in precedence order:
         # 1. Workspace Project (.agents/)
-        # 2. Declared JSON configs (skills.json, plugins.json in workspace)
+        # 2. Declared JSON configs (skills.json in workspace)
         # 3. Global Discovery (~/.gemini/config/)
         # 4. Built-in Customizations (~/.gemini/antigravity-cli/builtin/)
         # 5. Global Declared JSON configs
@@ -71,51 +71,6 @@ module Master
           entries
         end
 
-        def declared_plugins_entries
-          entries = []
-          workspace_customization_roots.each do |root|
-            cfg = File.join(root, "plugins.json")
-            entries.concat(JsonConfig.load(cfg, workspace_root: @workspace_root)) if File.file?(cfg)
-          end
-          entries
-        end
-
-        def settings_files
-          files = []
-          workspace_customization_roots.each do |root|
-            s = File.join(root, "settings.json")
-            files << s if File.file?(s)
-          end
-          cli_settings = File.expand_path("~/.gemini/antigravity-cli/settings.json")
-          files << cli_settings if File.file?(cli_settings)
-          files.uniq
-        end
-
-        def hooks_files
-          files = []
-          workspace_customization_roots.each do |root|
-            h = File.join(root, "hooks.json")
-            files << h if File.file?(h)
-          end
-          if global_customization_root
-            gh = File.join(global_customization_root, "hooks.json")
-            files << gh if File.file?(gh)
-          end
-          files.uniq
-        end
-
-        def mcp_config_files
-          files = []
-          workspace_customization_roots.each do |root|
-            m = File.join(root, "mcp_config.json")
-            files << m if File.file?(m)
-          end
-          if global_customization_root
-            gm = File.join(global_customization_root, "mcp_config.json")
-            files << gm if File.file?(gm)
-          end
-          files.uniq
-        end
       end
     end
   end

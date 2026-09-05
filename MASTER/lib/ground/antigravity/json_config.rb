@@ -5,8 +5,8 @@ require "json"
 module Master
   module Ground
     module Antigravity
-      # JsonConfig parses Antigravity skills.json and plugins.json schemas,
-      # resolving inherits, entries, path resolution, and regex filtering.
+      # JsonConfig parses the Antigravity skills.json schema, resolving inherits,
+      # entries, path resolution, and regex filtering.
       class JsonConfig
         def self.load(file_path, workspace_root: nil, visited: [])
           new(file_path, workspace_root:, visited:).resolve_entries
@@ -18,48 +18,16 @@ module Master
           @visited = visited
         end
 
+        # Inherited entries first, then local ones: a config's own entries take
+        # precedence over what it inherits, and the caller keeps the last of a
+        # duplicate name.
         def resolve_entries
           return [] if @visited.include?(@file_path) || !File.file?(@file_path)
 
-          current_visited = @visited + [@file_path]
           data = parse_json(@file_path)
           return [] unless data.is_a?(Hash)
 
-          entries = []
-
-          # 1. Process inherits
-          Array(data["inherits"]).each do |inherit_spec|
-            next unless inherit_spec.is_a?(Hash)
-
-            raw_path = inherit_spec["path"].to_s
-            next if raw_path.empty?
-
-            resolved_path = resolve_path(raw_path)
-            inherited_entries = self.class.load(resolved_path, workspace_root: @workspace_root, visited: current_visited)
-
-            filtered = filter_entries(inherited_entries,
-                                      include_only: inherit_spec["include_only"],
-                                      exclude: inherit_spec["exclude"])
-            entries.concat(filtered)
-          end
-
-          # 2. Process local entries
-          Array(data["entries"]).each do |entry_spec|
-            next unless entry_spec.is_a?(Hash)
-
-            raw_path = entry_spec["path"].to_s
-            next if raw_path.empty?
-
-            resolved_path = resolve_path(raw_path)
-            entry_obj = {
-              path: resolved_path,
-              include_only: Array(entry_spec["include_only"]),
-              exclude: Array(entry_spec["exclude"]),
-            }
-            entries << entry_obj
-          end
-
-          entries
+          inherited_entries(Array(data["inherits"])) + local_entries(Array(data["entries"]))
         end
 
         def resolve_path(path_str)
@@ -70,6 +38,32 @@ module Master
         end
 
         private
+
+        def inherited_entries(specs)
+          visited = @visited + [@file_path]
+          specs.flat_map do |spec|
+            next [] unless spec.is_a?(Hash)
+
+            path = spec["path"].to_s
+            next [] if path.empty?
+
+            loaded = self.class.load(resolve_path(path), workspace_root: @workspace_root, visited:)
+            filter_entries(loaded, include_only: spec["include_only"], exclude: spec["exclude"])
+          end
+        end
+
+        def local_entries(specs)
+          specs.filter_map do |spec|
+            next unless spec.is_a?(Hash)
+
+            path = spec["path"].to_s
+            next if path.empty?
+
+            { path: resolve_path(path),
+              include_only: Array(spec["include_only"]),
+              exclude: Array(spec["exclude"]) }
+          end
+        end
 
         def parse_json(path)
           JSON.parse(File.read(path, encoding: "UTF-8"))
