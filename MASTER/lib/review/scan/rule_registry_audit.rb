@@ -34,11 +34,10 @@ module Master
           end
 
           def hatch_line
-            if lexical_wired.empty? && lexical_unwired.empty?
-              "  lexical hatch empty: 0 detect_lexical in the corpus (escape hatch idle)"
-            else
-              "  lexical hatch: #{lexical_wired.size} wired, #{lexical_unwired.size} unwired"
-            end
+            idle = lexical_wired.empty? && lexical_unwired.empty?
+            return "  lexical hatch empty: 0 detect_lexical in the corpus (escape hatch idle)" if idle
+
+            "  lexical hatch: #{lexical_wired.size} wired, #{lexical_unwired.size} unwired"
           end
         end
 

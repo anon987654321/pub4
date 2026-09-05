@@ -38,6 +38,29 @@
 # symbol-to-proc, safe navigation, two numeric literals, and seven runs of
 # alignment spaces in STUDIO/dilla.
 findings: 151
+by_rule:
+  BARE_DIV_WRAPPER: 2
+  BLANK_LINE_RUN: 4
+  FROZEN_STRING_LITERAL: 5
+  GUARD_CLAUSE: 27
+  I18N_COVERAGE: 16
+  MEANINGFUL_NAMES: 1
+  MIGRATION_ADD_REFERENCE_NO_FK: 2
+  MOBILE_FIRST: 1
+  NEVER_BATCH_DELETE: 4
+  NO_CHANGELOG_COMMENT: 12
+  NO_INLINE_SCRIPT_BLOCK: 6
+  NO_INLINE_STYLES: 1
+  NO_MULTIPLE_LANGUAGES: 5
+  NULLISH_COALESCING: 24
+  OPTIONAL_CHAINING: 1
+  PROSE_ACTIVE_VOICE: 4
+  PROSE_ACTIVE_VOICE_NB: 1
+  PROSE_OMIT_QUALIFIERS: 16
+  RATE_LIMITING_MISSING: 4
+  SQUINT_TEST: 5
+  STRICT_MODE_ZSH: 5
+  USE_THEN: 5
 finding_members:
   - BARE_DIV_WRAPPER RAILS/brgen/public/dilla/dilla.html:35
   - BARE_DIV_WRAPPER RAILS/brgen/public/dilla/dilla.html:45
@@ -90,7 +113,7 @@ finding_members:
   - I18N_COVERAGE RAILS/brgen/engines/playlist/app/views/playlist/playlists/_player.html.erb:35
   - I18N_COVERAGE RAILS/brgen/engines/playlist/app/views/playlist/playlists/_radio_tunnel.html.erb:34
   - I18N_COVERAGE RAILS/brgen/engines/playlist/app/views/playlist/playlists/_radio_tunnel.html.erb:68
-  - I18N_COVERAGE RAILS/brgen/engines/playlist/app/views/playlist/sets/show.html.erb:38
+  - I18N_COVERAGE RAILS/brgen/engines/playlist/app/views/playlist/sets/show.html.erb:39
   - I18N_COVERAGE RAILS/brgen/engines/playlist/app/views/playlist/shared/_dilla_sketches.html.erb:13
   - I18N_COVERAGE RAILS/brgen/engines/takeaway/app/views/takeaway/_nav_bar.html.erb:15
   - MEANINGFUL_NAMES RAILS/brgen/engines/marketplace/app/services/marketplace/listing_facets.rb:47
@@ -107,8 +130,8 @@ finding_members:
   - NO_CHANGELOG_COMMENT RAILS/brgen/db/migrate/20260714164502_add_integrity_constraints.rb:6
   - NO_CHANGELOG_COMMENT RAILS/brgen/engines/dating/app/models/dating/profile.rb:48
   - NO_CHANGELOG_COMMENT RAILS/brgen/engines/marketplace/test/models/marketplace/order_test.rb:20
-  - NO_CHANGELOG_COMMENT RAILS/brgen/test/services/deploy_backlog_test.rb:245
-  - NO_CHANGELOG_COMMENT RAILS/brgen/test/services/deploy_backlog_test.rb:389
+  - NO_CHANGELOG_COMMENT RAILS/brgen/test/services/deploy_backlog_test.rb:256
+  - NO_CHANGELOG_COMMENT RAILS/brgen/test/services/deploy_backlog_test.rb:400
   - NO_CHANGELOG_COMMENT RAILS/shared/app/services/shared/pushable.rb:5
   - NO_CHANGELOG_COMMENT STUDIO/lora/_toolkit/colab_session.rb:219
   - NO_CHANGELOG_COMMENT STUDIO/postpro/postpro.rb:1488
@@ -154,7 +177,7 @@ finding_members:
   - PROSE_ACTIVE_VOICE RAILS/brgen/test/jobs/prune_guest_users_job_test.rb:5
   - PROSE_ACTIVE_VOICE RAILS/shared/app/models/concerns/shared/strict_safe_associations.rb:13
   - PROSE_ACTIVE_VOICE STUDIO/postpro/postpro.rb:1822
-  - PROSE_ACTIVE_VOICE_NB RAILS/brgen/config/locales/nb.yml:1614
+  - PROSE_ACTIVE_VOICE_NB RAILS/brgen/config/locales/nb.yml:1620
   - PROSE_OMIT_QUALIFIERS RAILS/brgen/app/controllers/invites_controller.rb:48
   - PROSE_OMIT_QUALIFIERS RAILS/brgen/app/controllers/nearby_controller.rb:44
   - PROSE_OMIT_QUALIFIERS RAILS/brgen/app/controllers/users_controller.rb:96
@@ -185,8 +208,8 @@ finding_members:
   - STRICT_MODE_ZSH STUDIO/dilla/bin/sine_stream_play.sh:1
   - STRICT_MODE_ZSH STUDIO/dilla/bin/sine_stream_supervisor.sh:1
   - STRICT_MODE_ZSH STUDIO/dilla/bin/sine_stream_watchdog.sh:1
-  - USE_THEN RAILS/brgen/test/controllers/communities/wiki_controller_test.rb:1
   - USE_THEN RAILS/brgen/test/controllers/paginated_index_test.rb:1
+  - USE_THEN RAILS/brgen/test/controllers/wiki_controller_test.rb:1
   - USE_THEN RAILS/shared/app/controllers/omniauth_callbacks_controller.rb:1
   - USE_THEN RAILS/shared/app/services/shared/newsletter_visuals.rb:1
   - USE_THEN RAILS/shared/app/services/shared/tradedoubler.rb:1

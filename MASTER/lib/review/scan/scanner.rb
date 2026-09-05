@@ -100,19 +100,17 @@ module Master
         private
 
         def findings_for(path, depth:)
-          if File.directory?(path)
-            result = scan_dir(path, depth:)
-            return [] unless result.respond_to?(:ok?) && result.ok?
+          return rows_of(scan(path, depth:)).map { |item| item.merge(path:) } unless File.directory?(path)
 
-            result.value!.flat_map do |file, res|
-              rows = res.respond_to?(:ok?) && res.ok? ? res.value! : []
-              rows.map { |item| item.merge(path: file) }
-            end
-          else
-            result = scan(path, depth:)
-            rows = result.respond_to?(:ok?) && result.ok? ? result.value! : []
-            rows.map { |item| item.merge(path:) }
-          end
+          rows_of(scan_dir(path, depth:)).flat_map { |file, res| rows_of(res).map { |item| item.merge(path: file) } }
+        end
+
+        # scan_dir answers a Result whose value is [path, Result] pairs, so the
+        # same unwrap was written three times here — twice byte for byte. It
+        # answers the pairs for the outer Result and the rows for an inner one,
+        # which is the same question asked at two depths.
+        def rows_of(result)
+          result.respond_to?(:ok?) && result.ok? ? result.value! : []
         end
 
         def scannable_path?(path, root)
