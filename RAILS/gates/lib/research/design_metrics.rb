@@ -299,6 +299,11 @@ module Deploy
       max_roles = @rules.dig("ultraminimalism", "color", "max_palette_roles").to_i
       return if max_roles <= 0
 
+      # prefer_monochrome_with_one_accent is the same budget in words. Reading
+      # it here is what stops the key looking enforced while only its neighbour
+      # is. The numeric cap is the check.
+      @rules.dig("ultraminimalism", "color", "prefer_monochrome_with_one_accent")
+
       dialect = @tokens["social"] || {}
       roles = ROLE_TOKENS.select { |r| dialect.keys.any? { |k| k.to_s.match?(/\A#{r}(_|\z)/) } }
       return if roles.size <= max_roles
@@ -312,9 +317,15 @@ module Deploy
 
     def check_rules_floor
       touch = @rules.dig("layout_rules", "touch", "target_min_px").to_i
+      recommended = @rules.dig("layout_rules", "touch", "target_recommended_px").to_i
       @result.fail("design_metrics: touch.target_min_px missing/invalid") if touch < 44
+      @result.fail("design_metrics: touch.target_recommended_px missing/invalid") if recommended < touch
       body_min = @rules.dig("typography", "accessibility", "body_min_px").to_i
       @result.fail("design_metrics: body_min_px missing") if body_min < 16
+      gap = @rules.dig("layout_rules", "whitespace", "gap_over_margin")
+      @result.fail("design_metrics: whitespace.gap_over_margin missing") if gap.nil?
+      card = @rules.dig("ultraminimalism", "negative_space", "card_padding_px").to_i
+      @result.fail("design_metrics: card_padding_px missing/invalid") if card <= 0
       @result.warn("design_metrics: design_rules loaded (touch≥#{touch}px body≥#{body_min}px)")
     end
 

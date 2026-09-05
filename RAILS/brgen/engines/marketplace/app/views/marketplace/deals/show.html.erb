@@ -5,6 +5,8 @@
   <%= tag.header do %>
     <%= tag.h1 @deal.headline %>
     <%= tag.p @deal.badge if @deal.badge.present? %>
+    <%= tag.p t("marketplace.deals.ends_in", time: distance_of_time_in_words(Time.current, @deal.ends_at)),
+              class: "deal-meta deal-meta--countdown" if @deal.ends_in %>
   <% end %>
 
   <%= tag.section class: "deal-listing" do %>

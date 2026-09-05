@@ -37,3 +37,5 @@ en:
       pending: pending
       sent: sent
       blocked: blocked
+    deals:
+      ends_in: "ends in %{time}"

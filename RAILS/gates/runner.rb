@@ -298,7 +298,12 @@ puts "[gates] Skipping #{skipped.join(', ')} (covered by composite gates in this
 # One named gate is the direct-invocation case the per-gate scripts used to
 # serve, so let it print its own success line.
 verbose = gates_to_run.size == 1
-outcomes = gates_to_run.to_h { |key| [key, run_one(key, verbose:)] }
+total = gates_to_run.size
+outcomes = {}
+gates_to_run.each_with_index do |key, index|
+  puts "[gates] #{index + 1}/#{total} #{key}" unless verbose
+  outcomes[key] = run_one(key, verbose:)
+end
 
 failed = outcomes.select { |_, o| o == :failed }.keys
 unchecked = outcomes.select { |_, o| o == :inconclusive }.keys

@@ -37,3 +37,5 @@ nb:
       pending: venter
       sent: sendt
       blocked: blokkert
+    deals:
+      ends_in: "slutter om %{time}"

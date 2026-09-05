@@ -62,7 +62,10 @@
   position: absolute;
   bottom: 0;
   inset-inline-end: 0;
-  width: min(360px, 100vw);
+  /* 100% of the positioned containing block, not 100vw: vw includes the
+     scrollbar gutter, so the panel is wider than the viewport on a desktop
+     with a classic scrollbar. */
+  width: min(360px, 100%);
   height: min(460px, calc(100dvh - 48px));
   display: flex;
   flex-direction: column;

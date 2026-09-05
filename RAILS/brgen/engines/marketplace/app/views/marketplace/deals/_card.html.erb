@@ -11,6 +11,9 @@
       <div class="deal-price"><%= listing.price_display %></div>
     <% end %>
     <h2 class="deal-card-title"><%= deal.headline %></h2>
+    <% if deal.ends_in %>
+      <p class="deal-meta deal-meta--countdown"><%= t("marketplace.deals.ends_in", time: distance_of_time_in_words(Time.current, deal.ends_at)) %></p>
+    <% end %>
     <% if listing %>
       <p class="deal-card-subtitle"><%= listing.title %></p>
       <% if listing.reviews_count.to_i.positive? %>

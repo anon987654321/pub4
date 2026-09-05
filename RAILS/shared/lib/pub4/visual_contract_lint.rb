@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "baseline_ratchet"
+require_relative "master_design"
 
 module Pub4
   # The visual decisions that are law, made measurable. Four checks, one ratchet
@@ -8,9 +9,12 @@ module Pub4
   #
   #   low_contrast — WCAG ratios computed from the COMPILED bundles, because the
   #     build is what production wears (WIRING_NOTES: "read the second table
-  #     before the first"). Text pairs need 4.5:1, UI/accent pairs 3:1.
-  #     Custom properties are resolved one var() hop within the same bundle;
-  #     pairs that don't resolve to hex are skipped, not guessed.
+  #     before the first"). Text pairs read large_text_contrast (AA 4.5) from
+  #     rules.yml; UI/accent pairs stay at WCAG non-text 3:1. AAA 7.0
+  #     (normal_text_contrast) is design_metrics' budgeted gate — raising this
+  #     lint's floor to 7.0 floods the compiled bundles. Custom properties are
+  #     resolved one var() hop within the same bundle; pairs that don't resolve
+  #     to hex are skipped, not guessed.
   #
   #   unreserved_image — an image with no width/height/aspect at the call site
   #     is a layout shift waiting on the network (TEMPORAL_COUPLING). Counted
@@ -81,7 +85,7 @@ module Pub4
 
         css = File.read(path, encoding: "UTF-8")
         tokens = root_tokens(css)
-        pairs = TEXT_PAIRS.map { |p| p + [ 4.5 ] } + UI_PAIRS.map { |p| p + [ 3.0 ] }
+        pairs = TEXT_PAIRS.map { |p| p + [ text_contrast_min ] } + UI_PAIRS.map { |p| p + [ 3.0 ] }
         base = pairs.filter_map do |fg, bg, min|
           ratio = ratio_for(tokens, fg, bg)
           next unless ratio && ratio < min
@@ -126,6 +130,17 @@ end
       return value if value.match?(/\A#\h{3,6}\z/)
       inner = value[/var\((--[\w-]+)/, 1]
       inner ? resolve(tokens, inner, depth + 1) : nil
+    end
+
+    # The CI floor is AA. typography.accessibility.large_text_contrast is that
+    # number in the law (4.5); normal_text_contrast (7.0) is design_metrics'.
+    def accessibility_rules
+      Pub4::MasterDesign.dig("typography", "accessibility") || {}
+    end
+
+    def text_contrast_min
+      value = accessibility_rules["large_text_contrast"].to_f
+      value.positive? ? value : 4.5
     end
 
     def ratio_for(tokens, fg_name, bg_name)

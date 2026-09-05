@@ -36,6 +36,14 @@ module Marketplace
       (starts_at.blank? || starts_at <= Time.current) && (ends_at.blank? || ends_at >= Time.current)
     end
 
+    # Seconds until ends_at, or nil when the deal has no end or has already ended.
+    def ends_in
+      return if ends_at.blank?
+
+      remaining = ends_at - Time.current
+      remaining.positive? ? remaining : nil
+    end
+
     # Used as the tracks_activity actor, so it runs in an after_commit on a deal
     # that a controller loaded by id — `listing&.user` was a lazy read that
     # raised under strict loading. See Shared::StrictSafeAssociations.
