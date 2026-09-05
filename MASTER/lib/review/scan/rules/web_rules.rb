@@ -44,6 +44,8 @@ module Master
 
         RuleDSL.rule :NO_IMPORTANT,
           severity: :warning, tags: %i[MAINTAINABILITY], applies_to: %i[css scss],
+          fires: ".btn { background: #c00 !important; }\n",
+          does_not_fire: ".btn { border: none !important; }\n",
           description: "no !important" do |src, path:|
           # Not inside the media queries whose entire job is to override.
           #
@@ -90,6 +92,8 @@ module Master
 
         RuleDSL.rule :ARIA_LABELS,
           severity: :warning, tags: %i[ACCESSIBILITY], applies_to: %i[html],
+          fires: %(<button class="icon-only"><svg></svg></button>\n),
+          does_not_fire: %(<button class="icon-only" aria-label="Close"><svg></svg></button>\n),
           description: "interactive controls need accessible names" do |src, path:|
           next [] unless path.include?("/app/views/")
           nameless_control_lines(src).map do |line|
@@ -109,6 +113,8 @@ module Master
 
         RuleDSL.rule :ANTI_DIVITIS,
           severity: :warning, tags: %i[DESIGN], applies_to: %i[html],
+          fires: %(<div class="header">\n),
+          does_not_fire: %(<header class="header">\n),
           description: "avoid styling-only wrappers and semantic div substitutes" do |src, path:|
           next [] unless path.include?("/app/views/")
           findings = scan_lines(src, /<div\s+class="(header|footer|nav|main|sidebar|article|section)"/i,
@@ -126,6 +132,8 @@ module Master
 
         RuleDSL.rule :PREFER_TAG_HELPERS,
           severity: :info, tags: %i[DESIGN RAILS_IDIOM], applies_to: %i[html],
+          fires: %(<p><%= t("hello_world") %></p>\n),
+          does_not_fire: %(<%= tag.p t("hello_world") %>\n),
           description: "prefer Rails tag helpers over raw HTML wrapping a single ERB expression" do |src, path:|
           next [] unless path.include?("/app/views/")
           scan_lines(src, SIMPLE_WRAPPER_TAG_RE,
@@ -141,6 +149,8 @@ module Master
 
         RuleDSL.rule :ERB_HTML_SAFE,
           severity: :error, tags: %i[SECURITY], applies_to: %i[html],
+          fires: %(<%= @post.body.html_safe %>\n),
+          does_not_fire: %(<%= sanitize(@post.body).html_safe %>\n),
           description: "html_safe only after sanitize" do |src, path:|
           next [] unless path.include?("/app/views/")
           next [] unless src.match?(/<%=\s*[^%]+\.html_safe\s*%>/)
@@ -150,6 +160,8 @@ module Master
 
         RuleDSL.rule :SINGLE_H1,
           severity: :warning, tags: %i[SEO ACCESSIBILITY], applies_to: %i[html],
+          fires: %(<h1>Bergen</h1>\n<h1>Oslo</h1>\n),
+          does_not_fire: %(<h1>Bergen</h1>\n<h2>Oslo</h2>\n),
           description: "one h1 per view surface" do |src, path:|
           next [] unless path.include?("/app/views/")
           # A locale-branched page renders one h1 per request while carrying
@@ -162,6 +174,8 @@ module Master
 
         RuleDSL.rule :FORM_LABEL,
           severity: :warning, tags: %i[ACCESSIBILITY], applies_to: %i[html],
+          fires: %(<input type="text" name="query">\n),
+          does_not_fire: %(<label>Search<input type="text" name="query"></label>\n),
           description: "inputs require labels or aria-label" do |src, path:|
           next [] unless path.include?("/app/views/")
           scan_lines(control_source(src), /<input\s+(?![^>]*(?:type=["']hidden|aria-label|aria-labelledby|id=))/i,
@@ -173,6 +187,8 @@ module Master
 
         RuleDSL.rule :H1_VISIBILITY,
           severity: :info, tags: %i[ACCESSIBILITY], applies_to: %i[html],
+          fires: %(<turbo-frame id="feed"></turbo-frame>\n),
+          does_not_fire: %(<turbo-frame id="feed" aria-live="polite"></turbo-frame>\n),
           description: "async regions expose status for screen readers" do |src, path:|
           next [] unless path.include?("/app/views/")
           # data-controller alone is not asynchrony: a theme toggle or a logo
@@ -206,6 +222,8 @@ module Master
 
         RuleDSL.rule :TABINDEX_ABOVE_ZERO,
           severity: :warning, tags: %i[ACCESSIBILITY], applies_to: %i[html],
+          fires: %(<a href="/" tabindex="3">Home</a>\n),
+          does_not_fire: %(<a href="/" tabindex="0">Home</a>\n),
           description: "tabindex above zero disrupts natural tab order" do |src, path:|
           next [] unless path.include?("/app/views/")
           scan_lines(src, /\btabindex\s*=\s*["']?[1-9]/i,
@@ -214,6 +232,8 @@ module Master
 
         RuleDSL.rule :NO_JS_ERB,
           severity: :warning, tags: %i[HOTWIRE], applies_to: %i[html],
+          fires: %(<%= render "posts/create.js.erb" %>\n),
+          does_not_fire: %(<%= render "posts/create.turbo_stream.erb" %>\n),
           description: "RJS and format.js — migrate to Turbo Streams" do |src, path:|
           next [] unless path.include?("/app/views/")
           findings = scan_lines(src, /format\.js\s*\{/, message: "format.js — use format.turbo_stream")
@@ -223,6 +243,8 @@ module Master
 
         RuleDSL.rule :DATA_REMOTE,
           severity: :warning, tags: %i[HOTWIRE], applies_to: %i[html],
+          fires: %(<%= link_to "Slett", post_path(post), remote: true %>\n),
+          does_not_fire: %(<%= link_to "Slett", post_path(post), data: { turbo_method: :delete } %>\n),
           description: "rails-ujs data-remote — use Turbo native forms" do |src, path:|
           next [] unless path.include?("/app/views/")
           scan_lines(src, /data-remote\s*=|remote:\s*true/,
@@ -237,6 +259,8 @@ module Master
 
         RuleDSL.rule :INPUT_TYPE_SPECIFIC,
           severity: :info, tags: %i[ACCESSIBILITY], applies_to: %i[html],
+          fires: %(<input type="text" name="email_address">\n),
+          does_not_fire: %(<input type="email" name="email_address">\n),
           description: "semantic input types for email/url/tel/date" do |src, path:|
           next [] unless path.include?("/app/views/")
           scan_lines(src, INPUT_GENERIC_TYPE_RE,
@@ -245,6 +269,9 @@ module Master
 
         RuleDSL.rule :FOCUS_VISIBLE,
           severity: :info, tags: %i[ACCESSIBILITY], applies_to: %i[css scss],
+          example_path: "/repo/app/assets/stylesheets/application.scss",
+          fires: ".btn:hover { background: var(--hover); }\n",
+          does_not_fire: ".btn:hover { background: var(--hover); }\n.btn:focus-visible { outline: 2px solid; }\n",
           description: "interactive surfaces expose visible focus" do |src, path:|
           next [] unless path.match?(/application|_minimal|_tokens|layout/i)
           next [] unless src.match?(/:hover|button|a\s*\{|\.btn/)

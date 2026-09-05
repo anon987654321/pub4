@@ -19,6 +19,8 @@ module Master
 
         RuleDSL.rule :FEW_ARGUMENTS,
           severity: :warning, tags: %i[SMALL_PARTS],
+          fires: "def place(north, east, depth)\nend\n",
+          does_not_fire: "def place(north:, east:, depth:)\nend\n",
           description: "ideal is zero to two positional arguments" do |src, path:|
           src.each_line.with_index(1).filter_map do |line, n|
             next unless line.match?(/\bdef\s+\w+\(/)
@@ -30,6 +32,8 @@ module Master
 
         RuleDSL.rule :N_PLUS_ONE,
           severity: :warning, tags: %i[PERFORMANCE],
+          fires: "posts.each { |post| post.author.name }\n",
+          does_not_fire: "posts.each { |post| post.title }\n",
           description: "loading records one-by-one inside a loop" do |src, path:|
           # Only meaningful in Rails app/ trees; non-AR enumerable chains are fine.
           next [] unless path.match?(%r{/app/|/spec/|/test/})
@@ -41,6 +45,8 @@ module Master
       # (stream: false, enabled: true) are not — they're fine API design.
         RuleDSL.rule :NO_FLAG_ARGUMENTS,
           severity: :warning, tags: %i[SMALL_PARTS],
+          fires: "def render(body, cache = true)\nend\n",
+          does_not_fire: "def render(body, cache: true)\nend\n",
           description: "a flag that selects behavior means two things hiding as one" do |src, path:|
           src.each_line.with_index(1).filter_map do |line, n|
             next unless line.match?(/def \w+\(/)
@@ -57,6 +63,8 @@ module Master
       # transformation chains (.to_s.strip.empty?) which are idiomatic Ruby.
         RuleDSL.rule :LAW_OF_DEMETER,
           severity: :warning, tags: %i[COUPLING],
+          fires: "city = order.buyer.profile.address\n",
+          does_not_fire: "city = order.buyer.profile.to_s\n",
           description: "only talk to immediate friends" do |src, path:|
           src.each_line.with_index(1).filter_map do |line, n|
             next if line.strip.start_with?("#")
@@ -75,6 +83,10 @@ module Master
 
         RuleDSL.rule :TYPOGRAPHIC_EXCELLENCE,
           severity: :info, tags: %i[TYPOGRAPHY],
+          # A quote against the ellipsis: the rule reads a bare quoted
+          # ellipsis as the placeholder, not prose that happens to contain dots.
+          fires: %(warn "..."\n),
+          does_not_fire: %(warn "…"\n),
           description: "typographic excellence in user-facing text" do |src, path:|
           next [] if path.to_s.include?("/review/scan/rules/")
           src.each_line.with_index(1).filter_map do |line, n|
@@ -92,6 +104,8 @@ module Master
       # only flag decorative runs inside code comments or string literals.
         RuleDSL.rule :TYPOGRAPHY_DISCIPLINE,
           severity: :info, tags: %i[TYPOGRAPHY],
+          fires: "# ====\n",
+          does_not_fire: "# ===\n",
           description: "hierarchy via weight and brightness, not decoration" do |src, path:|
           next [] if path.to_s.include?("/review/scan/rules/")
           src.each_line.with_index(1).filter_map do |line, n|
@@ -128,6 +142,8 @@ module Master
 
         RuleDSL.rule :ONE_SOURCE,
           severity: :warning, tags: %i[COUPLING],
+          fires: %(COUNCIL_PATH = "data/council.yml"\n),
+          does_not_fire: "path = Master::COUNCIL_PATH\n",
           description: "constants defined locally when a canonical ONE_SOURCE exists" do |src, path:|
           next [] if path.to_s.include?("/review/scan/rules/")
           next [] if path.to_s.include?("master.rb")
@@ -144,6 +160,8 @@ module Master
       # Bias: SIMULATION — future tense in output implies intent without evidence.
         RuleDSL.rule :SIMULATION,
           severity: :warning, tags: %i[ANTI_SIMULATION DENSITY],
+          fires: %(warn "the deploy will restart relayd"\n),
+          does_not_fire: %(warn "the deploy restarted relayd"\n),
           description: "future tense implies without evidence — use indicative past" do |src, path:|
           next [] unless path.to_s.end_with?(".rb", ".md", ".txt", ".erb")
           next [] if path.to_s.include?("/review/scan/rules/")
@@ -175,6 +193,8 @@ module Master
 
         RuleDSL.rule :COMPLETION_THEATER,
           severity: :error, tags: %i[ROBUSTNESS COMPLETENESS],
+          fires: "handle(first, second, etc.)\n",
+          does_not_fire: %(require "etc"\n),
           description: "ellipsis or etcetera as placeholder violates completeness" do |src, path:|
           next [] if path.to_s.include?("/review/scan/rules/")
           src.each_line.with_index(1).filter_map do |line, n|
@@ -216,6 +236,10 @@ module Master
 
         RuleDSL.rule :CONTROL_CHARS,
           severity: :error, tags: %i[ROBUSTNESS],
+          # An escape, not a literal, so this file keeps carrying no control
+          # character of its own — which is why the rule counts by ordinal.
+          fires: "value = 1\u0001\n",
+          does_not_fire: "value = 1\t\n",
           description: "no non-printable control characters in source" do |src, path:|
           # Only tab (9), newline (10), and carriage return (13) are legal in
           # source. A stray SOH/NUL reads fine in most viewers but breaks parsing

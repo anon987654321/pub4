@@ -12,6 +12,8 @@ module Master
 
         RuleDSL.rule :CONST_BY_DEFAULT,
           severity: :warning, tags: %i[IMMUTABLE], applies_to: %i[javascript],
+          fires: "let total = 0\n",
+          does_not_fire: "let total = 0\ntotal += 1\n",
           description: "use const unless reassigned" do |src, path:|
           next [] if path.to_s.match?(VENDORED_JS_RE)
 
@@ -44,6 +46,8 @@ module Master
         # this version had learned ported there (2026-08-21 twin retirement).
         RuleDSL.rule :QUOTE_VARIABLES,
           severity: :error, tags: %i[ROBUSTNESS], applies_to: %i[zsh],
+          fires: "#!/bin/bash\ngrep $pattern file\n",
+          does_not_fire: "#!/bin/zsh\ngrep $pattern file\n",
           description: "quote $variables where the shell word-splits" do |src, path:|
           # Quoting is a fact about the interpreter: zsh does not word-split or
           # glob an unquoted parameter expansion; sh, ksh and bash all do. The
@@ -101,6 +105,8 @@ module Master
 
         RuleDSL.rule :DOUBLE_BRACKET,
           severity: :warning, tags: %i[ROBUSTNESS], applies_to: %i[zsh],
+          fires: "#!/bin/zsh\nif [ -f x ]; then echo y; fi\n",
+          does_not_fire: "#!/bin/zsh\nif [[ -f x ]]; then echo y; fi\n",
           description: "use [[ ]] over [ ]" do |src, path:|
           # POSIX sh shebang — [[ ]] is a keyword only in zsh/bash, not in sh
           next [] if src.lines.first.to_s.match?(%r{#!/(?:usr/bin/env sh|bin/sh)\b})
@@ -112,6 +118,8 @@ module Master
 
         RuleDSL.rule :JS_MODULE_SIZE,
           severity: :warning, tags: %i[SMALL_PARTS], applies_to: %i[javascript],
+          fires: ("// line\n" * 301),
+          does_not_fire: ("// line\n" * 300),
           description: "JS files over 300 lines — split at module boundaries" do |src, path:|
           next [] if path.to_s.match?(VENDORED_JS_RE)
 
@@ -149,6 +157,8 @@ module Master
       # and every one was the rule misreading something; none was a substitution.
         RuleDSL.rule :MAGIC_COLOR,
           severity: :warning, tags: %i[DESIGN], applies_to: %i[css scss javascript html],
+          fires: ".btn { color: #c0392b; }\n",
+          does_not_fire: ":root { --danger: #c0392b; }\n",
           description: "color values must reference design tokens, not raw hex/rgb" do |src, path:|
           next [] if path.to_s.match?(%r{/spec/|/test/})
           next [] if File.basename(path.to_s).match?(/\Aface\.part\d+\.txt\z/)
@@ -220,6 +230,8 @@ module Master
       # A11 OPTIONAL_CHAINING_JS — && guard chains in JavaScript (OPTIONAL_CHAINING).
         RuleDSL.rule :OPTIONAL_CHAINING_JS,
           severity: :warning, tags: %i[READABILITY], applies_to: %i[javascript],
+          fires: "const name = user && user.name\n",
+          does_not_fire: "const name = user?.name\n",
           description: "use ?. over && chains" do |src, path:|
           scan_lines(src, /(\w+)\s*&&\s*\1\.\w+/, message: "nil-guard chain — use optional chaining (?.) instead")
         end

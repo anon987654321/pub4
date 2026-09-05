@@ -38,6 +38,12 @@ class TestRuleFixtures < Minitest::Test
     html: "/repo/app/views/example.html.erb",
     erb: "/repo/app/views/example.html.erb",
     js: "/repo/app/javascript/controllers/example_controller.js",
+    # `javascript` and `zsh` are what applies_to actually declares; `js` is not a
+    # language any rule names. Without these two the JS and shell rules landed at
+    # a Ruby model path, which none of them reads — but the next one to grow a
+    # path guard would have failed its own example for a reason nothing states.
+    javascript: "/repo/app/javascript/controllers/example_controller.js",
+    zsh: "/repo/bin/example.sh",
   }.freeze
 
   def self.fixtured

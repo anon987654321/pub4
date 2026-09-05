@@ -4310,7 +4310,25 @@ rule_ratchets:
     # carries a `scan: intentional` marker, because a rule's worked example is
     # the one place its own forbidden shape is legitimately spelled and
     # FAIL_VISIBLY reads that file like any other.
-    without_fixtures: 76
+    #
+    # 76 -> 47 on 2026-09-05: the twelve web rules, six JS and shell rules, and
+    # ten universal ones, plus FOCUS_VISIBLE's own example_path — its guard is
+    # a filename match, so the generic _example.scss could not have reached it.
+    # Two of the ten are worth reading. CONTROL_CHARS spells its control
+    # character as a unicode escape rather than a literal byte, so the file that
+    # forbids them keeps holding none, which is what its own comment promises.
+    # And TYPOGRAPHIC_EXCELLENCE's first draft, `warn "loading..."`, did not
+    # fire: the rule reads a bare quoted ellipsis, not prose containing dots,
+    # and a fixture that passes for the wrong reason is the thing this ratchet
+    # exists to stop. SQL_INJECTION is deliberately left unfixtured — its
+    # worked example is an interpolated `.execute(` call, the rule has no
+    # self-exemption and honours no marker, so the example would be a real
+    # error-severity finding in the rule file itself.
+    #
+    # `test_rule_fixtures.rb` gained `javascript:` and `zsh:` default paths.
+    # Those are what applies_to declares; `js` is not a language any rule names,
+    # so every JS and shell rule had been landing at a Ruby model path.
+    without_fixtures: 47
 
 # What a decision proposal is checked against before it is offered, by
 # Master::Ground::BiasGuard. `detect` accuses, `clears` acquits: a proposal
