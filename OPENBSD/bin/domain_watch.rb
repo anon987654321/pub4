@@ -14,8 +14,11 @@
 # changing hands shows up as a reviewable diff instead of an outage.
 #
 #   ruby OPENBSD/bin/domain_watch.rb            # report against the snapshot
-#   ruby OPENBSD/bin/domain_watch.rb --update   # rewrite the snapshot
+#   ruby OPENBSD/bin/domain_watch.rb --update   # rewrite the snapshot (OpenBSD/Linux)
 #   ruby OPENBSD/bin/domain_watch.rb --json
+#
+# --update shells to /usr/bin/timeout. macOS has no that binary; refresh the
+# snapshot on vm23.
 #
 # whois is rate-limited and several registries refuse queries from unknown
 # clients. Anything we cannot determine is reported "unknown" and never counted
