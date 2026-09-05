@@ -188,9 +188,16 @@ positives worth not re-discovering — those are guards, not history.
   `rules.yml` rather than out of `law/`. Converging `WhyExplainer` onto the law
   is the move that makes those safe to remove; doing it in the other order
   empties a live surface.
-- **Six ratchets are over, re-measured 2026-09-05**: `spine.lib_body_ceiling`
-  39181/37464, `self_findings` 164/151, `data_reach` 37/35, `growth.master`
-  1064/1047, `growth.rails` 2367/2358 and `growth.studio` 149/138. Each needs a
+- **Six ratchets are over, re-measured 2026-09-05 after the antigravity
+  collapse**: `spine.lib_body_ceiling` 38668/37464, `self_findings` 165/151,
+  `data_reach` 36/35, `growth.master` 1061/1047, `growth.rails` 2366/2358 and
+  `growth.studio` 155/138. `spine.lib_body_ceiling` fell 636 net — 695 back from
+  the collapse, 59 spent on rule fixtures — and `growth.master` six files, which
+  is what a fold looks like; every other row moved by one or two. The three
+  RAILS rows that were over — `model_contract.uninferrable_inverse` 54,
+  `model_contract.no_validations` 9 and
+  `destructive_action.unconfirmed_destroy` 29 — are all 0 and their floors are
+  0. Each remaining one needs a
   fold rather than a raise, and none is a one-sitting job. Read the live figures
   from `MASTER/bin/pub4 measure`; the list here has been three, then five, then
   six on three consecutive readings, so its value is the shape and not the
@@ -200,7 +207,12 @@ positives worth not re-discovering — those are guards, not history.
   `runtime.yml`'s five are served whole through `RuntimeCatalog` and
   `/runtime/topologies`, and the browser picks the sections by name;
   `personas.yml` and `models.yml`'s ollama rows are registry entries selected by
-  a config value. Do not delete from this list without finding the reader —
+  a config value. `rules.yml#schema_metadata` is the same shape read once more
+  on 2026-09-05 and is a third class again: nothing loads the key, and the block
+  under it documents two fields — `reversibility` and `blast_radius` — that
+  `semantic_rules.rb` and `meta_rules.rb` do pass to `Finding.build`. It is a
+  schema note, not config, and deleting it would delete the only statement of
+  what those two fields may hold. Do not delete from this list without finding the reader —
   that entry says why a stricter version of the tool is not buildable, and this
   is what its error looks like from the inside.
 ### `/scan`'s autofix corrupts code — opened 2026-08-31, do not run it on a tree
@@ -1184,51 +1196,26 @@ rather than inferred, and the command that measured it is named so the next
 reader can re-run it instead of re-deriving it. The cleanup that came out of the
 same sitting is `72a8cfae8`; what is here is what that commit did **not** close.
 
-#### The Antigravity adapter is 960 lines reached through one method
+#### `lib/autonomy` is reached by nothing but its own tests
 
-`lib/ground/antigravity/` is ten files and 960 non-blank non-comment lines.
-`Coordinator` is constructed at exactly one site, `lib/cli/skills.rb:76`, and
-that site uses one thing: `coordinator.skills.discover!`. Its constructor
-eagerly builds nine subsystems — Rules, Skills, Hooks, Plugins, Mcp, Settings,
-Subagents, Artifacts, Discovery — and every other public method on it has zero
-callers outside its own directory:
+Found 2026-09-05 while closing the last `rake selftest` finding, which is
+`NO_GOD_CLASS` on `EventStore` and had been read as a decomposition question.
+It is not one yet. `EventStore` is constructed at exactly two sites and both are
+`test/test_autonomy_event_store.rb`. So are `Goal`, `Task`, `TaskGraph` and
+`Schema`; `DreamLoop` and `Recovery` have no reference anywhere outside the
+directory, tests included. Seven files, 400 body lines, one `require` aggregator
+and no caller.
 
-    system_prompt_context  before_tool  after_tool  before_invocation
-    after_invocation  on_stop  active_rules_prompt  prompt_catalog
+`lib/autonomy.rb`'s own header is the reason this is a decision rather than a
+deletion. It says what these six are for — "a dependency graph that can say what
+is blocked on what, a store that survives a crash, and a way back into an
+interrupted run" — and argues, correctly, that the other half of the proposal it
+came from was already built under other names. The durable half was written and
+never wired.
 
-Each measured with `grep -rn "\b<name>\b" lib bin web tools test` filtered to
-exclude `lib/ground/antigravity/`; all eight return zero. So the hook lifecycle,
-the rules-into-prompt path, the plugin, MCP, settings, subagent and artifact
-surfaces are built on every skills load and called by nothing.
-
-Two things make this worth a sitting rather than a note. `lib/ground` is **938
-body lines over its budget** (6837 against 5899 in `limits.yml`), and this
-subsystem is 960 — the overage is almost exactly this directory. And **six of
-the twelve current `rake selftest` findings are inside it**: the one LINEARITY
-finding, and five of the nine DENSITY ones.
-
-The decision is whether the unreached surface is a half-landed integration to
-finish or a speculative adapter to delete. Do not answer it by deleting on
-sight: `Discovery` and `Skills` are live, and the file naming
-`OPENBSD/etc/rc.d/master` in the `data/tts.yml` entry above is the warning about
-how a subsystem can look configured and be unreached in exactly this shape.
-
-#### `rake selftest` is 12, and the record above says 0
-
-The **Self-Test Debt** section is corrected in place rather than left as a second
-source, but the delta deserves its own record because it is a regression, not
-drift in an instrument. It was 0 on 2026-08-19. Today:
-
-| law | count | where |
-|---|---|---|
-| LINEARITY | 1 | `lib/ground/antigravity/rules.rb:39` |
-| ABSTRACTION | 2 | `lib/autonomy/event_store.rb:16` (14 public methods), `lib/review/llm_dispatcher.rb:14` (11) |
-| DENSITY | 9 | five in `lib/ground/antigravity/`, plus `lib/cli/session/result_display.rb:62`, `lib/fix/fix_loop/pass_runner/llm_stage.rb:30` |
-
-`ROBUSTNESS`, `SINGULARITY`, `PROXIMITY`, `KERNEL_ADHERENCE` and `PRINCIPLE_MAP`
-are all 0. The two ABSTRACTION findings are the same shape the fold spine's
-`Constitution` had — check whether the public count is measuring an idiom before
-splitting anything, the way `private_class_method` closed that one.
+Splitting `EventStore`'s fourteen public methods is the wrong first move either
+way: it is a repository over four tables, every method is somebody's door, and
+nobody is at any of them. Wire it or delete it; the count follows.
 
 #### The tier2 ordering guarantee — closed 2026-09-05
 
@@ -1321,17 +1308,24 @@ Still open, and each is a decision rather than a sweep:
 
 #### Nine of sixteen line budgets are over, and `law/` is nearly double
 
-`rake loc_budget`, re-measured 2026-09-05: `law` 1609/852, `lib/pub4` 692/470,
-`lib/ground` 6842/5899, `lib/core` 769/682, `lib/boot` 264/227, `lib/trace`
-2055/1999, `lib/voice` 3405/3181, `lib/review` 10224/9765, `lib/fix` 2659/2643.
-`limits.yml` says a breach is paid by extraction or deletion and never by a
-bigger number. One of the nine has been paid down since: `lib/review` fell 36
-when ten byte-identical copies of a five-line `visit` came out of
-`structural_rules.rb` and moved onto `Rule#walk`, which is the "one shared
-AST-walk helper" the AST backlog above used to list — the extraction covered
-that session's own additions and 36 more. `law/` at 89% over is the one to
-open first: the twin census closed in 2026-08 retired 42 duplicated rules and the
-file set has grown back past where the budget was set.
+`rake loc_budget`, re-measured 2026-09-05 after the antigravity collapse: `law`
+1609/852, `lib/pub4` 692/470, `lib/ground` 6112/5899, `lib/core` 769/682,
+`lib/boot` 268/227, `lib/trace` 2055/1999, `lib/voice` 3408/3181, `lib/review`
+10387/9765, `lib/fix` 2670/2643. `limits.yml` says a breach is paid by
+extraction or deletion and never by a bigger number.
+
+One of the nine has been paid down and it is the largest single fold this file
+records. `lib/ground` fell 730 — 6842 to 6112, from 943 over to 213 — when the
+seven unreached antigravity subsystems and the Coordinator that eagerly built
+them went, which is the whole of what that directory's overage had been.
+`lib/review` moved the other way: 36 back when ten byte-identical copies of a
+five-line `visit` moved onto `Rule#walk`, then 59 out again on the twenty-nine
+rule fixtures below. That is the trade the fixture ratchet asks for, and it is
+named here rather than buried.
+
+`law/` at 89% over is the one to open next: the twin census closed in 2026-08
+retired 42 duplicated rules and the file set has grown back past where the
+budget was set.
 
 #### `rake selfcheck` locations and three silent rescues — closed 2026-09-05
 
@@ -1365,6 +1359,17 @@ public methods are the surface of a repository over four tables, and every one
 of them is somebody's door. Splitting it into a goal, task, event and checkpoint
 store is a design decision with an owner; privatising a repository's API to
 satisfy a counter is what "driving the count to zero by re-exempting" means.
+Read it beside the `lib/autonomy` entry above: nobody is at any of those doors,
+which changes the question from how to split it to whether to wire it.
+
+The fourth `SILENT_RESCUE` came back and is closed. `ProgressReporter`'s
+`append_scan_hits_jsonl` swallowed every failure writing `.master/scan_hits.jsonl`
+— the one record a sixteen-hour walk leaves behind, where an empty log and a
+clean run look alike. It reports at `:load_bearing` now. `rake selfcheck` is 1.
+
+`rake selfcheck` also printed its whole located summary twice on a failing run:
+once to stdout and once as the abort message. `Report#line` is the headline on
+its own and the task fails with that.
 
 #### `edge_tts_available?` and the Mac `say` fallback — closed 2026-09-05
 
@@ -1563,6 +1568,18 @@ The other three failures are separate and pre-existing: `test_reach_exec.rb`
 (1 error), `test_security_sweep.rb` (1 failure), and `test_ratchets.rb`, which
 is the record below.
 
+**All but `test_ratchets.rb` are closed, 2026-09-05.** `test_reach_exec` was
+`Io::Exec` calling `Swallow` without requiring it, so the timeout path raised
+NameError instead of killing the process group it exists to kill — the same
+defect `ground/swallow.rb`'s own header records for `replicate_client.rb`, on
+the file next to it. `test_security_sweep` was the sweep reading
+`$FLOW_AMBER_PASSWORD` in `RAILS/gates/data/flows.yml` as a leaked credential; a
+value that is nothing but an indirection names where the secret lives. Two more
+went red in the meantime and both were the test rather than the code —
+`test_scanner`'s doubles spelled a `scan_one` signature that had gained three
+keyword arguments, and `test_source_assertions` counted two additions its
+pattern cannot tell from the thing it hunts. The suite reads 293 of 294 files.
+
 #### The over-ratchet list is not stable, and that is the finding
 
 `test/test_ratchets.rb` names them. It read three on 2026-09-04, five later the
@@ -1629,6 +1646,20 @@ so `spine.lib_body_ceiling` reads 2 above where the session opened and
   underscores and the Gemfile with hyphens. The ground truth is one command —
   `echo hi | ruby bin/tts-worker en-GB-RyanNeural +0% +0Hz /tmp/x.mp3` — and it
   writes a real MP3.
+- **A lint that checks a basename cannot see a namespace.** `rake autoload` was
+  red and `rake lint:autoload` called the same file clean. The three files under
+  `lib/review/scan/engines/` declare `Master::Review::Scan::PathFilter` and the
+  directory implies `Scan::Engines::PathFilter`, so eager loading raised on a
+  name the lint approved: it matched `module <Basename>` anywhere in the file
+  and never asked at what nesting. It compares the whole path-implied constant
+  now. All 45 ignores still measure as necessary under the stricter reading,
+  which is the check that the fix did not just widen the hole.
+- **`rake mutate` chose its candidates with a regex over the file text**, so it
+  read a numbered list in a comment and the 8 in `"UTF-8"` as integers, and
+  `sub` then rewrote the first match anywhere rather than the one in the code.
+  Three well-documented files reported eight survivors for mutations no test
+  could see. It walks Prism's token stream now and names the line each mutation
+  is on. Same shape as every other entry here: the instrument, not the finding.
 - **`rake selfcheck` reports a count with no locations.** `SelfCheck::Report`
   exposes `total`, `by_rule`, `by_severity` and `error` and no findings list, so
   the gate can say "7 violations across 3 rules" and cannot say where. Acting on
@@ -1728,7 +1759,7 @@ findings with path and line, and the task prints that summary once.
 **6. A lint over the rule corpus's own regexes — done.** `rake lint:word_boundary`
 flags `\b` glued to escaped punctuation. Currently clean.
 
-**7. Every registry rule proves it can fire — enforced for new rules, 76 left.**
+**7. Every registry rule proves it can fire — enforced for new rules, 47 left.**
 `law/` refuses to load a rule without worked fixtures; the registry accepts one
 without. The forward half was already closed and this entry did not say so:
 `test_rule_fixtures.rb` fails when the unfixtured count rises, so a new RuleDSL
@@ -1744,7 +1775,22 @@ than restating its regex, which is the half that catches drift: TODO_FIXME's is
 a line naming `TODO.md`, DEAD_CODE's is a guard clause, PLUCK_OVER_MAP's is the
 `pluck` it recommends.
 
-Two things the retro-fit turned up. The harness had no `html` entry in
+Twenty-nine more on the same day, 76 -> 47: the twelve web rules, six JS and
+shell rules, and ten universal ones. `DEFAULT_PATHS` gained `javascript` and
+`zsh` for the same reason it gained `html` — those are what `applies_to`
+declares, and `js` is not a language any rule names. Two of the twenty-nine are
+worth keeping: TYPOGRAPHIC_EXCELLENCE's first draft did not fire, because the
+rule reads a bare quoted ellipsis and `warn "loading..."` is prose containing
+dots; and CONTROL_CHARS is fixtured with a unicode escape rather than a literal
+byte, after the first attempt wrote the byte into the file whose own comment
+promises it carries none, and a second slip wrote one into `data/rules.yml`
+where Psych then refused the whole rule corpus. SQL_INJECTION stays unfixtured
+on purpose — its example is an interpolated `.execute(` call, and the rule has
+neither a self-exemption nor a marker, so the example would be a live
+error-severity finding in the rule file. The 59 lines all this costs land on
+`lib/review`, which was already over budget.
+
+Two things the earlier retro-fit turned up. The harness had no `html` entry in
 `DEFAULT_PATHS`, so every web rule's example landed at a Ruby model path and a
 rule guarded by `path.include?("/app/views/")` could not fire on its own fixture.
 And a `fires:` string is source: RESCUE_EXCEPTION's made FAIL_VISIBLY fire on
@@ -2583,6 +2629,51 @@ with its blocker rather than left implied:
 3. **The anonymised contact relay** — inbound mail routing on vm23.
 4. **Live streaming, Solidus, pgvector** — infrastructure, listed under Blocked.
 
+### Eight files over their length ceilings
+
+`RAILS/test/file_length_ratchet_test.rb`, the one red file in the standalone
+suite as of 2026-09-05. `limits.yml`'s rule holds here too: a breach is paid by
+extraction or deletion, never by a bigger number.
+
+    gates/support/cdp_session.rb              374 / 339  (+35)
+    shared/app/assets/stylesheets/_zen_shell.scss  502 / 477  (+25)
+    gates/lib/research/design_metrics.rb      462 / 442  (+20)
+    brgen/test/services/deploy_backlog_test.rb 631 / 618  (+13)
+    gates/lib/live/user_flow.rb               320 / 313  (+7)
+    gates/support/page_inventory.rb           444 / 440  (+4)
+    gates/lib/rendered/rendered_geometry.rb   450 / 449  (+1)
+    gates/lib/source/css_constitution.rb      336, over the limit and no ceiling declared
+
+105 lines between them. Five of the eight are gate code that drives Chrome over
+CDP, so an extraction there is only provable against a booted fleet —
+`RAILS/bin/triangle up` first, or the split lands unmeasured. The counterpart
+half of that test is green: no ceiling is slack any more.
+
+### Two models nothing writes
+
+Found 2026-09-05 while giving the nine promiseless models their reason, and
+worth its own record because the marker on each says "nothing writes it", which
+is a finding rather than an exemption.
+
+- **`Stream`** (`brgen/app/models/stream.rb`) has a table with `url`,
+  `content_type` and `duration`, a `belongs_to :user` and `:post`, and no reader
+  or writer anywhere in the app or its seeds. `Tv::LiveStream` is the
+  live-video model and is a different class.
+- **`Mention`** is read by nothing and written by nothing. `Post has_many
+  :mentions` resolves and stays empty, so an @name in a post reaches nobody —
+  while `Notification::KINDS` carries `mention` and
+  `NotificationsController`'s group order ranks it first.
+
+Both are the shape the Tier 1 entries above closed one at a time: schema and
+model present, nothing at either end. The question per model is whether to wire
+the writer or drop the table.
+
+`Tagging` was the third candidate and is not one — verify the instrument before
+the finding. A grep for `Tagging.` and `taggings.create` finds only readers,
+because the writer is `self.hashtags = tags` inside
+`Shared::Taggable#sync_hashtags`, an `after_save` on every post. An association
+assignment writes the join row without ever naming its class.
+
 ### Deploy blockers
 
 What stops a RAILS deploy from being a one-command operation, each with what
@@ -2850,6 +2941,18 @@ itself as giving up on. no_validations lands at 10 against 11 and
 unconfirmed_destroy at 30 against 29 — reproducing a hand count is the reason
 to trust a detector. What remains under this row is the per-site judgement it
 always described, now with numbers that cannot drift while nobody looks.
+CLOSED 2026-09-05: the per-site judgement was done and all three read 0 against
+a floor of 0. 55 associations name their inverse and two say in a marker that
+the other side does not exist; four models gained a validation mirroring a
+unique index that was otherwise reached as a 500 and five say in a marker why
+they promise nothing; 25 destructive controls say why they are reversible and
+four gained a prompt. Two instruments were wrong on the way and both are fixed
+— model_contract read one line of a multi-line association, which called four
+declared inverse_of options missing and never saw eight wrapped foreign keys,
+and chrome_i18n read "the line above is a comment" as "this line is a comment",
+so the new markers silently excused two live findings. The RAILS rows of this
+register are done; what is left in this file's OPENBSD section is registrar and
+operator work.
 
 #### `bsdports_org_delegated_to_parking`  — tag: operator-priority
 
