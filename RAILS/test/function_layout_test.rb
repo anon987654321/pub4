@@ -4,7 +4,7 @@ require "minitest/autorun"
 require "net/http"
 require "socket"
 require "yaml"
-require_relative "../gates/lib/fleet"
+require_relative "../gates/support/fleet"
 
 # Per-app function + layout inventory. Each YAML row is one falsifiable check:
 # a file must contain (or omit) a marker, or a live GET must render one.

@@ -4,8 +4,8 @@ require "yaml"
 require_relative "../../../../OPENBSD/lib/gate_result"
 require_relative "../../support/gate_autofix"
 require_relative "../../../shared/lib/pub4/master_design"
-require_relative "css_spacing_scans"
-require_relative "css_weight"
+require_relative "../../support/css_spacing_scans"
+require_relative "../../support/css_weight"
 
 module Deploy
   # Every SCSS/CSS under RAILS apps + shared must pass MASTER design constitution.

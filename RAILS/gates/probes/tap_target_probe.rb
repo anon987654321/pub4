@@ -15,7 +15,7 @@
 # skipped. display:none/zero-rect elements are invisible, not undersized.
 
 require_relative "../support/cdp_session"
-require_relative "../lib/fleet"
+require_relative "../support/fleet"
 
 PAGES = Fleet.urls({
   # Routes, not numbers. This map restated the whole fleet, which

@@ -104,7 +104,69 @@ module Deploy
         result.fail("#{app_name}: stale asset build — #{rel} newer than application.css")
       end
 
+      content_stale?(sources, build, result, app_name)
       service_worker_stale?(app_dir, result, app_name)
+    end
+
+    # mtime and dirtiness miss a committed build that no longer matches its
+    # sources: both files are clean and the checkout stamped them together.
+    # Compare custom-property literals. Interpolated source values (`#{$bg}`)
+    # are skipped — those compile to a hex the source never spells, and
+    # treating that as drift is why a property-by-property check was
+    # withdrawn. A literal `--radius-card: 12px` in SCSS against `16px` in
+    # the build is the case this exists for.
+    TOKEN_DECL = /--([\w-]+)\s*:\s*([^;}{]+)/
+    # Hex, lengths, and unitless numbers (weights). Everything else is
+    # interpolation, calc(), a font stack, or a minified selector — the class
+    # that made a property-by-property check report every dialect as drift.
+    SIMPLE_ATOM = /(?:#(?:[0-9a-fA-F]{3,8})|-?[\d.]+(?:px|rem|em|%|ch)?)/i
+    SIMPLE_LITERAL = /\A#{SIMPLE_ATOM.source}\z/i
+
+    def content_stale?(sources, build, result, app_name)
+      allowed = Hash.new { |h, k| h[k] = [] }
+      sources.each do |path|
+        body = File.read(path)
+        token_literals(body).each { |name, values| allowed[name].concat(values) }
+        # --bg: #{$bg} compiles to a hex the custom property never spells.
+        # The mixin default `$bg: #17161c` is that hex, the same source
+        # fallback_drift_lint.collect_from_scss already reads.
+        scss_var_literals(body).each { |name, values| allowed[name].concat(values) }
+      end
+      allowed.transform_values!(&:uniq)
+
+      token_literals(File.read(build)).each do |name, values|
+        # Same exemption fallback_drift_lint carries: --accent is a different
+        # hex per vertical, so "not in the mixin default" is the design.
+        next if %w[accent accent-hover].include?(name)
+        next if allowed[name].empty?
+
+        extra = values - allowed[name]
+        next if extra.empty?
+
+        result.fail(
+          "#{app_name}: application.css declares --#{name}: #{extra.join(', ')} " \
+          "which no source declares (sources have #{allowed[name].join(', ')})"
+        )
+      end
+    end
+
+    def token_literals(body)
+      found = Hash.new { |h, k| h[k] = [] }
+      body.to_s.scan(TOKEN_DECL) do |name, raw|
+        value = raw.strip.sub(/\s*!important\z/, "")
+        next unless value.match?(SIMPLE_LITERAL)
+
+        found[name] << value.downcase
+      end
+      found
+    end
+
+    def scss_var_literals(body)
+      found = Hash.new { |h, k| h[k] = [] }
+      body.to_s.scan(/\$([\w-]+)\s*:\s*(#{SIMPLE_ATOM.source})/i) do |name, value|
+        found[name] << value.downcase
+      end
+      found
     end
 
     # tools/build_workbox.mjs writes app/views/pwa/service-worker.js — it is

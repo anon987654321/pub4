@@ -51,7 +51,7 @@ require "fileutils"
 require "json"
 require "optparse"
 require_relative "../support/cdp_session"
-require_relative "../lib/fleet"
+require_relative "../support/fleet"
 
 options = { url: nil, frames: 1, out: "tmp/face_capture", interval: 0.04, timeout: 30 }
 OptionParser.new do |o|

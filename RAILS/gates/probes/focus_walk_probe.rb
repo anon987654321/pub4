@@ -12,7 +12,7 @@
 #   ruby gates/probes/focus_walk_probe.rb <url> [steps]
 
 require_relative "../support/cdp_session"
-require_relative "../lib/fleet"
+require_relative "../support/fleet"
 require "json"
 
 PAGES = Fleet.urls({
