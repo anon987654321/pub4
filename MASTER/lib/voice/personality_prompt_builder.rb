@@ -317,8 +317,38 @@ module Master
         zsh = @rules.data(:zsh) || @rules.data(:zsh_patterns)
         return [] unless zsh.is_a?(Hash) && !zsh.empty?
 
+        [zsh_banned_line(zsh), zsh_replacement_line(zsh), zsh_pattern_line(zsh),
+         zsh_ssh_line(zsh), zsh_economics_line(zsh)].compact
+      end
+
+      def zsh_banned_line(zsh)
         banned = Array(zsh["banned_commands"]).join(", ")
-        ["Zsh scripts: never use #{banned}. Use pure zsh parameter expansion and builtins instead."]
+        "Zsh scripts: never use #{banned}. Use pure zsh parameter expansion and builtins instead." unless banned.empty?
+      end
+
+      def zsh_replacement_line(zsh)
+        replacements = Array(zsh["forbidden_commands"]).first(8).filter_map do |row|
+          "#{row["command"]} → #{row["replacement"]}" if row.is_a?(Hash)
+        end
+        "Zsh replacements: #{replacements.join("; ")}." unless replacements.empty?
+      end
+
+      def zsh_pattern_line(zsh)
+        patterns = zsh["native_patterns"]
+        return unless patterns.is_a?(Hash) && !patterns.empty?
+
+        samples = patterns.first(6).map { |name, expr| "#{name}=#{expr}" }.join(", ")
+        "Zsh native patterns: #{samples}."
+      end
+
+      def zsh_ssh_line(zsh)
+        ssh = zsh["ssh_reading"]
+        "SSH reading: #{ssh["rule"]}." if ssh.is_a?(Hash) && ssh["rule"]
+      end
+
+      def zsh_economics_line(zsh)
+        economics = zsh.dig("token_economics", "philosophy").to_s.strip
+        "Zsh token economics: #{economics.split(/\s+/).first(24).join(" ")}." unless economics.empty?
       end
 
       def ruby_style_lines(style)

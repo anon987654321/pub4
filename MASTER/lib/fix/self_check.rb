@@ -7,13 +7,19 @@ module Master
     class SelfCheck
       QUICK_SEVERITIES = %i[error critical].freeze
 
-      Report = Data.define(:total, :by_rule, :by_severity, :error) do
+      Report = Data.define(:total, :by_rule, :by_severity, :error, :findings) do
         def clean? = total.zero? && error.nil?
         def summary
           return "selfcheck: failed — #{error}" if error
           return "selfcheck: clean" if clean?
 
-          "selfcheck: #{total} violation(s) across #{by_rule.size} rule(s)"
+          lines = ["selfcheck: #{total} violation(s) across #{by_rule.size} rule(s)"]
+          Array(findings).first(20).each do |item|
+            lines << "  #{item[:path]}:#{item[:line]} #{item[:rule]}"
+          end
+          extra = Array(findings).size - 20
+          lines << "  … and #{extra} more" if extra.positive?
+          lines.join("\n")
         end
       end
 
@@ -63,12 +69,13 @@ module Master
       def build_report(violations)
         by_rule = violations.group_by { |item| item[:rule] }.transform_values(&:size)
         by_severity = violations.group_by { |item| item[:severity] }.transform_values(&:size)
-        Report.new(total: violations.size, by_rule:, by_severity:, error: nil)
+        Report.new(total: violations.size, by_rule:, by_severity:, error: nil, findings: violations)
       end
 
       def flatten_violations(results)
-        results.flat_map do |_path, scan_result|
-          scan_result.respond_to?(:ok?) && scan_result.ok? ? scan_result.value! : []
+        results.flat_map do |path, scan_result|
+          rows = scan_result.respond_to?(:ok?) && scan_result.ok? ? scan_result.value! : []
+          rows.map { |item| item.merge(path:) }
         end
       end
 
@@ -79,7 +86,7 @@ module Master
       end
 
       def failed_report(message)
-        Report.new(total: 0, by_rule: {}, by_severity: {}, error: message)
+        Report.new(total: 0, by_rule: {}, by_severity: {}, error: message, findings: [])
       end
     end
   end

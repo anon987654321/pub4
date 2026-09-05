@@ -30,10 +30,41 @@ module Pub4
 
     module_function
 
+    def code_files
+      @code_files ||= Dir.glob(CODE_GLOBS.map { |g| File.join(MASTER_DIR, g) })
+                         .select { |path| File.file?(path) }
+                         .to_h { |path| [path, File.read(path)] }
+    end
+
     def code
-      @code ||= Dir.glob(CODE_GLOBS.map { |g| File.join(MASTER_DIR, g) })
-                   .select { |f| File.file?(f) }
-                   .map { |f| File.read(f) }.join
+      @code ||= code_files.values.join
+    end
+
+    # A key whose name appears in code that never mentions the yaml file is
+    # counted as named by the census and still unread: success_criteria lived
+    # in rules.yml while phase_gates.rb read session state under the same word.
+    def attributed?(key, yaml_basename)
+      needle = /["':]#{Regexp.escape(key.to_s)}\b/
+      code_files.any? { |_path, src| src.match?(needle) && src.include?(yaml_basename) }
+    end
+
+    def misattributed
+      check_corpus!(Dir.glob(File.join(MASTER_DIR, "data", "*.yml")).sort).flat_map do |path|
+        doc = begin
+          YAML.safe_load_file(path, aliases: true)
+        rescue StandardError
+          nil
+        end
+        next [] unless doc.is_a?(Hash)
+
+        basename = File.basename(path)
+        doc.keys.filter_map do |key|
+          next unless code.match?(/["':]#{Regexp.escape(key.to_s)}\b/)
+          next if attributed?(key, basename)
+
+          "#{basename}##{key}"
+        end
+      end
     end
 
     # Both ends, because they fail in opposite directions. An empty code corpus
@@ -79,7 +110,12 @@ module Pub4
 
     def run(ratchet: false)
       out = unnamed
+      misplaced = misattributed
       puts "data_reach: #{out.size} top-level keys no code names (ceiling #{ceiling})"
+      unless misplaced.empty?
+        puts "data_reach: #{misplaced.size} named in code that never mentions their file:"
+        misplaced.each { |key| puts "  #{key} — name appears, but not next to #{key.split('#', 2).first}" }
+      end
       # <=, not <, so a census sitting exactly at its ceiling can record its
       # members without having to fall first. That is the common case for a
       # ratchet that is holding, and it seeds the attribution for the next rise.

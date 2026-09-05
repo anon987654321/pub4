@@ -155,7 +155,9 @@ module Master
 
           data = YAML.safe_load(File.read(@usage_file), aliases: false)
           data.is_a?(Hash) ? data : {}
-        rescue StandardError
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "antigravity.skills.load_usage",
+                                        severity: :load_bearing, path: @usage_file)
           {}
         end
 

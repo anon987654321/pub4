@@ -11,7 +11,11 @@ Rake::TestTask.new(:test) do |t|
   # unasked while `rake test` reported a full run.
   t.test_files = FileList["test/test_*.rb"].exclude(
     "test/test_browser.rb",
-    "test/test_web_http.rb"
+    "test/test_web_http.rb",
+    # rack/test lives in the web bundle, which is not installable on a
+    # contributor Mac. Leaving this in the default glob aborted `rake test`
+    # before any other file ran.
+    "test/test_web_ui.rb"
   )
   t.warning = false
 end
@@ -166,10 +170,7 @@ task :selfcheck do
        "error/critical only, across #{Master.scan_roots.join(', ')}"
   report = Master::Fix::SelfCheck.new(root: __dir__).quick
   puts report.summary
-  unless report.clean?
-    report.by_rule.sort_by { |_, count| -count }.first(8).each { |rule, count| puts "  #{rule}: #{count}" }
-  end
-  abort "selfcheck: #{report.summary}" unless report.clean?
+  abort report.summary unless report.clean?
 end
 
 desc "Eager-load all Zeitwerk-managed constants"
@@ -601,6 +602,16 @@ namespace :lint do
     sh RbConfig.ruby, File.join(__dir__, "tools", "rule_hygiene.rb")
   end
 
+  desc "Flag \\b adjacent to punctuation in rule regexes — a word boundary that can never fire"
+  task :word_boundary do
+    sh RbConfig.ruby, File.join(__dir__, "tools", "word_boundary_lint.rb")
+  end
+
+  desc "MASTER test files are test_<subject>.rb, not <subject>_test.rb"
+  task :test_naming do
+    sh RbConfig.ruby, File.join(__dir__, "tools", "test_naming.rb")
+  end
+
   desc "No two files loadable into one process define the same top-level constant"
   task :constant_collisions do
     sh RbConfig.ruby, File.join(__dir__, "tools", "constant_collisions.rb")
@@ -775,4 +786,11 @@ end
 desc "Every law/ rule flags its bad fixture and spares its good one, then every law judges law/ itself"
 task :dogfood do
   ruby "-Ilib", "spec/dogfood_spec.rb"
+end
+
+desc "Mutate a source and watch its test fail. Usage: rake mutate[lib/foo.rb,test/test_foo.rb]"
+task :mutate, [:source, :test] do |_t, args|
+  abort "usage: rake mutate[lib/foo.rb,test/test_foo.rb]" if args.source.to_s.empty? || args.test.to_s.empty?
+
+  ruby File.join(__dir__, "tools", "mutate.rb"), args.source, args.test
 end

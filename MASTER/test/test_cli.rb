@@ -13,7 +13,6 @@ class TestCLI < Minitest::Test
 
     @config.expect(:[], false, ["tts"])
     @config.expect(:prescan?, false)
-    @config.expect(:dig, nil, ["web_token"])
 
     @container = {
       session:  @session,
@@ -25,16 +24,10 @@ class TestCLI < Minitest::Test
     }
 
     @cli = Master::CLI::Session.new(container: @container)
+    refute Fiber[:master_visitor], "local CLI is the operator surface, not a visitor"
   end
 
-  # CLI#initialize calls set_visitor_mode_if_unauthenticated, which sets
-  # Fiber[:master_visitor] = true whenever the config carries no web_token —
-  # true of every container built here. Fiber storage outlives the test, so the
-  # flag stayed on for the rest of the process and the next test to reach
-  # TurnRouter took the visitor path: casual_reply instead of the Fold, and
-  # `chat: undefined method 'call'` against a stub agent that only answers
-  # :model. That is TODO.md's "known flake" in TurnRouterTest — order-dependent,
-  # invisible when the file runs alone, and nothing to do with the router.
+  # Local CLI is the operator surface. Visitor is a web-request flag.
   def teardown
     Fiber[:master_visitor] = nil
     Fiber[:master_paired] = nil

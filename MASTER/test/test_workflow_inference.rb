@@ -8,6 +8,13 @@ class WorkflowInferenceTest < Minitest::Test
     assert_equal :run_full_workflow, router.classify("run this through master")
   end
 
+  def test_intent_router_classifies_a_file_read
+    router = Master::Ground::IntentRouter.new
+    assert_equal :inspect_repo, router.classify("read CLAUDE.md")
+    refute_equal :inspect_repo, router.classify("I read that the constitution is long")
+    refute_equal :unknown, router.classify("read CLAUDE.md")
+  end
+
   # /workflow is an alias of /through (see help.rb), so it renders the through
   # pipeline's sections. This test used to assert a "workflow: deliberation" /
   # "verdict:" shape from a design that no longer exists, and its doubles had

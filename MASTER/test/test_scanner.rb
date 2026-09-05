@@ -214,6 +214,21 @@ class TestScanner < Minitest::Test
     end
   end
 
+  def test_findings_flattens_path_onto_each_hash
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "sample.rb")
+      File.write(path, "puts 'ok'\n")
+      scanner = Master::Review::Scan::Scanner.new(
+        rules: [build_rule(findings: [{ rule: "STYLE", line: 1, message: "issue" }])],
+      )
+
+      hits = scanner.findings([path, dir])
+
+      assert hits.all? { |item| item[:path] && item[:rule] == "STYLE" }
+      assert hits.any? { |item| item[:path] == path }
+    end
+  end
+
   private
 
   def git(repo, *args)

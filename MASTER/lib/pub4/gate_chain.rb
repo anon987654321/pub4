@@ -243,7 +243,8 @@ module Pub4
       announce_foreign(foreign)
 
       seen = foreign.dup
-      results = selected.map do |stage|
+      results = selected.each_with_index.map do |stage, index|
+        puts "gate: #{index + 1}/#{selected.size} #{stage.name}"
         result = run_stage(stage, seen)
         seen |= result.changed
         result

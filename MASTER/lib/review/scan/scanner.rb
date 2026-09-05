@@ -74,12 +74,36 @@ module Master
           self
         end
 
+        # Flat findings with :path merged in. scan_dir returns Result wrapping
+        # [path, Result] pairs whose inner values are hashes, so f.rule raises
+        # and the path is discarded unless the caller knows the unwrap. This is
+        # the one documented way to get them out.
+        def findings(paths, depth: :deep)
+          Array(paths).flat_map { |path| findings_for(path, depth:) }
+        end
+
         def set_agent(agent)
           @rules.each { |r| r.set_agent(agent) if r.respond_to?(:set_agent) }
           self
         end
 
         private
+
+        def findings_for(path, depth:)
+          if File.directory?(path)
+            result = scan_dir(path, depth:)
+            return [] unless result.respond_to?(:ok?) && result.ok?
+
+            result.value!.flat_map do |file, res|
+              rows = res.respond_to?(:ok?) && res.ok? ? res.value! : []
+              rows.map { |item| item.merge(path: file) }
+            end
+          else
+            result = scan(path, depth:)
+            rows = result.respond_to?(:ok?) && result.ok? ? result.value! : []
+            rows.map { |item| item.merge(path:) }
+          end
+        end
 
         def scannable_path?(path, root)
           File.file?(path) && !self.class.skip_path?(path, root:)

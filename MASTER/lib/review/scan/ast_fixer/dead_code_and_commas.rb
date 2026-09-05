@@ -142,7 +142,7 @@ module Master
             return false unless close_line.start_with?("]")
 
             close_index.downto(0) do |index|
-              return true if lines[index].match?(%r/%[iw]\[/)
+              return true if lines[index].match?(%r/%[iIwW]\[/)
               return false if lines[index].strip.start_with?("[", "{")
             end
             false

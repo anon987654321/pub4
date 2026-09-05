@@ -10,8 +10,10 @@ module Master
       private
 
       def set_visitor_mode_if_unauthenticated
-        web_token = @refs.config&.dig("web_token")
-        Fiber[:master_visitor] = true if web_token.nil? || web_token.empty?
+        # Visitor is a web-request flag, set per request on ai.brgen.no.
+        # The local CLI is the operator surface: treating a missing web_token
+        # as a visitor handed `bin/master "read CLAUDE.md"` AskLlm and
+        # WebSearch, no ReadFile, and a 45-cent reply asking for the text.
       end
 
       def repl_loop

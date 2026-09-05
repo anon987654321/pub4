@@ -405,6 +405,22 @@ class TestAstFixerTransforms < Minitest::Test
     refute_includes result[:transforms], :freeze_constants
   end
 
+  def test_trailing_commas_skip_percent_word_arrays
+    source = <<~RUBY
+      LIGHT_ONLY = %w[
+        brgen/engines/*/app/assets/stylesheets/*.scss
+      ]
+      SYMBOLS = %I[
+        alpha
+      ]
+    RUBY
+    result = fix("design_metrics.rb", source)
+
+    refute_includes result[:content], "scss,"
+    refute_includes result[:content], "alpha,"
+    refute_includes result[:transforms], :trailing_commas
+  end
+
   def test_trailing_commas_skip_block_closers
     source = <<~RUBY
       records.map { |rec|

@@ -33,6 +33,10 @@ class TurnRouterTest < Minitest::Test
   # Core::World#do_exec with model-chosen argv, and infer_operator_command
   # reconstructs slash commands from plain English (defeating the leading-"/"
   # block in chat_controller#message). Visitors must land on casual_reply only.
+  def test_a_file_read_is_not_casual_for_an_operator
+    refute Master::CLI::TurnRouter.casual?("read CLAUDE.md")
+  end
+
   def test_visitor_cannot_reach_fold_or_command_registry
     ["fix the bug", "run master through itself", "implement pagination for posts"].each do |message|
       Fiber[:master_visitor] = true

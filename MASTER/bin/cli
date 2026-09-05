@@ -135,6 +135,10 @@ if $stdin.tty?
   end
 else
   $stdout.sync = true
+  # Pipe mode used to ignore ARGV, so `bin/cli /scan RAILS` with no TTY
+  # printed nothing and exited 0. Honor the argument, then stdin.
+  message = initial_message_from_argv(ARGV)
+  cli.pipe(message) unless message.empty?
   $stdin.each_line { |line| cli.pipe(line) }
   stop_cli_background_loop_safely(cli)
   save_cli_session_safely(cli)

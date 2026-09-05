@@ -384,7 +384,12 @@ module Master
             @owned ||= begin
               y = Master.load_yaml(File.join(@root, "PATH_OWNERSHIP.yml")) || {}
               Array((y["ownership"] || {}).keys)
-            rescue StandardError
+            rescue StandardError => e
+              # An unreadable ownership file must not retire the whole corpus:
+              # returning [] here makes every path look owned and the scan
+              # reports the tree clean having judged nothing.
+              Master::Ground::Swallow.log(e, context: "PathPurposeRule.owned",
+                                            severity: :load_bearing, path: File.join(@root, "PATH_OWNERSHIP.yml"))
               []
             end
           end

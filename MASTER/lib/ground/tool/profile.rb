@@ -54,9 +54,22 @@ module Master
           when :elevated
             "Session scope: elevated operator. Dangerous tools unlocked."
           else
-            "Session scope: full operator."
+            build = group("build")
+            suffix = build.empty? ? "" : " Build group: #{build.join(', ')}."
+            "Session scope: full operator.#{suffix}"
           end
         end
+
+        def groups
+          data = Master.load_yaml(Master.data_path("agent_taxonomy.yml")) || {}
+          hash = data["toolset_groups"]
+          hash.is_a?(Hash) ? hash.transform_values { |names| Array(names).map(&:to_s) } : {}
+        rescue StandardError => e
+          Swallow.log(e, context: "ToolProfile.groups")
+          {}
+        end
+
+        def group(name) = Array(groups[name.to_s])
 
         def profiles_config
           data = Master.load_yaml(CONFIG_PATH) || {}

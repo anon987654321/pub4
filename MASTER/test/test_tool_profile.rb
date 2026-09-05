@@ -55,4 +55,12 @@ class TestToolProfile < Minitest::Test
     assert_includes messaging, "WebFetch"
     assert_includes messaging, "MemoryRecord"
   end
+
+  def test_toolset_groups_are_read_from_agent_taxonomy
+    build = Master::Ground::Tool::Profile.group("build")
+
+    assert_includes build, "read_file"
+    assert_includes build, "str_replace"
+    assert_match(/Build group:/, Master::Ground::Tool::Profile.session_note)
+  end
 end

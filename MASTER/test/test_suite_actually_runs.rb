@@ -45,7 +45,7 @@ class SuiteActuallyRunsTest < Minitest::Test
   def test_no_test_file_reports_zero_runs_on_its_own
     files = Dir.glob(File.join(Master::ROOT, "test", "test_*.rb"))
                 .reject { |f| File.basename(f) == File.basename(__FILE__) }
-                .reject { |f| %w[test_browser.rb test_web_http.rb test_helper.rb].include?(File.basename(f)) }
+                .reject { |f| %w[test_browser.rb test_web_http.rb test_web_ui.rb test_helper.rb].include?(File.basename(f)) }
     refute_empty files, "the glob that finds nothing is the failure this test exists to prevent"
 
     silent = in_parallel(files) { |f| standalone_runs(f).to_i.positive? ? nil : f }

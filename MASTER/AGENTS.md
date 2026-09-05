@@ -46,6 +46,19 @@ English literals; a hardcoded English string is a defect, not a placeholder.
 rotating seeds. Never render over a take that matters, and never change a
 rendered-sound or graded-look default on your own judgement.
 
+**Scanner findings are hashes with a path, not Finding objects.**
+`Scanner#findings(paths)` is the flat API. `scan_dir` returns Result wrapping
+`[path, Result]` pairs whose inner values are hashes: `h[:rule]` works,
+`f.rule` raises. `tools/example_scan.rb` is the worked example.
+
+**`bundler/setup` rewrites Gemfile.lock.** A mtime-keyed cache built around
+the lock is poisoned on every boot, even when the resolution is unchanged.
+`BUNDLE_FROZEN=true` is what the daemon uses.
+
+**A class in a multi-class rule file is invisible to Zeitwerk until the
+file loads.** `Rules::AstOmissionRule` raises NameError cold. `require
+"review/scan/rule_dsl"` is the load that defines them.
+
 ## Judging your own work
 
 The task as given is the deliverable, but it is not the whole job. Reason about

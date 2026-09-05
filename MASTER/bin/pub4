@@ -28,7 +28,8 @@ def usage
       bin/pub4 lint [--staged] [--changed-lines] [<path>...]  judge files by MASTER's laws, no model
       bin/pub4 test [<path>...]       smallest complete proof for the paths (default: dirty files)
       bin/pub4 land -m <msg> <path>...  commit, rebase, re-check, push
-      bin/pub4 worktree <name>        own checkout + branch, so agents never share an index
+      bin/pub4 worktree <name>|finish own checkout, or finish (rebase, push the branch, do not merge main)
+      bin/pub4 rule <ID> [--corpus MASTER|all] [path...]  one scanner rule over a corpus
       bin/pub4 hooks                  install the shared-tree commit guard
       bin/pub4 readers <path>         who reaches this file, across all four trees
 
@@ -202,9 +203,37 @@ when "worktree"
   # said "take a worktree if more than one agent is active" for months while the
   # worktree took a remembered path to a shell script and the shared tree took
   # nothing. Sessions kept picking nothing, and kept committing each other's work.
+  # finish rebases onto origin/main and pushes the branch — it does not merge
+  # to local main, which is how another session's push published commits twice.
   name = ARGV.shift
-  abort("usage: bin/pub4 worktree <name>   (e.g. bin/pub4 worktree claude)") if name.to_s.empty?
+  abort("usage: bin/pub4 worktree <name>|finish [--remove]") if name.to_s.empty?
   exec("sh", File.join(OPENBSD_OPS, "dev", "agent_worktree.sh"), name, *ARGV)
+when "rule"
+  # One rule, one corpus, printed findings. Written by hand every time a
+  # detector's silence had to be distinguished from a clean tree.
+  require "master"
+  require "review/scan/infra_helpers"
+  id = ARGV.shift.to_s
+  abort("usage: bin/pub4 rule <ID> [--corpus MASTER|all] [path...]") if id.empty?
+
+  corpus = "MASTER"
+  ARGV.delete_if { |arg| (m = arg.match(/\A--corpus=(.+)\z/)) && (corpus = m[1]) }
+  ENV["MASTER_SCAN_DETERMINISTIC"] = "1"
+  master_root = File.join(ROOT, "MASTER")
+  scanner = Master::Review::Scan::InfraHelpers.build_scanner(root: master_root, agent: nil)
+  rule = scanner.rules.find { |item| item.id.to_s.casecmp?(id) }
+  abort("rule: no scanner rule named #{id.inspect} (#{scanner.rules.size} loaded)") unless rule
+
+  one = Master::Review::Scan::Scanner.new(rules: [rule])
+  default = corpus.casecmp?("all") ? ROOT : master_root
+  targets = ARGV.empty? ? [default] : ARGV.map { |path| File.expand_path(path, ROOT) }
+  hits = one.findings(targets)
+  hits.each do |item|
+    rel = item[:path].to_s.sub(%r{\A#{Regexp.escape(ROOT)}/}, "")
+    puts "#{rel}:#{item[:line]} #{item[:rule]} #{item[:message]}"
+  end
+  puts "rule: #{rule.id} #{hits.size} finding(s)"
+  exit(hits.empty? ? 0 : 1)
 when "readers"
   # Before you believe "its only reader is X". That sentence has been wrong four
   # times in this repo and each time the grep behind it could not see the

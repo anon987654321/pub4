@@ -94,6 +94,18 @@ class TestPathPurposeRule < Minitest::Test
     end
   end
 
+  def test_malformed_ownership_yaml_is_logged_rather_than_retiring_the_corpus_in_silence
+    Dir.mktmpdir do |root|
+      File.write(File.join(root, "PATH_OWNERSHIP.yml"), ": not yaml [")
+      rule = Master::Review::Scan::Rules::PathPurposeRule.new(root:)
+
+      assert_empty rule.check("", path: File.join(root, "scratchpad/thing.rb"))
+      logged = Master::Ground::Swallow.recent(context: "PathPurposeRule.owned", limit: 20)
+      assert logged.any? { |row| row["severity"] == "load_bearing" },
+             "an unreadable ownership file must report through Swallow, or the scan looks clean"
+    end
+  end
+
   def test_test_and_vendor_paths_are_skipped
     in_tree do |rule, root|
       %w[test/thing.rb vendor/gem/lib/thing.rb tmp/thing.rb].each do |rel|

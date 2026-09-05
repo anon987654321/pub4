@@ -83,4 +83,20 @@ class TestDataReachAttribution < Minitest::Test
       assert_empty Tool.recorded_members
     end
   end
+
+  def test_attributed_requires_the_yaml_basename_in_the_same_file
+    Tool.instance_variable_set(:@code_files, {
+      "phase.rb" => "state['success_criteria']",
+      "loader.rb" => "load_yaml('rules.yml')",
+    })
+    refute Tool.attributed?("success_criteria", "rules.yml")
+
+    Tool.instance_variable_set(:@code_files, {
+      "rules.rb" => "Master.load_yaml('rules.yml'); data['success_criteria']",
+    })
+    assert Tool.attributed?("success_criteria", "rules.yml")
+  ensure
+    Tool.instance_variable_set(:@code_files, nil)
+    Tool.instance_variable_set(:@code, nil)
+  end
 end

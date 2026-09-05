@@ -74,7 +74,9 @@ module Master
           target = "#{@path}.corrupt.#{stamp}.#{Process.pid}"
           FileUtils.mv(@path, target)
           File.write("#{target}.reason", "#{error.class}: #{error.message}\n")
-        rescue StandardError
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "Session.quarantine_corrupt_session",
+                                        severity: :load_bearing, path: @path)
           nil
         end
       end

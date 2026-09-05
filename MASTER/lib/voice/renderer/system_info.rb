@@ -108,7 +108,8 @@ module Master
 
           page = stdout[/page size of (\d+) bytes/, 1].to_i
           page * FREE_PAGE_KINDS.sum { |kind| stdout[/^Pages #{kind}:\s+(\d+)\./, 1].to_i }
-        rescue StandardError => _e
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "SystemInfo.available_memory_bytes", severity: :load_bearing)
           0
         end
 
@@ -117,7 +118,8 @@ module Master
         def module_names
           lib = File.join(Master::ROOT, "lib")
           Dir.children(lib).select { |e| File.directory?(File.join(lib, e)) }.sort
-        rescue StandardError => _e
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "SystemInfo.module_names", severity: :load_bearing)
           []
         end
 

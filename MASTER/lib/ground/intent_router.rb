@@ -28,6 +28,11 @@ module Master
         run_master_through: %w[itself self master singularity dogfood selfscan],
       }.freeze
 
+      # "read CLAUDE.md" is a file request. Token-scoring "read" alone would
+      # also match "I read that", so the path-with-extension form is the
+      # intent; the keyword list above is a secondary score, not the door.
+      FILE_READ = /\b(?:read|open|show|cat|print|critique)\s+[\w.\/-]+\.[a-z0-9]{1,8}\b/i
+
       STANDING_SEMANTICS = {
         "go ahead" => :continue_prior_plan,
         "land it" => :write_repo_changes,
@@ -48,6 +53,7 @@ module Master
         low: %i[
           codify_policy refactor_to_ruby create_facade apply_user_style_rules
           run_sound_review run_ui_review audit_rails_pwa generate_rails_pwa redesign_mobile_pwa
+          inspect_repo
         ],
         medium: %i[
           wire_existing_module verify_patch_landed continue_prior_plan prefer_ruby refactor_rails_app
@@ -59,6 +65,7 @@ module Master
 
       def classify(text)
         downcased = text.to_s.downcase.strip
+        return :inspect_repo if downcased.match?(FILE_READ)
         return STANDING_SEMANTICS[downcased] if STANDING_SEMANTICS.key?(downcased)
 
         # Exact token match, not substring/prefix: short keywords like "ui",

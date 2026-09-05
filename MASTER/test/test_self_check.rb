@@ -28,11 +28,13 @@ class TestSelfCheck < Minitest::Test
       refute quick.clean?
       assert_includes quick.summary, "violation"
       assert_operator full.total, :>=, quick.total, "full scan should never find fewer violations than quick"
+      assert quick.findings.any? { |item| item[:path].to_s.end_with?("bad.rb") && item[:line] },
+             "a violation without a path and line is a count you cannot act on"
     end
   end
 
   def test_report_summary_reflects_a_scan_failure
-    report = Master::Fix::SelfCheck::Report.new(total: 0, by_rule: {}, by_severity: {}, error: "boom")
+    report = Master::Fix::SelfCheck::Report.new(total: 0, by_rule: {}, by_severity: {}, error: "boom", findings: [])
 
     refute report.clean?
     assert_equal "selfcheck: failed — boom", report.summary

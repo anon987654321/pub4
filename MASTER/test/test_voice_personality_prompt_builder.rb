@@ -86,6 +86,14 @@ def test_core_context_keeps_constitution_and_output_contract
     assert_includes line, "× 1.25"
   end
 
+  def test_zsh_reference_tables_reach_the_prompt
+    prompt = Master::Voice::Personality.new(:anchor).system_prompt(context: :full)
+
+    assert_includes prompt, "Zsh replacements:"
+    assert_includes prompt, "SSH reading:"
+    assert_includes prompt, "Zsh native patterns:"
+  end
+
   def test_core_and_full_are_cached_independently
     persona = Master::Voice::Personality.new(:trader)
     core = persona.system_prompt(context: :core)
