@@ -94,4 +94,16 @@ class TestThroughInference < Minitest::Test
     assert_equal :run_full_workflow, r.classify("through master")
     assert_equal :run_rails_through, r.classify("through rails")
   end
+
+  def test_through_footer_names_a_skipped_tier
+    result = Master::CLI::ThroughPipeline::Result.new(
+      target: ".", mode: "balanced", sections: [], ok: true, unit: "through0", failed_stages: []
+    )
+    Master::Ground::QuotaGate.stub(:report, "SKIPPED semantic rules — exhausted") do
+      text = result.footer
+
+      assert_includes text, "through0: complete"
+      assert_includes text, "SKIPPED semantic rules"
+    end
+  end
 end

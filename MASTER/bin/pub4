@@ -32,6 +32,7 @@ def usage
       bin/pub4 rule <ID> [--corpus MASTER|all] [path...]  one scanner rule over a corpus
       bin/pub4 hooks                  install the shared-tree commit guard
       bin/pub4 readers <path>         who reaches this file, across all four trees
+      bin/pub4 pushed? <path>...      is this content on origin/main, or only here
 
     Profiles (passed through to check scripts):
       OPENBSD/bin/check --profile=contributor
@@ -369,6 +370,30 @@ when "vps"
     warn usage
     exit 2
   end
+when "pushed?"
+  # Cherry-picking onto a moving origin/main rewrites SHAs, so "is my work
+  # pushed?" cannot be answered by commit id. Content vs origin/main can.
+  paths = ARGV
+  abort("usage: bin/pub4 pushed? <path>...") if paths.empty?
+
+  failed = false
+  paths.each do |path|
+    porcelain, = Open3.capture2e("git", "-C", ROOT, "status", "--porcelain", "--", path)
+    unless porcelain.strip.empty?
+      puts "dirty #{path}"
+      failed = true
+      next
+    end
+    ahead, = Open3.capture2e("git", "-C", ROOT, "log", "--oneline", "origin/main..HEAD", "--", path)
+    if ahead.strip.empty?
+      puts "pushed #{path}"
+    else
+      puts "unpushed #{path}"
+      ahead.each_line { |line| puts "  #{line.chomp}" }
+      failed = true
+    end
+  end
+  exit(failed ? 1 : 0)
 else
   warn usage
   exit 2

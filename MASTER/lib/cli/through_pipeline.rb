@@ -16,9 +16,15 @@ module Master
         # anyway, because `ok` was derived from scan text alone and never looked
         # at whether a stage had raised.
         def footer
-          return "#{unit}: incomplete — #{failed_stages.join(", ")} failed" if failed_stages.any?
-
-          ok ? "#{unit}: complete" : "#{unit}: complete with open findings"
+          base = if failed_stages.any?
+                   "#{unit}: incomplete — #{failed_stages.join(", ")} failed"
+                 elsif ok
+                   "#{unit}: complete"
+                 else
+                   "#{unit}: complete with open findings"
+                 end
+          skipped = Master::Ground::QuotaGate.report
+          skipped ? "#{base}\n#{skipped}" : base
         end
       end
 
