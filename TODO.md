@@ -2649,24 +2649,28 @@ CDP, so an extraction there is only provable against a booted fleet —
 `RAILS/bin/triangle up` first, or the split lands unmeasured. The counterpart
 half of that test is green: no ceiling is slack any more.
 
-### Two models nothing writes
+### One model nothing writes
 
 Found 2026-09-05 while giving the nine promiseless models their reason, and
-worth its own record because the marker on each says "nothing writes it", which
+worth its own record because the marker on each said "nothing writes it", which
 is a finding rather than an exemption.
 
 - **`Stream`** (`brgen/app/models/stream.rb`) has a table with `url`,
   `content_type` and `duration`, a `belongs_to :user` and `:post`, and no reader
   or writer anywhere in the app or its seeds. `Tv::LiveStream` is the
   live-video model and is a different class.
-- **`Mention`** is read by nothing and written by nothing. `Post has_many
-  :mentions` resolves and stays empty, so an @name in a post reaches nobody —
-  while `Notification::KINDS` carries `mention` and
-  `NotificationsController`'s group order ranks it first.
 
-Both are the shape the Tier 1 entries above closed one at a time: schema and
-model present, nothing at either end. The question per model is whether to wire
-the writer or drop the table.
+It is the shape the Tier 1 entries above closed one at a time: schema and model
+present, nothing at either end. The question is whether to wire the writer or
+drop the table.
+
+**`Mention` was the second and closed the same day** (`a05def16c`).
+`Shared::Mentionable` writes the rows from `@username` in title and content and
+notifies each named user, which is what `Notification::KINDS` and the
+notifications controller's group order had been promising while `Post has_many
+:mentions` stayed empty. It carries a real validation now rather than the
+marker: one row per named user per post, which is the promise `mention_test`
+makes twice and which no unique index enforces.
 
 `Tagging` was the third candidate and is not one — verify the instrument before
 the finding. A grep for `Tagging.` and `taggings.create` finds only readers,
