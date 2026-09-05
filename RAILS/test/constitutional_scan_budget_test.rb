@@ -49,8 +49,16 @@ class ConstitutionalScanBudgetTest < Minitest::Test
     written = YAML.safe_load_file(Deploy::ConstitutionalScanGate::BUDGET_PATH).fetch("targets")
 
     assert_equal lowered, written, "the ratchet reported a write it did not make"
-    assert_includes File.read(Deploy::ConstitutionalScanGate::BUDGET_PATH), "# RATCHETED",
-                    "rewriting the block would have eaten the comments"
+
+    # The comments are the whole reason this file cannot be rewritten as a
+    # block, so what to assert is that they survived. The line here looked for
+    # "# RATCHETED", which nothing in the tree writes — a marker invented by the
+    # assertion, failing against a rewrite that is doing its job.
+    after = File.read(Deploy::ConstitutionalScanGate::BUDGET_PATH)
+    comments = original.lines.grep(/\A\s*#/).map(&:strip).reject(&:empty?)
+
+    refute_empty comments, "the fixture stopped being a commented file"
+    comments.each { |line| assert_includes after, line, "the rewrite ate a comment: #{line}" }
   ensure
     File.write(Deploy::ConstitutionalScanGate::BUDGET_PATH, original)
   end

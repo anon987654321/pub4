@@ -108,13 +108,14 @@ class FileLengthRatchetTest < Minitest::Test
     # 436 -> 406 on 2026-08-26. The dependency graph and the wordmark went
     # to _port_graph.scss. Left the list 2026-09-05: under the 400 scss
     # limit, so a ceiling here would only re-admit it.
-# Recorded 338 earlier the same day from this ratchet's own staleness
-# message, and it measures 339 now. One line, and its provenance is not
-# attributable: three sessions were writing this tree through the pass and
-# HEAD moved twice. 428 -> 339 is the number that matters and it is still
-# down by 89; recording what it measures is the honest reading rather than
-# a guess about which session added the line.
-"gates/support/cdp_session.rb" => 339,
+    #
+    # Recorded 338 earlier the same day from this ratchet's own staleness
+    # message, and it measures 339 now. One line, and its provenance is not
+    # attributable: three sessions were writing this tree through the pass and
+    # HEAD moved twice. 428 -> 339 is the number that matters and it is still
+    # down by 89; recording what it measures is the honest reading rather than
+    # a guess about which session added the line.
+    "gates/support/cdp_session.rb" => 339,
     # +5 in 7ed6920cd — the seeds asked for a visible profile without a photo,
     # which gated every deploy.
     "brgen/db/seeds.rb" => 426,

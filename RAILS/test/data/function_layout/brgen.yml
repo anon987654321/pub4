@@ -27,8 +27,11 @@ checks:
   - {id: design.compose_no_requestsubmit, in: brgen/app/javascript/controllers/form_submit_controller.js, lack: [".requestSubmit("]}
   # --- feed / compose ---
   - {id: feed.home_orientation, in: brgen/app/views/home/index.html.erb, has: [data-visitor-orientation]}
-  - {id: feed.city_today_inset, in: brgen/app/assets/stylesheets/_chrome_surfaces.scss, has: ["aside.city-today", ".post-feed", "margin-inline: var(--space-4)"]}
-  - {id: feed.city_today_card, in: brgen/app/views/home/_today.html.erb, has: ["city-today sidebar-card", "<details>", "<summary>"]}
+  # No city-today rows. The strip went on 2026-08-27 by operator decision --
+  # "the city right now IS the feed below" -- and home/index.html.erb says so
+  # where it used to render. An inventory row for a surface somebody removed on
+  # purpose fails forever and teaches the reader to skip the file.
+  - {id: feed.no_city_today_strip, in: brgen/app/views/home/index.html.erb, lack: ["render \"home/today\"", "city-today sidebar-card"]}
   - {id: feed.compose_dialog, in: brgen/app/views/shared/_feed_compose.html.erb, has: ["<dialog", compose-launcher, form-submit, posts_path]}
   - {id: feed.compose_guest, in: brgen/app/views/shared/_feed_compose.html.erb, has: [anonymous, "guest?"]}
   - {id: feed.compose_tiptap, in: brgen/app/views/shared/_feed_compose.html.erb, has: [tiptap-editor, textarea-autogrow]}
@@ -68,7 +71,10 @@ checks:
   # --- auth ---
   - {id: auth.sign_in, in: brgen/app/views/sessions/new.html.erb, has: [session_path, password_visibility_field]}
   - {id: auth.sign_up_form, in: brgen/app/views/users/new.html.erb, has: [users_path, accept_terms, accept_age, homepage]}
-  - {id: auth.sign_up_nav, in: brgen/app/helpers/application_helper.rb, has: [new_user_path], lack: ["sign up\", main_app.new_session_path"]}
+  # Was application_helper.rb, which no longer builds any auth nav. What a
+  # signed-out visitor is offered lives in the mobile chrome, and the lack:
+  # guard is the one 5753e79fd fixed -- a "Sign up" label pointing at sign-in.
+  - {id: auth.sign_in_nav, in: brgen/app/views/shared/_mobile_chrome.html.erb, has: ["nav.sign_in", "main_app.new_session_path"], lack: ["sign up\", main_app.new_session_path"]}
   - {id: auth.create_account_from_sign_in, in: brgen/app/views/sessions/new.html.erb, has: [new_user_path]}
   - {id: auth.verified_email_gate, in: brgen/app/controllers/application_controller.rb, has: ["def require_verified_email", guest?]}
   - {id: auth.passwords, in: shared/app/views/passwords/new.html.erb, has: [email]}

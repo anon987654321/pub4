@@ -283,7 +283,11 @@ class DeployGatesContractTest < Minitest::Test
     assert File.exist?(File.join(REPO_ROOT, "RAILS", "deploy.sh"))
     assert File.exist?(File.join(REPO_ROOT, "TODO.md"))
     assert File.exist?(File.join(OPENBSD_ROOT, "data", "operator.yml"))
-    assert File.exist?(File.join(REPO_ROOT, "bin", "pub4"))
+    # MASTER/bin/pub4, not a root bin/. The repo root holds four documents and
+    # the four trees; the operator surface has lived under MASTER since the
+    # sprawl census emptied the root, and this line was still looking for the
+    # shim that removal deleted.
+    assert File.exist?(File.join(REPO_ROOT, "MASTER", "bin", "pub4"))
     assert File.exist?(File.join(REPO_ROOT, "RAILS", "apps.yml"))
     assert File.exist?(File.join(REPO_ROOT, "OPENBSD", "OPERATOR.sh"))
   end
@@ -316,15 +320,29 @@ class DeployGatesContractTest < Minitest::Test
               Dir.glob("#{ROOT}/**/*.sh").reject { |p| p.include?("/vendor/") }
 
     offenders = scripts.flat_map do |path|
-      File.read(path, encoding: "UTF-8").lines.each_with_index.filter_map do |line, i|
+      lines = File.read(path, encoding: "UTF-8").lines
+      lines.each_with_index.filter_map do |line, i|
         next if line.strip.start_with?("#")
         next unless line.match?(/(?:\A|[|;&(]|\s)(?:lockf|flock)\s+-/)
+        next if guarded_by_command_v?(lines, i)
 
         "#{path.sub("#{File.dirname(ROOT)}/", "")}:#{i + 1}"
       end
     end
 
     assert_empty offenders, "OpenBSD has no lockf(1)/flock(1) — use OPENBSD/bin/with-ci-lock"
+  end
+
+  # `command -v flock` before the call is the sanctioned degrade: the script
+  # takes the lock where there is one and runs unlocked where there is not,
+  # which is what a portable script does with an optional utility. Without this,
+  # the gate reported four sites in OPENBSD/dotfiles/mov.sh that all guard
+  # correctly — a rule whose failures are all false is one people learn to skip.
+  # Scoped to the enclosing shell function, so a guard in one function does not
+  # excuse a bare call in the next.
+  def guarded_by_command_v?(lines, index)
+    start = index.downto(0).find { |n| lines[n].match?(/\A[\w:.-]+\s*\(\)\s*\{/) } || 0
+    lines[start..index].any? { |line| line.match?(/command -v\s+(?:lockf|flock)\b/) }
   end
 
   # One CI mutex, not two. The Ruby guard and the shell helper have to name the

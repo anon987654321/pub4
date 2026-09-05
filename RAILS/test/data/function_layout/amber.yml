@@ -20,7 +20,10 @@ checks:
   - {id: design.no_dialog_compose, in: amber/app/views/shared/_feed_compose.html.erb, lack: ["<dialog", form-submit, requestSubmit]}
   # --- home / compose / posts ---
   - {id: home.guest_compose, in: amber/app/views/home/index.html.erb, has: [shared/feed_compose]}
-  - {id: home.dressing_room, in: amber/app/views/home/index.html.erb, has: [shared/dressing_room]}
+  # The mannequin moved to its own page (outfits/dressing_room, covered by
+  # outfits.dressing_room below); what the home page renders for a signed-out
+  # visitor is the four browse rows.
+  - {id: home.wardrobe_showcase, in: amber/app/views/home/index.html.erb, has: [shared/wardrobe_showcase]}
   - {id: home.empty_posts, in: amber/app/views/home/index.html.erb, has: [empty.no_posts_yet, empty.guest_post]}
   - {id: compose.box, in: amber/app/views/shared/_feed_compose.html.erb, has: [amber-compose-box, "text_area :body", posts_path, feed-compose]}
   - {id: compose.guest_anon, in: amber/app/views/shared/_feed_compose.html.erb, has: [anonymous, guest_hint]}

@@ -1,17 +1,17 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# One command that reproduces what GitHub Actions would run, because nothing
-# runs it automatically.
+# One command that reproduces what GitHub Actions would run, before the push
+# rather than after it.
 #
-# .github/workflows/rails-tests.yml and layout-suite.yml both trigger on
-# workflow_dispatch only. Their own header says why: "GitHub account billing
-# lock prevents job start." So the protection those workflows describe exists
-# and fires only when somebody remembers to fire it, and this session alone
-# found four gates that had silently stopped measuring — affiliate_honesty
-# ERRORED for hours after the files it reads moved, first_screen matched a
-# literal 44px the tree stopped writing, visual_contract passed with no Chrome,
-# and PostsController#feed was a 500 with no test of any kind.
+# .github/workflows/rails-tests.yml runs on push to main and on pull requests,
+# so its half of this is a fast local mirror. layout-suite.yml is still
+# workflow_dispatch only, with its auto-run block commented out — that half
+# fires only when somebody remembers to fire it, which is how one session found
+# four gates that had silently stopped measuring: affiliate_honesty ERRORED for
+# hours after the files it reads moved, first_screen matched a literal 44px the
+# tree stopped writing, visual_contract passed with no Chrome, and
+# PostsController#feed was a 500 with no test of any kind.
 #
 # The steps here are not a new opinion about what should be checked. They are
 # the two workflows, in order, and a test asserts that they stay that way — see

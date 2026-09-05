@@ -50,7 +50,9 @@ class MethodLengthRatchetTest < Minitest::Test
   # the same treatment production.rb's check_app got — split at the
   # responsibility bound, then mutation-test each half.
   CEILINGS = {
-    "gates" => [39, 68],
+    # 39 -> 38: one of the over-limit methods was split and this number was not
+    # lowered with it, which is the slack the counterpart test exists to catch.
+    "gates" => [38, 68],
     # 57 -> 48 on 2026-08-23. record_public_href was the 52: one case statement
     # over every routable class in the city, split into the apex, the verticals
     # and the two media engines. A sentinel separates "no branch claimed this
