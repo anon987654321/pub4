@@ -54,16 +54,17 @@ module Pub4
     # and eight wrapped their foreign_key onto one and were never seen. All 57
     # were then resolved — 55 by naming the inverse, two by the marker above,
     # where the other side genuinely does not exist.
-    # no_validations is 0 from 9. Four gained a real validation: PrivacySetting
+    # no_validations is 0 from 9. Five gained a real validation: PrivacySetting
     # and MessageReceipt each mirror a unique index that was otherwise reached
-    # as a 500, and brgen's and bsdports' Session took the shape amber's already
-    # had, so all three apps say the same thing about the same generated model.
-    # Five carry the marker with their reason, and Tagging's is the one worth
-    # reading: a tagging is an occurrence, and hashtag_test.rb tags one post
-    # with one hashtag twice on purpose because trending counts rows, so
-    # uniqueness there would be wrong rather than missing. A count driven to
-    # zero by re-exempting is worthless; a count driven to zero by writing down
-    # why each row is deliberate is the record this file wanted.
+    # as a 500, brgen's and bsdports' Session took the shape amber's already had
+    # so all three apps say the same thing about the same generated model, and
+    # Mention gained one when it gained a writer. Four carry the marker with
+    # their reason, and Tagging's is the one worth reading: a tagging is an
+    # occurrence, and hashtag_test.rb tags one post with one hashtag twice on
+    # purpose because trending counts rows, so uniqueness there would be wrong
+    # rather than missing. A count driven to zero by re-exempting is worthless;
+    # a count driven to zero by writing down why each row is deliberate is the
+    # record this file wanted.
     BASELINES = { "uninferrable_inverse" => 0, "no_validations" => 0 }.freeze
 
     Finding = Struct.new(:kind, :file, :line, :detail)
