@@ -4,12 +4,17 @@ require "yaml"
 require_relative "../../../../OPENBSD/lib/gate_result"
 require_relative "../../support/gate_autofix"
 require_relative "../../../shared/lib/pub4/master_design"
+require_relative "css_spacing_scans"
+require_relative "css_weight"
 
 module Deploy
   # Every SCSS/CSS under RAILS apps + shared must pass MASTER design constitution.
   # Documented product pens are allow-listed for intentional ornament (yep search shadow, etc.).
   # GATE_AUTOFIX=1 → mechanical fix + remeasure until clean or stuck.
   class CssConstitutionGate
+    include CssSpacingScans
+    include CssWeight
+
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
     MASTER_DESIGN = File.join(ROOT, "MASTER", "data", "rules.yml")
@@ -107,7 +112,11 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
 
       # Seeded, not defaulted: a rule that falls to zero has to still appear here
       # or it never reaches judge_budgets and its ceiling never ratchets down.
-      @tally = { "important" => [], "rhythm" => [], "magic_hex" => [], "type_scale" => [], "weight_ladder" => [] }
+      @tally = {
+        "important" => [], "rhythm" => [], "magic_hex" => [],
+        "type_scale" => [], "weight_ladder" => [],
+        "child_margin" => [], "card_padding" => []
+      }
       files.each { |path| scan(path) }
       judge_budgets
       check_weight
@@ -152,75 +161,6 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
 
       body = File.read(BUDGET_PATH)
       File.write(BUDGET_PATH, body.sub(/^  #{Regexp.escape(rule)}: \d+$/, "  #{rule}: #{count}"))
-    end
-
-    # Weight is a size, not a count, so it cannot ride the @tally shape above:
-    # judge_budgets compares hits.size against a ceiling and there are no hits to
-    # count here. The contract is otherwise identical -- over the ceiling fails,
-    # under it warns, and GATE_CSS_RATCHET=1 records the new low.
-    #
-    # app/assets/builds/application.css is the only stylesheet this gate can weigh
-    # reproducibly. RAILS/*/public/assets/ is gitignored, so the compiled JS is
-    # whatever the local machine last built; weighing it would fail on the wrong
-    # laptop rather than on the wrong commit.
-    def check_weight
-      ceilings = weight_ceilings
-      return @result.warn("css_constitution weight: no weight_kb in css_budget.yml") if ceilings.empty?
-
-      ceilings.each do |app, ceiling|
-        built = File.join(RAILS, app, "app", "assets", "builds", "application.css")
-        next @result.warn("css_constitution weight: #{app} has no built application.css") unless File.file?(built)
-
-        kb = (File.size(built) / 1024.0).ceil
-        if kb > ceiling
-          @result.fail("css_constitution weight: #{app} application.css is #{kb}KB, over its " \
-                       "#{ceiling}KB ceiling (+#{kb - ceiling}) -- cut it, or record a new ceiling with a reason")
-        elsif kb < ceiling
-          @result.warn("css_constitution weight: #{app} is #{kb}KB, under its #{ceiling}KB ceiling " \
-                       "(-#{ceiling - kb}) -- GATE_CSS_RATCHET=1 records the new low")
-          ratchet_weight(app, kb)
-        else
-          @result.warn("css_constitution weight: #{app} at its #{ceiling}KB ceiling")
-        end
-      end
-    end
-
-    def weight_ceilings
-      YAML.safe_load_file(BUDGET_PATH)&.dig("weight_kb") || {}
-    rescue StandardError => e
-      warn "css_constitution: weight budget unreadable (#{e.class}) -- weight runs unbudgeted"
-      {}
-    end
-
-    def ratchet_weight(app, kb)
-      return unless GateResult.flag?("GATE_CSS_RATCHET")
-
-      body = File.read(BUDGET_PATH)
-      File.write(BUDGET_PATH, body.sub(/^  #{Regexp.escape(app)}: \d+$/, "  #{app}: #{kb}"))
-    end
-
-    # This replaces a check that read design_rules.touch.target_min_px and
-    # failed if it was under 44 — the law measured against a constant, with no
-    # stylesheet involved. It could not have caught a single real defect: the
-    # only way to fail it was to edit the rule file, and the rule file is what
-    # it was quoting. What matters is whether the token the family sizes its
-    # controls from actually meets the floor the law sets.
-    def check_tap_token
-      floor = @design.dig("layout_rules", "touch", "target_min_px").to_i
-      return if floor <= 0
-
-      source = File.read(token_path("_dialect_tokens.scss"))
-      %w[--tap-min --bar-height].each do |name|
-        value = source[/#{Regexp.escape(name)}\s*:\s*(\d+)px\s*;/, 1]
-        if value.nil?
-          @result.warn("css_constitution touch: #{name} is not declared in _dialect_tokens.scss")
-          next
-        end
-        next if value.to_i >= floor
-
-        @result.fail("css_constitution touch: #{name} is #{value}px, under design_rules " \
-                     "layout_rules.touch.target_min_px #{floor}px")
-      end
     end
 
     def rhythm_allowlist
@@ -407,6 +347,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
       body = File.read(path)
       pen = path.match?(PEN_ALLOW)
       count_budget_rules(path, rel, body)
+      scan_spacing(rel, body) unless pen
 
       unless pen
         if body.match?(FLAT_PATTERN)

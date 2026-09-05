@@ -104,7 +104,7 @@ class GateLiveAndCssBudgetTest < Minitest::Test
     gate = Deploy::CssConstitutionGate.run_once
 
     assert gate.ok?, "css_constitution: #{gate.failures.join(', ')}"
-    %w[important rhythm magic_hex].each do |rule|
+    %w[important rhythm magic_hex child_margin card_padding].each do |rule|
       assert_kind_of Integer, budget[rule], "#{rule} has no ceiling, so it gates nothing"
     end
   end
@@ -182,5 +182,38 @@ class GateLiveAndCssBudgetTest < Minitest::Test
   def test_danger_reads_as_a_foreground_token
     assert_match Deploy::DesignMetrics::FOREGROUND_KEY, "danger"
     assert_match Deploy::DesignMetrics::FOREGROUND_KEY, "dark_danger"
+  end
+
+  def spacing_gate
+    gate = Deploy::CssConstitutionGate.new
+    gate.instance_variable_set(:@tally, {
+      "important" => [], "rhythm" => [], "magic_hex" => [],
+      "type_scale" => [], "weight_ladder" => [],
+      "child_margin" => [], "card_padding" => []
+    })
+    gate
+  end
+
+  def test_a_child_combinator_with_a_nonzero_margin_is_gap_over_margin_debt
+    gate = spacing_gate
+    gate.send(:scan_spacing, "fixture.scss", <<~CSS)
+      .stack > * { margin-bottom: 8px; }
+      .stack > * { margin: 0; }
+      .stack { margin-bottom: 8px; }
+    CSS
+
+    assert_equal [ "fixture.scss:1" ], gate.tally.fetch("child_margin")
+  end
+
+  def test_card_padding_other_than_24px_is_counted
+    gate = spacing_gate
+    gate.send(:scan_spacing, "fixture.scss", <<~CSS)
+      .card { padding: 1rem; }
+      .card { padding: 1.5rem; }
+      .card { padding: var(--space-6); }
+      .card-grid { padding: 8px; }
+    CSS
+
+    assert_equal [ "fixture.scss:1 1rem" ], gate.tally.fetch("card_padding")
   end
 end

@@ -105,13 +105,9 @@ class FileLengthRatchetTest < Minitest::Test
 # viewport_spill and occlusion against live apps with GATE_STRICT_ERRORS=1;
 # the desync-recovery path fires in that run, so the extracted code is
 # exercised rather than merely loaded.
-    # 436 -> 406 on 2026-08-26. The dependency graph and the wordmark are
-    # _port_graph.scss. Still over the 400 limit and still on this list: most
-    # of what is left cannot be moved, because bsdports styles `article >
-    # header` and `.search-result` twice each in this one file, so the blocks
-    # between those pairs are order dependent. The graph was the largest block
-    # that shares no selector with anything left behind.
-    "bsdports/app/assets/stylesheets/application.scss" => 406,
+    # 436 -> 406 on 2026-08-26. The dependency graph and the wordmark went
+    # to _port_graph.scss. Left the list 2026-09-05: under the 400 scss
+    # limit, so a ceiling here would only re-admit it.
 # Recorded 338 earlier the same day from this ratchet's own staleness
 # message, and it measures 339 now. One line, and its provenance is not
 # attributable: three sessions were writing this tree through the pass and
@@ -123,7 +119,7 @@ class FileLengthRatchetTest < Minitest::Test
     # which gated every deploy.
     "brgen/db/seeds.rb" => 426,
     "gates/lib/live/user_flow.rb" => 313,
-    "shared/app/assets/stylesheets/_minimal.scss" => 460,
+    "shared/app/assets/stylesheets/_minimal.scss" => 455,
     "shared/app/assets/stylesheets/_zen_shell.scss" => 477,
     "brgen/engines/playlist/app/views/playlist/playlists/_player.html.erb" => 155,
   }.freeze

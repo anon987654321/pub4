@@ -183,6 +183,16 @@ rules:
   # if the mark is ever cut to the ladder, run with GATE_CSS_RATCHET=1.
   type_scale: 0
   weight_ladder: 2
+  # gap_over_margin and card_padding_px were config keys design_metrics
+  # confirmed present and css_constitution never applied to a sheet.
+  # First measured 2026-09-05. Documented product pens are skipped, same
+  # as flat_ui, so the seven child-margins in the marketplace logo and
+  # nav bar are not this number. Zero is the floor: the next `> * {
+  # margin }` fails.
+  child_margin: 0
+  # One hit: shared/_minimal.scss:212 `.card { padding: 1rem }`. 1rem is
+  # 16px; the law is 24. Changing it is a look decision, so it is banked.
+  card_padding: 1
 
 # Built-stylesheet weight, in kilobytes, per app. Same ratchet as the counts
 # above: measured from the tree, never from another product's published figure,
