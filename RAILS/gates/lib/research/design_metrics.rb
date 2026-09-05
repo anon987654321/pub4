@@ -326,6 +326,18 @@ module Deploy
       @result.fail("design_metrics: whitespace.gap_over_margin missing") if gap.nil?
       card = @rules.dig("ultraminimalism", "negative_space", "card_padding_px").to_i
       @result.fail("design_metrics: card_padding_px missing/invalid") if card <= 0
+      columns = @rules.dig("layout_rules", "grid", "columns").to_i
+      @result.fail("design_metrics: grid.columns missing/invalid") if columns <= 0
+      para = @rules.dig("layout_rules", "whitespace", "paragraph_margin_em").to_f
+      @result.fail("design_metrics: paragraph_margin_em missing/invalid") if para <= 0
+      sec_min = @rules.dig("layout_rules", "whitespace", "section_padding_min_rem").to_f
+      sec_max = @rules.dig("layout_rules", "whitespace", "section_padding_max_rem").to_f
+      @result.fail("design_metrics: section_padding missing/invalid") if sec_min <= 0 || sec_max < sec_min
+      sidebar = @rules.dig("layout_rules", "proportion", "split_sidebar_ratio").to_f
+      main = @rules.dig("layout_rules", "proportion", "split_main_ratio").to_f
+      @result.fail("design_metrics: split ratios missing/invalid") if sidebar <= 0 || (main + sidebar - 1.0).abs > 0.02
+      visible = @rules.dig("ultraminimalism", "swiss_style", "visible_grid_optional")
+      @result.fail("design_metrics: visible_grid_optional missing") if visible.nil?
       @result.warn("design_metrics: design_rules loaded (touch≥#{touch}px body≥#{body_min}px)")
     end
 

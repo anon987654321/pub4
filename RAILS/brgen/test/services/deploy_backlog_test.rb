@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../support/source_reader"
+require_relative "../source_reader"
 require_relative "../../../shared/app/services/shared/cache_policy"
 require_relative "../../../shared/app/services/shared/cache_health"
 require_relative "../../../shared/app/services/shared/cable_health"

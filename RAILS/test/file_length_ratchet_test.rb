@@ -56,7 +56,7 @@ class FileLengthRatchetTest < Minitest::Test
 # infinite_scroll_wiring_test.rb — one subject, and the one most likely to
 # keep growing, rather than eight more entries in a bundle of forty
 # unrelated deploy contracts. ROOT and the two source readers went to
-# test/support/source_reader.rb so both files answer "where is the tree"
+# test/source_reader.rb so both files answer "where is the tree"
 # the same way; copying them would have made two answers that drift, which
 # is the failure ROOT's own comment records from 2026-07-10.
 "brgen/test/services/deploy_backlog_test.rb" => 618,
@@ -64,7 +64,7 @@ class FileLengthRatchetTest < Minitest::Test
 # check_token_contrast, judge_contrast_budget, contrast_budget — are
 # design_metrics/contrast_checks.rb. One subject, and the maths it calls
 # was split off the same subject at the other layer in
-# gates/support/design_metrics/contrast.rb.
+# gates/support/design_metrics_contrast.rb.
 #
 # The move broke something first, in the way this repo keeps finding: the
 # budget path was `File.expand_path("../../data/css_budget.yml", __dir__)`

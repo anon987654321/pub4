@@ -26,9 +26,9 @@ module Brgen
       def lessons_candidates
         [
           rails_root.join("config/radio_bergen/archive_lessons.yml"),
-          rails_root.join("../../../MASTER/data/lessons/pub_archive_restore.yml").expand_path,
-          Pub4::DeployPaths.repo_join("MASTER/data/lessons/pub_archive_restore.yml"),
-          Pathname.new("#{Pub4::DeployPaths::DEFAULT_REPO}/MASTER/data/lessons/pub_archive_restore.yml")
+          rails_root.join("../../../MASTER/data/pub_archive_restore.yml").expand_path,
+          Pub4::DeployPaths.repo_join("MASTER/data/pub_archive_restore.yml"),
+          Pathname.new("#{Pub4::DeployPaths::DEFAULT_REPO}/MASTER/data/pub_archive_restore.yml")
         ]
       end
 

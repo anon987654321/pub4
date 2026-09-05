@@ -2,8 +2,8 @@
 
 require "minitest/autorun"
 require "active_support/concern"
-require_relative "../../app/models/concerns/shared/activity_trackable"
-require_relative "../../app/services/shared/activity_event_recorder"
+require_relative "../app/models/concerns/shared/activity_trackable"
+require_relative "../app/services/shared/activity_event_recorder"
 
 class ActivityTrackableTest < Minitest::Test
   def test_concern_api

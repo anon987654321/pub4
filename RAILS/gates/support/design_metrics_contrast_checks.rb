@@ -8,7 +8,7 @@ module Deploy
     # It is one subject across three methods — pair every declared token against
     # the backgrounds it is actually painted on, score them WCAG and APCA, then
     # judge the two counts against gates/data/css_budget.yml — and the maths it
-    # calls lives next door in gates/support/design_metrics/contrast.rb, which
+    # calls lives next door in gates/support/design_metrics_contrast.rb, which
     # was split off the same subject at the other layer.
     #
     # A module included back into the gate, so it keeps @result, @tokens and the

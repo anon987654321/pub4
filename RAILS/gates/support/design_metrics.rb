@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "set"
-require_relative "design_metrics/contrast"
+require_relative "design_metrics_contrast"
 
 module Deploy
   # Pure-Ruby design measurements against MASTER/data/rules.yml design_rules.

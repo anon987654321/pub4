@@ -78,5 +78,10 @@ class DesignMetricsTest < Minitest::Test
     source = File.read(File.expand_path("../../gates/lib/research/design_metrics.rb", __dir__))
     assert_includes source, "principle=fitts_law"
     assert_includes source, "principle=accessibility"
+    assert_includes source, "grid.columns"
+    assert_includes source, "paragraph_margin_em"
+    assert_includes source, "section_padding"
+    assert_includes source, "split_sidebar_ratio"
+    assert_includes source, "visible_grid_optional"
   end
 end

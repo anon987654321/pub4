@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../support/source_reader"
+require_relative "../source_reader"
 
 # Every surface that scroll-loads, and the wiring each one needs: a reflex
 # subclass, a sentinel in the view, and a container the reflex appends into.
