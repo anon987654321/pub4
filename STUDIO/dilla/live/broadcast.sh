@@ -5,6 +5,11 @@
 # Three sets in rotation. Pass one as an argument to hold it:
 #   live/broadcast.sh                       # all three, in turn
 #   live/broadcast.sh ambient_pads          # that one, all night
+#
+# scan: intentional — no strict mode. This is an all-night rotation: set -e
+# would end the broadcast on the first render that exits non-zero instead of
+# moving to the next set, and set -u breaks the documented no-argument form,
+# where $1 is unset by design. Same argument as redo_nine.sh.
 export PATH=/opt/homebrew/bin:/usr/bin:/bin
 cd "${0:h}/.." || exit 1
 

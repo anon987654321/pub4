@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # The builtin progressions, played.
 #
 # dilla.rb carries 401 named chord progressions -- transcribed, curated and

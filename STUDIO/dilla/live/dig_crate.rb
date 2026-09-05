@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # The crate, dug from its manifest.
 #
 # Lives in the repo, not in a scratchpad: the scratchpad swept two earlier

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'open3'
 
 readme = File.read("MASTER/README.md")

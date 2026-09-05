@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # The same crate, held instead of struck.
 #
 # A chop is a short thing by construction -- best_trim hunts a two-to-fourteen

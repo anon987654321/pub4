@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # The rack the sets are patched into.
 #
 # Three livesets play this room: ambient_pads, sampled_based_beats and

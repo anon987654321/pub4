@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # The loop played as an instrument, and the kit played as a record.
 #
 # "Make old things sound new, and new things sound old." Old to new: a slice of
@@ -51,8 +53,8 @@ slice_at = (rand * 2.2).round(3)
 reverse = rand < 0.28 # a reversed chop, sometimes
 
 inputs = []
-graph  = []
-live   = []
+graph = []
+live = []
 
 prog.each_with_index do |cell, i|
   next if cell.nil?
@@ -111,7 +113,7 @@ graph << "[phrase][under][kit]amix=inputs=3:weights=0.30 0.14 3.4:" \
 # middle so the kit and the record carry it, then returns. A beat that never
 # changes is a beat nobody listens to twice.
 drop_from = (bar * 16).round(3)
-drop_to   = (bar * 24).round(3)
+drop_to = (bar * 24).round(3)
 graph << "[barmix]aloop=loop=-1:size=#{(bar * 44100).round},atrim=0:#{TOTAL}," \
          "volume='if(between(t,#{drop_from},#{drop_to}),0.55,1.0)':eval=frame," \
          "vibrato=f=1.7:d=0.14," \
