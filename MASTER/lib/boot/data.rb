@@ -26,6 +26,19 @@ module Master
       raise
     end
 
+    # A data file read from a caller's own root, falling back to the one this
+    # runtime ships, and never raising at the caller. PrincipleMap and
+    # MaturityScorecard each wrote this seven-line shape out, differing only in
+    # the filename and the Swallow context — the DRY detector named the pair.
+    def load_data_yaml(root, name, fallback, context:)
+      path = File.join(root, "data", name)
+      path = fallback unless File.file?(path)
+      load_yaml(path, default: {}) || {}
+    rescue StandardError => e
+      Master::Ground::Swallow.log(e, context:)
+      {}
+    end
+
     def validate_data!(root: ROOT, bus: nil)
       paths = Dir.glob(File.join(root, "data", "**/*.yml")).sort
       signature = paths.to_h { |path| [path, File.mtime(path).to_i] }

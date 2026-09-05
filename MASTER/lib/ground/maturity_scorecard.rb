@@ -36,14 +36,7 @@ module Master
 
       private
 
-      def load_data
-        path = File.join(@root, "data", "maturity.yml")
-        path = PATH unless File.file?(path)
-        Master.load_yaml(path, default: {}) || {}
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "MaturityScorecard.load_data")
-        {}
-      end
+      def load_data = Master.load_data_yaml(@root, "maturity.yml", PATH, context: "MaturityScorecard.load_data")
 
       def build_entries
         raw = @data["subsystems"] || {}

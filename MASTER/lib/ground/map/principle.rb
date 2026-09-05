@@ -125,14 +125,7 @@ module Master
 
         private
 
-        def load_data
-          path = File.join(@root, "data", "principle_map.yml")
-          path = PATH unless File.file?(path)
-          Master.load_yaml(path, default: {}) || {}
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "PrincipleMap.load_data")
-          {}
-        end
+        def load_data = Master.load_data_yaml(@root, "principle_map.yml", PATH, context: "PrincipleMap.load_data")
 
         def build_entries
           raw = @data["principles"] || {}

@@ -46,17 +46,6 @@ module Master
           collect(target)
         end
 
-        def mtimes(files)
-          files.to_h { |path| [path, File.exist?(path) ? File.mtime(path).to_f : nil] }
-        end
-
-        def quiescent?(files, before)
-          mtimes(files) == before
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "FileCollector.quiescent?")
-          false
-        end
-
         private
 
         def collect_tracked(target)
