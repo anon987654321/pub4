@@ -28,12 +28,12 @@ GATES_DIR = __dir__
 
 # Say which interpreter this is before anything runs. The repo pins 3.4.9 in
 # .ruby-version while MASTER runs the system Ruby and vm23 runs ruby34 — every
-# wrong pairing fails cryptically deep in a gem, so the mismatch is named here
-# at the door instead. A warning, not an abort: most gates read source as text
-# and run fine anywhere; the ones that boot an app bundle are the ones that die.
+# wrong pairing fails cryptically deep in a gem. Abort, not a warning: a
+# warning next to a later gem crash reads as two findings, and operators
+# learned to ignore the first.
 pinned = File.read(File.join(File.expand_path("../..", __dir__), ".ruby-version")).strip rescue nil
 if pinned && !RUBY_VERSION.start_with?(pinned.sub(/\.\d+\z/, ""))
-  warn "[gates] ruby #{RUBY_VERSION}, repo pins #{pinned} — app-bundle gates may fail; use `RBENV_VERSION=#{pinned} rbenv exec ruby gates/runner.rb ...`"
+  abort "[gates] ruby #{RUBY_VERSION}, repo pins #{pinned} — use `RBENV_VERSION=#{pinned} rbenv exec ruby gates/runner.rb ...`"
 end
 
 # The exit code a subprocessed gate uses for "preconditions missing, nothing
