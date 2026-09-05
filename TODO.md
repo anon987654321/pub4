@@ -188,11 +188,19 @@ positives worth not re-discovering — those are guards, not history.
   `rules.yml` rather than out of `law/`. Converging `WhyExplainer` onto the law
   is the move that makes those safe to remove; doing it in the other order
   empties a live surface.
-- **Four ratchets are over, re-measured 2026-09-05**: `spine.lib_body_ceiling`
-  38626/37464, `growth.master` 1061/1047, `growth.rails` 2371/2358 and
-  `growth.studio` 155/138. Every one that is left counts size, which is the
-  shape worth knowing: what remains is folding, and folding is a sitting rather
-  than a fix.
+- **Four ratchets are over, re-measured 2026-09-05 after `lib/autonomy` went**:
+  `spine.lib_body_ceiling` 38252/37464, `growth.master` 1049/1047,
+  `growth.rails` 2371/2358 and `growth.studio` 155/138. Every one that is left
+  counts size, which is the shape worth knowing: what remains is folding, and
+  folding is a sitting rather than a fix.
+
+  `growth.master` is **two files** from its floor and should stay there until
+  two are genuinely foldable. A constant-name census over `lib/` names three
+  candidates and all three are wrong: `HashDigCompat` is required by path and
+  called by method name, `RubyRuleSupport` is used inside its own multi-class
+  file, and `Trace::Hooks` is the entry above — the last reader of a
+  constitutional declaration. Two files is exactly the distance at which a
+  census stops being a measurement and starts being a shopping list.
 
   **Extraction cannot pay `spine.lib_body_ceiling`, and this file said it could.**
   The counter is non-blank non-comment lines across `lib/**/*.rb` minus the
@@ -1239,26 +1247,29 @@ rather than inferred, and the command that measured it is named so the next
 reader can re-run it instead of re-deriving it. The cleanup that came out of the
 same sitting is `72a8cfae8`; what is here is what that commit did **not** close.
 
-#### `lib/autonomy` is reached by nothing but its own tests
+#### `soul.yml` declares three hooks and nothing runs them
 
-Found 2026-09-05 while closing the last `rake selftest` finding, which is
-`NO_GOD_CLASS` on `EventStore` and had been read as a decomposition question.
-It is not one yet. `EventStore` is constructed at exactly two sites and both are
-`test/test_autonomy_event_store.rb`. So are `Goal`, `Task`, `TaskGraph` and
-`Schema`; `DreamLoop` and `Recovery` have no reference anywhere outside the
-directory, tests included. Seven files, 400 body lines, one `require` aggregator
-and no caller.
+Found 2026-09-05 while looking for two more files to fold, which is the wrong
+reason to find anything and the reason this was nearly deleted instead.
 
-`lib/autonomy.rb`'s own header is the reason this is a decision rather than a
-deletion. It says what these six are for — "a dependency graph that can say what
-is blocked on what, a store that survives a crash, and a way back into an
-interrupted run" — and argues, correctly, that the other half of the proposal it
-came from was already built under other names. The durable half was written and
-never wired.
+`Master::Trace::Hooks` is constructed nowhere. Its siblings are —
+`Trace::Ledger::Swallow`, `Feedback` and `Reflexion` are each attached in
+`builder/boot_phases.rb` or `ai_boot.rb` — and this one is not, so a
+constant-name census reports the file as dead and a file count says delete it.
 
-Splitting `EventStore`'s fourteen public methods is the wrong first move either
-way: it is a repository over four tables, every method is somebody's door, and
-nobody is at any of them. Wire it or delete it; the count follows.
+It is the only reader of `soul.yml#hooks`, which declares three:
+`on_violation_found` -> `append_constitutional_violation`, and two more.
+Nothing publishes `on_violation_found` either. So the kernel — the document
+that outranks every other in this repo — states three hooks that do not fire,
+and the class that would fire them is never built.
+
+Deleting the file would take the last reader of a constitutional declaration
+with it, turn `data_reach` back to 36, and leave `soul.yml` promising three
+hooks with nothing on either end. `soul.yml` is `paths.immutable`, so the
+block cannot simply go. Wire `Hooks` into the boot phases beside its three
+siblings and publish the events it listens for, or take the block to whoever
+owns the constitution. It is the **Inert law and config** class at the one
+place in the tree where it costs the most.
 
 #### The tier2 ordering guarantee — closed 2026-09-05
 
@@ -1397,13 +1408,15 @@ fourth, `voice/renderer/system_info.rb`, no longer reports at all — re-scanned
   in the repo and sat above `private`. Moved below it: 11 public → 8. The eight
   model-shape predicates that do have callers stay public.
 
-`NO_GOD_CLASS` on `EventStore` remains and is not the same shape. Its fourteen
-public methods are the surface of a repository over four tables, and every one
-of them is somebody's door. Splitting it into a goal, task, event and checkpoint
-store is a design decision with an owner; privatising a repository's API to
-satisfy a counter is what "driving the count to zero by re-exempting" means.
-Read it beside the `lib/autonomy` entry above: nobody is at any of those doors,
-which changes the question from how to split it to whether to wire it.
+`NO_GOD_CLASS` on `EventStore` closed with `lib/autonomy` on 2026-09-05, and
+what it took to close is the part worth keeping. The record read it as a
+decomposition question — fourteen public methods over four tables, each one
+somebody's door — and privatising a repository's API to satisfy a counter is
+what "driving the count to zero by re-exempting" means, so it sat. The question
+was never how to split it. Nobody was at any of those doors, the subsystem was
+reached by nothing but its own tests, and the counter was right in a way its own
+message could not say. **`rake selfcheck` is clean and `rake selftest` is 0**,
+both for the first time since 2026-08-19.
 
 The fourth `SILENT_RESCUE` came back and is closed. `ProgressReporter`'s
 `append_scan_hits_jsonl` swallowed every failure writing `.master/scan_hits.jsonl`
@@ -1621,7 +1634,18 @@ value that is nothing but an indirection names where the secret lives. Two more
 went red in the meantime and both were the test rather than the code —
 `test_scanner`'s doubles spelled a `scan_one` signature that had gained three
 keyword arguments, and `test_source_assertions` counted two additions its
-pattern cannot tell from the thing it hunts. The suite reads 293 of 294 files.
+pattern cannot tell from the thing it hunts. The suite reads 290 of 291 files —
+three fewer than the morning because `lib/autonomy`'s three tests went with it.
+
+One red file sits outside that glob and is not counted by it.
+`spec/smoke/static_syntax_spec.rb` fails on
+`data/radio_bergen_track_dossiers.yml`: it carries bare Ruby symbols
+(`drum_preset: :madlib_dusty`), and `Boot::Data.load_yaml` permits only Date and
+Time, so MASTER's own loader cannot read a file in MASTER's own data directory —
+`Master.validate_data!` warns about it on every boot. Nothing in MASTER reads
+it; the same table lives in `STUDIO/dilla/dilla.rb` as Ruby. Not edited here on
+purpose: quoting the values is a lossy change to dilla's data made by somebody
+who does not own it, and the file may be regenerated from that table.
 
 #### The over-ratchet list is not stable, and that is the finding
 
