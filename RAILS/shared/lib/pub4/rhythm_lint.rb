@@ -1,5 +1,6 @@
-require_relative "master_design"
 # frozen_string_literal: true
+
+require_relative "master_design"
 
 require "yaml"
 require "set"
