@@ -49,4 +49,12 @@ class TestRuleRegistryAudit < Minitest::Test
     assert_includes ids, "trailing_whitespace"
     assert_includes ids, "no_god_class"
   end
+
+  def test_an_empty_lexical_hatch_is_named
+    report = audit.call
+
+    assert_empty report.lexical_wired
+    assert_empty report.lexical_unwired
+    assert_includes report.lines.join("\n"), "lexical hatch empty"
+  end
 end

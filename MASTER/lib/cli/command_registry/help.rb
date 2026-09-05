@@ -24,7 +24,10 @@ module Master
         },
         "commit" => {
           summary: "record the current diff",
-          detail: ["/commit — re-run as /commit --confirm to git add -u + git commit."],
+          detail: [
+            "/commit — git add -u and git commit. No confirmation flag.",
+            "Path-scope from a worktree. Never run this on a shared checkout.",
+          ],
         },
         "model" => {
           summary: "show or switch the active model",

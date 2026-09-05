@@ -26,10 +26,19 @@ module Master
               "  kernel yaml: #{kernel_ids.size}",
               "  lexical wired (ruby+yaml bridge): #{lexical_wired.size}",
               "  lexical unwired: #{lexical_unwired.size}",
+              hatch_line,
               "  semantic-only: #{semantic_only.size}",
               "  structural unwired: #{structural_unwired.size}",
               "  rule_deps gaps: #{dep_graph_gaps.size}",
             ]
+          end
+
+          def hatch_line
+            if lexical_wired.empty? && lexical_unwired.empty?
+              "  lexical hatch empty: 0 detect_lexical in the corpus (escape hatch idle)"
+            else
+              "  lexical hatch: #{lexical_wired.size} wired, #{lexical_unwired.size} unwired"
+            end
           end
         end
 

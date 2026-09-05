@@ -117,6 +117,13 @@ class TestCLI < Minitest::Test
     assert_includes detail, "--dry-run"
   end
 
+  def test_commit_help_does_not_invent_a_confirm_flag
+    detail = Master::CLI::CommandRegistry.help_text("commit")
+
+    refute_includes detail, "--confirm"
+    assert_includes detail, "git add -u"
+  end
+
   def test_prompt_refreshes_skills_before_rendering
     skills = Minitest::Mock.new
     skills.expect(:discover!, [])

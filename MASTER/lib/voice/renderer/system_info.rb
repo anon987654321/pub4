@@ -29,14 +29,16 @@ module Master
 
         def soul_version
           (Master.load_yaml(File.join(Master::DATA, "soul.yml")) || {})["version"] || "unknown"
-        rescue StandardError => _e
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "SystemInfo.soul_version", severity: :load_bearing)
           "unknown"
         end
 
         def active_orders_count
           orders = Master.load_yaml(Master.state_path)
           Array(orders).count { |o| o["enabled"] != false }
-        rescue StandardError => _e
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "SystemInfo.active_orders_count", severity: :load_bearing)
           "?"
         end
 
@@ -60,7 +62,8 @@ module Master
           filtered = raw.reject { |l| l.match?(/\A(?:OpenBSD\s+\d|Copyright\s|The Regents)/) }
           lines = filtered.first(BOOT_DMESG_LINES)
           lines.empty? ? ["dmesg unavailable"] : lines
-        rescue StandardError => _e
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "SystemInfo.dmesg_lines", severity: :load_bearing)
           ["dmesg unavailable"]
         end
 
