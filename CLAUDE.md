@@ -22,7 +22,8 @@ renamed.
 
 Nothing else sits at the repo root but this file, `TODO.md` — the single
 repo-wide backlog (every per-tree debt/TODO/blocker list was folded into it) —
-and `WISHLIST.md`, the forward-work companion `TODO.md` points at. Build output
+`WISHLIST.md`, the forward-work companion `TODO.md` points at, and `TREE.md`,
+the map of the four trees. Build output
 never sits at the root whatever the tool's default: dilla writes to `$PWD`
 unless `DILLA_OUTPUT_DIR` says otherwise, and one session's renders lived at the
 root for weeks because of it. They belong under

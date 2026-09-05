@@ -755,17 +755,17 @@ that.
 Priced rather than fixed, because a ceiling that prices a known cost is what
 makes the next arrival a `+1`:
 
-- **52 one-file directories**, against a ceiling of 53. Most are Rails test
-  convention mirroring `app/`, and `MASTER/spec/` has five of its own. Neither
-  is wrong; both are countable. Read the live figure from
+- **20 one-file directories**, against a ceiling of 20, after the 2026-09-05
+  hoist of one-file spec, data, test and support dirs. What remains is mandated:
+  OS install paths, Zeitwerk, Rails `test/system`, ports fixtures, OmniAuth,
+  PWA, and dilla vocal/render takes. Read the live figure from
   `MASTER/bin/pub4 measure`, not from here — the number in this paragraph is
-  the kind that goes stale in a day.
-- **7 uninformative names, now 4.** Four are Zeitwerk's: `lib/io/base.rb` is
-  named after the constant it defines, so the finding is that the *concept* is
-  called `Base`, which is a design decision and not a rename. The three that
-  were actionable — `STUDIO/test/helper.rb`, `STUDIO/test/dilla/helper.rb` and
-  `STUDIO/test/tools/helper.rb`, three different helpers at three depths sharing
-  one name, ambiguous in a stack trace — are flattened to `studio_helper.rb`,
+  the kind that goes stale in a day. The map is `TREE.md`.
+- **3 uninformative names**, all Zeitwerk: `lib/io/base.rb` is named after the
+  constant it defines, so the finding is that the *concept* is called `Base`,
+  which is a design decision and not a rename. The three that were actionable —
+  `STUDIO/test/helper.rb`, `STUDIO/test/dilla/helper.rb` and
+  `STUDIO/test/tools/helper.rb` — were flattened to `studio_helper.rb`,
   `dilla_helper.rb` and `tools_helper.rb`. Checked 2026-08-29:
   `Dir["STUDIO/**/helper.rb"]` is empty and the three new names are in place.
 
@@ -1248,38 +1248,14 @@ Three of the four `SILENT_RESCUE` sites now report through
 `NO_GOD_CLASS` on EventStore and LlmDispatcher, and `COMPLETION_THEATER` on
 `ast_fixer.rb`, remain.
 
-#### `edge_tts_available?` checks two of the worker's four preconditions
+#### `edge_tts_available?` and the Mac `say` fallback — closed 2026-09-05
 
-`lib/voice/speech.rb:107` is `worker_executable? && eventmachine_ssl_available?`.
-`bin/tts-worker` requires five things before it can speak: `bundler/setup`,
-`eventmachine`, **`rb_edge_tts`** and **`faye/websocket`** (lines 51–54). The two
-gems are unchecked, so on a host where either is missing from the resolved bundle
-the probe answers true and the worker dies at `require`.
-
-That matters most at `/health`. `web/app/controllers/health_controller.rb:54`
-returns this predicate as `tts_healthy?`, and the comment above it reasons
-carefully about avoiding a **false negative** — the daemon socket is reaped
-between syntheses, so requiring a live socket 503'd a working host. The fix was
-right and it bought a false positive at the other end: a host that cannot
-synthesise at all now reports TTS healthy. There is no third state.
-
-The live synthesis path degrades, but not to the engine that would work.
-`synthesize_streaming_to_file_unlocked` (speech.rb:308–320) goes socket, then
-one-shot, then espeak, then returns false. The `say` fallback that any Mac would
-satisfy is only in `Engines::DEFAULT_CHAIN`, and the one caller of
-`Engines.attempt?` is `lib/voice/transcendent.rb:160` — the half of the voice
-stack the **Inert law and config** entry above already records as reached by
-nothing. So the chain that knows about `say` is unreachable, and the path that
-runs does not know about it.
-
-Wanted: the probe asserts every requirement the worker has, ideally by asking the
-worker rather than by a second list that drifts from it — a `--selftest` flag on
-`bin/tts-worker` is the shape, since the requires are already written there once.
-`/health` should distinguish "cannot synthesise" from "socket not up".
-
-Found by getting it wrong twice, which is why the instrument note below exists.
-On this Mac everything is installed and synthesis works; the defect is that the
-probe would not have told me if it were not.
+The cheap probe stays two preconditions (`worker_executable?` and
+EventMachine SSL) because it gates a per-utterance path. `/health` asks
+`edge_tts_ready?`, which spawns `tts-worker --selftest` and reports
+`tts_blocker` when it is not. Classic `Speech.synthesize` now falls through
+Edge, then espeak, then `Engines.synth_say`, so a Mac without a live Edge
+socket still speaks.
 
 #### Three test files have been erroring, and `rake test` cannot see them
 
@@ -3046,13 +3022,14 @@ the same pass are open, each measured and none of them a guess.
   (verified). The second is heavier and exact; the first is cheap and
   approximate.
 
-- **Seven `layout_rules` keys, three now read.** `design_metrics` reads
-  `gap_over_margin`, `card_padding_px`, and `target_recommended_px` (must be
-  ≥ `target_min_px`). `prefer_monochrome_with_one_accent` is read next to
-  `max_palette_roles`. Still unread: `grid.columns`, `paragraph_margin_em`,
-  `section_padding_min_rem`/`_max_rem`, `split_sidebar_ratio`,
-  `visible_grid_optional`. The CSS scans for children-with-margin and
-  card padding other than 24px are still unbuilt.
+- **The remaining `layout_rules` keys are now read.** `design_metrics` already
+  read `gap_over_margin`, `card_padding_px`, and `target_recommended_px` (must
+  be ≥ `target_min_px`). It now also refuses a missing `grid.columns`,
+  `paragraph_margin_em`, `section_padding_min_rem`/`_max_rem`,
+  `split_sidebar_ratio` (must sum with `split_main_ratio` to 1), and
+  `visible_grid_optional`. `prefer_monochrome_with_one_accent` is read next to
+  `max_palette_roles`. The CSS scans for children-with-margin and card padding
+  other than 24px are still unbuilt.
 
 - **`--border-strong` is declared only in `MASTER/web/public/face.css`.**
   brgen's composer asked for it twice and got its `var(--border)` fallback both
