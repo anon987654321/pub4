@@ -3097,8 +3097,11 @@ than implied across four.
   clone to a green check without reading every contract.
 - **Local-LLM fallback.** A path that keeps the runtime working when no API key
   and no `claude` CLI are present.
-- **PWA banner.** The install-prompt / add-to-home-screen affordance across the
-  three Rails apps.
+- **PWA banner.** Closed 2026-09-05. The banner waited for a post/play/chat
+  after `beforeinstallprompt`, so a first visit that only read never saw it.
+  It now shows when Chrome can install, and on iOS (where that event never
+  fires) it tells Safari/Chrome how. The three apps already shipped the
+  partial, the worker, and the manifest.
 - **Aegis, seaborne.** A safety agent for the water, and the first body the
   embryo could plausibly take. It is a program rather than a feature because
   most of it is gated on hardware; the section below says what is buildable now
