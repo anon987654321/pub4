@@ -64,6 +64,8 @@ class TestScanAutofix < Minitest::Test
         ctx: { args: path },
       )
 
+      # source-assertion: ok — reading back what the fixer wrote is the only way to see it landed
+
       assert_includes File.read(path), "# frozen_string_literal: true"
       assert_includes out, "autofixed: 1 file"
       assert_operator scanner.scan_calls, :>=, 2
@@ -138,6 +140,7 @@ class TestScanAutofix < Minitest::Test
 
       result = scanner.scan_dir(root, autofix: true, autofix_root: root)
       assert result.ok?
+      # source-assertion: ok — reading back what the fixer wrote is the only way to see it landed
       assert_includes File.read(path), "# frozen_string_literal: true"
       assert_equal 1, scanner.stream_autofixes.size
     end

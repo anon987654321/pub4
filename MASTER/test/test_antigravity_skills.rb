@@ -161,7 +161,7 @@ class TestAntigravitySkills < Minitest::Test
 
       assert_equal %w[greet], found.map { |s| s[:name] }
       assert_equal "says hello", found.first[:description]
-      assert_includes found.first[:body], "wave"
+      assert_equal "wave", found.first[:body].strip
       assert_equal :workspace, found.first[:source]
     end
   end

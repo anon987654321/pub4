@@ -15,10 +15,15 @@ class TestScanner < Minitest::Test
     end
   end
 
+  # **kwargs, not the signature spelled out. scan_dir wraps every error from
+  # scan_one in a Result it is free to ignore, so when the real method gained
+  # autofix:, autofix_root: and rules:, these doubles raised ArgumentError on
+  # every file and the walk reported nothing — a stale double that reads as a
+  # tree with no files in it.
   class BoomScanner < Master::Review::Scan::Scanner
     private
 
-    def scan_one(dir:, path:, depth:, stream:, index: nil)
+    def scan_one(dir:, path:, depth:, stream:, index: nil, **)
       raise "boom #{index}"
     end
   end
@@ -33,7 +38,7 @@ class TestScanner < Minitest::Test
 
     private
 
-    def scan_one(dir:, path:, depth:, stream:, index: nil)
+    def scan_one(dir:, path:, depth:, stream:, index: nil, **)
       @seen << path
       [path, Master::Result.ok([])]
     end
@@ -142,8 +147,11 @@ class TestScanner < Minitest::Test
       File.write(File.join(dir, "web", "script", "three_build", "vendor.js"), "console.log('vendor')\n")
       scanner = PathScanner.new(rules: [])
 
-      scanner.scan_dir(dir)
+      result = scanner.scan_dir(dir)
 
+      # The Result first: an empty `seen` reads the same whether the filter
+      # excluded everything or the walk died on the first file.
+      assert result.ok?, -> { "scan_dir failed: #{result.message}" }
       assert_equal [File.join(dir, "app", "good.rb"), File.join(dir, "web", "public", "face.js")].sort,
         scanner.seen.sort
     end
