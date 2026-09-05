@@ -10,6 +10,9 @@ $stdout.sync = true
 $stderr.sync = true
 
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
+# The tree is this file's parent, not Dir.pwd. bin/master exists to chdir
+# here; a caller from the repo root must get the same runtime without it.
+Dir.chdir(File.expand_path("..", __dir__))
 require "ground/env_loader"
 Master::Ground::EnvLoader.load!
 

@@ -4,10 +4,13 @@
 require "optparse"
 require "rbconfig"
 
+# The fold spine only. bin/master boots the full runtime (soul, scan, voice).
+# This drives lib/core.rb with a scripted no-op model unless --real.
+#
 # Was `unshift "../core"` + `require "master"`, which resolved to core/master.rb
 # purely by load-path order — two files named master.rb, one process, and the
 # winner decided by whichever directory came first. The fold spine is lib/core.rb
-# since 2026-08-12, so this is now the ordinary entrypoint.
+# since 2026-08-12, so this is now the ordinary fold entrypoint.
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "master"
 
