@@ -57,7 +57,7 @@ The worst failure here is not a red gate. It is a green one.
 15. `GATE_STRICT_INCONCLUSIVE=1` should be the default, not an opt-in. Four gates reported "checked nothing" in today's sweep and the summary line still read as a pass. **[yours]**
 16. `rails_runtime` required `lib/production` after that file moved to `lib/host/production`. It failed at *require* time for months, so the composite went red naming no finding. **[done]**
 17. `RAILS/test/gate_requires_resolve_test.rb` pins it: every `require_relative` under `gates/` resolves, and every `gates.yml` row names a file on disk. **[done]**
-18. Extend that to every tree, not just RAILS.
+18. Extend that to every tree, not just RAILS. **[done]** `gate_requires_resolve_test` now walks MASTER/lib and OPENBSD too, skipping heredoc requires.
 19. A gate that skips its live half should report the count it skipped in the summary line, not only in its own output.
 20. `runner.rb` takes whatever `ruby` is on PATH and prints one warning. Make the version mismatch fatal — app-bundle gates then fail for the interpreter and read as findings. **[done]** `abort`, not `warn`.
 21. Boot the triangle automatically for gates that need it, or fail rather than skip.
