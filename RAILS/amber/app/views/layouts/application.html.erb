@@ -72,6 +72,7 @@
   <div class="amber-nav-actions">
     <% if authenticated? %>
       <%= link_to t("nav.account"), user_path(Current.user), class: "btn-sm" %>
+      <%# destructive: no-confirm-ok — reversible — signing out, and signing in again is the same click %>
       <%= link_to t("nav.sign_out"), session_path, data: { turbo_method: :delete }, class: "btn-sm" %>
     <% else %>
       <%= link_to t("nav.sign_in"), new_session_path, class: "btn-sm" %>

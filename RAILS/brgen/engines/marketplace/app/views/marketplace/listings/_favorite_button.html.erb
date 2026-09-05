@@ -4,6 +4,7 @@
    } %>
 <% if Current.user.present? %>
   <% if favorited %>
+    <%# destructive: no-confirm-ok — reversible — the listing is favourited again from the same button %>
     <%= button_to listing_favorite_path(listing),
           method: :delete,
           class: "deal-fav deal-fav--on",

@@ -28,6 +28,7 @@
   <% if authenticated? %>
     <div class="cluster">
       <% if @set.likes.exists?(user: Current.user) %>
+        <%# destructive: no-confirm-ok — reversible — the button becomes Like again in place %>
         <%= button_to t("actions.unlike"), set_like_path(@set), method: :delete, class: "btn btn-ghost btn-sm" %>
       <% else %>
         <%= button_to t("actions.like"), set_like_path(@set), method: :post, class: "btn btn-primary btn-sm" %>
@@ -72,6 +73,7 @@
          · <%= set_track.track.duration_formatted %>
       </div>
       <% if authenticated? && (Current.user == set_track.user || Current.user == @set.user || @set.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
+        <%# destructive: no-confirm-ok — reversible — this takes the track out of the set; the track and its audio stay %>
         <%= button_to t("actions.remove"), set_track_path(@set, set_track), method: :delete, class: "btn btn-ghost btn-sm" %>
       <% end %>
     </article>

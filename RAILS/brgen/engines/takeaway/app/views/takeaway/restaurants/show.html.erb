@@ -12,6 +12,7 @@
     <% if authenticated? && @restaurant.owner?(Current.user) %>
       <%= link_to t("actions.edit"), edit_restaurant_path(@restaurant), class: "btn btn-ghost btn-sm" %>
     <% elsif Current.user.present? && @favorited %>
+      <%# destructive: no-confirm-ok — reversible — the button becomes Save again in place %>
       <%= button_to t("takeaway.unsave"), restaurant_favorite_restaurant_path(@restaurant), method: :delete, class: "btn btn-ghost btn-sm" %>
     <% elsif Current.user.present? %>
       <%= button_to t("takeaway.save_restaurant"), restaurant_favorite_restaurant_path(@restaurant), method: :post, class: "btn btn-primary btn-sm" %>

@@ -397,6 +397,7 @@ en:
     url_placeholder: "https://…"
     delete_permanent: "Delete permanently"
     confirm_delete: "Permanently delete this item and its photos? This cannot be undone."
+    confirm_remove_affiliate_link: "Remove this link? The address has to be typed in again."
     archive_seasonal: "Archive out-of-season"
     resurface_seasonal: "Resurface this season"
     archived_notice: "Archived to memory."
@@ -914,3 +915,7 @@ en:
     outfit_planned: "Planned."
     anonymous_post_limit: "Sign up to post more (%{limit} anonymous posts per browser)."
     welcome: "Welcome to Amber."
+  # Shared::PlaceHelper renders these wherever an item carries coordinates.
+  place:
+    within_a_km: "less than 1 km away"
+    km_away: "%{count} km away"

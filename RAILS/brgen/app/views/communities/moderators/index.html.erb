@@ -20,6 +20,7 @@
               community_moderators_path(@community, user_id: membership.user_id),
               method: :post, class: "btn btn-ghost btn-sm" %>
       <% elsif membership.role == "moderator" %>
+        <%# destructive: no-confirm-ok — reversible — the same row offers Make moderator once the role is member %>
         <%= button_to t("community.remove_moderator"),
               community_moderator_path(@community, membership),
               method: :delete, class: "btn btn-ghost btn-sm" %>

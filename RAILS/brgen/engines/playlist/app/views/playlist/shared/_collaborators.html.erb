@@ -10,7 +10,8 @@
     <% collaborations.includes(:user).each do |c| %>
       <%= c.user&.username || c.user&.email %> (<%= c.role %>)
       <% if Current.user == parent.user || c.user == Current.user %>
-        <%= button_to t("actions.remove"), collaboration_path_proc.call(c), method: :delete, class: "btn btn-ghost btn-sm" %>
+        <%= button_to t("actions.remove"), collaboration_path_proc.call(c), method: :delete, class: "btn btn-ghost btn-sm",
+              data: { turbo_confirm: t("playlist.confirm_remove_collaborator") } %>
       <% end %>
     <% end %>
   <% else %>

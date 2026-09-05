@@ -21,6 +21,7 @@
     <% if unread.positive? %><mark><%= unread %></mark><% end %>
   <% end %>
   <% if pinned %>
+    <%# destructive: no-confirm-ok — reversible — unpinning changes the order of the list, nothing else %>
     <%= button_to t("messages.unpin"), conversation_pin_path(conversation), method: :delete, class: "btn btn-ghost btn-sm" %>
   <% else %>
     <%= button_to t("messages.pin"), conversation_pin_path(conversation), class: "btn btn-ghost btn-sm" %>

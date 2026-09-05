@@ -11,6 +11,7 @@
         <li>
           <%= showcase.item.title %>
           <% if showcase.caption.present? %> — <%= showcase.caption %><% end %>
+          <%# destructive: no-confirm-ok — reversible — the same form re-adds the item to the profile %>
           <%= button_to t("actions.remove"), creator_profile_wardrobe_item_path(handle: @profile.handle, id: showcase), method: :delete, class: "btn btn-sm" %>
         </li>
       <% end %>

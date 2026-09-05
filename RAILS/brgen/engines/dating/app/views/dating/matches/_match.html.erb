@@ -1,7 +1,8 @@
 <% other = match.other_user(Current.user) %>
 <% match_actions = capture do %>
   <%= button_to t("actions.message"), main_app.user_conversations_path(other), method: :post, class: "feed-action feed-action--primary" %>
-  <%= button_to t("dating.unmatch"), match_path(match), method: :delete, class: "feed-action" %>
+  <%= button_to t("dating.unmatch"), match_path(match), method: :delete, class: "feed-action",
+        data: { turbo_confirm: t("dating.confirm_unmatch") } %>
 <% end %>
 <%= tag.div id: dom_id(match) do %>
   <%= render "shared/feed_card",

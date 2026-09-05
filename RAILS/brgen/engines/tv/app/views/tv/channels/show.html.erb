@@ -12,6 +12,7 @@
       <%= link_to t("actions.edit"), edit_channel_path(@channel), class: "btn btn-ghost btn-sm" %>
     <% elsif authenticated? %>
       <% if @channel.subscriptions.exists?(user: Current.user) %>
+        <%# destructive: no-confirm-ok — reversible — the button becomes Subscribe again in place %>
         <%= button_to t("tv.unsubscribe"), unsubscribe_channel_path(@channel), method: :delete, class: "btn btn-ghost btn-sm" %>
       <% else %>
         <%= button_to t("tv.subscribe"), subscribe_channel_path(@channel), method: :post, class: "btn btn-primary btn-sm" %>

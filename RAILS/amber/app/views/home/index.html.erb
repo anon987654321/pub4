@@ -46,6 +46,7 @@
           <div class="plan-row">
             <span class="plan-date"><%= plan.planned_date.strftime("%a %-d") %></span>
             <%= link_to plan.outfit.name, plan.outfit %>
+            <%# destructive: no-confirm-ok — reversible — this drops the outfit from today's plan, not the outfit %>
             <%= button_to t("actions.remove"), planned_outfit_path(plan), method: :delete, class: "btn-link" %>
           </div>
         <% end %>

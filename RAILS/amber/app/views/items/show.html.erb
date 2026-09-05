@@ -100,7 +100,8 @@
             <%= link_to link.merchant, link.url, rel: "sponsored noopener", target: "_blank",
                   data: { controller: "outbound-click", action: "click->outbound-click#record",
                           outbound_click_merchant_value: link.merchant, outbound_click_surface_value: "item_affiliate" } %>
-            <%= button_to t("actions.remove"), item_affiliate_link_path(@item, link), method: :delete, class: "btn-sm" %>
+            <%= button_to t("actions.remove"), item_affiliate_link_path(@item, link), method: :delete, class: "btn-sm",
+                  data: { turbo_confirm: t("items.confirm_remove_affiliate_link") } %>
           </li>
         <% end %>
       </ul>

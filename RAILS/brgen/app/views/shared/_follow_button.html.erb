@@ -1,6 +1,7 @@
 <span id="follow_<%= user.id %>">
   <% if current_user == user %>
   <% elsif active %>
+    <%# destructive: no-confirm-ok — reversible — the button becomes Follow again in place %>
     <%= button_to t("actions.unfollow"), main_app.unfollow_user_path(user), method: :delete,
         data: { turbo_stream: true }, aria: { label: t("a11y.unfollow_user", name: user.display_name) } %>
   <% else %>

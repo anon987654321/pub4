@@ -16,6 +16,7 @@
       <span class="group-line-what"><%= line.quantity %>× <%= line.menu_item.name %></span>
       <span class="group-line-sum"><%= line.subtotal_display %></span>
       <% if line.user_id == Current.user&.id %>
+        <%# destructive: no-confirm-ok — reversible — the item goes back in the group order from the menu %>
         <%= button_to t("actions.remove"), group_order_path(@order.group_token, line_id: line.id), method: :delete, class: "btn btn-ghost btn-sm" %>
       <% end %>
     </li>

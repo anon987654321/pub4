@@ -38,22 +38,22 @@ module Pub4
     CONFIRMED = /confirm:|data-turbo-confirm|turbo_confirm/
     OPT_OUT = "destructive: no-confirm-ok"
 
-    # Measured 2026-08-25 at first run: 30, against the register's hand count of
-    # 29 from a fortnight earlier. Reproducing a number counted by eye is the
-    # reason to trust the detector, so it is recorded rather than driven to zero.
+    # Opened at 30 against a hand count of 29, which is the reason to trust the
+    # detector, and read 29 by 2026-08-28.
     #
-    # Most of the 30 are reversible and want the marker rather than a prompt —
-    # sign out, unfollow, unpin, leave a community you can rejoin, remove a plan
-    # entry. A handful are moderation actions where a prompt is the right answer.
-    # That split is per-site judgement, which is what the register said all along;
-    # what it lacked was a number that could not drift while nobody looked.
-#
-# 30 -> 29 on 2026-08-28. The detector now reads what the register counted
-# by hand, and a ceiling above the real number is room the next change
-# grows into silently, so it follows the measurement down. Which site left
-# is not attributed: several views moved in the same window and the drop is
-# one of them, which is worth less than the ceiling being true.
-BASELINES = { "unconfirmed_destroy" => 29 }.freeze
+    # 0 now, and the split is the one this header predicted. Twenty-five carry
+    # the marker because the control is reversible in place: sign out, unfollow,
+    # unpin, unblock, unsubscribe, unwatch, leave a community you can rejoin,
+    # drop an outfit from today's plan. Two of those are moderation actions and
+    # still take the marker rather than a prompt — the bans view already argues
+    # that a mod team which cannot undo its own mistakes escalates everything to
+    # the owner, and the moderators list offers Make moderator on the same row.
+    #
+    # Four gained a prompt, each because the click destroys something a second
+    # click does not bring back: an affiliate link's address, a match and the
+    # conversation with it, a collaborator's access, and a dilla sketch with its
+    # rendered audio attached.
+    BASELINES = { "unconfirmed_destroy" => 0 }.freeze
 
     Finding = Struct.new(:kind, :file, :line, :detail)
 

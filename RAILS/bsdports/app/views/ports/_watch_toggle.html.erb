@@ -1,5 +1,6 @@
 <div id="port_watch_<%= port.id %>">
   <% if watching %>
+    <%# destructive: no-confirm-ok — reversible — the button becomes Watch again in place %>
     <%= button_to t("ports.unwatch"), unwatch_port_path(port), method: :delete, data: { turbo_stream: true } %>
   <% else %>
     <%= button_to t("ports.watch"), watch_port_path(port), method: :post, data: { turbo_stream: true } %>

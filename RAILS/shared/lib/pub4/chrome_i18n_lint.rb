@@ -290,9 +290,17 @@ module Pub4
       path.sub("#{rails_root}/", "")
     end
 
+    # The marker may sit on the line above; being a comment may not. The window
+    # form of this check read "the previous line opens a comment" as "this line
+    # is a comment", so writing any ERB comment above a call excused the call —
+    # twenty-five destructive-action markers landed above button_to calls and
+    # silently took two live translate_default findings with them. A preceding
+    # comment only reaches this line when it has not closed.
     def comment_or_opt_out?(lines, index)
-      window = lines[[ index - 1, 0 ].max..index].join
-      window.include?(OPT_OUT) || window.lstrip.start_with?("<%#", "#")
+      return true if lines[[ index - 1, 0 ].max..index].join.include?(OPT_OUT)
+      return true if lines[index].lstrip.start_with?("<%#", "#")
+
+      index.positive? && lines[index - 1].lstrip.start_with?("<%#") && !lines[index - 1].include?("%>")
     end
   end
 end

@@ -1,6 +1,7 @@
 <%= turbo_frame_tag dom_id(user, :follow) do %>
   <% if authenticated? && Current.user != user %>
     <% if Current.user.following?(user) %>
+      <%# destructive: no-confirm-ok — reversible — the button becomes Follow again in place %>
       <%= button_to t("actions.unfollow"), unfollow_user_path(user), method: :delete, class: "btn" %>
     <% else %>
       <%= button_to t("actions.follow"), follow_user_path(user), method: :post, class: "btn btn-primary" %>

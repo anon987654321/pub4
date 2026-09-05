@@ -40,6 +40,7 @@
     <%= icon :messages, size: 26 %>
     <%= t("nav.messages") %>
   <% end %>
+  <%# destructive: no-confirm-ok — reversible — signing out, and signing in again is the same click %>
   <%= link_to session_path, class: "nav-item", data: { turbo_method: :delete, turbo_prefetch: false } do %>
     <%= icon :log_out, size: 26 %>
     <%= t("nav.sign_out") %>

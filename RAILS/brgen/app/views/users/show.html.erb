@@ -12,6 +12,7 @@
     <%= render "shared/follow_button", user: @user, active: @active_follow %>
     <%= button_to t("actions.message"), user_conversations_path(@user), method: :post, class: "btn btn-ghost btn-sm" %>
     <% if @active_block %>
+      <%# destructive: no-confirm-ok — reversible — the button becomes Block again in place %>
       <%= button_to t("block.unblock", default: "Unblock"), unblock_user_path(@user), method: :delete, class: "btn btn-ghost btn-sm" %>
     <% else %>
       <%= button_to t("block.block", default: "Block"), block_user_path(@user), method: :post, class: "btn btn-ghost btn-sm" %>

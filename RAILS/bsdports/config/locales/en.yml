@@ -143,3 +143,12 @@ en:
   # Mirrors nb.yml's flash: block.
   flash:
     cve_cross_reference_complete: "CVE cross-reference complete."
+  # Shared::PlaceHelper renders these wherever a record carries coordinates.
+  place:
+    within_a_km: "less than 1 km away"
+    km_away: "%{count} km away"
+  # The shared comment form ships a minimal RTE toolbar in every app.
+  compose:
+    bold: "Bold"
+    italic: "Italic"
+    bullet_list: "Bullet list"

@@ -396,6 +396,7 @@ nb:
     url_placeholder: "https://…"
     delete_permanent: "Slett permanent"
     confirm_delete: "Slette dette plagget og bildene permanent? Dette kan ikke angres."
+    confirm_remove_affiliate_link: "Fjerne denne lenken? Adressen må skrives inn på nytt."
     archive_seasonal: "Arkiver utenom sesong"
     resurface_seasonal: "Ta frem denne sesongen"
     archived_notice: "Arkivert til minne."
@@ -916,3 +917,7 @@ nb:
     outfit_planned: "Planlagt."
     anonymous_post_limit: "Registrer deg for å poste mer (%{limit} anonyme innlegg per nettleser)."
     welcome: "Velkommen til Amber."
+  # Shared::PlaceHelper renders these wherever an item carries coordinates.
+  place:
+    within_a_km: "under 1 km unna"
+    km_away: "%{count} km unna"

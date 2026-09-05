@@ -104,6 +104,7 @@
         because ReportsController requires a real account. %>
     <% if authenticated? %>
       <% if Current.user.bookmarked?(@post) %>
+        <%# destructive: no-confirm-ok — reversible — the button becomes Save again in place; the post is untouched %>
         <%= button_to t("bookmark.unsave", default: "Unsave"), unbookmark_post_path(@post), method: :delete, class: "btn btn-ghost btn-sm" %>
       <% else %>
         <%= button_to t("bookmark.save", default: "Save"), bookmark_post_path(@post), method: :post, class: "btn btn-ghost btn-sm" %>

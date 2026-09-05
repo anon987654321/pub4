@@ -50,6 +50,7 @@
         <div class="swipe-overflow-menu cluster">
           <%= render "shared/report_button", target: profile.user, reason: nil %>
           <% if Current.user.blocking?(profile.user) %>
+            <%# destructive: no-confirm-ok — reversible — the button becomes Block again in place %>
             <%= button_to t("block.unblock"), main_app.unblock_user_path(profile.user), method: :delete, class: "btn btn-ghost btn-sm" %>
           <% else %>
             <%= button_to t("block.block"), main_app.block_user_path(profile.user), method: :post, class: "btn btn-ghost btn-sm" %>

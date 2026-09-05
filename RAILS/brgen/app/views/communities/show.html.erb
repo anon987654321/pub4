@@ -20,6 +20,7 @@
   <% if authenticated? && Current.user.id != @community.user_id %>
     <p class="cluster">
       <% if Current.user.member_of?(@community) %>
+        <%# destructive: no-confirm-ok — reversible — a community you leave is one you can rejoin; posts stay %>
         <%= button_to t("community.leave"), leave_community_path(@community), method: :delete, class: "btn btn-ghost btn-sm" %>
       <% else %>
         <%= button_to t("community.join"), join_community_path(@community), method: :post, class: "btn btn-sm" %>

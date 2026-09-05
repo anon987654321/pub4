@@ -28,7 +28,8 @@
         <% if can_manage %>
           <%= button_to t("playlist.render"), render_path_proc.call(sk), method: :post, class: "btn btn-primary btn-sm", params: { publish: "1" } %>
           <% if local_assigns[:destroy_path_proc] %>
-            <%= button_to t("actions.remove"), destroy_path_proc.call(sk), method: :delete, class: "btn btn-ghost btn-sm" %>
+            <%= button_to t("actions.remove"), destroy_path_proc.call(sk), method: :delete, class: "btn btn-ghost btn-sm",
+                data: { turbo_confirm: t("playlist.confirm_remove_sketch") } %>
           <% end %>
         <% end %>
         <% if sk.render.attached? %>

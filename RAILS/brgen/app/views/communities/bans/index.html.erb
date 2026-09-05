@@ -20,6 +20,7 @@
         <%= ban.banned_by.display_name %>
         <%# Any moderator can lift any ban: a mod team that cannot undo each
             other's mistakes escalates every disagreement to the owner. %>
+        <%# destructive: no-confirm-ok — reversible — the comment above is the whole argument: a mod team undoes its own mistakes, and banning again is a click %>
         <%= button_to t("community.lift_ban"), community_ban_path(@community, ban),
               method: :delete, class: "btn btn-ghost btn-sm" %>
       </li>

@@ -830,6 +830,7 @@ en:
     essentials: Essentials
     more_details_optional: More details (optional)
     unmatch: Unmatch
+    confirm_unmatch: Unmatch? The conversation goes for both of you.
     matched_on: Matched on %{date}
     rewind: Rewind
     stamp_like: LIKE
@@ -929,6 +930,8 @@ en:
     collaborators_sketches: Collaborators & dilla sketches
     join_code: Join code
     confirm_end_party: End the party for everyone listening?
+    confirm_remove_collaborator: Remove this collaborator? Their access goes immediately.
+    confirm_remove_sketch: Delete this sketch? The audio attached to it goes with it.
     add_track: Add a track
     add_track_body: Add a track to build this set.
     sets_subtitle: Local audio collections

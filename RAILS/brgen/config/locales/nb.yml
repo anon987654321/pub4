@@ -835,6 +835,7 @@ nb:
     essentials: Det viktigste
     more_details_optional: Flere detaljer (valgfritt)
     unmatch: Fjern match
+    confirm_unmatch: Fjerne matchen? Samtalen forsvinner for begge.
     matched_on: Match %{date}
     rewind: Angre
     stamp_like: LIKER
@@ -934,6 +935,8 @@ nb:
     collaborators_sketches: Samarbeidspartnere og dilla-skisser
     join_code: Kode
     confirm_end_party: Avslutte lytteselskapet for alle som lytter?
+    confirm_remove_collaborator: Fjerne denne samarbeidspartneren? Tilgangen forsvinner med det samme.
+    confirm_remove_sketch: Slette denne skissen? Lyden som er lagt ved forsvinner med den.
     add_track: Legg til et spor
     add_track_body: Legg til et spor for å bygge dette settet.
     sets_subtitle: Lokale lydsamlinger

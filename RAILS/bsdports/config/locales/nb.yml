@@ -141,3 +141,12 @@ nb:
   # The app's one hardcoded flash string, translated 2026-08-11.
   flash:
     cve_cross_reference_complete: "CVE-kryssreferansen er fullført."
+  # Shared::PlaceHelper renders these wherever a record carries coordinates.
+  place:
+    within_a_km: "under 1 km unna"
+    km_away: "%{count} km unna"
+  # The shared comment form ships a minimal RTE toolbar in every app.
+  compose:
+    bold: "Fet"
+    italic: "Kursiv"
+    bullet_list: "Punktliste"
