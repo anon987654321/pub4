@@ -1,19 +1,23 @@
-<%# PWA install prompt — shown once the visitor has got real value out of the
-    product (posted, played, chatted) and beforeinstallprompt has fired. Not on a
-    visit count: those were removed from install_prompt_controller because they
-    fire before the product is useful, and this comment still described them.
+<%# PWA install prompt — shown when beforeinstallprompt fires, or on iOS
+    where that event never exists. Not gated on a post/play/chat: a first
+    visit that only reads is still a visit that can install.
 
     First of the three onboarding prompts; the menu coach and the push button
     both wait behind it. See shared/frontend/onboarding_queue.js.
 
     Locals: title (optional), body (optional). Defaults stay generic for unknown hosts. %>
-<% title = local_assigns[:title].presence || t("install.title", default: "Install this app") %>
-<% body = local_assigns[:body].presence || t("install.body", default: "Get quicker access from your home screen.") %>
-<div id="install-prompt" class="install-prompt" hidden data-controller="install-prompt">
+<% title = local_assigns[:title].presence || t("install.title") %>
+<% body = local_assigns[:body].presence || t("install.body") %>
+<div id="install-prompt"
+     class="install-prompt"
+     hidden
+     data-controller="install-prompt"
+     data-install-prompt-ios-safari-value="<%= t("install.ios_safari") %>"
+     data-install-prompt-ios-chrome-value="<%= t("install.ios_chrome") %>">
   <%= tag.strong title %>
-  <%= tag.p body %>
+  <%= tag.p body, data: { install_prompt_target: "body" } %>
   <div class="install-prompt-actions">
-    <button type="button" class="install-prompt-secondary" data-action="click->install-prompt#dismiss"><%= t("install.not_now", default: "Not now") %></button>
-    <button type="button" class="install-prompt-primary" data-action="click->install-prompt#install"><%= t("install.action", default: "Install") %></button>
+    <button type="button" class="install-prompt-secondary" data-action="click->install-prompt#dismiss"><%= t("install.not_now") %></button>
+    <button type="button" class="install-prompt-primary" data-install-prompt-target="installButton" data-action="click->install-prompt#install"><%= t("install.action") %></button>
   </div>
 </div>

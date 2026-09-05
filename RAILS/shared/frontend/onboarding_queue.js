@@ -10,14 +10,16 @@
 // The coach fired on a timer on the first page view and the push button
 // appeared as soon as permission was `default`, so a visitor who had not yet
 // read a single post could meet two interruptions before the product had shown
-// them anything — while the install prompt, the one worth taking, waits
-// (correctly) for real product value and so arrived last or not at all.
+// them anything — while the install prompt, the one worth taking, waited
+// for a post and so arrived last or not at all.
 //
 // The order is deliberate and not a matter of timing luck:
 //
 //   1. Install always outranks the other two. It is the only prompt that
 //      improves every later visit, and it is the only one that becomes
-//      impossible to offer once the visitor leaves.
+//      impossible to offer once the visitor leaves. It appears when the
+//      browser can install (beforeinstallprompt, or iOS instructions) —
+//      not after a post. Waiting for value meant a first visit never saw it.
 //   2. The other two are worth nothing to someone still deciding whether they
 //      care. They wait until the app is familiar, and they wait behind install.
 //
@@ -29,9 +31,8 @@ const SESSIONS_KEY = "pub4:onboarding:sessions"
 const LAST_SEEN_KEY = "pub4:onboarding:last-seen"
 const SESSION_GAP_MS = 30 * 60 * 1000
 
-// Sessions before each prompt may appear. Install is 1 because it is allowed on
-// the first visit the moment the product has proved useful — that gate lives in
-// install_prompt_controller and is about value, not familiarity.
+// Sessions before each prompt may appear. Install is 1 because the first
+// visit is the one that can still install.
 const MIN_SESSIONS = {
   install: 1,
   menu_coach: 2,

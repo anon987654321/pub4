@@ -373,6 +373,8 @@ en:
   install:
     title: "Install Amber"
     body: "Amber on the home screen — feed, outfits and wear tracking when you are online."
+    ios_safari: "Share → Add to Home Screen."
+    ios_chrome: "Open in Safari, then Share → Add to Home Screen."
     not_now: "Not now"
     action: "Install"
 

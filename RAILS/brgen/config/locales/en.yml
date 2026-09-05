@@ -1402,6 +1402,8 @@ en:
   install:
     title: Install Brgen
     body: Live notes, marketplace, and nearby — one tap from your home screen.
+    ios_safari: Share → Add to Home Screen.
+    ios_chrome: Open in Safari, then Share → Add to Home Screen.
     not_now: Not now
     action: Install
   mailer:

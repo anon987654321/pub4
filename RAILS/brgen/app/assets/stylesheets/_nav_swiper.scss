@@ -88,6 +88,12 @@
      can put a link under them. */
   margin-inline: var(--nav-clear);
   justify-content: safe center;
+  /* Same swipe contract as .feed-tabs: pan-x so Chrome on a phone does not
+     wait to see if the gesture is a vertical page scroll, momentum on iOS,
+     and overscroll that does not chain into pull-to-refresh. */
+  touch-action: pan-x;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
   scroll-snap-type: x proximity;
   scroll-padding-inline: var(--brand-mark-inline) var(--space-1);
   background: var(--bg);

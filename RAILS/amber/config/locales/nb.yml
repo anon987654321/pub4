@@ -372,6 +372,8 @@ nb:
   install:
     title: "Installer Amber"
     body: "Amber på hjem-skjermen — feed, antrekk og bruks-sporing når du er på nett."
+    ios_safari: "Del → Legg til på Hjem-skjerm."
+    ios_chrome: "Åpne i Safari, så Del → Legg til på Hjem-skjerm."
     not_now: "Ikke nå"
     action: "Installer"
 

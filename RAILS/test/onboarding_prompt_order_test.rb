@@ -81,4 +81,13 @@ class OnboardingPromptOrderTest < Minitest::Test
       assert_path_exists File.join(ROOT, relative)
     end
   end
+
+  def test_install_does_not_wait_for_a_post
+    body = File.read(File.join(ROOT, INSTALL))
+
+    refute_match(/install-prompt-value/, body,
+                 "a first visit that only reads must still be able to install")
+    assert_includes body, "beforeinstallprompt"
+    assert_includes body, "iosManual"
+  end
 end

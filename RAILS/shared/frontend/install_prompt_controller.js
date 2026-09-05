@@ -2,16 +2,18 @@ import { Controller } from "@hotwired/stimulus"
 import { installDismissedKey } from "pub4/pwa_standalone"
 import { announceInstallVisible } from "pub4/onboarding"
 
-const VALUE_KEY = "install-prompt-value"
 // The unscoped key stays readable so a dismissal from before the key was
 // namespaced still counts; only new writes are scoped.
 const LEGACY_DISMISSED_KEY = "install-prompt-dismissed"
 
-// Progressive install: only after real product value (post / play / chat).
-// Value is marked via: window.dispatchEvent(new CustomEvent("pub4:install-value"))
-// or data-action that calls install-prompt#markValue.
-// Visit-count prompts were removed — they fire before the product is useful.
+// Show once Chrome fires beforeinstallprompt, or on iOS where that event
+// never exists. A first visit that only reads is still a visit that can
+// install — waiting for a post/play/chat meant the banner never appeared
+// for someone opening brgen.no on a phone.
 export default class extends Controller {
+  static targets = [ "body", "installButton" ]
+  static values = { iosSafari: String, iosChrome: String }
+
   connect() {
     this.deferredPrompt = null
 
@@ -20,26 +22,45 @@ export default class extends Controller {
       this.deferredPrompt = event
       this.reveal()
     }
-    this.onValue = () => this.markValue()
 
     window.addEventListener("beforeinstallprompt", this.onBeforeInstall)
-    window.addEventListener("pub4:install-value", this.onValue)
+    this.prepareIosCopy()
     this.reveal()
   }
 
   disconnect() {
     window.removeEventListener("beforeinstallprompt", this.onBeforeInstall)
-    window.removeEventListener("pub4:install-value", this.onValue)
-  }
-
-  markValue() {
-    try { localStorage.setItem(VALUE_KEY, "1") } catch (_) {}
-    this.reveal()
   }
 
   canShow() {
-    const valued = localStorage.getItem(VALUE_KEY) === "1"
-    return valued && !this.dismissed() && this.deferredPrompt
+    return !this.dismissed() && (this.deferredPrompt || this.iosManual())
+  }
+
+  iosManual() {
+    return this.ios() && !this.standalone()
+  }
+
+  ios() {
+    const ua = navigator.userAgent || ""
+    return /iPad|iPhone|iPod/.test(ua) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  }
+
+  standalone() {
+    return Boolean(window.navigator.standalone) ||
+      window.matchMedia("(display-mode: standalone)").matches
+  }
+
+  chromeIos() {
+    return /CriOS/i.test(navigator.userAgent || "")
+  }
+
+  prepareIosCopy() {
+    if (!this.iosManual()) return
+
+    const copy = this.chromeIos() ? this.iosChromeValue : this.iosSafariValue
+    if (copy && this.hasBodyTarget) this.bodyTarget.textContent = copy
+    if (this.hasInstallButtonTarget) this.installButtonTarget.hidden = true
   }
 
   dismissed() {
@@ -52,8 +73,8 @@ export default class extends Controller {
 
     this.element.hidden = false
     // Install outranks the menu coach and the push button, and it can appear at
-    // any moment — the visitor posts, plays a track, sends a message. Whichever
-    // of the other two is already open steps back rather than stacking.
+    // any moment. Whichever of the other two is already open steps back rather
+    // than stacking.
     announceInstallVisible()
   }
 
