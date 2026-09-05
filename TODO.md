@@ -3191,21 +3191,13 @@ working from one.
 The tile ladder landed and the undeclared tokens are gone. Three findings from
 the same pass are open, each measured and none of them a guess.
 
-- **The generated-asset gate cannot see a stale committed build.** It compares
-  mtimes and working-tree dirtiness, and its own comment says why that is
-  supposed to be enough: "with a clean tree the committed build is by
-  construction the one built from the committed sources." It is not. The
-  committed bsdports `application.css` carried `--radius-card: 16px` from a
-  `social` dialect no stylesheet emits any more, while its sources said 12px,
-  with the gate green over it. A content check was drafted and withdrawn rather
-  than shipped: comparing declared values per property reports every dialect as
-  drift, because `--bg: #{$bg}` resolves a SCSS variable at build time and the
-  literal never appears in the stylesheet. Two designs that would work — resolve
-  SCSS variable defaults the way `fallback_drift_lint.collect_from_scss`
-  already does, or rebuild into a scratch tree and compare checksums, which is
-  sound because dart-sass output is byte-identical across repeated builds
-  (verified). The second is heavier and exact; the first is cheap and
-  approximate.
+- **The generated-asset gate cannot see a stale committed build.** Closed
+  2026-09-05. It now compares simple custom-property literals in the committed
+  `application.css` against the SCSS (and mixin defaults, the same source
+  `fallback_drift_lint.collect_from_scss` already reads). `--bg: #{$bg}` is not
+  a literal, so it does not report every dialect as drift. `--radius-card:
+  16px` in a build whose sources say 12px does. The checksum rebuild is still
+  the exact check and is not this.
 
 - **The remaining `layout_rules` keys are now read.** `design_metrics` already
   read `gap_over_margin`, `card_padding_px`, and `target_recommended_px` (must
