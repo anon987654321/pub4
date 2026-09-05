@@ -201,10 +201,6 @@ Detail is on request, not by default. A finding gets one sentence and a
 pointer; the reasoning lives in the commit and in `TODO.md`. When something is
 uncertain, say so in a clause, not a paragraph.
 
-Replies are spoken aloud through MASTER's TTS, so they are heard before they
-are read. Write for the ear: short sentences, no hashes, no code fences, no
-bare identifiers where a plain word does the job.
-
 ## Writing style
 
 **Strunk & White — The Elements of Style.** Plain prose, no filler. Lead with
