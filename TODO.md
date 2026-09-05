@@ -1615,6 +1615,45 @@ accounting the budget exists to prevent.
   `rules.yml`. A grep for the key name finds the file and says nothing about
   which document it came from.
 
+### MASTER cannot be asked to read a file — 2026-09-05
+
+Found by asking it to critique `CLAUDE.md`. Three separate causes, each measured.
+
+**"read CLAUDE.md" routes to a toolset with no file access.**
+`Ground::IntentRouter#classify` returns `:unknown` for it, `TurnRouter#casual?`
+treats `:unknown` as conversation, and `casual_reply` talks straight to the agent
+with visitor-scoped tools — `AskLlm` and `WebSearch`, per the comment at
+`turn_router.rb:137`. So the plainest possible file request reaches a model that
+has no way to open one, and the only honest answer left to it is to ask for the
+text. That is what it did, after spending **45 cents and 30,002 tokens**.
+
+    Master::Ground::IntentRouter.new.classify("read CLAUDE.md")   # => :unknown
+
+Longer phrasings escape it — the same request with a clause attached classifies
+as `:codify_policy` — which makes the failure intermittent by wording, the worst
+kind to diagnose from a transcript.
+
+**`Io::ReadFile` exists and is wired.** `lib/io/read_file.rb`, built in
+`lib/builder.rb:18`, dispatched in `lib/review/llm_dispatcher.rb:52`. The model's
+own account of having no file tool was true of its turn and false of the runtime,
+which is worth noting: **a model's report of its own capabilities is evidence
+about the toolset it was handed, not about the tree.**
+
+**`agent_taxonomy.yml#toolset_groups` declares the groups and nothing reads it.**
+It names `build: [read_file, str_replace, write_file, ast_edit, atomic_write,
+batch_replace]`, which is exactly the set the failing turn wanted. Already
+counted in `data_reach.yml` as one of the 35 unread keys; what is new is knowing
+what its absence costs. Wiring the router to select a group by intent is the
+shape the file already assumes.
+
+**`bin/master "<instruction>"` printed nothing and exited 0.** Same silent no-op
+as `/scan <path>` recorded above, now confirmed for the documented repo-wide
+instruction surface. `CLAUDE.md` calls that command the way in.
+
+Not established: whether the pipe run was in visitor mode. `Fiber[:master_visitor]`
+is set when the config carries no `web_token`, and that would reach `casual_reply`
+by a second road. Either way the toolset is the same and so is the fix.
+
 ### Tooling I wanted while doing the work above — 2026-09-05
 
 Written from one long session spent inside the rule system: the rules file, the
