@@ -134,11 +134,20 @@ module Master
           ].freeze
           next [] if allowed.include?(rel)
 
-          target = case rel
-                   when %r{\Adata/principles/} then "data/rules.yml#operator_principles"
-                   when %r{\Adata/claude/} then "data/project_context.yml"
-                   else "YAML runtime (rules.yml#operator_principles, patterns.yml#skills_registry, project_context.yml)"
-                   end
+          # data/principles/*.md is a runtime-read location by construction:
+          # Ground::Constitution globs exactly that pattern and parses each file
+          # into an operator-declared principle. This rule told the operator to
+          # delete it, at error severity, and to move it to
+          # rules.yml#operator_principles — a section that no longer exists, its
+          # 47 entries having gone to law/practice.rb. A rule forbidding what a
+          # live loader requires is armed and invisible for as long as the
+          # directory stays empty, which it is.
+          next [] if rel.match?(%r{\Adata/principles/[^/]+\.md\z})
+
+          # One target, because the two the case statement carried both named
+          # somewhere gone: data/claude/ has no files and rules.yml has no
+          # operator_principles section.
+          target = "the YAML runtime (project_context.yml, patterns.yml#skills_registry) or law/ for conduct"
 
           [finding(
             line: 1,

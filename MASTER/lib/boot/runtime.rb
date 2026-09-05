@@ -81,6 +81,15 @@ module Master
                               .dig("models", "grok_primary")&.first&.fetch("id")
     end
 
+    # models.yml three_mirror_redundancy.pool — the three models Review::Consensus
+    # asks before a critical fix ships. It held its own copy of the list with a
+    # comment saying to keep the two in step by hand, which is the maintenance
+    # cost lint:dedup exists to price.
+    def three_mirror_pool(root: ROOT)
+      @three_mirror_pool ||= Array(load_yaml(File.join(root, "data", "models.yml"))
+                                   .dig("three_mirror_redundancy", "pool")).map(&:to_s).freeze
+    end
+
     def api_key_specs(root: ROOT)
       provider_config(root:).flat_map { |_name, config| provider_key_specs(config) }.compact
     end

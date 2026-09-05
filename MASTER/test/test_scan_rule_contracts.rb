@@ -214,15 +214,26 @@ class TestScanRuleContracts < Minitest::Test
   end
 
   def test_runtime_docs_yaml_forbids_stray_data_markdown
-    bad = File.join(Master::ROOT, "data", "principles", "feedback_new.md")
+    bad = File.join(Master::ROOT, "data", "feedback_new.md")
     good = File.join(Master::ROOT, "data", "SOUL.md")
 
-    assert_finding rule("RUNTIME_DOCS_YAML"), "# stray\n", bad, "rules.yml#operator_principles"
+    assert_finding rule("RUNTIME_DOCS_YAML"), "# stray\n", bad, "delete data/feedback_new.md"
     assert_empty rule("RUNTIME_DOCS_YAML").check("# ok\n", path: good)
     # data/skills/README.md left the allowed list when the directory was
     # deleted (2026-08-19) — a reborn copy is a finding now, not an exemption.
     assert_finding rule("RUNTIME_DOCS_YAML"), "# reborn\n",
                    File.join(Master::ROOT, "data", "skills", "README.md"), "delete data/skills/README.md"
+
+    # data/principles/*.md is what Ground::Constitution globs and parses. This
+    # rule used to call each of those files a delete-me at error severity, and
+    # send the operator to rules.yml#operator_principles, a section whose 47
+    # entries went to law/practice.rb. Invisible only because the directory is
+    # empty. A file one level deeper is not that location and still fires.
+    assert_empty rule("RUNTIME_DOCS_YAML").check("# a principle\n",
+                                                 path: File.join(Master::ROOT, "data", "principles", "no_secrets.md"))
+    assert_finding rule("RUNTIME_DOCS_YAML"), "# nested\n",
+                   File.join(Master::ROOT, "data", "principles", "drafts", "later.md"),
+                   "delete data/principles/drafts/later.md"
   end
   # The 2026-08-19 twin-drift debt closed at zero on 2026-08-21: an id that
   # lives in law/ and the registry at once is two detectors free to disagree

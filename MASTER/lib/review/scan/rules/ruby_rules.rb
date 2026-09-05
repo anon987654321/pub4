@@ -114,6 +114,8 @@ module Master
 
         RuleDSL.rule :FIND_EACH,
           severity: :warning, tags: %i[PERFORMANCE], applies_to: %i[ruby],
+          fires: "  User.all.each { |u| u.touch }\n",
+          does_not_fire: "  User.find_each(batch_size: 500) { |u| u.touch }\n",
           description: "use find_each for batch processing" do |src, path:|
           next [] unless path.match?(%r{/app/|/spec/|/test/})
           scan_lines(src, /\.(all\.each|where\(.*\)\.each)\b/,
@@ -122,6 +124,8 @@ module Master
 
         RuleDSL.rule :NO_UPDATE_ATTRIBUTE,
           severity: :error, tags: %i[DATA_INTEGRITY], applies_to: %i[ruby],
+          fires: "  user.update_attribute(:name, name)\n",
+          does_not_fire: "  user.update!(name: name)\n",
           description: "replace update_attribute with update!" do |src, path:|
           next [] unless path.match?(%r{/app/|/spec/|/test/})
           scan_lines(src, /\.update_attribute\(/, message: "update_attribute skips validations — use update!")
@@ -129,6 +133,8 @@ module Master
 
         RuleDSL.rule :PLUCK_OVER_MAP,
           severity: :info, tags: %i[PERFORMANCE], applies_to: %i[ruby],
+          fires: "  ids = order.items.map(&:id)\n",
+          does_not_fire: "  ids = order.items.pluck(:id)\n",
           description: "prefer pluck over map for single columns" do |src, path:|
           next [] unless path.match?(%r{/app/|/spec/|/test/})
           scan_lines(src, /\.\w+\.map\(&:\w+\)/, message: "use pluck(:column) to avoid loading full objects")
@@ -140,6 +146,10 @@ module Master
 
         RuleDSL.rule :DEAD_CODE,
           severity: :warning, tags: %i[CLEAN_CODE], applies_to: %i[ruby],
+          fires: "  return value\n  log(value)\n",
+          # A guard clause keeps the next line reachable, which is the shape a bare
+          # \b(return|raise)\b read as unreachable across the whole tree.
+          does_not_fire: "  return value if done?\n  log(value)\n",
           description: "eliminate unreachable code" do |src, path:|
           lines = src.lines
           lines.each_with_index.filter_map do |line, index|

@@ -9,6 +9,9 @@ module Master
 
   RuleDSL.rule :NO_DEBUG,
     severity: :error, tags: %i[CLEAN_CODE], applies_to: %i[ruby],
+    fires: "  binding.pry\n",
+    # A word boundary is what separates the breakpoint from a name containing it.
+    does_not_fire: "debugger_enabled = false\n",
     description: "no debug breakpoints in committed code" do |src, path:|
     next [] if path.to_s.include?("/review/scan/rules/")
     scan_lines(src, /\b(binding\.pry|debugger|byebug|binding\.irb)\b/, message: "debug breakpoint")
@@ -16,6 +19,8 @@ module Master
 
   RuleDSL.rule :NO_PUTS,
     severity: :warning, tags: %i[CLEAN_CODE], applies_to: %i[ruby],
+    fires: "  puts \"ready\"\n",
+    does_not_fire: "  @bus.publish(\"ready\")\n",
     description: "no bare puts in library code" do |src, path:|
     # The REPL prints for a living, so the path it lives at is exempt. This
     # exemption carries the whole of lib/cli/session/ -- 100 deliberate puts --
@@ -29,6 +34,9 @@ module Master
 
   RuleDSL.rule :FROZEN_LITERAL,
     severity: :warning, tags: %i[PERFORMANCE], applies_to: %i[ruby],
+    fires: "value = 1\n",
+    # First line only: the magic comment binds the file and Ruby reads it there.
+    does_not_fire: "# frozen_string_literal: true\n\nvalue = 1\n",
     description: "missing frozen_string_literal magic comment" do |src, path:|
     next [] if src.lines.first&.include?("frozen_string_literal")
     magic = "# frozen_string_literal: true"
@@ -37,6 +45,8 @@ module Master
 
   RuleDSL.rule :LONG_LINE,
     severity: :info, tags: %i[READABILITY], autofix: false,
+    fires: "#{"x" * 121}\n",
+    does_not_fire: "#{"x" * 120}\n",
     description: "lines exceeding 120 characters" do |src, path:|
     next [] if path.to_s.match?(%r{/voice/personality\.rb|/io/llm\.rb})
     src.each_line.with_index(1).filter_map do |line, n|
@@ -56,6 +66,9 @@ module Master
 
   RuleDSL.rule :TODO_FIXME,
     severity: :info, tags: %i[COMPLETENESS], autofix: false,
+    fires: "  # FIXME: the retry has no cap\n",
+    # The lookahead below, as a worked case: naming the backlog is not a marker.
+    does_not_fire: "  # the reasoning is in TODO.md\n",
     description: "unresolved work markers" do |src, path:|
     next [] if path.to_s.include?("/review/scan/rules/")
     # The lookahead keeps TODO.md, the repo-wide backlog, from reading as a
@@ -65,6 +78,11 @@ module Master
 
   RuleDSL.rule :RESCUE_EXCEPTION,
     severity: :warning, tags: %i[ERROR_HANDLING], applies_to: %i[ruby],
+    # A rule's worked example is the one place its own forbidden shape is
+    # legitimately spelled, and FAIL_VISIBLY reads this file like any other. The
+    # marker has to sit on the matching line, not above it.
+    fires: "rescue Exception => e\n", # scan: intentional
+    does_not_fire: "rescue StandardError => e\n",
     description: "rescue StandardError not Exception" do |src, path:|
     scan_lines(src, /rescue\s+Exception\b/, message: "catches signals — use StandardError")
   end
@@ -137,6 +155,8 @@ module Master
 
   RuleDSL.rule :TRAILING_COMMENT,
     severity: :info, tags: %i[BE_CONCISE],
+    fires: "value = 1 # why one\n",
+    does_not_fire: "# why one\nvalue = 1\n",
     description: "trailing comment after code" do |src, path:|
     src.each_line.with_index(1).filter_map do |line, n|
       next if line.strip.start_with?("#")

@@ -27,10 +27,15 @@ require_relative "../lib/review/scan/rule_dsl"
 class TestRuleFixtures < Minitest::Test
   Rule = Master::Review::Scan::Rule
 
+  # `html` is what the web rules declare in applies_to:, and it was missing, so
+  # every one of them fell through to the ruby path — a view rule guarded by
+  # `path.include?("/app/views/")` could not fire on its own worked example, and
+  # the only way to give it one was to spell example_path by hand.
   DEFAULT_PATHS = {
     ruby: "/repo/app/models/example.rb",
     scss: "/repo/app/assets/stylesheets/_example.scss",
     css: "/repo/app/assets/stylesheets/example.css",
+    html: "/repo/app/views/example.html.erb",
     erb: "/repo/app/views/example.html.erb",
     js: "/repo/app/javascript/controllers/example_controller.js",
   }.freeze

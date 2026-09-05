@@ -194,8 +194,15 @@ positives worth not re-discovering — those are guards, not history.
   fold rather than a raise, and none is a one-sitting job. Read the live figures
   from `MASTER/bin/pub4 measure`; the list here has been three, then five, then
   six on three consecutive readings, so its value is the shape and not the
-  numbers. `data_reach` is the newest and the cheapest to look at: 37 second-level
-  keys with no reader, listed by the tool.
+  numbers. `data_reach` fell 37 to 36 when `three_mirror_redundancy` gained a
+  reader, and the remaining 36 were read once: most are the false-positive
+  classes this file's own 2026-08-12 entry names. `topologies.yml`'s eight and
+  `runtime.yml`'s five are served whole through `RuntimeCatalog` and
+  `/runtime/topologies`, and the browser picks the sections by name;
+  `personas.yml` and `models.yml`'s ollama rows are registry entries selected by
+  a config value. Do not delete from this list without finding the reader —
+  that entry says why a stricter version of the tool is not buildable, and this
+  is what its error looks like from the inside.
 ### `/scan`'s autofix corrupts code — opened 2026-08-31, do not run it on a tree
 
 Trialled on `RAILS/gates` alone before turning it loose on RAILS's 2,326 files.
@@ -536,11 +543,26 @@ traced first:
   providers.yml. The whole block was a declaration claiming a routing that
   never existed; deleted.
 
-Still open, structural (the line-matcher cannot see them):
-`operator_principles` (27) vs `principle_map` (272) with zero name overlap —
-two principle vocabularies, nothing naming the authoritative one — and
-`Consensus::DEFAULT_MODELS` restating models.yml's three_mirror pool
-(marked as the copy it is in the source).
+Both structural ones — the pairs the line-matcher cannot see, because one half
+is Ruby — are closed 2026-09-05.
+
+- **`Consensus::DEFAULT_MODELS`** restated models.yml's `three_mirror_redundancy.pool`
+  under a comment asking the next reader to keep the two in step by hand, which
+  is how a model swapped in one place leaves the consensus voting with one
+  nothing else routes to. `Master.three_mirror_pool` is the reader now and
+  `test_consensus.rb` pins the pool against the file, the quorum against the
+  pool's size, and the injection point that keeps an explicit list winning.
+- **`operator_principles` vs `principle_map`** was two vocabularies with nothing
+  naming the authoritative one, and it settled itself: `operator_principles` is
+  no longer a section of `rules.yml` at all — its 47 entries went to
+  `law/practice.rb`, where each declares how it is checked. What was left were
+  three references to the dead section, and the worst of them was a live gate.
+  `RUNTIME_DOCS_YAML` sent an operator to `rules.yml#operator_principles` and,
+  at error severity, told them to **delete** any `data/principles/*.md` — which
+  is exactly what `Ground::Constitution` globs and parses. A rule forbidding
+  what a live loader requires, invisible only because the directory is empty.
+  That location is allowed now, one level deeper still fires, and the `/principles`
+  empty message names the directory rather than the vanished section.
 
 
 Worth naming: `SelfCheck#gate!` — the method that would halt background
@@ -1560,19 +1582,21 @@ the Transcendent decision that entry already assigns to an owner, and taking 35
 lines out of somewhere unrelated to make a number look right would be the
 accounting the budget exists to prevent.
 
-#### The 2026-09-05 pass costs `growth.master` and `growth.studio` a file each
+#### The 2026-09-05 pass costs `growth.master` two files and `growth.studio` one
 
-Same accounting, named for the same reason. Four gates gained the tests this
+Same accounting, named for the same reason. Five gates gained the tests this
 file kept asking for — `rule_hygiene`, `autofix_reach`, `SemanticRule`'s
-language scope, and the registry audit's shipped-rule filter — and the two tool
-tests were written as one file rather than two, because they read one subject.
-`test_semantic_rule_scope.rb` is the net addition to MASTER. STUDIO's is
+language scope, the registry audit's shipped-rule filter, and `Consensus`'s
+model pool — and the two tool tests were written as one file rather than two,
+because they read one subject. `test_semantic_rule_scope.rb` and
+`test_consensus.rb` are the net additions to MASTER. STUDIO's is
 `test_dilla_radio_bergen_study.rb`, which MASTER lost in the same move, so the
 repo total is unchanged and the two trees traded a file.
 
-The other direction was paid in full and then some: `lib/review` fell 36 lines
-and `spine.lib_body_ceiling` 33, both from the `visit` extraction, against 11
-lines this pass added.
+`lib/` came out level: the `visit` extraction returned 33 lines and the fifteen
+rule fixtures, the `three_mirror_pool` accessor and the language scope spent 35,
+so `spine.lib_body_ceiling` reads 2 above where the session opened and
+`lib/review` 5 below.
 
 #### Instrument notes
 
@@ -1685,14 +1709,33 @@ findings with path and line, and the task prints that summary once.
 **6. A lint over the rule corpus's own regexes — done.** `rake lint:word_boundary`
 flags `\b` glued to escaped punctuation. Currently clean.
 
-**7. Every registry rule proves it can fire.** `law/` already refuses to load a
-rule without worked fixtures, and the registry does not — `rule_ratchets.fixture_debt`
-records 91 rules without them. The cost is exactly the ambiguity this session had
-to resolve by hand: `rule_audit` reports 24 rules firing on nothing and cannot
-say whether the tree is clean or the detector is blind. **A rule that carries one
-source it must flag answers that at load time**, permanently, for every future
-reader. Extend the law/ requirement to new registry rules, and let the ratchet
-retire the existing 91.
+**7. Every registry rule proves it can fire — enforced for new rules, 76 left.**
+`law/` refuses to load a rule without worked fixtures; the registry accepts one
+without. The forward half was already closed and this entry did not say so:
+`test_rule_fixtures.rb` fails when the unfixtured count rises, so a new RuleDSL
+rule must carry `fires:`/`does_not_fire:`. What was missing is that the number
+was slack-tolerant — the test only printed "record the new low" — so it is a
+ratchet row now, `rule_fixture_debt`, and `bin/pub4 measure` carries it.
+
+Fifteen retro-fitted on 2026-09-05, 91 -> 76: NO_DEBUG, NO_PUTS, FROZEN_LITERAL,
+LONG_LINE, TODO_FIXME, RESCUE_EXCEPTION, TRAILING_COMMENT, FIND_EACH,
+NO_UPDATE_ATTRIBUTE, PLUCK_OVER_MAP, DEAD_CODE, HTML_LANG, IMG_ALT, LAZY_IMAGES,
+NO_TODO_IN_VIEWS. Each `does_not_fire` states the rule's own distinction rather
+than restating its regex, which is the half that catches drift: TODO_FIXME's is
+a line naming `TODO.md`, DEAD_CODE's is a guard clause, PLUCK_OVER_MAP's is the
+`pluck` it recommends.
+
+Two things the retro-fit turned up. The harness had no `html` entry in
+`DEFAULT_PATHS`, so every web rule's example landed at a Ruby model path and a
+rule guarded by `path.include?("/app/views/")` could not fire on its own fixture.
+And a `fires:` string is source: RESCUE_EXCEPTION's made FAIL_VISIBLY fire on
+this file, and the `scan: intentional` marker has to sit on the matching line
+rather than in the comment above it.
+
+The cost this closes is the ambiguity: `rule_audit` reports 24 rules firing on
+nothing and cannot say whether the tree is clean or the detector is blind. **A
+rule that carries one source it must flag answers that at load time**,
+permanently, for every future reader.
 
 **8. One class per rule file — documented.** `AGENTS.md` now says
 `require "review/scan/rule_dsl"` is the load that defines a class in a

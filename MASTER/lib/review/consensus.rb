@@ -5,18 +5,18 @@ require "json"
 module Master
   module Review
     class Consensus
-      # Restates models.yml three_mirror_redundancy.pool — keep the two in step
-      # until one of them grows a reader of the other.
-      DEFAULT_MODELS = [
-        "anthropic/claude-sonnet-4",
-        "z-ai/glm-4.5-air",
-        "moonshotai/kimi-k2",
-      ].freeze
       QUORUM = 2
 
       Vote = Struct.new(:model, :approved, :reason, keyword_init: true)
 
-      def initialize(agent:, event_bus: nil, models: DEFAULT_MODELS, quorum: QUORUM)
+      # models.yml three_mirror_redundancy.pool is the one source. This held a
+      # copy of the three ids under a comment asking the next reader to keep the
+      # two in step, which is a list where the next model swapped in one place
+      # leaves the other voting with a model nothing else routes to.
+      def self.default_models = Master.three_mirror_pool
+
+      def initialize(agent:, event_bus: nil, models: nil, quorum: QUORUM)
+        models ||= self.class.default_models
         @agent = agent
         @bus = event_bus
         @models = Array(models).reject(&:empty?)

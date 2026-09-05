@@ -4327,7 +4327,15 @@ rule_ratchets:
     # can, which is where every instrument defect this campaign found was hiding.
     # The number only ratchets down: a new RuleDSL rule must carry its examples,
     # and retro-fitting one lowers this by hand.
-    without_fixtures: 91
+    #
+    # 91 -> 76 on 2026-09-05, fifteen rules retro-fitted. Each pair states the
+    # rule's own distinction rather than restating its regex: TODO_FIXME's
+    # does_not_fire is a line naming TODO.md, DEAD_CODE's is a guard clause, and
+    # PLUCK_OVER_MAP's is the pluck it recommends. RESCUE_EXCEPTION's `fires:`
+    # carries a `scan: intentional` marker, because a rule's worked example is
+    # the one place its own forbidden shape is legitimately spelled and
+    # FAIL_VISIBLY reads that file like any other.
+    without_fixtures: 76
 
 # What a decision proposal is checked against before it is offered, by
 # Master::Ground::BiasGuard. `detect` accuses, `clears` acquits: a proposal

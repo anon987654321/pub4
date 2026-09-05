@@ -13,6 +13,8 @@ module Master
 
         RuleDSL.rule :HTML_LANG,
           severity: :error, tags: %i[ACCESSIBILITY], applies_to: %i[html],
+          fires: %(<html>\n),
+          does_not_fire: %(<html lang="nb">\n),
           description: "lang attribute on <html>" do |src, path:|
           next [] unless src.match?(/<html\b/i)
           scan_lines(tag_source(src), /<html(?!\s+[^>]*lang=)/, message: "<html> missing lang= attribute")
@@ -26,12 +28,16 @@ module Master
         # every multi-line <img> a finding. tag_source flattens first.
         RuleDSL.rule :IMG_ALT,
           severity: :error, tags: %i[ACCESSIBILITY], applies_to: %i[html],
+          fires: %(<img src="a.png">\n),
+          does_not_fire: %(<img src="a.png" alt="a garment">\n),
           description: "require alt on every <img>" do |src, path:|
           scan_lines(tag_source(src), /<img\s+(?![^>]*alt=)/, message: "<img> missing alt= attribute")
         end
 
         RuleDSL.rule :LAZY_IMAGES,
           severity: :info, tags: %i[PERFORMANCE], applies_to: %i[html],
+          fires: %(<img src="a.png" alt="a">\n),
+          does_not_fire: %(<img src="a.png" alt="a" loading="lazy">\n),
           description: "loading=lazy on below-fold images" do |src, path:|
           scan_lines(tag_source(src), /<img\s+(?![^>]*loading=)/, message: "<img> missing loading=lazy")
         end
@@ -94,6 +100,8 @@ module Master
 
         RuleDSL.rule :NO_TODO_IN_VIEWS,
           severity: :warning, tags: %i[MAINTAINABILITY], applies_to: %i[html],
+          fires: %(<%# FIXME: wire the filter %>\n),
+          does_not_fire: %(<%# the filter is Marketplace::ListingFacets %>\n),
           description: "no TODO/FIXME in shipped views" do |src, path:|
           next [] unless path.include?("/app/views/")
           scan_lines(src, /\b(TODO|FIXME|HACK)\b/, message: "unfinished marker in view — resolve before ship")

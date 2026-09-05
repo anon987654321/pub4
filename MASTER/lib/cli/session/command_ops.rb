@@ -240,7 +240,7 @@ module Master
         c = Master::Ground::Constitution.new
         lines = c.list
         if lines.empty?
-          puts @refs.renderer.render("no principles loaded (data/rules.yml#operator_principles)", mode: :dim)
+          puts @refs.renderer.render("no principles loaded (data/principles/*.md)", mode: :dim)
         else
           puts @refs.renderer.render("constitution: #{lines.size} principle(s)", mode: :dim)
           lines.each { |l| puts @refs.renderer.render("  #{l}", mode: :dim) }

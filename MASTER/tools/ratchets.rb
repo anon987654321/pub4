@@ -127,6 +127,16 @@ module Pub4
        # nothing failed on. rule_hygiene warned on its own ceiling and ratchets
        # never carried the row; RuleRegistryAudit reported dep_graph_gaps and no
        # ceiling anywhere read it.
+       master_row("rule_fixture_debt", "data/rules.yml", "registry rules with no worked example") do
+         $LOAD_PATH.unshift(File.join(MASTER, "lib")) unless $LOAD_PATH.include?(File.join(MASTER, "lib"))
+         require "master"
+         require "review/scan/rule_dsl"
+         unfixtured = Master::Review::Scan::Rule.registry.reject do |klass|
+           (klass.respond_to?(:dsl_fires) && (klass.dsl_fires || klass.dsl_does_not_fire)) ||
+             !klass.respond_to?(:dsl_block)
+         end
+         [unfixtured.size, Master.law("rule_ratchets", root: MASTER).dig("fixture_debt", "without_fixtures")]
+       end,
        master_row("rule_deps.ungraphed", "data/rules.yml", "registry rules absent from rule_deps") do
          $LOAD_PATH.unshift(File.join(MASTER, "lib")) unless $LOAD_PATH.include?(File.join(MASTER, "lib"))
          require "master"
