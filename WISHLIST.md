@@ -59,11 +59,11 @@ The worst failure here is not a red gate. It is a green one.
 17. `RAILS/test/gate_requires_resolve_test.rb` pins it: every `require_relative` under `gates/` resolves, and every `gates.yml` row names a file on disk. **[done]**
 18. Extend that to every tree, not just RAILS.
 19. A gate that skips its live half should report the count it skipped in the summary line, not only in its own output.
-20. `runner.rb` takes whatever `ruby` is on PATH and prints one warning. Make the version mismatch fatal — app-bundle gates then fail for the interpreter and read as findings. **[cheap]**
+20. `runner.rb` takes whatever `ruby` is on PATH and prints one warning. Make the version mismatch fatal — app-bundle gates then fail for the interpreter and read as findings. **[done]** `abort`, not `warn`.
 21. Boot the triangle automatically for gates that need it, or fail rather than skip.
 22. `flow_journey` skipped 23 live checks and `rendered_suite` 32; both reported inconclusive and neither failed.
 23. `deploy_drift` "checked nothing — 1 precondition missing" and never says which precondition.
-24. Name the missing precondition in every inconclusive line. **[cheap]**
+24. Name the missing precondition in every inconclusive line. **[done]** The live and rendered gates already name Chrome, closed ports, missing sass, empty sitemaps. No remaining `inconclusive!` without a reason.
 25. A red gate naming no finding should say "this gate could not load" rather than printing an empty failure list.
 26. `visual_contract` baselines are gitignored and overwritten on read, so a regression reports once and becomes the baseline.
 27. `layout_snapshot` commits reviewable JSON instead — make that the default and retire the self-overwriting one. **[yours]**
@@ -128,7 +128,7 @@ Half of these were mine, in one day.
 73. `PUB4_UNTRACKED=1` is discoverable only by triggering the refusal. Document it. **[done]**
 74. A push publishes every commit beneath yours. `git log --oneline origin/main..HEAD` before every push, and name what went with you.
 75. Cherry-picking onto a moving `origin/main` rewrites SHAs, so "is my work pushed?" must be answered by content hash, not by SHA.
-76. A helper that answers that: `pub4 pushed? <paths>`. **[cheap]**
+76. A helper that answers that: `pub4 pushed? <paths>`. **[done]** `bin/pub4 pushed?` compares content to `origin/main` and names dirty, unpushed, or pushed. Exit 1 unless every path is on origin.
 77. `self_findings` crashed because a file vanished between listing and reading. In a shared tree that is normal, not a fluke. **[done]**
 78. Every census that walks a file list needs the same tolerance.
 79. Worktrees left behind are their own hazard — remove and prune in the session that made them.
@@ -168,7 +168,7 @@ Half of these were mine, in one day.
 104. **`bsdports.org` is parked** on `ns1.expireddomain.hyp.net` while `domain_inventory.yml` claims it is registered until 2027. A live product domain, down, invisible to the inventory. **[yours]**
 105. Only `dns_zones` caught it, by resolving for real. Trust the live check over the snapshot.
 106. **OpenRouter credits are exhausted** — the council personas fail and the entire semantic rule tier cannot run. **[yours]**
-107. A chain that skips a whole tier must say so rather than report clean. **[cheap]**
+107. A chain that skips a whole tier must say so rather than report clean. **[done]** Scan completion already carries `QuotaGate.report`. `/through`'s footer does now too.
 108. Replicate and RunPod are unavailable; Colab plus a HuggingFace token is the render path.
 109. Ragnhild's adapter is SDXL (`ss_base_model_version: sdxl_1.0`), so it cannot load into FLUX — the same hardware limit, one step earlier.
 110. LoRA weights are gitignored, correctly: 218 MB of a real person's likeness does not belong in a public repo. The notebook searches Drive instead. **[done]**
