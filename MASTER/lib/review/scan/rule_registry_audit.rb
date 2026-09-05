@@ -55,9 +55,31 @@ module Master
           )
         end
 
+        # `Rule.inherited` registers every subclass in the process, and a test
+        # that defines one is in the same process. Measured: rule_deps.ungraphed
+        # read 133 on its own and 135 under `rake test`, so a ratchet on it would
+        # have been measuring the suite rather than the corpus.
+        # TestScanRuleFalsePositives::RaisingRule is the shape.
+        #
+        # A class whose source cannot be located counts as shipped: over-
+        # reporting a rule is safe, and silently dropping one is how a census
+        # stops measuring.
+        # Anchored at the start as well as after a slash: a file run as the main
+        # script reports the path it was invoked with, so `ruby -Itest
+        # test/test_x.rb` yields a relative `test/test_x.rb` that a leading-slash
+        # pattern misses — and the exclusion then works everywhere except in the
+        # one place the test for it runs.
+        TEST_DEFINED = %r{(?:\A|/)(?:test|spec)/}
+
+        def shipped?(klass)
+          location = klass.name && Object.const_source_location(klass.name)&.first
+          location.nil? || !location.match?(TEST_DEFINED)
+        end
+
         def ungraphed_rule_ids(registry = nil)
           Review::Scan::RuleDSL
           registry ||= Review::Scan::Rule.registry
+            .select { |klass| shipped?(klass) }
             .map { |klass| RuleFactory.build(klass, root: @root).id.to_s }
             .to_set
           registry = registry.map { |id| id.to_s.downcase }.to_set
@@ -74,6 +96,7 @@ module Master
 
         def build_registry_ids
           Review::Scan::Rule.registry
+            .select { |klass| shipped?(klass) }
             .reject { |klass| RuleFactory.bridge_class?(klass) }
             .map { |klass| RuleFactory.build(klass, root: @root).id.to_s.downcase }
             .to_set

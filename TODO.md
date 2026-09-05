@@ -135,9 +135,6 @@ MASTER audit" below.
 These are not single detectors; each is its own sitting, with an owner and a
 design, not a sweep.
 
-- **One shared AST-walk helper.** `visit` is copy-pasted across roughly eight
-  rule files. Extract the walk once and have the rules declare what they look
-  for, so a fix to the traversal lands in one place.
 - **A cross-file AST / symbol index.** Every rule that needs to know "who
   implements this" or "who calls this" (`DEAD_ABSTRACTION`, `LAYER_CAKE`,
   feature-envy across files) currently cannot see past the file it is in.
@@ -191,15 +188,14 @@ positives worth not re-discovering — those are guards, not history.
   `rules.yml` rather than out of `law/`. Converging `WhyExplainer` onto the law
   is the move that makes those safe to remove; doing it in the other order
   empties a live surface.
-- **Three growth ratchets are over, and were over when this session opened**:
-  `spine.lib_body_ceiling` 39173/37464, `growth.master` 1064/1045 and
-  `growth.studio` 146/138. The first measurement of the day read 39209, 1081 and
-  146, so removing the Codex cluster moved two of them and none of them is
-  close. Each needs a fold rather than a raise, and none is a one-sitting job.
-- **Four worktrees are live** — `pub4-fixfind`, `pub4-master-audit`,
-  `pub4-merge`, `pub4-rails`, three of them dirty, all touched within two hours.
-  `AGENTS.md` says to remove a worktree in the session that made it; none of
-  these is this session's, so they are named rather than removed.
+- **Six ratchets are over, re-measured 2026-09-05**: `spine.lib_body_ceiling`
+  39181/37464, `self_findings` 164/151, `data_reach` 37/35, `growth.master`
+  1064/1047, `growth.rails` 2367/2358 and `growth.studio` 149/138. Each needs a
+  fold rather than a raise, and none is a one-sitting job. Read the live figures
+  from `MASTER/bin/pub4 measure`; the list here has been three, then five, then
+  six on three consecutive readings, so its value is the shape and not the
+  numbers. `data_reach` is the newest and the cheapest to look at: 37 second-level
+  keys with no reader, listed by the tool.
 ### `/scan`'s autofix corrupts code — opened 2026-08-31, do not run it on a tree
 
 Trialled on `RAILS/gates` alone before turning it loose on RAILS's 2,326 files.
@@ -453,11 +449,37 @@ the same long line.
 
 ### Scanner noise
 
-**Re-measured 2026-09-04: 7 violations across 3 rules.** The located list and the
-one finding worth fixing first are under "From the 2026-09-04 MASTER audit"
-below. The triage that follows is kept because the reasoning transfers — it is
-how each of the 31 was classified, and three of those classes are why the number
-fell — but the numbers in it are 2026-08-19 and are no longer the tree.
+**Re-measured 2026-09-05: 1 violation, `NO_GOD_CLASS` on `EventStore`.** What
+closed the other two is under "From the 2026-09-04 MASTER audit" below. The
+triage that follows is kept because the reasoning transfers — it is how each of
+the 31 was classified, and three of those classes are why the number fell — but
+the numbers in it are 2026-08-19 and are no longer the tree. One line in it is
+now wrong on its own terms and worth reading with that in mind: "`etc` inside a
+directory-alternation regex read as a placeholder", counted as a legitimate
+false positive nobody could narrow. It was narrowable, and it was the last
+error-severity finding standing between this gate and the design question that
+is left.
+
+**Three more learned smells failed the uniqueness test, 2026-09-05.** The 2026-08-12
+pass above deleted `long_line` and `debug_output` for restating a registered rule
+and kept the rest; three of the remaining eight fail the same test, and all three
+fail it the same way — a raw regex repeating a registered rule's pattern, plus
+whatever that rule deliberately spares.
+
+- **`bare_rescue`** — `law/universal.rb`'s FAIL_VISIBLY says in its own header
+  that it folds BARE_RESCUE, and it deliberately does not match `rescue => e`,
+  which rescues StandardError and is the fix BARE_RESCUE prescribes. So the
+  smell's findings were FAIL_VISIBLY's again on a silent rescue (0 unique) or a
+  report against correct code. Its deletion also closed rule_hygiene's last id
+  case collision.
+- **`trailing_ws`** — TRAILING_WHITESPACE's pattern, with neither a path
+  exemption nor a language scope on either side. Probed across `.yml`, `.md` and
+  `.css`: 4 findings, 0 unique.
+- **`todo_comment`** — a strict subset of TODO_FIXME's pattern, one marker
+  fewer. Over `lib/` it scored 4 findings and 3 unique, and all 3 sat inside the
+  `/review/scan/rules/` directory TODO_FIXME deliberately exempts, because a
+  rule that names a marker is a detector and not a marker. Its whole unique
+  yield was a quiet override of another rule's exemption — `long_line` exactly.
 
 `rake selfcheck` was **31 violations across 7 rules** (measured 2026-08-19
 after the law-fixture pass and the first twin retirement), every one triaged:
@@ -809,24 +831,30 @@ followed: a plain `require` resolves against `$LOAD_PATH`, which depends on how
 the process was started, and guessing at it would produce a gate that is wrong
 in both directions.
 
-**The cross-tree test is still here, under a different name — re-measured
-2026-08-29.** `test_dilla.rb` is gone, so that half of the entry read as closed;
-it is not. `MASTER/test/test_radio_bergen_study.rb:6` requires
-`../../STUDIO/dilla/dilla`, and through it reads
+**The cross-tree test is closed — 2026-09-05.** `MASTER/test/test_radio_bergen_study.rb`
+required `../../STUDIO/dilla/dilla` and through it read
 `RAILS/brgen/config/radio_bergen/tracks.yml` — one test file reaching into two
 other trees. It had already broken the way this entry predicted: it asserted
 `assert_equal 9, local_count` while the manifest had grown to 30 rows when radio
 bergen started serving its own catalogue, so `rake test` in MASTER was red for a
-change made in RAILS, naming the growth as the regression.
+change made in RAILS, naming the growth as the regression. That half was fixed
+by asserting the invariant instead of the instance — the study covers every row
+the manifest holds, counted from the manifest.
 
-Fixed by asserting the invariant instead of the instance — the study covers
-every row the manifest holds, counted from the manifest — which is Scanner
-Convention 5 below applied to a count rather than a name. Mutation-checked:
-truncating `catalog_rows` to five rows fails it.
+The coupling is now fixed too. The file is
+`STUDIO/test/test_dilla_radio_bergen_study.rb`, beside the module it exercises,
+loading the engine through `dilla_helper` like its neighbours and named so the
+`test/test_dilla_*.rb` glob reaches it. `RadioBergenStudy` reading RAILS's
+manifest is the engine's own coupling and is unchanged; what has gone is a
+MASTER test that broke when any of three trees moved.
 
-What is still open is the coupling, not the count. A test in MASTER that loads
-STUDIO's entry point to read RAILS's data breaks whenever any of the three moves;
-it belongs in STUDIO, beside the module it exercises.
+Found on the way: **`Pub4::Runs` never looked at STUDIO at all** — 23 test files
+outside every question the "a test nothing runs" gate asks, which is why moving
+a file out of MASTER would have quietly removed it from that gate. STUDIO is in
+the census now, and the extractor reads a runner's exact path literals as well as
+its globs, because `STUDIO/Rakefile` names `test_studio_gate.rb` outright and a
+glob-only reader called it an orphan. 743 test files across four trees, 0
+orphans.
 
 ### Test coverage
 
@@ -1176,48 +1204,73 @@ lexical rule without writing a class, and `rake lint:rule_reach` counts on the
 category existing. What is wrong is that nothing says the hatch is empty — decide
 whether the corpus should regain lexical rules or the bridge should go.
 
-#### A `languages:` scope on a semantic rule is inert
+#### A `languages:` scope on a semantic rule was inert — closed 2026-09-05
 
-36 rules declare `languages:`. `SemanticRule.from_yaml`
-(`lib/review/scan/rules/semantic_rules.rb:211`) maps each rule to `prompt`,
-`severity`, `mode`, `reversibility` and `blast_radius` — and drops the rest, so
-the language list reaches nothing. The only reader it ever had is the lexical
-bridge above, which is now empty. A rule that says it applies to `css` is asked
-about every file.
+`SemanticRule` builds a prompt frame per language now and `parse_findings` reads
+the scope the file was asked about, so a reply naming a rule outside it is
+discarded rather than accepted. Empty still means every language, as it does for
+`Law::Rule#applies?`.
 
-This is why `PATTERN_EXTRACTION` carried `medium: [ruby]` for as long as it did
-without anyone noticing the key was misspelled: the correctly spelled key is
-just as unread. `72a8cfae8` renamed it for consistency and closed nothing.
+One thing came out of wiring it that is worth keeping. Thirteen rows declared a
+language `FILE_LANGUAGE_MAP` never produces — `rails` on four, `prose` on eight,
+`erb` on one — which aims a rule at no file at all. `Law::Rule#prove!` has
+refused that on the law population since `NEVER_BATCH_DELETE` declared `shell`
+and could read no script; `test_semantic_rule_scope` now asks the same of this
+one. `rails` became `ruby`, which is what those four detectors already declare;
+`prose` and `erb` went, each beside a real sibling that covers the same files.
 
 #### Rule-corpus debt the ratchets already price, listed so it is one place
 
 Each is the current output of a gate that passes because its ceiling accommodates
 the number. None is new; what is new is that they are together.
 
-- **12 rules claim `autofix: true` and have no detector** — `HTML_LANG`,
-  `WHITESPACE_PUNCTUATION`, `NO_UPDATE_ATTRIBUTE`, `QUOTE_VARIABLES`,
-  `DOUBLE_BRACKET`, `LAZY_IMAGES`, `DEAD_CODE`, `TYPOGRAPHIC_EXCELLENCE`,
-  `TYPOGRAPHY_DISCIPLINE`, `EN_DASH_RANGE`, `FEW_ARGUMENTS`, `MESSAGE_CHAIN`.
-  Cannot be found, so cannot be fixed. `rake lint:autofix_reach`.
-- **31 rules say `autofix: true` and name no transform.** One names a transform.
-  Since `72a8cfae8` every named transform is implemented, so what remains in this
-  category is rules whose autofix claim is a bare boolean.
+**Half of it was the instrument, closed 2026-09-05.** The two gates that report
+this debt were each asking a question their own data could not answer, and the
+corrections are worth more than the counts were.
+
+`autofix_reach` decided whether a rule can be *found* by counting the three
+`detect_*` columns in `rules.yml`, so it named twelve autofix claims
+undetectable and was wrong about all twelve: ten have a live detector in `law/`
+or the RuleDSL registry, and `WHITESPACE_PUNCTUATION` and `MESSAGE_CHAIN` carry
+`folded_into:`. It asks `RuleReach.mechanical` now, which knows all three
+populations and loads the laws rather than grepping for `Law.define(:ID)`.
+Corrected, it found six the old count could not see — `PRECOMPUTE_MATH`,
+`ANALOG_WARMTH`, `PURE_FUNCTIONS`, `SPECULATIVE_GENERALITY`, `SYSTEM_STATUS`,
+`CACHE_LLM` — each a semantic-only detector at info severity, which
+`SemanticRule`'s info filter drops, so nothing ever reported them and no fix
+could ever be reached. All six are `autofix: false` now and `bare_true` is 25.
+
+`rule_hygiene` walked every hash in the file carrying an `"id"`, so the eight
+check names inside `AUTOMATED_CSS_ANALYSIS`'s `config:` counted as eight rules
+with no metadata and one of them, `eight_px_rhythm`, collided by case with the
+real `EIGHT_PX_RHYTHM`. It reads the two declared populations now. What was left
+after that was real and is closed: the `bare_rescue` smell went (see **Scanner
+noise**), the five surviving smells declare a severity, and DRY's
+`duplicate_code` alias went rather than the live rule it named. All three
+counters read 0, and 0 is the recorded floor.
+
+Still open, and each is a decision rather than a sweep:
+
+- **25 rules say `autofix: true` and name no transform**, and the corpus now
+  names no transform at all — `strip_trailing_whitespace` was the last, on the
+  `trailing_ws` smell deleted as a duplicate. The transform itself is
+  untouched: `AstFixer::UNIVERSAL_TRANSFORMS` applies it to every file rather
+  than on a rule's say-so. Nothing declares the escape hatch that
+  `autofix_reach` exists to police, which is the same shape as the empty YAML
+  lexical bridge above.
 - **24 rules fire on nothing in this corpus** (ceiling 24, so the gate is at its
   limit). The header in `rule_ratchets.audit` is right that silence is usually a
   property of the sample — but `FROZEN_STRING_LITERAL`, `MEANINGFUL_NAMES` and
   `WHY_NOT_WHAT` are in the list *and* in the 78 rules that carry no detector
   field at all, which is a different reason for silence and worth separating.
-- **16 rules declare neither tier nor severity**, so every count grouped by
-  either omits them silently. **20 cross-population duplicates** — one id defined
-  in two places in two wordings. **2 id case collisions**:
-  `bare_rescue`/`BARE_RESCUE` and `eight_px_rhythm`/`EIGHT_PX_RHYTHM`. **DRY
-  claims the alias `duplicate_code`, which is still its own live rule** — a fold
-  nobody finished. `rake lint:rule_hygiene`.
-- **`rule_deps` gaps gate nothing.** `RuleRegistryAudit#ungraphed_rule_ids`
-  reports every registry rule absent from the graph, `/rules deps` prints the
-  count, and no ceiling in `rule_ratchets` and no task failure follows from it.
-  The number rose when `72a8cfae8` deleted the keys that named nothing, which is
-  the honest direction and reads like a regression.
+- **20 cross-population duplicates** — one id defined in two places in two
+  wordings, with no way for a reader to tell which governs. Resolving one means
+  keeping the wording where the detector is, which is a judgement per pair.
+  Ratcheted at 20 now, where it had a ceiling of 21 and no row in
+  `bin/pub4 measure`.
+- **133 registry rules sit outside `rule_deps`.** No longer ungated: it is a
+  ratchet row, `rule_deps.ungraphed`, floor 133 and down only. A rule outside
+  the graph is one `RuleOrder` cannot sequence.
 
 #### `zsh` reference tables — closed 2026-09-05
 
@@ -1227,11 +1280,15 @@ the number. None is new; what is new is that they are together.
 
 #### Nine of sixteen line budgets are over, and `law/` is nearly double
 
-`rake loc_budget`, measured this session: `law` 1609/852, `lib/pub4` 691/470,
-`lib/ground` 6837/5899, `lib/core` 769/682, `lib/boot` 264/227, `lib/trace`
-2053/1999, `lib/voice` 3330/3181, `lib/review` 10228/9765, `lib/fix` 2652/2643.
+`rake loc_budget`, re-measured 2026-09-05: `law` 1609/852, `lib/pub4` 692/470,
+`lib/ground` 6842/5899, `lib/core` 769/682, `lib/boot` 264/227, `lib/trace`
+2055/1999, `lib/voice` 3405/3181, `lib/review` 10224/9765, `lib/fix` 2659/2643.
 `limits.yml` says a breach is paid by extraction or deletion and never by a
-bigger number, and none of these has been paid. `law/` at 89% over is the one to
+bigger number. One of the nine has been paid down since: `lib/review` fell 36
+when ten byte-identical copies of a five-line `visit` came out of
+`structural_rules.rb` and moved onto `Rule#walk`, which is the "one shared
+AST-walk helper" the AST backlog above used to list — the extraction covered
+that session's own additions and 36 more. `law/` at 89% over is the one to
 open first: the twin census closed in 2026-08 retired 42 duplicated rules and the
 file set has grown back past where the budget was set.
 
@@ -1243,10 +1300,30 @@ prints that summary once (the `selfcheck: selfcheck:` prefix is gone).
 
 Three of the four `SILENT_RESCUE` sites now report through
 `Swallow.log(..., severity: :load_bearing)`: `PathPurposeRule#owned`,
-`antigravity/skills.rb#load_usage`, `Session#quarantine_corrupt_session!`.
-`voice/renderer/system_info.rb` was left for the session that held the file.
-`NO_GOD_CLASS` on EventStore and LlmDispatcher, and `COMPLETION_THEATER` on
-`ast_fixer.rb`, remain.
+`antigravity/skills.rb#load_usage`, `Session#quarantine_corrupt_session!`. The
+fourth, `voice/renderer/system_info.rb`, no longer reports at all — re-scanned
+2026-09-05, the rule finds nothing there. Do not re-open it from this line.
+
+**`rake selfcheck` is 1 finding, 2026-09-05.** Two of the three went:
+
+- `COMPLETION_THEATER` on `ast_fixer.rb:75` was the rule reading its own subject.
+  `PLACEHOLDER_ETC` already excluded a path segment; it excludes a regex
+  alternation now, so `%r{/OPENBSD/(?:etc|usr|var)/}` — the verbatim-mirror
+  guard, at error severity, so the fast gate was red on the rule that protects
+  `/etc` — reads as the pattern it is. Measured over all four trees: two lines
+  retire, 57 findings stay, and `(etc.)` in prose still fires, which is why `(`
+  and `)` stay out of the exclusion.
+- `NO_GOD_CLASS` on `LlmDispatcher` was the count measuring an idiom, the way it
+  read `Core::Constitution` at 16. Three of its eleven public methods —
+  `redact_secrets`, `forced_model`, `vision_capable?` — have no caller anywhere
+  in the repo and sat above `private`. Moved below it: 11 public → 8. The eight
+  model-shape predicates that do have callers stay public.
+
+`NO_GOD_CLASS` on `EventStore` remains and is not the same shape. Its fourteen
+public methods are the surface of a repository over four tables, and every one
+of them is somebody's door. Splitting it into a goal, task, event and checkpoint
+store is a design decision with an owner; privatising a repository's API to
+satisfy a counter is what "driving the count to zero by re-exempting" means.
 
 #### `edge_tts_available?` and the Mac `say` fallback — closed 2026-09-05
 
@@ -1445,25 +1522,26 @@ The other three failures are separate and pre-existing: `test_reach_exec.rb`
 (1 error), `test_security_sweep.rb` (1 failure), and `test_ratchets.rb`, which
 is the record below.
 
-#### Five ratchets are over, not three
+#### The over-ratchet list is not stable, and that is the finding
 
-`test/test_ratchets.rb` names them, measured 2026-09-05:
+`test/test_ratchets.rb` names them. It read three on 2026-09-04, five later the
+same day, and six on 2026-09-05. The current list is in **Still open after this
+session** above; do not read a count from any of them — read it from
+`MASTER/bin/pub4 measure`, which prints every row with its ceiling and names the
+slack ones too.
 
-    spine.lib_body_ceiling  39085/37464
-    self_findings             162/151
-    growth.master            1053/1047
-    growth.rails             2363/2358
-    growth.studio             153/138
+What is stable is the shape: `spine.lib_body_ceiling` and the four `growth.*`
+rows move with every session in a shared checkout, and each needs a fold rather
+than a raise.
 
-The **Still open after this session** record above lists three of these and
-predates `self_findings` and `growth.rails` joining them. Nothing here is new
-debt from this session's work beyond what the next paragraph admits; the entry
-is corrected so the count is not read as stable.
+Two ceilings were slack rather than over and are now at their number.
+`autofix_reach.dangling` sat at 7 above a real 0 — room the next change grows
+into silently — and was lowered when `efc96832f` emptied it. `reader_singularity`
+carried `agent_taxonomy.yml: 2` after that file's three readers became one.
 
-`autofix_reach.dangling` was the sixth, in the other direction — a ceiling of 7
-above a real number of 0, which the same test calls slack because it is room the
-next change grows into silently. `efc96832f` emptied it and did not lower it.
-Lowered to 0 and it stays there.
+Two more rows joined the ratchets on 2026-09-05, both of them numbers that
+already existed and gated nothing: `rule_hygiene.cross_population_duplicates`
+(20) and `rule_deps.ungraphed` (133).
 
 #### The TTS probe fix is paid for out of two budgets that were already over
 
@@ -1481,6 +1559,20 @@ callers, mostly tests. Checked before claiming otherwise. Paying this breach is
 the Transcendent decision that entry already assigns to an owner, and taking 35
 lines out of somewhere unrelated to make a number look right would be the
 accounting the budget exists to prevent.
+
+#### The 2026-09-05 pass costs `growth.master` and `growth.studio` a file each
+
+Same accounting, named for the same reason. Four gates gained the tests this
+file kept asking for — `rule_hygiene`, `autofix_reach`, `SemanticRule`'s
+language scope, and the registry audit's shipped-rule filter — and the two tool
+tests were written as one file rather than two, because they read one subject.
+`test_semantic_rule_scope.rb` is the net addition to MASTER. STUDIO's is
+`test_dilla_radio_bergen_study.rb`, which MASTER lost in the same move, so the
+repo total is unchanged and the two trees traded a file.
+
+The other direction was paid in full and then some: `lib/review` fell 36 lines
+and `spine.lib_body_ceiling` 33, both from the `visit` extraction, against 11
+lines this pass added.
 
 #### Instrument notes
 
@@ -2682,12 +2774,6 @@ itself as giving up on. no_validations lands at 10 against 11 and
 unconfirmed_destroy at 30 against 29 — reproducing a hand count is the reason
 to trust a detector. What remains under this row is the per-site judgement it
 always described, now with numbers that cannot drift while nobody looks.
-
-#### `two_rules_share_one_rescue_regex`  — tag: agent-ignore
-
-<!-- open-debt -->
-
-BARE_RESCUE in the line scope of data/rules.yml and FAIL_VISIBLY in the unit scope carry the identical detect_lexical, the identical severity (error) and the same fix advice in different words, so every bare rescue in this tree is two findings. Both were edited in step on 2026-08-12 when the regex was corrected for symbols and comments, which is the maintenance cost the duplication buys. Not collapsed on my own judgement: FAIL_VISIBLY is a soul.yml `absolute.rules` entry and BARE_RESCUE is a borrowed style-guide rule, so deciding which one keeps the regex — or whether the constitutional principle should be measured by something other than a line-level regex at all — is a constitutional question and needs the operator. It is the same shape as EMPTY_RESCUE, which WAS collapsed the same day because nothing constitutional was attached to it: 37 findings, 0 unique. See "Scanner noise" in the MASTER section.
 
 #### `bsdports_org_delegated_to_parking`  — tag: operator-priority
 

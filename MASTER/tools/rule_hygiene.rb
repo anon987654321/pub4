@@ -38,18 +38,16 @@ module Pub4
       Master.load_rules(root: MASTER)
     end
 
+    # The two populations rules.yml declares, and no third. A hand-rolled walk
+    # over every hash carrying an "id" was the first version, and it read the
+    # eight check names inside AUTOMATED_CSS_ANALYSIS's `config:` as eight rules
+    # — so missing_metadata counted config keys that were never going to carry a
+    # tier, and eight_px_rhythm, a check id, collided by case with the real
+    # EIGHT_PX_RHYTHM. A rule's config is its own; only the populations are rules.
     def yaml_rules
-      found = []
-      walk = lambda do |node|
-        case node
-        when Array then node.each(&walk)
-        when Hash
-          found << node if node["id"]
-          node.each_value(&walk)
-        end
-      end
-      walk.call(master_rules)
-      found
+      body = master_rules
+      Master.flatten_rules(body.fetch("rules", {})).select { |r| r.is_a?(Hash) && r["id"] } +
+        Array(body["learned_smells"]).select { |r| r.is_a?(Hash) && r["id"] }
     end
 
     def law_ids

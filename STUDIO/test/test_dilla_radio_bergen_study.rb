@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
+require_relative "dilla_helper"
 require "yaml"
-require "minitest/autorun"
 require "tmpdir"
-require_relative "../../STUDIO/dilla/dilla"
 
 class RadioBergenStudyUnitTest < Minitest::Test
   FAST_AUDIO = ->(path) { path ? { duration_seconds: 180.0 } : nil }.freeze

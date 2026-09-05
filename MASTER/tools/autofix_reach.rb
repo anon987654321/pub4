@@ -2,31 +2,45 @@
 
 # Whether a rule's autofix promise reaches any code.
 #
-# `autofix:` in data/rules.yml carries three different kinds of value and only
-# one of them says anything a machine can act on:
-#
-#   false                 197 rules. Honest: no mechanical fix exists.
-#   <transform name>        8 rules. The useful form — it names the edit.
-#   true                   31 rules. "Fixable", without saying how.
+# `autofix:` in data/rules.yml carries three kinds of value and only one of them
+# says anything a machine can act on: `false` is honest, a transform name is the
+# useful form because it names the edit, and bare `true` claims a fix without
+# saying how. Read the live split from `--json` rather than from a count here;
+# the three numbers this header used to quote were stale within a fortnight.
 #
 # Two failures follow, and neither is visible from the field itself.
 #
-# dangling_transform: seven of the eight named transforms are implemented
-# nowhere in the tree. rescue_standard_error, add_frozen_string_literal,
-# create_issue, extract_named_constant, delete_phrase, rewrite_indicative and
-# extract_shared_method appear in no Ruby file outside the rule that names them.
-# Only strip_trailing_whitespace exists, in review/scan/ast_fixer.rb. A rule
-# asking to be fixed by code that does not exist is a promise to a reader, and
-# to any agent reading the rule to decide whether it may edit.
+# dangling_transform: a rule naming a transform no code implements. It was seven
+# of eight; efc96832f deleted those seven, all learned_smells entries whose
+# `autofix:` nothing reads. A rule asking to be fixed by code that does not
+# exist is a promise to a reader, and to any agent reading the rule to decide
+# whether it may edit.
 #
 # bare_true: `true` claims a fix without naming it, so nothing can apply it and
-# nothing can check it. Twelve of the thirty-one have no detector of any kind
-# either, which makes them rules that cannot be found and cannot be fixed.
+# nothing can check it.
+#
+# Whether a rule can be FOUND is a separate question from whether its fix can be
+# applied, and this tool got it wrong for as long as it asked it. It counted the
+# three detect_* columns in rules.yml and reported twelve autofix claims as
+# undetectable — every one of the twelve wrong. Ten have a live detector in law/
+# or the RuleDSL registry, and the other two (WHITESPACE_PUNCTUATION,
+# MESSAGE_CHAIN) carry `folded_into:` naming the rule that reports for them. It
+# is the same instrument error tools/rule_reach.rb's own header records against
+# itself, so the question is asked there now, once: `RuleReach.mechanical`
+# already knows all three populations and loads the laws rather than grepping
+# for them.
+#
+# Corrected, it reports six and none of them was on the old list:
+# PRECOMPUTE_MATH, ANALOG_WARMTH, PURE_FUNCTIONS, SPECULATIVE_GENERALITY,
+# SYSTEM_STATUS and CACHE_LLM each declare a semantic detector at info severity,
+# which SemanticRule's info filter drops — so nothing ever reports them and the
+# autofix claim can never be reached. Raise the severity, give one a detector,
+# or say `autofix: false`.
 #
 # The target shape is `autofix: <transform>` or `autofix: false`. Bare true is
 # the unfinished middle. Both counters are ceilings rather than errors because
-# emptying them means either writing seven transforms or demoting the rules —
-# per rule, with a reason, not as a sweep.
+# emptying them means either writing the transforms or demoting the rules — per
+# rule, with a reason, not as a sweep.
 #
 #   ruby MASTER/tools/autofix_reach.rb
 #   ruby MASTER/tools/autofix_reach.rb --json
@@ -94,10 +108,20 @@ module Pub4
 
     def dangling = named_transforms.reject { |n| implemented?(n[:transform]) }
 
+    # Detection is RuleReach's question, not this tool's: it knows law/, the
+    # RuleDSL registry and `folded_into` as well as the yml columns, and it
+    # loads the laws instead of grepping for a literal `Law.define(:ID)`.
+    def detectable_ids
+      @detectable_ids ||= begin
+        require File.join(MASTER, "tools/rule_reach")
+        all = RuleReach.rules
+        (RuleReach.mechanical(all) + RuleReach.prompted(all)).map { |r| r["id"].to_s }.to_set
+      end
+    end
+
     def bare_true
       rules.select { |r| r["autofix"] == true }.map do |r|
-        detectors = %w[detect_semantic detect_structural detect_lexical].count { |k| r[k].to_s.strip != "" }
-        { rule: r["id"], detectors: detectors }
+        { rule: r["id"], detected: detectable_ids.include?(r["id"].to_s) }
       end
     end
 
@@ -121,10 +145,11 @@ module Pub4
         end
       end
 
-      undetectable = found[:bare_true].select { |b| b[:detectors].zero? }
+      undetectable = found[:bare_true].reject { |b| b[:detected] }
       unless undetectable.empty?
-        warn "autofix_reach: #{undetectable.size} rule(s) claim autofix and have no detector — " \
-             "cannot be found, cannot be fixed: #{undetectable.map { |b| b[:rule] }.join(', ')}"
+        warn "autofix_reach: #{undetectable.size} rule(s) claim autofix and nothing reports them — " \
+             "no detector in rules.yml, law/ or the registry, or a semantic-only detector the info " \
+             "filter drops: #{undetectable.map { |b| b[:rule] }.join(', ')}"
       end
 
       c = ceilings

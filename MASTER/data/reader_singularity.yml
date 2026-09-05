@@ -22,7 +22,6 @@
 # accessor on Master.* the way load_rules already is.
 reader_singularity:
   ceiling:
-    agent_taxonomy.yml: 2
     models.yml: 9
     patterns.yml: 6
     rules.yml: 10

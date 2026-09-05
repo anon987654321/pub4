@@ -9,10 +9,21 @@
 # the seven and left strip_trailing_whitespace, which names real code.
 #
 # 0 is the floor and it stays there. A new rule names a transform that exists or
-# it names none.
+# it names none. The corpus now names none at all: strip_trailing_whitespace was
+# the last, on the trailing_ws smell that 2026-09-05 deleted as a strict
+# duplicate of TRAILING_WHITESPACE, and the transform itself is untouched — it is
+# in AstFixer's UNIVERSAL_TRANSFORMS, applied to every file rather than triggered
+# by a rule, so nothing was lost with the claim.
 #
 # bare_true: autofix: true with no transform named. Nothing can apply it and
-# nothing can check it, and twelve of these have no detector either. The target
-# shape is a named transform or false; bare true is the unfinished middle.
+# nothing can check it. The target shape is a named transform or false; bare true
+# is the unfinished middle.
+#
+# 31 -> 25 on 2026-09-05. The six were PRECOMPUTE_MATH, ANALOG_WARMTH,
+# PURE_FUNCTIONS, SPECULATIVE_GENERALITY, SYSTEM_STATUS and CACHE_LLM — each a
+# semantic-only detector at info severity, which SemanticRule's info filter
+# drops, so nothing ever reported them and no fix could ever be reached. Their
+# `fix:` lines ask for film grain, a spinner and a deletion; none is mechanical
+# either. Demoted to false with the reason, not swept.
 dangling: 0
-bare_true: 31
+bare_true: 25

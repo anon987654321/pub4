@@ -147,15 +147,19 @@ module Master
           include NeedsModel
 
           def check(code, path:)
-            return [] unless language(path) && @agent
+            lang = language(path)
+            return [] unless lang && @agent
             return [] if quota_paused?
 
             reload_semantic_rules_if_stale
+            scoped = rules_for(lang)
+            return [] if scoped.empty?
+
             cache_key = semantic_cache_key(path, code)
             return @cache[cache_key] if @cache.key?(cache_key)
 
-            response = @agent.ask(build_prompt(code, path), operation: :scan_semantic).to_s
-            findings = parse_findings(response)
+            response = @agent.ask(build_prompt(code, path, scoped), operation: :scan_semantic).to_s
+            findings = parse_findings(response, scoped)
             @cache[cache_key] = findings
             findings
           rescue StandardError => e
@@ -179,7 +183,23 @@ module Master
             @rules = load_semantic_rules
             @rule_tags = @rules.keys.map(&:to_sym)
             @rules_mtime = rules_mtime
-            @prompt_frame = build_prompt_frame
+            @prompt_frames = {}
+          end
+
+          # Thirty-seven rules declare `languages:` and nothing read it. from_yaml
+          # kept prompt, severity, mode, reversibility and blast_radius and
+          # dropped the rest, so this pass put a css rule in front of every file
+          # in the tree. Its only reader was the lexical bridge, which carries no
+          # rules at all now. Hence a frame per language: one frame built at load
+          # cannot honour a scope.
+          #
+          # Empty means every language, as it does for Law::Rule#applies? and
+          # Rule#applies_to?. Law refuses a language FILE_LANGUAGE_MAP never
+          # produces (Law::Rule#prove!); test_semantic_rule_scope asks the same of
+          # this population, because a declared language nothing emits aims a rule
+          # at no file at all — which is how `rails`, `prose` and `erb` sat here.
+          def rules_for(language)
+            @rules.select { |_, a| a[:languages].empty? || a[:languages].include?(language) }
           end
 
           def reload_semantic_rules_if_stale
@@ -220,6 +240,7 @@ module Master
                   mode: (r["mode"] || "violation").to_sym,
                   reversibility: r["reversibility"],
                   blast_radius: r["blast_radius"],
+                  languages: Array(r["languages"]).map(&:to_s),
                 }
               end
           end
@@ -239,6 +260,7 @@ module Master
                 mode: :violation,
                 reversibility: nil,
                 blast_radius: nil,
+                languages: rule.languages.map(&:to_s),
               }
             end
           rescue StandardError => e
@@ -246,20 +268,24 @@ module Master
             {}
           end
 
-          def build_prompt(code, path)
+          def build_prompt(code, path, scoped)
             <<~PROMPT
             Review #{File.basename(path)}.
 
-            #{@prompt_frame}
+            #{prompt_frame_for(scoped, language(path))}
 
             Code (first #{CODE_SNIPPET_LIMIT} chars):
             #{code[0, CODE_SNIPPET_LIMIT]}
           PROMPT
           end
 
-          def build_prompt_frame
-            violations = @rules.select { |_, a| a[:mode] == :violation }
-            opportunities = @rules.select { |_, a| a[:mode] == :opportunity }
+          def prompt_frame_for(scoped, language)
+            @prompt_frames[language] ||= build_prompt_frame(scoped)
+          end
+
+          def build_prompt_frame(rules)
+            violations = rules.select { |_, a| a[:mode] == :violation }
+            opportunities = rules.select { |_, a| a[:mode] == :opportunity }
             parts = []
             parts << violation_block(violations) unless violations.empty?
             parts << opportunity_block(opportunities) unless opportunities.empty?
@@ -284,15 +310,19 @@ module Master
           BLOCK
           end
 
-          def parse_findings(response)
+          # Against the rules this file was actually asked about, not against all
+          # of them: a model handed a css frame that answers RAILS_VIEW_PURITY has
+          # invented a rule for this file, and accepting it would put the scope
+          # back where it was.
+          def parse_findings(response, scoped)
             response.lines.filter_map do |line|
               stripped = line.strip
               next if stripped.empty? || %w[CLEAN NONE].include?(stripped.upcase)
 
               match = stripped.match(/\A([A-Z_][A-Z0-9_]*):(\d+):(.+)\z/)
-              next unless match && @rules.key?(match[1])
+              next unless match && scoped.key?(match[1])
 
-              axiom = @rules[match[1]]
+              axiom = scoped[match[1]]
               Finding.build(
                 rule: match[1],
                 message: match[3].strip,

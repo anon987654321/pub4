@@ -72,7 +72,7 @@ module Master
         module_function
 
         def taxonomy_types
-          data = Master.load_yaml(File.join(Master::ROOT, "data", "agent_taxonomy.yml")) || {}
+          data = Master.agent_taxonomy
           data.fetch("agent_types", {}).transform_keys(&:to_sym)
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "SubagentPolicy.taxonomy_types")

@@ -201,9 +201,10 @@ module Master
             # "would"/"could" in rationale comments. Such a smell opts into
             # skip_comments and its comment-only lines are blanked to spaces
             # (length-preserving, so line numbers still land). Opt-in, because a
-            # whitespace or layout smell like trailing_ws MUST read the raw line
-            # — blanking a comment to spaces would make every comment look like
-            # trailing whitespace.
+            # smell can legitimately mean to read a comment: sycophancy is about
+            # the words, wherever they are written, and the whitespace smell this
+            # was first written for had to see the raw line or every comment would
+            # read as trailing space.
             source = smell["skip_comments"] ? without_comment_lines(code) : code
             source.each_line.with_index(1).filter_map do |line, line_number|
               next if line.match?(/scan:\s*intentional\b/)

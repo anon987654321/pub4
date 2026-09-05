@@ -72,6 +72,11 @@ end
       %(path = "/etc/rc.d/master"),
       %(sh "doas cp etc/doas.conf /etc/doas.conf"),
       %(File.read("/etc/master.env")),
+      # A word inside a regex alternation is a token in a pattern. Both of these
+      # are real lines: the OPENBSD verbatim-mirror guard in ast_fixer.rb, which
+      # kept `rake selfcheck` red at error severity, and a stdlib allowlist.
+      %(VERBATIM_MIRROR_RE = %r{/OPENBSD/(?:etc|usr|var)/}),
+      %(next if line.match?(/["'](open3|etc|yaml)["']/)),
     ].each do |line|
       assert_empty findings(:COMPLETION_THEATER, "#{line}\n"), "#{line.inspect} is not a placeholder"
     end
@@ -82,6 +87,9 @@ end
       %(SUPPORTED = "png, jpg, etc."),
       %(DESCRIPTION = "clusters (marketplace, playlist, etc.)"),
       %(HELP = "flags: --all, --quiet, etcetera"),
+      # The counterweight to the alternation exemption: parentheses are not
+      # regex syntax on their own, and "(etc.)" is exactly the placeholder.
+      %(LABEL = "moods (happy, sad, etc.)"),
     ].each do |line|
       refute_empty findings(:COMPLETION_THEATER, "#{line}\n"), "#{line.inspect} should be flagged"
     end
@@ -649,9 +657,12 @@ end
   # so magic_number scored every number in a comment (6,318 findings, sampled
   # 100% comment prose) and future_tense every "would"/"could" in a rationale
   # note. skip_comments in rules.yml now blanks comment-only lines for those two
-  # content smells. Opt-in, because a whitespace smell like trailing_ws must
-  # still read the raw line — blanking a comment to spaces would otherwise make
-  # every comment look like trailing whitespace. All three directions asserted.
+  # content smells. It is opt-in, because a smell can legitimately mean to read a
+  # comment — this was written against trailing_ws, which had to see raw
+  # whitespace or every comment would read as trailing space, and trailing_ws was
+  # deleted 2026-09-05 as a strict duplicate of TRAILING_WHITESPACE. The property
+  # is the opt-in, not that one smell, so it is asserted through a smell that
+  # still declines skip_comments. All three directions asserted.
 
   def smell_findings(smell_id, source, path: "lib/example.rb")
     rule = scanner.rules.find { |r| r.id.to_s == "LEARNED_SMELLS" } || raise("LEARNED_SMELLS not registered")
@@ -675,10 +686,10 @@ end
     refute_empty smell_findings("future_tense", "status = \"it will retry\"\n")
   end
 
-  def test_skip_comments_leaves_whitespace_smells_reading_raw_lines
-    assert_empty smell_findings("trailing_ws", "# a clean comment line\n"),
-      "a clean comment must not read as trailing whitespace once masked"
-    refute_empty smell_findings("trailing_ws", "# comment with real trailing space   \n"),
-      "trailing_ws must still see raw trailing whitespace on a comment line"
+  def test_skip_comments_is_opt_in_so_a_smell_without_it_reads_comments
+    assert_empty smell_findings("future_tense", "# this would break if anyone could reorder it\n"),
+      "future_tense declares skip_comments, so a rationale comment is masked"
+    refute_empty smell_findings("sycophancy", "# absolutely, this is the right fix\n"),
+      "sycophancy declares none, so it must still read the raw comment line"
   end
 end

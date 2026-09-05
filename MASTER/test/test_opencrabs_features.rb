@@ -94,8 +94,10 @@ class TestOpenCrabsFeatures < Minitest::Test
 
   def test_agent_pool_capacity
     bus = Master::Trace::EventBus.new
+    # The capacity under test is the taxonomy's, so it is stated here rather
+    # than read from the file the assertion below depends on.
     pool = Master::Review::AgentPool.new(governor: nil, event_bus: bus,
-      taxonomy_path: File.join(Master::ROOT, "data", "agent_taxonomy.yml"))
+      taxonomy: { "spawn_policy" => { "max_concurrent_children" => 4 } })
     hold = Queue.new
     4.times do |i|
       r = pool.spawn(type: :explore, tag: "t#{i}") { hold.pop }

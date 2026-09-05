@@ -160,7 +160,17 @@ module Master
       # about that (/\betc\.?\b/i) matched `require "etc"`, `Etc.nprocessors` and
       # every /etc/… deploy path — 12 of selfcheck's 71 findings, none real. See
       # TODO.md, Scanner noise.
-        PLACEHOLDER_ETC = %r{(?<![\w/])etc\.?(?![\w/])}
+      #
+      # `|`, `:` and `[` join the path characters because a word that sits inside
+      # a regex alternation is a token in a pattern, not prose. Two lines in the
+      # tree were reported for years on that shape and both are lists of real
+      # names: ast_fixer's `%r{/OPENBSD/(?:etc|usr|var)/}` — the OPENBSD mirror
+      # guard, at error severity, so `rake selfcheck` was red on the rule that
+      # protects /etc — and a stdlib allowlist naming `etc` among a dozen others.
+      # Measured over all four trees: exactly those two go, 57 findings stay.
+      # `(` and `)` are deliberately NOT in the sets: "(etc.)" in prose is the
+      # placeholder this rule exists to find.
+        PLACEHOLDER_ETC = %r{(?<![\w/|:\[])etc\.?(?![\w/|\]])}
         STDLIB_ETC_REQUIRE = /\brequire\s+["']etc["']/
 
         RuleDSL.rule :COMPLETION_THEATER,

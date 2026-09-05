@@ -26,6 +26,7 @@ module Pub4
     # Files that orchestrate other files. Each is read for glob literals.
     RUNNERS = %w[
       MASTER/Rakefile
+      STUDIO/Rakefile
       MASTER/bin/check
       MASTER/bin/ci
       MASTER/bin/gate
@@ -58,6 +59,13 @@ module Pub4
     # A string literal that looks like it selects ruby files.
     GLOB = /["']([A-Za-z0-9_.\-\/*\[\]{}]*\*[A-Za-z0-9_.\-\/*\[\]{}]*\.rb)["']/
 
+    # A runner naming one file outright runs it just as surely. STUDIO's Rakefile
+    # lists test_studio_gate.rb by name — deliberately, its comment says, because
+    # the glob beside it would pull in the dilla and tool suites — and a
+    # glob-only extractor read that as a test nothing runs. A path literal that
+    # matches no test file matches nothing here, so this cannot invent coverage.
+    EXACT = %r{["']((?:[A-Za-z0-9_.\-]+/)*(?:test|spec)/[A-Za-z0-9_.\-]+\.rb)["']}
+
     def self.globs
       @globs ||= begin
         found = Hash.new { |hash, key| hash[key] = [] }
@@ -67,9 +75,10 @@ module Pub4
           next unless File.file?(path)
 
           base = runner.split("/").first
-          File.read(path).scan(GLOB).flatten.uniq.each do |glob|
+          source = File.read(path)
+          (source.scan(GLOB).flatten + source.scan(EXACT).flatten).uniq.each do |glob|
             # Globs are written relative to the tree the runner lives in.
-            found[runner] << (glob.start_with?("MASTER/", "RAILS/", "OPENBSD/") ? glob : "#{base}/#{glob}")
+            found[runner] << (glob.start_with?("MASTER/", "RAILS/", "OPENBSD/", "STUDIO/") ? glob : "#{base}/#{glob}")
           end
         end
 
@@ -78,13 +87,27 @@ module Pub4
       end
     end
 
+    # A test is a file under a test/ or spec/ directory, not every file whose
+    # name reads like one. The name alone was the first instrument and it was
+    # wrong in both directions: law/ rules are named for what they detect, so
+    # squint_test.rb read as a test (exempted by hand), MASTER/tools/test_naming.rb
+    # is the lint over test names and read as an orphan test forever, and
+    # lib/review/scan/self_test.rb read as a test that happened to be covered by
+    # a bin/check glob — a false positive masked by a coincidence, which is the
+    # worse half. Three files, all of them source. Adding a third exemption by
+    # hand was the move this replaces, because the exemptions were describing a
+    # rule the directory already states.
+    #
+    # 726 of the 729 files named like tests are under test/ or spec/; the three
+    # that are not are those three. HELPERS stays: test_helper.rb IS under test/,
+    # and a runner loads it rather than running it.
+    TEST_DIR = %r{(\A|/)(test|spec)/}
+
     def self.test_files
-      @test_files ||= Dir[File.join(ROOT, "{MASTER,RAILS,OPENBSD}/**/*.rb")]
+      @test_files ||= Dir[File.join(ROOT, "{MASTER,RAILS,OPENBSD,STUDIO}/**/*.rb")]
                       .map { |path| path.sub("#{ROOT}/", "") }
                       .reject { |path| path =~ %r{/(node_modules|vendor|tmp|\.master|knowledge|output)/} }
-                      # law/ rules are named for what they detect — squint_test.rb
-                      # is a rule, not a test file; its runner is Law.load_all.
-                      .reject { |path| path.start_with?("MASTER/law/") }
+                      .select { |path| path =~ TEST_DIR }
                       .select { |path| File.basename(path) =~ /\Atest_.*\.rb\z|_test\.rb\z|_spec\.rb\z/ }
                       .reject { |path| HELPERS.include?(File.basename(path)) }
                       .sort

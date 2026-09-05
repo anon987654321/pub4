@@ -24,16 +24,19 @@ class TestFindingMetadata < Minitest::Test
 
   def test_semantic_findings_keep_exact_rule_id
     rule = Master::Review::Scan::Rules::SemanticRule.new
-    rule.instance_variable_set(:@rules, {
+    # The scope the file was asked about, which is what parse_findings reads: a
+    # reply naming a rule outside it is one the model invented for this file.
+    scoped = {
       "PATTERN_EXTRACTION" => {
         severity: :info,
         mode: :opportunity,
         reversibility: "surgical",
         blast_radius: { "files_touched" => 2 },
+        languages: ["ruby"],
       },
-    })
+    }
 
-    findings = rule.send(:parse_findings, "PATTERN_EXTRACTION:12:extract strategy")
+    findings = rule.send(:parse_findings, "PATTERN_EXTRACTION:12:extract strategy", scoped)
 
     assert_equal 1, findings.size
     assert_equal "PATTERN_EXTRACTION", findings.first.rule_id

@@ -121,6 +121,21 @@ module Master
         classified_call_failure(err)
       end
 
+      def agy_model?(model_id) = model_id.to_s.start_with?("agy:") || model_id.to_s == "agy"
+      def claude_cli_model?(model_id) = model_id.to_s.start_with?("claude-cli:")
+      def web_chat_model?(model_id) = model_id.to_s.start_with?("web-chat:")
+      def tool_capable?(model_id) = TOOL_CAPABLE_RE.match?(model_id.to_s.downcase)
+      def claude_model?(model_id) = CLAUDE_RE.match?(model_id.to_s)
+
+      private
+
+      # These three have no caller outside this class. They sat above `private`
+      # and NO_GOD_CLASS counted them, which put the dispatcher at 11 public
+      # methods against a limit of 10 and kept `rake selfcheck` red — the count
+      # measuring the idiom rather than the surface, the way it read
+      # Core::Constitution at 16 before private_class_method corrected it. The
+      # eight model-shape predicates that DO have callers stay public.
+
       # Ground::Redactor owns the pattern list. It was copied here verbatim, and
       # a redaction list that exists twice is a list where the next pattern
       # added to one copy leaves the other still printing the key.
@@ -150,18 +165,11 @@ module Master
         value
       end
 
-      def agy_model?(model_id) = model_id.to_s.start_with?("agy:") || model_id.to_s == "agy"
-      def claude_cli_model?(model_id) = model_id.to_s.start_with?("claude-cli:")
-      def web_chat_model?(model_id) = model_id.to_s.start_with?("web-chat:")
-      def tool_capable?(model_id) = TOOL_CAPABLE_RE.match?(model_id.to_s.downcase)
-      def claude_model?(model_id) = CLAUDE_RE.match?(model_id.to_s)
       def vision_capable?(model_id)
         id = model_id.to_s
         return false if NON_VISION_RE.match?(id)
         VISION_RE.match?(id)
       end
-
-      private
 
       # A billing or rate-limit refusal cannot succeed on an in-place retry,
       # and :llm_call_failure is not in fallback_policy.on — classified as

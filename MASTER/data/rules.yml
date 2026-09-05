@@ -629,18 +629,35 @@ refusal_templates:
 # nowhere — rescue_standard_error, add_frozen_string_literal, create_issue,
 # extract_named_constant, delete_phrase, rewrite_indicative,
 # extract_shared_method — so the gate reported seven promises no code could keep.
-# Only strip_trailing_whitespace names something real, and it is the one left.
+# The eighth went with trailing_ws below, and the list now names no transform.
+#
+# `severity:` is declared rather than left to LearnedSmellsRule's `:warning`
+# default. A smell reports under its own id, so a report grouped by severity
+# reads these rows and not the reader's fallback.
 learned_smells:
-- id: bare_rescue
-  pattern: "^\\s*rescue\\s*(?:=>|;|$)"
-  confidence: 0.98
+# bare_rescue and trailing_ws were removed 2026-09-05, by the test the long_line
+# and debug_output deletions used: how many findings land on a line no other rule
+# reports.
+#
+# trailing_ws is a strict duplicate. Its pattern is TRAILING_WHITESPACE's
+# (lexical_rules.rb) and neither carries a path exemption or a language scope, so
+# a four-line probe across .yml, .md and .css scored 4 findings and 0 unique.
+#
+# bare_rescue is worse than a duplicate. law/universal.rb's FAIL_VISIBLY says in
+# its own header that it folds BARE_RESCUE, and it deliberately does NOT match
+# `rescue => e`: that form rescues StandardError, which is the fix BARE_RESCUE
+# prescribes. So the smell's findings were either FAIL_VISIBLY's again (0 unique
+# on a silent rescue) or a report against correct code — measured both ways, on
+# a rescue that logs and re-raises and on one that discards. A pattern whose only
+# unique findings are the fix is not a narrowing job.
+#
+# Deleting it also closes rule_hygiene's last id_case_collision: bare_rescue and
+# BARE_RESCUE were one rule to a reader and two to every registry that keys on an
+# id, which is how a rule's findings, priors and exemptions split in silence.
 - id: frozen_string
   pattern: "\\bString\\.new\\b|%q\\(|%Q\\("
   confidence: 0.99
-- id: trailing_ws
-  pattern: "[ \\t]+$"
-  confidence: 0.99
-  autofix: strip_trailing_whitespace
+  severity: warning
 # debug_output was removed 2026-08-12, for the same reason as long_line above and
 # with the same evidence. It carried the SAME id as the registered DEBUG_OUTPUT
 # rule, so their findings were not even distinguishable in a report — where
@@ -652,12 +669,16 @@ learned_smells:
 # the DEBUG_OUTPUT Ruby rule carries" — two regexes kept in step by hand, which
 # is the definition of the defect. That reasoning lives on in the registered
 # rule and in test_debug_output_ignores_a_local_named_p, which pins it.
-- id: todo_comment
-  # `\b` holds before the dot, so TODO.md read as a marker: 59 of the 81 marker
-  # lines under MASTER are that filename and nothing else. The veto pattern
-  # `unfinished` and the registry's TODO_FIXME carry the same lookahead.
-  pattern: "\\b(?:TODO|FIXME|HACK)\\b(?!\\.md)"
-  confidence: 0.7
+# todo_comment was removed 2026-09-05, and it is the long_line case exactly.
+# Its pattern was a strict subset of the registry's TODO_FIXME — same
+# `\b(TODO|FIXME|HACK)\b(?!\.md)` lookahead, one marker fewer (XXX) — so every
+# finding it could make outside one directory was a duplicate by construction.
+# The one directory is the point: TODO_FIXME exempts `/review/scan/rules/`,
+# because a rule that names a marker is a detector and not a marker. Over
+# MASTER/lib the smell scored 4 findings and 3 unique, and all 3 were inside that
+# exemption — lexical_rules.rb:63 and web_rules.rb:97,99, which are the exempted
+# rule sources. So its whole unique yield was a quiet override of another rule's
+# exemption, at confidence 0.7 where the registered rule says :info.
 - id: magic_number
   # A number in a comment is prose about a number, not a magic literal — the
   # bare regex scored 6,318 findings, sampled 100% comment text. skip_comments
@@ -679,6 +700,7 @@ learned_smells:
   # the pattern fires on any number in a markdown transcript or a data file,
   # where "extract a constant" is not an available move.
   mediums: [ruby, javascript, html, zsh]
+  severity: warning
 # long_line was removed 2026-08-12. It restated the registered LONG_LINE rule as a
 # raw regex and produced 334 findings across lib/, of which THREE landed on a line
 # no other rule reports — and all three are in lib/io/llm.rb, which LONG_LINE
@@ -687,12 +709,14 @@ learned_smells:
 # its whole message.
 #
 # The same test the EMPTY_RESCUE deletion used: how many findings are unique to it.
-# Every other entry in this list passes that test — magic_number, future_tense,
-# duplicate_code, sycophancy and todo_comment are the only implementations of what
-# they detect, which is why this is a deletion of one entry and not of the layer.
+# The four entries that survive it — magic_number, future_tense, duplicate_code
+# and sycophancy — are the only implementations of what they detect. Four of the
+# nine this list once held have now failed it, always the same way: a raw regex
+# restating a registered rule, plus whatever that rule deliberately spares.
 - id: sycophancy
   pattern: "\\b(?:absolutely|certainly|of course|happy to help)\\b"
   confidence: 0.99
+  severity: warning
 - id: future_tense
   # Anti-simulation is about hedging in OUTPUT; a rationale comment saying a
   # change "would break X" is describing the past, not simulating. skip_comments
@@ -700,9 +724,17 @@ learned_smells:
   skip_comments: true
   pattern: "\\b(?:will|would|might|could|perhaps|seems|appears)\\b"
   confidence: 0.95
+  severity: warning
+# DRY carried `duplicate_code` in its aliases while duplicate_code was still a
+# live smell with 51 findings over lib/, 48 of them on a line no other rule
+# reports. An alias is a retired id; one pointing at a live rule makes every
+# lookup ambiguous and is a fold nobody finished. Resolved in the direction the
+# measurement gives: the smell is the only implementation of what it detects, so
+# the alias went and the rule stayed.
 - id: duplicate_code
   pattern: "\\b(?:copy|duplicate|same as)\\b"
   confidence: 0.75
+  severity: warning
 # god_class/n_plus_one learned_smells removed 2026-07-12: god_class's regex
 # (^\s*class\b) matched every class declaration with zero signal, riding
 # alongside the real AST-based NO_GOD_CLASS rule (structural_rules.rb:78);
@@ -1519,7 +1551,7 @@ rules:
     autofix: false
     fix: Add .includes(:association).
     languages:
-    - rails
+    - ruby
   - id: FIND_EACH
     source: Rails — find_each batch processing (Rails Guides)
     name: Use find_each for batch processing
@@ -1528,7 +1560,7 @@ rules:
     autofix: false
     fix: 'Use .find_each(batch_size: 1000).'
     languages:
-    - rails
+    - ruby
   - id: NO_UPDATE_ATTRIBUTE
     source: Rails — update_attribute skips validations (best practice)
     name: Replace update_attribute with update!
@@ -1537,7 +1569,7 @@ rules:
     autofix: true
     fix: update_attribute skips validations. Use update!
     languages:
-    - rails
+    - ruby
   - id: PLUCK_OVER_MAP
     source: Rails performance — pluck over map(&:attr)
     name: Prefer pluck over map for single columns
@@ -1546,7 +1578,7 @@ rules:
     autofix: false
     fix: Use .pluck(:column) to avoid AR object instantiation.
     languages:
-    - rails
+    - ruby
   - id: CONST_BY_DEFAULT
     source: Airbnb JS Style Guide — const over let/var
     name: Use const unless reassigned
@@ -1725,7 +1757,7 @@ rules:
     name: Precompute expensive math
     tier: performance
     severity: info
-    autofix: true
+    autofix: false
     detect_semantic: Are trig functions or noise lookups called per-frame per-object?
     fix: Precompute tables. Cache distance. Use squared distance comparison.
   - id: AUDIO_SMOOTHING
@@ -1750,7 +1782,7 @@ rules:
     name: Perfect is sterile
     tier: aesthetic
     severity: info
-    autofix: true
+    autofix: false
     detect_semantic: Is generated imagery clinically perfect with zero texture?
     fix: Film grain. Vintage lens softness. Subtle color cast.
   - id: DOMAIN_LANGUAGE
@@ -2082,7 +2114,6 @@ rules:
     autofix: true
     fix: 'Ranges take an en dash, not a hyphen: 45-75 -> 45–75.'
     languages:
-    - prose
     - markdown
   - id: MEASURE_OPTIMUM
     source: Bringhurst, Elements of Typographic Style — the measure (45–75 chars)
@@ -2126,8 +2157,10 @@ rules:
     severity: warning
     autofix: false
     violates_law: SINGULARITY
-    aliases:
-    - duplicate_code
+    # No `duplicate_code` alias: it is a live learned smell with its own findings,
+    # so claiming it here made a lookup ambiguous. An alias is a retired id — the
+    # four KISS carries below are the shape — and one naming a rule that still
+    # exists is a fold nobody finished. See the note above the smell.
     detect_semantic: Are two units expressing the same idea twice?
     fix: MERGE or DEFRAG. Pass the difference as an argument; never copy a block to
       vary one literal.
@@ -2359,7 +2392,7 @@ rules:
     name: Same input, same output
     tier: functional
     severity: info
-    autofix: true
+    autofix: false
     detect_semantic: Does this function depend on hidden state?
     fix: Pass all dependencies as parameters.
   - id: PRIMITIVE_OBSESSION
@@ -2422,7 +2455,7 @@ rules:
     name: Remove code for hypothetical needs
     tier: refactoring
     severity: info
-    autofix: true
+    autofix: false
     detect_semantic: Is this code written for a future requirement that does not exist
       yet?
     fix: Delete it. YAGNI.
@@ -2439,7 +2472,7 @@ rules:
     name: Keep users informed of progress
     tier: ux
     severity: info
-    autofix: true
+    autofix: false
     detect_semantic: Does this long operation provide feedback to the user?
     fix: Spinner, progress bar, status message.
   - id: USER_CONTROL
@@ -2523,7 +2556,7 @@ rules:
     name: Cache deterministic LLM responses
     tier: llm
     severity: info
-    autofix: true
+    autofix: false
     detect_semantic: Is the same prompt sent multiple times without caching?
     fix: Hash prompt, cache response with bounded TTL.
   - id: GUARD_EXPENSIVE_OPS
@@ -2654,7 +2687,6 @@ rules:
       and clearer?
     fix: 'Recast active: ''the bug was fixed by X'' -> ''X fixed the bug''.'
     languages:
-    - prose
     - markdown
     - ruby
   - id: PROSE_POSITIVE_FORM
@@ -2667,7 +2699,6 @@ rules:
       (did not remember -> forgot, not honest -> dishonest)?
     fix: 'Replace ''not + word'' with the affirmative: ''did not pass'' -> ''failed''.'
     languages:
-    - prose
     - markdown
     - ruby
   - id: PROSE_OMIT_QUALIFIERS
@@ -2678,7 +2709,6 @@ rules:
     autofix: false
     fix: Delete the qualifier; let the verb or noun carry the weight.
     languages:
-    - prose
     - markdown
     - ruby
   - id: PROSE_PARALLEL_FORM
@@ -2692,7 +2722,6 @@ rules:
       phrase, clause) where one form should hold throughout?
     fix: 'Make series elements match: all imperatives, or all nouns, never a blend.'
     languages:
-    - prose
     - markdown
   - id: PROSE_RELATED_WORDS
     source: Strunk, Elements of Style (1918) Rule 16 — keep related words together
@@ -2704,7 +2733,6 @@ rules:
       misreads on first pass?
     fix: Move the modifier next to the word it modifies; close the subject-verb gap.
     languages:
-    - prose
     - markdown
   - id: PROSE_ONE_TOPIC_PARAGRAPH
     source: Strunk, Elements of Style (1918) Rules 8–9 — paragraph as the unit
@@ -2716,7 +2744,6 @@ rules:
       below the first sentence?
     fix: Split per topic; lead each paragraph with its claim.
     languages:
-    - prose
     - markdown
   - id: GRICE_COOPERATIVE
     source: Grice — cooperative principle (quantity, quality, relation, manner)
@@ -2729,7 +2756,6 @@ rules:
       (relation), or read unclearly/out of order (manner)?
     fix: Trim to what is needed, assert only the verified, stay on point, order it plainly.
     languages:
-    - prose
     - markdown
     - ruby
   - id: RAILS_THIN_CONTROLLER_SEMANTIC
@@ -2751,7 +2777,6 @@ rules:
     mode: violation
     languages:
     - html
-    - erb
     detect_semantic: If this is a Rails view/partial, flag non-presentation logic (queries,
       persistence, multi-step condition trees that belong in helpers/models). Prefer
       CLEAN when the view only presents assigns.
@@ -4242,29 +4267,50 @@ rule_ratchets:
 
 
   hygiene:
-    # Ceilings for tools/rule_hygiene.rb.
+    # Ceilings for tools/rule_hygiene.rb. The first three are 0 as of 2026-09-05
+    # and 0 is a floor: a new rule arrives with a tier or a severity, an id that
+    # collides with nothing, and no alias naming something still alive.
     #
-    # id_case_collisions: bare_rescue/BARE_RESCUE and eight_px_rhythm/EIGHT_PX_RHYTHM.
-    # Two ids differing only by case are two rules to a registry and one rule to a
-    # reader, so findings, priors and exemptions split across the pair.
+    # Half of what they used to report was the instrument. The walk collected
+    # every hash in the file carrying an "id", so the eight check names inside
+    # AUTOMATED_CSS_ANALYSIS's `config:` counted as eight rules with no metadata,
+    # and one of them — eight_px_rhythm — collided by case with the real
+    # EIGHT_PX_RHYTHM. It reads the two declared populations now.
     #
-    # alias_shadows_live_rule: DRY claims duplicate_code, which is still its own
-    # rule. One of the two is a fold nobody finished; closing it means deleting the
-    # absorbed rule or dropping the alias, and that is a decision per pair.
+    # id_case_collisions: two ids differing only by case are two rules to a
+    # registry and one rule to a reader, so findings, priors and exemptions split
+    # across the pair in silence. The real one was bare_rescue/BARE_RESCUE, closed
+    # by deleting the smell.
     #
-    # missing_metadata: 16 rules declare neither tier nor severity, so every count
-    # that groups by either omits them without saying so. It was 43 until the 27
-    # operator_principles entries moved to soul.yml, where conduct belongs and where
-    # a tier and a severity were never the right shape for them.
-    id_case_collisions: 2
-    alias_shadows_live_rule: 1
-    missing_metadata: 16
+    # alias_shadows_live_rule: an alias is a retired id. One naming a rule that
+    # still exists makes every lookup ambiguous. DRY claimed duplicate_code, which
+    # has 51 findings of its own; the alias went.
+    #
+    # missing_metadata: a rule with neither tier nor severity is omitted by every
+    # count that groups by either, without saying so. It was 43 until the 27
+    # operator_principles entries moved to soul.yml, where conduct belongs.
+    id_case_collisions: 0
+    alias_shadows_live_rule: 0
+    missing_metadata: 0
 
     # cross_population_duplicates: one id defined in two places, in two wordings,
     # with no way to tell which governs. FAIL_VISIBLY had three. Resolve one by
     # keeping the wording where the detector is; a population that only restates it
     # is the copy.
-    cross_population_duplicates: 21
+    cross_population_duplicates: 20
+
+  deps:
+    # ungraphed: registry rules absent from rule_deps below. RuleRegistryAudit has
+    # reported this number and `/rules deps` has printed it since either existed,
+    # and until 2026-09-05 nothing failed on it — a gap that gates nothing is a
+    # count, not a ratchet. It rose when 72a8cfae8 deleted the dep keys that named
+    # no live rule, which is the honest direction and read like a regression
+    # precisely because no ceiling was watching.
+    #
+    # A rule outside the graph is one RuleOrder cannot sequence: it runs wherever
+    # it lands, and a rule meant to follow another (PRIMITIVE_OBSESSION after
+    # DATA_CLUMPS) is only ordered because the graph says so. Down only.
+    ungraphed: 133
 
   reach:
     # 56 -> 70 on 2026-09-05, and the rise is the point rather than a cost.

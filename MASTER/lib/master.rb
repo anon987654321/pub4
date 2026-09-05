@@ -85,6 +85,16 @@ module Master
     @law.fetch(section.to_s) { raise KeyError, "data/rules.yml has no #{section}: section" }
   end
 
+  # The one reader of data/agent_taxonomy.yml. It had three, each building the
+  # path its own way — File.join(ROOT, "data", ...), data_path, and a keyword
+  # default on AgentPool — which is the shape reader_singularity exists to catch:
+  # they all called load_yaml, so "bypasses the helper" would have missed it.
+  # Answers {} on a missing file, because every caller already reads a missing
+  # taxonomy as "no declared types" and falls back to its own constants.
+  def self.agent_taxonomy(root: ROOT)
+    load_yaml(File.join(root, "data", "agent_taxonomy.yml")) || {}
+  end
+
   # The design blocks are rules like any other now: `tier: design` with the old
   # nested section under `config`. This rebuilds the map they used to form, so
   # everything that dug design_rules by block name still reaches its key.

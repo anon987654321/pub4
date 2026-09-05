@@ -80,16 +80,21 @@ module Master
           )
         end
 
-        # Every node of one Prism type, in source order. Ten rules in
-        # structural_rules.rb carry a private `visit` that does this, which is
-        # the copy-paste TODO.md's "one shared AST-walk helper" names; those ten
-        # are their own sitting. This exists so rules written after it are not
-        # copies eleven through fourteen.
-        def each_node(node, type, acc = [])
-          return acc unless node.is_a?(Prism::Node)
+        # Every node under this one, in source order. Ten rules in
+        # structural_rules.rb each carried a byte-identical private `visit` doing
+        # exactly this — the copy-paste TODO.md names as "one shared AST-walk
+        # helper". They call this now, and a fix to the traversal lands once.
+        def walk(node, &block)
+          return unless node.respond_to?(:child_nodes)
 
-          acc << node if node.is_a?(type)
-          node.compact_child_nodes.each { |child| each_node(child, type, acc) }
+          block.call(node)
+          node.child_nodes.compact.each { |child| walk(child, &block) }
+        end
+
+        # Every node of one Prism type. The filter over the walk above, so the
+        # two cannot disagree about what "under this node" means.
+        def each_node(node, type, acc = [])
+          walk(node) { |child| acc << child if child.is_a?(type) }
           acc
         end
 

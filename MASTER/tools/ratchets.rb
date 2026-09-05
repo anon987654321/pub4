@@ -118,6 +118,21 @@ module Pub4
          require File.join(MASTER, "tools/rule_hygiene")
          [Pub4::RuleHygiene.report[:missing_metadata].size, Pub4::RuleHygiene.ceilings.fetch("missing_metadata")]
        end,
+       master_row("rule_hygiene.cross_population_duplicates", "data/rules.yml", "one id defined in two populations") do
+         require File.join(MASTER, "tools/rule_hygiene")
+         [Pub4::RuleHygiene.report[:cross_population_duplicates].size,
+          Pub4::RuleHygiene.ceilings.fetch("cross_population_duplicates")]
+       end,
+       # The fourth hygiene check and the dep graph both reported a number that
+       # nothing failed on. rule_hygiene warned on its own ceiling and ratchets
+       # never carried the row; RuleRegistryAudit reported dep_graph_gaps and no
+       # ceiling anywhere read it.
+       master_row("rule_deps.ungraphed", "data/rules.yml", "registry rules absent from rule_deps") do
+         $LOAD_PATH.unshift(File.join(MASTER, "lib")) unless $LOAD_PATH.include?(File.join(MASTER, "lib"))
+         require "master"
+         audit = Master::Review::Scan::RuleRegistryAudit.new(root: MASTER)
+         [audit.ungraphed_rule_ids.size, Master.law("rule_ratchets", root: MASTER).dig("deps", "ungraphed")]
+       end,
        master_row("self_findings", "data/self_findings.yml", "what our own rules find in our own trees") do
          require File.join(MASTER, "tools/self_findings")
          [Pub4::SelfFindings.by_rule.values.sum, Pub4::SelfFindings.ceiling]

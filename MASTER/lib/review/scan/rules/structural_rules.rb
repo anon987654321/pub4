@@ -92,7 +92,7 @@ module Master
           def check_ast(ast, _code, path:)
             return [] unless ast
             findings = []
-            visit(ast) do |node|
+            walk(ast) do |node|
               next unless node.is_a?(Prism::DefNode)
               cc = 1 + count_cc_nodes(node)
               next if cc <= MAX_CC
@@ -103,12 +103,6 @@ module Master
           end
 
           private
-
-          def visit(node, &block)
-            return unless node.respond_to?(:child_nodes)
-            block.call(node)
-            node.child_nodes.compact.each { |c| visit(c, &block) }
-          end
 
           def count_cc_nodes(node)
             return 0 unless node.respond_to?(:child_nodes)
@@ -136,7 +130,7 @@ module Master
 
             lines = code.lines
             findings = []
-            visit(ast) { |node| findings << def_node_finding(node, lines) if node.is_a?(Prism::DefNode) }
+            walk(ast) { |node| findings << def_node_finding(node, lines) if node.is_a?(Prism::DefNode) }
             findings.compact
           end
 
@@ -156,12 +150,6 @@ module Master
                 message: "Pipeline opportunity in #{node.name}: sequential transformations can be named stages",
               )
             end
-          end
-
-          def visit(node, &block)
-            return unless node.respond_to?(:child_nodes)
-            block.call(node)
-            node.child_nodes.compact.each { |c| visit(c, &block) }
           end
 
           def branch_dispatch_count(src)
@@ -198,7 +186,7 @@ module Master
           def check_ast(ast, _code, path:)
             return [] unless ast
             findings = []
-            visit(ast) do |node|
+            walk(ast) do |node|
               next unless node.is_a?(Prism::ClassNode)
               next unless node.body
               children = node.body.child_nodes.compact
@@ -213,11 +201,6 @@ module Master
 
           private
 
-          def visit(node, &block)
-            return unless node.respond_to?(:child_nodes)
-            block.call(node)
-            node.child_nodes.compact.each { |c| visit(c, &block) }
-          end
         end
       end
     end
@@ -331,7 +314,7 @@ module Master
 
             lines = code.to_s.lines
             findings = []
-            visit(ast) do |node|
+            walk(ast) do |node|
               next unless node.is_a?(Prism::DefNode)
 
               len = code_length(node, lines)
@@ -357,11 +340,6 @@ module Master
             CodeMetrics.method_code_lines(node, lines)
           end
 
-          def visit(node, &block)
-            return unless node.respond_to?(:child_nodes)
-            block.call(node)
-            node.child_nodes.compact.each { |c| visit(c, &block) }
-          end
         end
 
       # B03 NO_GOD_CLASS — class with >10 public methods (detect_structural: god_class).
@@ -386,7 +364,7 @@ module Master
             return [] if path.to_s.match?(%r{/test/|/spec/|_test\.rb\z|_spec\.rb\z})
             lines = code.to_s.lines
             findings = []
-            visit(ast) do |node|
+            walk(ast) do |node|
               breach = class_breach(node, lines)
               findings << finding(line: node.location.start_line, message: breach) if breach
             end
@@ -418,12 +396,6 @@ module Master
             return nil unless line_count > LINE_LIMIT
 
             "god class #{name} is #{line_count} code lines (max #{LINE_LIMIT}) — split at responsibility boundaries"
-          end
-
-          def visit(node, &block)
-            return unless node.respond_to?(:child_nodes)
-            block.call(node)
-            node.child_nodes.compact.each { |c| visit(c, &block) }
           end
 
           def count_public_methods(class_node)
@@ -485,7 +457,7 @@ module Master
           def check_ast(ast, _code, path:)
             return [] unless ast
             findings = []
-            visit(ast) do |node|
+            walk(ast) do |node|
               next unless node.is_a?(Prism::DefNode)
               body = node.body
               next unless body
@@ -500,12 +472,6 @@ module Master
           end
 
           private
-
-          def visit(node, &block)
-            return unless node.respond_to?(:child_nodes)
-            block.call(node)
-            node.child_nodes.compact.each { |c| visit(c, &block) }
-          end
 
           def body_contains?(node, *types)
             return false unless node.respond_to?(:child_nodes)
@@ -549,7 +515,7 @@ module Master
           def check_ast(ast, _code, path:)
             return [] unless ast
             findings = []
-            visit(ast) do |node|
+            walk(ast) do |node|
               next unless node.is_a?(Prism::CaseNode)
               next unless node.conditions.size >= MIN_BRANCHES
               next unless type_dispatch?(node)
@@ -569,11 +535,6 @@ module Master
             end
           end
 
-          def visit(node, &block)
-            return unless node.respond_to?(:child_nodes)
-            block.call(node)
-            node.child_nodes.compact.each { |c| visit(c, &block) }
-          end
         end
 
         class LiskovRule < Rule
@@ -628,7 +589,7 @@ module Master
 
           def collect_classes(ast)
             classes = {}
-            visit(ast) do |node|
+            walk(ast) do |node|
               next unless node.is_a?(Prism::ClassNode)
               methods = {}
               node.body&.body&.each do |child|
@@ -639,11 +600,6 @@ module Master
             classes
           end
 
-          def visit(node, &block)
-            return unless node.respond_to?(:child_nodes)
-            block.call(node)
-            node.child_nodes.compact.each { |c| visit(c, &block) }
-          end
         end
 
         class DependencyInversionRule < Rule
@@ -661,11 +617,11 @@ module Master
           def check_ast(ast, _code, path:)
             return [] unless ast
             findings = []
-            visit(ast) do |node|
+            walk(ast) do |node|
               next unless node.is_a?(Prism::DefNode) && node.name == :initialize
               params = param_names(node)
               next unless node.body
-              visit(node.body) do |call|
+              walk(node.body) do |call|
                 next unless call.is_a?(Prism::CallNode) && call.name == :new && call.receiver
                 const = call.receiver.slice
                 next unless const.match?(COLLABORATOR_SUFFIX)
@@ -687,11 +643,6 @@ module Master
             end
           end
 
-          def visit(node, &block)
-            return unless node.respond_to?(:child_nodes)
-            block.call(node)
-            node.child_nodes.compact.each { |c| visit(c, &block) }
-          end
         end
 
         class InterfaceSegregationRule < Rule
@@ -725,7 +676,7 @@ module Master
 
           def collect_modules(ast)
             modules = {}
-            visit(ast) do |node|
+            walk(ast) do |node|
               next unless node.is_a?(Prism::ModuleNode)
               count = node.body&.body.to_a.count { |c| c.is_a?(Prism::DefNode) }
               modules[node.name] = count
@@ -735,7 +686,7 @@ module Master
 
           def collect_includers(ast)
             includers = Hash.new { |h, k| h[k] = [] }
-            visit(ast) do |node|
+            walk(ast) do |node|
               next unless node.is_a?(Prism::ClassNode)
               node.body&.body&.each do |child|
                 next unless child.is_a?(Prism::CallNode) && child.name == :include
@@ -746,11 +697,6 @@ module Master
             includers
           end
 
-          def visit(node, &block)
-            return unless node.respond_to?(:child_nodes)
-            block.call(node)
-            node.child_nodes.compact.each { |c| visit(c, &block) }
-          end
         end
 
         # Over-engineering, the deterministic half of engineering_fit: a class

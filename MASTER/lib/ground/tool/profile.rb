@@ -61,7 +61,7 @@ module Master
         end
 
         def groups
-          data = Master.load_yaml(Master.data_path("agent_taxonomy.yml")) || {}
+          data = Master.agent_taxonomy
           hash = data["toolset_groups"]
           hash.is_a?(Hash) ? hash.transform_values { |names| Array(names).map(&:to_s) } : {}
         rescue StandardError => e
