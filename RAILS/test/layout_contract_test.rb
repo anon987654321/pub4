@@ -177,7 +177,22 @@ class LayoutContractTest < Minitest::Test
     refute_match(/--chrome-inset:\s*[\d.]+rem/, scss, "chrome inset must not scale with the root")
     assert_includes scss, "--tap-min: 44px"
     assert_includes scss, "--bar-height: 44px"
-    assert_includes scss, "--measure-body: 66ch"
+  end
+
+  # The measure is `--measure`, in _typography.scss, which both stacks @forward.
+  # This line asked the dialect for `--measure-body`, which e2dc94299 retired as
+  # a second name for the same 66ch — declared three times and used more often
+  # than the real one. design_tokens.yml keeps its `measure_body` key because
+  # design_metrics reads that YAML; it is not a CSS name. Asserting the retired
+  # spelling in the chrome file is how a stale test invites the twin back.
+  def test_the_measure_is_declared_once_under_one_name
+    typography = File.read(File.join(SHARED, "app", "assets", "stylesheets", "_typography.scss"))
+
+    assert_includes typography, "--measure: 66ch"
+    stylesheets = Dir.glob(File.join(File.dirname(SHARED), "{amber,brgen,bsdports,shared}/app/assets/stylesheets/**/*.scss"))
+    declarers = stylesheets.select { |path| File.read(path).match?(/^\s*--measure(?:-body)?\s*:/) }
+
+    assert_equal [File.join(SHARED, "app", "assets", "stylesheets", "_typography.scss")], declarers
   end
 
   def test_skip_link_is_hard_hidden_until_focus_in_shell_and_face
