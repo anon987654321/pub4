@@ -45,3 +45,45 @@ class TestFindingMetadata < Minitest::Test
     assert_equal({ "files_touched" => 2 }, findings.first.blast_radius)
   end
 end
+
+# Finding.read is the one accessor for the shape trap AGENTS.md records: a
+# rule answers a Finding, scan_dir answers plain symbol-keyed Hashes, and four
+# readers each hand-rolled the same ladder. Every shape it is asked about is
+# pinned here, including the two that used to be handled by different halves
+# of that ladder.
+class TestFindingRead < Minitest::Test
+  F = Master::Review::Scan::Finding
+
+  def finding = F.build(rule: "NO_DEBUG", message: "binding.pry", line: 7)
+
+  def test_reads_a_finding_object
+    assert_equal "NO_DEBUG", F.read(finding, :rule)
+    assert_equal 7, F.read(finding, :line)
+    assert_equal "binding.pry", F.read(finding, :message)
+  end
+
+  def test_reads_the_plain_hash_scan_dir_returns
+    row = { rule: "NO_PUTS", message: "puts", line: 3 }
+
+    assert_equal "NO_PUTS", F.read(row, :rule)
+    assert_equal 3, F.read(row, :line)
+  end
+
+  # A bare Data.define with no #[] is what a test double usually is, and
+  # reading only the subscript returned nil for one without failing.
+  def test_reads_an_object_that_answers_the_method_but_not_the_subscript
+    double = Data.define(:rule, :line).new(rule: "FROZEN_LITERAL", line: 1)
+
+    assert_equal "FROZEN_LITERAL", F.read(double, :rule)
+  end
+
+  # A reporter must not be the thing that fails on a rule returning nonsense.
+  def test_answers_nil_for_a_shape_it_cannot_read
+    assert_nil F.read(Object.new, :rule)
+    assert_nil F.read(nil, :rule)
+  end
+
+  def test_a_hash_missing_the_key_is_nil_not_an_error
+    assert_nil F.read({ message: "no rule here" }, :rule)
+  end
+end

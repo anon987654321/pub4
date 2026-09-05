@@ -68,15 +68,8 @@ module Master
         end
 
         def autofixable_finding?(finding)
-          rule = rules_by_id[finding_rule_id(finding).to_s]
+          rule = rules_by_id[Finding.read(finding, :rule).to_s]
           rule&.auto_fix
-        end
-
-        def finding_rule_id(finding)
-          return finding.rule if finding.respond_to?(:rule)
-          return finding[:rule] if finding.respond_to?(:[])
-
-          nil
         end
 
         def rules_by_id

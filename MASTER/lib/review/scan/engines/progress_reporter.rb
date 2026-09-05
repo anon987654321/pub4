@@ -31,7 +31,7 @@ module Master
           findings = file_result.ok? ? Array(file_result.value!) : []
           count = findings.size
           rel = path.sub(dir, "").delete_prefix("/")
-          rule_hits = findings.filter_map { |f| finding_rule_id(f) }
+          rule_hits = findings.filter_map { |f| Finding.read(f, :rule)&.to_s }
 
           done, total, viol_total, dirty, top = update_scan_progress_state(count, rule_hits)
 
@@ -57,9 +57,9 @@ module Master
             findings.each do |finding|
               io.puts({
                 path: path.to_s,
-                line: finding_line(finding),
-                rule: finding_rule_id(finding),
-                message: finding_message(finding),
+                line: Finding.read(finding, :line),
+                rule: Finding.read(finding, :rule)&.to_s,
+                message: Finding.read(finding, :message),
               }.to_json)
             end
           end
@@ -68,20 +68,6 @@ module Master
           # and a swallowed write makes an empty log and a clean run look alike.
           Master::Ground::Swallow.log(e, context: "ProgressReporter.append_scan_hits_jsonl",
                                          severity: :load_bearing, path: path.to_s)
-          nil
-        end
-
-        def finding_line(finding)
-          return finding.line if finding.respond_to?(:line)
-          return finding[:line] if finding.respond_to?(:[])
-
-          nil
-        end
-
-        def finding_message(finding)
-          return finding.message if finding.respond_to?(:message)
-          return finding[:message] if finding.respond_to?(:[])
-
           nil
         end
 
@@ -167,12 +153,6 @@ module Master
           Master::Ground::Swallow.log(e, context: "Scanner.write_progress_snapshot")
         end
 
-        def finding_rule_id(finding)
-          return finding.rule.to_s if finding.respond_to?(:rule)
-          return finding[:rule].to_s if finding.respond_to?(:[]) && finding[:rule]
-
-          nil
-        end
       end
     end
   end

@@ -22,6 +22,23 @@ module Master
           public_send(key)
         end
 
+        # A finding reaches a reader as this object from a rule and as the plain
+        # symbol-keyed Hash scan_dir returns — the trap AGENTS.md records, where
+        # `f.rule` raises on one and `h[:rule]` works on both. #[] above is what
+        # makes one subscript read either, and four readers hand-rolled the same
+        # respond_to? ladder around it anyway. Two of them disagreed about to_s.
+        # The reader comes first and the subscript second, which is not
+        # redundant: a test double is often a bare Data.define with no #[], and
+        # narrowing this to the subscript alone silently returned nil for one.
+        # Anything answering neither gets nil rather than an exception, because
+        # a rule may return whatever it likes and a reporter must not be the
+        # thing that fails.
+        def self.read(finding, key)
+          return finding.public_send(key) if finding.respond_to?(key)
+
+          finding[key] if finding.respond_to?(:[])
+        end
+
         def to_h
           {
             rule:,
