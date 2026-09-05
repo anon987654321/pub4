@@ -22897,15 +22897,10 @@ def crate_dig!(seam, count)
       dest = File.join(CrateDig::DUG, seam, "#{id}#{File.extname(file['name'])}")
       print "  #{doc['year']}  #{doc['title'].to_s[0, 44]} ... "
       CrateDig.download(file["url"], dest)
-      CrateDig.record!(
-        "identifier" => id, "seam" => seam, "year" => doc["year"],
-        "title" => doc["title"], "creator" => Array(doc["creator"]).first,
-        "source" => "https://archive.org/details/#{id}", "collection" => "great78",
-        "basis" => "US public domain — published #{doc['year']}, MMA 100-year term expired",
-        "rights" => file["rights"], "licenseurl" => file["licenseurl"],
-        "path" => dest.sub("#{ROOT}/", ""),
-        "sha256" => Digest::SHA256.file(dest).hexdigest, "bytes" => File.size(dest)
-      )
+      CrateDig.record!(CrateDig.archive_entry(
+        doc, file, seam: seam, path: dest.sub("#{ROOT}/", ""),
+        sha: Digest::SHA256.file(dest).hexdigest, bytes: File.size(dest)
+      ))
       puts "#{(File.size(dest) / 1024.0 / 1024).round(1)}MB"
       taken += 1
     rescue StandardError => e
@@ -22955,7 +22950,7 @@ def cc_dig!(seam, count)
       # files.first while this picks the first *audio* file, so any upload whose
       # first file is a zip recorded a name that did not match its own sha256.
       CrateDig.record!(CrateDig.ccmixter_entry(row, seam, dest.sub("#{ROOT}/", ""), sha,
-                                               file_name: file["file_name"])
+                                               file_name: file["file_name"], url: url)
                          .merge("bytes" => File.size(dest)))
       puts "#{(File.size(dest) / 1024.0 / 1024).round(1)}MB [#{row['license_name']}]"
       taken += 1
@@ -26261,6 +26256,40 @@ def copy_machine_loop_entry(loop_entry, duration)
   loop_entry.merge(path: out, copy_machined: true)
 end
 
+# Named takes are irreplaceable. Scratch is PID-scoped and stream's demo.wav
+# is a rolling capture; everything else in OUTPUT_DIR is a take.
+def scratch_destination?(destination)
+  dest = File.expand_path(destination)
+  scratch = File.expand_path(SCRATCH_DIR)
+  dest == scratch || dest.start_with?("#{scratch}#{File::SEPARATOR}")
+end
+
+def take_overwrite_allowed?(destination)
+  return true if ENV["DILLA_OVERWRITE"] == "1"
+  return true if scratch_destination?(destination)
+  return true if stream_save_demo? && File.expand_path(destination) == File.expand_path(stream_demo_path)
+
+  false
+end
+
+def existing_take_refusal(destination)
+  return nil if take_overwrite_allowed?(destination)
+  return nil unless File.file?(destination)
+
+  "dilla: refusing to overwrite existing take #{destination} (set DILLA_OVERWRITE=1 to replace it)"
+end
+
+def refuse_existing_take!(destination)
+  dest = File.expand_path(destination)
+  @dilla_claimed_takes ||= {}
+  return if @dilla_claimed_takes[dest]
+
+  msg = existing_take_refusal(destination)
+  abort msg if msg
+
+  @dilla_claimed_takes[dest] = true
+end
+
 def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = nil, keep_stems: false)
   require_tools! "ffmpeg"
   cleanup_render_scratch!
@@ -26269,6 +26298,7 @@ def render_dilla(destination = File.join(OUTPUT_DIR, "beat.mp3"), bars_count = n
   @chord_motif_cache = {}
   ensure_drum_kit!
   FileUtils.mkdir_p(File.dirname(destination))
+  refuse_existing_take!(destination)
   cache_self_sample!(destination)
   # Set the previous take aside instead of deleting it.
   #
@@ -27849,7 +27879,9 @@ DEVICES IN A RENDER (all off by default; each replaces or adds a real layer)
      KICKS=1 (default) enable kicks | KICKS=0 mute kick drum
          KICK_GAIN=0.88 (0.78 on wonky) kick/sub level scale — lower if still loud
          SONITEX=donuts_warm (default) | SONITEX=classic | SONITEX=heavy | SONITEX=0 dry
-         crush off: SONITEX_SAMPLING=0  noise off: SONITEX_NOISE=0  TAPE_BIAS=1 TAPE_LOSS_HZ=0
+         SONITEX_MIX/_DISTORTION/_VINYL/_TONE/_NOISE/_SAMPLING are documented but unread
+         TAPE_BIAS=1 TAPE_LOSS_HZ=0
+         DILLA_OVERWRITE=1              Replace an existing named take; default is to refuse
          ANALOG_CHAIN=acetate|sp1200|auto (rotates per session in slum batch)
          FORCE_KIT=1 regenerate synth drums
          samples/drums/custom/ overrides kit

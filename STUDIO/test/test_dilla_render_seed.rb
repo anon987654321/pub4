@@ -143,4 +143,39 @@ class TestRenderSeed < Minitest::Test
     assert_equal runs.first, runs.last
     refute_includes runs.first, nil, "a pinned text must fill all three"
   end
+
+  # The third time this claim was wrong. render_seed becomes @render_seed and
+  # DILLA_RENDER_SEED, which groove_engine reads for per-bar phrase and
+  # pattern choices -- and it fell through to rand on every ordinary render,
+  # because it consulted GEN_SEED and SEED_TEXT and never the one seed
+  # DillaProvenance guarantees is set. Two renders of the same recipe drew
+  # different grooves and the sidecar said they were the same take.
+  def test_render_seed_takes_the_pin_when_no_one_named_a_seed
+    with_env("GEN_SEED" => nil, "SEED_TEXT" => nil, "RENDER_SEED" => "1615715775") do
+      assert_equal 1_615_715_775, DillaSeeds.render_seed
+      assert_equal DillaSeeds.render_seed, DillaSeeds.render_seed
+    end
+  end
+
+  # Pinning stays opt-in below the seed the operator named: someone who sets
+  # either of these has chosen their constant, and the pin must not move it.
+  def test_an_explicitly_named_seed_still_outranks_the_pin
+    with_env("GEN_SEED" => "4242", "SEED_TEXT" => nil, "RENDER_SEED" => "1615715775") do
+      assert_equal 4242, DillaSeeds.render_seed
+    end
+
+    with_env("GEN_SEED" => nil, "SEED_TEXT" => "bergen regn", "RENDER_SEED" => "1615715775") do
+      assert_equal DillaSeeds.stable_seed("bergen regn") % 1_000_000, DillaSeeds.render_seed
+    end
+  end
+
+  # Without a pin the draw stays a draw, which is what keeps an unpinned
+  # render free to be a new take.
+  def test_no_pin_still_draws
+    with_env("GEN_SEED" => nil, "SEED_TEXT" => nil, "RENDER_SEED" => nil) do
+      seeds = Array.new(6) { DillaSeeds.render_seed }
+      assert_operator seeds.uniq.size, :>, 1, "an unpinned seed must not be a constant"
+      seeds.each { |s| assert_operator s, :<, 1_000_000 }
+    end
+  end
 end

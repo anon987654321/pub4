@@ -225,11 +225,11 @@ were all silent — the code ran, returned success, and did nothing.
   (very un-harsh) while sounding rough. `low`/`mid`/`high` stay at their
   historical edges so `sub_kick_balance` and old sidecars keep the same
   numbers. Callers that still pass only mid/high get the old ratio.
-- **Sonitex sections are not independently wet.** `SONITEX_MIX`,
-  `_DISTORTION`, `_VINYL`, `_TONE`, `_NOISE` and `_SAMPLING` are read by
-  nothing: setting any of them changes no sound. `SONITEX` and `SONITEX_PRESET`
-  are the two that work. The six were documented before the per-section wet
-  controls existed, and the controls never followed.
+- **Sonitex sections are documented but unread.** `SONITEX_MIX`,
+  `_DISTORTION`, `_VINYL`, `_TONE`, `_NOISE` and `_SAMPLING` are reserved
+  names with no reader: setting any of them changes no sound. `SONITEX` and
+  `SONITEX_PRESET` are the two that work. The six were documented before the
+  per-section wet controls existed, and the controls never followed.
 - **One console strip is not a console.** `console_strip.rb`'s own header argues
   that the sound people mean by "console" is the sum of thirty slightly
   different channels, and then runs one pass. NastyVCS gets its character from

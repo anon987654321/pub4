@@ -29,11 +29,25 @@ module DillaSeeds
   # runs. SWING and BPM are derived from the same value, so they were drifting too.
   def stable_seed(text) = Digest::SHA256.hexdigest(text.to_s).to_i(16) % (1 << 62)
 
+  # The last resort was reached on every ordinary render. DillaProvenance sets
+  # RENDER_SEED before any command runs, so a pinned seed was always sitting in
+  # the environment while this drew a fresh one anyway: three processes given
+  # RENDER_SEED=1615715775 answered 270549, 60260 and 344463. The value becomes
+  # @render_seed and DILLA_RENDER_SEED, which groove_engine reads for its
+  # per-bar phrase and pattern choices -- so the groove moved between two runs
+  # of the same recipe and every sidecar's "Reproduce with:" line promised
+  # something the engine could not do.
+  #
+  # GEN_SEED and SEED_TEXT still win, because someone who sets either has named
+  # the seed on purpose. rand stays underneath for library use where provenance
+  # never ran.
   def render_seed
     base = ENV["GEN_SEED"]&.to_i
     return base if base&.positive?
     text = ENV["SEED_TEXT"].to_s
     return stable_seed(text) % 1_000_000 if text.length.positive?
+    pinned = ENV["RENDER_SEED"].to_i
+    return pinned if pinned.positive?
     rand(1_000_000)
   end
 

@@ -4,6 +4,7 @@ require_relative "frozen_state"
 require "fileutils"
 require "json"
 require_relative "sample_worth"
+require_relative "crate_dig"
 require "open3"
 require "time"
 
@@ -598,6 +599,22 @@ module RadioChop
     { key: "#{PITCH_CLASSES[pc]} #{mode}", key_pc: pc, key_mode: mode.to_s, key_fit: fit.round(3) }
   end
 
+  # The HTTP URL that produced this source, copied from crate provenance.
+  # The dug wav is deleted after the chop; the registry row has to name the
+  # fetch, not a path that no longer exists.
+  def source_url_for(src, items: nil)
+    items ||= CrateDig.manifest["items"]
+    abs = File.expand_path(src)
+    items.find do |item|
+      next if item["url"].to_s.empty?
+
+      path = item["path"].to_s
+      next if path.empty?
+
+      File.expand_path(path, ROOT) == abs
+    end&.[]("url")
+  end
+
   # --- 6: registry ------------------------------------------------------------
 
   def registry
@@ -812,7 +829,7 @@ module RadioChop
            "-ac", "2", "-ar", SAMPLE_RATE.to_s, "-c:a", "pcm_s16le", dest, label: "loop trim")
 
       voicing = voicing_for(dest)
-      {
+      row = {
         "slug" => slug,
         "path" => dest.sub("#{ROOT}/", ""),
         "bpm" => m[:bpm],
@@ -843,6 +860,9 @@ module RadioChop
         "stems_dropped" => DROP_STEMS,
         "model" => MODEL,
       }.merge(key_fields(dest, key_probe).transform_keys(&:to_s))
+      url = source_url_for(src)
+      row["url"] = url unless url.to_s.empty?
+      row
     end
 
 # Merge, not replace. The registry is the only index the engine has: a slug

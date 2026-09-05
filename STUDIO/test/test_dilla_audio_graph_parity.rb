@@ -85,20 +85,21 @@ class TestAudioGraphParity < Minitest::Test
 # The same question, asked of the code the renderer actually calls.
 #
 # Absorbed from test_audio_graph_render_dilla.rb. The class above proves the
-# spine CAN emit what render_dilla used to build by hand, from literals copied
-# out of it -- which would keep passing if render_dilla had been migrated
-# wrongly, because it never calls render_dilla's code. These call
-# dilla_mix_graph, which is what the renderer now uses.
+# spine CAN emit a flat mix from literals. These call dilla_mix_graph, which
+# is what the renderer now uses, and pin the bus-routed graph it actually
+# emits (kit_sum / harmonic_sum / low_sum / texture_sum).
 # ---------------------------------------------------------------------------
-  # A full six-channel render: the shape a default `dilla dilla` produces, taken
-  # from a dumped filter graph rather than imagined -- drums, harm, bass,
-  # analog pad, vinyl and rumble at the weights that render used.
+  # A full six-channel render: the shape a default `dilla dilla` produces.
+  # DILLA_FULL defaults DILLA_MIX_BUSES on, so the engine emits kit / harmonic /
+  # low / texture buses rather than one flat amix.
   LABELS = %w([drums_c] [harm] [bassducked] [analogpad] [vinyl] [rumble]).freeze
   WEIGHTS = %w[0.95 1.12 1.15 0.62 0.35 0.25].freeze
-
-  def by_hand(labels, weights)
-    "#{labels.join}amix=inputs=#{labels.length}:weights=#{weights.join(' ')}:duration=first:normalize=0[mix]"
-  end
+  BUSSED_SIX = "[drums_c]amix=inputs=1:weights=0.95:duration=first:normalize=0[kit_sum];" \
+               "[harm][analogpad]amix=inputs=2:weights=1.12 0.62:duration=first:normalize=0[harmonic_sum];" \
+               "[bassducked]amix=inputs=1:weights=1.15:duration=first:normalize=0[low_sum];" \
+               "[vinyl][rumble]amix=inputs=2:weights=0.35 0.25:duration=first:normalize=0[texture_sum];" \
+               "[kit_sum][harmonic_sum][low_sum][texture_sum]amix=inputs=4:weights=1 1 1 1:duration=first:normalize=0[mix]"
+  FLAT_SIX = "#{LABELS.join}amix=inputs=#{LABELS.length}:weights=#{WEIGHTS.join(' ')}:duration=first:normalize=0[mix]"
 
   def through_spine(labels, weights)
     graph = dilla_mix_graph(labels, weights)
@@ -108,18 +109,18 @@ class TestAudioGraphParity < Minitest::Test
   def test_the_six_channel_mix_is_character_identical
     text, sum = through_spine(LABELS, WEIGHTS)
 
-    assert_equal by_hand(LABELS, WEIGHTS), text.gsub(sum, "mix")
+    assert_equal BUSSED_SIX, text.gsub(sum, "mix")
   end
 
   # Weights are positional in amix, so a reordered graph silently reassigns every
   # one of them. This is the failure that would not look like a failure.
   def test_each_weight_stays_with_its_own_channel
     text, = through_spine(LABELS, WEIGHTS)
-    order = text[/amix=inputs=6:weights=([^:]+):/, 1].split
-    labels = text[/((?:\[[a-z_0-9]+\])+)amix/, 1].scan(/\[([a-z_0-9]+)\]/).flatten
 
-    assert_equal WEIGHTS, order
-    assert_equal LABELS.map { |l| l.delete("[]") }, labels
+    assert_match(/\[drums_c\]amix=inputs=1:weights=0\.95:/, text)
+    assert_match(/\[harm\]\[analogpad\]amix=inputs=2:weights=1\.12 0\.62:/, text)
+    assert_match(/\[bassducked\]amix=inputs=1:weights=1\.15:/, text)
+    assert_match(/\[vinyl\]\[rumble\]amix=inputs=2:weights=0\.35 0\.25:/, text)
   end
 
   # "1.0" is not "1", and the difference is the whole reason format_gain takes
@@ -127,8 +128,9 @@ class TestAudioGraphParity < Minitest::Test
   def test_a_string_weight_is_emitted_as_written
     text, = through_spine(%w([sc_mix] [bassducked]), %w[1.0 1.15])
 
-    assert_includes text, "weights=1.0 1.15:"
-    refute_includes text, "weights=1 1.15:"
+    assert_includes text, "[sc_mix]amix=inputs=1:weights=1.0:"
+    refute_includes text, "[sc_mix]amix=inputs=1:weights=1:"
+    assert_includes text, "[bassducked]amix=inputs=1:weights=1.15:"
   end
 
   # Every channel a render can produce has to reach master. A name missing from
@@ -136,23 +138,23 @@ class TestAudioGraphParity < Minitest::Test
   # to a bus that is never declared would be dropped from the sum silently, and
   # that is a channel that stops being audible with no error anywhere.
   def test_no_channel_is_dropped_under_bus_routing
-    with_env("DILLA_MIX_BUSES" => "1") do
-      text, = through_spine(LABELS, WEIGHTS)
-      LABELS.each do |label|
-        assert_includes text, label, "#{label} vanished from the graph under bus routing"
-      end
+    text, = through_spine(LABELS, WEIGHTS)
+    LABELS.each do |label|
+      assert_includes text, label, "#{label} vanished from the graph under bus routing"
     end
   end
 
-  # Bus routing is opt-in precisely because it changes the text. If it ever
-  # stopped doing so, the default path and the bus path would have converged and
-  # one of them is not doing what it says.
-  def test_bus_routing_is_off_by_default_and_changes_the_graph_when_on
-    flat, = through_spine(LABELS, WEIGHTS)
-    bussed, = with_env("DILLA_MIX_BUSES" => "1") { through_spine(LABELS, WEIGHTS) }
+  # DILLA_FULL turns buses on. DILLA_MIX_BUSES=0 is the flat path, and it still
+  # has to emit a different graph or the opt-out is not doing what it says.
+  def test_bus_routing_is_on_by_default_and_the_flat_path_is_opt_out
+    bussed, sum = through_spine(LABELS, WEIGHTS)
+    flat, flat_sum = with_env("DILLA_MIX_BUSES" => "0") { through_spine(LABELS, WEIGHTS) }
 
-    refute_equal flat, bussed
+    refute_equal bussed, flat
     assert_includes bussed, "kit_sum"
+    refute_includes flat, "kit_sum"
+    assert_equal BUSSED_SIX, bussed.gsub(sum, "mix")
+    assert_equal FLAT_SIX, flat.gsub(flat_sum, "mix")
   end
 
   # The map exists to group channels. A typo in a label name there would route a

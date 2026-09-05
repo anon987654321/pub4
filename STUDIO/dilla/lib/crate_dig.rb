@@ -147,7 +147,11 @@ module CrateDig
   # be files.first while the downloader picked the first *audio* file, so on any
   # upload whose first file is a zip the recorded name did not match the
   # recorded sha256.
-  def self.ccmixter_entry(row, seam, path, sha, file_name: nil)
+  #
+  # `url` is the HTTP address that was fetched, not the page and not the local
+  # path. The dug file is deleted after the chop; without this the sidecar names
+  # a path that no longer exists and the upload cannot be re-fetched.
+  def self.ccmixter_entry(row, seam, path, sha, file_name: nil, url: nil)
     upstream = row.dig("upload_extra", "featuring").to_s.strip
     author = row["user_real_name"].to_s.empty? ? row["user_name"] : row["user_real_name"]
     credit = +"\"#{row['upload_name']}\" by #{author} (#{row['file_page_url']}), " \
@@ -167,7 +171,23 @@ module CrateDig
       "upstream" => (upstream.empty? ? nil : upstream),
       "attribution" => credit,
       "file" => file_name || Array(row["files"]).first&.dig("file_name"),
+      "url" => url,
       "path" => path, "sha256" => sha,
+    }.compact
+  end
+
+  # Archive.org provenance. `source` is the item page; `url` is the transfer
+  # that download() fetched — best_file already names that as file["url"].
+  def self.archive_entry(doc, file, seam:, path:, sha:, bytes: nil)
+    {
+      "identifier" => doc["identifier"], "seam" => seam, "year" => doc["year"],
+      "title" => doc["title"], "creator" => Array(doc["creator"]).first,
+      "source" => "https://archive.org/details/#{doc['identifier']}",
+      "collection" => "great78",
+      "basis" => "US public domain — published #{doc['year']}, MMA 100-year term expired",
+      "rights" => file["rights"], "licenseurl" => file["licenseurl"],
+      "url" => file["url"], "file" => file["name"],
+      "path" => path, "sha256" => sha, "bytes" => bytes,
     }.compact
   end
 
@@ -289,6 +309,10 @@ module CrateDig
   # row records where it came from and under what terms, so the crate can answer
   # "may I release this" without anyone having to remember.
   def record!(entry)
+    if entry["url"].to_s.empty?
+      raise ArgumentError, "crate provenance requires url (the HTTP URL that was fetched)"
+    end
+
     crate = manifest
     crate["items"].reject! { |i| i["identifier"] == entry["identifier"] }
     crate["items"] << entry
