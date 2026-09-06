@@ -139,6 +139,9 @@ module Master
 
   RuleDSL.rule :DEBUG_OUTPUT,
     severity: :error, tags: %i[FAIL_VISIBLY], applies_to: %i[ruby],
+    example_path: "/repo/lib/example.rb",
+    fires: "p value\n",
+    does_not_fire: "p << value\n",
     description: "debug output left in lib/" do |src, path:|
     next [] unless path.to_s.include?("/lib/")
     next [] if path.to_s.include?("/scan/rules/")
@@ -196,6 +199,8 @@ module Master
 
   RuleDSL.rule :NO_ASCII_LINE_ART,
     severity: :warning, tags: %i[BE_CONCISE],
+    fires: "# --- section\n",
+    does_not_fire: "# -- section\n",
     description: "ASCII divider decorations" do |src, path:|
     next [] if path.to_s.match?(%r{(^|/)(test|spec)/})
 

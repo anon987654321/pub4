@@ -251,6 +251,8 @@ module Master
 
         RuleDSL.rule :PROGRESSIVE_DISCLOSURE,
           severity: :info, tags: %i[DESIGN UX], applies_to: HTML_LANGS, autofix: false,
+          fires: %(<form class="settings">\n<input name=\"f1\">\n<input name=\"f2\">\n<input name=\"f3\">\n<input name=\"f4\">\n<input name=\"f5\">\n<input name=\"f6\">\n</form>\n),
+          does_not_fire: %(<form class="settings">\n<details><summary>Advanced</summary>\n<input name=\"f1\">\n<input name=\"f2\">\n<input name=\"f3\">\n<input name=\"f4\">\n<input name=\"f5\">\n<input name=\"f6\">\n</details>\n</form>\n),
           description: "advanced controls should not dump all options at once" do |src, path:|
           next [] unless path.to_s.include?("/app/views/") || path.to_s.include?("web/")
           # "Dumping all options at once" needs options to dump. This fired on any
@@ -268,6 +270,8 @@ module Master
 
         RuleDSL.rule :WHITESPACE_RHYTHM,
           severity: :info, tags: %i[DESIGN AESTHETIC], applies_to: CSS_LANGS, autofix: false,
+          fires: ".card { color: red; }\n",
+          does_not_fire: ".card { gap: var(--sp); }\n",
           description: "ma — breathing room via gap/section spacing tokens" do |src, path:|
           next [] unless Rules.ui_path?(path)
           # The keyword has to be a selector this file styles, not a word anywhere
@@ -284,6 +288,8 @@ module Master
 
         RuleDSL.rule :TYPE_HIERARCHY,
           severity: :info, tags: %i[DESIGN TYPOGRAPHY], applies_to: CSS_LANGS, autofix: false,
+          fires: ".s1 { font-size: 11px; }\n.s2 { font-size: 12px; }\n.s3 { font-size: 13px; }\n.s4 { font-size: 14px; }\n.s5 { font-size: 15px; }\n.s6 { font-size: 16px; }\n.s7 { font-size: 17px; }\n.s8 { font-size: 18px; }\n.s9 { font-size: 19px; }\n",
+          does_not_fire: ".s1 { font-size: 11px; }\n.s2 { font-size: 12px; }\n.s3 { font-size: 13px; }\n.s4 { font-size: 14px; }\n.s5 { font-size: 15px; }\n.s6 { font-size: 16px; }\n.s7 { font-size: 17px; }\n.s8 { font-size: 18px; }\n",
           description: "modular type scale — flag one-off font sizes" do |src, path:|
           next [] unless Rules.ui_path?(path)
 
@@ -298,6 +304,8 @@ module Master
 
         RuleDSL.rule :CONTRAST_TOKENS,
           severity: :info, tags: %i[DESIGN ACCESSIBILITY], applies_to: CSS_LANGS, autofix: false,
+          fires: ".meta { color: #ccc; }\n",
+          does_not_fire: ".meta { color: var(--text-secondary); }\n",
           description: "prefer token colors over low-contrast gray-on-gray magic" do |src, path:|
           next [] unless Rules.ui_path?(path)
 
@@ -323,6 +331,8 @@ module Master
 
         RuleDSL.rule :PIXEL_EXACT,
           severity: :info, tags: %i[DESIGN AESTHETIC PIXEL], applies_to: CSS_LANGS, autofix: false,
+          fires: ".card { width: 12.5px; }\n",
+          does_not_fire: ".card { width: 12px; }\n",
           description: "avoid subpixel/fractional layout that breaks integer grids" do |src, path:|
           next [] unless Rules.ui_path?(path)
 

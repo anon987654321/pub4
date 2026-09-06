@@ -69,6 +69,8 @@ module Master
         # model object handed the params hash carries the same risk.
         RuleDSL.rule :STRONG_PARAMETERS,
           severity: :error, tags: %i[SECURITY], applies_to: %i[ruby],
+          fires: "Post.create(params[:post])\n",
+          does_not_fire: "Post.create(params.require(:post).permit(:title))\n",
           description: "mass assignment goes through explicitly permitted attributes" do |src, path:|
           next [] unless path.include?("/app/")
 
@@ -88,6 +90,8 @@ module Master
 
         RuleDSL.rule :HASH_FETCH,
           severity: :info, tags: %i[READABILITY], applies_to: %i[ruby],
+          fires: "value = options[:size] || 10\n",
+          does_not_fire: "value = options.fetch(:size, 10)\n",
           description: "prefer Hash#fetch over [] with ||" do |src, path:|
           next [] if path.to_s.include?("/review/scan/rules/")
           src.each_line.with_index(1).filter_map do |line, n|
@@ -218,6 +222,8 @@ module Master
 
         RuleDSL.rule :TRAILING_COMMAS,
           severity: :info, tags: %i[STYLE], applies_to: %i[ruby],
+          fires: %(LIST = [\n  "one"\n]\n),
+          does_not_fire: %(LIST = [\n  "one",\n]\n),
           description: "trailing commas in multi-line collections" do |src, path:|
           src.each_line.with_index(1).filter_map do |line, number|
             next unless line.match?(/^\s*"[^"]+",?\s*$/)

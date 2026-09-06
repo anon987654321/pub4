@@ -4328,7 +4328,18 @@ rule_ratchets:
     # `test_rule_fixtures.rb` gained `javascript:` and `zsh:` default paths.
     # Those are what applies_to declares; `js` is not a language any rule names,
     # so every JS and shell rule had been landing at a Ruby model path.
-    without_fixtures: 47
+    #
+    # 47 -> 30 on 2026-09-06: the seven cosmetic rules, three ruby, two lexical,
+    # and five of surface_rules' twenty-nine. EN_DASH_RANGE, README_PROSE and
+    # DEBUG_OUTPUT each needed a spelled example_path, because each guards on the
+    # path rather than the source and the generic Ruby model path satisfies none
+    # of them.
+    #
+    # SILENT_RESCUE and NARROW_SILENT_RESCUE stay unfixtured for the reason
+    # SQL_INJECTION does: their worked example is a swallowed rescue, and
+    # lexical_rules.rb carries no self-exemption for them, so the example would be
+    # a live error-severity finding in the file that defines the rule.
+    without_fixtures: 30
 
 # What a decision proposal is checked against before it is offered, by
 # Master::Ground::BiasGuard. `detect` accuses, `clears` acquits: a proposal

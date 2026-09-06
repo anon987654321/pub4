@@ -83,6 +83,8 @@ module Master
 
         RuleDSL.rule :RUBY_TERNARY_NOT_NESTED,
           severity: :warning, tags: %i[STYLE], applies_to: %i[ruby],
+          fires: "value = a ? (b ? 1 : 2) : 3\n",
+          does_not_fire: "value = a ? 1 : 2\n",
           description: "no nested ternaries" do |src, path:|
           next [] if path.to_s.include?("/review/scan/rules/")
           result = Prism.parse(src)
@@ -103,6 +105,8 @@ module Master
 
         RuleDSL.rule :NO_ABBREVIATED_IDENTIFIERS,
           severity: :info, tags: %i[STYLE], applies_to: %i[ruby javascript],
+          fires: "def call(tmp)\nend\n",
+          does_not_fire: "def call(temporary_path)\nend\n",
           description: "spell identifiers in full — no tmp/idx/cfg/ctx" do |src, path:|
           next [] if path.to_s.include?("/review/scan/rules/")
           src.each_line.with_index(1).filter_map do |line, number|
@@ -114,6 +118,8 @@ module Master
 
         RuleDSL.rule :DOUBLE_QUOTES_RUBY,
           severity: :info, tags: %i[STYLE], applies_to: %i[ruby],
+          fires: %(name = 'osman'\n),
+          does_not_fire: %(name = "osman"\n),
           description: "double-quoted strings per style.yml" do |src, path:|
           next [] if path.to_s.include?("/review/scan/rules/")
           src.each_line.with_index(1).filter_map do |line, number|
@@ -126,6 +132,9 @@ module Master
 
         RuleDSL.rule :EN_DASH_RANGE,
           severity: :info, tags: %i[TYPOGRAPHY], applies_to: %i[markdown yaml html],
+          example_path: "/repo/docs/example.md",
+          fires: "The band is 45-75 wide.\n",
+          does_not_fire: "The band is 45–75 wide.\n",
           description: "numeric ranges use en dash not hyphen" do |src, path:|
           next [] if path.to_s.include?("/review/scan/rules/")
           next [] if path.end_with?(".rb", ".js", ".css", ".scss")
@@ -140,6 +149,8 @@ module Master
 
         RuleDSL.rule :ALL_CAPS_NO_TRACKING,
           severity: :info, tags: %i[TYPOGRAPHY], applies_to: %i[css scss],
+          fires: ".label { text-transform: uppercase; }\n",
+          does_not_fire: ".label { text-transform: uppercase; letter-spacing: 0.08em; }\n",
           description: "all-caps labels need letter-spacing" do |src, path:|
           next [] unless src.match?(/text-transform:\s*uppercase/i)
           next [] if src.match?(/letter-spacing\s*:/i)
@@ -194,6 +205,8 @@ module Master
 
         RuleDSL.rule :COMMENTS_AS_DEODORANT,
           severity: :warning, tags: %i[CLEAN_CODE SELF_EXPLAINING], applies_to: %i[ruby],
+          fires: "# increment the wear count\nincrement_wear_count\n",
+          does_not_fire: "# a torn hem is still a wearing\nincrement_wear_count\n",
           description: "a comment that restates the line below it says nothing the code did not" do |src, path:|
           next [] if path.to_s.include?("/review/scan/rules/")
 
@@ -218,6 +231,9 @@ module Master
 
         RuleDSL.rule :README_PROSE,
           severity: :info, tags: %i[TYPOGRAPHY DOMAIN_LANGUAGE], applies_to: %i[markdown],
+          example_path: "/repo/README.md",
+          fires: "# Title\n\n| one | two |\n",
+          does_not_fire: "# Title\n\n**One bold sentence carrying the argument.**\n",
           description: "a README is prose — a bold visionary opening, tables never, code only under the final heading" do |src, path:|
           next [] unless path.to_s.end_with?("README.md")
           findings = []
