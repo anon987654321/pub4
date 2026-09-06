@@ -118,10 +118,15 @@ module Pub4
          require File.join(MASTER, "tools/rule_hygiene")
          [Pub4::RuleHygiene.report[:missing_metadata].size, Pub4::RuleHygiene.ceilings.fetch("missing_metadata")]
        end,
-       master_row("rule_hygiene.cross_population_duplicates", "data/rules.yml", "one id defined in two populations") do
+       master_row("rule_hygiene.cross_population_duplicates", "data/rules.yml", "one id with two detectors") do
          require File.join(MASTER, "tools/rule_hygiene")
          [Pub4::RuleHygiene.report[:cross_population_duplicates].size,
           Pub4::RuleHygiene.ceilings.fetch("cross_population_duplicates")]
+       end,
+       master_row("rule_hygiene.statement_conflicts", "data/rules.yml", "one id, two statements") do
+         require File.join(MASTER, "tools/rule_hygiene")
+         [Pub4::RuleHygiene.report[:statement_conflicts].size,
+          Pub4::RuleHygiene.ceilings.fetch("statement_conflicts")]
        end,
        # The fourth hygiene check and the dep graph both reported a number that
        # nothing failed on. rule_hygiene warned on its own ceiling and ratchets

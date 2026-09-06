@@ -177,7 +177,10 @@ module Master
             super()
             @id = "PRIMITIVE_OBSESSION"
             @description = "clusters of primitives should become small domain objects"
-            @severity = :warning
+            # data/rules.yml declares this one info, and the catalogue owns a
+            # rule's severity — it is the file that must carry tier and severity
+            # for every rule, which rule_hygiene.missing_metadata enforces.
+            @severity = :info
             @rule_tags = %i[BLOATERS DOMAIN_MODELING]
             @auto_fix = false
           end
@@ -371,7 +374,8 @@ module Master
             super()
             @id = "LAZY_CLASS"
             @description = "classes should own behavior, not only delegate"
-            @severity = :warning
+            # info, as the catalogue declares it — see PRIMITIVE_OBSESSION above.
+            @severity = :info
             @rule_tags = %i[DISPENSABLES SRP]
             @auto_fix = false
           end

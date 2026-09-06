@@ -1820,6 +1820,61 @@ Two more rows joined the ratchets on 2026-09-05, both of them numbers that
 already existed and gated nothing: `rule_hygiene.cross_population_duplicates`
 (20) and `rule_deps.ungraphed` (133).
 
+#### `cross_population_duplicates` counted the architecture — closed 2026-09-06
+
+The row read 20 and one of them was a duplicate. rules.yml is the catalogue,
+`law/` and the registry are the implementations, so an id appears in both by
+construction — and thirteen of the twenty were a `detect_semantic` prompt
+beside a lexical detector, which is one rule at two depths rather than two
+rules. `FAIL_VISIBLY` is the shape: the catalogue declares the prompt,
+`law/universal.rb` holds the detector, and the source, the severity and the
+fix are identical word for word. The count asked for one of the two to be
+deleted, and either deletion loses a tier of a kernel rule.
+
+A home is now a population that can fire: a law with a `detect` — not a
+`practice`, which states conduct and matches no line — a registry rule, or a
+catalogue entry carrying `detect_lexical`, which the YamlDeclarativeRule
+bridge runs. Measured that way it is **0**, and `FLAT_PIXELS` is why the
+practice exclusion is not a loophole: `law/practice.rb` states the flat-design
+principle and `surface_rules.rb` detects `imageSmoothingEnabled = true`, which
+is that principle and its one mechanical case, and the law says so in a
+comment written before this session.
+
+**What the old count was hiding is now a row of its own.**
+`rule_hygiene.statement_conflicts` asks whether the two files tell a reader
+different things, and read 14:
+
+- **Eleven were a catalogue `fix` carrying an older draft** of the instruction
+  its own law enforces. `MEANINGFUL_NAMES` said "use domain-specific names.
+  user_profile, error_message" where the law says "name it after what the
+  right-hand side already calls it, or after the domain"; `GUARD_EXPENSIVE_OPS`
+  had lost "scope the delete to a parent", which is the half a reader needs.
+  All eleven now carry the law's wording, by the resolution rule the duplicate
+  check has always stated: whichever population holds the detector owns it.
+- **Three were severity**, and those resolve the other way. This file is the
+  one that must carry a tier and a severity for every rule, so `ONE_SOURCE`
+  moved to the kernel `error` it is declared at (measured first: it finds
+  nothing in any of the four trees, so the severity is a promise about the
+  next collision rather than a new gate failure), and `PRIMITIVE_OBSESSION`
+  and `LAZY_CLASS` moved down to the `info` the catalogue declares.
+
+**The three left are the owner's call, not mine.** `BE_CONCISE`,
+`PRESERVE_FIRST` and `SIMPLEST_WORKS` each have a soul-derived `practice` in
+`law/practice.rb` that says something other than the kernel rule of the same
+name in `rules.yml`: the practice for `BE_CONCISE` is "minimal response" (a
+rule about the voice) against "omit needless words, omit needless code" (a
+rule about the source), and `SIMPLEST_WORKS`' practice is "refuse to create
+god classes", which is `NO_GOD_CLASS`' subject and severity. Resolving one
+means deleting or renaming a statement that reaches the system prompt —
+`law/practice.rb` is where `soul.yml`'s absolutes live — so the fix belongs to
+whoever owns the constitution's wording.
+
+One thing found and left: `STIMULUS_CONTROLLER_SIZE` declares
+`detect_structural: {max_lines: 200, path_pattern: "_controller\.js$"}` in the
+catalogue, and the registry rule hardcodes both. Inert config beside a reader
+that ignores it, which is this repo's dominant defect and invisible to
+`data_reach` because that census reads top-level keys.
+
 #### The three `growth.*` overages, itemised — 2026-09-06
 
 `spine.yml` says a raise must name each file it makes room for, and the rows

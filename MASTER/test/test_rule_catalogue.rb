@@ -71,6 +71,79 @@ class TestRuleCatalogue < Minitest::Test
     with_body(body) { assert_equal ["C"], Pub4::RuleHygiene.missing_metadata }
   end
 
+  # A law double: the four things the two checks below read off one.
+  Law = Struct.new(:id, :detect, :fix, :severity, keyword_init: true)
+
+  def with_populations(laws: {}, registry: {})
+    hygiene = Pub4::RuleHygiene
+    originals = { loaded_laws: hygiene.method(:loaded_laws), dsl_ids: hygiene.method(:dsl_ids),
+                  dsl_severities: hygiene.method(:dsl_severities) }
+    hygiene.define_singleton_method(:loaded_laws) { laws }
+    hygiene.define_singleton_method(:dsl_ids) { registry.keys.map(&:to_s) }
+    hygiene.define_singleton_method(:dsl_severities) { registry.transform_keys(&:to_s) }
+    yield
+  ensure
+    originals.each { |name, method| hygiene.define_singleton_method(name, method) }
+  end
+
+  # The count this check carried until 2026-09-06 was nineteen parts architecture
+  # to one part duplicate. rules.yml is the catalogue and law/ is an
+  # implementation, so an id appears in both by construction, and a
+  # `detect_semantic` prompt is that rule's model tier rather than a second
+  # definition of it — FAIL_VISIBLY declares one beside the law that holds its
+  # lexical detector, with the same source, severity and fix.
+  def test_a_semantic_prompt_beside_a_detector_is_one_rule_at_two_depths
+    body = { "rules" => [{ "id" => "FAIL_VISIBLY", "tier" => "kernel", "severity" => "error",
+                           "fix" => "Catch it.", "detect_semantic" => "Does this swallow errors?" }] }
+    laws = { FAIL_VISIBLY: Law.new(id: :FAIL_VISIBLY, detect: ->(_) { true }, fix: "Catch it.", severity: :error) }
+    with_body(body) do
+      with_populations(laws:) { assert_empty Pub4::RuleHygiene.cross_population_duplicates }
+    end
+  end
+
+  # The direction that must still fire: a catalogue entry carrying its own
+  # deterministic detector, which the YamlDeclarativeRule bridge runs, beside a
+  # law that also detects. Two things can fire, so it is a twin.
+  def test_a_lexical_entry_beside_a_law_detector_is_a_duplicate
+    body = { "rules" => [{ "id" => "BARE_RESCUE", "tier" => "safety", "severity" => "error",
+                           "detect_lexical" => "rescue$" }] }
+    laws = { BARE_RESCUE: Law.new(id: :BARE_RESCUE, detect: ->(_) { true }, fix: "x", severity: :error) }
+    with_body(body) do
+      with_populations(laws:) do
+        assert_equal [{ rule: "BARE_RESCUE", homes: ["law/", "rules.yml"] }],
+                     Pub4::RuleHygiene.cross_population_duplicates
+      end
+    end
+  end
+
+  # What the old duplicate count was reaching for: not that an id lives in two
+  # files, but that the two tell a reader different things.
+  def test_a_conflicting_fix_or_severity_is_reported_and_agreement_is_not
+    body = { "rules" => [{ "id" => "AGREES", "severity" => "error", "fix" => "Same words." },
+                         { "id" => "DRIFTED", "severity" => "error", "fix" => "An older draft." },
+                         { "id" => "LOUDER", "severity" => "info", "fix" => "Same words." }] }
+    laws = { AGREES: Law.new(id: :AGREES, detect: ->(_) { true }, fix: "Same words.", severity: :error),
+             DRIFTED: Law.new(id: :DRIFTED, detect: ->(_) { true }, fix: "What the law enforces.", severity: :error),
+             LOUDER: Law.new(id: :LOUDER, detect: ->(_) { true }, fix: "Same words.", severity: :warn) }
+    with_body(body) do
+      with_populations(laws:) do
+        conflicts = Pub4::RuleHygiene.statement_conflicts
+
+        assert_equal %w[DRIFTED LOUDER], conflicts.map { |c| c[:rule] }
+        assert_equal ["fix"], conflicts.first[:reasons]
+        assert_match(/info declared, warning enforced/, conflicts.last[:reasons].first)
+      end
+    end
+  end
+
+  # :warn in a law and "warning" in the catalogue are the same severity, and a
+  # check that says otherwise reports every law in the tree.
+  def test_warn_and_warning_are_one_severity
+    body = { "rules" => [{ "id" => "SAME", "severity" => "warning", "fix" => "One." }] }
+    laws = { SAME: Law.new(id: :SAME, detect: ->(_) { true }, fix: "One.", severity: :warn) }
+    with_body(body) { with_populations(laws:) { assert_empty Pub4::RuleHygiene.statement_conflicts } }
+  end
+
   # An alias IS a retired id, so one naming nothing is correct and one naming a
   # live rule is the defect. Both asserted, because narrowing this check to
   # silence the second would turn it off rather than fix it.

@@ -140,8 +140,13 @@ module Master
       # law/ text arrives conducted, and rule sources that spell the pattern in
       # strings are counted and triaged rather than excused by path.
 
+        # :error because data/rules.yml declares ONE_SOURCE a kernel rule at
+        # error, and the catalogue outranks the implementation (CLAUDE.md's
+        # authority order). Measured before the change: this rule finds nothing
+        # in any of the four trees today, so the severity is a promise about the
+        # next collision rather than a new gate failure.
         RuleDSL.rule :ONE_SOURCE,
-          severity: :warning, tags: %i[COUPLING],
+          severity: :error, tags: %i[COUPLING],
           fires: %(COUNCIL_PATH = "data/council.yml"\n),
           does_not_fire: "path = Master::COUNCIL_PATH\n",
           description: "constants defined locally when a canonical ONE_SOURCE exists" do |src, path:|

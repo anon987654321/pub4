@@ -1272,7 +1272,7 @@ rules:
     tier: core
     severity: warning
     autofix: false
-    fix: 'Add ''# frozen_string_literal: true'' as first line.'
+    fix: 'Add ''# frozen_string_literal: true'' as the first line, or the line after a shebang.'
   - id: SINGLE_PRIVATE_SECTION
     source: Ruby Style Guide / RuboCop Style/AccessModifierDeclarations
     name: One private keyword at bottom
@@ -1686,7 +1686,7 @@ rules:
     tier: design
     severity: warning
     autofix: false
-    fix: Extract to CSS class.
+    fix: Extract to CSS class; pass dynamic values as custom properties.
   - id: LOGICAL_PROPERTIES
     source: CSS Logical Properties and Values (W3C)
     name: Prefer logical properties for RTL support
@@ -1707,7 +1707,7 @@ rules:
     tier: clarity
     severity: info
     autofix: false
-    fix: Use domain-specific names. user_profile, error_message.
+    fix: Name it after what the right-hand side already calls it, or after the domain.
   - id: WHY_NOT_WHAT
     source: Clean Code / Code Complete — comments explain why, not what
     name: Comments explain why, not what
@@ -1976,7 +1976,7 @@ rules:
     tier: correctness
     severity: error
     autofix: false
-    fix: Add <meta charset=UTF-8> as first element in <head>.
+    fix: Add a UTF-8 charset declaration as the first element in head.
   - id: ARIA_LABELS
     source: WCAG 4.1.2 Name, Role, Value (W3C/WAI)
     name: Interactive controls need accessible names
@@ -2016,7 +2016,7 @@ rules:
     tier: accessibility
     severity: warning
     autofix: false
-    fix: 'Add skip link to #main-content in layout.'
+    fix: 'Add a skip link to #main-content in the layout.'
   - id: NO_LONG_TRANSITION
     source: style.yml motion budget / FrontendRuleSet MOTION
     name: UI transitions stay under 300ms
@@ -2075,14 +2075,14 @@ rules:
     autofix: false
     detect_semantic: Is a non-class/non-module constant named in any case other than
       SCREAMING_SNAKE_CASE?
-    fix: 'Rename: MaxRetries -> MAX_RETRIES. CamelCase is for classes/modules only.'
+    fix: 'Scream a constant that holds a value: MaxRetries = 3 -> MAX_RETRIES = 3.'
   - id: RUBY_NUMERIC_UNDERSCORE
     source: Ruby Style Guide / RuboCop Style/NumericLiterals
     name: Separate large numeric literals with underscores
     tier: clarity
     severity: info
     autofix: false
-    fix: 'Group digits in threes: 1000000 -> 1_000_000.'
+    fix: 'Group digits in threes: one million is 1_000_000.'
   - id: RUBY_SYMBOL_TO_PROC
     source: Ruby Style Guide / RuboCop Style/SymbolProc
     name: Use &:method for single-method blocks
@@ -2567,7 +2567,7 @@ rules:
     autofix: false
     detect_semantic: Does this execute an expensive or destructive operation without
       confirmation?
-    fix: Cost estimate before execution. Require opt-in for danger.
+    fix: Cost estimate before execution. Require opt-in for danger; scope the delete to a parent.
   - id: NO_FLAG_ARGUMENTS
     source: Clean Code — no flag arguments (Robert C. Martin)
     name: A flag that selects behavior means two things hiding as one
@@ -4268,11 +4268,42 @@ rule_ratchets:
     alias_shadows_live_rule: 0
     missing_metadata: 0
 
-    # cross_population_duplicates: one id defined in two places, in two wordings,
-    # with no way to tell which governs. FAIL_VISIBLY had three. Resolve one by
-    # keeping the wording where the detector is; a population that only restates it
-    # is the copy.
-    cross_population_duplicates: 20
+    # cross_population_duplicates: one id with two things that can fire. It read 20
+    # on 2026-09-06 and one of them was a duplicate; the other nineteen were the
+    # architecture. rules.yml is the catalogue and law/ and the registry are the
+    # implementations, so an id appears in both by construction — and thirteen of
+    # the nineteen were a `detect_semantic` prompt beside a lexical detector, which
+    # is one rule at two depths. FAIL_VISIBLY is the shape: same source, same
+    # severity, same fix, word for word, in both files. Counting it asked for one of
+    # the two to be deleted, and either deletion loses a tier of a kernel rule.
+    #
+    # A home is now a population that detects: a law with a `detect` (not a
+    # practice, which cannot fire on a line), a registry rule, or a catalogue entry
+    # carrying detect_lexical, which the YamlDeclarativeRule bridge runs. There are
+    # no lexical entries today; the hatch is idle, not the check.
+    #
+    # 0, and the twin campaign this row opened for is finished. It stands as the
+    # guard against a second detector regrowing under a live id.
+    cross_population_duplicates: 0
+
+    # statement_conflicts: what the old count was reaching for and could not say —
+    # not that an id lives in two files, but that the two tell a reader different
+    # things. Fourteen on 2026-09-06. Eleven were a catalogue `fix` carrying an
+    # older draft of the instruction its own law enforces (MEANINGFUL_NAMES said
+    # "use domain-specific names" where the law says "name it after what the
+    # right-hand side already calls it"), and those are rewritten to the law's
+    # wording: whichever population holds the detector owns it. Severity is the
+    # other way round — this file is the one that must carry tier and severity for
+    # every rule, so ONE_SOURCE, PRIMITIVE_OBSESSION and LAZY_CLASS moved to the
+    # severity declared here rather than the one their class chose.
+    #
+    # The 3 left are one argument, and it is the owner's: BE_CONCISE, PRESERVE_FIRST
+    # and SIMPLEST_WORKS each have a soul-derived practice in law/practice.rb that
+    # says something other than the kernel rule of the same name here — SIMPLEST_WORKS'
+    # practice is about god classes, which is NO_GOD_CLASS's subject. Resolving them
+    # changes what reaches the system prompt, so they are recorded in TODO.md rather
+    # than decided here.
+    statement_conflicts: 3
 
   deps:
     # ungraphed: registry rules absent from rule_deps below. RuleRegistryAudit has
