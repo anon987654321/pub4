@@ -30,10 +30,22 @@ critical_items:
 
   - id: bplans_pipeline
     source: bplans/
-    expected_target: DEPLOY/bp/generate.rb
-    current_state: partial
-    gate: generator_reproduces_pages
-
+    # Measured 2026-09-06 against github.com/anon987654321/pub at a3185f4, by
+    # sparse checkout rather than by memory. bplans/ is 163 files: 25 HTML
+    # pages, 30 markdown plans, four Ruby prototypes under norwegianhedge and
+    # pubhealthcare, and the rest images and CSV. There is no generate.rb and
+    # no __shared/template.html.erb anywhere in that repo — `git ls-tree`
+    # matches neither "generate" nor "template" at any path. The pipeline this
+    # row has been waiting to restore was the pages themselves, built by hand.
+    #
+    # So the gate below cannot be met by restoring a generator that never
+    # existed. What is left is a decision the owner has to make and an agent
+    # must not: the content is personal and some of it is explicitly sensitive
+    # (consolidated/archived/sensitive_content_archive.md, barnevernet.html,
+    # the __letters/ correspondence), and pub4 is public.
+    expected_target: owner decision — import the pages, or record them as archived in pub
+    current_state: source_measured_no_generator
+    gate: owner_decision
   - id: privcam_active_decision
     source: __OLD_BACKUPS/MEGA_ALL_APPS.md
     expected_target: retired, with the reason in recovery/legacy_manifest.yml
