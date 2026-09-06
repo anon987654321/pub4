@@ -155,6 +155,12 @@ module Master
           next [] unless path.include?("/app/views/")
           next [] unless src.match?(/<%=\s*[^%]+\.html_safe\s*%>/)
           next [] if src.match?(/sanitize|strip_tags|\.to_json\.html_safe/)
+          # The finding is about the file, so the marker is read from the file.
+          # sanitize is the fix this rule names and it is the wrong one for
+          # generated SVG — Rails' allowlist strips svg and path, so following
+          # the advice on the 2FA QR code would blank the QR. A view that
+          # renders markup it generated itself says so where it renders it.
+          next [] if src.match?(/scan:\s*intentional\b/)
           [finding(line: 1, message: "raw html_safe in view — sanitize first or use auto-escaped <%= %>")]
         end
 

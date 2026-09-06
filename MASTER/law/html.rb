@@ -80,6 +80,14 @@ Law.define(:BLANK_LINE_RUN) do
   scope :file
   # Whitespace-only lines count as blank: a line holding two spaces looks
   # identical to an empty one and is the usual way a run of them survives.
+  #
+  # It reads comments because it measures whitespace, and the engine blanks a
+  # comment to a bare newline to keep line numbers. That turns any two-line
+  # comment into a run this law then reports: a four-line `<%# … %>` block
+  # explaining an opt-out, with one ordinary blank line above it, was five blank
+  # lines by the time the detector saw it. A spacing law that cannot see the
+  # comments is measuring a file nobody wrote.
+  reads_comments true
   detect { |text| text.match?(/\n[ \t]*\n[ \t]*\n/) }
   fix "Collapse consecutive blank lines to one."
   bad  "<p>first</p>\n\n\n<p>second</p>\n"

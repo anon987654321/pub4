@@ -1331,13 +1331,44 @@ say out loud on stderr:
   `locale_shadowing` applied a budget of zero ceilings when its budget file
   would not load.
 
-What is left is `SILENT_RESCUE` 26, `NO_GOD_CLASS` 26, `ERB_HTML_SAFE` 2 and
-`DEBUG_OUTPUT` 1, every one with its file and line in
-`data/self_findings.yml`. Every one of the twenty-six remaining swallows is in
-STUDIO, nineteen of them in dilla, where a `rescue StandardError` around an
-optional gem call is load-bearing for a render and narrowing one on my own
-judgement is the change this repo's own rules say not to make. **That is the
-forward work this row exists to make visible**, and it wants dilla's owner.
+A third pass took the row to **52** and the law row with it, 151 to 147, on
+three more instruments:
+
+- `DEBUG_OUTPUT` named `==` and `!=` as proof that a leading `p` is a local
+  variable and did not name `<` or `>`, so dilla's triangle oscillator —
+  `p < 0.5 ? (p * 4.0) - 1.0 : …`, where `p` is the phase — was an
+  error-severity finding. `p <expr>` parses as a comparison in every case.
+- `ERB_HTML_SAFE` had no opt-out, and the fix it names is wrong for one of
+  its two subjects: Rails' `sanitize` strips `svg` and `path`, so following
+  the advice on the 2FA QR code would render an empty box. It reads
+  `scan: intentional` from the file now, and that view carries the reason.
+  The other subject was redundant — a `_html` translation key is already
+  marked safe, so the `.html_safe` after it did nothing.
+- `BLANK_LINE_RUN` was reporting runs it had made itself. The law engine
+  blanks a comment to a bare newline to keep line numbers, so a four-line
+  `<%# … %>` block with one ordinary blank line above it arrives at the
+  detector as five blank lines. A whitespace law has to see the whitespace,
+  which is what `reads_comments true` gives it: three of its four findings
+  were the engine, and the fourth was a real double blank line, now one.
+
+What is left is two rules and fifty-two lines, each with its file and line in
+`data/self_findings.yml`, and both are real:
+
+- **`SILENT_RESCUE` 26**, every one of them in STUDIO and nineteen in dilla,
+  where a `rescue StandardError` around an optional gem call is load-bearing
+  for a render. Narrowing one on my own judgement is the change this repo's
+  own rules say not to make; this half wants dilla's owner.
+- **`NO_GOD_CLASS` 26** — more than ten public methods, or more than three
+  hundred code lines. `Conversation` 28, `User` 27, `Takeaway::Order` 26,
+  `Marketplace::Listing` 24, `GateResult` 22, `Marketplace::Order` 20,
+  `CdpSession` 19, `Item` and `Message` 18 apiece, dilla's `Matrix` 18, and
+  four gate files past three hundred lines led by `BergenDemoSeeder` at 834.
+  Nothing here is instrument: the rule counted correctly every time. It is
+  twenty-six separate decompositions in three trees, most of them in live
+  Rails models, and it is the largest single piece of design debt this row
+  has surfaced.
+
+**That is the forward work this row exists to make visible.**
 
 Two things the work uncovered, both fixed here:
 

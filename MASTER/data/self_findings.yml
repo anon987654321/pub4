@@ -55,10 +55,9 @@
 # reaches the scanner through LawBridgeRule under its own id, and those fifteen
 # findings are dropped from the registry count because they are already members
 # above.
-findings: 151
+findings: 147
 by_rule:
   BARE_DIV_WRAPPER: 2
-  BLANK_LINE_RUN: 4
   FROZEN_STRING_LITERAL: 5
   GUARD_CLAUSE: 27
   I18N_COVERAGE: 16
@@ -82,10 +81,6 @@ by_rule:
 finding_members:
   - BARE_DIV_WRAPPER RAILS/brgen/public/dilla/dilla.html:35
   - BARE_DIV_WRAPPER RAILS/brgen/public/dilla/dilla.html:45
-  - BLANK_LINE_RUN RAILS/brgen/app/views/shared/_feed_compose.html.erb:1
-  - BLANK_LINE_RUN RAILS/bsdports/public/404.html:1
-  - BLANK_LINE_RUN RAILS/bsdports/public/422.html:1
-  - BLANK_LINE_RUN RAILS/bsdports/public/500.html:1
   - FROZEN_STRING_LITERAL STUDIO/dilla/bin/demo_from_stream.rb:1
   - FROZEN_STRING_LITERAL STUDIO/dilla/bin/demo_full.rb:1
   - FROZEN_STRING_LITERAL STUDIO/dilla/bin/sine_stream.rb:1
@@ -231,16 +226,11 @@ finding_members:
   - USE_THEN RAILS/shared/app/controllers/omniauth_callbacks_controller.rb:1
   - USE_THEN RAILS/shared/app/services/shared/newsletter_visuals.rb:1
   - USE_THEN RAILS/shared/app/services/shared/tradedoubler.rb:1
-registry_findings: 55
+registry_findings: 52
 registry_by_rule:
-  DEBUG_OUTPUT: 1
-  ERB_HTML_SAFE: 2
   NO_GOD_CLASS: 26
   SILENT_RESCUE: 26
 registry_finding_members:
-  - DEBUG_OUTPUT STUDIO/dilla/lib/modulation.rb:110
-  - ERB_HTML_SAFE RAILS/brgen/engines/tv/app/views/tv/videos/new.html.erb:1
-  - ERB_HTML_SAFE RAILS/shared/app/views/two_factor_setups/show.html.erb:1
   - NO_GOD_CLASS MASTER/tools/doc_paths.rb:21
   - NO_GOD_CLASS OPENBSD/lib/gate_result.rb:24
   - NO_GOD_CLASS OPENBSD/tools/tree.rb:15

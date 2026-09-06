@@ -150,7 +150,13 @@ module Master
     # flagged attention_context.rb's `p << "zoom: …"` twice — an error-severity,
     # auto_fix=true rule pointed at correct code. Anything whose next token is an
     # assignment, append or comparison operator is the variable, not the call.
-    findings = scan_lines(src, /^\s*pp?\s+(?!self\b)(?!<<|==|!=|\|\|=|&&=|[+\-*\/%|&^]?=)/,
+    #
+    # `==` and `!=` were named and `<` and `>` were not, so dilla's
+    # `p < 0.5 ? (p * 4.0) - 1.0 : 3.0 - (p * 4.0)` — the phase local of a
+    # triangle oscillator — was an error-severity finding. `p <expr>` parses as
+    # a comparison in every case; a Kernel#p whose argument opens with `<` is
+    # `p <<~HEREDOC`, which the `<<` branch already spares.
+    findings = scan_lines(src, /^\s*pp?\s+(?!self\b)(?!<<|[<>]|==|!=|\|\|=|&&=|[+\-*\/%|&^]?=)/,
       message: "p/pp debug call — remove or publish via event bus")
     findings += scan_lines(src, /\$stderr\.puts\b/, message: "$stderr.puts — use @bus.publish or $stdout")
     findings
