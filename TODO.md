@@ -1247,29 +1247,54 @@ rather than inferred, and the command that measured it is named so the next
 reader can re-run it instead of re-deriving it. The cleanup that came out of the
 same sitting is `72a8cfae8`; what is here is what that commit did **not** close.
 
-#### `soul.yml` declares three hooks and nothing runs them
+#### `soul.yml` declares seven hooks, and one missing line is why none fires
 
 Found 2026-09-05 while looking for two more files to fold, which is the wrong
 reason to find anything and the reason this was nearly deleted instead.
+Re-counted 2026-09-06: **seven**, not the three a truncated `inspect` showed.
 
 `Master::Trace::Hooks` is constructed nowhere. Its siblings are —
-`Trace::Ledger::Swallow`, `Feedback` and `Reflexion` are each attached in
-`builder/boot_phases.rb` or `ai_boot.rb` — and this one is not, so a
+`Trace::Ledger::Swallow` in `builder/boot_phases.rb`, `Feedback` and
+`Reflexion` in `ai_boot.rb`, each `.attach`ed — and this one is not, so a
 constant-name census reports the file as dead and a file count says delete it.
 
-It is the only reader of `soul.yml#hooks`, which declares three:
-`on_violation_found` -> `append_constitutional_violation`, and two more.
-Nothing publishes `on_violation_found` either. So the kernel — the document
-that outranks every other in this repo — states three hooks that do not fire,
-and the class that would fire them is never built.
+It is the only reader of `soul.yml#hooks`:
 
-Deleting the file would take the last reader of a constitutional declaration
-with it, turn `data_reach` back to 36, and leave `soul.yml` promising three
-hooks with nothing on either end. `soul.yml` is `paths.immutable`, so the
-block cannot simply go. Wire `Hooks` into the boot phases beside its three
-siblings and publish the events it listens for, or take the block to whoever
-owns the constitution. It is the **Inert law and config** class at the one
-place in the tree where it costs the most.
+    on_violation_found    append_constitutional_violation -> .constitutional_violations.jsonl
+    on_fix_applied        publish hooks:fix_applied
+    on_cost_threshold     warn_cost_threshold at 0.5 of budget
+    on_session_start      publish hooks:session_start
+    on_session_end        publish hooks:session_end
+    on_phase_transition   publish hooks:phase_transition
+    on_convergence        publish hooks:convergence
+
+The part that makes this worth a sitting rather than a note: **every source
+event `Hooks#attach` subscribes to is already being published by live code.**
+
+    scan:complete          review/scan/file_processor.rb   (two sites)
+    rule_loop:fix_applied  fix/rule_loop.rb
+    llm:cost               review/llm_dispatcher/ruby_llm_sender.rb
+    phase:advanced         ground/phase_gates.rb
+    fix_loop:clean         fix/fix_loop/pass_runner.rb
+
+Nothing publishes the `on_*` names because `Hooks` is what publishes them — it
+translates the five bus events into the seven the constitution names, then
+dispatches whatever `soul.yml` declared for each. `attach` is never called, so
+the translation never happens and every one of the seven is dead on a bus that
+is carrying its trigger right now. The constitution records that a violation
+is appended to `.constitutional_violations.jsonl`; no such file is ever
+written.
+
+So the wiring is one line in the boot phases, beside the three siblings that
+already have it. What it is not is a one-line decision: turning seven hooks on
+at once changes what a session emits, `on_session_end` runs from an `at_exit`,
+and `warn_cost_threshold` fires at half the budget. `soul.yml` is
+`paths.immutable`, so the block cannot simply be deleted either — the choice
+is to wire it or to take it to whoever owns the constitution.
+
+Deleting `lib/trace/hooks.rb` would take the last reader of a constitutional
+declaration with it and turn `data_reach` back to 36. This is the **Inert law
+and config** class at the one place in the tree where it costs the most.
 
 #### The tier2 ordering guarantee — closed 2026-09-05
 
