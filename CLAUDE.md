@@ -5,6 +5,16 @@ One screen. Everything else is reference, reached from here.
 Authority order: `MASTER/data/soul.yml` > `MASTER/data/rules.yml` > this file >
 the per-tree contract. Feature truth is `RAILS/apps.yml`.
 
+**MASTER is the primary configuration; this file is secondary and so is every
+other harness file.** Claude Code reads this one, Codex and most agents read
+`AGENTS.md`, Gemini CLI reads `GEMINI.md`, Cursor reads `.cursorrules`, Copilot
+reads `.github/copilot-instructions.md` — and all four of those are generated
+from one marked block in `MASTER/AGENTS.md` by `cd MASTER && rake
+docs:agent_contracts`, with `rake lint:agent_contracts` failing when one drifts.
+Whichever door an agent comes through, it is pointed at `MASTER/data/soul.yml`
+and `MASTER/data/rules.yml` before it writes. Change the law there, never in a
+harness file.
+
 This file points; it does not copy. Every subsystem keeps its own contract and
 those files are maintained, so restating them here produces a second source that
 drifts. The previous version was deleted at `6cdd2cb97` after exactly that — it
@@ -22,8 +32,8 @@ renamed.
 
 Nothing else sits at the repo root but this file, `TODO.md` — the single
 repo-wide backlog (every per-tree debt/TODO/blocker list was folded into it) —
-`WISHLIST.md`, the forward-work companion `TODO.md` points at, and `TREE.md`,
-the map of the four trees. Build output
+and `TREE.md`, the map of the four trees. (`WISHLIST.md` folded into `TODO.md`
+on 2026-09-06 — one backlog, forward work as its last section.) Build output
 never sits at the root whatever the tool's default: dilla writes to `$PWD`
 unless `DILLA_OUTPUT_DIR` says otherwise, and one session's renders lived at the
 root for weeks because of it. They belong under

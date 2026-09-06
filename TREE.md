@@ -10,7 +10,6 @@ pub4/
 │
 ├── CLAUDE.md                 one screen
 ├── TODO.md                   the backlog
-├── WISHLIST.md               forward work
 ├── TREE.md                   this map
 │
 ├── MASTER/                   the product — a constitutional Ruby runtime

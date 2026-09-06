@@ -191,7 +191,7 @@ class ProjectTree
   # Loose files at the repo root that are neither the documented entry points
   # nor dotfiles. Media and scratch output is what this is looking for.
   def stray_root_files(repo)
-    keep = %w[CLAUDE.md TODO.md WISHLIST.md TREE.md README.md LICENSE Gemfile Gemfile.lock Rakefile]
+    keep = %w[CLAUDE.md TODO.md TREE.md README.md LICENSE Gemfile Gemfile.lock Rakefile]
     Dir.children(repo).reject do |e|
       e.start_with?(".") || keep.include?(e) || File.directory?(File.join(repo, e))
     end.sort
