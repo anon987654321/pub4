@@ -18,7 +18,20 @@ module Deploy
       "MASTER_WATCHER" => "0",
       "MASTER_HEARTBEAT" => "0",
       "MASTER_SCAN_AUTOFIX" => "0",
+      # The deterministic tier, which is the one this gate wants and had never
+      # asked for. The runtime hands /scan an agent, so every file was costing a
+      # model round trip: measured 2026-09-06, brgen alone took 48 minutes of
+      # wall clock against 35 seconds of CPU — idle in a TLS read, the same stall
+      # MASTER_SCAN_DETERMINISTIC was added to MASTER for. A per-app finding
+      # ceiling needs no model, and a gate nobody can afford to run is a gate
+      # nobody runs.
+      "MASTER_SCAN_DETERMINISTIC" => "1",
     }.freeze
+
+    # And a bound, because the wait above had none. capture2e waits forever, so
+    # a stalled provider or a hung boot stops the whole gate run with no output
+    # and no verdict. Past this, the scan is a gate result rather than a wait.
+    SCAN_TIMEOUT_S = Integer(ENV.fetch("GATE_SCAN_TIMEOUT_S", 900))
 
     def self.run(targets: nil)
       new(targets: targets).run
@@ -60,7 +73,7 @@ module Deploy
 
       announce_plan
       started = now
-      @targets.each_with_index { |target, index| scan_target(cli, target, index) }
+      @targets.each_with_index { |target, index| scan_target(target, index) }
       progress "constitutional scan: #{@targets.size} target(s) in #{(now - started).round}s"
       maybe_ratchet
       @result
@@ -134,18 +147,18 @@ module Deploy
       []
     end
 
-    def scan_target(cli, path, index)
+    def scan_target(path, index)
       progress "#{index + 1}/#{@targets.size} #{File.basename(path)} …"
       started = now
       line = "/scan --no-autofix #{path}"
-      env = SAFE_ENV.dup
-      stdout, status = Open3.capture2e(
-        env,
-        "bundle", "exec", "ruby", "bin/cli",
-        chdir: MASTER,
-        stdin_data: "#{line}\n"
-      )
+      stdout, status = bounded_scan(line)
       elapsed = (now - started).round
+      if status == :timeout
+        @result.fail("constitutional scan for #{path} passed #{SCAN_TIMEOUT_S}s and was killed — " \
+                     "raise GATE_SCAN_TIMEOUT_S if the tree really is that big, or find what it is waiting on")
+        return
+      end
+
       name = File.basename(path)
       progress "#{index + 1}/#{@targets.size} #{name} #{status.success? ? "ok" : "findings"} in #{elapsed}s"
 
@@ -172,6 +185,40 @@ module Deploy
       judge_count(name, Integer(count))
     rescue StandardError => e
       @result.fail("constitutional scan error for #{path}: #{e.class}: #{e.message}")
+    end
+
+    # One scan, with a bound. Returns the output and either the exit status or
+    # :timeout — the child is killed, so a stalled scan costs SCAN_TIMEOUT_S
+    # rather than the rest of the day.
+    def bounded_scan(line)
+      Open3.popen2e(SAFE_ENV, "bundle", "exec", "ruby", "bin/cli", chdir: MASTER) do |stdin, out, wait|
+        stdin.write("#{line}\n")
+        stdin.close
+        output = +""
+        # Read on a thread: the pipe fills at 64KB and a scan prints more than
+        # that, so waiting on the process first deadlocks against its own output.
+        reader = Thread.new { output << out.read.to_s }
+        finished = wait.join(SCAN_TIMEOUT_S)
+        unless finished
+          kill_tree(wait.pid)
+          reader.join(5)
+          next [output, :timeout]
+        end
+
+        reader.join
+        [output, wait.value]
+      end
+    end
+
+    # The CLI runs the scan in the same process, but a boot that shells out
+    # leaves the child holding the pipe — TERM first, then KILL, so a process
+    # ignoring the polite one still goes.
+    def kill_tree(pid)
+      Process.kill("TERM", pid)
+      sleep 2
+      Process.kill("KILL", pid)
+    rescue Errno::ESRCH, Errno::EPERM
+      nil
     end
 
     # Same contract as MASTER's rake lint:spine: the number only moves down, and

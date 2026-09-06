@@ -20,6 +20,23 @@ class ConstitutionalScanTargetsTest < Minitest::Test
 
   def names(paths) = paths.map { |path| File.basename(path) }
 
+  # The gate asks MASTER for its lexical tier and nothing else. Without this
+  # flag the runtime hands /scan an agent and every file costs a model round
+  # trip: measured 2026-09-06, brgen alone ran 48 minutes of wall clock against
+  # 35 seconds of CPU. With it, all four targets finish in under two minutes.
+  # A per-app finding ceiling needs no model, and a gate nobody can afford to
+  # run is a gate nobody runs.
+  def test_the_scan_asks_for_the_deterministic_tier
+    assert_equal "1", Deploy::ConstitutionalScanGate::SAFE_ENV["MASTER_SCAN_DETERMINISTIC"]
+  end
+
+  # And it is bounded. capture2e waited forever, so a stalled provider stopped
+  # the whole gate run with no output and no verdict.
+  def test_the_scan_has_a_finite_timeout
+    assert_operator Deploy::ConstitutionalScanGate::SCAN_TIMEOUT_S, :>, 0
+    assert_operator Deploy::ConstitutionalScanGate::SCAN_TIMEOUT_S, :<=, 3600
+  end
+
   def test_scans_every_target_by_default
     gate = build(changed: [], changed_only: false)
 
