@@ -20,6 +20,11 @@ module Master
         severity: :error,
         tags: %i[ONE_SOURCE],
         applies_to: %i[ruby],
+        # One retired name and its replacement, both out of
+        # data/rules.yml#stale_namespaces. The examples live in this file, which
+        # the block below exempts for exactly this reason.
+        fires: "value = Master::Pipeline.new\n",
+        does_not_fire: "value = Master::CLI::Pipeline.new\n",
         description: "retired constants must not return" do |source, path:|
           # This file names the retired constants, so it flags itself. The old
           # exemption named stale_namespace_rule.rb, which no longer exists.
@@ -40,6 +45,12 @@ module Master
           tags: %i[FLAT_HIERARCHY DRY],
           applies_to: %i[ruby],
           autofix: false,
+          # The subject is the path, not the source, and the harness gives a rule
+          # one path — so the positive example is all this rule can carry, and a
+          # does_not_fire here would be the same path answering differently.
+          # The clean form is the message's own suggestion, minus `_service`.
+          example_path: "/repo/app/services/user_profile_photo_uploader_service.rb",
+          fires: "# any source; this rule reads the path\n",
           description: "path is dense Rails-parameterize slug — Strunk-clean snake_case" do |_src, path:|
           rel = path.to_s
           # A migration's filename is its schema_migrations key, and Rails finds

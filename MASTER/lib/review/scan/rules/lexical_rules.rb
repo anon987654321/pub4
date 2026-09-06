@@ -89,6 +89,13 @@ module Master
 
   RuleDSL.rule :SILENT_RESCUE,
     severity: :error, tags: %i[ERROR_HANDLING FAIL_VISIBLY], applies_to: %i[ruby],
+    # The examples are escaped strings on one physical line, and that is what
+    # makes them possible here. SilentRescue reads a line that *starts* with
+    # `rescue`, so a fixture spelled this way is a worked example everywhere and
+    # a finding nowhere — including in this file, which carries no path
+    # exemption on purpose (see the note in the block below).
+    fires: "begin\n  risky\nrescue StandardError\n  nil\nend\n",
+    does_not_fire: "begin\n  risky\nrescue StandardError => e\n  warn e\nend\n",
     description: "blanket rescue discards error without logging or re-raising" do |src, path:|
     # No path exemption for the scanner's own rules: a rule that returns [] on
     # error calls the file it failed on clean, so a swallow costs more in this
@@ -100,6 +107,11 @@ module Master
 
   RuleDSL.rule :NARROW_SILENT_RESCUE,
     severity: :warning, tags: %i[ERROR_HANDLING], applies_to: %i[ruby],
+    # Named class, same discard. The pair with SILENT_RESCUE above is the point:
+    # these two split one subject on the class named, and a shared predicate is
+    # where a change to one silently becomes a change to both.
+    fires: "begin\n  risky\nrescue Errno::ENOENT\n  nil\nend\n",
+    does_not_fire: "begin\n  risky\nrescue Errno::ENOENT => e\n  warn e\nend\n",
     description: "narrow-class rescue discards error without logging or re-raising" do |src, path:|
     SilentRescue.scan(src, narrow: true).map { |hit| finding(line: hit[:line], message: hit[:message]) }
   end

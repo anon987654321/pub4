@@ -123,6 +123,12 @@ module Master
           tags: %i[CONSTITUTION DOCS],
           applies_to: %i[markdown],
           autofix: false,
+          # The subject is the path — a stray .md under data/ — so the positive
+          # example is all the harness can express with one path per rule. It is
+          # spelled from Master::ROOT because data_relative answers only for a
+          # path inside this tree, and it names no file that exists.
+          example_path: File.join(Master::ROOT, "data", "worked_example.md"),
+          fires: "# a runtime doc that should have been YAML\n",
           description: "runtime-read docs must be YAML — forbid stray .md under data/" do |_src, path:|
           rel = RuntimeDocsPaths.data_relative(path)
           next [] unless rel&.start_with?("data/") && rel.end_with?(".md")

@@ -64,7 +64,12 @@ module Master
 
         RuleDSL.rule :FLAT_PIXELS,
           severity: :warning, tags: %i[DESIGN AESTHETIC PIXEL], applies_to: %i[css scss javascript], autofix: false,
-          description: "canvas/pixel layers stay crisp — no smoothing/glow language" do |src, path:|
+          description: "canvas/pixel layers stay crisp — no smoothing/glow language",
+          # Spelled, because the first language decides the default path and this
+          # rule reads only .js/.ts or a file named face.
+          example_path: "/repo/web/public/face_vision.js",
+          fires: "ctx.imageSmoothingEnabled = true;\n",
+          does_not_fire: "ctx.imageSmoothingEnabled = false;\n" do |src, path:|
           findings = []
           if path.to_s.match?(/\.(js|ts)\z/) || File.basename(path.to_s).match?(/face/)
             src.each_line.with_index(1) do |line, num|
@@ -171,7 +176,11 @@ module Master
 
         RuleDSL.rule :TOUCH_TARGET_MIN,
           severity: :warning, tags: %i[DESIGN UX ACCESSIBILITY], applies_to: CSS_LANGS, autofix: false,
-          description: "Fitts — interactive targets ≥44px" do |src, path:|
+          description: "Fitts — interactive targets ≥44px",
+          # The selector and the dimension on separate lines, which is the shape
+          # the rule was blind to until 2026-07-21 and the one worth pinning.
+          fires: ".btn {\n  width: 12px;\n}\n",
+          does_not_fire: ".btn {\n  width: 48px;\n}\n" do |src, path:|
           next [] unless Rules.ui_path?(path)
 
           min = Rules.thresholds.touch_min_px.to_i
@@ -204,7 +213,11 @@ module Master
 
         RuleDSL.rule :CHOICE_OVERLOAD,
           severity: :info, tags: %i[DESIGN UX], applies_to: HTML_LANGS, autofix: false,
-          description: "Hick — too many peer choices without grouping" do |src, path:|
+          description: "Hick — too many peer choices without grouping",
+          fires: "<nav>#{(1..8).map { |n| "<a href=\"/#{n}\">#{n}</a>" }.join}</nav>\n",
+          # A plain <ul> is content being browsed, not options being chosen
+          # between — the exemption that took this rule off search results.
+          does_not_fire: "<ul>#{(1..8).map { |n| "<li>#{n}</li>" }.join}</ul>\n" do |src, path:|
           next [] unless Rules.ui_path?(path)
 
           max = Rules.thresholds.max_visible_choices.to_i
@@ -221,7 +234,13 @@ module Master
           menu_ul = /<ul[^>]*(?:role=["']menu|class=["'][^"']*(?:menu|nav|tabs|filters))/i
           src.scan(/<(?:ul|nav|select)[^>]*>(.*?)<\/(?:ul|nav|select)>/im) do |body|
             chunk = body[0].to_s
-            opening = src[src.index(chunk) ? (src.rindex("<", src.index(chunk)) || 0) : 0, 200].to_s
+            # From the character BEFORE the body, or rindex answers with the
+            # body's own first `<`: a chunk that opens `<li>` made every plain
+            # <ul> look like a <li> and skipped the exemption below, which is
+            # the whole reason this rule reads the opening tag. Found by its own
+            # worked example, 2026-09-06.
+            start = src.index(chunk)
+            opening = src[start ? (src.rindex("<", [start - 1, 0].max) || 0) : 0, 200].to_s
             next if opening.start_with?("<ul") && !opening.match?(menu_ul)
             count = chunk.scan(/<li\b/i).size
             count = chunk.scan(/<option\b/i).size if count.zero?
@@ -343,7 +362,9 @@ module Master
         # Family polish (design_rules ui_polish) — ERB chrome must be i18n; titles use tokens.
         RuleDSL.rule :ERB_HARDCODED_CHROME,
           severity: :warning, tags: %i[DESIGN I18N RAILS VIEWS], applies_to: HTML_LANGS, autofix: false,
-          description: "empty/search chrome uses t() not hardcoded English (default_locale nb)" do |src, path:|
+          description: "empty/search chrome uses t() not hardcoded English (default_locale nb)",
+          fires: %(<%= render "shared/empty", title: "No results" %>\n),
+          does_not_fire: %(<%= render "shared/empty", title: t("empty.results") %>\n) do |src, path:|
           next [] unless path.to_s.include?("/app/views/") && path.to_s.end_with?(".erb")
           next [] if path.to_s.end_with?("shared/_empty_state.html.erb")
 
@@ -366,7 +387,9 @@ module Master
 
         RuleDSL.rule :TYPE_TITLE_TOKEN,
           severity: :info, tags: %i[DESIGN TYPOGRAPHY], applies_to: CSS_LANGS, autofix: false,
-          description: "page titles use --text-title token not raw 20px" do |src, path:|
+          description: "page titles use --text-title token not raw 20px",
+          fires: ".page-header h1 { font-size: 20px; }\n",
+          does_not_fire: ".page-header h1 { font-size: var(--text-title, 1.25rem); }\n" do |src, path:|
           next [] unless Rules.ui_path?(path)
 
           findings = []
@@ -387,7 +410,10 @@ module Master
 
         RuleDSL.rule :FORM_FOLLOWS_FUNCTION,
           severity: :info, tags: %i[DESIGN AESTHETIC], applies_to: HTML_LANGS, autofix: false,
-          description: "decorative empty wrappers without content/role" do |src, path:|
+          description: "decorative empty wrappers without content/role",
+          fires: %(<div class="decor"></div>\n),
+          # The same class carrying something is the wrapper doing work.
+          does_not_fire: %(<div class="decor"><%= yield %></div>\n) do |src, path:|
           next [] unless Rules.ui_path?(path)
 
           scan_lines(src, /<div\s+class=["'][^"']*(?:decor|ornament|spacer|filler|gradient-bg)[^"']*["']\s*>\s*<\/div>/i,
@@ -396,7 +422,9 @@ module Master
 
         RuleDSL.rule :SIGNAL_NOISE,
           severity: :info, tags: %i[DESIGN AESTHETIC], applies_to: HTML_LANGS, autofix: false,
-          description: "too many competing visual classes on one node" do |src, path:|
+          description: "too many competing visual classes on one node",
+          fires: %(<div class="card card--wide is-open u-mt-2 u-p-1 shadow rounded muted">x</div>\n),
+          does_not_fire: %(<div class="card card--wide is-open">x</div>\n) do |src, path:|
           next [] unless Rules.ui_path?(path)
 
           src.each_line.with_index(1).filter_map do |line, num|
@@ -411,7 +439,12 @@ module Master
 
         RuleDSL.rule :AFFORDANCE_CLARITY,
           severity: :warning, tags: %i[DESIGN UX], applies_to: HTML_LANGS, autofix: false,
-          description: "clickable non-buttons need clear affordance" do |src, path:|
+          description: "clickable non-buttons need clear affordance",
+          fires: %(<div data-action="click->dropdown#toggle">Menu</div>\n),
+          # A click-outside listener on the window says nothing about the div
+          # carrying it, and the 79 findings that taught this rule that were all
+          # this shape.
+          does_not_fire: %(<div data-action="click@window->dropdown#hide">Menu</div>\n) do |src, path:|
           next [] unless Rules.ui_path?(path)
 
           # An element is interactive when something activates it, not when a
@@ -435,17 +468,38 @@ module Master
 
         RuleDSL.rule :AESTHETIC_MINIMALISM,
           severity: :info, tags: %i[DESIGN AESTHETIC], applies_to: HTML_LANGS, autofix: false,
-          description: "Rams less-but-better — flag icon+label+badge pileups" do |src, path:|
+          description: "Rams less-but-better — flag icon+label+badge pileups",
+          fires: %(<button class="btn"><svg class="icon"></svg><span>Save</span></button>\n),
+          does_not_fire: %(<button class="btn">Save</button>\n) do |src, path:|
           next [] unless Rules.ui_path?(path)
 
           scan_lines(src, /<(button|a)[^>]*>.*?<(svg|img|i)[^>]*>.*?<(span|small|badge)/im,
             message: "control packs icon+extra chrome — prefer one signal (label or icon)")
         end
 
+        # One rule per trait, so one worked example per trait. They are declared
+        # here rather than inline because the five rules share a body and differ
+        # only in the branch each takes, which is exactly what the examples must
+        # pin: a shared body is where a change to one trait silently becomes a
+        # change to five.
+        RAMS_FIXTURES = {
+          "USEFUL" => [%(<p>Coming soon</p>\n), %(<p>Bergen i kveld</p>\n)],
+          "UNDERSTANDABLE" => [%(<input placeholder="Q">\n), %(<input placeholder="Søk i byen">\n)],
+          "UNOBTRUSIVE" => [%(<div class="modal">…</div>\n),
+                            # The compliant spelling of the thing it checks: a
+                            # dialog that announces itself correctly.
+                            %(<dialog aria-modal="true">…</dialog>\n)],
+          "HONEST" => [%(<div class="bar">loading 100%</div>\n), %(<div class="bar">42%</div>\n)],
+          "THOROUGH" => [%(<form action="/search"><input name="q"></form>\n),
+                         %(<form action="/search"><input name="q"><span class="error"></span></form>\n)],
+        }.freeze
+
         %w[USEFUL UNDERSTANDABLE UNOBTRUSIVE HONEST THOROUGH].each do |trait|
           RuleDSL.rule :"RAMS_#{trait}",
             severity: :info, tags: %i[DESIGN RAMS], applies_to: HTML_LANGS, autofix: false,
-            description: "Rams checklist tag: #{trait.downcase}" do |src, path:|
+            description: "Rams checklist tag: #{trait.downcase}",
+            fires: RAMS_FIXTURES.fetch(trait)[0],
+            does_not_fire: RAMS_FIXTURES.fetch(trait)[1] do |src, path:|
             next [] unless Rules.ui_path?(path)
             next [] unless path.to_s.include?("/app/views/") || path.to_s.include?("web/")
 
@@ -483,7 +537,10 @@ module Master
 
         RuleDSL.rule :HOST_CAPACITY,
           severity: :warning, tags: %i[OPS], applies_to: %i[ruby], autofix: false,
-          description: "carrying capacity — avoid full-repo scan/fix in hot paths" do |src, path:|
+          description: "carrying capacity — avoid full-repo scan/fix in hot paths",
+          example_path: "/repo/lib/example.rb",
+          fires: "scanner.scan_dir(Master::ROOT)\n",
+          does_not_fire: "scanner.scan_dir(target_dir)\n" do |src, path:|
           next [] unless path.to_s.include?("lib/")
 
           scan_lines(src, /scan_dir\([^)]*ROOT|fix_loop\.run\(\s*(@root|root|Master::ROOT)/,
@@ -520,7 +577,10 @@ module Master
 
         RuleDSL.rule :THIN_CONTROLLER,
           severity: :warning, tags: %i[RAILS ARCHITECTURE], applies_to: %i[ruby], autofix: false,
-          description: "thin controllers — business logic belongs in models/services" do |src, path:|
+          description: "thin controllers — business logic belongs in models/services",
+          example_path: "/repo/app/controllers/example_controller.rb",
+          fires: %(def index\n  @posts = Post.where("created_at > ? AND city_id = ? AND published = ?", a, b, c)\nend\n),
+          does_not_fire: "def index\n  @posts = Post.recent\nend\n" do |src, path:|
           next [] unless path.to_s.include?("/controllers/")
           next [] unless path.to_s.end_with?(".rb")
 
@@ -551,7 +611,11 @@ module Master
 
         RuleDSL.rule :FAT_MODEL_CALLBACK_SOUP,
           severity: :info, tags: %i[RAILS ARCHITECTURE], applies_to: %i[ruby], autofix: false,
-          description: "limit model callback piles" do |src, path:|
+          description: "limit model callback piles",
+          fires: %w[before_validation before_save after_save after_create after_update after_commit]
+                 .map { |cb| "  #{cb} :touch_feed\n" }.join,
+          does_not_fire: "  before_validation :normalise_slug\n  after_commit :broadcast\n",
+          example_path: "/repo/app/models/example.rb" do |src, path:|
           next [] unless path.to_s.include?("/models/")
           count = src.scan(/^\s*(?:before|after|around)_(?:validation|save|create|update|destroy|commit)/).size
           next [] if count <= 5
@@ -560,7 +624,9 @@ module Master
 
         RuleDSL.rule :RAILS_TAG_HELPER,
           severity: :info, tags: %i[RAILS VIEWS], applies_to: %i[html], autofix: false,
-          description: "prefer tag helpers over raw HTML for dynamic content" do |src, path:|
+          description: "prefer tag helpers over raw HTML for dynamic content",
+          fires: %(<p><%= @post.title %></p>\n),
+          does_not_fire: %(<%= tag.p @post.title %>\n) do |src, path:|
           next [] unless path.to_s.include?("/app/views/") && path.to_s.end_with?(".erb")
           findings = []
           src.each_line.with_index(1) do |line, num|
@@ -573,7 +639,11 @@ module Master
 
         RuleDSL.rule :STIMULUS_CONTROLLER_SIZE,
           severity: :warning, tags: %i[RAILS JAVASCRIPT], applies_to: %i[javascript], autofix: false,
-          description: "Stimulus controllers stay focused" do |src, path:|
+          description: "Stimulus controllers stay focused",
+          # 201 lines against the ceiling of 200, so the example proves the
+          # boundary rather than a number far from it.
+          fires: "export default class extends Controller {\n#{"  step();\n" * 199}}\n",
+          does_not_fire: "export default class extends Controller {\n  connect() {}\n}\n" do |src, path:|
           next [] unless path.to_s.match?(/controllers?.*\.js\z|stimulus/i) || path.to_s.include?("/javascript/")
           next [] unless src.match?(/Controller\s+extends|export default class/)
           lines = src.lines.size
@@ -583,7 +653,9 @@ module Master
 
         RuleDSL.rule :STIMULUS_PROGRESSIVE,
           severity: :info, tags: %i[RAILS JAVASCRIPT UX], applies_to: %i[html], autofix: false,
-          description: "interactive UI should degrade without JS when possible" do |src, path:|
+          description: "interactive UI should degrade without JS when possible",
+          fires: %(<div data-controller="map"></div>\n),
+          does_not_fire: %(<div data-controller="map"><a href="/kart">Kart</a></div>\n) do |src, path:|
           next [] unless path.to_s.include?("/app/views/")
           next [] unless src.match?(/data-controller=/)
           next [] if src.match?(/<form\b|<a\s+href=|<button\b/i)
@@ -592,7 +664,10 @@ module Master
 
         RuleDSL.rule :NO_LOGIC_IN_VIEW,
           severity: :warning, tags: %i[RAILS VIEWS], applies_to: %i[html], autofix: false,
-          description: "views present; models/helpers compute" do |src, path:|
+          description: "views present; models/helpers compute",
+          fires: %(<% @posts.select { |p| p.published? }.each do |post| %>\n),
+          # Rendering a collection is presentation, and `<%=` is the tell.
+          does_not_fire: %(<%= render @posts %>\n) do |src, path:|
           next [] unless path.to_s.include?("/app/views/") && path.to_s.end_with?(".erb")
           findings = []
           src.each_line.with_index(1) do |line, num|
@@ -606,7 +681,10 @@ module Master
 
         RuleDSL.rule :HELPER_VIEW_ONLY,
           severity: :info, tags: %i[RAILS], applies_to: %i[ruby], autofix: false,
-          description: "helpers format for views only" do |src, path:|
+          description: "helpers format for views only",
+          example_path: "/repo/app/helpers/example_helper.rb",
+          fires: "def recent_posts\n  Post.where(published: true)\nend\n",
+          does_not_fire: "def title_for(post)\n  post.title.upcase\nend\n" do |src, path:|
           next [] unless path.to_s.include?("/helpers/")
           next [] unless src.match?(/\b(?:ActiveRecord|ApplicationRecord|\.where\(|\.find\()/)
           [finding(line: 1, message: "AR access in helper — helpers format only; queries belong in models")]
@@ -614,7 +692,11 @@ module Master
 
         RuleDSL.rule :SCSS_NESTING_DEPTH,
           severity: :warning, tags: %i[RAILS CSS DESIGN], applies_to: %i[scss], autofix: false,
-          description: "avoid deep SCSS nesting / preprocessor bloat" do |src, path:|
+          description: "avoid deep SCSS nesting / preprocessor bloat",
+          # Depth is read at each line's end, so the example nests the way SCSS
+          # is written. The same five levels on one line measure zero.
+          fires: ".a {\n  .b {\n    .c {\n      .d {\n        .e {\n          color: red;\n        }\n      }\n    }\n  }\n}\n",
+          does_not_fire: ".a {\n  .b {\n    color: red;\n  }\n}\n" do |src, path:|
           next [] unless Rules.rails_path?(path) || path.to_s.include?("/assets/")
           max = 0
           depth = 0
@@ -630,7 +712,10 @@ module Master
 
         RuleDSL.rule :PWA_MANIFEST_HINT,
           severity: :info, tags: %i[RAILS PWA], applies_to: %i[json html], autofix: false,
-          description: "PWA surfaces declare manifest" do |src, path:|
+          description: "PWA surfaces declare manifest",
+          example_path: "/repo/app/views/layouts/application.html.erb",
+          fires: "<html>\n<head><title>Brgen</title></head>\n</html>\n",
+          does_not_fire: %(<html>\n<head><link rel="manifest" href="/manifest.json"></head>\n</html>\n) do |src, path:|
           next [] unless path.to_s.match?(/layout|application\.html|manifest/i)
           if path.to_s.end_with?(".erb", ".html") && src.match?(/<html/i)
             next [] if src.match?(/rel=["']manifest["']|webmanifest/i)

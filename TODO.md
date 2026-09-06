@@ -2028,7 +2028,7 @@ findings with path and line, and the task prints that summary once.
 **6. A lint over the rule corpus's own regexes — done.** `rake lint:word_boundary`
 flags `\b` glued to escaped punctuation. Currently clean.
 
-**7. Every registry rule proves it can fire — enforced for new rules, 30 left.**
+**7. Every registry rule proves it can fire — closed 2026-09-06, 91 to 0.**
 `law/` refuses to load a rule without worked fixtures; the registry accepts one
 without. The forward half was already closed and this entry did not say so:
 `test_rule_fixtures.rb` fails when the unfixtured count rises, so a new RuleDSL
@@ -2067,16 +2067,34 @@ Ruby model path could not reach them. `EN_DASH_RANGE` skips `.rb` outright,
 rule that cannot fire on its own example is what this ratchet is for, and it
 found three more.
 
-Three stay unfixtured on purpose and it is one argument, not three.
-`SQL_INJECTION`, `SILENT_RESCUE` and `NARROW_SILENT_RESCUE` would each carry
-their own forbidden shape as a worked example, in a file that carries no
-self-exemption for them, so the example would be a live error-severity finding
-in the rule that defines it. **A rule whose subject is a shape cannot always
-hold one.**
+The last 30 the same day, 30 to 0. Twenty-four were `surface_rules`' — the
+design and Rails-convention half, which had never had an example at all — and
+two of them found real defects while being written, which is the argument for
+the ratchet in one line each. `CHOICE_OVERLOAD` read the opening tag by
+searching backwards for `<` from the body's first character, and `rindex`
+answers with that character, so a body opening `<li>` made every plain `<ul>`
+look like a `<li>` and skipped the exemption that keeps the rule off search
+results. `SCSS_NESTING_DEPTH` measures depth at each line's end, so five levels
+written on one line read zero.
 
-The remaining 30: twenty-four in `surface_rules`, those three, `STALE_NAMESPACE`
-and `PARAMETERIZED_SLUG` — which judge the path or the data rather than the
-source — and `RUNTIME_DOCS_YAML`.
+**The claim that three rules could not hold their own example was wrong, and
+it was the fixture's shape rather than the rule's.** `SILENT_RESCUE` reads a
+line that *starts* with `rescue`; an example spelled as an escaped one-line
+string — `"begin\n  risky\nrescue StandardError\n  nil\nend\n"` — is a worked
+example everywhere and a finding nowhere, including in the file that defines
+it, which still carries no path exemption. `NARROW_SILENT_RESCUE` is the same,
+and `SQL_INJECTION` was closed from the other end by skipping the rules
+directory. Two entries in this file and two in `rule_ratchets` said the thing
+was impossible; it took one line of string escaping.
+
+`PARAMETERIZED_SLUG` and `RUNTIME_DOCS_YAML` carry a positive example and no
+negative one, which is the honest maximum: both judge the path rather than the
+source, and the harness gives a rule one path.
+
+The last thirty cost 67 body lines, all of them in `lib/review`, and
+`spine.lib_body_ceiling` carries them the way it carried the first 59. That is
+the trade this ratchet has made from the start: a rule that cannot fire on its
+own example is worth more than a line of budget.
 
 Two things the earlier retro-fit turned up. The harness had no `html` entry in
 `DEFAULT_PATHS`, so every web rule's example landed at a Ruby model path and a

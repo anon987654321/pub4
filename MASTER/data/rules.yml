@@ -4344,13 +4344,30 @@ rule_ratchets:
     # path rather than the source and the generic Ruby model path satisfies none
     # of them.
     #
-    # SILENT_RESCUE and NARROW_SILENT_RESCUE stay unfixtured because their worked
-    # example is a swallowed rescue and lexical_rules.rb carries no self-exemption,
-    # so the example would be a live error-severity finding in the file that
-    # defines the rule. SQL_INJECTION sat in that group and does not any more: it
-    # skips lib/review/scan/rules/ the way COMPLETION_THEATER already did, which
-    # states the exemption in the rule instead of in this ceiling. 30 -> 29.
-    without_fixtures: 29
+    # 29 -> 0 on 2026-09-06, and 0 is the floor: every rule in the registry now
+    # carries at least one worked example, which is what every law has always
+    # had to. Twenty-four were surface_rules', the design and Rails-convention
+    # half that had never had one.
+    #
+    # Two of them found real defects while being written, which is the whole
+    # argument for the ratchet. CHOICE_OVERLOAD read the opening tag by searching
+    # backwards for `<` from the body's first character, and rindex answers with
+    # that character — so a body opening `<li>` made every plain <ul> look like a
+    # <li> and skipped the exemption that keeps this rule off search results.
+    # SCSS_NESTING_DEPTH measures depth at each line's end, so five levels written
+    # on one line read zero; the example nests the way SCSS is written and says so.
+    #
+    # This ceiling twice recorded that a rule could not hold its own example, and
+    # both times it was the fixture's shape rather than the rule's. SILENT_RESCUE
+    # reads a line that STARTS with `rescue`, so an example spelled as an escaped
+    # one-line string is a worked example everywhere and a finding nowhere —
+    # including in the file that defines it, which still carries no path exemption.
+    # SQL_INJECTION was the same mistake, closed the same day from the other end.
+    #
+    # PARAMETERIZED_SLUG and RUNTIME_DOCS_YAML carry a positive example and no
+    # negative one, and that is the honest maximum: both judge the path rather
+    # than the source, and the harness gives a rule one path.
+    without_fixtures: 0
 
 # What a decision proposal is checked against before it is offered, by
 # Master::Ground::BiasGuard. `detect` accuses, `clears` acquits: a proposal
