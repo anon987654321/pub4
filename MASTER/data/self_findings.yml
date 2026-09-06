@@ -231,55 +231,13 @@ finding_members:
   - USE_THEN RAILS/shared/app/controllers/omniauth_callbacks_controller.rb:1
   - USE_THEN RAILS/shared/app/services/shared/newsletter_visuals.rb:1
   - USE_THEN RAILS/shared/app/services/shared/tradedoubler.rb:1
-registry_findings: 108
+registry_findings: 66
 registry_by_rule:
-  COMPLETION_THEATER: 40
   DEBUG_OUTPUT: 1
   ERB_HTML_SAFE: 2
   NO_GOD_CLASS: 26
   SILENT_RESCUE: 37
-  SQL_INJECTION: 2
 registry_finding_members:
-  - COMPLETION_THEATER MASTER/tools/doc_paths.rb:101
-  - COMPLETION_THEATER OPENBSD/OPERATOR.sh:175
-  - COMPLETION_THEATER OPENBSD/OPERATOR.sh:189
-  - COMPLETION_THEATER OPENBSD/RUNBOOK.md:228
-  - COMPLETION_THEATER OPENBSD/SSH_ACCESS.md:153
-  - COMPLETION_THEATER OPENBSD/bin/render_dns.rb:43
-  - COMPLETION_THEATER OPENBSD/bin/render_dns.rb:44
-  - COMPLETION_THEATER OPENBSD/config_drift_gate.rb:41
-  - COMPLETION_THEATER OPENBSD/config_drift_gate.rb:43
-  - COMPLETION_THEATER OPENBSD/deploy_smoke_gate.rb:10
-  - COMPLETION_THEATER OPENBSD/deploy_smoke_gate.rb:52
-  - COMPLETION_THEATER OPENBSD/dotfiles/mov.sh:1452
-  - COMPLETION_THEATER OPENBSD/dotfiles/mov.sh:2092
-  - COMPLETION_THEATER OPENBSD/dotfiles/mov.sh:643
-  - COMPLETION_THEATER OPENBSD/dotfiles/mov.sh:666
-  - COMPLETION_THEATER OPENBSD/dotfiles/mov.sh:677
-  - COMPLETION_THEATER OPENBSD/sync.rb:47
-  - COMPLETION_THEATER OPENBSD/sync.rb:48
-  - COMPLETION_THEATER OPENBSD/sync.rb:49
-  - COMPLETION_THEATER OPENBSD/sync.rb:51
-  - COMPLETION_THEATER OPENBSD/sync.rb:52
-  - COMPLETION_THEATER OPENBSD/test/test_tracked_crontab.rb:22
-  - COMPLETION_THEATER OPENBSD/tools/reach.rb:114
-  - COMPLETION_THEATER OPENBSD/tools/reach.rb:131
-  - COMPLETION_THEATER OPENBSD/tools/reach.rb:53
-  - COMPLETION_THEATER OPENBSD/tools/reach.rb:74
-  - COMPLETION_THEATER OPENBSD/tools/reach.rb:96
-  - COMPLETION_THEATER OPENBSD/vps_safety_gate.rb:76
-  - COMPLETION_THEATER OPENBSD/vps_safety_gate.rb:9
-  - COMPLETION_THEATER RAILS/brgen/AGENTS.md:46
-  - COMPLETION_THEATER RAILS/brgen/docs/merchant/ENHANCED_CONVERSIONS.md:36
-  - COMPLETION_THEATER RAILS/brgen/lib/tasks/x.rake:18
-  - COMPLETION_THEATER RAILS/gates/lib/host/domain_alignment.rb:20
-  - COMPLETION_THEATER RAILS/gates/lib/host/port_inventory.rb:16
-  - COMPLETION_THEATER RAILS/gates/lib/host/production.rb:145
-  - COMPLETION_THEATER RAILS/gates/lib/host/production.rb:146
-  - COMPLETION_THEATER RAILS/gates/support/geometry_probe.rb:101
-  - COMPLETION_THEATER RAILS/shared/app/views/comments/_form.html.erb:6
-  - COMPLETION_THEATER STUDIO/dilla/ENV_AND_RENDER.md:276
-  - COMPLETION_THEATER STUDIO/lora/_toolkit/run_generate.sh:51
   - DEBUG_OUTPUT STUDIO/dilla/lib/modulation.rb:110
   - ERB_HTML_SAFE RAILS/brgen/engines/tv/app/views/tv/videos/new.html.erb:1
   - ERB_HTML_SAFE RAILS/shared/app/views/two_factor_setups/show.html.erb:1
@@ -346,5 +304,3 @@ registry_finding_members:
   - SILENT_RESCUE STUDIO/test/test_dilla_engine_probes.rb:1215
   - SILENT_RESCUE STUDIO/trymbot/trymbot.rb:163
   - SILENT_RESCUE STUDIO/trymbot/trymbot.rb:258
-  - SQL_INJECTION RAILS/brgen/db/seeds.rb:48
-  - SQL_INJECTION RAILS/shared/app/jobs/shared/database_snapshot_job.rb:26

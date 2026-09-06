@@ -1283,13 +1283,37 @@ Three decisions set the second number, and each one moves it:
   fix would have moved two ratchets. A test asserts the two populations share
   no rule.
 
-What the 108 are: `COMPLETION_THEATER` 40, `SILENT_RESCUE` 37, `NO_GOD_CLASS`
-26, `SQL_INJECTION` 2, `ERB_HTML_SAFE` 2, `DEBUG_OUTPUT` 1 — every one with
-its file and line in `data/self_findings.yml`, so the next rise is
-attributable without diffing two runs by hand. Almost none of it is MASTER: 4
-in MASTER, 46 in RAILS, 38 in STUDIO, 35 in OPENBSD. **That is the forward
-work this row exists to make visible**, and the two `SQL_INJECTION` findings
-are where to start.
+The row opened at 108 — `COMPLETION_THEATER` 40, `SILENT_RESCUE` 37,
+`NO_GOD_CLASS` 26, `SQL_INJECTION` 2, `ERB_HTML_SAFE` 2, `DEBUG_OUTPUT` 1 —
+and the first pass over it took it to **66** the same day. Both rules that
+fell were mostly instrument, which is what this repo's own habit predicts:
+
+- **`SQL_INJECTION` 2 to 0, and the rule is stronger.** Both findings were
+  `execute("... #{conn.quote_table_name(table)}")`. A bind parameter cannot be
+  an identifier, so quoting the identifier is the documented fix — the rule
+  was flagging the answer to its own question. It now spares an interpolation
+  that is nothing but one quoting call. While proving that, its concatenation
+  branch turned out to want a closed string before the `+` and never ask for
+  one: it read `execute("SELECT a + b FROM t")` as concatenation and missed
+  `execute("SELECT * FROM " + name)`, the shape it exists for. Both fixed, and
+  the rule can now carry its own worked example because it skips the directory
+  it lives in — `rule_fixture_debt` 30 to 29.
+- **`COMPLETION_THEATER` 40 to 0**, of which 30 were the instrument. `etc` is
+  a directory: `File.join(ROOT, "etc", "rc.d")`, `OPENBSD/{etc,usr,var}`,
+  `for d in etc usr var`, `"etc-pre-sync"`. A trailing comment is a comment,
+  though the rule skipped only lines that begin with one. And markdown is
+  prose, where "etc." is a word rather than work left undone. The remaining
+  ten were real and are reworded: four lines of `mov.sh` help text, a rake
+  `desc`, an ERB locals block, a documented token shape in two places, and the
+  one line that is genuinely a path list, which now says so with the marker
+  the framework advertises — `scan: intentional`, which this rule wrote its
+  own loop and so had never honoured.
+
+What is left is `SILENT_RESCUE` 37, `NO_GOD_CLASS` 26, `ERB_HTML_SAFE` 2 and
+`DEBUG_OUTPUT` 1, every one with its file and line in
+`data/self_findings.yml`. Almost none of it is MASTER, and none of it is a
+census artefact this time: a swallowed rescue and a class doing five jobs are
+both real. **That is the forward work this row exists to make visible.**
 
 Two things the work uncovered, both fixed here:
 

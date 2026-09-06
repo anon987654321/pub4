@@ -188,8 +188,23 @@ module Master
       # Measured over all four trees: exactly those two go, 57 findings stay.
       # `(` and `)` are deliberately NOT in the sets: "(etc.)" in prose is the
       # placeholder this rule exists to find.
-        PLACEHOLDER_ETC = %r{(?<![\w/|:\[])etc\.?(?![\w/|\]])}
+        # `-` joins them for the same reason: `"etc-pre-sync"` is a label naming
+        # the directory, and no abbreviation is ever hyphenated onward.
+        PLACEHOLDER_ETC = %r{(?<![\w/|:\[-])etc\.?(?![\w/|\]-])}
         STDLIB_ETC_REQUIRE = /\brequire\s+["']etc["']/
+        # /etc is a directory, and the exclusions above only knew it when a
+        # slash was adjacent. Every other way this tree spells that path counted
+        # as theater: File.join(ROOT, "etc", "rc.d"), `OPENBSD/{etc,usr,var}`,
+        # the %w list of directory names in tools/doc_paths.rb — 25 of this
+        # rule's 40 findings on 2026-09-06, none of them a placeholder.
+        # `require "etc"` is the same lesson, learned once for one line.
+        PATH_ETC = /["']etc["']|\{[\w,]*\betc\b[\w,]*\}|\betc(?=\s+(?:usr|var)\b)/
+        # A comment is a comment wherever it starts. The rule skipped a line
+        # that opens with one and read the same words as theater when they
+        # followed code, so `|| continue   # skip CAM, TS, screener, etc.` was a
+        # finding and the same sentence on its own line was not. Ruby's `#{` and
+        # a shell `$#` are not comment openers.
+        TRAILING_COMMENT = /(?<![$\\])#(?!\{).*\z/
 
         RuleDSL.rule :COMPLETION_THEATER,
           severity: :error, tags: %i[ROBUSTNESS COMPLETENESS],
@@ -197,26 +212,67 @@ module Master
           does_not_fire: %(require "etc"\n),
           description: "ellipsis or etcetera as placeholder violates completeness" do |src, path:|
           next [] if path.to_s.include?("/review/scan/rules/")
+
+          # In prose "etc." is a word; in code it stands where the work should
+          # be. Markdown is prose, and reading a documented list of examples as
+          # an unfinished implementation is how a rule teaches its readers to
+          # ignore it. An ellipsis still counts in both.
+          prose = path.to_s.end_with?(".md", ".markdown")
           src.each_line.with_index(1).filter_map do |line, n|
             stripped = line.strip
             next if stripped.start_with?("#")
             next if stripped.match?(STDLIB_ETC_REQUIRE)
-            next unless stripped.match?(/\.\.\.\s*$/) ||
-                        stripped.match?(PLACEHOLDER_ETC) ||
-                        stripped.match?(/\betcetera\b/i)
+            # The marker the framework advertises. scan_lines honours it and
+            # this rule wrote its own loop, so the one line in the tree that
+            # needs it had no way to say so.
+            next if stripped.match?(/scan:\s*intentional\b/)
+
+            code = stripped.sub(TRAILING_COMMENT, "").rstrip
+            etcetera = !prose && (code.gsub(PATH_ETC, "").match?(PLACEHOLDER_ETC) || code.match?(/\betcetera\b/i))
+            next unless etcetera || code.match?(/\.\.\.\s*$/)
+
             finding(line: n, message: "completion theater — implement or delete, never placeholder")
           end
         end
 
+        # Interpolation is not injection when the adapter did the quoting. A
+        # bind parameter cannot be an identifier, so
+        # `conn.execute("DELETE FROM #{conn.quote_table_name(table)}")` is the
+        # documented way to name a table — and flagging it tells the reader the
+        # rule does not know the fix it demands. Only an interpolation that is
+        # nothing but one quoting call is spared; a second term inside the
+        # braces still fires.
+        QUOTED_INTERPOLATION = /
+          \A[\w.:@]*\b
+          (?:quote_table_name|quote_column_name|sanitize_sql_array|sanitize_sql|quote)
+          \([^()]*\)\z
+        /x
+        INTERPOLATION = /\#\{([^{}]*)\}/
+
         RuleDSL.rule :SQL_INJECTION,
           severity: :error, tags: %i[SECURITY],
+          fires: %q(conn.execute("DELETE FROM #{table}")) + "\n",
+          does_not_fire: %q(conn.execute("DELETE FROM #{conn.quote_table_name(table)}")) + "\n",
           description: "parameterize all SQL — never interpolate user input" do |src, path:|
+          # The two fixtures above are SQL injection and its fix, spelled out in
+          # this file, so this rule reads its own source as two findings unless
+          # it skips the directory it lives in. COMPLETION_THEATER carries the
+          # same skip for the same reason.
+          next [] if path.to_s.include?("/review/scan/rules/")
+
           src.each_line.with_index(1).filter_map do |line, n|
             stripped = line.strip
             next if stripped.start_with?("#")
+            # The concatenation branch wanted a closed string before the `+` and
+            # never asked for one, so it read `execute("SELECT a + b FROM t")` —
+            # SQL arithmetic — as concatenation, and missed
+            # `execute("SELECT * FROM " + name)`, which is the shape it is for.
             match = stripped.match(/\.(?:execute|query)\s*\(.*#\{/) ||
-                    stripped.match(/\.(?:execute|query)\s*\(\s*["'][^"']*\+\s*/)
+                    stripped.match(/\.(?:execute|query)\s*\(\s*["'][^"']*["']\s*\+/)
             next unless match
+
+            interpolated = stripped.scan(INTERPOLATION).flatten
+            next if interpolated.any? && interpolated.all? { |expr| expr.strip.match?(QUOTED_INTERPOLATION) }
             # A real `.execute(`/`.query(` call is never itself quoted string content —
             # skip when it sits inside a string literal (e.g. a human-readable label
             # like "Foo.execute(#{bar})" passed to a logger), which reads as an odd

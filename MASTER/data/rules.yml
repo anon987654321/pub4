@@ -4344,11 +4344,13 @@ rule_ratchets:
     # path rather than the source and the generic Ruby model path satisfies none
     # of them.
     #
-    # SILENT_RESCUE and NARROW_SILENT_RESCUE stay unfixtured for the reason
-    # SQL_INJECTION does: their worked example is a swallowed rescue, and
-    # lexical_rules.rb carries no self-exemption for them, so the example would be
-    # a live error-severity finding in the file that defines the rule.
-    without_fixtures: 30
+    # SILENT_RESCUE and NARROW_SILENT_RESCUE stay unfixtured because their worked
+    # example is a swallowed rescue and lexical_rules.rb carries no self-exemption,
+    # so the example would be a live error-severity finding in the file that
+    # defines the rule. SQL_INJECTION sat in that group and does not any more: it
+    # skips lib/review/scan/rules/ the way COMPLETION_THEATER already did, which
+    # states the exemption in the rule instead of in this ceiling. 30 -> 29.
+    without_fixtures: 29
 
 # What a decision proposal is checked against before it is offered, by
 # Master::Ground::BiasGuard. `detect` accuses, `clears` acquits: a proposal

@@ -96,10 +96,10 @@ module Pub4
     # A token is path-shaped when it carries an extension, ends in a slash, or
     # starts at a directory this repo actually has. "pending/accepted/blocked"
     # is a status list and matches none of those.
-    KNOWN_HEADS = %w[
+    KNOWN_HEADS = (%w[
       MASTER RAILS OPENBSD STUDIO bin lib core data app config test spec web
-      gates shared tools script db public frontend engines dotfiles etc
-    ].freeze
+      gates shared tools script db public frontend engines dotfiles
+    ] << "etc").freeze # scan: intentional — /etc, the directory OPENBSD mirrors, not an abbreviation
 
     def self.path_shaped?(token)
       return false if token.start_with?("http", "/")          # urls and routes
