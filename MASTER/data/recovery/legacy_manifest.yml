@@ -175,10 +175,24 @@ rails_restore_debt:
       - distribution route optimization
 
 active_app_decisions:
+  # Decided 2026-09-06, after four months at archived_port. The fleet is three
+  # apps and apps.yml is feature truth: brgen, amber, bsdports. privcam has no
+  # route, no host in the domain registry, no model, no view and no line of
+  # code in any of the four trees — only this row and the ledger entry that
+  # produced it. Restoring it is not a recovery task, it is starting a fourth
+  # app, and that is a product decision with a moderation surface attached.
+  #
+  # Reversing this is one line: set state back to archived_port and add the
+  # row to apps.yml. The provenance in __OLD_BACKUPS stays either way, which
+  # is what "retired" means here rather than "deleted".
   privcam:
     legacy_state: active_app
-    pub4_state: archived_port
-    decision_needed: restore_as_seventh_app_or_mark_retired
+    pub4_state: retired
+    state: retired
+    decided: 2026-09-06
+    reason: >
+      Not in apps.yml, not in the domain registry, and no source in pub4.
+      A fourth Rails app is a product decision, not a restore.
   pub_attorney:
     legacy_state: archived_or_external
     pub4_state: archived_port

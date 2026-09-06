@@ -36,8 +36,8 @@ critical_items:
 
   - id: privcam_active_decision
     source: __OLD_BACKUPS/MEGA_ALL_APPS.md
-    expected_target: RAILS/privcam/ or retired decision
-    current_state: archived_port
+    expected_target: retired, with the reason in recovery/legacy_manifest.yml
+    current_state: retired
     gate: active_app_or_retirement_note
 
 checks:

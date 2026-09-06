@@ -8,6 +8,63 @@ the per-tree contract — and it carries the five traps that cost the most time
 here. This file routes; it does not restate, because a second copy drifts and
 the copy is always the one being read.
 
+The block below is the source every other agent's entry file is generated from
+— root `AGENTS.md`, `GEMINI.md`, `.cursorrules` and
+`.github/copilot-instructions.md`. Edit it here and run
+`cd MASTER && rake docs:agent_contracts`; `rake lint:agent_contracts` fails when
+a generated file drifts from it. One source, four harnesses, no second copy to
+rot.
+
+## The contract every agent gets
+
+<!-- agent-contract:begin -->
+pub4 is governed by MASTER, and MASTER's law is data, not prose. Read it before
+you write:
+
+1. `MASTER/data/soul.yml` — the kernel. Absolutes, work rules, anti-simulation.
+2. `MASTER/data/rules.yml` — the declared rule catalogue, in four scopes.
+3. `MASTER/law/*.rb` — the domain law, each rule carrying the example it must
+   flag and the one it must not. Those two examples are the rule.
+4. `MASTER/lib/review/scan/rules/*.rb` — the registry, the rest of the detectors.
+
+That order is the authority order, and it outranks every per-agent instruction
+file including this one. A harness file (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`,
+`.cursorrules`, `.github/copilot-instructions.md`) is a pointer at the law, never
+a second copy of it: the copy is always the one being read, and it is always the
+one that drifted.
+
+The four trees, and how each is entered:
+
+- `MASTER/` — a constitutional AI runtime in pure Ruby. `MASTER/bin/master "<instruction>"`.
+- `RAILS/` — brgen (a city social network, verticals as mounted engines), amber, bsdports. `RAILS/bin/triangle up`.
+- `OPENBSD/` — the deploy pipeline and the VPS runbook. Production is one box, vm23.
+- `STUDIO/` — dilla makes beats, postpro grades images, repligen and lora generate.
+
+Two commands cover most work. `MASTER/bin/pub4 gate` runs the whole ladder over
+all four trees; `MASTER/bin/pub4 measure` prints every ratchet with its ceiling.
+Run the smallest check that proves the work, and never report done without its
+output.
+
+Five things that will bite you, in order:
+
+1. The checkout is shared. Commit path-scoped with `git commit -- <paths>`, and
+   take a worktree for anything past a one-file edit.
+2. Strict loading is on in every Rails environment, test and production alike.
+3. A deploy sheds amber and bsdports while relayd keeps answering TLS, so the
+   outage looks like a hang rather than a 5xx.
+4. The apps default to Norwegian. Assert through I18n keys, never English
+   literals.
+5. dilla and postpro renders are irreplaceable. Never render over a take, and
+   never change a rendered-sound default on your own judgement.
+
+Two habits this repo learned the hard way. **Verify the instrument before the
+finding** — naive pattern-matching over this tree produces mostly false
+positives, and a census that is wrong is worse than no census. **A comment
+states the present-tense reason**, not what the code used to do; git holds that.
+
+Ruby is pinned to 3.4.9: run `RBENV_VERSION=3.4.9 rbenv exec ruby ...`.
+<!-- agent-contract:end -->
+
 ## Working alone in this repo
 
 An agent arrives with none of the session context that makes the tree

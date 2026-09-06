@@ -23,6 +23,10 @@ class TestDocPaths < Minitest::Test
   # a path does.
   DOCS = %w[
     CLAUDE.md
+    AGENTS.md
+    GEMINI.md
+    .cursorrules
+    .github/copilot-instructions.md
     RAILS/CLAUDE.md
     OPENBSD/CLAUDE.md
     OPENBSD/RUNBOOK.md
@@ -31,6 +35,41 @@ class TestDocPaths < Minitest::Test
     MASTER/DECISIONS.md
     RAILS/shared/WIRING_NOTES.md
   ].freeze
+  
+  # Every coding agent reads a different file, and pub4 had one of the five.
+  # An agent that never sees MASTER's law does not follow it however well the
+  # law is written, so the four harness files are generated from one marked
+  # block in MASTER/AGENTS.md. This asserts they exist and still point at the
+  # law; rake lint:agent_contracts asserts they are byte-identical to it.
+  HARNESS_FILES = %w[
+    AGENTS.md GEMINI.md .cursorrules .github/copilot-instructions.md
+  ].freeze
+  
+  def test_every_harness_file_points_at_the_law
+    missing = HARNESS_FILES.reject { |relative| File.file?(File.join(REPO, relative)) }
+  
+    assert_empty missing, "no entry file for an agent that reads it: #{missing.join(", ")}"
+  
+    HARNESS_FILES.each do |relative|
+      body = File.read(File.join(REPO, relative))
+  
+      assert_includes body, "MASTER/data/soul.yml", "#{relative} does not name the kernel"
+      assert_includes body, "MASTER/data/rules.yml", "#{relative} does not name the rule catalogue"
+      assert_includes body, "docs:agent_contracts",
+                      "#{relative} does not say where it came from"
+    end
+  end
+  
+  # The one an agent reading CLAUDE.md must not miss: this file is not the
+  # authority, and it has to say so where it is read rather than in a commit.
+  def test_claude_md_says_master_outranks_it
+    body = File.read(File.join(REPO, "CLAUDE.md"))
+  
+    assert_includes body, "MASTER is the primary configuration"
+    # Not "rake docs:…": the sentence wraps between the two words in CLAUDE.md,
+    # and an assertion that fails on a line break is testing the paragraph.
+    assert_includes body, "docs:agent_contracts"
+  end
 
   # The repo root is four trees and CLAUDE.md. bin/ moved under MASTER and
   # dotfiles/ under OPENBSD, so neither is a top-level tree any more.
