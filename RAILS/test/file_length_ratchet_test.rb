@@ -89,7 +89,8 @@ class FileLengthRatchetTest < Minitest::Test
 "gates/lib/rendered/rendered_geometry.rb" => 449, # type checks live in geometry_type.rb
     # +6 in cf6e56a52 — an error template is not a route, so the manifest stopped
     # being hand-edited and the inventory learned to tell the two apart.
-    "gates/support/page_inventory.rb" => 440,
+    # page_inventory.rb left this list on 2026-09-06: 444 -> 288 when the five
+    # filename ladders went and the route manifest became the only answer.
 # 428 -> 339 on 2026-08-26. The seam was already drawn in the file: a
 # `--- websocket framing ---` banner, above which every method speaks CDP
 # (navigate, evaluate, press, screenshot) and below which every method

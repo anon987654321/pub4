@@ -1,7 +1,7 @@
 ---
 generated_note: Snapshot of Deploy::PageInventory.all — regenerate via page_simulation
   gate
-count: 204
+count: 202
 pages:
 - id: brgen/activity_events/index
   app: brgen
@@ -225,14 +225,6 @@ pages:
   host: brgen.no
   path: "/"
   action: index
-  persona: guest
-  needs_id: false
-- id: brgen/messages/new
-  app: brgen
-  view: RAILS/brgen/app/views/messages/new.html.erb
-  host: brgen.no
-  path: "/conversations"
-  action: new
   persona: guest
   needs_id: false
 - id: brgen/nearby/index
@@ -1361,14 +1353,6 @@ pages:
   host:
   path: "/categories/:id"
   action: show
-  persona: guest
-  needs_id: true
-- id: bsdports/comments/new
-  app: bsdports
-  view: RAILS/bsdports/app/views/comments/new.html.erb
-  host:
-  path: "/ports/:id/comments"
-  action: new
   persona: guest
   needs_id: true
 - id: bsdports/maintainers/index

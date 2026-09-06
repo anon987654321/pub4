@@ -1,5 +1,5 @@
 ---
-generated_at: '2026-08-31T10:50:24Z'
+generated_at: '2026-09-06T11:16:22Z'
 pages:
 - id: brgen/activity_events/index
   app: brgen
@@ -281,16 +281,6 @@ pages:
   host: brgen.no
   persona: guest
   view: RAILS/brgen/app/views/home/index.html.erb
-  needs_id: false
-  mode: source
-  ok: true
-  findings: []
-- id: brgen/messages/new
-  app: brgen
-  path: "/conversations"
-  host: brgen.no
-  persona: guest
-  view: RAILS/brgen/app/views/messages/new.html.erb
   needs_id: false
   mode: source
   ok: true
@@ -1716,16 +1706,6 @@ pages:
   mode: source
   ok: true
   findings: []
-- id: bsdports/comments/new
-  app: bsdports
-  path: "/ports/:id/comments"
-  host:
-  persona: guest
-  view: RAILS/bsdports/app/views/comments/new.html.erb
-  needs_id: true
-  mode: source
-  ok: true
-  findings: []
 - id: bsdports/maintainers/index
   app: bsdports
   path: "/maintainers"
@@ -2071,13 +2051,13 @@ pages:
   ok: true
   findings: []
 summary:
-  total_pages: 204
+  total_pages: 202
   by_app:
-    brgen: 128
+    brgen: 127
     amber: 56
-    bsdports: 15
+    bsdports: 14
     master: 5
-  guest: 122
+  guest: 120
   auth: 82
   live_probed: 0
   ports_open:
@@ -2085,7 +2065,7 @@ summary:
     amber: false
     bsdports: false
     master: false
-  hard_findings: 3
+  hard_findings: 0
   soft_findings: 17
-  source_ok: 204
-  source_total: 204
+  source_ok: 202
+  source_total: 202

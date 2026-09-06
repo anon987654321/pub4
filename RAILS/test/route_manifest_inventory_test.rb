@@ -88,10 +88,25 @@ class RouteManifestInventoryTest < Minitest::Test
     assert Deploy::PageInventory.guest_open_brgen?("/registration/new", "registrations/new")
   end
 
-  def test_app_local_error_templates_are_not_invented_as_routes
-    refute find("brgen/shared/members_only"),
-           "members_only is rendered with a 403 from other actions, not served at /shared/members_only"
-    assert Deploy::PageInventory.app_view_without_route?("brgen", %w[shared members_only])
+  # This used to need a hand-kept exclusion list. It does not: a view with no GET
+  # route is one the manifest cannot answer, and the inventory drops it. Three
+  # views prove the rule rather than one — an error template rendered with a 403,
+  # and two `new` views for resources routed `only: %i[create destroy]`, which
+  # the retired filename ladder gave URLs to (/conversations and
+  # /ports/:id/comments) that were not theirs.
+  def test_a_view_with_no_get_route_is_not_a_page
+    %w[brgen/shared/members_only brgen/messages/new bsdports/comments/new].each do |id|
+      refute find(id), "#{id} has no GET route and must not be probed as a page"
+    end
+  end
+
+  # The other direction, so the rule above cannot be satisfied by an inventory
+  # that dropped everything.
+  def test_the_inventory_still_covers_every_app
+    %w[amber brgen bsdports master].each do |app|
+      refute_empty inventory.select { |page| page[:app] == app }, "#{app} left the inventory"
+    end
+    assert_operator inventory.size, :>, 150, "the inventory collapsed"
   end
 
   def test_digest_moves_when_a_route_source_changes

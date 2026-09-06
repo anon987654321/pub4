@@ -20,16 +20,6 @@ module Deploy
       "maps" => "maps.#{APEX}",
     }.freeze
 
-    # Vertical root view → path "/"
-    VERTICAL_ROOTS = {
-      %w[marketplace listings index] => true,
-      %w[dating home index] => true,
-      %w[tv home index] => true,
-      %w[maps home index] => true,
-      %w[playlist playlists index] => true,
-      %w[takeaway restaurants index] => true,
-    }.freeze
-
     APPS = {
       "brgen" => {
         views: File.join(ROOT, "RAILS", "brgen", "app", "views"),
@@ -82,10 +72,6 @@ module Deploy
     # them as error templates. They are not controller actions, and inventing a
     # URL from their filename makes the live probe report a 404 for a route that
     # must not exist.
-    APP_VIEWS_WITHOUT_ROUTE = {
-      "brgen" => [%w[shared members_only]],
-    }.freeze
-
     MASTER_PAGES = [
       { id: "master/face", view: "MASTER/web/app/views/chat/index.html.erb", path: "/", persona: "guest" },
       { id: "master/dashboard", view: "MASTER/web/app/views/dashboard/index.html.erb", path: "/dashboard", persona: "guest" },
@@ -212,9 +198,11 @@ module Deploy
       root = APPS["brgen"][:views]
       discover(root).filter_map do |abs|
         parts = relative_parts(abs, root)
-        next if mailer_parts?(parts) || app_view_without_route?("brgen", parts)
+        next if mailer_parts?(parts)
 
         host, path, action = brgen_route(parts)
+        next unless path
+
         rel = parts.join("/")
         {
           id: "brgen/#{rel}",
@@ -232,9 +220,11 @@ module Deploy
 
     def amber_pages
       root = APPS["amber"][:views]
-      discover(root).map do |abs|
+      discover(root).filter_map do |abs|
         parts = relative_parts(abs, root)
         path, action = amber_route(parts)
+        next unless path
+
         rel = parts.join("/")
         {
           id: "amber/#{rel}",
@@ -271,9 +261,11 @@ module Deploy
       root = APPS["bsdports"][:views]
       return BSDPORTS_LIVE.map { |row| bsdports_live_row(row) } unless File.directory?(root)
 
-      discovered = discover(root).map do |abs|
+      discovered = discover(root).filter_map do |abs|
         parts = relative_parts(abs, root)
         path, action = bsdports_route(parts)
+        next unless path
+
         rel = parts.join("/")
         {
           id: "bsdports/#{rel}",
@@ -304,31 +296,13 @@ module Deploy
       }
     end
 
+    # The manifest or nothing. A view it does not answer has no GET route --
+    # that is what `rails routes` said when the manifest was generated -- so it
+    # is not a page, and inventing a URL for one is what sent page_simulation
+    # at 404s in the first place.
     def bsdports_route(parts)
       resolved = manifest_route("bsdports", parts)
-      return [resolved, parts[-1]] if resolved
-
-      bsdports_route_by_convention(parts)
-    end
-
-    def bsdports_route_by_convention(parts)
-      case parts
-      when %w[ports index], %w[home index] then ["/", "index"]
-      when %w[sessions new] then ["/session/new", "new"]
-      when %w[categories index] then ["/categories", "index"]
-      when %w[categories show] then ["/categories/:id", "show"]
-      when %w[maintainers index] then ["/maintainers", "index"]
-      when %w[maintainers show] then ["/maintainers/:id", "show"]
-      when %w[ports show] then ["/ports/:id", "show"]
-      when %w[ports explore] then ["/ports/:id/explore", "explore"]
-      when %w[comments new]
-        # Nested under ports only — no bare GET /comments/new
-        ["/ports/:id/comments", "new"]
-      else
-        resource = parts[0]
-        action = parts[1] || "index"
-        [rest_path(resource, action), action]
-      end
+      [resolved, parts[-1]] if resolved
     end
 
     def discover(root)
@@ -348,180 +322,18 @@ module Deploy
       parts.any? { |p| p.end_with?("_mailer") || p == "mailer" }
     end
 
-    def app_view_without_route?(app, parts)
-      Array(APP_VIEWS_WITHOUT_ROUTE[app]).include?(parts)
-    end
-
     def mailer?(page)
       page[:view].to_s.include?("_mailer") || page[:view].to_s.include?("/mailer/")
     end
 
     def brgen_route(parts)
-      host = VERTICAL_HOSTS.fetch(parts[0], APEX)
       resolved = manifest_route("brgen", parts)
-      return [host, resolved, parts[-1]] if resolved
-
-      brgen_route_by_convention(parts)
-    end
-
-    # Kept for views whose action has no GET route in the manifest. Every case in
-    # here that the manifest now answers is dead weight; delete one when the
-    # route table proves it redundant, not before.
-    def brgen_route_by_convention(parts)
-      return vertical_route_by_convention(parts) if VERTICAL_HOSTS.key?(parts[0])
-
-      apex_route_by_convention(parts)
-    end
-
-    # The five mountable verticals. Each has its own host, so the answer is
-    # (host, path, action) rather than the apex's (path, action).
-    def vertical_route_by_convention(parts)
-      vert = parts[0]
-      rest = parts[1..]
-      host = VERTICAL_HOSTS[vert]
-
-      return [host, "/", "index"] if VERTICAL_ROOTS[[vert, *rest]]
-      return [host, "/cart", "show"] if rest == %w[carts show]
-      return [host, "/next", "next"] if rest == %w[home next]
-
-      special = dating_profile_route(vert, rest) || tv_nested_route(vert, rest)
-      return [host, *special] if special
-
-      resource = rest[0]
-      action = rest[1] || "index"
-      resource = "shops" if vert == "marketplace" && resource == "stores"
-      [host, rest_path(resource, action), action]
-    end
-
-    # Dating uses singular resource :profile (not /profiles).
-    def dating_profile_route(vert, rest)
-      return nil unless vert == "dating" && rest[0] == "profiles"
-
-      action = rest[1] || "show"
-      path =
-        case action
-        when "new" then "/profile/new"
-        when "edit" then "/profile/edit"
-        when "show" then "/profile"
-        else "/profile/#{action}"
-        end
-      [path, action]
-    end
-
-    # TV shows/episodes/videos are nested under channels in routes — treat
-    # non-root index/new as needs_id for live probes.
-    def tv_nested_route(vert, rest)
-      return nil unless vert == "tv"
-      return ["/channels/:slug/live_streams/new", "new"] if rest == %w[live_streams new]
-      return nil unless %w[shows episodes videos].include?(rest[0])
-
-      resource = rest[0]
-      action = rest[1] || "index"
-      # Live matrix skips :id paths; mark with :id so guest_liveable excludes them.
-      path =
-        case action
-        when "index" then "/channels/:slug/#{resource}"
-        when "new" then "/channels/:slug/#{resource}/new"
-        when "show" then "/#{resource}/:id"
-        else "/#{resource}/#{action}"
-        end
-      [path, action]
-    end
-
-    def apex_route_by_convention(parts)
-      host = APEX
-      case parts
-      when %w[home index] then return [host, "/", "index"]
-      when %w[sessions new] then return [host, "/session/new", "new"]
-      when %w[search index] then return [host, "/search", "index"]
-      # live folded into nearby in 76612fd0b — /live is a redirect, no view tree.
-      when %w[nearby widget] then return [host, "/nearby/widget", "widget"]
-      when %w[messages new]
-        # No standalone GET /messages/new — DMs open via conversations
-        return [host, "/conversations", "new"]
-      end
-
-      if parts[0] == "admin"
-        path = "/" + parts[0..-2].join("/")
-        path = "/admin/reports" if parts == %w[admin reports index]
-        return [host, path, parts[-1]]
-      end
-
-      # Nested partner/* resources need ids for show/edit
-      if parts[0] == "partner"
-        resource = parts[1]
-        action = parts[2] || "index"
-        path =
-          case action
-          when "index" then "/partner/#{resource}"
-          when "new" then "/partner/#{resource}/new"
-          when "show" then "/partner/#{resource}/:id"
-          when "edit" then "/partner/#{resource}/:id/edit"
-          else "/partner/#{resource}/#{action}"
-          end
-        return [host, path, action]
-      end
-
-      resource = parts[0]
-      action = parts[1] || "index"
-      [host, rest_path(resource, action), action]
+      [VERTICAL_HOSTS.fetch(parts[0], APEX), resolved, parts[-1]] if resolved
     end
 
     def amber_route(parts)
       resolved = manifest_route("amber", parts)
-      return [resolved, parts[-1]] if resolved
-
-      amber_route_by_convention(parts)
-    end
-
-    def amber_route_by_convention(parts)
-      case parts
-      when %w[home index] then return ["/", "index"]
-      when %w[sessions new] then return ["/session/new", "new"]
-      when %w[registrations new] then return ["/registration/new", "new"]
-      when %w[demo_wardrobe index] then return ["/demo", "index"]
-      when %w[demo_wardrobe show] then return ["/demo/items/:id", "show"]
-      when %w[posts feed] then return ["/posts/feed", "feed"]
-      when %w[outfits dressing_room] then return ["/outfits/dressing_room", "dressing_room"]
-      when %w[items shopping_list] then return ["/items/shopping_list", "shopping_list"]
-      when %w[wardrobe_items analytics] then return ["/wardrobe_items/analytics", "analytics"]
-      when %w[wardrobe_items timeline] then return ["/wardrobe_items/timeline", "timeline"]
-      when %w[creator_profiles show] then return ["/creators/:handle", "show"]
-      when %w[creator_profiles new] then return ["/creator_profile/new", "new"]
-      when %w[creator_profiles edit] then return ["/creator_profile/edit", "edit"]
-      when %w[declutter review] then return ["/declutter/:id/review", "review"]
-      end
-
-      if parts[0] == "ai"
-        map = {
-          "capsule" => "/ai/capsule",
-          "color_palette" => "/ai/palette",
-          "declutter_guide" => "/ai/declutter",
-          "mood_board" => "/ai/moodboard",
-          "occasion_map" => "/ai/occasions",
-          "packing_list" => "/ai/pack",
-          "search" => "/ai/search",
-          "style_profile" => "/ai/style",
-          "suggest_outfits" => "/ai/outfits/suggest",
-        }
-        return [map.fetch(parts[1], "/ai/#{parts[1]}"), parts[1]]
-      end
-
-      resource = parts[0]
-      action = parts[1] || "index"
-      [rest_path(resource, action), action]
-    end
-
-    def rest_path(resource, action)
-      case action
-      when "index" then "/#{resource}"
-      when "new" then "/#{resource}/new"
-      when "show" then "/#{resource}/:id"
-      when "edit" then "/#{resource}/:id/edit"
-      when "embed" then "/#{resource}/:id/embed"
-      when "review" then "/#{resource}/:id/review"
-      else "/#{resource}/#{action}"
-      end
+      [resolved, parts[-1]] if resolved
     end
 
     # Sign-in and sign-up are the only authoring forms a guest reaches.
