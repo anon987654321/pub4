@@ -640,7 +640,7 @@ Options:
                           top    — Cinemeta trending/recent
                           imdb   — Cinemeta IMDb Top 250 (ignores year unless explicit)
                           yts    — YTS by rating
-                          all    — prestige + top + yts etc
+                          all    — every source above, combined
   --pages=N             Fetch N pages per catalog source (default: 2)
   --max-size=N          Max torrent size in GB (default: 4 — compact WEBRips)
   --english-only        English audio only — skip international releases (old behavior)
@@ -663,7 +663,7 @@ Options:
 Skip / owned / seen:
   ~/mov-sh-state/history — download log; also blocks re-fetch after you delete files from disk
   ~/mov-sh-state/skip + --seen= — explicitly watched titles (never re-fetched; --cleanup-seen deletes these from disk)
-  Inline SKIP_LIST — hardcoded never-fetch (Sinners etc.)
+  Inline SKIP_LIST — hardcoded never-fetch titles, listed in the script
   Zero-arg / --library: prestige list + live Cinemeta discovery → parallel auto-fetch (2023+)
 
 Selection examples at the prompt:
@@ -674,7 +674,7 @@ Selection examples at the prompt:
 
 With --auto + -y : autonomously downloads the first available proper torrents for real acclaimed 2025+ titles.
 
-By default skips CAM, CAMRip, TS, HDTS, screeners, workprints etc. Use --allow-cam to accept theatrical recordings.
+By default skips CAM, CAMRip, TS, HDTS, screeners and workprints. Use --allow-cam to accept theatrical recordings.
 
 Examples:
   zsh mov.sh                            # just works: prestige auto-download, parallel, no flags
@@ -2089,7 +2089,7 @@ echo "📥 Staging incomplete pulls in $STAGING_DIR (promoted after playable+aud
 if [ "$ENGLISH_ONLY" = true ]; then
   echo "🗣️  English audio only (no international)"
 elif [ "$REQUIRE_ENG_SUBS" = true ]; then
-  echo "🌍 International OK — requires English audio/subs; blocks RU/CIS dubs (ExKinoRay, seleZen, DUB, etc.)"
+  echo "🌍 International OK — requires English audio/subs; blocks RU/CIS dub tags (ExKinoRay, seleZen, DUB)"
 else
   echo "🗣️  Any language accepted (no subtitle requirement)"
 fi
