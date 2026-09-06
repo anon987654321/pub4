@@ -764,7 +764,7 @@ rules:
     name: One authoritative representation per concept
     tier: kernel
     severity: error
-    autofix: true
+    autofix: false
     detect_semantic: Is the same logic or data defined in multiple places?
     fix: Extract to single source, reference from all consumers.
   - id: DECOUPLE
@@ -1292,7 +1292,7 @@ rules:
     name: lang attribute on <html>
     tier: accessibility
     severity: error
-    autofix: true
+    autofix: add_html_lang
     fix: Add lang="en" or appropriate locale.
     languages:
     - html
@@ -1340,7 +1340,7 @@ rules:
     name: Whitespace as layout tool
     tier: aesthetic
     severity: info
-    autofix: true
+    autofix: false
     folded_into: SQUINT_TEST # same detector; one law, two ids
     fix: One blank line between sections, never more than two.
   - id: NO_MULTIPLE_LANGUAGES
@@ -1423,7 +1423,7 @@ rules:
     name: Explicit contracts over implicit coupling
     tier: kernel
     severity: warning
-    autofix: true
+    autofix: false
     detect_structural: explicit
     fix: Make it explicit.
   - id: SELF_EXPLAINING
@@ -1431,7 +1431,7 @@ rules:
     name: Names reduce need for comments
     tier: kernel
     severity: info
-    autofix: true
+    autofix: false
     detect_semantic: Does this name clearly reveal intent?
     fix: Rename to reveal intent.
   - id: GUARD_CLAUSE
@@ -1566,7 +1566,7 @@ rules:
     name: Replace update_attribute with update!
     tier: safety
     severity: error
-    autofix: true
+    autofix: false
     fix: update_attribute skips validations. Use update!
     languages:
     - ruby
@@ -1628,7 +1628,7 @@ rules:
     name: Always quote $variables
     tier: safety
     severity: error
-    autofix: true
+    autofix: false
     fix: Use "$VAR" to prevent word splitting.
     languages:
     - zsh
@@ -1637,7 +1637,7 @@ rules:
     name: Use [[ ]] over [ ]
     tier: safety
     severity: warning
-    autofix: true
+    autofix: false
     fix: Use [[ ... ]] for safe conditionals.
     languages:
     - zsh
@@ -1676,7 +1676,7 @@ rules:
     name: loading="lazy" on below-fold images
     tier: performance
     severity: info
-    autofix: true
+    autofix: add_lazy_loading
     fix: Add loading="lazy".
     languages:
     - html
@@ -1720,14 +1720,14 @@ rules:
     name: Eliminate unreachable code
     tier: clean_code
     severity: warning
-    autofix: true
+    autofix: remove_immediate_dead_code
     fix: Remove code after return/exit/raise/throw.
   - id: TRAILING_COMMAS
     source: Ruby/JS style — trailing commas in multiline literals
     name: Trailing commas in multi-line collections
     tier: style
     severity: info
-    autofix: true
+    autofix: add_trailing_commas
     detect_semantic: Does this multi-line collection lack a trailing comma?
     fix: Add trailing comma so additions produce one-line diffs.
   - id: TYPOGRAPHIC_EXCELLENCE
@@ -1735,7 +1735,7 @@ rules:
     name: Typographic excellence in user-facing text
     tier: aesthetic
     severity: info
-    autofix: true
+    autofix: false
     fix: Use ellipsis, em dash, curly quotes in UI strings.
   - id: SILENCE_ON_SUCCESS
     source: Unix philosophy — Rule of Silence (no news is good news)
@@ -1750,7 +1750,7 @@ rules:
     name: Hierarchy via weight and brightness, not decoration
     tier: interface
     severity: info
-    autofix: true
+    autofix: false
     fix: No ASCII separators. No box drawing. Whitespace is the layout tool.
   - id: PRECOMPUTE_MATH
     source: MASTER-native (precompute constant math)
@@ -1773,7 +1773,7 @@ rules:
     name: Degrade quality under load, do not crash
     tier: performance
     severity: warning
-    autofix: true
+    autofix: false
     detect_semantic: Does this run at full quality until it crashes instead of scaling
       down?
     fix: EWMA frame timing. Dynamic resolution scaling. Emergency brake.
@@ -2111,7 +2111,7 @@ rules:
     name: Use an en dash for numeric and date ranges
     tier: aesthetic
     severity: info
-    autofix: true
+    autofix: false
     fix: 'Ranges take an en dash, not a hyphen: 45-75 -> 45–75.'
     languages:
     - markdown
@@ -2147,7 +2147,7 @@ rules:
     name: Avoid unnecessary words, tokens, or lines
     tier: kernel
     severity: warning
-    autofix: true
+    autofix: false
     detect_semantic: Does this unit contain unnecessary verbosity?
     fix: Omit needless words. Omit needless code.
   - id: DRY
@@ -2269,7 +2269,7 @@ rules:
     name: Separate queries from state mutations
     tier: design
     severity: warning
-    autofix: true
+    autofix: false
     detect_structural: cqs
     fix: 'Split: query() + command(). Never mix.'
     languages:
@@ -2279,7 +2279,7 @@ rules:
     name: Only talk to immediate friends
     tier: design
     severity: warning
-    autofix: true
+    autofix: false
     detect_semantic: Does this code reach through multiple objects?
     fix: Add delegate method. Talk only to direct collaborators.
   - id: COMPOSITION_OVER_INHERITANCE
@@ -2295,7 +2295,7 @@ rules:
     name: Methods under 10 lines ideal, max 20
     tier: clean_code
     severity: warning
-    autofix: true
+    autofix: false
     detect_structural: long_method
     fix: 'Extract: validate(), calculate(), persist().'
   - id: FEW_ARGUMENTS
@@ -2303,7 +2303,7 @@ rules:
     name: Ideal is zero to two arguments
     tier: clean_code
     severity: warning
-    autofix: true
+    autofix: false
     fix: Group into keyword arguments or parameter object.
     languages:
     - ruby
@@ -2336,7 +2336,7 @@ rules:
     name: No unexplained constants or flags
     tier: clean_code
     severity: warning
-    autofix: true
+    autofix: false
     detect_semantic: Are there unexplained numeric literals or boolean flags?
     fix: Extract to named constants.
   - id: FAIL_FAST
@@ -2344,7 +2344,7 @@ rules:
     name: Report errors at detection point
     tier: reliability
     severity: warning
-    autofix: true
+    autofix: false
     detect_semantic: Does this code defer error reporting instead of failing immediately?
     fix: Raise or return Result.err at point of detection.
   - id: IDEMPOTENT
@@ -2360,7 +2360,7 @@ rules:
     name: Never trust input at system boundaries
     tier: reliability
     severity: warning
-    autofix: true
+    autofix: false
     detect_semantic: Is external input used without validation?
     fix: Validate at boundaries. Whitelist, sanitize.
   - id: GRACEFUL_DEGRADATION
@@ -2423,7 +2423,7 @@ rules:
     name: Avoid a.b.c.d chains
     tier: refactoring
     severity: warning
-    autofix: true
+    autofix: false
     folded_into: LAW_OF_DEMETER # same detector; one law, two ids
     fix: Talk only to immediate collaborators.
   - id: MIDDLE_MAN
@@ -2548,7 +2548,7 @@ rules:
     name: Show LLM costs in real-time
     tier: llm
     severity: warning
-    autofix: true
+    autofix: false
     detect_semantic: Are API calls made without showing token count or cost?
     fix: Display [$0.0023, 847 tokens] after each call.
   - id: CACHE_LLM

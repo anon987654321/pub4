@@ -25,5 +25,38 @@
 # drops, so nothing ever reported them and no fix could ever be reached. Their
 # `fix:` lines ask for film grain, a spinner and a deletion; none is mechanical
 # either. Demoted to false with the reason, not swept.
+# 25 -> 0 on 2026-09-06, and 0 is the floor. Per rule with a reason, in three
+# kinds, because the kinds are the reason:
+#
+# Four name the transform that already fixes them. AstFixer implements each,
+# so the field says which edit rather than only that one exists:
+#   HTML_LANG       add_html_lang
+#   LAZY_IMAGES     add_lazy_loading
+#   TRAILING_COMMAS add_trailing_commas
+#   DEAD_CODE       remove_immediate_dead_code
+#
+# Sixteen are design judgements with no single correct edit — CQS,
+# LAW_OF_DEMETER, SMALL_FUNCTIONS, FEW_ARGUMENTS, BE_CONCISE, SELF_EXPLAINING,
+# EXPLICIT, FAIL_FAST, DEFENSIVE_INPUT, NO_MAGIC, COST_TRANSPARENCY,
+# GRACEFUL_LOAD, ONE_SOURCE, MESSAGE_CHAIN, TYPOGRAPHY_DISCIPLINE,
+# TYPOGRAPHIC_EXCELLENCE. Splitting a query from a command, shortening a
+# method, naming a magic number or flattening a chain each has many shapes and
+# a person picks one; a machine picking for them writes a different program.
+# false is what these always meant.
+#
+# Five are mechanical in principle and unwritten in fact: EN_DASH_RANGE,
+# NO_UPDATE_ATTRIBUTE, QUOTE_VARIABLES, DOUBLE_BRACKET,
+# WHITESPACE_PUNCTUATION. The edit is obvious in each — an en dash for a
+# hyphen, update for update_attribute, quotes around an expansion, [[ ]] for
+# [ ] — and no transform implements any of them, so the promise was to a reader
+# who would wait forever. These are the five to write transforms for; naming
+# one here without writing it is how the dangling counter above filled up.
+#
+# What this changes at runtime: MechanicalAutofix selects a file when any of
+# its findings carries a truthy autofix, so a file whose only findings are
+# judgement rules no longer gets AstFixer's universal cosmetic passes as a side
+# effect. That is the correct direction — a scan should not rewrite a file
+# because of a finding it cannot fix — and it is the one behavioural
+# consequence of the demotion.
 dangling: 0
-bare_true: 25
+bare_true: 0
