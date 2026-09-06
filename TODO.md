@@ -2005,6 +2005,43 @@ The schema and the model exist. Nothing reads or writes them. These are the
 cheapest items here and they gate most of Tier 2, because ranking and
 notification both need a signal that is currently never recorded.
 
+#### `constitutional_scan` was unaffordable, and two of its four budgets are over
+
+The gate shells `/scan` at `MASTER/bin/cli` once per app, and `SAFE_ENV`
+disabled autofix, background, watch and heartbeat but never asked for the
+deterministic tier — so the runtime handed the scan an agent and every file
+cost a model round trip. Measured 2026-09-06: **brgen alone ran 48 minutes of
+wall clock against 35 seconds of CPU**, idle in a TLS read, which is the exact
+stall `MASTER_SCAN_DETERMINISTIC` was added to MASTER for. `capture2e` has no
+timeout, so there was no bound on it either. With the flag and a
+`GATE_SCAN_TIMEOUT_S` bound, all four targets finish in **113 seconds**.
+
+What that uncovers is the part that matters. The gate has been failing, and
+nobody could see it because nobody could run it:
+
+    brgen      15 / 27   under
+    amber       4 / 28   under
+    bsdports    6 / 3    OVER +3
+    shared     15 / 8    OVER +7
+
+Verified against `2e2e464c2` — the same numbers before this session's rule
+changes, so the overage is the tree's, not the instrument's.
+
+**The findings are CSS and this repo says not to touch them on my own
+judgement.** bsdports is `EIGHT_PX_RHYTHM` ×4, `CHOICE_OVERLOAD` and
+`SIGNAL_NOISE`; shared is `EIGHT_PX_RHYTHM` ×6, `MAGIC_COLOR` ×3,
+`NO_DECORATIVE_FX`, `TOUCH_TARGET_MIN`, `CONTRAST_TOKENS`, `RAMS_UNOBTRUSIVE`,
+`REDUCED_MOTION` and `WHITESPACE_RHYTHM`. Every one is a spacing, colour or
+motion value in a design its owner is a trained architect of, and
+`RAILS/CLAUDE.md` says restore or ask, never invent a layout fix.
+
+One thing to know before acting on the number: the gate reads the **first**
+`scan: done` line, which is the aesthetic profile. The full profile in the same
+run reports 60 for bsdports and 187 for shared. The budgets were recorded
+against the aesthetic number, so the row is consistent — but it is a narrower
+claim than "constitutional preflight" sounds, and re-basing it against the full
+profile is a separate decision with four new ceilings in it.
+
 #### 1.1 Repost was a decorative button — **done, built**
 
 The call was build rather than drop, because brgen is aiming at x.com and
