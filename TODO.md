@@ -1820,6 +1820,51 @@ Two more rows joined the ratchets on 2026-09-05, both of them numbers that
 already existed and gated nothing: `rule_hygiene.cross_population_duplicates`
 (20) and `rule_deps.ungraphed` (133).
 
+#### The three `growth.*` overages, itemised — 2026-09-06
+
+`spine.yml` says a raise must name each file it makes room for, and the rows
+have been red for days with nobody naming anything. Each tree is diffed
+against the commit that last set its ceiling, so the overage arrives as a list
+instead of a number:
+
+    ruby -e 'EXCLUDE = %r{/(\.git|node_modules|tmp|log|renders|[\w.-]*stems|samples|scratch|project|crate|venv|\.venv|site-packages|vendor|storage|\.cache|builds|coverage|\.master|knowledge|output)/|/public/assets/|\.wav\.quality\.json\z}
+      EXT = %w[.rb .rake .erb .scss .css .js .mjs .yml .yaml .md .sh .ksh .exp .html .json]
+      now = Dir.glob("STUDIO/**/*").select { |p| File.file?(p) && !p.match?(EXCLUDE) && EXT.include?(File.extname(p)) }
+      was = `git ls-tree -r --name-only 9ea74b3d7 STUDIO`.split("\n").select { |p| !p.match?(EXCLUDE) && EXT.include?(File.extname(p)) }
+      puts (now.sort - was.sort)'
+
+**`growth.studio` 150/138, twelve over.** Fifteen files arrived and three
+left. Ten of the fifteen are `dilla/live/` — `rack.rb`, `recall.rb`,
+`dig_crate.rb` and `dig_crate.sh`, `broadcast.sh`, three `*.als.rb` Ableton
+writers, plus `lib/sample_worth.rb` and `scripts/generate_tts.rb`. Three are
+tests (`test_dilla_crate_dig.rb`, `test_dilla_radio_bergen_study.rb`,
+`test_dilla_take_write.rb`), one is `STUDIO/isolation.rb` moved up from
+`tools/`, and one is `lora/_toolkit/toolkit.sh` replacing `lib.sh`. A live
+performance surface is a coherent thing to have grown; it wants one named
+raise from whoever built it, not twelve arguments.
+
+**`growth.rails` 2371/2358, thirteen over.** Thirty-three arrived and twenty
+left, and most of both sides are the same files: the test trees were flattened
+(`test/helpers/x_test.rb` to `test/x_test.rb`) across amber, brgen, bsdports
+and shared. What is genuinely new is thirteen — `authorization_matrix_test` in
+two apps, `deal_test`, `city_seed_test`, `mention_test`, four
+`RAILS/test/*_lint_test.rb` gate tests, `gates/lib/source/scale_ratchet.rb`,
+`gates/support/css_spacing_scans.rb` and `css_weight.rb`, and
+`shared/lib/pub4/master_design.rb`. Every one of them is a test or a gate
+support file, which is the shape `spine.yml` has raised for before.
+
+**`growth.master` 1050/1047, three over.** Twenty-four arrived against thirty
+gone since `a931c5f0f`, so the tree is six files smaller than when the ceiling
+was set and still three over the number — the ceiling was lowered below the
+measurement on purpose, and the note in `spine.yml` says so.
+
+One instrument fix landed with this: `TREE_EXCLUDE` matched a directory named
+exactly `stems` and dilla names them after the render, so `demo_stems/` and
+`loop_stems/` put five `session.json` and `motifs.json` sidecars into
+`growth.studio` — a stems render raised a source-file ceiling, and 155 was
+really 150. The same five files are now ignored where they are written, beside
+the sidecar rule `dilla/.gitignore` already states and had not generalised.
+
 #### The TTS probe fix is paid for out of two budgets that were already over
 
 Named rather than buried, because `limits.yml` says a breach is paid by

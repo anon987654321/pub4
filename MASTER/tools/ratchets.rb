@@ -220,7 +220,12 @@ module Pub4
     # it SLACK and also fails, so a win only lands when its ceiling is lowered to
     # lock it — the exact discipline that keeps sprawl from regrowing into slack.
     # Pure Ruby, so it stays in fast mode and runs before every commit.
-    TREE_EXCLUDE = %r{/(\.git|node_modules|tmp|log|renders|stems|samples|scratch|project|crate|venv|\.venv|site-packages|vendor|storage|\.cache|builds|coverage|\.master|knowledge|output)/|/public/assets/}
+    # `stems` matched a directory called exactly that, and dilla names them after
+    # the render: demo_stems/, loop_stems/. Their session.json and motifs.json
+    # sidecars were five of growth.studio's files, so a stems render raised a
+    # source-file ceiling. The quality sidecar beside an untracked render is the
+    # same thing at the tree's root, where no directory name can catch it.
+    TREE_EXCLUDE = %r{/(\.git|node_modules|tmp|log|renders|[\w.-]*stems|samples|scratch|project|crate|venv|\.venv|site-packages|vendor|storage|\.cache|builds|coverage|\.master|knowledge|output)/|/public/assets/|\.wav\.quality\.json\z}
     TREE_SOURCE_EXT = %w[.rb .rake .erb .scss .css .js .mjs .yml .yaml .md .sh .ksh .exp .html .json].freeze
 
     def pub4_growth_rows
