@@ -189,18 +189,18 @@ positives worth not re-discovering — those are guards, not history.
   is the move that makes those safe to remove; doing it in the other order
   empties a live surface.
 - **Four ratchets are over, re-measured 2026-09-05 after `lib/autonomy` went**:
-  `spine.lib_body_ceiling` 38252/37464, `growth.master` 1049/1047,
+  `spine.lib_body_ceiling` 38253/37464, `growth.master` 1050/1047,
   `growth.rails` 2371/2358 and `growth.studio` 155/138. Every one that is left
   counts size, which is the shape worth knowing: what remains is folding, and
   folding is a sitting rather than a fix.
 
-  `growth.master` is **two files** from its floor and should stay there until
-  two are genuinely foldable. A constant-name census over `lib/` names three
-  candidates and all three are wrong: `HashDigCompat` is required by path and
-  called by method name, `RubyRuleSupport` is used inside its own multi-class
-  file, and `Trace::Hooks` is the entry above — the last reader of a
-  constitutional declaration. Two files is exactly the distance at which a
-  census stops being a measurement and starts being a shopping list.
+  `growth.master` is three files over and one of those three is the test that
+  came with the hooks wiring, named rather than absorbed. A constant-name census
+  over `lib/` offered three files to fold and all three were wrong:
+  `HashDigCompat` is required by path and called by method name,
+  `RubyRuleSupport` is used inside its own multi-class file, and `Trace::Hooks`
+  was three-quarters wired. Two files is exactly the distance at which a census
+  stops being a measurement and starts being a shopping list.
 
   **Extraction cannot pay `spine.lib_body_ceiling`, and this file said it could.**
   The counter is non-blank non-comment lines across `lib/**/*.rb` minus the
@@ -1247,54 +1247,32 @@ rather than inferred, and the command that measured it is named so the next
 reader can re-run it instead of re-deriving it. The cleanup that came out of the
 same sitting is `72a8cfae8`; what is here is what that commit did **not** close.
 
-#### `soul.yml` declares seven hooks, and one missing line is why none fires
+#### The constitution's seven hooks — closed 2026-09-06
 
-Found 2026-09-05 while looking for two more files to fold, which is the wrong
-reason to find anything and the reason this was nearly deleted instead.
-Re-counted 2026-09-06: **seven**, not the three a truncated `inspect` showed.
+`soul.yml` had declared seven hooks since it was written and none had ever
+fired. `Trace::Hooks` turns five bus events the tree already publishes into the
+`on_*` names the constitution uses and runs what `soul.yml` declared for each;
+nothing called `attach`, while its three `Trace::Ledger` siblings are each
+attached in the same boot phase.
 
-`Master::Trace::Hooks` is constructed nowhere. Its siblings are —
-`Trace::Ledger::Swallow` in `builder/boot_phases.rb`, `Feedback` and
-`Reflexion` in `ai_boot.rb`, each `.attach`ed — and this one is not, so a
-constant-name census reports the file as dead and a file count says delete it.
+Deleting it was the alternative and it was the wrong call — the shape is worth
+keeping, because a constant-name census and a file count both said delete.
+All three halves were built: the declarations, the class, and the events.
+`scan:complete` comes from `file_processor` at two sites,
+`rule_loop:fix_applied` from `rule_loop`, `llm:cost` from `ruby_llm_sender`,
+`phase:advanced` from `phase_gates`, `fix_loop:clean` from `pass_runner`. What
+was missing was one line. **A subsystem three-quarters wired reads exactly like
+a dead one from the outside, and the difference is whether the events it wants
+are already on the bus.** Ask that before deleting.
 
-It is the only reader of `soul.yml#hooks`:
+`.constitutional_violations.jsonl` — the file `soul.yml` has always said a
+violation is appended to — is written now, proved by a real scan rather than
+asserted. It is gitignored.
 
-    on_violation_found    append_constitutional_violation -> .constitutional_violations.jsonl
-    on_fix_applied        publish hooks:fix_applied
-    on_cost_threshold     warn_cost_threshold at 0.5 of budget
-    on_session_start      publish hooks:session_start
-    on_session_end        publish hooks:session_end
-    on_phase_transition   publish hooks:phase_transition
-    on_convergence        publish hooks:convergence
-
-The part that makes this worth a sitting rather than a note: **every source
-event `Hooks#attach` subscribes to is already being published by live code.**
-
-    scan:complete          review/scan/file_processor.rb   (two sites)
-    rule_loop:fix_applied  fix/rule_loop.rb
-    llm:cost               review/llm_dispatcher/ruby_llm_sender.rb
-    phase:advanced         ground/phase_gates.rb
-    fix_loop:clean         fix/fix_loop/pass_runner.rb
-
-Nothing publishes the `on_*` names because `Hooks` is what publishes them — it
-translates the five bus events into the seven the constitution names, then
-dispatches whatever `soul.yml` declared for each. `attach` is never called, so
-the translation never happens and every one of the seven is dead on a bus that
-is carrying its trigger right now. The constitution records that a violation
-is appended to `.constitutional_violations.jsonl`; no such file is ever
-written.
-
-So the wiring is one line in the boot phases, beside the three siblings that
-already have it. What it is not is a one-line decision: turning seven hooks on
-at once changes what a session emits, `on_session_end` runs from an `at_exit`,
-and `warn_cost_threshold` fires at half the budget. `soul.yml` is
-`paths.immutable`, so the block cannot simply be deleted either — the choice
-is to wire it or to take it to whoever owns the constitution.
-
-Deleting `lib/trace/hooks.rb` would take the last reader of a constitutional
-declaration with it and turn `data_reach` back to 36. This is the **Inert law
-and config** class at the one place in the tree where it costs the most.
+`test_trace_hooks.rb` boots `TraceBoot` for real rather than grepping
+`boot_phases.rb` for the word `attach`, which would pass against a method body
+of `raise`. Its last test walks `soul.yml` and fails if any declared hook
+produces no effect, so the state this record described cannot return quietly.
 
 #### The tier2 ordering guarantee — closed 2026-09-05
 
