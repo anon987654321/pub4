@@ -8,7 +8,7 @@
       the URL rather than from a picker the create action never read. %>
   <%= form_with model: @video, url: channel_videos_path(@channel), multipart: true do |f| %>
     <%= render "shared/errors", object: @video %>
-    <p><%= t("tv.uploading_to_html", channel: tag.strong(@channel.name)).html_safe %></p>
+    <p><%= t("tv.uploading_to_html", channel: tag.strong(@channel.name)) %></p>
     <div class="field"><%= f.label :title %><%= f.text_field :title, required: true %></div>
     <div class="field"><%= f.label :description %><div data-controller="character-counter" data-character-counter-countdown-value="true">
   <%= f.text_area :description, rows: 4 , data: { character_counter_target: "input" } %>
