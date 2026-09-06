@@ -2704,25 +2704,37 @@ with its blocker rather than left implied:
 3. **The anonymised contact relay** — inbound mail routing on vm23.
 4. **Live streaming, Solidus, pgvector** — infrastructure, listed under Blocked.
 
-### Eight files over their length ceilings
+### Six files over their length ceilings
 
 `RAILS/test/file_length_ratchet_test.rb`, the one red file in the standalone
-suite as of 2026-09-05. `limits.yml`'s rule holds here too: a breach is paid by
-extraction or deletion, never by a bigger number.
+suite. `limits.yml`'s rule holds here too: a breach is paid by extraction or
+deletion, never by a bigger number.
 
     gates/support/cdp_session.rb              374 / 339  (+35)
     shared/app/assets/stylesheets/_zen_shell.scss  502 / 477  (+25)
     gates/lib/research/design_metrics.rb      462 / 442  (+20)
     brgen/test/services/deploy_backlog_test.rb 631 / 618  (+13)
     gates/lib/live/user_flow.rb               320 / 313  (+7)
-    gates/support/page_inventory.rb           444 / 440  (+4)
     gates/lib/rendered/rendered_geometry.rb   450 / 449  (+1)
-    gates/lib/source/css_constitution.rb      336, over the limit and no ceiling declared
 
-105 lines between them. Five of the eight are gate code that drives Chrome over
+101 lines between them. Four of the six are gate code that drives Chrome over
 CDP, so an extraction there is only provable against a booted fleet —
 `RAILS/bin/triangle up` first, or the split lands unmeasured. The counterpart
 half of that test is green: no ceiling is slack any more.
+
+Two left the list on 2026-09-06, and only one of them by extraction.
+`page_inventory.rb` went 444 -> 288 by **deletion**, which is the note worth
+keeping: it carried five filename ladders for resolving a view's URL, under a
+comment inviting their removal "when the route table proves it redundant, not
+before". Counted rather than assumed — the ladders were reached three times in
+a full 204-page run, twice for the same view — and the two views they answered
+turned out to have no GET route at all, so the fallback was inventing URLs and
+sending `page_simulation` at them. A file over its ceiling is sometimes a file
+doing something it should not do.
+
+The reading that transfers: measure how often a fallback is taken before
+extracting the file that holds it. Three calls out of 204 is not a fallback,
+it is a residue.
 
 ### One model nothing writes
 
