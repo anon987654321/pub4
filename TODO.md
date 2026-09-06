@@ -2736,6 +2736,26 @@ The reading that transfers: measure how often a fallback is taken before
 extracting the file that holds it. Three calls out of 204 is not a fallback,
 it is a residue.
 
+**The remaining six carry nothing dead, measured 2026-09-06.** A Prism census
+over every method in the five Ruby files finds zero with no caller. So they are
+long files doing long work, and the only payment left is extraction.
+
+Which is where the two ratchets meet head on. `file_length` is per file and
+wants a split; `growth.rails` counts files and is 13 over, so every split costs
+it one. Extraction cannot satisfy both, a raise is forbidden by both, and there
+is nothing left to delete — the same structure `spine.lib_body_ceiling` has in
+MASTER and the reason this list has survived several sittings. Closing it needs
+either 13 genuinely dead RAILS files to pay `growth.rails` first, or an owner
+raising one ceiling in a commit that says what the lines buy.
+
+Two instrument errors while measuring that, both the same family and both worth
+not repeating. A dead-method census reported eleven methods with no caller; the
+first eight were predicates, where the `\b` after `Regexp.escape("fractional?")`
+demands a word character after the `?` — the fourth time `\b` next to
+punctuation has cost something here. The other three were reported dead because
+the lookbehind excluded `.`, so a method reached only as `receiver.name` read
+as unreachable. Eleven findings, zero real.
+
 ### One model nothing writes
 
 Found 2026-09-05 while giving the nine promiseless models their reason, and
