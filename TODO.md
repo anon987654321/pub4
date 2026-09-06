@@ -1869,11 +1869,14 @@ means deleting or renaming a statement that reaches the system prompt —
 `law/practice.rb` is where `soul.yml`'s absolutes live — so the fix belongs to
 whoever owns the constitution's wording.
 
-One thing found and left: `STIMULUS_CONTROLLER_SIZE` declares
+One thing found and fixed on the way: `STIMULUS_CONTROLLER_SIZE` declares
 `detect_structural: {max_lines: 200, path_pattern: "_controller\.js$"}` in the
-catalogue, and the registry rule hardcodes both. Inert config beside a reader
-that ignores it, which is this repo's dominant defect and invisible to
-`data_reach` because that census reads top-level keys.
+catalogue and the rule held both as literals — inert config beside a reader
+that ignores it, this repo's dominant defect, sitting inside the file that
+declares the hunt, and invisible to `data_reach` because that census reads
+top-level keys. The rule reads the declaration now. The declared pattern is
+Stimulus's own naming convention and so is narrower than the guess it
+replaces; measured before the change, both find the same four controllers.
 
 #### The three `growth.*` overages, itemised — 2026-09-06
 

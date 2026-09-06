@@ -30,6 +30,22 @@ module Master
           Master::Design::Thresholds
         end
 
+        # STIMULUS_CONTROLLER_SIZE's numbers are declared, not invented here:
+        # data/rules.yml carries `detect_structural: {max_lines: 200,
+        # path_pattern: "_controller\.js$"}` and this rule held both as literals,
+        # which is a declaration with no reader — the defect this repo hunts most
+        # often, sitting inside the file that declares the hunt. Read once per
+        # process: rules.yml is four thousand lines and load_rules memoizes
+        # nothing.
+        def stimulus_limits
+          @stimulus_limits ||= begin
+            entry = Master.flatten_rules(Master.load_rules(root: Master::ROOT).fetch("rules", {}))
+                          .find { |r| r["id"].to_s.upcase == "STIMULUS_CONTROLLER_SIZE" }
+            config = entry && entry["detect_structural"]
+            config.is_a?(Hash) ? config : {}
+          end
+        end
+
         RuleDSL.rule :NO_DECORATIVE_FX,
           severity: :warning, tags: %i[DESIGN AESTHETIC PIXEL], applies_to: CSS_LANGS, autofix: false,
           description: "flat UI — no blur, glow, or ornamental shadow",
@@ -644,11 +660,17 @@ module Master
           # boundary rather than a number far from it.
           fires: "export default class extends Controller {\n#{"  step();\n" * 199}}\n",
           does_not_fire: "export default class extends Controller {\n  connect() {}\n}\n" do |src, path:|
-          next [] unless path.to_s.match?(/controllers?.*\.js\z|stimulus/i) || path.to_s.include?("/javascript/")
+          limits = Rules.stimulus_limits
+          max = limits.fetch("max_lines", 200).to_i
+          # The declared pattern is Stimulus's own naming convention, so it is
+          # narrower than the guess it replaces and finds the same four files in
+          # the fleet — measured before the change.
+          next [] unless path.to_s.match?(Regexp.new(limits.fetch("path_pattern", '_controller\.js$')))
           next [] unless src.match?(/Controller\s+extends|export default class/)
+
           lines = src.lines.size
-          next [] if lines <= 200
-          [finding(line: 1, message: "Stimulus controller #{lines} lines — split at 200 (style.yml); move targets/actions out (progressive enhancement)")]
+          next [] if lines <= max
+          [finding(line: 1, message: "Stimulus controller #{lines} lines — split at #{max} (data/rules.yml); move targets/actions out (progressive enhancement)")]
         end
 
         RuleDSL.rule :STIMULUS_PROGRESSIVE,
