@@ -1,18 +1,28 @@
 # Transcendent TTS — emotion-aware multi-engine orchestration (MLX / Replicate).
 #
-# NOTHING RUNNING READS THIS. Voice::Speech has three consumers -- health_controller,
-# tts_controller and TtsJob -- and all three enter through
-# synthesize_streaming_to_file, which goes socket -> oneshot -> espeak and never
-# reaches Transcendent. The only door in is Speech.synthesize, whose only caller
-# is synthesize_audio, whose only caller is synthesize_bytes, which nothing calls.
-# So every key below, the engine chain included, is inert. See TODO.md
-# ("Transcendent TTS is unreached") before believing a value here describes
-# production, and MASTER/DECISIONS.md for why it is not simply wired up.
+# THIS FILE DECIDES HOW MASTER SOUNDS ON THE COMMAND LINE. Transcendent.load_config
+# reads it, `enabled` and `default_mode` are what Speech.synthesis_mode consults,
+# and Speech.synthesize hands the text to Transcendent.synthesize whenever that
+# mode comes back "transcendent" -- which is what `default_mode: transcendent`
+# below asks for. The path is Cli::Session::ResultDisplay -> Voice::Playback.speak
+# -> Playback.synthesize -> Speech.synthesize, so it runs on every spoken reply.
+# bin/tts-speak takes the same door directly, exporting MASTER_TTS_MODE=transcendent.
 #
-# The line this replaces claimed "Production overrides: OPENBSD/etc/rc.d/master
-# sets MASTER_TTS_MODE=classic". That variable is set nowhere -- not in the repo
-# rc.d, not in /etc/master.env on vm23 -- so the comment described a control that
-# did not exist, over a subsystem nothing reached.
+# The web half does not: health_controller, tts_controller and TtsJob all enter
+# through synthesize_streaming_to_file, which goes socket -> oneshot -> espeak and
+# never reaches Transcendent. MASTER/DECISIONS.md records why it is not simply
+# wired up. On OpenBSD, enabled alone forces transcendent mode and `engine_chain`
+# here is overridden by MASTER_TTS_ENGINE_CHAIN or Engines::OPENBSD_CHAIN, so the
+# chain below is the Mac's.
+#
+# The header this replaces said "NOTHING RUNNING READS THIS ... every key below,
+# the engine chain included, is inert", from a caller trace that stopped one frame
+# short of Playback. It was wrong in the direction that costs most: a reader was
+# told the file governs nothing, over the subsystem that speaks. Corrected
+# 2026-09-06 by tracing each caller. An older line above it claimed
+# "OPENBSD/etc/rc.d/master sets MASTER_TTS_MODE=classic", and rc.d sets no such
+# thing; the variable is read at speech.rb's synthesis_mode and offered,
+# commented out, in OPENBSD/etc/master.env.sample.
 transcendent:
   enabled: true
   default_mode: transcendent

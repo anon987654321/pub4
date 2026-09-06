@@ -779,27 +779,25 @@ themselves.
   `repo_topics` and `refusal_templates` have readers that the pattern missed,
   which is why `data_reach` is the instrument and grep is not.
 
-- `data/tts.yml` and the whole Transcendent path — **the web half stands; the
-  "1,500 unreached lines" does not, re-measured 2026-09-05.** What is still true
-  is the web: `Voice::Speech`'s three web consumers — `health_controller`,
-  `tts_controller`, `TtsJob` — all enter through `synthesize_streaming_to_file`,
-  which goes socket → oneshot → espeak and never reaches `Transcendent`. And the
-  tell that opened this is still the best example in the file: `data/tts.yml`
-  claimed `OPENBSD/etc/rc.d/master` sets `MASTER_TTS_MODE=classic`, and that
-  variable is set nowhere, in the repo or in `/etc/master.env` on vm23 — a
-  control that does not exist, described over a path nothing web-side reaches.
-  `DECISIONS.md` records why it is not simply wired to the streaming path.
+- `data/tts.yml` — **closed 2026-09-06, and it was inert in the other
+  direction.** The file's own header said "NOTHING RUNNING READS THIS … every
+  key below, the engine chain included, is inert", from a caller trace that
+  stopped one frame short of `Voice::Playback`. `Transcendent.load_config`
+  reads it, `enabled` and `default_mode` are what `Speech.synthesis_mode`
+  consults, and `Speech.synthesize` hands the text to `Transcendent.synthesize`
+  whenever that mode is transcendent — which is what the file asks for. The
+  path is `Cli::Session::ResultDisplay` → `Playback.speak` →
+  `Playback.synthesize` → `Speech.synthesize`, so it runs on every spoken CLI
+  reply. **A config that governs how MASTER sounds told its next reader it
+  governed nothing**, which is the same defect as an unread key and costs more.
 
-  What has changed is the conclusion. `Speech.synthesize`'s only caller is no
-  longer `synthesize_audio`: `Voice::Playback.synthesize` calls it with
-  `Policy.default_rate` and `default_pitch`, and `Playback.speak` is how
-  `Cli::Session::ResultDisplay` speaks every reply. `Transcendent.synthesize`
-  is `bin/tts-speak`'s only line. So the CLI's voice runs through exactly the
-  code this entry called unreached, and deleting "the Transcendent path" on the
-  strength of this paragraph would take MASTER's spoken reply with it.
-
-  `synthesize_bytes` is the part that survives the correction: tests call it,
-  nothing else does. One method, not a subsystem.
+  What stands: the web half never reaches it — `health_controller`,
+  `tts_controller` and `TtsJob` all enter through
+  `synthesize_streaming_to_file` (socket → oneshot → espeak), and
+  `DECISIONS.md` records why. On OpenBSD, `enabled` alone forces transcendent
+  mode and `engine_chain` is overridden by `MASTER_TTS_ENGINE_CHAIN` or
+  `Engines::OPENBSD_CHAIN`. `synthesize_bytes` is called by tests and nothing
+  else — one method, not a subsystem.
 
   **Do not use this entry as a source for the `lib/voice` budget.** A name-based
   census over `lib/voice` reports seven files with no `Voice::`-qualified
