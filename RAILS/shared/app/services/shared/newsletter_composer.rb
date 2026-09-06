@@ -31,7 +31,11 @@ module Shared
     def initialize(app_name: "Brgen", locale: "en", host: nil)
       @app_name = app_name
       @locale = locale
-      @host = host.presence
+# `presence` is ActiveSupport, and this class is written to run without
+# Rails: its own test requires the file directly, which is how the two
+# errors below stayed invisible — nothing ran it. A blank host is nil.
+host = host.to_s.strip
+@host = host.empty? ? nil : host
     end
 
     def daily(city_name:, stories:, hero: nil, cta_url: nil)
@@ -99,7 +103,8 @@ module Shared
     def edition_today
       return Time.zone.today if defined?(Time) && Time.respond_to?(:zone) && Time.zone
 
-      Date.current
+      # Date.current is ActiveSupport too, so the fallback needed the fallback.
+      Date.today
     end
 
     def read_attr(object, name)

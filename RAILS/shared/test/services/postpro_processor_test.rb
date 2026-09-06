@@ -9,7 +9,9 @@ class PostproProcessorTest < Minitest::Test
     with_env("PUB4_ROOT" => repo_root, "PUB4_RAILS_ROOT" => rails_root) do
       script = Shared::PostproProcessor.script
       assert script, "postpro script not found"
-      assert_includes script.to_s, "/studio/postpro/postpro.rb"
+      # STUDIO, not studio: the tree is upper case and has been since it was
+    # named. Nothing ran this file, so the assertion sat wrong instead of red.
+    assert_includes script.to_s, "/STUDIO/postpro/postpro.rb"
       assert File.file?(script), "expected postpro at #{script}"
     end
   end

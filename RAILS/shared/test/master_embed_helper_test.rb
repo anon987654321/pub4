@@ -18,9 +18,14 @@ class MasterEmbedHelperTest < ActionView::TestCase
     assert_match(%r{\Ahttps://ai\.example\.test\?}, url)
   end
 
-  def test_master_embed_title_falls_back
+  # Through the key, not the English literal behind it: `master.embed_heading`
+  # is translated ("AI-assistent" in nb), and the bare "AI" this asserted is the
+  # helper last resort for an app with no locale entry at all. The apps default
+  # to Norwegian, so asserting the literal made the translation a failure.
+  def test_master_embed_title_falls_back_to_the_translation
     @master_embed_title = nil
-    assert_equal "AI", master_embed_title
+    assert_equal I18n.t("master.embed_heading", default: I18n.t("master.title", default: "AI")),
+                 master_embed_title
   end
 
   def test_master_embed_title_uses_instance_variable
