@@ -2,7 +2,15 @@
 
 # A/B comparison renders from master-chain work; regenerate, do not track.
 full_track_*.wav
-full_track_*.wav.quality.json
+# Every render's quality sidecar, not only full_track's. loop.wav is ignored
+# twenty lines down and loop.wav.quality.json sat untracked beside it, which is
+# the rule below about sidecars, unapplied.
+*.wav.quality.json
+
+# Stem splits. A stems render writes <name>_stems/ beside the render: four wavs
+# at about 15 MB apiece plus their .dilla and session sidecars, 121 MB a split.
+# The render is not tracked, so its parts are not either.
+*_stems/
 
 # Audio is irreplaceable and does not belong in git. Source loops, vocal takes
 # and synthesised drums are on disk and backed up as files; a 4.1 GB .git is
