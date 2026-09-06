@@ -1247,144 +1247,31 @@ rather than inferred, and the command that measured it is named so the next
 reader can re-run it instead of re-deriving it. The cleanup that came out of the
 same sitting is `72a8cfae8`; what is here is what that commit did **not** close.
 
-#### `self_findings` counted the law and called it the tree — closed 2026-09-06
+#### `self_findings.registry`: 52 findings the tree owns
 
-Found while deciding whether the five unwritten autofix transforms had
-anything to fix. `self_findings` reported 0 findings for every one of them,
-and running two of the five by hand gives `DOUBLE_BRACKET` 180 and
-`EN_DASH_RANGE` 88. The ratchet was not wrong about its own population; it was
-answering a narrower question than its label. `scan_corpus` began `rules =
-law`, so the row called "what our own rules find in our own trees" was the 122
-laws over 2,890 files and nothing else. The 145 rules the RuleDSL registry
-builds were counted by nothing: `rule_audit` runs them over a sixth of the
-tree and measures blindness rather than findings, and `bin/pub4 gate` runs
-them over all four trees on every pass and records nothing.
+The row was opened 2026-09-06, when `self_findings` turned out to count the 122
+laws and call itself "what our own rules find in our own trees" — the 145 rules
+the registry builds were counted by nothing. It measures through
+`InfraHelpers.build_scanner` and `Scanner#findings` at error severity, over the
+same corpus as the law row, dropping ids that reach the scanner through
+`LawBridgeRule` so one fix moves one ratchet. `data/self_findings.yml` carries
+every finding with its file and line.
 
-Now two rows, from one tool and one baseline file:
+It opened at 108 and three passes took it to 52, and almost all of what fell
+was the instrument rather than the tree — `SQL_INJECTION` flagging the
+`quote_table_name` that is its own fix, `COMPLETION_THEATER` reading `/etc` as
+an abbreviation thirty times, `DEBUG_OUTPUT` reading dilla's `p < 0.5` phase
+local as a debug print. Each rule carries its own evidence now; the lesson is
+the one this file opens with.
 
-    self_findings.law         151 / 151
-    self_findings.registry    108 / 108
-
-Three decisions set the second number, and each one moves it:
-
-- **Through the scanner, not a harness.** The first measurement here said 221
-  at error severity, from a harness calling `rule.check` on every tracked
-  file. Through `InfraHelpers.build_scanner` and `Scanner#findings` it is 108:
-  `PathFilter` drops what nobody authored and each rule sees only the
-  languages it declares. The harness number was an upper bound on a question
-  nobody asked — the instrument-before-the-finding habit, paying again.
-- **Error severity only.** The same run reports 10,147 warnings and 7,997
-  info. A ceiling nobody can hold is decoration, and the warning half is the
-  scan noise this file already triages one entry at a time.
-- **The scanner's own rules only.** A law reaches the scanner through
-  `LawBridgeRule` under the law's own id, so fifteen `STRICT_MODE_ZSH`,
-  `NEVER_BATCH_DELETE`, `RATE_LIMITING_MISSING` and
-  `MIGRATION_ADD_REFERENCE_NO_FK` findings would have sat in both rows and one
-  fix would have moved two ratchets. A test asserts the two populations share
-  no rule.
-
-The row opened at 108 — `COMPLETION_THEATER` 40, `SILENT_RESCUE` 37,
-`NO_GOD_CLASS` 26, `SQL_INJECTION` 2, `ERB_HTML_SAFE` 2, `DEBUG_OUTPUT` 1 —
-and the first pass over it took it to **66** the same day. Both rules that
-fell were mostly instrument, which is what this repo's own habit predicts:
-
-- **`SQL_INJECTION` 2 to 0, and the rule is stronger.** Both findings were
-  `execute("... #{conn.quote_table_name(table)}")`. A bind parameter cannot be
-  an identifier, so quoting the identifier is the documented fix — the rule
-  was flagging the answer to its own question. It now spares an interpolation
-  that is nothing but one quoting call. While proving that, its concatenation
-  branch turned out to want a closed string before the `+` and never ask for
-  one: it read `execute("SELECT a + b FROM t")` as concatenation and missed
-  `execute("SELECT * FROM " + name)`, the shape it exists for. Both fixed, and
-  the rule can now carry its own worked example because it skips the directory
-  it lives in — `rule_fixture_debt` 30 to 29.
-- **`COMPLETION_THEATER` 40 to 0**, of which 30 were the instrument. `etc` is
-  a directory: `File.join(ROOT, "etc", "rc.d")`, `OPENBSD/{etc,usr,var}`,
-  `for d in etc usr var`, `"etc-pre-sync"`. A trailing comment is a comment,
-  though the rule skipped only lines that begin with one. And markdown is
-  prose, where "etc." is a word rather than work left undone. The remaining
-  ten were real and are reworded: four lines of `mov.sh` help text, a rake
-  `desc`, an ERB locals block, a documented token shape in two places, and the
-  one line that is genuinely a path list, which now says so with the marker
-  the framework advertises — `scan: intentional`, which this rule wrote its
-  own loop and so had never honoured.
-
-The second pass took it to **55**, and the eleven were all one shape: a
-`rescue StandardError` returning `nil`, `{}`, `[]` or `false` with nothing
-said. Each one made a failure look like an answer, and that is what the fixes
-say out loud on stderr:
-
-- `data_reach` could not parse a data file and counted every key in it as
-  read — the census that exists to find unread declarations reporting an
-  unreadable file as a clean one, in two copies of the same swallow. One
-  loader now, and it names `radio_bergen_track_dossiers.yml` on every run: the
-  file whose bare Ruby symbols `safe_load` refuses, already recorded below.
-- `domain_watch` returned an empty RDAP map, so every TLD went unresolvable
-  and the expiry report said nothing was wrong about domains it never asked
-  about. `OPENBSD/tools/tree.rb` reported a fleet with no apps when
-  `apps.yml` would not parse, and counted an unreadable file as a small one.
-- `RAILS/gates/runner.rb` skipped every browser gate silently when CDP was
-  unavailable, and a skipped gate reads green — the failure mode this repo has
-  already learned twice. `visual_contract` reported no console errors when it
-  could not read the console; `face_capture_probe` reported no renderer and no
-  frames, which is exactly what a page that drew nothing reports;
-  `locale_shadowing` applied a budget of zero ceilings when its budget file
-  would not load.
-
-A third pass took the row to **52** and the law row with it, 151 to 147, on
-three more instruments:
-
-- `DEBUG_OUTPUT` named `==` and `!=` as proof that a leading `p` is a local
-  variable and did not name `<` or `>`, so dilla's triangle oscillator —
-  `p < 0.5 ? (p * 4.0) - 1.0 : …`, where `p` is the phase — was an
-  error-severity finding. `p <expr>` parses as a comparison in every case.
-- `ERB_HTML_SAFE` had no opt-out, and the fix it names is wrong for one of
-  its two subjects: Rails' `sanitize` strips `svg` and `path`, so following
-  the advice on the 2FA QR code would render an empty box. It reads
-  `scan: intentional` from the file now, and that view carries the reason.
-  The other subject was redundant — a `_html` translation key is already
-  marked safe, so the `.html_safe` after it did nothing.
-- `BLANK_LINE_RUN` was reporting runs it had made itself. The law engine
-  blanks a comment to a bare newline to keep line numbers, so a four-line
-  `<%# … %>` block with one ordinary blank line above it arrives at the
-  detector as five blank lines. A whitespace law has to see the whitespace,
-  which is what `reads_comments true` gives it: three of its four findings
-  were the engine, and the fourth was a real double blank line, now one.
-
-What is left is two rules and fifty-two lines, each with its file and line in
-`data/self_findings.yml`, and both are real:
-
-- **`SILENT_RESCUE` 26**, every one of them in STUDIO and nineteen in dilla,
-  where a `rescue StandardError` around an optional gem call is load-bearing
-  for a render. Narrowing one on my own judgement is the change this repo's
-  own rules say not to make; this half wants dilla's owner.
-- **`NO_GOD_CLASS` 26** — more than ten public methods, or more than three
-  hundred code lines. `Conversation` 28, `User` 27, `Takeaway::Order` 26,
-  `Marketplace::Listing` 24, `GateResult` 22, `Marketplace::Order` 20,
-  `CdpSession` 19, `Item` and `Message` 18 apiece, dilla's `Matrix` 18, and
-  four gate files past three hundred lines led by `BergenDemoSeeder` at 834.
-  Nothing here is instrument: the rule counted correctly every time. It is
-  twenty-six separate decompositions in three trees, most of them in live
-  Rails models, and it is the largest single piece of design debt this row
-  has surfaced.
-
-**That is the forward work this row exists to make visible.**
-
-Two things the work uncovered, both fixed here:
-
-- `rule_dsl.rb` required fifteen rule files and not `law_bridge_rule`, so
-  `Rule.registry` held 144 rules in a fresh process and 145 after anything
-  built a scanner. Every census over the registry read whichever number its
-  load order produced — `rule_deps.ungraphed` 133 alone and 134 in the same
-  process as a scan. The require makes it 134 everywhere, and the ceiling
-  records that: the rule was always ungraphed, the audit just could not see
-  it. A `rule_deps` entry for `law_bridge` would order nothing in `RuleOrder`,
-  since it reports under each law's id, so it would exist only to make a count
-  fall.
-- Reading the baseline through a key name built from a prefix cost `data_reach`
-  a key: interpolation is not a reader, and the census that hunts inert config
-  was made blind by the reader written to serve two populations. Every key is
-  spelled out in `KEYS` now.
+**What is left is real, and it is two rules.** `SILENT_RESCUE` 26, every one in
+STUDIO and nineteen in dilla, where a `rescue StandardError` around an optional
+gem call is load-bearing for a render — narrowing one on my own judgement is
+the change this repo's own rules say not to make, so that half wants dilla's
+owner. `NO_GOD_CLASS` 26: more than ten public methods or more than three
+hundred code lines, led by `Conversation` 28, `User` 27, `Takeaway::Order` 26
+and `BergenDemoSeeder` at 834 lines. Nothing there is instrument; it is
+twenty-six decompositions in three trees, most of them live Rails models.
 
 #### The constitution's seven hooks — closed 2026-09-06
 
@@ -1820,63 +1707,25 @@ Two more rows joined the ratchets on 2026-09-05, both of them numbers that
 already existed and gated nothing: `rule_hygiene.cross_population_duplicates`
 (20) and `rule_deps.ungraphed` (133).
 
-#### `cross_population_duplicates` counted the architecture — closed 2026-09-06
+#### Three rules say one thing in `rules.yml` and another in `law/`
 
-The row read 20 and one of them was a duplicate. rules.yml is the catalogue,
-`law/` and the registry are the implementations, so an id appears in both by
-construction — and thirteen of the twenty were a `detect_semantic` prompt
-beside a lexical detector, which is one rule at two depths rather than two
-rules. `FAIL_VISIBLY` is the shape: the catalogue declares the prompt,
-`law/universal.rb` holds the detector, and the source, the severity and the
-fix are identical word for word. The count asked for one of the two to be
-deleted, and either deletion loses a tier of a kernel rule.
+`rule_hygiene.statement_conflicts`, opened 2026-09-06 when
+`cross_population_duplicates` turned out to be counting the architecture: an id
+lives in the catalogue and in its implementation by construction, and thirteen
+of the twenty it reported were a `detect_semantic` prompt beside a lexical
+detector, which is one rule at two depths. Eleven of the fourteen conflicts it
+found were a catalogue `fix` carrying an older draft of what its law enforces,
+and those now carry the law's wording; three severities moved the other way,
+to what the catalogue declares.
 
-A home is now a population that can fire: a law with a `detect` — not a
-`practice`, which states conduct and matches no line — a registry rule, or a
-catalogue entry carrying `detect_lexical`, which the YamlDeclarativeRule
-bridge runs. Measured that way it is **0**, and `FLAT_PIXELS` is why the
-practice exclusion is not a loophole: `law/practice.rb` states the flat-design
-principle and `surface_rules.rb` detects `imageSmoothingEnabled = true`, which
-is that principle and its one mechanical case, and the law says so in a
-comment written before this session.
-
-**What the old count was hiding is now a row of its own.**
-`rule_hygiene.statement_conflicts` asks whether the two files tell a reader
-different things, and read 14:
-
-- **Eleven were a catalogue `fix` carrying an older draft** of the instruction
-  its own law enforces. `MEANINGFUL_NAMES` said "use domain-specific names.
-  user_profile, error_message" where the law says "name it after what the
-  right-hand side already calls it, or after the domain"; `GUARD_EXPENSIVE_OPS`
-  had lost "scope the delete to a parent", which is the half a reader needs.
-  All eleven now carry the law's wording, by the resolution rule the duplicate
-  check has always stated: whichever population holds the detector owns it.
-- **Three were severity**, and those resolve the other way. This file is the
-  one that must carry a tier and a severity for every rule, so `ONE_SOURCE`
-  moved to the kernel `error` it is declared at (measured first: it finds
-  nothing in any of the four trees, so the severity is a promise about the
-  next collision rather than a new gate failure), and `PRIMITIVE_OBSESSION`
-  and `LAZY_CLASS` moved down to the `info` the catalogue declares.
-
-**The three left are the owner's call, not mine.** `BE_CONCISE`,
-`PRESERVE_FIRST` and `SIMPLEST_WORKS` each have a soul-derived `practice` in
-`law/practice.rb` that says something other than the kernel rule of the same
-name in `rules.yml`: the practice for `BE_CONCISE` is "minimal response" (a
-rule about the voice) against "omit needless words, omit needless code" (a
-rule about the source), and `SIMPLEST_WORKS`' practice is "refuse to create
-god classes", which is `NO_GOD_CLASS`' subject and severity. Resolving one
-means deleting or renaming a statement that reaches the system prompt —
-`law/practice.rb` is where `soul.yml`'s absolutes live — so the fix belongs to
-whoever owns the constitution's wording.
-
-One thing found and fixed on the way: `STIMULUS_CONTROLLER_SIZE` declares
-`detect_structural: {max_lines: 200, path_pattern: "_controller\.js$"}` in the
-catalogue and the rule held both as literals — inert config beside a reader
-that ignores it, this repo's dominant defect, sitting inside the file that
-declares the hunt, and invisible to `data_reach` because that census reads
-top-level keys. The rule reads the declaration now. The declared pattern is
-Stimulus's own naming convention and so is narrower than the guess it
-replaces; measured before the change, both find the same four controllers.
+**The three left are the constitution's wording, which is the owner's.**
+`BE_CONCISE`, `PRESERVE_FIRST` and `SIMPLEST_WORKS` each have a soul-derived
+`practice` in `law/practice.rb` saying something other than the kernel rule of
+the same name: `BE_CONCISE`'s practice is "minimal response", about the voice,
+against "omit needless words, omit needless code", about the source;
+`SIMPLEST_WORKS`' practice is "refuse to create god classes", which is
+`NO_GOD_CLASS`' subject and severity. Resolving one deletes or renames a
+statement that reaches the system prompt.
 
 #### The three `growth.*` overages, itemised — 2026-09-06
 
@@ -2087,84 +1936,19 @@ findings with path and line, and the task prints that summary once.
 flags `\b` glued to escaped punctuation. Currently clean.
 
 **7. Every registry rule proves it can fire — closed 2026-09-06, 91 to 0.**
-`law/` refuses to load a rule without worked fixtures; the registry accepts one
-without. The forward half was already closed and this entry did not say so:
-`test_rule_fixtures.rb` fails when the unfixtured count rises, so a new RuleDSL
-rule must carry `fires:`/`does_not_fire:`. What was missing is that the number
-was slack-tolerant — the test only printed "record the new low" — so it is a
-ratchet row now, `rule_fixture_debt`, and `bin/pub4 measure` carries it.
+`law/` has always refused to load a rule without worked fixtures and the
+registry accepted one without; `rule_fixture_debt` is the row that closed the
+gap, and `test_rule_fixtures.rb` fails when the count rises, so a new RuleDSL
+rule must carry `fires:`/`does_not_fire:`.
 
-Fifteen retro-fitted on 2026-09-05, 91 -> 76: NO_DEBUG, NO_PUTS, FROZEN_LITERAL,
-LONG_LINE, TODO_FIXME, RESCUE_EXCEPTION, TRAILING_COMMENT, FIND_EACH,
-NO_UPDATE_ATTRIBUTE, PLUCK_OVER_MAP, DEAD_CODE, HTML_LANG, IMG_ALT, LAZY_IMAGES,
-NO_TODO_IN_VIEWS. Each `does_not_fire` states the rule's own distinction rather
-than restating its regex, which is the half that catches drift: TODO_FIXME's is
-a line naming `TODO.md`, DEAD_CODE's is a guard clause, PLUCK_OVER_MAP's is the
-`pluck` it recommends.
-
-Twenty-nine more on the same day, 76 -> 47: the twelve web rules, six JS and
-shell rules, and ten universal ones. `DEFAULT_PATHS` gained `javascript` and
-`zsh` for the same reason it gained `html` — those are what `applies_to`
-declares, and `js` is not a language any rule names. Two of the twenty-nine are
-worth keeping: TYPOGRAPHIC_EXCELLENCE's first draft did not fire, because the
-rule reads a bare quoted ellipsis and `warn "loading..."` is prose containing
-dots; and CONTROL_CHARS is fixtured with a unicode escape rather than a literal
-byte, after the first attempt wrote the byte into the file whose own comment
-promises it carries none, and a second slip wrote one into `data/rules.yml`
-where Psych then refused the whole rule corpus. SQL_INJECTION stays unfixtured
-on purpose — its example is an interpolated `.execute(` call, and the rule has
-neither a self-exemption nor a marker, so the example would be a live
-error-severity finding in the rule file. The 59 lines all this costs land on
-`lib/review`, which was already over budget.
-
-Seventeen more on 2026-09-06, 47 -> 30: seven cosmetic, three ruby, two lexical
-and five of `surface_rules`' twenty-nine. Three needed a spelled `example_path`
-for one reason — they guard on the path rather than the source, so the generic
-Ruby model path could not reach them. `EN_DASH_RANGE` skips `.rb` outright,
-`README_PROSE` wants a file named README.md, `DEBUG_OUTPUT` wants `/lib/`. A
-rule that cannot fire on its own example is what this ratchet is for, and it
-found three more.
-
-The last 30 the same day, 30 to 0. Twenty-four were `surface_rules`' — the
-design and Rails-convention half, which had never had an example at all — and
-two of them found real defects while being written, which is the argument for
-the ratchet in one line each. `CHOICE_OVERLOAD` read the opening tag by
-searching backwards for `<` from the body's first character, and `rindex`
-answers with that character, so a body opening `<li>` made every plain `<ul>`
-look like a `<li>` and skipped the exemption that keeps the rule off search
-results. `SCSS_NESTING_DEPTH` measures depth at each line's end, so five levels
-written on one line read zero.
-
-**The claim that three rules could not hold their own example was wrong, and
-it was the fixture's shape rather than the rule's.** `SILENT_RESCUE` reads a
-line that *starts* with `rescue`; an example spelled as an escaped one-line
-string — `"begin\n  risky\nrescue StandardError\n  nil\nend\n"` — is a worked
-example everywhere and a finding nowhere, including in the file that defines
-it, which still carries no path exemption. `NARROW_SILENT_RESCUE` is the same,
-and `SQL_INJECTION` was closed from the other end by skipping the rules
-directory. Two entries in this file and two in `rule_ratchets` said the thing
-was impossible; it took one line of string escaping.
-
-`PARAMETERIZED_SLUG` and `RUNTIME_DOCS_YAML` carry a positive example and no
-negative one, which is the honest maximum: both judge the path rather than the
-source, and the harness gives a rule one path.
-
-The last thirty cost 67 body lines, all of them in `lib/review`, and
-`spine.lib_body_ceiling` carries them the way it carried the first 59. That is
-the trade this ratchet has made from the start: a rule that cannot fire on its
-own example is worth more than a line of budget.
-
-Two things the earlier retro-fit turned up. The harness had no `html` entry in
-`DEFAULT_PATHS`, so every web rule's example landed at a Ruby model path and a
-rule guarded by `path.include?("/app/views/")` could not fire on its own fixture.
-And a `fires:` string is source: RESCUE_EXCEPTION's made FAIL_VISIBLY fire on
-this file, and the `scan: intentional` marker has to sit on the matching line
-rather than in the comment above it.
-
-The cost this closes is the ambiguity: `rule_audit` reports 24 rules firing on
-nothing and cannot say whether the tree is clean or the detector is blind. **A
-rule that carries one source it must flag answers that at load time**,
-permanently, for every future reader.
+Two lessons are worth keeping, and both are in the rules themselves. A fixture
+that passes for the wrong reason is what this ratchet exists to stop —
+`TYPOGRAPHIC_EXCELLENCE`'s first draft, `warn "loading..."`, did not fire,
+because the rule reads a bare quoted ellipsis and that is prose containing
+dots. And a rule whose subject is a forbidden shape can still hold its own
+example: `SILENT_RESCUE` reads a line that *starts* with `rescue`, so an
+escaped one-line string is a worked example everywhere and a finding nowhere.
+This file twice recorded that as impossible.
 
 **8. One class per rule file — documented.** `AGENTS.md` now says
 `require "review/scan/rule_dsl"` is the load that defines a class in a
