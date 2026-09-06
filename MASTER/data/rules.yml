@@ -4285,7 +4285,16 @@ rule_ratchets:
     # A rule outside the graph is one RuleOrder cannot sequence: it runs wherever
     # it lands, and a rule meant to follow another (PRIMITIVE_OBSESSION after
     # DATA_CLUMPS) is only ordered because the graph says so. Down only.
-    ungraphed: 133
+    #
+    # 133 -> 134 on 2026-09-06, and the extra rule is one the audit could not
+    # see. rule_dsl.rb required fifteen rule files and not law_bridge_rule, so
+    # LawBridgeRule joined the registry only when InfraHelpers built a scanner
+    # and const_get loaded it — the audit read 133 alone and 134 after any run
+    # that scanned anything. The require closes that, and the number it
+    # uncovers belongs in the debt rather than in a graph entry: law_bridge
+    # reports each law under the law's own id, so a rule_deps key for it would
+    # order nothing in RuleOrder and exist only to make this count fall.
+    ungraphed: 134
 
   reach:
     # 56 -> 70 on 2026-09-05, and the rise is the point rather than a cost.

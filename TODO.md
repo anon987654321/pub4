@@ -1247,43 +1247,65 @@ rather than inferred, and the command that measured it is named so the next
 reader can re-run it instead of re-deriving it. The cleanup that came out of the
 same sitting is `72a8cfae8`; what is here is what that commit did **not** close.
 
-#### `self_findings` counts the law and calls it the tree
+#### `self_findings` counted the law and called it the tree — closed 2026-09-06
 
-Found 2026-09-06 while deciding whether the five unwritten autofix transforms
-had anything to fix. `self_findings` reported 0 findings for every one of them,
-and running two of the five by hand over the tracked tree gives
-`DOUBLE_BRACKET` 180 and `EN_DASH_RANGE` 88. The ratchet was not wrong about
-its own population; it was answering a narrower question than its label.
+Found while deciding whether the five unwritten autofix transforms had
+anything to fix. `self_findings` reported 0 findings for every one of them,
+and running two of the five by hand gives `DOUBLE_BRACKET` 180 and
+`EN_DASH_RANGE` 88. The ratchet was not wrong about its own population; it was
+answering a narrower question than its label. `scan_corpus` began `rules =
+law`, so the row called "what our own rules find in our own trees" was the 122
+laws over 2,890 files and nothing else. The 145 rules the RuleDSL registry
+builds were counted by nothing: `rule_audit` runs them over a sixth of the
+tree and measures blindness rather than findings, and `bin/pub4 gate` runs
+them over all four trees on every pass and records nothing.
 
-`SelfFindings.scan_corpus` starts `rules = law`, so it runs the 122 rules in
-`law/` over 2,898 files in four trees. The 140 in the RuleDSL registry are not
-in it. Its row reads "what our own rules find in our own trees", and it is
-what the law finds.
+Now two rows, from one tool and one baseline file:
 
-Nothing scans with the registry and records a number. The pieces that exist
-each answer something else: `rule_audit` runs the registry but over MASTER/lib,
-MASTER/law, RAILS/shared and a little web JS — 698 files — and measures
-blindness, saturation and silence rather than a count; `constitutional_scan`
-runs the scanner over the three RAILS apps with a per-app ceiling;
-`bin/pub4 gate`'s lexical stage runs law **and** the registry over all four
-trees on every run, autofixing, and records nothing.
+    self_findings.law         151 / 151
+    self_findings.registry    108 / 108
 
-A first measurement, and read the caveat before quoting it: **221 findings at
-error severity and 20,438 at warning**, from a harness that calls each registry
-rule directly on every tracked source file. That harness has no `PathFilter`
-and none of the scanner's routing, so both numbers are upper bounds. The shape
-is the part worth keeping, and it is the argument for the row:
+Three decisions set the second number, and each one moves it:
 
-    MASTER    error 78   warning 7798
-    RAILS     error 58   warning 5921
-    STUDIO    error 48   warning 5419
-    OPENBSD   error 34   warning  947
+- **Through the scanner, not a harness.** The first measurement here said 221
+  at error severity, from a harness calling `rule.check` on every tracked
+  file. Through `InfraHelpers.build_scanner` and `Scanner#findings` it is 108:
+  `PathFilter` drops what nobody authored and each rule sees only the
+  languages it declares. The harness number was an upper bound on a question
+  nobody asked — the instrument-before-the-finding habit, paying again.
+- **Error severity only.** The same run reports 10,147 warnings and 7,997
+  info. A ceiling nobody can hold is decoration, and the warning half is the
+  scan noise this file already triages one entry at a time.
+- **The scanner's own rules only.** A law reaches the scanner through
+  `LawBridgeRule` under the law's own id, so fifteen `STRICT_MODE_ZSH`,
+  `NEVER_BATCH_DELETE`, `RATE_LIMITING_MISSING` and
+  `MIGRATION_ADD_REFERENCE_NO_FK` findings would have sat in both rows and one
+  fix would have moved two ratchets. A test asserts the two populations share
+  no rule.
 
-221 is a ceiling somebody could hold. 20,438 is not, and pretending otherwise
-is how a ratchet becomes decoration — the warning half is the info-noise this
-file's own scanner-noise entries already triage. The work is a
-`self_findings.registry` row at error severity, measured through
-`Scanner#findings` rather than through a harness, starting where the tree is.
+What the 108 are: `COMPLETION_THEATER` 40, `SILENT_RESCUE` 37, `NO_GOD_CLASS`
+26, `SQL_INJECTION` 2, `ERB_HTML_SAFE` 2, `DEBUG_OUTPUT` 1 — every one with
+its file and line in `data/self_findings.yml`, so the next rise is
+attributable without diffing two runs by hand. Almost none of it is MASTER: 4
+in MASTER, 46 in RAILS, 38 in STUDIO, 35 in OPENBSD. **That is the forward
+work this row exists to make visible**, and the two `SQL_INJECTION` findings
+are where to start.
+
+Two things the work uncovered, both fixed here:
+
+- `rule_dsl.rb` required fifteen rule files and not `law_bridge_rule`, so
+  `Rule.registry` held 144 rules in a fresh process and 145 after anything
+  built a scanner. Every census over the registry read whichever number its
+  load order produced — `rule_deps.ungraphed` 133 alone and 134 in the same
+  process as a scan. The require makes it 134 everywhere, and the ceiling
+  records that: the rule was always ungraphed, the audit just could not see
+  it. A `rule_deps` entry for `law_bridge` would order nothing in `RuleOrder`,
+  since it reports under each law's id, so it would exist only to make a count
+  fall.
+- Reading the baseline through a key name built from a prefix cost `data_reach`
+  a key: interpolation is not a reader, and the census that hunts inert config
+  was made blind by the reader written to serve two populations. Every key is
+  spelled out in `KEYS` now.
 
 #### The constitution's seven hooks — closed 2026-09-06
 

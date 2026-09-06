@@ -143,9 +143,19 @@ module Pub4
          audit = Master::Review::Scan::RuleRegistryAudit.new(root: MASTER)
          [audit.ungraphed_rule_ids.size, Master.law("rule_ratchets", root: MASTER).dig("deps", "ungraphed")]
        end,
-       master_row("self_findings", "data/self_findings.yml", "what our own rules find in our own trees") do
+       master_row("self_findings.law", "data/self_findings.yml", "what the 122 laws find in our own trees") do
          require File.join(MASTER, "tools/self_findings")
          [Pub4::SelfFindings.by_rule.values.sum, Pub4::SelfFindings.ceiling]
+       end,
+       # The second population. The row above read "what our own rules find in
+       # our own trees" and counted the law alone, so nothing in this repo
+       # counted the 145 rules the scanner builds: rule_audit runs them over a
+       # sixth of the tree and measures blindness, and bin/pub4 gate runs them
+       # over all four trees and records nothing.
+       master_row("self_findings.registry", "data/self_findings.yml",
+                  "what the scanner's own rules find, at error severity") do
+         require File.join(MASTER, "tools/self_findings")
+         [Pub4::SelfFindings.registry_by_rule.values.sum, Pub4::SelfFindings.registry_ceiling]
        end,
        master_row("dup_census", "data/dup_census.yml", "tracked files existing twice") do
          require File.join(MASTER, "tools/dup_census")

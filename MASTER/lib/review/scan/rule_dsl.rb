@@ -79,5 +79,12 @@ require_relative "rules/graph_rules"
 require_relative "rules/yaml_bridge_rules"
 require_relative "rules/naming_rules"
 require_relative "rules/meta_rules"
+# The registry is what these requires load, and this one was missing: nothing
+# reached law_bridge_rule until InfraHelpers const_get'd it while building a
+# scanner, so `Rule.registry` held 144 rules in a fresh process and 145 after
+# anything scanned. Every census over the registry read whichever number its
+# load order happened to produce — rule_deps.ungraphed 133 alone and 134 under
+# a run that had scanned.
+require_relative "rules/law_bridge_rule"
 require_relative "infra_helpers"
 require_relative "rule_registry_audit"

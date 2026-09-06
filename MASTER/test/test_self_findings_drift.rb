@@ -86,4 +86,69 @@ class TestSelfFindingsDrift < Minitest::Test
       assert_match(/no rule moved/, out)
     end
   end
+
+  # The second population, added 2026-09-06. The row above called itself "what
+  # our own rules find in our own trees" and counted the law alone, so nothing
+  # counted the 145 rules the scanner builds. Both baselines live in one file,
+  # the registry's under a prefix, so every reader here is the same reader with
+  # an argument.
+  def test_the_registry_total_is_read_from_its_own_key
+    with_baseline({ "findings" => 151, "registry_findings" => 108 }) do
+      assert_equal 108, Tool.registry_ceiling
+      assert_equal 151, Tool.ceiling, "the registry key displaced the law's"
+    end
+  end
+
+  def test_registry_attribution_is_read_from_the_prefixed_keys
+    baseline = { "findings" => 1, "by_rule" => { "GUARD_CLAUSE" => 1 },
+                 "registry_findings" => 2, "registry_by_rule" => { "SILENT_RESCUE" => 2 },
+                 "registry_finding_members" => ["SILENT_RESCUE a.rb:1", "SILENT_RESCUE b.rb:2"] }
+    with_baseline(baseline) do
+      assert_equal({ "SILENT_RESCUE" => 2 }, Tool.recorded_by_rule("registry"))
+      assert_equal 2, Tool.recorded_members("registry").size
+      assert_equal({ "GUARD_CLAUSE" => 1 }, Tool.recorded_by_rule)
+      assert_empty Tool.recorded_members
+    end
+  end
+
+  # A ratchet run rewrites this file, and most of it is prose recording what
+  # each past move cost somebody. The dup_census ceiling lost thirty lines of
+  # history to a bare to_yaml dump; this is the assertion that keeps it.
+  def test_recording_keeps_the_prose_and_writes_both_populations
+    Dir.mktmpdir("self_findings") do |dir|
+      path = File.join(dir, "self_findings.yml")
+      File.write(path, "---\n# why the number is what it is\nfindings: 9\nby_rule:\n  OLD: 9\n")
+      swap_ceiling(path) do
+        Tool.stub(:members, ["GUARD_CLAUSE a.rb:1"]) do
+          Tool.stub(:registry_members, ["SILENT_RESCUE b.rb:2"]) do
+            File.write(path, Tool.rewritten_ceiling)
+          end
+        end
+      end
+
+      written = File.read(path)
+      recorded = YAML.safe_load(written)
+
+      assert_includes written, "# why the number is what it is"
+      assert_equal 1, recorded["findings"]
+      assert_equal 1, recorded["registry_findings"]
+      assert_equal({ "SILENT_RESCUE" => 1 }, recorded["registry_by_rule"])
+      assert_equal ["SILENT_RESCUE b.rb:2"], recorded["registry_finding_members"]
+      refute_includes recorded.keys, "OLD"
+    end
+  end
+
+  # The two rows must not count the same finding twice. A law reaches the
+  # scanner through LawBridgeRule and reports under its own id, so a registry
+  # census that kept those ids would move both ratchets on one fix — fifteen
+  # findings on the day the row was written. Asserted against the recorded
+  # baseline rather than a live scan, which is a minute of measurement.
+  def test_the_two_populations_share_no_rule
+    law_ids = Tool.law.keys.map(&:to_s)
+    registry_ids = Tool.recorded_by_rule("registry").keys
+
+    refute_empty registry_ids, "the registry baseline records no rules"
+    assert_empty registry_ids & law_ids,
+                 "a law's findings are counted in both rows; one fix would move two ratchets"
+  end
 end

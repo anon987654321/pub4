@@ -3,14 +3,25 @@
 # What MASTER's own rules find in MASTER's own tree.
 #
 # The question "would running MASTER through its own rules make it tidier" has a
-# number, and this is it. Every rule with a lexical detector, over every tracked
-# Ruby file in the four trees.
+# number, and this is it. Two numbers, because this repo has two populations of
+# rules and for a year only one of them was counted:
+#
+#   law       the 122 rules in law/ with a lexical detector, applied to every
+#             tracked source file in the four trees
+#   registry  the 145 rules the RuleDSL registry builds, run through the
+#             scanner itself and kept at error severity
+#
+# The second row arrived 2026-09-06. The first had been labelled "what our own
+# rules find in our own trees" while measuring the law alone, and nothing
+# anywhere counted what the registry finds: rule_audit runs those rules over a
+# sixth of the tree and measures blindness rather than findings, and `bin/pub4
+# gate` runs them over all four trees on every pass and records nothing.
 #
 # Lexical only, on purpose. The full gate runs /scan with the semantic pass and
 # blocks on a model call — measured 2026-08-25 at 17 minutes elapsed against 4
 # minutes of CPU, idle in a TLS read, on its way to a 20-minute stage timeout.
-# A number that needs a network and an API key is a number nobody has. These 70
-# rules need neither and finish in about a minute.
+# A number that needs a network and an API key is a number nobody has. Both
+# populations here need neither and finish in about two minutes.
 #
 #   ruby MASTER/tools/self_findings.rb
 #   ruby MASTER/tools/self_findings.rb --json
@@ -110,10 +121,14 @@ Master::Review::Scan::SourceMasking.without_foreign_heredocs(base)
 
     # Counted from the members rather than tallied alongside them, so the
     # summary and the attribution list can never disagree about a number.
-    def by_rule
-      members.each_with_object(Hash.new(0)) { |member, counts| counts[member.split(" ", 2).first] += 1 }
+    def tally(current)
+      current.each_with_object(Hash.new(0)) { |member, counts| counts[member.split(" ", 2).first] += 1 }
              .sort_by { |_, n| -n }.to_h
     end
+
+    def by_rule = tally(members)
+
+    def registry_by_rule = tally(registry_members)
 
     # The members behind the count, `RULE path:line`, one per finding.
     # Memoized for the same reason `files` is, and it matters more here: the
@@ -161,9 +176,76 @@ Master::Review::Scan::SourceMasking.without_foreign_heredocs(base)
       found.sort
     end
 
+    # The other population, and three decisions that each change its number.
+    #
+    # Through the scanner, not by hand. A harness calling `rule.check` on every
+    # tracked file read 221 findings at error severity where the scanner reads
+    # 108, because the scanner routes: PathFilter drops what nobody authored and
+    # each rule sees only the languages it declares. The harness number was an
+    # upper bound on a question nobody asked.
+    #
+    # Error severity only. The same run reports 10,147 warnings and 7,997 info.
+    # A ceiling nobody can hold is decoration, and the warning half is the
+    # scan-noise TODO.md already triages one entry at a time.
+    #
+    # The scanner's own rules only. A law reaches the scanner through
+    # LawBridgeRule and reports under its own id, so the STRICT_MODE_ZSH,
+    # NEVER_BATCH_DELETE, RATE_LIMITING_MISSING and MIGRATION_ADD_REFERENCE_NO_FK
+    # findings the scan returns are already members of the law row above —
+    # fifteen of them, and one fix would have moved two ratchets. Keeping only
+    # ids the scanner carries as rules of its own leaves each finding counted
+    # once.
+    def registry_members
+      @registry_members ||= scan_registry
+    end
+
+    # Built the way every other caller builds it, and the way tools/example_scan.rb
+    # documents: InfraHelpers, then `findings`. There is no scan_file.
+    def scan_registry
+      law # loads Master, as scan_corpus does
+      scanner = Master::Review::Scan::InfraHelpers.build_scanner(root: MASTER_DIR)
+      own = scanner.rules.select { |rule| shipped?(rule) }.map { |rule| rule.id.to_s }
+      @registry_rule_count = own.size
+      corpus = files.reject { |path| Master::Review::Scan::Scanner.skip_path?(path, root: ROOT) }
+      scanner.findings(corpus, depth: :deep).filter_map do |hit|
+        next unless hit[:severity].to_s == "error" && own.include?(hit[:rule].to_s)
+
+        "#{hit[:rule]} #{hit[:path].to_s.delete_prefix("#{ROOT}/")}:#{hit[:line]}"
+      end.sort
+    end
+
+    # `Rule.inherited` registers every subclass in the running process, so a
+    # suite that defines one joins the population it is measuring — the trap
+    # rule_deps.ungraphed hit first, reading two different numbers depending on
+    # whether a test had defined a rule. RuleRegistryAudit already owns the
+    # question, so this asks it rather than carrying a second answer.
+    def shipped?(rule)
+      @audit ||= Master::Review::Scan::RuleRegistryAudit.new(root: MASTER_DIR)
+      @audit.shipped?(rule.class)
+    end
+
+    def registry_rule_count
+      registry_members
+      @registry_rule_count
+    end
+
     def recorded = YAML.safe_load_file(CEILING) || {}
 
-    def ceiling = recorded.fetch("findings")
+    # Both populations record the same three things and one file holds them
+    # both. Every key is spelled here rather than built from a prefix, because
+    # data_reach reads the tree for the literal key name: one pass of
+    # `"#{prefix}finding_members"` made finding_members look like a key nothing
+    # reads, which is the inert-config shape this repo hunts — introduced by the
+    # reader written to serve two populations.
+    KEYS = {
+      "law" => { total: "findings", by_rule: "by_rule", members: "finding_members" },
+      "registry" => { total: "registry_findings", by_rule: "registry_by_rule",
+                      members: "registry_finding_members" },
+    }.freeze
+
+    def ceiling(name = "law") = recorded.fetch(KEYS.fetch(name)[:total])
+
+    def registry_ceiling = ceiling("registry")
 
     # Two attributions, because they answer different questions and both were
     # wanted on the same day. `by_rule` says which rules moved and by how much,
@@ -174,13 +256,15 @@ Master::Review::Scan::SourceMasking.without_foreign_heredocs(base)
     #
     # Absent, attribution is unavailable and the report says so rather than
     # reporting no movement — a different claim.
-    def recorded_by_rule = recorded["by_rule"].is_a?(Hash) ? recorded["by_rule"] : {}
+    def recorded_by_rule(name = "law")
+      known = recorded[KEYS.fetch(name)[:by_rule]]
+      known.is_a?(Hash) ? known : {}
+    end
 
-    def recorded_members = Array(recorded["finding_members"])
+    def recorded_members(name = "law") = Array(recorded[KEYS.fetch(name)[:members]])
 
     # Which rules moved since the baseline, and by how much.
-    def report_drift(counts)
-      known = recorded_by_rule
+    def report_drift(counts, known = recorded_by_rule)
       if known.empty?
         puts "self_findings: no by_rule recorded with the baseline — run --ratchet at or below it to make the next rise attributable"
         return
@@ -197,59 +281,93 @@ Master::Review::Scan::SourceMasking.without_foreign_heredocs(base)
     end
 
     # Which lines arrived and which left.
-    def report_delta(current)
-      if recorded_members.empty?
+    def report_delta(current, known = recorded_members)
+      if known.empty?
         puts "self_findings: no members recorded — line attribution unavailable; run --ratchet to seed it"
         return
       end
 
-      arrived = current - recorded_members
-      left = recorded_members - current
+      arrived = current - known
+      left = known - current
       puts "self_findings: #{arrived.size} arrived, #{left.size} left"
       arrived.each { |member| puts "  + #{member}" }
       left.each { |member| puts "  - #{member}" }
     end
 
+    POPULATIONS = KEYS.keys.freeze
+
+    def population(name) = name == "law" ? members : registry_members
+
+    def rules_behind(name) = name == "law" ? law.size : registry_rule_count
+
+    # Both populations are measured on every run, whatever the arguments. One
+    # file holds both baselines, so a run that measured one of them and wrote
+    # would put the other's last number back as if it were today's.
     def run(json: false, ratchet: false)
-      current = members
-      counts = by_rule
-      total = current.size
-      return (puts JSON.pretty_generate(total: total, by_rule: counts)) || true if json
+      return json_report if json
 
-      puts "self_findings: #{total} across #{files.size} files from #{law.size} rules"
-      counts.first(10).each { |id, n| puts format("  %-26s %5d", id, n) }
-      over = total > ceiling
-      # <=, not <, so a census sitting exactly at its ceiling can record its
-      # attribution without having to fall first — the same reason data_reach
-      # seeds at parity. A census already over cannot: a baseline containing the
+      over = POPULATIONS.reject { |name| report(name) }
+      # A census sitting exactly at its ceiling can still record its
+      # attribution, without having to fall first — the same reason data_reach
+      # seeds at parity. One already over cannot: a baseline containing the
       # overage would report it as known and hide exactly what is wanted.
-      if ratchet && !over
-        # Read before the write: `ceiling` re-reads the file, so asking after
-        # writing always answers with the number just written, and every fall
-        # reports itself as a re-record.
-        previous = ceiling
-        File.write(CEILING, rewritten_ceiling(total, counts, current))
-        puts "self_findings: #{total < previous ? "recorded #{total} as the new low" : "re-recorded #{total}"}, with its rules and its members"
-        return true
-      end
+      return record if ratchet && over.empty?
 
-      if over
-        warn "self_findings: exceeds baseline — #{total} > #{ceiling}"
-        report_drift(counts)
-        report_delta(current)
+      over.empty?
+    end
+
+    def json_report
+      puts JSON.pretty_generate(POPULATIONS.to_h { |name|
+        [name, { total: population(name).size, by_rule: tally(population(name)) }]
+      })
+      true
+    end
+
+    # One population's line, its ten loudest rules, and — only when it is over —
+    # which rules moved and which lines arrived.
+    def report(name)
+      current = population(name)
+      counts = tally(current)
+      puts "self_findings #{name}: #{current.size} across #{files.size} files from #{rules_behind(name)} rules"
+      counts.first(10).each { |id, n| puts format("  %-26s %5d", id, n) }
+      return true unless current.size > ceiling(name)
+
+      warn "self_findings #{name}: exceeds baseline — #{current.size} > #{ceiling(name)}"
+      report_drift(counts, recorded_by_rule(name))
+      report_delta(current, recorded_members(name))
+      false
+    end
+
+    def record
+      # Read before the write: `ceiling` re-reads the file, so asking after
+      # writing always answers with the number just written, and every fall
+      # reports itself as a re-record.
+      previous = POPULATIONS.to_h { |name| [name, ceiling(name)] }
+      File.write(CEILING, rewritten_ceiling)
+      POPULATIONS.each do |name|
+        total = population(name).size
+        moved = total < previous.fetch(name) ? "recorded #{total} as the new low" : "re-recorded #{total}"
+        puts "self_findings #{name}: #{moved}, with its rules and its members"
       end
-      !over
+      true
     end
 
     # The prose above `findings:` is most of this file and records what each past
     # move cost somebody, so it is preserved rather than regenerated. A bare
     # to_yaml dump of the ceiling eats all of it, which is how the dup_census
     # ceiling lost thirty lines of history the first time it recorded members.
-    def rewritten_ceiling(total, counts, current)
-      prose = File.read(CEILING).sub(/^findings: .*\n(?:by_rule:\n(?:  \S+: \d+\n)*)?(?:finding_members:\n(?:  - .*\n)*)?\z/, "")
-      by_rule = counts.sort.to_h.map { |id, n| "  #{id}: #{n}\n" }.join
-      members = current.map { |m| "  - #{m}\n" }.join
-      "#{prose}findings: #{total}\nby_rule:\n#{by_rule}finding_members:\n#{members}"
+    def rewritten_ceiling
+      prose = File.read(CEILING).split(/^findings: /, 2).first
+      prose + POPULATIONS.map { |name| recorded_block(name, population(name)) }.join
+    end
+
+    # One population's three keys: the number, the rules behind it, and the
+    # lines behind those.
+    def recorded_block(name, current)
+      keys = KEYS.fetch(name)
+      by_rule = tally(current).sort.to_h.map { |id, n| "  #{id}: #{n}\n" }.join
+      "#{keys[:total]}: #{current.size}\n#{keys[:by_rule]}:\n#{by_rule}" \
+        "#{keys[:members]}:\n#{current.map { |member| "  - #{member}\n" }.join}"
     end
   end
 end

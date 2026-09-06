@@ -37,6 +37,24 @@
 # scanner. The remaining fifteen are mechanical and behaviour-identical:
 # symbol-to-proc, safe navigation, two numeric literals, and seven runs of
 # alignment spaces in STUDIO/dilla.
+#
+# The registry_ keys are the second population, added 2026-09-06. Everything
+# above this line is the law: 122 rules in law/, applied file by file. The
+# RuleDSL registry is 145 more rules, and nothing in this repo counted what they
+# find — the row was labelled "what our own rules find in our own trees" and was
+# the law's number alone.
+#
+# The registry number comes through the scanner rather than through a harness,
+# and the difference is large: calling each rule directly on every tracked file
+# reads 221 at error severity, the scanner reads 108. PathFilter drops what
+# nobody authored and each rule sees only the languages it declares, so the
+# harness figure was an upper bound on a question nobody asked.
+#
+# Error severity only. The same run reports 10,147 warnings and 7,997 info, and
+# a ceiling nobody can hold is decoration. The two rows do not overlap: a law
+# reaches the scanner through LawBridgeRule under its own id, and those fifteen
+# findings are dropped from the registry count because they are already members
+# above.
 findings: 151
 by_rule:
   BARE_DIV_WRAPPER: 2
@@ -213,3 +231,120 @@ finding_members:
   - USE_THEN RAILS/shared/app/controllers/omniauth_callbacks_controller.rb:1
   - USE_THEN RAILS/shared/app/services/shared/newsletter_visuals.rb:1
   - USE_THEN RAILS/shared/app/services/shared/tradedoubler.rb:1
+registry_findings: 108
+registry_by_rule:
+  COMPLETION_THEATER: 40
+  DEBUG_OUTPUT: 1
+  ERB_HTML_SAFE: 2
+  NO_GOD_CLASS: 26
+  SILENT_RESCUE: 37
+  SQL_INJECTION: 2
+registry_finding_members:
+  - COMPLETION_THEATER MASTER/tools/doc_paths.rb:101
+  - COMPLETION_THEATER OPENBSD/OPERATOR.sh:175
+  - COMPLETION_THEATER OPENBSD/OPERATOR.sh:189
+  - COMPLETION_THEATER OPENBSD/RUNBOOK.md:228
+  - COMPLETION_THEATER OPENBSD/SSH_ACCESS.md:153
+  - COMPLETION_THEATER OPENBSD/bin/render_dns.rb:43
+  - COMPLETION_THEATER OPENBSD/bin/render_dns.rb:44
+  - COMPLETION_THEATER OPENBSD/config_drift_gate.rb:41
+  - COMPLETION_THEATER OPENBSD/config_drift_gate.rb:43
+  - COMPLETION_THEATER OPENBSD/deploy_smoke_gate.rb:10
+  - COMPLETION_THEATER OPENBSD/deploy_smoke_gate.rb:52
+  - COMPLETION_THEATER OPENBSD/dotfiles/mov.sh:1452
+  - COMPLETION_THEATER OPENBSD/dotfiles/mov.sh:2092
+  - COMPLETION_THEATER OPENBSD/dotfiles/mov.sh:643
+  - COMPLETION_THEATER OPENBSD/dotfiles/mov.sh:666
+  - COMPLETION_THEATER OPENBSD/dotfiles/mov.sh:677
+  - COMPLETION_THEATER OPENBSD/sync.rb:47
+  - COMPLETION_THEATER OPENBSD/sync.rb:48
+  - COMPLETION_THEATER OPENBSD/sync.rb:49
+  - COMPLETION_THEATER OPENBSD/sync.rb:51
+  - COMPLETION_THEATER OPENBSD/sync.rb:52
+  - COMPLETION_THEATER OPENBSD/test/test_tracked_crontab.rb:22
+  - COMPLETION_THEATER OPENBSD/tools/reach.rb:114
+  - COMPLETION_THEATER OPENBSD/tools/reach.rb:131
+  - COMPLETION_THEATER OPENBSD/tools/reach.rb:53
+  - COMPLETION_THEATER OPENBSD/tools/reach.rb:74
+  - COMPLETION_THEATER OPENBSD/tools/reach.rb:96
+  - COMPLETION_THEATER OPENBSD/vps_safety_gate.rb:76
+  - COMPLETION_THEATER OPENBSD/vps_safety_gate.rb:9
+  - COMPLETION_THEATER RAILS/brgen/AGENTS.md:46
+  - COMPLETION_THEATER RAILS/brgen/docs/merchant/ENHANCED_CONVERSIONS.md:36
+  - COMPLETION_THEATER RAILS/brgen/lib/tasks/x.rake:18
+  - COMPLETION_THEATER RAILS/gates/lib/host/domain_alignment.rb:20
+  - COMPLETION_THEATER RAILS/gates/lib/host/port_inventory.rb:16
+  - COMPLETION_THEATER RAILS/gates/lib/host/production.rb:145
+  - COMPLETION_THEATER RAILS/gates/lib/host/production.rb:146
+  - COMPLETION_THEATER RAILS/gates/support/geometry_probe.rb:101
+  - COMPLETION_THEATER RAILS/shared/app/views/comments/_form.html.erb:6
+  - COMPLETION_THEATER STUDIO/dilla/ENV_AND_RENDER.md:276
+  - COMPLETION_THEATER STUDIO/lora/_toolkit/run_generate.sh:51
+  - DEBUG_OUTPUT STUDIO/dilla/lib/modulation.rb:110
+  - ERB_HTML_SAFE RAILS/brgen/engines/tv/app/views/tv/videos/new.html.erb:1
+  - ERB_HTML_SAFE RAILS/shared/app/views/two_factor_setups/show.html.erb:1
+  - NO_GOD_CLASS MASTER/tools/doc_paths.rb:21
+  - NO_GOD_CLASS OPENBSD/lib/gate_result.rb:24
+  - NO_GOD_CLASS OPENBSD/tools/tree.rb:15
+  - NO_GOD_CLASS RAILS/amber/app/controllers/ai_controller.rb:5
+  - NO_GOD_CLASS RAILS/amber/app/controllers/items_controller.rb:3
+  - NO_GOD_CLASS RAILS/amber/app/controllers/outfits_controller.rb:3
+  - NO_GOD_CLASS RAILS/amber/app/models/item.rb:5
+  - NO_GOD_CLASS RAILS/amber/app/services/wardrobe_ai.rb:6
+  - NO_GOD_CLASS RAILS/brgen/app/models/community.rb:3
+  - NO_GOD_CLASS RAILS/brgen/app/models/conversation.rb:3
+  - NO_GOD_CLASS RAILS/brgen/app/models/event.rb:11
+  - NO_GOD_CLASS RAILS/brgen/app/models/message.rb:3
+  - NO_GOD_CLASS RAILS/brgen/app/models/post.rb:3
+  - NO_GOD_CLASS RAILS/brgen/app/models/user.rb:3
+  - NO_GOD_CLASS RAILS/brgen/app/services/partner_attribution_report.rb:24
+  - NO_GOD_CLASS RAILS/brgen/engines/marketplace/app/models/marketplace/listing.rb:3
+  - NO_GOD_CLASS RAILS/brgen/engines/marketplace/app/models/marketplace/order.rb:3
+  - NO_GOD_CLASS RAILS/brgen/engines/takeaway/app/models/takeaway/order.rb:3
+  - NO_GOD_CLASS RAILS/brgen/lib/brgen/bergen_demo_seeder.rb:8
+  - NO_GOD_CLASS RAILS/brgen/lib/brgen/irc/bridge.rb:10
+  - NO_GOD_CLASS RAILS/gates/lib/live/user_flow.rb:21
+  - NO_GOD_CLASS RAILS/gates/lib/rendered/rendered_geometry.rb:24
+  - NO_GOD_CLASS RAILS/gates/lib/research/design_metrics.rb:15
+  - NO_GOD_CLASS RAILS/gates/support/cdp_session.rb:29
+  - NO_GOD_CLASS STUDIO/dilla/lib/composition_engine.rb:161
+  - NO_GOD_CLASS STUDIO/dilla/lib/modulation.rb:554
+  - SILENT_RESCUE MASTER/tools/data_reach.rb:55
+  - SILENT_RESCUE MASTER/tools/data_reach.rb:85
+  - SILENT_RESCUE OPENBSD/bin/domain_watch.rb:135
+  - SILENT_RESCUE OPENBSD/tools/tree.rb:176
+  - SILENT_RESCUE OPENBSD/tools/tree.rb:226
+  - SILENT_RESCUE OPENBSD/tools/tree.rb:259
+  - SILENT_RESCUE RAILS/amber/test/analysis_status_label_test.rb:28
+  - SILENT_RESCUE RAILS/gates/lib/source/locale_shadowing.rb:182
+  - SILENT_RESCUE RAILS/gates/probes/face_capture_probe.rb:96
+  - SILENT_RESCUE RAILS/gates/runner.rb:336
+  - SILENT_RESCUE RAILS/gates/visual_contract.rb:173
+  - SILENT_RESCUE STUDIO/dilla/bin/demo_full.rb:54
+  - SILENT_RESCUE STUDIO/dilla/lib/master_heuristics.rb:113
+  - SILENT_RESCUE STUDIO/dilla/lib/master_heuristics.rb:129
+  - SILENT_RESCUE STUDIO/dilla/lib/master_heuristics.rb:24
+  - SILENT_RESCUE STUDIO/dilla/lib/music_gems.rb:152
+  - SILENT_RESCUE STUDIO/dilla/lib/music_gems.rb:174
+  - SILENT_RESCUE STUDIO/dilla/lib/music_gems.rb:206
+  - SILENT_RESCUE STUDIO/dilla/lib/music_gems.rb:237
+  - SILENT_RESCUE STUDIO/dilla/lib/music_gems.rb:246
+  - SILENT_RESCUE STUDIO/dilla/lib/provenance.rb:274
+  - SILENT_RESCUE STUDIO/dilla/lib/provenance.rb:365
+  - SILENT_RESCUE STUDIO/dilla/lib/provenance.rb:376
+  - SILENT_RESCUE STUDIO/dilla/lib/seed_providers.rb:88
+  - SILENT_RESCUE STUDIO/dilla/lib/seed_providers.rb:99
+  - SILENT_RESCUE STUDIO/dilla/lib/verify_fx.rb:209
+  - SILENT_RESCUE STUDIO/dilla/lib/verify_fx.rb:220
+  - SILENT_RESCUE STUDIO/dilla/lib/verify_fx.rb:340
+  - SILENT_RESCUE STUDIO/dilla/live/rack.rb:114
+  - SILENT_RESCUE STUDIO/dilla/live/rack.rb:130
+  - SILENT_RESCUE STUDIO/gate.rb:392
+  - SILENT_RESCUE STUDIO/lora/_toolkit/curate.rb:160
+  - SILENT_RESCUE STUDIO/postpro/postpro.rb:291
+  - SILENT_RESCUE STUDIO/postpro/postpro.rb:302
+  - SILENT_RESCUE STUDIO/test/test_dilla_engine_probes.rb:1215
+  - SILENT_RESCUE STUDIO/trymbot/trymbot.rb:163
+  - SILENT_RESCUE STUDIO/trymbot/trymbot.rb:258
+  - SQL_INJECTION RAILS/brgen/db/seeds.rb:48
+  - SQL_INJECTION RAILS/shared/app/jobs/shared/database_snapshot_job.rb:26
