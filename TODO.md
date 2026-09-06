@@ -2872,14 +2872,15 @@ Found 2026-09-05 while giving the nine promiseless models their reason, and
 worth its own record because the marker on each said "nothing writes it", which
 is a finding rather than an exemption.
 
-- **`Stream`** (`brgen/app/models/stream.rb`) has a table with `url`,
-  `content_type` and `duration`, a `belongs_to :user` and `:post`, and no reader
-  or writer anywhere in the app or its seeds. `Tv::LiveStream` is the
-  live-video model and is a different class.
-
-It is the shape the Tier 1 entries above closed one at a time: schema and model
-present, nothing at either end. The question is whether to wire the writer or
-drop the table.
+- **`Stream` — dropped 2026-09-06.** It was the pre-Active-Storage way to hang
+  a media file off a post: `url`, `content_type`, `duration`, created in the
+  first schema batch ten minutes before `posts` existed, never written. Three
+  models had taken the job — `Post has_one_attached :image/:video/:audio` with
+  `Shared::MediaProcessable` for uploads, `Playlist::Track` (`SOURCE_TYPES`
+  upload/youtube/spotify/soundcloud/whyp/direct/dilla) for audio hosted
+  elsewhere, and `LinkPreview` for a pasted URL — with `Tv::LiveStream` and
+  `Tv::StreamChat` owning live video. Wiring it meant a second media path
+  beside Active Storage, which is what `ONE_SOURCE` forbids.
 
 **`Mention` was the second and closed the same day** (`a05def16c`).
 `Shared::Mentionable` writes the rows from `@username` in title and content and
