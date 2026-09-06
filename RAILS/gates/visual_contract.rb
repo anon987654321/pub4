@@ -170,7 +170,10 @@ module VisualContractGate
     return [] unless captured
 
     captured.select { |row| row["level"] == "error" }.map { |row| row["text"].to_s }.uniq
-  rescue StandardError
+  rescue StandardError => e
+    # No console errors is what a clean page looks like, so a failed read here
+    # passes the check it was meant to perform.
+    warn "visual_contract: console read failed (#{e.class}: #{e.message.lines.first.to_s.strip}) — reporting no errors"
     []
   end
 

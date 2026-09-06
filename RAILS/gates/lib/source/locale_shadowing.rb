@@ -179,7 +179,10 @@ module Deploy
       return {} unless File.file?(BUDGET)
 
       YAML.safe_load_file(BUDGET).to_h { |k, v| [k.to_s, Integer(v)] }
-    rescue StandardError
+    rescue StandardError => e
+      # An empty budget is every ceiling at zero, which reads as a gate that
+      # found nothing rather than one that could not read its own limits.
+      warn "locale_shadowing: #{File.basename(BUDGET)} unreadable (#{e.class}: #{e.message.lines.first.to_s.strip}) — no budgets applied"
       {}
     end
 

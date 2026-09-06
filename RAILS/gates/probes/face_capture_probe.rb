@@ -93,7 +93,11 @@ Deploy::CdpSession.open(webgl: true, timeout: options[:timeout]) do |cdp|
         });
       })()
     JS
-  rescue StandardError
+  rescue StandardError => e
+    # An empty state reads as "no renderer, no frames" — the same answer a page
+    # that drew nothing gives, which is the confusion the comment above records
+    # one layer down. Say that the probe itself failed.
+    warn "face_capture_probe: state read failed (#{e.class}: #{e.message.lines.first.to_s.strip})"
     {}
   end
 

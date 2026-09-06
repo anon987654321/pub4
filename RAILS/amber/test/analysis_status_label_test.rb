@@ -25,7 +25,11 @@ class AnalysisStatusLabelTest < ActionView::TestCase
     Rails.cache.delete("amber:queue:worker_present")
     @queue_ready = begin
       SolidQueue::Process.table_exists?
-    rescue StandardError
+    rescue ActiveRecord::ActiveRecordError, NameError => e
+      # The queue schema being absent is the case this setup is written for.
+      # Anything else — a connection this test did not expect, a renamed
+      # constant — now raises instead of arriving as a skipped assertion.
+      warn "analysis_status_label_test: queue unavailable (#{e.class}) — asserting the no-worker label"
       false
     end
   end

@@ -333,7 +333,11 @@ if browser_gates.any?
   chrome = begin
     require_relative "support/cdp_session"
     Deploy::CdpSession.available?
-  rescue StandardError
+  rescue StandardError => e
+    # Every browser gate is skipped from here, and a skipped gate reads green.
+    # Which failure it was decides whether that is a missing Chrome or a broken
+    # session file.
+    warn "runner: CDP unavailable (#{e.class}: #{e.message.lines.first.to_s.strip}) — browser gates skipped"
     false
   end
   if chrome
