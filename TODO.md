@@ -1834,7 +1834,7 @@ findings with path and line, and the task prints that summary once.
 **6. A lint over the rule corpus's own regexes — done.** `rake lint:word_boundary`
 flags `\b` glued to escaped punctuation. Currently clean.
 
-**7. Every registry rule proves it can fire — enforced for new rules, 47 left.**
+**7. Every registry rule proves it can fire — enforced for new rules, 30 left.**
 `law/` refuses to load a rule without worked fixtures; the registry accepts one
 without. The forward half was already closed and this entry did not say so:
 `test_rule_fixtures.rb` fails when the unfixtured count rises, so a new RuleDSL
@@ -1864,6 +1864,25 @@ on purpose — its example is an interpolated `.execute(` call, and the rule has
 neither a self-exemption nor a marker, so the example would be a live
 error-severity finding in the rule file. The 59 lines all this costs land on
 `lib/review`, which was already over budget.
+
+Seventeen more on 2026-09-06, 47 -> 30: seven cosmetic, three ruby, two lexical
+and five of `surface_rules`' twenty-nine. Three needed a spelled `example_path`
+for one reason — they guard on the path rather than the source, so the generic
+Ruby model path could not reach them. `EN_DASH_RANGE` skips `.rb` outright,
+`README_PROSE` wants a file named README.md, `DEBUG_OUTPUT` wants `/lib/`. A
+rule that cannot fire on its own example is what this ratchet is for, and it
+found three more.
+
+Three stay unfixtured on purpose and it is one argument, not three.
+`SQL_INJECTION`, `SILENT_RESCUE` and `NARROW_SILENT_RESCUE` would each carry
+their own forbidden shape as a worked example, in a file that carries no
+self-exemption for them, so the example would be a live error-severity finding
+in the rule that defines it. **A rule whose subject is a shape cannot always
+hold one.**
+
+The remaining 30: twenty-four in `surface_rules`, those three, `STALE_NAMESPACE`
+and `PARAMETERIZED_SLUG` — which judge the path or the data rather than the
+source — and `RUNTIME_DOCS_YAML`.
 
 Two things the earlier retro-fit turned up. The harness had no `html` entry in
 `DEFAULT_PATHS`, so every web rule's example landed at a Ruby model path and a
