@@ -173,7 +173,10 @@ class ProjectTree
     return subdirs(File.join(repo, "RAILS")) - %w[shared gates test tools bin visual_contract tmp] unless File.exist?(path)
 
     (YAML.safe_load_file(path)["apps"] || {}).keys.sort
-  rescue StandardError
+  rescue StandardError => e
+    # apps.yml is the fleet's feature truth. No apps reads as a tree with none,
+    # which is a report about this file rather than about RAILS.
+    warn "tree: RAILS/apps.yml unreadable (#{e.class}: #{e.message.lines.first.to_s.strip}) — reporting no apps"
     []
   end
 
@@ -223,7 +226,10 @@ class ProjectTree
         begin
           lines = File.readlines(f).size
           lines <= 30
-        rescue StandardError
+        rescue SystemCallError, ArgumentError => e
+          # A file this cannot read is not a small file; say which, so the count
+          # is not quietly measuring what the process may open.
+          warn "tree: cannot read #{f} (#{e.class}) — not counted"
           false
         end
       end
@@ -256,7 +262,8 @@ class ProjectTree
         if lines <= 30
           tiny_files << [file.sub(lib_root + "/", ""), lines]
         end
-      rescue StandardError
+      rescue SystemCallError, ArgumentError => e
+        warn "tree: cannot read #{file} (#{e.class}) — not counted"
       end
     end
 

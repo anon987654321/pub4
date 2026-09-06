@@ -132,7 +132,10 @@ module Deploy
       parsed.fetch("services", []).each_with_object({}) do |(tlds, urls), map|
         tlds.each { |t| map[t] = urls.first }
       end
-    rescue StandardError
+    rescue StandardError => e
+      # An empty map is every TLD unresolvable, and silently: the expiry check
+      # then reports nothing wrong about domains it never asked about.
+      warn "domain_watch: RDAP bootstrap unreachable (#{e.class}: #{e.message.lines.first.to_s.strip}) — no expiry dates this run"
       {}
     end
     @rdap_bases[tld]
