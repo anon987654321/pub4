@@ -36,6 +36,40 @@ class ConstitutionalScanBudgetTest < Minitest::Test
     assert_equal "207", output[Deploy::ConstitutionalScanGate::VIOLATION_LINE, 1]
   end
 
+# The other spelling of the same number. A count regex that only knows digits
+# skipped the clean line and matched the NEXT `scan: done`, which is the deep
+# pass — so a target whose aesthetic pass is clean was judged on a different
+# profile than one whose aesthetic pass found something. STUDIO read 317 and
+# OPENBSD 72 against ceilings measured at 0 in the same run that printed
+# "clean".
+def test_a_clean_first_pass_counts_as_zero_not_as_the_next_pass
+  gate = Deploy::ConstitutionalScanGate.allocate
+  output = <<~OUT
+    scan: done dry-run: [profile: aesthetic] clean -- no violations (no changes made)
+    scan: done dry-run: [profile: full] 317 violations | top FEATURE_ENVY=70
+  OUT
+
+  assert_equal 0, gate.send(:first_pass_count, output)
+end
+
+def test_the_first_pass_is_the_one_judged
+  gate = Deploy::ConstitutionalScanGate.allocate
+  output = <<~OUT
+    scan: done dry-run: [profile: aesthetic] 6 violations | top EIGHT_PX_RHYTHM=4
+    scan: done dry-run: [profile: full] 60 violations | top FILE_SPRAWL=12
+  OUT
+
+  assert_equal 6, gate.send(:first_pass_count, output)
+end
+
+# No count at all is the third state, and it must stay distinguishable from
+# zero: one is a clean scan, the other is a scan that did not run.
+def test_no_scan_line_is_nil_rather_than_zero
+  gate = Deploy::ConstitutionalScanGate.allocate
+
+  assert_nil gate.send(:first_pass_count, "boom: LoadError\n")
+end
+
   # The rewrite matched the entries as a block directly under `targets:`, which
   # every comment in that file breaks. It wrote nothing and announced the new
   # numbers anyway. Assert against the real file's shape, comments included.

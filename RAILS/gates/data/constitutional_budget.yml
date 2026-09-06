@@ -50,3 +50,27 @@ targets:
   amber: 28
   bsdports: 3
   shared: 8
+
+  # The other three trees, added 2026-09-06. MASTER judges every effect against
+  # its constitution and STUDIO and OPENBSD are effects; until now the gate that
+  # applies the law read only the Rails half, so STUDIO's 155 source files and
+  # OPENBSD's 107 were governed by a law that never opened them. MASTER is here
+  # too and is not a duplicate of `rake selfcheck`: that runs error and critical
+  # over lib and law, this is the whole registry over the whole tree.
+  #
+  # Every number in this file is the AESTHETIC profile, which is the first
+  # `scan: done` line the gate reads. The full profile in the same run is much
+  # larger — STUDIO 317, OPENBSD 72, MASTER 532 — and re-basing against it is a
+  # separate decision with seven new ceilings in it.
+  #
+  # Measured 2026-09-06 with MASTER_SCAN_DETERMINISTIC=1:
+  #   STUDIO   0  — no design findings at all; it is Ruby and shell, almost no
+  #                 CSS or markup for the aesthetic rules to read.
+  #   OPENBSD  0  — the same, and both are therefore ratchets that fail on the
+  #                 first design finding anyone adds, which is the point.
+  #   MASTER  15  — the web face: EIGHT_PX_RHYTHM 8, MAGIC_COLOR 2, and one each
+  #                 of FLAT_PIXELS, NO_DECORATIVE_FX, TOUCH_TARGET_MIN,
+  #                 PIXEL_EXACT and RAMS_UNOBTRUSIVE.
+  STUDIO: 0
+  OPENBSD: 0
+  MASTER: 15

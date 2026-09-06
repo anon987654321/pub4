@@ -40,15 +40,37 @@ class ConstitutionalScanTargetsTest < Minitest::Test
   def test_scans_every_target_by_default
     gate = build(changed: [], changed_only: false)
 
-    assert_equal %w[brgen amber bsdports shared], names(gate.targets)
+    assert_equal %w[brgen amber bsdports shared STUDIO OPENBSD MASTER], names(gate.targets)
     assert_empty gate.skipped
   end
 
-  def test_changed_only_scans_just_the_apps_that_moved
+  # All four trees, not the Rails half. MASTER judges every effect against its
+  # constitution and the other three trees are effects; until 2026-09-06,
+  # STUDIO's 155 source files and OPENBSD's 107 were governed by a law that
+  # never read them.
+  def test_every_tree_is_a_target
+    gate = build(changed: [], changed_only: false)
+
+    %w[STUDIO OPENBSD MASTER].each do |tree|
+      assert_includes names(gate.targets), tree, "#{tree} is not scanned by the constitutional gate"
+    end
+  end
+
+  # A tree selects on its own name, an app on RAILS/<app>.
+  def test_a_change_in_a_tree_selects_that_tree
+    gate = build(changed: ["STUDIO/dilla/lib/modulation.rb"])
+
+    assert_equal %w[STUDIO], names(gate.targets)
+  end
+
+  # Both, now that MASTER is a target of its own: a change under MASTER/lib used
+  # to select nothing here, which is how the tree that owns the law went
+  # unscanned by the gate that applies it.
+  def test_changed_only_scans_just_what_moved
     gate = build(changed: ["RAILS/brgen/app/models/post.rb", "MASTER/lib/master.rb"])
 
-    assert_equal %w[brgen], names(gate.targets)
-    assert_equal %w[amber bsdports shared], names(gate.skipped)
+    assert_equal %w[brgen MASTER], names(gate.targets)
+    assert_equal %w[amber bsdports shared STUDIO OPENBSD], names(gate.skipped)
   end
 
   # Silent truncation reads as "covered everything". Whatever is dropped has to
@@ -58,14 +80,16 @@ class ConstitutionalScanTargetsTest < Minitest::Test
 
     assert_equal %w[shared], names(gate.targets)
     refute_empty gate.skipped
-    assert_equal 4, gate.targets.size + gate.skipped.size
+    assert_equal 7, gate.targets.size + gate.skipped.size
   end
 
+  # A path in no tree at all — OPENBSD is a target now, so the old example
+  # selects one.
   def test_no_changes_means_nothing_to_scan_not_everything
-    gate = build(changed: ["OPENBSD/DECISIONS.md"])
+    gate = build(changed: ["docs/notes.md"])
 
     assert_empty gate.targets
-    assert_equal 4, gate.skipped.size
+    assert_equal 7, gate.skipped.size
   end
 
   # A path that merely contains an app's name must not select it.

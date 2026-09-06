@@ -44,6 +44,14 @@ module Deploy
     BUDGET_PATH = File.expand_path("../../data/constitutional_budget.yml", __dir__)
     # `scan: done [profile: full] 410 violations | top DEAD_CODE=99 …`
     VIOLATION_LINE = /^scan: done\b[^\n]*?\b(\d+) violations/
+    # And the other spelling of the same number: `scan: done [profile: aesthetic]
+    # clean -- no violations`. A count regex that only knows the digits skipped
+    # the clean line and matched the NEXT `scan: done`, which is the deep pass —
+    # so a target whose aesthetic pass is clean was judged on a different
+    # profile's number than a target whose aesthetic pass found something.
+    # STUDIO read 317 and OPENBSD 72 against ceilings measured at 0 in the same
+    # run that printed "clean".
+    CLEAN_LINE = /^scan: done\b[^\n]*\bclean\b/
 
     def initialize(targets: nil)
       list = Array(targets).compact
@@ -123,12 +131,33 @@ module Deploy
       progress "skipped #{@skipped.size} unchanged target(s): #{@skipped.map { |t| File.basename(t) }.join(", ")}"
     end
 
+    # All four trees, not the Rails half. MASTER judges every effect against its
+    # constitution and the other three trees are effects; scanning only RAILS
+    # left a law that never opens STUDIO's 155 source files or OPENBSD's 107 to
+    # govern them anyway. Each target carries its own ceiling in
+    # constitutional_budget.yml, so a tree can be over without hiding another.
+    #
+    # MASTER is here too, and it is not a duplicate of `rake selfcheck`: that
+    # runs error and critical severities over lib and law, while this is the
+    # whole registry over the whole tree, against a recorded number.
+    DEFAULT_TARGETS = %w[
+      ../RAILS/brgen ../RAILS/amber ../RAILS/bsdports ../RAILS/shared
+      ../STUDIO ../OPENBSD ../MASTER
+    ].freeze
+
+    # RAILS/brgen for an app, STUDIO for a tree — the prefix a changed path must
+    # carry to select its target.
+    def repo_prefix(target)
+      relative = target.sub(%r{\A\.\./}, "")
+      "#{relative}/"
+    end
+
     def default_targets
-      all = %w[../RAILS/brgen ../RAILS/amber ../RAILS/bsdports ../RAILS/shared]
+      all = DEFAULT_TARGETS
       return all unless changed_only?
 
       changed = changed_paths
-      selected = all.select { |target| changed.any? { |path| path.start_with?("RAILS/#{File.basename(target)}/") } }
+      selected = all.select { |target| changed.any? { |path| path.start_with?(repo_prefix(target)) } }
       @skipped = all - selected
       # Everything unchanged still means everything to scan: an empty selection
       # is "nothing to do", not "scan the world by surprise".
@@ -171,7 +200,7 @@ module Deploy
       # file" made a completed scan report as a crash. amber failed this gate on
       # 2026-08-03 having scanned cleanly to 79-plus findings. A run that printed
       # its violation count did not crash, whatever its findings say.
-      count = stdout.to_s[VIOLATION_LINE, 1]
+      count = first_pass_count(stdout)
       if count.nil?
         if stdout.to_s.match?(/LoadError|SyntaxError|uninitialized constant|No such file/)
           @result.fail("constitutional scan crashed for #{path}: #{stdout.lines.last(3).join}")
@@ -182,9 +211,22 @@ module Deploy
       end
 
       @result.checked!
-      judge_count(name, Integer(count))
+      judge_count(name, count)
     rescue StandardError => e
       @result.fail("constitutional scan error for #{path}: #{e.class}: #{e.message}")
+    end
+
+    # The FIRST `scan: done` line and nothing else — the aesthetic pass, which is
+    # what every ceiling in constitutional_budget.yml was measured against. Both
+    # of its spellings count: a number, or "clean -- no violations", which is
+    # zero and was being read as "no count here, try the next line".
+    def first_pass_count(stdout)
+      line = stdout.to_s.lines.find { |l| l.start_with?("scan: done") }
+      return nil unless line
+      return 0 if line.match?(CLEAN_LINE)
+
+      digits = line[VIOLATION_LINE, 1]
+      digits && Integer(digits)
     end
 
     # One scan, with a bound. Returns the output and either the exit status or
