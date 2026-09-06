@@ -15,7 +15,7 @@ namespace :scrape do
     end
   end
 
-  desc "Seed fictive data from X scrape into brgen models (posts, etc.). Requires OPENROUTER_API_KEY."
+  desc "Seed fictive data from X scrape into brgen models (users, posts, comments). Requires OPENROUTER_API_KEY."
   task :x_seed, [ :queries ] => :environment do |_, args|
     require "cgi"
     queries = (args[:queries] || "bergen,oslo,norge").split(",").map(&:strip)

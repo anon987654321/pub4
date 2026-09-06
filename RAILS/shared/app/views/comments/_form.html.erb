@@ -3,7 +3,7 @@
 
   locals:
     comment     — Comment instance (required; use Comment.new for empty form)
-    commentable — polymorphic parent (Post, etc.); preferred
+    commentable — polymorphic parent (a Post, an Item); preferred
     post        — alias for commentable (amber call sites)
     url         — optional explicit path (overrides nested model URL)
     form_id     — DOM id for turbo replace (default "comment_form")
