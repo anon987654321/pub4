@@ -1399,20 +1399,22 @@ Still open, and each is a decision rather than a sweep:
 
 #### Nine of sixteen line budgets are over, and `law/` is nearly double
 
-`rake loc_budget`, re-measured 2026-09-05 after the antigravity collapse: `law`
-1609/852, `lib/pub4` 692/470, `lib/ground` 6112/5899, `lib/core` 769/682,
-`lib/boot` 268/227, `lib/trace` 2055/1999, `lib/voice` 3408/3181, `lib/review`
-10387/9765, `lib/fix` 2670/2643. `limits.yml` says a breach is paid by
-extraction or deletion and never by a bigger number.
+`rake loc_budget`, re-measured 2026-09-06: `law` 1610/852, `lib/pub4` 692/470,
+`lib/ground` 6098/5899, `lib/core` 769/682, `lib/boot` 276/227, `lib/trace`
+2055/1999, `lib/voice` 3408/3181, `lib/review` 10493/9765, `lib/fix` 2661/2643.
+`limits.yml` says a breach is paid by extraction or deletion and never by a
+bigger number.
 
 One of the nine has been paid down and it is the largest single fold this file
 records. `lib/ground` fell 730 — 6842 to 6112, from 943 over to 213 — when the
 seven unreached antigravity subsystems and the Coordinator that eagerly built
 them went, which is the whole of what that directory's overage had been.
-`lib/review` moved the other way: 36 back when ten byte-identical copies of a
-five-line `visit` moved onto `Rule#walk`, then 59 out again on the twenty-nine
-rule fixtures below. That is the trade the fixture ratchet asks for, and it is
-named here rather than buried.
+`lib/review` moved the other way and keeps moving: 36 back when ten
+byte-identical copies of a five-line `visit` moved onto `Rule#walk`, then 59
+out on the twenty-nine rule fixtures below and 67 more on the last thirty,
+which closed `rule_fixture_debt` at 0. That is the trade the fixture ratchet
+asks for — a worked example per rule against a line of budget — and it is named
+here rather than buried.
 
 `law/` at 89% over is the one to open next: the twin census closed in 2026-08
 retired 42 duplicated rules and the file set has grown back past where the
