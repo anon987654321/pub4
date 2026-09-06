@@ -1336,13 +1336,23 @@ counters read 0, and 0 is the recorded floor.
 
 Still open, and each is a decision rather than a sweep:
 
-- **25 rules say `autofix: true` and name no transform**, and the corpus now
-  names no transform at all — `strip_trailing_whitespace` was the last, on the
-  `trailing_ws` smell deleted as a duplicate. The transform itself is
-  untouched: `AstFixer::UNIVERSAL_TRANSFORMS` applies it to every file rather
-  than on a rule's say-so. Nothing declares the escape hatch that
-  `autofix_reach` exists to police, which is the same shape as the empty YAML
-  lexical bridge above.
+- **`autofix: true` naming no transform — closed 2026-09-06, 25 to 0.** Three
+  kinds, and the kinds are the reason the tool asked for. Four name the
+  transform that already fixes them (`HTML_LANG` `add_html_lang`,
+  `LAZY_IMAGES` `add_lazy_loading`, `TRAILING_COMMAS` `add_trailing_commas`,
+  `DEAD_CODE` `remove_immediate_dead_code`), so `named` is 4 where the corpus
+  named none at all. Sixteen are design judgements where no single edit is
+  correct and `false` is what they always meant. Five are mechanical in
+  principle and unwritten in fact — `EN_DASH_RANGE`, `NO_UPDATE_ATTRIBUTE`,
+  `QUOTE_VARIABLES`, `DOUBLE_BRACKET`, `WHITESPACE_PUNCTUATION` — and those
+  five are the forward work: **the transforms are worth writing, and naming one
+  before writing it is how the dangling counter filled up last time.**
+
+  One behavioural consequence, named rather than discovered. `MechanicalAutofix`
+  selects a file when any finding carries a truthy `autofix`, so a file whose
+  only findings are judgement rules no longer gets `AstFixer`'s universal
+  cosmetic passes as a side effect — a scan should not rewrite a file because
+  of a finding it cannot fix.
 - **24 rules fire on nothing in this corpus** (ceiling 24, so the gate is at its
   limit). The header in `rule_ratchets.audit` is right that silence is usually a
   property of the sample — but `FROZEN_STRING_LITERAL`, `MEANINGFUL_NAMES` and
