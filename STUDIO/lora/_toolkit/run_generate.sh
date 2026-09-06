@@ -48,7 +48,7 @@ Four train lanes:
 
 RunPod (24GB+ GPU — RTX 4090 / A5000 / L4):
   1. Create pod: PyTorch 2.x CUDA 12 template, 50GB+ disk
-  2. SSH in, export HF_TOKEN=hf_...
+  2. SSH in, export HF_TOKEN=hf_yourtoken
   3. ./setup_runpod.sh --train   (or see setup_runpod.sh --help)
   4. tmux attach -t $SUBJECT
   5. scp weights/$MODEL/*.safetensors back to Mac when done
