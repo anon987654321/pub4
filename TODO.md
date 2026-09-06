@@ -1997,6 +1997,49 @@ The schema and the model exist. Nothing reads or writes them. These are the
 cheapest items here and they gate most of Tier 2, because ranking and
 notification both need a signal that is currently never recorded.
 
+#### One verb with named stages, and all four trees under it — 2026-09-06
+
+Two changes, one subject: what the runtime offers and what it reads.
+
+**The verb.** `command_registry.rb` has carried a closed public surface for
+months — its own comment says "Scan/fix/critique stay as methods
+ThroughPipeline calls; they are not slash verbs" — so the fold was already
+done and nobody could tell, because `TurnRouter.rewrite_slash` mapped every one
+of those words to a bare `/through`. Asking to scan ran the fix loop, the
+council and the principle map.
+
+Each word now carries the stage it names. `/scan` is `/through --only scan`,
+`/critique` and `/council` are `--only critique`, and the words that mean the
+whole pass still mean the whole pass. **The scan stage fixes what it finds, on
+the spot**, which is why `/scan` and `/fix` name the same stage: a finding is
+cheapest to repair at the moment it is found, and a fix loop with no scan in
+front of it has nothing to act on. `--no-autofix` and `--dry-run` still hold it
+back, which is what `bin/gate` and the RAILS gate pass.
+
+An unknown stage runs nothing and says so. Silently widening a pass because a
+flag was misspelled is the failure the flag exists to prevent, and silently
+narrowing one is the same failure wearing the other coat.
+
+**The trees.** `constitutional_scan` scanned the Rails half only, so STUDIO's
+155 source files and OPENBSD's 107 were governed by a law that never opened
+them. It runs all seven targets now — brgen, amber, bsdports, shared, STUDIO,
+OPENBSD, MASTER — in **184 seconds**, which is the same gate that cost 48
+minutes for one app this morning.
+
+Recording the three new ceilings turned up the instrument defect underneath
+them. The gate reads the first `scan: done` line, and that line has two
+spellings: `6 violations` and `clean -- no violations`. The count regex knew
+only the digits, so a target whose aesthetic pass is clean fell through to the
+**deep** pass's number — STUDIO read 317 and OPENBSD 72 against ceilings
+measured at 0 in the same run that printed "clean". A target was being judged
+on a different profile than its neighbour depending on whether its first pass
+found anything. Both spellings count now, and the budget file says in its own
+head that every number in it is the aesthetic profile.
+
+Where the seven stand: STUDIO 0/0, OPENBSD 0/0, MASTER 15/15, brgen 15/27,
+amber 4/28, and the two that were already over — bsdports 6/3 and shared 15/8,
+whose findings are spacing and colour values in a design its owner drew.
+
 #### `constitutional_scan` was unaffordable, and two of its four budgets are over
 
 The gate shells `/scan` at `MASTER/bin/cli` once per app, and `SAFE_ENV`

@@ -30,6 +30,12 @@ all four trees; `MASTER/bin/pub4 measure` prints every ratchet with its ceiling.
 Run the smallest check that proves the work, and never report done without its
 output.
 
+Inside the runtime there is one verb: `/through [path]` — scan, critique,
+principle map. `--only <stage>` runs one of them, and `/scan`, `/fix`,
+`/critique` and `/council` are those stages by name. **The scan stage fixes what
+it finds, on the spot**, so a scan writes to the tree unless `--no-autofix` or
+`--dry-run` holds it back.
+
 Five things that will bite you, in order:
 
 1. The checkout is shared. Commit path-scoped with `git commit -- <paths>`, and
