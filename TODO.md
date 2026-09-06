@@ -1247,6 +1247,44 @@ rather than inferred, and the command that measured it is named so the next
 reader can re-run it instead of re-deriving it. The cleanup that came out of the
 same sitting is `72a8cfae8`; what is here is what that commit did **not** close.
 
+#### `self_findings` counts the law and calls it the tree
+
+Found 2026-09-06 while deciding whether the five unwritten autofix transforms
+had anything to fix. `self_findings` reported 0 findings for every one of them,
+and running two of the five by hand over the tracked tree gives
+`DOUBLE_BRACKET` 180 and `EN_DASH_RANGE` 88. The ratchet was not wrong about
+its own population; it was answering a narrower question than its label.
+
+`SelfFindings.scan_corpus` starts `rules = law`, so it runs the 122 rules in
+`law/` over 2,898 files in four trees. The 140 in the RuleDSL registry are not
+in it. Its row reads "what our own rules find in our own trees", and it is
+what the law finds.
+
+Nothing scans with the registry and records a number. The pieces that exist
+each answer something else: `rule_audit` runs the registry but over MASTER/lib,
+MASTER/law, RAILS/shared and a little web JS — 698 files — and measures
+blindness, saturation and silence rather than a count; `constitutional_scan`
+runs the scanner over the three RAILS apps with a per-app ceiling;
+`bin/pub4 gate`'s lexical stage runs law **and** the registry over all four
+trees on every run, autofixing, and records nothing.
+
+A first measurement, and read the caveat before quoting it: **221 findings at
+error severity and 20,438 at warning**, from a harness that calls each registry
+rule directly on every tracked source file. That harness has no `PathFilter`
+and none of the scanner's routing, so both numbers are upper bounds. The shape
+is the part worth keeping, and it is the argument for the row:
+
+    MASTER    error 78   warning 7798
+    RAILS     error 58   warning 5921
+    STUDIO    error 48   warning 5419
+    OPENBSD   error 34   warning  947
+
+221 is a ceiling somebody could hold. 20,438 is not, and pretending otherwise
+is how a ratchet becomes decoration — the warning half is the info-noise this
+file's own scanner-noise entries already triage. The work is a
+`self_findings.registry` row at error severity, measured through
+`Scanner#findings` rather than through a harness, starting where the tree is.
+
 #### The constitution's seven hooks — closed 2026-09-06
 
 `soul.yml` had declared seven hooks since it was written and none had ever
