@@ -18,6 +18,21 @@ require_relative "../tools/data_reach"
 # deadlock exactly when attribution is wanted. This holds that behaviour; the
 # census itself is tested by being run, not here.
 class TestDataReachAttribution < Minitest::Test
+  # A file the census cannot parse has no keys, so every key in it used to pass
+  # as read — an unread-declaration census reporting an unreadable file clean.
+  # data/radio_bergen_track_dossiers.yml is the file that does it today.
+  def test_an_unparseable_data_file_says_so_and_yields_nothing
+    Dir.mktmpdir("data_reach") do |dir|
+      path = File.join(dir, "broken.yml")
+      File.write(path, "keys: [unclosed\n")
+
+      _, err = capture_io { assert_nil Pub4::DataReach.document(path) }
+
+      assert_match(/broken\.yml does not parse/, err)
+      assert_match(/pass this census unread/, err)
+    end
+  end
+
   Tool = Pub4::DataReach
 
   # The tool reads CEILING as a frozen constant, so the seam is the constant

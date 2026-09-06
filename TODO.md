@@ -1309,11 +1309,35 @@ fell were mostly instrument, which is what this repo's own habit predicts:
   the framework advertises — `scan: intentional`, which this rule wrote its
   own loop and so had never honoured.
 
-What is left is `SILENT_RESCUE` 37, `NO_GOD_CLASS` 26, `ERB_HTML_SAFE` 2 and
+The second pass took it to **55**, and the eleven were all one shape: a
+`rescue StandardError` returning `nil`, `{}`, `[]` or `false` with nothing
+said. Each one made a failure look like an answer, and that is what the fixes
+say out loud on stderr:
+
+- `data_reach` could not parse a data file and counted every key in it as
+  read — the census that exists to find unread declarations reporting an
+  unreadable file as a clean one, in two copies of the same swallow. One
+  loader now, and it names `radio_bergen_track_dossiers.yml` on every run: the
+  file whose bare Ruby symbols `safe_load` refuses, already recorded below.
+- `domain_watch` returned an empty RDAP map, so every TLD went unresolvable
+  and the expiry report said nothing was wrong about domains it never asked
+  about. `OPENBSD/tools/tree.rb` reported a fleet with no apps when
+  `apps.yml` would not parse, and counted an unreadable file as a small one.
+- `RAILS/gates/runner.rb` skipped every browser gate silently when CDP was
+  unavailable, and a skipped gate reads green — the failure mode this repo has
+  already learned twice. `visual_contract` reported no console errors when it
+  could not read the console; `face_capture_probe` reported no renderer and no
+  frames, which is exactly what a page that drew nothing reports;
+  `locale_shadowing` applied a budget of zero ceilings when its budget file
+  would not load.
+
+What is left is `SILENT_RESCUE` 26, `NO_GOD_CLASS` 26, `ERB_HTML_SAFE` 2 and
 `DEBUG_OUTPUT` 1, every one with its file and line in
-`data/self_findings.yml`. Almost none of it is MASTER, and none of it is a
-census artefact this time: a swallowed rescue and a class doing five jobs are
-both real. **That is the forward work this row exists to make visible.**
+`data/self_findings.yml`. Every one of the twenty-six remaining swallows is in
+STUDIO, nineteen of them in dilla, where a `rescue StandardError` around an
+optional gem call is load-bearing for a render and narrowing one on my own
+judgement is the change this repo's own rules say not to make. **That is the
+forward work this row exists to make visible**, and it wants dilla's owner.
 
 Two things the work uncovered, both fixed here:
 

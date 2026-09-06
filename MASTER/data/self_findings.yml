@@ -231,12 +231,12 @@ finding_members:
   - USE_THEN RAILS/shared/app/controllers/omniauth_callbacks_controller.rb:1
   - USE_THEN RAILS/shared/app/services/shared/newsletter_visuals.rb:1
   - USE_THEN RAILS/shared/app/services/shared/tradedoubler.rb:1
-registry_findings: 66
+registry_findings: 55
 registry_by_rule:
   DEBUG_OUTPUT: 1
   ERB_HTML_SAFE: 2
   NO_GOD_CLASS: 26
-  SILENT_RESCUE: 37
+  SILENT_RESCUE: 26
 registry_finding_members:
   - DEBUG_OUTPUT STUDIO/dilla/lib/modulation.rb:110
   - ERB_HTML_SAFE RAILS/brgen/engines/tv/app/views/tv/videos/new.html.erb:1
@@ -267,17 +267,6 @@ registry_finding_members:
   - NO_GOD_CLASS RAILS/gates/support/cdp_session.rb:29
   - NO_GOD_CLASS STUDIO/dilla/lib/composition_engine.rb:161
   - NO_GOD_CLASS STUDIO/dilla/lib/modulation.rb:554
-  - SILENT_RESCUE MASTER/tools/data_reach.rb:55
-  - SILENT_RESCUE MASTER/tools/data_reach.rb:85
-  - SILENT_RESCUE OPENBSD/bin/domain_watch.rb:135
-  - SILENT_RESCUE OPENBSD/tools/tree.rb:176
-  - SILENT_RESCUE OPENBSD/tools/tree.rb:226
-  - SILENT_RESCUE OPENBSD/tools/tree.rb:259
-  - SILENT_RESCUE RAILS/amber/test/analysis_status_label_test.rb:28
-  - SILENT_RESCUE RAILS/gates/lib/source/locale_shadowing.rb:182
-  - SILENT_RESCUE RAILS/gates/probes/face_capture_probe.rb:96
-  - SILENT_RESCUE RAILS/gates/runner.rb:336
-  - SILENT_RESCUE RAILS/gates/visual_contract.rb:173
   - SILENT_RESCUE STUDIO/dilla/bin/demo_full.rb:54
   - SILENT_RESCUE STUDIO/dilla/lib/master_heuristics.rb:113
   - SILENT_RESCUE STUDIO/dilla/lib/master_heuristics.rb:129

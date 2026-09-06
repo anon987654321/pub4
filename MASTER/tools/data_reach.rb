@@ -40,6 +40,28 @@ module Pub4
       @code ||= code_files.values.join
     end
 
+    # A file this cannot parse has no keys, so every key in it passed as read:
+    # the census that exists to find unread declarations reported an unreadable
+    # file as a clean one, twice, once per question. It cannot fix the file, so
+    # the answer is still no keys — said out loud on stderr, naming the file and
+    # the parse error. One file answers it today,
+    # radio_bergen_track_dossiers.yml, whose bare Ruby symbols safe_load refuses
+    # (TODO.md records why quoting them is not this session's change to make).
+    # Memoized because both questions ask for every file, and a file that does
+    # not parse would otherwise announce itself once per question.
+    def document(path)
+      @documents ||= {}
+      return @documents[path] if @documents.key?(path)
+
+      @documents[path] = begin
+        YAML.safe_load_file(path, aliases: true)
+      rescue StandardError => e
+        warn "data_reach: #{File.basename(path)} does not parse " \
+             "(#{e.class}: #{e.message.lines.first.to_s.strip}) — its keys pass this census unread"
+        nil
+      end
+    end
+
     # A key whose name appears in code that never mentions the yaml file is
     # counted as named by the census and still unread: success_criteria lived
     # in rules.yml while phase_gates.rb read session state under the same word.
@@ -50,11 +72,7 @@ module Pub4
 
     def misattributed
       check_corpus!(Dir.glob(File.join(MASTER_DIR, "data", "*.yml")).sort).flat_map do |path|
-        doc = begin
-          YAML.safe_load_file(path, aliases: true)
-        rescue StandardError
-          nil
-        end
+        doc = document(path)
         next [] unless doc.is_a?(Hash)
 
         basename = File.basename(path)
@@ -80,11 +98,7 @@ module Pub4
 
     def unnamed
       check_corpus!(Dir.glob(File.join(MASTER_DIR, "data", "*.yml")).sort).flat_map do |path|
-        doc = begin
-          YAML.safe_load_file(path, aliases: true)
-        rescue StandardError
-          nil
-        end
+        doc = document(path)
         next [] unless doc.is_a?(Hash)
 
         doc.keys.filter_map do |key|
