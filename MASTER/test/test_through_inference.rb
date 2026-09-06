@@ -3,6 +3,44 @@
 require_relative "test_helper"
 
 class TestThroughInference < Minitest::Test
+# --only names stages, and the names have to mean the same thing everywhere.
+# `fix` is a spelling of `scan` because the scan stage fixes what it finds on
+# the spot — going back to relocate a finding later is the cost the fold
+# removes — and `council` is a spelling of `critique`.
+def test_only_accepts_stage_names_and_their_spellings
+  pipeline = Master::CLI::ThroughPipeline.allocate
+
+  assert_nil pipeline.send(:normalize_stages, nil)
+  assert_equal %w[scan], pipeline.send(:normalize_stages, "scan")
+  assert_equal %w[scan], pipeline.send(:normalize_stages, "fix")
+  assert_equal %w[scan], pipeline.send(:normalize_stages, "scan,fix")
+  assert_equal %w[critique], pipeline.send(:normalize_stages, "council")
+  assert_equal %w[scan critique], pipeline.send(:normalize_stages, "scan,critique")
+end
+
+# A misspelled stage must not silently widen the pass to everything, which is
+# what dropping the unknown name and falling back to nil would do.
+def test_an_unknown_stage_runs_nothing_and_is_named
+  pipeline = Master::CLI::ThroughPipeline.allocate
+
+  assert_empty pipeline.send(:normalize_stages, "bogus")
+  assert_equal %w[bogus], pipeline.instance_variable_get(:@unknown_stages)
+
+  assert_equal %w[scan], pipeline.send(:normalize_stages, "scan,bogus")
+  assert_equal %w[bogus], pipeline.instance_variable_get(:@unknown_stages)
+end
+
+# The flag parser is the other half: /through --only scan x and
+# --only=scan must both leave the path alone.
+def test_the_only_flag_is_parsed_in_both_spellings
+  registry = Master::CLI::CommandRegistry
+
+  assert_equal [nil, nil, true, "scan", "lib/io"], registry.parse_through_flags("--only scan lib/io")
+  assert_equal [nil, nil, true, "critique", "lib"], registry.parse_through_flags("--only=critique lib")
+  assert_equal [false, nil, true, "scan", "../RAILS/amber"],
+               registry.parse_through_flags("--only scan --no-autofix ../RAILS/amber")
+end
+
   def test_infer_promotes_through_master_phrase
     ctx = Master::CLI::PipelineContext.build(
       user_message: "run this through master",

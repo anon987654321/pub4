@@ -46,10 +46,10 @@ module Master
       end
 
       # Promote plain language to the full pass. Stage names are leftovers.
-      THROUGH_COMMANDS = %w[through workflow triad sweep scan fix self critique review].freeze
+      THROUGH_COMMANDS = %w[through workflow triad sweep scan fix self critique council review].freeze
       FOLD_SLASH = %w[fold run].freeze
       READ_SLASH = %w[explain why laws axioms principles].freeze
-      THROUGH_SLASH = %w[scan fix critique self workflow triad review sweep].freeze
+      THROUGH_SLASH = %w[scan fix critique council self workflow triad review sweep].freeze
       INFER_MIN_CONFIDENCE = 0.62
 
       def infer_operator_command(text, container:)
@@ -206,12 +206,32 @@ module Master
         memory
       end
 
+      # One verb, named stages. /scan, /fix and /critique are not separate
+      # commands and have not been since the registry closed its public surface
+      # — but until 2026-09-06 they all rewrote to a bare /through, so asking to
+      # scan ran the fix stage and the critique too. Each now carries the stage
+      # it names; the words that mean the whole pass still mean the whole pass.
+      #
+      # The scan stage fixes what it finds, on the spot, which is why /scan and
+      # /fix name the same stage: a finding is cheapest to repair at the moment
+      # it is found, and a fix loop with no scan in front of it has nothing to
+      # act on. `--no-autofix` and `--dry-run` still hold it back.
+      STAGE_FOR_SLASH = {
+        "scan" => "scan",
+        "fix" => "scan",
+        "critique" => "critique",
+        "council" => "critique",
+        "review" => "critique",
+      }.freeze
+
       def rewrite_slash(input)
         name, rest = input.sub(%r{\A/}, "").split(/\s+/, 2)
         name = name.to_s.downcase
-        return rest.to_s.strip.empty? ? "/through" : "/through #{rest}" if THROUGH_SLASH.include?(name)
+        return input unless THROUGH_SLASH.include?(name)
 
-        input
+        stage = STAGE_FOR_SLASH[name]
+        parts = ["/through", ("--only #{stage}" if stage), rest.to_s.strip].compact.reject(&:empty?)
+        parts.join(" ")
       end
 
       def dispatch_slash(input, container:, felt_sense: nil, on_turn: nil)

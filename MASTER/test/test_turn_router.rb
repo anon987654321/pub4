@@ -33,6 +33,43 @@ class TurnRouterTest < Minitest::Test
   # Core::World#do_exec with model-chosen argv, and infer_operator_command
   # reconstructs slash commands from plain English (defeating the leading-"/"
   # block in chat_controller#message). Visitors must land on casual_reply only.
+# One verb, named stages. The registry has carried a closed public surface for
+# months — scan, fix and critique are methods ThroughPipeline calls, not slash
+# verbs — but every one of those words rewrote to a bare /through, so asking to
+# scan also ran the fix loop, the council and the principle map. Each word now
+# carries the stage it names.
+def test_each_stage_word_rewrites_to_its_own_stage
+  router = Master::CLI::TurnRouter
+
+  assert_equal "/through --only scan lib/io", router.rewrite_slash("/scan lib/io")
+  assert_equal "/through --only scan lib/io", router.rewrite_slash("/fix lib/io")
+  assert_equal "/through --only critique lib", router.rewrite_slash("/critique lib")
+  assert_equal "/through --only critique lib", router.rewrite_slash("/council lib")
+end
+
+# The words that mean the whole pass still mean the whole pass, and a flag
+# rides along rather than being eaten as a path.
+def test_the_whole_pass_words_are_untouched
+  router = Master::CLI::TurnRouter
+
+  assert_equal "/through master", router.rewrite_slash("/through master")
+  assert_equal "/through x", router.rewrite_slash("/sweep x")
+  assert_equal "/through", router.rewrite_slash("/triad")
+  assert_equal "/through --only scan --no-autofix ../RAILS/bsdports",
+               router.rewrite_slash("/scan --no-autofix ../RAILS/bsdports")
+end
+
+# The RAILS constitutional gate shells `/scan --no-autofix <app>` and greps
+# the violation line out of the output. A rewrite that dropped the flag, or
+# that stopped running the aesthetic pass the budget is measured against,
+# would change what four recorded ceilings compare to.
+def test_the_scan_stage_keeps_the_flag_the_rails_gate_passes
+  rewritten = Master::CLI::TurnRouter.rewrite_slash("/scan --no-autofix ../RAILS/amber")
+
+  assert_includes rewritten, "--no-autofix"
+  assert_includes rewritten, "--only scan"
+end
+
   def test_a_file_read_is_not_casual_for_an_operator
     refute Master::CLI::TurnRouter.casual?("read CLAUDE.md")
   end

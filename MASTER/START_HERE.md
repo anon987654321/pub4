@@ -9,7 +9,8 @@ before durable writes. The Rails face in `web/` mirrors runtime state at
 contract. Law and config live in YAML under `data/`. Prose stubs:
 `data/SOUL.md`, `data/IDENTITY.md`, generated `data/CANON.md`. Work is a
 sentence. The slash set is `/through` `/status` `/undo` `/commit` `/model`
-`/pair` `/doctor` `/help` `/clear`.
+`/pair` `/doctor` `/help` `/clear`. `/scan`, `/fix`, `/critique` and `/council`
+are not a second set: each is `/through --only <stage>`.
 
 ## Safe First Commands
 
@@ -23,8 +24,11 @@ sentence. The slash set is `/through` `/status` `/undo` `/commit` `/model`
 - `bin/check --profile=full` — operator-grade probe path.
 - `bin/check --format=brief` — structured pass/fail with debt hints (pair with
   any profile).
-- Work: say the path. `/through [path]` is the one explicit pass (`--dry-run`
-  previews).
+- Work: say the path. `/through [path]` is the one explicit pass, and its
+  stages are `--only scan`, `--only critique` and `--only map`. `/scan`, `/fix`,
+  `/critique` and `/council` are those stages by name — `/scan` is `/through
+  --only scan`. **The scan stage fixes what it finds, on the spot**, so it
+  writes unless `--dry-run` or `--no-autofix` holds it back.
 
 ## Runtime Map
 

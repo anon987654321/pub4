@@ -49,11 +49,28 @@ module Master
         @unit = "through0"
       end
 
-      def call(target: nil, apply: nil, critique: nil, aesthetic: true)
+      # The stages a caller can ask for by name, in the order they run.
+      #
+      # `scan` fixes. It is both scan passes, the fix, and the re-scan that
+      # proves the fix, because a finding is cheapest to repair at the moment it
+      # is found — going back to relocate it later is the cost this fold
+      # removes. `fix` is accepted as a spelling of the same stage rather than a
+      # separate one, since a fix loop with no scan in front of it has nothing
+      # to act on.
+      #
+      # Both scan passes stay together for a second reason: the RAILS
+      # constitutional budget is measured off the aesthetic one, so splitting
+      # them would change what that gate compares against.
+      STAGES = %w[scan critique map].freeze
+      STAGE_ALIASES = { "fix" => "scan", "aesthetic" => "scan", "council" => "critique" }.freeze
+
+      def call(target: nil, apply: nil, critique: nil, aesthetic: true, only: nil)
         resolved = resolve_target(target)
         posture = Master::Ground::ModePosture.current(root: @root)
+        @only = normalize_stages(only)
         apply = default_apply?(posture) if apply.nil?
         critique = default_critique?(posture, resolved) if critique.nil?
+        critique = @only.include?("critique") if @only
         shell = shell_target(resolved)
         @apply = apply
 
@@ -77,15 +94,39 @@ module Master
 
       def build_sections(resolved:, shell:, posture:, apply:, critique:, aesthetic:)
         sections = [["mode", log_phase("mode0", "posture", posture_line(posture)) { posture_line(posture) }]]
-        sections << aesthetic_scan_section(shell) if aesthetic
+        if @unknown_stages&.any?
+          sections << ["stages", "unknown stage: #{@unknown_stages.join(", ")} — " \
+                                 "--only takes #{STAGES.join(", ")} (fix and council are spellings of scan and critique)"]
+        end
+        if run?("scan")
+          sections << aesthetic_scan_section(shell) if aesthetic
 
-        deep_unit = aesthetic ? "scan1" : "scan0"
-        sections << ["deep scan", log_phase(deep_unit, "deep", "path=#{shell}") { run_scan(shell, unit: deep_unit) }]
-        sections.concat(build_fix_sections(resolved:, shell:, posture:, apply:, aesthetic:))
-        sections << critique_section(resolved, shell) if critique
-        sections << ["principle map", log_phase("map0", "principle_map", nil) { map_line }]
+          deep_unit = aesthetic ? "scan1" : "scan0"
+          sections << ["deep scan", log_phase(deep_unit, "deep", "path=#{shell}") { run_scan(shell, unit: deep_unit) }]
+          sections.concat(build_fix_sections(resolved:, shell:, posture:, apply:, aesthetic:))
+        end
+        sections << critique_section(resolved, shell) if critique && run?("critique")
+        sections << ["principle map", log_phase("map0", "principle_map", nil) { map_line }] if run?("map")
         sections
       end
+
+      # `--only` names stages; without it every stage runs, which is what
+      # /through has always meant. A name that is not a stage runs nothing and
+      # says so: silently widening a pass because a flag was misspelled is the
+      # failure this flag exists to prevent, and silently narrowing one is the
+      # same failure wearing the other coat.
+      def normalize_stages(only)
+        @unknown_stages = []
+        return nil if only.nil?
+
+        asked = Array(only).flat_map { |s| s.to_s.downcase.split(",") }
+                           .map { |s| STAGE_ALIASES.fetch(s.strip, s.strip) }
+                           .reject(&:empty?)
+        @unknown_stages = asked - STAGES
+        asked & STAGES
+      end
+
+      def run?(stage) = @only.nil? || @only.include?(stage)
 
       def aesthetic_scan_section(shell)
         ["aesthetic scan", log_phase("scan0", "aesthetic", "path=#{shell}") { run_scan("aesthetic #{shell}", unit: "scan0") }]

@@ -34,7 +34,7 @@ module Master
       # Invoked by natural-language inference, /workflow, /through, /triad — users need not memorize stages.
       def dispatch_workflow(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, **_legacy)
         raw = arg_for(ctx).to_s.strip
-        apply, critique, aesthetic, target = parse_through_flags(raw)
+        apply, critique, aesthetic, only, target = parse_through_flags(raw)
         Master::CLI::ThroughPipeline.new(
           scanner:,
           fix_loop:,
@@ -42,7 +42,7 @@ module Master
           deliberation:,
           bus:,
           review_crew:,
-        ).call(target:, apply:, critique:, aesthetic:).render
+        ).call(target:, apply:, critique:, aesthetic:, only:).render
       end
 
       def dispatch_through(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, **_legacy)
@@ -52,13 +52,26 @@ module Master
         )
       end
 
+      # `--only scan`, `--only scan,fix`, or `--only=critique`. This is how the
+      # old stage verbs survive: /scan, /fix and /critique are rewritten into
+      # `/through --only <stage>` by TurnRouter, so there is one verb with named
+      # stages instead of four verbs that each ran a different part of the same
+      # pipeline. Without it, typing /scan ran the fix stage too.
       def parse_through_flags(raw)
         apply = nil
         critique = nil
         aesthetic = true
+        only = nil
         tokens = raw.split(/\s+/)
         path_bits = []
+        expecting_stage = false
         tokens.each do |tok|
+          if expecting_stage
+            only = tok
+            expecting_stage = false
+            next
+          end
+
           case tok.downcase
           when "--dry-run", "preview", "dry" then apply = false
           # bin/gate's scan-only spelling. Unrecognised, it fell into the
@@ -68,10 +81,12 @@ module Master
           when "--no-critique", "no-critique" then critique = false
           when "--critique", "critique" then critique = true
           when "--no-aesthetic", "no-aesthetic" then aesthetic = false
+          when "--only" then expecting_stage = true
+          when /\A--only=(.+)\z/ then only = Regexp.last_match(1)
           else path_bits << tok
           end
         end
-        [apply, critique, aesthetic, path_bits.join(" ")]
+        [apply, critique, aesthetic, only, path_bits.join(" ")]
       end
 
       def run_tribunal(deliberation:, artifact:, target:, bus: nil)

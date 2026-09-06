@@ -66,11 +66,23 @@ class TestScanRequestTargets < Minitest::Test
   end
 
   def test_parse_through_flags_reads_no_autofix_as_measure_only
-    apply, _critique, _aesthetic, path =
+    apply, _critique, _aesthetic, only, path =
       Master::CLI::CommandRegistry.parse_through_flags("--no-autofix ../RAILS")
 
     assert_equal false, apply
+    assert_nil only, "no --only means every stage"
     assert_equal "../RAILS", path
+  end
+
+  # The stage flag rides beside the path and must not be eaten as one, which is
+  # how --no-autofix once became a directory that resolved nowhere.
+  def test_parse_through_flags_reads_the_stage_beside_the_path
+    apply, _critique, _aesthetic, only, path =
+      Master::CLI::CommandRegistry.parse_through_flags("--only scan --no-autofix ../RAILS/amber")
+
+    assert_equal false, apply
+    assert_equal "scan", only
+    assert_equal "../RAILS/amber", path
   end
 
   def test_aesthetic_profile_walks_only_aesthetic_rules

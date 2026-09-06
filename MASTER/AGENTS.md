@@ -45,6 +45,12 @@ all four trees; `MASTER/bin/pub4 measure` prints every ratchet with its ceiling.
 Run the smallest check that proves the work, and never report done without its
 output.
 
+Inside the runtime there is one verb: `/through [path]` — scan, critique,
+principle map. `--only <stage>` runs one of them, and `/scan`, `/fix`,
+`/critique` and `/council` are those stages by name. **The scan stage fixes what
+it finds, on the spot**, so a scan writes to the tree unless `--no-autofix` or
+`--dry-run` holds it back.
+
 Five things that will bite you, in order:
 
 1. The checkout is shared. Commit path-scoped with `git commit -- <paths>`, and
@@ -153,9 +159,16 @@ restores from HEAD. Say what you did rather than hoping it is unnoticed.
 every commit beneath yours, including other people's. Name in your report what
 went with you.
 
-**`/fix` mutates the tree** and has broken dilla, postpro and MASTER's own chat
-path. Read the printed diff before committing, and never commit rewrites of
-generated caches — the scanner descends into them.
+**One verb, named stages.** `/through [path]` runs every stage: scan, critique,
+principle map. `--only <stage>` runs one, and `/scan`, `/fix`, `/critique` and
+`/council` are those stages by name — `/scan` is `/through --only scan`. The
+scan stage fixes what it finds as it finds it, so `/scan` and `/fix` name the
+same stage; a finding is cheapest to repair at the moment it is found.
+
+**That means a scan mutates the tree** — it has broken dilla, postpro and
+MASTER's own chat path. `--no-autofix` and `--dry-run` hold it back. Read the
+printed diff before committing, and never commit rewrites of generated caches:
+the scanner descends into them.
 
 **A red gate that names no finding is usually a gate that cannot load.**
 `rails_runtime` failed at `require` time for months and read as a normal
@@ -219,8 +232,9 @@ hands back an amended effect, `Allow` applies it against a checkpoint. Nothing
 touches disk on any other path.
 
 **Tier.** Two meanings, both live. `bin/gate` runs a *lexical* tier (law and the
-scan registry, deterministic, no model) and a *semantic* tier (`/critique` and
-`/review`, which reach a provider); the semantic one is currently unreachable
+scan registry, deterministic, no model) and a *semantic* tier (the critique
+stage, `/through --only critique`, which reaches a provider); the semantic one is
+currently unreachable
 and reports as skipped rather than clean. On a `rules.yml` row, `tier:` is the
 rule's category — `clean_code`, `style`, `safety` — and is what resolves a
 conflict between two rules firing on one line.

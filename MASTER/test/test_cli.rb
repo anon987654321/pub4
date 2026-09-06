@@ -111,10 +111,11 @@ class TestCLI < Minitest::Test
     summary = Master::CLI::CommandRegistry.help_text
     detail = Master::CLI::CommandRegistry.help_text("through")
 
-    assert_includes summary, "/through - scan → fix → critique a path"
+    assert_includes summary, "/through - the one verb"
     refute_includes summary, "--dry-run previews"
     assert_includes detail, "/through [path]"
     assert_includes detail, "--dry-run"
+    assert_includes detail, "--only", "the stages are the detail, not the summary"
   end
 
   def test_commit_help_does_not_invent_a_confirm_flag
@@ -229,13 +230,20 @@ class TestCLI < Minitest::Test
     assert_equal "core", profile
   end
 
+  # The closed set is what the list offers. /scan and /fix are named in the
+  # footer as stages of /through — `/through --only scan` — because they are
+  # what a person types, and a help page that pretends otherwise sends them to
+  # find out by experiment. What must not appear is a `/scan - …` row: a second
+  # entry in the list is a second command.
   def test_help_names_the_closed_set
     summary = Master::CLI::CommandRegistry.help_text
     %w[through status undo commit model pair doctor help clear].each do |name|
-      assert_includes summary, "/#{name}"
+      assert_includes summary, "/#{name} - "
     end
-    refute_includes summary, "/scan"
+    refute_includes summary, "/scan - "
+    refute_includes summary, "/fix - "
     refute_includes summary, "/orient"
+    assert_includes summary, "/through --only <stage>"
   end
 
   def test_publish_snapshot_includes_tree_and_full_file_contents

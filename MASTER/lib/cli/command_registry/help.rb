@@ -7,11 +7,21 @@ module Master
 
       HELP_TOPICS = {
         "through" => {
-          summary: "scan → fix → critique a path",
+          summary: "the one verb: scan (which fixes), critique, principle map",
           detail: [
-            "/through [path] — aesthetic scan, deep scan, fix, re-scan, critique.",
-            "Or just say the path. Mechanical autofix writes on each file as it is",
-            "scanned; --dry-run / --no-autofix preview without writing.",
+            "/through [path] — every stage: aesthetic scan, deep scan, fix, re-scan,",
+            "critique, principle map. Or just say the path.",
+            "",
+            "--only <stage> runs one part. The stages are scan, critique and map;",
+            "`fix` is a spelling of scan and `council` of critique, because the scan",
+            "stage fixes what it finds on the spot rather than leaving it to be",
+            "relocated later.",
+            "",
+            "/scan, /fix, /critique and /council are those stages by name —",
+            "/scan is /through --only scan. There is one verb underneath.",
+            "",
+            "Mechanical autofix writes on each file as it is scanned;",
+            "--dry-run / --no-autofix preview without writing.",
           ],
         },
         "status" => {
@@ -73,7 +83,8 @@ module Master
       def help_summary
         lines = HELP_TOPICS.map { |cmd, topic| "/#{cmd} - #{topic[:summary]}" }
         lines << ""
-        lines << "work is a sentence. /through is the one explicit pass."
+        lines << "work is a sentence. /through is the one explicit pass, and"
+        lines << "/scan /fix /critique /council are its stages: /through --only <stage>."
         lines.join("\n")
       end
     end
