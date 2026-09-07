@@ -226,12 +226,11 @@ finding_members:
   - USE_THEN RAILS/shared/app/controllers/omniauth_callbacks_controller.rb:1
   - USE_THEN RAILS/shared/app/services/shared/newsletter_visuals.rb:1
   - USE_THEN RAILS/shared/app/services/shared/tradedoubler.rb:1
-registry_findings: 52
+registry_findings: 51
 registry_by_rule:
-  NO_GOD_CLASS: 26
+  NO_GOD_CLASS: 25
   SILENT_RESCUE: 26
 registry_finding_members:
-  - NO_GOD_CLASS MASTER/tools/doc_paths.rb:21
   - NO_GOD_CLASS OPENBSD/lib/gate_result.rb:24
   - NO_GOD_CLASS OPENBSD/tools/tree.rb:15
   - NO_GOD_CLASS RAILS/amber/app/controllers/ai_controller.rb:5
@@ -276,7 +275,7 @@ registry_finding_members:
   - SILENT_RESCUE STUDIO/dilla/lib/verify_fx.rb:340
   - SILENT_RESCUE STUDIO/dilla/live/rack.rb:114
   - SILENT_RESCUE STUDIO/dilla/live/rack.rb:130
-  - SILENT_RESCUE STUDIO/gate.rb:392
+  - SILENT_RESCUE STUDIO/gate.rb:386
   - SILENT_RESCUE STUDIO/lora/_toolkit/curate.rb:160
   - SILENT_RESCUE STUDIO/postpro/postpro.rb:291
   - SILENT_RESCUE STUDIO/postpro/postpro.rb:302

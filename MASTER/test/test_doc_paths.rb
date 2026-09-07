@@ -30,9 +30,12 @@ class TestDocPaths < Minitest::Test
     RAILS/CLAUDE.md
     OPENBSD/CLAUDE.md
     OPENBSD/RUNBOOK.md
+    OPENBSD/DECISIONS.md
+    OPENBSD/SSH_ACCESS.md
     MASTER/START_HERE.md
     MASTER/AGENTS.md
     MASTER/DECISIONS.md
+    MASTER/EXAMPLES.md
     RAILS/shared/WIRING_NOTES.md
   ].freeze
 

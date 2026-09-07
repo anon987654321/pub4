@@ -1997,6 +1997,30 @@ The schema and the model exist. Nothing reads or writes them. These are the
 cheapest items here and they gate most of Tier 2, because ranking and
 notification both need a signal that is currently never recorded.
 
+#### Two censuses over one subject, and the copy was the unrun one — 2026-09-07
+
+`MASTER/tools/doc_paths.rb` and `MASTER/test/test_doc_paths.rb` both asked
+whether a repo path a document cites still exists. The test is run by
+`rake test` and by `tools/todo.rb`; **nothing ran the tool** — no Rakefile
+task, no gate, no bin script names it — and it carried no baseline, so it
+reported eight dead paths of which seven were exemptions the test already
+holds in `data/doc_baselines.yml`, each with its argument written out.
+
+The tool is deleted. Its wider sweep is kept where it belongs: the three
+documents it covered and the test did not — `MASTER/EXAMPLES.md`,
+`OPENBSD/DECISIONS.md` and `OPENBSD/SSH_ACCESS.md` — are in the test's `DOCS`
+list now, and all three are clean under it.
+
+The eighth finding was real and is fixed. `OPENBSD/DECISIONS.md` said legacy
+path strings "still resolve via `MASTER/lib/pub4/paths.rb`", in the present
+tense, about a file that does not exist; they resolve through
+`RAILS/shared/lib/pub4/deploy_paths.rb`, which is what `Pub4::DeployPaths` is.
+A decision record making a live claim about a missing file is the shape this
+guard exists for, and it took an unrun tool to find it.
+
+`growth.master` 1050 → 1049 and `self_findings.registry` 52 → 51 come with the
+deletion: one fewer file, one fewer `NO_GOD_CLASS` subject.
+
 #### The STUDIO and OPENBSD suites, run and read — 2026-09-07
 
 Both were run end to end for the first time in this session's memory. They are
