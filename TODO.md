@@ -1997,6 +1997,35 @@ The schema and the model exist. Nothing reads or writes them. These are the
 cheapest items here and they gate most of Tier 2, because ranking and
 notification both need a signal that is currently never recorded.
 
+#### A census of the census tools: two of thirty-six were reaching nothing — 2026-09-07
+
+Asked of every `MASTER/tools/*.rb`: does anything in the repo name it? Twenty-nine
+are named by a Rakefile task, a test, a gate, `bin/pub4` or a workflow. The
+first pass called eleven unreferenced and **that pass was wrong about five of
+them** — it searched for the string `tools/<name>` and the Rakefile spells its
+shell-outs `File.join(__dir__, "tools", "<name>.rb")`. Verify the instrument
+before the finding, again, and this file's own rule paid for itself inside ten
+minutes.
+
+Two were real:
+
+- **`tools/load_order.rb` — deleted.** It guarded dilla's `ENGINE_PARTS`, an
+  81-file manifest whose order was load-bearing. The engine is one file now,
+  and `engine_sources.rb` says so in its own comment: "Two ways the list could
+  lie went with the split … Neither is expressible any more." The tool's regex
+  finds no manifest, so it reported "0 manifest entries, every load-time
+  constant is defined above its reader" — a clean verdict over an empty set,
+  which is the shape STUDIO's own gate test was failing on an hour earlier.
+- **`tools/agent_context.rb` — wired.** It prints the law in force in 691
+  bytes: the 29 rules that can refuse a write, and how many run without a
+  model. That is wish 45 of the list below, already built and named by
+  nothing, so it is now in the agent contract every harness file is generated
+  from.
+
+`growth.master` is **1048/1047** after this and the doc_paths deletion — one
+file over, from three this morning, and both deletions were of instruments
+whose subject had retired rather than of anything anyone reads.
+
 #### Two censuses over one subject, and the copy was the unrun one — 2026-09-07
 
 `MASTER/tools/doc_paths.rb` and `MASTER/test/test_doc_paths.rb` both asked
