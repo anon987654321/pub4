@@ -1699,15 +1699,31 @@ keyword arguments, and `test_source_assertions` counted two additions its
 pattern cannot tell from the thing it hunts. The suite reads 290 of 291 files —
 three fewer than the morning because `lib/autonomy`'s three tests went with it.
 
-One red file sits outside that glob and is not counted by it.
-`spec/smoke/static_syntax_spec.rb` fails on
-`data/radio_bergen_track_dossiers.yml`: it carries bare Ruby symbols
+One red file sat outside that glob and was not counted by it.
+`spec/smoke/static_syntax_spec.rb` failed on
+`data/radio_bergen_track_dossiers.yml`: it carried bare Ruby symbols
 (`drum_preset: :madlib_dusty`), and `Boot::Data.load_yaml` permits only Date and
-Time, so MASTER's own loader cannot read a file in MASTER's own data directory —
-`Master.validate_data!` warns about it on every boot. Nothing in MASTER reads
-it; the same table lives in `STUDIO/dilla/dilla.rb` as Ruby. Not edited here on
-purpose: quoting the values is a lossy change to dilla's data made by somebody
-who does not own it, and the file may be regenerated from that table.
+Time, so MASTER could not read a file in its own data directory and
+`Master.validate_data!` warned about it on every boot.
+
+**Closed 2026-09-07.** The blocker recorded here was that quoting the values
+would be a lossy edit to dilla’ data by somebody who does not own it. It is not
+lossy, and the reason is in dilla: `write_dossiers!` builds the file with
+`stringify_keys`, which stringifies keys and leaves values alone, so the
+`drum_preset` symbols in the `RADIO_BERGEN_TRACKS` table reached YAML by
+omission rather than by intent. Nothing reads the dossier back — `DOSSIERS_PATH`
+appears twice in `dilla.rb`, at the constant and at the writer — so a symbol
+there carries nothing a string does not. The writer deep-stringifies now, and
+`write!` beside it is deliberately left alone: its output *is* read back, with
+`permitted_classes: [Symbol]`.
+
+`Master.validate_data!` is clean and `data_reach` reads the file. Reading it
+costs two keys nothing names, `cross_track_learnings` and `tracks` — the dossier
+is a report, not configuration. With three recorded members gone
+(`agent_taxonomy.yml#toolset_groups`, `doc_baselines.yml#doc_paths`,
+`models.yml#three_mirror_redundancy`) and three arriving from
+`pub_archive_restore.yml`, the ceiling is 35 → 37. **A census that cannot parse
+a file reports it clean**, so the two keys are worth more than they cost.
 
 #### The over-ratchet list is not stable, and that is the finding
 

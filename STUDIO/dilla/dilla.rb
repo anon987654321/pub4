@@ -3964,11 +3964,27 @@ end
     }
   end
 
+  # Keys and values both, because the dossier lands in MASTER/data and MASTER
+  # loads that directory with Boot::Data.load_yaml, which permits Date and Time
+  # and nothing else. stringify_keys alone left `drum_preset: :madlib_dusty` in
+  # the file, so MASTER could not read a file in its own data directory and
+  # warned on every boot. Nothing reads the dossier back, so a symbol here
+  # carries no meaning a string does not -- unlike write! below, whose output
+  # load_radio_bergen_learnings reads with permitted_classes: [Symbol].
   def write_dossiers!(audio_root: nil, path: DOSSIERS_PATH)
-    data = stringify_keys(dossiers!(audio_root:))
+    data = plain_yaml(dossiers!(audio_root:))
     FileUtils.mkdir_p(File.dirname(path))
     File.write(path, data.to_yaml)
     path
+  end
+
+  def plain_yaml(obj)
+    case obj
+    when Hash then obj.to_h { |k, v| [k.to_s, plain_yaml(v)] }
+    when Array then obj.map { |v| plain_yaml(v) }
+    when Symbol then obj.to_s
+    else obj
+    end
   end
 
   def stringify_keys(obj)

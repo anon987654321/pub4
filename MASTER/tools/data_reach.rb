@@ -44,9 +44,9 @@ module Pub4
     # the census that exists to find unread declarations reported an unreadable
     # file as a clean one, twice, once per question. It cannot fix the file, so
     # the answer is still no keys — said out loud on stderr, naming the file and
-    # the parse error. One file answers it today,
-    # radio_bergen_track_dossiers.yml, whose bare Ruby symbols safe_load refuses
-    # (TODO.md records why quoting them is not this session's change to make).
+    # the parse error. No file answers it today: the one that did,
+    # radio_bergen_track_dossiers.yml, carried bare Ruby symbols its generator
+    # forgot to stringify, and dilla writes plain YAML now.
     # Memoized because both questions ask for every file, and a file that does
     # not parse would otherwise announce itself once per question.
     def document(path)

@@ -1,17 +1,14 @@
 ---
-unnamed: 35
+unnamed: 37
 members:
-- agent_taxonomy.yml#toolset_groups
 - attention_context.yml#runtime_uses
 - council.yml#auto_trigger_patterns
 - council.yml#mcp_persona_slots
 - council.yml#voice_samples
-- doc_baselines.yml#doc_paths
 - lexicon.yml#synonyms
 - models.yml#ollama_llama
 - models.yml#ollama_phi
 - models.yml#ollama_qwen
-- models.yml#three_mirror_redundancy
 - models.yml#trust_scoring
 - namespace_ceilings.yml#RAILS/shared/lib
 - personas.yml#british
@@ -19,6 +16,11 @@ members:
 - personas.yml#sysadmin
 - prompts.yml#rewoo
 - providers.yml#mistral
+- pub_archive_restore.yml#pub
+- pub_archive_restore.yml#pub2
+- pub_archive_restore.yml#pub3
+- radio_bergen_track_dossiers.yml#cross_track_learnings
+- radio_bergen_track_dossiers.yml#tracks
 - recovery_pub.yml#agent_prompt
 - recovery_pub.yml#layout_note
 - rules.yml#schema_metadata

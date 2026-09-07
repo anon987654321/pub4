@@ -39,7 +39,7 @@ tracks:
   production_dossier:
     bpm: 87
     key: F# minor
-    drum_preset: :madlib_dusty
+    drum_preset: madlib_dusty
     groove_dna: donuts
     drums: Bergen lofi grid; kick 0,4,8,12 with humanize; swung hats; sparse clap.
     texture: AKMD mastering chain; night-rain pad; vinyl 0.08; LP 3.1 kHz.
@@ -91,7 +91,7 @@ tracks:
   production_dossier:
     bpm: 88
     key: F# minor
-    drum_preset: :madlib_dusty
+    drum_preset: madlib_dusty
     groove_dna: donuts
     drums: Same family as Stailings; slightly busier hat 16ths.
     texture: Lo-fi warmth; boosted 80/200 Hz per AKMD chain.
@@ -115,7 +115,7 @@ tracks:
   production_dossier:
     bpm: 86
     key: C minor
-    drum_preset: :mpc3000
+    drum_preset: mpc3000
     groove_dna: donuts
     drums: Neo-IV pocket; kick 0,6,10; ghost snares.
     texture: Diverse arrangement — filter sweeps between sections.
@@ -166,7 +166,7 @@ tracks:
   production_dossier:
     bpm: 85
     key: F# minor
-    drum_preset: :madlib_dusty
+    drum_preset: madlib_dusty
     groove_dna: donuts
     drums: Slow bergen swing; long kick sustain; rim ghosts.
     texture: Hotel-room ambience; heavy reverb on pad; AKMD LP.
@@ -219,7 +219,7 @@ tracks:
   production_dossier:
     bpm: 84
     key: Eb
-    drum_preset: :madlib_dusty
+    drum_preset: madlib_dusty
     groove_dna: donuts
     drums: Companion to A; softer kick velocity; more pad-forward.
     texture: Warmer, less drum-forward than A.
@@ -271,7 +271,7 @@ tracks:
   production_dossier:
     bpm: 88
     key: G
-    drum_preset: :mpc3000
+    drum_preset: mpc3000
     groove_dna: donuts
     drums: Minor turnaround grid; kick 0,6,10; snare 4/12; steady 8th hats.
     texture: Bergen night rain pad; vinyl 0.07; pad LP 3.3 kHz.
@@ -321,7 +321,7 @@ tracks:
   production_dossier:
     bpm: 89
     key: F# minor
-    drum_preset: :dilla_slight
+    drum_preset: dilla_slight
     groove_dna: donuts
     drums: PB-series pocket; crisp snare; tight hats.
     texture: Cleaner top than Sandviken; still AKMD-mastered body.
@@ -374,7 +374,7 @@ tracks:
   production_dossier:
     bpm: 87
     key: F# minor
-    drum_preset: :madlib_dusty
+    drum_preset: madlib_dusty
     groove_dna: donuts
     drums: Stailings variant; drunk hat stagger on 3,9,15.
     texture: Canonical Bergen stailings timbre — reference for local rotation.
@@ -426,7 +426,7 @@ tracks:
   production_dossier:
     bpm: 90
     key: A minor
-    drum_preset: :dilla_slight
+    drum_preset: dilla_slight
     groove_dna: donuts
     drums: Rauingar drive; kick syncopation 0,4,7,10; open hat on 14.
     texture: Slightly brighter hats; more energy in 4–8 kHz.
@@ -450,7 +450,7 @@ tracks:
   production_dossier:
     bpm: 90
     key: Fm / Ab
-    drum_preset: :dilla_slight
+    drum_preset: dilla_slight
     groove_dna: donuts
     drums: MPC3000 swing ~57%; kick anchors 1 + late 3 (steps 0,6,10); snare 4/12
       with early push; 8th-note hats with lazy upbeats; ghost snares on 2/10.
@@ -479,7 +479,7 @@ tracks:
   production_dossier:
     bpm: 88
     key: Dm
-    drum_preset: :dilla_drunk
+    drum_preset: dilla_drunk
     groove_dna: donuts
     drums: Sparse pocket; kick drift on 0,3,6,13; snare 4/12 + ghost 7; hats staggered
       16ths with wide humanize.
@@ -503,7 +503,7 @@ tracks:
   production_dossier:
     bpm: 86
     key: Fm9
-    drum_preset: :dilla_slight
+    drum_preset: dilla_slight
     groove_dna: donuts
     drums: Canonical Dilla swing; kick 0,6,10; snare 4/12 early; 8th hats; occasional
       open hat on 14.
@@ -529,7 +529,7 @@ tracks:
   production_dossier:
     bpm: 91
     key: Bb
-    drum_preset: :dilla_slight
+    drum_preset: dilla_slight
     groove_dna: donuts
     drums: Neo-soul slash grid; kick syncopated on 0,4,8; snare 4/12; clap layer;
       shaker on off-16ths.
@@ -552,7 +552,7 @@ tracks:
   production_dossier:
     bpm: 85
     key: Cm
-    drum_preset: :flylo_abstract
+    drum_preset: flylo_abstract
     groove_dna: wonky
     drums: Broken 16ths; kicks on 0,5,8,13; snares displaced 2,6,10,15; heavy ghost
       layer.
@@ -578,7 +578,7 @@ tracks:
   production_dossier:
     bpm: 96
     key: Dm
-    drum_preset: :sp303
+    drum_preset: sp303
     groove_dna: dust
     drums: SP-303 grit; straight-ish 8th hats; kick four-on-floor variant 0,4,8,12;
       snare 4/12.
@@ -601,7 +601,7 @@ tracks:
   production_dossier:
     bpm: 93
     key: Dm
-    drum_preset: :mpc3000
+    drum_preset: mpc3000
     groove_dna: donuts
     drums: 'Players pocket: kick 0,6,10; snare 4/12; 8th hats; ghost 2/9; MPC swing
       62%.'
@@ -626,7 +626,7 @@ tracks:
   production_dossier:
     bpm: 86
     key: Bb / Dm
-    drum_preset: :madlib_dusty
+    drum_preset: madlib_dusty
     groove_dna: donuts
     drums: Slow drunk swing; kick 0,3,6,10,13; snare 4/7/12; sparse hats.
     texture: Cinematic strings sample + warm minor arc; vinyl 0.07.
@@ -648,7 +648,7 @@ tracks:
   production_dossier:
     bpm: 94
     key: F minor
-    drum_preset: :dilla_drunk
+    drum_preset: dilla_drunk
     groove_dna: donuts
     drums: Donda-style drunk grid; kick 0,3,6,10,13; dense hat 16ths.
     texture: Dark minor loop; heavy bass shelf.
@@ -669,7 +669,7 @@ tracks:
   production_dossier:
     bpm: 92
     key: C minor
-    drum_preset: :mpc3000
+    drum_preset: mpc3000
     groove_dna: donuts
     drums: Classic boom-bap; kick four-on; snare 4/12; clap double.
     texture: Soul sample flip; filtered intro.
@@ -690,7 +690,7 @@ tracks:
   production_dossier:
     bpm: 95
     key: Ab
-    drum_preset: :dilla_slight
+    drum_preset: dilla_slight
     groove_dna: donuts
     drums: Upbeat swing; kick syncopated; open hat accents.
     texture: Bright soul sample; less vinyl than Donuts.
@@ -711,7 +711,7 @@ tracks:
   production_dossier:
     bpm: 83
     key: D
-    drum_preset: :flylo_abstract
+    drum_preset: flylo_abstract
     groove_dna: wonky
     drums: Broken beat; irregular kick; snare clusters; glitch percussion.
     texture: Chopped vocal fragments; heavy stereo motion.
@@ -732,7 +732,7 @@ tracks:
   production_dossier:
     bpm: 84
     key: C
-    drum_preset: :flylo_abstract
+    drum_preset: flylo_abstract
     groove_dna: wonky
     drums: Off-kilter 16ths; kick 0,5,8,13; snare 2,6,10,15; sidechain pump.
     texture: Quartal jazz haze; sidechain; vinyl 0.08; pan on arps.
@@ -756,7 +756,7 @@ tracks:
   production_dossier:
     bpm: 82
     key: Eb
-    drum_preset: :flylo_abstract
+    drum_preset: flylo_abstract
     groove_dna: wonky
     drums: Slow loose pocket; minimal kick; brush-like hats.
     texture: Glasper quartal keys; long reverb.
@@ -777,7 +777,7 @@ tracks:
   production_dossier:
     bpm: 88
     key: G minor
-    drum_preset: :dilla_slight
+    drum_preset: dilla_slight
     groove_dna: donuts
     drums: Melancholy swing; sparse kicks; rimshot ghosts.
     texture: Waterfall pad wash; minor soul loop.
@@ -798,7 +798,7 @@ tracks:
   production_dossier:
     bpm: 124
     key: D mixolydian
-    drum_preset: :mpc3000
+    drum_preset: mpc3000
     groove_dna: wonky
     drums: Techno-influenced 4/4 with swing overlay; driving hats.
     texture: Modal safe loop; cleaner digital top.
@@ -821,7 +821,7 @@ tracks:
   production_dossier:
     bpm: 96
     key: Dm
-    drum_preset: :sp303
+    drum_preset: sp303
     groove_dna: donuts
     drums: Dry modern punch; kick 0,4,8,12; tight snare; minimal ghosts.
     texture: Rounded sub; low vinyl; modern dry punch texture.
@@ -844,7 +844,7 @@ tracks:
   production_dossier:
     bpm: 88
     key: G
-    drum_preset: :mpc3000
+    drum_preset: mpc3000
     groove_dna: donuts
     drums: Minor turnaround grid; kick 0,6,10; snare 4/12; steady 8th hats.
     texture: Bergen night rain pad; vinyl 0.07; pad LP 3.3 kHz.
@@ -865,7 +865,7 @@ tracks:
   production_dossier:
     bpm: 90
     key: F minor
-    drum_preset: :dilla_slight
+    drum_preset: dilla_slight
     groove_dna: donuts
     drums: Slightly drunk hat pattern; kick syncopation.
     texture: Lo-fi crunch; AKMD-family mastering.
@@ -886,7 +886,7 @@ tracks:
   production_dossier:
     bpm: 86
     key: varies
-    drum_preset: :flylo_abstract
+    drum_preset: flylo_abstract
     groove_dna: wonky
     drums: 'Live mix: long blends; percussion overdubs; tempo drift.'
     texture: Radio collage; reverb throws; DJ-style filter sweeps.

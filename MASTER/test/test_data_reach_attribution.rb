@@ -20,7 +20,7 @@ require_relative "../tools/data_reach"
 class TestDataReachAttribution < Minitest::Test
   # A file the census cannot parse has no keys, so every key in it used to pass
   # as read — an unread-declaration census reporting an unreadable file clean.
-  # data/radio_bergen_track_dossiers.yml is the file that does it today.
+  # No file in data/ does it today; the fixture below is written to be broken.
   def test_an_unparseable_data_file_says_so_and_yields_nothing
     Dir.mktmpdir("data_reach") do |dir|
       path = File.join(dir, "broken.yml")
