@@ -49,11 +49,11 @@ class TestScanOutput < Minitest::Test
       # Different lines so ConflictResolver does not collapse them
       Master::Result.ok([finding("LONG_LINE", line: 1), finding("DEAD_CODE", line: 2)]),
     ]]
-    r1 = Master::CLI::ScanReport.new(pairs:, profile: "full", rule_filter: nil, phase: "pass1")
+    r1 = Master::CLI::Scan::Report.new(pairs:, profile: "full", rule_filter: nil, phase: "pass1")
     assert_match(/2 violations/, r1.brief)
     assert_match(/LONG_LINE|DEAD_CODE/, r1.brief)
 
-    r2 = Master::CLI::ScanReport.new(
+    r2 = Master::CLI::Scan::Report.new(
       pairs: [[ "/tmp/a.rb", Master::Result.ok([finding("LONG_LINE", line: 1)]) ]],
       profile: "full",
       rule_filter: nil,
@@ -69,7 +69,7 @@ class TestScanOutput < Minitest::Test
 
   def test_scan_live_snapshot_written
     Dir.mktmpdir do |root|
-      path = Master::CLI::ScanLive.snapshot!("hello findings", root:, note: "test", announce: false)
+      path = Master::CLI::Scan::Live.snapshot!("hello findings", root:, note: "test", announce: false)
       assert_equal File.join(root, ".master", "scan_last.txt"), path
       assert_includes File.read(path), "hello findings"
       assert_includes File.read(path), "test"

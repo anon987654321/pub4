@@ -8,7 +8,7 @@ class TestThroughInference < Minitest::Test
 # the spot — going back to relocate a finding later is the cost the fold
 # removes — and `council` is a spelling of `critique`.
 def test_only_accepts_stage_names_and_their_spellings
-  pipeline = Master::CLI::ThroughPipeline.allocate
+  pipeline = Master::CLI::Pipeline::Through.allocate
 
   assert_nil pipeline.send(:normalize_stages, nil)
   assert_equal %w[scan], pipeline.send(:normalize_stages, "scan")
@@ -21,7 +21,7 @@ end
 # A misspelled stage must not silently widen the pass to everything, which is
 # what dropping the unknown name and falling back to nil would do.
 def test_an_unknown_stage_runs_nothing_and_is_named
-  pipeline = Master::CLI::ThroughPipeline.allocate
+  pipeline = Master::CLI::Pipeline::Through.allocate
 
   assert_empty pipeline.send(:normalize_stages, "bogus")
   assert_equal %w[bogus], pipeline.instance_variable_get(:@unknown_stages)
@@ -89,7 +89,7 @@ end
 
     stub_scan = lambda { |*| "scan: clean" }
     Master::CLI::CommandRegistry.stub(:dispatch_scan, stub_scan) do
-      pipe = Master::CLI::ThroughPipeline.new(
+      pipe = Master::CLI::Pipeline::Through.new(
         scanner:,
         fix_loop: fix,
         root: Master::ROOT,
@@ -134,7 +134,7 @@ end
   end
 
   def test_through_footer_names_a_skipped_tier
-    result = Master::CLI::ThroughPipeline::Result.new(
+    result = Master::CLI::Pipeline::Through::Result.new(
       target: ".", mode: "balanced", sections: [], ok: true, unit: "through0", failed_stages: []
     )
     Master::Ground::QuotaGate.stub(:report, "SKIPPED semantic rules — exhausted") do

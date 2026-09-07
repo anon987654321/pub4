@@ -120,7 +120,7 @@ module Master
       agent = fast_agent_stub
       ai[:agent] = agent
       runtime = infra.merge(ai).merge(commands:, scanner:, root:)
-      pipeline = CLI::TurnPipeline.new(container: runtime)
+      pipeline = CLI::Pipeline::Turn.new(container: runtime)
       runtime.merge(pipeline:)
     end
 
@@ -223,7 +223,7 @@ module Master
       commands = CLI::CommandRegistry.build(infra:, ai:, root:)
       runtime = infra.merge(ai).merge(commands:, root:)
       ai[:standing].wire_container(runtime)
-      pipeline = CLI::TurnPipeline.new(container: runtime)
+      pipeline = CLI::Pipeline::Turn.new(container: runtime)
       runtime = runtime.merge(pipeline:)
       gateway = Io::Gateway.new(pipeline:, session: infra[:session], event_bus: bus, container: runtime)
       commands["gateway"] = ->(_ctx) { gateway.channels }

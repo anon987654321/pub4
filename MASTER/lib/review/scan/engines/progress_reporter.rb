@@ -146,8 +146,8 @@ module Master
             "note: partial — full report lands after pass completes",
           ].compact.join("\n")
           # Quiet write — checkpoints already print top rules; avoid spam.
-          if defined?(Master::CLI::ScanLive)
-            Master::CLI::ScanLive.snapshot!(text, root:, note: "streaming checkpoint", announce: false)
+          if defined?(Master::CLI::Scan::Live)
+            Master::CLI::Scan::Live.snapshot!(text, root:, note: "streaming checkpoint", announce: false)
           end
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Scanner.write_progress_snapshot")

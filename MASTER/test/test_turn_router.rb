@@ -34,7 +34,7 @@ class TurnRouterTest < Minitest::Test
   # reconstructs slash commands from plain English (defeating the leading-"/"
   # block in chat_controller#message). Visitors must land on casual_reply only.
 # One verb, named stages. The registry has carried a closed public surface for
-# months — scan, fix and critique are methods ThroughPipeline calls, not slash
+# months — scan, fix and critique are methods Pipeline::Through calls, not slash
 # verbs — but every one of those words rewrote to a bare /through, so asking to
 # scan also ran the fix loop, the council and the principle map. Each word now
 # carries the stage it names.

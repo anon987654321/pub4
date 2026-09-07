@@ -68,7 +68,7 @@ class TestPrincipleMapRuntime < Minitest::Test
   end
 
   def test_scan_path_aliases
-    req = Master::CLI::ScanRequest.allocate
+    req = Master::CLI::Scan::Request.allocate
     req.instance_variable_set(:@scanner, nil)
     req.instance_variable_set(:@root, Master::ROOT)
     req.instance_variable_set(:@arg, "face")

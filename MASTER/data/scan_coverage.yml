@@ -39,7 +39,7 @@ scan_coverage:
       Exempt because listing it as scanned would be inert, not because
       nothing reads it. The two entry points into the same scanner
       disagree here: the /scan CLI passes glob "**/*"
-      (lib/cli/scan_request.rb) and reads all 29 files in bin/, while
+      (lib/cli/scan/request.rb) and reads all 29 files in bin/, while
       Fix::SelfCheck calls scan_dir with no override and gets SCAN_GLOB,
       which matches on extension and reaches 1 of 29 -- every executable
       here is extensionless by convention. roots is what SelfCheck reads,

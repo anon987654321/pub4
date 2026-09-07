@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "cli/scan_request"
+require "cli/scan/request"
 require "cli/command_registry"
 
 # Three defects, one amplifier, all shipped together on 2026-08-17's slash
@@ -31,7 +31,7 @@ class TestScanRequestTargets < Minitest::Test
   end
 
   def request(arg)
-    Master::CLI::ScanRequest.new(scanner: RecordingScanner.new, root: Master::ROOT, arg:)
+    Master::CLI::Scan::Request.new(scanner: RecordingScanner.new, root: Master::ROOT, arg:)
   end
 
   def test_a_word_that_is_both_profile_and_target_is_the_target
@@ -49,7 +49,7 @@ class TestScanRequestTargets < Minitest::Test
 
   def test_a_bare_profile_word_still_scans_the_root
     scanner = RecordingScanner.new
-    req = Master::CLI::ScanRequest.new(scanner:, root: Master::ROOT, arg: "aesthetic")
+    req = Master::CLI::Scan::Request.new(scanner:, root: Master::ROOT, arg: "aesthetic")
     req.call
 
     assert_equal [Master::ROOT], scanner.dirs
@@ -57,7 +57,7 @@ class TestScanRequestTargets < Minitest::Test
 
   def test_a_target_that_resolves_nowhere_fails_loudly_instead_of_scanning_root
     scanner = RecordingScanner.new
-    req = Master::CLI::ScanRequest.new(scanner:, root: Master::ROOT, arg: "../NO_SUCH_TREE")
+    req = Master::CLI::Scan::Request.new(scanner:, root: Master::ROOT, arg: "../NO_SUCH_TREE")
     result = req.call
 
     assert_kind_of String, result.pairs
@@ -98,7 +98,7 @@ class TestScanRequestTargets < Minitest::Test
     end
     def scanner.rule_ids = @rule_ids
 
-    Master::CLI::ScanRequest.new(scanner:, root: Master::ROOT, arg: "aesthetic").call
+    Master::CLI::Scan::Request.new(scanner:, root: Master::ROOT, arg: "aesthetic").call
 
     refute_includes scanner.rule_ids, "CONFIG_HIERARCHY"
     assert_includes scanner.rule_ids, "ANTI_DIVITIS"

@@ -30,7 +30,7 @@ module Master
         }
       end
 
-      # Closed public surface. Scan/fix/critique stay as methods ThroughPipeline
+      # Closed public surface. Scan/fix/critique stay as methods Pipeline::Through
       # calls; they are not slash verbs.
       def build(infra:, ai:, root:)
         d = work_command_deps(ai:, root:, infra:)

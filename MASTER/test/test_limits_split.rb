@@ -25,9 +25,9 @@ class TestLimitsSplit < Minitest::Test
     # the mechanism lint:spine uses so a stale number cannot pass quietly.
     "loc_body_budgets" => ["Rakefile", "loc_body_budgets"],
     "dmesg" => ["lib/trace/dmesg.rb", "dmesg"],
-    "principle_groups" => ["lib/cli/scan_request.rb", "principle_groups"],
+    "principle_groups" => ["lib/cli/scan/request.rb", "principle_groups"],
     "process" => ["lib/ops/process_budget.rb", "process"],
-    "scan_profiles" => ["lib/cli/scan_request.rb", "scan_profiles"],
+    "scan_profiles" => ["lib/cli/scan/request.rb", "scan_profiles"],
     "session_modes" => ["lib/ground/mode_posture.rb", "session_modes"],
     "validation" => ["lib/ground/schema_check.rb", "validation"],
     "zeitwerk" => ["lib/master.rb", "zeitwerk"],
@@ -77,7 +77,7 @@ class TestLimitsSplit < Minitest::Test
     bodies = sources.to_h { |path| [path.sub("#{Master::ROOT}/", ""), File.read(path)] }
 
     # Both halves, or this is the same coincidence in the other direction: a
-    # file must open limits AND name the key. scan_report.rb contains the word
+    # file must open limits AND name the key. scan/report.rb contains the word
     # "conflicts" and has never read limits.yml, which is exactly how the
     # forward map came to carry four false claims.
     promoted = limits.fetch("guidance").keys.filter_map do |key|

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "yaml"
-require_relative "../../support/design_metrics_contrast_checks"
+require_relative "../../support/design_metrics/contrast_checks"
 require_relative "../../../../OPENBSD/lib/gate_result"
 require_relative "../../../../OPENBSD/lib/deploy_inventory"
 require_relative "../../../tools/crawl_support"

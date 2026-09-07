@@ -108,7 +108,7 @@ module Master
         @voice_data = load_yaml(@voice_path) || {}
         # limits.yml is no longer parsed here. It was loaded on every Rules
         # construction purely to back two accessors nobody called; the callers that
-        # do want it (scan_request, fix_loop, mode_posture) each read it themselves,
+        # do want it (scan/request, fix_loop, mode_posture) each read it themselves,
         # mtime-cached. `data(:workflow)` still resolves it through DATA_ALIASES.
         @cache = {}
       end

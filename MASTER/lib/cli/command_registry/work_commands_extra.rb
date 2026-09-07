@@ -35,7 +35,7 @@ module Master
       def dispatch_workflow(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, **_legacy)
         raw = arg_for(ctx).to_s.strip
         apply, critique, aesthetic, only, target = parse_through_flags(raw)
-        Master::CLI::ThroughPipeline.new(
+        Master::CLI::Pipeline::Through.new(
           scanner:,
           fix_loop:,
           root:,

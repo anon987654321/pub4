@@ -1,2 +1,33 @@
 ---
 families: 30
+members:
+- MASTER/lib/cli/command_registry#commands
+- MASTER/lib/cli/command_registry#work
+- MASTER/lib/fix#loop
+- MASTER/lib/io#web
+- MASTER/lib/rails#audit
+- MASTER/lib/review/council#deliberation
+- MASTER/lib/review/review_crew#agent
+- MASTER/lib/review/scan#rule
+- MASTER/tools#reach
+- MASTER/tools#rule
+- OPENBSD/lib#gate
+- RAILS/amber/app/models#declutter
+- RAILS/amber/app/models#item
+- RAILS/amber/app/services#declutter
+- RAILS/amber/app/services#wardrobe
+- RAILS/brgen/app/models#community
+- RAILS/brgen/app/models#fedi
+- RAILS/brgen/app/models#story
+- RAILS/brgen/app/models/user#associations
+- RAILS/brgen/app/services/marketplace/payments#stripe
+- RAILS/gates/lib/source#honesty
+- RAILS/gates/support#geometry
+- RAILS/shared/app/controllers/concerns/shared#actions
+- RAILS/shared/app/controllers/concerns/shared#auth
+- RAILS/shared/app/models/shared#affiliate
+- RAILS/shared/lib/pub4#lint
+- RAILS/shared/lib/shared#examples
+- STUDIO/dilla/lib#engine
+- STUDIO/dilla/lib#harmony
+- STUDIO/dilla/lib#score

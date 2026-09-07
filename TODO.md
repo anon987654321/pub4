@@ -1848,7 +1848,7 @@ rendering tool on an outsider’s judgement. It belongs to dilla’s owner.
 
 #### `cohesion_census` was the last census recording a bare integer — 2026-09-07
 
-`rake lint:cohesion` reads 33 against a ceiling of 30 and says *a new family
+`rake lint:cohesion` read 33 against a ceiling of 30 and said *a new family
 appeared*. It could not say which. `data_reach`, `self_findings` and
 `dup_census` all record their members beside the count; this one recorded
 `families: 30` and nothing else, so naming the arrival meant checking out
@@ -1856,23 +1856,35 @@ appeared*. It could not say which. `data_reach`, `self_findings` and
 records `dir#family` members, seeds them at parity as well as on a fall, and
 prints what arrived and what left when it goes over.
 
-**The current overage stays unattributed, and that is the honest state.** The
-members were never recorded, so there is nothing to diff against; the census
-says so in those words rather than reporting zero arrivals. Pricing the
-ceiling to 33 without naming the three is the swallowing `spine.yml` forbids.
-The next `--ratchet` at or below 30 seeds the members and the question
-answers itself from then on.
+**The overage is closed, three families at a time.** Two were `MASTER/lib/cli`,
+and the tool had written the plan: `scan_live.rb + scan_report.rb +
+scan_request.rb` regrouped into `cli/scan/` as `Scan::Live`, `Scan::Report` and
+`Scan::Request`, and `through_pipeline.rb + turn_pipeline.rb` into
+`cli/pipeline/` under the class that was already their parent. Fifty-four
+references across fifteen files, and the suite is the proof.
 
-The 33 families, largest first, are `STUDIO/dilla/lib` (engine 5, harmony 3,
-score 3), `RAILS/shared/lib/pub4` (lint 13), `MASTER/lib/cli/command_registry`
-(commands 8, work 3), `RAILS/gates/support` (design 3, geometry 3),
-`MASTER/lib/cli` (scan 3, pipeline 3) and `MASTER/tools` (rule 3, reach 3).
-Two of those have a plan already written by the tool:
-`scan_live.rb + scan_report.rb + scan_request.rb` regroup into `cli/scan/`,
-and `pipeline.rb + through_pipeline.rb + turn_pipeline.rb` into `cli/pipeline/`,
-each with the constant renames spelled out by `ruby MASTER/tools/cohesion.rb
-MASTER/lib/cli`. Nineteen files name those five constants, so it is a sitting
-of its own rather than a side effect of one.
+The third was `RAILS/gates/support#design`, and it was made by a hoist.
+`5f3580ec9` lifted `design_metrics/contrast.rb` to the top level because the
+directory held one file — correct by the lone-directory rule, and it put a
+third `design_metrics*` file beside `design_metrics.rb` and
+`design_metrics_contrast_checks.rb`, which is a family. **The two censuses pull
+against each other**, and `code_metrics.rb` already says so about spine and
+cohesion. The answer here was not the tool’s plan — it proposed
+`Contrast -> Design::MetricsContrast`, which breaks `DesignMetrics.extend
+Contrast` and stutters — but the directory the hoist emptied: `contrast.rb` and
+`contrast_checks.rb` go back into `design_metrics/`, where the constants
+`Deploy::DesignMetrics::Contrast` already match the path, and the directory now
+holds two files rather than one.
+
+`cohesion_census` reads 30 against 30 with its members recorded, so the next
+arrival names itself.
+
+**The regroup cost four body lines to a budget already 973 over**, and they are
+charged here rather than hidden. `code_metrics.rb` excludes a `module` wrapping
+one module or class as loader ceremony and deliberately does not excuse a
+`class` doing it — `Pipeline` is a class, so `pipeline/through.rb` and
+`pipeline/turn.rb` pay two lines each. That is the tension the file describes,
+not a leak in it.
 
 Two indentation faults went with it: `roots_for` and `census_dirs` sat at
 column zero inside the module, and seventeen lines of `test_cohesion.rb` sat

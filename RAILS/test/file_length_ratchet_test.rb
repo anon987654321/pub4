@@ -64,7 +64,7 @@ class FileLengthRatchetTest < Minitest::Test
 # check_token_contrast, judge_contrast_budget, contrast_budget — are
 # design_metrics/contrast_checks.rb. One subject, and the maths it calls
 # was split off the same subject at the other layer in
-# gates/support/design_metrics_contrast.rb.
+# gates/support/design_metrics/contrast.rb.
 #
 # The move broke something first, in the way this repo keeps finding: the
 # budget path was `File.expand_path("../../data/css_budget.yml", __dir__)`
