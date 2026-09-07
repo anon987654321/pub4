@@ -68,6 +68,12 @@ class ProjectTree
     end
   end
 
+  # `run` is the surface, and `initialize` is how you get one. Everything below
+  # is how it works: sixteen public methods for a script whose only caller is
+  # `ruby tree.rb` (and `tree.sh`, which shells exactly that) is sixteen things a
+  # future reader may take for API. NO_GOD_CLASS counted them, correctly.
+  private
+
   # These reads come from the tree, not from hardcoded `puts` lines, which is
   # how the old ones came to
   # describe a repo that no longer existed: they still named lib/now, lib/judge,
