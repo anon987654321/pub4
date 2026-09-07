@@ -1997,6 +1997,39 @@ The schema and the model exist. Nothing reads or writes them. These are the
 cheapest items here and they gate most of Tier 2, because ranking and
 notification both need a signal that is currently never recorded.
 
+#### The STUDIO and OPENBSD suites, run and read — 2026-09-07
+
+Both were run end to end for the first time in this session's memory. They are
+the two trees whose tests nothing in MASTER's `rake test` reaches.
+
+**STUDIO's gate declared a tree that no longer exists — fixed.** `gate.rb`'s
+`TREES` carried `tools/**/*.rb`, and `STUDIO/tools/` went away at `5a18c40d7`
+when `isolation.rb` was hoisted to the STUDIO root. Its own test says what that
+costs — "a glob that matches nothing passes every check in the file while
+covering nothing" — and it was failing on exactly that. The `gate` entry's
+`*.rb` already covers both root files; the dead entry is gone and the owner
+line names them.
+
+That unblocked the rest of the suite, because `rake test` aborts at the first
+failing sub-suite. What it reached next is real and is dilla's owner's:
+
+**124 hand-cut sample loops have no track preset, so nothing renders them.**
+`test_every_hand_cut_sample_loop_is_reachable_as_a_track_preset` says why it is
+a test rather than a comment: a loop reaches a render only when a TRACK name
+resolves to it, so one with no preset and no alias is selectable by typing
+`TRACK=<slug>` by hand and never appears in the medley or the rotation. Nothing
+errors. The test was written when three of four measured loops were in that
+state; the crate has grown since. Naming 124 presets is authoring, not repair —
+it is a musical decision per loop, and this repo's own rule is that a
+rendered-sound default is never changed on an agent's judgement.
+
+**OPENBSD is nine suites green and one red for money.** `test_domain_expiry`
+fails on nine domains past their expiry date, measured 2026-09-07: brmingham.uk
+and glasgw.uk 75 days, lverpool.uk and mnchester.uk 74, dnver.us 66, cardff.uk,
+denvr.us and edinbrgh.uk 25, wshingtondc.com 16. Renew at the registrar, then
+`OPENBSD/bin/domain_watch.rb --update` refreshes the snapshot. Nothing in the
+repo can close this one.
+
 #### One verb with named stages, and all four trees under it — 2026-09-06
 
 Two changes, one subject: what the runtime offers and what it reads.
