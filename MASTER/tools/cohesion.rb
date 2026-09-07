@@ -325,10 +325,10 @@ return nil if collisions.any?
     SKIP = %r{/(vendor|node_modules|tmp|log|\.git|fixtures|dummy)/}
 
     # A census that reports the repo-wide number under every tree's heading is
-# four copies of one fact wearing four names. --tree scopes it.
-def roots_for(tree) = tree ? ROOTS.select { |r| r == tree || r.start_with?("#{tree}/") } : ROOTS
+    # four copies of one fact wearing four names. --tree scopes it.
+    def roots_for(tree) = tree ? ROOTS.select { |r| r == tree || r.start_with?("#{tree}/") } : ROOTS
 
-def census_dirs(tree = nil)
+    def census_dirs(tree = nil)
       roots_for(tree).flat_map { |root| Dir.glob(File.join(REPO, root, "**/")) + [File.join(REPO, root)] }
            .map { |d| d.chomp("/") }.uniq.reject { |d| d.match?(SKIP) }
            .select { |d| Dir.glob(File.join(d, "*.rb")).size >= MIN_FAMILY }
@@ -354,8 +354,18 @@ def census_dirs(tree = nil)
       dedupe(found)
     end
 
-    def ceiling
-      File.exist?(CENSUS) ? YAML.safe_load_file(CENSUS).fetch("families", 0) : 0
+    def recorded = File.exist?(CENSUS) ? (YAML.safe_load_file(CENSUS) || {}) : {}
+
+    def ceiling = recorded.fetch("families", 0)
+
+    # The count said "a new family appeared" and could not say which, so naming
+    # it meant checking out the commit that set the ceiling and running the
+    # census twice. Members sit beside the count now, in the shape
+    # data_reach.yml, self_findings.yml and dup_census.yml already use.
+    def recorded_members = Array(recorded["members"])
+
+    def member_ids(rows)
+      rows.flat_map { |dir, plans| plans.map { |plan| "#{dir}##{plan[:family]}" } }.sort
     end
 
     def run_census(ratchet: false, list: false, tree: nil)
@@ -375,18 +385,36 @@ def census_dirs(tree = nil)
 
       return 0 if tree
 
-      if ratchet && total < ceiling
-        File.write(CENSUS, { "families" => total }.to_yaml)
-        puts "cohesion_census: recorded #{total} as the new low"
+      members = member_ids(rows)
+
+      # Recorded at parity as well as on a fall: requiring a fall first is a
+      # deadlock exactly when the attribution is wanted.
+      if ratchet && total <= ceiling
+        File.write(CENSUS, { "families" => total, "members" => members }.to_yaml)
+        puts "cohesion_census: recorded #{total} with its members"
         return 0
       end
       return 0 unless total > ceiling
 
+      report_arrivals(members)
       rows.sort_by { |_, plans| -plans.sum { |p| p[:lines] } }.first(6).each do |dir, plans|
         puts "  #{dir}: #{plans.map { |p| "#{p[:family]} (#{p[:files].size})" }.join(', ')}"
       end
       puts "cohesion_census: a new family appeared — regroup it, merge it, or price the ceiling"
       1
+    end
+
+    def report_arrivals(members)
+      if recorded_members.empty?
+        puts "cohesion_census: no members recorded with the ceiling — run --ratchet once to make the next rise attributable"
+        return
+      end
+
+      arrived = members - recorded_members
+      left = recorded_members - members
+      puts "cohesion_census: #{arrived.size} arrived since the low was recorded:"
+      arrived.each { |id| puts "  + #{id}" }
+      puts "cohesion_census: #{left.size} of the recorded families are gone (#{left.join(', ')})" unless left.empty?
     end
 
   end

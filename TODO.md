@@ -1846,6 +1846,38 @@ ratchet re-bases four ceilings and wants its own sitting.
 to take: these render real audio, and this repo says not to reshape a
 rendering tool on an outsider’s judgement. It belongs to dilla’s owner.
 
+#### `cohesion_census` was the last census recording a bare integer — 2026-09-07
+
+`rake lint:cohesion` reads 33 against a ceiling of 30 and says *a new family
+appeared*. It could not say which. `data_reach`, `self_findings` and
+`dup_census` all record their members beside the count; this one recorded
+`families: 30` and nothing else, so naming the arrival meant checking out
+`3e4afd50b`, running the whole census again, and diffing by hand. It now
+records `dir#family` members, seeds them at parity as well as on a fall, and
+prints what arrived and what left when it goes over.
+
+**The current overage stays unattributed, and that is the honest state.** The
+members were never recorded, so there is nothing to diff against; the census
+says so in those words rather than reporting zero arrivals. Pricing the
+ceiling to 33 without naming the three is the swallowing `spine.yml` forbids.
+The next `--ratchet` at or below 30 seeds the members and the question
+answers itself from then on.
+
+The 33 families, largest first, are `STUDIO/dilla/lib` (engine 5, harmony 3,
+score 3), `RAILS/shared/lib/pub4` (lint 13), `MASTER/lib/cli/command_registry`
+(commands 8, work 3), `RAILS/gates/support` (design 3, geometry 3),
+`MASTER/lib/cli` (scan 3, pipeline 3) and `MASTER/tools` (rule 3, reach 3).
+Two of those have a plan already written by the tool:
+`scan_live.rb + scan_report.rb + scan_request.rb` regroup into `cli/scan/`,
+and `pipeline.rb + through_pipeline.rb + turn_pipeline.rb` into `cli/pipeline/`,
+each with the constant renames spelled out by `ruby MASTER/tools/cohesion.rb
+MASTER/lib/cli`. Nineteen files name those five constants, so it is a sitting
+of its own rather than a side effect of one.
+
+Two indentation faults went with it: `roots_for` and `census_dirs` sat at
+column zero inside the module, and seventeen lines of `test_cohesion.rb` sat
+one level out of the class.
+
 #### The TTS probe fix is paid for out of two budgets that were already over
 
 Named rather than buried, because `limits.yml` says a breach is paid by

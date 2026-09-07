@@ -222,23 +222,23 @@ def test_a_family_that_sits_together_is_mergeable
 end
 
 # No manifest means order is not a contract, so contiguity has nothing to say.
-def test_without_a_manifest_contiguity_does_not_block
-  flat_family
+  def test_without_a_manifest_contiguity_does_not_block
+    flat_family
 
-  assert Pub4::Cohesion.mergeable?(Dir.glob(File.join(@tmp, "thing_*.rb")), [])
-end
+    assert Pub4::Cohesion.mergeable?(Dir.glob(File.join(@tmp, "thing_*.rb")), [])
+  end
 
-# The counterbalance needs a bound or it is not a counterbalance. dilla's six
-# proposals produced files of 1076 to 2925 lines against a SMALL_FILES
-# threshold of 300 — and the three dilla_* headers say they were "split out of
-# dilla.rb", so the proposal was to undo a deliberate split and recreate the
-# file under the name of the file it came from.
-def test_a_merge_that_would_breach_small_files_is_refused
-  3.times { |n| write("big_#{n}.rb", "def big_#{n} = big_#{(n + 1) % 3}\n" + ("# pad\n" * 120)) }
+  # The counterbalance needs a bound or it is not a counterbalance. dilla's six
+  # proposals produced files of 1076 to 2925 lines against a SMALL_FILES
+  # threshold of 300 — and the three dilla_* headers say they were "split out of
+  # dilla.rb", so the proposal was to undo a deliberate split and recreate the
+  # file under the name of the file it came from.
+  def test_a_merge_that_would_breach_small_files_is_refused
+    3.times { |n| write("big_#{n}.rb", "def big_#{n} = big_#{(n + 1) % 3}\n" + ("# pad\n" * 120)) }
 
-  refute Pub4::Cohesion.mergeable?(Dir.glob(File.join(@tmp, "big_*.rb")), [])
-  assert_operator Pub4::Cohesion::MAX_MERGED_LINES, :<=, 300
-end
+    refute Pub4::Cohesion.mergeable?(Dir.glob(File.join(@tmp, "big_*.rb")), [])
+    assert_operator Pub4::Cohesion::MAX_MERGED_LINES, :<=, 300
+  end
 
   # ---- the census -----------------------------------------------------------
 
@@ -250,5 +250,51 @@ end
 
   def test_the_census_ceiling_is_recorded
     assert_kind_of Integer, YAML.safe_load_file(Pub4::Cohesion::CENSUS).fetch("families")
+  end
+
+  # A count alone says "a new family appeared" and cannot say which, which is
+  # how the row sat over its ceiling for a fortnight with nobody able to name
+  # the arrival without checking out the commit that set it.
+  def rows_for(*ids)
+    ids.group_by { |id| id.split("#").first }
+       .map { |dir, members| [dir, members.map { |id| { family: id.split("#").last, files: %w[a b c], lines: 9 } }] }
+  end
+
+  def test_a_family_is_identified_by_its_directory_and_its_name
+    assert_equal ["lib/cli#pipeline", "lib/cli#scan", "tools#reach"],
+                 Pub4::Cohesion.member_ids(rows_for("lib/cli#scan", "lib/cli#pipeline", "tools#reach"))
+  end
+
+  def swap_census(contents)
+    previous = Pub4::Cohesion.const_get(:CENSUS)
+    Dir.mktmpdir("census") do |dir|
+      path = File.join(dir, "cohesion_census.yml")
+      File.write(path, contents.to_yaml)
+      Pub4::Cohesion.send(:remove_const, :CENSUS)
+      Pub4::Cohesion.const_set(:CENSUS, path)
+      yield
+    end
+  ensure
+    Pub4::Cohesion.send(:remove_const, :CENSUS)
+    Pub4::Cohesion.const_set(:CENSUS, previous)
+  end
+
+  def test_an_overage_names_what_arrived_and_what_left
+    swap_census({ "families" => 2, "members" => ["lib/cli#scan", "tools#doc"] }) do
+      out, = capture_io { Pub4::Cohesion.report_arrivals(["lib/cli#scan", "tools#reach"]) }
+
+      assert_includes out, "+ tools#reach"
+      assert_includes out, "the recorded families are gone (tools#doc)"
+      refute_includes out, "+ lib/cli#scan"
+    end
+  end
+
+  def test_a_ceiling_with_no_members_says_so_rather_than_claiming_nothing_arrived
+    swap_census({ "families" => 2 }) do
+      out, = capture_io { Pub4::Cohesion.report_arrivals(["lib/cli#scan"]) }
+
+      assert_includes out, "no members recorded with the ceiling"
+      refute_includes out, "arrived since"
+    end
   end
 end
