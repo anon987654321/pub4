@@ -204,12 +204,25 @@ module Master
         # rule's 40 findings on 2026-09-06, none of them a placeholder.
         # `require "etc"` is the same lesson, learned once for one line.
         PATH_ETC = /["']etc["']|\{[\w,]*\betc\b[\w,]*\}|\betc(?=\s+(?:usr|var)\b)/
-        # A comment is a comment wherever it starts. The rule skipped a line
-        # that opens with one and read the same words as theater when they
-        # followed code, so `|| continue   # skip CAM, TS, screener, etc.` was a
-        # finding and the same sentence on its own line was not. Ruby's `#{` and
-        # a shell `$#` are not comment openers.
-        TRAILING_COMMENT = /(?<![$\\])#(?!\{).*\z/
+        # A comment is a comment wherever it starts, and in whatever language.
+        # The rule skipped a line that opens with `#` and read the same words as
+        # theater when they followed code, so `|| continue   # skip CAM, TS,
+        # screener, etc.` was a finding and the same sentence on its own line was
+        # not. Ruby's `#{` and a shell `$#` are not comment openers.
+        #
+        # `//` and `/* … */` for the same reason, found when MASTER/web joined
+        # the corpus: a CSS comment reading "(mood changes etc)" and a JS one
+        # listing "style bleed, mood arc, vertical timbre, etc." were the only
+        # two findings in 164 files, and both were prose.
+        #
+        # Per language, because a comment opener in one is data in another. The
+        # first version applied all three everywhere and `CONFIG_GLOBS =
+        # ["etc/crontab*", "etc/*.local", …]` in OPENBSD lost everything from
+        # its `/*` onward — leaving `"etc` at the end of the line, which then
+        # read as the abbreviation. The ratchet caught it at 0 -> 1.
+        HASH_COMMENT = /(?<![$\\])\#(?!\{).*\z/
+        SLASH_COMMENT = %r{//.*\z|/\*.*?(?:\*/|\z)}
+        SLASH_COMMENT_EXTENSIONS = %w[.js .mjs .ts .jsx .tsx .css .scss].freeze
 
         RuleDSL.rule :COMPLETION_THEATER,
           severity: :error, tags: %i[ROBUSTNESS COMPLETENESS],
@@ -223,6 +236,7 @@ module Master
           # an unfinished implementation is how a rule teaches its readers to
           # ignore it. An ellipsis still counts in both.
           prose = path.to_s.end_with?(".md", ".markdown")
+          comment = SLASH_COMMENT_EXTENSIONS.include?(File.extname(path.to_s).downcase) ? SLASH_COMMENT : HASH_COMMENT
           src.each_line.with_index(1).filter_map do |line, n|
             stripped = line.strip
             next if stripped.start_with?("#")
@@ -232,7 +246,7 @@ module Master
             # needs it had no way to say so.
             next if stripped.match?(/scan:\s*intentional\b/)
 
-            code = stripped.sub(TRAILING_COMMENT, "").rstrip
+            code = stripped.gsub(comment, "").rstrip
             etcetera = !prose && (code.gsub(PATH_ETC, "").match?(PLACEHOLDER_ETC) || code.match?(/\betcetera\b/i))
             next unless etcetera || code.match?(/\.\.\.\s*$/)
 

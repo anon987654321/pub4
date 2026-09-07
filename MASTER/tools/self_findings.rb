@@ -40,8 +40,17 @@ module Pub4
     # what the nb laws in law/prose.rb judge. Without them those two load,
     # prove their fixtures, and reach no file — law that reads as enforcement
     # and enforces nothing, which is the defect this repo names most often.
+    # MASTER/web joined 2026-09-07, and it is the primary product's face: a Rails
+    # app, the WebGL runtime's five source parts, the chat surface. 164 tracked
+    # source files that no census read — self_findings' list started at MASTER's
+    # Ruby directories and web was never added, while rule_audit reaches "a
+    # little web JS" and measures blindness rather than findings. The laws that
+    # looked silent were the tell: FOR_OF, TEMPLATE_LITERALS, ASYNC_AWAIT,
+    # FACE_POINT_IS_ONE_PIXEL and NO_JQUERY all have their subject there and
+    # nowhere else, so five laws written for the face were enforced against no
+    # file at all.
     TREES = %w[
-      MASTER/lib MASTER/law MASTER/tools RAILS/shared/lib RAILS/gates OPENBSD STUDIO
+      MASTER/lib MASTER/law MASTER/tools MASTER/web RAILS/shared/lib RAILS/gates OPENBSD STUDIO
       RAILS/amber RAILS/brgen RAILS/bsdports RAILS/shared/app RAILS/shared/config
     ].freeze
 
@@ -72,6 +81,14 @@ module Pub4
       |/(?:cable|cache|queue)_migrate/
       |/service-worker\.js\z
       |\.min\.(?:js|css)\z
+      # The face's build output, tracked because the daemon serves it straight
+      # from public/. face.runtime.js opens "do not edit by hand" and is written
+      # by assets:build_face_runtime from face.part1-5.txt; the three bundles are
+      # esbuild output. Scanner::PathFilter has always skipped these four by
+      # name, and this census had no reason to know about them until MASTER/web
+      # joined its corpus — at which point 12,019 lines of generated JavaScript
+      # would have arrived as findings about code nobody typed.
+      |/web/public/(?:face\.runtime|face\.modules\.bundle|face_vision\.bundle|three\.face\.module)\.js\z
     }x
     # Every extension a law can declare, not just Ruby. The corpus globbed
     # `*.rb` while the laws claim nine languages, so every css, scss, yaml,

@@ -30,7 +30,14 @@ module Master
           # exemption named stale_namespace_rule.rb, which no longer exists.
           next [] if stale_constants.empty? || path.end_with?("naming_rules.rb")
 
-          scan_lines(source, stale_pattern, message: "retired constant — use data/rules.yml#stale_namespaces replacement")
+          # Prose is not a constant reference. `Master::CLI` is retired as a
+          # class and alive as a namespace, so a comment explaining that
+          # "Fiber[:master_visitor] is set when a Master::CLI is built" reads as
+          # a use of the retired name — found when MASTER/web joined the corpus,
+          # where it was one of exactly two findings. A comment cannot resolve a
+          # constant, so it cannot resolve a retired one.
+          code = source.each_line.map { |line| line.lstrip.start_with?("#") ? "\n" : line }.join
+          scan_lines(code, stale_pattern, message: "retired constant — use data/rules.yml#stale_namespaces replacement")
         end
     end
   end

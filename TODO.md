@@ -1263,6 +1263,37 @@ hundred code lines, led by `Conversation` 28, `User` 27, `Takeaway::Order` 26
 and `BergenDemoSeeder` at 834 lines. Nothing there is instrument; it is
 twenty-six decompositions in three trees, most of them live Rails models.
 
+#### The census had never read `MASTER/web` — widened 2026-09-07
+
+`self_findings` walked eleven trees and `MASTER/web` was not one of them. The
+face is 164 tracked files, and five laws have their only subject there:
+`FOR_OF`, `TEMPLATE_LITERALS`, `ASYNC_AWAIT`, `FACE_POINT_IS_ONE_PIXEL` and
+`NO_JQUERY` read as silent because nothing they govern was ever handed to them.
+Adding the tree took the law row from 147 to 293 and the registry row from 51
+to 54, and `data/self_findings.yml` carries that reasoning beside the ceilings.
+
+The face’s generated bundles are third party for this purpose.
+`face.runtime.js`, `face.modules.bundle.js`, `face_vision.bundle.js` and
+`three.face.module.js` are 12,019 lines built from `face.part1-5.txt`, so
+counting them measures the generator’s output rather than anything a person
+wrote.
+
+Two of the new findings were the instrument. `STALE_NAMESPACE` read a comment
+saying a `Master::CLI` is built as a use of the retired constant; it blanks
+comment lines before scanning now. `COMPLETION_THEATER` read `/* … (mood
+changes etc) */` in the face’s CSS as a placeholder, and extending its comment
+stripper to `//` and `/* */` for every language then mangled
+`OPENBSD/installed_targets_gate.rb`’s `CONFIG_GLOBS = ["etc/crontab*",
+"etc/*.local", "etc/rc.d/*"]` — the strip ran from `/*` to the end of the line
+and left `"etc` behind, which is the abbreviation the rule flags. The ratchet
+caught it as registry 0 → 1 in the same sitting. The stripper picks its pattern
+from the file’s extension now: `#` everywhere, `//` and `/* */` only for `.js`,
+`.mjs`, `.ts`, `.jsx`, `.tsx`, `.css` and `.scss`.
+
+**A rule that fires on nothing may have no subject rather than no defects.**
+Before believing a silent law, check that the census reads the tree its subject
+lives in.
+
 #### The constitution's seven hooks — closed 2026-09-06
 
 `soul.yml` had declared seven hooks since it was written and none had ever
