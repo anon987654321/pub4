@@ -1795,6 +1795,41 @@ exactly `stems` and dilla names them after the render, so `demo_stems/` and
 really 150. The same five files are now ignored where they are written, beside
 the sidecar rule `dilla/.gitignore` already states and had not generalised.
 
+**Closed 2026-09-07, and the count now asks git.** `TREE_EXCLUDE` had been
+growing one clause per incident — `renders`, a stems glob, the
+`.wav.quality.json` sidecar — and a name-shaped regex cannot catch a sidecar
+sitting at a tree’s root, which is where the next one landed.
+`tree_source_count` runs one batched `git check-ignore` per tree now: the
+repository already declares every generated and scratch path, so the census
+reads that declaration instead of guessing at directory names. The regex stays
+for what git tracks and we still should not count — vendored JavaScript,
+compiled asset builds, dilla’s `project/` state and its committed renders.
+
+Two things fell out of it. `growth.master`’s long-standing +1 was
+`MASTER/runtime/rtk_stats.json`, untracked runtime state `MASTER/.gitignore`
+has always listed — the census was counting a file the repository had already
+disowned. And the `log` clause, written for Rails log directories, had been
+hiding three tracked Ruby files at `lib/trace/log/`: `audit.rb`, `event.rb`
+and `evidence.rb` were invisible to the sprawl census for as long as it has
+existed. Every clause added to catch generated output had shadowed something
+real, which is the argument for asking git rather than adding a fourth.
+
+The three ceilings are raised with each file named in `spine.yml`: MASTER
+1047 → 1050 (the three the regex hid, a correction rather than growth), RAILS
+2358 → 2371, STUDIO 138 → 150. All four `growth.*` rows read `at`.
+
+**`growth.rails` taxes a test at the rate it taxes sprawl.** Eleven of the
+thirteen RAILS files are tests, and the row cannot tell one from a new god
+class. The fix is two rows per tree, source and test, so sprawl stays resisted
+while coverage is free to grow. Forward work, not made here: splitting a
+ratchet re-bases four ceilings and wants its own sitting.
+
+**`dilla/live/` is eight files and reads like one subject** — `rack.rb`,
+`recall.rb`, `dig_crate.rb`, `dig_crate.sh`, `broadcast.sh` and three
+`*.als.rb` Ableton writers. Folding it is the obvious win and it is not mine
+to take: these render real audio, and this repo says not to reshape a
+rendering tool on an outsider’s judgement. It belongs to dilla’s owner.
+
 #### The TTS probe fix is paid for out of two budgets that were already over
 
 Named rather than buried, because `limits.yml` says a breach is paid by

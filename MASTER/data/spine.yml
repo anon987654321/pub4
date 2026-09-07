@@ -140,7 +140,14 @@ pub4_source_ceilings:
   # restored triage files; the branch then removed five rule_*.yml files and the
   # tracked calibration screenshots, so it ends five files below origin/main and
   # needs no room at all. The row stays red on growth this branch did not make.
-  MASTER: 1047
+  # 1047 -> 1050 is not growth. Three tracked Ruby files were invisible to the
+  # census: lib/trace/log/audit.rb, event.rb and evidence.rb, hidden by a `log`
+  # clause written for Rails log directories. And the +1 this row carried for
+  # weeks was runtime/rtk_stats.json, untracked state git already ignores, which
+  # the count drops now that it asks git instead of a regex. Nothing was added to
+  # MASTER to earn these three; the number is what the tree has measured all
+  # along, and a ceiling below the true count is slack in the other direction.
+  MASTER: 1050
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
   # it belongs beside the other probes and folds into nothing.
@@ -154,7 +161,23 @@ pub4_source_ceilings:
   # engine-owned copies of the two tests that had been living once per app.
   # Two files against three copies of the same assertion; brgen keeps the
   # behavioural destroy cases on top of the include.
-  RAILS: 2358
+  # 2358 -> 2371 for thirteen files: seventeen in, four out, and seventeen more
+  # that only moved. Eleven of the seventeen are tests, and they are the reason
+  # for the raise: authorization_matrix_test.rb in brgen and in bsdports (who may
+  # reach what, which nothing asserted), marketplace/deal_test.rb, city_seed_test.rb,
+  # mention_test.rb, activity_trackable_concern_test.rb, fallback_drift_lint_test.rb,
+  # flow_client_write_test.rb, generated_asset_gate_test.rb and
+  # visual_contract_lint_test.rb. The rest is source and each folds into nothing:
+  # gates/lib/source/scale_ratchet.rb, gates/support/css_spacing_scans.rb and
+  # css_weight.rb (two scans lifted out of a support file doing three jobs),
+  # shared/concerns/shared/mentionable.rb, shared/lib/pub4/master_design.rb, and
+  # the migration that drops streams. Out: brgen/app/models/stream.rb,
+  # shared/concerns/shared/followable.rb, and two files that became one elsewhere.
+  #
+  # A test costs the same here as a lib file, and should not -- this ceiling taxes
+  # coverage at the rate it taxes sprawl, and eleven of thirteen say so plainly.
+  # Splitting the row in two is the fix; naming the thirteen is what this line does.
+  RAILS: 2371
   # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
   # that are the whole defence against a shared index, and nothing tested any of
   # them — a hook that stopped firing looks exactly like a week in which nobody
@@ -188,7 +211,21 @@ pub4_source_ceilings:
   # assertion asks for. The next STUDIO file now fails `measure` on the day it
   # is written and wants a named raise here — which is the point, and is what
   # 224 had stopped doing.
-  STUDIO: 138
+  # 138 -> 150 for twelve, in two halves. Six predate the fold that set 138 and
+  # were never accounted for: dilla/lib/sample_worth.rb, dilla/scripts/generate_tts.rb
+  # and four in dilla/live/ (broadcast.sh, dig_crate.rb, dig_crate.sh, synth.rb).
+  # Six more since: live/ambient_pads.als.rb, chord_based_beats.als.rb,
+  # sampled_based_beats.als.rb, rack.rb and recall.rb -- the Ableton-facing surface,
+  # where a file per project shape is the shape -- plus lora/_toolkit/toolkit.sh,
+  # against synth.rb, _toolkit/lib.sh and one fixture removed. Three of the twelve
+  # are dilla tests: test_dilla_crate_dig.rb, test_dilla_radio_bergen_study.rb and
+  # test_dilla_take_write.rb.
+  #
+  # dilla/live/ is eight files now and reads like one subject. Folding it is the
+  # obvious win and it is not mine to take: these render real audio and this repo
+  # says not to reshape a rendering tool on an outsider's judgement. It belongs to
+  # the owner, and it is in TODO.md so the next person sees the same eight.
+  STUDIO: 150
 
 # Executable files directly under each tree's own bin/ — the number CLAUDE.md's
 # "two surfaces, no third" makes a claim about while nothing counted it. MASTER

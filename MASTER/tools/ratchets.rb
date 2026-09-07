@@ -23,8 +23,11 @@ require "open3"
 #   MASTER/bin/pub4 measure --deep     # + the scans that cost minutes
 #   MASTER/bin/pub4 measure --json
 #
-# Fast means "reads files"; deep means "runs a scanner". Nothing here shells out
-# in fast mode, so it is cheap enough to run before every commit.
+# Fast means "reads files"; deep means "runs a scanner". The one exception is a
+# batched `git check-ignore` per tree, four subprocesses that cost milliseconds
+# and answer a question no amount of file reading can: which paths on disk this
+# repository already considers disposable. Fast mode stays cheap enough to run
+# before every commit.
 
 require "json"
 require "yaml"
@@ -225,12 +228,17 @@ module Pub4
     # it SLACK and also fails, so a win only lands when its ceiling is lowered to
     # lock it — the exact discipline that keeps sprawl from regrowing into slack.
     # Pure Ruby, so it stays in fast mode and runs before every commit.
-    # `stems` matched a directory called exactly that, and dilla names them after
-    # the render: demo_stems/, loop_stems/. Their session.json and motifs.json
-    # sidecars were five of growth.studio's files, so a stems render raised a
-    # source-file ceiling. The quality sidecar beside an untracked render is the
-    # same thing at the tree's root, where no directory name can catch it.
-    TREE_EXCLUDE = %r{/(\.git|node_modules|tmp|log|renders|[\w.-]*stems|samples|scratch|project|crate|venv|\.venv|site-packages|vendor|storage|\.cache|builds|coverage|\.master|knowledge|output)/|/public/assets/|\.wav\.quality\.json\z}
+    # Two filters, because there are two ways a file is not this tree's source.
+    # git already knows every generated and scratch path — renders, stems, the
+    # quality sidecar, MASTER/runtime/ — so ask it rather than grow one more
+    # clause per incident: a name-shaped regex cannot catch a sidecar sitting at
+    # a tree's root, and every clause added to try shadowed something real.
+    # `log` shadowed lib/trace/log/, three tracked Ruby files the census never
+    # saw; git ignores the log directories it was written for, so it is gone.
+    # TREE_EXCLUDE keeps what remains: paths git tracks that are still not ours
+    # to count -- vendored JavaScript, compiled asset builds, dilla's project
+    # state and its committed renders.
+    TREE_EXCLUDE = %r{/(\.git|node_modules|tmp|renders|[\w.-]*stems|samples|scratch|project|crate|venv|\.venv|site-packages|vendor|storage|\.cache|builds|coverage|\.master|knowledge|output)/|/public/assets/|\.wav\.quality\.json\z}
     TREE_SOURCE_EXT = %w[.rb .rake .erb .scss .css .js .mjs .yml .yaml .md .sh .ksh .exp .html .json].freeze
 
     def pub4_growth_rows
@@ -273,9 +281,27 @@ module Pub4
     end
 
     def tree_source_count(dir)
-      Dir.glob(File.join(dir, "**", "*"), File::FNM_DOTMATCH).count do |path|
+      candidates = Dir.glob(File.join(dir, "**", "*"), File::FNM_DOTMATCH).select do |path|
         File.file?(path) && path !~ TREE_EXCLUDE && TREE_SOURCE_EXT.include?(File.extname(path).downcase)
       end
+      (candidates - git_ignored(candidates)).size
+    end
+
+    # One batched call for the whole tree, so this stays fast enough for a hook.
+    # Nothing is rescued here. git exits 1 when no path matched, which is a
+    # normal answer and not an exception; the only thing that raises is git
+    # being absent, and a growth row measured without knowing what the
+    # repository ignores is the blind instrument this file exists to catch.
+    # pub4_growth_rows turns it into an unreadable row, which fails.
+    def git_ignored(paths)
+      return [] if paths.empty?
+
+      out = IO.popen(["git", "-C", ROOT, "check-ignore", "--stdin"], "r+", err: File::NULL) do |io|
+        io.write(paths.join("\n"))
+        io.close_write
+        io.read
+      end
+      out.to_s.lines.map(&:chomp)
     end
 
     # The RAILS lints, each a Pub4 module with its own BASELINES.
