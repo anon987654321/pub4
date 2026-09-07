@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# The scan/fix/critique/review pass over all four trees — two stages of the
+# The scan and critique pass over all four trees — two stages of the
 # repo-wide chain, not the chain itself. `MASTER/bin/pub4 gate` is the chain:
 # it runs this for the lexical and semantic tiers, then the RAILS gates, the
 # suites, the ratchets and the sprawl census, and attributes every file each
@@ -10,7 +10,7 @@
 #   ruby bin/gate                      lexical + semantic, full-fix
 #   ruby bin/gate --scan-only          measures, writes nothing
 #   ruby bin/gate --lexical-only       law/ and the scan registry, no council
-#   ruby bin/gate --semantic-only      /critique and /review; exit 3 = not measured
+#   ruby bin/gate --semantic-only      the critique stage; exit 3 = not measured
 #   ruby bin/gate --explain            prints the ladder, runs nothing
 
 require "open3"
@@ -62,16 +62,17 @@ end
 
 EXPLAIN = ARGV.include?("--explain") || ARGV.include?("--help") || ARGV.include?("-h")
 
-# Full chain mutates the tree via /fix, and only via /fix -- see SAFE_ENV above.
+# The full chain mutates the tree: the scan stage fixes what it finds as it
+# finds it, which is what --scan-only holds back -- see SAFE_ENV above.
 # Prefer SCAN_ONLY=1 in CI/preflight.
 SCAN_ONLY = ENV["MASTER_GATE_SCAN_ONLY"] == "1" || ARGV.include?("--scan-only")
 
 # Two tiers, selectable, because only one of them can currently reach a verdict.
 #
 # The lexical tier is law/ and the scan registry: deterministic detectors, no
-# model, and the half that autofixes. The semantic tier is /critique and
-# /review, which reach the council and therefore a provider — and the provider
-# answers "Insufficient credits", so every semantic stage is inconclusive.
+# model, and the half that autofixes. The semantic tier is the critique stage,
+# which reaches the council and therefore a provider — and the provider answers
+# "Insufficient credits", so every semantic stage is inconclusive.
 #
 # Interleaved, as they were, that dead tier aborted the run and the
 # deterministic half which had just passed went unreported. `bin/pub4 gate`
@@ -87,9 +88,17 @@ TIER = if ARGV.include?("--lexical-only")
 
 # One path per invocation: /scan takes a single target, so each tree gets its
 # own pass.
+#
+# One line per tier, since 2026-09-06. The lexical pass used to be
+# `/scan`, `/fix`, `/scan` — three boots of the runtime for a pipeline that
+# already scans, fixes and re-scans inside one: /scan is /through --only scan,
+# whose stages are the aesthetic pass, the deep pass, the fix, and the re-scan
+# that proves it. Running it three times ran that sequence three times. The
+# semantic pass was `/critique` then `/review`, and both words name the critique
+# stage, so it ran the council twice — the tier that already costs the most.
 def lines_for(path)
-  lexical = SCAN_ONLY ? ["/scan --no-autofix #{path}"] : ["/scan #{path}", "/fix #{path}", "/scan #{path}"]
-  semantic = SCAN_ONLY ? ["/critique #{path}"] : ["/critique #{path}", "/review #{path}"]
+  lexical = SCAN_ONLY ? ["/scan --no-autofix #{path}"] : ["/scan #{path}"]
+  semantic = ["/critique #{path}"]
   case TIER
   when :lexical then lexical
   when :semantic then semantic

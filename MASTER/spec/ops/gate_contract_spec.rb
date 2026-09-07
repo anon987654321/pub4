@@ -26,6 +26,29 @@ class GateContractSpec < Minitest::Test
                     "returns produces no output for INCONCLUSIVE to match on"
   end
 
+# One boot per tier per tree, because one boot does the whole tier.
+#
+# The lexical pass was `/scan`, `/fix`, `/scan` — three runtime boots for a
+# pipeline that already scans, fixes and re-scans inside one. /scan is
+# /through --only scan, and that stage's sections are the aesthetic pass, the
+# deep pass, the fix, and the re-scan that proves it; running the word three
+# times ran that sequence three times. The semantic pass was `/critique` then
+# `/review`, and both words name the critique stage, so the tier that costs
+# the most ran twice.
+#
+# Asserted on the shape rather than the literal line, since the flag spellings
+# move: what must hold is that no tier repeats a stage.
+def test_each_tier_boots_the_runtime_once_per_tree
+  source = File.read(GATE)
+  lexical = source[/lexical = SCAN_ONLY \? (.*?) : (.*?)$/, 2].to_s
+  semantic = source[/^  semantic = (.*?)$/, 1].to_s
+
+  assert_equal 1, lexical.scan(%r{/\w+}).size,
+               "the lexical tier boots bin/cli once: /scan already fixes and re-scans"
+  assert_equal 1, semantic.scan(%r{/\w+}).size,
+               "/critique and /review name one stage; running both runs the council twice"
+end
+
   def test_gate_is_expected_to_keep_repo_clean
     source = File.read(GATE)
     assert_includes source, 'assert_clean("MASTER")'
