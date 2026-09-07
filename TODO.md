@@ -3061,7 +3061,7 @@ with its blocker rather than left implied:
 3. **The anonymised contact relay** — inbound mail routing on vm23.
 4. **Live streaming, Solidus, pgvector** — infrastructure, listed under Blocked.
 
-### Six files over their length ceilings
+### Four files over their length ceilings
 
 `RAILS/test/file_length_ratchet_test.rb`, the one red file in the standalone
 suite. `limits.yml`'s rule holds here too: a breach is paid by extraction or
@@ -3069,18 +3069,45 @@ deletion, never by a bigger number.
 
     gates/support/cdp_session.rb              374 / 339  (+35)
     shared/app/assets/stylesheets/_zen_shell.scss  502 / 477  (+25)
-    gates/lib/research/design_metrics.rb      462 / 442  (+20)
-    brgen/test/services/deploy_backlog_test.rb 631 / 618  (+13)
     gates/lib/live/user_flow.rb               320 / 313  (+7)
     gates/lib/rendered/rendered_geometry.rb   450 / 449  (+1)
 
-101 lines between them. Four of the six are gate code that drives Chrome over
-CDP, so an extraction there is only provable against a booted fleet —
-`RAILS/bin/triangle up` first, or the split lands unmeasured. The counterpart
-half of that test is green: no ceiling is slack any more.
+68 lines between them, and every one of the four drives Chrome over CDP or
+measures what Chrome painted. An extraction there is only provable against a
+booted fleet — `RAILS/bin/triangle up` first, or the split lands unmeasured.
+The counterpart half of that test is green: no ceiling is slack any more.
+
+**The deadlock that kept this list alive is gone.** It read: `file_length` is
+per file and wants a split, `growth.rails` counts files and was thirteen over,
+so every split deepened an overage nobody could account for; a raise was
+forbidden by both. `growth.rails` is at its ceiling now, with each of the
+thirteen named in `spine.yml`, so a split costs one nameable line instead. Two
+were paid that way on 2026-09-08 and left the list:
+
+- `deploy_backlog_test.rb` 631 → 557. Playlist import, track ownership, hosted
+  tracks and set likes are `playlist_wiring_test.rb` — four contracts that
+  arrived one at a time and read as one subject, out of a bundle of forty.
+- `gates/lib/research/design_metrics.rb` 462 → 345. Input size, heading
+  hierarchy, the weight ladder, font families and lowercase tracking are
+  `design_metrics/type_checks.rb`, a module included back into the gate like
+  `ContrastChecks` beside it. Every one of them reads a font declaration out
+  of the SCSS and judges it against typography.
+
+**The diff standard this file set is what caught the real defect**, and it was
+not in either split. Running the gate's whole sorted output against the tree
+before the change showed one extra line — `no ceiling recorded in
+css_budget.yml`. Moving `contrast_checks.rb` into `design_metrics/` the day
+before had broken `File.expand_path("../data/css_budget.yml", __dir__)` for the
+second time, in the same method whose comment records the first: the gate ran
+unbudgeted and still reported ok. The path is anchored on the gates root now,
+and `gate_live_and_css_budget_test` asserts that all four budget readers —
+design_metrics contrast, css_constitution rules, css_constitution weight,
+constitutional_scan targets — return something. **The ceilings existing in the
+YAML and the gate reaching them are two facts, and only the first was ever
+asserted.** Proved by mutation: restore the old path and the test goes red.
 
 Two left the list on 2026-09-06, and only one of them by extraction.
-`page_inventory.rb` went 444 -> 288 by **deletion**, which is the note worth
+`page_inventory.rb` went 444 → 288 by **deletion**, which is the note worth
 keeping: it carried five filename ladders for resolving a view's URL, under a
 comment inviting their removal "when the route table proves it redundant, not
 before". Counted rather than assumed — the ladders were reached three times in
@@ -3093,17 +3120,9 @@ The reading that transfers: measure how often a fallback is taken before
 extracting the file that holds it. Three calls out of 204 is not a fallback,
 it is a residue.
 
-**The remaining six carry nothing dead, measured 2026-09-06.** A Prism census
-over every method in the five Ruby files finds zero with no caller. So they are
-long files doing long work, and the only payment left is extraction.
-
-Which is where the two ratchets meet head on. `file_length` is per file and
-wants a split; `growth.rails` counts files and is 13 over, so every split costs
-it one. Extraction cannot satisfy both, a raise is forbidden by both, and there
-is nothing left to delete — the same structure `spine.lib_body_ceiling` has in
-MASTER and the reason this list has survived several sittings. Closing it needs
-either 13 genuinely dead RAILS files to pay `growth.rails` first, or an owner
-raising one ceiling in a commit that says what the lines buy.
+**The remaining four carry nothing dead, measured 2026-09-06.** A Prism census
+over every method finds zero with no caller. So they are long files doing long
+work, and the only payment left is extraction against a booted fleet.
 
 Two instrument errors while measuring that, both the same family and both worth
 not repeating. A dead-method census reported eleven methods with no caller; the

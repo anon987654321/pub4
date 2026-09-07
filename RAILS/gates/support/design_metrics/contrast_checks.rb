@@ -136,14 +136,14 @@ module Deploy
         end
       end
 
+      # Anchored on the gates root, not on __dir__, because this file has now
+      # moved twice and a __dir__ path broke on both. It fails the way this kind
+      # of thing does — not an exception, a rescue that logs "rules unreadable"
+      # and runs the gate unbudgeted, so the contrast ceiling stops being
+      # enforced while the gate still reports ok. RAILS comes from the gate this
+      # module is included into, so the path holds wherever the file sits.
       def contrast_budget
-# Relative to the gates root, not to __dir__: this method moved one
-# directory deeper in the split and a path anchored on __dir__ silently
-# became gates/lib/data/css_budget.yml, which does not exist. It failed
-# the way this kind of thing does — not an exception, a rescue that
-# logged "rules unreadable" and ran the gate unbudgeted, so the contrast
-# ceiling stopped being enforced while the gate still reported ok.
-path = File.expand_path("../data/css_budget.yml", __dir__)
+        path = File.join(RAILS, "gates", "data", "css_budget.yml")
         (YAML.safe_load_file(path)&.dig("rules") || {}).slice("contrast_below_aa", "contrast_below_aaa")
       rescue StandardError => e
         warn "design_metrics: rules unreadable (#{e.class}) — gate runs unbudgeted"

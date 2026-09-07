@@ -52,14 +52,19 @@ class FileLengthRatchetTest < Minitest::Test
   # looked like when something finally forced it.
   CEILINGS = {
     "brgen/lib/brgen/bergen_demo_seeder.rb" => 839,
-# 746 -> 618 on 2026-08-26. The eight infinite-scroll wiring assertions are
-# infinite_scroll_wiring_test.rb — one subject, and the one most likely to
-# keep growing, rather than eight more entries in a bundle of forty
-# unrelated deploy contracts. ROOT and the two source readers went to
-# test/source_reader.rb so both files answer "where is the tree"
-# the same way; copying them would have made two answers that drift, which
-# is the failure ROOT's own comment records from 2026-07-10.
-"brgen/test/services/deploy_backlog_test.rb" => 618,
+    # 746 -> 618 on 2026-08-26. The eight infinite-scroll wiring assertions are
+    # infinite_scroll_wiring_test.rb — one subject, and the one most likely to
+    # keep growing, rather than eight more entries in a bundle of forty
+    # unrelated deploy contracts. ROOT and the two source readers went to
+    # test/source_reader.rb so both files answer "where is the tree"
+    # the same way; copying them would have made two answers that drift, which
+    # is the failure ROOT's own comment records from 2026-07-10.
+    #
+    # 618 -> 557 on 2026-09-08, the same surgery on the next subject to have
+    # grown one. Playlist import, track ownership, hosted tracks and set likes
+    # are playlist_wiring_test.rb: four tests that arrived one at a time and
+    # read as one contract. It reads its tree through the same SourceReader.
+    "brgen/test/services/deploy_backlog_test.rb" => 557,
 # 522 -> 442 on 2026-08-26. Token contrast and the budget that judges it —
 # check_token_contrast, judge_contrast_budget, contrast_budget — are
 # design_metrics/contrast_checks.rb. One subject, and the maths it calls
@@ -73,7 +78,21 @@ class FileLengthRatchetTest < Minitest::Test
 # unbudgeted, so the contrast ceiling stopped being enforced while the gate
 # still printed ok. Caught by diffing the gate's whole output before and
 # after, which is now the standard for a split in this file.
-"gates/lib/research/design_metrics.rb" => 442,
+#
+# 442 -> 345 on 2026-09-08, the next subject in the same file: input size,
+# heading hierarchy, the weight ladder, font families and lowercase tracking
+# are design_metrics/type_checks.rb. Every one of them reads a font
+# declaration out of the SCSS and judges it against typography, and they were
+# the largest of the four groups left. Verified the way this file asks for:
+# the gate's whole output, sorted, is identical to the tree before the split.
+#
+# That diff also caught a live one. Moving contrast_checks.rb into
+# design_metrics/ the day before broke `File.expand_path("../data/...", __dir__)`
+# a second time, in the same file whose comment records the first -- the gate
+# ran unbudgeted and still reported ok. The path is anchored on the gates root
+# now, and gate_live_and_css_budget_test asserts every budget reader returns
+# something, which is the assertion that was missing both times.
+"gates/lib/research/design_metrics.rb" => 345,
 # 498 -> 449 on 2026-08-26. check_contrast, apca_note and check_apca are
 # rendered_geometry/contrast_checks.rb — the one subject in this gate that
 # is colour rather than geometry, and the rendered counterpart to the

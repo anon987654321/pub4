@@ -84,7 +84,7 @@
 # `//` or `/* */`; STALE_NAMESPACE read a comment explaining that
 # "Fiber[:master_visitor] is set when a Master::CLI is built" as a use of a
 # retired constant. A comment cannot resolve a constant.
-findings: 293
+findings: 292
 by_rule:
   BARE_DIV_WRAPPER: 3
   BLANK_LINE_RUN: 1
@@ -108,7 +108,7 @@ by_rule:
   PROSE_ACTIVE_VOICE_NB: 1
   PROSE_OMIT_QUALIFIERS: 18
   RATE_LIMITING_MISSING: 4
-  SQUINT_TEST: 6
+  SQUINT_TEST: 5
   STRICT_MODE_ZSH: 5
   UNBOUNDED_RETRY: 1
   USE_THEN: 6
@@ -188,8 +188,8 @@ finding_members:
   - NO_CHANGELOG_COMMENT RAILS/brgen/db/migrate/20260714164502_add_integrity_constraints.rb:6
   - NO_CHANGELOG_COMMENT RAILS/brgen/engines/dating/app/models/dating/profile.rb:48
   - NO_CHANGELOG_COMMENT RAILS/brgen/engines/marketplace/test/models/marketplace/order_test.rb:20
-  - NO_CHANGELOG_COMMENT RAILS/brgen/test/services/deploy_backlog_test.rb:256
-  - NO_CHANGELOG_COMMENT RAILS/brgen/test/services/deploy_backlog_test.rb:400
+  - NO_CHANGELOG_COMMENT RAILS/brgen/test/services/deploy_backlog_test.rb:346
+  - NO_CHANGELOG_COMMENT RAILS/brgen/test/services/playlist_wiring_test.rb:30
   - NO_CHANGELOG_COMMENT RAILS/shared/app/services/shared/pushable.rb:5
   - NO_CHANGELOG_COMMENT STUDIO/lora/_toolkit/colab_session.rb:219
   - NO_CHANGELOG_COMMENT STUDIO/postpro/postpro.rb:1488
@@ -392,7 +392,6 @@ finding_members:
   - SQUINT_TEST RAILS/brgen/app/assets/stylesheets/_vertical_shell.scss:1
   - SQUINT_TEST RAILS/brgen/app/assets/stylesheets/_widgets.scss:1
   - SQUINT_TEST RAILS/brgen/app/javascript/reference/visualizers_2d_reference.js:1
-  - SQUINT_TEST RAILS/brgen/test/services/deploy_backlog_test.rb:1
   - SQUINT_TEST RAILS/shared/app/assets/stylesheets/_search_yep.scss:1
   - STRICT_MODE_ZSH STUDIO/dilla/bin/demo_daemon.sh:1
   - STRICT_MODE_ZSH STUDIO/dilla/bin/sine_stream_heartbeat.sh:1
@@ -435,7 +434,7 @@ registry_finding_members:
   - NO_GOD_CLASS RAILS/brgen/lib/brgen/irc/bridge.rb:10
   - NO_GOD_CLASS RAILS/gates/lib/live/user_flow.rb:21
   - NO_GOD_CLASS RAILS/gates/lib/rendered/rendered_geometry.rb:24
-  - NO_GOD_CLASS RAILS/gates/lib/research/design_metrics.rb:15
+  - NO_GOD_CLASS RAILS/gates/lib/research/design_metrics.rb:16
   - NO_GOD_CLASS RAILS/gates/support/cdp_session.rb:29
   - NO_GOD_CLASS STUDIO/dilla/lib/composition_engine.rb:161
   - NO_GOD_CLASS STUDIO/dilla/lib/modulation.rb:554

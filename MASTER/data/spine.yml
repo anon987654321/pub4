@@ -177,7 +177,17 @@ pub4_source_ceilings:
   # A test costs the same here as a lib file, and should not -- this ceiling taxes
   # coverage at the rate it taxes sprawl, and eleven of thirteen say so plainly.
   # Splitting the row in two is the fix; naming the thirteen is what this line does.
-  RAILS: 2371
+  #
+  # 2371 -> 2373 for two extractions the file-length ratchet asked for, and it
+  # is worth naming the shape: file_length is per file and wants a split,
+  # growth counts files and charges one for it. Neither may be raised to swallow
+  # the other, so the split has to be worth a named line here.
+  # brgen/test/services/playlist_wiring_test.rb takes four playlist contracts
+  # out of a bundle of forty (deploy_backlog_test 631 -> 557), and
+  # gates/support/design_metrics/type_checks.rb takes the five source checks
+  # that read a font declaration (design_metrics 462 -> 345). Both are one
+  # subject, and both fold into nothing that exists.
+  RAILS: 2373
   # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
   # that are the whole defence against a shared index, and nothing tested any of
   # them — a hook that stopped firing looks exactly like a week in which nobody

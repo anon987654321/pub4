@@ -5,6 +5,9 @@ require "yaml"
 require_relative "../../OPENBSD/lib/gate_result"
 require_relative "../gates/lib/source/css_constitution"
 require_relative "../gates/support/design_metrics"
+require_relative "../gates/lib/research/design_metrics"
+require_relative "../gates/support/css_weight"
+require_relative "../gates/lib/meta/constitutional_scan"
 
 # Two gaps, same shape: a rule that exists and measures nothing.
 #
@@ -147,6 +150,25 @@ class GateLiveAndCssBudgetTest < Minitest::Test
   def test_contrast_ceilings_exist_for_both_bands
     assert_kind_of Integer, budget["contrast_below_aa"]
     assert_kind_of Integer, budget["contrast_below_aaa"]
+  end
+
+  # The ceilings existing in the YAML and the gate reaching them are two facts,
+  # and only the first was asserted. Every budget reader here rescues and runs
+  # unbudgeted, so a path that stops resolving costs the ceiling and leaves the
+  # gate green — which is what a file move did to design_metrics twice, the
+  # second time on 2026-09-08 despite a comment in the file warning about the
+  # first. A reader that returns nothing is the failure; assert what it returns.
+  def test_every_budget_reader_reaches_its_file
+    readers = {
+      "design_metrics contrast" => Deploy::DesignMetricsGate.new.send(:contrast_budget),
+      "css_constitution rules" => Deploy::CssConstitutionGate.new.send(:budgets),
+      "css_constitution weight" => Deploy::CssConstitutionGate.new.send(:weight_ceilings),
+      "constitutional_scan targets" => Deploy::ConstitutionalScanGate.new.send(:budget)
+    }
+
+    readers.each do |name, values|
+      refute_empty values, "#{name}: budget unreadable, so the gate runs unbudgeted and still reports ok"
+    end
   end
 
   # The vertical accents live in their own top-level map with no background of
