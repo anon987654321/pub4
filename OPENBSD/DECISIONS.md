@@ -32,7 +32,8 @@ green.
 - `OPENBSD/` — VPS config backup (`etc/`, `usr/`, `var/`) plus deploy tooling
   (`bin/`, `lib/`, `sh/`, gates)
 - The `DEPLOY → OPERATOR → OPENBSD` renames completed 2026-07-14; legacy path
-  strings still resolve via `MASTER/lib/pub4/paths.rb`
+  strings still resolve, through `RAILS/shared/lib/pub4/deploy_paths.rb`, which
+  is what `Pub4::DeployPaths` is
 
 ## OpenBSD First
 
