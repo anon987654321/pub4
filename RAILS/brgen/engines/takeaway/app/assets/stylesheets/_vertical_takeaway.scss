@@ -25,8 +25,17 @@ body.vertical-takeaway {
 }
 
 /* Dark mode puts that same meta text on a dark card, where the darkened red
-   would fail the other way — the bright chip red is the correct ink there. */
-body.vertical-takeaway #dark-toggle:checked ~ .theme-root {
+   would fail the other way — the bright chip red is the correct ink there.
+
+   The dataset lane, not the checkbox one. This rule read `#dark-toggle:checked
+   ~ .theme-root` and could never match: shared/_theme_toggle renders the input
+   inside the role="region" wrapper, so it is not a sibling of .theme-root, and
+   brgen renders the toggle only `unless vertical_surface?` — on a vertical the
+   input is not in the document at all. So the correction never fired and dark
+   mode wore #c62b1b, a light-card ink, on #1a1a1a at 3.12:1. This selector is
+   the one _vertical_shell already uses for its light accents, and it restores
+   the 5.85 this block was written to get. */
+:root[data-theme="dark"] body.vertical-takeaway {
   --food-dash-ink: var(--food-dash);
 }
 

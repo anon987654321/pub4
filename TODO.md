@@ -5261,17 +5261,13 @@ and `image_findings` directly above it had already been widened for. Its
 both were reported as prose the moment the glob reached them. Both lint tests
 stay green.
 
-**Open — two sites, and they are a rendered-value decision.**
-`accent_on_prose` now reports 2 against a baseline of 0, both in
-`_vertical_marketplace.scss`: `.market-hero-kicker` (line 62) and
-`.deal-rating` (line 154). The kicker is the harder one — 12px uppercase bold at
-3.48:1, and `design_tokens.yml` already records why the accent cannot be
-darkened to fix it (`#80715c` took the kicker 3.48 → 4.74 and broke
-`.compose-btn` 5.02 → 3.70 in the same run; the fill and ink bounds do not
-overlap). The only fix inside the accent system is the one `.price` took —
-drop the hue and let the weight carry the emphasis. That is the operator's
-call, so the baseline stays at 0 and the gate stays red rather than being
-raised to silence a defect that was there all along.
+**The two sites it found are closed.** `accent_on_prose` reported 2 against a
+baseline of 0, both in `_vertical_marketplace.scss`. The kicker was the harder
+one — 12px uppercase bold at 3.48:1, and `design_tokens.yml` already records why
+the accent cannot be darkened to reach it (`#80715c` took the kicker 3.48 → 4.74
+and broke `.compose-btn` 5.02 → 3.70 in the same run; the fill and ink bounds do
+not overlap). Both took the fix `.price` took — drop the hue, let the weight
+carry the emphasis. The baseline was never raised. Operator decision 2026-09-08.
 
 **Three things found beside it, none of them fixed.**
 
@@ -5301,15 +5297,18 @@ combinator has nothing to reach; brgen's layout also renders the toggle only
 all. Both conditions hold independently. SURFACES.md called this lane retired
 on 2026-08-21 and two verticals still steer by it:
 
-- `_vertical_takeaway.scss:29` corrects `--food-dash-ink` for a dark card and
-  never fires, so takeaway's meta text wears `#c62b1b` — tuned for a light
-  card — on `#1a1a1a` at **3.12:1**. The value the dead branch names,
-  `#e07b39`, is 5.85 there. A written intent, a measured cost, and a one-line
-  repair: the same rule under `:root[data-theme="dark"]`, which is the live
-  lane. It changes a rendered colour in dark mode, so it waits on the operator.
-- `_vertical_dating_shell.scss:32` sets `--dating-accent-ink:
-  var(--dating-accent)`, which the base block already sets. Inert and harmless;
-  delete it or leave it, but it is not load-bearing.
+Both moved to `:root[data-theme="dark"]`, the lane `_vertical_shell` already
+uses. Operator decision 2026-09-08.
+
+- `_vertical_takeaway.scss` corrected `--food-dash-ink` for a dark card and
+  never fired, so takeaway's meta text wore `#c62b1b` — tuned for a light
+  card — on `#1a1a1a` at **3.12:1**. The value the dead branch named,
+  `#e07b39`, is 5.85 there, and is what it now gets.
+- `_vertical_dating_shell.scss` set `--dating-accent-ink:
+  var(--dating-accent)`, which the base block already set — inert while the base
+  block named the fill. The base now names the light ink `#00705c` (6.05 on
+  `#ffffff`, against the fill accent's 3.77), so this override became
+  load-bearing in the same pass that fixed its selector.
 
 amber still wears the checkbox lane deliberately (`_variables.scss:45,55`) and
 renders its own `#dark-toggle` outside any wrapper, so it is unaffected. Do not

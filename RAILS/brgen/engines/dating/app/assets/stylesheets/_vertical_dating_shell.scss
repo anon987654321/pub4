@@ -19,9 +19,10 @@ body.vertical-dating {
      resolves to the map's light slot #009579 and this ink measures 3.77 on
      #ffffff. That clears the 3:1 non-text floor visual_contract_lint holds
      accents to and misses AA for text, and the BankID trust line is text.
-     #00705c is 6.05 there. Restoring it is a rendered value and a decision;
-     it is recorded in TODO.md rather than taken here. */
-  --dating-accent-ink: var(--dating-accent);
+     #00705c is 6.05 there, so it is the ink and the dark override below
+     restores the bright teal where that one is 9.11 on the card. Operator
+     decision 2026-09-08. */
+  --dating-accent-ink: #00705c;
   --dating-accent-warm: #ff5500;
   --dating-pass: var(--danger);
   background: var(--dating-bg);
@@ -29,7 +30,13 @@ body.vertical-dating {
   font-family: var(--font);
 }
 
-body.vertical-dating #dark-toggle:checked ~ .theme-root {
+/* The dataset lane, for the same reason takeaway's twin moved: the checkbox is
+   nested inside the toggle's wrapper and is not rendered on a vertical at all,
+   so `#dark-toggle:checked ~ .theme-root` could never match. Here it was inert
+   rather than costly — it set what the base block already set — but the base
+   block now names the light ink, so this override is load-bearing. On dark,
+   --dating-accent is the map's bright teal at 9.11 on the card. */
+:root[data-theme="dark"] body.vertical-dating {
   --dating-accent-ink: var(--dating-accent);
 }
 

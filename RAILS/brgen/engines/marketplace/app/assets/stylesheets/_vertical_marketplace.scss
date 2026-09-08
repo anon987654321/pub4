@@ -59,7 +59,13 @@ main#main-content > header.market-hero h1 {
   font-weight: var(--weight-bold);
   letter-spacing: var(--tracking-widest);
   text-transform: uppercase;
-  color: var(--accent);
+  /* No hue. The mono face, the bold weight, the widest tracking and the caps
+     are four carriers of emphasis already; the taupe was a fifth that could not
+     be made legible. As 12px it needs AA 4.5 and measures 3.48 on #ffffff, and
+     the accent cannot be darkened to reach it — design_tokens records that
+     #80715c took this kicker to 4.74 and broke .compose-btn to 3.70 in the same
+     run, because the fill and ink bounds do not overlap. Same fix .price took.
+     Operator decision 2026-09-08. */
 }
 
 /* --accent is sized to carry #1a1824 ink as a button background (.compose-btn),
@@ -150,9 +156,9 @@ body.vertical-marketplace .deal-cat.active {
   color: var(--accent-ink);
 }
 
-body.vertical-marketplace .deal-rating {
-  color: var(--accent);
-}
+/* .deal-rating inherits --text. It wore the taupe at 3.48 on #ffffff, which is
+   the accent's fill floor rather than a text one, and a rating is read rather
+   than pressed. Operator decision 2026-09-08, with .market-hero-kicker above. */
 
 body.vertical-marketplace .marketplace-top-offers .top-offer-card:hover {
   border-color: var(--accent);
