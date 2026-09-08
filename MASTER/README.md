@@ -1,8 +1,10 @@
 # MASTER
 
-<!-- GitHub's README sanitizer strips <video>. loop.gif is the same take and
-     autoplays in Chrome; loop.mp4 holds the mix (face, beat, README speech). -->
-<img src="loop.gif" width="360" alt="MASTER">
+<!-- The face reading this file aloud, in the voice data/voice.yml names. Recorded
+     by RAILS/gates/probes/face_loop_record.rb; loop.mp4 carries the sound, and
+     loop.gif is the same take without it, because GitHub's README sanitizer
+     strips <video> and renders an <img>. -->
+<img src="loop.gif" width="360" alt="The MASTER face, reading this page aloud">
 
 **MASTER is the first artificial intelligence written in pure Ruby that governs
 itself by law, not by hope — grown in Norway, to run its own mind on power drawn

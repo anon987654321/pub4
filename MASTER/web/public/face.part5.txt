@@ -1578,6 +1578,11 @@ window.MASTER_FACE = {
   get mouthPool() { return mouthPool; },
   get eyePool() { return eyePool; },
   get renderer() { return renderer; },
+  // The face's material, so a recorder can pin a uniform. Every uniform is
+  // rewritten each frame from State, so anything reading this to change the look
+  // has to hold its value against that — see tools/face_record.rb, which defines
+  // uExposure's `value` as a getter the per-frame write cannot move.
+  get faceMat() { return faceMat; },
   get cv() { return cv; },
   get faceHome() { return faceHome; },
   get faceScatter() { return faceScatter; },

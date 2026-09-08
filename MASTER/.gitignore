@@ -36,7 +36,8 @@ knowledge/
 .constitutional_violations.jsonl
 .constitutional_locks/
 loop.mp4
-loop.wav
+# The README take is recorded from this, by gates/probes/face_loop_record.rb.
+tts.wav
 
 # reports/ is generated output — PATH_OWNERSHIP.yml calls it "regenerate, do not
 # hand-edit", the scanner skips it, and web/script/screenshot_calibrate.rb writes
