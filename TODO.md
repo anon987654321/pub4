@@ -3494,6 +3494,286 @@ worth keeping: the session cookie is `domain: :all`, scoped to the registrable
 domain, so a move off brgen.no silently ends cross-app sign-in, and
 `Shared::SsoToken` is consume-only in this tree.
 
+### Survey — the shell tree read end to end, 2026-09-08
+
+A survey, not a cleanup. Nothing under `OPENBSD/` was changed. Every item names a
+file and a line, or a command and its output, and says how it was checked. Box
+measurements are read-only over ssh, taken while another session was deploying,
+and are stated as divergences rather than as live effects.
+
+One instrument was wrong before it was right, and it is the first thing to read.
+`bin/vps-deploy:153` guards its config-drift warning on
+`[[ -x /usr/local/bin/config_drift_gate.rb ]]`, which is the exact shape
+`installed_targets_gate.rb`'s own header records as a dead guard for
+`daily.local`. It is not dead. `OPERATOR.sh:293` installs that file explicitly,
+`ls` on the box finds it dated Aug 25, and `/tmp/vps-deploy-drift.out` is dated
+Sep 5 12:34 — the last brgen deploy. The finding died on verification and a
+better one came out of the same measurement, item 3 below.
+
+The tree holds 169 files outside `var/`: 43 `.sh`, 35 with no extension, 34
+`.rb`, 11 `.exp`, the rest config and prose. Those are this survey's own counts;
+`MASTER/tools/ratchets.rb` and `sprawl_census.rb` printed nothing when run
+directly, so the `growth.openbsd` ceiling of 107 counts a narrower set and no
+number here is quoted from it.
+
+The operator-debt rows above were worked on the same day and are not
+re-surveyed. None of them turned out to be wrong.
+
+#### 1. `bin/pub4 gate` measures twelve of this tree's 292 assertions
+
+`MASTER/lib/pub4/gate_chain.rb:142` runs the OPENBSD suite as
+`Dir["test/test_*.rb"].sort.each { |f| system(RbConfig.ruby, f) || abort(f) }`.
+`abort` stops the loop. `test/test_domain_expiry.rb` sorts first and is red on
+nine domains past their expiry date, so the stage ends there. Run verbatim from
+`OPENBSD/`: 4 runs, 12 assertions, exit 1, last line `test/test_domain_expiry.rb`.
+`OPENBSD/bin/check:36` loads the same glob into one process and gets 76 runs and
+292 assertions. Nine files — the gate library, the githooks, guard state, the
+health check, reach, the restore scripts, solid queue, the tracked crontab and
+the safety gate — have therefore not executed under the repo-wide ladder since
+the ninth domain lapsed, while `bin/check` runs them all and reports the same one
+failure. The failure is a registrar bill, not code, and it is hiding 280
+assertions behind itself. Fix: collect failures rather than `abort`, and give the
+expiry assertion its own step so a spend decision cannot silence a contract
+suite.
+
+#### 2. Live `/etc/rc.d/amber` and `/etc/rc.d/bsdports` wait 30 seconds where the repo waits 300
+
+`ruby OPENBSD/config_drift_gate.rb --remote` exits 1 and names three drifted
+files; `doas cat` and `diff` give the content. Both rc.d scripts differ from the
+repo in one number: `while [ "$_i" -lt 300 ]` in the repo, `-lt 30` on the box,
+at `rc.d/amber:58` and `rc.d/bsdports:60`. That loop sets `_up_ok`, and `_up_ok`
+is what decides whether `rcctl restart relayd` runs — an app that answers `/up`
+late leaves relayd pointing at a dead backend and logs `relayd skipped`. Commit
+`d76fa573c` (2026-08-28, "the box is slower than every timeout allowed for")
+raised both to 300 for exactly that reason. The live files are dated Aug 27
+17:35 and predate it; `/etc/rc.d/brgen` and `/etc/rc.d/master` were installed
+Sep 5. So the documented fix for the recurring amber/bsdports shed-and-stay-down
+has never reached the two services it was written for. Fix: one
+`install_root_configs` run. `grep "relayd skipped" /var/log/daemon` finds none,
+but `daemon` rotates roughly hourly and the current file covers about two and a
+half hours, so nothing here dates the last occurrence.
+
+The third divergence is a comment: the repo's `doas.conf` cites `TODO.md` where
+live cites the retired `OPENBSD/data/debt.yml`. Functionally identical, and it
+is why the drift gate is red — which is the shape that teaches an operator to
+skim a red gate.
+
+#### 3. Nothing compares `/usr/local/bin`, and seven of twelve root-cron executables differ
+
+`config_drift_gate.rb`'s `VERBATIM` is eleven files under `/etc` and its
+`EXCLUDED` is four more. It never reads `/usr/local`, where every cron job on
+this box lives. Checked by `cksum` over ssh against the repo copies: divergent
+are `config_drift_gate.rb`, `resource_guard.sh`, `config-drift-check`,
+`core-reclaim.sh`, `drain-jobs.sh`, `prune-guests.sh` and `relayd-watchdog`;
+matching are `keep-warm.sh`, `prune_guests.rb`, `renew-certs.sh`,
+`uptime-check.sh` and `nsd-resign`. Two consequences. The drift detector cannot
+see that its own installed copy has drifted, and the warning at
+`bin/vps-deploy:154` is produced by that stale copy rather than by the gate in
+the commit being deployed. And `test/resource_guard_test.sh` proves which site
+goes down under memory pressure about `OPENBSD/resource_guard.sh`, 14,196 bytes,
+while the file root runs every five minutes is 14,099.
+
+The one difference that could be named is benign, and saying so is the point. Live
+`OPTIONAL` reads `litestream bsdports amber` against the repo's `bsdports amber`,
+and the shed loop at `resource_guard.sh:230` only sheds a service `rcctl check`
+calls `(ok)`, which a service with no rc.d script never is. The category is
+unwatched, not that today's instance bites. Fix: extend the gate to the installed
+script tree, which is where the box's scheduled behaviour actually lives.
+
+#### 4. `resource_guard.sh` guards its crisis tier on a file nothing installs
+
+`resource_guard.sh:284` reads `[ -x /usr/local/bin/emergency_cpu.sh ]`, line 285
+runs it, line 287 logs that it is not installed. `ls` on the box: no such file.
+The target is tracked at `OPENBSD/emergency_cpu.sh`, the tree root, and
+`OPERATOR.sh` carries explicit `install` lines for `resource_guard.sh` (276) and
+`config_drift_gate.rb` (293) and none for this one. So `LOAD_CRIT` has only ever
+logged, and it fails loudly, which is the one mercy here.
+
+Two instruments exist for this shape and both report clean.
+`installed_targets_gate.rb`'s `CONFIG_GLOBS` are `etc/crontab*`, `etc/*.local`
+and `etc/rc.d/*`; `tools/reach.rb` reads the same three plus the nsd zones. A
+guard living inside an installed script is invisible to both. Widening the scan
+to every file in the tree finds exactly one genuine orphan — this one; the other
+seven hits are test fixtures in `test_reach.rb` and one line of `RUNBOOK.md`. Fix:
+add the install line, and widen both censuses, which will stay quiet.
+
+#### 5. `uptime-check.sh` has mailed root 7,924 DOWN lines
+
+`/var/log/uptime-check.log` is 660 KB and holds 7,924 `DOWN` lines: 4,811 for
+`https://bsdports.org/up`, 2,693 for amber, 265 for ai and 155 for brgen. The
+crontab comment says "cron mails root on a DOWN line". The largest share is a
+registrar setting: `curl https://bsdports.org/up` returns 000, connection refused
+on 443, because the parking nameservers terminate no TLS, while
+`curl http://bsdports.org/up` returns 200 from Domeneshop's parking page. A
+checker reading HTTPS calls the domain down forever; a checker reading HTTP calls
+it healthy. Both repo checkers use HTTPS, and `bin/deploy-smoke.sh:201` makes it a
+required check. The registrar fix is already the `bsdports_org_delegated_to_parking`
+row above. What belongs here is the alarm: thousands of mails whose cause is
+known make root's mailbox unreadable, which is the same lesson the litestream
+`rcctl ls failed` decision records. Waive the domain by name in both checkers
+until the nameservers move.
+
+#### 6. The two `uptime-check.sh` disagree, and cron runs the one the other argues against
+
+`bin/uptime-check.sh` is a wrapper onto `health_check.rb --public-only
+--all-ready-apps`, and its header argues that a hardcoded URL list "can only go
+stale — it would still name four domains after a fifth app ships, and nothing
+would report that". `usr/local/bin/uptime-check.sh` is that hardcoded four-domain
+list, and `doas crontab -l` shows it is the one running every five minutes. The
+wrapper works — `health_check.rb` does accept `--public-only`, checked at line 34
+— it simply runs nowhere. Fix: install the wrapper, or drop the argument from the
+header and keep the list.
+
+#### 7. Eight cron logs grow without rotation
+
+`etc/newsyslog.conf` carries stanzas for four pub4 logs; `etc/crontab.vm23` and
+`etc/*.local` write nine. Unrotated: `config_drift.log`, `core-reclaim.log`,
+`domain_watch.log`, `drain-jobs.log`, `git_gc.log`, `keep-warm.log`,
+`prune-guests.log`, `uptime-check.log`. On the box `drain-jobs.detail.log` is
+10.8 MB, `uptime-check.log` 660 KB and `config_drift.log` 417 KB of identical
+`config-drift ok` lines, one every fifteen minutes. `/var` is at 16%, so this is
+not pressure — but that file's own header records `/var` at 106% from exactly
+this neglect, and the fix it applied covered only the logs that existed then.
+Every job added since brought a log and no stanza. Fix: a stanza each, and a test
+asserting every `>> /var/log/...` in the crontab has one.
+
+#### 8. `vps_weekly_integrity.sh` says where to install it, and it is installed nowhere
+
+Its header reads "Install in root crontab or daily.local". `doas crontab -l`,
+`etc/weekly.local` and `etc/daily.local` were all read and none names it. So
+`integrity_gate.rb` and `health_check.rb --public --all-ready-apps --json` run on
+no schedule on vm23; the only integrity run is `OPENBSD/bin/check-full` on the
+operator's Mac. Its own skip path is the same shape: line 16 exits 0 when the CI
+lock is held, into a log nothing reads, so a skipped weekly run and a passing one
+are the same event. Fix: schedule it, or delete it and say plainly that the
+integrity gate is a laptop gate.
+
+#### 9. `etc/rc.d/master:153` still does what the comment twenty lines above forbids
+
+Lines 126-129 explain the bug: `|| true` on precompile plus an unconditional
+stamp write made every later start skip precompile, because the skip test is
+stamp-equals-digest. Lines 136-141 write the stamp only on success. The
+gate-failure retry at 153-154 runs
+`(... rails assets:precompile) 2>/dev/null || true` and then writes the stamp
+regardless. The blast radius is bounded — line 158 still refuses the start when
+the gate fails twice — so this is a stamp that lies rather than an outage, and it
+is the item on this list I am least sure earns work. Fix is the same `if`/`else`
+as above it. Line 112 in the same file has the quieter version: `_face_assets=$(
+... face_asset_paths.rb 2>/dev/null)` yields an empty list when that script
+fails, narrowing the digest to the seven hardcoded inputs and reproducing the
+stale-fingerprint bug the comment above it describes.
+
+#### 10. Seven scripts deploy this box, three write the same master sequence, two report success having done nothing
+
+The seven: `bin/vps-deploy` (the one CLAUDE.md and RUNBOOK name), `deploy_all.sh`,
+`vps_install_all.sh`, `vps_on_vm_install.sh`, `vps_production_push.sh`,
+`vps_deploy_master.sh`, `manual_master_deploy.ksh`. Three of them build the three
+face bundles, precompile and run the `master_web_assets` gate, with three
+different failure semantics: `rc.d/master:100` swallows the face build,
+`vps_deploy_master.sh:42` swallows it, `manual_master_deploy.ksh:37` records
+`_fail=1` and exits 1. Two end green whatever happened —
+`vps_on_vm_install.sh:22` turns a failed app deploy into `WARN: $app failed` and
+finishes on `log "done"`, defeating its own `set -euo pipefail`, and
+`vps_install_all.sh:61` finishes on `doas rcctl check master 2>/dev/null || true`.
+`deploy_all.sh`, `vps_run_remote.sh` and `manual_master_deploy.ksh` are named by
+`RUNBOOK.md` and by nothing that runs. `OPENBSD/bin/` is at its
+`pub4_entrypoint_ceilings` of 17, five of them `check-*`. Fix: retire the scripts
+whose only caller is the runbook, and make the survivors exit non-zero.
+
+#### 11. Seven implementations of one load gate, and the awk ban has no detector
+
+`vps_master_scan.sh:13-16` carries the note "awk twice, in a repo that bans it in
+committed scripts" and does the comparison in one `ruby34 -e`. `vps_ci_all.sh:13`
+and `:17` still shell out to awk for the identical `vm.loadavg` field, and
+`check-openbsd:39` only runs `zsh -n` over that file, which is syntax. Seven
+places read the load and compare a field against a ceiling: `vps_ci_all.sh`,
+`vps_master_scan.sh`, `resource_guard.sh:101`, `core-reclaim.sh:65`,
+`stale_ci_cleanup.ksh:16` in awk, and `drain-jobs.sh:52`, `prune-guests.sh:49` in
+Ruby.
+
+The ban itself is unenforced here. `zsh.banned_commands` at
+`MASTER/data/rules.yml:560` has two readers, `MASTER/lib/io/shell.rb:27` and
+`MASTER/lib/voice/personality_prompt_builder.rb:325`, so it governs what MASTER's
+own shell effect runs and warns about, not what this tree commits. A scan over
+`OPENBSD/` for those commands in command position finds 75 hits in 17 files, 30
+of them in `dotfiles/mov.sh`. Fix: one `lib/load.sh` helper the seven callers
+share, and then either a scanner rule over `OPENBSD/**/*.{sh,ksh,zsh}` or a note
+saying the ban is advice outside MASTER.
+
+#### 12. Usage after the work, in four files
+
+`OPERATOR.sh` is 960 lines and its usage is at 906. `bin/deploy-smoke.sh` handles
+`-h|--help` at 161, after the banner at 149: `sh OPENBSD/bin/deploy-smoke.sh
+--help` prints `deploy-smoke: mode=--help timeout=20s` and then the usage, which
+was confirmed by running it. `validate_doas.ksh` puts usage at 100 of 116 with
+its first side effect at 31. `lib/ssh_vm23.sh` at 52 of 60. What an operator
+needs first should come first; in all four it comes last.
+
+#### 13. Nine two-line expect shims, and three dead in-tree paths
+
+`vps_console_status.exp`, `_probe`, `_short`, `_install`, `_fix_key`,
+`_poll_install`, `_start_install`, `_sync_and_install` and `vps_drop_install.exp`
+are each one line: `exec [file join [file dirname $argv0] vps_console.exp]
+<subcommand> {*}$argv`. The dispatcher already takes the subcommand as its first
+argument. Their shared guard is wired — `vps_console.exp:8` sources
+`vps_console_common.exp` and line 9 calls `require_console_risk_ack` — and its
+refusal message names `OPENBSD/VPS_SAFETY.md` and `OPENBSD/OPERATOR_CONTRACT.md`,
+neither of which exists. `deploy_all.sh:6` points at
+`OPENBSD/archive/recovery/manifest.json`, which does not exist;
+`DECISIONS.md:200` still names the retired `OPENBSD/data/debt.yml`. Six dangling
+in-tree paths in total, and that is the whole list. The shims were not exercised
+— they refuse without `I_UNDERSTAND_CONSOLE_RISK=1` and are recovery-only — so
+whether Tcl's `exec` buffers their output is unverified.
+
+#### 14. One dead local in `restore_backups.sh`
+
+`ROOT_DIR` at line 21 is assigned and read nowhere in the file. The disaster-recovery
+hardening the previous session landed does hold: every precondition exits 1,
+`test_restore_scripts.rb` pins the replica check, and the bare `ruby` at line 34
+is fine because `/usr/local/bin/ruby` on vm23 is a symlink to `ruby34`.
+
+#### Not worth chasing
+
+- **Ruby entry points come last, everywhere.** `config_drift_gate.rb`'s skip
+  guard is at 125 of 162, `installed_targets_gate.rb`'s `run` at 83 of 111,
+  `health_check.rb`'s first `def` at 51 of 414. The language wants the definition
+  before the call and the tree is consistent about it. Reordering buys nothing.
+- **Hardcoded ports in `bin/smoke-apps.sh` and `bin/deploy-smoke.sh`.**
+  `ruby RAILS/gates/runner.rb port_inventory` compares them against `apps.yml`
+  and passes; `RAILS/gates/lib/host/port_inventory.rb:57-58` names both files.
+- **Most `|| true`.** About a hundred instances, and the majority are idempotence
+  on `rcctl`, `pkill`, `chmod`, `install` and `rm -f`. `start_all_apps.sh:16-17`
+  swallows enable and start and then fails correctly at line 24
+  (`rcctl check "$svc" || exit 1`). Read the exit path before flagging one.
+- **`test/resource_guard_test.sh`.** `ksh OPENBSD/test/resource_guard_test.sh
+  OPENBSD/resource_guard.sh` prints ALL PASS across all eight cases and exits 0,
+  and `check-openbsd:36` runs it. The precedent is closed. The only note is that
+  `bin/pub4 gate`'s OPENBSD stage globs `test/test_*.rb` and so does not include
+  it — the two entrypoints cover different halves of this directory.
+- **`dotfiles/mov.sh`.** 2,343 lines, the largest shell file in the tree, thirty
+  banned-tool hits, and a torrent-and-transcode tool with nothing to do with
+  vm23. It is a dotfile and it is the owner's. Moving it is a `growth` argument.
+- **`test_gate_lib.rb:23`** prints `Failures:` and `  - nope` into the suite's
+  stdout. Cosmetic.
+- **Four gates that pass and mean it.** `installed_targets_gate.rb`,
+  `tools/reach.rb`, `deploy_smoke_gate.rb` and `port_inventory` all pass, and
+  `config-drift-check` is green on the box (13 relayd hosts, 417 acme SANs, 57
+  zones). Their coverage gaps are items 3 and 4; there is no finding inside them.
+- **The `config_drift_gate.rb` / `config-drift-check` name pair.** Two different
+  questions — repo-versus-live `/etc` bytes, and relayd/acme/nsd consistency —
+  under two names one letter apart, and the confusion has already cost a check
+  its life once. Renaming either breaks an install line and a crontab entry, so
+  this is a note, not work.
+
+#### What could not be measured
+
+`brgen.no` and `ai.brgen.no` answered 000 during this survey while `amber.brgen.no`
+answered 200; another session was deploying, so none of that is treated as a
+finding and the live smoke was not run. `/var/log/daemon` rotates about hourly and
+the current file holds no `relayd skipped`, which dates nothing. The expect shims
+are recovery-gated and were not executed. And the ratchet tools printed nothing
+when invoked directly, so every file count above is this survey's own census.
+
 ## STUDIO
 
 No standing backlog file exists for STUDIO, and none is invented here. dilla,
