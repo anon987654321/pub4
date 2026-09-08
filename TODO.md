@@ -4616,6 +4616,290 @@ not restated here.
   inside `rake test`. Not a defect in what they measure; the budget does not
   survive a loaded machine, and a green subset here proves only that.
 
+### STUDIO surveyed, nothing changed — 2026-09-08
+
+A read-only pass over all 349 tracked files in `STUDIO/`. No file under
+`STUDIO/` was touched, nothing was rendered, and no sound or graded-look value
+is proposed here. Where a finding reaches a number that shapes a render, it says
+so and stops; those belong to dilla's owner.
+
+**Three of my own instruments were wrong before they were right, and the third
+was a bug this file already records.** A reach census over `postpro`'s tables
+reported 25 of 61 `PRESETS` keys and both `PRINT_STOCKS` keys as named nowhere.
+Both readings were false. The presets are selected by name from argv
+(`postpro.rb:2942`, `:3335`, `:3457`), so a preset table driven that way has no
+in-tree reference by design; and the `PRINT_STOCKS` reading came from a
+lookbehind excluding `:`, when every use is written `print_stock: :kodak_2383`
+(`postpro.rb:788`, `:819`, `:822`, `:911`, `:979`). That is the third recorded
+instance of that exact character. A part census over `dilla.rb` read 3 seam
+markers where there are 82, because `# --- name ---` is not the marker the fold
+used; and a span census printed 18 nameless parts because `\z` was matched
+against a line still carrying its newline. Each was caught by checking a case
+whose answer was known by hand first. Every number below survived that check.
+
+**A fix the repository claims to have made is not in the repository.** Commit
+`c116a3493` — "the comb died on integer maths" — describes the defect precisely
+in its own body: `drum_chain!` passes `90 + rnd.rand(160)` and `40 + rnd.rand(70)`
+to the comb resonator, both Integers, so `hz_to / hz_from` is integer division,
+`40/249 == 0`, the swept frequency reaches zero and `RATE / 0.0` is Infinity.
+`STUDIO/dilla/bin/sine_stream.rb:875` still reads
+`hz = hz_from * ((hz_to / hz_from)**t)`, with `RATE = 44_100` an Integer at
+`:15` and the Integer caller at `:1379`. Verified three ways: `git show
+c116a3493 -- STUDIO/dilla/bin/sine_stream.rb` changes no line containing `hz`;
+the commit touched only that file and `bin/demo_full.rb`; and `grep -rn
+"hz_from.to_f" STUDIO/` returns nothing. The fix exists, in
+`/Users/mac/Music/dilla_sines/sine_stream.rb`, which is outside the repository
+and untracked — it carries `hz_from.to_f`, `hz_to.to_f`, a `<= 0.0` guard and a
+`20.0` floor. The fix is to copy those four lines back in. **Whether the floor
+is 20.0 is dilla's owner's**; that the guard exists is not.
+
+**Five scripts live twice, and four of the pairs have drifted.**
+`/Users/mac/Music/dilla_sines/` holds six Ruby files. Five have tracked twins in
+`STUDIO/dilla/bin/`; only `demo_from_stream.rb` is still byte-identical.
+`sine_stream.rb` is 2023 lines outside against 2012 tracked, `demo_full.rb` 130
+against 123, and `make_ticks.rb`/`player.rb` differ by one line each against
+`sine_stream_ticks.rb` and `sine_stream_player.rb`. `demo_render.rb`, 4393
+bytes, has no tracked twin at all. Measured by SHA-256 and line-set difference.
+This is the shadow-copy class `dup_census` exists for, and no census can see it:
+it reads tracked files only, and excludes `STUDIO/` besides. The fix is to make
+the repository the only copy — which needs the entry below first.
+
+**`bin/demo_full.rb` runs code from outside the repository, by `eval`.** Lines
+8–10 `Dir.chdir` to a hard-coded absolute path inside the *main* checkout, read
+`/Users/mac/Music/dilla_sines/sine_stream.rb`, and `eval` the part of it before
+the literal string `cfg = dilla_resolve_config` — measured at 1791 of that
+file's 2023 lines. So the tracked `bin/sine_stream.rb` is not what runs, the
+script cannot work from a worktree, and the split depends on a marker string
+surviving in a file nothing checks. `bin/sine_stream.rb:12` has the milder form
+of the same problem: `require "./dilla.rb"` resolves against the working
+directory. The fix is `require_relative "../dilla"` in both, and the eval
+deleted.
+
+**`STUDIO/gate.rb` reads only `*.rb`, so 239 lines of Ruby are checked by
+nothing.** `StudioGate#source_files` is `Dir[File.join(@root, "**", "*.rb")]`
+(`gate.rb:145`). `STUDIO/dilla/bin/crate` opens `#!/usr/bin/env ruby` and has no
+extension, so it is absent from `check_parse`, absent from `check_orphans`, and
+absent from the `dilla/lib/[^/]+\.rb` count that `DILLA_SUPPORT_CEILING` guards.
+Thirteen shell scripts are outside the same corpus. The gate's own comment says
+"a file that matches no entry here is a file nothing loads and nothing checks",
+which is exactly what the glob then permitted. The fix is to read the corpus by
+shebang as well as by extension.
+
+**dilla has four crate surfaces, three layouts, and one reader.** The engine
+reads `samples/chopped/loops.json` through `RadioChop.registered_loops`
+(`radio_chop.rb:634`). `lib/crate_dig.rb` writes `samples/dug/` from the
+Internet Archive and LibriVox, filtered to expired copyright, and exists — its
+own header says so — because YouTube rips are "neither licensed nor defensible".
+`live/dig_crate.rb:37` rips YouTube with `yt-dlp`. And `bin/crate` declares a
+third layout, `crate/{sources,stems,loops}`, calling itself "the replacement" for
+`samples/`. Searched over all 4274 tracked files with no extension filter:
+`crate/loops` appears in `bin/crate`'s own header and in two committed render
+sidecars — `project/learnings/vocals/jonas_v/fit_96_16bars.wav.dilla:65` and
+`fit_96_8bars.wav.dilla:65`, both recording
+`SAMPLE_LOOP=…/dilla/crate/loops/semua_untukmu/choir_trim.wav`. So `bin/crate` is
+not dead; it made two takes. But `dilla/crate/` no longer exists on disk, so
+those two takes are no longer reproducible from their own sidecars — the same
+non-reproducibility already recorded for `samples/dug/`, now in a second layout.
+The naming is worth fixing on its own: `crate_dig` and `dig_crate` are one word
+order apart and take opposite positions on licensing. **Which layout survives is
+dilla's owner's call.**
+
+**The 124 unreachable loops are verified, and they are not the hand-cut ones.**
+Measured without loading the engine: `samples/chopped/loops.json` holds 161 rows,
+124 of which resolve to a `loop.wav` on disk, matching the 124 rack directories
+exactly; `TRACK_PRESETS` (`dilla.rb:11717-12108`) has 74 keys;
+`TRACK_SAMPLE_LOOP_ALIASES` (`:6206`) has 11; `SAMPLE_LOOPS_OUT_OF_ROTATION`
+(`:6198`) excludes one. Applying the test's own rule
+(`test_dilla_engine_probes.rb:1013`) gives 129 loops, 4 reachable, 124 not — the
+number this file already carried. What it did not say is which: the four
+reachable are all builtins (`kembara_rindu`, `semua_untuk_mu`, `lo_borges`,
+`arat_swost_wolet`), and the 124 unreachable are every single chopper-registered
+rack. So the gap is not scattered oversight, it is that the chopper has never
+written a preset row. `WISHLIST.md` 100–101 has the shape of it. **Naming 124
+presets is authoring and stays the owner's**; making `chop` write a row is not.
+The registry's other 37 rows and the 37 stale scores in
+`project/sample_worth.json` are the racks deleted on 2026-09-02, dropped at load
+by design (`radio_chop.rb:637`) and pruned on the next chop (`:879`).
+
+**Thirteen knobs get a different default depending on which read site runs.**
+`DillaKnobs` already computes this — its header names it as the fourth
+consequence it was built for — and nothing gates it. Measured independently over
+`DillaSources.all`, counting only `ENV["X"] || lit` and `ENV.fetch("X", lit)`
+and never a profile-table row: 13 of the 405 knobs that carry a fallback have
+more than one. Three are operational and reconcilable without touching sound:
+`DILLA_SH_TIMEOUT` 120 at `dilla.rb:12571` against 900 exported at `:14048`,
+with the help text at `:27664` saying 120; `STREAM_TRACK_TIMEOUT` 420 at `:17170`
+against 300 at `:19860`; `RENDER_RETRIES` 2 at `:17255` and `:18487` against 1 at
+`:17258`. The rest shape a render and are **the owner's alone**, the sharpest
+being `MELODIC_LEAD`: `ENV.fetch("MELODIC_LEAD", "0") != "0"` at `dilla.rb:8657`
+and `ENV.fetch("MELODIC_LEAD", "1") != "0"` at `:9145` — with nothing set, one
+predicate says the melodic lead is off and the other says it is on. Then
+`HARM_VOL` 2.45 at `:16185` against 2.4 at `composition_engine.rb:570`,
+`EVOLVE_HARMONY_W` 0.18/0.08/0.12, `EVOLVE_GROOVE_W` 0.22/0.06,
+`EVOLVE_EVERY` 3/2, `LISTEN_PASSES` 0/3, `RENDER_BEAUTY_MIN` 65/70, and `BPM`
+92/90. `BARS` and `TRACK` are per-command and are not defects. The fix that is
+mine to suggest is a ratchet: `DillaKnobs` already has the answer, so pin 13 and
+let the fourteenth fail.
+
+**Forty-two rescues discard an error in STUDIO, and 26 are counted.** Grouped by
+what each one protects, so this is one sitting rather than nineteen. The 26 come
+from `ruby MASTER/tools/self_findings.rb`, whose recorded members are current;
+each was then re-read line by line. The other 16 are two shapes the rule cannot
+see, listed after the groups.
+
+- *Optional gem probes, guarded by a presence predicate* — `music_gems.rb:152`
+  (Coltrane chord), `:174` (scale search), `:206` (chord-set overlap), `:237`
+  (WaveFile read), `:246` (HeadMusic pitch-class set). Each returns `nil` and the
+  caller falls back, so the render continues with less analysis and says nothing.
+- *External binaries whose output is parsed* — `master_heuristics.rb:113` (ffmpeg
+  `aphasemeter`), `:129` (283 Hz band RMS), `provenance.rb:376` (`ffprobe`
+  duration), `postpro.rb:291` and `:302` (vips snapshot and Laplacian texture).
+  All return `nil`, and `postpro.rb:285` says in its own comment that texture
+  delta is the number to watch — which `nil` makes invisible.
+- *Optional state files* — `master_heuristics.rb:24` (reference YAML),
+  `provenance.rb:365` (render manifest), `live/rack.rb:114` (worth table),
+  `:130` (journal recency), `curate.rb:160` (caption stubs). Returning empty is
+  right; being silent about *why* is the question.
+- *Optional services and network seeds* — `seed_providers.rb:88` (USGS) and `:99`
+  (open-meteo), which both set `SWING` and `HARM_VOL`, so a failed fetch silently
+  leaves the defaults and an operator who asked for a seeded swing cannot tell
+  whether they got one; and `trymbot.rb:163`, where an empty ollama list is a
+  documented normal state.
+- *Introspection loops that mean to skip a bad member* — `verify_fx.rb:209`,
+  `:220`, `:340` and `test_dilla_engine_probes.rb:1215`. This is the population
+  where a blanket rescue is arguably correct.
+- *Process teardown* — `gate.rb:386` and `trymbot.rb:258`.
+- *One render path* — `bin/demo_full.rb:54`, around
+  `render_pad_via_fluidsynth`. On failure the pad is silently absent from the
+  showcase.
+
+Three of the 26 read as narrow and are not. `master_heuristics.rb:24` catches
+`StandardError, Psych::Exception`, `music_gems.rb:152` catches
+`::Coltrane::ChordNotFoundError, StandardError`, and `verify_fx.rb:220` catches
+`StandardError, ArgumentError` — and `Psych::Exception`, `ArgumentError` and
+`Coltrane::ChordNotFoundError` are all `StandardError` descendants, checked with
+`.ancestors`. The named class buys nothing; the clause is blanket. **Narrowing
+any of these is the owner's**, but deleting a redundant class name is not.
+
+A further 11 discard through a modifier `rescue`, which `SILENT_RESCUE` cannot
+see because it reads lines that *begin* with `rescue`. Five are `Process.kill` or
+`Process.wait` teardown and are fine. Four lose a measurement:
+`dilla.rb:6290` and `:6291` wrap `band_rms` inside `cross_sample_convolve!`, so
+if either raises, `trim` falls to `0.0` at `:6292`, the convolved bed ships
+unmatched in level, and the `dmesg` at `:6300` prints "matched dB → dB" with the
+numbers missing. Also `dilla.rb:30565` and
+`test_dilla_engine_probes.rb:1463`. The remaining two are
+`live/recall.rb:36` and `bin/sine_stream_player.rb:41`.
+
+Five more are blanket `rescue StandardError` clauses whose whole body is `next`.
+`SilentRescue#discard_token?` (`lexical_rules.rb:321`) matches
+`nil|false|[]|{}|_word|end` and not a loop-control word, so these are counted by
+nothing: `music_gems.rb:200`, `harmony_engine.rb:362`, `bin/demo_full.rb:40`,
+`bin/sine_stream.rb:1817` and `lora/_toolkit/run_train_kaggle.rb:144`. All five
+skip a member of a loop, which is the least alarming of the shapes here — but the
+rule reporting 26 where the tree holds 42 is worth knowing before anyone reads
+that number as complete. Extending `SILENT_RESCUE` to the modifier and
+loop-control forms is a MASTER change, not a STUDIO one.
+
+**`dilla/live/` is three subjects, not one, and folding it wins less than it
+looks.** Measured: the three `*.als.rb` sets share exactly 10 identical code
+lines out of 81, 94 and 104 — the duplication is already extracted into
+`Rack`, which each set calls 7 to 15 times. So the eight files are one 297-line
+shared room, three ~90-line arrangements, an 89-line replay tool, a 55-line
+YouTube ingest with its launcher, and a 27-line rotation loop. Folding the three
+arrangements into one file would collapse three distinct arrangements, not three
+copies of one. Two costs are measurable. `broadcast.sh:24` and `recall.rb:89`
+both resolve a set by filename, and `Rack.journal!` writes the set name into
+`project/liveset.jsonl` as data — so a rename breaks replay of every journalled
+pass. Right now that cost is zero: the journal holds 32 rows and **not one
+carries `seed` or `set`**, the two keys `recall.rb:37` filters on, so
+`live/recall.rb` today prints "no seeded passes yet" and can replay nothing. The
+sets do write both keys now (`ambient_pads.als.rb:133` and its siblings), so the
+next pass played is the first replayable one. If the fold is going to happen it
+is free before then and never free again. The third subject, `dig_crate.rb`, is
+crate ingest and has nothing to do with playback; it belongs beside
+`lib/crate_dig.rb`, which is the entry above. **Still the owner's to take.**
+
+**dilla.rb already carries its own map; nothing indexes it.** 34,596 lines, 959
+top-level `def`s, 545 top-level constants, and 82 `# engine part: <name>`
+markers — the fold preserved every part boundary, with 228 lines of preamble
+before the first. The seams worth naming are the 18 parts over 600 lines, not
+the file: `patch` 1741-3318 (1578 lines, and it carries three inner
+`# --- was patch_*.rb ---` banners, so one part name covers three folded files),
+`progression_tables` 10901-12109 (1209 lines, 8 constants and 4 defs — pure
+data, the most extractable thing in the file), `render_dilla` 26082-27272,
+`characterize` 33424-34596, `cli_commands` 12974-14137, `render_techno`
+28330-29379, then `lead_render`, `rap_vocal_fit`, `analysis`, `pad_layers`,
+`lead_arp`, `sample_loops`, `radio_bergen`, `demo_all`, `voice_presets`,
+`demo_catalog`, `grade_analog` and `style_defaults`. Median part is 342 lines and
+20 are under 200. Seven methods are over 250 lines: `render_dilla`
+(`dilla.rb:26309`, 963), `render_hate_techno` (`:28641`, 662), `demo_all`
+(`:19826`, 606), `dilla_schedule` (`:22052`, 366), `render_harmonic_wav`
+(`:25393`, 307), `help` (`:27638`, 270) and `rap_vocal_fit!` (`:32469`, 249). The
+cheap win is a generated index of the 82 markers so a reader can find a subject
+without grepping; **splitting any of them is not proposed here**, and the
+existing decision not to reopen `lib/engine/` stands.
+
+**`dilla/lib` sits exactly on its ceiling while `bin/` and `live/` have none.**
+`DILLA_SUPPORT_CEILING = 42` (`gate.rb:106`) and `dilla/lib` holds 42 tracked
+`.rb`, so the next module fails the gate. Meanwhile `dilla/bin` is 11 files
+(2638 lines, including the 2012-line `sine_stream.rb`) and `dilla/live` is 8, and
+neither is counted. `MASTER/tools/cohesion.rb STUDIO/dilla/lib` proposes three
+regroups — `engine/` (5 files), `harmony/` (3) and `score/` (3), 9 distinct
+files. Taking any of them would move those files out of
+`%r{/dilla/lib/[^/]+\.rb\z}` and drop the guarded count from 42 to 33, so the
+regroup would quietly disable the ceiling it appears to relieve. Raise the
+ceiling with a reason, or extend it to `bin/` and `live/`; do not regroup to get
+under it.
+
+**Small, mechanical, and none of them touch sound.** Every one verified by
+reading the line.
+
+- `lib/radio_chop.rb:868-887` — twenty lines of method body dedented to column 0
+  while still inside the method, which closes at `:889`. Valid Ruby, unreadable.
+- `lib/knobs.rb:7` says "There are 610 of them" in the present tense; the census
+  its own file computes now reads 717.
+- The sample rate is declared eight times under three names: `SAMPLE_RATE` at
+  `dilla.rb:9663`, `lib/acapella.rb:30`, `lib/radio_chop.rb:72`; `RATE` at
+  `lib/analog_synth.rb:37`, `lib/sample_flip.rb:31`, `bin/sine_stream.rb:15`,
+  `bin/demo_from_stream.rb:14`; `SU_TUNNEL_IR_RATE` at `dilla.rb:24551`. All four
+  library ones are namespaced, so nothing collides — this is duplication, not a
+  bug, and 44100 is not a matter of taste. The bare literal also appears in 32
+  ffmpeg filter strings in `dilla.rb`.
+- `dilla.rb` requires `lib/frozen_state` five times (`:115`, `:17866`, `:20827`,
+  `:29704`, `:30079`) and `tmpdir` twice (`:79`, `:33428`).
+- All 25 law findings inside STUDIO fall outside the engine, and 16 of them are
+  in `dilla/bin`: five `.rb` missing `# frozen_string_literal: true`, five `.sh`
+  missing strict mode where `live/broadcast.sh:9` shows the convention of stating
+  why, four prose findings in `sine_stream.rb`, and `NEVER_BATCH_DELETE` at
+  `sine_stream_ticks.rb:15`, which clears every wav under
+  `~/Music/dilla_sines/ticks` at startup. Four each fall in `postpro` and `lora`,
+  and one in `lib/harmony_score.rb:122`. `dilla.rb` itself produces none — by the
+  repository's own law the folded engine is the cleanest file in the tree.
+  Measured by running the 122 `MASTER/law` rules over the 176 STUDIO files they
+  can read.
+- 52 of 106 STUDIO Ruby files put their `require` lines above the paragraph that
+  explains the file, and 54 do the reverse. `dilla.rb` explains itself first.
+  There is no convention here, only a coin flip.
+
+#### Not worth chasing
+
+- **`dup_census` excludes `STUDIO/`** with no comment saying why
+  (`MASTER/tools/dup_census.rb:30`), against a header claiming "every tracked
+  file". Measured what the exclusion hides: 3 duplicate sets, 13.9 KB, all
+  legitimate — a `last_learn.json` pointer, a render sidecar copy, and the two
+  per-subject `lora` launchers, which are identical because each derives its
+  subject from its own directory. Worth one comment, not a campaign.
+- **Preset reach in `postpro` and `lora`.** My census read 27 false positives
+  here, and `postpro` already owns the question properly in `vocab_check`
+  (`postpro.rb:3573-3749`), which asks whether a stock, lens or print stock is
+  defined and used by no preset. Do not add a second census.
+- **The 37 stale rows in `loops.json` and the 37 in `sample_worth.json`.**
+  Dropped at load and pruned on the next chop. Inert by design.
+- **The three `cohesion.rb` regroups**, for the ceiling reason above.
+- **Bare `44100` inside ffmpeg filter strings.** Extracting it into
+  interpolation would touch 32 render-path strings for no behavioural gain.
+
 ## The unified handoff, read against the tree — 2026-08-31
 
 `CLAUDE_OPUS_UNIFIED_HANDOFF.md` arrived at the repo root in `8dfe41309` as an
