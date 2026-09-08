@@ -5234,6 +5234,98 @@ named here rather than edited.
 - **`prefer_monochrome_with_one_accent` is read** next to `max_palette_roles`
   in `design_metrics`. The numeric cap is the check.
 
+### The accent read across all nine surfaces — 2026-09-08
+
+Opened by a design survey of brgen, its six engines, messenger and amber. The
+survey's own headline finding was wrong and the correction is the useful part.
+
+**The claim that failed.** brgen now defaults light on every surface
+(`ApplicationHelper::DEFAULT_SURFACE_THEME`, retiring the 2026-08-24
+per-vertical split), and the seven vertical accents were tuned before it did.
+Measured as ink: marketplace 3.48, tv 3.51, dating 3.77, maps 3.79, messenger
+3.72, takeaway 3.89, playlist 4.13 on `#ffffff`, and 3.11–3.69 on `#f2f2f2`.
+Every one clears AA on the dark theme (4.68–9.11 on `#1a1a1a`) and none clears
+it on light. Read as "seven AA failures", which it is not: `visual_contract_lint`
+floors accents at WCAG non-text 3:1 deliberately, because the accent belongs to
+interactive and state elements, and `accent_on_prose` is the check that keeps it
+off prose. All seven clear that floor. The gate was right and passing.
+
+**What was actually wrong was the gate's reach.** `accent_findings` globbed
+`brgen/app/assets/stylesheets/*.scss` and nothing else, so it read the host and
+none of the six engines — the blindness WIRING_NOTES has recorded four times,
+and `image_findings` directly above it had already been widened for. Its
+`accent_on_prose: 0` was a measurement over a third of its subject. Widened to
+`brgen/{app,engines/*/app}`, and `INTERACTIVE_SELECTOR` taught `delete` and
+`fav`: `.comment-delete` is a transparent button with `cursor: pointer` and
+`.deal-fav--on` is a favourite's on-state carrying `--tap-min` in both axes, so
+both were reported as prose the moment the glob reached them. Both lint tests
+stay green.
+
+**The two sites it found are closed.** `accent_on_prose` reported 2 against a
+baseline of 0, both in `_vertical_marketplace.scss`. The kicker was the harder
+one — 12px uppercase bold at 3.48:1, and `design_tokens.yml` already records why
+the accent cannot be darkened to reach it (`#80715c` took the kicker 3.48 → 4.74
+and broke `.compose-btn` 5.02 → 3.70 in the same run; the fill and ink bounds do
+not overlap). Both took the fix `.price` took — drop the hue, let the weight
+carry the emphasis. The baseline was never raised. Operator decision 2026-09-08.
+
+**Three things found beside it, none of them fixed.**
+
+- **`.price`'s recorded closure is stale.** `BASELINES` says ".price dropped
+  the hue its bold already carries" among the four measured to 0 on 2026-08-21.
+  `shared/_minimal.scss:474` still sets `color: var(--accent)`. Outside the
+  brgen-scoped glob, so the lint does not report it; scanner convention 2.
+- **amber is deliberately out of scope.** `.sustainability-grade` and
+  `.weather-bar` wear the accent as text. The rule's rationale is brgen's
+  grayscale identity; amber's identity *is* its warm taupe, so widening this
+  check to amber would apply brgen's rule to a surface it was never written
+  for. Written into the file so the next widening does not sweep them in.
+- **`.weather-bar` paints the accent on a 15% tint of itself.** Not measured by
+  anything: a `color-mix` is a blend rather than an alpha, which is the axis
+  `off_scale_opacity` deliberately does not read.
+
+**Whether 3:1 is the right floor for an accent worn as link text** is the
+question under all of this. WCAG 1.4.11's 3:1 covers non-text components;
+link text is still text under 1.4.3. The tree's stance is recorded and
+defensible; it is named here because it is a choice, not an oversight.
+
+**Two `#dark-toggle:checked ~ .theme-root` branches cannot match, and one of
+them costs contrast.** `shared/_theme_toggle` renders the input inside the
+`role="region"` wrapper, so it is not a sibling of `.theme-root` and the `~`
+combinator has nothing to reach; brgen's layout also renders the toggle only
+`unless vertical_surface?`, so on a vertical the input is not in the DOM at
+all. Both conditions hold independently. SURFACES.md called this lane retired
+on 2026-08-21 and two verticals still steer by it:
+
+Both moved to `:root[data-theme="dark"]`, the lane `_vertical_shell` already
+uses. Operator decision 2026-09-08.
+
+- `_vertical_takeaway.scss` corrected `--food-dash-ink` for a dark card and
+  never fired, so takeaway's meta text wore `#c62b1b` — tuned for a light
+  card — on `#1a1a1a` at **3.12:1**. The value the dead branch named,
+  `#e07b39`, is 5.85 there, and is what it now gets.
+- `_vertical_dating_shell.scss` set `--dating-accent-ink:
+  var(--dating-accent)`, which the base block already set — inert while the base
+  block named the fill. The base now names the light ink `#00705c` (6.05 on
+  `#ffffff`, against the fill accent's 3.77), so this override became
+  load-bearing in the same pass that fixed its selector.
+
+amber still wears the checkbox lane deliberately (`_variables.scss:45,55`) and
+renders its own `#dark-toggle` outside any wrapper, so it is unaffected. Do not
+sweep the two trees together.
+
+**Forward work from the same survey, none of it started.** A shared display-type
+slot so a hero opts out of `main#main-content > header h1` by name rather than
+by matching an id (`_vertical_marketplace.scss` carries that workaround under
+protest). tv's `--tv-accent` fallback `#d6473f` no longer matches the map's
+`#dc635c`. `WORN_TYPE.profiles.map.label_min_px` has no reader. takeaway's
+`#dark-toggle:checked` sibling branch is dead under the dataset mechanism.
+playlist's `--edge-soft/-/-strong` is the donor the queued shared edge scale
+wants, and its `--font-mono: "SF Mono"` fork is a fifth typeface by accident.
+`SURFACES.md` still calls brgen dark-default, and the "operator, 2026-08-24"
+comments in `_vertical_dating_shell.scss` and `_vertical_takeaway.scss` describe
+the retired split as current.
+
 ### Mobile, what it found and what it did not — 2026-09-05
 
 Ten of the twelve proposals were not problems, which is the pattern by now and
