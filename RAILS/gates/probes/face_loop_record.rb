@@ -24,12 +24,16 @@
 #   3. The crop is Chrome's, through captureScreenshot's clip. Cropping in ffmpeg
 #      afterwards costs a full-frame encode of pixels nobody sees.
 #
-# The particles are pinned bright for the recording. Every uniform is rewritten
-# from State on every frame, so a plain assignment lasts one frame; uColor and
-# uExposure are redefined as getters the per-frame write cannot move. uColor is a
-# multiplier the shader clamps after (face.part2.txt:169), so a value above 1
-# lifts the receding points — which are at 0.14 of full brightness and are why
-# the face reads as a shadow — without touching the shader.
+# It records what the face looks like, and nothing more. --tint and --exposure
+# can pin uColor and uExposure, and both default to zero, which leaves the page
+# alone: a take that has to be lit by its recorder is a take of something no
+# visitor will ever see. The first version of this file lit the face because the
+# face was drawn at a fifth of the light it needed; that was fixed where it
+# belonged, in face.part2.txt's depth shade and face.part3.txt's INK.
+#
+# Pinning, when it is asked for, is a defineProperty rather than an assignment:
+# every uniform is rewritten from State on every frame, so a plain assignment
+# lasts exactly one frame.
 
 require "base64"
 require "fileutils"
@@ -40,7 +44,7 @@ require_relative "../support/fleet"
 
 options = {
   url: nil, audio: nil, out: nil, fps: 20, seconds: nil, clip: nil,
-  work: nil, exposure: 2.2, tint: 2.6, timeout: 40, viewport: [1280, 720], scale: 2,
+  work: nil, exposure: 0.0, tint: 0.0, timeout: 40, viewport: [1280, 720], scale: 2, warmup: 20,
 }
 OptionParser.new do |o|
   o.banner = "usage: face_loop_record.rb --audio WAV --out MP4 [options]"
@@ -51,13 +55,14 @@ OptionParser.new do |o|
   o.on("--seconds N", Float, "Record only the first N seconds") { |v| options[:seconds] = v }
   o.on("--clip X,Y,W,H", "Crop, in CSS pixels") { |v| options[:clip] = v.split(",").map(&:to_i) }
   o.on("--work DIR", "Where frames go (default: a temp dir under the audio)") { |v| options[:work] = v }
-  o.on("--exposure F", Float, "Alpha multiplier (default 2.2)") { |v| options[:exposure] = v }
-  o.on("--tint F", Float, "Particle colour multiplier (default 2.6)") { |v| options[:tint] = v }
+  o.on("--exposure F", Float, "Pin uExposure to this; 0 leaves the page's own") { |v| options[:exposure] = v }
+  o.on("--tint F", Float, "Pin uColor to this grey; 0 leaves the page's own") { |v| options[:tint] = v }
   o.on("--timeout S", Integer, "Seconds to wait for the first drawn frame") { |v| options[:timeout] = v }
   o.on("--viewport WxH", "Page size in CSS pixels (default 1280x720)") { |v| options[:viewport] = v.split("x").map(&:to_i) }
   o.on("--scale F", Float, "Device pixel ratio for the capture (default 2)") { |v| options[:scale] = v }
   o.on("--from N", Integer, "First frame of this slice (default 0)") { |v| options[:from] = v }
   o.on("--to N", Integer, "One past the last frame of this slice (default: all)") { |v| options[:to] = v }
+  o.on("--warmup N", Integer, "Frames drawn and dropped before the first kept one (default 20)") { |v| options[:warmup] = v }
 end.parse!
 
 abort "usage: --audio WAV --out MP4" unless options[:audio] && options[:out]
@@ -287,11 +292,20 @@ begin
           Object.defineProperty(u, 'value', { get: () => value, set: () => {}, configurable: true });
           return true;
         };
-        const tint = mat.uniforms.uColor.value;
-        tint.setRGB(#{options[:tint]}, #{options[:tint]}, #{options[:tint]});
-        tint.copy = () => tint;
-        tint.lerp = () => tint;
-        const exposure = pin('uExposure', #{options[:exposure]});
+        // Zero leaves the page alone, and zero is the default: the face is drawn
+        // at the brightness it should have (part2's shade floor and part3's INK),
+        // so a recorder has no business deciding how MASTER looks. A take that
+        // has to be lit by its recorder is recording something the visitor will
+        // never see.
+        const tintValue = #{options[:tint]};
+        if (tintValue > 0) {
+          const tint = mat.uniforms.uColor.value;
+          tint.setRGB(tintValue, tintValue, tintValue);
+          tint.copy = () => tint;
+          tint.lerp = () => tint;
+        }
+        const exposureValue = #{options[:exposure]};
+        const exposure = exposureValue > 0 ? pin('uExposure', exposureValue) : false;
 
         // Ours from here: the natural loop would advance face time by wall clock
         // while capture runs slower than playback.
@@ -328,9 +342,9 @@ begin
       JS
     end
 
-    WARMUP = 20
+    warmup = options[:warmup]
     first = pending.first
-    [WARMUP, first].min.times { |back| render.call(first - WARMUP + back) } if first
+    [warmup, first].min.times { |back| render.call(first - [warmup, first].min + back) } if first
 
     pending.each_with_index do |index, done|
       render.call(index)
