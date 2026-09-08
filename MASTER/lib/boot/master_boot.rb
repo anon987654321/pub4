@@ -34,6 +34,12 @@ module Master
     def init_loop(root:, container:)
       validate_data!(root:, bus: container[:bus])
       Builder.boot_snapshot(container)
+      container[:cognition] = Cognition::Mind.new(
+        root:,
+        bus: container[:bus],
+        memory: container[:memory]
+      )
+      container[:cognition]&.tick!
       container[:heartbeat]&.start!
     end
 
