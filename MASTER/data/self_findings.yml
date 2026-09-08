@@ -84,18 +84,30 @@
 # `//` or `/* */`; STALE_NAMESPACE read a comment explaining that
 # "Fiber[:master_visitor] is set when a Master::CLI is built" as a use of a
 # retired constant. A comment cannot resolve a constant.
-findings: 292
+#
+# 54 -> 56 on the registry row, and like the jump above it is the instrument
+# rather than the tree. NO_GOD_CLASS judged one AST node at a time, so a class
+# written as a scaffold and reopened — `class Propose; end` at the top of the
+# file, the methods in a second block below — was measured twice at half its
+# size. The rule graded source layout, and it graded it backwards: the more
+# scattered the file, the more lenient the verdict. Summing the blocks by the
+# class's full lexical name adds no method-count finding anywhere in the corpus
+# and two line-count findings, both true and both previously invisible:
+# Master::CLI::Propose is 447 code lines across two blocks and
+# Master::Review::RepoEcology 354 across three, against a limit of 300. They are
+# recorded rather than exempted, and TODO.md names them as the decompositions
+# they are.
+findings: 290
 by_rule:
   BARE_DIV_WRAPPER: 3
   BLANK_LINE_RUN: 1
-  FAIL_VISIBLY: 1
   FROZEN_STRING_LITERAL: 6
   GUARD_CLAUSE: 27
   I18N_COVERAGE: 18
   MEANINGFUL_NAMES: 1
   MIGRATION_ADD_REFERENCE_NO_FK: 2
   MOBILE_FIRST: 1
-  NEVER_BATCH_DELETE: 5
+  NEVER_BATCH_DELETE: 4
   NO_CHANGELOG_COMMENT: 16
   NO_COLUMN_ALIGN: 42
   NO_INLINE_SCRIPT_BLOCK: 21
@@ -117,7 +129,6 @@ finding_members:
   - BARE_DIV_WRAPPER RAILS/brgen/public/dilla/dilla.html:35
   - BARE_DIV_WRAPPER RAILS/brgen/public/dilla/dilla.html:45
   - BLANK_LINE_RUN MASTER/web/app/views/chat/index.html.erb:1
-  - FAIL_VISIBLY MASTER/web/config/initializers/master_container.rb:95
   - FROZEN_STRING_LITERAL MASTER/web/lib/tasks/probe.rake:1
   - FROZEN_STRING_LITERAL STUDIO/dilla/bin/demo_from_stream.rb:1
   - FROZEN_STRING_LITERAL STUDIO/dilla/bin/demo_full.rb:1
@@ -173,7 +184,6 @@ finding_members:
   - MIGRATION_ADD_REFERENCE_NO_FK RAILS/brgen/db/migrate/20260524113000_create_brgen_social_tables.rb:15
   - MIGRATION_ADD_REFERENCE_NO_FK RAILS/brgen/db/migrate/20260602150000_add_neighborhood_to_dating_profiles.rb:5
   - MOBILE_FIRST RAILS/shared/app/assets/stylesheets/_tab_bar.scss:99
-  - NEVER_BATCH_DELETE MASTER/web/test/controllers/tts_controller_test.rb:24
   - NEVER_BATCH_DELETE OPENBSD/dotfiles/mov.sh:1151
   - NEVER_BATCH_DELETE RAILS/shared/app/jobs/shared/database_snapshot_job.rb:41
   - NEVER_BATCH_DELETE STUDIO/dilla/bin/sine_stream_player.rb:44
@@ -405,11 +415,13 @@ finding_members:
   - USE_THEN RAILS/shared/app/controllers/omniauth_callbacks_controller.rb:1
   - USE_THEN RAILS/shared/app/services/shared/newsletter_visuals.rb:1
   - USE_THEN RAILS/shared/app/services/shared/tradedoubler.rb:1
-registry_findings: 54
+registry_findings: 56
 registry_by_rule:
-  NO_GOD_CLASS: 28
+  NO_GOD_CLASS: 30
   SILENT_RESCUE: 26
 registry_finding_members:
+  - NO_GOD_CLASS MASTER/lib/cli/propose.rb:13
+  - NO_GOD_CLASS MASTER/lib/review/repo_ecology.rb:13
   - NO_GOD_CLASS MASTER/web/app/controllers/chat_controller.rb:7
   - NO_GOD_CLASS MASTER/web/app/services/chat_service.rb:7
   - NO_GOD_CLASS MASTER/web/app/services/tts_job.rb:7
@@ -435,7 +447,7 @@ registry_finding_members:
   - NO_GOD_CLASS RAILS/gates/lib/live/user_flow.rb:21
   - NO_GOD_CLASS RAILS/gates/lib/rendered/rendered_geometry.rb:24
   - NO_GOD_CLASS RAILS/gates/lib/research/design_metrics.rb:16
-  - NO_GOD_CLASS RAILS/gates/support/cdp_session.rb:29
+  - NO_GOD_CLASS RAILS/gates/support/cdp_session.rb:30
   - NO_GOD_CLASS STUDIO/dilla/lib/composition_engine.rb:161
   - NO_GOD_CLASS STUDIO/dilla/lib/modulation.rb:554
   - SILENT_RESCUE STUDIO/dilla/bin/demo_full.rb:54

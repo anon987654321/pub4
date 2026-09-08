@@ -234,9 +234,27 @@ module Master
             # about a namespace, and the four of them accounted for most of the
             # rule's output.
             next if namespaces.include?(stem)
+            # One class reopened by its own parts is not a parallel hierarchy.
+            # Zeitwerk lays a split class out as `fix_loop.rb` beside
+            # `fix_loop/`, and every finding this rule produced was that shape:
+            # FixLoop over 12 files, ModelRouter 6, LLMDispatcher, PassRunner
+            # and AstFixer 4 each, Builder 3. The namespace guard above cannot
+            # see them, because a part reopens `class FixLoop` and never writes
+            # `FixLoop::`. A stem whose files sit anywhere else still fires —
+            # that is the parallel structure the rule is for.
+            next if paths.all? { |path| own_part?(stem, path) }
 
             build("PARALLEL_HIERARCHY", "#{stem} spans #{paths.size} class/module hierarchies — share a base or collapse the parallel structure")
           end
+        end
+
+        # `lib/fix/fix_loop.rb`, or anything under `lib/fix/fix_loop/`.
+        # Underscored in two steps because one pass over `([a-z\d])([A-Z])`
+        # leaves an acronym joined: LLMDispatcher would ask for llmdispatcher and
+        # match none of its own four files.
+        def own_part?(stem, path)
+          slug = stem.gsub(/([A-Z]+)([A-Z][a-z])/, '\1_\2').gsub(/([a-z\d])([A-Z])/, '\1_\2').downcase
+          path.match?(%r{/#{Regexp.escape(slug)}(?:\.rb\z|/)})
         end
 
         def scattered_config(files)

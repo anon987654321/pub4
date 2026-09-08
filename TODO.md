@@ -34,93 +34,43 @@ mentioned.
 ### Rule and AST-detector backlog
 
 Deterministic detectors in `MASTER/lib/review/scan/rules/`, following the
-`MiddleManRule` / `NOISE_NAME` pattern landed 2026-08-29. Each gives a
-currently semantic-only concept a keyless detector. All six were verified absent
-from `data/rules.yml`, `law/`, and `lib/review/scan/rules/` before being listed —
-genuinely missing, not already built under another name.
-
-Four of the six are built, 2026-08-31. Each was drafted, measured against all
-four trees, and narrowed against the false positives that measurement found
-before it was allowed into the registry — the numbers below are what that cost,
-and they are in the rules' own comments so the next reader does not re-derive
-them. `MASTER/test/test_smell_detectors.rb` holds each one twice: a source it
-must flag and a source it must not, because an exemption nothing tests is a
-comment.
-
-- **`BOOLEAN_TRAP`** — **done**. A positional parameter defaulting to a boolean;
-  keywords are exempt, since `cache: true` already makes the call site say what
-  is true. 1 finding tree-wide (`postpro.rb` `shadow_lift`). Narrow on purpose.
-- **`DATA_CLUMPS`** — **done**, and note the plural, for the reason the
-  paragraph below already gave: the prior in `data/rules.yml` and the
-  `rule_deps.yml` node both name `DATA_CLUMPS`, and both now resolve. 48
-  findings across 30 files, down from 81 before two exclusions: identical
-  signatures are one interface implemented many times rather than a clump —
-  `check_ast(ast, code, path:)` is a contract, and its nine implementers were 33
-  of the original findings — and overlapping windows over the same signatures
-  are one clump seen three times, so the longest run wins.
-- **`TYPE_IN_NAME`** — **done**. 44 findings across 24 files, down from 85.
-  Three exclusion classes, each a measured false positive: `to_hash`/`from_hash`
-  is the Ruby conversion protocol, a digest is spelled `_hash` too (`prev_hash`
-  renamed to `prev` loses the only thing the name said), and `_list` is a domain
-  noun as often as a type. `old_string`/`new_string` are exempt because they are
-  the edit-tool schema this runtime hands a model — an external contract, like
-  `to_hash`.
-- **`NUMBERED_NAME`** — **done**, but only for numbered *siblings*: a name whose
-  stem appears in the same file with a different number. 5 findings, all of them
-  `mix_v7` through `mix_v11` in `dilla.rb`. Without the sibling requirement it
-  found 15, of which `fet1176`, `fairchild670` and `stc8` are the names of real
-  hardware — an 1176 compressor, a Fairchild 670, a Coles STC-8 — and `inv3` and
-  `normalize_to_y1` are maths. A lone number in a name is usually a fact about
-  the world. Locals were measured and dropped for the same reason: 114 findings,
-  nearly all dilla and postpro, where `t1` and `d8` are the notation the DSP is
-  transcribed from and `prev2` is the sample two frames back.
-
-The other two are **measured and blocked on the cross-file index**, which is the
-larger AST work listed below. This is not a guess about them; both were built as
-drafts and run over the tree:
-
-- **`LAYER_CAKE`** — a chain of sibling methods each of which only forwards.
-  Built and measured at both plausible depths. At three links, which is the
-  honest reading of "a call chain that only forwards", this tree has **none** —
-  and a rule that fires on nothing joins `rule_audit.silent`, which is already
-  over its ceiling. At two links it finds 9, and reading them says why that
-  threshold is wrong: three are `rescue_handlers.rb` naming one exception each
-  before forwarding to `render_http_error`, which is the shape `rescue_from`
-  requires, and the rest (`ok? -> ok`, `unwrap -> value!`) are aliases. A
-  two-link forward is an alias, not a cake. The finding underneath: a real layer
-  cake spans files — controller to service to repository — and no per-file rule
-  can see it. It waits on the symbol index.
-- **`DEAD_ABSTRACTION`** — same answer, arrived at the same way. Measured
-  tree-wide with a throwaway cross-file census. The class half is precise and
-  almost empty: 4 classes declare an abstract method (a body that is only `raise
-  NotImplementedError`), and exactly **1** has fewer than two implementers —
-  `MASTER/lib/io/gateway.rb:5`, with none. The module half is a false-positive
-  machine and must not ship as written: 367 of 419 modules that define methods
-  are "included at most once", because nearly every module in this tree is a
-  `module_function` namespace rather than a mixin, so the census measures
-  Zeitwerk's file-to-constant mapping and calls it a dead abstraction. One real
-  finding does not pay for a rule; the single `Gateway` is worth a look by hand.
+`MiddleManRule` / `NOISE_NAME` pattern. Six were listed and four are built:
+`BOOLEAN_TRAP`, `DATA_CLUMPS`, `TYPE_IN_NAME` and `NUMBERED_NAME`. Their records
+are deleted rather than kept, because each rule's own comment carries the
+measurement that earned its exemptions and `MASTER/test/test_smell_detectors.rb`
+holds each one twice — a source it must flag and a source it must not.
+`violation_priors["DATA_CLUMPS"]` and `PRIMITIVE_OBSESSION after: [DATA_CLUMPS]`
+both resolve to the third of them, which is why the plural spelling was chosen.
 
 **Already exist — do not re-list these as todo:** `LONG_PARAMETER_LIST`,
 `PRIMITIVE_OBSESSION`, `FEATURE_ENVY`, `COUPLER_SMELLS`, `LAZY_CLASS`,
 `SPECULATIVE_GENERALITY`, `NO_SHOTGUN_SURGERY`, `TEMPORAL_COUPLING`.
 
-**Closed 2026-09-04, and it closed the right way round.** The advice was to name
-the detector `DATA_CLUMPS` so the prior and the dep node would wake up, and that
-is what happened: the rule is built, the scanner carries the id, and both rows
-now resolve. `violation_priors["DATA_CLUMPS"]` weights it and
-`PRIMITIVE_OBSESSION after: [DATA_CLUMPS]` orders it.
+The other two were drafted, run over the tree, and are blocked on the cross-file
+index below. Neither is a guess.
 
-The census the paragraph deferred is settled too, in `72a8cfae8`. Three attempts
-gave three answers because three different instruments were being used, and each
-is right about its own question — `Rule.registry` is short until `RuleDSL` is
-touched, a regex over `law/` and the rule DSL sources sees ids the scanner never
-builds, and only one of them answers "does this key weight anything". That one
-is: build the scanner and read `@rules`, which is the collection `RuleOrder`
-receives. It holds 145 String ids. Measured that way, `violation_priors` had 59
-keys of which 4 resolved and `rule_deps` had 35 of which 17 did; the dead rows
-are gone and both headers now state the invariant. See "From the 2026-09-04
-MASTER audit" below.
+- **`LAYER_CAKE`** — a chain of sibling methods each of which only forwards. At
+  three links, the honest reading, this tree has **none**, and a rule that fires
+  on nothing joins `rule_audit.silent`, which is at its ceiling. At two links it
+  finds 9, and reading them says why that threshold is wrong: three are
+  `rescue_handlers.rb` naming one exception each before forwarding to
+  `render_http_error`, the shape `rescue_from` requires, and the rest (`ok? ->
+  ok`, `unwrap -> value!`) are aliases. A two-link forward is an alias, not a
+  cake. A real layer cake spans files — controller to service to repository —
+  and no per-file rule can see it.
+- **`DEAD_ABSTRACTION`** — the class half is precise and almost empty: 4 classes
+  declare a body that is only `raise NotImplementedError`, and exactly **1** has
+  no implementer. The module half is a false-positive machine and must not ship
+  as written: 367 of 419 modules that define methods are included at most once,
+  because nearly every module here is a `module_function` namespace rather than
+  a mixin, so the census measures Zeitwerk's file-to-constant mapping and calls
+  it a dead abstraction. One finding does not pay for a rule.
+
+  That one finding is open and wants a hand rather than a detector.
+  `Master::Io::Gateway::Adapter` declares `render`, raises, and nothing in the
+  repo includes it — while `Gateway#render_to_adapter` duck-types straight past
+  it on `adapter.respond_to?(:render)`. The contract is a comment with a raise
+  in it.
 
 #### Larger AST work — multi-session projects
 
@@ -533,59 +483,134 @@ the same long line.
 
 ### Scanner noise
 
-**Re-measured 2026-09-05: 1 violation, `NO_GOD_CLASS` on `EventStore`.** What
-closed the other two is under "From the 2026-09-04 MASTER audit" below. The
-triage that follows is kept because the reasoning transfers — it is how each of
-the 31 was classified, and three of those classes are why the number fell — but
-the numbers in it are 2026-08-19 and are no longer the tree. One line in it is
-now wrong on its own terms and worth reading with that in mind: "`etc` inside a
-directory-alternation regex read as a placeholder", counted as a legitimate
-false positive nobody could narrow. It was narrowable, and it was the last
-error-severity finding standing between this gate and the design question that
-is left.
+**`rake selfcheck` is clean, and it gates one severity more than it used to.**
+`QUICK_SEVERITIES` held `error` and `critical`, so a `:veto` — the severity
+`WriteGuard::BLOCKING` refuses a write for, and the one `rules.yml#veto_patterns`
+calls an unconditional merge blocker — passed the fast gate unseen. Four stood
+under `lib/` and `law/` while the banner read clean. The set is
+`veto/critical/error` now, the same three WriteGuard holds, and the banner prints
+the constant rather than a sentence free to drift from it.
 
-**Three more learned smells failed the uniqueness test, 2026-09-05.** The 2026-08-12
-pass above deleted `long_line` and `debug_output` for restating a registered rule
-and kept the rest; three of the remaining eight fail the same test, and all three
-fail it the same way — a raw regex repeating a registered rule's pattern, plus
-whatever that rule deliberately spares.
+All four were the scanner reading its own worked examples. `VetoPatternRule` was
+the only rule in the population with no exemption of any kind, while every
+registered twin of those patterns — `SQL_INJECTION`, `TODO_FIXME`,
+`NO_TODO_IN_VIEWS` — skips `/review/scan/rules/` by name and says why. It blanks
+`fires:` and `does_not_fire:` lines in that directory now, which is
+`Law.conduct`'s argument for `law/` in the registry's own spelling. The directory
+is not skipped, so a real secret or an interpolated shell string in a rule file
+still vetoes.
 
-- **`bare_rescue`** — `law/universal.rb`'s FAIL_VISIBLY says in its own header
-  that it folds BARE_RESCUE, and it deliberately does not match `rescue => e`,
-  which rescues StandardError and is the fix BARE_RESCUE prescribes. So the
-  smell's findings were FAIL_VISIBLY's again on a silent rescue (0 unique) or a
-  report against correct code. Its deletion also closed rule_hygiene's last id
-  case collision.
-- **`trailing_ws`** — TRAILING_WHITESPACE's pattern, with neither a path
-  exemption nor a language scope on either side. Probed across `.yml`, `.md` and
-  `.css`: 4 findings, 0 unique.
-- **`todo_comment`** — a strict subset of TODO_FIXME's pattern, one marker
-  fewer. Over `lib/` it scored 4 findings and 3 unique, and all 3 sat inside the
-  `/review/scan/rules/` directory TODO_FIXME deliberately exempts, because a
-  rule that names a marker is a detector and not a marker. Its whole unique
-  yield was a quiet override of another rule's exemption — `long_line` exactly.
+Three more of the same shape, each a rule reading prose or a pattern as conduct:
 
-`rake selfcheck` was **31 violations across 7 rules** (measured 2026-08-19
-after the law-fixture pass and the first twin retirement), every one triaged:
+- **`RESCUE_EXCEPTION`** fired on the paragraph in `lexical_rules.rb` explaining
+  which rescue shape each rule owns. It blanks comment lines now, and does not
+  skip the directory: a real `rescue Exception` in a scanner rule is worth
+  catching, which is why `SILENT_RESCUE` beside it carries no path exemption.
+- **`NO_ASCII_LINE_ART`** fired on its own `fires:` divider. Its subject is
+  decoration inside comments, so it cannot blank them; the line carries the
+  `scan: intentional` marker instead, as `RESCUE_EXCEPTION`'s positive example
+  already did.
+- **`TODO_FIXME`** read two detectors as markers — `personal_workspace` greps a
+  MEMORY.md for what an operator left, `history_valuables` lists the markers
+  among the patterns worth recovering from git. Both spell the words inside a
+  regex literal, where they are tokens in a pattern. `SourceMasking` blanks
+  regex literals for it, as `COMPLETION_THEATER` learned to spare `etc` inside
+  an alternation.
 
-- `SILENT_RESCUE` 12 — the standing track above.
-- `guard_expensive_ops` 9 — the verified false positives, still counted.
-- **7 are scanner sources describing defects**: the registry UNBOUNDED_RETRY
-  twin's own description/detector/message lines, chaos_agent's report
-  strings, the SQL-null normalise transform's regex, FAIL_VISIBLY's detector,
-  and `etc` inside a directory-alternation regex read as a placeholder. A
-  lexical rule cannot see into a string or regex literal; these are the one
-  place the pattern is legitimately spelled. Counted, per the 2026-08-15
-  precedent.
-- `never_batch_delete` 3 — self-owned temp-file cleanup verified line by
-  line: Swallow rotating its own log backups, SemanticCache#invalidate_all!
-  clearing its own root, Engines deleting the chunks it just concatenated.
-  Not the operator-batch-delete hazard the rule guards.
+Two cross-file rules were grading layout rather than code:
 
-It was 46-across-10 earlier the same day, and the delta is the law reading
-itself, now closed structurally: `FileProcessor#law_conducted` runs
-`Law.conduct` at the one read site, so every rule — bridge and registry alike
-— sees law/ fixtures and detectors as declarations, not conduct.
+- **`PARALLEL_HIERARCHY` was wrong on every finding it had.** Zeitwerk lays a
+  class split across files out as `fix_loop.rb` beside `fix_loop/`, and the rule
+  read each such split as parallel hierarchies — `FixLoop` over 12 files,
+  `ModelRouter` 6, `LLMDispatcher`, `PassRunner` and `AstFixer` 4 each, `Builder`
+  3. The namespace guard it already carried cannot see them, because a part
+  reopens `class FixLoop` and never writes `FixLoop::`. A stem whose files all
+  sit at or under its own slug is exempt now; a stem shared by unrelated trees
+  still fires. 6 → 0.
+- **`NO_GOD_CLASS` counted per class node, not per class**, so a class written as
+  a scaffold and reopened was measured twice at half its size. It graded source
+  layout, and backwards: the more scattered the file, the more lenient the
+  verdict, and merging two blocks made a class breach without a method being
+  added. It sums the blocks by the class's full lexical name now — two `Same`
+  under two modules stay two classes.
+
+Two law findings landed on real MASTER code, one a rule and one a line:
+
+- **`NEVER_BATCH_DELETE`** flagged the TTS controller test's teardown. Its other
+  three branches all ask whether the set of files is known at read time — a
+  glob, a bare `$var` and a `Dir[]` are unbounded by construction — and the
+  `.each { rm }` branch asked only whether there was a loop, so a receiver
+  spelled out in full read as the same hazard. A `%w[]` or `[...]` receiver is
+  spared; `Dir[...]`, `Array(old)` and `snapshots[0...-KEEP].to_a` still fire,
+  because the bracket there follows a word character and is an index.
+- **`FAIL_VISIBLY`** flagged `master_container.rb`'s `rescue Exception`, which
+  re-raises `SystemExit` and `SignalException` on the next line and logs the
+  rest. A line-scoped law sees neither. The line carries `scan: intentional`
+  beside the `rubocop:disable` naming the same decision — for a linter
+  `.rubocop.yml` excludes `web/**` from, so that half was already inert.
+
+`self_findings.law` fell 292 → 290. Every narrowing is pinned both directions in
+`test_scan_rule_false_positives.rb` and `test_scan_rule_contracts.rb`: the false
+positive is gone and the real violation still fires.
+
+#### `rake selfcheck` is red on two real god classes — opened 2026-09-08
+
+**operator-priority.** Correcting `NO_GOD_CLASS` surfaced two classes the old
+count could not see, and they are true: `Master::CLI::Propose` is **447 code
+lines** across two blocks in `lib/cli/propose.rb`, and
+`Master::Review::RepoEcology` is **354** across three in
+`lib/review/repo_ecology.rb`. The limit is 300. Neither block breaches alone,
+which is why the rule passed them for as long as it judged blocks.
+
+They are recorded, not exempted: `self_findings.registry` 54 → 56, with the
+reasoning in `data/self_findings.yml` beside the MASTER/web precedent for the
+same kind of raise. `rake selfcheck` has no ceiling — it is a binary gate — so it
+now reports 2, and `SelfCheck#gate!` publishes `self_violation`, which
+`FixLoop#halt!` reacts to. Background autofix stays halted until these are split.
+
+The payment is two decompositions, and it needs a budget this could not spend:
+`growth.master` is at its ceiling, so the files a split wants are a raise in
+`data/spine.yml`. That is the same owner as the `lib/` collapse. Nothing here
+should be closed by putting the two classes on an exemption list — the rule is
+right and the classes are large.
+
+**What is left is not noise.** `SILENT_RESCUE` 26 and `NO_GOD_CLASS` 28, all 54
+outside MASTER and already itemised under `self_findings.registry` below.
+`GUARD_EXPENSIVE_OPS` finds nothing anywhere and is right to: narrowed
+2026-08-21 to a delete with a bare constant receiver, and the tree has none. It
+still fires on `Session.delete_all` and `drop_table`.
+
+#### Three false positives blocked on an immutable ceiling
+
+Each is measured, each has a fix, and each fix needs a number in
+`data/rules.yml`, which is `paths.immutable`. They wait on whoever may move it.
+
+- **`UNBOUNDED_RETRY` is at `:error` and both its findings are wrong.** `retry`
+  is a Ruby keyword and the law declares no `languages`, so it reads JavaScript,
+  HTML, YAML and Markdown too: a Stimulus controller's method named `retry()`
+  and the word in a sentence on `406-unsupported-browser.html`. Scoping it to
+  ruby kills both — and no Ruby `retry` statement exists anywhere in the repo,
+  so the rule then fires on nothing and `rule_audit.silent` goes 24 → 25.
+- **The ratchet measuring silence is itself wrong by fourteen.**
+  `tools/rule_audit.rb` reads `law/*.rb` raw where `Law.scan` and
+  `FileProcessor#law_conducted` both conduct it first, so a law matching nothing
+  but its own `detect` line or `bad` fixture counts as reaching a subject.
+  Measured both ways over its corpus: 24 raw, **38 conducted**. The fourteen are
+  `EACH_WITH_OBJECT`, `KERNEL_COERCION`, `PERCENT_LITERAL`, `RESCUE_ON_DEF`,
+  `RUBY_SNAKE_METHODS`, `RUBY_SYMBOL_TO_PROC`, `SAFE_NAVIGATION`,
+  `SINGLE_PRIVATE_SECTION`, `TRANSFORM_KEYS`, `DIRNAME_FILE`, `FAIL_VISIBLY`,
+  `FULL_BY_DEFAULT`, `GUARD_EXPENSIVE_OPS` and `NULL_BLINDNESS`, each counted
+  live on hits production cannot make.
+- **Two learned smells still fail the uniqueness test** the 2026-08-12 and
+  2026-09-05 passes used to delete five others. `future_tense` reads 12 under
+  `lib/` and `law/` where `SIMULATION` — the registered rule stating the same
+  law — reads 3, and all 9 extra are lines `SIMULATION` deliberately spares:
+  five in the `/review/scan/rules/` directory it exempts, including `SIMULATION`'s
+  own two fixtures, and four string literals, one of them `strunk_pass.rb`'s
+  regex hunting "I would be happy". `frozen_string` scores 2, both `%q(` in a
+  file declaring `frozen_string_literal: true`, where a `%q()` literal is
+  already frozen; its id names the magic comment and its pattern has nothing to
+  do with it.
 
 #### The law had 72 registry twins, and they drifted — opened 2026-08-19, closed 2026-08-21
 

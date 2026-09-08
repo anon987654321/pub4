@@ -124,6 +124,33 @@ class TestScanRuleContracts < Minitest::Test
     end
   end
 
+  # NEVER_BATCH_DELETE's other three branches all ask whether the set of files
+  # is known at read time — a glob, a bare $var, a Dir[] are each unbounded by
+  # construction. The `.each { rm }` branch asked only whether there was a loop,
+  # so it read a receiver spelled out in full as the same hazard. The bracket in
+  # Dir[] follows a word character and is an index, not a literal.
+  def test_never_batch_delete_spares_a_receiver_enumerated_in_the_source
+    [
+      %(%w[.mp3 .job].each { |ext| FileUtils.rm_f(base + ext) }\n),
+      %([old, older].each { |f| File.delete(f) }\n),
+    ].each do |source|
+      assert_empty law_findings("NEVER_BATCH_DELETE", source, path: "cleanup.rb"),
+                   "#{source.inspect} names how many files go and which"
+    end
+  end
+
+  def test_never_batch_delete_still_fires_on_an_unknown_set
+    [
+      %(stale.each { |f| File.delete(f) }\n),
+      %(Dir["tmp/*.log"].each { |f| File.delete(f) }\n),
+      %(snapshots[0...-KEEP].to_a.each { |old| File.delete(old) }\n),
+      %(Array(old).each { |f| FileUtils.rm_f(f) }\n),
+    ].each do |source|
+      refute_empty law_findings("NEVER_BATCH_DELETE", source, path: "cleanup.rb"),
+                   "#{source.inspect} deletes a set nothing on the line bounds"
+    end
+  end
+
   def test_strict_mode_zsh_rule_flags_missing_set_e
     refute_empty law_findings("STRICT_MODE_ZSH", "#!/usr/bin/env zsh\necho ok\n", path: "script.zsh")
   end

@@ -297,16 +297,37 @@ module Master
             # counts coverage as sin. SolidQueueProofTest carried 12 tests and
             # an error-severity god-class finding for it.
             return [] if path.to_s.match?(%r{/test/|/spec/|_test\.rb\z|_spec\.rb\z})
+
             lines = code.to_s.lines
-            findings = []
-            walk(ast) do |node|
-              breach = class_breach(node, lines)
-              findings << finding(line: node.location.start_line, message: breach) if breach
+            classes(ast).filter_map do |name, nodes|
+              breach = class_breach(name.split("::").last, nodes, lines)
+              finding(line: nodes.first.location.start_line, message: breach) if breach
             end
-            findings
           end
 
           private
+
+          # Every `class X` block in the file, grouped by the class it opens.
+          #
+          # The walk judged one AST node at a time, so a class written as a
+          # scaffold and reopened — `class Propose; end` at the top, the methods
+          # in a second block below — was measured twice at half its size, and
+          # merging those blocks made the same class breach without one method
+          # being added. The rule was reading source layout rather than the
+          # class, and it read it backwards: the more scattered the file, the
+          # more lenient the verdict.
+          #
+          # Keyed on the full lexical name, so two different `Foo` under two
+          # modules in one file stay two classes.
+          def classes(node, prefix = [], acc = Hash.new { |hash, key| hash[key] = [] })
+            return acc unless node.is_a?(Prism::Node)
+
+            named = node.is_a?(Prism::ClassNode) || node.is_a?(Prism::ModuleNode)
+            inner = named ? prefix + [node.constant_path.slice] : prefix
+            acc[inner.join("::")] << node if node.is_a?(Prism::ClassNode)
+            node.compact_child_nodes.each { |child| classes(child, inner, acc) }
+            acc
+          end
 
           # The message for a class that is too big, or nil for one that is not.
           # Split out of check_ast because that method was 21 code lines against
@@ -318,23 +339,16 @@ module Master
           # Core::Constitution read 348 under it while holding 250 lines of code,
           # and the self_violation halted every /through fix stage; the only
           # "fix" the span offered was deleting the law's own reasoning.
-          def class_breach(node, lines)
-            return nil unless node.is_a?(Prism::ClassNode)
-
-            public_defs = count_public_methods(node)
-            name = node.constant_path.slice
+          def class_breach(name, nodes, lines)
+            public_defs = nodes.sum { |node| CodeMetrics.public_method_count(node) }
             if public_defs > METHOD_LIMIT
               return "god class #{name} has #{public_defs} public methods (max #{METHOD_LIMIT}) — decompose"
             end
 
-            line_count = CodeMetrics.method_code_lines(node, lines)
+            line_count = nodes.sum { |node| CodeMetrics.method_code_lines(node, lines) }
             return nil unless line_count > LINE_LIMIT
 
             "god class #{name} is #{line_count} code lines (max #{LINE_LIMIT}) — split at responsibility boundaries"
-          end
-
-          def count_public_methods(class_node)
-            CodeMetrics.public_method_count(class_node)
           end
         end
 

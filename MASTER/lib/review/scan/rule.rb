@@ -160,13 +160,6 @@ module Master
           end
         end
 
-        # A raw regex over raw lines makes a comment that names the thing the rule
-        # forbids into a finding about itself. BARE_RESCUE and FAIL_VISIBLY both
-        # fired on the paragraph in lexical_rules.rb explaining which rescue shape
-        # each rule owns; veto unsafe_calls fires on a comment describing a shell
-        # interpolation. Blanked to spaces, so line numbers still line up.
-        #
-
         def default_confidence
           case @severity
           when :error then 0.9

@@ -46,6 +46,26 @@ class TestScanRuleFalsePositives < Minitest::Test
     assert_match(/code lines/, hits.first[:message])
   end
 
+  # A class is what it holds, not how many blocks it was written in. Judging one
+  # AST node at a time made the rule lenient in proportion to how scattered the
+  # file was: a class opened twice measured twice at half its size, and merging
+  # the blocks made it breach without a method being added.
+
+  def test_god_class_sums_a_class_reopened_in_the_same_file
+    half = ->(from) { "class Split\n" + (from...(from + 6)).map { |i| "  def m#{i}; end" }.join("\n") + "\nend\n" }
+    hits = findings(:NO_GOD_CLASS, "#{half.call(0)}#{half.call(6)}")
+
+    refute_empty hits, "twelve public methods in two blocks are still twelve"
+    assert_match(/12 public methods/, hits.first[:message])
+  end
+
+  def test_god_class_keeps_two_same_named_classes_under_two_modules_apart
+    body = (0...8).map { |i| "    def m#{i}; end" }.join("\n")
+    source = "module A\n  class Same\n#{body}\n  end\nend\nmodule B\n  class Same\n#{body}\n  end\nend\n"
+
+    assert_empty findings(:NO_GOD_CLASS, source), "A::Same and B::Same are two classes, not one of sixteen methods"
+  end
+
 # --- DOUBLE_BRACKET ----------------------------------------------------
 # [[ ]] is a keyword in zsh and bash, not in POSIX sh — telling an sh
 # script to use it is a syntax error prescription.
@@ -240,6 +260,113 @@ end
     # The lookahead sits on the marker, not on the line, so a real marker still
     # vetoes on a line that also cites the backlog.
     refute_empty findings(:veto_patterns, %(# TODO: wire this up, see TODO.md\n))
+  end
+
+  # --- PARALLEL_HIERARCHY -------------------------------------------------
+  # Zeitwerk lays a class split across files out as `fix_loop.rb` beside
+  # `fix_loop/`, and this rule read every such split as parallel hierarchies:
+  # FixLoop over 12 files, ModelRouter 6, LLMDispatcher, PassRunner and AstFixer
+  # 4 each, Builder 3 — every finding it had, none actionable. The namespace
+  # guard it already carried cannot see them, because a part reopens
+  # `class FixLoop` and never writes `FixLoop::`.
+
+  def cross_file_rules(files)
+    Dir.mktmpdir do |root|
+      files.each do |relative, code|
+        path = File.join(root, relative)
+        FileUtils.mkdir_p(File.dirname(path))
+        File.write(path, code)
+      end
+      results = Master::Review::Scan::CrossFileAnalysis.new(root:).call(Dir.glob(File.join(root, "**", "*.rb")))
+      results.flat_map { |_, result| result.value! }.map { |finding| finding[:rule] }
+    end
+  end
+
+  def test_parallel_hierarchy_ignores_a_class_reopened_by_its_own_parts
+    parts = {
+      "lib/fix/fix_loop.rb" => "class FixLoop\nend\n",
+      "lib/fix/fix_loop/committer.rb" => "class FixLoop\n  def commit; end\nend\n",
+      "lib/fix/fix_loop/scanner.rb" => "class FixLoop\n  def scan; end\nend\n",
+    }
+
+    refute_includes cross_file_rules(parts), "PARALLEL_HIERARCHY",
+                    "one class laid out as x.rb beside x/ is not a parallel hierarchy"
+  end
+
+  def test_parallel_hierarchy_still_fires_on_files_that_share_only_a_stem
+    scattered = {
+      "app/models/order.rb" => "class Order\nend\n",
+      "app/services/order_service.rb" => "class OrderService\nend\n",
+      "app/policies/order_policy.rb" => "class OrderPolicy\nend\n",
+    }
+
+    assert_includes cross_file_rules(scattered), "PARALLEL_HIERARCHY",
+                    "three trees sharing a stem and nothing else is the shape this rule is for"
+  end
+
+  # --- veto patterns against the scanner's own sources --------------------
+  # VetoPatternRule was the only rule in the population with no exemption of any
+  # kind, and it reports at :veto — the severity above error. So it read the
+  # scanner's own rule sources as conduct where every registered twin of these
+  # patterns skips that directory by name, and all four of its findings under
+  # lib/ and law/ were worked examples rather than code. Only the `fires:` and
+  # `does_not_fire:` lines are blanked, which is Law.conduct's argument for law/
+  # applied to the registry's spelling of a declaration.
+
+  RULE_SOURCE = "lib/review/scan/rules/example.rb"
+
+  def test_veto_ignores_a_rules_own_worked_examples
+    [
+      %(          fires: %q(conn.execute("DELETE FROM \#{table}")) + "\\n",\n),
+      %(    fires: "  # FIXME: the retry has no cap\\n",\n),
+    ].each do |source|
+      assert_empty findings(:veto_patterns, source, path: RULE_SOURCE),
+                   "#{source.inspect} declares the shape; it does not perform it"
+    end
+  end
+
+  # A directory skip would have bought this at the price of the veto's teeth.
+  def test_veto_still_fires_on_real_code_in_the_rules_directory
+    refute_empty findings(:veto_patterns, %(  conn.execute("DELETE FROM \#{table}")\n), path: RULE_SOURCE)
+    refute_empty findings(:veto_patterns, %(  KEY = "sk-abcdefghijklmnopqrstuvwxyz123456"\n), path: RULE_SOURCE)
+    # Outside that directory the same line is an ordinary hash key.
+    refute_empty findings(:veto_patterns, %(  fires: %q(conn.execute("DELETE FROM \#{table}"))\n))
+  end
+
+  # --- RESCUE_EXCEPTION ---------------------------------------------------
+  # A comment naming the shape is prose about it. The paragraph in
+  # lexical_rules.rb explaining which rescue shape each rule owns was a warning
+  # against itself. Comments blanked rather than the directory skipped: a real
+  # rescue Exception in a scanner rule is worth catching, which is the reason
+  # SILENT_RESCUE carries no path exemption either.
+
+  def test_rescue_exception_ignores_a_comment_naming_the_shape
+    assert_empty findings(:RESCUE_EXCEPTION, %(  # rescue Exception belongs to this rule\n))
+  end
+
+  def test_rescue_exception_still_fires_on_a_real_rescue
+    refute_empty findings(:RESCUE_EXCEPTION, %(  rescue Exception => e\n))
+  end
+
+  # --- TODO_FIXME ---------------------------------------------------------
+  # "A rule that names a marker is a detector and not a marker" is why this rule
+  # skips the directory it lives in, and detectors live outside it too:
+  # personal_workspace greps a MEMORY.md for what an operator left,
+  # history_valuables lists the markers among the patterns worth recovering from
+  # git. Both spell the words inside a regex literal, where they are tokens in a
+  # pattern rather than instances of themselves.
+
+  def test_todo_fixme_ignores_markers_inside_a_regex_literal
+    [
+      %(  VALUABLE = [/TODO|FIXME|XXX/, /add_index/i]\n),
+      %(  hits = body.each_line.grep(/\\A\\s*(?:TODO|NUDGE):/i)\n),
+    ].each do |source|
+      assert_empty findings(:TODO_FIXME, source), "#{source.inspect} hunts for a marker, it does not carry one"
+    end
+  end
+
+  def test_todo_fixme_still_fires_on_a_real_marker
+    refute_empty findings(:TODO_FIXME, %(  # FIXME: the retry has no cap\n))
   end
 
   # --- learned_smells must not restate a registered rule ------------------

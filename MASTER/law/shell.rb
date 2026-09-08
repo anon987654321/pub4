@@ -48,12 +48,22 @@ Law.define(:NEVER_BATCH_DELETE) do
   # was four of this law's six findings — every scoped removal in the deploy
   # pipeline. Blanked before the glob test, since a `{` that survives is one
   # somebody typed.
+  # An array literal is the fourth branch's exemption, and it is what the other
+  # three already test for. A glob, a bare `$var` and a `Dir[]` are all
+  # dangerous because the set is unknown until the line runs; the `.each { rm }`
+  # branch asked only whether there was a loop, so it read a receiver spelled out
+  # in full as the same hazard. `%w[.mp3 .job .err .meta.json].each { |ext|
+  # rm_f(dir + ext) }` — the tts test's teardown — names how many files go and
+  # which, and each call removes one named path, which is what the fix line asks.
+  # `Dir[...]` keeps firing: the `[` there follows a word character, so the
+  # bracket belongs to an index rather than to a literal.
   detect do |line|
     bare = line.gsub(/\$\{[^}]*\}/) { |m| "\0" * m.length }
+    enumerated = /(?:%[wi][\[({][^\])}]*[\])}]|(?<![\w\])])\[[^\[\]]*\])\s*\.each\s*\{/
     bare.match?(/\brm\s+(-[a-zA-Z]*[rf][a-zA-Z]*\s+)*[^\s;|&]*[*?{]/) ||
       bare.match?(%r{\brm\s+-[a-zA-Z]*[rf][a-zA-Z]*\s+(?:"?/"?\s*(?:$|;)|"?~|\$\w+)}) ||
       line.match?(/FileUtils\.rm(_r|_rf|_f)?\(?\s*Dir\[/) ||
-      line.match?(/\.each\s*\{[^}]*(?:File\.delete|FileUtils\.rm)/)
+      (line.match?(/\.each\s*\{[^}]*(?:File\.delete|FileUtils\.rm)/) && !line.match?(enumerated))
   end
   fix "Delete one named path per call and confirm first; globs and .each { rm } need an explicit operator ack."
   bad  <<~RUBY
@@ -65,6 +75,7 @@ Law.define(:NEVER_BATCH_DELETE) do
     FileUtils.rm("tmp/session.txt")
     system("rm", "-f", "build/main.o")
     File.delete(path) if confirmed?(path)
+    %w[.mp3 .job].each { |ext| FileUtils.rm_f(base + ext) }
   RUBY
 end
 

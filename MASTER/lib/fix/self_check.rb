@@ -5,7 +5,12 @@ module Master
     # Applies MASTER's canonical scanner to MASTER's own source, over the roots
     # data/scan_coverage.yml declares rather than a hardcoded lib/.
     class SelfCheck
-      QUICK_SEVERITIES = %i[error critical].freeze
+      # The same three WriteGuard::BLOCKING refuses a write for. veto was missing
+      # here, and it is the severity above error — rules.yml#veto_patterns calls
+      # them unconditional merge blockers — so the fast gate reported clean while
+      # four vetoes stood in the tree it had just read. One severity set, two
+      # readers, is the shape that let them disagree.
+      QUICK_SEVERITIES = %i[veto critical error].freeze
 
       Report = Data.define(:total, :by_rule, :by_severity, :error, :findings) do
         def clean? = total.zero? && error.nil?
