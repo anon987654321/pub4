@@ -158,5 +158,17 @@ checks.each do |check|
   puts "#{check.ok ? 'OK' : 'FAIL'} #{check.name}: #{check.detail}"
 end
 
+# The receipt, under the probes rather than instead of them. doctor answers
+# "is this host well"; the receipt answers "what did this process boot with",
+# and the second question had no answer anywhere.
+begin
+  require "master"
+  require "review/scan/rule_dsl"
+  puts
+  puts Master::Ground::BootReceipt.lines
+rescue StandardError => e
+  puts "receipt: unavailable — #{e.class}: #{e.message.lines.first.to_s.strip}"
+end
+
 failed = checks.reject(&:ok)
 exit(failed.empty? ? 0 : 1)
