@@ -170,7 +170,12 @@ pub4_source_ceilings:
   # ecology map. Both were nested modules the host included; they now sit at the
   # path Zeitwerk maps their constant to, and the empty scaffold each host was
   # left holding is gone.
-  MASTER: 1055
+  # 1055 -> 1052 folds lib/ground/antigravity/ into antigravity.rb. The parent was
+  # a nine-line namespace holder with three requires; json_config, discovery and
+  # skills nest inside it and total 231 code lines, under the 300 SMALL_FILES and
+  # NO_GOD_CLASS enforce, so the directory was buying nesting nothing needed.
+  # One file, no shelf, and its twenty tests unchanged.
+  MASTER: 1052
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
   # it belongs beside the other probes and folds into nothing.
@@ -272,7 +277,12 @@ pub4_source_ceilings:
   # obvious win and it is not mine to take: these render real audio and this repo
   # says not to reshape a rendering tool on an outsider's judgement. It belongs to
   # the owner, and it is in TODO.md so the next person sees the same eight.
-  STUDIO: 150
+  # 150 -> 149 folds dilla/lib/spectral_audit_run.rb into spectral_audit.rb behind
+  # the $PROGRAM_NAME guard MASTER's own tools use. The runner was a second file
+  # whose only caller was the usage line in its own header -- nothing in the repo
+  # named it -- and the pair is 132 code lines together. It was also the one file
+  # in dilla/lib declaring no module or class, so `namespace` falls with it.
+  STUDIO: 149
 
 # Executable files directly under each tree's own bin/ — the number CLAUDE.md's
 # "two surfaces, no third" makes a claim about while nothing counted it. MASTER

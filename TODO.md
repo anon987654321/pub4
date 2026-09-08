@@ -31,6 +31,76 @@ mentioned.
 
 ## MASTER
 
+### File sprawl, measured across all four trees — 2026-09-08
+
+Asked as a reduction rather than a reorganisation, and with no new
+subdirectories: the question is which files can stop existing.
+
+**The 300 code-line limit is what bounds this, and it bounds it hard.**
+`SMALL_FILES` and `NO_GOD_CLASS` both cap a file at 300, and `cohesion.rb`
+caps its own merge proposals at exactly that for the stated reason — a merge
+that breaches the rule which caused the split is not a simplification. Of the
+nineteen namespace directories in the repo (`x.rb` beside `x/`), **one** fits
+inside the limit when merged. The other eighteen run from 361 lines
+(`cli/routing/model_router`) to 1,612 (`cli/command_registry`). So there is no
+level of aggression that folds them: fewer files and no file over 300 lines are
+in direct conflict past this point, and the limit wins.
+
+**Deletion is nearly exhausted.** The unreached-file question, asked over the
+fourteen roots that load by explicit require or ordered manifest — every tracked
+file searched, no extension filter, and the lookbehind that does not exclude
+`:` — finds three files, 87 code lines, and two of those are hand-run operator
+tools whose loss would remove capability: `OPENBSD/bin/sync_deploy_inventory.rb`
+(writes `deploy_inventory.json` from `apps.yml`) and
+`RAILS/tools/sync_auth_schema.rb`. Neither is named by any doc, Rakefile or
+runbook, which is the real finding about them: they are undocumented tools, not
+dead code. Rails `app/` trees are deliberately outside this census — a
+controller is reached by routing and a view by render, so a constant search
+there reports convention as death.
+
+**Absorption is where the remaining count is, and most of it is a mirage.**
+Eighty-one files have exactly one non-test Ruby reader and fit within the limit
+when combined. But five of them point at `lib/builder/boot_phases.rb`, which
+constructs everything — being its only reader is what a wiring file means, and
+folding those five would build the god class the limit exists to prevent. Others
+point at a web controller from `lib/`, which would invert the layering. The
+honest subset is a pair in the same directory where the reader owns the subject,
+and it is small.
+
+Two landed here:
+
+- `lib/ground/antigravity/` folded into `antigravity.rb`. The parent was a
+  nine-line namespace holder with three requires; the three children total 231
+  code lines. Three files and a directory gone, twenty tests unchanged. Worth
+  knowing before anyone proposes deleting it wholesale: it is live. `agy` is
+  installed on the operator's machine, `lib/cli/skills.rb:71` reads it, and it
+  discovers five real skills today. `GEMINI.md` does not replace it — that is an
+  instruction file, this is a skills adapter, and the `agy` row in
+  `data/providers.yml` is a third thing sharing the name: the LLM a keyless
+  machine falls back to.
+- `STUDIO/dilla/lib/spectral_audit_run.rb` folded into `spectral_audit.rb`
+  behind `$PROGRAM_NAME == __FILE__`, the guard MASTER's own tools use. It was a
+  second file whose only caller was the usage line in its own header, and the
+  one file in `dilla/lib` declaring no module or class, so `namespace` fell with
+  it. No sound path is touched: this reads rendered mp3s and prints a table.
+
+**`lib/ground/orders/` is not sprawl and should be left alone.** Eight files,
+314 code lines: a registry, a base class and six order classes, one per order.
+That is the plugin shape working as intended, and it is over the limit anyway.
+
+**What is left for whoever takes this further**, in descending value:
+
+1. The eighteen over-limit directories are the real sprawl, and each needs its
+   parent to lose lines before it can absorb its children. That is the same
+   work as `spine.lib_body_ceiling`'s remaining 640, approached from the other
+   end — do them together or not at all.
+2. `RAILS/shared/lib/pub4` is thirteen `*_lint.rb` files and 2,819 lines. Each
+   is a real lint with its own ratchet, so this is a shelf rather than a
+   merge — and a shelf is a subdirectory, which is not wanted. Left as a
+   statement of where the mass is.
+3. The two undocumented operator tools want a line in a runbook or a rake task,
+   which costs nothing and is what stops the next census reporting them as dead.
+
 ### Survey of MASTER — 2026-09-08
 
 A read-only survey of `MASTER/`, ranked by value. Nothing here was fixed. What
