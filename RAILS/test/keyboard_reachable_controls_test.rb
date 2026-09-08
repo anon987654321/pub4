@@ -4,12 +4,11 @@ require "minitest/autorun"
 
 # A control a keyboard cannot reach, and a role that promises one.
 #
-# This exists because TODO.md's rails_audit_backlog_2026_08_10 says,
-# of its own twelve rows, that "the first move on any of these is to name the
-# instrument, not to fix a count: an unfalsifiable number is how a register row
-# outlives its subject". Its a11y row read "3 div/span elements carrying a click
-# action — not focusable, not keyboard-activatable, not announced as a control",
-# and no committed tool reproduced it.
+# This exists because a hand-counted audit row read "3 div/span elements
+# carrying a click action — not focusable, not keyboard-activatable, not
+# announced as a control", and no committed tool reproduced it. The first move
+# on a row like that is to name the instrument rather than fix the count: an
+# unfalsifiable number is how a register row outlives its subject.
 #
 # Written 2026-08-13. The first two attempts at it were wrong in ways worth
 # recording, because both produced a confident number:

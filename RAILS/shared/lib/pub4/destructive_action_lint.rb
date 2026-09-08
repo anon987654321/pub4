@@ -5,9 +5,9 @@ require_relative "baseline_ratchet"
 module Pub4
   # A destructive control that asks nothing before it fires.
   #
-  # The third of the uninstrumented rows in TODO.md's
-  # rails_audit_backlog — "29 destructive links with no confirmation
-  # interstitial" — a hand count with no committed tool behind it.
+  # The third of the hand-counted audit rows that had no instrument behind it —
+  # "29 destructive links with no confirmation interstitial" — a number nothing
+  # committed could reproduce.
   #
   # unconfirmed_destroy — a link or button that issues DELETE and carries no
   # confirmation. Rails routes destruction through the method, not the label, so
