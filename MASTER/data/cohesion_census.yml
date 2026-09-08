@@ -1,6 +1,6 @@
 ---
 families: 30
-members:
+family_members:
 - MASTER/lib/cli/command_registry#commands
 - MASTER/lib/cli/command_registry#work
 - MASTER/lib/fix#loop

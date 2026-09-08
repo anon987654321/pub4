@@ -1,6 +1,6 @@
 ---
 unnamed: 37
-members:
+unnamed_members:
 - attention_context.yml#runtime_uses
 - council.yml#auto_trigger_patterns
 - council.yml#mcp_persona_slots

@@ -101,14 +101,14 @@ module Pub4
 
     def ceiling = recorded.fetch("unreached", 0)
 
-    def recorded_members = Array(recorded["members"])
+    def recorded_members = Array(recorded["unreached_members"])
 
     def run(ratchet: false)
       out = unreached
       puts "code_reach: #{out.size} lib files nothing names (ceiling #{ceiling})"
 
       if ratchet && out.size <= ceiling
-        File.write(CEILING, { "unreached" => out.size, "members" => out.sort }.to_yaml)
+        File.write(CEILING, { "unreached" => out.size, "unreached_members" => out.sort }.to_yaml)
         verb = out.size < ceiling ? "recorded #{out.size} as the new low" : "re-recorded #{out.size}"
         puts "code_reach: #{verb}, with its members"
         return 0

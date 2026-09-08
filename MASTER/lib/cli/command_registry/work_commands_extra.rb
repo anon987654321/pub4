@@ -57,36 +57,45 @@ module Master
       # `/through --only <stage>` by TurnRouter, so there is one verb with named
       # stages instead of four verbs that each ran a different part of the same
       # pipeline. Without it, typing /scan ran the fix stage too.
-      def parse_through_flags(raw)
-        apply = nil
-        critique = nil
-        aesthetic = true
-        only = nil
-        tokens = raw.split(/\s+/)
-        path_bits = []
-        expecting_stage = false
-        tokens.each do |tok|
-          if expecting_stage
-            only = tok
-            expecting_stage = false
-            next
-          end
+      # Every spelling a flag answers to, and the flag it sets. A table rather
+      # than a `case`, because the spellings are data: `--no-autofix` is
+      # bin/gate's, and while it was missing it fell through to the path,
+      # resolved nowhere, and the scan quietly ran over MASTER instead.
+      THROUGH_FLAGS = {
+        "--dry-run" => [:apply, false], "preview" => [:apply, false], "dry" => [:apply, false],
+        "--no-autofix" => [:apply, false], "no-autofix" => [:apply, false],
+        "--apply" => [:apply, true], "apply" => [:apply, true], "fix" => [:apply, true],
+        "--no-critique" => [:critique, false], "no-critique" => [:critique, false],
+        "--critique" => [:critique, true], "critique" => [:critique, true],
+        "--no-aesthetic" => [:aesthetic, false], "no-aesthetic" => [:aesthetic, false],
+      }.freeze
 
-          case tok.downcase
-          when "--dry-run", "preview", "dry" then apply = false
-          # bin/gate's scan-only spelling. Unrecognised, it fell into the
-          # path, resolved nowhere, and the scan quietly ran over MASTER.
-          when "--no-autofix", "no-autofix" then apply = false
-          when "--apply", "apply", "fix" then apply = true
-          when "--no-critique", "no-critique" then critique = false
-          when "--critique", "critique" then critique = true
-          when "--no-aesthetic", "no-aesthetic" then aesthetic = false
-          when "--only" then expecting_stage = true
-          when /\A--only=(.+)\z/ then only = Regexp.last_match(1)
-          else path_bits << tok
+      # A bare `--only` captures nothing and leaves the stage unset, which is what
+      # the split spelling did before it was joined.
+      ONLY_FLAG = /\A--only(?:=(.+))?\z/i
+
+      def parse_through_flags(raw)
+        flags = { apply: nil, critique: nil, aesthetic: true, only: nil }
+        path_bits = []
+        joined_only(raw.split(/\s+/)).each do |token|
+          if (flag = THROUGH_FLAGS[token.downcase])
+            flags[flag.first] = flag.last
+          elsif token =~ ONLY_FLAG
+            flags[:only] = Regexp.last_match(1)
+          else
+            path_bits << token
           end
         end
-        [apply, critique, aesthetic, only, path_bits.join(" ")]
+        flags.values_at(:apply, :critique, :aesthetic, :only) + [path_bits.join(" ")]
+      end
+
+      # `--only scan` and `--only=scan` are one flag with its value in two places.
+      # Joining the split form here keeps that out of the loop, which otherwise
+      # needs a carried flag and a branch that reads as a third kind of token.
+      def joined_only(tokens)
+        tokens.each_with_object([]) do |token, out|
+          out.last&.casecmp?("--only") ? out[-1] = "--only=#{token}" : out << token
+        end
       end
 
       def run_tribunal(deliberation:, artifact:, target:, bus: nil)

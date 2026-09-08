@@ -61,7 +61,7 @@ class TestDataReachAttribution < Minitest::Test
   end
 
   def test_members_are_read_when_present
-    in_tmp_ceiling({ "unnamed" => 2, "members" => ["a.yml#one", "b.yml#two"] }) do
+    in_tmp_ceiling({ "unnamed" => 2, "unnamed_members" => ["a.yml#one", "b.yml#two"] }) do
       assert_equal ["a.yml#one", "b.yml#two"], Tool.recorded_members
     end
   end
@@ -82,7 +82,7 @@ class TestDataReachAttribution < Minitest::Test
   end
 
   def test_it_names_what_arrived_and_what_left
-    in_tmp_ceiling({ "unnamed" => 2, "members" => ["kept.yml#a", "gone.yml#b"] }) do
+    in_tmp_ceiling({ "unnamed" => 2, "unnamed_members" => ["kept.yml#a", "gone.yml#b"] }) do
       out, = capture_io { Tool.send(:report_new, ["kept.yml#a", "new.yml#c"]) }
 
       assert_match(/1 arrived/, out)

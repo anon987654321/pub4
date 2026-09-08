@@ -120,7 +120,7 @@ module Pub4
     # thread to pull and the next reader re-derives the whole list by hand.
     # Absent, attribution is simply unavailable and the report says so rather
     # than guessing.
-    def recorded_members = Array(recorded["members"])
+    def recorded_members = Array(recorded["unnamed_members"])
 
     def run(ratchet: false)
       out = unnamed
@@ -142,7 +142,7 @@ module Pub4
       # that set the ceiling; that is how business_plan and markdown_style were
       # identified on 2026-08-31.
       if ratchet && out.size <= ceiling
-        File.write(CEILING, { "unnamed" => out.size, "members" => out.sort }.to_yaml)
+        File.write(CEILING, { "unnamed" => out.size, "unnamed_members" => out.sort }.to_yaml)
         verb = out.size < ceiling ? "recorded #{out.size} as the new low" : "re-recorded #{out.size}"
         puts "data_reach: #{verb}, with its members"
         return 0

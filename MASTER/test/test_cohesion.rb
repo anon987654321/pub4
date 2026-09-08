@@ -280,7 +280,7 @@ end
   end
 
   def test_an_overage_names_what_arrived_and_what_left
-    swap_census({ "families" => 2, "members" => ["lib/cli#scan", "tools#doc"] }) do
+    swap_census({ "families" => 2, "family_members" => ["lib/cli#scan", "tools#doc"] }) do
       out, = capture_io { Pub4::Cohesion.report_arrivals(["lib/cli#scan", "tools#reach"]) }
 
       assert_includes out, "+ tools#reach"

@@ -362,7 +362,7 @@ return nil if collisions.any?
     # it meant checking out the commit that set the ceiling and running the
     # census twice. Members sit beside the count now, in the shape
     # data_reach.yml, self_findings.yml and dup_census.yml already use.
-    def recorded_members = Array(recorded["members"])
+    def recorded_members = Array(recorded["family_members"])
 
     def member_ids(rows)
       rows.flat_map { |dir, plans| plans.map { |plan| "#{dir}##{plan[:family]}" } }.sort
@@ -390,7 +390,7 @@ return nil if collisions.any?
       # Recorded at parity as well as on a fall: requiring a fall first is a
       # deadlock exactly when the attribution is wanted.
       if ratchet && total <= ceiling
-        File.write(CENSUS, { "families" => total, "members" => members }.to_yaml)
+        File.write(CENSUS, { "families" => total, "family_members" => members }.to_yaml)
         puts "cohesion_census: recorded #{total} with its members"
         return 0
       end
