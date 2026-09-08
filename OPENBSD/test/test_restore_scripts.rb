@@ -17,6 +17,18 @@ class RestoreScriptsTest < Minitest::Test
     refute_includes source, "MASTER/RAILS"
   end
 
+  # litestream is absent from this box and unpackageable, so every precondition
+  # in restore_backups.sh is false and a skipping version walked all three apps,
+  # restored none and exited 0. A restore that reports success having restored
+  # nothing is read as evidence the backups work.
+  def test_restore_backups_fails_rather_than_skipping
+    source = File.read(File.join(ROOT, "restore_backups.sh"))
+    assert_includes source, "require_litestream", "no check that the binary exists"
+    refute_match(/log "skip \$app/, source, "a missing replica must fail, not skip")
+    assert_match(/missing replica \$replica"; exit 1/, source)
+    assert_includes source, "dr-pull", "the failure must name the backup that does work"
+  end
+
   def test_vps_deploy_stamps_head_after_the_work
     source = File.read(File.join(ROOT, "bin/vps-deploy"))
     assert_includes source, "write_stamp()"

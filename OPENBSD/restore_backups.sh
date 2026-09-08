@@ -8,6 +8,13 @@
 #   zsh OPENBSD/restore_backups.sh                    # all apps in etc/litestream.yml
 #
 # For repo-archaeology (pub3 heredocs), use extract_legacy_installers.sh instead.
+#
+# Every precondition below is a hard failure, not a skip. On vm23 litestream is
+# absent and /var/backups/litestream/ is empty, so a skipping restore walked all
+# three apps, restored none of them and printed "done" — a disaster-recovery
+# script that reports success is worse than one that is missing, because it is
+# read as evidence. The working backup is OPENBSD/bin/dr-pull, whose snapshots
+# live on the operator Mac; see RUNBOOK.md, "Backups".
 
 set -euo pipefail
 
@@ -35,19 +42,27 @@ end
 RUBY
 }
 
+require_litestream() {
+  whence litestream >/dev/null 2>&1 && return 0
+  log "FAIL — no litestream binary on this host, so nothing here can restore anything."
+  log "       litestream is not in OpenBSD ports; /var/backups/litestream/ is empty."
+  log "       Restore from a dr-pull snapshot instead: ruby OPENBSD/bin/dr-pull --check"
+  exit 1
+}
+
 restore_app() {
   local app="$1"
   local storage="/home/${app}/app/storage"
   local replica="file:///var/backups/litestream/${app}"
 
-  [[ -d $storage ]] || { log "skip $app — missing $storage"; return 0 }
-  [[ -d "/var/backups/litestream/${app}" ]] || { log "skip $app — missing replica $replica"; return 0 }
+  [[ -d $storage ]] || { log "FAIL $app — missing $storage"; exit 1 }
+  [[ -d "/var/backups/litestream/${app}" ]] || { log "FAIL $app — missing replica $replica"; exit 1 }
 
   local -a dbs
   dbs=("$storage"/*.sqlite3(N))
   if (( ${#dbs[@]} == 0 )); then
-    log "skip $app — no *.sqlite3 in $storage"
-    return 0
+    log "FAIL $app — no *.sqlite3 in $storage"
+    exit 1
   fi
 
   log "stopping $app"
@@ -73,6 +88,7 @@ restore_app() {
 }
 
 main() {
+  [[ $DRY_RUN == 1 ]] || require_litestream
   local app
   while IFS= read -r app; do
     [[ -n $app ]] || continue
