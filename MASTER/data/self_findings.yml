@@ -415,13 +415,11 @@ finding_members:
   - USE_THEN RAILS/shared/app/controllers/omniauth_callbacks_controller.rb:1
   - USE_THEN RAILS/shared/app/services/shared/newsletter_visuals.rb:1
   - USE_THEN RAILS/shared/app/services/shared/tradedoubler.rb:1
-registry_findings: 56
+registry_findings: 54
 registry_by_rule:
-  NO_GOD_CLASS: 30
+  NO_GOD_CLASS: 28
   SILENT_RESCUE: 26
 registry_finding_members:
-  - NO_GOD_CLASS MASTER/lib/cli/propose.rb:13
-  - NO_GOD_CLASS MASTER/lib/review/repo_ecology.rb:13
   - NO_GOD_CLASS MASTER/web/app/controllers/chat_controller.rb:7
   - NO_GOD_CLASS MASTER/web/app/services/chat_service.rb:7
   - NO_GOD_CLASS MASTER/web/app/services/tts_job.rb:7

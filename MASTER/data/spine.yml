@@ -157,7 +157,20 @@ pub4_source_ceilings:
   # twice, once with an extension whitelist that could not see bin/cli, once
   # with a lookbehind excluding ":" that hid every qualified use and reported
   # the whole tree dead. Both are fixtures, and both go red under mutation.
-  MASTER: 1053
+  # 1053 -> 1055 for lib/cli/propose/candidate_sources.rb and
+  # lib/review/repo_ecology/co_change_graph.rb, and the raise is a consequence
+  # of a rule learning to see. NO_GOD_CLASS counted methods per class *node*,
+  # so both files hid a god class behind a second `class X ... end` block in the
+  # same file -- Propose measured 447 code lines and RepoEcology 354 against a
+  # limit of 300, and selfcheck read clean. With the rule counting the class,
+  # both surfaced, and SelfCheck#gate! publishes self_violation, so background
+  # autofix was halted for every session until they were split.
+  # Each seam was already drawn: CandidateSources is the fourteen from_* sources
+  # a proposal can come from, CoChangeGraph is the pair counting behind the
+  # ecology map. Both were nested modules the host included; they now sit at the
+  # path Zeitwerk maps their constant to, and the empty scaffold each host was
+  # left holding is gone.
+  MASTER: 1055
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
   # it belongs beside the other probes and folds into nothing.

@@ -321,11 +321,12 @@ in the session and in the registry, the two git questions the prompt asks, the
 three runtime loop guards, and the review crew's two style checks. The remaining
 DRY findings over `lib/` are all worth five lines or fewer.
 
-Two things looked collapsible and are not. `propose.rb` and `repo_ecology.rb`
-repeat their scaffold because `NO_GOD_CLASS` counts methods per class node, so a
-second `class X ... end` block halves the count it sees; merging them turns
-`rake selfcheck` red. Both classes are god classes either way, which means the
-rule is reading the source layout rather than the class. And
+One thing looked collapsible and is not, and one turned out to be the rule.
+`propose.rb` and `repo_ecology.rb` repeated their scaffold because
+`NO_GOD_CLASS` counted methods per class node, so a second `class X ... end`
+block halved the count it saw and merging them turned `rake selfcheck` red.
+Both were god classes either way: the rule was reading source layout rather
+than the class, it was corrected the next day, and both files are split. And
 `PARALLEL_HIERARCHY` reports `FixLoop spans 12 class/module hierarchies`, with
 `ModelRouter`, `LLMDispatcher`, `PassRunner`, `AstFixer` and `Builder` behind it.
 All twelve are `class FixLoop` reopened by the parts of one class under
@@ -553,26 +554,35 @@ Two law findings landed on real MASTER code, one a rule and one a line:
 `test_scan_rule_false_positives.rb` and `test_scan_rule_contracts.rb`: the false
 positive is gone and the real violation still fires.
 
-#### `rake selfcheck` is red on two real god classes — opened 2026-09-08
+#### `rake selfcheck` was red on two real god classes — closed 2026-09-08
 
-**operator-priority.** Correcting `NO_GOD_CLASS` surfaced two classes the old
-count could not see, and they are true: `Master::CLI::Propose` is **447 code
-lines** across two blocks in `lib/cli/propose.rb`, and
-`Master::Review::RepoEcology` is **354** across three in
-`lib/review/repo_ecology.rb`. The limit is 300. Neither block breaches alone,
-which is why the rule passed them for as long as it judged blocks.
+Correcting `NO_GOD_CLASS` surfaced two classes the old count could not see, and
+they were true: `Master::CLI::Propose` measured **447 code lines** across two
+blocks in `lib/cli/propose.rb`, and `Master::Review::RepoEcology` **354** across
+three in `lib/review/repo_ecology.rb`, against a limit of 300. Neither block
+breached alone, which is why the rule passed them for as long as it judged
+blocks rather than classes.
 
-They are recorded, not exempted: `self_findings.registry` 54 → 56, with the
-reasoning in `data/self_findings.yml` beside the MASTER/web precedent for the
-same kind of raise. `rake selfcheck` has no ceiling — it is a binary gate — so it
-now reports 2, and `SelfCheck#gate!` publishes `self_violation`, which
-`FixLoop#halt!` reacts to. Background autofix stays halted until these are split.
+That mattered beyond the count. `rake selfcheck` is a binary gate, and
+`SelfCheck#gate!` publishes `self_violation`, which `FixLoop#halt!` reacts to —
+so background autofix was halted for every session while it stood.
 
-The payment is two decompositions, and it needs a budget this could not spend:
-`growth.master` is at its ceiling, so the files a split wants are a raise in
-`data/spine.yml`. That is the same owner as the `lib/` collapse. Nothing here
-should be closed by putting the two classes on an exemption list — the rule is
-right and the classes are large.
+**Both seams were already drawn, as nested modules the host included.**
+`CandidateSources` is the fourteen `from_*` sources a proposal can come from;
+`CoChangeGraph` is the pair counting behind the ecology map. Each now sits at
+the path Zeitwerk maps its constant to — `lib/cli/propose/candidate_sources.rb`
+and `lib/review/repo_ecology/co_change_graph.rb` — and the empty scaffold each
+host was left holding is gone. Propose falls to 225 code lines, RepoEcology to
+312. `growth.master` 1053 → 1055, both named in `spine.yml`;
+`self_findings.registry` records 54 again rather than the 56 the findings
+bought, and `sprawl.lone_dirs` and `cohesion_census` are unmoved.
+
+**The rule was right and the classes were large, which is the whole reading.**
+The collapse pass a day earlier had recorded these same two files as "looked
+collapsible and are not", because merging their repeated scaffolds turned
+`selfcheck` red. That was the rule reading source layout rather than the class.
+Fixing the rule made the scaffold pointless and the split obvious, in that
+order.
 
 **What is left is not noise.** `SILENT_RESCUE` 26 and `NO_GOD_CLASS` 28, all 54
 outside MASTER and already itemised under `self_findings.registry` below.
