@@ -335,3 +335,12 @@ occlusion:
   class: Deploy::OcclusionGate
   pass: "ok: every control answers a press at its own centre"
   covered_by: rendered_suite
+
+# PERF-100. The vitals sampler in hotwire.js has beaconed LCP/CLS/INP at one
+# percent for some time and nothing ever failed on the numbers; GATE_ADEQUACY
+# item 8 records the hole. Source half asserts the field collection still runs,
+# live half measures the two paint metrics against a budget.
+web_vitals_budget:
+  require: lib/rendered/web_vitals_budget
+  class: Deploy::WebVitalsBudget
+  pass: "ok: LCP and CLS within budget, field collection intact"
