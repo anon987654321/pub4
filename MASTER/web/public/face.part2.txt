@@ -161,7 +161,14 @@ void main(){
   vAlpha*=1.0-0.35*clamp(uQuestion,0.0,1.0);
   vAlpha*=clamp(form*0.42,0.25,1.0);
   vAlpha=max(vAlpha,0.08);
-  float shade=mix(0.14,1.0,depth);
+  // 0.35 rather than 0.14 at the far end, and the whole term scaled past 1.
+  // Receding points were painted at a seventh of full brightness — most of a
+  // head turned even slightly — which is half of why the face read as a shadow;
+  // the other half is exposure, in part3. vColor is clamped in the fragment
+  // shader, so the scale saturates the mid-depth points to white and leaves the
+  // far ones a real gradient rather than a run to almost nothing. Depth is the
+  // only 3D cue a 1px field has, and it survives this.
+  float shade=mix(0.35,1.0,depth)*2.2;
   // Warm, not cool. Receding points used to tint blue-violet, which reads
   // clinical on black. A face meant to be comfortable to sit with warms as it
   // recedes and resolves to a warm white at the nearest points.

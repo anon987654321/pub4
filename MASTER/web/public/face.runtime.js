@@ -1154,7 +1154,14 @@ void main(){
   vAlpha*=1.0-0.35*clamp(uQuestion,0.0,1.0);
   vAlpha*=clamp(form*0.42,0.25,1.0);
   vAlpha=max(vAlpha,0.08);
-  float shade=mix(0.14,1.0,depth);
+  // 0.35 rather than 0.14 at the far end, and the whole term scaled past 1.
+  // Receding points were painted at a seventh of full brightness — most of a
+  // head turned even slightly — which is half of why the face read as a shadow;
+  // the other half is exposure, in part3. vColor is clamped in the fragment
+  // shader, so the scale saturates the mid-depth points to white and leaves the
+  // far ones a real gradient rather than a run to almost nothing. Depth is the
+  // only 3D cue a 1px field has, and it survives this.
+  float shade=mix(0.35,1.0,depth)*2.2;
   // Warm, not cool. Receding points used to tint blue-violet, which reads
   // clinical on black. A face meant to be comfortable to sit with warms as it
   // recedes and resolves to a warm white at the nearest points.
@@ -1825,11 +1832,9 @@ function frame(t) {
     // Energy conservation: the less assembled the face, the more its points
     // overlap in one region, so brightness must drop with morph or the cloud
     // saturates to a solid white oval. Assembled (morph≈1) keeps full exposure;
-    // fully scattered would run at 35%.
-    if (faceMat.uniforms.uExposure) {
-      faceMat.uniforms.uExposure.value =
-        (0.35 + 0.65 * Math.min(1, Math.max(0, morphCurrent))) * Math.min(1.35, Math.max(0.45, _voiceGain));
-    }
+    // fully scattered runs at 35%. Applied at the one exposure write below.
+    const _morphEnergy = (0.35 + 0.65 * Math.min(1, Math.max(0, morphCurrent)))
+      * Math.min(1.35, Math.max(0.45, _voiceGain));
     const energeticGlow = /energetic|dramatic|intense|storyteller/i.test(String(State.currentSpeechStyle || ''))
       && (State.pulse || 0) > 0.35 ? Math.min(0.42, (State.pulse || 0) * 0.35) : 0;
     if (faceMat.uniforms.uBloom) faceMat.uniforms.uBloom.value = 0.03 + 0.06 * _breath + energeticGlow;
@@ -1877,10 +1882,28 @@ function frame(t) {
     const idleS3 = (t - State.lastTouch) / 1000;
     const eyeCloseTarget = _attnEyeClose || 0;
     faceMat.uniforms.uEyeClose.value += (eyeCloseTarget - faceMat.uniforms.uEyeClose.value) * 0.04;
+    // The one writer for uExposure. It was assigned twice in the same frame,
+    // sixty lines apart, and this assignment overwrote the other — so energy
+    // conservation, the voice gain, the whisper dip and the shout lift were all
+    // computed every frame and thrown away. They multiply here instead.
+    //
+    // INK is the overall gain, and it is a measurement rather than a taste:
+    // mean luminance over the cropped face read 1.59 against 7.31 for the same
+    // frame at the brightness the README take was lit to. The face was drawn at
+    // a fifth of the light it needs and read as a shadow on any screen that was
+    // not in a dark room; it now measures 7.73, with its peak at white rather
+    // than at 174. Alpha saturates at 1, so the points that were already lit
+    // stay where they are and the dim ones come up — which is the compression
+    // this wants, and why the depth gradient survives it.
+    //
+    // Both numbers are luminance ABOVE BLACK. The take's own frame reads YAVG
+    // 23.31 straight out of the mp4 because h264 puts black at 16, and comparing
+    // that against a screenshot's 1.59 says the gap is fourteenfold when it is
+    // under five. Subtract YMIN before believing a frame.
+    const INK = 3.0;
     const soulDensity = 0.82 + soulDrift * 0.35;
     const confExposure = 0.68 + (State.confidence || 1) * 0.42;
-    const baseExposure = soulDensity * confExposure;
-    faceMat.uniforms.uExposure.value = baseExposure;
+    faceMat.uniforms.uExposure.value = INK * soulDensity * confExposure * _morphEnergy;
     const engagement = document.documentElement.dataset.agentEngagement || '';
     let focusDim = rootBody.dataset.focusMode === '1' ? 0.88 : 1.0;
     if (engagement === 'attending') focusDim *= 0.97;
