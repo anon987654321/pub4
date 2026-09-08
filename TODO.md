@@ -31,6 +31,119 @@ mentioned.
 
 ## MASTER
 
+### The external 10/10 roadmap, read against the tree — 2026-09-08
+
+A ~90-item roadmap arrived from ChatGPT proposing an execution model of
+*intent → understand → inventory → classify → research → plan → change → test →
+measure → review → report*, natural language as the primary interface, and a
+final acceptance suite. The standing lesson about these applies — **external AI
+proposals here are mostly already built** — so every claim below was checked
+against the tree rather than accepted. Verdicts, not a re-listing.
+
+**Already built, with the reader named. Do not implement these.**
+
+- *MASTER-103 rule applicability* — `law/law.rb`'s `languages`, `path`,
+  `path_exclude` and `scope` verbs plus `Rule#applies_to?` are the applicability
+  engine. `languages` is used sixty times. This is also the answer to
+  *RAILS-103 automatic design-system activation*: `law/css.rb` already judges
+  only stylesheets, by declaration.
+- *MASTER-104 rule provenance* — every `Law.define` carries `source`, `severity`,
+  `fix`, and the two fixtures. `tools/rule_reach.rb` and
+  `tools/autofix_reach.rb` already detect a rule with no enforcement, and both
+  are ratchet rows.
+- *MASTER-105 / RAILS-105 render-before-claim* — `rendered_suite`,
+  `gates/support/cdp_session.rb`, `visual_contract` and `layout_snapshot`. The
+  doctrine is enforced further than the roadmap asks: `GateResult` distinguishes
+  *inconclusive* from *passed*, so a suite that skipped every live check cannot
+  report green.
+- *MASTER-122 risk classifier* — `lib/cli/fold_risk.rb` and
+  `lib/ground/failure_taxonomy.rb`.
+- *MASTER-123 evidence ledger* — `lib/trace/ledger.rb`, `lib/trace/recorder.rb`,
+  `runtime/events/activity.jsonl`, `.constitutional_violations.jsonl`.
+- *MASTER-124 no false completion* — `soul.yml`'s `anti_simulation`,
+  `SURFACE_ERRORS_FIRST`, `NO_DEAD_ENDS`, and `GateResult#measured_nothing?`.
+- *MASTER-130/131/132 provider broker, matrix, fallback* — `data/providers.yml`,
+  `ModelRouter` with `failover_config`, `provider_availability`, `escalation`,
+  `provider_quarantine_manager`, `circuit_breaker_registry` and `quota_gate`.
+  The quota gate already does exactly what MASTER-132 asks: classify the
+  failure, park the tier, carry the skip into the verdict, re-probe on backoff.
+- *SPRAWL-100 merge by concept not line count* — already the recorded finding,
+  in the sprawl section above, arrived at by measurement.
+
+**Confirmed open, and already recorded here with more precision than the
+roadmap carries.**
+
+- *MASTER-115 scope-aware structural analysis* — correct, and the survey named
+  two more of the same shape: `FILE_LAYOUT` flags the first private method of
+  every file (233 findings, all false), and `TRAILING_COMMAS` and
+  `DOUBLE_QUOTES_RUBY` are broken identically.
+- *MASTER-116 audit never silently stops* — correct. `rake audit` reached six of
+  twenty-three gates. Its three `selftest` blockers were fixed on 2026-09-08, so
+  it reaches all of them today, but the abort-on-first-failure shape is
+  unchanged and `Rakefile:158` documents it as deliberate. The fix the roadmap
+  asks for — report *passed / failed / skipped / unavailable / prerequisite
+  failure* — is the right one and is not done.
+- *SPRAWL-105 swarm: wire or delete* — confirmed exactly.
+  `Review::Swarm::Coordinator` is constructed at `lib/builder/ai_boot.rb:32`,
+  placed in the bundle as `swarm:`, and the key is never read: 99 of 278 body
+  lines unreached.
+- *SPRAWL-106 resolve `control_commands`* — confirmed. It occurs once in the
+  whole repo, its own `def`, so `/orders` and `/soul` are not commands — and
+  `data/state.yml` still tells the reader orders run "via /orders".
+- *SPRAWL-104 dead Session command machinery* — 167 methods in `lib/` are named
+  nowhere across all four trees, carrying 649 body lines. Verify dynamic
+  reachability first, as the roadmap says; the `?`-predicate and
+  qualified-constant traps recorded above are how that census goes wrong.
+
+**Half-built, and the gap is measurable.**
+
+- *MASTER-100 intent is the primary interface* — `MASTER/bin/master
+  "<instruction>"` already is that entry point, and `TurnRouter` and
+  `Ground::IntentRouter` route it. But the intent table is thin: of the
+  roadmap's own four examples, `IntentRouter#classify` answers
+  `:redesign_mobile_pwa` for "fix the broken mobile navigation" and
+  `:run_full_workflow` for "clean up MASTER itself", and **`:unknown` for both
+  "why isn't the homepage realtime?" and "run the relevant tests"**. So the item
+  is not "build a natural-language interface" — it is "the classifier returns
+  unknown for half its canonical examples", which is a much smaller and testable
+  piece of work.
+
+**Genuinely new.**
+
+- *PERF-100 Core Web Vitals* — no LCP, CLS or INP measurement exists anywhere in
+  MASTER or RAILS. `layout_stability_lint.rb` is CLS-adjacent by name and
+  measures source, not paint. This is the largest genuinely absent capability in
+  the roadmap.
+- *MASTER-134/135/136 local model bootstrap, benchmark, offline mode* — the
+  `agy` provider gives a keyless fallback, but nothing detects hardware, installs
+  a runtime, benchmarks it, or names offline as a capability state.
+- *MASTER-101 boot receipt* — `boot_checks.rb`, `bin/doctor` and `boot_phases.rb`
+  each hold part of it; nothing emits one deterministic receipt of
+  constitution + rules + providers + capabilities + degradations.
+
+**Wrong about the tree, and would cost a revert.**
+
+- *SPRAWL-101/102/103 — simplify `ground/policy`, `voice/renderer`,
+  `cli/routing/model_router`.* All three were attempted on 2026-09-08 and
+  reverted, and the reason is not size. `renderer.rb` does `include GitStatus` at
+  line 13 while the merged modules land at line 83, and `model_router.rb` does
+  the same: under Zeitwerk those were autoloaded on reference, and in one file
+  the `include` runs before the definition exists. The merge is possible — the
+  parent's body has to come **after** the children rather than before — but a
+  naive fold produces a file that passes `ruby -c` and raises `NameError` on
+  every constant. `ground/policy` has no parent file and merges cleanly at 370
+  lines. Whoever takes these should read the fold in `tools/` history first.
+
+**The framing worth keeping.** The roadmap's closing standard — that MASTER is
+10/10 when it does not need to be told how to use MASTER — is the right target,
+and it is a better statement of the goal than any of the items under it. What it
+underrates is that the tree's problem has not been missing features for some
+time: it is discoverability and detection reach. Three of today's four survey
+agents led with an instrument that had been wrong, and the largest single lead
+handed to the collapse pass — `PARALLEL_HIERARCHY`'s 33 findings — was entirely
+false. An acceptance suite that proves the detectors are right is worth more
+than one that proves the features exist.
+
 ### File sprawl across all four trees — 2026-09-08
 
 Asked as a reduction rather than a reorganisation, and with no new
