@@ -2954,20 +2954,42 @@ rules:
         # list; they drifted on 0 and 44 when they were two copies. Source:
         # RAILS/shared/design_tokens.yml#scale.space_px.
         source: RAILS/shared/design_tokens.yml#scale.space_px
+        # The rule is "a hairline at or below 3px, or a multiple of 4", and it is
+        # stated and tested at RAILS/test/scale_lint_test.rb:119 as
+        # `reject { |px| px <= 3 || (px % 4).zero? }`. This enumeration is that
+        # rule written out, and it drifted from it twice: on 0 and 44 when it was
+        # two copies, and again by 2026-09-08, when it held thirteen values and
+        # omitted 1, 2 and 3 as well as 28, 36, 56, 72, 80 and 128 — every one of
+        # those a multiple of 4 the rule admits.
+        #
+        # The second drift cost six days of deploys. `--space-0-5: 0.125rem` (2px)
+        # is used in ten places across five stylesheets, rhythm_lint reads this
+        # list, and brgen's CI has been red on it since 2026-09-02 — so no brgen
+        # deploy has landed since 2026-08-27. A number that disagrees with the
+        # rule beside it stops a release rather than catching a defect.
         allowed_spacing_px: &eight_px_rhythm
         - 0
+        - 1
+        - 2
+        - 3
         - 4
         - 8
         - 12
         - 16
         - 20
         - 24
+        - 28
         - 32
+        - 36
         - 40
         - 44
         - 48
+        - 56
         - 64
+        - 72
+        - 80
         - 96
+        - 128
         action: Prefer 8px rhythm and 12-column structure; allow 4px for hairline adjustments. Full scale in design_tokens.
       proportion:
         golden_ratio: 1.618
