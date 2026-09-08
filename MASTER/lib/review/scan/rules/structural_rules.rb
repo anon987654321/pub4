@@ -8,29 +8,97 @@ module Master
       module Rules
         # B05 FILE_LAYOUT — Ruby file order: frozen → require → module → class → public → private.
         class FileLayoutRule < Rule
+          # The three scopes Ruby resets method visibility in, plus the file itself.
+          SCOPE_NODES = [
+            Prism::ProgramNode, Prism::ClassNode, Prism::ModuleNode, Prism::SingletonClassNode
+          ].freeze
+          VISIBILITY_MARKERS = %w[public private protected].freeze
+
           declare id: "FILE_LAYOUT", severity: :info, tags: %i[PROXIMITY CONVENTION],
                   description: "frozen header → requires → module/class → public → private"
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
-            findings = []
+
+            findings = header_finding(code)
+            parsed = Prism.parse(code)
+            return findings if parsed.failure?
+
+            findings + public_below_private(parsed.value)
+          end
+
+          private
+
+          # A shebang has to be the first line, so the header sits under it —
+          # five executable tools in tools/ were reported for writing the only
+          # order the kernel accepts.
+          def header_finding(code)
             lines = code.lines
-            first_non_comment = lines.find_index { |l| !l.match?(/^\s*#|^\s*$/) }
-            return [] unless first_non_comment
-            unless lines.first&.include?("frozen_string_literal")
-              findings << finding(line: 1, message: "missing # frozen_string_literal: true as first line")
-            end
-            private_idx = lines.find_index { |l| l.match?(/^\s+private\s*$|^\s+private\b/) }
-            if private_idx
-              public_def_after_private = lines[private_idx..].each_with_index.find do |l, i|
-                l.match?(/^\s+def (?!self\.)/) && !l.match?(/^\s+def (?:initialize|to_s|inspect)\b/)
-              end
-              if public_def_after_private
-                idx = private_idx + public_def_after_private[1] + 1
-                findings << finding(line: idx, message: "public method def after private marker — move above private")
-              end
+            return [] unless lines.any? { |line| !line.match?(/^\s*#|^\s*$/) }
+
+            header = lines.first&.start_with?("#!") ? lines[1] : lines.first
+            return [] if header&.include?("frozen_string_literal")
+
+            [finding(line: 1, message: "missing # frozen_string_literal: true as first line")]
+          end
+
+          # Visibility is a property of the enclosing scope, so this reads scopes
+          # rather than lines. The line-based reading called the first `def` under
+          # every `private` a violation — 261 findings across MASTER, every one of
+          # them a correctly private method — because a private section is what
+          # `private` is for. What the law actually forbids is a method that is
+          # still *public* below the marker, and there are two ways to write one:
+          # re-open the scope with a bare `public`, or define a singleton method,
+          # which `private` does not reach.
+          def public_below_private(root)
+            findings = []
+            walk(root) do |node|
+              next unless SCOPE_NODES.include?(node.class)
+
+              findings.concat(scope_findings(scope_statements(node)))
             end
             findings
+          end
+
+          def scope_statements(node)
+            body = node.is_a?(Prism::ProgramNode) ? node.statements : node.body
+            body.is_a?(Prism::StatementsNode) ? body.body : []
+          end
+
+          def scope_findings(statements)
+            visibility = :public
+            sealed = false
+            statements.filter_map do |statement|
+              marker = visibility_marker(statement)
+              if marker
+                visibility = marker
+                sealed ||= marker != :public
+                next
+              end
+              next unless sealed && statement.is_a?(Prism::DefNode)
+
+              exposed_method_finding(statement, visibility)
+            end
+          end
+
+          def exposed_method_finding(node, visibility)
+            if node.receiver
+              finding(line: node.location.start_line,
+                message: "def self.#{node.name} below the private marker is still public — move it above")
+            elsif visibility == :public
+              finding(line: node.location.start_line,
+                message: "public method #{node.name} after private marker — move above private")
+            end
+          end
+
+          # A bare `private` changes the scope's default. `private :name` and
+          # `private def name` name their subject and leave the default alone.
+          def visibility_marker(statement)
+            return nil unless statement.is_a?(Prism::CallNode)
+            return nil unless statement.receiver.nil? && statement.arguments.nil? && statement.block.nil?
+            return nil unless VISIBILITY_MARKERS.include?(statement.name.to_s)
+
+            statement.name
           end
         end
 

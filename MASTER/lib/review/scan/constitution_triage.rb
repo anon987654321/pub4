@@ -31,6 +31,13 @@ module Master
         # Rules under active retune: noisy enough that gating on them would gate
         # on the detector rather than on the code. Every id here must name a rule
         # the scanner, data/rules.yml or law/ still defines.
+        #
+        # FILE_LAYOUT and DOUBLE_QUOTES_RUBY came off on 2026-09-08, when both
+        # detectors were rewritten onto the parse tree. They were not noisy
+        # rules; they were line readings of scope-shaped law, and together they
+        # reported 849 findings over MASTER of which 842 were the law being
+        # obeyed. A rule parked here for a detector fault is parked forever,
+        # because the parking is what stops anyone measuring it.
         RULE_RETUNE_IDS = %w[
           COMPLETION_THEATER
           CONSECUTIVE_BLANK_LINES
@@ -39,11 +46,9 @@ module Master
           CYCLOMATIC_COMPLEXITY
           DEAD_CODE
           DEBUG_OUTPUT
-          DOUBLE_QUOTES_RUBY
           EXPLICIT
           FEATURE_ENVY
           FEW_ARGUMENTS
-          FILE_LAYOUT
           FINAL_NEWLINE
           KEYWORD_ARGS
           LAW_OF_DEMETER

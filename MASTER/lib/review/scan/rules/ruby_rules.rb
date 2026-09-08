@@ -52,6 +52,23 @@ module Master
 
             node.name.to_s.end_with?("=") ? :a : :b
           end
+
+          # A multi-line array or hash whose last element is not followed by a
+          # comma before the closing bracket. Percent literals are excluded
+          # because %w[] and %i[] separate on whitespace, so a comma inside one
+          # becomes part of an element.
+          def self.unterminated_collection?(node, src)
+            opening = node.opening_loc
+            closing = node.closing_loc
+            return false unless opening && closing && !node.elements.empty?
+            return false if opening.slice.start_with?("%")
+
+            last = node.elements.last.location
+            return false unless last.end_line < closing.start_line
+
+            gap = src.byteslice(last.end_offset, closing.start_offset - last.end_offset).to_s
+            !gap.sub(/#.*/, "").include?(",")
+          end
         end
 
         # Retired registry twins — each lives once, in law/:
@@ -220,19 +237,27 @@ module Master
           findings
         end
 
+        # Only array and hash literals, because those are the two the autofix
+        # `add_trailing_commas` closes on — it matches a line opening with `]`
+        # or `}`. The lexical detector this replaces matched any line holding
+        # nothing but a quoted string, so it reported 496 findings across MASTER
+        # of which the great majority were a method's last expression or an
+        # assertion message, and the fixer would have touched none of them.
         RuleDSL.rule :TRAILING_COMMAS,
           severity: :info, tags: %i[STYLE], applies_to: %i[ruby],
           fires: %(LIST = [\n  "one"\n]\n),
           does_not_fire: %(LIST = [\n  "one",\n]\n),
           description: "trailing commas in multi-line collections" do |src, path:|
-          src.each_line.with_index(1).filter_map do |line, number|
-            next unless line.match?(/^\s*"[^"]+",?\s*$/)
-            next if line.match?(/,\s*$/)
+          parsed = Prism.parse(src)
+          next [] if parsed.failure?
 
-            finding(line: number, message: "missing trailing comma in multi-line collection")
+          collections = each_node(parsed.value, Prism::ArrayNode) + each_node(parsed.value, Prism::HashNode)
+          collections.filter_map do |node|
+            next unless RubyRuleSupport.unterminated_collection?(node, src)
+
+            finding(line: node.closing_loc.start_line, message: "missing trailing comma in multi-line collection")
           end
         end
-
       end
     end
   end

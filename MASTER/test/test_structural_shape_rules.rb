@@ -30,8 +30,12 @@ class TestStructuralShapeRules < Minitest::Test
     assert_empty flags(Rules::FileLayoutRule.new, "# frozen_string_literal: true\nclass Thing\nend\n")
   end
 
-  def test_file_layout_flags_a_public_method_below_the_private_marker
-    found = flags(Rules::FileLayoutRule.new, <<~RUBY)
+  # A private section is what `private` is for, so the methods under it are the
+  # rule being obeyed. The line-based reading called the first of them a
+  # violation and produced 261 findings across MASTER, every one of them a
+  # correctly private method.
+  def test_file_layout_spares_the_private_methods_under_the_marker
+    assert_empty flags(Rules::FileLayoutRule.new, <<~RUBY)
       # frozen_string_literal: true
       class Thing
         def a; end
@@ -39,27 +43,68 @@ class TestStructuralShapeRules < Minitest::Test
         private
 
         def b; end
+        def c; end
+      end
+    RUBY
+  end
+
+  # Two ways to write a method that is still public below the marker, and both
+  # are what the law forbids: re-open the scope, or define a singleton method,
+  # which `private` does not reach.
+  def test_file_layout_flags_a_scope_reopened_to_public
+    found = flags(Rules::FileLayoutRule.new, <<~RUBY)
+      # frozen_string_literal: true
+      class Thing
+        private
+
+        def b; end
+
+        public
+
+        def c; end
       end
     RUBY
 
     assert_equal 1, found.size
-    assert_includes found.first, "after private marker"
+    assert_includes found.first, "public method c after private marker"
   end
 
-  # initialize, to_s and inspect below private are the documented exemption:
-  # they are conventional positions, not a public method hiding in the wrong
-  # half of the file.
-  def test_file_layout_spares_the_conventional_names_below_private
+  def test_file_layout_flags_a_singleton_method_below_private
+    found = flags(Rules::FileLayoutRule.new, <<~RUBY)
+      # frozen_string_literal: true
+      class Thing
+        private
+
+        def b; end
+
+        def self.build; end
+      end
+    RUBY
+
+    assert_equal 1, found.size
+    assert_includes found.first, "def self.build below the private marker is still public"
+  end
+
+  # Visibility resets inside every class and module body, so a nested class's
+  # public methods are not below the outer scope's marker.
+  def test_file_layout_resets_visibility_in_a_nested_scope
     assert_empty flags(Rules::FileLayoutRule.new, <<~RUBY)
       # frozen_string_literal: true
       class Thing
         private
 
-        def initialize; end
-        def to_s; end
-        def inspect; end
+        def b; end
+
+        class Inner
+          def visible; end
+        end
       end
     RUBY
+  end
+
+  # A shebang has to come first, so the header sits on the second line.
+  def test_file_layout_accepts_the_header_under_a_shebang
+    assert_empty flags(Rules::FileLayoutRule.new, "#!/usr/bin/env ruby\n# frozen_string_literal: true\nclass Thing\nend\n")
   end
 
   def test_file_layout_ignores_a_file_that_is_not_ruby

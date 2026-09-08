@@ -4,6 +4,22 @@ module Master
   module Review
     module Scan
       module Rules
+        # What DOUBLE_QUOTES_RUBY may rewrite. A module rather than lambdas
+        # inside the rule block, which is instance_exec'd once per file and
+        # would rebuild them every time.
+        module CosmeticRuleSupport
+          LITERAL_QUOTE_CALLS = %w[require require_relative gem].freeze
+          MEANING_CHANGES_RE = Regexp.union('"', "\\", '#{', "\#$", "\#@")
+
+          # True for a single-quoted string literal whose content means the
+          # same thing between double quotes.
+          def self.convertible_single_quote?(node)
+            return false unless node.opening_loc&.slice == "'"
+
+            !node.content_loc.slice.match?(MEANING_CHANGES_RE)
+          end
+        end
+
         # Retired registry twins — each lives once, in law/:
         #   MEASURE_OPTIMUM
         # (test_scan_rule_contracts proves each reaches findings through the bridge).
@@ -116,17 +132,46 @@ module Master
           end
         end
 
+        # Read off the parse tree, not the line. A line-based reading cannot
+        # tell a single-quoted string from an apostrophe inside a double-quoted
+        # one, so an interpolated hash lookup and a comment reading "it's the
+        # caller's job" both counted: 588 findings across MASTER, and
+        # converting any of them would have broken the file. Prism knows which
+        # quote opened a string.
+        #
+        # Five exemptions, each because double quotes would change meaning or
+        # convention: a string carrying its own double quote, one carrying an
+        # interpolation sequence it means literally, one carrying a backslash
+        # escape that single quotes leave alone, the argument to require or gem
+        # where single quotes are the Bundler convention, and a string nested
+        # inside an interpolation, where doubling repeats the delimiter that
+        # opened the enclosing string. That last one is the whole remainder:
+        # once the parse tree is read instead of the line, MASTER holds 376
+        # single-quoted strings and every one of them sits inside a `#{}`.
         RuleDSL.rule :DOUBLE_QUOTES_RUBY,
           severity: :info, tags: %i[STYLE], applies_to: %i[ruby],
           fires: %(name = 'osman'\n),
           does_not_fire: %(name = "osman"\n),
           description: "double-quoted strings per style.yml" do |src, path:|
           next [] if path.to_s.include?("/review/scan/rules/")
-          src.each_line.with_index(1).filter_map do |line, number|
-            next if line.match?(/#[^"']*'[^']*'/) && !line.match?(/"[^"]*"/)
-            next unless line.match?(/'[^'\\]*(\\.[^'\\]*)*'/)
-            next if line.match?(/%w\[|%i\[|<<[-~]?'|require\s+'|gem\s+'/)
-            finding(line: number, message: "single-quoted string — use double quotes per style.yml")
+
+          parsed = Prism.parse(src)
+          next [] if parsed.failure?
+
+          exempt = each_node(parsed.value, Prism::CallNode)
+            .select { |call| CosmeticRuleSupport::LITERAL_QUOTE_CALLS.include?(call.name.to_s) }
+            .flat_map { |call| Array(call.arguments&.arguments) }
+            .map { |argument| argument.location.start_offset }
+
+          interpolations = each_node(parsed.value, Prism::EmbeddedStatementsNode)
+            .map { |node| node.location.start_offset...node.location.end_offset }
+
+          each_node(parsed.value, Prism::StringNode).filter_map do |node|
+            next unless CosmeticRuleSupport.convertible_single_quote?(node)
+            next if exempt.include?(node.location.start_offset)
+            next if interpolations.any? { |span| span.cover?(node.location.start_offset) }
+
+            finding(line: node.location.start_line, message: "single-quoted string — use double quotes per style.yml")
           end
         end
 
