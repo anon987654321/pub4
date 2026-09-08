@@ -4238,7 +4238,25 @@ rule_ratchets:
     # churn in the sample as much as in the tree, and the exact departure was not
     # chased. The header above already says a silent rule is a property of the
     # sample as often as of the rule, and is not evidence of a defect on its own.
-    silent: 24
+    #
+    # 24 -> 39, and it is a correction rather than a move. Fourteen of the fifteen
+    # are the census learning to read law/ the way the runtime does. A law file
+    # necessarily contains the pattern it forbids — its detector, its fix sentence,
+    # its bad fixture — and FileProcessor#law_conducted neutralizes those lines at
+    # the one read site so that a law does not judge itself. This audit read them
+    # raw, so a law matching nothing in the tree except its own `detect` line
+    # counted as having found a subject and stayed off this list. Measured both
+    # ways on 2026-09-08: 24 raw against 38 conducted. FAIL_VISIBLY,
+    # GUARD_EXPENSIVE_OPS, NULL_BLINDNESS and SAFE_NAVIGATION are four of the
+    # fourteen, and every one of them had been reading itself.
+    #
+    # The fifteenth is UNBOUNDED_RETRY, which declared no `languages`. `retry` is
+    # a Ruby keyword and nothing else, and its one standing finding was the word in
+    # a sentence on 406-unsupported-browser.html — English prose in HTML, reported
+    # at :error. Scoped to ruby it fires on nothing here, which is the honest
+    # state: this tree contains no unbounded Ruby `retry`, and a correct rule with
+    # no subject belongs on this list rather than in a gate as a false finding.
+    silent: 39
 
 
   hygiene:

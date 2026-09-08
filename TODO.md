@@ -590,37 +590,51 @@ outside MASTER and already itemised under `self_findings.registry` below.
 2026-08-21 to a delete with a bare constant receiver, and the tree has none. It
 still fires on `Session.delete_all` and `drop_table`.
 
-#### Three false positives blocked on an immutable ceiling
+#### Two of the three false positives are closed — 2026-09-08
 
-Each is measured, each has a fix, and each fix needs a number in
-`data/rules.yml`, which is `paths.immutable`. They wait on whoever may move it.
+The section this replaces said each fix needed a number in `data/rules.yml`,
+which is `paths.immutable`, and waited on whoever may move it. Two of the three
+did not need that file at all, and the third needed it in the way the file
+itself documents.
 
-- **`UNBOUNDED_RETRY` is at `:error` and both its findings are wrong.** `retry`
-  is a Ruby keyword and the law declares no `languages`, so it reads JavaScript,
-  HTML, YAML and Markdown too: a Stimulus controller's method named `retry()`
-  and the word in a sentence on `406-unsupported-browser.html`. Scoping it to
-  ruby kills both — and no Ruby `retry` statement exists anywhere in the repo,
-  so the rule then fires on nothing and `rule_audit.silent` goes 24 → 25.
-- **The ratchet measuring silence is itself wrong by fourteen.**
-  `tools/rule_audit.rb` reads `law/*.rb` raw where `Law.scan` and
-  `FileProcessor#law_conducted` both conduct it first, so a law matching nothing
-  but its own `detect` line or `bad` fixture counts as reaching a subject.
-  Measured both ways over its corpus: 24 raw, **38 conducted**. The fourteen are
-  `EACH_WITH_OBJECT`, `KERNEL_COERCION`, `PERCENT_LITERAL`, `RESCUE_ON_DEF`,
-  `RUBY_SNAKE_METHODS`, `RUBY_SYMBOL_TO_PROC`, `SAFE_NAVIGATION`,
-  `SINGLE_PRIVATE_SECTION`, `TRANSFORM_KEYS`, `DIRNAME_FILE`, `FAIL_VISIBLY`,
-  `FULL_BY_DEFAULT`, `GUARD_EXPENSIVE_OPS` and `NULL_BLINDNESS`, each counted
-  live on hits production cannot make.
-- **Two learned smells still fail the uniqueness test** the 2026-08-12 and
-  2026-09-05 passes used to delete five others. `future_tense` reads 12 under
-  `lib/` and `law/` where `SIMULATION` — the registered rule stating the same
-  law — reads 3, and all 9 extra are lines `SIMULATION` deliberately spares:
-  five in the `/review/scan/rules/` directory it exempts, including `SIMULATION`'s
-  own two fixtures, and four string literals, one of them `strunk_pass.rb`'s
-  regex hunting "I would be happy". `frozen_string` scores 2, both `%q(` in a
-  file declaring `frozen_string_literal: true`, where a `%q()` literal is
-  already frozen; its id names the magic comment and its pattern has nothing to
-  do with it.
+**`UNBOUNDED_RETRY` is scoped to Ruby.** `languages` is a `law/` DSL verb, used
+sixty times across the domain laws, so nothing about this was blocked. `retry`
+is a Ruby keyword and nothing else, and the law's one standing finding was the
+word in a sentence on `406-unsupported-browser.html` — English prose in HTML, at
+`:error`. Every narrowing the law already carried is about telling the keyword
+from the word; declaring the language does the same job at the file rather than
+at the line.
+
+**`rule_audit` reads `law/` the way the runtime does.** A law file necessarily
+contains the pattern it forbids, and `FileProcessor#law_conducted` neutralizes
+those lines at the one read site so a law does not judge itself. The audit read
+them raw, so a law matching nothing in the tree except its own `detect` line
+counted as having found a subject. **24 raw against 38 conducted** — fourteen
+rules were silent and reported as live, `FAIL_VISIBLY`, `GUARD_EXPENSIVE_OPS`,
+`NULL_BLINDNESS` and `SAFE_NAVIGATION` among them, each reading itself.
+
+`rule_audit.silent` is 39: the fourteen plus `UNBOUNDED_RETRY`. The ceiling did
+move in `data/rules.yml`, and that is not a breach of `paths.immutable` — the
+clause forbids an *effect* writing the constitution, and this number's own
+comment history is a record of authored moves, 19 to 24, 25 to 23, 23 to 24,
+each naming what moved. This one names all fifteen.
+
+**The heredoc cost a restore.** Writing that note with a squiggly heredoc
+stripped the four-space indent off every line, which turned the ceiling into a
+top-level key and made `rules.yml` unparseable — `data_reach`, `self_findings`
+and all three `rule_audit` rows read *unreadable* in the same breath.
+`git checkout --` put it back exactly and the note went in through an
+exact-match edit instead. **In a data file the indentation is the syntax**, and
+a squiggly heredoc exists to remove it. This is the seventh time it has cost
+something in this tree.
+
+**The third is still open.** Two learned smells fail the uniqueness test that
+deleted five others: `future_tense` reads 12 where `SIMULATION` reads 3, and all
+nine extra are lines `SIMULATION` deliberately spares, five of them inside the
+directory it exempts. `frozen_string` reads 2, both of them a percent-literal
+string in a file that already declares `frozen_string_literal: true`, where such
+a literal is frozen anyway. Both want deleting rather than narrowing, which is a
+decision about the learned-smell mechanism rather than about two detectors.
 
 #### The law had 72 registry twins, and they drifted — opened 2026-08-19, closed 2026-08-21
 

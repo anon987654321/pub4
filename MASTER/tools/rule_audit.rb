@@ -142,8 +142,24 @@ module Pub4
       { rule: rule.id.to_s, extension: ext, detail: reason.join(" and ") }
     end
 
+    # law/ arrives conducted, the way the runtime reads it.
+    #
+    # A law file necessarily contains the pattern it forbids — its detector, its
+    # fix sentence, its bad fixture — and FileProcessor#law_conducted neutralizes
+    # those lines at the one read site so a law does not judge itself. This census
+    # read them raw, so a law matching nothing in the tree but its own `detect`
+    # line counted as having found a subject and stayed out of the silent list.
+    # Measured both ways on 2026-09-08: 24 raw against 38 conducted, fourteen
+    # rules whose only hit was their own source.
+    def source_of(path)
+      code = File.read(path, encoding: "UTF-8").scrub
+      return code unless path.to_s.match?(%r{/law/[^/]+\.rb\z})
+
+      Law.conduct(code)
+    end
+
     def rates
-      files = corpus.map { |path| [path, language_of(path), File.read(path, encoding: "UTF-8").scrub] }
+      files = corpus.map { |path| [path, language_of(path), source_of(path)] }
       law.values.select(&:scannable?).filter_map do |rule|
         applicable = files.select { |path, lang, _| rule.applies?(path, lang) }
         next if applicable.empty?

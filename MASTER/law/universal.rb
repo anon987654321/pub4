@@ -243,6 +243,12 @@ end
 Law.define(:UNBOUNDED_RETRY) do
   source "Release It! — retry budgets / bounded retries (Nygard)"
   severity :error
+  # `retry` is a Ruby keyword and nothing else. Undeclared, this read every
+  # language in the tree, and its one standing finding was the word in a
+  # sentence on 406-unsupported-browser.html — "then retry", English prose in
+  # HTML, at :error. Every narrowing above is about telling the keyword from
+  # the word; declaring the language is the same job done at the file.
+  languages %i[ruby]
   # Every finding this produced was a false positive, all five of them. Three
   # narrowings, each against one of those shapes:
   #
