@@ -26,7 +26,7 @@ class TestLimitsSplit < Minitest::Test
     "loc_body_budgets" => ["Rakefile", "loc_body_budgets"],
     "dmesg" => ["lib/trace/dmesg.rb", "dmesg"],
     "principle_groups" => ["lib/cli/scan/request.rb", "principle_groups"],
-    "process" => ["lib/ops/process_budget.rb", "process"],
+    "process" => ["lib/ops.rb", "process"],
     "scan_profiles" => ["lib/cli/scan/request.rb", "scan_profiles"],
     "session_modes" => ["lib/ground/mode_posture.rb", "session_modes"],
     "validation" => ["lib/ground/schema_check.rb", "validation"],

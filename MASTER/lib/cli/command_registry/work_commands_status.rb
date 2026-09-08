@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "open3"
-require_relative "../../trace/log/event"
+require_relative "../../trace/log"
 require_relative "formatter"
 require_relative "../resync_service"
 require_relative "../fix_preview_report"

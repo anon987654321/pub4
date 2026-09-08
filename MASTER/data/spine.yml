@@ -175,7 +175,20 @@ pub4_source_ceilings:
   # skills nest inside it and total 231 code lines, under the 300 SMALL_FILES and
   # NO_GOD_CLASS enforce, so the directory was buying nesting nothing needed.
   # One file, no shelf, and its twenty tests unchanged.
-  MASTER: 1052
+  # 1052 -> 1026, twenty-six files gone by folding ten directories into the one
+  # file each of their constants already named. orders, ops, swarm/workers,
+  # design, axioms, map, security, ledger, log and tool: every child repeated the
+  # same three-deep scaffold, and a merge keeps one copy, so no constant moved
+  # and no caller changed. Zeitwerk maps orders.rb to Ground::Orders and loads
+  # Orders::Autocommit with it.
+  #
+  # Worth knowing before the next pass: this cost spine.lib_body_ceiling eight
+  # lines rather than saving any. body_lines excuses a `module` whose body is
+  # exactly one module or class, and a merged scaffold holds several, so the
+  # ceremony starts counting. The two ratchets pull against each other -- one
+  # rewards one class per file, the other counts files -- and that tension is
+  # real rather than a bug in either.
+  MASTER: 1026
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
   # it belongs beside the other probes and folds into nothing.

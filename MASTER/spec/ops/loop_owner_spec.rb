@@ -3,7 +3,7 @@
 require "fileutils"
 require "minitest/autorun"
 require_relative "../../lib/master"
-require_relative "../../lib/ops/loop_owner"
+require_relative "../../lib/ops"
 
 class LoopOwnerSpec < Minitest::Test
   def setup

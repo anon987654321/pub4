@@ -8,6 +8,39 @@ require "time"
 module Master
   module Trace
     module Log
+      # Append-only tool invocation log; subscribes to tool:before on EventBus.
+      class Audit
+        LOG_PATH = ".master/audit.ndjson".freeze
+        MAX_VAL = 120
+        MAX_BYTES = 5 * 1024 * 1024
+
+        def initialize(root:, event_bus:)
+          @path = File.join(root, LOG_PATH)
+          @mutex = Mutex.new
+          FileUtils.mkdir_p(File.dirname(@path))
+          event_bus.subscribe("tool:before") { |event_data| append(event_data) }
+        end
+
+        private
+
+        def append(event_data)
+          record = { ts: Time.now.utc.iso8601, tool: event_data[:tool] }
+                    .merge(event_data.except(:tool).transform_values { |v| v.to_s[0, MAX_VAL] })
+          Master::Trace::Telemetry.span("audit.append", tool: event_data[:tool].to_s) do
+            @mutex.synchronize do
+              rotate! if File.exist?(@path) && File.size(@path) > MAX_BYTES
+              File.open(@path, "a") { |f| f.puts(JSON.generate(record)) }
+            end
+          end
+        end
+
+        def rotate!
+          File.rename(@path, "#{@path}.1")
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "audit_log.rotate", path: @path)
+        end
+      end
+
       class Event
         DEFAULT_STREAM = "activity"
         STREAM_PATTERN = /\A[a-z0-9_\-]+\z/
@@ -90,6 +123,20 @@ module Master
           Master::Ground::Swallow.log(e, context: "Log::Event.parse_line")
           nil
         end
+      end
+
+      class Evidence
+        OPERATIONAL = /\A(?:ops:|pipeline:rollback|fix_loop:commit|resync:|deploy:)/
+
+        def initialize(root: Master::ROOT)
+          @log = Event.new(root:, stream: "evidence")
+        end
+
+        def operational?(event) = event.to_s.match?(OPERATIONAL)
+
+        def append(event, payload = {}) = @log.append(event, payload)
+
+        def recent(limit, pattern: nil) = @log.recent(limit, pattern:)
       end
     end
   end

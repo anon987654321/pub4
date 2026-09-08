@@ -2,8 +2,7 @@
 
 require "minitest/autorun"
 require_relative "../../lib/master"
-require_relative "../../lib/ops/process_budget"
-require_relative "../../lib/ops/loop_slot"
+require_relative "../../lib/ops"
 
 class ProcessBudgetSpec < Minitest::Test
   LOOP_ENVS = %w[MASTER_AUTOFIX MASTER_WATCH MASTER_WATCHER MASTER_BACKGROUND MASTER_HEARTBEAT].freeze

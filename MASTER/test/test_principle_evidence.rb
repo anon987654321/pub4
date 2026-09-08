@@ -18,7 +18,7 @@ class TestPrincipleEvidence < Minitest::Test
   end
 
   def test_audit_logging_appends_tool_invocations
-    audit = File.read(File.join(Master::ROOT, "lib/trace/log/audit.rb"))
+    audit = File.read(File.join(Master::ROOT, "lib/trace/log.rb"))
     assert_includes audit, "event_bus.subscribe(\"tool:before\")"
     assert_includes audit, "File.open(@path, \"a\")"
     refute_includes audit.gsub(/^\s*#.*$/, ""), "File.write(@path"

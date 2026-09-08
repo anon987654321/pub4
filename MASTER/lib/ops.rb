@@ -1,11 +1,115 @@
 # frozen_string_literal: true
 
+require "fileutils"
+require "json"
+require "time"
 require "timeout"
 require "yaml"
-require_relative "loop_owner"
 
 module Master
   module Ops
+    module LoopOwner
+      DIR = File.join(Master::ROOT, ".master", "active_loop").freeze
+      INFO = File.join(DIR, "owner.json").freeze
+      STALE_SECONDS = 3600
+
+      module_function
+
+      def claim(name)
+        cleanup_stale!
+        FileUtils.mkdir_p(File.dirname(DIR))
+        Dir.mkdir(DIR)
+        File.write(INFO, JSON.generate(loop: name.to_s, pid: Process.pid, at: Time.now.utc.iso8601))
+        true
+      rescue Errno::EEXIST => e
+        Master::Ground::Swallow.log(e, context: "LoopOwner.claim")
+        false
+      end
+
+      def release
+        FileUtils.rm_rf(DIR) if Dir.exist?(DIR)
+      end
+
+      def active
+        cleanup_stale!
+        return unless File.exist?(INFO)
+
+        JSON.parse(File.read(INFO))
+      rescue StandardError
+        { "loop" => "unknown" }
+      end
+
+      def cleanup_stale!
+        return unless File.exist?(INFO)
+
+        data = JSON.parse(File.read(INFO))
+        pid = data["pid"].to_i
+        at = Time.iso8601(data["at"].to_s) rescue Time.at(0)
+        stale = pid <= 0 || !process_alive?(pid) || (Time.now.utc - at) > STALE_SECONDS
+        release if stale
+      rescue StandardError
+        release
+      end
+
+      def process_alive?(pid)
+        Process.kill(0, pid)
+        true
+      rescue Errno::ESRCH => e
+        Master::Ground::Swallow.log(e, context: "LoopOwner.process_alive?")
+        false
+      rescue Errno::EPERM
+        true
+      end
+
+      def with_claim(name)
+        return false unless claim(name)
+
+        yield
+      ensure
+        release
+      end
+    end
+
+    # At most one *slot* loop (autofix/watch/watcher) may run at a time. The loops
+    # and their env flags are not defined here — they come from the single source,
+    # data/limits.yml#process, via ProcessBudget. LoopSlot is only the mutual-exclusion
+    # view over the slot loops; the background heartbeat is non-slot and excluded.
+    module LoopSlot
+      module_function
+
+      def flags
+        ProcessBudget.env_by_loop.select { |name, _env| ProcessBudget.slot_loop?(name) }
+      end
+
+      def enabled
+        ProcessBudget.active_loops
+      end
+
+      def selected
+        enabled.first
+      end
+
+      def valid?
+        enabled.size <= 1
+      end
+
+      def status
+        {
+          selected:,
+          enabled:,
+          valid: valid?,
+          flags: flags.transform_values { |env| ENV.fetch(env, "0") },
+        }
+      end
+
+      def validate!
+        return true if valid?
+
+        raise ArgumentError,
+              "Set exactly one loop: MASTER_LOOP=fix|watch|watcher or MASTER_AUTOFIX=1, MASTER_WATCH=1, MASTER_WATCHER=1."
+      end
+    end
+
     module ProcessBudget
       CONFIG_PATH = File.join(Master::ROOT, "data", "limits.yml").freeze
       NON_SLOT_LOOPS = %w[heartbeat].freeze
@@ -143,6 +247,50 @@ module Master
         end || :busy
       rescue Timeout::Error
         :timeout
+      end
+    end
+
+    module RuntimeLoopGuards
+      module_function
+
+      # Three long-running loops, each behind its own switch. The guard is one
+      # move — alias the real entry point, then refuse to reach it unless the
+      # environment asks for the loop — so what separates the three is data:
+      # the class, the entry point, and the switch.
+      GUARDS = {
+        "Master::Fix::Heartbeat" => [:start!, "MASTER_HEARTBEAT"],
+        "Master::Fix::Watcher" => [:run_forever, "MASTER_WATCHER"],
+        "Master::Fix::WatchLoop" => [:run, "MASTER_WATCH"],
+      }.freeze
+
+      def install!
+        GUARDS.each { |name, (entry, switch)| guard(name, entry, switch) }
+        true
+      end
+
+      def guard_subprocess_context!
+        if defined?(Falcon) && Fiber.scheduler
+          raise Master::SecurityError,
+                "Process.fork inside Falcon fibers induces closing scheduler panics. Shell out via Open3 or exe workers."
+        end
+        true
+      end
+
+      def guard(name, entry, switch)
+        return unless Object.const_defined?(name)
+
+        klass = Object.const_get(name)
+        unguarded = :"#{entry.to_s.delete_suffix("!")}_without_runtime_guard!"
+        return if klass.method_defined?(unguarded)
+
+        klass.class_eval do
+          alias_method unguarded, entry
+          define_method(entry) do |*args, **kwargs, &block|
+            return unless ENV[switch] == "1"
+
+            send(unguarded, *args, **kwargs, &block)
+          end
+        end
       end
     end
   end

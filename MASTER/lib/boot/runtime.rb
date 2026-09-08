@@ -54,9 +54,7 @@ module Master
     def runtime_catalog = Ground::RuntimeCatalog
 
     def install_process_guards!
-      require_relative "../ops/loop_slot"
-      require_relative "../ops/process_budget"
-      require_relative "../ops/runtime_loop_guards"
+      require_relative "../ops"
       Ops::LoopSlot.validate!
       Ops::ProcessBudget.validate_loop_slot!
       Ops::RuntimeLoopGuards.install!

@@ -283,7 +283,7 @@ principles:
     severity: high
     confidence: 0.85
     operation: add_logging
-    # Evidence is lib/trace/log/audit.rb (append-only tool:before log), pinned
+    # Evidence is lib/trace/log.rb (append-only tool:before log), pinned
     # by test_principle_evidence.rb. No registered scanner rule yet — a lexical
     # rule cannot prove a process actually subscribed.
     rule_ids: []

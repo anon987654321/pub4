@@ -19,7 +19,7 @@ module Master
               panel: nil,
               files: %w[
                 web/public/face.css web/public/face.js web/public/chat.js
-                web/app/views/chat/index.html.erb lib/design/platform_profiles.rb
+                web/app/views/chat/index.html.erb lib/design.rb
               ],
               quality_kind: :design,
               ideation_prompt: "Generate concrete multi-solution improvements for this web UI. " \

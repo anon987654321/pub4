@@ -6,7 +6,7 @@ require "sqlite3"
 require "tmpdir"
 require_relative "test_helper"
 require_relative "../lib/ground/knowledge_store"
-require_relative "../lib/trace/ledger/feedback"
+require_relative "../lib/trace/ledger"
 
 class TestFeedbackLedger < Minitest::Test
   class FakeBus

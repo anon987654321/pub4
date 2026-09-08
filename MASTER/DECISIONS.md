@@ -294,7 +294,7 @@ parameter.
 
 **MASTER names the law; RAILS names the measurement.** The Rails gate called
 `reflow` measured horizontal overflow and restated 320px as "the WCAG 1.4.10
-floor" — while `MASTER/lib/ground/axioms/wcag.rb` already declares that
+floor" — while `MASTER/lib/ground/axioms.rb` already declares that
 criterion and `REFLOW_WIDTH_PX = 320`. `soul.yml` uses "reflow" for a third
 thing, a refactoring verb beside "rename". A gate named after a criterion
 invites the criterion to be re-declared inside it, which is this tree's dominant
