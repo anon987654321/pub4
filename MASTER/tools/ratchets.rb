@@ -173,6 +173,14 @@ module Pub4
          require File.join(MASTER, "tools/data_reach")
          [Pub4::DataReach.unnamed.size, Pub4::DataReach.ceiling]
        end,
+       # Sibling to data_reach, one level up: that asks whether a declaration
+       # has a reader, this whether a whole file does. It reads 0 and the row
+       # exists to hold it there — an unreached file is how lib/ grows without
+       # anything failing.
+       master_row("code_reach", "data/code_reach.yml", "lib files nothing names") do
+         require File.join(MASTER, "tools/code_reach")
+         [Pub4::CodeReach.unreached.size, Pub4::CodeReach.ceiling]
+       end,
        master_row("namespace", "data/namespace_ceilings.yml", "files declaring no module or class") do
          require File.join(MASTER, "tools/namespace_ratchet")
          [Pub4::NamespaceRatchet.measure.values.sum, Pub4::NamespaceRatchet.ceilings.values.sum]

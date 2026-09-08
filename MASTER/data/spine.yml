@@ -147,7 +147,17 @@ pub4_source_ceilings:
   # the count drops now that it asks git instead of a regex. Nothing was added to
   # MASTER to earn these three; the number is what the tree has measured all
   # along, and a ceiling below the true count is slack in the other direction.
-  MASTER: 1050
+  # 1050 -> 1053 for tools/code_reach.rb, data/code_reach.yml and
+  # test/test_code_reach.rb. The fourth reach census, and the one that asks the
+  # question a file level up from data_reach: under Zeitwerk a file runs when
+  # its constant is named, so a constant nothing names is a file nothing runs.
+  # It reads 0, which is the point of recording it -- and it is also the answer
+  # to whether spine.lib_body_ceiling can be paid by deletion. It cannot.
+  # The test is the reason for the third file: this census was written wrong
+  # twice, once with an extension whitelist that could not see bin/cli, once
+  # with a lookbehind excluding ":" that hid every qualified use and reported
+  # the whole tree dead. Both are fixtures, and both go red under mutation.
+  MASTER: 1053
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
   # it belongs beside the other probes and folds into nothing.

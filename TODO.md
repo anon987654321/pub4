@@ -1846,6 +1846,33 @@ ratchet re-bases four ceilings and wants its own sitting.
 to take: these render real audio, and this repo says not to reshape a
 rendering tool on an outsider’s judgement. It belongs to dilla’s owner.
 
+#### The spine budget cannot be paid by deletion — measured 2026-09-08
+
+`spine.lib_body_ceiling` is 977 over and has been for weeks. Before arguing
+about a raise, the question worth asking is whether any of `lib/` is dead.
+**None of it is.** `tools/code_reach.rb` asks of a file what `data_reach` asks
+of a declaration: under Zeitwerk a file runs when its constant is named, so a
+constant nothing names is a file nothing runs. It reads 0 of 426, and the row
+exists to hold it there.
+
+**The census was wrong twice before it was right, and both were the same
+family of mistake this file already records.** The first version whitelisted
+file extensions, so `bin/cli` and the `Rakefile` were invisible and two live
+files read as dead. The second excluded `:` from its lookbehind, so every
+caller writing `Ground::BootChecks` was invisible and it reported thirteen
+files — 975 lines, against a 977-line overage, which is exactly the kind of
+coincidence that should stop you. The tree was quarantined to test it and the
+runtime refused to boot on `Ground::BootChecks.run(root:)`, a call the census
+had just declared absent. `\b` after a `?`, a lookbehind excluding `.`, a
+lookbehind excluding `:` — three now, all the same shape.
+
+Both traps are fixtures in `test_code_reach.rb` and both go red under mutation.
+
+So the 977 is real work in real files, and the payment is collapse or a
+sponsored raise. `spine.yml` allows one more raise before a fall must earn the
+budget back, and no single change can name what 977 lines buy — which is why
+this row stays red rather than being priced.
+
 #### `cohesion_census` was the last census recording a bare integer — 2026-09-07
 
 `rake lint:cohesion` read 33 against a ceiling of 30 and said *a new family
