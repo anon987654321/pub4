@@ -8,14 +8,8 @@ module Master
       module Rules
         # B05 FILE_LAYOUT — Ruby file order: frozen → require → module → class → public → private.
         class FileLayoutRule < Rule
-          def initialize
-            super()
-            @id = "FILE_LAYOUT"
-            @description = "frozen header → requires → module/class → public → private"
-            @severity = :info
-            @rule_tags = %i[PROXIMITY CONVENTION]
-            @auto_fix = false
-          end
+          declare id: "FILE_LAYOUT", severity: :info, tags: %i[PROXIMITY CONVENTION],
+                  description: "frozen header → requires → module/class → public → private"
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
@@ -42,14 +36,8 @@ module Master
 
         # B06 EXPLICIT — implicit requires, magic coupling, method_missing without respond_to_missing?.
         class ExplicitRule < Rule
-          def initialize
-            super()
-            @id = "EXPLICIT"
-            @description = "no implicit requires or magic coupling"
-            @severity = :warning
-            @rule_tags = %i[EXPLICIT CONVENTION]
-            @auto_fix = false
-          end
+          declare id: "EXPLICIT", severity: :warning, tags: %i[EXPLICIT CONVENTION],
+                  description: "no implicit requires or magic coupling"
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
@@ -80,14 +68,8 @@ module Master
             Prism::OrNode
           ].freeze
 
-          def initialize
-            super()
-            @id = "CYCLOMATIC_COMPLEXITY"
-            @description = "cyclomatic complexity under 10 per method"
-            @severity = :warning
-            @rule_tags = %i[LINEARITY SMALL_PARTS]
-            @auto_fix = false
-          end
+          declare id: "CYCLOMATIC_COMPLEXITY", severity: :warning, tags: %i[LINEARITY SMALL_PARTS],
+                  description: "cyclomatic complexity under 10 per method"
 
           def check_ast(ast, _code, path:)
             return [] unless ast
@@ -116,14 +98,8 @@ module Master
           BRANCH_THRESHOLD = 3
           PIPELINE_STEP_THRESHOLD = 4
 
-          def initialize
-            super()
-            @id = "PATTERN_EXTRACTION"
-            @description = "file is close to a named design pattern"
-            @severity = :info
-            @rule_tags = %i[DESIGN OPPORTUNITY]
-            @auto_fix = false
-          end
+          declare id: "PATTERN_EXTRACTION", severity: :info, tags: %i[DESIGN OPPORTUNITY],
+                  description: "file is close to a named design pattern"
 
           def check_ast(ast, code, path:)
             return [] unless ast
@@ -174,14 +150,8 @@ module Master
 
         # B10 DATA_CLASS — class with only attr_accessor and no real methods.
         class DataClassRule < Rule
-          def initialize
-            super()
-            @id = "DATA_CLASS"
-            @description = "data class with no behavior — use Struct or Data"
-            @severity = :info
-            @rule_tags = %i[SRP SOLID]
-            @auto_fix = false
-          end
+          declare id: "DATA_CLASS", severity: :info, tags: %i[SRP SOLID],
+                  description: "data class with no behavior — use Struct or Data"
 
           def check_ast(ast, _code, path:)
             return [] unless ast
@@ -202,14 +172,6 @@ module Master
           private
 
         end
-      end
-    end
-  end
-end
-module Master
-  module Review
-    module Scan
-      module Rules
         # Enforces "core stays lean" as a live check, not just an aspiration --
         # matches OpenClaw's explicit policy (VISION.md: "we are generally
         # slimming down core... bar for adding optional plugins to core is
@@ -227,13 +189,11 @@ module Master
 
           def self.auto_build? = false
 
+          declare id: "LIB_ROOT_DISCIPLINE", severity: :warning, tags: %i[ABSTRACTION ARCHITECTURE],
+                  description: "new files shouldn't land directly in lib/ root"
+
           def initialize(root: Master::ROOT)
             super()
-            @id = "LIB_ROOT_DISCIPLINE"
-            @description = "new files shouldn't land directly in lib/ root"
-            @severity = :warning
-            @rule_tags = %i[ABSTRACTION ARCHITECTURE]
-            @auto_fix = false
             @lib_root = File.join(root, "lib")
           end
 
@@ -254,15 +214,7 @@ module Master
             path.to_s.end_with?(".rb") && File.dirname(File.expand_path(path)) == @lib_root
           end
         end
-      end
-    end
-  end
-end
 
-module Master
-  module Review
-    module Scan
-      module Rules
       # Structural rules use Prism AST rather than line-by-line regex.
       # Each implements check_ast(ast, code, path:) for scanner integration.
       # All also implement check(code, path:) as fallback for non-Ruby files.
@@ -271,14 +223,7 @@ module Master
         class SmallFilesRule < Rule
           LIMIT = 300
 
-          def initialize
-            super()
-            @id = "SMALL_FILES"
-            @description = "files under 300 lines"
-            @severity = :warning
-            @rule_tags = %i[SMALL_PARTS]
-            @auto_fix = false
-          end
+          declare id: "SMALL_FILES", severity: :warning, tags: %i[SMALL_PARTS], description: "files under 300 lines"
 
           def check(code, path:)
             count = code.lines.size
@@ -292,14 +237,8 @@ module Master
           IDEAL = 10
           MAX = 20
 
-          def initialize
-            super()
-            @id = "SMALL_FUNCTIONS"
-            @description = "methods under 10 lines ideal, max 20"
-            @severity = :warning
-            @rule_tags = %i[SMALL_PARTS]
-            @auto_fix = false
-          end
+          declare id: "SMALL_FUNCTIONS", severity: :warning, tags: %i[SMALL_PARTS],
+                  description: "methods under 10 lines ideal, max 20"
 
           # Counts *code* lines, not the raw start..end span.
           #
@@ -350,14 +289,7 @@ module Master
           METHOD_LIMIT = 10
           LINE_LIMIT = 300
 
-          def initialize
-            super()
-            @id = "NO_GOD_CLASS"
-            @description = "no god classes"
-            @severity = :error
-            @rule_tags = %i[SOLID SRP]
-            @auto_fix = false
-          end
+          declare id: "NO_GOD_CLASS", severity: :error, tags: %i[SOLID SRP], description: "no god classes"
 
           def check_ast(ast, code, path:)
             return [] unless ast
@@ -418,14 +350,7 @@ module Master
             Prism::BlockNode
           ].freeze
 
-          def initialize
-            super()
-            @id = "NESTING_DEPTH"
-            @description = "nesting depth under 4"
-            @severity = :warning
-            @rule_tags = %i[LINEARITY]
-            @auto_fix = false
-          end
+          declare id: "NESTING_DEPTH", severity: :warning, tags: %i[LINEARITY], description: "nesting depth under 4"
 
           def check_ast(ast, _code, path:)
             return [] unless ast
@@ -448,14 +373,8 @@ module Master
 
       # B04 CQS — method that both mutates state and returns a meaningful value.
         class CqsRule < Rule
-          def initialize
-            super()
-            @id = "CQS"
-            @description = "command-query separation — mutate OR return, not both"
-            @severity = :warning
-            @rule_tags = %i[CQS CLEAN_CODE]
-            @auto_fix = false
-          end
+          declare id: "CQS", severity: :warning, tags: %i[CQS CLEAN_CODE],
+                  description: "command-query separation — mutate OR return, not both"
 
           def check_ast(ast, _code, path:)
             return [] unless ast
@@ -506,14 +425,8 @@ module Master
           # does work, keeping `foo_is_a?` out.
           TYPE_CHECK = /\b(is_a\?|instance_of\?)/
 
-          def initialize
-            super()
-            @id = "OPEN_CLOSED"
-            @description = "case/when or is_a? chains that must grow on every new type"
-            @severity = :warning
-            @rule_tags = %i[SOLID OCP]
-            @auto_fix = false
-          end
+          declare id: "OPEN_CLOSED", severity: :warning, tags: %i[SOLID OCP],
+                  description: "case/when or is_a? chains that must grow on every new type"
 
           def check_ast(ast, _code, path:)
             return [] unless ast
@@ -541,14 +454,8 @@ module Master
         end
 
         class LiskovRule < Rule
-          def initialize
-            super()
-            @id = "LISKOV"
-            @description = "subclass breaks the parent's contract via refused bequest or narrowed signature"
-            @severity = :warning
-            @rule_tags = %i[SOLID LSP]
-            @auto_fix = false
-          end
+          declare id: "LISKOV", severity: :warning, tags: %i[SOLID LSP],
+                  description: "subclass breaks the parent's contract via refused bequest or narrowed signature"
 
           def check_ast(ast, _code, path:)
             return [] unless ast
@@ -608,14 +515,8 @@ module Master
         class DependencyInversionRule < Rule
           COLLABORATOR_SUFFIX = /(Service|Client|Adapter|Gateway|Repository|Provider)\z/
 
-          def initialize
-            super()
-            @id = "DEPENDENCY_INVERSION"
-            @description = "constructor hardcodes a concrete collaborator instead of accepting it as a dependency"
-            @severity = :warning
-            @rule_tags = %i[SOLID DIP]
-            @auto_fix = false
-          end
+          declare id: "DEPENDENCY_INVERSION", severity: :warning, tags: %i[SOLID DIP],
+                  description: "constructor hardcodes a concrete collaborator instead of accepting it as a dependency"
 
           def check_ast(ast, _code, path:)
             return [] unless ast
@@ -651,14 +552,8 @@ module Master
         class InterfaceSegregationRule < Rule
           METHOD_LIMIT = 8
 
-          def initialize
-            super()
-            @id = "INTERFACE_SEGREGATION"
-            @description = "large module forces includers to stub methods they don't use"
-            @severity = :warning
-            @rule_tags = %i[SOLID ISP]
-            @auto_fix = false
-          end
+          declare id: "INTERFACE_SEGREGATION", severity: :warning, tags: %i[SOLID ISP],
+                  description: "large module forces includers to stub methods they don't use"
 
           def check_ast(ast, _code, path:)
             return [] unless ast
@@ -710,14 +605,8 @@ module Master
         class MiddleManRule < Rule
           MIN_METHODS = 3
 
-          def initialize
-            super()
-            @id = "MIDDLE_MAN"
-            @description = "a class that only forwards to one object adds a name, not behaviour"
-            @severity = :info
-            @rule_tags = %i[ENGINEERING_FIT ABSTRACTION]
-            @auto_fix = false
-          end
+          declare id: "MIDDLE_MAN", severity: :info, tags: %i[ENGINEERING_FIT ABSTRACTION],
+                  description: "a class that only forwards to one object adds a name, not behaviour"
 
           def check_ast(ast, _code, path:)
             return [] unless ast

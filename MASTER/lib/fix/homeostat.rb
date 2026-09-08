@@ -2,6 +2,9 @@
 
 module Master
   module Fix
+    # Continuous-time homeostatic drives (CTCS-HRRL, arXiv 2401.08999).
+    # State vector decays toward setpoint; events shift it; readers bias routing,
+    # reasoning depth, and persona mood. No external deps.
     class Homeostat
       # Persona/routing signals derived from drive state — mood, circadian
       # phase, model-tier bias — separate from the core drive-decay state.
@@ -51,12 +54,6 @@ module Master
           :night
         end
       end
-    end
-  end
-end
-module Master
-  module Fix
-    class Homeostat
       # Cognitive health predicates derived from error pressure, fatigue, and
       # energy — separate from Homeostat's own state-decay/event-observation core.
       module HealthPredicates
@@ -83,16 +80,7 @@ module Master
           :healthy
         end
       end
-    end
-  end
-end
 
-module Master
-  module Fix
-  # Continuous-time homeostatic drives (CTCS-HRRL, arXiv 2401.08999).
-  # State vector decays toward setpoint; events shift it; readers bias routing,
-  # reasoning depth, and persona mood. No external deps.
-    class Homeostat
       include HealthPredicates
       include DerivedSignals
 

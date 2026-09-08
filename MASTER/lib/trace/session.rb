@@ -80,12 +80,6 @@ module Master
           nil
         end
       end
-    end
-  end
-end
-module Master
-  module Trace
-    class Session
       # In-memory per-path content snapshots (not persisted to disk) —
       # separate from Session's own message/cost/save-load concerns.
       module Snapshots
@@ -100,13 +94,7 @@ module Master
           @mutex.synchronize { @snapshots[path]&.last }
         end
       end
-    end
-  end
-end
 
-module Master
-  module Trace
-    class Session
       include Persistence
       include Snapshots
 

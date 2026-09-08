@@ -52,13 +52,7 @@ module Master
           "#{o['name']} [#{flag}|#{st}] - #{o['description']} (last: #{last})#{err}"
         end
       end
-    end
-  end
-end
 
-module Master
-  module Ground
-    class StandingOrders
       include AtomicWrite
       include OrderManagement
       DAILY_INTERVAL = 86_400

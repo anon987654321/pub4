@@ -10,10 +10,6 @@ module Master
       def flat_map(&) = self
       def and_then(*) = self
     end
-  end
-end
-module Master
-  class Result
     # Retry-policy classification for Result::Err — separate from Err's own
     # value-identity and monad-chaining methods.
     #
@@ -48,10 +44,6 @@ module Master
       # should treat it as permanent — the safe direction is not retrying.
       def classified? = retriable? || permanent?
     end
-  end
-end
-module Master
-  class Result
     # Functor/monad composition for Result::Ok (map/flat_map/and_then) — kept
     # separate from Ok's own value-identity methods (ok?/value!/unwrap/...).
     module OkChaining
@@ -65,11 +57,7 @@ module Master
         Result.err("#{label || "stage"}: #{e.message}", category: :infrastructure)
       end
     end
-  end
-end
 
-module Master
-  class Result
     CATEGORIES = {
       validation: "input failed preconditions",
       axiom_violation: "constitutional rule broken",

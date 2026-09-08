@@ -84,13 +84,7 @@ module Master
         end
         puts @refs.renderer.render("rails-pwa-fix: #{fixed} app(s) patched", mode: :dim)
       end
-    end
-  end
-end
 
-module Master
-  module CLI
-    class Session
       private
 
       def run_restart
@@ -100,31 +94,18 @@ module Master
         ::Kernel.exec(RbConfig.ruby, $PROGRAM_NAME, *ARGV)
       end
 
-      def run_undo
-        res = @refs.undo.undo!
-        if res.is_a?(Master::Result) && res.ok?
-          puts @refs.renderer.render("undo: #{Array(res.value!).join(", ")}", mode: :success)
-        else
-          puts @refs.renderer.render(res.message, mode: :warning)
-        end
-      end
+      def run_undo = report_undo("undo", @refs.undo.undo!)
 
-      def run_rollback
-        res = @refs.undo.undo!
-        if res.is_a?(Master::Result) && res.ok?
-          puts @refs.renderer.render("rollback: #{Array(res.value!).join(", ")}", mode: :success)
-        else
-          puts @refs.renderer.render(res.message, mode: :warning)
-        end
-      end
+      # /rollback is /undo under the name an operator reaches for; only the word
+      # in the line differs.
+      def run_rollback = report_undo("rollback", @refs.undo.undo!)
 
-      def run_redo
-        res = @refs.undo.redo!
-        if res.is_a?(Master::Result) && res.ok?
-          puts @refs.renderer.render("redo: #{Array(res.value!).join(", ")}", mode: :success)
-        else
-          puts @refs.renderer.render(res.message, mode: :warning)
-        end
+      def run_redo = report_undo("redo", @refs.undo.redo!)
+
+      def report_undo(verb, res)
+        return puts @refs.renderer.render(res.message, mode: :warning) unless res.is_a?(Master::Result) && res.ok?
+
+        puts @refs.renderer.render("#{verb}: #{Array(res.value!).join(", ")}", mode: :success)
       end
 
       def run_history

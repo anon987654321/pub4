@@ -31,42 +31,9 @@ module Master
         Result.err("undo snapshot: #{e.message}", category: :unknown)
       end
 
-      def undo!(steps: 1)
-        return Result.err("nothing to undo", category: :validation) if @stack.empty?
+      def undo!(steps: 1) = replay(@stack, @redo, "undo", steps)
 
-        steps = [steps, @stack.size].min
-        paths = []
-
-        steps.times do
-          entry = @stack.pop
-          current = File.exist?(entry["path"]) ? File.read(entry["path"]) : nil
-          @redo << { "path" => entry["path"], "content" => current, "ts" => Time.now.to_i }
-          restore(entry["path"], entry["content"])
-          paths << entry["path"]
-          @bus&.publish("undo:applied", path: paths.last)
-        end
-
-        persist_journal
-        Result.ok(paths.size == 1 ? paths.first : paths)
-      end
-
-      def redo!(steps: 1)
-        return Result.err("nothing to redo", category: :validation) if @redo.empty?
-
-        steps = [steps, @redo.size].min
-        paths = []
-        steps.times do
-          entry = @redo.pop
-          current = File.exist?(entry["path"]) ? File.read(entry["path"]) : nil
-          @stack << { "path" => entry["path"], "content" => current, "ts" => Time.now.to_i }
-          restore(entry["path"], entry["content"])
-          paths << entry["path"]
-          @bus&.publish("redo:applied", path: paths.last)
-        end
-
-        persist_journal
-        Result.ok(paths.size == 1 ? paths.first : paths)
-      end
+      def redo!(steps: 1) = replay(@redo, @stack, "redo", steps)
 
       def depth
         @stack.size
@@ -80,6 +47,27 @@ module Master
       end
 
       private
+
+      # Undo and redo are one move in two directions: pop the file's previous
+      # content off one stack, push what is on disk now onto the other, and put
+      # the popped content back. Only the two stacks and the word in the event
+      # differ, so they are arguments.
+      def replay(from, to, verb, steps)
+        return Result.err("nothing to #{verb}", category: :validation) if from.empty?
+
+        paths = []
+        [steps, from.size].min.times do
+          entry = from.pop
+          current = File.exist?(entry["path"]) ? File.read(entry["path"]) : nil
+          to << { "path" => entry["path"], "content" => current, "ts" => Time.now.to_i }
+          restore(entry["path"], entry["content"])
+          paths << entry["path"]
+          @bus&.publish("#{verb}:applied", path: paths.last)
+        end
+
+        persist_journal
+        Result.ok(paths.size == 1 ? paths.first : paths)
+      end
 
       def restore(path, content)
         if content.nil?

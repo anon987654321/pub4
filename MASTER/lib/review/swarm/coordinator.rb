@@ -137,15 +137,7 @@ module Master
             "(arbitration failed: #{error.message})"
           end
         end
-      end
-    end
-  end
-end
 
-module Master
-  module Review
-    module Swarm
-      class Coordinator
         SwarmResult = Struct.new(:verdict, :confidence, :reasoning, :artifacts, :votes, keyword_init: true) do
           def ok? = !%i[error insufficient_quorum].include?(verdict)
           def approved? = verdict == :approved

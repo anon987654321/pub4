@@ -8,12 +8,11 @@ module Master
         class VetoPatternRule < Rule
           def self.auto_build? = false
 
+          declare id: "veto_patterns", severity: :veto,
+                  description: "Unconditional merge blockers from rules.yml veto_patterns"
+
           def initialize(root: Master::ROOT)
             super()
-            @id = "veto_patterns"
-            @description = "Unconditional merge blockers from rules.yml veto_patterns"
-            @severity = :veto
-            @auto_fix = false
             @patterns = load_patterns(root)
           end
 
@@ -47,15 +46,7 @@ module Master
             raise
           end
         end
-      end
-    end
-  end
-end
 
-module Master
-  module Review
-    module Scan
-      module Rules
         # Wires rules.yml detect_lexical entries not already covered by RuleDSL classes.
         class YamlDeclarativeRule < Rule
           def self.auto_build? = false
@@ -68,12 +59,11 @@ module Master
             @reloading = value
           end
 
+          declare id: "yaml_declarative", severity: :warning,
+                  description: "YAML detect_lexical bridge for unwired declarative rules"
+
           def initialize(root: Master::ROOT)
             super()
-            @id = "yaml_declarative"
-            @description = "YAML detect_lexical bridge for unwired declarative rules"
-            @severity = :warning
-            @auto_fix = false
             @root = root
             reload!
           end

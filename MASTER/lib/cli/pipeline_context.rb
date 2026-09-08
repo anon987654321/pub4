@@ -41,15 +41,9 @@ module Master
           new(hash)
         end
       end
-    end
-  end
-end
 
-module Master
-  module CLI
   # Typed pipeline context — enforces required keys, validates types, provides accessors.
   # Immutable update via #merge (returns new instance). Hash-compatible via [] and #to_h.
-    class PipelineContext
       extend FactoryMethods
 
       # Keys every stage may read or write. Unknown keys raise on construction.

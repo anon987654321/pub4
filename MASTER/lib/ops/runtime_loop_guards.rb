@@ -5,10 +5,18 @@ module Master
     module RuntimeLoopGuards
       module_function
 
+      # Three long-running loops, each behind its own switch. The guard is one
+      # move — alias the real entry point, then refuse to reach it unless the
+      # environment asks for the loop — so what separates the three is data:
+      # the class, the entry point, and the switch.
+      GUARDS = {
+        "Master::Fix::Heartbeat" => [:start!, "MASTER_HEARTBEAT"],
+        "Master::Fix::Watcher" => [:run_forever, "MASTER_WATCHER"],
+        "Master::Fix::WatchLoop" => [:run, "MASTER_WATCH"],
+      }.freeze
+
       def install!
-        guard_heartbeat
-        guard_watcher
-        guard_watch_loop
+        GUARDS.each { |name, (entry, switch)| guard(name, entry, switch) }
         true
       end
 
@@ -20,47 +28,19 @@ module Master
         true
       end
 
-      def guard_heartbeat
-        return unless defined?(Master::Fix::Heartbeat)
-        return if Master::Fix::Heartbeat.method_defined?(:start_without_runtime_guard!)
+      def guard(name, entry, switch)
+        return unless Object.const_defined?(name)
 
-        Master::Fix::Heartbeat.class_eval do
-          alias_method :start_without_runtime_guard!, :start!
+        klass = Object.const_get(name)
+        unguarded = :"#{entry.to_s.delete_suffix("!")}_without_runtime_guard!"
+        return if klass.method_defined?(unguarded)
 
-          def start!
-            return unless ENV["MASTER_HEARTBEAT"] == "1"
+        klass.class_eval do
+          alias_method unguarded, entry
+          define_method(entry) do |*args, **kwargs, &block|
+            return unless ENV[switch] == "1"
 
-            start_without_runtime_guard!
-          end
-        end
-      end
-
-      def guard_watcher
-        return unless defined?(Master::Fix::Watcher)
-        return if Master::Fix::Watcher.method_defined?(:run_forever_without_runtime_guard!)
-
-        Master::Fix::Watcher.class_eval do
-          alias_method :run_forever_without_runtime_guard!, :run_forever
-
-          def run_forever
-            return unless ENV["MASTER_WATCHER"] == "1"
-
-            run_forever_without_runtime_guard!
-          end
-        end
-      end
-
-      def guard_watch_loop
-        return unless defined?(Master::Fix::WatchLoop)
-        return if Master::Fix::WatchLoop.method_defined?(:run_without_runtime_guard!)
-
-        Master::Fix::WatchLoop.class_eval do
-          alias_method :run_without_runtime_guard!, :run
-
-          def run(*args, **kwargs, &block)
-            return unless ENV["MASTER_WATCH"] == "1"
-
-            run_without_runtime_guard!(*args, **kwargs, &block)
+            send(unguarded, *args, **kwargs, &block)
           end
         end
       end

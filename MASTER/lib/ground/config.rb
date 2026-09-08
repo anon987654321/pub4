@@ -26,13 +26,7 @@ module Master
         def history_max = self["history_max"].to_i
         def cache_ttl = self["cache_ttl"].to_i
       end
-    end
-  end
-end
 
-module Master
-  module Ground
-    class Config
       include ConfigAccessors
 
       BUDGET_MAX_DEFAULT = 10.0

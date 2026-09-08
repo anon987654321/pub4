@@ -6,6 +6,7 @@ require "pathname"
 
 module Master
   module Voice
+    # Manages the human-readable SOUL.md Evolution Protocol.
     class Soul
       # The propose -> diff -> approve/reject workflow for SOUL.md changes —
       # separate from Soul's own read-only accessors and rollback.
@@ -59,14 +60,7 @@ module Master
           propose(rationale, agent:)
         end
       end
-    end
-  end
-end
 
-module Master
-  module Voice
-    # Manages the human-readable SOUL.md Evolution Protocol.
-    class Soul
       include ProposalLifecycle
 
       SOUL_PATH = File.join(Master::ROOT, "data", "SOUL.md").freeze

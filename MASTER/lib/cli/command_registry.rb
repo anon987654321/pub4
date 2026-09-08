@@ -85,20 +85,13 @@ module Master
         Formatter.cost(session.cost)
       end
 
-      def dispatch_undo(undo, ctx: nil)
-        r = undo.undo!
-        r.ok? ? "reverted: #{r.value!}" : r.message
-      end
+      def dispatch_undo(undo, ctx: nil) = undo_line("reverted", undo.undo!)
 
-      def dispatch_rollback(undo, ctx: nil)
-        r = undo.undo!
-        r.ok? ? "rolled back: #{r.value!}" : r.message
-      end
+      def dispatch_rollback(undo, ctx: nil) = undo_line("rolled back", undo.undo!)
 
-      def dispatch_redo(undo, ctx: nil)
-        r = undo.redo!
-        r.ok? ? "reapplied: #{r.value!}" : r.message
-      end
+      def dispatch_redo(undo, ctx: nil) = undo_line("reapplied", undo.redo!)
+
+      def undo_line(verb, result) = result.ok? ? "#{verb}: #{result.value!}" : result.message
 
       def dispatch_dmesg(logging, ctx: nil)
         n = arg_for(ctx).to_i

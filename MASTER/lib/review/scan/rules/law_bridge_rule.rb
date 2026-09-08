@@ -12,12 +12,10 @@ module Master
         class LawBridgeRule < Rule
           def self.auto_build? = false
 
+          declare id: "law_bridge", severity: :warning, description: "law/ — executable rules with fixtures"
+
           def initialize(root: Master::ROOT)
             super()
-            @id = "law_bridge"
-            @description = "law/ — executable rules with fixtures"
-            @severity = :warning
-            @auto_fix = false
             @root = root
             Law.load_all(File.join(root, "law")) if Law.rules.empty?
           end

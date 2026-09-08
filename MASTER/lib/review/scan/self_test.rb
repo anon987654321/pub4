@@ -89,15 +89,7 @@ module Master
             !Scanner.skip_path?(rel) && !rel.split("/").include?("db")
           end
         end
-      end
-    end
-  end
-end
 
-module Master
-  module Review
-    module Scan
-      class SelfTest
         include DeployChecks
 
         Check = Data.define(:law, :description, :findings) do

@@ -10,29 +10,22 @@ module Master
 
         def git_root = @config["root"] || Dir.pwd
 
-        def git_rev
-          out, _, st = Master::Io::Exec.capture3("git", "-C", git_root, "rev-parse", "--short", "HEAD")
-          st.success? ? out.strip : nil
+        # A git question the prompt asks in passing: it answers nil when the
+        # command fails or the tree is not a repository, and never raises into
+        # the render.
+        def git_say(context, *argv)
+          out, _, status = Master::Io::Exec.capture3("git", "-C", git_root, *argv)
+          status.success? ? out.strip : nil
         rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "renderer.git_rev")
+          Master::Ground::Swallow.log(e, context: "renderer.#{context}")
           nil
         end
 
-        def git_branch
-          out, _, st = Master::Io::Exec.capture3("git", "-C", git_root, "rev-parse", "--abbrev-ref", "HEAD")
-          st.success? ? out.strip : nil
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "renderer.git_branch")
-          nil
-        end
+        def git_rev = git_say("git_rev", "rev-parse", "--short", "HEAD")
 
-        def git_dirty?
-          out, _, st = Master::Io::Exec.capture3("git", "-C", git_root, "status", "--porcelain")
-          st.success? && !out.strip.empty?
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "renderer.git_dirty?")
-          false
-        end
+        def git_branch = git_say("git_branch", "rev-parse", "--abbrev-ref", "HEAD")
+
+        def git_dirty? = !git_say("git_dirty?", "status", "--porcelain").to_s.empty?
 
         def git_ahead_behind
           out, _, st = Master::Io::Exec.capture3(

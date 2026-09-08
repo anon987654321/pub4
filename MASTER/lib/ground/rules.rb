@@ -2,6 +2,7 @@
 
 module Master
   module Ground
+    # Loads and exposes rules, axioms, voice, and workflow from data/*.yml.
     class Rules
       # Pure data-accessor readers over the loaded YAML — kept in a separate
       # module so NO_GOD_CLASS's AST-based public-method count only sees
@@ -52,12 +53,6 @@ module Master
         def thresholds = @thresholds ||= (@data["thresholds"] || {}).freeze
         def languages_config = @languages_config ||= (@data["languages"] || {}).freeze
       end
-    end
-  end
-end
-module Master
-  module Ground
-    class Rules
       # Markdown block rendering for system-prompt injection — a rendering
       # concern separate from Rules' own lookup/parsing responsibility.
       module RulePromptBlocks
@@ -76,14 +71,7 @@ module Master
           "## Rules (top #{items.size})\n#{top}"
         end
       end
-    end
-  end
-end
 
-module Master
-  module Ground
-  # Loads and exposes rules, axioms, voice, and workflow from data/*.yml.
-    class Rules
       include RuleAccessors
       include RulePromptBlocks
 

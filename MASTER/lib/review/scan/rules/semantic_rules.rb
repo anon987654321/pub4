@@ -67,13 +67,12 @@ module Master
           %<code>s
         PROMPT
 
+          declare id: "adversarial", severity: :error, tags: %i[ONE_JOB CQS GUARD_EXPENSIVE FAIL_VISIBLY COMPOSABLE],
+                  autofix: true, description: "Red-team scan: steelman then challenge — suppresses false positives"
+
           def initialize(agent: nil)
             super()
             @agent = agent
-            @id = "adversarial"
-            @description = "Red-team scan: steelman then challenge — suppresses false positives"
-            @severity = :error
-            @rule_tags = %i[ONE_JOB CQS GUARD_EXPENSIVE FAIL_VISIBLY COMPOSABLE]
           end
 
           def self.auto_build? = false
@@ -115,15 +114,7 @@ module Master
             end
           end
         end
-      end
-    end
-  end
-end
 
-module Master
-  module Review
-    module Scan
-      module Rules
         require_relative "../finding"
         # LLM review for rules whose violations resist lexical detection.
         # Each rules.yml entry with a detect_semantic prompt is folded into one LLM
@@ -132,12 +123,12 @@ module Master
         class SemanticRule < Rule
           CODE_SNIPPET_LIMIT = 2000
 
+          declare id: "semantic", severity: :warning, autofix: true,
+                  description: "LLM-based rule review (violations + opportunities)"
+
           def initialize(agent: nil)
             super()
             @agent = agent
-            @id = "semantic"
-            @description = "LLM-based rule review (violations + opportunities)"
-            @severity = :warning
             @cache = {}
             reload_semantic_rules!
           end
@@ -337,15 +328,7 @@ module Master
           end
 
         end
-      end
-    end
-  end
-end
 
-module Master
-  module Review
-    module Scan
-      module Rules
         # Comments above method defs that no longer describe what the code does.
         # Lexical pass extracts (comment, method_body) pairs; LLM judges drift in one
         # batched call per file. Pairs with the "reassess on touch" directive: lying
@@ -355,13 +338,12 @@ module Master
           # Lines of method body sent to LLM for drift comparison.
           BODY_SNIPPET = 20
 
+          declare id: "comment_drift", severity: :warning, tags: %i[SELF_EXPLAINING EXPLICIT], autofix: true,
+                  description: "Comment claim doesn't match method body — comment is lying"
+
           def initialize(agent: nil)
             super()
             @agent = agent
-            @id = "comment_drift"
-            @description = "Comment claim doesn't match method body — comment is lying"
-            @severity = :warning
-            @rule_tags = %i[SELF_EXPLAINING EXPLICIT]
           end
 
           def self.auto_build? = false
