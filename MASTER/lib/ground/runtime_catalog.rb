@@ -42,30 +42,16 @@ module Master
           micro_interactions.find { |item| item["id"].to_s == id.to_s }
         end
 
-        def event_registry
-          load("event_registry")
-        end
-
-        def invariants
-          load("invariants")
-        end
-
-        def ui_philosophy
-          load("ui_philosophy")
-        end
-
-        def face3d_migration
-          load("face3d_migration")
-        end
-
-        def face_research
-          load("face_research")
-        end
-
+        # A section is read through `load`, the one door START_HERE documents.
+        # Five readers stood beside it whose whole body was `load("<own name>")`
+        # — event_registry, invariants, ui_philosophy, face3d_migration,
+        # face_research — and no caller outside their own test used one. They
+        # were a second public surface over the same YAML, and the class carried
+        # fourteen public methods because of them.
         def web_boot_payload
           sources = web_boot_sources
           runtime_cfg = load("runtime")
-          philosophy = ui_philosophy
+          philosophy = load("ui_philosophy")
 
           {
             topologies_path: "/runtime/topologies",
@@ -74,26 +60,11 @@ module Master
             vertical_timbre: philosophy["vertical_timbre"] || {},
             ui_philosophy: runtime_cfg["ui_philosophy"] || {},
             micro_interactions:,
-            event_registry:,
+            event_registry: load("event_registry"),
             visual_limits: sources[:visual]["visual"] || sources[:visual],
             tts_config: sources[:tts],
             topologies: sources[:topologies],
-            face_research:,
-          }
-        end
-
-        def web_boot_sources
-          {
-            topologies: Master.load_yaml(Master.data_path("topologies.yml"), default: {}),
-            # data/ops/visual.yml was deleted on purpose in 68ca272e0: it had
-            # drifted on all five values against visual_governor.js, which is
-            # now the one place the limits live. The read outlived it and
-            # printed "load_yaml: No such file" on every boot and every test
-            # run. The key stays — the browser payload and
-            # test_ground_runtime_catalog both expect it — and is empty,
-            # because that is what the source is.
-            visual: {},
-            tts: Master.load_yaml(Master.data_path("tts.yml"), default: {}),
+            face_research: load("face_research"),
           }
         end
 
@@ -128,6 +99,23 @@ module Master
 
         def catalog
           @catalog ||= Master.load_yaml(CATALOG_PATH, default: {})
+        end
+
+        # The three files the browser payload is assembled from. Private because
+        # web_boot_payload is its only caller anywhere in the four trees.
+        def web_boot_sources
+          {
+            topologies: Master.load_yaml(Master.data_path("topologies.yml"), default: {}),
+            # data/ops/visual.yml was deleted on purpose in 68ca272e0: it had
+            # drifted on all five values against visual_governor.js, which is
+            # now the one place the limits live. The read outlived it and
+            # printed "load_yaml: No such file" on every boot and every test
+            # run. The key stays — the browser payload and
+            # test_ground_runtime_catalog both expect it — and is empty,
+            # because that is what the source is.
+            visual: {},
+            tts: Master.load_yaml(Master.data_path("tts.yml"), default: {}),
+          }
         end
       end
     end

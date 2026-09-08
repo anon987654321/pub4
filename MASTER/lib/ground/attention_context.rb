@@ -16,7 +16,12 @@ module Master
     class AttentionContext
       DATA = File.expand_path("../../data/attention_context.yml", __dir__)
 
-      class << self
+      # The vocabulary, read from the file — a subject of its own, and the one
+      # PersonalityPromptBuilder talks to: it asks for the philosophy, the
+      # rendering template and both allowed lists to build the prompt section.
+      # Extended rather than written into the class so a breadcrumb stays a value
+      # object of five methods, and the protocol keeps its own seven.
+      module Protocol
         def protocol = @protocol ||= YAML.safe_load_file(DATA, aliases: true) || {}
 
         def valid_zooms = @valid_zooms ||= allowed("zoom")
@@ -31,6 +36,16 @@ module Master
 
         def template(name) = protocol.dig("rendering", name.to_s).to_s
 
+        private
+
+        def allowed(field)
+          Array(protocol.dig("fields", field, "allowed")).map(&:to_s).freeze
+        end
+      end
+
+      extend Protocol
+
+      class << self
         def from_yaml(path)
           return new unless File.exist?(path)
 
@@ -42,12 +57,6 @@ module Master
             target: data["target"] || [],
             parent: data["parent"] || [],
           )
-        end
-
-        private
-
-        def allowed(field)
-          Array(protocol.dig("fields", field, "allowed")).map(&:to_s).freeze
         end
       end
 

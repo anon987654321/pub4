@@ -66,18 +66,21 @@ class TestRuntimeCatalog < Minitest::Test
     refute payload.key?(:topologies)
   end
 
+  # Through `load`, the one documented door. Named readers for these three
+  # sections existed for this test alone and are gone; the sections and the
+  # shape they promise are what matters, and both are still asserted.
   def test_invariants_and_event_registry
-    inv = Master::Ground::RuntimeCatalog.invariants
+    inv = Master::Ground::RuntimeCatalog.load("invariants")
     assert inv["invariants"].is_a?(Array)
     assert inv["anti_patterns"].is_a?(Array)
 
-    registry = Master::Ground::RuntimeCatalog.event_registry
+    registry = Master::Ground::RuntimeCatalog.load("event_registry")
     assert registry["namespaces"].is_a?(Array)
     assert registry["established_events"].is_a?(Array)
   end
 
   def test_face3d_migration_steps
-    migration = Master::Ground::RuntimeCatalog.face3d_migration
+    migration = Master::Ground::RuntimeCatalog.load("face3d_migration")
     assert migration["migration_steps"].is_a?(Array)
     assert migration["blendshape_mapping"].is_a?(Array)
     assert migration["modules"].is_a?(Array)
