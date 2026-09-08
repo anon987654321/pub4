@@ -40,7 +40,7 @@ class OmniauthCallbacksController < ::ApplicationController
   private
 
   def find_or_create_user(auth)
-    record = external_identity_for(auth) || legacy_authentication_for(auth)
+    record = external_identity_for(auth)
     return record.user if record&.user
 
     email = auth.info.email.to_s.downcase.strip
@@ -50,7 +50,6 @@ class OmniauthCallbacksController < ::ApplicationController
       password: SecureRandom.hex(24),
     )
     persist_external_identity(user, auth)
-    persist_legacy_authentication(user, auth)
     user
   end
 
@@ -60,12 +59,6 @@ class OmniauthCallbacksController < ::ApplicationController
 
     provider = ::IdentityProvider.find_by(slug: auth.provider.to_s)
     provider&.external_identities&.find_by(subject: auth.uid.to_s)
-  end
-
-  def legacy_authentication_for(auth)
-    return unless defined?(Shared::Authentication) && Shared::Authentication.table_exists?
-
-    Shared::Authentication.find_by(provider: auth.provider, uid: auth.uid)
   end
 
   def persist_external_identity(user, auth)
@@ -84,15 +77,6 @@ class OmniauthCallbacksController < ::ApplicationController
     identity.assurance_level = assurance_level_for(auth.provider)
     identity.last_used_at = Time.current
     identity.save!
-  end
-
-  def persist_legacy_authentication(user, auth)
-    return unless defined?(Shared::Authentication) && Shared::Authentication.table_exists?
-
-    Shared::Authentication.find_or_create_by!(provider: auth.provider, uid: auth.uid) do |record|
-      record.user = user
-      record.info = auth.info.to_h if record.respond_to?(:info=)
-    end
   end
 
   def assurance_level_for(provider)

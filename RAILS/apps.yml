@@ -38,7 +38,7 @@ apps:
         - { name: Mention model,                                           status: done }
         - { name: Votable concern,                                         status: done }
         - { name: Hotwire broadcasts_refreshes,                            status: done }
-        - { name: OmniAuth (Vipps / Google / Snapchat),                       status: done, notes: "google/github/vipps/snapchat providers in omniauth.rb; Shared::OmniauthCallbacksController persists external_identities" }
+        - { name: OmniAuth (Vipps / Google / Snapchat),                       status: done, notes: "google/github/vipps/snapchat providers in omniauth.rb; OmniauthCallbacksController (shared engine, top-level class) persists external_identities" }
         - { name: "Reaction (polymorphic on posts/messages, ActionCable)",  status: done }
         - { name: "Follow (self-join, no self-follows, notifications)",     status: done }
         - { name: "Notification (like/follow/custom, mark_as_read)",        status: done }

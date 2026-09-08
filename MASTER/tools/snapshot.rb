@@ -117,13 +117,13 @@ module Pub4
       return io.puts("snapshot: #{tree} has no tracked files — skipped") if paths.empty?
 
       binaries, texts = paths.partition { |p| binary?(File.join(REPO, p)) }
-      # MASTER/output, not the repo root. The root is four trees and one file,
-      # and a tool that drops four generated markdown files beside them makes
-      # that untrue every time it runs -- gitignored, so the tracked state stayed
-      # right while the working directory did not.
-      dir = File.join(REPO, "MASTER", "output")
-      FileUtils.mkdir_p(dir)
-      out = File.join(dir, "snapshot_#{tree}.md")
+      # The repo root, which is where an operator hands these to another model
+      # from. CLAUDE.md's "nothing else sits at the repo root" is about the
+      # tracked shape of the tree, and `.gitignore` already carries
+      # `/snapshot_*.md` — so these four never enter it, and no ratchet counts
+      # them. Writing them to MASTER/output instead meant the operator had to
+      # know a second location and every pack was two copies of 21 MB.
+      out = File.join(REPO, "snapshot_#{tree}.md")
 
       File.open(out, "w") do |f|
         f.puts "# #{tree} — source snapshot"

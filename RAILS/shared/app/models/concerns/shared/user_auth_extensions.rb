@@ -9,9 +9,6 @@ module Shared
 
     included do
       has_many :device_logins, dependent: :destroy if defined?(::DeviceLogin)
-      if defined?(Shared::Authentication) && shared_auth_table_available?
-        has_many :authentications, class_name: "Shared::Authentication", dependent: :destroy
-      end
     end
 
     def generate_remember_token!
@@ -107,14 +104,6 @@ module Shared
       return if missing.empty?
 
       raise ActiveRecord::StatementInvalid, "missing shared auth user columns: #{missing.join(', ')}"
-    end
-
-    module ClassMethods
-      def shared_auth_table_available?
-        connection.data_source_exists?("authentications")
-      rescue ActiveRecord::NoDatabaseError, ActiveRecord::StatementInvalid
-        false
-      end
     end
   end
 end

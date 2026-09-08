@@ -215,7 +215,16 @@ pub4_source_ceilings:
   # length list outright (339 -> 288, under the limit). Finding Chrome,
   # launching it, waiting for its debugging port and reaping it is a subject;
   # what is left speaks CDP to a browser that is already running.
-  RAILS: 2374
+  # 2374 -> 2373 is a deletion, and the file it removes could never have run.
+  # shared/app/models/authentication.rb declared Shared::Authentication as an
+  # ActiveRecord model for an `authentications` table that no migration in any of
+  # the three apps creates. Its path maps to a top-level `Authentication`, which
+  # each app's own concerns/authentication.rb already defines, so Zeitwerk
+  # shadowed it and never loaded it — leaving Shared::Authentication resolving to
+  # the controller concern, and `.table_exists?` on a Module raising NoMethodError
+  # in every OAuth callback. ExternalIdentity and IdentityProvider are the real
+  # persistence and were already doing the work.
+  RAILS: 2373
   # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
   # that are the whole defence against a shared index, and nothing tested any of
   # them — a hook that stopped firing looks exactly like a week in which nobody
