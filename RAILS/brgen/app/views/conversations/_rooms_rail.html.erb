@@ -8,7 +8,13 @@
 
     The DM list is optional. Guests reach channels without an inbox, and the rail
     renders for them too — the channels above it are a static roster and are
-    always there. %>
+    always there.
+
+    No brand block at the head of this rail. messenger is an immersive vertical,
+    so _vertical_shell hides the nav swiper and the theme toggle, but NOT
+    .brgen-logo-mark — the city wordmark is on screen at the top-left of this
+    surface like every other. A second mark inside the rail would be the identity
+    stated twice, and the mark is the brand and nothing else. %>
 <% rail_conversations = @rail_conversations || [] %>
 <% rail_unread = @rail_unread || {} %>
 <% current_room = defined?(@conversation) ? @conversation : nil %>
@@ -28,32 +34,15 @@
       <% end %>
     </div>
 
-    <%# Your own "message me" link, and you do not need an account to hand one out.
-    A guest here is a persisted row with a session behind it, so it can hold a
-    conversation; what a guest cannot do is appear in the people picker, which
-    is a different permission and stays closed. Being handed a link is not
-    being findable. %>
-    <%# user_plus, not share. share means "send this somewhere" and is right for
-        a post; this adds a person, which is what the link does and what Lucide's
-        user-plus draws.
-
-        The wrapper carries the controller and the button is a target, which is
-        the shape @stimulus-components/clipboard needs in order to swap the label
-        on success — the same pattern shared/_action_bar uses. A copy button with
-        no confirmation is a button people press twice. %>
-    <div class="messenger-rail-invite"
-         data-controller="clipboard"
-         data-clipboard-success-content-value="<%= t("actions.copied") %>">
-      <input type="hidden" data-clipboard-target="source"
-             value="<%= invite_url(token: Current.user.message_invite_token) %>"
-             aria-hidden="true" tabindex="-1">
-      <button type="button" class="messenger-rail-invite-copy"
-              data-clipboard-target="button"
-              data-action="click->clipboard#copy">
-        <%= icon :user_plus, size: 16 %>
-        <span><%= t("invite.copy_link") %></span>
-      </button>
-    </div>
+    <%# Search, promoted out of the conversation header. It was one of two links
+        in a nav beside the room title, reachable only once you were already
+        inside a room — so searching for the room you wanted meant opening a
+        different one first. Here it sits with the inbox it searches. %>
+    <%= link_to search_conversations_path, class: "messenger-rail-search",
+                data: { turbo_frame: "_top" } do %>
+      <%= icon :search, size: 17 %>
+      <span><%= t("messages.search") %></span>
+    <% end %>
   <% end %>
 
   <%# Channels are grouped under a heading and DMs are not. That is the one
@@ -78,14 +67,36 @@
     <ul class="messenger-rail-list" role="list">
       <% rail_conversations.each do |room| %>
         <% unread = rail_unread.fetch(room.id, 0) %>
+        <%# messages is preloaded — conversations_controller builds
+            @rail_conversations with .includes(:participants, :messages) — so this
+            reads the loaded association rather than issuing a query per row, and
+            strict loading does not raise. The inbox row below this file has made
+            the same call since it was extracted. %>
+        <% last = room.messages.last %>
         <li role="listitem">
-          <%= link_to conversation_path(room), class: "messenger-rail-room",
+          <%= link_to conversation_path(room), class: "messenger-rail-room messenger-rail-room--dm",
                       data: { turbo_frame: "messenger-pane" },
                       aria: { current: current_room&.id == room.id ? "page" : nil } do %>
-            <span class="messenger-rail-name"><%= room.display_name_for(Current.user) %></span>
-            <% if unread.positive? %>
-              <span class="messenger-rail-unread"><%= unread %></span>
-            <% end %>
+            <span class="messenger-room-avatar" aria-hidden="true">
+              <%= room.display_name_for(Current.user).to_s.first&.upcase || "?" %>
+            </span>
+            <span class="messenger-room-copy">
+              <span class="messenger-rail-name"><%= room.display_name_for(Current.user) %></span>
+              <% if last %>
+                <span class="messenger-room-preview"><%= truncate(last.content.to_s, length: 42) %></span>
+              <% end %>
+            </span>
+            <%# Unread outranks the timestamp rather than sitting beside it. Both
+                answer "is there anything here for me", and a count answers it
+                better; showing the two together spends the row's last column on
+                the weaker of the two. %>
+            <span class="messenger-room-meta">
+              <% if unread.positive? %>
+                <span class="messenger-rail-unread"><%= unread %></span>
+              <% elsif last %>
+                <time datetime="<%= last.created_at.iso8601 %>"><%= time_ago(last.created_at) %></time>
+              <% end %>
+            </span>
           <% end %>
         </li>
       <% end %>
@@ -93,5 +104,38 @@
         <li role="listitem" class="messenger-rail-empty"><%= t("messages.empty_title") %></li>
       <% end %>
     </ul>
+
+    <%# Your own "message me" link, and you do not need an account to hand one out.
+        A guest here is a persisted row with a session behind it, so it can hold a
+        conversation; what a guest cannot do is appear in the people picker, which
+        is a different permission and stays closed. Being handed a link is not
+        being findable.
+
+        At the foot of the rail now rather than at its head. It is the thing you
+        reach for once, when somebody you want is not here yet — it was sitting
+        above the rooms, ahead of everything you came for. %>
+    <%# user_plus, not share. share means "send this somewhere" and is right for
+        a post; this adds a person, which is what the link does and what Lucide's
+        user-plus draws.
+
+        The wrapper carries the controller and the button is a target, which is
+        the shape @stimulus-components/clipboard needs in order to swap the label
+        on success — the same pattern shared/_action_bar uses. A copy button with
+        no confirmation is a button people press twice. %>
+    <% if Current.user&.persisted? %>
+      <div class="messenger-rail-invite"
+           data-controller="clipboard"
+           data-clipboard-success-content-value="<%= t("actions.copied") %>">
+        <input type="hidden" data-clipboard-target="source"
+               value="<%= invite_url(token: Current.user.message_invite_token) %>"
+               aria-hidden="true" tabindex="-1">
+        <button type="button" class="messenger-rail-invite-copy"
+                data-clipboard-target="button"
+                data-action="click->clipboard#copy">
+          <%= icon :user_plus, size: 16 %>
+          <span><%= t("invite.copy_link") %></span>
+        </button>
+      </div>
+    <% end %>
   <% end %>
 </nav>

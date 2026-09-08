@@ -263,18 +263,9 @@ body.vertical-messenger .link-preview-body {
   font-size: var(--text-sm);
 }
 
-/* Who is in a group DM, and the controls for changing that. A quiet block
-   above the log: the roster is reference, the conversation is the page. */
-body.vertical-messenger .group-roster {
-  margin-block: var(--space-2);
-  font-size: var(--text-sm);
-  color: var(--msg-muted);
-}
-
-body.vertical-messenger .group-roster ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  list-style: none;
-  padding: 0;
-}
+/* .group-roster is gone with the block it described. The roster was "a quiet
+   block above the log" and is now a section of the conversation's disclosure
+   panel, where .messenger-member-list gives each member a --tap-min row with its
+   remove control — a wrapping flex of names could not hold a button per name.
+   The rules are deleted rather than kept against a class nothing renders:
+   css_coverage_lint counts a selector with no consumer, and it counted these. */

@@ -400,6 +400,9 @@ nb:
     disappears_in: forsvinner om %{time}
     new_message: Ny melding
     rooms_label: "Rom"
+    member_count:
+      one: 1 medlem
+      other: "%{count} medlemmer"
     message_action: "Send melding"
     no_people: "Ingen med det navnet her ennå."
     find_people: "Søk etter noen"
