@@ -31,6 +31,405 @@ mentioned.
 
 ## MASTER
 
+### Survey of MASTER — 2026-09-08
+
+A read-only survey of `MASTER/`, ranked by value. Nothing here was fixed. What
+was run: `cd MASTER && rake audit`, then each of its twenty remaining gates
+individually; `bin/pub4 measure`; `tools/cohesion.rb --census --list` and
+per-directory; `lib/review/scan/cross_file_analysis.rb` over `lib/**/*.rb`; and
+four purpose-built probes whose self-checks are stated with each finding. Every
+item names a file and a line. The last two subsections say what is not worth
+chasing and which findings are least certain.
+
+The headline is that the payment for `spine.lib_body_ceiling` already exists.
+`lib/` is 38110 body lines against a ceiling of 37464, and 167 unreferenced
+methods in it account for 649 of those lines.
+
+**`rake audit` stops at its third gate, so seventeen gates never run.** The task
+list is `dogfood constitution selftest studio core_smoke security_sweep lint:*
+loc_budget` (`MASTER/Rakefile:742`). `selftest` aborts on three violations
+(`Rakefile:160`), and the process ends there. Running each remaining gate by
+hand found sixteen green and four red: `studio`, `lint:data_singularity`,
+`lint:spine` and `loc_budget`. None of the four was visible from the audit's own
+output. The Rakefile already carries the comment that a gate nobody calls has
+stopped measuring without anyone deciding it should; a gate behind an early abort
+is the same condition with a different cause. The fix is not to make the audit
+lenient — it is to clear the two blockers below, and meanwhile to say in the
+audit's failure line how many gates it did not reach.
+
+**Two of `selftest`'s three violations are the SINGULARITY law firing on three
+generated ceiling files.** `MASTER/data/cohesion_census.yml:1` and
+`MASTER/data/data_reach.yml:1` are reported for a top-level `members` key that
+`MASTER/data/code_reach.yml` also defines. All three are committed ratchet files
+written by `tools/cohesion.rb:310`, `tools/data_reach.rb` and
+`tools/code_reach.rb:39`, and in each one `members` is the *subject* of a finding
+— the list of families, unnamed keys or unreached files — not a configuration
+value with two sources. That is exactly the case `SINGULARITY_EXEMPT_REGISTERS`
+was created for at `MASTER/lib/review/scan/self_test.rb:240`, where
+`doc_baselines.yml` is exempted with that reasoning written out. Add the three
+census files there, or rename each key to `family_members`, `unnamed_members` and
+`unreached_members` so no exemption is needed. Either unblocks seventeen gates.
+The third violation is real and small: `parse_through_flags` at
+`MASTER/lib/cli/command_registry/work_commands_extra.rb:60` is 26 code lines
+against a limit of 20.
+
+**`FILE_LAYOUT` reports the convention it exists to enforce as a violation.**
+`MASTER/lib/review/scan/rules/structural_rules.rb:23` finds the first bare
+`private` line in the file and then, at line 25, takes the first `def` after it
+that is not `def self.`, `initialize`, `to_s` or `inspect` — with no notion of
+visibility or scope. The first private method of every class therefore matches.
+Verified by instantiating `FileLayoutRule` and running it over
+`MASTER/lib/cli/pipeline/through.rb`, a file whose order is exemplary: it
+reported line 96, `def build_sections`, the first method under the `private` at
+line 94. Over all 428 files in `lib/` it produces 233 findings; a Prism walk that
+tracks visibility per class says 227 of them are private instance defs, and the
+six it disagreed about are all inside `class << self` blocks my walker skipped,
+so the true rate is 233 of 233. `FILE_LAYOUT` is on `RULE_RETUNE_IDS`
+(`MASTER/lib/review/scan/constitution_triage.rb:46`), which is where a broken
+detector goes to be forgotten: the entry is correct that the rule is noisy and
+wrong that the answer is retuning. The fix is a scope-aware check — a def below
+`private` is public only after an explicit `public`, or inside a nested scope —
+after which the id comes off the retune list.
+
+**167 methods in `lib/` are named nowhere in the repo, and they carry 649 body
+lines.** The instrument is token frequency, not a call matcher: every
+identifier-shaped token in every text file across all four trees is counted, and
+a method whose name occurs only on its own `def` line is unreferenced. Counting
+bare tokens has no boundary to get wrong, which matters because all three
+recorded matcher bugs here are boundary bugs — `\b` after an escaped `foo?`, a
+lookbehind excluding `.`, a lookbehind excluding `:`. It errs toward calling a
+method live. Removing a dead method removes the references its body made, so the
+pass iterates; four rounds settled. Protected from the census, because the
+instrument cannot see them: names reached by an interpolated `send` (the prefixes
+`do_`, `section_` and `visit_` were harvested from `lib/` itself), setters, Ruby
+and Prism hooks, and any name defined more than once. Self-check: `Expression.
+for_council` at `MASTER/lib/voice/expression.rb:49` reads dead while
+`for_council_persona` at `:303` reads live, which is the distinction a
+lookbehind-based matcher loses. The two largest clusters are the next two
+findings; the rest is a long tail of one- and two-line methods, and the full list
+is reproducible from the probe described here.
+
+**The `Session` slash-command surface is a previous dispatch mechanism left
+standing.** `MASTER/lib/cli/session/command_ops.rb` holds twenty unreferenced
+private methods worth 103 body lines — `run_rails_pwa_fix` at `:68`,
+`run_rails_pwa_audit` at `:50`, `run_propose` at `:231`, `run_why` at `:148`,
+`run_phase` at `:179` and down to the endless `run_rollback` at `:101` and
+`run_redo` at `:103`. `MASTER/lib/cli/session/repl_flow.rb:99` is the only thing
+that routes a slash command inside the session, and it handles four —
+`help`, `exit`/`quit`, `undo`/`rollback`, `clear` — before falling through to
+`run_input`, which goes to `CommandRegistry`. `NL_DISPATCH` at
+`repl_flow.rb:81` sends to two methods by symbol, and `toggle_chips` at
+`command_ops.rb:215` is the twin of the `toggle_focus` it names — the pair
+`cross_file_analysis.rb` reports as one shared structure, one half of which is
+dead. Delete the twenty.
+
+**The swarm coordinator is constructed and never called.**
+`MASTER/lib/builder/ai_boot.rb:32` builds `Review::Swarm::Coordinator` (only when
+`MASTER_FULL_BOOT=1`) and `ai_boot.rb:20` puts it in the bundle as `swarm:`.
+Grepping `lib`, `bin` and `web/app` for `:swarm]`, `.swarm` and `swarm:` finds
+the two constructions and three event names, and no read of the key. Its whole
+public surface is therefore unreached: `dispatch` at
+`MASTER/lib/review/swarm/coordinator.rb:174`, `analyse_and_review` at `:180`,
+`fan_out` at `:191`, `dispatch_parallel` at `:212`, `worker_roles` at `:222` and
+`swarm_vote` at `:228`, plus the private thread machinery beneath them — 99 body
+lines of 278. `MASTER/test/test_swarm.rb` exercises `build_swarm_result` through
+`send` and `WORKER_CLASSES`, so the tests do not contradict this. Decide whether
+the swarm is a feature: wire it to a caller, or delete it. Leaving a
+parallel-review engine in the container with no reader is the inert-wiring shape
+this repo keeps paying for.
+
+**`control_commands` is never merged, so `/orders` and `/soul` are not
+commands.** `MASTER/lib/cli/command_registry.rb:157` builds a table with
+`"orders"` and `"soul"` in it, and the name `control_commands` occurs exactly
+once in all four trees — its own `def`. Every other builder in the registry
+(`agent_commands`, `core_commands`, `domain_commands`, `media_commands`,
+`memory_commands`, `reach_commands`, `system_commands`) is called from
+`command_registry.rb`; this one is not. Twenty-eight body lines hang off it:
+`dispatch_orders` at `:164`, `run_due_orders` at `:177`, `dispatch_soul` at
+`:183`, and downstream `Voice::Soul#propose_from_violations` at
+`MASTER/lib/voice/soul.rb:53`. The scheduler itself is live —
+`ai[:standing].wire_container` runs at `MASTER/lib/builder.rb:225` — so what is
+missing is only the operator surface for 222 body lines of standing orders. Merge
+`control_commands` into `build`, or delete it and say in `data/state.yml` that
+orders are event-driven only; that file's comment currently claims they run "via
+/orders".
+
+**Twenty-five registered `dispatch_*` methods are not named by any command
+table.** In `MASTER/lib/cli/command_registry{,/*}.rb` there are 73 `dispatch_*`
+definitions and 37 distinct symbols passed to `command(`. Diffing them, then
+keeping only names whose token count across the repo is one, leaves 25 methods and
+98 body lines with no route: `dispatch_rules` at
+`MASTER/lib/cli/command_registry/work_commands.rb:191` (19 lines),
+`dispatch_tail` at `work_commands_status.rb:137`, `dispatch_map` at
+`work_commands.rb:90`, `dispatch_topic` at `work_commands_extra.rb:255`, and on
+down to the endless `dispatch_rollback` and `dispatch_redo` at
+`command_registry.rb:90` and `:92`, both superseded by `"rollback" =>
+command(:dispatch_undo, undo)` at `:42`. `dispatch_map` alone strands six
+`map_*_report` helpers at `work_commands.rb:104-132`; the transitive closure is
+what the 649-line figure counts.
+
+**Sixteen LLM tool wrappers write one `execute` sixteen times.**
+`MASTER/lib/io/llm.rb` is 234 lines of which the great majority is the same
+method: `result = @tool.call(<coerced params>)` then `result.ok? ? <format> :
+"Error: #{result.message}"`. See `:30`, `:42`, `:55`, `:67`, `:80`, `:91`,
+`:104`, `:115`, `:127`, `:140`, `:157`, `:172`, `:186`, `:200`, `:212` and
+`:224`. `cross_file_analysis.rb` reports three of these as structural clones; the
+file itself already shows the fix it wants, because `ToolInitializer` at `:17`
+was extracted from the same repetition one method earlier. Give that module an
+`execute` driven by the declared `param` names, with a class-level success
+formatter for the three variants (`result.value!`, `"Written: …"`, `"Replaced in:
+…"`) and a per-class hook for the two that differ — `SearchFiles` at `:80`
+renames `path` to `glob` and `context` to `context_lines`, and `DynamicHttp` at
+`:224` parses JSON and rescues. Worth roughly forty body lines and, more, one
+place to change when the error convention changes.
+
+**Four rule builders in the constitution are one shape written four times.**
+`MASTER/lib/core/constitution.rb` pairs a `*_reason` predicate with a `*_rule`
+wrapper that is identical every time but for two names: `batch_delete_rule` at
+`:219`, `forbidden_file_rule` at `:233`, `scope_creep_rule` at `:251` and
+`new_path_rule` at `:382`, with `two_hats_rule` at `:267` the same plus one
+guard. `cross_file_analysis.rb` reports them as two structural-clone pairs, and
+locating them needed a local probe because that class builds every finding at
+line 1 of a virtual path (`cross_file_analysis.rb:315`). A private
+`reason_rule(id, verbs:) { |effect, memory| … }` collapses the four to four
+blocks. `lib/core` is 769 body lines against a 682 budget, so this is 87 lines
+overdue in the one subsystem whose file count is a ratcheted invariant and cannot
+absorb the overage by splitting.
+
+**`cohesion.rb`'s constant column is wrong wherever a directory's files reopen
+one module, and the census does not say so.** `ruby MASTER/tools/cohesion.rb
+MASTER/lib/cli/command_registry` proposes `agent_commands.rb ->
+commands/agent.rb   CommandRegistry -> Commands::Agent` and seven more like it.
+All ten files in that directory declare `module Master / module CLI / module
+CommandRegistry` — one module reopened ten times, verified by listing every
+`module`/`class` line in each — so there is no per-file constant to rename and
+the proposal would split one module into eight, breaking every call site.
+`MASTER/data/autoload.yml` states this explicitly under
+`reopens_a_constant_defined_elsewhere`, and names all ten files, with
+`rake lint:autoload` proving each entry still necessary. `cohesion.rb` never
+reads it. The fix is to teach the tool that file: a family whose members are on
+the ignore list gets a merge proposal or nothing, never a rename. By contrast its
+`MASTER/tools` proposals are sound on that axis — `autofix_reach.rb` really does
+declare `Pub4::AutofixReach`, and `tools/` is under no loader — but the two
+families it prints there overlap on `rule_reach.rb`, so they are mutually
+exclusive and the output does not say which to take. That is a second thing to
+fix in the tool, not in the tree.
+
+**Thirty-one files in `lib/` are below the sprawl threshold, and the merge is not
+free.** `FileSprawlRule` (`MASTER/lib/review/scan/rules/meta_rules.rb:284`) run
+over `lib/` names 31, of which two are lone-file directories —
+`MASTER/lib/cli/propose/candidate_sources.rb` and
+`MASTER/lib/review/repo_ecology/co_change_graph.rb` — and the rest are under 25
+code lines. The cheapest are the ones whose constant nothing outside names:
+`MASTER/lib/security_error.rb` at 3 code lines, `MASTER/lib/ground/antigravity.rb`
+at 9, `MASTER/lib/review/review_crew/agents.rb` at 8 (already an autoload ignore,
+so a pure require aggregator), `MASTER/lib/fix/constants.rb` at 10. But `lib/` is
+under `Zeitwerk::Loader.push_dir(lib, namespace: Master)`
+(`MASTER/lib/master.rb:149`), so every other merge moves a constant and needs
+either a caller rename or a new `data/autoload.yml` entry that
+`rake lint:autoload` will then hold to account. Do these one at a time with the
+constant rename in the same commit; do not sweep them.
+
+**`loc_budget` has ten of sixteen subjects over budget and is not in
+`measure`.** `bin/pub4 measure` reports one row off, `spine.lib_body_ceiling`,
+and that is true of the ratchet register. `rake loc_budget` is a separate gate
+and reports `law 1613/852`, `lib/pub4 692/470`, `lib/review 10282/9765`,
+`lib/voice 3395/3181`, `lib/ground 6086/5899`, `lib/core 769/682`, `lib/boot
+276/227`, `lib/trace 2037/1999`, `lib/cli 6086/6080` and `lib/fix 2646/2643`
+over. Recounted independently with `CodeMetrics.body_lines_in`, every figure
+agrees — including the `6086` that `lib/cli` and `lib/ground` share, which is a
+coincidence and not a bug. Separately, the sixteen `loc_body_budgets` keys in
+`MASTER/data/limits.yml` cover 37398 of `lib/`'s 38110 body lines: the seven files
+at `lib/*.rb` are in no budget at all, the largest being `lib/builder.rb` at 215,
+`lib/master.rb` at 136, `lib/pressure_engine.rb` at 115 and `lib/unwrap_error.rb`
+at 103. Add a `lib` root key or fold those files into subsystems; an unbudgeted
+712 lines is where growth goes to hide.
+
+**Declaration order in `lib/` is already right, and the residual is constants,
+not methods.** A Prism walk over all 428 files, tracking visibility per
+class/module/singleton scope, finds **zero** scopes where any def precedes the
+first public non-`initialize` def. The known-negative was
+`MASTER/lib/cli/pipeline/through.rb`, whose scope dump reads constants, `Result`,
+`initialize`, constants, `call`, `private`, helpers — the convention exactly. A
+second probe counted backward call edges (a callee declared above its only
+caller) and found 276 across 155 files, but hand-reading the top of that list
+killed most of them: `MASTER/lib/cli/session/command_handlers.rb:70` "calls"
+`run_rebuild` only inside a `%w[]` list at `:77`, and
+`MASTER/lib/fix/diff_stager.rb:176` "calls" `apply` only in a comment at `:178`.
+Two survive reading and are worth doing.
+
+`MASTER/lib/pub4/gate_chain.rb` is the clearest. It is `module_function` at `:52`
+with no `private` marker anywhere, its sole entry point is `run` at `:224`, and
+its only caller is `MASTER/bin/pub4:74`. A reader of the repo's most-used command
+meets twenty helpers — `stages` at `:61`, `council`, `act_on`, `picks_in`,
+`gate`, `rails_gates`, `suites`, `sprawl`, `capture`, `dirty`, `verdict`,
+`classify` — before the six-line method that calls them. Move `run`, `explain`
+and `report` up under `module_function` and mark the rest
+`private_class_method`. Second, `MASTER/lib/fix/fix_loop/background_runner.rb:10`
+puts the 18-line thread body `run_forever` above `start_background!` at `:31`,
+its only caller; swap them, or make `run_forever` private.
+
+The measurable residual is constants: 153 constants in `lib/` have exactly one
+use 80 or more lines below their declaration. The worst are
+`MASTER/lib/voice/speech.rb:27-28` (`WORKER_TIMEOUT_PER_CHAR` and
+`WORKER_TIMEOUT_MAX`, used only at `:611`),
+`MASTER/lib/voice/personality_prompt_builder.rb:20` (`CORE_SECTIONS`, used only
+at `:585`), and `MASTER/lib/review/llm_dispatcher.rb:15`, `:18` and `:20`
+(`COST_PER_TOKEN`, `CACHE_WINDOW`, `MS_PER_SECOND`, used only at `:370`, `:365`
+and `:375`). Move each next to its one reader. This is cosmetic and safe, and it
+is what the convention means by constants used only deep inside going last.
+
+**`TRAILING_COMMAS` and `DOUBLE_QUOTES_RUBY` are the same kind of broken as
+`FILE_LAYOUT`, at 264 and 233 findings.** `TRAILING_COMMAS`
+(`MASTER/lib/review/scan/rules/ruby_rules.rb:228`) matches any line that is only
+a double-quoted string, in or out of a collection. Reproducing the rule body over
+`lib/` gives 273 hits, of which 34 sit on the last line of a `# pub4 backlog
+
+The single backlog for the whole repo. One file, at the root, replacing the
+per-tree lists that used to drift out of sight of one another: `MASTER/DEBT.md`,
+`RAILS/TODO.md`, `RAILS/BLOCKERS.md`, and the `OPENBSD/data/debt.yml` register.
+
+Authority order is unchanged: `MASTER/data/soul.yml` > `MASTER/data/rules.yml` >
+the root `CLAUDE.md` > the per-tree contract. Feature truth is still
+`RAILS/apps.yml`; horizon (aspirational, agent: ignore) is still
+`RAILS/apps.horizon.yml`. The decision records — `MASTER/DECISIONS.md` and
+`OPENBSD/DECISIONS.md` — are rationale, not backlog, and stay where they are.
+
+How to read this file. Each tree has its own top-level section, and everything
+in it is open. **A record is deleted when it closes** — `git log` holds the
+history, and a backlog that keeps every item it ever had teaches the reader to
+skim. What survives a close is the false positive worth not re-discovering:
+those live under "Debt — resolved records" and are guards, not history.
+
+One habit this repo learned the hard way, and it governs every finding below:
+**a finding is a hypothesis; re-measure before working from one.** Naive
+pattern-matching over this tree produces mostly false positives, and several of
+the entries here were themselves stale when written. Verify the instrument
+before the finding.
+
+An item leaves this file when a check proves it, not when it stops being
+mentioned.
+
+**Forward work is the last section of this file**, merged from `WISHLIST.md` on
+2026-09-06.
+---
+
+-continued string
+— `MASTER/lib/boot/runtime.rb:158` is one — where adding the comma the message
+asks for is a SyntaxError. It declares no autofix, so this is noise rather than a
+hazard, but a rule whose advice would break the file cannot be gated on.
+`DOUBLE_QUOTES_RUBY` (`MASTER/lib/review/scan/rules/cosmetic_rules.rb:125`) gives
+268 hits of which 148 are single quotes nested inside a `#{}` interpolation of a
+double-quoted string, where double quotes are impossible:
+`MASTER/lib/builder.rb:130` and
+`MASTER/lib/cli/command_registry/agent_commands.rb:48` are the pattern. Both need
+the same treatment as `FILE_LAYOUT` — fix the detector, then take the id off
+`RULE_RETUNE_IDS` — and both should be fixed in the same sitting, since the three
+together are 730 of the 2195 findings in the retune bucket.
+
+**The biggest subjects in `lib/`, and whether each absorbs.** Ranked by
+`CodeMetrics.body_lines`: `MASTER/lib/review/scan/rules/surface_rules.rb` 518,
+`structural_rules.rb` 473, `MASTER/lib/voice/speech.rb` 471,
+`MASTER/lib/voice/personality_prompt_builder.rb` 386,
+`MASTER/lib/cli/command_registry/work_commands.rb` 367,
+`MASTER/lib/voice/expression.rb` 306, `MASTER/lib/review/repo_ecology.rb` 298,
+`MASTER/lib/voice/engines.rb` 296, `MASTER/lib/review/llm_dispatcher.rb` 296,
+`MASTER/lib/review/scan/self_test.rb` 294. The four rules files are registries of
+`RuleDSL.rule` calls and already carry `SMALL_FILES` findings; splitting them
+moves lines rather than removing them, so they pay nothing toward the ceiling and
+should be left alone until someone wants them split for reading.
+`work_commands.rb` is the one that absorbs: 83 of its 367 body lines are the
+unrouted `dispatch_*` methods and their stranded helpers above. `speech.rb` and
+`expression.rb` each shed a little to the dead-method list (9 lines in
+`expression.rb`) and a little more to the late-constant move. By directory, counting only the files directly in each, `lib/ground` is the largest subject at 4387 body lines over 64 files, then `lib/io` at 3450 over 46 and `lib/review/scan/rules` at 3239 over 16.
+
+**`/help` documents ten of the thirty-nine registered commands.** `HELP_TOPICS`
+at `MASTER/lib/cli/command_registry/help.rb:8` holds `through status undo commit
+model pair doctor help clear why`. Enumerating the string keys of every
+`command(`/`Command.new` table in `lib/cli/command_registry{,/*}.rb` gives 39,
+so `help_text` at `:67` answers "help: unknown command /dilla" for a command that
+works, and `Session#unknown_command`
+(`MASTER/lib/cli/session/command_handlers.rb:17`) prints that answer. The
+twenty-nine undocumented are `brgen btw capture context diag diff dilla domain
+dreams fold memory music orders photograph plan postpro propose rebuild reload
+repligen rollback rtk security-audit shell snapshot soul tools tree verify` —
+`orders` and `soul` among them only because `control_commands` never merges. Note
+that `command_registry.rb:33` calls this a "closed public surface", so the
+divergence may be deliberate; if it is, the wrong half is `help_text`'s wording,
+not the table.
+
+**The remaining named findings from `rake constitution`, already located by the
+scanner.** `ABC_SIZE` fires three times over its ratchet of 40:
+`MASTER/lib/voice/emotion.rb:20` `#analyze` at 74.7,
+`MASTER/lib/cli/session/command_ops.rb:264` `#run_critique` at 42.2, and
+`MASTER/lib/ground/phase_gates.rb:103` `#automatic_gate_met?` at 41.4. The first
+is the only one worth a sitting. `FILE_VAGUE_NAME` has one finding,
+`MASTER/lib/cli/routing/provider_quarantine_manager.rb:1` — "manager" is a
+category, and but it is not one of the three the sprawl census counts. Those are `MASTER/lib/boot/data.rb`, `MASTER/lib/ground/orders/base.rb` and `MASTER/lib/io/base.rb` (`ruby MASTER/tools/sprawl_census.rb --list`), so `FILE_VAGUE_NAME` and `sprawl.vague_names` measure different things and neither number is the other. `NO_PUTS` fires
+eleven times, all in `MASTER/lib/pub4/gate_chain.rb` (`:234`, `:242`, `:247` and
+on), which is a command-line reporter and arguably the rule's exemption rather
+than its subject; check the rule's statement before acting.
+
+#### Not worth chasing
+
+Measured, and rejected, so the next reader does not spend a day on it.
+
+`code_reach` is at 0 of 0 and correct: no file in `lib/` is unreached. The
+file-level question is closed; the method-level one above is the live version of
+it, and re-running `tools/code_reach.rb` answers nothing new.
+
+There are no oversized methods. The largest body in `lib/` is 26 code lines
+(`parse_through_flags`, `MASTER/lib/cli/command_registry/work_commands_extra.rb:60`),
+the next is 20, and the `DENSITY` limit is 20. `SMALL_FUNCTIONS`-style sweeps have
+nothing left to find here; the high `ABC_SIZE` rows above are branch density in
+short methods, not length.
+
+`MAGIC_NUMBER_SPREAD` from `cross_file_analysis.rb` reports fourteen literals
+recurring across files — `100` in 24 files, `200` in 20, `120` in 16. These are
+limits, widths and percentages that mean different things in each file; the rule's
+own comment records that an earlier version of it fired on the named constants it
+was recommending. Naming them centrally would couple unrelated subsystems.
+Likewise its `SPRAWL` rows (`cost` in 13 files, `cache` in 19, `provider` in 17)
+and `SCATTERED_CONFIG` rows (`ENV PATH` in 9 files) are namespaces, not sprawl.
+
+`COPY_PASTE_BLOCK` finds one group in all of `lib/`, and the `DRY`
+structural-clone rule finds three cross-file groups, of which one —
+`MASTER/lib/review/repo_ecology.rb:231` `#grade_for` and
+`MASTER/lib/trace/context_pressure.rb:21` `#band_for` — is two banding functions
+over different domains that happen to share a `case` shape. Extracting a shared
+band helper for two callers buys nothing.
+
+`lint:dedup` reports two known cross-file duplicates and zero new, `dup_census`
+is at 30 of 30, and `lint:reader_singularity`, `lint:doc_citations`,
+`lint:instruments`, `lint:constant_collisions`, `lint:capability`,
+`lint:scan_coverage`, `lint:autoload`, `lint:frozen`, `lint:rule_reach`,
+`lint:models`, `lint:cohesion`, `lint:principle_trace`, `core_smoke` and
+`security_sweep` are all green when run individually. Do not re-audit them; audit
+why they were unreachable instead.
+
+`rake studio` fails locally because `ruby-vips` and `libvips` are not installed
+on this Mac, so `STUDIO/postpro/postpro.rb` does not boot. That is an environment
+condition, not a MASTER finding, and it is the fourth prerequisite of `rake
+audit` — so clearing the `selftest` blocker above will hand the audit straight to
+this one on any machine without vips. Worth knowing before someone reads it as a
+regression.
+
+#### Least certain of the above
+
+The `/help` divergence is the one most likely to be intended; the "closed public
+surface" comment argues both ways.
+
+The 649-line dead-method figure is the aggregate I trust least at the margins.
+The two largest clusters and five individual entries were hand-verified and the
+instrument's self-check distinguishes `for_council` from `for_council_persona`
+correctly, but the long tail of one-line methods has not been read one by one,
+and a name reached through a `send` form my prefix harvest missed would be a
+false positive. Verify each entry against its own call graph before deleting it,
+not the total.
+
+`NO_PUTS` in `gate_chain.rb` may be the rule's exemption rather than a finding; I
+did not read the rule's statement closely enough to say.
+
 ### Rule and AST-detector backlog
 
 Deterministic detectors in `MASTER/lib/review/scan/rules/`, following the
