@@ -152,4 +152,21 @@ class VerticalConsistencyTest < Minitest::Test
       number, so the same browse grid changed width between subapps.
     MSG
   end
+
+  # brgen's verticals are mountable engines, so their views render inside brgen
+  # and live outside brgen/app. A gate scanning brgen/app/views saw none of the
+  # 71 vertical pages, and the sub-apps drifted behind a green gate. The answer
+  # was six engine directories written out by hand, which is correct until the
+  # seventh engine — the same blind spot, deferred. UserFlowGate reads them off
+  # disk now, and this holds that every engine that exists is covered.
+  def test_the_view_contract_covers_every_engine
+    require_relative "../gates/lib/live/user_flow"
+    on_disk = Dir.glob(File.join(ROOT, "brgen/engines/*/app/views"))
+                 .map { |path| path.sub("#{ROOT}/", "") }
+
+    refute_empty on_disk, "brgen has no engine views — this test is measuring nothing"
+    assert_empty on_disk - Deploy::UserFlowGate::VIEW_PATHS,
+                 "an engine's views are outside the gate's paths, which is how 71 pages went unscanned"
+    assert_includes Deploy::UserFlowGate::VIEW_PATHS, "amber/app/views"
+  end
 end

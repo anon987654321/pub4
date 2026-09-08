@@ -26,6 +26,17 @@ module Deploy
     PRINCIPLE_MAP = File.join(MASTER, "data", "principle_map.yml")
     WIRING_NOTES = File.join(RAILS_ROOT, "shared", "WIRING_NOTES.md")
 
+    # Every directory that renders a view, the three apps plus brgen's engines.
+    #
+    # The engine views render inside brgen and live outside brgen/app, so a
+    # brgen/app/views scan never saw the 71 vertical pages — the blind spot that
+    # let the sub-apps drift. Read off disk rather than listed, because a list is
+    # only correct until the next engine, and the last one cost 71 pages of
+    # coverage before anybody noticed.
+    VIEW_PATHS = (%w[brgen/app/views amber/app/views bsdports/app/views] +
+                  Dir.glob(File.join(RAILS_ROOT, "brgen/engines/*/app/views"))
+                     .map { |path| path.sub("#{RAILS_ROOT}/", "") }.sort).freeze
+
     def self.run
       return run_once unless GateAutofix.enabled?
 
@@ -73,16 +84,7 @@ module Deploy
         id: :stimulus_progressive,
         principle: "stimulus_progressive / progressive_enhancement",
         meaning: "Behavior via Stimulus data-controller, not jQuery CDN apps",
-        # The engine views render inside brgen but live outside brgen/app, so a
-        # brgen/app/views scan never saw the 71 vertical pages — the blind spot
-        # that let the sub-apps drift. Enumerated per engine because the path
-        # resolver takes literal directories, not globs.
-        paths: %w[
-          brgen/app/views amber/app/views bsdports/app/views
-          brgen/engines/dating/app/views brgen/engines/maps/app/views
-          brgen/engines/marketplace/app/views brgen/engines/playlist/app/views
-          brgen/engines/takeaway/app/views brgen/engines/tv/app/views
-        ],
+        paths: VIEW_PATHS,
         forbidden: /jquery(\.min)?\.js|cdn\.jsdelivr\.net\/npm\/jquery/i,
         allow_path: nil,
       },
