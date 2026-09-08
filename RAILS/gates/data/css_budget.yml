@@ -149,7 +149,18 @@ rules:
   # instead of by declaration: an improvement that raises the number because it
   # brings debt into view. Forcing 43 means lightening secondary text until the
   # metric stops seeing it, which is the trade this file exists to refuse.
-  contrast_below_aaa: 45
+  # 45 -> 37 on 2026-09-08, when six colour dialects became one greyscale scheme.
+  # The eight that left are pairs no longer expressible: an indigo accent, a warm
+  # luxury paper and a 2014 port each had their own near-AAA text, and there is now
+  # one #333-on-#efefef and one #efefef-on-#000, both AAA with margin. The gate
+  # enumerates 84 mode-matched pairs across the dialects and reports 0 below AA.
+  #
+  # The 37 that remain are almost all --danger, which is deliberately the one
+  # non-grey token: a greyscale scheme cannot say "destructive", and light.danger
+  # on bg is 4.96 — AA, short of the 7.0 target. Forcing those to AAA means either
+  # a darker red on every surface or dropping the semantic, and neither is a
+  # contrast decision.
+  contrast_below_aaa: 37
   # These two are what gives design_rules.yml's `typography` block a reader.
   # type_scale counts font-size literals off the --text-* ladder in
   # _tokens.scss; weight_ladder counts font-weight literals off

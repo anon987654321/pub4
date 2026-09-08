@@ -25,10 +25,10 @@
   flex-direction: column;
   gap: var(--sp, 8px);
   padding: 0.75rem 1rem;
-  background: var(--surface-elevated, #211f28);
-  border: 1px solid var(--border, #46435a);
+  background: var(--surface-elevated, #111111);
+  border: 1px solid var(--border, #666666);
   border-radius: var(--radius-card, 16px);
-  color: var(--text, #d8d6e0);
+  color: var(--text, #333333);
   font-family: var(--font);
 }
 
@@ -56,7 +56,7 @@
 .install-prompt-secondary {
   min-height: var(--tap-min);
   padding: 0 var(--space-3);
-  border: 1px solid var(--border, #46435a);
+  border: 1px solid var(--border, #666666);
   border-radius: var(--radius-sm, 8px);
   font: var(--weight-bold) 0.875rem/1 var(--font);
   cursor: pointer;
@@ -70,12 +70,12 @@
 /* Family primary is inverted type-on-background, not an accent fill — see
    .btn-primary in _minimal.scss. */
 .install-prompt-primary {
-  background: var(--text, #d8d6e0);
-  border-color: var(--text, #d8d6e0);
-  color: var(--bg, #17161c);
+  background: var(--text, #333333);
+  border-color: var(--text, #333333);
+  color: var(--bg, #000000);
 }
 
-.install-prompt-secondary:hover { color: var(--text, #d8d6e0); }
+.install-prompt-secondary:hover { color: var(--text, #333333); }
 .install-prompt-primary:hover { border-color: var(--text-secondary); }
 
 /* Installed launches: pwa_standalone_controller.js stamps this on <html>. There

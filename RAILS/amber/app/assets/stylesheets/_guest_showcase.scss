@@ -16,7 +16,7 @@
   --slide_size: 104px;
   --row_gap: var(--space-3);
 
-  border-block: 1px solid var(--border, #e6e0d8);
+  border-block: 1px solid var(--border, #666666);
   padding-block: var(--space-3, 16px);
 
   /* This is a flex item, and a flex item's min-width is auto -- so it refuses
@@ -33,7 +33,7 @@
 }
 
 .wardrobe_showcase_row + .wardrobe_showcase_row {
-  border-top: 1px solid var(--border, #e6e0d8);
+  border-top: 1px solid var(--border, #666666);
   margin-top: var(--space-3, 16px);
   padding-top: var(--space-3, 16px);
 }
@@ -56,7 +56,7 @@
 .wardrobe_showcase_hint {
   margin: 0;
   font-size: var(--text-xs, 0.75rem);
-  color: var(--text-secondary, #6b665f);
+  color: var(--text-secondary, #999999);
 }
 
 /* The column, not the viewport. Full-bleed here ran the rows under the fixed
@@ -103,11 +103,11 @@ animation: wardrobe_showcase_drift 46s var(--ease-linear) infinite;
   display: block;
   aspect-ratio: 1;
   overflow: hidden;
-  border: 1px solid var(--border, #e6e0d8);
+  border: 1px solid var(--border, #666666);
   /* Not plain surface: a white shirt or a white trainer on white paper is an
      empty box with a caption under it. A few percent of ink behind the cut-out
      gives the pale half of the wardrobe an edge to sit against. */
-  background: color-mix(in srgb, var(--text, #2c2824) 4%, var(--surface, #ffffff));
+  background: color-mix(in srgb, var(--text, #efefef) 4%, var(--surface, #ffffff));
 }
 
 .wardrobe_slide_image {
@@ -130,13 +130,13 @@ animation: wardrobe_showcase_drift 46s var(--ease-linear) infinite;
 .wardrobe_slide_glyph {
   font-size: var(--text-lg, 1.125rem);
   font-weight: var(--weight-bold, 700);
-  color: var(--text, #2c2824);
+  color: var(--text, #efefef);
 }
 
 .wardrobe_slide_title {
   margin: var(--space-2) 0 0;
   font-size: var(--text-xs, 0.75rem);
-  color: var(--text-secondary, #6b665f);
+  color: var(--text-secondary, #999999);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

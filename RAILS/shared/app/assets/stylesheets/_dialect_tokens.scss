@@ -1,16 +1,43 @@
-// Parametric x.com tokens — defaults match shared/design_tokens.yml social: palette (R10).
-// Derived hovers use color-mix; hex anchors unchanged for visual parity.
+// The token scheme every app and every dialect uses. Derived hovers use
+// color-mix over --text, so they follow the ink rather than carrying a value.
 
+// One scheme, seven values: #000 #111 #333 #666 #999 #efefef #fff.
+//
+// Every dialect below now forwards here. There were six colour mixins carrying
+// fifty distinct hex literals between them — an indigo, a warm luxury paper, a
+// 2014 greyscale port — and a surface could pin any of them, so the same
+// component read three ways across three apps.
+//
+// The values are not a preference; each pair was measured with
+// Deploy::DesignMetrics.contrast_ratio against the target rules.yml states,
+// wcag_2_2_aa_with_aaa_body_text — AAA for body prose, AA elsewhere, 3.0 for a
+// boundary per WCAG 1.4.11:
+//
+//   text #efefef on #000 18.26:1, on #111 16.42:1     secondary #999 7.37 / 6.63
+//   border #666 on #000 3.66:1                        accent ink #000 on #efefef 18.26:1
+//
+// #666 is the border in BOTH modes — 4.99:1 on #efefef and 3.66:1 on #000 —
+// which is why there is one border value rather than two.
+//
+// The panel fill is #111 and not #222: at #222 the border falls to 2.77:1 and
+// stops being a boundary. #1a1a1a passes at 3.03:1, with no margin worth having.
+//
+// --danger stays the one non-grey. A greyscale scheme cannot say "destructive",
+// and colour is the only channel that carries it without adding a word.
 @mixin dark-tokens(
-  $bg: #17161c,
-  $surface: #17161c,
-  $surface-elevated: #211f28,
-  $search-bg: #232030,
-  $text: #d8d6e0,
-  $text-secondary: #b6b3c8,
-  $border: #46435a,
-  $accent: #897dda,
+  $bg: #000000,
+  $surface: #111111,
+  $surface-elevated: #111111,
+  $search-bg: #111111,
+  $text: #efefef,
+  $text-secondary: #999999,
+  $border: #666666,
+  $accent: #efefef,
   $danger: #e46151,
+  // The --c-* channel is the MASTER face's, not the apps'. It keeps its chroma
+  // and stays pinned to design_tokens.yml face_root.anchors, which the production
+  // gate asserts — zeroing it here to match the greyscale broke that link and
+  // would have recoloured the face, a surface this scheme does not cover.
   $c-text: oklch(86% 0.02 300),
   $c-accent: oklch(78% 0.10 300),
   $c-danger: oklch(60% 0.14 35),
@@ -72,16 +99,19 @@
   --feed-max: 600px;
 }
 
-// Indigo light (not Twitter blue) — matches design_tokens.yml light: palette.
+// The light half of the one scheme. text #333 on #efefef is 10.99:1 and on #fff
+// 12.63:1; secondary #666 is 4.99 / 5.74, which is AA and deliberately not AAA —
+// the target asks AAA of body prose, and secondary is meta text. The accent is
+// #000 rather than a hue, so a link needs an underline to be a link.
 @mixin light-tokens(
-  $bg: #f7f6fa,
+  $bg: #efefef,
   $surface: #ffffff,
-  $surface-elevated: #eeedf3,
-  $search-bg: #e8e6ef,
-  $text: #1a1824,
-  $text-secondary: #5c586e,
-  $border: #d4d1de,
-  $accent: #5b4fc4,
+  $surface-elevated: #ffffff,
+  $search-bg: #ffffff,
+  $text: #333333,
+  $text-secondary: #666666,
+  $border: #666666,
+  $accent: #000000,
   $danger: #a9483c
 ) {
   --bg: #{$bg};
@@ -98,116 +128,33 @@
   --danger: #{$danger};
 }
 
-// Amber luxury dialect (Aesop/Toteme warm paper) — design_tokens.yml luxury:
+// amber kept a warm-paper dialect of its own until 2026-09-08.
 @mixin luxury-light-tokens {
-  // White, not the warm off-white this used to carry. Operator decision
-  // 2026-08-18: amber is a white page. The warm cast stays in the elevated
-  // surfaces and the border, which is where it reads as paper rather than as a
-  // tint over everything.
-  --bg: #ffffff;
-  --surface: #ffffff;
-  --surface-elevated: #f0ebe3;
-  --search-bg: #ebe4da;
-  --text: #2c2824;
-  --text-secondary: #6b665f;
-  --border: #e6e0d8;
-  --hover: rgb(from var(--text) r g b / var(--opacity-subtle));
-  --hover-subtle: rgb(from var(--text) r g b / var(--opacity-whisper));
-  /* Darkened by 2 to clear APCA Lc 75.1 from 74.2 — the only amber colour that
-     failed both contrast models rather than WCAG alone. */
-  --accent: #7c6c53;
-  --danger: #a7473b;
-/* The radius fork is gone. 6, 10 and 14 were amber-only, none of them on
-   scale.radius_px, and nothing recorded a reason — a wardrobe card and a
-   marketplace card are the same object at different tilts. amber now
-   inherits the family ladder and keeps its palette, which is the whole of
-   what made it luxury. */
+  // amber's warm paper: #f0ebe3 elevated, #e6e0d8 border, a #7c6c53 accent
+  // darkened by 2 to clear APCA Lc 75.1. All of it now the one scheme — a
+  // wardrobe page and a city feed are the same surface with different words on
+  // them, and three palettes meant the same component read three ways.
+  @include light-tokens;
 }
 
 @mixin luxury-dark-tokens {
-  --bg: #1a1816;
-  --surface: #1a1816;
-  --surface-elevated: #24221f;
-  --search-bg: #2a2622;
-  --text: #e8e4dc;
-  --text-secondary: #8a8278;
-  --border: #3a3630;
-  --hover: rgb(from var(--text) r g b / var(--opacity-subtle));
-  --hover-subtle: rgb(from var(--text) r g b / var(--opacity-whisper));
-  --accent: #a38b6f;
-  --danger: #ea6453;
+  // The dark half of the same warm paper. Forwards for the same reason.
+  @include dark-tokens;
 }
 
-// BRGEN_OLD dark — dark-inverted port of the real 2014 desktop.css/mobile.css
-// (see pub/__OLD_BACKUPS/BRGEN_OLD): true neutral grayscale, zero accent hue,
-// Arial. Bar/chrome sits darker than body, mirroring the original's dark
-// #333 utility bar against a white page — same tonal relationship, extended
-// to the dark end instead of collapsed into it. Kept in sync with
-// design_tokens.yml brgen_old_dark:.
+// brgen kept a dark-inverted port of the real 2014 desktop.css until 2026-09-08.
 @mixin brgen-old-dark-tokens {
-  --bg: #000000;
-  --surface: #1a1a1a;
-  --surface-elevated: #1a1a1a;
-  --search-bg: #222222;
-  --text: #e0e0e0;
-  /* #969696 -> #cfcfcf: APCA Lc 44.3 against a 75 floor on #1a1a1a, and it is
-     the single most-repeated contrast finding in the tree (44 sites over four
-     dark grounds). #cfcfcf clears 75 on all four and still sits a clear step
-     under --text #e0e0e0 at Lc 86.5, so secondary text stays secondary. If it
-     reads too bright, #b4b4b4 is the Lc 60 tier. */
-  --text-secondary: #cfcfcf;
-  --border: #333333;
-  --hover: rgb(from var(--text) r g b / var(--opacity-subtle));
-  --hover-subtle: rgb(from var(--text) r g b / var(--opacity-whisper));
-  --accent: #f2f2f2;
-  --danger: #e46151;
-  // No --font here. It was `Arial, Helvetica, sans-serif` in both this mixin and
-  // its light twin, which meant the typeface was declared twice, per theme, and
-  // the toggle could change it -- and it silently outranked anything brgen's
-  // :root said, because an @include emits its declarations at the point of
-  // inclusion. brgen now names its typeface once in _root.scss, after the
-  // includes, and the light block inherits it. Both mixins are brgen-only.
-  --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-pill: 9999px;
-  --radius-card: 8px;
-  --radius-lg: 8px;
+  // The 2014 desktop.css port: true neutral greyscale, zero accent hue. It was
+  // already the closest of the six to one scheme, and the scheme took its side —
+  // #000 ground, a #111 bar, #efefef ink. Its own note argued #cfcfcf secondary
+  // against an APCA 75 floor over four dark grounds; #999 on #111 is 6.63:1 WCAG
+  // and the shared value, so that argument is settled here rather than per app.
+  @include dark-tokens;
 }
 
-// BRGEN_OLD light — the actual 2014 palette (pub/__OLD_BACKUPS/BRGEN_OLD/
-// app/assets/stylesheets/all.css): `body { color: #222 }` on the browser's
-// plain white, dark #333 utility bar, black (#000) reserved for
-// .has_media_feed only -- not a page background. Same true-grayscale, zero-
-// accent-hue philosophy as brgen-old-dark-tokens, just the light half of it;
-// --accent lands on that same near-black rather than inventing a hue.
 @mixin brgen-old-light-tokens {
-  --bg: #ffffff;
-  --surface: #ffffff;
-  --surface-elevated: #f2f2f2;
-  --search-bg: #f0f0f0;
-  --text: #222222;
-/* #666666 -> #545454: the light twin of the #969696 fix in the dark set. On
-   this palette's own #f2f2f2 elevated surface it measured APCA Lc 71.0
-   against a 75 floor, and WCAG 5.13 against the AAA 7.0 style.yml declares.
-   #545454 clears both on all three grounds it lands on (white, #f8f8f8,
-   #f2f2f2) at Lc 86.3/80.6/78.6 and WCAG 7.57, and stays a clear step under
-   --text #222222. It became visible when markedsplass and takeaway were
-   pinned light — before that the gate was measuring them in dark, so this
-   whole palette was reported against grounds it never renders on. */
---text-secondary: #545454;
-  --border: #d9d9d9;
-  --hover: rgb(from var(--text) r g b / var(--opacity-faint));
-  --hover-subtle: rgb(from var(--text) r g b / var(--opacity-whisper));
-  --accent: #1a1a1a;
-  --danger: #b24c3f;
-  // See the dark twin above: the typeface is declared once, in _root.scss.
-  --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-pill: 9999px;
-  --radius-card: 8px;
-  --radius-lg: 8px;
+  // The light twin of the 2014 port.
+  @include light-tokens;
 }
 
 // What an app root sets over a dialect palette: the typeface, and nothing

@@ -36,7 +36,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--surface-elevated, #211f28);
+  background: var(--surface-elevated, #111111);
   /* The elevated surface is the separation. Three edges of hairline around a
      44px tab was the most line-per-pixel chrome on the page. */
   border: 0;
@@ -46,7 +46,7 @@
      is rounded: html, body, .theme-root, .app-shell, .layout and main are all 0
      at every width. */
   border-radius: 0;
-  color: var(--text, #d8d6e0);
+  color: var(--text, #333333);
   padding: 0.625rem var(--space-4);
   min-height: var(--tap-min);
   font: var(--text-xs)/1 var(--font-mono, ui-monospace, monospace);
@@ -69,8 +69,8 @@
   height: min(460px, calc(100dvh - 48px));
   display: flex;
   flex-direction: column;
-  background: var(--surface-elevated, #211f28);
-  border: 1px solid var(--border, #46435a);
+  background: var(--surface-elevated, #111111);
+  border: 1px solid var(--border, #666666);
   border-block-end: 0;
   border-inline-end: 0;
   /* Square, like the tab. The widget is one surface and it now has one
@@ -155,7 +155,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.625rem 0.875rem;
-  border-bottom: 1px solid var(--border, #46435a);
+  border-bottom: 1px solid var(--border, #666666);
   font: var(--weight-bold) var(--text-xs)/1 var(--font-mono, ui-monospace, monospace);
   color: var(--text-secondary);
   flex-shrink: 0;
@@ -177,7 +177,7 @@
   border-radius: 0;
 }
 
-.nearby-chat-widget-close:hover { color: var(--text, #d8d6e0); }
+.nearby-chat-widget-close:hover { color: var(--text, #333333); }
 
 /* Frame must flex so log scrolls and composer sticks to the bottom. */
 .nearby-chat-widget-frame {
@@ -204,7 +204,7 @@
   align-items: flex-end;
   gap: 8px;
   padding: 0.5rem;
-  border-top: 1px solid var(--border, #46435a);
+  border-top: 1px solid var(--border, #666666);
   flex-shrink: 0;
   font-family: var(--font);
 }
@@ -212,10 +212,10 @@
 .nearby-chat-widget-composer textarea {
   flex: 1;
   resize: none;
-  background: var(--bg, #17161c);
-  border: 1px solid var(--border, #46435a);
+  background: var(--bg, #000000);
+  border: 1px solid var(--border, #666666);
   border-radius: 0;
-  color: var(--text, #d8d6e0);
+  color: var(--text, #333333);
   padding: 0.5rem var(--space-2);
   min-height: var(--tap-min);
   max-height: 6.5rem;
@@ -225,7 +225,7 @@
 }
 
 .nearby-chat-widget-composer textarea:focus {
-  outline: 2px solid var(--accent, #7c6fd6);
+  outline: 2px solid var(--accent, #000000);
   outline-offset: 1px;
 }
 
@@ -255,7 +255,7 @@
   font-family: var(--font);
   font-size: var(--text-sm);
   line-height: 1.5;
-  color: var(--text, #d8d6e0);
+  color: var(--text, #333333);
 }
 
 .nearby-chat-widget-empty-item {
@@ -280,7 +280,7 @@
   font-family: var(--font);
   font-size: var(--text-sm);
   line-height: 1.4;
-  border-bottom: 1px solid var(--border, #46435a);
+  border-bottom: 1px solid var(--border, #666666);
   color: var(--text-secondary);
 }
 
@@ -298,7 +298,7 @@
   font-family: var(--font);
   font-size: var(--text-sm);
   line-height: 1.4;
-  border-bottom: 1px solid var(--border, #46435a);
+  border-bottom: 1px solid var(--border, #666666);
   flex-shrink: 0;
 }
 
@@ -319,7 +319,7 @@
 }
 
 .nearby-chat-widget-linkish:hover {
-  color: var(--text, #d8d6e0);
+  color: var(--text, #333333);
 }
 
 .nearby-chat-widget-fallback {
@@ -329,13 +329,13 @@
 }
 
 .nearby-chat-widget-empty strong {
-  color: var(--text, #d8d6e0);
+  color: var(--text, #333333);
   font-weight: var(--weight-bold);
 }
 
 .nearby-chat-widget-empty a,
 .nearby-chat-widget-cta {
-  color: var(--accent, #7c6fd6);
+  color: var(--accent, #000000);
 }
 
 .nearby-chat-widget-cta {
@@ -344,9 +344,9 @@
   justify-content: center;
   min-height: var(--tap-min);
   padding: 0.5rem var(--space-3);
-  border: 1px solid var(--border, #46435a);
+  border: 1px solid var(--border, #666666);
   border-radius: 0;
-  background: var(--bg, #17161c);
+  background: var(--bg, #000000);
   text-decoration: none;
   font: var(--weight-bold) var(--text-xs)/1 var(--font-mono, ui-monospace, monospace);
   width: fit-content;
@@ -359,7 +359,7 @@
 
 .nearby-chat-widget-log li {
   padding: 4px 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--border, #46435a) 55%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--border, #666666) 55%, transparent);
 }
 
 .nearby-chat-widget-log li:last-child {

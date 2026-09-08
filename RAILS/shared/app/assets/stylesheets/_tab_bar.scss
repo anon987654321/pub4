@@ -77,7 +77,7 @@ html.chrome-hidden .tab-bar {
   opacity: 1;
 }
 .tab-bar-peel:focus-visible {
-  outline: 2px solid var(--accent, #7c6fd6);
+  outline: 2px solid var(--accent, #000000);
   outline-offset: 2px;
   border-radius: var(--radius-sm, 8px);
 }
@@ -113,11 +113,11 @@ html.chrome-hidden .tab-bar {
   z-index: calc(var(--z-nav, 80) + 1);
   width: min(20rem, calc(100vw - 2rem));
   padding: 0.75rem var(--space-3);
-  background: var(--surface-elevated, #211f28);
+  background: var(--surface-elevated, #111111);
   border: 0;
   border-radius: var(--radius-sm, 8px);
   font-family: var(--font);
-  color: var(--text, #d8d6e0);
+  color: var(--text, #333333);
   box-sizing: border-box;
 }
 .tab-bar-coach[hidden] {
@@ -152,13 +152,13 @@ html.chrome-hidden .tab-bar {
      The sibling .hotkey-coach-dismiss below carries the same note. */
   border: 0;
   background: var(--hover, #232030);
-  color: var(--text, #d8d6e0);
+  color: var(--text, #333333);
   font: var(--weight-bold) var(--text-xs)/1 var(--font);
   cursor: pointer;
 }
 .tab-bar-coach-show {
-  background: var(--accent, #7c6fd6);
-  color: var(--bg, #17161c);
+  background: var(--accent, #000000);
+  color: var(--bg, #000000);
 }
 
 .nearby-locate-actions {

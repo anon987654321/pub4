@@ -10,7 +10,7 @@
      _dialect_tokens.scss), not #000. #000 matched no definition of --surface
      anywhere, which is exactly the drift fallback_drift_lint exists to catch —
      and that failing lint had been blocking every brgen deploy. */
-  background: var(--surface, #1a1a1a);
+  background: var(--surface, #111111);
 }
 
 .ai-embed-bar {

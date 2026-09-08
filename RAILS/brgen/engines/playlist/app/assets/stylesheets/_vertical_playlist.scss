@@ -15,15 +15,15 @@ body.vertical-playlist {
 body.vertical-playlist {
   --font-mono: "SF Mono", Monaco, "Cascadia Code", monospace;
   /* Token-backed — vertical shell sets --accent to playlist teal */
-  --color-bg: var(--bg, #17161c);
-  --color-text: var(--text, #d8d6e0);
-  --color-accent: var(--accent, #12b6c4);
+  --color-bg: var(--bg, #000000);
+  --color-text: var(--text, #333333);
+  --color-accent: var(--accent, #000000);
   // #8a879c matched no real definition of --text-secondary — a stale hex from
   // an older palette. fallback_drift_lint never caught it because its glob
   // stopped at <app>/app/assets, and the verticals moved into engines/.
   --color-muted: var(--text-secondary);
   --color-overlay: color-mix(in srgb, var(--bg) 92%, transparent);
-  --color-elevated: var(--surface-elevated, #211f28);
+  --color-elevated: var(--surface-elevated, #111111);
   --transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: var(--color-bg);
   color: var(--color-text);
@@ -224,7 +224,7 @@ body.vertical-playlist .playlist-index {
   object-fit: cover;
   border-radius: var(--radius-card);
   background: var(--color-elevated);
-  border: 1px solid var(--border, #46435a);
+  border: 1px solid var(--border, #666666);
 }
 
 .playlist-artwork--fallback {

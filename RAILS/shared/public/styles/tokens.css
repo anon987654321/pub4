@@ -1,16 +1,16 @@
 /* Auto-synced by build_all_css.rb — social palette from design_tokens.yml */
 :root {
   color-scheme: dark;
-  --bg: #17161c;
-  --surface: #17161c;
-  --surface-elevated: #211f28;
-  --search-bg: #232030;
-  --text: #d8d6e0;
-  --text-secondary: #b6b3c8;
-  --border: #46435a;
+  --bg: #000000;
+  --surface: #111111;
+  --surface-elevated: #111111;
+  --search-bg: #111111;
+  --text: #efefef;
+  --text-secondary: #999999;
+  --border: #666666;
   --hover: color-mix(in srgb, var(--text) 10%, transparent);
   --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
-  --accent: #897dda;
+  --accent: #efefef;
   --danger: #e46151;
   --font: "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, monospace;
   --weight-normal: 400;

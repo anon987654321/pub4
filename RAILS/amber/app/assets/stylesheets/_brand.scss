@@ -377,7 +377,7 @@ h1, .display, .wordmark {
       color-mix(in srgb, var(--border) 55%, transparent) 6px,
       color-mix(in srgb, var(--border) 55%, transparent) 7px
     ),
-    var(--surface-elevated, #f0ebe3);
+    var(--surface-elevated, #ffffff);
   color: var(--text-secondary);
   display: grid;
   place-items: center;
