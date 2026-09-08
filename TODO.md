@@ -360,6 +360,56 @@ graph. The twelve `run_*` methods in `command_ops.rb` are the obvious next
 family: nothing dispatches them, and the two that are reached get there through
 explicit symbol tables in `repl_flow.rb` and `heartbeat.rb`.
 
+**SPRAWL-104, second increment: the closure, and the split it exposes.**
+
+`tools/method_graph.rb` is the transitive answer `method_reach.rb` could not
+give. Every method is a node, every identifier in its body an edge, and the
+roots are the names something outside `lib/` uses plus the names `lib/` uses at
+file scope. Anything the roots cannot reach is unreachable however deep it sits.
+
+Building it found four more faults in the instrument, and the fourth is a rule
+rather than a bug:
+
+- **An interpolation is code.** Blanking string literals blanked
+  `"…#{role_description}…"`, the only call four swarm workers have. This is a
+  whole class — it also explained `system_info.rb`'s four.
+- **`const_missing`** is Ruby's, and the tree's only other mention is a scan
+  rule's regex.
+- **A setter or an index cannot be reached by name.** `x.model = v` tokenises
+  as `model`; `x[k]` as nothing. `model=`, `[]` and `[]=` were dead by
+  construction.
+- **A hook is invisible to a call-site census by definition.** `Result` defines
+  `deconstruct_keys` twice for `case … in {ok:}` and nothing names it; `core.rb`
+  defines `_dump` for Marshal. The `FRAMEWORK` list in method_graph.rb is that
+  blind spot written down rather than discovered again.
+
+Closure after the fixes: **110 unreachable, 88 of them named nowhere at all**
+by an independent single-pass scan. Both readings agreeing is the bar for
+deleting.
+
+**And the 88 are two different defects, which is the finding.**
+
+*Obsolete* — leftovers of commands that were removed. Nineteen deleted here on
+top of the twenty in the first increment: the ten `run_*` in `command_ops.rb`,
+`run_dmesg`, `run_reap`, and the seven helpers whose only callers were the
+`dispatch_*` handlers already gone.
+
+*Declared and never wired* — the repo's own dominant defect, found at method
+level. Deleting these would destroy the evidence that a check was never hooked
+up, so they are recorded instead:
+
+- `review/security.rb` — `safe?` and `clean!`. A security predicate nothing
+  consults.
+- `ground/tool.rb` — `fake_execution_risk?` and `operational_claim?`. Both
+  read as anti-simulation guards, which `soul.yml` makes absolute.
+- `ground/policy/workflow.rb` — `autofix?` and `confirm?`. Policy nothing asks.
+- `cli/routing/provider_quarantine_manager.rb` — `route?` and
+  `record_and_assess`. A quarantine that is never consulted does not quarantine.
+- `cli/routing/model_router/escalation.rb` — `next_escalation_tier`.
+
+Each wants the same question, and it is not "delete or keep": what was supposed
+to call this, and why doesn't it?
+
 **Corrections to this section, from a second reading — 2026-09-08 evening.**
 
 - *PERF-100 is not absent, and this section was wrong about it.*
