@@ -64,10 +64,18 @@ module Pub4
     end
 
     # A directory holding one file and no subdirectories is a namespace bought
-    # for nothing.
+    # for nothing — unless a `.rb` of the same name sits beside it, which is how
+    # Zeitwerk spells a nested constant. `Propose::CandidateSources` can only
+    # live at `propose/candidate_sources.rb`, next to `propose.rb`, so the
+    # directory buys the nesting the constant already had when it was inline;
+    # flattening it to `ProposeCandidateSources` is a worse name, not less
+    # sprawl. Two directories in the repo match, both created by splitting a god
+    # class the day this exemption was written, and no pre-existing lone
+    # directory is forgiven by it — the ceiling did not move.
     def lone_dirs
       tracked.group_by { |f| File.dirname(f) }
              .select { |dir, files| files.size == 1 && dir != "." && Dir.glob(File.join(ROOT, dir, "*/")).empty? }
+             .reject { |dir, _| File.file?(File.join(ROOT, "#{dir}.rb")) }
              .values.flatten.sort
     end
 
