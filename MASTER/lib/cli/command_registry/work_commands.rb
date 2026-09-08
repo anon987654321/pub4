@@ -49,6 +49,7 @@ module Master
           review_crew: Review::ReviewCrew.new(agent: ai[:agent], event_bus: infra[:bus], root:,
                                              code_index: ai[:code_index], reference_graph: ai[:reference_graph]),
           git: ai.fetch(:git) { Io::GitOperations.new(File.expand_path("..", root)) },
+          swarm: ai[:swarm],
         }
       end
 

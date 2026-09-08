@@ -42,6 +42,10 @@ class TestEcosystemFeatures < Minitest::Test
     registry = Master::CLI::CommandRegistry.build(infra:, ai:, root: Master::ROOT)
     # /why joins the surface: its handler, its Trace::WhyExplainer and its place
     # in the next-action chips all existed; only the registration was missing.
-    assert_equal %w[clear commit doctor help model pair rollback status through undo why], registry.keys.sort
+    # /orders and /soul joined on the same grounds: both handlers, both
+    # subjects and both help entries existed, and control_commands was merged
+    # into the table by nothing.
+    assert_equal %w[clear commit doctor help model orders pair rollback soul status through undo why],
+                 registry.keys.sort
   end
 end

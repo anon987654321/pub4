@@ -38,8 +38,9 @@ module Master
         # input, which is a real condition and belongs in the report.
         DEFECT_ERRORS = [NameError, TypeError].freeze
 
-        def initialize(scanner:, fix_loop:, root:, deliberation: nil, bus: nil, review_crew: nil)
+        def initialize(scanner:, fix_loop:, root:, deliberation: nil, bus: nil, review_crew: nil, swarm: nil)
           @failed_stages = []
+          @swarm = swarm
           @scanner = scanner
           @fix_loop = fix_loop
           @root = root
@@ -62,6 +63,8 @@ module Master
         # Both scan passes stay together for a second reason: the RAILS
         # constitutional budget is measured off the aesthetic one, so splitting
         # them would change what that gate compares against.
+        SWARM_EXCERPT = 400
+
         STAGES = %w[scan critique map].freeze
         STAGE_ALIASES = { "fix" => "scan", "aesthetic" => "scan", "council" => "critique" }.freeze
 
@@ -305,6 +308,30 @@ module Master
         def run_critique(abs)
           return "critique: deliberation not configured" unless @deliberation
 
+          [swarm_review(abs), deliberation_critique(abs)].compact.join("\n")
+        end
+
+        # Review::Swarm::Coordinator is built under MASTER_FULL_BOOT=1, placed in
+        # the bundle as `swarm:`, and until now read by nothing: 546 lines of
+        # analyst/reviewer fan-out with a vote engine sitting in the boot graph,
+        # 99 of 278 body lines unreached. It runs here because a per-file reading
+        # is what `analyse_and_review` is for, and ahead of the deliberation
+        # because the council argues better with one in front of it. A lean boot
+        # passes nil and this returns nil, so the default pass is unchanged.
+        def swarm_review(abs)
+          return nil unless @swarm && File.file?(abs)
+
+          result = @swarm.analyse_and_review(file_path: abs, code: File.read(abs))
+          return "swarm: #{result.message}" unless result.ok?
+
+          reading = result.value!
+          verdict = reading[:approved] ? "approved" : "not approved"
+          "swarm: #{verdict} — #{reading[:review].to_s.gsub(/\s+/, " ")[0, SWARM_EXCERPT]}"
+        rescue StandardError => e
+          stage_failure("swarm", "crit0", e)
+        end
+
+        def deliberation_critique(abs)
           Master::CLI::CommandRegistry.dispatch_critique(
             deliberation: @deliberation,
             root: @root,

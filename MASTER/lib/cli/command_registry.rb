@@ -36,7 +36,11 @@ module Master
         d = work_command_deps(ai:, root:, infra:)
         undo = infra[:undo]
         {
-          "through" => command(:dispatch_through, d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus], d[:review_crew]),
+          # Positional, and the order is load-bearing: Command#dependency_kwargs
+          # zips these against dispatch_through's keyword names in declaration
+          # order, so swarm goes last in both places.
+          "through" => command(:dispatch_through, d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus],
+            d[:review_crew], d[:swarm]),
           "status" => command(:dispatch_status, d[:root], d[:fix_loop], d[:bus], d[:git], d[:trace]),
           "undo" => command(:dispatch_undo, undo),
           "rollback" => command(:dispatch_undo, undo),
@@ -47,7 +51,7 @@ module Master
           "doctor" => command(:dispatch_doctor, root),
           "why" => command(:dispatch_why, d[:agent], d[:root]),
           "help" => command(:help_text, nil),
-        }
+        }.merge(control_commands(ai[:standing], ai[:soul]))
       end
 
       def dispatch_clear(session, ctx: nil)
@@ -154,6 +158,12 @@ module Master
         "audit: #{e.message}"
       end
 
+      # /orders and /soul. Built here since the surface closed and merged into
+      # it by nothing, so data/state.yml described standing orders running
+      # "via /orders" and data/soul.yml described amendment as
+      # `soul propose -> soul approve`, and neither verb existed. The amendment
+      # path the constitution names has to be reachable from the runtime the
+      # constitution governs.
       def control_commands(standing, soul)
         {
           "orders" => command(:dispatch_orders, standing),

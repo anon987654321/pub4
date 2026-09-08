@@ -133,6 +133,55 @@ end
     assert_equal :run_rails_through, r.classify("through rails")
   end
 
+  # :unknown is not a neutral answer. TurnRouter#casual? reads it as plain
+  # conversation and talks to the agent instead of folding the work, so an
+  # ordinary request that scores zero is silently answered rather than done.
+  # These two scored zero: the token scan splits "isn't" into "isn" and "t",
+  # and "run" belongs to no keyword list because adding it would swallow
+  # "run master through".
+  def test_intent_router_reads_a_diagnosis_question
+    r = Master::Ground::IntentRouter.new
+    assert_equal :diagnose_behaviour, r.classify("Why isn't the homepage realtime?")
+    assert_equal :diagnose_behaviour, r.classify("what's breaking in the deploy")
+  end
+
+  def test_intent_router_reads_a_test_run
+    r = Master::Ground::IntentRouter.new
+    assert_equal :run_relevant_tests, r.classify("Run the relevant tests.")
+    assert_equal :run_relevant_tests, r.classify("rerun the failing specs")
+  end
+
+  # The doors are narrow on purpose: plain conversation must still reach the
+  # chat path, and "run master through" must still reach the workflow.
+  def test_intent_router_still_spares_conversation
+    r = Master::Ground::IntentRouter.new
+    assert_equal :unknown, r.classify("hi")
+    assert_equal :unknown, r.classify("what is the weather")
+    assert_equal :run_full_workflow, r.classify("run master through")
+  end
+
+  # SPRAWL-105: the coordinator was constructed under MASTER_FULL_BOOT and read
+  # by nothing. These two pin both halves of the wiring -- that a lean boot
+  # still runs the pass it ran, and that a full boot reaches the coordinator.
+  def test_through_without_a_swarm_adds_nothing_to_critique
+    through = Master::CLI::Pipeline::Through.new(scanner: nil, fix_loop: nil, root: Master::ROOT)
+
+    assert_nil through.send(:swarm_review, __FILE__)
+  end
+
+  def test_through_reads_the_swarm_when_one_is_wired
+    swarm = Object.new
+    swarm.define_singleton_method(:analyse_and_review) do |file_path:, code:|
+      Master::Result.ok({ analysis: "read #{code.length} bytes", review: "no issues", approved: true })
+    end
+    through = Master::CLI::Pipeline::Through.new(scanner: nil, fix_loop: nil, root: Master::ROOT, swarm:)
+
+    line = through.send(:swarm_review, __FILE__)
+
+    assert_includes line, "swarm: approved"
+    assert_includes line, "no issues"
+  end
+
   def test_through_footer_names_a_skipped_tier
     result = Master::CLI::Pipeline::Through::Result.new(
       target: ".", mode: "balanced", sections: [], ok: true, unit: "through0", failed_stages: []

@@ -28,6 +28,20 @@ module Master
         run_master_through: %w[itself self master singularity dogfood selfscan],
       }.freeze
 
+      # Two doors the keyword score cannot open, both of them ordinary things
+      # to ask for.
+      #
+      # `scan(/\w+/)` turns "isn't" into "isn" and "t", and no keyword list
+      # holds "why", so "why isn't the homepage realtime?" scored zero and came
+      # back :unknown — and TurnRouter#casual? reads :unknown as plain
+      # conversation, so the question reached the chat path instead of the Fold.
+      # "run the relevant tests" failed the same way: "run" belongs to no intent
+      # and adding it would swallow "run master through".
+      DIAGNOSIS = /\A(?:why|how come)\b|\bwhat(?:'s| is)\s+(?:wrong|breaking|failing|going on)\b/i
+      TEST_QUALIFIER = /(?:the|all|relevant|failing|remaining|whole|full)\s+/
+      TEST_RUN = /\b(?:re-?)?run\s+#{TEST_QUALIFIER}*(?:tests?|specs?|suites?|minitest)\b|
+                  \b(?:tests?|specs?|suite)\s+(?:green|passing|failing)\b/xi
+
       # "read CLAUDE.md" is a file request. Token-scoring "read" alone would
       # also match "I read that", so the path-with-extension form is the
       # intent; the keyword list above is a secondary score, not the door.
@@ -53,7 +67,7 @@ module Master
         low: %i[
           codify_policy refactor_to_ruby create_facade apply_user_style_rules
           run_sound_review run_ui_review audit_rails_pwa generate_rails_pwa redesign_mobile_pwa
-          inspect_repo
+          inspect_repo diagnose_behaviour run_relevant_tests
         ],
         medium: %i[
           wire_existing_module verify_patch_landed continue_prior_plan prefer_ruby refactor_rails_app
@@ -66,6 +80,8 @@ module Master
       def classify(text)
         downcased = text.to_s.downcase.strip
         return :inspect_repo if downcased.match?(FILE_READ)
+        return :run_relevant_tests if downcased.match?(TEST_RUN)
+        return :diagnose_behaviour if downcased.match?(DIAGNOSIS)
         return STANDING_SEMANTICS[downcased] if STANDING_SEMANTICS.key?(downcased)
 
         # Exact token match, not substring/prefix: short keywords like "ui",

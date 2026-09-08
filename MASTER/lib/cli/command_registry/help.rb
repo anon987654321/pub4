@@ -59,6 +59,17 @@ module Master
           summary: "clear the session transcript",
           detail: ["/clear — does not undo file changes."],
         },
+        "orders" => {
+          summary: "standing orders — the work that runs without being asked",
+          detail: ["/orders", "/orders enable|disable|reset <name>", "/orders run",
+                   "/orders add name=<name> cmd=<command> — the table is data/state.yml."],
+        },
+        "soul" => {
+          summary: "read and amend the constitution",
+          detail: ["/soul — the summary. /soul version, /soul diff.",
+                   "/soul propose <rationale> then /soul approve or /soul reject;",
+                   "/soul rollback undoes the last amendment. Absolute sections do not move."],
+        },
         "why" => {
           summary: "what a rule says, and where it comes from",
           detail: ["/why <law|scan_rule|anti_pattern|style.key> — Trace::WhyExplainer looks it",

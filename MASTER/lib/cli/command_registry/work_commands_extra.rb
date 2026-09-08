@@ -32,7 +32,7 @@ module Master
 
       # Full singularity sequence (aesthetic → scan → fix → re-scan → critique).
       # Invoked by natural-language inference, /workflow, /through, /triad — users need not memorize stages.
-      def dispatch_workflow(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, **_legacy)
+      def dispatch_workflow(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, swarm: nil, **_legacy)
         raw = arg_for(ctx).to_s.strip
         apply, critique, aesthetic, only, target = parse_through_flags(raw)
         Master::CLI::Pipeline::Through.new(
@@ -42,13 +42,14 @@ module Master
           deliberation:,
           bus:,
           review_crew:,
+          swarm:,
         ).call(target:, apply:, critique:, aesthetic:, only:).render
       end
 
-      def dispatch_through(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, **_legacy)
+      def dispatch_through(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, swarm: nil, **_legacy)
         dispatch_workflow(
           scanner:, fix_loop:, deliberation:,
-          root:, bus:, ctx:, review_crew:
+          root:, bus:, ctx:, review_crew:, swarm:
         )
       end
 
