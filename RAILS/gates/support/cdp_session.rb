@@ -6,6 +6,7 @@ require "base64"
 require "digest/sha1"
 require "securerandom"
 require_relative "cdp_framing"
+require_relative "chrome_process"
 require "tmpdir"
 require "fileutils"
 require "net/http"
@@ -28,6 +29,8 @@ module Deploy
   #   end
   class CdpSession
     include CdpFraming
+    include ChromeProcess
+    extend ChromeProcess::Discovery
 
     class Error < StandardError; end
     class Timeout < Error; end
@@ -37,26 +40,7 @@ module Deploy
     # Timeout because a timeout is retryable and this is not.
     class Desync < Error; end
 
-    CHROME_PATHS = [
-      ENV["CHROME_PATH"],
-      "/usr/local/bin/chromium",
-      "/usr/local/bin/chrome",
-      "/usr/local/chrome/chrome",
-      "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-      "/Applications/Chromium.app/Contents/MacOS/Chromium",
-      "/usr/bin/chromium",
-      "/usr/bin/google-chrome",
-    ].compact.freeze
-
     DEFAULT_TIMEOUT = Integer(ENV.fetch("GATE_BROWSER_TIMEOUT", "20"))
-
-    def self.chrome_path
-      CHROME_PATHS.find { |path| File.executable?(path) }
-    end
-
-    def self.available?
-      !chrome_path.nil?
-    end
 
     # host_map: { "markedsplass.brgen.no" => "127.0.0.1:38182", ... }
     # Rules are applied in order and first match wins, so callers should pass
@@ -118,24 +102,6 @@ module Deploy
       rescue StandardError # scan: intentional — teardown; the socket is closing either way
         nil
       end
-    end
-
-    def reap_chrome
-      return unless @pid
-
-      Process.kill("TERM", @pid)
-      deadline = monotonic + 5
-      loop do
-        break if Process.waitpid(@pid, Process::WNOHANG)
-        break if monotonic > deadline
-
-        sleep 0.05
-      end
-      Process.kill("KILL", @pid) if monotonic > deadline
-    rescue Errno::ESRCH, Errno::ECHILD
-      nil
-    ensure
-      @pid = nil
     end
 
     # --- high level ---------------------------------------------------------
@@ -350,76 +316,6 @@ module Deploy
       Process.clock_gettime(Process::CLOCK_MONOTONIC)
     end
 
-    def spawn_chrome(chrome)
-      args = [
-        chrome,
-        "--headless=new",
-        "--remote-debugging-port=0",
-        "--user-data-dir=#{@profile}",
-        "--no-first-run",
-        "--no-default-browser-check",
-        "--disable-extensions",
-        "--disable-background-networking",
-        "--disable-sync",
-        "--no-sandbox",
-        "--disable-dev-shm-usage",
-        "--hide-scrollbars",
-        "--force-device-scale-factor=1",
-        "--force-color-profile=srgb",
-        "--font-render-hinting=none",
-        "--disable-lcd-text",
-        "--disable-features=NetworkService,TranslateUI,BackForwardCache",
-        "--mute-audio",
-        # --disable-gpu turns WebGL off entirely, which is right for the layout
-        # and CSS gates this session was written for — software GL is slow and
-        # rasterises text differently. It is wrong for a surface made of WebGL:
-        # MapLibre and the MASTER face both measured as an empty canvas, so a
-        # gate asserting "the map draws" would have passed or failed for reasons
-        # that had nothing to do with the map. SwiftShader is the opt-in.
-        *(@webgl ? [ "--use-angle=swiftshader", "--enable-unsafe-swiftshader" ] : [ "--disable-gpu" ]),
-        "about:blank",
-      ]
-      unless @host_map.empty?
-        rules = @host_map.map { |host, target| "MAP #{host} #{target}" }.join(", ")
-        args.insert(-2, "--host-resolver-rules=#{rules}")
-      end
-      spawn(*args, out: File::NULL, err: File::NULL)
-    end
-
-    def devtools_port
-      port_file = File.join(@profile, "DevToolsActivePort")
-      deadline = monotonic + @timeout
-      loop do
-        if File.file?(port_file)
-          line = File.read(port_file).lines.first.to_s.strip
-          return line.to_i if line.to_i.positive?
-        end
-        raise Timeout, "Chrome never wrote DevToolsActivePort" if monotonic > deadline
-
-        sleep 0.05
-      end
-    end
-
-    def discover_page_target
-      port = devtools_port
-      deadline = monotonic + @timeout
-      loop do
-        body = begin
-          Net::HTTP.get(URI("http://127.0.0.1:#{port}/json/list"))
-        rescue StandardError # scan: intentional — one poll in the discovery loop; nil retries
-          nil
-        end
-        if body
-          targets = JSON.parse(body) rescue []
-          page = targets.find { |t| t["type"] == "page" && t["webSocketDebuggerUrl"] }
-          return page["webSocketDebuggerUrl"] if page
-        end
-        raise Timeout, "no CDP page target on port #{port}" if monotonic > deadline
-
-        sleep 0.05
-      end
-    end
-
     def connect(ws_url)
       uri = URI(ws_url)
       @socket = TCPSocket.new(uri.host, uri.port)
@@ -545,6 +441,5 @@ module Deploy
     rescue JSON::ParserError
       nil
     end
-
   end
 end

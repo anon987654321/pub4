@@ -110,32 +110,25 @@ class FileLengthRatchetTest < Minitest::Test
     # being hand-edited and the inventory learned to tell the two apart.
     # page_inventory.rb left this list on 2026-09-06: 444 -> 288 when the five
     # filename ladders went and the route manifest became the only answer.
-# 428 -> 339 on 2026-08-26. The seam was already drawn in the file: a
-# `--- websocket framing ---` banner, above which every method speaks CDP
-# (navigate, evaluate, press, screenshot) and below which every method
-# speaks RFC 6455 and knows nothing about Chrome. The 101 lines below it
-# are gates/support/cdp_framing.rb, included back in, so the methods stay
-# private to CdpSession exactly as they were.
-#
-# Two constants had to move or be qualified: MAX_FRAME_BYTES went with its
-# only reader, and Error/Desync are now CdpSession::. Constant lookup is
-# lexical and an included module does not see the includer's constants —
-# which surfaced as the frame reader raising NameError, reported by the
-# runner as a gate that errored and blocked nothing. Verified by running
-# viewport_spill and occlusion against live apps with GATE_STRICT_ERRORS=1;
-# the desync-recovery path fires in that run, so the extracted code is
-# exercised rather than merely loaded.
-    # 436 -> 406 on 2026-08-26. The dependency graph and the wordmark went
-    # to _port_graph.scss. Left the list 2026-09-05: under the 400 scss
-    # limit, so a ceiling here would only re-admit it.
+    # cdp_session.rb left this list on 2026-09-08: 339 -> 288, under the 300
+    # rb limit, so a ceiling here would only re-admit it. The first split, on
+    # 2026-08-26, took the RFC 6455 half into cdp_framing.rb along a
+    # `--- websocket framing ---` banner the file already carried. The second
+    # took the other seam: finding Chrome, launching it, waiting for
+    # DevToolsActivePort, discovering the page target and reaping the process
+    # are gates/support/chrome_process.rb. What is left speaks the DevTools
+    # Protocol to a browser that is already running.
     #
-    # Recorded 338 earlier the same day from this ratchet's own staleness
-    # message, and it measures 339 now. One line, and its provenance is not
-    # attributable: three sessions were writing this tree through the pass and
-    # HEAD moved twice. 428 -> 339 is the number that matters and it is still
-    # down by 89; recording what it measures is the honest reading rather than
-    # a guess about which session added the line.
-    "gates/support/cdp_session.rb" => 339,
+    # The same constant trap as the first split, and avoided rather than paid:
+    # `raise Timeout` inside the extracted module resolves to the stdlib
+    # module, and only at the moment the deadline is hit, so it is a NameError
+    # in place of the error the caller rescues. Spelled CdpSession::Timeout,
+    # and both timeout paths were driven to make sure.
+    #
+    # Verified against a real Chrome rather than by reading: viewport, headers,
+    # cookies, navigate, status, evaluate, a computed style, a bounding rect,
+    # a key press, console capture, a screenshot and a thrown JsError, before
+    # and after, byte-identical.
     # +5 in 7ed6920cd — the seeds asked for a visible profile without a photo,
     # which gated every deploy.
     "brgen/db/seeds.rb" => 426,

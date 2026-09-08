@@ -187,7 +187,12 @@ pub4_source_ceilings:
   # gates/support/design_metrics/type_checks.rb takes the five source checks
   # that read a font declaration (design_metrics 462 -> 345). Both are one
   # subject, and both fold into nothing that exists.
-  RAILS: 2373
+  # 2373 -> 2374 for gates/support/chrome_process.rb, the third file
+  # cdp_session.rb has been split into and the one that takes it off the
+  # length list outright (339 -> 288, under the limit). Finding Chrome,
+  # launching it, waiting for its debugging port and reaping it is a subject;
+  # what is left speaks CDP to a browser that is already running.
+  RAILS: 2374
   # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
   # that are the whole defence against a shared index, and nothing tested any of
   # them — a hook that stopped firing looks exactly like a week in which nobody

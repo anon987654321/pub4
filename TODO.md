@@ -3061,21 +3061,32 @@ with its blocker rather than left implied:
 3. **The anonymised contact relay** — inbound mail routing on vm23.
 4. **Live streaming, Solidus, pgvector** — infrastructure, listed under Blocked.
 
-### Four files over their length ceilings
+### Three files over their length ceilings
 
 `RAILS/test/file_length_ratchet_test.rb`, the one red file in the standalone
 suite. `limits.yml`'s rule holds here too: a breach is paid by extraction or
 deletion, never by a bigger number.
 
-    gates/support/cdp_session.rb              374 / 339  (+35)
     shared/app/assets/stylesheets/_zen_shell.scss  502 / 477  (+25)
     gates/lib/live/user_flow.rb               320 / 313  (+7)
     gates/lib/rendered/rendered_geometry.rb   450 / 449  (+1)
 
-68 lines between them, and every one of the four drives Chrome over CDP or
-measures what Chrome painted. An extraction there is only provable against a
-booted fleet — `RAILS/bin/triangle up` first, or the split lands unmeasured.
-The counterpart half of that test is green: no ceiling is slack any more.
+33 lines between them. The counterpart half of that test is green: no ceiling
+is slack any more.
+
+**`_zen_shell.scss` is not an extraction, and that is the finding.** Its rules
+reach the apps through one `@forward` in `_stack_brgen.scss`, so source order
+is cascade order, and Sass allows `@use`/`@forward` only at the top of a file.
+A partial lifted out of the middle lands after everything that followed it. The
+only order-preserving split is head/forms/tail — three files, two of which are
+named for a position rather than a subject. The forms block (`.input-group`,
+`.field--float`, `.dropzone`, the direct-upload and error families, `fieldset`)
+is the subject that is there; taking it needs the owner, because this repo says
+restore or ask and never invent a layout change.
+
+The other two are +7 and +1 against a booted fleet. A one-line overage does not
+want a file of its own, so the payment there is deletion, and the four-file
+census on 2026-09-06 found nothing dead in either.
 
 **The deadlock that kept this list alive is gone.** It read: `file_length` is
 per file and wants a split, `growth.rails` counts files and was thirteen over,
@@ -3087,6 +3098,15 @@ were paid that way on 2026-09-08 and left the list:
 - `deploy_backlog_test.rb` 631 → 557. Playlist import, track ownership, hosted
   tracks and set likes are `playlist_wiring_test.rb` — four contracts that
   arrived one at a time and read as one subject, out of a bundle of forty.
+- `gates/support/cdp_session.rb` 339 → 288, off the list outright. Finding
+  Chrome, launching it, waiting for `DevToolsActivePort`, discovering the page
+  target and reaping the process are `chrome_process.rb`; what is left speaks
+  CDP to a browser that is already running. The first split, in August, took
+  the RFC 6455 half. Verified against a real Chrome — viewport, headers,
+  cookies, navigate, status, evaluate, a computed style, a bounding rect, a key
+  press, console capture, a screenshot and a thrown `JsError` — identical
+  before and after, and both timeout paths driven to prove `CdpSession::Timeout`
+  rather than the stdlib `Timeout` the first split had to learn about.
 - `gates/lib/research/design_metrics.rb` 462 → 345. Input size, heading
   hierarchy, the weight ladder, font families and lowercase tracking are
   `design_metrics/type_checks.rb`, a module included back into the gate like
@@ -3120,9 +3140,8 @@ The reading that transfers: measure how often a fallback is taken before
 extracting the file that holds it. Three calls out of 204 is not a fallback,
 it is a residue.
 
-**The remaining four carry nothing dead, measured 2026-09-06.** A Prism census
-over every method finds zero with no caller. So they are long files doing long
-work, and the only payment left is extraction against a booted fleet.
+**The remaining three carry nothing dead, measured 2026-09-06.** A Prism census
+over every method finds zero with no caller.
 
 Two instrument errors while measuring that, both the same family and both worth
 not repeating. A dead-method census reported eleven methods with no caller; the

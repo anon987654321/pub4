@@ -33,11 +33,14 @@ class WebglSurfacesGateTest < Minitest::Test
   # software GL is slow and rasterises text differently — dropping it globally
   # would change what the layout and CSS gates measure.
   def test_swiftshader_is_opt_in_and_disable_gpu_is_the_default
-    source = File.read(File.join(ROOT, "gates/support/cdp_session.rb"))
+    # Two files since the split: the flags are built where Chrome is launched,
+    # the session still takes the keyword that selects between them.
+    flags = File.read(File.join(ROOT, "gates/support/chrome_process.rb"))
+    session = File.read(File.join(ROOT, "gates/support/cdp_session.rb"))
 
-    assert_match(/@webgl \?.*swiftshader.*disable-gpu/m, source,
+    assert_match(/@webgl \?.*swiftshader.*disable-gpu/m, flags,
                  "the flag has to be a branch, not a replacement")
-    assert_includes source, "def initialize(host_map: {}, timeout: DEFAULT_TIMEOUT, webgl: false)"
+    assert_includes session, "def initialize(host_map: {}, timeout: DEFAULT_TIMEOUT, webgl: false)"
   end
 
   # A gate that cannot fail is not a gate. brgen's own front page has no WebGL
