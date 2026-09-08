@@ -11,7 +11,7 @@ consistency campaign; enforcement lives in `visual_contract_lint`,
 
 | Surface | Palette | Radius | Type | Theme |
 |---|---|---|---|---|
-| brgen (+verticals) | brgen_old grayscale, per-vertical accents (3-slot map) | 4/8/12/8 | Inter | dark default, `data-theme` toggle |
+| brgen (+verticals) | brgen_old grayscale, per-vertical accents (3-slot map) | 4/8/12/8 | Inter | light default on all eight, `data-theme` toggle |
 | amber | luxury warm paper | –/6/10/14 | Inter + editorial faces (amber-only) | light default, `data-theme` toggle |
 | bsdports | wscons terminal green | 0 | system mono | **one-theme by design** — no toggle until decided otherwise |
 | MASTER face | black + lavender `--c-*` | 0 | JetBrains Mono | **one-theme black by design** |

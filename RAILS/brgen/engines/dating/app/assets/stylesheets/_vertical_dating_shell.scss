@@ -11,10 +11,16 @@ body.vertical-dating {
      the one label on the intro a user is meant to read carefully. Same hue,
      darkened until it clears AA: 5.62:1 on --bg. Dark mode keeps the bright
      teal, which is already 9.42:1 there. */
-  /* dating is a DARK surface (operator, 2026-08-24) and the layout pins it, so
-     the bright accent is the ink unconditionally. #00705c was the light-card
-     value and it was the default, which put it on a dark card at APCA Lc 22.2
-     and WCAG 3.47 — below AA. No theme branch: the surface has one theme. */
+  /* The accent is the ink unconditionally, and the premise that earned that is
+     gone. It was written when the layout pinned dating dark, where the bright
+     teal measures 9.11 on the card and #00705c would have been APCA Lc 22.2 —
+     so one value, no theme branch. brgen now defaults LIGHT on all eight
+     surfaces (ApplicationHelper::DEFAULT_SURFACE_THEME), where --dating-accent
+     resolves to the map's light slot #009579 and this ink measures 3.77 on
+     #ffffff. That clears the 3:1 non-text floor visual_contract_lint holds
+     accents to and misses AA for text, and the BankID trust line is text.
+     #00705c is 6.05 there. Restoring it is a rendered value and a decision;
+     it is recorded in TODO.md rather than taken here. */
   --dating-accent-ink: var(--dating-accent);
   --dating-accent-warm: #ff5500;
   --dating-pass: var(--danger);

@@ -5293,6 +5293,28 @@ question under all of this. WCAG 1.4.11's 3:1 covers non-text components;
 link text is still text under 1.4.3. The tree's stance is recorded and
 defensible; it is named here because it is a choice, not an oversight.
 
+**Two `#dark-toggle:checked ~ .theme-root` branches cannot match, and one of
+them costs contrast.** `shared/_theme_toggle` renders the input inside the
+`role="region"` wrapper, so it is not a sibling of `.theme-root` and the `~`
+combinator has nothing to reach; brgen's layout also renders the toggle only
+`unless vertical_surface?`, so on a vertical the input is not in the DOM at
+all. Both conditions hold independently. SURFACES.md called this lane retired
+on 2026-08-21 and two verticals still steer by it:
+
+- `_vertical_takeaway.scss:29` corrects `--food-dash-ink` for a dark card and
+  never fires, so takeaway's meta text wears `#c62b1b` — tuned for a light
+  card — on `#1a1a1a` at **3.12:1**. The value the dead branch names,
+  `#e07b39`, is 5.85 there. A written intent, a measured cost, and a one-line
+  repair: the same rule under `:root[data-theme="dark"]`, which is the live
+  lane. It changes a rendered colour in dark mode, so it waits on the operator.
+- `_vertical_dating_shell.scss:32` sets `--dating-accent-ink:
+  var(--dating-accent)`, which the base block already sets. Inert and harmless;
+  delete it or leave it, but it is not load-bearing.
+
+amber still wears the checkbox lane deliberately (`_variables.scss:45,55`) and
+renders its own `#dark-toggle` outside any wrapper, so it is unaffected. Do not
+sweep the two trees together.
+
 **Forward work from the same survey, none of it started.** A shared display-type
 slot so a hero opts out of `main#main-content > header h1` by name rather than
 by matching an id (`_vertical_marketplace.scss` carries that workaround under

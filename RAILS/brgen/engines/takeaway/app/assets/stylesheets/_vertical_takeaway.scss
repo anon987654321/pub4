@@ -13,10 +13,14 @@ body.vertical-takeaway {
   /* --food-dash is an urgency red on a dark chip. Used as ink directly on a
      light feed card it measures 2.93:1, so text-on-surface takes its own value:
      4.80 on --surface-elevated, 4.54 on the card fill. */
-  /* takeaway is a LIGHT surface (operator, 2026-08-24) and the layout pins it,
-     so this is unconditional: the darkened red is the ink for a light card, and
-     the bright --food-dash stays the ink for the dark #202020 eta chip. There is
-     no theme branch here because the surface does not have two themes. */
+  /* Unconditional: the darkened red is the ink for a light card, and the bright
+     --food-dash stays the ink for the dark #202020 eta chip. This was written
+     when the layout pinned takeaway light on its own; brgen now defaults light
+     on all eight surfaces (ApplicationHelper::DEFAULT_SURFACE_THEME), so the
+     value is still right and the reason is now the fleet default rather than
+     this surface's exception. Measured 2026-09-08: #c62b1b is 5.58 on #ffffff
+     and 4.99 on #f2f2f2. This fill/ink split is the shape the other six
+     verticals want — see TODO.md. */
   --food-dash-ink: #c62b1b;
 }
 
