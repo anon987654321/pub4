@@ -3303,6 +3303,323 @@ agents unless explicitly requested. Canonical active inventory is
     - infrastructure knowledge graph — status: planned
     - OpenBSD package intelligence — status: planned
 
+### Survey of `RAILS/` — 2026-09-08, structure, order and the shared engine
+
+A read-only pass over the three apps, the shared engine and the gates. No code
+under `RAILS/` was changed. Ranked by value, with what was run to verify each.
+Everything measured live: the standalone suite is green but for the length
+ratchet, every source gate passes, and every RAILS lint sits exactly on its
+ceiling.
+
+**Instrument note first, because it cost two findings.** BSD `grep` has no `\|`
+alternation in a basic regular expression, and a pattern built through a Ruby
+double-quoted string arrives as one. Two searches for `A\|B` therefore reported
+zero hits over subjects that were there — `Shared::ConsentHelper` read as absent
+while `shared/lib/shared/engine.rb:91` registers it, and two lints read as
+unreferenced while `MASTER/tools/ratchets.rb:325` measures both. Use `grep -E`.
+This is the "BSD variants break GNU idioms" rule catching a survey of its own
+tree.
+
+#### 1. `Shared::Authentication` is two things, and the model is the one that lost
+
+`shared/app/models/authentication.rb` declares `Shared::Authentication <
+ApplicationRecord`. `shared/app/controllers/concerns/shared/authentication.rb`
+declares `module Shared::Authentication`. One constant, two definitions, and the
+concern wins: booting bsdports and asking gives `Shared::Authentication ->
+Module`, `respond_to?(:table_exists?) -> false`, and Zeitwerk's shadowed-file set
+contains `RAILS/shared/app/models/authentication.rb` — so that file is never
+loaded, in any environment.
+
+The consequence is a 500 rather than dead weight.
+`shared/app/controllers/omniauth_callbacks_controller.rb:66` and `:90` read
+`defined?(Shared::Authentication) && Shared::Authentication.table_exists?`. The
+`defined?` guard is satisfied by the module, so evaluation proceeds and raises —
+verified in a booted app: `NoMethodError: undefined method 'table_exists?' for
+module Shared::Authentication`. Line 66 is reached from
+`find_or_create_user:43`, which `create:29` calls on every callback, and neither
+rescues. Locally no provider registers (`shared/config/initializers/omniauth.rb`
+returns early without a client id and secret), so it is latent here and live the
+moment a key lands in `/etc/<app>.env`. The comment at lines 31–34 records this
+endpoint raising `NoMethodError` once before, for a different missing method.
+
+No app has the table: no migration creates `authentications` and none of the
+three `db/schema.rb` carries it. So the fix is deletion, not renaming — drop the
+shadowed model, `legacy_authentication_for` and `persist_legacy_authentication`,
+and let `ExternalIdentity`/`IdentityProvider` be the one path, which is the
+`ONE_SOURCE` answer the `Stream` record above reached for the same shape. Pays
+one file.
+
+`apps.yml:41` is wrong about this in a second way: it names
+`Shared::OmniauthCallbacksController`, and the class is bare
+`OmniauthCallbacksController`. The row says `status: done`.
+
+The guard that would have caught it is one test. Boot one app and assert
+Zeitwerk's shadowed set holds only the eight helpers `engine.rb` loads with
+`require_dependency` — those are shadowed by design, the ninth was not.
+
+#### 2. Eight gate classes each wrote their own HTTP client
+
+`RAILS/tools/crawl_support.rb:67` is `CrawlSupport.fetch(url, timeout:)`, and
+every gate already requires the module for `CrawlSupport.port_open?`. It cannot
+set a `Host` header, so eight gates carry a private near-copy of it:
+
+    gates/lib/live/user_flow.rb:389        fetch_with_host   open 8  read 15
+    gates/lib/live/page_simulation.rb:345  fetch_with_host   open 6  read 12  + Accept
+    gates/lib/live/first_screen.rb:216     fetch             open 8  read 15
+    gates/lib/live/surface_schema.rb:90    fetch             open 8  read 15
+    gates/lib/source/content_honesty.rb:111 fetch            open 8  read 20
+    gates/lib/source/payment_honesty.rb:78 fetch             open 8  read 12
+    gates/lib/research/visual_quality.rb:201 fetch           open 8  read 15
+    gates/lib/rendered/journey_invariant.rb:158 fetch_raw    open 8  read 15
+
+Verified by reading all eight: the bodies differ in the timeout numbers, one
+`Accept` header and the method name. Giving `CrawlSupport.fetch` a `host:` and an
+`accept:` keyword deletes about 64 lines across eight files and adds none. It
+also fixes a latent gap — `CrawlSupport.fetch` sets `use_ssl:` from the scheme
+and not one of the eight copies does, so none of them can probe an `https` URL.
+This pays `user_flow.rb`'s +5 ratchet overage exactly, without a new file.
+
+`gates/lib/live/flow_journey.rb:347` and `gates/support/guest_flow_persona.rb:129`
+build POST and PATCH requests and are a separate subject; leave them.
+
+#### 3. `_zen_shell.scss` does have a subject-named split, and the button family is it
+
+The standing note above says the only order-preserving split is head/forms/tail.
+That was reasoned from "source order is cascade order", which is true only
+between two rules that can match the same element *and* set the same property.
+Measured rather than assumed: a script walked the 104 top-level blocks, recorded
+each block's selector tokens and declared properties, and reported every ordered
+pair sharing both. **37 pairs out of 5,356 possible pin the order.** Everything
+else in the file is free to move.
+
+The `.btn` family at lines **94–160** — `.btn`, `:hover`, `:disabled` and
+`[aria-disabled]`, the four compound variants and `.btn-sm`, with the comment at
+126–132 that explains the compound-specificity contract — is pinned to itself and
+to nothing outside itself. Fourteen of the 37 pairs are internal to it; none
+crosses its boundary. Lift it verbatim into `_zen_buttons.scss` and it pays 67
+source lines against a +25 overage, named for its subject.
+
+Specificity closes the gap the pair list cannot. The only other rules in the file
+that a `<button class="btn">` matches are `*, *::before, *::after` at 4–8,
+`input, button, textarea, select { font: inherit }` at 28–30 and `:focus-visible`
+at 45 — 0-0-0 and 0-0-1 against `.btn`'s 0-1-0, so they lose whatever the order.
+Every `.btn` mention in the file is inside 94–160 or inside the two media blocks
+below.
+
+One position constraint, and it is the whole of the surgery. `_zen_shell.scss`
+also names `.btn` inside `@media (forced-colors: active)` at 598–605 and
+`@media print` at 607–624. Print uses `!important` and does not care; the
+forced-colors block is 0-1-0 against the base's 0-1-0 and must stay later. So the
+new partial is `@forward`ed **immediately before** `zen_shell` in both
+`_stack.scss` and `_stack_brgen.scss` — after `animations`, which keeps it later
+than `_layout_chrome.scss:107` and `_minimal.scss` (whose line 291 records that
+zen_shell's position is the one that wins) and earlier than zen_shell's own media
+overrides. Nothing moves, nothing is renamed, no value changes.
+
+Two further blocks report zero pairs — the feedback family `.empty-state*`,
+`.skeleton`, `.toast*` at 174–222 and `.tooltip*` at 257–279 — and **do not take
+that verdict**, because the instrument compares property names and does not know
+shorthand from longhand. `.toast:215` sets `border` and `.toast--success:221`
+sets `border-inline-start`; different names, one cascade. `.empty-state*` also
+appears in `_empty_state.scss`, forwarded after `zen_shell`. Either would need a
+shorthand-aware pass first.
+
+Confidence: the pair list is a lower bound. It matches selector tokens exactly,
+so a compound or prefix relation between two classes that never share a selector
+is invisible to it, and it does not see shorthand/longhand or inherited
+properties. The button family survives all three gaps for a checkable reason —
+every variant selector literally contains `.btn`, and the specificity argument
+above covers what the pairs do not. The extraction is still a structural move and
+wants the owner's yes, because the house rule is restore or ask.
+
+#### 4. brgen re-implements the concern that exists to hold it
+
+`shared/app/controllers/concerns/shared/application_setup.rb` is the one place
+the three apps set up a controller. amber and bsdports use it —
+`amber/app/controllers/application_controller.rb:4`,
+`bsdports/...:4`. brgen does not:
+`brgen/app/controllers/application_controller.rb:4-23` inlines the same five
+includes, the same three `helper` calls and the same three settings, and carries
+a longer version of the same comment that `application_setup.rb:13-16` carries,
+each pointing at the other. `helper Shared::ConsentHelper` at line 20 is now
+redundant besides: `shared/lib/shared/engine.rb:91` registers it for every app.
+
+Underneath it is a smaller thing worth fixing first. `application_setup.rb:9`
+reads `include Authentication` — a bare constant, resolved in each host app by
+`{amber,brgen,bsdports}/app/controllers/concerns/authentication.rb`, three
+byte-identical seven-line files whose whole body is
+`base.include(Shared::Authentication)`. Verified identical by SHA. Nothing
+overrides them. Writing `include Shared::Authentication` in the concern deletes
+three files and 21 lines, and removes the engine's one reach into a host-app
+constant name — the same reach that produced finding 1.
+
+#### 5. The `Pub4::*Lint` family puts its entry point last
+
+A Prism pass over 1,267 Ruby files under `RAILS/` (visibility tracked through
+bare `private`/`public` call nodes, entry point taken as the method callers name)
+finds six inversions, and five are one family:
+
+    shared/lib/pub4/css_coverage_lint.rb:407     #scan, 22 helpers and 130 lines above it
+    shared/lib/pub4/layout_stability_lint.rb:225 #counts, 12 helpers, 114 lines
+    shared/lib/pub4/asset_url_lint.rb:186        #scan, 11 helpers, 84 lines
+    shared/lib/pub4/scale_lint.rb:214            #check, 22 helpers, 83 lines
+    shared/lib/pub4/breakpoint_lint.rb:162       #scan, 6 helpers, 39 lines
+    test/method_length_ratchet_test.rb:111       #measure, 3 helpers, 30 lines
+
+In each the reader meets `engine_dirs`, `strip_erb`, `to_px` and twenty siblings
+before meeting `scan`, and `run` — the ratchet-printing main — is last of all.
+They are `module_function` modules, so nothing is private and the fix is ordering
+alone: entry, then what it calls, then the rest. `ScaleLint::Finding` and a few
+helpers are named directly by tests, so nothing can be made private.
+
+Four smaller cases in the gates, from the same pass at a lower threshold:
+`gates/support/geometry_type.rb:60` (`check` behind five helpers it calls),
+`gates/support/layout_search.rb:63` (`report` behind six),
+`gates/support/gate_calibration.rb:36`, `gates/support/dom_surface_schema.rb:21`.
+`geometry_type`'s `check_measure` and `check_tabular` are called from
+`test/gates/rendered_gates_test.rb:307,314`, so again ordering only.
+
+The counterpart defect is absent. A public method declared below a scope's first
+`private` appears **nowhere** in `RAILS/` — 0 findings over 1,461 files, with the
+instrument proved on a planted positive that was then deleted.
+
+#### 6. The sign-in screen is written three times, and two of the copies lack something
+
+`{amber,brgen,bsdports}/app/views/sessions/new.html.erb`, 27–38 lines each, 74%
+of their non-comment lines shared, with no shared counterpart —
+`shared/app/views/sessions/` does not exist, though `Shared::SessionsActions` is
+the controller and all three `sessions_controller.rb` are five-line shims onto
+it. Three of the differences are real and two are not cosmetic:
+
+- amber renders no `shared/oauth_links`. brgen renders it in `sessions/new:4`
+  and `users/new:7`, bsdports in `sessions/new:4`. The route
+  (`shared/config/routes/auth.rb:15`) and the provider registration are
+  engine-wide, so amber is the only app where a configured provider would have
+  no button.
+- bsdports offers no create-account link at all; amber links
+  `new_registration_path`, brgen `new_user_path`.
+- brgen uses `.field--float`, the other two plain `.field`. That is the
+  deliberate visual difference and is not for an agent to unify.
+
+Record the first two as behaviour; the consolidation into
+`shared/app/views/sessions/new.html.erb` with the field wrapper as a local is a
+second step and needs the owner, because it moves markup.
+
+#### 7. The remaining two length-ratchet rows
+
+`gates/lib/live/user_flow.rb` is +5 and finding 2 pays it exactly, by deletion
+rather than extraction.
+
+`gates/lib/rendered/rendered_geometry.rb` is +1 across 20 `check_*` methods, and
+a one-line overage does not want a file. If deletion cannot be found — a Prism
+census on 2026-09-06 found nothing dead, and a fresh grep finds no twin of
+`fractional?`, `on_rhythm?`, `expand_hex`, `collect_hexes`, `rect_gap`,
+`undersized?`, `inline_target?`, `critical?` or `token_palette` anywhere in the
+repo — the shelf with the clearest edge is the colour group:
+`check_token_conformance:618`, `token_palette:671`, `collect_hexes:677`,
+`expand_hex:687`, about 40 lines answering one question, extractable as
+`rendered/rendered_geometry/token_checks.rb` and included back in exactly as
+`design_metrics/type_checks.rb` and `contrast_checks.rb` already are.
+
+Sequencing, since `growth.rails` is at 2374/2374 and `.md` counts toward it: a
+split costs one file, and `RAILS/INSTANT.md` is one to spend. It is 304 lines of
+forward proposals at a tree root, referenced by nothing in the repo, while the
+repo rule is that every per-tree backlog folded into this file. Fold it into the
+forward-work section and delete it, and the button partial and the token shelf
+are both paid for.
+
+#### 8. `shared/lib/pub4/` wants a `lint/` shelf, and it costs no files
+
+13 of the 20 files in that directory end `_lint.rb` — 2,819 lines — and the other
+seven are `deploy_paths`, `ci_guard`, `load_average`, `master_design`,
+`baseline_ratchet`, `dialect_token_drift_check` and `importmap_preload_audit`,
+which are not lints. `MASTER/tools/cohesion.rb --census --tree=RAILS --list`
+proposes the regroup and it is the largest of the sixteen it finds. Moving files
+into `pub4/lint/` leaves the count unchanged, so the ratchet is neutral; the cost
+is renaming `Pub4::ScaleLint` to `Pub4::Lint::Scale` and following it through
+`MASTER/tools/ratchets.rb:318-327` (which derives the constant from the basename
+at line 360, so that mapping changes too), `shared/config/ci.rb:53-60`,
+`gates/lib/source/scale_ratchet.rb` and nine test files. Worth doing, but it is
+an afternoon and it touches a MASTER ratchet, so it is not a first move.
+
+#### 9. Smaller, verified
+
+- `shared/lib/pub4/asset_url_lint.rb:48-60` says "The 5 that remain" and "2 are
+  lg.svg, once per vendored copy". `BASELINES` on line 61 is 4 and the lint
+  prints 4, because `Dir.glob("**/lightgallery.css")` now returns one path. The
+  duplicate the comment describes, and the `rails_duplicate_vendor_css` register
+  entry it cites, are both gone. A comment states the present-tense reason.
+- `shared/app/services/scrape.rb` defines bare top-level `Scrape` from an engine
+  autoload root, called from six places in two apps. It works, but it is finding
+  1's hazard class: the engine puts 19 files at unnamespaced roots, and one of
+  them has already lost a collision silently. The `Application*` five must stay
+  bare by Rails convention; `scrape.rb`, `site_verification.rb`,
+  `schema_helper.rb` and `passwords_mailer.rb` need not.
+- `RAILS/test/` holds 80 files in one drawer and `test/gates/` holds 13.
+  `run_all.rb` globs recursively (`test/**/*_test.rb`), so subject shelves —
+  `test/lints/`, `test/layout/` — need no runner change. Navigational only.
+- `dns_zones` is the one red gate: `bsdports.org` resolves to
+  185.134.245.114, not to us. Already the OPENBSD section's
+  `bsdports_org_delegated_to_parking`; not a RAILS defect.
+- `Shared::Engine.config.eager_load_paths` is empty while
+  `Shared::Engine.paths.eager_load` lists eleven directories. Whether that means
+  the engine is not eager-loaded in production, or is only a Rails 8.1 internal,
+  is **not settled** — `bin/rails zeitwerk:check` could not finish in this
+  worktree because the development database has no `users` table. Least sure item
+  here; worth ten minutes on a migrated checkout, because it is the difference
+  between a boot failure and a first-request 500.
+- Eager loading needs a migrated database either way: `zeitwerk:check` aborted at
+  `bsdports/app/controllers/categories_controller.rb:6` with `Could not find
+  table 'users'`, because `Shared::Authentication.allow_unauthenticated_access`
+  reads `::User.column_names` in a class body.
+
+#### Not worth chasing — measured and rejected
+
+- **The three per-app `Current` models.** `amber` and `bsdports` are
+  byte-identical six-liners and brgen's 36-line version is a strict superset with
+  eleven extra attributes it genuinely needs. `Current` has to be a bare constant
+  for `Current.user`; there is nothing to share.
+- **`brgen/app/models/user/*_associations.rb`.** Seven files of 12–48 lines, one
+  per vertical, and the cohesion census proposes a `user/associations/` shelf.
+  `brgen/ENGINES.md` says under "What stays in the host": shared models, `User`
+  first. Moving them into the engines contradicts the contract; renaming them
+  gains a path segment.
+- **The `honesty` shelf in `gates/lib/source/`.** Three files, 275 lines,
+  united by a word rather than a subject — affiliate disclosure, Faker filler and
+  payment claims. `gates.yml` addresses each by `require` and `class`, so a shelf
+  renames three classes and edits three rows for one path segment in a directory
+  of 17. The census's constant renames are wrong here anyway: gates use explicit
+  `require_relative` with hand-chosen namespaces.
+- **The four ActiveRecord regroups the census proposes** — `item` and
+  `declutter` in `amber/app/models`, `community`, `fedi` and `story` in
+  `brgen/app/models`. `OutfitItem -> Item::Outfit` collides with `Outfit`, and
+  every one of them costs `class_name:`/`table_name:` churn through
+  strict-loading associations for a navigational gain. `fedi_*` is the only one
+  that reads cleanly as `Fedi::*`, and it is four files of 119 lines.
+- **The four missing assets `asset_url_lint` reports.** Both exemptions are
+  documented at `shared/lib/pub4/asset_url_lint.rb:48-60` and verified still
+  true: the three `pp-neue-montreal` woff2 are a licensed face that cannot be
+  committed, behind two `local()` entries and an Arial fallback; `lg.svg` is
+  lightGallery's IE9 tail entry that no browser asks for.
+- **`RAILS/*.sh`.** All ten root scripts are reached — `_scaffold.sh` and
+  `_service.sh` from `_deploy.sh`, the rest from `OPENBSD/bin/vps-deploy`,
+  `vps_ci.sh` and the contract tests. Not sprawl.
+- **`MASTER/tools/cohesion.rb <dir>` on a tree root.** It globs
+  `File.join(dir, "*.rb")` and does not recurse, so `cohesion.rb RAILS/shared`
+  reports "nothing to merge" having read zero files. Use
+  `--census --tree=RAILS --list`.
+
+#### What could not be measured
+
+The `rendered_*` and `live_*` families need a booted fleet and the fleet was not
+booted, so `rendered_suite` and its eleven leaves, `user_flow`, `first_screen`,
+`surface_schema`, `flow_journey`, `page_simulation`, `deploy_drift`,
+`human_walkthrough`, `visual_contract` and `gate_mutation` are unmeasured here.
+So is per-app `bin/ci`: RuboCop, Brakeman and the app test suites want each app's
+bundle and a migrated database, and this worktree has neither. The
+`_zen_shell.scss` split and the `CrawlSupport.fetch` consolidation both want
+`RAILS/bin/triangle up` and a full `rendered_suite` before they are called done.
+
 ---
 
 ## OPENBSD
