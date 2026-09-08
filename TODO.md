@@ -2144,11 +2144,15 @@ of those models exist with nothing reading or writing them.
 
 ---
 
-### Tier 1 — built and inert
+### Cross-tree session records, filed here by mistake
 
-The schema and the model exist. Nothing reads or writes them. These are the
-cheapest items here and they gate most of Tier 2, because ranking and
-notification both need a signal that is currently never recorded.
+Four of the five records below belong to MASTER, STUDIO and OPENBSD, not to
+RAILS. They were appended under the Tier 1 heading, which promises a schema
+nothing reads, and they describe census tools, a STUDIO gate, nine expired
+domains and the `/through` stages instead. Only the `constitutional_scan`
+budget record is a RAILS gate's. Moving them means editing three other trees'
+sections while their agents are in this file, so they are named here and left
+where they sit.
 
 #### A census of the census tools: two of thirty-six were reaching nothing — 2026-09-07
 
@@ -2316,175 +2320,36 @@ against the aesthetic number, so the row is consistent — but it is a narrower
 claim than "constitutional preflight" sounds, and re-basing it against the full
 profile is a separate decision with four new ceilings in it.
 
-#### 1.1 Repost was a decorative button — **done, built**
+### Tier 1 — closed, verified 2026-09-08
 
-The call was build rather than drop, because brgen is aiming at x.com and
-Mastodon parity and `Announce` is repost (2.1 depends on it).
+Five entries here named a schema and a model that nothing read or wrote. All
+five were wired, and every reader was found again on 2026-09-08 rather than
+taken from the note: repost through `RepostsController`, the `button_to` in
+`shared/_action_bar` and the `Current.reposted_post_ids` memo; watch time
+through `Tv::ViewEvent#record_progress!`, the `tv/view_events` endpoint, the
+`tv-player` video target and `Tv::Video::WATCH_TIME_SQL`; saved-search alerts
+through `SavedSearchAlertJob`, scheduled every thirty minutes in
+`brgen/config/recurring.yml`; courier dispatch through
+`Takeaway::Order#transition_to!` calling `DeliveryDriver.nearest_free`, drawn
+by `Maps::HomeController#courier_layer`; and mentions through
+`Shared::Mentionable` on `Post`. The seven test files those entries name run
+sixty-seven tests, all green. The records are deleted; `git log` holds the
+reasoning.
 
-A repost is a `Repost` row, not a `Post`: `Post` includes `Shared::Sluggable`,
-whose slug is derived from the title and unique per city, so a repost-as-post
-would have collided with the thing it reposted. It carries no content, boosts
-into followers' timelines via `User#timeline_posts`, notifies the author (but
-not for reposting yourself), and toggles off on a second press.
+One line of 1.5 was wrong when it was written, and it is the finding worth
+keeping. It said `Stream` still has no writer and that the table stays. No
+`Stream` model and no `streams` table exist anywhere in `RAILS/`.
+`Tv::LiveStream` is the table it meant, and it has a full writer —
+`Tv::LiveStreamsController` creates, updates, destroys, `go_live!` and
+`end_live!` — with `vertical_forms_test.rb` posting the real form and
+asserting the row. What is absent is the media half: `apps.yml` records the
+model done and notes "no WebRTC/RTMP", so ingest is Tier 2 work rather than an
+unwired column.
 
-The button is a `button_to`, not the `action` Stimulus controller the vote
-button uses. Two reasons: that controller's optimistic toggle is exactly what
-made the broken version look like it worked, and a third Stimulus instance per
-card breaks `FrontPageWeightTest`'s five-per-post budget.
-
-Three things the repo's own gates caught, all of them real:
-
-- `reposted_by?` as an `exists?` per card is a 25-query N+1 on the feed;
-  `QueryBudgetTest` failed on it. It is now one pluck per request memoised on
-  `Current`.
-- the card is fragment-cached and `reposted_by?` is per-viewer output, so the
-  flag had to go into the cache key or one viewer's repost state renders for
-  everyone.
-- `FrontPageWeightTest` had a test asserting *no repost backend exists* and the
-  button stays inert. It is inverted now: the button must reach the endpoint.
-
-**Found while wiring it, and fixed:** `post_vote_path(post)` carries the slug
-(`Sluggable#to_param`), and `VotesController#find_votable` called `Post.find` on
-it — a 404 that the `action` controller rolls back silently, so **every vote
-cast from a feed card was discarded**. Fixing that exposed a second layer:
-`Vote#update_author_karma` lazily read `votable.user` on a strict-loading record
-and raised after the vote had been written. Both pinned by tests.
-
-**Check:** `brgen/test/models/repost_test.rb` (counter cache, uniqueness, undo,
-timeline inclusion, author notification, cascade) and
-`brgen/test/controllers/reposts_controller_test.rb` (POST toggle, guest
-behaviour, removed posts, cache-key leakage, and voting by slug).
-
-**Quote-post is built.** A `reposts.comment` column (max 280) turns the same
-row into a quote; empty comment stays a boost; a second boost press still
-destroys. The write surface is a form in the more-actions dropdown (no extra
-Stimulus — FrontPageWeightTest still holds) and on the post page, which lists
-quotes. It is not a `Post`, for the same Sluggable reason as a boost.
-
-**Check:** `brgen/test/models/repost_test.rb` (quote is not a Post, length,
-notification body) and `brgen/test/controllers/reposts_controller_test.rb`
-(comment creates, updates a boost, second POST without comment destroys).
-
-**Closed 2026-08-18.** The dead-partial note was stale: `shared/_feed_card`
-renders `shared/action_bar` when it is given a `record:` and no `actions:`, so
-the partial is reached by every app that draws a feed card.
-
-#### 1.2 `Tv::ViewEvent` recorded that a page opened, not that anything was watched — **done**
-
-The first version of this entry said no row was ever created. That was wrong,
-and wrong for an instructive reason: the grep behind it searched for the class
-name, and the only writer reaches the table through the association
-(`@video.view_events.create!` in `videos#show`). Searching for the noun missed
-the verb.
-
-What was true: the row was created with `watch_time_seconds` and `completed`
-both nil and nothing ever filled them in, and `Tv::Video.trending` sorted
-`views_count` — incremented on that same page load. So a viewer who bounced
-after four seconds moved a video up the trending page exactly as far as one who
-watched it through, and the two columns that could tell them apart were never
-written by anything.
-
-Now: `videos#show` keeps the row in an ivar and hands the player its URL; the
-player reports the furthest point reached on pause, on `ended`, on tab hide and
-on disconnect. `record_progress!` takes the max (beacons arrive out of order),
-clamps to the video's own `duration_seconds` (the number comes from the client,
-and unclamped the ranking is forgeable), and marks `completed` at 90% because
-the last `timeupdate` rarely reaches duration. `trending` now ranks by summed
-watch time with `views_count` as the tiebreak, via a correlated subquery rather
-than `left_joins + group` — the home page passes the scope to pagy, and pagy
-counts a grouped relation with `.count(:all)`, which returns a hash.
-
-Two things fell out of doing it:
-
-- `data-tv-player-target="video"` was declared on no page in the tree, so the
-  player's whole `#bindVideoEvents` body — including the wake lock on play —
-  had never run. Watch-time reporting needs that target, so it runs now.
-- `videos#show` preloaded `:channel` but not `channel: :user`, and the subscribe
-  control reads `Current.user != @video.channel.user` only when authenticated.
-  The page rendered for guests and raised for every signed-in viewer, which is
-  why a guest-only smoke test never caught it.
-
-**Check:** `engines/tv/test/models/tv/view_event_test.rb` (monotonicity, clamp,
-90% threshold, no-duration case, strict loading, and that trending puts one
-watched-through view above 500 page opens) and
-`test/controllers/tv_watch_time_test.rb` (a viewer can only write their own
-event; the page carries the progress URL).
-
-**Closed.** The vertical feed this ranking exists for is 2.5, and it is built:
-`tv_feed_test.rb` asserts one viewer who watched a clip through outranks 500
-page opens, which is this entry's watch-time columns doing the work.
-
-#### 1.3 `Marketplace::SavedSearch` never ran itself — **done**
-
-Worse than a bookmark, as it turned out. The table carries a `notify` boolean,
-the create form permits it, and the saved-searches page renders an "alerts on"
-chip from it — while nothing in the tree ever ran a saved search on anyone's
-behalf. Ticking "notify me" changed a label. The only other reader was a manual
-"run search" link.
-
-Now `SavedSearchAlertJob` runs every 30 minutes over searches with `notify` on,
-matching new listings through `Shared::LiveSearch` on the same columns the
-listings page searches, so an alert cannot disagree with what that row's own
-"run search" link would show. Three things it deliberately does:
-
-- a new `last_notified_at` column, anchored to `created_at` on first run, so
-  switching alerts on does not mail you the entire back catalogue;
-- a 6-hour floor per search, independent of the schedule, so the cadence of the
-  job is not the cadence of the interruption;
-- a quiet run leaves `last_notified_at` alone, so the next run still measures
-  from the last thing the user was actually told about rather than silently
-  stepping over listings posted in between.
-
-**Check:** `brgen/test/jobs/saved_search_alert_job_test.rb` — eight tests
-covering first alert, back-catalogue suppression, alerts-off, the interval floor
-and its expiry, category scoping, the untouched watermark, and one broken search
-not stopping everyone else's.
-
-**Closed.** Price drops are `SavedSearch#price_drop_matches`, preferred over
-plain new listings so a reduction on an existing match is not hidden behind "N
-new listings", and `alert` is in `PUSHABLE_KINDS`, so the alert reaches a lock
-screen.
-
-#### 1.4 `takeaway_orders.delivery_driver_id` had no writer — **done**
-
-The column had shipped with the table, carrying two indexes including a
-composite `["delivery_driver_id", "status"]`, and
-`Takeaway::DeliveryDriver has_many :orders` had always resolved through it.
-There was no `belongs_to` on `Takeaway::Order` and nothing ever wrote the
-column, so every order reached `out_for_delivery` with no courier attached.
-
-Now: `belongs_to :delivery_driver`, and `transition_to!` dispatches the nearest
-free courier on the same write as the status change, so an order is never
-observable as out for delivery with nobody on it.
-`DeliveryDriver.nearest_free` post-sorts the `nearby` bounding box by real
-haversine distance — the box alone would take a courier in the corner over one
-on the doorstep — and excludes anyone already mid-delivery. No free courier in
-range is left as a real state rather than a failed transition: the order still
-leaves the kitchen and the page says nobody is assigned yet.
-
-**Check:** `engines/takeaway/test/models/takeaway/order_test.rb` — four tests
-covering nearest-not-merely-in-box, no double-booking, dispatch with no courier
-available, and dispatch on an order loaded without preloads.
-
-**Closed.** `Maps::HomeController#courier_layer` draws the courier — the
-viewer's own, and only while that order is out for delivery. A live position is
-the courier's, not the city's: publishing every rider's would be tracking people
-who never agreed to it, and the person waiting for the food is the only one who
-needs it.
-
-#### 1.5 Mention had a table and no writer — **done**
-
-`Post has_many :mentions` resolved and stayed empty, while
-`Notification::KINDS` already carried `mention` and the inbox ranked it first.
-`Shared::Mentionable` now writes the join from `@username` in title and content
-— the same `after_save` shape as `Shared::Taggable#sync_hashtags` — skips self
-and unknown handles, and notifies only for new rows. An email address is not a
-mention.
-
-**Check:** `brgen/test/models/mention_test.rb`.
-
-**Closed 2026-09-05.** `Stream` still has no writer. Live streaming is blocked
-and that table stays.
+One gap the closing left is forward work, not debt. `Shared::Mentionable` is
+polymorphic and `Comment` does not include it, so an `@username` in a reply
+notifies nobody. `Post` is the only model in any of the three apps that
+includes the concern.
 
 ---
 
