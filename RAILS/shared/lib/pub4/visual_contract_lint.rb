@@ -40,7 +40,13 @@ module Pub4
     TEXT_PAIRS = [ %w[--text --bg], %w[--text-secondary --surface], %w[--text-secondary --bg] ].freeze
     UI_PAIRS = [ %w[--accent --bg], %w[--danger --bg] ].freeze
 
-    INTERACTIVE_SELECTOR = /\ba\b|button|\.btn|link|tab|chip|badge|action|:hover|:focus|active|vote|toggle|nav|pill|switch|control|icon|spinner|progress|ring|cursor|caret|brand|logo|accent|input|select|textarea|summary/i
+    # `delete` and `fav` name controls this list could not see. `.comment-delete`
+    # is a transparent bordereless button with `cursor: pointer`, and
+    # `.deal-fav--on` is the on-state of a favourite button that carries
+    # --tap-min in both axes. Both are the state-indicator case the 3:1 non-text
+    # floor exists for, so both were reported as prose the moment the glob below
+    # widened far enough to reach them.
+    INTERACTIVE_SELECTOR = /\ba\b|button|\.btn|link|tab|chip|badge|action|:hover|:focus|active|vote|toggle|nav|pill|switch|control|icon|spinner|progress|ring|cursor|caret|brand|logo|accent|input|select|textarea|summary|delete|fav/i
 
     # All four measured to 0 on 2026-08-21: the light-theme vertical accents
     # gained darkened same-hue variants, .price dropped the hue its bold
@@ -193,8 +199,21 @@ end
 
     # --- accent scope ---------------------------------------------------------
 
+    # brgen's verticals are mountable engines, so a glob at brgen/app/** reads
+    # the host and none of the six. This one did, and reported 0 over a third of
+    # its own subject: `.market-hero-kicker` and `.deal-rating` were outside it,
+    # and the first is the site design_tokens.yml names when it explains why the
+    # taupe accent cannot be darkened. image_findings above was widened for this
+    # reason already; accent_findings was not.
+    #
+    # brgen only, and that is the rule rather than the glob. The rationale is
+    # brgen's grayscale identity — "the direction itself, not a rotated hue"
+    # (_root.scss) — so a hue on prose spends the surface's one accent. amber's
+    # identity IS its warm taupe, and its `.sustainability-grade` and
+    # `.weather-bar` are that identity rather than debt. Widening to amber would
+    # apply brgen's rule to a surface it was never written for.
     def accent_findings
-      Dir.glob(File.join(RAILS_ROOT, "brgen/app/assets/stylesheets/*.scss")).flat_map do |path|
+      Dir.glob(File.join(RAILS_ROOT, "brgen/{app,engines/*/app}/assets/stylesheets/**/*.scss")).flat_map do |path|
         src = File.read(path, encoding: "UTF-8")
         src.each_line.with_index(1).filter_map do |line, n|
           next unless line.match?(/(?<!-)color:\s*var\(--accent\)/)
