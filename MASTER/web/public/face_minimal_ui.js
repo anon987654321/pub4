@@ -129,6 +129,5 @@ const F_FACE_STATE = F_FACE_MINIMAL.State || window.State;
       if (e.key === '?') { e.preventDefault(); safeStart(); }
     });
     window.startVoiceRec = safeStart;
-    window.startOsmanVoice = safeStart;
   }
 })();

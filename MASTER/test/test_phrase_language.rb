@@ -56,7 +56,7 @@ class TestPhraseLanguage < Minitest::Test
     assert(plan[:phrases].none? { |p| p.key?(:voice) })
   end
 
-  # data/voice.yml sets single_voice: osman and persona_affects_text_only: true.
+  # data/voice.yml sets single_voice: ezinne and persona_affects_text_only: true.
   # Switching voices mid-utterance is the one thing that contradicts it, so it
   # ships off and the default has to stay that way until it is chosen.
   def test_switching_is_off_by_default_so_the_single_voice_policy_holds

@@ -6,21 +6,21 @@
 schema: 1
 version: "2.8.0"
 persona: anchor
-voice: ms-MY-OsmanNeural
+voice: en-NG-EzinneNeural
 language:
   primary: english
   secondary: norwegian
-  # English spoken with a Malay accent. Operator decision 2026-08-10.
+  # English spoken with a Nigerian accent. Operator decision 2026-09-08.
   #
   # primary stays english — the words are English; what changed is the mouth.
-  # ms-MY-OsmanNeural is a Malay-language neural voice reading English text,
-  # which is what produces the accent, so `dialect` names the accent rather than
-  # a variety of English with its own spelling and idiom.
+  # en-NG-EzinneNeural is an English (Nigeria) neural voice, so `dialect` names
+  # the accent it speaks in rather than a variety of English with its own
+  # spelling and idiom.
   #
   # This block used to say primary: english while the voice was nb-NO and the
   # dialect was bokmal, so the law described a Norwegian speaker and an English
   # one at once. The three have been kept in step since; they still are.
-  dialect: malaysian
+  dialect: nigerian
 
 research:
   constitutional_ai:
@@ -86,7 +86,7 @@ negotiable:
   style: sentence_case
   # default_model lives once, in providers.yml openrouter.default_model —
   # the copy that stood here had no reader and could only drift.
-  tts_voice: ms-MY-OsmanNeural
+  tts_voice: en-NG-EzinneNeural
   language_detection: true
   conflict_resolution:
     strategy: highest_priority_wins

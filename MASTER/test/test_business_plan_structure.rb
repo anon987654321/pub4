@@ -18,8 +18,11 @@ class TestBusinessPlanStructure < Minitest::Test
 
   def plan = Master.law("business_plan")
 
+  # Any heading below the title. The movements are the law; which level they are
+  # written at is hierarchy, and the README sets its sections one step under its
+  # own `#` rather than two.
   def headings
-    File.readlines(README).grep(/\A#{"#" * 3}#?\s/).map { |line| line.sub(/\A#+\s*/, "").strip }
+    File.readlines(README).grep(/\A##+\s/).map { |line| line.sub(/\A#+\s*/, "").strip }
   end
 
   def test_the_readme_carries_one_section_per_declared_movement

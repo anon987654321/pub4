@@ -90,7 +90,7 @@ topics:
       - data/personas.yml
       - lib/voice/personality.rb
       - web/app/views/chat/index.html.erb
-    note: TTS voice is whatever data/voice.yml tts.single_voice names (osman since 2026-08-13); persona changes LLM style only.
+    note: TTS voice is whatever data/voice.yml tts.single_voice names (ezinne since 2026-09-08); persona changes LLM style only.
 
 patch_briefs:
   data/soul.yml:

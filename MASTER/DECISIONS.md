@@ -238,7 +238,7 @@ and the asymmetry between them is deliberate:
 - **`melodic_threshold`** still gates the pentatonic contour alone. That is a
   stylistic mode and belongs to lyrical text only.
 - **`phrase_language_switching: false`.** `data/voice.yml` sets `single_voice:
-  osman` and `persona_affects_text_only: true`. Reading a Norwegian clause with
+  ezinne` and `persona_affects_text_only: true`. Reading a Norwegian clause with
   `nb-NO-FinnNeural` means two voices in one utterance, which is the one thing
   that contradicts that policy. The mechanism is built so the choice is a flag
   rather than a rewrite; flipping it is an operator decision about identity, not

@@ -34,7 +34,7 @@ checkable: one command prints every measure beside the number it must respect.
 It runs offline, deploys to OpenBSD, and judges a codebase with no cloud behind
 it, so it runs on hardware we own.
 
-## The mountain
+## The business, inside a mountain
 
 The world spends more on machine intelligence than on almost anything else, and
 nearly all of it burns electricity in large buildings. Global data-centre spend
@@ -61,6 +61,8 @@ hundred kilowatts proving the economics on real Norwegian power. One million
 stands up a 3D-printing and robotics bench where the embryo takes its first body.
 The full mountain datacentre is later-stage project finance in the tens of
 millions of euros, the roadmap this pilot unlocks.
+
+## The horizon
 
 MASTER is built like an embryo: one small core of identity, memory, and safety
 that takes on whatever body a mission needs. Today that body is software on green

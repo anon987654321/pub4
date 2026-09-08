@@ -98,10 +98,10 @@ module Master
         end
       end
 
-      # Speech already defaults to Osman, because DEFAULT_VOICE is
+      # Speech already defaults to the policy voice, because DEFAULT_VOICE is
       # Policy.single_voice_key. The tempo is the part that does not come for
       # free: with no rate or pitch passed, Speech falls back to STYLES[:calm]
-      # at -6% and -20Hz, which is Osman's voice read at someone else's pace.
+      # at -6% and -20Hz, which is the policy voice read at someone else's pace.
       # The web does not use that table — it reads default_rate and
       # default_pitch out of Policy.browser_payload and applies them in the
       # page. Passing the same two values is what makes the CLI and the web one

@@ -255,8 +255,8 @@ function setVoiceName(voice, opts = {}) {
   // back onto the Norwegian voice, which is the opposite of the policy whatever
   // the policy voice happens to be: a voice asked for is the voice used. The
   // single-voice lock lives in guardVoice, which reads MASTER_VOICE_POLICY, not
-  // in a hardcoded rewrite here. (Policy voice is ms-MY-OsmanNeural as of
-  // 2026-08-10; nothing in this function should need to know that.)
+  // in a hardcoded rewrite here. (Policy voice is en-NG-EzinneNeural as of
+  // 2026-09-08; nothing in this function should need to know that.)
   const next = VOICE_ALIASES[raw.toLowerCase()] || raw;
   const prev = State.voiceName || '';
   if (prev === next && window.MASTER_FACE?.tts?.voice === next) return;

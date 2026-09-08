@@ -257,8 +257,8 @@ function setVoiceName(voice, opts = {}) {
   // back onto the Norwegian voice, which is the opposite of the policy whatever
   // the policy voice happens to be: a voice asked for is the voice used. The
   // single-voice lock lives in guardVoice, which reads MASTER_VOICE_POLICY, not
-  // in a hardcoded rewrite here. (Policy voice is ms-MY-OsmanNeural as of
-  // 2026-08-10; nothing in this function should need to know that.)
+  // in a hardcoded rewrite here. (Policy voice is en-NG-EzinneNeural as of
+  // 2026-09-08; nothing in this function should need to know that.)
   const next = VOICE_ALIASES[raw.toLowerCase()] || raw;
   const prev = State.voiceName || '';
   if (prev === next && window.MASTER_FACE?.tts?.voice === next) return;
@@ -2209,7 +2209,7 @@ const TTS_STORE = 'blobs';
 // with nothing said. This literal has been wrong in both directions — Pernille
 // here while the policy said Osman, then Osman here while the policy said
 // Pernille — which is the two-halves bug voice.yml's own header documents.
-const TTS_DEFAULT_VOICE = window.MASTER_VOICE_POLICY?.neural || 'ms-MY-OsmanNeural';
+const TTS_DEFAULT_VOICE = window.MASTER_VOICE_POLICY?.neural || 'en-NG-EzinneNeural';
 const TTS_STREAM_LIVE_KEY = 'master:tts-stream-live';
 function ttsStreamLiveEnabled() {
   try {
@@ -3032,12 +3032,12 @@ function speakWithBrowserTTS(text, token) {
   // utterance — so the fallback contradicted the policy voice precisely when it
   // was the only thing speaking.
   //
-  // Deliberately still en-US now that the policy voice is ms-MY-OsmanNeural: the
-  // words are English either way, and a browser is far likelier to ship an
-  // en-US voice than an ms-MY one. Asking for a locale the platform lacks gets
+  // Deliberately still en-US now that the policy voice is en-NG-EzinneNeural:
+  // the words are English either way, and a browser is far likelier to ship an
+  // en-US voice than an en-NG one. Asking for a locale the platform lacks gets
   // an arbitrary substitute, which is worse than a plain English fallback. The
-  // Malay accent is a property of the neural voice, not something this path can
-  // reproduce.
+  // Nigerian accent is a property of the neural voice, not something this path
+  // can reproduce.
   const lang = tts.lang === 'nb' ? 'nb-NO' : 'en-US';
   const voice = pickBrowserVoice(lang);
   if (!voice) { primeBrowserVoices(); return false; }

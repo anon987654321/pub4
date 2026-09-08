@@ -39,7 +39,7 @@ transcendent:
   # single call at one rate and one pitch.
   phrase_rhythm_enabled: true
   # Read a Norwegian clause with a Norwegian voice. Off: data/voice.yml sets
-  # single_voice: osman and persona_affects_text_only: true, and this is the one
+  # single_voice: ezinne and persona_affects_text_only: true, and this is the one
   # thing that contradicts it. See MASTER/DECISIONS.md.
   phrase_language_switching: false
   phrase_language_voices:

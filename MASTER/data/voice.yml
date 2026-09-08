@@ -3,46 +3,24 @@
 # Persona registries (personas.yml, soul.yml) affect LLM text/style only when persona_affects_text_only is true.
 # Engine chain / transcendent mode: data/tts.yml (not used by web TtsJob). VPS env: OPENBSD/etc/rc.d/master.
 tts:
-  # English with a Malay accent (edge-tts / Azure neural). Operator decision
-  # 2026-08-10: MASTER speaks English in Osman's voice, soothing.
+  # MASTER speaks English in a Nigerian woman's voice. Operator decision
+  # 2026-09-08, chosen by ear against the README read aloud.
   #
-  # ms-MY-OsmanNeural is a Malay-language voice reading English text — that is
-  # what produces the accent, and it is why soul.yml keeps language.primary:
-  # english and moves only `dialect` to malaysian. The voice is not new to this
-  # tree: it is the `malay` persona in personas.yml, it is already in VOICES and
-  # VOICE_ALIASES on both the Ruby and JS sides, and it already carries an idle
-  # signature in face.part1.txt (breath 1.08, saccade 0.24, blink 3200ms), so the
-  # face has real breath/saccade/blink tuning for it rather than the generic
-  # fallback. That absence was the reason Andrew was chosen over Ryan in August;
-  # it does not apply here.
+  # en-NG-EzinneNeural is an English (Nigeria) neural voice, so the accent is
+  # the locale's own rather than a second language reading English — which is
+  # why soul.yml keeps language.primary: english and moves only `dialect`, to
+  # nigerian. Edge publishes no Ghanaian voice, and this is the nearest West
+  # African woman in its catalogue.
   #
-  # The pitch below is the one part of this that is a measurement rather than a
-  # name — see default_pitch.
-  #
-  # Three operator decisions, in order: 2026-08-10 to Osman, 2026-08-11 back to
-  # Pernille (much louder and much slower — the volume and rate below are from
-  # that pass and are kept), 2026-08-13 to Osman again. This is the third.
-  #
-  # Both earlier passes left the tree disagreeing with itself, in opposite
-  # directions, because a name lives in more places than the one that changed:
-  #
-  #   - 08-10 moved four files and the registry kept Pernille — face.runtime.js's
-  #     VOICES and idle-signature tables, expression.rb, and agent_map.yml, which
-  #     said in five places that "TTS voice is always Pernille per data/voice.yml".
-  #   - 08-11 moved this value back and left soul.yml declaring
-  #     `dialect: malaysian`, so the constitution described a Malaysian-accented
-  #     English identity that a Norwegian voice then read aloud. It also left
-  #     face_speech_runtime.js falling back to Osman whenever MASTER_VOICE_POLICY
-  #     failed to load, silently switching accent and language on a load error.
-  #
-  # So this pass moves the registry with the value: lib/voice/policy.rb's
-  # hardcoded defaults, agent_map.yml's note, health_controller's comment, and
-  # personas.yml's header. What did not need moving was already right — the
-  # alias in speech.rb, the idle signatures in expression.rb and face.runtime.js,
-  # soul.yml's dialect, and the JS fallback, which now agrees rather than
-  # contradicting.
-  single_voice: osman
-  neural: ms-MY-OsmanNeural
+  # A name lives in more places than the value, and every earlier voice change
+  # left the tree disagreeing with itself by moving one of them. So this pass
+  # moves the registry with the value: policy.rb's fallbacks, personas.yml's
+  # header, agent_map.yml's note, soul.yml's voice, tts_voice and dialect, the
+  # idle signatures in expression.rb and face.part1.txt, the JS fallback in
+  # face_speech_runtime.js and face.runtime.js, and the assertions in
+  # test_yaml_registries.rb.
+  single_voice: ezinne
+  neural: en-NG-EzinneNeural
   persona_affects_text_only: true
   # ON as of 2026-08-14. pushLiveStreamTts (face.part1.txt) pulls each finished
   # sentence off the model's stream and speaks it while the rest is still being
@@ -70,32 +48,14 @@ tts:
   # every utterance (Personality#browser_profile substitutes them for the
   # persona's own).
   #
-  # -35Hz is not invented for this change and not carried over from Andrew's
-  # +0Hz. It is the value personas.yml already records for this exact voice,
-  # from someone listening to it: "natural, soothing single voice", settled at
-  # -8%/-35Hz after -32%/-180Hz pushed the engine past the range it renders
-  # cleanly and read as choking. Roughly +-15% rate and +-50Hz pitch is where
-  # Azure neural voices stay natural, so this sits inside it with room.
-  #
-  # That history is also the standing warning here: pitch tuning does not survive
-  # a voice change. -20Hz was once picked for en-GB Ryan and then carried onto a
-  # Norwegian voice it had never been measured against. This value moves with
-  # Osman because it was measured on Osman; the next voice starts at +0Hz until
-  # someone listens.
-  #
-  # -8% rate is unchanged and is a listening preference for long-form comfort
-  # rather than a property of any voice — the same figure the malay persona
-  # arrived at independently.
-  # Much slower, per the operator. -32% was measured as the point where the
-  # engine stops rendering cleanly and reads as choking, so this sits well
-  # short of it while being audibly slower than the -8% it replaces.
-  default_rate: "-22%"
-  # -35Hz, measured on Osman. The standing warning here is that pitch tuning
-  # does not survive a voice change — -20Hz was once picked for en-GB Ryan and
-  # carried onto a Norwegian voice it had never been measured against — which is
-  # why Pernille was reset to +0Hz rather than inheriting this. Coming back to
-  # Osman restores his own measurement rather than carrying hers.
-  default_pitch: "-35Hz"
+  # -4% and +0Hz are the settings the README was read at when this voice was
+  # chosen, so they are this voice's own measurement rather than an inheritance.
+  # Pitch tuning does not survive a voice change: -35Hz was measured on Osman,
+  # and the -20Hz before it was picked for en-GB Ryan and then carried onto a
+  # Norwegian voice it had never been heard on. Roughly ±15% rate and ±50Hz is
+  # where Azure neural voices stay natural, so a later listener has room.
+  default_rate: "-4%"
+  default_pitch: "+0Hz"
   # No default_volume. The daemon protocol is {voice,rate,pitch,text} and
   # RbEdgeTTS::Communicate takes rate: and pitch: only, so a volume here was
   # read by nothing for as long as it existed. Adding one back means

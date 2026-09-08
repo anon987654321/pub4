@@ -24,8 +24,8 @@ module Master
         # Melody::MAX_PHRASES; set false to go back to a single call.
         "phrase_rhythm_enabled" => true,
         # Read a Norwegian clause with a Norwegian voice instead of putting it
-        # through ms-MY-OsmanNeural. Off, because data/voice.yml sets
-        # single_voice: osman and persona_affects_text_only: true — one voice is
+        # through en-NG-EzinneNeural. Off, because data/voice.yml sets
+        # single_voice: ezinne and persona_affects_text_only: true — one voice is
         # a recorded decision, and this is the one thing that would break it.
         # The machinery is here so the choice is a flag rather than a rewrite.
         "phrase_language_switching" => false,
