@@ -69,6 +69,10 @@ source_gates = [
   ["flow journey", "flow_journey"],
   ["gate mutation", "gate_mutation"],
   ["deploy drift", "deploy_drift"],
+  # Same shape as the four above: a source half that always runs — hotwire.js
+  # still observes all three vitals entry types — and a live half that reports
+  # INCONCLUSIVE off the deploy host rather than green.
+  ["web vitals budget", "web_vitals_budget"],
 ]
 
 source_gates.each do |name, gate|
