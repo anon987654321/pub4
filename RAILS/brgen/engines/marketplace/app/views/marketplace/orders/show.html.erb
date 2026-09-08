@@ -14,7 +14,7 @@
   <dt><%= t("marketplace.order_quantity") %></dt>
   <dd><%= @order.quantity %></dd>
   <dt><%= t("marketplace.order_total") %></dt>
-  <dd><%= @order.total_display %></dd>
+  <dd data-money><%= @order.total_display %></dd>
   <dt><%= t("marketplace.order_buyer") %></dt>
   <dd><%= @order.buyer.display_name %></dd>
   <dt><%= t("marketplace.order_seller") %></dt>

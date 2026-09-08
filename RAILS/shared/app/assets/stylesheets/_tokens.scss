@@ -220,11 +220,25 @@
 }
 
 /* Catalog quantities share a width so a column of prices does not dance.
-   Worn on marketplace, takeaway, and feed counts. */
+   Worn on marketplace, takeaway, and feed counts.
+
+   design_rules worn_type.profiles.catalog sets require_tabular_nums, and a
+   sweep of the marketplace engine on 2026-09-08 found four columns outside this
+   list: the cart's per-row totals, the order summary's total, the store's
+   payout list and the variant table's prices. The first three carry data-money
+   now — the generic hook, rather than three new class names — and .variant-price
+   already had a name, so it joins the list.
+
+   Four other money renderings were left alone deliberately, because tabular
+   figures fix a column and none of them is one: a lone price on a deal or
+   listing detail page, the price inside a card's aria-label (never rendered),
+   the price bands in the facet chips (a wrapping row, not a stack) and a
+   variant's price inside a select option label. */
 [data-money],
 .deal-price,
 .listing-price,
 .listing-buy-bar-amount,
+.variant-price,
 .item-subtotal {
   font-variant-numeric: tabular-nums lining-nums;
 }

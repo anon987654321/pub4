@@ -218,6 +218,113 @@
   color: var(--text-secondary);
 }
 
+/* The filter drawer. Everything that is not the search field or one of the four
+   kinds lives behind this: source, category, distance, sort, price bounds and
+   the facets. Before it, twenty-one peer controls stood in front of the first
+   listing on the densest surface in the family, against a Hick ceiling of seven.
+
+   The summary wears .deal-cat, so nothing new is introduced — it is the chip
+   that opens the drawer holding the other chips. Only the marker, the count and
+   the open state are declared here.
+
+   Its own row rather than a flex sibling of the search field: .search-form
+   already wraps, so a 100% basis with a later order puts the chip under the
+   field and the panel under the chip, and the chip does not move when the panel
+   opens. A drawer whose handle jumps as it opens is a drawer you lose. */
+.listing-filters {
+  flex: 0 0 100%;
+  order: 2;
+  min-width: 0;
+}
+
+.listing-filters-toggle {
+  cursor: pointer;
+  /* Three spellings for one marker: Safari and Chrome read the pseudo-element,
+     Firefox and the spec read ::marker, and list-style covers the summary's
+     default display: list-item. Missing one draws a triangle beside the chip. */
+  list-style: none;
+}
+
+.listing-filters-toggle::-webkit-details-marker { display: none; }
+.listing-filters-toggle::marker { content: ""; }
+
+/* Open reads the same as an applied chip, because it is the same state: the
+   drawer opens itself whenever a filter inside it is set. */
+.listing-filters[open] > .listing-filters-toggle {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+/* How many filters are on, on the handle, so a closed drawer never hides state.
+   Tabular so the chip does not change width between 1 and 7. */
+.listing-filters-count {
+  margin-inline-start: var(--space-2);
+  padding-inline: var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.listing-filters-panel {
+  display: grid;
+  gap: var(--space-4);
+  margin-block-start: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-card);
+  background: var(--surface-elevated);
+}
+
+/* A fieldset carries a UA border and padding in every engine. Stripping them is
+   not the tree adding a line, it is removing one the browser drew.
+
+   display stays block. A flex or grid fieldset makes its legend a flex item in
+   some engines and leaves it in the special legend box in others, so the label
+   lands in a different place per browser — which is why the controls sit in
+   their own group below it rather than beside it. */
+.listing-filter-group {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.listing-filter-group legend {
+  padding: 0;
+  margin-block-end: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.listing-filter-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* Number fields in the drawer size to their content rather than stretching to
+   the row: a radius and a price bound are two or three digits, and a full-width
+   input says a paragraph is expected. */
+.listing-filter-controls input[type="number"] {
+  inline-size: 8ch;
+  min-height: var(--tap-min);
+}
+
+.listing-filter-controls select {
+  min-height: var(--tap-min);
+}
+
+/* The facets partial is a nav of links inside the drawer, so it stops being a
+   row of its own and becomes the last group in the column. */
+.listing-filters-panel .listing-facets {
+  margin-block: 0;
+}
+
 /* The seller's list of sizes and colours. A row per version, its price and
    what is left of it — the three things the seller is deciding between. */
 .variant-list {

@@ -1164,6 +1164,13 @@ en:
     answer_notification_title: The seller answered you
     facets: Filters
     filter_condition: Condition
+    top: Top
+    deal: Deal
+    percent_off: "%{percent}%% off"
+    store_categories: Store categories
+    new_listing_form: Create listing
+    filters: Filters
+    filter_distance: Distance
     filter_price: Price
     under_price: "Under %{price}"
     over_price: "%{price} and up"

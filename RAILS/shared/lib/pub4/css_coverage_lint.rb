@@ -183,7 +183,19 @@ module Pub4
 # and it carries this file's sanctioned opt-out marker. Its class names are out
 # of the used set, so rules elsewhere that only it referenced read as orphans.
 # Recorded rather than chased, and recorded rather than hidden.
-BASELINES = { "undefined_class" => 0, "unused_selector" => 154 }.freeze
+# 154 -> 153 (2026-09-08), and the reason is the instrument rather than the CSS.
+# `deal-cat` left the unused set. It was never unused: every one of its call
+# sites wrote `class: "deal-cat#{" active" if …}"`, and a literal search cannot
+# read a composed class — the caveat the header above already states. The
+# marketplace filter drawer added one summary carrying a static
+# `class="deal-cat listing-filters-toggle"`, and that single literal occurrence
+# is what made a selector the tree had been using all along visible here.
+#
+# Lowered anyway, because the number is the measurement and it only descends.
+# Worth knowing while reading the remaining 153: an unknown share of them are
+# the same shape, live selectors this check cannot see, which is why its
+# tolerance is wide and why it is a ratchet rather than a target of zero.
+BASELINES = { "undefined_class" => 0, "unused_selector" => 153 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
 
