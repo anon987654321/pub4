@@ -3409,7 +3409,7 @@ no rc.d script at all, so `rcctl get litestream status` answers "service does
 not exist"; `pkg_scripts` reads master brgen amber bsdports brgen_jobs.
 /var/backups/litestream/ is empty and has been since it was created on
 2026-07-27, which is the measurement the rest of this entry rested on.
-THREE PLACES STILL BELIEVED IN IT, fixed 2026-09-08 and worth naming because
+FOUR PLACES STILL BELIEVED IN IT, fixed 2026-09-08 and worth naming because
 each was a separate fact. `RUNBOOK.md` told the operator that `etc/litestream.yml`
 replicates each database to `file:///var/backups/litestream/` — the one document
 an operator reads about backups, describing a replica that has never held a
@@ -3421,7 +3421,12 @@ and printed "done"; every precondition is now a hard failure naming dr-pull, and
 skip turns it red). `resource_guard.sh` still said in comments that litestream
 leads the shed list and that "a mild breach costs litestream and nothing else",
 while `OPTIONAL` had read `bsdports amber` for some time: the guard's cheapest
-step was described as free when it actually takes a site down. litestream is
+step was described as free when it actually takes a site down. And
+`test/resource_guard_test.sh` — the only thing that proves which site goes down
+under memory pressure — asserted litestream went first, failed five of its eight
+cases, and read green because no script in this repository named it. It is
+corrected against the two-service ladder, verified in both directions by
+reversing `OPTIONAL`, and `OPENBSD/bin/check-openbsd` runs it now. litestream is
 also out of `vm_resource.yml`'s optional_services, OPERATOR.sh's optional_apps
 and emergency_cpu.sh's stop loop. `OPENBSD/etc/litestream.yml` stays, because
 the config is correct for the day someone builds the binary.

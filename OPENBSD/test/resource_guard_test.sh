@@ -2,6 +2,11 @@
 # Drive resource_guard.sh through tick sequences with stubbed system tools, and
 # assert what it sheds. The guard is load-bearing — a wrong shed took all four
 # apps down today — so its hysteresis needs proving, not eyeballing.
+#
+# The ladder is two services, bsdports then amber. It was three, and this file
+# asserted litestream went first long after the guard stopped shedding it, which
+# nothing noticed because nothing ran this file. OPENBSD/bin/check-openbsd runs
+# it now.
 set -e
 
 SANDBOX=$(mktemp -d)
@@ -83,8 +88,8 @@ check() {
 }
 
 up() { for s in "$@"; do : > "$DB/$s"; done }
-running() { ls "$DB" 2>/dev/null | grep -Ex 'amber|bsdports|litestream' | sort | tr '\n' ' ' | sed 's/ $//'; }
-reset() { rm -f "$DB"/* 2>/dev/null || true; up litestream bsdports amber; } # scan: intentional — clears this test's own scratch $DB between cases
+running() { ls "$DB" 2>/dev/null | grep -Ex 'amber|bsdports' | sort | tr '\n' ' ' | sed 's/ $//'; }
+reset() { rm -f "$DB"/* 2>/dev/null || true; up bsdports amber; } # scan: intentional — clears this test's own scratch $DB between cases
 
 # physmem is ~1007M, so Free=400M is ~39% (clear), Free=40M is ~3% (breach).
 CLEAR=400
@@ -93,30 +98,28 @@ BREACH=40
 print "1. a single breaching tick must not shed anything"
 reset
 run_tick "$BREACH"
-check "all three still up after 1 breach" "amber bsdports litestream" "$(running)"
+check "both still up after 1 breach" "amber bsdports" "$(running)"
 
 print "2. two consecutive breaches shed exactly one — the cheapest"
 run_tick "$BREACH"
-check "litestream shed, others up" "amber bsdports" "$(running)"
+check "bsdports shed, amber up" "amber" "$(running)"
 
 print "3. a clear tick restores what was shed, and resets the strike counter"
 run_tick "$CLEAR"
-check "litestream restored on the clear tick" "amber bsdports litestream" "$(running)"
+check "bsdports restored on the clear tick" "amber bsdports" "$(running)"
 run_tick "$BREACH"
-check "first breach after a clear tick sheds nothing" "amber bsdports litestream" "$(running)"
+check "first breach after a clear tick sheds nothing" "amber bsdports" "$(running)"
 
 print "4. sustained pressure keeps shedding, one per tick, cheapest first"
 run_tick "$BREACH"
-check "litestream goes first" "amber bsdports" "$(running)"
-run_tick "$BREACH"
-check "bsdports next" "amber" "$(running)"
+check "bsdports goes first" "amber" "$(running)"
 run_tick "$BREACH"
 check "amber last" "" "$(running)"
 
-print "5. the old behaviour would have shed all three on tick 1"
+print "5. the old behaviour would have shed both on tick 1"
 reset
 GUARD_SHED_STRIKES=1 FAKE_FREE=$BREACH ksh "$SANDBOX/guard_under_test.sh" >/dev/null 2>&1 || true
-check "with strikes=1 only one goes, not all three" "amber bsdports" "$(running)"
+check "with strikes=1 only one goes, not both" "amber" "$(running)"
 
 rm -rf "$SANDBOX"
 [[ $fail -eq 0 ]] && print "\nALL PASS" || { print "\nFAILURES"; exit 1; }

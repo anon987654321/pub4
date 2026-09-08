@@ -30,6 +30,12 @@ failures << "ports" unless runner.run("ports", RUBY, "RAILS/gates/runner.rb", "p
 # directory its file happens to sit in.
 failures << "dns_zones" unless runner.run("dns zones", RUBY, "RAILS/gates/runner.rb", "dns_zones", env: LIVE_ENV)
 failures << "deploy_smoke" unless runner.run("deploy smoke", RUBY, "OPENBSD/deploy_smoke_gate.rb")
+# The shed ladder decides which site goes down under memory pressure, and its
+# test was named by nothing. It asserted litestream went first for as long as the
+# guard had stopped shedding it, and read green because nobody ran it.
+failures << "resource guard" unless runner.run("resource guard", "ksh",
+                                               "OPENBSD/test/resource_guard_test.sh",
+                                               "OPENBSD/resource_guard.sh")
 failures << "vps_ci_all syntax" unless runner.run("vps_ci_all syntax", "zsh", "-n", "OPENBSD/vps_ci_all.sh")
 failures << "openbsd deploy syntax" unless runner.run("openbsd deploy syntax", "zsh", "-n", "OPENBSD/OPERATOR.sh")
 failures << "vps safety" unless runner.run("vps safety", RUBY, "OPENBSD/vps_safety_gate.rb")
