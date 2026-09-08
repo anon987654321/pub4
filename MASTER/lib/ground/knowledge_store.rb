@@ -5,6 +5,7 @@ require "json"
 
 module Master
   module Ground
+    # WAL-mode SQLite ledger for fix quality, strategy outcomes, and RSI feedback events.
     class KnowledgeStore
       # Feedback-event storage and RSI opportunity detection — separate from
       # KnowledgeStore's fix-outcome and strategy-reuse concerns.
@@ -37,12 +38,6 @@ module Master
             event_count_opportunities(recent, "provider_error", :provider_errors, RSI_PROVIDER_MIN)
         end
       end
-    end
-  end
-end
-module Master
-  module Ground
-    class KnowledgeStore
       # Strategy-reuse tracking (trigger -> strategy -> outcome/confidence) —
       # separate from KnowledgeStore's fix-outcome and feedback-event concerns.
       module StrategyOutcomes
@@ -64,14 +59,7 @@ module Master
         SQL
         end
       end
-    end
-  end
-end
 
-module Master
-  module Ground
-  # WAL-mode SQLite ledger for fix quality, strategy outcomes, and RSI feedback events.
-    class KnowledgeStore
       include Master::Ground::SqliteStore
       include StrategyOutcomes
       include FeedbackEvents

@@ -38,13 +38,10 @@ module Master
 
           def self.auto_build? = false
 
+          declare id: "rubocop", severity: :warning, tags: %i[STYLE LINT], description: "RuboCop style/lint violation"
+
           def initialize(root:)
             super()
-            @id = "rubocop"
-            @description = "RuboCop style/lint violation"
-            @severity = :warning
-            @auto_fix = false
-            @rule_tags = %i[STYLE LINT]
             @root = root
           end
 
@@ -68,13 +65,10 @@ module Master
 
           def self.auto_build? = false
 
+          declare id: "reek", severity: :warning, tags: %i[SMELL ONE_JOB], description: "Reek code smell detected"
+
           def initialize(root:)
             super()
-            @id = "reek"
-            @description = "Reek code smell detected"
-            @severity = :warning
-            @auto_fix = false
-            @rule_tags = %i[SMELL ONE_JOB]
             @root = root
           end
 

@@ -39,13 +39,7 @@ module Master
           code = source.each_line.map { |line| line.lstrip.start_with?("#") ? "\n" : line }.join
           scan_lines(code, stale_pattern, message: "retired constant — use data/rules.yml#stale_namespaces replacement")
         end
-    end
-  end
-end
 
-module Master
-  module Review
-    module Scan
       module Rules
         RuleDSL.rule :PARAMETERIZED_SLUG,
           severity: :warning,
@@ -74,19 +68,11 @@ module Master
             finding(line: 1, message:)
           end
         end
-      end
-    end
-  end
-end
 
 # TYPE_IN_NAME and NUMBERED_NAME, the two naming detectors from TODO.md's
 # AST-detector backlog. AST rather than a Law line-regex because both are about
 # declarations — a method, a parameter, a local, an ivar — and a regex over raw
 # lines cannot tell a declaration from a mention of one in a comment.
-module Master
-  module Review
-    module Scan
-      module Rules
         # A name that says what type it is says the one thing the code already
         # says. `text_str` is a String either way; the name's job was to say
         # which text.
@@ -110,14 +96,8 @@ module Master
             play_list guest_list old_string new_string old_str new_str
           ].freeze
 
-          def initialize
-            super()
-            @id = "TYPE_IN_NAME"
-            @description = "a name that encodes its own type says nothing the code did not"
-            @severity = :info
-            @rule_tags = %i[DOMAIN_LANGUAGE LOAD_BEARING_NAMES]
-            @auto_fix = false
-          end
+          declare id: "TYPE_IN_NAME", severity: :info, tags: %i[DOMAIN_LANGUAGE LOAD_BEARING_NAMES],
+                  description: "a name that encodes its own type says nothing the code did not"
 
           def check_ast(ast, _code, path:)
             return [] if ast.nil? || path.to_s.match?(%r{/(?:test|spec|fixtures)/})
@@ -171,14 +151,8 @@ module Master
                float|int|uint|bit|px|rem|em|ms|hz|db|k|fp|bf|q|load|capture)\d+\z
           /x
 
-          def initialize
-            super()
-            @id = "NUMBERED_NAME"
-            @description = "numbered siblings name no difference between themselves"
-            @severity = :info
-            @rule_tags = %i[DOMAIN_LANGUAGE LOAD_BEARING_NAMES]
-            @auto_fix = false
-          end
+          declare id: "NUMBERED_NAME", severity: :info, tags: %i[DOMAIN_LANGUAGE LOAD_BEARING_NAMES],
+                  description: "numbered siblings name no difference between themselves"
 
           def check_ast(ast, _code, path:)
             return [] if ast.nil? || path.to_s.match?(%r{/(?:test|spec|fixtures)/})
@@ -214,10 +188,6 @@ module Master
             name.gsub(/([a-z\d])([A-Z])/, '\1_\2').downcase
           end
         end
-      end
-    end
-  end
-end
 
 # FILE_SEQUENCE_NAME and FILE_VAGUE_NAME — the two filename detectors. Both are
 # about the file's own name rather than anything inside it, so neither needs an
@@ -229,10 +199,6 @@ end
 # frames_final2/ in one sitting — names that record the order they were made in
 # and throw away the thing that actually differed (a keep-alive, then trusted
 # input).
-module Master
-  module Review
-    module Scan
-      module Rules
         # A sequence word is a timestamp wearing a name. If two files differ,
         # the name says how; if it cannot, they are one file or the difference
         # is not yet understood.

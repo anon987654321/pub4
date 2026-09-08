@@ -67,31 +67,32 @@ module Master
         }
       end
 
-      def load_avg_1m
-        out, _, st = Master::Io::Exec.capture3("/sbin/sysctl", "-n", "vm.loadavg")
-        return unless st.success?
+      # Every metric here is the same move: run a probe, parse what it printed,
+      # and answer nil rather than raise. A metric the box will not report is
+      # missing, not fatal — the sample carries the nil and the guard reads it.
+      def probe(name, *argv)
+        out, _, status = Master::Io::Exec.capture3(*argv)
+        return unless status.success?
 
-        load_average_1m(out)
+        yield out
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "Watcher.load_avg_1m")
+        Master::Ground::Swallow.log(e, context: "Watcher.#{name}")
         nil
+      end
+
+      def load_avg_1m
+        probe("load_avg_1m", "/sbin/sysctl", "-n", "vm.loadavg") { |out| load_average_1m(out) }
       end
 
       # OpenBSD does not expose vm.uvmexp.free via sysctl — parse vmstat instead.
       def mem_free_pct
-        out, _, st = Master::Io::Exec.capture3("/usr/bin/vmstat")
-        return unless st.success?
+        probe("mem_free_pct", "/usr/bin/vmstat") do |out|
+          free = vmstat_free_bytes(out)
+          next unless free
 
-        free = vmstat_free_bytes(out)
-        return unless free
-
-        total, _, st2 = Master::Io::Exec.capture3("/sbin/sysctl", "-n", "hw.physmem")
-        return unless st2.success?
-
-        memory_free_percent(free, physmem_bytes(total))
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "Watcher.mem_free_pct")
-        nil
+          total, _, status = Master::Io::Exec.capture3("/sbin/sysctl", "-n", "hw.physmem")
+          memory_free_percent(free, physmem_bytes(total)) if status.success?
+        end
       end
 
       def load_average_1m(output)
@@ -133,13 +134,7 @@ module Master
       end
 
       def disk_root_pct
-        out, _, st = Master::Io::Exec.capture3("/bin/df", "-k", "/")
-        return unless st.success?
-
-        disk_percent(out)
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "Watcher.disk_root_pct")
-        nil
+        probe("disk_root_pct", "/bin/df", "-k", "/") { |out| disk_percent(out) }
       end
 
       def disk_percent(output)
@@ -149,13 +144,7 @@ module Master
 
       # The master daemon runs as `falcon serve` on port 53187.
       def master_rss_mb
-        out, _, st = Master::Io::Exec.capture3("/bin/ps", "-Ao", "rss,command")
-        return unless st.success?
-
-        master_rss_mb_from_ps(out)
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "Watcher.master_rss_mb")
-        nil
+        probe("master_rss_mb", "/bin/ps", "-Ao", "rss,command") { |out| master_rss_mb_from_ps(out) }
       end
 
       def master_rss_mb_from_ps(output)

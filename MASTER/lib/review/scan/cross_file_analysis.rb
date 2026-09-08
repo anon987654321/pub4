@@ -43,21 +43,27 @@ module Master
           {}
         end
 
-        def duplicate_function_calls(files)
-          grouped = group_occurrences(files, /File\.read\(([^)\n]+)\)/)
-          grouped.filter_map do |call, occurrences|
-            next unless distinct_files(occurrences) >= MIN_FILES
+        # One expression written in MIN_FILES files or more. The three callers
+        # differ only in what they match and what they advise, so the sweep is
+        # written once and they pass the sentence in.
+        def spread(files, pattern, rule)
+          group_occurrences(files, pattern).filter_map do |value, occurrences|
+            count = distinct_files(occurrences)
+            next unless count >= MIN_FILES
 
-            build("CROSS_FILE_DRY", "duplicate File.read(#{call}) in #{distinct_files(occurrences)} files — extract a shared reader")
+            build(rule, yield(value, count))
+          end
+        end
+
+        def duplicate_function_calls(files)
+          spread(files, /File\.read\(([^)\n]+)\)/, "CROSS_FILE_DRY") do |call, count|
+            "duplicate File.read(#{call}) in #{count} files — extract a shared reader"
           end
         end
 
         def duplicate_glob_patterns(files)
-          grouped = group_occurrences(files, /Dir\.glob\(([^)\n]+)\)/)
-          grouped.filter_map do |pattern, occurrences|
-            next unless distinct_files(occurrences) >= MIN_FILES
-
-            build("CROSS_FILE_DRY", "duplicate Dir.glob(#{pattern}) in #{distinct_files(occurrences)} files — extract shared glob helper")
+          spread(files, /Dir\.glob\(([^)\n]+)\)/, "CROSS_FILE_DRY") do |pattern, count|
+            "duplicate Dir.glob(#{pattern}) in #{count} files — extract shared glob helper"
           end
         end
 
@@ -234,11 +240,8 @@ module Master
         end
 
         def scattered_config(files)
-          grouped = group_occurrences(files, /(?:ENV\.fetch|ENV\[)\(?["']([A-Z0-9_]+)["']/)
-          grouped.filter_map do |key, occurrences|
-            next unless distinct_files(occurrences) >= MIN_FILES
-
-            build("SCATTERED_CONFIG", "ENV #{key} is read in #{distinct_files(occurrences)} files — consolidate config access")
+          spread(files, /(?:ENV\.fetch|ENV\[)\(?["']([A-Z0-9_]+)["']/, "SCATTERED_CONFIG") do |key, count|
+            "ENV #{key} is read in #{count} files — consolidate config access"
           end
         end
 

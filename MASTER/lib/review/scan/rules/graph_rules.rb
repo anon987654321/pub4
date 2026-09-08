@@ -18,13 +18,11 @@ module Master
 
           def self.auto_build? = false
 
+          declare id: "interconnect", severity: :warning, tags: %i[ONE_SOURCE],
+                  description: "Phantom YAML key reads and orphan data keys"
+
           def initialize(root:)
             super()
-            @id = "interconnect"
-            @description = "Phantom YAML key reads and orphan data keys"
-            @severity = :warning
-            @auto_fix = false
-            @rule_tags = %i[ONE_SOURCE]
             @root = root
             @data_dir = File.join(root, "data")
             @lib_source = load_lib_source(root)
@@ -112,15 +110,7 @@ module Master
                .join("\n")
           end
         end
-      end
-    end
-  end
-end
 
-module Master
-  module Review
-    module Scan
-      module Rules
         # Files that change together in many commits are coupled regardless of imports.
         # Reads the co-change graph from RepoEcology (built once at boot) instead of
         # mining git per-scan. Flags cross-module pairs — likely DECOUPLE candidates
@@ -130,12 +120,11 @@ module Master
 
           def self.auto_build? = false
 
+          declare id: "co_change_coupling", severity: :info, tags: %i[DECOUPLE ONE_JOB], autofix: true,
+                  description: "Files co-change with N+ peers across module boundaries — hidden coupling"
+
           def initialize(root: nil, ecology: nil)
             super()
-            @id = "co_change_coupling"
-            @description = "Files co-change with N+ peers across module boundaries — hidden coupling"
-            @severity = :info
-            @rule_tags = %i[DECOUPLE ONE_JOB]
             @root = root ? File.expand_path(root) : File.expand_path(File.join(Master::ROOT, ".."))
             @ecology = ecology
           end

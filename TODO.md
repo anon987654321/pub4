@@ -353,6 +353,41 @@ is design work with an owner, not a sweep. Until someone takes that decision, ex
 every feature to arrive as a raise, and read a green `lint:spine` as "the ceiling was
 moved to meet it" rather than as "the spine held".
 
+#### A 977-line breach, paid down to 634 by collapse — 2026-09-08
+
+`lib/` stood at 38,441 against 37,464. Collapse took 343 of it. The ceiling is
+untouched and stays at 37,464: the tree is still above it, and a number written
+to meet the measurement is the raise this section refuses.
+
+Four things merged. Forty-two scan rules opened with the same eight-line
+constructor — `super()` and five instance variables holding literals, which
+`cross_file_analysis` reported as twenty-three identical structures — and now
+declare their identity at the class level, the way `RuleDSL` already declares the
+rules it generates. Twenty-one files opened their own scaffold two, three or four
+times over, `module Master ... end` written again below itself in one file, and
+now open it once. Six method families were one move written twice or three times:
+undo and redo, the watcher's three metric probes, the undo/rollback/redo reporters
+in the session and in the registry, the two git questions the prompt asks, the
+three runtime loop guards, and the review crew's two style checks. The remaining
+DRY findings over `lib/` are all worth five lines or fewer.
+
+Two things looked collapsible and are not. `propose.rb` and `repo_ecology.rb`
+repeat their scaffold because `NO_GOD_CLASS` counts methods per class node, so a
+second `class X ... end` block halves the count it sees; merging them turns
+`rake selfcheck` red. Both classes are god classes either way, which means the
+rule is reading the source layout rather than the class. And
+`PARALLEL_HIERARCHY` reports `FixLoop spans 12 class/module hierarchies`, with
+`ModelRouter`, `LLMDispatcher`, `PassRunner`, `AstFixer` and `Builder` behind it.
+All twelve are `class FixLoop` reopened by the parts of one class under
+`lib/fix/fix_loop/`. The rule already exempts a stem it has seen written as a
+qualifier; a class split across files is the same shape and is not exempt yet.
+
+The orphan account reads the same as it did on 2026-08-14. Nothing in `lib/` is
+dead, no two files are near-duplicates — line Jaccard peaks at 0.17, on two files
+that share a grading helper — and exactly one method body appears twice in the
+whole of `lib/`. The remaining 634 is not a sweep; it is the subsystem decision
+this section already names.
+
 ### Self-Test Debt
 
 **agent-ignore** — triage only when the task explicitly targets scan rules.

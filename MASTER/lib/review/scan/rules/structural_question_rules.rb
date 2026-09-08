@@ -11,14 +11,8 @@ module Master
           MAX_DEPTH = 4
           TOP_LEVEL_LIMIT = 12
 
-          def initialize
-            super()
-            @id = "CONFIG_HIERARCHY"
-            @description = "config keys are grouped, non-duplicated, and shallow"
-            @severity = :warning
-            @rule_tags = %i[CONFIG HIERARCHY]
-            @auto_fix = false
-          end
+          declare id: "CONFIG_HIERARCHY", severity: :warning, tags: %i[CONFIG HIERARCHY],
+                  description: "config keys are grouped, non-duplicated, and shallow"
 
           def check(code, path:)
             ext = File.extname(path).downcase
@@ -112,14 +106,8 @@ module Master
         class CodeHierarchyRule < Rule
           TOP_LEVEL_LIMIT = 5
 
-          def initialize
-            super()
-            @id = "CODE_HIERARCHY"
-            @description = "related classes are grouped under clear namespaces"
-            @severity = :warning
-            @rule_tags = %i[ARCHITECTURE HIERARCHY]
-            @auto_fix = false
-          end
+          declare id: "CODE_HIERARCHY", severity: :warning, tags: %i[ARCHITECTURE HIERARCHY],
+                  description: "related classes are grouped under clear namespaces"
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
@@ -148,14 +136,8 @@ module Master
         class LongParameterListRule < Rule
           LIMIT = 4
 
-          def initialize
-            super()
-            @id = "LONG_PARAMETER_LIST"
-            @description = "methods accept at most four parameters"
-            @severity = :warning
-            @rule_tags = %i[BLOATERS API]
-            @auto_fix = false
-          end
+          declare id: "LONG_PARAMETER_LIST", severity: :warning, tags: %i[BLOATERS API],
+                  description: "methods accept at most four parameters"
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
@@ -173,17 +155,11 @@ module Master
         class PrimitiveObsessionRule < Rule
           PRIMITIVE_HINTS = /\b(id|name|type|status|flag|count|price|amount|date|email|phone|url)\b|_id\z/i
 
-          def initialize
-            super()
-            @id = "PRIMITIVE_OBSESSION"
-            @description = "clusters of primitives should become small domain objects"
-            # data/rules.yml declares this one info, and the catalogue owns a
-            # rule's severity — it is the file that must carry tier and severity
-            # for every rule, which rule_hygiene.missing_metadata enforces.
-            @severity = :info
-            @rule_tags = %i[BLOATERS DOMAIN_MODELING]
-            @auto_fix = false
-          end
+          # data/rules.yml declares this one info, and the catalogue owns a
+          # rule's severity — it is the file that must carry tier and severity
+          # for every rule, which rule_hygiene.missing_metadata enforces.
+          declare id: "PRIMITIVE_OBSESSION", severity: :info, tags: %i[BLOATERS DOMAIN_MODELING],
+                  description: "clusters of primitives should become small domain objects"
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
@@ -208,14 +184,8 @@ module Master
         # Keyword parameters are exempt: `def render(path, cache: true)` already
         # forces the call site to say what is true, which is the whole point.
         class BooleanTrapRule < Rule
-          def initialize
-            super()
-            @id = "BOOLEAN_TRAP"
-            @description = "a positional boolean parameter makes every call site a riddle"
-            @severity = :info
-            @rule_tags = %i[API DOMAIN_LANGUAGE]
-            @auto_fix = false
-          end
+          declare id: "BOOLEAN_TRAP", severity: :info, tags: %i[API DOMAIN_LANGUAGE],
+                  description: "a positional boolean parameter makes every call site a riddle"
 
           def check_ast(ast, _code, path:)
             return [] if ast.nil? || path.to_s.match?(%r{/(?:test|spec|fixtures)/})
@@ -253,14 +223,8 @@ module Master
           MIN_CLUMP = 3
           MIN_SIGNATURES = 3
 
-          def initialize
-            super()
-            @id = "DATA_CLUMPS"
-            @description = "the same parameters travelling together are a record struggling to be born"
-            @severity = :info
-            @rule_tags = %i[BLOATERS DOMAIN_MODELING]
-            @auto_fix = false
-          end
+          declare id: "DATA_CLUMPS", severity: :info, tags: %i[BLOATERS DOMAIN_MODELING],
+                  description: "the same parameters travelling together are a record struggling to be born"
 
           def check_ast(ast, _code, path:)
             return [] if ast.nil? || path.to_s.match?(%r{/(?:test|spec|fixtures)/})
@@ -301,14 +265,8 @@ module Master
           MESSAGE_CHAIN = /\b\w+(?:\.\w+){4,}/
           INTIMACY = /\.(?:instance_variable_get|instance_variable_set|send|public_send)\s*\(/
 
-          def initialize
-            super()
-            @id = "COUPLER_SMELLS"
-            @description = "inappropriate intimacy and message chains"
-            @severity = :warning
-            @rule_tags = %i[COUPLING DEMETER]
-            @auto_fix = false
-          end
+          declare id: "COUPLER_SMELLS", severity: :warning, tags: %i[COUPLING DEMETER],
+                  description: "inappropriate intimacy and message chains"
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
@@ -328,14 +286,8 @@ module Master
         # under COUPLER_SMELLS. This gives it a real matching id and a single
         # responsibility of its own.
         class FeatureEnvyRule < Rule
-          def initialize
-            super()
-            @id = "FEATURE_ENVY"
-            @description = "method talks to one collaborator's internals more than its own"
-            @severity = :warning
-            @rule_tags = %i[COUPLING DEMETER]
-            @auto_fix = false
-          end
+          declare id: "FEATURE_ENVY", severity: :warning, tags: %i[COUPLING DEMETER],
+                  description: "method talks to one collaborator's internals more than its own"
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
@@ -354,31 +306,13 @@ module Master
 
           private
 
-          def methods(code)
-            result = []
-            current = nil
-            code.each_line.with_index(1) do |line, index|
-              current = [index, +""] if line.match?(/\A\s*def\b/)
-              current[1] << line if current
-              if current && line.match?(/\A\s*end\b/)
-                result << current
-                current = nil
-              end
-            end
-            result
-          end
+          def methods(code) = keyword_blocks(code, "def")
         end
 
         class LazyClassRule < Rule
-          def initialize
-            super()
-            @id = "LAZY_CLASS"
-            @description = "classes should own behavior, not only delegate"
-            # info, as the catalogue declares it — see PRIMITIVE_OBSESSION above.
-            @severity = :info
-            @rule_tags = %i[DISPENSABLES SRP]
-            @auto_fix = false
-          end
+          # info, as the catalogue declares it — see PRIMITIVE_OBSESSION above.
+          declare id: "LAZY_CLASS", severity: :info, tags: %i[DISPENSABLES SRP],
+                  description: "classes should own behavior, not only delegate"
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb", ".rake")
@@ -394,19 +328,7 @@ module Master
 
           private
 
-          def classes(code)
-            result = []
-            current = nil
-            code.each_line.with_index(1) do |line, index|
-              current = [index, +""] if line.match?(/\A\s*class\b/)
-              current[1] << line if current
-              if current && line.match?(/\A\s*end\b/)
-                result << current
-                current = nil
-              end
-            end
-            result
-          end
+          def classes(code) = keyword_blocks(code, "class")
         end
       end
     end

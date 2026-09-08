@@ -6,6 +6,7 @@ require "monitor"
 
 module Master
   module Review
+    # Prism-parsed symbol graph; rebuilt on write events.
     class CodeIndex
       # Read-only query surface over the built symbol/reference graph —
       # separated from CodeIndex's own build/reindex lifecycle.
@@ -67,13 +68,7 @@ module Master
           end
         end
       end
-    end
-  end
-end
 
-module Master
-  module Review
-    class CodeIndex
       class SymbolVisitor < Prism::Visitor
         attr_reader :symbols, :references, :metrics
 
@@ -177,14 +172,7 @@ module Master
           nil
         end
       end
-    end
-  end
-end
 
-module Master
-  module Review
-  # Prism-parsed symbol graph; rebuilt on write events.
-    class CodeIndex
       include QueryApi
 
       Symbol = Struct.new(:fqn, :type, :file, :line, :parent, :includes, keyword_init: true)

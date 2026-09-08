@@ -15,6 +15,7 @@ require_relative "../ground/swallow"
 
 module Master
   module Io
+    # Thin Replicate predictions client — used by the replicate_kokoro TTS engine.
     class ReplicateClient
       # File upload/download helpers — separate from ReplicateClient's own
       # prediction/training/model-catalog API.
@@ -43,12 +44,6 @@ module Master
           path
         end
       end
-    end
-  end
-end
-module Master
-  module Io
-    class ReplicateClient
       # LoRA training lifecycle (ostris/flux-dev-lora-trainer): start, poll,
       # fetch weights. Grouped apart from prediction/model-management to keep
       # ReplicateClient itself under the NO_GOD_CLASS public-method ceiling --
@@ -125,14 +120,7 @@ module Master
           [trainings_uri, body]
         end
       end
-    end
-  end
-end
 
-module Master
-  module Io
-    # Thin Replicate predictions client — used by the replicate_kokoro TTS engine.
-    class ReplicateClient
       include AssetTransfer
       include Training
 

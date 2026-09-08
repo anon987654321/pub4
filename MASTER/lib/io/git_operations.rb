@@ -4,6 +4,7 @@ require "open3"
 
 module Master
   module Io
+    # GitOperations — git wrappers scoped to a repository root.
     class GitOperations
       # State-changing git commands (add/commit/push/reset/tag/fetch) — kept
       # separate from GitOperations' own read-only status/inspection queries.
@@ -32,14 +33,7 @@ module Master
           Master::Io::Exec.capture2e("git", "-C", @root_path, "fetch")
         end
       end
-    end
-  end
-end
 
-module Master
-  module Io
-    # GitOperations — git wrappers scoped to a repository root.
-    class GitOperations
       include Mutations
 
       def initialize(root_path)

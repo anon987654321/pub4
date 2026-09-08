@@ -29,12 +29,37 @@ module Master
           true
         end
 
+        # What a rule *is*, declared once at the class level.
+        #
+        # Forty-two subclasses opened with the same constructor — `super()` and
+        # five instance variables holding literals — which cross_file_analysis
+        # reported as twenty-three byte-identical structures. Identity is a
+        # declaration, so it reads as one, and RuleDSL's generated classes say
+        # the same five things through the same names.
+        #
+        # autofix defaults to false because a rule that names no transform
+        # cannot apply one; the base default stays true for a rule that declares
+        # nothing at all, which is what an undeclared subclass has always got.
+        def self.declare(id:, description: "", severity: :warning, tags: [], autofix: false)
+          @declaration = { id: id.to_s, description: description.to_s, severity:,
+                           rule_tags: Array(tags), auto_fix: autofix }
+        end
+
+        # Inherited, so a subclass of a declared rule keeps its parent's identity
+        # until it declares its own.
+        def self.declaration
+          return @declaration if defined?(@declaration) && @declaration
+
+          superclass.respond_to?(:declaration) ? superclass.declaration : nil
+        end
+
         def initialize
-          @id = self.class.name&.split("::")&.last&.downcase || "unknown"
-          @description = ""
-          @severity = :warning
-          @rule_tags = []
-          @auto_fix = true
+          declared = self.class.declaration
+          @id = declared&.fetch(:id, nil) || self.class.name&.split("::")&.last&.downcase || "unknown"
+          @description = declared ? declared[:description] : ""
+          @severity = declared ? declared[:severity] : :warning
+          @rule_tags = declared ? declared[:rule_tags] : []
+          @auto_fix = declared ? declared[:auto_fix] : true
         end
 
         # Default for AST-based rules: a subclass implements check_ast and gets
@@ -106,6 +131,24 @@ module Master
 
           (Array(params.requireds) + Array(params.optionals) + Array(params.keywords))
             .filter_map { |param| param.name&.to_s if param.respond_to?(:name) }
+        end
+
+        # Blocks opened by one keyword, as [first_line, source] pairs. Lexical on
+        # purpose: the rules that read this ask how large a def or a class is,
+        # and they must answer on a file Prism will not parse.
+        def keyword_blocks(code, keyword)
+          opener = /\A\s*#{keyword}\b/
+          result = []
+          current = nil
+          code.each_line.with_index(1) do |line, index|
+            current = [index, +""] if line.match?(opener)
+            current[1] << line if current
+            if current && line.match?(/\A\s*end\b/)
+              result << current
+              current = nil
+            end
+          end
+          result
         end
 
         def scan_lines(code, pattern, message:, fix: nil)

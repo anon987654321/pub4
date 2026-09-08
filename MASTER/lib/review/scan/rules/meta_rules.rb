@@ -9,10 +9,11 @@ module Master
         class AstOmissionRule < Rule
           def self.auto_build? = false
 
+          declare id: "ast_omission", severity: :warning, tags: %i[COMPLETENESS],
+                  description: "symbol dropped vs recent commits"
+
           def initialize(root: Dir.pwd, depth: CommitGuard::DEFAULT_DEPTH)
             super()
-            @id = "ast_omission"; @description = "symbol dropped vs recent commits"
-            @severity = :warning; @rule_tags = %i[COMPLETENESS]; @auto_fix = false
             @root = File.expand_path(root)
             @guard = CommitGuard.new(root: @root, depth:)
           end
@@ -38,26 +39,16 @@ module Master
             full.start_with?(prefix) ? full.delete_prefix(prefix) : File.basename(full)
           end
         end
-      end
-    end
-  end
-end
 
-module Master
-  module Review
-    module Scan
-      module Rules
         # Every Rule subclass must have a matching test file; gaps mean untested enforcement.
         class RuleCoverageRule < Rule
           def self.auto_build? = false
 
+          declare id: "rule_coverage", severity: :warning, tags: %i[TEST_COVERAGE],
+                  description: "Rule subclass has no corresponding test file"
+
           def initialize(root:)
             super()
-            @id = "rule_coverage"
-            @description = "Rule subclass has no corresponding test file"
-            @severity = :warning
-            @auto_fix = false
-            @rule_tags = %i[TEST_COVERAGE]
             @root = root
             @test_dir = File.join(root, "test")
           end
@@ -108,15 +99,7 @@ module Master
             end
           end
         end
-      end
-    end
-  end
-end
 
-module Master
-  module Review
-    module Scan
-      module Rules
         # Runtime authority lives in YAML + Ground::BootstrapDocs — not markdown under data/.
         RuleDSL.rule :RUNTIME_DOCS_YAML,
           severity: :error,
@@ -172,23 +155,13 @@ module Master
             expanded.delete_prefix("#{root}/")
           end
         end
-      end
-    end
-  end
-end
 
-module Master
-  module Review
-    module Scan
-      module Rules
         class LearnedSmellsRule < Rule
+          declare id: "LEARNED_SMELLS", severity: :warning, tags: %i[LEARNED_SMELLS SESSION],
+                  description: "session-learned smell patterns from rules.yml"
+
           def initialize(root: Master::ROOT)
             super()
-            @id = "LEARNED_SMELLS"
-            @description = "session-learned smell patterns from rules.yml"
-            @severity = :warning
-            @rule_tags = %i[LEARNED_SMELLS SESSION]
-            @auto_fix = false
             @root = root
             reload_learned_smells!
           end
@@ -313,13 +286,11 @@ module Master
           SKIP_RE = %r{/(?:law|core|test|spec|fixtures|templates|node_modules)/|/web/public/}
           def self.auto_build? = false
 
+          declare id: "FILE_SPRAWL", severity: :warning, tags: %i[FLAT_HIERARCHY COLLAPSE_BEFORE_ADDING],
+                  description: "one-file directories and tiny files merge into their owners"
+
           def initialize(root: Master::ROOT)
             super()
-            @id = "FILE_SPRAWL"
-            @description = "one-file directories and tiny files merge into their owners"
-            @severity = :warning
-            @auto_fix = false
-            @rule_tags = %i[FLAT_HIERARCHY COLLAPSE_BEFORE_ADDING]
             @root = File.expand_path(root)
             @dir_entries = {}
           end
@@ -383,16 +354,14 @@ module Master
           SKIP_RE = %r{/(?:test|spec|fixtures|node_modules|vendor|tmp|log|scratch|frames?_|renders?)/|/\.}
           def self.auto_build? = false
 
+          # error, not warning: WriteGuard blocks on veto/critical/error, and a
+          # directory nobody has taken responsibility for is exactly what
+          # should be refused at write time rather than reported afterwards.
+          declare id: "PATH_PURPOSE", severity: :error, tags: %i[ONE_SOURCE COLLAPSE_BEFORE_ADDING],
+                  description: "every directory declares its purpose in PATH_OWNERSHIP.yml"
+
           def initialize(root: Master::ROOT)
             super()
-            @id = "PATH_PURPOSE"
-            @description = "every directory declares its purpose in PATH_OWNERSHIP.yml"
-            # error, not warning: WriteGuard blocks on veto/critical/error, and a
-            # directory nobody has taken responsibility for is exactly what
-            # should be refused at write time rather than reported afterwards.
-            @severity = :error
-            @auto_fix = false
-            @rule_tags = %i[ONE_SOURCE COLLAPSE_BEFORE_ADDING]
             @root = File.expand_path(root)
           end
 
