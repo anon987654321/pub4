@@ -144,23 +144,9 @@ module Master
         ].join("\n")
       end
 
-      def dispatch_core(root:, ctx: nil)
-        smoke = File.join(root, "core", "spec", "core_smoke.rb")
-        return "core: smoke script missing at #{smoke}" unless File.file?(smoke)
-
-        out, status = Master::Io::Exec.capture2e(Gem.ruby, smoke, chdir: root)
-        status.success? ? out.lines.last(5).join : "core smoke failed:\n#{out}"
-      end
-
       # Constitutional scoreboard: per-axiom violation counts over lib/, plus a
       # rule dep-graph completeness report.
       AXIOM_SCAN_CAP = 400
-
-      def dispatch_axioms(scanner:, root:, ctx: nil)
-        files = axiom_scan_files(root)
-        by_axiom = tally_axioms(scanner, files)
-        [axiom_table(files, by_axiom), "", dep_graph_line(root)].join("\n")
-      end
 
       def axiom_scan_files(root)
         Dir.glob(File.join(root, "lib", "**", "*.rb"))
@@ -209,15 +195,6 @@ module Master
         end
       rescue StandardError => e
         "rules: #{e.message}"
-      end
-
-      def dispatch_edge_cases(root:, ctx: nil)
-        arg = arg_for(ctx)
-        return "usage: /edge-cases <ruby-file>" if arg.empty?
-
-        Master::Review::Scan::EdgeCaseStubGenerator.new(root:).call(arg).then do |result|
-          result.ok? ? result.value! : result.message
-        end
       end
 
       def dispatch_analyze_self(learnings:, ctx: nil)
@@ -390,24 +367,6 @@ module Master
 
       def strip_scan_flags(arg)
         arg.to_s.split(/\s+/).reject { |part| part == "--dry-run" || part == "--no-autofix" }.join(" ")
-      end
-
-      def strip_dry_run(arg)
-        strip_scan_flags(arg)
-      end
-
-      def dispatch_process(ctx: nil)
-        JSON.pretty_generate(process: Master::Ops::ProcessBudget.status, loop_slot: Master::Ops::LoopSlot.status)
-      end
-
-      def dispatch_propose_tree(propose_tree, ctx: nil)
-        propose_tree&.call || "propose-tree: not wired"
-      end
-
-      def dispatch_replay(root:, trace: nil, ctx: nil)
-        Trace::ReplayReader.new(root:, recorder: trace).render(arg: arg_for(ctx))
-      rescue StandardError => e
-        "replay: #{e.message}"
       end
 
       def dispatch_graph(root:, code_index:, reference_graph:, ctx: nil)

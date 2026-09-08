@@ -13,10 +13,6 @@ module Master
         .git .bundle node_modules vendor tmp log coverage storage cache dist build knowledge public var
       ].freeze
 
-      def dispatch_review(deliberation:, root:, bus:, review_crew:, ctx: nil)
-        review_target(arg_for(ctx), root:, deliberation:, bus:, review_crew:)
-      end
-
       def review_target(arg, root:, deliberation:, bus:, review_crew:)
         target = arg.empty? ? "." : arg
         crew_result = review_crew&.run(target:)
@@ -252,16 +248,6 @@ module Master
         agent.ask_once(Voice::Personality.why_prompt(rule))
       end
 
-      def dispatch_ecology(ecology, ctx: nil)
-        arg = arg_for(ctx)
-        return "ecology: not wired" unless ecology
-        path = arg.to_s.strip.empty? ? nil : File.expand_path(arg.strip)
-        report = ecology.scan(path:)
-        ecology.render(report)
-      rescue StandardError => e
-        "ecology: #{e.message}"
-      end
-
       def dispatch_topic(session, ctx: nil)
         arg = arg_for(ctx)
         if arg.empty?
@@ -275,18 +261,6 @@ module Master
 
       # Maturity scorecard (OpenClaw's taxonomy.yaml pattern) -- what's
       # actually proven to work, not just claimed. See data/maturity.yml.
-      def dispatch_maturity(root:, ctx: nil)
-        arg = arg_for(ctx).to_s.strip
-        card = Master::Ground::MaturityScorecard.load(root:)
-        return card.summary_line if arg.empty?
-        return maturity_status_report(card, arg) if Master::Ground::MaturityScorecard::STATUSES.include?(arg)
-
-        entry = card.subsystems.find { |e| e.id == arg }
-        return "unknown subsystem #{arg.inspect} — try /maturity, or /maturity verified|smoke|broken" unless entry
-
-        maturity_entry_detail(entry)
-      end
-
       def maturity_status_report(card, status)
         entries = card.by_status(status)
         return "no subsystems with status=#{status}" if entries.empty?

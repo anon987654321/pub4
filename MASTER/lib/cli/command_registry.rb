@@ -64,31 +64,6 @@ module Master
         "session saved"
       end
 
-      def dispatch_history(session, ctx: nil)
-        n = arg_for(ctx).to_i
-        n = 10 if n <= 0
-        recent = session.messages.last(n)
-        return "history: empty" if recent.empty?
-
-        recent.map.with_index(1) { |m, i| Formatter.history_line(m, i) }.join("\n")
-      end
-
-      def dispatch_grep(session, ctx: nil)
-        grep_history(session, arg_for(ctx))
-      end
-
-      def dispatch_audit(config, ctx: nil)
-        audit_changes(config["root"] || Dir.pwd)
-      end
-
-      def dispatch_tokens(session, ctx: nil)
-        "~#{session.token_est} tokens"
-      end
-
-      def dispatch_cost(session, ctx: nil)
-        Formatter.cost(session.cost)
-      end
-
       def dispatch_undo(undo, ctx: nil) = undo_line("reverted", undo.undo!)
 
       def dispatch_rollback(undo, ctx: nil) = undo_line("rolled back", undo.undo!)
@@ -97,25 +72,11 @@ module Master
 
       def undo_line(verb, result) = result.ok? ? "#{verb}: #{result.value!}" : result.message
 
-      def dispatch_dmesg(logging, ctx: nil)
-        n = arg_for(ctx).to_i
-        logging.dmesg(n.positive? ? n : Master::Trace::Logging::DEFAULT_DMESG_LINES)
-      end
-
-      def dispatch_config(config, ctx: nil)
-        config.to_h.inspect
-      end
-
       def dispatch_reasoning(config, ctx: nil)
         arg = arg_for(ctx)
         Master::Review::Modes::SUPPORTED.include?(arg) ?
           (config["reasoning_mode"] = arg; config.save!; "reasoning: #{arg}") :
           "reasoning: #{config.reasoning_mode} (supported: #{Master::Review::Modes::SUPPORTED.join(", ")})"
-      end
-
-      def dispatch_task(config, ctx: nil)
-        arg = arg_for(ctx)
-        arg.empty? ? "task_type: #{config.task_type}" : (config["task_type"] = arg; config.save!; "task_type: #{arg}")
       end
 
       def dispatch_persona(config, ctx: nil)
@@ -130,11 +91,6 @@ module Master
         config["persona"] = arg.downcase
         config.save!
         "persona: #{arg.downcase}"
-      end
-
-      def dispatch_flag(config, flag, ctx: nil)
-        arg = arg_for(ctx)
-        arg.empty? ? "#{flag}: #{config[flag]}" : (config[flag] = arg == "on"; config.save!; "#{flag}: #{config[flag]}")
       end
 
       def grep_history(session, pattern)

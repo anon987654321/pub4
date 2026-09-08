@@ -129,10 +129,6 @@ module Master
       end
 
       # /resync — divergence repair: tag, fetch, reset, bundle, restart.
-      def dispatch_resync(root:, fix_loop:, git:, bus:, ctx: nil)
-        ResyncService.new(root:, fix_loop:, git:, bus:).call(dry_run: arg_for(ctx).include?("--dry-run"))
-      end
-
       # /tail [N] [pattern] — last N events matching pattern. Default N=20.
       def dispatch_tail(root:, ctx: nil)
         arg = arg_for(ctx)
