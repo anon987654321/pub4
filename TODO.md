@@ -31,6 +31,73 @@ mentioned.
 
 ## MASTER
 
+### Left open at the close of 2026-09-08
+
+Everything here was measured in this session and is not recorded elsewhere in
+this file.
+
+**The deploy is incomplete, and the blocker is not in MASTER.** master is at
+HEAD and serving; brgen, amber and bsdports are not. amber has been on
+`54fb1d990` since 2026-08-29 and bsdports on `480239f89` since 2026-08-22.
+brgen's CI now clears the rhythm lint and its whole Rails suite, and stops at
+`css_constitution magic_hex` — **140 against a ceiling of 139**. Seven of the 140
+sit in the three vertical stylesheets touched by `7c704bf0b`, one of four commits
+another session left unpushed beneath this one. It needs either the ceiling
+recorded with the reason those accent inks are raw hex, or the hexes moved into
+tokens. Neither is a call to make on another session's deliberate values.
+
+**Two deploy hazards, both paid for once already.**
+
+Stashing vm23's `Gemfile.lock` to fast-forward the checkout is what broke master.
+The Mac-committed lock carries an empty `CHECKSUMS` entry for `ffi`, and
+`BUNDLE_FROZEN=true` — which exists to stop the daemon writing its own lockfile —
+means Bundler cannot repair it, so the boot dies in `Bundler.setup` and
+`vps-deploy all` halts the whole pass. **Do not stash the box's locks.** A plain
+`git pull --ff-only` succeeds with them dirty, because no commit here touches
+them. Recovery is `git checkout stash@{0} -- MASTER/Gemfile.lock
+MASTER/web/Gemfile.lock`.
+
+And a deploy can take relayd down. Mid-pass it died with `rsae_send_imsg:
+imsgbuf_flush: Broken pipe` → `relay: pipe closed` → `parent terminating`, while
+every app port stayed open. All four hosts read `curl 000`, including
+`ai.brgen.no`, which nothing had deployed — the shape `OPENBSD/CLAUDE.md`
+describes as the front door rather than a backend. `relayd -n` validated, and
+`doas rcctl restart relayd` restored it. Check `rcctl check relayd` after any
+deploy that restarts master.
+
+**Eleven amber translation keys are defined twice with different values.**
+`config/locales/copy.en.yml` and `en.yml` both define `en.ai.*`; Rails loads
+locale files alphabetically, so `en.yml` wins and `copy.en.yml`'s eleven strings
+are dead copy someone wrote to be read. "Analysis unavailable" versus "No
+analysis for this garment yet." is the shape of all eleven. brgen has nine
+collisions too, but with identical values, so those are only redundancy. The
+files cannot be concatenated — the winner has to be chosen per key.
+
+**The one scheme has three follow-ups.** `magic_hex` is untouched at 140 because
+those are hardcoded hexes in components, not token fallbacks; reducing them
+changes what is painted and wants the owner. `vertical_accents` still gives
+marketplace, tv, dating and the rest their own ink, and a greyscale scheme has
+to decide whether one accent survives for interactive affordance — a link with
+no colour needs an underline instead. And `--danger` is deliberately the one
+non-grey, which is why 37 of the remaining `contrast_below_aaa` pairs are it.
+
+**`RAILS/brgen/domains.yml` has exactly one reader in the repo**,
+`OPENBSD/vps_ci.sh`, which is worth knowing given brgen's city hosts are meant
+to be driven from it.
+
+**`self_findings.law` reads 290 against a ceiling of 289, and the extra one is
+not landed.** It comes from another session's uncommitted `STUDIO/dilla/dilla.rb`
+and `lib/analog_synth.rb` — 335 insertions dirty in the tree at the close. The
+ceiling stays at 289: `spine.yml` already records that a ceiling raised to fit
+uncommitted files is the swallowing it exists to refuse. Re-record after that
+work lands, and read the member list rather than the number.
+
+**Two other sessions were committing into this checkout through the afternoon** —
+`agent/messenger` at 17:33 and `agent/marketplace` at 17:53 — and both went out
+beneath a push from this one. `STUDIO/dilla/` is dirty from a third, with an
+untracked `renders/analog_test/`, left alone. Nothing in git separates sessions;
+read the commit body before claiming or disclaiming one.
+
 ### The external 10/10 roadmap, read against the tree — 2026-09-08
 
 A ~90-item roadmap arrived from ChatGPT proposing an execution model of
