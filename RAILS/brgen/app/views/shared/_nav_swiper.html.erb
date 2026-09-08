@@ -59,40 +59,16 @@
         <% end %>
       <% end %>
     </div>
-    <%# Hot and New are orderings of the front page, so they ride the bar that is
-        already the wayfinding rather than a second row beneath it: root carries
-        exactly one horizontal scroller and test_root_offers_the_verticals_once
-        pins that. Front page only — on a vertical these would order a feed that
-        is not on screen. These navigate in place, so no target="_blank".
+    <%# The feed orderings are not here any more. One rule each, and it is the
+        rule rather than the row that was the problem: this bar is how you leave
+        this app — eight verticals, each a separate host — and the bottom tab bar
+        is how you move within it. Hot, New, Following and Communities are
+        neither. They order the feed, so they sit with the feed, in
+        home/index.html.erb.
 
-        Its own group, and deliberately not carrying the separators: the pipes
-        say "these are the eight places", and a feed ordering is not one of
-        them. %>
-    <% if !vertical_surface? && authenticated? %>
-      <%# Fresh is the default now, so it is the bare root path and Hot carries
-          the parameter — the tabs say which one the front page is. `latest`
-          still lands here because it still means fresh. %>
-      <% fresh = params[:feed].blank? && params[:sort].to_s != "hot" %>
-      <% ranked = params[:sort] == "hot" %>
-      <div class="nav_swiper_group" role="group" aria-label="<%= t("home.feed_sort", default: "Feed") %>">
-        <%= link_to t("home.feed_latest"), main_app.root_path,
-              class: "nav_link#{" active" if fresh}",
-              "aria-current": ("page" if fresh) %>
-        <%= link_to t("home.feed_hot", default: "Hot"), main_app.root_path(sort: "hot"),
-              class: "nav_link#{" active" if ranked}",
-              "aria-current": ("page" if ranked) %>
-        <%# Following and Communities move with Hot and New rather than being left
-            behind on a row that no longer exists. Dropping them here would leave
-            feed=following and feed=communities implemented in the controller and
-            reachable only by typing the query string — which is the state New was
-            in before today. %>
-        <%= link_to t("home.feed_following"), main_app.root_path(feed: "following"),
-              class: "nav_link#{" active" if params[:feed] == "following"}",
-              "aria-current": ("page" if params[:feed] == "following") %>
-        <%= link_to t("home.feed_communities"), main_app.root_path(feed: "communities"),
-              class: "nav_link#{" active" if params[:feed] == "communities"}",
-              "aria-current": ("page" if params[:feed] == "communities") %>
-      </div>
-    <% end %>
+        This is not a return to the two-scroller shape test_root_offers_the_
+        verticals_once forbids. That row listed the same verticals as this bar,
+        immediately under it; a feed ordering duplicates nothing here, and the
+        control it moved to is `chips` — four links that wrap, not a scroller. %>
   </nav>
 </div>

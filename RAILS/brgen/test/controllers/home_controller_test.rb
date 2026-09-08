@@ -106,6 +106,62 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
                  "root must not carry a second nav scroller duplicating the swiper"
   end
 
+  # BRGEN-100. Two chromes, one rule each: the swiper is how you leave brgen —
+  # eight verticals, each its own host — and the bottom tab bar is how you move
+  # within it. A feed ordering is neither, and while it sat on the swiper the
+  # front page had two controls that both meant "go to root".
+  #
+  # Asserted from the signed-in page, because guest root carries no feed
+  # controls and never did.
+  def test_the_swiper_carries_no_feed_ordering
+    host! "brgen.no"
+    sign_in_a_reader
+    get root_url
+    assert_response :success
+
+    bar = response.body[/<nav id="nav_sections".*?<\/nav>/m]
+    refute_nil bar, "the nav swiper should render on root"
+    refute_match(/sort=hot/, bar, "the swiper orders no feed — that lives with the feed")
+    refute_match(/feed=following/, bar, "the swiper orders no feed — that lives with the feed")
+  end
+
+  # And the feed carries them exactly once. `chips` rather than a tab row is
+  # what keeps test_root_offers_the_verticals_once intact: four links that wrap
+  # is not a second horizontal scroller.
+  def test_the_feed_carries_its_orderings_once
+    host! "brgen.no"
+    sign_in_a_reader
+    get root_url
+    assert_response :success
+
+    assert_equal 1, response.body.scan(/class="chips"/).size
+    assert_equal 1, response.body.scan(/href="[^"]*\?sort=hot"/).size
+    assert_match(/class="chip active"/, response.body, "the active ordering should be marked")
+  end
+
+  # More is the rest, not everything. AI, Nearby and New post are tab items
+  # inches above the sheet, and listing them again made the sheet read as a
+  # second copy of the bar.
+  def test_the_more_sheet_does_not_repeat_a_tab
+    host! "brgen.no"
+    sign_in_a_reader
+    get root_url
+    assert_response :success
+
+    sheet = response.body[/<section class="mobile-sheet".*?<\/section>/m]
+    refute_nil sheet, "the more sheet should render"
+    refute_match(%r{href="/posts/new"}, sheet, "New post is a tab; the sheet is what the bar has no room for")
+    refute_match(%r{href="/nearby"}, sheet, "Nearby is a tab")
+  end
+
+  def sign_in_a_reader
+    user = User.create!(email_address: "nav-#{SecureRandom.hex(4)}@brgen.no",
+                        password: "password12345", username: "nv#{SecureRandom.hex(3)}",
+                        city: City.find_by(domain: "brgen.no"))
+    post session_url, params: { email_address: user.email_address, password: "password12345" }
+    user
+  end
+
   # Exactly one entry carries the rule, and on the apex it is front. The class is
   # what paints it and aria-current is what announces it, so both are asserted --
   # the two have come apart before.

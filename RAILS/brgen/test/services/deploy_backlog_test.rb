@@ -534,11 +534,16 @@ assert_includes haystack, "turbo_prefetch: false",
     # regression.
     brgen_layout = %w[layouts/application shared/_mobile_chrome].sum("") { |v| read_source(File.join(ROOT, "brgen/app/views/#{v}.html.erb")) }
     assert_includes brgen_layout, "data-push-unread-value="
-    # The sheet that links out to the AI surface is shared/_mobile_chrome, which
-    # the layout renders. The invariant is that the shell reaches it, not which
-    # of the two files spells the helper.
+    # The shell reaches the AI surface. The invariant is that it does, not which
+    # file spells the helper — and the assertion under this comment used to name
+    # _mobile_chrome, which contradicted it. That passed only because the sheet
+    # listed AI a second time, three centimetres under the tab that already did;
+    # deduping the sheet under BRGEN-100 took the literal with it while leaving
+    # the destination exactly as reachable, through shared/_ai_nav_link, which
+    # the tab bar renders. So the partial is read as part of the shell now.
     %w[ai_nav_link mobile_chrome].each { |p| assert_includes brgen_layout, %(render "shared/#{p}") }
-    assert_includes read_source(File.join(ROOT, "brgen/app/views/shared/_mobile_chrome.html.erb")), "brgen_ai_url"
+    shell = brgen_layout + read_source(File.join(ROOT, "brgen/app/views/shared/_ai_nav_link.html.erb"))
+    assert_includes shell, "brgen_ai_url"
     refute_match(/javascript_include_tag "(face|particle_kernel)"/, brgen_layout)
     assert_match(/pwa\.create_outfit|Create outfit/, read_source(File.join(ROOT, "amber/app/views/pwa/manifest.json.erb")))
     assert_match(/pwa\.search_ports|Search ports/, read_source(File.join(ROOT, "bsdports/app/views/pwa/manifest.json.erb")))

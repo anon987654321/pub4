@@ -64,16 +64,19 @@
 <section class="mobile-sheet" data-level="0" aria-label="<%= t("nav.quick_actions") %>" data-bottom-sheet-target="sheet" data-action="pointerdown->bottom-sheet#pointerDown pointermove->bottom-sheet#pointerMove pointerup->bottom-sheet#pointerUp pointercancel->bottom-sheet#pointerUp">
   <div class="mobile-sheet-handle"></div>
   <div class="mobile-sheet-links">
-    <%= link_to t("nav.ai_assistant"), brgen_ai_url, data: { turbo: false } %>
-    <%# Was Live, the separate hyperlocal feed. /nearby is that layer's hub now
-        and it handles the no-location case, which the room itself cannot. %>
-    <%= link_to t("nav.nearby"), main_app.nearby_path %>
+    <%# AI, Nearby and New post are tab items three centimetres above this
+        sheet, and listing them again made More read as "everything" rather
+        than "the rest". The sheet is what the bar has no room for: seven tabs
+        is the ceiling, and these are the destinations past it.
+
+        Nearby was Live, the separate hyperlocal feed; /nearby is that layer's
+        hub now and handles the no-location case the room itself cannot. It
+        keeps its tab. %>
     <%= link_to t("nav.channels"), main_app.channels_path %>
     <%# Notifications lived only in the left rail, and the rail is gone. It is
         a secondary destination, so it belongs in the sheet rather than as a
         seventh tab -- five plus More is already the ceiling for a tab bar. %>
     <%= link_to t("nav.notifications"), main_app.notifications_path if Current.user %>
-    <%= link_to t("nav.new_post"), main_app.new_post_path %>
     <%= link_to t("nav.new_community"), main_app.new_community_path %>
     <% if authenticated? %>
       <%= link_to t("nav.profile"), main_app.user_path(Current.user) %>
