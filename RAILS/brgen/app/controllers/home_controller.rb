@@ -8,8 +8,7 @@ class HomeController < ApplicationController
     return render_master_guest_home!(title: "Brgen") if params[:master].present? && master_guest_home?
 
     @feed = params[:feed]
-    scope = Brgen::HomeFeed.scope(feed: @feed, authenticated: authenticated?)
-    scope = scope.reorder(created_at: :desc) if params[:sort] == "latest"
+    scope = Brgen::HomeFeed.scope(feed: @feed, authenticated: authenticated?, sort: params[:sort])
     # with_attached_image, or the card's `post.image.attached?` costs one
     # active_storage_attachments query per post — 25 on a full page.
     scope = scope.includes(:user, :community, :votes).with_attached_image

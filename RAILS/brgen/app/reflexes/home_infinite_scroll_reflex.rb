@@ -8,10 +8,10 @@ class HomeInfiniteScrollReflex < Shared::InfiniteScrollReflex
   def scope
     scope = Brgen::HomeFeed.scope(
       feed: element.dataset["feed"],
-      authenticated: Current.user.present? && !Current.user.guest?
+      authenticated: Current.user.present? && !Current.user.guest?,
+      sort: element.dataset["sort"]
     )
     scope = scope.includes(:user, :community, :votes)
-    scope = scope.reorder(created_at: :desc) if element.dataset["sort"] == "latest"
     return scope unless element.dataset["q"].present?
 
     term = "%#{ActiveRecord::Base.sanitize_sql_like(element.dataset["q"])}%"

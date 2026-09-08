@@ -18,18 +18,34 @@ module Brgen
       feed.to_s == "communities"
     end
 
-    def scope(feed: nil, authenticated: false, user: Current.user)
+    # BRGEN-104. The front page is newest-first, and hot is the named
+    # alternative.
+    #
+    # It was the other way round: every branch here ordered by HOT_SQL and
+    # newest-first existed only as `?sort=latest` reordering the result, so a
+    # city feed that calls itself the city's now ranked by score and a post
+    # could be hours old before it surfaced. Ranking is a thing a reader asks
+    # for; freshness is what a feed is.
+    #
+    # `latest` is still accepted and still means fresh — it is what every
+    # existing link says — so no URL anyone has bookmarked changes meaning.
+    def scope(feed: nil, authenticated: false, user: Current.user, sort: nil)
+      ranked = ranked?(sort:)
       base =
         if communities?(feed:) && authenticated
           user.community_feed
         elsif following?(feed:) && authenticated
-          user.timeline_posts.hot
+          ranked ? user.timeline_posts.hot : user.timeline_posts.fresh
         elsif !authenticated && Brgen::DemoFeed.available?
-          Brgen::DemoFeed.hot
+          ranked ? Brgen::DemoFeed.hot : Brgen::DemoFeed.fresh
         else
-          Post.hot
+          ranked ? Post.hot : Post.fresh
         end
       exclude_blocked(Post.visible_to(user).merge(base), user)
+    end
+
+    def ranked?(sort:)
+      sort.to_s == "hot"
     end
 
     # A blocker never sees blocked users' posts in any feed.

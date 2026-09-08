@@ -69,14 +69,18 @@
         say "these are the eight places", and a feed ordering is not one of
         them. %>
     <% if !vertical_surface? && authenticated? %>
-      <% hot = params[:sort].blank? && params[:feed].blank? %>
+      <%# Fresh is the default now, so it is the bare root path and Hot carries
+          the parameter — the tabs say which one the front page is. `latest`
+          still lands here because it still means fresh. %>
+      <% fresh = params[:feed].blank? && params[:sort].to_s != "hot" %>
+      <% ranked = params[:sort] == "hot" %>
       <div class="nav_swiper_group" role="group" aria-label="<%= t("home.feed_sort", default: "Feed") %>">
-        <%= link_to t("home.feed_hot", default: "Hot"), main_app.root_path,
-              class: "nav_link#{" active" if hot}",
-              "aria-current": ("page" if hot) %>
-        <%= link_to t("home.feed_latest"), main_app.root_path(sort: "latest"),
-              class: "nav_link#{" active" if params[:sort] == "latest"}",
-              "aria-current": ("page" if params[:sort] == "latest") %>
+        <%= link_to t("home.feed_latest"), main_app.root_path,
+              class: "nav_link#{" active" if fresh}",
+              "aria-current": ("page" if fresh) %>
+        <%= link_to t("home.feed_hot", default: "Hot"), main_app.root_path(sort: "hot"),
+              class: "nav_link#{" active" if ranked}",
+              "aria-current": ("page" if ranked) %>
         <%# Following and Communities move with Hot and New rather than being left
             behind on a row that no longer exists. Dropping them here would leave
             feed=following and feed=communities implemented in the controller and

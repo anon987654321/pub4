@@ -24,5 +24,12 @@ module Brgen
     def hot(city: ActsAsTenant.current_tenant, limit: 50)
       posts_scope(city: city).hot.limit(limit)
     end
+
+    # The guest front page defaults to this now, so it has to exist here too —
+    # a guest getting hot while a signed-in reader got fresh would be two front
+    # pages with one name.
+    def fresh(city: ActsAsTenant.current_tenant, limit: 50)
+      posts_scope(city: city).fresh.limit(limit)
+    end
   end
 end
