@@ -295,6 +295,24 @@ roadmap carries.**
   `initialize` above the bare `private` stays public. The diagnosis was right
   and worth acting on; the arithmetic in the fixtures was not.
 
+**Four decompositions the fixed counter made visible.**
+
+None is new debt. All four were public methods a stop-marker reading could not
+see, and none left the census when the counter was fixed — four arrived, zero
+left, which is what separates newly visible from newly written.
+
+- `MASTER/lib/ground/runtime_catalog.rb:9` — 14 public methods, and it read
+  **0**. Its whole API is inside one `class << self`, which the old walk never
+  entered.
+- `RAILS/brgen/lib/brgen/radio_bergen_manifest.rb:7` — 14, same shape, same
+  reason.
+- `RAILS/gates/support/geometry_probe.rb:20` — 19, mixing `def self.` with a
+  `class << self`.
+- `MASTER/lib/ground/attention_context.rb:16` — 13 instance methods across two
+  `private` sections, where the walk stopped at the first.
+
+Recorded rather than exempted, at 32 NO_GOD_CLASS in `data/self_findings.yml`.
+
 **Corrections to this section, from a second reading — 2026-09-08 evening.**
 
 - *PERF-100 is not absent, and this section was wrong about it.*
