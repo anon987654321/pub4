@@ -36,6 +36,23 @@ mentioned.
 Everything here was measured in this session and is not recorded elsewhere in
 this file.
 
+**The face reads as a shadow at its own defaults, and the README take does not.**
+`RAILS/gates/probes/face_loop_record.rb` records it with `uColor` pinned to 3.4
+and `uExposure` to 2.8, and the difference is not subtle: receding points sit at
+`shade = mix(0.14, 1.0, depth)` in `face.part2.txt:164`, so most of the face is
+painted at a seventh of full brightness before alpha. The recording lifts them
+because a 360-pixel README embed of dim grey dots on black reads as nothing at
+all. Whether the live face should move with it is an operator decision about the
+look, not a bug — and `design_tokens.yml`'s `face_root.anchors` is pinned by a
+production gate, so the change is not free. If the answer is yes, the honest fix
+is the shader's floor rather than a uniform the recorder happens to hold.
+
+**MASTER's voice moved to en-NG-EzinneNeural**, and vm23 is still speaking with
+the old one: the daemon reads `data/voice.yml` at boot, so the change is live
+only after a deploy and `rcctl restart master`. The browser half comes from
+`Policy.browser_payload` in the page, so a stale `face.runtime.js` on the box
+would keep the old fallback for anyone whose payload fails to load.
+
 **The deploy is incomplete, and the blocker is not in MASTER.** master is at
 HEAD and serving; brgen, amber and bsdports are not. amber has been on
 `54fb1d990` since 2026-08-29 and bsdports on `480239f89` since 2026-08-22.
@@ -312,6 +329,36 @@ left, which is what separates newly visible from newly written.
   `private` sections, where the walk stopped at the first.
 
 Recorded rather than exempted, at 32 NO_GOD_CLASS in `data/self_findings.yml`.
+
+**SPRAWL-104, first increment: twenty methods with an evidence trail.**
+
+`tools/method_reach.rb` is the instrument, and it took four wrong versions to
+get one worth acting on. Each was wrong differently, and the list is the value:
+send-prefix dispatch reaches nine methods with no call site; a name inside a
+log string is not a call, and `run_swallow_report` logs its own name; an
+endless method carries its body on the def line, so skipping the line lost
+sixteen callers including the only one `undo_line` has; and a substring grep
+for `dispatch_core` matches `dispatch_core_slash_command`, a different method.
+The first shape also held every tracked body in memory and ran the machine out
+of it.
+
+Census: 4,395 definitions in `MASTER/lib`, **136 named nowhere in code**,
+carrying 486 body lines.
+
+Twenty deleted, each verified independently of the census by word-boundary grep
+across all four trees: the `dispatch_*` handlers left behind when the command
+surface closed to eleven verbs. `dispatch_core` was among them and was also
+broken — it points at `MASTER/core/spec/core_smoke.rb`, a path that has never
+existed. Every CLI suite green after.
+
+**Stopped there deliberately.** The next layer is transitive — deleting
+`dispatch_review` orphans `review_target`, which orphans `run_tribunal`, which
+orphans `snapshot_artifact` — and `snapshot_artifact` reads as reached only
+because `data/maturity.yml` names it in evidence prose. Walking that closure by
+hand at the end of a session is how a census over-deletes. It wants a call
+graph. The twelve `run_*` methods in `command_ops.rb` are the obvious next
+family: nothing dispatches them, and the two that are reached get there through
+explicit symbol tables in `repl_flow.rb` and `heartbeat.rb`.
 
 **Corrections to this section, from a second reading — 2026-09-08 evening.**
 
