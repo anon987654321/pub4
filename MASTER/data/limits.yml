@@ -883,17 +883,23 @@ guidance:
 # namespace nobody budgeted is a namespace that could grow without anyone
 # noticing, which is what this table exists to prevent.
 #
+# design and ops are single files, and the keys said `lib/design` and `lib/ops`
+# — the same shape as the `core: 916` this table's guard was written against,
+# and the guard caught them the moment `rake audit` stopped stopping at its
+# fourth gate. Both budgets were measured against the file; only the extension
+# was missing. ops re-measured down, 251 to 234.
+#
 # Measured once at the rename. Down only from here.
 loc_body_budgets:
   lib/boot: 227
   lib/builder: 252
   lib/cli: 6080
   lib/core: 682
-  lib/design: 270
+  lib/design.rb: 270
   lib/fix: 2643
   lib/ground: 5899
   lib/io: 3545
-  lib/ops: 251
+  lib/ops.rb: 234
   lib/pub4: 470
   lib/rails: 925
   lib/review: 9765

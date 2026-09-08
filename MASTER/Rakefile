@@ -738,13 +738,79 @@ end
 # nine of twelve subsystems while `rake audit` reported passed, because nothing
 # called it. A gate defined and uncalled is a gate that has stopped measuring
 # without anyone deciding it should.
+AUDIT_GATES = %w[
+  dogfood constitution selftest studio core_smoke security_sweep
+  lint:frozen lint:data_singularity lint:spine lint:autoload
+  lint:principle_trace lint:scan_coverage lint:reader_singularity lint:doc_citations
+  lint:do_not_touch lint:instruments lint:constant_collisions
+  lint:capability lint:cohesion lint:rule_reach lint:models lint:dedup
+  loc_budget
+].freeze
+
+# Four outcomes, because three of them used to print as one.
+#
+# `task audit: [...]` made every gate a prerequisite, and a prerequisite that
+# calls `abort` ends the process: a failure in gate three left twenty unrun and
+# the report said only what gate three found. Nothing distinguished a gate that
+# failed from one that crashed, and a crashing gate blocks nothing while reading
+# like a fault in the tree.
+#
+# The vocabulary is RAILS/gates/runner.rb's, which has separated these since it
+# grew a third state, and for the same reason: a coverage number a run did not
+# earn is the number people quote.
+AUDIT_LABEL = {
+  passed: "PASSED",
+  failed: "FAILED",
+  errored: "ERRORED (gate broke, measured nothing, blocked nothing)",
+  undefined: "UNDEFINED (named in AUDIT_GATES, defined nowhere)",
+}.freeze
+
+# `sh` raises rather than exiting, so its failure is a gate verdict and not a
+# broken gate. Everything else that escapes is the gate itself breaking.
+def audit_outcome(name)
+  return :undefined unless Rake::Task.task_defined?(name)
+
+  Rake::Task[name].invoke
+  :passed
+rescue SystemExit => e
+  e.success? ? :passed : :failed
+rescue RuntimeError => e
+  raise unless e.message.include?("Command failed with status")
+
+  :failed
+rescue StandardError, ScriptError => e
+  warn "audit: #{name} errored — #{e.class}: #{e.message.lines.first.to_s.strip}"
+  :errored
+end
+
 desc "Full audit: constitution + selftest + every lint:* gate + the ratchets"
-task audit: %i[dogfood constitution selftest studio core_smoke security_sweep
-               lint:frozen lint:data_singularity lint:spine lint:autoload
-               lint:principle_trace lint:scan_coverage lint:reader_singularity lint:doc_citations
-               lint:do_not_touch lint:instruments lint:constant_collisions
-               lint:capability lint:cohesion lint:rule_reach lint:models lint:dedup
-               loc_budget] do
+task :audit do
+  # Gates abort on stderr, which is unbuffered, and the summary goes to stdout,
+  # which is not once this is redirected to a file — so the verdict printed
+  # above the gate it belongs to in the first run of the new shape.
+  $stdout.sync = true
+  outcomes = AUDIT_GATES.to_h do |name|
+    puts "\n==> audit: #{name}"
+    outcome = audit_outcome(name)
+    puts "audit: #{name} #{AUDIT_LABEL.fetch(outcome)}"
+    [name, outcome]
+  end
+
+  by_outcome = outcomes.group_by { |_, outcome| outcome }.transform_values { |rows| rows.map(&:first) }
+  passed = by_outcome.fetch(:passed, [])
+  failed = by_outcome.fetch(:failed, [])
+  errored = by_outcome.fetch(:errored, [])
+  undefined = by_outcome.fetch(:undefined, [])
+
+  puts "\n#{'=' * 50}"
+  puts "audit: #{passed.size}/#{outcomes.size} passed"
+  puts "audit: #{errored.size} errored and blocked nothing: #{errored.join(', ')}" if errored.any?
+  puts "audit: #{undefined.size} named but undefined: #{undefined.join(', ')}" if undefined.any?
+  puts "audit: #{failed.size} failed: #{failed.join(', ')}" if failed.any?
+  # An errored or undefined gate is a hole in the coverage this run claims, so
+  # it ends the run non-zero too — otherwise the fail-open case is the quiet one.
+  abort "audit: incomplete" if failed.any? || errored.any? || undefined.any?
+
   puts "audit: passed"
 end
 
