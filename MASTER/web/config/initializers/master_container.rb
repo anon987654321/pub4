@@ -92,7 +92,9 @@ module MasterContainerLoader
   # flag above stays claimed, which used to mean the process served "Starting
   # up..." for the rest of its life having logged nothing. NoMemoryError is the
   # live case on a 1GB box under swap pressure, and it is not a StandardError.
-  rescue Exception => e # rubocop:disable Lint/RescueException
+  # FAIL_VISIBLY reads a line, so it cannot see the re-raise below or the log
+  # after it; the marker carries that reason to it.
+  rescue Exception => e # rubocop:disable Lint/RescueException -- scan: intentional
     raise if e.is_a?(SystemExit) || e.is_a?(SignalException)
 
     Rails.logger.error("master_container boot failed: #{e.class}: #{e.message}")

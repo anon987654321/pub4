@@ -160,14 +160,17 @@ task :selftest do
   abort "selftest: #{summary.line}" unless summary.ok?
 end
 
-desc "Fast error/critical-only scan of lib/ (Fix::SelfCheck) -- a quick fail-fast gate ahead of the heavier rake constitution triage scan"
+desc "Fast blocking-severity scan of lib/ (Fix::SelfCheck) -- a quick fail-fast gate ahead of the heavier rake constitution triage scan"
 task :selfcheck do
   $LOAD_PATH.unshift(File.join(__dir__, "lib"))
   require "master"
   audit = Master::Review::Scan::RuleRegistryAudit.new(root: __dir__).call
+  # The severities named from the constant, so the banner cannot claim a set the
+  # gate does not use — it read "error/critical only" for as long as veto was
+  # missing from it, which is how nobody noticed veto was missing.
   puts "selfcheck: #{audit.yaml_rules - audit.semantic_only.size} of #{audit.yaml_rules} declared " \
        "rules active (rake lint:rule_reach for what the rest need), " \
-       "error/critical only, across #{Master.scan_roots.join(', ')}"
+       "#{Master::Fix::SelfCheck::QUICK_SEVERITIES.join('/')} only, across #{Master.scan_roots.join(', ')}"
   report = Master::Fix::SelfCheck.new(root: __dir__).quick
   puts report.summary
   abort report.line unless report.clean?

@@ -20,6 +20,24 @@ module Master
     # deliberately untouched — several rules mean to read comments.
     def without_comment_lines(code) = code.gsub(COMMENT_LINE) { |line| " " * line.length }
 
+    # A RuleDSL registration spells its own forbidden shape in `fires:` and
+    # `does_not_fire:`, which is the one place that shape is legitimately
+    # written. Law.conduct makes the same argument for law/'s bad/good and
+    # neutralizes them before a law judges law/; this is the registry's half.
+    #
+    # One physical line, because that is what a declaration is here and being
+    # loose about it would blank a continuation carrying real code.
+    RULE_FIXTURE_LINE = /^[ \t]*(?:fires|does_not_fire):[^\n]*/
+    def without_rule_fixtures(code) = code.gsub(RULE_FIXTURE_LINE) { |line| " " * line.length }
+
+    # A word inside a regex literal is a token in a pattern, not an instance of
+    # itself — the distinction COMPLETION_THEATER learned for `etc` and
+    # NO_MULTIPLE_LANGUAGES for `<%`. The lookbehind keeps a division out: `a /
+    # b` has no closing delimiter, and a `)`, `]` or word character before the
+    # slash means the expression is already complete.
+    REGEX_LITERAL = %r{(?<![\w)\]])/(?:[^/\\\n]|\\.)+/[mixo]*}
+    def without_regex_literals(code) = code.gsub(REGEX_LITERAL) { |literal| " " * literal.length }
+
     # The same trick for ERB output tags, and for the same reason.
     #
     # Attribute rules ask "does this tag contain alt=" as `<img\s+(?![^>]*alt=)`.

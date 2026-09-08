@@ -67,13 +67,21 @@ module Master
   RuleDSL.rule :TODO_FIXME,
     severity: :info, tags: %i[COMPLETENESS], autofix: false,
     fires: "  # FIXME: the retry has no cap\n",
-    # The lookahead below, as a worked case: naming the backlog is not a marker.
-    does_not_fire: "  # the reasoning is in TODO.md\n",
+    # Both exemptions as worked cases: naming the backlog is not a marker, and
+    # neither is a pattern that hunts for one.
+    does_not_fire: "  # the reasoning is in TODO.md\n  MARKERS = /TODO|FIXME|XXX/\n",
     description: "unresolved work markers" do |src, path:|
     next [] if path.to_s.include?("/review/scan/rules/")
     # The lookahead keeps TODO.md, the repo-wide backlog, from reading as a
     # marker — see data/rules.yml `unfinished`, which learned this at :veto.
-    scan_lines(src, /\b(TODO|FIXME|HACK|XXX)\b(?!\.md)/, message: "unresolved marker — resolve or delete")
+    #
+    # A marker inside a regex literal is a detector, which is the reason this
+    # rule already skips the directory it lives in — and detectors live outside
+    # it too. Both of the tree's cases are that: personal_workspace greps a
+    # MEMORY.md for the marker lines an operator left, history_valuables lists
+    # the markers among the patterns worth recovering from git.
+    scan_lines(without_regex_literals(src), /\b(TODO|FIXME|HACK|XXX)\b(?!\.md)/,
+               message: "unresolved marker — resolve or delete")
   end
 
   RuleDSL.rule :RESCUE_EXCEPTION,
@@ -82,9 +90,16 @@ module Master
     # legitimately spelled, and FAIL_VISIBLY reads this file like any other. The
     # marker has to sit on the matching line, not above it.
     fires: "rescue Exception => e\n", # scan: intentional
-    does_not_fire: "rescue StandardError => e\n",
+    # A comment naming the shape is prose about it. The paragraph below
+    # explaining which rescue each rule owns was a finding against itself, and
+    # this line spells the shape twice, so it carries the marker the way the
+    # positive example above does.
+    does_not_fire: "# rescue Exception belongs to this rule\nrescue StandardError => e\n", # scan: intentional
     description: "rescue StandardError not Exception" do |src, path:|
-    scan_lines(src, /rescue\s+Exception\b/, message: "catches signals — use StandardError")
+    # Comment lines blanked, not the directory skipped: a real `rescue
+    # Exception` in a scanner rule is worth catching, and SILENT_RESCUE's note
+    # below says why this population carries no path exemption.
+    scan_lines(without_comment_lines(src), /rescue\s+Exception\b/, message: "catches signals — use StandardError")
   end
 
   RuleDSL.rule :SILENT_RESCUE,
@@ -217,7 +232,11 @@ module Master
 
   RuleDSL.rule :NO_ASCII_LINE_ART,
     severity: :warning, tags: %i[BE_CONCISE],
-    fires: "# --- section\n",
+    # A divider is decoration in a comment, so this rule must read comments and
+    # cannot blank them the way RESCUE_EXCEPTION above does. Its own worked
+    # example is the one legitimate divider in the tree, and the marker on that
+    # line is what says so.
+    fires: "# --- section\n", # scan: intentional
     does_not_fire: "# -- section\n",
     description: "ASCII divider decorations" do |src, path:|
     next [] if path.to_s.match?(%r{(^|/)(test|spec)/})

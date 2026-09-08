@@ -5,6 +5,16 @@ module Master
     module Scan
       module Rules
         # Bridges rules.yml veto_patterns into the scanner (constitution.rb also checks writes).
+        #
+        # A veto is the severity above error, and this was the one rule in the
+        # population with no exemption of any kind — so it read the scanner's own
+        # rule sources as conduct where every registered twin of these patterns
+        # skips that directory by name. All four of its findings under lib/ and
+        # law/ were worked examples: the work marker TODO_FIXME and
+        # NO_TODO_IN_VIEWS each carry, SQL_INJECTION's interpolated query and the
+        # quoted fix beside it. Only the `fires:`/`does_not_fire:` lines are
+        # blanked, not the directory, so a real secret or shell interpolation in
+        # a rule file still vetoes.
         class VetoPatternRule < Rule
           def self.auto_build? = false
 
@@ -30,6 +40,7 @@ module Master
               # and a comment describing a shell interpolation is documentation.
               # (Written without naming the markers, since this rule reads it.)
               source = spec["reads_comments"] ? code : without_comment_lines(code)
+              source = without_rule_fixtures(source) if path.to_s.include?("/review/scan/rules/")
               scan_lines(source, regex, message: "veto: #{name} — #{spec["apply"] || "blocked"}")
             end
           end
