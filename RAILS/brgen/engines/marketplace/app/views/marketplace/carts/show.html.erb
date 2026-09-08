@@ -20,7 +20,7 @@
           <div><%= item.listing.price_display %> × <%= item.quantity || 1 %></div> <%# scan: intentional — a line of text inside the item block %>
         </div>
         <div class="text-end">
-          <%= tag.strong item.total_display %>
+          <%= tag.strong item.total_display, data: { money: true } %>
           <div class="cluster">
             <%= button_to t("actions.remove"), listing_order_path(item.listing, item),
                   method: :patch, params: { decline: true }, class: "btn btn-ghost btn-sm" %>

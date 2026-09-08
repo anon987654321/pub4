@@ -7,7 +7,7 @@
 
 <turbo-frame id="marketplace-new-listing" data-turbo-action="replace">
 <div class="form-wrap">
-  <%= form_with model: @listing, url: listings_path, html: { role: "form", "aria-label": "Create marketplace listing" } do |f| %>
+  <%= form_with model: @listing, url: listings_path, html: { role: "form", "aria-label": t("marketplace.new_listing_form") } do |f| %>
     <%= render "shared/errors", object: @listing %>
     <%# What is being listed, chosen before anything else: a job advert has no
         price and no condition, and a form that asks for both is a form people

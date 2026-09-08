@@ -14,9 +14,7 @@
   <div class="deal-card-body">
     <h2 class="deal-card-title"><%= store.name %></h2>
     <% if store.vertical.present? %>
-      <% if store.vertical.present? %>
-        <p class="deal-card-subtitle"><%= t("marketplace.verticals.#{store.vertical}") %></p>
-      <% end %>
+      <p class="deal-card-subtitle"><%= t("marketplace.verticals.#{store.vertical}") %></p>
     <% end %>
     <% if store.description.present? %>
       <p class="deal-meta deal-meta--clamp"><%= store.description %></p>

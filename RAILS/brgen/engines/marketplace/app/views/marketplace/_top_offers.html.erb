@@ -14,7 +14,13 @@
       <% if offer.is_a?(Marketplace::Deal) %>
         <% listing = offer.listing %>
         <% photo = listing&.photos&.attached? ? listing.photos.first : nil %>
-        <% badge = offer.badge.presence || (offer.discount_percent.present? ? "#{offer.discount_percent.to_i}% off" : "Deal") %>
+        <%# The badge falls back twice and both fallbacks were English literals on
+            a surface that renders in Norwegian by default. offer.badge itself is
+            seller copy and stays as written. %>
+        <% badge = offer.badge.presence ||
+                   (offer.discount_percent.present? ?
+                     t("marketplace.percent_off", percent: offer.discount_percent.to_i) :
+                     t("marketplace.deal")) %>
         <%= link_to deal_path(offer), class: "top-offer-card", role: "listitem" do %>
           <div class="top-offer-media">
             <% if photo %>

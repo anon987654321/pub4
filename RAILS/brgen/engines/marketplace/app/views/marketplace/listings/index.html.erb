@@ -30,7 +30,17 @@
 
 <%# Goods, jobs, housing, gigs. Separate lists rather than one mixed feed: a
     bicycle search should not turn up a job, and the filters below mean
-    different things for each. %>
+    different things for each.
+
+    These four and the search field are the whole of what this page offers at
+    rest. Everything else — who is selling, category, distance, sort, price
+    bounds, condition and the price bands — is one tap in, under Filtre.
+
+    The count before that change: six nav sections, four kinds, three source
+    chips and eight filter controls, plus a facet chip per condition and price
+    band, all in front of the first listing. UX_LAWS.hick.max_visible_choices is
+    7 and progressive_disclosure.require_advanced_hidden is true, and the
+    densest surface in the family was the one furthest past both. %>
 <nav class="listing-kinds" aria-label="<%= t("marketplace.kinds_label") %>">
   <% Marketplace::Listing::KINDS.each do |kind| %>
     <%= link_to t("marketplace.kinds.#{kind}"), listings_path(kind: kind),
@@ -38,35 +48,94 @@
   <% end %>
 </nav>
 
-<nav class="deal-cats" aria-label="<%= t("marketplace.listing_kind") %>">
-  <%= link_to t("marketplace.from_anyone"), listings_path(category_id: params[:category_id], q: params[:q].presence),
-        class: "deal-cat#{" active" if params[:from].blank?}" %>
-  <%= link_to t("marketplace.from_a_person"), listings_path(from: "person", category_id: params[:category_id], q: params[:q].presence),
-        class: "deal-cat#{" active" if params[:from] == "person"}" %>
-  <%= link_to t("marketplace.from_a_shop"), listings_path(from: "shop", category_id: params[:category_id], q: params[:q].presence),
-        class: "deal-cat#{" active" if params[:from] == "shop"}" %>
-</nav>
+<%# A collapsed panel that hides applied state would be worse than the row it
+    replaces, so it does neither: the count rides on the summary, and the panel
+    opens itself whenever anything inside it is set. sort is only a filter when
+    it is not the default — "newest first" is the page as it arrives. %>
+<% active_filters = [ params[:from], params[:category_id], params[:condition],
+                      params[:min_price], params[:max_price], @search_lat ].count(&:present?) +
+                    ((params[:sort].present? && params[:sort] != "recent") ? 1 : 0) %>
 
 <%= live_search_index url: listings_path, results_partial: "marketplace/listings/live_search_results", placeholder: t("search.marketplace_dots"), label: t("search.marketplace_label"), frame_id: "marketplace-listings" do |f| %>
-  <%= f.select :category_id,
-        options_from_collection_for_select(@categories, :id, :name, params[:category_id]),
-        { include_blank: t("actions.all_categories") }, aria: { label: t("marketplace.filter_category") } %>
-  <%= f.hidden_field :lat, value: @search_lat %>
-  <%= f.hidden_field :lng, value: @search_lng %>
-  <button type="button" class="btn btn-ghost btn-sm" data-controller="geolocation" data-action="geolocation#pin">
-    <%= t("marketplace.near_me") %>
-  </button>
-  <%= f.number_field :radius_km, value: @radius_km, min: 1, max: Marketplace::Listing::MAX_RADIUS_KM, step: 1, placeholder: t("marketplace.radius_km"), aria: { label: t("marketplace.radius_label") }, inputmode: "numeric" %>
-  <%= f.select :sort,
-        options_for_select([[t("marketplace.sort_recent", default: "Newest"), "recent"],
-                            [t("marketplace.sort_price_low", default: "Price ↑"), "price_low"],
-                            [t("marketplace.sort_price_high", default: "Price ↓"), "price_high"]], @sort),
-        {}, aria: { label: t("marketplace.sort_label", default: "Sort") } %>
-  <%= f.number_field :min_price, value: params[:min_price], min: 0, step: 1, placeholder: t("marketplace.min_price", default: "Min"), aria: { label: t("marketplace.min_price", default: "Min price") }, inputmode: "numeric" %>
-  <%= f.number_field :max_price, value: params[:max_price], min: 0, step: 1, placeholder: t("marketplace.max_price", default: "Max"), aria: { label: t("marketplace.max_price", default: "Max price") }, inputmode: "numeric" %>
-<% end %>
+  <details class="listing-filters" <%= "open" if active_filters.positive? %>>
+    <%# .deal-cat, not a style of its own. This control opens the drawer holding
+        the source chips, so it is a sibling of them and wears their geometry —
+        a second chip vocabulary for one summary would be the schism at birth
+        that btn_vocabulary exists to prevent. %>
+    <summary class="deal-cat listing-filters-toggle">
+      <%= t("marketplace.filters") %>
+      <% if active_filters.positive? %>
+        <span class="listing-filters-count"><%= active_filters %></span>
+      <% end %>
+    </summary>
 
-<%= render "marketplace/listings/facets", facets: @facets %>
+    <div class="listing-filters-panel">
+      <%# Six groups, none of them over the seven-item chunk. The source chips
+          were a second horizontal scroller of their own directly under the
+          kinds — the same movement offered twice, for a narrower question. %>
+      <fieldset class="listing-filter-group">
+        <legend><%= t("marketplace.listing_kind") %></legend>
+        <div class="listing-filter-controls">
+          <%= link_to t("marketplace.from_anyone"), listings_path(category_id: params[:category_id], q: params[:q].presence),
+                class: "deal-cat#{" active" if params[:from].blank?}" %>
+          <%= link_to t("marketplace.from_a_person"), listings_path(from: "person", category_id: params[:category_id], q: params[:q].presence),
+                class: "deal-cat#{" active" if params[:from] == "person"}" %>
+          <%= link_to t("marketplace.from_a_shop"), listings_path(from: "shop", category_id: params[:category_id], q: params[:q].presence),
+                class: "deal-cat#{" active" if params[:from] == "shop"}" %>
+        </div>
+      </fieldset>
+
+      <fieldset class="listing-filter-group">
+        <legend><%= t("marketplace.filter_category") %></legend>
+        <div class="listing-filter-controls">
+          <%= f.select :category_id,
+                options_from_collection_for_select(@categories, :id, :name, params[:category_id]),
+                { include_blank: t("actions.all_categories") }, aria: { label: t("marketplace.filter_category") } %>
+        </div>
+      </fieldset>
+
+      <fieldset class="listing-filter-group">
+        <%# filter_distance, not radius_label. The group holds "near me" and a
+            radius, and "Radius i kilometer" names only the second of them —
+            it stays as the number field's own aria-label. %>
+        <legend><%= t("marketplace.filter_distance") %></legend>
+        <div class="listing-filter-controls">
+          <%= f.hidden_field :lat, value: @search_lat %>
+          <%= f.hidden_field :lng, value: @search_lng %>
+          <button type="button" class="btn btn-ghost btn-sm" data-controller="geolocation" data-action="geolocation#pin">
+            <%= t("marketplace.near_me") %>
+          </button>
+          <%= f.number_field :radius_km, value: @radius_km, min: 1, max: Marketplace::Listing::MAX_RADIUS_KM, step: 1, placeholder: t("marketplace.radius_km"), aria: { label: t("marketplace.radius_label") }, inputmode: "numeric" %>
+        </div>
+      </fieldset>
+
+      <fieldset class="listing-filter-group">
+        <legend><%= t("marketplace.sort_label") %></legend>
+        <div class="listing-filter-controls">
+          <%= f.select :sort,
+                options_for_select([[t("marketplace.sort_recent"), "recent"],
+                                    [t("marketplace.sort_price_low"), "price_low"],
+                                    [t("marketplace.sort_price_high"), "price_high"]], @sort),
+                {}, aria: { label: t("marketplace.sort_label") } %>
+        </div>
+      </fieldset>
+
+      <fieldset class="listing-filter-group">
+        <legend><%= t("marketplace.filter_price") %></legend>
+        <div class="listing-filter-controls">
+          <%= f.number_field :min_price, value: params[:min_price], min: 0, step: 1, placeholder: t("marketplace.min_price"), aria: { label: t("marketplace.min_price") }, inputmode: "numeric" %>
+          <%= f.number_field :max_price, value: params[:max_price], min: 0, step: 1, placeholder: t("marketplace.max_price"), aria: { label: t("marketplace.max_price") }, inputmode: "numeric" %>
+        </div>
+      </fieldset>
+
+      <%# The facets are links rather than fields, which is why they can sit
+          inside the form without submitting anything — and why they belong here
+          rather than in a second disclosure: a reader narrowing a search does
+          not care which of the two mechanisms a control happens to use. %>
+      <%= render "marketplace/listings/facets", facets: @facets %>
+    </div>
+  </details>
+<% end %>
 
 <% content_for :widgets do %>
   <%= render "shared/affiliate_deals", category: params[:category_id] %>

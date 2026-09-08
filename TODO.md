@@ -5339,6 +5339,71 @@ wants, and its `--font-mono: "SF Mono"` fork is a fifth typeface by accident.
 comments in `_vertical_dating_shell.scss` and `_vertical_takeaway.scss` describe
 the retired split as current.
 
+### The marketplace, read against the system rather than against Amazon — 2026-09-08
+
+House-system-first was the operator's call: the shapes come from
+`design_tokens.yml` and `design_rules`, not from a competitor's page. Most of
+the engine turned out to already obey them, which is the pattern by now.
+
+**Already right, and left alone.** The catalogue grid is the house geometry and
+has been all along — two-up on a phone, `auto-fill minmax(--tile-min-xl, 1fr)`
+above `viewport.lg`, `--tile-gap-row` against the narrower `--tile-gap-col`, so
+a dense grid reads as rows of goods rather than as a mosaic. `.deal-card` and
+`marketplace/_card_media` are one anatomy across listings, deals and stores. The
+type-led hero is deliberate and stays.
+
+**The one real defect was the control count.** Twenty-one peer controls stood in
+front of the first listing: six nav sections, four kind chips, three source
+chips and eight filter controls, plus a facet chip per condition and price band.
+`UX_LAWS.hick.max_visible_choices` is 7 and
+`progressive_disclosure.require_advanced_hidden` is true. Source, category,
+distance, sort, price bounds and the facets moved into one disclosure; search and
+the four kinds stay. Six at rest in the content column, the nav bar's six being
+its own group under `nav_items_warn: 9`.
+
+The drawer holds applied state rather than hiding it: the count rides on the
+summary and the panel opens itself whenever anything inside it is set. The
+summary wears `.deal-cat` rather than a style of its own — it is the chip that
+opens the drawer holding the other chips, and a second chip vocabulary for one
+control is the schism `btn_vocabulary` exists to prevent.
+
+**`marketplace.top` did not exist.** `_top_offers` has been calling it for every
+non-deal card, so that badge rendered a translation-missing. Added, with
+`deal`, `percent_off`, `store_categories` and `new_listing_form` — the last four
+replacing English literals on a surface that defaults to Norwegian.
+
+**Two ratchets fell, and one of them fell for the wrong reason.**
+
+- `translate_default` 177 → 171. The listings index carried eight `default:`
+  fallbacks over six lines for keys that all exist in both locales, so none
+  could ever fire. Value-preserving.
+- `unused_selector` 154 → 153, and this one is instrument. `deal-cat` left the
+  set without ever having been unused: every call site wrote
+  `class: "deal-cat#{" active" if …}"`, and a literal search cannot read a
+  composed class — the caveat `css_coverage_lint`'s own header states. One
+  static `class="deal-cat listing-filters-toggle"` on the new summary made a
+  selector the tree had been using all along visible to the check. **An unknown
+  share of the remaining 153 is the same shape**, which is why that number is a
+  ratchet with wide tolerance rather than a target of zero.
+
+**Tabular figures, per `worn_type.profiles.catalog.require_tabular_nums`.** Four
+money columns sat outside the selector list: the cart's per-row totals, the
+order total, the store payout list and the variant prices. The first three carry
+`data-money` — the generic hook rather than three new class names — and
+`.variant-price` joined the list. Four other money renderings were left alone
+because tabular figures fix a column and none of them is one: a lone price on a
+detail page, a price inside an aria-label that never renders, the facet price
+bands (a wrapping row, not a stack), and a variant price inside a select option.
+
+**Still open in this engine.** `.deal-cat` carries `border: 1px solid
+var(--border)`, which is a line, and the 2026-08-04 decision traded control
+borders for surface fills everywhere else (`.compose-trigger`, `.btn-ghost`,
+`.btn--secondary`). The chip family kept its edge and nothing records why.
+Changing it moves rendering across marketplace, stores and takeaway at once, so
+it is named here rather than taken. The hero's `main#main-content >
+header.market-hero h1` still beats `_typography`'s page-title rule by matching an
+id; a shared display-type slot would retire that workaround and is unbuilt.
+
 ### Mobile, what it found and what it did not — 2026-09-05
 
 Ten of the twelve proposals were not problems, which is the pattern by now and

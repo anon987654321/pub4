@@ -19,7 +19,7 @@
       <% if listing.reviews_count.to_i.positive? %>
         <div class="deal-meta deal-meta--rating">
           <span class="deal-rating"><%= number_with_precision(listing.rating, precision: 1) %> ★</span>
-          <%= pluralize(listing.reviews_count, "review") %>
+          <%= t("marketplace.reviews_count", count: listing.reviews_count) %>
         </div>
       <% end %>
     <% end %>

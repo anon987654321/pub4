@@ -211,7 +211,13 @@ module Pub4
       # -> 177 (2026-09-05). Two of the four are the PWA banner and install
       # prompt losing their fallbacks; the count is also honest now that
       # comment_or_opt_out? stopped excusing any line with a comment above it.
-      "translate_default" => 177,
+      # -> 171 (2026-09-08). The marketplace listings index lost every one of
+      # its fallbacks while its filter row was being rebuilt: sort_label,
+      # sort_recent, sort_price_low, sort_price_high, min_price and max_price
+      # all exist in en and nb, so no default there could ever fire. Eight call
+      # sites over six lines, and this counts lines — two of them carried both
+      # a placeholder and an aria label. Same shape as the 181 entry above.
+      "translate_default" => 171,
     }.freeze
 
     # Kept for callers that referenced the old single number.

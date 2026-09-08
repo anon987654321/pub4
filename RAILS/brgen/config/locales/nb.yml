@@ -1171,6 +1171,13 @@ nb:
     answer_notification_title: Selgeren svarte deg
     facets: Filtre
     filter_condition: Tilstand
+    top: Topp
+    deal: Tilbud
+    percent_off: "%{percent} %% rabatt"
+    store_categories: Butikkategorier
+    new_listing_form: Opprett annonse
+    filters: Filtre
+    filter_distance: Avstand
     filter_price: Pris
     under_price: "Under %{price}"
     over_price: "%{price} og opp"
