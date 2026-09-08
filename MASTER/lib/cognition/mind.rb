@@ -44,8 +44,10 @@ module Master
           salience = @attention.score(event:, payload:, prediction_error: error, affect: @state.affect)
           success = payload[:ok] if payload.respond_to?(:key?)
           success = payload["ok"] if success.nil? && payload.is_a?(Hash)
+          affect_args = { prediction_error: error, salience: }
+          affect_args[:success] = success unless success.nil?
 
-          @affect.update!(@state.affect, prediction_error: error, salience:, success: success unless success.nil?)
+          @affect.update!(@state.affect, **affect_args)
           @self_model.update!(@state.self_model, event:, payload:, salience:)
           @state.remember_workspace(
             "key" => "#{event}:#{Time.now.to_i}",
@@ -118,7 +120,6 @@ module Master
         return 1.0 unless last
 
         recurrence = now - last
-        # Repetition quickly becomes predictable; long gaps become novel again.
         (recurrence / DECAY_S).clamp(0.05, 1.0)
       end
 
