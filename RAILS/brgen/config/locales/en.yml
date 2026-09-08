@@ -395,6 +395,9 @@ en:
     disappears_in: disappears in %{time}
     new_message: New message
     rooms_label: "Rooms"
+    member_count:
+      one: 1 member
+      other: "%{count} members"
     message_action: "Message"
     no_people: "Nobody by that name here yet."
     find_people: "Search for someone"

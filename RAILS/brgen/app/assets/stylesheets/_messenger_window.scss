@@ -15,6 +15,19 @@
 // Mobile first and min-width only (MASTER MOBILE_FIRST): one column until there is
 // room for two. 1280 is design_tokens viewport.xl — BreakpointLint asserts every
 // media width is one of those edges, so this is not a width chosen here.
+//
+// Separation is surface, not line (operator, 2026-08-04: "no lines at all", one
+// exemption for form fields). The window has three real seams — rail against
+// pane, header against log, composer against log — and all three are drawn by
+// putting chrome on --surface-elevated and content on --bg. That pair differs in
+// both themes, where --surface and --bg do not: brgen-old light sets both to
+// #ffffff, so a rail on --surface against a pane on --bg would have had no seam
+// at all under the theme this app now defaults to.
+//
+// Two borders survive and each cites its rule:
+//   .messenger-composer-box   the form-field exemption — you must see where to type
+//   .messenger-details-panel  ui_polish.flat_ui — floating chrome is 1px border
+//                             plus an elevated surface, never a shadow
 
 .messenger-window {
   display: grid;
@@ -48,7 +61,7 @@
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-3);
-  border-inline-end: 1px solid var(--border);
+  background: var(--surface-elevated);
   // The rail scrolls on its own, so a long inbox never moves the log.
   overflow-y: auto;
 }
@@ -65,6 +78,22 @@
   gap: var(--space-2);
   min-height: var(--tap-min);
 }
+
+// Search reads as a room you can go to rather than as a button, which is what it
+// is: it opens a surface. Same row shape as a channel, one step quieter.
+.messenger-rail-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--tap-min);
+  padding-inline: var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  text-decoration: none;
+}
+
+.messenger-rail-search:hover { background: var(--hover); color: var(--text); }
 
 .messenger-rail-group {
   margin: var(--space-3) 0 0;
@@ -105,6 +134,12 @@
   font-weight: var(--weight-bold);
 }
 
+// A DM row carries two lines where a channel carries one, so it needs the block
+// padding a --tap-min channel row gets for free.
+.messenger-rail-room--dm {
+  padding-block: var(--space-1);
+}
+
 .messenger-rail-hash {
   color: var(--text-secondary);
   font-weight: var(--weight-bold);
@@ -115,6 +150,56 @@
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// The avatar is a wash of the ink rather than a surface token: inside a rail
+// already on --surface-elevated, an elevated circle is invisible. The opacity
+// ladder is what composes a tint that tracks the theme (scale.opacity), and
+// --hover is built from the same expression one step up — this is the resting
+// version of that, so it does not borrow a state token to paint a resting fill.
+.messenger-room-avatar,
+.messenger-inbox-avatar,
+.messenger-header-avatar,
+.messenger-member-avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  border-radius: var(--radius-pill);
+  background: rgb(from var(--text) r g b / var(--opacity-faint));
+  color: var(--text);
+  font-weight: var(--weight-bold);
+  line-height: 1;
+}
+
+.messenger-room-avatar {
+  inline-size: 32px;
+  block-size: 32px;
+  font-size: var(--text-xs);
+}
+
+// Name over preview. The row is a grid rather than a stack of two flex children
+// so the middle column can be the one that shrinks — min-width: 0 on a flex item
+// is what lets an ellipsis happen at all.
+.messenger-room-copy {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.messenger-room-preview {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  line-height: 1.25;
+}
+
+.messenger-room-meta {
+  flex: none;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
   white-space: nowrap;
 }
 
@@ -139,15 +224,397 @@
   font-size: var(--text-sm);
 }
 
+// Your own "message me" link. Quiet, and at the foot: it is the thing you reach
+// for once, when somebody you want is not here yet, not a control you use every
+// session. margin-block-start: auto pins it to the bottom of the rail's column
+// however short the inbox is.
+.messenger-rail-invite {
+  display: flex;
+  margin-block-start: auto;
+  padding-block-start: var(--space-2);
+}
+
+.messenger-rail-invite-copy {
+  display: grid;
+  /* Icon column, then text. align-items on a flex row left the glyph beside the
+     first line of a two-line label and the second line hanging under it; a grid
+     column keeps the icon against the whole block however the words wrap. */
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: var(--space-2);
+  inline-size: 100%;
+  min-height: var(--tap-min);
+  padding-block: var(--space-2);
+  padding-inline: var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: start;
+  cursor: pointer;
+}
+
+.messenger-rail-invite-copy:hover { background: var(--hover); color: var(--text); }
+
+// The pane is a column: header, log, composer. The log is the only part that
+// scrolls, which is the whole point — a composer that scrolls off the bottom of
+// a conversation is the defect this pane exists to prevent.
 .messenger-pane {
-  display: block;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
-  /* A conversation has no ideal measure, but an empty state does: centred in
-     1200px of black it read as vacancy rather than as an invitation. */
-  // The log scrolls, not the window: a composer that scrolls off the bottom of a
-  // conversation is the defect this pane exists to prevent.
+  min-height: 0;
+  background: var(--bg);
+}
+
+.messenger-conversation-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+  min-height: 64px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-elevated);
+}
+
+.messenger-header-back,
+.messenger-header-action {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: var(--tap-min);
+  block-size: var(--tap-min);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.messenger-header-back:hover,
+.messenger-header-action:hover { background: var(--hover); color: var(--text); }
+
+.messenger-header-avatar {
+  inline-size: 40px;
+  block-size: 40px;
+}
+
+.messenger-header-identity {
+  flex: 1;
+  min-width: 0;
+}
+
+.messenger-header-identity h1 {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-base);
+  font-weight: var(--weight-bold);
+  line-height: 1.25;
+}
+
+.messenger-header-meta {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  line-height: 1.25;
+}
+
+.messenger-header-actions {
+  display: flex;
+  align-items: center;
+  flex: none;
+}
+
+.messenger-details {
+  position: relative;
+}
+
+// The disclosure triangle is replaced by the ⋯ glyph inside the summary, so the
+// marker has to go in both engines' spellings or it draws twice.
+.messenger-details summary { list-style: none; }
+.messenger-details summary::-webkit-details-marker { display: none; }
+.messenger-details summary::marker { content: ""; }
+
+// Floating chrome: 1px border on an elevated surface, per design_rules
+// ui_polish.flat_ui. This is the one place the window draws a line, and it earns
+// it — a panel over content with no edge has no boundary at all, and the
+// alternative the rule forbids is a shadow.
+.messenger-details-panel {
+  position: absolute;
+  z-index: var(--z-overlay);
+  inset-inline-end: 0;
+  inset-block-start: calc(100% + var(--space-1));
+  inline-size: min(360px, calc(100vw - var(--space-8)));
+  max-block-size: 70vh;
   overflow-y: auto;
   padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-elevated);
+}
+
+.messenger-details-section + .messenger-details-section {
+  margin-block-start: var(--space-4);
+}
+
+.messenger-details-section h2 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  line-height: 1.25;
+}
+
+.messenger-member-list {
+  display: grid;
+  gap: var(--space-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.messenger-member-list li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--tap-min);
+}
+
+.messenger-member-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.messenger-member-avatar {
+  inline-size: 32px;
+  block-size: 32px;
+  font-size: var(--text-xs);
+}
+
+.messenger-details-form {
+  display: grid;
+  gap: var(--space-1);
+  margin-block-start: var(--space-3);
+}
+
+.messenger-details-form label {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+.messenger-details-form input { min-height: var(--tap-min); }
+.messenger-details-form .btn { justify-self: start; }
+
+// The log is the scrolling middle. overscroll-behavior stops a flick at the end
+// of it from scrolling the page behind it, which on a chat is the difference
+// between reading history and losing your place.
+.messenger-pane #message_log {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.messenger-pane .conversation-log {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-4) var(--space-3);
+}
+
+.messenger-composer-area {
+  flex: none;
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  background: var(--surface-elevated);
+}
+
+.messenger-typing {
+  min-height: 16px;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  line-height: 1.25;
+}
+
+.messenger-composer { margin: 0; }
+
+// One box holding attach, record, the field and send. The outline is on the box
+// rather than the textarea: form fields are the single surviving exemption to
+// the no-lines decision ("an input with no outline gives no target; you must see
+// where to type"), and this box is the field as far as a reader is concerned.
+.messenger-composer-box {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-1);
+  min-height: 48px;
+  padding: var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+}
+
+.messenger-composer-tool {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: var(--tap-min);
+  block-size: var(--tap-min);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.messenger-composer-tool:hover { background: var(--hover); color: var(--text); }
+
+.messenger-composer-record {
+  display: flex;
+  align-items: center;
+  flex: none;
+}
+
+.messenger-composer-record-status {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+.messenger-composer-field {
+  flex: 1;
+  min-width: 0;
+}
+
+// The field has no edge of its own — the box carries it — and grows with what is
+// typed rather than reserving three rows for one line.
+.messenger-composer-field textarea {
+  display: block;
+  inline-size: 100%;
+  min-height: var(--tap-min);
+  max-height: 160px;
+  margin: 0;
+  padding: var(--space-2);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: 1.5;
+  resize: none;
+}
+
+.messenger-composer-field textarea:focus { outline: 0; }
+
+// The counter stays. character_counter_controller counts DOWN from maxlength,
+// so it reads 500 on an empty box and 0 at the limit — and the field carries a
+// hard maxlength: 500, which means without it the box simply stops accepting
+// keystrokes with nothing to say why. That is the dead end FEEDBACK_LOOPS names.
+// Hiding it until it matters needs a number CSS cannot read, and reserving its
+// row to avoid a shift would make the compact box permanently a line taller, so
+// it sits quietly in flow instead.
+.messenger-composer-field .char-counter {
+  display: block;
+  padding-inline: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  line-height: 1.25;
+}
+
+.messenger-composer-send {
+  flex: none;
+  min-height: var(--tap-min);
+}
+
+.messenger-edit-form {
+  margin-block-end: var(--space-2);
+}
+
+// The reply referent qualifies what you are about to type, so it sits above the
+// box it qualifies.
+.messenger-composer .msg-reply-context {
+  margin-block-end: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+.messenger-inbox-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.messenger-inbox-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1;
+  min-width: 0;
+  min-height: 72px;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.messenger-inbox-link:hover { background: var(--hover); }
+
+.messenger-inbox-avatar {
+  inline-size: 48px;
+  block-size: 48px;
+  font-size: var(--text-base);
+}
+
+.messenger-inbox-main {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.messenger-inbox-name,
+.messenger-inbox-preview {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.messenger-inbox-name { font-size: var(--text-sm); line-height: 1.25; }
+
+.messenger-inbox-preview {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.25;
+}
+
+.messenger-inbox-meta {
+  flex: none;
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+.messenger-inbox-meta mark {
+  display: inline-block;
+  min-inline-size: 20px;
+  padding-inline: var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: var(--weight-bold);
+  text-align: center;
+}
+
+/* The empty state is a message, not a room. Hold it to a measure and put it
+   near the top of the pane, where the first line of a conversation would be —
+   dead centre of a tall column is where nothing lives. */
+.messenger-pane .empty-state {
+  max-inline-size: 34rem;
+  margin-inline: auto;
+  padding-block-start: var(--space-8);
 }
 
 @media (min-width: 1280px) {
@@ -163,7 +630,7 @@
   // There is room for both here, so the master-detail switch above is undone
   // rather than repeated: whichever of the two the phone was hiding comes back.
   .messenger-window:has(.conversation-log) .messenger-rail { display: flex; }
-  .messenger-window:not(:has(.conversation-log)) .messenger-pane { display: block; }
+  .messenger-window:not(:has(.conversation-log)) .messenger-pane { display: flex; }
 
   /* Each pane scrolls to the bottom of the viewport rather than to a viewport's
      worth of height, and keeps its scroll to itself — overscroll-behavior stops
@@ -174,44 +641,10 @@
     max-block-size: 100dvh;
     overscroll-behavior: contain;
   }
-}
 
-// Your own "message me" link. Quiet: it is the thing you reach for once, when
-// somebody you want is not here yet, not a control you use every session.
-.messenger-rail-invite {
-  display: flex;
-}
+  // The rail is on screen beside the room, so the way back to the inbox is to
+  // look left. Mobile keeps the control because there the rail is not there.
+  .messenger-header-back { display: none; }
 
-.messenger-rail-invite-copy {
-  display: grid;
-  /* Icon column, then text. align-items on a flex row left the glyph beside the
-     first line of a two-line label and the second line hanging under it; a grid
-     column keeps the icon against the whole block however the words wrap. */
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  gap: var(--space-2);
-  inline-size: 100%;
-  min-height: var(--tap-min);
-  padding-block: var(--space-2);
-  padding-inline: var(--space-2);
-  text-align: start;
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--text-secondary);
-  font: inherit;
-  font-size: var(--text-sm);
-  text-align: start;
-  cursor: pointer;
-}
-
-.messenger-rail-invite-copy:hover { background: var(--hover); color: var(--text); }
-
-/* The empty state is a message, not a room. Hold it to a measure and put it
-   near the top of the pane, where the first line of a conversation would be —
-   dead centre of a tall column is where nothing lives. */
-.messenger-pane .empty-state {
-  max-inline-size: 34rem;
-  margin-inline: auto;
-  padding-block-start: var(--space-8);
+  .messenger-pane .conversation-log { padding-inline: var(--space-4); }
 }

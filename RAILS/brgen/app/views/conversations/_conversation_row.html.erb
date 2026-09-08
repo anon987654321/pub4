@@ -8,22 +8,39 @@
     pluck), because the row used to call unread_count_for per conversation,
     which `includes(:messages)` does not help with — it is a find_by plus its
     own COUNT, so the preload was paid for and ignored. The reflex recomputes
-    them for its own page in after_paginate for the same reason. %>
+    them for its own page in after_paginate for the same reason.
+
+    Same anatomy as the rail's DM row — avatar, name, preview, then unread or
+    time — because they are the same object at two sizes. The rail row is the
+    compact one; this is the same row with room to breathe, and the pin control
+    that the rail has no space for. %>
 <li role="listitem">
   <% other = (conversation.participants - [ Current.user ]).first %>
   <% last = conversation.messages.last %>
-  <%= link_to conversation_path(conversation) do %>
-    <%= tag.strong other&.display_name || t("messages.anonymous") %>
-    <% if last %>
-      <%= truncate(last.content.to_s, length: 80) %>
-      <time datetime="<%= last.created_at.iso8601 %>"><%= time_ago(last.created_at) %></time>
+  <div class="messenger-inbox-row">
+    <%= link_to conversation_path(conversation), class: "messenger-inbox-link" do %>
+      <span class="messenger-inbox-avatar" aria-hidden="true">
+        <%= (other&.display_name || t("messages.anonymous")).to_s.first&.upcase || "?" %>
+      </span>
+      <span class="messenger-inbox-main">
+        <strong class="messenger-inbox-name"><%= other&.display_name || t("messages.anonymous") %></strong>
+        <% if last %>
+          <span class="messenger-inbox-preview"><%= truncate(last.content.to_s, length: 80) %></span>
+        <% end %>
+      </span>
+      <span class="messenger-inbox-meta">
+        <% if unread.positive? %>
+          <mark><%= unread %></mark>
+        <% elsif last %>
+          <time datetime="<%= last.created_at.iso8601 %>"><%= time_ago(last.created_at) %></time>
+        <% end %>
+      </span>
     <% end %>
-    <% if unread.positive? %><mark><%= unread %></mark><% end %>
-  <% end %>
-  <% if pinned %>
-    <%# destructive: no-confirm-ok — reversible — unpinning changes the order of the list, nothing else %>
-    <%= button_to t("messages.unpin"), conversation_pin_path(conversation), method: :delete, class: "btn btn-ghost btn-sm" %>
-  <% else %>
-    <%= button_to t("messages.pin"), conversation_pin_path(conversation), class: "btn btn-ghost btn-sm" %>
-  <% end %>
+    <% if pinned %>
+      <%# destructive: no-confirm-ok — reversible — unpinning changes the order of the list, nothing else %>
+      <%= button_to t("messages.unpin"), conversation_pin_path(conversation), method: :delete, class: "btn btn-ghost btn-sm" %>
+    <% else %>
+      <%= button_to t("messages.pin"), conversation_pin_path(conversation), class: "btn btn-ghost btn-sm" %>
+    <% end %>
+  </div>
 </li>
