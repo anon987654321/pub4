@@ -188,6 +188,159 @@ roadmap carries.**
   each hold part of it; nothing emits one deterministic receipt of
   constitution + rules + providers + capabilities + degradations.
 
+**Landed 2026-09-08 evening, and what the numbers were.**
+
+- *MASTER-115 scope-aware structural analysis* — done for all three detectors
+  the survey named. `FileLayoutRule` reads Prism scopes instead of lines;
+  `TRAILING_COMMAS` reads array and hash literals instead of any line holding a
+  quoted string; `DOUBLE_QUOTES_RUBY` reads `StringNode#opening_loc` instead of
+  guessing an apostrophe. Over the 774 Ruby files in `MASTER/{lib,law,tools,bin,spec,test}`:
+  1,345 findings before, 19 after, and the 19 are true. The split was
+  FILE_LAYOUT 261 → 3, TRAILING_COMMAS 496 → 16, DOUBLE_QUOTES_RUBY 588 → 0.
+  The three surviving FILE_LAYOUT findings are all the same shape: a public
+  `def self.` sitting under the private marker, where `private` does not
+  reach it.
+- The 588 were **all** single-quoted strings nested inside a `#{}`, where
+  doubling repeats the delimiter that opened the enclosing string. Zero stood
+  outside an interpolation, so the tree already obeys `style.quotes: double`
+  everywhere a choice exists, and that measurement is the exemption's evidence.
+- *MASTER-116 audit never silently stops* — done. `rake audit` was a
+  prerequisite list, so `abort` in gate four ended the process; it now invokes
+  each of the 23 gates and reports passed / failed / errored / undefined,
+  separating a gate that broke from a verdict about the tree. First full run:
+  **20 passed, 3 failed** — `studio`, `lint:spine`, `loc_budget` — none of
+  which the old shape could reach, because `studio` is gate four.
+- *SPRAWL-106 control_commands* — resolved by wiring, not deleting.
+  `data/soul.yml` names `soul propose -> soul approve` as the amendment path
+  and `data/state.yml` says orders run "via /orders"; neither verb existed.
+  Both are on the surface now, with help entries, and the closed-set test names
+  thirteen commands instead of eleven.
+- *MASTER-100 intent classifier gap* — closed for the roadmap's own four
+  examples. Two regex doors ahead of the keyword score: a diagnosis question
+  and a test run. The token scan splits "isn't" into "isn" and "t", and "run"
+  could not join a keyword list without swallowing "run master through".
+  :unknown is not neutral — `TurnRouter#casual?` reads it as conversation, so
+  both questions were being answered rather than done.
+- `FILE_LAYOUT` and `DOUBLE_QUOTES_RUBY` came off `RULE_RETUNE_IDS`. A rule
+  parked for a detector fault stays parked, because the parking is what stops
+  anyone measuring it.
+- `loc_budget` carried `lib/design` and `lib/ops` as directory keys for two
+  files, `lib/design.rb` and `lib/ops.rb` — the same shape as the `core: 916`
+  its own guard was written against. Fixed; ops re-measured down, 251 to 234.
+  The gate now runs, and reports ten subsystems over budget, `law` worst at
+  1613/852. That debt is older than this session and nothing had reached it.
+
+**Second sweep, same evening.**
+
+- *SPRAWL-105 swarm* — wired, not deleted. `Review::Swarm::Coordinator` reaches
+  `Pipeline::Through#run_critique` through `analyse_and_review`, ahead of the
+  deliberation, and `dispatch_through` carries it as the last keyword because
+  `Command#dependency_kwargs` zips the registry's positional arguments against
+  the keyword names in declaration order. A lean boot passes nil and the stage
+  is the stage it was; a full boot now reads the 546 lines that were built and
+  thrown away. Two tests pin both halves.
+- *MASTER-101 boot receipt* — `Ground::BootReceipt`, printed by `bin/doctor`.
+  Commit, a digest over the five governing data files, the soul version, the
+  three rule populations counted separately, provider availability, and
+  capabilities. Deterministic: no clock, no host path, so a changed digest
+  names a changed constitution. Two facts it found on its first run — `rules:`
+  in `data/rules.yml` is a flat array of 242, not a hash of scopes, so the
+  enumeration snippet in `CLAUDE.md` raises on the file it documents; and
+  `schema:` in `providers.yml` was being counted as a permanently unavailable
+  provider.
+- *MASTER-136 offline as a capability* — the receipt names it. `network` is a
+  TCP open to a resolver rather than a DNS lookup, because a captive portal
+  answers DNS and nothing else, and that case reads as "the model is down".
+  One `network=no` explains every provider miss printed under it.
+- *PERF-100 the missing ratchet* — `Deploy::WebVitalsBudget`, registered in
+  `gates.yml` as `web_vitals_budget`. Source half asserts `hotwire.js` still
+  observes all three entry types, so the field collection cannot quietly stop;
+  live half measures LCP and CLS against the public "good" thresholds through
+  CDP, and reports inconclusive rather than green when no app is listening.
+  INP is deliberately not in the live half: it is defined over real
+  interactions, a scripted load produces none, and reading that silence as
+  zero would print the best possible score for a page nobody touched.
+- *BRGEN-104 fresh-first* — done. `HomeFeed.scope` takes `sort:` and defaults
+  every branch to `fresh`; `?sort=hot` is the ranking, and `?sort=latest`
+  still means fresh so no bookmarked URL changed meaning. `DemoFeed.fresh`
+  added so the guest front page is the same front page. The nav tabs swapped:
+  New is the bare root path, Hot carries the parameter.
+
+**Third sweep: the same bug class, in the counter that matters most.**
+
+- A second external reading found `CodeMetrics.public_method_count` doing what
+  `FileLayoutRule` did — reading visibility off a stop marker. The walk ended
+  at the first `private` or `protected`. That is not what either keyword does,
+  and every consequence is an *under*count: a `public` below `private`
+  re-opens the scope and everything after it went uncounted; `protected` was
+  read as end-of-class; `def self.x` below `private` is still public and the
+  walk had already stopped; `private def x` and `public def x` are CallNodes
+  wrapping the DefNode, so neither was ever seen; `class << self` was
+  invisible.
+- `NO_GOD_CLASS` is the reader, so the rule has been measuring a floor.
+  Measured across `lib`, `law` and `tools`: **2,588 public methods before,
+  2,663 after, twenty classes moved**, and three cross the limit that were
+  under it — `Ground::RuntimeCatalog` read **0** while having 14, because
+  every one of its methods is a class method written below a `private`.
+- Rewritten as a two-pass visibility model with both streams:
+  `private` moves the instance default, `private_class_method` reaches the
+  singleton one, the named forms apply backwards, the inline forms reach one
+  definition, and `class << self` is its own scope. Eight hand-derived cases
+  in `test/test_visibility_semantics.rb`.
+- Two notes on the patch that came with the finding, kept because they are the
+  reason to re-derive rather than apply. Its own retroactive-visibility test
+  could not pass against it — a single forward pass counts a method public
+  before `private :foo` below the def tells it otherwise — and its
+  `private_class_method` case declared 1 where Ruby gives 2, since the
+  `initialize` above the bare `private` stays public. The diagnosis was right
+  and worth acting on; the arithmetic in the fixtures was not.
+
+**Corrections to this section, from a second reading — 2026-09-08 evening.**
+
+- *PERF-100 is not absent, and this section was wrong about it.*
+  `RAILS/shared/frontend/hotwire.js` samples LCP, CLS and INP at 1%
+  (`WEB_VITALS_SAMPLE_RATE = 0.01`) through `PerformanceObserver` and beacons
+  them to `/web_vitals`; `WebVitalsController` and
+  `design_contract_test.rb#test_web_vitals_wired` both exist. The earlier
+  verdict searched MASTER and `layout_stability_lint.rb` and never opened
+  `RAILS/shared/frontend/`. What is missing is the *budget gate* — which
+  `RAILS/gates/GATE_ADEQUACY.md:57` already records as its own item 8, "no
+  LCP/INP or request waterfall gate". Demoted from "genuinely new" to
+  "telemetry exists, ratchet does not".
+- *MASTER-134/135/136 is not a blank page either.* `data/models.yml:363`
+  declares a Tier-D local tier of three Ollama models, activating only when
+  `OLLAMA_BASE_URL` is set. Still absent: a hardware probe, a bootstrap, a
+  benchmark, and offline named as a capability state. (`agy` is not "marked
+  offline" — it is a CLI binary reached by `command:`, with availability
+  through `Master.agy_cli_available?`; it is keyless, which is a different
+  property.)
+- *MASTER-100 has two intakes, and closing the classifier did not merge them.*
+  `CLI::Stages::Intake` maps every non-slash line to `:llm`;
+  `Ground::IntentRouter` is a separate keyword scorer read by `TurnRouter`,
+  `FoldRisk` and `Policy::Orchestration`. Natural language is still two doors.
+- *A detector note worth keeping.* The second reading asked that
+  `def self.x` below `private` be spared, on the grounds that `private` does
+  not reach a singleton method. That is the reason to flag it, not to spare
+  it: it is a public method in the private half of the file, which is exactly
+  what the law forbids. The census is three findings across 774 files —
+  `Scan::Request.resolve_scan_profile`, `.workflow_profiles` and
+  `AstFixer.node_available?` — and the first is called from
+  `work_commands.rb:263`. Three true positives is not noise.
+
+**BRGEN, checked against the code rather than the roadmap.**
+
+- *BRGEN-104 fresh-first* — confirmed. `Brgen::HomeFeed.scope` defaults to
+  `Post.hot`, guests to `Brgen::DemoFeed.hot`, and newest-first exists only as
+  `params[:sort] == "latest"` in `HomeController#index`. A product decision
+  followed by one reorder, not a feature.
+- *BRGEN-100 one navigation system* — confirmed as coexistence rather than
+  leftover markup: `RAILS/brgen/app/views/shared/_mobile_chrome.html.erb` is a
+  full tab bar with a peel and a sheet. Decide tab bar *or* primary nav; do
+  not hide one with CSS.
+- *BRGEN-105 realtime homepage* — Turbo Streams reach comments and a few
+  writes; the homepage is not a live feed and has no "N new posts" chip.
+  Scoped and large.
+
 **Wrong about the tree, and would cost a revert.**
 
 - *SPRAWL-101/102/103 — simplify `ground/policy`, `voice/renderer`,
