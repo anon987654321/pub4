@@ -70,7 +70,17 @@ class DeployBacklogTest < Minitest::Test
     assert_includes callback, "persist_external_identity"
     assert_includes callback, "IdentityProvider.find_or_create_by!"
     assert_includes callback, "ExternalIdentity.table_exists?"
-    assert_includes callback, "Shared::Authentication.table_exists?"
+    # Shared::Authentication is the controller concern and nothing else. A second
+    # declaration of that constant — an ActiveRecord model for an
+    # `authentications` table no migration in any app creates — sat at
+    # shared/app/models/authentication.rb, where the path maps to a top-level
+    # `Authentication` that each app's own concerns/authentication.rb already
+    # defines. Zeitwerk shadowed the model, so this constant resolved to a Module
+    # and `.table_exists?` raised NoMethodError on every OAuth callback. This
+    # assertion used to require that call. ExternalIdentity is the persistence,
+    # and refuting any method call on the concern is what stops the phantom
+    # returning; the word itself still appears in a comment above.
+    refute_match(/Shared::Authentication\.\w/, callback)
     assert_includes links, "oauth_provider_slugs"
     assert_includes links, "/auth/google_oauth2"
     assert_includes links, "/auth/snapchat"
