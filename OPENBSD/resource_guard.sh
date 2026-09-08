@@ -30,10 +30,9 @@ SHED_STRIKES=${GUARD_SHED_STRIKES:-2}
 STRIKE_STATE=/var/db/resource_guard_strikes
 CORE="master brgen"
 # Ordered cheapest-to-lose first, because shedding now takes one per tick.
-# litestream leads: it is a backup streamer with no user-facing surface (and
-# per amber-deploy-hazards it is not currently backing anything up), so losing
-# it costs nothing visible. bsdports is a low-traffic ports index. amber is a
-# real app with real users and goes last.
+# bsdports is a low-traffic ports index and leads. amber is a real app with real
+# users and goes last. Every entry here is a service someone loses, so the first
+# shed already costs a site — there is no free step to spend before amber.
 OPTIONAL="bsdports amber"
 # vm23 is 1 vCPU (hw.ncpu=1) — load=1.0 just means the single core is fully
 # busy, which is routine, not an emergency. Calm baseline ~0.5-1.4,
@@ -226,7 +225,7 @@ if [[ $shed -eq 1 ]]; then
   # One service per tick, the same way restore releases one per tick. Shedding
   # the whole OPTIONAL list on one breach gave up more than the pressure asked
   # for and then took three ticks to undo. The list is ordered cheapest-to-lose
-  # first, so a mild breach costs litestream and nothing else.
+  # first, so a mild breach costs bsdports and leaves amber up.
   for svc in $OPTIONAL; do
     if rcctl check "$svc" 2>/dev/null | grep -q '(ok)'; then
       logger -t resource-guard "shed $svc (load=$load mem_avail=${mem_avail_pct}% strikes=$strikes)"

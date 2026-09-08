@@ -3372,12 +3372,20 @@ the `MASTER/bin/pub4 status` debt line, so keep exactly one per open item.
 vm23 runs a locally built libvips, and `pkg_add -u` will replace it with the stock package. The port graphics/libvips carries `-Drsvg=disabled` among the loaders OpenBSD turns off, so the packaged build has no svgload at all — librsvg-2.61.1 is installed beside it and is never reached. amber's garment cut-outs need it: Amber::GarmentSilhouette rasterises SVG it generates itself.
  Rebuilt 2026-08-23 from a signify-verified 7.8 ports tree with `-Drsvg=enabled` and `x11/gnome/librsvg` added to LIB_DEPENDS (the port path is x11/gnome, not graphics — `graphics/librsvg` fails as a broken dependency). Package kept at /usr/ports/packages/amd64/all/libvips-8.14.5.tgz, so a re-install after an update is `make reinstall` in /usr/ports/graphics/libvips rather than a fresh build.
  What makes this quiet: GarmentSilhouette#png returns nil and logs one line when vips cannot read SVG, and the seeder then keeps whatever photos the items already had. A stock-package upgrade therefore does not break the site, it just stops the cut-outs regenerating — nothing announces it. Re-check with `vips -l | grep svgload` after any pkg_add -u touching graphics.
-UPDATE 2026-08-25: the detection this entry asks for exists. daily.local now
-checks `vips -l` for svgload and logs loudly when it is gone, naming the
-recovery (make reinstall in /usr/ports/graphics/libvips). Verified in both
-directions — it passes against the live loader list and fails against a string
-without svgload. Currently healthy: 4 svgload operators, vips 8.14.5. What is
-left is the rebuild itself after a pkg_add -u, which is operator work.
+The detection this entry asks for exists. `OPENBSD/etc/daily.local` checks `vips
+-l` for svgload and logs loudly when it is gone, naming the recovery. Verified in
+both directions — it passes against the live loader list and fails against a
+string without svgload.
+RE-MEASURED 2026-09-08 on the box: still healthy. `vips --version` reports
+8.14.5, `vips -l` lists 4 svgload operators, and the rebuilt package is still at
+/usr/ports/packages/amd64/all/libvips-8.14.5.tgz. The live /etc/daily.local
+carries the same check as the repo copy; the two differ in one comment, which
+names the retired `debt.yml` instead of this file, so an operator run of
+`install_root_configs` is pending but nothing functional has drifted.
+What remains is conditional operator work, not a defect: after any `pkg_add -u`
+touching graphics, run `make reinstall` in /usr/ports/graphics/libvips, then
+confirm with `ruby34 -e 'puts \`vips -l\`.scan("svgload").size'`, which must
+print 4. daily.local runs the same read every morning and logs when it drops.
 
 #### `off_host_dr`  — tag: operator-priority
 
@@ -3394,6 +3402,31 @@ LITESTREAM, which is not in OpenBSD ports and so cannot be pkg_add'ed at all.
 It is now rcctl-disabled and out of pkg_scripts, because a service that can
 never start kept `rcctl ls failed` permanently non-empty and taught everyone to
 skim the one list that announces a real outage. See OPENBSD/DECISIONS.md.
+RE-MEASURED 2026-09-08. dr-pull is healthy — `ruby OPENBSD/bin/dr-pull --check`
+reports the newest pull 0 days old, 7 kept. litestream is still absent
+(`pkg_info` has no entry, /usr/local/bin/litestream does not exist) and now has
+no rc.d script at all, so `rcctl get litestream status` answers "service does
+not exist"; `pkg_scripts` reads master brgen amber bsdports brgen_jobs.
+/var/backups/litestream/ is empty and has been since it was created on
+2026-07-27, which is the measurement the rest of this entry rested on.
+THREE PLACES STILL BELIEVED IN IT, fixed 2026-09-08 and worth naming because
+each was a separate fact. `RUNBOOK.md` told the operator that `etc/litestream.yml`
+replicates each database to `file:///var/backups/litestream/` — the one document
+an operator reads about backups, describing a replica that has never held a
+byte; it now describes dr-pull and says plainly that litestream replicates
+nothing. `restore_backups.sh` skipped every app whose replica was missing and
+exited 0, so the disaster-recovery script walked all three apps, restored none
+and printed "done"; every precondition is now a hard failure naming dr-pull, and
+`test/test_restore_scripts.rb` holds it (verified by mutation — restoring the
+skip turns it red). `resource_guard.sh` still said in comments that litestream
+leads the shed list and that "a mild breach costs litestream and nothing else",
+while `OPTIONAL` had read `bsdports amber` for some time: the guard's cheapest
+step was described as free when it actually takes a site down. litestream is
+also out of `vm_resource.yml`'s optional_services, OPERATOR.sh's optional_apps
+and emergency_cpu.sh's stop loop. `OPENBSD/etc/litestream.yml` stays, because
+the config is correct for the day someone builds the binary.
+WHAT IS LEFT is one purchase: an off-host object store. dr-pull's copies live on
+the operator Mac, which is one other disk, not a bucket.
 
 #### `multi_app_ram`  — tag: operator-priority
 
@@ -3401,11 +3434,17 @@ skim the one list that announces a real outage. See OPENBSD/DECISIONS.md.
 
 vm23 ~1GB cannot keep master + brgen + amber resident, and bsdports is a fourth app that does not fit at all. UVM out-of-swap kills ruby34 when they all boot. Raise RAM (≥2GB) or run amber on-demand. Restart order: master → brgen → amber → relayd. Smoke: sh OPENBSD/bin/deploy-smoke.sh (ALLOW_AMBER_DOWN=1 if amber policy is optional). It also shows up as a STARTUP RACE rather than an OOM kill, and that form looks like a broken app. amber needs ~20s to signal ready; Falcon SIGKILLs the worker if that misses its health-check window, so while another app's CI has the box at load 5+, amber restarts, gets killed, and rcctl reports amber(failed) with port 61352 closed. It is not broken — `bin/rails runner` boots it (BOOT_OK) and on a quiet box it logs "Finished startup" then ready:true within ~20s and stays. Wait for the deploy to finish and restart. Do NOT reproduce this by hand without --health-check-timeout 300: the rc.d passes it, a bare `falcon serve` defaults to 30s, and the worker then dies at exactly +30s, which reads as confirmation of a timeout theory that is wrong.
  DECIDED 2026-08-22 (operator delegation): stay at 1GB with exactly one resident worker (brgen_jobs, ~380M measured, 131M free after). The resize question reopens only if amber earns its own worker.
-UPDATE 2026-08-25: operator has scheduled the 2 GB upgrade for Friday. Until
-then the shape is unchanged and the measurements stand — swap reached 96%
-with no deploy running. vps-deploy already stands the app's job worker down
-for the CI run (line 156, since the 2026-08-23 OOM); doing it by hand first is
-unnecessary and makes that stand-down silently skip.
+vps-deploy already stands the app's job worker down for the CI run (line 156,
+since the 2026-08-23 OOM); doing it by hand first is unnecessary and makes that
+stand-down silently skip.
+THE UPGRADE DID NOT HAPPEN. An entry here said on 2026-08-25 that the operator
+had scheduled 2 GB "for Friday". Two Fridays later, measured 2026-09-08:
+`sysctl hw.physmem` reads 1056952320, still one gigabyte, and `swapctl -s`
+reports 2549544 of 2588672 blocks used — 98.5% of swap, with 43 MB free and no
+deploy running, worse than the 96% that entry recorded. A scheduled date is not
+a measurement; re-read the box before believing one.
+The operator command is a provider resize of vm23 and nothing in this repository
+can do it. After it lands, `sysctl hw.physmem` must read at least 2147483648.
 
 #### `internet_app_runs_as_passwordless_root_user`  — tag: operator-priority
 
@@ -3422,7 +3461,11 @@ before the switch: writing repo code refused, doas refused. /home/dev went
 drwx--x--- to drwxr-x--- because getcwd needs read on every ancestor and
 bundler calls Dir.pwd first; .ssh and priv keep drwx------.
 STILL OPEN: `MASTER/bin/master` from a terminal is dev, and dev is still nopass root.
-The remote path is closed; the local one is the remaining half.
+The remote path is closed; the local one is the remaining half. Both halves
+re-measured on the box 2026-09-08: `/etc/rc.d/master` carries daemon_user="master"
+and BUNDLE_FROZEN=true, and `/etc/doas.conf` line 39 still reads
+`permit nopass setenv { … } dev as root`. The operator work is to drop or scope
+that line, after which `doas -C /etc/doas.conf -u dev id` must stop naming root.
 COST, recorded 2026-08-25 because the next app to be moved will pay it too:
 the first deploy that carried daemon_user="master" to the box did not bring
 ai.brgen.no back, and vps-deploy halted the whole pass at master. Bundler.setup
@@ -3442,61 +3485,38 @@ source tree and something was quietly using it.
 
 Re-measured on the box 2026-08-12, as this entry asked. /home is at 89% (1.9G free of 17G), up from 99% that morning — the three retired apps (baibl, blognet, hjerterom) still had home directories worth 1.6G between them, for products removed from the repo in July. The git figure moved too: /home/dev/pub4 is 8.0G and .git is 3.3G of it, not the 7.7G recorded on 2026-08-02, so someone has run a gc. The claim underneath stands. The ten largest objects in history are 80–87 MB WAV renders under DEPLOY/dilla/renders/beats/, a path that no longer exists and never will again; every `git pull` deploy carries them, so this does not improve by itself and more RAM does not touch it. Operator-owned: the fix is a history rewrite, i.e. a force-push to a public repo. Strip these blobs in the same pass as the key purge above.
  RE-MEASURED 2026-08-22: /home is 67% (5.4G free) and the three retired app homes are gone. What remains is exactly the history rewrite, and it is SCHEDULED, not casual: it needs every session quiescent (STUDIO carries live uncommitted work), a coordinated force-push, and a vm23 re-clone in the same hour. Strip the WAV blobs and the key purge in one pass.
-RE-MEASURED 2026-08-25: /home is 68% (5.3G free of 17G), not the 89% above.
+RE-MEASURED 2026-09-08: /home is 67% (5.3G free of 17G), not the 89% above.
 The three retired app homes this entry names — baibl, blognet, hjerterom — are
-gone, and /home/dev/pub4 is 4.9G against the 8.0G recorded, so the weekly
-`git gc` in weekly.local is doing its job. .git is still 3.6G of the 4.9G,
-which is the remaining shape of the problem, but it is not pressure: /var is
-16% and / is 18%. Nothing here is urgent; the entry stays only so the .git
-figure has somewhere to be re-read.
-
-#### `amber_moving_to_its_own_apex`  — tag: operator-priority
-
-<!-- open-debt -->
-
-amber is intended to move from amber.brgen.no to amberapp.com (operator, 2026-08-11, not yet bought). Filed before the move because one coupling is easy to miss and expensive: the session cookie is `domain: :all` (shared/config/initializers/session_store.rb), which scopes it to the REGISTRABLE domain. Today that is brgen.no, so a visitor who signs in on brgen.no is signed in on amber.brgen.no. On a separate apex the cookie stops crossing, and the replacement — Shared::SsoToken — is consume-only here: nothing in this repository mints one (the minting side is MASTER's and is not in this tree). So cross-app identity would go from working-by-cookie to unimplemented, silently, for anyone who expects it. The fleet plumbing mostly follows apps.yml now and does not need hand edits: port_inventory, domain_alignment's live_apexes, health_check --public-only and therefore uptime-check.sh all derive from it. What does need hand work: an acme cert and a relayd keypair for the new apex, ALL_DOMAINS in OPERATOR.sh, DNS (own zone in nsd or external), deploy_inventory.json's mirror, canonical/sitemap hosts, the PWA manifest start_url and scope, and any CSP or embed allowlist that names brgen.no. Worth doing for revenue reasons as well as branding: TradeDoubler publisher approval and AdSense site review both go easier for an apex that is the product than for a subdomain of something else.
- CORRECTED 2026-08-22 (later): amberapp.com is a REDIRECT SHELL — every path returns the same 114-byte JS-redirect page (verified: /fonts/* serve text/html there and font/woff2 on amber.brgen.no). The apex is bought and certified but the app does not live there yet; the move itself, with the entry's coupling list, is still ahead. DECIDED: amber keeps its own identity space (no cross-apex SSO — separate product, separate accounts); remaining hand work is the canonical/redirect choice for amber.brgen.no and the sitemap/manifest host sweep the entry lists.
-
-#### `rails_audit_backlog_2026_08_10`  — tag: agent-workable
-
-<!-- open-debt -->
-
-The tail of the 2026-08-10 UI/UX audit, grouped because these were 12 separate one-line entries that shared a tag, a provenance and a shape. Each needs reading per site rather than a sweep, which is why they are still here. 104 associations with no inverse_of (changes in-memory identity and interacts with strict_loading_by_default — a decision per association). 102 CSS selectors with no literal match in ERB/JS/Ruby (class names are also composed at runtime, so a literal search cannot prove death). 64 controllers with a create and no rate_limit — DONE 2026-08-13, and the subset was right: of 98 controllers with a write action, 84 had no rate_limit and 6 of those were write actions a request with no session can reach. All six now carry one, and the guest-reachable question is asserted rather than recounted by RAILS/test/guest_write_rate_limit_test.rb, which also asserts its own detector still finds guest writes at all — a source-text checker that stops matching reports zero gaps and reads exactly like a clean tree. The one that mattered was Fediverse::InboxesController#create: unauthenticated by protocol, and it calls ActorFetcher.for_key_id BEFORE verifying the signature, which is an outbound HTTPS GET to a URL taken from the sender's own Signature header. Verifying first is not available as a fix — the key needed to verify is what the fetch goes to get. The others were amber's signup (brgen's equivalent had carried 10/10min all along) and brgen's email-subscription create, which queues mail to an arbitrary address over brgen.no's SPF and DKIM. Found on the way and worth more than the entry: FOUR controllers declared two rate_limits and named neither. ActionController::RateLimiting builds its key as ["rate-limit", scope, name, by] with name defaulting to nil, so two unnamed limits in one controller share a counter — Rails documents this on the method itself. MessagesController's 30/minute and 40/3-minutes on :create therefore shared a key for every signed-out sender, incremented it twice per request, and blocked at 15; the 3-minute limit never existed, because whichever call created the key set its TTL. Two correct-looking lines, no code change needed to introduce it, and the same defect class as everything else in this file. RAILS/test/rate_limit_naming_test.rb holds it, and also re-reads actionpack's rate_limiting.rb to check the upstream behaviour the rule depends on is still true rather than enforcing a rule about nothing. 56 raw hex values in stylesheets (var() fallbacks and dialect token definitions are correct by design). 29 destructive links with no confirmation interstitial. 11 models with no validations at all. 9 inline style attributes bypassing the token system. 9 numeric z-index values above 10 not from a token — the ladder itself is the finding; two disagreeing sources already made the brgen logo invisible once. 6 `display: none !important` hiding chrome the shell renders on every page (auth, print, immersive verticals, dating splash); deleting the render is not available while the layout is shared. 5 hardcoded placeholders and 3 hardcoded submit labels — same chrome_i18n rule as rails_flash_strings_untranslated, on the highest-traffic strings on a form. 5 image_tag calls with no width/height (layout shift), 1 more without lazy. 3 div/span elements carrying a click action — not focusable, not keyboard-activatable, not announced as a control. Small CSS groups left as judgement: 3 css_blur, 2 css_line_height_tight, 2 css_radius_large, 1 value_no_declaration. READ THIS FIRST: no committed tool reproduces these counts, and two of the rows are already covered by tools that count something else. The rule names above (css_blur, value_no_declaration) exist nowhere in the tree; a plain grep answers 24 for the z-index row and 287 for the hex row, because it cannot make the exclusions the audit made by hand; and css_constitution ALREADY measures and ratchets magic_hex — at 151 against a ceiling of 150, over stylesheets excluding vendor, node_modules and builds — which is neither this row's 56 nor the grep's 287. Same for the !important and file-size rows, which frontend_auditor reports as non-blocking warnings. So the first move on any of these is to name the instrument, not to fix a count: an unfalsifiable number is how a register row outlives its subject. rails_flash_strings_untranslated is the worked example — writing the lint moved a hand-counted 144 to a measured, ratcheted 169.
- TRIMMED 2026-08-22, rows that got their instrument: raw hex -> css_budget magic_hex (140, ratcheted); !important and file-size -> frontend_auditor warnings; dead selectors -> css_coverage_lint (174, DYNAMIC_SEEDS-aware); the 3 div/span click rows examined — two were @window listener HOSTS (correct pattern, audit misread) and the sheet backdrop gained keydown.esc@window so keyboard users can leave. Still uninstrumented and open: inverse_of 104, destructive-link interstitials 29, validation-less models 11, inline styles 9, the z-index ladder, image dims, and the small CSS judgment rows.
-TRIMMED 2026-08-25, the three uninstrumented rows got their instrument.
-RAILS/shared/lib/pub4/model_contract_lint.rb ratchets uninferrable_inverse
-(54) and no_validations (10); destructive_action_lint.rb ratchets
-unconfirmed_destroy (30). Both are wired into MASTER/tools/ratchets.rb and
-appear in `MASTER/bin/pub4 measure`. The inverse_of number is 54 rather than the 104
-counted by eye because half of what a grep calls a missing inverse_of is an
-association ActiveRecord infers by itself, and reporting those is reporting
-Rails working; the detector encodes the cases automatic_inverse_of documents
-itself as giving up on. no_validations lands at 10 against 11 and
-unconfirmed_destroy at 30 against 29 — reproducing a hand count is the reason
-to trust a detector. What remains under this row is the per-site judgement it
-always described, now with numbers that cannot drift while nobody looks.
-CLOSED 2026-09-05: the per-site judgement was done and all three read 0 against
-a floor of 0. 55 associations name their inverse and two say in a marker that
-the other side does not exist; four models gained a validation mirroring a
-unique index that was otherwise reached as a 500 and five say in a marker why
-they promise nothing; 25 destructive controls say why they are reversible and
-four gained a prompt. Two instruments were wrong on the way and both are fixed
-— model_contract read one line of a multi-line association, which called four
-declared inverse_of options missing and never saw eight wrapped foreign keys,
-and chrome_i18n read "the line above is a comment" as "this line is a comment",
-so the new markers silently excused two live findings. The RAILS rows of this
-register are done; what is left in this file's OPENBSD section is registrar and
-operator work.
+gone, and /home/dev/pub4 is 4.4G against the 8.0G recorded, so the weekly
+`git gc` in weekly.local is doing its job. .git is 3.6G of the 4.4G, unmoved
+across three weeks, which is the remaining shape of the problem — but it is not
+pressure: /var is 16% and / is 18%. Nothing here is urgent; the entry stays only
+so the .git figure has somewhere to be re-read, and the fix is still the
+scheduled history rewrite, which needs every session quiescent, a coordinated
+force-push and a vm23 re-clone in the same hour. Read it with
+`ssh brgen 'df -h /home; du -sh /home/dev/pub4/.git'`.
 
 #### `bsdports_org_delegated_to_parking`  — tag: operator-priority
 
 <!-- open-debt -->
 
 open 2026-08-25, registrar-side. bsdports.org does not resolve: the .org registry delegates it to ns1/2/3.expireddomain.hyp.net — Domeneshop's parking servers — which publish no A record. Confirmed against b0.org.afilias-nst.org, not a cached resolver. The registration is ours and paid to 2027-08-08, and whois shows autoRenewPeriod, so the shape is: it lapsed on 2026-08-08, Domeneshop moved the nameservers to parking, the registration auto-renewed, and the nameservers were never put back. Everything downstream still believes in it — relayd holds a keypair and a Host match, a valid certificate sits at /etc/ssl/bsdports.org.fullchain.pem to Nov 10 2026, RUNBOOK.md names https://bsdports.org as the URL, OPERATOR.sh probes it, rcctl says ok and the app answers 200 on 47312. It has simply been dark. Fix is one registrar change: set the nameservers at Domeneshop to ns.hyp.net and ns.brgen.no, which is what brgen.no uses. Do it before Nov 10 or the certificate renewal fails too — acme-client needs the name to resolve here for HTTP-01. Nothing we had could have caught this: domain_watch takes its population from nsd.conf and bsdports.org is not a zone we serve, and the expiry watch reads expiry, which is paid. dns_zones now asks a public resolver whether each app domain points at 46.23.89.226, and fails on this one.
-STILL OPEN 2026-08-29, and this row owns it — `WISHLIST.md` 104 names the same
+STILL OPEN 2026-09-08, and this row owns it — `WISHLIST.md` 104 names the same
 registrar change and points here rather than restating it. `dns_zones` also
 fails on nine domains that are past expiry, which is `WISHLIST.md` 103: money at
 a registrar, not code, and not a finding to re-open under a second name here.
+ONE DETAIL ABOVE IS NOW WRONG, and the correction makes this worse rather than
+better. bsdports.org resolves: the parking servers publish 185.134.245.114 and
+2a01:5b40:0:bc04::1, and http://bsdports.org/ answers 200 with Domeneshop's
+parking page. A check that reads a status code therefore calls the domain
+healthy while it serves someone else's page. Only `dns_zones` catches it,
+because it compares the answer against 46.23.89.226 rather than against 200.
+The nameservers at the .org registry are still ns1/ns2/ns3.expireddomain.hyp.net
+and whois still shows autoRenewPeriod against an expiry of 2027-08-08.
+Operator command, at Domeneshop and nowhere else: set bsdports.org's nameservers
+to ns.hyp.net and ns.brgen.no. It is done when
+`ruby RAILS/gates/runner.rb dns_zones` passes. Do it before Nov 10 2026 or
+acme-client's HTTP-01 renewal fails too.
 
 ### Debt — resolved records
 
@@ -3504,6 +3524,21 @@ Closed records are deleted when they close, and `git log` holds them. A finding
 that is fixed is not a backlog item, and a file that keeps every one it ever had
 teaches the reader to skim. What stays here is forward work and the false
 positives worth not re-discovering — those are guards, not history.
+
+**amberapp.com is not ours and never has been.** A row here called
+`amber_moving_to_its_own_apex` planned amber's move onto that apex and, on
+2026-08-22, recorded it as "bought and certified" after reading a 114-byte
+JS-redirect page. That page is Afternic's for-sale lander: it redirects to
+`/lander`, and the domain has been registered at GoDaddy since 2019 with
+nameservers `ns1/ns2.afternic.com` and a `VERIFY.HN` fast-transfer record. The
+listing asks USD 5,999. Nothing in this repository names amberapp.com, so the
+belief cost nothing, but it was wrong the day it was written, and a redirect
+page is not evidence of ownership — read whois before calling a domain ours.
+amber is canonical at amber.brgen.no. Buying the apex is a spend decision for
+Johann and Ragnhild, not a scheduled step, and the coupling it would trigger is
+worth keeping: the session cookie is `domain: :all`, scoped to the registrable
+domain, so a move off brgen.no silently ends cross-app sign-in, and
+`Shared::SsoToken` is consume-only in this tree.
 
 ## STUDIO
 

@@ -307,7 +307,7 @@ sync_openbsd_apply() {
   # App services: start only if /up already returns 200 — avoids Falcon crash-loops burning CPU.
   typeset -A app_ports=(brgen 38182 amber 61352 bsdports 47312)
   typeset -a core_apps=(brgen)
-  typeset -a optional_apps=(amber bsdports litestream)
+  typeset -a optional_apps=(amber bsdports)
   for svc in $core_apps $optional_apps; do
     [[ -x /etc/rc.d/$svc ]] || continue
     /usr/sbin/rcctl enable $svc 2>/dev/null || true

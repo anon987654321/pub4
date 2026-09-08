@@ -206,14 +206,27 @@ everyone. `OPERATOR.sh` fixes the repo copy before install, validates `su dev -c
 'doas id'`, and rolls back on failure. Cron heal paths use
 `OPENBSD/validate_doas.ksh` with the same validation.
 
-## Backups (Litestream)
+## Backups
 
-`etc/litestream.yml` replicates each app's SQLite to
-`file:///var/backups/litestream/` on the same VPS disk. That protects against
-app-level corruption, not disk loss or provider failure. Accepted RPO for
-full-disk loss: last manual off-host backup or git pull + redeploy. Add an
-off-host Litestream replica (sftp/s3) before treating backups as
-disaster-recovery grade.
+`OPENBSD/bin/dr-pull` is the backup. It runs nightly on the operator Mac under
+launchd, writes a `VACUUM INTO` snapshot of every production database on vm23,
+streams them back in one tar, checks `PRAGMA integrity_check` on arrival and
+rotates the last fourteen. `ruby OPENBSD/bin/dr-pull --check` reports the newest
+pull and its age, and fails when the newest is stale — read that rather than the
+launchd exit status, because a snapshot that has stopped working exits 0.
+
+**Litestream replicates nothing and never has.** It is not in OpenBSD ports, so
+`pkg_add litestream` cannot install it, `/usr/local/bin/litestream` does not
+exist, and `/var/backups/litestream/` has been empty since the day it was
+created. It is out of `pkg_scripts` and has no `rc.d` script, so it no longer
+keeps `rcctl ls failed` permanently non-empty. `OPENBSD/etc/litestream.yml` is
+kept because the config is correct for the day someone builds the binary from Go
+and adds an off-host bucket; see `DECISIONS.md`, "rcctl owns rc.conf.local, and
+litestream is off the boot list".
+
+Nothing on the box is a disaster-recovery replica: dr-pull's copies live on the
+Mac, which is one other disk, not a bucket. An off-host object store is the
+remaining gap and it needs an account.
 
 ## OpenBSD deploy
 

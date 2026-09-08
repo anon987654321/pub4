@@ -12,10 +12,10 @@ core_services:
 
 # Start manually: doas ksh OPENBSD/start_all_apps.sh
 # Pins all apps (creates /var/db/pub4_all_apps; resource_guard skips shedding).
+# Mirrors resource_guard.sh's OPTIONAL, which is the live authority.
 optional_services:
   - amber
   - bsdports
-  - litestream
 
 limits:
   # These mirror resource_guard.sh, which is the live authority — the values
