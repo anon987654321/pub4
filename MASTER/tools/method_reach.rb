@@ -48,12 +48,17 @@ FRAMEWORK = %w[
   prepended new run start stop setup teardown before after
 ].freeze
 
-# Comments and prose string literals dropped; a short lowercase literal is kept
-# because that is how a symbol table names a handler.
+# Comments and prose string literals dropped. Two things are kept: a short
+# lowercase literal, because that is how a symbol table names a handler, and
+# whatever sits inside an interpolation, because that is code.
 def code_only(line)
   return "" if line.match?(/\A\s*#/)
 
-  line.sub(/\s#.*\z/, "").gsub(/"[^"]*"|'[^']*'/) { |lit| lit.match?(/\A["'][a-z_]+["']\z/) ? lit : " " }
+  line.sub(/\s#(?!\{).*\z/, "").gsub(/"[^"]*"|'[^']*'/) do |literal|
+    next literal if literal.match?(/\A["'][a-z_]+["']\z/)
+
+    literal.scan(/#\{([^}]*)\}/).flatten.join(" ")
+  end
 end
 
 uses = Hash.new(0)

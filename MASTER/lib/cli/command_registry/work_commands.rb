@@ -148,33 +148,6 @@ module Master
       # rule dep-graph completeness report.
       AXIOM_SCAN_CAP = 400
 
-      def axiom_scan_files(root)
-        Dir.glob(File.join(root, "lib", "**", "*.rb"))
-           .reject { |p| p.include?("/knowledge/") || p.include?("/vendor/") }
-           .sort.first(AXIOM_SCAN_CAP)
-      end
-
-      def tally_axioms(scanner, files)
-        files.each_with_object(Hash.new(0)) do |path, acc|
-          result = scanner.scan(path, depth: :deep)
-          next unless result.ok?
-          result.value!.each { |f| Array(f[:tags]).each { |t| acc[t.to_s] += 1 } }
-        end
-      end
-
-      def axiom_table(files, by_axiom)
-        head = "constitution — #{files.size} files scanned"
-        return "#{head}\n  clean: no axiom violations" if by_axiom.empty?
-        rows = by_axiom.sort_by { |_, n| -n }.map { |tag, n| "  #{tag.ljust(24)} #{n}" }
-        ([head] + rows + ["  total#{" " * 19}#{by_axiom.values.sum}"]).join("\n")
-      end
-
-      def dep_graph_line(root)
-        gap = ungraphed_rules(root)
-        tail = gap.empty? ? " (complete)" : " — #{gap.first(8).join(", ")}"
-        "rule dep-graph: #{gap.size} rule(s) absent from rules.yml rule_deps#{tail}"
-      end
-
       def dispatch_rules(ctx: nil)
         arg = arg_for(ctx)
         case arg

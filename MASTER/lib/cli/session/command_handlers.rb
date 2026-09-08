@@ -63,10 +63,6 @@ module Master
         puts @refs.renderer.render("checkpoint: #{id} (#{files.size} file(s))", mode: :dim)
       end
 
-      def run_dmesg(lines)
-        puts @refs.logging.dmesg(lines.positive? ? lines : DMESG_BUFFER_LINES)
-      end
-
       def run_verify
         puts @refs.renderer.render("verify: checking recently landed operator symbols", mode: :dim)
         plan = {

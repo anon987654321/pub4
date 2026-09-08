@@ -217,7 +217,18 @@ pub4_source_ceilings:
   # subject; they carry different exemptions and different traps, and the
   # twenty methods deleted on its first run were invisible to the file-level
   # census, which has stood at 0 throughout.
-  MASTER: 1030
+  # 1030 -> 1031 for tools/method_graph.rb. method_reach.rb answers one layer
+  # -- a method no line names -- and acting on that alone deletes a handler
+  # while leaving the helpers only it called, then reports them next run as
+  # though they were separate debt. This is the closure: every method a node,
+  # every identifier in its body an edge, and the roots the names used outside
+  # lib/ or at file scope inside it. Building it found four faults in the
+  # first census, one of them a class rather than a case -- a hook is
+  # invisible to a call-site search by definition, so Result#deconstruct_keys
+  # and core.rb#_dump both read as dead. It does not fold into method_reach.rb:
+  # one answers a name, the other a graph, and the first is what you run when
+  # the second is too slow to iterate on.
+  MASTER: 1031
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
   # it belongs beside the other probes and folds into nothing.

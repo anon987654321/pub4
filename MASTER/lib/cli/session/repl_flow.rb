@@ -119,12 +119,6 @@ module Master
         run_input(line.strip)
       end
 
-      def run_reap
-        n = Master::Ground::HostBudget.reap_suspended_ruby!
-        msg = n.positive? ? "reap: #{n} suspended ruby process(es) killed" : "reap: no suspended ruby processes"
-        puts @refs.renderer.render(msg, mode: :dim)
-      end
-
       def host_refusal_for(line)
         Master::Ground::HostBudget.refuse_heavy_prompt?(line)
       rescue StandardError => e

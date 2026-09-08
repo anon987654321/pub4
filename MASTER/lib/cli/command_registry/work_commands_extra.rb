@@ -261,22 +261,6 @@ module Master
 
       # Maturity scorecard (OpenClaw's taxonomy.yaml pattern) -- what's
       # actually proven to work, not just claimed. See data/maturity.yml.
-      def maturity_status_report(card, status)
-        entries = card.by_status(status)
-        return "no subsystems with status=#{status}" if entries.empty?
-
-        entries.map { |e| "#{e.id.ljust(36)} #{e.last_checked}  #{e.meaning}" }.join("\n")
-      end
-
-      def maturity_entry_detail(entry)
-        <<~TEXT.strip
-          #{entry.id} — #{entry.status}
-          #{entry.meaning}
-          last checked: #{entry.last_checked}
-          evidence: #{entry.evidence}
-        TEXT
-      end
-
       # The 8-law constitutional self-test gate is the single most load-bearing
       # check in the codebase (blocks /fix entirely on any violation), but the
       # law names are Latin-abstract enough that decoding one meant reading

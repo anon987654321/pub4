@@ -87,13 +87,6 @@ module Master
 
       private
 
-      def run_restart
-        @refs.session.save!
-        puts @refs.renderer.render("restart: exec'ing fresh master in place", mode: :dim)
-        $stdout.flush
-        ::Kernel.exec(RbConfig.ruby, $PROGRAM_NAME, *ARGV)
-      end
-
       def run_undo = report_undo("undo", @refs.undo.undo!)
 
       # /rollback is /undo under the name an operator reaches for; only the word
@@ -106,27 +99,6 @@ module Master
         return puts @refs.renderer.render(res.message, mode: :warning) unless res.is_a?(Master::Result) && res.ok?
 
         puts @refs.renderer.render("#{verb}: #{Array(res.value!).join(", ")}", mode: :success)
-      end
-
-      def run_history
-        lines = @refs.undo.history(limit: 10)
-        if lines.empty?
-          puts @refs.renderer.render("no undo history", mode: :dim)
-        else
-          lines.each { |l| puts @refs.renderer.render(l, mode: :dim) }
-        end
-      end
-
-      def run_grep(pattern)
-        puts @refs.renderer.render(Master::CLI::CommandRegistry.grep_history(@refs.session, pattern), mode: :dim)
-      end
-
-      def run_cost
-        puts @refs.renderer.render(Master::CLI::CommandRegistry::Formatter.cost(@refs.session.cost), mode: :dim)
-      end
-
-      def run_audit
-        puts @refs.renderer.render(Master::CLI::CommandRegistry.audit_changes(@refs.root), mode: :dim)
       end
 
       def run_watch(mode)
@@ -161,19 +133,6 @@ module Master
       def toggle_focus
         @focus_mode = !@focus_mode
         puts @refs.renderer.render("focus: #{@focus_mode ? "on" : "off"}", mode: :dim)
-      end
-
-      def run_last
-        return puts @refs.renderer.render("no prior input", mode: :dim) unless @last_input
-
-        puts @refs.renderer.render("rerun: #{@last_input[0, 60]}", mode: :dim)
-        run_input(@last_input)
-      end
-
-      def run_cmd
-        puts @refs.renderer.render("describe what you want — work is a sentence", mode: :dim)
-        puts @refs.renderer.render("ops: #{SLASH_COMMANDS.join(" ")}", mode: :dim)
-        puts @refs.renderer.render("work: say the path. /help lists the eight commands.", mode: :dim)
       end
 
       def run_phase(arg = "")
@@ -217,17 +176,6 @@ module Master
         puts @refs.renderer.render("chips: #{@show_chips ? "on" : "off"}", mode: :dim)
       end
 
-      def run_principles
-        c = Master::Ground::Constitution.new
-        lines = c.list
-        if lines.empty?
-          puts @refs.renderer.render("no principles loaded (data/principles/*.md)", mode: :dim)
-        else
-          puts @refs.renderer.render("constitution: #{lines.size} principle(s)", mode: :dim)
-          lines.each { |l| puts @refs.renderer.render("  #{l}", mode: :dim) }
-        end
-      end
-
       def run_propose(arg = nil)
         if arg.to_s.strip.match?(/\Areject\s+(.+)\z/)
           puts @refs.renderer.render(proposer.reject(Regexp.last_match(1)), mode: :dim)
@@ -256,11 +204,7 @@ module Master
         end
       end
 
-      def run_ui_critique = run_critique(:ui, label: "ui-critique", intro: "assembling panel — brutal honesty mode")
       def run_sound_critique = run_critique(:sound, label: "sound-critique", intro: "assembling audio panel")
-      def run_dilla_critique = run_critique(:dilla, label: "dilla-critique",
-                                                    intro: "assembling dilla engine + mix panel (multi-solution → cherry-pick)")
-
       def run_critique(mode, label:, intro:)
         puts @refs.renderer.render("#{label}: #{intro}", mode: :dim)
         critic = Master::Review::Council::Critique.new(mode:, agent: @refs.agent, event_bus: @refs.bus)
