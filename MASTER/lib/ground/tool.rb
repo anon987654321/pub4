@@ -28,7 +28,7 @@ module Master
 
         def allowlist(profile = current)
           key = profile.to_s
-          return nil if %w[full elevated].include?(key)
+          return if %w[full elevated].include?(key)
 
           configured = Array(profiles_config[key]).map(&:to_s)
           configured.empty? ? FALLBACK.fetch(key, []) : configured

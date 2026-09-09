@@ -170,11 +170,11 @@ module Master
 
           def template_literal_for(chain)
             parts = chain.split(/\s*\+\s*/)
-            return nil unless parts.size > 1
+            return unless parts.size > 1
 
             literals, expressions = parts.partition { |part| part.match?(/\A(['"]).*\1\z/m) }
-            return nil if literals.empty? || expressions.empty?
-            return nil if literals.any? { |part| part.include?("`") || part.include?("${") }
+            return if literals.empty? || expressions.empty?
+            return if literals.any? { |part| part.include?("`") || part.include?("${") }
 
             body = parts.map do |part|
               literals.include?(part) ? part[1..-2] : "${#{part}}"

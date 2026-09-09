@@ -263,9 +263,13 @@ public :without_foreign_heredocs
     # Length-preserving, so this copy stays index-aligned with the attribute
     # copy and one match can be read against both.
     def with_erb_output_as_text(code)
-      code.gsub(ERB_OUTPUT_TAG) { |t|
-        t.each_char.with_index.map { |c, i| c == "\n" ? "\n" : (i.zero? ? "x" : " ") }.join
-      }.gsub(ERB_SILENT_TAG) { |t| t.gsub(/[^\n]/, " ") }
+      code.gsub(ERB_OUTPUT_TAG) do |t|
+        t.each_char.with_index.map do |c, i| if c == "\n"
+"\n"
+else
+(i.zero? ? "x" : " ")
+end end.join
+      end.gsub(ERB_SILENT_TAG) { |t| t.gsub(/[^\n]/, " ") }
     end
 
     def nameless_control_lines(code)

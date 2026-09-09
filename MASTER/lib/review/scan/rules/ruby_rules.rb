@@ -48,7 +48,7 @@ module Master
             short = node.class.name.split("::").last.to_sym
             return :a if ASSIGNMENT_NODES.include?(short)
             return :c if CONDITION_NODES.include?(short)
-            return nil unless short == :CallNode
+            return unless short == :CallNode
 
             node.name.to_s.end_with?("=") ? :a : :b
           end

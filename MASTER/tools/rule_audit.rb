@@ -134,7 +134,7 @@ module Pub4
       as_file = "fixture#{ext}"
       bad_seen = !rule.scan(rule.bad, file: as_file).empty?
       good_seen = rule.scan(rule.good, file: as_file).empty?
-      return nil if bad_seen && good_seen
+      return if bad_seen && good_seen
 
       reason = []
       reason << "bad fixture no longer flagged" unless bad_seen
@@ -186,7 +186,7 @@ module Pub4
         corpus: corpus.size,
         fixture_blindness: blind,
         saturation: measured.select { |r| r[:rate] > SATURATION }.sort_by { |r| -r[:rate] },
-        silent: measured.select { |r| r[:hits].zero? }.map { |r| r[:rule] }.sort
+        silent: measured.select { |r| r[:hits].zero? }.map { |r| r[:rule] }.sort,
       }
     end
 

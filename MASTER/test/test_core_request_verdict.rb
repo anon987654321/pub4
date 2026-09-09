@@ -54,7 +54,7 @@ class RequestVerdictTest < Minitest::Test
   def test_a_request_returns_immediately_and_is_not_revised_further
     later = C::Constitution::Rule.new(
       id: :never_reached, verbs: %i[exec],
-      judge: ->(_e, _m) { raise "a later rule ran after a Request" },
+      judge: ->(_e, _m) { raise "a later rule ran after a Request" }
     )
     law = C::Constitution.new(
       rules: [C::Constitution.send(:sandboxed_exec_rule, ->(_argv) { { ask: "check" } }), later],

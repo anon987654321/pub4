@@ -23,7 +23,7 @@ class TestLimitsSplit < Minitest::Test
     "autoloop" => ["lib/fix/fix_loop/convergence_config.rb", "autoloop"],
     # Renamed with its unit on 2026-08-25 — raw lines to body lines — which is
     # the mechanism lint:spine uses so a stale number cannot pass quietly.
-    "loc_body_budgets" => ["Rakefile", "loc_body_budgets"],
+    "loc_body_budgets" => %w[Rakefile loc_body_budgets],
     "dmesg" => ["lib/trace/dmesg.rb", "dmesg"],
     "principle_groups" => ["lib/cli/scan/request.rb", "principle_groups"],
     "process" => ["lib/ops.rb", "process"],

@@ -74,8 +74,21 @@ module Pub4
       (YAML.safe_load(text, aliases: true)["biases"] || {}).keys.map(&:to_s).sort
     end
 
+    # Both shapes a rule declares its id in.
+    #
+    # This reads source text rather than asking the constitution, because it
+    # also reads older versions out of a git ref to compare — there is no
+    # runtime to ask for a commit that is not checked out. The cost is that a
+    # refactor which changes how an id is written makes rules vanish from the
+    # inventory while they keep working: folding five builders into reason_rule
+    # turned `id: :batch_delete` into `reason_rule(:batch_delete` plus a
+    # shorthand `id:`, and batch_delete, forbidden_file, scope_creep, two_hats
+    # and new_path_ask disappeared from a report that is meant to notice
+    # exactly that.
+    RULE_ID = /id: :(\w+)|reason_rule\(:(\w+)/
+
     def rule_ids(text)
-      text.to_s.scan(/id: :(\w+)/).flatten.uniq.sort
+      text.to_s.scan(RULE_ID).flatten.compact.uniq.sort
     end
 
     def law_files(ref)

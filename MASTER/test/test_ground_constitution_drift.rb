@@ -27,7 +27,7 @@ class ConstitutionDriftTest < Minitest::Test
     )
   end
 
-  def finding(tags) = { tags: tags }
+  def finding(tags) = { tags: }
 
   def test_it_reports_a_total_and_a_first_run_delta
     result = order([finding(%i[READABILITY]), finding(%i[CLEAN_CODE])]).call

@@ -25,7 +25,7 @@ class TestReaders < Minitest::Test
     path
   end
 
-  def find(root, target) = Pub4::Readers.find(root: root, target: target)
+  def find(root, target) = Pub4::Readers.find(root:, target:)
 
   def hard(hits) = hits.reject { |h| h.kind == :mention }
 

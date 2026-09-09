@@ -61,7 +61,7 @@ def test_core_context_keeps_constitution_and_output_contract
       "scale_base" => "18px",
       "scale_ratio" => 1.618,
       "leading" => 1.35,
-      "measure" => "72ch"
+      "measure" => "72ch",
     )
 
     assert_includes line, "brutalist style"

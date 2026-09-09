@@ -21,7 +21,7 @@ class SourceLoopGuardsSpec < Minitest::Test
     ["MASTER_WATCHER",   -> { Master::Fix::Watcher.new(bus: nil, root: Master::ROOT).run_forever }],
     ["MASTER_WATCH",     lambda {
       Master::Fix::WatchLoop.new(rules: nil, agent: nil, scanner: nil, root: Master::ROOT).run
-    }]
+    }],
   ].freeze
 
   def without(var)

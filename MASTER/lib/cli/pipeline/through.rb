@@ -121,7 +121,7 @@ module Master
         # same failure wearing the other coat.
         def normalize_stages(only)
           @unknown_stages = []
-          return nil if only.nil?
+          return if only.nil?
 
           asked = Array(only).flat_map { |s| s.to_s.downcase.split(",") }
                              .map { |s| STAGE_ALIASES.fetch(s.strip, s.strip) }
@@ -319,7 +319,7 @@ module Master
         # because the council argues better with one in front of it. A lean boot
         # passes nil and this returns nil, so the default pass is unchanged.
         def swarm_review(abs)
-          return nil unless @swarm && File.file?(abs)
+          return unless @swarm && File.file?(abs)
 
           result = @swarm.analyse_and_review(file_path: abs, code: File.read(abs))
           return "swarm: #{result.message}" unless result.ok?

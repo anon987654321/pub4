@@ -35,7 +35,7 @@ module Pub4
     Reference = Struct.new(:path, :line, :text, :kind, keyword_init: true)
 
     def self.find(root:, target:)
-      new(root: root, target: target).run
+      new(root:, target:).run
     end
 
     def initialize(root:, target:)
@@ -98,7 +98,7 @@ module Pub4
           kind = classify(line, path)
           next unless kind
 
-          hits << Reference.new(path: rel(path), line: lineno, text: line.strip, kind: kind)
+          hits << Reference.new(path: rel(path), line: lineno, text: line.strip, kind:)
         end
       rescue ArgumentError
         next # binary

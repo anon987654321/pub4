@@ -10,7 +10,7 @@ module Master
         class FileLayoutRule < Rule
           # The three scopes Ruby resets method visibility in, plus the file itself.
           SCOPE_NODES = [
-            Prism::ProgramNode, Prism::ClassNode, Prism::ModuleNode, Prism::SingletonClassNode
+            Prism::ProgramNode, Prism::ClassNode, Prism::ModuleNode, Prism::SingletonClassNode,
           ].freeze
           VISIBILITY_MARKERS = %w[public private protected].freeze
 
@@ -94,9 +94,9 @@ module Master
           # A bare `private` changes the scope's default. `private :name` and
           # `private def name` name their subject and leave the default alone.
           def visibility_marker(statement)
-            return nil unless statement.is_a?(Prism::CallNode)
-            return nil unless statement.receiver.nil? && statement.arguments.nil? && statement.block.nil?
-            return nil unless VISIBILITY_MARKERS.include?(statement.name.to_s)
+            return unless statement.is_a?(Prism::CallNode)
+            return unless statement.receiver.nil? && statement.arguments.nil? && statement.block.nil?
+            return unless VISIBILITY_MARKERS.include?(statement.name.to_s)
 
             statement.name
           end
@@ -414,7 +414,7 @@ module Master
             end
 
             line_count = nodes.sum { |node| CodeMetrics.method_code_lines(node, lines) }
-            return nil unless line_count > LINE_LIMIT
+            return unless line_count > LINE_LIMIT
 
             "god class #{name} is #{line_count} code lines (max #{LINE_LIMIT}) — split at responsibility boundaries"
           end
@@ -720,10 +720,10 @@ module Master
           # The one object a def forwards to, or nil the moment it does anything else.
           def forwarded_receiver(def_node)
             body = def_node.body
-            return nil unless body.is_a?(Prism::StatementsNode) && body.body.size == 1
+            return unless body.is_a?(Prism::StatementsNode) && body.body.size == 1
 
             call = body.body.first
-            return nil unless call.is_a?(Prism::CallNode) && call.receiver
+            return unless call.is_a?(Prism::CallNode) && call.receiver
 
             receiver = call.receiver
             return receiver.name.to_s if receiver.is_a?(Prism::InstanceVariableReadNode)

@@ -25,7 +25,7 @@ class TestCouncilHarvest < Minitest::Test
                  critiques: ["VERDICT: reject — a linter adds a reader nothing needs"],
                  final: "move notes to git" },
         cherry: ["move notes to git"],
-        root: root,
+        root:,
       )
 
       assert File.file?(path), "no harvest written"

@@ -57,7 +57,7 @@ module Pub4
     # The deepest constant the file declares — the one Zeitwerk maps its path to.
     def declared_constant(path)
       result = Prism.parse_file(path)
-      return nil unless result.success?
+      return unless result.success?
 
       deepest = nil
       walk = lambda do |node, stack|

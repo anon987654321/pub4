@@ -194,13 +194,13 @@ module Pub4
     end
 
     def master_row(name, relative, note)
-      return nil unless File.file?(File.join(MASTER, relative))
+      return unless File.file?(File.join(MASTER, relative))
 
       current, ceiling = yield
-      Row.new(name: name, current: current, ceiling: ceiling, direction: :down,
-              source: "MASTER/#{relative}", note: note)
+      Row.new(name:, current:, ceiling:, direction: :down,
+              source: "MASTER/#{relative}", note:)
     rescue StandardError => e
-      Row.new(name: name, current: nil, ceiling: nil, direction: :down,
+      Row.new(name:, current: nil, ceiling: nil, direction: :down,
               source: "MASTER/#{relative}", note: "unreadable: #{e.class}")
     end
 
@@ -253,7 +253,7 @@ module Pub4
       ceilings = YAML.safe_load_file(File.join(MASTER, "data/spine.yml")).fetch("pub4_source_ceilings")
       ceilings.map do |tree, ceiling|
         Row.new(name: "growth.#{tree.downcase}", current: tree_source_count(File.join(ROOT, tree)),
-                ceiling: ceiling, direction: :down, source: "MASTER/data/spine.yml",
+                ceiling:, direction: :down, source: "MASTER/data/spine.yml",
                 note: "on-disk source files; a new file folds in or raises this")
       end
     rescue StandardError => e
@@ -269,7 +269,7 @@ module Pub4
       ceilings = YAML.safe_load_file(File.join(MASTER, "data/spine.yml")).fetch("pub4_entrypoint_ceilings")
       ceilings.map do |tree, ceiling|
         Row.new(name: "entrypoints.#{tree.downcase}", current: entrypoint_count(tree),
-                ceiling: ceiling, direction: :down, source: "MASTER/data/spine.yml",
+                ceiling:, direction: :down, source: "MASTER/data/spine.yml",
                 note: "commands the tree offers; folding one in is how this falls")
       end
     rescue StandardError => e
@@ -281,7 +281,7 @@ module Pub4
     # session's scratch and not a surface this repo offers anyone.
     def entrypoint_count(tree)
       out, status = Open3.capture2e("git", "-C", ROOT, "ls-files", "-z", "#{tree}/bin")
-      return nil unless status.success?
+      return unless status.success?
 
       out.split("\0").count do |path|
         path.count("/") == 2 && File.executable?(File.join(ROOT, path))
@@ -343,15 +343,15 @@ module Pub4
       if mod.const_defined?(:BASELINES)
         counts = mod.counts
         mod.const_get(:BASELINES).map do |kind, ceiling|
-          Row.new(name: "#{name}.#{kind}", current: counts[kind], ceiling: ceiling,
+          Row.new(name: "#{name}.#{kind}", current: counts[kind], ceiling:,
                   direction: :down, source: relative_to_root(path), note: nil)
         end
       else
-        Row.new(name: name, current: mod.scan.size, ceiling: mod.const_get(:BASELINE),
+        Row.new(name:, current: mod.scan.size, ceiling: mod.const_get(:BASELINE),
                 direction: :down, source: relative_to_root(path), note: nil)
       end
     rescue StandardError => e
-      Row.new(name: name, current: nil, ceiling: nil, direction: :down,
+      Row.new(name:, current: nil, ceiling: nil, direction: :down,
               source: relative_to_root(path), note: "unreadable: #{e.class}: #{e.message}")
     end
 
@@ -371,7 +371,7 @@ module Pub4
       return [] unless File.file?(path)
 
       YAML.safe_load_file(path).fetch("rules").map do |rule, ceiling|
-        Row.new(name: "css_budget.#{rule}", current: nil, ceiling: ceiling, direction: :down,
+        Row.new(name: "css_budget.#{rule}", current: nil, ceiling:, direction: :down,
                 source: "RAILS/gates/data/css_budget.yml",
                 note: "current value is --deep (runs css_constitution)")
       end
@@ -464,7 +464,7 @@ module Pub4
                   else
                     summary[/#{name}: (\d+)/, 1]&.to_i
                   end
-        Row.new(name: "css_budget.#{rule}", current: current, ceiling: ceiling, direction: :down,
+        Row.new(name: "css_budget.#{rule}", current:, ceiling:, direction: :down,
                 source: "RAILS: gates/runner.rb css_constitution",
                 note: current.nil? ? "neither gate printed a count for #{rule} (silent when it passes)" : nil)
       end
@@ -498,7 +498,7 @@ module Pub4
       # split is faithful; the arg-array form keeps the shell out entirely.
       output, _status = Open3.capture2e(*command.split, chdir: File.join(ROOT, dir))
       current = output[pattern, 1]&.to_i
-      Row.new(name: name, current: current, ceiling: ceiling, direction: :down,
+      Row.new(name:, current:, ceiling:, direction: :down,
               source: "#{dir}: #{command}",
               note: ceiling.nil? ? "no recorded ceiling — see TODO.md" : nil)
     end
@@ -519,7 +519,7 @@ module Pub4
       end
       broken = rows.reject(&:ok?).reject { |row| row.current.nil? || row.ceiling.nil? }
       summary = if broken.empty?
-                  "measure: #{rows.count { |r| r.ok? }} ratchet(s) at their recorded value"
+                  "measure: #{rows.count(&:ok?)} ratchet(s) at their recorded value"
                 else
                   "measure: #{broken.size} off — #{broken.map(&:name).join(', ')}"
                 end
@@ -540,4 +540,3 @@ module Pub4
     end
   end
 end
-

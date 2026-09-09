@@ -292,7 +292,7 @@ module Master
           "-of", "default=noprint_wrappers=1:nokey=1", part
         )
         rate, channels, bitrate = out.to_s.split("\n").map(&:strip)
-        return nil unless status.success? && rate.to_i.positive? && channels.to_i.positive?
+        return unless status.success? && rate.to_i.positive? && channels.to_i.positive?
 
         { rate: rate.to_i, channels: channels.to_i, bitrate: bitrate.to_i.positive? ? bitrate.to_i : 48_000 }
       rescue StandardError => e
@@ -374,7 +374,7 @@ module Master
       def report_missing_ffmpeg(where, consequence)
         Master::Ground::Swallow.log(
           RuntimeError.new("ffmpeg not on PATH — #{consequence}"),
-          context: "Engines.#{where}", severity: :load_bearing
+          context: "Engines.#{where}", severity: :load_bearing,
         )
       end
 

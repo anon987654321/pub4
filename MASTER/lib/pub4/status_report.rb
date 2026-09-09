@@ -72,7 +72,7 @@ module Pub4
         branch: git("branch", "--show-current") || "unknown",
         commit: git("rev-parse", "--short", "HEAD") || "unknown",
         dirty: git("status", "--porcelain").to_s.lines.count,
-        dirty_by_tree: dirty_by_tree,
+        dirty_by_tree:,
         behind: git("rev-list", "--count", "HEAD..@{u}") || "0",
         ruby: Environment.ruby_label,
         ruby_ok: Environment.ruby_version_ok?,
@@ -104,7 +104,7 @@ module Pub4
     # this bug blames the slice.
     def tree_of(line)
       path = line[3..].to_s.strip
-      return nil if path.empty?
+      return if path.empty?
 
       path = path.split(" -> ").last.to_s
       path = path.delete_prefix('"').delete_suffix('"')

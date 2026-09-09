@@ -214,17 +214,17 @@ module Master
 
         def body_for(name)
           skill = find(name)
-          return nil unless skill
+          return unless skill
 
           read_skill_body(skill)
         end
 
         def reference_for(name, reference_rel_path)
           skill = find(name)
-          return nil unless skill
+          return unless skill
 
           ref_path = File.expand_path(reference_rel_path, skill[:dir])
-          return nil unless File.file?(ref_path) && ref_path.start_with?(skill[:dir])
+          return unless File.file?(ref_path) && ref_path.start_with?(skill[:dir])
 
           File.read(ref_path, encoding: "UTF-8")
         rescue StandardError => e
@@ -240,7 +240,7 @@ module Master
         # Progressive disclosure summary for system prompts
         def prompt_catalog
           skills_list = list
-          return nil if skills_list.empty?
+          return if skills_list.empty?
 
           items = skills_list.map do |s|
             "- #{s[:name]} (#{s[:skill_file]}): #{s[:description]}"
@@ -277,11 +277,11 @@ module Master
           # drops the skill when it is empty, so a typo would silently unregister the
           # skill rather than report a broken one.
           parsed = Master::Ground::Frontmatter.split(content, context: "antigravity.skills.frontmatter", skill_file:)
-          return nil unless parsed
+          return unless parsed
 
           meta, body = parsed
           name = meta["name"].to_s
-          return nil if name.empty?
+          return if name.empty?
 
           { name:, description: meta["description"].to_s, body:, dir: skill_dir,
             skill_file:, source:, meta:, **resource_flags(skill_dir) }

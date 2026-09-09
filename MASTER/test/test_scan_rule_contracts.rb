@@ -109,7 +109,7 @@ class TestScanRuleContracts < Minitest::Test
 
   TWIN_EXT = {
     "ruby" => ".rb", "html" => ".html", "css" => ".css",
-    "scss" => ".scss", "zsh" => ".zsh", "javascript" => ".js",
+    "scss" => ".scss", "zsh" => ".zsh", "javascript" => ".js"
   }.freeze
 
   def test_every_retired_twin_reaches_findings_through_the_bridge

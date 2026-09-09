@@ -30,7 +30,7 @@ module Master
       # empty, so a typo silently unregisters the thing rather than reporting it
       # broken.
       def split(raw, context:, **meta)
-        match = raw.to_s.match(RE) or return nil
+        match = raw.to_s.match(RE) or return
 
         header = begin
           YAML.safe_load(match[1], permitted_classes: [Symbol, Time, Date], aliases: false) || {}

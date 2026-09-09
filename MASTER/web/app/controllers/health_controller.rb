@@ -70,7 +70,7 @@ class HealthController < ActionController::API
   # Why TTS is down, when it is. A critical check that 503s without saying what
   # broke makes the reader re-derive it on a box that is already failing.
   def tts_blocker
-    return nil if Rails.env.test?
+    return if Rails.env.test?
 
     Master::Voice::Speech.edge_tts_blocker
   rescue StandardError => e

@@ -208,7 +208,7 @@ collisions = members.filter_map do |f|
   stem = move_for(f, name, kind)[:to]
   stem if File.exist?(File.join(dir, stem))
 end
-return nil if collisions.any?
+return if collisions.any?
 
       {
         plan: "regroup",

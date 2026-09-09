@@ -359,7 +359,7 @@ module Master
           @bus&.publish("council:persona_error", persona: persona.name, error: error.message)
           limited = Io::QuotaGate.trip_if_limited(
             source: "council persona #{persona.name}", message: error.message,
-            model: (persona.model if persona.respond_to?(:model)),
+            model: (persona.model if persona.respond_to?(:model))
           )
           unless limited
             Master::Trace::Dmesg.status(

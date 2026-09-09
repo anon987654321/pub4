@@ -243,7 +243,7 @@ class TtsJob
         pitch: @pitch,
         voice_locked: @voice_locked,
         style_locked: @style_locked,
-        conversation: conversation,
+        conversation:,
       ),
     )
   end

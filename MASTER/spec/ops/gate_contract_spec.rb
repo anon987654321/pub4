@@ -107,7 +107,7 @@ end
     env = safe_env_from_source
     assert_includes env.keys, "MASTER_SCAN_AUTOFIX",
                     "bin/gate's SAFE_ENV must name the variable /scan's autofix pass actually reads"
-    refute Master::Review::Scan::MechanicalAutofix.enabled?(env: env),
+    refute Master::Review::Scan::MechanicalAutofix.enabled?(env:),
            "bin/gate's SAFE_ENV does not disable MechanicalAutofix, so the full chain's first " \
            "/scan writes to the tree before /fix runs -- which is what the COMMANDS comment " \
            "promises it does not do"

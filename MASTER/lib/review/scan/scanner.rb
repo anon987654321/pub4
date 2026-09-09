@@ -51,9 +51,9 @@ module Master
           validate_depth!(depth)
           paths = Dir.glob(File.join(dir, glob)).select { |path| scannable_path?(path, dir) }
           reset_scan_progress(paths.size) if stream
-          pairs = parallel_map(paths) { |path, idx|
+          pairs = parallel_map(paths) do |path, idx|
             scan_one(dir:, path:, depth:, stream:, index: idx, autofix:, autofix_root:, rules:)
-          }
+          end
           pairs.concat(cross_file_pairs(dir, paths))
           Result.ok(prune_violation_objects(pairs))
         rescue StandardError => e

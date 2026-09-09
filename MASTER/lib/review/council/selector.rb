@@ -89,7 +89,7 @@ module Master
         # configured got back names for personas that do not exist. The
         # parameter has been inert since it was added.
         def normalize_available(available)
-          return nil if available.nil?
+          return if available.nil?
 
           Array(available).map(&:to_s)
         end

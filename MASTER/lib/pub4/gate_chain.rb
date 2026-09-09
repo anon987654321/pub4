@@ -166,7 +166,7 @@ module Pub4
 
     def suites
       results = suite_jobs.map do |name, cmd, dir, env|
-        ok, out = capture(*cmd, chdir: dir, env: env)
+        ok, out = capture(*cmd, chdir: dir, env:)
         [name, ok, out]
       end
       failed = results.reject { |_, ok, _| ok }
@@ -193,7 +193,7 @@ module Pub4
     # [ok, body, exitstatus] — the status, because 3 is a third state a boolean
     # cannot carry.
     def capture(*cmd, chdir: MASTER, env: {})
-      out, status = Open3.capture2e(ENV.to_h.merge(env), *cmd, chdir: chdir)
+      out, status = Open3.capture2e(ENV.to_h.merge(env), *cmd, chdir:)
       [status.success?, out.lines.map(&:rstrip).reject(&:empty?), status.exitstatus]
     rescue StandardError => e
       [false, ["#{e.class}: #{e.message}"], 1]

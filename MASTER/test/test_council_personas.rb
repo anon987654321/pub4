@@ -64,9 +64,9 @@ class TestCouncilPersonas < Minitest::Test
   # warning, so motion_critique sat two hats and called itself five.
   def test_every_preset_panel_name_is_a_loaded_persona
     data = Master.load_yaml(Master::COUNCIL_PATH)
-    known = Master::Review::Council::Personas.load.flat_map { |p|
+    known = Master::Review::Council::Personas.load.flat_map do |p|
       [p.name, *Array(p.aliases)]
-    }.map { |n| n.to_s.downcase }
+    end.map { |n| n.to_s.downcase }
     missing = Array(data["presets"]).flat_map do |key, preset|
       Array(preset["panel"]).reject { |name| known.include?(name.to_s.downcase) }
                             .map { |name| "#{key}: #{name}" }

@@ -31,7 +31,7 @@ class TestPersonalWorkspace < Minitest::Test
 
   def test_append_memory_stays_in_the_subject_dir
     path = Master::Ground::PersonalWorkspace.append_memory(
-      root: @root, subject: "sub1", key: "prefers_tea", body: "drinks tea", type: "user"
+      root: @root, subject: "sub1", key: "prefers_tea", body: "drinks tea", type: "user",
     )
     refute_includes path, "project_context.yml"
     assert_includes File.read(path), "prefers_tea"

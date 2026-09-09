@@ -22,7 +22,7 @@ class TestScanRequestTargets < Minitest::Test
       @dirs = []
     end
 
-    def scan(path, **) = Master::Result.ok([])
+    def scan(_path, **) = Master::Result.ok([])
 
     def scan_dir(dir, **)
       @dirs << dir

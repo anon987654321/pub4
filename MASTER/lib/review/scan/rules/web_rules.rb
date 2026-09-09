@@ -77,9 +77,9 @@ module Master
           # stripping above blanks /* scan: intentional */ before scan_lines
           # could see it.
           originals = src.lines
-          source_text = source_text.each_line.with_index.map { |l, i|
+          source_text = source_text.each_line.with_index.map do |l, i|
             l.match?(erase) || l.lstrip.start_with?("//") || originals[i].to_s.match?(/scan:\s*intentional\b/) ? "\n" : l
-          }.join
+          end.join
           scan_lines(source_text, /!\s*important/,
                      message: "!important overrides cascade — fix specificity instead")
         end

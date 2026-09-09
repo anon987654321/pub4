@@ -119,7 +119,7 @@ module Master
         def log_scan_completion(unit:, done:, total:, viol_total:, dirty:, elapsed:)
           fields = {
             complete: true, files: total, violations: viol_total,
-            dirty_files: dirty, elapsed_s: elapsed.round,
+            dirty_files: dirty, elapsed_s: elapsed.round
           }
           skipped = Master::Io::QuotaGate.report
           fields[:skipped] = skipped if skipped

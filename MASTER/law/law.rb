@@ -28,7 +28,7 @@ module Law
     ".zsh" => ["#"], ".sh" => ["#"], ".bash" => ["#"],
     ".js" => ["//", "/*"], ".ts" => ["//", "/*"], ".jsx" => ["//", "/*"], ".tsx" => ["//", "/*"],
     ".css" => ["/*"], ".scss" => ["//", "/*"], ".sass" => ["//", "/*"],
-    ".html" => ["<!--"], ".htm" => ["<!--"], ".erb" => ["<!--"],
+    ".html" => ["<!--"], ".htm" => ["<!--"], ".erb" => ["<!--"]
   }.freeze
 
   # `ask` is the semantic half: a rule whose subject cannot be matched by a
@@ -182,7 +182,7 @@ module Law
   class Builder
     %i[source severity languages scope path path_exclude absent ask practice fix bad good reads_comments].each { |a| define_method(a) { |v| @h[a] = v } }
 
-    def initialize(id) = @h = { id: id, severity: :warn, languages: [], scope: :line, path: nil, path_exclude: nil, absent: nil, detect: nil, ask: nil, practice: nil, reads_comments: false }
+    def initialize(id) = @h = { id:, severity: :warn, languages: [], scope: :line, path: nil, path_exclude: nil, absent: nil, detect: nil, ask: nil, practice: nil, reads_comments: false }
     def detect(&block) = @h[:detect] = block
 
     # Exactly one kind, and the fixtures whichever it is.
@@ -237,7 +237,7 @@ module Law
     def scan(file, language: nil)
       text = File.read(file, encoding: "UTF-8")
       text = conduct(text) if file.start_with?(__dir__)
-      @rules.values.select { |r| r.applies?(file, language) }.flat_map { |r| r.scan(text, file: file) }
+      @rules.values.select { |r| r.applies?(file, language) }.flat_map { |r| r.scan(text, file:) }
     end
 
     # A law file necessarily contains the pattern it forbids: in its detector,

@@ -121,7 +121,7 @@ class IngressController < ApplicationController
     enforce_rate_limit!(
       "master:rl:ingress:#{request.remote_ip}",
       limit: self.class.rate_limit,
-      window: self.class.rate_window_seconds
+      window: self.class.rate_window_seconds,
     )
   end
 end

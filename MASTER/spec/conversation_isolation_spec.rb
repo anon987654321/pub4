@@ -31,7 +31,7 @@ class ConversationIsolationSpec < Minitest::Test
   # exercised here, in the order the runtime uses them.
   def say(session, key, content)
     Fiber[:master_conversation] = key
-    session.add_message(role: :user, content: content)
+    session.add_message(role: :user, content:)
   ensure
     Fiber[:master_conversation] = nil
   end

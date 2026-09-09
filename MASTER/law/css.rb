@@ -159,7 +159,6 @@ Law.define(:NO_MULTIPLE_LANGUAGES) do
   good "rows = connection.exec(query)"
 end
 
-
 # Every Layout (Bell & Pickering): let the content size the box. A fixed pixel
 # height on a container is a promise about content the container cannot keep —
 # text wraps, translations run long (Norwegian does), and the box clips or

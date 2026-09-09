@@ -29,9 +29,9 @@ class LocaleContractTest < ActionDispatch::IntegrationTest
       #{duplicates.size} duplicate key(s). YAML keeps the last one and discards
       everything under the first, silently:
 
-      #{duplicates.map { |path, (key, line, first)|
+      #{duplicates.map do |path, (key, line, first)|
           "  #{File.basename(path)}:#{line}  #{key}  (already defined at line #{first})"
-        }.join("\n")}
+        end.join("\n")}
     MSG
   end
 

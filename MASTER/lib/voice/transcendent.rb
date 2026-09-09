@@ -138,10 +138,10 @@ module Master
       # nil when switching is off, so Melody attaches no :voice at all and every
       # phrase inherits the single locked voice.
       def phrase_languages(cfg)
-        return nil unless cfg["phrase_language_switching"] == true
+        return unless cfg["phrase_language_switching"] == true
 
         voices = cfg["phrase_language_voices"]
-        return nil unless voices.is_a?(Hash)
+        return unless voices.is_a?(Hash)
 
         voices.filter_map { |lang, key| [lang.to_s.to_sym, key.to_s.to_sym] if key.to_s != "" }.to_h
       end

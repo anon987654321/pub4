@@ -13,7 +13,7 @@ module Master
       # letter and a colon, so /\bMaster::CLI\b/ matched inside every legitimate
       # Master::CLI::* reference — 25 of selfcheck's 71 findings, all false.
       stale_pattern = Regexp.union(
-        stale_constants.map { |name| /(?<![\w:])#{Regexp.escape(name)}(?!::|\w)/ }
+        stale_constants.map { |name| /(?<![\w:])#{Regexp.escape(name)}(?!::|\w)/ },
       )
 
       RuleDSL.rule :STALE_NAMESPACE,

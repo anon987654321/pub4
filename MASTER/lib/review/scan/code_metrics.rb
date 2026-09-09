@@ -201,7 +201,7 @@ module Master
           end
 
           def inline_definition(call)
-            return nil unless MARKERS.include?(call.name.to_s) || CLASS_MARKERS.key?(call.name.to_s)
+            return unless MARKERS.include?(call.name.to_s) || CLASS_MARKERS.key?(call.name.to_s)
 
             arguments = Array(call.arguments&.arguments)
             arguments.size == 1 && arguments.first.is_a?(Prism::DefNode) ? arguments.first : nil

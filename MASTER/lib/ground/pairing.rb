@@ -34,7 +34,11 @@ module Master
       def code_ttl_seconds = Integer(config["code_ttl_seconds"] || DEFAULT_TTL)
       def redeem_per_minute = Integer(config["redeem_per_minute"] || 8)
       def redeem_window_seconds = Integer(config["redeem_window_seconds"] || 60)
-      def face_profile(visitor:, paired:) = visitor ? (paired ? "messaging" : "public") : "operator"
+      def face_profile(visitor:, paired:) = if visitor
+paired ? "messaging" : "public"
+else
+"operator"
+end
       def redeem_notice(result) = "#{REDEEM_NOTICE} subject=#{result[:subject]}"
       def allowlist_path(root = Master::ROOT) = File.expand_path(config["allowlist_path"].to_s.empty? ? DEFAULT_ALLOWLIST : config["allowlist_path"], root)
       def codes_path(root = Master::ROOT) = File.join(File.dirname(allowlist_path(root)), "codes.yml")

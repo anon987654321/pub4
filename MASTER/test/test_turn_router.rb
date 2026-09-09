@@ -168,7 +168,7 @@ end
       seen = ctx
       Master::Result.ok("ok")
     end
-    container = build_container.merge(agent: agent)
+    container = build_container.merge(agent:)
 
     Master.stub(:any_api_key_present?, true) do
       result = Master::CLI::TurnRouter.casual_reply("what is this", container:, image:)

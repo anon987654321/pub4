@@ -81,7 +81,7 @@ class TestCouncilSelector < Minitest::Test
   # --- the available filter ------------------------------------------------
 
   def test_the_available_list_narrows_the_result
-    names = S.for(task: :ui, available: ["Maintainer", "Typographer"])
+    names = S.for(task: :ui, available: %w[Maintainer Typographer])
 
     assert_equal %w[Maintainer Typographer].sort, names.sort
   end
@@ -106,7 +106,7 @@ class TestCouncilSelector < Minitest::Test
   end
 
   def test_an_available_persona_nobody_asked_for_is_not_added
-    refute_includes S.for(task: :docs, available: ["Maintainer", "Chaos"]), "Chaos"
+    refute_includes S.for(task: :docs, available: %w[Maintainer Chaos]), "Chaos"
   end
 
   # --- the tables ----------------------------------------------------------

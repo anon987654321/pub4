@@ -93,7 +93,7 @@ end
     end
 
     def capture(*cmd, chdir: MASTER)
-      out, err, status = Open3.capture3(*cmd, chdir: chdir)
+      out, err, status = Open3.capture3(*cmd, chdir:)
       body = "#{out}#{err}".lines.map(&:rstrip).reject(&:empty?)
       [status.success?, body]
     rescue StandardError => e

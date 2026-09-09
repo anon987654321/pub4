@@ -171,7 +171,7 @@ module Master
           TtsSupervisor.daemon_env(Master::ROOT), Gem.ruby, WORKER, "--selftest",
           chdir: Master::ROOT, timeout: SELFTEST_TIMEOUT_S
         )
-        return nil if status.success?
+        return if status.success?
 
         detail = err.to_s.lines.map(&:strip).reject(&:empty?).first
         "worker selftest exited #{status.exitstatus}#{": #{detail}" if detail}"

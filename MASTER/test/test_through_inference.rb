@@ -62,7 +62,7 @@ end
   end
 
   def test_turn_router_promotes_scan_and_fix_to_through
-    %w[scan\ lib fix\ lib].each do |text|
+    ["scan lib", "fix lib"].each do |text|
       inferred = Master::CLI::TurnRouter.infer_operator_command(text, container: { bus: nil, session: nil })
       refute_nil inferred, "#{text} should infer a work command"
       assert_equal "through", inferred[:command], "#{text} should run the full pass"
@@ -184,7 +184,7 @@ end
 
   def test_through_footer_names_a_skipped_tier
     result = Master::CLI::Pipeline::Through::Result.new(
-      target: ".", mode: "balanced", sections: [], ok: true, unit: "through0", failed_stages: []
+      target: ".", mode: "balanced", sections: [], ok: true, unit: "through0", failed_stages: [],
     )
     Master::Io::QuotaGate.stub(:report, "SKIPPED semantic rules — exhausted") do
       text = result.footer

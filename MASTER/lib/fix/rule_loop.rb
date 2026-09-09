@@ -165,7 +165,7 @@ module Master
         @agent.consensus.approve_fix?(
           prompt: "Rule #{@rule.id} on #{violation[:file]}",
           candidate:,
-          violation:
+          violation:,
         )
       rescue StandardError => e
         # A broken quorum must not silently approve. Refuse and say why.

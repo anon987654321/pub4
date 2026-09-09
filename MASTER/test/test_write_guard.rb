@@ -21,7 +21,7 @@ class WriteGuardTest < Minitest::Test
   def path(name = "example.rb") = File.join(@tmp, name)
 
   def test_a_write_that_introduces_an_error_is_blocked
-    verdict = @guard.verdict(path: path, content: DIRTY)
+    verdict = @guard.verdict(path:, content: DIRTY)
 
     assert_predicate verdict, :blocked?
     assert_match(/SILENT_RESCUE/, verdict.reason)
@@ -32,7 +32,7 @@ class WriteGuardTest < Minitest::Test
   def test_editing_a_file_that_already_carries_the_violation_is_allowed
     File.write(path, DIRTY)
 
-    verdict = @guard.verdict(path: path, content: DIRTY.sub("def work", "def renamed"))
+    verdict = @guard.verdict(path:, content: DIRTY.sub("def work", "def renamed"))
 
     refute_predicate verdict, :blocked?
     assert_empty verdict.introduced
@@ -42,11 +42,11 @@ class WriteGuardTest < Minitest::Test
     File.write(path, DIRTY)
     doubled = DIRTY + "\ndef second\n  go\nrescue StandardError\n  nil\nend\n"
 
-    assert_predicate @guard.verdict(path: path, content: doubled), :blocked?
+    assert_predicate @guard.verdict(path:, content: doubled), :blocked?
   end
 
   def test_clean_content_passes
-    refute_predicate @guard.verdict(path: path, content: "# frozen_string_literal: true\n\ndef work = 1\n"), :blocked?
+    refute_predicate @guard.verdict(path:, content: "# frozen_string_literal: true\n\ndef work = 1\n"), :blocked?
   end
 
   def test_sidecar_markdown_is_blocked_even_when_clean
@@ -66,7 +66,7 @@ class WriteGuardTest < Minitest::Test
 
     guarded = Master::Review::Scan::WriteGuard.new(rules: agent_backed)
 
-    assert_empty guarded.verdict(path: path, content: DIRTY).introduced
+    assert_empty guarded.verdict(path:, content: DIRTY).introduced
   end
 
   # The Fold writes through World rather than through the Io tools, so the same
@@ -95,6 +95,6 @@ class WriteGuardTest < Minitest::Test
   def verifier = Master::CLI::CoreBridge.scan_verifier
 
   def write_effect(content)
-    Master::Core::Effect.new(verb: :write, args: { path: path, content: content })
+    Master::Core::Effect.new(verb: :write, args: { path:, content: })
   end
 end

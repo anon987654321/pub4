@@ -22,7 +22,7 @@ class TestSemanticCachePhantoms < Minitest::Test
 
   def with_cache
     Dir.mktmpdir do |root|
-      yield Master::Io::SemanticCache.new(root: root, ttl: 600)
+      yield Master::Io::SemanticCache.new(root:, ttl: 600)
     end
   end
 

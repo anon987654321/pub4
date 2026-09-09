@@ -190,9 +190,9 @@ module Pub4
       reasons << "severity: #{normalised(entry["severity"])} declared, #{normalised(severity)} enforced" if
         normalised(severity) != normalised(entry["severity"])
       reasons << "fix" if fix.to_s.strip != entry["fix"].to_s.strip
-      return nil if reasons.empty?
+      return if reasons.empty?
 
-      { rule: id, home: home, reasons: reasons }
+      { rule: id, home:, reasons: }
     end
 
     # law/ writes :warn where the catalogue writes "warning", and they are the
@@ -218,11 +218,11 @@ module Pub4
     end
 
     def report
-      { id_case_collisions: id_case_collisions,
-        alias_shadows_live_rule: alias_shadows_live_rule,
-        missing_metadata: missing_metadata,
-        cross_population_duplicates: cross_population_duplicates,
-        statement_conflicts: statement_conflicts }
+      { id_case_collisions:,
+        alias_shadows_live_rule:,
+        missing_metadata:,
+        cross_population_duplicates:,
+        statement_conflicts: }
     end
 
     def run(json: false)

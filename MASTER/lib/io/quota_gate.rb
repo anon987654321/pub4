@@ -175,7 +175,7 @@ module Master
       # that only printed #report would never mention it.
       def substitution_note
         swaps = substitutions
-        return nil if swaps.empty?
+        return if swaps.empty?
 
         "SUBSTITUTED #{swaps.map { |s| "#{s[:from]} -> #{s[:to]}" }.join(", ")}"
       end
@@ -205,7 +205,11 @@ module Master
             message: @message,
             skipped_tiers: @skipped.dup,
             substitutions: @substitutions.dup,
-            seconds_until_probe: @state == :refused ? nil : (blocked_now? ? (@resume_at - now).ceil : 0),
+            seconds_until_probe: if @state == :refused
+nil
+else
+(blocked_now? ? (@resume_at - now).ceil : 0)
+end,
           }
         end
       end

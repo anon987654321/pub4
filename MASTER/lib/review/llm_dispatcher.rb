@@ -156,7 +156,7 @@ module Master
       # model call belongs to a shell session, not to a file that deploys.
       def forced_model
         value = ENV["MASTER_MODEL"].to_s.strip
-        return nil if value.empty?
+        return if value.empty?
 
         unless @forced_announced
           Master::Trace::Dmesg.status("llm0", "MASTER_MODEL=#{value} — every lane forced to this model")

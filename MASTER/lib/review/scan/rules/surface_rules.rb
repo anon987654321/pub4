@@ -171,7 +171,7 @@ module Master
               findings << finding(
                 line: num,
                 message: "absolute px line-height — prefer unitless step #{allowed.join('/')} " \
-                         "(design_rules.typography.line_height; ScaleLint absolute_line_height)"
+                         "(design_rules.typography.line_height; ScaleLint absolute_line_height)",
               )
             end
 
@@ -183,7 +183,7 @@ module Master
               findings << finding(
                 line: num,
                 message: "line-height #{val} off scale — use #{allowed.join('/')} " \
-                         "(design_rules.typography.line_height.allowed; RAILS ScaleLint)"
+                         "(design_rules.typography.line_height.allowed; RAILS ScaleLint)",
               )
             end
           end
@@ -394,7 +394,7 @@ module Master
               findings << finding(
                 line: num,
                 message: "hardcoded EN chrome — use t(\"empty.*\") / t(\"search.*\") " \
-                         "(design_rules.ui_polish.chrome_i18n; RAILS chrome_i18n_lint)"
+                         "(design_rules.ui_polish.chrome_i18n; RAILS chrome_i18n_lint)",
               )
             end
           end
@@ -417,7 +417,7 @@ module Master
             if line.match?(/font-size\s*:\s*20px/i)
               findings << finding(
                 line: num,
-                message: "raw 20px title — use var(--text-title, 1.25rem) (design_rules.ui_polish.type_tokens)"
+                message: "raw 20px title — use var(--text-title, 1.25rem) (design_rules.ui_polish.type_tokens)",
               )
             end
           end

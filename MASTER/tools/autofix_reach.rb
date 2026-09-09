@@ -128,7 +128,7 @@ module Pub4
     def ceilings = YAML.safe_load_file(CEILING)
 
     def report
-      { dangling: dangling, bare_true: bare_true, named: named_transforms.size }
+      { dangling:, bare_true:, named: named_transforms.size }
     end
 
     def run(json: false)

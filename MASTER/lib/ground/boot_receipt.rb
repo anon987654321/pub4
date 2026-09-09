@@ -31,10 +31,10 @@ module Master
         {
           commit: commit(root),
           constitution: constitution(root),
-          law: law,
-          providers: providers,
-          capabilities: capabilities,
-          degraded: degraded,
+          law:,
+          providers:,
+          capabilities:,
+          degraded:,
         }
       end
 

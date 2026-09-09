@@ -29,7 +29,7 @@ class GitOperationsTest < Minitest::Test
   end
 
   def sh(*args, chdir:)
-    out, status = Open3.capture2e(*args, chdir: chdir)
+    out, status = Open3.capture2e(*args, chdir:)
     raise "#{args.join(" ")} failed: #{out}" unless status.success?
 
     out

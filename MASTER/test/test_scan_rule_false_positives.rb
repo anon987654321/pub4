@@ -190,7 +190,7 @@ end
       ["  background: #131921; // scan: intentional\n", "app/x.scss"],
       ["/* scan: intentional-colors */\n  color: #131921;\n", "app/x.scss"],
     ].each do |source, path|
-      assert_empty findings(:MAGIC_COLOR, source, path: path), "#{source.inspect} is intentional or a definition"
+      assert_empty findings(:MAGIC_COLOR, source, path:), "#{source.inspect} is intentional or a definition"
     end
   end
 

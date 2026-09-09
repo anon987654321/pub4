@@ -579,7 +579,7 @@ module Master
         unless unordered.empty?
           Master::Ground::Swallow.log(
             RuntimeError.new("prompt sections built but absent from soul prompt_ordering: #{unordered.join(', ')}"),
-            context: "PromptBuilder.ordered_sections", severity: :load_bearing
+            context: "PromptBuilder.ordered_sections", severity: :load_bearing,
           )
         end
         ordering = ordering & CORE_SECTIONS if context == :core
