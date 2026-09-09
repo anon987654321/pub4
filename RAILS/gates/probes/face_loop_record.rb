@@ -44,7 +44,7 @@ require_relative "../support/fleet"
 
 options = {
   url: nil, audio: nil, out: nil, fps: 20, seconds: nil, clip: nil,
-  work: nil, exposure: 0.0, tint: 0.0, timeout: 40, viewport: [1280, 720], scale: 2, warmup: 20,
+  work: nil, exposure: 0.0, tint: 0.0, timeout: 40, viewport: [1280, 720], scale: 2, warmup: 20, crf: 28,
 }
 OptionParser.new do |o|
   o.banner = "usage: face_loop_record.rb --audio WAV --out MP4 [options]"
@@ -63,6 +63,7 @@ OptionParser.new do |o|
   o.on("--from N", Integer, "First frame of this slice (default 0)") { |v| options[:from] = v }
   o.on("--to N", Integer, "One past the last frame of this slice (default: all)") { |v| options[:to] = v }
   o.on("--warmup N", Integer, "Frames drawn and dropped before the first kept one (default 20)") { |v| options[:warmup] = v }
+  o.on("--crf N", Integer, "x264 quality, lower is bigger (default 28)") { |v| options[:crf] = v }
 end.parse!
 
 abort "usage: --audio WAV --out MP4" unless options[:audio] && options[:out]
@@ -320,11 +321,23 @@ begin
     clip_params = clip ? { x: clip[0], y: clip[1], width: clip[2], height: clip[3], scale: 1 } : nil
     started = Time.now
 
+    # frame() clamps its own delta at 50ms (66 on a coarse pointer), so a step
+    # larger than that advances every spring and lerp by less than the video
+    # advances: at 10fps the oscillators, which read t directly, would run at
+    # full speed while the morph spring, the colour lerp and the bass average ran
+    # at half. The face drifts out of time with its own voice, subtly enough to
+    # look like bad animation rather than a bug. So a video frame is drawn in as
+    # many 50ms steps as it takes, and only the last one is kept.
+    SUBSTEP_MS = 50.0
+    substeps = [(step / SUBSTEP_MS).ceil, 1].max
+
     # A frame of face time, drawn. The oscillators are functions of t so they
     # carry across a chunk boundary on their own, but the springs — morph,
     # colour, the bass average — start from rest in a fresh browser, so the
     # first frames of a slice are drawn and thrown away rather than kept.
     render = lambda do |index|
+      base = index * step
+      times = (1..substeps).map { |n| (base - step + (step * n / substeps)).round(3) }
       cdp.evaluate(<<~JS) # scan: intentional — a CDP recorder evaluates JavaScript by definition
         (function(){
           window.__LOOP.frame = #{index};
@@ -335,8 +348,8 @@ begin
           // (face.part5.txt:790): past sixty seconds without it, frame() drifts
           // morphTarget down to 0.55 and the face gathers into a dim oval
           // halfway through the take.
-          F.State.lastTouch = #{(index * step).round(3)};
-          F.frame(#{(index * step).round(3)});
+          F.State.lastTouch = #{base.round(3)};
+          #{times.map { |t| "F.frame(#{t});" }.join("\n          ")}
           return 1;
         })()
       JS
@@ -378,7 +391,7 @@ audio_args = ["-i", options[:audio], "-c:a", "aac", "-b:a", "128k", "-shortest"]
 ok = system("ffmpeg", "-y", "-loglevel", "error",
             "-framerate", options[:fps].to_s, "-i", File.join(work, "f_%05d.jpg"),
             *audio_args,
-            "-c:v", "libx264", "-preset", "slow", "-crf", "24",
+            "-c:v", "libx264", "-preset", "slow", "-crf", options[:crf].to_s,
             "-pix_fmt", "yuv420p", "-movflags", "+faststart",
             options[:out])
 abort "ffmpeg failed" unless ok && File.size?(options[:out])
