@@ -19,10 +19,11 @@
   --color-white: var(--bg);
   --color-extra-light-grey: var(--border);
   --color-grey-text: var(--text-secondary);
-  --color-success: #00ba7c;
   --color-danger: var(--danger);
-  --color-warning: #c9a227;
-  --color-info: #5b9fd4;
+  // --color-success, --color-warning and --color-info are not restated here.
+  // shared/_tokens.scss declares all three on :root and every app reaches it
+  // through stack's @forward "tokens"; a second copy at the same value is how
+  // --color-warning came to be #ffd400 in one file and #c9a227 in another.
   --font-size-base: var(--font-size);
   --color-badge: var(--accent);
   --tint-success: color-mix(in srgb, var(--color-success) 20%, var(--surface-elevated));

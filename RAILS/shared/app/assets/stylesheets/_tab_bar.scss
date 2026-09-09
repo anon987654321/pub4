@@ -77,7 +77,7 @@ html.chrome-hidden .tab-bar {
   opacity: 1;
 }
 .tab-bar-peel:focus-visible {
-  outline: 2px solid var(--accent, #000000);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: var(--radius-sm, 8px);
 }
@@ -113,11 +113,11 @@ html.chrome-hidden .tab-bar {
   z-index: calc(var(--z-nav, 80) + 1);
   width: min(20rem, calc(100vw - 2rem));
   padding: 0.75rem var(--space-3);
-  background: var(--surface-elevated, #111111);
+  background: var(--surface-elevated);
   border: 0;
   border-radius: var(--radius-sm, 8px);
   font-family: var(--font);
-  color: var(--text, #333333);
+  color: var(--text);
   box-sizing: border-box;
 }
 .tab-bar-coach[hidden] {
@@ -151,14 +151,14 @@ html.chrome-hidden .tab-bar {
      in the screenshot the pass was measured from. A button is not a field.
      The sibling .hotkey-coach-dismiss below carries the same note. */
   border: 0;
-  background: var(--hover, #232030);
-  color: var(--text, #333333);
+  background: var(--hover);
+  color: var(--text);
   font: var(--weight-bold) var(--text-xs)/1 var(--font);
   cursor: pointer;
 }
 .tab-bar-coach-show {
-  background: var(--accent, #000000);
-  color: var(--bg, #000000);
+  background: var(--accent);
+  color: var(--bg);
 }
 
 .nearby-locate-actions {

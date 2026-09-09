@@ -42,21 +42,21 @@
   background: var(--accent);
 }
 
-/* The layers besides places. These join the two colour declarations that were
-   already here rather than introducing new hex values: --color-success and
-   --color-info are not tokens (which is why the rules above carry literal
-   fallbacks and why css_constitution already counts them), and inventing a
-   third and fourth palette entry is a design decision, not a wiring one.
+/* The layers besides places. Both read status tokens rather than introducing
+   new hex values: --color-success and --color-info are declared on :root in
+   shared/_tokens.scss and pinned to design_tokens.yml shared_chrome, so a
+   literal fallback here would be a second copy of each. Inventing a third and
+   fourth palette entry is a design decision, not a wiring one.
 
    Flat throughout — no shadow, blur or glow, per the design rules. */
 .map-marker--courier span,
 .map-marker--food span {
-  background: var(--color-success, #00ba7c);
+  background: var(--color-success);
 }
 
 .map-marker--place span,
 .map-marker--resource span {
-  background: var(--color-info, #5b9fd4);
+  background: var(--color-info);
 }
 
 /* event falls through to the base rule, which is already --accent. */

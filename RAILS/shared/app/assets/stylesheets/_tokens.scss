@@ -27,8 +27,15 @@
     --color-highlight: var(--surface);
     --color-accent: var(--accent);
     --color-danger: var(--danger);
+    /* The three status inks design_tokens.yml shared_chrome declares, and the
+       only colour this file states as a literal: they carry meaning no grey
+       can, so the greyscale scheme in _dialect_tokens.scss does not cover
+       them. tools/design_tokens.rb keeps all three pinned to the yml.
+       --color-info was hand-copied into brgen and amber instead of living
+       here, which is the drift that map only exists to correct. */
     --color-warning: #c9a227;
     --color-success: #00ba7c;
+    --color-info: #5b9fd4;
     --color-overlay: rgb(0 0 0 / 0.4);
     --color-border: var(--border);
     --color-midtone-tint: var(--hover);

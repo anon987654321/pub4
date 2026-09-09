@@ -98,7 +98,7 @@
   width: 100vw;
   margin-inline: calc(50% - 50vw);
   line-height: 0; // intentional: collapses inline-SVG descender gap
-  background: var(--surface, #ffffff);
+  background: var(--surface);
   position: sticky;
   top: 0;
   z-index: calc(var(--z-nav) + 1);
@@ -191,7 +191,7 @@
   width: 100vw;
   margin-inline: calc(50% - 50vw);
   line-height: 0;
-  background: var(--surface, #ffffff);
+  background: var(--surface);
 
   .amber-instance {
     width: 100%;
@@ -377,7 +377,7 @@ h1, .display, .wordmark {
       color-mix(in srgb, var(--border) 55%, transparent) 6px,
       color-mix(in srgb, var(--border) 55%, transparent) 7px
     ),
-    var(--surface-elevated, #ffffff);
+    var(--surface-elevated);
   color: var(--text-secondary);
   display: grid;
   place-items: center;
@@ -416,6 +416,15 @@ h1, .display, .wordmark {
   .skeleton { animation: none; }
 }
 
+/* Custom properties substitute at computed-value time, so --border here reads
+   --text-secondary's final value on :root — which this same block sets to
+   --text. The boundary and the meta text both become the body ink: 10.99:1 on
+   #efefef and 18.26:1 on #000 by Deploy::DesignMetrics.contrast_ratio, against
+   --border #666's 4.99 and 3.66. This is the whole override; a second one
+   further down the file restated it as the literal #2c2824, a warm near-black
+   tuned against amber's retired luxury paper, which measures 1.44:1 on #000 —
+   so a reader asking for more contrast got a border weaker than the default and
+   under the 3.0 floor WCAG 1.4.11 sets for a boundary. */
 @media (prefers-contrast: more) {
   :root {
     --border: var(--text-secondary);
@@ -480,6 +489,3 @@ h1, .display, .wordmark {
   outline-offset: 2px;
 }
 
-@media (prefers-contrast: more) {
-  :root { --border: #2c2824; }
-}

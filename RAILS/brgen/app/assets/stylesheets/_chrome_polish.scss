@@ -176,12 +176,11 @@ aside:not([class]) > h2 {
 /* UI_REFINEMENTS pass — tokens, a11y floor, nav, vertical accents.
    Flat borders only (no box-shadow). Honors prefers-reduced-motion. */
 
-/* color-success/warning, ease-out/spring, transition-fast/normal already come
+/* color-success/warning/info, ease-out/spring, transition-fast/normal all come
    from shared/_tokens.scss via stack_brgen's @forward "tokens" -- redeclaring
    them here at the same values was pure redundant CSS output, not an
    override (verified: shared's values are byte-identical to what was here). */
 :root {
-  --color-info: #5b9fd4;
   --elev-1: 1px solid var(--border);
 }
 

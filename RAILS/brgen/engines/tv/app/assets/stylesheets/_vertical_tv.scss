@@ -1,7 +1,7 @@
 /* TV — Odyssey-style cinematic watch + postpro/repligen media polish */
 body.vertical-tv {
   --tv-stage: var(--bg);
-  --tv-accent: var(--accent, #000000);
+  --tv-accent: var(--accent);
 }
 
 body.vertical-tv main {
