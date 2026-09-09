@@ -96,8 +96,8 @@ module Master
       # to nobody. This is the one place in the tree where content from outside
       # it becomes prompt.
       #
-      # Redact, do not refuse. A page carrying an injection string is very often
-      # a page *about* injection, and refusing the fetch would break the tool for
+      # Redact, do not refuse. A page carrying an injection string is often a
+      # page *about* injection, and refusing the fetch would break the tool for
       # the research it exists to do. `clean!` replaces the matched spans and the
       # rest of the page still arrives.
       #

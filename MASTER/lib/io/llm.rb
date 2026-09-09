@@ -215,7 +215,7 @@ module Master
 
         def execute(name:, params: "{}")
           payload = params.is_a?(Hash) ? params : JSON.parse(params.to_s)
-          forward(name: name.to_s, params: payload) { |value| value.to_s }
+          forward(name: name.to_s, params: payload, &:to_s)
         rescue JSON::ParserError => e
           "Error: invalid params JSON — #{e.message}"
         end
