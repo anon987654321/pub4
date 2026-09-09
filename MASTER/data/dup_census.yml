@@ -30,11 +30,14 @@
 # notification) that the shared engine already served. Same collapse as the
 # sortable / animated-number / character-counter set above. Measured in a
 # clean worktree after that deletion.
-duplicate_sets: 30
+# 30 -> 29 on 2026-09-09: MASTER/web and RAILS/shared no longer carry the same
+# filter_parameter_logging.rb. Recorded rather than left, because a ceiling above
+# the real number is room the next duplicate grows into without an argument -- the
+# ratchet test fails on slack in exactly the way it fails on debt.
+duplicate_sets: 29
 duplicate_members:
 - MASTER/web/Rakefile | RAILS/amber/Rakefile | RAILS/bsdports/Rakefile | RAILS/shared/Rakefile
 - MASTER/web/bin/setup | RAILS/shared/bin/setup
-- MASTER/web/config/initializers/filter_parameter_logging.rb | RAILS/shared/config/initializers/filter_parameter_logging.rb
 - MASTER/web/config/initializers/inflections.rb | RAILS/shared/config/initializers/inflections.rb
 - MASTER/web/public/icon.png | RAILS/shared/public/icon.png
 - RAILS/amber/.rubocop.yml | RAILS/brgen/.rubocop.yml | RAILS/bsdports/.rubocop.yml
