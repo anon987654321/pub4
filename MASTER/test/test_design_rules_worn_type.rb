@@ -45,6 +45,43 @@ class TestDesignRulesWornType < Minitest::Test
     assert_includes src, "check_hanging"
   end
 
+  # A profile with a reader can still carry a key nothing reads, and that is the
+  # same inert-config hole one level down. worn_type.profiles.map.label_min_px
+  # declares that map labels are at least 12px and no code has ever asked: it
+  # appears in rules.yml and in nothing else, so the floor it states is not a
+  # floor, it is a sentence.
+  #
+  # Named rather than deleted, because the intent is worth keeping and removing
+  # it would quietly drop a legibility rule from the constitution. Named rather
+  # than wired, because enforcing it means measuring rendered label sizes on the
+  # map surface, which is a rendered-gate change and an operator's call about
+  # what the map should look like — not something to invent inside a test.
+  #
+  # When it gains a reader, delete it from here. When another key joins it, this
+  # fails and says so instead of the key going quiet.
+  #
+  # rhythm_off_max_pct is the larger find, and it was invisible until this test
+  # asked: every one of the seven profiles sets it, and geometry_type.rb reads
+  # it in none of them. A threshold declared seven times and enforced zero times
+  # is not a stricter rule than one declared once — it is the same silence,
+  # written out seven ways.
+  UNREAD_EVERYWHERE = %w[rhythm_off_max_pct].freeze
+  UNREAD_PROFILE_KEYS = Hash.new(UNREAD_EVERYWHERE).merge(
+    "map" => UNREAD_EVERYWHERE + %w[label_min_px],
+  ).freeze
+
+  def test_profile_keys_have_a_reader_or_are_declared_unread
+    src = File.read(@reader)
+    PROFILES.each do |name|
+      keys = @worn.dig("profiles", name).to_h.keys
+      unread = keys.reject { |key| src.include?(key) }
+      expected = UNREAD_PROFILE_KEYS[name]
+      assert_equal expected.sort, unread.sort,
+                   "worn_type.profiles.#{name}: keys with no reader in geometry_type.rb " \
+                   "changed — wire it, or add it to UNREAD_PROFILE_KEYS with why"
+    end
+  end
+
   def test_feed_measure_is_the_short_column
     feed = @worn.dig("profiles", "feed")
     assert_operator feed["measure_max_ch"].to_i, :<=, 55
