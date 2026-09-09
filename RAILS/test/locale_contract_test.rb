@@ -6,9 +6,9 @@ require "psych"
 
 # What a locale file has to be true of before anything reads it.
 #
-# i18n_resolution_test asks whether a key a view uses resolves. This asks the two
-# questions that come before that, and both were found by throwaway scripts during
-# the 2026-08-12 i18n sweep — scripts that caught real bugs and were then thrown
+# i18n_resolution_test asks whether a key a view uses resolves. This asks the
+# questions that come before that, found by throwaway scripts during the
+# 2026-08-12 i18n sweep — scripts that caught real bugs and were then thrown
 # away, which is why the bugs stayed findable and this file exists.
 #
 #   Duplicate keys. Psych keeps the last value for a repeated key and says nothing.
@@ -17,14 +17,21 @@ require "psych"
 #   translation_missing on a page nobody had loaded that week. YAML.safe_load_file
 #   cannot see this after the fact, so this walks the parse tree instead.
 #
+#   One home per key. The same silence one directory up: Rails merges every file
+#   in a locale directory in sorted order, so a key defined in two of them renders
+#   from whichever file sorts last and the other definition is read by nobody.
+#   amber kept eleven English strings in copy.en.yml that en.yml overrode —
+#   "Analysis unavailable" against "No analysis for this garment yet." — and the
+#   symptom was prose a person had written and no reader could reach.
+#
 #   nb/en parity. Rails falls back to :en for a key nb does not carry, so a missing
 #   Norwegian translation renders as English on a Norwegian page and raises nothing.
 #   That is the exact failure the sweep spent a day on: 76 English strings on the
 #   nb UI, several of them keys that existed in en.yml and not in nb.yml. The
 #   fallback is what makes this invisible, so the check has to be on the files.
 #
-# Both pass as of 2026-08-12. That is the point — they are here so the next one
-# fails a test instead of shipping.
+# All three pass. That is the point — they are here so the next one fails a test
+# instead of shipping.
 class LocaleContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
 
@@ -50,6 +57,35 @@ class LocaleContractTest < Minitest::Test
       #{duplicates.map { |path, (key, line, first)|
           "  #{rel(path)}:#{line}  #{key}  (already defined at line #{first})"
         }.join("\n")}
+    MSG
+  end
+
+  # Within one directory, because across directories the shadowing is the override
+  # mechanism rather than a bug: an app's config/locales loads after the engines it
+  # mounts, which is how amber words six of its shared strings differently. A key
+  # with two homes in one directory has no such reason — one of them renders and
+  # the other is dead copy.
+  def test_no_key_has_two_homes_in_one_locale_directory
+    collisions = locale_groups.flat_map do |(app, locale), paths|
+      next [] if paths.size < 2
+
+      homes = paths.each_with_object({}) do |path, out|
+        flat_values(path).each { |key, value| (out[key] ||= []) << [File.basename(path), value] }
+      end
+
+      homes.select { |_, defs| defs.size > 1 }.sort.map do |key, defs|
+        winner, dead = defs.last, defs[0..-2]
+        "#{app} [#{locale}] #{key}: #{winner[0]} #{winner[1].inspect} renders, " \
+          "#{dead.map { |file, value| "#{file} #{value.inspect}" }.join(' and ')} #{dead.one? ? 'is' : 'are'} dead"
+      end
+    end
+
+    assert_empty collisions, <<~MSG
+      #{collisions.size} key(s) with two homes. Rails merges a locale directory in
+      sorted order, so the file that sorts last wins and every other definition is
+      read by nobody. Delete the dead copy, or move the survivor to it:
+
+      #{collisions.map { |line| "  #{line}" }.join("\n")}
     MSG
   end
 
@@ -97,6 +133,24 @@ class LocaleContractTest < Minitest::Test
   def keys_for(app, locale)
     pattern = app == "shared" ? "shared/config/locales/*.#{locale}.yml" : "#{app}/config/locales/*#{locale}.yml"
     Dir.glob(File.join(ROOT, pattern)).flat_map { |path| flat_keys(path) }.uniq
+  end
+
+  # The files Rails merges into one store, keyed by the app that owns the directory
+  # and the locale the filename claims. Sorted, because that is the order I18n
+  # loads them in and therefore which definition of a repeated key survives.
+  def locale_groups
+    locale_files.sort.group_by do |path|
+      [rel(File.dirname(path)).sub(%r{/config/locales\z}, ""), File.basename(path, ".yml").split(".").last]
+    end
+  end
+
+  def flat_values(path, node = nil, prefix = [], out = {})
+    node ||= (YAML.safe_load_file(path, aliases: true) || {}).values.first || {}
+    node.each do |key, value|
+      path_keys = prefix + [key.to_s]
+      value.is_a?(Hash) ? flat_values(path, value, path_keys, out) : out[path_keys.join(".")] = value
+    end
+    out
   end
 
   def flat_keys(path, node = nil, prefix = [], out = [])

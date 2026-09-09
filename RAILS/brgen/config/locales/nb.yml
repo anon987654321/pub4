@@ -198,11 +198,11 @@ nb:
       other: "%{count} uleste"
     someone: Noen
     kinds:
-      mention: Omtalt
+      mention: Nevnelser
       match: Treff
       message: Meldinger
       reply: Svar
-      like: Likes
+      like: Liker
       reaction: Reaksjoner
       follow: Følgere
       order: Ordrer
@@ -398,6 +398,7 @@ nb:
     playlist_label: Søk spillelister
     tv: Søk kanaler og videoer…
     tv_label: Søk TV
+    vertical_heading: "%{vertical}"
   messages:
     anonymous: "anon"
     from_aria: Melding fra %{name}
@@ -980,6 +981,14 @@ nb:
     privacy_private: privat
     expires_on: "· utløper %{date}"
     public_access: Offentlig
+    public: Offentlig
+    privacy:
+      public: Offentlig
+      unlisted: Skjult
+      private: Privat
+    tracks:
+      one: "%{count} spor"
+      other: "%{count} spor"
     collaborative: Samarbeid
     add_comment: "+ Kommentar"
     add_comment_aria: Legg til tidsstemplet kommentar på nåværende tidspunkt
@@ -1257,6 +1266,22 @@ nb:
       flat: Leilighet
       house: Hus
       sublet: Framleie
+    verticals:
+      groceries: Dagligvarer
+      homewares: Husholdning
+      furniture: Møbler
+      electronics: Elektronikk
+      fashion: Mote
+      beauty: Skjønnhet
+      sports: Sport
+      toys: Leker
+      garden: Hage
+      automotive: Bil
+      pets: Kjæledyr
+      books: Bøker
+      health: Helse
+      local_services: Lokale tjenester
+      other: Annet
   takeaway:
     intro: Dette er en meny- og bestillingsdemo, ikke et levende restaurantnett. Betaling
       avtales med kjøkkenet. Ingen registrering for å legge inn en prøvebestilling.
@@ -1341,6 +1366,32 @@ nb:
     group_guest_note: Den som åpnet bestillingen sender den til kjøkkenet.
     open_group: Del denne bestillingen
     group_link: Lenken du deler
+    order_title: "Ordre #%{id}"
+    order_details: Ordredetaljer
+    order_item: Ordrelinje
+    order_items: Varer
+    order_actions: Ordrehandlinger
+    order_status_title: Ordre %{status}
+    order_status_body: Bestillingen din fra %{restaurant} er nå %{status}.
+    order_status_courier: "%{courier} tar den med."
+    statuses:
+      pending: Venter
+      confirmed: Bekreftet
+      preparing: Tilberedes
+      out_for_delivery: På vei
+      delivered: Levert
+      cancelled: Kansellert
+    delivered: Levert
+    eta_calculating: Forventet levering — beregner…
+    delivery_to: "Leveres til: %{address}"
+    instructions: "Instruksjoner:"
+    subtotal: "Delsum: %{amount}"
+    delivery: "Levering: %{amount}"
+    total: "Totalt: %{amount}"
+    vehicle_unset: Kjøretøy ikke satt
+    available: Tilgjengelig
+    unavailable: Utilgjengelig
+    drivers_empty_body: Kom tilbake når sjåfører er pålogget.
   maps:
     your_courier: Budet ditt
     recent_check_ins: Nylige innsjekkinger

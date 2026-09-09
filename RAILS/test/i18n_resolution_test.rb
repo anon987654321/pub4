@@ -41,9 +41,9 @@ class I18nResolutionTest < Minitest::Test
 
   # What Rails loads for this app: everything in its config/locales for this
   # locale, plus the engine's social.<locale>.yml. Globbed rather than named,
-  # because Rails loads the whole directory and amber splits its into three
-  # files — en.yml, copy.en.yml and validations.en.yml — of which this used to
-  # read one.
+  # because Rails loads the whole directory: a file dropped in beside en.yml
+  # resolves keys for the app whether this test names it or not. locale_contract
+  # holds the other half — that a key lives in exactly one of those files.
   #
   # The mountable engines are here for the same reason they are in keys_used_by,
   # and it is the same blind spot in the other direction: this side globbed only

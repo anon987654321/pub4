@@ -49,10 +49,13 @@ class LeftoverEnglishChromeTest < ActiveSupport::TestCase
     assert_includes source, 't("playlist.privacy.'
   end
 
-  test "chrome_labels locale files pair en and nb keys" do
-    en = YAML.safe_load_file(File.join(ROOT, "config/locales/chrome_labels.en.yml")).fetch("en")
-    nb = YAML.safe_load_file(File.join(ROOT, "config/locales/chrome_labels.nb.yml")).fetch("nb")
-    assert_equal en.keys.sort, nb.keys.sort
+  # The status labels the order timeline reads, in both languages. Whole-file en/nb
+  # parity is RAILS/test/locale_contract_test.rb's job and it compares every key,
+  # not just the roots; this asserts the one subtree the view above depends on.
+  test "takeaway status labels exist in both languages" do
+    en = YAML.safe_load_file(File.join(ROOT, "config/locales/en.yml")).fetch("en")
+    nb = YAML.safe_load_file(File.join(ROOT, "config/locales/nb.yml")).fetch("nb")
+    assert_equal en.dig("takeaway", "statuses").keys.sort, nb.dig("takeaway", "statuses").keys.sort
     assert en.dig("takeaway", "statuses", "out_for_delivery")
     assert nb.dig("takeaway", "statuses", "out_for_delivery")
   end

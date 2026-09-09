@@ -393,6 +393,7 @@ en:
     playlist_label: Playlist search
     tv: Search channels and videos…
     tv_label: TV search
+    vertical_heading: "%{vertical}"
   messages:
     anonymous: "anon"
     from_aria: Message from %{name}
@@ -974,6 +975,14 @@ en:
     privacy_private: private
     expires_on: "· expires %{date}"
     public_access: Public
+    public: Public
+    privacy:
+      public: Public
+      unlisted: Unlisted
+      private: Private
+    tracks:
+      one: "%{count} track"
+      other: "%{count} tracks"
     collaborative: Collaborative
     add_comment: "+ Comment"
     add_comment_aria: Add timestamped comment at current time
@@ -1250,6 +1259,22 @@ en:
       flat: Flat
       house: House
       sublet: Sublet
+    verticals:
+      groceries: Groceries
+      homewares: Homewares
+      furniture: Furniture
+      electronics: Electronics
+      fashion: Fashion
+      beauty: Beauty
+      sports: Sports
+      toys: Toys
+      garden: Garden
+      automotive: Automotive
+      pets: Pets
+      books: Books
+      health: Health
+      local_services: Local services
+      other: Other
   takeaway:
     intro: This is a menu and order demo, not a live restaurant network. Payment is
       arranged with the kitchen. No signup to place a trial order.
@@ -1334,6 +1359,32 @@ en:
     group_guest_note: The person who opened this sends it to the kitchen.
     open_group: Share this order
     group_link: The link to share
+    order_title: "Order #%{id}"
+    order_details: Order details
+    order_item: Order item
+    order_items: Items
+    order_actions: Order actions
+    order_status_title: Order %{status}
+    order_status_body: Your order from %{restaurant} is now %{status}.
+    order_status_courier: "%{courier} is bringing it."
+    statuses:
+      pending: Pending
+      confirmed: Confirmed
+      preparing: Preparing
+      out_for_delivery: Out for delivery
+      delivered: Delivered
+      cancelled: Cancelled
+    delivered: Delivered
+    eta_calculating: Est. delivery — calculating…
+    delivery_to: "Delivery to: %{address}"
+    instructions: "Instructions:"
+    subtotal: "Subtotal: %{amount}"
+    delivery: "Delivery: %{amount}"
+    total: "Total: %{amount}"
+    vehicle_unset: Vehicle not set
+    available: Available
+    unavailable: Unavailable
+    drivers_empty_body: Check back when drivers come online.
   maps:
     your_courier: Your courier
     recent_check_ins: Recent check-ins
