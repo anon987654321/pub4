@@ -5,7 +5,7 @@ require "json"
 require "time"
 
 module Master
-  module Ground
+  module Fix
     class Checkpoint
       attr_reader :root, :dir
 

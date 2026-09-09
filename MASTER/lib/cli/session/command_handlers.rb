@@ -57,7 +57,7 @@ module Master
         puts @refs.renderer.render("checkpoint: snapshotting changed files", mode: :dim)
         lib_dir = File.join(Master::ROOT, "lib")
         files = changed_lib_files(lib_dir)
-        cp = Master::Ground::Checkpoint.new
+        cp = Master::Fix::Checkpoint.new
         result = cp.create(label: "manual", files:)
         id = result.respond_to?(:fetch) ? result[:id] : result.to_s
         puts @refs.renderer.render("checkpoint: #{id} (#{files.size} file(s))", mode: :dim)
@@ -67,12 +67,12 @@ module Master
         puts @refs.renderer.render("verify: checking recently landed operator symbols", mode: :dim)
         plan = {
           files: %w[lib/cli/intent_router.rb lib/cli/attention_context.rb
-                    lib/ground/unfinished_ledger.rb lib/ground/policy/orchestration.rb],
+                    lib/fix/unfinished_ledger.rb lib/ground/policy/orchestration.rb],
           symbols: %w[Master::CLI::IntentRouter Master::CLI::AttentionContext
-                      Master::Ground::UnfinishedLedger Master::Ground::Policy::Orchestration],
+                      Master::Fix::UnfinishedLedger Master::Ground::Policy::Orchestration],
           callers: %w[run_sound_critique run_rebuild run_context run_checkpoint run_verify],
         }
-        checker = Master::Ground::DoneChecker.new
+        checker = Master::Fix::DoneChecker.new
         result = checker.call(plan)
         result.each do |key, check_result|
           icon = check_result.is_a?(TrueClass) || check_result == :ok ? "ok" : "!!"

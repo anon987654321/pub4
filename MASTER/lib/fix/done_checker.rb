@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  module Ground
+  module Fix
     class DoneChecker
       REQUIRED_KEYS = %i[files symbols callers].freeze
 

@@ -4,7 +4,7 @@ require "json"
 require "time"
 
 module Master
-  module Ground
+  module Fix
     class UnfinishedLedger
       LEDGER_PATH = File.join(Master::ROOT, ".master", "unfinished.json").freeze
 

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  module Ground
+  module Fix
     class PatchVerifier
       Check = Struct.new(:kind, :target, :ok, :detail, keyword_init: true)
 

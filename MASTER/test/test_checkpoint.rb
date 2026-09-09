@@ -8,7 +8,7 @@ class TestCheckpoint < Minitest::Test
       path = File.join(root, "lib", "sample.rb")
       FileUtils.mkdir_p(File.dirname(path))
       File.write(path, "before\n")
-      checkpoint = Master::Ground::Checkpoint.new(
+      checkpoint = Master::Fix::Checkpoint.new(
         root:,
         dir: File.join(root, ".master", "checkpoints"),
       )
@@ -22,7 +22,7 @@ class TestCheckpoint < Minitest::Test
 
   def test_create_rejects_paths_outside_root
     Dir.mktmpdir do |root|
-      checkpoint = Master::Ground::Checkpoint.new(root:, dir: File.join(root, ".master", "checkpoints"))
+      checkpoint = Master::Fix::Checkpoint.new(root:, dir: File.join(root, ".master", "checkpoints"))
 
       assert_raises(ArgumentError) { checkpoint.create(label: "bad", files: ["../outside"]) }
     end
