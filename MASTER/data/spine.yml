@@ -31,6 +31,21 @@ spine:
   # detector for DRY, MiddleManRule for the over-engineering half of
   # engineering_fit, and StrunkPass's brevity mode wired onto conversational
   # output so a terse reply sheds its padding, not its structure.
+  #
+  # 38233 against this on 2026-09-09, and the overage has a shape rather than
+  # being diffuse. Measured against the budgets as they stood before four keys
+  # were re-based for the ground-to-io moves: lib/review +690, lib/pub4 +226,
+  # lib/voice +214, lib/core +80, lib/boot +49, lib/trace +36. More than half of
+  # it is one directory. The four keys the moves touched net to -218 between
+  # them, so the moves paid rather than cost, and lib/cognition's 253 lines are
+  # new work that arrived with a boot wire and a test.
+  #
+  # It is left over rather than raised, and the reason is the rule above: a raise
+  # names what the lines buy, and nobody who did not write them can say. What
+  # this measurement changes is who has to answer — review's sponsor, not the
+  # next person to run the gate. Nothing here can be paid by tidying: code_reach
+  # reads 0 dead files of 405, extraction raises the number because a Zeitwerk
+  # wrapper costs lines, and de-duplication across lib/ is worth about thirty.
   lib_body_ceiling: 37464
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
