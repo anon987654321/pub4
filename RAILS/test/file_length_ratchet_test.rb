@@ -114,9 +114,22 @@ class FileLengthRatchetTest < Minitest::Test
 # it is anywhere sensible." Those four — Hick's law on peer choices, Gestalt
 # proximity, the phone thumb zone and the weak bottom-left of an F-pattern scan
 # — are placement_checks.rb, and they are the only checks in the gate that read
-# ux_laws, layout_rules.reading_patterns and layout_rules.whitespace. Still over
-# the 300 rb limit, so the row stays; the next seam is the pair that reads the
-# unrounded rect, check_subpixel and check_edge_alignment.
+# ux_laws, layout_rules.reading_patterns and layout_rules.whitespace.
+#
+# It stays at 344, over the 300 rb limit, because what is left does not divide,
+# and this row is the place to say so rather than leave the next session hunting
+# a third seam. Two cuts look available and neither survives reading. By the
+# gate's own principle labels, fitts_law and fitts own four of the eleven checks
+# — target size, occlusion, chrome occlusion, target spacing — so lifting the
+# occlusion pair out separates siblings the gate itself files together, and they
+# share critical? with check_fitts. By probe field, the one clean separation is
+# the two checks that read `hit`; but frect is read by four checks across three
+# different principles, so "reads the unrounded rect" names a data source, not a
+# question, and grouping by it is how a split ends up with halves nobody can
+# name. Everything left asks one thing in different units: is this box, as the
+# browser computed it, the size, position, gap or spacing design_rules states.
+# The two things in here that were not that have already gone — colour to
+# token_checks.rb, placement to placement_checks.rb.
 #
 # Both live under gates/support/rendered_geometry/, and token_checks.rb moved
 # there from gates/lib/ to join it: deploy_gates_contract_test asserts gates/lib/
