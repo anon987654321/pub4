@@ -170,7 +170,7 @@ pub4_source_ceilings:
   # ecology map. Both were nested modules the host included; they now sit at the
   # path Zeitwerk maps their constant to, and the empty scaffold each host was
   # left holding is gone.
-  # 1055 -> 1052 folds lib/ground/antigravity/ into antigravity.rb. The parent was
+  # 1055 -> 1052 folds lib/io/antigravity/ into antigravity.rb. The parent was
   # a nine-line namespace holder with three requires; json_config, discovery and
   # skills nest inside it and total 231 code lines, under the 300 SMALL_FILES and
   # NO_GOD_CLASS enforce, so the directory was buying nesting nothing needed.
@@ -228,7 +228,23 @@ pub4_source_ceilings:
   # and core.rb#_dump both read as dead. It does not fold into method_reach.rb:
   # one answers a name, the other a graph, and the first is what you run when
   # the second is too slow to iterate on.
-  MASTER: 1031
+  # 1031 -> 1038 for the cognition layer: five files under lib/cognition,
+  # COGNITION.md and test/test_cognition.rb. Seven, and the argument has to
+  # be made rather than assumed, because this is a feature on a tree whose
+  # own backlog says the gap is detection reach rather than features.
+  #
+  # What they buy: internal state that is observable instead of inferred.
+  # MASTER had affect nowhere, salience nowhere, and no record of what it
+  # had already seen, so every report of how a run went was reconstructed
+  # after the fact from findings. They do not fold into Ground::Memory,
+  # which stores what MASTER was told rather than what it noticed, and the
+  # reflections are written into that store rather than replacing it.
+  #
+  # Five files rather than one because each is a different subject with a
+  # different failure: attention is a weight table, affect is bounded
+  # arithmetic, the self-model is a belief set with a pruning rule, state
+  # is a schema with a frozen default, and Mind is the loop that runs them.
+  MASTER: 1038
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
   # it belongs beside the other probes and folds into nothing.
