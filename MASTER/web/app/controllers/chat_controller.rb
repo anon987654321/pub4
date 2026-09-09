@@ -244,7 +244,7 @@ class ChatController < ApplicationController
     dirty = out.lines.count
     open_models = c[:breaker].respond_to?(:open_models) ? c[:breaker].open_models : []
     cache = Master::Trace::CacheEfficiency.snapshot
-    quota = Master::Ground::ModelQuota.snapshot[:exhausted]
+    quota = Master::Io::ModelQuota.snapshot[:exhausted]
     cost = c[:session].respond_to?(:cost) ? c[:session].cost : 0.0
     {
       model:            c[:agent].model.to_s.split("/").last,
