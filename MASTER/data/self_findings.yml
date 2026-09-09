@@ -97,7 +97,7 @@
 # Master::Review::RepoEcology 354 across three, against a limit of 300. They are
 # recorded rather than exempted, and TODO.md names them as the decompositions
 # they are.
-findings: 289
+findings: 287
 by_rule:
   BARE_DIV_WRAPPER: 3
   BLANK_LINE_RUN: 1
@@ -118,7 +118,7 @@ by_rule:
   OPTIONAL_CHAINING: 2
   PROSE_ACTIVE_VOICE: 4
   PROSE_ACTIVE_VOICE_NB: 1
-  PROSE_OMIT_QUALIFIERS: 18
+  PROSE_OMIT_QUALIFIERS: 16
   RATE_LIMITING_MISSING: 4
   SQUINT_TEST: 5
   STRICT_MODE_ZSH: 5
@@ -197,7 +197,7 @@ finding_members:
   - NO_CHANGELOG_COMMENT RAILS/brgen/db/migrate/20260714164502_add_integrity_constraints.rb:6
   - NO_CHANGELOG_COMMENT RAILS/brgen/engines/dating/app/models/dating/profile.rb:48
   - NO_CHANGELOG_COMMENT RAILS/brgen/engines/marketplace/test/models/marketplace/order_test.rb:20
-  - NO_CHANGELOG_COMMENT RAILS/brgen/test/services/deploy_backlog_test.rb:346
+  - NO_CHANGELOG_COMMENT RAILS/brgen/test/services/deploy_backlog_test.rb:356
   - NO_CHANGELOG_COMMENT RAILS/brgen/test/services/playlist_wiring_test.rb:30
   - NO_CHANGELOG_COMMENT RAILS/shared/app/services/shared/pushable.rb:5
   - NO_CHANGELOG_COMMENT STUDIO/lora/_toolkit/colab_session.rb:219
@@ -374,7 +374,7 @@ finding_members:
   - PROSE_ACTIVE_VOICE RAILS/brgen/test/jobs/prune_guest_users_job_test.rb:5
   - PROSE_ACTIVE_VOICE RAILS/shared/app/models/concerns/shared/strict_safe_associations.rb:13
   - PROSE_ACTIVE_VOICE STUDIO/postpro/postpro.rb:1822
-  - PROSE_ACTIVE_VOICE_NB RAILS/brgen/config/locales/nb.yml:1620
+  - PROSE_ACTIVE_VOICE_NB RAILS/brgen/config/locales/nb.yml:1685
   - PROSE_OMIT_QUALIFIERS MASTER/web/CLAUDE.md:263
   - PROSE_OMIT_QUALIFIERS MASTER/web/test/controllers/tts_controller_test.rb:28
   - PROSE_OMIT_QUALIFIERS RAILS/brgen/app/controllers/invites_controller.rb:48
@@ -383,11 +383,9 @@ finding_members:
   - PROSE_OMIT_QUALIFIERS RAILS/brgen/app/models/reaction.rb:49
   - PROSE_OMIT_QUALIFIERS RAILS/brgen/engines/playlist/app/helpers/playlist_helper.rb:18
   - PROSE_OMIT_QUALIFIERS RAILS/brgen/engines/takeaway/app/models/takeaway/delivery_driver.rb:26
-  - PROSE_OMIT_QUALIFIERS RAILS/shared/app/controllers/concerns/shared/authentication.rb:219
-  - PROSE_OMIT_QUALIFIERS STUDIO/dilla/bin/sine_stream.rb:1329
+  - PROSE_OMIT_QUALIFIERS RAILS/shared/app/controllers/concerns/shared/authentication.rb:220
   - PROSE_OMIT_QUALIFIERS STUDIO/dilla/bin/sine_stream.rb:234
   - PROSE_OMIT_QUALIFIERS STUDIO/dilla/bin/sine_stream.rb:3
-  - PROSE_OMIT_QUALIFIERS STUDIO/dilla/bin/sine_stream.rb:954
   - PROSE_OMIT_QUALIFIERS STUDIO/dilla/lib/harmony_score.rb:122
   - PROSE_OMIT_QUALIFIERS STUDIO/lora/_toolkit/colab_session.rb:485
   - PROSE_OMIT_QUALIFIERS STUDIO/lora/_toolkit/curate.rb:211
@@ -413,30 +411,11 @@ finding_members:
   - USE_THEN RAILS/shared/app/controllers/omniauth_callbacks_controller.rb:1
   - USE_THEN RAILS/shared/app/services/shared/newsletter_visuals.rb:1
   - USE_THEN RAILS/shared/app/services/shared/tradedoubler.rb:1
-#
-# 56 -> 58 on the registry row, and for the third time it is the instrument
-# rather than the tree. CodeMetrics.public_method_count read visibility off a
-# stop marker: the walk ended at the first `private` or `protected`, which is
-# not what either keyword does. Every consequence was an undercount, and the
-# largest was that it never descended into `class << self` -- so a class whose
-# whole API is written inside one measured zero public methods.
-#
-# Four arrive and none leaves, which is what says this is newly visible rather
-# than newly written. Ground::RuntimeCatalog and Brgen::RadioBergenManifest are
-# both the `class << self` shape and both read 0 before; Deploy::GeometryProbe
-# mixes `def self.` with one; Ground::AttentionContext is thirteen instance
-# methods across two `private` sections. All four are true and all four were
-# invisible. Across MASTER's lib, law and tools the count went 2,588 -> 2,663
-# over twenty classes.
-#
-# Recorded rather than exempted. The decompositions are TODO.md's now.
-registry_findings: 58
+registry_findings: 55
 registry_by_rule:
-  NO_GOD_CLASS: 32
+  NO_GOD_CLASS: 29
   SILENT_RESCUE: 26
 registry_finding_members:
-  - NO_GOD_CLASS MASTER/lib/cli/attention_context.rb:16
-  - NO_GOD_CLASS MASTER/lib/ground/runtime_catalog.rb:9
   - NO_GOD_CLASS MASTER/web/app/controllers/chat_controller.rb:7
   - NO_GOD_CLASS MASTER/web/app/services/chat_service.rb:7
   - NO_GOD_CLASS MASTER/web/app/services/tts_job.rb:7
@@ -460,14 +439,13 @@ registry_finding_members:
   - NO_GOD_CLASS RAILS/brgen/lib/brgen/bergen_demo_seeder.rb:8
   - NO_GOD_CLASS RAILS/brgen/lib/brgen/irc/bridge.rb:10
   - NO_GOD_CLASS RAILS/brgen/lib/brgen/radio_bergen_manifest.rb:7
-  - NO_GOD_CLASS RAILS/gates/lib/live/user_flow.rb:21
-  - NO_GOD_CLASS RAILS/gates/lib/rendered/rendered_geometry.rb:24
+  - NO_GOD_CLASS RAILS/gates/lib/rendered/rendered_geometry.rb:26
   - NO_GOD_CLASS RAILS/gates/lib/research/design_metrics.rb:16
   - NO_GOD_CLASS RAILS/gates/support/cdp_session.rb:30
   - NO_GOD_CLASS RAILS/gates/support/geometry_probe.rb:20
   - NO_GOD_CLASS STUDIO/dilla/lib/composition_engine.rb:161
   - NO_GOD_CLASS STUDIO/dilla/lib/modulation.rb:554
-  - SILENT_RESCUE STUDIO/dilla/bin/demo_full.rb:54
+  - SILENT_RESCUE STUDIO/dilla/bin/demo_full.rb:56
   - SILENT_RESCUE STUDIO/dilla/lib/master_heuristics.rb:113
   - SILENT_RESCUE STUDIO/dilla/lib/master_heuristics.rb:129
   - SILENT_RESCUE STUDIO/dilla/lib/master_heuristics.rb:24
@@ -486,7 +464,7 @@ registry_finding_members:
   - SILENT_RESCUE STUDIO/dilla/lib/verify_fx.rb:340
   - SILENT_RESCUE STUDIO/dilla/live/rack.rb:114
   - SILENT_RESCUE STUDIO/dilla/live/rack.rb:130
-  - SILENT_RESCUE STUDIO/gate.rb:386
+  - SILENT_RESCUE STUDIO/gate.rb:424
   - SILENT_RESCUE STUDIO/lora/_toolkit/curate.rb:160
   - SILENT_RESCUE STUDIO/postpro/postpro.rb:291
   - SILENT_RESCUE STUDIO/postpro/postpro.rb:302
