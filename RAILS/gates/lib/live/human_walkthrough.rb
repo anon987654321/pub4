@@ -43,7 +43,9 @@ module Deploy
           /aria:\s*\{[^}]*\blabel:\s*["']Explore[^"']*["']|t\(["']nav\.explore["']\)|t\(["']nav\.communities["']\)/i,
           /aria:\s*\{[^}]*\blabel:\s*["']Messages["']|t\(["']nav\.messages["']\)/i,
           /aria:\s*\{[^}]*\blabel:\s*["']Nearby["']|t\(["']nav\.nearby["']\)/i,
-          /AI\s*assistant|t\(["']nav\.ai_assistant["']\)/i,
+          # a11y, not nav: the AI link is shared between the desktop rail and
+          # the mobile tab bar, and it labels itself out of the a11y namespace.
+          /AI\s*assistant|t\(["'](?:nav|a11y)\.ai_assistant["']\)/i,
         ],
       },
       "bsdports" => {
@@ -102,18 +104,38 @@ end
     # them. The blindness is the same shape as the four scanners that stopped
     # seeing 57 views when the verticals became engines.
     #
-    # One level deep, deliberately. Every marker this gate looks for is chrome
-    # the layout itself renders; recursing would widen the haystack for markers
-    # that are supposed to be in the frame, and a marker found three partials
-    # down is not evidence the frame carries it.
+    # Two levels, and the second is the chrome's own.
+    #
+    # One level was not enough for the reason above: the layout renders
+    # _mobile_chrome, and _mobile_chrome renders _ai_nav_link, so the AI tab sat
+    # two hops out and the gate reported a missing label for a tab bar that has
+    # it. That is the same false negative the note above describes, one hop
+    # further along — the chrome moved, and the gate followed it only as far as
+    # the first move.
+    #
+    # It stops at two, and the bound is what keeps the check meaningful: a
+    # partial the layout renders IS the frame, and a partial that frame renders
+    # is still the frame. Anything below that is a component the page happens to
+    # contain, and finding a marker there is not evidence the chrome carries it.
     RENDER_CALL = /render(?:\s+partial:)?\s+"([a-z0-9_]+(?:\/[a-z0-9_]+)+)"/
+    PARTIAL_DEPTH = 2
 
     def resolve_rendered_partials(app, sources)
-      sources.join("\n").scan(RENDER_CALL).flatten.uniq.filter_map do |name|
-        dir, base = File.split(name)
-        rel = "app/views/#{dir}/_#{base}.html.erb"
-        rel if File.file?(File.join(RAILS_ROOT, app, rel))
+      seen = []
+      frontier = sources
+      PARTIAL_DEPTH.times do
+        found = frontier.join("\n").scan(RENDER_CALL).flatten.uniq.filter_map do |name|
+          dir, base = File.split(name)
+          rel = "app/views/#{dir}/_#{base}.html.erb"
+          rel if File.file?(File.join(RAILS_ROOT, app, rel))
+        end
+        fresh = found - seen
+        break if fresh.empty?
+
+        seen.concat(fresh)
+        frontier = fresh.map { |rel| read_app_file(app, rel) }
       end
+      seen
     end
 
     # A listed path that does not exist reads as an empty file, which is a check
