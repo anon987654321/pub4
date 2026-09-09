@@ -346,6 +346,23 @@ namespace :docs do
   end
 end
 
+namespace :readme do
+  desc "Record the README's opening image: the face reading this file aloud"
+  task :take do
+    ruby File.join(__dir__, "tools", "readme_take.rb")
+  end
+
+  desc "Only tts.wav — the README read in the voice data/voice.yml names"
+  task :speech do
+    ruby File.join(__dir__, "tools", "readme_take.rb"), "--speech"
+  end
+
+  desc "Only loop.mp4 and loop.gif, from the tts.wav already on disk"
+  task :record do
+    ruby File.join(__dir__, "tools", "readme_take.rb"), "--record"
+  end
+end
+
 namespace :lint do
 desc "Every agent harness file matches the contract in MASTER/AGENTS.md"
 task :agent_contracts do
