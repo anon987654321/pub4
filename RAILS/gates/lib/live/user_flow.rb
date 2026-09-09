@@ -8,7 +8,7 @@ require_relative "../../support/gate_autofix"
 require_relative "../../support/brgen_vertical_surfaces"
 require_relative "../../support/guest_flow_persona"
 require_relative "../../support/dom_surface_schema"
-require_relative "../../support/user_flow/design_contracts"
+require_relative "../../support/user_flow_design_contracts"
 require_relative "../../../shared/lib/pub4/master_design"
 
 module Deploy

@@ -166,7 +166,7 @@ class FileLengthRatchetTest < Minitest::Test
     # limit, so a ceiling here would only re-admit it. Its own header admitted
     # to being two gates in one — "critical-path user flows + MASTER
     # design/principle semantics" — and the second half is
-    # gates/support/user_flow/design_contracts.rb: the seven-rule contract
+    # gates/support/user_flow_design_contracts.rb: the seven-rule contract
     # table and the four methods that read it off source text. Not one of them
     # opens a socket or asks whether an app is up, which is what everything
     # left in user_flow.rb does. The earlier 313 -> 308 was the private
