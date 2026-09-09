@@ -117,30 +117,13 @@
 /* The replies box is always in the markup so turbo can append a first reply.
    Without this, an empty box draws a leftover indent rail. :empty is the
    wrong test — ERB whitespace is a text node. */
-.comment_item .comment-replies:not(:has(*)) { display: none; }
-
-/* Reply disclosure — native details, no Stimulus reply controller. */
-.comment-reply {
-  margin-top: var(--space-2);
-}
-.comment-reply-toggle {
-  cursor: pointer;
-  color: var(--accent);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-bold);
-  list-style: none;
-}
-.comment-reply-toggle::-webkit-details-marker { display: none; }
-.comment-reply-toggle:hover { text-decoration: underline; }
-.comment-reply[open] .comment-reply-toggle { margin-bottom: var(--space-2); }
-.comment-body { margin: 0; white-space: pre-wrap; }
-.comment-delete {
-  display: inline;
-  padding: 0;
-  min-height: 0;
-  font: inherit;
-  font-weight: var(--weight-bold);
-}
+/* The reply disclosure, the comment body and the delete control are shared's:
+   _chat_reactions.scss owns all seven rules and brgen @use's it after this
+   file, so the copies that stood here were overridden by a later, richer
+   twin — shared's .comment-delete also carries border, background, colour and
+   cursor, and its .comment-body carries colour, line-height and size. Nothing
+   here painted; deleting it changes no pixel and takes 393 bytes off every
+   brgen page. Comment chrome belongs in the engine all three apps read. */
 
 /* Forms — x.com minimal */
 .form-wrap { padding: var(--space-6) var(--space-4); max-width: 480px; }

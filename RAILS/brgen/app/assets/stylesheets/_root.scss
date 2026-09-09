@@ -53,6 +53,12 @@ $brgen-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, H
 /* Shared [data-theme=light] is the social indigo palette and outranks a bare
    :root. Restate brgen-old here so the checkbox path and the dataset path
    wear the same 2014 light, not two lights. */
+/* Unconditional, and there is no @media (prefers-color-scheme: light) twin.
+   [data-theme=light] is a stated choice, so it has to hold whatever the OS
+   prefers — which this rule already does. The twin restated the same six
+   declarations at the same specificity two lines further down, so it could
+   never win a cascade this rule lost, and it cost 1,061 bytes of every
+   brgen page load against a weight ceiling this app was over. */
 :root[data-theme="light"] {
   @include x.brgen-old-light-tokens;
   @include x.app-root-tokens;
@@ -61,17 +67,9 @@ $brgen-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, H
   --font: #{$brgen-font};
 }
 
-@media (prefers-color-scheme: light) {
-  :root[data-theme="light"] {
-    @include x.brgen-old-light-tokens;
-    @include x.app-root-tokens;
-    color-scheme: light;
-    --font-size: var(--text-lg);
-    --font: #{$brgen-font};
-  }
-}
-
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* The universal border-box/zero-margin reset is shared/_zen_shell.scss's first
+   rule, and it reaches every app. Restating it here emitted the same three
+   declarations a second time under the same selector. */
 
 html, body {
   height: 100%;

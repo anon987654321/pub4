@@ -1,42 +1,17 @@
-/* Mobile tab bar */
-.tab-bar {
-  position: fixed;
-  bottom: 0;
-  inset-inline-start: 0;
-  inset-inline-end: 0;
-  display: flex;
-  min-height: 54px;
-  background: var(--surface-elevated);
-  z-index: var(--z-nav);
-  padding-bottom: var(--safe-bottom);
-}
+/* Mobile tab bar. The .tab-bar rule itself is shared/_tab_bar.scss's, which
+   this app reaches through _shell.scss: the copy that stood here restated all
+   eight declarations, with inset-inline written as its two longhands and
+   --z-nav and --safe-bottom without the fallbacks shared gives them, both of
+   which are declared on :root anyway. Same eight computed values, 178 bytes. */
 
-.tab-item {
-  position: relative;
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-3);
-  color: var(--text);
-  transition: background var(--transition-fast) var(--ease-out);
-}
-
-.tab-item[aria-current="page"] {
-  color: var(--accent);
-  background: var(--hover-subtle);
-}
-
-.tab-item[aria-current="page"]::after {
-  content: "";
-  position: absolute;
-  inset-block-end: calc(4px + var(--safe-bottom));
-  width: 5px;
-  height: 5px;
-  border-radius: var(--radius-pill);
-  background: currentColor;
-}
-
+/* .tab-item, its aria-current state, that state's dot and its hover are
+   shared/_tab_bar.scss's, reached through _shell.scss before this file. The
+   copies here restated them declaration for declaration — var(--space-3) is
+   the 0.75rem shared writes — so they could only ever repaint the same
+   pixels, and shared's .tab-item also carries touch-action: manipulation,
+   which already applied. 362 bytes, no paint. What stays below is brgen's
+   own: the button reset shared has no rule for, and the :active pairing with
+   .compose-btn. */
 .tab-item-button {
   background: transparent;
   border: 0;
@@ -44,7 +19,6 @@
   cursor: pointer;
 }
 
-.tab-item:hover { background: var(--hover); text-decoration: none; }
 .tab-item:active,
 .compose-btn:active {
   background: var(--hover);

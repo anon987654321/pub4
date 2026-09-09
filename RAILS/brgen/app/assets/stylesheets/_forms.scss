@@ -22,7 +22,8 @@
   min-height: var(--tap-min);
 }
 
-.btn:hover { opacity: .88; text-decoration: none; }
+/* No .btn:hover here: shared/_zen_shell.scss sets the same opacity .88 and the
+   same text-decoration none, and it is the sheet that owns .btn. */
 /* Fill instead of outline. A transparent button with a 1px edge is a line;
    a subtle surface is a button. */
 .btn:focus-visible,

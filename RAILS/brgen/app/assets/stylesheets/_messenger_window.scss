@@ -93,7 +93,22 @@
   text-decoration: none;
 }
 
-.messenger-rail-search:hover { background: var(--hover); color: var(--text); }
+// One hover state for the whole window, listed once. Six controls — the rail
+// search, a room row, the invite copy button, the two header controls and a
+// composer tool — all lift to --hover with full-strength ink, and each carried
+// its own copy of these two declarations. Stated at the earliest of the six so
+// none of them moves later in the cascade: the only rule in this file that ties
+// on specificity is .messenger-rail-room[aria-current="page"] below, which still
+// comes after this and still wins the ground it sets on the open room.
+.messenger-rail-search:hover,
+.messenger-rail-room:hover,
+.messenger-rail-invite-copy:hover,
+.messenger-header-back:hover,
+.messenger-header-action:hover,
+.messenger-composer-tool:hover {
+  background: var(--hover);
+  color: var(--text);
+}
 
 .messenger-rail-group {
   margin: var(--space-3) 0 0;
@@ -124,8 +139,6 @@
   text-decoration: none;
 }
 
-.messenger-rail-room:hover { background: var(--hover); color: var(--text); }
-
 // The room you are reading. Discord marks this with a lighter ground and full-
 // strength text, which is the whole of it — no rule, no marker, no accent bar.
 .messenger-rail-room[aria-current="page"] {
@@ -145,7 +158,12 @@
   font-weight: var(--weight-bold);
 }
 
-.messenger-rail-name {
+// The name cell of a list row, wherever the window draws one: a room in the rail
+// and a person in the member list. min-width: 0 is the half that matters — a
+// flex item defaults to min-width: auto and will not shrink below its text, so
+// without it the ellipsis never happens and the row overflows instead.
+.messenger-rail-name,
+.messenger-member-name {
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -196,7 +214,11 @@
   line-height: 1.25;
 }
 
-.messenger-room-meta {
+// The meta cell of a list row — the timestamp on a rail room and on an inbox
+// row. flex: none against the name cell's flex: 1, so the name is what gives way
+// when the row is narrow and the time never wraps or truncates.
+.messenger-room-meta,
+.messenger-inbox-meta {
   flex: none;
   color: var(--text-secondary);
   font-size: var(--text-xs);
@@ -256,8 +278,6 @@
   cursor: pointer;
 }
 
-.messenger-rail-invite-copy:hover { background: var(--hover); color: var(--text); }
-
 // The pane is a column: header, log, composer. The log is the only part that
 // scrolls, which is the whole point — a composer that scrolls off the bottom of
 // a conversation is the defect this pane exists to prevent.
@@ -293,9 +313,6 @@
   cursor: pointer;
   text-decoration: none;
 }
-
-.messenger-header-back:hover,
-.messenger-header-action:hover { background: var(--hover); color: var(--text); }
 
 .messenger-header-avatar {
   inline-size: 40px;
@@ -383,14 +400,6 @@
   min-height: var(--tap-min);
 }
 
-.messenger-member-name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .messenger-member-avatar {
   inline-size: 32px;
   block-size: 32px;
@@ -471,8 +480,6 @@
   color: var(--text-secondary);
   cursor: pointer;
 }
-
-.messenger-composer-tool:hover { background: var(--hover); color: var(--text); }
 
 .messenger-composer-record {
   display: flex;
@@ -588,13 +595,6 @@
   color: var(--text-secondary);
   font-size: var(--text-sm);
   line-height: 1.25;
-}
-
-.messenger-inbox-meta {
-  flex: none;
-  color: var(--text-secondary);
-  font-size: var(--text-xs);
-  white-space: nowrap;
 }
 
 .messenger-inbox-meta mark {

@@ -112,7 +112,31 @@ rules:
   # at the pen's own #ccc. That file is in the PEN_ALLOW list, so the literal
   # is counted deliberately rather than treated as palette drift. If the pen
   # is ever re-tokenised, run with GATE_CSS_RATCHET=1 to bring this back down.
-  magic_hex: 139
+  #
+  # 139 -> 77 on 2026-09-09, and 62 of the 64 that left were never component
+  # colour. This row read 140 and had been the deploy blocker for a week on the
+  # recorded reading that the remainder were hardcoded hexes whose reduction
+  # would change what is painted. Enumerated: 59 of the 115 in RAILS were the
+  # fallback half of `var(--token, #hex)` — the shape this same gate already
+  # exempts for `rhythm` through VAR_FALLBACK, because a value inside a fallback
+  # is the token's own declared value and not a literal anyone chose at the call
+  # site. Every one of those tokens is declared unconditionally on :root, so the
+  # fallbacks were unreachable, and they had already drifted apart from each
+  # other: --text carried #333333 in shared and #efefef in amber, --bg named the
+  # dark #000000 under a scheme that defaults light, and --hover's #232030 was
+  # the indigo the one scheme retired. Four more became real tokens
+  # (--color-info into _tokens.scss, amber's duplicate success/warning deleted),
+  # and one was a contrast defect: amber's second prefers-contrast block
+  # restated --border as #2c2824, which is 1.44:1 on #000.
+  #
+  # Recorded at the measured low rather than left loose. The 77 that remain are
+  # 25 in MASTER/web/public/face.css, which this gate also opens, and 52 in
+  # RAILS that are all identity or replica — the pen-allowlisted marketplace nav
+  # bar's Amazon values, the vertical accent map, the categorical monogram
+  # fills, the yep.com recreation, amber's wardrobe gradient, bsdports' status
+  # ambers. Reducing any of those is a colour decision, not a wiring one, so
+  # this row is now a floor and the next raise needs a name.
+  magic_hex: 77
   # Token pairs below WCAG AA (4.5:1) and in the AA..AAA band, as design_metrics
   # counts them. style.yml declares wcag_2_2_aaa; body text earns it (12.51:1
   # dark, 16.26:1 light) and the secondary/accent tier does not. The vertical
@@ -219,7 +243,47 @@ rules:
 # bsdports 64.1KB, each rounded up to the next whole KB. Nothing was measured
 # as debt and nothing is being waved through — this is the first reading, and
 # what it buys is that the next change cannot add weight silently.
+#
+# It bought exactly that on 2026-09-08, and this is the record of it. brgen's
+# build was 202.0KB and comfortably under on 2026-09-05. Then 42fedd139 (the
+# messenger redesign) added 6,129 bytes in one commit and took it to 208.0KB,
+# straight through this ceiling; c0a351b05 added 1,263 more and cdb0998b0 181,
+# ending at 209.4KB. The gate went red and stayed red, and with it every brgen,
+# amber and bsdports deploy — amber sat on a 2026-08-29 commit and bsdports on
+# 2026-08-22 while this row was the thing in the way. Read per commit, the
+# breach is one change, not accumulated drift.
+#
+# 3,123 bytes came back out on 2026-09-09, all of it duplication and none of it
+# paint. The built file was parsed rule by rule and every byte attributed to a
+# source sheet: brgen's _root.scss carried a whole second copy of its light
+# theme inside @media (prefers-color-scheme: light) at the same specificity two
+# lines below the unconditional one (1,061B); _posts.scss restated the seven
+# comment-chrome rules shared/_chat_reactions.scss owns and loads after it;
+# _mobile.scss restated .tab-bar and four .tab-item rules that shared/_tab_bar
+# owns; _forms.scss restated .btn:hover; .visually-hidden was declared three
+# times identically; --feed-max sat in a palette mixin and an app-root mixin
+# both; and the messenger's own new CSS repeated one hover state across six
+# controls and two list-row cells across four rows. Every cut was checked for
+# cascade order first — the merged hover list is stated at the earliest of its
+# six so nothing moves past .messenger-rail-room[aria-current="page"].
+#
+# brgen stays at 206 and now sits AT it, with 89 bytes of room. That is not
+# comfort: the next messenger-shaped commit has to carry its own cut, and the
+# named places to look are the three PP Neue Montreal @font-face blocks (~1KB,
+# pointing at woff2 that do not exist in this app, and a licensing decision the
+# operator owns) and the 153 selectors css_coverage_lint records as unused.
+# What is NOT waste, and was examined and left: the per-file
+# prefers-reduced-motion guards, which look redundant under _animations.scss's
+# global !important reset and are the deliberate survivors of the 4211c4ebb
+# pass — the convention is that a guard lives in the file with the animation it
+# guards, so that moving a sheet cannot orphan it; and _coverage_fills.scss,
+# which is real styling for real classes and holds undefined_class at 0.
+#
+# amber 111 -> 109 and bsdports 65 -> 64, measured the same day. Both fell
+# because the shared engine stopped restating what it already declared, so the
+# saving is real rather than a build artefact, and a number that may fall and
+# never rise is recorded when it falls.
 weight_kb:
   brgen: 206
-  amber: 111
-  bsdports: 65
+  amber: 109
+  bsdports: 64

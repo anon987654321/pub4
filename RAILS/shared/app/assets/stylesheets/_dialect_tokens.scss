@@ -96,7 +96,12 @@
 --radius-card: 12px;
 --radius-lg: 12px;
   --sidebar-width: 275px;
-  --feed-max: 600px;
+  // --feed-max is app-root-tokens', not this mixin's, and it was in both — so
+  // every :root that includes a palette and an app root emitted it twice. The
+  // same category error the --font note above records: a palette is colour, and
+  // a surface that pins one (body.vertical-maps pins dark) has no business
+  // resetting the column width as a side effect. app-root-tokens sets the
+  // identical 600px at every app root, so nothing moves.
 }
 
 // The light half of the one scheme. text #333 on #efefef is 10.99:1 and on #fff
