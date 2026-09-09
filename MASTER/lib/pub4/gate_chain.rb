@@ -139,7 +139,15 @@ module Pub4
                                                 env: { "GATE_AUTOFIX" => scan_only ? "0" : "1" })
     end
 
-    OPENBSD_SUITE = %(Dir["test/test_*.rb"].sort.each { |f| system(RbConfig.ruby, f) || abort(f) })
+    # Every file runs, then the run fails once with all of them named. Aborting
+    # on the first non-zero status leaves the other nine files and their 280
+    # assertions unmeasured behind whichever name sorts first, and reports the
+    # tree as having one broken suite rather than an unknown number.
+    OPENBSD_SUITE = <<~SUITE
+      files = Dir["test/test_*.rb"].sort
+      failed = files.reject { |f| system(RbConfig.ruby, f) }
+      abort("openbsd: \#{failed.size} of \#{files.size} file(s) failed — \#{failed.join(", ")}") if failed.any?
+    SUITE
 
     # Whole suites, not the ones the diff touches: a green over hand-picked tests
     # is unmeasured. This is `bin/pub4 test`'s mapping with every path in it.
