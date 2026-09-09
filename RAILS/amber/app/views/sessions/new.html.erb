@@ -1,6 +1,7 @@
 <div class="auth-form">
   <%= tag.h1 t("auth.sign_in") %>
   <p class="auth-form-lead"><%= t("auth.sign_in_lead") %></p>
+  <%= render "shared/oauth_links" %>
   <%= form_with url: session_path do |f| %>
     <%= render "shared/errors", object: f.object if f.object.respond_to?(:errors) %>
     <div class="field">

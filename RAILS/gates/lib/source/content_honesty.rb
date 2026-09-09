@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "net/http"
-require "uri"
 require_relative "../../../../OPENBSD/lib/deploy_inventory"
 require_relative "../../../../OPENBSD/lib/gate_result"
 require_relative "../../../tools/crawl_support"
@@ -81,7 +79,7 @@ module Deploy
         return @result.inconclusive!("content_honesty: brgen port closed — sitemap not probed")
       end
 
-      res = fetch("http://127.0.0.1:#{inv.port}/sitemap.xml", host: "brgen.no")
+      res = CrawlSupport.fetch("http://127.0.0.1:#{inv.port}/sitemap.xml", host: "brgen.no", timeout: 20)
       code = res.code.to_i
       return @result.fail("content_honesty: sitemap HTTP #{code}") unless code == 200
 
@@ -106,15 +104,6 @@ module Deploy
     def latin_slug?(url)
       slug = url.split("/").last.to_s.downcase
       slug.split("-").any? { |w| MARKERS.any? { |m| w.start_with?(m) } }
-    end
-
-    def fetch(url, host: nil)
-      uri = URI(url)
-      Net::HTTP.start(uri.host, uri.port, open_timeout: 8, read_timeout: 20) do |http|
-        req = Net::HTTP::Get.new(uri.request_uri)
-        req["Host"] = host if host
-        http.request(req)
-      end
     end
   end
 end

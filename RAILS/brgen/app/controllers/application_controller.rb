@@ -2,7 +2,7 @@
 
 class ApplicationController < ActionController::Base
   include Shared::RescueHandlers
-  include Authentication
+  include Shared::Authentication
   include Shared::PunditAuthorization
   include Shared::PagyPagination
   include Shared::VisitCounting

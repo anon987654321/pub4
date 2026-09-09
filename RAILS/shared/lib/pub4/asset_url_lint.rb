@@ -33,10 +33,8 @@ module Pub4
     APPS = %w[amber brgen bsdports].freeze
     TREES = (APPS + %w[shared]).freeze
 
-    # Measured 2026-08-12: 9 reported → 5 recorded, after fixing the one that was
-    # a live bug.
-    #
-    # 9 → 5 was the work. amber's layout links `/lightgallery.css`, amber has no
+    # The baseline is what is left after the one live bug this lint found was
+    # fixed. amber's layout links `/lightgallery.css`, amber has no
     # copy of its own, so it was served `shared/public/lightgallery.css` — whose
     # icon font and spinner live at `../fonts/lg.*` and `../images/loading.gif`,
     # present in `brgen/public` and in no root amber can see. Verified against
@@ -45,7 +43,7 @@ module Pub4
     # rendered as a missing glyph. Four files copied into `shared/public`, which
     # the engine's static middleware serves to all three apps.
     #
-    # The 5 that remain are both deliberate:
+    # The 4 that remain are both deliberate:
     #
     # 3 are pp-neue-montreal-latin-{400,600,700}-normal.woff2, documented in
     # brgen/app/assets/stylesheets/_fonts_brand.scss as a licensed face whose
@@ -54,10 +52,10 @@ module Pub4
     # assumes the fetch fails. Recorded rather than removed: dropping the url()
     # would silently break the documented plan of dropping the files in.
     #
-    # 2 are lg.svg, lightGallery's IE9 fallback, once per vendored copy. It sits
-    # last in a `src:` list behind woff2/woff/ttf, so no browser that exists asks
-    # for it, and adding a file nothing requests is worse than recording it. The
-    # two copies are themselves the register's `rails_duplicate_vendor_css`.
+    # 1 is `../fonts/lg.svg` in shared/public/lightgallery.css, lightGallery's
+    # IE9 fallback. It sits last in a `src:` list behind woff2/woff/ttf, all
+    # three of which are present, so no browser that exists asks for it and
+    # adding a file nothing requests is worse than recording it.
     BASELINES = { "missing_asset" => 4 }.freeze
 
     Finding = Struct.new(:kind, :ref, :sheet, :tried)

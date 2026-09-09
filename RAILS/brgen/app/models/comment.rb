@@ -3,6 +3,9 @@
 class Comment < ApplicationRecord
   include Shared::Votable
   include Shared::CommentThreading
+  # A reply names people as often as a post does. The concern reads :content
+  # and :user_id, both columns here, and skips :title, which comments lack.
+  include Shared::Mentionable
   tracks_activity created: "CommentCreated", source_vertical: "social", actor: :user
 
   belongs_to :user

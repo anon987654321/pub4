@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "net/http"
-require "uri"
 require_relative "../../../../OPENBSD/lib/deploy_inventory"
 require_relative "../../../../OPENBSD/lib/gate_result"
 require_relative "../../../tools/crawl_support"
@@ -66,22 +64,13 @@ module Deploy
       return @result.inconclusive!("payment_honesty: brgen port closed — live cart not probed") unless CrawlSupport.port_open?("127.0.0.1", inv.port)
 
       # Guest cart should redirect to sign-in or show cart — never 500
-      res = fetch("http://127.0.0.1:#{inv.port}/cart", host: "markedsplass.brgen.no")
+      res = CrawlSupport.fetch("http://127.0.0.1:#{inv.port}/cart", host: "markedsplass.brgen.no", timeout: 12)
       code = res.code.to_i
       @result.fail("payment_honesty: cart HTTP #{code}") unless code.between?(200, 399)
       body = res.body.to_s
       @result.fail("payment_honesty: cart shows Exception") if body.include?("Exception") || body.include?("Routing Error")
     rescue StandardError => e
       @result.fail("payment_honesty live: #{e.class}: #{e.message}")
-    end
-
-    def fetch(url, host: nil)
-      uri = URI(url)
-      Net::HTTP.start(uri.host, uri.port, open_timeout: 8, read_timeout: 12) do |http|
-        req = Net::HTTP::Get.new(uri.request_uri)
-        req["Host"] = host if host
-        http.request(req)
-      end
     end
   end
 end

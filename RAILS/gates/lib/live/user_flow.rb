@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "net/http"
-require "uri"
 require "yaml"
 require_relative "../../../../OPENBSD/lib/deploy_inventory"
 require_relative "../../../../OPENBSD/lib/gate_result"
@@ -343,7 +341,7 @@ module Deploy
     def run_live_step(app, step)
       label = step[:label] || step[:path]
       url = "http://127.0.0.1:#{app.port}#{step[:path]}"
-      response = fetch_with_host(url, host: step[:host])
+      response = CrawlSupport.fetch(url, host: step[:host])
       code = response.code.to_i
       range = step[:expect_status]
       ok_status = range.respond_to?(:cover?) ? range.cover?(code) : Array(range).map(&:to_i).include?(code)
@@ -384,15 +382,6 @@ module Deploy
 
       open = CrawlSupport.port_open?("127.0.0.1", brgen.port)
       GuestFlowPersona.new(port: brgen.port).run_brgen_probes!(@result, port_open: open)
-    end
-
-    def fetch_with_host(url, host: nil, timeout: 15)
-      uri = URI(url)
-      Net::HTTP.start(uri.host, uri.port, open_timeout: 8, read_timeout: timeout) do |http|
-        req = Net::HTTP::Get.new(uri.request_uri)
-        req["Host"] = host if host
-        http.request(req)
-      end
     end
   end
 end

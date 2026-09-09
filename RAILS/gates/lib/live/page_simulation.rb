@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 require "json"
-require "net/http"
-require "uri"
 require "yaml"
 require_relative "../../../../OPENBSD/lib/deploy_inventory"
 require_relative "../../../../OPENBSD/lib/gate_result"
@@ -127,7 +125,7 @@ module Deploy
     def simulate_live(page, port)
       entry = base_entry(page).merge("mode" => "live")
       url = "http://127.0.0.1:#{port}#{page[:path]}"
-      response = fetch_with_host(url, host: page[:host])
+      response = CrawlSupport.fetch(url, host: page[:host], accept: "text/html", timeout: 12, open_timeout: 6)
       code = response.code.to_i
       body = response.body.to_s
       findings = []
@@ -340,16 +338,6 @@ module Deploy
       apply_finding(entry, soft(msg))
       entry["ok"] = true
       entry["findings"] = [msg]
-    end
-
-    def fetch_with_host(url, host: nil, timeout: 12)
-      uri = URI(url)
-      Net::HTTP.start(uri.host, uri.port, open_timeout: 6, read_timeout: timeout) do |http|
-        req = Net::HTTP::Get.new(uri.request_uri)
-        req["Host"] = host if host
-        req["Accept"] = "text/html"
-        http.request(req)
-      end
     end
 
     def write_report!(pages, ports_open, live_count)

@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "net/http"
-require "uri"
 require_relative "../../../../OPENBSD/lib/deploy_inventory"
 require_relative "../../../../OPENBSD/lib/gate_result"
 require_relative "../../../tools/crawl_support"
@@ -170,7 +168,7 @@ SCHEMA_FOR_LABEL = {
       end
 
       url = "http://127.0.0.1:#{app.port}#{surface[:path]}"
-      res = fetch(url, host: surface[:host])
+      res = CrawlSupport.fetch(url, host: surface[:host])
       code = res.code.to_i
       unless code.between?(200, 399)
         @result.fail("first_screen: #{label} HTTP #{code}")
@@ -211,15 +209,6 @@ SCHEMA_FOR_LABEL = {
       end
     rescue StandardError => e
       @result.fail("first_screen: #{label} #{e.class}: #{e.message}")
-    end
-
-    def fetch(url, host: nil)
-      uri = URI(url)
-      Net::HTTP.start(uri.host, uri.port, open_timeout: 8, read_timeout: 15) do |http|
-        req = Net::HTTP::Get.new(uri.request_uri)
-        req["Host"] = host if host
-        http.request(req)
-      end
     end
   end
 end

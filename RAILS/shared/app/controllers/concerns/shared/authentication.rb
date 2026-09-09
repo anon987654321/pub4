@@ -3,7 +3,8 @@
 require "bcrypt"
 
 # AN201: Rails 8 authentication baseline (resume_session, has_secure_password, Session model).
-# Guest users when +guest+ column exists (brgen family). Single engine source — apps alias `Authentication`.
+# Guest users when +guest+ column exists (brgen family). The single engine
+# source: every app includes this constant by its full name.
 module Shared
   module Authentication
     extend ActiveSupport::Concern

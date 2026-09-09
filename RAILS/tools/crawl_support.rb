@@ -64,13 +64,19 @@ module CrawlSupport
     end
   end
 
-  def fetch(url, timeout: 15)
+  # The one HTTP client the crawler and every live gate share. `host` sets the
+  # Host header so a request to 127.0.0.1 reaches the right virtual host, and
+  # `accept` narrows the negotiated type.
+  def fetch(url, timeout: 15, open_timeout: 8, host: nil, accept: nil)
     uri = URI(url)
     Net::HTTP.start(uri.host, uri.port,
                     use_ssl: uri.scheme == "https",
-                    open_timeout: 8,
+                    open_timeout: open_timeout,
                     read_timeout: timeout) do |http|
-      http.request(Net::HTTP::Get.new(uri.request_uri))
+      req = Net::HTTP::Get.new(uri.request_uri)
+      req["Host"] = host if host
+      req["Accept"] = accept if accept
+      http.request(req)
     end
   end
 

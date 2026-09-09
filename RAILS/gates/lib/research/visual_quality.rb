@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "net/http"
-require "uri"
 require_relative "../../../../OPENBSD/lib/gate_result"
 require_relative "../../../../OPENBSD/lib/deploy_inventory"
 require_relative "../../../tools/crawl_support"
@@ -199,12 +197,7 @@ module Deploy
     end
 
     def fetch(url, host: nil)
-      uri = URI(url)
-      res = Net::HTTP.start(uri.host, uri.port, open_timeout: 8, read_timeout: 15) do |http|
-        req = Net::HTTP::Get.new(uri.request_uri)
-        req["Host"] = host if host
-        http.request(req)
-      end
+      res = CrawlSupport.fetch(url, host: host)
       return nil unless res.code.to_i.between?(200, 399)
 
       res.body.to_s

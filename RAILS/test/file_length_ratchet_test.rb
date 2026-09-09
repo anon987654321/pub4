@@ -105,7 +105,9 @@ class FileLengthRatchetTest < Minitest::Test
 # and the delta was not the split. The 108 contrast and apca findings —
 # the ones this file is actually responsible for — were byte-identical
 # across all three runs.
-"gates/lib/rendered/rendered_geometry.rb" => 449, # type checks live in geometry_type.rb
+# 449 -> 422: the palette half is rendered_geometry/token_checks.rb, the same
+# split as contrast_checks and for the same reason — colour is not geometry.
+"gates/lib/rendered/rendered_geometry.rb" => 422, # type checks live in geometry_type.rb
     # +6 in cf6e56a52 — an error template is not a route, so the manifest stopped
     # being hand-edited and the inventory learned to tell the two apart.
     # page_inventory.rb left this list on 2026-09-06: 444 -> 288 when the five
@@ -132,7 +134,9 @@ class FileLengthRatchetTest < Minitest::Test
     # +5 in 7ed6920cd — the seeds asked for a visible profile without a photo,
     # which gated every deploy.
     "brgen/db/seeds.rb" => 426,
-    "gates/lib/live/user_flow.rb" => 313,
+    # 313 -> 308: the private Net::HTTP client is CrawlSupport.fetch, which
+    # every live gate now shares.
+    "gates/lib/live/user_flow.rb" => 308,
     "shared/app/assets/stylesheets/_minimal.scss" => 455,
     "shared/app/assets/stylesheets/_zen_shell.scss" => 477,
     "brgen/engines/playlist/app/views/playlist/playlists/_player.html.erb" => 155,

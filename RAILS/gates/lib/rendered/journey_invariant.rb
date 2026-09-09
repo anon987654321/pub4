@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
-require "net/http"
-require "uri"
 require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../../tools/crawl_support"
 require_relative "../../support/geometry_probe"
 
 module Deploy
@@ -156,12 +155,8 @@ module Deploy
     end
 
     def fetch_raw(surface)
-      uri = URI("http://127.0.0.1:#{surface.port}#{surface.path}")
-      Net::HTTP.start(uri.host, uri.port, open_timeout: 8, read_timeout: 15) do |http|
-        req = Net::HTTP::Get.new(uri.request_uri)
-        req["Host"] = surface.host if surface.host
-        http.request(req).body.to_s
-      end
+      url = "http://127.0.0.1:#{surface.port}#{surface.path}"
+      CrawlSupport.fetch(url, host: surface.host).body.to_s
     end
 
     def structural_diff(a, b)
