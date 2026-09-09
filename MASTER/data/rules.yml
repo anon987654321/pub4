@@ -4278,7 +4278,12 @@ rule_ratchets:
     # at :error. Scoped to ruby it fires on nothing here, which is the honest
     # state: this tree contains no unbounded Ruby `retry`, and a correct rule with
     # no subject belongs on this list rather than in a gate as a false finding.
-    silent: 39
+    #
+    # 39 -> 38 on 2026-09-09, and nothing was written to make it fall: nine files
+    # moved out of lib/ground into the namespace whose purpose covers them, and a
+    # rule that had been silent found a subject in its new company. A rule's reach
+    # is a property of where the code sits, not only of what the rule says.
+    silent: 38
 
 
   hygiene:

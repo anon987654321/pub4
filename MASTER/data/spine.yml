@@ -265,7 +265,15 @@ pub4_source_ceilings:
   # pattern that matched, strict denies anything without an allowlist token
   # and would refuse every honest page on the web. A test that does not hold
   # those apart would pass against the wiring that breaks the tool.
-  MASTER: 1040
+  #
+  # 1040 -> 1041 for tools/readme_take.rb. The README's opening image is the face
+  # reading the README aloud, and making one took a session's worth of shell
+  # history: prose extraction, a synthesis per paragraph against data/voice.yml,
+  # a frame-by-frame capture in resumable slices, and two ffmpeg passes. All of
+  # it now runs as rake readme:take. It folds into nothing that exists: the
+  # recorder is a RAILS probe because CdpSession lives there, and the Rakefile is
+  # the wrong home for sixty lines of prose extraction.
+  MASTER: 1041
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
   # it belongs beside the other probes and folds into nothing.
@@ -347,7 +355,16 @@ pub4_source_ceilings:
   # to learn: an icon path resolves from two public roots, the app own and the
   # shared engine which mounts its own ActionDispatch::Static, so a check that
   # reads one of them calls two installable apps broken.
-  RAILS: 2376
+  #
+  # 2376 -> 2371, a fall, and it is worth naming what paid for it because two of
+  # the five were splits that should have cost. amber's copy.en.yml, copy.nb.yml,
+  # validations.en.yml and validations.nb.yml and brgen's chrome_labels.en.yml
+  # and chrome_labels.nb.yml are gone: six files whose own headers said they
+  # existed to avoid touching a locale file another session held open, and whose
+  # keys were being shadowed by the file that sorts last. Against that,
+  # user_flow_design_contracts.rb and rendered_geometry/placement_checks.rb are
+  # two real splits the file-length ratchet asked for, and each is one subject.
+  RAILS: 2371
   # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
   # that are the whole defence against a shared index, and nothing tested any of
   # them — a hook that stopped firing looks exactly like a week in which nobody
