@@ -244,7 +244,16 @@ pub4_source_ceilings:
   # different failure: attention is a weight table, affect is bounded
   # arithmetic, the self-model is a belief set with a pruning rule, state
   # is a schema with a frozen default, and Mind is the loop that runs them.
-  MASTER: 1038
+  # 1038 -> 1039 for test/test_provider_quarantine_wiring.rb. Two methods that
+  # method_graph.rb reported as unreachable turned out to be live defects
+  # rather than dead code: record_and_assess was the only caller of
+  # quarantine and had none itself, so nothing ever wrote an entry and
+  # quarantined? read an empty log while RuntimeRegistry asked it twice; and
+  # stronger_model read one static tier instead of walking ESCALATION_CHAIN,
+  # so escalating twice asked for the same model twice. The file holds both,
+  # because both are the same finding -- a census entry that is a bug, not
+  # sprawl -- and neither existing test file covers routing behaviour.
+  MASTER: 1039
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
   # it belongs beside the other probes and folds into nothing.
