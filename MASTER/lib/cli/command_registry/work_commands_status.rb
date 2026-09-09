@@ -128,29 +128,6 @@ module Master
         []
       end
 
-      # /resync — divergence repair: tag, fetch, reset, bundle, restart.
-      # /tail [N] [pattern] — last N events matching pattern. Default N=20.
-      def dispatch_tail(root:, ctx: nil)
-        arg = arg_for(ctx)
-        n_arg, pattern = arg.split(/\s+/, 2)
-        n = n_arg.to_i.positive? ? n_arg.to_i : 20
-        records = Trace::Log::Event.new(root:).tail(n, pattern:)
-        return "tail: no events" if records.empty?
-
-        records.map do |rec|
-          ts = rec["timestamp"].to_s.sub(/\..+/, "").sub("T", " ")
-          "#{ts} #{rec["event"].ljust(28)} #{format_payload(rec["payload"])}"
-        end.compact.join("\n")
-      rescue StandardError => e
-        "tail: #{e.message}"
-      end
-
-      def format_payload(pay)
-        return pay.to_s[0, 100] unless pay.is_a?(Hash)
-
-        Formatter.key_value_payload(pay)[0, 100]
-      end
-
       def dispatch_fix(fix_loop:, root:, scanner: nil, ctx: nil, arg: nil)
         arg = arg || arg_for(ctx)
         sub, rest = arg.split(/\s+/, 2)

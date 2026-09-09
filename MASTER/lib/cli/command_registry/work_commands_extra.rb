@@ -248,17 +248,6 @@ module Master
         agent.ask_once(Voice::Personality.why_prompt(rule))
       end
 
-      def dispatch_topic(session, ctx: nil)
-        arg = arg_for(ctx)
-        if arg.empty?
-          current = session.respond_to?(:topic) ? session.topic : nil
-          current ? "topic: #{current}" : "no topic set  /topic <description>"
-        else
-          session.topic = arg if session.respond_to?(:topic=)
-          "topic: #{arg}"
-        end
-      end
-
       # Maturity scorecard (OpenClaw's taxonomy.yaml pattern) -- what's
       # actually proven to work, not just claimed. See data/maturity.yml.
       # The 8-law constitutional self-test gate is the single most load-bearing

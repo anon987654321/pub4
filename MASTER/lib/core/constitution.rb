@@ -216,11 +216,18 @@ module Master::Core
       "batch delete refused: #{paths.size} paths — one path at a time"
     end
 
-    def self.batch_delete_rule
-      Rule.new(id: :batch_delete, verbs: %i[exec], judge: lambda { |effect, _memory|
-        reason = batch_delete_reason(effect.args[:argv])
-        reason ? Verdict::Block.new(reason:, by: :batch_delete) : nil
+    # Five rules below share one shape: work out a reason from the effect, and
+    # block under the rule's own id when there is one. The block returns nil to
+    # pass.
+    def self.reason_rule(id, verbs, &reason)
+      Rule.new(id:, verbs:, judge: lambda { |effect, memory|
+        text = reason.call(effect, memory)
+        text ? Verdict::Block.new(reason: text, by: id) : nil
       })
+    end
+
+    def self.batch_delete_rule
+      reason_rule(:batch_delete, %i[exec]) { |effect, _memory| batch_delete_reason(effect.args[:argv]) }
     end
 
     def self.forbidden_file_reason(path)
@@ -231,10 +238,7 @@ module Master::Core
     end
 
     def self.forbidden_file_rule
-      Rule.new(id: :forbidden_file, verbs: %i[write], judge: lambda { |effect, _memory|
-        reason = forbidden_file_reason(effect.args[:path])
-        reason ? Verdict::Block.new(reason:, by: :forbidden_file) : nil
-      })
+      reason_rule(:forbidden_file, %i[write]) { |effect, _memory| forbidden_file_reason(effect.args[:path]) }
     end
 
     def self.scope_creep_reason(path, proof)
@@ -249,10 +253,7 @@ module Master::Core
     end
 
     def self.scope_creep_rule
-      Rule.new(id: :scope_creep, verbs: %i[write], judge: lambda { |effect, memory|
-        reason = scope_creep_reason(effect.args[:path], memory.proof)
-        reason ? Verdict::Block.new(reason:, by: :scope_creep) : nil
-      })
+      reason_rule(:scope_creep, %i[write]) { |effect, memory| scope_creep_reason(effect.args[:path], memory.proof) }
     end
 
     def self.two_hats_reason(message, lines)
@@ -265,12 +266,11 @@ module Master::Core
     end
 
     def self.two_hats_rule
-      Rule.new(id: :two_hats, verbs: %i[git], judge: lambda { |effect, memory|
+      reason_rule(:two_hats, %i[git]) do |effect, memory|
         next nil unless effect.args[:operation].to_s.to_sym == :commit
 
-        reason = two_hats_reason(effect.args[:message], memory.proof.scope[:write_lines])
-        reason ? Verdict::Block.new(reason:, by: :two_hats) : nil
-      })
+        two_hats_reason(effect.args[:message], memory.proof.scope[:write_lines])
+      end
     end
 
     def self.git_clean_all?(argv)
@@ -380,10 +380,7 @@ module Master::Core
     end
 
     def self.new_path_rule
-      Rule.new(id: :new_path_ask, verbs: %i[write], judge: lambda { |effect, memory|
-        reason = new_path_reason(effect.args[:path], memory.proof)
-        reason ? Verdict::Block.new(reason:, by: :new_path_ask) : nil
-      })
+      reason_rule(:new_path_ask, %i[write]) { |effect, memory| new_path_reason(effect.args[:path], memory.proof) }
     end
 
     # The fold blocks on this answer before it admits a write, so a parser that
@@ -421,7 +418,7 @@ module Master::Core
     # is the idiom being measured, not the surface — see TODO.md, "The fold spine
     # had never been scanned". Unlike Memory, this class did not need splitting:
     # its count was the idiom, and Memory's was the design.
-    private_class_method :default_rules, :immutable_hit?, :no_secret_rule, :ruby_parses_rule, :scan_clean_rule,
+    private_class_method :default_rules, :immutable_hit?, :no_secret_rule, :ruby_parses_rule, :scan_clean_rule, :reason_rule,
                          :safe_exec_rule, :sandboxed_exec_rule, :structured_exec_rule, :batch_delete_rule, :delete_operands,
                          :operands_after_flags, :git_clean_all?, :forbidden_file_rule, :scope_creep_rule,
                          :two_hats_rule, :evidence_for_done_rule,
