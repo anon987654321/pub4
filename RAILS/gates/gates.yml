@@ -344,3 +344,13 @@ web_vitals_budget:
   require: lib/rendered/web_vitals_budget
   class: Deploy::WebVitalsBudget
   pass: "ok: LCP and CLS within budget, field collection intact"
+
+# PWA-100 and BRGEN-115. Three manifests, and nothing checked that the icons
+# they declare exist or that brgen's name follows the host's city. An icon
+# resolves from two public roots — the app's and the shared engine's, which
+# mounts its own ActionDispatch::Static — so a check that reads one of them
+# reports two apps as broken when they are not.
+pwa_installable:
+  require: lib/source/pwa_installable
+  class: Deploy::PwaInstallable
+  pass: "ok: three manifests installable, icons resolve, brgen follows its host"

@@ -316,7 +316,17 @@ pub4_source_ceilings:
   # prepends on a tap. It folds into no existing controller: pull_to_refresh
   # reloads on a gesture and typing_controller watches a field, and neither
   # owns a stream that must not paint.
-  RAILS: 2375
+  # 2375 -> 2376 for gates/lib/source/pwa_installable.rb. Three manifests, and
+  # nothing checked that the icons they declare exist or that brgen names the
+  # city it is being served as. It folds into no existing gate: generated_asset
+  # checks build freshness and frontend_production reads the shell, and neither
+  # reads a manifest.
+  #
+  # What it buys beyond the assertion is the one fact that took a wrong answer
+  # to learn: an icon path resolves from two public roots, the app own and the
+  # shared engine which mounts its own ActionDispatch::Static, so a check that
+  # reads one of them calls two installable apps broken.
+  RAILS: 2376
   # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
   # that are the whole defence against a shared index, and nothing tested any of
   # them — a hook that stopped firing looks exactly like a week in which nobody
