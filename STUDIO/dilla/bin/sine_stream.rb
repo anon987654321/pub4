@@ -9,7 +9,7 @@
 # file, because afplay leaves a gap between files and a gap is the one thing
 # this stream is not allowed to have.
 Dir.chdir("/Users/mac/Documents/GitHub/pub4/STUDIO/dilla")
-require "./dilla.rb"
+require_relative "../dilla"
 require "fileutils"
 
 RATE = 44_100
@@ -867,12 +867,20 @@ end
 # chainsaw: a feedback delay of a couple of milliseconds rings at 1/delay, and
 # sweeping the delay sweeps that ring through the harmonic series.
 def comb_resonator!(l, r, hz_from: 118.0, hz_to: 52.0, feedback: 0.72, mix: 0.5)
+  # Floats, and both ends above zero. The sweep is a ratio raised to a power, so
+  # two Integer arguments make hz_to / hz_from an integer division -- 52 / 118 is
+  # 0, the ratio is 0 and the sweep collapses onto hz_from -- and a hz_from of
+  # zero divides by zero before that.
+  from = hz_from.to_f
+  to = hz_to.to_f
+  return if from <= 0.0 || to <= 0.0
+
   n = l.length
   bl = Array.new(n, 0.0)
   br = Array.new(n, 0.0)
   n.times do |i|
     t = i.to_f / n
-    hz = hz_from * ((hz_to / hz_from)**t)
+    hz = from * ((to / from)**t)
     d = (RATE / hz).to_i
     next if i < d
 
@@ -1778,6 +1786,11 @@ ENV["WONKY_TOP_DIRT"] ||= "0.42"
 ENV["WONKY_HAT_DUCK"] ||= "0.55"
 ENV["DRUM_FIELD_MIX"] ||= "0.18"
 
+# Everything above is the synthesis library; everything below is the endless
+# generator. demo_full.rb requires this file for the library alone, so loading it
+# from anywhere but the command line stops here rather than starting a stream.
+return unless __FILE__ == $PROGRAM_NAME
+
 cfg = dilla_resolve_config
 names = CHORD_PROGRESSIONS.keys
 xf = (RATE * XFADE).to_i
@@ -1821,7 +1834,7 @@ loop do
       treat = TREATMENTS[((gi * PER_FILE + ni) * 7 + SALT * 5) % TREATMENTS.length]
       played << "#{name}/#{treat}~#{(flow_at(gi * PER_FILE + ni) * 100).round}"
       # The pads come from the engine's own synths, not from an oscillator in
-      # this file. render_pad_via_fluidsynth plays the chord through a stack of
+      # this file. render_pad_stack! plays the chord through a stack of
       # real SF2 instruments -- Rhodes, Prophet, CS-80, Solina, Juno -- with each
       # patch's own ffmpeg chain after it. A sine with the patch's EQ on it is
       # still a sine, which is why rotating 54 presets sounded like one pad.
@@ -1843,7 +1856,7 @@ loop do
       pl = []
       pr = []
       begin
-        render_pad_via_fluidsynth(tmp, events, dur)
+        render_pad_stack!(tmp, events, dur)
         got = File.file?(tmp) ? read_wav(tmp) : nil
         pl, pr = got[0], got[1] if got
       rescue StandardError => err

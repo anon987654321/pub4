@@ -151,8 +151,28 @@ module Deploy
     end
 
     # Every first-party Ruby file in STUDIO, absolute, sorted.
+    #
+    # An executable with a ruby shebang and no extension is Ruby too, and
+    # dilla/bin/crate is one: 700 lines that fetch, split and register every
+    # sample the engine plays, checked by nothing while the corpus was `*.rb`
+    # alone. Only extensionless files are opened, so no wav or json is read to
+    # ask the question, and vendored paths are excluded before anything is.
     def source_files
-      Dir[File.join(@root, "**", "*.rb")].reject { |path| StudioGate.vendored?(path, root: @root) }.sort
+      rb = Dir[File.join(@root, "**", "*.rb")]
+      scripts = Dir[File.join(@root, "**", "*")].select { |path| ruby_shebang?(path) }
+      (rb + scripts).reject { |path| StudioGate.vendored?(path, root: @root) }.uniq.sort
+    end
+
+    RUBY_SHEBANG = /\A#!.*\bruby\b/
+
+    def ruby_shebang?(path)
+      return false unless File.extname(path).empty?
+      return false if StudioGate.vendored?(path, root: @root)
+      return false unless File.file?(path)
+
+      File.open(path, "rb") { |file| file.readline(256).match?(RUBY_SHEBANG) }
+    rescue StandardError
+      false
     end
 
     private
@@ -218,8 +238,16 @@ module Deploy
       )
     end
 
+    # A tree's glob names its .rb files; an extensionless shebang script beside
+    # them belongs to the same tree, so the trailing *.rb is read as * for those.
+    # Otherwise every script the corpus just gained reports as belonging to no
+    # tree, and the orphan check goes from a finding to a standing warning.
     def owned?(path)
-      @trees.any? { |tree| File.fnmatch?(File.join(@root, tree[:glob]), path, File::FNM_PATHNAME) }
+      @trees.any? do |tree|
+        globs = [tree[:glob]]
+        globs << tree[:glob].sub(/\*\.rb\z/, "*") if File.extname(path).empty?
+        globs.any? { |glob| File.fnmatch?(File.join(@root, glob), path, File::FNM_PATHNAME) }
+      end
     end
 
     # A tree's entry point either loads or it does not, and that is the check

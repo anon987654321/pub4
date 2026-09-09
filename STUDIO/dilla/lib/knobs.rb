@@ -4,9 +4,12 @@ require_relative "engine_sources"
 
 # What every environment knob is, derived from the engine rather than listed.
 #
-# There are 610 of them and nothing said what any one was: not its type, not its
-# default, not its range, not whether the operator sets it or the engine writes
-# it. Four consequences, all of them observed rather than imagined:
+# Every ENV name the engine reads or writes, with the type, default, range and
+# accepted literals its own call sites prove it has, and which side of the line
+# it sits on: an input the operator sets, or a value the engine writes. The count
+# moves with the engine, so it is not written down here -- `dilla knobs` prints
+# it, split into the two halves. Four consequences of having none of this, all of
+# them observed rather than imagined:
 #
 #   SAMPLE_LOOP=1     reads like a switch and is a PATH. Thirteen beats were
 #                     rendered with the flag set to turn samples ON and no

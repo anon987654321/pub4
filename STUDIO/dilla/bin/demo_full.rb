@@ -5,9 +5,11 @@
 # bassline drawn from its own chords, and a vocal that is never heard twice.
 # One pass of the master chain over the whole thing at the end, so the record is
 # mastered as a record rather than take by take.
-Dir.chdir("/Users/mac/Documents/GitHub/pub4/STUDIO/dilla")
-src = File.read("/Users/mac/Music/dilla_sines/sine_stream.rb")
-eval(src.split("cfg = dilla_resolve_config").first) # rubocop:disable Security/Eval
+#
+# The synthesis library is sine_stream.rb's, required from the repo: it holds
+# every voice, effect and chain this file arranges, and its own generator is
+# behind a `__FILE__ == $PROGRAM_NAME` guard, so requiring it starts no stream.
+require_relative "sine_stream"
 require "fileutils"
 
 $stdout.sync = true
@@ -48,7 +50,7 @@ names.each_with_index do |name, ni|
   tmp = "/Users/mac/Music/dilla_sines/df_pad.wav"
   pl = []; pr = []
   begin
-    render_pad_via_fluidsynth(tmp, ev, pads.length * SECS)
+    render_pad_stack!(tmp, ev, pads.length * SECS)
     got = File.file?(tmp) ? read_wav(tmp) : nil
     pl, pr = got[0], got[1] if got
   rescue StandardError

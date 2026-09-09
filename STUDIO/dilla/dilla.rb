@@ -12682,11 +12682,17 @@ end
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-# Per-tool wall-clock cap. Hang-prone fluidsynth/ffmpeg used to block stream
-# forever (waitpid with no timeout). Override: DILLA_SH_TIMEOUT=180.
+# Per-tool wall-clock cap: fluidsynth and ffmpeg hang, and waitpid without one
+# blocks the stream behind them forever.
+#
+# 900 seconds, and the same 900 `dilla ab` hands its children, because this knob
+# has one default or the two sites disagree about what a hang is. It is the
+# longer of the two candidates: a render pass through the master chain runs for
+# minutes on a full arrangement, and a short cap kills a working tool rather than
+# a stuck one. Override: DILLA_SH_TIMEOUT=180.
 def sh_timeout_sec
-  sec = (ENV["DILLA_SH_TIMEOUT"] || "120").to_i
-  sec.positive? ? sec : 120
+  sec = (ENV["DILLA_SH_TIMEOUT"] || "900").to_i
+  sec.positive? ? sec : 900
 end
 
 # Spawn in its own process group so timeout can kill children (ffmpeg forks).
@@ -17221,7 +17227,7 @@ STREAM_EXTRA_DEFAULTS = DILLA_STYLE_DEFAULTS.slice(
   "STREAM_BARS" => "12",
   "STREAM_GAP" => "0.15",
   "STREAM_CROSSFADE" => "0.12",
-  "STREAM_TRACK_TIMEOUT" => "300",
+  "STREAM_TRACK_TIMEOUT" => "420",
   "STREAM_DRUM_ROTATE" => "1",
   # Jonas V vocals — loud, tempo-matched.
   # gunnhild is the only vocal source (operator decision). It is also the harder
@@ -17284,6 +17290,11 @@ def stream_creative_mode?
   ENV["STREAM_CREATIVE"] == "1" || ENV["STREAM_PUNCH"] == "1"
 end
 
+# 420 seconds is the one per-track cap: the stream defaults, the demo's fallback
+# and the help text all name this number, and a knob whose value depends on which
+# of them ran first is a knob nobody can predict. The longer of the two
+# candidates wins for the same reason sh_timeout_sec takes 900 -- a slow track is
+# not a hung one, and skipping it costs the whole render. 0 means no limit.
 def stream_track_timeout_sec
   sec = (ENV["STREAM_TRACK_TIMEOUT"] || "420").to_i
   sec.positive? ? sec : nil
@@ -17369,11 +17380,16 @@ def stream_creative_freedom_enabled?
   stream_iterate_enabled? && ENV.fetch("STREAM_CREATIVE_FREEDOM", "1") != "0"
 end
 
+# Unset RENDER_RETRIES means 2, in both branches and in deep_default_render!. A
+# mode that wants fewer says so in its own defaults hash -- STREAM_ITERATE_TUNING
+# sets 1, STREAM_FAST_DEFAULTS sets 0 -- and that is the only place the number
+# should vary, because a second fallback in the reader is a default no caller can
+# see and no `dilla knobs` line can report.
 def play_render_attempts
   return [STREAM_MAX_RETRIES, (ENV["RENDER_RETRIES"] || "2").to_i].max + 1 if quality_gate_enabled?
   return 1 unless stream_iterate_enabled?
 
-  [(ENV["RENDER_RETRIES"] || "1").to_i, 1].max + 1
+  [(ENV["RENDER_RETRIES"] || "2").to_i, 1].max + 1
 end
 
 def stream_iterate_acceptable?(path)
@@ -19976,8 +19992,8 @@ def demo_all(bars_count = 12, destination = nil)
   end
   log_path = File.join(out_dir, "demo_all.log")
   catalog_path = File.join(out_dir, "catalog.txt")
-  track_timeout = (ENV["DEMO_TRACK_TIMEOUT"] || ENV["STREAM_TRACK_TIMEOUT"] || "300").to_i
-  track_timeout = 300 unless track_timeout.positive?
+  track_timeout = (ENV["DEMO_TRACK_TIMEOUT"] || ENV["STREAM_TRACK_TIMEOUT"] || "420").to_i
+  track_timeout = 420 unless track_timeout.positive?
   force = ENV["DEMO_FORCE"] == "1"
   creative = ENV.fetch("DEMO_CREATIVE", "1") != "0"
   # No vocals in the demo. The demo exists to show the engine's harmony, groove
@@ -28168,7 +28184,7 @@ def help
       STREAM_ITERATE=1 (default)       Auto-refine mix/groove each track; log stream_iterate.log
       STREAM_DEMO=demo.wav (default)   Each stream track overwrites demo.wav (WAV = no mp3 encode)
       STREAM_CREATIVE=1                Opt-in wild layer (LA_BEAT/vinyl/hot LUFS) — off by default
-      DILLA_SH_TIMEOUT=120             Kill hung ffmpeg/fluidsynth after N seconds
+      DILLA_SH_TIMEOUT=900             Kill hung ffmpeg/fluidsynth after N seconds
       DILLA_FS_DRY=1                   Fluidsynth without its own chorus/reverb (pads go ~mono)
       GENRE=hiphop|soul|jazz|techno|lofi   One word for the colour bundle; every knob still overrides it
       GENRE_HARMONY=1                  Techno/industrial/analog take their pitches from the progression

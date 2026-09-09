@@ -865,26 +865,26 @@ module RadioChop
       row
     end
 
-# Merge, not replace. The registry is the only index the engine has: a slug
-# absent from it is a bed the stream and the demo cannot reach, however many
-# loop.wavs sit under DEST. Writing this run's rows alone made every earlier
-# record unreachable the moment a second source was chopped -- 161 playable
-# directories on disk against 5 registered -- which reads as the engine
-# ignoring the crate and falling back to its built-in progressions.
-#
-# This run's own slugs are dropped first, so a re-chop of the same record
-# replaces its rows rather than doubling them, matching the rm_rf above.
-# Rows whose wav has gone are dropped too, for the reason registered_loops
-# gives: a bed that quietly does not play is the hardest absence to notice.
-kept = Array(registry["loops"]).reject do |row|
-  slug = row["slug"].to_s
-  abs = File.absolute_path?(row["path"].to_s) ? row["path"].to_s : File.join(ROOT, row["path"].to_s)
-  slug.start_with?("#{slug_base}_") || !File.file?(abs)
-end
-merged = (kept + loops).sort_by { |row| row["slug"].to_s }
-data = { "version" => 1, "ingested_at" => Time.now.utc.iso8601, "loops" => merged }
-DillaFrozen.write_json(REGISTRY, data)
-puts "chop: #{loops.length} new, #{kept.length} kept -> #{merged.length} registered"
+    # Merge, not replace. The registry is the only index the engine has: a slug
+    # absent from it is a bed the stream and the demo cannot reach, however many
+    # loop.wavs sit under DEST. Writing this run's rows alone made every earlier
+    # record unreachable the moment a second source was chopped -- 161 playable
+    # directories on disk against 5 registered -- which reads as the engine
+    # ignoring the crate and falling back to its built-in progressions.
+    #
+    # This run's own slugs are dropped first, so a re-chop of the same record
+    # replaces its rows rather than doubling them, matching the rm_rf above.
+    # Rows whose wav has gone are dropped too, for the reason registered_loops
+    # gives: a bed that quietly does not play is the hardest absence to notice.
+    kept = Array(registry["loops"]).reject do |row|
+      slug = row["slug"].to_s
+      abs = File.absolute_path?(row["path"].to_s) ? row["path"].to_s : File.join(ROOT, row["path"].to_s)
+      slug.start_with?("#{slug_base}_") || !File.file?(abs)
+    end
+    merged = (kept + loops).sort_by { |row| row["slug"].to_s }
+    data = { "version" => 1, "ingested_at" => Time.now.utc.iso8601, "loops" => merged }
+    DillaFrozen.write_json(REGISTRY, data)
+    puts "chop: #{loops.length} new, #{kept.length} kept -> #{merged.length} registered"
     loops
   end
 
