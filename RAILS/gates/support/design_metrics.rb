@@ -20,9 +20,12 @@ module Deploy
 
     # brgen's vertical accents sit in their own top-level map with no background
     # of their own, so token_pairs -- which only pairs inside one dialect -- never
-    # saw them. They render on the social chrome. Paired against it, marketplace
-    # (#8c7a5e, 4.33:1) and tv (#d6473f, 4.14:1) are both under WCAG AA, and
-    # nothing had reported either.
+    # saw them. They render on the social chrome, and nothing reported them.
+    #
+    # Both accents this found have since been lifted: marketplace is #98876e and
+    # tv is #dc635c in design_tokens.yml, which records tv's own history. The
+    # measurement below is kept because its lesson is about the background, not
+    # about two hex values.
     VERTICAL_BACKGROUNDS = %w[bg surface_elevated].freeze
 
     # Against the surfaces brgen actually paints, which are not social's.
@@ -33,7 +36,7 @@ module Deploy
     # real surfaces are #000000 and #1a1a1a. Every vertical finding was measured
     # against a background the app never renders.
     #
-    # It mattered in both directions. marketplace #8c7a5e reads 3.92:1 on
+    # It mattered in both directions. The marketplace accent read 3.92:1 on
     # social.surface_elevated and 4.19 on the real one — still failing, so the
     # lift was right for the wrong reason. messenger #6b7fd7 reads 4.37 on
     # social's and 4.68 on the real one — it already passed, and was "corrected"

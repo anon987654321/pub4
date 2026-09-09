@@ -48,11 +48,17 @@ module Pub4
     # widened far enough to reach them.
     INTERACTIVE_SELECTOR = /\ba\b|button|\.btn|link|tab|chip|badge|action|:hover|:focus|active|vote|toggle|nav|pill|switch|control|icon|spinner|progress|ring|cursor|caret|brand|logo|accent|input|select|textarea|summary|delete|fav/i
 
-    # All four measured to 0 on 2026-08-21: the light-theme vertical accents
-    # gained darkened same-hue variants, .price dropped the hue its bold
-    # already carries, the image helpers reserve intrinsically and every raw
+    # All four measure 0: the light-theme vertical accents carry darkened
+    # same-hue variants, the image helpers reserve intrinsically, and every raw
     # call site carries its pair or a reserved: container marker. Never raise
     # to silence.
+    #
+    # .price is not one of the four and never was. It still sets
+    # color: var(--accent) at _minimal.scss:474, and INTERACTIVE_SELECTOR above
+    # does not match it, so this lint has never had an opinion about it.
+    # Whether a price should carry the hue its bold already carries is a
+    # rendering decision across marketplace, stores and takeaway, and it is the
+    # operator's.
     BASELINES = {
       "low_contrast" => 0,
       "unreserved_image" => 0,
