@@ -220,6 +220,31 @@ deliberate, the flat pass that stripped every box-shadow is deliberate, the
 on the grounds that it is "more correct". That is a colour change wearing a
 refactor's clothes.
 
+## Reading a design finding (2026-09-09)
+
+Four rules, each learned by a session that fixed the wrong thing first. They sat
+in the backlog for weeks, where a rule is read once; a contract is read before
+every change, which is why they are here.
+
+**A value-preserving snap is a fix. A value-changing one is a decision.** Moving
+a literal into the token that already holds the same value changes nothing on
+screen and needs no one's permission. Moving `13px` onto a `12px` token changes
+what is painted, and belongs to the operator however tidy it looks in the diff.
+
+**A retirement is not finished while a test still names the retired thing.** The
+dead `#dark-toggle` lane survived its own removal in two apps because their tests
+still asserted it, and the tests passed. Grep for the name, not for the code.
+
+**Sticky hover is not a defect until the hovers are classified.** There are 122
+`:hover` rules across these apps and most of them are correct on a touch device
+because they never fire there. A count is not a finding.
+
+**A finding against the design system is usually a finding against the
+instrument.** One pass produced 981 of them and 596 were misreadings of correct
+markup. Before believing a number, check what it measured — the standing example
+is a scan that searched for a bare constant name while every caller wrote it
+qualified, and reported forty dead files that were all alive.
+
 ## Visual design system (2026-07-19)
 
 **Reference:** x.com interaction patterns. Source of truth:
