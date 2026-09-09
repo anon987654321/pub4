@@ -20306,6 +20306,33 @@ voice_stack_every = (ENV["DEMO_VOICE_STACK_EVERY"] || "3").to_i
     # it, which is the right instrument for judging a progression on its own.
     apply_album_slot!(idx)
 
+# Techno changes the kit, not the piece.
+#
+# A techno slot used to call render_hate_techno, which is a second renderer
+# and not a drum option: it builds its own harmony, has no lead at all, and
+# replaces the track. So a third of the demo was never the catalogue's
+# progression on a techno kit -- it was a different piece occupying the
+# slot, and the pads and the lead every other track spent minutes rendering
+# were simply absent. Forcing the kit and letting render_dilla do the rest
+# keeps the pads, the lead and the bass and changes the drums.
+#
+# Above the report, not below it. The dmesg line and the catalogue row both
+# read DRUM_PRESET, so forcing the kit after them recorded the rotation's
+# preset against audio that used this one -- a log saying what did not
+# happen, which is worse than the preset being wrong.
+#
+# Straight time, and both switches are needed: role_timing_offset zeroes the
+# snare only on SNARE_EARLY=0 and the kick only on KICK_LATE=0, so setting
+# one leaves the other leaning. Techno is on the grid; the lean is the other
+# genre's whole signature.
+if demo_techno_slot?(idx, slug)
+  force_env!({ "DRUM_PRESET" => "industrial_techno",
+               "POCKET_SET" => "industrial",
+               "SNARE_EARLY" => "0",
+               "KICK_LATE" => "0" },
+             label: "demo_all[#{idx}] techno kit")
+end
+
     dmesg(
       "render #{idx + 1}/#{order.length} #{slug} " \
       "pad=#{ENV['PAD_VOICE']}/#{ENV['PAD_ARP_MODE']} " \
@@ -20328,52 +20355,7 @@ voice_stack_every = (ENV["DEMO_VOICE_STACK_EVERY"] || "3").to_i
     ok = false
     begin
       Timeout.timeout(track_timeout) do
-        if demo_techno_slot?(idx, slug)
-          # Techno slots go through the industrial renderer instead. Length is
-          # matched to what the hip-hop track would have run to, so the two
-          # sit side by side in a demo rather than one being twice the other.
-          prev = ENV["HATE_MIN"]
-          prev_blocks = ENV["HATE_MIN_BLOCKS"]
-          prev_arrived = ENV["HATE_ARRIVED"]
-          ENV["HATE_MIN"] = ((bars_count * 4 * (60.0 / HATE_BPM)) / 60.0).round(2).to_s
-          # A demo slot is a sample, not a set: one block is a legitimate length
-          # here even though it is not one for a standalone techno render. Without
-          # this the renderer's own floor doubles the slot back and the length
-          # matching on the line above is discarded a second time.
-          ENV["HATE_MIN_BLOCKS"] = "1"
-          # ...and a sample is of the music, not of the way in to it. The arc's
-          # only resolution is the block, so a slot short enough to be two blocks
-          # puts the listener at position 0.0 for the whole first half -- three of
-          # eighteen layers, -50.5 dB against the second half's -14.3. Every
-          # techno slot in the demo had that shape, identical to 0.1 dB across all
-          # 27, because a dead block carries no progression to tell them apart.
-          ENV["HATE_ARRIVED"] = "1"
-          begin
-            dmesg("slot #{idx} -> techno", unit: "demo0", parent: "dilla0")
-            techno_mp3 = part.sub(/\.wav\z/, ".mp3")
-            render_hate_techno(techno_mp3)
-            # Decode, do not rename. The techno renderer writes an mp3, and
-            # moving it onto the .wav path gave the part an extension that lied
-            # about its contents -- every other slot here is pcm_s16le. That
-            # matters at the end of this method, where the parts are joined with
-            # `-c copy`: the concat demuxer probes only the FIRST input and
-            # applies that codec to all of them, so one mp3 in slot 1 makes
-            # ffmpeg copy mp3 packets into a WAV container and exit 0. Nothing
-            # raises, so the re-encode rescue below never fires; the file
-            # does not open (afplay: "AudioFileOpen failed ('dta?')") and
-            # ffprobe reports a duration read from a header that does not
-            # describe the data -- 14.2 minutes for 5.3 minutes of audio.
-            sh! "ffmpeg", "-y", "-loglevel", "error", "-i", techno_mp3,
-                "-c:a", "pcm_s16le", "-ar", SAMPLE_RATE.to_s, "-ac", "2", part
-            FileUtils.rm_f(techno_mp3)
-          ensure
-            prev ? ENV["HATE_MIN"] = prev : ENV.delete("HATE_MIN")
-            prev_blocks ? ENV["HATE_MIN_BLOCKS"] = prev_blocks : ENV.delete("HATE_MIN_BLOCKS")
-            prev_arrived ? ENV["HATE_ARRIVED"] = prev_arrived : ENV.delete("HATE_ARRIVED")
-          end
-        else
-          render_dilla(part, bars_count)
-        end
+render_dilla(part, bars_count)
       end
       ok = demo_part_rendered?(part)
     rescue Timeout::Error
@@ -29161,6 +29143,27 @@ def hate_forbid_tonal!
   true
 end
 
+# The cavern, and why the percussion is out of it.
+#
+# The metal and chirp voices ran a bit crusher into four echo taps reaching
+# 1130 ms, then a flanger or phaser, then a 1.8 stereo spread. That is a
+# distorted tunnel, and on a track that is only drums it is the sound. In a mix
+# it is a smear: every hit arrives again, late, across the whole stereo field,
+# and the pads and the bass have to be heard through it.
+#
+# The crusher stays. The grit is the genre; the cavern is what competes.
+# HATE_TUNNEL=1 puts the tails back.
+def hate_tunnel? = ENV.fetch("HATE_TUNNEL", "0") != "0"
+
+TUNNEL_STAGES = %w[aecho flanger aphaser].freeze
+
+def without_tunnel(chain)
+  return chain if hate_tunnel?
+
+  chain.reject { |stage| TUNNEL_STAGES.any? { |name| stage.start_with?(name) } }
+       .map { |stage| stage.sub(/stereotools=slev=[\d.]+/, "stereotools=slev=1.1") }
+end
+
 def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp3"))
   require_tools! "ffmpeg"
   if hate_forbid_tonal!
@@ -29685,7 +29688,7 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
              ]))
 
   noise.call(:metal, "white", gather.call(metal_per_bar), 0.9, 5, 0.30,
-             drum_chain.call([
+             drum_chain.call(without_tunnel([
                "bandpass=f=3100:w=260",
                "bandpass=f=4700:w=200",
                "afreqshift=shift=-37",
@@ -29694,7 +29697,7 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
                "aecho=0.8:0.7:170|330|610|1130:0.5|0.32|0.18|0.09",
                "highpass=f=900",
                "stereotools=slev=1.8",
-             ]))
+             ])))
 
   noise.call(:tom, "brown", gather.call(tom_per_bar, :ghost), 0.5, 7, 0.34,
              drum_chain.call([
@@ -29740,14 +29743,14 @@ def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp
                   "sin(2*PI*(#{f}*#{dt}+#{(f * 0.4).round(1)}*#{dt}*#{dt}))"
               }
             }.join("+"),
-            drum_chain.call([
+            drum_chain.call(without_tunnel([
               "acrusher=bits=7:samples=1:mix=0.45",
               "highpass=f=500",
               "aecho=0.7:0.6:#{(step * 1500).round}|#{(step * 3000).round}|#{(step * 4500).round}:0.42|0.26|0.14",
               "aphaser=speed=0.9:decay=0.55:delay=2",
               "pan=stereo|c0=1.0*c0|c1=0.35*c1",
               "stereotools=slev=1.6",
-            ]))
+            ])))
 
   tone.call(:bloop,
             HATE_CYCLE_BARS.times.flat_map { |b|
