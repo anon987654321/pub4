@@ -54,7 +54,8 @@ without an argument about taste. The charter is one repo-level file, not a
 per-directory one — `lib/ground/README.md:16` reads as though `PATH_OWNERSHIP.yml`
 sits beside it, and it does not.
 
-`lib/ground` is down to 51 files from seventy-one. Nineteen left on 2026-09-09:
+`lib/ground` is down to 57 files from seventy-one — 50 at the top level and
+the rest nested under policy/ and tool/. Nineteen left on 2026-09-09:
 providers and what they cost went to `io` (`provider_registry`, `runtime_registry`,
 `model_quota`, `model_skip_cache`, `quota_gate`), three external surfaces followed
 (`antigravity`, `dynamic_tools`, `ingress_jobs`), `git_hooks` and `key_rotator` went
