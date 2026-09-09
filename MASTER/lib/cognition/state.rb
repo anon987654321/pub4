@@ -54,15 +54,16 @@ module Master
         @data = self.class.deep_merge(self.class.deep_dup(DEFAULT), data)
       end
 
-      def affect = @data.fetch("affect")
-      def drives = @data.fetch("drives")
-      def identity = @data.fetch("identity")
-      def workspace = @data.fetch("workspace")
-      def self_model = @data.fetch("self_model")
-      def thoughts = @data.fetch("thoughts")
-      def metrics = @data.fetch("metrics")
-      def last_tick_at = @data.fetch("last_tick_at", 0)
-      def ticks = @data.fetch("ticks", 0)
+      # One reader per section of the schema, from the schema. Nine of these were
+      # written out, each `@data.fetch("<its own name>")`, which is the same
+      # method nine times and put the class over the god-class ceiling on nothing
+      # but transcription. Generating them keeps DEFAULT the single statement of
+      # what a state has: add a section there and its reader exists.
+      #
+      # Every key is present because #initialize deep-merges DEFAULT, so fetch
+      # without a fallback is the right strictness — a missing section is a bug
+      # in the merge, not a case to paper over.
+      DEFAULT.each_key { |section| define_method(section) { @data.fetch(section) } }
 
       def remember_workspace(item)
         @data["workspace"] = ([item] + workspace).uniq { |entry| entry["key"] }.first(MAX_WORKSPACE)
