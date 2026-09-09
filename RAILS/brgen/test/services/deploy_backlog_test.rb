@@ -74,7 +74,7 @@ class DeployBacklogTest < Minitest::Test
     # declaration of that constant — an ActiveRecord model for an
     # `authentications` table no migration in any app creates — sat at
     # shared/app/models/authentication.rb, where the path maps to a top-level
-    # `Authentication` that each app's own concerns/authentication.rb already
+    # `Authentication`. The three per-app shims that used to define it are gone;
     # defines. Zeitwerk shadowed the model, so this constant resolved to a Module
     # and `.table_exists?` raised NoMethodError on every OAuth callback. This
     # assertion used to require that call. ExternalIdentity is the persistence,
