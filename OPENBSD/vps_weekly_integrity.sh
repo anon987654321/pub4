@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
-# Weekly vm23 integrity + public health (serial, mutex-aware). Install in root crontab or daily.local.
+# Weekly vm23 integrity + public health (serial, mutex-aware). OPERATOR.sh
+# installs it to /usr/local/bin and etc/crontab.vm23 runs it Sunday 03:30.
 set -eu
 
 ROOT="${PUB4_ROOT:-/home/dev/pub4}"

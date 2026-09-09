@@ -38,9 +38,9 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
 # renew-certs — weekly ACME renewal (stage-1 installs renew-certs.sh)
 0 2 * * 1 /usr/local/bin/renew-certs.sh >> /var/log/cert-renewal.log 2>&1
 
-# uptime-check — public /up on every apps.yml host. Installed to
-# /usr/local/bin so root cron does not exec the checkout. Wrapper lives
-# in OPENBSD/usr/local/bin/uptime-check.sh.
+# uptime-check — public /up on every apps.yml host, plus the master face.
+# Installed to /usr/local/bin so root cron does not exec the checkout; it
+# reads apps.yml as data instead. Source: OPENBSD/usr/local/bin/uptime-check.sh.
 */5 * * * * /usr/local/bin/uptime-check.sh >> /var/log/uptime-check.log 2>&1
 
 # prune-guests — nightly guest-row hygiene, because nothing runs the job queue.
@@ -74,3 +74,11 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
 # brgen when that service is up, so a second supervisor does not appear under
 # load. amber and bsdports stay on the hourly drain.
 5 * * * * /usr/local/bin/drain-jobs.sh >> /var/log/drain-jobs.log 2>&1
+
+# weekly-integrity — integrity_gate plus a public health pass, once a week.
+#
+# No redirect: the script writes /var/log/pub4/weekly_integrity.log itself, so
+# anything cron mails root is a failure of the wrapper rather than of a gate.
+# It takes the pub4 CI lock and stands down when a deploy holds it, and 03:30
+# on a Sunday is the quietest hour on a box this small.
+30 3 * * 0 /usr/local/bin/vps_weekly_integrity.sh

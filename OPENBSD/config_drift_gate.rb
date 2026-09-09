@@ -3,8 +3,8 @@
 
 # encoding: utf-8
 
-# Fails when a security-critical config on vm23 does not match its tracked
-# OPENBSD/etc mirror byte-for-byte.
+# Fails when a security-critical config or scheduled script on vm23 does not
+# match its tracked OPENBSD/ mirror byte-for-byte.
 #
 # The doas keepenv root-RCE stayed live in production for days while the repo and
 # TODO.md both called it fixed, because nothing ever compared the mirror against
@@ -27,11 +27,10 @@ require_relative "lib/utf8"
 # The repo is found, not assumed to be one level up.
 #
 # daily.local runs the INSTALLED copy at /usr/local/bin — root must not execute a
-# file the dev user can rewrite — and from there `..` is /usr/local, so ETC was
-# /usr/local/etc and every one of the eleven comparisons found no repo mirror.
-# The gate warned eleven times, `next`ed past each without recording anything,
-# and exited 0 reporting "clean (0 verbatim configs)". It had been reporting
-# clean while comparing nothing.
+# file the dev user can rewrite — and from there `..` is /usr/local, so a mirror
+# resolved relative to this file lands on /usr/local/etc and every comparison
+# finds no repo mirror. That is a gate reporting "clean" while comparing
+# nothing, so the checkout is searched for rather than inferred.
 #
 # Reading the checkout is safe in a way that executing it is not: root compares
 # bytes it never runs, so the escalation the installed copy exists to close stays
@@ -40,23 +39,49 @@ ROOT = [ENV["PUB4_ROOT"], File.expand_path("..", __dir__), "/home/dev/pub4"]
        .compact
        .find { |dir| File.file?(File.join(dir, "OPENBSD", "etc", "doas.conf")) } ||
        File.expand_path("..", __dir__)
-ETC = File.join(ROOT, "OPENBSD", "etc")
+MIRROR = File.join(ROOT, "OPENBSD")
 
+# Repo mirror => live path, for every file installed byte-for-byte.
+#
+# /etc is half of it. The other half is /usr/local/bin, where every root cron
+# job on this box lives: the load guard, the drift check, the certificate
+# renewal, the uptime check, the two jobs that keep the working set resident.
+# A hand-edit there changes what vm23 does on a schedule, and the same argument
+# that makes /etc worth comparing makes those worth comparing.
+#
+# The key is a repo path rather than the live path with its slash stripped
+# because four of these ship from the tree root: OPERATOR.sh installs them with
+# `install` while the rest arrive as a `cp -R usr/. /usr/`.
 VERBATIM = {
-  "doas.conf" => "/etc/doas.conf",
-  "pf.conf" => "/etc/pf.conf",
-  "httpd.conf" => "/etc/httpd.conf",
-  "rc.conf.local" => "/etc/rc.conf.local",
-  "login.conf" => "/etc/login.conf",
-  "newsyslog.conf" => "/etc/newsyslog.conf",
-  "ssh/sshd_config" => "/etc/ssh/sshd_config",
-  "rc.d/master" => "/etc/rc.d/master",
-  "rc.d/brgen" => "/etc/rc.d/brgen",
-  "rc.d/amber" => "/etc/rc.d/amber",
-  "rc.d/bsdports" => "/etc/rc.d/bsdports",
+  "etc/doas.conf" => "/etc/doas.conf",
+  "etc/pf.conf" => "/etc/pf.conf",
+  "etc/httpd.conf" => "/etc/httpd.conf",
+  "etc/rc.conf.local" => "/etc/rc.conf.local",
+  "etc/login.conf" => "/etc/login.conf",
+  "etc/newsyslog.conf" => "/etc/newsyslog.conf",
+  "etc/ssh/sshd_config" => "/etc/ssh/sshd_config",
+  "etc/rc.d/master" => "/etc/rc.d/master",
+  "etc/rc.d/brgen" => "/etc/rc.d/brgen",
+  "etc/rc.d/amber" => "/etc/rc.d/amber",
+  "etc/rc.d/bsdports" => "/etc/rc.d/bsdports",
+  "usr/local/bin/config-drift-check" => "/usr/local/bin/config-drift-check",
+  "usr/local/bin/core-reclaim.sh" => "/usr/local/bin/core-reclaim.sh",
+  "usr/local/bin/drain-jobs.sh" => "/usr/local/bin/drain-jobs.sh",
+  "usr/local/bin/keep-warm.sh" => "/usr/local/bin/keep-warm.sh",
+  "usr/local/bin/nsd-resign" => "/usr/local/bin/nsd-resign",
+  "usr/local/bin/prune-guests.sh" => "/usr/local/bin/prune-guests.sh",
+  "usr/local/bin/prune_guests.rb" => "/usr/local/bin/prune_guests.rb",
+  "usr/local/bin/relayd-watchdog" => "/usr/local/bin/relayd-watchdog",
+  "usr/local/bin/renew-certs.sh" => "/usr/local/bin/renew-certs.sh",
+  "usr/local/bin/uptime-check.sh" => "/usr/local/bin/uptime-check.sh",
+  "resource_guard.sh" => "/usr/local/bin/resource_guard.sh",
+  "emergency_cpu.sh" => "/usr/local/bin/emergency_cpu.sh",
+  "config_drift_gate.rb" => "/usr/local/bin/config_drift_gate.rb",
+  "lib/utf8.rb" => "/usr/local/bin/lib/utf8.rb",
+  "vps_weekly_integrity.sh" => "/usr/local/bin/vps_weekly_integrity.sh",
 }.freeze
 
-EXCLUDED = %w[relayd.conf mail/smtpd.conf litestream.yml acme-client.conf].freeze
+EXCLUDED = %w[etc/relayd.conf etc/mail/smtpd.conf etc/litestream.yml etc/acme-client.conf].freeze
 
 REMOTE = ARGV.include?("--remote")
 SSH_HOST = ENV.fetch("SSH_HOST", "dev@brgen.no")
@@ -101,25 +126,25 @@ def split_stream(out, paths)
 end
 
 def report(drift, missing, compared, unfound)
-  EXCLUDED.each { |name| puts "config-drift: #{name.ljust(22)} skip - templated or generated (not verbatim)" }
-  compared.each { |name| puts "config-drift: #{name.ljust(22)} ok" }
+  EXCLUDED.each { |name| puts "config-drift: #{name.ljust(34)} skip - templated or generated (not verbatim)" }
+  compared.each { |name| puts "config-drift: #{name.ljust(34)} ok" }
 
   # The denominator, always. "clean" without it is the shape of every gate in
   # this tree that has ever passed having measured nothing: it reads identically
   # whether eleven files matched or the gate could not find a single one.
   if drift.empty? && missing.empty? && unfound.empty?
-    puts "config-drift: clean (#{compared.size}/#{VERBATIM.size} verbatim configs match live /etc)"
+    puts "config-drift: clean (#{compared.size}/#{VERBATIM.size} verbatim files match the live copy)"
     return
   end
 
-  unfound.each { |name| warn "config-drift: #{name}: no repo mirror under #{ETC}" }
+  unfound.each { |name| warn "config-drift: #{name}: no repo mirror under #{MIRROR}" }
   warn "config-drift: compared #{compared.size}/#{VERBATIM.size} — a gate that compares nothing is not a passing gate" if compared.empty?
   missing.each { |name| warn "config-drift: #{name}: live file missing or unreadable on vm23" }
   drift.each do |name, detail|
-    warn "config-drift: #{name}: DRIFT - live /etc differs from OPENBSD/etc"
+    warn "config-drift: #{name}: DRIFT - the live copy differs from OPENBSD/#{name}"
     warn "  #{detail}"
   end
-  warn "config-drift: sync (doas zsh OPENBSD/OPERATOR.sh) or copy the live edit back into OPENBSD/etc/"
+  warn "config-drift: sync (doas zsh OPENBSD/OPERATOR.sh) or copy the live edit back into OPENBSD/"
 end
 
 unless REMOTE || on_vps?
@@ -134,7 +159,7 @@ unfound = []
 live_map = live_files(VERBATIM.values)
 
 VERBATIM.each do |repo_rel, live_path|
-  repo_path = File.join(ETC, repo_rel)
+  repo_path = File.join(MIRROR, repo_rel)
   unless File.file?(repo_path)
     # Recorded, not merely warned. `next` alone left this out of every tally, so
     # a gate that could not find the repo at all still exited 0.

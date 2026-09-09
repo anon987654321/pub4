@@ -150,8 +150,15 @@ rc_pre() {
     _gate_rc=$?
     if [ "$_gate_rc" != "0" ]; then
       logger -t master "assets gate failed, forcing fresh precompile and retrying once: $_gate_out"
-      (cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:precompile) 2>/dev/null || true
-      echo "$_digest" > "$_stamp"
+      # Same rule as the stamp above, and this is the path where breaking it
+      # hurts most: the gate has already said the assets are wrong, so stamping
+      # a precompile that failed makes every later start skip the retry.
+      if (cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:precompile) 2>/dev/null; then
+        mkdir -p /home/dev/pub4/MASTER/web/tmp
+        echo "$_digest" > "$_stamp"
+      else
+        logger -t master "retry precompile failed — stamp not written, the gate below decides the start"
+      fi
       _gate_out=$(cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec ruby "$_gate" "$_gate_name" 2>&1)
       _gate_rc=$?
       if [ "$_gate_rc" != "0" ]; then

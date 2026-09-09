@@ -278,6 +278,23 @@ sync_openbsd_apply() {
     return 1
   fi
 
+  # resource_guard.sh's crisis tier is guarded the same way and installed from
+  # the same place. LOAD_CRIT runs `/usr/local/bin/emergency_cpu.sh` when it is
+  # executable and logs "emergency_cpu not installed" when it is not, so without
+  # this line the top tier of the load guard can only ever write that line.
+  if ! install -m 755 "${SCRIPT_DIR}/emergency_cpu.sh" /usr/local/bin/emergency_cpu.sh; then
+    log ERROR "emergency_cpu.sh install failed — resource_guard's crisis tier would only log"
+    return 1
+  fi
+
+  # crontab.vm23 schedules the weekly integrity run, and install_tracked_crontab
+  # refuses a command that is not on the box. root runs the installed copy for
+  # the same reason daily.local does: the checkout is dev-writable.
+  if ! install -m 755 "${SCRIPT_DIR}/vps_weekly_integrity.sh" /usr/local/bin/vps_weekly_integrity.sh; then
+    log ERROR "vps_weekly_integrity.sh install failed — the weekly integrity run would go unscheduled"
+    return 1
+  fi
+
   # daily.local runs this as ROOT, and it guards on `[ -x /usr/local/bin/... ]`,
   # so the guard is exactly as load-bearing as the install. Nothing installed it:
   # config_drift_gate.rb sits at the repo root rather than under usr/local/bin/,
