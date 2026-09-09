@@ -890,15 +890,26 @@ guidance:
 # was missing. ops re-measured down, 251 to 234.
 #
 # Measured once at the rename. Down only from here.
+# 2026-09-09: four keys re-based, and not one line of code was written. Nine
+# files left lib/ground for the namespace whose declared purpose covers them --
+# providers and quotas and three external surfaces to lib/io, the turn-framing
+# to lib/cli, work and verification to lib/fix -- so io read 598 over while
+# ground sat on 831 of slack. The four together moved by ten body lines, which
+# is the rounding of a `module Ground` becoming a `module Io`.
+#
+# Re-based rather than left, because this table reads a directory's budget as a
+# statement about that directory, and a key carrying another directory's lines
+# says nothing about either. Slack is the same defect as debt here: 831 lines of
+# room in ground is 831 lines the next change grows into without an argument.
 loc_body_budgets:
   lib/boot: 227
   lib/builder: 252
-  lib/cli: 6080
+  lib/cli: 5892
   lib/core: 682
   lib/design.rb: 270
-  lib/fix: 2643
-  lib/ground: 5899
-  lib/io: 3545
+  lib/fix: 2854
+  lib/ground: 5068
+  lib/io: 4143
   lib/ops.rb: 234
   lib/pub4: 470
   lib/rails: 925
