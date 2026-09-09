@@ -166,9 +166,11 @@ module Deploy
     #
     # Warming here rather than raising the timeout keeps the budget meaningful:
     # after this, 20s of browser time does mean the page is wedged.
-    # Net::HTTP rather than CrawlSupport.fetch, which cannot set a Host header --
-    # and the Host is the whole point for the vertical subdomains, which all
-    # resolve to the same port and are told apart by it.
+    # Net::HTTP directly rather than CrawlSupport.fetch: this warms a surface and
+    # throws the response away, so it wants neither the redirect following nor
+    # the body handling the shared client does. The Host still matters — the
+    # vertical subdomains all resolve to the same port and are told apart by it —
+    # and CrawlSupport.fetch does take a host: now, if this ever needs it.
     def self.warm_surfaces(rows)
       Array(rows).map { |s| [s.host, s.port] }.uniq.each do |host, port|
         next unless host && port
