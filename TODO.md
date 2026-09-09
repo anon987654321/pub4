@@ -31,6 +31,57 @@ mentioned.
 
 ## MASTER
 
+### The tree should explain MASTER — 2026-09-09
+
+The operator's standard: a reader should be able to infer what MASTER is from the
+shape of its directories. `lib/` reads *boot, builder, cli, core, fix, ground,
+io, pub4, rails, review, trace, voice* today, and most of those names carry their
+own meaning. The one that does not is `ground`, and the reason is not its name:
+`lib/ground/README.md` and `PATH_OWNERSHIP.yml` both give it a charter —
+constitution, config, policy, memory, schema — and seventy-one files have
+accumulated in it, of which about twenty-five are none of those things.
+
+So this is not a renaming exercise. **Every directory here already declares its
+purpose in `PATH_OWNERSHIP.yml`, and the work is to put each file under the
+purpose that matches it.** `io/` is "tools and external actions"; `ground/` is
+the law and what the law reads. That single test settles most of the twenty-five
+without an argument about taste.
+
+Done on 2026-09-09, both verified with `rake autoload` and the suite:
+
+- **Providers and what they cost left `ground` for `io`** — `provider_registry`,
+  `runtime_registry`, `model_quota`, `model_skip_cache`, `quota_gate`. Which
+  provider answers and whether MASTER may spend a call on it is the outside
+  world, not the law. `runtime_registry` had to move with them: it calls
+  `ProviderRegistry` unqualified, which resolves only while both sit in the same
+  module — the trap that also hides a caller from a census.
+- **Three external surfaces followed**: `antigravity` (reads another tool's
+  workspace), `dynamic_tools` (an HTTP tool registry), `ingress_jobs` (webhook
+  and cron definitions, whose runner was already `io/ingress_runner.rb`).
+
+Still in `ground` and belonging elsewhere, by subject:
+
+- *Session and attention*: `attention_context`, `intent_router`,
+  `subagent_context`, `brain_overlay` — these are how a turn is framed, which is
+  `cli`'s subject.
+- *Work and verification*: `checkpoint`, `patch_verifier`, `unfinished_ledger`,
+  `done_checker`, `content_dedup_scan` — `fix` owns the loop that uses them.
+- *Operator surface*: `git_hooks`, `key_rotator`, `operator_playbook`.
+- *File and text mechanics*: `atomic_write`, `frontmatter`, `parameterized_slug`,
+  `unified_diff_editor`. These have no home that matches, and inventing a
+  `util/` is how a tree stops explaining anything. The honest options are to
+  fold each into its one real caller or to name what they actually are.
+- *Catalogue readers*: `map`, `runtime_catalog`, `maturity_scorecard`,
+  `research_thresholds`, `mobile_web_cluster_catalog`, `bootstrap_docs`,
+  `principle_map_repair` — each is a typed reader over one `data/` file, which
+  is arguably `ground`'s "schema" clause and arguably its own subject.
+
+Two cautions for whoever continues. A move is a constant rename, so check for
+callers that write the bare name inside the same module before moving anything —
+`PressureEngine` looked dead to a qualified-name census and is constructed on
+every boot in `builder.rb:165`. And `growth` charges one per file either way, so
+a move is free but a split is not.
+
 ### Left open at the close of 2026-09-08
 
 Everything here was measured in this session and is not recorded elsewhere in
@@ -56,12 +107,13 @@ would keep the old fallback for anyone whose payload fails to load.
 **The deploy is incomplete, and the blocker is not in MASTER.** master is at
 HEAD and serving; brgen, amber and bsdports are not. amber has been on
 `54fb1d990` since 2026-08-29 and bsdports on `480239f89` since 2026-08-22.
-brgen's CI now clears the rhythm lint and its whole Rails suite, and stops at
-`css_constitution magic_hex` — **140 against a ceiling of 139**. Seven of the 140
-sit in the three vertical stylesheets touched by `7c704bf0b`, one of four commits
-another session left unpushed beneath this one. It needs either the ceiling
-recorded with the reason those accent inks are raw hex, or the hexes moved into
-tokens. Neither is a call to make on another session's deliberate values.
+brgen's CI now clears the rhythm lint and its whole Rails suite, and stopped at
+`css_constitution`. **The blocker was never only `magic_hex`**, which is the part
+this entry got wrong: that row fell to 77 on 2026-09-09 and `css_constitution`
+still fails, on brgen's built `application.css` at 209KB against a 206KB ceiling
+— a second and independent rule that predates the colour work and that nothing
+here had named. A row that is red for two reasons reads as one reason to whoever
+fixes the first.
 
 **Two deploy hazards, both paid for once already.**
 
@@ -82,17 +134,25 @@ describes as the front door rather than a backend. `relayd -n` validated, and
 `doas rcctl restart relayd` restored it. Check `rcctl check relayd` after any
 deploy that restarts master.
 
-**Eleven amber translation keys are defined twice with different values.**
-`config/locales/copy.en.yml` and `en.yml` both define `en.ai.*`; Rails loads
-locale files alphabetically, so `en.yml` wins and `copy.en.yml`'s eleven strings
-are dead copy someone wrote to be read. "Analysis unavailable" versus "No
-analysis for this garment yet." is the shape of all eleven. brgen has nine
-collisions too, but with identical values, so those are only redundancy. The
-files cannot be concatenated — the winner has to be chosen per key.
+**Closed 2026-09-09, and the record here was wrong twice.** amber's collisions
+were not eleven but thirty-four, twenty of them with differing values, once the
+Norwegian files and `validations.*` were counted. brgen's were not "identical
+values, so only redundancy": two of its nine differed and `nb.yml` — the file
+that wins — held the worse half of both, so the app was rendering *Likes* on a
+Norwegian page and *Omtalt* for a mention, which in this app's own vocabulary
+says *reviewed*. Both apps are folded to one home per key (`6d659ff39`,
+`f02cc1512`), and `locale_contract_test` now fails on any key defined in two
+files of the same app and locale, naming which file renders and which is dead.
+It checks within a directory and not across them, because across directories the
+shadowing *is* the override mechanism.
 
-**The one scheme has three follow-ups.** `magic_hex` is untouched at 140 because
-those are hardcoded hexes in components, not token fallbacks; reducing them
-changes what is painted and wants the owner. `vertical_accents` still gives
+**The one scheme has three follow-ups.** `magic_hex` fell 140 → 77 on 2026-09-09
+(`4c794b750`), and the sentence that stood here — that these were "hardcoded
+hexes in components, not token fallbacks" — was the opposite of true: fifty-nine
+of the hundred and forty were the fallback half of `var(--token, #hex)`, the
+exact shape the same gate already exempts for `rhythm`, and several had drifted
+from the token they were supposed to mirror. Believing that sentence is why the
+row sat untouched for a week. `vertical_accents` still gives
 marketplace, tv, dating and the rest their own ink, and a greyscale scheme has
 to decide whether one accent survives for interactive affordance — a link with
 no colour needs an underline instead. And `--danger` is deliberately the one
@@ -552,7 +612,7 @@ its only reader is what a wiring file means, and folding those five would build
 the god class the limit exists to prevent. Others point at a web controller from
 `lib/`, which would invert the layering.
 
-Also landed here, and not sprawl in the end: `lib/ground/antigravity/` folded
+Also landed here, and not sprawl in the end: `lib/io/antigravity/` folded
 into `antigravity.rb` (3 files), and `STUDIO/dilla/lib/spectral_audit_run.rb`
 into `spectral_audit.rb` behind `$PROGRAM_NAME == __FILE__` — a second file
 whose only caller was the usage line in its own header, and the one file in
@@ -752,7 +812,7 @@ over `lib/` names 31, of which two are lone-file directories —
 `MASTER/lib/cli/propose/candidate_sources.rb` and
 `MASTER/lib/review/repo_ecology/co_change_graph.rb` — and the rest are under 25
 code lines. The cheapest are the ones whose constant nothing outside names:
-`MASTER/lib/security_error.rb` at 3 code lines, `MASTER/lib/ground/antigravity.rb`
+`MASTER/lib/security_error.rb` at 3 code lines, `MASTER/lib/io/antigravity.rb`
 at 9, `MASTER/lib/review/review_crew/agents.rb` at 8 (already an autoload ignore,
 so a pure require aggregator), `MASTER/lib/fix/constants.rb` at 10. But `lib/` is
 under `Zeitwerk::Loader.push_dir(lib, namespace: Master)`
@@ -1275,7 +1335,7 @@ this section already names.
 
 `rake selftest` reports **12 findings, re-measured 2026-09-04** — 1 LINEARITY, 2
 ABSTRACTION, 9 DENSITY, and 0 for every other law. It was 0 on 2026-08-19, and
-six of the twelve are in `lib/ground/antigravity/`, a directory that did not
+six of the twelve are in `lib/io/antigravity/`, a directory that did not
 exist when that measurement was taken. The table and the reasoning are under
 "From the 2026-09-04 MASTER audit" below; this section keeps the history of how
 the count was driven to 0 the first time, because the method is what transfers.
