@@ -162,18 +162,11 @@ non-grey, which is why 37 of the remaining `contrast_below_aaa` pairs are it.
 `OPENBSD/vps_ci.sh`, which is worth knowing given brgen's city hosts are meant
 to be driven from it.
 
-**`self_findings.law` reads 290 against a ceiling of 289, and the extra one is
-not landed.** It comes from another session's uncommitted `STUDIO/dilla/dilla.rb`
-and `lib/analog_synth.rb` — 335 insertions dirty in the tree at the close. The
-ceiling stays at 289: `spine.yml` already records that a ceiling raised to fit
-uncommitted files is the swallowing it exists to refuse. Re-record after that
-work lands, and read the member list rather than the number.
-
-**Two other sessions were committing into this checkout through the afternoon** —
-`agent/messenger` at 17:33 and `agent/marketplace` at 17:53 — and both went out
-beneath a push from this one. `STUDIO/dilla/` is dirty from a third, with an
-untracked `renders/analog_test/`, left alone. Nothing in git separates sessions;
-read the commit body before claiming or disclaiming one.
+**`self_findings.law` wants re-recording against the landed dilla work.** It
+read 290 against a ceiling of 289 while `STUDIO/dilla/dilla.rb` and
+`lib/analog_synth.rb` were dirty; that work is committed now, so the row can be
+re-measured. Read the member list rather than the number, and do not raise the
+ceiling to meet it — `spine.yml` records that as the swallowing it refuses.
 
 ### The external 10/10 roadmap, read against the tree — 2026-09-08
 
@@ -213,57 +206,6 @@ against the tree rather than accepted. Verdicts, not a re-listing.
   failure, park the tier, carry the skip into the verdict, re-probe on backoff.
 - *SPRAWL-100 merge by concept not line count* — already the recorded finding,
   in the sprawl section above, arrived at by measurement.
-
-**Confirmed open, and already recorded here with more precision than the
-roadmap carries.**
-
-- *MASTER-115 scope-aware structural analysis* — correct, and the survey named
-  two more of the same shape: `FILE_LAYOUT` flags the first private method of
-  every file (233 findings, all false), and `TRAILING_COMMAS` and
-  `DOUBLE_QUOTES_RUBY` are broken identically.
-- *MASTER-116 audit never silently stops* — correct. `rake audit` reached six of
-  twenty-three gates. Its three `selftest` blockers were fixed on 2026-09-08, so
-  it reaches all of them today, but the abort-on-first-failure shape is
-  unchanged and `Rakefile:158` documents it as deliberate. The fix the roadmap
-  asks for — report *passed / failed / skipped / unavailable / prerequisite
-  failure* — is the right one and is not done.
-- *SPRAWL-105 swarm: wire or delete* — confirmed exactly.
-  `Review::Swarm::Coordinator` is constructed at `lib/builder/ai_boot.rb:32`,
-  placed in the bundle as `swarm:`, and the key is never read: 99 of 278 body
-  lines unreached.
-- *SPRAWL-106 resolve `control_commands`* — confirmed. It occurs once in the
-  whole repo, its own `def`, so `/orders` and `/soul` are not commands — and
-  `data/state.yml` still tells the reader orders run "via /orders".
-- *SPRAWL-104 dead Session command machinery* — 167 methods in `lib/` are named
-  nowhere across all four trees, carrying 649 body lines. Verify dynamic
-  reachability first, as the roadmap says; the `?`-predicate and
-  qualified-constant traps recorded above are how that census goes wrong.
-
-**Half-built, and the gap is measurable.**
-
-- *MASTER-100 intent is the primary interface* — `MASTER/bin/master
-  "<instruction>"` already is that entry point, and `TurnRouter` and
-  `CLI::IntentRouter` route it. But the intent table is thin: of the
-  roadmap's own four examples, `IntentRouter#classify` answers
-  `:redesign_mobile_pwa` for "fix the broken mobile navigation" and
-  `:run_full_workflow` for "clean up MASTER itself", and **`:unknown` for both
-  "why isn't the homepage realtime?" and "run the relevant tests"**. So the item
-  is not "build a natural-language interface" — it is "the classifier returns
-  unknown for half its canonical examples", which is a much smaller and testable
-  piece of work.
-
-**Genuinely new.**
-
-- *PERF-100 Core Web Vitals* — no LCP, CLS or INP measurement exists anywhere in
-  MASTER or RAILS. `layout_stability_lint.rb` is CLS-adjacent by name and
-  measures source, not paint. This is the largest genuinely absent capability in
-  the roadmap.
-- *MASTER-134/135/136 local model bootstrap, benchmark, offline mode* — the
-  `agy` provider gives a keyless fallback, but nothing detects hardware, installs
-  a runtime, benchmarks it, or names offline as a capability state.
-- *MASTER-101 boot receipt* — `boot_checks.rb`, `bin/doctor` and `boot_phases.rb`
-  each hold part of it; nothing emits one deterministic receipt of
-  constitution + rules + providers + capabilities + degradations.
 
 **Landed 2026-09-08 evening, and what the numbers were.**
 
@@ -632,161 +574,6 @@ four purpose-built probes whose self-checks are stated with each finding. Every
 item names a file and a line. The last two subsections say what is not worth
 chasing and which findings are least certain.
 
-The headline is that the payment for `spine.lib_body_ceiling` already exists.
-`lib/` is 38110 body lines against a ceiling of 37464, and 167 unreferenced
-methods in it account for 649 of those lines.
-
-**`rake audit` stops at its third gate, so seventeen gates never run.** The task
-list is `dogfood constitution selftest studio core_smoke security_sweep lint:*
-loc_budget` (`MASTER/Rakefile:742`). `selftest` aborts on three violations
-(`Rakefile:160`), and the process ends there. Running each remaining gate by
-hand found sixteen green and four red: `studio`, `lint:data_singularity`,
-`lint:spine` and `loc_budget`. None of the four was visible from the audit's own
-output. The Rakefile already carries the comment that a gate nobody calls has
-stopped measuring without anyone deciding it should; a gate behind an early abort
-is the same condition with a different cause. The fix is not to make the audit
-lenient — it is to clear the two blockers below, and meanwhile to say in the
-audit's failure line how many gates it did not reach.
-
-**Two of `selftest`'s three violations are the SINGULARITY law firing on three
-generated ceiling files.** `MASTER/data/cohesion_census.yml:1` and
-`MASTER/data/data_reach.yml:1` are reported for a top-level `members` key that
-`MASTER/data/code_reach.yml` also defines. All three are committed ratchet files
-written by `tools/cohesion.rb:310`, `tools/data_reach.rb` and
-`tools/code_reach.rb:39`, and in each one `members` is the *subject* of a finding
-— the list of families, unnamed keys or unreached files — not a configuration
-value with two sources. That is exactly the case `SINGULARITY_EXEMPT_REGISTERS`
-was created for at `MASTER/lib/review/scan/self_test.rb:240`, where
-`doc_baselines.yml` is exempted with that reasoning written out. Add the three
-census files there, or rename each key to `family_members`, `unnamed_members` and
-`unreached_members` so no exemption is needed. Either unblocks seventeen gates.
-The third violation is real and small: `parse_through_flags` at
-`MASTER/lib/cli/command_registry/work_commands_extra.rb:60` is 26 code lines
-against a limit of 20.
-
-**`FILE_LAYOUT` reports the convention it exists to enforce as a violation.**
-`MASTER/lib/review/scan/rules/structural_rules.rb:23` finds the first bare
-`private` line in the file and then, at line 25, takes the first `def` after it
-that is not `def self.`, `initialize`, `to_s` or `inspect` — with no notion of
-visibility or scope. The first private method of every class therefore matches.
-Verified by instantiating `FileLayoutRule` and running it over
-`MASTER/lib/cli/pipeline/through.rb`, a file whose order is exemplary: it
-reported line 96, `def build_sections`, the first method under the `private` at
-line 94. Over all 428 files in `lib/` it produces 233 findings; a Prism walk that
-tracks visibility per class says 227 of them are private instance defs, and the
-six it disagreed about are all inside `class << self` blocks my walker skipped,
-so the true rate is 233 of 233. `FILE_LAYOUT` is on `RULE_RETUNE_IDS`
-(`MASTER/lib/review/scan/constitution_triage.rb:46`), which is where a broken
-detector goes to be forgotten: the entry is correct that the rule is noisy and
-wrong that the answer is retuning. The fix is a scope-aware check — a def below
-`private` is public only after an explicit `public`, or inside a nested scope —
-after which the id comes off the retune list.
-
-**167 methods in `lib/` are named nowhere in the repo, and they carry 649 body
-lines.** The instrument is token frequency, not a call matcher: every
-identifier-shaped token in every text file across all four trees is counted, and
-a method whose name occurs only on its own `def` line is unreferenced. Counting
-bare tokens has no boundary to get wrong, which matters because all three
-recorded matcher bugs here are boundary bugs — `\b` after an escaped `foo?`, a
-lookbehind excluding `.`, a lookbehind excluding `:`. It errs toward calling a
-method live. Removing a dead method removes the references its body made, so the
-pass iterates; four rounds settled. Protected from the census, because the
-instrument cannot see them: names reached by an interpolated `send` (the prefixes
-`do_`, `section_` and `visit_` were harvested from `lib/` itself), setters, Ruby
-and Prism hooks, and any name defined more than once. Self-check: `Expression.
-for_council` at `MASTER/lib/voice/expression.rb:49` reads dead while
-`for_council_persona` at `:303` reads live, which is the distinction a
-lookbehind-based matcher loses. The two largest clusters are the next two
-findings; the rest is a long tail of one- and two-line methods, and the full list
-is reproducible from the probe described here.
-
-**The `Session` slash-command surface is a previous dispatch mechanism left
-standing.** `MASTER/lib/cli/session/command_ops.rb` holds twenty unreferenced
-private methods worth 103 body lines — `run_rails_pwa_fix` at `:68`,
-`run_rails_pwa_audit` at `:50`, `run_propose` at `:231`, `run_why` at `:148`,
-`run_phase` at `:179` and down to the endless `run_rollback` at `:101` and
-`run_redo` at `:103`. `MASTER/lib/cli/session/repl_flow.rb:99` is the only thing
-that routes a slash command inside the session, and it handles four —
-`help`, `exit`/`quit`, `undo`/`rollback`, `clear` — before falling through to
-`run_input`, which goes to `CommandRegistry`. `NL_DISPATCH` at
-`repl_flow.rb:81` sends to two methods by symbol, and `toggle_chips` at
-`command_ops.rb:215` is the twin of the `toggle_focus` it names — the pair
-`cross_file_analysis.rb` reports as one shared structure, one half of which is
-dead. Delete the twenty.
-
-**The swarm coordinator is constructed and never called.**
-`MASTER/lib/builder/ai_boot.rb:32` builds `Review::Swarm::Coordinator` (only when
-`MASTER_FULL_BOOT=1`) and `ai_boot.rb:20` puts it in the bundle as `swarm:`.
-Grepping `lib`, `bin` and `web/app` for `:swarm]`, `.swarm` and `swarm:` finds
-the two constructions and three event names, and no read of the key. Its whole
-public surface is therefore unreached: `dispatch` at
-`MASTER/lib/review/swarm/coordinator.rb:174`, `analyse_and_review` at `:180`,
-`fan_out` at `:191`, `dispatch_parallel` at `:212`, `worker_roles` at `:222` and
-`swarm_vote` at `:228`, plus the private thread machinery beneath them — 99 body
-lines of 278. `MASTER/test/test_swarm.rb` exercises `build_swarm_result` through
-`send` and `WORKER_CLASSES`, so the tests do not contradict this. Decide whether
-the swarm is a feature: wire it to a caller, or delete it. Leaving a
-parallel-review engine in the container with no reader is the inert-wiring shape
-this repo keeps paying for.
-
-**`control_commands` is never merged, so `/orders` and `/soul` are not
-commands.** `MASTER/lib/cli/command_registry.rb:157` builds a table with
-`"orders"` and `"soul"` in it, and the name `control_commands` occurs exactly
-once in all four trees — its own `def`. Every other builder in the registry
-(`agent_commands`, `core_commands`, `domain_commands`, `media_commands`,
-`memory_commands`, `reach_commands`, `system_commands`) is called from
-`command_registry.rb`; this one is not. Twenty-eight body lines hang off it:
-`dispatch_orders` at `:164`, `run_due_orders` at `:177`, `dispatch_soul` at
-`:183`, and downstream `Voice::Soul#propose_from_violations` at
-`MASTER/lib/voice/soul.rb:53`. The scheduler itself is live —
-`ai[:standing].wire_container` runs at `MASTER/lib/builder.rb:225` — so what is
-missing is only the operator surface for 222 body lines of standing orders. Merge
-`control_commands` into `build`, or delete it and say in `data/state.yml` that
-orders are event-driven only; that file's comment currently claims they run "via
-/orders".
-
-**Twenty-five registered `dispatch_*` methods are not named by any command
-table.** In `MASTER/lib/cli/command_registry{,/*}.rb` there are 73 `dispatch_*`
-definitions and 37 distinct symbols passed to `command(`. Diffing them, then
-keeping only names whose token count across the repo is one, leaves 25 methods and
-98 body lines with no route: `dispatch_rules` at
-`MASTER/lib/cli/command_registry/work_commands.rb:191` (19 lines),
-`dispatch_tail` at `work_commands_status.rb:137`, `dispatch_map` at
-`work_commands.rb:90`, `dispatch_topic` at `work_commands_extra.rb:255`, and on
-down to the endless `dispatch_rollback` and `dispatch_redo` at
-`command_registry.rb:90` and `:92`, both superseded by `"rollback" =>
-command(:dispatch_undo, undo)` at `:42`. `dispatch_map` alone strands six
-`map_*_report` helpers at `work_commands.rb:104-132`; the transitive closure is
-what the 649-line figure counts.
-
-**Sixteen LLM tool wrappers write one `execute` sixteen times.**
-`MASTER/lib/io/llm.rb` is 234 lines of which the great majority is the same
-method: `result = @tool.call(<coerced params>)` then `result.ok? ? <format> :
-"Error: #{result.message}"`. See `:30`, `:42`, `:55`, `:67`, `:80`, `:91`,
-`:104`, `:115`, `:127`, `:140`, `:157`, `:172`, `:186`, `:200`, `:212` and
-`:224`. `cross_file_analysis.rb` reports three of these as structural clones; the
-file itself already shows the fix it wants, because `ToolInitializer` at `:17`
-was extracted from the same repetition one method earlier. Give that module an
-`execute` driven by the declared `param` names, with a class-level success
-formatter for the three variants (`result.value!`, `"Written: …"`, `"Replaced in:
-…"`) and a per-class hook for the two that differ — `SearchFiles` at `:80`
-renames `path` to `glob` and `context` to `context_lines`, and `DynamicHttp` at
-`:224` parses JSON and rescues. Worth roughly forty body lines and, more, one
-place to change when the error convention changes.
-
-**Four rule builders in the constitution are one shape written four times.**
-`MASTER/lib/core/constitution.rb` pairs a `*_reason` predicate with a `*_rule`
-wrapper that is identical every time but for two names: `batch_delete_rule` at
-`:219`, `forbidden_file_rule` at `:233`, `scope_creep_rule` at `:251` and
-`new_path_rule` at `:382`, with `two_hats_rule` at `:267` the same plus one
-guard. `cross_file_analysis.rb` reports them as two structural-clone pairs, and
-locating them needed a local probe because that class builds every finding at
-line 1 of a virtual path (`cross_file_analysis.rb:315`). A private
-`reason_rule(id, verbs:) { |effect, memory| … }` collapses the four to four
-blocks. `lib/core` is 769 body lines against a 682 budget, so this is 87 lines
-overdue in the one subsystem whose file count is a ratcheted invariant and cannot
-absorb the overage by splitting.
-
 **`cohesion.rb`'s constant column is wrong wherever a directory's files reopen
 one module, and the census does not say so.** `ruby MASTER/tools/cohesion.rb
 MASTER/lib/cli/command_registry` proposes `agent_commands.rb ->
@@ -850,7 +637,7 @@ killed most of them: `MASTER/lib/cli/session/command_handlers.rb:70` "calls"
 Two survive reading and are worth doing.
 
 `MASTER/lib/pub4/gate_chain.rb` is the clearest. It is `module_function` at `:52`
-with no `private` marker anywhere, its sole entry point is `run` at `:224`, and
+with no `private` marker anywhere, its sole entry point is `run` at `:232`, and
 its only caller is `MASTER/bin/pub4:74`. A reader of the repo's most-used command
 meets twenty helpers — `stages` at `:61`, `council`, `act_on`, `picks_in`,
 `gate`, `rails_gates`, `suites`, `sprawl`, `capture`, `dirty`, `verdict`,
@@ -870,54 +657,6 @@ at `:585`), and `MASTER/lib/review/llm_dispatcher.rb:15`, `:18` and `:20`
 and `:375`). Move each next to its one reader. This is cosmetic and safe, and it
 is what the convention means by constants used only deep inside going last.
 
-**`TRAILING_COMMAS` and `DOUBLE_QUOTES_RUBY` are the same kind of broken as
-`FILE_LAYOUT`, at 264 and 233 findings.** `TRAILING_COMMAS`
-(`MASTER/lib/review/scan/rules/ruby_rules.rb:228`) matches any line that is only
-a double-quoted string, in or out of a collection. Reproducing the rule body over
-`lib/` gives 273 hits, of which 34 sit on the last line of a `# pub4 backlog
-
-The single backlog for the whole repo. One file, at the root, replacing the
-per-tree lists that used to drift out of sight of one another: `MASTER/DEBT.md`,
-`RAILS/TODO.md`, `RAILS/BLOCKERS.md`, and the `OPENBSD/data/debt.yml` register.
-
-Authority order is unchanged: `MASTER/data/soul.yml` > `MASTER/data/rules.yml` >
-the root `CLAUDE.md` > the per-tree contract. Feature truth is still
-`RAILS/apps.yml`; horizon (aspirational, agent: ignore) is still
-`RAILS/apps.horizon.yml`. The decision records — `MASTER/DECISIONS.md` and
-`OPENBSD/DECISIONS.md` — are rationale, not backlog, and stay where they are.
-
-How to read this file. Each tree has its own top-level section, and everything
-in it is open. **A record is deleted when it closes** — `git log` holds the
-history, and a backlog that keeps every item it ever had teaches the reader to
-skim. What survives a close is the false positive worth not re-discovering:
-those live under "Debt — resolved records" and are guards, not history.
-
-One habit this repo learned the hard way, and it governs every finding below:
-**a finding is a hypothesis; re-measure before working from one.** Naive
-pattern-matching over this tree produces mostly false positives, and several of
-the entries here were themselves stale when written. Verify the instrument
-before the finding.
-
-An item leaves this file when a check proves it, not when it stops being
-mentioned.
-
-**Forward work is the last section of this file**, merged from `WISHLIST.md` on
-2026-09-06.
----
-
--continued string
-— `MASTER/lib/boot/runtime.rb:158` is one — where adding the comma the message
-asks for is a SyntaxError. It declares no autofix, so this is noise rather than a
-hazard, but a rule whose advice would break the file cannot be gated on.
-`DOUBLE_QUOTES_RUBY` (`MASTER/lib/review/scan/rules/cosmetic_rules.rb:125`) gives
-268 hits of which 148 are single quotes nested inside a `#{}` interpolation of a
-double-quoted string, where double quotes are impossible:
-`MASTER/lib/builder.rb:130` and
-`MASTER/lib/cli/command_registry/agent_commands.rb:48` are the pattern. Both need
-the same treatment as `FILE_LAYOUT` — fix the detector, then take the id off
-`RULE_RETUNE_IDS` — and both should be fixed in the same sitting, since the three
-together are 730 of the 2195 findings in the retune bucket.
-
 **The biggest subjects in `lib/`, and whether each absorbs.** Ranked by
 `CodeMetrics.body_lines`: `MASTER/lib/review/scan/rules/surface_rules.rb` 518,
 `structural_rules.rb` 473, `MASTER/lib/voice/speech.rb` 471,
@@ -929,30 +668,13 @@ together are 730 of the 2195 findings in the retune bucket.
 `RuleDSL.rule` calls and already carry `SMALL_FILES` findings; splitting them
 moves lines rather than removing them, so they pay nothing toward the ceiling and
 should be left alone until someone wants them split for reading.
-`work_commands.rb` is the one that absorbs: 83 of its 367 body lines are the
-unrouted `dispatch_*` methods and their stranded helpers above. `speech.rb` and
-`expression.rb` each shed a little to the dead-method list (9 lines in
-`expression.rb`) and a little more to the late-constant move. By directory, counting only the files directly in each, `lib/ground` is the largest subject at 4387 body lines over 64 files, then `lib/io` at 3450 over 46 and `lib/review/scan/rules` at 3239 over 16.
-
-**`/help` documents ten of the thirty-nine registered commands.** `HELP_TOPICS`
-at `MASTER/lib/cli/command_registry/help.rb:8` holds `through status undo commit
-model pair doctor help clear why`. Enumerating the string keys of every
-`command(`/`Command.new` table in `lib/cli/command_registry{,/*}.rb` gives 39,
-so `help_text` at `:67` answers "help: unknown command /dilla" for a command that
-works, and `Session#unknown_command`
-(`MASTER/lib/cli/session/command_handlers.rb:17`) prints that answer. The
-twenty-nine undocumented are `brgen btw capture context diag diff dilla domain
-dreams fold memory music orders photograph plan postpro propose rebuild reload
-repligen rollback rtk security-audit shell snapshot soul tools tree verify` —
-`orders` and `soul` among them only because `control_commands` never merges. Note
-that `command_registry.rb:33` calls this a "closed public surface", so the
-divergence may be deliberate; if it is, the wrong half is `help_text`'s wording,
-not the table.
+`speech.rb` and `expression.rb` each shed a little to the late-constant move.
+By directory, counting only the files directly in each, `lib/ground` is the largest subject at 4387 body lines over 64 files, then `lib/io` at 3450 over 46 and `lib/review/scan/rules` at 3239 over 16.
 
 **The remaining named findings from `rake constitution`, already located by the
 scanner.** `ABC_SIZE` fires three times over its ratchet of 40:
 `MASTER/lib/voice/emotion.rb:20` `#analyze` at 74.7,
-`MASTER/lib/cli/session/command_ops.rb:264` `#run_critique` at 42.2, and
+`MASTER/lib/cli/session/command_ops.rb:24` `#run_critique` at 42.2, and
 `MASTER/lib/ground/phase_gates.rb:103` `#automatic_gate_met?` at 41.4. The first
 is the only one worth a sitting. `FILE_VAGUE_NAME` has one finding,
 `MASTER/lib/cli/routing/provider_quarantine_manager.rb:1` — "manager" is a
@@ -1006,17 +728,6 @@ this one on any machine without vips. Worth knowing before someone reads it as a
 regression.
 
 #### Least certain of the above
-
-The `/help` divergence is the one most likely to be intended; the "closed public
-surface" comment argues both ways.
-
-The 649-line dead-method figure is the aggregate I trust least at the margins.
-The two largest clusters and five individual entries were hand-verified and the
-instrument's self-check distinguishes `for_council` from `for_council_persona`
-correctly, but the long tail of one-line methods has not been read one by one,
-and a name reached through a `send` form my prefix harvest missed would be a
-false positive. Verify each entry against its own call graph before deleting it,
-not the total.
 
 `NO_PUTS` in `gate_chain.rb` may be the rule's exemption rather than a finding; I
 did not read the rule's statement closely enough to say.
@@ -1333,12 +1044,9 @@ this section already names.
 
 **agent-ignore** — triage only when the task explicitly targets scan rules.
 
-`rake selftest` reports **12 findings, re-measured 2026-09-04** — 1 LINEARITY, 2
-ABSTRACTION, 9 DENSITY, and 0 for every other law. It was 0 on 2026-08-19, and
-six of the twelve are in `lib/io/antigravity/`, a directory that did not
-exist when that measurement was taken. The table and the reasoning are under
-"From the 2026-09-04 MASTER audit" below; this section keeps the history of how
-the count was driven to 0 the first time, because the method is what transfers.
+`rake selftest` reads 0, and this section keeps the history of how the count was
+driven there the first time, because the method is what transfers. Read the live
+figure from the task, never from here.
 
 The 1 of 2026-08-18 — `god class Constitution is 348 lines` — closed the way the
 2026-08-12 idiom findings did: the count was the instrument, not the design.
@@ -1356,11 +1064,9 @@ true for the commit that carries it and no further: it has been 0, 1, 2, 3, 6 an
 7 on different days of the same fortnight, and a "clean since" claim in
 `START_HERE.md` was already stale once.
 
-`test/test_heartbeat.rb` passes at the count above — 7 runs, 12 assertions, 0
-failures on 2026-09-04. The note here that
-`self_test_heartbeat_publishes_clean_scan_metrics` fails *because* the count is
-non-zero no longer holds, so the count is not gated by that test and a
-non-zero `selftest` is currently visible only to whoever runs the task.
+`self_test_heartbeat_publishes_clean_scan_metrics` does not fail on a non-zero
+count, so nothing gates this number: a non-zero `selftest` is visible only to
+whoever runs the task.
 
 Triage each new finding as: true violation to fix / scanner false positive / rule
 exemption needed / rule threshold too strict / known debt to leave alone.
@@ -2395,12 +2101,6 @@ asserted. It is gitignored.
 of `raise`. Its last test walks `soul.yml` and fails if any declared hook
 produces no effect, so the state this record described cannot return quietly.
 
-#### The tier2 ordering guarantee — closed 2026-09-05
-
-`TIER2_QUALITY_RULE_IDS` is now `%w[NO_GOD_CLASS FEATURE_ENVY FEW_ARGUMENTS]`,
-the scanner ids that actually exist. The test asserts those ids are on the live
-scanner, not on a Struct it constructed.
-
 #### The YAML lexical bridge now compiles nothing — closed 2026-09-05
 
 `YamlDeclarativeRule` remains the escape hatch for a `detect_lexical` with no
@@ -2487,12 +2187,6 @@ Still open, and each is a decision rather than a sweep:
 - **133 registry rules sit outside `rule_deps`.** No longer ungated: it is a
   ratchet row, `rule_deps.ungraphed`, floor 133 and down only. A rule outside
   the graph is one `RuleOrder` cannot sequence.
-
-#### `zsh` reference tables — closed 2026-09-05
-
-`zsh_style_lines` now reaches `forbidden_commands`, `native_patterns`,
-`ssh_reading` and `token_economics` as well as `banned_commands`.
-`banned_commands` is still the only list `Io::Shell` warns on.
 
 #### Nine of sixteen line budgets are over, and `law/` is nearly double
 
@@ -3013,22 +2707,6 @@ somebody can make in a sentence. `speech.rb` at 475 and
 of somewhere unrelated to make the number look right would be the accounting the
 budget exists to prevent.
 
-#### The 2026-09-05 pass costs `growth.master` two files and `growth.studio` one
-
-Same accounting, named for the same reason. Five gates gained the tests this
-file kept asking for — `rule_hygiene`, `autofix_reach`, `SemanticRule`'s
-language scope, the registry audit's shipped-rule filter, and `Consensus`'s
-model pool — and the two tool tests were written as one file rather than two,
-because they read one subject. `test_semantic_rule_scope.rb` and
-`test_consensus.rb` are the net additions to MASTER. STUDIO's is
-`test_dilla_radio_bergen_study.rb`, which MASTER lost in the same move, so the
-repo total is unchanged and the two trees traded a file.
-
-`lib/` came out level: the `visit` extraction returned 33 lines and the fifteen
-rule fixtures, the `three_mirror_pool` accessor and the language scope spent 35,
-so `spine.lib_body_ceiling` reads 2 above where the session opened and
-`lib/review` 5 below.
-
 #### Instrument notes
 
 - **There is no `edge-tts` binary to look for, and the gem is spelled with
@@ -3111,85 +2789,14 @@ so `spine.lib_body_ceiling` reads 2 above where the session opened and
   `rules.yml`. A grep for the key name finds the file and says nothing about
   which document it came from.
 
-### MASTER cannot be asked to read a file — closed 2026-09-05
-
-Two causes, both closed. `IntentRouter` classifies `read CLAUDE.md` as
-`inspect_repo`, so it is not casual. Local CLI is the operator surface and no
-longer sets `Fiber[:master_visitor]` for a missing `web_token` — that flag is
-web-request only. Pipe mode honors ARGV. `Tool::Profile` reads
-`agent_taxonomy.yml#toolset_groups`. Visitors on ai.brgen.no still cannot reach
-the Fold.
-
-### Tooling I wanted while doing the work above — 2026-09-05
-
-Written from one long session spent inside the rule system: the rules file, the
-fix loop's ordering, the coverage gate, the TTS probe, and tests for fifteen rule
-classes. Every item is something that cost time in that session rather than
-something that sounds good, and each says what it cost. Two candidates were cut
-on checking, which is the point of checking: `bin/pub4 measure` already prints
-every ratchet with its ceiling **and** names slack beneath one, so both wishes I
-had about ratchets were already built. Read that command before wishing for
-anything in its neighbourhood.
-
-They are ordered by how much time each would have saved.
-
-**1. A mutation harness — done.** `rake mutate[lib/foo.rb,test/test_foo.rb]`
-flips comparators, nudges integers, inverts reject/select, runs the test,
-restores. Survivors fail the task.
-
-**2. One documented way to get findings out of the scanner — done.**
-`Scanner#findings(paths)` returns a flat array of hashes with `:path`.
-`tools/example_scan.rb` is the worked example. `scan`/`scan_dir` still return
-the nested Result shape.
-
-**3. `rake test` that runs on a dev Mac — done.** `test_web_ui.rb` sits with
-`test_browser.rb` and `test_web_http.rb` behind `rake test:web_ui`. The default
-glob no longer aborts on `rack/test`.
-
-**4. Locations in every gate's output — done for selfcheck.** The report carries
-findings with path and line, and the task prints that summary once.
-
-**5. `bin/pub4 rule <ID>` — done.** `--corpus MASTER|all` and optional paths.
-
-**6. A lint over the rule corpus's own regexes — done.** `rake lint:word_boundary`
-flags `\b` glued to escaped punctuation. Currently clean.
-
-**7. Every registry rule proves it can fire — closed 2026-09-06, 91 to 0.**
-`law/` has always refused to load a rule without worked fixtures and the
-registry accepted one without; `rule_fixture_debt` is the row that closed the
-gap, and `test_rule_fixtures.rb` fails when the count rises, so a new RuleDSL
-rule must carry `fires:`/`does_not_fire:`.
-
-Two lessons are worth keeping, and both are in the rules themselves. A fixture
-that passes for the wrong reason is what this ratchet exists to stop —
-`TYPOGRAPHIC_EXCELLENCE`'s first draft, `warn "loading..."`, did not fire,
-because the rule reads a bare quoted ellipsis and that is prose containing
-dots. And a rule whose subject is a forbidden shape can still hold its own
-example: `SILENT_RESCUE` reads a line that *starts* with `rescue`, so an
-escaped one-line string is a worked example everywhere and a finding nowhere.
-This file twice recorded that as impossible.
-
-**8. One class per rule file — documented.** `AGENTS.md` now says
-`require "review/scan/rule_dsl"` is the load that defines a class in a
-multi-class rule file. Zeitwerk still maps one file to one constant.
-
-**9. A finish-the-worktree command — done.** `bin/pub4 worktree finish` rebases
-onto origin/main and pushes the branch. It does not merge to local main and
-does not push main.
-
-**10. A gate on the test-naming convention — done.** `rake lint:test_naming`
-asserts MASTER/test is `test_*.rb`, not `*_test.rb`.
-
-**11. Progress on the long gates — done for the two long runners.**
-`RAILS/gates/runner.rb --all` prints `N/M name`. `bin/pub4 gate` prints
-`gate: N/M stage`. Individual suites inside a stage are still silent.
-
-**12. `data_reach` same-file check — done.** It reports keys named in code that
-never mentions their yaml file, separately from the unnamed ceiling.
-
-**13. Facts that are not rules — done.** They live in `MASTER/AGENTS.md` under
-Working alone: scanner findings hashes, bundler/setup rewriting the lock,
-Zeitwerk multi-class.
+- **A rule fixture can pass for the wrong reason, and one can exist where this
+  file said none could.** `TYPOGRAPHIC_EXCELLENCE`'s first draft,
+  `warn "loading..."`, did not fire, because the rule reads a bare quoted
+  ellipsis and that is prose containing dots. And a rule whose subject is a
+  forbidden shape can still hold its own example: `SILENT_RESCUE` reads a line
+  that *starts* with `rescue`, so an escaped one-line string is a worked
+  example everywhere and a finding nowhere. This file twice recorded that as
+  impossible.
 
 ## RAILS
 ### Parity gaps — forward work
@@ -3419,15 +3026,6 @@ keeping. It said `Stream` still has no writer and that the table stays. No
 asserting the row. What is absent is the media half: `apps.yml` records the
 model done and notes "no WebRTC/RTMP", so ingest is Tier 2 work rather than an
 unwired column.
-
-The gap this close recorded is gone, and how it went is the entry worth
-keeping. It said `Comment` does not include `Shared::Mentionable`, so an
-`@username` in a reply notifies nobody, and that `Post` was the only model in
-the three apps carrying the concern. `comment.rb:8` includes it now; verified
-end to end on 2026-09-09, a comment naming a user writes one `Mention` row and
-one `Notification`. Nothing asserted it, which is how a record that has closed
-and one that is still open come to look the same in this file — the test in
-`mention_test.rb` is what makes the difference visible next time.
 
 ---
 
@@ -4037,12 +3635,13 @@ with its blocker rather than left implied:
 suite. `limits.yml`'s rule holds here too: a breach is paid by extraction or
 deletion, never by a bigger number.
 
-    shared/app/assets/stylesheets/_zen_shell.scss  502 / 477  (+25)
-    gates/lib/live/user_flow.rb               320 / 313  (+7)
-    gates/lib/rendered/rendered_geometry.rb   450 / 449  (+1)
+    shared/app/assets/stylesheets/_zen_shell.scss        502 / 477   (+25)
+    brgen/app/assets/stylesheets/_messenger_window.scss  446 / none declared
+    brgen/test/services/deploy_backlog_test.rb           558 / 557   (+1)
 
-33 lines between them. The counterpart half of that test is green: no ceiling
-is slack any more.
+`user_flow.rb` and `rendered_geometry.rb` left the list on 2026-09-09.
+`_messenger_window.scss` is the new arrival and has no ceiling at all, which is
+the shape the counterpart half of that test exists to make visible.
 
 **`_zen_shell.scss` is not an extraction, and that is the finding.** Its rules
 reach the apps through one `@forward` in `_stack_brgen.scss`, so source order
@@ -4053,10 +3652,6 @@ named for a position rather than a subject. The forms block (`.input-group`,
 `.field--float`, `.dropzone`, the direct-upload and error families, `fieldset`)
 is the subject that is there; taking it needs the owner, because this repo says
 restore or ask and never invent a layout change.
-
-The other two are +7 and +1 against a booted fleet. A one-line overage does not
-want a file of its own, so the payment there is deletion, and the four-file
-census on 2026-09-06 found nothing dead in either.
 
 **The deadlock that kept this list alive is gone.** It read: `file_length` is
 per file and wants a split, `growth.rails` counts files and was thirteen over,
@@ -4314,69 +3909,7 @@ unreferenced while `MASTER/tools/ratchets.rb:325` measures both. Use `grep -E`.
 This is the "BSD variants break GNU idioms" rule catching a survey of its own
 tree.
 
-#### 1. `Shared::Authentication` is two things, and the model is the one that lost
-
-`shared/app/models/authentication.rb` declares `Shared::Authentication <
-ApplicationRecord`. `shared/app/controllers/concerns/shared/authentication.rb`
-declares `module Shared::Authentication`. One constant, two definitions, and the
-concern wins: booting bsdports and asking gives `Shared::Authentication ->
-Module`, `respond_to?(:table_exists?) -> false`, and Zeitwerk's shadowed-file set
-contains `RAILS/shared/app/models/authentication.rb` — so that file is never
-loaded, in any environment.
-
-The consequence is a 500 rather than dead weight.
-`shared/app/controllers/omniauth_callbacks_controller.rb:66` and `:90` read
-`defined?(Shared::Authentication) && Shared::Authentication.table_exists?`. The
-`defined?` guard is satisfied by the module, so evaluation proceeds and raises —
-verified in a booted app: `NoMethodError: undefined method 'table_exists?' for
-module Shared::Authentication`. Line 66 is reached from
-`find_or_create_user:43`, which `create:29` calls on every callback, and neither
-rescues. Locally no provider registers (`shared/config/initializers/omniauth.rb`
-returns early without a client id and secret), so it is latent here and live the
-moment a key lands in `/etc/<app>.env`. The comment at lines 31–34 records this
-endpoint raising `NoMethodError` once before, for a different missing method.
-
-No app has the table: no migration creates `authentications` and none of the
-three `db/schema.rb` carries it. So the fix is deletion, not renaming — drop the
-shadowed model, `legacy_authentication_for` and `persist_legacy_authentication`,
-and let `ExternalIdentity`/`IdentityProvider` be the one path, which is the
-`ONE_SOURCE` answer the `Stream` record above reached for the same shape. Pays
-one file.
-
-`apps.yml:41` is wrong about this in a second way: it names
-`Shared::OmniauthCallbacksController`, and the class is bare
-`OmniauthCallbacksController`. The row says `status: done`.
-
-The guard that would have caught it is one test. Boot one app and assert
-Zeitwerk's shadowed set holds only the eight helpers `engine.rb` loads with
-`require_dependency` — those are shadowed by design, the ninth was not.
-
-#### 2. Eight gate classes each wrote their own HTTP client
-
-`RAILS/tools/crawl_support.rb:67` is `CrawlSupport.fetch(url, timeout:)`, and
-every gate already requires the module for `CrawlSupport.port_open?`. It cannot
-set a `Host` header, so eight gates carry a private near-copy of it:
-
-    gates/lib/live/user_flow.rb:389        fetch_with_host   open 8  read 15
-    gates/lib/live/page_simulation.rb:345  fetch_with_host   open 6  read 12  + Accept
-    gates/lib/live/first_screen.rb:216     fetch             open 8  read 15
-    gates/lib/live/surface_schema.rb:90    fetch             open 8  read 15
-    gates/lib/source/content_honesty.rb:111 fetch            open 8  read 20
-    gates/lib/source/payment_honesty.rb:78 fetch             open 8  read 12
-    gates/lib/research/visual_quality.rb:201 fetch           open 8  read 15
-    gates/lib/rendered/journey_invariant.rb:158 fetch_raw    open 8  read 15
-
-Verified by reading all eight: the bodies differ in the timeout numbers, one
-`Accept` header and the method name. Giving `CrawlSupport.fetch` a `host:` and an
-`accept:` keyword deletes about 64 lines across eight files and adds none. It
-also fixes a latent gap — `CrawlSupport.fetch` sets `use_ssl:` from the scheme
-and not one of the eight copies does, so none of them can probe an `https` URL.
-This pays `user_flow.rb`'s +5 ratchet overage exactly, without a new file.
-
-`gates/lib/live/flow_journey.rb:347` and `gates/support/guest_flow_persona.rb:129`
-build POST and PATCH requests and are a separate subject; leave them.
-
-#### 3. `_zen_shell.scss` does have a subject-named split, and the button family is it
+#### 1. `_zen_shell.scss` does have a subject-named split, and the button family is it
 
 The standing note above says the only order-preserving split is head/forms/tail.
 That was reasoned from "source order is cascade order", which is true only
@@ -4426,7 +3959,7 @@ every variant selector literally contains `.btn`, and the specificity argument
 above covers what the pairs do not. The extraction is still a structural move and
 wants the owner's yes, because the house rule is restore or ask.
 
-#### 4. brgen re-implements the concern that exists to hold it
+#### 2. brgen re-implements the concern that exists to hold it
 
 `shared/app/controllers/concerns/shared/application_setup.rb` is the one place
 the three apps set up a controller. amber and bsdports use it —
@@ -4438,16 +3971,7 @@ a longer version of the same comment that `application_setup.rb:13-16` carries,
 each pointing at the other. `helper Shared::ConsentHelper` at line 20 is now
 redundant besides: `shared/lib/shared/engine.rb:91` registers it for every app.
 
-Underneath it is a smaller thing worth fixing first. `application_setup.rb:9`
-reads `include Authentication` — a bare constant, resolved in each host app by
-`{amber,brgen,bsdports}/app/controllers/concerns/authentication.rb`, three
-byte-identical seven-line files whose whole body is
-`base.include(Shared::Authentication)`. Verified identical by SHA. Nothing
-overrides them. Writing `include Shared::Authentication` in the concern deletes
-three files and 21 lines, and removes the engine's one reach into a host-app
-constant name — the same reach that produced finding 1.
-
-#### 5. The `Pub4::*Lint` family puts its entry point last
+#### 3. The `Pub4::*Lint` family puts its entry point last
 
 A Prism pass over 1,267 Ruby files under `RAILS/` (visibility tracked through
 bare `private`/`public` call nodes, entry point taken as the method callers name)
@@ -4477,41 +4001,33 @@ The counterpart defect is absent. A public method declared below a scope's first
 `private` appears **nowhere** in `RAILS/` — 0 findings over 1,461 files, with the
 instrument proved on a planted positive that was then deleted.
 
-#### 6. The sign-in screen is written three times, and two of the copies lack something
+#### 4. The sign-in screen is written three times, and two of the copies lack something
 
 `{amber,brgen,bsdports}/app/views/sessions/new.html.erb`, 27–38 lines each, 74%
 of their non-comment lines shared, with no shared counterpart —
 `shared/app/views/sessions/` does not exist, though `Shared::SessionsActions` is
 the controller and all three `sessions_controller.rb` are five-line shims onto
-it. Three of the differences are real and two are not cosmetic:
+it. Two differences remain, and only one of them is behaviour:
 
-- amber renders no `shared/oauth_links`. brgen renders it in `sessions/new:4`
-  and `users/new:7`, bsdports in `sessions/new:4`. The route
-  (`shared/config/routes/auth.rb:15`) and the provider registration are
-  engine-wide, so amber is the only app where a configured provider would have
-  no button.
 - bsdports offers no create-account link at all; amber links
   `new_registration_path`, brgen `new_user_path`.
 - brgen uses `.field--float`, the other two plain `.field`. That is the
   deliberate visual difference and is not for an agent to unify.
 
-Record the first two as behaviour; the consolidation into
+Record the create-account link as behaviour; the consolidation into
 `shared/app/views/sessions/new.html.erb` with the field wrapper as a local is a
 second step and needs the owner, because it moves markup.
 
-#### 7. The remaining two length-ratchet rows
+#### 5. `rendered_geometry.rb` sits exactly on its own raised ceiling
 
-`gates/lib/live/user_flow.rb` is +5 and finding 2 pays it exactly, by deletion
-rather than extraction.
-
-`gates/lib/rendered/rendered_geometry.rb` is +1 across 20 `check_*` methods, and
-a one-line overage does not want a file. If deletion cannot be found — a Prism
-census on 2026-09-06 found nothing dead, and a fresh grep finds no twin of
-`fractional?`, `on_rhythm?`, `expand_hex`, `collect_hexes`, `rect_gap`,
-`undersized?`, `inline_target?`, `critical?` or `token_palette` anywhere in the
-repo — the shelf with the clearest edge is the colour group:
-`check_token_conformance:618`, `token_palette:671`, `collect_hexes:677`,
-`expand_hex:687`, about 40 lines answering one question, extractable as
+It is 344 code lines against a 344 ceiling and a 300 general limit, across 20
+`check_*` methods, so the next check breaches. A Prism census found nothing
+dead and a fresh grep finds no twin of `fractional?`, `on_rhythm?`,
+`expand_hex`, `collect_hexes`, `rect_gap`, `undersized?`, `inline_target?`,
+`critical?` or `token_palette` anywhere in the repo, so the payment is
+extraction. The shelf with the clearest edge is the colour group —
+`check_token_conformance`, `token_palette`, `collect_hexes`, `expand_hex`,
+about 40 lines answering one question, extractable as
 `rendered/rendered_geometry/token_checks.rb` and included back in exactly as
 `design_metrics/type_checks.rb` and `contrast_checks.rb` already are.
 
@@ -4522,7 +4038,7 @@ repo rule is that every per-tree backlog folded into this file. Fold it into the
 forward-work section and delete it, and the button partial and the token shelf
 are both paid for.
 
-#### 8. `shared/lib/pub4/` wants a `lint/` shelf, and it costs no files
+#### 6. `shared/lib/pub4/` wants a `lint/` shelf, and it costs no files
 
 13 of the 20 files in that directory end `_lint.rb` — 2,819 lines — and the other
 seven are `deploy_paths`, `ci_guard`, `load_average`, `master_design`,
@@ -4536,17 +4052,12 @@ at line 360, so that mapping changes too), `shared/config/ci.rb:53-60`,
 `gates/lib/source/scale_ratchet.rb` and nine test files. Worth doing, but it is
 an afternoon and it touches a MASTER ratchet, so it is not a first move.
 
-#### 9. Smaller, verified
+#### 7. Smaller, verified
 
-- `shared/lib/pub4/asset_url_lint.rb:48-60` says "The 5 that remain" and "2 are
-  lg.svg, once per vendored copy". `BASELINES` on line 61 is 4 and the lint
-  prints 4, because `Dir.glob("**/lightgallery.css")` now returns one path. The
-  duplicate the comment describes, and the `rails_duplicate_vendor_css` register
-  entry it cites, are both gone. A comment states the present-tense reason.
 - `shared/app/services/scrape.rb` defines bare top-level `Scrape` from an engine
-  autoload root, called from six places in two apps. It works, but it is finding
-  1's hazard class: the engine puts 19 files at unnamespaced roots, and one of
-  them has already lost a collision silently. The `Application*` five must stay
+  autoload root, called from six places in two apps. It works, but the engine
+  puts 19 files at unnamespaced roots, and one of them has already lost a
+  collision silently. The `Application*` five must stay
   bare by Rails convention; `scrape.rb`, `site_verification.rb`,
   `schema_helper.rb` and `passwords_mailer.rb` need not.
 - `RAILS/test/` holds 80 files in one drawer and `test/gates/` holds 13.
@@ -4611,8 +4122,8 @@ booted, so `rendered_suite` and its eleven leaves, `user_flow`, `first_screen`,
 `human_walkthrough`, `visual_contract` and `gate_mutation` are unmeasured here.
 So is per-app `bin/ci`: RuboCop, Brakeman and the app test suites want each app's
 bundle and a migrated database, and this worktree has neither. The
-`_zen_shell.scss` split and the `CrawlSupport.fetch` consolidation both want
-`RAILS/bin/triangle up` and a full `rendered_suite` before they are called done.
+`_zen_shell.scss` split wants `RAILS/bin/triangle up` and a full
+`rendered_suite` before it is called done.
 
 ---
 
@@ -4818,8 +4329,8 @@ One instrument was wrong before it was right, and it is the first thing to read.
 `installed_targets_gate.rb`'s own header records as a dead guard for
 `daily.local`. It is not dead. `OPERATOR.sh:293` installs that file explicitly,
 `ls` on the box finds it dated Aug 25, and `/tmp/vps-deploy-drift.out` is dated
-Sep 5 12:34 — the last brgen deploy. The finding died on verification and a
-better one came out of the same measurement, item 3 below.
+Sep 5 12:34 — the last brgen deploy. The finding died on verification, and the
+drift gate it was wrong about now mirrors `/usr/local/bin` as well as `/etc`.
 
 The tree holds 169 files outside `var/`: 43 `.sh`, 35 with no extension, 34
 `.rb`, 11 `.exp`, the rest config and prose. Those are this survey's own counts;
@@ -4830,24 +4341,7 @@ number here is quoted from it.
 The operator-debt rows above were worked on the same day and are not
 re-surveyed. None of them turned out to be wrong.
 
-#### 1. `bin/pub4 gate` measures twelve of this tree's 292 assertions
-
-`MASTER/lib/pub4/gate_chain.rb:142` runs the OPENBSD suite as
-`Dir["test/test_*.rb"].sort.each { |f| system(RbConfig.ruby, f) || abort(f) }`.
-`abort` stops the loop. `test/test_domain_expiry.rb` sorts first and is red on
-nine domains past their expiry date, so the stage ends there. Run verbatim from
-`OPENBSD/`: 4 runs, 12 assertions, exit 1, last line `test/test_domain_expiry.rb`.
-`OPENBSD/bin/check:36` loads the same glob into one process and gets 76 runs and
-292 assertions. Nine files — the gate library, the githooks, guard state, the
-health check, reach, the restore scripts, solid queue, the tracked crontab and
-the safety gate — have therefore not executed under the repo-wide ladder since
-the ninth domain lapsed, while `bin/check` runs them all and reports the same one
-failure. The failure is a registrar bill, not code, and it is hiding 280
-assertions behind itself. Fix: collect failures rather than `abort`, and give the
-expiry assertion its own step so a spend decision cannot silence a contract
-suite.
-
-#### 2. Live `/etc/rc.d/amber` and `/etc/rc.d/bsdports` wait 30 seconds where the repo waits 300
+#### 1. Live `/etc/rc.d/amber` and `/etc/rc.d/bsdports` wait 30 seconds where the repo waits 300
 
 `ruby OPENBSD/config_drift_gate.rb --remote` exits 1 and names three drifted
 files; `doas cat` and `diff` give the content. Both rc.d scripts differ from the
@@ -4869,46 +4363,7 @@ live cites the retired `OPENBSD/data/debt.yml`. Functionally identical, and it
 is why the drift gate is red — which is the shape that teaches an operator to
 skim a red gate.
 
-#### 3. Nothing compares `/usr/local/bin`, and seven of twelve root-cron executables differ
-
-`config_drift_gate.rb`'s `VERBATIM` is eleven files under `/etc` and its
-`EXCLUDED` is four more. It never reads `/usr/local`, where every cron job on
-this box lives. Checked by `cksum` over ssh against the repo copies: divergent
-are `config_drift_gate.rb`, `resource_guard.sh`, `config-drift-check`,
-`core-reclaim.sh`, `drain-jobs.sh`, `prune-guests.sh` and `relayd-watchdog`;
-matching are `keep-warm.sh`, `prune_guests.rb`, `renew-certs.sh`,
-`uptime-check.sh` and `nsd-resign`. Two consequences. The drift detector cannot
-see that its own installed copy has drifted, and the warning at
-`bin/vps-deploy:154` is produced by that stale copy rather than by the gate in
-the commit being deployed. And `test/resource_guard_test.sh` proves which site
-goes down under memory pressure about `OPENBSD/resource_guard.sh`, 14,196 bytes,
-while the file root runs every five minutes is 14,099.
-
-The one difference that could be named is benign, and saying so is the point. Live
-`OPTIONAL` reads `litestream bsdports amber` against the repo's `bsdports amber`,
-and the shed loop at `resource_guard.sh:230` only sheds a service `rcctl check`
-calls `(ok)`, which a service with no rc.d script never is. The category is
-unwatched, not that today's instance bites. Fix: extend the gate to the installed
-script tree, which is where the box's scheduled behaviour actually lives.
-
-#### 4. `resource_guard.sh` guards its crisis tier on a file nothing installs
-
-`resource_guard.sh:284` reads `[ -x /usr/local/bin/emergency_cpu.sh ]`, line 285
-runs it, line 287 logs that it is not installed. `ls` on the box: no such file.
-The target is tracked at `OPENBSD/emergency_cpu.sh`, the tree root, and
-`OPERATOR.sh` carries explicit `install` lines for `resource_guard.sh` (276) and
-`config_drift_gate.rb` (293) and none for this one. So `LOAD_CRIT` has only ever
-logged, and it fails loudly, which is the one mercy here.
-
-Two instruments exist for this shape and both report clean.
-`installed_targets_gate.rb`'s `CONFIG_GLOBS` are `etc/crontab*`, `etc/*.local`
-and `etc/rc.d/*`; `tools/reach.rb` reads the same three plus the nsd zones. A
-guard living inside an installed script is invisible to both. Widening the scan
-to every file in the tree finds exactly one genuine orphan — this one; the other
-seven hits are test fixtures in `test_reach.rb` and one line of `RUNBOOK.md`. Fix:
-add the install line, and widen both censuses, which will stay quiet.
-
-#### 5. `uptime-check.sh` has mailed root 7,924 DOWN lines
+#### 2. `uptime-check.sh` has mailed root 7,924 DOWN lines
 
 `/var/log/uptime-check.log` is 660 KB and holds 7,924 `DOWN` lines: 4,811 for
 `https://bsdports.org/up`, 2,693 for amber, 265 for ai and 155 for brgen. The
@@ -4924,57 +4379,15 @@ known make root's mailbox unreadable, which is the same lesson the litestream
 `rcctl ls failed` decision records. Waive the domain by name in both checkers
 until the nameservers move.
 
-#### 6. The two `uptime-check.sh` disagree, and cron runs the one the other argues against
+#### 3. `etc/rc.d/master:112` narrows the asset digest when a script fails
 
-`bin/uptime-check.sh` is a wrapper onto `health_check.rb --public-only
---all-ready-apps`, and its header argues that a hardcoded URL list "can only go
-stale — it would still name four domains after a fifth app ships, and nothing
-would report that". `usr/local/bin/uptime-check.sh` is that hardcoded four-domain
-list, and `doas crontab -l` shows it is the one running every five minutes. The
-wrapper works — `health_check.rb` does accept `--public-only`, checked at line 34
-— it simply runs nowhere. Fix: install the wrapper, or drop the argument from the
-header and keep the list.
+`_face_assets=$(... face_asset_paths.rb 2>/dev/null)` yields an empty list when
+that script fails, so the digest falls back to the seven hardcoded inputs and
+reproduces the stale-fingerprint bug the comment above it describes. Both stamp
+writes in the same file already guard on success; this is the quieter half of
+that shape and nothing guards it.
 
-#### 7. Eight cron logs grow without rotation
-
-`etc/newsyslog.conf` carries stanzas for four pub4 logs; `etc/crontab.vm23` and
-`etc/*.local` write nine. Unrotated: `config_drift.log`, `core-reclaim.log`,
-`domain_watch.log`, `drain-jobs.log`, `git_gc.log`, `keep-warm.log`,
-`prune-guests.log`, `uptime-check.log`. On the box `drain-jobs.detail.log` is
-10.8 MB, `uptime-check.log` 660 KB and `config_drift.log` 417 KB of identical
-`config-drift ok` lines, one every fifteen minutes. `/var` is at 16%, so this is
-not pressure — but that file's own header records `/var` at 106% from exactly
-this neglect, and the fix it applied covered only the logs that existed then.
-Every job added since brought a log and no stanza. Fix: a stanza each, and a test
-asserting every `>> /var/log/...` in the crontab has one.
-
-#### 8. `vps_weekly_integrity.sh` says where to install it, and it is installed nowhere
-
-Its header reads "Install in root crontab or daily.local". `doas crontab -l`,
-`etc/weekly.local` and `etc/daily.local` were all read and none names it. So
-`integrity_gate.rb` and `health_check.rb --public --all-ready-apps --json` run on
-no schedule on vm23; the only integrity run is `OPENBSD/bin/check-full` on the
-operator's Mac. Its own skip path is the same shape: line 16 exits 0 when the CI
-lock is held, into a log nothing reads, so a skipped weekly run and a passing one
-are the same event. Fix: schedule it, or delete it and say plainly that the
-integrity gate is a laptop gate.
-
-#### 9. `etc/rc.d/master:153` still does what the comment twenty lines above forbids
-
-Lines 126-129 explain the bug: `|| true` on precompile plus an unconditional
-stamp write made every later start skip precompile, because the skip test is
-stamp-equals-digest. Lines 136-141 write the stamp only on success. The
-gate-failure retry at 153-154 runs
-`(... rails assets:precompile) 2>/dev/null || true` and then writes the stamp
-regardless. The blast radius is bounded — line 158 still refuses the start when
-the gate fails twice — so this is a stamp that lies rather than an outage, and it
-is the item on this list I am least sure earns work. Fix is the same `if`/`else`
-as above it. Line 112 in the same file has the quieter version: `_face_assets=$(
-... face_asset_paths.rb 2>/dev/null)` yields an empty list when that script
-fails, narrowing the digest to the seven hardcoded inputs and reproducing the
-stale-fingerprint bug the comment above it describes.
-
-#### 10. Seven scripts deploy this box, three write the same master sequence, two report success having done nothing
+#### 4. Seven scripts deploy this box, three write the same master sequence, two report success having done nothing
 
 The seven: `bin/vps-deploy` (the one CLAUDE.md and RUNBOOK name), `deploy_all.sh`,
 `vps_install_all.sh`, `vps_on_vm_install.sh`, `vps_production_push.sh`,
@@ -4991,7 +4404,7 @@ finishes on `log "done"`, defeating its own `set -euo pipefail`, and
 `pub4_entrypoint_ceilings` of 17, five of them `check-*`. Fix: retire the scripts
 whose only caller is the runbook, and make the survivors exit non-zero.
 
-#### 11. Seven implementations of one load gate, and the awk ban has no detector
+#### 5. Seven implementations of one load gate, and the awk ban has no detector
 
 `vps_master_scan.sh:13-16` carries the note "awk twice, in a repo that bans it in
 committed scripts" and does the comparison in one `ruby34 -e`. `vps_ci_all.sh:13`
@@ -5011,7 +4424,7 @@ of them in `dotfiles/mov.sh`. Fix: one `lib/load.sh` helper the seven callers
 share, and then either a scanner rule over `OPENBSD/**/*.{sh,ksh,zsh}` or a note
 saying the ban is advice outside MASTER.
 
-#### 12. Usage after the work, in four files
+#### 6. Usage after the work, in four files
 
 `OPERATOR.sh` is 960 lines and its usage is at 906. `bin/deploy-smoke.sh` handles
 `-h|--help` at 161, after the banner at 149: `sh OPENBSD/bin/deploy-smoke.sh
@@ -5020,7 +4433,7 @@ was confirmed by running it. `validate_doas.ksh` puts usage at 100 of 116 with
 its first side effect at 31. `lib/ssh_vm23.sh` at 52 of 60. What an operator
 needs first should come first; in all four it comes last.
 
-#### 13. Nine two-line expect shims, and three dead in-tree paths
+#### 7. Nine two-line expect shims, and three dead in-tree paths
 
 `vps_console_status.exp`, `_probe`, `_short`, `_install`, `_fix_key`,
 `_poll_install`, `_start_install`, `_sync_and_install` and `vps_drop_install.exp`
@@ -5036,7 +4449,7 @@ in-tree paths in total, and that is the whole list. The shims were not exercised
 — they refuse without `I_UNDERSTAND_CONSOLE_RISK=1` and are recovery-only — so
 whether Tcl's `exec` buffers their output is unverified.
 
-#### 14. One dead local in `restore_backups.sh`
+#### 8. One dead local in `restore_backups.sh`
 
 `ROOT_DIR` at line 21 is assigned and read nowhere in the file. The disaster-recovery
 hardening the previous session landed does hold: every precondition exits 1,
@@ -5069,7 +4482,8 @@ is fine because `/usr/local/bin/ruby` on vm23 is a symlink to `ruby34`.
 - **Four gates that pass and mean it.** `installed_targets_gate.rb`,
   `tools/reach.rb`, `deploy_smoke_gate.rb` and `port_inventory` all pass, and
   `config-drift-check` is green on the box (13 relayd hosts, 417 acme SANs, 57
-  zones). Their coverage gaps are items 3 and 4; there is no finding inside them.
+  zones). Their coverage gaps closed with the drift gate's reach; there is no
+  finding inside them.
 - **The `config_drift_gate.rb` / `config-drift-check` name pair.** Two different
   questions — repo-versus-live `/etc` bytes, and relayd/acme/nsd consistency —
   under two names one letter apart, and the confusion has already cost a check
@@ -5141,12 +4555,12 @@ the question was.
 ### The engine is one file
 
 dilla.rb carries the 81 parts that were under `lib/engine/`, in the order they
-were required, because that order was load-bearing. 129 ruby files to 48.
-`DillaSources` still defines the corpus and it is now the entry plus the 41
+were required, because that order was load-bearing. 129 ruby files to 59.
+`DillaSources` still defines the corpus and it is now the entry plus the 44
 support modules; `STUDIO/gate.rb` fails if `lib/engine/` reappears, and
 `DILLA_SUPPORT_CEILING` caps the modules that could grow in its place.
 
-Not done: the 41 `lib/*.rb` are still separate. Fourteen of them use `__dir__`
+Not done: the 44 `lib/*.rb` are still separate. Fourteen of them use `__dir__`
 or `__FILE__`, which shift a directory level when a file moves — the bug that
 broke three tests during the first fold, and the reason to do the second one
 deliberately rather than as a tail-end.
@@ -5196,12 +4610,6 @@ not restated here.
   `rejoin_db` are gone for those rows and cannot be recomputed without the
   source. `vocal_chop` skips a row that cannot name its record rather than
   guessing, which is why those 148 have no vocal chop available.
-- **`DRUM_LOOP` falls back to `~/Downloads`.** `drum_loop_source`
-  (`dilla.rb:7215`) resolves to `File.expand_path("~/Downloads/techno_drums.mp3")`
-  when the samples copy is absent, and the samples copy is absent. A render
-  therefore depends on a file outside the repo, and the one there is industrial
-  techno, which the crate rules exclude. Naming the replacement is an operator's
-  call because it changes rendered sound.
 - **`test_dilla_audio_graph_parity.rb` follows the engine.** Bus routing is
   opt-in (`DILLA_MIX_BUSES=1`); the default path is still a flat amix, and the
   test asserts both.
@@ -5218,8 +4626,8 @@ A read-only pass over all 349 tracked files in `STUDIO/`. No file under
 is proposed here. Where a finding reaches a number that shapes a render, it says
 so and stops; those belong to dilla's owner.
 
-**Three of my own instruments were wrong before they were right, and the third
-was a bug this file already records.** A reach census over `postpro`'s tables
+**Three of my own instruments were wrong before they were right.** A reach
+census over `postpro`'s tables
 reported 25 of 61 `PRESETS` keys and both `PRINT_STOCKS` keys as named nowhere.
 Both readings were false. The presets are selected by name from argv
 (`postpro.rb:2942`, `:3335`, `:3457`), so a preset table driven that way has no
@@ -5232,22 +4640,6 @@ used; and a span census printed 18 nameless parts because `\z` was matched
 against a line still carrying its newline. Each was caught by checking a case
 whose answer was known by hand first. Every number below survived that check.
 
-**A fix the repository claims to have made is not in the repository.** Commit
-`c116a3493` — "the comb died on integer maths" — describes the defect precisely
-in its own body: `drum_chain!` passes `90 + rnd.rand(160)` and `40 + rnd.rand(70)`
-to the comb resonator, both Integers, so `hz_to / hz_from` is integer division,
-`40/249 == 0`, the swept frequency reaches zero and `RATE / 0.0` is Infinity.
-`STUDIO/dilla/bin/sine_stream.rb:875` still reads
-`hz = hz_from * ((hz_to / hz_from)**t)`, with `RATE = 44_100` an Integer at
-`:15` and the Integer caller at `:1379`. Verified three ways: `git show
-c116a3493 -- STUDIO/dilla/bin/sine_stream.rb` changes no line containing `hz`;
-the commit touched only that file and `bin/demo_full.rb`; and `grep -rn
-"hz_from.to_f" STUDIO/` returns nothing. The fix exists, in
-`/Users/mac/Music/dilla_sines/sine_stream.rb`, which is outside the repository
-and untracked — it carries `hz_from.to_f`, `hz_to.to_f`, a `<= 0.0` guard and a
-`20.0` floor. The fix is to copy those four lines back in. **Whether the floor
-is 20.0 is dilla's owner's**; that the guard exists is not.
-
 **Five scripts live twice, and four of the pairs have drifted.**
 `/Users/mac/Music/dilla_sines/` holds six Ruby files. Five have tracked twins in
 `STUDIO/dilla/bin/`; only `demo_from_stream.rb` is still byte-identical.
@@ -5256,29 +4648,9 @@ against 123, and `make_ticks.rb`/`player.rb` differ by one line each against
 `sine_stream_ticks.rb` and `sine_stream_player.rb`. `demo_render.rb`, 4393
 bytes, has no tracked twin at all. Measured by SHA-256 and line-set difference.
 This is the shadow-copy class `dup_census` exists for, and no census can see it:
-it reads tracked files only, and excludes `STUDIO/` besides. The fix is to make
-the repository the only copy — which needs the entry below first.
-
-**`bin/demo_full.rb` runs code from outside the repository, by `eval`.** Lines
-8–10 `Dir.chdir` to a hard-coded absolute path inside the *main* checkout, read
-`/Users/mac/Music/dilla_sines/sine_stream.rb`, and `eval` the part of it before
-the literal string `cfg = dilla_resolve_config` — measured at 1791 of that
-file's 2023 lines. So the tracked `bin/sine_stream.rb` is not what runs, the
-script cannot work from a worktree, and the split depends on a marker string
-surviving in a file nothing checks. `bin/sine_stream.rb:12` has the milder form
-of the same problem: `require "./dilla.rb"` resolves against the working
-directory. The fix is `require_relative "../dilla"` in both, and the eval
-deleted.
-
-**`STUDIO/gate.rb` reads only `*.rb`, so 239 lines of Ruby are checked by
-nothing.** `StudioGate#source_files` is `Dir[File.join(@root, "**", "*.rb")]`
-(`gate.rb:145`). `STUDIO/dilla/bin/crate` opens `#!/usr/bin/env ruby` and has no
-extension, so it is absent from `check_parse`, absent from `check_orphans`, and
-absent from the `dilla/lib/[^/]+\.rb` count that `DILLA_SUPPORT_CEILING` guards.
-Thirteen shell scripts are outside the same corpus. The gate's own comment says
-"a file that matches no entry here is a file nothing loads and nothing checks",
-which is exactly what the glob then permitted. The fix is to read the corpus by
-shebang as well as by extension.
+it reads tracked files only, and excludes `STUDIO/` besides. The scripts run
+from the repository now, so the fix left is to retire the outside copies rather
+than keep diffing them.
 
 **dilla has four crate surfaces, three layouts, and one reader.** The engine
 reads `samples/chopped/loops.json` through `RadioChop.registered_loops`
@@ -5316,25 +4688,21 @@ The registry's other 37 rows and the 37 stale scores in
 `project/sample_worth.json` are the racks deleted on 2026-09-02, dropped at load
 by design (`radio_chop.rb:637`) and pruned on the next chop (`:879`).
 
-**Thirteen knobs get a different default depending on which read site runs.**
-`DillaKnobs` already computes this — its header names it as the fourth
-consequence it was built for — and nothing gates it. Measured independently over
-`DillaSources.all`, counting only `ENV["X"] || lit` and `ENV.fetch("X", lit)`
-and never a profile-table row: 13 of the 405 knobs that carry a fallback have
-more than one. Three are operational and reconcilable without touching sound:
-`DILLA_SH_TIMEOUT` 120 at `dilla.rb:12571` against 900 exported at `:14048`,
-with the help text at `:27664` saying 120; `STREAM_TRACK_TIMEOUT` 420 at `:17170`
-against 300 at `:19860`; `RENDER_RETRIES` 2 at `:17255` and `:18487` against 1 at
-`:17258`. The rest shape a render and are **the owner's alone**, the sharpest
-being `MELODIC_LEAD`: `ENV.fetch("MELODIC_LEAD", "0") != "0"` at `dilla.rb:8657`
-and `ENV.fetch("MELODIC_LEAD", "1") != "0"` at `:9145` — with nothing set, one
+**Ten knobs get a different default depending on which read site runs.**
+`DillaKnobs.conflicts` already computes this — its header names it as the fourth
+consequence it was built for — and nothing gates it. The three operational ones
+are reconciled: `DILLA_SH_TIMEOUT` and `STREAM_TRACK_TIMEOUT` each take the
+longer candidate with the reason written at the site, and `RENDER_RETRIES` is
+one number. The ten that remain shape a render and are **the owner's alone**,
+the sharpest being `MELODIC_LEAD`: `ENV.fetch("MELODIC_LEAD", "0") != "0"` and
+`ENV.fetch("MELODIC_LEAD", "1") != "0"` sit in one file, so with nothing set one
 predicate says the melodic lead is off and the other says it is on. Then
-`HARM_VOL` 2.45 at `:16185` against 2.4 at `composition_engine.rb:570`,
-`EVOLVE_HARMONY_W` 0.18/0.08/0.12, `EVOLVE_GROOVE_W` 0.22/0.06,
-`EVOLVE_EVERY` 3/2, `LISTEN_PASSES` 0/3, `RENDER_BEAUTY_MIN` 65/70, and `BPM`
-92/90. `BARS` and `TRACK` are per-command and are not defects. The fix that is
-mine to suggest is a ratchet: `DillaKnobs` already has the answer, so pin 13 and
-let the fourteenth fail.
+`HARM_VOL` 2.45 against 2.4 in `composition_engine.rb`, `EVOLVE_HARMONY_W`
+0.18/0.08/0.12, `EVOLVE_GROOVE_W` 0.22/0.06, `EVOLVE_EVERY` 3/2,
+`LISTEN_PASSES` 0/3, `RENDER_BEAUTY_MIN` 65/70, and `BPM` 92/90. `BARS` and
+`TRACK` are per-command and are not defects. The fix that is mine to suggest is
+a ratchet: `DillaKnobs` already has the answer, so pin 10 and let the eleventh
+fail.
 
 **Forty-two rescues discard an error in STUDIO, and 26 are counted.** Grouped by
 what each one protects, so this is one sitting rather than nineteen. The 26 come
@@ -5415,7 +4783,7 @@ is free before then and never free again. The third subject, `dig_crate.rb`, is
 crate ingest and has nothing to do with playback; it belongs beside
 `lib/crate_dig.rb`, which is the entry above. **Still the owner's to take.**
 
-**dilla.rb already carries its own map; nothing indexes it.** 34,596 lines, 959
+**dilla.rb already carries its own map; nothing indexes it.** 35,142 lines, 959
 top-level `def`s, 545 top-level constants, and 82 `# engine part: <name>`
 markers — the fold preserved every part boundary, with 228 lines of preamble
 before the first. The seams worth naming are the 18 parts over 600 lines, not
@@ -5436,13 +4804,13 @@ without grepping; **splitting any of them is not proposed here**, and the
 existing decision not to reopen `lib/engine/` stands.
 
 **`dilla/lib` sits exactly on its ceiling while `bin/` and `live/` have none.**
-`DILLA_SUPPORT_CEILING = 42` (`gate.rb:106`) and `dilla/lib` holds 42 tracked
+`DILLA_SUPPORT_CEILING = 44` (`gate.rb:116`) and `dilla/lib` holds 44 tracked
 `.rb`, so the next module fails the gate. Meanwhile `dilla/bin` is 11 files
 (2638 lines, including the 2012-line `sine_stream.rb`) and `dilla/live` is 8, and
 neither is counted. `MASTER/tools/cohesion.rb STUDIO/dilla/lib` proposes three
 regroups — `engine/` (5 files), `harmony/` (3) and `score/` (3), 9 distinct
 files. Taking any of them would move those files out of
-`%r{/dilla/lib/[^/]+\.rb\z}` and drop the guarded count from 42 to 33, so the
+`%r{/dilla/lib/[^/]+\.rb\z}` and drop the guarded count from 44 to 35, so the
 regroup would quietly disable the ceiling it appears to relieve. Raise the
 ceiling with a reason, or extend it to `bin/` and `live/`; do not regroup to get
 under it.
@@ -5598,11 +4966,6 @@ than implied across four.
   clone to a green check without reading every contract.
 - **Local-LLM fallback.** A path that keeps the runtime working when no API key
   and no `claude` CLI are present.
-- **PWA banner.** Closed 2026-09-05. The banner waited for a post/play/chat
-  after `beforeinstallprompt`, so a first visit that only read never saw it.
-  It now shows when Chrome can install, and on iOS (where that event never
-  fires) it tells Safari/Chrome how. The three apps already shipped the
-  partial, the worker, and the manifest.
 - **Aegis, seaborne.** A safety agent for the water, and the first body the
   embryo could plausibly take. It is a program rather than a feature because
   most of it is gated on hardware; the section below says what is buildable now
@@ -6051,9 +5414,9 @@ to finish rather than a bare title.
   `dilla.rb:815` records that giving industrial its own target was "a sound
   decision, not a gap." Read all three before cutting; merging on surface
   similarity flattens the arrangements into one sound.
-- **`dilla.rb` is 34,545 lines.** `GLOSSARY.md` defines gravity debt as a file
+- **`dilla.rb` is 35,142 lines.** `GLOSSARY.md` defines gravity debt as a file
   over 300 lines; this exceeds it by 115x and holds 71% of the engine against
-  `lib/`'s 41 files and 14,263 lines. Split along the seams it already has —
+  `lib/`'s 44 files and 15,894 lines. Split along the seams it already has —
   the renderers, the ENV default tables, the SMF writers, the patch registries.
   The direction is out of the monolith, not into it.
 - **RAILS token discipline, from the joi.com study.** Three patterns worth
