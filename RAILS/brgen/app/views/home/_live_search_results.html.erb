@@ -4,7 +4,7 @@
 
 <% if @posts.any? %>
  <%= turbo_frame_tag "home-feed", target: "_top" do %>
- <ul class="post-feed feed_list" id="home-feed">
+ <ul class="post-feed feed_list" id="home-feed" data-feed-updates-target="feed">
  <% @posts.each_with_index do |post, index| %>
  <li><%= render "posts/post", post: post %></li>
  <%# One unit after every AFFILIATE_EVERY posts, never before the first and

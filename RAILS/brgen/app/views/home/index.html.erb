@@ -37,7 +37,38 @@
     strip of links to other hosts said the same thing worse, above the thing
     itself. Operator decision 2026-08-27. %>
 
-<section id="feed-panel" aria-label="<%= t("home.local_posts") %>" data-visitor-orientation>
+<%# BRGEN-105. The front page is live, and it does not move while you read it.
+    Post#broadcast_to_city_feed prepends the new card into #feed-pending, which
+    is hidden; feed_updates_controller counts what lands there and offers it on
+    a chip. The stream is per city because posts are city-tenanted — one shared
+    stream would put Bergen's feed on Oslo's front page.
+
+    Both plural forms are rendered here rather than in the controller, so the
+    rule stays I18n's. %>
+<%# ActsAsTenant.current_tenant rather than Current.city: acts_as_tenant is what
+    scopes posts by city, so its tenant is by definition the city whose feed
+    this is, and Current.city is set from a domain-registry entry that need not
+    be the City record. %>
+<% feed_city = ActsAsTenant.current_tenant %>
+<% if feed_city.respond_to?(:id) %>
+  <%= turbo_stream_from Post.city_feed_stream(feed_city.id) %>
+<% end %>
+
+<section id="feed-panel" aria-label="<%= t("home.local_posts") %>" data-visitor-orientation
+         data-controller="feed-updates"
+         data-feed-updates-one-value="<%= t("home.new_posts.one") %>"
+         data-feed-updates-other-value="<%= t("home.new_posts.other") %>">
+  <%# Where the broadcasts land. Hidden and out of the accessibility tree: these
+      cards are not on the page yet in any sense a reader would recognise, and
+      announcing them as they arrive is the interruption the chip exists to
+      replace. %>
+  <div id="feed-pending" hidden aria-hidden="true" data-feed-updates-target="pending"></div>
+  <p class="chips" hidden data-feed-updates-target="chip">
+    <%= button_tag type: "button", class: "chip", data: { action: "feed-updates#show" } do %>
+      <span data-feed-updates-target="count"></span>
+      <span class="visually-hidden"><%= t("home.show_new_posts") %></span>
+    <% end %>
+  </p>
   <%# Hot / New / Following / Communities order this feed, so they sit with it.
       They spent a while on the nav swiper, which was right about the second
       horizontal row being wrong and wrong about where they belonged: the swiper

@@ -134,7 +134,7 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     get root_url
     assert_response :success
 
-    assert_equal 1, response.body.scan(/class="chips"/).size
+    assert_equal 1, response.body.scan(/<nav class="chips"/).size
     assert_equal 1, response.body.scan(/href="[^"]*\?sort=hot"/).size
     assert_match(/class="chip active"/, response.body, "the active ordering should be marked")
   end
@@ -160,6 +160,59 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
                         city: City.find_by(domain: "brgen.no"))
     post session_url, params: { email_address: user.email_address, password: "password12345" }
     user
+  end
+
+  # BRGEN-105. The front page is live, and the point is where the new post
+  # lands: #feed-pending is hidden, so nothing moves under a reader until they
+  # tap the chip. broadcast_refresh_to, which the model already had for
+  # posts#index, does the opposite — it replaces the list in place.
+  def test_root_subscribes_to_its_city_feed_and_stages_arrivals
+  host! "brgen.no"
+  city = brgen_city
+  # The list only renders with something in it, and the chip prepends into
+  # the list.
+  author = User.create!(email_address: "feed-#{SecureRandom.hex(4)}@brgen.no", password: "password12345")
+  Post.create!(user: author, title: "Noe skjer", content: "i byen", city:)
+  get root_url
+    assert_response :success
+
+    # turbo_stream_from signs the stream name into the tag, so the name itself
+    # is never in the body — what is assertable here is that root subscribes
+    # at all. The per-city naming is a unit test below.
+    assert_match(/<turbo-cable-stream-source[^>]+signed-stream-name/, response.body,
+                 "root must subscribe to its city feed stream")
+    assert_match(/id="feed-pending"[^>]*hidden/, response.body,
+                 "arrivals stage hidden — a visible append is the yank this replaces")
+    assert_includes response.body, %(data-feed-updates-target="feed"),
+                    "the chip needs the list it prepends into"
+  end
+
+  # The count is rendered by I18n, not assembled in JavaScript. brgen renders nb
+  # and the suite runs in nb, so both plural forms must reach the page already
+  # translated.
+  def test_the_new_posts_chip_carries_both_plural_forms_translated
+    host! "brgen.no"
+    get root_url
+    assert_response :success
+
+    assert_includes response.body, I18n.t("home.new_posts.one", locale: :nb)
+    assert_includes response.body, I18n.t("home.new_posts.other", locale: :nb)
+  end
+
+  # Per city, because posts are city-tenanted: one shared stream would put
+  # Bergen's feed on Oslo's front page.
+  def test_the_feed_stream_is_scoped_to_one_city
+    refute_equal Post.city_feed_stream(1), Post.city_feed_stream(2)
+  end
+
+  # The stream only renders when a City row resolves for the host: the tenant is
+  # assigned `if result.city_record`, so no row means no tenant and no
+  # subscription. The suite does not guarantee one.
+  def brgen_city
+    City.find_by(domain: "brgen.no") || City.create!(
+      name: "Bergen", slug: "bergen-feed-stream", domain: "brgen.no",
+      country_code: "NO", locale: "nb", currency: "NOK"
+    )
   end
 
   # Exactly one entry carries the rule, and on the apex it is front. The class is

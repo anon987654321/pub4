@@ -118,6 +118,10 @@ nb:
     feed_hot: Hot
     feed_latest: Nytt
     feed_sort: Strøm
+    new_posts:
+      one: 1 nytt innlegg
+      other: "%{count} nye innlegg"
+    show_new_posts: Vis nye
     intro_title: "%{city}, akkurat nå"
     live: Live
     marketplace: Markedsplass

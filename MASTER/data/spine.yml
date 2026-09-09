@@ -307,7 +307,16 @@ pub4_source_ceilings:
   # metric, and the source half it carries — that hotwire.js still observes all
   # three entry types — is what stops the field collection dying quietly under
   # a passing budget.
-  RAILS: 2374
+  # 2374 -> 2375 for brgen/app/javascript/controllers/feed_updates_controller.js.
+  # BRGEN-105 asked for a realtime front page that does not yank the reader,
+  # and the mechanism the feed already had does exactly that: Post
+  # broadcast_refresh_to "posts" replaces the list in place, so a stranger
+  # posting pulls somebody three screens down back to the top. The controller
+  # is what makes an arrival wait -- it counts a hidden staging list and
+  # prepends on a tap. It folds into no existing controller: pull_to_refresh
+  # reloads on a gesture and typing_controller watches a field, and neither
+  # owns a stream that must not paint.
+  RAILS: 2375
   # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
   # that are the whole defence against a shared index, and nothing tested any of
   # them — a hook that stopped firing looks exactly like a week in which nobody

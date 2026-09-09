@@ -114,6 +114,10 @@ en:
     feed_hot: Hot
     feed_latest: New
     feed_sort: Feed
+    new_posts:
+      one: 1 new post
+      other: "%{count} new posts"
+    show_new_posts: Show new
     intro_title: "%{city}, right now"
     live: Live
     marketplace: Marketplace

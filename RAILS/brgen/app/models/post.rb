@@ -49,6 +49,11 @@ class Post < ApplicationRecord
   # Turbo::Streams::BroadcastStreamJob, and nothing on vm23 runs the queue.
   # "posts" is the index stream; self is posts#show.
   after_commit :broadcast_live_refresh
+  # BRGEN-105. The front page is its own stream, and it gets an append rather
+  # than a refresh: a refresh replaces the feed under whoever is reading it,
+  # which is the behaviour the roadmap names first. The append lands in a hidden
+  # staging list and a chip offers it, so nothing moves until the reader says so.
+  after_create_commit :broadcast_to_city_feed
 
   def to_markdown
     [ "# #{title}", content.to_s ].join("\n\n")
@@ -182,6 +187,31 @@ class Post < ApplicationRecord
   def broadcast_live_refresh
     broadcast_refresh_to "posts"
     broadcast_refresh_to self
+  end
+
+  # Per city, because posts are city-tenanted and one shared stream would put
+  # Bergen's feed on Oslo's front page.
+  def self.city_feed_stream(city_id) = "brgen:feed:#{city_id}"
+
+  # Rendering the card here is safe for exactly this callback and would not be
+  # for the others. Its only viewer-specific output is vote, repost and quote
+  # state — the partial's own comment says so and guards each with
+  # `Current.user.present?` — and a post that was created a moment ago has none
+  # of the three from anyone. So the markup one broadcast renders with no
+  # Current.user is the markup every viewer should see at that instant, and the
+  # ordinary turbo_stream replaces it the moment someone votes.
+  #
+  # Synchronous, matching broadcast_live_refresh above and for its reason: the
+  # _later_ variants enqueue a job and nothing on vm23 runs the queue.
+  def broadcast_to_city_feed
+    return if city_id.blank? || removed_at.present?
+
+    broadcast_prepend_to(
+      self.class.city_feed_stream(city_id),
+      target: "feed-pending", partial: "posts/post", locals: { post: self }
+    )
+  rescue StandardError => e
+    Rails.logger.warn("broadcast_to_city_feed #{id}: #{e.class}: #{e.message}")
   end
 
 
