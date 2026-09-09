@@ -112,7 +112,22 @@ class MentionTest < ActiveSupport::TestCase
     assert_equal [ @named.id ], post.mentions.map(&:mentioned_user_id)
   end
 
-  test "destroying a post takes its mentions with it" do
+# Shared::Mentionable is polymorphic and Comment includes it, so a handle in a
+# reply notifies too. TODO.md carried this as the gap the Tier 1 close left --
+# "Post is the only model in any of the three apps that includes the concern"
+# -- and it was true when written. Nothing asserted it after it stopped being
+# true, which is how a closed record and an open one look the same.
+test "an at-name in a comment writes a mention and notifies that user" do
+  post = post_with(content: "Ingen nevnt her")
+
+  assert_difference -> { Mention.count }, 1 do
+    assert_difference -> { @named.notifications.count }, 1 do
+      Comment.create!(user: @author, commentable: post, content: "Hei @mn_named")
+    end
+  end
+end
+
+test "destroying a post takes its mentions with it" do
     post = post_with(content: "Hei @mn_named")
 
     assert_difference -> { Mention.count }, -1 do

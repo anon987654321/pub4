@@ -3420,10 +3420,14 @@ asserting the row. What is absent is the media half: `apps.yml` records the
 model done and notes "no WebRTC/RTMP", so ingest is Tier 2 work rather than an
 unwired column.
 
-One gap the closing left is forward work, not debt. `Shared::Mentionable` is
-polymorphic and `Comment` does not include it, so an `@username` in a reply
-notifies nobody. `Post` is the only model in any of the three apps that
-includes the concern.
+The gap this close recorded is gone, and how it went is the entry worth
+keeping. It said `Comment` does not include `Shared::Mentionable`, so an
+`@username` in a reply notifies nobody, and that `Post` was the only model in
+the three apps carrying the concern. `comment.rb:8` includes it now; verified
+end to end on 2026-09-09, a comment naming a user writes one `Mention` row and
+one `Notification`. Nothing asserted it, which is how a record that has closed
+and one that is still open come to look the same in this file — the test in
+`mention_test.rb` is what makes the difference visible next time.
 
 ---
 
