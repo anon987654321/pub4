@@ -81,14 +81,9 @@ module AnalogSynth
   # State lives in the four `z` values, which is why this is a class rather than
   # a function -- a filter is a thing with a memory.
   class Ladder
-    attr_accessor :z0, :z1, :z2, :z3
-
     def initialize(rate: RATE)
       @rate = rate
       @z = [0.0, 0.0, 0.0, 0.0]
-      @z0 = @z1 = @z2 = @z3 = 0.0
-      @last_hz = nil
-      @last_f = 0.0
     end
 
     # `cutoff` in hertz, `resonance` from 0 to about 1.1. Above 1 it self
@@ -101,17 +96,14 @@ module AnalogSynth
     # phase of the feedback and cancels the resonance entirely. Measured across
     # resonance 0.1 to 0.9 it moved the level at cutoff by half a decibel: the
     # knob was connected to nothing.
-    # The coefficient depends only on the cutoff, and the cutoff stops moving
-    # the moment the filter envelope reaches its sustain -- which for a pad is
-    # most of the note. Caching it there turns a Math.exp per sample into one
-    # comparison, and the value is the same value, so nothing rendered changes.
-    def coefficient(stage_hz)
-      return @last_f if stage_hz == @last_hz
-
-      @last_hz = stage_hz
-      @last_f = 1.0 - Math.exp(-2.0 * Math::PI * stage_hz / @rate)
-    end
-
+    # The Math.exp below is computed per sample and stays that way. Caching it
+    # on the last cutoff looks obviously right -- the coefficient depends only
+    # on the cutoff, and a pad's filter envelope holds at sustain for most of
+    # the note -- and it is measurably wrong: interleaved A/B over three
+    # patches, three rounds, identical audio both ways, 10% SLOWER cached and
+    # 23% slower on prophet_pad. The cutoff moves on nearly every sample, so the
+    # cache almost never hits, and a method call per sample costs more than the
+    # exp it was meant to save. Inline arithmetic wins here.
     def process(sample, cutoff, resonance)
       # Two corrections, both of which the first version got wrong, and together
       # they put the cutoff an octave and a half below where it was asked for --
@@ -319,7 +311,7 @@ module AnalogSynth
     # Two octaves down, almost nothing above the fundamental, and a long tail.
     #
     # A dub bass is felt before it is heard. The filter sits at 90 Hz, so what
-    # reaches the ear is the fundamental and the first partial and very little
+    # reaches the ear is the fundamental and the first partial and little
     # else -- that is the difference between a bass that rumbles and one that
     # growls. Drive is above 1 because the tanh in the ladder is standing in for
     # a valve amp being pushed, which is where the warmth in those records came
@@ -353,7 +345,7 @@ module AnalogSynth
     # A lead, which is a different instrument from a pad and not a brighter one.
     #
     # The envelope is the whole difference. A sixteenth-note arp at 90 BPM gives
-    # each note 165 ms; warm_pad takes 350 ms just to reach full, so every note
+    # each note 165 ms; warm_pad takes 350 ms to reach full, so every note
     # arrives after the next one has started and the figure smears into a held
     # chord. This speaks in six milliseconds and is gone in two hundred, which is
     # what makes a line audible as a line.
