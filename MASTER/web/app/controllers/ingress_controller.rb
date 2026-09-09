@@ -38,20 +38,20 @@ class IngressController < ApplicationController
     render json: {
       ok: true,
       service: "master-ingress",
-      cron_jobs: Master::Ground::IngressJobs.cron_jobs.map { |j| j["name"] },
-      webhooks: Master::Ground::IngressJobs.webhook_jobs.map { |j| j["name"] },
+      cron_jobs: Master::Io::IngressJobs.cron_jobs.map { |j| j["name"] },
+      webhooks: Master::Io::IngressJobs.webhook_jobs.map { |j| j["name"] },
     }
   end
 
   def cron
-    job = Master::Ground::IngressJobs.lookup_cron(params[:name])
+    job = Master::Io::IngressJobs.lookup_cron(params[:name])
     return render(json: { error: "unknown cron job" }, status: :not_found) unless job
 
     run_job(job, channel: "cron")
   end
 
   def webhook
-    job = Master::Ground::IngressJobs.lookup_webhook(params[:name])
+    job = Master::Io::IngressJobs.lookup_webhook(params[:name])
     return render(json: { error: "unknown webhook" }, status: :not_found) unless job
 
     run_job(job, channel: "webhook")
