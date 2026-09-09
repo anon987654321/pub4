@@ -104,16 +104,29 @@ only after a deploy and `rcctl restart master`. The browser half comes from
 `Policy.browser_payload` in the page, so a stale `face.runtime.js` on the box
 would keep the old fallback for anyone whose payload fails to load.
 
-**The deploy is incomplete, and the blocker is not in MASTER.** master is at
-HEAD and serving; brgen, amber and bsdports are not. amber has been on
-`54fb1d990` since 2026-08-29 and bsdports on `480239f89` since 2026-08-22.
-brgen's CI now clears the rhythm lint and its whole Rails suite, and stopped at
-`css_constitution`. **The blocker was never only `magic_hex`**, which is the part
-this entry got wrong: that row fell to 77 on 2026-09-09 and `css_constitution`
-still fails, on brgen's built `application.css` at 209KB against a 206KB ceiling
-— a second and independent rule that predates the colour work and that nothing
-here had named. A row that is red for two reasons reads as one reason to whoever
-fixes the first.
+**The deploy is incomplete and nothing is blocking it any more.** Measured on
+2026-09-09 with `bin/pub4 vps state --remote`, which is the only honest way to
+answer this and is cheap:
+
+    dev: /home/dev/pub4 @ 5084461dc
+    master                             service=ok  :53187 listening
+    brgen     deployed=4219192a0 DRIFT  svc=ok     :38182 listening
+    amber     deployed=54fb1d990 DRIFT  svc=ok     :61352 listening
+    bsdports  deployed=480239f89 DRIFT  svc=ok     :47312 listening
+
+All four are up. The drift is real — amber has been on `54fb1d990` since
+2026-08-29 and bsdports on `480239f89` since 2026-08-22 — but this entry was
+wrong about brgen, which deployed on 2026-09-08 at `4219192a0` rather than
+stopping at `css_constitution`.
+
+And the `css_constitution` blocker is gone: the gate passes, with brgen's built
+`application.css` **at** its 206KB ceiling rather than 3KB over it. The colour
+work closed both halves — the `magic_hex` row and the weight — so the warning
+this entry ends with, that a row red for two reasons reads as one, is now a
+guard rather than a live finding.
+
+What remains is a deploy, which is an operator action rather than a blocker.
+The box's checkout is behind this session's work as well as the three apps'.
 
 **Two deploy hazards, both paid for once already.**
 
