@@ -243,7 +243,7 @@ roadmap carries.**
 
 - *MASTER-100 intent is the primary interface* — `MASTER/bin/master
   "<instruction>"` already is that entry point, and `TurnRouter` and
-  `Ground::IntentRouter` route it. But the intent table is thin: of the
+  `CLI::IntentRouter` route it. But the intent table is thin: of the
   roadmap's own four examples, `IntentRouter#classify` answers
   `:redesign_mobile_pwa` for "fix the broken mobile navigation" and
   `:run_full_workflow` for "clean up MASTER itself", and **`:unknown` for both
@@ -491,7 +491,7 @@ to call this, and why doesn't it?
   property.)
 - *MASTER-100 has two intakes, and closing the classifier did not merge them.*
   `CLI::Stages::Intake` maps every non-slash line to `:llm`;
-  `Ground::IntentRouter` is a separate keyword scorer read by `TurnRouter`,
+  `CLI::IntentRouter` is a separate keyword scorer read by `TurnRouter`,
   `FoldRisk` and `Policy::Orchestration`. Natural language is still two doors.
 - *A detector note worth keeping.* The second reading asked that
   `def self.x` below `private` be spared, on the grounds that `private` does
