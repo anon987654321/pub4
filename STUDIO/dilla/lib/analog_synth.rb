@@ -81,9 +81,14 @@ module AnalogSynth
   # State lives in the four `z` values, which is why this is a class rather than
   # a function -- a filter is a thing with a memory.
   class Ladder
+    attr_accessor :z0, :z1, :z2, :z3
+
     def initialize(rate: RATE)
       @rate = rate
       @z = [0.0, 0.0, 0.0, 0.0]
+      @z0 = @z1 = @z2 = @z3 = 0.0
+      @last_hz = nil
+      @last_f = 0.0
     end
 
     # `cutoff` in hertz, `resonance` from 0 to about 1.1. Above 1 it self
@@ -96,6 +101,17 @@ module AnalogSynth
     # phase of the feedback and cancels the resonance entirely. Measured across
     # resonance 0.1 to 0.9 it moved the level at cutoff by half a decibel: the
     # knob was connected to nothing.
+    # The coefficient depends only on the cutoff, and the cutoff stops moving
+    # the moment the filter envelope reaches its sustain -- which for a pad is
+    # most of the note. Caching it there turns a Math.exp per sample into one
+    # comparison, and the value is the same value, so nothing rendered changes.
+    def coefficient(stage_hz)
+      return @last_f if stage_hz == @last_hz
+
+      @last_hz = stage_hz
+      @last_f = 1.0 - Math.exp(-2.0 * Math::PI * stage_hz / @rate)
+    end
+
     def process(sample, cutoff, resonance)
       # Two corrections, both of which the first version got wrong, and together
       # they put the cutoff an octave and a half below where it was asked for --
@@ -242,6 +258,111 @@ module AnalogSynth
       amp: Envelope.new(attack: 0.55, decay: 0.8, sustain: 0.82, release: 1.6),
       filter_env: Envelope.new(attack: 1.8, decay: 1.2, sustain: 0.7, release: 1.2),
     },
+    # Leads that are not a buzzsaw.
+    #
+    # A saw has every harmonic in it. That is what a lead wants in a mix with a
+    # band around it, and it is exactly wrong alone in a high register over a
+    # pad -- there is nothing to mask the upper partials, so what should read as
+    # a voice reads as a fault. A triangle has odd harmonics that fall away
+    # fast, which is nearly a sine with an edge, and that is what these are
+    # built on.
+    #
+    # Resonance stays low for the same reason. A resonant peak in the register a
+    # lead sits in is a whistle.
+    glass_bell: {
+      waves: %i[sine triangle sine], detune: [0.0, 4.0, -3.0], octaves: [0, 1, 0],
+      cutoff: 1400.0, env_amount: 2200.0, resonance: 0.12, drive: 0.85,
+      amp: Envelope.new(attack: 0.004, decay: 1.1, sustain: 0.18, release: 1.4),
+      filter_env: Envelope.new(attack: 0.002, decay: 0.7, sustain: 0.2, release: 0.9),
+      vibrato_hz: 4.6, vibrato_cents: 7.0,
+      lpg: 0.7,
+    },
+    soft_reed: {
+      waves: %i[triangle triangle square], detune: [-5.0, 6.0, 0.0], octaves: [0, 0, -1],
+      cutoff: 780.0, env_amount: 1500.0, resonance: 0.16, drive: 0.9,
+      amp: Envelope.new(attack: 0.06, decay: 0.5, sustain: 0.62, release: 0.7),
+      filter_env: Envelope.new(attack: 0.12, decay: 0.6, sustain: 0.4, release: 0.5),
+      vibrato_hz: 5.4, vibrato_cents: 11.0,
+      filter_lfo_hz: 0.31, filter_lfo_amount: 420.0,
+      lpg: 0.4,
+    },
+    vapor_lead: {
+      waves: %i[triangle saw triangle], detune: [-9.0, 0.0, 12.0], octaves: [0, -1, 1],
+      cutoff: 900.0, env_amount: 1800.0, resonance: 0.2, drive: 0.8,
+      amp: Envelope.new(attack: 0.02, decay: 0.8, sustain: 0.45, release: 1.8),
+      filter_env: Envelope.new(attack: 0.35, decay: 1.0, sustain: 0.35, release: 1.2),
+      vibrato_hz: 3.1, vibrato_cents: 16.0,
+      filter_lfo_hz: 0.19, filter_lfo_amount: 700.0,
+      lpg: 0.6,
+    },
+    # The lead that is not a machine holding a note.
+    #
+    # Same fast envelope as poly_lead, because a line still has to speak before
+    # the next note arrives. What is added is everything a played instrument has
+    # and an oscillator does not: a slow vibrato, a filter drifting underneath
+    # at a different and unrelated rate so the two never line up, and a low-pass
+    # gate coupling brightness to loudness so each note darkens as it dies
+    # instead of holding one tone and then stopping.
+    #
+    # 5.2 and 0.27 Hz share no useful factor. That is deliberate -- modulations
+    # at related rates lock into a pattern the ear learns in a bar, and the
+    # whole reason for two of them is that it should not be able to.
+    ringtone_lead: {
+      waves: %i[saw square triangle], detune: [-7.0, 0.0, 11.0], octaves: [0, 0, 1],
+      cutoff: 700.0, env_amount: 3200.0, resonance: 0.41, drive: 1.1,
+      amp: Envelope.new(attack: 0.008, decay: 0.3, sustain: 0.5, release: 0.6),
+      filter_env: Envelope.new(attack: 0.006, decay: 0.4, sustain: 0.3, release: 0.4),
+      vibrato_hz: 5.2, vibrato_cents: 14.0,
+      filter_lfo_hz: 0.27, filter_lfo_amount: 900.0,
+      lpg: 0.55,
+    },
+    # Two octaves down, almost nothing above the fundamental, and a long tail.
+    #
+    # A dub bass is felt before it is heard. The filter sits at 90 Hz, so what
+    # reaches the ear is the fundamental and the first partial and very little
+    # else -- that is the difference between a bass that rumbles and one that
+    # growls. Drive is above 1 because the tanh in the ladder is standing in for
+    # a valve amp being pushed, which is where the warmth in those records came
+    # from; and the release is nearly a second because the note is meant to
+    # still be sounding when the next one lands.
+    dub_bass: {
+      waves: %i[sine triangle sine], detune: [0.0, 0.0, -5.0], octaves: [-1, -1, -2],
+      cutoff: 90.0, env_amount: 260.0, resonance: 0.08, drive: 1.35,
+      amp: Envelope.new(attack: 0.02, decay: 0.9, sustain: 0.55, release: 0.9),
+      filter_env: Envelope.new(attack: 0.05, decay: 0.6, sustain: 0.35, release: 0.6),
+    },
+    # Five oscillators across three octaves, detuned far enough that they beat
+    # against each other slowly rather than sounding merely thick.
+    #
+    # Two things make it feel unreal rather than only large. The filter takes
+    # two and a half seconds to open, so a chord arrives from somewhere instead
+    # of starting; and the release is longer than most chords are held, so each
+    # one is still sounding when the next begins. At any moment you are hearing
+    # two chords, which is the whole effect -- the harmony blurs into itself.
+    #
+    # Detune is in cents and deliberately uneven: -22 and +17 beat at a
+    # different rate than +9 and -11, so there is no single wobble to latch on
+    # to. Drive sits under 1.0 because five oscillators into a saturator is mud.
+    surreal_wash: {
+      waves: %i[saw saw triangle saw square],
+      detune: [-22.0, 17.0, 0.0, 9.0, -11.0], octaves: [0, 0, 1, -1, 0],
+      cutoff: 420.0, env_amount: 1900.0, resonance: 0.24, drive: 0.8,
+      amp: Envelope.new(attack: 0.9, decay: 1.6, sustain: 0.85, release: 2.8),
+      filter_env: Envelope.new(attack: 2.5, decay: 2.2, sustain: 0.65, release: 2.0),
+    },
+    # A lead, which is a different instrument from a pad and not a brighter one.
+    #
+    # The envelope is the whole difference. A sixteenth-note arp at 90 BPM gives
+    # each note 165 ms; warm_pad takes 350 ms just to reach full, so every note
+    # arrives after the next one has started and the figure smears into a held
+    # chord. This speaks in six milliseconds and is gone in two hundred, which is
+    # what makes a line audible as a line.
+    poly_lead: {
+      waves: %i[saw square saw], detune: [-6.0, 0.0, 8.0], octaves: [0, 0, 0],
+      cutoff: 900.0, env_amount: 3400.0, resonance: 0.34, drive: 1.15,
+      amp: Envelope.new(attack: 0.006, decay: 0.22, sustain: 0.62, release: 0.18),
+      filter_env: Envelope.new(attack: 0.004, decay: 0.26, sustain: 0.35, release: 0.15),
+    },
     # Prophet-6 stack: saw plus a triangle an octave up, a little resonance so
     # the filter speaks. Flying Lotus names the Prophet 6 as the versatile one.
     prophet_pad: {
@@ -279,23 +400,51 @@ module AnalogSynth
     end
     level = 1.0 / spec[:waves].length
 
+    # Modulation, and all of it is off unless a patch asks. Each is guarded on a
+    # positive value rather than multiplied by zero, so a patch that declares
+    # none takes the identical arithmetic it always did.
+    #
+    #   VIBRATO      a slow sine on pitch. Every played instrument has it and no
+    #                oscillator does, which is most of why an unmodulated synth
+    #                line sounds like a machine holding a note.
+    #   FILTER LFO   a slow sine on the cutoff. The filter is where the ear
+    #                looks for movement, so this is heard as the sound being
+    #                alive rather than as an effect.
+    #   LOW-PASS GATE  brightness follows loudness, the way a struck object gets
+    #                duller as it dies. On a Buchla this is one vactrol doing
+    #                both jobs; here it is the amplitude envelope steering the
+    #                cutoff instead of the filter's own.
+    vib_hz = spec[:vibrato_hz].to_f
+    vib_cents = spec[:vibrato_cents].to_f
+    flfo_hz = spec[:filter_lfo_hz].to_f
+    flfo_amount = spec[:filter_lfo_amount].to_f
+    lpg = spec[:lpg].to_f
+    two_pi = 2.0 * Math::PI
+
     i = 0
     while i < frames
       dest = start + i
       break if dest >= left.length
 
       t = i.to_f / RATE
+      bend = vib_hz.positive? ? 2.0**((vib_cents * Math.sin(two_pi * vib_hz * t)) / 1200.0) : 1.0
       # Oscillators, summed.
       raw = 0.0
       spec[:waves].each_with_index do |shape, k|
-        phases[k] = (phases[k] + (freqs[k] / RATE)) % 1.0
+        phases[k] = (phases[k] + (freqs[k] * bend / RATE)) % 1.0
         raw += wave(shape, phases[k]) * level
       end
 
       # The filter envelope decides the cutoff, moment by moment. This is the
       # single most important line here: a static filter is a tone control, and
       # a moving one is an instrument.
-      cutoff = spec[:cutoff] + (spec[:env_amount] * spec[:filter_env].at(t, held))
+      shape_env = if lpg.positive?
+                    (spec[:filter_env].at(t, held) * (1.0 - lpg)) + (spec[:amp].at(t, held) * lpg)
+                  else
+                    spec[:filter_env].at(t, held)
+                  end
+      cutoff = spec[:cutoff] + (spec[:env_amount] * shape_env)
+      cutoff += flfo_amount * Math.sin(two_pi * flfo_hz * t) if flfo_hz.positive?
       filtered = ladder.process(raw * spec[:drive], cutoff.clamp(30.0, 18_000.0), spec[:resonance])
 
       amp = spec[:amp].at(t, held) * gain
@@ -313,15 +462,34 @@ module AnalogSynth
   # Each note is {hz:, at:, held:, gain:}. Returns the path, or nil if there was
   # nothing to play.
   def render!(notes, dest:, patch:, duration:, seed: 4242)
-    return nil if notes.empty?
+    render_groups!([{ patch:, notes: }], dest:, duration:, seed:)
+  end
+
+  # Several patches into one performance.
+  #
+  # A per-chord morph is one player changing sound between chords, not several
+  # instruments playing at once, so the groups have to sum into the same pair of
+  # channels. Mixing N finished files afterwards is a different thing and sounds
+  # like it: each file is peak-normalised on its own first, which rebalances the
+  # chords against each other by however loud each one happened to be.
+  #
+  # Each group is {patch:, notes:}. The seed advances across every note in
+  # order, so a single-group call is identical to what render! did alone.
+  def render_groups!(groups, dest:, duration:, seed: 4242)
+    groups = Array(groups).reject { |g| g[:notes].nil? || g[:notes].empty? }
+    return nil if groups.empty?
 
     frames = (duration * RATE).ceil + RATE
     left = Array.new(frames, 0.0)
     right = Array.new(frames, 0.0)
 
-    notes.each_with_index do |note, i|
-      render_note!(left, right, patch:, hz: note[:hz], at: note[:at],
-                   held: note[:held], gain: note[:gain] || 1.0, seed: seed + i)
+    i = 0
+    groups.each do |group|
+      group[:notes].each do |note|
+        render_note!(left, right, patch: group[:patch], hz: note[:hz], at: note[:at],
+                     held: note[:held], gain: note[:gain] || 1.0, seed: seed + i)
+        i += 1
+      end
     end
 
     peak = 0.0
@@ -335,6 +503,59 @@ module AnalogSynth
     left.map! { |v| v * scale }
     right.map! { |v| v * scale }
     write!(left, right, dest)
+  end
+
+  # The same notes as render_groups!, handed back as raw interleaved PCM rather
+  # than written to a file. This is what live playback needs: a pipe wants
+  # samples, and going through a wav on disk to reach one adds a write, a read
+  # and a container for nothing.
+  # The raw channel buffers, before anything is done to them. A caller that
+  # wants to put one layer through a reverb and leave another dry needs each
+  # layer on its own, which neither the file writer nor the PCM packer can hand
+  # back.
+  def buffers!(groups, duration:, seed: 4242)
+    groups = Array(groups).reject { |g| g[:notes].nil? || g[:notes].empty? }
+    return nil if groups.empty?
+
+    frames = (duration * RATE).ceil
+    left = Array.new(frames, 0.0)
+    right = Array.new(frames, 0.0)
+    i = 0
+    groups.each do |group|
+      group[:notes].each do |note|
+        render_note!(left, right, patch: group[:patch], hz: note[:hz], at: note[:at],
+                     held: note[:held], gain: note[:gain] || 1.0, seed: seed + i)
+        i += 1
+      end
+    end
+    [left, right]
+  end
+
+  def pcm_groups!(groups, duration:, seed: 4242)
+    left, right = buffers!(groups, duration:, seed:)
+    return nil unless left
+    # No peak normalisation here, deliberately. A live stream is rendered in
+    # chunks, and scaling each chunk to its own peak makes the quiet ones louder
+    # -- the level would pump with every window. The limiter below is per sample
+    # and has no memory, so it cannot do that.
+    interleave(left, right)
+  end
+
+  def interleave(left, right)
+    inter = Array.new(left.length * 2)
+    i = 0
+    while i < left.length
+      l = left[i]
+      r = right[i]
+      l = 1.0 if l > 1.0
+      l = -1.0 if l < -1.0
+      r = 1.0 if r > 1.0
+      r = -1.0 if r < -1.0
+      inter[i * 2] = (l * 32_767.0).round
+      inter[(i * 2) + 1] = (r * 32_767.0).round
+      i += 1
+    end
+    inter.pack("s<*")
   end
 
   def write!(left, right, dest)

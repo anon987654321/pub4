@@ -86,6 +86,9 @@ require_relative "lib/radio_chop"
 require_relative "lib/sample_flip"
 require_relative "lib/vocal_chop"
 require_relative "lib/analog_synth"
+require_relative "lib/improvisation"
+require_relative "lib/improvised_line"
+require_relative "lib/space_fx"
 require_relative "lib/acapella"
 require_relative "lib/outboard"
 require_relative "lib/key_lock"
@@ -1708,14 +1711,6 @@ def seed_for(tag)
 end
 
 def noise_seed(tag) = render_pinned? ? seed_for(tag) : -1
-
-# The unpinned branch of both of these is the existing behaviour verbatim, so
-# nothing changes for anyone who has not set RENDER_SEED.
-def render_rand(tag)
-  return rand unless render_pinned?
-
-  seed_for(tag).fdiv(NOISE_SEED_MODULUS)
-end
 
 # Array#sample under a pin, keyed by tag rather than by call order. Order-keying
 # matters here: drum_sample_path is called once per role and a shared sequential
@@ -7189,10 +7184,16 @@ end
 #
 # The point is to be able to hear what the oscillators and the filter actually
 # do, without a whole track around them. `PATCH=acid` for one; `HZ=` to move the
-# chord.
-def synth_audition!
+# chord. `synth chords` plays the whole catalogue instead of one chord.
+def synth_audition!(mode = nil)
   wanted = ENV["PATCH"].to_s.strip
   patches = wanted.empty? ? AnalogSynth::PATCHES.keys : [wanted.to_sym]
+  patches = patches.select do |patch|
+    AnalogSynth::PATCHES.key?(patch) ||
+      (warn("no patch #{patch.inspect} — have: #{AnalogSynth::PATCHES.keys.join(', ')}") && false)
+  end
+  return synth_chord_audition!(patches) if mode.to_s == "chords"
+
   root = (ENV["HZ"] || 130.81).to_f
   # A minor seventh, which shows a filter's character better than a single note:
   # four voices beating against each other is where detune becomes audible.
@@ -7200,11 +7201,6 @@ def synth_audition!
   dir = File.join(ROOT, "scratch", "synth")
 
   patches.each do |patch|
-    unless AnalogSynth::PATCHES.key?(patch)
-      warn "no patch #{patch.inspect} — have: #{AnalogSynth::PATCHES.keys.join(', ')}"
-      next
-    end
-
     notes = chord.map { |hz| { hz:, at: 0.05, held: 1.8, gain: 0.7 } }
     out = AnalogSynth.render!(notes, dest: File.join(dir, "#{patch}.wav"), patch:,
                               duration: 3.4, seed: stable_hash(patch.to_s))
@@ -7212,32 +7208,133 @@ def synth_audition!
   end
 end
 
-# The progression played on real oscillators.
-#
-# Every other pad in this engine is FluidSynth reading a soundfont: a recording
-# of a sound somebody else made, which can be equalised afterwards and not much
-# else. lib/analog_synth.rb is the other thing -- oscillators, a four-pole
-# resonant ladder, and envelopes, which is what an analogue synthesiser is. It
-# was built and measured and then left unwired, because connecting it as THE pad
-# source means touching every patch table in the engine.
-#
-# This is the smaller version of that, and it is the version worth having: it
-# renders the same chords as a SECOND pad, underneath the sampled one. Two
-# instruments playing the same harmony is not a compromise, it is how a record
-# gets depth -- the soundfont has the detail of a real instrument and this has
-# the movement a recording cannot have, because its filter opens on every chord.
-#
-def drum_loop_source
-  raw = ENV["DRUM_LOOP"].to_s.strip
-  return if raw == "0"
+# The instruments a set moves through, named for what each one is closest to:
+# the Rhodes, the Prophet, the Moog, the VP-330's massed voices, the Odyssey's
+# resonant bite, the Juno's chorused bed, and the wash that is nobody's machine.
+PATCH_ROTATION = %i[e_piano prophet_pad moog_bass poly_strings acid
+                    juno_pad surreal_wash warm_pad poly_lead].freeze
 
-  candidates = []
-  candidates << raw unless raw.empty?
-  candidates << File.join(SAMPLE_DIR, "drums", "techno_drums.mp3")
-  candidates << File.expand_path("~/Downloads/techno_drums.mp3")
-  candidates.find { |path| File.file?(path) }
+# Every chord the catalogue plays, on every instrument the engine has.
+#
+# The single chord above shows what a filter does. This shows what the
+# instruments do with the actual harmony: the nineteen progressions -- seven off
+# records and twelve the engine wrote -- played straight through on one patch,
+# then again on the next. A rest sits between progressions so the ear can hear
+# where one ends, and the manifest names what is playing when.
+#
+# CHORD_HOLD sets how long each chord is held; PATCH= narrows it to one
+# instrument, which is the version to reach for when comparing two takes.
+def synth_chord_audition!(patches)
+  return puts("no patches to audition") if patches.empty?
+
+  # One length per chord, or a cadence that cycles through several.
+  #
+  # Equal chords one after another is a list, not a performance -- and against a
+  # long release the difference is the whole character: a chord held 3 seconds
+  # has stopped moving by the time the next arrives, while one held 0.6 is still
+  # sounding under the next two. CHORD_CADENCE=2.4,0.8,0.8,1.6 cycles those
+  # lengths; CHORD_HOLD alone keeps every chord the same.
+  cadence = ENV["CHORD_CADENCE"].to_s.split(",").map { |v| v.to_f.clamp(0.15, 12.0) }.select(&:positive?)
+  cadence = [(ENV["CHORD_HOLD"] || "1.2").to_f.clamp(0.2, 8.0)] if cadence.empty?
+  gap = cadence.sum / cadence.length * 0.75
+  dir = File.join(SCRATCH_DIR, "synth_chords")
+  FileUtils.mkdir_p(dir)
+  order = demo_curated_order
+
+  # Built once: the same notes are played by every patch, which is the whole
+  # point of an audition -- the only thing changing between files is the
+  # instrument.
+  notes = []
+  progression_notes = {}
+  manifest = []
+  at = 0.0
+  step = 0
+  order.each do |track|
+    names = CHORD_PROGRESSIONS[track] or next
+
+    manifest << format("  %8.1fs  %s", at, track)
+    progression_notes[track] = []
+    names.each do |name|
+      chord = resolve_pad_chord_symbol(name) or next
+
+      # The cadence runs across the whole audition rather than restarting each
+      # progression, so a four-length cycle against eight-chord progressions
+      # lands differently every time round instead of marking every bar the same.
+      held = cadence[step % cadence.length]
+      step += 1
+      Array(chord[:hz]).each do |hz|
+        next unless hz.to_f.positive?
+
+        note = { hz: hz.to_f, at: at.round(4), held: held, gain: 0.6 }
+        notes << note
+        progression_notes[track] << note
+      end
+      at += held
+    end
+    at += gap
+  end
+  return puts("no chords resolved") if notes.empty?
+
+  puts "#{order.length} progressions, #{notes.length} notes, #{at.round(1)}s per patch"
+  puts manifest
+  File.write(File.join(dir, "manifest.txt"), manifest.join("\n") + "\n")
+
+  # One instrument per progression rather than one per pass.
+  #
+  # The pass above is for comparing instruments: the same notes nine times, so
+  # the only variable is the synth. This is the other thing entirely -- a set,
+  # where the instrument changes with the piece. Nineteen progressions over nine
+  # patches cycles twice and never pairs the same two together.
+  if ENV["PATCH_PER_PROGRESSION"] == "1"
+    groups = []
+    idx = 0
+    progression_notes.each do |track, track_notes|
+      groups << { patch: PATCH_ROTATION[idx % PATCH_ROTATION.length], notes: track_notes }
+      puts format("  %-24s %s", track, groups.last[:patch])
+      idx += 1
+    end
+    dest = File.join(dir, "rotating.wav")
+    out = AnalogSynth.render_groups!(groups, dest:, duration: at + 3.0, seed: stable_hash("rotating"))
+    puts out ? "ok: #{out} (#{groups.length} progressions, #{(at / 60.0).round(1)} min)" : "produced silence"
+    return out
+  end
+
+  parts = patches.filter_map do |patch|
+    out = AnalogSynth.render!(notes, dest: File.join(dir, "#{patch}.wav"), patch:,
+                              duration: at + 2.0, seed: stable_hash(patch.to_s))
+    puts out ? "  #{patch.to_s.ljust(14)} #{(File.size(out) / 1_000_000.0).round(1)}MB" : "  #{patch}: silence"
+    out
+  end
+  return if parts.empty?
+
+  joined = File.join(dir, "all_patches.wav")
+  list = File.join(dir, "concat.txt")
+  File.write(list, parts.map { |p| "file '#{p}'" }.join("\n") + "\n")
+  sh! "ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", joined
+  puts "ok: #{joined} (#{parts.length} patches, #{(at * parts.length / 60.0).round(1)} min)"
+  joined
 end
 
+# A drum loop the operator names, and nothing the engine finds on its own.
+#
+# Two implicit candidates used to sit under this: a file in samples/drums/ and
+# one in ~/Downloads. Neither is checked out with the repo, so the engine's
+# drums silently depended on whichever of them happened to be on the machine --
+# and on this one it was the Downloads copy, which reached nineteen slots of the
+# last demo. The kit under this layer is synthesised; that is what plays when
+# nobody names a loop.
+def drum_loop_source
+  raw = ENV["DRUM_LOOP"].to_s.strip
+  return if raw.empty? || raw == "0"
+
+  raw if File.file?(raw)
+end
+
+# The progression played on real oscillators, as a second pad under the main
+# stack. Two instruments playing the same harmony is how a record gets depth,
+# and this one moves in a way a single stack does not, because its filter opens
+# on every chord.
+#
 # warm_pad is the patch: two detuned saws and a square an octave down, filter
 # opening over a second and a half, so the chord arrives rather than starts.
 def analog_pad_file(pads, cfg, n_bars, beat_p)
@@ -10704,8 +10801,12 @@ EXTENDED_TENSION_CHORDS = [
   { name: "Dmaj9nc",    hz: [146.83, 185.00, 220.00, 277.18, 329.63] },
   { name: "DMaj7overG", hz: [98.00,  146.83, 185.00, 220.00, 277.18] },
 ].freeze
+# The improvised chords go in last and cannot collide: every name they carry
+# ends in the `imp` tag, so the first-wins rule below never silently hands one
+# of them somebody else's voicing.
 PAD_CHORD_LOOKUP = (
-  PAD_CHORDS + EXTENDED_NINTH_CHORDS + MODAL_MINOR_CHORDS + EXTENDED_TENSION_CHORDS
+  PAD_CHORDS + EXTENDED_NINTH_CHORDS + MODAL_MINOR_CHORDS + EXTENDED_TENSION_CHORDS +
+  DillaImprovisation.chords
 ).each_with_object({}) { |c, m| m[c[:name]] = c unless m[c[:name]] }.freeze
 # ---------------------------------------------------------------------------
 # ARTIST-VERIFIED progressions only (exact artist/sample harmony).
@@ -10829,6 +10930,21 @@ ARTIST_VERIFIED_PROGRESSIONS = {
     sources: ["Same as eb_minor_two_chord"],
   },
 }.freeze
+
+# The twelve entries above are seven recordings.
+#
+# Five of the names are a second reading of a progression already in the table:
+# Time appears as sevenths and again as ninths, Fall in Love, Get Dis Money,
+# Climax and Untitled each appear twice. That is useful as a record of how a
+# progression was heard, and it is wrong as a playlist -- a demo built from the
+# names plays five of the seven twice and reads as a catalogue with a stutter.
+#
+# Grouped by the recording, first name declared wins. That keeps
+# pedal_e_descent, which the engine already names as its default TRACK.
+VERIFIED_PROGRESSION_SLOTS = ARTIST_VERIFIED_PROGRESSIONS
+                             .group_by { |_, entry| [entry[:artist], entry[:title]] }
+                             .map { |_, entries| entries.first.first }
+                             .freeze
 
 # The strictly Dilla-produced subset (artist or producer: J Dilla) — the
 # "original J Dilla progressions". Excludes the D'Angelo Voodoo entries.
@@ -11711,7 +11827,8 @@ CHORD_PROGRESSIONS = {
   # Dorian with the window open: the minor tonic and the major fourth that only
   # Dorian has, plus the relative major leaning in. Modal, but not static.
   dorian_open_window: %w[Dm9 G13 Cmaj9 Am9 Dm9 Em9 G13 Dm9],
-}.merge(EXTENDED_PROGRESSIONS).merge(DEVICE_PROGRESSIONS).freeze
+}.merge(EXTENDED_PROGRESSIONS).merge(DEVICE_PROGRESSIONS)
+ .merge(DillaImprovisation.progressions).freeze
 
 # Per-track production presets (BPM from jdillabasslines Vol. 2).
 TRACK_PRESETS = {
@@ -16052,8 +16169,9 @@ README_LOOP_DEFAULTS = {
   "SPACE_ECHO" => "1",
   "PAD_LAYERS" => "1",
   "LEARNED_PROGRESSION" => "1",
-  "DRUM_LOOP" => File.join(SAMPLE_DIR, "drums", "techno_drums.mp3"),
-  "DRUM_LOOP_SEMITONES" => "-2.5",
+  # The kit is synthesised, so the readme loop plays it rather than a recording
+  # of somebody else's drums.
+  "DRUM_LOOP" => "0",
 }.freeze
 
 def readme_loop!
@@ -17326,27 +17444,36 @@ DILLA_PAD_LEAD_LOCK_KEYS = %w[
 # existed and nothing could pick them. A demo of eight tracks came out
 # boom-bap eight times, by construction rather than by choice.
 #
-# Five Wonky entries added. They are placed at odd indices so a run of
-# consecutive tracks alternates rather than arriving in a block, since the
-# rotation is indexed by track number.
+# The curated rotation, and "curated" now means what it says.
 #
-# The pockets differ from the boom-bap half on purpose. wonky_abstract and
-# wonky_burst are busier and want the straighter pocket under them; dilla_drunk
-# with a Wonky grid on top is two kinds of drunk at once.
+# Five of the thirteen entries were Wonky presets -- an abstract grid with the
+# overlay on top -- so nearly two slots in five of a hip-hop demo came out as
+# Camel rather than as a pocket. That is the whole of the operator verdict this
+# file already records a few hundred lines up: "the drums seem to go without
+# rhythm or purpose". A colour that appears 38% of the time is not a colour.
+#
+# Two remain, at indices 5 and 10, far enough apart that neither run of tracks
+# gets both. The rest is the pocket, and dillatime opens it because it is the
+# sparsest thing here and the demo should start by showing that space is a
+# choice.
+#
+# The kit column is inert now: the engine synthesises its drums and only an
+# explicit EXTERNAL_KIT reaches a sample pack. It stays as the record of which
+# kit each pairing was voiced against.
 STREAM_DRUM_ROTATION = [
-  { preset: "dilla_slight",      pocket: "neo_soul", kit: "03-soulful-vintage", fm: "0", wonky: "0" },
-  { preset: "wonky_abstract",    pocket: "classic",  kit: "02-bounce",          fm: "0", wonky: "1" },
-  { preset: "dilla_drunk",       pocket: "neo_soul", kit: "03-soulful-vintage", fm: "0", wonky: "0" },
-  { preset: "wonky_cosmogramma", pocket: "classic",  kit: "03-soulful-vintage", fm: "0", wonky: "1" },
-  { preset: "mpc3000",           pocket: "neo_soul", kit: "03-soulful-vintage", fm: "0", wonky: "0" },
-  { preset: "wonky_zodiac",      pocket: "dusty",    kit: "03-soulful-vintage", fm: "0", wonky: "1" },
-  { preset: "madlib_dusty",      pocket: "dusty",    kit: "03-soulful-vintage", fm: "0", wonky: "0" },
-  { preset: "wonky_warp",        pocket: "classic",  kit: "02-bounce",          fm: "1", wonky: "1" },
-  { preset: "sp1200",            pocket: "classic",  kit: "03-soulful-vintage", fm: "0", wonky: "0" },
-  { preset: "wonky_burst",       pocket: "classic",  kit: "02-bounce",          fm: "0", wonky: "1" },
-  { preset: "dilla_slight",      pocket: "classic",  kit: "02-bounce",          fm: "0", wonky: "0" },
-  { preset: "mpc3000",           pocket: "classic",  kit: "02-bounce",          fm: "0", wonky: "0" },
-  { preset: "dilla_drunk",       pocket: "dusty",    kit: "03-soulful-vintage", fm: "0", wonky: "0" },
+  { preset: "dillatime",         pocket: "neo_soul", kit: "03-soulful-vintage", fm: "1", wonky: "0" },
+  { preset: "dilla_slight",      pocket: "neo_soul", kit: "03-soulful-vintage", fm: "1", wonky: "0" },
+  { preset: "mpc3000",           pocket: "neo_soul", kit: "03-soulful-vintage", fm: "1", wonky: "0" },
+  { preset: "dilla_drunk",       pocket: "neo_soul", kit: "03-soulful-vintage", fm: "1", wonky: "0" },
+  { preset: "sp1200",            pocket: "classic",  kit: "03-soulful-vintage", fm: "1", wonky: "0" },
+  { preset: "wonky_abstract",    pocket: "classic",  kit: "02-bounce",          fm: "1", wonky: "1" },
+  { preset: "dillatime",         pocket: "dusty",    kit: "03-soulful-vintage", fm: "1", wonky: "0" },
+  { preset: "madlib_dusty",      pocket: "dusty",    kit: "03-soulful-vintage", fm: "1", wonky: "0" },
+  { preset: "dilla_slight",      pocket: "classic",  kit: "02-bounce",          fm: "1", wonky: "0" },
+  { preset: "four_seven",        pocket: "classic",  kit: "02-bounce",          fm: "1", wonky: "0" },
+  { preset: "wonky_cosmogramma", pocket: "classic",  kit: "03-soulful-vintage", fm: "1", wonky: "1" },
+  { preset: "mpc3000",           pocket: "classic",  kit: "02-bounce",          fm: "1", wonky: "0" },
+  { preset: "dilla_drunk",       pocket: "dusty",    kit: "03-soulful-vintage", fm: "1", wonky: "0" },
 ].freeze
 
 # Lead arp modes cycled each stream track (real figures, not held wash).
@@ -18765,9 +18892,6 @@ end
 def stream_rotate_drums!(index)
   return unless stream_drum_rotate_enabled?
 
-  # DRUM_ROTATE_CURATED is separate from DEMO_CURATED_ONLY on purpose: that one
-  # also narrows the TRACK list, so asking for the house kit meant giving up
-  # most of the catalogue.
   #
   # Why a demo wants it. drum_rotation_full is the 13 hand-built pairings
   # followed by every other preset SORTED BY NAME, and the index walks it
@@ -18782,12 +18906,15 @@ def stream_rotate_drums!(index)
   # The curated table is 13 entries and deliberately repeats dilla_slight,
   # mpc3000 and dilla_drunk, so over 34 slots a listener hears each pocket
   # several times and it registers as the record's groove.
-  curated = ENV["DEMO_CURATED_ONLY"] == "1" || ENV.fetch("DRUM_ROTATE_CURATED", "0") == "1"
+  curated = ENV.fetch("DRUM_ROTATE_CURATED", "0") == "1"
   table = curated ? STREAM_DRUM_ROTATION : drum_rotation_full
   d = table[index % table.length]
   ENV["DRUM_PRESET"] = d[:preset]
   ENV["POCKET_SET"] = d[:pocket]
-  ENV["EXTERNAL_KIT"] = d[:kit] if d[:kit] && !d[:kit].empty?
+  # The rotation used to set EXTERNAL_KIT from the table here, which put a
+  # sample pack back into a kit the engine synthesises -- and did it on every
+  # slot, so the one place an operator can say "no borrowed drums" was overruled
+  # by a preset list. A pocket is a pocket; the sounds come from the kit.
   ENV["FM_DRUMS"] = d[:fm] if d[:fm] == "1" && !USER_PINNED_ENV.key?("FM_DRUMS")
   ENV["WONKY_DRUM_OVERLAY"] = d[:wonky] || "0"
   ENV["DRUM_CHOPS"] = "0" unless ENV["FORCE_DRUM_CHOPS"] == "1"
@@ -19115,65 +19242,37 @@ def demo_all_order
   # including any DILLA_PROGRESSIONS_ONLY filtering.
   return locked if ENV["DEMO_CATALOG"].to_s.strip.downcase == "stream"
 
-  # Deliberately STREAM_TRACKS and not stream_track_order: the latter runs
-  # through stream_track_pool, which DILLA_PROGRESSIONS_ONLY narrows to the
-  # Dilla-produced handful. That is right for a broadcast and wrong for a
-  # catalogue demo, which should show everything the engine knows regardless
-  # of what the stream is currently filtered to.
-  curated = demo_curated_order
-
-  # ...and then everything else, which is most of it.
-  #
-  # The note above says this list "should show everything the engine knows", and
-  # it did not. Those three sources union to 86 entries. CHORD_PROGRESSIONS holds
-  # 250. Measured, 209 progressions could never appear in a catalogue demo --
-  # gospel_walk_up, neapolitan_door, lament_ground, hexatonic_pole_shiver, every
-  # eight_bar_* arc, both whole_tone entries. The engine knew them and no demo
-  # ever played one, which is a large part of why eight tracks drawn from the
-  # same 41 sounded like each other.
-  #
-  # Curated first, so the order of the front of the catalogue is unchanged and
-  # DEMO_TRACKS/demo-quick still sample the good stuff first. The tail is sorted
-  # rather than shuffled: a catalogue should be in a stable order so a track you
-  # heard yesterday is in the same place today.
-  #
-  # DEMO_CURATED_ONLY=1 restores the old 86 for anyone who wants those.
-  return curated if ENV["DEMO_CURATED_ONLY"] == "1"
-
-  # The sampled beds go in too, and they are the reason this matters.
-  #
-  # TRACK_SAMPLE_LOOPS entries are track names: name one as TRACK and the loop
-  # plays underneath the arrangement on its own bus. All twelve were unreachable
-  # from any demo -- the four hand-cut records and the eight cut from the Sheger
-  # broadcast by `chop`, which was built this session precisely so the engine
-  # could make beats out of them. It could, and no demo ever did.
-  loops = TRACK_SAMPLE_LOOPS.keys.map(&:to_sym).sort
-  tail = (CHORD_PROGRESSIONS.keys.map(&:to_sym).sort - curated - loops)
-  (curated + loops + tail).uniq
+  order = demo_curated_order
+  # The crate, when it is asked for. The records are material rather than
+  # catalogue: naming one as TRACK plays the loop under the arrangement, and
+  # DEMO_CRATE=1 puts every record that is on disk into the demo after the
+  # nineteen pieces.
+  order += demo_sampled_order if ENV["DEMO_CRATE"] == "1"
+  order.uniq
 end
 
-# The crate opens the demo. Its three sources below union to 86 entries and
-# not one of them is a sampled track, so a demo of what this engine does
-# played 86 synthesised pieces and never put on a record -- the one thing it
-# does that a synthesiser cannot.
-#
-# Only records whose loop is on disk. TRACK_SAMPLE_LOOPS names five and four
-# of them are currently missing their audio; listing a record with no file
-# buys a failed slot or a silence placeholder in the middle of a demo. This
-# reads the disk so restoring a loop is the whole of putting it back in.
+# Only records whose loop is on disk. Listing a record with no file buys a
+# failed slot or a silence placeholder in the middle of a demo, so this reads
+# the disk -- which makes restoring a loop the whole of putting it back in.
 def demo_sampled_order
   lead = :semua_untuk_mu
   present = TRACK_SAMPLE_LOOPS.select { |_, spec| File.file?(spec[:path].to_s) }.keys
   ([lead] & present) + (present - [lead])
 end
 
-# The curated head of the catalogue, on its own. Named because three places want
-# it: demo_all_order builds from it, DEMO_CURATED_ONLY returns it, and the help
-# text has to be able to say how big it is without guessing.
+# The catalogue: seven recordings and twelve improvisations.
+#
+# It was 575 pieces, and 401 of those were chord progressions nobody had chosen
+# -- every name the engine could resolve, played once. A catalogue assembled
+# that way demonstrates reach and nothing else, and eight tracks drawn from it
+# sound like each other because most of them are the same four functional moves
+# under different names.
+#
+# So it is the seven progressions that carry a date and a source, and twelve the
+# engine writes itself in five languages. Verified first: the demo opens on the
+# music it is answerable to, and then says what it can do with it.
 def demo_curated_order
-  base = STREAM_TRACKS.map(&:to_sym)
-  extra = GENERATED_STYLES.map(&:to_sym) + ARTIST_VERIFIED_PROGRESSIONS.keys.map(&:to_sym)
-  (demo_sampled_order + base + extra).uniq
+  VERIFIED_PROGRESSION_SLOTS.map(&:to_sym) + DillaImprovisation.names
 end
 
 # Catalogue sizes, derived rather than written down.
@@ -19188,20 +19287,19 @@ end
 # 1.7 hours at 86 and 6 hours at 307, and an operator choosing between them off
 # the help text was choosing off numbers four times wrong.
 #
-# The :all and :curated counts read no ENV, deliberately. demo_all_order honours
-# DEMO_TRACKS/DEMO_CATALOG/DEMO_CURATED_ONLY, which is right for a render and
-# wrong for a help screen -- `DEMO_CATALOG=stream ruby dilla.rb help` should
-# still report what the default catalogue costs. :stream goes through
-# stream_track_order and therefore does follow STREAM_LOCK and any progression
-# filter, because that is the honest answer to "what would DEMO_CATALOG=stream
-# render for me", which is the question the help line is answering.
+# The :all and :verified counts read no ENV, deliberately. demo_all_order honours
+# DEMO_TRACKS/DEMO_CATALOG/DEMO_CRATE, which is right for a render and wrong for
+# a help screen -- `DEMO_CATALOG=stream ruby dilla.rb help` should still report
+# what the default catalogue costs. :stream goes through stream_track_order and
+# therefore does follow STREAM_LOCK and any progression filter, because that is
+# the honest answer to "what would DEMO_CATALOG=stream render for me", which is
+# the question the help line is answering.
 def demo_catalog_sizes
-  curated = demo_curated_order
-  loops = TRACK_SAMPLE_LOOPS.keys.map(&:to_sym)
-  tail = CHORD_PROGRESSIONS.keys.map(&:to_sym) - curated - loops
   {
-    all: (curated + loops + tail).uniq.length,
-    curated: curated.length,
+    all: demo_curated_order.length,
+    verified: VERIFIED_PROGRESSION_SLOTS.length,
+    improvised: DillaImprovisation.names.length,
+    crate: demo_sampled_order.length,
     stream: stream_track_order.length,
   }
 end
@@ -19244,8 +19342,8 @@ end
 #   DEMO_CREATIVE=1 (default) rotate pads/leads/MIDI/analog + sparse rap so chords read
 #   DEMO_TRACK_TIMEOUT=300 max seconds per track (creative stacks need headroom)
 #   DEMO_RAP_EVERY=4 rap only every Nth track (0 = never; 1 = always)
-#   DEMO_CATALOG=stream restrict to the stream rotation; DEMO_CURATED_ONLY=1 the
-#     curated head only. Sizes are in demo_catalog_sizes -- do not write them here,
+#   DEMO_CATALOG=stream restrict to the stream rotation; DEMO_CRATE=1 adds the
+#     records on disk. Sizes are in demo_catalog_sizes -- do not write them here,
 #     the two that used to live in this file drifted to 4x wrong.
 #   DEMO_MP3=0 skip the mp3; DEMO_MP3_BITRATE=192k
 # One file per track instead of one 48-minute concat.
@@ -19340,7 +19438,28 @@ def demo_rap_slot?(idx, rap_every)
   (idx % every) != every - 1
 end
 
+# Does this track name a record? TRACK_SAMPLE_LOOPS is keyed by slug, through
+# the alias table for the older ingest names.
+def sampled_track?(slug)
+  key = slug.to_s.downcase.tr("-", "_").to_sym
+  TRACK_SAMPLE_LOOPS.key?(TRACK_SAMPLE_LOOP_ALIASES.fetch(key, key))
+end
+
 def demo_techno_slot?(idx, slug)
+  # Alternation, when it is asked for by period rather than by proportion.
+  #
+  # DEMO_TECHNO_SHARE is a coin, and a coin does not alternate -- at 0.5 it
+  # cheerfully deals four hip-hop slots in a row, which is not what "alternate"
+  # means. DEMO_TECHNO_EVERY=2 puts techno on every second slot exactly, and 3
+  # on every third. It still defers to the sampled-record exemption below,
+  # because a chopped record on a techno slot loses the record.
+  every = ENV["DEMO_TECHNO_EVERY"].to_i
+  if every.positive?
+    return false unless techno_harmony_enabled? || !sampled_track?(slug)
+
+    return ((idx + 1) % every).zero?
+  end
+
   share = demo_techno_share
   return false if share <= 0.0
 
@@ -20013,6 +20132,14 @@ voice_stack_every = (ENV["DEMO_VOICE_STACK_EVERY"] || "3").to_i
       HEAD
     end
   end
+  # The improvisation seed is pinned into ENV before the first part renders, so
+  # every sidecar records it and the set can be played again. Drawn per run
+  # otherwise -- an improvisation that comes back identical every time is a
+  # recording, and one nobody can replay is lost.
+  ENV["IMPROV_SEED"] = DillaImprovisation.seed.to_s
+  dmesg("improvised #{DillaImprovisation.names.length} in 5 languages, IMPROV_SEED=#{DillaImprovisation.seed}",
+        unit: "harm0", parent: "dilla0")
+  DillaImprovisation.report.each { |line| dmesg(line.strip, unit: "harm0", parent: "dilla0") }
   dmesg("demo-all tracks=#{order.length} bars=#{bars_count} creative=#{creative ? 1 : 0} → #{dest}",
         unit: "demo0", parent: "dilla0")
 
@@ -22484,29 +22611,14 @@ def pick_external_drum_kit!
       return
     end
   end
-  track = (ENV["TRACK"] || "").to_s
-  soul = DillaHarmony.soul_profile?(track) || ENV["DILLA_STREAMING"] == "1"
-  roll = render_rand("external_kit_roll")
-  @current_external_kit = if soul
-                            if roll < 0.72
-                              "03-soulful-vintage"
-                            elsif roll < 0.88
-                              "02-bounce"
-                            else
-                              render_pick(EXTERNAL_DRUM_KITS, "external_kit_soul")
-                            end
-                          elsif roll < 0.35
-                            render_pick(EXTERNAL_DRUM_KITS, "external_kit_plain")
-                          end
+  # Nothing else. An external kit is somebody else's recording of a drum, and
+  # the engine reaches for one only when EXTERNAL_KIT names it -- which is an
+  # operator feeding it material, not the engine making its own sound.
+  #
+  # This used to roll for one: 72% of soul tracks and 35% of the rest came back
+  # with a sample pack instead of the kit the engine synthesises, so the drums
+  # on most renders were neither chosen nor built here.
 end
-
-# Hats/snares/claps synthesized from a bandpassed noise burst (generate_drum_kit!)
-# are thin/harsh by construction — pure noise decaying in ~20ms has no body.
-# pick_external_drum_kit! rolls a real-sample kit only 35-88% of the time
-# (track-dependent); these three roles matter enough to the drum sound that
-# they should reach for real samples whenever the (already-fetched) kit
-# cache exists, not just when the roll happened to land on it.
-ALWAYS_SAMPLED_DRUM_ROLES = %w[hat.wav open_hat.wav snare.wav ghost.wav].freeze
 
 def drum_sample_path(name)
   # Explicit opt-in beats the passive custom-dir cache -- FM_DRUMS=1 is a
@@ -22521,8 +22633,11 @@ def drum_sample_path(name)
 
   subdir = DRUM_SAMPLE_SUBDIR[name]
   if subdir
+    # Only when an operator named the kit. There used to be a second way in:
+    # four roles reached for the sample pack whenever its cache happened to
+    # exist, on the argument that synthesised noise has no body. The answer to a
+    # thin hat is a better recipe, not a borrowed recording.
     kit = @current_external_kit
-    kit ||= "03-soulful-vintage" if ALWAYS_SAMPLED_DRUM_ROLES.include?(name) && Dir.exist?(EXTERNAL_DRUM_KIT_CACHE)
     if kit
       kit_dir = File.join(EXTERNAL_DRUM_KIT_CACHE, "drum-samples", kit, subdir)
       # .sort first: Dir.glob order is not guaranteed across filesystems, so an
@@ -22652,6 +22767,20 @@ def generate_fm_drum_kit!
     ["open_hat.wav",
      ["-f", "lavfi", "-i", "aevalsrc='0.75*exp(-t*10)*sin(2*PI*900*t+5*sin(2*PI*3150*t))':d=0.42:s=#{sr}"],
      "highpass=f=3500"],
+    # The 808, which was the one drum role in the kit with no recipe at all --
+    # so every render reached past the kit and opened a file for it.
+    #
+    # What separates an 808 from a kick is that its tail is a note. The pitch
+    # falls from 110 Hz to the 43 Hz in its name inside the first fifty
+    # milliseconds and then holds, decaying over more than a second, so the ear
+    # hears a played bass rather than a struck drum. The click is a separate
+    # eight-millisecond burst an octave and a half up: it carries the attack on
+    # a small speaker, and it is not pitched, which is why it is added rather
+    # than folded into the sine.
+    ["bass_43.wav",
+     ["-f", "lavfi", "-i", "aevalsrc='0.9*exp(-t*1.6)*sin(2*PI*(43+67*exp(-t*26))*t)" \
+                           "+0.5*exp(-t*140)*sin(2*PI*1800*t)*between(t,0,0.008)':d=1.4:s=#{sr}"],
+     "aeval=exprs='tanh(1.5*val(0))/tanh(1.5)',lowpass=f=320,equalizer=f=45:t=o:w=0.9:g=3"],
   ]
   recipes.each do |name, inputs, chain|
     dest = File.join(FM_DRUM_DIR, name)
@@ -22670,7 +22799,7 @@ def fm_drums_enabled?
 end
 
 def ensure_fm_drum_kit!
-  needed = %w[kick.wav snare.wav hat.wav ghost.wav open_hat.wav ind_kick.wav]
+  needed = %w[kick.wav snare.wav hat.wav ghost.wav open_hat.wav ind_kick.wav bass_43.wav]
   generate_fm_drum_kit! unless needed.all? { |n| File.exist?(File.join(FM_DRUM_DIR, n)) }
 end
 
@@ -23994,11 +24123,15 @@ def blend_xlead_stems(destination, fs_path, native_path, duration)
   destination
 end
 
-def render_xlead_morph_fluidsynth(path, pad_events, duration, cfg)
-  return unless lead_morph_enabled? && fluidsynth_pad_available?
+def render_xlead_morph!(path, pad_events, duration, cfg)
+  return unless lead_morph_enabled?
+  return unless analog_synth_enabled? || fluidsynth_pad_available?
   return if pad_events.empty?
 
-  timed = []
+  # The arp figure per chord is worked out once and kept, because both the
+  # oscillator path and the soundfont path want the same notes -- one as a group
+  # of frequencies, the other as bank, program and MIDI note numbers.
+  per_chord = []
   first_patch = nil
   beat_p = 60.0 / cfg[:bpm]
   bar_p = beat_p * 4.0
@@ -24007,30 +24140,51 @@ def render_xlead_morph_fluidsynth(path, pad_events, duration, cfg)
     patch = morph_lead_patch_for_chord(i)
     next unless patch && chord && chord[:hz]&.any?
     first_patch ||= patch
-    voice = patch_voice_for(patch)
     arp_cfg = morph_lead_arp_cfg_for_chord(i, patch)
     chord_events = lead_arp_events_for_chord(time, velocity, chord, sustain, i, cfg, arp_cfg, patch,
                                              role: :xlead, n_bars_est:, skip_intro: false)
     next if chord_events.empty?
-    on_tick = (time * SMF_TICKS_PER_SECOND).round
-    timed << [on_tick, :bank, voice[:bank]]
-    timed << [on_tick, :prog, voice[:program]]
-    chord_events.each do |(t, vel, ch, dur)|
-      note = hz_to_midi(ch[:hz].first).round.clamp(0, 127)
-      note_on = (t * SMF_TICKS_PER_SECOND).round
-      note_off = (note_on + (dur * SMF_TICKS_PER_SECOND)).round
-      v = (vel.clamp(0.0, 1.0) * 100).round.clamp(40, 127)
-      timed << [note_on, :on, note, v]
-      timed << [note_off, :off, note, 0]
-    end
+    per_chord << [time, patch, chord_events]
   end
-  return if timed.empty?
+  return if per_chord.empty?
 
-  midi_path = "#{path}.smf.mid"
-  write_smf_timed(midi_path, timed, duration:, midi_fx: MIDI_FX_LEAD, lead_mode: true)
-  fs_gain = first_patch&.fetch(:fs_gain, 1.38) || 1.38
-  fluidsynth_render!(path, pad_soundfont_path, midi_path, gain: fs_gain)
-  FileUtils.rm_f(midi_path)
+  groups = analog_synth_enabled? ? per_chord.filter_map { |_, patch, events|
+    notes = analog_notes_from_events(events, 0.85)
+    { patch: analog_patch_for({ patch: }, :lead), notes: } unless notes.empty?
+  } : []
+  rendered = if groups.any?
+               AnalogSynth.render_groups!(groups, dest: path, duration: duration.to_f,
+                                          seed: seed_for("analog_xlead"))
+             end
+  if rendered
+    dmesg("xlead morph: #{groups.map { |g| g[:patch] }.uniq.length} instrument(s) over #{groups.length} chord(s)",
+          unit: "harm0", parent: "dilla0")
+  else
+    return unless fluidsynth_pad_available?
+
+    timed = []
+    per_chord.each do |time, patch, chord_events|
+      voice = patch_voice_for(patch)
+      on_tick = (time * SMF_TICKS_PER_SECOND).round
+      timed << [on_tick, :bank, voice[:bank]]
+      timed << [on_tick, :prog, voice[:program]]
+      chord_events.each do |(t, vel, ch, dur)|
+        note = hz_to_midi(ch[:hz].first).round.clamp(0, 127)
+        note_on = (t * SMF_TICKS_PER_SECOND).round
+        note_off = (note_on + (dur * SMF_TICKS_PER_SECOND)).round
+        v = (vel.clamp(0.0, 1.0) * 100).round.clamp(40, 127)
+        timed << [note_on, :on, note, v]
+        timed << [note_off, :off, note, 0]
+      end
+    end
+    return if timed.empty?
+
+    midi_path = "#{path}.smf.mid"
+    write_smf_timed(midi_path, timed, duration:, midi_fx: MIDI_FX_LEAD, lead_mode: true)
+    fs_gain = first_patch&.fetch(:fs_gain, 1.38) || 1.38
+    fluidsynth_render!(path, pad_soundfont_path, midi_path, gain: fs_gain)
+    FileUtils.rm_f(midi_path)
+  end
   sh! "ffmpeg", "-y", "-i", path, "-af", lead_post_fx_chain(first_patch, duration, 0.0),
       "-c:a", "pcm_s16le", "#{path}.xlead.wav"
   FileUtils.mv("#{path}.xlead.wav", path)
@@ -24113,7 +24267,7 @@ end
 # also has a 40% chance of pulling from the fetched Galaxy Electric Pianos
 # soundfont instead of GeneralUser-GS's single Rhodes patch.
 def render_pad_morph_fluidsynth(path, pad_events, duration)
-  @render_used_fluidsynth_pad = true
+  @render_used_fluidsynth_pad = !analog_synth_enabled?
   ep_path = "#{path}.ep.wav"
   warm_path = "#{path}.warm.wav"
   texture_path = "#{path}.texture.wav"
@@ -24124,30 +24278,23 @@ def render_pad_morph_fluidsynth(path, pad_events, duration)
              { sf2: pad_soundfont_path, bank: 0, program: PAD_GM_PROGRAM, patch: nil }
   warm_voice = patch_voice_for(@render_warm_patch || synth_patch_by_id(:prophet_5_pad)) ||
                { sf2: pad_soundfont_path, bank: 0, program: 89, patch: nil }
-  ep_midi = "#{ep_path}.smf.mid"
-  _, ep_anchor = write_smf_morph(ep_midi, pad_events, duration:, role: :ep,
-                                midi_fx: midi_fx_specs_for_role(:ep, ep_voice[:patch]))
+  ep_anchor = render_morph_layer!(ep_path, pad_events, duration, :ep, ep_voice, 0.55, 1.7)
   ep_mix = ep_anchor&.fetch(:mix, ep_voice[:patch]&.fetch(:mix, 1.2) || 1.2) || 1.2
-  fluidsynth_render!(ep_path, ep_voice[:sf2], ep_midi,
-                     gain: ep_anchor&.fetch(:fs_gain, ep_voice[:patch]&.fetch(:fs_gain, 1.7) || 1.7) || 1.7)
-  FileUtils.rm_f(ep_midi)
 
-  warm_midi = "#{warm_path}.smf.mid"
-  _, warm_anchor = write_smf_morph(warm_midi, pad_events, duration:, role: :warm,
-                                   midi_fx: midi_fx_specs_for_role(:warm, warm_voice[:patch]))
+  warm_anchor = render_morph_layer!(warm_path, pad_events, duration, :warm, warm_voice, 0.48, 1.55)
   warm_mix = warm_anchor&.fetch(:mix, warm_voice[:patch]&.fetch(:mix, 0.9) || 0.9) || 0.9
-  fluidsynth_render!(warm_path, warm_voice[:sf2], warm_midi,
-                     gain: warm_anchor&.fetch(:fs_gain, warm_voice[:patch]&.fetch(:fs_gain, 1.55) || 1.55) || 1.55)
-  FileUtils.rm_f(warm_midi)
 
   texture_voice = resolve_texture_voice
   if texture_voice
-    texture_midi = "#{texture_path}.smf.mid"
-    write_pad_smf(texture_midi, pad_events, program: texture_voice[:program], bank: texture_voice[:bank],
-                  duration:, patch: texture_voice[:patch], role: :texture)
-    fluidsynth_render!(texture_path, texture_voice[:sf2], texture_midi,
-                       gain: texture_voice[:patch]&.fetch(:fs_gain, 1.2) || 1.2)
-    FileUtils.rm_f(texture_midi)
+    unless analog_synth_enabled? &&
+           render_analog_layer!(texture_path, pad_events, duration, texture_voice, :texture, 0.4)
+      texture_midi = "#{texture_path}.smf.mid"
+      write_pad_smf(texture_midi, pad_events, program: texture_voice[:program], bank: texture_voice[:bank],
+                    duration:, patch: texture_voice[:patch], role: :texture)
+      fluidsynth_render!(texture_path, texture_voice[:sf2], texture_midi,
+                         gain: texture_voice[:patch]&.fetch(:fs_gain, 1.2) || 1.2)
+      FileUtils.rm_f(texture_midi)
+    end
   end
 
   inputs = ["-i", ep_path, "-i", warm_path]
@@ -24190,16 +24337,294 @@ def pad_layer_specs_for_voice(voice)
   layers
 end
 
+# --------------------------------------------------------------------------
+# engine part: analog_voices
+# --------------------------------------------------------------------------
+#
+# The pads and the leads, played on oscillators rather than on a recording.
+#
+# FluidSynth answers "give me program 4" with whatever somebody sampled into
+# that slot years ago. There is no filter to open and no second oscillator to
+# detune, so every one of the 219 patches in the catalogue could only be shaped
+# after the fact, with equalisation. AnalogSynth is the instrument instead of a
+# recording of one -- oscillators, a four-pole ladder, an amplitude envelope and
+# a filter envelope -- so a patch's character comes from how it is built.
+#
+# The patch's own :fx chain still runs on top, because that chain is half of
+# what makes a Mark I a Mark I rather than an electric piano.
+#
+# ANALOG_SYNTH=0 puts the soundfont back, for a take voiced against it and for
+# the sampled instruments an oscillator cannot be -- a choir is a recording of
+# people, and no filter setting gets there.
+def analog_synth_enabled?
+  ENV.fetch("ANALOG_SYNTH", "1") != "0"
+end
+
+# Struck instruments, which keep their envelope whatever they are asked to
+# play. A Rhodes taking the lead line is still a Rhodes.
+ANALOG_SYNTH_STRUCK =
+  /rhodes|wurli|epiano|ep\d|piano|clav|celeste|vibes|marimba|kalimba|music_box|bell|tine|harpsi/
+
+# The roles a line is played in rather than a bed.
+ANALOG_SYNTH_LEAD_ROLES = %i[lead scale_lead xlead].freeze
+
+# ...and the beds, which have to sustain whatever they are named after.
+ANALOG_SYNTH_BED_ROLES = %i[warm texture].freeze
+
+# Which pad, once a name has already been read as a pad. The brand is what is
+# left to decide: a Juno is chorused and open, a Prophet has more filter in it.
+ANALOG_SYNTH_PAD_BRANDS = [
+  [/juno|solina|ensemble|chorus/, :juno_pad],
+  [/string|orchestra|vp330|choir|voice|mellotron|tape/, :poly_strings],
+  [/prophet|obx|oberheim|cs80|cs_|jupiter|jp8|supersaw|memorymoon|pwm|virus|polysynth/, :prophet_pad],
+].freeze
+
+# 219 patch ids against nine instruments, so the map is by family and never by
+# id. What an oscillator bank needs to be told is how many oscillators, how far
+# apart, and how the filter moves -- and these names already imply all three.
+# First match wins, so the specific families come before the general ones.
+ANALOG_SYNTH_FAMILIES = [
+  [/tb303|acid/, :acid],
+  [/synth_bass_deep|sub|taiko|thud|seashore/, :sub],
+  [/moog|voyager|ladder|bass/, :moog_bass],
+  [/glass|crystal|shimmer/, :juno_pad],
+  [/string|solina|orchestra|vp330|choir|voice|aahs|oohs|tremolo|mellotron|harp|flute|horn|oboe|clarinet/, :poly_strings],
+  [/juno|wash/, :juno_pad],
+  [/prophet|obx|oberheim|cs80|cs_|jupiter|jp8|supersaw|polysynth|memorymoon|pwm|virus/, :prophet_pad],
+].freeze
+
+# What decides it when the name says nothing. A name that says nothing is
+# usually a synth patch, and a synth patch is usually a pad.
+ANALOG_SYNTH_BY_ROLE = {
+  ep: :e_piano, warm: :warm_pad, texture: :juno_pad,
+  lead: :poly_lead, scale_lead: :poly_lead, xlead: :poly_lead, bass: :moog_bass,
+  # The answering voice, and the reason it is not a bright synth: it is meant to
+  # sit behind the lead, which two saws barely apart and an open filter do.
+  counter: :poly_strings,
+}.freeze
+
+def analog_patch_for(voice, role)
+  named = ENV["ANALOG_PATCH"].to_s.strip.to_sym
+  return named if AnalogSynth::PATCHES.key?(named)
+
+  id = voice.dig(:patch, :id).to_s
+  role = (role || voice.dig(:patch, :role)).to_s.to_sym
+
+  # A bed is a bed whatever it is named after, and that has to be decided before
+  # the name is read at all. The warm and texture layers exist to sustain under
+  # the EP; half of them are named rhodes_* or moog_*, and either an e_piano's
+  # zero sustain or a moog_bass's closing filter leaves the stack with nothing
+  # holding it up. The same argument covers any name that says "pad":
+  # moog_sub37_pad is a Moog and it is still a pad.
+  if ANALOG_SYNTH_BED_ROLES.include?(role) || id.match?(/pad|wash/)
+    brand = ANALOG_SYNTH_PAD_BRANDS.find { |pattern, _| pattern.match?(id) }
+    return brand[1] if brand
+
+    return role == :texture ? :juno_pad : :warm_pad
+  end
+
+  # A struck instrument keeps its envelope: a Rhodes taking the lead line is
+  # still a Rhodes.
+  return :e_piano if id.match?(ANALOG_SYNTH_STRUCK)
+  # Then the job, because half the lead patches in the catalogue are named after
+  # a synth that also makes pads -- prophet_lead, moog_ladder_lead -- and a pad's
+  # envelope on a sixteenth-note arp smears the figure into one held chord.
+  return :poly_lead if ANALOG_SYNTH_LEAD_ROLES.include?(role)
+  return :poly_strings if role == :counter
+
+  family = ANALOG_SYNTH_FAMILIES.find { |pattern, _| pattern.match?(id) }
+  return family[1] if family
+
+  ANALOG_SYNTH_BY_ROLE.fetch(role, :warm_pad)
+end
+
+# The engine's note events are [time, velocity, chord, sustain] with the pitches
+# in chord[:hz]; AnalogSynth wants one note per pitch. Velocity carries through
+# as gain rather than being flattened, because every note here shares one filter
+# envelope and level is then the only thing separating a struck chord from a
+# held one.
+def analog_notes_from_events(events, gain_scale)
+  notes = []
+  events.each do |parts|
+    time, velocity, chord, sustain = parts[0], parts[1], parts[2], parts[3]
+    next unless chord && chord[:hz]&.any?
+
+    held = sustain.to_f
+    next unless held.positive?
+
+    chord[:hz].each do |hz|
+      next unless hz.to_f.positive?
+
+      notes << { hz: hz.to_f, at: [time.to_f, 0.0].max, held:,
+                 gain: (velocity.to_f.clamp(0.05, 1.0) * gain_scale).round(4) }
+    end
+  end
+  notes
+end
+
+# One layer on oscillators. Returns the path, or nil when there was nothing to
+# play -- and nil is what sends the caller to the soundfont instead of shipping
+# a silent layer, because a missing pad is not audible as an error, only as a
+# thinner mix.
+def render_analog_layer!(dest, events, duration, voice, role, gain_scale)
+  notes = analog_notes_from_events(events, gain_scale)
+  return nil if notes.empty?
+
+  patch = analog_patch_for(voice, role)
+  out = AnalogSynth.render!(notes, dest:, patch:, duration: duration.to_f,
+                            seed: seed_for("analog:#{patch}:#{role}"))
+  return nil unless out && File.file?(out)
+
+  dmesg("#{role}: #{notes.length} notes on #{patch}, real oscillators",
+        unit: "harm0", parent: "dilla0")
+  out
+rescue StandardError => e
+  dmesg_warn("analog #{role}: #{e.message} — falling back to the soundfont")
+  nil
+end
+
+# A MIDI file, read back as notes.
+#
+# The electronium generator writes a MIDI file and something has to sound it.
+# That was the soundfont, which made it the last recording left in the engine's
+# own signal path once every other voice was built here. midilib already reads
+# and writes this format for the generator, so playing the file back through
+# oscillators needs no new dependency -- only the pairing of each note-on with
+# its note-off, which midilib does on read.
+def analog_notes_from_midi(midi_path)
+  require "midilib/sequence"
+  sequence = MIDI::Sequence.new
+  File.open(midi_path, "rb") { |file| sequence.read(file) }
+
+  notes = []
+  sequence.each do |track|
+    track.each do |event|
+      next unless event.is_a?(MIDI::NoteOnEvent) && event.velocity.positive?
+
+      # An unpaired note-on is a truncated file rather than an infinite note, so
+      # it gets a short length instead of running to the end of the piece.
+      off = event.off
+      held = off ? sequence.pulses_to_seconds(off.time_from_start - event.time_from_start) : 0.25
+      next unless held.positive?
+
+      notes << { hz: midi_to_hz(event.note),
+                 at: sequence.pulses_to_seconds(event.time_from_start),
+                 held: held,
+                 gain: ((event.velocity / 127.0) * 0.8).clamp(0.04, 0.8).round(4) }
+    end
+  end
+  notes
+end
+
+# One MIDI file rendered on oscillators. Returns the path, or nil if the file
+# carried no playable note.
+def render_analog_midi!(dest, midi_path, patch: :poly_lead)
+  notes = analog_notes_from_midi(midi_path)
+  return nil if notes.empty?
+
+  named = ENV["ANALOG_PATCH"].to_s.strip.to_sym
+  patch = named if AnalogSynth::PATCHES.key?(named)
+  duration = notes.map { |note| note[:at] + note[:held] }.max + 1.0
+  out = AnalogSynth.render!(notes, dest:, patch:, duration:, seed: seed_for("analog_midi"))
+  return nil unless out && File.file?(out)
+
+  dmesg("midi: #{notes.length} notes on #{patch}, real oscillators", unit: "harm0", parent: "dilla0")
+  out
+rescue StandardError => e
+  dmesg_warn("analog midi: #{e.message} — falling back to the soundfont")
+  nil
+end
+
+# The instrument the morph opens on, which is what a layer's mix weight is
+# taken from. write_smf_morph works this out as a side effect of writing a MIDI
+# file, and the oscillator path writes no MIDI file.
+def morph_anchor_patch(pad_events, role:)
+  pad_events.each_index do |i|
+    patch = morph_patch_for_chord(i, role:)
+    return patch if patch
+  end
+  nil
+end
+
+# The per-chord morph, on oscillators.
+#
+# morph_patch_for_chord already decides which instrument each chord is played
+# on; this asks it the same question and hands the answer to AnalogSynth rather
+# than to a bank-and-program change. The chords sum into one buffer, so a
+# morph still sounds like one player reaching for another sound between chords.
+def render_analog_morph!(dest, pad_events, duration, role, gain_scale)
+  groups = []
+  pad_events.each_with_index do |parts, i|
+    patch = morph_patch_for_chord(i, role:) or next
+    notes = analog_notes_from_events([parts], gain_scale)
+    groups << { patch: analog_patch_for({ patch: }, role), notes: } unless notes.empty?
+  end
+  return nil if groups.empty?
+
+  out = AnalogSynth.render_groups!(groups, dest:, duration: duration.to_f,
+                                   seed: seed_for("analog_morph:#{role}"))
+  return nil unless out && File.file?(out)
+
+  dmesg("#{role} morph: #{groups.map { |g| g[:patch] }.uniq.length} instrument(s) over #{groups.length} chord(s)",
+        unit: "harm0", parent: "dilla0")
+  out
+rescue StandardError => e
+  dmesg_warn("analog morph #{role}: #{e.message} — falling back to the soundfont")
+  nil
+end
+
+# One morph layer, oscillators first and the soundfont behind them. Returns the
+# anchor patch, because that is what the caller weighs the layer by.
+def render_morph_layer!(dest, pad_events, duration, role, voice, gain_scale, fs_gain_default)
+  return unless playable_note_events?(pad_events)
+
+  if analog_synth_enabled? && render_analog_morph!(dest, pad_events, duration, role, gain_scale)
+    return morph_anchor_patch(pad_events, role:)
+  end
+
+  midi = "#{dest}.smf.mid"
+  _, anchor = write_smf_morph(midi, pad_events, duration:, role:,
+                              midi_fx: midi_fx_specs_for_role(role, voice[:patch]))
+  default = voice[:patch]&.fetch(:fs_gain, fs_gain_default) || fs_gain_default
+  fluidsynth_render!(dest, voice[:sf2], midi, gain: anchor&.fetch(:fs_gain, default) || default)
+  FileUtils.rm_f(midi)
+  anchor
+end
+
+# Nothing to play is not a layer.
+#
+# Every renderer below writes a file whatever it is handed. An empty event list
+# still produces a valid MIDI with a bank and a program in it, fluidsynth still
+# starts, and what comes back is a wav of silence that passes every downstream
+# size and duration check. Measured on one demo slot: three soundfont processes
+# spawned to render nothing, in a run whose whole point was that it reaches for
+# no soundfont at all.
+#
+# A note needs a pitch and a length. An event carrying neither is not a quiet
+# note, it is an absent one.
+def playable_note_events?(events)
+  Array(events).any? do |parts|
+    chord = parts[2]
+    chord.is_a?(Hash) && parts[3].to_f.positive? &&
+      Array(chord[:hz]).any? { |hz| hz.to_f.positive? }
+  end
+end
+
 def render_one_pad_layer!(voice_path, pad_events, duration, voice, role)
+  return unless playable_note_events?(pad_events)
+
   if voice[:patch]&.dig(:native) && native_fm_layers_enabled?
     return render_native_pad_layer!(voice_path, pad_events, duration, voice[:patch])
   end
-  midi_path = "#{voice_path}.smf.mid"
-  write_pad_smf(midi_path, pad_events, program: voice[:program], bank: voice[:bank],
-                duration:, patch: voice[:patch], role:)
-  fs_gain = voice[:patch]&.fetch(:fs_gain, 1.5) || 1.5
-  fluidsynth_render!(voice_path, voice[:sf2], midi_path, gain: fs_gain)
-  FileUtils.rm_f(midi_path)
+  unless analog_synth_enabled? &&
+         render_analog_layer!(voice_path, pad_events, duration, voice, role, 0.55)
+    midi_path = "#{voice_path}.smf.mid"
+    write_pad_smf(midi_path, pad_events, program: voice[:program], bank: voice[:bank],
+                  duration:, patch: voice[:patch], role:)
+    fs_gain = voice[:patch]&.fetch(:fs_gain, 1.5) || 1.5
+    fluidsynth_render!(voice_path, voice[:sf2], midi_path, gain: fs_gain)
+    FileUtils.rm_f(midi_path)
+  end
   return unless voice[:patch]&.dig(:fx) && tool_available?("ffmpeg")
   fx_tmp = "#{voice_path}.fx.wav"
   begin
@@ -24211,10 +24636,14 @@ def render_one_pad_layer!(voice_path, pad_events, duration, voice, role)
   end
 end
 
-def render_pad_via_fluidsynth(path, pad_events, duration)
+def render_pad_stack!(path, pad_events, duration)
   # Morph path is opt-in only — multi-layer stack is the quality default.
   return render_pad_morph_fluidsynth(path, pad_events, duration) if synth_morph_enabled? && ENV["PAD_LAYERS"] == "0"
-  @render_used_fluidsynth_pad = true
+  # warm_dilla_pad_post reads this to choose between two post chains, and the
+  # soundfont branch exists to tame a sampled Rhodes. Oscillators do not need
+  # taming, and they do want the patch :fx the other branch applies, so the flag
+  # has to say which source actually played rather than which function ran.
+  @render_used_fluidsynth_pad = !analog_synth_enabled?
   voice_key = ENV["PAD_VOICE"]&.downcase&.to_sym
   specs = pad_layer_specs_for_voice(voice_key)
   if specs.nil? || specs.empty?
@@ -24772,7 +25201,12 @@ def choir_vox_enabled?
   # Default off, matching DILLA_STYLE_DEFAULTS. This gate is the one that
   # decides, and it defaulted on — so any path that does not apply the style
   # table still got a choir.
-  ENV.fetch("CHOIR_VOX", "0") != "0" && fluidsynth_pad_available?
+  #
+  # The choir goes through render_one_pad_layer! like every other bed, so it
+  # needs a voice to exist and not a soundfont in particular: on oscillators it
+  # is poly_strings, two saws barely apart under an open filter, which is as
+  # close to massed voices as a filter gets.
+  ENV.fetch("CHOIR_VOX", "0") != "0" && (analog_synth_enabled? || fluidsynth_pad_available?)
 end
 
 # Thin full pad voicings to 2–3 mid/upper chord tones so choir reads as
@@ -25350,20 +25784,29 @@ def mix_harmonic_wav_stems(destination, duration, **stem_paths)
   true
 end
 
-def render_lead_via_fluidsynth(path, lead_events, duration, scale_arp: false, counter: false, program_override: nil)
-  return if lead_events.empty? || !fluidsynth_pad_available?
-  midi_path = "#{path}.smf.mid"
+def render_lead_voice!(path, lead_events, duration, scale_arp: false, counter: false, program_override: nil)
+  return unless playable_note_events?(lead_events)
+  return unless analog_synth_enabled? || fluidsynth_pad_available?
+
   lead_voice = scale_arp ? resolve_scale_lead_voice : resolve_lead_voice
   patch = lead_voice[:patch] || (scale_arp ? @render_scale_lead_patch : @render_lead_patch)
   role = scale_arp ? :scale_lead : :lead
-  # The counter-line borrows the lead's soundfont and takes a strings or choir
-  # program out of it, rather than the bright synth the rotation would pick.
-  program = program_override || (counter ? counter_lead_program : lead_voice[:program])
-  write_smf(midi_path, lead_events, program:, bank: (counter ? 0 : lead_voice[:bank]),
-            duration:, midi_fx: resolve_midi_fx_for(patch, role:), lead_mode: true)
-  fs_gain = lead_voice[:patch]&.fetch(:fs_gain, 1.3) || 1.3
-  fluidsynth_render!(path, lead_voice[:sf2], midi_path, gain: fs_gain)
-  FileUtils.rm_f(midi_path)
+  # A counter-line is the answering voice, so it is played on strings or a choir
+  # rather than on the bright synth the rotation would pick for the lead itself.
+  analog_role = counter ? :counter : role
+  unless analog_synth_enabled? &&
+         render_analog_layer!(path, lead_events, duration,
+                              counter ? { patch: nil } : lead_voice, analog_role, 0.85)
+    return unless fluidsynth_pad_available?
+
+    midi_path = "#{path}.smf.mid"
+    program = program_override || (counter ? counter_lead_program : lead_voice[:program])
+    write_smf(midi_path, lead_events, program:, bank: (counter ? 0 : lead_voice[:bank]),
+              duration:, midi_fx: resolve_midi_fx_for(patch, role:), lead_mode: true)
+    fs_gain = lead_voice[:patch]&.fetch(:fs_gain, 1.3) || 1.3
+    fluidsynth_render!(path, lead_voice[:sf2], midi_path, gain: fs_gain)
+    FileUtils.rm_f(midi_path)
+  end
   target_db = if counter then COUNTER_LEAD_TARGET_RMS_DB
               elsif scale_arp then LEAD_TARGET_RMS_DB + 1.5
               else LEAD_TARGET_RMS_DB
@@ -25388,6 +25831,64 @@ def render_lead_via_fluidsynth(path, lead_events, duration, scale_arp: false, co
   # bug to see, because it works.
   low_pass_gate_lead!(path)
   path
+end
+
+# The lead voices the improvised line is played on. No saws: alone above a pad
+# there is nothing to mask a saw's upper partials, and what should read as a
+# voice reads as a fault.
+IMPROVISED_LEAD_PATCHES = %i[glass_bell soft_reed vapor_lead ringtone_lead].freeze
+
+def improvised_lead_enabled? = ENV.fetch("IMPROVISED_LEAD", "1") != "0"
+
+# The improvised line, in the render path.
+#
+# dilla_live.rb has played this since it was written and no render had ever
+# contained it: the live script had the guide-tone lines and the drawn effect
+# chains, the engine had neither, and a ten-minute catalogue went out with the
+# old lead code in it. One generator was the whole point of putting
+# ImprovisedLine in lib/ rather than in the script.
+#
+# It takes the `lead` stem slot instead of adding a new one, so it inherits the
+# balance every other lead in this method already has, and returns nil when
+# there is nothing to play so the caller falls back rather than mixing silence.
+def render_improvised_lead!(path, pad_events, duration)
+  chords = pad_events.filter_map do |parts|
+    hz = Array(parts[2] && parts[2][:hz]).map(&:to_f).select(&:positive?)
+    [parts[0].to_f, parts[3].to_f, hz] unless hz.empty? || parts[3].to_f <= 0
+  end
+  return nil if chords.empty?
+
+  rng = Random.new(seed_for("improvised_lead"))
+  notes = []
+  chords.each_with_index do |(at, held, hz), i|
+    notes.concat(ImprovisedLine.lead(hz, chords[i + 1]&.last, at, held, rng))
+  end
+  return nil if notes.empty?
+
+  copies = (ENV["LEAD_COPIES"] || "3").to_i
+  notes = ImprovisedLine.copies(notes, copies:, seed: seed_for("lead_copies")) if copies > 1
+
+  patch = IMPROVISED_LEAD_PATCHES[seed_for("lead_patch") % IMPROVISED_LEAD_PATCHES.length]
+  left, right = AnalogSynth.buffers!([{ patch:, notes: }], duration: duration.to_f,
+                                     seed: seed_for("improvised_lead_render"))
+  return nil unless left
+
+  # A render has no deadline, so the chain runs at full length here where live
+  # has to trim it. The two channels get different comb lengths, which is what
+  # makes the room a place rather than one reverb played twice.
+  plan = SpaceFx.random_plan(Random.new(seed_for("lead_fx")),
+                             max_stages: (ENV["FX_STAGES"] || "9").to_i)
+  SpaceFx.apply!(left, plan, spread: 0)
+  SpaceFx.apply!(right, plan, spread: 23)
+  AnalogSynth.write!(left, right, path)
+  return nil unless File.file?(path)
+
+  dmesg("improvised lead: #{notes.length} notes on #{patch}", unit: "harm0", parent: "dilla0")
+  dmesg("  #{SpaceFx.describe(plan)}", unit: "harm0", parent: "dilla0")
+  path
+rescue StandardError => e
+  dmesg_warn("improvised lead: #{e.message}")
+  nil
 end
 
 def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, melody_events: [], cfg: nil, dfam_events: nil,
@@ -25420,8 +25921,8 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
   end
   if used_singers_chops
     # Real chopped vocal bed replaces the synth pad stack entirely.
-  elsif fluidsynth_pad_available?
-    render_pad_via_fluidsynth(pads_path, pad_render_events, duration)
+  elsif analog_synth_enabled? || fluidsynth_pad_available?
+    render_pad_stack!(pads_path, pad_render_events, duration)
   else
     render_native_pad_wav(pads_path, pad_render_events, duration)
   end
@@ -25525,7 +26026,7 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
     creative_events = apply_section_envelope_to_events(creative_events, :lead, n_bars_est, lead_bar_p)
   end
 
-  scale_lead_rendered = scale_events.any? ? render_lead_via_fluidsynth(scale_lead_path, scale_events, duration, scale_arp: true) : nil
+  scale_lead_rendered = scale_events.any? ? render_lead_voice!(scale_lead_path, scale_events, duration, scale_arp: true) : nil
   harmony_lead_rendered = harmony_lead_ev.any? ? render_hocket_lead!(harmony_lead_path, harmony_lead_ev, duration) : nil
   # Say which lead actually played, and how many notes it played.
   #
@@ -25568,18 +26069,23 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
   end
 
   lead_arp_rendered = if counter_events.any?
-                        render_lead_via_fluidsynth(lead_arp_path, counter_events, duration, counter: true)
+                        render_lead_voice!(lead_arp_path, counter_events, duration, counter: true)
                       elsif lead_arp_ev.any?
-                        render_lead_via_fluidsynth(lead_arp_path, lead_arp_ev, duration)
+                        render_lead_voice!(lead_arp_path, lead_arp_ev, duration)
                       end
   xlead_rendered = nil
   if lead_morph_enabled? && !leads_muted
-    xlead_fs = render_xlead_morph_fluidsynth(xlead_path, pad_events, duration, cfg)
+    xlead_fs = render_xlead_morph!(xlead_path, pad_events, duration, cfg)
     xlead_native = render_xlead_native_fm("#{xlead_path}.native.wav", pad_events, duration, cfg)
     xlead_rendered = blend_xlead_stems(xlead_path, xlead_fs, xlead_native, duration)
     FileUtils.rm_f("#{xlead_path}.native.wav")
   end
-  lead_rendered = creative_events.any? ? render_lead_via_fluidsynth(lead_path, creative_events, duration) : nil
+  lead_rendered = if improvised_lead_enabled? && !leads_muted
+                    render_improvised_lead!(lead_path, pad_events, duration) ||
+                      (creative_events.any? ? render_lead_voice!(lead_path, creative_events, duration) : nil)
+                  elsif creative_events.any?
+                    render_lead_voice!(lead_path, creative_events, duration)
+                  end
   # Karplus-Strong plucked-string accent on each chord's root — a genuinely
   # new instrument timbre (real physical-modeling algorithm, not another
   # oscillator/soundfont voice), pre-rendered per chord since the algorithm
@@ -25950,7 +26456,7 @@ def render_hocket_lead!(path, events, duration)
 
     part = "#{path}.hocket#{i}.wav"
     voice_stack_lead!(part, voice, duration) ||
-      render_lead_via_fluidsynth(part, voice, duration, scale_arp: true,
+      render_lead_voice!(part, voice, duration, scale_arp: true,
                                                         program_override: EP_GM_PROGRAMS[i % EP_GM_PROGRAMS.length])
     File.file?(part) ? part : nil
   end
@@ -26027,7 +26533,7 @@ end
 # VOICE_STACK=1 restores the single voice.
 def voice_stack_lead!(path, events, duration)
   voices = ENV.fetch("VOICE_STACK", "2").to_i
-  return render_lead_via_fluidsynth(path, events, duration, scale_arp: true) unless voices > 1
+  return render_lead_voice!(path, events, duration, scale_arp: true) unless voices > 1
 
   plan = VoiceStack.plan(
     voices:,
@@ -26045,7 +26551,7 @@ def voice_stack_lead!(path, events, duration)
     # idea over dillas own catalogue rather than beside it.
     model = VoiceStack.model_for(voice.macro)
     patch = VoiceStack.patch_for(model, SYNTH_PATCH_CATALOG, seed: seed_for("vsmodel#{voice.index}"))
-    render_lead_via_fluidsynth(part, VoiceStack.transpose(events, voice), duration,
+    render_lead_voice!(part, VoiceStack.transpose(events, voice), duration,
                                scale_arp: true,
                                program_override: patch ? patch[:program] : EP_GM_PROGRAMS[voice.index % EP_GM_PROGRAMS.length])
     File.file?(part) ? part : nil
@@ -27650,8 +28156,9 @@ def help
 
     STREAM (non-stop rotation — speakers via afplay/ffplay)
       stream [bars]                    Fast render+play (#{STREAM_BARS_COUNT} bars default)
-      demo-all [bars] [out.wav]        Render all #{demo_catalog_sizes[:all]} named pieces → demo.wav + demo.mp3 (resumable)
-      DEMO_CURATED_ONLY=1              Just the curated head (#{demo_catalog_sizes[:curated]} pieces)
+      demo-all [bars] [out.wav]        #{demo_catalog_sizes[:verified]} verified + #{demo_catalog_sizes[:improvised]} improvised → demo.wav + demo.mp3 (resumable)
+      DEMO_CRATE=1                     Add the #{demo_catalog_sizes[:crate]} records on disk after them
+      IMPROV_SEED=<n>                  Replay one set of improvisations (drawn and logged when unset)
       DEMO_CATALOG=stream              Restrict demo-all to the stream rotation (#{demo_catalog_sizes[:stream]})
       DEMO_MP3=0 / DEMO_MP3_BITRATE    Skip the tracked mp3 / override 128k
       STREAM_CONTINUOUS=1 (default)    Outer shell auto-restarts; per-track timeout skips hangs
@@ -32844,7 +33351,8 @@ end
 # occasional syncopated rests so it doesn't read as a machine-gun wall.
 # Follows the same chord roots as the main progression, cycled per bar.
 def render_punk_guitar_layer!(beat_bpm, n_bars, cfg)
-  return nil unless fluidsynth_pad_available?
+  return nil unless analog_synth_enabled? || fluidsynth_pad_available?
+
   names = CHORD_PROGRESSIONS[cfg[:progression]] || CHORD_PROGRESSIONS.fetch(:soul)
   return nil if names.empty?
   beat_p = 60.0 / beat_bpm.to_f
@@ -32870,10 +33378,18 @@ def render_punk_guitar_layer!(beat_bpm, n_bars, cfg)
   return nil unless voice
   dir = Dir.mktmpdir("punk_guitar")
   path = File.join(dir, "guitar.wav")
-  midi_path = "#{path}.mid"
-  write_smf(midi_path, events, program: voice[:program], bank: voice[:bank] || 0, duration:, lead_mode: true)
-  fluidsynth_render!(path, voice[:sf2], midi_path, gain: 1.2)
-  FileUtils.rm_f(midi_path)
+  # Three detuned oscillators through the amp chain below, which is where the
+  # crunch has always come from: what this layer needs from its source is a
+  # harmonically rich raw tone, and a saw is exactly that. A sampled guitar
+  # arrives already amplified and then gets amplified again.
+  unless analog_synth_enabled? && render_analog_layer!(path, events, duration, voice, :lead, 0.9)
+    return nil unless fluidsynth_pad_available?
+
+    midi_path = "#{path}.mid"
+    write_smf(midi_path, events, program: voice[:program], bank: voice[:bank] || 0, duration:, lead_mode: true)
+    fluidsynth_render!(path, voice[:sf2], midi_path, gain: 1.2)
+    FileUtils.rm_f(midi_path)
+  end
   path
 end
 
@@ -33369,10 +33885,13 @@ end
 def electronium_render_audio(midi_path, audio_path = nil)
   require_playback_tool!
   audio_path ||= midi_path.sub(/\.mid\z/i, ".wav")
-  sf2 = pad_soundfont_path
-  abort "no soundfont — install GeneralUser-GS or set DILLA_SOUNDFONT" unless sf2 && File.exist?(sf2)
   wav_tmp = audio_path.end_with?(".mp3") ? audio_path.sub(/\.mp3\z/i, ".wav") : audio_path
-  fluidsynth_render!(wav_tmp, sf2, midi_path, gain: 1.4)
+  unless analog_synth_enabled? && render_analog_midi!(wav_tmp, midi_path)
+    sf2 = pad_soundfont_path
+    abort "no soundfont — install GeneralUser-GS or set DILLA_SOUNDFONT" unless sf2 && File.exist?(sf2)
+
+    fluidsynth_render!(wav_tmp, sf2, midi_path, gain: 1.4)
+  end
   if audio_path.end_with?(".mp3")
     sh! "ffmpeg", "-y", "-i", wav_tmp, "-acodec", "libmp3lame", "-ab", "192k", audio_path
     FileUtils.rm_f(wav_tmp)
@@ -34236,7 +34755,11 @@ DISPATCH = {
   # The short one, kept because it is genuinely useful when iterating -- a few
   # bars of each named style finishes in minutes. It is no longer what a bare
   # invoke gives you, because "the demo" means the full catalogue.
-  "showcase" => -> { showcase_demo! },
+"showcase" => -> { showcase_demo! },
+# What a bare invoke used to do: loop.wav plus a spoken reading of MASTER's
+# README. Kept reachable by name rather than deleted -- it is the one path
+# that exercises the speech overlay end to end.
+"readme-loop" => -> { readme_loop! },
   # USER_PINNED_ENV, not ENV, for the bar count in all three demo commands.
   # apply_best_defaults! writes BARS=32 before any of them run, so `ENV["BARS"]`
   # is always set and the default after it was unreachable: every demo rendered
@@ -34413,7 +34936,7 @@ DISPATCH = {
                 laid[:half_time] ? " (half-time)" : "", laid[:bars], laid[:start_sec])
   end,
   # Auditions the built-in synthesiser, one file per patch. PATCH=<name> for one.
-  "synth" => -> { synth_audition! },
+  "synth" => -> { synth_audition!(ARGV.shift) },
   # A drum kit cut from our own recordings. The inverse of `chop`: that one
   # runs demucs and throws the drum stem away, this one keeps only the drums.
   "kit" => lambda do
@@ -34581,11 +35104,15 @@ if __FILE__ == $PROGRAM_NAME
 
   cmd = ARGV.shift
   if cmd.nil?
-    # Bare invoke: loop.wav of the engine and tts.wav of MASTER/README.md.
-    # Every mix/speech/stem knob that path needs is already on, so the
-    # command line is empty. `ruby dilla.rb demo-all` still renders the
-    # catalogue; `ruby dilla.rb stream` is still the live speaker loop.
-    readme_loop!
+    # Bare invoke renders the catalogue.
+    #
+    # It used to render loop.wav plus a spoken reading of MASTER's README, which
+    # answers a question nobody asks of a beat engine. The catalogue is what
+    # this program is for: nineteen pieces, seven off records and twelve it
+    # wrote, every sound synthesised. `readme_loop` still reaches the old
+    # behaviour by name, and `dilla_live.rb` is the version that plays instead
+    # of writing.
+    demo_all((USER_PINNED_ENV["BARS"] || "12").to_i)
   elsif render_output_path?(cmd) && !DISPATCH.key?(cmd)
     ARGV.unshift(cmd)
     default_render!

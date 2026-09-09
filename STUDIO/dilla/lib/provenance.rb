@@ -11,7 +11,7 @@ require_relative "frozen_state"
 # Every rendered file gets a recipe beside it, so any render can be made again.
 #
 # Before this, none could. RENDER_SEED already pinned the whole engine — patch
-# selection, all 31 anoisesrc sites, render_rand, the 26 seeds built out of
+# selection, all 31 anoisesrc sites, the 26 seeds built out of
 # Ruby's per-process String#hash — and that work was thorough. What was missing
 # is that nothing ever wrote the seed down. Unset, the engine draws from
 # Process.pid and ffmpeg's own RNG, so a render was gone the moment it finished:
@@ -27,7 +27,7 @@ require_relative "frozen_state"
 # The consequence worth stating plainly: an unpinned render is now produced
 # through the pinned code paths, because ENV["RENDER_SEED"] is set before any of
 # them run. render_pinned? is true, so noise comes from seed_for(tag) rather than
-# ffmpeg's seed=-1, and render_rand is seeded rather than rand. Two unpinned
+# ffmpeg's seed=-1, and every draw is seeded rather than rand. Two unpinned
 # renders still differ from each other exactly as they did. What changes is that
 # each one is now a draw that can be replayed instead of one that cannot.
 #

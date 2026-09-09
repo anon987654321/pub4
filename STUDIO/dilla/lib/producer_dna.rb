@@ -238,6 +238,38 @@ SUFFIX_MATCHERS = CHORD_SUFFIXES.map { |sfx| [sfx, /\A[A-G][#b]?#{sfx}\z/i] }.fr
 
   # 16-step MPC grids: kicks/snares/hats/ghosts/claps/perc + swing/humanize.
   DRUM_PRESETS = {
+    # Eleven hits a bar, and the eleven are the point.
+    #
+    # Every other Dilla-named preset here fires nineteen to twenty-five: hats on
+    # all eight eighths, a clap doubling the snare on the same two steps, ghosts
+    # and perc over the top. That is a busy pattern, and busy is the one thing
+    # these records are not -- a Donuts beat is frequently a kick, a backbeat
+    # and air. Density is why the kit did not read as hip-hop; the microtiming
+    # was already right.
+    #
+    # KICK on the downbeat and the sixteenth before the second backbeat. Two,
+    # not five. The gap between them is what the bass and the sample fill.
+    #
+    # SNARE on 4 and 12 and nothing else, and no clap doubled onto it -- two
+    # samples on one step is a slap, not a backbeat. This is the layer that
+    # drags: GROOVE_FEEL puts it four ticks late at 96 PPQ.
+    #
+    # HATS on six of the eight eighths, deliberately leaving 4 and 12 open so
+    # the snare arrives into space rather than into a hat. This is also the
+    # steady reference the snare is late AGAINST -- Charnas's conflict needs
+    # something keeping straight time or there is nothing to conflict with, and
+    # a bar where everything drags is just slow.
+    #
+    # ONE GHOST, before the second backbeat, where a drummer's left hand goes.
+    #
+    # Swing 58 and humanize 5: further than the 55 and 2 the older presets use,
+    # because this is modelled on hand-played pads with quantize off rather than
+    # on a grid with a swing percentage applied to it.
+    dillatime: {
+      swing: 58, humanize: 5, bpm: 90, mode: :dilla_time,
+      kicks: [0, 11], snares: [4, 12], hats: [0, 2, 6, 8, 10, 14],
+      ghosts: [7], claps: [], perc: [],
+    },
     dilla_slight: {
       swing: 55, humanize: 2, bpm: 95, mode: :dilla_time,
       kicks: [0, 6, 10], snares: [4, 12], hats: [0, 2, 4, 6, 8, 10, 12, 14],
