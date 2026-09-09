@@ -28,7 +28,10 @@ require "fileutils"
 require "net/http"
 require "shellwords"
 require "tmpdir"
-require "yaml"
+
+# The runtime, for Voice::Policy — the one reader of data/voice.yml.
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
+require "master"
 
 ROOT = File.expand_path("..", __dir__)
 REPO = File.expand_path("..", ROOT)
@@ -132,9 +135,11 @@ end
 # One synthesis per paragraph: data/tts.yml caps an utterance at 900 characters,
 # and a paragraph break is the pause a listener expects anyway.
 def speak!
-  # The voice, its rate and its pitch come from the one file that decides how
-  # MASTER sounds, so a take never disagrees with the daemon.
-  policy = YAML.safe_load_file(File.join(ROOT, "data", "voice.yml"), aliases: true).fetch("tts")
+  # Through Policy, not through the file. voice.yml decides how MASTER sounds and
+  # Master::Voice::Policy is its one reader; loading the YAML here would make a
+  # second, and a take that read the file directly would keep speaking in the old
+  # voice the day the policy grows a fallback the file does not spell out.
+  policy = Master::Voice::Policy
   parts_dir = File.join(WORK, "speech")
   FileUtils.mkdir_p(parts_dir)
 
@@ -145,8 +150,8 @@ def speak!
     text = File.join(parts_dir, format("%02d.txt", index))
     File.write(text, para)
     ok = system({ "RBENV_VERSION" => "3.4.9" }, "rbenv", "exec", "ruby",
-                File.join(ROOT, "bin", "tts-worker"), policy.fetch("neural"),
-                policy.fetch("default_rate"), policy.fetch("default_pitch"), out,
+                File.join(ROOT, "bin", "tts-worker"), policy.neural_voice,
+                policy.default_rate, policy.default_pitch, out,
                 in: text, out: File::NULL, err: File::NULL)
     abort "tts-worker failed on paragraph #{index}" unless ok && File.size?(out)
     out

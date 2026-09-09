@@ -4279,11 +4279,20 @@ rule_ratchets:
     # state: this tree contains no unbounded Ruby `retry`, and a correct rule with
     # no subject belongs on this list rather than in a gate as a false finding.
     #
-    # 39 -> 38 on 2026-09-09, and nothing was written to make it fall: nine files
-    # moved out of lib/ground into the namespace whose purpose covers them, and a
-    # rule that had been silent found a subject in its new company. A rule's reach
-    # is a property of where the code sits, not only of what the rule says.
-    silent: 38
+    # 39 on 2026-09-09, having been 38 for an hour, and the round trip is the
+    # useful part. It fell when nine files moved out of lib/ground into the
+    # namespace whose declared purpose covers them and a silent rule found a
+    # subject in its new company — a rule's reach is a property of where the code
+    # sits, not only of what the rule says. It rose again when the last
+    # RUBY_SYMBOL_TO_PROC finding in the tree was fixed, in io/llm.rb, leaving
+    # that rule with nothing to say.
+    #
+    # So this row cannot tell "no subject in a clean tree" from "no subject ever",
+    # and it charges the first at the same rate as the second: fixing a rule's
+    # only finding is scored here as new debt. Splitting it would need the two
+    # populations named separately — a rule whose pattern no configuration can
+    # reach, against a rule the tree has simply stopped breaking.
+    silent: 39
 
 
   hygiene:
