@@ -3,22 +3,6 @@
 module Master
   module CLI
     class BrainOverlay
-      CORE_FILES = %w[
-        standing_orders.rb
-        policy/workflow.rb
-        research_thresholds.rb
-        tool/protocol.rb
-        policy/subagent.rb
-      ].freeze
-
-      CONTEXTUAL_FILES = %w[
-        policy_classifier.rb
-        patch_verifier.rb
-        done_checker.rb
-        memory_search.rb
-        context_compactor.rb
-      ].freeze
-
       DEFAULT_MARKDOWN_DIRS = [
         File.join(Master::ROOT, "data", "claude"),
         File.join(Master::ROOT, ".master", "memory"),

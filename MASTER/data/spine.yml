@@ -322,7 +322,7 @@ pub4_source_ceilings:
   # shared/app/models/authentication.rb declared Shared::Authentication as an
   # ActiveRecord model for an `authentications` table that no migration in any of
   # the three apps creates. Its path maps to a top-level `Authentication`, which
-  # each app's own concerns/authentication.rb already defines, so Zeitwerk
+  # the three per-app shims used to define — they are gone now, so Zeitwerk
   # shadowed it and never loaded it — leaving Shared::Authentication resolving to
   # the controller concern, and `.table_exists?` on a Module raising NoMethodError
   # in every OAuth callback. ExternalIdentity and IdentityProvider are the real

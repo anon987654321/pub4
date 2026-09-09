@@ -14,13 +14,6 @@ module Master
         puts @refs.renderer.render("<< for multiline. anything else is a prompt.", mode: :dim) if arg.empty?
       end
 
-      def unknown_command(stripped)
-        name = stripped.split(/\s/).first
-        detail = Master::CLI::CommandRegistry.help_text(name.delete_prefix("/"))
-        puts @refs.renderer.render("unknown command: #{name}.", mode: :dim)
-        puts @refs.renderer.render(detail, mode: :dim) if detail && !detail.start_with?("help: no detail")
-      end
-
       def run_rebuild
         puts @refs.renderer.render("rebuild: syntax check + session save + hot-restart", mode: :dim)
         lib_dir = File.join(Master::ROOT, "lib")
