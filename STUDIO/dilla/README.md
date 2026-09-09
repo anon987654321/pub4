@@ -305,6 +305,23 @@ parameters were never the problem.
 fired below about 21 bars — every short render was intro, main, outro. The
 machinery had been there all along.
 
+**A claim about the mix needs a render long enough to contain its evidence.** The
+kit does not enter below 16 bars and the arrangement does not breathe below about
+48, so an 8-bar A/B comparing "the drums sit better" compares two drumless takes
+and hears a difference that is not there. State the bar count with the claim, and
+pick it from what the claim depends on rather than from patience.
+
+**A probe that reads a global must fail loudly when the global is absent.** An
+absent reading is not a valid state and must never be scored as one: the face
+census that reported a dead runtime was reading `window.face` where the page
+writes `window.MASTER_FACE`, and "no renderer, no frames" is exactly what a
+healthy 2D fallback also reports. Separate "it said no" from "it did not answer".
+
+**PRNG draw order is an interface.** Adding a `rand` above an existing one shifts
+every draw after it, so a seed journalled last week reproduces a different take
+and the journal quietly stops meaning anything. Append draws at the end of a
+path, or accept that the old seeds are gone and say so where they are recorded.
+
 ## Running it
 
 ```sh
