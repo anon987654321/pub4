@@ -314,9 +314,13 @@ module Master
             [out_reader.value, err_reader.value, wait_thr.value]
           else
             terminate_subprocess(wait_thr)
-            [stdout, stderr].each(&:close)
-            out_reader.kill
-            err_reader.kill
+            # Kill the readers before closing what they are reading. Closing
+            # first left both threads inside IO#read on a closed handle, so each
+            # terminated with "stream closed in another thread" and
+            # report_on_exception printed a backtrace over the operator's
+            # prompt — twice, on every timeout.
+            [out_reader, err_reader].each { |reader| reader.kill.join }
+            [stdout, stderr].each { |io| io.close unless io.closed? }
             raise Timeout::Error
           end
         end

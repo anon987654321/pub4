@@ -246,6 +246,24 @@ class TestCLI < Minitest::Test
     assert_includes summary, "/through --only <stage>"
   end
 
+  # ^C during a turn took the REPL down with "undefined method ok? for nil".
+  # signals.rb kills the pipeline thread, Thread#value answers nil for a killed
+  # thread rather than raising, and session.rb:88 called result.ok? on it.
+  # Neither rescue in fetch_pipeline_result could have caught it: Interrupt is
+  # not a StandardError and a killed thread raises nothing at all.
+  def test_a_killed_pipeline_thread_yields_a_result_not_nil
+    thread = Thread.new { sleep 5 }
+    sleep 0.05
+    thread.kill
+
+    assert_nil thread.value, "a killed thread answers nil, which is the shape of the crash"
+
+    result = thread.value || Master::Result.err("interrupted", category: :abort)
+
+    refute_predicate result, :ok?
+    assert_equal "interrupted", result.message
+  end
+
   def test_publish_snapshot_includes_tree_and_full_file_contents
     Dir.mktmpdir do |target|
       FileUtils.mkdir_p(File.join(target, "lib"))
