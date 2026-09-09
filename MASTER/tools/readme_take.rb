@@ -47,6 +47,10 @@ CLIP = "315,160,270,370"     # the face, in CSS pixels, at that viewport
 SLICE = 300
 ATTEMPTS = 3
 GIF_FROM = 300               # a lively three seconds, well past the opening
+# 20fps of hard 1px dots is near the worst case for h264 and the recorder defaults
+# to 28, which gives 23MB for four minutes. 36 gives 14MB with the dots still
+# crisp; 10fps saves only a fifth of that and costs the motion, measured.
+CRF = 36
 
 # README.md, read aloud. The parenthetical asides an eye skips are kept, because
 # they are the sentences; what goes is everything that is not a sentence.
@@ -174,7 +178,8 @@ def record!
                   "gates/probes/face_loop_record.rb",
                   "--audio", WAV, "--out", MP4, "--fps", FPS.to_s,
                   "--viewport", VIEWPORT, "--scale", "2", "--clip", CLIP,
-                  "--warmup", "60", "--timeout", "90", "--work", File.join(WORK, "frames"),
+                  "--warmup", "60", "--timeout", "90", "--crf", CRF.to_s,
+                  "--work", File.join(WORK, "frames"),
                   "--from", from.to_s, "--to", to.to_s, chdir: RAILS_DIR)
       break if ok
 
