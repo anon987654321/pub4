@@ -103,7 +103,17 @@ module Deploy
     # grow, so this is the ceiling that replaced ENGINE_PART_CEILING when the 81
     # engine parts folded into dilla.rb. A new module fails the gate until its
     # author folds it into a sibling or raises this with the reason in the commit.
-    DILLA_SUPPORT_CEILING = 42
+    #
+    # 42 to 44, for improvisation.rb, improvised_line.rb and space_fx.rb.
+    #
+    # Three subjects, not one split three ways, which is the distinction this
+    # ceiling exists to police. improvisation writes progressions once at load
+    # and hands them to the catalogue; improvised_line writes a lead and a bass
+    # over a progression, per render, and knows nothing about which progressions
+    # exist; space_fx is per-sample DSP that knows nothing about music at all.
+    # Folding any pair would put two lifetimes in one file to satisfy a count,
+    # which is the regrouping the backlog already decided against.
+    DILLA_SUPPORT_CEILING = 44
 
     # VENDORED is matched against the path inside STUDIO, never the absolute
     # one. Matched absolutely it excluded every file in a checkout living under
