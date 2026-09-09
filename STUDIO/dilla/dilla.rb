@@ -20313,7 +20313,7 @@ voice_stack_every = (ENV["DEMO_VOICE_STACK_EVERY"] || "3").to_i
 # replaces the track. So a third of the demo was never the catalogue's
 # progression on a techno kit -- it was a different piece occupying the
 # slot, and the pads and the lead every other track spent minutes rendering
-# were simply absent. Forcing the kit and letting render_dilla do the rest
+# were absent. Forcing the kit and letting render_dilla do the rest
 # keeps the pads, the lead and the bass and changes the drums.
 #
 # Above the report, not below it. The dmesg line and the catalogue row both
@@ -22631,10 +22631,10 @@ def drum_sample_path(name)
 
   subdir = DRUM_SAMPLE_SUBDIR[name]
   if subdir
-    # Only when an operator named the kit. There used to be a second way in:
-    # four roles reached for the sample pack whenever its cache happened to
-    # exist, on the argument that synthesised noise has no body. The answer to a
-    # thin hat is a better recipe, not a borrowed recording.
+    # Only when an operator named the kit. A role does not reach for the sample
+    # pack because its cache happens to exist, whatever the argument about
+    # synthesised noise having no body: the answer to a thin hat is a better
+    # recipe, not a borrowed recording.
     kit = @current_external_kit
     if kit
       kit_dir = File.join(EXTERNAL_DRUM_KIT_CACHE, "drum-samples", kit, subdir)

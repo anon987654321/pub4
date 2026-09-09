@@ -258,7 +258,7 @@ SUFFIX_MATCHERS = CHORD_SUFFIXES.map { |sfx| [sfx, /\A[A-G][#b]?#{sfx}\z/i] }.fr
     # the snare arrives into space rather than into a hat. This is also the
     # steady reference the snare is late AGAINST -- Charnas's conflict needs
     # something keeping straight time or there is nothing to conflict with, and
-    # a bar where everything drags is just slow.
+    # a bar where everything drags is slow.
     #
     # ONE GHOST, before the second backbeat, where a drummer's left hand goes.
     #

@@ -959,7 +959,7 @@ end
 # realtime, so the generator could never feed the speakers no matter how it was
 # scheduled. The same chain in ffmpeg takes 2.7 seconds for the same 20 seconds
 # -- 0.137x realtime, twenty-five times faster than playback. Nothing about the
-# sound was traded for it; the arithmetic simply moved out of the interpreter.
+# sound was traded for it; the arithmetic moved out of the interpreter.
 #
 # Two traps, both of which took the whole graph down rather than one stage:
 # aecho wants its decays pipe-separated like its delays, and the groove-wear
@@ -1334,7 +1334,7 @@ end
 # So the stream now moves on a slow cycle roughly sixteen progressions long.
 # Near the low point the takes are short and almost unprocessed: harmony, kit,
 # and little else. Near the high point they are long, layered and heavily
-# treated. Nothing announces the change; the width just varies, which is how a
+# treated. Nothing announces the change; the width varies, which is how a
 # river reads as alive rather than as a channel.
 FLOW_PERIOD = (ENV["SINE_FLOW_PERIOD"] || "16").to_f
 
