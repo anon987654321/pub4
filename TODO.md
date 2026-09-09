@@ -3091,8 +3091,8 @@ proxying, remote content moderation (`ModerationReport` has no model for
 content whose author is not local) and a blocklist story, each of which is
 larger than everything above. The handler says so instead of pretending.
 
-Also open: outbound *following* (a brgen user following a remote account),
-instance-level blocklists, and `Update` on edit.
+Still open: inbound storage. There is no `RemotePost` model or table, which is
+the half the paragraph above says is deliberate.
 
 #### 2.2 No `Event` model (Facebook) — **done**
 
@@ -3268,7 +3268,8 @@ history can be edited is a wiki nobody can audit.
 **Check:** `brgen/test/controllers/crossposts_controller_test.rb` (5),
 `test/models/community_wiki_page_test.rb` (5),
 `test/models/community_wiki_revision_test.rb` (4),
-`test/controllers/communities/wiki_controller_test.rb` (5).
+`brgen/test/controllers/wiki_controller_test.rb` (5) — the class inside is
+`Communities::WikiControllerTest`; the namespace is not a directory.
 
 **Still open:** nothing in this entry.
 
@@ -3426,7 +3427,7 @@ Who-liked-you is its own page, not folded into the deck: people who have already
 said yes are a different decision from people who have not seen you.
 
 **Check:** `brgen/test/models/dating_ranking_test.rb` (8) and
-`brgen/test/controllers/dating_likes_test.rb` (5).
+`brgen/test/controllers/dating_likes_test.rb` (6).
 
 **Unmatch is built.** `Dating::Match#unmatch!` writes `unmatched`, drops the
 mutual likes so the pair can like again, and rematch flips the same row back
@@ -3583,7 +3584,7 @@ a policy. Renewing restarts the window from now, so renewing late does not
 immediately expire again, and it clears the notice flag so the next lapse is
 announced too.
 
-**Check:** `brgen/test/models/listing_expiry_test.rb` (5).
+**Check:** `brgen/test/models/listing_expiry_test.rb` (8).
 
 **A listing has a kind.** `goods`, `job`, `housing` or `gig`, with three detail
 tables behind the three new ones — employment type and a salary range, rent and
@@ -5113,8 +5114,8 @@ named here rather than edited.
 
 ### Surface and colour, what it left open — 2026-09-05
 
-- **Sixty-four off-scale alphas, now measured.** apps 26, face 38, recorded as
-  baselines rather than snapped. Eleven of the apps' twenty-six are chrome and
+- **Sixty-seven off-scale alphas, now measured.** apps 29, face 38, recorded as
+  baselines rather than snapped. Eleven of the apps' twenty-nine are chrome and
   card washes between 6% and 45% and could go on the ladder for a small visible
   change each; the rest are the three engines that paint glass — playlist at
   94%, maps at 92%, tv at 78% — where the number is that pane's own opacity and
@@ -5375,8 +5376,8 @@ Scanner is done: 466 lines to 139, with `PathFilter`, `ProgressReporter` and
 is the cautionary half of this layer — an extraction that carries a method out
 and puts a stub back is worse than the class it replaced. Dispatcher was already
 done: `llm_dispatcher.rb` is 410 lines over `react_loop`, `ruby_llm_sender` and
-`tool_registry`. What is actually large now is `structural_rules.rb` at 814 and
-`surface_rules.rb` at 635, and both are registries of independent rules rather
+`tool_registry`. What is actually large now is `surface_rules.rb` at 752 and
+`structural_rules.rb` at 740, and both are registries of independent rules rather
 than classes with gravity, so neither is the same problem.
 
 **4 · Face and body — normalise the deploy pipeline between Rails and
@@ -5493,7 +5494,7 @@ taken from the transcript that raised it.
   "Not checked" every run and never counted among the passes; noticing it is
   still a person's job. If that is not enough, the missing piece is a
   per-journey severity, not a stricter reading of the existing flag.
-- **`bin/sine_stream.rb:967` is the last un-oversampled `asoftclip`.** Every
+- **`bin/sine_stream.rb:975` is the last un-oversampled `asoftclip`.** Every
   other saturation site in dilla runs `oversample=4` or `8`; this one runs the
   ffmpeg default and aliases above Nyquist. It is left alone deliberately —
   changing it changes how the stream sounds, which is the operator's ear and not
