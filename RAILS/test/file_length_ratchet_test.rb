@@ -105,9 +105,24 @@ class FileLengthRatchetTest < Minitest::Test
 # and the delta was not the split. The 108 contrast and apca findings —
 # the ones this file is actually responsible for — were byte-identical
 # across all three runs.
-# 449 -> 422: the palette half is rendered_geometry/token_checks.rb, the same
-# split as contrast_checks and for the same reason — colour is not geometry.
-"gates/lib/rendered/rendered_geometry.rb" => 422, # type checks live in geometry_type.rb
+# 449 -> 422: the palette half is token_checks.rb, the same split as
+# contrast_checks and for the same reason — colour is not geometry.
+#
+# 422 -> 344 on 2026-09-09 along a seam the gate already carried as a banner
+# comment: "Placement, not size. Everything else in this gate asks whether an
+# element is big enough, legible enough or on the grid; these four ask whether
+# it is anywhere sensible." Those four — Hick's law on peer choices, Gestalt
+# proximity, the phone thumb zone and the weak bottom-left of an F-pattern scan
+# — are placement_checks.rb, and they are the only checks in the gate that read
+# ux_laws, layout_rules.reading_patterns and layout_rules.whitespace. Still over
+# the 300 rb limit, so the row stays; the next seam is the pair that reads the
+# unrounded rect, check_subpixel and check_edge_alignment.
+#
+# Both live under gates/support/rendered_geometry/, and token_checks.rb moved
+# there from gates/lib/ to join it: deploy_gates_contract_test asserts gates/lib/
+# holds exactly the gates gates.yml declares, and a check module is not a gate.
+# That test had been red on token_checks.rb since it was split out.
+"gates/lib/rendered/rendered_geometry.rb" => 344, # type checks live in geometry_type.rb
     # +6 in cf6e56a52 — an error template is not a route, so the manifest stopped
     # being hand-edited and the inventory learned to tell the two apart.
     # page_inventory.rb left this list on 2026-09-06: 444 -> 288 when the five
@@ -134,9 +149,20 @@ class FileLengthRatchetTest < Minitest::Test
     # +5 in 7ed6920cd — the seeds asked for a visible profile without a photo,
     # which gated every deploy.
     "brgen/db/seeds.rb" => 426,
-    # 313 -> 308: the private Net::HTTP client is CrawlSupport.fetch, which
-    # every live gate now shares.
-    "gates/lib/live/user_flow.rb" => 308,
+    # user_flow.rb left this list on 2026-09-09: 308 -> 166, under the 300 rb
+    # limit, so a ceiling here would only re-admit it. Its own header admitted
+    # to being two gates in one — "critical-path user flows + MASTER
+    # design/principle semantics" — and the second half is
+    # gates/support/user_flow/design_contracts.rb: the seven-rule contract
+    # table and the four methods that read it off source text. Not one of them
+    # opens a socket or asks whether an app is up, which is what everything
+    # left in user_flow.rb does. The earlier 313 -> 308 was the private
+    # Net::HTTP client becoming CrawlSupport.fetch, shared by every live gate.
+    #
+    # The contract table is a method there, not a frozen constant, because it
+    # reads VIEW_PATHS and the gate class builds that in its own body after the
+    # require. That is the load-order half of the trap this file already
+    # records twice for __dir__ paths.
     "shared/app/assets/stylesheets/_minimal.scss" => 455,
     "shared/app/assets/stylesheets/_zen_shell.scss" => 477,
     "brgen/engines/playlist/app/views/playlist/playlists/_player.html.erb" => 155,
