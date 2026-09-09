@@ -4877,93 +4877,15 @@ reading the line.
 - **Bare `44100` inside ffmpeg filter strings.** Extracting it into
   interpolation would touch 32 render-path strings for no behavioural gain.
 
-## The unified handoff, read against the tree — 2026-08-31
-
-`CLAUDE_OPUS_UNIFIED_HANDOFF.md` arrived at the repo root in `8dfe41309` as an
-implementation brief. It is 302 lines and it stops mid-list, at
-"pagination/filtering;" under section 7 — the file is truncated, so anything the
-author intended after the Rails test matrix is not in this repository at all.
-It is also a fourth file at a root that `CLAUDE.md` says holds two, and most of
-its asks restate this file or `WISHLIST.md` in different words, which is the
-"two backlogs saying the same thing" defect the preamble here names. It is left
-in place rather than folded or deleted, because that is an owner's call; what
-follows is the audit, so the next reader does not do it again.
-
-Its own first instruction — "reconcile every change against the current tree
-before applying it, do not blindly paste historical snippets" — is what this
-audit is. Two of its premises did not survive that reconciliation.
-
-**3.2, the circuit-breaker hazard — done, and its premise was already stale.**
-The brief asks after a `Stoplight::Light` NameError and says to check the tree
-rather than assume. Checked: `Stoplight` appears nowhere — not in `lib/`, not in
-the `Gemfile`, not in `Gemfile.lock`. There is no hazard to repair and no stale
-reference to remove. The half that was real is the one it names second: test the
-replacement's states. `Master::Io::CircuitBreaker` is hand-rolled and its two
-existing tests covered the rate limiter and the per-model registry, so the
-closed -> open -> half_open -> closed machine, the eight-failure threshold, the
-thirty-second cooldown and the recovery had nothing holding them.
-`MASTER/test/test_circuit_breaker_states.rb` holds all four now, plus the two
-error classes that must *not* open it (a provider rate limit, an absent key) and
-the state file that survives the process. Verified by mutation: four separate
-breaks in the implementation each turn it red.
-
-**4, multi-agent safety — done.** "Where hooks already exist, test them as
-executable behaviour rather than documenting them only" was the sharpest line in
-the brief, and it was exactly right. `OPENBSD/dev/githooks/` holds the three
-guards that are the whole defence against trap one, and nothing tested any of
-them. A hook that stopped firing looks identical to a week in which nobody made
-the mistake. `OPENBSD/test/test_githooks.rb` runs all three through real git in
-a throwaway repository — real commits, a real bare remote, a real push — because
-a hook is installed behaviour and unit-testing its logic would not catch a lost
-chmod, a bad shebang, or a `core.hooksPath` pointing somewhere else. It covers
-every case the brief lists (cross-tree refusal and its override, multi-commit
-push refusal and its override, the clean single-commit path, the diagnostic
-output) and three the brief did not: the half-landed move, STUDIO session
-ownership, and that an absent session ledger reads as "unknown" rather than
-accusing every commit of being foreign.
-
-**3.1, 3.3, 3.4, 3.5, 3.6, 5, 6, 7 — open, and each is a sitting.** These are
-programs, not tasks: boundary validation for every data contract, the
-require-order graph, snapshot rollback, autoloop fencing, dead-session startup,
-routing resilience, and a full Rails audit with a test matrix. Where they touch
-something this file already tracks, this file is the record and the brief is a
-restatement — do not open a second row for the same work under the brief's
-numbering.
-
 ## Cross-cutting programs
 
 Larger efforts that span trees or do not belong to any single one. Each is a
 program with its own sitting, listed so they are visible in one place rather
 than implied across four.
 
-- **Realtime wiring — instrumented and down to one recorded exception, 2026-09-05.**
-  `turbo_broadcast_contract_test.rb` already asked whether a broadcast has a
-  partial. It now reads every *named* stream from both ends, and two pairs had
-  never matched: `brgen:notifications:*`, written on every notification create by
-  a synchronous `broadcast_prepend_to` and read nowhere, and `items`, subscribed
-  by amber's busiest page against a model that declines `broadcasts_refreshes` on
-  purpose. Both removed, each with the reason at the site. The one tolerated
-  entry is `NotificationDeliveryJob`, which is enqueued by nothing and kept only
-  until vm23 confirms no queued row names it; `UNREAD_STREAMS` carries it and
-  fails if it stops being true.
-
-  Literal streams only, and that is the whole of the instrument's honesty:
-  `broadcast_refresh_to self` names its stream at runtime, and guessing which
-  view subscribes to `@conversation` is how a census reports the shape of the
-  tree and calls it a defect. Three false positives died on the way and each is
-  worth not re-deriving — the ERB comment recording a dropped subscription read
-  as the subscription, `broadcast_refresh_to` was outside the DOM-verb pattern so
-  three quarters of amber's streams read as orphans, and
-  `Turbo::StreamsChannel.broadcast_append_to(` puts its stream literal on the
-  next line, which made `LocationsController` silent and the layout's
-  `nearby_alerts` subscription an orphan. Mutation-checked in all three
-  directions: a new dead broadcast, a stale `UNREAD_STREAMS` entry, and a
-  restored orphan subscription each turn it red.
-
-  What is left is the dynamic half, deliberately: a stream named by an object
-  rather than a string needs a runtime instrument, not a wider regex.
 - **Seed realism.** Coordinates and timezones for every DomainRegistry city
-  live in `CitySeed::COORDINATES` / `TIME_ZONES`. Population is still unset.
+  live in `CitySeed::COORDINATES` / `TIME_ZONES`. Population has no column and
+  no seed.
 - **Bringhurst typography codification.** Turn the typographic rules the design
   system already half-follows into enforced tokens and a gate, rather than
   convention.
@@ -4979,7 +4901,9 @@ than implied across four.
 - **Onboarding.** A first-contact path that gets a new agent or contributor from
   clone to a green check without reading every contract.
 - **Local-LLM fallback.** A path that keeps the runtime working when no API key
-  and no `claude` CLI are present.
+  and no `claude` CLI are present. `models.yml` declares a local tier gated on
+  `OLLAMA_BASE_URL`, but only `review/embeddings` and the boot receipt read that
+  variable, so no chat path falls to it.
 - **Aegis, seaborne.** A safety agent for the water, and the first body the
   embryo could plausibly take. It is a program rather than a feature because
   most of it is gated on hardware; the section below says what is buildable now
@@ -4988,14 +4912,12 @@ than implied across four.
 ## The layout pass — opened 2026-09-02
 
 A study of joi.com, kimi.com and medium.com, read against this tree, produced
-roughly 178 proposals. They are worked one category at a time, and about sixty
-are closed. The list itself lived in a conversation and was never written down,
-so perhaps forty of the closed items are recoverable only from `git log` and
-another forty of the open ones are gone. That is the defect this file exists to
-prevent, and it is recorded here rather than quietly repaired: what follows is
+roughly 178 proposals, worked one category at a time. The list itself lived in a
+conversation and was never written down, so the closed items are recoverable
+only from `git log` and perhaps forty of the open ones are gone. What follows is
 what survived, not a copy of the original.
 
-What the pass has actually taught, which is worth more than the list:
+What the pass taught, which is worth more than the list:
 
 - **Most proposals were not problems.** Of the three raised against motion, two
   were already satisfied — `transition: all` was two sites rather than a
@@ -5009,49 +4931,17 @@ What the pass has actually taught, which is worth more than the list:
 - **A value-preserving snap is a fix; a value-changing one is a decision.**
   160ms is `--transition-fast` written 20ms apart, and whether those are one
   step or two is a question about how a hover should feel. Off-scale values that
-  cannot be moved without changing the render are recorded as baselines with the
-  argument written down, never snapped to silence the lint.
-
-### Closed
-
-- **Motion**, 14. Thirty duplicate reduced-motion resets collapsed to the one in
-  `_animations.scss`, with `scroll-behavior: auto` promoted into it because
-  `animation: none` does not reach it (`4211c4ebb`).
-- **Measure**, 10. `--measure-body` was a second name for `--measure`'s 66ch,
-  declared three times and used seventeen; collapsed across sixteen files, and
-  `rules.yml` corrected from 65ch to 66ch (`e2dc94299`, `a85160ee7`).
-  It came back on 2026-09-05 and the route in is worth knowing:
-  `layout_contract_test` still asserted the retired spelling in
-  `_dialect_tokens.scss`, so the collapse left a red test behind and the obvious
-  way to make it green was to re-declare the twin. `design_tokens.yml`'s
-  `measure_body` key reads like a token the CSS forgot to emit and is not — it
-  is YAML `design_metrics` reads. **A retirement is not finished while a test
-  still names the retired thing.** The assertion asks the real question now: the
-  measure is declared exactly once, in `_typography.scss`, under one name, and a
-  second declaration anywhere in the four stylesheet trees fails (`cd09222b0`).
-- **Weight discipline.** `--weight-heavy: 800` is now the top of
-  `scale.font_weight` rather than an exception to it: the ramp in use is
-  400/600/800, which is the only even ladder meeting `min_weight_delta: 200`,
-  and system-ui carries a drawn Heavy. Retired the last 31-finding baseline
-  (`1e32bd964`).
-- **Grid and tiles**, 14. Nineteen tile grids gave nineteen answers to how
-  narrow a column may get, four of them in rem against two different roots;
-  six steps now, ten grids moved, none by more than 20px (`b7760ac8c`).
-  Thirteen tokens the tree asked for were declared nowhere -- the fallback
-  always won, and one had none, so `.tv-feed-title` shipped with no
-  font-size. Two lints could not read their own opt-out (`b49b2c82d`).
-- **Surface and colour**, 12. Three compat aliases -- --surface2, --text-dim
-  and --radius -- were 104 call sites and seven declarations of a second
-  name, and the mechanism had already caused a 1.23:1 contrast bug that the
-  comment above them documented. The alpha ladder was the one scale nothing
-  measured, and its two hand-kept copies had drifted by a step (`67ec62871`).
-- **Mobile**, 12. Ten were not problems -- the tree already writes dvh, guards
-  touch and reads safe-area everywhere. The two that were: `--tap-min` spent the
-  law's 44px from five hand-written copies with nothing comparing them to the
-  rule, and eighty-three var() fallbacks named the token they fell back from,
-  three of which were hiding an alpha from the ratchet (`21ba3e7ca`).
-- **Elevation and hairline**, and **bsdports**. Both finished rather than
-  skipped: one `box-shadow` across 106 stylesheets, and zero auditor warnings.
+  cannot move without changing the render are recorded as baselines in
+  `design_tokens.yml` with the argument beside them, never snapped to silence a
+  lint.
+- **A retirement is not finished while a test still names the retired thing.**
+  Collapsing `--measure-body` left `layout_contract_test` asserting the retired
+  spelling, and the obvious way to make it green was to re-declare the twin.
+- **Sticky hover is not a defect here.** 122 `:hover` declarations across 52
+  files against four `@media (hover: ...)` guards reads alarming until the
+  hovers are classified: eighty-two only repaint, thirty declare nothing that
+  matters on touch, and the ten that move or reveal are opacity or transform
+  nudges. Nothing strands a tap. Re-classify before re-opening this.
 
 ### Open, by category
 
@@ -5066,492 +4956,96 @@ working from one.
 
 ### Held open deliberately
 
-- **Duration baselines.** 20 off-scale durations in the apps and 33 in the face,
-  recorded rather than snapped. Twelve of the twenty are 160ms. The face keeps
-  its own timings — `.09s` and `.15s` `steps(4,end)` belong to a terminal
-  redrawing in character cells, not to the apps' four-step ladder.
-- **Four face transitions exceed `NO_LONG_TRANSITION`.** `face.css:380` at
-  1200ms, `:635` at 1800ms, `:867` at 400ms, `:1015` at 600ms, and
-  `chat_upload.css:42,48` at 420ms each. Left alone: this is the operator's own
-  face timing, and the rule caps UI transitions, not a deliberate slow reveal.
+**Four face transitions exceed `NO_LONG_TRANSITION`.** `face.css:380` at 1200ms,
+`:635` at 1800ms, `:867` at 400ms, `:1015` at 600ms, and `chat_upload.css:42,48`
+at 420ms each. Left alone: this is the operator's own face timing, and the rule
+caps UI transitions, not a deliberate slow reveal. No baseline records them, so
+this line is the only thing standing between them and a well-meaning fix.
 
+### Still open, each verified 2026-09-09
 
-### Grid and tiles, what it left open — 2026-09-04
-
-The tile ladder landed and the undeclared tokens are gone. Three findings from
-the same pass are open, each measured and none of them a guess.
-
-- **The generated-asset gate cannot see a stale committed build.** Closed
-  2026-09-05. It now compares simple custom-property literals in the committed
-  `application.css` against the SCSS (and mixin defaults, the same source
-  `fallback_drift_lint.collect_from_scss` already reads). `--bg: #{$bg}` is not
-  a literal, so it does not report every dialect as drift. `--radius-card:
-  16px` in a build whose sources say 12px does. The checksum rebuild is still
-  the exact check and is not this.
-
-- **The remaining `layout_rules` keys are now read.** `design_metrics` already
-  read `gap_over_margin`, `card_padding_px`, and `target_recommended_px` (must
-  be ≥ `target_min_px`). It now also refuses a missing `grid.columns`,
-  `paragraph_margin_em`, `section_padding_min_rem`/`_max_rem`,
-  `split_sidebar_ratio` (must sum with `split_main_ratio` to 1), and
-  `visible_grid_optional`. `prefer_monochrome_with_one_accent` is read next to
-  `max_palette_roles`. The CSS scans for children-with-margin and card padding
-  other than 24px landed 2026-09-05 as `css_constitution` tallies
-  `child_margin` (floor 0, pens skipped) and `card_padding` (1:
-  `_minimal.scss` `.card { padding: 1rem }`, a look decision).
-
-- **`--border-strong` is declared only in `MASTER/web/public/face.css`.**
-  brgen's composer asked for it twice and got its `var(--border)` fallback both
-  times, which is now written directly. The intent — a border stronger than the
-  default one — has no token in RAILS. Naming one is a design decision, not a
-  lint fix.
-
-Two more dead indirections sit in the face, outside this lint's reach:
-`face.css:372` asks for `--x-font` (the `x_` prefix was retired from the design
-system) and `:399` for `--c-mic-off`. Both resolve to their fallbacks. The face
-is one-theme by design and its colour lines are the operator's, so they are
-named here rather than edited.
-
-### Surface and colour, what it left open — 2026-09-05
-
-- **Sixty-seven off-scale alphas, now measured.** apps 29, face 38, recorded as
-  baselines rather than snapped. Eleven of the apps' twenty-nine are chrome and
-  card washes between 6% and 45% and could go on the ladder for a small visible
-  change each; the rest are the three engines that paint glass — playlist at
-  94%, maps at 92%, tv at 78% — where the number is that pane's own opacity and
-  moving it is a decision about the surface.
-- **Twenty-two color-mix blends are a separate axis and deliberately unmeasured.**
-  `color-mix(in srgb, X 22%, var(--surface))` mixes two opaque colours; 22% is a
-  ratio between them, not a transparency. Fourteen distinct ratios. A tint ladder
-  would be a real design decision, not a lint.
-- **`large_text_contrast` is read.** `visual_contract_lint` takes its text floor
-  from that key (AA 4.5). `design_metrics` still enforces `normal_text_contrast`
-  (AAA 7.0) on every token pair, large text included — a stricter bar than WCAG
-  asks, and a choice, not an unread key.
-- **`visual_contract_lint` hardcodes 3.0** for UI/accent pairs. Text now reads
-  `large_text_contrast`. Raising the CI floor to AAA 7.0 would flood the
-  compiled bundles; `design_metrics` is the gate that enforces
-  AAA. Both currently pass, so nothing is broken — but the CI lint would not
-  notice a pair falling from 7.0 to 4.6.
-- **`prefer_monochrome_with_one_accent` is read** next to `max_palette_roles`
-  in `design_metrics`. The numeric cap is the check.
-
-### The accent read across all nine surfaces — 2026-09-08
-
-Opened by a design survey of brgen, its six engines, messenger and amber. The
-survey's own headline finding was wrong and the correction is the useful part.
-
-**The claim that failed.** brgen now defaults light on every surface
-(`ApplicationHelper::DEFAULT_SURFACE_THEME`, retiring the 2026-08-24
-per-vertical split), and the seven vertical accents were tuned before it did.
-Measured as ink: marketplace 3.48, tv 3.51, dating 3.77, maps 3.79, messenger
-3.72, takeaway 3.89, playlist 4.13 on `#ffffff`, and 3.11–3.69 on `#f2f2f2`.
-Every one clears AA on the dark theme (4.68–9.11 on `#1a1a1a`) and none clears
-it on light. Read as "seven AA failures", which it is not: `visual_contract_lint`
-floors accents at WCAG non-text 3:1 deliberately, because the accent belongs to
-interactive and state elements, and `accent_on_prose` is the check that keeps it
-off prose. All seven clear that floor. The gate was right and passing.
-
-**What was actually wrong was the gate's reach.** `accent_findings` globbed
-`brgen/app/assets/stylesheets/*.scss` and nothing else, so it read the host and
-none of the six engines — the blindness WIRING_NOTES has recorded four times,
-and `image_findings` directly above it had already been widened for. Its
-`accent_on_prose: 0` was a measurement over a third of its subject. Widened to
-`brgen/{app,engines/*/app}`, and `INTERACTIVE_SELECTOR` taught `delete` and
-`fav`: `.comment-delete` is a transparent button with `cursor: pointer` and
-`.deal-fav--on` is a favourite's on-state carrying `--tap-min` in both axes, so
-both were reported as prose the moment the glob reached them. Both lint tests
-stay green.
-
-**The two sites it found are closed.** `accent_on_prose` reported 2 against a
-baseline of 0, both in `_vertical_marketplace.scss`. The kicker was the harder
-one — 12px uppercase bold at 3.48:1, and `design_tokens.yml` already records why
-the accent cannot be darkened to reach it (`#80715c` took the kicker 3.48 → 4.74
-and broke `.compose-btn` 5.02 → 3.70 in the same run; the fill and ink bounds do
-not overlap). Both took the fix `.price` took — drop the hue, let the weight
-carry the emphasis. The baseline was never raised. Operator decision 2026-09-08.
-
-**Three things found beside it, none of them fixed.**
-
-- **`.price`'s recorded closure is stale.** `BASELINES` says ".price dropped
-  the hue its bold already carries" among the four measured to 0 on 2026-08-21.
-  `shared/_minimal.scss:474` still sets `color: var(--accent)`. Outside the
-  brgen-scoped glob, so the lint does not report it; scanner convention 2.
-- **amber is deliberately out of scope.** `.sustainability-grade` and
-  `.weather-bar` wear the accent as text. The rule's rationale is brgen's
-  grayscale identity; amber's identity *is* its warm taupe, so widening this
-  check to amber would apply brgen's rule to a surface it was never written
-  for. Written into the file so the next widening does not sweep them in.
-- **`.weather-bar` paints the accent on a 15% tint of itself.** Not measured by
-  anything: a `color-mix` is a blend rather than an alpha, which is the axis
-  `off_scale_opacity` deliberately does not read.
-
-**Whether 3:1 is the right floor for an accent worn as link text** is the
-question under all of this. WCAG 1.4.11's 3:1 covers non-text components;
-link text is still text under 1.4.3. The tree's stance is recorded and
-defensible; it is named here because it is a choice, not an oversight.
-
-**Two `#dark-toggle:checked ~ .theme-root` branches cannot match, and one of
-them costs contrast.** `shared/_theme_toggle` renders the input inside the
-`role="region"` wrapper, so it is not a sibling of `.theme-root` and the `~`
-combinator has nothing to reach; brgen's layout also renders the toggle only
-`unless vertical_surface?`, so on a vertical the input is not in the DOM at
-all. Both conditions hold independently. SURFACES.md called this lane retired
-on 2026-08-21 and two verticals still steer by it:
-
-Both moved to `:root[data-theme="dark"]`, the lane `_vertical_shell` already
-uses. Operator decision 2026-09-08.
-
-- `_vertical_takeaway.scss` corrected `--food-dash-ink` for a dark card and
-  never fired, so takeaway's meta text wore `#c62b1b` — tuned for a light
-  card — on `#1a1a1a` at **3.12:1**. The value the dead branch named,
-  `#e07b39`, is 5.85 there, and is what it now gets.
-- `_vertical_dating_shell.scss` set `--dating-accent-ink:
-  var(--dating-accent)`, which the base block already set — inert while the base
-  block named the fill. The base now names the light ink `#00705c` (6.05 on
-  `#ffffff`, against the fill accent's 3.77), so this override became
-  load-bearing in the same pass that fixed its selector.
-
-amber still wears the checkbox lane deliberately (`_variables.scss:45,55`) and
-renders its own `#dark-toggle` outside any wrapper, so it is unaffected. Do not
-sweep the two trees together.
-
-**Forward work from the same survey, none of it started.** A shared display-type
-slot so a hero opts out of `main#main-content > header h1` by name rather than
-by matching an id (`_vertical_marketplace.scss` carries that workaround under
-protest). tv's `--tv-accent` fallback `#d6473f` no longer matches the map's
-`#dc635c`. `WORN_TYPE.profiles.map.label_min_px` has no reader. takeaway's
-`#dark-toggle:checked` sibling branch is dead under the dataset mechanism.
-playlist's `--edge-soft/-/-strong` is the donor the queued shared edge scale
-wants, and its `--font-mono: "SF Mono"` fork is a fifth typeface by accident.
-`SURFACES.md` still calls brgen dark-default, and the "operator, 2026-08-24"
-comments in `_vertical_dating_shell.scss` and `_vertical_takeaway.scss` describe
-the retired split as current.
-
-### The marketplace, read against the system rather than against Amazon — 2026-09-08
-
-House-system-first was the operator's call: the shapes come from
-`design_tokens.yml` and `design_rules`, not from a competitor's page. Most of
-the engine turned out to already obey them, which is the pattern by now.
-
-**Already right, and left alone.** The catalogue grid is the house geometry and
-has been all along — two-up on a phone, `auto-fill minmax(--tile-min-xl, 1fr)`
-above `viewport.lg`, `--tile-gap-row` against the narrower `--tile-gap-col`, so
-a dense grid reads as rows of goods rather than as a mosaic. `.deal-card` and
-`marketplace/_card_media` are one anatomy across listings, deals and stores. The
-type-led hero is deliberate and stays.
-
-**The one real defect was the control count.** Twenty-one peer controls stood in
-front of the first listing: six nav sections, four kind chips, three source
-chips and eight filter controls, plus a facet chip per condition and price band.
-`UX_LAWS.hick.max_visible_choices` is 7 and
-`progressive_disclosure.require_advanced_hidden` is true. Source, category,
-distance, sort, price bounds and the facets moved into one disclosure; search and
-the four kinds stay. Six at rest in the content column, the nav bar's six being
-its own group under `nav_items_warn: 9`.
-
-The drawer holds applied state rather than hiding it: the count rides on the
-summary and the panel opens itself whenever anything inside it is set. The
-summary wears `.deal-cat` rather than a style of its own — it is the chip that
-opens the drawer holding the other chips, and a second chip vocabulary for one
-control is the schism `btn_vocabulary` exists to prevent.
-
-**`marketplace.top` did not exist.** `_top_offers` has been calling it for every
-non-deal card, so that badge rendered a translation-missing. Added, with
-`deal`, `percent_off`, `store_categories` and `new_listing_form` — the last four
-replacing English literals on a surface that defaults to Norwegian.
-
-**Two ratchets fell, and one of them fell for the wrong reason.**
-
-- `translate_default` 177 → 171. The listings index carried eight `default:`
-  fallbacks over six lines for keys that all exist in both locales, so none
-  could ever fire. Value-preserving.
-- `unused_selector` 154 → 153, and this one is instrument. `deal-cat` left the
-  set without ever having been unused: every call site wrote
-  `class: "deal-cat#{" active" if …}"`, and a literal search cannot read a
-  composed class — the caveat `css_coverage_lint`'s own header states. One
-  static `class="deal-cat listing-filters-toggle"` on the new summary made a
-  selector the tree had been using all along visible to the check. **An unknown
-  share of the remaining 153 is the same shape**, which is why that number is a
-  ratchet with wide tolerance rather than a target of zero.
-
-**Tabular figures, per `worn_type.profiles.catalog.require_tabular_nums`.** Four
-money columns sat outside the selector list: the cart's per-row totals, the
-order total, the store payout list and the variant prices. The first three carry
-`data-money` — the generic hook rather than three new class names — and
-`.variant-price` joined the list. Four other money renderings were left alone
-because tabular figures fix a column and none of them is one: a lone price on a
-detail page, a price inside an aria-label that never renders, the facet price
-bands (a wrapping row, not a stack), and a variant price inside a select option.
-
-**Still open in this engine.** `.deal-cat` carries `border: 1px solid
-var(--border)`, which is a line, and the 2026-08-04 decision traded control
-borders for surface fills everywhere else (`.compose-trigger`, `.btn-ghost`,
-`.btn--secondary`). The chip family kept its edge and nothing records why.
-Changing it moves rendering across marketplace, stores and takeaway at once, so
-it is named here rather than taken. The hero's `main#main-content >
-header.market-hero h1` still beats `_typography`'s page-title rule by matching an
-id; a shared display-type slot would retire that workaround and is unbuilt.
-
-### Mobile, what it found and what it did not — 2026-09-05
-
-Ten of the twelve proposals were not problems, which is the pattern by now and
-worth recording so nobody re-derives it. The tree writes `100dvh` twenty-six
-times against one `100vh` (now none), guards touch with `touch-action` fifteen
-times and `overscroll-behavior` twelve, reads `safe-area-inset` in eighty-nine
-places, and has no `text-align: justify` anywhere. The mobile hygiene is done.
-
-- **Sticky hover is not a defect here, and this is why.** 122 `:hover`
-  declarations across 52 files, and only four `@media (hover: ...)` guards —
-  which reads alarming until the hovers are classified. Eighty-two only repaint,
-  thirty declare nothing that matters on touch, and the ten that move or reveal
-  are all opacity or transform nudges. `.edge-grip` even carries a
-  `@media (hover: none)` permanent affordance beside its hover. No menu, no
-  reveal, nothing that strands a tap. Re-classify before re-opening this.
-- **`justify_never_on_mobile` has no reader and nothing to catch.** The rule is
-  satisfied by a tree that never writes justify; a check would measure zero
-  forever. Left as doctrine.
-- **`target_recommended_px` is read.** `design_metrics` requires it ≥
-  `target_min_px`.
-- **`width: min(360px, 100%)` in `_nearby_chat_widget.scss`.** Was 100vw, which
-  includes the scrollbar gutter. 100% of the positioned containing block.
-### Where the ratchet stands, 2026-09-04
-
-Every kind sits exactly on its baseline, which is what a ratchet with no slack
-looks like: `off_scale_opacity` 67 (apps 29, face 38), `off_scale_duration` 53
-(apps 20, face 33), `off_scale_space` 48 (apps 16, face 32),
-`off_scale_tracking` 14 (all face). Radius, line-height and font-weight are at
-zero on both surfaces. `RAILS/shared/design_tokens.yml` holds
-the baselines and the argument for each; the contract is that none is ever
-raised to silence a new finding, and a staleness test forces a lowering when one
-is beaten.
-
-## The wish list, read against the tree — 2026-08-31
-
-`uplift_summary.txt` sat untracked at the root: the owner's own words, six
-numbered layers. It is folded here and the file removed, because a wish list at
-a root that holds two files is the same "second backlog" this file's preamble
-names. Each layer below is what the tree actually holds against it, so the next
-reader does not re-audit.
-
-One word about the word. That file called the whole thing an "uplift", and the
-six layers are not one job: making the tree legible (1 and 6), making a stated
-rule enforceable (2 and 5), and collapsing duplication (3). An umbrella that
-vague is how three of the six came to be already built without anyone checking —
-so the umbrella is dropped here rather than renamed, and the layers are read one
-at a time. Where this tree needs a word for the third of those it already has
-two. `collapse` is a rule id — `COLLAPSE_BEFORE_ADDING`, declared and with no
-detector, which is its own entry below. `fold` is what `lib/core/` and
-`rake lint:spine` mean, and it is enforced.
-
-**1 · Orientation — a map and a glossary. Done.** The map already existed and
-is reached from `AGENTS.md`: `data/agent_map.yml` routes by topic,
-`START_HERE.md` is the contract, `OPENBSD/tools/tree.rb` draws the layout. The
-glossary did not. One arrived during the Codex cluster and was removed with it —
-five entries, three of them terms this repo does not use ("Gravity Debt", "The
-Bridge"), which is what a glossary written from outside a tree looks like.
-
-The replacement is a section of `AGENTS.md` rather than a file, because
-`COLLAPSE_BEFORE_ADDING` applies to documents too and its reader is the agent
-already reading that file. It defines the words that mean one thing here and
-something else everywhere else — law versus rule, conduct, twin, intentional
-marker, fold and spine, ratchet and census, inconclusive, verdict, tier, the
-triangle, vertical, the face — and every entry names the file behind it, so a
-claim about one can be checked. Three of them were wrong on the first pass and
-the tree said so: `face.part4.txt` does not exist, brgen has six engines and not
-five, and the intentional marker is honoured by `Rule#scan_lines` as well as by
-the law engine. Related: **`tree.rb` on entry** and **Onboarding** above.
-
-**2 · Guardrail — traps out of documentation and into hooks.** Done, and before
-the wish list was written. `OPENBSD/dev/githooks/` holds all three guards, they
-are installed through `core.hooksPath` by `bin/pub4 hooks`, and
-`OPENBSD/test/test_githooks.rb` runs them through real git in a throwaway
-repository. The cluster's `bin/pre-commit-hook.sh` and `bin/trap_check` were a
-second copy of the first two thirds of that, using `wc` and `grep`, which the
-house rules ban in committed scripts.
-
-**3 · Technical debt — decompose the God Classes in Scanner and Dispatcher.**
-Scanner is done: 466 lines to 139, with `PathFilter`, `ProgressReporter` and
-`Transport` beside it in `engines/`. The record of how that went is above and it
-is the cautionary half of this layer — an extraction that carries a method out
-and puts a stub back is worse than the class it replaced. Dispatcher was already
-done: `llm_dispatcher.rb` is 410 lines over `react_loop`, `ruby_llm_sender` and
-`tool_registry`. What is actually large now is `surface_rules.rb` at 752 and
-`structural_rules.rb` at 740, and both are registries of independent rules rather
-than classes with gravity, so neither is the same problem.
-
-**4 · Face and body — normalise the deploy pipeline between Rails and
-OpenBSD.** Open, and the sharpest piece of it is already recorded: every deploy
-sheds amber and bsdports while relayd keeps answering TLS on their closed ports,
-so the outage reads as a hang. `OPENBSD/deploy_smoke_gate.rb` now checks the
-named-table-plus-forward shape `relayd.conf` actually uses rather than a backend
-block that never existed, which is a start on the same surface.
-
-**5 · Studio — asset versioning to protect irreplaceable renders.** The write
-site refuses an existing named take unless `DILLA_OVERWRITE=1`; scratch and
-stream demo.wav still overwrite. `render_seed` now honors `RENDER_SEED` when
-GEN_SEED and SEED_TEXT are unset. About 0.012 dB of run-to-run spread remains,
-so a bit-identical re-render is still not available.
-
-**6 · Future agent — optimise the repo for LLM-native navigation.** This is
-layer 1 plus the standing complaint that the gap here is discoverability rather
-than features. The concrete moves already named: the glossary, `tree.rb` on
-entry, the profile matrix published in one place, and one name for one job — the
-entry-point ratchet in `spine.yml` is what keeps the last of those honest.
+- **`.price` still wears the accent.** `shared/_minimal.scss:474` sets
+  `color: var(--accent)`, while `visual_contract_lint.rb:52` records that
+  `.price` dropped the hue on 2026-08-21. One of the two is wrong. It sits
+  outside the brgen-scoped glob, so `accent_on_prose` cannot report it.
+- **A shared display-type slot is unbuilt.** `_vertical_marketplace.scss:42`
+  outranks `_typography`'s page-title rule by matching an id, and the comment
+  above it carries the workaround under protest. A hero wants to opt out by
+  name.
+- **`.deal-cat` keeps a border nothing explains.** `_marketplace.scss:48` sets
+  `border: 1px solid var(--border)` where the 2026-08-04 decision traded control
+  borders for surface fills. Changing it moves rendering across marketplace,
+  stores and takeaway at once, so it is a decision rather than a lint fix.
+- **playlist forks two scales.** `--edge-soft` and `--edge-strong` are the donor
+  a shared edge scale wants, and `--font-mono: "SF Mono"` is a fifth typeface by
+  accident (`_vertical_playlist.scss:9,11,16`).
+- **`WORN_TYPE.profiles.map.label_min_px` has no reader.** Declared at
+  `rules.yml:3364` and read by nothing. `data_reach` counts top-level keys only,
+  so no instrument sees a nested one.
+- **brgen's layout comment describes a mechanism that is gone.**
+  `brgen/app/views/layouts/application.html.erb:22` says the surface theme is
+  "per vertical, not a constant" and sends the reader to
+  `ApplicationHelper#surface_theme` for the mapping; that method now returns
+  `DEFAULT_SURFACE_THEME`, which is `"light"` for every surface.
 
 ## From the 2026-08-31 session
 
-Raised while building the audio-driven README loop and the file-discipline
-rules. Each was found by measurement, and each is left with what it would take
-to finish rather than a bare title.
-
 - **`rules.yml` refactor.** Aggressively DRYing the law wants a measured pass.
-  It was held while the gate was down and the scanner mis-scanned; both of
-  those closed on 2026-09-01, so the block is gone and only the work remains.
-- **Three outboard units are in no rack.** `freq_shift`, `phase_rotate` and
-  `hedd_triode` are built and dispatchable in `Outboard.chain` — the `when`
-  arms exist — but no rack names them, so those arms are dead. They are also
-  the most advanced processing in the tree, which is what makes it worth
-  either wiring them into a rack or deleting the arms.
-- **Six Sonitex knobs have no reader.** Docs now say so: `ENV_AND_RENDER.md`,
-  the README, and `dilla.rb`'s ENV help. Wiring them still changes rendered
-  sound. Use `SONITEX` / `SONITEX_PRESET`.
-- **`Policy.default_volume` has no reader.** `+40%` in `data/voice.yml`,
-  hardcoded again at `lib/voice/policy.rb:20`, exposed at `:65`, consumed
-  nowhere — not by `browser_payload`, not by the worker. Left inert
-  deliberately: wiring it changes how MASTER sounds, which is an operator's
-  call. That file's own header is a long account of a voice value living in
-  more places than the one that changed; this would be the third entry.
+  The two things holding it — a down gate and a mis-scanning scanner — closed on
+  2026-09-01, so only the work remains.
+- **`dilla.rb` is 35,142 lines**, against `lib/`'s 44 files and 15,894 lines, so
+  the monolith still holds 69% of the engine. Split along the seams it already
+  has: the renderers, the ENV default tables, the SMF writers, the patch
+  registries. The direction is out of the monolith, not into it.
+- **Flatten `STUDIO/dilla/renders/` into the dilla root.** Operator's
+  instruction. It needs `.gitignore` rules to follow the files, since `renders/`
+  is ignored wholesale, and `dilla.rb`'s hardcoded `File.join(ROOT, "renders",
+  …)` defaults move with them.
 - **Merge the three techno renderers.** `render_industrial`,
   `render_hate_techno` and `render_techno` share `techno_harmony_roots` and the
-  schedule builders but hold genuinely different arrangements, and
-  `dilla.rb:815` records that giving industrial its own target was "a sound
-  decision, not a gap." Read all three before cutting; merging on surface
-  similarity flattens the arrangements into one sound.
-- **`dilla.rb` is 35,142 lines.** `GLOSSARY.md` defines gravity debt as a file
-  over 300 lines; this exceeds it by 115x and holds 71% of the engine against
-  `lib/`'s 44 files and 15,894 lines. Split along the seams it already has —
-  the renderers, the ENV default tables, the SMF writers, the patch registries.
-  The direction is out of the monolith, not into it.
-- **RAILS token discipline, from the joi.com study.** Three patterns worth
-  taking, none of them ornament: colours composed from a named opacity scale
-  rather than hardcoded alpha, line-height bound to a semantic role rather than
-  a size, and one spacing primitive with `calc` multiples instead of ten
-  hardcoded steps. Do not take the 8-step radius scale, the rounded cards or a
-  webfont — `--font-brand` is a deliberate zero-byte stack. Line-height landed:
-  both surfaces read zero off-scale. The other two are open, and belong to the
-  layout pass rather than to this entry — check there before starting either.
-- **Flatten `STUDIO/dilla/renders/` into the dilla root.** Operator's
-  instruction. It needs `.gitignore` rules to follow the files, since
-  `renders/` is currently ignored wholesale, and `dilla.rb`'s hardcoded
-  `File.join(ROOT, "renders", ...)` defaults move with them.
+  schedule builders but hold genuinely different arrangements. Read all three
+  before cutting; merging on surface similarity flattens the arrangements into
+  one sound.
 
 ## From the 2026-09-01 audit
 
+- **Twenty-seven of the fifty-one RAILS gates never call `checked!`.**
+  `flow_journey` reported PASSED over 25 journeys while its verdict line read
+  "checked nothing", because `measured_nothing?` saw `checks_ran == 0`. That one
+  is fixed and the rest were never read. Some of the twenty-seven are suites
+  that delegate, so classify before fixing; `live/first_screen.rb`,
+  `live/user_flow.rb` and `source/css_constitution.rb` are among them.
 - **Live RAILS gates still measure too little.** `user_flow`, `first_screen`,
   `payment_honesty`, `content_honesty` and several rendered gates skip when the
   app ports are closed. Run the suite once with `GATE_REQUIRE_LIVE=1`,
   `GATE_STRICT_INCONCLUSIVE=1` and `GATE_STRICT_ERRORS=1` on a host where brgen,
-  amber and bsdports are listening, then record any findings that only appear live.
-- **Nine domains are expired.** Renew `brmingham.uk`, `cardff.uk`, `denvr.us`,
-  `dnver.us`, `edinbrgh.uk`, `glasgw.uk`, `lverpool.uk`, `mnchester.uk` and
-  `wshingtondc.com`, then refresh the expiry snapshot with
-  `OPENBSD/bin/domain_watch.rb --update`.
-- **The yep search pen still owns a magic hex.** `#ccc` is currently banked at
-  139 because it is the pen's own divider. If/when the pen is re-tokenised, use
-  an existing border token or a named pen token and ratchet `magic_hex` down
-  with `GATE_CSS_RATCHET=1`.
-
-### From the 2026-09-01 session sweep
-
-Fifty-seven session transcripts read back against the tree, asking of each
-whether its work is present here. Almost all of it is: the 2026-08-31 tree loss
-was made good by the `pub4-rescue` snapshot, and a file-level diff of that
-snapshot against this checkout leaves nothing of substance behind. These are
-what the sweep found still open, each verified against the tree rather than
-taken from the transcript that raised it.
-
-- **The three journey-gate follow-ons are done and the journeys have run.**
-  `brgen` and `bsdports` carry `test/integration/authorization_matrix_test.rb`
-  beside amber's, mutation-checked. `requires_data` is `inconclusive!` rather
-  than `warn`. And `flows.yml` has three signed-in writing journeys where it
-  had none — 55 steps, all GET, no flow declaring an actor. Driven live on
-  2026-09-02 against a booted triangle with an account seeded per app:
-  **`flow_journey PASSED`, 25 checks ran, 1 skipped**, and a deliberately wrong
-  password fails it with `landed back on /session/new — refused, not signed in`.
-- **`flow_journey` could never have reported PASSED.** Found by running it: the
-  gate never called `GateResult#checked!`, so `measured_nothing?` saw
-  `checks_ran == 0` and one skipped precondition spoke for the whole run — 25
-  journeys green under a verdict line reading "checked nothing". Fixed, and it
-  is the same defect `checked!` was written for in `human_walkthrough`, which
-  suggests looking at the other gates that never call it.
-- **A skipped writing journey does not block, and the earlier note here said it
-  did.** `GATE_STRICT_INCONCLUSIVE` promotes only `measured_nothing?`, so a run
-  that exercises 25 journeys and skips one passes in strict mode too —
-  `gate_result.rb` explains that this is deliberate, because promoting at
-  record time once made a gate that ran fifty checks and skipped one hard-fail
-  on the deploy host. What unchecked buys is that the journey is named in
-  "Not checked" every run and never counted among the passes; noticing it is
-  still a person's job. If that is not enough, the missing piece is a
-  per-journey severity, not a stricter reading of the existing flag.
-- **`bin/sine_stream.rb:975` is the last un-oversampled `asoftclip`.** Every
-  other saturation site in dilla runs `oversample=4` or `8`; this one runs the
-  ffmpeg default and aliases above Nyquist. It is left alone deliberately —
-  changing it changes how the stream sounds, which is the operator's ear and not
-  a gate's. Worth an A/B before it moves.
+  amber and bsdports are listening, then record any findings that only appear
+  live.
 - **brgen's `Gemfile.lock` was written by a different bundler major than the
-  box resolves with.** vm23 runs ruby 3.4.9 with bundler **4.0.17**; amber and
-  bsdports record `BUNDLED WITH 4.0.7`, brgen records `2.7.2`. brgen also
-  writes its `RUBY VERSION` as `3.4.9p82` where the others write `3.4.9`,
-  which is the older bundler's format — so the whole lockfile, not just the
-  footer, came from 2.x. Not fixed here on purpose: the body was resolved by
-  the bundler that wrote it, `vps-deploy` installs from it on a 1 GB box, and
+  box resolves with.** vm23 runs ruby 3.4.9 with bundler 4.0.17; amber and
+  bsdports record `BUNDLED WITH 4.0.7`, brgen records `2.7.2` and writes its
+  `RUBY VERSION` as `3.4.9p82`, which is the older bundler's format — so the
+  whole lockfile, not just the footer, came from 2.x. Re-resolving is a
+  deploy-day change with a rollback plan: the body was resolved by the bundler
+  that wrote it, `vps-deploy` installs from it on a 1 GB box, and
   `vps_gemfile_lock_drift` already records that a Mac-written lock against
-  BSD-only gems is how this breaks. Re-resolving is a deploy-day change with
-  a rollback plan, not a footer edit.
+  BSD-only gems is how this breaks.
+- **`bin/sine_stream.rb:975` is the last un-oversampled `asoftclip`.** Every
+  other saturation site runs `oversample=4` or `8`, and dilla's README says the
+  rule reaches every real `asoftclip=type=` filter string; this one runs the
+  ffmpeg default and aliases above Nyquist. Left alone deliberately — it changes
+  how the stream sounds, which is the operator's ear. Worth an A/B before it
+  moves.
 - **The 61-track crate fetch was abandoned at 2.** `~/dilla-crate-incoming`
   holds two FLACs and three fetch scripts from the 2026-08-31 rebuild, which
-  finished by another route — `samples/chopped/` has 162 entries. Either resume
-  that fetch deliberately or delete the staging directory; a half-finished
-  download beside a finished crate reads as the crate.
-
----
-
----
-
-## Session record — 2026-09-02, Big Pickle
-
-The dead-route cleanup on RAILS (`e33df9923`) and the three OPENBSD fixes
-(`118f38835`) were signed by me. The five OPENBSD findings were verified against
-the file source and the live box before any of them was touched, and that
-verification changed the plan twice, which is the record to keep:
-
-**Verified, then fixed.** `setup_litestream` installed a `etc/rc.d/litestream`
-template that e511ccba1 had retired and neither the tree nor vm23 carries;
-`install_template` exits 1 on a missing source, so every `--stage-2` and
-`--first-install` aborted there. The fix keeps the config install for the day a
-replica exists and drops the rc.d install, matching the comment that was already
-there. `--first-install` reached `stage_1` (the DNS-material wipe) without the
-`I_UNDERSTAND_DNS_WIPE=1` guard `--stage-1` requires; the guard now gates both
-entry points. `brgen_jobs` has been in `pkg_scripts` since e511ccba1 and
-confirmed live; the rc.d footer and `operator.yml` still said no `_jobs` service
-was enabled, and both now say brgen_jobs is and the others are not.
-
-**Verified, then left alone.** The `chmod 555 /etc/rc.d/master` in OPERATOR.sh
-is immediately overwritten by the `chmod 755` loop over every `/etc/rc.d/*`, yet
-the box runs every app rc.d at 555. Both lines came from the same original
-split, so the intended mode is ambiguous, and neither reading is contradicted by
-a comment or a RUNBOOK line — changing the mode of a live service file on my own
-judgement is exactly the render-default trap in different clothing. Left for the
-operator, reported, not touched. The duplicate `ruby "$REPO_ROOT/RAILS/...` and
-`$m3dir/../RAILS/...` fallback in the last-clock check resolves to the same path
-under `/home/dev/pub4`; redundant but harmless, same call as the chmod.
-
-**Re-confirmed, already owned.** `dns_zones` still fails on bsdports.org
-(resolves to `185.134.245.114, 2a01:5b40:0:bc04::1`, not `46.23.89.226`). That
-is `bsdports_org_delegated_to_parking` above, open since 2026-08-25 with a "do
-it before Nov 10" deadline; no second entry was opened because the first one
-still owns it.
+  finished by another route into `samples/chopped/`. Either resume that fetch
+  deliberately or delete the staging directory; a half-finished download beside
+  a finished crate reads as the crate.
+- **`chmod 555 /etc/rc.d/master` cannot survive its own installer.**
+  `OPERATOR.sh:196` sets it and the loop at `:198` chmods every `/etc/rc.d/*` to
+  755, yet the box runs every app rc.d at 555. Both lines came from the same
+  original split and neither reading is contradicted by a comment or a RUNBOOK
+  line, so the intended mode is the operator's call. Found 2026-09-02.
 
 ---
 
