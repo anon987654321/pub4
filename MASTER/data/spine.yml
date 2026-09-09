@@ -253,7 +253,19 @@ pub4_source_ceilings:
   # so escalating twice asked for the same model twice. The file holds both,
   # because both are the same finding -- a census entry that is a bug, not
   # sprawl -- and neither existing test file covers routing behaviour.
-  MASTER: 1039
+  # 1039 -> 1040 for test/test_injection_guard_wiring.rb. The guard was built
+  # at builder/ai_boot.rb:37, stashed in the boot bundle as `guard:` and read
+  # by nothing, so a fetched page could carry "ignore previous instructions"
+  # into a model unexamined -- while web_fetch.rb published
+  # tool:untrusted_output about that same text to no subscriber. It is
+  # consulted there now, redacting rather than refusing.
+  #
+  # Its own file because the claim under test is a security boundary and the
+  # mode distinction is the load-bearing half: permissive errs only on a
+  # pattern that matched, strict denies anything without an allowlist token
+  # and would refuse every honest page on the web. A test that does not hold
+  # those apart would pass against the wiring that breaks the tool.
+  MASTER: 1040
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
   # it belongs beside the other probes and folds into nothing.

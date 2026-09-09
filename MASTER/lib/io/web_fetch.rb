@@ -84,7 +84,35 @@ module Master
         stripped = strip_html(body)[0, MAX_BYTES]
         @bus&.publish("tool:after", tool: NAME, url:)
         @bus&.publish("tool:untrusted_output", tool: NAME, source: url)
-        Result.ok(stripped)
+        Result.ok(guarded(stripped, url))
+      end
+
+      # Review::Security::InjectionGuard, finally consulted.
+      #
+      # It was built at builder/ai_boot.rb:37, stashed in the boot bundle as
+      # `guard:`, and read by nothing — so a fetched page could carry "ignore
+      # previous instructions" straight into a model. The line above has been
+      # publishing tool:untrusted_output about this exact text the whole time,
+      # to nobody. This is the one place in the tree where content from outside
+      # it becomes prompt.
+      #
+      # Redact, do not refuse. A page carrying an injection string is very often
+      # a page *about* injection, and refusing the fetch would break the tool for
+      # the research it exists to do. `clean!` replaces the matched spans and the
+      # rest of the page still arrives.
+      #
+      # Permissive mode on purpose: it errs only on a pattern that matched. The
+      # strict mode denies anything without an allowlist token, which would
+      # refuse every honest page on the web.
+      def guarded(text, url)
+        return text if injection_guard.safe?(text)
+
+        @bus&.publish("security:injection_redacted", tool: NAME, source: url)
+        injection_guard.clean!(text).value!
+      end
+
+      def injection_guard
+        @injection_guard ||= Master::Review::Security::InjectionGuard.new(mode: :permissive)
       end
 
       def http_get(uri)

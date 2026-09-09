@@ -99,14 +99,6 @@ module Master
           names.flatten.map(&:to_sym).to_h { |name| [name, GATES.fetch(name, {})] }
         end
 
-        def self.confirm?(action)
-          CONFIRM.include?(action.to_sym)
-        end
-
-        def self.autofix?(action)
-          AUTO_FIX.include?(action.to_sym)
-        end
-
         def self.brief(workflow: :refactor)
           phases = workflow(workflow).map(&:name).join(" -> ")
           "Workflow policy: #{workflow} phases #{phases}; gates #{GATES.keys.join(', ')}; hard limits #{LIMITS}."

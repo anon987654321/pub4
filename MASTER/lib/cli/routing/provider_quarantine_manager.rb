@@ -31,11 +31,6 @@ module Master
           @bus = event_bus
         end
 
-        def route?(model)
-          return false if quarantined?(model)
-          @health.score(model) > QUARANTINE_THRESHOLD
-        end
-
         def quarantined?(model)
           entry = active_quarantine(model.to_s)
           return false unless entry
