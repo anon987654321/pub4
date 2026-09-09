@@ -20,4 +20,12 @@ you go looking for them there. `ChatController` and the CLI both call `enhance`
 as a class method before the pipeline runs at all, and `memory` holds the
 patterns for durable user and project memories and for voice episodes.
 
+Three files frame a turn rather than run it. `intent_router.rb` scores a message
+into an intent and a risk tier, which is what `TurnRouter` and `FoldRisk` read
+before either chooses a path. `attention_context.rb` is the breadcrumb of where
+attention sits — a map, a zoom and an act, with the whole vocabulary read from
+`data/attention_context.yml` rather than restated in Ruby. `subagent_context.rb`
+is the fiber-local tool boundary a typed child agent runs inside, and it is what
+turns a tool a subagent may not touch into a refusal instead of a call.
+
 Enter through `MASTER/bin/master`, `MASTER/bin/cli`, or `bin/dogfood`.

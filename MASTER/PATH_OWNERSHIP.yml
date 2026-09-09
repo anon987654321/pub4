@@ -76,7 +76,10 @@ ownership:
     risk: high
     check: rake test:core
   lib/boot/:
-    purpose: paths, data, runtime setup consumed before Zeitwerk is live
+    purpose: paths, data, runtime setup consumed before Zeitwerk is live — each
+      file declares a plain module, three of them mixed onto Master and MasterPaths
+      read before Master::ROOT exists, all hand-required in load order and
+      Zeitwerk-ignored, so this is not a namespace anything can live under
     risk: high
     check: bin/check --profile=agent
   lib/builder/:
