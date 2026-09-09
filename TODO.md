@@ -3418,10 +3418,15 @@ this line is the only thing standing between them and a well-meaning fix.
   the monolith still holds 69% of the engine. Split along the seams it already
   has: the renderers, the ENV default tables, the SMF writers, the patch
   registries. The direction is out of the monolith, not into it.
-- **Flatten `STUDIO/dilla/renders/` into the dilla root.** Operator's
-  instruction. It needs `.gitignore` rules to follow the files, since `renders/`
-  is ignored wholesale, and `dilla.rb`'s hardcoded `File.join(ROOT, "renders",
-  …)` defaults move with them.
+- **Do not flatten `STUDIO/dilla/renders/` into the dilla root.** Counted before
+  doing it: `slum` emits fourteen files, `loose_pocket beats` twenty-eight, plus
+  `foundry_pulse.mp3`, `hate_session.mp3`, `ALBUM.mp3` and `beat.wav` — about
+  forty-six named files, before the contents of `renders/{wav,demo,mastered,
+  beats,rescued}/`. The root holds `demo.wav`, `demo.mp3` and `loop.wav`, and
+  CLAUDE.md says build output never sits there, recording the session whose
+  renders lived at the root for weeks. Two instructions pointed opposite ways
+  and the count settles it: `demo.wav` in the root is the demo's own path and is
+  already how `demo_all` defaults; every batch renderer keeps `renders/`.
 - **Merge the three techno renderers.** `render_industrial`,
   `render_hate_techno` and `render_techno` share `techno_harmony_roots` and the
   schedule builders but hold genuinely different arrangements. Read all three
