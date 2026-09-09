@@ -28,7 +28,7 @@ module Master
 
     def init_ground(root:)
       Trace::Telemetry.bootstrap!(root:)
-      Ground::GitHooks.ensure_pre_commit!(root:)
+      Io::GitHooks.ensure_pre_commit!(root:)
     end
 
     def init_loop(root:, container:)

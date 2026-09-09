@@ -3,7 +3,7 @@
 require "fileutils"
 
 module Master
-  module Ground
+  module Io
     module GitHooks
       HOOK_BODY = "#!/bin/sh\nroot=\"$(git rev-parse --show-toplevel 2>/dev/null)\"\n" \
                   "exec \"${root}/MASTER/bin/audit\" --profile critical\n".freeze

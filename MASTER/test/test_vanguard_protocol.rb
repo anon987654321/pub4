@@ -31,7 +31,7 @@ class TestVanguardProtocol < Minitest::Test
   end
 
   def test_git_hooks_skip_without_git_dir
-    result = Ground::GitHooks.ensure_pre_commit!(root: Dir.mktmpdir)
+    result = Io::GitHooks.ensure_pre_commit!(root: Dir.mktmpdir)
     assert result.ok?
     assert_equal :no_git, result.value![:skipped]
   end

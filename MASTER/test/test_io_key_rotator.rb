@@ -6,7 +6,7 @@ require_relative "test_helper"
 # every free-tier call uses, and its "single key makes every method a no-op"
 # contract is the kind of thing that quietly becomes false.
 class KeyRotatorTest < Minitest::Test
-  Rotator = Master::Ground::KeyRotator
+  Rotator = Master::Io::KeyRotator
 
   def setup
     @index = Rotator.instance_variable_get(:@index)

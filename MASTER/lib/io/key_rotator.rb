@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  module Ground
+  module Io
     # Rotate across multiple OpenRouter keys to spread free-tier rate limits.
     # Pins one key between rotations and advances only on rate-limit/quota outcomes
     # (the OpenClaw pattern). A single configured key makes every method a no-op.

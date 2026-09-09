@@ -91,7 +91,7 @@ def check_web_token
 end
 
 def check_key_rotator
-  count = Master::Ground::KeyRotator.keys.size
+  count = Master::Io::KeyRotator.keys.size
   Check.new(name: "key-rotator", ok: count.positive?, detail: "#{count} OpenRouter key(s)")
 rescue NameError
   keys = %w[OPENROUTER_API_KEY OPENROUTER_API_KEY_2 OPENROUTER_API_KEY_3]

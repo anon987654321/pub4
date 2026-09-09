@@ -412,7 +412,7 @@ module Master
         end
         @model_router&.record_provider_outcome(model:, status:, latency_ms:, error:)
         @bus&.publish("llm:provider_outcome", model:, status:, latency_ms:, error:)
-        Ground::KeyRotator.rotate_for(model) if %i[rate_limit quota_exceeded].include?(status)
+        Io::KeyRotator.rotate_for(model) if %i[rate_limit quota_exceeded].include?(status)
       rescue StandardError => e
         @bus&.publish("provider_health:record_error", model:, error: e.message)
       end

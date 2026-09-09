@@ -435,7 +435,7 @@ registry_by_rule:
   NO_GOD_CLASS: 32
   SILENT_RESCUE: 26
 registry_finding_members:
-  - NO_GOD_CLASS MASTER/lib/ground/attention_context.rb:16
+  - NO_GOD_CLASS MASTER/lib/cli/attention_context.rb:16
   - NO_GOD_CLASS MASTER/lib/ground/runtime_catalog.rb:9
   - NO_GOD_CLASS MASTER/web/app/controllers/chat_controller.rb:7
   - NO_GOD_CLASS MASTER/web/app/services/chat_service.rb:7

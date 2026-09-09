@@ -21,7 +21,7 @@ module Master
       require "ruby_llm"
       require_relative "../io/ruby_llm_patch"
       RubyLLM.configure { |config| apply_api_keys(config) }
-      Ground::KeyRotator.configure_current!
+      Io::KeyRotator.configure_current!
       [Io::ModelQuota, Trace::CacheEfficiency].each(&:name)
       Trace::CacheEfficiency.load!
     end
