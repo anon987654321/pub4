@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "../ground/intent_router"
+require_relative "intent_router"
 require_relative "../ground/host_budget"
 
 module Master
@@ -13,7 +13,7 @@ module Master
       module_function
 
       def assess(goal, root: Dir.pwd)
-        route = Ground::IntentRouter.new.route(goal)
+        route = CLI::IntentRouter.new.route(goal)
         risk = route[:risk]
         risk = :high if goal.to_s.match?(HIGH_PATTERNS)
         risk = :medium if risk == :low && goal.to_s.match?(MEDIUM_PATTERNS)

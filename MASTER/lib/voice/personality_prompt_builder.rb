@@ -84,7 +84,7 @@ module Master
       # Read from the protocol rather than restated here, so the vocabulary has
       # one source and adding a zoom or an act to the yaml changes the prompt.
       def add_attention(sections)
-        protocol = Master::Ground::AttentionContext
+        protocol = Master::CLI::AttentionContext
         philosophy = protocol.protocol.dig("protocol", "philosophy").to_s.strip
         return if philosophy.empty?
 

@@ -100,7 +100,7 @@ module Master
       end
 
       def full_workflow_intent?(text)
-        route = Ground::IntentRouter.new.route(text)
+        route = CLI::IntentRouter.new.route(text)
         route[:intent] == :run_full_workflow ||
           text.match?(/\b(?:through\s+(?:master|itself|rails)|singularity|self[-\s]?apply|run\s+(?:master|rails)\s+through)\b/i)
       end
@@ -139,7 +139,7 @@ module Master
       def casual?(text)
         return false if text.match?(FoldRisk::HIGH_PATTERNS) || text.match?(FoldRisk::MEDIUM_PATTERNS)
 
-        Ground::IntentRouter.new.classify(text) == :unknown
+        CLI::IntentRouter.new.classify(text) == :unknown
       end
 
       def casual_reply(text, container:, felt_sense: nil, on_chunk: nil, image: nil)

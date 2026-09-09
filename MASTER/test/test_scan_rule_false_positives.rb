@@ -549,7 +549,7 @@ end
 
   # --- DEBUG_OUTPUT -------------------------------------------------------
   # `p` is a legal variable name. The rule read `p << "…"` as a Kernel#p call
-  # and flagged lib/ground/attention_context.rb twice — error severity, and
+  # and flagged lib/cli/attention_context.rb twice — error severity, and
   # auto_fix=true, pointed at correct code.
 
   def test_debug_output_ignores_a_local_named_p

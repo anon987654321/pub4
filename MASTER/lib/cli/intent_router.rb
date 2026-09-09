@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  module Ground
+  module CLI
     class IntentRouter
       INTENTS = {
         codify_policy: %w[codify policy make it ruby turn into],

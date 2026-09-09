@@ -28,7 +28,7 @@ module Master
         # Required output sections for high/critical risk responses.
         EVIDENCE_CONTRACT = %i[observed_facts inferred_plan uncertainty rollback_path verification_path].freeze
 
-        def initialize(router: IntentRouter.new, registry: nil)
+        def initialize(router: Master::CLI::IntentRouter.new, registry: nil)
           @router = router
           @registry = registry
         end

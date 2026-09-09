@@ -4,12 +4,12 @@ require_relative "test_helper"
 
 class WorkflowInferenceTest < Minitest::Test
   def test_intent_router_classifies_through_master
-    router = Master::Ground::IntentRouter.new
+    router = Master::CLI::IntentRouter.new
     assert_equal :run_full_workflow, router.classify("run this through master")
   end
 
   def test_intent_router_classifies_a_file_read
-    router = Master::Ground::IntentRouter.new
+    router = Master::CLI::IntentRouter.new
     assert_equal :inspect_repo, router.classify("read CLAUDE.md")
     refute_equal :inspect_repo, router.classify("I read that the constitution is long")
     refute_equal :unknown, router.classify("read CLAUDE.md")

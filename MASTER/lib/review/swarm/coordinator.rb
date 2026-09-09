@@ -340,7 +340,7 @@ module Master
 
         def run_with_subagent_policy(role)
           ctx = Ground::Policy::Subagent.context_for_swarm_role(role, @parent_tools)
-          Ground::SubagentContext.run(type: ctx[:type], allowed: ctx[:allowed]) { yield }
+          CLI::SubagentContext.run(type: ctx[:type], allowed: ctx[:allowed]) { yield }
         end
       end
     end

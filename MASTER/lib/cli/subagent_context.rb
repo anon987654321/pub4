@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  module Ground
+  module CLI
     # Fiber-local tool boundary for typed child agents (opencrabs pattern #5).
     module SubagentContext
       module_function

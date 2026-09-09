@@ -128,7 +128,7 @@ end
   end
 
   def test_intent_router_standing_through
-    r = Master::Ground::IntentRouter.new
+    r = Master::CLI::IntentRouter.new
     assert_equal :run_full_workflow, r.classify("through master")
     assert_equal :run_rails_through, r.classify("through rails")
   end
@@ -140,13 +140,13 @@ end
   # and "run" belongs to no keyword list because adding it would swallow
   # "run master through".
   def test_intent_router_reads_a_diagnosis_question
-    r = Master::Ground::IntentRouter.new
+    r = Master::CLI::IntentRouter.new
     assert_equal :diagnose_behaviour, r.classify("Why isn't the homepage realtime?")
     assert_equal :diagnose_behaviour, r.classify("what's breaking in the deploy")
   end
 
   def test_intent_router_reads_a_test_run
-    r = Master::Ground::IntentRouter.new
+    r = Master::CLI::IntentRouter.new
     assert_equal :run_relevant_tests, r.classify("Run the relevant tests.")
     assert_equal :run_relevant_tests, r.classify("rerun the failing specs")
   end
@@ -154,7 +154,7 @@ end
   # The doors are narrow on purpose: plain conversation must still reach the
   # chat path, and "run master through" must still reach the workflow.
   def test_intent_router_still_spares_conversation
-    r = Master::Ground::IntentRouter.new
+    r = Master::CLI::IntentRouter.new
     assert_equal :unknown, r.classify("hi")
     assert_equal :unknown, r.classify("what is the weather")
     assert_equal :run_full_workflow, r.classify("run master through")

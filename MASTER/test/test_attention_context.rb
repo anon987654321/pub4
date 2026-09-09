@@ -8,7 +8,7 @@ require_relative "test_helper"
 # These tests pin the file as the single source, so the next edit to either one
 # cannot silently disagree with the other.
 class TestAttentionContext < Minitest::Test
-  AC = Master::Ground::AttentionContext
+  AC = Master::CLI::AttentionContext
 
   def test_vocabulary_comes_from_the_protocol_file
     protocol = YAML.safe_load_file(AC::DATA, aliases: true)

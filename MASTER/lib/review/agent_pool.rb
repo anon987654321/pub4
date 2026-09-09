@@ -55,7 +55,7 @@ module Master
       def spawn_worker_thread(parsed, allowed, tag, &block)
         Thread.new do
           Thread.current.report_on_exception = false
-          Ground::SubagentContext.run(type: parsed, allowed:) do
+          CLI::SubagentContext.run(type: parsed, allowed:) do
             @bus&.publish("agent:start", type: parsed, tag:, tools: allowed)
             block.call
           rescue StandardError => err

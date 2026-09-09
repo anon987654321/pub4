@@ -3,7 +3,7 @@
 require "yaml"
 
 module Master
-  module Ground
+  module CLI
     # A spatial breadcrumb — where attention is, at what zoom, doing what.
     #
     # The vocabulary and the rendering come from data/attention_context.yml

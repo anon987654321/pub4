@@ -40,11 +40,11 @@ class TestOpenCrabsFeatures < Minitest::Test
   end
 
   def test_subagent_context_restricts_tools
-    Master::Ground::SubagentContext.run(type: :explore, allowed: %w[ReadFile]) do
-      assert Master::Ground::SubagentContext.permits?("ReadFile")
-      refute Master::Ground::SubagentContext.permits?("WriteFile")
+    Master::CLI::SubagentContext.run(type: :explore, allowed: %w[ReadFile]) do
+      assert Master::CLI::SubagentContext.permits?("ReadFile")
+      refute Master::CLI::SubagentContext.permits?("WriteFile")
     end
-    assert Master::Ground::SubagentContext.permits?("WriteFile")
+    assert Master::CLI::SubagentContext.permits?("WriteFile")
   end
 
   def test_phantom_repetition_detector

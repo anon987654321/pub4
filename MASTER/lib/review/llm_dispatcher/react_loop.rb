@@ -76,8 +76,8 @@ module Master
           tool = @tools.find { |t| t.class.name.split("::").last == name }
           return "<tool_result name=\"#{name}\">error: tool not found</tool_result>" unless tool
           runtime = tool.class.const_defined?(:NAME) ? tool.class::NAME : name
-          unless Ground::SubagentContext.permits?(name) && Ground::SubagentContext.permits?(runtime)
-            return "<tool_result name=\"#{name}\">error: tool denied for subagent #{Ground::SubagentContext.active_type}</tool_result>"
+          unless CLI::SubagentContext.permits?(name) && CLI::SubagentContext.permits?(runtime)
+            return "<tool_result name=\"#{name}\">error: tool denied for subagent #{CLI::SubagentContext.active_type}</tool_result>"
           end
           unless Ground::Tool::Profile.allow?(name) && Ground::Tool::Profile.allow?(runtime)
             return "<tool_result name=\"#{name}\">error: tool denied</tool_result>"
