@@ -2,13 +2,13 @@
 
 require_relative "test_helper"
 
-# lib/ground/antigravity/ was ten files and 962 lines with no test, and nine of
+# lib/io/antigravity/ was ten files and 962 lines with no test, and nine of
 # its subsystems had no caller. What survives is the one path Cli::Skills takes:
 # Discovery finds the workspace roots, JsonConfig resolves what skills.json
 # declares, Skills reads a SKILL.md out of each. The three are pinned here so
 # the collapse cannot quietly take the reached half with it.
 class TestAntigravitySkills < Minitest::Test
-  A = Master::Ground::Antigravity
+  A = Master::Io::Antigravity
 
   def with_workspace
     Dir.mktmpdir do |root|

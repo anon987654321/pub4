@@ -62,9 +62,9 @@ module Master
                   else
                     (paid_or_subscription + [pref] + all + continuity_models + [@config.model]).uniq
                   end
-          chain = Ground::ModelSkipCache.filter(chain)
+          chain = Io::ModelSkipCache.filter(chain)
           ranked = @provider_health ? @provider_health.rank(chain) : chain
-          Ground::ModelSkipCache.filter(ranked)
+          Io::ModelSkipCache.filter(ranked)
         end
 
         def constrained_for(operation:)
@@ -115,7 +115,7 @@ module Master
         end
 
         def unhealthy?(model_id)
-          return true if Ground::ModelQuota.over_quota?(model_id)
+          return true if Io::ModelQuota.over_quota?(model_id)
           @provider_health&.unhealthy?(model_id)
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "ModelRouter.unhealthy?")

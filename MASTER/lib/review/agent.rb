@@ -134,20 +134,20 @@ end
         # becomes the tier's: recorded on the gate, which is what the council
         # and the semantic rules ask before spending the next call.
         unless fallback && fallback != chosen
-          Ground::QuotaGate.trip_if_limited(source: "agent single-shot", message: result.message, model: chosen)
+          Io::QuotaGate.trip_if_limited(source: "agent single-shot", message: result.message, model: chosen)
           return result
         end
 
         @bus&.publish("llm:ask_once_failover", from: chosen, to: fallback, category: result.category)
         hopped = @dispatcher.send_with_cache(fallback, messages, system:, stream: false, image:, temperature:)
         if hopped.is_a?(Master::Result::Err)
-          Ground::QuotaGate.trip_if_limited(source: "agent single-shot", message: hopped.message, model: fallback)
+          Io::QuotaGate.trip_if_limited(source: "agent single-shot", message: hopped.message, model: fallback)
         else
           # The lane that answered is not the lane that was routed to. Recorded
           # rather than quietly accepted: a council whose personas ran on a
           # substitute model is worth far more than one that did not run, and
           # worth nothing at all if the verdict does not say so.
-          Ground::QuotaGate.substituted(from: chosen, to: fallback)
+          Io::QuotaGate.substituted(from: chosen, to: fallback)
         end
         hopped
       end
@@ -161,14 +161,14 @@ end
       DIVERT_CATEGORIES = %i[budget quota_exceeded auth_error no_api_key].freeze
 
       def live_model(selected)
-        return selected unless DIVERT_CATEGORIES.include?(Ground::ModelSkipCache.skip_category(selected))
+        return selected unless DIVERT_CATEGORIES.include?(Io::ModelSkipCache.skip_category(selected))
 
         fallback = single_call_fallback_model
         return selected unless fallback && fallback != selected
 
         @bus&.publish("llm:skip_cache_hop", from: selected, to: fallback,
-                                            reason: Ground::ModelSkipCache.skip_reason(selected))
-        Ground::QuotaGate.substituted(from: selected, to: fallback)
+                                            reason: Io::ModelSkipCache.skip_reason(selected))
+        Io::QuotaGate.substituted(from: selected, to: fallback)
         fallback
       end
 

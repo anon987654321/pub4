@@ -100,7 +100,7 @@ rescue NameError
 end
 
 def check_model_quota
-  snap = Master::Ground::ModelQuota.snapshot
+  snap = Master::Io::ModelQuota.snapshot
   exhausted = snap[:exhausted]
   detail = exhausted.empty? ? "ok (#{snap[:models].size} tracked)" : "exhausted: #{exhausted.join(', ')}"
   Check.new(name: "model-quota", ok: exhausted.empty?, detail: detail)

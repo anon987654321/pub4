@@ -3,7 +3,7 @@
 require "time"
 
 module Master
-  module Ground
+  module Io
     # OpenClaw OPENCLAW_FALLBACK_SKIP_TTL_MS parity — skip models that recently failed
     # auth/rate/quota so failover chains do not hammer the same dead endpoint.
     module ModelSkipCache

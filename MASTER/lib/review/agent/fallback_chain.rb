@@ -56,9 +56,9 @@ module Master
 
         def skip_fallback_attempt?(selected_model, timed_out_models:, stage_warnings:)
           return true if timed_out_models.include?(selected_model)
-          return false unless Ground::ModelSkipCache.skipped?(selected_model)
+          return false unless Io::ModelSkipCache.skipped?(selected_model)
 
-          reason = Ground::ModelSkipCache.skip_reason(selected_model)
+          reason = Io::ModelSkipCache.skip_reason(selected_model)
           stage_warnings << "skipped #{selected_model} (recent failure: #{reason})"
           true
         end
@@ -128,8 +128,8 @@ module Master
 
         def record_failover_skip(model, response)
           cat = response.respond_to?(:category) ? response.category : :provider_error
-          Ground::ModelSkipCache.skip!(model, reason: response.message, category: cat)
-          @bus&.publish("llm:failover_skip", model:, category: cat, ttl_ms: Ground::ModelSkipCache.skip_ttl_ms)
+          Io::ModelSkipCache.skip!(model, reason: response.message, category: cat)
+          @bus&.publish("llm:failover_skip", model:, category: cat, ttl_ms: Io::ModelSkipCache.skip_ttl_ms)
         end
 
         def mode_chain_for(candidates)

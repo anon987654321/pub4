@@ -9,7 +9,7 @@ module Master
         # in-place retry cannot succeed, and distinct from permanent because
         # the condition lifts on its own — a window rolls, a balance refills.
         # The strategy is to pause the paid lane and re-probe on backoff, which
-        # Ground::QuotaGate owns; max_retries stays 0 so nothing retries in
+        # Io::QuotaGate owns; max_retries stays 0 so nothing retries in
         # place while it waits.
         "exhausted" => { "strategy" => "pause_and_reprobe", "max_retries" => 0 },
         "transient" => { "strategy" => "exponential_backoff", "max_retries" => 3 },
@@ -57,7 +57,7 @@ module Master
         [2**attempt, 60].min
       end
 
-      # One classifier for the whole process. Ground::QuotaGate asks the same
+      # One classifier for the whole process. Io::QuotaGate asks the same
       # yes/no question once per failed provider call — hundreds of times in a
       # council run — against the same rules.yml, so it reuses this taxonomy
       # rather than carrying a second copy of the patterns.

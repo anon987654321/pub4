@@ -67,13 +67,13 @@ module Master
       private
 
       def load_antigravity_skills
-        require_relative "../ground/antigravity"
-        discovery = Master::Ground::Antigravity::Discovery.new(cwd: @root, workspace_root: @root)
+        require_relative "../io/antigravity"
+        discovery = Master::Io::Antigravity::Discovery.new(cwd: @root, workspace_root: @root)
         roots = discovery.workspace_customization_roots
         declared = discovery.declared_skills_entries
         return if roots.empty? && declared.empty? && @root != Master::ROOT
 
-        Master::Ground::Antigravity::Skills.new(discovery:).discover!.each do |skill|
+        Master::Io::Antigravity::Skills.new(discovery:).discover!.each do |skill|
           next if find(skill[:name])
 
           @loaded << {

@@ -186,7 +186,7 @@ end
     result = Master::CLI::Pipeline::Through::Result.new(
       target: ".", mode: "balanced", sections: [], ok: true, unit: "through0", failed_stages: []
     )
-    Master::Ground::QuotaGate.stub(:report, "SKIPPED semantic rules — exhausted") do
+    Master::Io::QuotaGate.stub(:report, "SKIPPED semantic rules — exhausted") do
       text = result.footer
 
       assert_includes text, "through0: complete"

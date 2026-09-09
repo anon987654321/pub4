@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  module Ground
+  module Io
     # Webhook + cron ingress definitions (OpenCrabs cron DSL / OpenClaw hooks parity).
     module IngressJobs
       PATTERNS_PATH = File.join(Master::ROOT, "data", "patterns.yml").freeze
@@ -35,7 +35,7 @@ module Master
             (row["kind"].nil? || row["kind"].to_s == kind)
         end
       rescue StandardError => e
-        Swallow.log(e, context: "ingress_jobs.load", path: PATTERNS_PATH)
+        Master::Ground::Swallow.log(e, context: "ingress_jobs.load", path: PATTERNS_PATH)
         []
       end
     end

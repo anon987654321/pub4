@@ -7,7 +7,7 @@ require_relative "test_helper"
 require "review/scan/rules/semantic_rules"
 
 class TestQuotaGate < Minitest::Test
-  Gate = Master::Ground::QuotaGate
+  Gate = Master::Io::QuotaGate
   CREDITS = "Insufficient credits. Add more using https://openrouter.ai"
 
   def setup = Gate.reset!

@@ -31,7 +31,7 @@ module Master
           end
 
           def runtime_choice(task: :exploration)
-            Master::Ground::RuntimeRegistry.new.choose(task:)
+            Master::Io::RuntimeRegistry.new.choose(task:)
           rescue StandardError
             { provider: :local, model: preferred, score: 0.5, quarantined: [] }
           end

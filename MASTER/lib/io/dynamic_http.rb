@@ -19,7 +19,7 @@ module Master
       end
 
       def call(name:, params: {})
-        defn = Ground::DynamicTools.lookup(name)
+        defn = Io::DynamicTools.lookup(name)
         return Result.err("dynamic_http: unknown tool #{name}", category: :validation) unless defn
 
         perm = @governor.permit?(NAME, TIER, "#{name} #{params}")

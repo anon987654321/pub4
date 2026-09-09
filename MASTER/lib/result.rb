@@ -70,7 +70,7 @@ module Master
       timeout: "operation exceeded deadline",
       rate_limit: "tier rate limit exceeded",
       budget: "cost limit hit",
-      exhausted: "paid provider spend limit — the tier could not run (Ground::QuotaGate)",
+      exhausted: "paid provider spend limit — the tier could not run (Io::QuotaGate)",
       policy: "blocked by policy / kernel rule",
       shutdown: "user quit / shutdown requested",
       abort: "operation aborted",

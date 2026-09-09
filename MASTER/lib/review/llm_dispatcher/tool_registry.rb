@@ -38,7 +38,7 @@ module Master
           path = File.join(Master::ROOT, "data", "tools.yml")
           rows = Master.load_yaml(path)
           base = rows.is_a?(Array) ? rows.select { |row| row.is_a?(Hash) } : []
-          merged = base + Ground::DynamicTools.registry_rows
+          merged = base + Io::DynamicTools.registry_rows
           merged.each_with_object({}) do |row, h|
             key = row["dynamic_name"] ? "DynamicHttp" : row["name"].to_s
             h[key] = row

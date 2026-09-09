@@ -4,7 +4,7 @@ require "monitor"
 require_relative "../fix/constants"
 
 module Master
-  module Ground
+  module Io
     # The paid-provider limit gate, and the one surface anything downstream
     # asks about it.
     #
@@ -25,14 +25,14 @@ module Master
     # fix: deciding at minute one that a tier does not exist.
     #
     # Trip fast, re-probe soon. The wait comes from
-    # FailureTaxonomy.backoff_seconds — the same capped exponential
+    # Master::Ground::FailureTaxonomy.backoff_seconds — the same capped exponential
     # Io::ReplicateClient retries on, so there is one backoff formula in the
     # tree — indexed by how many times the limit has been confirmed in a row.
     # First confirmation waits a second, the fourth waits eight, and it caps at
     # a minute, so a long gate picks the tier back up within a minute of the
     # limit lifting. A successful paid call clears the count.
     #
-    # What this is NOT: a second per-model breaker. Ground::ModelSkipCache
+    # What this is NOT: a second per-model breaker. Io::ModelSkipCache
     # already parks an individual dead endpoint so failover chains route around
     # it. This is the tier-level fact — "the semantic rules could not run, and
     # here is why" — which no per-model cache can answer, and which is the half
@@ -77,10 +77,10 @@ module Master
       # Whether this message means a spend limit, per the shared taxonomy. No
       # second copy of the patterns lives here.
       def exhaustion?(message)
-        FailureTaxonomy.exhausted?(message)
+        Master::Ground::FailureTaxonomy.exhausted?(message)
       rescue StandardError
         # STUDIO/repligen and STUDIO/lora load Io::ReplicateClient standalone,
-        # without the runtime that gives FailureTaxonomy its rules.yml. The
+        # without the runtime that gives Master::Ground::FailureTaxonomy its rules.yml. The
         # gate still has to answer there, so it falls back to the pattern the
         # taxonomy would have reached for anyway.
         Master::Fix::Constants::EXHAUSTED_RE.match?(message.to_s)
@@ -97,7 +97,7 @@ module Master
           was_open = !blocked_now?
           @state = refusal?(message) ? :refused : :exhausted
           @confirmations += 1
-          @resume_at = @state == :refused ? nil : now + FailureTaxonomy.backoff_seconds(@confirmations - 1)
+          @resume_at = @state == :refused ? nil : now + Master::Ground::FailureTaxonomy.backoff_seconds(@confirmations - 1)
           @source = source.to_s
           @model = model.to_s
           @message = message.to_s.strip

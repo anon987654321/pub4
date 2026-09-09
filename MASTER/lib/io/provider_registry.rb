@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  module Ground
+  module Io
     module ProviderRegistry
       LOCAL_FALLBACK = {
         local: { env: [], strengths: %i[privacy offline cheap], default_model: "local" },

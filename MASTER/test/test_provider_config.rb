@@ -22,12 +22,12 @@ class TestProviderConfig < Minitest::Test
   end
 
   def test_runtime_registry_uses_yaml_as_its_provider_source
-    Master::Ground::ProviderRegistry.reset!
-    providers = Master::Ground::ProviderRegistry.providers
+    Master::Io::ProviderRegistry.reset!
+    providers = Master::Io::ProviderRegistry.providers
 
     assert_equal "gpt-5.5-thinking", providers.dig(:openai, :default_model)
     refute providers.key?(:schema)
   ensure
-    Master::Ground::ProviderRegistry.reset!
+    Master::Io::ProviderRegistry.reset!
   end
 end

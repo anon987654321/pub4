@@ -22,7 +22,7 @@ module Master
           end
 
           def failover_skip_ttl_ms
-            Ground::ModelSkipCache.skip_ttl_ms
+            Io::ModelSkipCache.skip_ttl_ms
           end
 
           # Categories that stop retrying a model and move on. nil when unconfigured,

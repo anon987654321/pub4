@@ -24,7 +24,7 @@ module Master
                    else
                      "#{unit}: complete with open findings"
                    end
-            skipped = Master::Ground::QuotaGate.report
+            skipped = Master::Io::QuotaGate.report
             skipped ? "#{base}\n#{skipped}" : base
           end
         end

@@ -16,7 +16,7 @@ class TestReplicateKokoroEngine < Minitest::Test
   end
 
   def test_provider_registry_lists_replicate
-    providers = Master::Ground::ProviderRegistry.providers
+    providers = Master::Io::ProviderRegistry.providers
     assert providers.key?(:replicate)
     assert_includes providers[:replicate][:strengths], :tts
   end

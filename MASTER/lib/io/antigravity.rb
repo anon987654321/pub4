@@ -6,7 +6,7 @@ require "pathname"
 require "yaml"
 
 module Master
-  module Ground
+  module Io
     # Reads the skills an Antigravity workspace declares — `.agents/skills/`,
     # a `skills.json` and its inherits chain, and the global and built-in roots
     # under `~/.gemini` — so `Cli::Skills` can offer them beside MASTER's own.
@@ -276,7 +276,7 @@ module Master
           # Load-bearing inside split: `name` comes out of that hash and the caller
           # drops the skill when it is empty, so a typo would silently unregister the
           # skill rather than report a broken one.
-          parsed = Frontmatter.split(content, context: "antigravity.skills.frontmatter", skill_file:)
+          parsed = Master::Ground::Frontmatter.split(content, context: "antigravity.skills.frontmatter", skill_file:)
           return nil unless parsed
 
           meta, body = parsed

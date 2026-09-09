@@ -20,9 +20,9 @@ module Master
           # unscanned files read as a clean bill of health, so the skip is
           # named on the gate before it is taken.
           def quota_paused?
-            return false unless Master::Ground::QuotaGate.blocked?
+            return false unless Master::Io::QuotaGate.blocked?
 
-            Master::Ground::QuotaGate.skipped("semantic rules")
+            Master::Io::QuotaGate.skipped("semantic rules")
             true
           end
 
@@ -31,7 +31,7 @@ module Master
           # log entries is what this rule population produced the last time a
           # per-file failure was recorded per file.
           def note_model_failure(error)
-            Master::Ground::QuotaGate.trip_if_limited(source: "semantic rule #{@id}", message: error.message)
+            Master::Io::QuotaGate.trip_if_limited(source: "semantic rule #{@id}", message: error.message)
           end
         end
 

@@ -121,7 +121,7 @@ module Master
             complete: true, files: total, violations: viol_total,
             dirty_files: dirty, elapsed_s: elapsed.round,
           }
-          skipped = Master::Ground::QuotaGate.report
+          skipped = Master::Io::QuotaGate.report
           fields[:skipped] = skipped if skipped
           Master::Trace::Dmesg.kv(unit, **fields)
         end

@@ -3,7 +3,7 @@
 require_relative "test_helper"
 
 class TestCouncilDeliberation < Minitest::Test
-  Gate = Master::Ground::QuotaGate
+  Gate = Master::Io::QuotaGate
   CREDITS = "Insufficient credits. Add more using https://openrouter.ai"
 
   Persona = Struct.new(:name, :role, :bias, :prompt, :veto_role, :emphasizes, keyword_init: true) do

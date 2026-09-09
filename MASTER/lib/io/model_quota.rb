@@ -5,7 +5,7 @@ require "json"
 require "time"
 
 module Master
-  module Ground
+  module Io
     # Per-model daily request budget for OpenRouter :free slugs (200/day/key typical).
     module ModelQuota
       FREE_RE = /:free\z|\Aopenrouter\//.freeze

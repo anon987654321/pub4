@@ -7,14 +7,14 @@ class TestEcosystemFeatures < Minitest::Test
   def test_model_quota_tracks_free_models
     dir = Dir.mktmpdir("master-quota-")
     path = File.join(dir, "model_quota.json")
-    Master::Ground::ModelQuota.stub(:path, path) do
-      Master::Ground::ModelQuota.stub(:daily_limit, 3) do
+    Master::Io::ModelQuota.stub(:path, path) do
+      Master::Io::ModelQuota.stub(:daily_limit, 3) do
         model = "qwen/qwen3-coder:free"
-        2.times { Master::Ground::ModelQuota.record(model) }
-        refute Master::Ground::ModelQuota.over_quota?(model)
-        Master::Ground::ModelQuota.record(model)
-        assert Master::Ground::ModelQuota.over_quota?(model)
-        refute Master::Ground::ModelQuota.trackable?("deepseek-chat")
+        2.times { Master::Io::ModelQuota.record(model) }
+        refute Master::Io::ModelQuota.over_quota?(model)
+        Master::Io::ModelQuota.record(model)
+        assert Master::Io::ModelQuota.over_quota?(model)
+        refute Master::Io::ModelQuota.trackable?("deepseek-chat")
       end
     end
   ensure

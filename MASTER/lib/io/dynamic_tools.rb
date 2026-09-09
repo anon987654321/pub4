@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  module Ground
+  module Io
     # Runtime HTTP tool registry (OpenCrabs tools.toml parity) — data-driven endpoints
     # without redeploying Ruby adapters.
     module DynamicTools
@@ -24,7 +24,7 @@ module Master
 
         rows.select { |row| row.is_a?(Hash) && row["enabled"] != false && !row["name"].to_s.empty? }
       rescue StandardError => e
-        Swallow.log(e, context: "dynamic_tools.load", path:)
+        Master::Ground::Swallow.log(e, context: "dynamic_tools.load", path:)
         []
       end
 

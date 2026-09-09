@@ -127,7 +127,7 @@ module Master
           # enough that the re-probe is not due yet; the council is a paid
           # tier, so it is skipped and says so rather than spending 26 calls
           # to relearn one fact.
-          return exhausted_error if Ground::QuotaGate.blocked?
+          return exhausted_error if Io::QuotaGate.blocked?
 
           context = reflexion_context(context)
           feedback = collect_feedback(active, code, context)
@@ -189,11 +189,11 @@ module Master
           # A spend limit gets its own category so a chain stage can branch on
           # "this tier could not run" instead of parsing prose, and so the
           # verdict never folds "could not run" into "timed out".
-          limited = Ground::QuotaGate.tripped?
+          limited = Io::QuotaGate.tripped?
           Result.err(
             "council: quorum not reached (#{feedback.size}/#{@personas.size})" \
             "#{failure_summary}#{quota_note}",
-            category: limited ? Ground::QuotaGate::CATEGORY : :timeout,
+            category: limited ? Io::QuotaGate::CATEGORY : :timeout,
           )
         end
 
@@ -201,8 +201,8 @@ module Master
         # gate's own report so the reason and the re-probe ETA travel with the
         # verdict rather than living only in a log line.
         def exhausted_error
-          Ground::QuotaGate.skipped("council")
-          Result.err("council: #{Ground::QuotaGate.report}", category: Ground::QuotaGate::CATEGORY)
+          Io::QuotaGate.skipped("council")
+          Result.err("council: #{Io::QuotaGate.report}", category: Io::QuotaGate::CATEGORY)
         end
 
         # A panel that answered on a stand-in model declares it on the pass as
@@ -210,10 +210,10 @@ module Master
         # not two readings of the same thing, and silence here is what would
         # let them compare as though they were.
         def announce_substitution
-          note = Ground::QuotaGate.substitution_note
+          note = Io::QuotaGate.substitution_note
           return unless note
 
-          @bus&.publish("council:substituted", swaps: Ground::QuotaGate.substitutions)
+          @bus&.publish("council:substituted", swaps: Io::QuotaGate.substitutions)
           Master::Trace::Dmesg.status("council0", note)
         end
 
@@ -221,8 +221,8 @@ module Master
         # substitution half stands alone, because a panel that answered on a
         # stand-in model has something to declare even when nothing tripped.
         def quota_note
-          Ground::QuotaGate.skipped("council") if Ground::QuotaGate.tripped?
-          parts = [Ground::QuotaGate.report, Ground::QuotaGate.substitution_note].compact
+          Io::QuotaGate.skipped("council") if Io::QuotaGate.tripped?
+          parts = [Io::QuotaGate.report, Io::QuotaGate.substitution_note].compact
           parts.empty? ? "" : " — #{parts.join(" — ")}"
         end
 
@@ -264,14 +264,14 @@ module Master
         end
 
         def collect_parallel(code:, context:, personas: @personas)
-          return [] if circuit_open? || Ground::QuotaGate.blocked?
+          return [] if circuit_open? || Io::QuotaGate.blocked?
 
           deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + TOTAL_BUDGET_S
           personas.each_slice(MAX_CONCURRENT).each_with_object([]) do |batch, feedback|
             # A batch already in flight cannot be recalled, but the batches
             # after it can: one confirmed spend limit ends the round rather
             # than buying the same refusal 22 more times.
-            break feedback if Ground::QuotaGate.blocked?
+            break feedback if Io::QuotaGate.blocked?
 
             threads = batch.map do |persona|
               Thread.new { ask_persona(persona:, code:, context:) }
@@ -283,7 +283,7 @@ module Master
         def collect_sequential(code:, context:, personas: @personas)
           deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + TOTAL_BUDGET_S
           personas.each_with_object([]) do |persona, feedback|
-            break feedback if Ground::QuotaGate.blocked?
+            break feedback if Io::QuotaGate.blocked?
             break feedback if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline || circuit_open?(persona)
 
             turn_context = feedback.empty? ? context : "#{context}\n\nprior turns:\n#{format_prior_turns(feedback)}"
@@ -324,7 +324,7 @@ module Master
           # Checked here as well as per batch: the four threads of a batch
           # queue behind the dispatcher's CLI slots, so the ones still waiting
           # when the first comes back refused can be spared their own refusal.
-          return quota_skipped(persona) if Ground::QuotaGate.blocked?
+          return quota_skipped(persona) if Io::QuotaGate.blocked?
 
           model = persona.respond_to?(:model) ? persona.model : nil
           temperature = persona.respond_to?(:temperature) ? persona.temperature : nil
@@ -357,7 +357,7 @@ module Master
         # what the operator reads anyway.
         def note_persona_failure(persona, error)
           @bus&.publish("council:persona_error", persona: persona.name, error: error.message)
-          limited = Ground::QuotaGate.trip_if_limited(
+          limited = Io::QuotaGate.trip_if_limited(
             source: "council persona #{persona.name}", message: error.message,
             model: (persona.model if persona.respond_to?(:model)),
           )

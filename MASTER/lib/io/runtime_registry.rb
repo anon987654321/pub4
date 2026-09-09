@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  module Ground
+  module Io
   # Collapses ProviderRegistry, ProviderHealth, and ProviderQuarantineManager into one call site (#396 item 2).
     class RuntimeRegistry
       def initialize(
