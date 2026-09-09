@@ -901,16 +901,34 @@ guidance:
 # statement about that directory, and a key carrying another directory's lines
 # says nothing about either. Slack is the same defect as debt here: 831 lines of
 # room in ground is 831 lines the next change grows into without an argument.
+# 2026-09-09: eight keys for twelve files that were in no key at all, 964 body
+# lines of them. This task walks the keys rather than the tree, so an unkeyed
+# file is not merely unbudgeted — it is invisible to the check written to bound
+# it, and lib/cognition is five of the twelve: a subsystem built at
+# boot/master_boot.rb:40 that no budget had ever priced.
+#
+# The rest are the namespace files beside their directories and the loose
+# top-level ones. `lib/builder` counts lib/builder/*.rb and not lib/builder.rb,
+# where the constant actually lives; single-file keys are the shape lib/design.rb
+# and lib/ops.rb already use.
 loc_body_budgets:
   lib/boot: 227
   lib/builder: 252
+  lib/builder.rb: 214
   lib/cli: 5892
+  lib/cognition: 253
   lib/core: 682
+  lib/core.rb: 47
   lib/design.rb: 270
   lib/fix: 2854
   lib/ground: 5068
   lib/io: 4143
+  lib/master.rb: 136
   lib/ops.rb: 234
+  lib/pressure_engine.rb: 115
+  lib/result.rb: 95
+  lib/security_error.rb: 1
+  lib/unwrap_error.rb: 103
   lib/pub4: 470
   lib/rails: 925
   lib/review: 9765
