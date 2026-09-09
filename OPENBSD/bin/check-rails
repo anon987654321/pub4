@@ -73,6 +73,10 @@ source_gates = [
   # still observes all three vitals entry types — and a live half that reports
   # INCONCLUSIVE off the deploy host rather than green.
   ["web vitals budget", "web_vitals_budget"],
+  # Source-only and instant: three manifests read as text. It belongs with
+  # these rather than the deep set because it opens no browser and needs no
+  # app listening.
+  ["pwa installable", "pwa_installable"],
 ]
 
 source_gates.each do |name, gate|
