@@ -417,7 +417,25 @@ pub4_source_ceilings:
   # whose only caller was the usage line in its own header -- nothing in the repo
   # named it -- and the pair is 132 code lines together. It was also the one file
   # in dilla/lib declaring no module or class, so `namespace` falls with it.
-  STUDIO: 149
+  # 149 -> 153 for four files in dilla, and what they buy:
+  #
+  #   lib/improvisation.rb   twelve progressions the engine writes itself, in
+  #                          five composers' languages. It replaced a catalogue
+  #                          of 575 with one of 19, so the tree it grew is
+  #                          smaller than the tree it left.
+  #   lib/improvised_line.rb a lead and a bass generated from the chords, shared
+  #                          by the render path and the live one so a take you
+  #                          hear is the take you keep.
+  #   lib/space_fx.rb        reverb, tape echo, phaser, chorus and a wave folder
+  #                          as arithmetic, because live playback never becomes
+  #                          a file and has nothing to hand ffmpeg.
+  #   dilla_live.rb          the catalogue played rather than written.
+  #
+  # Three subjects and an entry point, not one subject split four ways: the
+  # first writes music, the second plays over it, the third knows nothing about
+  # music at all. STUDIO/gate.rb's DILLA_SUPPORT_CEILING carries the same
+  # reasoning for the same three modules.
+  STUDIO: 153
 
 # Executable files directly under each tree's own bin/ — the number CLAUDE.md's
 # "two surfaces, no third" makes a claim about while nothing counted it. MASTER

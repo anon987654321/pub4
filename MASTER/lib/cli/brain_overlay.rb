@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  module Ground
+  module CLI
     class BrainOverlay
       CORE_FILES = %w[
         standing_orders.rb

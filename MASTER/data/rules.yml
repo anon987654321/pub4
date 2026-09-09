@@ -4379,7 +4379,15 @@ rule_ratchets:
     # uncovers belongs in the debt rather than in a graph entry: law_bridge
     # reports each law under the law's own id, so a rule_deps key for it would
     # order nothing in RuleOrder and exist only to make this count fall.
-    ungraphed: 134
+    #
+    # 134 -> 136, and the two are PLEDGE_STAGED and AUDIT_APPEND_ONLY, written to
+    # give principle_map's pledge_unveil and audit_logging a detector instead of
+    # an empty rule_ids. Neither runs after anything: one reads unveil promises,
+    # the other reads how an audit sink opens its file, and no other rule changes
+    # what either sees. By the paragraph above, a dep key for them would order
+    # nothing and exist only to keep this number flat, so the number moves and
+    # names them instead.
+    ungraphed: 136
 
   reach:
     # 56 -> 70 on 2026-09-05, and the rise is the point rather than a cost.

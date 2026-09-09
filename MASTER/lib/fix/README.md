@@ -26,5 +26,10 @@ the file is there, the symbol is somewhere under `lib/`, the caller names it —
 done or not done. `unfinished_ledger.rb` keeps what was left open, so a pass that
 stopped short says so instead of reading as finished.
 
+`content_dedup_scan.rb` reads the other direction: it flags lines that repeat
+across the constitution files, and reports rather than repairs, because which
+copy is right when two differ slightly is not safe to guess. `rake lint:dedup`
+is its reader.
+
 The filenames are canonical. Any numbered architecture label you find in a
 comment names nothing that exists.

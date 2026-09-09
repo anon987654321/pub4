@@ -5,6 +5,14 @@ module Master
     module CommandRegistry
       module_function
 
+      # One topic per registered command, and the registry is the whole list:
+      # `build` returns clear, commit, doctor, help, model, orders, pair,
+      # rollback, soul, status, through, undo and why, and nothing else reaches
+      # Stages::Route. The other command tables in this directory — memory,
+      # system, media, core, domain, reach, agent — are built by no caller, so
+      # /dilla, /btw, /tree and the rest have a dispatcher and no route. Writing
+      # them a help topic would advertise a command the router cannot resolve,
+      # which is why test_cli_domain_commands pins that /domain stays unlisted.
       HELP_TOPICS = {
         "through" => {
           summary: "the one verb: scan (which fixes), critique, principle map",
@@ -77,18 +85,32 @@ module Master
         },
       }.freeze
 
+      # /rollback is /undo registered twice, so help answers for it under the
+      # name the user typed. It gets no topic of its own — two entries print the
+      # same sentence twice in the summary, and the surface is one command.
+      ALIASES = { "rollback" => "undo" }.freeze
+
       def help_text(command = nil)
         key = command.to_s.strip.sub(/\A\//, "")
         return help_summary if key.empty?
 
-        topic = HELP_TOPICS[key]
-        return "help: unknown command /#{key} — say the work, or /help" unless topic
+        name = ALIASES.fetch(key, key)
+        topic = HELP_TOPICS[name]
+        return unknown_command_text(key) unless topic
 
         (["/#{key} - #{topic[:summary]}"] + topic[:detail]).join("\n")
       end
 
+      # The surface is closed, so a name with no topic is not a documented
+      # command missing its page — it is not a command. Say which is which,
+      # rather than leaving a reader to look for a page nobody wrote.
+      def unknown_command_text(key)
+        "help: unknown command /#{key} — the slash surface is #{slash_commands.size} commands " \
+          "and closed. /help lists them; everything else is said in a sentence."
+      end
+
       def slash_commands
-        (HELP_TOPICS.keys.map { |k| "/#{k}" } + %w[/exit /quit /rollback]).uniq.sort
+        (HELP_TOPICS.keys.map { |k| "/#{k}" } + ALIASES.keys.map { |k| "/#{k}" } + %w[/exit /quit]).uniq.sort
       end
 
       def help_summary

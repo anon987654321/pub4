@@ -55,8 +55,8 @@ end
 # which duplicate is "correct" when two differ even slightly isn't safe to
 # guess, so this reports rather than fixes (see ContentDedupScan's header).
 def check_content_dedup
-  require "ground/content_dedup_scan"
-  dups = Master::Ground::ContentDedupScan.scan(root: ROOT)
+  require "fix/content_dedup_scan"
+  dups = Master::Fix::ContentDedupScan.scan(root: ROOT)
   detail = dups.empty? ? "no duplicate lines" : "#{dups.size} duplicate line(s), top: #{dups.first.text[0, 50]} (x#{dups.first.count})"
   # ok: true unconditionally -- advisory only, never fails doctor's exit code.
   Check.new(name: "content-dedup", ok: true, detail:)

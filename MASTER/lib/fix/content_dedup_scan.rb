@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  module Ground
+  module Fix
     # Periodic duplicate-content scanner for MASTER's own config/constitution
     # files, matching OpenCrabs' dedup_scan.rs -- reads each file, flags exact
     # duplicate lines (within a file or across files), reported for human

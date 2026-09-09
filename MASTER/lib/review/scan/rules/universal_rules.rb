@@ -328,6 +328,75 @@ module Master
           end
         end
 
+        # pledge(2) and unveil(2) restrict a process once, at boot, in a fixed
+        # order: promise the syscalls, deny the filesystem root, open the paths
+        # back, then lock. Ground::Pledge holds that order in stage1_boot!,
+        # stage2_lock! and stage3_scan_only!, and a caller that assembles its own
+        # promise string somewhere else restricts a different process than the one
+        # data/principle_map.yml pledge_unveil describes.
+        #
+        # Two shapes, and the second is why the wrapper is not simply exempt:
+        # unveiling "/" with anything but the empty permission leaves the whole
+        # filesystem reachable, and that line lives inside lib/ground/pledge.rb.
+        # The choke-point half is what the wrapper is allowed to break.
+        #
+        # A bare `pledge(` is deliberately unmatched. pledge(2) in prose and the
+        # Fiddle extern both read that way, so the namespace is what separates a
+        # call from a mention — and an `include Pledge` caller writing bare
+        # `pledge("stdio")` is outside this rule's reach.
+        RuleDSL.rule :PLEDGE_STAGED,
+          severity: :error, tags: %i[SECURITY], applies_to: %i[ruby], autofix: false,
+          fires: %q(Master::Ground::Pledge.unveil("/", "r")) + "\n",
+          does_not_fire: "Master::Ground::Pledge.stage1_boot!(root)\n",
+          description: "restrict the process through Ground::Pledge's stages, never a hand-written promise" do |src, path:|
+          next [] if path.to_s.include?("/review/scan/rules/")
+
+          wrapper = path.to_s.end_with?("lib/ground/pledge.rb")
+          src.each_line.with_index(1).flat_map do |line, number|
+            next [] if line.strip.start_with?("#")
+
+            hits = []
+            permissions = line[%r{\bunveil\(\s*["']/["']\s*,\s*["']([^"']*)["']}, 1]
+            if permissions && !permissions.empty?
+              hits << finding(line: number, message: %(unveil("/", "#{permissions}") leaves the filesystem open — deny the root first))
+            end
+            if !wrapper && line.match?(/\bPledge\.(?:pledge|unveil)\s*\(/)
+              hits << finding(line: number, message: "raw pledge/unveil promise — call a Ground::Pledge stage helper")
+            end
+            hits
+          end
+        end
+
+        # The audit log is the only record of which tools ran, and it is worth
+        # exactly as much as its oldest surviving line. Trace::Log::Audit
+        # subscribes to tool:before and appends; opening that file for writing, or
+        # File.write-ing it without mode "a", discards every earlier entry and
+        # leaves a log that reads full and remembers one turn.
+        #
+        # Scoped to the sinks: a file that subscribes to tool:before is an audit
+        # sink, and this asks how it writes. It does not ask whether every action
+        # publishes tool:before — a subscription that never happens leaves no line
+        # to read — so a tool that mutates without publishing is outside its reach
+        # and stays the gap data/principle_map.yml audit_logging records.
+        RuleDSL.rule :AUDIT_APPEND_ONLY,
+          severity: :error, tags: %i[SECURITY], applies_to: %i[ruby], autofix: false,
+          fires: %Q(bus.subscribe("tool:before") { |e| record(e) }\nFile.open(@path, "w") { |f| f.puts(line) }\n),
+          does_not_fire: %Q(bus.subscribe("tool:before") { |e| record(e) }\nFile.open(@path, "a") { |f| f.puts(line) }\n),
+          description: "an audit sink appends to its log and never truncates it" do |src, path:|
+          next [] if path.to_s.include?("/review/scan/rules/")
+          next [] unless src.match?(/subscribe\(\s*["']tool:before["']/)
+
+          src.each_line.with_index(1).filter_map do |line, number|
+            next if line.strip.start_with?("#")
+            # Rotation renames; only an in-place truncation is the defect.
+            next unless line.match?(/File\.open\s*\([^)]*,\s*["']w\+?["']/) ||
+                        line.match?(/File\.write\s*\((?![^)]*mode:\s*["']a)/) ||
+                        line.match?(/\.truncate\s*\(/)
+
+            finding(line: number, message: %(audit log truncated — append with mode "a", or rotate by rename))
+          end
+        end
+
       end
     end
   end

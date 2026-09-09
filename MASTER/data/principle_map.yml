@@ -283,11 +283,17 @@ principles:
     severity: high
     confidence: 0.85
     operation: add_logging
-    # Evidence is lib/trace/log.rb (append-only tool:before log), pinned
-    # by test_principle_evidence.rb. No registered scanner rule yet — a lexical
-    # rule cannot prove a process actually subscribed.
-    rule_ids: []
-    status: gap
+    # Evidence is lib/trace/log.rb (append-only tool:before log), pinned by
+    # test_principle_evidence.rb. AUDIT_APPEND_ONLY reads the sink: a file that
+    # subscribes to tool:before must append rather than truncate, so the record
+    # survives past one turn. It does not reach the other half — whether every
+    # mutating action publishes tool:before at all. Five tools in lib/io mutate
+    # and never publish (clean, git_context, memory_record,
+    # subdomain_orchestrator, web_fetch), and closing that is a change to those
+    # tools rather than a detector question.
+    rule_ids:
+    - AUDIT_APPEND_ONLY
+    status: covered
     root: least_authority
     tags:
     - code
@@ -2446,9 +2452,12 @@ principles:
     operation: add_restrictions
     # Evidence is lib/ground/pledge.rb applied from lib/boot/master_boot.rb,
     # pinned by test_principle_evidence.rb. Linking LEAST_PRIVILEGE would close
-    # the map gap without measuring pledge(2).
-    rule_ids: []
-    status: gap
+    # the map gap without measuring pledge(2); PLEDGE_STAGED measures the two
+    # lines that lose the restriction — an unveil of "/" that grants anything,
+    # and a raw promise string assembled outside Ground::Pledge's stages.
+    rule_ids:
+    - PLEDGE_STAGED
+    status: covered
     root: least_authority
     tags:
     - code

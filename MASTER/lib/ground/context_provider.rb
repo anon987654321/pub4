@@ -66,9 +66,9 @@ module Master
       end
 
       def brain_overlay
-        return [] unless defined?(Master::Ground::BrainOverlay)
+        return [] unless defined?(Master::CLI::BrainOverlay)
 
-        overlay = Master::Ground::BrainOverlay.new(root: @root)
+        overlay = Master::CLI::BrainOverlay.new(root: @root)
         [{ source: :brain_overlay, path: nil, text: overlay.core_brief[0, 800] }]
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "context_provider.brain_overlay")
