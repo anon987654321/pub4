@@ -2949,7 +2949,7 @@ there, not a shelf.
 #### 6. `shared/lib/pub4/` keeps a flat drawer — decided 2026-09-10, no shelf
 
 Decided against and written into `shared/WIRING_NOTES.md`. The shelf is already
-spelled in the filenames — thirteen of the twenty files end `_lint.rb` — the
+spelled in the filenames — thirteen of the twenty names end in `_lint` — the
 file count does not move, so no ratchet is paid either way, and the cost is
 renaming thirteen constants and following them through `MASTER/tools/ratchets.rb`,
 whose `lint_module` derives each constant from the basename. That is a
