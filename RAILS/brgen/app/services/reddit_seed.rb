@@ -21,7 +21,7 @@ class RedditSeed
   private
 
   def seed_subreddit(sub, seed_user)
-    items = Scrape.call(
+    items = Shared::Scrape.call(
       "https://www.reddit.com/r/#{sub}/hot/",
       schema: POST_SCHEMA,
       hint: post_hint(sub)
@@ -51,7 +51,7 @@ class RedditSeed
     return scraped if scraped.any?
     return [] if item["url"].blank?
 
-    Scrape.call(
+    Shared::Scrape.call(
       item["url"],
       schema: COMMENT_SCHEMA,
       hint: "Extract up to 5 top-level comments visible on the thread. Skip AutoModerator and deleted."

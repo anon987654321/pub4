@@ -11,8 +11,8 @@
   </div>
 <% else %>
   <%= render "shared/empty_state",
-        title: "Video coming soon",
-        body: "This episode is not ready to play.",
-        action: { label: "Back to show", path: channel_show_path(@channel, @show) } %>
+        title: t("empty.video_coming_soon"),
+        body: t("empty.video_coming_soon_body"),
+        action: { label: t("actions.back_to_show"), path: channel_show_path(@channel, @show) } %>
 <% end %>
 

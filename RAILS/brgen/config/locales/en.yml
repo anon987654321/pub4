@@ -677,6 +677,17 @@ en:
     kitchen_no_food: The kitchen has not listed food yet.
     order_then_rate: Order, then leave a rating for neighbours.
     episodes_when_published: Episodes will show up when published.
+    no_activity_body: "Events from your network show up here."
+    no_category_body: "Be the first to list something here — no signup needed."
+    no_hosted_tracks_body: "Upload or link a track to host it."
+    no_sets_body: "Create or import a set to get started."
+    no_sketches_body: "Save a beat from the lab or paste JSON state below."
+    no_videos_body: "This channel has no published videos."
+    no_shows_body: "Published shows will appear here."
+    no_live_streams_body: "Nothing live right now."
+    no_comments_body: "Start the conversation — guests can comment without an account."
+    video_coming_soon: "Video coming soon"
+    video_coming_soon_body: "This episode is not ready to play."
   actions:
     close: Close
     load_more: Older posts
@@ -703,6 +714,10 @@ en:
     select_all: Select all
     select_all_reports: Select all reports
     reload: Reload
+    edit_profile: "Edit profile"
+    all_channels: "All channels"
+    back_to_show: "Back to show"
+    channel: "Channel"
   pages:
     cart: Your Cart
     my_orders: My Orders

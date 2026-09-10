@@ -43,7 +43,7 @@
         <% else %>
           <%= render "shared/empty_state",
                 title: t("empty.no_phase_items"),
-                body: "Tag life phases on items to fill this column.",
+                body: t("empty.no_phase_items_body"),
                 action: { label: t("actions.wardrobe"), path: items_path } %>
         <% end %>
       </article>
@@ -76,7 +76,7 @@
   <% else %>
     <%= render "shared/empty_state",
           title: t("empty.no_wear_history"),
-          body: "Wear items to build your style timeline.",
+          body: t("empty.no_wear_history_body"),
           action: { label: t("actions.wardrobe"), path: items_path } %>
   <% end %>
 </section>

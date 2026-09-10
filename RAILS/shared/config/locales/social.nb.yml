@@ -165,6 +165,16 @@ nb:
     view: "Se innlegg"
     share: "Del innlegg"
     share_short: "Del"
+  reactions:
+    aria: "Reager med %{kind}"
+    kinds:
+      like: "Liker"
+      love: "Elsker"
+      laugh: "Ler"
+      wow: "Wow"
+      sad: "Trist"
+      angry: "Sint"
+      local: "Lokalt"
   a11y:
     skip_to_content: "Hopp til hovedinnhold"
   # Engine-owned keys. Namespaced under shared: so an app can keep its own

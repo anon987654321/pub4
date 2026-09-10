@@ -44,6 +44,28 @@ class InfiniteScrollReflexContractTest < Minitest::Test
                     "expected at least 21 infinite-scroll reflexes, found #{reflexes.size} — check the glob"
   end
 
+  # Every reflex above declares a partial and a scope and passes all four checks
+  # while being reachable by nobody. A reflex runs when a view hands its class
+  # name to shared/_infinite_scroll_sentinel as `reflex:`; without that mount it
+  # is a scope, a partial and a comment that no scroll can ever call.
+  #
+  # ConversationsInfiniteScrollReflex was in exactly that state and read as a
+  # product question in the backlog — the messenger inbox is a rail capped at 30
+  # with no sentinel anywhere, so there was no page for it to append to. Deleted.
+  def test_every_reflex_is_mounted_by_a_view
+    views = Dir.glob(File.join(ROOT, "{amber,brgen,bsdports,shared}", "app", "views", "**", "*.erb")) +
+            Dir.glob(File.join(ROOT, "brgen", "engines", "*", "app", "views", "**", "*.erb"))
+    mounted = views.flat_map { |v| File.read(v).scan(/reflex:\s*"([^"#]+)/).flatten }.to_set
+
+    # The class name a reflex file defines, derived the way Zeitwerk does.
+    declared = reflexes.to_h { |p| [File.basename(p, ".rb").split("_").map(&:capitalize).join, p] }
+
+    unmounted = (declared.keys - mounted.to_a).sort.map { |c| declared[c].delete_prefix("#{ROOT}/") }
+
+    assert_empty unmounted,
+                 "no view passes these to shared/_infinite_scroll_sentinel as reflex:, so nothing can call them"
+  end
+
   def test_every_reflex_declares_a_partial_and_a_local
     undeclared = reflexes.reject { |path| code(path).match?(/^\s*renders\s+"[^"]+",\s*as:\s*:\w+/) }
 

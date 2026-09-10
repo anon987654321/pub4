@@ -167,6 +167,16 @@ en:
     view: "View post"
     share: "Share post"
     share_short: "Share"
+  reactions:
+    aria: "React with %{kind}"
+    kinds:
+      like: "Like"
+      love: "Love"
+      laugh: "Laugh"
+      wow: "Wow"
+      sad: "Sad"
+      angry: "Angry"
+      local: "Local"
   a11y:
     skip_to_content: "Skip to main content"
   # Engine-owned keys. Namespaced under shared: so an app can keep its own

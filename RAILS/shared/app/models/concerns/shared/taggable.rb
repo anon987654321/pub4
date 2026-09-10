@@ -19,6 +19,9 @@ module Shared
       names = Hashtag.extract(try(:content).to_s + " " + try(:title).to_s)
       tags = names.map { |n| Hashtag.find_or_create_by!(name: n) }
       previous = hashtags.to_a
+      # This line is Tagging's only writer, and it never names the class. A
+      # census of models nothing writes reported Tagging as unwritten for that
+      # reason — a grep for `Tagging.` or `taggings.create` finds readers only.
       self.hashtags = tags
       # usage_count is the number of records using the tag, so only move it by the
       # delta — a no-op edit changes nothing, and untagging decrements. The old

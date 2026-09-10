@@ -26,7 +26,7 @@
 <% else %>
   <%= render "shared/empty_state",
         title: t("empty.no_activity"),
-        body: "Events from your network show up here.",
+        body: t("empty.no_activity_body"),
         action: { label: t("empty.city_feed"), path: root_path } %>
 <% end %>
 <% end %>

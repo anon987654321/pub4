@@ -45,6 +45,7 @@ en:
       edit: "Edit wardrobe item"
       untitled: "Untitled item"
       empty: "No wardrobe items yet."
+      empty_body: "Add a photo, tag it, then plan an outfit."
       condition: "Condition"
       acquired: "Acquired"
       age_days: "Age (days)"
@@ -161,6 +162,11 @@ en:
     no_phase_items: "No items in this phase"
     no_wear_history: "No wear history yet"
     clear_search: "Clear search"
+    no_matches_body: "Try a broader description, or add the piece if it is missing from your wardrobe."
+    no_showcase_body: "Add a wardrobe piece with the form below."
+    no_showcase_edit_body: "Add pieces from your wardrobe when you edit this profile."
+    no_phase_items_body: "Tag life phases on items to fill this column."
+    no_wear_history_body: "Wear items to build your style timeline."
   search:
     wardrobe: "Search wardrobe by title, brand, category…"
     wardrobe_label: "Wardrobe search"
@@ -215,6 +221,7 @@ en:
     back_to_ai: "Back to AI tools"
     wardrobe: "Wardrobe"
     dressing_room: "Dressing room"
+    edit_showcase: "Edit showcase"
   hotkeys:
     help: "j/k · ↓↑ nav · Enter open · / search · n new · esc clear · ? help"
     coach: "Keyboard: press ? anytime for shortcuts (j/k to move, / to search)."

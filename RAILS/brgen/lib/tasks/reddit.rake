@@ -6,7 +6,7 @@ namespace :scrape do
     subs = (args[:subs] || "norge,bergen,oslo").split(",").map(&:strip)
     schema = RedditSeed::POST_SCHEMA
     subs.each do |sub|
-      Scrape.call(
+      Shared::Scrape.call(
         "https://www.reddit.com/r/#{sub}/hot/",
         schema: schema,
         hint: "Skip pinned moderator posts. comment_count is upvotes. top_comments is an array of preview comments."

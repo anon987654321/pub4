@@ -22,7 +22,7 @@
   <% else %>
     <%= render "shared/empty_state",
           title: t("amber.wardrobe.empty", default: "No wardrobe items yet."),
-          body: "Add a photo, tag it, then plan an outfit.",
+          body: t("amber.wardrobe.empty_body"),
           action: { label: t("amber.wardrobe.add", default: "Add item"), path: new_wardrobe_item_path } %>
   <% end %>
 <% end %>

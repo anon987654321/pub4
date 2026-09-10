@@ -183,7 +183,10 @@ module Pub4
       # → 8 (2026-08-27): amber's sidebar nav and tab bar stopped hand-rolling
       # their SVGs, and the shared icon partial carries the label the inline
       # markup had been repeating.
-"aria_label" => 8,
+      # → 7 (2026-09-10): the shared reaction bar's label was built from the
+      # kind and the target's Ruby class name, so a Norwegian reader heard
+      # "Angry post"; it is t("reactions.aria") over a translated kind now.
+      "aria_label" => 7,
       # 169 (first run, 2026-08-11: amber 48, brgen engines 48, brgen host 44,
       # shared 28, bsdports 1) → 141. The hand count that opened this debt said 144
       # and was blind to shared/app/controllers, whose sites ship to all three apps
@@ -241,23 +244,14 @@ module Pub4
       # sites over six lines, and this counts lines — two of them carried both
       # a placeholder and an aria label. Same shape as the 181 entry above.
       "translate_default" => 171,
-      # 24 → 23 (2026-09-10), and the number is the point of the rule rather than
-      # a target to reach in one pass. Every one is a sentence a person wrote in
-      # English inside a view option — an empty state's body, an action's label,
-      # a title that does not open with "No" — on apps that default to Norwegian.
-      # Until this rule existed nothing counted them, which is the same failure
-      # aria_label was added for: a class nobody measures is a class nobody is
-      # holding.
-      #
-      # The one paid here is the one a gate found the hard way. brgen's
-      # marketplace shipped `title: t("empty.no_listings")` above `body: "No
-      # listings match this search."`, and `empty.no_listings_search` was the
-      # only member of a six-strong family — no_posts_search, no_deals_search,
-      # no_stores_search, no_places_search, no_communities_search — that had
-      # never been written. Adding it is following the tree's own vocabulary
-      # rather than authoring copy, which is exactly why the other 23 stay: they
-      # are new sentences in a language this session does not get to choose.
-      "empty_copy" => 23,
+      # 0, and a ratchet at zero is a ban. Every finding was a sentence written
+      # in English inside a view option — an empty state's body, an action's
+      # label, a title that does not open with "No" — on apps that default to
+      # Norwegian. The last 23 became keys in the `empty.*` and `actions.*`
+      # families each view was already drawing its title from, with the English
+      # sentence kept verbatim in en.yml and a bokmål sentence beside it, so the
+      # locale file and not the template decides what a reader sees.
+      "empty_copy" => 0,
     }.freeze
 
     # Kept for callers that referenced the old single number.
