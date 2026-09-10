@@ -2575,12 +2575,11 @@ A candidate whose two halves never contend is a seam. `SURFACES.md` used to say
 splitting a base layer scatters the cascade story; it now says how to answer
 that per candidate.
 
-Still open, and it is one line in another tree: `growth.rails` measures 2373
-against a ceiling of 2372 in `MASTER/data/spine.yml`. Two files in
-(`shared/_zen_buttons.scss`, `brgen/_messenger_inbox.scss`), one out
-(`RAILS/INSTANT.md`, folded into this file above). That row's own convention is
-that a split is paid by a named raise there, and this session's scope was
-`RAILS/` only, so the raise is named here instead of taken.
+Both splits are paid inside `RAILS/`, so no ceiling in another tree moved.
+`growth.rails` is 2372 against 2372: two partials in (`shared/_zen_buttons.scss`,
+`brgen/_messenger_inbox.scss`) and two files out — `RAILS/INSTANT.md` folded into
+this document above, and `shared/app/helpers/application_helper.rb`, which two of
+the three apps shadowed and none of the three reached.
 
 ### One model nothing writes
 
@@ -2860,10 +2859,24 @@ an afternoon and it touches a MASTER ratchet, so it is not a first move.
 
 - `shared/app/services/scrape.rb` defines bare top-level `Scrape` from an engine
   autoload root, called from six places in two apps. It works, but the engine
-  puts 19 files at unnamespaced roots, and one of them has already lost a
-  collision silently. The `Application*` five must stay
-  bare by Rails convention; `scrape.rb`, `site_verification.rb`,
-  `schema_helper.rb` and `passwords_mailer.rb` need not.
+  puts 18 files at unnamespaced roots. The `Application*` set must stay bare by
+  Rails convention; `scrape.rb`, `site_verification.rb`, `schema_helper.rb` and
+  `passwords_mailer.rb` need not.
+
+  **The silent collision this entry recorded is named and gone (2026-09-10).**
+  It was `ApplicationHelper`, in two apps at once: brgen's and amber's shadow the
+  engine's, so the engine's copy loaded only in bsdports. A census of every
+  top-level path the engine defines against every path the three apps define
+  finds those two and nothing else. The engine's copy is deleted rather than
+  renamed, because it carried nothing anyone reached — its three `include`s are
+  all supplied to every app already, by the `shared.seo_kit` and
+  `shared.schema_helper` initializers and by `Shared::ApplicationSetup`'s
+  `helper Shared::StimulusFormHelper`, and its three methods (`nok`,
+  `norwegian_date`, `api_date`) have no caller anywhere in `RAILS/`. `nok` was
+  also a second money formatter disagreeing with the one under contract:
+  `Shared::MoneyDisplay` renders `kr 3 500` and `nok` would have rendered
+  `3 500,00 kr`. `zeitwerk:check` on bsdports says "All is good!" and all three
+  app suites and the standalone suite are green without it.
 - `RAILS/test/` holds 80 files in one drawer and `test/gates/` holds 13.
   `run_all.rb` globs recursively (`test/**/*_test.rb`), so subject shelves —
   `test/lints/`, `test/layout/` — need no runner change. Navigational only.
@@ -2973,9 +2986,11 @@ nothing became unused in the exchange.
 
 #### Still open, and each is somebody's
 
-- **`growth.rails` 2373 against 2372.** Two partials in, `INSTANT.md` out. That
-  row's own convention is a named raise in `MASTER/data/spine.yml`; this
-  session's scope was `RAILS/`, so it is named here and not taken.
+- ~~`growth.rails` over its ceiling~~ — paid. Two partials in
+  (`shared/_zen_buttons.scss`, `brgen/_messenger_inbox.scss`), two files out
+  (`RAILS/INSTANT.md` folded into this document, `shared/app/helpers/application_helper.rb`
+  deleted as unreachable). 2372 against 2372, and no ceiling in another tree had
+  to move.
 - **`rendered_suite` fails on about forty contrast pairs, every one a colour.**
   `#d62828` on `#efefef` at 4.36 against a 4.5 floor (the nav badge, on twelve
   surfaces), `#ff5b24` at 2.7 (dating's Vipps line), the playlist teal at 4.44,
