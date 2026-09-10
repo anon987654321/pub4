@@ -1014,6 +1014,7 @@ class TestDilla < Minitest::Test
         presets.include?(slug) || aliases.any? { |a, t| t == slug && presets.include?(a) }
       end
       puts JSON.generate(builtin_count: TRACK_SAMPLE_LOOPS_BUILTIN.length, loops: loops, unreachable: unreachable,
+                         crate_present: TRACK_SAMPLE_LOOPS.any? { |_, v| Dir.exist?(File.dirname(v[:path].to_s)) },
                          missing_files: TRACK_SAMPLE_LOOPS.reject { |_, v| File.file?(v[:path]) }.keys)
     RUBY
     # As above: the rack is the builtins until the rebuilt crate registers its
@@ -1037,7 +1038,23 @@ class TestDilla < Minitest::Test
     # The list itself went stale in both directions and neither showed, because
     # the unreachable assertion above fails first and hides this one: rauingar
     # is back on disk, and semua_untuk_mu is not.
+    #
+    # `samples/` is gitignored, so a worktree has no crate and every loop reads as
+    # fileless — this failed on rauingar in a worktree while passing with the real
+    # crate copied in, and the finding was the worktree rather than the engine. A
+    # crate that is not there cannot answer this question, so it skips and says
+    # so; a crate that IS there and is missing a file is the defect, and that
+    # still fails.
+    #
+    # The test is whether any loop has its own directory, not whether `samples/`
+    # exists: the engine writes samples/drums/ at load, so the directory is
+    # always there and always proves nothing.
     awaiting_rebuild = %w[kembara_rindu semua_untuk_mu lo_borges arat_swost_wolet]
+    unless result.fetch("crate_present")
+      skip "not one loop rack has a directory under STUDIO/dilla/samples — the crate is gitignored, " \
+           "so a worktree cannot measure which loops are on disk. Copy the crate in, or run from the " \
+           "main checkout."
+    end
     fileless = result.fetch("missing_files")
     assert_empty fileless - awaiting_rebuild,
                  "a loop entry pointing at a file that is not there renders silently without a bed: " \
