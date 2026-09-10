@@ -389,7 +389,15 @@ pub4_source_ceilings:
   # remote host and the run would report nothing at all rather than a failure.
   # One place that bounds a command, because six places that each remember to
   # is how five of them forget.
-  RAILS: 2372
+  # 2372 -> 2373 for brgen/lib/brgen/bergen_demo_data.rb. One file bought, five
+  # hundred code lines paid back: it is the literal Bergen the demo seeder
+  # carried inside itself — users, posts, listings, bios, neighbourhoods,
+  # places, restaurants, channels and Live notes — which made a class with two
+  # public methods into the largest NO_GOD_CLASS finding in the fleet at 839
+  # code lines. The seeder is 337 now. This is the trade this line exists to
+  # record, and it is the right way round: a data file and the code that reads
+  # it are two things, and only one of them is code.
+  RAILS: 2373
   # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
   # that are the whole defence against a shared index, and nothing tested any of
   # them — a hook that stopped firing looks exactly like a week in which nobody

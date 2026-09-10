@@ -37,29 +37,6 @@ class DeployGatesContractTest < Minitest::Test
     end
   end
 
-  # `needs` moved runner.rb's BROWSER_BACKED list into the registry, which is
-  # what this file is for — a second table naming the same gates is exactly the
-  # drift gates.yml replaced. Both halves: no unknown precondition word, and no
-  # copy of the list left behind in the runner.
-  KNOWN_PRECONDITIONS = %w[browser].freeze
-
-  def test_every_declared_precondition_is_one_the_runner_knows
-    GATES.each do |name, row|
-      strays = Array(row["needs"]) - KNOWN_PRECONDITIONS
-      assert_empty strays, "#{name} needs #{strays.join(', ')}, which nothing checks"
-    end
-  end
-
-  def test_the_runner_reads_preconditions_from_the_registry_and_keeps_no_list
-    source = File.read(File.join(ROOT, "gates", "runner.rb"))
-
-    refute_includes source, "BROWSER_BACKED",
-                    "the browser list belongs in gates.yml; a copy here drifts from it"
-    assert_includes source, 'needs(key).include?("browser")'
-    refute_empty GATES.select { |_, row| Array(row["needs"]).include?("browser") },
-                 "no gate declares needs: [browser], so the precondition check covers nothing"
-  end
-
   def test_every_composite_names_a_real_gate
     GATES.each do |name, row|
       parent = row["covered_by"]

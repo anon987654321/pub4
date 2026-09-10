@@ -51,7 +51,20 @@ class FileLengthRatchetTest < Minitest::Test
   # remainder is 129 lines of methods. That is what "splitting is possible"
   # looked like when something finally forced it.
   CEILINGS = {
-    "brgen/lib/brgen/bergen_demo_seeder.rb" => 839,
+    # 839 -> 337. The seeder was NO_GOD_CLASS's largest single finding in the
+    # fleet, and it breached on length alone: two public methods and five
+    # hundred lines of literal Bergen — the users, the posts, the listings, the
+    # bios, the neighbourhoods, the places, the restaurants, the channels and
+    # the Live notes. Those moved whole to bergen_demo_data.rb, included so
+    # every name reads the same inside the seeder and BergenDemoSeeder::
+    # LIVE_NOTES still resolves through the ancestor chain. The seeder's own six
+    # tests pass unchanged, which is the proof the move preserved it.
+    "brgen/lib/brgen/bergen_demo_seeder.rb" => 337,
+    # The data itself, which is long because Bergen is. It is on this list for
+    # the same reason db/seeds.rb is: splitting it is possible, not obviously
+    # worth doing. Splitting it further would be splitting a list of restaurants
+    # from a list of neighbourhoods, which buys two files and no clarity.
+    "brgen/lib/brgen/bergen_demo_data.rb" => 507,
     # 746 -> 618 on 2026-08-26. The eight infinite-scroll wiring assertions are
     # infinite_scroll_wiring_test.rb — one subject, and the one most likely to
     # keep growing, rather than eight more entries in a bundle of forty
