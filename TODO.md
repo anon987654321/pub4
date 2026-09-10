@@ -157,6 +157,44 @@ should be closed by an agent's judgement.
   sprawl stays resisted while coverage is free to grow. **Splitting a ratchet re-bases
   four ceilings** and wants its own sitting.
 
+### Two repairs live only on the box — 2026-09-10
+
+Both were made by hand to get master deployed and neither is in git, so both
+come back the moment something restores what they changed. Recorded here
+because an undocumented production edit is the same defect as an inert
+declaration, wearing the other coat.
+
+**1. `MASTER/Gemfile.lock` on the box has had its `CHECKSUMS` section deleted.**
+Backup at `/tmp/Gemfile.lock.bak`, which the next reboot removes. The committed
+lock carries 26 empty `CHECKSUMS` entries; `BUNDLE_FROZEN=true` exists to stop
+the daemon writing its own lockfile, so Bundler could see the problem and was
+forbidden from repairing it. The TTS worker died on it at every boot —
+`/health` read `status: unavailable`, `checks.tts: false` — and the deploy's
+smoke step correctly refused. `rc.d/master:79` already carries a comment about
+this exact failure.
+
+Restoring the box's lock from git undoes the repair and takes TTS down again.
+
+*The root cause is upstream of the lock.* `MASTER/Gemfile:47` guards
+`rb-kqueue` behind a runtime `if RUBY_PLATFORM =~ /bsd/` rather than a
+`platforms:` or `install_if` block, so the lockfile is host-dependent by
+construction: a Mac evaluating that Gemfile never declares the gem, and no
+`bundle lock --add-platform x86_64-openbsd` can add it. That is why the box's
+lock must stay divergent, why `--ff-only` only works while no commit touches
+it, and why frozen mode keeps colliding with it. Fixing the Gemfile is what
+closes this properly.
+
+**2. `.master/tts-worker-0.log` and `-1.log` were `root:master`, and the daemon
+runs as `master`.** It could not write its own log and died with `EACCES`
+before opening a socket, so `checks.tts` went true while `tts_socket` stayed
+false. `chown master:master` and both sockets came up. Whatever created them as
+root will do it again on the next restart that recreates them — that writer is
+unidentified and is the thing to find.
+
+A cheap guard for both: `/health` already reports `tts_socket`, and
+`bin/pub4 vps state --remote` does not. Surfacing it there would have named
+this in one command instead of four deploy passes.
+
 ### The box, verified 2026-09-09
 
 `MASTER/bin/pub4 vps state --remote` is the only honest way to answer this and it is
