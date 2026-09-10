@@ -6282,8 +6282,21 @@ def cross_sample_convolve!(loop_path, partner, dest)
       "-map", "[out]", "-ar", SAMPLE_RATE.to_s, "-ac", "2",
       "-c:a", "pcm_s16le", raw
 
-  want = band_rms(loop_path, highpass: 20, lowpass: 20_000) rescue nil
-  got = band_rms(raw, highpass: 20, lowpass: 20_000) rescue nil
+  # The level match may fail and the render carries on, which is right — an
+  # unmatched bed is better than no bed. What was wrong is that it carried on in
+  # silence. Two modifier `rescue nil`s left trim at 0.0 and the dmesg below
+  # printing "matched dB → dB" with both numbers missing, and that is the one
+  # shape SILENT_RESCUE cannot catch: the rule reads lines that BEGIN with
+  # `rescue`, so a modifier rescue is counted by nothing.
+  measure = lambda do |path, what|
+    band_rms(path, highpass: 20, lowpass: 20_000)
+  rescue StandardError => e
+    dmesg_warn("cross-sample convolve: #{what} would not measure (#{e.class}: #{e.message}) — " \
+               "the bed ships at its own level")
+    nil
+  end
+  want = measure.call(loop_path, "the source")
+  got = measure.call(raw, "the convolved bed")
   trim = if want&.finite? && got&.finite?
            (want - got).clamp(-48.0, 24.0)
          else
@@ -6292,8 +6305,13 @@ def cross_sample_convolve!(loop_path, partner, dest)
   sh! "ffmpeg", "-y", "-i", raw,
       "-af", "volume=#{trim.round(2)}dB,alimiter=limit=0.95:level_out=0.96",
       "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", dest
-  dmesg("cross-sample convolve: matched #{got&.round(1)}dB → #{want&.round(1)}dB (#{trim.round(1)}dB)",
-        unit: "xsmp0", parent: "dilla0")
+  if want&.finite? && got&.finite?
+    dmesg("cross-sample convolve: matched #{got.round(1)}dB → #{want.round(1)}dB (#{trim.round(1)}dB)",
+          unit: "xsmp0", parent: "dilla0")
+  else
+    dmesg("cross-sample convolve: UNMATCHED — no level measurement, shipped as convolved",
+          unit: "xsmp0", parent: "dilla0")
+  end
   FileUtils.rm_f([ir, raw])
   dest
 end

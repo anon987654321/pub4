@@ -40,7 +40,16 @@ until File.exist?(STOP)
     system("/usr/bin/afplay", fresh)
     # The sidecar travels with the take, so the archive knows which ones carry a
     # verse and are therefore spent.
-    FileUtils.mv(fresh, ARCHIVE, force: true) rescue nil
+    # If the move fails the loop picks the same file again on the next turn and
+    # plays it forever, so this rescue used to turn one bad permission into an
+    # endless repeat with nothing on stderr. The take still is not lost — it
+    # plays again — but the reason is on the terminal now.
+    begin
+      FileUtils.mv(fresh, ARCHIVE, force: true)
+    rescue StandardError => e
+      warn "player: could not archive #{File.basename(fresh)} (#{e.class}: #{e.message}) — " \
+           "it will play again next turn"
+    end
     FileUtils.mv(txt, ARCHIVE, force: true) if File.file?(txt)
     old = Dir[File.join(ARCHIVE, "*.wav")].sort_by { |f| -File.mtime(f).to_i }[KEEP..]
     Array(old).each { |f| FileUtils.rm_f(f); FileUtils.rm_f(f.sub(/\.wav\z/, ".txt")) }

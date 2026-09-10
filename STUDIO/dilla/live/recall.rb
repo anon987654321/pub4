@@ -32,8 +32,17 @@ RENDERS = D
 def passes
   return [] unless File.file?(JOURNAL)
 
-  File.readlines(JOURNAL).filter_map do |line|
-    row = JSON.parse(line) rescue next
+  File.readlines(JOURNAL).filter_map.with_index(1) do |line, number|
+    # A torn row is skipped and said so. The journal is append-only from a live
+    # set, so a kill mid-write leaves exactly one unparseable line — and a replay
+    # that quietly drops it reports "no seeded passes yet" for a pass that
+    # happened.
+    row = begin
+      JSON.parse(line)
+    rescue JSON::ParserError
+      warn "recall: #{File.basename(JOURNAL)}:#{number} is not JSON — skipped"
+      next
+    end
     row if row["seed"] && row["set"]
   end
 end
