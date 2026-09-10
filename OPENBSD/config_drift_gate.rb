@@ -106,23 +106,27 @@ def on_vps?
   File.file?("/etc/relayd.conf") || ENV["DEPLOY_ASSUME_VPS"] == "1"
 end
 
-def doas_cat(path)
-  out, status = Open3.capture2e("doas", "-n", "cat", path)
+# A machine with no doas is a machine that cannot answer, not a crash.
+# `DEPLOY_ASSUME_VPS=1` is documented in bin/check-rails as the way to exercise
+# the on-VPS path from a laptop, and on a laptop `doas` does not exist — so
+# without the rescue this gate raises Errno::ENOENT where it means to report
+# nothing found.
+def doas_run(*command)
+  out, status = Open3.capture2e("doas", "-n", *command)
   status.success? ? out : nil
+rescue Errno::ENOENT
+  nil
 end
 
-# One SSH round-trip for all files. Reading them one at a time is 11 rapid
-# reconnects, which is what pf bruteforce blocks (RUNBOOK: one session at a time).
-# Each file emits `<marker><path>` on its own line then its contents; echo, not
-# printf, because printf backslash escaping is fragile across ruby -> ssh -> shell.
-def doas_root_crontab
-  out, status = Open3.capture2e("doas", "-n", "crontab", "-l", "-u", "root")
-  status.success? ? out : nil
-end
+def doas_cat(path) = doas_run("cat", path)
+def doas_root_crontab = doas_run("crontab", "-l", "-u", "root")
 
-# The crontab rides the same round trip rather than opening a second one. Reading
-# the files one at a time is 11 rapid reconnects, which is what pf bruteforce
-# blocks, and a separate connection for the crontab would be the twelfth.
+# One SSH round-trip for all files, the crontab included. Reading them one at a
+# time is 11 rapid reconnects, which is what pf bruteforce blocks (RUNBOOK: one
+# session at a time), and a separate connection for the crontab would be the
+# twelfth. Each file emits `<marker><path>` on its own line then its contents;
+# echo, not printf, because printf backslash escaping is fragile across ruby ->
+# ssh -> shell.
 def live_files(paths)
   keys = paths + [CRONTAB_KEY]
 
