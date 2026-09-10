@@ -27,6 +27,24 @@ class TestCosmeticRules < Minitest::Test
     end
   end
 
+  # A YAML mapping's value is data, and the commonest subject in this repo is
+  # `bpm_range: 84-90` in a file dilla parses to render audio. The prose YAML
+  # also carries -- a comment, a block scalar continuation -- is not a mapping
+  # line, so both directions are asserted against the same file kind.
+  def test_en_dash_range_ignores_a_yaml_mapping_value
+    assert_empty rule("EN_DASH_RANGE").check("bpm_range: 84-90\n", path: "data/reference_sonic.yml")
+  end
+
+  def test_en_dash_range_still_reads_prose_inside_yaml
+    refute_empty rule("EN_DASH_RANGE").check("    4-9 lines total. No preamble.\n", path: "data/council.yml")
+  end
+
+  # CSS specificity is a tuple written 0-1-0, and a two-number pattern reads two
+  # ranges in it.
+  def test_en_dash_range_ignores_a_hyphenated_triple
+    assert_empty rule("EN_DASH_RANGE").check("the block is 0-1-0 against the base's 0-1-0.\n", path: "README.md")
+  end
+
   def test_tab_character_flags_tabs
     findings = rule("TAB_CHARACTER").check("def foo\n\tbar\nend\n", path: "lib/foo.rb")
     refute_empty findings

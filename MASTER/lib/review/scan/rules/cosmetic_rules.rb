@@ -49,7 +49,18 @@ module Master
         # Blank them before looking, or the rule reports the repo's own decision log
         # as a typography defect — 200 of 207 findings over the tracked markdown were
         # dates, and one was `claude-opus-4-8`.
-        EN_DASH_NOT_A_RANGE = %r{`[^`]*`|\b\d{4}-\d{2}(?:-\d{2})?\b|\[[^\]]*\]|[A-Za-z][\w.]*-\d[\w.]*(?:-[\w.]+)*}.freeze
+        # A fourth wears it too: three or more hyphenated numbers is a tuple, not
+        # a range. CSS specificity is written 0-1-0 and reads as two ranges to a
+        # two-number pattern.
+        EN_DASH_NOT_A_RANGE = %r{`[^`]*`|\b\d+(?:-\d+){2,}\b|\b\d{4}-\d{2}(?:-\d{2})?\b|\[[^\]]*\]|[A-Za-z][\w.]*-\d[\w.]*(?:-[\w.]+)*}.freeze
+        # In YAML a mapping line's value is data, and a hyphen in data is a
+        # character some reader parses. Measured over the tracked markdown and
+        # YAML: 39 findings, of which 32 were mapping values — 28 of those
+        # `bpm_range: 84-90` in STUDIO/dilla/reference_sonic.yml, which dilla
+        # parses to render audio. YAML also carries real prose, in comments and
+        # in block scalars, and those lines are not mappings, so the seven that
+        # survive are all paragraphs.
+        YAML_MAPPING_LINE = /\A[\w.-]+:\s/.freeze
 
         module_function
 
@@ -183,11 +194,13 @@ module Master
           description: "numeric ranges use en dash not hyphen" do |src, path:|
           next [] if path.to_s.include?("/review/scan/rules/")
           next [] if path.end_with?(".rb", ".js", ".css", ".scss")
+          data_file = path.end_with?(".yml", ".yaml")
           src.each_line.with_index(1).filter_map do |line, number|
             stripped = line.strip
             next if stripped.start_with?("#", "//", "detect_lexical:", "- id:")
             next unless stripped.gsub(EN_DASH_NOT_A_RANGE, " ").match?(EN_DASH_RANGE_RE)
             next if stripped.match?(/^\s*-\s+\w/) # YAML list item
+            next if data_file && stripped.match?(YAML_MAPPING_LINE)
             finding(line: number, message: "numeric range — use en dash: 45–75 not 45-75")
           end
         end

@@ -45,11 +45,16 @@ module Master
         # build and then vanishes — the same loop the db/schema.rb note below
         # describes. Matching the MASTER-prefixed form too makes the list mean
         # the same thing from both roots.
-        SKIP_RELATIVE_PATHS = %w[
-          .master runtime web/public/assets web/script/three_build web/node_modules web/tmp web/log
+        # The four generated face bundles are their own constant because
+        # tools/self_findings.rb needs the same four and had its own copy of
+        # them inside a regex. One fact, one home; the census reads this.
+        GENERATED_FACE_BUNDLES = %w[
           web/public/three.face.module.js web/public/face.runtime.js
           web/public/face.modules.bundle.js web/public/face_vision.bundle.js
-        ].flat_map { |path| [path, "MASTER/#{path}"] }.freeze
+        ].freeze
+        SKIP_RELATIVE_PATHS = (%w[
+          .master runtime web/public/assets web/script/three_build web/node_modules web/tmp web/log
+        ] + GENERATED_FACE_BUNDLES).flat_map { |path| [path, "MASTER/#{path}"] }.freeze
 
         # Not authored anywhere: `builds/` is what dartsass compiles the tracked
         # _*.scss into, so every finding in it is a duplicate of one already

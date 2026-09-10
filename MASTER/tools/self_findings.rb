@@ -81,15 +81,29 @@ module Pub4
       |/(?:cable|cache|queue)_migrate/
       |/service-worker\.js\z
       |\.min\.(?:js|css)\z
-      # The face's build output, tracked because the daemon serves it straight
-      # from public/. face.runtime.js opens "do not edit by hand" and is written
-      # by assets:build_face_runtime from face.part1-5.txt; the three bundles are
-      # esbuild output. Scanner::PathFilter has always skipped these four by
-      # name, and this census had no reason to know about them until MASTER/web
-      # joined its corpus — at which point 12,019 lines of generated JavaScript
-      # would have arrived as findings about code nobody typed.
-      |/web/public/(?:face\.runtime|face\.modules\.bundle|face_vision\.bundle|three\.face\.module)\.js\z
     }x
+
+    # The face's build output, tracked because the daemon serves it straight from
+    # public/. face.runtime.js opens "do not edit by hand" and is written by
+    # assets:build_face_runtime from face.part1-5.txt; the three bundles are
+    # esbuild output. Twelve thousand lines of generated JavaScript arrived here
+    # the day MASTER/web joined the corpus.
+    #
+    # Read from Scan::PathFilter rather than copied. It is the scanner's own
+    # skip list, so the two agreed only for as long as somebody edited both --
+    # and this census names the bundles as strings while the scanner names them
+    # as paths, which is a difference no test could see. Lazy, because Master is
+    # not loaded until `law` runs.
+    def generated_bundles
+      @generated_bundles ||= begin
+        # path_filter.rb is an autoload ignore, so the constant exists only once
+        # the scanner has required it.
+        require File.join(MASTER_DIR, "lib", "review", "scan", "scanner")
+        Regexp.union(
+          Master::Review::Scan::PathFilter::GENERATED_FACE_BUNDLES.map { |p| %r{/#{Regexp.escape(p)}\z} },
+        )
+      end
+    end
     # Every extension a law can declare, not just Ruby. The corpus globbed
     # `*.rb` while the laws claim nine languages, so every css, scss, yaml,
     # markdown, html, json and shell law in the registry was measured against
@@ -117,7 +131,7 @@ module Pub4
           next unless extensions.include?(File.extname(relative))
 
           path = File.join(ROOT, relative)
-          path unless path.match?(THIRD_PARTY)
+          path unless path.match?(THIRD_PARTY) || path.match?(generated_bundles)
         end.sort
       end
     end
