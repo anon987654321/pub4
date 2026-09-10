@@ -10,7 +10,7 @@ would otherwise get wrong. Each app deploys through its own script at
 `RAILS/<app>/<app>.sh`, and `RAILS/apps.yml` is the inventory of which apps
 exist.
 
-Three checks answer most questions: `MASTER/bin/pub4 status` for the trees,
+Three checks answer most questions: `MASTER/bin/operator status` for the trees,
 `OPENBSD/bin/check` for this one locally, and `OPENBSD/bin/check-vps` against the
 live vm23.
 

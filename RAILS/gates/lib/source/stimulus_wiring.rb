@@ -295,7 +295,7 @@ module Deploy
           false
         else
           spec = source[/import\s+#{Regexp.escape(base)}\s+from\s+["']([^"']+)["']/, 1]
-          spec.nil? || !(spec.start_with?(".") || spec.start_with?("pub4/") || spec.start_with?("controllers/"))
+          spec.nil? || !(spec.start_with?(".") || spec.start_with?("operator/") || spec.start_with?("controllers/"))
         end
       end
     end

@@ -6,7 +6,7 @@ require_relative "../../../../OPENBSD/lib/deploy_inventory"
 require_relative "../../../../OPENBSD/lib/gate_result"
 
 begin
-  require_relative "../../../shared/lib/pub4/deploy_paths"
+  require_relative "../../../shared/lib/operator/deploy_paths"
 rescue LoadError
   # ok for minimal ruby env
 end
@@ -31,9 +31,9 @@ module Deploy
       registry = parse_registry_entries
       routes = parse_registry_subdomains
 
-      if defined?(Pub4::DeployPaths) && Pub4::DeployPaths.respond_to?(:validate_layout!)
+      if defined?(Operator::DeployPaths) && Operator::DeployPaths.respond_to?(:validate_layout!)
         begin
-          Pub4::DeployPaths.validate_layout!
+          Operator::DeployPaths.validate_layout!
         rescue StandardError => e
           result.fail("deploy layout: #{e.message}")
         end

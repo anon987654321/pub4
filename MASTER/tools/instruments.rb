@@ -31,7 +31,7 @@
 
 require "json"
 
-module Pub4
+module Operator
   class Instruments
     MASTER = File.expand_path("..", __dir__)
     FIXTURES = File.join(MASTER, "tools", "fixtures")
@@ -114,7 +114,7 @@ module Pub4
 end
 
 if $PROGRAM_NAME == __FILE__
-  report = Pub4::Instruments.run
+  report = Operator::Instruments.run
 
   if ARGV.include?("--json")
     puts JSON.pretty_generate(report)

@@ -283,11 +283,11 @@ class DeployGatesContractTest < Minitest::Test
     assert File.exist?(File.join(REPO_ROOT, "RAILS", "deploy.sh"))
     assert File.exist?(File.join(REPO_ROOT, "TODO.md"))
     assert File.exist?(File.join(OPENBSD_ROOT, "data", "operator.yml"))
-    # MASTER/bin/pub4, not a root bin/. The repo root holds four documents and
+    # MASTER/bin/operator, not a root bin/. The repo root holds four documents and
     # the four trees; the operator surface has lived under MASTER since the
     # sprawl census emptied the root, and this line was still looking for the
     # shim that removal deleted.
-    assert File.exist?(File.join(REPO_ROOT, "MASTER", "bin", "pub4"))
+    assert File.exist?(File.join(REPO_ROOT, "MASTER", "bin", "operator"))
     assert File.exist?(File.join(REPO_ROOT, "RAILS", "apps.yml"))
     assert File.exist?(File.join(REPO_ROOT, "OPENBSD", "OPERATOR.sh"))
   end
@@ -351,7 +351,7 @@ class DeployGatesContractTest < Minitest::Test
   # /var/db/pub4/ci.lock and called itself the single source.
   def test_the_ruby_and_shell_ci_locks_are_the_same_file
     shell = File.read(File.expand_path("../OPENBSD/lib/ci_lock.sh", ROOT), encoding: "UTF-8")
-    ruby = File.read(File.join(ROOT, "shared/lib/pub4/ci_guard.rb"), encoding: "UTF-8")
+    ruby = File.read(File.join(ROOT, "shared/lib/operator/ci_guard.rb"), encoding: "UTF-8")
 
     assert_includes shell, "PUB4_CI_LOCK_DIR=/var/db/pub4"
     assert_includes shell, "PUB4_CI_LOCK_NAME=ci.lock"

@@ -13,7 +13,7 @@
 require "open3"
 require "yaml"
 
-module Pub4
+module Operator
   class CapabilityInventory
     MASTER = File.expand_path("..", __dir__)
     REPO = File.expand_path("..", MASTER)
@@ -110,7 +110,7 @@ module Pub4
 end
 
 if $PROGRAM_NAME == __FILE__
-  report = Pub4::CapabilityInventory.report
+  report = Operator::CapabilityInventory.report
   if report[:lost].empty?
     puts "capability: ok vs #{report[:baseline_ref]}"
     exit 0

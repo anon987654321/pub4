@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative "../../MASTER/lib/pub4/environment"
-require_relative "../../MASTER/lib/pub4/ruby_runner"
+require_relative "../../MASTER/lib/operator/environment"
+require_relative "../../MASTER/lib/operator/ruby_runner"
 
 module Deploy
   module GateEnvironment
@@ -36,11 +36,11 @@ module Deploy
 
     def skip_reason(gate)
       needs = Array(gate.needs)
-      if needs.include?(:vps) && !Pub4::Environment.on_vps?
+      if needs.include?(:vps) && !Operator::Environment.on_vps?
         return "not on VPS"
       end
-      if needs.include?(:bundle) && Pub4::RubyRunner.runtime_gate_skipped?
-        return Pub4::RubyRunner.runtime_skip_reason || "bundle runtime unavailable"
+      if needs.include?(:bundle) && Operator::RubyRunner.runtime_gate_skipped?
+        return Operator::RubyRunner.runtime_skip_reason || "bundle runtime unavailable"
       end
       if needs.include?(:browser) && ENV["PROBE_REQUIRE_BROWSER"] != "1" && ENV["MASTER_CI_BROWSER"] != "1"
         return "browser probe optional"
@@ -50,7 +50,7 @@ module Deploy
     end
 
     def post_pull_warning
-      return unless Pub4::Environment.on_vps?
+      return unless Operator::Environment.on_vps?
 
       <<~WARN
         integrity: note — source updated in /home/dev/pub4; deployed /home/<app>/app trees are unchanged.

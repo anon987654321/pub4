@@ -41,7 +41,7 @@ pub4_ci_lock_path() {
 # second holder open a fresh inode and run concurrently — the one thing a mutex
 # exists to prevent.
 #
-# The lock itself is taken by OPENBSD/bin/with-ci-lock and Pub4::CiGuard, both
+# The lock itself is taken by OPENBSD/bin/with-ci-lock and Operator::CiGuard, both
 # flock(2). This comment used to say lockf(1), and vps_master_scan.sh called it:
 # OpenBSD has no lockf(1) and no flock(1) either, so that line was `command not
 # found` on every run and the documented way to scan vm23 never took a lock or

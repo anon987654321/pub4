@@ -3,7 +3,7 @@
 require "yaml"
 require_relative "../../../../OPENBSD/lib/gate_result"
 require_relative "../../support/gate_autofix"
-require_relative "../../../shared/lib/pub4/master_design"
+require_relative "../../../shared/lib/operator/master_design"
 require_relative "../../support/css_spacing_scans"
 require_relative "../../support/css_weight"
 
@@ -103,7 +103,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
 
     def run_once
       @result = GateResult.new
-      @design = Pub4::MasterDesign.blocks(MASTER_DESIGN)
+      @design = Operator::MasterDesign.blocks(MASTER_DESIGN)
       check_tap_token
 
       files = css_files

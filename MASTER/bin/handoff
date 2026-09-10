@@ -54,7 +54,7 @@ puts "backlog: TODO.md — #{open_debt_count} open operator-debt item(s) (OPENBS
 puts
 
 puts "feature inventory: RAILS/apps.yml (horizon: apps.horizon.yml)"
-puts "quick status: bin/pub4 status · /orient deploy"
+puts "quick status: bin/operator status · /orient deploy"
 puts
 puts "golden checks (contributor profile):"
 puts "  cd MASTER && bin/check --profile=contributor"

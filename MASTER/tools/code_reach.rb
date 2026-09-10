@@ -32,7 +32,7 @@
 require "yaml"
 require "prism"
 
-module Pub4
+module Operator
   module CodeReach
     MASTER_DIR = File.expand_path("..", __dir__)
     ROOT = File.expand_path("..", MASTER_DIR)
@@ -125,4 +125,4 @@ module Pub4
   end
 end
 
-exit Pub4::CodeReach.run(ratchet: ARGV.include?("--ratchet")) if $PROGRAM_NAME == __FILE__
+exit Operator::CodeReach.run(ratchet: ARGV.include?("--ratchet")) if $PROGRAM_NAME == __FILE__

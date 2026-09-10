@@ -48,7 +48,7 @@ assuming a fix is local.
 **Shared deploys as a sibling, not a subdirectory.** The copy-tree deploy puts
 the tracked app at `/home/<app>/app` and its own copy of the engine at
 `/home/<app>/shared`. Every app vendors a separate copy; syncing to the wrong
-one makes precompile a silent no-op. `Pub4::DeployPaths` resolves OPENBSD tools
+one makes precompile a silent no-op. `Operator::DeployPaths` resolves OPENBSD tools
 across both source-checkout and copy-tree shapes — never compute paths from
 `Rails.root`.
 

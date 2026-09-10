@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../shared/lib/pub4/chrome_i18n_lint"
+require_relative "../shared/lib/operator/chrome_i18n_lint"
 
 class ChromeI18nLintTest < Minitest::Test
   # Was assert_equal 0, findings.size. The lint now measures three kinds with
@@ -9,8 +9,8 @@ class ChromeI18nLintTest < Minitest::Test
   # 0, hardcoded aria-labels are a measured 172 that may only shrink. One flat number
   # would have forced either 172 permanent failures or no aria rule at all.
   def test_no_kind_exceeds_its_baseline
-    findings = Pub4::ChromeI18nLint.scan
-    exceeded = Pub4::ChromeI18nLint.over_baseline(findings)
+    findings = Operator::ChromeI18nLint.scan
+    exceeded = Operator::ChromeI18nLint.over_baseline(findings)
 
     assert_empty exceeded,
                  "#{exceeded.join("; ")}\n" \
@@ -19,9 +19,9 @@ class ChromeI18nLintTest < Minitest::Test
 
   # A baseline that has been beaten and never lowered is a baseline nobody trusts.
   def test_baselines_are_not_stale
-    counts = Pub4::ChromeI18nLint.counts
+    counts = Operator::ChromeI18nLint.counts
 
-    Pub4::ChromeI18nLint::BASELINES.each do |kind, baseline|
+    Operator::ChromeI18nLint::BASELINES.each do |kind, baseline|
       assert_equal baseline, counts.fetch(kind),
                    "#{kind} is at #{counts.fetch(kind)} against a baseline of #{baseline} — " \
                    "lower the baseline in chrome_i18n_lint.rb"
@@ -41,8 +41,8 @@ class ChromeI18nLintTest < Minitest::Test
   # 0 today across all 6. This is a ratchet at zero, not a tolerance.
   def test_no_opt_out_has_outlived_what_it_excuses
     scopes = {
-      Pub4::ChromeI18nLint.view_paths => Pub4::ChromeI18nLint::VIEW_RULES.values,
-      Pub4::ChromeI18nLint.controller_paths => Pub4::ChromeI18nLint::CONTROLLER_RULES.values,
+      Operator::ChromeI18nLint.view_paths => Operator::ChromeI18nLint::VIEW_RULES.values,
+      Operator::ChromeI18nLint.controller_paths => Operator::ChromeI18nLint::CONTROLLER_RULES.values,
     }
     scopes.each_key do |paths|
       refute_empty paths, "a glob stopped matching, which is blindness not cleanliness"
@@ -52,20 +52,20 @@ class ChromeI18nLintTest < Minitest::Test
       paths.flat_map do |path|
         lines = File.readlines(path, encoding: "UTF-8")
         lines.each_with_index.filter_map do |line, i|
-          next unless line.include?(Pub4::ChromeI18nLint::OPT_OUT)
+          next unless line.include?(Operator::ChromeI18nLint::OPT_OUT)
 
           # The marker guards its own line and the next two — the same window
           # comment_or_opt_out? uses, read forwards.
           window = lines[i..[i + 2, lines.size - 1].min].join
           next if rules.any? { |re| window.match?(re) }
 
-          "#{Pub4::ChromeI18nLint.rel(path)}:#{i + 1}"
+          "#{Operator::ChromeI18nLint.rel(path)}:#{i + 1}"
         end
       end
     end
 
     assert_empty stale.sort,
-                 "these `#{Pub4::ChromeI18nLint::OPT_OUT}` markers no longer excuse anything — " \
+                 "these `#{Operator::ChromeI18nLint::OPT_OUT}` markers no longer excuse anything — " \
                  "delete them, or they will silence whatever lands on those lines next"
   end
 
@@ -76,12 +76,12 @@ class ChromeI18nLintTest < Minitest::Test
             body: "Add one.",
             action: { label: "Add", path: "/" } %>
     ERB
-    assert_match(Pub4::ChromeI18nLint::EMPTY_TITLE, sample)
+    assert_match(Operator::ChromeI18nLint::EMPTY_TITLE, sample)
   end
 
   def test_ignores_t_wrapped_title
     sample = 'title: t("empty.no_widgets")'
-    refute_match(Pub4::ChromeI18nLint::EMPTY_TITLE, sample)
+    refute_match(Operator::ChromeI18nLint::EMPTY_TITLE, sample)
   end
 
   # RAILS/gates/GATE_ADEQUACY.md gap 2: a screen-reader user on :nb hears
@@ -92,7 +92,7 @@ class ChromeI18nLintTest < Minitest::Test
       %(<%= link_to "#", aria: { label: "Item actions" } %>),
       %(<div aria-roledescription="carousel">),
     ].each do |sample|
-      assert_match(Pub4::ChromeI18nLint::ARIA_LABEL, sample, "should flag #{sample}")
+      assert_match(Operator::ChromeI18nLint::ARIA_LABEL, sample, "should flag #{sample}")
     end
   end
 
@@ -101,12 +101,12 @@ class ChromeI18nLintTest < Minitest::Test
       %(<section aria-label="<%= t("a11y.declutter_summary") %>">),
       %(<div aria-label="<%= @item.name %>">),
     ].each do |sample|
-      refute_match(Pub4::ChromeI18nLint::ARIA_LABEL, sample, "should not flag #{sample}")
+      refute_match(Operator::ChromeI18nLint::ARIA_LABEL, sample, "should not flag #{sample}")
     end
   end
 
   def test_a_single_character_label_is_not_worth_translating
-    refute_match(Pub4::ChromeI18nLint::ARIA_LABEL, %(<button aria-label="×">))
+    refute_match(Operator::ChromeI18nLint::ARIA_LABEL, %(<button aria-label="×">))
   end
 
   # brgen renders :nb, so an English toast over a Norwegian page is the most
@@ -117,7 +117,7 @@ class ChromeI18nLintTest < Minitest::Test
       %(redirect_to root_path, alert: "You are not allowed to do that"),
       %(render :new, status: :unprocessable_entity, alert: 'Could not save the item'),
     ].each do |sample|
-      assert_match(Pub4::ChromeI18nLint::CONTROLLER_FLASH, sample, "should flag #{sample}")
+      assert_match(Operator::ChromeI18nLint::CONTROLLER_FLASH, sample, "should flag #{sample}")
     end
   end
 
@@ -127,18 +127,18 @@ class ChromeI18nLintTest < Minitest::Test
       %(redirect_to item, notice: I18n.t("items.destroyed")),
       %(redirect_to item, notice: helpers.item_notice(@item)),
     ].each do |sample|
-      refute_match(Pub4::ChromeI18nLint::CONTROLLER_FLASH, sample, "should not flag #{sample}")
+      refute_match(Operator::ChromeI18nLint::CONTROLLER_FLASH, sample, "should not flag #{sample}")
     end
   end
 
   # Every counted string lives in a file the lint can still open. A rule whose
   # findings point at nothing is how a ratchet turns into a number.
   def test_every_finding_resolves_to_a_real_line
-    findings = Pub4::ChromeI18nLint.scan
+    findings = Operator::ChromeI18nLint.scan
     refute_empty findings
 
     missing = findings.reject do |finding|
-      path = File.join(Pub4::ChromeI18nLint.rails_root, finding.file)
+      path = File.join(Operator::ChromeI18nLint.rails_root, finding.file)
       File.file?(path) && File.readlines(path, encoding: "UTF-8").length >= finding.line
     end
 

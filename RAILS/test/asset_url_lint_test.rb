@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../shared/lib/pub4/asset_url_lint"
+require_relative "../shared/lib/operator/asset_url_lint"
 
 # The gap css_coverage_lint left. It measures class names in both directions and
 # never looks inside a declaration, so no committed tool read `url()` — and the
@@ -11,7 +11,7 @@ require_relative "../shared/lib/pub4/asset_url_lint"
 # What it found on the first run was live: amber served a lightgallery.css whose
 # icon font 404'd.
 class AssetUrlLintTest < Minitest::Test
-  L = Pub4::AssetUrlLint
+  L = Operator::AssetUrlLint
 
   def test_no_kind_exceeds_its_baseline
     exceeded = L.over_baseline

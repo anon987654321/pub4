@@ -29,8 +29,8 @@ module Master
     # what it exempted: when lib/now/ became lib/cli/ and this address stayed,
     # 105 findings arrived in selfcheck's largest actionable bucket overnight.
     # pub4/gate_chain.rb is the eleventh and last exemption, and it is the one
-    # file rather than its directory: lib/pub4 is the operator surface's
-    # library, and its sibling status_report.rb renders a string that bin/pub4
+    # file rather than its directory: lib/operator is the operator surface's
+    # library, and its sibling status_report.rb renders a string that bin/operator
     # prints, which is the shape this rule asks for. gate_chain cannot take it.
     # The ladder runs for many minutes and the report is the progress -- which
     # stage is running, and which files it changed under that stage's name --

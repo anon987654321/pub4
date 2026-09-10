@@ -562,11 +562,11 @@ shapes. The test carries a clone and a worktree side by side, because a fixture
 with only one of them is how this stood.
 
 `Io::GitHooks` is deleted rather than fixed. It wrote a `pre-commit` hook into the private git directory
-from the boot path, and `bin/pub4 hooks` — the installer `CLAUDE.md` names —
+from the boot path, and `bin/operator hooks` — the installer `CLAUDE.md` names —
 sets `core.hooksPath` to `OPENBSD/dev/githooks`, which git honours *instead of* the
 private hooks directory. So on any tree carrying the documented guard the file it wrote
 could never run, and on a tree without one it silently installed a slow audit on
-every commit that nobody asked for. Its own comment in `bin/pub4` says why: a
+every commit that nobody asked for. Its own comment in `bin/operator` says why: a
 copy in the private hooks directory is a second implementation that drifts from
 the tracked one.
 Its only test asserted that it skips when there is no git directory — a test of

@@ -18,7 +18,7 @@
 require "json"
 require "yaml"
 
-module Pub4
+module Operator
   class ScanCoverage
     MASTER = File.expand_path("..", __dir__)
     MANIFEST = File.join(MASTER, "data", "scan_coverage.yml")
@@ -121,7 +121,7 @@ module Pub4
 end
 
 if $PROGRAM_NAME == __FILE__
-  report = Pub4::ScanCoverage.run
+  report = Operator::ScanCoverage.run
 
   if ARGV.include?("--json")
     puts JSON.pretty_generate(report)

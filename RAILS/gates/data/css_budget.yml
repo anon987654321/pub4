@@ -3,7 +3,7 @@
 #
 # All three rules were declared and unread before 2026-08-03. IMPORTANT was a
 # constant in css_constitution.rb with no call site. eight_px_rhythm was checked
-# by shared/lib/pub4/rhythm_lint.rb against design_tokens.yml and the two token
+# by shared/lib/operator/rhythm_lint.rb against design_tokens.yml and the two token
 # stylesheets only -- the definitions, never the use sites -- which matters
 # because WIRING_NOTES' 2026-07-28 decision made spacing, not borders, the thing
 # that separates elements. magic_color_hex_ban_inline had no reader anywhere.

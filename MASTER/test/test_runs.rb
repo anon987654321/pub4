@@ -15,7 +15,7 @@ require "minitest/autorun"
 require_relative "../tools/runs"
 
 class TestRuns < Minitest::Test
-  def self.report = @report ||= Pub4::Runs.run
+  def self.report = @report ||= Operator::Runs.run
 
   def setup
     @report = self.class.report
@@ -41,8 +41,8 @@ class TestRuns < Minitest::Test
   end
 
   def test_who_runs_answers_for_a_known_file
-    assert_includes Pub4::Runs.who_runs("MASTER/test/test_runs.rb"), "MASTER/Rakefile"
-    assert_empty Pub4::Runs.who_runs("MASTER/test/no_such_test.rb")
+    assert_includes Operator::Runs.who_runs("MASTER/test/test_runs.rb"), "MASTER/Rakefile"
+    assert_empty Operator::Runs.who_runs("MASTER/test/no_such_test.rb")
   end
 
   # STUDIO was the fourth tree and the census never looked at it: 23 test files
@@ -50,11 +50,11 @@ class TestRuns < Minitest::Test
   # runs it, which a glob-only extractor could not see — STUDIO's Rakefile lists
   # test_studio_gate.rb by name on purpose.
   def test_studio_is_in_the_census_and_its_named_runner_counts
-    studio = Pub4::Runs.test_files.select { |path| path.start_with?("STUDIO/") }
+    studio = Operator::Runs.test_files.select { |path| path.start_with?("STUDIO/") }
 
     assert_operator studio.size, :>, 15, "STUDIO's suite is not being read"
-    assert_includes Pub4::Runs.who_runs("STUDIO/test/test_studio_gate.rb"), "STUDIO/Rakefile"
-    assert_includes Pub4::Runs.who_runs("STUDIO/test/test_dilla_radio_bergen_study.rb"), "STUDIO/Rakefile"
+    assert_includes Operator::Runs.who_runs("STUDIO/test/test_studio_gate.rb"), "STUDIO/Rakefile"
+    assert_includes Operator::Runs.who_runs("STUDIO/test/test_dilla_radio_bergen_study.rb"), "STUDIO/Rakefile"
   end
 
   # What makes a file a test is the directory, not the name — three source files
@@ -63,9 +63,9 @@ class TestRuns < Minitest::Test
   # directions: a lint named test_naming is not a test, and a real test a
   # runner's glob does not reach is still unreached.
   def test_the_directory_is_what_makes_a_file_a_test
-    refute_includes Pub4::Runs.test_files, "MASTER/tools/test_naming.rb"
-    refute_includes Pub4::Runs.test_files, "MASTER/lib/review/scan/self_test.rb"
-    assert_empty Pub4::Runs.who_runs("MASTER/test/deep/nested/test_orphan.rb"),
+    refute_includes Operator::Runs.test_files, "MASTER/tools/test_naming.rb"
+    refute_includes Operator::Runs.test_files, "MASTER/lib/review/scan/self_test.rb"
+    assert_empty Operator::Runs.who_runs("MASTER/test/deep/nested/test_orphan.rb"),
                  "the Rakefile globs one level, so a nested test would go unrun"
   end
 end

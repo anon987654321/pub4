@@ -26,14 +26,14 @@ class TestDataReachAttribution < Minitest::Test
       path = File.join(dir, "broken.yml")
       File.write(path, "keys: [unclosed\n")
 
-      _, err = capture_io { assert_nil Pub4::DataReach.document(path) }
+      _, err = capture_io { assert_nil Operator::DataReach.document(path) }
 
       assert_match(/broken\.yml does not parse/, err)
       assert_match(/pass this census unread/, err)
     end
   end
 
-  Tool = Pub4::DataReach
+  Tool = Operator::DataReach
 
   # The tool reads CEILING as a frozen constant, so the seam is the constant
   # itself. Swapped and restored rather than redefined, to avoid a warning

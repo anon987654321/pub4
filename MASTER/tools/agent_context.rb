@@ -15,7 +15,7 @@
 # go out — the binding half: the conduct rules that govern how to work, what the
 # gate can actually block on, and how much of the law is unmeasured right now.
 
-module Pub4
+module Operator
   module AgentContext
     MASTER_DIR = File.expand_path("..", __dir__)
     BLOCKING = %i[veto critical error].freeze
@@ -91,4 +91,4 @@ module Pub4
   end
 end
 
-puts Pub4::AgentContext.render(ARGV.first) if $PROGRAM_NAME == __FILE__
+puts Operator::AgentContext.render(ARGV.first) if $PROGRAM_NAME == __FILE__

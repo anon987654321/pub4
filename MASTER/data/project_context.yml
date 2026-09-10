@@ -160,7 +160,7 @@ entries:
     in pub4 directories for potential regressions or style violations. 2) Execute
     linting and test suites (e.g., rubocop, minitest) focusing on pub4 files to catch
     any deviations from constitutional rules such as abbreviation use in identifiers
-    (e.g., Pub4, AkmdMasteringChain) or path names (e.g., pub4, akmd). 3) Verify that
+    (e.g., Operator, AkmdMasteringChain) or path names (e.g., operator, akmd). 3) Verify that
     any new files added to pub4 follow Flat Hierarchy naming (lowercase snake_case,
     no abbreviations, concrete nouns/verbs). 4) Check for god classes or methods exceeding
     size limits (e.g., >200 lines, >6 methods) in pub4 classes. 5) Ensure no hardcoded

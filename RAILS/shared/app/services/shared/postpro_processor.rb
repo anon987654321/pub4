@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "pub4/deploy_paths"
+require "operator/deploy_paths"
 require "rbconfig"
 require "fileutils"
 
@@ -12,7 +12,7 @@ module Shared
     module_function
 
     def script
-      Pub4::DeployPaths.postpro_script
+      Operator::DeployPaths.postpro_script
     end
 
     def available?

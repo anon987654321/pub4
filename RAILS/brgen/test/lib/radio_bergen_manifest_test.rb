@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "pub4/deploy_paths"
+require "operator/deploy_paths"
 
 class RadioBergenManifestTest < ActiveSupport::TestCase
   test "loads youtube tracks from manifest" do
@@ -16,7 +16,7 @@ class RadioBergenManifestTest < ActiveSupport::TestCase
   test "archaeology lines reference pub4 index.html dig" do
     lines = Brgen::RadioBergenManifest.archaeology_lines
 
-    assert_includes lines.join("\n"), "pub4/index.html"
+    assert_includes lines.join("\n"), "operator/index.html"
     assert_includes lines.join("\n"), "monolithic index.html"
     assert_includes lines.join("\n"), "config/radio_bergen/tracks.yml"
   end
@@ -25,7 +25,7 @@ class RadioBergenManifestTest < ActiveSupport::TestCase
   # is a claim about this repo. They named studio/radio-bergen/ for weeks after
   # 41b20306d deleted it, and nothing failed.
   test "every repo path in the archaeology lines exists" do
-    root = Pathname.new(Pub4::DeployPaths.repo_root)
+    root = Pathname.new(Operator::DeployPaths.repo_root)
     paths = Brgen::RadioBergenManifest.archaeology_lines.join("\n")
                                       .scan(%r{\b(?:RAILS|STUDIO|MASTER|OPENBSD)/[\w./-]+\.\w+})
 

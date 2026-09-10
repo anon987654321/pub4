@@ -48,7 +48,7 @@
 require "yaml"
 require "json"
 
-module Pub4
+module Operator
   module AutofixReach
     MASTER = File.expand_path("..", __dir__)
     CEILING = File.join(MASTER, "data", "autofix_reach.yml")
@@ -163,6 +163,6 @@ module Pub4
 end
 
 if $PROGRAM_NAME == __FILE__
-  ok = Pub4::AutofixReach.run(json: ARGV.include?("--json"))
+  ok = Operator::AutofixReach.run(json: ARGV.include?("--json"))
   exit(ok ? 0 : 1)
 end

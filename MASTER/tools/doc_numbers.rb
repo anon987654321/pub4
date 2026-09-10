@@ -17,7 +17,7 @@
 require "json"
 require "yaml"
 
-module Pub4
+module Operator
   class DocNumbers
     ROOT = File.expand_path("../..", __dir__)
     TOKENS = File.join(ROOT, "RAILS/shared/design_tokens.yml")
@@ -94,7 +94,7 @@ module Pub4
 end
 
 if $PROGRAM_NAME == __FILE__
-  report = Pub4::DocNumbers.run
+  report = Operator::DocNumbers.run
   count = report[:findings].values.sum(&:size)
 
   if ARGV.include?("--json")

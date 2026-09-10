@@ -14,7 +14,7 @@ require "minitest/autorun"
 require_relative "../tools/instruments"
 
 class TestInstruments < Minitest::Test
-  def self.report = @report ||= Pub4::Instruments.run
+  def self.report = @report ||= Operator::Instruments.run
 
   def setup
     @report = self.class.report
@@ -39,7 +39,7 @@ class TestInstruments < Minitest::Test
   # wrong for real. Four methods, none of them long.
   def test_an_endless_def_is_not_a_long_method
     source = File.read(File.expand_path("../tools/fixtures/endless_defs.rb", __dir__))
-    measured = Pub4::Instruments.measured(source)
+    measured = Operator::Instruments.measured(source)
 
     assert_equal 4, measured["public_methods"]
     assert_equal 1, measured["longest_method"],
@@ -51,12 +51,12 @@ class TestInstruments < Minitest::Test
   def test_comments_do_not_count_as_length
     source = File.read(File.expand_path("../tools/fixtures/documented_method.rb", __dir__))
 
-    assert_equal 2, Pub4::Instruments.measured(source)["longest_method"]
+    assert_equal 2, Operator::Instruments.measured(source)["longest_method"]
   end
 
   # A fixture with no declared answers passes silently, which is the failure
   # this whole file exists to prevent.
   def test_a_fixture_that_declares_nothing_is_a_finding
-    assert_empty Pub4::Instruments.declared("# frozen_string_literal: true\nclass A; end\n")
+    assert_empty Operator::Instruments.declared("# frozen_string_literal: true\nclass A; end\n")
   end
 end

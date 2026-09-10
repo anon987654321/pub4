@@ -3,7 +3,7 @@
 require "json"
 require "net/http"
 require "uri"
-require "pub4/deploy_paths"
+require "operator/deploy_paths"
 
 module Shared
   # HTTP client for MASTER's authenticated bridge (TurnRouter / IngressRunner).
@@ -21,7 +21,7 @@ module Shared
     end
 
     def self.base_url
-      Pub4::DeployPaths.master_bridge_base.to_s.sub(%r{/\z}, "")
+      Operator::DeployPaths.master_bridge_base.to_s.sub(%r{/\z}, "")
     end
 
     def initialize(base_url: self.class.base_url, token: self.class.token, timeout: DEFAULT_TIMEOUT)

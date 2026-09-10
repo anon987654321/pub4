@@ -14,7 +14,7 @@
 # The second row arrived 2026-09-06. The first had been labelled "what our own
 # rules find in our own trees" while measuring the law alone, and nothing
 # anywhere counted what the registry finds: rule_audit runs those rules over a
-# sixth of the tree and measures blindness rather than findings, and `bin/pub4
+# sixth of the tree and measures blindness rather than findings, and `bin/operator
 # gate` runs them over all four trees on every pass and records nothing.
 #
 # Lexical only, on purpose. The full gate runs /scan with the semantic pass and
@@ -30,7 +30,7 @@
 require "English"
 require "json"
 
-module Pub4
+module Operator
   module SelfFindings
     MASTER_DIR = File.expand_path("..", __dir__)
     ROOT = File.expand_path("..", MASTER_DIR)
@@ -406,6 +406,6 @@ end
 require "yaml"
 
 if $PROGRAM_NAME == __FILE__
-  ok = Pub4::SelfFindings.run(json: ARGV.include?("--json"), ratchet: ARGV.include?("--ratchet"))
+  ok = Operator::SelfFindings.run(json: ARGV.include?("--json"), ratchet: ARGV.include?("--ratchet"))
   exit(ok ? 0 : 1)
 end

@@ -5,9 +5,9 @@ require "open3"
 
 # Every path an entry-point script resolves at load time must exist on disk.
 #
-# This gate exists because `MASTER/bin/pub4` was dead on main for six days and nothing
-# reported it. `5203c698e` deleted `lib/pub4/status_report.rb` as an orphan while
-# `MASTER/bin/pub4` required it, so every subcommand -- including the `MASTER/bin/pub4
+# This gate exists because `MASTER/bin/operator` was dead on main for six days and nothing
+# reported it. `5203c698e` deleted `lib/operator/status_report.rb` as an orphan while
+# `MASTER/bin/operator` required it, so every subcommand -- including the `MASTER/bin/operator
 # status` CLAUDE.md documents as the repo-level check -- died with a LoadError
 # before it parsed argv.
 #
@@ -15,10 +15,10 @@ require "open3"
 # both blindnesses are reproducible:
 #
 #   1. Extension filter. The sweep matched each file's innermost constant with a
-#      grep over *.rb, *.yml and *.md. `MASTER/bin/pub4` has no extension, so its
-#      `Pub4::StatusReport` call was invisible. Re-running that grep today still
+#      grep over *.rb, *.yml and *.md. `MASTER/bin/operator` has no extension, so its
+#      `Operator::StatusReport` call was invisible. Re-running that grep today still
 #      returns zero callers for a constant that plainly has one.
-#   2. Scope. The sweep ran from MASTER/, and `bin/pub4` puts MASTER/lib on the
+#   2. Scope. The sweep ran from MASTER/, and `bin/operator` puts MASTER/lib on the
 #      load path itself rather than being required from anywhere the sweep read.
 #
 # So this checks the paths rather than the constants: it does not care how a
@@ -166,10 +166,10 @@ class TestEntrypointRequires < Minitest::Test
   # The specific regression, named, so a future orphan sweep that deletes it
   # again fails with the reason rather than a generic missing-file line.
   def test_bin_pub4_status_report_is_present
-    assert_path_exists File.join(LIB, "pub4", "status_report.rb"),
-                       "MASTER/bin/pub4 requires pub4/status_report and calls Pub4::StatusReport at :56. " \
+    assert_path_exists File.join(LIB, "operator", "status_report.rb"),
+                       "MASTER/bin/operator requires pub4/status_report and calls Operator::StatusReport at :56. " \
                        "It is not an orphan. A constant grep filtered by file extension cannot see " \
-                       "the caller, because MASTER/bin/pub4 has no extension."
+                       "the caller, because MASTER/bin/operator has no extension."
   end
 
   private

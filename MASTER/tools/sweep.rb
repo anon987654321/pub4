@@ -12,7 +12,7 @@
 # What already existed: eight instruments that each answer one such question for
 # one population — dup_census, data_reach, reader_singularity, rule_reach,
 # namespace_ratchet, design_baseline, loc_budget, cohesion. Each with its own
-# invocation, its own ceiling file, and no shared vocabulary. `MASTER/bin/pub4 measure`
+# invocation, its own ceiling file, and no shared vocabulary. `MASTER/bin/operator measure`
 # aggregates the ratchets; nothing aggregates the *questions*.
 #
 # This does, per tree, in dmesg form, because a sweep that prints a wall of prose
@@ -31,7 +31,7 @@ require "json"
 require "yaml"
 require "open3"
 
-module Pub4
+module Operator
   module Sweep
     ROOT = File.expand_path("../..", __dir__)
     MASTER = File.join(ROOT, "MASTER")
@@ -165,9 +165,9 @@ end
 
 if $PROGRAM_NAME == __FILE__
   json = ARGV.include?("--json")
-  trees = ARGV.include?("--all") ? Pub4::Sweep::TREES : ARGV.reject { |a| a.start_with?("--") }
+  trees = ARGV.include?("--all") ? Operator::Sweep::TREES : ARGV.reject { |a| a.start_with?("--") }
   trees = %w[MASTER] if trees.empty?
-  bad = trees - Pub4::Sweep::TREES
+  bad = trees - Operator::Sweep::TREES
   abort "sweep: unknown tree(s): #{bad.join(', ')}" if bad.any?
-  exit Pub4::Sweep.run(trees, json:)
+  exit Operator::Sweep.run(trees, json:)
 end

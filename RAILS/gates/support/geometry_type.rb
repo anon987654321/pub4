@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "yaml"
-require_relative "../../shared/lib/pub4/master_design"
+require_relative "../../shared/lib/operator/master_design"
 
 module Deploy
   # Worn-type contracts. rules.yml design_rules.worn_type is the law; this module
@@ -38,7 +38,7 @@ module Deploy
     end
 
     def rules
-      @rules ||= Pub4::MasterDesign.blocks(RULES)
+      @rules ||= Operator::MasterDesign.blocks(RULES)
     end
 
     def worn

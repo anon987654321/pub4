@@ -28,7 +28,7 @@
 require "json"
 require "yaml"
 
-module Pub4
+module Operator
   class ReaderSingularity
     ROOT = File.expand_path("../..", __dir__)
     MASTER = File.join(ROOT, "MASTER")
@@ -113,7 +113,7 @@ end
 
 if $PROGRAM_NAME == __FILE__
   if ARGV.include?("--ratchet")
-    lows, refused = Pub4::ReaderSingularity.ratchet!
+    lows, refused = Operator::ReaderSingularity.ratchet!
     puts "reader_singularity: recorded #{lows.size} multi-reader file(s), #{lows.values.sum} sites"
     # Named, not swallowed: a refusal is the ratchet holding, and the file it
     # held for is the one that just gained a reader.
@@ -123,7 +123,7 @@ if $PROGRAM_NAME == __FILE__
     exit 0
   end
 
-  report = Pub4::ReaderSingularity.run
+  report = Operator::ReaderSingularity.run
 
   if ARGV.include?("--json")
     puts JSON.pretty_generate(report)

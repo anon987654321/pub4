@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "pub4/readers"
+require "operator/readers"
 require "tmpdir"
 require "fileutils"
 
-# Pub4::Readers exists because "its only reader is X" has been wrong four times
+# Operator::Readers exists because "its only reader is X" has been wrong four times
 # in this repo, and each time the grep behind that sentence could not see the
 # one reference that mattered. So the cases here are those four, reproduced as
 # fixtures rather than described — a tool built to stop a specific mistake has
@@ -25,7 +25,7 @@ class TestReaders < Minitest::Test
     path
   end
 
-  def find(root, target) = Pub4::Readers.find(root:, target:)
+  def find(root, target) = Operator::Readers.find(root:, target:)
 
   def hard(hits) = hits.reject { |h| h.kind == :mention }
 

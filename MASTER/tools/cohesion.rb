@@ -41,7 +41,7 @@
 require "json"
 require "yaml"
 
-module Pub4
+module Operator
   module Cohesion
 MIN_FAMILY = 3
 
@@ -449,10 +449,10 @@ end
 if $PROGRAM_NAME == __FILE__
   if ARGV.include?("--census")
     tree = ARGV.grep(/\A--tree=/).first&.split("=", 2)&.last
-    exit Pub4::Cohesion.run_census(ratchet: ARGV.include?("--ratchet"), list: ARGV.include?("--list"), tree:)
+    exit Operator::Cohesion.run_census(ratchet: ARGV.include?("--ratchet"), list: ARGV.include?("--list"), tree:)
   end
 
   target = ARGV.reject { |a| a.start_with?("--") }.first
   abort "usage: cohesion.rb <dir> | cohesion.rb --census [--list|--ratchet]" unless target
-  exit Pub4::Cohesion.run(target, json: ARGV.include?("--json"))
+  exit Operator::Cohesion.run(target, json: ARGV.include?("--json"))
 end

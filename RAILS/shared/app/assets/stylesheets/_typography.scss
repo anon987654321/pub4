@@ -8,7 +8,7 @@
 //   • Absolute --line-height: 20px on dialect :root stays until a measured
 //     screenshot pass (brgen 18px root would open chrome 20→22.5px).
 //
-// Enforced by: Pub4::ScaleLint (RAILS), MASTER LINE_HEIGHT_ON_SCALE (surface_rules).
+// Enforced by: Operator::ScaleLint (RAILS), MASTER LINE_HEIGHT_ON_SCALE (surface_rules).
 
 :root {
   --measure: 66ch;

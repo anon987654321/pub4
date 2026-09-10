@@ -2,7 +2,7 @@
 @use "vertical_dating_intro";
 @use "vertical_dating_discover";
 
-// Measured by Pub4::CssCoverageLint 2026-08-11: match overlay and profile form
+// Measured by Operator::CssCoverageLint 2026-08-11: match overlay and profile form
 // carried classes nothing defined. Token-only.
 .match-overlay-card {
   display: flex;

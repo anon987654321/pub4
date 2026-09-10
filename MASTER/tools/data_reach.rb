@@ -20,7 +20,7 @@
 
 require "yaml"
 
-module Pub4
+module Operator
   module DataReach
     MASTER_DIR = File.expand_path("..", __dir__)
     CEILING = File.join(MASTER_DIR, "data", "data_reach.yml")
@@ -193,4 +193,4 @@ module Pub4
   end
 end
 
-exit Pub4::DataReach.run(ratchet: ARGV.include?("--ratchet")) if $PROGRAM_NAME == __FILE__
+exit Operator::DataReach.run(ratchet: ARGV.include?("--ratchet")) if $PROGRAM_NAME == __FILE__

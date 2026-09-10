@@ -18,7 +18,7 @@
 require "yaml"
 require "json"
 
-module Pub4
+module Operator
   module RuleReach
     MASTER_DIR = File.expand_path("..", __dir__)
     CEILING = File.join(MASTER_DIR, "data", "rules.yml")
@@ -100,5 +100,5 @@ puts "rule_reach: raise its severity so the prompt keeps it, give it a detect_le
 end
 
 if $PROGRAM_NAME == __FILE__
-  exit Pub4::RuleReach.run(ratchet: ARGV.include?("--ratchet"), json: ARGV.include?("--json"))
+  exit Operator::RuleReach.run(ratchet: ARGV.include?("--ratchet"), json: ARGV.include?("--json"))
 end

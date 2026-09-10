@@ -14,7 +14,7 @@
 #   sh OPENBSD/dev/agent_worktree.sh claude
 #   cd ../pub4-claude        # work here
 #   git push origin agent/claude   # then PR / fast-forward to main
-#   bin/pub4 worktree finish # rebase onto origin/main, push the branch, do not merge main
+#   bin/operator worktree finish # rebase onto origin/main, push the branch, do not merge main
 #
 # Cleanup:  git worktree remove ../pub4-<agent>
 set -eu

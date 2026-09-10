@@ -84,7 +84,7 @@ rc_pre() {
     (cd /home/dev/pub4/MASTER && BUNDLE_GEMFILE=Gemfile bundle34 install) 2>/dev/null || true
   pkill -f "falcon.*${PORT}" 2>/dev/null
   pkill -f "ruby34.*${PORT}" 2>/dev/null
-  pkill -f "pub4/MASTER/web" 2>/dev/null
+  pkill -f "operator/MASTER/web" 2>/dev/null
   pkill -f "/home/dev/pub4/MASTER/bin/tts-worker" 2>/dev/null
   rm -f /home/dev/pub4/MASTER/.master/tts.sock /home/dev/pub4/MASTER/.master/tts-0.sock /home/dev/pub4/MASTER/.master/tts-1.sock 2>/dev/null || true
   # Propshaft must not re-digest public/assets/ (nested assets/assets wedges boot).

@@ -18,7 +18,7 @@
 # the kernel releases it when the child exits however it exits.
 #
 # Non-blocking. If the lock is held it names the holder and exits 1, matching
-# Pub4::CiGuard, because the point of a serial gate on a one-vCPU box is to
+# Operator::CiGuard, because the point of a serial gate on a one-vCPU box is to
 # refuse rather than to queue up behind whatever is already busy.
 
 LOCK_DIR = "/var/db/pub4"

@@ -22,7 +22,7 @@
 require "json"
 require_relative "../lib/utf8"
 
-module Pub4
+module Operator
   module OpenbsdReach
     DEFAULT_ROOT = File.expand_path("..", __dir__)
 
@@ -150,4 +150,4 @@ module Pub4
   end
 end
 
-exit Pub4::OpenbsdReach.run(json: ARGV.include?("--json")) if $PROGRAM_NAME == __FILE__
+exit Operator::OpenbsdReach.run(json: ARGV.include?("--json")) if $PROGRAM_NAME == __FILE__

@@ -2,7 +2,7 @@
 
 # Run using bin/ci — Rails 8.1 local CI (pub4 family apps)
 require "rbconfig"
-require_relative "../lib/pub4/ci_guard"
+require_relative "../lib/operator/ci_guard"
 
 ENV["GIT_CEILING_DIRECTORIES"] ||= "/"
 # Refresh by default. This was "0", and the step below only passes --update
@@ -17,7 +17,7 @@ ENV["PUB4_RAILS_ROOT"] ||= monorepo_rails if File.directory?(File.join(monorepo_
 
 vps_host = ENV["PUB4_CI_GUARD"] == "1" || File.exist?("/var/db/pub4_vps") || File.exist?("/etc/relayd.conf")
 
-Pub4::CiGuard.run! do
+Operator::CiGuard.run! do
   CI.run do
     # On vm23 the tree is already /home/<app>/app. bin/setup's db:prepare
     # loads development configs against that tree and dies (nil configurations).
@@ -48,8 +48,8 @@ Pub4::CiGuard.run! do
     else
       step "Styles: pub4 CSS", "echo 'tools/build_all_css.rb not found in any known location' >&2; exit 1"
     end
-    pub4_lib = ENV["PUB4_RAILS_ROOT"] && File.join(ENV["PUB4_RAILS_ROOT"], "shared/lib/pub4")
-    pub4_lib ||= File.expand_path("../lib/pub4", __dir__)
+    pub4_lib = ENV["PUB4_RAILS_ROOT"] && File.join(ENV["PUB4_RAILS_ROOT"], "shared/lib/operator")
+    pub4_lib ||= File.expand_path("../lib/operator", __dir__)
     %w[
       rhythm_lint
       fallback_drift_lint

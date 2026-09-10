@@ -17,7 +17,7 @@ require "json"
 require "psych"
 require_relative "../lib/io/catalog_index"
 
-module Pub4
+module Operator
   module ModelCatalogCheck
     MODELS_PATH = File.expand_path("../data/models.yml", __dir__)
     # A bare id (deepseek-chat, gemini-2.5-pro) addresses a native API; only
@@ -123,4 +123,4 @@ module Pub4
   end
 end
 
-exit Pub4::ModelCatalogCheck.run(json: ARGV.include?("--json")) if $PROGRAM_NAME == __FILE__
+exit Operator::ModelCatalogCheck.run(json: ARGV.include?("--json")) if $PROGRAM_NAME == __FILE__

@@ -42,7 +42,7 @@
 
 require "json"
 
-module Pub4
+module Operator
   module RuleAudit
     MASTER = File.expand_path("..", __dir__)
     ROOT = File.expand_path("..", MASTER)
@@ -218,6 +218,6 @@ module Pub4
 end
 
 if $PROGRAM_NAME == __FILE__
-  ok = Pub4::RuleAudit.run(json: ARGV.include?("--json"))
+  ok = Operator::RuleAudit.run(json: ARGV.include?("--json"))
   exit(ok ? 0 : 1)
 end

@@ -25,7 +25,7 @@ class TestRuleCatalogue < Minitest::Test
     "rules" => [
       { "id" => "EIGHT_PX_RHYTHM", "tier" => "design", "severity" => "warning" },
       { "id" => "AUTOMATED_CSS_ANALYSIS", "tier" => "design", "severity" => "warning",
-        "config" => { "checks" => [{ "id" => "eight_px_rhythm", "enforce" => ["Pub4::ScaleLint"] },
+        "config" => { "checks" => [{ "id" => "eight_px_rhythm", "enforce" => ["Operator::ScaleLint"] },
                                    { "id" => "touch_target", "enforce" => ["TOUCH_TARGET_MIN"] }] } },
     ],
     "learned_smells" => [
@@ -37,18 +37,18 @@ class TestRuleCatalogue < Minitest::Test
   # leaves one singleton copy, and removing it takes the real reader with it — the
   # live-catalogue test below then errors on whichever seed runs it second.
   def with_body(body)
-    original = Pub4::RuleHygiene.method(:master_rules)
-    Pub4::RuleHygiene.define_singleton_method(:master_rules) { body }
+    original = Operator::RuleHygiene.method(:master_rules)
+    Operator::RuleHygiene.define_singleton_method(:master_rules) { body }
     yield
   ensure
-    Pub4::RuleHygiene.define_singleton_method(:master_rules, original)
+    Operator::RuleHygiene.define_singleton_method(:master_rules, original)
   end
 
   def test_a_check_id_inside_a_rules_config_is_not_a_rule
     with_body(BODY) do
-      assert_empty Pub4::RuleHygiene.missing_metadata,
+      assert_empty Operator::RuleHygiene.missing_metadata,
                    "config check names carry no tier because they are not rules"
-      assert_empty Pub4::RuleHygiene.id_case_collisions,
+      assert_empty Operator::RuleHygiene.id_case_collisions,
                    "eight_px_rhythm is a check name under EIGHT_PX_RHYTHM's neighbour, not a second id"
     end
   end
@@ -60,22 +60,22 @@ class TestRuleCatalogue < Minitest::Test
     body = { "rules" => [{ "id" => "BARE_RESCUE", "tier" => "safety", "severity" => "error" }],
              "learned_smells" => [{ "id" => "bare_rescue", "pattern" => "rescue" }] }
     with_body(body) do
-      assert_equal [%w[BARE_RESCUE bare_rescue]], Pub4::RuleHygiene.id_case_collisions
-      assert_equal ["bare_rescue"], Pub4::RuleHygiene.missing_metadata
+      assert_equal [%w[BARE_RESCUE bare_rescue]], Operator::RuleHygiene.id_case_collisions
+      assert_equal ["bare_rescue"], Operator::RuleHygiene.missing_metadata
     end
   end
 
   def test_a_rule_declaring_only_a_tier_has_metadata
     body = { "rules" => [{ "id" => "A", "tier" => "design" }, { "id" => "B", "severity" => "info" },
                          { "id" => "C" }] }
-    with_body(body) { assert_equal ["C"], Pub4::RuleHygiene.missing_metadata }
+    with_body(body) { assert_equal ["C"], Operator::RuleHygiene.missing_metadata }
   end
 
   # A law double: the four things the two checks below read off one.
   Law = Struct.new(:id, :detect, :fix, :severity, keyword_init: true)
 
   def with_populations(laws: {}, registry: {})
-    hygiene = Pub4::RuleHygiene
+    hygiene = Operator::RuleHygiene
     originals = { loaded_laws: hygiene.method(:loaded_laws), dsl_ids: hygiene.method(:dsl_ids),
                   dsl_severities: hygiene.method(:dsl_severities) }
     hygiene.define_singleton_method(:loaded_laws) { laws }
@@ -97,7 +97,7 @@ class TestRuleCatalogue < Minitest::Test
                            "fix" => "Catch it.", "detect_semantic" => "Does this swallow errors?" }] }
     laws = { FAIL_VISIBLY: Law.new(id: :FAIL_VISIBLY, detect: ->(_) { true }, fix: "Catch it.", severity: :error) }
     with_body(body) do
-      with_populations(laws:) { assert_empty Pub4::RuleHygiene.cross_population_duplicates }
+      with_populations(laws:) { assert_empty Operator::RuleHygiene.cross_population_duplicates }
     end
   end
 
@@ -111,7 +111,7 @@ class TestRuleCatalogue < Minitest::Test
     with_body(body) do
       with_populations(laws:) do
         assert_equal [{ rule: "BARE_RESCUE", homes: ["law/", "rules.yml"] }],
-                     Pub4::RuleHygiene.cross_population_duplicates
+                     Operator::RuleHygiene.cross_population_duplicates
       end
     end
   end
@@ -127,7 +127,7 @@ class TestRuleCatalogue < Minitest::Test
              LOUDER: Law.new(id: :LOUDER, detect: ->(_) { true }, fix: "Same words.", severity: :warn) }
     with_body(body) do
       with_populations(laws:) do
-        conflicts = Pub4::RuleHygiene.statement_conflicts
+        conflicts = Operator::RuleHygiene.statement_conflicts
 
         assert_equal %w[DRIFTED LOUDER], conflicts.map { |c| c[:rule] }
         assert_equal ["fix"], conflicts.first[:reasons]
@@ -141,7 +141,7 @@ class TestRuleCatalogue < Minitest::Test
   def test_warn_and_warning_are_one_severity
     body = { "rules" => [{ "id" => "SAME", "severity" => "warning", "fix" => "One." }] }
     laws = { SAME: Law.new(id: :SAME, detect: ->(_) { true }, fix: "One.", severity: :warn) }
-    with_body(body) { with_populations(laws:) { assert_empty Pub4::RuleHygiene.statement_conflicts } }
+    with_body(body) { with_populations(laws:) { assert_empty Operator::RuleHygiene.statement_conflicts } }
   end
 
   # An alias IS a retired id, so one naming nothing is correct and one naming a
@@ -151,7 +151,7 @@ class TestRuleCatalogue < Minitest::Test
     body = { "rules" => [{ "id" => "DRY", "tier" => "principle", "aliases" => %w[duplicate_code retired_id] },
                          { "id" => "duplicate_code", "tier" => "smell" }] }
     with_body(body) do
-      reported = Pub4::RuleHygiene.alias_shadows_live_rule
+      reported = Operator::RuleHygiene.alias_shadows_live_rule
       assert_equal [{ rule: "DRY", alias_name: "duplicate_code" }], reported
     end
   end
@@ -159,7 +159,7 @@ class TestRuleCatalogue < Minitest::Test
   # The live catalogue, as an invariant rather than as today's numbers: these
   # three are at zero and zero is the floor recorded in rule_ratchets.hygiene.
   def test_the_live_catalogue_is_clean
-    report = Pub4::RuleHygiene.report
+    report = Operator::RuleHygiene.report
     assert_empty report[:id_case_collisions]
     assert_empty report[:alias_shadows_live_rule]
     assert_empty report[:missing_metadata]
@@ -174,7 +174,7 @@ class TestRuleCatalogue < Minitest::Test
 
   def test_timeout = 120
 
-  def ids(rules) = Pub4::RuleReach.mechanical(rules).map { |r| r["id"] }
+  def ids(rules) = Operator::RuleReach.mechanical(rules).map { |r| r["id"] }
 
   # FAIL_VISIBLY's detector lives in law/universal.rb and its rules.yml row
   # carries no detect_lexical — the shape the old count called undetectable.
@@ -204,7 +204,7 @@ class TestRuleCatalogue < Minitest::Test
   # green: raise a severity, add a detector or say `autofix: false` and this
   # passes. It cannot be satisfied by a rule going quiet.
   def test_no_autofix_claim_is_unreportable
-    stranded = Pub4::AutofixReach.bare_true.reject { |row| row[:detected] }
+    stranded = Operator::AutofixReach.bare_true.reject { |row| row[:detected] }
 
     assert_empty stranded.map { |row| row[:rule] },
                  "these claim a mechanical fix and nothing ever reports them, so the fix " \
@@ -212,6 +212,6 @@ class TestRuleCatalogue < Minitest::Test
   end
 
   def test_no_named_transform_is_dangling
-    assert_empty Pub4::AutofixReach.dangling.map { |d| "#{d[:rule]} -> #{d[:transform]}" }
+    assert_empty Operator::AutofixReach.dangling.map { |d| "#{d[:rule]} -> #{d[:transform]}" }
   end
 end

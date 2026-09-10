@@ -88,10 +88,10 @@ end
 def subprocess?(row) = row.key?("script")
 
 def ruby_cmd
-  ruby_runner = File.join(REPO_ROOT, "MASTER", "lib", "pub4", "ruby_runner.rb")
+  ruby_runner = File.join(REPO_ROOT, "MASTER", "lib", "operator", "ruby_runner.rb")
   if File.file?(ruby_runner)
     require ruby_runner
-    Pub4::RubyRunner.gate_ruby
+    Operator::RubyRunner.gate_ruby
   else
     ENV.fetch("RUBY_CMD", "ruby").split
   end

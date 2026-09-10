@@ -19,7 +19,7 @@
 
 require "json"
 
-module Pub4
+module Operator
   class Runs
     ROOT = File.expand_path("../..", __dir__)
 
@@ -136,12 +136,12 @@ end
 if $PROGRAM_NAME == __FILE__
   if (index = ARGV.index("--who"))
     target = ARGV[index + 1] or abort "usage: runs.rb --who <path>"
-    runners = Pub4::Runs.who_runs(target)
+    runners = Operator::Runs.who_runs(target)
     puts runners.empty? ? "nothing runs #{target}" : runners.join("\n")
     exit(runners.empty? ? 1 : 0)
   end
 
-  report = Pub4::Runs.run
+  report = Operator::Runs.run
 
   if ARGV.include?("--json")
     puts JSON.pretty_generate(report)

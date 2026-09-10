@@ -2,17 +2,17 @@
 # frozen_string_literal: true
 
 require "rbconfig"
-require_relative "../../MASTER/lib/pub4/check_runner"
-require_relative "../../MASTER/lib/pub4/environment"
+require_relative "../../MASTER/lib/operator/check_runner"
+require_relative "../../MASTER/lib/operator/environment"
 
 ROOT = File.expand_path("../..", __dir__)
 RUBY = RbConfig.ruby
 STEP_TIMEOUT = Integer(ENV.fetch("DEPLOY_CHECK_TIMEOUT", "240"))
-runner = Pub4::CheckRunner.new(prefix: "deploy-openbsd", root: ROOT, timeout: STEP_TIMEOUT)
+runner = Operator::CheckRunner.new(prefix: "deploy-openbsd", root: ROOT, timeout: STEP_TIMEOUT)
 
 # dns_zones queries our own nameserver and reports skipped_live when it cannot
 # reach it. On the box that serves the zone, unreachable is the finding.
-LIVE_ENV = Pub4::Environment.on_vps? ? { "GATE_REQUIRE_LIVE" => "1" } : {}
+LIVE_ENV = Operator::Environment.on_vps? ? { "GATE_REQUIRE_LIVE" => "1" } : {}
 
 failures = []
 failures << "identity" unless runner.run("identity", RUBY, "OPENBSD/verify_deploy_identity.rb")

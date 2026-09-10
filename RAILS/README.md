@@ -118,7 +118,7 @@ ci && npm run build:pwa` from this directory. `/offline` renders the shared
 partial, and the styled 404, 422 and 500 pages in `shared/public/` are copied
 into each app's `public/` at deploy.
 
-Rails resolves MASTER's media tools through `Pub4::DeployPaths`, which handles
+Rails resolves MASTER's media tools through `Operator::DeployPaths`, which handles
 both the source checkout and the VPS copy-tree; never compute those paths from
 `Rails.root`. Newsletter hero rendering can use the same postpro and repligen
 pair MASTER uses. Provider tokens belong in the app's `/etc/<app>.env` and not in

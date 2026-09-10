@@ -17,7 +17,7 @@ require_relative "../tools/reach"
 # wants a starter, and all four *_jobs workers plus irc_gateway deliberately have
 # none and say so in their own headers.
 class ReachTest < Minitest::Test
-  R = Pub4::OpenbsdReach
+  R = Operator::OpenbsdReach
 
   def setup
     @tmp = Dir.mktmpdir("reach")

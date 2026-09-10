@@ -3,14 +3,14 @@
 require "minitest/autorun"
 require "yaml"
 require "tempfile"
-require_relative "../shared/lib/pub4/breakpoint_lint"
+require_relative "../shared/lib/operator/breakpoint_lint"
 
 # TODO.md, rails_no_breakpoint_token: colour, space, motion,
 # elevation and the dialect maps are single-sourced; the viewport scale was not, so
 # breakpoints were written by hand and drifted into 13 distinct widths across 58
 # media queries.
 class BreakpointLintTest < Minitest::Test
-  L = Pub4::BreakpointLint
+  L = Operator::BreakpointLint
 
   def test_no_kind_exceeds_its_baseline
     findings = L.scan
@@ -30,10 +30,10 @@ class BreakpointLintTest < Minitest::Test
   # _zen_shell as unrecognised widths -- which is the shape that gets correct
   # code changed to satisfy a check.
   def test_a_container_query_is_not_a_viewport_bound
-    assert_match Pub4::BreakpointLint::CONTAINER, "@container grid (min-width: 400px) {"
-    refute_match Pub4::BreakpointLint::CONTAINER, "@media (min-width: 768px) {"
+    assert_match Operator::BreakpointLint::CONTAINER, "@container grid (min-width: 400px) {"
+    refute_match Operator::BreakpointLint::CONTAINER, "@media (min-width: 768px) {"
 
-    container_widths = Pub4::BreakpointLint.bounds.select { |_, _, _, px, _| [400, 600].include?(px) }
+    container_widths = Operator::BreakpointLint.bounds.select { |_, _, _, px, _| [400, 600].include?(px) }
     assert_empty container_widths.select { |file, _, _, _, _| file.include?("_zen_shell") },
                  "_zen_shell's container queries are being counted as viewport breakpoints again"
   end
@@ -41,8 +41,8 @@ class BreakpointLintTest < Minitest::Test
   # The other direction: the filter must not swallow a real media query that
   # happens to sit near a container one.
   def test_real_media_queries_are_still_counted
-    refute_empty Pub4::BreakpointLint.bounds, "the bounds scanner returns nothing at all"
-    assert Pub4::BreakpointLint.bounds.any? { |_, _, bound, px, _| bound == "min" && px == 768 },
+    refute_empty Operator::BreakpointLint.bounds, "the bounds scanner returns nothing at all"
+    assert Operator::BreakpointLint.bounds.any? { |_, _, bound, px, _| bound == "min" && px == 768 },
            "the family's tablet edge is not being seen"
   end
 

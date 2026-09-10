@@ -322,7 +322,7 @@ class DeployBacklogTest < Minitest::Test
       bsdports/app/javascript/application.js
     ].each do |relative|
       source = read_source(File.join(ROOT, relative))
-      assert_includes source, 'import "pub4/hotwire"'
+      assert_includes source, 'import "operator/hotwire"'
     end
 
     %w[
@@ -710,8 +710,8 @@ assert_includes haystack, "turbo_prefetch: false",
     refute_includes show, "post_show"
     refute_includes app_js, "brgen_shell"
     refute_includes read_brgen("config/importmap.rb"), "brgen_shell"
-    assert_includes read_source(File.join(ROOT, "shared/frontend/stimulus_boot.js")), "pub4/brgen_shell"
-    assert_includes read_source(File.join(ROOT, "shared/config/importmap_baseline.rb")), "pub4/brgen_shell"
+    assert_includes read_source(File.join(ROOT, "shared/frontend/stimulus_boot.js")), "operator/brgen_shell"
+    assert_includes read_source(File.join(ROOT, "shared/config/importmap_baseline.rb")), "operator/brgen_shell"
     # The token is declared, not what it is set to. design_tokens.yml
     # system.radius_card is the authority for the value, and pinning the pixels
     # here made this a second copy of it: the ladder moved to 12px and this

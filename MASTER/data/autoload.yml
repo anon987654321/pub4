@@ -72,8 +72,8 @@ autoload:
     # autoloads openssl.so. Load-bearing; see TODO.md.
     - io/bedrock_stub.rb
     - io/ruby_llm_patch.rb
-    # Pub4:: -- shared with RAILS and OPENBSD, its own tool, not Master::Pub4.
-    - pub4
+    # Operator:: -- shared with RAILS and OPENBSD, its own tool, not Master::Operator.
+    - operator
 
   # Loaded by hand because order matters or the entrypoint is a plain require.
   required_manually:

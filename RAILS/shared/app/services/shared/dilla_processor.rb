@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "pub4/deploy_paths"
+require "operator/deploy_paths"
 require "rbconfig"
 require "fileutils"
 require "open3"
@@ -15,7 +15,7 @@ module Shared
     module_function
 
     def script
-      Pub4::DeployPaths.dilla_script
+      Operator::DeployPaths.dilla_script
     end
 
     def available?

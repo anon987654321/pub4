@@ -2,8 +2,8 @@ require "yaml"
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../shared/lib/pub4/scale_lint"
-require_relative "../shared/lib/pub4/master_design"
+require_relative "../shared/lib/operator/scale_lint"
+require_relative "../shared/lib/operator/master_design"
 
 # The rhythm axis, ratcheted.
 #
@@ -19,7 +19,7 @@ require_relative "../shared/lib/pub4/master_design"
 # in design_tokens.yml `scale:` and the values are unchanged by this file --
 # nothing here moves a pixel.
 class ScaleLintTest < Minitest::Test
-  LINT = Pub4::ScaleLint
+  LINT = Operator::ScaleLint
   TOKENS_SCSS = File.expand_path("../shared/app/assets/stylesheets/_tokens.scss", __dir__)
 
   def counts = @counts ||= LINT.counts
@@ -292,7 +292,7 @@ class ScaleLintTest < Minitest::Test
   # A finding that says only "wrong" costs the reader the arithmetic. The whole
   # value of a scale lint is that the right answer is computable.
   def test_a_finding_names_the_step_it_should_have_been
-    finding = Pub4::ScaleLint::Finding.new("a.scss", 1, "off_scale_space", "0.35rem", "gap")
+    finding = Operator::ScaleLint::Finding.new("a.scss", 1, "off_scale_space", "0.35rem", "gap")
     assert_equal "4px", LINT.nearest(finding), "0.35rem is 5.6px, which is nearer 4 than 8"
   end
 
@@ -300,19 +300,19 @@ class ScaleLintTest < Minitest::Test
   # first minimum, so a tie resolves downward -- stated here because a suggestion
   # that flips between two answers on a scale reorder is worse than either.
   def test_a_tie_resolves_to_the_smaller_step
-    radius = Pub4::ScaleLint::Finding.new("a.scss", 1, "off_scale_radius", "3px", "border-radius")
+    radius = Operator::ScaleLint::Finding.new("a.scss", 1, "off_scale_radius", "3px", "border-radius")
     assert_equal "2px", LINT.nearest(radius)
   end
 
   def test_a_kind_with_no_nearest_step_says_so_rather_than_guessing
-    finding = Pub4::ScaleLint::Finding.new("a.scss", 1, "off_scale_line_height", "1.55", "line-height")
+    finding = Operator::ScaleLint::Finding.new("a.scss", 1, "off_scale_line_height", "1.55", "line-height")
     assert_nil LINT.nearest(finding)
   end
 
   def test_every_finding_points_at_a_file_that_exists_and_a_real_line
     LINT.findings.first(40).each do |finding|
       # Repo-relative since the corpus spans MASTER/web as well as RAILS.
-      path = File.join(Pub4::ScaleLint::REPO_ROOT, finding.file)
+      path = File.join(Operator::ScaleLint::REPO_ROOT, finding.file)
       assert File.file?(path), "#{finding.file} is not on disk"
       assert_operator finding.line, :>, 0
       assert_operator finding.line, :<=, File.readlines(path).size, "#{finding.file}:#{finding.line} is past EOF"
@@ -338,7 +338,7 @@ class ScaleLintTest < Minitest::Test
   # compared any of them to the rule. The same shape as the opacity ladder: a
   # constant copied out of its source and left to drift.
   def test_tap_min_matches_the_law
-    law = Pub4::MasterDesign.dig("layout_rules", "touch", "target_min_px")
+    law = Operator::MasterDesign.dig("layout_rules", "touch", "target_min_px")
     refute_nil law, "layout_rules.touch.target_min_px is gone from rules.yml"
 
     declared = LINT.stylesheets.flat_map do |path|

@@ -18,7 +18,7 @@ ownership:
       in RAILS/apps.yml, horizon in RAILS/apps.horizon.yml, operator recipes in
       ../OPENBSD/data/operator.yml)
     risk: medium
-    check: MASTER/bin/pub4 status
+    check: MASTER/bin/operator status
   law/:
     purpose: the constitution as code — one domain file per body of law
     risk: critical
@@ -110,10 +110,10 @@ ownership:
     purpose: external model/provider catalog indexing
     risk: medium
     check: ruby -Ilib:spec spec/providers/catalog_index_spec.rb
-  lib/pub4/:
+  lib/operator/:
     purpose: pub4-level (multi-repo) check/status tooling, separate namespace from Master
     risk: medium
-    check: MASTER/bin/pub4 status
+    check: MASTER/bin/operator status
   lib/rails/:
     purpose: Rails-app audits (PWA, routes/views, Hotwire, face3d policy) for the RAILS/ tree
     risk: medium

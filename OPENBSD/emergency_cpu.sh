@@ -58,7 +58,7 @@ done
 # became the thing it exists to fix.
 #
 # master's rc_pre rebuilds the face bundles and can run assets:precompile, which
-# takes over five minutes on one vCPU. The pkill below matches 'pub4/MASTER/web',
+# takes over five minutes on one vCPU. The pkill below matches 'operator/MASTER/web',
 # and an in-flight `rcctl start master` carries exactly that in its command line
 # (cd /home/dev/pub4/MASTER/web && ...) -- so this killed the start it was about
 # to re-issue, waited 75s, gave up, and cron ran the guard again five minutes
@@ -77,7 +77,7 @@ pkill -f 'ruby34.*53187' 2>/dev/null || true
 pkill -f 'falcon.*38182' 2>/dev/null || true
 pkill -f 'ruby34.*38182' 2>/dev/null || true
 pkill -f '/home/brgen/app' 2>/dev/null || true
-[ "$_master_starting" = "0" ] && pkill -f 'pub4/MASTER/web' 2>/dev/null || true
+[ "$_master_starting" = "0" ] && pkill -f 'operator/MASTER/web' 2>/dev/null || true
 sleep 2
 
 echo "=== restart core (master then brgen) ==="

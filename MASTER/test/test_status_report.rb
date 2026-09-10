@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "pub4/status_report"
+require "operator/status_report"
 
-# `MASTER/bin/pub4 status` tells one session which trees hold another session's
+# `MASTER/bin/operator status` tells one session which trees hold another session's
 # uncommitted work. That line is the repo's answer to a shared checkout, so it
 # has to name the trees correctly — a mangled name reads as a tree nobody
 # recognises, and the reflex is to ignore the line rather than to distrust it.
 class TestStatusReport < Minitest::Test
-  def tree_of(line) = Pub4::StatusReport.allocate.send(:tree_of, line)
+  def tree_of(line) = Operator::StatusReport.allocate.send(:tree_of, line)
 
   # git quotes a path the moment it holds a space or a non-ASCII byte, which
   # STUDIO/dilla produces routinely. Unquoted, `STUDIO/dilla/før.wav` tallied

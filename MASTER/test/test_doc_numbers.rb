@@ -15,7 +15,7 @@ require_relative "../tools/doc_numbers"
 class TestDocNumbers < Minitest::Test
   BASELINE = File.expand_path("../data/doc_baselines.yml", __dir__)
 
-  def self.report = @report ||= Pub4::DocNumbers.run
+  def self.report = @report ||= Operator::DocNumbers.run
 
   def setup
     @report = self.class.report
@@ -62,7 +62,7 @@ class TestDocNumbers < Minitest::Test
                     "only #{@report[:values]} token values extracted — design_tokens.yml moved or changed shape"
     assert_operator @report[:docs], :>, 30,
                     "only #{@report[:docs]} documents scanned"
-    refute Pub4::DocNumbers.traceable?("Minimum touch target: 44px.", ["shared_chrome.tap_min"])
-    assert Pub4::DocNumbers.traceable?("Minimum touch target: 44px (`--tap-min`).", ["shared_chrome.tap_min"])
+    refute Operator::DocNumbers.traceable?("Minimum touch target: 44px.", ["shared_chrome.tap_min"])
+    assert Operator::DocNumbers.traceable?("Minimum touch target: 44px (`--tap-min`).", ["shared_chrome.tap_min"])
   end
 end

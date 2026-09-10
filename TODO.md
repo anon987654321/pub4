@@ -167,12 +167,12 @@ root will do it again on the next restart that recreates them — that writer is
 unidentified and is the thing to find.
 
 A cheap guard for both: `/health` already reports `tts_socket`, and
-`bin/pub4 vps state --remote` does not. Surfacing it there would have named
+`bin/operator vps state --remote` does not. Surfacing it there would have named
 this in one command instead of four deploy passes.
 
 ### The box, verified 2026-09-09
 
-`MASTER/bin/pub4 vps state --remote` is the only honest way to answer this and it is
+`MASTER/bin/operator vps state --remote` is the only honest way to answer this and it is
 cheap:
 
     dev: /home/dev/pub4 @ 5084461dc
@@ -210,7 +210,7 @@ keep the old fallback for anyone whose payload fails to load.
 
 ### The ratchets, and the two budgets that had stopped measuring — settled 2026-09-10
 
-Every row `MASTER/bin/pub4 measure` prints is green or is another tree's. Read the
+Every row `MASTER/bin/operator measure` prints is green or is another tree's. Read the
 live figures there; this list goes stale in a day and has done so repeatedly.
 
 **`spine.lib_body_ceiling` is sponsored at 38,148 and the argument is in
@@ -266,7 +266,7 @@ that read `unreadable` are `--deep` CSS budgets and the two ratchets whose own t
 fail in both directions; they need a browser run rather than a decision. The rows this
 section used to list as slack — `growth.studio` at 146/153, `self_findings.law` at
 279/287 — were prose quoted from a previous entry rather than read from the task, and
-both are at their ceilings. **Read `bin/pub4 measure`. Do not quote this paragraph.**
+both are at their ceilings. **Read `bin/operator measure`. Do not quote this paragraph.**
 
 ### How the spine ratchet must be used
 
@@ -381,7 +381,7 @@ reader hunting callers for methods that have them or do not exist:
 
 ### The rule corpus
 
-Live figures from `bin/pub4 measure`, `rake lint:rule_reach` and `rake lint:rule_audit`
+Live figures from `bin/operator measure`, `rake lint:rule_reach` and `rake lint:rule_audit`
 on 2026-09-10. `data/rules.yml` declares **242** rules, of which 141 carry
 `detect_semantic`, 15 `detect_structural`, **0 `detect_lexical`**, and **92** carry no
 detector field and resolve through `law/` or a `folded_into`. `law/` holds 118
@@ -657,9 +657,9 @@ MASTER sounds like, made by somebody who cannot hear it. It stays until a sittin
 can A/B the audio.
 
 **`NO_PUTS`' eleven findings are closed**, and the rule exempts
-`MASTER/lib/pub4/gate_chain.rb` by name. The statement is "no bare puts in library
+`MASTER/lib/operator/gate_chain.rb` by name. The statement is "no bare puts in library
 code" and its exemptions are the paths that print for a living. The file rather than
-its directory: the sibling `status_report.rb` renders a string that `bin/pub4` prints,
+its directory: the sibling `status_report.rb` renders a string that `bin/operator` prints,
 which is the shape the rule asks for and the proof `lib/pub4` should not be exempt
 wholesale. `gate_chain` cannot take that shape — the ladder runs for minutes and the
 report is the progress, so a buffered return delivers the account after the run it was
@@ -806,7 +806,7 @@ already makes against the repo-wide version.**
 ### The shape of the tree
 
 `sprawl_census` counts three things over every tracked file in all four trees, and
-`bin/pub4 measure` carries them: a directory holding one file, a name that repeats its
+`bin/operator measure` carries them: a directory holding one file, a name that repeats its
 parent, and a name that says nothing on its own. `FILE_SPRAWL` in the scan registry
 measures the first two for MASTER's `.rb` files and skips `law/`, `core/`, `test/` and
 `spec/`, so it reports zero here and means only that.
@@ -814,7 +814,7 @@ measures the first two for MASTER's `.rb` files and skips `law/`, `core/`, `test
 **19 one-file directories against a ceiling of 19**, all of them mandated: OS install
 paths, Zeitwerk, ports fixtures, OmniAuth, PWA, and dilla vocal, render and stem
 takes. The row is at its ceiling, and the ceiling is not MASTER's to lower — it counts
-all four trees. Read the live figure from `MASTER/bin/pub4 measure`, not from here.
+all four trees. Read the live figure from `MASTER/bin/operator measure`, not from here.
 The map is `TREE.md`.
 
 Calibrate a new kind against a real file before adding it. The first pass called 130
@@ -881,9 +881,9 @@ guessing at it would produce a gate that is wrong in both directions. So the oth
 bare `ROOT`s stay, and stay a hazard the day one of them is required.
 
 **An orphan sweep must include the repo-root `bin/` and must not filter by
-extension.** A 2026-08-03 sweep deleted `lib/pub4/status_report.rb` as an orphan and
-broke `MASTER/bin/pub4` for six days: the grep matched only `*.rb`/`*.yml`/`*.md` and
-`MASTER/bin/pub4` has no extension, and it ran from `MASTER/`, where `bin/` does not
+extension.** A 2026-08-03 sweep deleted `lib/operator/status_report.rb` as an orphan and
+broke `MASTER/bin/operator` for six days: the grep matched only `*.rb`/`*.yml`/`*.md` and
+`MASTER/bin/operator` has no extension, and it ran from `MASTER/`, where `bin/` does not
 mean the repo-root `bin/` that holds the caller. Pinned by
 `test/test_entrypoint_requires.rb`, which checks requires rather than constants — a
 constant sweep can be fooled by an extension filter; a missing file cannot.
@@ -1139,7 +1139,7 @@ no test could see.
 
 **`self_findings.law` is 279 against 279 and at its ceiling** — the "slack by eight"
 this entry recorded was a stale number quoted from prose rather than read from
-`bin/pub4 measure`, which is the mistake the header of this section warns about. It
+`bin/operator measure`, which is the mistake the header of this section warns about. It
 moves several points in a day because it counts every tree, and the bulk of what moves
 is `STUDIO/dilla`; lowering the ceiling from a shared checkout records a low the
 committed tree does not hold, so it stays dilla's owner's row to ratchet on a settled
@@ -1461,7 +1461,7 @@ the first candidate and why the box never saw it. The two verticals it re-armed 
 `InfiniteScrollWiringTest` and `DeployBacklogTest` — are the ones that read source
 rather than exercise it.
 
-Same family as `Pub4::OperatorDocs::ROOT`, recorded above at four levels instead of
+Same family as `Operator::OperatorDocs::ROOT`, recorded above at four levels instead of
 three, and the remedy is the one that entry named: **assert the resolution, not the
 reads.** `test_root_resolves_to_the_rails_tree` checks that ROOT holds `shared/app` and
 `brgen/app` and is called `RAILS`, because a wrong root fails as a missing file and
@@ -1650,7 +1650,7 @@ where they sit.
 #### A census of the census tools: two of thirty-six were reaching nothing — 2026-09-07
 
 Asked of every `MASTER/tools/*.rb`: does anything in the repo name it? Twenty-nine
-are named by a Rakefile task, a test, a gate, `bin/pub4` or a workflow. The
+are named by a Rakefile task, a test, a gate, `bin/operator` or a workflow. The
 first pass called eleven unreferenced and **that pass was wrong about five of
 them** — it searched for the string `tools/<name>` and the Rakefile spells its
 shell-outs `File.join(__dir__, "tools", "<name>.rb")`. Verify the instrument
@@ -1691,9 +1691,9 @@ documents it covered and the test did not — `MASTER/EXAMPLES.md`,
 list now, and all three are clean under it.
 
 The eighth finding was real and is fixed. `OPENBSD/DECISIONS.md` said legacy
-path strings "still resolve via `MASTER/lib/pub4/paths.rb`", in the present
+path strings "still resolve via `MASTER/lib/operator/paths.rb`", in the present
 tense, about a file that does not exist; they resolve through
-`RAILS/shared/lib/pub4/deploy_paths.rb`, which is what `Pub4::DeployPaths` is.
+`RAILS/shared/lib/operator/deploy_paths.rb`, which is what `Operator::DeployPaths` is.
 A decision record making a live claim about a missing file is the shape this
 guard exists for, and it took an unrun tool to find it.
 
@@ -2899,7 +2899,7 @@ forever without anyone learning.
 ### Horizon — aspirational features (agent: ignore)
 
 Migrated from `RAILS/apps.horizon.yml`, which is **kept** because
-`MASTER/lib/pub4/status_report.rb` counts it and a deploy contract test
+`MASTER/lib/operator/status_report.rb` counts it and a deploy contract test
 asserts it exists. These items are **`agent: ignore`** — out of scope for
 agents unless explicitly requested. Canonical active inventory is
 `apps.yml`; do not implement horizon items by default.
@@ -2953,11 +2953,11 @@ tree.
 
 #### 3. Reading order — the five lints are done, the gates cases are not worth it
 
-The five `Pub4::*Lint` modules read entry first now. Each was reordered on its
+The five `Operator::*Lint` modules read entry first now. Each was reordered on its
 own and checked the same way: every lint's findings and counts snapshotted to
 JSON before the first move and compared after each, byte identical throughout.
 `scale_lint`'s first attempt raised on require — the module's closing `end` was
-inside the slice being reordered, so `REPO_ROOT` landed in `module Pub4`. A
+inside the slice being reordered, so `REPO_ROOT` landed in `module Operator`. A
 reorder that carries a scope terminator is not a reorder.
 
 The four gates cases from the same pass, at a lower threshold, were read and
@@ -3018,7 +3018,7 @@ share `critical?`, and the one clean separation by probe field names a data
 source rather than a question. The next check breaches and wants a raise argued
 there, not a shelf.
 
-#### 6. `shared/lib/pub4/` keeps a flat drawer — decided 2026-09-10, no shelf
+#### 6. `shared/lib/operator/` keeps a flat drawer — decided 2026-09-10, no shelf
 
 Decided against and written into `shared/WIRING_NOTES.md`. The shelf is already
 spelled in the filenames — thirteen of the twenty names end in `_lint` — the
@@ -3088,7 +3088,7 @@ cross-tree rename of another tree's ratchet table bought for one path segment.
   strict-loading associations for a navigational gain. `fedi_*` is the only one
   that reads cleanly as `Fedi::*`, and it is four files of 119 lines.
 - **The four missing assets `asset_url_lint` reports.** Both exemptions are
-  documented at `shared/lib/pub4/asset_url_lint.rb:48-60` and verified still
+  documented at `shared/lib/operator/asset_url_lint.rb:48-60` and verified still
   true: the three `pp-neue-montreal` woff2 are a licensed face that cannot be
   committed, behind two `local()` entries and an Arial fallback; `lg.svg` is
   lightGallery's IE9 tail entry that no browser asks for.
@@ -3200,8 +3200,8 @@ nothing became unused in the exchange.
 ### Operator debt — still open
 
 Each item carries a hidden HTML-comment marker on its own line under its heading;
-`MASTER/lib/pub4/operator_docs.rb:55` counts those markers for the
-`MASTER/bin/pub4 status` debt line, so keep exactly one per open item.
+`MASTER/lib/operator/operator_docs.rb:55` counts those markers for the
+`MASTER/bin/operator status` debt line, so keep exactly one per open item.
 
 #### `libvips_local_build`  — tag: operator-priority
 
@@ -3373,7 +3373,7 @@ the four base-system lines are not four permanent false alarms.
 `test/test_config_drift_gate.rb` carries the shape it must flag and the shape it
 must not.
 
-Nothing here can install any of it. `MASTER/bin/pub4 vps deploy` does not do it
+Nothing here can install any of it. `MASTER/bin/operator vps deploy` does not do it
 either — this is `doas zsh OPENBSD/OPERATOR.sh` on the box, and it is the whole
 of what this row still wants. The two repairs the script itself needed are
 committed and `git log` holds them.
@@ -3943,10 +3943,10 @@ a finding is a hypothesis until the instrument has been checked. A second pass o
 2026-09-10 proved it again on the survivors: of sixteen items, one asserted the
 opposite of the truth, three had numbers that did not reproduce by any method,
 and two named the wrong file. Seven closed. The instrument entries closed by
-being built — `bin/pub4 measure --why <row>` names the members behind a number
+being built — `bin/operator measure --why <row>` names the members behind a number
 and checks that they add up to it, `--since <ref>` reads the recorded ceilings
-out of git so a session can diff its own effect before pushing, `bin/pub4 gate
---tree <TREE>` drops the stages that prove another tree, and `bin/pub4 rule <ID>`
+out of git so a session can diff its own effect before pushing, `bin/operator gate
+--tree <TREE>` drops the stages that prove another tree, and `bin/operator rule <ID>`
 prints the declaration, whether it reaches a detector, and the definition
 verbatim with the comment that earned its exemption.
 
@@ -3956,7 +3956,7 @@ will otherwise re-open them. **Silent detectors were already measured**:
 reads 39, and `--why rule_audit.silent` now names them. Its corpus is `law/`'s
 rules over `MASTER/lib`, `law/`, `RAILS/shared` and the two hand-written
 JavaScript homes — chosen deliberately and widened once already — not the whole
-fleet, which is what `bin/pub4 gate` and `self_findings.registry` measure.
+fleet, which is what `bin/operator gate` and `self_findings.registry` measure.
 **Gate cost is measured, not declared**: `gates.yml` gained a `needs` field
 consolidating runner.rb's hardcoded browser list, and refused a `cost` field on
 the ground that a declaration cannot show the failure a cost field is for. A

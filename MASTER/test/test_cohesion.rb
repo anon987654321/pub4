@@ -14,7 +14,7 @@ class CohesionTest < Minitest::Test
 
   def write(name, body) = File.write(File.join(@tmp, name), body)
 
-  def families = Pub4::Cohesion.families(@tmp)
+  def families = Operator::Cohesion.families(@tmp)
 
   def flat_family
     write("thing_a.rb", "ALPHA = 1\ndef thing_a_run = thing_b_help\n")
@@ -24,7 +24,7 @@ class CohesionTest < Minitest::Test
 
   def test_a_flat_family_that_calls_itself_is_one_concept
     flat_family
-    found = capture_io { Pub4::Cohesion.run(@tmp) }
+    found = capture_io { Operator::Cohesion.run(@tmp) }
 
     assert_includes found.first, "thing [merge, by prefix]: 3 files"
   end
@@ -34,7 +34,7 @@ class CohesionTest < Minitest::Test
     write("solo_b.rb", "def solo_b = 2\n")
     write("solo_c.rb", "def solo_c = 3\n")
 
-    assert_equal 0, Pub4::Cohesion.run(@tmp), "a shared prefix alone is naming, not cohesion"
+    assert_equal 0, Operator::Cohesion.run(@tmp), "a shared prefix alone is naming, not cohesion"
   end
 
   # This asserted 0 — "a file declaring a module already has the boundary a merge
@@ -49,7 +49,7 @@ class CohesionTest < Minitest::Test
       write("#{n}.rb", "module Thing#{i}\n  ALPHA = 1\n  def self.run = 1\nend\n")
     end
 
-    plans = Pub4::Cohesion.plans_for(@tmp)
+    plans = Operator::Cohesion.plans_for(@tmp)
 
     assert_equal 1, plans.size
     assert_equal "regroup", plans.first[:plan], "Zeitwerk refuses two constants at one path"
@@ -59,14 +59,14 @@ class CohesionTest < Minitest::Test
     write("pair_a.rb", "def pair_a = pair_b\n")
     write("pair_b.rb", "def pair_b = pair_a\n")
 
-    assert_equal 0, Pub4::Cohesion.run(@tmp)
+    assert_equal 0, Operator::Cohesion.run(@tmp)
   end
 
   # The plan names the merge site by load order, not alphabetically: the latest
   # member, so anything an earlier member reads at load time is already defined.
   def test_the_plan_merges_into_the_latest_member_of_the_manifest
     flat_family
-    plan = Pub4::Cohesion.merge_plan("thing", Dir.glob(File.join(@tmp, "thing_*.rb")), :prefix, %w[thing_c thing_a thing_b])
+    plan = Operator::Cohesion.merge_plan("thing", Dir.glob(File.join(@tmp, "thing_*.rb")), :prefix, %w[thing_c thing_a thing_b])
 
     assert_equal "thing_b", plan[:take_position_of]
     assert_equal %w[thing_c.rb thing_a.rb thing_b.rb], plan[:files]
@@ -74,7 +74,7 @@ class CohesionTest < Minitest::Test
 
   def test_it_emits_a_plan_rather_than_a_patch
     flat_family
-    plan = Pub4::Cohesion.merge_plan("thing", Dir.glob(File.join(@tmp, "thing_*.rb")), :prefix, [])
+    plan = Operator::Cohesion.merge_plan("thing", Dir.glob(File.join(@tmp, "thing_*.rb")), :prefix, [])
 
     refute_empty plan[:check], "a merge crosses files and load order; the checks are the deliverable"
     assert_equal 4, plan[:methods], "one def in thing_a and thing_c, two in thing_b"
@@ -104,7 +104,7 @@ class CohesionTest < Minitest::Test
 
   def test_a_suffix_family_regroups_into_a_subdirectory
     policy_family
-    plan = Pub4::Cohesion.plans_for(@tmp).first
+    plan = Operator::Cohesion.plans_for(@tmp).first
 
     assert_equal "regroup", plan[:plan]
     assert_includes plan[:moves].map { |m| m[:to] }, "policy/sandbox.rb"
@@ -114,7 +114,7 @@ class CohesionTest < Minitest::Test
   def test_the_member_named_for_the_family_becomes_the_parent
     policy_family
     write("policy.rb", namespaced("Policy"))
-    plan = Pub4::Cohesion.plans_for(@tmp).first
+    plan = Operator::Cohesion.plans_for(@tmp).first
 
     assert_equal "policy.rb", plan[:parent]
     assert_equal 3, plan[:moves].size, "the parent is not moved into its own shelf"
@@ -122,7 +122,7 @@ class CohesionTest < Minitest::Test
 
   def test_without_a_parent_the_plan_says_one_must_be_created
     policy_family
-    plan = Pub4::Cohesion.plans_for(@tmp).first
+    plan = Operator::Cohesion.plans_for(@tmp).first
 
     assert_match(/must be created/, plan[:parent])
   end
@@ -142,13 +142,13 @@ class CohesionTest < Minitest::Test
   end
 
   def test_a_suffix_the_directory_declares_is_not_a_family
-    assert_empty Pub4::Cohesion.families(in_dir("controllers"))
+    assert_empty Operator::Cohesion.families(in_dir("controllers"))
   end
 
   # The shared engine nests app/controllers/shared/, so the type is declared by
   # the grandparent and a basename-only test still matched every controller.
   def test_the_declaring_directory_may_be_the_grandparent
-    assert_empty Pub4::Cohesion.families(in_dir("controllers", "shared"))
+    assert_empty Operator::Cohesion.families(in_dir("controllers", "shared"))
   end
 
   # rules/ holding *_rules.rb: the key is already plural, so singularising the
@@ -158,7 +158,7 @@ class CohesionTest < Minitest::Test
     FileUtils.mkdir_p(dir)
     %w[web js ruby].each { |n| File.write(File.join(dir, "#{n}_rules.rb"), namespaced("#{n.capitalize}Rules")) }
 
-    assert_empty Pub4::Cohesion.families(dir)
+    assert_empty Operator::Cohesion.families(dir)
   end
 
   def test_a_prefix_family_is_still_found_after_all_that
@@ -166,7 +166,7 @@ class CohesionTest < Minitest::Test
     write("render_techno.rb", "def render_techno = render_analog\n")
     write("render_analog.rb", "def render_analog = render_seed\n")
 
-    assert_equal "merge", Pub4::Cohesion.plans_for(@tmp).first[:plan]
+    assert_equal "merge", Operator::Cohesion.plans_for(@tmp).first[:plan]
   end
 
 # ---- a shelf that is already occupied -------------------------------------
@@ -184,7 +184,7 @@ def test_a_family_whose_destination_is_taken_is_not_a_family
   FileUtils.mkdir_p(File.join(@tmp, "thing"))
   File.write(File.join(@tmp, "thing", "search.rb"), namespaced("Search"))
 
-  assert_empty Pub4::Cohesion.plans_for(@tmp),
+  assert_empty Operator::Cohesion.plans_for(@tmp),
                "thing/search.rb is taken, so these three are not one kind"
 end
 
@@ -193,7 +193,7 @@ def test_an_empty_destination_still_regroups
   write("thing_index.rb", namespaced("ThingIndex"))
   write("thing_search.rb", namespaced("ThingSearch"))
 
-  assert_equal "regroup", Pub4::Cohesion.plans_for(@tmp).first[:plan]
+  assert_equal "regroup", Operator::Cohesion.plans_for(@tmp).first[:plan]
 end
 
 # ---- the two gates a merge needs ------------------------------------------
@@ -210,14 +210,14 @@ end
 def test_a_family_scattered_through_the_manifest_is_not_mergeable
   flat_family
 
-  refute Pub4::Cohesion.mergeable?(Dir.glob(File.join(@tmp, "thing_*.rb")),
+  refute Operator::Cohesion.mergeable?(Dir.glob(File.join(@tmp, "thing_*.rb")),
                                    %w[thing_a other_one other_two thing_b thing_c])
 end
 
 def test_a_family_that_sits_together_is_mergeable
   flat_family
 
-  assert Pub4::Cohesion.mergeable?(Dir.glob(File.join(@tmp, "thing_*.rb")),
+  assert Operator::Cohesion.mergeable?(Dir.glob(File.join(@tmp, "thing_*.rb")),
                                    %w[other_one thing_a thing_b thing_c other_two])
 end
 
@@ -225,7 +225,7 @@ end
   def test_without_a_manifest_contiguity_does_not_block
     flat_family
 
-    assert Pub4::Cohesion.mergeable?(Dir.glob(File.join(@tmp, "thing_*.rb")), [])
+    assert Operator::Cohesion.mergeable?(Dir.glob(File.join(@tmp, "thing_*.rb")), [])
   end
 
   # The counterbalance needs a bound or it is not a counterbalance. dilla's six
@@ -236,20 +236,20 @@ end
   def test_a_merge_that_would_breach_small_files_is_refused
     3.times { |n| write("big_#{n}.rb", "def big_#{n} = big_#{(n + 1) % 3}\n" + ("# pad\n" * 120)) }
 
-    refute Pub4::Cohesion.mergeable?(Dir.glob(File.join(@tmp, "big_*.rb")), [])
-    assert_operator Pub4::Cohesion::MAX_MERGED_LINES, :<=, 300
+    refute Operator::Cohesion.mergeable?(Dir.glob(File.join(@tmp, "big_*.rb")), [])
+    assert_operator Operator::Cohesion::MAX_MERGED_LINES, :<=, 300
   end
 
   # ---- the census -----------------------------------------------------------
 
   def test_the_census_roots_all_exist
-    missing = Pub4::Cohesion::ROOTS.reject { |r| Dir.exist?(File.join(Pub4::Cohesion::REPO, r)) }
+    missing = Operator::Cohesion::ROOTS.reject { |r| Dir.exist?(File.join(Operator::Cohesion::REPO, r)) }
 
     assert_empty missing, "a root that does not exist counts nothing and reads as clean"
   end
 
   def test_the_census_ceiling_is_recorded
-    assert_kind_of Integer, YAML.safe_load_file(Pub4::Cohesion::CENSUS).fetch("families")
+    assert_kind_of Integer, YAML.safe_load_file(Operator::Cohesion::CENSUS).fetch("families")
   end
 
   # A count alone says "a new family appeared" and cannot say which, which is
@@ -262,26 +262,26 @@ end
 
   def test_a_family_is_identified_by_its_directory_and_its_name
     assert_equal ["lib/cli#pipeline", "lib/cli#scan", "tools#reach"],
-                 Pub4::Cohesion.member_ids(rows_for("lib/cli#scan", "lib/cli#pipeline", "tools#reach"))
+                 Operator::Cohesion.member_ids(rows_for("lib/cli#scan", "lib/cli#pipeline", "tools#reach"))
   end
 
   def swap_census(contents)
-    previous = Pub4::Cohesion.const_get(:CENSUS)
+    previous = Operator::Cohesion.const_get(:CENSUS)
     Dir.mktmpdir("census") do |dir|
       path = File.join(dir, "cohesion_census.yml")
       File.write(path, contents.to_yaml)
-      Pub4::Cohesion.send(:remove_const, :CENSUS)
-      Pub4::Cohesion.const_set(:CENSUS, path)
+      Operator::Cohesion.send(:remove_const, :CENSUS)
+      Operator::Cohesion.const_set(:CENSUS, path)
       yield
     end
   ensure
-    Pub4::Cohesion.send(:remove_const, :CENSUS)
-    Pub4::Cohesion.const_set(:CENSUS, previous)
+    Operator::Cohesion.send(:remove_const, :CENSUS)
+    Operator::Cohesion.const_set(:CENSUS, previous)
   end
 
   def test_an_overage_names_what_arrived_and_what_left
     swap_census({ "families" => 2, "family_members" => ["lib/cli#scan", "tools#doc"] }) do
-      out, = capture_io { Pub4::Cohesion.report_arrivals(["lib/cli#scan", "tools#reach"]) }
+      out, = capture_io { Operator::Cohesion.report_arrivals(["lib/cli#scan", "tools#reach"]) }
 
       assert_includes out, "+ tools#reach"
       assert_includes out, "the recorded families are gone (tools#doc)"
@@ -291,7 +291,7 @@ end
 
   def test_a_ceiling_with_no_members_says_so_rather_than_claiming_nothing_arrived
     swap_census({ "families" => 2 }) do
-      out, = capture_io { Pub4::Cohesion.report_arrivals(["lib/cli#scan"]) }
+      out, = capture_io { Operator::Cohesion.report_arrivals(["lib/cli#scan"]) }
 
       assert_includes out, "no members recorded with the ceiling"
       refute_includes out, "arrived since"
@@ -308,10 +308,10 @@ end
   # fact under test. The second assertion is the instrument check: an empty
   # register would satisfy the first while measuring nothing.
   def test_a_family_that_reopens_one_constant_gets_no_regroup
-    refute_empty Pub4::Cohesion.reopened_paths, "the autoload register did not read"
+    refute_empty Operator::Cohesion.reopened_paths, "the autoload register did not read"
 
     dir = File.expand_path("../lib/cli/command_registry", __dir__)
-    plans = Pub4::Cohesion.plans_for(dir)
+    plans = Operator::Cohesion.plans_for(dir)
 
     assert_empty plans.select { |plan| plan[:plan] == "regroup" },
                  "cli/command_registry reopens CommandRegistry — a rename there is a NameError at every call site"

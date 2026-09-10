@@ -5,7 +5,7 @@ require "optparse"
 
 ROOT = File.expand_path("../..", __dir__)
 $LOAD_PATH.unshift(File.join(ROOT, "MASTER", "lib"))
-require "pub4/environment"
+require "operator/environment"
 
 options = { lines: 20 }
 OptionParser.new do |parser|
@@ -16,8 +16,8 @@ end.parse!
 app = ARGV.shift
 abort "usage: vps-logs APP [--lines N]" if app.to_s.empty?
 
-unless Pub4::Environment.on_vps?
-  warn "vps-logs: skip — not on VPS (use: bin/pub4 vps logs #{app} --remote)"
+unless Operator::Environment.on_vps?
+  warn "vps-logs: skip — not on VPS (use: bin/operator vps logs #{app} --remote)"
   exit 0
 end
 

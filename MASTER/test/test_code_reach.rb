@@ -16,7 +16,7 @@ require_relative "../tools/code_reach"
 # see a reference is worse than no census: it reports work to do that is not
 # there, and this one's action is deletion.
 class TestCodeReach < Minitest::Test
-  Tool = Pub4::CodeReach
+  Tool = Operator::CodeReach
 
   def with_bodies(files)
     Tool.instance_variable_set(:@bodies, files)
