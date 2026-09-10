@@ -26,6 +26,23 @@ class TestSnapshotPublisher < Minitest::Test
     end
   end
 
+  # Every other test here sets MASTER_SNAPSHOT_DIR, so the branch that chooses
+  # between the checkout and ~/Downloads had never run. It counted three ".."
+  # from a file that had since moved a level deeper, landing on MASTER, which
+  # holds no .git — so a snapshot taken inside a checkout went to ~/Downloads and
+  # said nothing. A worktree hid it twice over: .git there is a file, and the
+  # test was File.directory?.
+  def test_output_dir_is_the_checkout_that_holds_master
+    prior = ENV.delete("MASTER_SNAPSHOT_DIR")
+    dir = Master::Trace::Snapshot::Publisher.output_dir
+
+    assert_equal Master::REPO_ROOT, dir
+    assert_path_exists File.join(dir, "MASTER")
+    refute_includes dir, "Downloads"
+  ensure
+    ENV["MASTER_SNAPSHOT_DIR"] = prior if prior
+  end
+
   def test_artifacts_section_reads_downloads_not_repo_root
     Dir.mktmpdir do |downloads|
       prior = ENV["MASTER_SNAPSHOT_DIR"]

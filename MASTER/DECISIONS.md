@@ -505,3 +505,45 @@ mangles passed a syntax check.
 generates its detectors per natural language from `data/rules.yml`, and
 `law/css.rb` judges stylesheets by declaration. The audio half — dilla's render
 graph — belongs to dilla's owner, whose renders are irreplaceable.
+
+## A Worktree Is A Checkout (2026-09-10)
+
+Seven readers asked whether a directory is a git checkout by testing whether
+`.git` is a directory. A `git worktree` checkout keeps `.git` as a *file*
+holding one `gitdir:` line, and `CLAUDE.md`'s first trap tells every agent
+working here to take a worktree — so each of the seven answered "not a
+repository" in the trees the runtime mostly runs in, and every one of them
+failed by going quiet.
+
+- `Fix::Rollback#git_workspace?` — a failed fix was never rolled back.
+- `Ground::BootReceipt#capabilities` — `git` read false, so `degraded` listed a
+  capability the process had, on every boot in a worktree.
+- `Ground::BootReceipt#commit` — it opened `<root>/../.git/HEAD` by hand, which
+  does not resolve when `.git` is a file, and the receipt whose first field is
+  the commit reported `unknown`.
+- `Trace::Snapshot::Collector#git_repo?` and `Publisher#git_summary` — a
+  snapshot lost its tracked-path collection and its branch and sha line.
+- `Trace::Snapshot::Publisher#output_dir` — this one was wrong twice. It counted
+  three `..` from a file that had since moved a directory deeper, landing on
+  `MASTER`, which holds no `.git` at all; and the directory test would have
+  failed at the real root anyway. Every snapshot taken inside a checkout was
+  written to `~/Downloads`. Both existing tests set `MASTER_SNAPSHOT_DIR`, so
+  the branch had never run.
+- `RepoEcology::CoChangeGraph#git_head_mtime` — the read raised, the rescue
+  answered 0, and one constant key is a cache that never invalidates.
+
+`Master.git_checkout?` is the one predicate now, and it tests existence.
+`commit` and `git_head_mtime` ask `git rev-parse`, which answers for both
+shapes. The test carries a clone and a worktree side by side, because a fixture
+with only one of them is how this stood.
+
+`Io::GitHooks` is deleted rather than fixed. It wrote a `pre-commit` hook into the private git directory
+from the boot path, and `bin/pub4 hooks` — the installer `CLAUDE.md` names —
+sets `core.hooksPath` to `OPENBSD/dev/githooks`, which git honours *instead of* the
+private hooks directory. So on any tree carrying the documented guard the file it wrote
+could never run, and on a tree without one it silently installed a slow audit on
+every commit that nobody asked for. Its own comment in `bin/pub4` says why: a
+copy in the private hooks directory is a second implementation that drifts from
+the tracked one.
+Its only test asserted that it skips when there is no git directory — a test of
+the inert path, which is what let it stand.

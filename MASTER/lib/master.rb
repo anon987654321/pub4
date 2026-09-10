@@ -69,6 +69,13 @@ module Master
   end
 
   def self.repo_root = REPO_ROOT
+  # File.exist?, never File.directory?. A `git worktree` checkout carries .git as
+  # a file holding a gitdir line, and CLAUDE.md tells every agent here to take
+  # one — so a directory test answers no for the trees the runtime mostly runs
+  # in. It disabled rollback after a failed fix, dropped the branch and sha from
+  # every snapshot, and reported the boot receipt degraded on a capability the
+  # process had.
+  def self.git_checkout?(root = REPO_ROOT) = File.exist?(File.join(root, ".git"))
   def self.operator_path(*parts) = File.join(OPENBSD_ROOT, *parts)
   def self.rails_path(*parts) = File.join(RAILS_ROOT, *parts)
   def self.openbsd_path(*parts) = File.join(OPENBSD_ROOT, *parts)

@@ -507,13 +507,29 @@ Worth reading beside it: the map holds 272 principles of which 176 carry empty
 
 ### Test coverage
 
-**119 of 405 `lib/` files have no test or spec naming their innermost class or
-module**, re-measured 2026-09-09. The earlier records of 163 of 445 and 188 of ~400
-used the same method against larger trees; the fall is mostly `lib/` shrinking and the
-rule-fixture pass.
+**69 of 404 `lib/` files have no test or spec naming any constant they declare**,
+measured 2026-09-10. **The definition is most of the number and the entry that quoted
+119 did not carry one.** Read as "the innermost class or module", meaning the last
+constant a walk sees, the count is 128 — and it calls `review/scan/self_test.rb`
+untested under the name `DeployChecks`, its last helper module, while `SelfTest` has a
+suite. Read as "any constant, namespace segments included", the count is 1, because
+every test naming `Review` vouches for every file under it. 69 is the honest middle:
+a file is untested when no leaf constant it declares is named anywhere in `test/` or
+`spec/`. **Quote the definition with the number or the next reader re-derives a
+different one.**
 
-The argument for closing the gap is what happened when eight named constants got their
-first tests on 2026-08-01: four live defects fell out, all in code that looked fine.
+The argument for closing the gap is what happens when a file gets its first reading.
+Three defects fell out of the 2026-09-10 pass through this list, all in the same
+sentence — a `git worktree` checkout keeps `.git` as a file and seven readers tested
+for a directory, so rollback after a failed fix went off, the boot receipt reported
+`commit: unknown` and `git` missing while running inside git, and every snapshot taken
+in a checkout was written to `~/Downloads`. `MASTER/DECISIONS.md` carries the list.
+**The tell was not the missing test; it was that the two tests which did exist both set
+`MASTER_SNAPSHOT_DIR`, so the branch that was wrong had never run.** Look for the
+branch no test reaches before looking for the file no test names.
+
+Four more fell out when eight named constants got their first tests on 2026-08-01, all
+in code that looked fine.
 
 - `io/ssrf_guard.rb` never required `uri`. `safe_uri?` does `uri.is_a?(URI::HTTP)`
   inside a blanket rescue, so in any process that had not already loaded `uri` the
@@ -536,21 +552,27 @@ contributors to.
 Re-measured 2026-09-09. Every number here was wrong by a little in the previous
 version, which is the argument for re-running the instrument rather than quoting it.
 
-**Twenty-five files in `lib/` are below the sprawl threshold, and the merge is not
+**Twenty-three files in `lib/` are below the sprawl threshold, and the merge is not
 free.** `FileSprawlRule` (`MASTER/lib/review/scan/rules/meta_rules.rb:284`) run over
-`lib/` names 25, of which two are lone-file directories —
+`lib/` names 23, of which two are lone-file directories —
 `MASTER/lib/cli/propose/candidate_sources.rb` and
 `MASTER/lib/review/repo_ecology/co_change_graph.rb` — and the rest are under 25 code
-lines. The cheapest are the ones whose constant nothing outside names:
-`MASTER/lib/security_error.rb` at 3 code lines,
-`MASTER/lib/review/review_crew/agents.rb` at 8 (already an autoload ignore, so a pure
-require aggregator), `MASTER/lib/fix/constants.rb` at 10. `lib/io/antigravity.rb` is
-**not** on this list any more — it absorbed its folded subdirectory and is 231 code
-lines. But `lib/` is under `push_dir(__dir__, namespace: Master)`
-(`MASTER/lib/master.rb:150`), so every other merge moves a constant and needs either a
-caller rename or a new `data/autoload.yml` entry that `rake lint:autoload` will then
-hold to account. Do these one at a time with the constant rename in the same commit;
-do not sweep them.
+lines. `lib/io/antigravity.rb` is **not** on this list any more — it absorbed its
+folded subdirectory and is 231 code lines. But `lib/` is under
+`push_dir(__dir__, namespace: Master)` (`MASTER/lib/master.rb:150`), so every merge
+moves a constant and needs either a caller rename or a new `data/autoload.yml` entry
+that `rake lint:autoload` will then hold to account. Do these one at a time with the
+constant rename in the same commit; do not sweep them.
+
+`review_crew/agents.rb` was the one with no constant to move — a require aggregator
+carrying an autoload ignore — and it is folded: `review_crew.rb` names the eight files
+where it loads them, and the ignore list is 44. **`security_error.rb` at 3 code lines is
+declined, and the reason generalises.** Zeitwerk maps `Master::SecurityError` to that
+path and nowhere else, so absorbing it means defining a class in `lib/master.rb`, the
+namespace file, which carries its own `loc_body_budgets` key separate from `lib/` — two
+lines saved in one row and charged to another. `FILE_SPRAWL`'s subject is a directory
+holding one file or a name repeating its parent, and a file Zeitwerk requires to sit
+exactly where it does is neither.
 
 **Declaration order in `lib/` is already right, and the residual is constants, not
 methods.** A Prism walk over all 405 files, tracking visibility per
@@ -593,12 +615,22 @@ wants them split for reading. By directory, counting only the files directly in 
 `lib/ground` is 4,323 over 50 files, `lib/io` 4,143 over 56, and
 `lib/review/scan/rules` 3,341 over 16.
 
-**`ABC_SIZE` fires three times over its ratchet of 40**, and this is the one figure
-that re-measured exactly: `MASTER/lib/voice/emotion.rb:20` `#analyze` at 74.7,
+**`ABC_SIZE` fires four times over its ratchet of 40, not three.** The entry that
+called this "the one figure that re-measured exactly" named three and missed
+`MASTER/lib/review/scan/rule_registry_audit.rb:139` `#classify_yaml_entries` at 43.8,
+which is not new — the same measurement over `ad6e6c0b0` reports it. The other three
+are `MASTER/lib/voice/emotion.rb:20` `#analyze` at 74.7,
 `MASTER/lib/cli/session/command_ops.rb:24` `#run_critique` at 42.2, and
-`MASTER/lib/ground/phase_gates.rb:103` `#automatic_gate_met?` at 41.4. `rake
-constitution` overall is 1,791 findings, 101 actionable against a budget of 1,500, and
-passes.
+`MASTER/lib/ground/phase_gates.rb:103` `#automatic_gate_met?` at 41.4. Run the rule over
+`lib/**/*.rb` directly rather than reading a triage bucket, which is where the fourth
+went. `rake constitution` overall is 1,791 findings, 101 actionable against a budget of
+1,500, and passes.
+
+`classify_yaml_entries` builds five populations from one pass, and the shape that
+lowers it is to split the lexical trio out. Nothing gates on it — `ABC_SIZE` is a
+threshold rather than a ratchet row — and the split adds a `def` and an `end` to a
+`spine.lib_body_ceiling` with no headroom, so it waits for a reason better than the
+number.
 
 **`emotion.rb#analyze` at 74.7 is the largest and is deliberately not being
 refactored.** Its ABC is arithmetic rather than branching — five weighted sums over the
@@ -764,9 +796,9 @@ parent, and a name that says nothing on its own. `FILE_SPRAWL` in the scan regis
 measures the first two for MASTER's `.rb` files and skips `law/`, `core/`, `test/` and
 `spec/`, so it reports zero here and means only that.
 
-**19 one-file directories against a ceiling of 20**, all of them mandated: OS install
+**19 one-file directories against a ceiling of 19**, all of them mandated: OS install
 paths, Zeitwerk, ports fixtures, OmniAuth, PWA, and dilla vocal, render and stem
-takes. The row reads one under and the ceiling is not MASTER's to lower — it counts
+takes. The row is at its ceiling, and the ceiling is not MASTER's to lower — it counts
 all four trees. Read the live figure from `MASTER/bin/pub4 measure`, not from here.
 The map is `TREE.md`.
 

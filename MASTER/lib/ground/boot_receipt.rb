@@ -64,15 +64,13 @@ module Master
         Digest::SHA256.hexdigest(parts.join("\n"))[0, 16]
       end
 
+      # git answers, rather than a hand-walk of .git. The walk opened
+      # <root>/../.git/HEAD, and a worktree keeps .git as a file naming its real
+      # git dir, so the path did not resolve and the receipt reported
+      # `commit: unknown` in every checkout an agent is told to take.
       def commit(root)
-        head = File.join(root, "..", ".git", "HEAD")
-        return "unknown" unless File.file?(head)
-
-        ref = File.read(head).strip
-        return ref[0, 12] unless ref.start_with?("ref: ")
-
-        path = File.join(root, "..", ".git", ref.delete_prefix("ref: "))
-        File.file?(path) ? File.read(path).strip[0, 12] : "unknown"
+        out, status = Master::Io::Exec.capture2e("git", "-C", root, "rev-parse", "--short=12", "HEAD")
+        status.success? ? out.strip : "unknown"
       rescue StandardError
         "unknown"
       end
@@ -142,7 +140,7 @@ module Master
           "network" => network?,
           "tts" => tts?,
           "local_models" => ENV["OLLAMA_BASE_URL"].to_s.strip.length.positive?,
-          "git" => File.directory?(File.join(MasterPaths::REPO, ".git")),
+          "git" => Master.git_checkout?(MasterPaths::REPO),
         }
       end
 

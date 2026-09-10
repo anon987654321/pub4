@@ -3,7 +3,19 @@
 require "json"
 require "set"
 require "thread"
-require_relative "review_crew/agents"
+
+# One class per file, and the load order stated where the loader is. Each agent
+# reopens `class ReviewCrew` and nests its own class, so the constant path is
+# ReviewCrew::SecurityAgent and build_workers' unqualified SecurityAgent.new
+# below resolves without qualification.
+require_relative "review_crew/finding"
+require_relative "review_crew/base_agent"
+require_relative "review_crew/security_agent"
+require_relative "review_crew/performance_agent"
+require_relative "review_crew/style_agent"
+require_relative "review_crew/architecture_agent"
+require_relative "review_crew/minimalist_agent"
+require_relative "review_crew/chaos_agent"
 
 module Master
   module Review
