@@ -2,9 +2,11 @@
 
 require_relative "test_helper"
 require "review/scan/rule_dsl"
+require "prism"
 
-# Four shape rules from structural_rules.rb that nothing named until now:
-# FileLayoutRule, CyclomaticComplexityRule, DataClassRule, MiddleManRule.
+# Five shape rules from structural_rules.rb that nothing named until now:
+# FileLayoutRule, CyclomaticComplexityRule, DataClassRule, MiddleManRule and
+# NestingDepthRule.
 #
 # Each is tested the way law/ tests its own — a source it must flag and a source
 # it must not — because a detector proved only to fire says nothing about what it
@@ -237,6 +239,84 @@ class TestStructuralShapeRules < Minitest::Test
         def one = @a.one
         def two = @b.two
         def three = @a.three
+      end
+    RUBY
+  end
+
+  # NESTING_DEPTH — depth over the AST, not over the margin.
+
+  def ast_flags(source)
+    Rules::NestingDepthRule.new.check_ast(Prism.parse(source).value, source, path: "lib/thing.rb").map { |f| f[:message] }
+  end
+
+  def test_nesting_depth_allows_four_levels
+    assert_empty ast_flags(<<~RUBY)
+      def call(a, b, c, d)
+        if a
+          if b
+            if c
+              if d
+                true
+              end
+            end
+          end
+        end
+      end
+    RUBY
+  end
+
+  def test_nesting_depth_reports_the_fifth_level
+    found = ast_flags(<<~RUBY)
+      def call(a, b, c, d, e)
+        if a
+          if b
+            if c
+              if d
+                if e
+                  true
+                end
+              end
+            end
+          end
+        end
+      end
+    RUBY
+
+    assert_equal 1, found.size
+    assert_includes found.first, "nesting depth exceeds 4"
+  end
+
+  # Blocks nest as surely as conditions do, and five `each`es are the commoner
+  # half of this shape. A rule counting only `if` would spare it.
+  def test_nesting_depth_counts_a_block
+    refute_empty ast_flags(<<~RUBY)
+      def call(rows)
+        rows.each do |a|
+          a.each do |b|
+            b.each do |c|
+              c.each do |d|
+                d.each { |e| e }
+              end
+            end
+          end
+        end
+      end
+    RUBY
+  end
+
+  # Indentation is not depth. A module inside a module holding a class holding a
+  # def is six columns in and branches nowhere, and a rule reading the margin
+  # would fire on every namespaced file in this tree.
+  def test_nesting_depth_spares_module_class_and_def
+    assert_empty ast_flags(<<~RUBY)
+      module A
+        module B
+          class C
+            def d
+              e
+            end
+          end
+        end
       end
     RUBY
   end

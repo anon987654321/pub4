@@ -50,7 +50,7 @@ module Master
           def initialize(root:)
             super()
             @root = root
-            @test_dir = File.join(root, "test")
+            @source_dirs = [File.join(root, "test"), File.join(root, "spec")]
           end
 
           # Asks the question the description asks — has this Rule subclass a
@@ -64,12 +64,17 @@ module Master
           # produced one finding, and `test/test_law_bridge_rule.rb` existed.
           # Fifteen skipped, one false positive, nothing correct.
           #
-          # Coverage is a mention anywhere in test/, of the class or of its id,
-          # because the tests that exercise these rules mostly do it in bulk —
-          # test_smell_detectors.rb and test_scan_rule_false_positives.rb reach
-          # rules by id through the scanner. Requiring a file per class would
-          # report those as uncovered, which is the false-positive machine the
-          # old shape already was, pointed the other way.
+          # Coverage is a mention anywhere in test/ or spec/, of the class or of
+          # its id, because the tests that exercise these rules mostly do it in
+          # bulk — test_smell_detectors.rb and test_scan_rule_false_positives.rb
+          # reach rules by id through the scanner. Requiring a file per class
+          # would report those as uncovered, which is the false-positive machine
+          # the old shape already was, pointed the other way.
+          #
+          # spec/ is read because LearnedSmellsRule's only test is
+          # spec/learned_smells_rule_spec.rb, and a class covered from the wrong
+          # directory read as uncovered — this rule reporting a gap it had made
+          # itself.
           def check(code, path:)
             return [] unless path.include?("/review/scan/rules/") && path.end_with?(".rb")
 
@@ -79,24 +84,34 @@ module Master
 
           private
 
+          # `declare id:` is how a Rule subclass names itself, in all sixteen
+          # files. The needle read `@id = "..."` and matched nothing in the tree,
+          # so only the class-name needle ever did any work and the id half of
+          # this rule was dead from the day it was written.
           def subclasses(code)
             code.enum_for(:scan, /^\s*class (\w+Rule) < Rule\b/).map do
               name = Regexp.last_match(1)
-              [name, code[Regexp.last_match.end(0), 2000][/@id\s*=\s*["']([\w.]+)["']/, 1]]
+              [name, code[Regexp.last_match.end(0), 2000][/declare\s+id:\s*["']([\w.]+)["']/, 1]]
             end
           end
 
+          # The id counts only where it is written as a value — quoted, or as a
+          # symbol — because that is how the bulk tests reach a rule through the
+          # scanner. A bare-word match would let the prose in any comment stand in
+          # for a test, and ids like `explicit` and `reek` are ordinary English.
           def covered?(name, id)
-            needles = [name, id, id&.downcase, id&.upcase].compact.uniq
-            test_sources.any? { |src| needles.any? { |needle| src.include?(needle) } }
+            return true if test_sources.any? { |src| src.include?(name) }
+            return false if id.nil?
+
+            needle = /(?<=["':])#{Regexp.escape(id)}(?!\w)/i
+            test_sources.any? { |src| src.match?(needle) }
           end
 
           # Read once per scan. Sixteen rule files against ~280 test files is
           # 4,500 reads without this.
           def test_sources
-            @test_sources ||= Dir.glob(File.join(@test_dir, "**", "*.rb")).map do |file|
-              File.read(file, encoding: "UTF-8", invalid: :replace)
-            end
+            @test_sources ||= @source_dirs.flat_map { |dir| Dir.glob(File.join(dir, "**", "*.rb")) }
+                                          .map { |file| File.read(file, encoding: "UTF-8", invalid: :replace) }
           end
         end
 
