@@ -16,6 +16,21 @@
 #               does not run it twice
 #   script      set instead of require/class for gates that stay subprocesses
 #   env_flags   ENV name -> keyword argument, passed to .run when the var is "1"
+#   needs       preconditions the machine must satisfy for this gate to measure
+#               anything. Today the only value is `browser`, which was runner.rb's
+#               hardcoded BROWSER_BACKED list — a fifth hand-maintained table of
+#               exactly the kind this file replaced.
+#
+# There is deliberately no `cost` field, and it is not an oversight.
+#
+# A cost declared here is a number somebody typed once, and this registry exists
+# because four such tables drifted from each other. The failure a cost field is
+# meant to catch is a gate that DOUBLES — constitutional_scan at 48 minutes on
+# brgen, rendered_suite at an hour on a Mac — and a declaration can never show a
+# doubling; only a history can. The ledger already records duration_ms per gate
+# per run, so runner.rb prints each gate's measured median before it starts and
+# says "unmeasured here" for the ones this machine has never run. A gate whose
+# median moves is visible in `runner.rb --ledger`.
 #
 # Order is run order.
 
@@ -27,6 +42,7 @@ production:
     GATE_SKIP_NESTED: skip_nested
 
 rendered_invariants:
+  needs: [browser]
   require: lib/rendered/rendered_invariants
   class: Deploy::RenderedInvariants
   pass: "Rendered invariants passed (theme served matches theme declared; chat tab corner consistent or declared)."
@@ -108,6 +124,7 @@ stimulus_components:
 
 # Forwards --capture/--app/--base, so it stays a subprocess.
 visual_contract:
+  needs: [browser]
   script: visual_contract.rb
 
 user_flow:
@@ -246,47 +263,55 @@ constitutional_scan:
 # Owns every browser-backed gate below it. Each leaf launches Chrome, so running
 # one twice in a single invocation is pure wall-clock waste.
 rendered_suite:
+  needs: [browser]
   require: lib/rendered_suite
   class: Deploy::RenderedSuiteGate
   pass: "ok: rendered browser suite clean"
 
 rendered_geometry:
+  needs: [browser]
   require: lib/rendered/rendered_geometry
   class: Deploy::RenderedGeometryGate
   pass: "ok: rendered geometry contracts satisfied"
   covered_by: rendered_suite
 
 webgl_surfaces:
+  needs: [browser]
   require: lib/rendered/webgl_surfaces
   class: Deploy::WebglSurfacesGate
   pass: "ok: webgl surfaces draw"
   covered_by: rendered_suite
 
 viewport_spill:
+  needs: [browser]
   require: lib/rendered/viewport_spill
   class: Deploy::ViewportSpillGate
   pass: "ok: nothing hangs off the right edge at 390px"
   covered_by: rendered_suite
 
 layout_snapshot:
+  needs: [browser]
   require: lib/rendered/layout_snapshot
   class: Deploy::LayoutSnapshotGate
   pass: "ok: layout snapshots match committed baselines"
   covered_by: rendered_suite
 
 journey_invariant:
+  needs: [browser]
   require: lib/rendered/journey_invariant
   class: Deploy::JourneyInvariantGate
   pass: "ok: journey invariants hold"
   covered_by: rendered_suite
 
 reflow:
+  needs: [browser]
   require: lib/rendered/reflow
   class: Deploy::ReflowGate
   pass: "ok: no overflow across the width sweep"
   covered_by: rendered_suite
 
 keyboard_flow:
+  needs: [browser]
   require: lib/rendered/keyboard_flow
   class: Deploy::KeyboardFlowGate
   pass: "ok: keyboard tab order is sound"
@@ -294,12 +319,14 @@ keyboard_flow:
 
 # Phone viewport journey floor (Fitts 44px, overflow, landmarks, verticals).
 mobile_flow:
+  needs: [browser]
   require: lib/rendered/mobile_flow
   class: Deploy::MobileFlowGate
   pass: "ok: mobile journey floor holds"
   covered_by: rendered_suite
 
 cross_app:
+  needs: [browser]
   require: lib/rendered/cross_app
   class: Deploy::CrossAppEquivalenceGate
   pass: "ok: shared chrome agrees across apps"
@@ -318,6 +345,7 @@ flow_journey:
 # Full-matrix UI/UX simulation: every full-page view (brgen · amber · MASTER).
 # Source always; live HTTP when triangle ports are open.
 page_simulation:
+  needs: [browser]
   require: lib/live/page_simulation
   class: Deploy::PageSimulationGate
   pass: "ok: page UI/UX simulations clean across inventory"
@@ -331,6 +359,7 @@ gate_mutation:
 # control centre, so deliberate stacking (fixed nav, modal, chat widget) is
 # not mistaken for a defect the way rect intersection would.
 occlusion:
+  needs: [browser]
   require: lib/rendered/occlusion
   class: Deploy::OcclusionGate
   pass: "ok: every control answers a press at its own centre"
