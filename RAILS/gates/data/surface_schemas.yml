@@ -36,8 +36,12 @@ schemas:
       search:
         pattern: 'marketplace-nav-search|class="[^"]*search|name="q"'
         principle: affordance
+      # An empty catalogue still renders the catalogue region, as the empty
+      # state. Without the third alternate this hard marker reported a checkout
+      # with no listings as a page missing its product grid — the same reading
+      # error exemplars.yml's nav_before_grid carried, and for the same reason.
       product_grid:
-        pattern: 'deal-grid|deal-card'
+        pattern: 'deal-grid|deal-card|empty-state-title'
         principle: hierarchy
       sell_or_cart:
         pattern: 'Cart|Sell|listings/new|marketplace_cart'
