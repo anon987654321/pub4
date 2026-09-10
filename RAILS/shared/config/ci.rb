@@ -81,7 +81,31 @@ Pub4::CiGuard.run! do
     # that nothing runs automatically. It is a source-text check needing no
     # browser and no database, so the reasons the system tests and the importmap
     # audit are skipped on the VPS do not apply to it.
-    rubocop = 'bundle exec rubocop $(for d in app lib config db/migrate test engines; do [ -d "$d" ] && printf "%s " "$d"; done)'
+    # Autocorrect first, then check. A correctable offence must never be why an
+    # app does not ship: bsdports sat on a commit from 2026-08-22 until
+    # 2026-09-10, 156 commits behind, because two Style/TrailingCommaInArrayLiteral
+    # offences in one test file failed this step at 2m43s — after 102 tests and
+    # the seeds had passed. The deploy exited before the sync, so nothing shipped
+    # and nothing said why in a place anyone looked.
+    #
+    # `-a`, never `-A`. Safe autocorrect only touches offences RuboCop can fix
+    # without changing behaviour; unsafe autocorrect rewrites semantics, which is
+    # not something a deploy may decide on its own. Anything left after it — a
+    # real offence, an uncorrectable one — still fails the step, so the guard is
+    # intact and only the mechanical half stops blocking.
+    #
+    # On the VPS the correction lands in the synced live directory and not in
+    # git, so the next sync restores the offence and the next deploy fixes it
+    # again. That is fine for shipping and useless as a record, which is why it
+    # is reported as drift the repo has not learned rather than passed over in
+    # silence.
+    dirs = '$(for d in app lib config db/migrate test engines; do [ -d "$d" ] && printf "%s " "$d"; done)'
+    autocorrect = "bundle exec rubocop --autocorrect --format quiet #{dirs} > /tmp/rubocop-autocorrect.out 2>&1; " \
+                  "if ! git diff --quiet -- #{dirs} 2>/dev/null; then " \
+                  "echo 'Style: Ruby autocorrected — commit these, they are not in git:'; " \
+                  "git diff --name-only -- #{dirs}; fi; true"
+    step "Style: Ruby (autocorrect)", autocorrect
+    rubocop = "bundle exec rubocop #{dirs}"
     step "Style: Ruby", rubocop
     audit = "bundle exec bundler-audit check"
     audit += " --update" if ENV["BUNDLER_AUDIT_UPDATE"] == "1"
