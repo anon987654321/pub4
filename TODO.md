@@ -2825,24 +2825,22 @@ costing a round trip; and `value: params[:email_address]` re-fills the address
 after a failed attempt. brgen and bsdports carried all three and only amber did
 not.
 
-#### 5. `rendered_geometry.rb` sits exactly on its own raised ceiling
+#### 5. `rendered_geometry.rb`'s token shelf — stale, it was already built
 
-It is 344 code lines against a 344 ceiling and a 300 general limit, across 20
-`check_*` methods, so the next check breaches. A Prism census found nothing
-dead and a fresh grep finds no twin of `fractional?`, `on_rhythm?`,
-`expand_hex`, `collect_hexes`, `rect_gap`, `undersized?`, `inline_target?`,
-`critical?` or `token_palette` anywhere in the repo, so the payment is
-extraction. The shelf with the clearest edge is the colour group —
-`check_token_conformance`, `token_palette`, `collect_hexes`, `expand_hex`,
-about 40 lines answering one question, extractable as
-`rendered/rendered_geometry/token_checks.rb` and included back in exactly as
-`design_metrics/type_checks.rb` and `contrast_checks.rb` already are.
+The entry proposed extracting `check_token_conformance`, `token_palette`,
+`collect_hexes` and `expand_hex` into `rendered_geometry/token_checks.rb`. All
+four are in `gates/support/rendered_geometry/token_checks.rb` and have been
+since the 422 → 344 pass; `deploy_gates_contract_test` is what moved it out of
+`gates/lib/`, since a check module is not a gate. The proposal was written from
+the earlier number.
 
-The file it was to be paid with is spent. `RAILS/INSTANT.md` is folded into the
-forward-work section above and deleted, and the two stylesheet partials took
-that room plus one more — `growth.rails` measures 2373 against 2372, so the
-token shelf now wants a named raise in `MASTER/data/spine.yml` rather than a
-file to trade against.
+`rendered_geometry.rb` still sits at 344 against its own 344 ceiling, and the
+`CEILINGS` comment in `file_length_ratchet_test.rb` already says at length why
+what is left does not divide: two further cuts look available and neither
+survives reading, because the gate files four checks under `fitts_law` that
+share `critical?`, and the one clean separation by probe field names a data
+source rather than a question. The next check breaches and wants a raise argued
+there, not a shelf.
 
 #### 6. `shared/lib/pub4/` wants a `lint/` shelf, and it costs no files
 
@@ -2916,8 +2914,13 @@ an afternoon and it touches a MASTER ratchet, so it is not a first move.
 
 #### What could not be measured
 
-Per-app `bin/ci` — RuboCop, Brakeman and the app suites — wants each app's
-bundle and a migrated database, and a worktree has neither.
+The app suites DO run in a worktree, and the earlier note here saying otherwise
+was wrong. `cd RAILS/<app> && RBENV_VERSION=3.4.9 rbenv exec bundle exec rails
+test` resolves each app's bundle and prepares its own sqlite from the checked-in
+schema: brgen 994 runs, amber 254, bsdports 102, all green on 2026-09-10, plus
+the shared engine's own three files. What genuinely does not run here is the
+rest of `bin/ci` — RuboCop and Brakeman — and the system tests. Do not report a
+shared-engine change unverified on the grounds that the apps are unreachable.
 
 And a fact that cost a verification before it was noticed: **the fleet on
 38182/61352/47312 serves the main checkout, not your worktree.** Its rendered

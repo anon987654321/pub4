@@ -271,7 +271,9 @@ rules:
 # comfort: the next messenger-shaped commit has to carry its own cut, and the
 # named places to look are the three PP Neue Montreal @font-face blocks (~1KB,
 # pointing at woff2 that do not exist in this app, and a licensing decision the
-# operator owns) and the 153 selectors css_coverage_lint records as unused.
+# operator owns) and the 134 selectors css_coverage_lint records as unused —
+# 153 until 2026-09-10, when that census learned to read a class value written
+# as a Ruby expression and nineteen of them turned out to be painting.
 # What is NOT waste, and was examined and left: the per-file
 # prefers-reduced-motion guards, which look redundant under _animations.scss's
 # global !important reset and are the deliberate survivors of the 4211c4ebb
