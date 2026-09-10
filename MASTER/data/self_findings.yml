@@ -97,17 +97,18 @@
 # Master::Review::RepoEcology 354 across three, against a limit of 300. They are
 # recorded rather than exempted, and TODO.md names them as the decompositions
 # they are.
-findings: 287
+findings: 279
 by_rule:
   BARE_DIV_WRAPPER: 3
   BLANK_LINE_RUN: 1
-  FROZEN_STRING_LITERAL: 6
+  FROZEN_STRING_LITERAL: 1
   GUARD_CLAUSE: 27
   I18N_COVERAGE: 18
+  IMMUTABLE: 2
   MEANINGFUL_NAMES: 1
   MIGRATION_ADD_REFERENCE_NO_FK: 2
   MOBILE_FIRST: 1
-  NEVER_BATCH_DELETE: 4
+  NEVER_BATCH_DELETE: 3
   NO_CHANGELOG_COMMENT: 16
   NO_COLUMN_ALIGN: 42
   NO_INLINE_SCRIPT_BLOCK: 21
@@ -118,10 +119,9 @@ by_rule:
   OPTIONAL_CHAINING: 2
   PROSE_ACTIVE_VOICE: 4
   PROSE_ACTIVE_VOICE_NB: 1
-  PROSE_OMIT_QUALIFIERS: 16
+  PROSE_OMIT_QUALIFIERS: 17
   RATE_LIMITING_MISSING: 4
   SQUINT_TEST: 5
-  STRICT_MODE_ZSH: 5
   USE_THEN: 6
 finding_members:
   - BARE_DIV_WRAPPER MASTER/web/public/offline.html:25
@@ -129,11 +129,6 @@ finding_members:
   - BARE_DIV_WRAPPER RAILS/brgen/public/dilla/dilla.html:45
   - BLANK_LINE_RUN MASTER/web/app/views/chat/index.html.erb:1
   - FROZEN_STRING_LITERAL MASTER/web/lib/tasks/probe.rake:1
-  - FROZEN_STRING_LITERAL STUDIO/dilla/bin/demo_from_stream.rb:1
-  - FROZEN_STRING_LITERAL STUDIO/dilla/bin/demo_full.rb:1
-  - FROZEN_STRING_LITERAL STUDIO/dilla/bin/sine_stream.rb:1
-  - FROZEN_STRING_LITERAL STUDIO/dilla/bin/sine_stream_player.rb:1
-  - FROZEN_STRING_LITERAL STUDIO/dilla/bin/sine_stream_ticks.rb:1
   - GUARD_CLAUSE RAILS/brgen/app/controllers/communities_controller.rb:1
   - GUARD_CLAUSE RAILS/brgen/app/controllers/conversations_controller.rb:1
   - GUARD_CLAUSE RAILS/brgen/app/controllers/events_controller.rb:1
@@ -179,14 +174,15 @@ finding_members:
   - I18N_COVERAGE RAILS/brgen/engines/playlist/app/views/playlist/sets/show.html.erb:39
   - I18N_COVERAGE RAILS/brgen/engines/playlist/app/views/playlist/shared/_dilla_sketches.html.erb:13
   - I18N_COVERAGE RAILS/brgen/engines/takeaway/app/views/takeaway/_nav_bar.html.erb:15
+  - IMMUTABLE RAILS/gates/runner.rb:237
+  - IMMUTABLE RAILS/gates/runner.rb:248
   - MEANINGFUL_NAMES RAILS/brgen/engines/marketplace/app/services/marketplace/listing_facets.rb:47
   - MIGRATION_ADD_REFERENCE_NO_FK RAILS/brgen/db/migrate/20260524113000_create_brgen_social_tables.rb:15
   - MIGRATION_ADD_REFERENCE_NO_FK RAILS/brgen/db/migrate/20260602150000_add_neighborhood_to_dating_profiles.rb:5
   - MOBILE_FIRST RAILS/shared/app/assets/stylesheets/_tab_bar.scss:99
   - NEVER_BATCH_DELETE OPENBSD/dotfiles/mov.sh:1151
   - NEVER_BATCH_DELETE RAILS/shared/app/jobs/shared/database_snapshot_job.rb:41
-  - NEVER_BATCH_DELETE STUDIO/dilla/bin/sine_stream_player.rb:44
-  - NEVER_BATCH_DELETE STUDIO/dilla/bin/sine_stream_ticks.rb:15
+  - NEVER_BATCH_DELETE STUDIO/dilla/bin/sine_stream_player.rb:46
   - NO_CHANGELOG_COMMENT MASTER/web/app/services/tts_job.rb:45
   - NO_CHANGELOG_COMMENT MASTER/web/config/initializers/master_container.rb:59
   - NO_CHANGELOG_COMMENT MASTER/web/script/face_asset_paths.rb:6
@@ -384,9 +380,10 @@ finding_members:
   - PROSE_OMIT_QUALIFIERS RAILS/brgen/engines/playlist/app/helpers/playlist_helper.rb:18
   - PROSE_OMIT_QUALIFIERS RAILS/brgen/engines/takeaway/app/models/takeaway/delivery_driver.rb:26
   - PROSE_OMIT_QUALIFIERS RAILS/shared/app/controllers/concerns/shared/authentication.rb:220
-  - PROSE_OMIT_QUALIFIERS STUDIO/dilla/bin/sine_stream.rb:234
-  - PROSE_OMIT_QUALIFIERS STUDIO/dilla/bin/sine_stream.rb:3
+  - PROSE_OMIT_QUALIFIERS STUDIO/dilla/bin/sine_stream.rb:236
+  - PROSE_OMIT_QUALIFIERS STUDIO/dilla/bin/sine_stream.rb:5
   - PROSE_OMIT_QUALIFIERS STUDIO/dilla/lib/harmony_score.rb:122
+  - PROSE_OMIT_QUALIFIERS STUDIO/dilla/live/CATALOGUE.md:152
   - PROSE_OMIT_QUALIFIERS STUDIO/lora/_toolkit/colab_session.rb:485
   - PROSE_OMIT_QUALIFIERS STUDIO/lora/_toolkit/curate.rb:211
   - PROSE_OMIT_QUALIFIERS STUDIO/lora/_toolkit/render_config.rb:365
@@ -400,21 +397,16 @@ finding_members:
   - SQUINT_TEST RAILS/brgen/app/assets/stylesheets/_widgets.scss:1
   - SQUINT_TEST RAILS/brgen/app/javascript/reference/visualizers_2d_reference.js:1
   - SQUINT_TEST RAILS/shared/app/assets/stylesheets/_search_yep.scss:1
-  - STRICT_MODE_ZSH STUDIO/dilla/bin/demo_daemon.sh:1
-  - STRICT_MODE_ZSH STUDIO/dilla/bin/sine_stream_heartbeat.sh:1
-  - STRICT_MODE_ZSH STUDIO/dilla/bin/sine_stream_play.sh:1
-  - STRICT_MODE_ZSH STUDIO/dilla/bin/sine_stream_supervisor.sh:1
-  - STRICT_MODE_ZSH STUDIO/dilla/bin/sine_stream_watchdog.sh:1
   - USE_THEN MASTER/web/script/browser_probe_support.rb:1
   - USE_THEN RAILS/brgen/test/controllers/paginated_index_test.rb:1
   - USE_THEN RAILS/brgen/test/controllers/wiki_controller_test.rb:1
   - USE_THEN RAILS/shared/app/controllers/omniauth_callbacks_controller.rb:1
   - USE_THEN RAILS/shared/app/services/shared/newsletter_visuals.rb:1
   - USE_THEN RAILS/shared/app/services/shared/tradedoubler.rb:1
-registry_findings: 55
+registry_findings: 53
 registry_by_rule:
   NO_GOD_CLASS: 29
-  SILENT_RESCUE: 26
+  SILENT_RESCUE: 24
 registry_finding_members:
   - NO_GOD_CLASS MASTER/web/app/controllers/chat_controller.rb:7
   - NO_GOD_CLASS MASTER/web/app/services/chat_service.rb:7
@@ -445,20 +437,18 @@ registry_finding_members:
   - NO_GOD_CLASS RAILS/gates/support/geometry_probe.rb:20
   - NO_GOD_CLASS STUDIO/dilla/lib/composition_engine.rb:161
   - NO_GOD_CLASS STUDIO/dilla/lib/modulation.rb:554
-  - SILENT_RESCUE STUDIO/dilla/bin/demo_full.rb:56
-  - SILENT_RESCUE STUDIO/dilla/lib/master_heuristics.rb:113
-  - SILENT_RESCUE STUDIO/dilla/lib/master_heuristics.rb:129
-  - SILENT_RESCUE STUDIO/dilla/lib/master_heuristics.rb:24
-  - SILENT_RESCUE STUDIO/dilla/lib/music_gems.rb:152
-  - SILENT_RESCUE STUDIO/dilla/lib/music_gems.rb:174
-  - SILENT_RESCUE STUDIO/dilla/lib/music_gems.rb:206
-  - SILENT_RESCUE STUDIO/dilla/lib/music_gems.rb:237
-  - SILENT_RESCUE STUDIO/dilla/lib/music_gems.rb:246
-  - SILENT_RESCUE STUDIO/dilla/lib/provenance.rb:274
-  - SILENT_RESCUE STUDIO/dilla/lib/provenance.rb:365
+  - SILENT_RESCUE STUDIO/dilla/bin/demo_full.rb:58
+  - SILENT_RESCUE STUDIO/dilla/lib/master_heuristics.rb:115
+  - SILENT_RESCUE STUDIO/dilla/lib/master_heuristics.rb:131
+  - SILENT_RESCUE STUDIO/dilla/lib/master_heuristics.rb:26
+  - SILENT_RESCUE STUDIO/dilla/lib/music_gems.rb:155
+  - SILENT_RESCUE STUDIO/dilla/lib/music_gems.rb:177
+  - SILENT_RESCUE STUDIO/dilla/lib/music_gems.rb:209
+  - SILENT_RESCUE STUDIO/dilla/lib/music_gems.rb:240
+  - SILENT_RESCUE STUDIO/dilla/lib/music_gems.rb:249
+  - SILENT_RESCUE STUDIO/dilla/lib/provenance.rb:277
   - SILENT_RESCUE STUDIO/dilla/lib/provenance.rb:376
-  - SILENT_RESCUE STUDIO/dilla/lib/seed_providers.rb:88
-  - SILENT_RESCUE STUDIO/dilla/lib/seed_providers.rb:99
+  - SILENT_RESCUE STUDIO/dilla/lib/provenance.rb:387
   - SILENT_RESCUE STUDIO/dilla/lib/verify_fx.rb:209
   - SILENT_RESCUE STUDIO/dilla/lib/verify_fx.rb:220
   - SILENT_RESCUE STUDIO/dilla/lib/verify_fx.rb:340
@@ -468,6 +458,6 @@ registry_finding_members:
   - SILENT_RESCUE STUDIO/lora/_toolkit/curate.rb:160
   - SILENT_RESCUE STUDIO/postpro/postpro.rb:291
   - SILENT_RESCUE STUDIO/postpro/postpro.rb:302
-  - SILENT_RESCUE STUDIO/test/test_dilla_engine_probes.rb:1215
+  - SILENT_RESCUE STUDIO/test/test_dilla_engine_probes.rb:1221
   - SILENT_RESCUE STUDIO/trymbot/trymbot.rb:163
   - SILENT_RESCUE STUDIO/trymbot/trymbot.rb:258

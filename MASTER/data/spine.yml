@@ -288,7 +288,12 @@ pub4_source_ceilings:
   # it now runs as rake readme:take. It folds into nothing that exists: the
   # recorder is a RAILS probe because CdpSession lives there, and the Rakefile is
   # the wrong home for sixty lines of prose extraction.
-  MASTER: 1041
+  # 1041 -> 1042 for AEGIS.md. Aegis is a product thesis -- the sea case for
+  # this runtime's offline-first design -- and it had been sitting in TODO.md,
+  # which is the file people open to find out what to fix. That is why nobody
+  # had read it. It folds into nothing: README.md is the pitch for what exists
+  # and this is the argument for what a body would be for.
+  MASTER: 1042
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
   # it belongs beside the other probes and folds into nothing.
@@ -379,7 +384,12 @@ pub4_source_ceilings:
   # keys were being shadowed by the file that sorts last. Against that,
   # user_flow_design_contracts.rb and rendered_geometry/placement_checks.rb are
   # two real splits the file-length ratchet asked for, and each is one subject.
-  RAILS: 2371
+  # 2371 -> 2372 for gates/support/bounded_command.rb. Six gate subprocesses
+  # called capture2e with no timeout, so a gate could hang on a browser or a
+  # remote host and the run would report nothing at all rather than a failure.
+  # One place that bounds a command, because six places that each remember to
+  # is how five of them forget.
+  RAILS: 2372
   # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
   # that are the whole defence against a shared index, and nothing tested any of
   # them — a hook that stopped firing looks exactly like a week in which nobody
@@ -450,7 +460,11 @@ pub4_source_ceilings:
   # first writes music, the second plays over it, the third knows nothing about
   # music at all. STUDIO/gate.rb's DILLA_SUPPORT_CEILING carries the same
   # reasoning for the same three modules.
-  STUDIO: 153
+  # 153 -> 148, a fall. CATALOGUE.md arrived from TODO.md and six files left:
+  # a test asserting render_rand, a method the engine has never defined, and
+  # five the sweep found dead. A catalogue of livesets is dilla's work and
+  # belongs beside the three sets it was written after.
+  STUDIO: 148
 
 # Executable files directly under each tree's own bin/ — the number CLAUDE.md's
 # "two surfaces, no third" makes a claim about while nothing counted it. MASTER
