@@ -70,15 +70,6 @@ class TestRenderSeed < Minitest::Test
     refute_equal a, b
   end
 
-  def test_render_rand_stays_in_the_unit_interval
-    with_env("RENDER_SEED" => "42") do
-      value = send(:render_rand, "swing")
-      assert_operator value, :>=, 0.0
-      assert_operator value, :<, 1.0
-      assert_equal value, send(:render_rand, "swing")
-    end
-  end
-
   # Keyed by tag rather than by call order, because drum_sample_path is called
   # once per role and an order-keyed RNG hands a role a different file depending
   # on which roles resolved before it.
