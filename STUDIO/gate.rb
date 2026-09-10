@@ -99,21 +99,32 @@ module Deploy
 
     PROBE_TIMEOUT = Integer(ENV.fetch("STUDIO_PROBE_TIMEOUT", "60"))
 
-    # dilla's support modules under lib/ are the one place file count can still
-    # grow, so this is the ceiling that replaced ENGINE_PART_CEILING when the 81
-    # engine parts folded into dilla.rb. A new module fails the gate until its
-    # author folds it into a sibling or raises this with the reason in the commit.
+    # dilla's support files are the one place file count can still grow, so this
+    # is the ceiling that replaced ENGINE_PART_CEILING when the 83 engine parts
+    # folded into dilla.rb. A new module fails the gate until its author folds it
+    # into a sibling or raises this with the reason in the commit.
     #
-    # 42 to 44, for improvisation.rb, improvised_line.rb and space_fx.rb.
+    # It used to read `/dilla/lib/[^/]+\.rb\z` — one directory, one level deep —
+    # and both halves of that were an escape hatch. `MASTER/tools/cohesion.rb
+    # STUDIO/dilla/lib` proposes three regroups into engine/, harmony/ and
+    # score/, nine files between them; taking any one moves those files a level
+    # down, out of the pattern, and the guarded count falls from 44 to 35. The
+    # ceiling would appear to have been relieved by the very change that made it
+    # measure less. And `dilla/bin`, `dilla/live` and `dilla/scripts` were not
+    # counted at all, so twelve support files sat outside a ceiling written to
+    # stop support files multiplying.
     #
-    # Three subjects, not one split three ways, which is the distinction this
-    # ceiling exists to police. improvisation writes progressions once at load
-    # and hands them to the catalogue; improvised_line writes a lead and a bass
-    # over a progression, per render, and knows nothing about which progressions
-    # exist; space_fx is per-sample DSP that knows nothing about music at all.
-    # Folding any pair would put two lifetimes in one file to satisfy a count,
-    # which is the regrouping the backlog already decided against.
-    DILLA_SUPPORT_CEILING = 44
+    # So the corpus is every first-party Ruby file dilla carries beside the
+    # engine, at any depth: 44 in lib/, 4 in bin/, 6 in live/ and 2 in scripts/.
+    # A regroup is now free and a new file is not, which is the way round this
+    # was always meant to be. Raising it is still allowed and still wants a
+    # reason — 42 to 44 was improvisation.rb, improvised_line.rb and space_fx.rb,
+    # three subjects rather than one split three ways: improvisation writes
+    # progressions once at load, improvised_line writes a lead and a bass over a
+    # progression per render and knows nothing about which progressions exist,
+    # and space_fx is per-sample DSP that knows nothing about music at all.
+    DILLA_SUPPORT = %r{/dilla/(?:lib|bin|live|scripts)/}
+    DILLA_SUPPORT_CEILING = 56
 
     # VENDORED is matched against the path inside STUDIO, never the absolute
     # one. Matched absolutely it excluded every file in a checkout living under
@@ -217,11 +228,11 @@ module Deploy
         )
       end
 
-      support = files.count { |path| path =~ %r{/dilla/lib/[^/]+\.rb\z} }
+      support = files.count { |path| path =~ DILLA_SUPPORT }
       return if support <= DILLA_SUPPORT_CEILING
 
       @result.fail(
-        "studio growth: dilla has #{support} support modules against a ceiling of " \
+        "studio growth: dilla has #{support} support files against a ceiling of " \
         "#{DILLA_SUPPORT_CEILING} — fold the new one into a sibling, or raise " \
         "DILLA_SUPPORT_CEILING in gate.rb with why in the commit"
       )

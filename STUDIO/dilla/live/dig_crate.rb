@@ -1,6 +1,23 @@
 # frozen_string_literal: true
 
-# The crate, dug from its manifest.
+# The crate, dug from its manifest — off YouTube, and therefore not cleared.
+#
+# Say that first, because this file and lib/crate_dig.rb are one word order
+# apart and take opposite positions on the same question. crate_dig's own header
+# reads "Everything else under samples/ was ripped from YouTube, which is neither
+# licensed nor defensible, and this does not add to that pile", and it is the
+# licensed path: Internet Archive and LibriVox, filtered to expired copyright.
+# This file is the pile. The two are not alternatives and neither replaces the
+# other — one fills samples/dug/ with material that clears, this one fills
+# samples/chopped/ with material that does not — and reading a repository that
+# holds both without saying so once left the distinction to whichever file a
+# reader happened to open.
+#
+# Rights are carried, not checked. Nothing here can clear a recording, and
+# lib/radio_chop.rb makes the same admission about its off-air captures in the
+# same words: a rack cut from an unlicensed source is identifiable later rather
+# than discovered at release. Treat everything this writes as unlicensed until
+# somebody clears it by hand.
 #
 # Lives in the repo, not in a scratchpad: the scratchpad swept two earlier
 # copies of this away mid-run. Resumable -- a slug whose chopped rack exists is
@@ -19,6 +36,10 @@ YTDLP = "/opt/homebrew/bin/yt-dlp"
 MAX_SECONDS = 480
 
 Dir.chdir(D)
+# On stderr, every run. A header only warns the reader who opens the file, and
+# the person about to fill a crate with unlicensed material is at a prompt.
+warn "dig_crate: YouTube rips — unlicensed, not cleared for release. " \
+     "lib/crate_dig.rb is the path that clears (Internet Archive, LibriVox, expired copyright)."
 crate = YAML.safe_load_file("project/crate.yml")["crate"].select { |e| e["available"] }
 slugify = ->(t) { t.to_s.downcase.gsub(/[^a-z0-9]+/, "_").gsub(/\A_|_\z/, "")[0, 44] }
 

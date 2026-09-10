@@ -1046,6 +1046,47 @@ class TestDilla < Minitest::Test
                     "more fileless loops than the crate rebuild accounts for"
   end
 
+  # An alias whose target nothing registers is a silent miss, and eight of the
+  # eleven are in that state.
+  #
+  # TRACK=sheger_01 renders today: TRACK_PRESETS has a live row for it with its
+  # own measured tempo and progression, so the chords and the pocket arrive. What
+  # does not arrive is the bed — the alias resolves to ubrukte_samples_01, which
+  # RadioChop registered out of samples/chopped/loops.json, and that crate was
+  # cleared at 74d9e4c1b on the operator's call. sample_loop_entry finds nothing
+  # and says nothing, which is how eight half-working tracks read as eight
+  # working ones. The backlog called these "eight dead rows" and proposed
+  # deleting them; the presets are not dead, and the aliases carry the mapping
+  # from a friendly name to a chop the rebuild is meant to bring back.
+  #
+  # Ratcheted rather than asserted empty, for the reason the loop-file check
+  # above gives: this is the state the operator asked for, and it tightens on its
+  # own as each chop re-registers. A NINTH dead alias is a new one, and that is
+  # the failure worth having.
+  def test_every_sample_loop_alias_names_a_loop_something_registers
+    result = eval_in_engine(<<~RUBY)
+      loops = TRACK_SAMPLE_LOOPS.keys.map(&:to_s)
+      aliases = TRACK_SAMPLE_LOOP_ALIASES.transform_keys(&:to_s).transform_values(&:to_s)
+      puts JSON.generate(count: aliases.length,
+                         dead: aliases.reject { |_, target| loops.include?(target) }.keys.sort,
+                         sheger_presets_live: TRACK_PRESETS.keys.map(&:to_s).grep(/\\Asheger_/).sort)
+    RUBY
+
+    awaiting_rebuild = %w[sheger_01 sheger_02 sheger_03 sheger_04 sheger_05 sheger_06 sheger_07 sheger_08]
+
+    refute_empty result.fetch("count").then { |n| n.positive? ? [n] : [] },
+                 "no aliases parsed — this test would pass having measured nothing"
+    assert_empty result.fetch("dead") - awaiting_rebuild,
+                 "a TRACK alias points at a loop nothing registers, so the track renders with no bed and " \
+                 "nothing says so: #{(result.fetch('dead') - awaiting_rebuild).inspect}"
+    assert_operator result.fetch("dead").length, :<=, awaiting_rebuild.length,
+                    "more dead aliases than the crate rebuild accounts for"
+    # And the half that is not dead, so nobody deletes the presets on the
+    # strength of the aliases.
+    assert_equal awaiting_rebuild, result.fetch("sheger_presets_live"),
+                 "the sheger preset rows are live and carry per-chop tempo and progression"
+  end
+
   # GENRE names a bundle; it does not seize the controls. Every value in it is
   # soft-filled, so anything the operator pinned survives — a bundle that
   # overrode a deliberate choice would be worse than no bundle. And an unknown
@@ -2593,6 +2634,32 @@ class TestDilla < Minitest::Test
     assert_equal 0.08..1.35, DillaKnobs["KICK_GAIN"].range
     assert_equal :float, DillaKnobs["KICK_GAIN"].type
     assert_equal "0.62", DillaKnobs["DILLA_XCONV_WET"].default
+  end
+
+  # `dilla parts` is the engine's table of contents, and it is only worth what
+  # the markers are worth.
+  #
+  # The 83 `# engine part:` markers are the order the parts were required back
+  # when they were separate files, and that order is load-bearing. Nothing
+  # indexed them, so finding a subject meant grepping for a word you had to know
+  # already. Two ways the index could lie: a marker lost in an edit, which makes
+  # the part before it look twice its size, and a duplicate name, which sends a
+  # reader to the wrong one. Neither shows up in a render.
+  def test_the_engine_part_index_covers_the_file_once_each
+    src = File.readlines(File.expand_path("../dilla/dilla.rb", __dir__))
+    marks = src.each_with_index.filter_map do |line, index|
+      (m = line.match(/\A#\s*engine part:\s*(\S+)/)) && [m[1], index + 1]
+    end
+
+    assert_operator marks.length, :>=, 80, "the engine part markers are disappearing"
+    assert_equal marks.map(&:first).uniq.length, marks.length,
+                 "two engine parts share a name, so `dilla parts <needle>` sends a reader to the wrong one: " \
+                 "#{marks.map(&:first).tally.select { |_, n| n > 1 }.keys.inspect}"
+    assert_equal marks.map(&:last).sort, marks.map(&:last),
+                 "the markers are no longer in file order, so the index cannot state a part's size"
+    # The first marker sits near the top, or everything above it is unindexed.
+    assert_operator marks.first.last, :<, 1_000,
+                    "the first engine part starts at line #{marks.first.last} — that much of the engine is off the map"
   end
 
   # Three literals are provably not defaults, and reporting them as defaults

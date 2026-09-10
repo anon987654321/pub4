@@ -29,6 +29,13 @@ require "uri"
 # The point is not that these are the same records. It is that chopping,
 # filtering, pitching and drunk-swinging a public-domain 78 puts you in the same
 # place, and the result clears.
+#
+# "This does not add to that pile" is about this file only. dilla/live/
+# dig_crate.rb is a YouTube ripper and is still here and still run — one word
+# order away from this name, which is how a reader ends up believing the whole
+# tree took the position this paragraph takes. It says so in its own header now.
+# Nothing in either file can clear a recording; what they can do is be legible
+# about which is which.
 module CrateDig
   ROOT = File.expand_path("..", __dir__)
   # NOT samples/crate/ -- that belongs to build_crate!, which synthesises chord

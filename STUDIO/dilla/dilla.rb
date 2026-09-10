@@ -14540,7 +14540,10 @@ end
 #
 #   knobs                one line per knob, grouped by type
 #   knobs SAMPLE_LOOP    everything known about one, and where it is read
-#   knobs conflicts      knobs whose default differs between files
+#   knobs conflicts      knobs read with two literal defaults, each with the
+#                        site and the method, because two of the pairs it finds
+#                        are the two arms of one `if` and a list of file names
+#                        cannot say so
 #   knobs check          what is wrong with the environment right now
 #
 # Words rather than --flags: the global flag parser consumes anything starting
@@ -14624,6 +14627,41 @@ PRECEDENCE_ORDER = DillaKnobs::PRECEDENCE
 # question directly instead, from the AST for methods and from the source for
 # constants, and it distinguishes a definition from a mention -- which is the
 # part that actually helps.
+# `parts [needle]` — the engine's own table of contents.
+#
+# dilla.rb is one file of 35,000 lines carrying 83 `# engine part:` markers, in
+# the order they were required back when they were separate files, because that
+# order is load-bearing. The map has always been in the file and nothing has ever
+# indexed it, so finding a subject meant grepping for a word you had to already
+# know. This prints the markers with the line each one starts at and how many
+# lines it holds, longest-first when asked, so the seams worth knowing about
+# announce themselves.
+#
+# Generated rather than written down, for the reason lib/knobs.rb gives about the
+# knob count: a table maintained beside the code goes stale against the code, and
+# this engine has proved that twice.
+def parts_report(needle = nil)
+  entry = DillaSources.entry
+  src = File.readlines(entry)
+  marks = src.each_with_index.filter_map do |line, index|
+    (m = line.match(/\A#\s*engine part:\s*(\S+)/)) && { name: m[1], line: index + 1 }
+  end
+  return puts("no `# engine part:` markers in #{entry} — the map moved") if marks.empty?
+
+  marks.each_with_index do |part, i|
+    part[:lines] = ((marks[i + 1] ? marks[i + 1][:line] : src.length + 1) - part[:line])
+  end
+
+  shown = needle.to_s.empty? ? marks : marks.select { |p| p[:name].include?(needle.to_s) }
+  return puts("no engine part matching #{needle} — #{marks.length} parts, run `dilla parts` for all") if shown.empty?
+
+  shown.each { |p| puts format("  %6d  %5d lines  %s", p[:line], p[:lines], p[:name]) }
+  biggest = marks.max_by(6) { |p| p[:lines] }
+  puts "#{marks.length} parts over #{src.length} lines" \
+       "#{needle.to_s.empty? ? '' : " (#{shown.length} shown)"}"
+  puts "largest: #{biggest.map { |p| "#{p[:name]} #{p[:lines]}" }.join(', ')}"
+end
+
 def where_report(name)
   return puts("usage: dilla where <method|CONSTANT|KNOB>") if name.to_s.empty?
 
@@ -28278,6 +28316,19 @@ def help
     LIVESET
       liveset [set] [minutes]      Long-form WAV from stem rack (LIVESET_MIN=#{LIVESET_MIN})
 
+    READING THE ENGINE (no audio, no render — these only look)
+      parts [needle]               Every `# engine part:` marker with the line it
+                                   starts at and how many it holds. The map has
+                                   always been in dilla.rb; this indexes it.
+      where <name>                 Which file owns a method, a constant or a knob
+      knobs [NAME|conflicts|check] Every knob the engine reads, one it reads, the
+                                   ones read with two defaults, or what is wrong
+                                   with the environment right now
+      assets [record]              Is the crate the recipes name still here and
+                                   still itself
+      tracklist [path]             What a render was actually made of
+      taste                        What the engine has been asked to prefer
+
     ANALYSIS & GRADE
       scan | ears | verify | study | grade | grade_list | chords
       vocab-check                  Chord symbols, arp figures and drum grids — no audio, ~1s.
@@ -34649,6 +34700,7 @@ DISPATCH = {
   "debug" => -> { debug },
   "config-provenance" => -> { print_config_provenance },
   "knobs" => -> { knobs_report(ARGV.shift) },
+  "parts" => -> { parts_report(ARGV.shift) },
   "assets" => -> { assets_report(ARGV.shift) },
   "tracklist" => -> { tracklist_report(ARGV.shift) },
   "taste" => -> { taste_report(ARGV.dup) },
