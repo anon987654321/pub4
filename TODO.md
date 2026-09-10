@@ -3153,14 +3153,15 @@ decision not to reopen `lib/engine/` stands.
 
 ### The engine probes pass, and the seed question is smaller than it looked
 
-`rake test:dilla` is 305 runs, 0 failures, 3 skips, measured with the real
-`samples/` present. Both failures this section recorded are gone.
-`test_every_genre_renderer_reaches_the_master_bus` passes — `render_analog`
-reaches the bus — and `test_every_hand_cut_sample_loop_is_reachable_as_a_track
-_preset` passes with `semua_untuk_mu` among the four builtins its whitelist names
-as awaiting the crate rebuild. The three skips are the timeouts recorded under
-"not worth chasing" below. A worktree without `samples/` copied in fails the
-second of those on `rauingar`, which is the worktree and not the engine.
+`rake test:dilla` is 305 runs and 0 failures, with 3 skips when the real
+`samples/` is present and 4 in a worktree. Both failures this section recorded
+are gone. `test_every_genre_renderer_reaches_the_master_bus` passes —
+`render_analog` reaches the bus — and `test_every_hand_cut_sample_loop_is
+_reachable_as_a_track_preset` passes with `semua_untuk_mu` among the four
+builtins its whitelist names as awaiting the crate rebuild. Three of the skips
+are the timeouts recorded under "not worth chasing" below; the fourth is the
+loop-file check standing down because a worktree has no crate to measure, which
+is where it used to fail on `rauingar` and send a session after the engine.
 
 `RENDER_SEED` stays open and is a quarter the size this said. `test_dilla_render
 _seed.rb` pins `stable_hash`, `seed_for`, `noise_seed`, `render_pick` and
