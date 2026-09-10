@@ -211,9 +211,21 @@ install_root_configs() {
     log INFO "installed /$d from repo"
   done
 
-  [[ -f /etc/rc.d/master ]] && chmod 555 /etc/rc.d/master
+  # 755 first, then 555 for the scripts this repo owns. Written the other way
+  # round, the blanket loop undid the line above it two lines later, so the mode
+  # the file asks for twice — here and where master is installed — was never the
+  # mode it set.
+  #
+  # Two conventions, on purpose, and vm23 already runs both: OpenBSD's own 82
+  # base scripts are 755, and the nine this repo installs are r-xr-xr-x. The
+  # read-only bit is the signal that the file is generated from the checkout and
+  # a local edit will be overwritten. root writes through it regardless, which is
+  # why `cp` onto an installed script has always worked.
   [[ -f /etc/daily.local ]] && chmod 755 /etc/daily.local
   for f in /etc/rc.d/*(N); do chmod 755 "$f"; done
+  for svc in master ${ALL_APPS%%:*}; do
+    [[ -f /etc/rc.d/$svc ]] && chmod 555 /etc/rc.d/$svc
+  done
   for f in /usr/local/bin/*(N); do [[ -f $f ]] && chmod 755 "$f"; done
   # libexec holds helpers root dot-sources (stale_ci_cleanup.ksh); they must be
   # root-owned and not group/world writable or the sourcing is a root RCE.
@@ -748,7 +760,10 @@ bootstrap_rails_app() {
 
   typeset svc=$app
   [[ -f ${CONFIG_ROOT}/etc/rc.d/${svc} ]] || install_template etc/rc.d/rails-app.tmpl /etc/rc.d/${svc}
-  chmod 755 /etc/rc.d/${svc}
+  # 555, the mode brgen, amber and bsdports already carry on vm23 — see
+  # install_root_configs for why this repo's rc.d scripts are read-only and
+  # OpenBSD's own are not. 755 here would flatten that on the next app install.
+  chmod 555 /etc/rc.d/${svc}
   /usr/sbin/rcctl enable ${svc}
   /usr/sbin/rcctl restart ${svc} || /usr/sbin/rcctl start ${svc} \
     || { log ERROR "${svc} failed to start"; return 1 }
@@ -889,7 +904,7 @@ stage_2() {
     typeset svc_rest=${svc_entry#*:}
     typeset svc_port=${svc_rest##*:}
     log INFO "Setting up service: $svc_name on port $svc_port"
-    chmod 755 /etc/rc.d/$svc_name
+    chmod 555 /etc/rc.d/$svc_name
     /usr/sbin/rcctl enable $svc_name
     /usr/sbin/rcctl start $svc_name || log WARN "$svc_name start failed (may need manual start)"
   done
