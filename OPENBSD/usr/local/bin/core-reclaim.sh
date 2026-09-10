@@ -62,6 +62,12 @@ rss_kb=$(ps -axo rss,args | grep "127.0.0.1:$PORT" | grep -v grep | head -1 | aw
 rss_mb=$(( rss_kb / 1024 ))
 [ "$rss_mb" -ge "$CEILING_MB" ] || exit 0
 
+# Field 1 is the 1-minute average, and it is the right one here while
+# resource_guard.sh:101 takes field 2. The two ask opposite questions. The guard
+# must not shed a site over a passing spike, so it wants the smoothed figure; this
+# script is about to cost somebody a cold boot, so it wants to know whether the box
+# is busy in this minute. Reading the same field in both would make one of them
+# wrong, which is why there is no shared helper for this line.
 load=$(sysctl -n vm.loadavg | awk '{print $1}')
 over=$(echo "$load $LOAD_MAX" | awk '{print ($1 > $2) ? 1 : 0}')
 if [ "$over" = "1" ]; then

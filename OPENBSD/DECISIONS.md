@@ -284,3 +284,107 @@ arrival and keeps the last 14. Verified 2026-08-25 by an actual restore drill:
 posts and listings in the 24th's brgen snapshot matched live exactly. If
 litestream is ever wanted, it needs a Go build on the box, which is a separate
 decision with its own maintenance cost.
+
+## dev keeps passwordless root, and here is the exposure — 2026-09-10
+
+**Status:** accepted, with a review trigger. This closes a question that had sat
+open for weeks as "the operator's to schedule", which is not a posture — it is an
+absence of one. The rule stays. What follows is what it costs, what already
+limits it, and the one narrowing someone could actually walk.
+
+**The rule.** `/etc/doas.conf:39` reads `permit nopass setenv { … } dev as root`.
+`doas -C /etc/doas.conf id` prints `permit nopass` on the box. Check it with that
+form and not with `-u dev`: `-u` names the target user and defaults to root
+(doas(1)), so `-u dev` asks whether dev may run a command as dev, which no rule
+permits. It printed `deny` against `permit nopass` for the plain form in the same
+minute, and this row read as closed for weeks on that backwards measurement.
+
+**The exposure, stated plainly.** Anything that executes as dev is root. Not "can
+become root with effort" — root on the next line, with no password and no prompt.
+dev is the account ssh lands on, the account `bin/vps-deploy` runs as, the account
+`MASTER/bin/master` runs as from a terminal, and the owner of `/home/dev/pub4`, a
+checkout several agent sessions write to every day. So the trust boundary is not
+the doas rule; it is every commit that reaches that directory. The four daemons
+are not in it: brgen, amber, bsdports and master each run under their own account,
+none is in `wheel`, and none has a doas rule, so an application bug does not reach
+root through this file. dev and root are the only members of `wheel`, and sshd
+carries `PermitRootLogin no` and `PasswordAuthentication no`, so the reachable
+door is a dev key.
+
+**Why command scoping cannot narrow it.** doas.conf(5) matches `cmd command
+[args argument ...]`, and the arguments a user supplies must match those
+specified. Measured 2026-09-10 over tracked executable files, ignoring comments,
+documentation and tests: 123 `doas` call sites, 103 of them in `OPENBSD/` across
+20 files and 20 in `RAILS/_deploy.sh` and `RAILS/deploy.sh`. Twenty-one are a
+shell — 11 `doas zsh`, 6 `doas sh`, 3 `doas su`, 1 `doas ksh` — and a root shell
+is blanket root, so no allowlist containing one is narrower than the rule it
+replaces. The 39 `doas rcctl` sites are not the safe remainder either: `rcctl set
+<svc> flags` writes `/etc/rc.conf.local` and root executes those flags at the next
+boot, and the deploy passes the service name as a variable, so pinning `args` is
+not open to it. Scoping this file is arithmetic that does not come out.
+
+**Why dropping `nopass` cannot work either.** Every escalation here is
+non-interactive: cron ticks, an ssh one-shot, and `bin/vps-deploy:6`, which runs
+as dev and escalates per step by design. `persist` does not help — it suppresses
+the *second* prompt after a successful authentication, and these callers have no
+terminal to answer the first. Drop `nopass` and every deploy path stops at its
+first `doas rcctl`.
+
+**What is already spent, and must not be given back.** `keepenv` came off the dev
+rule and was replaced by a measured five-variable `setenv` allowlist, because
+`keepenv` carries `RUBYOPT`/`RUBYLIB`/`GEM_HOME` across the boundary and that is
+arbitrary code execution as root by construction. No cron path installs
+`doas.conf` any more. Root cron execs no file inside the checkout: `uptime-check`
+and `config_drift_gate.rb` are installed copies, and `vps_weekly_integrity.sh` now
+drops to dev before it reads a line of `/home/dev/pub4`. `validate_doas.ksh`
+installs from a timestamped backup and rolls back when the post-install check
+fails. Those four are the mitigation; the rule is survivable because of them.
+
+**The one narrowing someone could walk.** Collapse the escalation into a single
+root-owned entry point. Install one script — call it `/usr/local/sbin/pub4-deploy`
+— holding every step `bin/vps-deploy` currently escalates for, and reduce dev's
+rule to `permit nopass dev as root cmd /usr/local/sbin/pub4-deploy`. It works for
+the reason scoping otherwise fails: `cmd` matches what doas executes, so moving
+the body out of the dev-writable checkout into a file only a deliberate root
+`install` can replace makes the boundary the install rather than the pull. The
+price is real and is why it is not being taken today. It inverts the bootstrap —
+the box could no longer deploy a checkout it had not already installed from, so a
+hotfix would need a root run first — and it turns 103 call sites into one script
+whose failure modes are all new. Do it as a scheduled rebuild of the deploy, with
+`OPERATOR.sh` as the installer, or do not start it.
+
+**Two smaller things worth doing before that, and neither is this tree's.**
+MASTER's shell effect is not gated against escalation: `zsh.forbidden_commands` in
+`MASTER/data/rules.yml` is a style list of GNU tools and it names `doas` as the
+recommended replacement for `sudo`, so nothing stops a shell effect from calling
+it. Adding `doas` and `su` to what that effect refuses would remove the largest
+everyday path from a language model to this rule, and it is a MASTER change.
+Second, dev is in `wheel` as well as in `doas.conf`; that is redundant while the
+doas rule stands and worth removing in the same pass as the rebuild, not before.
+
+**Review trigger.** Reopen this when the deploy is rebuilt, when a fourth account
+needs root, or when anything other than a deliberate operator action starts
+running as dev on the box.
+
+## The three unrun deploy scripts stay, as recovery paths — 2026-09-10
+
+**Status:** accepted. `deploy_all.sh`, `vps_run_remote.sh` and
+`manual_master_deploy.ksh` are named by `RUNBOOK.md` and by nothing that runs,
+which reads as sprawl every time someone counts files. They are kept, and this is
+the record so the count stops reopening the question.
+
+Each covers a case `bin/vps-deploy` does not. `deploy_all.sh` re-applies box
+config after drift, which the deploy assumes is already right. `vps_run_remote.sh`
+bootstraps a fresh VM through the hypervisor console jump, which is the only path
+that exists before ssh works. `manual_master_deploy.ksh` recovers a stalled master
+deploy under tmux, and it is the one of the three that records `_fail=1` and exits
+1 rather than swallowing the face build. Deleting them removes three recovery
+paths and duplicates nothing.
+
+The reason they are unrun is the reason to keep them: each is for a day the normal
+path is unavailable. That also means none of them is exercised, so treat all three
+as untested on the day you need one, and read before running. If a future session
+wants them gone, the argument to beat is not "nothing calls them" — nothing is
+supposed to — it is "this capability is not wanted", and that is the operator's
+sentence to write.
+
