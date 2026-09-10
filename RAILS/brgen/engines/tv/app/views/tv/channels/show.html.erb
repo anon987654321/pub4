@@ -41,7 +41,7 @@
   <% else %>
     <%= render "shared/empty_state",
           title: t("empty.no_videos"),
-          body: "This channel has no published videos.",
-          action: { label: "All channels", path: channels_path } %>
+          body: t("empty.no_videos_body"),
+          action: { label: t("actions.all_channels"), path: channels_path } %>
   <% end %>
 </section>

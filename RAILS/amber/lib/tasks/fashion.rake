@@ -6,7 +6,7 @@ namespace :scrape do
     subs = (args[:subs] || "femalefashionadvice,30PlusSkinCare,PetiteFashion").split(",").map(&:strip)
     schema = %w[title description url upvotes comments image_hints]
     subs.each do |sub|
-      Scrape.call(
+      Shared::Scrape.call(
         "https://www.reddit.com/r/#{sub}/hot/",
         schema: schema,
         hint:   "Focus on outfit photos and descriptions. title is the post title, description any selftext or top comments summary. upvotes and comments counts. image_hints from visual (colors, style, items like jacket, sneakers). Skip ads."
@@ -24,7 +24,7 @@ namespace :scrape do
     end
 
     subs.each do |sub|
-      items = Scrape.call(
+      items = Shared::Scrape.call(
         "https://www.reddit.com/r/#{sub}/hot/",
         schema: schema,
         hint:   "Focus on outfit photos and descriptions. title is the post title, description any selftext or top comments summary. upvotes and comments counts. image_hints from visual (colors, style, items like jacket, sneakers). Skip ads."

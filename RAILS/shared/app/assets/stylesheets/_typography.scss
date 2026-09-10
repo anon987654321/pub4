@@ -106,6 +106,13 @@
   max-width: var(--measure);
 }
 
+/* The id in the third selector is the page-title floor for every surface, and it
+   has exactly one opt-out in the fleet: the marketplace hero, which matches the
+   id itself to outrank it. No shared display-type slot exists to opt into.
+   Lowering this rule to a class changes which override wins on every surface
+   that has one, and widening it with :not() ties rather than wins — :not() takes
+   its argument's specificity — so an opt-out here is a design decision about
+   what display type means, not a refactor. */
 .page-title,
 .feed-post-show h1,
 main#main-content > header h1 {

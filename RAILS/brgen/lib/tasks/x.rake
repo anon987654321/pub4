@@ -7,7 +7,7 @@ namespace :scrape do
     schema = %w[author text timestamp likes retweets url]
     queries.each do |q|
       url = "https://x.com/search?q=#{CGI.escape(q)}&src=typed_query&f=live"
-      Scrape.call(
+      Shared::Scrape.call(
         url,
         schema: schema,
         hint: "Extract visible tweets in the search results. author is the @handle or display name. text is the tweet body (ignore images/links for text). timestamp relative or absolute. likes/retweets are counts. url is the tweet permalink if available. Skip ads and 'show more'."
@@ -26,7 +26,7 @@ namespace :scrape do
 
     queries.each do |q|
       url = "https://x.com/search?q=#{CGI.escape(q)}&src=typed_query&f=live"
-      items = Scrape.call(url, schema: schema, hint: "Extract visible tweets... (same as :x)")
+      items = Shared::Scrape.call(url, schema: schema, hint: "Extract visible tweets... (same as :x)")
 
       items.each do |item|
         # Fictivize + route to subapps

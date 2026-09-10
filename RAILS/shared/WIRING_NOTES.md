@@ -452,6 +452,38 @@ Deliberately left duplicated:
   are already one-line delegations to the engine; routing, Zeitwerk and
   StimulusReflex resolve them by bare constant, so the file has to exist.
 
+## What the engine may define at a bare root (2026-09-10)
+
+Sixteen files sit at an engine autoload root under an unnamespaced constant. An
+app that defines the same path shadows the engine's copy and nothing says so:
+`ApplicationHelper` was in that state in two apps at once, so the engine's copy
+loaded only in bsdports, and its `nok` was a second money formatter disagreeing
+with `Shared::MoneyDisplay`.
+
+The rule that came out of it, so the next file lands on the right side:
+
+- **A controller, a mailer, a policy or an `Application*` base stays bare.**
+  Routing, ActionMailer and Zeitwerk resolve these by bare constant from the host
+  — `PasswordsMailer` is reached by name from `Shared::PasswordResetJob`, and a
+  namespaced `FingerprintsController` would not answer the host's route.
+- **A model stays bare**, because its name is its table name. `Shared::SiteVerification`
+  looks for `shared_site_verifications`, and every association to it grows a
+  `class_name:` — the churn the cohesion census is repeatedly wrong about.
+- **A plain service is namespaced.** Nothing resolves it for you, so a bare name
+  is a shadowing hazard with no framework paying for it. `Shared::Scrape` is the
+  only one there was.
+
+## `shared/lib/pub4/` keeps a flat drawer (2026-09-10)
+
+Thirteen of the twenty files there end `_lint.rb` and the cohesion census
+proposes a `pub4/lint/` shelf. Decided against. The shelf is already spelled in
+the filenames; the file count does not move, so no ratchet is paid either way;
+and the cost is renaming thirteen constants and following them through
+`MASTER/tools/ratchets.rb` — which derives each constant from the basename —
+plus `shared/config/ci.rb`, `gates/lib/source/scale_ratchet.rb` and nine tests.
+That is a cross-tree rename of a ratchet table bought for one path segment, on a
+checkout where the commit hook refuses a cross-tree commit for good reason.
+
 ## Vertical ownership (2026-08-10)
 
 brgen hosts five mountable engines and two plain namespaces. Which is which

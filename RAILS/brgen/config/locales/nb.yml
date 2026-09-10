@@ -682,6 +682,17 @@ nb:
     kitchen_no_food: Kjøkkenet har ikke lagt ut mat ennå.
     order_then_rate: Bestill, og gi naboene en vurdering etterpå.
     episodes_when_published: Episoder vises når de publiseres.
+    no_activity_body: "Hendelser fra nettverket ditt dukker opp her."
+    no_category_body: "Vær den første til å legge ut noe her — ingen registrering nødvendig."
+    no_hosted_tracks_body: "Last opp eller lenk et spor for å hoste det."
+    no_sets_body: "Lag eller importer et sett for å komme i gang."
+    no_sketches_body: "Lagre en beat fra laben, eller lim inn JSON-tilstand under."
+    no_videos_body: "Denne kanalen har ingen publiserte videoer."
+    no_shows_body: "Publiserte serier dukker opp her."
+    no_live_streams_body: "Ingenting sendes direkte nå."
+    no_comments_body: "Start samtalen — gjester kan kommentere uten konto."
+    video_coming_soon: "Video kommer snart"
+    video_coming_soon_body: "Denne episoden er ikke klar for avspilling."
   actions:
     close: Lukk
     load_more: Eldre innlegg
@@ -708,6 +719,10 @@ nb:
     select_all: Velg alle
     select_all_reports: Velg alle rapporter
     reload: Last inn på nytt
+    edit_profile: "Rediger profil"
+    all_channels: "Alle kanaler"
+    back_to_show: "Tilbake til serien"
+    channel: "Kanal"
   pages:
     cart: Handlekurv
     my_orders: Mine ordrer

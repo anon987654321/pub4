@@ -76,6 +76,10 @@ consistency campaign; enforcement lives in `visual_contract_lint`,
   session's work, queued, not casual.
 - wscons and the face are one-theme; brgen ghosts inherit ink; the deliberate
   max-width bands carry `scan: intentional` markers inline.
+- playlist redeclares `--font-mono` as SF Mono. It is the fifth face in the
+  fleet and it is deliberate: the vertical is branded on the SF family, stated
+  at the head of `_vertical_playlist.scss`, and the token is scoped to
+  `body.vertical-playlist` so no other surface inherits it.
 
 ## Queued refactors (recorded, ratchet-held, unscheduled)
 

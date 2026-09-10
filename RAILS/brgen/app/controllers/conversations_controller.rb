@@ -126,6 +126,9 @@ end
 # Deliberately not paginated — the rail is chrome, and an inbox long enough to
 # need a second page is long enough that the search box is the right tool. The
 # index still paginates its own list for the no-JS path.
+# The rail is a roster, not a feed: 30 rooms, no pager and no sentinel. Past
+# thirty the way to a room is search, which sits at the head of the rail for
+# that reason. #index's own @pagy/@conversations serve the <noscript> list only.
 def load_rail
   @rail_conversations = Conversation.for_user(Current.user)
                                     .where(slug: nil)

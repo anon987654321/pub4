@@ -18,7 +18,7 @@
     <% if @live_streams.empty? %>
       <%= render "shared/empty_state",
             title: t("empty.no_live_streams"),
-            body: "Nothing live right now.",
+            body: t("empty.no_live_streams_body"),
             action: { label: t("actions.tv_home"), path: root_path } %>
     <% end %>
   <% end %>

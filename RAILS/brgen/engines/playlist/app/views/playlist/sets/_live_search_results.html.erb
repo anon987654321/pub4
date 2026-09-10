@@ -19,7 +19,7 @@
 <% else %>
   <%= render "shared/empty_state",
         title: t("empty.no_sets"),
-        body: "Create or import a set to get started.",
+        body: t("empty.no_sets_body"),
         action: live_search_query.present? ?
           { label: t("empty.clear_search"), path: sets_path } :
           { label: t("actions.new_set"), path: new_set_path } %>

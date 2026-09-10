@@ -14,6 +14,6 @@
 <% elsif @query.present? %>
   <%= render "shared/empty_state",
         title: t("empty.no_matches"),
-        body: "Try a broader description, or add the piece if it is missing from your wardrobe.",
+        body: t("empty.no_matches_body"),
         action: { label: t("pages.add_item"), path: new_item_path } %>
 <% end %>

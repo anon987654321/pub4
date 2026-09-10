@@ -21,6 +21,6 @@
 <% else %>
   <%= render "shared/empty_state",
         title: t("empty.no_shows"),
-        body: "Published shows will appear here.",
-        action: { label: "Back to channel", path: (@channel ? channel_path(@channel) : channels_path) } %>
+        body: t("empty.no_shows_body"),
+        action: { label: t("tv.back_to_channel"), path: (@channel ? channel_path(@channel) : channels_path) } %>
 <% end %>

@@ -19,7 +19,7 @@
   <% else %>
     <%= render "shared/empty_state",
           title: t("empty.no_showcase"),
-          body: "Add a wardrobe piece with the form below.",
+          body: t("empty.no_showcase_body"),
           action: { label: t("actions.wardrobe"), path: items_path } %>
   <% end %>
 

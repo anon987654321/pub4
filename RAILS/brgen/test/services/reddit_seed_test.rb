@@ -53,6 +53,6 @@ class RedditSeedTest < ActiveSupport::TestCase
   private
 
   def stub_scrape(items)
-    Scrape.define_singleton_method(:call) { |_url, **_kwargs| items }
+    Shared::Scrape.define_singleton_method(:call) { |_url, **_kwargs| items }
   end
 end

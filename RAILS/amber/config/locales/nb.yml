@@ -44,6 +44,7 @@ nb:
       edit: "Rediger garderobeplagg"
       untitled: "Uten tittel"
       empty: "Ingen plagg i garderoben ennå."
+      empty_body: "Legg til et bilde, merk det, og planlegg et antrekk."
       condition: "Tilstand"
       acquired: "Anskaffet"
       age_days: "Alder (dager)"
@@ -160,6 +161,11 @@ nb:
     no_phase_items: "Ingen plagg i denne fasen"
     no_wear_history: "Ingen bruks-historikk ennå"
     clear_search: "Tøm søk"
+    no_matches_body: "Prøv en bredere beskrivelse, eller legg til plagget hvis det mangler i garderoben."
+    no_showcase_body: "Legg til et plagg med skjemaet under."
+    no_showcase_edit_body: "Legg til plagg fra garderoben når du redigerer denne profilen."
+    no_phase_items_body: "Merk plagg med livsfaser for å fylle denne kolonnen."
+    no_wear_history_body: "Bruk plagg for å bygge stiltidslinjen din."
   search:
     wardrobe: "Søk garderobe etter tittel, merke, kategori…"
     wardrobe_label: "Søk garderobe"
@@ -214,6 +220,7 @@ nb:
     back_to_ai: "Tilbake til AI-verktøy"
     wardrobe: "Garderobe"
     dressing_room: "Prøverom"
+    edit_showcase: "Rediger showcase"
   hotkeys:
     help: "j/k · ↓↑ nav · Enter åpne · / søk · n ny · esc nullstill · ? hjelp"
     coach: "Tastatur: trykk ? når som helst for snarveier (j/k for å flytte, / for søk)."
