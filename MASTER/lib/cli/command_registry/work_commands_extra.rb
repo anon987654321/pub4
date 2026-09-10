@@ -248,8 +248,6 @@ module Master
         agent.ask_once(Voice::Personality.why_prompt(rule))
       end
 
-      # Maturity scorecard (OpenClaw's taxonomy.yaml pattern) -- what's
-      # actually proven to work, not just claimed. See data/maturity.yml.
       # The 8-law constitutional self-test gate is the single most load-bearing
       # check in the codebase (blocks /fix entirely on any violation), but the
       # law names are Latin-abstract enough that decoding one meant reading

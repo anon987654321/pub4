@@ -5,13 +5,6 @@ module Master
     class Gateway
       CHANNELS = %i[cli web irc matrix api].freeze
 
-      # Contract for channel adapters.
-      module Adapter
-        def render(text, metadata = {})
-          raise NotImplementedError, "#{self.class}#render not implemented"
-        end
-      end
-
       def initialize(pipeline:, session:, event_bus: nil, container: nil)
         @pipeline = pipeline
         @session = session
@@ -61,6 +54,12 @@ module Master
         client_actions.any? ? attach_client_actions(result, client_actions) : result
       end
 
+      # The adapter contract, and this line is the whole of it: anything that
+      # answers `render(text, metadata)` or `call(text, metadata)`. It used to be
+      # stated twice — as an `Adapter` module declaring `render` and raising
+      # NotImplementedError, which nothing included and which would have broken
+      # any adapter that did include it, since including the contract makes
+      # respond_to?(:render) true and sends every turn into the raise.
       def render_to_adapter(channel, result, metadata)
         adapter = @adapters[channel]
         return unless adapter

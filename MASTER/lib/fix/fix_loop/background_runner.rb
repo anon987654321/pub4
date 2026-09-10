@@ -7,27 +7,6 @@ module Master
       # from the single-pass run/preview responsibility that stays in
       # fix_loop.rb proper.
       module BackgroundRunner
-        def run_forever(target = @root, max_cycles: max_cycles_default, startup_delay: startup_delay_default,
-                        idle_sleep: idle_sleep_default, cooldown_sleep: idle_sleep_default)
-          sleep startup_delay
-          cycles = 0
-          while cycles < max_cycles
-            break if halted?
-            cycles += 1
-            begin
-              run(target)
-              break if halted?
-              @homeostat&.observe(:idle_tick)
-              @bus&.publish("fix_loop:idle", sleep: idle_sleep, cycle: cycles, max_cycles:)
-              sleep idle_sleep
-            rescue StandardError => e
-              @bus&.publish("fix_loop:error", error: e.message, cycle: cycles, max_cycles:)
-              sleep cooldown_sleep
-            end
-          end
-          @bus&.publish("fix_loop:max_cycles", cycles:, max_cycles:) unless halted?
-        end
-
         def start_background!(target = @root)
           return Result.err("fix_loop already running") if @bg_thread&.alive?
           @halted = false
@@ -58,6 +37,30 @@ module Master
         end
 
         def halted? = @halted
+
+        # start/stop/halt first, then the thread body they own. Its own caller is
+        # start_background! and its only other reader is a test that drives it
+        # directly, so it is public by necessity rather than by design.
+        def run_forever(target = @root, max_cycles: max_cycles_default, startup_delay: startup_delay_default,
+                        idle_sleep: idle_sleep_default, cooldown_sleep: idle_sleep_default)
+          sleep startup_delay
+          cycles = 0
+          while cycles < max_cycles
+            break if halted?
+            cycles += 1
+            begin
+              run(target)
+              break if halted?
+              @homeostat&.observe(:idle_tick)
+              @bus&.publish("fix_loop:idle", sleep: idle_sleep, cycle: cycles, max_cycles:)
+              sleep idle_sleep
+            rescue StandardError => e
+              @bus&.publish("fix_loop:error", error: e.message, cycle: cycles, max_cycles:)
+              sleep cooldown_sleep
+            end
+          end
+          @bus&.publish("fix_loop:max_cycles", cycles:, max_cycles:) unless halted?
+        end
       end
     end
   end
