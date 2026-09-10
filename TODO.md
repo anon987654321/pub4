@@ -2925,18 +2925,36 @@ hand first makes that step skip.
 
 `MASTER/bin/master` from a terminal runs as dev, and dev is still nopass root:
 `/etc/doas.conf:39` reads `permit nopass setenv { … } dev as root`, and `doas -C
-/etc/doas.conf id` printed `permit nopass` on 2026-09-09. The remote half is
+/etc/doas.conf id` printed `permit nopass` on 2026-09-10. The remote half is
 closed — `/etc/rc.d/master:64` carries `daemon_user="master"`, in the same shape as
-the three apps. The operator work is to drop or scope line 39, and it is not doas
-command scoping; see DECISIONS.md for why cmd rules cannot work here. Check it
-with `doas -C /etc/doas.conf id`, not with `doas -C /etc/doas.conf -u dev id`,
-which this row used to name: `-u` sets the target user, so that form asks whether
-dev may run a command as dev, prints `deny` today, and reads as done. Before
-moving brgen, amber or bsdports off their own daemon_user, check what the master
-switch cost a deploy: `Bundler.setup` ends in `Definition#write_lock`, which
-touches Gemfile.lock on every boot, the daemon had always written it as dev, and
-under a new user it is EACCES with a trace naming `File.utime` and nothing about
-permissions. `BUNDLE_FROZEN=true` in the daemon's env is the fix and is
+the three apps.
+
+Check it with `doas -C /etc/doas.conf id`, not with `doas -C /etc/doas.conf -u
+dev id`. `-u` names the target user and defaults to root (doas(1)), so the `-u
+dev` form asks whether dev may run a command as dev, which no rule permits: it
+printed `deny` on 2026-09-10 against `permit nopass` for the plain form on the
+same box, in the same minute. This row named the `-u dev` form for weeks and read
+as done on a measurement that was answering another question. The correct form is
+now in `OPENBSD/etc/doas.conf` beside the rule, with the reason.
+
+What dropping line 39 would take, so the size of the decision is on the record.
+Nothing in this repository can do it and it is not doas command scoping; see
+DECISIONS.md for why cmd rules cannot work here. `OPENBSD` alone holds 104 `doas`
+call sites in 29 files — 21 `rcctl`, 10 `doas zsh`, 8 `doas sh`, 6 `doas ksh` —
+and `RAILS/_deploy.sh` holds 16 more. A root shell is blanket root, so the ten
+`doas zsh` sites alone defeat any allowlist. `bin/vps-deploy` runs as dev and
+escalates per step by design (`bin/vps-deploy:6`), so the line cannot be narrowed
+to a wrapper either: drop it and every deploy path stops at its first `doas
+rcctl`. The real reduction available is the one the file already took — `keepenv`
+off the dev rule, replaced by a measured five-variable `setenv` allowlist. Going
+further is a rebuild of how this box is deployed, and it is the operator's to
+schedule, not an edit.
+
+Before moving brgen, amber or bsdports off their own daemon_user, check what the
+master switch cost a deploy: `Bundler.setup` ends in `Definition#write_lock`,
+which touches Gemfile.lock on every boot, the daemon had always written it as dev,
+and under a new user it is EACCES with a trace naming `File.utime` and nothing
+about permissions. `BUNDLE_FROZEN=true` in the daemon's env is the fix and is
 load-bearing.
 
 #### `home_partition_full_from_git_history`  — tag: operator-priority
@@ -2957,9 +2975,12 @@ with `ssh dev@brgen.no 'df -h /home; du -sh /home/dev/pub4/.git'`.
 <!-- open-debt -->
 
 One registrar change, at Domeneshop and nowhere else: set bsdports.org's
-nameservers to ns.hyp.net and ns.brgen.no. The app is well — it deployed on
-2026-09-09 beside brgen and amber and answers on port 47312 behind relayd — and the
-domain is parked. Measured 2026-09-09: the .org registry still delegates to
+nameservers to ns.hyp.net and ns.brgen.no. It costs nothing — whois reads status
+ACTIVE, autoRenewPeriod, and a registry expiry of 2027-08-08T14:15:10Z, so the
+registration is paid and only the delegation is wrong. The app is well and
+answers 200 on 127.0.0.1:47312 behind relayd; the domain is parked.
+
+Measured 2026-09-10 from the box: the .org registry delegates to
 ns1/2/3.expireddomain.hyp.net, those publish 185.134.245.114 and
 2a01:5b40:0:bc04::1, `https://bsdports.org/up` returns 000 because parking
 terminates no TLS, and `http://bsdports.org/up` returns 200 from Domeneshop's
@@ -2968,11 +2989,18 @@ while it serves someone else's page. `ruby RAILS/gates/runner.rb dns_zones` catc
 it by comparing the answer against 46.23.89.226, and bsdports.org is its one
 failure — that gate reads the three app domains
 (`RAILS/gates/lib/host/dns_zones.rb:69`), so no count of expired city domains
-belongs in this row. whois still shows autoRenewPeriod against an expiry of
-2027-08-08: the registration is paid, the nameservers were never put back. It is
-done when `dns_zones` passes, and it must be done before the certificate at
-/etc/ssl/bsdports.org.fullchain.pem expires on Nov 10 2026, because acme-client's
-HTTP-01 renewal needs the name to resolve here.
+belongs in this row.
+
+The deadline is a certificate, not a registration. `/etc/ssl/bsdports.org.fullchain.pem`
+carries `notAfter=Nov 10 16:56:43 2026 GMT`, and acme-client renews over HTTP-01,
+which needs the name to resolve here — so a delegation still wrong that week ends
+TLS for bsdports.org until it is fixed. It is done when `dns_zones` passes.
+
+Nothing else in OPENBSD reads the parking as the app being down. `uptime-check`
+carries `ALLOW_BSDPORTS_DOWN=1` on its crontab line, with the reason and the
+condition to drop it; `bin/deploy-smoke.sh` keeps the public check required and
+names the delegation when it fails, while `http://127.0.0.1:47312/up` stays
+required and is what actually measures the app.
 
 ### Guards worth not re-discovering
 
@@ -2990,106 +3018,82 @@ ends cross-app sign-in, and `Shared::SsoToken` is consume-only in this tree.
 
 ### The shell tree — what is still open
 
-Re-verified 2026-09-09 against the box, read-only, the day brgen, amber and
-bsdports all deployed. All three answer 200 on `/up`.
+Re-verified 2026-09-10 against the box, read-only. brgen, amber and bsdports all
+answer 200 on `/up`, and master answers on 53187.
 
-#### 1. Live `/etc/rc.d/amber` and `/etc/rc.d/bsdports` still wait 30 seconds where the repo waits 300
+#### 1. Two files drift between the repo and `/etc`, and the repo is the newer side of both
 
-The difference is one number: `while [ "$_i" -lt 300 ]` in the repo against `-lt
-30` on the box, at `rc.d/amber:58` and `rc.d/bsdports:63`. That loop sets `_up_ok`,
-and `_up_ok` decides whether `rcctl restart relayd` runs, so an app that answers
-`/up` late leaves relayd pointing at a dead backend and logs `relayd skipped` —
-the recurring amber and bsdports shed-and-stay-down. Commit `d76fa573c` raised
-both to 300 for that reason on 2026-08-28; the live files are dated Aug 27 17:35
-and today's deploy did not replace them. Fix: one `install_root_configs` run. Five
-files drift, not three — `/tmp/vps-deploy-drift.out`, written by today's deploy at
-16:16, names doas.conf, newsyslog.conf, rc.d/master, rc.d/amber and rc.d/bsdports.
-In amber and bsdports the drift is this timeout plus a comment citing the retired
-`OPENBSD/data/debt.yml`, and in doas.conf it is that comment alone. A drift gate
-red on comments is what teaches an operator to skim a red gate.
+`rc.d/master`, `rc.d/amber` and `rc.d/bsdports` now match the box byte for byte —
+the 300-second `/up` wait reached them. What is left is `doas.conf` and
+`newsyslog.conf`, and in both the repo is right and the box is stale, so the fix
+is one `OPERATOR.sh` sync. In `doas.conf` the difference is comment only: the
+live file names the retired `OPENBSD/data/debt.yml`, and the repo names `TODO.md`
+and now carries the corrected `doas -C /etc/doas.conf id` beside the rule.
+In `newsyslog.conf` it is seven rotation entries the live file has
+never had: `config_drift.log` is 428 KB, `uptime-check.log` 694 KB,
+`drain-jobs.log` 120 KB and `keep-warm.log` 114 KB, all untrimmed, on a box whose
+/var has been filled once already.
 
-#### 2. `uptime-check.sh` has mailed root 8,270 DOWN lines, and the waiver already exists
+The same uninstalled batch holds a job that has therefore never run.
+`crontab.vm23:84` schedules `/usr/local/bin/vps_weekly_integrity.sh` and
+`OPERATOR.sh:293` installs it, but the box has neither the script, nor the
+crontab line, nor `/var/log/pub4/` for it to write into. The weekly integrity
+pass is scheduled in the repository and nowhere else. One `OPERATOR.sh` run
+closes all three; it is the operator's to make, and nothing here can.
 
-`/var/log/uptime-check.log` is 692 KB and holds 8,270 `DOWN` lines: 5,140 for
-`https://bsdports.org/up` and 2,698 for amber. Root's crontab runs
-`/usr/local/bin/uptime-check.sh` every five minutes and mails root on a DOWN line,
-and `OPENBSD/usr/local/bin/uptime-check.sh:72` already honours
-`ALLOW_BSDPORTS_DOWN=1` — the crontab line does not set it. The fix is an operator
-edit to root's crontab, or that waiver as the default while the domain is parked;
-`bin/deploy-smoke.sh:201` makes the same HTTPS probe a required check and needs
-the same treatment. Thousands of mails whose cause is known make root's mailbox
-unreadable, which is the lesson the litestream `rcctl ls failed` decision already
-recorded.
+#### 2. Seven scripts deploy this box, and the two that lied now exit non-zero
 
-#### 3. `etc/rc.d/master:112` narrows the asset digest when a script fails
+`bin/vps-deploy` is the one CLAUDE.md and RUNBOOK name. `vps_on_vm_install.sh`
+and `vps_install_all.sh` used to turn every failure into a `WARN` line and finish
+on `log "done"`, defeating their own `set -euo pipefail`; both now count failures
+and exit 1, and `vps_install_all.sh` also stopped printing an empty free-memory
+figure — its `awk /free memory/` matched no line OpenBSD `vmstat -s` writes.
 
-`_face_assets=$(... face_asset_paths.rb 2>/dev/null)` yields an empty list when
-that script fails, so the digest falls back to the hardcoded inputs and reproduces
-the stale-fingerprint bug the comment above it describes. Both stamp writes in the
-same file guard on success; this is the quieter half and nothing guards it.
+What is left is a retirement, and it is the operator's. `deploy_all.sh`,
+`vps_run_remote.sh` and `manual_master_deploy.ksh` are named by `RUNBOOK.md` and
+by nothing that runs, which reads as sprawl until you read what the runbook says
+they are for: re-applying box config after drift, bootstrapping a fresh VM
+through the hypervisor jump, and recovering a stalled master deploy under tmux.
+`bin/vps-deploy` does none of the three. Deleting them removes recovery paths
+rather than duplicates, so it needs the operator to say the capability is not
+wanted. The three failure semantics in the face build are unchanged and correct:
+`etc/rc.d/master` swallows it behind `|| true` because the assets gate below
+decides the start, `vps_deploy_master.sh:42` does the same, and
+`manual_master_deploy.ksh` records `_fail=1` and exits 1.
 
-#### 4. Seven scripts deploy this box, and two report success having done nothing
+#### 3. Seven places read the load average, and four of them cannot share a library
 
-`bin/vps-deploy` is the one CLAUDE.md and RUNBOOK name. The others are
-`deploy_all.sh`, `vps_install_all.sh`, `vps_on_vm_install.sh`,
-`vps_production_push.sh`, `vps_deploy_master.sh` and `manual_master_deploy.ksh`.
-Three build the three face bundles, precompile and run the `master_web_assets`
-gate, with three different failure semantics: `etc/rc.d/master:100` swallows the
-face build behind `|| true`, `vps_deploy_master.sh:42` swallows it the same way,
-and `manual_master_deploy.ksh:37` records `_fail=1` and exits 1 at :43. Two end
-green whatever happened — `vps_on_vm_install.sh:22` turns a failed app deploy into
-`WARN: $app failed` and finishes on `log "done"` at :28, defeating its own `set
--euo pipefail`, and `vps_install_all.sh:61` finishes on `doas rcctl check master
-2>/dev/null || true`. `deploy_all.sh`, `vps_run_remote.sh` and
-`manual_master_deploy.ksh` are named by `RUNBOOK.md` and by nothing that runs.
-`OPENBSD/bin` holds exactly 17 tracked executables against its
-`pub4_entrypoint_ceilings` of 17 (`MASTER/data/spine.yml:466`), so nothing new
-lands there until something folds. Fix: retire the scripts whose only caller is
-the runbook, and make the survivors exit non-zero.
-
-#### 5. Seven places read the load average, and the awk ban has no detector here
-
-`vps_master_scan.sh:13-15` notes the ban and does the comparison in one `ruby34
--e`. `vps_ci_all.sh:13` and `:17` still shell out to awk for the same `vm.loadavg`
-field, and `bin/check-openbsd:39` only runs `zsh -n` over that file, which is
-syntax. The seven readers are `vps_ci_all.sh`, `vps_master_scan.sh`,
-`resource_guard.sh:101`, `usr/local/bin/core-reclaim.sh:65` and
+`vps_ci_all.sh` and `vps_master_scan.sh` now read it the same way, one `ruby34`
+that both reads the figure and decides on it. The other five are
+`resource_guard.sh:101`, `usr/local/bin/core-reclaim.sh:65`,
 `usr/local/libexec/stale_ci_cleanup.ksh:16` in awk, and
-`usr/local/bin/drain-jobs.sh:52` and `usr/local/bin/prune-guests.sh:49` in Ruby.
-The ban itself governs MASTER: `zsh.banned_commands` in `MASTER/data/rules.yml`
-has two readers, `MASTER/lib/io/shell.rb:27` and
+`usr/local/bin/drain-jobs.sh:52` and `usr/local/bin/prune-guests.sh:49` already
+in Ruby.
+
+The `lib/load.sh` this row used to propose cannot be written. Those five are
+installed to `/usr/local` and run by root, and `resource_guard.sh:135-147`
+records why root sources only root-owned absolute paths: dot-sourcing the
+dev-owned checkout was root code execution within five minutes, independent of
+doas. A shared file would have to be installed too, which is a new install target
+rather than a fold. The three awk sites are also not equivalent to the Ruby ones
+— `core-reclaim.sh` reads the 1-minute figure where every other reader takes the
+5-minute one — so converting them is a change to a guard's behaviour on a 1 GB
+box, and `resource_guard.sh` fails toward `9.9`, which sheds. Both are the
+owner's. The ban itself governs MASTER: `zsh.banned_commands` in
+`MASTER/data/rules.yml` has two readers, `MASTER/lib/io/shell.rb:27` and
 `MASTER/lib/voice/personality_prompt_builder.rb:325`, so it bounds what MASTER's
-shell effect runs, not what this tree commits. Fix: one `lib/load.sh` the seven
-callers share, then either a scanner rule over `OPENBSD/**/*.{sh,ksh,zsh}` or a
-note saying the ban is advice outside MASTER.
+shell effect runs, not what this tree commits.
 
-#### 6. Usage comes after the work in four files
-
-`OPERATOR.sh` is 977 lines and prints its usage at 925, inside `main()`.
-`bin/deploy-smoke.sh` handles `-h|--help` at 161, after the banner at 149, so
-`--help` prints `deploy-smoke: mode=--help timeout=20s` and then the usage.
-`validate_doas.ksh` puts its general usage at 105 of 116, with the first side
-effect above it, and `lib/ssh_vm23.sh` at 52 of 60. What an operator needs first
-should come first.
-
-#### 7. Nine two-line expect shims, and six dangling in-tree paths
+#### 4. Nine two-line expect shims, and they are gate-required
 
 `vps_console_status.exp`, `_probe`, `_short`, `_install`, `_fix_key`,
 `_poll_install`, `_start_install`, `_sync_and_install` and `vps_drop_install.exp`
-are each one line — `exec [file join [file dirname $argv0] vps_console.exp]
-<subcommand> {*}$argv` — and the dispatcher already takes the subcommand as its
-first argument. Their shared guard is wired: `vps_console.exp:8` sources
-`vps_console_common.exp`, which calls `require_console_risk_ack`. Its refusal
-message at `vps_console_common.exp:13` names `OPENBSD/VPS_SAFETY.md` and
-`OPENBSD/OPERATOR_CONTRACT.md`, neither of which exists; the other four dangling
-references are `RUNBOOK.md:18` and `deploy_all.sh:6` to
-`OPENBSD/archive/recovery/manifest.json`, and `DECISIONS.md:200` and
-`PATH_OWNERSHIP.yml:17` to the retired `OPENBSD/data/debt.yml`. That is the whole
-list. The shims refuse without `I_UNDERSTAND_CONSOLE_RISK=1` and were not run.
-
-#### 8. One dead local in `restore_backups.sh`
-
-`ROOT_DIR` at line 21 is assigned and read nowhere in the file.
+are each one line delegating to `vps_console.exp`, which already takes the
+subcommand as its first argument. They are not sprawl to delete:
+`vps_safety_gate.rb:63-74` names all nine and fails when one is missing or stops
+delegating, which is how the shared `require_console_risk_ack` guard is enforced.
+Folding them means changing that gate, and the gate is the reason the guard
+cannot be bypassed by adding a tenth shim.
 
 #### Not worth chasing
 
@@ -3099,8 +3103,8 @@ list. The shims refuse without `I_UNDERSTAND_CONSOLE_RISK=1` and were not run.
   the call and the tree is consistent about it. Reordering buys nothing.
 - **`bin/vps-deploy:153`'s `[[ -x /usr/local/bin/config_drift_gate.rb ]]` guard.**
   It has the shape `installed_targets_gate.rb` records as a dead guard, and it is
-  not one: `OPERATOR.sh:310` installs that file, the box has it dated Aug 25, and
-  it wrote `/tmp/vps-deploy-drift.out` during today's deploy.
+  not one: `OPERATOR.sh` installs that file, the box has it dated Aug 25, and it
+  wrote `/tmp/vps-deploy-drift.out` on the last deploy.
 - **Hardcoded ports in `bin/smoke-apps.sh` and `bin/deploy-smoke.sh`.** `ruby
   RAILS/gates/runner.rb port_inventory` compares them against `apps.yml` and
   passes.
@@ -3111,6 +3115,13 @@ list. The shims refuse without `I_UNDERSTAND_CONSOLE_RISK=1` and were not run.
 - **`dotfiles/mov.sh`.** 2,343 lines, the largest shell file here, thirty
   banned-tool hits, and a torrent-and-transcode tool with nothing to do with vm23.
   It is the owner's dotfile; moving it is a growth argument.
+- **The four `data/debt.yml` and `archive/recovery` mentions that remain.**
+  `RUNBOOK.md:16-22` says in so many words to read `archive/recovery` as
+  document-only, and `DECISIONS.md:200` and `PATH_OWNERSHIP.yml:17` both write
+  "the old data/debt.yml", which is history rather than a live path. The two that
+  pointed at files which never existed — `vps_console_common.exp`'s refusal
+  naming `VPS_SAFETY.md` and `OPERATOR_CONTRACT.md`, and `deploy_all.sh`'s header
+  citing a manifest inside an `archive/` this repo does not create — are fixed.
 - **Four gates that pass and mean it.** `OPENBSD/installed_targets_gate.rb` is
   clean at 12 configured targets against 15 the repo provides,
   `OPENBSD/tools/reach.rb` reports 10 cron, 8 rcd and 57 zones with none
@@ -3137,10 +3148,10 @@ constraints bound any agent work in this tree:
   but techno, soul and jazz must blend as parameters. That is a design goal, not a
   backlog item to close unprompted.
 
-Everything below was re-measured on 2026-09-09 in the main checkout, because
-`samples/` is gitignored and a worktree therefore shows an empty crate that is not
-empty. dilla is under active edit; line numbers inside `dilla.rb` move, symbol
-names do not.
+Everything below was re-measured on 2026-09-10. The crate figures come from the
+main checkout, because `samples/` is gitignored and a worktree therefore shows an
+empty crate that is not empty. dilla is under active edit; line numbers inside
+`dilla.rb` move, symbol names do not.
 
 ### The crate
 
@@ -3151,15 +3162,33 @@ names do not.
   irreplaceable audio living on exactly one disk, which is the state `samples/dug/`
   was in the day it went. Pull `samples/` to the rotated off-box location dr-pull
   already uses, or somewhere the operator names.
-- **All 124 chopper-registered racks are unreachable as presets.** Verified by
-  running the test that asserts otherwise: `ruby
-  STUDIO/test/test_dilla_engine_probes.rb -n
-  test_every_hand_cut_sample_loop_is_reachable_as_a_track_preset` fails in 0.7
-  seconds and names 124 slugs. The four reachable loops are all builtins —
-  `kembara_rindu`, `semua_untuk_mu`, `lo_borges` and `arat_swost_wolet` — so this is
-  not scattered oversight: the chopper has never written a preset row. Making
-  `chop` write one is mechanical; **naming 124 presets is authoring and stays the
-  owner's**.
+- **The 124 chopper-registered racks have no preset of their own, and giving them
+  one changes what they render.** The test that measures it,
+  `test_every_hand_cut_sample_loop_is_reachable_as_a_track_preset`
+  (`STUDIO/test/test_dilla_engine_probes.rb:1004`), fails in about 0.4 seconds
+  naming all 124 slugs. "Unreachable" is the wrong word for what it found, and
+  the distinction is the whole decision: every one of the 124 renders today, by
+  `TRACK=<slug>` and under `DEMO_CRATE=1`. What they lack is a row in
+  `TRACK_PRESETS` (`dilla.rb:11834`, 74 rows), so `track_preset` falls each of
+  them through to `TRACK_PRESETS[:timeless]`. Writing preset rows therefore
+  changes the sound of 124 existing renders, which is why no agent may do it.
+
+  Naming is not what blocks it. A preset row carries no prose at all — the field
+  vocabulary is `bpm`, `progression`, `chord_bars`, `swing`, `phrase_bars`,
+  `feel`, `stereo_pan`, `voicing`, `timing` and six rarer keys — and the registry
+  row already supplies `bpm`, `key_mode` and the slug that would be the hash key.
+  `dilla.rb:11898-11911` even writes down a mechanical derivation for the eight
+  `sheger_*` rows: take `progression` and `feel` from the existing preset nearest
+  the chop's measured tempo, so no new musical judgement is smuggled in with the
+  wiring. **What is the owner's is whether that derivation is the right sound for
+  124 racks**, plus two facts that make a blind pass wrong: 13 of the 124 are
+  byte-identical wavs from the shared-scratch bug `radio_chop.rb:680-684`
+  describes, and the eight `sheger_*` rows are already dead, because the
+  `ubrukte_samples_*` slugs their aliases point at are no longer registered.
+  Nothing else moves if rows are appended: `demo_all_order`, the stream rotation
+  and `chopped_bed_pick` all read `TRACK_SAMPLE_LOOPS` or `RadioChop.registry`
+  rather than `TRACK_PRESETS`, and only the explicit `showcase` subcommand
+  enumerates the preset table.
 - **160 of the crate's 161 sources are gone, and no loop is reproducible from its
   sidecar.** `samples/dug/` holds one record, `arat_swost_wolet.mp3`. The sidecars
   carry a reproduce command naming a path that no longer exists, and only the
@@ -3194,12 +3223,12 @@ fixing whichever layout wins.
 
 ### The engine is one file, and its support directory is full
 
-`dilla.rb` is 35,142 lines and carries the 83 `# engine part:` parts that were
+`dilla.rb` is 35,139 lines and carries the 83 `# engine part:` parts that were
 under `lib/engine/`, in the order they were required, because that order was
 load-bearing. `DillaSources` defines the corpus, `STUDIO/gate.rb` fails if
 `lib/engine/` reappears, and `DILLA_SUPPORT_CEILING = 44` (`gate.rb:116`) caps the
 modules that could grow in its place — `dilla/lib` holds exactly 44 tracked `.rb`,
-so the next module fails the gate, while `dilla/bin` at 11 files and `dilla/live`
+so the next module fails the gate, while `dilla/bin` at 4 files and `dilla/live`
 at 8 are not counted at all. `MASTER/tools/cohesion.rb STUDIO/dilla/lib` proposes
 three regroups, `engine/`, `harmony/` and `score/`, nine files between them; taking
 any of them moves those files out of `%r{/dilla/lib/[^/]+\.rb\z}` and drops the
@@ -3221,39 +3250,65 @@ thing in the file), `render_dilla`, `characterize`, `cli_commands` and
 963. **Splitting any of them is not proposed here**, and the decision not to
 reopen `lib/engine/` stands.
 
-### Five scripts live twice, and four pairs have drifted
+### Two engine probes fail, and both failures are the owner's
 
-`/Users/mac/Music/dilla_sines/` holds six Ruby files. Five have tracked twins in
-`STUDIO/dilla/bin/`, and only `demo_from_stream.rb` is byte-identical. Measured by
-SHA-256: `sine_stream.rb` is 2,023 lines outside against 2,025 tracked,
-`demo_full.rb` 130 against 125, and `make_ticks.rb` and `player.rb` differ in
-content from `sine_stream_ticks.rb` and `sine_stream_player.rb` at equal length.
-`demo_render.rb`, 4,393 bytes, has no tracked twin at all. No census can see this:
-`dup_census` reads tracked files only, and excludes `STUDIO/` besides. The scripts
-run from the repository now, so the fix is to retire the outside copies rather
-than keep diffing them.
+`rake test:dilla` is 302 runs and two of them fail, on the same tree, before and
+after any of today's edits.
+
+`test_every_genre_renderer_reaches_the_master_bus`
+(`test_dilla_engine_probes.rb:1180`) says `render_analog` never sets an integrated
+loudness, so it drifts against every other renderer the moment they share a
+playlist. Giving it one is a mix value, which is the owner's alone.
+
+`test_every_hand_cut_sample_loop_is_reachable_as_a_track_preset` fails a second
+time at its file check (`:1038`): `semua_untuk_mu` is a builtin loop entry whose
+wav is not on disk, so it renders silently with no bed. Three of the five
+builtins are whitelisted as awaiting the crate rebuild; this one is not, and
+whether it should be waived or re-cut needs the record it was cut from.
+
+`RENDER_SEED` is the third of these and the largest. `test_dilla_render_seed.rb`
+pins `stable_hash`, `seed_for`, `noise_seed`, `render_pick` and `render_rng`, and
+carried a sixteenth test calling `render_rand`, a method the engine has never
+defined; it errored on every run and is deleted, because a test asserting an
+absent method measures nothing and adding the method to satisfy it would be dead
+code. What the test was groping at is real and stays open: 92 sites in `dilla.rb`
+still call bare `rand`, `Array#sample` or `Random.new` outside the pinned
+helpers, which is why a pinned render still varies by about 0.012 dB. Routing any
+of them through `render_rng` changes what that site renders, so it is the
+owner's, one site at a time.
 
 ### Ten knobs get a different default depending on which read site runs
 
-`DillaKnobs.conflicts` already computes this and nothing gates it. The three
-operational conflicts are reconciled. The ten that remain shape a render and are
-**the owner's alone**, the sharpest being `MELODIC_LEAD`: `dilla.rb:8754` reads
-`ENV.fetch("MELODIC_LEAD", "0") != "0"` and `:9242` reads `ENV.fetch("MELODIC_LEAD",
-"1") != "0"`, so with nothing set one predicate says the melodic lead is off and
-the other says it is on. Then `HARM_VOL` 2.45 against 2.4 in
-`composition_engine.rb`, `EVOLVE_HARMONY_W` 0.18/0.08/0.12, `EVOLVE_GROOVE_W`
-0.22/0.06, `EVOLVE_EVERY` 3/2, `LISTEN_PASSES` 0/3, `RENDER_BEAUTY_MIN` 65/70 and
-`BPM` 92/90. `BARS` and `TRACK` are per-command and are not defects. The fix worth
-suggesting is a ratchet: `DillaKnobs` already has the answer, so pin ten and let
-the eleventh fail.
+`DillaKnobs.conflicts` computes this and nothing gates it: its only caller is the
+`knobs conflicts` CLI branch at `dilla.rb:14565`, which prints and never exits
+non-zero. The ten shape a render and are **the owner's alone** — the value that
+wins today is whichever read site runs first, so picking one is picking a sound.
+Measured by running it, with the site that states each literal:
 
-### Four rescues lose a measurement, and the rule cannot see them
+- `MELODIC_LEAD` — `dilla.rb:8754` defaults `"0"`, `:9242` defaults `"1"`, so with
+  nothing set one predicate says the melodic lead is off and the other says it is
+  on. The sharpest of the ten.
+- `HARM_VOL` — `dilla.rb:16309` 2.45 against `lib/composition_engine.rb:570` 2.4.
+- `EVOLVE_HARMONY_W` — `dilla.rb:17845` 0.18, `composition_engine.rb:513` 0.08,
+  `:518` 0.12.
+- `EVOLVE_GROOVE_W` — `composition_engine.rb:514` 0.22 against `:523` 0.06, both
+  in one file.
+- `EVOLVE_EVERY` — `dilla.rb:17708` 3, `:17802` and `:17855` 2.
+- `LISTEN_PASSES` — `dilla.rb:18631` 0 against `:28117` 3.
+- `RENDER_BEAUTY_MIN` — `dilla.rb:17401` 65 against `:18544` 70.
+- `BPM` — `dilla.rb:20427` 92 against `:34653` 90.
+
+`BARS` and `TRACK` are per-command and are not defects. The fix worth suggesting
+is a ratchet: `DillaKnobs` already has the answer, so pin ten and let the
+eleventh fail.
+
+### Rescues that lose a measurement, and the rule that cannot see them
 
 `SILENT_RESCUE` (`MASTER/lib/review/scan/rules/lexical_rules.rb`) reads lines that
 begin with `rescue`, so a modifier `rescue` and a `rescue` whose whole body is
 `next` are counted by nothing. `dilla.rb:6285` and `:6286` wrap `band_rms` inside
 `cross_sample_convolve!`; if either raises, `trim` falls to 0.0, the convolved bed
-ships unmatched in level, and the `dmesg` at `:6295` prints "matched dB → dB" with
+ships unmatched in level, and the `dmesg` beneath prints "matched dB → dB" with
 the numbers missing. `live/recall.rb:36` and `bin/sine_stream_player.rb:41` are
 the other two. The five loop-control ones — `lib/music_gems.rb:200`,
 `lib/harmony_engine.rb:362`, `bin/demo_full.rb:42`, `bin/sine_stream.rb:1830` and
@@ -3261,17 +3316,16 @@ the other two. The five loop-control ones — `lib/music_gems.rb:200`,
 least alarming shape. Extending the rule to both forms is a MASTER change, not a
 STUDIO one.
 
-Three blanket clauses read as narrow and are not: `lib/master_heuristics.rb:24`
-catches `StandardError, Psych::Exception`, `lib/music_gems.rb:152` catches
-`::Coltrane::ChordNotFoundError, StandardError`, and `lib/verify_fx.rb:220`
-catches `StandardError, ArgumentError`, and all three named classes descend from
-`StandardError`. **Narrowing any of them is the owner's**; deleting a redundant
-class name is not. The remaining discards are optional gem probes, external
-binaries whose output is parsed, optional state files and process teardown, and
-they are correct as they stand — with one worth a log line rather than a rescue:
-`lib/seed_providers.rb:88` and `:99` set `SWING` and `HARM_VOL` from USGS and
-open-meteo, so a failed fetch silently leaves the defaults and an operator who
-asked for a seeded swing cannot tell whether they got one.
+**Narrowing a blanket rescue is still the owner's**, and it is now the only half
+left: the three clauses that named a class already covered by `StandardError`
+(`lib/master_heuristics.rb`, `lib/music_gems.rb`, `lib/verify_fx.rb`) are down to
+`StandardError` alone, which the `music_gems` one also needed for a second reason
+— resolving `::Coltrane::ChordNotFoundError` while handling an exception raises a
+NameError of its own where the gem is absent. `lib/seed_providers.rb` now says
+when a USGS or open-meteo fetch fails, so an operator who asked for a seeded swing
+can tell whether they got one. The remaining discards are optional gem probes,
+external binaries whose output is parsed, optional state files and process
+teardown, and they are correct as they stand.
 
 ### `dilla/live/` is three subjects, and the fold is free only until the next pass
 
@@ -3289,25 +3343,31 @@ the first replayable one, and the fold is free before then and never free again.
 `dig_crate.rb` is the third subject: crate ingest, nothing to do with playback, and
 it belongs beside `lib/crate_dig.rb`. **Still the owner's to take.**
 
+### Three scripts live twice, and none of the pairs match
+
+`/Users/mac/Music/dilla_sines/` holds six Ruby files and only three of them still
+have a tracked twin: `sine_stream.rb` is 2,023 lines outside against 2,027
+tracked, `demo_full.rb` 130 against 127, and `player.rb` 61 against
+`sine_stream_player.rb`'s 63. Not one pair is byte-identical any more. The other
+three outside files name nothing in the repository: `demo_from_stream.rb` and
+`make_ticks.rb` had twins that have since been deleted from `dilla/bin`, and
+`demo_render.rb` never had one. No census can see this — `dup_census` reads
+tracked files only, and excludes `STUDIO/` besides — and nothing in this
+repository may delete from the operator's home directory. The scripts run from the
+repository now, so the close is the operator retiring the outside copies rather
+than either side diffing them again.
+
 ### Small, mechanical, and none of them touch sound
 
-- `lib/knobs.rb:389` says `dilla knobs` reports 632 knobs across 119 files.
-  Running it reports 729 across 45. A hand-kept figure in prose, against a census
-  the tool computes on demand.
-- `dilla.rb` requires `lib/frozen_state` five times (`:118`, `:18009`, `:20952`,
-  `:30230`, `:30605`) and `tmpdir` twice (`:79`, `:33966`).
-- The law findings in STUDIO cluster in `dilla/bin`: all five `.rb` there lack `#
-  frozen_string_literal: true`, all five `.sh` there lack strict mode where
-  `live/broadcast.sh:9` shows the convention of stating why it goes without, and
-  `NEVER_BATCH_DELETE` fires at `bin/sine_stream_ticks.rb:15`, which clears every
-  wav under `~/Music/dilla_sines/ticks` at startup.
-- Three engine tests pass in about 23 seconds alone and time out under suite load
-  against the 90-second `PROBE_TIMEOUT`
-  (`STUDIO/test/test_dilla_engine_probes.rb:26`): `test_smoke_two_bar_render`
-  (`:2289`), `test_provenance_separates` (`:2618`) and `test_dilla_frozen_reads`
-  (`:2658`). Recorded, not re-run today. Not a defect in what they measure; the
-  budget does not survive a loaded machine, and a green subset here proves only
-  that.
+- The `#!/usr/bin/env ruby` scripts under `dilla/bin` no longer disagree with the
+  tree: all three now carry `# frozen_string_literal: true`, which the other 104
+  Ruby files in STUDIO already had, so all 107 do. The `.sh` strict-mode row and the
+  `NEVER_BATCH_DELETE` row that used to sit here named `dilla/bin/*.sh` and
+  `bin/sine_stream_ticks.rb`, and neither exists: `dilla/bin` is four files.
+- `lib/knobs.rb` and `dilla.rb` used to state the knob count in prose — 632 across
+  119 files, and 610 — against a census the tool computes on demand and which
+  reports 729 across 45. Both now point at the command instead of restating it,
+  which is the only form of that sentence that cannot go stale.
 
 #### Not worth chasing
 
@@ -3325,15 +3385,23 @@ it belongs beside `lib/crate_dig.rb`. **Still the owner's to take.**
 - **The 37 stale rows in `loops.json` and the 37 slugs in `sample_worth.json`.**
   161 registered against 124 on disk; dropped at load (`radio_chop.rb:637`) and
   pruned on the next chop (`:879`). Inert by design.
-- **The sample rate declared eleven times under three names.** `SAMPLE_RATE` in
+- **The sample rate declared ten times under three names.** `SAMPLE_RATE` in
   `dilla.rb`, `lib/acapella.rb`, `lib/radio_chop.rb` and `lib/vocal_chop.rb`;
   `RATE` in `lib/analog_synth.rb`, `lib/sample_flip.rb`, `lib/space_fx.rb`,
-  `lib/verify_fx.rb`, `bin/sine_stream.rb` and `bin/demo_from_stream.rb`; and
-  `SU_TUNNEL_IR_RATE` in `dilla.rb`. Every library one is namespaced, so nothing
-  collides, and 44,100 is not a matter of taste. The bare literal also appears in
-  32 ffmpeg filter strings, and interpolating it would touch 32 render-path strings
-  for no behavioural gain.
+  `lib/verify_fx.rb` and `bin/sine_stream.rb`; and `SU_TUNNEL_IR_RATE` in
+  `dilla.rb`. Every library one is namespaced, so nothing collides, and 44,100 is
+  not a matter of taste. `lib/sample_worth.rb:18` is an eleventh `RATE` and not one
+  of these: it is 11,025 on purpose, with the Nyquist reason beside it. The bare
+  literal appears 46 times more, most of them inside ffmpeg filter strings, and
+  interpolating those would touch render-path strings for no behavioural gain.
 - **The three `cohesion.rb` regroups**, for the ceiling reason above.
+- **The three engine tests that time out under suite load.**
+  `test_smoke_two_bar_render`, `test_provenance_separates` and
+  `test_dilla_frozen_reads` pass in about 23 seconds alone against the 90-second
+  `PROBE_TIMEOUT` (`test_dilla_engine_probes.rb:26`), and skipped rather than
+  failed in the full 87-second `rake test:dilla` run today. Not a defect in what
+  they measure; the budget does not survive a loaded machine, and a green subset
+  here proves only that.
 
 ## Cross-cutting programs
 

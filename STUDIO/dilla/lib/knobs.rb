@@ -384,9 +384,11 @@ end
 # two places -- the "defrag: one source, not several" move. Everything above
 # answers "what is this knob"; everything below answers "what do I call a
 # handful of them at once", and neither is useful without the other.
-# Eight words for six hundred and thirty-two knobs.
+# Eight words for seven hundred and twenty-nine knobs.
 #
-# `dilla knobs` reports 632 of them across 119 files. Every one is real, most are
+# `dilla knobs` counts them on demand and is the figure to trust; a number typed
+# into this comment is stale the next time a knob lands. It reports 729 across 45
+# files as this is written. Every one is real, most are
 # documented, and the whole surface is unusable as an instrument: nobody decides
 # to make a beat dustier by setting SAMPLE_EXCITE to 0.2, TAPE_WOW_MS to 2.4,
 # PAD_GRAIN_REVERSE to 0.45 and VINYL to 0.8. They decide to make it dustier.

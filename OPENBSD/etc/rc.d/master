@@ -110,6 +110,19 @@ rc_pre() {
   # inputs (stylesheet, service worker, the views themselves), which the
   # manifest does not and should not describe.
   _face_assets=$(cd /home/dev/pub4/MASTER/web && ruby34 script/face_asset_paths.rb 2>/dev/null)
+  _face_assets_rc=$?
+  _force_precompile=0
+  if [ "$_face_assets_rc" != "0" ] || [ -z "$_face_assets" ]; then
+    # The same rule the two stamp writes below keep, on the quieter half. An
+    # empty list narrows the digest to the hardcoded tail, which is exactly the
+    # stale fingerprint the paragraph above says this replaced: every
+    # manifest-described asset drops out of the fingerprint, the stamp still
+    # matches, and precompile is skipped with the face wrong. Fail toward the
+    # expensive answer instead.
+    logger -t master "face_asset_paths.rb produced no asset list — digest would be narrowed, precompiling instead of trusting the stamp"
+    _face_assets=""
+    _force_precompile=1
+  fi
   _digest=$(cksum $_face_assets \
     /home/dev/pub4/MASTER/web/public/face.part*.txt \
     /home/dev/pub4/MASTER/web/public/face.css \
@@ -119,7 +132,7 @@ rc_pre() {
     /home/dev/pub4/MASTER/web/app/views/shared/_face_boot.html.erb \
     /home/dev/pub4/MASTER/web/app/views/chat/index.html.erb 2>/dev/null | cksum)
   _skip=0
-  if [ -f "$_manifest" ] && [ -f "$_stamp" ] && [ "$(cat "$_stamp" 2>/dev/null)" = "$_digest" ]; then
+  if [ "$_force_precompile" = "0" ] && [ -f "$_manifest" ] && [ -f "$_stamp" ] && [ "$(cat "$_stamp" 2>/dev/null)" = "$_digest" ]; then
     _skip=1
   fi
   if [ "$_skip" = "0" ]; then
@@ -134,8 +147,12 @@ rc_pre() {
     # to check. It stayed invisible because public/ is served undigested, so the
     # face kept working while every fingerprinted asset was missing.
     if (cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:precompile) 2>/dev/null; then
-      mkdir -p /home/dev/pub4/MASTER/web/tmp
-      echo "$_digest" > "$_stamp"
+      if [ "$_force_precompile" = "1" ]; then
+        logger -t master "precompiled but stamp not written: the digest was computed without the manifest list and would license a skip"
+      else
+        mkdir -p /home/dev/pub4/MASTER/web/tmp
+        echo "$_digest" > "$_stamp"
+      fi
     else
       logger -t master "assets:precompile failed — stamp not written, will retry next start"
     fi
@@ -154,8 +171,12 @@ rc_pre() {
       # hurts most: the gate has already said the assets are wrong, so stamping
       # a precompile that failed makes every later start skip the retry.
       if (cd /home/dev/pub4/MASTER/web && RAILS_ENV=production bundle34 exec rails assets:precompile) 2>/dev/null; then
-        mkdir -p /home/dev/pub4/MASTER/web/tmp
-        echo "$_digest" > "$_stamp"
+        if [ "$_force_precompile" = "1" ]; then
+          logger -t master "retry precompiled but stamp not written: narrowed digest"
+        else
+          mkdir -p /home/dev/pub4/MASTER/web/tmp
+          echo "$_digest" > "$_stamp"
+        fi
       else
         logger -t master "retry precompile failed — stamp not written, the gate below decides the start"
       fi

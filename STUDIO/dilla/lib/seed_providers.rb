@@ -85,7 +85,11 @@ module DillaSeeds
     m = features.first&.dig("properties", "mag") || 2.5
     ENV["SWING"] = (54 + m * 2).round.clamp(52, 62).to_s
     ENV["HARM_VOL"] = (2.2 + m * 0.08).round(2).to_s
-  rescue StandardError
+  # An operator who set SEISMIC_SEED=1 asked for a seeded swing. Discarding the
+  # failure leaves the defaults in place and renders a take that looks seeded and
+  # is not, with nothing anywhere to tell the two apart.
+  rescue StandardError => e
+    warn "SEISMIC_SEED: USGS fetch failed (#{e.class}: #{e.message}) — SWING and HARM_VOL keep their defaults"
     nil
   end
 
@@ -96,7 +100,10 @@ module DillaSeeds
     data = fetch_json("https://api.open-meteo.com/v1/forecast?latitude=#{lat}&longitude=#{lon}&current=relative_humidity_2m")
     hum = data.dig("current", "relative_humidity_2m") || 50
     ENV["SWING"] = (50 + hum * 0.12).round.clamp(52, 62).to_s
-  rescue StandardError
+  # Same as the seismic seed above: say so, rather than render an unseeded take
+  # the operator has no way to tell from a seeded one.
+  rescue StandardError => e
+    warn "WEATHER_SEED: open-meteo fetch failed (#{e.class}: #{e.message}) — SWING keeps its default"
     nil
   end
 

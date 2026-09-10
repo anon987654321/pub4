@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Drains the generator's queue. Never replays a verse.
 #
 # The rule is that a rap vocal is never heard twice, and generation has honoured

@@ -41,7 +41,20 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
 # uptime-check — public /up on every apps.yml host, plus the master face.
 # Installed to /usr/local/bin so root cron does not exec the checkout; it
 # reads apps.yml as data instead. Source: OPENBSD/usr/local/bin/uptime-check.sh.
-*/5 * * * * /usr/local/bin/uptime-check.sh >> /var/log/uptime-check.log 2>&1
+#
+# ALLOW_BSDPORTS_DOWN=1 while bsdports.org is delegated to the registrar's
+# parking nameservers. The check asks https://bsdports.org/up, parking
+# terminates no TLS, and the answer is 000 whatever the app is doing — so the
+# waiver removes a check that cannot pass rather than one that is failing. The
+# app itself stays covered: deploy-smoke keeps http://127.0.0.1:47312/up
+# required, and `ruby RAILS/gates/runner.rb dns_zones` is the check that stays
+# red until the delegation comes back. Drop this line's prefix the day it does.
+#
+# The redirect is the reason this waiver is hygiene rather than an alert change:
+# `>> log 2>&1` leaves cron nothing to mail, so the 5,142 impossible bsdports
+# lines never reached root — they buried the 2,682 amber lines in a 694 KB log
+# instead. /var/mail/root was last written in October 2025.
+*/5 * * * * ALLOW_BSDPORTS_DOWN=1 /usr/local/bin/uptime-check.sh >> /var/log/uptime-check.log 2>&1
 
 # prune-guests — nightly guest-row hygiene, because nothing runs the job queue.
 #

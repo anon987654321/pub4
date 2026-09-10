@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # demo.mp3: the full showcase.
 #
 # Walks the progression catalogue with every synth stack and every Detroit feel

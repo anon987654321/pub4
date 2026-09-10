@@ -18,7 +18,6 @@
 
 set -euo pipefail
 
-ROOT_DIR="${0:A:h:h}"
 CONFIG="${LITESTREAM_CONFIG:-/etc/litestream.yml}"
 DRY_RUN="${DRY_RUN:-0}"
 APPS=("${@}")

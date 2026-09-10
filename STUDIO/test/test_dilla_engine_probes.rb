@@ -2567,7 +2567,7 @@ class TestDilla < Minitest::Test
   def test_knob_registry_reads_each_knob_as_the_engine_reads_it
     require File.expand_path("../dilla/lib/knobs", __dir__)
 
-    assert_operator DillaKnobs.all.length, :>=, 600, "the engine reads 610 knobs"
+    assert_operator DillaKnobs.all.length, :>=, 600, "the engine reads 729 knobs"
 
     # A path with an off-switch is a path. Calling SAMPLE_LOOP a flag is the
     # mistake that cost thirteen renders their sample bed.

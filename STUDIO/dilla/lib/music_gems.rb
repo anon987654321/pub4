@@ -149,7 +149,10 @@ module DillaMusicGems
       return { name: sym.to_s, hz:, bass_hz: }
     end
     { name: sym.to_s, hz: }
-  rescue ::Coltrane::ChordNotFoundError, StandardError
+  # Coltrane::ChordNotFoundError descends from StandardError, and naming it here
+  # also asked Ruby to resolve a Coltrane constant while handling an exception --
+  # a NameError of its own on a machine where the gem is absent.
+  rescue StandardError
     nil
   end
 

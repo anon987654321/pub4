@@ -16,6 +16,14 @@ set -e
 set -o pipefail
 DOAS_ENV_CANARY=${DOAS_ENV_CANARY:-I_UNDERSTAND_DNS_WIPE}
 
+# Usage above the work, not at line 105 under the functions it describes.
+validate_doas_usage() {
+	print -u2 "usage: validate_doas.ksh check            # dev reaches root AND the canary crosses"
+	print -u2 "       validate_doas.ksh install SRC [tag] # install SRC over /etc/doas.conf, rolling back on failure"
+	print -u2 ""
+	print -u2 "Env: DOAS_ENV_CANARY (default I_UNDERSTAND_DNS_WIPE)"
+}
+
 validate_doas_can_reach_root() {
   su dev -c 'doas id' 2>/dev/null | grep -q 'uid=0(root)'
 }
@@ -92,17 +100,21 @@ install_doas_conf_from_repo() {
 
 _run_validate_doas_cli() {
   case ${1:-check} in
+  -h | --help)
+    validate_doas_usage
+    return 0
+    ;;
   check)
     validate_doas_works
     return $?
     ;;
   install)
-    [ -n "${2:-}" ] || { echo "usage: validate_doas.ksh install SRC [tag]" >&2; return 2; }
+    [ -n "${2:-}" ] || { validate_doas_usage; return 2; }
     install_doas_conf_from_repo "$2" "${3:-doas-guard}"
     return $?
     ;;
   *)
-    echo "usage: validate_doas.ksh check|install SRC [tag]" >&2
+    validate_doas_usage
     return 2
     ;;
   esac

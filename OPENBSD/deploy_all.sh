@@ -2,8 +2,10 @@
 # Workstation orchestrator: sync pub4 to VPS and run OPENBSD/OPERATOR.sh.
 #
 # Canonical app list: OPENBSD/deploy_inventory.json (active Rails apps).
-# NOT deployed (archived installers only)
-#   → see OPENBSD/archive/recovery/manifest.json
+#
+# deploy_inventory.json is the whole list. There is no OPENBSD/archive/ to
+# consult beside it: that is a pub3-era path nothing in this repository creates,
+# and RUNBOOK.md says to read every mention of it as document-only.
 #
 # Usage:
 #   zsh OPENBSD/deploy_all.sh

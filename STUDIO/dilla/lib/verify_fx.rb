@@ -217,7 +217,7 @@ module VerifyFx
       units.sort.each do |u|
         f = begin
           u == "stc8" ? Outboard.stc8(bpm: 90.0) : Outboard.send(u)
-        rescue StandardError, ArgumentError
+        rescue StandardError # ArgumentError is one of these
           nil
         end
         stages["outboard:#{u}"] = f if f.is_a?(String) && !f.empty?

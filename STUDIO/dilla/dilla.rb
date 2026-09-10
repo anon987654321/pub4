@@ -14539,8 +14539,10 @@ end
 # with -- before dispatch ever runs, so `knobs --check` aborts with the flag list
 # instead of reaching this method.
 #
-# There are 610 of them and until this existed the only way to learn what one
-# did was to grep for it and read the coercion.
+# `knobs` with no argument prints the count — 729 across 45 files today — rather
+# than a figure typed here, which goes stale the next time a knob lands. Until
+# this existed the only way to learn what one did was to grep for it and read
+# the coercion.
 def knobs_report(argument = nil)
   case argument
   when nil, ""
@@ -18006,7 +18008,6 @@ end
 # constants at top level exactly as it did there; dilla.rb requires the
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
-require_relative "lib/frozen_state"
 
 # One word for genre.
 #
@@ -20949,7 +20950,6 @@ end
 # constants at top level exactly as it did there; dilla.rb requires the
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
-require_relative "lib/frozen_state"
 
 # Sparse boom-bap base. Bar-to-bar phrase rotation is DillaGroove.pocket_* when
 # POCKET_DNA=1. Keep this simple — dense grids are why the kit sounded wrong.
@@ -30227,7 +30227,6 @@ end
 # constants at top level exactly as it did there; dilla.rb requires the
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
-require_relative "lib/frozen_state"
 
 WONKY_LEARNINGS_DIR = File.join(DillaSourceLearn::LEARNINGS_DIR, "wonky_drums").freeze
 
@@ -30602,7 +30601,6 @@ end
 # constants at top level exactly as it did there; dilla.rb requires the
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
-require_relative "lib/frozen_state"
 
 RAP_VOCAL_DIR = File.join(DillaSourceLearn::LEARNINGS_DIR, "vocals").freeze
 RAP_VOCAL_CATALOG = File.join(RAP_VOCAL_DIR, "catalog.json").freeze
@@ -33963,7 +33961,6 @@ end
 # engine part: characterize
 # --------------------------------------------------------------------------
 
-require "tmpdir"
 #
 # Measuring where the drums actually land.
 #

@@ -21,7 +21,9 @@ module DillaMaster
     return {} unless File.file?(REFERENCE_PATH)
 
     YAML.safe_load_file(REFERENCE_PATH)["loss_gates"] || {}
-  rescue StandardError, Psych::Exception
+  # Psych::Exception descends from RuntimeError, so StandardError already
+  # covers a malformed reference file; naming both said the opposite.
+  rescue StandardError
     {}
   end
 

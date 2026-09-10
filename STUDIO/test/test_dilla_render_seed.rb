@@ -70,7 +70,7 @@ class TestRenderSeed < Minitest::Test
     refute_equal a, b
   end
 
-    # Keyed by tag rather than by call order, because drum_sample_path is called
+  # Keyed by tag rather than by call order, because drum_sample_path is called
   # once per role and an order-keyed RNG hands a role a different file depending
   # on which roles resolved before it.
   def test_render_pick_is_keyed_by_tag_not_call_order
