@@ -287,13 +287,13 @@ SPEAK=0 ruby dilla.rb demo-all 12 demo.wav
 
 ## Provenance debugging
 
-Every run writes a `<file>.dilla` beside each audio file it produced —
+Every run writes a `<file>.provenance.json` beside each audio file it produced —
 `lib/provenance.rb`, hooked at the CLI entry before anything reads a seed. It
 carries the render seed, argv, the env knobs that change the output, the engine
 commit, whether the working tree was clean, and a sha256.
 
 ```sh
-ruby dilla.rb replay renders/beats/direction_v4.wav.dilla
+ruby dilla.rb replay direction_v4.wav.provenance.json
 # RENDER_SEED=1505395575 TRACK=circle_fifths_descent … ruby dilla.rb dilla …
 ```
 

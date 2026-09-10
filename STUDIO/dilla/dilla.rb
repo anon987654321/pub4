@@ -14706,13 +14706,13 @@ def taste_report(argv)
   weak.each { |f| puts format("  %-26s %.2f", f[:dimension], f[:separation]) }
 end
 
-# `dilla tracklist <file.dilla>` — what a compilation is made of.
+# `dilla tracklist <file.provenance.json>` — what a compilation is made of.
 #
 # Reads the `assembly` block: each part, where it starts, how long it runs, and
 # the recipe it was rendered from, copied in at join time so it survives the part
 # being swept. For a plain render it says so rather than inventing a tracklist.
 def tracklist_report(manifest_path)
-  return puts("usage: dilla tracklist <file.dilla>") if manifest_path.to_s.empty?
+  return puts("usage: dilla tracklist <file.provenance.json>") if manifest_path.to_s.empty?
 
   manifest_path = "#{manifest_path}#{DillaProvenance::MANIFEST_EXT}" unless manifest_path.end_with?(DillaProvenance::MANIFEST_EXT)
   return puts("no manifest at #{manifest_path}") unless File.file?(manifest_path)
@@ -15743,7 +15743,7 @@ end
 # and the render environment they were made under. It exists so a set can be
 # rebuilt months later instead of being remembered.
 #
-# It is JSON with a .dilla extension, and it is readable by this engine rather
+# It is JSON, and it is readable by this engine rather
 # than by a person alone -- a settings file nothing loads is a note that goes
 # stale the first time a default moves under it, which is the failure mode this
 # tree already has plenty of.
@@ -15773,8 +15773,8 @@ def save_setlist(path, takes: nil, bars: nil)
     h[k] = v unless v.nil? || v.empty?
   end
   doc = {
-    # Named, because .dilla is now two formats. DillaProvenance writes one
-    # beside every render as <output>.mp3.dilla: a single take, its seed, and
+    # Named, because two JSON formats live beside renders. DillaProvenance
+    # writes one as <output>.mp3.provenance.json: a single take, its seed, and
     # the command that rebuilds it. This is the other kind -- several takes and
     # the environment they share. The suffixes differ in practice, but a file
     # should say what it is rather than rely on how it happened to be named.
@@ -15794,7 +15794,7 @@ end
 def render_setlist(path, outdir = nil)
   abort("no such setlist: #{path}") unless File.file?(path)
   doc = JSON.parse(File.read(path))
-  # Handed the other .dilla, say which one it is. Falling through to "no takes"
+  # Handed a render sidecar instead, say which one it is. Falling through to "no takes"
   # would blame the file for being empty when it is a different format
   # with its own command.
   if doc["schema"].to_s != "setlist" && doc.key?("render_seed") && doc.key?("command")
@@ -20530,7 +20530,7 @@ render_dilla(part, bars_count)
   # The mp3 gets its own sidecar, not just the wav.
   #
   # record_assembly! above files the tracklist under `dest`, which is demo.wav —
-  # and demo.wav, demo.wav.dilla and demo.mp3 are all gitignored, so the only
+  # and demo.wav, its sidecar and demo.mp3 are all gitignored, so the only
   # one of the three that reliably survives on disk is the mp3. It is the file
   # this code calls the tracked artifact two lines down, it is the one that gets
   # played and sent to people, and it was the one with no record of how it was
@@ -34237,13 +34237,13 @@ end
 # Sidecar replay, balance audition, demo matrix, album master
 # =============================================================================
 
-# Every .dilla sidecar pins the whole environment of a render. Replaying it with
+# Every sidecar pins the whole environment of a render. Replaying it with
 # the seed keys dropped draws a fresh performance from the same recipe, which is
 # what a new take means here: seed and performer rotate per run and renders are
 # not reproducible bit for bit, so pinning the seed buys nothing and hides that
 # this is a new take.
 def replay_environment(src, overrides = {})
-  path = src.end_with?(".dilla") ? src : "#{src}.dilla"
+  path = src.end_with?(DillaProvenance::MANIFEST_EXT) ? src : DillaProvenance.manifest_path(src)
   abort "no sidecar at #{path}" unless File.file?(path)
 
   JSON.parse(File.read(path)).fetch("environment")
@@ -34830,9 +34830,9 @@ DISPATCH = {
   # with its own render_liveset(name, minutes:). A setlist is the other thing:
   # the recipe for a set of takes, replayable.
   "setlist" => lambda do
-    file = ARGV.shift or abort("usage: setlist <file.dilla> [outdir]  |  setlist --save <file.dilla>")
+    file = ARGV.shift or abort("usage: setlist <file.json> [outdir]  |  setlist --save <file.json>")
     if file == "--save"
-      target = ARGV.shift or abort("usage: setlist --save <file.dilla>")
+      target = ARGV.shift or abort("usage: setlist --save <file.json>")
       save_setlist(target)
     else
       render_setlist(file, ARGV.shift)
@@ -35036,10 +35036,10 @@ DISPATCH = {
       abort "usage: ruby dilla.rb rap-vocal ingest|fit|list"
     end
   end,
-  # Print the command that rebuilds a render. The .dilla file carries it; this
+  # Print the command that rebuilds a render. The sidecar carries it; this
   # saves reading JSON to find it.
   "replay" => lambda do
-    manifest = ARGV.shift or abort "usage: ruby dilla.rb replay <file.dilla>"
+    manifest = ARGV.shift or abort "usage: ruby dilla.rb replay <file.provenance.json>"
     puts DillaProvenance.replay_command(manifest)
   end,
   "liveset" => lambda do
@@ -35076,7 +35076,7 @@ end
 
 if __FILE__ == $PROGRAM_NAME
   # Before anything reads a seed. Draws and records RENDER_SEED when it is unset,
-  # so every file this run produces gets a .dilla recipe beside it and can be
+  # so every file this run produces gets a recipe beside it and can be
   # made again. DILLA_NO_PROVENANCE=1 restores the old unrecorded behaviour.
   DillaProvenance.begin!(root: OUTPUT_DIR, argv: ARGV)
 

@@ -21,8 +21,8 @@ require_relative "frozen_state"
 # So the seed is always chosen now, never left to chance-without-a-record. If
 # RENDER_SEED is set, that is used and honoured exactly as before. If it is not,
 # one is drawn at random — the render still differs from the last, which is the
-# behaviour the engine documents and wants — and then written into a .dilla file
-# next to every audio file the run produced.
+# behaviour the engine documents and wants — and then written into a sidecar
+# next to every audio file the run produced: <audio>.provenance.json.
 #
 # The consequence worth stating plainly: an unpinned render is now produced
 # through the pinned code paths, because ENV["RENDER_SEED"] is set before any of
@@ -33,7 +33,10 @@ require_relative "frozen_state"
 #
 # DILLA_NO_PROVENANCE=1 restores the old behaviour completely, seed and all.
 module DillaProvenance
-  MANIFEST_EXT = ".dilla"
+  MANIFEST_EXT = ".provenance.json"
+  # Sidecars written before the rename carry the old suffix. Reading falls back
+  # to it so a render made elsewhere still replays; nothing writes it.
+  LEGACY_MANIFEST_EXT = ".dilla"
   AUDIO = %w[.wav .mp3 .flac .ogg .m4a .aiff .aif].freeze
   SCHEMA = "dilla.render.v1"
 
@@ -303,7 +306,7 @@ module DillaProvenance
     # gitignored and the seed rotates, so a part that is gone is gone.
     #
     # Which is why each part's own recipe is INLINED here rather than referenced.
-    # A manifest that points at a .dilla file beside a deleted wav records
+    # A manifest that points at a sidecar beside a deleted wav records
     # nothing. Inlined, the assembly still says what every part was made from
     # after every part has been swept.
     ASSEMBLY_SCHEMA = "dilla.assembly.v1"
@@ -351,8 +354,16 @@ module DillaProvenance
       nil
     end
 
+    # The sidecar for an audio file, preferring the current suffix and falling
+    # back to the one written before the rename.
+    def manifest_path(audio)
+      current = "#{audio}#{MANIFEST_EXT}"
+      legacy = "#{audio}#{LEGACY_MANIFEST_EXT}"
+      File.file?(current) || !File.file?(legacy) ? current : legacy
+    end
+
     def part_recipe(part)
-      manifest = "#{part}#{MANIFEST_EXT}"
+      manifest = manifest_path(part)
       return unless File.file?(manifest)
 
       doc = JSON.parse(File.read(manifest))
@@ -389,7 +400,7 @@ module DillaProvenance
       File.write("#{path}#{MANIFEST_EXT}", JSON.pretty_generate(manifest_for(path)) + "\n")
     end
 
-    # `dilla replay <file.dilla>` — prints the command that rebuilds it.
+    # `dilla replay <file.provenance.json>` — prints the command that rebuilds it.
     #
     # From `pinned` when the manifest has one, because that is what the operator
     # typed and letting the engine choose the rest is what the original run did.

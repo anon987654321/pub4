@@ -1096,8 +1096,11 @@ class TestDilla < Minitest::Test
       # method here has nested blocks, so the first end belongs to one of them
       # and the body comes back truncated. That is how the first version of
       # this test reported render_dilla as not reaching the sampled bed.
+      # The name has to end where the method name ends. A prefix search finds
+      # render_analog_layer! -- a per-voice helper with no business mastering
+      # anything -- and reports render_analog as a bypass.
       body = ->(m) {
-        i = src.index("\\ndef " + m)
+        i = src.index(/\\ndef \#{Regexp.escape(m)}(?![\\w!?])/)
         next "" unless i
 
         src[i, (src.index("\\ndef ", i + 1) || src.length) - i]
@@ -1144,8 +1147,11 @@ class TestDilla < Minitest::Test
   def test_every_genre_renderer_reaches_the_master_bus
     result = eval_in_engine(<<~RUBY)
       src = engine_source
+      # The name has to end where the method name ends. A prefix search finds
+      # render_analog_layer! -- a per-voice helper with no business mastering
+      # anything -- and reports render_analog as a bypass.
       body = ->(m) {
-        i = src.index("\\ndef " + m)
+        i = src.index(/\\ndef \#{Regexp.escape(m)}(?![\\w!?])/)
         next "" unless i
 
         src[i, (src.index("\\ndef ", i + 1) || src.length) - i]
@@ -2504,7 +2510,7 @@ class TestDilla < Minitest::Test
     refute_equal result.fetch("up"), result.fetch("down")
   end
 
-  # The .dilla manifest beside every render claims "Reproduce with: ...", so a
+  # The sidecar manifest beside every render claims "Reproduce with: ...", so a
   # knob the scan misses is not a missing line in a report — it is a recipe that
   # silently omits an ingredient. The scan globbed lib/*.rb, one level, and the
   # engine split into lib/engine/ dropped 484 of 610 knobs without failing
@@ -2632,7 +2638,7 @@ class TestDilla < Minitest::Test
       _out, err, status = Open3.capture3(env, RbConfig.ruby, ENGINE, "dilla", output)
       assert status.success?, "the render must succeed before its manifest means anything: #{err}"
 
-      manifest = JSON.parse(File.read("#{output}.dilla"))
+      manifest = JSON.parse(File.read("#{output}#{DillaProvenance::MANIFEST_EXT}"))
       pinned = manifest.fetch("pinned")
       assert_equal({ "BARS" => "2", "SONITEX" => "heavy", "PAD_VOL" => "60",
                      "DILLA_OUTPUT_DIR" => dir, "DILLA_SCRATCH_DIR" => File.join(dir, "scratch") }, pinned,
@@ -2688,7 +2694,7 @@ class TestDilla < Minitest::Test
       assert_equal before, File.binread(session), "DILLA_FROZEN=1 must not write the session back"
       assert_match(/frozen: not writing project\/session\.json/, err,
                    "a skipped write is announced; silently dropping data would be worse than the bug this fixes")
-      assert_includes JSON.parse(File.read(File.join(dir, "cold.wav.dilla"))).fetch("frozen"),
+      assert_includes JSON.parse(File.read(File.join(dir, "cold.wav#{DillaProvenance::MANIFEST_EXT}"))).fetch("frozen"),
                       "project/session.json",
                       "the manifest has to say the take was made against held state"
     end
@@ -2875,7 +2881,7 @@ class TestDilla < Minitest::Test
         # about the bookkeeping, and a real render costs twenty seconds.
         system("ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i",
                "sine=frequency=#{220 * (index + 1)}:duration=0.4", "-ac", "2", part, exception: true)
-        File.write("#{part}.dilla", JSON.generate(
+        File.write("#{part}#{DillaProvenance::MANIFEST_EXT}", JSON.generate(
                                       "render_seed" => 100 + index,
                                       "pinned" => { "BARS" => "2" },
                                       "note" => "Reproduce with: ...",
@@ -2888,7 +2894,7 @@ class TestDilla < Minitest::Test
       FileUtils.cp(parts.first, joined)
       DillaProvenance.record_assembly!(joined, parts:, how: "test join")
 
-      assembly = JSON.parse(File.read("#{joined}.dilla")).fetch("assembly")
+      assembly = JSON.parse(File.read("#{joined}#{DillaProvenance::MANIFEST_EXT}")).fetch("assembly")
       assert_equal 2, assembly.fetch("parts")
       assert_equal "test join", assembly.fetch("how")
 
@@ -2903,8 +2909,8 @@ class TestDilla < Minitest::Test
       # the part being deleted.
       assert_equal 101, second.dig("recipe", "render_seed")
       assert_equal({ "BARS" => "2" }, second.dig("recipe", "pinned"))
-      parts.each { |part| FileUtils.rm_f([part, "#{part}.dilla"]) } # scan: intentional — removes only the temp files this method rendered
-      assert_equal 101, JSON.parse(File.read("#{joined}.dilla")).dig("assembly", "from", 1, "recipe", "render_seed"),
+      parts.each { |part| FileUtils.rm_f([part, "#{part}#{DillaProvenance::MANIFEST_EXT}"]) } # scan: intentional — removes only the temp files this method rendered
+      assert_equal 101, JSON.parse(File.read("#{joined}#{DillaProvenance::MANIFEST_EXT}")).dig("assembly", "from", 1, "recipe", "render_seed"),
                    "the record still names what part 2 was made from after part 2 is gone"
     end
   end

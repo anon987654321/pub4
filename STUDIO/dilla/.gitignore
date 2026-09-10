@@ -8,7 +8,7 @@ full_track_*.wav
 *.wav.quality.json
 
 # Stem splits. A stems render writes <name>_stems/ beside the render: four wavs
-# at about 15 MB apiece plus their .dilla and session sidecars, 121 MB a split.
+# at about 15 MB apiece plus their provenance and session sidecars, 121 MB a split.
 # The render is not tracked, so its parts are not either.
 *_stems/
 
@@ -24,8 +24,11 @@ project/learnings/vocals/**/*.wav
 # tracked is not tracked either.
 *.wav
 *.mp3
-*.wav.dilla
-*.mp3.dilla
+# Anchored to this directory. The vocal-fit sidecars under project/learnings are
+# tracked on purpose -- they are the record of which take was fitted to what --
+# and an unanchored pattern would sweep them up with the render sidecars.
+/*.wav.provenance.json
+/*.mp3.provenance.json
 *.wav.quality.json
 *_stems/
 
