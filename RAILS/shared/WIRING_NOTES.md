@@ -389,6 +389,25 @@ and after this pass it is doing all of the separating.
 
 **Feed actions:** use `shared/_feed_icon.html.erb` SVG icons — not emoji.
 
+## The engine is eager-loaded, and its own config says otherwise (2026-09-10)
+
+`Shared::Engine.config.eager_load_paths` is empty while
+`Shared::Engine.paths.eager_load` lists eleven directories, which reads like the
+engine going unloaded in production — the difference between a boot failure and
+a first-request 500, so it was worth settling rather than guessing.
+
+It is a Rails internal and nothing is missing. Measured inside a booted brgen
+with a migrated database: `Rails.autoloaders.main` carries 56 directories, all
+eleven of the engine's among them, and the loader's eager-load exclusion set is
+empty — so `Rails.application.eager_load!` reaches every one. `bin/rails
+zeitwerk:check`, which eager-loads the whole application, answers "All is good!".
+
+The measurement wants a migrated database and fails without one in a way that
+looks like the finding: `Shared::Authentication.allow_unauthenticated_access`
+reads `::User.column_names` in a class body, so eager loading a fresh worktree
+aborts with `Could not find table 'users'` before it reaches anything about
+engines. Run `bin/rails db:prepare` first.
+
 ## Engine extraction (done)
 
 `install_frontend_baseline.sh` is deprecated. Prune per-app duplicates of shared
