@@ -306,5 +306,40 @@ for other in amber bsdports; do
 done
 (( ${#restored} )) && print "vps-deploy: restored after shedding: ${restored}"
 
+# The gates, on the deployed thing.
+#
+# Fifty-one gates existed and nothing ran them unattended: the only callers were
+# four commands a person types, so the half that can only be measured against a
+# running app was measured on a laptop where it meant less. flow_journey is the
+# worked example — it sent no Host header, production answers 403 from host
+# authorization, and the gate therefore passed in development and could never
+# pass here, which is the only place a user journey is real.
+#
+# This set is the cheap half: source checks plus the live probes against the
+# loopback. It runs in about forty seconds on this one core with the fleet up,
+# which is what makes it affordable on every deploy.
+#
+# The browser half — rendered_suite, layout_suite, visual_contract — is NOT here
+# and is opt-in through PUB4_DEPLOY_BROWSER_GATES=1. Chrome is installed, but
+# this box is 1GB with four apps resident and resource_guard sheds amber and
+# bsdports under exactly that pressure. A deploy that takes the site down to
+# check the site has failed at the only thing it was for.
+#
+# GATE_AUTOFIX=0 because a gate must not rewrite the tree it is judging, least
+# of all the one that is deployed.
+gate_names=(production port_inventory generated_asset schema_migration
+            phantom_foreign_keys frontend_production stimulus_components
+            flow_journey page_simulation)
+if [[ -n ${PUB4_DEPLOY_BROWSER_GATES:-} ]]; then
+  gate_names+=(rendered_suite layout_suite)
+fi
+print "vps-deploy: $app (gates: ${gate_names})"
+if ! GATE_AUTOFIX=0 ruby34 "$repo/RAILS/gates/runner.rb" "${gate_names[@]}"; then
+  write_stamp "$app" failed
+  print -u2 "vps-deploy: $app gates failed — the app is deployed and serving, and something"
+  print -u2 "            it is now serving does not hold. Fix or revert; do not deploy over it."
+  exit 1
+fi
+
 print "vps-deploy: $app ok"
 write_stamp "$app" ok
