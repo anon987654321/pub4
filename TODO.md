@@ -2699,31 +2699,27 @@ every variant selector literally contains `.btn`, and the specificity argument
 above covers what the pairs do not. The extraction is still a structural move and
 wants the owner's yes, because the house rule is restore or ask.
 
-#### 3. The `Pub4::*Lint` family puts its entry point last
+#### 3. Reading order — the five lints are done, the gates cases are not worth it
 
-A Prism pass over 1,267 Ruby files under `RAILS/` (visibility tracked through
-bare `private`/`public` call nodes, entry point taken as the method callers name)
-finds six inversions, and five are one family:
+The five `Pub4::*Lint` modules read entry first now. Each was reordered on its
+own and checked the same way: every lint's findings and counts snapshotted to
+JSON before the first move and compared after each, byte identical throughout.
+`scale_lint`'s first attempt raised on require — the module's closing `end` was
+inside the slice being reordered, so `REPO_ROOT` landed in `module Pub4`. A
+reorder that carries a scope terminator is not a reorder.
 
-    shared/lib/pub4/css_coverage_lint.rb:407     #scan, 22 helpers and 130 lines above it
-    shared/lib/pub4/layout_stability_lint.rb:225 #counts, 12 helpers, 114 lines
-    shared/lib/pub4/asset_url_lint.rb:186        #scan, 11 helpers, 84 lines
-    shared/lib/pub4/scale_lint.rb:214            #check, 22 helpers, 83 lines
-    shared/lib/pub4/breakpoint_lint.rb:162       #scan, 6 helpers, 39 lines
-    test/method_length_ratchet_test.rb:111       #measure, 3 helpers, 30 lines
+The four gates cases from the same pass, at a lower threshold, were read and
+rejected. `gate_calibration.rb`'s `run` is already fourth in its class and
+`dom_surface_schema.rb`'s `self.check` is second; neither is an inversion at a
+useful threshold. `geometry_type.rb`'s `check` sits directly above the eight
+`check_*` methods it dispatches to, so lifting it above `profile` and `worn`
+would put 150 lines between it and the helper it calls on its first line —
+the move makes that file worse, not better. `layout_search.rb`'s `report` is
+behind four public methods a caller may want on their own.
 
-In each the reader meets `engine_dirs`, `strip_erb`, `to_px` and twenty siblings
-before meeting `scan`, and `run` — the ratchet-printing main — is last of all.
-They are `module_function` modules, so nothing is private and the fix is ordering
-alone: entry, then what it calls, then the rest. `ScaleLint::Finding` and a few
-helpers are named directly by tests, so nothing can be made private.
-
-Four smaller cases in the gates, from the same pass at a lower threshold:
-`gates/support/geometry_type.rb:60` (`check` behind five helpers it calls),
-`gates/support/layout_search.rb:63` (`report` behind six),
-`gates/support/gate_calibration.rb:36`, `gates/support/dom_surface_schema.rb:21`.
-`geometry_type`'s `check_measure` and `check_tabular` are called from
-`test/gates/rendered_gates_test.rb:307,314`, so again ordering only.
+`test/method_length_ratchet_test.rb`'s `measure` stays where it is: in a
+Minitest class the entry points are the four `test_*` methods, and they are
+below it already.
 
 The counterpart defect is absent. A public method declared below a scope's first
 `private` appears **nowhere** in `RAILS/` — 0 findings over 1,461 files, with the
