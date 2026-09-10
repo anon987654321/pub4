@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require "open3"
 require "json"
 
 # INVENTORY_ROOT, not ROOT. A bare top-level ROOT is harmless in its own process
@@ -60,8 +61,28 @@ def repo_paths
   end
 end
 
+# The root the repo has, not the root this disk has.
+#
+# A working checkout accumulates entries git was already told to forget —
+# .DS_Store, the gate ledger the runner appends to, the four generated
+# snapshot_*.md — and Dir.children reports every one of them as a
+# non-canonical top-level file. That is a report nobody acts on, and it only
+# appears in the main checkout: a fresh worktree has none of them, so the
+# census reads clean exactly where nobody is working. Ask git what it ignores
+# instead of the filesystem, which is the correction spine.yml already records
+# for the file count.
 def root_entries
-  Dir.children(INVENTORY_ROOT).reject { |name| name == ".git" }.sort
+  names = Dir.children(INVENTORY_ROOT).reject { |name| name == ".git" }.sort
+  names - ignored_root_names(names)
+end
+
+def ignored_root_names(names)
+  return [] if names.empty?
+
+  out, = Open3.capture2("git", "check-ignore", "--stdin", chdir: INVENTORY_ROOT, stdin_data: names.join("\n"))
+  out.split("\n").map(&:strip).reject(&:empty?)
+rescue Errno::ENOENT
+  [] # no git on this machine: report everything rather than nothing
 end
 
 def loose_root_entries

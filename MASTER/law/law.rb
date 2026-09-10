@@ -28,7 +28,7 @@ module Law
     ".zsh" => ["#"], ".sh" => ["#"], ".bash" => ["#"],
     ".js" => ["//", "/*"], ".ts" => ["//", "/*"], ".jsx" => ["//", "/*"], ".tsx" => ["//", "/*"],
     ".css" => ["/*"], ".scss" => ["//", "/*"], ".sass" => ["//", "/*"],
-    ".html" => ["<!--"], ".htm" => ["<!--"], ".erb" => ["<!--"]
+    ".html" => ["<!--"], ".htm" => ["<!--"], ".erb" => ["<!--", "<%#"]
   }.freeze
 
   # `ask` is the semantic half: a rule whose subject cannot be matched by a
@@ -153,9 +153,12 @@ module Law
     # multi-line detector still sees the file's shape.
     def considered_text(text, file)
       leaders = reads_comments ? [] : COMMENT_LEADERS.fetch(File.extname(file), [])
-      return text if leaders.empty? && !text.include?("scan:")
+      continued = reads_comments ? [] : continued_comment_lines(text, file)
+      return text if leaders.empty? && continued.empty? && !text.include?("scan:")
 
       text.each_line.with_index.map do |line, index|
+        next "\n" if continued.include?(index)
+
         # A shebang is not a comment here: STRICT_MODE_ZSH asks whether a script
         # that declares an interpreter also sets strict mode, so blanking line 1
         # made it unable to see the script at all.
@@ -167,9 +170,44 @@ module Law
       end.join
     end
 
+    # Line indices, zero-based, that sit inside a comment which opened on an
+    # earlier line.
+    #
+    # A leader test reads one line, so it sees where a comment starts and never
+    # where it continues. An ERB comment is routinely six lines of prose about
+    # the markup below it, and every line after the first was being read as
+    # markup: I18N_COVERAGE fired on a comment explaining that a page carried no
+    # <h1>, because "<h1> at all — two <h2>s" is a `>`, English, and a `<`. The
+    # rule already refused the opening line; there was no way for it to refuse
+    # the rest.
+    #
+    # ERB only. The other multi-line syntaxes this file lists — /* */ and <!-- --
+    # — have not produced a finding of this shape, and a span reader that is
+    # wrong is worse than a leader test that is narrow.
+    def continued_comment_lines(text, file)
+      return [] unless File.extname(file) == ".erb"
+      return [] unless text.include?("<%#")
+
+      inside = false
+      text.each_line.with_index.filter_map do |line, index|
+        opened = inside
+        unless inside
+          open_at = line.rindex("<%#")
+          inside = true if open_at && !line[open_at..].include?("%>")
+        end
+        if inside && line.include?("%>")
+          inside = false
+          next opened ? index : nil
+        end
+        index if inside && opened
+      end
+    end
+
     def scan_lines(text, file)
       leaders = reads_comments ? [] : COMMENT_LEADERS.fetch(File.extname(file), [])
+      continued = reads_comments ? [] : continued_comment_lines(text, file)
       text.each_line.with_index(1).filter_map do |line, n|
+        next if continued.include?(n - 1)
         next if leaders.any? { |leader| line.lstrip.start_with?(leader) }
         # The registry's one-line opt-out, honoured here too: a line that
         # declares itself intentional carries a reviewer's reason beside it.

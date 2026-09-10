@@ -53,7 +53,19 @@ spine:
   # and de-duplication across lib/ is worth about thirty. What was paid was a
   # deletion: unified_diff_editor.rb, 133 body lines, found by asking what the
   # unwired files were duplicating rather than whether they were called.
-  lib_body_ceiling: 38148
+  # 38148 -> 38120, and the fall cleared both standing raises.
+  #
+  # Two changes landed above the ceiling after it was sponsored — 17 lines for
+  # `gate --tree <TREE>` and 6 for the local model tier's gate — and a third
+  # raise was not available: consecutive_raises_allowed is 2 and both were
+  # spent. The cap did what it is for. It was paid out of lib/trace/metrics.rb,
+  # which recorded four things and was called for one: record_latency,
+  # record_diff and record_undo had no caller anywhere and were reachable only
+  # through a bus that subscribes llm:response, so `summary` reported
+  # avg_latency_ms 0, avg_diff_lines 0 and rollback_rate 0.0 on every run of a
+  # runtime doing all three. The thresholds and the sampling window went with
+  # them; they existed to judge those counters.
+  lib_body_ceiling: 38120
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753
@@ -62,38 +74,7 @@ spine:
   introduced: "2026-07-30"
   # Raises standing since the last fall. lint:spine refuses another once this
   # reaches consecutive_raises_allowed; a genuine fall clears it.
-  raised:
-  - >-
-    lib/ground/quota_gate.rb and the paths that read it. A paid provider limit
-    was discovered once per persona and once per file, and the tier it deleted
-    left no mark on the verdict, so a run that could not review reported the
-    same as one that did. The lines buy three things nothing else held. The
-    limit is now its own failure class rather than a rate limit, one trip
-    serves the whole process instead of N refusals bought at N call sites, and
-    the skipped tier travels with the result so a summary cannot fold "could
-    not run" into "passed". They also buy the resume — the gate re-probes on
-    the taxonomy's own backoff, so the tier comes back without a code change or
-    an operator remembering a reset.
-  - >-
-    684 lines, and they are six subsystems rather than one drift, so the account
-    is per directory. lib/review +695: rules that could only be judged by a model,
-    judged deterministically instead — four detectors in 9b9e8c88f, three more
-    reading the parse tree in dcbff6ae8, the structural-clone half of DRY, and
-    MIDDLE_MAN. Beside them, a reader for PATH_OWNERSHIP.yml, the quota gate, the
-    boot receipt with a public-method count that reads Ruby rather than a stop
-    marker, an audit that had been dead since its triage was deleted, and a worked
-    example on every registry rule so a rule that cannot fire is visible. That
-    directory also paid: three deletions took 464 lines out of it in the same
-    window. lib/pub4 +226 is one commit, the gate ladder, buying one command where
-    five uncoordinated invocations used to be and a third state so a tier that
-    could not run is skipped rather than passed. lib/voice +221, and 142 of it is
-    that the CLI speaks at all — Speech was synthesising into a file nobody
-    opened. lib/core +80 buys a rule that can ask a person instead of guessing for
-    them. lib/boot +49 is a boot crash and a CLI that led every fallback chain
-    without being installed. lib/trace +36 is a sandbox that said nothing about
-    the credentials inside it. What the whole raise buys, in one sentence: the
-    tree can now decide deterministically what it used to send to a model, and it
-    can say what it booted with.
+  raised: []
   consecutive_raises_allowed: 2
   # A tripwire on new top-level concepts in the fold, not on line count. Counted
   # as lib/{core.rb,core/*.rb} — the entrypoint plus the directory — so the glob

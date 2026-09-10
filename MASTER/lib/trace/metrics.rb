@@ -4,53 +4,29 @@ require "json"
 
 module Master
   module Trace
+    # What the runtime measures about its own model calls: how many, how many
+    # failed, how many escalated, per model.
+    #
+    # It measured three more things until nothing turned out to call them.
+    # record_latency, record_diff and record_undo were public, had no caller
+    # anywhere in the tree, and were reachable only through the bus — which
+    # subscribes one event, llm:response. So the counters they maintained never
+    # moved, and `summary` reported avg_latency_ms 0, avg_diff_lines 0 and
+    # rollback_rate 0.0 on every run of a system doing all three things. A
+    # metric that always reads zero is worse than an absent one: it answers the
+    # question, and the answer is that everything is fine.
+    #
+    # Deleted rather than wired, because wiring them is a decision about what
+    # the runtime should watch, not a repair of what it claimed to. The three
+    # thresholds and the sampling window went with them; they existed only to
+    # judge those counters.
     class Metrics
-      SLOW_REQUEST_MS = 5000
-      METRICS_PREFIX = "metrics0".freeze
-      DIFF_SIZE_LIMIT_DEFAULT = 200
-      MAX_DIFF_SIZE_LIMIT = DIFF_SIZE_LIMIT_DEFAULT.freeze
-      MAX_DIFF_SIZE_LINES = MAX_DIFF_SIZE_LIMIT.freeze
-      ROLLBACK_RATE_THRESHOLD = 0.15
-      DECISION_LATENCY_MS_THRESHOLD = 5000
-      MAX_SAMPLE_SIZE = 500
-
       def initialize(root:, event_bus: nil)
         @path = File.join(root, ".master", "metrics.jsonl")
         @bus = event_bus
         @mutex = Mutex.new
-        @writes = 0
-        @undos = 0
-        @latencies = []
-        @diff_sizes = []
         @model_stats = Hash.new { |h, k| h[k] = { calls: 0, failures: 0, escalations: 0 } }
         subscribe_to_bus(event_bus) if event_bus
-      end
-
-      def record_latency(ms)
-        avg = @mutex.synchronize do
-          @latencies << ms
-          @latencies.shift if @latencies.size > MAX_SAMPLE_SIZE
-          average(@latencies)
-        end
-        check_threshold(:decision_latency_ms, avg)
-        append(decision_latency_ms: ms)
-      end
-
-      def record_diff(lines)
-        avg = @mutex.synchronize do
-          @diff_sizes << lines
-          @diff_sizes.shift if @diff_sizes.size > MAX_SAMPLE_SIZE
-          @writes += 1
-          average(@diff_sizes)
-        end
-        check_threshold(:diff_size_lines, avg)
-        append(diff_size_lines: lines)
-      end
-
-      def record_undo
-        rate = @mutex.synchronize { @undos += 1; @writes > 0 ? @undos.to_f / @writes : 0.0 }
-        check_threshold(:rollback_rate, rate)
-        append(rollback_rate: rate.round(3))
       end
 
       def record_llm_response(model:, success:, tokens_approx: 0, escalated: false)
@@ -64,12 +40,12 @@ module Master
       end
 
       def summary
+        calls = @model_stats.values.sum { |s| s[:calls] }
         {
-          avg_latency_ms: average(@latencies).round,
-          avg_diff_lines: average(@diff_sizes).round,
-          rollback_rate: (@writes > 0 ? @undos.to_f / @writes : 0.0).round(3),
-          writes: @writes,
-          undos: @undos,
+          llm_calls: calls,
+          llm_failures: @model_stats.values.sum { |s| s[:failures] },
+          llm_escalations: @model_stats.values.sum { |s| s[:escalations] },
+          models: @model_stats.size,
         }
       end
 
@@ -93,24 +69,6 @@ module Master
         rescue StandardError => e
           @bus&.publish("metrics:record_error", error: e.message)
         end
-      end
-
-      def check_threshold(metric, value)
-        threshold =
-          case metric
-          when :decision_latency_ms then DECISION_LATENCY_MS_THRESHOLD
-          when :diff_size_lines then MAX_DIFF_SIZE_LINES
-          when :rollback_rate then ROLLBACK_RATE_THRESHOLD
-          else return
-          end
-        return unless value > threshold
-        warn "#{METRICS_PREFIX}: #{metric} #{value} exceeds #{threshold}"
-      end
-
-      def average(values)
-        return 0.0 if values.empty?
-
-        values.sum.to_f / values.size
       end
 
       def append(entry)

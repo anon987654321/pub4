@@ -199,8 +199,21 @@ module Deploy
         # skipped it.
         fail_app!(app_failures, "shared CI must run RuboCop on the VPS too") if
           ci_text.match?(/rubocop[^\n]*unless vps_host|step\("Style: Ruby"[^\n]*unless vps_host/)
+        # Two facts, checked separately, because the regex that checked them
+        # together was measuring the order they happen to appear in.
+        #
+        # It read /rubocop.*db\/migrate test engines/m, which needs the word
+        # "rubocop" to come first in the file. When the directory list moved into a
+        # variable so the autocorrect step and the check step could share one list,
+        # the assignment landed above both rubocop lines and this failed on all
+        # three apps — while CI linted exactly the directories it asks about. And
+        # /m across a 160-line file was never evidence of adjacency: a rubocop at
+        # line 20 with a directory list at line 150 satisfied it.
+        #
+        # That RuboCop runs at all is the assertion twenty lines above. This one is
+        # about the scope it runs over.
         fail_app!(app_failures, "shared CI must lint engines/ and test/") unless
-          ci_text.match?(/rubocop.*db\/migrate test engines/m)
+          ci_text.include?("db/migrate test engines")
       else
         fail_app!(app_failures, "missing bin/ci")
       end

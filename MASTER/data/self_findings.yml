@@ -97,7 +97,18 @@
 # Master::Review::RepoEcology 354 across three, against a limit of 300. They are
 # recorded rather than exempted, and TODO.md names them as the decompositions
 # they are.
-findings: 279
+# 279 -> 278, and the line is the instrument rather than the tree.
+#
+# A comment leader reads one line, so law.rb saw where a comment opened and
+# never where it continued. An ERB comment here is routinely six lines of prose
+# about the markup below it, and every line after the first was read as markup:
+# I18N_COVERAGE fired on a comment explaining that a page carried no <h1>,
+# because "<h1> at all — two <h2>s" is a `>`, English text and a `<`. The rule
+# already refused the opening line and had no way to refuse the rest. Blanking
+# the whole `<%# ... %>` span dropped that finding and one NO_INLINE_SCRIPT_BLOCK
+# of the same shape, and the detector still fires on markup that follows the
+# comment's close — proved on planted cases before the count was believed.
+findings: 278
 by_rule:
   BARE_DIV_WRAPPER: 3
   BLANK_LINE_RUN: 1
@@ -111,7 +122,7 @@ by_rule:
   NEVER_BATCH_DELETE: 3
   NO_CHANGELOG_COMMENT: 16
   NO_COLUMN_ALIGN: 42
-  NO_INLINE_SCRIPT_BLOCK: 21
+  NO_INLINE_SCRIPT_BLOCK: 20
   NO_INLINE_STYLES: 2
   NO_MULTIPLE_LANGUAGES: 22
   NO_VAR: 2
@@ -174,15 +185,15 @@ finding_members:
   - I18N_COVERAGE RAILS/brgen/engines/playlist/app/views/playlist/sets/show.html.erb:39
   - I18N_COVERAGE RAILS/brgen/engines/playlist/app/views/playlist/shared/_dilla_sketches.html.erb:13
   - I18N_COVERAGE RAILS/brgen/engines/takeaway/app/views/takeaway/_nav_bar.html.erb:15
-  - IMMUTABLE RAILS/gates/runner.rb:237
-  - IMMUTABLE RAILS/gates/runner.rb:248
+  - IMMUTABLE RAILS/gates/runner.rb:308
+  - IMMUTABLE RAILS/gates/runner.rb:319
   - MEANINGFUL_NAMES RAILS/brgen/engines/marketplace/app/services/marketplace/listing_facets.rb:47
   - MIGRATION_ADD_REFERENCE_NO_FK RAILS/brgen/db/migrate/20260524113000_create_brgen_social_tables.rb:15
   - MIGRATION_ADD_REFERENCE_NO_FK RAILS/brgen/db/migrate/20260602150000_add_neighborhood_to_dating_profiles.rb:5
   - MOBILE_FIRST RAILS/shared/app/assets/stylesheets/_tab_bar.scss:99
   - NEVER_BATCH_DELETE OPENBSD/dotfiles/mov.sh:1151
   - NEVER_BATCH_DELETE RAILS/shared/app/jobs/shared/database_snapshot_job.rb:41
-  - NEVER_BATCH_DELETE STUDIO/dilla/bin/sine_stream_player.rb:46
+  - NEVER_BATCH_DELETE STUDIO/dilla/bin/sine_stream_player.rb:55
   - NO_CHANGELOG_COMMENT MASTER/web/app/services/tts_job.rb:45
   - NO_CHANGELOG_COMMENT MASTER/web/config/initializers/master_container.rb:59
   - NO_CHANGELOG_COMMENT MASTER/web/script/face_asset_paths.rb:6
@@ -241,7 +252,6 @@ finding_members:
   - NO_COLUMN_ALIGN MASTER/web/public/swarm.html:186
   - NO_COLUMN_ALIGN MASTER/web/public/swarm.html:235
   - NO_COLUMN_ALIGN MASTER/web/public/swarm.html:77
-  - NO_INLINE_SCRIPT_BLOCK MASTER/web/app/views/chat/index.html.erb:153
   - NO_INLINE_SCRIPT_BLOCK MASTER/web/app/views/chat/index.html.erb:159
   - NO_INLINE_SCRIPT_BLOCK MASTER/web/app/views/chat/index.html.erb:21
   - NO_INLINE_SCRIPT_BLOCK MASTER/web/app/views/chat/index.html.erb:375
@@ -370,7 +380,7 @@ finding_members:
   - PROSE_ACTIVE_VOICE RAILS/brgen/test/jobs/prune_guest_users_job_test.rb:5
   - PROSE_ACTIVE_VOICE RAILS/shared/app/models/concerns/shared/strict_safe_associations.rb:13
   - PROSE_ACTIVE_VOICE STUDIO/postpro/postpro.rb:1822
-  - PROSE_ACTIVE_VOICE_NB RAILS/brgen/config/locales/nb.yml:1685
+  - PROSE_ACTIVE_VOICE_NB RAILS/brgen/config/locales/nb.yml:1686
   - PROSE_OMIT_QUALIFIERS MASTER/web/CLAUDE.md:263
   - PROSE_OMIT_QUALIFIERS MASTER/web/test/controllers/tts_controller_test.rb:28
   - PROSE_OMIT_QUALIFIERS RAILS/brgen/app/controllers/invites_controller.rb:48
@@ -454,10 +464,10 @@ registry_finding_members:
   - SILENT_RESCUE STUDIO/dilla/lib/verify_fx.rb:340
   - SILENT_RESCUE STUDIO/dilla/live/rack.rb:114
   - SILENT_RESCUE STUDIO/dilla/live/rack.rb:130
-  - SILENT_RESCUE STUDIO/gate.rb:424
+  - SILENT_RESCUE STUDIO/gate.rb:435
   - SILENT_RESCUE STUDIO/lora/_toolkit/curate.rb:160
   - SILENT_RESCUE STUDIO/postpro/postpro.rb:291
   - SILENT_RESCUE STUDIO/postpro/postpro.rb:302
-  - SILENT_RESCUE STUDIO/test/test_dilla_engine_probes.rb:1221
+  - SILENT_RESCUE STUDIO/test/test_dilla_engine_probes.rb:1283
   - SILENT_RESCUE STUDIO/trymbot/trymbot.rb:163
   - SILENT_RESCUE STUDIO/trymbot/trymbot.rb:258

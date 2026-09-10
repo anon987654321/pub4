@@ -56,7 +56,11 @@ class LifecycleToolsSpec < Minitest::Test
   def test_the_root_allowlists_name_the_repo_root_exactly
     load_inventory
     repo = File.expand_path("..", ROOT)
-    present = Dir.children(repo).reject { |name| name == ".git" }
+    # The tool own reading rather than a second one beside it: root_entries
+    # drops what git ignores, and a spec that re-derived the list from
+    # Dir.children failed on .DS_Store and the gate ledger while the tool was
+    # right.
+    present = root_entries
     files, dirs = present.partition { |name| File.file?(File.join(repo, name)) }
 
     assert_equal files.sort, Object.const_get(:ALLOWED_ROOT_FILES).sort,
