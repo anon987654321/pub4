@@ -61,18 +61,20 @@ when the table's subject is another directory's declared purpose, and it is not 
 schema at all when the file writes the table rather than reading it. The clause is in
 `PATH_OWNERSHIP.yml` and the worked cases are in `lib/ground/README.md`.
 
-What is open is one file and it is not a placement question. **`ground/unified_diff_editor.rb`
-has no caller outside its own test** in any of the four trees. It parses, summarises
-and builds unified diffs and nothing asks it to; `code_reach` reads it as reached
-because the test names the constant. It belongs with the unwired declarations below —
-the question is what was meant to apply a diff through it, not whether to delete it.
+**Nothing under `lib/ground` is open on placement now.** The one file this entry
+carried, `ground/unified_diff_editor.rb`, is deleted — the question that moved it was
+not where it belonged but what it duplicated, and the answer was three live mechanisms
+in other directories.
 
-Two cautions for whoever moves the next file. A move is a constant rename, so check
+Three cautions for whoever moves the next file. A move is a constant rename, so check
 for callers that write the bare name inside the same module first — `PressureEngine`
 looked dead to a qualified-name census and is constructed at `MASTER/lib/builder.rb:165`
 on every full boot, though not under `Builder.build_fast`. And re-base the source and
 destination `loc_body_budgets` keys in the same commit, by the body lines that moved
-and no more: the sum has to be zero, because a move pays nothing toward a breach.
+and no more: the sum has to be zero, because a move pays nothing toward a breach. And
+`lib/builder.rb` and `lib/core.rb` have their own keys separate from `lib/builder` and
+`lib/core`, so a change to the namespace file does not show up in the directory's row —
+`loc_budget` caught two body lines there that every directory reading had missed.
 
 ### What is still the operator's, after the delegation of 2026-09-10
 
@@ -349,12 +351,12 @@ reader hunting callers for methods that have them or do not exist:
 
 - `review/security.rb`'s `safe?` (`:89`) and `clean!` (`:91`) are called from
   `MASTER/lib/io/web_fetch.rb:108` and `:111`.
-- `provider_quarantine_manager.rb`'s `record_and_assess` (`:44`) is called from
+- `provider_quarantine.rb`'s `record_and_assess` (`:44`) is called from
   `model_router/diagnostics.rb:42`; `escalation.rb`'s `next_escalation_tier` (`:58`) is
   called at `:34` and pinned by `test_provider_quarantine_wiring.rb`.
 - `ground/policy/workflow.rb` has no `autofix?` and no `confirm?` — its methods are
   `phase`, `workflow`, `gates` and `brief`, and neither word appears in the file.
-- `provider_quarantine_manager.rb` has no `route?`. Its predicate is `quarantined?`.
+- `provider_quarantine.rb` has no `route?`. Its predicate is `quarantined?`.
 
 ### The rule corpus
 
@@ -641,10 +643,15 @@ report is the progress, so a buffered return delivers the account after the run 
 meant to narrate.
 
 **`FILE_VAGUE_NAME` and `sprawl.vague_names` measure different things and neither
-number is the other.** `FILE_VAGUE_NAME` has one finding,
-`MASTER/lib/cli/routing/provider_quarantine_manager.rb:1` — "manager" is a category —
-and it never surfaces in `rake constitution` because the rule is `severity: :info`
-(`naming_rules.rb:239-240`) and the info filter drops it. `sprawl.vague_names` is 2 of 2
+number is the other.** `FILE_VAGUE_NAME`'s one finding is closed:
+`provider_quarantine_manager.rb` is `provider_quarantine.rb`, and
+`ProviderQuarantineManager` is `ProviderQuarantine`. "Manager" is a category rather
+than a name, and the class was already named for what it does — it quarantines a
+provider. Renaming it lost nothing, because the accessor in
+`model_router/diagnostics.rb` reads better as `quarantine` than as
+`quarantine_manager`. The rule never surfaces in `rake constitution` because it is
+`severity: :info` (`naming_rules.rb:239-240`) and the info filter drops it, which is
+why one finding sat there for as long as it did. `sprawl.vague_names` is 2 of 2
 and both are Zeitwerk: `MASTER/lib/boot/data.rb` and `MASTER/lib/io/base.rb`, the
 latter named after the constant it defines, so the finding is that the *concept* is
 called `Base` — a design decision and not a rename.
@@ -1441,7 +1448,7 @@ re-verified 2026-09-09.
   `NO_DEAD_ENDS`, and `GateResult#measured_nothing?`.
 - *Provider broker, matrix, fallback* — `data/providers.yml`, `ModelRouter` with
   `failover_config`, `provider_availability` and `escalation` under
-  `lib/cli/routing/model_router/`, plus `provider_quarantine_manager`, and
+  `lib/cli/routing/model_router/`, plus `provider_quarantine`, and
   `circuit_breaker_registry` and `quota_gate` under `lib/io/`. The quota gate already
   classifies the failure, parks the tier, carries the skip into the verdict and re-probes
   on backoff.
