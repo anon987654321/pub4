@@ -312,10 +312,12 @@ and hears a difference that is not there. State the bar count with the claim, an
 pick it from what the claim depends on rather than from patience.
 
 **A probe that reads a global must fail loudly when the global is absent.** An
-absent reading is not a valid state and must never be scored as one: the face
-census that reported a dead runtime was reading `window.face` where the page
-writes `window.MASTER_FACE`, and "no renderer, no frames" is exactly what a
-healthy 2D fallback also reports. Separate "it said no" from "it did not answer".
+absent reading is not a valid state and must never be scored as one. A census
+elsewhere in this repo reported a live renderer dead because it read a global
+under a name the page does not use, and the empty answer it got back — no
+renderer, no frames — is exactly what a healthy fallback path reports too.
+Separate "it said no" from "it did not answer", here as well: a knob probe that
+finds no value must say the knob is unreadable, not that it is off.
 
 **PRNG draw order is an interface.** Adding a `rand` above an existing one shifts
 every draw after it, so a seed journalled last week reproduces a different take

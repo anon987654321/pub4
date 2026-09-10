@@ -228,8 +228,9 @@ every change, which is why they are here.
 
 **A value-preserving snap is a fix. A value-changing one is a decision.** Moving
 a literal into the token that already holds the same value changes nothing on
-screen and needs no one's permission. Moving `13px` onto a `12px` token changes
-what is painted, and belongs to the operator however tidy it looks in the diff.
+screen and needs no one's permission. Moving it onto a token whose value differs
+by a pixel changes what is painted, and belongs to the operator however tidy it
+looks in the diff.
 
 **A retirement is not finished while a test still names the retired thing.** The
 dead `#dark-toggle` lane survived its own removal in two apps because their tests
