@@ -145,19 +145,26 @@ fi
 # configs)". Its first working run found six of eleven drifted. A deploy is
 # exactly when that matters — it is the moment the repo becomes the box.
 #
-# Advisory, not blocking, and deliberately so: six configs differ today
-# (TODO.md, etc_drift_six_configs), three of them rc.d files that start
-# production services, so a hard gate here would refuse every deploy until an
-# unrelated backlog is cleared. Make it blocking when that row closes; a warning
-# that names a number is still the difference between knowing and not.
+# Advisory, not blocking, and deliberately so. Measured 2026-09-10 with
+# `SSH_HOST=dev@brgen.no ruby OPENBSD/config_drift_gate.rb --remote`: eight files
+# differ and two more are absent from the box entirely — emergency_cpu.sh, which
+# is resource_guard's crisis tier, and vps_weekly_integrity.sh, which the crontab
+# has scheduled for weeks. A hard gate here would refuse every deploy until an
+# OPERATOR.sh run nobody has scheduled, and one of the eight is rc.d/master, which
+# starts a production service. Make it blocking the first time a deploy runs with
+# this clean; a warning that names a number is still the difference between
+# knowing and not.
+#
+# The count now includes root's crontab, which is the drift that hid the longest:
+# every /etc file matched while a scheduled job existed only in this repository.
 if [[ -x /usr/local/bin/config_drift_gate.rb ]]; then
   if ! /usr/local/bin/ruby34 /usr/local/bin/config_drift_gate.rb > /tmp/vps-deploy-drift.out 2>&1; then
     # ruby34, not grep: coreutils are banned in committed scripts here, and the
     # gate's own summary line already carries the count in the shape we want.
     drift_count=$(/usr/local/bin/ruby34 -e \
       'print File.read("/tmp/vps-deploy-drift.out").scan(/: DRIFT -/).size' 2>/dev/null)
-    print "vps-deploy: $app WARNING — ${drift_count:-?} config(s) in /etc differ from the repo being deployed"
-    print "vps-deploy: $app see /tmp/vps-deploy-drift.out (TODO.md: etc_drift_six_configs)"
+    print "vps-deploy: $app WARNING — ${drift_count:-?} config(s) on the box differ from the repo being deployed"
+    print "vps-deploy: $app see /tmp/vps-deploy-drift.out (TODO.md, OPENBSD: the shell tree)"
   fi
 fi
 

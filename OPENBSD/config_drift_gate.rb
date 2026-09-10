@@ -83,6 +83,20 @@ VERBATIM = {
 
 EXCLUDED = %w[etc/relayd.conf etc/mail/smtpd.conf etc/litestream.yml etc/acme-client.conf].freeze
 
+# Root's crontab cannot join VERBATIM: OPERATOR.sh merges the tracked lines into
+# whatever is already there rather than overwriting the file, so a byte compare
+# would fail on every box that has ever been touched by hand. What is comparable
+# is the set of commands, and that is the half worth comparing — a schedule the
+# repo declares and the box does not run is a capability that exists only in this
+# directory.
+#
+# It is the gap this check was written for. `etc/crontab.vm23:97` has scheduled
+# `/usr/local/bin/vps_weekly_integrity.sh` for weeks; the box has no such line, no
+# such file and no /var/log/pub4 to write into, and the weekly integrity pass has
+# therefore never run once. Every /etc file matched, so the gate said clean.
+CRONTAB_MIRROR = "etc/crontab.vm23"
+CRONTAB_KEY = "@root-crontab"
+
 REMOTE = ARGV.include?("--remote")
 SSH_HOST = ENV.fetch("SSH_HOST", "dev@brgen.no")
 SSH_KEY = File.expand_path(ENV.fetch("SSH_KEY", "~/.ssh/id_ed25519_brgen"))
@@ -101,18 +115,50 @@ end
 # reconnects, which is what pf bruteforce blocks (RUNBOOK: one session at a time).
 # Each file emits `<marker><path>` on its own line then its contents; echo, not
 # printf, because printf backslash escaping is fragile across ruby -> ssh -> shell.
+def doas_root_crontab
+  out, status = Open3.capture2e("doas", "-n", "crontab", "-l", "-u", "root")
+  status.success? ? out : nil
+end
+
+# The crontab rides the same round trip rather than opening a second one. Reading
+# the files one at a time is 11 rapid reconnects, which is what pf bruteforce
+# blocks, and a separate connection for the crontab would be the twelfth.
 def live_files(paths)
-  return paths.to_h { |path| [path, File.readable?(path) ? File.read(path) : doas_cat(path)] } unless REMOTE
+  keys = paths + [CRONTAB_KEY]
+
+  unless REMOTE
+    map = paths.to_h { |path| [path, File.readable?(path) ? File.read(path) : doas_cat(path)] }
+    map[CRONTAB_KEY] = doas_root_crontab
+    return map
+  end
 
   script = paths.map do |path|
     "echo #{(MARKER + path).dump}; doas cat #{path} 2>/dev/null || cat #{path} 2>/dev/null"
   end.join("; ")
+  script += "; echo #{(MARKER + CRONTAB_KEY).dump}; doas crontab -l -u root 2>/dev/null"
   out, status = Open3.capture2e(
     "ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=15", "-i", SSH_KEY, SSH_HOST, script
   )
-  return paths.to_h { |path| [path, nil] } unless status.success?
+  return keys.to_h { |key| [key, nil] } unless status.success?
 
-  split_stream(out, paths)
+  split_stream(out, keys)
+end
+
+# The command a crontab line schedules, as an absolute path.
+#
+# Five time fields (or an `@reboot`-style shorthand) then the command, and the
+# first absolute path inside the command is the program: an environment prefix
+# sits before it without a slash and a `>> /var/log/...` redirect comes after it.
+# A bare `PATH=...` assignment has no five fields in front of it and so matches
+# nothing, which is what should happen to it.
+def scheduled_commands(text)
+  text.to_s.lines.filter_map do |line|
+    line = line.strip
+    next if line.empty? || line.start_with?("#")
+    next unless line =~ %r{\A(?:@\w+|\S+\s+\S+\s+\S+\s+\S+\s+\S+)\s+(.+)\z}
+
+    Regexp.last_match(1)[%r{/\S+}]
+  end.uniq
 end
 
 def split_stream(out, paths)
@@ -125,15 +171,17 @@ def split_stream(out, paths)
   result
 end
 
-def report(drift, missing, compared, unfound)
+def report(drift, missing, compared, unfound, cron)
   EXCLUDED.each { |name| puts "config-drift: #{name.ljust(34)} skip - templated or generated (not verbatim)" }
   compared.each { |name| puts "config-drift: #{name.ljust(34)} ok" }
+  puts "config-drift: #{CRONTAB_MIRROR.ljust(34)} #{cron[:summary]}"
 
   # The denominator, always. "clean" without it is the shape of every gate in
   # this tree that has ever passed having measured nothing: it reads identically
   # whether eleven files matched or the gate could not find a single one.
-  if drift.empty? && missing.empty? && unfound.empty?
-    puts "config-drift: clean (#{compared.size}/#{VERBATIM.size} verbatim files match the live copy)"
+  if drift.empty? && missing.empty? && unfound.empty? && cron[:ok]
+    puts "config-drift: clean (#{compared.size}/#{VERBATIM.size} verbatim files and " \
+         "#{cron[:declared]} crontab command(s) match the live copy)"
     return
   end
 
@@ -144,8 +192,50 @@ def report(drift, missing, compared, unfound)
     warn "config-drift: #{name}: DRIFT - the live copy differs from OPENBSD/#{name}"
     warn "  #{detail}"
   end
+  cron[:absent].each do |command|
+    warn "config-drift: #{CRONTAB_MIRROR}: DRIFT - root's crontab does not schedule #{command}"
+  end
+  cron[:extra].each do |command|
+    warn "config-drift: #{CRONTAB_MIRROR}: DRIFT - root's crontab schedules #{command}, which the repo does not"
+  end
   warn "config-drift: sync (doas zsh OPENBSD/OPERATOR.sh) or copy the live edit back into OPENBSD/"
 end
+
+# Nothing found and nothing missing are different answers. An unreadable crontab
+# would otherwise report every declared job as absent, which is ten false alarms
+# and the fastest way to teach a reader to skip this section.
+def crontab_report(repo_text, live_text)
+  declared = scheduled_commands(repo_text)
+  return { ok: true, declared: declared.size, absent: [], extra: [], summary: "skip - no repo mirror" } if repo_text.nil?
+
+  if live_text.nil? || live_text.strip.empty?
+    return { ok: true, declared: declared.size, absent: [], extra: [],
+             summary: "skip - root's crontab was not readable here" }
+  end
+
+  # Extras are scoped to /usr/local, because the repo owns only half of this file.
+  # OpenBSD ships root a crontab of its own — `/usr/bin/newsyslog` and the three
+  # `/bin/sh /etc/{daily,weekly,monthly}` lines — and OPERATOR.sh merges the pub4
+  # lines onto it rather than replacing it. Every command this repo installs lives
+  # under /usr/local/bin, so anything outside it is the base system's and reporting
+  # it would be four permanent false alarms.
+  live = scheduled_commands(live_text)
+  absent = declared - live
+  extra = (live - declared).select { |command| command.start_with?("/usr/local/") }
+  {
+    ok: absent.empty? && extra.empty?,
+    declared: declared.size,
+    absent: absent,
+    extra: extra,
+    summary: absent.empty? && extra.empty? ? "ok" : "DRIFT - #{absent.size} unscheduled, #{extra.size} unexpected",
+  }
+end
+
+# Everything above is definitions; everything below runs. The split is what lets
+# test/test_config_drift_gate.rb require this file and hand `crontab_report` the
+# shape it must flag and the shape it must not — without the guard, requiring the
+# gate off-VPS exits the test process at the skip line below.
+return unless $PROGRAM_NAME == __FILE__
 
 unless REMOTE || on_vps?
   warn "config-drift: skip - not on vm23 (run on the box, or pass --remote with SSH_HOST set)"
@@ -183,5 +273,11 @@ VERBATIM.each do |repo_rel, live_path|
   end
 end
 
-report(drift, missing, compared, unfound)
-exit(drift.empty? && missing.empty? && unfound.empty? ? 0 : 1)
+crontab_mirror_path = File.join(MIRROR, CRONTAB_MIRROR)
+cron = crontab_report(
+  File.file?(crontab_mirror_path) ? File.read(crontab_mirror_path) : nil,
+  live_map[CRONTAB_KEY]
+)
+
+report(drift, missing, compared, unfound, cron)
+exit(drift.empty? && missing.empty? && unfound.empty? && cron[:ok] ? 0 : 1)
