@@ -3,6 +3,7 @@
 require "minitest/autorun"
 require "net/http"
 require "socket"
+require "uri"
 require "yaml"
 require_relative "../gates/support/fleet"
 
@@ -114,12 +115,27 @@ PORTS = Fleet.app_ports
     host = spec["host"] || PORTS.key(port) && default_host(app)
     response = http_get(port, path, host)
     fails = []
-    want = Integer(spec.fetch("status", 200))
-    unless response.code.to_i == want
-      fails << "#{id}: HTTP #{response.code} want #{want} at #{path}"
+    # A list, because a page can have more than one correct answer and asserting
+    # one of them turns the other into a defect report. amber's /demo is the
+    # case: require_demo! renders when the demo wardrobe is seeded and redirects
+    # home when it is not, both deliberate, so a row demanding 200 called an
+    # unseeded checkout a broken app. What stays falsifiable is the set — a 404
+    # or a 500 still fails, and a redirect must land where the row says.
+    want = Array(spec.fetch("status", 200)).map { |s| Integer(s) }
+    unless want.include?(response.code.to_i)
+      fails << "#{id}: HTTP #{response.code} want #{want.join(" or ")} at #{path}"
       return fails
     end
+    if (target = spec["redirect_to"]) && response.code.to_i >= 300
+      location = URI(response["location"].to_s).path
+      fails << "#{id}: redirected to #{location.inspect}, want #{target.inspect}" unless location == target
+    end
     body = response.body.to_s.encode("UTF-8", invalid: :replace, undef: :replace)
+    # A redirect carries no page, so the content assertions have nothing to read.
+    # They are the rendered branch's, and skipping them on the other one is what
+    # lets one row hold both.
+    return fails if body.strip.empty?
+
     Array(spec["has"]).each do |needle|
       n = needle.to_s
       fails << "#{id}: live missing #{n.inspect}" unless body.include?(n)

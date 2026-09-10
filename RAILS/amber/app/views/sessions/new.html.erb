@@ -4,13 +4,22 @@
   <%= render "shared/oauth_links" %>
   <%= form_with url: session_path do |f| %>
     <%= render "shared/errors", object: f.object if f.object.respond_to?(:errors) %>
+    <%# The three sign-in screens differ visually on purpose — brgen floats its
+        labels, these two do not — and they had drifted on things that are not
+        visual. autocomplete is "username", not "email": that is the token a
+        password manager pairs with current-password, and "email" leaves the
+        credential unpaired. required stops a blank form costing a round trip,
+        and value re-fills the address after a failed attempt instead of asking
+        for it again. brgen and bsdports carry all three; only amber did not. %>
     <div class="field">
       <%= f.label :email_address, t("auth.email") %>
-      <%= f.email_field :email_address, autofocus: true, autocomplete: "email", inputmode: "email" %>
+      <%= f.email_field :email_address, required: true, autofocus: true,
+            autocomplete: "username", inputmode: "email", value: params[:email_address] %>
     </div>
     <div class="field">
       <%= f.label :password, t("auth.password") %>
-      <%= password_visibility_field f, :password, autocomplete: "current-password" %>
+      <%= password_visibility_field f, :password, required: true,
+            autocomplete: "current-password", maxlength: 72 %>
     </div>
     <div class="actions">
       <%= f.submit t("auth.sign_in"), class: "btn btn-primary" %>

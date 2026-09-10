@@ -91,73 +91,9 @@ select {
 .w-min { width: min-content; }
 .w-max { width: max-content; }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  /* The control block. Height is --tap-min, the 44px touch target this tree
-     already had; the inline padding and gap are absolute because the space
-     scale is rem and brgen roots at 18px. */
-  gap: var(--control-gap);
-  min-height: var(--tap-min);
-  padding: 0 var(--control-pad-inline);
-  border-radius: var(--radius-pill);
-  border: 1px solid transparent;
-  background: var(--text, var(--color-primary));
-  color: var(--bg, var(--color-highlight));
-  font-weight: var(--weight-bold);
-  text-decoration: none;
-  cursor: pointer;
-  transition: opacity var(--transition-fast) var(--ease-out), background 160ms var(--ease-out), border-color 160ms var(--ease-out), color 160ms var(--ease-out);
-}
-
-.btn:hover {
-  opacity: 0.88;
-  text-decoration: none;
-}
-
-.btn:disabled,
-.btn[aria-disabled="true"] {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* The one button family, dash-spelled. Variants are compound (.btn.btn-primary,
-   0-2-0) so they beat any app's later .btn base (0-1-0) by specificity: an app
-   dialect-skins the BASE (brgen's _forms paints it accent), and the variant
-   contract holds everywhere without caring about load order. An app that must
-   re-skin a variant writes the same compound later. Fill instead of outline in
-   every variant — a transparent button with a 1px edge is a line, and the flat
-   system separates by surface. The zen-era btn--primary BEM twins are retired. */
-.btn.btn-primary {
-  background: var(--text, var(--color-primary));
-  color: var(--bg, var(--color-highlight));
-}
-
-.btn.btn-ghost {
-  background: var(--hover-subtle);
-  border: 0;
-  /* The ink is the context's: a ghost inherits, so wscons ghosts stay green
-     and grayscale ghosts stay grayscale without per-app overrides. */
-  color: inherit;
-}
-
-.btn.btn-ghost:hover {
-  background: var(--hover, var(--color-midtone-tint));
-}
-
-.btn.btn-danger {
-  background: var(--hover);
-  color: var(--danger, var(--text));
-  border: 0;
-}
-
-.btn.btn-sm {
-  min-height: var(--tap-min);
-  padding: var(--space-1) var(--space-3);
-  font-size: var(--text-sm);
-}
+/* The button family is _zen_buttons.scss, forwarded immediately before this
+   file. The two media blocks at the foot of this one still name `.btn` and must
+   keep the later word: forced-colors ties with it at 0-1-0. */
 
 .avatar-initials {
 

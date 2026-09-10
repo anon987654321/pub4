@@ -45,6 +45,6 @@
 <% else %>
   <%= render "shared/empty_state",
         title: t("empty.no_listings"),
-        body: "No listings match this search.",
+        body: t("empty.no_listings_search"),
         action: { label: t("actions.sell_something"), path: new_listing_path } %>
 <% end %>

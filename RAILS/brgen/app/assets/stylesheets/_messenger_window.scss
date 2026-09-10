@@ -548,65 +548,9 @@
   font-size: var(--text-xs);
 }
 
-.messenger-inbox-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-width: 0;
-}
-
-.messenger-inbox-link {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  flex: 1;
-  min-width: 0;
-  min-height: 72px;
-  padding: var(--space-2);
-  border-radius: var(--radius-sm);
-  color: var(--text);
-  text-decoration: none;
-}
-
-.messenger-inbox-link:hover { background: var(--hover); }
-
-.messenger-inbox-avatar {
-  inline-size: 48px;
-  block-size: 48px;
-  font-size: var(--text-base);
-}
-
-.messenger-inbox-main {
-  display: grid;
-  flex: 1;
-  min-width: 0;
-}
-
-.messenger-inbox-name,
-.messenger-inbox-preview {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.messenger-inbox-name { font-size: var(--text-sm); line-height: 1.25; }
-
-.messenger-inbox-preview {
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-  line-height: 1.25;
-}
-
-.messenger-inbox-meta mark {
-  display: inline-block;
-  min-inline-size: 20px;
-  padding-inline: var(--space-1);
-  border-radius: var(--radius-pill);
-  background: var(--accent);
-  color: var(--accent-ink);
-  font-weight: var(--weight-bold);
-  text-align: center;
-}
+// The inbox row itself is _messenger_inbox.scss, @used immediately after this
+// file: a list of conversations is a different surface from the window that
+// opens one, and nothing below can match an element it reaches.
 
 /* The empty state is a message, not a room. Hold it to a measure and put it
    near the top of the pane, where the first line of a conversation would be —

@@ -25,8 +25,11 @@ entry or an existing partial.
 @use "stack" as *;
 ```
 
-`stack` forwards: `_minimal`, `_tokens`, `_animations`, `_zen_shell` (offline
-page, install prompt, x.com-shell primitives).
+`stack` forwards: `_minimal`, `_tokens`, `_animations`, `_zen_buttons`,
+`_zen_shell` (offline page, install prompt, x.com-shell primitives). The button
+partial's position is a cascade contract, not an ordering convenience:
+zen_shell's `@media (forced-colors: active)` block names `.btn` and ties with it
+at 0-1-0, so it has to keep the later word.
 
 **Brgen** adds product partials after the stack (`_root`, `_canvas`, `_shell`,
 …). **Standalone apps** add a thin product block below `@use "stack"`.

@@ -54,16 +54,6 @@ module Shared
       located ? "nearby" : LOBBY_CHANNEL
     end
 
-    REACTION_GLYPHS = {
-      "like" => :like,
-      "love" => :like,
-      "laugh" => "😂",
-      "wow" => "😮",
-      "sad" => "😢",
-      "angry" => "😠",
-      "local" => "📍",
-    }.freeze
-
     # Every icon partial in the shared engine, by name. Read once at load; the
     # sprite partial and the unknown-name guard below both work off this list, so
     # dropping a file in shared/app/views/shared/icons/ is all it takes to add one.
@@ -91,13 +81,6 @@ module Shared
       end
 
       render(partial: "shared/icon", locals: { name: key, size:, css_class: })
-    end
-
-    def reaction_glyph(kind)
-      glyph = REACTION_GLYPHS.fetch(kind.to_s, kind.to_s)
-      return icon(glyph, size: 18) if glyph.is_a?(Symbol)
-
-      tag.span(glyph, class: "reaction-glyph", aria: { hidden: true })
     end
 
     # autosave_controller.js falls back to English labels, so a form that omits these announces "Saving…" to nb readers.

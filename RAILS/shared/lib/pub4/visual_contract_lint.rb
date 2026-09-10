@@ -53,12 +53,24 @@ module Pub4
     # call site carries its pair or a reserved: container marker. Never raise
     # to silence.
     #
-    # .price is not one of the four and never was. It still sets
-    # color: var(--accent) at _minimal.scss:474, and INTERACTIVE_SELECTOR above
-    # does not match it, so this lint has never had an opinion about it.
-    # Whether a price should carry the hue its bold already carries is a
-    # rendering decision across marketplace, stores and takeaway, and it is the
-    # operator's.
+    # .price is not one of the four, and the reason written here was the wrong
+    # one. It said INTERACTIVE_SELECTOR does not match .price — true, and beside
+    # the point: accent_findings never opened the file. The glob was brgen's
+    # stylesheet directory and .price's colour is at shared/_minimal.scss:474.
+    #
+    # Measured against the three built bundles rather than the sources, because
+    # the build is what production wears. brgen's .price carries no colour at
+    # all: _stack_brgen does not forward _minimal, and brgen redeclares .price in
+    # _card_modifiers.scss with weight and size and nothing else, its own comment
+    # saying the accent stays with interactive elements. amber's and bsdports'
+    # .price do wear var(--accent), through _stack. So "does .price still wear
+    # the accent" has two answers, and the one this file could have an opinion
+    # about is already no.
+    #
+    # The other two are not brgen's to judge. amber is the luxury dialect and
+    # bsdports is a green terminal; accent on text may be their identity, and
+    # accent_on_prose is a claim about brgen's grayscale one. That is why
+    # brgen_bundle_sources follows the bundle and not the tree.
     BASELINES = {
       "low_contrast" => 0,
       "unreserved_image" => 0,
@@ -219,7 +231,7 @@ end
     # `.weather-bar` are that identity rather than debt. Widening to amber would
     # apply brgen's rule to a surface it was never written for.
     def accent_findings
-      Dir.glob(File.join(RAILS_ROOT, "brgen/{app,engines/*/app}/assets/stylesheets/**/*.scss")).flat_map do |path|
+      brgen_bundle_sources.flat_map do |path|
         src = File.read(path, encoding: "UTF-8")
         src.each_line.with_index(1).filter_map do |line, n|
           next unless line.match?(/(?<!-)color:\s*var\(--accent\)/)
@@ -230,8 +242,59 @@ end
       end
     end
 
+    # The bundle, not the directory. accent_on_prose is a claim about brgen's
+    # grayscale identity, and brgen's bundle is not brgen's stylesheet folder:
+    # _stack_brgen forwards eleven shared partials and application.scss @uses
+    # several more by bare name, so a shared file painting accent on prose lands
+    # in brgen while sitting outside every glob this check used to have.
+    # _nearby_chat_widget.scss is one, and it is correct — the accent is on a
+    # link — but nothing here could say so.
+    #
+    # It also has to be the bundle rather than every shared file, because the
+    # rule does not govern the other two dialects. amber is luxury and bsdports
+    # is a green terminal; accent on text may be their identity and is not
+    # brgen's to judge. _minimal.scss is the case that proves the distinction:
+    # _stack_brgen does not forward it, so its .price reaches amber and bsdports
+    # and never brgen.
+    def brgen_bundle_sources
+      load_paths = [ File.join(RAILS_ROOT, "brgen/app/assets/stylesheets"),
+                     File.join(RAILS_ROOT, "shared/app/assets/stylesheets") ] +
+                   Dir.glob(File.join(RAILS_ROOT, "brgen/engines/*/app/assets/stylesheets"))
+      seen = []
+      queue = [ File.join(RAILS_ROOT, "brgen/app/assets/stylesheets/application.scss") ]
+      until queue.empty?
+        path = queue.shift
+        next if path.nil? || seen.include?(path) || !File.file?(path)
+
+        seen << path
+        File.read(path, encoding: "UTF-8").scan(/@(?:use|forward)\s+["']([^"']+)["']/) do |(target)|
+          queue << resolve_partial(target, load_paths)
+        end
+      end
+      seen
+    end
+
+    def resolve_partial(target, load_paths)
+      dir = File.dirname(target)
+      base = File.basename(target).delete_prefix("_")
+      load_paths.filter_map { |root|
+        [ "_#{base}.scss", "#{base}.scss" ]
+          .map { |name| File.expand_path(File.join(root, dir, name)) }.find { |p| File.file?(p) }
+      }.first
+    end
+
+    # The whole selector group, not its last line. `.widget-empty a,\n.widget-cta
+    # {` is one selector and the `a` in its first member is what makes the accent
+    # on it correct; reading only the line carrying the brace made this check
+    # blind to every multi-line group in the tree.
     def nearest_selector(src, line_number)
-      src.lines[0...line_number].reverse_each.find { |l| l.match?(/^\s*[^@\s\/][^{]*\{/) }
+      lines = src.lines[0...line_number]
+      brace = lines.rindex { |l| l.match?(/^\s*[^@\s\/][^{]*\{/) }
+      return nil if brace.nil?
+
+      first = brace
+      first -= 1 while first.positive? && lines[first - 1].match?(/,\s*\z/)
+      lines[first..brace].join(" ")
     end
 
     # --- button vocabulary ----------------------------------------------------

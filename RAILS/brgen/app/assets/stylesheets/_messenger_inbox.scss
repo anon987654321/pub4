@@ -1,0 +1,76 @@
+// The inbox row — one conversation in a list, not a room in the window.
+//
+// A different surface from _messenger_window.scss, which is why it is a
+// different file. The window is the two-pane frame at conversations#index and
+// #show; this is the flat list conversations/_conversation_row renders, and
+// that partial lives inside <noscript> plus the infinite-scroll reflex. Nothing
+// here paints inside .messenger-window, and the split was checked on exactly
+// that: these rules move past _messenger_window's tail (the pane empty state
+// and the 1280 media block) and not one selector there can match an element
+// these reach.
+//
+// Same anatomy as the rail's DM row — avatar, name, preview, then unread or
+// time — at a larger size, so the shared halves are declared once in
+// _messenger_window.scss (.messenger-inbox-avatar in the avatar group,
+// .messenger-inbox-meta in the meta group) and specialised here. That is why
+// this file is @used AFTER messenger_window and never before it.
+
+.messenger-inbox-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.messenger-inbox-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1;
+  min-width: 0;
+  min-height: 72px;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.messenger-inbox-link:hover { background: var(--hover); }
+
+.messenger-inbox-avatar {
+  inline-size: 48px;
+  block-size: 48px;
+  font-size: var(--text-base);
+}
+
+.messenger-inbox-main {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.messenger-inbox-name,
+.messenger-inbox-preview {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.messenger-inbox-name { font-size: var(--text-sm); line-height: 1.25; }
+
+.messenger-inbox-preview {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.25;
+}
+
+.messenger-inbox-meta mark {
+  display: inline-block;
+  min-inline-size: 20px;
+  padding-inline: var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: var(--weight-bold);
+  text-align: center;
+}

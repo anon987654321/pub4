@@ -9,6 +9,9 @@
 @use "_nav";
 @use "_nav_swiper";
 @use "messenger_window";
+// After messenger_window, not before: the inbox row specialises two rules the
+// window declares for every avatar and every meta cell.
+@use "messenger_inbox";
 @use "tiptap";
 @use "_composer";
 @use "_composer_responsive";

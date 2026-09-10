@@ -57,6 +57,11 @@ en:
     planner: "Planner"
     search: "Search"
     messages: "Messages"
+    # shared/_inbox_link names it and amber renders no such link today, but the
+    # partial belongs to the engine and every app can reach it — a key a shared
+    # view can name must resolve, or it ships as a translation_missing span the
+    # day it does. The word is brgen's, so the three apps say one thing.
+    notifications: "Notifications"
     account: "Account"
     sign_in: "Sign in"
     sign_out: "Sign out"

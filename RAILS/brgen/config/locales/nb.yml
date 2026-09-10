@@ -639,6 +639,7 @@ nb:
     no_communities: Ingen fellesskap
     no_communities_search: Ingen fellesskap matcher søket.
     no_listings: Ingen annonser
+    no_listings_search: Ingen annonser matcher søket.
     no_deals: Ingen tilbud
     no_deals_search: Ingen tilbud matcher søket.
     no_stores: Ingen butikker

@@ -9,7 +9,15 @@
     are 240px, which is already 30x the 8px base, so those stand. Its channel rows
     are 32px tall and those do not — layout_rules.touch.target_min_px is 44, and a
     32px row is a miss on a phone. --tap-min is the number here. %>
-<section class="messenger-window" aria-label="<%= t("messages.title") %>">
+<%# The heading is visually hidden and it is not decoration. This page carried no
+    <h1> at all — two <h2>s in the rail under nothing, and the only page-level
+    name was this section's aria-label, which a heading-navigation key cannot
+    reach. conversations/show has one already (the room's name), so the inbox was
+    the single messenger surface without. Hidden rather than drawn because the
+    window deliberately has no visible page title, and aria-labelledby rather
+    than a second aria-label so the name is written once. %>
+<section class="messenger-window" aria-labelledby="messenger_window_title">
+  <h1 id="messenger_window_title" class="visually-hidden"><%= t("messages.title") %></h1>
   <%= render "conversations/rooms_rail" %>
 
   <%= turbo_frame_tag "messenger-pane", class: "messenger-pane" do %>
