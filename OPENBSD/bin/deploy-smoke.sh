@@ -1,14 +1,7 @@
 #!/usr/bin/env sh
 # One-page post-deploy smoke — run on vm23 after vps-deploy / restarts, or from a laptop.
-#
-# Usage:
-#   sh OPENBSD/bin/deploy-smoke.sh              # auto: local+public if rcctl present
-#   sh OPENBSD/bin/deploy-smoke.sh --public     # public HTTPS only
-#   sh OPENBSD/bin/deploy-smoke.sh --local      # localhost ports + rcctl only
-#   ALLOW_AMBER_DOWN=1 sh OPENBSD/bin/deploy-smoke.sh   # don't fail if amber is down
-#   ALLOW_BSDPORTS_DOWN=1 sh OPENBSD/bin/deploy-smoke.sh  # same for bsdports
-#
-# Exit 0 only when required checks pass.
+# `deploy-smoke.sh --help` prints the modes and the waiver variables; usage() below
+# is the one copy of that text.
 #
 # bsdports was the hole this script existed to cover and did not: it had no local
 # check at all and its public check was optional, so the one post-deploy gate that
@@ -25,6 +18,34 @@ TIMEOUT=${SMOKE_TIMEOUT:-20}
 MODE=${1:-auto}
 ALLOW_AMBER_DOWN=${ALLOW_AMBER_DOWN:-0}
 ALLOW_BSDPORTS_DOWN=${ALLOW_BSDPORTS_DOWN:-0}
+
+# Usage first, and from a here-document rather than by printing the top of the
+# file. The old form was `sed -n '2,12p' "$0"` reached after the banner had
+# already printed, so `--help` answered with `deploy-smoke: mode=--help` and then
+# a line range that any edit above it silently shifted.
+usage() {
+  cat <<'EOF'
+usage: deploy-smoke.sh [--local|--public|auto]
+
+  --local    localhost ports + rcctl only (needs to run on vm23)
+  --public   public HTTPS only
+  auto       both when rcctl is present, public otherwise (default)
+
+  ALLOW_AMBER_DOWN=1      do not fail when amber is down
+  ALLOW_BSDPORTS_DOWN=1   do not fail when bsdports is down
+  SMOKE_TIMEOUT=20        seconds per request
+  CURL=curl               the client to use
+
+Exit 0 only when required checks pass.
+EOF
+}
+
+case "$MODE" in
+-h | --help)
+  usage
+  exit 0
+  ;;
+esac
 
 failed=0
 warns=0
@@ -146,8 +167,6 @@ brgen_html_smoke() {
   esac
 }
 
-printf 'deploy-smoke: mode=%s timeout=%ss\n' "$MODE" "$TIMEOUT"
-
 run_local=0
 run_public=0
 case "$MODE" in
@@ -158,15 +177,15 @@ case "$MODE" in
     else run_public=1
     fi
     ;;
-  -h|--help)
-    sed -n '2,12p' "$0"
-    exit 0
-    ;;
   *)
-    printf 'usage: deploy-smoke.sh [--local|--public|auto]\n' >&2
+    usage >&2
     exit 2
     ;;
 esac
+
+# The banner comes after the mode is understood, so a bad argument answers with
+# the usage alone rather than with a banner naming the argument it rejected.
+printf 'deploy-smoke: mode=%s timeout=%ss\n' "$MODE" "$TIMEOUT"
 
 amber_req=1
 if [ "$ALLOW_AMBER_DOWN" = "1" ]; then
@@ -198,7 +217,23 @@ if [ "$run_public" = "1" ]; then
   check_http master_public  "https://ai.brgen.no/up" 1
   check_http brgen_public   "https://brgen.no/up" 1
   check_http amber_public   "https://amber.brgen.no/up" "$amber_req"
+  # Required, and it fails today for a reason that is not the app: bsdports.org
+  # is delegated to the registrar's parking nameservers, parking terminates no
+  # TLS, and the answer is 000 whether or not port 47312 is healthy. A red line
+  # whose cause is unnamed is what teaches an operator to skim a red gate, so
+  # name it here. The local check above is the one that measures the app.
+  bsdports_public_failed=$failed
   check_http bsdports_public "https://bsdports.org/up" "$bsdports_req"
+  if [ "$failed" -ne "$bsdports_public_failed" ] && command -v dig >/dev/null 2>&1; then
+    bsdports_ns=$(dig +short NS bsdports.org 2>/dev/null | tr '\n' ' ')
+    case "$bsdports_ns" in
+    *expireddomain*)
+      printf '     cause: bsdports.org is delegated to %s\n' "$bsdports_ns" >&2
+      printf '     that is registrar parking, not this box, and it terminates no TLS.\n' >&2
+      printf '     The domain, not the app: TODO.md bsdports_org_delegated_to_parking.\n' >&2
+      ;;
+    esac
+  fi
   # One asset per app, from the engine's shared/public, which the deploy ships by
   # tarring RAILS/shared wholesale rather than through the asset pipeline. Nothing
   # else here proves that tar arrived: /up answers from the app, and propshaft
