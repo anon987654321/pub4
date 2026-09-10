@@ -3077,6 +3077,19 @@ repository can restore them and no session should assume either answer.
   _registers` pins the eight as known-dead, tightens as each chop re-registers,
   and fails on a ninth; the same test asserts the preset rows are live so nobody
   deletes them on the strength of the aliases.
+- **Eight of the sixteen recorded assets are not the files that were recorded.**
+  `ruby STUDIO/dilla/dilla.rb assets` exits 1 today: three loops missing — the
+  crate-rebuild three — and eight changed. Seven of the eight are drum one-shots
+  that kept their byte count and changed their hash, so they were re-synthesised
+  after the manifest was written; the eighth is `samples/rauingar/loop.wav`, which
+  went from 920,358 bytes to 3,397,694 and is the re-cut the engine's test already
+  records as "rauingar is back on disk". Nothing runs this check, which is why it
+  has been red without anyone knowing. `dilla assets record` closes it and blesses
+  whatever is on disk as canonical, which is the operator's to say — a re-record
+  that includes a wrong file makes the check agree with the wrong file forever.
+  The report itself is fixed: it decided on the hash and printed the byte count,
+  so a re-encoded one-shot read as "12426 bytes → 12426" and looked like a bug in
+  the check rather than a difference in the file.
 - **Writing `TRACK_PRESETS` rows for chops is still forbidden to an agent, when
   there are chops again.** A slug with no preset row falls through to
   `TRACK_PRESETS[:timeless]`, so appending rows changes what those slugs render.

@@ -89,10 +89,24 @@ module DillaAssets
         next missing << name unless File.file?(path)
 
         got = fingerprint(path)
-        changed << "#{name} (#{want['bytes']} bytes → #{got['bytes']})" if got["sha256"] != want["sha256"]
+        changed << "#{name} (#{describe_change(want, got)})" if got["sha256"] != want["sha256"]
       end
       unrecorded = tracked_paths.map { |p| relative(p) } - recorded.keys
       { missing:, changed:, unrecorded:, recorded: recorded.length }
+    end
+
+    # The comparison is on the hash, so the report has to name the hash.
+    #
+    # It used to print `#{want['bytes']} bytes → #{got['bytes']}` for a mismatch
+    # it decided on sha256, and a re-encoded one-shot keeps its size: seven drum
+    # samples report as "CHANGED samples/drums/ghost.wav (12426 bytes → 12426)",
+    # which reads as a bug in the check rather than a difference in the file, and
+    # a reader who does not believe the check stops running it.
+    def describe_change(want, got)
+      shas = "sha #{want['sha256'].to_s[0, 12]} → #{got['sha256'].to_s[0, 12]}"
+      return "same #{got['bytes']} bytes, #{shas}" if want["bytes"] == got["bytes"]
+
+      "#{want['bytes']} → #{got['bytes']} bytes, #{shas}"
     end
 
     # The external drum kits are a shallow git clone outside the repository, so
