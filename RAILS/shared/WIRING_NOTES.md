@@ -52,7 +52,7 @@ app-owned paths), `bin/rails dartsass:build` in CI.
   `password_visibility_field`, `read_more`
 - Gate: `ruby RAILS/gates/runner.rb stimulus_components` (no legacy
   `char-counter` / duplicate controllers)
-- `theme_meta.js`, `nav_reveal.js`, `live_search_controller.js`, …
+- `theme_meta.js`, `nav_autohide_controller.js`, `live_search_controller.js`, …
 
 **Per-app wiring:**
 
