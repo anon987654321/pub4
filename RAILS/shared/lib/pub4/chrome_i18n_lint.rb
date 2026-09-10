@@ -81,6 +81,29 @@ module Pub4
     # cannot know its host's locales; in a view it is a hardcoded string with an
     # alibi.
     TRANSLATE_DEFAULT = /\bt\(\s*["'][\w.]+["']\s*,\s*default:/
+
+    # The rest of the empty state, and the rest of every option that carries a
+    # sentence: body:, an action's label:, and the titles EMPTY_TITLE cannot see.
+    #
+    # EMPTY_TITLE asks for "No …" and "Nothing …" because that is the grammar an
+    # empty state usually opens with, and it holds at 0. It reads only the title,
+    # so the body under a translated title stayed English — the marketplace has
+    # shipped `title: t("empty.no_listings")` above `body: "No listings match
+    # this search."` for as long as the locale key has existed, and every sibling
+    # empty state in the same locale file already carries a *_search body beside
+    # its title. It also misses a title that opens any other way: tv's "Video
+    # coming soon" is English on a Norwegian page and matches nothing above.
+    #
+    # aria: { label: } is aria_label's, and stays there — VIEW_RULES is ordered
+    # and the first pattern to match owns the line.
+    EMPTY_COPY = /
+      (?:^|[\s{(])(?:body|title|label):\s*
+      (?:
+        "[A-Z][^"]{2,160}"
+        |
+        '[A-Z][^']{2,160}'
+      )
+    /x
     OPT_OUT = "chrome_i18n: ok"
 
     # Per kind, because they are not the same debt. A new hardcoded empty title is a
@@ -218,6 +241,23 @@ module Pub4
       # sites over six lines, and this counts lines — two of them carried both
       # a placeholder and an aria label. Same shape as the 181 entry above.
       "translate_default" => 171,
+      # 24 → 23 (2026-09-10), and the number is the point of the rule rather than
+      # a target to reach in one pass. Every one is a sentence a person wrote in
+      # English inside a view option — an empty state's body, an action's label,
+      # a title that does not open with "No" — on apps that default to Norwegian.
+      # Until this rule existed nothing counted them, which is the same failure
+      # aria_label was added for: a class nobody measures is a class nobody is
+      # holding.
+      #
+      # The one paid here is the one a gate found the hard way. brgen's
+      # marketplace shipped `title: t("empty.no_listings")` above `body: "No
+      # listings match this search."`, and `empty.no_listings_search` was the
+      # only member of a six-strong family — no_posts_search, no_deals_search,
+      # no_stores_search, no_places_search, no_communities_search — that had
+      # never been written. Adding it is following the tree's own vocabulary
+      # rather than authoring copy, which is exactly why the other 23 stay: they
+      # are new sentences in a language this session does not get to choose.
+      "empty_copy" => 23,
     }.freeze
 
     # Kept for callers that referenced the old single number.
@@ -269,7 +309,7 @@ module Pub4
     end
 
     VIEW_RULES = { "empty_title" => EMPTY_TITLE, "search_placeholder" => SEARCH_PLACEHOLDER,
-                   "aria_label" => ARIA_LABEL }.freeze
+                   "aria_label" => ARIA_LABEL, "empty_copy" => EMPTY_COPY }.freeze
     CONTROLLER_RULES = { "controller_flash" => CONTROLLER_FLASH }.freeze
     DEFAULT_RULES = { "translate_default" => TRANSLATE_DEFAULT }.freeze
 

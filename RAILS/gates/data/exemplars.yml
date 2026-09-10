@@ -102,8 +102,15 @@ exemplars:
     principle: reading_patterns / catalog
     target_score: 85
     parts:
+      # The claim is that the nav comes before the catalogue region, and an empty
+      # catalogue is still a catalogue region. order_ok? fails a step it cannot
+      # find, so on a checkout with no listings the marketplace rendered its
+      # empty state and this required part reported the page as structurally
+      # broken — an empty database read as a defect, and the live probe has been
+      # red on it. empty-state-title rather than empty-state, because the
+      # wrapper class also appears in chrome that can precede the nav.
       - id: nav_before_grid
-        order: ['navBar', 'deal-grid|deal-card']
+        order: ['navBar', 'deal-grid|deal-card|empty-state-title']
         points: 25
         required: true
       - id: search_present

@@ -90,7 +90,13 @@ checks:
   - {id: pwa.sw, in: amber/app/views/pwa/service-worker.js, has: [offline]}
   # --- live ---
   - {id: live.home, live: {path: /, status: 200, has: [amber-compose-box, skip-link, main-content], lack: [Routing Error, "Exception"]}}
-  - {id: live.demo, live: {path: /demo, status: 200, has: [demo]}}
+  # Two documented answers, and DemoWardrobeController#require_demo! is where
+  # they are written: the capsule renders when the demo wardrobe is seeded, and
+  # redirects to root with an alert when it is not. vm23 has the seed and a
+  # fresh checkout does not, so demanding 200 made a seeding state read as a
+  # broken app. The redirect target is asserted, so a redirect to sign-in or an
+  # error page still fails.
+  - {id: live.demo, live: {path: /demo, status: [200, 302], redirect_to: /, has: [demo]}}
   - {id: live.sign_in, live: {path: /session/new, status: 200, has: [session]}}
   - {id: live.sign_up, live: {path: /registration/new, status: 200, has: [registration]}}
   - {id: live.posts, live: {path: /posts, status: 200, has: [post]}}
