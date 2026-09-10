@@ -3304,27 +3304,41 @@ Larger efforts that span trees or do not belong to any single one. Each is a
 program with its own sitting, listed so they are visible in one place rather
 than implied across four.
 
-- **Seed realism.** Coordinates and timezones for every DomainRegistry city
-  live in `CitySeed::COORDINATES` / `TIME_ZONES`. Population has no column and
-  no seed.
-- **Bringhurst typography codification.** Turn the typographic rules the design
-  system already half-follows into enforced tokens and a gate, rather than
-  convention.
+- **Seed realism.** Only population is missing, and the entry used to imply more.
+  Measured 2026-09-10: `CitySeed::COORDINATES` and `TIME_ZONES` each hold 43
+  keys against `DomainRegistry::ENTRIES`'s 43 cities, the set difference is empty
+  both ways, and `rows_from_registry` uses `.fetch`, so a new registry entry
+  without a row raises at load. Population has no column in any of the three
+  schemas and no seed anywhere.
+- **Bringhurst typography codification.** Most of it is enforced already, and
+  what is left is three named gaps rather than a programme. The size ladder
+  (`_tokens.scss:52-65`), the weight ladder (`_dialect_tokens.scss:84-86`) and
+  the measure, leading and tracking ladders (`_typography.scss:14-28`) are
+  tokens; `css_constitution.rb:212-227` reads both ladders out of the
+  stylesheets so no gate copy can drift, and `css_budget.yml` holds `type_scale`
+  at 0 and `weight_ladder` at 2. `check_caps_tracking`, `MEASURE_OPTIMUM` and
+  `geometry_type.rb`'s rendered measure and modular-scale checks cover the rest.
+  What is not enforced: no lint says a `line-height` literal must come off
+  `--leading-*` (`css_constitution.rb:61` lists `line_height` as a config key
+  that never got a reader); `MASTER/web/public/face.css` sits outside the asset
+  pipeline and cannot read the ladders, which is the whole of the residual +2 on
+  `weight_ladder`; and `rules.yml`'s `beauty.typography_bringhurst` is four
+  slogans with no detector.
 - **The layout pass.** Roughly 178 proposals from a study of joi.com, kimi.com
   and medium.com, worked one category at a time; about sixty are closed. Its own
   section below carries the state and the doctrine it produced.
 - **Web-face redo.** The MASTER web face (WebGL + TTS) wants a rebuild; see the
   web-face notes in the MASTER debt records for the current failure map.
-- **README consolidation.** The per-tree READMEs overlap and drift; one pass to
-  make each the single maintained long-form reference for its tree.
-- **`tree.rb` on entry.** Run the tree map on session entry so an agent orients
-  from the real layout rather than a remembered one.
 - **Onboarding.** A first-contact path that gets a new agent or contributor from
-  clone to a green check without reading every contract.
-- **Local-LLM fallback.** A path that keeps the runtime working when no API key
-  and no `claude` CLI are present. `models.yml` declares a local tier gated on
-  `OLLAMA_BASE_URL`, but only `review/embeddings` and the boot receipt read that
-  variable, so no chat path falls to it.
+  clone to a green check without reading every contract. `MASTER/bin/onboard` is
+  not it: it writes `.master/config.yml` and never runs a check.
+- **Local-LLM fallback.** One method, now that the routing half is fixed.
+  `Master::Review::LLMDispatcher#send_llm_request` has branches for `agy:`,
+  `claude-cli:` and `web-chat:` and none for `ollama:`, so a chain that reaches
+  the local tier ships the id to the OpenRouter client and errors. Done when it
+  posts to `models.yml`'s `ollama.default_base_url` instead. The tier itself is
+  now correctly absent unless `OLLAMA_BASE_URL` is set — it used to sit in every
+  fallback chain on every machine.
 - **Aegis, seaborne.** A safety agent for the water, and the first body the
   embryo could plausibly take. It is a program rather than a feature because
   most of it is gated on hardware; the section below says what is buildable now
@@ -3366,8 +3380,11 @@ What the pass taught, which is worth more than the list:
 
 ### Open, by category
 
-Counts are what remained when each category was last read; re-measure before
-working from one.
+These five numbers are the whole record and nothing enumerates their members —
+no file, no ledger, no commit. The commit that wrote this section says so
+outright, and re-reading the tree for it in 2026-09-10 found nothing either. So
+they cannot be worked from: re-run the study, or work from the verified items
+below, which do name their files.
 
 - **Controls** — 10 left.
 - **brgen** — 9 left.
@@ -3383,32 +3400,62 @@ at 420ms each. Left alone: this is the operator's own face timing, and the rule
 caps UI transitions, not a deliberate slow reveal. No baseline records them, so
 this line is the only thing standing between them and a well-meaning fix.
 
-### Still open, each verified 2026-09-09
+### Still open, each verified 2026-09-10
 
-- **A shared display-type slot is unbuilt.** `_vertical_marketplace.scss:42`
-  outranks `_typography`'s page-title rule by matching an id, and the comment
-  above it carries the workaround under protest. A hero wants to opt out by
-  name.
-- **`.deal-cat` keeps a border nothing explains.** `_marketplace.scss:48` sets
-  `border: 1px solid var(--border)` where the 2026-08-04 decision traded control
-  borders for surface fills. Changing it moves rendering across marketplace,
-  stores and takeaway at once, so it is a decision rather than a lint fix.
-- **playlist forks two scales.** `--edge-soft` and `--edge-strong` are the donor
-  a shared edge scale wants, and `--font-mono: "SF Mono"` is a fifth typeface by
-  accident (`_vertical_playlist.scss:9,11,16`).
-- **`WORN_TYPE.profiles.map.label_min_px` has no reader.** Declared at
-  `rules.yml:3364` and read by nothing. `data_reach` counts top-level keys only,
-  so no instrument sees a nested one.
+A fourth entry left on 2026-09-10. `WORN_TYPE.profiles.map.label_min_px` was
+recorded as having no reader, and it has one — not code, but
+`MASTER/test/test_design_rules_worn_type.rb:48-71`, which names it as
+deliberately unwired and explains why enforcing it means measuring rendered
+label sizes, an operator's call. The same test found a larger unread key the
+entry never mentioned, `rhythm_off_max_pct`, declared in all seven profiles and
+read in none. `data_reach` still counts top-level keys only, and its corpus is
+`MASTER/` alone, so it could not have seen either one — but the gap is
+instrumented where it matters and does not need a backlog line.
+
+- **A shared display-type slot is unbuilt.** The file is not under `shared/`:
+  it is `RAILS/brgen/engines/marketplace/app/assets/stylesheets/_vertical_marketplace.scss:42`,
+  `main#main-content > header.market-hero h1`, at (1,1,3) against
+  `_typography.scss:109-119`'s (1,0,3). The comment above it carries the
+  workaround under protest — matching an id is the only way to outrank one. The
+  hero it protects is the real `<header class="market-hero">` at the marketplace
+  listings index, and no display-type opt-out exists anywhere in the fleet. A
+  `:not()` on the shared rule is not the fix: `:not()` takes its argument's
+  specificity, so the exclusion would tie with the override and let source order
+  decide.
+- **`.deal-cat` keeps a border nothing explains, and so do sixteen other
+  controls.** `RAILS/brgen/app/assets/stylesheets/_marketplace.scss:48` sets
+  `border: 1px solid var(--border)` beside `background: var(--surface-elevated)`
+  on line 47, so it carries both the fill and the line the 2026-08-04 decision
+  traded away (`WIRING_NOTES.md:359,378-381`). Two corrections to what this entry
+  used to say: takeaway has no `.deal-cat` call site at all — all six are in the
+  marketplace engine, about nineteen elements plus one per category — and
+  seventeen other control-like classes across eleven stylesheets still paint a
+  visible border, from `.carousel-btn` to `.pager-link`. So this is not a
+  one-line lint fix on one class; it is one fleet-wide question about whether
+  the 2026-08-04 decision reaches controls that were never revisited. The
+  operator is a trained architect and this changes rendering, so it stays a
+  question until he answers it.
+- **playlist forks two scales.**
+  `RAILS/brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:9,11,16`.
+  Verified 2026-09-10: `--edge-soft` and `--edge-strong` have seven consumers,
+  every one of them inside the playlist engine, and no shared edge scale exists
+  to donate to — shared tokens carry a single `--border`, and `design_tokens.yml`
+  has a radius scale and a space scale but no hairline tier. `SURFACES.md:65`
+  already flags it. `--font-mono: "SF Mono"` is genuinely the fifth typeface:
+  the other four are JetBrainsMono Nerd Font, the system sans, Helvetica Neue
+  and Bricolage Grotesque, and `--font-mono` is declared in exactly two places
+  fleet-wide.
 
 ## From the 2026-08-31 session
 
 - **`rules.yml` refactor.** Aggressively DRYing the law wants a measured pass.
   The two things holding it — a down gate and a mis-scanning scanner — closed on
   2026-09-01, so only the work remains.
-- **`dilla.rb` is 35,142 lines**, against `lib/`'s 44 files and 15,894 lines, so
-  the monolith still holds 69% of the engine. Split along the seams it already
-  has: the renderers, the ENV default tables, the SMF writers, the patch
-  registries. The direction is out of the monolith, not into it.
+- **`dilla.rb` is 35,139 lines**, against `lib/`'s 44 files and 15,911 lines, so
+  the monolith still holds 68.8% of the engine (re-measured 2026-09-10). Split
+  along the seams it already has: the renderers, the ENV default tables, the SMF
+  writers, the patch registries. The direction is out of the monolith, not into
+  it.
 - **Do not flatten `STUDIO/dilla/renders/` into the dilla root.** Counted before
   doing it: `slum` emits fourteen files, `loose_pocket beats` twenty-eight, plus
   `foundry_pulse.mp3`, `hate_session.mp3`, `ALBUM.mp3` and `beat.wav` — about
@@ -3417,7 +3464,11 @@ this line is the only thing standing between them and a well-meaning fix.
   CLAUDE.md says build output never sits there, recording the session whose
   renders lived at the root for weeks. Two instructions pointed opposite ways
   and the count settles it: `demo.wav` in the root is the demo's own path and is
-  already how `demo_all` defaults; every batch renderer keeps `renders/`.
+  already how `demo_all` defaults; every batch renderer keeps `renders/`. The
+  session CLAUDE.md records was about the REPO root and not dilla's, and that
+  half closed on 2026-09-10: `DILLA_OUTPUT_DIR` still defaults to the invoking
+  directory, except when that directory is the repo root, where dilla refuses
+  and writes to `STUDIO/dilla/renders/` with a line on stderr.
 - **Merge the three techno renderers.** `render_industrial`,
   `render_hate_techno` and `render_techno` share `techno_harmony_roots` and the
   schedule builders but hold genuinely different arrangements. Read all three
@@ -3426,28 +3477,36 @@ this line is the only thing standing between them and a well-meaning fix.
 
 ## From the 2026-09-01 audit
 
-- **Live RAILS gates still measure too little.** `user_flow`, `first_screen`,
-  `payment_honesty`, `content_honesty` and several rendered gates skip when the
-  app ports are closed. Run the suite once with `GATE_REQUIRE_LIVE=1`,
-  `GATE_STRICT_INCONCLUSIVE=1` and `GATE_STRICT_ERRORS=1` on a host where brgen,
-  amber and bsdports are listening, then record any findings that only appear
-  live.
-- **`bin/sine_stream.rb:975` is the last un-oversampled `asoftclip`.** Every
-  other saturation site runs `oversample=4` or `8`, and dilla's README says the
-  rule reaches every real `asoftclip=type=` filter string; this one runs the
-  ffmpeg default and aliases above Nyquist. Left alone deliberately — it changes
-  how the stream sounds, which is the operator's ear. Worth an A/B before it
-  moves.
-- **The 61-track crate fetch was abandoned at 2.** `~/dilla-crate-incoming`
-  holds two FLACs and three fetch scripts from the 2026-08-31 rebuild, which
-  finished by another route into `samples/chopped/`. Either resume that fetch
-  deliberately or delete the staging directory; a half-finished download beside
-  a finished crate reads as the crate.
-- **`chmod 555 /etc/rc.d/master` cannot survive its own installer.**
-  `OPERATOR.sh:196` sets it and the loop at `:198` chmods every `/etc/rc.d/*` to
-  755, yet the box runs every app rc.d at 555. Both lines came from the same
-  original split and neither reading is contradicted by a comment or a RUNBOOK
-  line, so the intended mode is the operator's call. Found 2026-09-02.
+- **The browser half of the gates still measures nothing unattended.** The live
+  half no longer does: `vps-deploy` runs nine gates on every deploy with
+  `GATE_REQUIRE_LIVE=1` as of 2026-09-10, on the one host where a closed port is
+  a deploy that did not come up rather than a laptop. What is still opt-in is
+  `PUB4_DEPLOY_BROWSER_GATES=1`, and the argument against making it the default
+  is in `vps-deploy` beside the flag: the box is 1GB with four apps resident and
+  `resource_guard` sheds amber and bsdports under exactly the pressure Chrome
+  adds, so a deploy that takes the site down to check the site has failed at the
+  only thing it was for. Done when the browser half runs somewhere unattended
+  that is not vm23. `GATE_STRICT_ERRORS=1` is the cheap remaining half and can
+  go into the same line the day somebody has read one ledger's worth of errored
+  gates.
+- **`bin/sine_stream.rb:977` is the last un-oversampled `asoftclip`**, and
+  `dilla.rb:1826` is the one that only looks oversampled. Of 24 non-comment
+  `asoftclip=type=` filter strings across `dilla.rb`, `lib/*.rb` and `bin/*.rb`,
+  23 carry `oversample` — but `dilla.rb:1826` carries `oversample=1`, which is
+  ffmpeg's default, so it satisfies the guard textually and aliases exactly like
+  the one that carries nothing. The guard test scans `ENGINE_SOURCES`, which is
+  `dilla.rb` plus `lib/*.rb`, so `bin/` is outside it by design. Both are left
+  alone deliberately: they change how the stream sounds, which is the operator's
+  ear. Worth an A/B before either moves. (Line numbers re-read 2026-09-10; the
+  entry said 975.)
+- **The 61-track crate fetch was abandoned at 2, and the staging is bigger than
+  this entry said.** `~/dilla-crate-incoming` holds two FLACs (42 MB), four fetch
+  scripts, four logs and `stems/htdemucs_ft/` with demucs output for both tracks
+  — eight wavs, 161 MB, 202 MB in all, every file dated 2026-08-31. Nothing in
+  the repo references the directory. Not closed here on purpose: those two FLACs
+  are source audio, renders reproduce and samples do not, and deleting the
+  operator's audio on an agent's judgement is the one move this repo's own
+  memory forbids. His call, and only his.
 
 ---
 
@@ -3478,84 +3537,93 @@ this fleet does not run, among them sidekiq, CarrierWave, ransack, searchkick an
 naming the file it concerns and what closing it looks like.
 
 The enumerations proved their own opening claim, which is the half worth keeping:
-a finding is a hypothesis until the instrument has been checked.
+a finding is a hypothesis until the instrument has been checked. A second pass on
+2026-09-10 proved it again on the survivors: of sixteen items, one asserted the
+opposite of the truth, three had numbers that did not reproduce by any method,
+and two named the wrong file. Seven closed. The instrument entries closed by
+being built — `bin/pub4 measure --why <row>` names the members behind a number
+and checks that they add up to it, `--since <ref>` reads the recorded ceilings
+out of git so a session can diff its own effect before pushing, `bin/pub4 gate
+--tree <TREE>` drops the stages that prove another tree, and `bin/pub4 rule <ID>`
+prints the declaration, whether it reaches a detector, and the definition
+verbatim with the comment that earned its exemption.
 
-### The instrument
-
-- **`bin/pub4 measure` cannot say why a row moved.** There is no `--why` and no
-  `--since`: three censuses record their members and the rest record a bare
-  integer, so "OVER +826" cannot be attributed and a session cannot diff its own
-  effect on the ceilings before pushing. Done when `--why <row>` prints the
-  members behind a number and `--since <ref>` prints every row's delta against a
-  commit.
-- **A silent detector still reads like a clean tree.** `bin/pub4 rule <ID>
-  --corpus all` answers that one rule at a time; nothing reports the set. Done
-  when `bin/pub4 measure` marks the rules that fire nowhere in the fleet beside
-  their ceilings.
-
-### Gates
-
-- **`RAILS/gates/gates.yml` declares neither a gate's cost nor what it needs.**
-  `constitutional_scan` spent 48 minutes on brgen alone inside a model round trip
-  (measured 2026-09-06, recorded at `lib/meta/constitutional_scan.rb:23`) and
-  `rendered_suite` monopolises a Mac for an hour; `runner.rb` prints nothing
-  before starting either. Done when each row carries its cost and its
-  preconditions, `runner.rb` prints them first, and the ledger records each
-  gate's wall time, so a gate that doubles is visible before it is unrunnable.
-- **Nothing automated runs the gates at all, which is the bigger half of the
-  `GATE_STRICT_INCONCLUSIVE` entry.** `runner.rb --all` now closes with each
-  inconclusive gate's reasons, names any gate that failed while listing no
-  finding, and bounds every subprocess through `gates/support/bounded_command.rb`
-  — but measured 2026-09-10, neither `OPENBSD/vps_ci.sh` nor `OPENBSD/bin/vps-deploy`
-  invokes the runner, and `shared/config/ci.rb` never did either. The only
-  callers are `OPENBSD/bin/check`, `check-openbsd`, `check-rails` and
-  `MASTER/bin/probe`, all of which a person types. So the fifty-one gates are an
-  operator tool, and the twenty-seven that could report a pass having measured
-  nothing had been failing to measure in a tool no pipeline runs.
-
-  Setting a strictness flag is therefore the wrong shape of fix. The question is
-  whether the deploy should run gates at all, and that is an operator decision
-  with a real cost: the box is one core, the live gates want the apps up, and a
-  deploy that runs them is a deploy that takes minutes longer. Decide that first;
-  the flag follows from it in one line either way.
-- **`bin/pub4 gate --tree <TREE>`** — the ladder scoped to one tree, for the
-  common case of working in one. Today it is all four or nothing.
+Two of those closures need saying rather than deleting, because the next reader
+will otherwise re-open them. **Silent detectors were already measured**:
+`measure` has carried `rule_audit.silent` as a ratchet row all along and it
+reads 39, and `--why rule_audit.silent` now names them. Its corpus is `law/`'s
+rules over `MASTER/lib`, `law/`, `RAILS/shared` and the two hand-written
+JavaScript homes — chosen deliberately and widened once already — not the whole
+fleet, which is what `bin/pub4 gate` and `self_findings.registry` measure.
+**Gate cost is measured, not declared**: `gates.yml` gained a `needs` field
+consolidating runner.rb's hardcoded browser list, and refused a `cost` field on
+the ground that a declaration cannot show the failure a cost field is for. A
+gate that doubles reads the same as a gate that did not; only a history can tell
+them apart, so `runner.rb` prints each gate's measured median from the ledger
+before it starts and the ledger flags a gate whose last five runs are twice its
+earlier ones. And the deploy question the third gate entry left open is
+answered: `vps-deploy` runs nine gates on every deploy, with the cost argument
+for which nine written beside them.
 
 ### STUDIO
 
-- **`MELODIC_LEAD=1` and `SCALE_LEAD=1` resolve and produce no lead.** Both
-  switches are read, all four lead lanes return empty, and the render reports
-  "lead: none". Done when a lead is audible under those switches, or they go.
-- **`FLYLO_QUINT_HATS` is read by nothing under either prefix**, and the quint
-  assertion in `STUDIO/test/test_dilla_engine_probes.rb:2067` passes because
-  quint is never scheduled at all. That test's own comment points at this entry.
-  Done when quint is wired, or the switch and its assertion are deleted together.
-- **`DILLA_OUTPUT_DIR` defaults to `Dir.pwd`** at `STUDIO/dilla/dilla.rb:143`,
-  which is how one session's renders lived at the repo root for weeks. Done when
-  the default is `STUDIO/dilla/renders/` and a stems render lands under
-  `renders/<seed>/stems/`, where the gitignore already expects output.
-- **138 dilla ENV switches default off and are unclassified.** `DILLA_FULL` turns
-  on the eighteen additive ones. Done when the rest are sorted into additive,
-  exclusive fork and operational, and the dead ones are deleted rather than
-  renamed.
+- **`SCALE_LEAD=1` is inert on its own**, and the entry this replaces was wrong
+  about the rest. Measured 2026-09-10 by running the engine over eight synthetic
+  pad events: `MELODIC_LEAD=1` produces a lead — the counter-line lane fires, ten
+  notes, and the render says "lead: counter-line", not "lead: none". What does
+  dead-end is the scale lane: `lead_events_scale_arp` returns `[]` when
+  `no_arp?`, and `NO_ARP` defaults to on, so `SCALE_LEAD=1` schedules nothing
+  until `NO_ARP=0` is also set, at which point it schedules seventy notes.
+  Making the switch imply `NO_ARP=0` would change what a render sounds like, so
+  it is recorded rather than fixed. Done when `SCALE_LEAD` either says what it
+  needs or stops pretending to be a switch.
+- **The dilla ENV switch census does not reproduce, by any method.** The entry
+  said 138 default off. `lib/knobs.rb` — the engine's own registry, which infers
+  type and default from source — reports 727 knobs, 286 of them flags, of which
+  80 default on, 38 carry an explicit `"0"` and 168 have no default at all: 206
+  default-off flags, 189 once `DILLA_FULL`'s eighteen are subtracted. An
+  independent regex over `dilla.rb` and `lib/*.rb` gives 475. `dilla.rb:4498`'s
+  own comment claims 156 of 405 and is stale too. The count is not the work; the
+  classification is. Done when the default-off flags are sorted into additive,
+  exclusive fork and operational, and the dead ones deleted rather than renamed —
+  `knobs.rb` is the instrument to do it with, and it already answers the type
+  half.
 
 ### RAILS and MASTER
 
-- **`NO_GOD_CLASS` is the fleet's largest single piece of design debt, and it is
-  growing.** `RAILS/brgen/lib/brgen/bergen_demo_seeder.rb` is 902 lines against
-  the 834 recorded on 2026-09-06; `brgen/app/models/conversation.rb` is 356 and
-  `brgen/engines/takeaway/app/models/takeaway/order.rb` is 285. One decomposition
-  at a time, measured against `MASTER/data/self_findings.yml`.
-- **`MASTER/bin` holds 27 executables against a ceiling of 27.** `check`, `gate`,
-  `ci`, `audit`, `dogfood`, `preflight`, `probe`, `smoke`, `smoke-web`, `doctor`
-  and `nsaudit` are eleven doors onto one ladder, and `CLAUDE.md` says two
-  surfaces, no third. Done when `entrypoints.master` falls by folding rather than
-  by raising the ceiling.
-- **An agent cannot read one rule cheaply.** `bin/pub4 rule <ID>` prints
-  findings; it prints neither the rule's fixtures nor the exemption it carries,
-  and the exemption is the half that gets broken. Done when it prints both, in a
-  `--json` form as well, so an agent can hold the rule instead of 4,000 lines of
-  YAML.
+- **`NO_GOD_CLASS` is the fleet's largest single piece of design debt.** It is
+  not growing: the entry that said so compared
+  `bergen_demo_seeder.rb`'s 902 raw lines against its own 834 code lines, the
+  same file measured two ways on the same day. That file is now 337 code lines —
+  the five hundred lines of literal Bergen it carried moved to
+  `bergen_demo_data.rb` and come back through `include`, and its six tests pass
+  unchanged. It still breaches, at 337 against a 300 limit, and it stays counted:
+  what is left is sixteen private methods, one per vertical, driven by one
+  `seed!`, and splitting that means ten files with one caller each — a god class
+  traded for FILE_SPRAWL.
+
+  The other two breach on public method count, not length, and each wants a
+  different cut. `brgen/app/models/conversation.rb` is 28 public methods over
+  178 code lines and is genuinely several subjects: IRC channels (`:17-104`),
+  geo rooms (`:106-132`) and unread counting (`:236-321`) are three
+  self-contained blocks with their own constants, and the last is a pure query
+  concern. `takeaway/order.rb` is 26 methods over 179 lines and is one subject in
+  three layers — a state machine, delivery and ETA, and eight pure display
+  formatters. Moving the five `*_display` methods to a presenter drops it to 21
+  and the five status aliases to a generated loop drops it to 16, so neither
+  half clears the limit alone and the real cut is the state machine.
+- **Two more `MASTER/bin` folds are available, if the count needs to fall
+  again.** It is at 26 now, `bin/preflight` having folded into `bin/ci`.
+  `nsaudit` and `dogfood` each have exactly one caller in the whole repo —
+  `bin/probe`'s table — and neither is named by a workflow, a shell script or
+  the Rakefile, so either could become a `check` step or a `rake lint:` task at
+  no cost. The real duplication is `probe` and `check`: both are step
+  registries, `probe`'s `ci` entry shells `bin/ci` which shells
+  `check --profile=ci`, and `check`'s `full` profile shells `probe all`. That
+  mutual call is the ladder with two doors, and both doors have real callers —
+  `RUNBOOK.md` and `bootstrap_docs.rb` for probe, `CLAUDE.md` and thirty
+  `PATH_OWNERSHIP.yml` rows for check. `gate`, `audit`, `doctor` and `check` are
+  four genuinely distinct things, not eleven.
 
 ## Wishes, not work
 
