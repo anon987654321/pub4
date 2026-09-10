@@ -475,7 +475,7 @@ The rule that came out of it, so the next file lands on the right side:
 
 ## `shared/lib/pub4/` keeps a flat drawer (2026-09-10)
 
-Thirteen of the twenty files there end `_lint.rb` and the cohesion census
+Thirteen of the twenty file names there end in `_lint` and the cohesion census
 proposes a `pub4/lint/` shelf. Decided against. The shelf is already spelled in
 the filenames; the file count does not move, so no ratchet is paid either way;
 and the cost is renaming thirteen constants and following them through
