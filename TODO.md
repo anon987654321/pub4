@@ -1020,6 +1020,21 @@ right would be the accounting the budget exists to prevent.
 
 Facts with no home of their own, kept because each was expensive to find.
 
+- **`rake studio` and `bin/check --profile=agent` ran the same task and answered
+  differently, and the deciding factor was how the parent shell was started.** Bare,
+  `studio_gate` passed; through `bin/check`, which runs rake under `bundle exec`, it
+  failed with "postpro does not boot — ruby-vips gem missing" on a host where a plain
+  `ruby -e 'require "vips"'` says ok. STUDIO has no Gemfile and resolves its own gems,
+  so a child that inherits MASTER's bundle cannot load any of them. `studio_test`
+  cleared five variables by hand for exactly this and `studio_gate` cleared none —
+  **and the five were not enough anyway**: Bundler 4 sets `BUNDLER_SETUP`, and a child
+  ruby loads `bundler/setup` off it with `RUBYOPT` already cleared, so the grandchild
+  was still bundled. Both call `Bundler.with_unbundled_env` now, which is what
+  `test:web` already concluded in its own paragraph three tasks below. `bin/check
+  --profile=agent` reads clean. **The general shape: a gate that passes bare and fails
+  under a profile is an environment leak, not a finding, and the hand-rolled list of
+  bundler variables is wrong on every bundler release that adds one.**
+
 - **A council pass looks exactly like a hang.** On a dev Mac the provider is the
   `claude` CLI (`llm_dispatcher.rb:291 send_claude_cli`), not an HTTP API, so a run
   with no `*_API_KEY` in the environment still reaches a model and
