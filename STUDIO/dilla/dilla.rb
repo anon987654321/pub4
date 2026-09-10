@@ -140,7 +140,31 @@ ENGINE_FILE = File.expand_path(__FILE__)
 # Finished renders default to the invoking directory (override with
 # DILLA_OUTPUT_DIR). ROOT stays the base for samples/stems, which aren't
 # user output.
-OUTPUT_DIR = ENV.fetch("DILLA_OUTPUT_DIR", Dir.pwd)
+#
+# With one refusal: the repo root. `ruby STUDIO/dilla/dilla.rb` typed from the
+# checkout is the natural invocation and the one nobody means literally, and
+# CLAUDE.md records a session whose renders sat at the root for weeks because of
+# it. Nothing at the root ignores a .wav, so those renders are also untracked
+# files in a shared checkout, which is how another session's `git status` fills
+# with audio it did not make.
+#
+# The invoking directory stays the default everywhere else. Moving it wholesale
+# to renders/ would relocate output for every session that runs dilla from its
+# own directory and would strand four gitignore patterns that are anchored to
+# this one — and a render nobody can find is as lost as a render nobody kept.
+def default_output_dir
+  cwd = Dir.pwd
+  repo_root = File.expand_path("../..", ROOT)
+  return cwd unless File.expand_path(cwd) == repo_root
+
+  fallback = File.join(ROOT, "renders")
+  warn "dilla: refusing to write renders to the repo root; using #{fallback} " \
+       "(set DILLA_OUTPUT_DIR to choose)"
+  FileUtils.mkdir_p(fallback)
+  fallback
+end
+
+OUTPUT_DIR = ENV.fetch("DILLA_OUTPUT_DIR") { default_output_dir }
 # Every cache and temp file the engine writes lives here — never loose
 # dotfiles in the invoking directory or next to the source. Safe to wipe,
 # with one exception: the progressions log (see log_progression!) is the

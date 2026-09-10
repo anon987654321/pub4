@@ -24,9 +24,9 @@ full. `ci` is the name GitHub Actions and vm23 call, and it resolves to `check
 
 The rest diagnose. `probe` runs the readiness probes, `audit` scans staged files
 against the constitution before a commit, and `doctor` reports on the
-environment and the wiring. `dogfood` boots the CLI and talks to it. `smoke`
-checks boot and wiring, `smoke-web` checks the face over HTTP, and `preflight`
-checks an OpenBSD box before a deploy. `nsaudit` audits namespace references and
+environment and the wiring, which is also what to run before a deploy.
+`dogfood` boots the CLI and talks to it. `smoke` checks boot and wiring and
+`smoke-web` checks the face over HTTP. `nsaudit` audits namespace references and
 `onboard` checks a new contributor's machine.
 
 A few serve a session or the runtime around it. `master-core` exposes the core

@@ -22,6 +22,22 @@ require "open3"
 #   MASTER/bin/pub4 measure            # fast: pure-Ruby lints + declared ceilings
 #   MASTER/bin/pub4 measure --deep     # + the scans that cost minutes
 #   MASTER/bin/pub4 measure --json
+#   MASTER/bin/pub4 measure --why <row>    the members behind one number
+#   MASTER/bin/pub4 measure --since <ref>  every recorded ceiling's delta
+#
+# --why exists because a bare integer cannot be acted on. "OVER +826" names no
+# file, so a session that has just moved a ceiling cannot tell whether the move
+# is its own. Every row that can enumerate its population now carries it, and it
+# carries the SAME list the count came from rather than a second reading of the
+# same census — a member list computed a second way buys a disagreement, which
+# is the defect this whole file exists to catch.
+#
+# --since reads the recorded ceilings out of git rather than re-running the
+# census at another commit. Re-running needs a checkout of that commit, and a
+# detached worktree cannot `require "master"` (measured 2026-08-15; the note on
+# Row#ok? below is what that cost). The ceilings ARE the record: nearly every
+# row in this register sits exactly at its ceiling, so the ceiling at <ref> is
+# the value at <ref>, and `git show` answers it for the price of a subprocess.
 #
 # Fast means "reads files"; deep means "runs a scanner". The one exception is a
 # batched `git check-ignore` per tree, four subprocesses that cost milliseconds
@@ -41,7 +57,13 @@ module Pub4
 
     # name, current, ceiling, and how to read it again. `direction` is what the
     # number is allowed to do: :down for a ratchet, :fixed for an invariant.
-    Row = Struct.new(:name, :current, :ceiling, :direction, :source, :note, keyword_init: true) do
+    #
+    # `members` is the population the number counts, carried out of the same call
+    # that produced the count. Not recomputed on demand: a member list read a
+    # second way is a second implementation of the measurement, and this file
+    # exists because two of those disagreed (see file_length_rows below). A row
+    # that genuinely cannot enumerate itself leaves it nil and --why says so.
+    Row = Struct.new(:name, :current, :ceiling, :direction, :source, :note, :members, keyword_init: true) do
       def over? = current && ceiling && current > ceiling
       def slack? = current && ceiling && current < ceiling
 
@@ -84,52 +106,63 @@ module Pub4
     def master_yaml_rows
       [master_row("rule_reach", "data/rules.yml", "rules no configuration can run") do
          require File.join(MASTER, "tools/rule_reach")
-         [Pub4::RuleReach.unreachable.size, Pub4::RuleReach.ceiling]
+         unreachable = Pub4::RuleReach.unreachable
+         [unreachable.size, Pub4::RuleReach.ceiling, unreachable]
        end,
        # Three rows rather than one, because they are three different facts and
        # collapsing them would let a rule go blind while another stops being
        # silent and the total holds still.
        master_row("rule_audit.blind", "data/rules.yml", "rules proved on input their subjects never get") do
          require File.join(MASTER, "tools/rule_audit")
-         [Pub4::RuleAudit.audit[:fixture_blindness].size, Pub4::RuleAudit.ceilings.fetch("blind")]
+         blind = Pub4::RuleAudit.audit[:fixture_blindness]
+         [blind.size, Pub4::RuleAudit.ceilings.fetch("blind"), blind.map { |row| "#{row[:rule]}: #{row[:detail]}" }]
        end,
        master_row("rule_audit.saturated", "data/rules.yml", "rules flagging most of what they read") do
          require File.join(MASTER, "tools/rule_audit")
-         [Pub4::RuleAudit.audit[:saturation].size, Pub4::RuleAudit.ceilings.fetch("saturated")]
+         saturated = Pub4::RuleAudit.audit[:saturation]
+         [saturated.size, Pub4::RuleAudit.ceilings.fetch("saturated"),
+          saturated.map { |row| format("%s: %d/%d files", row[:rule], row[:hits], row[:applicable]) }]
        end,
        master_row("rule_audit.silent", "data/rules.yml", "rules firing on nothing in the corpus") do
          require File.join(MASTER, "tools/rule_audit")
-         [Pub4::RuleAudit.audit[:silent].size, Pub4::RuleAudit.ceilings.fetch("silent")]
+         silent = Pub4::RuleAudit.audit[:silent]
+         [silent.size, Pub4::RuleAudit.ceilings.fetch("silent"), silent]
        end,
        master_row("autofix_reach.dangling", "data/autofix_reach.yml", "rules naming a transform nothing implements") do
          require File.join(MASTER, "tools/autofix_reach")
-         [Pub4::AutofixReach.dangling.size, Pub4::AutofixReach.ceilings.fetch("dangling")]
+         dangling = Pub4::AutofixReach.dangling
+         [dangling.size, Pub4::AutofixReach.ceilings.fetch("dangling"),
+          dangling.map { |row| "#{row[:id]} -> #{row[:transform]}" }]
        end,
        master_row("autofix_reach.bare_true", "data/autofix_reach.yml", "rules claiming a fix without naming it") do
          require File.join(MASTER, "tools/autofix_reach")
-         [Pub4::AutofixReach.bare_true.size, Pub4::AutofixReach.ceilings.fetch("bare_true")]
+         bare = Pub4::AutofixReach.bare_true
+         [bare.size, Pub4::AutofixReach.ceilings.fetch("bare_true"), bare]
        end,
        master_row("rule_hygiene.id_case_collisions", "data/rules.yml", "ids differing only by case") do
          require File.join(MASTER, "tools/rule_hygiene")
-         [Pub4::RuleHygiene.report[:id_case_collisions].size, Pub4::RuleHygiene.ceilings.fetch("id_case_collisions")]
+         collisions = Pub4::RuleHygiene.report[:id_case_collisions]
+         [collisions.size, Pub4::RuleHygiene.ceilings.fetch("id_case_collisions"), collisions.map(&:to_s)]
        end,
        master_row("rule_hygiene.alias_shadows_live_rule", "data/rules.yml", "aliases naming a rule that still exists") do
          require File.join(MASTER, "tools/rule_hygiene")
-         [Pub4::RuleHygiene.report[:alias_shadows_live_rule].size, Pub4::RuleHygiene.ceilings.fetch("alias_shadows_live_rule")]
+         shadows = Pub4::RuleHygiene.report[:alias_shadows_live_rule]
+         [shadows.size, Pub4::RuleHygiene.ceilings.fetch("alias_shadows_live_rule"), shadows.map(&:to_s)]
        end,
        master_row("rule_hygiene.missing_metadata", "data/rules.yml", "rules with neither tier nor severity") do
          require File.join(MASTER, "tools/rule_hygiene")
-         [Pub4::RuleHygiene.report[:missing_metadata].size, Pub4::RuleHygiene.ceilings.fetch("missing_metadata")]
+         missing = Pub4::RuleHygiene.report[:missing_metadata]
+         [missing.size, Pub4::RuleHygiene.ceilings.fetch("missing_metadata"), missing.map(&:to_s)]
        end,
        master_row("rule_hygiene.cross_population_duplicates", "data/rules.yml", "one id with two detectors") do
          require File.join(MASTER, "tools/rule_hygiene")
-         [Pub4::RuleHygiene.report[:cross_population_duplicates].size,
-          Pub4::RuleHygiene.ceilings.fetch("cross_population_duplicates")]
+         duplicates = Pub4::RuleHygiene.report[:cross_population_duplicates]
+         [duplicates.size, Pub4::RuleHygiene.ceilings.fetch("cross_population_duplicates"), duplicates.map(&:to_s)]
        end,
        master_row("rule_hygiene.statement_conflicts", "data/rules.yml", "one id, two statements") do
          require File.join(MASTER, "tools/rule_hygiene")
-         [Pub4::RuleHygiene.report[:statement_conflicts].size,
-          Pub4::RuleHygiene.ceilings.fetch("statement_conflicts")]
+         conflicts = Pub4::RuleHygiene.report[:statement_conflicts]
+         [conflicts.size, Pub4::RuleHygiene.ceilings.fetch("statement_conflicts"), conflicts.map(&:to_s)]
        end,
        # The fourth hygiene check and the dep graph both reported a number that
        # nothing failed on. rule_hygiene warned on its own ceiling and ratchets
@@ -143,17 +176,20 @@ module Pub4
            (klass.respond_to?(:dsl_fires) && (klass.dsl_fires || klass.dsl_does_not_fire)) ||
              !klass.respond_to?(:dsl_block)
          end
-         [unfixtured.size, Master.law("rule_ratchets", root: MASTER).dig("fixture_debt", "without_fixtures")]
+         [unfixtured.size, Master.law("rule_ratchets", root: MASTER).dig("fixture_debt", "without_fixtures"),
+          unfixtured.map(&:name)]
        end,
        master_row("rule_deps.ungraphed", "data/rules.yml", "registry rules absent from rule_deps") do
          $LOAD_PATH.unshift(File.join(MASTER, "lib")) unless $LOAD_PATH.include?(File.join(MASTER, "lib"))
          require "master"
          audit = Master::Review::Scan::RuleRegistryAudit.new(root: MASTER)
-         [audit.ungraphed_rule_ids.size, Master.law("rule_ratchets", root: MASTER).dig("deps", "ungraphed")]
+         ungraphed = audit.ungraphed_rule_ids
+         [ungraphed.size, Master.law("rule_ratchets", root: MASTER).dig("deps", "ungraphed"), ungraphed.map(&:to_s)]
        end,
        master_row("self_findings.law", "data/self_findings.yml", "what the 122 laws find in our own trees") do
          require File.join(MASTER, "tools/self_findings")
-         [Pub4::SelfFindings.by_rule.values.sum, Pub4::SelfFindings.ceiling]
+         found = Pub4::SelfFindings.members
+         [found.size, Pub4::SelfFindings.ceiling, found]
        end,
        # The second population. The row above read "what our own rules find in
        # our own trees" and counted the law alone, so nothing in this repo
@@ -163,15 +199,18 @@ module Pub4
        master_row("self_findings.registry", "data/self_findings.yml",
                   "what the scanner's own rules find, at error severity") do
          require File.join(MASTER, "tools/self_findings")
-         [Pub4::SelfFindings.registry_by_rule.values.sum, Pub4::SelfFindings.registry_ceiling]
+         found = Pub4::SelfFindings.registry_members
+         [found.size, Pub4::SelfFindings.registry_ceiling, found]
        end,
        master_row("dup_census", "data/dup_census.yml", "tracked files existing twice") do
          require File.join(MASTER, "tools/dup_census")
-         [Pub4::DupCensus.sets.size, Pub4::DupCensus.ceiling]
+         sets = Pub4::DupCensus.sets
+         [sets.size, Pub4::DupCensus.ceiling, Pub4::DupCensus.members(sets)]
        end,
        master_row("data_reach", "data/data_reach.yml", "data keys no code names") do
          require File.join(MASTER, "tools/data_reach")
-         [Pub4::DataReach.unnamed.size, Pub4::DataReach.ceiling]
+         unnamed = Pub4::DataReach.unnamed
+         [unnamed.size, Pub4::DataReach.ceiling, unnamed]
        end,
        # Sibling to data_reach, one level up: that asks whether a declaration
        # has a reader, this whether a whole file does. It reads 0 and the row
@@ -179,26 +218,32 @@ module Pub4
        # anything failing.
        master_row("code_reach", "data/code_reach.yml", "lib files nothing names") do
          require File.join(MASTER, "tools/code_reach")
-         [Pub4::CodeReach.unreached.size, Pub4::CodeReach.ceiling]
+         unreached = Pub4::CodeReach.unreached
+         [unreached.size, Pub4::CodeReach.ceiling, unreached]
        end,
        master_row("namespace", "data/namespace_ceilings.yml", "files declaring no module or class") do
          require File.join(MASTER, "tools/namespace_ratchet")
-         [Pub4::NamespaceRatchet.measure.values.sum, Pub4::NamespaceRatchet.ceilings.values.sum]
+         flat = Pub4::NamespaceRatchet.ceilings.keys.flat_map { |dir| Pub4::NamespaceRatchet.flat_files(dir) }
+         [flat.size, Pub4::NamespaceRatchet.ceilings.values.sum, flat]
        end,
        *%w[lone_dirs stutter vague_names].map do |kind|
          master_row("sprawl.#{kind}", "data/sprawl_census.yml", "the shape of the tree, in all four of them") do
            require File.join(MASTER, "tools/sprawl_census")
-           [Pub4::SprawlCensus.counts.fetch(kind), Pub4::SprawlCensus.ceilings.fetch(kind)]
+           [Pub4::SprawlCensus.counts.fetch(kind), Pub4::SprawlCensus.ceilings.fetch(kind),
+            Array(Pub4::SprawlCensus.public_send(kind))]
          end
        end].compact
     end
 
+    # A block may return [current, ceiling] or [current, ceiling, members]; the
+    # third slot is the population the count came from, so --why reads the same
+    # list rather than asking the census again.
     def master_row(name, relative, note)
       return unless File.file?(File.join(MASTER, relative))
 
-      current, ceiling = yield
+      current, ceiling, members = yield
       Row.new(name:, current:, ceiling:, direction: :down,
-              source: "MASTER/#{relative}", note:)
+              source: "MASTER/#{relative}", note:, members:)
     rescue StandardError => e
       Row.new(name:, current: nil, ceiling: nil, direction: :down,
               source: "MASTER/#{relative}", note: "unreadable: #{e.class}")
@@ -212,13 +257,18 @@ module Pub4
         Row.new(name: "spine.lib_body_ceiling", current: lib_code_lines, ceiling: spine["lib_body_ceiling"],
                 direction: :down, source: "MASTER/data/spine.yml",
                 note: "a budget with a sponsor, not a promise (DECISIONS.md)"),
-        Row.new(name: "spine.core_files", current: Dir.glob(File.join(MASTER, "lib/{core.rb,core/*.rb}")).size,
+        Row.new(name: "spine.core_files",
+                current: core_files.size, members: core_files,
                 ceiling: spine["core_files"], direction: :fixed, source: "MASTER/data/spine.yml",
                 note: "the actual invariant: a new top-level concept is a design change"),
       ]
     rescue StandardError => e
       [Row.new(name: "spine", current: nil, ceiling: nil, direction: :down,
                source: "MASTER/data/spine.yml", note: "unreadable: #{e.class}")]
+    end
+
+    def core_files
+      Dir.glob(File.join(MASTER, "lib/{core.rb,core/*.rb}")).map { |path| relative_to_root(path) }.sort
     end
 
     # Same definition as the Rakefile's lint:spine: non-blank, non-comment.
@@ -254,9 +304,11 @@ module Pub4
     def pub4_growth_rows
       ceilings = YAML.safe_load_file(File.join(MASTER, "data/spine.yml")).fetch("pub4_source_ceilings")
       ceilings.map do |tree, ceiling|
-        Row.new(name: "growth.#{tree.downcase}", current: tree_source_count(tree),
+        files = tree_source_files(tree)
+        Row.new(name: "growth.#{tree.downcase}", current: files.size,
                 ceiling:, direction: :down, source: "MASTER/data/spine.yml",
-                note: "tracked source files; a new file folds in or raises this")
+                note: "tracked source files; a new file folds in or raises this",
+                members: files)
       end
     rescue StandardError => e
       [Row.new(name: "growth", current: nil, ceiling: nil, direction: :down,
@@ -270,9 +322,11 @@ module Pub4
     def entrypoint_rows
       ceilings = YAML.safe_load_file(File.join(MASTER, "data/spine.yml")).fetch("pub4_entrypoint_ceilings")
       ceilings.map do |tree, ceiling|
-        Row.new(name: "entrypoints.#{tree.downcase}", current: entrypoint_count(tree),
+        doors = entrypoints(tree)
+        Row.new(name: "entrypoints.#{tree.downcase}", current: doors&.size,
                 ceiling:, direction: :down, source: "MASTER/data/spine.yml",
-                note: "commands the tree offers; folding one in is how this falls")
+                note: "commands the tree offers; folding one in is how this falls",
+                members: doors)
       end
     rescue StandardError => e
       [Row.new(name: "entrypoints", current: nil, ceiling: nil, direction: :down,
@@ -281,17 +335,17 @@ module Pub4
 
     # Tracked, not on-disk: an untracked script in a shared checkout is another
     # session's scratch and not a surface this repo offers anyone.
-    def entrypoint_count(tree)
+    def entrypoints(tree)
       out, status = Open3.capture2e("git", "-C", ROOT, "ls-files", "-z", "#{tree}/bin")
       return unless status.success?
 
-      out.split("\0").count do |path|
+      out.split("\0").select do |path|
         path.count("/") == 2 && File.executable?(File.join(ROOT, path))
-      end
+      end.sort
     end
 
-    def tree_source_count(tree)
-      tracked_source_files.count { |path| path.start_with?("#{tree}/") }
+    def tree_source_files(tree)
+      tracked_source_files.select { |path| path.start_with?("#{tree}/") }
     end
 
     # One call for all four trees, so this stays fast enough for a hook. Nothing
@@ -337,19 +391,35 @@ module Pub4
       mod = lint_module(path)
       return [] unless mod
 
+      # One scan, then grouped. The count and the member list come from the same
+      # findings, so --why can never disagree with the number beside it — and the
+      # scan is the expensive half, so asking twice would also cost twice.
+      findings = mod.scan
       if mod.const_defined?(:BASELINES)
-        counts = mod.counts
+        by_kind = findings.group_by(&:kind)
         mod.const_get(:BASELINES).map do |kind, ceiling|
-          Row.new(name: "#{name}.#{kind}", current: counts[kind], ceiling:,
-                  direction: :down, source: relative_to_root(path), note: nil)
+          hits = by_kind.fetch(kind, [])
+          Row.new(name: "#{name}.#{kind}", current: hits.size, ceiling:,
+                  direction: :down, source: relative_to_root(path), note: nil,
+                  members: hits.map { |finding| describe_finding(finding) })
         end
       else
-        Row.new(name:, current: mod.scan.size, ceiling: mod.const_get(:BASELINE),
-                direction: :down, source: relative_to_root(path), note: nil)
+        Row.new(name:, current: findings.size, ceiling: mod.const_get(:BASELINE),
+                direction: :down, source: relative_to_root(path), note: nil,
+                members: findings.map { |finding| describe_finding(finding) })
       end
     rescue StandardError => e
       Row.new(name:, current: nil, ceiling: nil, direction: :down,
               source: relative_to_root(path), note: "unreadable: #{e.class}: #{e.message}")
+    end
+
+    # Eight lints, eight different Finding structs — file/line here, sheet/ref
+    # there. The kind is already the row name, so what is left of the struct is
+    # what identifies the member; joining it beats eight per-lint formatters.
+    def describe_finding(finding)
+      return finding.to_s unless finding.respond_to?(:to_h)
+
+      finding.to_h.reject { |key, _| key == :kind }.values.compact.join(" ")
     end
 
     # Pub4::ChromeI18nLint from chrome_i18n_lint.rb, without guessing at names.
@@ -523,10 +593,99 @@ module Pub4
       (["ratchet".ljust(width) + "  current / ceiling  state"] + lines + ["", summary]).join("\n")
     end
 
+    # --why: the members behind one number.
+    #
+    # A prefix match, because the row names are long and the useful ones are
+    # families — `--why sprawl` answers all three at once, `--why growth.rails`
+    # answers one. Naming nothing lists the rows that can answer, which is the
+    # question a reader has before they have a row name.
+    def why(rows, query)
+      return why_index(rows, query).join("\n") if query.to_s.empty?
+
+      matched = rows.select { |row| row.name == query }
+      matched = rows.select { |row| row.name.start_with?(query) } if matched.empty?
+      return why_index(rows, query).join("\n") if matched.empty?
+
+      matched.flat_map { |row| why_row(row) }.join("\n")
+    end
+
+    def why_index(rows, query)
+      answerable = rows.select(&:members)
+      head = query.to_s.empty? ? "measure --why <row>" : "measure --why: no row named #{query.inspect}"
+      lines = [head, "", "#{answerable.size} of #{rows.size} rows can name their members:"]
+      lines + answerable.map { |row| "  #{row.name}" }
+    end
+
+    def why_row(row)
+      head = "#{row.name}  #{row.current || '?'} / #{row.ceiling || '-'}  #{row.state}  (#{row.source})"
+      return [head, "  this row records a count and no population — nothing to name", ""] if row.members.nil?
+
+      body = row.members.map { |member| "  #{member}" }
+      # The instrument checking itself. A member list whose length is not the
+      # number printed beside it means the count and the population came apart,
+      # and a register that cannot notice that is the register this file replaced.
+      unless row.members.size == row.current
+        body << "  MISMATCH: #{row.members.size} member(s) listed against a count of #{row.current}"
+      end
+      [head] + body + [""]
+    end
+
+    # --since: what this session did to the recorded ceilings.
+    #
+    # The ceilings are files in git, so the delta is `git show <ref>:<path>`
+    # against the working copy — no checkout, no second census, and it works from
+    # a worktree. It answers about the RECORD rather than about the tree: a row
+    # whose current value drifted without its ceiling moving shows as unchanged
+    # here and OVER in the table above, which are two different facts and both
+    # worth having.
+    def since(ref, rows = all)
+      sources = rows.filter_map { |row| row.source if row.source.to_s.end_with?(".yml") }.uniq.sort
+      lines = ["measure --since #{ref}: recorded ceilings, then against now", ""]
+      moved = sources.flat_map { |source| ceiling_deltas(ref, source) }
+      lines << if moved.empty?
+                 "  no recorded ceiling moved in #{sources.size} file(s) since #{ref}"
+               else
+                 moved.join("\n")
+               end
+      lines.join("\n")
+    end
+
+    def ceiling_deltas(ref, source)
+      before, status = Open3.capture2e("git", "-C", ROOT, "show", "#{ref}:#{source}")
+      return ["  #{source}: not at #{ref} (#{before.lines.first&.chomp})"] unless status.success?
+
+      was = numeric_leaves(YAML.safe_load(before, aliases: true))
+      now = numeric_leaves(YAML.safe_load_file(File.join(ROOT, source), aliases: true))
+      (was.keys | now.keys).sort.filter_map do |key|
+        old = was[key]
+        new = now[key]
+        next if old == new
+
+        delta = old && new ? format("%+d", new - old) : "added or removed"
+        "  #{source} #{key}: #{old || '-'} -> #{new || '-'} (#{delta})"
+      end
+    rescue Psych::Exception => e
+      ["  #{source}: unparseable at #{ref} or now (#{e.class})"]
+    end
+
+    # Every integer in the document, keyed by its dotted path. Generic on
+    # purpose: the ceilings live under a different key in every one of these
+    # files, and a per-file reader would be twelve readers to maintain.
+    def numeric_leaves(node, prefix = nil, into = {})
+      case node
+      when Hash
+        node.each { |key, value| numeric_leaves(value, [prefix, key].compact.join("."), into) }
+      when Integer
+        into[prefix] = node
+      end
+      into
+    end
+
     def json(rows)
       JSON.pretty_generate(rows.map do |row|
         { name: row.name, current: row.current, ceiling: row.ceiling,
-          direction: row.direction, state: row.state, source: row.source, note: row.note }
+          direction: row.direction, state: row.state, source: row.source, note: row.note,
+          members: row.members }
       end)
     end
 

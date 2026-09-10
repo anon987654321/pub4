@@ -104,6 +104,77 @@ def resolve_gates(keys)
   end
 end
 
+def needs(key) = Array(GATES.dig(key, "needs"))
+
+# What this run is about to spend, before it spends it.
+#
+# runner.rb printed nothing before starting, and two of these gates are measured
+# in tens of minutes: constitutional_scan at 48 minutes on brgen alone inside a
+# model round trip, rendered_suite monopolising a Mac for an hour. So a person
+# who typed --all found out what it cost by waiting.
+#
+# The number is the ledger's own median for that gate on THIS machine, not a
+# figure declared in gates.yml. A declared cost is a fifth hand-maintained table
+# and, worse, it cannot show the failure it is for: a gate that doubles reads the
+# same as a gate that did not. A median over real runs moves when the gate does.
+def plan_for(keys)
+  history = ledger.entries.group_by { |row| row["gate"] }
+  rows = keys.map do |key|
+    times = history.fetch(key, []).filter_map { |row| row["duration_ms"] }.sort
+    median = times.empty? ? nil : times[times.size / 2]
+    [key, median, needs(key)]
+  end
+  known = rows.filter_map { |_, median, _| median }
+  puts "[gates] plan: #{keys.size} gate(s)#{known.empty? ? '' : format(', ~%s of measured wall time', duration(known.sum))}"
+  rows.each do |key, median, wants|
+    cost = median ? duration(median) : "unmeasured here"
+    puts format("[gates]   %-24s %-16s %s", key, cost, wants.empty? ? "" : "needs #{wants.join(', ')}").rstrip
+  end
+  unmeasured = rows.count { |_, median, _| median.nil? }
+  return if unmeasured.zero?
+
+  puts "[gates]   #{unmeasured} gate(s) have no history on this machine; " \
+       "the ledger fills in as they run (--ledger to read it)"
+end
+
+def duration(ms)
+  seconds = ms.to_f / 1000
+  return format("%.1fs", seconds) if seconds < 90
+
+  format("%dm%02ds", (seconds / 60).floor, (seconds % 60).round)
+end
+
+# Chrome, named from the registry's `needs` rather than from a list in this file.
+# A browser gate without Chrome degrades to a warning rather than failing, which
+# is right — a missing browser is a property of the machine, not a verdict about
+# the tree — but it means a green run says nothing about them unless you
+# separately know Chrome was there. The committed visual manifests are the
+# argument for saying it out loud: eighteen declared states, three actual pages,
+# and every summary printed above them read PASSED.
+#
+# It never changes an exit code.
+def report_browser_precondition(keys)
+  wanted = keys.select { |key| needs(key).include?("browser") }
+  return if wanted.empty?
+
+  chrome = begin
+    require_relative "support/cdp_session"
+    Deploy::CdpSession.available?
+  rescue StandardError => e
+    # Every browser gate is skipped from here, and a skipped gate reads green.
+    # Which failure it was decides whether that is a missing Chrome or a broken
+    # session file.
+    warn "runner: CDP unavailable (#{e.class}: #{e.message.lines.first.to_s.strip}) — browser gates skipped"
+    false
+  end
+  if chrome
+    puts "[gates] browser: Chrome present — #{wanted.size} browser-backed gate(s) could measure"
+  else
+    puts "[gates] browser: NO Chrome — #{wanted.size} browser-backed gate(s) degrade to " \
+         "warnings and measure nothing (#{wanted.join(', ')})"
+  end
+end
+
 def visual_contract_capture_args
   return [] unless ENV["VISUAL_CAPTURE"] == "1"
 
@@ -330,6 +401,9 @@ gates_to_run = resolve_gates(requested)
 skipped = requested - gates_to_run
 puts "[gates] Skipping #{skipped.join(', ')} (covered by composite gates in this run)" if skipped.any?
 
+plan_for(gates_to_run)
+report_browser_precondition(gates_to_run)
+
 # One named gate is the direct-invocation case the per-gate scripts used to
 # serve, so let it print its own success line.
 verbose = gates_to_run.size == 1
@@ -357,31 +431,7 @@ puts "\n#{'=' * 50}"
 # pages, and every summary printed above them read PASSED.
 #
 # One line, printed with the verdict. It never changes an exit code.
-BROWSER_BACKED = %w[
-  rendered_suite rendered_invariants rendered_geometry webgl_surfaces viewport_spill
-  layout_snapshot journey_invariant reflow keyboard_flow mobile_flow cross_app
-  occlusion page_simulation visual_contract
-].freeze
-
-browser_gates = gates_to_run & BROWSER_BACKED
-if browser_gates.any?
-  chrome = begin
-    require_relative "support/cdp_session"
-    Deploy::CdpSession.available?
-  rescue StandardError => e
-    # Every browser gate is skipped from here, and a skipped gate reads green.
-    # Which failure it was decides whether that is a missing Chrome or a broken
-    # session file.
-    warn "runner: CDP unavailable (#{e.class}: #{e.message.lines.first.to_s.strip}) — browser gates skipped"
-    false
-  end
-  if chrome
-    puts "[gates] browser: Chrome present — #{browser_gates.size} browser-backed gate(s) could measure"
-  else
-    puts "[gates] browser: NO Chrome — #{browser_gates.size} browser-backed gate(s) degraded to " \
-         "warnings and measured nothing (#{browser_gates.join(', ')})"
-  end
-end
+report_browser_precondition(gates_to_run)
 
 # Printed before the verdict and independently of it, because it is the one line
 # that changes what the rest of the summary means. An errored gate blocked

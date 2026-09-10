@@ -420,7 +420,15 @@ pub4_source_ceilings:
   # remote host and the run would report nothing at all rather than a failure.
   # One place that bounds a command, because six places that each remember to
   # is how five of them forget.
-  RAILS: 2372
+  # 2372 -> 2373 for brgen/lib/brgen/bergen_demo_data.rb. One file bought, five
+  # hundred code lines paid back: it is the literal Bergen the demo seeder
+  # carried inside itself — users, posts, listings, bios, neighbourhoods,
+  # places, restaurants, channels and Live notes — which made a class with two
+  # public methods into the largest NO_GOD_CLASS finding in the fleet at 839
+  # code lines. The seeder is 337 now. This is the trade this line exists to
+  # record, and it is the right way round: a data file and the code that reads
+  # it are two things, and only one of them is code.
+  RAILS: 2373
   # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
   # that are the whole defence against a shared index, and nothing tested any of
   # them — a hook that stopped firing looks exactly like a week in which nobody
@@ -526,8 +534,19 @@ pub4_source_ceilings:
 # spec/io/ in the lib rename — so every invocation aborted, and nothing noticed
 # because nothing invoked it. Its one reader was a bin/doctor check asserting
 # the file exists, which went with it.
+#
+# 27 -> 26 folds bin/preflight away. It checked ruby, bundler, `bundle check`
+# and three API keys — each already a bin/doctor check — then `ruby -c
+# lib/master.rb` and a kernel/ directory the tree has not had for some time,
+# then ran bin/ci. Its only caller anywhere was bin/probe's own table, so it was
+# doctor and ci wearing a third name, and the syntax check it added cannot fail
+# without bin/ci failing first: loading the runtime is the suite's first act.
+# `bin/probe all` names ci directly in its place. Not doctor, though doctor is
+# the strict superset of preflight's host checks: doctor is red on a laptop with
+# no TTS socket, and a probe that fails on every developer's box is a line people
+# learn to skip.
 pub4_entrypoint_ceilings:
-  MASTER: 27
+  MASTER: 26
   RAILS: 2
   OPENBSD: 17
   STUDIO: 0

@@ -8,7 +8,9 @@ ports fixtures, OmniAuth, PWA, and dilla vocal/render takes.
 ```
 pub4/
 │
-├── CLAUDE.md                 one screen
+├── CLAUDE.md                 one screen — and AGENTS, GEMINI, .cursorrules,
+│                             .github/copilot-instructions, all generated from
+│                             MASTER/AGENTS.md by rake docs:agent_contracts
 ├── TODO.md                   the backlog
 ├── TREE.md                   this map
 │
@@ -49,7 +51,8 @@ pub4/
 │   │   └── test/             makefile parser hoisted one level; ports fixtures stay
 │   ├── shared/               engine every app mounts
 │   ├── gates/                design and deploy measurements
-│   │   └── support/design_metrics_contrast.rb   hoisted from design_metrics/
+│   │   ├── gates.yml         one row per gate: class, pass line, preconditions
+│   │   └── support/design_metrics/   contrast, contrast_checks, type_checks
 │   ├── apps.yml              feature truth
 │   └── bin/triangle          bring the three up
 │
@@ -69,7 +72,10 @@ pub4/
     └── test/
 ```
 
-Twenty one-file directories remain, all mandated or priced. Stutter is
-zero. Three vague names remain, all Zeitwerk (`lib/io/base.rb` and its
-kin). Hoisting a Rails system test out of `test/system/` would run it in
-the unit suite and drop it from `rails test:system`; those two stayed.
+Nineteen one-file directories remain, all mandated or priced. Stutter is
+zero. Two vague names remain, both Zeitwerk (`lib/io/base.rb` and
+`lib/boot/data.rb`). Hoisting a Rails system test out of `test/system/`
+would run it in the unit suite and drop it from `rails test:system`;
+those two stayed. The three counts come from
+`MASTER/data/sprawl_census.yml`; `bin/pub4 measure --why sprawl.lone_dirs`
+names the members rather than leaving this paragraph to remember them.

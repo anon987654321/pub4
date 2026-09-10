@@ -12,6 +12,11 @@
 #   ruby bin/gate --lexical-only       law/ and the scan registry, no council
 #   ruby bin/gate --semantic-only      the critique stage; exit 3 = not measured
 #   ruby bin/gate --explain            prints the ladder, runs nothing
+#   ruby bin/gate --tree=RAILS         one tree instead of four
+#
+# --tree narrows the scan, not the assertion. A /fix pass aimed at one tree can
+# still write into another, so the clean-tree check at the bottom always
+# includes MASTER alongside whatever was named.
 
 require "open3"
 
@@ -52,7 +57,7 @@ SAFE_ENV = {
 # be the dangerous one on the other, so this surface knows it too — and refuses
 # anything it does not know rather than defaulting to the writing mode.
 KNOWN_FLAGS = %w[--scan-only --lexical-only --semantic-only --explain --help -h].freeze
-unknown = ARGV.reject { |arg| KNOWN_FLAGS.include?(arg) }
+unknown = ARGV.reject { |arg| KNOWN_FLAGS.include?(arg) || arg.start_with?("--tree=") }
 unless unknown.empty?
   warn "gate: unknown argument#{"s" if unknown.size > 1}: #{unknown.join(" ")}"
   warn "gate: known flags are #{KNOWN_FLAGS.join(" ")}"
@@ -106,8 +111,22 @@ def lines_for(path)
   end
 end
 
+# The four trees, by the name a person types. `.` is MASTER because this script
+# runs from inside it.
+TREE_PATHS = { "MASTER" => ".", "RAILS" => "../RAILS", "OPENBSD" => "../OPENBSD", "STUDIO" => "../STUDIO" }.freeze
+
+# Named trees when --tree is given, all four otherwise. An unknown name is
+# refused rather than silently narrowing the gate to nothing — a gate that
+# measures no tree and exits 0 is the failure this whole file is written against.
+named_trees = ARGV.filter_map { |arg| arg[/\A--tree=(.+)\z/, 1] }.flat_map { |value| value.split(",") }.map(&:upcase)
+unless (named_trees - TREE_PATHS.keys).empty?
+  warn "gate: unknown tree(s): #{(named_trees - TREE_PATHS.keys).join(" ")}; have #{TREE_PATHS.keys.join(" ")}"
+  exit 2
+end
+SELECTED_TREES = (named_trees.empty? ? TREE_PATHS.keys : named_trees).freeze
+
 COMMANDS = {
-  master: lines_for(".").freeze,
+  master: (SELECTED_TREES.include?("MASTER") ? lines_for(".") : []).freeze,
   # DEPLOY was renamed to RAILS + OPENBSD (OPERATOR was later folded into
   # OPENBSD).
   #
@@ -125,8 +144,12 @@ COMMANDS = {
   # and that guard was gone with no other sign. Read the printed diff before
   # committing; do not commit rewrites of generated caches. `bin/pub4 gate`
   # names any such path in its own report and refuses to call the run clean.
-  deploy: %w[../RAILS ../OPENBSD ../STUDIO].flat_map { |path| lines_for(path) }.freeze,
+  deploy: (SELECTED_TREES - ["MASTER"]).map { |tree| TREE_PATHS.fetch(tree) }
+                                       .flat_map { |path| lines_for(path) }.freeze,
 }.freeze
+
+# Always MASTER, whatever was named: see the --tree note in the header.
+ASSERT_PATHS = (SELECTED_TREES | ["MASTER"]).freeze
 
 def run_command(*argv, chdir: ROOT)
   puts "$ #{argv.join(" ")}"
@@ -274,7 +297,7 @@ def assert_clean(*paths)
   ERR
 end
 
-puts "gate: mode=#{SCAN_ONLY ? 'scan-only' : 'full-fix'} tier=#{TIER}"
+puts "gate: mode=#{SCAN_ONLY ? 'scan-only' : 'full-fix'} tier=#{TIER} trees=#{SELECTED_TREES.join(',')}"
 
 if EXPLAIN
   COMMANDS.each do |name, lines|
@@ -293,11 +316,13 @@ end
 lexical = TIER != :semantic
 
 COMMANDS[:master].each { |line| run_master_line(line) }
-git_diff("MASTER") if lexical
-assert_clean("MASTER") if lexical && !SCAN_ONLY
+if COMMANDS[:master].any?
+  git_diff("MASTER") if lexical
+  assert_clean("MASTER") if lexical && !SCAN_ONLY
+end
 
 COMMANDS[:deploy].each { |line| run_master_line(line) }
-git_diff("RAILS", "OPENBSD", "STUDIO", "MASTER") if lexical
-assert_clean("RAILS", "OPENBSD", "STUDIO", "MASTER") if lexical && !SCAN_ONLY
+git_diff(*ASSERT_PATHS) if lexical
+assert_clean(*ASSERT_PATHS) if lexical && !SCAN_ONLY
 
 puts SCAN_ONLY ? "ok: MASTER gate scan-only complete" : "ok: MASTER gate clean"

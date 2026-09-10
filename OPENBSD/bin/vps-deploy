@@ -334,6 +334,15 @@ done
 #
 # GATE_AUTOFIX=0 because a gate must not rewrite the tree it is judging, least
 # of all the one that is deployed.
+#
+# GATE_REQUIRE_LIVE=1 because this is the one host where a live gate has no
+# excuse. It turns "port closed, skipping" into a failure, and half this set —
+# flow_journey, page_simulation, port_inventory — measures nothing without a
+# listening app. The fleet was just restarted and the shed apps restored a few
+# lines above, so a closed port here is a deploy that did not come up, not a
+# laptop. bin/check-rails has taken exactly this position on the box since it
+# learned Environment.on_vps?; a second caller on the same host that quietly
+# accepted a skip was the inconsistency, not the flag.
 gate_names=(production port_inventory generated_asset schema_migration
             phantom_foreign_keys frontend_production stimulus_components
             flow_journey page_simulation)
@@ -341,7 +350,7 @@ if [[ -n ${PUB4_DEPLOY_BROWSER_GATES:-} ]]; then
   gate_names+=(rendered_suite layout_suite)
 fi
 print "vps-deploy: $app (gates: ${gate_names})"
-if ! GATE_AUTOFIX=0 ruby34 "$repo/RAILS/gates/runner.rb" "${gate_names[@]}"; then
+if ! GATE_AUTOFIX=0 GATE_REQUIRE_LIVE=1 ruby34 "$repo/RAILS/gates/runner.rb" "${gate_names[@]}"; then
   write_stamp "$app" failed
   print -u2 "vps-deploy: $app gates failed — the app is deployed and serving, and something"
   print -u2 "            it is now serving does not hold. Fix or revert; do not deploy over it."

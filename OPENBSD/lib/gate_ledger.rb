@@ -95,6 +95,7 @@ module Deploy
       by_gate.map do |gate, rows|
         counts = Hash.new(0)
         rows.each { |r| counts[r["outcome"].to_s] += 1 }
+        times = rows.filter_map { |r| r["duration_ms"] }
         {
           gate: gate,
           runs: rows.size,
@@ -104,10 +105,32 @@ module Deploy
           errored: counts["errored"],
           fire_rate: rows.empty? ? 0.0 : (counts["failed"].to_f / rows.size),
           error_rate: rows.empty? ? 0.0 : (counts["errored"].to_f / rows.size),
+          median_ms: median(times),
+          # The last five against everything before them. A gate that has started
+          # taking twice as long is the failure the whole duration column is for,
+          # and a median over the full history hides it by definition.
+          recent_ms: median(times.last(5)),
+          earlier_ms: median(times[0...-5]),
           last: rows.last["outcome"],
           last_at: rows.last["at"],
         }
       end.sort_by { |r| [-r[:errored], -r[:failed], -r[:inconclusive], r[:gate].to_s] }
+    end
+
+    def median(values)
+      sorted = Array(values).compact.sort
+      return if sorted.empty?
+
+      sorted[sorted.size / 2]
+    end
+
+    # A wall time a person reads without arithmetic. Anything past ninety seconds
+    # is the kind of gate somebody plans a coffee around, so it changes units.
+    def self.duration(ms)
+      return "-" if ms.nil?
+
+      seconds = ms.to_f / 1000
+      seconds < 90 ? format("%.1fs", seconds) : format("%dm%02ds", (seconds / 60).floor, (seconds % 60).round)
     end
 
     # The lines worth acting on, in the words of what to do about them. Returned
@@ -124,6 +147,9 @@ module Deploy
             "finding or a line people have learned to skip; read it or retire it"
         elsif r[:inconclusive] == r[:runs]
           "#{r[:gate]}: measured nothing on all #{r[:runs]} runs — its preconditions are never met here"
+        elsif doubled?(r)
+          "#{r[:gate]}: #{self.class.duration(r[:earlier_ms])} -> #{self.class.duration(r[:recent_ms])} " \
+            "over the last five runs — a gate that doubles becomes a gate nobody runs"
         end
       end
     end
@@ -136,11 +162,13 @@ module Deploy
       end
 
       io.puts "[gates] ledger #{display_path} — #{rows.sum { |r| r[:runs] }} gate-runs across #{rows.size} gates"
-      io.puts format("  %-24s %5s %5s %5s %5s %5s  %s", "gate", "runs", "pass", "fail", "inc", "err", "last")
+      io.puts format("  %-24s %5s %5s %5s %5s %5s %9s  %s",
+                     "gate", "runs", "pass", "fail", "inc", "err", "median", "last")
       rows.each do |r|
         io.puts format(
-          "  %-24s %5d %5d %5d %5d %5d  %s",
-          r[:gate], r[:runs], r[:passed], r[:failed], r[:inconclusive], r[:errored], r[:last]
+          "  %-24s %5d %5d %5d %5d %5d %9s  %s",
+          r[:gate], r[:runs], r[:passed], r[:failed], r[:inconclusive], r[:errored],
+          self.class.duration(r[:median_ms]), r[:last]
         )
       end
 
@@ -153,6 +181,14 @@ module Deploy
     end
 
     private
+
+    # Twice as slow, with enough runs on both sides of the line for the
+    # comparison to mean anything and enough absolute time for it to matter. A
+    # 40ms gate that becomes an 80ms gate is noise, not a regression.
+    def doubled?(row)
+      row[:recent_ms] && row[:earlier_ms] &&
+        row[:earlier_ms] >= 1_000 && row[:recent_ms] >= row[:earlier_ms] * 2
+    end
 
     def display_path = @path.sub("#{File.expand_path('../..', __dir__)}/", "")
   end
