@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Every chord progression in the catalogue as sine tones, continuous.
 #
 # No engine, no pads, no drums -- just the harmony, so what is actually in the
