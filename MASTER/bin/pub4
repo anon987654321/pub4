@@ -18,18 +18,21 @@ def usage
     pub4 — repo-wide operator surface
 
     Usage:
-      bin/pub4 gate [--scan-only] [--only=a,b] [--list]  every gate in the repo, fixing as it goes
+      bin/pub4 gate [--scan-only] [--only=a,b] [--tree=T] [--list]  every gate in the repo, fixing as it goes
       bin/pub4 status [--json]
       bin/pub4 vps state [--json] [--remote]
       bin/pub4 vps deploy <app|master> [--remote]
       bin/pub4 vps logs <app> [--lines N] [--remote]
       bin/pub4 post-pull
       bin/pub4 measure [--deep] [--json]
+      bin/pub4 measure --why <row>    the members behind one number
+      bin/pub4 measure --since <ref>  which recorded ceilings moved since <ref>
       bin/pub4 lint [--staged] [--changed-lines] [<path>...]  judge files by MASTER's laws, no model
       bin/pub4 test [<path>...]       smallest complete proof for the paths (default: dirty files)
       bin/pub4 land -m <msg> <path>...  commit, rebase, re-check, push
       bin/pub4 worktree <name>|finish own checkout, or finish (rebase, push the branch, do not merge main)
-      bin/pub4 rule <ID> [--corpus MASTER|all] [path...]  one scanner rule over a corpus
+      bin/pub4 rule <ID> [--card] [--json] [--corpus MASTER|all] [path...]
+                                      the rule, its exemption, then what it finds
       bin/pub4 hooks                  install the shared-tree commit guard
       bin/pub4 readers <path>         who reaches this file, across all four trees
       bin/pub4 pushed? <path>...      is this content on origin/main, or only here
@@ -71,7 +74,13 @@ when "gate"
   # of gates: what is this going to run.
   list = !ARGV.delete("--list").nil? || !ARGV.delete("--explain").nil?
   only = ARGV.filter_map { |arg| arg[/\A--only=(.+)\z/, 1] }.flat_map { |value| value.split(",") }
-  exit Pub4::GateChain.run(scan_only:, only:, list:)
+  # --tree is the common case made cheap: working inside one tree, the other
+  # three trees' suites and gates prove nothing about the change and cost most of
+  # the wall clock. It drops whole stages rather than shrinking them; the
+  # reasoning is in lib/pub4/gate_chain.rb.
+  trees = ARGV.filter_map { |arg| arg[/\A--tree=(.+)\z/, 1] }
+  trees << ARGV[ARGV.index("--tree") + 1].to_s if ARGV.include?("--tree")
+  exit Pub4::GateChain.run(scan_only:, only:, list:, trees:)
 when "status", nil
   json = ARGV.include?("--json")
   puts Pub4::StatusReport.new(root: ROOT).render(json:)
@@ -79,9 +88,26 @@ when "measure"
   # Every ratchet in the repo, current beside recorded. Non-zero when any is over
   # its ceiling OR slack beneath it, because a ceiling above the real number is
   # room the next change grows into without failing anything.
+  #
+  # --why names the files behind a number and --since names the ceilings that
+  # moved, because neither question can be answered from the table: "OVER +826"
+  # is not something a session can act on or disclaim.
   require_relative "../tools/ratchets"
   deep = !ARGV.delete("--deep").nil?
+  why = ARGV.filter_map { |arg| arg[/\A--why(?:=(.*))?\z/, 1] }.first
+  why ||= ARGV[ARGV.index("--why") + 1].to_s if ARGV.include?("--why")
+  since = ARGV.filter_map { |arg| arg[/\A--since(?:=(.*))?\z/, 1] }.first
+  since ||= ARGV[ARGV.index("--since") + 1] if ARGV.include?("--since")
+  abort("usage: bin/pub4 measure --since <ref>") if ARGV.include?("--since") && since.to_s.empty?
+  if since
+    puts Pub4::Ratchets.since(since)
+    exit 0
+  end
   rows = Pub4::Ratchets.all(deep:)
+  if why
+    puts Pub4::Ratchets.why(rows, why)
+    exit 0
+  end
   puts ARGV.include?("--json") ? Pub4::Ratchets.json(rows) : Pub4::Ratchets.render(rows)
   exit(Pub4::Ratchets.ok?(rows) ? 0 : 1)
 when "lint"
@@ -210,31 +236,146 @@ when "worktree"
   abort("usage: bin/pub4 worktree <name>|finish [--remove]") if name.to_s.empty?
   exec("sh", File.join(OPENBSD_OPS, "dev", "agent_worktree.sh"), name, *ARGV)
 when "rule"
-  # One rule, one corpus, printed findings. Written by hand every time a
-  # detector's silence had to be distinguished from a clean tree.
+  # One rule: what it says, what it spares, and what it finds — in that order.
+  #
+  # It printed findings and nothing else, so the one thing a session actually
+  # needs before writing a line was the one thing it could not get cheaply.
+  # CLAUDE.md's instruction is to hold the rule AND its exemption before the
+  # first edit, and "the exemption is the half that gets skipped and the half
+  # that was earned against a measured false positive". A findings list carries
+  # neither.
+  #
+  # The exemption is not a field anywhere. In law/ it is a clause inside the
+  # detect block with the measurement that earned it in the comment above; in
+  # the registry it is an early return with the same comment. So the card prints
+  # the definition verbatim, comments included, rather than a summary of it —
+  # a summary is where an exemption goes missing.
   require "master"
   require "review/scan/infra_helpers"
+  require "yaml"
+  require "json"
   id = ARGV.shift.to_s
-  abort("usage: bin/pub4 rule <ID> [--corpus MASTER|all] [path...]") if id.empty?
+  abort("usage: bin/pub4 rule <ID> [--card] [--json] [--corpus MASTER|all] [path...]") if id.empty?
 
   corpus = "MASTER"
   ARGV.delete_if { |arg| (m = arg.match(/\A--corpus=(.+)\z/)) && (corpus = m[1]) }
+  card_only = !ARGV.delete("--card").nil?
+  as_json = !ARGV.delete("--json").nil?
   ENV["MASTER_SCAN_DETERMINISTIC"] = "1"
   master_root = File.join(ROOT, "MASTER")
+
+  # The declaration, from the file CLAUDE.md calls the law. A rule can be
+  # declared here and have no detector — 78 of them are — so this is looked up
+  # first and separately from the scanner.
+  # Walked rather than read from `rules`: ids live under `laws`, `beauty` and
+  # `anti_patterns` too, and a lookup that knows only one section answers "no
+  # such rule" about a rule that exists.
+  def declarations_in(node, found = [])
+    case node
+    when Hash
+      found << node if node["id"].is_a?(String)
+      node.each_value { |value| declarations_in(value, found) }
+    when Array
+      node.each { |value| declarations_in(value, found) }
+    end
+    found
+  end
+
+  declared = declarations_in(YAML.safe_load_file(File.join(master_root, "data/rules.yml"), aliases: true))
+             .find { |row| row["id"].to_s.casecmp?(id) }
+
+  # Where it is written. Every ruby file under law/ and the scan registry is
+  # searched for the id, and the enclosing block plus its leading comment is the
+  # answer — that comment is where the exemption's reason lives.
+  def definition_at(root, id)
+    Dir.glob(File.join(root, "{law/*.rb,lib/review/scan/rules/*.rb}")).sort.each do |path|
+      lines = File.readlines(path)
+      index = lines.index { |line| line.match?(/(?:Law\.define\(:|declare\s+id:\s*["']|declare\s+:)#{Regexp.escape(id)}\b/i) }
+      index ||= lines.index { |line| line.include?(id) }
+      next unless index
+
+      # The block is the enclosing definition, so back up past the comment that
+      # explains it — and take the indent from the code, not the comment, or a
+      # comment indented one step deeper runs the block on to the file's end.
+      first = index
+      first -= 1 while first.positive? && lines[first - 1].strip.start_with?("#")
+      opener = (first..index).find { |i| !lines[i].strip.start_with?("#") && !lines[i].strip.empty? } || index
+      opener = (index.downto(0).find do |i|
+        lines[i].match?(/\A\s*(class|module|Law\.define)\b/)
+      end || opener)
+      indent = lines[opener][/\A\s*/].length
+      last = opener
+      last += 1 while last + 1 < lines.length && lines[last].rstrip != "#{' ' * indent}end"
+      body = lines[first..last]
+      body = body.first(80) + ["    … #{body.size - 80} more line(s); open #{path} to read the rest\n"] if body.size > 80
+      return { path: path.sub("#{root}/", "MASTER/"), line: first + 1, body: body.join }
+    end
+    nil
+  end
+
   scanner = Master::Review::Scan::InfraHelpers.build_scanner(root: master_root, agent: nil)
   rule = scanner.rules.find { |item| item.id.to_s.casecmp?(id) }
-  abort("rule: no scanner rule named #{id.inspect} (#{scanner.rules.size} loaded)") unless rule
+  if rule.nil? && declared.nil?
+    abort("rule: nothing named #{id.inspect} — neither a declaration in data/rules.yml " \
+          "nor one of the #{scanner.rules.size} rules the scanner loaded")
+  end
+
+  where = definition_at(master_root, rule&.id.to_s.empty? ? id : rule.id.to_s)
+  card = {
+    id: (rule&.id || declared&.dig("id")).to_s,
+    declared: declared,
+    detector: rule ? rule.class.name || "anonymous scan rule" : nil,
+    severity: rule&.severity&.to_s || declared&.dig("severity"),
+    description: rule.respond_to?(:description) ? rule.description : nil,
+    defined_at: where && "#{where[:path]}:#{where[:line]}",
+    definition: where && where[:body],
+  }
+
+  unless as_json
+    # Three states, not two. A rule can carry a scan-registry detector, or none
+    # there and a law/ definition instead, or nothing at all — and 78 of the 228
+    # declarations are in the third state, which is the file's own point.
+    reach = if card[:detector] then ""
+            elsif card[:defined_at].to_s.start_with?("MASTER/law/") then "  (no scan-registry rule; enforced from law/)"
+            else "  (declared only — no detector anywhere; it resolves through a fold or a prompt)"
+            end
+    puts "rule: #{card[:id]}#{reach}"
+    if declared
+      %w[name source tier severity autofix fix detect detect_semantic detect_structural].each do |key|
+        puts "  #{key}: #{declared[key]}" if declared[key]
+      end
+    end
+    puts "  detector: #{card[:detector]}" if card[:detector]
+    if card[:definition]
+      puts "  defined at #{card[:defined_at]} — its fixtures and its exemption, verbatim:"
+      card[:definition].each_line { |line| puts "    #{line.chomp}" }
+    else
+      puts "  no definition found under law/ or lib/review/scan/rules/"
+    end
+  end
+
+  if card_only
+    puts JSON.pretty_generate(card) if as_json
+    exit 0
+  end
+
+  abort("rule: #{card[:id]} has no detector, so there is nothing to run") unless rule
 
   one = Master::Review::Scan::Scanner.new(rules: [rule])
   default = corpus.casecmp?("all") ? ROOT : master_root
   targets = ARGV.empty? ? [default] : ARGV.map { |path| File.expand_path(path, ROOT) }
   hits = one.findings(targets)
-  hits.each do |item|
-    rel = item[:path].to_s.sub(%r{\A#{Regexp.escape(ROOT)}/}, "")
-    puts "#{rel}:#{item[:line]} #{item[:rule]} #{item[:message]}"
+  rows = hits.map do |item|
+    { path: item[:path].to_s.sub(%r{\A#{Regexp.escape(ROOT)}/}, ""), line: item[:line],
+      rule: item[:rule].to_s, message: item[:message].to_s }
   end
-  puts "rule: #{rule.id} #{hits.size} finding(s)"
-  exit(hits.empty? ? 0 : 1)
+  if as_json
+    puts JSON.pretty_generate(card.merge(corpus: corpus, findings: rows))
+  else
+    rows.each { |row| puts "#{row[:path]}:#{row[:line]} #{row[:rule]} #{row[:message]}" }
+    puts "rule: #{rule.id} #{rows.size} finding(s) over #{corpus}"
+  end
+  exit(rows.empty? ? 0 : 1)
 when "readers"
   # Before you believe "its only reader is X". That sentence has been wrong four
   # times in this repo and each time the grep behind it could not see the

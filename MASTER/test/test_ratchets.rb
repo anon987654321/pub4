@@ -84,11 +84,11 @@ class TestRatchets < Minitest::Test
   # nothing would pass the first assertion on its own.
   def test_growth_counts_tracked_files_and_not_the_working_tree
     intruder = File.join(Pub4::Ratchets::ROOT, "MASTER", "test", "untracked_growth_probe.rb")
-    before = Pub4::Ratchets.tree_source_count("MASTER")
+    before = Pub4::Ratchets.tree_source_files("MASTER").size
     File.write(intruder, "# frozen_string_literal: true\n")
     forget_tracked_files
 
-    assert_equal before, Pub4::Ratchets.tree_source_count("MASTER"),
+    assert_equal before, Pub4::Ratchets.tree_source_files("MASTER").size,
                  "an untracked file is somebody's work in progress, not this tree's growth"
     assert_includes Pub4::Ratchets.tracked_source_files, "MASTER/tools/ratchets.rb",
                     "a tracked source file must still be counted"
@@ -98,6 +98,45 @@ class TestRatchets < Minitest::Test
   end
 
   def forget_tracked_files = Pub4::Ratchets.instance_variable_set(:@tracked_source_files, nil)
+
+  # The whole value of --why is that the list and the number are the same
+  # measurement. A row whose members do not add up to its own count is worse than
+  # a row with no members: it reads as attribution and attributes wrongly.
+  def test_members_agree_with_the_count_they_stand_behind
+    disagreeing = rows.select { |row| row.members && row.members.size != row.current }
+    assert_empty disagreeing.map { |row| "#{row.name}: #{row.members.size} members vs #{row.current}" }
+  end
+
+  # An integer nobody can decompose is the state this flag exists to end, so most
+  # of the register has to be able to answer. Not all of it: file_length and
+  # coverage_ratchet are pointers to a test that owns the number.
+  def test_most_rows_can_name_their_members
+    answerable = rows.count(&:members)
+    assert_operator answerable, :>=, (rows.size * 0.7).floor,
+                    "only #{answerable} of #{rows.size} rows can say what their number is made of"
+  end
+
+  def test_why_names_the_members_and_falls_back_to_an_index
+    named = rows.find { |row| row.members&.any? }
+    refute_nil named, "no row carries members, so --why has nothing to prove"
+    assert_includes Pub4::Ratchets.why(rows, named.name), named.members.first.to_s
+    assert_includes Pub4::Ratchets.why(rows, "no-such-row"), "rows can name their members"
+  end
+
+  # --since asks git, not a second census, so it has to work from a worktree and
+  # on a tree whose ceilings have not moved.
+  def test_since_reads_recorded_ceilings_out_of_git
+    report = Pub4::Ratchets.since("HEAD", rows)
+
+    assert_includes report, "measure --since HEAD"
+    refute_includes report, "unparseable"
+  end
+
+  def test_numeric_leaves_keys_by_path
+    leaves = Pub4::Ratchets.numeric_leaves({ "a" => { "b" => 3 }, "c" => "not a number", "d" => 4 })
+
+    assert_equal({ "a.b" => 3, "d" => 4 }, leaves)
+  end
 
   # Each row must say where its number lives, or a failure is unactionable.
   def test_every_row_names_its_source

@@ -55,25 +55,40 @@ module Pub4
     # bin/pub4 calls. Everything below is a stage or a helper one of these three
     # reaches, so the file reads in the order the ladder runs rather than the
     # order it was written.
-    def run(scan_only:, only: nil, list: false)
-      all = stages(scan_only:)
+    TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
+
+    def run(scan_only:, only: nil, list: false, trees: nil)
+      trees = normalise_trees(trees)
+      all = stages(scan_only:, trees:)
       selected = only&.any? ? all.select { |stage| only.include?(stage.name) } : all
       abort "gate: no stage named #{only.join(", ")} (have: #{all.map(&:name).join(", ")})" if selected.empty?
-      return explain(selected, scan_only:) if list
+      return explain(selected, scan_only:, trees:) if list
 
-      report(selected, scan_only:)
+      report(selected, scan_only:, trees:)
     end
 
-    def explain(selected, scan_only:)
-      puts "gate: #{scan_only ? "scan-only" : "full-fix"} — #{selected.size} stage(s)"
+    # An unknown tree name is refused. The whole point of --tree is to run less,
+    # so a typo that quietly narrowed the ladder to nothing would report a clean
+    # repo on the strength of having measured none of it.
+    def normalise_trees(trees)
+      named = Array(trees).flat_map { |value| value.to_s.split(",") }.map(&:upcase).reject(&:empty?)
+      return TREES if named.empty?
+
+      unknown = named - TREES
+      abort "gate: no tree named #{unknown.join(", ")} (have: #{TREES.join(", ")})" if unknown.any?
+      named
+    end
+
+    def explain(selected, scan_only:, trees:)
+      puts "gate: #{scan_only ? "scan-only" : "full-fix"} — #{selected.size} stage(s) over #{trees.join(", ")}"
       selected.each { |s| puts format("  %-9s %s%s", s.name, s.purpose, s.mutates ? "  [writes]" : "") }
       0
     end
 
-    def report(selected, scan_only:)
+    def report(selected, scan_only:, trees:)
       foreign = dirty
       mode = scan_only ? "scan-only (writes nothing)" : "full-fix (writes)"
-      puts "gate: #{mode} — #{selected.map(&:name).join(" -> ")}"
+      puts "gate: #{mode} over #{trees.join(", ")} — #{selected.map(&:name).join(" -> ")}"
       announce_foreign(foreign)
 
       seen = foreign.dup
@@ -93,28 +108,41 @@ module Pub4
     # because it is the only stage that costs money and the only one that
     # currently cannot answer — a tier with no answer must not stand between the
     # rest of the ladder and its verdict.
-    def stages(scan_only:)
+    # Narrowing by tree drops stages rather than shrinking them, because that is
+    # what each stage is: the RAILS gate runner has nothing to say about STUDIO,
+    # and brgen's suite is not a MASTER session's business. Two stages stay
+    # whole under every --tree — the ratchets and the sprawl census are
+    # repo-wide measurements by definition, and both are cheap.
+    def stages(scan_only:, trees: TREES)
+      scope = trees == TREES ? "all four trees" : trees.join(", ")
       [
-        Stage.new(name: "lexical", purpose: "law/ and the scan registry over all four trees, autofixing",
-                  mutates: !scan_only, run: -> { gate("--lexical-only", scan_only:) }),
-        Stage.new(name: "source", purpose: "every RAILS gate, source and rendered, fix + remeasure",
-                  mutates: !scan_only, run: -> { rails_gates(scan_only:) }),
-        Stage.new(name: "suites", purpose: "MASTER, the three apps, the RAILS contracts, OPENBSD, STUDIO",
-                  mutates: false, run: -> { suites }),
+        Stage.new(name: "lexical", purpose: "law/ and the scan registry over #{scope}, autofixing",
+                  mutates: !scan_only, run: -> { gate("--lexical-only", scan_only:, trees:) }),
+        (if trees.include?("RAILS")
+           Stage.new(name: "source", purpose: "every RAILS gate, source and rendered, fix + remeasure",
+                     mutates: !scan_only, run: -> { rails_gates(scan_only:) })
+         end),
+        Stage.new(name: "suites", purpose: suite_purpose(trees),
+                  mutates: false, run: -> { suites(trees) }),
         Stage.new(name: "ratchets", purpose: "every recorded ceiling, current beside it", mutates: false,
                   run: -> { capture(RUBY, File.join(MASTER, "bin", "pub4"), "measure") }),
         Stage.new(name: "sprawl", purpose: "lone dirs, stutter, vague names, duplicate files",
                   mutates: !scan_only, run: -> { sprawl(scan_only:) }),
         Stage.new(name: "council", purpose: "/critique and /review, then the panel's picks back through the runtime",
-                  mutates: council_fix?(scan_only:), run: -> { council(scan_only:) }),
-      ]
+                  mutates: council_fix?(scan_only:), run: -> { council(scan_only:, trees:) }),
+      ].compact
+    end
+
+    def suite_purpose(trees)
+      jobs = suite_jobs(trees).map(&:first)
+      jobs.empty? ? "no suite belongs to #{trees.join(", ")}" : jobs.join(", ")
     end
 
     # /critique IS the council: dispatch_critique hands the path to
     # Review::Council::Critique, which runs the persona panel, the adversarial
     # round and the cherry-pick. A second one here is a second debate.
-    def council(scan_only:)
-      ok, body, exitstatus = gate("--semantic-only", scan_only:)
+    def council(scan_only:, trees: TREES)
+      ok, body, exitstatus = gate("--semantic-only", scan_only:, trees:)
       # Exit 3 is the panel saying it reached nobody — today, four personas
       # against a provider out of credit. Straight through, so the summary
       # reports the tier as skipped and the run refuses to call itself clean.
@@ -164,8 +192,9 @@ module Pub4
       !scan_only && ENV.fetch("PUB4_GATE_COUNCIL_FIX", "1") != "0"
     end
 
-    def gate(tier, scan_only:)
-      capture(RUBY, File.join(MASTER, "bin", "gate"), tier, *(scan_only ? ["--scan-only"] : []))
+    def gate(tier, scan_only:, trees: TREES)
+      scope = trees == TREES ? [] : ["--tree=#{trees.join(',')}"]
+      capture(RUBY, File.join(MASTER, "bin", "gate"), tier, *scope, *(scan_only ? ["--scan-only"] : []))
     end
 
     # GATE_AUTOFIX defaults to on; naming it keeps scan-only honest either way.
@@ -186,21 +215,24 @@ module Pub4
 
     # Whole suites, not the ones the diff touches: a green over hand-picked tests
     # is unmeasured. This is `bin/pub4 test`'s mapping with every path in it.
-    def suite_jobs
+    # The fifth element is the tree the suite proves, so --tree can drop the ones
+    # that prove another. It is not derivable from the working directory: STUDIO's
+    # suite runs from MASTER, because the rake task lives there.
+    def suite_jobs(trees = TREES)
       [
-        ["MASTER", [RUBY, File.join(MASTER, "bin", "check"), "--profile=ci"], MASTER, {}],
-        ["RAILS contracts", [RUBY, "test/run_all.rb"], File.join(ROOT, "RAILS"), {}],
+        ["MASTER", [RUBY, File.join(MASTER, "bin", "check"), "--profile=ci"], MASTER, {}, "MASTER"],
+        ["RAILS contracts", [RUBY, "test/run_all.rb"], File.join(ROOT, "RAILS"), {}, "RAILS"],
         *%w[brgen amber bsdports].map do |app|
           ["#{app} suite", %w[rbenv exec bundle exec bin/rails test],
-           File.join(ROOT, "RAILS", app), { "RBENV_VERSION" => "3.4.9" }]
+           File.join(ROOT, "RAILS", app), { "RBENV_VERSION" => "3.4.9" }, "RAILS"]
         end,
-        ["OPENBSD", [RUBY, "-e", OPENBSD_SUITE], File.join(ROOT, "OPENBSD"), {}],
-        ["STUDIO", %w[bundle exec rake studio], MASTER, {}],
-      ]
+        ["OPENBSD", [RUBY, "-e", OPENBSD_SUITE], File.join(ROOT, "OPENBSD"), {}, "OPENBSD"],
+        ["STUDIO", %w[bundle exec rake studio], MASTER, {}, "STUDIO"],
+      ].select { |job| trees.include?(job.last) }
     end
 
-    def suites
-      results = suite_jobs.map do |name, cmd, dir, env|
+    def suites(trees = TREES)
+      results = suite_jobs(trees).map do |name, cmd, dir, env, _tree|
         ok, out = capture(*cmd, chdir: dir, env:)
         [name, ok, out]
       end

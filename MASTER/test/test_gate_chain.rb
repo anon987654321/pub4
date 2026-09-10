@@ -36,6 +36,31 @@ class TestGateChain < Minitest::Test
     assert_equal %w[lexical source sprawl council], writers
   end
 
+  # --tree exists to run less. Its whole risk is running less than the caller
+  # thinks: a narrowed ladder that still calls itself a gate, or a typo that
+  # narrows it to nothing and exits clean.
+  def test_tree_scoping_drops_the_stages_that_prove_another_tree
+    scoped = G.stages(scan_only: true, trees: %w[MASTER]).map(&:name)
+
+    refute_includes scoped, "source", "the RAILS gate runner says nothing about MASTER"
+    assert_includes scoped, "ratchets", "the ratchets are repo-wide by definition and cheap"
+    assert_equal ["MASTER"], G.suite_jobs(%w[MASTER]).map(&:first)
+    assert_equal %w[RAILS\ contracts brgen\ suite amber\ suite bsdports\ suite],
+                 G.suite_jobs(%w[RAILS]).map(&:first)
+  end
+
+  def test_every_suite_job_names_a_tree_the_scoping_knows
+    strays = G.suite_jobs.map(&:last) - G::TREES
+
+    assert_empty strays, "a suite tagged with a tree --tree cannot name is unreachable"
+  end
+
+  def test_an_unknown_tree_is_refused_rather_than_narrowing_to_nothing
+    assert_equal G::TREES, G.normalise_trees(nil)
+    assert_equal %w[RAILS], G.normalise_trees("rails")
+    assert_raises(SystemExit) { G.normalise_trees("NOPE") }
+  end
+
   # The panel argues for free or it does not argue; either way the tree stays as
   # it was when nobody asked for a fixing run.
   def test_the_council_acts_on_its_picks_only_in_full_fix
