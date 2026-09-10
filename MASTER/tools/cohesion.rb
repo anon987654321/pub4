@@ -190,6 +190,8 @@ end
     # name and the rename costs nothing. Without one the regroup has to create
     # the parent module, which is a real edit and the plan says so.
     def regroup_plan(name, files, kind, dir)
+      return if reopens_one_constant?(files)
+
       parent = files.find { |f| File.basename(f, ".rb") == name }
       members = files - [parent].compact
       subdir = File.join(dir, name)
@@ -227,6 +229,30 @@ return if collisions.any?
           "no member reads a sibling at load time under its old constant",
         ],
       }
+    end
+
+    # A regroup renames every member's constant, and a member that reopens one
+    # constant defined elsewhere has none of its own to rename. MASTER declares
+    # exactly which files those are, and this tool did not read the file:
+    # cli/command_registry is thirteen files declaring one reopened
+    # CommandRegistry, and the proposal was to split it into eight constants,
+    # breaking every call site. data/autoload.yml is the register, and
+    # rake lint:autoload proves each entry still necessary, so it is a live
+    # source rather than an allow-list.
+    #
+    # Paths there are relative to MASTER/lib, which is the only tree Zeitwerk
+    # loads this way; a family outside it cannot be on the list and is unaffected.
+    LIB = File.expand_path("../lib", __dir__)
+    AUTOLOAD = File.expand_path("../data/autoload.yml", __dir__)
+
+    def reopens_one_constant?(files)
+      files.any? { |path| reopened_paths.include?(File.expand_path(path).sub("#{LIB}/", "")) }
+    end
+
+    def reopened_paths
+      @reopened_paths ||= Array(
+        (YAML.safe_load_file(AUTOLOAD) || {}).dig("autoload", "reopens_a_constant_defined_elsewhere"),
+      )
     end
 
     def move_for(path, family, kind)

@@ -297,4 +297,23 @@ end
       refute_includes out, "arrived since"
     end
   end
+
+  # A regroup renames every member constant, so a family whose members reopen one
+  # constant defined elsewhere has nothing to rename and the proposal would break
+  # every call site. MASTER declares those files in data/autoload.yml and this
+  # tool did not read it: thirteen files under cli/command_registry declare one
+  # reopened CommandRegistry, and the plan was to split it into eight constants.
+  #
+  # Against the real tree, because the register and the paths it names are the
+  # fact under test. The second assertion is the instrument check: an empty
+  # register would satisfy the first while measuring nothing.
+  def test_a_family_that_reopens_one_constant_gets_no_regroup
+    refute_empty Pub4::Cohesion.reopened_paths, "the autoload register did not read"
+
+    dir = File.expand_path("../lib/cli/command_registry", __dir__)
+    plans = Pub4::Cohesion.plans_for(dir)
+
+    assert_empty plans.select { |plan| plan[:plan] == "regroup" },
+                 "cli/command_registry reopens CommandRegistry — a rename there is a NameError at every call site"
+  end
 end
