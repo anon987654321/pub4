@@ -4,7 +4,7 @@ module Master
   module Io
     # Applies a governed replacement across text files and optional filenames.
     class BatchReplace
-      include Master::Ground::AtomicWrite
+      include AtomicWrite
       include PathGuard
 
       TIER = :guarded

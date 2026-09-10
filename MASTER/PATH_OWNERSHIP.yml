@@ -56,7 +56,11 @@ ownership:
     risk: high
     check: bin/check --profile=agent
   lib/ground/:
-    purpose: constitution, config, policy, memory, schema
+    purpose: constitution, config, policy, memory, schema — the schema clause
+      covers a typed reader whose table declares one of those four things, in
+      data/ or in a frozen constant, and stops where the table's subject is
+      another directory's declared purpose or where the file writes the table
+      rather than reading it
     risk: high
     check: bin/check --profile=agent
   lib/trace/:

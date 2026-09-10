@@ -28,7 +28,7 @@ module Master
         @pwa = PwaAudit.new(root:)
         @design = Master::Design::MobileFirstPwaProfiles.new
         @routes_views = RoutesViewsAudit.new(root:)
-        @catalog = Master::Ground::MobileWebClusterCatalog.new
+        @catalog = MobileWebClusterCatalog.new
       end
 
       def call(intent:, app: nil, goal: nil)

@@ -10,7 +10,7 @@ module Master
     PHASES = %w[discover analyze ideate design implement validate deliver idle].freeze
 
     class PhaseGates
-      include AtomicWrite
+      include Master::Io::AtomicWrite
       PHASE_STATE_PATH = "data/phase_state.yml".freeze
       REQUIRED_EDGE_CASES = %w[nil empty max unicode].freeze
       VAGUE_WORDS = /\b(it|thing|things|stuff|something|somehow)\b/i

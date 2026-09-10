@@ -4,7 +4,7 @@ module Master
   module Ground
     class Memory
       module Store
-        include AtomicWrite
+        include Master::Io::AtomicWrite
 
         def initialize(root: Dir.pwd)
           @root = root

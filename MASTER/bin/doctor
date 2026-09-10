@@ -127,8 +127,8 @@ require "master" rescue nil
 if ARGV.include?("--fix")
   require "fileutils"
   require "set"
-  require "ground/principle_map_repair"
-  fixed = Master::Ground::PrincipleMapRepair.fix!(root: ROOT)
+  require "fix/principle_map_repair"
+  fixed = Master::Fix::PrincipleMapRepair.fix!(root: ROOT)
   if fixed.any?
     puts "doctor --fix: removed #{fixed.size} dangling rule_id reference(s) from data/principle_map.yml (backup: .bak)"
     fixed.each { |id, rid| puts "  #{id}: removed #{rid}" }

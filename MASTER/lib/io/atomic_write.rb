@@ -4,7 +4,7 @@ require "fileutils"
 require "tempfile"
 
 module Master
-  module Ground
+  module Io
     # Atomic file writes using temp file + rename. Ensures data durability
     # via fsync, and optionally fsyncs the parent directory on POSIX systems
     # to commit the rename to disk.

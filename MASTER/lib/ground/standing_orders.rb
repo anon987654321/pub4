@@ -53,7 +53,7 @@ module Master
         end
       end
 
-      include AtomicWrite
+      include Master::Io::AtomicWrite
       include OrderManagement
       DAILY_INTERVAL = 86_400
       WEEKLY_INTERVAL = 604_800

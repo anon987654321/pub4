@@ -2,7 +2,7 @@
 
 require "digest"
 require "tempfile"
-require_relative "../ground/atomic_write"
+require_relative "../io/atomic_write"
 require_relative "conflict_resolver"
 require_relative "constants"
 require_relative "fix_attempt"
@@ -80,7 +80,7 @@ module Master
         end
       end
 
-      include Master::Ground::AtomicWrite
+      include Master::Io::AtomicWrite
       include FixStrategies
       include FixVerification
       include OutcomeTracking
