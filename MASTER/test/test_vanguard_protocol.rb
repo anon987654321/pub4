@@ -30,12 +30,6 @@ class TestVanguardProtocol < Minitest::Test
     assert Ops::RuntimeLoopGuards.guard_subprocess_context!
   end
 
-  def test_git_hooks_skip_without_git_dir
-    result = Io::GitHooks.ensure_pre_commit!(root: Dir.mktmpdir)
-    assert result.ok?
-    assert_equal :no_git, result.value![:skipped]
-  end
-
   def test_symbol_visitor_tracks_metrics
     source = <<~RUBY
       module Demo

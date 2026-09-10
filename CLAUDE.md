@@ -149,7 +149,7 @@ aliases, so `safe_load_file` raises on it:
 
 ```zsh
 ruby -ryaml -e 'YAML.unsafe_load_file("MASTER/data/rules.yml")["rules"].each { |r| puts "#{r["tier"]} #{r["id"]}: #{r["name"]}" }'
-ruby MASTER/tools/agent_context.rb   # the law in force, under a kilobyte
+ruby MASTER/tools/agent_context.rb   # the 47 conduct rules, and what can refuse a write
 ```
 
 You have it when you can name the rule that governs a line you are about to

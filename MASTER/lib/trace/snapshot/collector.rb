@@ -82,7 +82,7 @@ module Master
         end
 
         def git_repo?(repo_root)
-          File.directory?(File.join(repo_root, ".git"))
+          Master.git_checkout?(repo_root)
         end
 
         def deploy_pillar_paths(repo_root)

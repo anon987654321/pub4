@@ -313,6 +313,21 @@ ways — which is the finding.** One was wired, one was deleted, and one was del
 a reason that had nothing to do with being unwired. "Wire or delete" is the rule and it
 is not a coin toss: what decides it is what the thing would be a second copy of.
 
+**The instrument that finds the next one is the event bus, in one direction only.**
+Comparing published topic names against subscribed ones over `lib/`, `bin/`, `tools/`
+and `web/app`: published-never-subscribed is 238 of 285 and every row is noise, because
+`*` and `**` wildcard subscribers consume the lot. Subscribed-never-published is 4, two
+of them those wildcards, and **both of the remaining two were real**.
+`Trace::Ledger::Swallow` subscribed to `swallow:error` while `Ground::Swallow.log`
+publishes `error:swallowed` — the same two words the other way round — so the ledger
+that exists to make a swallowed error visible had never counted one, and its test
+published the subscriber's spelling on a fake bus, so both halves agreed with each
+other and neither with the producer. It now goes through `Ground::Swallow.log`, and a
+rename on either side fails. The second is the face's mood channel, recorded below
+because it is an operator decision rather than a defect. **One direction of a census
+being 100% noise does not make the other direction worthless; run both and read the
+smaller list.**
+
 **`unified_diff_editor.rb` went, and the reason is worth keeping: it was not merely
 unwired, it was a second source for three live mechanisms.** `applyable?`'s
 immutability and traversal checks are `Io::PathGuard` and `Fix::DiffStager#stage`;
@@ -329,12 +344,13 @@ back half-edited and an `Oops.rej` was written to the working directory.
 `test_fix_patch_applier.rb` pins it.
 
 **`maturity_scorecard.rb` was wired rather than deleted, and its first honest reading
-is eight rows of debt.** `bin/doctor` prints `summary_line` under the boot receipt —
-the receipt says what booted, the scorecard says what has been proven and when. It
-now names how many rows are past `EVIDENCE_SHELF_LIFE_DAYS`, set to 30 because a
-`verified` taken off month-old evidence is a claim again. All eight rows in
-`data/maturity.yml` were last checked on 2026-07-22, so the count reads 8 of 8. **That
-is the open item now: re-verify them or mark them, one at a time, with the evidence.**
+was eight rows of debt.** `bin/doctor` prints `summary_line` under the boot receipt —
+the receipt says what booted, the scorecard says what has been proven and when — and it
+names how many rows are past `EVIDENCE_SHELF_LIFE_DAYS`, set to 30 because a `verified`
+taken off month-old evidence is a claim again. All eight were re-verified on 2026-09-10
+and each row carries what was read, so the count is 0 of 8. **The re-verification is
+cheap and the shelf life is thirty days: expect this to read 8 of 8 again in a month,
+and re-read the predicate rather than re-dating the row.**
 
 **The posture, settled 2026-09-10, is warn — and the funnel already had one.**
 `Voice::OutputGuard#validate` runs in `CLI::Stages::Render`, beside
@@ -425,40 +441,31 @@ Deterministic detectors in `MASTER/lib/review/scan/rules/`, following the
 `LONG_PARAMETER_LIST`, `PRIMITIVE_OBSESSION`, `FEATURE_ENVY`, `COUPLER_SMELLS`,
 `LAZY_CLASS`, `SPECULATIVE_GENERALITY`, `NO_SHOTGUN_SURGERY`, `TEMPORAL_COUPLING`.
 
-Two were drafted, run over the tree, and are blocked on the cross-file index below.
-Neither is a guess.
+**`LAYER_CAKE` and `DEAD_ABSTRACTION` are decided against**, with the measurement, at
+`MASTER/DECISIONS.md`. Neither was blocked on the cross-file index. `DEAD_ABSTRACTION`'s
+class half was recorded here as one finding and there are **none**: a Prism walk for
+classes whose every method raises `NotImplementedError`, proved against a planted file
+first, reads zero over `lib/`, and the three abstract declarations the tree holds carry
+six implementers apiece or are `Scan::Rule#check`. Reopen either only with a finding in
+hand.
 
-- **`LAYER_CAKE`** — a chain of sibling methods each of which only forwards. At three
-  links, the honest reading, this tree has **none**, and a rule that fires on nothing
-  joins `rule_audit.silent`, which is at its ceiling. At two links it finds 9, and
-  reading them says why that threshold is wrong: three are `rescue_handlers.rb` naming
-  one exception each before forwarding to `render_http_error`, the shape `rescue_from`
-  requires, and the rest (`ok? -> ok`, `unwrap -> value!`) are aliases. A two-link
-  forward is an alias, not a cake. A real layer cake spans files — controller to
-  service to repository — and no per-file rule can see it.
-- **`DEAD_ABSTRACTION`** — the class half is precise and almost empty: 4 classes declare
-  a body that is only `raise NotImplementedError`, and exactly **1** has no
-  implementer. The module half is a false-positive machine and must not ship as
-  written: 367 of 419 modules that define methods are included at most once, because
-  nearly every module here is a `module_function` namespace rather than a mixin, so the
-  census measures Zeitwerk's file-to-constant mapping and calls it a dead abstraction.
-  One finding does not pay for a rule.
+#### Larger AST work — closed 2026-09-10, four against and one already built
 
-#### Larger AST work — multi-session projects
+The five that stood here were a wish list with no measurement under any of them. Each
+was measured; the arguments are in `MASTER/DECISIONS.md` and none is open.
 
-Each is its own sitting, with an owner and a design, not a sweep.
-
-- **A cross-file AST / symbol index.** Every rule that needs to know "who implements
-  this" or "who calls this" (`DEAD_ABSTRACTION`, `LAYER_CAKE`, feature envy across
-  files) currently cannot see past the file it is in.
-- **An incremental scan cache keyed on file SHA.** Re-parse only what changed; a full
-  scan re-walks the whole tree every run.
-- **tree-sitter for real JS / SCSS ASTs.** The JS and SCSS rules are lexical because
-  there is no real parse tree for those languages here; a real AST retires whole
-  classes of false positive.
-- **Prose / CSS / audio "AST" rules.** The same deterministic-detector idea applied to
-  non-Ruby artifacts — documents, stylesheets, and dilla's render graph.
-- **A clone → extract-method autofix.** `DUPLICATE_CODE` detects; nothing extracts.
+The **cross-file symbol index** has no consumer left and is mostly built besides:
+`tools/method_graph.rb` is a name-based call graph over all of `lib/`, and thirty lines
+of Prism answered "who implements this" for `DEAD_ABSTRACTION` above. The
+**incremental scan cache** wants a bottleneck it does not have — a full `lib/` scan is
+13.0s over 410 files, about 32ms a file, and the minutes a `/through` pass takes are
+the council. **tree-sitter** buys real JS and SCSS parse trees at the price of a native
+extension, in the tree whose first sentence is that it is pure Ruby and which deploys
+to OpenBSD. The **clone-to-extract autofix** has three subjects in all of `lib/`, one
+of them already judged not worth extracting, and rewriting method boundaries is the
+riskiest transform available to a pass that has mangled one file in three. The
+**prose and CSS detector** idea is `law/prose.rb` and `law/css.rb`, both live; the
+audio half is dilla's owner's.
 
 ### `rake test` is green — 2026-09-10
 
@@ -515,13 +522,29 @@ Worth reading beside it: the map holds 272 principles of which 176 carry empty
 
 ### Test coverage
 
-**119 of 405 `lib/` files have no test or spec naming their innermost class or
-module**, re-measured 2026-09-09. The earlier records of 163 of 445 and 188 of ~400
-used the same method against larger trees; the fall is mostly `lib/` shrinking and the
-rule-fixture pass.
+**69 of 404 `lib/` files have no test or spec naming any constant they declare**,
+measured 2026-09-10. **The definition is most of the number and the entry that quoted
+119 did not carry one.** Read as "the innermost class or module", meaning the last
+constant a walk sees, the count is 128 — and it calls `review/scan/self_test.rb`
+untested under the name `DeployChecks`, its last helper module, while `SelfTest` has a
+suite. Read as "any constant, namespace segments included", the count is 1, because
+every test naming `Review` vouches for every file under it. 69 is the honest middle:
+a file is untested when no leaf constant it declares is named anywhere in `test/` or
+`spec/`. **Quote the definition with the number or the next reader re-derives a
+different one.**
 
-The argument for closing the gap is what happened when eight named constants got their
-first tests on 2026-08-01: four live defects fell out, all in code that looked fine.
+The argument for closing the gap is what happens when a file gets its first reading.
+Three defects fell out of the 2026-09-10 pass through this list, all in the same
+sentence — a `git worktree` checkout keeps `.git` as a file and seven readers tested
+for a directory, so rollback after a failed fix went off, the boot receipt reported
+`commit: unknown` and `git` missing while running inside git, and every snapshot taken
+in a checkout was written to `~/Downloads`. `MASTER/DECISIONS.md` carries the list.
+**The tell was not the missing test; it was that the two tests which did exist both set
+`MASTER_SNAPSHOT_DIR`, so the branch that was wrong had never run.** Look for the
+branch no test reaches before looking for the file no test names.
+
+Four more fell out when eight named constants got their first tests on 2026-08-01, all
+in code that looked fine.
 
 - `io/ssrf_guard.rb` never required `uri`. `safe_uri?` does `uri.is_a?(URI::HTTP)`
   inside a blanket rescue, so in any process that had not already loaded `uri` the
@@ -539,47 +562,32 @@ first tests on 2026-08-01: four live defects fell out, all in code that looked f
 `test/{cli,io,fix,lib}/` is no longer skipped by the gate `START_HERE.md` sends
 contributors to.
 
-### `rake studio` fails on dilla, not on vips
-
-**This section said `rake studio` fails locally because `ruby-vips` and `libvips` are
-not installed. Both are installed** — `test_tools_postpro.rb` prints `vipsgem=true`
-and passes — and `studio_gate` itself passes, parsing 110 Ruby files. What fails is
-`studio_test`, inside dilla, and the three defects are real:
-
-    302 runs, 14098 assertions, 2 failures, 1 errors, 3 skips
-
-- `test_every_hand_cut_sample_loop_is_reachable_as_a_track_preset`
-  (`STUDIO/test/test_dilla_engine_probes.rb:1038`) — the loop `semua_untuk_mu` points
-  at a missing file.
-- `test_every_genre_renderer_reaches_the_master_bus` (`:1180`) — `render_analog` never
-  sets an integrated loudness.
-- `TestRenderSeed#test_render_rand_stays_in_the_unit_interval`
-  (`STUDIO/test/test_dilla_render_seed.rb:75`) — `NoMethodError: undefined method
-  'render_rand'`. The helper the test names does not exist.
-
-These belong to dilla's owner. `rake studio` is the fourth prerequisite of `rake
-audit`, so it is what the audit hands you after the earlier gates pass.
-
 ### Survey findings still open
 
 Re-measured 2026-09-09. Every number here was wrong by a little in the previous
 version, which is the argument for re-running the instrument rather than quoting it.
 
-**Twenty-five files in `lib/` are below the sprawl threshold, and the merge is not
+**Twenty-three files in `lib/` are below the sprawl threshold, and the merge is not
 free.** `FileSprawlRule` (`MASTER/lib/review/scan/rules/meta_rules.rb:284`) run over
-`lib/` names 25, of which two are lone-file directories —
+`lib/` names 23, of which two are lone-file directories —
 `MASTER/lib/cli/propose/candidate_sources.rb` and
 `MASTER/lib/review/repo_ecology/co_change_graph.rb` — and the rest are under 25 code
-lines. The cheapest are the ones whose constant nothing outside names:
-`MASTER/lib/security_error.rb` at 3 code lines,
-`MASTER/lib/review/review_crew/agents.rb` at 8 (already an autoload ignore, so a pure
-require aggregator), `MASTER/lib/fix/constants.rb` at 10. `lib/io/antigravity.rb` is
-**not** on this list any more — it absorbed its folded subdirectory and is 231 code
-lines. But `lib/` is under `push_dir(__dir__, namespace: Master)`
-(`MASTER/lib/master.rb:150`), so every other merge moves a constant and needs either a
-caller rename or a new `data/autoload.yml` entry that `rake lint:autoload` will then
-hold to account. Do these one at a time with the constant rename in the same commit;
-do not sweep them.
+lines. `lib/io/antigravity.rb` is **not** on this list any more — it absorbed its
+folded subdirectory and is 231 code lines. But `lib/` is under
+`push_dir(__dir__, namespace: Master)` (`MASTER/lib/master.rb:150`), so every merge
+moves a constant and needs either a caller rename or a new `data/autoload.yml` entry
+that `rake lint:autoload` will then hold to account. Do these one at a time with the
+constant rename in the same commit; do not sweep them.
+
+`review_crew/agents.rb` was the one with no constant to move — a require aggregator
+carrying an autoload ignore — and it is folded: `review_crew.rb` names the eight files
+where it loads them, and the ignore list is 44. **`security_error.rb` at 3 code lines is
+declined, and the reason generalises.** Zeitwerk maps `Master::SecurityError` to that
+path and nowhere else, so absorbing it means defining a class in `lib/master.rb`, the
+namespace file, which carries its own `loc_body_budgets` key separate from `lib/` — two
+lines saved in one row and charged to another. `FILE_SPRAWL`'s subject is a directory
+holding one file or a name repeating its parent, and a file Zeitwerk requires to sit
+exactly where it does is neither.
 
 **Declaration order in `lib/` is already right, and the residual is constants, not
 methods.** A Prism walk over all 405 files, tracking visibility per
@@ -622,12 +630,22 @@ wants them split for reading. By directory, counting only the files directly in 
 `lib/ground` is 4,323 over 50 files, `lib/io` 4,143 over 56, and
 `lib/review/scan/rules` 3,341 over 16.
 
-**`ABC_SIZE` fires three times over its ratchet of 40**, and this is the one figure
-that re-measured exactly: `MASTER/lib/voice/emotion.rb:20` `#analyze` at 74.7,
+**`ABC_SIZE` fires four times over its ratchet of 40, not three.** The entry that
+called this "the one figure that re-measured exactly" named three and missed
+`MASTER/lib/review/scan/rule_registry_audit.rb:139` `#classify_yaml_entries` at 43.8,
+which is not new — the same measurement over `ad6e6c0b0` reports it. The other three
+are `MASTER/lib/voice/emotion.rb:20` `#analyze` at 74.7,
 `MASTER/lib/cli/session/command_ops.rb:24` `#run_critique` at 42.2, and
-`MASTER/lib/ground/phase_gates.rb:103` `#automatic_gate_met?` at 41.4. `rake
-constitution` overall is 1,791 findings, 101 actionable against a budget of 1,500, and
-passes.
+`MASTER/lib/ground/phase_gates.rb:103` `#automatic_gate_met?` at 41.4. Run the rule over
+`lib/**/*.rb` directly rather than reading a triage bucket, which is where the fourth
+went. `rake constitution` overall is 1,791 findings, 101 actionable against a budget of
+1,500, and passes.
+
+`classify_yaml_entries` builds five populations from one pass, and the shape that
+lowers it is to split the lexical trio out. Nothing gates on it — `ABC_SIZE` is a
+threshold rather than a ratchet row — and the split adds a `def` and an `end` to a
+`spine.lib_body_ceiling` with no headroom, so it waits for a reason better than the
+number.
 
 **`emotion.rb#analyze` at 74.7 is the largest and is deliberately not being
 refactored.** Its ABC is arithmetic rather than branching — five weighted sums over the
@@ -758,11 +776,32 @@ So the honest scope is per-file and by hand, with a two-direction test. A repo-w
 gate would need a baseline carrying a written reason for all 49, which is a decision
 about 49 sections rather than a mechanical step.
 
-**And `data_reach` cannot tell which file a reader opened.** Its test is whether the
-key name appears anywhere in first-party code, so `success_criteria` counted as reached
-for as long as it existed — `lib/ground/phase_gates.rb:133` names it, reading session
-state rather than `rules.yml`. The 37 at the ceiling is a floor on the real number, not
-the number.
+**`data_reach` does tell which file a reader opened, and the entry that said otherwise
+was reading an older tool.** `misattributed` reports every key named in code that never
+mentions its file — the `success_criteria` shape, where `lib/ground/phase_gates.rb:133`
+names the word while reading session state rather than `rules.yml`. The 37 at the
+ceiling is still a floor on the real number, because a key named in a comment counts as
+named.
+
+**Its own instrument was punishing the house rule, and that is fixed.** Attribution
+asked for the yaml basename in the same file as the key, and a reader obeying
+`lint:reader_singularity` never writes one — it asks `Master.load_rules`,
+`Master::RULES_PATH` or `@rules.data(:soul)`. Nine live readers were reported unread for
+following the rule, `rules.yml#llm_output_rules` and `soul.yml#prompt_ordering` among
+them. `DataReach::ACCESSORS` names the handles each file is legitimately reached by, and
+the test pins both directions: an accessor names its own file and vouches for no other.
+
+**The 36 that remain are four families and none is a defect** — read this before
+chasing the number. Fourteen are registry rows selected by a config value at runtime
+(`personas.yml` 7, `providers.yml` 5, `prompts.yml` 2), the case the subsection above
+already names as unreachable by any grep. Six are a `schema` or `meta` version key read
+by a version check rather than by name. Nine are archive and recovery manifests
+(`pub_archive_restore.yml`, `recovery_pub.yml`) whose keys are data about a restore
+rather than configuration. The rest are keyed by something other than an identifier —
+`namespace_ceilings.yml` by tree path, `soul.yml#language` and `#research` by a nested
+reader. **A ceiling over them needs a written reason for all 36, which is a decision
+about 36 rows rather than a mechanical step, and that is the same argument this section
+already makes against the repo-wide version.**
 
 ### The shape of the tree
 
@@ -772,9 +811,9 @@ parent, and a name that says nothing on its own. `FILE_SPRAWL` in the scan regis
 measures the first two for MASTER's `.rb` files and skips `law/`, `core/`, `test/` and
 `spec/`, so it reports zero here and means only that.
 
-**19 one-file directories against a ceiling of 20**, all of them mandated: OS install
+**19 one-file directories against a ceiling of 19**, all of them mandated: OS install
 paths, Zeitwerk, ports fixtures, OmniAuth, PWA, and dilla vocal, render and stem
-takes. The row reads one under and the ceiling is not MASTER's to lower — it counts
+takes. The row is at its ceiling, and the ceiling is not MASTER's to lower — it counts
 all four trees. Read the live figure from `MASTER/bin/pub4 measure`, not from here.
 The map is `TREE.md`.
 
@@ -915,6 +954,22 @@ to everything else.
 
 ### The face, and TTS on the box
 
+**The face's mood channel is complete at both ends and has no middle, and it is an
+operator call because closing it changes what a visitor sees.** `face.part5.txt:1032`
+listens for an SSE `mood` event and does three things `felt` does not — mood history,
+the surprise lift on `curious`, and the colour tint through `fadeColorTo(TINT[m])`.
+`web/app/services/chat_service.rb:120` subscribes to `agent:mood` to feed it. **Nothing
+in the repo publishes `agent:mood`**, so the tint has never fired.
+
+The near neighbour is not a substitute and reading it as one is the trap here.
+`felt:sense` carries a mood, but `publish_canvas_state` builds it from
+`@params[:state]` — the browser posting its own state back — so that channel is the
+face echoing itself, not MASTER telling the face anything. The emotional state MASTER
+does compute lives in `voice/emotion.rb` as `exaggeration`, `cfg_weight` and `warmth`,
+and nothing maps those to a mood word. **So this is an unbuilt producer rather than a
+broken wire: the SSE plumbing, the listener and the tint table are all there.** Wiring
+it starts the face changing colour on its own, which is a look somebody has to see.
+
 **operator-priority.** Voice Mode and boot contracts are covered by
 `web/test/face_boot.test.mjs` (static assertions on `face.runtime.js`), and the WebGL
 primer guard has the same pattern. **Manual iOS Safari tap-testing remains operator
@@ -964,6 +1019,21 @@ right would be the accounting the budget exists to prevent.
 ### Live gotchas
 
 Facts with no home of their own, kept because each was expensive to find.
+
+- **`rake studio` and `bin/check --profile=agent` ran the same task and answered
+  differently, and the deciding factor was how the parent shell was started.** Bare,
+  `studio_gate` passed; through `bin/check`, which runs rake under `bundle exec`, it
+  failed with "postpro does not boot — ruby-vips gem missing" on a host where a plain
+  `ruby -e 'require "vips"'` says ok. STUDIO has no Gemfile and resolves its own gems,
+  so a child that inherits MASTER's bundle cannot load any of them. `studio_test`
+  cleared five variables by hand for exactly this and `studio_gate` cleared none —
+  **and the five were not enough anyway**: Bundler 4 sets `BUNDLER_SETUP`, and a child
+  ruby loads `bundler/setup` off it with `RUBYOPT` already cleared, so the grandchild
+  was still bundled. Both call `Bundler.with_unbundled_env` now, which is what
+  `test:web` already concluded in its own paragraph three tasks below. `bin/check
+  --profile=agent` reads clean. **The general shape: a gate that passes bare and fails
+  under a profile is an environment leak, not a finding, and the hand-rolled list of
+  bundler variables is wrong on every bundler release that adds one.**
 
 - **A council pass looks exactly like a hang.** On a dev Mac the provider is the
   `claude` CLI (`llm_dispatcher.rb:291 send_claude_cli`), not an HTTP API, so a run
@@ -1443,7 +1513,9 @@ recorded.
   naming the rule that reports for it. `RuleRegistryAudit` measures the split, `SelfTest`
   reads it, and `test_rule_registry_audit.rb` pins it. Re-measured 2026-09-09 at **242
   declared** and 147 built by the registry, split 141 semantic, 15 structural, 0 lexical
-  and 86 carrying no detector field. The lexical hatch is deliberately idle and
+  and 92 carrying no detector field — 92 and not the 86 this entry used to say, which
+  was the subtraction corrected under "The rule corpus" above. The lexical hatch is
+  deliberately idle and
   `RuleRegistryAudit` prints `lexical hatch empty` rather than two zeros a reader has to
   add up — so the day somebody declares a `detect_lexical` again, a test fails and asks
   whether the bridge is still wanted.

@@ -65,7 +65,19 @@ spine:
   # avg_latency_ms 0, avg_diff_lines 0 and rollback_rate 0.0 on every run of a
   # runtime doing all three. The thresholds and the sampling window went with
   # them; they existed to judge those counters.
-  lib_body_ceiling: 38118
+  #
+  # 38120 -> 38098 on 2026-09-10, and all of it was paid by two deletions that
+  # were not tidying. Io::GitHooks wrote a pre-commit hook from the boot path
+  # while bin/pub4 hooks points core.hooksPath at OPENBSD/dev/githooks, which git
+  # honours instead — so the file it wrote could never run on a guarded tree.
+  # RuleRegistryAudit::Report#lines and #hatch_line rendered an eight-row report
+  # nothing printed; the tripwire they were credited with is the test asserting
+  # both lexical sets are empty, which stays. BootReceipt#commit shed six lines
+  # by asking git rev-parse instead of walking .git by hand. Against them,
+  # RuleRegistryAudit#mechanical adds thirteen and buys one statement of a
+  # population three gate banners and rule_reach were each spelling for
+  # themselves, at two different answers.
+  lib_body_ceiling: 38098
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753
@@ -305,7 +317,13 @@ pub4_source_ceilings:
   # because the file was a second source for three live mechanisms rather than
   # merely unwired. Lowered in the same commit as the deletion, so the two files
   # of room do not sit here waiting to be spent without an argument.
-  MASTER: 1040
+  # 1040 -> 1038 is a fall: lib/io/git_hooks.rb, which wrote a hook into the
+  # private git directory that core.hooksPath makes git ignore, and
+  # lib/review/review_crew/agents.rb, a require aggregator whose eight lines moved
+  # into review_crew.rb where they are read. Lowered in the same commit as the
+  # deletions, so the room does not sit here waiting to be spent without an
+  # argument.
+  MASTER: 1038
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
   # it belongs beside the other probes and folds into nothing.

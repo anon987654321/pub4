@@ -49,10 +49,16 @@ module Master
         def output_dir
           return File.expand_path(ENV["MASTER_SNAPSHOT_DIR"]) if ENV["MASTER_SNAPSHOT_DIR"]
 
-          # lib/trace -> lib -> MASTER -> pub4. Three levels, not four: the first
-          # ".." already leaves the trace/ directory.
-          repo = File.expand_path("../../..", __dir__)
-          File.directory?(File.join(repo, ".git")) ? repo : File.expand_path("~/Downloads")
+          # Master::REPO_ROOT, not a count of "..": this file has moved once
+          # already and the count did not move with it, so a snapshot taken from
+          # a checkout landed in ~/Downloads.
+          #
+          # File.exist?, not File.directory?. A `git worktree` checkout carries
+          # .git as a file holding a gitdir line, and every agent working here
+          # takes one — so the directory test failed on precisely the trees this
+          # is written for.
+          repo = Master::REPO_ROOT
+          File.exist?(File.join(repo, ".git")) ? repo : File.expand_path("~/Downloads")
         end
 
         def write(target:, label:, repo_root: nil, mode: :both)
@@ -242,7 +248,7 @@ module Master
         end
 
         def git_summary(repo_root)
-          return [] unless File.directory?(File.join(repo_root, ".git"))
+          return [] unless Master.git_checkout?(repo_root)
 
           branch, = Master::Io::Exec.capture2e("git", "-C", repo_root, "rev-parse", "--abbrev-ref", "HEAD")
           sha, = Master::Io::Exec.capture2e("git", "-C", repo_root, "rev-parse", "--short", "HEAD")

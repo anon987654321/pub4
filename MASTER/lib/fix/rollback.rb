@@ -34,7 +34,7 @@ module Master
       end
 
       def git_workspace?
-        @root && Dir.exist?(File.join(@root, ".git"))
+        @root && Master.git_checkout?(@root)
       end
 
       def dirty?

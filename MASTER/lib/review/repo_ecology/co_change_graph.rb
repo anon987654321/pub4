@@ -77,8 +77,15 @@ module Master
           File.join(@root, CO_CHANGE_CACHE_PATH)
         end
 
+        # git resolves HEAD's path, because a worktree keeps its own under the
+        # common git dir and <root>/.git is a file naming it. Read directly, the
+        # path did not resolve, the rescue answered 0, and one constant key means
+        # a cache that never invalidates.
         def git_head_mtime
-          File.mtime(File.join(@root, ".git", "HEAD")).to_i
+          out, status = Master::Io::Exec.capture2e("git", "-C", @root, "rev-parse", "--git-path", "HEAD")
+          return 0 unless status.success?
+
+          File.mtime(File.expand_path(out.strip, @root)).to_i
         rescue StandardError
           0
         end

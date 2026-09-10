@@ -62,12 +62,27 @@ module Pub4
       end
     end
 
+    # How a file is legitimately named without its own basename. This repo's
+    # house rule is that a data file is reached through one accessor rather than
+    # opened, and `lint:reader_singularity` enforces it — so a basename-only test
+    # reports the discipline as the defect. Measured 2026-09-10: eight of the
+    # forty-five misattributions were readers doing exactly what they are told
+    # to, `Master.load_rules`, `Master::RULES_PATH` and `@rules.data(:soul)`.
+    ACCESSORS = {
+      "rules.yml" => %w[RULES_PATH load_rules Master.law flatten_rules],
+      "soul.yml" => ["soul_data", 'data("soul")', "data(:soul)"],
+      "runtime.yml" => %w[RuntimeCatalog],
+      "limits.yml" => ["limits_path", "data(:workflow)"],
+      "state.yml" => %w[state_path standing_orders],
+    }.freeze
+
     # A key whose name appears in code that never mentions the yaml file is
     # counted as named by the census and still unread: success_criteria lived
     # in rules.yml while phase_gates.rb read session state under the same word.
     def attributed?(key, yaml_basename)
       needle = /["':]#{Regexp.escape(key.to_s)}\b/
-      code_files.any? { |_path, src| src.match?(needle) && src.include?(yaml_basename) }
+      handles = [yaml_basename, *ACCESSORS.fetch(yaml_basename, [])]
+      code_files.any? { |_path, src| src.match?(needle) && handles.any? { |handle| src.include?(handle) } }
     end
 
     def misattributed

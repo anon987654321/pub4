@@ -37,6 +37,27 @@ end
 desc "STUDIO parses, has no orphans, its entry points boot, and its suite is green"
 task studio: %i[studio_gate studio_test]
 
+# Outside MASTER's bundle. STUDIO's tools resolve their own gems — postpro needs
+# ruby-vips and dilla needs coltrane/midilib/wavefile, none of which are in
+# MASTER's Gemfile and none of which should be: the trees are independent and
+# that is the point of the subprocess. A child inherits BUNDLE_GEMFILE and
+# RUBYOPT, so bundler refuses every one of them and the gate reads "postpro is
+# broken" when the gem is installed and visible to a plain ruby.
+#
+# Both STUDIO tasks, not one. studio_test cleared five variables by hand and
+# studio_gate cleared none, so `rake studio` passed on a bare shell and failed
+# under `bin/check`, which runs rake through bundle exec — the same task, two
+# answers, decided by how the parent was started.
+#
+# Bundler's own API, not a list of names — the same conclusion `test:web` below
+# reaches in its own paragraph. Bundler 4 sets BUNDLER_SETUP as well, and a child
+# ruby loads bundler/setup off it with RUBYOPT already cleared, so the
+# hand-rolled five left the grandchild inside MASTER's bundle and `require
+# "vips"` failed anyway.
+def unbundled(&block)
+  defined?(Bundler) ? Bundler.with_unbundled_env(&block) : block.call
+end
+
 desc "STUDIO parses, has no orphans, and its entry points still boot"
 task :studio_gate do
   # A subprocess, not a require. `bin/gate`'s /fix step mutates the whole shared
@@ -50,7 +71,7 @@ task :studio_gate do
   # under_deploy) and a rake task is not a reason to spend it.
   gate = File.expand_path("../STUDIO/gate.rb", __dir__)
   if File.file?(gate)
-    sh RbConfig.ruby, gate
+    unbundled { sh RbConfig.ruby, gate }
   else
     warn "studio: #{gate} not found — skipping (STUDIO tree absent?)"
   end
@@ -69,15 +90,7 @@ task :studio_test do
     next
   end
 
-  # Outside MASTER's bundle. STUDIO's tools resolve their own gems -- postpro
-  # needs ruby-vips and dilla needs coltrane/midilib/wavefile, none of which are
-  # in MASTER's Gemfile and none of which should be: the trees are independent
-  # and that is the point of the subprocess. Inheriting BUNDLE_GEMFILE makes
-  # bundler refuse every one of them, which reads as "postpro is broken".
-  clean = %w[BUNDLE_GEMFILE BUNDLE_BIN_PATH BUNDLE_PATH RUBYOPT RUBYLIB]
-          .to_h { |key| [key, nil] }
-
-  Dir.chdir(studio) { sh clean, RbConfig.ruby, "-S", "rake", "test" }
+  unbundled { Dir.chdir(studio) { sh RbConfig.ruby, "-S", "rake", "test" } }
 end
 
 desc "Deep scan lib/ — triage scanner self-findings separately from actionable violations"
@@ -103,7 +116,7 @@ task :constitution do
   # Rules that need a model and did not get one return [] and say nothing, so
   # a report that omits them offers the mechanical half as the whole law.
   idle = scanner.rules.select { |rule| rule.respond_to?(:agent?) && !rule.agent? }
-  puts "constitution: #{audit.yaml_rules - audit.semantic_only.size} of #{audit.yaml_rules} declared rules active" \
+  puts "constitution: #{audit.mechanical.size} of #{audit.yaml_rules} declared rules active" \
        "#{idle.empty? ? '' : " (#{idle.map(&:id).join(', ')} idle without a model — rake lint:rule_reach)"}"
 
   violations = paths.each_with_index.flat_map do |path, index|
@@ -168,7 +181,7 @@ task :selfcheck do
   # The severities named from the constant, so the banner cannot claim a set the
   # gate does not use — it read "error/critical only" for as long as veto was
   # missing from it, which is how nobody noticed veto was missing.
-  puts "selfcheck: #{audit.yaml_rules - audit.semantic_only.size} of #{audit.yaml_rules} declared " \
+  puts "selfcheck: #{audit.mechanical.size} of #{audit.yaml_rules} declared " \
        "rules active (rake lint:rule_reach for what the rest need), " \
        "#{Master::Fix::SelfCheck::QUICK_SEVERITIES.join('/')} only, across #{Master.scan_roots.join(', ')}"
   report = Master::Fix::SelfCheck.new(root: __dir__).quick
@@ -230,8 +243,12 @@ namespace :test do
     # gems web/ does not vendor. An empty BUNDLE_PATH separately overrides
     # web/.bundle/config, which says vendor/bundle.
     #
-    # studio_test uses the hash-of-nils idiom and has never been bitten: STUDIO has
-    # no .bundle/config and no parent Gemfile above it.
+    # The STUDIO tasks used the hash-of-nils idiom under the same exemption — no
+    # .bundle/config, no parent Gemfile — and it was wrong for a third reason the
+    # exemption did not cover. Bundler 4 sets BUNDLER_SETUP, and a child ruby
+    # loads bundler/setup off it with RUBYOPT already cleared, so `require "vips"`
+    # failed in a grandchild the list had supposedly freed. Both call `unbundled`
+    # now, which is this method by another name.
     Bundler.with_unbundled_env do
       Dir.chdir(File.join(__dir__, "web")) { sh "bundle exec rails test" }
     end

@@ -51,4 +51,35 @@ class TestBootReceipt < Minitest::Test
     assert_includes Receipt.capabilities.keys, "network"
     assert_equal "receipt: degraded none", Receipt.degraded_line([])
   end
+
+  # Both shapes of .git, because the tree has two and the runtime mostly runs in
+  # the second. A clone keeps a directory; a `git worktree` checkout keeps a file
+  # holding one `gitdir:` line, and CLAUDE.md's first trap tells every agent to
+  # take a worktree. Four callers tested File.directory? and therefore answered
+  # "not a repository" in exactly those trees — rollback after a failed fix went
+  # off, the snapshot lost its branch and sha, and this receipt reported git
+  # missing while running inside git.
+  def test_git_checkout_recognises_a_worktree_as_well_as_a_clone
+    Dir.mktmpdir do |dir|
+      refute Master.git_checkout?(dir), "an ordinary directory is not a checkout"
+
+      FileUtils.mkdir_p(File.join(dir, ".git"))
+
+      assert Master.git_checkout?(dir), "a clone keeps .git as a directory"
+    end
+
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, ".git"), "gitdir: /elsewhere/.git/worktrees/x\n")
+
+      assert Master.git_checkout?(dir), "a worktree keeps .git as a file"
+    end
+  end
+
+  # The receipt's own use of it, end to end. `commit` read <root>/../.git/HEAD
+  # by hand, which does not resolve when .git is a file, so this suite has only
+  # ever run where the answer was "unknown".
+  def test_the_receipt_names_the_commit_it_booted_from
+    assert_match(/\A[0-9a-f]{12}\z/, Receipt.commit(Master::ROOT))
+    assert Receipt.capabilities["git"], "the receipt is running inside a checkout"
+  end
 end

@@ -53,8 +53,9 @@ finding** — naive pattern-matching over this tree produces mostly false
 positives, and a census that is wrong is worse than no census. **A comment
 states the present-tense reason**, not what the code used to do; git holds that.
 
-`ruby MASTER/tools/agent_context.rb` prints the law in force in under a
-kilobyte: the rules that can refuse a write, and how many run without a model.
-Read it when the full catalogue will not fit.
+`ruby MASTER/tools/agent_context.rb` prints the law in force in six kilobytes:
+the 47 conduct rules a detector cannot describe, the rules that can refuse a
+write, and how many run without a model. Read it when the full catalogue will
+not fit.
 
 Ruby is pinned to 3.4.9: run `RBENV_VERSION=3.4.9 rbenv exec ruby ...`.

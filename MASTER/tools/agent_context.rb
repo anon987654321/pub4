@@ -11,9 +11,9 @@
 #   ruby MASTER/tools/agent_context.rb "<prompt>"      # plus what matches it
 #
 # Designed for a UserPromptSubmit hook, so it has to be small: data/rules.yml is
-# 3,108 lines and injecting it every turn would drown the turn. What goes out is
-# the binding half — the code rules that constrain output, what the gate can
-# actually block on, and how much of the law is unmeasured right now.
+# 4,609 lines and injecting it every turn would drown the turn. Six kilobytes
+# go out — the binding half: the conduct rules that govern how to work, what the
+# gate can actually block on, and how much of the law is unmeasured right now.
 
 module Pub4
   module AgentContext
@@ -22,15 +22,28 @@ module Pub4
 
     module_function
 
-    # Both files go through the accessors the rest of MASTER uses. Opening them
-    # directly is what reader_singularity counts, and it refused this file twice
-    # before this — a data file with two loaders has two behaviours.
-    def rules
+    # The 47 rules about how to work, each as one sentence. They are `practice`
+    # laws in law/practice.rb, which is the only population a detector cannot
+    # describe — "sweep to convergence", "one SSH session" — and therefore the
+    # half of the law an agent has to be told rather than caught on.
+    #
+    # This read `soul.yml`'s `absolute.rules`, where they lived until the
+    # `conduct` kind let them be Laws. Since that move the key has not existed,
+    # `dig` answered nil, and the heading below printed over an empty list: the
+    # law-in-force section of the file that hands agents the law in force named
+    # nothing at all. Every other section kept working, which is why it stood.
+    def conduct
       load_master
-      Master::Ground::Rules.new.data("soul").dig("absolute", "rules") || {}
+      require File.join(MASTER_DIR, "law", "law") unless defined?(::Law)
+      ::Law.load_all(File.join(MASTER_DIR, "law")) if ::Law.rules.empty?
+      ::Law.rules.values.select(&:practice).to_h do |rule|
+        [rule.id.to_s, rule.practice.to_s.gsub(/\s+/, " ").strip]
+      end
+    rescue StandardError => e
+      { "conduct unavailable" => e.class.to_s }
     end
 
-    # Only the rules that can refuse a write. A list of 225 is a reference; a
+    # Only the rules that can refuse a write. A list of 242 is a reference; a
     # list of what actually blocks is an instruction.
     def blocking_rules
       load_master
@@ -66,8 +79,8 @@ module Pub4
     end
 
     def render(query = nil)
-      out = ["MASTER law in force (data/soul.yml absolute.rules):"]
-      rules.each { |name, text| out << "  #{name}: #{text.to_s.split(/(?<=\.)\s/).first}" }
+      out = ["MASTER conduct in force (law/practice.rb):"]
+      conduct.each { |name, text| out << "  #{name}: #{text.to_s.split(/(?<=\.)\s/).first}" }
       out << ""
       out << "Rules that can refuse a write (#{blocking_rules.size}): #{blocking_rules.join(', ')}"
       out << "Coverage: #{coverage}"

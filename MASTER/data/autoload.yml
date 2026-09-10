@@ -65,8 +65,6 @@ autoload:
     # Master::Builder module functions, split out of builder.rb.
     - builder/ai_boot.rb
     - builder/boot_phases.rb
-    # A require aggregator for the review_crew agents.
-    - review/review_crew/agents.rb
 
   # Declare a constant outside Master::, so the path cannot imply the name.
   defines_a_foreign_namespace:

@@ -31,50 +31,17 @@ module Pub4
       Master.flatten_rules(Master.load_rules(root: MASTER_DIR).fetch("rules", {}))
     end
 
-    # A rule is mechanical if something can run it. law/ is one of those places
-    # now: a migrated rule has detect_lexical: ~ in the yml and a detector, a bad
-    # fixture and a good one in law/<id>.rb. Counting only the yml column reported
-    # eighty-one of them as reaching nothing on the day they became the only rules
-    # in the tree that prove themselves before they may judge anything.
-    # Asked of the loaded registry, not of the source text. Scanning for a
-    # literal `Law.define(:ID)` reads only the laws whose id is spelled in the
-    # file, and law/prose.rb generates its four from data/rules.yml — one pair
-    # per natural language — so a grep saw none of them and called two live,
-    # proving, firing laws unreachable. Loading is what running does.
-    def enacted
-      dir = File.join(MASTER_DIR, "law")
-      return Set.new unless Dir.exist?(dir)
-
-      require File.join(dir, "law")
-      ::Law.load_all(dir) if ::Law.rules.empty?
-      ::Law.rules.keys.map(&:to_s).to_set
-    rescue StandardError
-      Dir.glob(File.join(dir, "*.rb")).flat_map { |f| File.read(f).scan(/Law\.define\(:(\w+)\)/) }.flatten.to_set
-    end
-
-    # folded_into names the law that carries a rule whose detector was identical
-    # to another's. The id survives so principle_map can still trace it; the
-    # detector does not exist twice. Reachable through the law it folded into.
+    # A rule is mechanical if something can run it: a lexical or structural
+    # detector in the yml, a law in law/, or a class in the scanner registry —
+    # under its own id or under the one it folded into.
+    #
+    # RuleRegistryAudit owns the question, because three gate banners print a
+    # count of the same population and a second spelling here answered 115 where
+    # theirs answered 107. Asking rather than restating is what keeps them one
+    # number.
     def mechanical(all)
-      laws = enacted
-      regs = registry_ids
-      all.select do |rule|
-        rule["detect_lexical"] || rule["detect_structural"] ||
-          laws.include?(rule["id"].to_s) || laws.include?(rule["folded_into"].to_s) ||
-          regs.include?(rule["id"].to_s.upcase) || regs.include?(rule["folded_into"].to_s.upcase)
-      end
-    end
-
-    # The registry (RuleDSL classes) is the third rule population. MAGIC_COLOR
-    # lives only there since its law twin retired; counting law/ and the yml
-    # columns alone reported it as law no configuration can run.
-    def registry_ids
-      require "review/scan/rule_dsl"
-      Master::Review::Scan::Rule.registry
-        .filter_map { |klass| Master::Review::Scan::RuleFactory.registry_id(klass, root: MASTER_DIR)&.upcase }
-        .to_set
-    rescue StandardError
-      Set.new
+      rules # boots the runtime so the audit and its laws resolve
+      Master::Review::Scan::RuleRegistryAudit.new(root: MASTER_DIR).mechanical(all)
     end
 
     # Mirrors SemanticRule#load_semantic_rules. Kept in step by test_rule_reach.

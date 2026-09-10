@@ -32,13 +32,10 @@ module Master
           nil
         end
 
-        # Must match Review::Scan::SemanticFingerprint.for exactly -- it's
-        # what stamped the fingerprint being compared against here. These
-        # is one formula with one home; two separately-maintained copies drift
-        # that quietly drifted apart (one included an extra field the
-        # other didn't), so every comparison failed permanently regardless
-        # of whether the file had actually changed. See that module's own
-        # comment for the full story.
+        # Delegates rather than computes: Review::Scan::SemanticFingerprint.for
+        # stamps the fingerprint this compares against, and two copies of one
+        # formula disagree the moment either gains a field. That module's own
+        # comment holds what the disagreement cost.
         def semantic_fingerprint_for(path)
           src = File.read(path, encoding: "UTF-8")
           Master::Review::Scan::SemanticFingerprint.for(src)

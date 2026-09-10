@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require_relative "../tools/agent_context"
 
 class TestSoul < Minitest::Test
   Agent = Struct.new(:draft) do
@@ -29,6 +30,19 @@ class TestSoul < Minitest::Test
     refute_empty rules, "law/ must load"
     missing = rules.keys.reject { |id| prompt.include?(id) }
     assert_empty missing, "rules absent from the prompt: #{missing.first(5).join(', ')}"
+  end
+
+  # The counterweight to the assertion above, and the reason it was needed. That
+  # test holds soul.yml empty of rules; nothing held their readers to the move.
+  # tools/agent_context.rb — the file every harness contract sends an agent to —
+  # went on digging for `absolute.rules`, got nil, and printed its heading over
+  # an empty list. Assert what the section says, not that the key is gone.
+  def test_the_conduct_rules_reach_the_agent_context
+    conduct = Pub4::AgentContext.conduct
+
+    assert_operator conduct.size, :>, 40, "law/practice.rb holds the rules that left soul"
+    assert_includes conduct.keys, "PRESERVE_FIRST"
+    assert_includes Pub4::AgentContext.render, "PRESERVE_FIRST: never rewrite working code"
   end
 
   DOCUMENT = <<~SOUL

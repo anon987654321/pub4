@@ -13,50 +13,70 @@ subsystems:
     status: verified
     meaning: LLM fix stage only skips when every fallback-chain model is exhausted, not any one
     evidence: 'commits 2caa7e7ac, d0f488c77 -- was blocking on any unrelated model (e.g. a dead
-      free-tier fallback) even when the actually-used model was healthy; found live via round 22-26 gate output'
-    last_checked: '2026-07-22'
+      free-tier fallback) even when the actually-used model was healthy; found live via round 22-26 gate output.
+      Re-verified 2026-09-10 by reading the predicate: lib/fix/fix_loop/llm_router.rb:26 returns the model
+      list only when models.all? { |m| registry.open?(m) }, and [] otherwise, so one open breaker skips nothing.'
+    last_checked: '2026-09-10'
   fix_loop.self_test_gate:
     status: verified
     meaning: constitutional self-violation gate (8 laws) halts /fix only on a genuine violation
     evidence: 'commit bf02780f7 -- a DENSITY regression from an earlier same-session fix was
-      silently halting /fix entirely; SelfTest confirmed 0 violations after the fix'
-    last_checked: '2026-07-22'
+      silently halting /fix entirely; SelfTest confirmed 0 violations after the fix.
+      Re-verified 2026-09-10: rake selftest reads 0 across all eight laws, and the halt is still wired —
+      SelfCheck#gate! at lib/builder/ai_boot.rb:158 publishes self_violation, which :183 subscribes to
+      fix_loop.halt!, so a red selfcheck stops background autofix for the session.'
+    last_checked: '2026-09-10'
   fix_loop.fast_stage_rubocop:
     status: verified
     meaning: deterministic rubocop autocorrect pass actually runs and fixes files
     evidence: 'commits 5c622e919, eb576bf8d -- was failing on every single file for two
       independent reasons (wrong Gemfile root for RAILS multi-app layout, and a -q flag that
-      does not exist in rubocop 1.85.1); round 26 committed 308 real files once both were fixed'
-    last_checked: '2026-07-22'
+      does not exist in rubocop 1.85.1); round 26 committed 308 real files once both were fixed.
+      Re-verified 2026-09-10: FastStage#fast_pass groups files by gemfile_root, the nearest ancestor
+      holding a Gemfile, and rubocop_pass shells `bundle exec rubocop -A --no-color` per group. Neither
+      fault can recur without the read showing it.'
+    last_checked: '2026-09-10'
   fix_loop.learnings_recording:
     status: verified
     meaning: per-rule fix outcomes actually reach the KnowledgeStore from the CLI-driven /fix path
     evidence: 'commit a77b3fb22 -- record_outcomes used String#presence (ActiveSupport-only);
       bin/cli never loads Rails, so every call silently NoMethodError''d, swallowed by the
       surrounding rescue. fix_quality had been returning the hardcoded 0.5 default for every
-      rule since this code was written.'
-    last_checked: '2026-07-22'
+      rule since this code was written.
+      Re-verified 2026-09-10: OutcomeTracking#record_outcomes builds its extension tally with filter_map
+      and ext.empty?, plain Ruby with no ActiveSupport in the path, and hands the outcome to
+      @learnings.record.'
+    last_checked: '2026-09-10'
   review.council_deliberation:
     status: verified
     meaning: /critique's persona deliberation actually reaches a quorum instead of failing every persona
     evidence: 'commit 7e93b526e -- snapshot_artifact byte-truncated file content via String#b,
       leaving it tagged BINARY; concatenating that into every persona''s UTF-8 prompt raised
-      Encoding::CompatibilityError identically for all 26, every round, until traced live'
-    last_checked: '2026-07-22'
+      Encoding::CompatibilityError identically for all 26, every round, until traced live.
+      Re-verified 2026-09-10: snapshot_truncate (cli/command_registry/work_commands_extra.rb:130) still
+      cuts on .b and restores the tag with force_encoding("UTF-8").scrub, so the byte limit holds and the
+      result concatenates.'
+    last_checked: '2026-09-10'
   runtime.event_log_rotation:
     status: verified
     meaning: activity.jsonl and conflict_log.jsonl stay bounded instead of growing forever
     evidence: 'commit 42d8b9405 -- both were plain append-only with no cap; grew to 1.2GB and
       890MB respectively, together filling the disk completely mid-session and crashing an
-      in-progress /fix round with no warning beyond a swallowed ENOSPC'
-    last_checked: '2026-07-22'
+      in-progress /fix round with no warning beyond a swallowed ENOSPC.
+      Re-verified 2026-09-10: both caps hold and both rotate on write — Log::Event MAX_BYTES 25MB with
+      rotate_if_oversized! called from append (trace/log.rb:63), ConflictResolver LOG_MAX_BYTES 25MB over
+      three generations (fix/conflict_resolver.rb:150).'
+    last_checked: '2026-09-10'
   fix_loop.rule_outcome_classification:
     status: verified
     meaning: a policy-skipped violation (confidence gate, stale fingerprint) doesn't count against
       a rule's fix_quality the same way a genuine failed attempt does
     evidence: 'commit a77b3fb22 -- matches OpenCrabs feedback_policy.rs (issue #236): treating
-      every non-fix as a defect risked deprioritizing rules that were never actually attempted'
-    last_checked: '2026-07-22'
+      every non-fix as a defect risked deprioritizing rules that were never actually attempted.
+      Re-verified 2026-09-10 in both halves: pass_outcome returns :skipped when every violation skipped,
+      and KnowledgeStore#fix_quality divides fixed by fixed + stuck, so a skip is recorded and excluded
+      from the denominator rather than counted as a failure.'
+    last_checked: '2026-09-10'
   fix_loop.semantic_fingerprint:
     status: verified
     meaning: the LLM-driven fix stage actually attempts and applies fixes, not just deterministic
@@ -69,5 +89,8 @@ subsystems:
       rule, every round -- found live via skip_breakdown showing confidence=0 fingerprint=N
       identically across dozens of rules in a full-repo pass. Traced back through five other
       real, necessary, but ultimately not-the-answer fixes first (circuit breaker x2, self-test
-      DENSITY regression, fast_stage rubocop, learnings recording).'
-    last_checked: '2026-07-22'
+      DENSITY regression, fast_stage rubocop, learnings recording).
+      Re-verified 2026-09-10: one formula with one home. Review::Scan::SemanticFingerprint.for is the only
+      definition, FileProcessor:40 stamps with it and FixVerification#semantic_fingerprint_for:42 calls the
+      same module. There is no second copy to drift.'
+    last_checked: '2026-09-10'
