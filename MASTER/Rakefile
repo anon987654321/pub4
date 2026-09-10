@@ -103,7 +103,7 @@ task :constitution do
   # Rules that need a model and did not get one return [] and say nothing, so
   # a report that omits them offers the mechanical half as the whole law.
   idle = scanner.rules.select { |rule| rule.respond_to?(:agent?) && !rule.agent? }
-  puts "constitution: #{audit.yaml_rules - audit.semantic_only.size} of #{audit.yaml_rules} declared rules active" \
+  puts "constitution: #{audit.mechanical.size} of #{audit.yaml_rules} declared rules active" \
        "#{idle.empty? ? '' : " (#{idle.map(&:id).join(', ')} idle without a model — rake lint:rule_reach)"}"
 
   violations = paths.each_with_index.flat_map do |path, index|
@@ -168,7 +168,7 @@ task :selfcheck do
   # The severities named from the constant, so the banner cannot claim a set the
   # gate does not use — it read "error/critical only" for as long as veto was
   # missing from it, which is how nobody noticed veto was missing.
-  puts "selfcheck: #{audit.yaml_rules - audit.semantic_only.size} of #{audit.yaml_rules} declared " \
+  puts "selfcheck: #{audit.mechanical.size} of #{audit.yaml_rules} declared " \
        "rules active (rake lint:rule_reach for what the rest need), " \
        "#{Master::Fix::SelfCheck::QUICK_SEVERITIES.join('/')} only, across #{Master.scan_roots.join(', ')}"
   report = Master::Fix::SelfCheck.new(root: __dir__).quick
