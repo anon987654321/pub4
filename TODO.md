@@ -313,6 +313,21 @@ ways — which is the finding.** One was wired, one was deleted, and one was del
 a reason that had nothing to do with being unwired. "Wire or delete" is the rule and it
 is not a coin toss: what decides it is what the thing would be a second copy of.
 
+**The instrument that finds the next one is the event bus, in one direction only.**
+Comparing published topic names against subscribed ones over `lib/`, `bin/`, `tools/`
+and `web/app`: published-never-subscribed is 238 of 285 and every row is noise, because
+`*` and `**` wildcard subscribers consume the lot. Subscribed-never-published is 4, two
+of them those wildcards, and **both of the remaining two were real**.
+`Trace::Ledger::Swallow` subscribed to `swallow:error` while `Ground::Swallow.log`
+publishes `error:swallowed` — the same two words the other way round — so the ledger
+that exists to make a swallowed error visible had never counted one, and its test
+published the subscriber's spelling on a fake bus, so both halves agreed with each
+other and neither with the producer. It now goes through `Ground::Swallow.log`, and a
+rename on either side fails. The second is the face's mood channel, recorded below
+because it is an operator decision rather than a defect. **One direction of a census
+being 100% noise does not make the other direction worthless; run both and read the
+smaller list.**
+
 **`unified_diff_editor.rb` went, and the reason is worth keeping: it was not merely
 unwired, it was a second source for three live mechanisms.** `applyable?`'s
 immutability and traversal checks are `Io::PathGuard` and `Fix::DiffStager#stage`;
@@ -938,6 +953,22 @@ inside `lib/` on operator instruction precisely so it is measured by the law it 
 to everything else.
 
 ### The face, and TTS on the box
+
+**The face's mood channel is complete at both ends and has no middle, and it is an
+operator call because closing it changes what a visitor sees.** `face.part5.txt:1032`
+listens for an SSE `mood` event and does three things `felt` does not — mood history,
+the surprise lift on `curious`, and the colour tint through `fadeColorTo(TINT[m])`.
+`web/app/services/chat_service.rb:120` subscribes to `agent:mood` to feed it. **Nothing
+in the repo publishes `agent:mood`**, so the tint has never fired.
+
+The near neighbour is not a substitute and reading it as one is the trap here.
+`felt:sense` carries a mood, but `publish_canvas_state` builds it from
+`@params[:state]` — the browser posting its own state back — so that channel is the
+face echoing itself, not MASTER telling the face anything. The emotional state MASTER
+does compute lives in `voice/emotion.rb` as `exaggeration`, `cfg_weight` and `warmth`,
+and nothing maps those to a mood word. **So this is an unbuilt producer rather than a
+broken wire: the SSE plumbing, the listener and the tint table are all there.** Wiring
+it starts the face changing colour on its own, which is a look somebody has to see.
 
 **operator-priority.** Voice Mode and boot contracts are covered by
 `web/test/face_boot.test.mjs` (static assertions on `face.runtime.js`), and the WebGL

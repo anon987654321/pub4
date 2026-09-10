@@ -151,7 +151,7 @@ module Master
         end
       end
 
-      # Tallies swallow:error events per context — a spike in one context is a defect, not noise.
+      # Tallies error:swallowed events per context — a spike in one context is a defect, not noise.
       class Swallow
         LEDGER_PATH = "runtime/swallow_ledger.jsonl"
         SNAPSHOT_EVERY = 50
@@ -165,8 +165,15 @@ module Master
         end
 
         # Subscribe to the swallow stream. Call once at boot.
+        #
+        # `error:swallowed` is the topic Ground::Swallow.log publishes and
+        # cognition/attention.rb weights. This read `swallow:error`, the same
+        # two words the other way round, so the ledger that exists to make a
+        # swallowed error visible had never counted one. Its test published the
+        # subscriber's spelling on a fake bus, so both halves agreed with each
+        # other and neither with the producer.
         def attach
-          @bus&.subscribe("swallow:error") { |payload| record(payload) }
+          @bus&.subscribe("error:swallowed") { |payload| record(payload) }
           self
         end
 
