@@ -44,7 +44,7 @@ consistency campaign; enforcement lives in `visual_contract_lint`,
 
 ## Component families (closed sets)
 
-- **Buttons** — dash-spelled, one family in `_zen_shell.scss`: `btn` base +
+- **Buttons** — dash-spelled, one family in `_zen_buttons.scss`: `btn` base +
   compound variants `.btn.btn-primary/-ghost/-danger/-sm`, plus `btn-link`,
   `btn-block`, `btn-share`. Variants are compound (`0-2-0`) so an app's later
   `.btn` base is a dialect skin that can never beat them; ghost ink is `inherit`
@@ -132,10 +132,19 @@ Verdicts, recorded not forced:
 
 ## Stylesheet size budget (auditor css_file_size, 200 lines) — stance 2026-08-22
 
-Ten sheets exceed it. Not one queue: _zen_shell (474) and _minimal (459) are
+Ten sheets exceed it. Not one queue: _zen_shell (593) and _minimal (459) are
 BASE LAYERS — one file is their design, splitting them scatters the cascade
 story; _dialect_tokens (200+) holds tokens AND theme mixins and is the one with
-a real seam (tokens vs mixins) if anyone splits anything. face.css (1282) is the
+a real seam (tokens vs mixins) if anyone splits anything.
+
+"Splitting scatters the cascade story" held until it was measured. The button
+family came out of _zen_shell on 2026-09-10 into `_zen_buttons.scss`, forwarded
+immediately before it, and the three built bundles hold the same declarations in
+an order no element can tell apart — the 24 pairs that changed relative order
+all pit `.btn` against a utility that ties it at 0-1-0, and no element in the
+tree wears both. So the objection is answerable per candidate rather than in
+general: build the CSS before and after, diff the resolved order, and a seam
+whose two halves never contend is a seam. face.css (1282) is the
 whole face by construction. The app sheets (_chrome_polish 324, _marketplace
 251, _vertical_playlist 378, amber _brand 378) are section-seamed and splittable
 when their surfaces are next open; the auditor keeps counting so none of this

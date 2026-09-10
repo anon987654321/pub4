@@ -1,0 +1,85 @@
+/* The one button family, shared by all three apps.
+ *
+ * Forwarded immediately before `zen_shell` in both `_stack.scss` and
+ * `_stack_brgen.scss`, and that position is the contract rather than a
+ * convenience. It has to stay after `layout_chrome` and `minimal`, whose own
+ * comment records that zen_shell's position is the one that wins, and before
+ * zen_shell's `@media (forced-colors: active)` block, which ties with `.btn` at
+ * 0-1-0 and must keep the later word. Move this line and a button changes
+ * colour on Windows High Contrast.
+ *
+ * Nothing else in zen_shell's head can beat these rules: `*` and `:focus-visible`
+ * are 0-0-0 and 0-1-0 over properties `.btn` does not set, `input, button,
+ * textarea, select { font: inherit }` is 0-0-1 against `.btn`'s 0-1-0, and no
+ * element in the tree wears `.btn` beside a `.px-*`, `.text-primary`,
+ * `.bg-surface`, `.truncate-*`, `.h-dvh` or `.visually-hidden` utility, which are
+ * the only other 0-1-0 rules there that share a property with it.
+ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* The control block. Height is --tap-min, the 44px touch target this tree
+     already had; the inline padding and gap are absolute because the space
+     scale is rem and brgen roots at 18px. */
+  gap: var(--control-gap);
+  min-height: var(--tap-min);
+  padding: 0 var(--control-pad-inline);
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  background: var(--text, var(--color-primary));
+  color: var(--bg, var(--color-highlight));
+  font-weight: var(--weight-bold);
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity var(--transition-fast) var(--ease-out), background 160ms var(--ease-out), border-color 160ms var(--ease-out), color 160ms var(--ease-out);
+}
+
+.btn:hover {
+  opacity: 0.88;
+  text-decoration: none;
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Variants are compound (.btn.btn-primary, 0-2-0) so they beat any app's later
+   .btn base (0-1-0) by specificity: an app dialect-skins the BASE (brgen's
+   _forms paints it accent), and the variant contract holds everywhere without
+   caring about load order. An app that must re-skin a variant writes the same
+   compound later. Fill instead of outline in every variant — a transparent
+   button with a 1px edge is a line, and the flat system separates by surface.
+   The zen-era btn--primary BEM twins are retired. */
+.btn.btn-primary {
+  background: var(--text, var(--color-primary));
+  color: var(--bg, var(--color-highlight));
+}
+
+.btn.btn-ghost {
+  background: var(--hover-subtle);
+  border: 0;
+  /* The ink is the context's: a ghost inherits, so wscons ghosts stay green
+     and grayscale ghosts stay grayscale without per-app overrides. */
+  color: inherit;
+}
+
+.btn.btn-ghost:hover {
+  background: var(--hover, var(--color-midtone-tint));
+}
+
+.btn.btn-danger {
+  background: var(--hover);
+  color: var(--danger, var(--text));
+  border: 0;
+}
+
+.btn.btn-sm {
+  min-height: var(--tap-min);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-sm);
+}
