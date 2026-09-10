@@ -326,8 +326,9 @@ phantom_recovery:
   # escalating the model tier and finally halting are all sane answers to those.
   #
   # gaslighting_preamble is not one of them. It is a style rule — soul.yml's
-  # anti_simulation, already enforced by voice/output_guard, review/prompt_filter,
-  # ground/maturity_scorecard and the personality prompt — and its pattern matches
+  # anti_simulation, already enforced on the reply itself by voice/output_guard
+  # (through cli/stages/render), review/prompt_filter and the personality
+  # prompt — and its pattern matches
   # any reply opening "I can", "I would", "Let me" or "Sure,". A model writing
   # ordinary English is working, not malfunctioning, so letting it spend the
   # ladder ends the conversation for a phrasing preference.

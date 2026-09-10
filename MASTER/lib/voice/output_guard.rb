@@ -7,6 +7,9 @@ module Master
       COLLAPSED_DIAGNOSTIC_LINE_LENGTH = 120
       COMPLETION_CLAIM = /\b(fixed|completed|done|applied|updated|removed|added|wired|implemented)\b/i
       MODIFICATION_CLAIM = /\b(changed|modified|edited|patched|replaced|refactored)\b/i
+      # A shell prompt or an exit code: what a real transcript carries and a
+      # block written to look like one does not.
+      TRANSCRIPT_EVIDENCE = /^\s*\$ .+|exit code:?\s*\d/i
       EVIDENCE_MARKERS = [
         /```/,
         /^diff --git/m,
@@ -46,6 +49,7 @@ module Master
         issues << "minimize rule misapplied to diagnostic output" if minimize_misapplied?(text)
         issues << "modification claim without diff" if modification_claim?(text) && !diff_evidence?(text)
         issues << "completion claim without command output" if completion_claim?(text) && !command_evidence?(text)
+        issues << "shell block presented as execution" if pretend_execution?(text)
         issues.empty? ? Result.ok(text) : Result.err(issues.join("; "), category: :axiom_violation)
       end
 
@@ -85,6 +89,20 @@ module Master
 
       def completion_claim?(text)
         text.to_s.match?(COMPLETION_CLAIM)
+      end
+
+      # Ground::Tool::Protocol's third requirement — a shell block offered as
+      # proof that something ran — is the one the two claim checks above cannot
+      # see, because a fence satisfies command_evidence? and so buys silence for
+      # the claim beside it. Protocol owns both halves of the question, so this
+      # asks it rather than restating its regexes. Both predicates must hold:
+      # CLAIM_WORDS is past tense throughout, so a block MASTER is offering for
+      # the operator to run ("run this: ```sh") does not fire, and a real
+      # transcript carries a prompt or an exit code, which is the third clause.
+      def pretend_execution?(text)
+        protocol = Ground::Tool::Protocol
+        protocol.fake_execution_risk?(text) && protocol.operational_claim?(text) &&
+          !text.to_s.match?(TRANSCRIPT_EVIDENCE)
       end
 
       def diff_evidence?(text)

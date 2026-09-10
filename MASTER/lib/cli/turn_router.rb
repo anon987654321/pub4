@@ -272,6 +272,7 @@ module Master
         Stages::Render.new(
           renderer:,
           output_check: container[:output_check],
+          output_guard: renderer.output_guard,
           event_bus: bus,
         ).call(ctx)
       end

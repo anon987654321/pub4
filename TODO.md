@@ -314,30 +314,43 @@ rather than as "the spine held".
 The repo's own dominant defect at method level: a check that was built and never
 hooked up. Deleting one destroys the evidence, so they are recorded.
 
-- **The anti-simulation guard on MASTER's own replies is a whole method, not two
-  predicates, and closing it is a posture decision.** `Ground::Tool::Protocol`
-  declares `fake_execution_risk?` (`tool.rb:100`) and `operational_claim?` (`:104`)
-  and nothing calls either; only its `brief` is reached, from `cli/brain_overlay.rb`,
-  which puts the protocol in the system prompt. The reader they were written for is
-  `Voice::OutputGuard#validate`, which asks the same question in its own words —
-  `COMPLETION_CLAIM`, `MODIFICATION_CLAIM` and `EVIDENCE_MARKERS` — and **is itself
-  called by nothing but `test_output_guard.rb`.** `Voice::Renderer:51` calls
-  `sanitize` and never `validate`, so all six of its issue checks are inert, and the
-  two Protocol predicates are the inert half of an inert method. What the next person
-  needs is not a caller but an answer: when MASTER's own reply claims work it cannot
-  show, does it warn, append the evidence hint it already appends, or refuse? That is
-  posture, and it is the operator's. The one thing neither side detects today is
-  Protocol's own third requirement — a shell block presented as execution — and
-  `COMMAND_BLOCK` is the regex for it.
-- `MASTER/lib/ground/unified_diff_editor.rb` — the whole file, not a method.
-  `parse`, `applyable?`, `summary` and `build_single_file` are named by
-  `test_unified_diff_editor.rb` and by nothing else in any tree. `Fix::PatchApplier`
-  shells out to `patch(1)` instead, and `ResearchThresholds` declares
-  `edit_format: :unified_diff` as policy with no code between the two. Same question:
-  what was supposed to apply a diff through this?
-- `MASTER/lib/ground/maturity_scorecard.rb` — the same shape one layer up.
-  `data/maturity.yml` is a real scorecard and `rules.yml:330` says the personality
-  prompt reads it; the only callers of `MaturityScorecard` are its own test.
+**`unified_diff_editor.rb` went, and the reason is worth keeping: it was not merely
+unwired, it was a second source for three live mechanisms.** `applyable?`'s
+immutability and traversal checks are `Io::PathGuard` and `Fix::DiffStager#stage`;
+`summary`'s add/delete counting is `DiffStager::Entry#diff_stats`; `build_single_file`
+is a hand-rolled `Diffy::Diff`. Nothing was ever meant to apply a diff through it —
+`Fix::PatchApplier` applies one, to a temp copy of a single source, through `patch(1)`.
+
+**What the deletion found on the way past is real and is fixed.** `patch(1)` handed a
+diff naming two files applies the first file's hunks to the source it was given, then
+prompts `File to patch:` for the second and reads the answer off the diff on stdin,
+leaving a `.rej` in whatever directory the process is in. Measured: the temp file came
+back half-edited and an `Oops.rej` was written to the working directory.
+`PatchApplier.apply` refuses a second `---` header before the shell now, and
+`test_fix_patch_applier.rb` pins it.
+
+**`maturity_scorecard.rb` was wired rather than deleted, and its first honest reading
+is eight rows of debt.** `bin/doctor` prints `summary_line` under the boot receipt —
+the receipt says what booted, the scorecard says what has been proven and when. It
+now names how many rows are past `EVIDENCE_SHELF_LIFE_DAYS`, set to 30 because a
+`verified` taken off month-old evidence is a claim again. All eight rows in
+`data/maturity.yml` were last checked on 2026-07-22, so the count reads 8 of 8. **That
+is the open item now: re-verify them or mark them, one at a time, with the evidence.**
+
+**The posture, settled 2026-09-10, is warn — and the funnel already had one.**
+`Voice::OutputGuard#validate` runs in `CLI::Stages::Render`, beside
+`Review::OutputCheck`, and its issues arrive as findings in the same list, are
+published on the same bus and annotate the reply the same way. Refusing was
+rejected: `render` is the last stage before the operator sees anything, so a
+refusal drops MASTER's answer to punish its phrasing and reads as a hang.
+`Ground::Tool::Protocol`'s two predicates reach a caller through the check
+written for its third requirement — a fenced shell block plus a past-tense claim
+and no prompt or exit code beside it. Measured before wiring, on the harshest
+corpus available: 13 of 222 paragraphs of MASTER's own documentation trip
+`validate` at `:routine`, which is the rate a warn can carry. **If it turns out
+noisier in a session than in the docs, scope the context rather than delete the
+check** — the two claim regexes are ordinary English verbs and `:routine` is
+where a fabricated claim actually lands.
 
 What this entry used to claim, corrected because a stale orphan list sends the next
 reader hunting callers for methods that have them or do not exist:

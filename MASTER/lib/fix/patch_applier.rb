@@ -15,8 +15,22 @@ module Master
       Success = Struct.new(:source, keyword_init: true)
       Failure = Struct.new(:reason, keyword_init: true)
 
+      # A diff naming two files, applied to the one temp copy this class makes,
+      # is not merely wrong — patch(1) applies the first file's hunks, then
+      # prompts "File to patch:" for the second and reads the answer off the
+      # diff on stdin, and writes the unmatched hunks to a .rej file in whatever
+      # directory the process happens to be in. Measured: the temp file came
+      # back half-edited, the status was non-zero, and an Oops.rej was left in
+      # the working directory. The caller only ever hands one file's source, so
+      # a second header is a model error and is refused before the shell.
+      MULTI_FILE_HEADER = /^--- /
+
       def self.apply(original, diff_text)
         return Failure.new(reason: "empty diff") if diff_text.strip.empty?
+        if diff_text.scan(MULTI_FILE_HEADER).size > 1
+          return Failure.new(reason: "diff names more than one file; this applies to one source")
+        end
+
         new(original, diff_text).apply
       end
 
