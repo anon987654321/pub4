@@ -2771,7 +2771,7 @@ package, which sets `-Drsvg=disabled` and so carries no svgload at all. amber's
 garment cut-outs need it, and the loss is quiet: `Amber::GarmentSilhouette#png`
 returns nil and logs one line when vips cannot read SVG, and the seeder keeps
 whatever photos the items already had, so the site does not break — the cut-outs
-merely stop regenerating. Healthy on 2026-09-09: `vips --version` reads 8.14.5,
+merely stop regenerating. Healthy on 2026-09-11: `vips --version` reads 8.14.5,
 `vips -l` lists four svgload operators, and the rebuilt package is still at
 /usr/ports/packages/amd64/all/libvips-8.14.5.tgz. Detection is live at
 `/etc/daily.local:71`, which reads the loader list every morning and names the
@@ -2787,7 +2787,16 @@ svgload operators again.
 One purchase is left: an off-host object store. `ruby OPENBSD/bin/dr-pull --check`
 reports the newest pull one day old and seven kept, integrity-checked on arrival
 and restore-drilled, but those copies sit on the operator Mac — one other disk,
-not a bucket. litestream is absent by decision: it is not in OpenBSD ports,
+not a bucket.
+
+The same purchase closes the crate, and that is the sharper half. `STUDIO/dilla/
+samples/` is 84 MB on exactly one disk, of which 75 MB is `own/` — the operator's
+and named collaborators' own recordings — and `.gitignore` excludes all of it.
+dr-pull cannot help: it pulls from vm23 to the Mac, and the crate is already on
+the Mac, so writing it into `~/pub4-dr/` puts a second copy on the disk it is
+already on. Until there is a bucket, the crate has no backup at all, and
+`samples/dug/` is down to one record from 161 as the standing demonstration of
+what that costs. litestream is absent by decision: it is not in OpenBSD ports,
 neither the binary nor an rc.d script exists on the box, and it is out of
 `pkg_scripts`, which reads master brgen amber bsdports brgen_jobs.
 `OPENBSD/etc/litestream.yml` stays correct for the day someone builds the binary,
@@ -2802,10 +2811,11 @@ cheapest step takes a site down.
 
 The operator command is a provider resize of vm23, and nothing in this repository
 can do it; after it lands `sysctl hw.physmem` must read at least 2147483648.
-Measured 2026-09-09 with all four apps answering: `hw.physmem` is 1056952320 and
-`swapctl -s` reports 2163920 of 2588672 blocks used, 84 percent. A resize was
-recorded here as scheduled for a Friday in August and the box is unchanged, so
-read the box, never a date. The standing decision is to stay at 1 GB with one
+Measured 2026-09-11: `hw.physmem` is 1056952320 and `swapctl -s` reports 1652096
+of 2588672 blocks used, 64 percent — down from 84 two days earlier, which is
+core-reclaim working rather than the ceiling moving. A resize was recorded here
+as scheduled for a Friday in August and the box is unchanged, so read the box,
+never a date. The standing decision is to stay at 1 GB with one
 resident worker, brgen_jobs, and it reopens only if amber earns its own. Two
 shapes read as a broken app rather than as memory: amber needs about twenty
 seconds to signal ready and a bare `falcon serve` defaults to a thirty-second
@@ -2823,8 +2833,8 @@ it. The ten largest objects in history are 80–87 MB WAV renders under a
 `DEPLOY/dilla/renders/beats/` path that no longer exists, every deploy pulls them,
 and the fix is a force-push to a public repo with a vm23 re-clone in the same hour
 and every session quiescent. Strip the blobs and the key purge in one pass. It is
-not pressure: measured 2026-09-09, /home is 69 percent with 5.1G free of 17G, /var
-is 16 and / is 18, and /home/dev/pub4 is 4.5G of which .git is 3.6G. Re-read it
+not pressure: measured 2026-09-11, /home is 69 percent with 5.1G free of 17G, /var
+is 16 and / is 18, and /home/dev/pub4's .git is 3.6G. Re-read it
 with `ssh dev@brgen.no 'df -h /home; du -sh /home/dev/pub4/.git'`.
 
 #### `bsdports_org_delegated_to_parking`  — tag: operator-priority
@@ -2837,7 +2847,7 @@ ACTIVE, autoRenewPeriod, and a registry expiry of 2027-08-08T14:15:10Z, so the
 registration is paid and only the delegation is wrong. The app is well and
 answers 200 on 127.0.0.1:47312 behind relayd; the domain is parked.
 
-Measured 2026-09-10 from the box: the .org registry delegates to
+Measured 2026-09-11: the .org registry still delegates to
 ns1/2/3.expireddomain.hyp.net, those publish 185.134.245.114 and
 2a01:5b40:0:bc04::1, `https://bsdports.org/up` returns 000 because parking
 terminates no TLS, and `http://bsdports.org/up` returns 200 from Domeneshop's
