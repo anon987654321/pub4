@@ -385,7 +385,7 @@ module DillaKnobs
     # the knob is set to anything; the fetch default exists so the answer is no
     # when it is unset, and it is the comparand rather than a value the engine
     # ever uses. Only when the two literals are the SAME literal —
-    # `ENV.fetch("SAMPLE_NATIVE_BPM", "1") != "0"` really does default to "1".
+    # `ENV.fetch("SAMPLE_NATIVE_BPM", "1") != "0"` defaults to "1".
     SENTINEL = /ENV\.fetch[\[(]\s*["']NAME["']\s*,\s*(["'][^"']*["']|-?\d+(?:\.\d+)?)\s*[)\]]\s*(?:==|!=)\s*\1(?![\w.])/
 
     # The self-updating fallback. `ENV["HARM_VOL"] = (ENV["HARM_VOL"] || "2.4")

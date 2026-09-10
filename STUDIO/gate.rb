@@ -109,8 +109,8 @@ module Deploy
     # STUDIO/dilla/lib` proposes three regroups into engine/, harmony/ and
     # score/, nine files between them; taking any one moves those files a level
     # down, out of the pattern, and the guarded count falls from 44 to 35. The
-    # ceiling would appear to have been relieved by the very change that made it
-    # measure less. And `dilla/bin`, `dilla/live` and `dilla/scripts` were not
+    # same change relieves the ceiling by making it measure less.
+    # And `dilla/bin`, `dilla/live` and `dilla/scripts` were not
     # counted at all, so twelve support files sat outside a ceiling written to
     # stop support files multiplying.
     #

@@ -331,7 +331,7 @@ terminal to answer the first. Drop `nopass` and every deploy path stops at its
 first `doas rcctl`.
 
 **What is already spent, and must not be given back.** `keepenv` came off the dev
-rule and was replaced by a measured five-variable `setenv` allowlist, because
+rule; a measured five-variable `setenv` allowlist replaced it, because
 `keepenv` carries `RUBYOPT`/`RUBYLIB`/`GEM_HOME` across the boundary and that is
 arbitrary code execution as root by construction. No cron path installs
 `doas.conf` any more. Root cron execs no file inside the checkout: `uptime-check`

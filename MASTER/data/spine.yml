@@ -428,7 +428,13 @@ pub4_source_ceilings:
   # repository, because a hook is installed behaviour: a unit test of its logic
   # would not catch a lost chmod or a core.hooksPath pointing elsewhere. It
   # folds into no existing OPENBSD test; every one of those is about the box.
-  OPENBSD: 107
+  # 107 -> 108 is test/test_config_drift_gate.rb. The drift gate compared
+  # eighteen files, found every one identical, and reported the box clean while
+  # a root cron job existed only in the repo — a gate whose blind spot was
+  # invisible precisely because it passed. The rewrite that taught it to compare
+  # root's crontab as a set of commands needs a test that fails when that
+  # comparison is dropped again, and no existing OPENBSD test boots a gate.
+  OPENBSD: 108
   # 220 -> 222 for lora/seed_media.yml and lora/_toolkit/install_seed_media.rb,
   # the prompt set for every seeded photograph and the script that grades and
   # files what comes back from it. Two files, both named, neither foldable:

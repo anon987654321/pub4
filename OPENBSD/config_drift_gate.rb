@@ -35,11 +35,11 @@ require_relative "lib/utf8"
 # Reading the checkout is safe in a way that executing it is not: root compares
 # bytes it never runs, so the escalation the installed copy exists to close stays
 # closed. PUB4_ROOT first so a worktree or a test can point it somewhere else.
-ROOT = [ENV["PUB4_ROOT"], File.expand_path("..", __dir__), "/home/dev/pub4"]
+DRIFT_ROOT = [ENV["PUB4_ROOT"], File.expand_path("..", __dir__), "/home/dev/pub4"]
        .compact
        .find { |dir| File.file?(File.join(dir, "OPENBSD", "etc", "doas.conf")) } ||
        File.expand_path("..", __dir__)
-MIRROR = File.join(ROOT, "OPENBSD")
+MIRROR = File.join(DRIFT_ROOT, "OPENBSD")
 
 # Repo mirror => live path, for every file installed byte-for-byte.
 #
