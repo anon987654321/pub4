@@ -19,6 +19,16 @@ module Deploy
       # The check the static parser structurally cannot do: var()/oklch/color-mix
       # arrive here already resolved by the browser, and the background is the
       # real composited stack rather than a same-file guess.
+      # WCAG's "large text", and the floor that follows from it: 24px, or 18.66px
+      # when bold. The two numbers are one decision, so they are read together
+      # rather than four lines apart in a loop body.
+      def text_grade(el)
+        size = el["font_size"].to_f
+        bold = el["font_weight"].to_s.to_i >= 700 || el["font_weight"].to_s == "bold"
+        large = size >= 24 || (size >= 18.66 && bold)
+        [size, bold, large, large ? 3.0 : 4.5]
+      end
+
       def check_contrast(surface, elements)
         seen = {}
         elements.each do |el|
@@ -28,10 +38,7 @@ module Deploy
           bg = el["bg"]
           next unless fg && bg
 
-          size = el["font_size"].to_f
-          bold = el["font_weight"].to_s.to_i >= 700 || el["font_weight"].to_s == "bold"
-          large = size >= 24 || (size >= 18.66 && bold)
-          floor = large ? 3.0 : 4.5
+          size, bold, large, floor = text_grade(el)
           ratio = DesignMetrics.contrast_ratio(fg, bg)
           next unless ratio
 

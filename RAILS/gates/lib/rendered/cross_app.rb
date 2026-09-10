@@ -78,6 +78,7 @@ module Deploy
       end
       return @result if chrome.size < 2
 
+      @result.checked!(chrome.size)
       compare_chrome(chrome)
       compare_controllers(chrome)
       @result.warn("cross_app: compared shared chrome across #{chrome.keys.sort.join(', ')}")

@@ -79,6 +79,7 @@ module Deploy
           @result.fail("visual_quality: missing good fixture #{file}")
           next
         end
+        @result.checked!
         html = File.read(path)
         r = @exemplars.score(html, id)
         apply_exemplar_result!(r, context: "fixture good/#{id}")
@@ -99,6 +100,7 @@ module Deploy
           @result.warn("visual_quality: missing bad fixture #{file}")
           next
         end
+        @result.checked!
         r = @exemplars.score(File.read(path), id)
         if r.pass?
           @result.fail("visual_quality: bad fixture #{id} unexpectedly passed (score #{r.score}/#{r.max}) — gate blind")
@@ -120,6 +122,7 @@ module Deploy
           @result.skipped_live("visual_quality: live #{probe[:quality_surface]} skipped (port closed)")
           next
         end
+        @result.checked!
         html = fetch("http://127.0.0.1:#{app.port}#{probe[:path]}", host: probe[:host])
         if html.nil?
           @result.fail("visual_quality: live fetch failed #{probe[:host]}#{probe[:path]}", severity: :soft)

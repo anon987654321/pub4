@@ -25,6 +25,7 @@ module Deploy
 
       (APPS + ["shared"]).each do |app|
         root = app == "shared" ? SHARED : Pathname.new(File.join(ROOT, "RAILS", app))
+        result.checked!
         findings = Shared::FrontendAuditor.call(root: root)
         errs = findings.select { |f| f.severity == :error }
         warns = findings.select { |f| f.severity == :warning }

@@ -23,8 +23,17 @@ module Deploy
     # broke the design_metrics split twice. Resolved at call time, it holds
     # wherever the file sits.
     module DesignContracts
+      # Three groups, by what a contract reads rather than by what it means: the
+      # stylesheet contracts open .scss, the markup contracts open layouts and
+      # views, and the payment one opens Ruby services. One list of seven was the
+      # longest method in the gates tree, and a list is the one thing that grows
+      # without anyone deciding it should.
       def design_contracts
-        @design_contracts ||= [
+        @design_contracts ||= (stylesheet_contracts + markup_contracts + payment_contracts).freeze
+      end
+
+      def stylesheet_contracts
+        [
           {
             id: :flat_ui,
             principle: "flat_ui / rejection_of_ornament",
@@ -39,55 +48,6 @@ module Deploy
             # jOxVvNE carbon-example — documented product pens. Flag elsewhere.
             forbidden: /box-shadow\s*:\s*(?!none\b)|text-shadow\s*:|backdrop-filter\s*:|filter\s*:[^;]*\bblur\(/i,
             allow_path: %r{(search_yep|jsfiddle_chrome|_marketplace_nav_bar|_marketplace_animated_logo)\.scss\z},
-          },
-          {
-            id: :stimulus_progressive,
-            principle: "stimulus_progressive / progressive_enhancement",
-            meaning: "Behavior via Stimulus data-controller, not jQuery CDN apps",
-            paths: VIEW_PATHS,
-            forbidden: /jquery(\.min)?\.js|cdn\.jsdelivr\.net\/npm\/jquery/i,
-            allow_path: nil,
-          },
-          {
-            id: :fail_visibly_payments,
-            principle: "fail_fast / good_design_is_honest",
-            meaning: "Checkout without keys must not pretend payment succeeded",
-            paths: %w[brgen/app],
-            required_any: [
-              /NotConfigured|not configured|payment not configured|STRIPE_SECRET|VIPPS_.*KEY/i,
-              # A file may satisfy this by delegating rather than by spelling it.
-              # stripe_refund.rb opens submit! with StripeCheckout.ensure!, which
-              # raises NotConfigured when the key is absent -- so it is fail-closed,
-              # and it named none of the words above. That is the shape CLAUDE.md
-              # records for the dead-file census that searched for context_provider
-              # while every caller wrote the constant: a detector that only reads the
-              # inline spelling reports the abstraction as the defect.
-              #
-              # Tight on purpose. It wants a call to a named guard on a constant, in
-              # a scope that is payments services only, where ensure! is the
-              # convention. Measured: it moves stripe_refund.rb and no other file.
-              /(?:^|\s)[A-Z]\w*\.ensure!/,
-            ],
-            scope_glob: "**/payments/**/*.rb",
-          },
-          {
-            id: :skip_to_main,
-            principle: "accessibility / SKIP_TO_MAIN",
-            meaning: "Every app layout has skip link to #main-content",
-            paths: %w[
-              brgen/app/views/layouts/application.html.erb
-              amber/app/views/layouts/application.html.erb
-              bsdports/app/views/layouts/application.html.erb
-            ],
-            required_all: [/#main-content/, /skip-link|Skip to main/i],
-          },
-          {
-            id: :single_h1_marketplace_listings,
-            principle: "hierarchy / clarity",
-            meaning: "Marketplace listings index exposes exactly one document h1",
-            paths: %w[brgen/engines/marketplace/app/views/marketplace/listings/index.html.erb],
-            required_all: [/<h1\b/i],
-            max_h1: 1,
           },
           {
             id: :vertical_accent_single_map,
@@ -115,7 +75,66 @@ module Deploy
             paths: %w[brgen/engines/marketplace/app/assets/stylesheets/_vertical_marketplace.scss],
             required_all: [/\.listing-buy-bar-cta/, /min-height:\s*(?:44px|var\(--tap-min\))/],
           },
-        ].freeze
+        ]
+      end
+
+      def markup_contracts
+        [
+          {
+            id: :stimulus_progressive,
+            principle: "stimulus_progressive / progressive_enhancement",
+            meaning: "Behavior via Stimulus data-controller, not jQuery CDN apps",
+            paths: VIEW_PATHS,
+            forbidden: /jquery(\.min)?\.js|cdn\.jsdelivr\.net\/npm\/jquery/i,
+            allow_path: nil,
+          },
+          {
+            id: :skip_to_main,
+            principle: "accessibility / SKIP_TO_MAIN",
+            meaning: "Every app layout has skip link to #main-content",
+            paths: %w[
+              brgen/app/views/layouts/application.html.erb
+              amber/app/views/layouts/application.html.erb
+              bsdports/app/views/layouts/application.html.erb
+            ],
+            required_all: [/#main-content/, /skip-link|Skip to main/i],
+          },
+          {
+            id: :single_h1_marketplace_listings,
+            principle: "hierarchy / clarity",
+            meaning: "Marketplace listings index exposes exactly one document h1",
+            paths: %w[brgen/engines/marketplace/app/views/marketplace/listings/index.html.erb],
+            required_all: [/<h1\b/i],
+            max_h1: 1,
+          },
+        ]
+      end
+
+      def payment_contracts
+        [
+          {
+            id: :fail_visibly_payments,
+            principle: "fail_fast / good_design_is_honest",
+            meaning: "Checkout without keys must not pretend payment succeeded",
+            paths: %w[brgen/app],
+            required_any: [
+              /NotConfigured|not configured|payment not configured|STRIPE_SECRET|VIPPS_.*KEY/i,
+              # A file may satisfy this by delegating rather than by spelling it.
+              # stripe_refund.rb opens submit! with StripeCheckout.ensure!, which
+              # raises NotConfigured when the key is absent -- so it is fail-closed,
+              # and it named none of the words above. That is the shape CLAUDE.md
+              # records for the dead-file census that searched for context_provider
+              # while every caller wrote the constant: a detector that only reads the
+              # inline spelling reports the abstraction as the defect.
+              #
+              # Tight on purpose. It wants a call to a named guard on a constant, in
+              # a scope that is payments services only, where ensure! is the
+              # convention. Measured: it moves stripe_refund.rb and no other file.
+              /(?:^|\s)[A-Z]\w*\.ensure!/,
+            ],
+            scope_glob: "**/payments/**/*.rb",
+          },
+        ]
       end
 
       def design_contract_checks
@@ -130,6 +149,7 @@ module Deploy
       def apply_design_contract(contract)
         label = "design:#{contract[:id]} (#{contract[:principle]})"
         Array(contract[:paths]).each do |rel|
+          @result.checked!
           abs = File.join(RAILS_ROOT, rel)
           unless File.exist?(abs)
             # Payment files may not exist yet — warn so flow gate still teaches the contract

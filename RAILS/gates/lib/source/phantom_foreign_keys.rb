@@ -17,7 +17,12 @@ module Deploy
     def run
       result = GateResult.new
       files = Dir.glob(File.join(ROOT, "RAILS", "*", "db", "schema.rb"))
+      # No schema.rb is not a clean tree, it is an unread one: every app keeps
+      # one, so an empty glob means the path moved and this gate saw nothing.
+      return result.inconclusive!("phantom_foreign_keys: no db/schema.rb under RAILS/*/ — nothing was read") if files.empty?
+
       files.each do |path|
+        result.checked!
         File.read(path).scan(/add_foreign_key\s+"([^"]+)"\s*,\s*"([^"]+)"/).each do |from, to|
           next unless PHANTOM_TABLES.include?(to)
 

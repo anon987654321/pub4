@@ -44,6 +44,7 @@ module Deploy
 
       # Good fixtures must pass; bad fixtures must produce ≥1 finding.
       Dir.glob(File.join(FIXTURES, "good_*.html")).each do |path|
+        @result.checked!
         id = File.basename(path, ".html").sub(/\Agood_/, "")
         html = File.read(path)
         findings = @schema.check(html, id)
@@ -51,6 +52,7 @@ module Deploy
       end
 
       Dir.glob(File.join(FIXTURES, "bad_*.html")).each do |path|
+        @result.checked!
         id = File.basename(path, ".html").sub(/\Abad_/, "")
         html = File.read(path)
         findings = @schema.check(html, id)
@@ -75,6 +77,7 @@ module Deploy
           next
         end
 
+        @result.checked!
         url = "http://127.0.0.1:#{app.port}#{surface[:path]}"
         body = fetch(url, host: surface[:host])
         if body.nil?

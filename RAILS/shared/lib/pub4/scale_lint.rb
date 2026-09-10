@@ -64,6 +64,51 @@ module Pub4
 
     module_function
 
+    def findings
+      stylesheets.flat_map do |path|
+        # Two views of the same file. Declarations are read from the copy with
+        # comments blanked, so a commented-out rule is not a declaration; the
+        # opt-out is read from the raw copy, because `// scale: ok` is itself a
+        # comment and blanking it left every opt-out in the tree inert.
+        raw = File.readlines(path, encoding: "UTF-8")
+        lines = source_lines(path)
+        lines.each_with_index.flat_map do |line, index|
+          next [] if opted_out?(raw, index)
+
+          line.to_enum(:scan, DECLARATION).map { Regexp.last_match }
+              .flat_map { |m| check(rel(path), index + 1, m[:prop], m[:value].strip) }
+        end
+      end
+    end
+
+    def findings_for(surface_name)
+      findings.select { |finding| surface(File.join(REPO_ROOT, finding.file)) == surface_name }
+    end
+
+    def counts_for(surface_name)
+      findings_for(surface_name).group_by(&:kind).transform_values(&:size)
+    end
+
+    def counts = findings.group_by(&:kind).transform_values(&:size)
+
+    SURFACES = %w[apps face].freeze
+
+    def baselines = @baselines ||= scale.fetch("baselines")
+
+    def baselines_for(surface_name) = baselines.fetch(surface_name)
+
+    # The nearest declared step, for a report that says what to write instead.
+    def nearest(finding)
+      allowed = case finding.kind
+      when "off_scale_space" then space_px
+      when "off_scale_radius" then radius_px
+      else return nil
+      end
+      m = finding.value.match(LENGTH) or return nil
+      px = to_px(m[1], m[2].to_s).abs
+      "#{allowed.min_by { |step| (step - px).abs }.to_i}px"
+    end
+
     def tokens = @tokens ||= YAML.safe_load_file(TOKENS)
 
     def scale = @scale ||= tokens.fetch("scale")
@@ -186,31 +231,6 @@ module Pub4
 
     DECLARATION = /(?<prop>[-a-z]+)\s*:\s*(?<value>[^;{}]+)[;}]/
 
-    def findings
-      stylesheets.flat_map do |path|
-        # Two views of the same file. Declarations are read from the copy with
-        # comments blanked, so a commented-out rule is not a declaration; the
-        # opt-out is read from the raw copy, because `// scale: ok` is itself a
-        # comment and blanking it left every opt-out in the tree inert.
-        raw = File.readlines(path, encoding: "UTF-8")
-        lines = source_lines(path)
-        lines.each_with_index.flat_map do |line, index|
-          next [] if opted_out?(raw, index)
-
-          line.to_enum(:scan, DECLARATION).map { Regexp.last_match }
-              .flat_map { |m| check(rel(path), index + 1, m[:prop], m[:value].strip) }
-        end
-      end
-    end
-
-    def findings_for(surface_name)
-      findings.select { |finding| surface(File.join(REPO_ROOT, finding.file)) == surface_name }
-    end
-
-    def counts_for(surface_name)
-      findings_for(surface_name).group_by(&:kind).transform_values(&:size)
-    end
-
     def check(file, line, prop, value)
       check_alpha(file, line, prop, value) + case prop
       when *SPACE_PROPS
@@ -326,24 +346,5 @@ module Pub4
     # and a path that resolves against the wrong one points at nothing.
     def rel(path) = path.sub("#{REPO_ROOT}/", "")
 
-    def counts = findings.group_by(&:kind).transform_values(&:size)
-
-    SURFACES = %w[apps face].freeze
-
-    def baselines = @baselines ||= scale.fetch("baselines")
-
-    def baselines_for(surface_name) = baselines.fetch(surface_name)
-
-    # The nearest declared step, for a report that says what to write instead.
-    def nearest(finding)
-      allowed = case finding.kind
-      when "off_scale_space" then space_px
-      when "off_scale_radius" then radius_px
-      else return nil
-      end
-      m = finding.value.match(LENGTH) or return nil
-      px = to_px(m[1], m[2].to_s).abs
-      "#{allowed.min_by { |step| (step - px).abs }.to_i}px"
-    end
   end
 end

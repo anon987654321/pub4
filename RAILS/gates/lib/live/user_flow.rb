@@ -134,11 +134,13 @@ module Deploy
       touch = @design_rules.dig("layout_rules", "touch", "target_min_px")
       @result.fail("user_flow: design_rules layout_rules.touch.target_min_px missing") unless touch.to_i >= 44
       @result.warn("user_flow: MASTER design_rules + principle_map loaded (semantic floor)")
+      @result.checked!(4)
     end
 
     def source_flow_checks(app)
       markers = SOURCE_FLOW_MARKERS.fetch(app.name, {})
       markers.each do |name, rels|
+        @result.checked!
         present = Array(rels).any? { |rel| File.file?(File.join(RAILS_ROOT, app.name, rel)) || File.file?(File.expand_path(rel, File.join(RAILS_ROOT, app.name))) }
         # allow relative ../shared
         present ||= Array(rels).any? { |rel| File.file?(File.expand_path(rel, File.join(RAILS_ROOT, app.name))) }
@@ -157,6 +159,7 @@ module Deploy
       end
 
       FLOW_PATHS.fetch(app.name).each do |step|
+        @result.checked!
         run_live_step(app, step)
       end
     end

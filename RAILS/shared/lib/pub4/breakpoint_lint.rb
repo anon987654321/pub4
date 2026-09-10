@@ -86,37 +86,30 @@ module Pub4
 
     module_function
 
-    def edges
-      @edges ||= begin
-        viewport = YAML.safe_load_file(TOKENS).fetch("viewport")
-        viewport.values.map { |value| Integer(value) }.sort
+    def run
+      findings = scan
+      counts(findings).each do |kind, count|
+        baseline = BASELINES.fetch(kind)
+        note = count < baseline ? " — under baseline, lower it" : ""
+        puts "breakpoint_lint: #{kind} #{count} (baseline #{baseline})#{note}"
       end
+      findings.each { |f| puts "  #{f.file}:#{f.line} [#{f.kind}] #{f.value}" }
+
+      exceeded = over_baseline(findings)
+      return true if exceeded.empty?
+
+      warn "breakpoint_lint: exceeds baseline — #{exceeded.join("; ")}"
+      warn "breakpoint_lint: use a design_tokens.yml viewport edge (max-width bounds are edge - 1px)"
+      false
     end
 
-    # rem and em in a media query resolve against the browser's root size, which is
-    # 16px regardless of what any element sets — this is the one place `rem` is not
-    # affected by brgen's 18px root.
-    def to_px(value, unit)
-      unit == "px" ? value.to_f : value.to_f * 16
-    end
-
-    def stylesheets
-      Dir.glob(File.join(RAILS_ROOT, "*/app/assets/stylesheets/**/*.{scss,css}")) +
-        Dir.glob(File.join(RAILS_ROOT, "*/engines/*/app/assets/stylesheets/**/*.{scss,css}")) +
-        Dir.glob(File.join(RAILS_ROOT, "shared/app/assets/stylesheets/**/*.{scss,css}"))
-    end
-
-    # Comments blanked, line numbering preserved.
-    #
-    # TODO.md, Scanner Conventions 1, walked into on the first run of this file:
-    # shared/_responsive.scss opens with a paragraph explaining why a rule is NO
-    # LONGER wrapped in `@media (max-width: 768px)`, and the lint reported that
-    # sentence as a colliding bound. A check that reads its own documentation
-    # produces a false alarm the next author "fixes" by deleting the explanation.
-    def source_lines(path)
-      raw = File.read(path, encoding: "UTF-8")
-      raw = raw.gsub(%r{/\*.*?\*/}m) { |block| block.gsub(/[^\n]/, " ") }
-      raw.gsub(%r{//[^\n]*}) { |line| " " * line.length }.lines
+    def scan
+      all = bounds
+      ambiguous = ambiguous_pixels(all)
+      all.filter_map do |(file, line, bound, pixels, spelling)|
+        kind = classify(bound, pixels, ambiguous)
+        Finding.new(file, line, kind, spelling) if kind
+      end
     end
 
     # `@container grid (min-width: 400px)` is not a breakpoint.
@@ -159,15 +152,6 @@ module Pub4
       (mins & maxes).sort
     end
 
-    def scan
-      all = bounds
-      ambiguous = ambiguous_pixels(all)
-      all.filter_map do |(file, line, bound, pixels, spelling)|
-        kind = classify(bound, pixels, ambiguous)
-        Finding.new(file, line, kind, spelling) if kind
-      end
-    end
-
     def classify(bound, pixels, ambiguous)
       return "ambiguous_edge" if ambiguous.include?(pixels)
       return nil if edges.include?(pixels)
@@ -176,30 +160,47 @@ module Pub4
       "unknown_edge"
     end
 
+    def stylesheets
+      Dir.glob(File.join(RAILS_ROOT, "*/app/assets/stylesheets/**/*.{scss,css}")) +
+        Dir.glob(File.join(RAILS_ROOT, "*/engines/*/app/assets/stylesheets/**/*.{scss,css}")) +
+        Dir.glob(File.join(RAILS_ROOT, "shared/app/assets/stylesheets/**/*.{scss,css}"))
+    end
+
+    # Comments blanked, line numbering preserved.
+    #
+    # TODO.md, Scanner Conventions 1, walked into on the first run of this file:
+    # shared/_responsive.scss opens with a paragraph explaining why a rule is NO
+    # LONGER wrapped in `@media (max-width: 768px)`, and the lint reported that
+    # sentence as a colliding bound. A check that reads its own documentation
+    # produces a false alarm the next author "fixes" by deleting the explanation.
+    def source_lines(path)
+      raw = File.read(path, encoding: "UTF-8")
+      raw = raw.gsub(%r{/\*.*?\*/}m) { |block| block.gsub(/[^\n]/, " ") }
+      raw.gsub(%r{//[^\n]*}) { |line| " " * line.length }.lines
+    end
+
     def opted_out?(lines, index)
       lines[[ index - 1, 0 ].max..index].join.include?(OPT_OUT)
+    end
+
+    def edges
+      @edges ||= begin
+        viewport = YAML.safe_load_file(TOKENS).fetch("viewport")
+        viewport.values.map { |value| Integer(value) }.sort
+      end
+    end
+
+    # rem and em in a media query resolve against the browser's root size, which is
+    # 16px regardless of what any element sets — this is the one place `rem` is not
+    # affected by brgen's 18px root.
+    def to_px(value, unit)
+      unit == "px" ? value.to_f : value.to_f * 16
     end
 
     def rel(path)
       path.sub("#{RAILS_ROOT}/", "")
     end
 
-    def run
-      findings = scan
-      counts(findings).each do |kind, count|
-        baseline = BASELINES.fetch(kind)
-        note = count < baseline ? " — under baseline, lower it" : ""
-        puts "breakpoint_lint: #{kind} #{count} (baseline #{baseline})#{note}"
-      end
-      findings.each { |f| puts "  #{f.file}:#{f.line} [#{f.kind}] #{f.value}" }
-
-      exceeded = over_baseline(findings)
-      return true if exceeded.empty?
-
-      warn "breakpoint_lint: exceeds baseline — #{exceeded.join("; ")}"
-      warn "breakpoint_lint: use a design_tokens.yml viewport edge (max-width bounds are edge - 1px)"
-      false
-    end
   end
 end
 

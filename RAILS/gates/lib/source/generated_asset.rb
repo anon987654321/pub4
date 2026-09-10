@@ -38,10 +38,13 @@ module Deploy
     def run
       result = GateResult.new
       inventory = Inventory.new(root: ROOT)
+      return result.inconclusive!("generated_asset: the inventory lists no apps — no build was compared") if inventory.apps.empty?
+
       inventory.apps.each do |app|
         app_dir = File.join(RAILS_ROOT, app.name)
         next unless File.directory?(app_dir)
 
+        result.checked!
         stale?(app_dir, result, app.name)
       end
       result

@@ -46,6 +46,17 @@ module Deploy
       new.run
     end
 
+    # Every source check this gate runs, and the number it reports as measured.
+    # A list rather than fourteen call lines, so the count cannot drift from the
+    # calls the way a hand-typed 13 does.
+    SOURCE_CHECKS = %i[
+      check_rules_floor check_token_type_and_measure check_token_contrast
+      check_touch_targets check_line_height_and_body check_spacing_rhythm
+      check_type_scale_budget check_mobile_input_size check_heading_hierarchy
+      check_weight_delta check_font_families check_lowercase_tracking
+      check_palette_roles
+    ].freeze
+
     def run
       @result = GateResult.new
       unless File.file?(MASTER_RULES)
@@ -55,19 +66,8 @@ module Deploy
       @rules = Pub4::MasterDesign.blocks(MASTER_RULES)
       @tokens = File.file?(TOKENS) ? YAML.safe_load_file(TOKENS) : {}
 
-      check_rules_floor
-      check_token_type_and_measure
-      check_token_contrast
-      check_touch_targets
-      check_line_height_and_body
-      check_spacing_rhythm
-      check_type_scale_budget
-      check_mobile_input_size
-      check_heading_hierarchy
-      check_weight_delta
-      check_font_families
-      check_lowercase_tracking
-      check_palette_roles
+      @result.checked!(SOURCE_CHECKS.size)
+      SOURCE_CHECKS.each { |check| send(check) }
       optional_browser_hit_targets
       @result
     end
@@ -393,6 +393,7 @@ module Deploy
       begin
         driver = Selenium::WebDriver.for(:chrome, options: options)
         probes.each do |probe|
+          @result.checked!
           # selenium can't set Host easily — probe apex paths only.
           next if probe[:host].to_s.include?("markedsplass")
 

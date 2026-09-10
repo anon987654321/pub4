@@ -132,6 +132,7 @@ module Deploy
           end
 
           applied += 1
+          @result.checked!
           after = verdict(mutant, id)
           next if caught?(baseline, after)
 

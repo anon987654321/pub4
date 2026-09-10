@@ -33,6 +33,7 @@ module Deploy
         return
       end
       data = YAML.safe_load_file(TOKENS)
+      @result.checked!(7)
       %w[social luxury openbsd_wscons face_root vertical_accents].each do |key|
         @result.fail("dialect_purity: design_tokens missing #{key}") unless data.key?(key)
       end
@@ -46,6 +47,7 @@ module Deploy
       return @result.fail("dialect_purity: missing WIRING_NOTES.md") unless File.file?(WIRING)
 
       notes = File.read(WIRING)
+      @result.checked!(3)
       @result.fail("dialect_purity: WIRING_NOTES lost dialect table") unless notes.match?(/social|luxury|openbsd_wscons|face_root/i)
       @result.fail("dialect_purity: WIRING_NOTES lost Flat rule") unless notes.match?(/Flat rule|box-shadow/i)
       @result.fail("dialect_purity: WIRING_NOTES lost vertical accents rule") unless notes.match?(/vertical_accents|_vertical_shell/i)
@@ -56,6 +58,7 @@ module Deploy
       return @result.fail("dialect_purity: missing _vertical_shell.scss") unless File.file?(shell)
 
       shell_body = File.read(shell)
+      @result.checked!
       @result.fail("dialect_purity: _vertical_shell missing $vertical-accents map") unless shell_body.include?("$vertical-accents")
 
       # The verticals moved to engines/ and their sheets went with them: the host
@@ -66,6 +69,8 @@ module Deploy
                         Dir.glob(File.join(RAILS, "brgen/engines/*/app/assets/stylesheets/_vertical_*.scss"))
       vertical_sheets.each do |path|
         next if path.end_with?("_vertical_shell.scss")
+
+        @result.checked!
 
         body = File.read(path)
         if body.match?(/--accent\s*:/)
@@ -79,6 +84,8 @@ module Deploy
                Dir.glob(File.join(RAILS, "brgen/engines/*/app/assets/stylesheets/**/*.{scss,css}"))
       sheets.each do |path|
         next if path.include?("/builds/")
+
+        @result.checked!
         body = File.read(path)
         if body.match?(/#1d9bf0|#1DA1F2/i)
           @result.fail("dialect_purity: twitter blue in #{path.sub(RAILS + '/', '')}")

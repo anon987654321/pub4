@@ -109,6 +109,10 @@ module Deploy
       apps = inventory.apps
       result = GateResult.new
 
+      return result.inconclusive!("port_inventory: the inventory lists no apps — every check below reads that list") if apps.empty?
+
+      # Fourteen checks, all of them unconditional once the inventory loads.
+      result.checked!(14)
       check_uniques(result, apps, :name)
       check_uniques(result, apps, :domain)
       check_uniques(result, apps, :port)

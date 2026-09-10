@@ -4,6 +4,7 @@ require "json"
 require "yaml"
 require "open3"
 require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../support/bounded_command"
 
 module Deploy
   # Is what is committed actually running?
@@ -80,6 +81,7 @@ module Deploy
       # ci_ok means CI passed but vps-deploy had not finished; ok is the only
       # value that means the app is actually running this SHA.
       result.fail("deploy_drift: #{app} last deploy status is #{status.inspect}, not \"ok\"") unless status == "ok"
+      result.checked!
 
       unless known_commit?(sha)
         result.inconclusive!("deploy_drift: #{app} deployed #{sha}, which this checkout does not contain — fetch and re-run")
@@ -126,18 +128,18 @@ module Deploy
     end
 
     def known_commit?(sha)
-      _out, status = Open3.capture2e("git", "-C", ROOT, "cat-file", "-e", "#{sha}^{commit}")
-      status.success?
+      _out, status = BoundedCommand.capture2e("git", "-C", ROOT, "cat-file", "-e", "#{sha}^{commit}")
+      BoundedCommand.success?(status)
     end
 
     def git_repo?
-      _out, status = Open3.capture2e("git", "-C", ROOT, "rev-parse", "--git-dir")
-      status.success?
+      _out, status = BoundedCommand.capture2e("git", "-C", ROOT, "rev-parse", "--git-dir")
+      BoundedCommand.success?(status)
     end
 
     def capture(*args)
-      out, status = Open3.capture2e("git", "-C", ROOT, *args[1..])
-      status.success? ? out : ""
+      out, status = BoundedCommand.capture2e("git", "-C", ROOT, *args[1..])
+      BoundedCommand.success?(status) ? out : ""
     end
   end
 end

@@ -3,6 +3,7 @@
 require "open3"
 require "yaml"
 require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../support/bounded_command"
 require_relative "../source/apps_yml"
 require_relative "master_web_assets"
 require_relative "master_tts"
@@ -33,6 +34,7 @@ module Deploy
       @result.fail("tracked Rails master keys: #{tracked_master_keys.join(', ')}") if tracked_master_keys.any?
       @result.fail("missing shared RAILS/env.sample") unless File.file?(env_sample)
 
+      @result.checked!(2)
       apps.each do |name, metadata|
         check_app(name, metadata)
       end
@@ -61,6 +63,7 @@ module Deploy
       failures = []
       prod_active = production_lines(production)
 
+      @result.checked!(6)
       check_production_config(failures, prod_active, domain)
       check_routes(failures, app_dir)
       check_solid_adapters(failures, prod_active)
@@ -235,8 +238,8 @@ module Deploy
     end
 
     def git_ls_files(pattern)
-      stdout, status = Open3.capture2("git", "-C", ROOT, "ls-files", pattern)
-      status.success? ? stdout.lines.map(&:chomp).reject(&:empty?) : []
+      stdout, status = BoundedCommand.capture2e("git", "-C", ROOT, "ls-files", pattern)
+      BoundedCommand.success?(status) ? stdout.lines.map(&:chomp).reject(&:empty?) : []
     end
 
     def load_yaml(path)

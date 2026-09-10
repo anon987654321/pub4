@@ -33,7 +33,10 @@ module Deploy
       ports = []
       domains = []
 
+      return @result.inconclusive!("apps_yml: apps.yml declares no apps — nothing was validated") if apps.empty?
+
       apps.each do |name, meta|
+        @result.checked!
         validate_app(name.to_s, meta, ports:, domains:)
       end
 
@@ -49,15 +52,23 @@ module Deploy
       app_dir = File.join(ROOT, name)
       @result.fail("#{name}: declared in apps.yml but no directory #{app_dir}") unless File.directory?(app_dir)
 
-      deploy_script = meta["deploy_script"]
-      if deploy_script
-        full_deploy = File.join(ROOT, "..", deploy_script)
-        full_deploy2 = File.join(ROOT, deploy_script)
-        @result.fail("#{name}: deploy_script '#{deploy_script}' does not exist") unless File.file?(full_deploy) || File.file?(full_deploy2)
-      else
-        @result.warn("#{name}: no deploy_script declared")
-      end
+      validate_deploy_script(name, meta)
+      validate_endpoint(name, meta, ports:, domains:)
+      validate_features(name, meta)
+    end
 
+    def validate_deploy_script(name, meta)
+      deploy_script = meta["deploy_script"]
+      return @result.warn("#{name}: no deploy_script declared") unless deploy_script
+
+      full_deploy = File.join(ROOT, "..", deploy_script)
+      full_deploy2 = File.join(ROOT, deploy_script)
+      @result.fail("#{name}: deploy_script '#{deploy_script}' does not exist") unless File.file?(full_deploy) || File.file?(full_deploy2)
+    end
+
+    # Port and domain together, because both feed the duplicate tallies in #run
+    # and a check that collects into a caller's array reads wrong on its own.
+    def validate_endpoint(name, meta, ports:, domains:)
       port = meta["port"]
       if port
         @result.fail("#{name}: port must be integer, got #{port.class}") unless port.is_a?(Integer)
@@ -72,7 +83,9 @@ module Deploy
       else
         @result.warn("#{name}: no domain declared")
       end
+    end
 
+    def validate_features(name, meta)
       (meta["features"] || {}).each_value do |section|
         next unless section.is_a?(Array)
 

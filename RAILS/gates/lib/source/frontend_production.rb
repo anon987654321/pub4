@@ -4,6 +4,7 @@ require "open3"
 require "rbconfig"
 require "yaml"
 require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../support/bounded_command"
 
 module Deploy
   class FrontendProductionGate
@@ -25,13 +26,16 @@ module Deploy
         app_dir = File.join(RAILS_ROOT, name)
         next unless File.directory?(app_dir)
 
+        result.checked!
         layout_files(app_dir).each do |path|
+          result.checked!
           check_layout(path).each { |issue| result.fail("#{name} #{File.basename(path)}: #{issue}") }
         end
         check_views(app_dir).each { |issue| result.fail("#{name}: #{issue.delete_prefix(app_dir + '/')}") }
       end
 
       web_layout_files.each do |path|
+        result.checked!
         check_layout(path).each { |issue| result.fail("MASTER/web #{File.basename(path)}: #{issue}") }
       end
 
@@ -45,8 +49,15 @@ module Deploy
       build_script = File.join(RAILS_ROOT, "tools", "build_all_css.rb")
       return unless File.file?(build_script)
 
-      _out, status = Open3.capture2e(RbConfig.ruby, build_script, "--check", chdir: ROOT)
-      result.fail("CSS build check failed (run tools/build_all_css.rb)") unless status.success?
+      # Two minutes: --check reads the built bundles rather than compiling, but
+      # the script has a build path and a stuck sass-embedded is exactly the
+      # child that used to hang a whole run.
+      _out, status = BoundedCommand.capture2e(RbConfig.ruby, build_script, "--check", timeout: 120, chdir: ROOT)
+      if BoundedCommand.timed_out?(status)
+        result.fail("CSS build check passed 120s and was killed — tools/build_all_css.rb --check is stuck")
+      elsif !status.success?
+        result.fail("CSS build check failed (run tools/build_all_css.rb)")
+      end
     end
 
     def layout_files(app_dir)

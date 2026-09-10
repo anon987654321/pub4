@@ -50,6 +50,8 @@ module Deploy
       run_leaves
     end
 
+    # No checked! of its own — merge! carries each leaf's count up, and this
+    # class measures nothing itself.
     def run_leaves
       result = GateResult.new
       LEAVES.each do |klass|

@@ -59,6 +59,9 @@ module Deploy
       report
     end
 
+    # No checked! of its own: a composite measured whatever its leaves
+    # measured, and merge! carries their check counts up. Counting here as well
+    # would claim a check this class never ran.
     def run_leaves
       result = GateResult.new
       LEAVES.each do |klass|

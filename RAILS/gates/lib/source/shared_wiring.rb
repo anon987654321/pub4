@@ -43,13 +43,16 @@ module Deploy
 
       baseline_text = File.read(baseline)
       boot_text = File.read(boot)
+      result.checked!(2)
       %w[
         pub4/autosave pub4/draft_store pub4/media_picker pub4/feed_compose pub4/scroll_reveal
         pub4/offline_feed pub4/pwa_standalone
       ].each do |pin|
+        result.checked!
         result.fail("importmap_baseline missing pin #{pin}") unless baseline_text.include?(%("#{pin}"))
       end
       REQUIRED_STIMULUS_REGISTRATIONS.each do |name|
+        result.checked!
         result.fail("pub4_stimulus_boot must register #{name}") unless boot_text.include?(%("#{name}"))
       end
 
@@ -64,6 +67,7 @@ module Deploy
       end
 
       APPS.each do |app|
+        result.checked!
         routes_path = File.join(RAILS_ROOT, app, "config/routes.rb")
         importmap_path = File.join(RAILS_ROOT, app, "config/importmap.rb")
         reactions_path = File.join(RAILS_ROOT, app, "app/controllers/reactions_controller.rb")

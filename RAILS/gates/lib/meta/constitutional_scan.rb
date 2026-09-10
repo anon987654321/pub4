@@ -3,6 +3,7 @@
 require "open3"
 require "yaml"
 require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../support/bounded_command"
 
 module Deploy
   # Scan-only constitutional preflight: MASTER /scan on RAILS (+ optional OPENBSD).
@@ -167,8 +168,8 @@ module Deploy
     def changed_only? = ENV["GATE_SCAN_CHANGED"].to_s == "1"
 
     def changed_paths
-      out, status = Open3.capture2e("git", "diff", "--name-only", "HEAD", chdir: ROOT)
-      return [] unless status.success?
+      out, status = BoundedCommand.capture2e("git", "diff", "--name-only", "HEAD", chdir: ROOT)
+      return [] unless BoundedCommand.success?(status)
 
       out.lines.map(&:strip).reject(&:empty?)
     rescue StandardError => e

@@ -64,7 +64,31 @@ module Pub4
 
     module_function
 
-    def engine_dirs = Dir.glob(File.join(RAILS_ROOT, "brgen/engines/*"))
+    def run
+      findings = scan
+      counts(findings).each do |kind, count|
+        baseline = BASELINES.fetch(kind)
+        note = count < baseline ? " — under baseline, lower it" : ""
+        puts "asset_url_lint: #{kind} #{count} (baseline #{baseline})#{note}"
+      end
+      findings.sort_by(&:ref).each { |f| puts format("  %-52s %s", f.ref, f.sheet) }
+
+      exceeded = over_baseline(findings)
+      return true if exceeded.empty?
+
+      warn "asset_url_lint: exceeds baseline — #{exceeded.join("; ")}"
+      false
+    end
+
+    def scan
+      sheets.flat_map do |path|
+        refs_in(path).uniq.filter_map do |ref|
+          next if satisfied_everywhere?(ref, path)
+
+          Finding.new("missing_asset", ref, rel(path), roots_for(path).map { |r| rel(r) }.join(", "))
+        end
+      end
+    end
 
     # Both places a url() can be written: a stylesheet, and the inline <style>
     # blocks the mailer layout and brgen's legal footer use because an email and
@@ -78,10 +102,16 @@ module Pub4
       (pipeline + served + views).reject { |path| path.include?("/builds/") || path.include?("/public/assets/") }
     end
 
-    def body_of(path)
-      raw = File.read(path, encoding: "UTF-8")
-      css = path.end_with?(".erb") ? raw.scan(%r{<style[^>]*>(.*?)</style>}m).flatten.join("\n") : raw
-      css.gsub(%r{/\*.*?\*/}m, " ").gsub(%r{(?<!:)//[^\n]*}, " ")
+    def refs_in(path)
+      body = body_of(path)
+      blocks = each_blocks(body)
+      body.enum_for(:scan, /(?<![\w-])url\(\s*([^)]+?)\s*\)/).flat_map do
+        ref = Regexp.last_match(1).strip.delete('"\'')
+        offset = Regexp.last_match.begin(0)
+        next [] if ref.empty? || ref.start_with?("data:", "http:", "https:", "//", "#")
+
+        expand(ref, offset, blocks)
+      end
     end
 
     # `@each $w in (400, 600, 700)` builds three refs from one url(). Without
@@ -127,35 +157,6 @@ module Pub4
       refs.reject { |r| r.include?("\#{") }
     end
 
-    def refs_in(path)
-      body = body_of(path)
-      blocks = each_blocks(body)
-      body.enum_for(:scan, /(?<![\w-])url\(\s*([^)]+?)\s*\)/).flat_map do
-        ref = Regexp.last_match(1).strip.delete('"\'')
-        offset = Regexp.last_match.begin(0)
-        next [] if ref.empty? || ref.start_with?("data:", "http:", "https:", "//", "#")
-
-        expand(ref, offset, blocks)
-      end
-    end
-
-    def tree_of(path)
-      rel = path.sub("#{RAILS_ROOT}/", "")
-      rel.start_with?("brgen/engines/") ? "brgen" : rel.split("/").first
-    end
-
-    # Every root that serves this stylesheet. `shared/public` reaches all three
-    # apps through the engine's static middleware, so one copy there satisfies
-    # everyone; a file in only one app's `public/` satisfies only that app, which
-    # is why a shared stylesheet needs the file in shared or in all three.
-    def roots_for(path)
-      tree = tree_of(path)
-      return [ File.join(RAILS_ROOT, tree, "public"), File.join(RAILS_ROOT, "shared", "public"),
-              File.join(RAILS_ROOT, tree, "app/assets") ] if APPS.include?(tree)
-
-      [ File.join(RAILS_ROOT, "shared", "public"), File.join(RAILS_ROOT, "shared", "app/assets") ]
-    end
-
     def satisfied_everywhere?(ref, path)
       return true if satisfied?(ref, roots_for(path))
       return false if APPS.include?(tree_of(path))
@@ -181,33 +182,33 @@ module Pub4
       end
     end
 
-    def scan
-      sheets.flat_map do |path|
-        refs_in(path).uniq.filter_map do |ref|
-          next if satisfied_everywhere?(ref, path)
+    # Every root that serves this stylesheet. `shared/public` reaches all three
+    # apps through the engine's static middleware, so one copy there satisfies
+    # everyone; a file in only one app's `public/` satisfies only that app, which
+    # is why a shared stylesheet needs the file in shared or in all three.
+    def roots_for(path)
+      tree = tree_of(path)
+      return [ File.join(RAILS_ROOT, tree, "public"), File.join(RAILS_ROOT, "shared", "public"),
+              File.join(RAILS_ROOT, tree, "app/assets") ] if APPS.include?(tree)
 
-          Finding.new("missing_asset", ref, rel(path), roots_for(path).map { |r| rel(r) }.join(", "))
-        end
-      end
+      [ File.join(RAILS_ROOT, "shared", "public"), File.join(RAILS_ROOT, "shared", "app/assets") ]
     end
+
+    def tree_of(path)
+      rel = path.sub("#{RAILS_ROOT}/", "")
+      rel.start_with?("brgen/engines/") ? "brgen" : rel.split("/").first
+    end
+
+    def body_of(path)
+      raw = File.read(path, encoding: "UTF-8")
+      css = path.end_with?(".erb") ? raw.scan(%r{<style[^>]*>(.*?)</style>}m).flatten.join("\n") : raw
+      css.gsub(%r{/\*.*?\*/}m, " ").gsub(%r{(?<!:)//[^\n]*}, " ")
+    end
+
+    def engine_dirs = Dir.glob(File.join(RAILS_ROOT, "brgen/engines/*"))
 
     def rel(path) = path.to_s.sub("#{RAILS_ROOT}/", "")
 
-    def run
-      findings = scan
-      counts(findings).each do |kind, count|
-        baseline = BASELINES.fetch(kind)
-        note = count < baseline ? " — under baseline, lower it" : ""
-        puts "asset_url_lint: #{kind} #{count} (baseline #{baseline})#{note}"
-      end
-      findings.sort_by(&:ref).each { |f| puts format("  %-52s %s", f.ref, f.sheet) }
-
-      exceeded = over_baseline(findings)
-      return true if exceeded.empty?
-
-      warn "asset_url_lint: exceeds baseline — #{exceeded.join("; ")}"
-      false
-    end
   end
 end
 

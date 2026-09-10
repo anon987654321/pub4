@@ -2271,19 +2271,26 @@ with its blocker rather than left implied:
 3. **The anonymised contact relay** — inbound mail routing on vm23.
 4. **Live streaming, Solidus, pgvector** — infrastructure, listed under Blocked.
 
-### Three files over their length ceilings
+### Two stylesheets over their length ceilings
 
-`RAILS/test/file_length_ratchet_test.rb`, the one red file in the standalone
-suite. `limits.yml`'s rule holds here too: a breach is paid by extraction or
-deletion, never by a bigger number.
+`RAILS/test/file_length_ratchet_test.rb`, the one red file left in the
+standalone suite. `limits.yml`'s rule holds here too: a breach is paid by
+extraction or deletion, never by a bigger number.
 
     shared/app/assets/stylesheets/_zen_shell.scss        502 / 477   (+25)
     brgen/app/assets/stylesheets/_messenger_window.scss  446 / none declared
-    brgen/test/services/deploy_backlog_test.rb           558 / 557   (+1)
 
-`user_flow.rb` and `rendered_geometry.rb` left the list on 2026-09-09.
-`_messenger_window.scss` is the new arrival and has no ceiling at all, which is
-the shape the counterpart half of that test exists to make visible.
+`user_flow.rb` and `rendered_geometry.rb` left the list on 2026-09-09,
+`deploy_backlog_test.rb` and `design_metrics.rb` on 2026-09-10 — the second by
+folding thirteen check_* call lines into the symbol list its check count now
+reads, 345 → 342.
+
+**Both that are left are stylesheets, and that is why they are still here.**
+Splitting a partial moves it in the cascade, and every candidate cut in
+`_zen_shell.scss` is argued out below and still ends "wants the owner's yes".
+`_messenger_window.scss` has no ceiling at all, which is the shape the
+counterpart half of that test exists to make visible; recording one would admit
+its current length rather than measure it, so it waits on the same yes.
 
 **`_zen_shell.scss` is not an extraction, and that is the finding.** Its rules
 reach the apps through one `@forward` in `_stack_brgen.scss`, so source order
@@ -2601,43 +2608,27 @@ every variant selector literally contains `.btn`, and the specificity argument
 above covers what the pairs do not. The extraction is still a structural move and
 wants the owner's yes, because the house rule is restore or ask.
 
-#### 2. brgen re-implements the concern that exists to hold it
+#### 3. Reading order — the five lints are done, the gates cases are not worth it
 
-`shared/app/controllers/concerns/shared/application_setup.rb` is the one place
-the three apps set up a controller. amber and bsdports use it —
-`amber/app/controllers/application_controller.rb:4`,
-`bsdports/...:4`. brgen does not:
-`brgen/app/controllers/application_controller.rb:4-23` inlines the same five
-includes, the same three `helper` calls and the same three settings, and carries
-a longer version of the same comment that `application_setup.rb:13-16` carries,
-each pointing at the other. `helper Shared::ConsentHelper` at line 20 is now
-redundant besides: `shared/lib/shared/engine.rb:91` registers it for every app.
+The five `Pub4::*Lint` modules read entry first now. Each was reordered on its
+own and checked the same way: every lint's findings and counts snapshotted to
+JSON before the first move and compared after each, byte identical throughout.
+`scale_lint`'s first attempt raised on require — the module's closing `end` was
+inside the slice being reordered, so `REPO_ROOT` landed in `module Pub4`. A
+reorder that carries a scope terminator is not a reorder.
 
-#### 3. The `Pub4::*Lint` family puts its entry point last
+The four gates cases from the same pass, at a lower threshold, were read and
+rejected. `gate_calibration.rb`'s `run` is already fourth in its class and
+`dom_surface_schema.rb`'s `self.check` is second; neither is an inversion at a
+useful threshold. `geometry_type.rb`'s `check` sits directly above the eight
+`check_*` methods it dispatches to, so lifting it above `profile` and `worn`
+would put 150 lines between it and the helper it calls on its first line —
+the move makes that file worse, not better. `layout_search.rb`'s `report` is
+behind four public methods a caller may want on their own.
 
-A Prism pass over 1,267 Ruby files under `RAILS/` (visibility tracked through
-bare `private`/`public` call nodes, entry point taken as the method callers name)
-finds six inversions, and five are one family:
-
-    shared/lib/pub4/css_coverage_lint.rb:407     #scan, 22 helpers and 130 lines above it
-    shared/lib/pub4/layout_stability_lint.rb:225 #counts, 12 helpers, 114 lines
-    shared/lib/pub4/asset_url_lint.rb:186        #scan, 11 helpers, 84 lines
-    shared/lib/pub4/scale_lint.rb:214            #check, 22 helpers, 83 lines
-    shared/lib/pub4/breakpoint_lint.rb:162       #scan, 6 helpers, 39 lines
-    test/method_length_ratchet_test.rb:111       #measure, 3 helpers, 30 lines
-
-In each the reader meets `engine_dirs`, `strip_erb`, `to_px` and twenty siblings
-before meeting `scan`, and `run` — the ratchet-printing main — is last of all.
-They are `module_function` modules, so nothing is private and the fix is ordering
-alone: entry, then what it calls, then the rest. `ScaleLint::Finding` and a few
-helpers are named directly by tests, so nothing can be made private.
-
-Four smaller cases in the gates, from the same pass at a lower threshold:
-`gates/support/geometry_type.rb:60` (`check` behind five helpers it calls),
-`gates/support/layout_search.rb:63` (`report` behind six),
-`gates/support/gate_calibration.rb:36`, `gates/support/dom_surface_schema.rb:21`.
-`geometry_type`'s `check_measure` and `check_tabular` are called from
-`test/gates/rendered_gates_test.rb:307,314`, so again ordering only.
+`test/method_length_ratchet_test.rb`'s `measure` stays where it is: in a
+Minitest class the entry points are the four `test_*` methods, and they are
+below it already.
 
 The counterpart defect is absent. A public method declared below a scope's first
 `private` appears **nowhere** in `RAILS/` — 0 findings over 1,461 files, with the
@@ -2708,17 +2699,11 @@ an afternoon and it touches a MASTER ratchet, so it is not a first move.
 - `dns_zones` is the one red gate: `bsdports.org` resolves to
   185.134.245.114, not to us. Already the OPENBSD section's
   `bsdports_org_delegated_to_parking`; not a RAILS defect.
-- `Shared::Engine.config.eager_load_paths` is empty while
-  `Shared::Engine.paths.eager_load` lists eleven directories. Whether that means
-  the engine is not eager-loaded in production, or is only a Rails 8.1 internal,
-  is **not settled** — `bin/rails zeitwerk:check` could not finish in this
-  worktree because the development database has no `users` table. Least sure item
-  here; worth ten minutes on a migrated checkout, because it is the difference
-  between a boot failure and a first-request 500.
-- Eager loading needs a migrated database either way: `zeitwerk:check` aborted at
-  `bsdports/app/controllers/categories_controller.rb:6` with `Could not find
-  table 'users'`, because `Shared::Authentication.allow_unauthenticated_access`
-  reads `::User.column_names` in a class body.
+- `Shared::Engine.config.eager_load_paths` being empty is settled and is a Rails
+  internal: the eleven directories reach `Rails.autoloaders.main` with no
+  eager-load exclusions, and `zeitwerk:check` passes. Written up in
+  `shared/WIRING_NOTES.md`, including why the measurement needs `db:prepare`
+  first.
 
 #### Not worth chasing — measured and rejected
 
@@ -3400,10 +3385,6 @@ this line is the only thing standing between them and a well-meaning fix.
 
 ### Still open, each verified 2026-09-09
 
-- **`.price` still wears the accent.** `shared/_minimal.scss:474` sets
-  `color: var(--accent)`, while `visual_contract_lint.rb:52` records that
-  `.price` dropped the hue on 2026-08-21. One of the two is wrong. It sits
-  outside the brgen-scoped glob, so `accent_on_prose` cannot report it.
 - **A shared display-type slot is unbuilt.** `_vertical_marketplace.scss:42`
   outranks `_typography`'s page-title rule by matching an id, and the comment
   above it carries the workaround under protest. A hero wants to opt out by
@@ -3418,11 +3399,6 @@ this line is the only thing standing between them and a well-meaning fix.
 - **`WORN_TYPE.profiles.map.label_min_px` has no reader.** Declared at
   `rules.yml:3364` and read by nothing. `data_reach` counts top-level keys only,
   so no instrument sees a nested one.
-- **brgen's layout comment describes a mechanism that is gone.**
-  `brgen/app/views/layouts/application.html.erb:22` says the surface theme is
-  "per vertical, not a constant" and sends the reader to
-  `ApplicationHelper#surface_theme` for the mapping; that method now returns
-  `DEFAULT_SURFACE_THEME`, which is `"light"` for every surface.
 
 ## From the 2026-08-31 session
 
@@ -3450,27 +3426,12 @@ this line is the only thing standing between them and a well-meaning fix.
 
 ## From the 2026-09-01 audit
 
-- **Twenty-seven of the fifty-one RAILS gates never call `checked!`.**
-  `flow_journey` reported PASSED over 25 journeys while its verdict line read
-  "checked nothing", because `measured_nothing?` saw `checks_ran == 0`. That one
-  is fixed and the rest were never read. Some of the twenty-seven are suites
-  that delegate, so classify before fixing; `live/first_screen.rb`,
-  `live/user_flow.rb` and `source/css_constitution.rb` are among them.
 - **Live RAILS gates still measure too little.** `user_flow`, `first_screen`,
   `payment_honesty`, `content_honesty` and several rendered gates skip when the
   app ports are closed. Run the suite once with `GATE_REQUIRE_LIVE=1`,
   `GATE_STRICT_INCONCLUSIVE=1` and `GATE_STRICT_ERRORS=1` on a host where brgen,
   amber and bsdports are listening, then record any findings that only appear
   live.
-- **brgen's `Gemfile.lock` was written by a different bundler major than the
-  box resolves with.** vm23 runs ruby 3.4.9 with bundler 4.0.17; amber and
-  bsdports record `BUNDLED WITH 4.0.7`, brgen records `2.7.2` and writes its
-  `RUBY VERSION` as `3.4.9p82`, which is the older bundler's format — so the
-  whole lockfile, not just the footer, came from 2.x. Re-resolving is a
-  deploy-day change with a rollback plan: the body was resolved by the bundler
-  that wrote it, `vps-deploy` installs from it on a 1 GB box, and
-  `vps_gemfile_lock_drift` already records that a Mac-written lock against
-  BSD-only gems is how this breaks.
 - **`bin/sine_stream.rb:975` is the last un-oversampled `asoftclip`.** Every
   other saturation site runs `oversample=4` or `8`, and dilla's README says the
   rule reaches every real `asoftclip=type=` filter string; this one runs the
@@ -3541,19 +3502,15 @@ a finding is a hypothesis until the instrument has been checked.
   before starting either. Done when each row carries its cost and its
   preconditions, `runner.rb` prints them first, and the ledger records each
   gate's wall time, so a gate that doubles is visible before it is unrunnable.
-- **Six `capture2e` calls in gates have no timeout** — in
-  `lib/live/deploy_drift.rb`, `lib/meta/constitutional_scan.rb` and
-  `lib/source/frontend_production.rb`. One of them hung a whole run with no
-  output and no verdict. Done when every subprocess a gate spawns is bounded.
-- **A skipped gate still reads as a pass in the summary.** `runner.rb --all`
-  should close with the skipped gates and their reasons as a list, the summary
-  line should separate passed from failed from measured-nothing, and
-  `GATE_STRICT_INCONCLUSIVE=1` should be the CI default while staying optional
-  locally. The live gates that skip on closed ports are the case to settle: boot
-  the triangle for them, or fail rather than skip.
-- **A red gate that never loaded prints an empty failure list.** `rails_runtime`
-  was red for months naming no finding, because it failed at require time. Done
-  when a load failure says so instead of reporting zero findings.
+- **`GATE_STRICT_INCONCLUSIVE=1` is not the CI default.** `runner.rb --all` now
+  closes with each inconclusive gate's own reasons and names any gate that
+  failed while listing no finding, and every subprocess a gate spawns is bounded
+  by `gates/support/bounded_command.rb`. What is left of that entry is the CI
+  half, and it has nowhere to live yet: `shared/config/ci.rb` never invokes the
+  gate runner, so the flag would have to be set by `OPENBSD/vps_ci.sh` or
+  `bin/vps-deploy`, which is the operator's tree. The other half — whether the
+  live gates should boot the triangle rather than skip — is a decision about
+  what CI is allowed to start, not a defect.
 - **`bin/pub4 gate --tree <TREE>`** — the ladder scoped to one tree, for the
   common case of working in one. Today it is all four or nothing.
 

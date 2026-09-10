@@ -24,8 +24,10 @@ module Deploy
   class ScaleRatchetGate
     LINT = Pub4::ScaleLint
 
-    def self.run
-      result = GateResult.new
+    # Every baseline against its count, as two lists of message lines. Separated
+    # from #run because comparing is one job and reporting is another, and only
+    # the first knows what the numbers mean.
+    def self.compare(result)
       over = []
       under = []
 
@@ -34,6 +36,7 @@ module Deploy
         counts = LINT.counts_for(surface)
 
         baselines.each do |kind, baseline|
+          result.checked!
           count = counts[kind].to_i
           if count > baseline
             over << "#{surface}.#{kind}: #{count} (baseline #{baseline}, +#{count - baseline})"
@@ -42,6 +45,17 @@ module Deploy
           end
         end
       end
+
+      # A surface with no baselines compares nothing, and a lint that read no
+      # files reports zero for every kind, which is indistinguishable from clean.
+      result.inconclusive!("scale_ratchet: no baselines declared for any surface — design_tokens.yml scale.baselines is unread") if result.checks_ran.zero?
+
+      [over, under]
+    end
+
+    def self.run
+      result = GateResult.new
+      over, under = compare(result)
 
       over.each do |line|
         result.fail("scale_ratchet: #{line}")
