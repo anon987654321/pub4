@@ -1033,7 +1033,11 @@ class TestDilla < Minitest::Test
     # assert_empty here failed the suite for the state the operator asked for.
     # A skip would go quiet and stay quiet. This fails on a fifth, and tightens
     # on its own as the rebuild lands each file.
-    awaiting_rebuild = %w[kembara_rindu lo_borges rauingar arat_swost_wolet]
+    #
+    # The list itself went stale in both directions and neither showed, because
+    # the unreachable assertion above fails first and hides this one: rauingar
+    # is back on disk, and semua_untuk_mu is not.
+    awaiting_rebuild = %w[kembara_rindu semua_untuk_mu lo_borges arat_swost_wolet]
     fileless = result.fetch("missing_files")
     assert_empty fileless - awaiting_rebuild,
                  "a loop entry pointing at a file that is not there renders silently without a bed: " \
