@@ -1,6 +1,4 @@
-# Doc-drift baselines — dimension and path exemptions with reasons.
-# Was doc_numbers_baseline.yml + doc_paths_baseline.yml (one reader each),
-# and doc_paths: then had none at all until test_doc_paths.rb read it.
+---
 doc_numbers:
   RAILS/UI_REFINEMENTS.md:
   - value: 44px
@@ -21,13 +19,25 @@ doc_numbers:
 
       '
 doc_paths:
-  OPENBSD/SSH_ACCESS.md:
-  - path: priv/ssh/id_ed25519_brgen.pub
-    why: |
-      Deliberate, and load-bearing. Permanent exemption.
-      Corrected 2026-08-12: this reason used to read "Keys are never committed; the document names where the operator keeps one locally", and on that reading the sentence was rewritten to send the reader to the VM instead. That was wrong and has been reverted. .gitignore lines 42-43 are `priv/ssh/` followed by `!priv/ssh/*.pub` -- public keys are explicitly un-ignored, so `priv/ssh/id_ed25519_brgen.pub` is where the public half is MEANT to live and "in repo" is accurate about the design. The file is simply not there yet.
-      So this is not a dead reference to repair. It is a path waiting for its file, and the fix is to add the public key, not to reword the document.
+  CLAUDE.md:
+  - path: WISHLIST.md
+    why: 'The sentence is the deletion record: WISHLIST.md folded into TODO.md on
+      2026-09-06 and this file says so. Naming it is the point.
+
+      '
   MASTER/DECISIONS.md:
+  - path: core/ABSORPTION.md
+    why: 'A record of a document that was renamed and then deleted. The paragraph
+      exists to say what the deleted file claimed and why the ratchet replaced it.
+
+      '
+  - path: data/biases.yml
+    why: 'A decision record naming the data file this repo folded into data/rules.yml.
+      The record is what says the fold happened, so it has to be able to name what
+      was folded; rewriting it to cite rules.yml would delete the fact it exists to
+      carry.
+
+      '
   - path: data/design_rules.yml
     why: 'A decision record naming the file whose fold it records. The path is meant
       to be dead; the entry explains why proximity to a consumer lost to having one
@@ -48,11 +58,20 @@ doc_paths:
       carry.
 
       '
-  - path: data/biases.yml
-    why: 'A decision record naming the data file this repo folded into data/rules.yml.
-      The record is what says the fold happened, so it has to be able to name what
-      was folded; rewriting it to cite rules.yml would delete the fact it exists to
-      carry.
+  - path: design_rules.yml
+    why: 'A record of a fold. design_rules.yml was merged into rules.yml on 2026-09-04
+      and this entry is the argument for merging it.
+
+      '
+  - path: docs/SEVERANCE.md
+    why: 'A record of a rename followed by a deletion: core/ABSORPTION.md became docs/SEVERANCE.md
+      and went with the rest of docs/. The paragraph exists to say the standing policy
+      has no second document to consult.
+
+      '
+  - path: style.yml
+    why: 'Same fold, the other side of it: design_rules.yml was split from style.yml
+      before both were folded away.
 
       '
   MASTER/EXAMPLES.md:
@@ -61,10 +80,86 @@ doc_paths:
       reason as the DECISIONS.md entry above.
 
       '
+  - path: style.yml
+    why: 'A worked example of a past fold, written in the first person as the reasoning
+      that led to it. Rewriting it to name today''s file would change what the example
+      teaches.
+
+      '
   MASTER/START_HERE.md:
+  - path: GITHUB_WATCH.md
+    why: 'Deleted with docs/ in 3e2f32f76, with no successor and no section in the
+      runtime catalog.
+
+      '
+  - path: REPAIR_PLAYBOOKS.md
+    why: 'The sentence is the deletion record: docs/ was codified into data/runtime.yml
+      and its last four files went in 3e2f32f76, a commit about a deploy gate that
+      swept them up. A reader sent to a missing playbook needs to be told it is missing.
+
+      '
+  - path: SEVERANCE.md
+    why: 'Deleted with docs/ in 3e2f32f76. Named because two governing documents cited
+      it as a source of truth for weeks while it did not exist.
+
+      '
+  - path: UI_POLISH_PLAYBOOK.md
+    why: 'Deleted with docs/ in 3e2f32f76; the sentence says so and points at RAILS/shared/WIRING_NOTES.md,
+      which is maintained.
+
+      '
+  - path: mobile_web_opportunities.yml
+    why: 'Deleted 2026-08-11 with visual_clusters.yml, in the same sentence.
+
+      '
+  - path: visual_clusters.yml
+    why: 'The sentence ends ''Both files deleted 2026-08-11'' and explains what was
+      checked before cutting them.
+
+      '
   - path: web/public/assets/
     why: 'A generated web directory, absent from a clean checkout and gitignored.
       Same class as MASTER/output/ and MASTER/knowledge/ in test_doc_paths'' repo-wide
       list, but cited by this document alone.
+
+      '
+  OPENBSD/DECISIONS.md:
+  - path: config/puma.rb
+    why: 'The sentence asserts the absence: none of the three apps has a config/puma.rb,
+      because they run Falcon. A gate that fails on a document for correctly reporting
+      that a file is gone has the direction backwards.
+
+      '
+  OPENBSD/RUNBOOK.md:
+  - path: db/seeds/launch.rb
+    why: 'Prescriptive, not stale. The line asks for a launch seed to be written that
+      week; the file is meant not to exist yet. It comes out of this list the day
+      someone writes it.
+
+      '
+  OPENBSD/SSH_ACCESS.md:
+  - path: priv/ssh/id_ed25519_brgen.pub
+    why: |
+      Deliberate, and load-bearing. Permanent exemption.
+      Corrected 2026-08-12: this reason used to read "Keys are never committed; the document names where the operator keeps one locally", and on that reading the sentence was rewritten to send the reader to the VM instead. That was wrong and has been reverted. .gitignore lines 42-43 are `priv/ssh/` followed by `!priv/ssh/*.pub` -- public keys are explicitly un-ignored, so `priv/ssh/id_ed25519_brgen.pub` is where the public half is MEANT to live and "in repo" is accurate about the design. The file is simply not there yet.
+      So this is not a dead reference to repair. It is a path waiting for its file, and the fix is to add the public key, not to reword the document.
+  RAILS/shared/WIRING_NOTES.md:
+  - path: _appname.scss
+    why: 'A pattern, not a path: the line warns against creating per-app stylesheets
+      named after their app. There is no file to resolve and there should not be.
+
+      '
+  - path: shared/_minimal.scss
+    why: 'Shorthand for RAILS/shared/app/assets/stylesheets/_minimal.scss, which exists.
+      The document writes engine paths from the engine''s own root throughout; spelling
+      every one in full would make it unreadable.
+
+      '
+  - path: shared/_tokens.scss
+    why: 'Shorthand for RAILS/shared/app/assets/stylesheets/_tokens.scss, which exists.
+
+      '
+  - path: style.yml
+    why: 'A record of the same fold MASTER/DECISIONS.md carries.
 
       '

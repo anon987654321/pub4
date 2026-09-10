@@ -121,11 +121,11 @@ the whole log; this paragraph has the story.
 
 ## The Spine Ratchet Replaces An Unmeasured Invariant
 
-`core/ABSORPTION.md` (now `docs/SEVERANCE.md`) asserted "the spine never grows"
-and nothing checked it. In the three weeks after `core/` landed, `lib/` gained
-8,022 lines and `core/` gained none. That file is now `docs/SEVERANCE.md`, a
-record of what was cut rather than a plan, and this document is the standing
-policy on the spine.
+`core/ABSORPTION.md` asserted "the spine never grows" and nothing checked it.
+In the three weeks after `core/` landed, `lib/` gained 8,022 lines and `core/`
+gained none. It was renamed `docs/SEVERANCE.md` and then deleted with the rest of
+`docs/` in `3e2f32f76`, so this document is the standing policy on the spine and
+there is no second one to consult.
 
 What is enforced instead: `rake lint:spine` reads `data/spine.yml` and fails
 when `lib/` grows past its recorded ceiling or the fold spine gains a file. The

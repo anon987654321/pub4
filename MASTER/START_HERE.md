@@ -86,8 +86,8 @@ gates it names exist.
 
 1. `lib/core.rb` and `lib/core/` are the fold spine, and they must not require
    the rest of `lib/`. The two-spine *directory* split ended 2026-08-12
-   (`docs/SEVERANCE.md`); the dependency direction it was protecting did not,
-   and is now a test rather than a folder boundary. `core_files: 7` in
+   (the record of it went with `docs/`); the dependency direction it was
+   protecting did not, and is now a test rather than a folder boundary. `core_files: 7` in
    `data/spine.yml` makes a new concept a design decision — raised from 6 on
    2026-08-12 for `Proof`, the first raise since the spine was written. — gate:
    `test/test_core_no_lib_backedges.rb`, `rake lint:spine`
@@ -190,9 +190,12 @@ Documents outside `data/` that nothing links to are found by nobody — this
 sentence was the only thing linking two of them, which is not the same as being
 read. The principle-map audit is gone: its eight closed gaps are in git and its
 three open ones are in the repo-root `TODO.md`, where open work is looked for.
-The rest live under `docs/`: `REPAIR_PLAYBOOKS.md` for a red gate,
-`UI_POLISH_PLAYBOOK.md` for visual authority, `GITHUB_WATCH.md` for external
-projects worth reading.
+The rest are gone. `docs/` was codified into `data/runtime.yml` in `3797afea7`
+and its last four files went in `3e2f32f76`, a commit about a deploy gate that
+swept them up — so `REPAIR_PLAYBOOKS.md`, `UI_POLISH_PLAYBOOK.md`,
+`GITHUB_WATCH.md` and `SEVERANCE.md` have no successors and no section in the
+catalog. For a red gate read the gate's own output and `TODO.md`; for visual
+authority read `RAILS/shared/WIRING_NOTES.md`, which is maintained.
 
 **Tier 4 — Prose (3 allowed markdown files in `data/`):**
 
@@ -208,7 +211,7 @@ projects worth reading.
 
 **Target end state:** 4 law YAMLs + 1 patterns + registries + 1 runtime catalog
 + 3 data markdown stubs. Top-level MASTER markdown: this file + `README.md` stub
-+ `DECISIONS.md` / `EXAMPLES.md` / `REPAIR_PLAYBOOKS.md` only when they hold
++ `DECISIONS.md` / `EXAMPLES.md` only when they hold
 living entries (the debt register moved to the repo-root `TODO.md`).
 
 OPENBSD mirror: `OPENBSD/START_HERE.md` + `OPENBSD/RUNBOOK.md` — not duplicate

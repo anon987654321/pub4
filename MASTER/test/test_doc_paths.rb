@@ -102,8 +102,23 @@ class TestDocPaths < Minitest::Test
     # checked. Seven stale ones were sitting behind that, four of them in the
     # decision records.
     dir = File.dirname(@current_doc.to_s)
-    dir != "." && File.exist?(File.join(REPO, dir, head))
+    return true if dir != "." && File.exist?(File.join(REPO, dir, head))
+
+    # A head that resolves nowhere is usually prose — but it is also exactly what
+    # a deleted directory leaves behind, and that is when this check matters
+    # most. `docs/SEVERANCE.md` was cited as a source of truth by two governing
+    # documents for weeks: docs/ had been deleted, so the token was dropped as
+    # "not a path" before anything looked for the file. The gate written to catch
+    # a stale citation was blind to the one kind of staleness it cannot recover
+    # from.
+    #
+    # An extension is what separates the two. This repo's own file kinds only:
+    # a mime type in prose (application/json) carries none, and a bare word with
+    # a slash is not a citation.
+    CITED_EXTENSIONS.include?(File.extname(candidate))
   end
+
+  CITED_EXTENSIONS = %w[.md .rb .yml .yaml .scss .css .js .erb .rake .sh].freeze
 
   # Per-document exemptions, each with the argument for it, in
   # MASTER/data/doc_baselines.yml under `doc_paths:`. KNOWN_ABSENT above is
