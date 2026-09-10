@@ -173,12 +173,45 @@ class TestDocPaths < Minitest::Test
   def resolves?(candidate, doc)
     return true if File.exist?(File.join(REPO, candidate))
     return true if File.exist?(File.expand_path(candidate, File.join(REPO, File.dirname(doc))))
+    return true if tracked.any? { |t| t.end_with?("/#{candidate}") || t == candidate }
 
-    tracked.any? { |t| t.end_with?("/#{candidate}") || t == candidate }
+    generated?(candidate, doc)
+  end
+
+  # A path the repo ignores is generated, and a clean checkout is entitled not to
+  # have it. `web/storage/` and `web/log/` are Rails' own runtime directories and
+  # START_HERE.md lists them under "Local/generated", which is the citation this
+  # gate is least able to check and most likely to punish: the prose is correct
+  # and the directory only appears after the app has run once.
+  #
+  # A live query rather than another allow-list entry, because an exemption whose
+  # subject no longer exists is a hole nobody can see — this one goes stale the
+  # day the ignore rule does, on its own.
+  #
+  # From the document's own directory only, which is the reading `resolves?`
+  # already takes of a citation. The repo-root reading would be wrong in one case
+  # that matters: `.gitignore` excludes `priv/ssh/` and then un-excludes
+  # `!priv/ssh/*.pub`, but git cannot re-include a file inside an excluded
+  # directory, so the root form of that public key reads as ignored while
+  # `OPENBSD/priv/ssh/…` does not. The operator's decision there is that the file
+  # is missing and should be added, which is a citation this gate must keep.
+  def generated?(candidate, doc)
+    Dir.chdir(REPO) { system("git", "check-ignore", "-q", File.join(File.dirname(doc), candidate)) }
   end
 
   def tracked
     @tracked ||= Dir.chdir(REPO) { `git ls-files`.lines.map(&:strip) }
+  end
+
+  # Both directions, because a predicate that answered true for everything would
+  # switch this gate off while reading exactly like a fix.
+  def test_only_an_ignored_path_counts_as_generated
+    assert generated?("web/storage/", "MASTER/START_HERE.md"),
+           "MASTER/web/.gitignore names storage, so a clean checkout cannot be asked for it"
+    refute generated?("web/nowhere/", "MASTER/START_HERE.md"),
+           "a path nothing ignores is a citation this gate must still check"
+    refute generated?("priv/ssh/id_ed25519_brgen.pub", "OPENBSD/SSH_ACCESS.md"),
+           "the root reading of that path is ignored and the document's reading is not"
   end
 
   def test_every_repo_path_a_doc_cites_exists
