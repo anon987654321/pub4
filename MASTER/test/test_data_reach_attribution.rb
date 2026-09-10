@@ -114,4 +114,25 @@ class TestDataReachAttribution < Minitest::Test
     Tool.instance_variable_set(:@code_files, nil)
     Tool.instance_variable_set(:@code, nil)
   end
+
+  # A reader following the house rule never writes the basename: it asks
+  # Master.load_rules or @rules.data(:soul), because lint:reader_singularity
+  # refuses a second loader. Judged on the basename alone, obeying that rule
+  # made a live reader invisible and the census called nine of them unread.
+  def test_an_accessor_names_the_file_it_resolves_to
+    Tool.instance_variable_set(:@code_files, {
+      "output_check.rb" => "Master.load_rules(root:).fetch('llm_output_rules', {})",
+      "builder.rb" => "soul = @rules.data(:soul); Array(soul['prompt_ordering'])",
+    })
+
+    assert Tool.attributed?("llm_output_rules", "rules.yml")
+    assert Tool.attributed?("prompt_ordering", "soul.yml")
+
+    # The other direction: an accessor for one file does not vouch for another's
+    # key, or the table would attribute everything to everything.
+    refute Tool.attributed?("llm_output_rules", "runtime.yml")
+  ensure
+    Tool.instance_variable_set(:@code_files, nil)
+    Tool.instance_variable_set(:@code, nil)
+  end
 end

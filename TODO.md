@@ -329,12 +329,13 @@ back half-edited and an `Oops.rej` was written to the working directory.
 `test_fix_patch_applier.rb` pins it.
 
 **`maturity_scorecard.rb` was wired rather than deleted, and its first honest reading
-is eight rows of debt.** `bin/doctor` prints `summary_line` under the boot receipt —
-the receipt says what booted, the scorecard says what has been proven and when. It
-now names how many rows are past `EVIDENCE_SHELF_LIFE_DAYS`, set to 30 because a
-`verified` taken off month-old evidence is a claim again. All eight rows in
-`data/maturity.yml` were last checked on 2026-07-22, so the count reads 8 of 8. **That
-is the open item now: re-verify them or mark them, one at a time, with the evidence.**
+was eight rows of debt.** `bin/doctor` prints `summary_line` under the boot receipt —
+the receipt says what booted, the scorecard says what has been proven and when — and it
+names how many rows are past `EVIDENCE_SHELF_LIFE_DAYS`, set to 30 because a `verified`
+taken off month-old evidence is a claim again. All eight were re-verified on 2026-09-10
+and each row carries what was read, so the count is 0 of 8. **The re-verification is
+cheap and the shelf life is thirty days: expect this to read 8 of 8 again in a month,
+and re-read the predicate rather than re-dating the row.**
 
 **The posture, settled 2026-09-10, is warn — and the funnel already had one.**
 `Voice::OutputGuard#validate` runs in `CLI::Stages::Render`, beside
@@ -425,40 +426,31 @@ Deterministic detectors in `MASTER/lib/review/scan/rules/`, following the
 `LONG_PARAMETER_LIST`, `PRIMITIVE_OBSESSION`, `FEATURE_ENVY`, `COUPLER_SMELLS`,
 `LAZY_CLASS`, `SPECULATIVE_GENERALITY`, `NO_SHOTGUN_SURGERY`, `TEMPORAL_COUPLING`.
 
-Two were drafted, run over the tree, and are blocked on the cross-file index below.
-Neither is a guess.
+**`LAYER_CAKE` and `DEAD_ABSTRACTION` are decided against**, with the measurement, at
+`MASTER/DECISIONS.md`. Neither was blocked on the cross-file index. `DEAD_ABSTRACTION`'s
+class half was recorded here as one finding and there are **none**: a Prism walk for
+classes whose every method raises `NotImplementedError`, proved against a planted file
+first, reads zero over `lib/`, and the three abstract declarations the tree holds carry
+six implementers apiece or are `Scan::Rule#check`. Reopen either only with a finding in
+hand.
 
-- **`LAYER_CAKE`** — a chain of sibling methods each of which only forwards. At three
-  links, the honest reading, this tree has **none**, and a rule that fires on nothing
-  joins `rule_audit.silent`, which is at its ceiling. At two links it finds 9, and
-  reading them says why that threshold is wrong: three are `rescue_handlers.rb` naming
-  one exception each before forwarding to `render_http_error`, the shape `rescue_from`
-  requires, and the rest (`ok? -> ok`, `unwrap -> value!`) are aliases. A two-link
-  forward is an alias, not a cake. A real layer cake spans files — controller to
-  service to repository — and no per-file rule can see it.
-- **`DEAD_ABSTRACTION`** — the class half is precise and almost empty: 4 classes declare
-  a body that is only `raise NotImplementedError`, and exactly **1** has no
-  implementer. The module half is a false-positive machine and must not ship as
-  written: 367 of 419 modules that define methods are included at most once, because
-  nearly every module here is a `module_function` namespace rather than a mixin, so the
-  census measures Zeitwerk's file-to-constant mapping and calls it a dead abstraction.
-  One finding does not pay for a rule.
+#### Larger AST work — closed 2026-09-10, four against and one already built
 
-#### Larger AST work — multi-session projects
+The five that stood here were a wish list with no measurement under any of them. Each
+was measured; the arguments are in `MASTER/DECISIONS.md` and none is open.
 
-Each is its own sitting, with an owner and a design, not a sweep.
-
-- **A cross-file AST / symbol index.** Every rule that needs to know "who implements
-  this" or "who calls this" (`DEAD_ABSTRACTION`, `LAYER_CAKE`, feature envy across
-  files) currently cannot see past the file it is in.
-- **An incremental scan cache keyed on file SHA.** Re-parse only what changed; a full
-  scan re-walks the whole tree every run.
-- **tree-sitter for real JS / SCSS ASTs.** The JS and SCSS rules are lexical because
-  there is no real parse tree for those languages here; a real AST retires whole
-  classes of false positive.
-- **Prose / CSS / audio "AST" rules.** The same deterministic-detector idea applied to
-  non-Ruby artifacts — documents, stylesheets, and dilla's render graph.
-- **A clone → extract-method autofix.** `DUPLICATE_CODE` detects; nothing extracts.
+The **cross-file symbol index** has no consumer left and is mostly built besides:
+`tools/method_graph.rb` is a name-based call graph over all of `lib/`, and thirty lines
+of Prism answered "who implements this" for `DEAD_ABSTRACTION` above. The
+**incremental scan cache** wants a bottleneck it does not have — a full `lib/` scan is
+13.0s over 410 files, about 32ms a file, and the minutes a `/through` pass takes are
+the council. **tree-sitter** buys real JS and SCSS parse trees at the price of a native
+extension, in the tree whose first sentence is that it is pure Ruby and which deploys
+to OpenBSD. The **clone-to-extract autofix** has three subjects in all of `lib/`, one
+of them already judged not worth extracting, and rewriting method boundaries is the
+riskiest transform available to a pass that has mangled one file in three. The
+**prose and CSS detector** idea is `law/prose.rb` and `law/css.rb`, both live; the
+audio half is dilla's owner's.
 
 ### `rake test` is green — 2026-09-10
 
@@ -538,27 +530,6 @@ first tests on 2026-08-01: four live defects fell out, all in code that looked f
 `rake test:subsystems` runs in the `operator` and `contributor` profiles, so
 `test/{cli,io,fix,lib}/` is no longer skipped by the gate `START_HERE.md` sends
 contributors to.
-
-### `rake studio` fails on dilla, not on vips
-
-**This section said `rake studio` fails locally because `ruby-vips` and `libvips` are
-not installed. Both are installed** — `test_tools_postpro.rb` prints `vipsgem=true`
-and passes — and `studio_gate` itself passes, parsing 110 Ruby files. What fails is
-`studio_test`, inside dilla, and the three defects are real:
-
-    302 runs, 14098 assertions, 2 failures, 1 errors, 3 skips
-
-- `test_every_hand_cut_sample_loop_is_reachable_as_a_track_preset`
-  (`STUDIO/test/test_dilla_engine_probes.rb:1038`) — the loop `semua_untuk_mu` points
-  at a missing file.
-- `test_every_genre_renderer_reaches_the_master_bus` (`:1180`) — `render_analog` never
-  sets an integrated loudness.
-- `TestRenderSeed#test_render_rand_stays_in_the_unit_interval`
-  (`STUDIO/test/test_dilla_render_seed.rb:75`) — `NoMethodError: undefined method
-  'render_rand'`. The helper the test names does not exist.
-
-These belong to dilla's owner. `rake studio` is the fourth prerequisite of `rake
-audit`, so it is what the audit hands you after the earlier gates pass.
 
 ### Survey findings still open
 
@@ -758,11 +729,32 @@ So the honest scope is per-file and by hand, with a two-direction test. A repo-w
 gate would need a baseline carrying a written reason for all 49, which is a decision
 about 49 sections rather than a mechanical step.
 
-**And `data_reach` cannot tell which file a reader opened.** Its test is whether the
-key name appears anywhere in first-party code, so `success_criteria` counted as reached
-for as long as it existed — `lib/ground/phase_gates.rb:133` names it, reading session
-state rather than `rules.yml`. The 37 at the ceiling is a floor on the real number, not
-the number.
+**`data_reach` does tell which file a reader opened, and the entry that said otherwise
+was reading an older tool.** `misattributed` reports every key named in code that never
+mentions its file — the `success_criteria` shape, where `lib/ground/phase_gates.rb:133`
+names the word while reading session state rather than `rules.yml`. The 37 at the
+ceiling is still a floor on the real number, because a key named in a comment counts as
+named.
+
+**Its own instrument was punishing the house rule, and that is fixed.** Attribution
+asked for the yaml basename in the same file as the key, and a reader obeying
+`lint:reader_singularity` never writes one — it asks `Master.load_rules`,
+`Master::RULES_PATH` or `@rules.data(:soul)`. Nine live readers were reported unread for
+following the rule, `rules.yml#llm_output_rules` and `soul.yml#prompt_ordering` among
+them. `DataReach::ACCESSORS` names the handles each file is legitimately reached by, and
+the test pins both directions: an accessor names its own file and vouches for no other.
+
+**The 36 that remain are four families and none is a defect** — read this before
+chasing the number. Fourteen are registry rows selected by a config value at runtime
+(`personas.yml` 7, `providers.yml` 5, `prompts.yml` 2), the case the subsection above
+already names as unreachable by any grep. Six are a `schema` or `meta` version key read
+by a version check rather than by name. Nine are archive and recovery manifests
+(`pub_archive_restore.yml`, `recovery_pub.yml`) whose keys are data about a restore
+rather than configuration. The rest are keyed by something other than an identifier —
+`namespace_ceilings.yml` by tree path, `soul.yml#language` and `#research` by a nested
+reader. **A ceiling over them needs a written reason for all 36, which is a decision
+about 36 rows rather than a mechanical step, and that is the same argument this section
+already makes against the repo-wide version.**
 
 ### The shape of the tree
 
@@ -1443,7 +1435,9 @@ recorded.
   naming the rule that reports for it. `RuleRegistryAudit` measures the split, `SelfTest`
   reads it, and `test_rule_registry_audit.rb` pins it. Re-measured 2026-09-09 at **242
   declared** and 147 built by the registry, split 141 semantic, 15 structural, 0 lexical
-  and 86 carrying no detector field. The lexical hatch is deliberately idle and
+  and 92 carrying no detector field — 92 and not the 86 this entry used to say, which
+  was the subtraction corrected under "The rule corpus" above. The lexical hatch is
+  deliberately idle and
   `RuleRegistryAudit` prints `lexical hatch empty` rather than two zeros a reader has to
   add up — so the day somebody declares a `detect_lexical` again, a test fails and asks
   whether the bridge is still wanted.

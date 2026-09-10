@@ -427,3 +427,81 @@ three places (touch minimum at `ux_laws.fitts` and `layout_rules.touch`; the
 spacing scale at `pixel_perfection.eight_px_rhythm` and `layout_rules.grid`),
 which is why `Design::Thresholds` reads them as fallback chains. Deduplicating
 those requires editing every reader and is not this commit.
+
+## LAYER_CAKE And DEAD_ABSTRACTION Are Not Built (2026-09-10)
+
+Both were drafted, run over the tree and left blocked on a cross-file symbol
+index. Neither waits on the index. Both were measured again on 2026-09-10 and
+the measurement decides them.
+
+`LAYER_CAKE` looks for a chain of sibling methods each of which only forwards.
+At three links, the honest threshold, this tree has none. At two it finds nine,
+and reading the nine says why two is the wrong number: three are
+`rescue_handlers.rb` naming one exception each before forwarding to
+`render_http_error`, which is the shape `rescue_from` requires, and the rest —
+`ok? -> ok`, `unwrap -> value!` — are aliases. A two-link forward is an alias.
+A real layer cake spans files, so the cross-file index would be a prerequisite
+rather than the obstacle; nothing in the per-file reading suggests the index
+would find one. A rule that fires on nothing lands in `rule_audit.silent`, which
+is a ratchet at its ceiling, so building it costs a ceiling point and buys no
+finding.
+
+`DEAD_ABSTRACTION`'s module half is a false-positive machine and must not ship
+as written: 367 of 419 modules that define methods are included at most once,
+because nearly every module here is a `module_function` namespace rather than a
+mixin, so the census measures Zeitwerk's file-to-constant mapping.
+
+**Its class half was recorded as one finding and there are none.** A Prism walk
+for classes whose every method body raises `NotImplementedError`, proved first
+against a planted file carrying one implemented and one abandoned base, finds
+zero over `lib/`. The tree holds three abstract method declarations in all —
+`Ground::Orders::Base#call`, `ReviewCrew::BaseAgent#analyze` and
+`Scan::Rule#check` — and the first two carry six implementers each. The refused
+bequest in the other direction, a subclass raising `NotImplementedError` over a
+parent that implements, already has a detector in `LiskovRule`.
+
+Reopen either only with a finding in hand. The bar is a subject in the tree, not
+a design.
+
+## The Five Larger AST Projects Are Four Refusals And One Duplicate (2026-09-10)
+
+They stood in `TODO.md` as multi-session projects, each a design with no
+measurement under it. The measurements decide four and reveal the fifth.
+
+**A cross-file AST / symbol index.** Its named consumers were
+`DEAD_ABSTRACTION` and `LAYER_CAKE`, both refused above, and the rest of its
+case is "who implements this" and "who calls this". `tools/method_graph.rb`
+already answers the second across every file in `lib/` — every method a node,
+every identifier in a body an edge, rooted in the names used outside `lib/` —
+and thirty lines of Prism answered the first while refusing
+`DEAD_ABSTRACTION`. Building an index for consumers that no longer exist is
+the speculative generality the rule catalogue names.
+
+**An incremental scan cache keyed on file SHA.** No bottleneck. A full scan of
+`lib/` is 13.0 seconds over 410 files, about 32 milliseconds each; the minutes a
+`/through` pass spends are the council reaching a provider, which no file digest
+shortens. A cache carries an invalidation surface, and this one would buy
+seconds off a task nobody waits on. `biases.premature_optimization` asks for a
+measured bottleneck first, and the measurement says there is none.
+
+**tree-sitter for real JS and SCSS ASTs.** The gain is real: those rules are
+lexical because no parse tree exists for them here, and a tree retires whole
+classes of false positive. The price is a native extension in the tree whose
+first sentence is that it is a constitutional AI runtime in pure Ruby, deploying
+to OpenBSD, where every added build dependency is a deploy hazard. Prism is in
+the stdlib and covers the language MASTER is written in. Reopen this only as an
+operator decision about what MASTER is, not as a scanner improvement.
+
+**A clone to extract-method autofix.** `DUPLICATE_CODE` detects and nothing
+extracts, and there is almost nothing to extract: `COPY_PASTE_BLOCK` finds one
+group in all of `lib/` and the structural `DRY` rule three cross-file groups, of
+which `repo_ecology#grade_for` against `context_pressure#band_for` is two banding
+functions over different domains sharing a `case` shape. Against three subjects,
+a transform that rewrites method boundaries is the worst risk this pass could
+take: `/scan`'s autofix has damaged one file in three on a trial run, and both
+mangles passed a syntax check.
+
+**Prose, CSS and audio detectors.** Already built, twice over. `law/prose.rb`
+generates its detectors per natural language from `data/rules.yml`, and
+`law/css.rb` judges stylesheets by declaration. The audio half — dilla's render
+graph — belongs to dilla's owner, whose renders are irreplaceable.
