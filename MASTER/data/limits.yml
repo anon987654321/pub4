@@ -981,7 +981,10 @@ guidance:
 loc_body_budgets:
   lib/boot: 276
   lib/builder: 252
-  lib/builder.rb: 214
+  # 214 -> 216 for the two lines that construct Voice::OutputGuard in each of
+  # the two boot paths, so the evidence contract on MASTER's own reply reaches
+  # the container that CLI::Stages::Render reads it from.
+  lib/builder.rb: 216
   lib/cli: 5892
   lib/cognition: 253
   lib/core: 762
