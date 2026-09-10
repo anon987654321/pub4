@@ -4,6 +4,7 @@ require "json"
 require "yaml"
 require "open3"
 require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../support/bounded_command"
 
 module Deploy
   # Is what is committed actually running?
@@ -127,18 +128,18 @@ module Deploy
     end
 
     def known_commit?(sha)
-      _out, status = Open3.capture2e("git", "-C", ROOT, "cat-file", "-e", "#{sha}^{commit}")
-      status.success?
+      _out, status = BoundedCommand.capture2e("git", "-C", ROOT, "cat-file", "-e", "#{sha}^{commit}")
+      BoundedCommand.success?(status)
     end
 
     def git_repo?
-      _out, status = Open3.capture2e("git", "-C", ROOT, "rev-parse", "--git-dir")
-      status.success?
+      _out, status = BoundedCommand.capture2e("git", "-C", ROOT, "rev-parse", "--git-dir")
+      BoundedCommand.success?(status)
     end
 
     def capture(*args)
-      out, status = Open3.capture2e("git", "-C", ROOT, *args[1..])
-      status.success? ? out : ""
+      out, status = BoundedCommand.capture2e("git", "-C", ROOT, *args[1..])
+      BoundedCommand.success?(status) ? out : ""
     end
   end
 end

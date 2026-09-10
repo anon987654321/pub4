@@ -3,6 +3,7 @@
 require "open3"
 require "yaml"
 require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../support/bounded_command"
 require_relative "../source/apps_yml"
 require_relative "master_web_assets"
 require_relative "master_tts"
@@ -237,8 +238,8 @@ module Deploy
     end
 
     def git_ls_files(pattern)
-      stdout, status = Open3.capture2("git", "-C", ROOT, "ls-files", pattern)
-      status.success? ? stdout.lines.map(&:chomp).reject(&:empty?) : []
+      stdout, status = BoundedCommand.capture2e("git", "-C", ROOT, "ls-files", pattern)
+      BoundedCommand.success?(status) ? stdout.lines.map(&:chomp).reject(&:empty?) : []
     end
 
     def load_yaml(path)

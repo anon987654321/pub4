@@ -1,30 +1,17 @@
 # frozen_string_literal: true
 
 class ApplicationController < ActionController::Base
-  include Shared::RescueHandlers
-  include Shared::Authentication
-  include Shared::PunditAuthorization
-  include Shared::PagyPagination
-  include Shared::VisitCounting
-  # Rails' automatic helper inclusion (config.action_controller.include_all_helpers)
-  # scans the HOST app's app/helpers/, but pub4-shared is mounted as a separate
-  # engine gem -- its helpers aren't in that scan path and need an explicit
-  # `helper` call. Other shared helpers (e.g. Shared::SearchHelper's
-  # live_search_index) happened to already be reachable via a different
-  # inclusion path; Shared::StimulusFormHelper wasn't, breaking
-  # password_visibility_field on every sessions/new render.
-  helper Shared::StimulusFormHelper
-  # Same reason: shared/_ad_slot gates on advertising_consent?, and an ad slot
-  # whose gate raises NoMethodError would take the page down instead of
-  # rendering nothing.
-  helper Shared::ConsentHelper
-  helper Shared::AffiliateHelper
-  turbo_refreshes_with :morph, scroll: :preserve
-  stale_when_importmap_changes
+  # The five shared includes, the two shared helper registrations, the browser
+  # floor, morph refreshes and the importmap staleness key are one concern that
+  # amber and bsdports already use. brgen inlined the same list beside a comment
+  # pointing at that concern while the concern's comment pointed back here.
+  #
+  # Shared::ConsentHelper is not in it and is not needed: shared/_ad_slot is an
+  # engine partial, so the engine registers the helper for every app in
+  # shared/lib/shared/engine.rb's "shared.consent_helper" initializer.
+  include Shared::ApplicationSetup
 
   before_action :set_domain_context
-
-  allow_browser versions: :modern
 
   private
 

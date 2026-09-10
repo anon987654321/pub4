@@ -107,7 +107,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
       check_tap_token
 
       files = css_files
-      @result.fail("css_constitution: no stylesheets found") if files.empty?
+      files.empty? ? @result.fail("css_constitution: no stylesheets found") : @result.checked!(files.size)
       @result.warn("css_constitution: scanning #{files.size} stylesheets")
 
       # Seeded, not defaulted: a rule that falls to zero has to still appear here
@@ -117,10 +117,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
         "type_scale" => [], "weight_ladder" => [],
         "child_margin" => [], "card_padding" => []
       }
-      files.each do |path|
-        @result.checked!
-        scan(path)
-      end
+      files.each { |path| scan(path) }
       judge_budgets
       check_weight
       @result

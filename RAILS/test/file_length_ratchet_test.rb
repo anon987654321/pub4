@@ -92,7 +92,12 @@ class FileLengthRatchetTest < Minitest::Test
 # ran unbudgeted and still reported ok. The path is anchored on the gates root
 # now, and gate_live_and_css_budget_test asserts every budget reader returns
 # something, which is the assertion that was missing both times.
-"gates/lib/research/design_metrics.rb" => 345,
+# 345 -> 342 when the gate learned to count what it checked. The thirteen
+# check_* calls in #run are SOURCE_CHECKS, a symbol list, so checked! reports
+# the list's size rather than a hand-typed thirteen that drifts the first time
+# a check is added. Fourteen call lines became two, which is what paid for the
+# count.
+"gates/lib/research/design_metrics.rb" => 342,
 # 498 -> 449 on 2026-08-26. check_contrast, apca_note and check_apca are
 # rendered_geometry/contrast_checks.rb — the one subject in this gate that
 # is colour rather than geometry, and the rendered counterpart to the

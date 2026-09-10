@@ -225,6 +225,38 @@ def ledger
   end
 end
 
+# Why a gate could not measure, kept for the summary rather than only printed
+# under the gate that said it. A full run prints hundreds of lines above its
+# verdict, so naming the inconclusive gates at the bottom without their reasons
+# tells the reader which gates to scroll back to — one step short of telling
+# them what to do about it.
+#
+# A subprocess gate has no result object to read and can only speak in exit
+# codes, so it contributes the code and nothing else. Say that rather than
+# leaving a blank line under its name.
+REASONS = {}
+
+# A gate that failed while naming no finding is the shape rails_runtime wore for
+# months: red every run with an empty failure list, because it broke at require
+# time and never reached a check. The in-process path turns a raise into
+# :errored and names it, so what is left here is the subprocess half and the
+# genuine zero-finding failure. Either way the reader should not have to guess
+# whether the list is empty because nothing was found or because nothing ran.
+EMPTY_FAILURES = []
+
+def record_reasons(key, outcome)
+  result = @last_result
+  case outcome
+  when :inconclusive
+    reasons = result.respond_to?(:unchecked) ? Array(result.unchecked) : []
+    reasons = ["exit #{SUBPROCESS_INCONCLUSIVE}, no reason given (subprocess gate)"] if reasons.empty?
+    REASONS[key] = reasons
+  when :failed
+    named = result.respond_to?(:failures) ? result.failures.size : 0
+    EMPTY_FAILURES << key if named.zero?
+  end
+end
+
 def run_one(key, verbose:)
   row = GATES.fetch(key)
   source = subprocess?(row) ? row["script"] : row["class"]
@@ -234,6 +266,7 @@ def run_one(key, verbose:)
   outcome = subprocess?(row) ? run_subprocess(key, row) : run_in_process(key, row, verbose:)
   elapsed = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
   puts "[gates] #{key} #{OUTCOME_LABEL.fetch(outcome)}"
+  record_reasons(key, outcome)
   ledger.record(
     gate: key,
     outcome: outcome,
@@ -357,6 +390,23 @@ if errored.any?
   puts "[gates] #{errored.size} gate(s) ERRORED and blocked nothing: #{errored.join(', ')}"
   puts "[gates]   whatever those guard was not checked this run " \
        "(GATE_STRICT_ERRORS=1 to fail on it; --ledger for how long this has been true)"
+end
+
+unless REASONS.empty?
+  puts "[gates] #{REASONS.size} gate(s) measured nothing, and why:"
+  REASONS.each do |key, reasons|
+    # Most gates already open the reason with their own name, and printing it
+    # twice reads like two gates.
+    reasons.each { |reason| puts "[gates]   #{key}: #{reason.to_s.delete_prefix("#{key}: ")}" }
+  end
+  puts "[gates]   GATE_STRICT_INCONCLUSIVE=1 turns these into failures. A live " \
+       "precondition is satisfied by RAILS/bin/triangle up; a deploy-host one is not."
+end
+
+if EMPTY_FAILURES.any?
+  puts "[gates] #{EMPTY_FAILURES.size} gate(s) failed while naming no finding: #{EMPTY_FAILURES.join(', ')}"
+  puts "[gates]   a red gate with an empty failure list broke before it reached a check — " \
+       "run it alone to see the error"
 end
 
 if failed.any?

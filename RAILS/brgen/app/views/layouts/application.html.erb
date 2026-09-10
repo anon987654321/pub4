@@ -19,11 +19,11 @@
     `#dark-toggle:checked ~ .theme-root`, a different selector, so a visitor who
     asks for light still gets light.
 
-    The value is per vertical, not a constant (operator, 2026-08-24). It was
-    hardcoded "dark" for every surface, so markedsplass, maps and takeaway --
-    the three that are designed light -- rendered on the dark palette while
-    their accents stayed tuned for the light one. ApplicationHelper#surface_theme
-    holds the mapping. %>
+    The value is one constant for every surface. ApplicationHelper carries it
+    as DEFAULT_SURFACE_THEME, and #surface_theme returns that and nothing else,
+    so a per-vertical exception has a place to live and legibly does not exist
+    yet. A reader who wants dark still has it: the toggle writes localStorage
+    and _theme_bootstrap restores it before paint. %>
 <%# --brand-mark-glyphs is how the gutter learns the wordmark's length.
 
     The mark is a city domain, so it is not one width: brgen.no draws 8
