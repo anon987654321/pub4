@@ -3,7 +3,13 @@
 
 require "json"
 
-ROOT = File.expand_path("../..", __dir__)
+# INVENTORY_ROOT, not ROOT. A bare top-level ROOT is harmless in its own process
+# and stops being harmless the moment two of them load together: Ruby warns
+# "already initialized constant", lets the second assignment win, and the loser
+# reads the wrong tree with no further complaint. Made the spec that reads this
+# file's constants collide with spec/dogfood_spec.rb's ROOT on the first run.
+# tools/security_sweep.rb is SWEEP_ROOT for the same reason.
+INVENTORY_ROOT = File.expand_path("../..", __dir__)
 # Both lists had gone stale in both directions at once, which is the worst state
 # an allowlist can be in: five of seven files and four of six directories named
 # subjects that no longer exist, while the four canonical trees, TODO.md and
@@ -47,7 +53,7 @@ SKIP_DIRS = %w[
 Entry = Struct.new(:path, :kind, :reason, keyword_init: true)
 
 def repo_paths
-  Dir.glob(File.join(ROOT, "**/*"), File::FNM_DOTMATCH).reject do |path|
+  Dir.glob(File.join(INVENTORY_ROOT, "**/*"), File::FNM_DOTMATCH).reject do |path|
     next true if [".", ".."].include?(File.basename(path))
     parts = path.split(File::SEPARATOR)
     parts.any? { |part| SKIP_DIRS.include?(part) }
@@ -55,12 +61,12 @@ def repo_paths
 end
 
 def root_entries
-  Dir.children(ROOT).reject { |name| name == ".git" }.sort
+  Dir.children(INVENTORY_ROOT).reject { |name| name == ".git" }.sort
 end
 
 def loose_root_entries
   root_entries.filter_map do |name|
-    full_path = File.join(ROOT, name)
+    full_path = File.join(INVENTORY_ROOT, name)
     if File.directory?(full_path)
       next if ALLOWED_ROOT_DIRS.include?(name)
       Entry.new(path: name, kind: "root_dir", reason: "non-canonical top-level directory")
@@ -72,7 +78,7 @@ def loose_root_entries
 end
 
 def duplicate_basename_entries
-  groups = repo_paths.select { |path| File.file?(File.join(ROOT, path)) }.group_by { |path| File.basename(path) }
+  groups = repo_paths.select { |path| File.file?(File.join(INVENTORY_ROOT, path)) }.group_by { |path| File.basename(path) }
   groups.filter_map do |basename, paths|
     next if paths.size < 2
     next if basename.start_with?(".")

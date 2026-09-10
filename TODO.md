@@ -806,12 +806,20 @@ rename. Read the list before believing the number.
 
 ### Top-level ROOT
 
-**44 files across the repo define a bare top-level `ROOT`** — 16 in MASTER, 14 in
-OPENBSD, 7 in RAILS, 7 in STUDIO — each pointing at a different tree. In their own
-processes that is harmless, which is why it stands. It stops being harmless the moment
-two of them are loaded together: Ruby warns `already initialized constant ROOT`, lets
-the **second assignment win**, and the loser then reads the wrong tree with no further
-complaint.
+**43 files across the repo define a bare top-level `ROOT`**, each pointing at a
+different tree. In their own processes that is harmless, which is why it stands. It
+stops being harmless the moment two of them are loaded together: Ruby warns
+`already initialized constant ROOT`, lets the **second assignment win**, and the loser
+then reads the wrong tree with no further complaint.
+
+**It cost something again on 2026-09-10, and the cost was one line of warning in a
+green run.** A new spec reading `tools/repo_inventory.rb`'s allowlists loaded the file,
+and its `ROOT` collided with `spec/dogfood_spec.rb`'s — which resolves to `MASTER/`
+where the tool's resolves to the repo root, so whichever loaded second sent the other
+looking in the wrong tree. `rake spec` was green through it. It is `INVENTORY_ROOT`
+now, after `SWEEP_ROOT`. **The pattern to take from this: the collision arrives when
+somebody makes one of these files requirable, and making a script requirable is
+otherwise a pure improvement, so the hazard shows up attached to good news.**
 
 That happened in `rake test`, where `test_security_sweep.rb` requires
 `tools/security_sweep.rb` and `test_dilla.rb` loads `STUDIO/dilla/dilla.rb`. Depending
