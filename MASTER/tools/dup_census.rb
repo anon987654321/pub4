@@ -34,7 +34,12 @@ module Pub4
       # match. `project/learnings/last_learn.json` is a copy of the newest
       # learning file under a stable name. Neither is a shadow copy, and a
       # census reporting two permanent sets teaches people to skim it.
-      files = check_corpus!(`git -C #{ROOT} ls-files -z`.split("\0"))
+      # uniq, because a merge with a conflict in it is a state this runs in. git
+      # ls-files prints an unmerged path once per stage, so two conflicted files
+      # read as six and this reported duplicates that do not exist. A census that
+      # lies only mid-merge is worse than one that always does: the run right
+      # after a merge is when somebody reads it.
+      files = check_corpus!(`git -C #{ROOT} ls-files -z`.split("\0").uniq)
               .reject { |f| f.start_with?("STUDIO/") }
       by = Hash.new { |h, k| h[k] = [] }
       files.each do |f|

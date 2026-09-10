@@ -41,7 +41,8 @@ module Pub4
     module_function
 
     def tracked
-      @tracked ||= Dir.chdir(ROOT) { `git ls-files`.lines.map(&:chomp) }
+      # uniq: ls-files prints an unmerged path once per stage.
+      @tracked ||= Dir.chdir(ROOT) { `git ls-files`.lines.map(&:chomp).uniq }
                       .map { |rel| File.join(ROOT, rel) }
                       .select { |path| File.file?(path) }
     end

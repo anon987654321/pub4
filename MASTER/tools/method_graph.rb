@@ -62,7 +62,7 @@ module Pub4
     module_function
 
     def tracked
-      Dir.chdir(ROOT) { `git ls-files`.lines.map(&:chomp) }
+      Dir.chdir(ROOT) { `git ls-files`.lines.map(&:chomp).uniq }
          .map { |rel| File.join(ROOT, rel) }
          .select { |path| File.file?(path) }
     end

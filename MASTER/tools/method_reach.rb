@@ -66,7 +66,8 @@ defs = Hash.new(0)
 prefixes = Set.new
 visitors = Set.new
 
-Dir.chdir(ROOT) { `git ls-files`.lines.map(&:chomp) }.each do |rel|
+# uniq: ls-files prints an unmerged path once per stage.
+Dir.chdir(ROOT) { `git ls-files`.lines.map(&:chomp).uniq }.each do |rel|
   path = File.join(ROOT, rel)
   next unless File.file?(path)
 

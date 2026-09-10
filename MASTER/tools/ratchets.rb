@@ -357,7 +357,9 @@ module Pub4
         out, status = Open3.capture2e("git", "-C", ROOT, "ls-files", "-z")
         raise "git ls-files failed: #{out}" unless status.success?
 
-        out.split("\0").select do |path|
+        # uniq: ls-files prints an unmerged path once per stage, so growth reads
+        # high by the number of conflicts in the index rather than by the tree.
+        out.split("\0").uniq.select do |path|
           "/#{path}" !~ TREE_EXCLUDE && TREE_SOURCE_EXT.include?(File.extname(path).downcase)
         end
       end

@@ -77,7 +77,7 @@ spine:
   # RuleRegistryAudit#mechanical adds thirteen and buys one statement of a
   # population three gate banners and rule_reach were each spelling for
   # themselves, at two different answers.
-  lib_body_ceiling: 38098
+  lib_body_ceiling: 38096
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753
