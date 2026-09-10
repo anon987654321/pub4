@@ -8751,6 +8751,14 @@ def melodic_lead_mode?
 
   return false if lead_true_arp_mode?
   return false if ENV["MELODIC_LEAD"] == "0"
+  # The "0" is a sentinel, not a default. The line above has already returned
+  # for a set "0", so this fetch default is reachable only when the knob is
+  # unset, and its whole job is to make the test false there and hand the unset
+  # case to the LEAD_ARP_MODE lookup below. Read as a default it looks like a
+  # claim that the melodic lead is off unless asked for, contradicting
+  # melodic_lead_enabled?, which defaults it on — and that reading sat in the
+  # backlog for weeks as the sharpest knob conflict in the engine, inviting
+  # somebody to pick a sound where there is nothing to pick.
   return true if ENV.fetch("MELODIC_LEAD", "0") != "0"
   mode = (ENV["LEAD_ARP_MODE"] || lead_arp_mode || "").to_s
   %w[soul_wash melodic_soul melodic donuts_shimmer ballad_bloom].include?(mode)
@@ -14567,9 +14575,20 @@ def knobs_report(argument = nil)
     conflicts = DillaKnobs.conflicts
     conflicts.each do |name, knob|
       puts format("%-24s %s", name, knob.defaults.compact.uniq.inspect)
-      puts format("%-24s read in %s", "", knob.read_in.join(", "))
+      knob.default_sites.each { |site| puts format("%-24s   %s", "", site) }
+      # Named, not counted away. A knob whose real default is a constant has a
+      # conflict list that is incomplete rather than wrong, and BPM is the case:
+      # the two literals below are a silence placeholder and a subcommand
+      # argument, while DEFAULT_BPM decides every render and appears here as one
+      # of these lines.
+      unless knob.opaque_sites.empty?
+        puts format("%-24s   %s", "",
+                    "#{knob.opaque_sites.length} more site(s) default to something this scan " \
+                    "cannot read: #{knob.opaque_sites.join(', ')}")
+      end
     end
-    puts "#{conflicts.length} knob(s) whose default differs between files — whichever site runs first wins"
+    puts "#{conflicts.length} knob(s) read with more than one literal default — the site that runs first wins, " \
+         "unless the method names beside them say the sites are exclusive"
   when "check"
     problems = DillaKnobs.validate
     problems.each { |problem| puts "NOTE   #{problem}" }

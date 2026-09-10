@@ -2595,6 +2595,70 @@ class TestDilla < Minitest::Test
     assert_equal "0.62", DillaKnobs["DILLA_XCONV_WET"].default
   end
 
+  # Three literals are provably not defaults, and reporting them as defaults
+  # invited an operator to pick a sound where there was nothing to pick.
+  #
+  # MELODIC_LEAD was called the sharpest conflict in the tree — "0" at one site
+  # against "1" at another — and it is not a conflict at all. The "0" is in
+  # `ENV.fetch("MELODIC_LEAD", "0") != "0"`, one line below a `return false if
+  # ENV["MELODIC_LEAD"] == "0"`, so no set value of "0" ever reaches it: the
+  # fetch default exists to make the test false when the knob is unset and route
+  # that case to the LEAD_ARP_MODE lookup below. HARM_VOL's "2.4" is the base of
+  # `ENV["HARM_VOL"] = (ENV["HARM_VOL"] || "2.4").to_f + 0.05`, an increment
+  # rather than a default. EVOLVE_EVERY's "2" is the tail of `ENV[
+  # "STREAM_HARMONY_EVERY"] || ENV["EVOLVE_EVERY"] || "2"`, which belongs to the
+  # chain and was being compared against a different method's cadence.
+  def test_the_conflict_report_does_not_read_a_sentinel_as_a_default
+    require File.expand_path("../dilla/lib/knobs", __dir__)
+
+    refute DillaKnobs["MELODIC_LEAD"].conflicting_defaults?,
+           "the presence sentinel at melodic_lead_mode? is being read as a default: " \
+           "#{DillaKnobs['MELODIC_LEAD'].default_sites.inspect}"
+    refute DillaKnobs["HARM_VOL"].conflicting_defaults?,
+           "an increment's base is being read as a default: #{DillaKnobs['HARM_VOL'].default_sites.inspect}"
+    refute DillaKnobs["EVOLVE_EVERY"].conflicting_defaults?,
+           "a chained fallback is being read as this knob's default: " \
+           "#{DillaKnobs['EVOLVE_EVERY'].default_sites.inspect}"
+
+    # And the shape it must still flag, or the three refutes above are a way of
+    # measuring nothing: same fetch shape, different literals, a real default.
+    assert_equal "1", DillaKnobs["SAMPLE_NATIVE_BPM"].default
+    assert DillaKnobs["RENDER_BEAUTY_MIN"].conflicting_defaults?,
+           "two live beauty floors stopped being reported"
+
+    # A knob whose real default is a constant has an incomplete list, not a
+    # correct one. BPM's two literals are a silence placeholder and a subcommand
+    # argument; DEFAULT_BPM decides every render and no scan of literals sees it.
+    assert DillaKnobs["BPM"].incomplete_defaults?,
+           "BPM's non-literal default sites stopped being counted, so its conflict list reads as complete"
+  end
+
+  # The ratchet the backlog asked for: pin the set, and let the next one fail.
+  #
+  # Each of these seven was adjudicated on 2026-09-10 and none is a defect an
+  # agent may fix, because every one of them is a mix value or a per-command
+  # argument. TRACK, BARS and BPM are per-command. RENDER_BEAUTY_MIN is two
+  # beauty floors on two different gates. LISTEN_PASSES is 0 in the render path
+  # and 3 in the `listen_loop` subcommand, which its own help text documents.
+  # EVOLVE_HARMONY_W and EVOLVE_GROOVE_W each read two of their literals in the
+  # two arms of one `if` inside evolve_weights, so those two pairs are exclusive
+  # rather than in conflict — run `ruby dilla.rb knobs conflicts` and the method
+  # name is printed beside each site.
+  #
+  # An eighth name here is a knob that grew a second default without anyone
+  # deciding it should have one, which is the failure this pins.
+  def test_the_set_of_knobs_with_two_defaults_does_not_grow
+    require File.expand_path("../dilla/lib/knobs", __dir__)
+
+    adjudicated = %w[BARS BPM EVOLVE_GROOVE_W EVOLVE_HARMONY_W LISTEN_PASSES RENDER_BEAUTY_MIN TRACK]
+    current = DillaKnobs.conflicts.keys.sort
+
+    assert_equal adjudicated, current,
+                 "the conflicting-default set moved. New names are knobs that grew a second literal default " \
+                 "with nobody deciding they should have one; names that left are fixed and belong out of " \
+                 "this list. Run `ruby dilla.rb knobs conflicts` for the sites and the methods."
+  end
+
   def test_knob_check_finds_real_mistakes_and_stays_quiet_otherwise
     require File.expand_path("../dilla/lib/knobs", __dir__)
 
