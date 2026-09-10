@@ -57,7 +57,7 @@ class AuthorizationMatrixTest < ActionDispatch::IntegrationTest
       # crossref_cves reaches NvdCve.crossref, which talks to an external
       # service. Only the guest row runs: the refusal is the security property,
       # and a signed-in row would make this suite depend on the network.
-      [ -> { crossref_cves_port_path(@port) }, :post,  :redirect, :guest_only, {} ],
+      [ -> { crossref_cves_port_path(@port) }, :post,  :redirect, :guest_only, {} ]
     ]
   end
 
@@ -73,7 +73,7 @@ class AuthorizationMatrixTest < ActionDispatch::IntegrationTest
       [ -> { categories_path },          :get ],
       [ -> { category_path(@category) }, :get ],
       [ -> { maintainers_path },         :get ],
-      [ -> { new_session_path },         :get ],
+      [ -> { new_session_path },         :get ]
     ]
   end
 
