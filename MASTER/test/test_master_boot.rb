@@ -5,7 +5,7 @@ require_relative "test_helper"
 class MasterBootTest < Minitest::Test
   def test_boot_loader_requires_all_modules
     assert defined?(MasterPaths)
-    assert defined?(Master::MasterData)
+    assert defined?(Master::DataLoading)
     assert defined?(Master::MasterRuntime)
     assert defined?(Master::MasterBoot)
   end

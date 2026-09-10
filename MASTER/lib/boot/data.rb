@@ -4,7 +4,7 @@ require "date"
 
 module Master
   # YAML loading, validation, and rule-shard composition for Master.*.
-  module MasterData
+  module DataLoading
     # This ENOENT warning is load-bearing — keep it. A doubled path segment in
     # RuntimeCatalog#web_boot_payload_minimal ("OPENBSD/openbsd/vm_resource.yml")
     # was found only because every load printed "No such file or directory"

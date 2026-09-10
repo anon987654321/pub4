@@ -176,7 +176,7 @@ module Master
   require_relative "boot/data"
   require_relative "boot/runtime"
   require_relative "boot/master_boot"
-  extend MasterData
+  extend DataLoading
   extend MasterRuntime
   extend MasterBoot
 

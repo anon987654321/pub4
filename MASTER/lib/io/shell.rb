@@ -26,13 +26,17 @@ module Master
       # outright now, so the escalation never reaches a shell and a warning
       # before a refusal is two announcements of one answer.
 
+      # What a zsh command may not call, read from the law. The name says which
+      # way round it is: zsh is the shell this repo writes, and these are the
+      # tools banned inside it — bash among them.
+      #
       # The law's list, and only the law's list. A hardcoded fallback sat behind
       # a `rescue StandardError` here and had already drifted from it — the
       # fallback banned grep and perl, which zsh.banned_commands does not — so a
       # day the law failed to load would have warned about a different set of
       # tools and said nothing about the swap. This list drives a warning rather
       # than a refusal, so an empty one loses a warning, not a gate.
-      ZSH_BANNED = Array(Master.law("zsh")&.[]("banned_commands")).freeze
+      BANNED_IN_ZSH = Array(Master.law("zsh")&.[]("banned_commands")).freeze
 
       INTERACTIVE_RE = /\b(
         vim?|nano|less|more|pager|git\s+add\s+-[ip]|
@@ -138,7 +142,7 @@ module Master
 
       def publish_before(command)
         @bus&.publish("tool:before", tool: NAME, command:)
-        banned = ZSH_BANNED.select { |binary| command.match?(/\b#{Regexp.escape(binary)}\b/) }
+        banned = BANNED_IN_ZSH.select { |binary| command.match?(/\b#{Regexp.escape(binary)}\b/) }
         @bus&.publish("zsh:banned_tool_warning", tools: banned, command:) if banned.any?
       end
 

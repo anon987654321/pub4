@@ -6,11 +6,17 @@ module Master
   module Review
     module Security
       module CommandGuard
+        # Tokens a tool call may not execute. Not the style list: Io::Shell reads
+        # BANNED_IN_ZSH out of the law to warn a human away from GNU text tools,
+        # and this raises SecurityError on a shell, an interpreter or a network
+        # fetcher reaching a subprocess at all. Two questions, two lists, and a
+        # name on each saying which.
+        #
         # Any of these can trivially reintroduce whatever the rest of this list tries to
         # prevent (bash -c with sed, curl piped to sh, python -c with inline code) — a token-level
         # blocklist is a weak boundary in general, but omitting the shells/interpreters/
         # network fetchers themselves defeats the point of having one at all.
-        BANNED_COMMANDS = %w[
+        EXECUTION_VECTORS = %w[
           sed awk tr grep cut head tail find wc sudo doas perl ruby python python3 dd xargs
           bash sh zsh csh ksh fish curl wget nc ncat telnet
         ].freeze
@@ -24,7 +30,7 @@ module Master
             cleaned = token.downcase.strip
             next if cleaned.empty?
 
-            raise Master::SecurityError, "Banned terminal execution vector: #{cleaned}" if BANNED_COMMANDS.include?(cleaned)
+            raise Master::SecurityError, "Banned terminal execution vector: #{cleaned}" if EXECUTION_VECTORS.include?(cleaned)
           end
           true
         end
