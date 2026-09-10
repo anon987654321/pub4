@@ -308,6 +308,11 @@ rather than as "the spine held".
 The repo's own dominant defect at method level: a check that was built and never
 hooked up. Deleting one destroys the evidence, so they are recorded.
 
+**All three that were open on 2026-09-10 are closed, and they closed three different
+ways — which is the finding.** One was wired, one was deleted, and one was deleted for
+a reason that had nothing to do with being unwired. "Wire or delete" is the rule and it
+is not a coin toss: what decides it is what the thing would be a second copy of.
+
 **`unified_diff_editor.rb` went, and the reason is worth keeping: it was not merely
 unwired, it was a second source for three live mechanisms.** `applyable?`'s
 immutability and traversal checks are `Io::PathGuard` and `Fix::DiffStager#stage`;
