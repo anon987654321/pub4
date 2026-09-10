@@ -182,14 +182,17 @@ class RuntimeHardeningTest < Minitest::Test
     end
   end
 
-  def test_shell_warns_on_doas_escalation
+  # It warned and then ran the command. The Governor was the only thing between
+  # a doas call and root, and check_permit returns ok on @auto before it reaches
+  # needs_human? — so unattended, the case that matters, nothing stopped it.
+  def test_shell_refuses_doas_escalation
     Dir.mktmpdir do |dir|
-      bus = EventBus.new
-      shell = Master::Io::Shell.new(root: dir, governor: PermitAll.new, event_bus: bus)
+      shell = Master::Io::Shell.new(root: dir, governor: PermitAll.new, event_bus: EventBus.new)
 
-      shell.call(command: "doas vim /tmp/example")
+      result = shell.call(command: "doas rcctl restart brgen")
 
-      assert bus.events.any? { |name, _payload| name == "zsh:privilege_escalation_warning" }
+      assert_predicate result, :err?
+      assert_match(/sandbox denied/, result.message)
     end
   end
 

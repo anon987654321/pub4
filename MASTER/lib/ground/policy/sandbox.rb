@@ -21,8 +21,18 @@ module Master
         FORK_BOMB = /:\s*\(\s*\)\s*\{[^}]*:\s*\|\s*:/.freeze
         DEVICE_REDIRECT = %r{(?:^|\s):?>\s*/dev/(?:sd|disk|hd|nvme|rdisk)}.freeze
 
+        # sudo is not installed on OpenBSD and doas is, so a list holding one and
+        # not the other guards the tool this fleet does not run and passes the one
+        # it does. On vm23 `/etc/doas.conf` gives dev passwordless root, and dev is
+        # the account a terminal `bin/master` runs as — so a shell effect calling
+        # `doas` is root on the next line. Io::Shell warns on it and the Governor
+        # asks a human, but `check_permit` returns ok on `@auto` before it reaches
+        # `needs_human?`, and unattended is exactly when this matters. Denying here
+        # covers the fold's path as well as the tool's. MASTER's own restarts are
+        # unaffected: orders.rb, relayd.rb and resync_service.rb spawn doas through
+        # Io::Exec and never come past this gate.
         DENY_PATTERNS = [
-          /\bsudo\b/,
+          /\bdoas\b/, /\bsudo\b/, /(?:\A|[;&|]\s*)su\b/,
           /\bmkfs\b/,
           /\bdd\s+if=/,
           /\bchmod\s+-R\s+777\b/,

@@ -554,10 +554,12 @@ zsh:
     array_filter_match: "${(M)arr:#*pattern*}"
     array_filter_exclude: "${arr:#*pattern*}"
     remove_crlf: "${var//$'\\r'/}"
-  exceptions:
-  - Complex regex requiring PCRE
-  - Multi‑file operations beyond globbing
-  - Binary data processing
+  # Three exceptions to the list above — complex regex needing PCRE, multi-file
+  # operations beyond globbing, binary data processing. Prose, because it was a
+  # list and nothing read it: PersonalityPromptBuilder assembles five zsh lines
+  # from banned_commands, forbidden_commands, native_patterns, ssh_reading and
+  # token_economics, and never reached this key. A declaration with no reader is
+  # the tree's most common defect; guidance a reader can see is not.
   banned_commands:
   - python
   - bash
@@ -4180,6 +4182,10 @@ markdown_style:
 # verbs rather than rule ids, and DRY, KISS and SRP are principle names carried
 # by no rule the scanner builds.
 rule_deps:
+  # The block forms first, then the modifier form: all three ask one question of
+  # three spellings, and the block form is the one a reader already knows.
+  MODIFIER_SILENT_RESCUE:
+    after: [SILENT_RESCUE, NARROW_SILENT_RESCUE]
   FEATURE_ENVY:
     after: [SMALL_FILES, SMALL_FUNCTIONS]
 

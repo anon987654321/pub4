@@ -139,6 +139,32 @@ module Master
     SilentRescue.scan(src, narrow: true).map { |hit| finding(line: hit[:line], message: hit[:message]) }
   end
 
+  # An assignment, then any expression, then a modifier rescue returning a
+  # discard. `(?<![=!<>*+\/%|&^-])=(?!=)` keeps comparisons out and lets `||=`,
+  # `+=` and friends in, since each is still a binding.
+  MODIFIER_RESCUE_DISCARD = %r{(?<![=!<>*+/%|&^-])=(?!=)[^=\n]*\S\s+rescue\s+(?:nil|false|\[\]|\{\})\s*(?:#.*)?$}
+
+  RuleDSL.rule :MODIFIER_SILENT_RESCUE,
+    severity: :warning, tags: %i[ERROR_HANDLING], applies_to: %i[ruby],
+    # The third spelling, and the one the two rules above are blind to by
+    # construction: SilentRescue.matches_mode? reads a line that *starts* with
+    # `rescue`, so `value = parse(raw) rescue nil` is a blanket StandardError
+    # rescue that no rule in this registry sees.
+    #
+    # An assignment, deliberately. Measured across the four trees: 28 modifier
+    # rescues bind or discard a discard value, and 15 of them are a best-effort
+    # side effect whose result nobody reads — `File.delete(path) rescue nil`,
+    # `Process.kill("TERM", pid) rescue nil`, `response.stream.close rescue
+    # nil`. There the rescue is the idempotence, and the value it returns goes
+    # nowhere. The other 13 bind the discard to a name the next lines read as
+    # though the call had succeeded, which is the measurement this rule is for.
+    fires: "value = parse(raw) rescue nil\n",
+    does_not_fire: "File.delete(path) rescue nil\n",
+    description: "modifier rescue binds a discarded error to a name" do |src, path:|
+    scan_lines(without_rule_fixtures(without_comment_lines(without_regex_literals(src))),
+               MODIFIER_RESCUE_DISCARD, message: "modifier rescue binds nil on failure — bind a meaningful value")
+  end
+
   # EMPTY_RESCUE was deleted here on 2026-08-12. It shared SilentRescue's
   # discard_body? predicate with the two rules above and differed only in which
   # `rescue` lines it matched, so every finding it produced was already produced
@@ -325,6 +351,14 @@ module Master
 
     # `end` on the first non-blank line after a rescue means an empty body:
     # nothing can open between the two. An empty body discards completely.
+    #
+    # `next` is not in the list, and that is the same argument the predicate
+    # exemption above makes. A rescue whose whole body is `next` sits in a loop
+    # over members, and skipping the member IS the handling: the method's answer
+    # is that this one contributed nothing. All 17 in the four trees are that
+    # shape — a census walking files, a gate walking hosts — and 16 of them
+    # would land at error severity, so adding the token asks the fleet to
+    # annotate its own idiom.
     def discard_token?(body)
       body.match?(/\A(?:nil|false|\[\]|\{\}|_\w+|end)\s*\z/)
     end

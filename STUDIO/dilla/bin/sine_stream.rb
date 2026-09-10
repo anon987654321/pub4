@@ -974,6 +974,12 @@ def sonitex_filters(p, last:)
       "attack=#{p[:comp_attack]}:release=#{p[:comp_release]}:makeup=#{p[:comp_makeup]}",
     "stereotools=slev=#{(p[:stereo_width] * p[:side_gain]).round(3)}",
     "equalizer=f=#{p[:dist_pre_lp]}:t=h:w=1:g=#{p[:dist_pre_emph_db]}",
+    # No `oversample`, which is ffmpeg's default of 1 and is the value the engine
+    # measured its way to: on ffmpeg 8.1.1 oversample>=2 costs about 5.8 dB with
+    # no gain compensation and generates no harmonics, so it attenuates instead
+    # of anti-aliasing. dilla.rb's arp_odyssey carries the numbers. A census
+    # counting `oversample` as a token reads this line as the odd one out and has
+    # it backwards.
     "asoftclip=type=tanh:param=#{p[:dist_drive]}",
     "equalizer=f=#{p[:dist_pre_lp]}:t=h:w=1:g=#{(-p[:dist_pre_emph_db] * 0.75).round(2)}",
     "lowpass=f=#{p[:hf_rolloff]}",

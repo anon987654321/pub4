@@ -574,11 +574,12 @@ module DillaComposition
         puts "pass #{pass + 1}: LUFS=#{lufs} groove=#{groove}"
         break if lufs && lufs.to_f >= targets[:lufs_min] && lufs.to_f <= targets[:lufs_max] && groove >= targets[:groove_min]
         apply_drum_vol!((resolved_drum_mix_weight + 0.02)) if groove < targets[:groove_min]
-        # The base is one step below the engine's own 2.45, so on a run where
-        # nobody set HARM_VOL the first bump lands exactly on the value the
-        # render already had, and the loop spends a pass standing still. Raising
-        # the base to 2.45 is the obvious fix and it is a mix value, so it is the
-        # owner's; TODO.md carries the measurement.
+        # The base is one step below the engine's own 2.45 (dilla.rb's
+        # `harm_gain`), so on a run where nobody set HARM_VOL the first bump
+        # lands exactly on the value the render already had and the loop spends
+        # a pass standing still — a three-pass loop gets two effective bumps.
+        # Raising the base to 2.45 is the fix. It is a mix value and therefore
+        # the owner's ear, not an agent's: this comment is the record.
         ENV["HARM_VOL"] = (ENV["HARM_VOL"] || "2.4").to_f + 0.05 if lufs && lufs.to_f < targets[:lufs_min]
       end
       path

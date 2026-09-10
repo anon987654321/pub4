@@ -21,13 +21,18 @@ module Master
       FORCE_REQUIRED_RE = /\b(?:rm\s+-rf|dd\s+if=|mkfs(?:\.\w+)?)\b/.freeze
       FORCE_FLAG_RE = /(?:\A|\s)--force(?:\s|\z)/.freeze
       REDIRECT_RE = /(?:^|\s)(?:>|>>)\s*([^\s;&|]+)/.freeze
-      PRIVILEGE_RE = /\bdoas\b/.freeze
+      # A doas warning used to sit here, published on the bus and then followed
+      # by the command running. Ground::Policy::Sandbox denies doas, sudo and su
+      # outright now, so the escalation never reaches a shell and a warning
+      # before a refusal is two announcements of one answer.
 
-      ZSH_BANNED = begin
-        Array(Master.law("zsh")["banned_commands"]).freeze
-      rescue StandardError => _e
-        %w[sed awk grep find head tail wc cut tr bash sudo perl python].freeze
-      end
+      # The law's list, and only the law's list. A hardcoded fallback sat behind
+      # a `rescue StandardError` here and had already drifted from it — the
+      # fallback banned grep and perl, which zsh.banned_commands does not — so a
+      # day the law failed to load would have warned about a different set of
+      # tools and said nothing about the swap. This list drives a warning rather
+      # than a refusal, so an empty one loses a warning, not a gate.
+      ZSH_BANNED = Array(Master.law("zsh")&.[]("banned_commands")).freeze
 
       INTERACTIVE_RE = /\b(
         vim?|nano|less|more|pager|git\s+add\s+-[ip]|
@@ -47,7 +52,6 @@ module Master
       end
 
       def call(command:)
-        warn_privilege_escalation(command)
         error = preflight_error(command)
         return error if error
 
@@ -183,13 +187,6 @@ module Master
         path = File.expand_path(match[1].delete_prefix("./"), @root)
         dir = File.directory?(path) ? path : File.dirname(path)
         File.writable?(dir) ? nil : path
-      end
-
-      def warn_privilege_escalation(command)
-        return unless command.match?(PRIVILEGE_RE)
-
-        @bus&.publish("voice:catchphrase", phrase: "That looks risky. Confirm?", command:)
-        @bus&.publish("zsh:privilege_escalation_warning", command:)
       end
 
       def track_result(outcome)

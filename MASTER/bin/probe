@@ -43,6 +43,13 @@ CHECKS = {
     cmd: [RUBY, File.join(MASTER_ROOT, "bin", "smoke-web")],
     cwd: MASTER_ROOT,
   },
+  # nsaudit and dogfood each have one caller in the repo — this table — and the
+  # entry-point count keeps proposing that they fold into `check` as steps. They
+  # stay separate processes. `bin/nsaudit:16` defines a bare top-level `ROOT`,
+  # one of the 43 the tree carries, and every one of them is harmless only while
+  # it owns its process: loading two together lets the second assignment win and
+  # sends the loser reading the wrong tree in silence. A subprocess is what makes
+  # the entry safe, so folding it in trades a number for that hazard.
   "nsaudit" => {
     desc: "MASTER namespace reference audit",
     cmd: [RUBY, File.join(MASTER_ROOT, "bin", "nsaudit")],

@@ -427,3 +427,27 @@ three places (touch minimum at `ux_laws.fitts` and `layout_rules.touch`; the
 spacing scale at `pixel_perfection.eight_px_rhythm` and `layout_rules.grid`),
 which is why `Design::Thresholds` reads them as fallback chains. Deduplicating
 those requires editing every reader and is not this commit.
+
+## The Law Reads Whole Where It Sits — 2026-09-10
+
+**Status:** accepted. This closes "aggressively DRYing the law wants a measured
+pass", which sat in `TODO.md` from the 2026-08-31 session with nothing measured
+behind it.
+
+Measured: `data/rules.yml` declares 242 rules and **zero** of them share a body.
+Compare every rule with its `id`, `name` and `description` removed and there are
+242 distinct bodies — so the repetition a reader notices is field names and
+scalars (`severity: error`, a `source:` string, a `tier:`), not rules that could
+collapse into one another.
+
+Folding those behind YAML anchors would buy line count and cost the property the
+file exists for. `CLAUDE.md` tells every agent to read the law **one rule at a
+time**, id by id, holding each before moving to the next, and the exemption is
+the half that gets skipped. A rule whose severity, tier and exemption live at an
+anchor three hundred lines away does not read whole where it sits, and the reader
+who skips the jump has skipped exactly the half the instruction is about. The
+file has three anchors and sixteen aliases today, all outside `rules`; that is
+the right amount.
+
+**Consequences:** a rule stays spelled out. Reopen this only with a duplicate
+*body* to point at, not with a line count.

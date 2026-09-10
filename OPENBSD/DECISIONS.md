@@ -353,14 +353,25 @@ hotfix would need a root run first — and it turns 103 call sites into one scri
 whose failure modes are all new. Do it as a scheduled rebuild of the deploy, with
 `OPERATOR.sh` as the installer, or do not start it.
 
-**Two smaller things worth doing before that, and neither is this tree's.**
-MASTER's shell effect is not gated against escalation: `zsh.forbidden_commands` in
-`MASTER/data/rules.yml` is a style list of GNU tools and it names `doas` as the
-recommended replacement for `sudo`, so nothing stops a shell effect from calling
-it. Adding `doas` and `su` to what that effect refuses would remove the largest
-everyday path from a language model to this rule, and it is a MASTER change.
-Second, dev is in `wheel` as well as in `doas.conf`; that is redundant while the
-doas rule stands and worth removing in the same pass as the rebuild, not before.
+**The first of the two smaller things is done, 2026-09-10.** MASTER's shell
+effect refuses escalation now. `Ground::Policy::Sandbox::DENY_PATTERNS` held
+`sudo`, which OpenBSD does not install, and neither `doas` nor `su`; both are on
+it, and the gate covers the constitutional fold as well as the tool, so an
+unattended turn cannot reach this rule. The guard it replaces was not one:
+`Io::Shell` published a warning and the `Fix::Governor` asked a human, but
+`check_permit` returns ok on `@auto` before it reaches `needs_human?`, and
+unattended is the case that matters. That warning is gone with the gap it
+described; a warning in front of a refusal is two announcements of one answer.
+MASTER's own restarts are unaffected —
+`orders.rb`, `relayd.rb` and `resync_service.rb` spawn `doas` through `Io::Exec`
+and never pass this gate. Note for anyone reopening it: `zsh.forbidden_commands`
+in `MASTER/data/rules.yml` is not the place. It is a style list of GNU tools, it
+names `doas` as the recommended replacement for `sudo`, and adding `doas` to it
+would fire on the 103 legitimate call sites in this tree.
+
+**The second is still open, and is the rebuild's to take.** dev is in `wheel` as
+well as in `doas.conf`; that is redundant while the doas rule stands and worth
+removing in the same pass as the rebuild, not before.
 
 **Review trigger.** Reopen this when the deploy is rebuilt, when a fourth account
 needs root, or when anything other than a deliberate operator action starts
