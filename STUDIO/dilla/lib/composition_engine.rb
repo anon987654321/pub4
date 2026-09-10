@@ -505,6 +505,13 @@ module DillaComposition
       track.match?(/dilla|donuts|timeless|slum|jaydee|yancey/)
     end
 
+    # Two sets of weights, one per style, and they are exclusive. A scan of
+    # literal defaults reports EVOLVE_HARMONY_W as 0.08 against 0.12 and
+    # EVOLVE_GROOVE_W as 0.22 against 0.06, which reads as one knob answering two
+    # ways when the branch is the answer: a dilla-pocket plan leans on groove and
+    # lets harmony sit, and everything else derives its plan weight from the
+    # harmony weight instead. `ruby dilla.rb knobs conflicts` prints the method
+    # name beside each site so the pair reads as one method rather than two.
     def evolve_weights(cfg)
       if dilla_pocket_style?(cfg)
         return {
@@ -567,6 +574,11 @@ module DillaComposition
         puts "pass #{pass + 1}: LUFS=#{lufs} groove=#{groove}"
         break if lufs && lufs.to_f >= targets[:lufs_min] && lufs.to_f <= targets[:lufs_max] && groove >= targets[:groove_min]
         apply_drum_vol!((resolved_drum_mix_weight + 0.02)) if groove < targets[:groove_min]
+        # The base is one step below the engine's own 2.45, so on a run where
+        # nobody set HARM_VOL the first bump lands exactly on the value the
+        # render already had, and the loop spends a pass standing still. Raising
+        # the base to 2.45 is the obvious fix and it is a mix value, so it is the
+        # owner's; TODO.md carries the measurement.
         ENV["HARM_VOL"] = (ENV["HARM_VOL"] || "2.4").to_f + 0.05 if lufs && lufs.to_f < targets[:lufs_min]
       end
       path

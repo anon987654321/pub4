@@ -35,7 +35,8 @@ module DillaKnobs
   # checked by nothing.
   PRECEDENCE = %i[path list float int flag string].freeze
 
-  Knob = Struct.new(:name, :types, :defaults, :ranges, :compares, :read_in, :written_in, keyword_init: true) do
+  Knob = Struct.new(:name, :types, :defaults, :ranges, :compares, :read_in, :written_in,
+                    :default_sites, :opaque_sites, keyword_init: true) do
     # :string is "the scanner learned nothing here", not a claim, so a knob whose
     # only sites are uninformative stays :string and the validator leaves it be.
     #
@@ -75,6 +76,15 @@ module DillaKnobs
     def default_on? = on_values.empty? && off_values.any?
     def default = defaults.compact.uniq.length == 1 ? defaults.compact.first : nil
     def conflicting_defaults? = defaults.compact.uniq.length > 1
+
+    # A knob with a non-literal default somewhere has a conflict list that is
+    # incomplete rather than wrong, and the difference matters. BPM is the case
+    # that proves it: two literal sites say 92 and 90, and the site that decides
+    # every render says `ENV["BPM"] || DEFAULT_BPM`, which is 86 and which no
+    # scan of literals can see. Reporting "92 against 90" without this reads as
+    # the whole story and names neither the real default nor a site that touches
+    # audio.
+    def incomplete_defaults? = opaque_sites.any?
     def range = ranges.compact.first
     def derived? = ENGINE_WRITTEN.include?(name)
     def to_s = "#{name} (#{type}#{default ? ", default #{default}" : ''}#{range ? ", #{range.first}..#{range.last}" : ''})"
@@ -236,13 +246,33 @@ module DillaKnobs
         # A comment mentioning a knob is not a site. This is the same rule the
         # wiring ratchets use, and for the same reason.
         lines = File.readlines(path).map { |line| line.sub(/(?<!\#\{)#(?!\{).*$/, "") }
+        # The enclosing method, carried down the scan. Two of the seven remaining
+        # conflicts are the two arms of one `if` inside a single method
+        # (evolve_weights), and two more are two different gates; a reader who
+        # sees the method name adjudicates in a glance where a file name alone
+        # sent them grepping.
+        enclosing = nil
         lines.each_with_index do |code, index|
-          code.scan(WRITE) { |(name)| (knobs[name] ||= blank(name)).written_in << base }
+          enclosing = Regexp.last_match(1) if code =~ /^\s*def\s+(?:self\.)?([a-z_][\w?!]*)/
+          writes_here = code.scan(WRITE).flatten
+          writes_here.each { |name| (knobs[name] ||= blank(name)).written_in << base }
           code.scan(READ) do |(name)|
             knob = (knobs[name] ||= blank(name))
             knob.read_in << base
             knob.types << infer_type(name, code, lines, index)
-            knob.defaults << infer_default(name, code)
+            found = infer_default(name, code, writes_here:)
+            # The site, not just the value. Adjudicating "0.18 against 0.08
+            # against 0.12" meant grepping three files to discover that two of
+            # the three are the arms of one `if`; with the line numbers it takes
+            # a glance.
+            site = "#{base}:#{index + 1}"
+            case found
+            when :opaque then knob.opaque_sites << site
+            when nil then nil
+            else
+              knob.defaults << found
+              knob.default_sites << "#{site} #{found}#{enclosing ? " (#{enclosing})" : ''}"
+            end
             knob.ranges << infer_range(code)
             knob.compares.concat(infer_compares(name, code, lines, index))
           end
@@ -282,7 +312,8 @@ module DillaKnobs
     end
 
     def blank(name)
-      Knob.new(name:, types: [], defaults: [], ranges: [], compares: [], read_in: [], written_in: [])
+      Knob.new(name:, types: [], defaults: [], ranges: [], compares: [], read_in: [], written_in: [],
+               default_sites: [], opaque_sites: [])
     end
 
     # Every literal the engine tests this value against, including through a
@@ -338,18 +369,51 @@ module DillaKnobs
     # have a default that depends on state this scanner cannot see, and reading
     # the identifier `bars` as the string "bars" produced nine "conflicting
     # defaults" for BARS alone, every one of them an artefact. An unknown default
-    # is recorded as nil, which is true; a wrong one would be believed.
+    # is :opaque, which is true and is counted; a wrong one would be believed.
     LITERAL = /("(?:[^"\\]|\\.)*"|'[^']*'|-?\d+(?:\.\d+)?)/
+    # A default of some kind is present here, literal or not.
+    ANY_DEFAULT = /(?:ENV\.fetch[\[(]\s*["']NAME["']\s*,|ENV\[\s*["']NAME["']\s*\]\s*\|\|)/
 
-    def infer_default(name, line)
+    # Two shapes carry a literal that is provably not this knob's default, and
+    # both were being reported as one. Each cost an audit: the ten-conflict list
+    # of 2026-09-10 was six false positives, and the sharpest of them —
+    # MELODIC_LEAD reading "0" at one site and "1" at another — was a sentinel
+    # against a real default, so a reader was invited to pick a sound where there
+    # was nothing to pick.
+    #
+    # The presence sentinel. `ENV.fetch("MELODIC_LEAD", "0") != "0"` asks whether
+    # the knob is set to anything; the fetch default exists so the answer is no
+    # when it is unset, and it is the comparand rather than a value the engine
+    # ever uses. Only when the two literals are the SAME literal —
+    # `ENV.fetch("SAMPLE_NATIVE_BPM", "1") != "0"` really does default to "1".
+    SENTINEL = /ENV\.fetch[\[(]\s*["']NAME["']\s*,\s*(["'][^"']*["']|-?\d+(?:\.\d+)?)\s*[)\]]\s*(?:==|!=)\s*\1(?![\w.])/
+
+    # The self-updating fallback. `ENV["HARM_VOL"] = (ENV["HARM_VOL"] || "2.4")
+    # .to_f + 0.05` reads a knob to raise it; "2.4" is the base of an increment,
+    # not what the engine renders with when nobody set it. Recorded as opaque
+    # rather than dropped, because a line that both reads and writes a knob is
+    # exactly where a real default can hide.
+    def infer_default(name, line, writes_here: [])
+      pattern = ->(re) { Regexp.new(re.source.sub("NAME", Regexp.escape(name))) }
+      return nil if line.match?(pattern.call(SENTINEL))
+      return :opaque if writes_here.include?(name)
+
+      # A chained fallback belongs to the chain. In `ENV["STREAM_HARMONY_EVERY"]
+      # || ENV["EVOLVE_EVERY"] || "2"` the literal is reached only when both are
+      # unset, so calling it EVOLVE_EVERY's default and comparing it against the
+      # "3" a different method uses invents a disagreement between two cadences
+      # that were never the same cadence.
+      before = line.split(/ENV(?:\.fetch)?[\[(]\s*["']#{Regexp.escape(name)}["']/, 2).first.to_s
+      chained = before.match?(/ENV(?:\.fetch)?[\[(]\s*["'][A-Z][A-Z0-9_]{2,}["']/)
+
       if (m = line.match(/ENV\.fetch[\[(]\s*["']#{name}["']\s*,\s*#{LITERAL}\s*[,)\]]/))
-        return unquote(m[1])
+        return chained ? :opaque : unquote(m[1])
       end
       if (m = line.match(/ENV\[\s*["']#{name}["']\s*\]\s*\|\|\s*#{LITERAL}(?![\w.])/))
-        return unquote(m[1])
+        return chained ? :opaque : unquote(m[1])
       end
 
-      nil
+      line.match?(pattern.call(ANY_DEFAULT)) ? :opaque : nil
     end
 
     def infer_range(line)

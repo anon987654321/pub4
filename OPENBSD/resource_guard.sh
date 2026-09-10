@@ -98,7 +98,13 @@ LOAD_RESTORE=2.0
 MEM_WARN=8
 MEM_RESTORE=10
 
+# Field 2 is the 5-minute average. Shedding a site is expensive and reversible
+# only on the next tick, so this guard reads the smoothed figure and not the
+# 1-minute one core-reclaim.sh:65 reads for its own, opposite question.
 load=$(sysctl -n vm.loadavg 2>/dev/null | awk '{print $2}')
+# Failing toward 9.9 sheds. A guard that cannot read the load must assume the
+# worst; assuming the best would disarm it exactly when sysctl is the thing
+# struggling.
 load=${load:-9.9}
 
 # Available memory percent = (Free + Cache) / physmem.

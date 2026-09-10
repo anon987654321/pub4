@@ -6282,8 +6282,21 @@ def cross_sample_convolve!(loop_path, partner, dest)
       "-map", "[out]", "-ar", SAMPLE_RATE.to_s, "-ac", "2",
       "-c:a", "pcm_s16le", raw
 
-  want = band_rms(loop_path, highpass: 20, lowpass: 20_000) rescue nil
-  got = band_rms(raw, highpass: 20, lowpass: 20_000) rescue nil
+  # The level match may fail and the render carries on, which is right — an
+  # unmatched bed is better than no bed. What was wrong is that it carried on in
+  # silence. Two modifier `rescue nil`s left trim at 0.0 and the dmesg below
+  # printing "matched dB → dB" with both numbers missing, and that is the one
+  # shape SILENT_RESCUE cannot catch: the rule reads lines that BEGIN with
+  # `rescue`, so a modifier rescue is counted by nothing.
+  measure = lambda do |path, what|
+    band_rms(path, highpass: 20, lowpass: 20_000)
+  rescue StandardError => e
+    dmesg_warn("cross-sample convolve: #{what} would not measure (#{e.class}: #{e.message}) — " \
+               "the bed ships at its own level")
+    nil
+  end
+  want = measure.call(loop_path, "the source")
+  got = measure.call(raw, "the convolved bed")
   trim = if want&.finite? && got&.finite?
            (want - got).clamp(-48.0, 24.0)
          else
@@ -6292,8 +6305,13 @@ def cross_sample_convolve!(loop_path, partner, dest)
   sh! "ffmpeg", "-y", "-i", raw,
       "-af", "volume=#{trim.round(2)}dB,alimiter=limit=0.95:level_out=0.96",
       "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", dest
-  dmesg("cross-sample convolve: matched #{got&.round(1)}dB → #{want&.round(1)}dB (#{trim.round(1)}dB)",
-        unit: "xsmp0", parent: "dilla0")
+  if want&.finite? && got&.finite?
+    dmesg("cross-sample convolve: matched #{got.round(1)}dB → #{want.round(1)}dB (#{trim.round(1)}dB)",
+          unit: "xsmp0", parent: "dilla0")
+  else
+    dmesg("cross-sample convolve: UNMATCHED — no level measurement, shipped as convolved",
+          unit: "xsmp0", parent: "dilla0")
+  end
   FileUtils.rm_f([ir, raw])
   dest
 end
@@ -8751,6 +8769,14 @@ def melodic_lead_mode?
 
   return false if lead_true_arp_mode?
   return false if ENV["MELODIC_LEAD"] == "0"
+  # The "0" is a sentinel, not a default. The line above has already returned
+  # for a set "0", so this fetch default is reachable only when the knob is
+  # unset, and its whole job is to make the test false there and hand the unset
+  # case to the LEAD_ARP_MODE lookup below. Read as a default it looks like a
+  # claim that the melodic lead is off unless asked for, contradicting
+  # melodic_lead_enabled?, which defaults it on — and that reading sat in the
+  # backlog for weeks as the sharpest knob conflict in the engine, inviting
+  # somebody to pick a sound where there is nothing to pick.
   return true if ENV.fetch("MELODIC_LEAD", "0") != "0"
   mode = (ENV["LEAD_ARP_MODE"] || lead_arp_mode || "").to_s
   %w[soul_wash melodic_soul melodic donuts_shimmer ballad_bloom].include?(mode)
@@ -14532,7 +14558,10 @@ end
 #
 #   knobs                one line per knob, grouped by type
 #   knobs SAMPLE_LOOP    everything known about one, and where it is read
-#   knobs conflicts      knobs whose default differs between files
+#   knobs conflicts      knobs read with two literal defaults, each with the
+#                        site and the method, because two of the pairs it finds
+#                        are the two arms of one `if` and a list of file names
+#                        cannot say so
 #   knobs check          what is wrong with the environment right now
 #
 # Words rather than --flags: the global flag parser consumes anything starting
@@ -14567,9 +14596,20 @@ def knobs_report(argument = nil)
     conflicts = DillaKnobs.conflicts
     conflicts.each do |name, knob|
       puts format("%-24s %s", name, knob.defaults.compact.uniq.inspect)
-      puts format("%-24s read in %s", "", knob.read_in.join(", "))
+      knob.default_sites.each { |site| puts format("%-24s   %s", "", site) }
+      # Named, not counted away. A knob whose real default is a constant has a
+      # conflict list that is incomplete rather than wrong, and BPM is the case:
+      # the two literals below are a silence placeholder and a subcommand
+      # argument, while DEFAULT_BPM decides every render and appears here as one
+      # of these lines.
+      unless knob.opaque_sites.empty?
+        puts format("%-24s   %s", "",
+                    "#{knob.opaque_sites.length} more site(s) default to something this scan " \
+                    "cannot read: #{knob.opaque_sites.join(', ')}")
+      end
     end
-    puts "#{conflicts.length} knob(s) whose default differs between files — whichever site runs first wins"
+    puts "#{conflicts.length} knob(s) read with more than one literal default — the site that runs first wins, " \
+         "unless the method names beside them say the sites are exclusive"
   when "check"
     problems = DillaKnobs.validate
     problems.each { |problem| puts "NOTE   #{problem}" }
@@ -14605,6 +14645,41 @@ PRECEDENCE_ORDER = DillaKnobs::PRECEDENCE
 # question directly instead, from the AST for methods and from the source for
 # constants, and it distinguishes a definition from a mention -- which is the
 # part that actually helps.
+# `parts [needle]` — the engine's own table of contents.
+#
+# dilla.rb is one file of 35,000 lines carrying 83 `# engine part:` markers, in
+# the order they were required back when they were separate files, because that
+# order is load-bearing. The map has always been in the file and nothing has ever
+# indexed it, so finding a subject meant grepping for a word you had to already
+# know. This prints the markers with the line each one starts at and how many
+# lines it holds, longest-first when asked, so the seams worth knowing about
+# announce themselves.
+#
+# Generated rather than written down, for the reason lib/knobs.rb gives about the
+# knob count: a table maintained beside the code goes stale against the code, and
+# this engine has proved that twice.
+def parts_report(needle = nil)
+  entry = DillaSources.entry
+  src = File.readlines(entry)
+  marks = src.each_with_index.filter_map do |line, index|
+    (m = line.match(/\A#\s*engine part:\s*(\S+)/)) && { name: m[1], line: index + 1 }
+  end
+  return puts("no `# engine part:` markers in #{entry} — the map moved") if marks.empty?
+
+  marks.each_with_index do |part, i|
+    part[:lines] = ((marks[i + 1] ? marks[i + 1][:line] : src.length + 1) - part[:line])
+  end
+
+  shown = needle.to_s.empty? ? marks : marks.select { |p| p[:name].include?(needle.to_s) }
+  return puts("no engine part matching #{needle} — #{marks.length} parts, run `dilla parts` for all") if shown.empty?
+
+  shown.each { |p| puts format("  %6d  %5d lines  %s", p[:line], p[:lines], p[:name]) }
+  biggest = marks.max_by(6) { |p| p[:lines] }
+  puts "#{marks.length} parts over #{src.length} lines" \
+       "#{needle.to_s.empty? ? '' : " (#{shown.length} shown)"}"
+  puts "largest: #{biggest.map { |p| "#{p[:name]} #{p[:lines]}" }.join(', ')}"
+end
+
 def where_report(name)
   return puts("usage: dilla where <method|CONSTANT|KNOB>") if name.to_s.empty?
 
@@ -28259,6 +28334,19 @@ def help
     LIVESET
       liveset [set] [minutes]      Long-form WAV from stem rack (LIVESET_MIN=#{LIVESET_MIN})
 
+    READING THE ENGINE (no audio, no render — these only look)
+      parts [needle]               Every `# engine part:` marker with the line it
+                                   starts at and how many it holds. The map has
+                                   always been in dilla.rb; this indexes it.
+      where <name>                 Which file owns a method, a constant or a knob
+      knobs [NAME|conflicts|check] Every knob the engine reads, one it reads, the
+                                   ones read with two defaults, or what is wrong
+                                   with the environment right now
+      assets [record]              Is the crate the recipes name still here and
+                                   still itself
+      tracklist [path]             What a render was actually made of
+      taste                        What the engine has been asked to prefer
+
     ANALYSIS & GRADE
       scan | ears | verify | study | grade | grade_list | chords
       vocab-check                  Chord symbols, arp figures and drum grids — no audio, ~1s.
@@ -34630,6 +34718,7 @@ DISPATCH = {
   "debug" => -> { debug },
   "config-provenance" => -> { print_config_provenance },
   "knobs" => -> { knobs_report(ARGV.shift) },
+  "parts" => -> { parts_report(ARGV.shift) },
   "assets" => -> { assets_report(ARGV.shift) },
   "tracklist" => -> { tracklist_report(ARGV.shift) },
   "taste" => -> { taste_report(ARGV.dup) },

@@ -1014,6 +1014,7 @@ class TestDilla < Minitest::Test
         presets.include?(slug) || aliases.any? { |a, t| t == slug && presets.include?(a) }
       end
       puts JSON.generate(builtin_count: TRACK_SAMPLE_LOOPS_BUILTIN.length, loops: loops, unreachable: unreachable,
+                         crate_present: TRACK_SAMPLE_LOOPS.any? { |_, v| Dir.exist?(File.dirname(v[:path].to_s)) },
                          missing_files: TRACK_SAMPLE_LOOPS.reject { |_, v| File.file?(v[:path]) }.keys)
     RUBY
     # As above: the rack is the builtins until the rebuilt crate registers its
@@ -1037,13 +1038,70 @@ class TestDilla < Minitest::Test
     # The list itself went stale in both directions and neither showed, because
     # the unreachable assertion above fails first and hides this one: rauingar
     # is back on disk, and semua_untuk_mu is not.
+    #
+    # `samples/` is gitignored, so a worktree has no crate and every loop reads as
+    # fileless — this failed on rauingar in a worktree while passing with the real
+    # crate copied in, and the finding was the worktree rather than the engine. A
+    # crate that is not there cannot answer this question, so it skips and says
+    # so; a crate that IS there and is missing a file is the defect, and that
+    # still fails.
+    #
+    # The test is whether any loop has its own directory, not whether `samples/`
+    # exists: the engine writes samples/drums/ at load, so the directory is
+    # always there and always proves nothing.
     awaiting_rebuild = %w[kembara_rindu semua_untuk_mu lo_borges arat_swost_wolet]
+    unless result.fetch("crate_present")
+      skip "not one loop rack has a directory under STUDIO/dilla/samples — the crate is gitignored, " \
+           "so a worktree cannot measure which loops are on disk. Copy the crate in, or run from the " \
+           "main checkout."
+    end
     fileless = result.fetch("missing_files")
     assert_empty fileless - awaiting_rebuild,
                  "a loop entry pointing at a file that is not there renders silently without a bed: " \
                  "#{(fileless - awaiting_rebuild).inspect}"
     assert_operator fileless.length, :<=, awaiting_rebuild.length,
                     "more fileless loops than the crate rebuild accounts for"
+  end
+
+  # An alias whose target nothing registers is a silent miss, and eight of the
+  # eleven are in that state.
+  #
+  # TRACK=sheger_01 renders today: TRACK_PRESETS has a live row for it with its
+  # own measured tempo and progression, so the chords and the pocket arrive. What
+  # does not arrive is the bed — the alias resolves to ubrukte_samples_01, which
+  # RadioChop registered out of samples/chopped/loops.json, and that crate was
+  # cleared at 74d9e4c1b on the operator's call. sample_loop_entry finds nothing
+  # and says nothing, which is how eight half-working tracks read as eight
+  # working ones. The backlog called these "eight dead rows" and proposed
+  # deleting them; the presets are not dead, and the aliases carry the mapping
+  # from a friendly name to a chop the rebuild is meant to bring back.
+  #
+  # Ratcheted rather than asserted empty, for the reason the loop-file check
+  # above gives: this is the state the operator asked for, and it tightens on its
+  # own as each chop re-registers. A NINTH dead alias is a new one, and that is
+  # the failure worth having.
+  def test_every_sample_loop_alias_names_a_loop_something_registers
+    result = eval_in_engine(<<~RUBY)
+      loops = TRACK_SAMPLE_LOOPS.keys.map(&:to_s)
+      aliases = TRACK_SAMPLE_LOOP_ALIASES.transform_keys(&:to_s).transform_values(&:to_s)
+      puts JSON.generate(count: aliases.length,
+                         dead: aliases.reject { |_, target| loops.include?(target) }.keys.sort,
+                         sheger_presets_live: TRACK_PRESETS.keys.map(&:to_s).grep(/\\Asheger_/).sort)
+    RUBY
+
+    awaiting_rebuild = %w[sheger_01 sheger_02 sheger_03 sheger_04 sheger_05 sheger_06 sheger_07 sheger_08]
+
+    refute_empty result.fetch("count").then { |n| n.positive? ? [n] : [] },
+                 "no aliases parsed — this test would pass having measured nothing"
+    assert_empty result.fetch("dead") - awaiting_rebuild,
+                 "a TRACK alias points at a loop nothing registers, so the track renders with no bed and " \
+                 "nothing says so: #{(result.fetch('dead') - awaiting_rebuild).inspect}"
+    assert_operator result.fetch("dead").length, :<=, awaiting_rebuild.length,
+                    "more dead aliases than the crate rebuild accounts for"
+    # And the half that is not dead, so nobody deletes the presets on the
+    # strength of the aliases.
+    assert_equal awaiting_rebuild, result.fetch("sheger_presets_live"),
+                 "the sheger preset rows are live and carry per-chop tempo and progression"
   end
 
   # GENRE names a bundle; it does not seize the controls. Every value in it is
@@ -2593,6 +2651,96 @@ class TestDilla < Minitest::Test
     assert_equal 0.08..1.35, DillaKnobs["KICK_GAIN"].range
     assert_equal :float, DillaKnobs["KICK_GAIN"].type
     assert_equal "0.62", DillaKnobs["DILLA_XCONV_WET"].default
+  end
+
+  # `dilla parts` is the engine's table of contents, and it is only worth what
+  # the markers are worth.
+  #
+  # The 83 `# engine part:` markers are the order the parts were required back
+  # when they were separate files, and that order is load-bearing. Nothing
+  # indexed them, so finding a subject meant grepping for a word you had to know
+  # already. Two ways the index could lie: a marker lost in an edit, which makes
+  # the part before it look twice its size, and a duplicate name, which sends a
+  # reader to the wrong one. Neither shows up in a render.
+  def test_the_engine_part_index_covers_the_file_once_each
+    src = File.readlines(File.expand_path("../dilla/dilla.rb", __dir__))
+    marks = src.each_with_index.filter_map do |line, index|
+      (m = line.match(/\A#\s*engine part:\s*(\S+)/)) && [m[1], index + 1]
+    end
+
+    assert_operator marks.length, :>=, 80, "the engine part markers are disappearing"
+    assert_equal marks.map(&:first).uniq.length, marks.length,
+                 "two engine parts share a name, so `dilla parts <needle>` sends a reader to the wrong one: " \
+                 "#{marks.map(&:first).tally.select { |_, n| n > 1 }.keys.inspect}"
+    assert_equal marks.map(&:last).sort, marks.map(&:last),
+                 "the markers are no longer in file order, so the index cannot state a part's size"
+    # The first marker sits near the top, or everything above it is unindexed.
+    assert_operator marks.first.last, :<, 1_000,
+                    "the first engine part starts at line #{marks.first.last} — that much of the engine is off the map"
+  end
+
+  # Three literals are provably not defaults, and reporting them as defaults
+  # invited an operator to pick a sound where there was nothing to pick.
+  #
+  # MELODIC_LEAD was called the sharpest conflict in the tree — "0" at one site
+  # against "1" at another — and it is not a conflict at all. The "0" is in
+  # `ENV.fetch("MELODIC_LEAD", "0") != "0"`, one line below a `return false if
+  # ENV["MELODIC_LEAD"] == "0"`, so no set value of "0" ever reaches it: the
+  # fetch default exists to make the test false when the knob is unset and route
+  # that case to the LEAD_ARP_MODE lookup below. HARM_VOL's "2.4" is the base of
+  # `ENV["HARM_VOL"] = (ENV["HARM_VOL"] || "2.4").to_f + 0.05`, an increment
+  # rather than a default. EVOLVE_EVERY's "2" is the tail of `ENV[
+  # "STREAM_HARMONY_EVERY"] || ENV["EVOLVE_EVERY"] || "2"`, which belongs to the
+  # chain and was being compared against a different method's cadence.
+  def test_the_conflict_report_does_not_read_a_sentinel_as_a_default
+    require File.expand_path("../dilla/lib/knobs", __dir__)
+
+    refute DillaKnobs["MELODIC_LEAD"].conflicting_defaults?,
+           "the presence sentinel at melodic_lead_mode? is being read as a default: " \
+           "#{DillaKnobs['MELODIC_LEAD'].default_sites.inspect}"
+    refute DillaKnobs["HARM_VOL"].conflicting_defaults?,
+           "an increment's base is being read as a default: #{DillaKnobs['HARM_VOL'].default_sites.inspect}"
+    refute DillaKnobs["EVOLVE_EVERY"].conflicting_defaults?,
+           "a chained fallback is being read as this knob's default: " \
+           "#{DillaKnobs['EVOLVE_EVERY'].default_sites.inspect}"
+
+    # And the shape it must still flag, or the three refutes above are a way of
+    # measuring nothing: same fetch shape, different literals, a real default.
+    assert_equal "1", DillaKnobs["SAMPLE_NATIVE_BPM"].default
+    assert DillaKnobs["RENDER_BEAUTY_MIN"].conflicting_defaults?,
+           "two live beauty floors stopped being reported"
+
+    # A knob whose real default is a constant has an incomplete list, not a
+    # correct one. BPM's two literals are a silence placeholder and a subcommand
+    # argument; DEFAULT_BPM decides every render and no scan of literals sees it.
+    assert DillaKnobs["BPM"].incomplete_defaults?,
+           "BPM's non-literal default sites stopped being counted, so its conflict list reads as complete"
+  end
+
+  # The ratchet the backlog asked for: pin the set, and let the next one fail.
+  #
+  # Each of these seven was adjudicated on 2026-09-10 and none is a defect an
+  # agent may fix, because every one of them is a mix value or a per-command
+  # argument. TRACK, BARS and BPM are per-command. RENDER_BEAUTY_MIN is two
+  # beauty floors on two different gates. LISTEN_PASSES is 0 in the render path
+  # and 3 in the `listen_loop` subcommand, which its own help text documents.
+  # EVOLVE_HARMONY_W and EVOLVE_GROOVE_W each read two of their literals in the
+  # two arms of one `if` inside evolve_weights, so those two pairs are exclusive
+  # rather than in conflict — run `ruby dilla.rb knobs conflicts` and the method
+  # name is printed beside each site.
+  #
+  # An eighth name here is a knob that grew a second default without anyone
+  # deciding it should have one, which is the failure this pins.
+  def test_the_set_of_knobs_with_two_defaults_does_not_grow
+    require File.expand_path("../dilla/lib/knobs", __dir__)
+
+    adjudicated = %w[BARS BPM EVOLVE_GROOVE_W EVOLVE_HARMONY_W LISTEN_PASSES RENDER_BEAUTY_MIN TRACK]
+    current = DillaKnobs.conflicts.keys.sort
+
+    assert_equal adjudicated, current,
+                 "the conflicting-default set moved. New names are knobs that grew a second literal default " \
+                 "with nobody deciding they should have one; names that left are fixed and belong out of " \
+                 "this list. Run `ruby dilla.rb knobs conflicts` for the sites and the methods."
   end
 
   def test_knob_check_finds_real_mistakes_and_stays_quiet_otherwise
