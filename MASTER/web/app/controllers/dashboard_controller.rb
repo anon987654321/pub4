@@ -41,7 +41,7 @@ class DashboardController < ApplicationController
       context_pressure: pressure,
       provider_health: provider_health(c),
       cache_efficiency: Master::Trace::CacheEfficiency.snapshot,
-      model_quota: Master::Ground::ModelQuota.snapshot,
+      model_quota: Master::Io::ModelQuota.snapshot,
       repair_queue: repair_queue(root),
     }
   end
