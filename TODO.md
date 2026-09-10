@@ -3502,15 +3502,22 @@ a finding is a hypothesis until the instrument has been checked.
   before starting either. Done when each row carries its cost and its
   preconditions, `runner.rb` prints them first, and the ledger records each
   gate's wall time, so a gate that doubles is visible before it is unrunnable.
-- **`GATE_STRICT_INCONCLUSIVE=1` is not the CI default.** `runner.rb --all` now
-  closes with each inconclusive gate's own reasons and names any gate that
-  failed while listing no finding, and every subprocess a gate spawns is bounded
-  by `gates/support/bounded_command.rb`. What is left of that entry is the CI
-  half, and it has nowhere to live yet: `shared/config/ci.rb` never invokes the
-  gate runner, so the flag would have to be set by `OPENBSD/vps_ci.sh` or
-  `bin/vps-deploy`, which is the operator's tree. The other half — whether the
-  live gates should boot the triangle rather than skip — is a decision about
-  what CI is allowed to start, not a defect.
+- **Nothing automated runs the gates at all, which is the bigger half of the
+  `GATE_STRICT_INCONCLUSIVE` entry.** `runner.rb --all` now closes with each
+  inconclusive gate's reasons, names any gate that failed while listing no
+  finding, and bounds every subprocess through `gates/support/bounded_command.rb`
+  — but measured 2026-09-10, neither `OPENBSD/vps_ci.sh` nor `OPENBSD/bin/vps-deploy`
+  invokes the runner, and `shared/config/ci.rb` never did either. The only
+  callers are `OPENBSD/bin/check`, `check-openbsd`, `check-rails` and
+  `MASTER/bin/probe`, all of which a person types. So the fifty-one gates are an
+  operator tool, and the twenty-seven that could report a pass having measured
+  nothing had been failing to measure in a tool no pipeline runs.
+
+  Setting a strictness flag is therefore the wrong shape of fix. The question is
+  whether the deploy should run gates at all, and that is an operator decision
+  with a real cost: the box is one core, the live gates want the apps up, and a
+  deploy that runs them is a deploy that takes minutes longer. Decide that first;
+  the flag follows from it in one line either way.
 - **`bin/pub4 gate --tree <TREE>`** — the ladder scoped to one tree, for the
   common case of working in one. Today it is all four or nothing.
 
