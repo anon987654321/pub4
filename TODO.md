@@ -3007,173 +3007,213 @@ constraints bound any agent work in this tree:
   but techno, soul and jazz must blend as parameters. That is a design goal, not a
   backlog item to close unprompted.
 
-Everything below was re-measured on 2026-09-10. The crate figures come from the
-main checkout, because `samples/` is gitignored and a worktree therefore shows an
-empty crate that is not empty. dilla is under active edit; line numbers inside
-`dilla.rb` move, symbol names do not.
+Re-measured 2026-09-11 against the crate itself, and most of what stood here was
+describing a crate this machine does not have. `samples/` is gitignored, so a
+worktree shows an empty crate that is not empty; the figures below come from
+copying the real `samples/` in and asking the engine, which is the only way to
+measure it without writing to the operator's only copy. dilla is under active
+edit; line numbers inside `dilla.rb` move, symbol names do not.
 
-### The crate
+### The crate — read this first
 
-- **The crate is in no backup, and that is the open item.**
-  `STUDIO/dilla/.gitignore:19` ignores `samples/` wholesale, so not one rack is
-  tracked, and `OPENBSD/bin/dr-pull` copies the three production databases and
-  nothing else. The 124 rack directories under `samples/chopped/` are
-  irreplaceable audio living on exactly one disk, which is the state `samples/dug/`
-  was in the day it went. Pull `samples/` to the rotated off-box location dr-pull
-  already uses, or somewhere the operator names.
-- **The 124 chopper-registered racks have no preset of their own, and giving them
-  one changes what they render.** The test that measures it,
-  `test_every_hand_cut_sample_loop_is_reachable_as_a_track_preset`
-  (`STUDIO/test/test_dilla_engine_probes.rb:1004`), fails in about 0.4 seconds
-  naming all 124 slugs. "Unreachable" is the wrong word for what it found, and
-  the distinction is the whole decision: every one of the 124 renders today, by
-  `TRACK=<slug>` and under `DEMO_CRATE=1`. What they lack is a row in
-  `TRACK_PRESETS` (`dilla.rb:11834`, 74 rows), so `track_preset` falls each of
-  them through to `TRACK_PRESETS[:timeless]`. Writing preset rows therefore
-  changes the sound of 124 existing renders, which is why no agent may do it.
+**There is no `samples/chopped/` on this machine, and there are no 124 racks.**
+This section described 124 rack directories, 161 registry rows, 13 byte-identical
+wavs and 153 mid-phrase cuts; none of it is on disk. `RadioChop.registered_loops`
+returns nothing, `TRACK_SAMPLE_LOOPS` is the five builtins, and `samples/` holds
+`drums`, `dug`, `own` and `rauingar` and nothing else. Every file in it is dated
+2026-08-31.
 
-  Naming is not what blocks it. A preset row carries no prose at all — the field
-  vocabulary is `bpm`, `progression`, `chord_bars`, `swing`, `phrase_bars`,
-  `feel`, `stereo_pan`, `voicing`, `timing` and six rarer keys — and the registry
-  row already supplies `bpm`, `key_mode` and the slug that would be the hash key.
-  `dilla.rb:11898-11911` even writes down a mechanical derivation for the eight
-  `sheger_*` rows: take `progression` and `feel` from the existing preset nearest
-  the chop's measured tempo, so no new musical judgement is smuggled in with the
-  wiring. **What is the owner's is whether that derivation is the right sound for
-  124 racks**, plus two facts that make a blind pass wrong: 13 of the 124 are
-  byte-identical wavs from the shared-scratch bug `radio_chop.rb:680-684`
-  describes, and the eight `sheger_*` rows are already dead, because the
-  `ubrukte_samples_*` slugs their aliases point at are no longer registered.
-  Nothing else moves if rows are appended: `demo_all_order`, the stream rotation
-  and `chopped_bed_pick` all read `TRACK_SAMPLE_LOOPS` or `RadioChop.registry`
-  rather than `TRACK_PRESETS`, and only the explicit `showcase` subcommand
-  enumerates the preset table.
-- **160 of the crate's 161 sources are gone, and no loop is reproducible from its
-  sidecar.** `samples/dug/` holds one record, `arat_swost_wolet.mp3`. The sidecars
-  carry a reproduce command naming a path that no longer exists, and only the
-  titles survive, in the slugs; re-fetching by title returns a different upload, so
-  offsets and mastering will not match. New fetches record the HTTP URL —
-  `CrateDig.archive_entry` and `ccmixter_entry` store `url` and `record!` refuses
-  an entry without one. `dilla/crate/` from `bin/crate` is gone the same way,
-  taking with it the two takes whose sidecars name `crate/loops/semua_untukmu`.
-- **153 racks were cut by the seam test that preferred mid-phrase**, and re-cutting
-  them needs the sources. The source-free remedy is rotating each loop onto its
-  strongest downbeat, which is content-preserving because a rack is one whole
-  period, but the measure needs a floor first: several of the largest apparent
-  gains are a quiet tail scoring as a downbeat, and one rack starts at -57 dB.
-- **148 registry rows carry only what a wav can be asked for.** bpm came back from
-  each file's duration and voicing from its spectrum; `source`,
-  `source_start_sec`, `self_similarity` and `rejoin_db` cannot be recomputed
-  without the source, and `vocal_chop` skips a row that cannot name its record
-  rather than guessing.
+The likely account is the one the engine's own test writes down: `74d9e4c1b`
+cleared the crate on 2026-08-16 on the operator's call — 133 renders and 498
+samples — and it is being rebuilt from source. The test's whitelist matches disk
+exactly today, naming `kembara_rindu`, `semua_untuk_mu`, `lo_borges` and
+`arat_swost_wolet` as the four builtins awaiting the rebuild and treating
+`rauingar` as present, which is what disk says. A backlog measured against 124
+racks after that clearing was measuring something else.
+
+**If the operator expected 124 racks to be there, they are not, and only they can
+say whether that is the August clearing or a later loss.** Nothing in this
+repository can restore them and no session should assume either answer.
+
+- **What is left is in no backup, and that is the open item.**
+  `STUDIO/dilla/.gitignore:19` ignores `samples/` wholesale, so not one file is
+  tracked. The irreplaceable half is `samples/own/` — 75 MB of the operator's own
+  and named collaborators' recordings — plus `rauingar` and the 1.1 MB drum rack,
+  84 MB in all, on exactly one disk. That is the state `samples/dug/` was in the
+  day it went, and dug is down to one record.
+
+  `OPENBSD/bin/dr-pull` cannot be the answer and this row used to say it could.
+  dr-pull pulls FROM vm23 TO the Mac; the crate is already on the Mac, so writing
+  it into `~/pub4-dr/<stamp>/` puts a second copy on the same disk, which is not a
+  backup. This is the same blocker as `off_host_dr` above — one purchase, an
+  off-host object store — and the two rows are one row.
+- **160 of the crate's sources are gone, and no loop is reproducible from its
+  sidecar.** `samples/dug/` holds one record, `arat_swost_wolet.mp3`, with its
+  provenance sidecar. The sidecars carry a reproduce command naming a path that no
+  longer exists, and only the titles survive, in the slugs; re-fetching by title
+  returns a different upload, so offsets and mastering will not match. New fetches
+  record the HTTP URL — `CrateDig.archive_entry` and `ccmixter_entry` store `url`
+  and `record!` refuses an entry without one. `dilla/crate/` from `bin/crate` is
+  gone the same way, taking with it the two takes whose sidecars name
+  `crate/loops/semua_untukmu`.
+- **The eight `sheger_*` rows are half alive, and deleting them would throw away
+  measured tuning.** This is settled, not open, and it is written here so nobody
+  re-derives the wrong half. `TRACK=sheger_01` renders today: `TRACK_PRESETS` has
+  a live row for it carrying its own measured tempo and progression. What it lacks
+  is the bed — `TRACK_SAMPLE_LOOP_ALIASES` resolves it to `ubrukte_samples_01`,
+  which RadioChop registered out of the crate that was cleared, so
+  `sample_loop_entry` finds nothing and says nothing. Eight half-working tracks
+  read as eight working ones. `test_every_sample_loop_alias_names_a_loop_something
+  _registers` pins the eight as known-dead, tightens as each chop re-registers,
+  and fails on a ninth; the same test asserts the preset rows are live so nobody
+  deletes them on the strength of the aliases.
+- **Writing `TRACK_PRESETS` rows for chops is still forbidden to an agent, when
+  there are chops again.** A slug with no preset row falls through to
+  `TRACK_PRESETS[:timeless]`, so appending rows changes what those slugs render.
+  `dilla.rb` writes down a mechanical derivation for the `sheger_*` rows — take
+  `progression` and `feel` from the existing preset nearest the chop's measured
+  tempo — and whether that derivation is the right sound is the owner's. Nothing
+  else moves if rows are appended: `demo_all_order`, the stream rotation and
+  `chopped_bed_pick` all read `TRACK_SAMPLE_LOOPS` or `RadioChop.registry` rather
+  than `TRACK_PRESETS`, and only the explicit `showcase` subcommand enumerates the
+  preset table.
 
 ### Which crate layout survives is the owner's call
 
 dilla has four crate surfaces and three layouts with one reader. The engine reads
 `samples/chopped/loops.json` through `RadioChop.registered_loops`
 (`lib/radio_chop.rb:634`). `lib/crate_dig.rb` writes `samples/dug/` from the
-Internet Archive and LibriVox, filtered to expired copyright, because — its own
-header says — YouTube rips are "neither licensed nor defensible", while
-`live/dig_crate.rb:37` rips YouTube with `yt-dlp`. `bin/crate` declares a third
-layout, `crate/{sources,stems,loops}`, calling itself the replacement for
-`samples/`, and that directory no longer exists. `crate_dig` and `dig_crate` are
-one word order apart and take opposite positions on licensing, which is worth
-fixing whichever layout wins.
+Internet Archive and LibriVox, filtered to expired copyright. `live/dig_crate.rb`
+rips YouTube with `yt-dlp`. `bin/crate` declares a third layout,
+`crate/{sources,stems,loops}`, calling itself the replacement for `samples/`, and
+that directory no longer exists.
+
+The licensing half of this is closed. `crate_dig` and `dig_crate` are one word
+order apart and used to take opposite positions in silence — crate_dig's header
+said YouTube rips are "neither licensed nor defensible, and this does not add to
+that pile" while its near-namesake did exactly that and said nothing — so a
+reader learned the tree's position from whichever file they opened. dig_crate now
+leads with what it is, points at the path that clears, and warns on stderr on
+every run; crate_dig says its sentence is about itself. Which layout survives is
+still the owner's, and neither file can clear a recording.
 
 ### The engine is one file, and its support directory is full
 
-`dilla.rb` is 35,139 lines and carries the 83 `# engine part:` parts that were
-under `lib/engine/`, in the order they were required, because that order was
-load-bearing. `DillaSources` defines the corpus, `STUDIO/gate.rb` fails if
-`lib/engine/` reappears, and `DILLA_SUPPORT_CEILING = 44` (`gate.rb:116`) caps the
-modules that could grow in its place — `dilla/lib` holds exactly 44 tracked `.rb`,
-so the next module fails the gate, while `dilla/bin` at 4 files and `dilla/live`
-at 8 are not counted at all. `MASTER/tools/cohesion.rb STUDIO/dilla/lib` proposes
-three regroups, `engine/`, `harmony/` and `score/`, nine files between them; taking
-any of them moves those files out of `%r{/dilla/lib/[^/]+\.rb\z}` and drops the
-guarded count to 35, quietly disabling the ceiling it appears to relieve. Raise
-the ceiling with a reason, or extend it to `bin/` and `live/`; do not regroup to
-get under it.
+`dilla.rb` is about 35,200 lines and carries the 83 `# engine part:` parts that
+were under `lib/engine/`, in the order they were required, because that order was
+load-bearing. `DillaSources` defines the corpus and `STUDIO/gate.rb` fails if
+`lib/engine/` reappears.
+
+`DILLA_SUPPORT_CEILING` is 56 and now counts every first-party Ruby file dilla
+carries beside the engine, at any depth: 44 in `lib/`, 4 in `bin/`, 6 in `live/`
+and 2 in `scripts/`. It used to count `%r{/dilla/lib/[^/]+\.rb\z}` alone, which
+was an escape hatch in both directions — `MASTER/tools/cohesion.rb` proposes three
+regroups into subdirectories of that same `lib/`, and taking any one of them
+would have dropped the guarded count to 35 and quietly disabled the ceiling it
+appeared to relieve, while twelve support files in `bin/`, `live/` and `scripts/`
+sat outside it entirely. A regroup is free now and a fifty-seventh file is not.
 
 Folding the 44 into fewer files is undone, and 14 of them use `__dir__` or
 `__FILE__`, which shift a directory level when a file moves — the bug that broke
 three tests during the first fold, and the reason to do the second one
 deliberately rather than as a tail-end.
 
-`dilla.rb` also carries its own map and nothing indexes it. The cheap win is a
-generated index of the 83 part markers so a reader can find a subject without
-grepping. The seams worth naming are the parts over 600 lines — `patch`,
-`progression_tables` (pure data, 8 constants and 4 defs, the most extractable
-thing in the file), `render_dilla`, `characterize`, `cli_commands` and
-`render_techno` — and the seven methods over 250 lines, of which `render_dilla` is
-963. **Splitting any of them is not proposed here**, and the decision not to
-reopen `lib/engine/` stands.
+`dilla parts` is the index the engine's map never had: every `# engine part:`
+marker with the line it starts at and how many it holds, `dilla parts <needle>`
+to filter, generated so it cannot go stale. Its test catches the two ways the
+index can lie without a render noticing — a marker lost in an edit, and two parts
+sharing a name. The seams worth naming are the parts over 1,000 lines — `patch`
+1578, `progression_tables` 1210 (pure data, the most extractable thing in the
+file), `render_dilla` 1191, `characterize` 1180, `cli_commands` 1164 and
+`render_techno` 1071. **Splitting any of them is not proposed here**, and the
+decision not to reopen `lib/engine/` stands.
 
-### Two engine probes fail, and both failures are the owner's
+### The engine probes pass, and the seed question is smaller than it looked
 
-`rake test:dilla` is 302 runs and two of them fail, on the same tree, before and
-after any of today's edits.
+`rake test:dilla` is 305 runs, 0 failures, 3 skips, measured with the real
+`samples/` present. Both failures this section recorded are gone.
+`test_every_genre_renderer_reaches_the_master_bus` passes — `render_analog`
+reaches the bus — and `test_every_hand_cut_sample_loop_is_reachable_as_a_track
+_preset` passes with `semua_untuk_mu` among the four builtins its whitelist names
+as awaiting the crate rebuild. The three skips are the timeouts recorded under
+"not worth chasing" below. A worktree without `samples/` copied in fails the
+second of those on `rauingar`, which is the worktree and not the engine.
 
-`test_every_genre_renderer_reaches_the_master_bus`
-(`test_dilla_engine_probes.rb:1180`) says `render_analog` never sets an integrated
-loudness, so it drifts against every other renderer the moment they share a
-playlist. Giving it one is a mix value, which is the owner's alone.
+`RENDER_SEED` stays open and is a quarter the size this said. `test_dilla_render
+_seed.rb` pins `stable_hash`, `seed_for`, `noise_seed`, `render_pick` and
+`render_rng`. The claim was that 92 sites in `dilla.rb` call bare `rand`,
+`Array#sample` or `Random.new` outside those helpers; measured, 31 of the 32
+`.sample` calls already pass `random:`, and of the 76 `Random.new` calls all but
+thirteen carry a seed while those thirteen are `seed ? Random.new(seed) :
+Random.new`, unpinned only when their caller passes none. What actually varies
+under a pinned seed is eight bare `rand` calls and one `.sample` — which is why a
+pinned render still moves by about 0.012 dB. Routing any of them through
+`render_rng` changes what that site renders, so it is the owner's, one site at a
+time, but it is now a list somebody could finish.
 
-`test_every_hand_cut_sample_loop_is_reachable_as_a_track_preset` fails a second
-time at its file check (`:1038`): `semua_untuk_mu` is a builtin loop entry whose
-wav is not on disk, so it renders silently with no bed. Three of the five
-builtins are whitelisted as awaiting the crate rebuild; this one is not, and
-whether it should be waived or re-cut needs the record it was cut from.
+### Two knob findings, and eight of the ten conflicts were the scanner
 
-`RENDER_SEED` is the third of these and the largest. `test_dilla_render_seed.rb`
-pins `stable_hash`, `seed_for`, `noise_seed`, `render_pick` and `render_rng`, and
-carried a sixteenth test calling `render_rand`, a method the engine has never
-defined; it errored on every run and is deleted, because a test asserting an
-absent method measures nothing and adding the method to satisfy it would be dead
-code. What the test was groping at is real and stays open: 92 sites in `dilla.rb`
-still call bare `rand`, `Array#sample` or `Random.new` outside the pinned
-helpers, which is why a pinned render still varies by about 0.012 dB. Routing any
-of them through `render_rng` changes what that site renders, so it is the
-owner's, one site at a time.
+Six of the ten "knobs whose default differs between files" were the scanner's own
+reading, and two more were per-command arguments. `DillaKnobs.conflicts` reports
+seven names now, each with the site and the enclosing method, and
+`test_the_set_of_knobs_with_two_defaults_does_not_grow` pins the set so an eighth
+fails. `ruby dilla.rb knobs conflicts` is the report.
 
-### Ten knobs get a different default depending on which read site runs
+The three the scanner should never have called defaults: `MELODIC_LEAD`, whose
+`"0"` is the comparand in `ENV.fetch("MELODIC_LEAD", "0") != "0"` one line below a
+`return false if ENV["MELODIC_LEAD"] == "0"` and is therefore reachable only when
+the knob is unset; `HARM_VOL`, whose `"2.4"` is the base of an increment on a line
+that both reads and writes the knob; and `EVOLVE_EVERY`, whose `"2"` is the tail
+of a chain that belongs to `STREAM_HARMONY_EVERY`. `EVOLVE_HARMONY_W` and
+`EVOLVE_GROOVE_W` each read two of their literals in the two arms of one `if`
+inside `evolve_weights`. `LISTEN_PASSES` is 0 in the render path and 3 in the
+`listen_loop` subcommand, which its own help text documents. `TRACK`, `BARS` and
+`BPM` are per-command — and `BPM`'s two literals are a silence placeholder and a
+positional argument, while the site that decides every render reads `ENV["BPM"] ||
+DEFAULT_BPM` and is 86, which no scan of literals can see. Opaque sites are
+counted and printed now, so an incomplete list says it is incomplete.
 
-`DillaKnobs.conflicts` computes this and nothing gates it: its only caller is the
-`knobs conflicts` CLI branch at `dilla.rb:14565`, which prints and never exits
-non-zero. The ten shape a render and are **the owner's alone** — the value that
-wins today is whichever read site runs first, so picking one is picking a sound.
-Measured by running it, with the site that states each literal:
+What is left is one live taste and two real bugs, all three mix values and
+therefore the owner's:
 
-- `MELODIC_LEAD` — `dilla.rb:8754` defaults `"0"`, `:9242` defaults `"1"`, so with
-  nothing set one predicate says the melodic lead is off and the other says it is
-  on. The sharpest of the ten.
-- `HARM_VOL` — `dilla.rb:16309` 2.45 against `lib/composition_engine.rb:570` 2.4.
-- `EVOLVE_HARMONY_W` — `dilla.rb:17845` 0.18, `composition_engine.rb:513` 0.08,
-  `:518` 0.12.
-- `EVOLVE_GROOVE_W` — `composition_engine.rb:514` 0.22 against `:523` 0.06, both
-  in one file.
-- `EVOLVE_EVERY` — `dilla.rb:17708` 3, `:17802` and `:17855` 2.
-- `LISTEN_PASSES` — `dilla.rb:18631` 0 against `:28117` 3.
-- `RENDER_BEAUTY_MIN` — `dilla.rb:17401` 65 against `:18544` 70.
-- `BPM` — `dilla.rb:20427` 92 against `:34653` 90.
-
-`BARS` and `TRACK` are per-command and are not defects. The fix worth suggesting
-is a ratchet: `DillaKnobs` already has the answer, so pin ten and let the
-eleventh fail.
+- **`RENDER_BEAUTY_MIN` is two floors on two gates.** `stream_iterate_acceptable?`
+  takes 65, `render_quality_acceptable?` takes 70, and under `DILLA_STREAMING`
+  the second one takes `STREAM_BEAUTY_MIN`, which is 68. Three numbers, all live,
+  and choosing among them is choosing a sound.
+- **The `HARM_VOL` bump is a pass behind itself.**
+  `composition_engine.rb`'s listening loop raises harmonic gain when the render
+  is too quiet: `ENV["HARM_VOL"] = (ENV["HARM_VOL"] || "2.4").to_f + 0.05`. On a
+  run where nobody set `HARM_VOL`, 2.4 plus 0.05 is exactly the 2.45 the engine
+  already defaults to, so the first correction changes nothing and a three-pass
+  loop gets two effective bumps. Raising the base to 2.45 is the fix and it is a
+  mix value.
+- **The stream's harmony walk destroys a pinned `EVOLVE_HARMONY_W`.**
+  `stream_iterate_evolve_harmony!` writes `ENV["EVOLVE_HARMONY_W"]`
+  unconditionally, so a value the operator pinned is gone after one iteration.
+  That is the shape `USER_PINNED_ENV` exists for and which the `BPM` code already
+  checks; honouring the pin changes what a stream renders for whoever pinned it.
 
 ### Rescues that lose a measurement, and the rule that cannot see them
 
 `SILENT_RESCUE` (`MASTER/lib/review/scan/rules/lexical_rules.rb`) reads lines that
 begin with `rescue`, so a modifier `rescue` and a `rescue` whose whole body is
-`next` are counted by nothing. `dilla.rb:6285` and `:6286` wrap `band_rms` inside
-`cross_sample_convolve!`; if either raises, `trim` falls to 0.0, the convolved bed
-ships unmatched in level, and the `dmesg` beneath prints "matched dB → dB" with
-the numbers missing. `live/recall.rb:36` and `bin/sine_stream_player.rb:41` are
-the other two. The five loop-control ones — `lib/music_gems.rb:200`,
+`next` are counted by nothing. Extending the rule to both forms is a MASTER
+change, not a STUDIO one, and it is the half still open.
+
+The three that lost something real are fixed and none of them changed a render on
+the path where nothing raises. `cross_sample_convolve!` measured the source and
+the convolved bed behind `rescue nil`, so a failed measurement left `trim` at 0.0
+and the `dmesg` beneath printing "matched dB → dB" with both numbers gone; the
+rescue stays, an unmatched bed being better than no bed, but it names which
+measurement would not take, and the matched and unmatched lines are now two
+different sentences. `bin/sine_stream_player.rb` swallowed a failed archive move,
+which made the same take play forever because the loop picks the first file in
+the queue each turn. `live/recall.rb` dropped an unparseable journal row in
+silence, which is how a pass that happened gets reported as "no seeded passes
+yet". The five loop-control ones — `lib/music_gems.rb:200`,
 `lib/harmony_engine.rb:362`, `bin/demo_full.rb:42`, `bin/sine_stream.rb:1830` and
 `lora/_toolkit/run_train_kaggle.rb:144` — each skip a member of a loop and are the
-least alarming shape. Extending the rule to both forms is a MASTER change, not a
-STUDIO one.
+least alarming shape.
 
 **Narrowing a blanket rescue is still the owner's**, and it is now the only half
 left: the three clauses that named a class already covered by `StandardError`
@@ -3185,36 +3225,6 @@ when a USGS or open-meteo fetch fails, so an operator who asked for a seeded swi
 can tell whether they got one. The remaining discards are optional gem probes,
 external binaries whose output is parsed, optional state files and process
 teardown, and they are correct as they stand.
-
-### `dilla/live/` is three subjects, and the fold is free only until the next pass
-
-The three `*.als.rb` sets share 10 identical code lines out of 81, 94 and 104 —
-the duplication is already extracted into `Rack`, which each set calls 7 to 15
-times — so folding them would collapse three distinct arrangements, not three
-copies of one. Two costs are measurable: `broadcast.sh:24` and `recall.rb:89`
-resolve a set by filename, and `Rack.journal!` writes the set name into
-`project/liveset.jsonl` as data, so a rename breaks replay of every journalled
-pass. Today that cost is zero — the journal holds 32 rows and not one carries
-`seed` or `set`, the two keys `recall.rb:37` filters on, so `live/recall.rb`
-prints "no seeded passes yet" and can replay nothing. The sets do write both keys
-now (`live/ambient_pads.als.rb:133` and its siblings), so the next pass played is
-the first replayable one, and the fold is free before then and never free again.
-`dig_crate.rb` is the third subject: crate ingest, nothing to do with playback, and
-it belongs beside `lib/crate_dig.rb`. **Still the owner's to take.**
-
-### Three scripts live twice, and none of the pairs match
-
-`/Users/mac/Music/dilla_sines/` holds six Ruby files and only three of them still
-have a tracked twin: `sine_stream.rb` is 2,023 lines outside against 2,027
-tracked, `demo_full.rb` 130 against 127, and `player.rb` 61 against
-`sine_stream_player.rb`'s 63. Not one pair is byte-identical any more. The other
-three outside files name nothing in the repository: `demo_from_stream.rb` and
-`make_ticks.rb` had twins that have since been deleted from `dilla/bin`, and
-`demo_render.rb` never had one. No census can see this — `dup_census` reads
-tracked files only, and excludes `STUDIO/` besides — and nothing in this
-repository may delete from the operator's home directory. The scripts run from the
-repository now, so the close is the operator retiring the outside copies rather
-than either side diffing them again.
 
 ### Small, mechanical, and none of them touch sound
 
@@ -3230,6 +3240,31 @@ than either side diffing them again.
 
 #### Not worth chasing
 
+- **Folding `dilla/live/`.** The three `*.als.rb` sets share 10 identical code
+  lines out of 81, 94 and 104, and the duplication is already extracted into
+  `Rack`, which each calls 7 to 15 times — so folding them would collapse three
+  distinct arrangements rather than three copies of one. Decided 2026-09-11: they
+  stay. `broadcast.sh:24` and `recall.rb:89` resolve a set by filename and
+  `Rack.journal!` writes the set name into `project/liveset.jsonl` as data, so a
+  rename also breaks replay of every journalled pass — free today, because the
+  journal holds 32 rows and not one carries `seed` or `set`, and never free again
+  once a pass is played with the keys the sets now write. `dig_crate.rb` was the
+  one movable piece, on the argument that crate ingest belongs beside
+  `lib/crate_dig.rb`; it stays where it is, because moving a tool the crate
+  rebuild is actively run from is a hazard for a filing improvement, and the
+  confusion the move was meant to fix — two files one word order apart taking
+  opposite positions on licensing — is fixed in the files themselves.
+- **The three scripts that live twice.** `/Users/mac/Music/dilla_sines/` holds six
+  Ruby files, three with a tracked twin — `sine_stream.rb` 2,023 lines outside
+  against 2,027 tracked, `demo_full.rb` 130 against 127, `player.rb` 61 against
+  `sine_stream_player.rb` — and not one pair is byte-identical. It is not a stale
+  copy of the scripts, which is what this row assumed: the directory is a running
+  installation, with its own renders, logs and shell runners beside them
+  (`now.wav`, `proof.wav`, `beat.wav`, `stream.log`, `run_sines.sh`). Retiring the
+  outside copies orphans the output next to them, so it is the operator's and it
+  is a move rather than a delete. Nothing in this repository may touch the
+  operator's home directory, and no census can see it — `dup_census` reads tracked
+  files only and excludes `STUDIO/` besides.
 - **`dup_census` excludes `STUDIO/`** with no comment saying why
   (`MASTER/tools/dup_census.rb:30`), against a header claiming every tracked file.
   What the exclusion hides is 3 duplicate sets, 13.9 KB, all legitimate. Worth one
@@ -3241,9 +3276,10 @@ than either side diffing them again.
   written `print_stock: :kodak_2383`. `postpro` already owns the question in
   `vocab_check` (`postpro.rb:3573`), which asks whether a stock, lens or print
   stock is defined and used by no preset. Do not add a second census.
-- **The 37 stale rows in `loops.json` and the 37 slugs in `sample_worth.json`.**
-  161 registered against 124 on disk; dropped at load (`radio_chop.rb:637`) and
-  pruned on the next chop (`:879`). Inert by design.
+- **The 37 slugs in `sample_worth.json` that name no rack.** `loops.json` is gone
+  with the crate, so there is nothing to compare them against; stale rows are
+  dropped at load (`radio_chop.rb:637`) and pruned on the next chop (`:879`).
+  Inert by design, and a rebuilt crate prunes it.
 - **The sample rate declared ten times under three names.** `SAMPLE_RATE` in
   `dilla.rb`, `lib/acapella.rb`, `lib/radio_chop.rb` and `lib/vocal_chop.rb`;
   `RATE` in `lib/analog_synth.rb`, `lib/sample_flip.rb`, `lib/space_fx.rb`,
@@ -3253,7 +3289,11 @@ than either side diffing them again.
   of these: it is 11,025 on purpose, with the Nyquist reason beside it. The bare
   literal appears 46 times more, most of them inside ffmpeg filter strings, and
   interpolating those would touch render-path strings for no behavioural gain.
-- **The three `cohesion.rb` regroups**, for the ceiling reason above.
+- **The three `cohesion.rb` regroups.** They no longer evade
+  `DILLA_SUPPORT_CEILING`, which counts at any depth now, so the only argument
+  left against them is the one the backlog already made: nine files with 14
+  `__dir__`/`__FILE__` references between them, moved to satisfy a shape rather
+  than to answer a question anyone has.
 - **The three engine tests that time out under suite load.**
   `test_smoke_two_bar_render`, `test_provenance_separates` and
   `test_dilla_frozen_reads` pass in about 23 seconds alone against the 90-second
