@@ -111,10 +111,11 @@ module Master
       bus = trace[:bus]
       renderer = Voice::Renderer.new(config:)
       output_check = Review::OutputCheck.load(root:)
+      output_guard = Voice::OutputGuard.new
       scanner = build_scanner(root:, bus:)
       code_index = Review::CodeIndex.new(root:, event_bus: bus)
       ai = { scanner:, code_index: }
-      infra = trace.merge(config:, boot_config:, renderer:, output_check:, root:)
+      infra = trace.merge(config:, boot_config:, renderer:, output_check:, output_guard:, root:)
       commands = CLI::CommandRegistry.build_fast(infra:, ai:, root:)
       agent = fast_agent_stub
       ai[:agent] = agent
@@ -156,6 +157,10 @@ module Master
       bus = trace[:bus]
       renderer = Voice::Renderer.new(config:)
       output_check = Review::OutputCheck.load(root:)
+      # The evidence contract on MASTER's own reply. Built here beside the other
+      # output gate rather than reached off the renderer, because a test that
+      # hands the pipeline a stub renderer must still get a container it can run.
+      output_guard = Voice::OutputGuard.new
       code_index = Review::CodeIndex.new(root:, event_bus: bus)
       code_index.build_async
       reference_graph = Review::ReferenceGraph.new(root:, event_bus: bus)
@@ -164,7 +169,7 @@ module Master
       diag = Trace::Diag.new(homeostat: loop_c[:homeostat], breaker: reach[:breaker], logging: trace[:logging], event_bus: bus)
       pressure = PressureEngine.new(event_bus: bus)
       subscribe_pressure_ingest(bus:, pressure:)
-      { renderer:, output_check:, code_index:, reference_graph:, ecology:, diag:, pressure: }
+      { renderer:, output_check:, output_guard:, code_index:, reference_graph:, ecology:, diag:, pressure: }
     end
 
     def subscribe_ecology_reindex(bus:, ecology:)
