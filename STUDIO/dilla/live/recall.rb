@@ -15,7 +15,7 @@
 #
 #   live/recall.rb                    the last twenty passes
 #   live/recall.rb 41205993           play that one again
-#   live/recall.rb 41205993 --keep    render it to renders/live_<seed>/
+#   live/recall.rb 41205993 --keep    render it beside dilla.rb
 #   live/recall.rb --keep             keep the pass that just played
 #
 # A kept take writes its wav beside a .json that names everything about it. The
@@ -27,7 +27,7 @@ require "json"
 
 D = File.expand_path("..", __dir__)
 JOURNAL = File.join(D, "project", "liveset.jsonl")
-RENDERS = File.join(D, "renders")
+RENDERS = D
 
 def passes
   return [] unless File.file?(JOURNAL)
@@ -48,7 +48,7 @@ def show(rows)
                 r["bed"] || r["progression_name"] || "-", r["bpm"], r["at"])
   end
   puts "\n  live/recall.rb <seed>          play it again"
-  puts "  live/recall.rb <seed> --keep   render it to renders/"
+  puts "  live/recall.rb <seed> --keep   render it beside dilla.rb"
 end
 
 keep = ARGV.delete("--keep")

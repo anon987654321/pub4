@@ -19,11 +19,15 @@ crate/
 samples/
 project/learnings/vocals/**/*.wav
 *.320kbps.original.mp3
-# A sidecar for a render that is not tracked is not tracked either.
-demo.wav
-demo.wav.dilla
-demo.mp3
-demo.mp3.dilla
+# Every renderer writes beside dilla.rb now rather than into renders/, so the
+# ignore rules have to name what lands here. A sidecar for a render that is not
+# tracked is not tracked either.
+*.wav
+*.mp3
+*.wav.dilla
+*.mp3.dilla
+*.wav.quality.json
+*_stems/
 
 # Installed tools. The demucs virtualenv is 23,783 files and was living in
 # scratch/, where its own venv .gitignore happened to cover it -- protection

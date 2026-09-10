@@ -15810,7 +15810,7 @@ def render_setlist(path, outdir = nil)
     warn "setlist was written at #{sha}, replaying at #{here} — a default may have moved under it"
   end
 
-  outdir ||= File.join(ROOT, "renders", "beats")
+  outdir ||= ROOT
   FileUtils.mkdir_p(outdir)
   bars = (doc["bars"] || 32).to_i
   takes = Array(doc["takes"])
@@ -27879,7 +27879,7 @@ def industrial_techno_schedule(n_bars, beat_p, roots = nil)
 end
 
 # Industrial techno: arranged 135 BPM groove, rumble sub, sidechain, dub space.
-def render_industrial(destination = File.join(ROOT, "renders", "foundry_pulse.mp3"), bars_count = nil)
+def render_industrial(destination = File.join(ROOT, "foundry_pulse.mp3"), bars_count = nil)
   require_tools! "ffmpeg"
   ensure_drum_kit!
   FileUtils.mkdir_p(File.dirname(destination))
@@ -28738,7 +28738,7 @@ def madlib_master_filters(input_tag = "bed")
 end
 
 # Pure drums: MPC one-shots + pocket microtiming + SP-1200 dirt.
-def render_madlib_drums(destination = File.join(ROOT, "renders", "beats", "beat.wav"), bars_count = nil)
+def render_madlib_drums(destination = File.join(ROOT, "beat.wav"), bars_count = nil)
   require_tools! "ffmpeg"
   ensure_drum_kit!
   FileUtils.mkdir_p(File.dirname(destination))
@@ -28783,7 +28783,7 @@ def render_madlib_drums(destination = File.join(ROOT, "renders", "beats", "beat.
   puts "wrote #{destination} (#{cfg[:bpm].to_i} BPM, #{n_bars} bars, TRACK=#{cfg[:track]}, #{fx.join('+')})"
 end
 
-def render_madlib_album(output_dir = File.join(ROOT, "renders", "beats"))
+def render_madlib_album(output_dir = ROOT)
   FileUtils.mkdir_p(output_dir)
   LOOSE_POCKET_BEAT_CATALOG.each do |entry|
     base = File.join(output_dir, entry[:out])
@@ -28805,7 +28805,7 @@ end
 # =============================================================================
 
 # Batch-render tape presets — neutral session_XX filenames (no album track names).
-def render_slum_album(output_dir = File.join(ROOT, "renders"))
+def render_slum_album(output_dir = ROOT)
   FileUtils.mkdir_p(output_dir)
   TAPE_RENDER_CATALOG.each_with_index do |entry, i|
     dest = File.join(output_dir, "#{entry[:out]}.mp3")
@@ -29164,7 +29164,7 @@ def without_tunnel(chain)
        .map { |stage| stage.sub(/stereotools=slev=[\d.]+/, "stereotools=slev=1.1") }
 end
 
-def render_hate_techno(destination = File.join(ROOT, "renders", "hate_session.mp3"))
+def render_hate_techno(destination = File.join(ROOT, "hate_session.mp3"))
   require_tools! "ffmpeg"
   if hate_forbid_tonal!
     dmesg("HATE_TONAL=0 — melody, dfam and drone all off", unit: "techno0", parent: "dilla0")
@@ -34306,7 +34306,7 @@ BALANCE_RECIPE = "renders/beats/dilla_semua_96.mp3"
 
 def render_balance(name)
   overrides = BALANCE_VARIANTS.fetch(name) { abort "unknown variant #{name}" }
-  dest = File.join(ROOT, "renders", "wav", "semua_#{name}.wav")
+  dest = File.join(ROOT, "semua_#{name}.wav")
   warn "#{name} -> #{dest}"
   warn "  sample vol #{overrides['SAMPLE_LOOP_VOL']} weight #{overrides['SAMPLE_LOOP_WEIGHT']}  " \
        "pads #{overrides['HARM_BUS_VOL']}  bed carve off"
@@ -34325,7 +34325,7 @@ DEMO_SAMPLES = %w[semua_untuk_mu arat_swost_wolet kembara_rindu lo_borges rauing
 DEMO_MIN_BYTES = 1_000_000
 
 def generate_demo(bars: ENV.fetch("BARS", "32"), parallel: ENV.fetch("PARALLEL", "3").to_i)
-  out = File.join(ROOT, "renders", "demo")
+  out = ROOT
   FileUtils.mkdir_p(out)
   base = replay_environment(File.join(ROOT, BALANCE_RECIPE))
 
@@ -34513,7 +34513,7 @@ def album_stitch(stems, dest)
 end
 
 def album_master(dest)
-  out_dir = File.join(ROOT, "renders", "mastered")
+  out_dir = ROOT
   FileUtils.mkdir_p(out_dir)
 
   puts format("%-24s %7s %7s   %7s %7s %7s", "track", "S/M in", "LUFS in", "S/M out", "LUFS", "peak")
@@ -34863,7 +34863,7 @@ DISPATCH = {
   "loose_pocket" => lambda do
     out = ARGV.shift
     if out.nil? || out == "beats"
-      render_madlib_album(out == "beats" ? (ARGV.shift || File.join(ROOT, "renders", "beats")) : File.join(ROOT, "renders", "beats"))
+      render_madlib_album(out == "beats" ? (ARGV.shift || ROOT) : ROOT)
     else
       render_madlib_drums(out)
     end
@@ -34895,12 +34895,12 @@ DISPATCH = {
     render_dilla(dest, n_bars)
   end,
   "hiphop" => -> { render_hiphop(ARGV.shift || File.join(OUTPUT_DIR, "hiphop.mp3")) },
-  "slum" => -> { render_slum_album(ARGV.shift || File.join(ROOT, "renders")) },
-  "industrial" => -> { render_industrial(ARGV.shift || File.join(ROOT, "renders", "foundry_pulse.mp3")) },
+  "slum" => -> { render_slum_album(ARGV.shift || ROOT) },
+  "industrial" => -> { render_industrial(ARGV.shift || File.join(ROOT, "foundry_pulse.mp3")) },
   "techno" => -> { render_techno(ARGV.shift || File.join(OUTPUT_DIR, "techno_hate.mp3")) },
   # Long-form industrial techno with layers that arrive and leave.
   # HATE_MIN sets the length in minutes, HATE_BPM the tempo (130-150 is the range).
-  "hate" => -> { render_hate_techno(ARGV.shift || File.join(ROOT, "renders", "hate_session.mp3")) },
+  "hate" => -> { render_hate_techno(ARGV.shift || File.join(ROOT, "hate_session.mp3")) },
   "analog" => -> { render_analog(ARGV.shift || File.join(OUTPUT_DIR, "analog_full.mp3")) },
   "analog_liveset" => -> { analog_liveset(ARGV.shift || File.join(OUTPUT_DIR, "analog_liveset.mp3"), (ARGV.shift || 12).to_f) },
   "electronium" => -> { electronium_dispatch! },
@@ -35064,7 +35064,7 @@ DISPATCH = {
   # Every record in the demo crate against three progressions.
   "demo" => -> { generate_demo },
   # Master the tracklist in data/album_tracks.yml into one crossfaded record.
-  "album" => -> { album_master(ARGV.shift || File.join(ROOT, "renders", "ALBUM.mp3")) },
+  "album" => -> { album_master(ARGV.shift || File.join(ROOT, "ALBUM.mp3")) },
 }.freeze
 
 # No command aliases — every name is a real DISPATCH key (or help).
