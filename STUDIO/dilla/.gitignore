@@ -40,3 +40,9 @@ tools/
 # the one keeper render — the only audio file dilla/ root holds
 loop.wav
 sonmi.wav
+
+# dilla.rb refuses to write renders to the repo root and falls back here, so
+# this directory now catches the output of an invocation typed from the
+# checkout. The whole tree, not a pattern list: the anchored sidecar rules
+# above are relative to this file and stop matching one level down.
+renders/

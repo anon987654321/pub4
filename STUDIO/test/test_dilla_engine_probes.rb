@@ -2070,11 +2070,6 @@ class TestDilla < Minitest::Test
     result = eval_in_engine(<<~RUBY)
       %w[RENDER_MODE CAMEL_DRUM_LOCK PRODUCER_MODE].each { |k| ENV.delete(k) }
       ENV["WONKY_DRUM_OVERLAY"] = "1"
-      # Dead switch: nothing in lib reads QUINT_HATS under either prefix, so
-      # this sets nothing and the quint assertion below passes because quint
-      # is never scheduled at all. Left as-is rather than renamed -- a
-      # differently-named dead switch is not an improvement. See TODO.md.
-      ENV["FLYLO_QUINT_HATS"] = "1"
       ENV["KICKS"] = "1"
       ENV["CAMEL_DRUM_LOCK"] = "0"
       pads = curated_progression_pads(:fourth_third_sixth_second_turn) ||
@@ -2085,8 +2080,6 @@ class TestDilla < Minitest::Test
         wonky_kick: events[:wonky_kick]&.length.to_i,
         wonky_hat: events[:wonky_hat]&.length.to_i,
         wonky_snare: events[:wonky_snare]&.length.to_i,
-        # Quint/perc intentionally omitted (sparse overlay — no spam).
-        wonky_quint: events[:wonky_quint]&.length.to_i,
         enabled: wonky_drum_overlay_enabled?
       )
     RUBY
@@ -2094,7 +2087,6 @@ class TestDilla < Minitest::Test
     assert_operator result.fetch("wonky_kick"), :>, 0
     assert_operator result.fetch("wonky_hat"), :>, 0
     assert_operator result.fetch("wonky_snare"), :>, 0
-    assert_equal 0, result.fetch("wonky_quint"), "sparse overlay skips quint spam"
   end
 
   def test_stream_iterate_evolve_wonky_drums_returns_notes
