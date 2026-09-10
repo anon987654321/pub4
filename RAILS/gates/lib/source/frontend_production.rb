@@ -25,13 +25,16 @@ module Deploy
         app_dir = File.join(RAILS_ROOT, name)
         next unless File.directory?(app_dir)
 
+        result.checked!
         layout_files(app_dir).each do |path|
+          result.checked!
           check_layout(path).each { |issue| result.fail("#{name} #{File.basename(path)}: #{issue}") }
         end
         check_views(app_dir).each { |issue| result.fail("#{name}: #{issue.delete_prefix(app_dir + '/')}") }
       end
 
       web_layout_files.each do |path|
+        result.checked!
         check_layout(path).each { |issue| result.fail("MASTER/web #{File.basename(path)}: #{issue}") }
       end
 

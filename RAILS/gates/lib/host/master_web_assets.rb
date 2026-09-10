@@ -26,6 +26,7 @@ module Deploy
     def self.run
       result = GateResult.new
 
+      result.checked!(2)
       if (drift = DesignTokens.face_root_drift?(FACE_CSS))
         result.fail(drift)
       end
@@ -56,6 +57,7 @@ module Deploy
       else
         manifest = JSON.parse(File.read(MANIFEST))
         REQUIRED.each do |logical|
+          result.checked!
           entry = manifest[logical]
           result.fail("manifest missing #{logical}") unless entry
           next unless entry
@@ -68,6 +70,7 @@ module Deploy
       end
 
       DEPLOY_SCRIPTS.each do |relative_path, restart_mode|
+        result.checked!
         path = File.join(ROOT, relative_path)
         unless File.file?(path)
           result.fail("missing MASTER web deploy script #{relative_path}")

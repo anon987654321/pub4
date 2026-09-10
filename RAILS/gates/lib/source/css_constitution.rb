@@ -117,7 +117,10 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
         "type_scale" => [], "weight_ladder" => [],
         "child_margin" => [], "card_padding" => []
       }
-      files.each { |path| scan(path) }
+      files.each do |path|
+        @result.checked!
+        scan(path)
+      end
       judge_budgets
       check_weight
       @result

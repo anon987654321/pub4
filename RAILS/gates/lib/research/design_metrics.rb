@@ -55,6 +55,8 @@ module Deploy
       @rules = Pub4::MasterDesign.blocks(MASTER_RULES)
       @tokens = File.file?(TOKENS) ? YAML.safe_load_file(TOKENS) : {}
 
+      # Thirteen source checks, all unconditional once the rules file loads.
+      @result.checked!(13)
       check_rules_floor
       check_token_type_and_measure
       check_token_contrast
@@ -393,6 +395,7 @@ module Deploy
       begin
         driver = Selenium::WebDriver.for(:chrome, options: options)
         probes.each do |probe|
+          @result.checked!
           # selenium can't set Host easily — probe apex paths only.
           next if probe[:host].to_s.include?("markedsplass")
 

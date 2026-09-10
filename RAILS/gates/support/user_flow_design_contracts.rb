@@ -130,6 +130,7 @@ module Deploy
       def apply_design_contract(contract)
         label = "design:#{contract[:id]} (#{contract[:principle]})"
         Array(contract[:paths]).each do |rel|
+          @result.checked!
           abs = File.join(RAILS_ROOT, rel)
           unless File.exist?(abs)
             # Payment files may not exist yet — warn so flow gate still teaches the contract

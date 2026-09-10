@@ -27,6 +27,7 @@ module Deploy
       ctx = load_ctx
       return @result if ctx.nil?
 
+      @result.checked!(ctx.size)
       search = LayoutSearch.new
       report = search.report(ctx)
       emit_report!(report)

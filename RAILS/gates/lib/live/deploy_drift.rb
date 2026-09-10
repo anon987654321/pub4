@@ -80,6 +80,7 @@ module Deploy
       # ci_ok means CI passed but vps-deploy had not finished; ok is the only
       # value that means the app is actually running this SHA.
       result.fail("deploy_drift: #{app} last deploy status is #{status.inspect}, not \"ok\"") unless status == "ok"
+      result.checked!
 
       unless known_commit?(sha)
         result.inconclusive!("deploy_drift: #{app} deployed #{sha}, which this checkout does not contain — fetch and re-run")

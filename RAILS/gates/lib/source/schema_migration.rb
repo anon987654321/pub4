@@ -15,10 +15,13 @@ module Deploy
     def run
       result = GateResult.new
       inventory = Inventory.new(root: ROOT)
+      return result.inconclusive!("schema_migration: the inventory lists no apps — nothing was read") if inventory.apps.empty?
+
       inventory.apps.each do |app|
         app_dir = File.join(RAILS_ROOT, app.name)
         next unless File.directory?(app_dir)
 
+        result.checked!
         versions = migration_versions(app_dir)
         schema_v = schema_version(app_dir)
         if versions.any? && schema_v && schema_v != versions.last

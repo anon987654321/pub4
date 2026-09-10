@@ -47,6 +47,7 @@ module Deploy
         result.fail("missing stimulus_boot.js")
       else
         boot = File.read(BOOT)
+        result.checked!(REQUIRED_CONTROLLERS.size + 1)
         REQUIRED_CONTROLLERS.each do |name|
           result.fail("pub4_stimulus_boot must register #{name}") unless boot.include?(%("#{name}"))
         end
@@ -55,6 +56,7 @@ module Deploy
 
       if File.file?(BASELINE)
         baseline = File.read(BASELINE)
+        result.checked!(1 + (REQUIRED_PACKAGES.size * 2))
         result.fail("importmap must pin shared vendor stimulus-components") unless baseline.include?("vendor/javascript")
         REQUIRED_PACKAGES.each do |pkg|
           result.fail("importmap missing #{pkg}") unless baseline.include?(pkg)
@@ -71,6 +73,7 @@ module Deploy
         next if path.include?("/public/assets/")
         next if path.include?("/node_modules/")
 
+        result.checked!
         body = File.read(path)
         FORBIDDEN_VIEW_PATTERNS.each do |pattern|
           result.fail("#{path.sub(ROOT + '/', '')}: forbidden legacy char-counter pattern") if body.match?(pattern)

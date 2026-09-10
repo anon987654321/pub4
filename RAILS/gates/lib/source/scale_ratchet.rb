@@ -34,6 +34,7 @@ module Deploy
         counts = LINT.counts_for(surface)
 
         baselines.each do |kind, baseline|
+          result.checked!
           count = counts[kind].to_i
           if count > baseline
             over << "#{surface}.#{kind}: #{count} (baseline #{baseline}, +#{count - baseline})"
@@ -42,6 +43,10 @@ module Deploy
           end
         end
       end
+
+      # A surface with no baselines compares nothing, and a lint that read no
+      # files reports zero for every kind, which is indistinguishable from clean.
+      result.inconclusive!("scale_ratchet: no baselines declared for any surface — design_tokens.yml scale.baselines is unread") if result.checks_ran.zero?
 
       over.each do |line|
         result.fail("scale_ratchet: #{line}")

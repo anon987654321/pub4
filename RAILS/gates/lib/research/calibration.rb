@@ -27,6 +27,15 @@ module Deploy
         "(#{report[:agreed]}/#{report[:total]}) floor=#{(report[:floor] * 100).round(0)}%"
       )
 
+      # A calibration set with no cases agrees with nothing; agreement over an
+      # empty set is 100% and means the labels went missing, not that the gate
+      # matches a human.
+      if report[:total].to_i.zero?
+        @result.inconclusive!("calibration: the labelled set is empty — agreement was computed over no cases")
+      else
+        @result.checked!(report[:total].to_i)
+      end
+
       report[:cases].each do |c|
         mark = c.agree ? "ok" : "DISAGREE"
         @result.warn(

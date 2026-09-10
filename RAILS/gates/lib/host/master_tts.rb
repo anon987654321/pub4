@@ -39,6 +39,7 @@ module Deploy
       result = GateResult.new
 
       CHECKS.each do |relative_path, needles|
+        result.checked!(needles.size)
         path = File.join(ROOT, relative_path)
         unless File.file?(path)
           result.fail("missing #{relative_path}")
@@ -51,6 +52,7 @@ module Deploy
         end
       end
 
+      result.checked!
       worker = File.join(MASTER, "bin", "tts-worker")
       result.fail("MASTER/bin/tts-worker must be executable") unless File.executable?(worker)
 

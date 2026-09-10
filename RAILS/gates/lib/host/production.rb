@@ -33,6 +33,7 @@ module Deploy
       @result.fail("tracked Rails master keys: #{tracked_master_keys.join(', ')}") if tracked_master_keys.any?
       @result.fail("missing shared RAILS/env.sample") unless File.file?(env_sample)
 
+      @result.checked!(2)
       apps.each do |name, metadata|
         check_app(name, metadata)
       end
@@ -61,6 +62,7 @@ module Deploy
       failures = []
       prod_active = production_lines(production)
 
+      @result.checked!(6)
       check_production_config(failures, prod_active, domain)
       check_routes(failures, app_dir)
       check_solid_adapters(failures, prod_active)

@@ -139,6 +139,7 @@ SCHEMA_FOR_LABEL = {
         return
       end
 
+      @result.checked!
       declared = File.read(TOKENS)[/--tap-min:\s*([0-9]+)px/, 1]
       if declared.nil?
         @result.fail("first_screen: _dialect_tokens.scss declares no --tap-min — sheets spell the floor with a token that does not exist")
@@ -150,6 +151,7 @@ SCHEMA_FOR_LABEL = {
     def source_touch_checks(surface)
       assert_token_floor
       Array(surface[:css_touch]).each do |rel, needle|
+        @result.checked!
         path = File.join(RAILS, rel)
         unless File.file?(path)
           @result.fail("first_screen: missing #{rel}")
@@ -167,6 +169,7 @@ SCHEMA_FOR_LABEL = {
         return
       end
 
+      @result.checked!
       url = "http://127.0.0.1:#{app.port}#{surface[:path]}"
       res = CrawlSupport.fetch(url, host: surface[:host])
       code = res.code.to_i
