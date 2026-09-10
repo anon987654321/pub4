@@ -48,6 +48,20 @@ module Fleet
     app_ports.merge(MASTER_NAME => MASTER_PORT)
   end
 
+  # The Host header an app answers to, from apps.yml's `domain`. A probe against
+  # the loopback carries no host, and production sets config.hosts, so Rails
+  # answers 403 before the app sees the path — a live gate that omits this can
+  # pass in development, where the allow list is permissive, and can never pass
+  # against the deployed app. MASTER's face has no apps.yml row and answers on
+  # ai.brgen.no.
+  def public_host(name)
+    return "ai.brgen.no" if name.to_s == MASTER_NAME
+
+    data = YAML.safe_load_file(APPS_YML, permitted_classes: [Symbol])
+    row = data.fetch("apps", {})[name.to_s]
+    row["domain"] if row.is_a?(Hash)
+  end
+
   def port(name)
     ports.fetch(name.to_s) { raise KeyError, "no port for #{name.inspect} in apps.yml" }
   end

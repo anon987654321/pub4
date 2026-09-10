@@ -6,6 +6,7 @@ require "uri"
 require_relative "../../../../OPENBSD/lib/deploy_inventory"
 require_relative "../../../../OPENBSD/lib/gate_result"
 require_relative "../../../tools/crawl_support"
+require_relative "../../support/fleet"
 
 module Deploy
   # Journeys with postconditions on state, not a list of URLs with body regexes.
@@ -51,7 +52,7 @@ module Deploy
         # run — 25 journeys green and the verdict line said "checked nothing".
         # That is the same defect checked! was added for in human_walkthrough.
         @result.checked!
-        run_flow(flow, port)
+        run_flow(flow, port, app)
       end
       @result.warn("flow_journey: ran #{ran}/#{flows.size} journeys") if ran.positive?
       @result
@@ -90,10 +91,10 @@ module Deploy
       nil
     end
 
-    def run_flow(flow, port)
+    def run_flow(flow, port, app)
       id = flow["id"]
       captures = {}
-      client = FlowClient.new(port: port)
+      client = FlowClient.new(port: port, default_host: Fleet.public_host(app))
       credentials = credentials_for(flow)
       return if credentials.nil?
 
@@ -266,9 +267,16 @@ module Deploy
       CSRF_META = /<meta name="csrf-token" content="([^"]+)"/
       CSRF_FIELD = /name="authenticity_token"[^>]*value="([^"]+)"/
 
-      def initialize(port:, host: "127.0.0.1")
+      # default_host is the Host header every request carries unless a step names
+      # its own. Without it a probe of the loopback identifies as nothing, and
+      # production answers 403 from host authorization before the app sees the
+      # path — so these journeys passed in development, where the allow list is
+      # permissive, and could never pass against the deployed app, which is the
+      # only place they measure anything.
+      def initialize(port:, host: "127.0.0.1", default_host: nil)
         @port = port
         @host = host
+        @default_host = default_host
         @cookies = {}
         @csrf = nil
       end
@@ -286,7 +294,7 @@ module Deploy
       def run(verb, path, params, host)
         redirects = []
         url = "http://#{@host}:#{@port}#{path}"
-        header_host = host
+        header_host = host || @default_host
         MAX_REDIRECTS.times do
           response = request(url, header_host, verb, params)
           store_cookies(response)
