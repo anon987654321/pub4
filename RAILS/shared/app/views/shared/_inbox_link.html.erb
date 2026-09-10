@@ -1,5 +1,15 @@
 <%# respond_to? guard: bsdports gates the social routes behind BSDPORTS_SOCIAL=1,
-    so notifications_path is undefined there and every signed-in page raised. %>
+    so notifications_path is undefined there and every signed-in page raised.
+
+    No class default. The one that stood here was "nav-link", which no stylesheet
+    in any of the three apps defines — the tree spells the nav class nav_link,
+    with an underscore — so the attribute reached no rule and the link has always
+    painted as the bare anchor its three siblings in bsdports' nav are. Naming
+    the real class would change what is painted and belongs to the operator; the
+    hook that promises styling it does not have is what goes.
+
+    The label is a key, not a word: these apps default to Norwegian and the link
+    pointed at notifications while reading "Inbox" in every locale. %>
 <% if authenticated? && respond_to?(:notifications_path) %>
-  <%= link_to "Inbox", notifications_path, class: local_assigns.fetch(:class_name, "nav-link") %>
+  <%= link_to t("nav.notifications"), notifications_path, class: local_assigns[:class_name] %>
 <% end %>

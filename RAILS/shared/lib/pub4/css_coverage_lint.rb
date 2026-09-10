@@ -210,15 +210,26 @@ module Pub4
 # whole class value that is a parenthesised conditional (`class: ("is-current"
 # if locale == current_locale)`).
 #
-# Reading app/helpers/**/*.rb as views is the obvious repair and it is not one:
-# measured over the sixteen helper files, it removes two names from the unused
-# set and adds two to undefined_class, one of them the interpolation artefact
-# `nav-item#{`. The extractors want an interpolation-aware pass before the
-# corpus widens, or the fix trades a false unused for a false undefined.
+# 153 -> 134 (2026-09-10). The corpus widened to app/helpers/**/*.rb, which the
+# entry above called "the obvious repair and not one" because on its own it
+# traded a false unused for a false undefined. It is one with the
+# interpolation-aware pass in front of it: ruby_class_value_lists reads a class
+# value the way Ruby does — the literal text of the string plus the literal text
+# of every string nested in its interpolations — so the three shapes named above
+# arrive whole instead of truncated at their first inner quote, and
+# attribute_lists tolerates the escaped quotes of markup written inside a Ruby
+# string. All ten are used names now, undefined_class is still 0, and no
+# selector became unused in the exchange.
 #
-# So the baseline holds and the ratchet stays wide, with the reason now written
-# as a list rather than as a caveat.
-BASELINES = { "undefined_class" => 0, "unused_selector" => 153 }.freeze
+# Nine more went with them, each with a named source: active-down and active-up
+# and top from posts, disappearing-settings and its --active twin from the
+# conversation header, feed-tab and read-more-content from the helpers that
+# build them, and is_mine and msg_reaction_chip from the reactions row.
+#
+# What is left is still not a list of dead rules. The caveat at the top of this
+# file stands — a literal search cannot prove a runtime-composed name dead — and
+# the amber sheets that dominate the remainder belong to amber's own session.
+BASELINES = { "undefined_class" => 0, "unused_selector" => 134 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
 
@@ -363,7 +374,117 @@ BASELINES = { "undefined_class" => 0, "unused_selector" => 153 }.freeze
     # to a class that is styled.
     def class_lists_in(body)
       attribute_lists(body) + helper_array_lists(body) +
-        javascript_lists(body) + interpolated_attribute_lists(body)
+        javascript_lists(body) + interpolated_attribute_lists(body) +
+        ruby_class_value_lists(body)
+    end
+
+    # Every place a class value is a Ruby expression rather than a quoted word.
+    #
+    # The five extractors above all end at a quote, so any expression that
+    # carries one inside it was truncated at that quote and the remainder lost:
+    # `class: "nav_link#{" active" if active}"` recorded `nav_link#{`, which
+    # interpolated? then dropped, so `.nav_link` read as dead while it painted on
+    # every page of brgen. `class: ("is-current" if locale == current_locale)`
+    # and `local_assigns.fetch(:class_name, "brand-mark")` never matched at all,
+    # the first because the value opens with a bracket and the second because the
+    # key is a symbol argument.
+    #
+    # This reads the value the way Ruby does: the literal text of a string, plus
+    # the literal text of every string nested inside its interpolations, which
+    # together are exactly the words a browser can end up seeing. Ten selectors
+    # left the unused list on the day it landed, each one verified against the
+    # running fleet first.
+    CLASS_VALUE = /(?<![\w-])(?:class(?:_name)?\s*:|:class(?:_name)?\s*,)\s*/
+
+    def ruby_class_value_lists(body)
+      lists = []
+      pos = 0
+      while (m = CLASS_VALUE.match(body, pos))
+        at = m.end(0)
+        fragments, after = class_value_fragments(body, at)
+        lists << fragments if fragments.any?
+        pos = [ after, m.end(0) ].max
+      end
+      lists
+    end
+
+    # A quoted string, or a bracketed expression holding some. Anything else —
+    # a bare method call, a symbol, a local — names nothing this can read.
+    def class_value_fragments(body, at)
+      case body[at]
+      when '"', "'" then string_fragments(body, at)
+      when "(" then bracket_fragments(body, at, "(", ")")
+      when "[" then bracket_fragments(body, at, "[", "]")
+      else [ [], at ]
+      end
+    end
+
+    def bracket_fragments(body, at, open, close)
+      depth = 0
+      i = at
+      while i < body.length
+        depth += 1 if body[i] == open
+        if body[i] == close
+          depth -= 1
+          break if depth.zero?
+        end
+        i += 1
+      end
+      region = body[at..i].to_s
+      [ scan_fragments(region), i + 1 ]
+    end
+
+    # Walks one Ruby string literal, keeping its plain text and recursing into
+    # each #{...} for the strings nested there. The nesting is why this is a walk
+    # and not a pattern: `"a#{"b#{c}"}"` is legal and a regex cannot balance it.
+    def string_fragments(body, at)
+      quote = body[at]
+      out = +""
+      inner = []
+      i = at + 1
+      while i < body.length
+        ch = body[i]
+        if ch == "\\"
+          i += 2
+          next
+        end
+        break if ch == quote
+
+        if quote == '"' && ch == "\#" && body[i + 1] == "{"
+          region, i = interpolation(body, i + 2)
+          inner.concat(scan_fragments(region))
+          out << " "
+          next
+        end
+        out << ch
+        i += 1
+      end
+      [ (out.split(/\s+/) + inner).reject(&:empty?), i + 1 ]
+    end
+
+    def interpolation(body, at)
+      depth = 1
+      i = at
+      while i < body.length && depth.positive?
+        depth += 1 if body[i] == "{"
+        depth -= 1 if body[i] == "}"
+        i += 1
+      end
+      [ body[at...(i - 1)].to_s, i ]
+    end
+
+    def scan_fragments(region)
+      names = []
+      i = 0
+      while i < region.length
+        if region[i] == '"' || region[i] == "'"
+          fragments, i = string_fragments(region, i)
+          names.concat(fragments)
+        else
+          i += 1
+        end
+      end
+      names.reject { |n| n.include?("\#{") }
     end
 
     def record_names(used, view, names)
@@ -373,8 +494,13 @@ BASELINES = { "undefined_class" => 0, "unused_selector" => 153 }.freeze
       end
     end
 
+    # The optional backslashes are for markup written inside a Ruby string —
+    # chat_helper re-introduces the one tag it allows as
+    # `"<code class=\"chat-code\">"`, and a pattern demanding a bare quote after
+    # `class=` cannot see it, so .chat-code read as dead while it wrapped every
+    # inline code span in the channels.
     def attribute_lists(body)
-      [ /class:\s*["']([^"'<>]+)["']/, /class=["']([^"'<>]*)["']/ ].flat_map do |pattern|
+      [ /class:\s*\\?["']([^"'<>\\]+)\\?["']/, /class=\\?["']([^"'<>\\]*)\\?["']/ ].flat_map do |pattern|
         body.scan(pattern).map { |(list)| list.to_s.split(/\s+/) }
       end
     end
@@ -428,7 +554,19 @@ BASELINES = { "undefined_class" => 0, "unused_selector" => 153 }.freeze
     def views
       TREES.flat_map { |t| Dir.glob(File.join(RAILS_ROOT, t, "app/views/**/*.erb")) } +
         engine_dirs.flat_map { |d| Dir.glob(File.join(d, "app/views/**/*.erb")) } +
-        rendered_by_javascript
+        rendered_by_javascript + rendered_by_helper
+    end
+
+    # A helper that builds a tag builds markup, so it is a view for this purpose.
+    # `password-field` and `password-toggle` are written in stimulus_form_helper,
+    # `chat-code` in a gsub in chat_helper, and the sidebar link classes in
+    # ui_helper — none of them appears in any template, and all of them paint.
+    # Widening the corpus needed ruby_class_value_lists first: without it the
+    # helpers' interpolated values arrived truncated and traded a false unused
+    # for a false undefined.
+    def rendered_by_helper
+      TREES.flat_map { |t| Dir.glob(File.join(RAILS_ROOT, t, "app/helpers/**/*.rb")) } +
+        engine_dirs.flat_map { |d| Dir.glob(File.join(d, "app/helpers/**/*.rb")) }
     end
 
     # Not every element is rendered by a template. optimistic_send_controller
