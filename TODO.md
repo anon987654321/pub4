@@ -2814,44 +2814,6 @@ health-check window, so reproduce a start by hand only with
 already stands the app's job worker down for the CI run, so standing it down by
 hand first makes that step skip.
 
-#### `internet_app_runs_as_passwordless_root_user`  — tag: operator-priority
-
-<!-- open-debt -->
-
-`MASTER/bin/master` from a terminal runs as dev, and dev is still nopass root:
-`/etc/doas.conf:39` reads `permit nopass setenv { … } dev as root`, and `doas -C
-/etc/doas.conf id` printed `permit nopass` on 2026-09-10. The remote half is
-closed — `/etc/rc.d/master:64` carries `daemon_user="master"`, in the same shape as
-the three apps.
-
-Check it with `doas -C /etc/doas.conf id`, not with `doas -C /etc/doas.conf -u
-dev id`. `-u` names the target user and defaults to root (doas(1)), so the `-u
-dev` form asks whether dev may run a command as dev, which no rule permits: it
-printed `deny` on 2026-09-10 against `permit nopass` for the plain form on the
-same box, in the same minute. This row named the `-u dev` form for weeks and read
-as done on a measurement that was answering another question. The correct form is
-now in `OPENBSD/etc/doas.conf` beside the rule, with the reason.
-
-What dropping line 39 would take, so the size of the decision is on the record.
-Nothing in this repository can do it and it is not doas command scoping; see
-DECISIONS.md for why cmd rules cannot work here. `OPENBSD` alone holds 104 `doas`
-call sites in 29 files — 21 `rcctl`, 10 `doas zsh`, 8 `doas sh`, 6 `doas ksh` —
-and `RAILS/_deploy.sh` holds 16 more. A root shell is blanket root, so the ten
-`doas zsh` sites alone defeat any allowlist. `bin/vps-deploy` runs as dev and
-escalates per step by design (`bin/vps-deploy:6`), so the line cannot be narrowed
-to a wrapper either: drop it and every deploy path stops at its first `doas
-rcctl`. The real reduction available is the one the file already took — `keepenv`
-off the dev rule, replaced by a measured five-variable `setenv` allowlist. Going
-further is a rebuild of how this box is deployed, and it is the operator's to
-schedule, not an edit.
-
-Before moving brgen, amber or bsdports off their own daemon_user, check what the
-master switch cost a deploy: `Bundler.setup` ends in `Definition#write_lock`,
-which touches Gemfile.lock on every boot, the daemon had always written it as dev,
-and under a new user it is EACCES with a trace naming `File.utime` and nothing
-about permissions. `BUNDLE_FROZEN=true` in the daemon's env is the fix and is
-load-bearing.
-
 #### `home_partition_full_from_git_history`  — tag: operator-priority
 
 <!-- open-debt -->
@@ -2902,6 +2864,23 @@ required and is what actually measures the app.
 A fixed finding is not a backlog item and is deleted when it closes; `git log`
 holds the why. What stays here is the false positive worth not paying twice.
 
+**dev's passwordless root is decided, not open.** `/etc/doas.conf:39` reads
+`permit nopass setenv { … } dev as root` and it stays. The exposure, the four
+mitigations it rests on, and the one narrowing someone could actually walk are in
+`OPENBSD/DECISIONS.md` — "dev keeps passwordless root, and here is the exposure",
+with a review trigger. Two things before reopening it. Check the rule with `doas
+-C /etc/doas.conf id` and never with `-u dev`: `-u` names the target user, so the
+`-u dev` form asks whether dev may run a command as dev, which no rule permits,
+and it printed `deny` against `permit nopass` for the plain form on the same box
+in the same minute. This row read as done for weeks on that backwards
+measurement. And the remote half is already closed — `/etc/rc.d/master:64` carries
+`daemon_user="master"`, like the three apps. Before moving any app off its own
+daemon_user, note what the master switch cost: `Bundler.setup` ends in
+`Definition#write_lock`, which touches Gemfile.lock on every boot, and under a
+new user that is EACCES with a trace naming `File.utime` and nothing about
+permissions. `BUNDLE_FROZEN=true` in the daemon's env is the fix and is
+load-bearing.
+
 **amberapp.com is not ours.** A row here once recorded it as bought and certified
 after reading a 114-byte JS-redirect page. That page is Afternic's for-sale
 lander; the domain has been at GoDaddy since 2019 with `ns1/ns2.afternic.com` and
@@ -2916,86 +2895,71 @@ ends cross-app sign-in, and `Shared::SsoToken` is consume-only in this tree.
 Re-verified 2026-09-10 against the box, read-only. brgen, amber and bsdports all
 answer 200 on `/up`, and master answers on 53187.
 
-#### 1. Two files drift between the repo and `/etc`, and the repo is the newer side of both
+#### 1. Ten files on the box are not the files in this repository, and one OPERATOR.sh run closes every one
 
-`rc.d/master`, `rc.d/amber` and `rc.d/bsdports` now match the box byte for byte —
-the 300-second `/up` wait reached them. What is left is `doas.conf` and
-`newsyslog.conf`, and in both the repo is right and the box is stale, so the fix
-is one `OPERATOR.sh` sync. In `doas.conf` the difference is comment only: the
-live file names the retired `OPENBSD/data/debt.yml`, and the repo names `TODO.md`
-and now carries the corrected `doas -C /etc/doas.conf id` beside the rule.
-In `newsyslog.conf` it is seven rotation entries the live file has
-never had: `config_drift.log` is 428 KB, `uptime-check.log` 694 KB,
-`drain-jobs.log` 120 KB and `keep-warm.log` 114 KB, all untrimmed, on a box whose
-/var has been filled once already.
+Re-measured 2026-09-10 with `SSH_HOST=dev@brgen.no ruby
+OPENBSD/config_drift_gate.rb --remote`, which is now the way to ask. It is not
+two files, which is what this row said until today. Eight differ —
+`etc/doas.conf`, `etc/newsyslog.conf`, `etc/rc.d/master`,
+`usr/local/bin/config-drift-check`, `drain-jobs.sh`, `prune-guests.sh`,
+`relayd-watchdog` and `uptime-check.sh`, the last of those 914 bytes live against
+2,877 in the repo — and two are absent from the box altogether:
+`emergency_cpu.sh`, which is the only thing `resource_guard.sh`'s crisis tier can
+run, and `vps_weekly_integrity.sh`. In every case the repo is the newer side, so
+there is nothing to copy back.
 
-The same uninstalled batch holds a job that has therefore never run.
-`crontab.vm23:84` schedules `/usr/local/bin/vps_weekly_integrity.sh` and
-`OPERATOR.sh:293` installs it, but the box has neither the script, nor the
-crontab line, nor `/var/log/pub4/` for it to write into. The weekly integrity
-pass is scheduled in the repository and nowhere else. One `OPERATOR.sh` run
-closes all three; it is the operator's to make, and nothing here can.
+Root's crontab is the eleventh and it hid the longest. `crontab.vm23:97`
+schedules `/usr/local/bin/vps_weekly_integrity.sh`, `OPERATOR.sh:311` installs
+it, and the box has neither the line, nor the file, nor `/var/log/pub4/` for it
+to write into — so the weekly integrity pass has never run once, while every
+`/etc` file the drift gate compared matched and it said clean. The gate now
+compares the crontab too, as a set of commands rather than bytes (OPERATOR.sh
+merges the pub4 lines onto OpenBSD's own, so a byte compare would always fail),
+scoped to `/usr/local` so the four base-system lines are not four permanent false
+alarms. `test/test_config_drift_gate.rb` carries the shape it must flag and the
+shape it must not.
 
-#### 2. Seven scripts deploy this box, and the two that lied now exit non-zero
+The script itself was wrong in two ways and is fixed, so the OPERATOR.sh run
+installs something worth running. It ran entirely as root out of root's crontab
+and its first act was to source `lib/ci_lock.sh` from the dev-writable checkout
+and then run two Ruby programs from it — the escalation `OPERATOR.sh:316` refuses
+for `config_drift_gate.rb` and `crontab.vm23:42` refuses for `uptime-check`; root
+now makes the log directory, opens the log and drops to dev, and reads not a line
+of `/home/dev/pub4` as root. And a bare `set -e` meant a failing integrity gate
+ended the run before the public health pass, on exactly the week something was
+already wrong, with the output redirected so cron had nothing to mail; both gates
+now run and the exit status carries the result.
 
-`bin/vps-deploy` is the one CLAUDE.md and RUNBOOK name. `vps_on_vm_install.sh`
-and `vps_install_all.sh` used to turn every failure into a `WARN` line and finish
-on `log "done"`, defeating their own `set -euo pipefail`; both now count failures
-and exit 1, and `vps_install_all.sh` also stopped printing an empty free-memory
-figure — its `awk /free memory/` matched no line OpenBSD `vmstat -s` writes.
-
-What is left is a retirement, and it is the operator's. `deploy_all.sh`,
-`vps_run_remote.sh` and `manual_master_deploy.ksh` are named by `RUNBOOK.md` and
-by nothing that runs, which reads as sprawl until you read what the runbook says
-they are for: re-applying box config after drift, bootstrapping a fresh VM
-through the hypervisor jump, and recovering a stalled master deploy under tmux.
-`bin/vps-deploy` does none of the three. Deleting them removes recovery paths
-rather than duplicates, so it needs the operator to say the capability is not
-wanted. The three failure semantics in the face build are unchanged and correct:
-`etc/rc.d/master` swallows it behind `|| true` because the assets gate below
-decides the start, `vps_deploy_master.sh:42` does the same, and
-`manual_master_deploy.ksh` records `_fail=1` and exits 1.
-
-#### 3. Seven places read the load average, and four of them cannot share a library
-
-`vps_ci_all.sh` and `vps_master_scan.sh` now read it the same way, one `ruby34`
-that both reads the figure and decides on it. The other five are
-`resource_guard.sh:101`, `usr/local/bin/core-reclaim.sh:65`,
-`usr/local/libexec/stale_ci_cleanup.ksh:16` in awk, and
-`usr/local/bin/drain-jobs.sh:52` and `usr/local/bin/prune-guests.sh:49` already
-in Ruby.
-
-The `lib/load.sh` this row used to propose cannot be written. Those five are
-installed to `/usr/local` and run by root, and `resource_guard.sh:135-147`
-records why root sources only root-owned absolute paths: dot-sourcing the
-dev-owned checkout was root code execution within five minutes, independent of
-doas. A shared file would have to be installed too, which is a new install target
-rather than a fold. The three awk sites are also not equivalent to the Ruby ones
-— `core-reclaim.sh` reads the 1-minute figure where every other reader takes the
-5-minute one — so converting them is a change to a guard's behaviour on a 1 GB
-box, and `resource_guard.sh` fails toward `9.9`, which sheds. Both are the
-owner's. The ban itself governs MASTER: `zsh.banned_commands` in
-`MASTER/data/rules.yml` has two readers, `MASTER/lib/io/shell.rb:27` and
-`MASTER/lib/voice/personality_prompt_builder.rb:325`, so it bounds what MASTER's
-shell effect runs, not what this tree commits.
-
-#### 4. Nine two-line expect shims, and they are gate-required
-
-`vps_console_status.exp`, `_probe`, `_short`, `_install`, `_fix_key`,
-`_poll_install`, `_start_install`, `_sync_and_install` and `vps_drop_install.exp`
-are each one line delegating to `vps_console.exp`, which already takes the
-subcommand as its first argument. They are not sprawl to delete:
-`vps_safety_gate.rb:63-74` names all nine and fails when one is missing or stops
-delegating, which is how the shared `require_console_risk_ack` guard is enforced.
-Folding them means changing that gate, and the gate is the reason the guard
-cannot be bypassed by adding a tenth shim.
+Nothing here can install any of it. `MASTER/bin/pub4 vps deploy` does not do it
+either — this is `doas zsh OPENBSD/OPERATOR.sh` on the box.
 
 #### Not worth chasing
 
-- **Ruby entry points come last, everywhere.** `config_drift_gate.rb`'s skip
-  guard, `installed_targets_gate.rb`'s `run` and `health_check.rb`'s first `def`
-  all sit below the definitions they use. The language wants the definition before
-  the call and the tree is consistent about it. Reordering buys nothing.
+- **The three deploy scripts nothing calls.** `deploy_all.sh`,
+  `vps_run_remote.sh` and `manual_master_deploy.ksh` stay, as recovery paths for
+  three cases `bin/vps-deploy` does not cover. Decided 2026-09-10; the argument is
+  in `OPENBSD/DECISIONS.md` and the count is not to reopen it.
+- **The seven readers of the load average.** They cannot share a library and two
+  of them must not agree. `core-reclaim.sh:65` takes the 1-minute figure because
+  it is about to cost somebody a cold boot; `resource_guard.sh:101` takes the
+  5-minute one because it must not shed a site over a spike. Both lines now say
+  so. A shared file would also have to be installed to `/usr/local` — root sources
+  only root-owned absolute paths (`resource_guard.sh:135`) — which is a new install
+  target rather than a fold. The banned-tools rule governs MASTER's shell effect,
+  not what this tree commits.
+- **Nine two-line expect shims.** `vps_console_status.exp`, `_probe`, `_short`,
+  `_install`, `_fix_key`, `_poll_install`, `_start_install`, `_sync_and_install`
+  and `vps_drop_install.exp` each delegate one line to `vps_console.exp`.
+  `vps_safety_gate.rb:63-74` names all nine and fails when one stops delegating,
+  which is how `require_console_risk_ack` cannot be bypassed by adding a tenth.
+  Folding them means changing that gate, and the gate is the point.
+- **Ruby entry points come last, everywhere.** `installed_targets_gate.rb`'s `run`
+  and `health_check.rb`'s first `def` sit below the definitions they use. The
+  language wants the definition before the call and the tree is consistent about
+  it. Reordering buys nothing. `config_drift_gate.rb` is the one exception and it
+  is deliberate: a `$PROGRAM_NAME == __FILE__` guard splits definitions from the
+  run so its test can require the file without the skip line exiting the test
+  process.
 - **`bin/vps-deploy:153`'s `[[ -x /usr/local/bin/config_drift_gate.rb ]]` guard.**
   It has the shape `installed_targets_gate.rb` records as a dead guard, and it is
   not one: `OPERATOR.sh` installs that file, the box has it dated Aug 25, and it
