@@ -326,8 +326,9 @@ phantom_recovery:
   # escalating the model tier and finally halting are all sane answers to those.
   #
   # gaslighting_preamble is not one of them. It is a style rule — soul.yml's
-  # anti_simulation, already enforced by voice/output_guard, review/prompt_filter,
-  # ground/maturity_scorecard and the personality prompt — and its pattern matches
+  # anti_simulation, already enforced on the reply itself by voice/output_guard
+  # (through cli/stages/render), review/prompt_filter and the personality
+  # prompt — and its pattern matches
   # any reply opening "I can", "I would", "Let me" or "Sure,". A model writing
   # ordinary English is working, not malfunctioning, so letting it spend the
   # ladder ends the conversation for a phrasing preference.
@@ -654,10 +655,16 @@ learned_smells:
 # Deleting it also closes rule_hygiene's last id_case_collision: bare_rescue and
 # BARE_RESCUE were one rule to a reader and two to every registry that keys on an
 # id, which is how a rule's findings, priors and exemptions split in silence.
-- id: frozen_string
-  pattern: "\\bString\\.new\\b|%q\\(|%Q\\("
-  confidence: 0.99
-  severity: warning
+# frozen_string was removed 2026-09-10, and it failed the uniqueness test harder
+# than the five before it: not duplicated, but with no true positive at all. Its
+# pattern reads `String.new`, `%q(` and `%Q(` as unfrozen strings. Over lib/ and
+# law/ it scores five findings and all five are in
+# lib/review/scan/rules/universal_rules.rb, where they are rule fixtures — the
+# `fires:`/`does_not_fire:` examples other rules are written against. The premise
+# is wrong besides: in a file declaring `frozen_string_literal: true` a percent
+# literal is frozen anyway, and `String.new` is how you deliberately ask for a
+# mutable one, so the rule fires on the fix. lint:frozen is the real check for
+# the magic comment.
 # debug_output was removed 2026-08-12, for the same reason as long_line above and
 # with the same evidence. It carried the SAME id as the registered DEBUG_OUTPUT
 # rule, so their findings were not even distinguishable in a report — where
@@ -708,23 +715,28 @@ learned_smells:
 # exemption, reported at :warning where the real rule says :info and with the id as
 # its whole message.
 #
-# The same test the EMPTY_RESCUE deletion used: how many findings are unique to it.
-# The four entries that survive it — magic_number, future_tense, duplicate_code
-# and sycophancy — are the only implementations of what they detect. Four of the
-# nine this list once held have now failed it, always the same way: a raw regex
-# restating a registered rule, plus whatever that rule deliberately spares.
+# The same test the EMPTY_RESCUE deletion used: how many findings are unique to
+# it. The three entries that survive it — magic_number, duplicate_code and
+# sycophancy — are the only implementations of what they detect. Six of the nine
+# this list once held have now failed it. Four failed the first way: a raw regex
+# restating a registered rule, plus whatever that rule deliberately spares. The
+# last two failed a second way, which is worth naming separately because the
+# first test does not catch it — a regex with no true positive anywhere in the
+# tree, whose whole yield is other rules' fixtures and its own subject matter.
 - id: sycophancy
   pattern: "\\b(?:absolutely|certainly|of course|happy to help)\\b"
   confidence: 0.99
   severity: warning
-- id: future_tense
-  # Anti-simulation is about hedging in OUTPUT; a rationale comment saying a
-  # change "would break X" is describing the past, not simulating. skip_comments
-  # keeps the rule off comment prose (1,667 code findings, sampled comments).
-  skip_comments: true
-  pattern: "\\b(?:will|would|might|could|perhaps|seems|appears)\\b"
-  confidence: 0.95
-  severity: warning
+# future_tense was removed 2026-09-10, with frozen_string and for the same
+# reason: twelve findings over lib/ and law/, and not one of them a hedge in
+# MASTER's output. Six are a detector's own text — SIMULATION's fixture and its
+# regex, two model prompts in semantic_rules.rb, StrunkPass's own strip list —
+# and the rest are refusal messages naming a consequence in correct English
+# ("reset would discard concurrent work", "the tier could not run"). SIMULATION
+# (universal_rules.rb) is the live rule for this and is deliberately narrower:
+# `will\s+\w+`, `would\s+\w+`, `let's`, with the rule directory exempted. A bare
+# modal-verb regex cannot tell a hedge from a sentence about consequence, which
+# is the distinction the whole rule turns on.
 # DRY carried `duplicate_code` in its aliases while duplicate_code was still a
 # live smell with 51 findings over lib/, 48 of them on a line no other rule
 # reports. An alias is a retired id; one pointing at a live rule makes every
@@ -4351,13 +4363,19 @@ rule_ratchets:
     # every rule, so ONE_SOURCE, PRIMITIVE_OBSESSION and LAZY_CLASS moved to the
     # severity declared here rather than the one their class chose.
     #
-    # The 3 left are one argument, and it is the owner's: BE_CONCISE, PRESERVE_FIRST
-    # and SIMPLEST_WORKS each have a soul-derived practice in law/practice.rb that
-    # says something other than the kernel rule of the same name here — SIMPLEST_WORKS'
-    # practice is about god classes, which is NO_GOD_CLASS's subject. Resolving them
-    # changes what reaches the system prompt, so they are recorded in TODO.md rather
-    # than decided here.
-    statement_conflicts: 3
+    # The last 3 — BE_CONCISE, PRESERVE_FIRST and SIMPLEST_WORKS — closed on
+    # 2026-09-10, and they closed the other way round from the eleven above. A
+    # `practice` cannot fire on a line, so for these three the detector is this
+    # catalogue's and law/practice.rb holds the conduct: the practice takes this
+    # file's `fix` and `severity` verbatim and states the rule it is named after
+    # in the imperative. SIMPLEST_WORKS' practice was about god classes, which is
+    # NO_GOD_CLASS's subject and has a structural detector, so that clause is
+    # gone rather than reworded — a practice named after one rule and stating
+    # another is how a rule's findings and its prompt come apart. BE_CONCISE was
+    # not two subjects: this file names it "avoid unnecessary words, tokens, or
+    # lines", which is the reply and the source both, so "minimal response"
+    # survives as the second sentence of one rule.
+    statement_conflicts: 0
 
   deps:
     # ungraphed: registry rules absent from rule_deps below. RuleRegistryAudit has

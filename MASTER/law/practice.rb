@@ -32,26 +32,38 @@ Law.define(:COLLAPSE_BEFORE_ADDING) do
   good "extends the gate that exists"
 end
 
+# Three of the rules here share an id with a catalogue rule in data/rules.yml,
+# and for those three the catalogue owns the wording. The usual resolution is
+# the other way round -- whichever population holds the detector states the rule
+# -- but a `practice` cannot fire on a line, so the detector is the catalogue's
+# and the conduct is what this file adds. `fix` and `severity` are therefore the
+# catalogue's verbatim, and `practice` says the same rule in the imperative
+# rather than a second rule under a borrowed name.
 Law.define(:SIMPLEST_WORKS) do
   source "MASTER constitution (soul.yml absolute.rules)"
-  severity :warn
+  severity :error
+  # The god-class clause this used to hold is NO_GOD_CLASS's subject, and
+  # NO_GOD_CLASS detects it structurally. A practice named after one rule and
+  # stating another is how a rule's findings and its prompt come apart.
   practice <<~TEXT
-    refuse to create god classes (>%{max_lines} lines, >%{max_methods}
-    methods). Push back and suggest decomposition.
+    fewest moving parts that solve the problem. when a simpler shape does the
+    job, propose it instead of building the one you were asked for, and delete
+    abstractions until it hurts.
   TEXT
-  fix "refuse to create god classes (>%{max_lines} lines, >%{max_methods} methods)."
-  bad  "a 400-line class with 20 methods"
-  good "three classes that each do one thing"
+  fix "Delete abstractions until it hurts. KISS."
+  bad  "a factory, a registry and an adapter for one call site"
+  good "the one call"
 end
 
 Law.define(:PRESERVE_FIRST) do
   source "MASTER constitution (soul.yml absolute.rules)"
-  severity :warn
+  severity :error
   practice <<~TEXT
-    never rewrite working code from scratch. Read first. Preserve behavior and
-    intent. Larger refactors allowed when approved and safe.
+    never rewrite working code from scratch. read before write, preserve
+    behavior and intent, and take a larger change only when it is justified and
+    tested.
   TEXT
-  fix "never rewrite working code from scratch."
+  fix "Read before write. Preserve behavior and intent. Larger changes allowed if justified and tested."
   bad  "rewrites the file from scratch"
   good "reads it, then changes the four lines that are wrong"
 end
@@ -59,10 +71,13 @@ end
 Law.define(:BE_CONCISE) do
   source "MASTER constitution (soul.yml absolute.rules)"
   severity :warn
+  # One rule, both halves: the catalogue's name is "avoid unnecessary words,
+  # tokens, or lines", so the reply and the source are the same subject.
   practice <<~TEXT
-    minimal response. If the answer is one word, say one word.
+    omit needless words and omit needless code. if the answer is one word, say
+    one word.
   TEXT
-  fix "minimal response."
+  fix "Omit needless words. Omit needless code."
   bad  "a paragraph restating the question"
   good "one word"
 end

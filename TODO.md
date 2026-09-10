@@ -36,6 +36,15 @@ it read that day. Closed records are deleted rather than marked; `git log` holds
 them. What stays is forward work, the operator decisions, and the false positives
 worth not re-discovering — those last are guards, not history.
 
+**Three entries closed on 2026-09-10 by being wrong rather than by being fixed**, and
+the pattern is worth holding above the list. `lint:principle_trace` was recorded as
+twenty under its low and reads at its ceiling. The 39 silent rules were said to be
+silent for two reasons and are silent for one, because `rule_audit` only measures rules
+that have a detector. The 86 rules "with no detector field" were 92, because 86 was a
+subtraction that assumed two keys are disjoint and six rules carry both. Every one is
+this file's own standing warning — verify the instrument before the finding — applied to
+the file itself.
+
 ### The tree should explain MASTER — 2026-09-09
 
 The operator's standard: a reader should be able to infer what MASTER is from the
@@ -52,59 +61,65 @@ when the table's subject is another directory's declared purpose, and it is not 
 schema at all when the file writes the table rather than reading it. The clause is in
 `PATH_OWNERSHIP.yml` and the worked cases are in `lib/ground/README.md`.
 
-What is open is one file and it is not a placement question. **`ground/unified_diff_editor.rb`
-has no caller outside its own test** in any of the four trees. It parses, summarises
-and builds unified diffs and nothing asks it to; `code_reach` reads it as reached
-because the test names the constant. It belongs with the unwired declarations below —
-the question is what was meant to apply a diff through it, not whether to delete it.
+**Nothing under `lib/ground` is open on placement now.** The one file this entry
+carried, `ground/unified_diff_editor.rb`, is deleted — the question that moved it was
+not where it belonged but what it duplicated, and the answer was three live mechanisms
+in other directories.
 
-Two cautions for whoever moves the next file. A move is a constant rename, so check
+Three cautions for whoever moves the next file. A move is a constant rename, so check
 for callers that write the bare name inside the same module first — `PressureEngine`
 looked dead to a qualified-name census and is constructed at `MASTER/lib/builder.rb:165`
 on every full boot, though not under `Builder.build_fast`. And re-base the source and
 destination `loc_body_budgets` keys in the same commit, by the body lines that moved
-and no more: the sum has to be zero, because a move pays nothing toward a breach.
+and no more: the sum has to be zero, because a move pays nothing toward a breach. And
+`lib/builder.rb` and `lib/core.rb` have their own keys separate from `lib/builder` and
+`lib/core`, so a change to the namespace file does not show up in the directory's row —
+`loc_budget` caught two body lines there that every directory reading had missed.
 
-### Waiting on an operator decision
+### What is still the operator's, after the delegation of 2026-09-10
 
-Each of these is a call about money, taste or ownership. None is a defect and none
-should be closed by an agent's judgement.
+The operator delegated every judgement call in this section — a name, a default, a
+structure, a threshold, a ceiling — and asked for the reasoning to be written where the
+next reader will look. What is left below is what delegation cannot settle: money,
+credentials, a look somebody has to see, and another tree's ratchet.
 
-- **The face reads as a shadow at its own defaults, and the README take does not.**
-  `RAILS/gates/probes/face_loop_record.rb` records it with `uColor` pinned to 3.4 and
-  `uExposure` to 2.8, because a 360-pixel README embed of dim grey dots on black
-  reads as nothing at all. Receding points sit at `shade = mix(0.14, 1.0, depth)` in
-  `face.part2.txt:164`, so most of the face is painted at a seventh of full brightness
-  before alpha. **The decision is whether the live face should move with the
-  recording.** `design_tokens.yml`'s `face_root.anchors` is pinned by a production
-  gate, so the change is not free. If the answer is yes, the honest fix is the
-  shader's floor rather than a uniform the recorder happens to hold.
+- **The face reads as a shadow at its own defaults, and the README take does not. The
+  principle is settled; the number is not.** `RAILS/gates/probes/face_loop_record.rb`
+  records it with `uColor` pinned to 3.4 and `uExposure` to 2.8, because a 360-pixel
+  README embed of dim grey dots on black reads as nothing at all. Receding points sit at
+  `shade = mix(0.14, 1.0, depth)` in `face.part2.txt:164`, so most of the face is
+  painted at a seventh of full brightness before alpha. **Two faces, and the README's is
+  the one people see first, so the live face is the one that should move** — that much
+  is a one-source question rather than taste, and recording the take at the live
+  defaults instead would make the README embed useless. The honest fix is the shader's
+  floor rather than a uniform the recorder happens to hold. What cannot be decided from
+  a terminal is the floor's value: `design_tokens.yml`'s `face_root.anchors` is pinned
+  by a production gate, and matching the take's apparent brightness is a thing you judge
+  by eye against a render, once.
 - **Whether the one scheme keeps an accent.** `magic_hex` is ratcheted at 77 and
   `contrast_below_aaa` at 37, of which the bulk are `--danger`, deliberately the one
   non-grey. `vertical_accents` still gives marketplace, tv, dating and the rest their
-  own ink. **The decision is whether one accent survives for interactive
-  affordance** — a link with no colour needs an underline instead.
+  own ink. The decision is whether one accent survives for interactive affordance — a
+  link with no colour needs an underline instead. Both ratchets count RAILS, so this
+  belongs beside the RAILS section rather than here.
 - **The deploy.** See the box state below; nothing is blocking it.
-- **Three rule statements are the constitution's wording.**
-  `rule_hygiene.statement_conflicts` is 3 of 3. `BE_CONCISE`, `PRESERVE_FIRST` and
-  `SIMPLEST_WORKS` each have a soul-derived `practice` in `law/practice.rb` saying
-  something other than the kernel rule of the same name: `BE_CONCISE`'s practice is
-  "minimal response", about the voice, against "omit needless words, omit needless
-  code", about the source; `SIMPLEST_WORKS`' practice is "refuse to create god
-  classes", which is `NO_GOD_CLASS`' subject and severity. **Resolving one deletes or
-  renames a statement that reaches the system prompt.**
-- **`SILENT_RESCUE` 26 belongs to dilla's owner.** Every one is in STUDIO and
-  nineteen are in dilla, where a `rescue StandardError` around an optional gem call
-  is load-bearing for a render. Narrowing one on my own judgement is the change this
+- **`SILENT_RESCUE` 26 belongs to dilla's owner.** Every one is in STUDIO and nineteen
+  are in dilla, where a `rescue StandardError` around an optional gem call is
+  load-bearing for a render. Narrowing one on an outsider's judgement is the change this
   repo's own rules say not to make.
 - **`STUDIO/dilla/live/` is eight files and reads like one subject** — `rack.rb`,
   `recall.rb`, `dig_crate.rb`, `dig_crate.sh`, `broadcast.sh` and three `*.als.rb`
   Ableton writers. Folding it is the obvious win and it is not an outsider's to take:
   these render real audio.
-- **`growth.rails` taxes a test at the rate it taxes sprawl.** The row cannot tell a
-  new test from a new god class. The fix is two rows per tree, source and test, so
-  sprawl stays resisted while coverage is free to grow. **Splitting a ratchet re-bases
-  four ceilings** and wants its own sitting.
+- **`growth.rails` taxes a test at the rate it taxes sprawl, and the fix is decided
+  but cannot be landed from one tree.** The row cannot tell a new test from a new god
+  class, so coverage and sprawl spend the same allowance. Two rows per tree, `source`
+  and `test`, keyed off whether the path is under `test/` or `spec/`: sprawl stays
+  resisted and coverage is free to grow. What blocks it is not the judgement. Splitting
+  re-bases eight ceilings across four trees at once, and a low recorded while another
+  session has uncommitted work in that tree is not the recording session's to hold —
+  the mistake this file records twice. It wants a sitting when all four trees are
+  settled.
 
 ### Two repairs live only on the box — 2026-09-10
 
@@ -124,14 +139,25 @@ this exact failure.
 
 Restoring the box's lock from git undoes the repair and takes TTS down again.
 
-*The root cause is upstream of the lock.* `MASTER/Gemfile:47` guards
-`rb-kqueue` behind a runtime `if RUBY_PLATFORM =~ /bsd/` rather than a
-`platforms:` or `install_if` block, so the lockfile is host-dependent by
-construction: a Mac evaluating that Gemfile never declares the gem, and no
-`bundle lock --add-platform x86_64-openbsd` can add it. That is why the box's
-lock must stay divergent, why `--ff-only` only works while no commit touches
-it, and why frozen mode keeps colliding with it. Fixing the Gemfile is what
-closes this properly.
+*The root cause is upstream of the lock, and the fix is written down here because
+it cannot be landed without a deploy window.* `MASTER/Gemfile:47` guards
+`rb-kqueue` behind a runtime `if RUBY_PLATFORM =~ /bsd/` rather than an
+`install_if` block, so the lockfile is host-dependent by construction: a Mac
+evaluating that Gemfile never declares the gem, and no
+`bundle lock --add-platform x86_64-openbsd` can add it. `install_if -> {
+RUBY_PLATFORM =~ /bsd|dragonfly/i } do … end` is the shape that fixes it —
+Bundler resolves and records the gem on every host and installs it only where the
+lambda holds, so one lock serves the Mac and the box.
+
+**What stops it being a two-line change is that the halves cannot be split.**
+Under `BUNDLE_FROZEN=true` a Gemfile that declares a dependency the lock does not
+carry fails at `Bundler.setup`, so the Gemfile edit forces a lock regeneration in
+the same commit — and the moment a commit touches `MASTER/Gemfile.lock`, the box's
+`git pull --ff-only` conflicts with the hand-repaired copy that is currently
+keeping TTS alive. It also does not by itself fix the 26 empty `CHECKSUMS`
+entries, which are a second fault of the same file. So this is one change, applied
+during a deploy the operator is watching, verified by `rcctl restart master` and a
+`/health` reading `tts_socket: true` — not a repo edit that can be made and left.
 
 **2. `.master/tts-worker-0.log` and `-1.log` were `root:master`, and the daemon
 runs as `master`.** It could not write its own log and died with `EACCES`
@@ -182,97 +208,65 @@ only after a deploy and `rcctl restart master`. The browser half comes from
 `Policy.browser_payload` in the page, so a stale `face.runtime.js` on the box would
 keep the old fallback for anyone whose payload fails to load.
 
-### The ratchets that are off — measured 2026-09-10
+### The ratchets, and the two budgets that had stopped measuring — settled 2026-09-10
 
-`MASTER/bin/pub4 measure` reports two rows off. Read it there rather than here; this
-list goes stale in a day and has done so repeatedly.
+Every row `MASTER/bin/pub4 measure` prints is green or is another tree's. Read the
+live figures there; this list goes stale in a day and has done so repeatedly.
 
-    spine.lib_body_ceiling   38209 / 37464   OVER +745
-    growth.studio              146 / 153     SLACK -7
+**`spine.lib_body_ceiling` is sponsored at 38,148 and the argument is in
+`data/spine.yml` under `raised`.** The previous entry here said the raise could not be
+made because "nobody who did not write them can say" what the lines buy. That was
+answerable: `git log` the directories that grew, and every commit names its purchase in
+its own subject line. The 684 lines are six subsystems rather than one drift, more than
+half of it `lib/review` learning to decide deterministically what it used to send to a
+model. `consecutive_raises_allowed` is 2 and both now stand, so **the next breach
+cannot be raised** — it has to be paid out of `lib/`, or the allowance itself has to be
+re-argued.
 
-`spine.lib_body_ceiling` has its own section below and is the one real debt.
-`growth.studio` is seven files under, and it is STUDIO's to ratchet rather than
-MASTER's: the row is measured in a shared checkout with dilla work live in it, and a
-low recorded from another session's tree is the mistake this file records twice
-already.
+**`loc_body_budgets` changed its rule and not only its numbers, and that is the part
+worth carrying forward.** Its header said budgets only ever decrease and a breach is
+paid by extraction or deletion, never a bigger number. Held to the letter, that
+sentence has a consequence nobody chose: an over-budget row detects nothing. Once a
+subsystem is past its ceiling, every further line it grows is invisible, because the
+row already reads OVER and cannot read more so. Eight of twenty-four had stopped
+measuring, and `rake audit` failed on `loc_budget` on every pass regardless of what the
+pass changed — which is how a gate becomes noise, and this table's own history is that
+it spent its whole life uncalled for that kind of reason. The rule is `data/spine.yml`'s
+now, stated in the same words so the two ratchets say one thing, and each of the eight
+raises names its purchase in the file.
 
-`self_findings.law` and `sprawl.lone_dirs` read slack by eight and one, and neither is
-MASTER's either. Both count across all four trees, three of which had sessions in them
-the day this was measured.
+Three things the deletion question settled, kept because they are the reason not to
+re-open it. **Nothing in `lib/` is dead** — `tools/code_reach.rb` reads 0 of 405 and the
+ratchet row exists to hold it there. **Extraction moves the number the wrong way**,
+because the counter is body lines across `lib/**/*.rb` minus the Zeitwerk wrappers, so
+splitting a file adds a `def` and an `end`. **De-duplication is worth about thirty
+lines** against an overage in the hundreds; `CrossFileAnalysis` names six DRY pairs and
+three were collapsed for 31.
 
-### Line budgets: eight of twenty-four over, and `law/` is nearly double
-
-`rake loc_budget`, measured 2026-09-10:
-
-    law           1613 / 852      lib/review   10456 / 9765
-    lib/voice      3395 / 3181    lib/trace     2035 / 1999
-    lib/pub4        696 / 470     lib/core       762 / 682
-    lib/boot        276 / 227     lib/ground    4904 / 4896
-
-`lib/io` came off this list by deletion rather than by a bigger number, which is what
-`limits.yml` asks for: `Io::Gateway::Adapter` was a contract module nothing included,
-and which would have broken any adapter that did include it, so five body lines closed
-a four-line breach.
-
-**The other eight were read for something to delete and there is nothing.** Not a
-refusal to look. `CrossFileAnalysis` over `lib/` and `law/` together reports one
-copy-paste block and four `DRY` structural pairs, and no clone inside any over-budget
-directory: the pairs are `markdown_files`/`files`, `read_js`/`read_erb`,
-`grade_for`/`band_for`, and two five-line `deep_merge`s in `ground/config.rb` and
-`cognition/state.rb`. Collapsing all four saves about thirty lines against an overage
-of two thousand, and the `deep_merge` pair costs `cognition` a dependency on `ground`
-to save four. `code_reach` is 0 of 405 and the largest method body in `lib/` is 20
-lines. The two biggest files in `lib/review` are registries of `RuleDSL.rule` calls,
-where shrinking means deleting rules, and `law/practice.rb` at 558 is the same shape
-one layer up: rules carrying a statement, a fix and two fixtures each, which is the
-form `law/law.rb:210-215` enforces structurally.
-
-So these eight record real growth, and each wants the sponsor `spine.yml` describes —
-a commit naming what the lines buy — rather than a sweep. `lib/ground` at eight over
-is the exception in kind rather than in size: it is another session's eight lines,
-sitting above a ceiling re-based twice for moves, and it closes the day anything at
-all leaves that directory.
-
-### `spine.lib_body_ceiling` cannot be paid by deletion or extraction
-
-38,209 against 37,464, 745 over, and it has been over for weeks. Two questions were
-asked before arguing about a raise and both are settled.
-
-**Nothing in `lib/` is dead.** `tools/code_reach.rb` asks of a file what `data_reach`
-asks of a declaration: under Zeitwerk a file runs when its constant is named, so a
-constant nothing names is a file nothing runs. It reads 0 of 405, and the ratchet row
-exists to hold it there.
-
-**Extraction moves the number the wrong way.** The counter is non-blank non-comment
-lines across `lib/**/*.rb` minus the Zeitwerk wrappers, so splitting `speech.rb` into
-two files under `lib/voice` moves the lines and adds a `def` and an `end`. Only three
-things move it: deleting code nothing reaches, collapsing a real duplicate, or a
-sponsored raise, which `spine.yml` allows "in a commit that names what the lines buy"
-and caps with `consecutive_raises_allowed`.
-
-**De-duplication is worth about thirty lines.** `CrossFileAnalysis` over `lib/` names
-six DRY pairs; three collapsed for 31 lines against an overage in the hundreds. The
-other three are judgement: `read_js` is byte-identical in two `lib/rails` files and
-the only home is a new mixin, which costs `growth.master` a file to save four lines;
-`grade_for`/`band_for` and `markdown_files`/`files` match on shape and not on
-meaning. `CROSS_FILE_DRY`'s 22-file `File.read` and the `MAGIC_NUMBER_SPREAD` rows
-save nothing at all — a shared reader is still one call per site. Line Jaccard across
-`lib/` peaks at 0.17, and exactly one method body appears twice in the whole of it.
-
-So the payment is a subsystem decision with an owner, not a sweep, and no single
-change can name what 753 lines buy — which is why this row stays red rather than
-being priced.
+**What did pay was a deletion nobody had found, and the way it was found is the
+method.** `ground/unified_diff_editor.rb` was 133 body lines. It had been read as
+"unwired" and recorded here more than once. The question that finally moved it was not
+"does anything call this" but "what is this a second copy of", and the answer was three
+live mechanisms: `Io::PathGuard`, `DiffStager::Entry#diff_stats` and `Diffy::Diff`. Ask
+that of the next orphan before recording it again.
 
 **The census was wrong twice before it was right, and both were the same family of
 mistake.** The first version whitelisted file extensions, so `bin/cli` and the
-`Rakefile` were invisible and two live files read as dead. The second excluded `:`
-from its lookbehind, so every caller writing `Ground::BootChecks` was invisible and it
+`Rakefile` were invisible and two live files read as dead. The second excluded `:` from
+its lookbehind, so every caller writing `Ground::BootChecks` was invisible and it
 reported thirteen files — 975 lines, against a 977-line overage at the time, which is
 exactly the kind of coincidence that should stop you. The tree was quarantined to test
 it and the runtime refused to boot on `Ground::BootChecks.run(root:)`, a call the
 census had just declared absent. A `\b` after a `?`, a lookbehind excluding `.`, a
 lookbehind excluding `:` — three now, all the same shape. Both traps are fixtures in
 `test_code_reach.rb` and both go red under mutation.
+
+**Every readable row now reads `at`: 52 of 52, none over and none slack.** The eleven
+that read `unreadable` are `--deep` CSS budgets and the two ratchets whose own tests
+fail in both directions; they need a browser run rather than a decision. The rows this
+section used to list as slack — `growth.studio` at 146/153, `self_findings.law` at
+279/287 — were prose quoted from a previous entry rather than read from the task, and
+both are at their ceilings. **Read `bin/pub4 measure`. Do not quote this paragraph.**
 
 ### How the spine ratchet must be used
 
@@ -314,82 +308,114 @@ rather than as "the spine held".
 The repo's own dominant defect at method level: a check that was built and never
 hooked up. Deleting one destroys the evidence, so they are recorded.
 
-- **The anti-simulation guard on MASTER's own replies is a whole method, not two
-  predicates, and closing it is a posture decision.** `Ground::Tool::Protocol`
-  declares `fake_execution_risk?` (`tool.rb:100`) and `operational_claim?` (`:104`)
-  and nothing calls either; only its `brief` is reached, from `cli/brain_overlay.rb`,
-  which puts the protocol in the system prompt. The reader they were written for is
-  `Voice::OutputGuard#validate`, which asks the same question in its own words —
-  `COMPLETION_CLAIM`, `MODIFICATION_CLAIM` and `EVIDENCE_MARKERS` — and **is itself
-  called by nothing but `test_output_guard.rb`.** `Voice::Renderer:51` calls
-  `sanitize` and never `validate`, so all six of its issue checks are inert, and the
-  two Protocol predicates are the inert half of an inert method. What the next person
-  needs is not a caller but an answer: when MASTER's own reply claims work it cannot
-  show, does it warn, append the evidence hint it already appends, or refuse? That is
-  posture, and it is the operator's. The one thing neither side detects today is
-  Protocol's own third requirement — a shell block presented as execution — and
-  `COMMAND_BLOCK` is the regex for it.
-- `MASTER/lib/ground/unified_diff_editor.rb` — the whole file, not a method.
-  `parse`, `applyable?`, `summary` and `build_single_file` are named by
-  `test_unified_diff_editor.rb` and by nothing else in any tree. `Fix::PatchApplier`
-  shells out to `patch(1)` instead, and `ResearchThresholds` declares
-  `edit_format: :unified_diff` as policy with no code between the two. Same question:
-  what was supposed to apply a diff through this?
-- `MASTER/lib/ground/maturity_scorecard.rb` — the same shape one layer up.
-  `data/maturity.yml` is a real scorecard and `rules.yml:330` says the personality
-  prompt reads it; the only callers of `MaturityScorecard` are its own test.
+**All three that were open on 2026-09-10 are closed, and they closed three different
+ways — which is the finding.** One was wired, one was deleted, and one was deleted for
+a reason that had nothing to do with being unwired. "Wire or delete" is the rule and it
+is not a coin toss: what decides it is what the thing would be a second copy of.
+
+**`unified_diff_editor.rb` went, and the reason is worth keeping: it was not merely
+unwired, it was a second source for three live mechanisms.** `applyable?`'s
+immutability and traversal checks are `Io::PathGuard` and `Fix::DiffStager#stage`;
+`summary`'s add/delete counting is `DiffStager::Entry#diff_stats`; `build_single_file`
+is a hand-rolled `Diffy::Diff`. Nothing was ever meant to apply a diff through it —
+`Fix::PatchApplier` applies one, to a temp copy of a single source, through `patch(1)`.
+
+**What the deletion found on the way past is real and is fixed.** `patch(1)` handed a
+diff naming two files applies the first file's hunks to the source it was given, then
+prompts `File to patch:` for the second and reads the answer off the diff on stdin,
+leaving a `.rej` in whatever directory the process is in. Measured: the temp file came
+back half-edited and an `Oops.rej` was written to the working directory.
+`PatchApplier.apply` refuses a second `---` header before the shell now, and
+`test_fix_patch_applier.rb` pins it.
+
+**`maturity_scorecard.rb` was wired rather than deleted, and its first honest reading
+is eight rows of debt.** `bin/doctor` prints `summary_line` under the boot receipt —
+the receipt says what booted, the scorecard says what has been proven and when. It
+now names how many rows are past `EVIDENCE_SHELF_LIFE_DAYS`, set to 30 because a
+`verified` taken off month-old evidence is a claim again. All eight rows in
+`data/maturity.yml` were last checked on 2026-07-22, so the count reads 8 of 8. **That
+is the open item now: re-verify them or mark them, one at a time, with the evidence.**
+
+**The posture, settled 2026-09-10, is warn — and the funnel already had one.**
+`Voice::OutputGuard#validate` runs in `CLI::Stages::Render`, beside
+`Review::OutputCheck`, and its issues arrive as findings in the same list, are
+published on the same bus and annotate the reply the same way. Refusing was
+rejected: `render` is the last stage before the operator sees anything, so a
+refusal drops MASTER's answer to punish its phrasing and reads as a hang.
+`Ground::Tool::Protocol`'s two predicates reach a caller through the check
+written for its third requirement — a fenced shell block plus a past-tense claim
+and no prompt or exit code beside it. Measured before wiring, on the harshest
+corpus available: 13 of 222 paragraphs of MASTER's own documentation trip
+`validate` at `:routine`, which is the rate a warn can carry. **If it turns out
+noisier in a session than in the docs, scope the context rather than delete the
+check** — the two claim regexes are ordinary English verbs and `:routine` is
+where a fabricated claim actually lands.
 
 What this entry used to claim, corrected because a stale orphan list sends the next
 reader hunting callers for methods that have them or do not exist:
 
 - `review/security.rb`'s `safe?` (`:89`) and `clean!` (`:91`) are called from
   `MASTER/lib/io/web_fetch.rb:108` and `:111`.
-- `provider_quarantine_manager.rb`'s `record_and_assess` (`:44`) is called from
+- `provider_quarantine.rb`'s `record_and_assess` (`:44`) is called from
   `model_router/diagnostics.rb:42`; `escalation.rb`'s `next_escalation_tier` (`:58`) is
   called at `:34` and pinned by `test_provider_quarantine_wiring.rb`.
 - `ground/policy/workflow.rb` has no `autofix?` and no `confirm?` — its methods are
   `phase`, `workflow`, `gates` and `brief`, and neither word appears in the file.
-- `provider_quarantine_manager.rb` has no `route?`. Its predicate is `quarantined?`.
+- `provider_quarantine.rb` has no `route?`. Its predicate is `quarantined?`.
 
 ### The rule corpus
 
 Live figures from `bin/pub4 measure`, `rake lint:rule_reach` and `rake lint:rule_audit`
-on 2026-09-09. `data/rules.yml` declares **242** rules, of which 141 carry
-`detect_semantic`, 15 `detect_structural`, **0 `detect_lexical`**, and 86 carry no
+on 2026-09-10. `data/rules.yml` declares **242** rules, of which 141 carry
+`detect_semantic`, 15 `detect_structural`, **0 `detect_lexical`**, and **92** carry no
 detector field and resolve through `law/` or a `folded_into`. `law/` holds 118
 `Law.define` blocks and the registry builds 147. `rule_reach` is 70 of 70: 115 rules
 run without a model, 74 need one, 70 are dropped by the info filter.
 
-**`CLAUDE.md`'s own enumeration snippet cannot run, two ways.** It says 228 rules and
-does `d["rules"].each { |scope, rs| ... }`, but `rules:` is a flat array of 242, so
-the block raises `NoMethodError`; and `YAML.safe_load_file` on that file now raises
-`Psych::AliasesNotEnabled` before the block is reached. Whoever next edits `CLAUDE.md`
-owes it `YAML.unsafe_load_file` and a flat `each`.
+**92, not 86, and the correction is the instrument again.** 86 was `242 - 141 - 15`,
+which assumes the two detector keys are disjoint. Six rules carry both. Count the rules
+that carry neither rather than subtracting the ones that carry either.
 
 Still open, and each is a decision rather than a sweep:
 
-- **Five mechanical transforms are worth writing.** `EN_DASH_RANGE`,
-  `NO_UPDATE_ATTRIBUTE`, `QUOTE_VARIABLES`, `DOUBLE_BRACKET` and
-  `WHITESPACE_PUNCTUATION` are mechanical in principle and unwritten in fact. They are
-  `autofix: false` today, which is honest. **Naming a transform before writing it is
-  how the dangling counter filled up last time**, so write the transform first and
-  then name it.
-- **39 rules fire on nothing in this corpus**, at a ceiling of 39. The header in
-  `rule_ratchets.audit` is right that silence is usually a property of the sample — but
-  `FROZEN_STRING_LITERAL`, `MEANINGFUL_NAMES` and `WHY_NOT_WHAT` are in the list *and*
-  among the 86 rules that carry no detector field at all, which is a different reason
-  for silence and worth separating.
 - **136 registry rules sit outside `rule_deps`**, floor 136 and down only. A rule
   outside the graph is one `RuleOrder` cannot sequence.
-- **`lint:principle_trace` is 81 of 101 untraced, twenty under its recorded low.**
-  Either ratchet it or say why the twenty are not real.
-- **Two learned smells still fail the uniqueness test that deleted five others.**
-  `future_tense` reads 12 where `SIMULATION` reads 3, and all nine extra are lines
-  `SIMULATION` deliberately spares, five of them inside the directory it exempts.
-  `frozen_string` reads 2, both a percent-literal string in a file that already
-  declares `frozen_string_literal: true`, where such a literal is frozen anyway. Both
-  want deleting rather than narrowing, which is **a decision about the learned-smell
-  mechanism** rather than about two detectors.
+
+Closed on 2026-09-10, with the argument, because each was open on a wrong reading:
+
+- **The five mechanical transforms are four impossibilities and one that is not worth
+  it.** `WHITESPACE_PUNCTUATION` is `folded_into: SQUINT_TEST` and has no detector of
+  its own to hang a transform on. `NO_UPDATE_ATTRIBUTE`'s whole subject is that
+  `update_attribute` skips validations and `update!` does not, so a blind rewrite
+  changes behaviour at every call site — deciding whether the record still validates is
+  the work. `QUOTE_VARIABLES` and `DOUBLE_BRACKET` both change word splitting, and
+  OPENBSD carries `/bin/sh` scripts where `[[` does not exist. `EN_DASH_RANGE` is the
+  only value-preserving one, and after its narrowing it has five real subjects in the
+  whole repo, two of them in this file. All five stay `autofix: false`, which is what
+  they already honestly said.
+- **The 39 silent rules are silent for one reason, not two.** `rule_audit` measures
+  `law.values.select(&:scannable?)` — rules that have a detector — so a rule cannot be
+  in that list for want of one. `FROZEN_STRING_LITERAL` is defined in `law/ruby.rb`,
+  `MEANINGFUL_NAMES` and `WHY_NOT_WHAT` in `law/universal.rb`. "No `detect_*` key in
+  `data/rules.yml`" and "no detector" are different claims, and the entry that asked to
+  separate them had conflated them.
+- **`lint:principle_trace` reads 81 of 81.** It is at its ceiling, not twenty under
+  it. The green-gate list in this file had it right and this entry had it wrong.
+- **Two learned smells are gone**, and they failed a second test rather than the
+  uniqueness test. `frozen_string` scored five over `lib/` and `law/` and all five were
+  other rules' worked examples; its premise is wrong besides, since a percent literal
+  in a `frozen_string_literal` file is frozen and `String.new` is how you deliberately
+  ask for a mutable one. `future_tense` scored twelve and not one was a hedge: six were
+  a detector's own text and the rest were refusal messages naming a consequence in
+  correct English. The list is three now, and `data/rules.yml` records both the test
+  they failed and how it differs from the one the earlier four failed.
+- **`rule_hygiene.statement_conflicts` is 0.** `BE_CONCISE`, `PRESERVE_FIRST` and
+  `SIMPLEST_WORKS` resolved the opposite way round from the eleven before them: a
+  `practice` cannot fire on a line, so for those three the detector is the catalogue's
+  and `law/practice.rb` holds the conduct. The practice takes `data/rules.yml`'s `fix`
+  and `severity` verbatim. `SIMPLEST_WORKS`' practice had been about god classes, which
+  is `NO_GOD_CLASS`' subject and has a structural detector, so that clause went rather
+  than being reworded.
 
 ### Rule and AST-detector backlog
 
@@ -434,21 +460,24 @@ Each is its own sitting, with an owner and a design, not a sweep.
   non-Ruby artifacts — documents, stylesheets, and dilla's render graph.
 - **A clone → extract-method autofix.** `DUPLICATE_CODE` detects; nothing extracts.
 
-### `rake test` completes, and one test is red — 2026-09-10
+### `rake test` is green — 2026-09-10
 
 **This section once said `rake test` "cannot complete on a dev Mac at all", aborting
 on `cannot load such file -- rack/test`. That has not been true for some time:
 `rack-test` resolves here (`MASTER/Gemfile:32`, lock 2.2.0) and the task runs to the
 end.** Believing it is why three dead test files went unnoticed once.
 
-    2227 runs, 6774 assertions, 1 failures, 0 errors, 12 skips   (157s)
+    2236 runs, 6789 assertions, 0 failures, 0 errors, 17 skips   (174s)
 
-- `TestRatchets#test_no_ratchet_is_over_its_ceiling` — `spine.lib_body_ceiling`, and
-  the section above says why it stays.
+Measured in a clean worktree with `spine.lib_body_ceiling` sponsored. The last red
+was `TestRatchets#test_no_ratchet_is_over_its_ceiling`, and it went green when the
+ceiling was argued rather than when anything was hidden.
 
 `test_no_ratchet_is_slack` skips rather than fails whenever the measured trees are
 dirty, which in a shared checkout is most of the time; read it in a clean worktree
-before believing it green.
+before believing it green. The skip count moves with host capability too — 12 and 17
+have both been recorded the same week — so a change in it is not by itself evidence
+that something stopped measuring.
 
 **`docs/SEVERANCE.md` does not exist, and both documents that name it now say so.**
 `MASTER/DECISIONS.md:126` records the rename and the deletion, and
@@ -458,8 +487,17 @@ is where to read it. Do not restore `io/lora_pipeline.rb` or `video_chain.rb`; i
 LoRA training loop needs generation capability again, express it as
 `lib/core/world.rb` handlers.
 
-`TODO.md` is not in `test_doc_paths`' `DOCS` list, so nothing checks the paths in this
-file. That is the one half of that gate still open.
+**`TODO.md` is deliberately not in `test_doc_paths`' `DOCS` list, and that half of the
+gate is closed as a decision rather than left open.** It cites 428 repo paths and 34 of
+them name subjects that are gone on purpose — `MASTER/DEBT.md`, `docs/SEVERANCE.md`, the
+deleted `io/lora_pipeline.rb` — because a register that records what was removed has to
+be able to say what it was. A 34-row baseline breaks the week somebody records another
+deletion, which turns this file's own function into a red gate. The argument sits beside
+the list in `test_doc_paths.rb`. `TREE.md` went in instead, at zero missing paths: it is
+the map, and a stale map is exactly what the gate is for. The checker also strips a
+trailing line number now, so `file.rb:165` cites `file.rb` — the commonest citation
+shape in this repo's documents had been falling outside the gate written to check
+citations.
 
 ### One principle has no scanner rule, not three
 
@@ -557,17 +595,19 @@ in `fix/fix_loop/background_runner.rb` — are both reordered.
 worse trade than the marker is worth; if somebody wants the surface narrowed, the
 work is deciding which of the five the test should reach through `run` instead.
 
-The measurable residual is constants: 161 constants in `lib/` have exactly one use 80
-or more lines below their declaration. The worst are
-`MASTER/lib/voice/speech.rb:27-28` (`WORKER_TIMEOUT_PER_CHAR` and
-`WORKER_TIMEOUT_MAX`, used only at `:611`),
-`MASTER/lib/voice/personality_prompt_builder.rb:20` (`CORE_SECTIONS`, used only at
-`:585`), and `MASTER/lib/review/llm_dispatcher.rb:15`, `:18` and `:20`
-(`COST_PER_TOKEN`, `CACHE_WINDOW`, `MS_PER_SECOND`, used at `:374`, `:369` and `:379`
-— though the first two are read again in `llm_dispatcher/ruby_llm_sender.rb:104-114`,
-so "one use" is within-file only). Move each next to its one reader. This is cosmetic
-and safe, and it is what the convention means by constants used only deep inside going
-last.
+**The constants residual was read one by one on 2026-09-10 and declined, and the
+reading is why.** 161 constants in `lib/` have exactly one use 80 or more lines below
+their declaration, and the five this entry named as the worst are each a reason not to
+move them. `llm_dispatcher.rb`'s `COST_PER_TOKEN` and `CACHE_WINDOW` are read again in
+`llm_dispatcher/ruby_llm_sender.rb:104-114`, so "one use" was within-file only and the
+census overcounts by however many constants a sibling file reads. `speech.rb`'s
+`WORKER_TIMEOUT_PER_CHAR` and `WORKER_TIMEOUT_MAX` are a trio with `WORKER_TIMEOUT`,
+which has two readers, and moving two of three splits a triple that shares one
+paragraph of reasoning. `personality_prompt_builder.rb`'s `CORE_SECTIONS` is explained
+by the class header comment eleven lines above it; moving it to `:585` separates the
+constant from the paragraph that says what it is for. **A convention that would make
+three of the five files worse is not being applied to the other 156 on faith.** If
+somebody wants this, the instrument has to count sibling-file readers first.
 
 **The biggest subjects in `lib/`, by `CodeMetrics.body_lines`:**
 `review/scan/rules/surface_rules.rb` 518, `structural_rules.rb` 512,
@@ -585,19 +625,38 @@ wants them split for reading. By directory, counting only the files directly in 
 **`ABC_SIZE` fires three times over its ratchet of 40**, and this is the one figure
 that re-measured exactly: `MASTER/lib/voice/emotion.rb:20` `#analyze` at 74.7,
 `MASTER/lib/cli/session/command_ops.rb:24` `#run_critique` at 42.2, and
-`MASTER/lib/ground/phase_gates.rb:103` `#automatic_gate_met?` at 41.4. The first is
-the only one worth a sitting. `rake constitution` overall is 1,791 findings, 101
-actionable against a budget of 1,500, and passes.
+`MASTER/lib/ground/phase_gates.rb:103` `#automatic_gate_met?` at 41.4. `rake
+constitution` overall is 1,791 findings, 101 actionable against a budget of 1,500, and
+passes.
 
-**`NO_PUTS` fires eleven times, all in `MASTER/lib/pub4/gate_chain.rb`** (`:242`,
-`:250`, `:255` and on), which is a command-line reporter and arguably the rule's
-exemption rather than its subject. Read the rule's statement before acting; nobody has.
+**`emotion.rb#analyze` at 74.7 is the largest and is deliberately not being
+refactored.** Its ABC is arithmetic rather than branching — five weighted sums over the
+signal table — and the shape that would lower it is to move the coefficients into a
+table and fold them. That changes the association order of a float sum, and its outputs
+are `exaggeration`, `cfg_weight` and `warmth`: the controls MASTER's speech is
+synthesised with. A refactor that alters the last bits of those is a change to what
+MASTER sounds like, made by somebody who cannot hear it. It stays until a sitting that
+can A/B the audio.
+
+**`NO_PUTS`' eleven findings are closed**, and the rule exempts
+`MASTER/lib/pub4/gate_chain.rb` by name. The statement is "no bare puts in library
+code" and its exemptions are the paths that print for a living. The file rather than
+its directory: the sibling `status_report.rb` renders a string that `bin/pub4` prints,
+which is the shape the rule asks for and the proof `lib/pub4` should not be exempt
+wholesale. `gate_chain` cannot take that shape — the ladder runs for minutes and the
+report is the progress, so a buffered return delivers the account after the run it was
+meant to narrate.
 
 **`FILE_VAGUE_NAME` and `sprawl.vague_names` measure different things and neither
-number is the other.** `FILE_VAGUE_NAME` has one finding,
-`MASTER/lib/cli/routing/provider_quarantine_manager.rb:1` — "manager" is a category —
-and it never surfaces in `rake constitution` because the rule is `severity: :info`
-(`naming_rules.rb:239-240`) and the info filter drops it. `sprawl.vague_names` is 2 of 2
+number is the other.** `FILE_VAGUE_NAME`'s one finding is closed:
+`provider_quarantine_manager.rb` is `provider_quarantine.rb`, and
+`ProviderQuarantineManager` is `ProviderQuarantine`. "Manager" is a category rather
+than a name, and the class was already named for what it does — it quarantines a
+provider. Renaming it lost nothing, because the accessor in
+`model_router/diagnostics.rb` reads better as `quarantine` than as
+`quarantine_manager`. The rule never surfaces in `rake constitution` because it is
+`severity: :info` (`naming_rules.rb:239-240`) and the info filter drops it, which is
+why one finding sat there for as long as it did. `sprawl.vague_names` is 2 of 2
 and both are Zeitwerk: `MASTER/lib/boot/data.rb` and `MASTER/lib/io/base.rb`, the
 latter named after the constant it defines, so the finding is that the *concept* is
 called `Base` — a design decision and not a rename.
@@ -633,7 +692,7 @@ helper for two callers buys nothing.
 **All sixteen individually-run lint gates are green** — `lint:dedup` (2 known
 cross-file duplicates, 0 new), `lint:reader_singularity` (451 source files, 7 data
 files with more than one reader), `lint:doc_citations`, `lint:instruments`,
-`lint:constant_collisions` (398 requirable of 2,473, 0 collisions), `lint:capability`,
+`lint:constant_collisions` (399 requirable of 2,469, 0 collisions), `lint:capability`,
 `lint:scan_coverage` (414 files), `lint:autoload` (45 ignores, all still necessary),
 `lint:frozen`, `lint:rule_reach`, `lint:models` (412 live, 0 stale ids),
 `lint:principle_trace` (81 of 147 registered rules untraced, ratcheted to 81 on
@@ -726,14 +785,46 @@ attempts before it separated `dilla/dilla.rb`, which reads correctly at a comman
 from `lib/cli/cli.rb`, which held `Master::CLI::CLI`. What tells them apart is whether
 the file declares the name twice.
 
+**`tools/repo_inventory.rb` had been reporting the four trees as sprawl, and nobody
+noticed because nobody could act on it.** Both of its allowlists had gone stale in both
+directions at once: five of seven root files and four of six root directories named
+subjects that do not exist — `MASTER.md`, `index.html`, `OPERATOR/`, `dilla/`,
+`multimedia/`, `sh/` — while `MASTER`, `RAILS`, `OPENBSD`, `STUDIO`, `TODO.md` and
+`TREE.md` were absent, so each was reported as non-canonical. That is the worst state
+an allowlist can reach, and the reason it stayed there is that a report naming the
+repo's own trees as defects is one everybody scrolls past.
+`spec/lifecycle_tools_spec.rb` holds both lists to the tree in both directions now, and
+the tool grew the `$PROGRAM_NAME` guard every other tool here has, so reading its
+constants no longer runs a census.
+
+**Its `new` marker had no true positive either**, which is the same test the two deleted
+learned smells failed. Thirty-four of thirty-five findings were `app/views/**/new.html.erb`
+— a Rails route action, not "the new version of a file" — and the thirty-fifth was
+`new_framework_defaults_8_0.rb`, a name Rails generates. A marker that only ever matches
+a framework convention is measuring the convention.
+
+**What repo_inventory reports now is 60 `low_density_slug` findings and nothing else**,
+and they are a naming campaign rather than a defect list: `lib/boot/data.rb`,
+`lib/io/base.rb`, `lib/cli/session/command_handlers.rb`. Two of those are the same
+`sprawl.vague_names` pair this file already records as a design decision and not a
+rename. Read the list before believing the number.
+
 ### Top-level ROOT
 
-**44 files across the repo define a bare top-level `ROOT`** — 16 in MASTER, 14 in
-OPENBSD, 7 in RAILS, 7 in STUDIO — each pointing at a different tree. In their own
-processes that is harmless, which is why it stands. It stops being harmless the moment
-two of them are loaded together: Ruby warns `already initialized constant ROOT`, lets
-the **second assignment win**, and the loser then reads the wrong tree with no further
-complaint.
+**43 files across the repo define a bare top-level `ROOT`**, each pointing at a
+different tree. In their own processes that is harmless, which is why it stands. It
+stops being harmless the moment two of them are loaded together: Ruby warns
+`already initialized constant ROOT`, lets the **second assignment win**, and the loser
+then reads the wrong tree with no further complaint.
+
+**It cost something again on 2026-09-10, and the cost was one line of warning in a
+green run.** A new spec reading `tools/repo_inventory.rb`'s allowlists loaded the file,
+and its `ROOT` collided with `spec/dogfood_spec.rb`'s — which resolves to `MASTER/`
+where the tool's resolves to the repo root, so whichever loaded second sent the other
+looking in the wrong tree. `rake spec` was green through it. It is `INVENTORY_ROOT`
+now, after `SWEEP_ROOT`. **The pattern to take from this: the collision arrives when
+somebody makes one of these files requirable, and making a script requirable is
+otherwise a pure improvement, so the hazard shows up attached to good news.**
 
 That happened in `rake test`, where `test_security_sweep.rb` requires
 `tools/security_sweep.rb` and `test_dilla.rb` loads `STUDIO/dilla/dilla.rb`. Depending
@@ -957,31 +1048,39 @@ Facts with no home of their own, kept because each was expensive to find.
   and `MESSAGE_CHAIN` each carry `folded_into:` naming the rule that reports for them,
   and `PROSE_OMIT_QUALIFIERS` is generated by `law/prose.rb` from the `prose.en.ids`
   mapping rather than declared.
-- **`learned_smells` declares five entries and its own comment says four.**
-  `data/rules.yml:637` holds `frozen_string`, `magic_number`, `sycophancy`,
-  `future_tense` and `duplicate_code`; the comment at `:712` lists the four that
-  "survive" and omits `frozen_string`, declared 55 lines above it. Prose and data
-  disagree about the size of the list, which is how a duplicate detector stays
-  registered.
+- **`learned_smells` declaring five while its own comment said four is closed, and the
+  disagreement was the finding.** The comment listed the four that "survive" and omitted
+  `frozen_string`, declared fifty-five lines above it. The list is three now —
+  `magic_number`, `sycophancy`, `duplicate_code` — and the comment counts them. **Prose
+  and data disagreeing about the size of a list is how a detector nobody believes in
+  stays registered**, which is exactly what had happened to both of the two deleted.
 
 ### `self_findings`: what our own rules find in our own trees
 
-Two ratchet rows over the same corpus of 3,033 files across eleven trees plus
-`MASTER/web`. `data/self_findings.yml` carries every finding with its file and line, so
-the arrival names itself.
+Two ratchet rows over the same corpus — 3,155 files on 2026-09-10, across eleven trees
+plus `MASTER/web`. `data/self_findings.yml` carries every finding with its file and
+line, so the arrival names itself.
 
-**`self_findings.law` is 279 against 287 and slack by eight**, having been 294 against
-289 the day before. It moves that far in a day because it counts every tree, and the
-bulk of what moves is `STUDIO/dilla`. Lowering the ceiling from a shared checkout
-records a low the committed tree does not hold, so this is dilla's owner's row to
-ratchet on a settled tree. The recorded members are the snapshot at 289:
+The four generated face bundles are excluded once now rather than twice: the exclusion
+lives in `Scan::PathFilter::GENERATED_FACE_BUNDLES` and `tools/self_findings.rb` reads
+it. The two copies agreed only for as long as somebody edited both, and one spelled the
+bundles as strings inside a regex while the other spelled them as paths — a difference
+no test could see.
+
+**`self_findings.law` is 279 against 279 and at its ceiling** — the "slack by eight"
+this entry recorded was a stale number quoted from prose rather than read from
+`bin/pub4 measure`, which is the mistake the header of this section warns about. It
+moves several points in a day because it counts every tree, and the bulk of what moves
+is `STUDIO/dilla`; lowering the ceiling from a shared checkout records a low the
+committed tree does not hold, so it stays dilla's owner's row to ratchet on a settled
+tree. The recorded members are the snapshot at 289:
 `NULLISH_COALESCING` 76, `NO_COLUMN_ALIGN` 42, `GUARD_CLAUSE` 27,
 `NO_MULTIPLE_LANGUAGES` 22, `NO_INLINE_SCRIPT_BLOCK` 21, `I18N_COVERAGE` 18,
 `PROSE_OMIT_QUALIFIERS` 18, `NO_CHANGELOG_COMMENT` 16 and sixteen smaller. **Read the
 member list, not the number.**
 
-**`self_findings.registry` is 55 against 55, and what is left is two
-rules.** `NO_GOD_CLASS` 29 live (32 recorded) and `SILENT_RESCUE` 26. All 26
+**`self_findings.registry` is 53 against 53, and what is left is two
+rules.** `NO_GOD_CLASS` 29 live (32 recorded) and `SILENT_RESCUE` 24. All the
 `SILENT_RESCUE` are under `STUDIO/` and nineteen under `STUDIO/dilla/`, which is the
 operator decision above. `NO_GOD_CLASS` is more than ten public methods or more than
 three hundred code lines, led by `RAILS/brgen/engines/takeaway/app/models/takeaway/order.rb`
@@ -1386,7 +1485,7 @@ re-verified 2026-09-09.
   `NO_DEAD_ENDS`, and `GateResult#measured_nothing?`.
 - *Provider broker, matrix, fallback* — `data/providers.yml`, `ModelRouter` with
   `failover_config`, `provider_availability` and `escalation` under
-  `lib/cli/routing/model_router/`, plus `provider_quarantine_manager`, and
+  `lib/cli/routing/model_router/`, plus `provider_quarantine`, and
   `circuit_breaker_registry` and `quota_gate` under `lib/io/`. The quota gate already
   classifies the failure, parks the tier, carries the skip into the verdict and re-probes
   on backoff.

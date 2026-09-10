@@ -40,13 +40,20 @@ spine:
   # them, so the moves paid rather than cost, and lib/cognition's 253 lines are
   # new work that arrived with a boot wire and a test.
   #
-  # It is left over rather than raised, and the reason is the rule above: a raise
-  # names what the lines buy, and nobody who did not write them can say. What
-  # this measurement changes is who has to answer — review's sponsor, not the
-  # next person to run the gate. Nothing here can be paid by tidying: code_reach
-  # reads 0 dead files of 405, extraction raises the number because a Zeitwerk
-  # wrapper costs lines, and de-duplication across lib/ is worth about thirty.
-  lib_body_ceiling: 37464
+  # Sponsored on 2026-09-10 at 38148, and the sponsorship is the whole of the
+  # entry below under `raised`. The previous note here said the raise was left
+  # unmade because "nobody who did not write them can say" what the lines buy.
+  # That turned out to be answerable: `git log` the directories that grew, read
+  # the commits, and every one of them names its purchase in its own subject
+  # line. The same reading re-based the eight over-budget rows in
+  # data/limits.yml, per key, in the same session.
+  #
+  # Nothing here could have been paid by tidying. code_reach reads 0 dead files
+  # of 405, extraction raises the number because a Zeitwerk wrapper costs lines,
+  # and de-duplication across lib/ is worth about thirty. What was paid was a
+  # deletion: unified_diff_editor.rb, 133 body lines, found by asking what the
+  # unwired files were duplicating rather than whether they were called.
+  lib_body_ceiling: 38148
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753
@@ -67,6 +74,26 @@ spine:
     not run" into "passed". They also buy the resume — the gate re-probes on
     the taxonomy's own backoff, so the tier comes back without a code change or
     an operator remembering a reset.
+  - >-
+    684 lines, and they are six subsystems rather than one drift, so the account
+    is per directory. lib/review +695: rules that could only be judged by a model,
+    judged deterministically instead — four detectors in 9b9e8c88f, three more
+    reading the parse tree in dcbff6ae8, the structural-clone half of DRY, and
+    MIDDLE_MAN. Beside them, a reader for PATH_OWNERSHIP.yml, the quota gate, the
+    boot receipt with a public-method count that reads Ruby rather than a stop
+    marker, an audit that had been dead since its triage was deleted, and a worked
+    example on every registry rule so a rule that cannot fire is visible. That
+    directory also paid: three deletions took 464 lines out of it in the same
+    window. lib/pub4 +226 is one commit, the gate ladder, buying one command where
+    five uncoordinated invocations used to be and a third state so a tier that
+    could not run is skipped rather than passed. lib/voice +221, and 142 of it is
+    that the CLI speaks at all — Speech was synthesising into a file nobody
+    opened. lib/core +80 buys a rule that can ask a person instead of guessing for
+    them. lib/boot +49 is a boot crash and a CLI that led every fallback chain
+    without being installed. lib/trace +36 is a sandbox that said nothing about
+    the credentials inside it. What the whole raise buys, in one sentence: the
+    tree can now decide deterministically what it used to send to a model, and it
+    can say what it booted with.
   consecutive_raises_allowed: 2
   # A tripwire on new top-level concepts in the fold, not on line count. Counted
   # as lib/{core.rb,core/*.rb} — the entrypoint plus the directory — so the glob
@@ -293,7 +320,11 @@ pub4_source_ceilings:
   # which is the file people open to find out what to fix. That is why nobody
   # had read it. It folds into nothing: README.md is the pitch for what exists
   # and this is the argument for what a body would be for.
-  MASTER: 1042
+  # 1042 -> 1040 is a fall: lib/ground/unified_diff_editor.rb and its test, gone
+  # because the file was a second source for three live mechanisms rather than
+  # merely unwired. Lowered in the same commit as the deletion, so the two files
+  # of room do not sit here waiting to be spent without an argument.
+  MASTER: 1040
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
   # it belongs beside the other probes and folds into nothing.

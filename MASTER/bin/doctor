@@ -166,6 +166,10 @@ begin
   require "review/scan/rule_dsl"
   puts
   puts Master::Ground::BootReceipt.lines
+  # The receipt says what booted; the scorecard says what has been proven, and
+  # when. Beside each other because a capability the receipt reports present
+  # and the scorecard has not seen exercised in a month is two different facts.
+  puts Master::Ground::MaturityScorecard.load.summary_line
 rescue StandardError => e
   puts "receipt: unavailable — #{e.class}: #{e.message.lines.first.to_s.strip}"
 end

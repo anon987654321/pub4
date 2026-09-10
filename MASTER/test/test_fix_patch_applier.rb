@@ -81,6 +81,34 @@ class PatchApplierTest < Minitest::Test
     assert_operator result.reason.length, :<=, 200
   end
 
+  # patch(1) applies the first file's hunks to the one source it was given,
+  # then asks "File to patch:" for the second and reads the answer off the diff
+  # on stdin, leaving a .rej in the working directory. The refusal has to come
+  # before the shell, and the source must be untouched after it.
+  def test_rejects_a_diff_naming_more_than_one_file
+    two_files = <<~DIFF
+      --- a/one.rb
+      +++ b/one.rb
+      @@ -1,3 +1,3 @@
+       line one
+      -line two
+      +line TWO
+       line three
+      --- a/two.rb
+      +++ b/two.rb
+      @@ -1,3 +1,3 @@
+       line one
+      -line two
+      +line THREE
+       line three
+    DIFF
+
+    result = Applier.apply(ORIGINAL, two_files)
+
+    assert_instance_of Applier::Failure, result
+    assert_match(/more than one file/, result.reason)
+  end
+
   def test_the_diff_threshold_is_declared
     assert_equal 8_192, Applier::DIFF_THRESHOLD
   end

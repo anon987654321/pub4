@@ -22,7 +22,7 @@ class TestProviderQuarantineWiring < Minitest::Test
   end
 
   def manager(score, path)
-    Routing::ProviderQuarantineManager.new(health: StubHealth.new(score), path:)
+    Routing::ProviderQuarantine.new(health: StubHealth.new(score), path:)
   end
 
   # `quarantine` had exactly one caller — record_and_assess — and
@@ -57,7 +57,7 @@ class TestProviderQuarantineWiring < Minitest::Test
   def test_the_outcome_still_reaches_health
     Dir.mktmpdir("quarantine") do |dir|
       health = StubHealth.new(0.9)
-      subject = Routing::ProviderQuarantineManager.new(health:, path: File.join(dir, "q.ndjson"))
+      subject = Routing::ProviderQuarantine.new(health:, path: File.join(dir, "q.ndjson"))
       subject.record_and_assess(model: "m", status: :ok, latency_ms: 12)
 
       assert_equal 1, health.recorded.size

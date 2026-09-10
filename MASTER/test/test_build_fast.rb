@@ -24,6 +24,17 @@ class TestBuildFast < Minitest::Test
     end
   end
 
+  # The evidence contract reaches the render stage off the container. TurnRouter
+  # reads container[:output_guard] and skips the check when it is nil, so a wire
+  # that quietly went missing would read exactly like a tree with nothing to
+  # report -- which is what the guard was for its whole life before this.
+  def test_build_fast_carries_both_output_gates
+    container = Master::Builder.build_fast(root: Master::ROOT)
+
+    assert container[:output_check], "no OutputCheck in the container"
+    assert_instance_of Master::Voice::OutputGuard, container[:output_guard]
+  end
+
   def test_fast_pipeline_is_turn_adapter
     container = Master::Builder.build_fast(root: Master::ROOT)
     assert_instance_of Master::CLI::Pipeline::Turn, container[:pipeline]

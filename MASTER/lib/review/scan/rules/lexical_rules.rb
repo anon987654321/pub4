@@ -28,7 +28,15 @@ module Master
     # subject moves out from under it is a gate that starts firing on exactly
     # what it exempted: when lib/now/ became lib/cli/ and this address stayed,
     # 105 findings arrived in selfcheck's largest actionable bucket overnight.
-    next [] if path.to_s.match?(%r{/exe/|/spec/|/bin/|/cli/session})
+    # pub4/gate_chain.rb is the eleventh and last exemption, and it is the one
+    # file rather than its directory: lib/pub4 is the operator surface's
+    # library, and its sibling status_report.rb renders a string that bin/pub4
+    # prints, which is the shape this rule asks for. gate_chain cannot take it.
+    # The ladder runs for many minutes and the report is the progress -- which
+    # stage is running, and which files it changed under that stage's name --
+    # so a buffered return would deliver the whole account after the run it was
+    # meant to narrate.
+    next [] if path.to_s.match?(%r{/exe/|/spec/|/bin/|/cli/session|/pub4/gate_chain\.rb\z})
     scan_lines(src, /^\s*puts\b(?!\s*\()/, message: "bare puts — use event bus or logger")
   end
 

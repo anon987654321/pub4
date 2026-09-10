@@ -7,6 +7,11 @@ class TestOutputGuard < Minitest::Test
     @guard = Master::Voice::OutputGuard.new
   end
 
+  def issues(text, context: :routine)
+    result = @guard.validate(text, context:)
+    result.ok? ? [] : result.message.split("; ")
+  end
+
   def test_preserves_multi_line_diagnostic_output
     text = "scan: lib/foo.rb 2 violation(s)\nscan: lib/bar.rb 0 violation(s)"
     result = @guard.validate(text, context: :diagnostic)
@@ -55,6 +60,28 @@ class TestOutputGuard < Minitest::Test
 
     refute result.ok?
     assert_match(/help output/, result.message)
+  end
+
+  # Ground::Tool::Protocol's third requirement. The pair matters: the fence on
+  # its own is a code sample, and the past-tense claim on its own is covered by
+  # the completion check.
+  def test_rejects_a_shell_block_offered_as_execution
+    result = @guard.validate("I ran the suite.\n```sh\nrake test\n```", context: :routine)
+
+    refute result.ok?
+    assert_match(/shell block presented as execution/, result.message)
+  end
+
+  def test_accepts_a_shell_block_with_a_real_transcript
+    text = "I ran the suite.\n```sh\n$ rake test\n2227 runs, 0 failures\n```"
+
+    refute_includes issues(text), "shell block presented as execution"
+  end
+
+  def test_accepts_a_shell_block_offered_for_the_operator_to_run
+    text = "Run this yourself:\n```sh\nrake test\n```"
+
+    refute_includes issues(text), "shell block presented as execution"
   end
 
   def test_rejects_minimize_applied_to_diagnostics

@@ -23,7 +23,7 @@ module Master
             end.sort_by { |x| -x[:total] }
           end
 
-          # Through the quarantine manager, not past it.
+          # Through ProviderQuarantine, not past it.
           #
           # This called @provider_health.record directly, and record_and_assess
           # was the only caller of `quarantine` anywhere — so nothing ever wrote
@@ -32,14 +32,14 @@ module Master
           # it, so the quarantine has been decorative since it was written: a
           # provider could fail every call and stay in the pool.
           #
-          # Assessment is what the manager adds over ProviderHealth — record the
+          # Assessment is what ProviderQuarantine adds over ProviderHealth — record the
           # outcome, then park the provider when its score falls to the
           # threshold. Stranding is not a risk: provider_pool falls back to the
           # full candidate list when every one is quarantined.
           def record_provider_outcome(model:, status:, latency_ms: nil, error: nil)
             return unless @provider_health
 
-            quarantine_manager.record_and_assess(model:, status:, latency_ms:, error:)
+            quarantine.record_and_assess(model:, status:, latency_ms:, error:)
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "Diagnostics.record_provider_outcome")
             nil
@@ -47,8 +47,8 @@ module Master
 
           # Wrapping the router's own health object rather than a second one, so
           # the score that triggers a quarantine is the score the router routes on.
-          def quarantine_manager
-            @quarantine_manager ||= ProviderQuarantineManager.new(health: @provider_health)
+          def quarantine
+            @quarantine ||= ProviderQuarantine.new(health: @provider_health)
           end
 
           def runtime_choice(task: :exploration)

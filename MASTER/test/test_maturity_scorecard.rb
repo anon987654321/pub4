@@ -27,7 +27,33 @@ class TestMaturityScorecard < Minitest::Test
       card = Master::Ground::MaturityScorecard.load(root:)
 
       assert_equal 2, card.subsystems.size
-      assert_equal "maturity: 2 subsystems tracked (verified=1 smoke=1 broken=0)", card.summary_line
+      assert_equal "maturity: 2 subsystems tracked (verified=1 smoke=1 broken=0), 0 unchecked for over 30 days",
+                   card.summary_line(today: Date.new(2026, 1, 20))
+    end
+  end
+
+  # Both directions, and the boundary named rather than a date well past it:
+  # the shelf life is what makes `verified` mean something, so the day it
+  # expires is the assertion.
+  def test_evidence_older_than_the_shelf_life_reads_stale
+    Dir.mktmpdir do |root|
+      write_fixture(root)
+      card = Master::Ground::MaturityScorecard.load(root:)
+
+      assert_empty card.stale(today: Date.new(2026, 1, 31))
+      assert_equal %w[thing_one], card.stale(today: Date.new(2026, 2, 1)).map(&:id)
+      assert_equal %w[thing_one thing_two], card.stale(today: Date.new(2026, 3, 1)).map(&:id)
+    end
+  end
+
+  def test_an_unparseable_date_reads_stale_rather_than_fresh
+    Dir.mktmpdir do |root|
+      FileUtils.mkdir_p(File.join(root, "data"))
+      File.write(File.join(root, "data", "maturity.yml"),
+                 FIXTURE.sub("'2026-01-01'", "soon"))
+      card = Master::Ground::MaturityScorecard.load(root:)
+
+      assert_includes card.stale(today: Date.new(2026, 1, 2)).map(&:id), "thing_one"
     end
   end
 

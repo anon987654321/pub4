@@ -7,13 +7,13 @@ require "time"
 module Master
   module CLI
     module Routing
-    # ProviderQuarantineManager — extends ProviderHealth with automatic quarantine
-    # and recovery. Issue #396 item 9: "repair daemon and provider quarantine manager".
+    # ProviderQuarantine — extends ProviderHealth with automatic quarantine
+    # and recovery.
     #
     # Quarantine removes a provider from routing until its quarantine
     # expires or an operator clears it. We append all decisions to NDJSON so
     # the quarantine state is replayable from the event log.
-      class ProviderQuarantineManager
+      class ProviderQuarantine
         QUARANTINE_PATH = File.join(Master::ROOT, "runtime", "telemetry", "quarantine.ndjson").freeze
         # 5 minutes initial quarantine
         DEFAULT_DURATION = 300
@@ -36,7 +36,7 @@ module Master
           return false unless entry
           Time.parse(entry["expires_at"]) > @now.call
         rescue ArgumentError => e
-          Master::Ground::Swallow.log(e, context: "ProviderQuarantineManager.quarantined?")
+          Master::Ground::Swallow.log(e, context: "ProviderQuarantine.quarantined?")
           false
         end
 
@@ -97,7 +97,7 @@ module Master
             next if line.strip.empty?
             JSON.parse(line)
           rescue JSON::ParserError => e
-            Master::Ground::Swallow.log(e, context: "ProviderQuarantineManager.all_entries")
+            Master::Ground::Swallow.log(e, context: "ProviderQuarantine.all_entries")
             nil
           end
         end

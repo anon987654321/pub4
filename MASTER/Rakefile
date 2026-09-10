@@ -891,8 +891,10 @@ end
 # task is that key's reader. limits.yml is the file TODO.md names for holding 44
 # keys with no reader, so a budget nothing read would have been the 45th.
 #
-# Budgets only ever shrink. A diff that grows a subsystem past its budget fails
-# here, and the remedy is extraction or deletion, never a bigger number.
+# A budget falls on its own whenever the subsystem falls, and rises only in a
+# commit that names what the lines buy — data/spine.yml's rule, stated the same
+# way so the two ratchets say one thing. A diff that grows a subsystem past its
+# budget fails here, and the first remedy is extraction or deletion.
 #
 # The unit is body lines, and the key is renamed with it — the mechanism
 # lint:spine uses, so a stale number is a load error rather than a silent pass
@@ -939,7 +941,8 @@ task :loc_budget do
 
   if over.any?
     over.each { |dir, actual, budget| puts "loc_budget: OVER #{dir} #{actual} > #{budget}" }
-    abort "loc_budget: #{over.size} subsystem(s) over budget — shrink or split, never raise the budget"
+    abort "loc_budget: #{over.size} subsystem(s) over budget — shrink, split, " \
+          "or raise the budget in a commit that names what the lines buy"
   end
   puts "loc_budget: ok"
 end

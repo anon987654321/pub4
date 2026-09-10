@@ -2,11 +2,11 @@
 
 module Master
   module Io
-  # Collapses ProviderRegistry, ProviderHealth, and ProviderQuarantineManager into one call site (#396 item 2).
+  # Collapses ProviderRegistry, ProviderHealth, and ProviderQuarantine into one call site (#396 item 2).
     class RuntimeRegistry
       def initialize(
         health: CLI::Routing::ProviderHealth.new,
-        quarantine: CLI::Routing::ProviderQuarantineManager.new,
+        quarantine: CLI::Routing::ProviderQuarantine.new,
         event_bus: nil
       )
         @health = health
