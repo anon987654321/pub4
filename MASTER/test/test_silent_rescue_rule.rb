@@ -153,4 +153,33 @@ end
   refute_empty Master::Review::Scan::Rules::SilentRescue.scan(src, narrow: false)
 end
 
+# --- MODIFIER_SILENT_RESCUE: the shape the other two cannot see -------------
+#
+# SilentRescue reads a line that starts with `rescue`, so both rules above are
+# blind to the modifier form by construction. These four are the pair the
+# gate doctrine asks for: the shape it must flag and the shapes it must not.
+
+def modifier_rule
+  Master::Review::Scan::Rule.registry.find { |k| k.new.id == "MODIFIER_SILENT_RESCUE" }&.new
+end
+
+def test_modifier_rescue_binding_nil_is_flagged
+  findings = modifier_rule.check("value = parse(raw) rescue nil\n", path: "x.rb")
+  refute_empty findings
+  assert_equal :warning, findings.first[:severity]
+end
+
+def test_modifier_rescue_on_a_bare_call_is_not_flagged
+  assert_empty modifier_rule.check("File.delete(path) rescue nil\n", path: "x.rb"),
+               "a best-effort side effect whose value nobody reads is the idempotence, not a swallow"
+end
+
+def test_modifier_rescue_binding_a_meaningful_value_is_not_flagged
+  assert_empty modifier_rule.check("value = parse(raw) rescue default_for(raw)\n", path: "x.rb")
+end
+
+def test_a_comparison_is_not_a_binding
+  assert_empty modifier_rule.check("puts \"a == b rescue nil\"\n", path: "x.rb")
+end
+
 end

@@ -17499,6 +17499,11 @@ def stream_iterate_acceptable?(path)
   beauty = DillaHarmony.score_beauty(DillaHarmony.last_progression_chords)
   spectrum = render_spectrum(path)
   harsh = DillaMaster.analyze_harshness(spectrum)
+  # 65 here, 68 under DILLA_STREAMING and 70 in render_quality_acceptable?, and
+  # the three are a ladder rather than a disagreement: this gate decides whether
+  # to stop iterating, the other decides whether a take is worth keeping, and
+  # asking less of an iteration than of a keeper is the point. RENDER_BEAUTY_MIN
+  # overrides both rungs at once, so pinning it flattens the ladder deliberately.
   min = (ENV["RENDER_BEAUTY_MIN"] || "65").to_f
   ok = beauty >= min && !harsh[:needs_notch]
   if ok && phone_preview_gate_enabled?
@@ -17943,9 +17948,19 @@ def stream_iterate_evolve_harmony!
   ENV["VOICING"] = voicing.to_s
   notes << "voicing=#{voicing}"
 
-  w = (ENV["EVOLVE_HARMONY_W"] || "0.18").to_f
-  ENV["EVOLVE_HARMONY_W"] = (w + rng.rand(-0.04..0.06)).clamp(0.08, 0.35).round(3).to_s
-  notes << "harm_w=#{ENV['EVOLVE_HARMONY_W']}"
+  # A pinned weight survives the walk, the rule style_env_write! applies to every
+  # defaults table. This loop wrote the key unconditionally, so an operator who
+  # set EVOLVE_HARMONY_W lost it after one iteration and the documented variable
+  # was advisory — the same defect the four style loops carried. Comparing ENV
+  # against the pin rather than testing the key alone is what makes it hold for
+  # every later iteration; an unpinned stream still walks exactly as before.
+  if USER_PINNED_ENV["EVOLVE_HARMONY_W"] && ENV["EVOLVE_HARMONY_W"] == USER_PINNED_ENV["EVOLVE_HARMONY_W"]
+    notes << "harm_w=#{ENV['EVOLVE_HARMONY_W']} (user-pinned)"
+  else
+    w = (ENV["EVOLVE_HARMONY_W"] || "0.18").to_f
+    ENV["EVOLVE_HARMONY_W"] = (w + rng.rand(-0.04..0.06)).clamp(0.08, 0.35).round(3).to_s
+    notes << "harm_w=#{ENV['EVOLVE_HARMONY_W']}"
+  end
 
   notes
 end
@@ -18638,6 +18653,9 @@ def render_quality_acceptable?(path)
   spectrum = render_spectrum(path)
   harsh = DillaMaster.analyze_harshness(spectrum)
   sk = DillaMaster.sub_kick_balance(spectrum, beauty)
+  # The keeper rung of the ladder stream_iterate_acceptable? opens at 65: a
+  # streamed take has to clear 68 and a rendered one 70. RENDER_BEAUTY_MIN
+  # overrides every rung, which is why the two literals are not a conflict.
   min_beauty = if ENV["DILLA_STREAMING"] == "1"
                  STREAM_BEAUTY_MIN
                else
@@ -26079,6 +26097,13 @@ def render_harmonic_wav(path, pad_events, chop_events, bass_events, duration, me
   # One clean melodic lead by default — scale/creative layers turned the top line into soup.
   scale_on = !leads_muted && lead_arp_enabled? && ENV.fetch("SCALE_LEAD", "0") != "0"
   creative_on = !leads_muted && lead_arp_enabled? && ENV.fetch("CREATIVE_LEAD", "0") != "0"
+  # SCALE_LEAD schedules nothing on its own: lead_events_scale_arp returns []
+  # under no_arp?, and NO_ARP defaults to on. Setting the switch and hearing no
+  # difference reads as a broken lane, so the switch says what it still needs
+  # rather than answering silently. Implying NO_ARP=0 here would change what a
+  # render sounds like for everyone who has ever set SCALE_LEAD, which is the
+  # operator's call and not this line's.
+  warn "SCALE_LEAD=1 schedules nothing while NO_ARP is on — set NO_ARP=0 to hear it" if scale_on && no_arp?
   scale_events = scale_on ? lead_events_scale_arp(pad_events, cfg, duration:, n_bars: n_bars_est) : []
   lead_arp_cfg = lead_arp_cfg_for(@render_lead_patch)
   # The counter-line replaces the arp rather than joining it. Two top lines at

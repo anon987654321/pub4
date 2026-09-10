@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-# Exact-duplicate census over every tracked file. The lightgallery defect —
+# Exact-duplicate census over every tracked file outside STUDIO, whose two
+# permanent sets are explained at the exclusion. The lightgallery defect —
 # one file vendored twice, diverging silently, amber shipping 404 icons for
 # months — is a CLASS, and the 2026-08-22 sitting found 65 sets of it worth
 # 546KB. This counts what remains after the provable collapses so the next
@@ -26,6 +27,13 @@ module Pub4
     module_function
 
     def sets
+      # STUDIO is excluded, and what the exclusion hides is two sets worth 13.2
+      # KB, both correct by construction. `lora/<subject>/lora` is byte-identical
+      # per subject on purpose — it derives the subject from its own directory
+      # and hands over to the shared toolkit, so johann's and ragnhild's must
+      # match. `project/learnings/last_learn.json` is a copy of the newest
+      # learning file under a stable name. Neither is a shadow copy, and a
+      # census reporting two permanent sets teaches people to skim it.
       files = check_corpus!(`git -C #{ROOT} ls-files -z`.split("\0"))
               .reject { |f| f.start_with?("STUDIO/") }
       by = Hash.new { |h, k| h[k] = [] }

@@ -95,7 +95,7 @@ drum chops, `GROOVE_DNA=cosmogramma`, quartal voicing, dub_chamber chain.
 | `DILLA_FS_DRY` | Fluidsynth with its own chorus/reverb off — **off** by default; costs 12.6 dB of pad side-channel |
 | `THEORY_RUNTIME` / `THEORY_DILLA` / `THEORY_BACH` | Voicing operators |
 | `PAD_VOICE` / `PAD_VOL` / `PAD_LAYERS` | Pad bed |
-| `LEAD_ARP` / `HARMONY_LEAD` / `SCALE_LEAD` | Lead layers |
+| `LEAD_ARP` / `HARMONY_LEAD` / `SCALE_LEAD` | Lead layers — `SCALE_LEAD=1` needs `NO_ARP=0` beside it, and says so on stderr when it does not have it |
 | `RAP_VOCAL` | Vocal slug or `0` |
 | `SONITEX` / `ANALOG_CHAIN` | Master character |
 | `STREAM_NORMALIZE` / `STREAM_LUFS` | Loudnorm target |

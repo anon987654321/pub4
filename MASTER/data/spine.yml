@@ -65,7 +65,7 @@ spine:
   # avg_latency_ms 0, avg_diff_lines 0 and rollback_rate 0.0 on every run of a
   # runtime doing all three. The thresholds and the sampling window went with
   # them; they existed to judge those counters.
-  lib_body_ceiling: 38120
+  lib_body_ceiling: 38118
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753

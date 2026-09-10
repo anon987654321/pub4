@@ -35,6 +35,21 @@ class TestSandboxPolicy < Minitest::Test
     assert decision.ask?
     assert_equal "unknown command risk", decision.reason
   end
+
+  # The shapes this gate must flag: on OpenBSD the escalation is doas, and dev's
+  # rule is nopass. The shapes it must not: a word that merely starts with those
+  # letters, and dilla's su_tunnel, which the engine names on every render.
+  def test_privilege_escalation_is_denied_in_every_spelling
+    ["doas rcctl restart brgen", "doas -u root id", "su", "su -", "cd /tmp; su root"].each do |cmd|
+      assert POLICY.decide(cmd).deny?, "#{cmd} must be denied"
+    end
+  end
+
+  def test_a_word_beginning_with_su_is_not_an_escalation
+    ["ruby dilla.rb su_tunnel", "git status --summary", "ls subdir"].each do |cmd|
+      refute POLICY.decide(cmd).deny?, "#{cmd} must not be denied"
+    end
+  end
 end
 
 class TestHomeostatHealth < Minitest::Test

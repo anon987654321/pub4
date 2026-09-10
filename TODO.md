@@ -3274,43 +3274,37 @@ ends cross-app sign-in, and `Shared::SsoToken` is consume-only in this tree.
 Re-verified 2026-09-10 against the box, read-only. brgen, amber and bsdports all
 answer 200 on `/up`, and master answers on 53187.
 
-#### 1. Ten files on the box are not the files in this repository, and one OPERATOR.sh run closes every one
+#### The box is not this repository, and one OPERATOR.sh run closes every difference
 
-Re-measured 2026-09-10 with `SSH_HOST=dev@brgen.no ruby
-OPENBSD/config_drift_gate.rb --remote`, which is now the way to ask. It is not
-two files, which is what this row said until today. Eight differ —
-`etc/doas.conf`, `etc/newsyslog.conf`, `etc/rc.d/master`,
-`usr/local/bin/config-drift-check`, `drain-jobs.sh`, `prune-guests.sh`,
-`relayd-watchdog` and `uptime-check.sh`, the last of those 914 bytes live against
-2,877 in the repo — and two are absent from the box altogether:
-`emergency_cpu.sh`, which is the only thing `resource_guard.sh`'s crisis tier can
-run, and `vps_weekly_integrity.sh`. In every case the repo is the newer side, so
-there is nothing to copy back.
+`SSH_HOST=dev@brgen.no ruby OPENBSD/config_drift_gate.rb --remote` is the way to
+ask, and it is the only form of this row that cannot go stale. The enumeration
+that used to sit here named eight files and was wrong within a day: re-run
+2026-09-10, ten differ, `etc/rc.d/master` has since come into line, and
+`core-reclaim.sh`, `resource_guard.sh` and `config_drift_gate.rb` have joined.
+Read the gate, not this paragraph.
+
+Two facts the gate reports that a re-run will not explain. Two targets are absent
+from the box altogether rather than merely different: `emergency_cpu.sh`, which
+is the only thing `resource_guard.sh`'s crisis tier can run, and
+`vps_weekly_integrity.sh`. And in every case the repo is the newer side, so there
+is nothing to copy back.
 
 Root's crontab is the eleventh and it hid the longest. `crontab.vm23:97`
 schedules `/usr/local/bin/vps_weekly_integrity.sh`, `OPERATOR.sh:311` installs
 it, and the box has neither the line, nor the file, nor `/var/log/pub4/` for it
-to write into — so the weekly integrity pass has never run once, while every
-`/etc` file the drift gate compared matched and it said clean. The gate now
-compares the crontab too, as a set of commands rather than bytes (OPERATOR.sh
-merges the pub4 lines onto OpenBSD's own, so a byte compare would always fail),
-scoped to `/usr/local` so the four base-system lines are not four permanent false
-alarms. `test/test_config_drift_gate.rb` carries the shape it must flag and the
-shape it must not.
-
-The script itself was wrong in two ways and is fixed, so the OPERATOR.sh run
-installs something worth running. It ran entirely as root out of root's crontab
-and its first act was to source `lib/ci_lock.sh` from the dev-writable checkout
-and then run two Ruby programs from it — the escalation `OPERATOR.sh:316` refuses
-for `config_drift_gate.rb` and `crontab.vm23:42` refuses for `uptime-check`; root
-now makes the log directory, opens the log and drops to dev, and reads not a line
-of `/home/dev/pub4` as root. And a bare `set -e` meant a failing integrity gate
-ended the run before the public health pass, on exactly the week something was
-already wrong, with the output redirected so cron had nothing to mail; both gates
-now run and the exit status carries the result.
+to write into — re-checked over ssh 2026-09-10, all three still absent — so the
+weekly integrity pass has never run once, while every `/etc` file the drift gate
+compared matched and it said clean. The gate now compares the crontab too, as a
+set of commands rather than bytes (OPERATOR.sh merges the pub4 lines onto
+OpenBSD's own, so a byte compare would always fail), scoped to `/usr/local` so
+the four base-system lines are not four permanent false alarms.
+`test/test_config_drift_gate.rb` carries the shape it must flag and the shape it
+must not.
 
 Nothing here can install any of it. `MASTER/bin/pub4 vps deploy` does not do it
-either — this is `doas zsh OPENBSD/OPERATOR.sh` on the box.
+either — this is `doas zsh OPENBSD/OPERATOR.sh` on the box, and it is the whole
+of what this row still wants. The two repairs the script itself needed are
+committed and `git log` holds them.
 
 #### Not worth chasing
 
@@ -3510,6 +3504,14 @@ Folding the 44 into fewer files is undone, and 14 of them use `__dir__` or
 three tests during the first fold, and the reason to do the second one
 deliberately rather than as a tail-end.
 
+A second entry used to sit under "From the 2026-08-31 session" telling the next
+session to split the monolith along its seams, and the two could not both be
+followed. It is gone, and this is the resolution: the direction is out of the
+monolith, but every destination is a file under `lib/` and
+`DILLA_SUPPORT_CEILING` leaves no room for one. A split therefore starts by
+moving support code together, not by moving engine parts out, and until somebody
+does that the honest answer is that the monolith stays.
+
 `dilla parts` is the index the engine's map never had: every `# engine part:`
 marker with the line it starts at and how many it holds, `dilla parts <needle>`
 to filter, generated so it cannot go stale. Its test catches the two ways the
@@ -3566,58 +3568,16 @@ positional argument, while the site that decides every render reads `ENV["BPM"] 
 DEFAULT_BPM` and is 86, which no scan of literals can see. Opaque sites are
 counted and printed now, so an incomplete list says it is incomplete.
 
-What is left is one live taste and two real bugs, all three mix values and
-therefore the owner's:
-
-- **`RENDER_BEAUTY_MIN` is two floors on two gates.** `stream_iterate_acceptable?`
-  takes 65, `render_quality_acceptable?` takes 70, and under `DILLA_STREAMING`
-  the second one takes `STREAM_BEAUTY_MIN`, which is 68. Three numbers, all live,
-  and choosing among them is choosing a sound.
-- **The `HARM_VOL` bump is a pass behind itself.**
-  `composition_engine.rb`'s listening loop raises harmonic gain when the render
-  is too quiet: `ENV["HARM_VOL"] = (ENV["HARM_VOL"] || "2.4").to_f + 0.05`. On a
-  run where nobody set `HARM_VOL`, 2.4 plus 0.05 is exactly the 2.45 the engine
-  already defaults to, so the first correction changes nothing and a three-pass
-  loop gets two effective bumps. Raising the base to 2.45 is the fix and it is a
-  mix value.
-- **The stream's harmony walk destroys a pinned `EVOLVE_HARMONY_W`.**
-  `stream_iterate_evolve_harmony!` writes `ENV["EVOLVE_HARMONY_W"]`
-  unconditionally, so a value the operator pinned is gone after one iteration.
-  That is the shape `USER_PINNED_ENV` exists for and which the `BPM` code already
-  checks; honouring the pin changes what a stream renders for whoever pinned it.
-
-### Rescues that lose a measurement, and the rule that cannot see them
-
-`SILENT_RESCUE` (`MASTER/lib/review/scan/rules/lexical_rules.rb`) reads lines that
-begin with `rescue`, so a modifier `rescue` and a `rescue` whose whole body is
-`next` are counted by nothing. Extending the rule to both forms is a MASTER
-change, not a STUDIO one, and it is the half still open.
-
-The three that lost something real are fixed and none of them changed a render on
-the path where nothing raises. `cross_sample_convolve!` measured the source and
-the convolved bed behind `rescue nil`, so a failed measurement left `trim` at 0.0
-and the `dmesg` beneath printing "matched dB → dB" with both numbers gone; the
-rescue stays, an unmatched bed being better than no bed, but it names which
-measurement would not take, and the matched and unmatched lines are now two
-different sentences. `bin/sine_stream_player.rb` swallowed a failed archive move,
-which made the same take play forever because the loop picks the first file in
-the queue each turn. `live/recall.rb` dropped an unparseable journal row in
-silence, which is how a pass that happened gets reported as "no seeded passes
-yet". The five loop-control ones — `lib/music_gems.rb:200`,
-`lib/harmony_engine.rb:362`, `bin/demo_full.rb:42`, `bin/sine_stream.rb:1830` and
-`lora/_toolkit/run_train_kaggle.rb:144` — each skip a member of a loop and are the
-least alarming shape.
-
-**Narrowing a blanket rescue is still the owner's**, and it is now the only half
-left: the three clauses that named a class already covered by `StandardError`
-(`lib/master_heuristics.rb`, `lib/music_gems.rb`, `lib/verify_fx.rb`) are down to
-`StandardError` alone, which the `music_gems` one also needed for a second reason
-— resolving `::Coltrane::ChordNotFoundError` while handling an exception raises a
-NameError of its own where the gem is absent. `lib/seed_providers.rb` now says
-when a USGS or open-meteo fetch fails, so an operator who asked for a seeded swing
-can tell whether they got one. The remaining discards are optional gem probes,
-external binaries whose output is parsed, optional state files and process
-teardown, and they are correct as they stand.
+Of the three that survived, two are closed and one is the owner's ear. The
+`RENDER_BEAUTY_MIN` "conflict" was a ladder read as a disagreement — 65 to keep
+iterating, 68 to keep a streamed take, 70 to keep a rendered one — and both gates
+now say so beside their literal. `stream_iterate_evolve_harmony!` no longer
+destroys a pinned `EVOLVE_HARMONY_W`; it applies the `USER_PINNED_ENV` rule
+`style_env_write!` applies everywhere else, and an unpinned stream walks exactly
+as before. **The `HARM_VOL` bump stays a pass behind itself**, because 2.4 plus
+0.05 is the 2.45 the engine already defaults to and raising the base is a mix
+value: `composition_engine.rb` carries the measurement beside the line, and the
+change is the owner's.
 
 ### Small, mechanical, and none of them touch sound
 
@@ -3658,10 +3618,25 @@ teardown, and they are correct as they stand.
   is a move rather than a delete. Nothing in this repository may touch the
   operator's home directory, and no census can see it — `dup_census` reads tracked
   files only and excludes `STUDIO/` besides.
-- **`dup_census` excludes `STUDIO/`** with no comment saying why
-  (`MASTER/tools/dup_census.rb:30`), against a header claiming every tracked file.
-  What the exclusion hides is 3 duplicate sets, 13.9 KB, all legitimate. Worth one
-  comment, not a campaign.
+- **Merging the three techno renderers.** `render_industrial`,
+  `render_hate_techno` and `render_techno` share `techno_harmony_roots` and the
+  schedule builders and look like three copies of one renderer. They hold
+  genuinely different arrangements, and merging on surface similarity flattens
+  three sounds into one. Read all three before proposing it again.
+- **Flattening `STUDIO/dilla/renders/` into the dilla root.** Counted before
+  doing it: `slum` emits fourteen files, `loose_pocket beats` twenty-eight, plus
+  `foundry_pulse.mp3`, `hate_session.mp3`, `ALBUM.mp3` and `beat.wav` — about
+  forty-six named files, before the contents of `renders/{wav,demo,mastered,
+  beats,rescued}/`. `demo.wav` in the dilla root is the demo's own path and is
+  already how `demo_all` defaults; every batch renderer keeps `renders/`. The
+  session CLAUDE.md records was about the REPO root, and that half is closed:
+  `DILLA_OUTPUT_DIR` defaults to the invoking directory, except when that
+  directory is the repo root, where dilla refuses and writes to
+  `STUDIO/dilla/renders/` with a line on stderr.
+- **Blanket rescues in STUDIO.** The remaining discards are optional gem probes,
+  external binaries whose output is parsed, optional state files and process
+  teardown, and they are correct as they stand. A census that reports them again
+  is measuring the idiom.
 - **Preset reach in `postpro` and `lora`.** A reach census read 27 false positives
   here: presets are selected by name from argv (`postpro.rb:2942`, `:3335`,
   `:3457`), so a table driven that way has no in-tree reference by design, and the
@@ -3717,7 +3692,10 @@ than implied across four.
   `geometry_type.rb`'s rendered measure and modular-scale checks cover the rest.
   What is not enforced: no lint says a `line-height` literal must come off
   `--leading-*` (`css_constitution.rb:61` lists `line_height` as a config key
-  that never got a reader); `MASTER/web/public/face.css` sits outside the asset
+  that never got a reader). Sized 2026-09-10 before anybody opens it — 87
+  literals across the fleet, seven of them in `face.css` — so it is a new
+  `css_budget` row and a pass over the operator's own stylesheets, not a lint
+  somebody adds on the way past. `MASTER/web/public/face.css` sits outside the asset
   pipeline and cannot read the ladders, which is the whole of the residual +2 on
   `weight_ladder`; and `rules.yml`'s `beauty.typography_bringhurst` is four
   slogans with no detector.
@@ -3729,12 +3707,19 @@ than implied across four.
 - **Onboarding.** A first-contact path that gets a new agent or contributor from
   clone to a green check without reading every contract. `MASTER/bin/onboard` is
   not it: it writes `.master/config.yml` and never runs a check.
-- **Local-LLM fallback.** One method, now that the routing half is fixed.
-  `Master::Review::LLMDispatcher#send_llm_request` has branches for `agy:`,
-  `claude-cli:` and `web-chat:` and none for `ollama:`, so a chain that reaches
-  the local tier ships the id to the OpenRouter client and errors. Done when it
-  posts to `models.yml`'s `ollama.default_base_url` instead. The tier itself is
-  now correctly absent unless `OLLAMA_BASE_URL` is set — it used to sit in every
+- **Local-LLM fallback**, and it is not "one method", which is what this entry
+  said until somebody wrote it. `Master::Review::LLMDispatcher#send_llm_request`
+  has branches for `agy:`, `claude-cli:` and `web-chat:` and none for `ollama:`,
+  so a chain that reaches the local tier ships the id to the OpenRouter client
+  and errors. The branch is easy; paying for it is the work. Written and
+  measured 2026-09-10 as an `OllamaSender` module beside `RubyLLMSender`: 51
+  body lines and one file. `llm_dispatcher.rb` cannot hold it — the class is at
+  298 code lines against NO_GOD_CLASS's 300 — and every ceiling it lands against
+  sits at exactly its value, so it costs a `growth.master` raise and a
+  `spine.lib_body_ceiling` raise, and `models.yml` gains a reader against a
+  `reader_singularity` ceiling that is also full. Done when somebody spends
+  those deliberately, or absorbs 51 lines elsewhere in `lib/` first. The tier is
+  correctly absent unless `OLLAMA_BASE_URL` is set — it used to sit in every
   fallback chain on every machine.
 - **Aegis, seaborne.** A safety agent for the water, and the first body the
   embryo could plausibly take. It is a program rather than a feature because
@@ -3830,35 +3815,6 @@ waits for the operator.
   `rhythm_off_max_pct`, declared in all seven profiles and read in none.
   Instrumented where it matters; it does not need a backlog line.
 
-## From the 2026-08-31 session
-
-- **`rules.yml` refactor.** Aggressively DRYing the law wants a measured pass.
-  The two things holding it — a down gate and a mis-scanning scanner — closed on
-  2026-09-01, so only the work remains.
-- **`dilla.rb` is 35,139 lines**, against `lib/`'s 44 files and 15,911 lines, so
-  the monolith still holds 68.8% of the engine (re-measured 2026-09-10). Split
-  along the seams it already has: the renderers, the ENV default tables, the SMF
-  writers, the patch registries. The direction is out of the monolith, not into
-  it.
-- **Do not flatten `STUDIO/dilla/renders/` into the dilla root.** Counted before
-  doing it: `slum` emits fourteen files, `loose_pocket beats` twenty-eight, plus
-  `foundry_pulse.mp3`, `hate_session.mp3`, `ALBUM.mp3` and `beat.wav` — about
-  forty-six named files, before the contents of `renders/{wav,demo,mastered,
-  beats,rescued}/`. The root holds `demo.wav`, `demo.mp3` and `loop.wav`, and
-  CLAUDE.md says build output never sits there, recording the session whose
-  renders lived at the root for weeks. Two instructions pointed opposite ways
-  and the count settles it: `demo.wav` in the root is the demo's own path and is
-  already how `demo_all` defaults; every batch renderer keeps `renders/`. The
-  session CLAUDE.md records was about the REPO root and not dilla's, and that
-  half closed on 2026-09-10: `DILLA_OUTPUT_DIR` still defaults to the invoking
-  directory, except when that directory is the repo root, where dilla refuses
-  and writes to `STUDIO/dilla/renders/` with a line on stderr.
-- **Merge the three techno renderers.** `render_industrial`,
-  `render_hate_techno` and `render_techno` share `techno_harmony_roots` and the
-  schedule builders but hold genuinely different arrangements. Read all three
-  before cutting; merging on surface similarity flattens the arrangements into
-  one sound.
-
 ## From the 2026-09-01 audit
 
 - **The browser half of the gates still measures nothing unattended.** The live
@@ -3873,16 +3829,6 @@ waits for the operator.
   that is not vm23. `GATE_STRICT_ERRORS=1` is the cheap remaining half and can
   go into the same line the day somebody has read one ledger's worth of errored
   gates.
-- **`bin/sine_stream.rb:977` is the last un-oversampled `asoftclip`**, and
-  `dilla.rb:1826` is the one that only looks oversampled. Of 24 non-comment
-  `asoftclip=type=` filter strings across `dilla.rb`, `lib/*.rb` and `bin/*.rb`,
-  23 carry `oversample` — but `dilla.rb:1826` carries `oversample=1`, which is
-  ffmpeg's default, so it satisfies the guard textually and aliases exactly like
-  the one that carries nothing. The guard test scans `ENGINE_SOURCES`, which is
-  `dilla.rb` plus `lib/*.rb`, so `bin/` is outside it by design. Both are left
-  alone deliberately: they change how the stream sounds, which is the operator's
-  ear. Worth an A/B before either moves. (Line numbers re-read 2026-09-10; the
-  entry said 975.)
 - **The 61-track crate fetch was abandoned at 2, and the staging is bigger than
   this entry said.** `~/dilla-crate-incoming` holds two FLACs (42 MB), four fetch
   scripts, four logs and `stems/htdemucs_ft/` with demucs output for both tracks
@@ -3951,16 +3897,6 @@ for which nine written beside them.
 
 ### STUDIO
 
-- **`SCALE_LEAD=1` is inert on its own**, and the entry this replaces was wrong
-  about the rest. Measured 2026-09-10 by running the engine over eight synthetic
-  pad events: `MELODIC_LEAD=1` produces a lead — the counter-line lane fires, ten
-  notes, and the render says "lead: counter-line", not "lead: none". What does
-  dead-end is the scale lane: `lead_events_scale_arp` returns `[]` when
-  `no_arp?`, and `NO_ARP` defaults to on, so `SCALE_LEAD=1` schedules nothing
-  until `NO_ARP=0` is also set, at which point it schedules seventy notes.
-  Making the switch imply `NO_ARP=0` would change what a render sounds like, so
-  it is recorded rather than fixed. Done when `SCALE_LEAD` either says what it
-  needs or stops pretending to be a switch.
 - **The dilla ENV switch census does not reproduce, by any method.** The entry
   said 138 default off. `lib/knobs.rb` — the engine's own registry, which infers
   type and default from source — reports 727 knobs, 286 of them flags, of which
@@ -3996,18 +3932,15 @@ for which nine written beside them.
   formatters. Moving the five `*_display` methods to a presenter drops it to 21
   and the five status aliases to a generated loop drops it to 16, so neither
   half clears the limit alone and the real cut is the state machine.
-- **Two more `MASTER/bin` folds are available, if the count needs to fall
-  again.** It is at 26 now, `bin/preflight` having folded into `bin/ci`.
-  `nsaudit` and `dogfood` each have exactly one caller in the whole repo —
-  `bin/probe`'s table — and neither is named by a workflow, a shell script or
-  the Rakefile, so either could become a `check` step or a `rake lint:` task at
-  no cost. The real duplication is `probe` and `check`: both are step
-  registries, `probe`'s `ci` entry shells `bin/ci` which shells
-  `check --profile=ci`, and `check`'s `full` profile shells `probe all`. That
-  mutual call is the ladder with two doors, and both doors have real callers —
-  `RUNBOOK.md` and `bootstrap_docs.rb` for probe, `CLAUDE.md` and thirty
-  `PATH_OWNERSHIP.yml` rows for check. `gate`, `audit`, `doctor` and `check` are
-  four genuinely distinct things, not eleven.
+- **The `probe`/`check` pair is the ladder with two doors**, and both doors have
+  real callers — `RUNBOOK.md` and `bootstrap_docs.rb` for probe, `CLAUDE.md` and
+  thirty `PATH_OWNERSHIP.yml` rows for check. `probe`'s `ci` entry shells
+  `bin/ci` which shells `check --profile=ci`, and `check`'s `full` profile shells
+  `probe all`. `gate`, `audit`, `doctor` and `check` are four genuinely distinct
+  things, not eleven. The two folds this entry used to propose — `nsaudit` and
+  `dogfood` into `check` — are decided against: `bin/probe` carries the argument
+  beside them, and it is the bare top-level `ROOT` that makes a subprocess the
+  safe shape.
 
 ## Wishes, not work
 
