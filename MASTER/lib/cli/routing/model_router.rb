@@ -52,6 +52,7 @@ module Master
           pref = preferred(task_type:)
           all = @rules.fetch("models", {}).values.flat_map { |tier| tier.filter_map { |m| m["id"] } }
           all = all.reject { |id| web_chat_model?(id) } unless web_chat_enabled?
+          all = all.reject { |id| ollama_model?(id) } unless ollama_enabled?
           paid_or_subscription = Ground::AuthProfileLane.models_for_router(self) + primary_models
           # Greetings are explicitly routed to the free tier. A locally installed
           # subscription CLI used to jump ahead of `pref`, contradicting the route

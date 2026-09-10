@@ -59,6 +59,37 @@ class TestKeylessRouting < Minitest::Test
     assert_equal "nvidia/nemotron-3-super-120b-a12b:free", chain.first
   end
 
+  # The same gate, for the local tier. models.yml has declared the ollama tier
+  # `enabled_when_env: OLLAMA_BASE_URL` since it was written and nothing read
+  # that key, so three ollama ids sat in every fallback chain on machines with no
+  # ollama — and the dispatcher has no ollama branch, so reaching one ships the
+  # id to the OpenRouter client and errors.
+  def test_local_tier_is_absent_unless_ollama_base_url_is_set
+    ENV["OPENROUTER_API_KEY"] = "sk-or-v1-#{'a' * 64}"
+    ENV.delete("OLLAMA_BASE_URL")
+    router = Master::CLI::Routing::ModelRouter.new(
+      config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT,
+    )
+
+    refute router.ollama_enabled?
+    assert_empty router.fallback_chain(task_type: :exploration).grep(/\Aollama[:\/]/)
+  ensure
+    ENV.delete("OLLAMA_BASE_URL")
+  end
+
+  def test_local_tier_is_offered_once_ollama_base_url_is_set
+    ENV["OPENROUTER_API_KEY"] = "sk-or-v1-#{'a' * 64}"
+    ENV["OLLAMA_BASE_URL"] = "http://localhost:11434/v1"
+    router = Master::CLI::Routing::ModelRouter.new(
+      config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT,
+    )
+
+    assert router.ollama_enabled?
+    refute_empty router.fallback_chain(task_type: :exploration).grep(/\Aollama[:\/]/)
+  ensure
+    ENV.delete("OLLAMA_BASE_URL")
+  end
+
   def test_web_chat_disabled_when_keys_present_without_opt_in
     ENV["OPENROUTER_API_KEY"] = "sk-or-v1-" + ("a" * 64)
     router = Master::CLI::Routing::ModelRouter.new(
