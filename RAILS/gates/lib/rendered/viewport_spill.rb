@@ -47,6 +47,15 @@ module Deploy
           const cls = raw.trim().split(/\\s+/).filter(Boolean).slice(0, 2).join(".");
           return el.tagName.toLowerCase() + (el.id ? "#" + el.id : "") + (cls ? "." + cls : "");
         };
+        // html and body are not ancestors for this question. Every other element
+        // that clips is a component whose author decided what is on screen; the
+        // root clipping is the page-level "kill the horizontal scrollbar" hack,
+        // and it conceals unreachable content rather than intending it. brgen
+        // sets `html, body { overflow: hidden }` for its edge-swipe shell, so
+        // treating the root like any other scroller made this gate blind on all
+        // sixteen of its brgen surfaces: every one reported clean because nothing
+        // could ever be reported at all.
+        const root = new Set([document.documentElement, document.body]);
         const spills = [];
         for (const el of document.querySelectorAll("body *")) {
           const cs = getComputedStyle(el);
@@ -55,6 +64,7 @@ module Deploy
           if (r.width === 0 || r.right <= vw + 1) continue;
           let scrolls = false;
           for (let p = el.parentElement; p; p = p.parentElement) {
+            if (root.has(p)) continue;
             const ox = getComputedStyle(p).overflowX;
             // hidden and clip belong here for the same reason auto and scroll do:
             // the ancestor decides what is on screen, and content it clips cannot
@@ -65,7 +75,7 @@ module Deploy
           }
           if (scrolls) continue;
           const p = el.parentElement;
-          if (p && p.getBoundingClientRect().right > vw + 1) continue;
+          if (p && !root.has(p) && p.getBoundingClientRect().right > vw + 1) continue;
           spills.push(name(el) + " reaches " + Math.round(r.right));
         }
         return JSON.stringify(Array.from(new Set(spills)).slice(0, 6));

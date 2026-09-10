@@ -203,43 +203,97 @@ BASELINES = { "undefined_class" => 0, "unused_selector" => 153 }.freeze
 
     module_function
 
-    def engine_dirs = Dir.glob(File.join(RAILS_ROOT, "brgen/engines/*"))
+    def run
+      findings = scan
+      counts(findings).each do |kind, count|
+        baseline = BASELINES.fetch(kind)
+        note = count < baseline ? " — under baseline, lower it" : ""
+        puts "css_coverage_lint: #{kind} #{count} (baseline #{baseline})#{note}"
+      end
+      findings.select { |f| f.kind == "undefined_class" }
+              .sort_by { |f| -f.count }
+              .first(20)
+              .each { |f| puts format("  .%-32s %2d use(s)  e.g. %s", f.name, f.count, f.example) }
 
-    def views
-      TREES.flat_map { |t| Dir.glob(File.join(RAILS_ROOT, t, "app/views/**/*.erb")) } +
-        engine_dirs.flat_map { |d| Dir.glob(File.join(d, "app/views/**/*.erb")) } +
-        rendered_by_javascript
+      exceeded = over_baseline(findings)
+      return true if exceeded.empty?
+
+      warn "css_coverage_lint: exceeds baseline — #{exceeded.join("; ")}"
+      false
     end
 
-    # Not every element is rendered by a template. optimistic_send_controller
-    # builds the pending message it later marks failed, so the class naming that
-    # status appears only in JavaScript — and a scan of the views alone called
-    # the rule styling it unused, which is the opposite of true.
+    def scan
+      undefined_classes.map { |name|
+ Finding.new("undefined_class", name, used_names[name].size, rel(used_names[name].first)) } +
+        unused_selectors.map { |name| Finding.new("unused_selector", name, 0, nil) }
+    end
+
+    def undefined_classes
+      used_names.keys.reject do |name|
+        interpolated?(name) || EXTERNAL.include?(name) || defined_names.include?(name) ||
+          base_defined?(name) || inherits_everywhere?(name) || controller_identity?(name)
+      end
+    end
+
+    # A class that ALWAYS shares its element with a class that IS styled inherits from
+    # it — `.channel-guest-hint dim`, `.conversation-log channel-log`, `.comment-time
+    # dim`. That is a naming hook, not a missing style, and reporting it asks the next
+    # author to invent a rule for something already styled.
     #
-    # Read as views because that is what they are: the markup exists, it is
-    # assembled at runtime. Both frontend homes are covered, so a controller
-    # promoted from an app into shared/frontend does not change the count.
-    def rendered_by_javascript
-      TREES.flat_map { |t| Dir.glob(File.join(RAILS_ROOT, t, "app/javascript/**/*.js")) } +
-        Dir.glob(File.join(RAILS_ROOT, "shared", "frontend", "**", "*.js"))
+    # "Always", not "ever": a class that appears alone on any surface is doing its own
+    # work there and stays in the count.
+    def inherits_everywhere?(name)
+      lists = class_lists[name] || []
+      return false if lists.empty?
+
+      lists.all? { |list| (list - [ name ]).any? { |sibling| defined_names.include?(sibling) } }
     end
 
-    def stylesheets
-      (TREES.flat_map { |t| Dir.glob(File.join(RAILS_ROOT, t, "app/assets/stylesheets/**/*.{scss,css}")) } +
-       engine_dirs.flat_map { |d| Dir.glob(File.join(d, "app/assets/stylesheets/**/*.{scss,css}")) })
-        .reject { |path| path.include?("/builds/") || path.include?("/public/assets/") }
+    # A class that names a Stimulus controller mounted on the same element is that
+    # controller's identity, not a style — `class="nested-form"
+    # data-controller="nested-form"`. Writing a rule for it would be styling an API.
+    def controller_identity?(name)
+      @controller_identities ||= views.flat_map do |view|
+        strip_erb(File.read(view, encoding: "UTF-8"))
+          .scan(/data-controller=["']([^"'<>]+)["']/).flatten
+          .flat_map { |list| list.split(/\s+/) }
+      end.to_set
+      @controller_identities.include?(name)
     end
 
-    def strip_css(body)
-      body.gsub(%r{/\*.*?\*/}m) { |block| block.gsub(/[^\n]/, " ") }
-          .gsub(%r{//[^\n]*}) { |line| " " * line.length }
+    # A modifier or element whose base is defined is a real BEM pair the literal scan
+    # cannot see, not a missing style.
+    def base_defined?(name)
+      defined_names.include?(name.sub(/--.*\z/, "")) || defined_names.include?(name.sub(/__.*\z/, ""))
     end
 
-    # Comments blanked. A stylesheet that explains why a class was removed would
-    # otherwise count as defining it, and a view that explains why one was dropped
-    # would count as using it.
-    def strip_erb(body)
-      body.gsub(/<%#.*?%>/m) { |block| block.gsub(/[^\n]/, " ") }
+    def interpolated?(name)
+      name.empty? || name.include?("\#{") || name.start_with?("<%")
+    end
+
+    def unused_selectors
+      markup = used_names.keys.to_set
+      defined_names.reject do |name|
+        markup.include?(name) || EXTERNAL.include?(name) || dynamic?(name) ||
+          markup.any? { |used| used.start_with?("#{name}--") || used.start_with?("#{name}__") }
+      end
+    end
+
+    # Names no template spells whole. Each seed is verified against a real
+    # producer (2026-08-22): vertical-<name> from the shell class map,
+    # monogram--<n> in _feed_card, map-marker--<kind> in map_controller.js,
+    # capsule-row--/occasion-card-- verdicts in amber ai views, chip--<state>
+    # in events, <theme>-tokens in the layouts, match-overlay subtree from the
+    # layout. maplibregl-/ProseMirror-/trix- are vendor-runtime: the library
+    # builds the node, our sheet styles it.
+    DYNAMIC_SEEDS = %w[vertical- monogram-- map-marker-- capsule-row--
+                       occasion-card-- chip-- match-overlay maplibregl-
+                       ProseMirror- trix-].freeze
+    DYNAMIC_SUFFIXES = %w[-tokens].freeze
+
+    def dynamic?(name)
+      DYNAMIC_SEEDS.any? { |seed| name.start_with?(seed) } ||
+        DYNAMIC_SUFFIXES.any? { |suffix| name.end_with?(suffix) }
     end
 
     def defined_names
@@ -348,100 +402,47 @@ BASELINES = { "undefined_class" => 0, "unused_selector" => 153 }.freeze
       @lists
     end
 
-    # A class that ALWAYS shares its element with a class that IS styled inherits from
-    # it — `.channel-guest-hint dim`, `.conversation-log channel-log`, `.comment-time
-    # dim`. That is a naming hook, not a missing style, and reporting it asks the next
-    # author to invent a rule for something already styled.
+    def views
+      TREES.flat_map { |t| Dir.glob(File.join(RAILS_ROOT, t, "app/views/**/*.erb")) } +
+        engine_dirs.flat_map { |d| Dir.glob(File.join(d, "app/views/**/*.erb")) } +
+        rendered_by_javascript
+    end
+
+    # Not every element is rendered by a template. optimistic_send_controller
+    # builds the pending message it later marks failed, so the class naming that
+    # status appears only in JavaScript — and a scan of the views alone called
+    # the rule styling it unused, which is the opposite of true.
     #
-    # "Always", not "ever": a class that appears alone on any surface is doing its own
-    # work there and stays in the count.
-    def inherits_everywhere?(name)
-      lists = class_lists[name] || []
-      return false if lists.empty?
-
-      lists.all? { |list| (list - [ name ]).any? { |sibling| defined_names.include?(sibling) } }
+    # Read as views because that is what they are: the markup exists, it is
+    # assembled at runtime. Both frontend homes are covered, so a controller
+    # promoted from an app into shared/frontend does not change the count.
+    def rendered_by_javascript
+      TREES.flat_map { |t| Dir.glob(File.join(RAILS_ROOT, t, "app/javascript/**/*.js")) } +
+        Dir.glob(File.join(RAILS_ROOT, "shared", "frontend", "**", "*.js"))
     end
 
-    # A class that names a Stimulus controller mounted on the same element is that
-    # controller's identity, not a style — `class="nested-form"
-    # data-controller="nested-form"`. Writing a rule for it would be styling an API.
-    def controller_identity?(name)
-      @controller_identities ||= views.flat_map do |view|
-        strip_erb(File.read(view, encoding: "UTF-8"))
-          .scan(/data-controller=["']([^"'<>]+)["']/).flatten
-          .flat_map { |list| list.split(/\s+/) }
-      end.to_set
-      @controller_identities.include?(name)
+    def stylesheets
+      (TREES.flat_map { |t| Dir.glob(File.join(RAILS_ROOT, t, "app/assets/stylesheets/**/*.{scss,css}")) } +
+       engine_dirs.flat_map { |d| Dir.glob(File.join(d, "app/assets/stylesheets/**/*.{scss,css}")) })
+        .reject { |path| path.include?("/builds/") || path.include?("/public/assets/") }
     end
 
-    # A modifier or element whose base is defined is a real BEM pair the literal scan
-    # cannot see, not a missing style.
-    def base_defined?(name)
-      defined_names.include?(name.sub(/--.*\z/, "")) || defined_names.include?(name.sub(/__.*\z/, ""))
+    # Comments blanked. A stylesheet that explains why a class was removed would
+    # otherwise count as defining it, and a view that explains why one was dropped
+    # would count as using it.
+    def strip_erb(body)
+      body.gsub(/<%#.*?%>/m) { |block| block.gsub(/[^\n]/, " ") }
     end
 
-    def interpolated?(name)
-      name.empty? || name.include?("\#{") || name.start_with?("<%")
+    def strip_css(body)
+      body.gsub(%r{/\*.*?\*/}m) { |block| block.gsub(/[^\n]/, " ") }
+          .gsub(%r{//[^\n]*}) { |line| " " * line.length }
     end
 
-    def undefined_classes
-      used_names.keys.reject do |name|
-        interpolated?(name) || EXTERNAL.include?(name) || defined_names.include?(name) ||
-          base_defined?(name) || inherits_everywhere?(name) || controller_identity?(name)
-      end
-    end
-
-    # Names no template spells whole. Each seed is verified against a real
-    # producer (2026-08-22): vertical-<name> from the shell class map,
-    # monogram--<n> in _feed_card, map-marker--<kind> in map_controller.js,
-    # capsule-row--/occasion-card-- verdicts in amber ai views, chip--<state>
-    # in events, <theme>-tokens in the layouts, match-overlay subtree from the
-    # layout. maplibregl-/ProseMirror-/trix- are vendor-runtime: the library
-    # builds the node, our sheet styles it.
-    DYNAMIC_SEEDS = %w[vertical- monogram-- map-marker-- capsule-row--
-                       occasion-card-- chip-- match-overlay maplibregl-
-                       ProseMirror- trix-].freeze
-    DYNAMIC_SUFFIXES = %w[-tokens].freeze
-
-    def dynamic?(name)
-      DYNAMIC_SEEDS.any? { |seed| name.start_with?(seed) } ||
-        DYNAMIC_SUFFIXES.any? { |suffix| name.end_with?(suffix) }
-    end
-
-    def unused_selectors
-      markup = used_names.keys.to_set
-      defined_names.reject do |name|
-        markup.include?(name) || EXTERNAL.include?(name) || dynamic?(name) ||
-          markup.any? { |used| used.start_with?("#{name}--") || used.start_with?("#{name}__") }
-      end
-    end
-
-    def scan
-      undefined_classes.map { |name|
- Finding.new("undefined_class", name, used_names[name].size, rel(used_names[name].first)) } +
-        unused_selectors.map { |name| Finding.new("unused_selector", name, 0, nil) }
-    end
+    def engine_dirs = Dir.glob(File.join(RAILS_ROOT, "brgen/engines/*"))
 
     def rel(path) = path.to_s.sub("#{RAILS_ROOT}/", "")
 
-    def run
-      findings = scan
-      counts(findings).each do |kind, count|
-        baseline = BASELINES.fetch(kind)
-        note = count < baseline ? " — under baseline, lower it" : ""
-        puts "css_coverage_lint: #{kind} #{count} (baseline #{baseline})#{note}"
-      end
-      findings.select { |f| f.kind == "undefined_class" }
-              .sort_by { |f| -f.count }
-              .first(20)
-              .each { |f| puts format("  .%-32s %2d use(s)  e.g. %s", f.name, f.count, f.example) }
-
-      exceeded = over_baseline(findings)
-      return true if exceeded.empty?
-
-      warn "css_coverage_lint: exceeds baseline — #{exceeded.join("; ")}"
-      false
-    end
   end
 end
 

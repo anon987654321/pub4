@@ -62,61 +62,47 @@ module Pub4
 
     module_function
 
-    def stylesheets
-      @stylesheets ||= (
-        Dir.glob(File.join(RAILS_ROOT, "*/app/assets/stylesheets/**/*.{scss,css}")) +
-        Dir.glob(File.join(RAILS_ROOT, "*/engines/*/app/assets/stylesheets/**/*.{scss,css}")) +
-        Dir.glob(File.join(RAILS_ROOT, "shared/app/assets/stylesheets/**/*.{scss,css}"))
-      ).uniq.sort.reject { |path| path.match?(SKIP) }
-    end
+    def counts = findings.group_by(&:kind).transform_values(&:size)
 
-    def views
-      @views ||= (
-        Dir.glob(File.join(RAILS_ROOT, "*/app/views/**/*.erb")) +
-        Dir.glob(File.join(RAILS_ROOT, "*/engines/*/app/views/**/*.erb")) +
-        Dir.glob(File.join(RAILS_ROOT, "shared/app/views/**/*.erb"))
-      ).uniq.sort.reject { |path| path.match?(SKIP) }
-    end
+    def findings = media_findings + transition_findings + font_findings
 
-    def strip_comments(raw)
-      raw.gsub(%r{/\*.*?\*/}m) { |b| b.gsub(/[^\n]/, " ") }
-         .gsub(%r{//[^\n]*}) { |l| " " * l.length }
-    end
+    def media_findings
+      views.flat_map do |path|
+        raw = File.readlines(path, encoding: "UTF-8")
+        lines = source_lines(path)
+        lines.each_with_index.flat_map do |line, index|
+          next [] if opted_out?(raw, index) || opted_out?(raw, index, RESERVED)
 
-    def source_lines(path) = strip_comments(File.read(path, encoding: "UTF-8")).lines
+          # Six lines of lead-in. An ERB wrapper and the tag it wraps are
+          # normally within two or three; six is slack for a conditional and a
+          # blank line between them.
+          context = lines[[ index - 6, 0 ].max...index].join
 
-    # Two views of the same file. Findings are read from the copy with comments
-    # blanked, so a commented-out rule is not a finding; the opt-out is read
-    # from the raw copy, because `// layout: ok` and `<%# reserved: %>` are
-    # themselves comments and blanking them leaves every opt-out in the tree
-    # inert. ScaleLint carried this exact bug until 2026-09-03, when three
-    # markers turned out to have been silencing nothing.
-    def opted_out?(raw, index, marker = OPT_OUT)
-      [ raw[index], index.positive? ? raw[index - 1] : nil ]
-        .compact.any? { |line| line.include?(marker) }
-    end
+          line.scan(MEDIA).flat_map do |tag|
+            next [] if sized?(tag, context)
 
-    # Class names whose CSS reserves a box.
-    #
-    # Deliberately generous: a class counts as reserved if ANY rule mentioning
-    # it declares a reservation. SCSS nesting means a selector line does not
-    # carry its own full ancestry (`&__img` resolves at build time, not here),
-    # so a stricter reading would report classes that are in fact sized and send
-    # the next author chasing a value that is already there. The lint's job is to
-    # find the media nobody sized at all.
-    def reserved_classes
-      @reserved_classes ||= begin
-        found = Set.new
-        stylesheets.each do |path|
-          body = strip_comments(File.read(path, encoding: "UTF-8"))
-          body.scan(/([^{}]+)\{([^{}]*)\}/m) do |selector, block|
-            next unless block.match?(RESERVING)
-
-            selector.scan(/\.([a-zA-Z][\w-]*)/) { |name| found << name.first }
+            [ Finding.new(rel(path), index + 1, "unreserved_media", tag.to_s.strip[0, 90]) ]
           end
         end
-        found
       end
+    end
+
+    # `context` is the handful of lines above the tag, which is as much ancestry
+    # as a line-oriented reader of ERB can honestly claim. Deliberately not a
+    # parser: the question is only whether a reserving wrapper is plausibly open
+    # around this tag, and being generous here costs a missed finding while
+    # being strict costs a false one — and a false one gets correct markup
+    # edited.
+    def sized?(tag, context = nil)
+      return true if tag.match?(/\bwidth\s*[:=]/) && tag.match?(/\bheight\s*[:=]/)
+      return true if tag.match?(/\bsize\s*:/)
+      return true if tag.match?(/\bstyle\s*=\s*"[^"]*aspect-ratio/)
+
+      own = tag.scan(/class\s*[:=]\s*[("']?([^"')]*)/).flatten.join(" ").scan(/[\w-]+/)
+      return true if own.any? { |name| reserved_classes.include?(name) }
+
+      enclosing = context.to_s.scan(/class\s*=\s*"([^"]*)"/).flatten.join(" ").scan(/[\w-]+/)
+      enclosing.any? { |name| wrapper_classes.include?(name) }
     end
 
     # <img ...> written by hand, and image_tag/video_tag through the helper.
@@ -147,42 +133,26 @@ module Pub4
       end
     end
 
-    # `context` is the handful of lines above the tag, which is as much ancestry
-    # as a line-oriented reader of ERB can honestly claim. Deliberately not a
-    # parser: the question is only whether a reserving wrapper is plausibly open
-    # around this tag, and being generous here costs a missed finding while
-    # being strict costs a false one — and a false one gets correct markup
-    # edited.
-    def sized?(tag, context = nil)
-      return true if tag.match?(/\bwidth\s*[:=]/) && tag.match?(/\bheight\s*[:=]/)
-      return true if tag.match?(/\bsize\s*:/)
-      return true if tag.match?(/\bstyle\s*=\s*"[^"]*aspect-ratio/)
+    # Class names whose CSS reserves a box.
+    #
+    # Deliberately generous: a class counts as reserved if ANY rule mentioning
+    # it declares a reservation. SCSS nesting means a selector line does not
+    # carry its own full ancestry (`&__img` resolves at build time, not here),
+    # so a stricter reading would report classes that are in fact sized and send
+    # the next author chasing a value that is already there. The lint's job is to
+    # find the media nobody sized at all.
+    def reserved_classes
+      @reserved_classes ||= begin
+        found = Set.new
+        stylesheets.each do |path|
+          body = strip_comments(File.read(path, encoding: "UTF-8"))
+          body.scan(/([^{}]+)\{([^{}]*)\}/m) do |selector, block|
+            next unless block.match?(RESERVING)
 
-      own = tag.scan(/class\s*[:=]\s*[("']?([^"')]*)/).flatten.join(" ").scan(/[\w-]+/)
-      return true if own.any? { |name| reserved_classes.include?(name) }
-
-      enclosing = context.to_s.scan(/class\s*=\s*"([^"]*)"/).flatten.join(" ").scan(/[\w-]+/)
-      enclosing.any? { |name| wrapper_classes.include?(name) }
-    end
-
-    def media_findings
-      views.flat_map do |path|
-        raw = File.readlines(path, encoding: "UTF-8")
-        lines = source_lines(path)
-        lines.each_with_index.flat_map do |line, index|
-          next [] if opted_out?(raw, index) || opted_out?(raw, index, RESERVED)
-
-          # Six lines of lead-in. An ERB wrapper and the tag it wraps are
-          # normally within two or three; six is slack for a conditional and a
-          # blank line between them.
-          context = lines[[ index - 6, 0 ].max...index].join
-
-          line.scan(MEDIA).flat_map do |tag|
-            next [] if sized?(tag, context)
-
-            [ Finding.new(rel(path), index + 1, "unreserved_media", tag.to_s.strip[0, 90]) ]
+            selector.scan(/\.([a-zA-Z][\w-]*)/) { |name| found << name.first }
           end
         end
+        found
       end
     end
 
@@ -220,9 +190,39 @@ module Pub4
       end
     end
 
-    def findings = media_findings + transition_findings + font_findings
+    def views
+      @views ||= (
+        Dir.glob(File.join(RAILS_ROOT, "*/app/views/**/*.erb")) +
+        Dir.glob(File.join(RAILS_ROOT, "*/engines/*/app/views/**/*.erb")) +
+        Dir.glob(File.join(RAILS_ROOT, "shared/app/views/**/*.erb"))
+      ).uniq.sort.reject { |path| path.match?(SKIP) }
+    end
 
-    def counts = findings.group_by(&:kind).transform_values(&:size)
+    def stylesheets
+      @stylesheets ||= (
+        Dir.glob(File.join(RAILS_ROOT, "*/app/assets/stylesheets/**/*.{scss,css}")) +
+        Dir.glob(File.join(RAILS_ROOT, "*/engines/*/app/assets/stylesheets/**/*.{scss,css}")) +
+        Dir.glob(File.join(RAILS_ROOT, "shared/app/assets/stylesheets/**/*.{scss,css}"))
+      ).uniq.sort.reject { |path| path.match?(SKIP) }
+    end
+
+    def source_lines(path) = strip_comments(File.read(path, encoding: "UTF-8")).lines
+
+    def strip_comments(raw)
+      raw.gsub(%r{/\*.*?\*/}m) { |b| b.gsub(/[^\n]/, " ") }
+         .gsub(%r{//[^\n]*}) { |l| " " * l.length }
+    end
+
+    # Two views of the same file. Findings are read from the copy with comments
+    # blanked, so a commented-out rule is not a finding; the opt-out is read
+    # from the raw copy, because `// layout: ok` and `<%# reserved: %>` are
+    # themselves comments and blanking them leaves every opt-out in the tree
+    # inert. ScaleLint carried this exact bug until 2026-09-03, when three
+    # markers turned out to have been silencing nothing.
+    def opted_out?(raw, index, marker = OPT_OUT)
+      [ raw[index], index.positive? ? raw[index - 1] : nil ]
+        .compact.any? { |line| line.include?(marker) }
+    end
 
     def rel(path) = path.sub("#{RAILS_ROOT}/", "")
 

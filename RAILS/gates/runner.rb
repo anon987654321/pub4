@@ -238,10 +238,13 @@ REASONS = {}
 
 # A gate that failed while naming no finding is the shape rails_runtime wore for
 # months: red every run with an empty failure list, because it broke at require
-# time and never reached a check. The in-process path turns a raise into
-# :errored and names it, so what is left here is the subprocess half and the
-# genuine zero-finding failure. Either way the reader should not have to guess
-# whether the list is empty because nothing was found or because nothing ran.
+# time and never reached a check. The reader should not have to guess whether
+# the list is empty because nothing was found or because nothing ran.
+#
+# In-process gates only. A subprocess gate returns an exit code and prints its
+# own findings, so the runner holds no result to count — release names a failing
+# MASTER contract test on its own stdout and would otherwise be reported here as
+# naming nothing, which is the false positive this line exists to avoid.
 EMPTY_FAILURES = []
 
 def record_reasons(key, outcome)
@@ -252,8 +255,7 @@ def record_reasons(key, outcome)
     reasons = ["exit #{SUBPROCESS_INCONCLUSIVE}, no reason given (subprocess gate)"] if reasons.empty?
     REASONS[key] = reasons
   when :failed
-    named = result.respond_to?(:failures) ? result.failures.size : 0
-    EMPTY_FAILURES << key if named.zero?
+    EMPTY_FAILURES << key if result.respond_to?(:failures) && result.failures.empty?
   end
 end
 

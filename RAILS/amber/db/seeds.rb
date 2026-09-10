@@ -89,6 +89,25 @@ end
 puts "Seeded Amber fictive data successfully."
 puts "Users: #{User.count}, Items: #{Item.count}, Outfits: #{Outfit.count}, Posts: #{Post.count}"
 
+# The /demo route ships in every environment and only worked in one. The
+# production branch above runs AmberDemoSeeder and exits, so nothing outside
+# production ever made DemoWardrobe.available? true — and DemoWardrobeController
+# redirects to the root when it is false. A locally booted amber therefore
+# answered 302 at /demo, which is what function_layout_test measures and what it
+# has been reporting.
+#
+# After the Faker flood, because that block opens with User.destroy_all. The
+# seeder is idempotent — find_or_create_by! on the demo address, then
+# find_or_initialize_by per item — so reseeding does not duplicate it.
+#
+# Development only. bin/ci seeds the test database as its last step, and an
+# extra user there is a row every counting test would then have to know about.
+# The suite's own demo tests seed what they need themselves.
+if Rails.env.development?
+  Amber::AmberDemoSeeder.new.seed!
+  puts "Demo wardrobe: items=#{Amber::DemoWardrobe.items.count}, outfits=#{Amber::DemoWardrobe.outfits.count}"
+end
+
 ApplicationRecord.strict_loading_by_default = was_strict
 ActiveJob::Base.queue_adapter = seed_job_adapter
 
