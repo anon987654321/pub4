@@ -192,9 +192,32 @@ module Pub4
 # is what made a selector the tree had been using all along visible here.
 #
 # Lowered anyway, because the number is the measurement and it only descends.
-# Worth knowing while reading the remaining 153: an unknown share of them are
-# the same shape, live selectors this check cannot see, which is why its
-# tolerance is wide and why it is a ratchet rather than a target of zero.
+#
+# "An unknown share of them are live selectors this check cannot see" stood here
+# as a hypothesis and is a measurement now: at least ten of the 153. Measured
+# 2026-09-10 against the running fleet — 144 pages fetched from the four apps,
+# 315 distinct class names in the returned HTML — and these ten are painted by a
+# browser right now while this file calls them dead:
+#
+#   brand-mark  brgen-logo-mark  chat-code  is-current  nav-cart--active
+#   nav_link  password-field  password-toggle  radio-tunnel  section--active
+#
+# Every one is named in source, in a form the extractors do not read. Six were
+# checked by hand and they are three shapes: a class written inside a Ruby
+# helper rather than a template (`password-toggle` in stimulus_form_helper,
+# `chat-code` in a gsub in chat_helper, `nav_link` built by ui_helper), a
+# default argument (`local_assigns.fetch(:class_name, "brand-mark")`), and a
+# whole class value that is a parenthesised conditional (`class: ("is-current"
+# if locale == current_locale)`).
+#
+# Reading app/helpers/**/*.rb as views is the obvious repair and it is not one:
+# measured over the sixteen helper files, it removes two names from the unused
+# set and adds two to undefined_class, one of them the interpolation artefact
+# `nav-item#{`. The extractors want an interpolation-aware pass before the
+# corpus widens, or the fix trades a false unused for a false undefined.
+#
+# So the baseline holds and the ratchet stays wide, with the reason now written
+# as a list rather than as a caveat.
 BASELINES = { "undefined_class" => 0, "unused_selector" => 153 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
