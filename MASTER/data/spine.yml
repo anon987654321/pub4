@@ -409,7 +409,12 @@ pub4_source_ceilings:
   # code lines. The seeder is 337 now. This is the trade this line exists to
   # record, and it is the right way round: a data file and the code that reads
   # it are two things, and only one of them is code.
-  RAILS: 2373
+  # 2373 -> 2372, and a deletion paid it: ConversationsInfiniteScrollReflex
+  # appended _conversation_row into #conversation-list, an id no view in the
+  # tree renders. Thirty-three reflex files, thirty-two classes, thirty-one
+  # mounted. RAILS/test/infinite_scroll_reflex_contract_test.rb asserts the
+  # property that would have caught it, and lives outside this count.
+  RAILS: 2372
   # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
   # that are the whole defence against a shared index, and nothing tested any of
   # them — a hook that stopped firing looks exactly like a week in which nobody
