@@ -2327,10 +2327,39 @@ is this repo's own rule, and thirteen of the items below were already here.
 rather than work.
 
 Grounded in what these three apps actually run today: Turbo 8 with
-`turbo_refreshes_with :morph`, 30 Stimulus controllers across the three apps,
-Solid Cache/Cable/Queue, Pagy in 13 controllers, importmap with no CDN pins, and
-— the number that shapes half this list — **zero fragment caches in any view**
-and **two conditional-GET responses in the whole of brgen**.
+`turbo_refreshes_with :morph`, Solid Cache/Cable/Queue and importmap with no CDN
+pins.
+
+**Every other number in that sentence was wrong, re-measured 2026-09-10, and two
+of them carried the argument for half the list.** Stimulus controllers are 68,
+not 30 (28 in the apps, 40 in `shared/frontend`). Pagy is in 37 controllers, not
+13. Three views fragment-cache, not zero — `brgen/posts/_post`,
+`brgen/events/_event` and `amber/posts/_post`, each on a composite key that
+includes the viewer's vote. And conditional GET is one response in all of
+`RAILS/`, `bsdports` `ports#show`, not two in brgen: brgen has none.
+
+Two things fall out of the re-measurement, and they are the reason the D section
+is not the afternoon it reads as:
+
+- **The composite cache key forecloses `cached: true`.** `render collection:,
+  cached: true` builds its own key from the partial; `_post` keys on
+  `[post, voted, reposted, quote]` because the card carries per-viewer output.
+  Item 66 cannot be had without giving that up, and giving it up renders one
+  viewer's vote state to everyone.
+- **A per-view counter and a fragment cache cannot both be right.** The
+  marketplace card is the obvious next cache and it renders
+  `listing.views_count`, bumped by `increment!`, which does not touch
+  `updated_at` — so `[listing]` would never bust and the count would freeze.
+  `touch: true` busts on every view and buys nothing. Item 64 names this trap;
+  what it does not say is that the trap is what stops item 61 from spreading.
+
+Item 4 and item 5 are built and the list never knew: `shared/frontend/hotwire.js`
+observes LCP, INP and CLS through `PerformanceObserver` and POSTs them to
+`WebVitalsController`, which logs rather than writing a table — a defensible
+choice on a 1 GB box, and the only half of 4 still open. Items 7 and 8 are built
+too, in `shared/config/initializers/bullet_and_profiler.rb`, which also records
+why they were inert before it existed. Item 21 verifies clean: no
+`data-turbo-cache="false"` exists anywhere in the tree.
 
 #### A · Measure first, because the instrument is usually wrong (1–13)
 
@@ -2344,17 +2373,16 @@ something here is running.
    never hits is visible rather than assumed.
 3. A `RAILS/gates/` check that fails when p95 server time on the route manifest
    crosses a ceiling — a ratchet, like every other gate here. **[deep]**
-4. Real User Monitoring for the three Core Web Vitals via `PerformanceObserver`,
-   posted to a `web_vitals` table. Lab numbers on a Mac are not vm23 on a phone.
+4. Real User Monitoring for the three Core Web Vitals via `PerformanceObserver`.
+   **[built]**, except that the endpoint logs rather than writing a table.
 5. Record **INP**, not FID. FID measured how fast the first tap was
-   acknowledged; INP measures every interaction, which is the thing being
-   complained about.
+   acknowledged; INP measures every interaction. **[built]**
 6. Log the **slowest 1% of interactions with their target element**, so "the app
    feels slow" becomes "the compose button takes 340 ms".
-7. `rack-mini-profiler` is already in the Gemfile — confirm it is mounted in
-   development, since a profiler nobody can open is inert config. **[cheap]**
-8. Bullet for N+1 detection in development and test, failing the suite rather
-   than logging. There are 50 `includes` calls; nothing proves they are enough.
+7. `rack-mini-profiler` is mounted in development by
+   `shared/config/initializers/bullet_and_profiler.rb`. **[built]**
+8. Bullet for N+1 detection in development and test, raising in test rather than
+   logging. **[built]**, in the same initializer.
 9. A boot-time query counter per controller action, asserted in a test. Query
    count is the metric that regresses silently.
 10. Track **payload bytes per route** in the same manifest the probe uses, so a
@@ -2385,8 +2413,8 @@ something here is running.
 20. `data-turbo-permanent` on the nav bar, the theme toggle and the player, so
     they survive a navigation without re-initialising. Three exist already; the
     nav bar is not one of them.
-21. **Instant back/forward** via Turbo's restoration cache — verify it is not
-    being defeated by a `data-turbo-cache="false"` somewhere broad.
+21. **Instant back/forward** via Turbo's restoration cache — verified, nothing
+    defeats it: `data-turbo-cache="false"` appears nowhere. **[built]**
 22. Render a **cached preview frame** on navigation start, then replace it.
     Turbo does this; make sure the preview is not visually identical to a blank
     page.
@@ -2466,9 +2494,9 @@ The cheapest millisecond is the one the reader never waits through.
 
 #### D · Server latency (61–86)
 
-61. **Fragment-cache the feed card.** Zero views cache anything today and Solid
-    Cache is installed and running. This is the single largest server-side win
-    available. **[cheap]**
+61. **Fragment-cache the feed card.** Three views do already; the traps in the
+    preamble are what stops the fourth. Still the largest server-side win
+    available, and no longer **[cheap]**.
 62. Russian-doll caching: post → comments → comment.
 63. Cache the nav bar and footer, which are identical on every page of a host.
 64. **Watch `update_column`** — it skips `updated_at`, so `[record, …]` cache
@@ -2476,9 +2504,11 @@ The cheapest millisecond is the one the reader never waits through.
     the new one. This has bitten this tree before.
 65. `touch: true` on the associations that participate in cache keys.
 66. Collection caching with `cached: true` on the feed's render call — one
-    multi-read instead of N reads. **[cheap]**
-67. **Conditional GET**: `fresh_when`/`stale?` on show actions. Two in the whole
-    app. A 304 is the cheapest response there is. **[cheap]**
+    multi-read instead of N reads. Closed against: the cached partials key on
+    the viewer's vote, and `cached: true` cannot express a composite key.
+67. **Conditional GET**: `fresh_when`/`stale?` on show actions. One in the whole
+    of `RAILS/`, and it is bsdports' `ports#show`. A 304 is the cheapest
+    response there is. **[cheap]**
 68. `expires_in` with `public: true` on genuinely public pages so relayd can
     serve them without touching Falcon.
 69. Cache the expensive count queries; a "1.2k members" that costs a full count
@@ -2607,7 +2637,7 @@ bar on hover is a good idea for a reader and a bad one for forty readers.
 **Do not ship an optimistic update you cannot roll back.** A UI that lies and
 then quietly corrects itself is worse than one that waits.
 
-**Do not tune animations before caching the feed card.** Zero fragment caches
+**Do not tune animations before caching the feed card.** Three fragment caches
 against 54 declared transitions is the wrong ratio, and no easing curve
 compensates for a view that rebuilds itself on every request.
 
@@ -2652,6 +2682,12 @@ with its blocker rather than left implied:
    Stripe Connect account per seller and a platform balance to transfer from.
 3. **The anonymised contact relay** — inbound mail routing on vm23.
 4. **Live streaming, Solidus, pgvector** — infrastructure, listed under Blocked.
+5. **Unblocked, and nobody has asked for them.** Recurring events and ticketing
+   beyond an external link (2.2); coupons, referral credit and bundle pricing
+   (marketplace). Each is a new noun a reader would meet on a page, so the
+   absent model is a product decision rather than a gap — verified 2026-09-10
+   that no column, table or service for any of them exists. An agent choosing
+   what a coupon is would be choosing the product.
 
 ### The stylesheet ceilings, and what a split has to prove — closed 2026-09-10
 
@@ -2679,36 +2715,6 @@ Both splits are paid inside `RAILS/`, so no ceiling in another tree moved.
 `brgen/_messenger_inbox.scss`) and two files out — `RAILS/INSTANT.md` folded into
 this document above, and `shared/app/helpers/application_helper.rb`, which two of
 the three apps shadowed and none of the three reached.
-
-### One model nothing writes
-
-Found 2026-09-05 while giving the nine promiseless models their reason, and
-worth its own record because the marker on each said "nothing writes it", which
-is a finding rather than an exemption.
-
-- **`Stream` — dropped 2026-09-06.** It was the pre-Active-Storage way to hang
-  a media file off a post: `url`, `content_type`, `duration`, created in the
-  first schema batch ten minutes before `posts` existed, never written. Three
-  models had taken the job — `Post has_one_attached :image/:video/:audio` with
-  `Shared::MediaProcessable` for uploads, `Playlist::Track` (`SOURCE_TYPES`
-  upload/youtube/spotify/soundcloud/whyp/direct/dilla) for audio hosted
-  elsewhere, and `LinkPreview` for a pasted URL — with `Tv::LiveStream` and
-  `Tv::StreamChat` owning live video. Wiring it meant a second media path
-  beside Active Storage, which is what `ONE_SOURCE` forbids.
-
-**`Mention` was the second and closed the same day** (`a05def16c`).
-`Shared::Mentionable` writes the rows from `@username` in title and content and
-notifies each named user, which is what `Notification::KINDS` and the
-notifications controller's group order had been promising while `Post has_many
-:mentions` stayed empty. It carries a real validation now rather than the
-marker: one row per named user per post, which is the promise `mention_test`
-makes twice and which no unique index enforces.
-
-`Tagging` was the third candidate and is not one — verify the instrument before
-the finding. A grep for `Tagging.` and `taggings.create` finds only readers,
-because the writer is `self.hashtags = tags` inside
-`Shared::Taggable#sync_hashtags`, an `after_save` on every post. An association
-assignment writes the join row without ever naming its class.
 
 ### Deploy blockers
 
@@ -2940,27 +2946,25 @@ share `critical?`, and the one clean separation by probe field names a data
 source rather than a question. The next check breaches and wants a raise argued
 there, not a shelf.
 
-#### 6. `shared/lib/pub4/` wants a `lint/` shelf, and it costs no files
+#### 6. `shared/lib/pub4/` keeps a flat drawer — decided 2026-09-10, no shelf
 
-13 of the 20 files in that directory end `_lint.rb` — 2,819 lines — and the other
-seven are `deploy_paths`, `ci_guard`, `load_average`, `master_design`,
-`baseline_ratchet`, `dialect_token_drift_check` and `importmap_preload_audit`,
-which are not lints. `MASTER/tools/cohesion.rb --census --tree=RAILS --list`
-proposes the regroup and it is the largest of the sixteen it finds. Moving files
-into `pub4/lint/` leaves the count unchanged, so the ratchet is neutral; the cost
-is renaming `Pub4::ScaleLint` to `Pub4::Lint::Scale` and following it through
-`MASTER/tools/ratchets.rb:318-327` (which derives the constant from the basename
-at line 360, so that mapping changes too), `shared/config/ci.rb:53-60`,
-`gates/lib/source/scale_ratchet.rb` and nine test files. Worth doing, but it is
-an afternoon and it touches a MASTER ratchet, so it is not a first move.
+Decided against and written into `shared/WIRING_NOTES.md`. The shelf is already
+spelled in the filenames — thirteen of the twenty files end `_lint.rb` — the
+file count does not move, so no ratchet is paid either way, and the cost is
+renaming thirteen constants and following them through `MASTER/tools/ratchets.rb`,
+whose `lint_module` derives each constant from the basename. That is a
+cross-tree rename of another tree's ratchet table bought for one path segment.
 
 #### 7. Smaller, verified
 
-- `shared/app/services/scrape.rb` defines bare top-level `Scrape` from an engine
-  autoload root, called from six places in two apps. It works, but the engine
-  puts 18 files at unnamespaced roots. The `Application*` set must stay bare by
-  Rails convention; `scrape.rb`, `site_verification.rb`, `schema_helper.rb` and
-  `passwords_mailer.rb` need not.
+- **The bare top-level names are settled (2026-09-10).** `Scrape` was the one
+  with no framework paying for it — nothing resolves a plain service by bare
+  name — so it is `Shared::Scrape` now, moved with its six call sites. The other
+  sixteen stay bare and `shared/WIRING_NOTES.md` says which kinds and why: a
+  controller, a mailer, a policy and the `Application*` bases are resolved by
+  bare constant from the host, and a model's name is its table name, so
+  `Shared::SiteVerification` would look for `shared_site_verifications` and grow
+  a `class_name:` on every association to it.
 
   **The silent collision this entry recorded is named and gone (2026-09-10).**
   It was `ApplicationHelper`, in two apps at once: brgen's and amber's shadow the
@@ -3083,38 +3087,41 @@ and reads `app/helpers/**/*.rb` as views, because a helper that builds a tag
 builds markup. `unused_selector` 153 to 134, `undefined_class` still 0, and
 nothing became unused in the exchange.
 
-#### Still open, and each is somebody's
+#### Still open, and each is the operator's
 
-- ~~`growth.rails` over its ceiling~~ — paid. Two partials in
-  (`shared/_zen_buttons.scss`, `brgen/_messenger_inbox.scss`), two files out
-  (`RAILS/INSTANT.md` folded into this document, `shared/app/helpers/application_helper.rb`
-  deleted as unreachable). 2372 against 2372, and no ceiling in another tree had
-  to move.
 - **`rendered_suite` fails on about forty contrast pairs, every one a colour.**
   `#d62828` on `#efefef` at 4.36 against a 4.5 floor (the nav badge, on twelve
   surfaces), `#ff5b24` at 2.7 (dating's Vipps line), the playlist teal at 4.44,
   `#6b7fd7` on white at 3.72 (the channel name). All are values the operator
   drew, and the house rule is that an agent may not choose a rendered value. They
   also measure the main checkout's compiled CSS rather than a branch's.
-- **23 English sentences in view copy options**, counted now by
-  `chrome_i18n_lint`'s `empty_copy` at a baseline of 23. Empty-state bodies,
-  action labels and titles that do not open with "No", on apps that default to
-  Norwegian. Each wants a Norwegian sentence, which is product copy.
-- **The reaction bar ships untranslated kind words.** `shared/_reaction_bar`
-  renders `like`, `laugh` and `angry` as literals. `Shared::UiHelper#reaction_glyph`
-  was written to render glyphs instead and nothing ever called it; it is deleted.
-  Closing this is either seven locale keys or the glyphs, and choosing is design.
 - **bsdports' inbox link is unstyled.** It defaulted to a class no stylesheet
   defines — `nav-link`, where the tree spells it `nav_link` — so it has always
   painted as the bare anchor its three nav siblings are. The dead hook is gone;
   whether that link should wear the nav class or the ghost button beside it is a
   rendered decision.
-- **`conversations#index` renders `_conversation_row` only inside `<noscript>`**,
-  while `ConversationsInfiniteScrollReflex` renders the same partial into
-  `#conversation-list` — a list that exists only when JavaScript is off. Either
-  the reflex appends into nothing or the noscript wrapper is wrong. Found while
-  splitting `_messenger_window.scss`, and not chased, because which of the two is
-  the defect is a product answer.
+
+#### Closed on 2026-09-10, and one of the three entries was wrong
+
+- **The 23 English sentences are keys.** `chrome_i18n_lint`'s `empty_copy` is a
+  ban at 0 now. Each sentence went into the `empty.*` or `actions.*` family the
+  same view already drew its title from, with the English kept verbatim in
+  `en.yml` and a bokmål sentence beside it — the copy is the locale file's
+  decision from here, not the template's.
+- **The reaction bar renders `t("reactions.kinds.<kind>")`.** Words, not glyphs:
+  translating what is there preserves the rendered shape, and swapping seven
+  words for seven glyphs is the design decision this entry said it was. Its
+  aria-label went with it — it was built from the kind and the target's Ruby
+  class name, so a Norwegian reader heard "Angry post". `aria_label` 8 → 7.
+- **`conversations#index` was not a product question, and the entry misread the
+  tree.** Nothing renders `_conversation_row` into `#conversation-list`: a
+  reflex appends `beforebegin` its own sentinel, and `shared/_infinite_scroll_sentinel`
+  is not on that page at all. `ConversationsInfiniteScrollReflex` was named by no
+  view, no test and no other file — 32 reflex classes, 31 mounted — so it was
+  deleted, and `infinite_scroll_reflex_contract_test` now asserts every reflex is
+  mounted by a view, which is the check that would have caught it. The messenger
+  inbox is a rail capped at 30 with search above it, and that cap now says so in
+  `load_rail`.
 
 ## OPENBSD
 
@@ -3790,51 +3797,38 @@ at 420ms each. Left alone: this is the operator's own face timing, and the rule
 caps UI transitions, not a deliberate slow reveal. No baseline records them, so
 this line is the only thing standing between them and a well-meaning fix.
 
-### Still open, each verified 2026-09-10
+**Seventeen control classes still paint a visible border, and one question
+covers all of them.** `.deal-cat` at `RAILS/brgen/app/assets/stylesheets/_marketplace.scss:48`
+sets `border: 1px solid var(--border)` beside `background: var(--surface-elevated)`
+on line 47, so it carries both the fill and the line the 2026-08-04 decision
+traded away (`WIRING_NOTES.md:359,378-381`). Its six call sites are all in the
+marketplace engine — takeaway has none — and sixteen other control-like classes
+across eleven stylesheets do the same, from `.carousel-btn` to `.pager-link`. So
+this is not a one-line lint fix on one class: it is whether the 2026-08-04
+decision reaches controls that were never revisited. It changes rendering, so it
+waits for the operator.
 
-A fourth entry left on 2026-09-10. `WORN_TYPE.profiles.map.label_min_px` was
-recorded as having no reader, and it has one — not code, but
-`MASTER/test/test_design_rules_worn_type.rb:48-71`, which names it as
-deliberately unwired and explains why enforcing it means measuring rendered
-label sizes, an operator's call. The same test found a larger unread key the
-entry never mentioned, `rhythm_off_max_pct`, declared in all seven profiles and
-read in none. `data_reach` still counts top-level keys only, and its corpus is
-`MASTER/` alone, so it could not have seen either one — but the gap is
-instrumented where it matters and does not need a backlog line.
+### Closed 2026-09-10, and none of the three was a defect
 
-- **A shared display-type slot is unbuilt.** The file is not under `shared/`:
-  it is `RAILS/brgen/engines/marketplace/app/assets/stylesheets/_vertical_marketplace.scss:42`,
-  `main#main-content > header.market-hero h1`, at (1,1,3) against
-  `_typography.scss:109-119`'s (1,0,3). The comment above it carries the
-  workaround under protest — matching an id is the only way to outrank one. The
-  hero it protects is the real `<header class="market-hero">` at the marketplace
-  listings index, and no display-type opt-out exists anywhere in the fleet. A
-  `:not()` on the shared rule is not the fix: `:not()` takes its argument's
-  specificity, so the exclusion would tie with the override and let source order
-  decide.
-- **`.deal-cat` keeps a border nothing explains, and so do sixteen other
-  controls.** `RAILS/brgen/app/assets/stylesheets/_marketplace.scss:48` sets
-  `border: 1px solid var(--border)` beside `background: var(--surface-elevated)`
-  on line 47, so it carries both the fill and the line the 2026-08-04 decision
-  traded away (`WIRING_NOTES.md:359,378-381`). Two corrections to what this entry
-  used to say: takeaway has no `.deal-cat` call site at all — all six are in the
-  marketplace engine, about nineteen elements plus one per category — and
-  seventeen other control-like classes across eleven stylesheets still paint a
-  visible border, from `.carousel-btn` to `.pager-link`. So this is not a
-  one-line lint fix on one class; it is one fleet-wide question about whether
-  the 2026-08-04 decision reaches controls that were never revisited. The
-  operator is a trained architect and this changes rendering, so it stays a
-  question until he answers it.
-- **playlist forks two scales.**
-  `RAILS/brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss:9,11,16`.
-  Verified 2026-09-10: `--edge-soft` and `--edge-strong` have seven consumers,
-  every one of them inside the playlist engine, and no shared edge scale exists
-  to donate to — shared tokens carry a single `--border`, and `design_tokens.yml`
-  has a radius scale and a space scale but no hairline tier. `SURFACES.md:65`
-  already flags it. `--font-mono: "SF Mono"` is genuinely the fifth typeface:
-  the other four are JetBrainsMono Nerd Font, the system sans, Helvetica Neue
-  and Bricolage Grotesque, and `--font-mono` is declared in exactly two places
-  fleet-wide.
+- **A shared display-type slot stays unbuilt, and the argument is now at the
+  rule.** `_typography.scss` carries it above `main#main-content > header h1`:
+  the marketplace hero is the fleet's only opt-out and matches the id itself to
+  outrank it; lowering the shared rule to a class changes which override wins on
+  every surface that has one, and `:not()` ties rather than wins because it takes
+  its argument's specificity. An opt-out is a design decision about what display
+  type means, not a refactor.
+- **playlist's two scales are one recorded fence and one already-recorded gap.**
+  `SURFACES.md:65` has held the `--edge-*` hairlines against a shared edge scale
+  that does not exist since before this entry was written, so the line was a
+  second copy of it. `--font-mono` is the fifth face and it is deliberate — the
+  vertical is branded on the SF family, stated at the head of
+  `_vertical_playlist.scss`, and the token is scoped to `body.vertical-playlist`
+  so nothing else inherits it. Recorded in `SURFACES.md` under Fences.
+- **`WORN_TYPE.profiles.map.label_min_px` has a reader** — `MASTER/test/test_design_rules_worn_type.rb:48-71`,
+  which names it deliberately unwired and says enforcing it means measuring
+  rendered label sizes. The same test found the larger unread key,
+  `rhythm_off_max_pct`, declared in all seven profiles and read in none.
+  Instrumented where it matters; it does not need a backlog line.
 
 ## From the 2026-08-31 session
 
