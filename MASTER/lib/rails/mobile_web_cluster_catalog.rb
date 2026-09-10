@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Master
-  module Ground
+  module Rails
     class MobileWebClusterCatalog
       Entry = Data.define(:repo, :pattern, :why, :risk, :tags)
 

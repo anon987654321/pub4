@@ -911,6 +911,11 @@ guidance:
 # top-level ones. `lib/builder` counts lib/builder/*.rb and not lib/builder.rb,
 # where the constant actually lives; single-file keys are the shape lib/design.rb
 # and lib/ops.rb already use.
+# 2026-09-10: four keys re-based for three files and no new code. ground gives up
+# 172 body lines, rails takes the 92 of mobile_web_cluster_catalog, fix the 47 of
+# principle_map_repair and io the 33 of atomic_write. The sum is zero on purpose:
+# a move pays nothing toward a breach, so every key here carries the same debt
+# after it as before.
 loc_body_budgets:
   lib/boot: 227
   lib/builder: 252
@@ -920,9 +925,9 @@ loc_body_budgets:
   lib/core: 682
   lib/core.rb: 47
   lib/design.rb: 270
-  lib/fix: 2854
-  lib/ground: 5068
-  lib/io: 4143
+  lib/fix: 2901
+  lib/ground: 4896
+  lib/io: 4176
   lib/master.rb: 136
   lib/ops.rb: 234
   lib/pressure_engine.rb: 115
@@ -930,7 +935,7 @@ loc_body_budgets:
   lib/security_error.rb: 1
   lib/unwrap_error.rb: 103
   lib/pub4: 470
-  lib/rails: 925
+  lib/rails: 1017
   lib/review: 9765
   lib/trace: 1999
   lib/voice: 3181

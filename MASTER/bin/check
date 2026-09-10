@@ -89,7 +89,15 @@ PROFILES = {
                     rake["test:core"], rake["lint:data_singularity"], rake["lint:dedup"], rake["studio"]],
   "contributor" => [rake["test"], rake["spec"], rake["test:subsystems"], rake["security_sweep"],
                     rake["lint:data_singularity"], rake["lint:dedup"], rake["studio"]],
-  "agent"       => [rake["selftest"], rake["lint:data_singularity"], rake["lint:dedup"], rake["studio"]],
+  # lint:word_boundary is here and nowhere else: its subject is a `\b` written
+  # next to punctuation in a rule regex, which is a word boundary that can never
+  # fire, and the agent profile is the one that runs around rule work. It has
+  # cost something four times — TYPE_CHECK's `is_a\?\b` clause was dead from the
+  # day it was written, so half of what OPEN_CLOSED promised never ran. The lint
+  # existed for weeks in no profile at all, which is the defect it detects,
+  # wearing the other coat. 0.2s.
+  "agent"       => [rake["selftest"], rake["lint:data_singularity"], rake["lint:dedup"],
+                    rake["lint:word_boundary"], rake["studio"]],
   # web/test/*.test.mjs evaluate the shipped face sources under node:vm, which is
   # the only way to assert anything about code that only exists inside a browser
   # feature check. Twenty-five of them were in the tree and in no profile, so

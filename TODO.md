@@ -31,7 +31,7 @@ mentioned.
 
 ## MASTER
 
-Everything here was checked against the tree on 2026-09-09 and carries the number
+Everything here was checked against the tree on 2026-09-10 and carries the number
 it read that day. Closed records are deleted rather than marked; `git log` holds
 them. What stays is forward work, the operator decisions, and the false positives
 worth not re-discovering — those last are guards, not history.
@@ -39,82 +39,31 @@ worth not re-discovering — those last are guards, not history.
 ### The tree should explain MASTER — 2026-09-09
 
 The operator's standard: a reader should be able to infer what MASTER is from the
-shape of its directories. `lib/` reads *boot, builder, cli, cognition, core, fix,
-ground, io, pub4, rails, review, trace, voice* today, and most of those
-names carry their own meaning. The one that does not is `ground`, and the reason is
-not its name: `MASTER/lib/ground/README.md:15` gives it a five-clause charter —
-constitution, config, policy, memory, schema — and files have accumulated in it that
-are none of those things.
-
-So this is not a renaming exercise. **Every directory declares its purpose in
+shape of its directories. Every directory declares its purpose in
 `MASTER/PATH_OWNERSHIP.yml`, and the work is to put each file under the purpose that
-matches it.** There `lib/io/` is "tools and external actions" and `lib/ground/` is
-"constitution, config, policy, memory, schema". That single test settles most cases
-without an argument about taste. The charter is one repo-level file, not a
-per-directory one — `lib/ground/README.md:16` reads as though `PATH_OWNERSHIP.yml`
-sits beside it, and it does not.
+matches it. Twenty-two files have left `lib/ground` for that reason and the charter
+now covers what remains.
 
-`lib/ground` is down to 57 files from seventy-one — 50 at the top level and
-the rest nested under policy/ and tool/. Nineteen left on 2026-09-09:
-providers and what they cost went to `io` (`provider_registry`, `runtime_registry`,
-`model_quota`, `model_skip_cache`, `quota_gate`), three external surfaces followed
-(`antigravity`, `dynamic_tools`, `ingress_jobs`), `git_hooks` and `key_rotator` went
-to `io`, session and attention to `cli` (`attention_context`, `intent_router`,
-`subagent_context`, `brain_overlay`), and work and verification to `fix`
-(`checkpoint`, `patch_verifier`, `unfinished_ledger`, `done_checker`,
-`content_dedup_scan`).
+**The question this campaign kept re-opening is settled and written down.** A typed
+reader over a declarative table belongs to `ground` under the schema clause when what
+the table declares is MASTER's own constitution, configuration, policy or memory,
+whether that table sits in `data/` or in a frozen constant in the file. It does not
+when the table's subject is another directory's declared purpose, and it is not a
+schema at all when the file writes the table rather than reading it. The clause is in
+`PATH_OWNERSHIP.yml` and the worked cases are in `lib/ground/README.md`.
 
-Twelve remain in `ground` and belong elsewhere, by subject:
+What is open is one file and it is not a placement question. **`ground/unified_diff_editor.rb`
+has no caller outside its own test** in any of the four trees. It parses, summarises
+and builds unified diffs and nothing asks it to; `code_reach` reads it as reached
+because the test names the constant. It belongs with the unwired declarations below —
+the question is what was meant to apply a diff through it, not whether to delete it.
 
-- *Operator surface*: `operator_playbook`.
-- *File and text mechanics*: `atomic_write`, `frontmatter`, `parameterized_slug`,
-  `unified_diff_editor`. These have no home that matches, and inventing a `util/` is
-  how a tree stops explaining anything. The honest options are to fold each into its
-  one real caller or to name what they actually are.
-- *Catalogue readers*: `map`, `runtime_catalog`, `maturity_scorecard`,
-  `research_thresholds`, `mobile_web_cluster_catalog`, `bootstrap_docs`,
-  `principle_map_repair` — each is a typed reader over one `data/` file, which is
-  arguably `ground`'s "schema" clause and arguably its own subject.
-
-Two cautions for whoever continues. A move is a constant rename, so check for callers
-that write the bare name inside the same module before moving anything —
-`PressureEngine` looked dead to a qualified-name census and is constructed at
-`MASTER/lib/builder.rb:165` on every full boot, though not under `Builder.build_fast`.
-And `growth` charges one per file either way, so a move is free but a split is not.
-
-**A move is not free to the line budgets, and this one was not.** Nothing was added
-and two budgets broke: `lib/io` is 4143 against 3545, 598 over, while `lib/ground`
-fell to 5068 against 5899 and now carries 831 lines of slack. `limits.yml` says a
-breach is paid by extraction or deletion and never by a bigger number, and
-`spine.yml` calls slack the next change grows into the same defect as debt — so the
-honest close is to re-base both keys in one commit that says the lines moved rather
-than grew. Until somebody does, `rake loc_budget` reports a breach nobody caused.
-
-### The budget register has a hole, and a whole subsystem is in it
-
-`data/limits.yml` carries sixteen `loc_body_budgets` keys. Measured with
-`CodeMetrics.body_lines` on 2026-09-09 they cover 393 of `lib/`'s 405 files and
-37,253 of its 38,217 body lines. **Twelve files and 964 lines are in no budget at
-all**, and five of them are a directory:
-
-    lib/cognition/mind.rb        114     lib/builder.rb        214
-    lib/cognition/state.rb        51     lib/master.rb         136
-    lib/cognition/self_model.rb   41     lib/pressure_engine.rb 115
-    lib/cognition/affect.rb       25     lib/unwrap_error.rb   103
-    lib/cognition/attention.rb    22     lib/result.rb          95
-                                         lib/core.rb            47
-                                         lib/security_error.rb   1
-
-`lib/cognition` is live — `Cognition::Mind.new` is built at
-`MASTER/lib/boot/master_boot.rb:40`, written as a bare constant inside `module
-Master`, which is the shape that hides a caller from a census. It is 253 body lines
-that no budget has ever priced.
-
-`lib/builder.rb` at 214 is the same defect the `lib/design` and `lib/ops` keys were
-corrected for: `lib/builder` matches the directory and misses the file beside it.
-Those two now read `lib/design.rb` and `lib/ops.rb`, so the fix is known — it was
-just not applied here. Add a `lib` root key and a `lib/cognition` key, or fold these
-into subsystems. An unbudgeted 964 lines is where growth goes to hide.
+Two cautions for whoever moves the next file. A move is a constant rename, so check
+for callers that write the bare name inside the same module first — `PressureEngine`
+looked dead to a qualified-name census and is constructed at `MASTER/lib/builder.rb:165`
+on every full boot, though not under `Builder.build_fast`. And re-base the source and
+destination `loc_body_budgets` keys in the same commit, by the body lines that moved
+and no more: the sum has to be zero, because a move pays nothing toward a breach.
 
 ### Waiting on an operator decision
 
@@ -233,64 +182,60 @@ only after a deploy and `rcctl restart master`. The browser half comes from
 `Policy.browser_payload` in the page, so a stale `face.runtime.js` on the box would
 keep the old fallback for anyone whose payload fails to load.
 
-### The ratchets that are off — measured 2026-09-09
+### The ratchets that are off — measured 2026-09-10
 
-`MASTER/bin/pub4 measure` reports six rows off. Read it there rather than here; this
+`MASTER/bin/pub4 measure` reports two rows off. Read it there rather than here; this
 list goes stale in a day and has done so repeatedly.
 
-    spine.lib_body_ceiling   38217 / 37464   OVER +753
-    self_findings.law          294 / 289     OVER +5
-    self_findings.registry      55 / 58      SLACK -3
-    dup_census                  31 / 30      OVER +1
-    sprawl.lone_dirs            21 / 20      OVER +1
-    growth.rails              2372 / 2371    OVER +1
+    spine.lib_body_ceiling   38209 / 37464   OVER +745
+    growth.studio              146 / 153     SLACK -7
 
-**Three of the six are one leftover file, and deleting it closes all three.**
-`5084461dc` moved `RAILS/gates/support/user_flow/design_contracts.rb` out to
-`RAILS/gates/support/user_flow_design_contracts.rb` and never deleted the original.
-The two are byte-identical at 9,712 bytes — the largest set in the whole dup census —
-and the live reader is the flat one (`RAILS/gates/lib/live/user_flow.rb:11`). The
-orphan is one duplicate set, one lone directory and one source file, so it is
-simultaneously `dup_census` +1, `sprawl.lone_dirs` +1 and `growth.rails` +1. This is
-the half-landed move this file records elsewhere: a path-scoped commit takes the
-addition and leaves the deletion behind.
+`spine.lib_body_ceiling` has its own section below and is the one real debt.
+`growth.studio` is seven files under, and it is STUDIO's to ratchet rather than
+MASTER's: the row is measured in a shared checkout with dilla work live in it, and a
+low recorded from another session's tree is the mistake this file records twice
+already.
 
-`self_findings.registry` at 3 under its ceiling is the other shape worth naming —
-slack the next change grows into. Lower it or say why not.
+`self_findings.law` and `sprawl.lone_dirs` read slack by eight and one, and neither is
+MASTER's either. Both count across all four trees, three of which had sessions in them
+the day this was measured.
 
-### Today's moves broke three accountings and added no code
+### Line budgets: eight of twenty-four over, and `law/` is nearly double
 
-`rake lint:cohesion` fails: `cohesion_census` reads 32 families against a ceiling of
-30, and it names the arrivals rather than making the next reader diff by hand —
-`MASTER/lib/cli#context`, `MASTER/lib/io#git` and `MASTER/lib/io#registry`, with
-`MASTER/tools#reach` gone. `lib/io` now holds three families of three:
-`git`, `web` and `registry`.
+`rake loc_budget`, measured 2026-09-10:
 
-Together with `lib/io` 598 over its budget and `lib/ground` sitting on 831 lines of
-slack, that is three gates red for one reason: **nineteen files changed directory and
-every instrument that prices a directory noticed.** None of it is new code. The close
-is one commit that re-bases `lib/io` and `lib/ground` and either regroups the three
-`io` families or prices the ceiling — and says in its message that the lines moved.
+    law           1613 / 852      lib/review   10456 / 9765
+    lib/voice      3395 / 3181    lib/trace     2035 / 1999
+    lib/pub4        696 / 470     lib/core       762 / 682
+    lib/boot        276 / 227     lib/ground    4904 / 4896
 
-### Line budgets: nine of sixteen over, and `law/` is nearly double
+`lib/io` came off this list by deletion rather than by a bigger number, which is what
+`limits.yml` asks for: `Io::Gateway::Adapter` was a contract module nothing included,
+and which would have broken any adapter that did include it, so five body lines closed
+a four-line breach.
 
-`rake loc_budget`, measured 2026-09-09:
+**The other eight were read for something to delete and there is nothing.** Not a
+refusal to look. `CrossFileAnalysis` over `lib/` and `law/` together reports one
+copy-paste block and four `DRY` structural pairs, and no clone inside any over-budget
+directory: the pairs are `markdown_files`/`files`, `read_js`/`read_erb`,
+`grade_for`/`band_for`, and two five-line `deep_merge`s in `ground/config.rb` and
+`cognition/state.rb`. Collapsing all four saves about thirty lines against an overage
+of two thousand, and the `deep_merge` pair costs `cognition` a dependency on `ground`
+to save four. `code_reach` is 0 of 405 and the largest method body in `lib/` is 20
+lines. The two biggest files in `lib/review` are registries of `RuleDSL.rule` calls,
+where shrinking means deleting rules, and `law/practice.rb` at 558 is the same shape
+one layer up: rules carrying a statement, a fix and two fixtures each, which is the
+form `law/law.rb:210-215` enforces structurally.
 
-    law           1613 / 852      lib/review   10451 / 9765
-    lib/io        4143 / 3545     lib/voice     3395 / 3181
-    lib/fix       2854 / 2643     lib/trace     2035 / 1999
-    lib/pub4       696 / 470      lib/core       762 / 682
-    lib/boot       276 / 227
-
-`limits.yml` says a breach is paid by extraction or deletion and never by a bigger
-number. `law/` at 89% over is the one to open next: the twin census of 2026-08 retired
-42 duplicated rules and the file set has grown back past where the budget was set.
-`lib/io` and `lib/fix` are the ground moves above and are an accounting fix rather
-than a fold.
+So these eight record real growth, and each wants the sponsor `spine.yml` describes —
+a commit naming what the lines buy — rather than a sweep. `lib/ground` at eight over
+is the exception in kind rather than in size: it is another session's eight lines,
+sitting above a ceiling re-based twice for moves, and it closes the day anything at
+all leaves that directory.
 
 ### `spine.lib_body_ceiling` cannot be paid by deletion or extraction
 
-38,217 against 37,464, 753 over, and it has been over for weeks. Two questions were
+38,209 against 37,464, 745 over, and it has been over for weeks. Two questions were
 asked before arguing about a raise and both are settled.
 
 **Nothing in `lib/` is dead.** `tools/code_reach.rb` asks of a file what `data_reach`
@@ -367,14 +312,32 @@ rather than as "the spine held".
 ### Declared and never wired
 
 The repo's own dominant defect at method level: a check that was built and never
-hooked up. Deleting one destroys the evidence, so they are recorded. **The list was
-five pairs and is now one — re-verified 2026-09-09, and four of the five were wrong.**
+hooked up. Deleting one destroys the evidence, so they are recorded.
 
-- `MASTER/lib/ground/tool.rb:100` `fake_execution_risk?` and `:104`
-  `operational_claim?` — zero callers in any of the four trees. Both read as
-  anti-simulation guards, which `soul.yml` makes absolute. **This is the whole of the
-  live list.** The question is not "delete or keep": what was supposed to call this,
-  and why doesn't it?
+- **The anti-simulation guard on MASTER's own replies is a whole method, not two
+  predicates, and closing it is a posture decision.** `Ground::Tool::Protocol`
+  declares `fake_execution_risk?` (`tool.rb:100`) and `operational_claim?` (`:104`)
+  and nothing calls either; only its `brief` is reached, from `cli/brain_overlay.rb`,
+  which puts the protocol in the system prompt. The reader they were written for is
+  `Voice::OutputGuard#validate`, which asks the same question in its own words —
+  `COMPLETION_CLAIM`, `MODIFICATION_CLAIM` and `EVIDENCE_MARKERS` — and **is itself
+  called by nothing but `test_output_guard.rb`.** `Voice::Renderer:51` calls
+  `sanitize` and never `validate`, so all six of its issue checks are inert, and the
+  two Protocol predicates are the inert half of an inert method. What the next person
+  needs is not a caller but an answer: when MASTER's own reply claims work it cannot
+  show, does it warn, append the evidence hint it already appends, or refuse? That is
+  posture, and it is the operator's. The one thing neither side detects today is
+  Protocol's own third requirement — a shell block presented as execution — and
+  `COMMAND_BLOCK` is the regex for it.
+- `MASTER/lib/ground/unified_diff_editor.rb` — the whole file, not a method.
+  `parse`, `applyable?`, `summary` and `build_single_file` are named by
+  `test_unified_diff_editor.rb` and by nothing else in any tree. `Fix::PatchApplier`
+  shells out to `patch(1)` instead, and `ResearchThresholds` declares
+  `edit_format: :unified_diff` as policy with no code between the two. Same question:
+  what was supposed to apply a diff through this?
+- `MASTER/lib/ground/maturity_scorecard.rb` — the same shape one layer up.
+  `data/maturity.yml` is a real scorecard and `rules.yml:330` says the personality
+  prompt reads it; the only callers of `MaturityScorecard` are its own test.
 
 What this entry used to claim, corrected because a stale orphan list sends the next
 reader hunting callers for methods that have them or do not exist:
@@ -455,11 +418,6 @@ Neither is a guess.
   census measures Zeitwerk's file-to-constant mapping and calls it a dead abstraction.
   One finding does not pay for a rule.
 
-  That one finding is open and wants a hand rather than a detector.
-  `Master::Io::Gateway::Adapter` declares `render`, raises, and nothing in the repo
-  includes it — while `Gateway#render_to_adapter` duck-types straight past it on
-  `adapter.respond_to?(:render)`. The contract is a comment with a raise in it.
-
 #### Larger AST work — multi-session projects
 
 Each is its own sitting, with an owner and a design, not a sweep.
@@ -476,61 +434,32 @@ Each is its own sitting, with an owner and a design, not a sweep.
   non-Ruby artifacts — documents, stylesheets, and dilla's render graph.
 - **A clone → extract-method autofix.** `DUPLICATE_CODE` detects; nothing extracts.
 
-### `rake test` completes, and four tests are red — 2026-09-09
+### `rake test` completes, and one test is red — 2026-09-10
 
-**This section said `rake test` "cannot complete on a dev Mac at all", aborting on
-`cannot load such file -- rack/test`. That is no longer true and it was worth
-checking: `rack-test` resolves here (`MASTER/Gemfile:32`, lock 2.2.0) and the task
-runs to the end.** Believing it is why three dead test files went unnoticed once, and
-believing it now would hide four live failures.
+**This section once said `rake test` "cannot complete on a dev Mac at all", aborting
+on `cannot load such file -- rack/test`. That has not been true for some time:
+`rack-test` resolves here (`MASTER/Gemfile:32`, lock 2.2.0) and the task runs to the
+end.** Believing it is why three dead test files went unnoticed once.
 
-    2217 runs, 6736 assertions, 4 failures, 0 errors, 11 skips   (391s)
+    2227 runs, 6774 assertions, 1 failures, 0 errors, 12 skips   (157s)
 
-- `TestRatchets#test_no_ratchet_is_over_its_ceiling` — the five over rows above.
-- `TestRatchets#test_no_ratchet_is_slack` — `self_findings.registry` 55/58.
-- `TestCapabilityInventory#test_constitution_still_names_the_incident_rules`
-  (`test/test_capability_inventory.rb:31`) — the constitution no longer names
-  `batch_delete` in its incident-rule list. Either the rule was renamed and the
-  inventory was not told, or a rule earned by an incident has been dropped. Read the
-  incident before deciding which.
-- `TestDocPaths#test_every_repo_path_a_doc_cites_exists` (`test/test_doc_paths.rb:177`)
-  — `MASTER/START_HERE.md` cites `web/storage/` and `web/log/` and neither exists.
+- `TestRatchets#test_no_ratchet_is_over_its_ceiling` — `spine.lib_body_ceiling`, and
+  the section above says why it stays.
 
-**`docs/SEVERANCE.md` does not exist, and three documents call it a source of
-truth.** `MASTER/DECISIONS.md:124,126` and `MASTER/START_HERE.md:89` both name it;
-`MASTER/docs/` is not a directory at all. The standing policy on media-generation
-severance survives only as `DECISIONS.md:124-128`, and that is where to read it. Do
-not restore `io/lora_pipeline.rb` or `video_chain.rb`; if the LoRA training loop needs
-generation capability again, express it as `lib/core/world.rb` handlers.
+`test_no_ratchet_is_slack` skips rather than fails whenever the measured trees are
+dirty, which in a shared checkout is most of the time; read it in a clean worktree
+before believing it green.
 
-**And `doc_paths` cannot see that citation, which is the more useful half.**
-`repo_path?` (`test/test_doc_paths.rb:91-105`) only treats a token as a repo path when
-its head segment still resolves — at the repo root, as a tree name, or beside the
-document. `web/` resolves as `MASTER/web`, so `web/storage/` is checked and fails;
-`docs/` resolves nowhere, so `docs/SEVERANCE.md` is dropped as "not a path" before
-anything asks whether it exists. **Deleting a whole directory makes every citation
-into it invisible to the gate that exists to catch stale citations** — the same shape
-as an exemption outliving its subject, in the check rather than in the allow-list.
-`TODO.md` is not in that test's `DOCS` list either, so nothing checks the paths in
-this file.
+**`docs/SEVERANCE.md` does not exist, and both documents that name it now say so.**
+`MASTER/DECISIONS.md:126` records the rename and the deletion, and
+`MASTER/START_HERE.md:89` writes "the record of it went with `docs/`". The standing
+policy on media-generation severance survives only as `DECISIONS.md:124-128`, and that
+is where to read it. Do not restore `io/lora_pipeline.rb` or `video_chain.rb`; if the
+LoRA training loop needs generation capability again, express it as
+`lib/core/world.rb` handlers.
 
-### `rule_coverage` reads 5, not 0, and its id needle never resolves
-
-`RuleCoverageRule` (`MASTER/lib/review/scan/rules/meta_rules.rb:44-101`) examines every
-`.rb` under `lib/review/scan/rules/`, which is the scope fix working. Run over all
-sixteen files it reports **five** classes with no test naming them: `RubocopRule` and
-`ReekRule` (`external_linter_rules.rb`), `LearnedSmellsRule` (`meta_rules.rb`),
-`ExplicitRule` and `NestingDepthRule` (`structural_rules.rb`).
-
-One of the five is the instrument. `LearnedSmellsRule` is named in
-`MASTER/spec/learned_smells_rule_spec.rb`, and the rule globs `test/` only — so a
-class covered from `spec/` reads as uncovered. And **its second needle has never
-matched anything**: `subclasses` looks for `@id = "..."` while every rule in the tree
-declares `declare id:`, so only the class-name needle does any work. Coverage is
-deliberately a mention rather than a file named after the class — the bulk tests reach
-rules by id through the scanner, and demanding a file per class would rebuild the same
-false-positive machine pointing the other way — but a needle that cannot fire is not
-part of that argument.
+`TODO.md` is not in `test_doc_paths`' `DOCS` list, so nothing checks the paths in this
+file. That is the one half of that gate still open.
 
 ### One principle has no scanner rule, not three
 
@@ -598,23 +527,6 @@ audit`, so it is what the audit hands you after the earlier gates pass.
 Re-measured 2026-09-09. Every number here was wrong by a little in the previous
 version, which is the argument for re-running the instrument rather than quoting it.
 
-**`cohesion.rb`'s constant column is wrong wherever a directory's files reopen one
-module, and the census does not say so.** `ruby MASTER/tools/cohesion.rb
-MASTER/lib/cli/command_registry` still proposes `agent_commands.rb ->
-commands/agent.rb   CommandRegistry -> Commands::Agent` and seven more like it. Eleven
-of the thirteen files there declare `module Master / module CLI / module
-CommandRegistry` — one module reopened — so there is no per-file constant to rename
-and the proposal would split one module into eight, breaking every call site.
-`MASTER/data/autoload.yml:17` states this explicitly under
-`reopens_a_constant_defined_elsewhere` and names the files at `:30-40`, with
-`rake lint:autoload` proving each entry still necessary. **`cohesion.rb` never reads
-it** — its only file reads are `data/cohesion_census.yml` at `:310` and `:357`, and
-`autoload.yml` appears once as advice text inside a checklist string at `:225`. The fix
-is to teach the tool that file: a family whose members are on the ignore list gets a
-merge proposal or nothing, never a rename. The mutually-exclusive `tools/` proposals
-this entry used to name are gone — `MASTER/tools#reach` left the census, and `tools`
-now proposes one family.
-
 **Twenty-five files in `lib/` are below the sprawl threshold, and the merge is not
 free.** `FileSprawlRule` (`MASTER/lib/review/scan/rules/meta_rules.rb:284`) run over
 `lib/` names 25, of which two are lone-file directories —
@@ -634,19 +546,16 @@ do not sweep them.
 **Declaration order in `lib/` is already right, and the residual is constants, not
 methods.** A Prism walk over all 405 files, tracking visibility per
 class/module/singleton scope, finds **zero** scopes where a public non-`initialize`
-def precedes the first one. Two backward call edges survive reading and are worth
-doing.
+def precedes the first one. The two backward call edges this entry named — `run`
+below twenty helpers in `pub4/gate_chain.rb`, and `run_forever` above its only caller
+in `fix/fix_loop/background_runner.rb` — are both reordered.
 
-`MASTER/lib/pub4/gate_chain.rb` is the clearest. It is `module_function` at `:52` with
-no `private` marker anywhere, its sole entry point is `run` at `:232`, and its only
-caller is `MASTER/bin/pub4:74`. A reader of the repo's most-used command meets twenty
-helpers — `stages` at `:61`, then `council`, `act_on`, `picks_in`, `gate`,
-`rails_gates`, `suites`, `sprawl`, `capture`, `dirty`, `verdict`, `classify` — before
-the method that calls them. Move `run`, `explain` and `report` up under
-`module_function` and mark the rest `private_class_method`. Second,
-`MASTER/lib/fix/fix_loop/background_runner.rb:10` puts the 18-line thread body
-`run_forever` above `start_background!` at `:31`, its only caller; swap them, or make
-`run_forever` private.
+**What is left of that entry is a marker nobody can add.** It also asked for
+`gate_chain`'s helpers to be `private_class_method`, and they cannot be while
+`test_gate_chain` drives `stages`, `council_fix?`, `picks_in`, `classify` and
+`verdict` directly. Reaching five methods through `send` to satisfy a marker is a
+worse trade than the marker is worth; if somebody wants the surface narrowed, the
+work is deciding which of the five the test should reach through `run` instead.
 
 The measurable residual is constants: 161 constants in `lib/` have exactly one use 80
 or more lines below their declaration. The worst are
@@ -721,15 +630,16 @@ helper for two callers buys nothing.
 `code_reach` is 0 of 0 and correct: no file in `lib/` is unreached. Re-running
 `tools/code_reach.rb` answers nothing new.
 
-**Fifteen of the sixteen individually-run lint gates are green** —
-`lint:dedup` (2 known cross-file duplicates, 0 new), `lint:reader_singularity` (451
-source files, 7 data files with more than one reader), `lint:doc_citations`,
-`lint:instruments`, `lint:constant_collisions` (398 requirable of 2,473, 0
-collisions), `lint:capability`, `lint:scan_coverage` (414 files), `lint:autoload` (45
-ignores, all still necessary), `lint:frozen`, `lint:rule_reach`, `lint:models` (412
-live, 0 stale ids), `lint:principle_trace`, `core_smoke`, `security_sweep`. **The
-sixteenth, `lint:cohesion`, is red** — see the three new families above. Do not
-re-audit the green ones; audit why they were once unreachable instead.
+**All sixteen individually-run lint gates are green** — `lint:dedup` (2 known
+cross-file duplicates, 0 new), `lint:reader_singularity` (451 source files, 7 data
+files with more than one reader), `lint:doc_citations`, `lint:instruments`,
+`lint:constant_collisions` (398 requirable of 2,473, 0 collisions), `lint:capability`,
+`lint:scan_coverage` (414 files), `lint:autoload` (45 ignores, all still necessary),
+`lint:frozen`, `lint:rule_reach`, `lint:models` (412 live, 0 stale ids),
+`lint:principle_trace` (81 of 147 registered rules untraced, ratcheted to 81 on
+2026-09-10), `lint:cohesion` (30 families, ratcheted to 30), `core_smoke`,
+`security_sweep`. Do not re-audit the green ones; audit why they were once
+unreachable instead.
 
 ### Inert law and config
 
@@ -803,11 +713,11 @@ parent, and a name that says nothing on its own. `FILE_SPRAWL` in the scan regis
 measures the first two for MASTER's `.rb` files and skips `law/`, `core/`, `test/` and
 `spec/`, so it reports zero here and means only that.
 
-**21 one-file directories against a ceiling of 20.** One of the twenty-one is the
-half-landed move above and closes by deletion. The rest are mandated: OS install
+**19 one-file directories against a ceiling of 20**, all of them mandated: OS install
 paths, Zeitwerk, ports fixtures, OmniAuth, PWA, and dilla vocal, render and stem
-takes. Read the live figure from `MASTER/bin/pub4 measure`, not from here. The map is
-`TREE.md`.
+takes. The row reads one under and the ceiling is not MASTER's to lower — it counts
+all four trees. Read the live figure from `MASTER/bin/pub4 measure`, not from here.
+The map is `TREE.md`.
 
 Calibrate a new kind against a real file before adding it. The first pass called 130
 RAILS paths too deep and 26 names vague, and every one was the rule misreading a path
@@ -1060,17 +970,17 @@ Two ratchet rows over the same corpus of 3,033 files across eleven trees plus
 `MASTER/web`. `data/self_findings.yml` carries every finding with its file and line, so
 the arrival names itself.
 
-**`self_findings.law` is 294 against 289, and the +5 is two rules.**
-`NO_CHANGELOG_COMMENT` 16 → 17 and `PROSE_OMIT_QUALIFIERS` 18 → 22; ten arrived and
-five left, and eight of the ten are in `STUDIO/dilla`. The recorded members are the
-snapshot at 289: `NULLISH_COALESCING` 76, `NO_COLUMN_ALIGN` 42, `GUARD_CLAUSE` 27,
+**`self_findings.law` is 279 against 287 and slack by eight**, having been 294 against
+289 the day before. It moves that far in a day because it counts every tree, and the
+bulk of what moves is `STUDIO/dilla`. Lowering the ceiling from a shared checkout
+records a low the committed tree does not hold, so this is dilla's owner's row to
+ratchet on a settled tree. The recorded members are the snapshot at 289:
+`NULLISH_COALESCING` 76, `NO_COLUMN_ALIGN` 42, `GUARD_CLAUSE` 27,
 `NO_MULTIPLE_LANGUAGES` 22, `NO_INLINE_SCRIPT_BLOCK` 21, `I18N_COVERAGE` 18,
-`PROSE_OMIT_QUALIFIERS` 18, `NO_CHANGELOG_COMMENT` 16 and sixteen smaller. Re-record the
-row against the landed dilla work rather than raising the ceiling to meet it —
-`spine.yml` names that as the swallowing it refuses. **Read the member list, not the
-number.**
+`PROSE_OMIT_QUALIFIERS` 18, `NO_CHANGELOG_COMMENT` 16 and sixteen smaller. **Read the
+member list, not the number.**
 
-**`self_findings.registry` is 55 against 58 and slack, and what is left is two
+**`self_findings.registry` is 55 against 55, and what is left is two
 rules.** `NO_GOD_CLASS` 29 live (32 recorded) and `SILENT_RESCUE` 26. All 26
 `SILENT_RESCUE` are under `STUDIO/` and nineteen under `STUDIO/dilla/`, which is the
 operator decision above. `NO_GOD_CLASS` is more than ten public methods or more than
@@ -3611,20 +3521,12 @@ a finding is a hypothesis until the instrument has been checked.
 
 ### The instrument
 
-- **`growth.*` counts files on disk, not tracked files.** `pub4_growth_rows`
-  (`MASTER/tools/ratchets.rb:252`) walks the working tree, so another session's
-  untracked stems render raises `growth.studio`. `entrypoint_count` in the same
-  file already reads `git ls-files`; done when `growth.*` does too.
 - **`bin/pub4 measure` cannot say why a row moved.** There is no `--why` and no
   `--since`: three censuses record their members and the rest record a bare
   integer, so "OVER +826" cannot be attributed and a session cannot diff its own
   effect on the ceilings before pushing. Done when `--why <row>` prints the
   members behind a number and `--since <ref>` prints every row's delta against a
   commit.
-- **`rake lint:word_boundary` runs in no profile.** `MASTER/Rakefile:701` invokes
-  `tools/word_boundary_lint.rb` and nothing else calls either. The
-  `\b`-next-to-punctuation trap it catches has been recorded four times. Done
-  when `bin/check` runs it.
 - **A silent detector still reads like a clean tree.** `bin/pub4 rule <ID>
   --corpus all` answers that one rule at a time; nothing reports the set. Done
   when `bin/pub4 measure` marks the rules that fire nowhere in the fleet beside

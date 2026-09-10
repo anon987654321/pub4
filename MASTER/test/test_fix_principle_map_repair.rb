@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require_relative "../lib/ground/principle_map_repair"
+require_relative "../lib/fix/principle_map_repair"
 
 class TestPrincipleMapRepair < Minitest::Test
   FIXTURE = <<~YAML
@@ -40,7 +40,7 @@ class TestPrincipleMapRepair < Minitest::Test
   # ids and must survive; only the two made-up ones should go.
   def test_fix_removes_only_genuinely_dangling_rule_ids
     with_fixture do |root|
-      fixed = Master::Ground::PrincipleMapRepair.fix!(root:)
+      fixed = Master::Fix::PrincipleMapRepair.fix!(root:)
 
       assert_equal [%w[accessibility FAKE_DANGLING_RULE], %w[other_principle ANOTHER_FAKE_RULE]], fixed
 
@@ -52,7 +52,7 @@ class TestPrincipleMapRepair < Minitest::Test
 
   def test_fix_backs_up_the_original_file
     with_fixture do |root|
-      Master::Ground::PrincipleMapRepair.fix!(root:)
+      Master::Fix::PrincipleMapRepair.fix!(root:)
 
       backup = File.join(root, "data", "principle_map.yml.bak")
       assert File.exist?(backup)
@@ -74,7 +74,7 @@ class TestPrincipleMapRepair < Minitest::Test
             tags: []
       YAML
 
-      assert_equal [], Master::Ground::PrincipleMapRepair.fix!(root:)
+      assert_equal [], Master::Fix::PrincipleMapRepair.fix!(root:)
       refute File.exist?(File.join(root, "data", "principle_map.yml.bak"))
     end
   end
@@ -84,7 +84,7 @@ class TestPrincipleMapRepair < Minitest::Test
   def test_refuses_to_touch_anything_if_registry_looks_unpopulated
     with_fixture do |root|
       Master::Review::Scan::Rule.stub(:registry, []) do
-        assert_equal [], Master::Ground::PrincipleMapRepair.fix!(root:)
+        assert_equal [], Master::Fix::PrincipleMapRepair.fix!(root:)
       end
 
       refute File.exist?(File.join(root, "data", "principle_map.yml.bak"))

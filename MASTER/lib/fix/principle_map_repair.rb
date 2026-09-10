@@ -4,7 +4,7 @@ require "fileutils"
 require "set"
 
 module Master
-  module Ground
+  module Fix
     # bin/doctor --fix's config self-repair (OpenClaw's doctor --fix
     # pattern): known, safe-to-automate drift in principle_map.yml.
     #

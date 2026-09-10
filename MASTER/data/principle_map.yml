@@ -4,7 +4,7 @@ schema: 1
 # 2026-08-07: closed 8 gaps (circuit_breaker, least_privilege, secure_by_default,
 # composition_over_inheritance, boy_scout_rule, durability, user_control, sovereignty)
 # by linking existing kernel/unit rules.
-rule_trace_ceiling: 101
+rule_trace_ceiling: 81
 version: v110.0-restored
 source: merged master.yml fossil → MASTER runtime principle_map
 clusters:

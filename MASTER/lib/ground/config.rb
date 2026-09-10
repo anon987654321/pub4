@@ -2,7 +2,7 @@
 
 require "yaml"
 require "fileutils"
-require_relative "atomic_write"
+require_relative "../io/atomic_write"
 
 module Master
   module Ground
@@ -74,7 +74,7 @@ module Master
         end
       end
 
-      include AtomicWrite
+      include Master::Io::AtomicWrite
 
       def save!
         FileUtils.mkdir_p(File.dirname(@path))

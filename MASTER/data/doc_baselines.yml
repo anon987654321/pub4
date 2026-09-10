@@ -117,12 +117,6 @@ doc_paths:
       checked before cutting them.
 
       '
-  - path: web/public/assets/
-    why: 'A generated web directory, absent from a clean checkout and gitignored.
-      Same class as MASTER/output/ and MASTER/knowledge/ in test_doc_paths'' repo-wide
-      list, but cited by this document alone.
-
-      '
   OPENBSD/DECISIONS.md:
   - path: config/puma.rb
     why: 'The sentence asserts the absence: none of the three apps has a config/puma.rb,

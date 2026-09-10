@@ -1,26 +1,7 @@
 ---
-# 32, priced rather than regrouped, on 2026-09-09. Three families arrived and
-# one left, and every arrival is the intended effect of a move rather than new
-# code: lib/io#git is git_hooks joining git_context and git_operations,
-# lib/io#registry is provider_registry and runtime_registry joining
-# circuit_breaker_registry, and lib/cli#context is attention_context and
-# subagent_context joining the turn's own context. Nine files left lib/ground
-# for the directory whose declared purpose covers them, so files that share a
-# subject now share a directory — which is what makes a family visible here.
-#
-# This census exists because SMALL_FILES, NO_GOD_CLASS and INTEGRATED_SYSTEMS
-# all say split and none says these belong together, so a family is a merge
-# candidate. These three are not: installing a hook, reading repository state
-# and committing are three jobs, and a provider registry, a runtime registry
-# and a circuit-breaker registry answer three different questions. Merging
-# them to satisfy a count would buy the number and lose the reason.
-#
-# MASTER/tools#reach left when another session folded a census away.
-families: 32
+families: 30
 family_members:
 - MASTER/lib/cli#context
-- MASTER/lib/cli/command_registry#commands
-- MASTER/lib/cli/command_registry#work
 - MASTER/lib/fix#loop
 - MASTER/lib/io#git
 - MASTER/lib/io#registry

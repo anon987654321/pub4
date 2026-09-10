@@ -77,6 +77,28 @@ class TestRatchets < Minitest::Test
                     "and RAILS_LINTS did not follow"
   end
 
+  # The growth population is git's, not the working tree's. This checkout is
+  # shared, and a walk of the disk charged one session for another's uncommitted
+  # files: an untracked stems render raised growth.studio against a session that
+  # had never opened STUDIO. Both directions, because a census that counted
+  # nothing would pass the first assertion on its own.
+  def test_growth_counts_tracked_files_and_not_the_working_tree
+    intruder = File.join(Pub4::Ratchets::ROOT, "MASTER", "test", "untracked_growth_probe.rb")
+    before = Pub4::Ratchets.tree_source_count("MASTER")
+    File.write(intruder, "# frozen_string_literal: true\n")
+    forget_tracked_files
+
+    assert_equal before, Pub4::Ratchets.tree_source_count("MASTER"),
+                 "an untracked file is somebody's work in progress, not this tree's growth"
+    assert_includes Pub4::Ratchets.tracked_source_files, "MASTER/tools/ratchets.rb",
+                    "a tracked source file must still be counted"
+  ensure
+    File.delete(intruder) if intruder && File.exist?(intruder)
+    forget_tracked_files
+  end
+
+  def forget_tracked_files = Pub4::Ratchets.instance_variable_set(:@tracked_source_files, nil)
+
   # Each row must say where its number lives, or a failure is unactionable.
   def test_every_row_names_its_source
     assert_empty rows.reject { |row| row.source.to_s.match?(/\w/) }.map(&:name)

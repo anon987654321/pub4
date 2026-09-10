@@ -8,7 +8,7 @@ require "tmpdir"
 # half-written file here is a corrupted runtime, and the failure path (leaving a
 # .master_atomic_ temp behind on error) was never exercised.
 class AtomicWriteTest < Minitest::Test
-  Writer = Class.new { include Master::Ground::AtomicWrite }
+  Writer = Class.new { include Master::Io::AtomicWrite }
 
   def setup
     @writer = Writer.new

@@ -19,25 +19,25 @@ class TestRuleCoverageRule < Minitest::Test
 
   ONE_CLASS = <<~RUBY
     class WidgetRule < Rule
-      def initialize = @id = "WIDGET"
+      declare id: "WIDGET"
     end
   RUBY
 
   TWO_CLASSES = <<~RUBY
     class WidgetRule < Rule
-      def initialize = @id = "WIDGET"
+      declare id: "WIDGET"
     end
     class SprocketRule < Rule
-      def initialize = @id = "SPROCKET"
+      declare id: "SPROCKET"
     end
   RUBY
 
   # The rule keys off a path containing /review/scan/rules/, so the fixture
-  # supplies one; only the test directory has to exist on disk.
-  def messages(code, test_files: {}, path: "/x/lib/review/scan/rules/widget_rules.rb")
+  # supplies one; only the source directory has to exist on disk.
+  def messages(code, test_files: {}, dir: "test", path: "/x/lib/review/scan/rules/widget_rules.rb")
     Dir.mktmpdir do |root|
-      FileUtils.mkdir_p(File.join(root, "test"))
-      test_files.each { |name, body| File.write(File.join(root, "test", name), body) }
+      FileUtils.mkdir_p(File.join(root, dir))
+      test_files.each { |name, body| File.write(File.join(root, dir, name), body) }
       Rules::RuleCoverageRule.new(root:).check(code, path:).map(&:message)
     end
   end
@@ -62,7 +62,34 @@ class TestRuleCoverageRule < Minitest::Test
   end
 
   def test_the_id_matches_in_either_case
-    assert_empty messages(ONE_CLASS, test_files: { "test_bulk.rb" => "widget" })
+    assert_empty messages(ONE_CLASS, test_files: { "test_bulk.rb" => "rule(:widget)" })
+  end
+
+  # A bare word is not a citation of an id. `explicit` and `reek` are ordinary
+  # English, and reading them out of a comment would report as covered every rule
+  # whose id happens to be a word somebody used — coverage a run did not earn.
+  def test_a_bare_word_is_not_coverage
+    refute_empty messages(ONE_CLASS, test_files: { "test_bulk.rb" => "# widget behaviour" })
+  end
+
+  # The id needle read `@id = "..."` and no Rule subclass in this tree has ever
+  # written that; every one declares itself with `declare id:`. So the needle
+  # matched nothing, only the class-name half did any work, and the fixtures here
+  # kept it green by writing a shape the tree does not use. Both directions: the
+  # shape the tree writes must be found, and the shape it abandoned must not.
+  def test_the_id_is_read_from_the_declaration_the_tree_writes
+    assert_empty messages(ONE_CLASS, test_files: { "test_bulk.rb" => 'rule("WIDGET")' })
+    refute_empty messages(<<~RUBY, test_files: { "test_bulk.rb" => 'rule("WIDGET")' })
+      class WidgetRule < Rule
+        def initialize = @id = "WIDGET"
+      end
+    RUBY
+  end
+
+  # LearnedSmellsRule's only test is spec/learned_smells_rule_spec.rb, and a rule
+  # covered from spec/ read as uncovered — this rule inventing a gap of its own.
+  def test_a_class_named_from_spec_is_covered
+    assert_empty messages(ONE_CLASS, test_files: { "widget_rule_spec.rb" => "WidgetRule" }, dir: "spec")
   end
 
   # The name of the test file is not the question. This is the false positive

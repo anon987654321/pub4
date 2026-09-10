@@ -51,6 +51,41 @@ module Pub4
 
     module_function
 
+    # The entry point, and the two methods under it are the whole of what
+    # bin/pub4 calls. Everything below is a stage or a helper one of these three
+    # reaches, so the file reads in the order the ladder runs rather than the
+    # order it was written.
+    def run(scan_only:, only: nil, list: false)
+      all = stages(scan_only:)
+      selected = only&.any? ? all.select { |stage| only.include?(stage.name) } : all
+      abort "gate: no stage named #{only.join(", ")} (have: #{all.map(&:name).join(", ")})" if selected.empty?
+      return explain(selected, scan_only:) if list
+
+      report(selected, scan_only:)
+    end
+
+    def explain(selected, scan_only:)
+      puts "gate: #{scan_only ? "scan-only" : "full-fix"} — #{selected.size} stage(s)"
+      selected.each { |s| puts format("  %-9s %s%s", s.name, s.purpose, s.mutates ? "  [writes]" : "") }
+      0
+    end
+
+    def report(selected, scan_only:)
+      foreign = dirty
+      mode = scan_only ? "scan-only (writes nothing)" : "full-fix (writes)"
+      puts "gate: #{mode} — #{selected.map(&:name).join(" -> ")}"
+      announce_foreign(foreign)
+
+      seen = foreign.dup
+      results = selected.each_with_index.map do |stage, index|
+        puts "gate: #{index + 1}/#{selected.size} #{stage.name}"
+        result = run_stage(stage, seen)
+        seen |= result.changed
+        result
+      end
+      summarise(results, foreign)
+    end
+
     # The ladder. Order is not taste: the deterministic fixers run first so
     # everything after measures the fixed tree; the ratchets run after the suites
     # because a fix moves the numbers; sprawl runs after the ratchets because it
@@ -227,37 +262,6 @@ module Pub4
       return "skipped" if exitstatus == 3
 
       "failed"
-    end
-
-    def run(scan_only:, only: nil, list: false)
-      all = stages(scan_only:)
-      selected = only&.any? ? all.select { |stage| only.include?(stage.name) } : all
-      abort "gate: no stage named #{only.join(", ")} (have: #{all.map(&:name).join(", ")})" if selected.empty?
-      return explain(selected, scan_only:) if list
-
-      report(selected, scan_only:)
-    end
-
-    def explain(selected, scan_only:)
-      puts "gate: #{scan_only ? "scan-only" : "full-fix"} — #{selected.size} stage(s)"
-      selected.each { |s| puts format("  %-9s %s%s", s.name, s.purpose, s.mutates ? "  [writes]" : "") }
-      0
-    end
-
-    def report(selected, scan_only:)
-      foreign = dirty
-      mode = scan_only ? "scan-only (writes nothing)" : "full-fix (writes)"
-      puts "gate: #{mode} — #{selected.map(&:name).join(" -> ")}"
-      announce_foreign(foreign)
-
-      seen = foreign.dup
-      results = selected.each_with_index.map do |stage, index|
-        puts "gate: #{index + 1}/#{selected.size} #{stage.name}"
-        result = run_stage(stage, seen)
-        seen |= result.changed
-        result
-      end
-      summarise(results, foreign)
     end
 
     def run_stage(stage, seen)

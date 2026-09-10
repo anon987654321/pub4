@@ -236,25 +236,27 @@ module Pub4
     # it SLACK and also fails, so a win only lands when its ceiling is lowered to
     # lock it — the exact discipline that keeps sprawl from regrowing into slack.
     # Pure Ruby, so it stays in fast mode and runs before every commit.
-    # Two filters, because there are two ways a file is not this tree's source.
-    # git already knows every generated and scratch path — renders, stems, the
-    # quality sidecar, MASTER/runtime/ — so ask it rather than grow one more
-    # clause per incident: a name-shaped regex cannot catch a sidecar sitting at
-    # a tree's root, and every clause added to try shadowed something real.
-    # `log` shadowed lib/trace/log/, three tracked Ruby files the census never
-    # saw; git ignores the log directories it was written for, so it is gone.
-    # TREE_EXCLUDE keeps what remains: paths git tracks that are still not ours
-    # to count -- vendored JavaScript, compiled asset builds, dilla's project
-    # state and its committed renders.
+    # The population is what git tracks, not what is on disk. This checkout is
+    # shared and a working-tree walk charged one session for another's
+    # uncommitted files — an untracked stems render raised growth.studio against
+    # a session that had never opened STUDIO. Tracking is also the honest moment
+    # for this row: a file joins the tree when it is committed. entrypoint_count
+    # has asked git all along, and this is the same question.
+    # TREE_EXCLUDE keeps what git tracks that is still not ours to count --
+    # vendored JavaScript, compiled asset builds, dilla's project state and its
+    # committed renders. It has to stay a regex because a name-shaped clause
+    # cannot catch a sidecar sitting at a tree's root, and every clause added to
+    # try shadowed something real: `log` hid lib/trace/log/, three tracked Ruby
+    # files the census never saw.
     TREE_EXCLUDE = %r{/(\.git|node_modules|tmp|renders|[\w.-]*stems|samples|scratch|project|crate|venv|\.venv|site-packages|vendor|storage|\.cache|builds|coverage|\.master|knowledge|output)/|/public/assets/|\.wav\.quality\.json\z}
     TREE_SOURCE_EXT = %w[.rb .rake .erb .scss .css .js .mjs .yml .yaml .md .sh .ksh .exp .html .json].freeze
 
     def pub4_growth_rows
       ceilings = YAML.safe_load_file(File.join(MASTER, "data/spine.yml")).fetch("pub4_source_ceilings")
       ceilings.map do |tree, ceiling|
-        Row.new(name: "growth.#{tree.downcase}", current: tree_source_count(File.join(ROOT, tree)),
+        Row.new(name: "growth.#{tree.downcase}", current: tree_source_count(tree),
                 ceiling:, direction: :down, source: "MASTER/data/spine.yml",
-                note: "on-disk source files; a new file folds in or raises this")
+                note: "tracked source files; a new file folds in or raises this")
       end
     rescue StandardError => e
       [Row.new(name: "growth", current: nil, ceiling: nil, direction: :down,
@@ -288,28 +290,23 @@ module Pub4
       end
     end
 
-    def tree_source_count(dir)
-      candidates = Dir.glob(File.join(dir, "**", "*"), File::FNM_DOTMATCH).select do |path|
-        File.file?(path) && path !~ TREE_EXCLUDE && TREE_SOURCE_EXT.include?(File.extname(path).downcase)
-      end
-      (candidates - git_ignored(candidates)).size
+    def tree_source_count(tree)
+      tracked_source_files.count { |path| path.start_with?("#{tree}/") }
     end
 
-    # One batched call for the whole tree, so this stays fast enough for a hook.
-    # Nothing is rescued here. git exits 1 when no path matched, which is a
-    # normal answer and not an exception; the only thing that raises is git
-    # being absent, and a growth row measured without knowing what the
-    # repository ignores is the blind instrument this file exists to catch.
-    # pub4_growth_rows turns it into an unreadable row, which fails.
-    def git_ignored(paths)
-      return [] if paths.empty?
+    # One call for all four trees, so this stays fast enough for a hook. Nothing
+    # is rescued: a growth row measured without asking git what it tracks is the
+    # blind instrument this file exists to catch, and pub4_growth_rows turns the
+    # raise into an unreadable row, which fails.
+    def tracked_source_files
+      @tracked_source_files ||= begin
+        out, status = Open3.capture2e("git", "-C", ROOT, "ls-files", "-z")
+        raise "git ls-files failed: #{out}" unless status.success?
 
-      out = IO.popen(["git", "-C", ROOT, "check-ignore", "--stdin"], "r+", err: File::NULL) do |io|
-        io.write(paths.join("\n"))
-        io.close_write
-        io.read
+        out.split("\0").select do |path|
+          "/#{path}" !~ TREE_EXCLUDE && TREE_SOURCE_EXT.include?(File.extname(path).downcase)
+        end
       end
-      out.to_s.lines.map(&:chomp)
     end
 
     # The RAILS lints, each a Pub4 module with its own BASELINES.
