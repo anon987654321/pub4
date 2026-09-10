@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "pub4/deploy_paths"
+require "operator/deploy_paths"
 
 require "json"
 require "net/http"
@@ -125,7 +125,7 @@ source: :postpro) if processed
       "file://#{path}"
     end
 
-    def postpro_script = Pub4::DeployPaths.postpro_script&.to_s
+    def postpro_script = Operator::DeployPaths.postpro_script&.to_s
 
     def log(message)
       Rails.logger.warn("NewsletterVisuals: #{message}") if defined?(Rails)

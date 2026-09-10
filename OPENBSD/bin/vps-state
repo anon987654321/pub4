@@ -7,7 +7,7 @@ require "yaml"
 
 ROOT = File.expand_path("../..", __dir__)
 $LOAD_PATH.unshift(File.join(ROOT, "MASTER", "lib"))
-require "pub4/environment"
+require "operator/environment"
 
 APPS = %w[brgen amber bsdports].freeze
 STAMP_DIR = "/var/db/pub4"
@@ -32,7 +32,7 @@ rescue StandardError
 end
 
 def port_listening?(port)
-  Pub4::Environment.port_open?(port) ? "listening" : "closed"
+  Operator::Environment.port_open?(port) ? "listening" : "closed"
 end
 
 def deploy_stamp(app)
@@ -76,7 +76,7 @@ end
 
 def app_row(name, port)
   dev_sha = git_short(ROOT)
-  deployed_root = Pub4::Environment.deployed_app_root(name)
+  deployed_root = Operator::Environment.deployed_app_root(name)
   stamp = deploy_stamp(name)
   deployed_sha = if File.directory?(deployed_root)
                    short = git_short(deployed_root)
@@ -104,8 +104,8 @@ def print_deploy_in_progress(status)
   puts "           DEPLOY IN PROGRESS: #{status['step']} (since #{status['started_at']}, #{flag})"
 end
 
-unless Pub4::Environment.on_vps?
-  warn "vps-state: skip — not on VPS (use: bin/pub4 vps state --remote)"
+unless Operator::Environment.on_vps?
+  warn "vps-state: skip — not on VPS (use: bin/operator vps state --remote)"
   exit 0
 end
 

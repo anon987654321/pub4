@@ -40,8 +40,8 @@ The four trees, and how each is entered:
 - `OPENBSD/` — the deploy pipeline and the VPS runbook. Production is one box, vm23.
 - `STUDIO/` — dilla makes beats, postpro grades images, repligen and lora generate.
 
-Two commands cover most work. `MASTER/bin/pub4 gate` runs the whole ladder over
-all four trees; `MASTER/bin/pub4 measure` prints every ratchet with its ceiling.
+Two commands cover most work. `MASTER/bin/operator gate` runs the whole ladder over
+all four trees; `MASTER/bin/operator measure` prints every ratchet with its ceiling.
 Run the smallest check that proves the work, and never report done without its
 output.
 
@@ -74,6 +74,50 @@ write, and how many run without a model. Read it when the full catalogue will
 not fit.
 
 Ruby is pinned to 3.4.9: run `RBENV_VERSION=3.4.9 rbenv exec ruby ...`.
+
+## You decide, and you close
+
+You have decision authority over anything in `TODO.md`, and the backlog is
+worked by closing entries rather than by annotating them. An entry closes two
+ways: you do it, or you decide against it and write the argument into the file
+that owns the decision — `MASTER/DECISIONS.md`, `OPENBSD/DECISIONS.md`, or the
+comment beside the code the decision is about. Then delete the entry. A record
+of finished work is closed by deleting it; git holds the why, and a backlog
+that keeps its own history stops being a backlog.
+
+What that authority does not extend to: anything that changes a rendered value
+— a colour, a font, a sound, a graded look — and anything that needs money, a
+registrar login, or a console on vm23. Name the seam and leave it. The operator
+is a trained architect, so restore or ask; never invent a layout fix.
+
+Three rules bound the work itself.
+
+**Verify the instrument before the finding.** A census here has been wrong more
+often than the reasoning it fed: a dead-file sweep was wrong forty times out of
+forty because it searched for `context_provider` while every caller wrote
+`Master::Ground::ContextProvider`. Before calling config inert, find the reader.
+Before calling code dead, prove the scan on a case you already know the answer
+to. An entry whose premise turns out to be false is the most valuable thing you
+can bring back — say so plainly rather than working around it.
+
+**Never move a ratchet to absorb your own growth.** `MASTER/bin/operator
+measure` must end where it started, and slack is the same defect as debt: a
+fall must be recorded, with a comment naming what paid for it. `spine.yml`'s
+budgets may be raised only in a commit that names what the lines buy, and
+`consecutive_raises_allowed` caps how many raises may stand before a deletion
+is owed. A good reason is always available, which is why the number needs
+teeth.
+
+**A check that reads source text measures a spelling.** Many gates and specs
+here assert on how code is written rather than on what it does, so a rename
+breaks them while the behaviour is correct. When that happens, fix the check to
+measure behaviour — run the tool's own `--explain` and read its answer, or
+split one regex into the separate facts it was conflating. Restoring the old
+spelling to appease a grep is how the check stops meaning anything, and
+`MASTER/test/test_source_assertions.rb` ratchets the habit down.
+
+Take a worktree, verify with the whole suite rather than a subset, and report
+what you decided against as carefully as what you built.
 <!-- agent-contract:end -->
 
 ## Working alone in this repo
@@ -281,7 +325,7 @@ Run the smallest proof in `START_HERE.md` "Checks by change type". On failure: `
 
 ## Do not touch
 
-`START_HERE.md` "Do Not Touch". Isolated checkout if more than one agent is in the repo: `MASTER/bin/pub4 worktree <name>` → work in `../pub4-<name>`. The shared tree has one git index; `git commit -a` sweeps other sessions into your commit. Path-scoped commits (`git commit -- <paths>`) are the minimum if you must share a tree.
+`START_HERE.md` "Do Not Touch". Isolated checkout if more than one agent is in the repo: `MASTER/bin/operator worktree <name>` → work in `../pub4-<name>`. The shared tree has one git index; `git commit -a` sweeps other sessions into your commit. Path-scoped commits (`git commit -- <paths>`) are the minimum if you must share a tree.
 
 ## Patch closeout
 

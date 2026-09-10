@@ -68,7 +68,7 @@ spine:
   #
   # 38120 -> 38098 on 2026-09-10, and all of it was paid by two deletions that
   # were not tidying. Io::GitHooks wrote a pre-commit hook from the boot path
-  # while bin/pub4 hooks points core.hooksPath at OPENBSD/dev/githooks, which git
+  # while bin/operator hooks points core.hooksPath at OPENBSD/dev/githooks, which git
   # honours instead — so the file it wrote could never run on a guarded tree.
   # RuleRegistryAudit::Report#lines and #hatch_line rendered an eight-row report
   # nothing printed; the tripwire they were credited with is the test asserting
@@ -94,7 +94,7 @@ spine:
   core_files: 7
 
 # The coarse sprawl net over all four trees: one source-file ceiling each, so a
-# new file anywhere fails `bin/pub4 measure` until it folds into an existing one
+# new file anywhere fails `bin/operator measure` until it folds into an existing one
 # or the ceiling is raised here with the reason in the commit. dilla's engine has
 # a finer per-part guard in STUDIO/gate.rb. On-disk source files (code, style,
 # markup, config, docs), vendored/generated excluded.
@@ -129,8 +129,8 @@ pub4_source_ceilings:
   # for a tier). Locking the number here is what stops the remaining two files
   # of slack from being spent without an argument.
   #
-  # 1038 -> 1040 is lib/pub4/gate_chain.rb and test/test_gate_chain.rb: the one
-  # ladder `bin/pub4 gate` runs, and the test that pins its order, which of its
+  # 1038 -> 1040 is lib/operator/gate_chain.rb and test/test_gate_chain.rb: the one
+  # ladder `bin/operator gate` runs, and the test that pins its order, which of its
   # stages may write, and its third state. Two files against five invocations
   # nobody ran together. bin/test-safety went the other way in the same commit
   # and costs nothing here, having no extension to count.
@@ -346,7 +346,7 @@ pub4_source_ceilings:
   # visual_contract_lint_test.rb. The rest is source and each folds into nothing:
   # gates/lib/source/scale_ratchet.rb, gates/support/css_spacing_scans.rb and
   # css_weight.rb (two scans lifted out of a support file doing three jobs),
-  # shared/concerns/shared/mentionable.rb, shared/lib/pub4/master_design.rb, and
+  # shared/concerns/shared/mentionable.rb, shared/lib/operator/master_design.rb, and
   # the migration that drops streams. Out: brgen/app/models/stream.rb,
   # shared/concerns/shared/followable.rb, and two files that became one elsewhere.
   #
@@ -529,7 +529,7 @@ pub4_source_ceilings:
 #
 # A ceiling at the honest count rather than at the two the prose asks for: a
 # target nobody can reach is a ratchet everyone learns to override. It falls as
-# they collapse, and a new script fails `bin/pub4 measure` until somebody argues
+# they collapse, and a new script fails `bin/operator measure` until somebody argues
 # for it here.
 #
 # 28 -> 27 folds bin/test-safety away. It ran 21 hand-picked spec files from no

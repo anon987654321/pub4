@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "pub4/deploy_paths"
+require "operator/deploy_paths"
 require "yaml"
 
-script = Pub4::DeployPaths.radio_bergen_study_script
-raise LoadError, "radio_bergen_study.rb not found in #{Pub4::DeployPaths.radio_bergen_study_candidates.map(&:expand_path)}" unless script
+script = Operator::DeployPaths.radio_bergen_study_script
+raise LoadError, "radio_bergen_study.rb not found in #{Operator::DeployPaths.radio_bergen_study_candidates.map(&:expand_path)}" unless script
 require script.to_s
 
 class RadioBergenStudyTest < ActiveSupport::TestCase

@@ -27,7 +27,7 @@
 require "prism"
 require "set"
 
-module Pub4
+module Operator
   module MethodGraph
     ROOT = File.expand_path("../..", __dir__)
     MASTER = File.expand_path("..", __dir__)
@@ -200,4 +200,4 @@ module Pub4
   end
 end
 
-Pub4::MethodGraph.report if $PROGRAM_NAME == __FILE__
+Operator::MethodGraph.report if $PROGRAM_NAME == __FILE__

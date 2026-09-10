@@ -14,7 +14,7 @@ require "yaml"
 require_relative "../tools/reader_singularity"
 
 class TestReaderSingularity < Minitest::Test
-  def self.report = @report ||= Pub4::ReaderSingularity.run
+  def self.report = @report ||= Operator::ReaderSingularity.run
 
   def setup
     @report = self.class.report
@@ -33,8 +33,8 @@ class TestReaderSingularity < Minitest::Test
   # A ceiling above the real count is slack, and slack is how a ratchet stops
   # measuring. Same rule data/spine.yml holds itself to.
   def test_no_ceiling_is_slack
-    slack = Pub4::ReaderSingularity.ceilings.filter_map do |name, ceiling|
-      actual = (Pub4::ReaderSingularity.readers[name] || []).size
+    slack = Operator::ReaderSingularity.ceilings.filter_map do |name, ceiling|
+      actual = (Operator::ReaderSingularity.readers[name] || []).size
       "#{name}: ceiling #{ceiling}, actual #{actual}" if actual < ceiling
     end
 
@@ -48,7 +48,7 @@ class TestReaderSingularity < Minitest::Test
   def test_the_detector_finds_the_shape_it_exists_to_find
     assert_operator @report["loaded"], :>, 15,
                     "only #{@report['loaded']} data files detected as loaded — the detector stopped reading"
-    assert_includes Pub4::ReaderSingularity.readers.fetch("rules.yml"), "MASTER/lib/boot/data.rb",
+    assert_includes Operator::ReaderSingularity.readers.fetch("rules.yml"), "MASTER/lib/boot/data.rb",
                     "the detector does not see the canonical rules.yml loader"
   end
 
@@ -66,7 +66,7 @@ class TestReaderSingularity < Minitest::Test
       RUBY
 
       found = Hash.new { |hash, key| hash[key] = [] }
-      Pub4::ReaderSingularity.scan(path, found)
+      Operator::ReaderSingularity.scan(path, found)
 
       assert_includes found.keys, "rules.yml",
                       "the detector misses a hand-built path into data/ through the shared helper — " \

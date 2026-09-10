@@ -7,7 +7,7 @@ require_relative "../../../../OPENBSD/lib/gate_result"
 require_relative "../../../../OPENBSD/lib/deploy_inventory"
 require_relative "../../../tools/crawl_support"
 require_relative "../../support/design_metrics"
-require_relative "../../../shared/lib/pub4/master_design"
+require_relative "../../../shared/lib/operator/master_design"
 
 module Deploy
   # P2: measure design_rules.yml (type, contrast, touch, spacing, measure)
@@ -63,7 +63,7 @@ module Deploy
         @result.fail("design_metrics: missing MASTER/data/rules.yml")
         return @result
       end
-      @rules = Pub4::MasterDesign.blocks(MASTER_RULES)
+      @rules = Operator::MasterDesign.blocks(MASTER_RULES)
       @tokens = File.file?(TOKENS) ? YAML.safe_load_file(TOKENS) : {}
 
       @result.checked!(SOURCE_CHECKS.size)

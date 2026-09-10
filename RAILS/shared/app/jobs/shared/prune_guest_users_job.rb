@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "pub4/load_average"
+require "operator/load_average"
 
 module Shared
   # Delete guest rows nobody is behind any more.
@@ -95,7 +95,7 @@ module Shared
     # Skipped rather than slowed when the box is loaded: a queue worker competing
     # with a deploy or a CI run is how the shed starts.
     #
-    # Read through Pub4::LoadAverage, which asks sysctl and returns nil rather
+    # Read through Operator::LoadAverage, which asks sysctl and returns nil rather
     # than zero when it cannot tell. /proc/loadavg does not exist on OpenBSD:
     # reading it there raises ENOENT, and a bare rescue around that answers
     # "not busy" on every tick of the only machine this guard exists for.
@@ -117,11 +117,11 @@ module Shared
     # The 5-minute average was 1.77 at that same moment: it describes the box
     # rather than the last thing to touch it. A prune that genuinely loads the
     # machine still raises it, just over minutes instead of instantly, which is
-    # the behaviour wanted from a brake. Pub4::CiGuard gates on the same field.
+    # the behaviour wanted from a brake. Operator::CiGuard gates on the same field.
     def busy?
       return false if Rails.env.test?
 
-      load5 = Pub4::LoadAverage.five
+      load5 = Operator::LoadAverage.five
       if load5.nil?
         Rails.logger.warn("PruneGuestUsersJob: cannot read load average, skipping this run")
         return true

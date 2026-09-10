@@ -18,8 +18,8 @@ module Master
         return index if key == INDEX_KEY
 
         if key == "deploy"
-          require_relative "../pub4/operator_docs"
-          return Master::Pub4::OperatorDocs.render_deploy
+          require_relative "../operator/operator_docs"
+          return Master::Operator::OperatorDocs.render_deploy
         end
 
         file = load_file_sections[key]

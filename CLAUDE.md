@@ -27,7 +27,7 @@ renamed.
 |---|---|---|
 | `MASTER/` | A constitutional AI runtime in pure Ruby. The primary product. | `MASTER/bin/master "<instruction>"` |
 | `RAILS/` | Three Rails 8 apps: **brgen** (a city social network; its verticals are mounted engines), **amber** (wardrobe), **bsdports**. | `RAILS/bin/triangle up` |
-| `OPENBSD/` | The deploy pipeline and the VPS runbook. Production is one box, `vm23`. | `MASTER/bin/pub4 vps state` |
+| `OPENBSD/` | The deploy pipeline and the VPS runbook. Production is one box, `vm23`. | `MASTER/bin/operator vps state` |
 | `STUDIO/` | Media tools. **dilla** makes beats, **postpro** grades images, **repligen**/**lora** generate. | `ruby STUDIO/dilla/dilla.rb` |
 
 Nothing else sits at the repo root but this file, `TODO.md` — the single
@@ -42,14 +42,14 @@ root for weeks because of it. They belong under
 ## Commands
 
 ```zsh
-MASTER/bin/pub4 gate                 # every gate in the repo, fixing as it goes
-MASTER/bin/pub4 gate --explain       # the ladder, without running it
-MASTER/bin/pub4 gate --scan-only     # the same ladder, writing nothing
-MASTER/bin/pub4 status               # what is dirty, per tree
-MASTER/bin/pub4 test                 # the suites
-MASTER/bin/pub4 measure              # every ratchet, current vs ceiling
-MASTER/bin/pub4 worktree <name>      # your own checkout — see the first trap
-MASTER/bin/pub4 vps state | deploy   # the box
+MASTER/bin/operator gate                 # every gate in the repo, fixing as it goes
+MASTER/bin/operator gate --explain       # the ladder, without running it
+MASTER/bin/operator gate --scan-only     # the same ladder, writing nothing
+MASTER/bin/operator status               # what is dirty, per tree
+MASTER/bin/operator test                 # the suites
+MASTER/bin/operator measure              # every ratchet, current vs ceiling
+MASTER/bin/operator worktree <name>      # your own checkout — see the first trap
+MASTER/bin/operator vps state | deploy   # the box
 
 cd MASTER && bin/check               # ordinary code
 cd MASTER && bin/check --profile=agent   # law, scanners, fix loop
@@ -62,7 +62,7 @@ Run the smallest check that proves the work, and do not report done without its
 output. `--profile=agent` may fail on known debt tagged `agent-ignore`; do not
 chase scan noise on unrelated patches.
 
-`bin/pub4 gate` is the whole ladder in one command: the scanner over all four
+`bin/operator gate` is the whole ladder in one command: the scanner over all four
 trees with autofix on, every RAILS gate, every suite, the ratchets, the sprawl
 census, and last the council. It writes by default and says which files each
 stage changed, under that stage's name, so a bad fix is attributable to the
@@ -74,14 +74,14 @@ as skipped and exits 3 rather than counting as a pass.
 `MASTER/bin/master "<instruction>"` is the repo-wide instruction surface — the
 runtime booted so `data/soul.yml` and the sibling trees all resolve. Bare
 `MASTER/bin/master` opens a session, and slash commands work as in
-`MASTER/bin/cli` because it is that runtime. `MASTER/bin/pub4` is the operator
+`MASTER/bin/cli` because it is that runtime. `MASTER/bin/operator` is the operator
 surface. Two surfaces, no third.
 
 ## Five traps, in the order they will bite you
 
 1. **The checkout is shared, so take a worktree by default.** Several agents edit
    this tree at once. `git commit -a` sweeps up someone else's half-finished work,
-   and `git push` publishes every commit beneath yours. Prefer `MASTER/bin/pub4
+   and `git push` publishes every commit beneath yours. Prefer `MASTER/bin/operator
    worktree <name>` for any change past a trivial one-file edit — a clean tree with
    no other session's dirt is worth the setup, and it is how this file was last
    edited. Merge it back and delete the worktree and its branch in the same
@@ -103,7 +103,7 @@ surface. Two surfaces, no third.
 
 ## Working in a shared index
 
-`MASTER/bin/pub4 hooks` installs two guards. `pre-commit` refuses a commit
+`MASTER/bin/operator hooks` installs two guards. `pre-commit` refuses a commit
 spanning more than one top-level tree — the `git commit -a` signature — unless
 `PUB4_CROSS_TREE=1`, and prints everything it leaves behind. `pre-push` refuses
 to publish more than one commit unless `PUB4_PUSH_ALL=1`, listing each with its
@@ -182,7 +182,7 @@ that is what `git log` and the decision records are for.
 
 **Every README carries one voice.** It opens with a bold, visionary paragraph, then
 plain Strunk & White prose a regular person follows — no code blocks, no lists, no
-tables — and it passes `bin/pub4 lint` — the `README_PROSE` rule in `MASTER/lib/review/scan/rules/cosmetic_rules.rb` enforces it, because a convention is a rule, not a paragraph an agent skims. Redo a folder's
+tables — and it passes `bin/operator lint` — the `README_PROSE` rule in `MASTER/lib/review/scan/rules/cosmetic_rules.rb` enforces it, because a convention is a rule, not a paragraph an agent skims. Redo a folder's
 README before you push that folder, so the door to it is never stale. `MASTER/README.md`
 is the reference.
 
@@ -222,6 +222,21 @@ needless words. Put emphatic words at the end. Keep related words together.
 Avoid fancy words. Revise and rewrite. Do not overwrite. Do not overstate. Do
 not explain too much. Use figures of speech sparingly. Prefer the standard to
 the offbeat. Make sure the reader knows who is speaking. Use orthodox spelling.
+
+## You decide, and you close
+
+You have decision authority over `TODO.md`. An entry closes when you do it, or
+when you decide against it and write the argument into the file that owns the
+decision — then delete the entry. A record of finished work is closed by
+deleting it. The authority stops at anything that changes a rendered value (a
+colour, a font, a sound, a graded look) and anything needing money, a registrar
+login, or a console on vm23: name the seam and leave it.
+
+The bounds are in `MASTER/AGENTS.md`, under the same heading, and they are the
+three this repo keeps relearning — verify the instrument before the finding,
+never move a ratchet to absorb your own growth, and fix a check that measures a
+spelling rather than restoring the spelling. Read them there; this is a
+pointer.
 
 ## Where the rest lives
 

@@ -1,17 +1,17 @@
 # frozen_string_literal: true
 
-require "pub4/deploy_paths"
+require "operator/deploy_paths"
 
 module Brgen
   # Shared Radio Bergen manifest loader — pub2 index.html archaeology split into data + Rails.
   class RadioBergenManifest
     class << self
       def manifest_path
-        Pub4::DeployPaths.first_file(manifest_candidates)
+        Operator::DeployPaths.first_file(manifest_candidates)
       end
 
       def lessons_path
-        Pub4::DeployPaths.first_file(lessons_candidates)
+        Operator::DeployPaths.first_file(lessons_candidates)
       end
 
       # One candidate now, not four. The three fallbacks pointed into
@@ -27,8 +27,8 @@ module Brgen
         [
           rails_root.join("config/radio_bergen/archive_lessons.yml"),
           rails_root.join("../../../MASTER/data/pub_archive_restore.yml").expand_path,
-          Pub4::DeployPaths.repo_join("MASTER/data/pub_archive_restore.yml"),
-          Pathname.new("#{Pub4::DeployPaths::DEFAULT_REPO}/MASTER/data/pub_archive_restore.yml")
+          Operator::DeployPaths.repo_join("MASTER/data/pub_archive_restore.yml"),
+          Pathname.new("#{Operator::DeployPaths::DEFAULT_REPO}/MASTER/data/pub_archive_restore.yml")
         ]
       end
 
@@ -42,13 +42,13 @@ module Brgen
         [
           rails_root.join("config/radio_bergen/sonic.yml"),
           rails_root.join("../../../STUDIO/dilla/reference_sonic.yml").expand_path,
-          Pub4::DeployPaths.repo_join("STUDIO/dilla/reference_sonic.yml"),
-          Pathname.new("#{Pub4::DeployPaths::DEFAULT_REPO}/STUDIO/dilla/reference_sonic.yml")
+          Operator::DeployPaths.repo_join("STUDIO/dilla/reference_sonic.yml"),
+          Pathname.new("#{Operator::DeployPaths::DEFAULT_REPO}/STUDIO/dilla/reference_sonic.yml")
         ]
       end
 
       def sonic_learnings_path
-        Pub4::DeployPaths.first_file(sonic_learnings_candidates)
+        Operator::DeployPaths.first_file(sonic_learnings_candidates)
       end
 
       def sonic_learnings

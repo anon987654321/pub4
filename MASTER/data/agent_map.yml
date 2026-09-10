@@ -231,7 +231,7 @@ patch_briefs:
     deploy: vps-deploy master
     post: ruby RAILS/tools/generate_face_root_css.rb
   OPENBSD/etc/rc.d/master:
-    check: MASTER/bin/pub4 status
+    check: MASTER/bin/operator status
     topic: deploy
     tests: []
     deploy: doas cp OPENBSD/etc/rc.d/master /etc/rc.d/master

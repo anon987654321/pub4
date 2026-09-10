@@ -13,7 +13,7 @@ require "minitest/autorun"
 require_relative "../tools/do_not_touch"
 
 class TestDoNotTouch < Minitest::Test
-  def self.report = @report ||= Pub4::DoNotTouch.run
+  def self.report = @report ||= Operator::DoNotTouch.run
 
   def setup
     @report = self.class.report
@@ -53,25 +53,25 @@ class TestDoNotTouch < Minitest::Test
       ## Next Section
     MD
 
-    parsed = Pub4::DoNotTouch.parse(doc)
+    parsed = Operator::DoNotTouch.parse(doc)
 
     assert_equal 2, parsed.size
     assert_includes parsed[0][1], "test_core_no_lib_backedges.rb"
     assert_includes parsed[1][1], "remote host"
-    assert_empty parsed.flat_map { |number, text| Pub4::DoNotTouch.check(number, text) }
+    assert_empty parsed.flat_map { |number, text| Operator::DoNotTouch.check(number, text) }
   end
 
   # Both halves must be able to fail, or the gate is decorative.
   def test_a_missing_gate_is_a_finding
-    assert_empty Pub4::DoNotTouch.check("1", "something — gate: `rake lint:spine`")
-    refute_empty Pub4::DoNotTouch.check("1", "something — gate: `rake lint:no_such_task`")
-    refute_empty Pub4::DoNotTouch.check("1", "something — gate: `test/no_such_test.rb`")
+    assert_empty Operator::DoNotTouch.check("1", "something — gate: `rake lint:spine`")
+    refute_empty Operator::DoNotTouch.check("1", "something — gate: `rake lint:no_such_task`")
+    refute_empty Operator::DoNotTouch.check("1", "something — gate: `test/no_such_test.rb`")
   end
 
   def test_an_entry_with_no_gate_and_no_reason_is_a_finding
-    refute_empty Pub4::DoNotTouch.check("1", "just do not touch it")
-    refute_empty Pub4::DoNotTouch.check("1", "do not touch it — no gate: because")
-    assert_empty Pub4::DoNotTouch.check(
+    refute_empty Operator::DoNotTouch.check("1", "just do not touch it")
+    refute_empty Operator::DoNotTouch.check("1", "do not touch it — no gate: because")
+    assert_empty Operator::DoNotTouch.check(
       "1", "do not touch it — no gate: a fact about a remote host that this repo cannot observe"
     )
   end

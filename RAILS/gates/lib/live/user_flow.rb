@@ -9,7 +9,7 @@ require_relative "../../support/brgen_vertical_surfaces"
 require_relative "../../support/guest_flow_persona"
 require_relative "../../support/dom_surface_schema"
 require_relative "../../support/user_flow_design_contracts"
-require_relative "../../../shared/lib/pub4/master_design"
+require_relative "../../../shared/lib/operator/master_design"
 
 module Deploy
   # Critical-path user flows + MASTER design/principle semantics.
@@ -120,7 +120,7 @@ module Deploy
     private
 
     def load_master_context
-      @design_rules = Pub4::MasterDesign.blocks(DESIGN_RULES)
+      @design_rules = Operator::MasterDesign.blocks(DESIGN_RULES)
       @principle_map = File.file?(PRINCIPLE_MAP) ? YAML.safe_load_file(PRINCIPLE_MAP) : {}
       unless File.file?(DESIGN_RULES)
         @result.fail("user_flow: missing MASTER/data/rules.yml")

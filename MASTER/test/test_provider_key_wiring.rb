@@ -10,7 +10,7 @@ require "ruby_llm"
 # did not boot: `agy` — the Antigravity CLI, which is not a RubyLLM provider —
 # declared `ruby_llm_key: agy_api_key` with `min_key_length: 0`, so the unset
 # AGY_BIN satisfied `"".length >= 0` and RubyLLM.configure raised NoMethodError
-# on every single boot. `bin/pub4 gate` reported it as a failed lexical stage
+# on every single boot. `bin/operator gate` reported it as a failed lexical stage
 # with the stack trace of a scan that had never started.
 #
 # These tests read the gem rather than restating what it offers, so a ruby_llm

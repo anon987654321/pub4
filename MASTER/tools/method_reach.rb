@@ -38,7 +38,10 @@
 require "prism"
 require "set"
 
-ROOT = "/Users/mac/Documents/GitHub/pub4"
+# The checkout this file sits in, not the one it was written in. A hardcoded
+# /Users/mac/Documents/GitHub/pub4 measured the main tree from inside every
+# worktree, so a census run against a branch reported the branch it was not on.
+ROOT = File.expand_path("../..", __dir__)
 MASTER = File.join(ROOT, "MASTER")
 IDENTIFIER = /[a-z_][A-Za-z0-9_]*[?!]?/
 

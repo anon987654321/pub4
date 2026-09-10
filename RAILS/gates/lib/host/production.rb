@@ -185,11 +185,11 @@ module Deploy
         fail_app!(app_failures, "bin/ci must run Rails tests") unless ci_text.include?("rails") && ci_text.include?("test")
         fail_app!(app_failures, "bin/ci must pin BUNDLER_AUDIT_UPDATE (offline VPS)") unless ci_text.include?("BUNDLER_AUDIT_UPDATE")
         fail_app!(app_failures, "bin/ci must set NPM_CONFIG_CACHE (copy-tree npm)") unless ci_text.include?("NPM_CONFIG_CACHE")
-        guard = File.join(RAILS_ROOT, "shared", "lib", "pub4", "ci_guard.rb")
-        paths = File.join(RAILS_ROOT, "shared", "lib", "pub4", "deploy_paths.rb")
-        fail_app!(app_failures, "missing shared/lib/pub4/ci_guard.rb") unless File.file?(guard)
-        fail_app!(app_failures, "missing shared/lib/pub4/deploy_paths.rb") unless File.file?(paths)
-        fail_app!(app_failures, "shared CI must use Pub4::CiGuard") unless ci_text.include?("Pub4::CiGuard")
+        guard = File.join(RAILS_ROOT, "shared", "lib", "operator", "ci_guard.rb")
+        paths = File.join(RAILS_ROOT, "shared", "lib", "operator", "deploy_paths.rb")
+        fail_app!(app_failures, "missing shared/lib/operator/ci_guard.rb") unless File.file?(guard)
+        fail_app!(app_failures, "missing shared/lib/operator/deploy_paths.rb") unless File.file?(paths)
+        fail_app!(app_failures, "shared CI must use Operator::CiGuard") unless ci_text.include?("Operator::CiGuard")
         fail_app!(app_failures, "shared CI must skip importmap on VPS") unless ci_text.include?("unless vps_host")
         # RuboCop no longer skips on the VPS, so this asserts the opposite of what it
         # used to. vm23 is where the deploy gate actually runs; skipping there left

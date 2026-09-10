@@ -13,7 +13,7 @@ require "yaml"
 require_relative "../tools/doc_citations"
 
 class TestDocCitations < Minitest::Test
-  def self.report = @report ||= Pub4::DocCitations.run
+  def self.report = @report ||= Operator::DocCitations.run
 
   def setup
     @report = self.class.report
@@ -50,12 +50,12 @@ class TestDocCitations < Minitest::Test
     assert_operator @report["quotations"] + @report["citations"], :>=, 3,
                     "only #{@report['quotations']} quotation(s) and #{@report['citations']} " \
                     "citation(s) found — the checker stopped matching"
-    assert_includes Pub4::DocCitations.keys.keys, "core_files",
+    assert_includes Operator::DocCitations.keys.keys, "core_files",
                     "core_files is no longer recognised as a citable key"
   end
 
   def test_a_citation_resolves_against_data
-    value, error = Pub4::DocCitations.resolve("data/spine.yml", "spine.core_files")
+    value, error = Operator::DocCitations.resolve("data/spine.yml", "spine.core_files")
 
     live = YAML.safe_load_file(File.expand_path("../data/spine.yml", __dir__)).dig("spine", "core_files")
 
@@ -69,17 +69,17 @@ class TestDocCitations < Minitest::Test
   # Both halves of a citation must be able to fail: a wrong number, and a marker
   # pointing at something that no longer exists.
   def test_a_citation_that_cannot_resolve_is_a_finding
-    _, missing_file = Pub4::DocCitations.resolve("data/no_such_file.yml", "a.b")
-    _, missing_key = Pub4::DocCitations.resolve("data/spine.yml", "spine.no_such_key")
+    _, missing_file = Operator::DocCitations.resolve("data/no_such_file.yml", "a.b")
+    _, missing_key = Operator::DocCitations.resolve("data/spine.yml", "spine.no_such_key")
 
     assert_equal "no such file", missing_file
     assert_equal "no such key", missing_key
   end
 
   def test_a_wrong_number_before_a_marker_is_a_finding
-    live, = Pub4::DocCitations.resolve("data/spine.yml", "spine.core_files")
+    live, = Operator::DocCitations.resolve("data/spine.yml", "spine.core_files")
     wrong = live.to_i + 1
-    findings = Pub4::DocCitations.citation_findings(
+    findings = Operator::DocCitations.citation_findings(
       "TEST.md", 1, "data/spine.yml", "spine.core_files", "a ceiling of #{wrong} "
     )
 

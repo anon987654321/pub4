@@ -24,8 +24,8 @@
 #   2. Everything left uncommitted is printed, grouped by tree. Some of it is
 #      probably not yours. That is the point.
 #
-# Installed by `bin/pub4 hooks`, which sets core.hooksPath to this directory.
-# The real fix is still `bin/pub4 worktree <name>`.
+# Installed by `bin/operator hooks`, which sets core.hooksPath to this directory.
+# The real fix is still `bin/operator worktree <name>`.
 
 TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
 
@@ -128,7 +128,7 @@ if staged_trees.size > 1 && ENV["PUB4_CROSS_TREE"] != "1"
   warn ""
   warn "  If more than one agent is working here, the actual fix is a worktree:"
   warn ""
-  warn "      bin/pub4 worktree <name>"
+  warn "      bin/operator worktree <name>"
   warn ""
   exit 1
 end
@@ -141,12 +141,12 @@ end
 # standing debt never blocks the change that merely touched it. A launch failure
 # (no bundle here) proceeds; only a real finding refuses.
 if ENV["LINT"] == "1" && ENV["LINT_SKIP"] != "1"
-  pub4 = File.expand_path("../../../MASTER/bin/pub4", __dir__)
+  pub4 = File.expand_path("../../../MASTER/bin/operator", __dir__)
   master = File.expand_path("../../../MASTER", __dir__)
   ran = system("bundle", "exec", "ruby", pub4, "lint", "--staged", "--changed-lines", chdir: master)
   if ran == false
     warn ""
-    warn "pre-commit: REFUSED — bin/pub4 lint found violations in the lines you staged."
+    warn "pre-commit: REFUSED — bin/operator lint found violations in the lines you staged."
     warn "  Fix them, or bypass this one commit: LINT_SKIP=1 git commit -- <paths>"
     warn ""
     exit 1

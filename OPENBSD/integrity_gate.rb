@@ -28,7 +28,7 @@ Deploy::GateEnvironment::INTEGRITY_GATES.each do |gate|
     next
   end
 
-  cmd = [Pub4::RubyRunner.gate_ruby, script, *Array(gate.args)]
+  cmd = [Operator::RubyRunner.gate_ruby, script, *Array(gate.args)]
   out, status = Open3.capture2e(*cmd, chdir: ROOT)
   if status.success?
     puts "integrity: #{gate.name.ljust(18)} ok"
@@ -43,12 +43,12 @@ Deploy::GateEnvironment::INTEGRITY_GATES.each do |gate|
 end
 
 vps_gate = Deploy::GateEnvironment::INTEGRITY_GATES.find { |g| g.name == "vps_health" }
-if Pub4::Environment.on_vps?
+if Operator::Environment.on_vps?
   if (reason = Deploy::GateEnvironment.skip_reason(vps_gate))
     puts "integrity: #{"vps_health".ljust(18)} skip — #{reason}"
   else
     script = File.join(ROOT, vps_gate.path)
-    cmd = [Pub4::RubyRunner.gate_ruby, script, *vps_gate.args]
+    cmd = [Operator::RubyRunner.gate_ruby, script, *vps_gate.args]
     out, status = Open3.capture2e(*cmd, chdir: ROOT)
     if status.success?
       puts "integrity: #{"vps_health".ljust(18)} ok"

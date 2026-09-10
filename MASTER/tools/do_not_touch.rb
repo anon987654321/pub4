@@ -32,7 +32,7 @@ require "open3"
 
 require "json"
 
-module Pub4
+module Operator
   class DoNotTouch
     MASTER = File.expand_path("..", __dir__)
     ROOT = File.expand_path("..", MASTER)
@@ -122,7 +122,7 @@ module Pub4
 end
 
 if $PROGRAM_NAME == __FILE__
-  report = Pub4::DoNotTouch.run
+  report = Operator::DoNotTouch.run
 
   if ARGV.include?("--json")
     puts JSON.pretty_generate(report)

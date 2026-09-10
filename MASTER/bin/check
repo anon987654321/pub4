@@ -12,19 +12,19 @@
 #   ci           what GitHub Actions runs; MASTER_CI_FULL/WEB/BROWSER widen it
 #   full         operator-grade gate: ci + bin/probe all + rake audit
 #
-# `bin/pub4 gate` runs this as one stage of the repo-wide chain, alongside the
+# `bin/operator gate` runs this as one stage of the repo-wide chain, alongside the
 # scanner, the RAILS gates, the ratchets and the sprawl census.
 #
 # Steps compose from two makers (rake / bin), so a new profile is one line of data.
 
 require "optparse"
-require_relative "../lib/pub4/check_runner"
-require_relative "../lib/pub4/check_brief"
-require_relative "../lib/pub4/ruby_runner"
+require_relative "../lib/operator/check_runner"
+require_relative "../lib/operator/check_brief"
+require_relative "../lib/operator/ruby_runner"
 
 ROOT = File.expand_path("..", __dir__)
-RUBY = Pub4::RubyRunner.ruby_cmd
-BUNDLE = Pub4::RubyRunner.bundle_cmd
+RUBY = Operator::RubyRunner.ruby_cmd
+BUNDLE = Operator::RubyRunner.bundle_cmd
 
 profile = "operator"
 format = "human"
@@ -129,20 +129,20 @@ warn "check[web]: live web checks skipped (set MASTER_WEB_LIVE=1)" if profile ==
 # as failing unit tests. CheckRunner now warns on a *passing* step that eats
 # most of its allowance, which is the signal that was missing.
 timeout = Integer(ENV.fetch("MASTER_CHECK_TIMEOUT", profile == "full" ? "1200" : "900"))
-runner = Pub4::CheckRunner.new(prefix: "check:#{profile}", root: ROOT, timeout:, quiet: format == "brief")
+runner = Operator::CheckRunner.new(prefix: "check:#{profile}", root: ROOT, timeout:, quiet: format == "brief")
 
 steps.each { |step| runner.run(*step) }
 failures = runner.results.reject { |r| r.success }.map(&:name)
 if failures.empty?
   if format == "brief"
-    puts Pub4::CheckBrief.render(profile:, results: runner.results)
+    puts Operator::CheckBrief.render(profile:, results: runner.results)
   else
     puts "check[#{profile}]: clean"
   end
   exit 0
 end
 if format == "brief"
-  puts Pub4::CheckBrief.render(profile:, results: runner.results)
+  puts Operator::CheckBrief.render(profile:, results: runner.results)
 else
   puts "check[#{profile}]: #{failures.size} failure(s): #{failures.join(', ')}"
 end

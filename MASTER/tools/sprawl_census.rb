@@ -25,7 +25,7 @@
 
 require "yaml"
 
-module Pub4
+module Operator
   module SprawlCensus
     ROOT = File.expand_path("../..", __dir__)
     CEILINGS = File.join(ROOT, "MASTER", "data", "sprawl_census.yml")
@@ -167,5 +167,5 @@ module Pub4
 end
 
 if $PROGRAM_NAME == __FILE__
-  exit Pub4::SprawlCensus.run(ratchet: ARGV.include?("--ratchet"), list: ARGV.include?("--list"))
+  exit Operator::SprawlCensus.run(ratchet: ARGV.include?("--ratchet"), list: ARGV.include?("--list"))
 end

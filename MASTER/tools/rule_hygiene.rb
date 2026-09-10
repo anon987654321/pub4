@@ -22,7 +22,7 @@
 require "yaml"
 require "json"
 
-module Pub4
+module Operator
   module RuleHygiene
     MASTER = File.expand_path("..", __dir__)
 
@@ -252,6 +252,6 @@ module Pub4
 end
 
 if $PROGRAM_NAME == __FILE__
-  ok = Pub4::RuleHygiene.run(json: ARGV.include?("--json"))
+  ok = Operator::RuleHygiene.run(json: ARGV.include?("--json"))
   exit(ok ? 0 : 1)
 end

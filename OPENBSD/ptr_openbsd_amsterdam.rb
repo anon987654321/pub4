@@ -6,7 +6,7 @@ require "net/http"
 require "optparse"
 require "uri"
 
-module Pub4Openbsd
+module Operator
   class PtrOpenbsdAmsterdam
     IPV4_ENDPOINT = "http://ptr4.openbsd.amsterdam"
     IPV6_ENDPOINT = "http://ptr6.openbsd.amsterdam"
@@ -82,7 +82,7 @@ if $PROGRAM_NAME == __FILE__
     exit 64
   end
 
-  ok = Pub4Openbsd::PtrOpenbsdAmsterdam.new(
+  ok = Operator::PtrOpenbsdAmsterdam.new(
     ip: options.fetch(:ip),
     hostname: options.fetch(:hostname),
     apply: options.fetch(:apply)

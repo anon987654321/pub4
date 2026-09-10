@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../shared/lib/pub4/visual_contract_lint"
-require_relative "../shared/lib/pub4/master_design"
+require_relative "../shared/lib/operator/visual_contract_lint"
+require_relative "../shared/lib/operator/master_design"
 
 class VisualContractLintTest < Minitest::Test
-  L = Pub4::VisualContractLint
-  SOURCE = File.expand_path("../shared/lib/pub4/visual_contract_lint.rb", __dir__)
+  L = Operator::VisualContractLint
+  SOURCE = File.expand_path("../shared/lib/operator/visual_contract_lint.rb", __dir__)
 
   def test_text_contrast_min_reads_large_text_contrast
-    law = Pub4::MasterDesign.dig("typography", "accessibility", "large_text_contrast")
+    law = Operator::MasterDesign.dig("typography", "accessibility", "large_text_contrast")
     refute_nil law, "typography.accessibility.large_text_contrast is gone from rules.yml"
     assert_in_delta law.to_f, L.text_contrast_min, 0.01
   end

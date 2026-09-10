@@ -17,7 +17,7 @@ require_relative "../tools/self_findings"
 # this is the one where the detail already existed and was simply thrown away,
 # since by_rule has always returned a rule => count hash.
 class TestSelfFindingsDrift < Minitest::Test
-  Tool = Pub4::SelfFindings
+  Tool = Operator::SelfFindings
 
   def swap_ceiling(path)
     previous = Tool.const_get(:CEILING)

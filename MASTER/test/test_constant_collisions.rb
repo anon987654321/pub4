@@ -14,7 +14,7 @@ require "minitest/autorun"
 require_relative "../tools/constant_collisions"
 
 class TestConstantCollisions < Minitest::Test
-  def self.report = @report ||= Pub4::ConstantCollisions.run
+  def self.report = @report ||= Operator::ConstantCollisions.run
 
   def setup
     @report = self.class.report
@@ -40,7 +40,7 @@ class TestConstantCollisions < Minitest::Test
   # The two files from the real incident must both still be in the set the gate
   # looks at, or it is green for the wrong reason.
   def test_both_files_from_the_original_collision_are_still_watched
-    watched = Pub4::ConstantCollisions.files.select { |path| Pub4::ConstantCollisions.requirable[path] }
+    watched = Operator::ConstantCollisions.files.select { |path| Operator::ConstantCollisions.requirable[path] }
 
     assert watched.any? { |path| path.end_with?("MASTER/tools/security_sweep.rb") },
            "security_sweep.rb is no longer seen as requirable"
@@ -50,10 +50,10 @@ class TestConstantCollisions < Minitest::Test
 
   # And the detector must still call that pair a collision if it returns.
   def test_the_historical_collision_would_still_be_caught
-    pair = Pub4::ConstantCollisions.files.select do |path|
+    pair = Operator::ConstantCollisions.files.select do |path|
       path.end_with?("MASTER/tools/security_sweep.rb", "STUDIO/dilla/dilla.rb")
     end
-    defined_in = Pub4::ConstantCollisions.definitions(pair)
+    defined_in = Operator::ConstantCollisions.definitions(pair)
 
     assert_equal 1, defined_in["ROOT"].to_a.size,
                  "ROOT is back in more than one of the two files that collided"

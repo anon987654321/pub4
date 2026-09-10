@@ -44,7 +44,7 @@ class TestRuleRegistryAudit < Minitest::Test
   # subtraction that used to stand in for it.
   def test_coverage_agrees_with_rule_reach
     report = audit.call
-    reach = Pub4::RuleReach.mechanical(Pub4::RuleReach.rules).size
+    reach = Operator::RuleReach.mechanical(Operator::RuleReach.rules).size
 
     assert_equal reach, report.mechanical.size
     assert_includes report.coverage_line, "#{reach} of #{report.yaml_rules}"

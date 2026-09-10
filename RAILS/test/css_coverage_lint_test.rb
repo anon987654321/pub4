@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../shared/lib/pub4/css_coverage_lint"
+require_relative "../shared/lib/operator/css_coverage_lint"
 
 # The register has tracked unused CSS selectors since 2026-08-10 and said in its own
 # entry that no committed tool reproduces the number. This is that tool, and it
 # measures the direction nobody had: a class the markup asks for that no stylesheet
 # defines — a hook the author expected to do something.
 class CssCoverageLintTest < Minitest::Test
-  L = Pub4::CssCoverageLint
+  L = Operator::CssCoverageLint
 
   def test_no_kind_exceeds_its_baseline
     exceeded = L.over_baseline

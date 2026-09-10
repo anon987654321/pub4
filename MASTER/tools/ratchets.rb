@@ -7,7 +7,7 @@ require "open3"
 # recorded one.
 #
 # The truth was spread across ten instruments — rake selftest, rake selfcheck,
-# lint:spine, four Pub4::*Lint modules, gates/data/css_budget.yml,
+# lint:spine, four Operator::*Lint modules, gates/data/css_budget.yml,
 # coverage_ratchet_test.rb and file_length_ratchet_test.rb — each with its own
 # invocation and its own idea of where the number lives. On 2026-08-11 four of
 # them were stale and were found by accident, one at a time, while doing unrelated
@@ -19,11 +19,11 @@ require "open3"
 # chrome_i18n_lint tested for the second; this makes it the contract for all of
 # them.
 #
-#   MASTER/bin/pub4 measure            # fast: pure-Ruby lints + declared ceilings
-#   MASTER/bin/pub4 measure --deep     # + the scans that cost minutes
-#   MASTER/bin/pub4 measure --json
-#   MASTER/bin/pub4 measure --why <row>    the members behind one number
-#   MASTER/bin/pub4 measure --since <ref>  every recorded ceiling's delta
+#   MASTER/bin/operator measure            # fast: pure-Ruby lints + declared ceilings
+#   MASTER/bin/operator measure --deep     # + the scans that cost minutes
+#   MASTER/bin/operator measure --json
+#   MASTER/bin/operator measure --why <row>    the members behind one number
+#   MASTER/bin/operator measure --since <ref>  every recorded ceiling's delta
 #
 # --why exists because a bare integer cannot be acted on. "OVER +826" names no
 # file, so a session that has just moved a ceiling cannot tell whether the move
@@ -48,7 +48,7 @@ require "open3"
 require "json"
 require "yaml"
 
-module Pub4
+module Operator
   module Ratchets
     ROOT = File.expand_path("../..", __dir__)
     RAILS = File.join(ROOT, "RAILS")
@@ -106,63 +106,63 @@ module Pub4
     def master_yaml_rows
       [master_row("rule_reach", "data/rules.yml", "rules no configuration can run") do
          require File.join(MASTER, "tools/rule_reach")
-         unreachable = Pub4::RuleReach.unreachable
-         [unreachable.size, Pub4::RuleReach.ceiling, unreachable]
+         unreachable = Operator::RuleReach.unreachable
+         [unreachable.size, Operator::RuleReach.ceiling, unreachable]
        end,
        # Three rows rather than one, because they are three different facts and
        # collapsing them would let a rule go blind while another stops being
        # silent and the total holds still.
        master_row("rule_audit.blind", "data/rules.yml", "rules proved on input their subjects never get") do
          require File.join(MASTER, "tools/rule_audit")
-         blind = Pub4::RuleAudit.audit[:fixture_blindness]
-         [blind.size, Pub4::RuleAudit.ceilings.fetch("blind"), blind.map { |row| "#{row[:rule]}: #{row[:detail]}" }]
+         blind = Operator::RuleAudit.audit[:fixture_blindness]
+         [blind.size, Operator::RuleAudit.ceilings.fetch("blind"), blind.map { |row| "#{row[:rule]}: #{row[:detail]}" }]
        end,
        master_row("rule_audit.saturated", "data/rules.yml", "rules flagging most of what they read") do
          require File.join(MASTER, "tools/rule_audit")
-         saturated = Pub4::RuleAudit.audit[:saturation]
-         [saturated.size, Pub4::RuleAudit.ceilings.fetch("saturated"),
+         saturated = Operator::RuleAudit.audit[:saturation]
+         [saturated.size, Operator::RuleAudit.ceilings.fetch("saturated"),
           saturated.map { |row| format("%s: %d/%d files", row[:rule], row[:hits], row[:applicable]) }]
        end,
        master_row("rule_audit.silent", "data/rules.yml", "rules firing on nothing in the corpus") do
          require File.join(MASTER, "tools/rule_audit")
-         silent = Pub4::RuleAudit.audit[:silent]
-         [silent.size, Pub4::RuleAudit.ceilings.fetch("silent"), silent]
+         silent = Operator::RuleAudit.audit[:silent]
+         [silent.size, Operator::RuleAudit.ceilings.fetch("silent"), silent]
        end,
        master_row("autofix_reach.dangling", "data/autofix_reach.yml", "rules naming a transform nothing implements") do
          require File.join(MASTER, "tools/autofix_reach")
-         dangling = Pub4::AutofixReach.dangling
-         [dangling.size, Pub4::AutofixReach.ceilings.fetch("dangling"),
+         dangling = Operator::AutofixReach.dangling
+         [dangling.size, Operator::AutofixReach.ceilings.fetch("dangling"),
           dangling.map { |row| "#{row[:id]} -> #{row[:transform]}" }]
        end,
        master_row("autofix_reach.bare_true", "data/autofix_reach.yml", "rules claiming a fix without naming it") do
          require File.join(MASTER, "tools/autofix_reach")
-         bare = Pub4::AutofixReach.bare_true
-         [bare.size, Pub4::AutofixReach.ceilings.fetch("bare_true"), bare]
+         bare = Operator::AutofixReach.bare_true
+         [bare.size, Operator::AutofixReach.ceilings.fetch("bare_true"), bare]
        end,
        master_row("rule_hygiene.id_case_collisions", "data/rules.yml", "ids differing only by case") do
          require File.join(MASTER, "tools/rule_hygiene")
-         collisions = Pub4::RuleHygiene.report[:id_case_collisions]
-         [collisions.size, Pub4::RuleHygiene.ceilings.fetch("id_case_collisions"), collisions.map(&:to_s)]
+         collisions = Operator::RuleHygiene.report[:id_case_collisions]
+         [collisions.size, Operator::RuleHygiene.ceilings.fetch("id_case_collisions"), collisions.map(&:to_s)]
        end,
        master_row("rule_hygiene.alias_shadows_live_rule", "data/rules.yml", "aliases naming a rule that still exists") do
          require File.join(MASTER, "tools/rule_hygiene")
-         shadows = Pub4::RuleHygiene.report[:alias_shadows_live_rule]
-         [shadows.size, Pub4::RuleHygiene.ceilings.fetch("alias_shadows_live_rule"), shadows.map(&:to_s)]
+         shadows = Operator::RuleHygiene.report[:alias_shadows_live_rule]
+         [shadows.size, Operator::RuleHygiene.ceilings.fetch("alias_shadows_live_rule"), shadows.map(&:to_s)]
        end,
        master_row("rule_hygiene.missing_metadata", "data/rules.yml", "rules with neither tier nor severity") do
          require File.join(MASTER, "tools/rule_hygiene")
-         missing = Pub4::RuleHygiene.report[:missing_metadata]
-         [missing.size, Pub4::RuleHygiene.ceilings.fetch("missing_metadata"), missing.map(&:to_s)]
+         missing = Operator::RuleHygiene.report[:missing_metadata]
+         [missing.size, Operator::RuleHygiene.ceilings.fetch("missing_metadata"), missing.map(&:to_s)]
        end,
        master_row("rule_hygiene.cross_population_duplicates", "data/rules.yml", "one id with two detectors") do
          require File.join(MASTER, "tools/rule_hygiene")
-         duplicates = Pub4::RuleHygiene.report[:cross_population_duplicates]
-         [duplicates.size, Pub4::RuleHygiene.ceilings.fetch("cross_population_duplicates"), duplicates.map(&:to_s)]
+         duplicates = Operator::RuleHygiene.report[:cross_population_duplicates]
+         [duplicates.size, Operator::RuleHygiene.ceilings.fetch("cross_population_duplicates"), duplicates.map(&:to_s)]
        end,
        master_row("rule_hygiene.statement_conflicts", "data/rules.yml", "one id, two statements") do
          require File.join(MASTER, "tools/rule_hygiene")
-         conflicts = Pub4::RuleHygiene.report[:statement_conflicts]
-         [conflicts.size, Pub4::RuleHygiene.ceilings.fetch("statement_conflicts"), conflicts.map(&:to_s)]
+         conflicts = Operator::RuleHygiene.report[:statement_conflicts]
+         [conflicts.size, Operator::RuleHygiene.ceilings.fetch("statement_conflicts"), conflicts.map(&:to_s)]
        end,
        # The fourth hygiene check and the dep graph both reported a number that
        # nothing failed on. rule_hygiene warned on its own ceiling and ratchets
@@ -188,29 +188,29 @@ module Pub4
        end,
        master_row("self_findings.law", "data/self_findings.yml", "what the 122 laws find in our own trees") do
          require File.join(MASTER, "tools/self_findings")
-         found = Pub4::SelfFindings.members
-         [found.size, Pub4::SelfFindings.ceiling, found]
+         found = Operator::SelfFindings.members
+         [found.size, Operator::SelfFindings.ceiling, found]
        end,
        # The second population. The row above read "what our own rules find in
        # our own trees" and counted the law alone, so nothing in this repo
        # counted the 145 rules the scanner builds: rule_audit runs them over a
-       # sixth of the tree and measures blindness, and bin/pub4 gate runs them
+       # sixth of the tree and measures blindness, and bin/operator gate runs them
        # over all four trees and records nothing.
        master_row("self_findings.registry", "data/self_findings.yml",
                   "what the scanner's own rules find, at error severity") do
          require File.join(MASTER, "tools/self_findings")
-         found = Pub4::SelfFindings.registry_members
-         [found.size, Pub4::SelfFindings.registry_ceiling, found]
+         found = Operator::SelfFindings.registry_members
+         [found.size, Operator::SelfFindings.registry_ceiling, found]
        end,
        master_row("dup_census", "data/dup_census.yml", "tracked files existing twice") do
          require File.join(MASTER, "tools/dup_census")
-         sets = Pub4::DupCensus.sets
-         [sets.size, Pub4::DupCensus.ceiling, Pub4::DupCensus.members(sets)]
+         sets = Operator::DupCensus.sets
+         [sets.size, Operator::DupCensus.ceiling, Operator::DupCensus.members(sets)]
        end,
        master_row("data_reach", "data/data_reach.yml", "data keys no code names") do
          require File.join(MASTER, "tools/data_reach")
-         unnamed = Pub4::DataReach.unnamed
-         [unnamed.size, Pub4::DataReach.ceiling, unnamed]
+         unnamed = Operator::DataReach.unnamed
+         [unnamed.size, Operator::DataReach.ceiling, unnamed]
        end,
        # Sibling to data_reach, one level up: that asks whether a declaration
        # has a reader, this whether a whole file does. It reads 0 and the row
@@ -218,19 +218,19 @@ module Pub4
        # anything failing.
        master_row("code_reach", "data/code_reach.yml", "lib files nothing names") do
          require File.join(MASTER, "tools/code_reach")
-         unreached = Pub4::CodeReach.unreached
-         [unreached.size, Pub4::CodeReach.ceiling, unreached]
+         unreached = Operator::CodeReach.unreached
+         [unreached.size, Operator::CodeReach.ceiling, unreached]
        end,
        master_row("namespace", "data/namespace_ceilings.yml", "files declaring no module or class") do
          require File.join(MASTER, "tools/namespace_ratchet")
-         flat = Pub4::NamespaceRatchet.ceilings.keys.flat_map { |dir| Pub4::NamespaceRatchet.flat_files(dir) }
-         [flat.size, Pub4::NamespaceRatchet.ceilings.values.sum, flat]
+         flat = Operator::NamespaceRatchet.ceilings.keys.flat_map { |dir| Operator::NamespaceRatchet.flat_files(dir) }
+         [flat.size, Operator::NamespaceRatchet.ceilings.values.sum, flat]
        end,
        *%w[lone_dirs stutter vague_names].map do |kind|
          master_row("sprawl.#{kind}", "data/sprawl_census.yml", "the shape of the tree, in all four of them") do
            require File.join(MASTER, "tools/sprawl_census")
-           [Pub4::SprawlCensus.counts.fetch(kind), Pub4::SprawlCensus.ceilings.fetch(kind),
-            Array(Pub4::SprawlCensus.public_send(kind))]
+           [Operator::SprawlCensus.counts.fetch(kind), Operator::SprawlCensus.ceilings.fetch(kind),
+            Array(Operator::SprawlCensus.public_send(kind))]
          end
        end].compact
     end
@@ -365,18 +365,18 @@ module Pub4
       end
     end
 
-    # The RAILS lints, each a Pub4 module with its own BASELINES.
+    # The RAILS lints, each a Operator module with its own BASELINES.
 
     # Each is a module with BASELINES (per kind) or BASELINE (single) and a scan.
     RAILS_LINTS = {
-      "chrome_i18n" => "shared/lib/pub4/chrome_i18n_lint.rb",
-      "breakpoint" => "shared/lib/pub4/breakpoint_lint.rb",
-      "empty_state" => "shared/lib/pub4/empty_state_lint.rb",
-      "css_coverage" => "shared/lib/pub4/css_coverage_lint.rb",
-      "asset_url" => "shared/lib/pub4/asset_url_lint.rb",
-      "visual_contract" => "shared/lib/pub4/visual_contract_lint.rb",
-      "model_contract" => "shared/lib/pub4/model_contract_lint.rb",
-      "destructive_action" => "shared/lib/pub4/destructive_action_lint.rb",
+      "chrome_i18n" => "shared/lib/operator/chrome_i18n_lint.rb",
+      "breakpoint" => "shared/lib/operator/breakpoint_lint.rb",
+      "empty_state" => "shared/lib/operator/empty_state_lint.rb",
+      "css_coverage" => "shared/lib/operator/css_coverage_lint.rb",
+      "asset_url" => "shared/lib/operator/asset_url_lint.rb",
+      "visual_contract" => "shared/lib/operator/visual_contract_lint.rb",
+      "model_contract" => "shared/lib/operator/model_contract_lint.rb",
+      "destructive_action" => "shared/lib/operator/destructive_action_lint.rb",
     }.freeze
 
     def rails_lint_rows
@@ -424,10 +424,10 @@ module Pub4
       finding.to_h.reject { |key, _| key == :kind }.values.compact.join(" ")
     end
 
-    # Pub4::ChromeI18nLint from chrome_i18n_lint.rb, without guessing at names.
+    # Operator::ChromeI18nLint from chrome_i18n_lint.rb, without guessing at names.
     def lint_module(path)
       constant = File.basename(path, ".rb").split("_").map(&:capitalize).join
-      Pub4.const_get(constant) if Pub4.const_defined?(constant)
+      Operator.const_get(constant) if Operator.const_defined?(constant)
     end
 
     # Ceilings that live in gates/data rather than in a lint.

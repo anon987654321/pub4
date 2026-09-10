@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "pub4/importmap_preload_audit"
+require "operator/importmap_preload_audit"
 
 module Shared
   # The importmap contract, shared because the importmap is shared: all three
@@ -31,7 +31,7 @@ module Shared
         end
 
         test "no pin emits an external modulepreload" do
-          external = Pub4::ImportmapPreloadAudit.external_preloads(app_importmap, resolver: importmap_resolver)
+          external = Operator::ImportmapPreloadAudit.external_preloads(app_importmap, resolver: importmap_resolver)
 
           assert_empty external, <<~MSG.strip
             these pins put a third-party host in <link rel="modulepreload"> on every page:
@@ -48,7 +48,7 @@ module Shared
         end
 
         test "every external pin is one we chose on purpose" do
-          unexpected = Pub4::ImportmapPreloadAudit.unexpected_external_pins(app_importmap, resolver: importmap_resolver)
+          unexpected = Operator::ImportmapPreloadAudit.unexpected_external_pins(app_importmap, resolver: importmap_resolver)
 
           assert_empty unexpected, <<~MSG.strip
             these pins resolve to a third-party host and are not on the allowlist:
@@ -57,7 +57,7 @@ module Shared
 
             Lazy or not, each is a runtime dependency on someone else's uptime
             and a record of every visitor's IP handed to them. Vendor it, or add
-            it to Pub4::ImportmapPreloadAudit::ALLOWED_EXTERNAL_PINS along with
+            it to Operator::ImportmapPreloadAudit::ALLOWED_EXTERNAL_PINS along with
             the reason it is acceptable.
           MSG
         end

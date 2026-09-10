@@ -21,7 +21,7 @@
 
 require "open3"
 
-module Pub4
+module Operator
   module Todo
     ROOT = File.expand_path("../..", __dir__)
 
@@ -109,5 +109,5 @@ module Pub4
 end
 
 if $PROGRAM_NAME == __FILE__
-  exit(Pub4::Todo.call)
+  exit(Operator::Todo.call)
 end

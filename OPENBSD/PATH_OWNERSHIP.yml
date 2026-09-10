@@ -17,7 +17,7 @@ ownership:
       data/debt.yml; features live in RAILS/apps.yml, operator recipes in
       data/operator.yml)
     risk: medium
-    check: MASTER/bin/pub4 status
+    check: MASTER/bin/operator status
   rails/apps.horizon.yml:
     purpose: aspirational features (agent ignore)
     risk: low
@@ -25,7 +25,7 @@ ownership:
   bin/vps-state:
     purpose: dev vs deployed SHA and service posture on vm23
     risk: medium
-    check: MASTER/bin/pub4 vps state --remote
+    check: MASTER/bin/operator vps state --remote
   bin/vps-deploy:
     purpose: serial VPS deploy entrypoint
     risk: critical

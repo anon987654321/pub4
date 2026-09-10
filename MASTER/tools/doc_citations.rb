@@ -33,7 +33,7 @@
 require "json"
 require "yaml"
 
-module Pub4
+module Operator
   class DocCitations
     ROOT = File.expand_path("../..", __dir__)
     MASTER = File.join(ROOT, "MASTER")
@@ -157,7 +157,7 @@ module Pub4
 end
 
 if $PROGRAM_NAME == __FILE__
-  report = Pub4::DocCitations.run
+  report = Operator::DocCitations.run
 
   if ARGV.include?("--json")
     puts JSON.pretty_generate(report)

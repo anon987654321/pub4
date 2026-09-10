@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 require_relative "../../../../OPENBSD/lib/gate_result"
-require_relative "../../../shared/lib/pub4/scale_lint"
+require_relative "../../../shared/lib/operator/scale_lint"
 
 module Deploy
-  # Pub4::ScaleLint, wired.
+  # Operator::ScaleLint, wired.
   #
   # The lint was written, tested by RAILS/test/scale_lint_test.rb, and reachable
   # from no gate: `runner.rb --list` did not know the name, so nothing ran it and
@@ -22,7 +22,7 @@ module Deploy
   # recording the new low is a deliberate edit to design_tokens.yml, the same
   # contract data_reach and spine.yml hold.
   class ScaleRatchetGate
-    LINT = Pub4::ScaleLint
+    LINT = Operator::ScaleLint
 
     # Every baseline against its count, as two lists of message lines. Separated
     # from #run because comparing is one job and reporting is another, and only

@@ -6,10 +6,10 @@ surface. Run both from `MASTER/` unless a script says otherwise.
 `MASTER/data/spine.yml` records how many executables this directory may hold, so
 the next one argues for itself instead of arriving unnoticed.
 
-`bin/pub4 gate` is the chain. It runs the scanner over all four trees with
+`bin/operator gate` is the chain. It runs the scanner over all four trees with
 autofix on, then every RAILS gate, then every suite, then the ratchets, the
 sprawl census, and last the council. It names the files each stage changed and
-refuses to report a clean pass over a tier it never reached. `bin/pub4 gate
+refuses to report a clean pass over a tier it never reached. `bin/operator gate
 --explain` prints the ladder without running it, and `--scan-only` measures
 without writing. The operator surface also carries status, test, measure, lint,
 land, worktree and vps. `bin/master "<instruction>"` boots the runtime around a

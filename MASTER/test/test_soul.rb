@@ -38,11 +38,11 @@ class TestSoul < Minitest::Test
   # went on digging for `absolute.rules`, got nil, and printed its heading over
   # an empty list. Assert what the section says, not that the key is gone.
   def test_the_conduct_rules_reach_the_agent_context
-    conduct = Pub4::AgentContext.conduct
+    conduct = Operator::AgentContext.conduct
 
     assert_operator conduct.size, :>, 40, "law/practice.rb holds the rules that left soul"
     assert_includes conduct.keys, "PRESERVE_FIRST"
-    assert_includes Pub4::AgentContext.render, "PRESERVE_FIRST: never rewrite working code"
+    assert_includes Operator::AgentContext.render, "PRESERVE_FIRST: never rewrite working code"
   end
 
   DOCUMENT = <<~SOUL

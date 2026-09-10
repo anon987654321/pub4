@@ -18,7 +18,7 @@
 #
 #     PUB4_PUSH_ALL=1 git push
 #
-# Installed by `bin/pub4 hooks`. The real fix is still `bin/pub4 worktree <name>`.
+# Installed by `bin/operator hooks`. The real fix is still `bin/operator worktree <name>`.
 
 ZERO = "0" * 40
 
@@ -105,6 +105,6 @@ warn "  Then, if you mean it:"
 warn ""
 warn "      PUB4_PUSH_ALL=1 git push"
 warn ""
-warn "  To stop sharing an index at all:  bin/pub4 worktree <name>"
+warn "  To stop sharing an index at all:  bin/operator worktree <name>"
 warn ""
 exit 1

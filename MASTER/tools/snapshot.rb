@@ -9,7 +9,7 @@
 # The generator that made them was `bin/snapshot`, deleted with the DEPLOY tree
 # in the OPENBSD reorganisation — so the three files sat eleven days stale at a
 # commit that no longer exists in any working checkout, with nothing able to
-# refresh them. This lives in tools/ and is reachable as `MASTER/bin/pub4 snapshot`,
+# refresh them. This lives in tools/ and is reachable as `MASTER/bin/operator snapshot`,
 # which is the surface an operator already has.
 #
 # Binary files are listed in the tree and skipped in the body; a mirror that
@@ -18,7 +18,7 @@
 require "fileutils"
 require "open3"
 
-module Pub4
+module Operator
   module Snapshot
     REPO = File.expand_path("../..", __dir__)
     TREES = %w[MASTER RAILS OPENBSD STUDIO].freeze
@@ -173,4 +173,4 @@ module Pub4
   end
 end
 
-exit Pub4::Snapshot.run(ARGV.empty? ? Pub4::Snapshot::TREES : ARGV) if $PROGRAM_NAME == __FILE__
+exit Operator::Snapshot.run(ARGV.empty? ? Operator::Snapshot::TREES : ARGV) if $PROGRAM_NAME == __FILE__

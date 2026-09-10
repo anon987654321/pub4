@@ -32,8 +32,8 @@ green.
 - `OPENBSD/` — VPS config backup (`etc/`, `usr/`, `var/`) plus deploy tooling
   (`bin/`, `lib/`, `sh/`, gates)
 - The `DEPLOY → OPERATOR → OPENBSD` renames completed 2026-07-14; legacy path
-  strings still resolve, through `RAILS/shared/lib/pub4/deploy_paths.rb`, which
-  is what `Pub4::DeployPaths` is
+  strings still resolve, through `RAILS/shared/lib/operator/deploy_paths.rb`, which
+  is what `Operator::DeployPaths` is
 
 ## OpenBSD First
 
@@ -341,9 +341,9 @@ installs from a timestamped backup and rolls back when the post-install check
 fails. Those four are the mitigation; the rule is survivable because of them.
 
 **The one narrowing someone could walk.** Collapse the escalation into a single
-root-owned entry point. Install one script — call it `/usr/local/sbin/pub4-deploy`
+root-owned entry point. Install one script — call it `/usr/local/sbin/operator-deploy`
 — holding every step `bin/vps-deploy` currently escalates for, and reduce dev's
-rule to `permit nopass dev as root cmd /usr/local/sbin/pub4-deploy`. It works for
+rule to `permit nopass dev as root cmd /usr/local/sbin/operator-deploy`. It works for
 the reason scoping otherwise fails: `cmd` matches what doas executes, so moving
 the body out of the dev-writable checkout into a file only a deliberate root
 `install` can replace makes the boundary the install rather than the pull. The

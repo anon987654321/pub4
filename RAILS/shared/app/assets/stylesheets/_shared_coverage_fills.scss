@@ -1,6 +1,6 @@
 // Classes the engine's own markup asked for and no stylesheet defined.
 //
-// Pub4::CssCoverageLint measured 96 of these across the family on 2026-08-11 — the
+// Operator::CssCoverageLint measured 96 of these across the family on 2026-08-11 — the
 // direction of CSS drift nothing had ever measured, while the register tracked only
 // the reverse (selectors with no markup). Each was a hook the author expected to do
 // something, on a live surface: shared/_pager renders from 19 call sites.

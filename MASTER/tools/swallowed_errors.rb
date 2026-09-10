@@ -29,7 +29,7 @@
 
 require "json"
 
-module Pub4
+module Operator
   module SwallowedErrors
     MASTER = File.expand_path("..", __dir__)
 
@@ -87,6 +87,6 @@ module Pub4
 end
 
 if $PROGRAM_NAME == __FILE__
-  ok = Pub4::SwallowedErrors.run(json: ARGV.include?("--json"))
+  ok = Operator::SwallowedErrors.run(json: ARGV.include?("--json"))
   exit(ok ? 0 : 1)
 end

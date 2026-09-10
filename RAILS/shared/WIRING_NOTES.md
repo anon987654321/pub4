@@ -61,7 +61,7 @@ app-owned paths), `bin/rails dartsass:build` in CI.
 
 ```js
 // app/javascript/application.js
-import "pub4/hotwire"
+import "operator/hotwire"
 import "controllers"
 ```
 
@@ -209,7 +209,7 @@ deliberate, the flat pass that stripped every box-shadow is deliberate, the
    the count of sites that justify it is an addition, not a change: the rendered
    value is identical the moment every site points at it.
 2. **Add a gate.** A number that can only fall is worth more than a fix, because
-   it holds after the session ends. `Pub4::BreakpointLint` exists for exactly
+   it holds after the session ends. `Operator::BreakpointLint` exists for exactly
    this.
 3. **Fix an ambiguity, not an aesthetic.** Two rules that both match at one
    exact viewport width have no intended outcome — bundle order decides.
@@ -473,7 +473,7 @@ The rule that came out of it, so the next file lands on the right side:
   is a shadowing hazard with no framework paying for it. `Shared::Scrape` is the
   only one there was.
 
-## `shared/lib/pub4/` keeps a flat drawer (2026-09-10)
+## `shared/lib/operator/` keeps a flat drawer (2026-09-10)
 
 Thirteen of the twenty file names there end in `_lint` and the cohesion census
 proposes a `pub4/lint/` shelf. Decided against. The shelf is already spelled in

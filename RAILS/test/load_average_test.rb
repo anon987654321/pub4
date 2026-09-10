@@ -17,13 +17,13 @@
 # Bare minitest, no Rails: RAILS/test/*.rb run under plain ruby.
 
 require "minitest/autorun"
-require_relative "../shared/lib/pub4/load_average"
+require_relative "../shared/lib/operator/load_average"
 
 ROOT = File.expand_path("..", __dir__)
 
 class LoadAverageTest < Minitest::Test
   def test_reads_a_real_load_average_on_this_machine
-    one = Pub4::LoadAverage.one
+    one = Operator::LoadAverage.one
 
     refute_nil one, "no load average on #{RUBY_PLATFORM} — the guard is blind here"
     assert_kind_of Float, one
@@ -34,13 +34,13 @@ class LoadAverageTest < Minitest::Test
   end
 
   def test_five_minute_average_is_also_available
-    assert_kind_of Float, Pub4::LoadAverage.five
+    assert_kind_of Float, Operator::LoadAverage.five
   end
 
   def test_unknown_reads_as_nil_rather_than_zero
     # The whole point of the module. An idle box and an unreadable one are
     # different facts, and the old code returned 0.0 for both.
-    assert_nil Pub4::LoadAverage.at(9)
+    assert_nil Operator::LoadAverage.at(9)
   end
 
   # macOS prints "{ 7.94 4.61 3.67 }". Splitting on whitespace makes the first
@@ -57,12 +57,12 @@ class LoadAverageTest < Minitest::Test
   NEEDLE = "/proc/" + "loadavg"
 
   def test_nothing_outside_the_reader_asks_procfs_for_the_load
-    offenders = ruby_sources.reject { |p| p.end_with?("lib/pub4/load_average.rb") }.flat_map do |path|
+    offenders = ruby_sources.reject { |p| p.end_with?("lib/operator/load_average.rb") }.flat_map do |path|
       code_lines(path).select { |_n, line| line.include?(NEEDLE) }
                       .map { |n, _line| "#{path.delete_prefix("#{ROOT}/")}:#{n}" }
     end
 
-    assert_empty offenders, "#{NEEDLE} does not exist on OpenBSD — use Pub4::LoadAverage"
+    assert_empty offenders, "#{NEEDLE} does not exist on OpenBSD — use Operator::LoadAverage"
   end
 
   private

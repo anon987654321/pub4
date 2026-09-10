@@ -164,8 +164,8 @@ end
   shared/test/activity_trackable_test.rb
   shared/test/lib/design_tokens_test.rb
   shared/test/lib/vapid_test.rb
-  shared/test/lib/pub4/ci_guard_test.rb
-  shared/test/lib/pub4/deploy_paths_test.rb
+  shared/test/lib/operator/ci_guard_test.rb
+  shared/test/lib/operator/deploy_paths_test.rb
   shared/test/services/account_exporter_test.rb
   shared/test/services/anonymous_post_test.rb
   shared/test/services/content_rewriter_test.rb

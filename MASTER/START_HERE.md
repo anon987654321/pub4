@@ -67,7 +67,7 @@ command and first failure class; document intentional exceptions.
 | Law / scanners / loop | `bin/check --profile=agent` |
 | Web face | `bin/check --profile=web` |
 | Deploy / Rails | `OPENBSD/bin/check-rails --profile=contributor` |
-| Operator / release | `MASTER/bin/pub4 status` then `OPENBSD/bin/check-full` |
+| Operator / release | `MASTER/bin/operator status` then `OPENBSD/bin/check-full` |
 
 **Do not optimize away:** the fold spine's independence from the rest of `lib/`
 — `lib/core*` requires nothing outside its own namespace, held by

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "../shared/lib/pub4/fallback_drift_lint"
+require_relative "../shared/lib/operator/fallback_drift_lint"
 
 # The second half of the lint: a token declared nowhere at all.
 #
@@ -18,7 +18,7 @@ require_relative "../shared/lib/pub4/fallback_drift_lint"
 # _vertical_shell.scss, and --nick-hue is written into a style attribute by
 # ChatHelper.
 class FallbackDriftLintTest < Minitest::Test
-  LINT = Pub4::FallbackDriftLint
+  LINT = Operator::FallbackDriftLint
 
   def test_the_tree_declares_every_token_it_asks_for
     undeclared = LINT.undeclared_uses.map do |v|

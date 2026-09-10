@@ -14,7 +14,7 @@ class ModelCatalogCheckTest < Minitest::Test
     "google/gemma-3-4b-it",
   ].freeze
 
-  def classify(id) = Pub4::ModelCatalogCheck.nearest(id, LIVE)
+  def classify(id) = Operator::ModelCatalogCheck.nearest(id, LIVE)
 
   def test_a_withdrawn_free_tier_points_at_the_paid_variant
     assert_equal [:free_tier_withdrawn, "z-ai/glm-4.5-air"], classify("z-ai/glm-4.5-air:free")
@@ -36,16 +36,16 @@ class ModelCatalogCheckTest < Minitest::Test
   end
 
   def test_only_vendor_scoped_ids_are_checkable
-    assert Pub4::ModelCatalogCheck.checkable?("z-ai/glm-4.6")
-    refute Pub4::ModelCatalogCheck.checkable?("gemini-2.5-pro"), "a bare id addresses a native API"
-    refute Pub4::ModelCatalogCheck.checkable?("ollama:phi4:mini")
-    refute Pub4::ModelCatalogCheck.checkable?("web-chat:grok")
+    assert Operator::ModelCatalogCheck.checkable?("z-ai/glm-4.6")
+    refute Operator::ModelCatalogCheck.checkable?("gemini-2.5-pro"), "a bare id addresses a native API"
+    refute Operator::ModelCatalogCheck.checkable?("ollama:phi4:mini")
+    refute Operator::ModelCatalogCheck.checkable?("web-chat:grok")
   end
 
   # The registry it reads is the live one, so this fails when models.yml grows a
   # chain shape the reader does not recognise.
   def test_it_finds_the_real_chains
-    chains = Pub4::ModelCatalogCheck.chains
+    chains = Operator::ModelCatalogCheck.chains
 
     refute_empty chains
     assert chains.key?("models.fast"), "models.fast is a fallback chain and must be read as one"

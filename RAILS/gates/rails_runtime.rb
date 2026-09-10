@@ -9,8 +9,8 @@ require "yaml"
 
 ROOT = File.expand_path("../..", __dir__)
 $LOAD_PATH.unshift(File.join(ROOT, "MASTER", "lib"))
-require "pub4/ruby_runner"
-require "pub4/environment"
+require "operator/ruby_runner"
+require "operator/environment"
 # lib/host/production, not lib/production: the file moved when the gates were
 # sorted into host/live/meta/rendered/research/source, and this was the one
 # caller the move missed. A subprocess gate that cannot load is a gate that
@@ -22,11 +22,11 @@ RAILS_ROOT = File.join(ROOT, "RAILS")
 APPS_YML = File.join(RAILS_ROOT, "apps.yml")
 
 def bundle_cmd
-  Pub4::RubyRunner.bundle_cmd
+  Operator::RubyRunner.bundle_cmd
 end
 
 def rails_cmd
-  Pub4::RubyRunner.ruby_cmd
+  Operator::RubyRunner.ruby_cmd
 end
 
 # Asks the booted app, not routes.rb: a resource declared without only: routes seven actions
@@ -70,8 +70,8 @@ def runtime_ready?
 end
 
 def runtime_gate!(apps)
-  if Pub4::RubyRunner.runtime_gate_skipped?
-    warn "runtime gate skipped: #{Pub4::RubyRunner.runtime_skip_reason || 'SKIP_RUNTIME_GATE=1'}"
+  if Operator::RubyRunner.runtime_gate_skipped?
+    warn "runtime gate skipped: #{Operator::RubyRunner.runtime_skip_reason || 'SKIP_RUNTIME_GATE=1'}"
     return true
   end
 

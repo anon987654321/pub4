@@ -3,18 +3,18 @@
 
 require "optparse"
 require "rbconfig"
-require_relative "../../MASTER/lib/pub4/check_runner"
-require_relative "../../MASTER/lib/pub4/ruby_runner"
+require_relative "../../MASTER/lib/operator/check_runner"
+require_relative "../../MASTER/lib/operator/ruby_runner"
 
 ROOT = File.expand_path("../..", __dir__)
-RUBY = Pub4::RubyRunner.gate_ruby
+RUBY = Operator::RubyRunner.gate_ruby
 STEP_TIMEOUT = Integer(ENV.fetch("DEPLOY_CHECK_TIMEOUT", "240"))
 profile = "operator"
 OptionParser.new do |parser|
   parser.on("--profile=PROFILE", "contributor or operator (default)") { |value| profile = value }
 end.parse!
 
-runner = Pub4::CheckRunner.new(prefix: "deploy-check", root: ROOT, timeout: STEP_TIMEOUT)
+runner = Operator::CheckRunner.new(prefix: "deploy-check", root: ROOT, timeout: STEP_TIMEOUT)
 
 failures = []
 failures << "identity" unless runner.run("identity", RUBY, "OPENBSD/verify_deploy_identity.rb")

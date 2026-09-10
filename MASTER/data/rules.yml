@@ -2881,7 +2881,7 @@ rules:
         action: >
           Use only allowed unitless steps. Prefer 1.5 for prose, 1.25 for titles,
           1.6 for relaxed quotes. Flag absolute px line-heights and off-scale ratios.
-          Cross-check RAILS Pub4::ScaleLint baselines before inventing a step.
+          Cross-check RAILS Operator::ScaleLint baselines before inventing a step.
       type_scale:
         default_ratio: 1.25
         marketing_ratio: 1.333
@@ -3261,9 +3261,9 @@ rules:
       # Each flag should name an enforcer. Flags without enforce: are guidance only.
       checks:
       - id: off_scale_line_height
-        enforce: [LINE_HEIGHT_ON_SCALE, Pub4::ScaleLint]
+        enforce: [LINE_HEIGHT_ON_SCALE, Operator::ScaleLint]
       - id: absolute_line_height
-        enforce: [LINE_HEIGHT_ON_SCALE, Pub4::ScaleLint]
+        enforce: [LINE_HEIGHT_ON_SCALE, Operator::ScaleLint]
       - id: measure_bounds
         enforce: [geometry_type worn_type.profiles]
       - id: hanging_list_markers
@@ -3273,9 +3273,9 @@ rules:
       - id: touch_target
         enforce: [TOUCH_TARGET_MIN]
       - id: eight_px_rhythm
-        enforce: [surface_rules spacing scan, Pub4::ScaleLint]
+        enforce: [surface_rules spacing scan, Operator::ScaleLint]
       - id: chrome_i18n
-        enforce: [Pub4::ChromeI18nLint]
+        enforce: [Operator::ChromeI18nLint]
       flag:
       - line length outside typography.line_length bounds
       - line height below typography.line_height.body_min for prose
@@ -3467,12 +3467,12 @@ rules:
         action: >
           Shell and empty/search chrome must use I18n t() keys (empty.*, search.*,
           nav.*, auth.*). Hardcoded English "No …" titles and "Search …" placeholders
-          are debt. Ratchet: RAILS/shared/lib/pub4/chrome_i18n_lint.rb (CI).
+          are debt. Ratchet: RAILS/shared/lib/operator/chrome_i18n_lint.rb (CI).
           Opt-out: <%# chrome_i18n: ok %> above the line.
         empty_partial: shared/empty_state
         empty_requires_action: true
-        empty_cta_lint: RAILS/shared/lib/pub4/empty_state_lint.rb
-        adhoc_empty_lint: RAILS/shared/lib/pub4/adhoc_empty_lint.rb
+        empty_cta_lint: RAILS/shared/lib/operator/empty_state_lint.rb
+        adhoc_empty_lint: RAILS/shared/lib/operator/adhoc_empty_lint.rb
       space_not_lines:
         action: >
           List/grid cards separate with gap + surface elevation, not hairline

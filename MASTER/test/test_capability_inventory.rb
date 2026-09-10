@@ -5,7 +5,7 @@ require_relative "../tools/capability_inventory"
 
 class TestCapabilityInventory < Minitest::Test
   def setup
-    @report = Pub4::CapabilityInventory.report
+    @report = Operator::CapabilityInventory.report
   end
 
   def test_no_named_capability_is_silently_dropped

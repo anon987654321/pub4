@@ -17,7 +17,7 @@
 # NOT a CSS custom property, and cannot be one: `@media (min-width: var(--x))` is
 # invalid CSS, so a media query has to carry a literal. That is why this section is
 # a declared set rather than a generated variable — the numbers stay in the
-# stylesheets and Pub4::BreakpointLint asserts they are these numbers.
+# stylesheets and Operator::BreakpointLint asserts they are these numbers.
 #
 # Every edge below is `min-width`. A max-width bound is the edge MINUS 1px, never
 # the edge itself: `(max-width: 768px)` and `(min-width: 768px)` both match at
@@ -410,7 +410,7 @@ vertical_accents:
 
 # The rhythm scale. Every spacing, radius, line-height and weight literal in the
 # family's stylesheets must land on a step below, or on a token that resolves to
-# one. Pub4::ScaleLint reads this; scale_lint_test.rb ratchets the findings.
+# one. Operator::ScaleLint reads this; scale_lint_test.rb ratchets the findings.
 #
 # This is the same argument `viewport:` above makes, applied to the axis it says
 # is already single-sourced and is not. Colour, motion, elevation and the dialect

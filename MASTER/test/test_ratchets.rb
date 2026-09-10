@@ -18,7 +18,7 @@ class TestRatchets < Minitest::Test
   # measurement, not a hang, and the default 30s bound exists to catch hangs.
   def test_timeout = 300
 
-  def rows = @rows ||= Pub4::Ratchets.all
+  def rows = @rows ||= Operator::Ratchets.all
 
   def readable = rows.reject { |row| row.current.nil? || row.ceiling.nil? }
 
@@ -61,7 +61,7 @@ class TestRatchets < Minitest::Test
   # Shelling out is fine here and deliberately not in tools/ratchets.rb, whose
   # header promises that fast mode only reads files.
   def uncommitted_measured_paths
-    root = Pub4::Ratchets::ROOT
+    root = Operator::Ratchets::ROOT
     out = `cd #{root.inspect} && git status --porcelain -- MASTER/lib MASTER/data RAILS 2>/dev/null`
     out.to_s.lines.map { |line| line[3..].to_s.strip }.reject(&:empty?)
   rescue StandardError # scan: intentional — unparseable status becomes unreadable rows, which the assertion reports
@@ -83,21 +83,21 @@ class TestRatchets < Minitest::Test
   # had never opened STUDIO. Both directions, because a census that counted
   # nothing would pass the first assertion on its own.
   def test_growth_counts_tracked_files_and_not_the_working_tree
-    intruder = File.join(Pub4::Ratchets::ROOT, "MASTER", "test", "untracked_growth_probe.rb")
-    before = Pub4::Ratchets.tree_source_files("MASTER").size
+    intruder = File.join(Operator::Ratchets::ROOT, "MASTER", "test", "untracked_growth_probe.rb")
+    before = Operator::Ratchets.tree_source_files("MASTER").size
     File.write(intruder, "# frozen_string_literal: true\n")
     forget_tracked_files
 
-    assert_equal before, Pub4::Ratchets.tree_source_files("MASTER").size,
+    assert_equal before, Operator::Ratchets.tree_source_files("MASTER").size,
                  "an untracked file is somebody's work in progress, not this tree's growth"
-    assert_includes Pub4::Ratchets.tracked_source_files, "MASTER/tools/ratchets.rb",
+    assert_includes Operator::Ratchets.tracked_source_files, "MASTER/tools/ratchets.rb",
                     "a tracked source file must still be counted"
   ensure
     File.delete(intruder) if intruder && File.exist?(intruder)
     forget_tracked_files
   end
 
-  def forget_tracked_files = Pub4::Ratchets.instance_variable_set(:@tracked_source_files, nil)
+  def forget_tracked_files = Operator::Ratchets.instance_variable_set(:@tracked_source_files, nil)
 
   # The whole value of --why is that the list and the number are the same
   # measurement. A row whose members do not add up to its own count is worse than
@@ -119,21 +119,21 @@ class TestRatchets < Minitest::Test
   def test_why_names_the_members_and_falls_back_to_an_index
     named = rows.find { |row| row.members&.any? }
     refute_nil named, "no row carries members, so --why has nothing to prove"
-    assert_includes Pub4::Ratchets.why(rows, named.name), named.members.first.to_s
-    assert_includes Pub4::Ratchets.why(rows, "no-such-row"), "rows can name their members"
+    assert_includes Operator::Ratchets.why(rows, named.name), named.members.first.to_s
+    assert_includes Operator::Ratchets.why(rows, "no-such-row"), "rows can name their members"
   end
 
   # --since asks git, not a second census, so it has to work from a worktree and
   # on a tree whose ceilings have not moved.
   def test_since_reads_recorded_ceilings_out_of_git
-    report = Pub4::Ratchets.since("HEAD", rows)
+    report = Operator::Ratchets.since("HEAD", rows)
 
     assert_includes report, "measure --since HEAD"
     refute_includes report, "unparseable"
   end
 
   def test_numeric_leaves_keys_by_path
-    leaves = Pub4::Ratchets.numeric_leaves({ "a" => { "b" => 3 }, "c" => "not a number", "d" => 4 })
+    leaves = Operator::Ratchets.numeric_leaves({ "a" => { "b" => 3 }, "c" => "not a number", "d" => 4 })
 
     assert_equal({ "a.b" => 3, "d" => 4 }, leaves)
   end

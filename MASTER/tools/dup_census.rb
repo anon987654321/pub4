@@ -18,7 +18,7 @@
 require "digest"
 require "yaml"
 
-module Pub4
+module Operator
   module DupCensus
     ROOT = File.expand_path("../..", __dir__)
     CEILING = File.join(ROOT, "MASTER", "data", "dup_census.yml")
@@ -129,4 +129,4 @@ end
   end
 end
 
-exit Pub4::DupCensus.run(ratchet: ARGV.include?("--ratchet"), list: ARGV.include?("--list")) if $PROGRAM_NAME == __FILE__
+exit Operator::DupCensus.run(ratchet: ARGV.include?("--ratchet"), list: ARGV.include?("--list")) if $PROGRAM_NAME == __FILE__

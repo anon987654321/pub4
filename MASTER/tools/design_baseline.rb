@@ -13,10 +13,10 @@
 #   cd MASTER && bundle exec ruby tools/design_baseline.rb            # measure
 #   cd MASTER && bundle exec ruby tools/design_baseline.rb --ratchet  # record new low
 #
-# Wired into Pub4::Ratchets#deep_rows, so `bin/check --profile=full` holds it.
+# Wired into Operator::Ratchets#deep_rows, so `bin/check --profile=full` holds it.
 require "yaml"
 
-module Pub4
+module Operator
   module DesignBaseline
     MASTER_ROOT = File.expand_path("..", __dir__)
     RAILS_ROOT = File.expand_path("../../RAILS", __dir__)
@@ -126,5 +126,5 @@ module Pub4
 end
 
 if $PROGRAM_NAME == __FILE__
-  exit(Pub4::DesignBaseline.run(ratchet: ARGV.include?("--ratchet")) ? 0 : 1)
+  exit(Operator::DesignBaseline.run(ratchet: ARGV.include?("--ratchet")) ? 0 : 1)
 end

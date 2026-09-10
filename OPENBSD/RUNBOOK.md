@@ -160,7 +160,7 @@ so; this line used to name all three after the word `doas`.
 
 **Rules:**
 
-- Run `MASTER/bin/pub4 status` before starting work; use `OPENBSD/RECIPES.md`
+- Run `MASTER/bin/operator status` before starting work; use `OPENBSD/RECIPES.md`
   for copy-paste paths.
 - Treat `RAILS/apps.yml` and `OPENBSD/deploy_inventory.json` as inventories, not
   suggestions.

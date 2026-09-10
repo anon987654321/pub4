@@ -9,7 +9,7 @@ require_relative "../../support/geometry_probe"
 require_relative "../../support/geometry_autofix"
 require_relative "../../support/gate_autofix"
 require_relative "../../support/design_metrics"
-require_relative "../../../shared/lib/pub4/master_design"
+require_relative "../../../shared/lib/operator/master_design"
 
 module Deploy
   # Rendered-geometry contracts: Fitts, occlusion, overflow, computed contrast,
@@ -61,7 +61,7 @@ module Deploy
 
     def run
       @result = Result.new
-      @rules = Pub4::MasterDesign.blocks(MASTER_RULES)
+      @rules = Operator::MasterDesign.blocks(MASTER_RULES)
       @tokens = File.file?(TOKENS) ? YAML.safe_load_file(TOKENS) : {}
       @min_touch = (@rules.dig("layout_rules", "touch", "target_min_px") || 44).to_f
       @aaa = (@rules.dig("typography", "accessibility", "normal_text_contrast") || 7.0).to_f

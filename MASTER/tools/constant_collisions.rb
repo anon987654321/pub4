@@ -27,7 +27,7 @@
 
 require "json"
 
-module Pub4
+module Operator
   class ConstantCollisions
     ROOT = File.expand_path("../..", __dir__)
     TREES = %w[MASTER OPENBSD RAILS STUDIO].freeze
@@ -87,7 +87,7 @@ module Pub4
 end
 
 if $PROGRAM_NAME == __FILE__
-  report = Pub4::ConstantCollisions.run
+  report = Operator::ConstantCollisions.run
 
   if ARGV.include?("--json")
     puts JSON.pretty_generate(report)

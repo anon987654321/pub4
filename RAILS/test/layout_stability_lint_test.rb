@@ -2,7 +2,7 @@
 
 require "minitest/autorun"
 require "tmpdir"
-require_relative "../shared/lib/pub4/layout_stability_lint"
+require_relative "../shared/lib/operator/layout_stability_lint"
 
 # Whether the layout holds still, asserted from source.
 #
@@ -13,7 +13,7 @@ require_relative "../shared/lib/pub4/layout_stability_lint"
 # place. This asks the question the frame cannot answer -- is there anything on
 # this page whose size is unknown until the network answers.
 class LayoutStabilityLintTest < Minitest::Test
-  LINT = Pub4::LayoutStabilityLint
+  LINT = Operator::LayoutStabilityLint
 
   def counts = @counts ||= LINT.counts
 
@@ -173,7 +173,7 @@ class LayoutStabilityLintTest < Minitest::Test
 
   def test_every_finding_points_at_a_real_line
     LINT.findings.first(40).each do |finding|
-      path = File.join(Pub4::LayoutStabilityLint::RAILS_ROOT, finding.file)
+      path = File.join(Operator::LayoutStabilityLint::RAILS_ROOT, finding.file)
       assert File.file?(path), "#{finding.file} is not on disk"
       assert_operator finding.line, :>, 0
       assert_operator finding.line, :<=, File.readlines(path).size

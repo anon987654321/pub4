@@ -3,19 +3,19 @@
 require_relative "test_helper"
 require "fileutils"
 require "tmpdir"
-require_relative "../lib/pub4/gate_chain"
+require_relative "../lib/operator/gate_chain"
 require_relative "../lib/review/council/harvest"
 
-# `bin/pub4 gate` is the one command that runs every gate in the repo, and the
+# `bin/operator gate` is the one command that runs every gate in the repo, and the
 # only thing worse than not having it is having one that reports a pass over
 # stages it never reached. Each test pins a property the chain otherwise loses
 # in silence: a stage pointing at a script that has moved, a mutating stage
 # smuggled into scan-only, a verdict read off the wrong line.
 class TestGateChain < Minitest::Test
-  G = Pub4::GateChain
+  G = Operator::GateChain
 
   def test_every_stage_runs_a_script_that_exists
-    missing = %w[bin/gate bin/pub4 bin/check bin/master tools/sprawl_census.rb tools/dup_census.rb]
+    missing = %w[bin/gate bin/operator bin/check bin/master tools/sprawl_census.rb tools/dup_census.rb]
               .reject { |path| File.file?(File.join(G::MASTER, path)) }
     missing << "RAILS/gates/runner.rb" unless File.file?(File.join(G::ROOT, "RAILS", "gates", "runner.rb"))
 
@@ -115,7 +115,7 @@ class TestGateChain < Minitest::Test
        RAILS/amber/public/assets/x.js MASTER/Gemfile.lock].each do |path|
       assert_match G::GENERATED, path
     end
-    refute_match G::GENERATED, "MASTER/lib/pub4/gate_chain.rb"
+    refute_match G::GENERATED, "MASTER/lib/operator/gate_chain.rb"
   end
 
   def test_only_selects_a_subset_and_list_reports_it

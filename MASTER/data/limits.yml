@@ -993,18 +993,37 @@ loc_body_budgets:
   lib/fix: 2905
   lib/ground: 4812
   lib/io: 4175
-  lib/master.rb: 136
+  # 136 -> 137 for Master.git_checkout?, one line and one comment. It tests
+  # File.exist?(.git) rather than File.directory?, because a worktree carries
+  # .git as a file and CLAUDE.md tells every agent to take one — so the old
+  # test answered no in the trees the runtime mostly runs in, and rollback,
+  # snapshot provenance and the boot receipt were all reading that no.
+  lib/master.rb: 137
   lib/ops.rb: 234
   lib/pressure_engine.rb: 115
   lib/result.rb: 95
   lib/security_error.rb: 1
   lib/unwrap_error.rb: 103
-  lib/pub4: 696
+  # 696 -> 713 for `gate --tree <TREE>`, which drops the stages that prove
+  # another tree instead of shrinking them: five stages against six for a
+  # MASTER-scoped run, one suite against seven, and the clean-tree assertion
+  # still covering MASTER whatever was named.
+  lib/operator: 713
   lib/rails: 1017
-  lib/review: 10460
+  # 10460 -> 10469 for MODIFIER_SILENT_RESCUE, which sees `value = parse(raw)
+  # rescue nil` — the shape SilentRescue cannot match by construction. Scoped
+  # to assignments after measuring: 28 modifier rescues discard fleet-wide and
+  # 15 are best-effort side effects nobody reads a value from.
+  lib/review: 10469
   lib/trace: 2035
   lib/voice: 3402
-  law: 1616
+  # 1616 -> 1637 so a comment that spans lines counts as a comment on every
+  # one of them. A leader test reads where a comment starts and never where it
+  # continues, so every line after the first in an ERB comment was scanned as
+  # markup, and I18N_COVERAGE fired on a comment explaining that a page
+  # carried no <h1>. ERB only, and the detector still fires on markup after
+  # the comment closes.
+  law: 1637
   # The one entry in this table that goes up, and only ever by consolidation.
   # Three folds have moved deleted files and top-level keys into rules.yml --
   # 86eaff4cf, ff7e93a82, and the 2026-09-05 merge that made design_rules

@@ -23,5 +23,5 @@ remaining = ::User.where(guest: true)
 
 puts format(
   "removed=%d remaining=%d in %.1fs load=%s",
-  removed.to_i, remaining, Time.now - started, Pub4::LoadAverage.one.inspect
+  removed.to_i, remaining, Time.now - started, Operator::LoadAverage.one.inspect
 )

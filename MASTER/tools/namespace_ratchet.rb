@@ -18,7 +18,7 @@
 require "yaml"
 require "json"
 
-module Pub4
+module Operator
   module NamespaceRatchet
     CEILINGS = File.expand_path("../data/namespace_ceilings.yml", __dir__)
     ROOT = File.expand_path("../..", __dir__)
@@ -64,5 +64,5 @@ module Pub4
 end
 
 if $PROGRAM_NAME == __FILE__
-  exit Pub4::NamespaceRatchet.run(ratchet: ARGV.include?("--ratchet"), json: ARGV.include?("--json"))
+  exit Operator::NamespaceRatchet.run(ratchet: ARGV.include?("--ratchet"), json: ARGV.include?("--json"))
 end

@@ -16,7 +16,7 @@ pub4/
 │
 ├── MASTER/                   the product — a constitutional Ruby runtime
 │   ├── bin/master            instruction surface
-│   ├── bin/pub4              operator surface
+│   ├── bin/operator              operator surface
 │   ├── bin/cli               the same runtime, slash commands
 │   ├── completions/_master   zsh completion (priced: the name is the command)
 │   ├── data/                 law as YAML — soul.yml outranks everything
@@ -77,5 +77,5 @@ zero. Two vague names remain, both Zeitwerk (`lib/io/base.rb` and
 `lib/boot/data.rb`). Hoisting a Rails system test out of `test/system/`
 would run it in the unit suite and drop it from `rails test:system`;
 those two stayed. The three counts come from
-`MASTER/data/sprawl_census.yml`; `bin/pub4 measure --why sprawl.lone_dirs`
+`MASTER/data/sprawl_census.yml`; `bin/operator measure --why sprawl.lone_dirs`
 names the members rather than leaving this paragraph to remember them.

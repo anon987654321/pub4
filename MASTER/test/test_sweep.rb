@@ -4,11 +4,11 @@ require_relative "test_helper"
 require_relative "../tools/sweep"
 
 # The instruments existed and had no shared vocabulary: eight tools, eight
-# ceiling files, eight invocations, and `MASTER/bin/pub4 measure` aggregating the
+# ceiling files, eight invocations, and `MASTER/bin/operator measure` aggregating the
 # numbers but not the questions. This runs them as one pass per tree and reports
 # in the dmesg form Trace::Dmesg and Pipeline::Through already use.
 class TestSweep < Minitest::Test
-  S = Pub4::Sweep
+  S = Operator::Sweep
 
   def test_every_probe_names_a_real_tree
     unknown = S.probes.flat_map(&:trees).uniq - S::TREES

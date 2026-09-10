@@ -36,7 +36,7 @@ require "open3"
 require "rbconfig"
 require "timeout"
 
-module Pub4
+module Operator
   class ContractSuite
     TEST_DIR = __dir__
     RAILS_ROOT = File.expand_path("..", __dir__)
@@ -155,4 +155,4 @@ module Pub4
   end
 end
 
-exit(Pub4::ContractSuite.new(filter: ARGV.first).run) if __FILE__ == $PROGRAM_NAME
+exit(Operator::ContractSuite.new(filter: ARGV.first).run) if __FILE__ == $PROGRAM_NAME
