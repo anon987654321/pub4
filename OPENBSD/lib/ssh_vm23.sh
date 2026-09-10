@@ -18,6 +18,17 @@ set -euo pipefail
 : "${SSH_KEY:=${HOME}/.ssh/id_ed25519_brgen}"
 : "${REMOTE_PUB4:=/home/dev/pub4}"
 
+# One copy of the usage, above the functions rather than in the dispatch at the
+# foot of the file, and reachable as -h so an operator does not have to run the
+# script with no argument to be told what it takes.
+ssh_vm23_usage() {
+  print -r -- "usage: ssh_vm23.sh <remote-command>
+       ssh_vm23.sh exec <remote-command>
+       ssh_vm23.sh tmux <session> <remote-command>
+
+Env: SSH_USER SSH_HOST SSH_KEY REMOTE_PUB4"
+}
+
 typeset -ga VM23_SSH_OPTS=(
   -o BatchMode=yes
   -o StrictHostKeyChecking=accept-new
@@ -40,6 +51,10 @@ vm23_tmux() {
 
 if [[ $ZSH_EVAL_CONTEXT == toplevel ]]; then
   case "${1:-}" in
+    -h|--help)
+      ssh_vm23_usage
+      exit 0
+      ;;
     tmux)
       shift
       vm23_tmux "$@"
@@ -49,8 +64,7 @@ if [[ $ZSH_EVAL_CONTEXT == toplevel ]]; then
       vm23_ssh "$@"
       ;;
     "")
-      print -u2 "usage: ssh_vm23.sh <remote-command>"
-      print -u2 "       ssh_vm23.sh tmux <session> <remote-command>"
+      ssh_vm23_usage >&2
       exit 2
       ;;
     *)

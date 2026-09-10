@@ -27,6 +27,24 @@ SCRIPT_DIR=${0:a:h}
 REPO_ROOT=${SCRIPT_DIR:h}
 CONFIG_ROOT=${REPO_ROOT}/OPENBSD
 
+# Usage first. main() is the last of 977 lines and this text used to live inside
+# it, so the one thing an operator opening the file needs was 900 lines below
+# every function it describes.
+usage() {
+  print -r -- "OpenBSD vm23 deploy (OPERATOR.sh). Config trees: etc/ usr/ var/ → /.
+Usage:
+  cd ~/pub4 && doas zsh OPENBSD/OPERATOR.sh
+
+Default: install configs, validate pf/relayd, restart services.
+
+Rare:
+  doas zsh OPERATOR.sh --first-install
+  doas zsh OPERATOR.sh --stage-1        # requires I_UNDERSTAND_DNS_WIPE=1
+  doas zsh OPERATOR.sh --stage-2
+
+--sync-configs is an alias for the default."
+}
+
 # Helpers inlined ( _lib.sh removed for ONE_SOURCE/singularity). Pure Zsh: log, backup_directory, install_*, sync_openbsd_configs (now ships .zshrc to /home/dev too).
 log() {
   typeset level=$1; shift
@@ -920,19 +938,8 @@ deploy_live() {
 }
 
 main() {
-  if [[ ${1:-} = --help ]]; then
-    print -r -- "OpenBSD vm23 deploy (OPERATOR.sh). Config trees: etc/ usr/ var/ → /.
-Usage:
-  cd ~/pub4 && doas zsh OPENBSD/OPERATOR.sh
-
-Default: install configs, validate pf/relayd, restart services.
-
-Rare:
-  doas zsh OPERATOR.sh --first-install
-  doas zsh OPERATOR.sh --stage-1        # requires I_UNDERSTAND_DNS_WIPE=1
-  doas zsh OPERATOR.sh --stage-2
-
---sync-configs is an alias for the default."
+  if [[ ${1:-} = --help || ${1:-} = -h ]]; then
+    usage
     exit 0
   fi
 
@@ -968,7 +975,8 @@ Rare:
       deploy_live
       ;;
     *)
-      log ERROR "unknown flag: $1 (try --help)"
+      log ERROR "unknown flag: $1"
+      usage >&2
       exit 1
       ;;
   esac
