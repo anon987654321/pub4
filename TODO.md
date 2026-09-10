@@ -780,6 +780,30 @@ attempts before it separated `dilla/dilla.rb`, which reads correctly at a comman
 from `lib/cli/cli.rb`, which held `Master::CLI::CLI`. What tells them apart is whether
 the file declares the name twice.
 
+**`tools/repo_inventory.rb` had been reporting the four trees as sprawl, and nobody
+noticed because nobody could act on it.** Both of its allowlists had gone stale in both
+directions at once: five of seven root files and four of six root directories named
+subjects that do not exist — `MASTER.md`, `index.html`, `OPERATOR/`, `dilla/`,
+`multimedia/`, `sh/` — while `MASTER`, `RAILS`, `OPENBSD`, `STUDIO`, `TODO.md` and
+`TREE.md` were absent, so each was reported as non-canonical. That is the worst state
+an allowlist can reach, and the reason it stayed there is that a report naming the
+repo's own trees as defects is one everybody scrolls past.
+`spec/lifecycle_tools_spec.rb` holds both lists to the tree in both directions now, and
+the tool grew the `$PROGRAM_NAME` guard every other tool here has, so reading its
+constants no longer runs a census.
+
+**Its `new` marker had no true positive either**, which is the same test the two deleted
+learned smells failed. Thirty-four of thirty-five findings were `app/views/**/new.html.erb`
+— a Rails route action, not "the new version of a file" — and the thirty-fifth was
+`new_framework_defaults_8_0.rb`, a name Rails generates. A marker that only ever matches
+a framework convention is measuring the convention.
+
+**What repo_inventory reports now is 60 `low_density_slug` findings and nothing else**,
+and they are a naming campaign rather than a defect list: `lib/boot/data.rb`,
+`lib/io/base.rb`, `lib/cli/session/command_handlers.rb`. Two of those are the same
+`sprawl.vague_names` pair this file already records as a design decision and not a
+rename. Read the list before believing the number.
+
 ### Top-level ROOT
 
 **44 files across the repo define a bare top-level `ROOT`** — 16 in MASTER, 14 in
