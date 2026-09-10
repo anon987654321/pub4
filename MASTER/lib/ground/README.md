@@ -22,7 +22,7 @@ verification went to `fix/`. Read the clause before you add a file, and read it
 again before you defend one.
 
 The clause that took longest to settle is schema, because a typed reader over a
-declarative table looks like it could live anywhere. It lives here, and the test
+declarative table reads as at home almost anywhere. It lives here, and the test
 is the table rather than the reader: when what the table declares is MASTER's own
 constitution, configuration, policy or memory, the reader is that schema and
 belongs to ground, whether the table sits in `data/` or in a frozen constant in
