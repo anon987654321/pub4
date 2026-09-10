@@ -4,7 +4,7 @@
 # master-probe — one entrypoint for local and VPS readiness checks.
 # Usage:
 #   bin/probe              # quick local signal
-#   bin/probe all          # smoke + namespace + selftest + core + dogfood + preflight + audit + rails gate
+#   bin/probe all          # smoke + namespace + selftest + core + dogfood + ci + audit + rails gate
 #   bin/probe smoke rails  # selected checks
 
 Encoding.default_external = Encoding::UTF_8
@@ -67,11 +67,17 @@ CHECKS = {
     cwd: MASTER_ROOT,
     needs_ruby3: true,
   },
-  "preflight" => {
-    desc: "MASTER deploy preflight",
-    cmd: [File.join(MASTER_ROOT, "bin", "preflight")],
-    cwd: MASTER_ROOT,
-  },
+  # bin/preflight used to sit here, and `all` ran it. It checked ruby, bundler
+  # and `bundle check`, warned about three API keys, syntax-checked
+  # lib/master.rb and a kernel/ directory the tree has not had for some time,
+  # and then ran bin/ci — which is the entry two rows down. Its only caller
+  # anywhere in the repo was this table.
+  #
+  # Folded into "ci" rather than into "doctor", though doctor is the strict
+  # superset of its host checks. doctor fails on a laptop with no TTS socket and
+  # no web token, which are true statements about the machine and not about the
+  # tree, and a probe that is red on every developer's box is a line people
+  # learn to skip. bin/ci is what preflight actually contributed to `all`.
   "audit" => {
     desc: "Staged-file constitutional audit",
     cmd: [RUBY, File.join(MASTER_ROOT, "bin", "audit")],
@@ -158,7 +164,7 @@ CHECKS = {
 
 ALIASES = {
   "quick" => %w[smoke nsaudit selftest data_singularity rails ci],
-  "all" => %w[smoke nsaudit selftest data_singularity core dogfood models preflight audit rails phantom_fk],
+  "all" => %w[smoke nsaudit selftest data_singularity core dogfood models ci audit rails phantom_fk],
   "deploy" => %w[rails phantom_fk crawl crawl-browser integrity health smoke-web playbook],
   "integrity" => %w[integrity crawl crawl-browser rails phantom_fk smoke-web],
   "security" => %w[audit nsaudit selftest data_singularity rails],

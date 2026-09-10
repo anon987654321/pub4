@@ -489,8 +489,19 @@ pub4_source_ceilings:
 # spec/io/ in the lib rename — so every invocation aborted, and nothing noticed
 # because nothing invoked it. Its one reader was a bin/doctor check asserting
 # the file exists, which went with it.
+#
+# 27 -> 26 folds bin/preflight away. It checked ruby, bundler, `bundle check`
+# and three API keys — each already a bin/doctor check — then `ruby -c
+# lib/master.rb` and a kernel/ directory the tree has not had for some time,
+# then ran bin/ci. Its only caller anywhere was bin/probe's own table, so it was
+# doctor and ci wearing a third name, and the syntax check it added cannot fail
+# without bin/ci failing first: loading the runtime is the suite's first act.
+# `bin/probe all` names ci directly in its place. Not doctor, though doctor is
+# the strict superset of preflight's host checks: doctor is red on a laptop with
+# no TTS socket, and a probe that fails on every developer's box is a line people
+# learn to skip.
 pub4_entrypoint_ceilings:
-  MASTER: 27
+  MASTER: 26
   RAILS: 2
   OPENBSD: 17
   STUDIO: 0
