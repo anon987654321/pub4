@@ -782,9 +782,8 @@ end
   # --- learned smells read code, not comments ----------------------------
   # meta_rules.rb#findings_for_smell matched the smell regex against raw lines,
   # so magic_number scored every number in a comment (6,318 findings, sampled
-  # 100% comment prose) and future_tense every "would"/"could" in a rationale
-  # note. skip_comments in rules.yml now blanks comment-only lines for those two
-  # content smells. It is opt-in, because a smell can legitimately mean to read a
+  # 100% comment prose). skip_comments in rules.yml blanks comment-only lines for
+  # a content smell that asks for it. It is opt-in, because a smell can read a
   # comment — this was written against trailing_ws, which had to see raw
   # whitespace or every comment would read as trailing space, and trailing_ws was
   # deleted 2026-09-05 as a strict duplicate of TRAILING_WHITESPACE. The property
@@ -805,17 +804,9 @@ end
     refute_empty smell_findings("magic_number", "schedule(4200)\n")
   end
 
-  def test_future_tense_ignores_modal_verbs_in_comments
-    assert_empty smell_findings("future_tense", "# this would break if anyone could reorder it\n")
-  end
-
-  def test_future_tense_still_fires_in_code
-    refute_empty smell_findings("future_tense", "status = \"it will retry\"\n")
-  end
-
   def test_skip_comments_is_opt_in_so_a_smell_without_it_reads_comments
-    assert_empty smell_findings("future_tense", "# this would break if anyone could reorder it\n"),
-      "future_tense declares skip_comments, so a rationale comment is masked"
+    assert_empty smell_findings("magic_number", "# retry after 4200 ms\n"),
+      "magic_number declares skip_comments, so a number in prose is masked"
     refute_empty smell_findings("sycophancy", "# absolutely, this is the right fix\n"),
       "sycophancy declares none, so it must still read the raw comment line"
   end

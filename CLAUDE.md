@@ -137,17 +137,19 @@ The order is the authority order, and it is not long:
 
 1. `MASTER/data/soul.yml` — the kernel. Absolutes, work rules, anti-simulation.
    It outranks everything below, including this file.
-2. `MASTER/data/rules.yml` — 228 declared rules, in four scopes: codebase,
-   file, line, unit. Read `laws` first, the six in priority order, then the
-   corpus.
+2. `MASTER/data/rules.yml` — 242 declared rules under `rules:`, a flat array
+   keyed by `tier` rather than by scope. Read `laws` first, the six in priority
+   order, then the corpus.
 3. `MASTER/law/*.rb` — the domain law, about 118 rules, each with a worked
    example it must flag and one it must not. Those two examples are the rule.
-4. `MASTER/lib/review/scan/rules/*.rb` — the registry, about 98 more.
+4. `MASTER/lib/review/scan/rules/*.rb` — the registry, which builds 147.
 
-Enumerate them rather than trusting a memory of them:
+Enumerate them rather than trusting a memory of them. The file uses YAML
+aliases, so `safe_load_file` raises on it:
 
 ```zsh
-ruby -ryaml -e 'd=YAML.safe_load_file("MASTER/data/rules.yml"); d["rules"].each { |scope, rs| rs.each { |r| puts "#{scope} #{r["id"]}: #{r["name"]}" } }'
+ruby -ryaml -e 'YAML.unsafe_load_file("MASTER/data/rules.yml")["rules"].each { |r| puts "#{r["tier"]} #{r["id"]}: #{r["name"]}" }'
+ruby MASTER/tools/agent_context.rb   # the law in force, under a kilobyte
 ```
 
 You have it when you can name the rule that governs a line you are about to
@@ -159,7 +161,7 @@ usually the exemption rather than the rule — every scan noise entry in
 
 Two cautions from the tree itself. `data/rules.yml` and `data/soul.yml` are
 `paths.immutable`: read them, never let an effect write them. And a rule
-declared there may have no detector — 78 of the 228 carry none and resolve
+declared there may have no detector — 92 of the 242 carry none and resolve
 through `law/` or a fold — so the file is the law, not the scanner's coverage
 of it.
 

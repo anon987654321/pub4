@@ -21,8 +21,18 @@ class TestDocPaths < Minitest::Test
   # Docs an agent is actually pointed at. Adding one here is the point: a
   # document nobody reads does not need this guard, and a document that teaches
   # a path does.
+  # TODO.md is deliberately not here, and the reason is measured rather than an
+  # omission. It cites 428 repo paths; 34 of them name subjects that are gone on
+  # purpose — MASTER/DEBT.md, RAILS/BLOCKERS.md, docs/SEVERANCE.md, the deleted
+  # io/lora_pipeline.rb — because a register that records what was removed has to
+  # be able to say what it was. A gate demanding every cited path exist would
+  # need a 34-row baseline that a fresh entry breaks the same week, and would
+  # turn the register's own function into a red gate. Its citations go stale as
+  # numbers rather than as paths, which is why every section carries the date it
+  # was measured.
   DOCS = %w[
     CLAUDE.md
+    TREE.md
     AGENTS.md
     GEMINI.md
     .cursorrules
@@ -144,6 +154,12 @@ class TestDocPaths < Minitest::Test
     File.read(File.join(REPO, doc))
         .scan(/`([^`\s]+)`/).flatten
         .map { |c| c.sub(/[.,;:)]+\z/, "") }
+        # `lib/builder.rb:165` cites lib/builder.rb. Without this the trailing
+        # line number makes the extension unrecognisable, so the whole citation
+        # is dropped as prose — and the file:line form is how this repo's
+        # documents point at code, which left the commonest citation shape
+        # outside the gate written to check citations.
+        .map { |c| c.sub(/:\d+(?:-\d+)?\z/, "") }
         .reject { |c| c.match?(/[*${}<]/) }
         .reject { |c| exempt.include?(c) }
         .select { |c| repo_path?(c) }

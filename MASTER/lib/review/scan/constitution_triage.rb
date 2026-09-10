@@ -76,7 +76,6 @@ module Master
           TRANSFORM_KEYS
           TYPOGRAPHIC_EXCELLENCE
           duplicate_code
-          future_tense
           magic_number
           sycophancy
         ].freeze
