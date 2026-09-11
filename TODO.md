@@ -9091,3 +9091,38 @@ A finding is a hypothesis.
 254 items. Capability first; then delete.
 
 ---
+
+## Measured subtraction candidates — 2026-09-11
+
+Continuation of the entropy pass. These have a path. Verify the second caller before deleting the first.
+
+1. **Unwired slash tables.** `CommandRegistry.build` never merges `memory_commands`, `system_commands`, `media_commands`, `core_commands`, `domain_commands`, `reach_commands`, `agent_commands`. Required, Zeitwerk-ignored, unused except `test_session_capture.rb` calling `memory_commands`. Delete the unused tables; keep a wanted verb only by adding it to `build`.
+2. **`mask.js` / `mask_generators.js` / `mask_topologies.js`.** `visual_governor_spec.rb:30` says mask.js is superseded. Comments in `cognition_ecology.js` and `visual_governor.js` still name it. Delete the three files and the comments.
+3. **`examples.html.erb`.** Unmounted. `deploy_backlog_test.rb` greps it for toast. Point the assertion at a live view; delete the demo; unregister `reveal` if it only lived there.
+4. **Two `WebPushJob`s.** `RAILS/brgen/app/jobs/web_push_job.rb` and `RAILS/shared/app/jobs/shared/web_push_job.rb`. One class.
+5. **`futurism` gem, no `futurize` in ERB.** `importmap_baseline.rb:27-31`. One lazy index uses it, or the gem leaves all three Gemfiles.
+6. **`bin/crate` writes `dilla/crate/`.** Directory gone; engine reads `samples/`. Delete or retarget.
+7. **`restore_backups.sh`.** Litestream. Rename; first usage line `use bin/dr-pull`.
+8. **Three atomic writes.** `Io::AtomicWrite` fsyncs; World and Live do not. One helper.
+9. **Two PathGuards.** Prefix vs ancestor-realpath. One module, the strong check.
+10. **`ChatController#dmesg` vs `Trace::Dmesg`.** One.
+11. **`VoteReflex` vs `votes#create.turbo_stream`.** Keep the stream.
+12. **Host vs shared notifications controllers.** One.
+13. **Marketplace vs takeaway `_nav_bar`.** One partial.
+14. **Legal/mailer `<style>` vs `_typography.scss`.** Delete the ERB type systems.
+15. **`.reading-column` / `.form-measure`.** Wear them or delete them.
+16. **MixScore backticks vs engine Open3 vs `RadioChop.capture`.** One ffmpeg runner, one `capture` signature.
+17. **`dilla_principles.yml` unread.** Load from `groove_engine` or delete.
+18. **Two LUFS windows.** One.
+19. **`operator.yml` vs RUNBOOK vs CLAUDE vs START_HERE vs RECIPES.** One command list.
+20. **Four deploy verbs.** Wrappers around `vps-deploy`.
+21. **Two uptime-check scripts.** One file, one host list.
+22. **Face tests in `spec/`, `test/`, `web/test/`.** Two homes at most.
+23. **`bin/cli` vs `bin/master`.** One REPL file.
+24. **`MASTER/lib/rails/`.** Move to `RAILS/gates/lib` or `/rails audit`.
+25. **Zeitwerk ignore of the dead slash tables.** After (1), `rake lint:autoload` failing those entries is the deletion proof.
+
+If two things mean the same thing, keep the one with the test.
+
+---
+
