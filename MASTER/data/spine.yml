@@ -530,7 +530,20 @@ pub4_source_ceilings:
 # raised described a tree that no longer existed. This is the shared checkout
 # in one row: a ratchet is a measurement of now, not a running total of what
 # one session did.
-  MASTER: 1050
+# 1050 -> 1051 for tools/backlog_triage.rb. TODO.md holds 5,741 items and grew
+# by 2,100 in one evening while fourteen were verified by hand; of those, three
+# were already done and three were false, so working the list unread wastes
+# about half the effort and one item would have deleted five live commands.
+#
+# The tool does the mechanical half: an item naming a file makes a checkable
+# claim. 5,024 of 5,741 name no file this repo owns, 23 name only files that
+# are not in the tree, and 694 have a subject — which is the set worth reading.
+#
+# Its own first answer was wrong and that is in its comments: resolving paths
+# from the repo root alone called 198 live items stale, because most are
+# written from inside the tree they are about. It also caught a verdict I had
+# written by hand, where I checked the wrong examples.html.erb.
+  MASTER: 1051
 
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:

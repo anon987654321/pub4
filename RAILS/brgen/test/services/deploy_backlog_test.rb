@@ -440,7 +440,11 @@ assert_includes haystack, "turbo_prefetch: false",
 
   def test_shared_components_are_wired_into_the_views_that_use_them
     assert_includes read_source(File.join(ROOT, "shared/app/views/shared/_toast.html.erb")), 'data-controller="toast"'
-    assert_includes read_source(File.join(ROOT, "shared/frontend/examples.html.erb")), 'data-controller="toast"'
+# shared/frontend/examples.html.erb is not asserted here. Its first line says
+# "Copy selected examples into each app": it is a snippet library, so its
+# containing data-controller="toast" proves the documentation documents the
+# thing it documents. The line above already asserts the partial that is the
+# real artifact.
 
     wardrobe_form = read_source(File.join(ROOT, "amber/app/views/wardrobe_items/_form.html.erb"))
     assert wardrobe_form.include?("textarea-autogrow") || wardrobe_form.include?("character-counter")

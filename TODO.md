@@ -6658,7 +6658,6 @@ Highest cost if wrong: 28–30 (deploy lock + jobs env), 36 (drain false-green),
 
 ### MASTER — writes, taint, request path
 
-66. **`AstEdit` calls `atomic_write`; the helper is `write_atomic`.** `lib/io/ast_edit.rb:69,91`. Every write is `NoMethodError` caught as `Result.err`. The dangerous tool cannot edit. Rename the call.
 67. **PathGuard is prefix-only; World realpath-walks ancestors.** ReadFile/WriteFile use PathGuard. A symlink inside the root reaches `/etc`. Put World’s ancestor-realpath check in PathGuard.
 68. **`SearchFiles` `Dir.glob(File.join(@root, glob))`.** `File.join(root, "/etc/passwd")` is `/etc/passwd`. Reject absolute globs; PathGuard every hit.
 69. **`GitContext#show` takes `path` as a git ref.** `HEAD:.master/config.yml` dumps the web token. Blame/diff use `safe_path`; show does not. Never `rev:path`.
@@ -9132,9 +9131,25 @@ the moment it happened, where the whole suite stayed green.
    "capture", not that the table reaches the registry, so it has passed for
    every one of those 25 days. Fix the test first — assert reachability through
    `CommandRegistry.build` — and it will name the dead set for you.
-2. **`mask.js` / `mask_generators.js` / `mask_topologies.js`.** `visual_governor_spec.rb:30` says mask.js is superseded. Comments in `cognition_ecology.js` and `visual_governor.js` still name it. Delete the three files and the comments.
-3. **`examples.html.erb` — already gone.** The file is not in the tree and no
-   controller references it. Nothing to do.
+2. **`mask.js` — deleted 2026-09-11.** Superseded by face.js; `visual_limits.test.mjs` now only names `cognition_ecology.js`.
+3. **`examples.html.erb` — a documentation file read as a view, and my first
+   verdict on it was wrong.** I checked `MASTER/web/app/views/chat/` and called
+   it gone; the item means `RAILS/shared/frontend/examples.html.erb`, which
+   exists. backlog_triage caught my error by resolving the basename.
+
+   It is not unmounted in the defect sense. Its first line reads "Copy selected
+   examples into each app" — a snippet library, so nothing rendering it is the
+   design. The assertion on it was redundant rather than misplaced: the line
+   above it in `deploy_backlog_test` already asserts
+   `shared/app/views/shared/_toast.html.erb`, which is the real artifact, so
+   the second line proved that the documentation documents what it documents.
+   Removed, with the reason in its place.
+
+   The finding underneath is larger and stays open: nothing renders the toast
+   partial either. `stimulus_boot.js:69` registers `["toast", Notification]`
+   and no view in any app renders `shared/toast`, so the component is wired at
+   the JavaScript end and reached from nowhere. Choosing where a toast appears
+   is design work.
 4. **Two `WebPushJob`s.** `RAILS/brgen/app/jobs/web_push_job.rb` and `RAILS/shared/app/jobs/shared/web_push_job.rb`. One class.
 5. **`futurism` — the claim is false.** `futurize` appears in three ERB files,
    so the pin has a reader. Whether one lazy index is worth a gem is a
@@ -10751,7 +10766,7 @@ Sixty questions. Each answered with two or three proposals. Unmeasured. Do not r
 
 11. **Can MASTER scan itself without lying?** (a) Findings start `hypothesis`. (b) `measured` only after a test or `--explain`. (c) Don’t count skip as pass.
 12. **What does `/review` do that `/scan` doesn’t?** (a) Council. (b) Advertise `--only scan` as the default verb. (c) Completions must not still say `through`.
-13. **If AstEdit cannot write, why is it in DEFAULT_TOOL_MAP?** (a) Fix `write_atomic`. (b) Or remove until it can. (c) Test the write.
+13. **If AstEdit cannot write, why is it in DEFAULT_TOOL_MAP?** Closed: it can write (`test_ast_edit_writes.rb`). Next: plan profile cannot call it.
 14. **Does a visitor get Shell?** (a) `VISITOR_ALLOWED_TOOLS` from public names. (b) Test it. (c) Cable must not broadcast `*`.
 15. **Is the constitution one file or twelve readers?** (a) `Master.law`. (b) Collapse `reader_singularity`. (c) Don’t add a thirteenth YAML.
 
@@ -10868,7 +10883,7 @@ Dreamed, then checked a path. Still hypotheses.
 87. **Consensus map: city OS vs social network.** Sources agree verticals; they disagree whether Brgen is inventory or people. Product is people (guest post). Inventory is marketplace. Don’t invert.
 88. **Assumption audit: “Brgen needs ads.”** Neutral: Brgen needs a working sell path. Ads are a later mechanism.
 89. **What becomes scarce after AI writes the CSS?** Operator eye, crate, city trust, dilla takes. Those are PATH_OWNERSHIP `check` that a model cannot raise.
-90. **“You have six hours. Build whatever.”** The intern should take a worktree, fix AstEdit’s method name, and run the write test — not add item 501.
+90. **“You have six hours. Build whatever.”** The intern should take a worktree and delete the dead slash tables (`CommandRegistry.build` never merges them) — not add item 501.
 
 ---
 
@@ -10891,3 +10906,521 @@ Research: brutally honest coach, red-team, assumption audit, consensus map, what
 
 
 
+
+## Ableton Live, Max for Live, ringtone.tools → STUDIO/dilla
+
+Unmeasured intake, 2026-09-12. Sound and music only; nothing here is a MASTER, RAILS, or OPENBSD item. Do not change a rendered-sound default (`DILLA_STYLE_DEFAULTS`, `GROOVE_FEEL`, LUFS, kit gains). Do not render over a take. Every device below is opt-in ENV or a `live/*.als.rb` set, never a silent change to the engine a golden WAV was made with.
+
+The instrument first. `STUDIO/dilla/lib/devices.rb` already is three ringtone.tools devices plus two cousins, merged on `COLLAPSE_BEFORE_ADDING`. `lib/modulation.rb` already is the ringtone LFO morph. A proposal that rebuilds Copy Machine, Hocket, MIDI Bag, wav_Map, VoiceStack, LPG, or the dual morphing LFO is a duplicate, not a gap. `live/CATALOGUE.md` already says the dominant defect is connect, not build.
+
+Sources: ringtone.tools (MIDI Bag, wav_Map, P_4L II, Copy Machine, ringtone LFO, Hocket II); Ableton Live 12 manual (Warp, MIDI Tools, Spectral Resonator/Time, Inspired by Nature, PitchLoop89, Granulator II); Mutable Instruments Plaits/Rings manuals; Dillon Bastan Inspired by Nature; Robert Henke PitchLoop89; Cycling 74 Ableton DSP objects.
+
+### Already in the engine — do not re-port
+
+1. **Copy Machine.** `CopyMachine` in `devices.rb`: up to 32 simultaneous varispeed copies (`asetrate`, not formant shift), `:harmonic` / `:chromatic` / `:spray` families, reverse fraction, stereo width, start drift, gain tilt. CLI `dilla copy-machine`. ENV `COPY_MACHINE`.
+2. **Hocket II (partial).** `MidiDevices::Hocket`: round_robin, pendulum, analog shift-register, random; hold of 1–n notes per voice; 1–8 voices. ENV `HOCKET`. Not a MIDI router — a splitter of the engine note-event contract.
+3. **MIDI Bag (partial).** `MidiDevices::Bag`: pitches from one event list, times from another; cycle / random / walk; velocity from timing or pitches; rests; optional `chord_at` fit. ENV `MIDI_BAG=1`.
+4. **wav_Map (partial).** `WavMap`: 512² height field via ffmpeg, closed paths `:circle` `:spiral` `:lissajous` `:rose`, 2048-point table, bilinear sample, DC removal, two-voice cents drift. ENV `WAV_MAP=<image>` + `WAV_MAP_PATH`. CLI `dilla wav-map`.
+5. **P_4L II (the macro, not Plaits).** `VoiceStack`: one macro → n different values via `DillaMacros.spread`; detune `:unison` `:octaves` `:fifths` `:spread`; models resolve to the existing synth-patch catalogue, not a second oscillator. ENV `VOICE_STACK`.
+6. **Buchla LPG.** `LowPassGate`: vactrol droop, combined VCA+lowpass, per-sample Ruby. ENV `LPG`.
+7. **ringtone LFO (the morph).** `DillaModulation` already has the two continua (square→trapezoid→triangle→ramp and parabola→sine→sharkfin→exponential) plus a stepped family, dual sources, `MAX_ROUTES=32`, `asendcmd` at 48 Hz. `BUS_PATCH=random` is a whole patch on a bus.
+8. **The grain pad.** `pad_layers` is simultaneous grains with octave shimmer and reversal — Granulator-shaped, but confined to the pad layer and the sounding chord.
+9. **Sequential multi-speed.** `organic_vary` copies a loop at different speeds concatenated, not stacked. Copy Machine is the stacked one.
+10. **Tape as hysteresis.** `tape_hysteresis.rb` is already the Nagra/Studer idea as a model, not a plugin.
+11. **DFAM.** `dfam_engine.rb` is a semi-modular drum voice, unreached from `live/`.
+12. **Analog VA.** `analog_synth.rb` is oscillators + filter + envelopes + detune/drift. Not Plaits.
+13. **Spectral as flags.** `spectral_engine.rb` is chop/arp/octave-stack/Fletcher inharmonicity. The old `afftfilt` industrial chain was deleted as unreached.
+14. **Room as arithmetic.** `space_fx.rb` is live-buffer reverb/echo, not convolution.
+
+### ringtone.tools — remaining gaps (research extra thoroughly)
+
+Ringtone.tools is ricoL / rico@ringtone.tools. Public devices: MIDI Bag, wav_Map, P_4L II, Copy Machine, Hocket II. Patreon: ringtone LFO (extracted from P_4L II). Aesthetic: one indivisible musical idea split so the halves can come from different places. That is the whole catalogue. dilla already took the split. What is left is depth inside each split, and Plaits as engines rather than as a macro.
+
+**MIDI Bag (https://ricola.gumroad.com/l/MIDI_Bag)**
+
+15. **Velocity morph, not a switch.** The M4L device morphs between velocity sources. Ours is `:timing` or `:pitches`. A 0..1 crossfade (`MIDI_BAG_VEL_MORPH`) is the missing control; at 0.5 a kit accent and a melody accent share the hit. Opt-in.
+16. **Range presets.** Bag stores and recalls pitch-range snapshots. Engine equivalent: named bags in `project/` (lead bag, kit bag, vocal-pitch bag) loaded by id, not rebuilt from the current phrase. Test that a bag round-trips without the render.
+17. **Record vs retrieve is two phases in Live, one array here.** Offline, "record" is just the pitch list. Expose `dilla bag --store <name>` / `--retrieve <name> --timing kit` so a bag survives a session the way the M4L device does.
+18. **Incoming MIDI can be anything.** In Live that is a drum rack, a sequencer, another plugin. Here the timing source is hardcoded to the kit when `MIDI_BAG=1`. Let `MIDI_BAG_TIMING=hats|kick|lead|chops` pick the grid. Hats-as-clock with lead pitches is the Donuts move.
+19. **Rests as musical material.** `rests:` exists and defaults to 0. Defaulting a bag to a small rest fraction (0.12–0.18) is how the M4L device avoids sequencer-grid rigidity. Do not change the default; add `MIDI_BAG_RESTS` and document it. `dilla_principles.yml` already says silence is musical material and has no Ruby reader — this is a place that reader would land.
+20. **Walk order is the playable one.** Cycle preserves contour; random destroys it; walk keeps adjacency. The M4L "feels played" reports match walk. Default the CLI demo to walk, leave ENV default cycle so existing calls do not move.
+
+**wav_Map (https://ricola.gumroad.com/l/wav_Map)**
+
+21. **Mip-mapped table per octave.** `WavMap.render!` already says bandlimiting is a post lowpass and the honest next piece is a mip-mapped table. Without it, a picture at 110 Hz aliases; at 440 Hz the same table is a different instrument. Build the pyramid once, pick the table by f0. Opt-in `WAV_MAP_MIP=1`.
+22. **Path morph.** Four discrete paths. ringtone traces a closed orbit you can reshape. A `WAV_MAP_PATH_MORPH` 0..1 that interpolates circle→spiral→lissajous→rose (and keeps the path closed at every t) is the playable control. Closing is load-bearing — a morph that opens the path puts a click on every cycle.
+23. **Hue as a second terrain.** Brightness is elevation. A colour image has a second axis (hue or saturation) that can detune the other voice, drive filter, or pick path radius. `WAV_MAP_COLOR=hue` without changing the brightness cycle. postpro grades become oscillators for free.
+24. **Audio-rate path walk during the note.** Currently one cycle is one orbit, then that table is scanned at f0. Letting the orbit itself crawl (slow spiral of the spiral) is wave-terrain as originally described, not wavetable. Control-rate first (`WAV_MAP_ORBIT_HZ`), audio-rate only if a test proves it is not FM-by-accident.
+25. **Auto-bridge from STUDIO images.** The file header says this is the shortest bridge from postpro/repligen/lora. Nothing calls it with their output. A set `image_osc.als.rb` that takes the newest file in a postpro out dir as `WAV_MAP=` is connect, not build. `[cheap]` in CATALOGUE language.
+26. **Scratch already has `album_wavmap.png`.** `STUDIO/dilla/scratch/album_wavmap.png` exists. If it is a leftover from a previous wav_Map experiment, wire it as the default picture when `WAV_MAP=1` with no path, or delete it. Do not leave a PNG that nothing reads.
+27. **Do not make wav_Map the default pad.** A picture-oscillator under every beat fights the crate. Keep file-gated.
+
+**P_4L II (https://ricola.gumroad.com/l/P_4LII) — Plaits as ecosystem, not a clone**
+
+P_4L II is seven independent Plaits voices plus, globally: two morphing LFOs, a random-voltage generator with four algorithms, velocity-sensitive ADSR with two curves, a clock, a patchbay. Per voice: Plaits (16 models, internal LPG, dual outs), a 6-type ladder filter that can self-oscillate, sample-and-hold as voltage offset, pre-filter tap for audio-rate self-mod. Detune modes: Prog, Equal, Power, Drift. Width pans voices. Velocity, aftertouch, key-track as sources.
+
+Plaits models (Mutable manual, two banks of eight): pair of classic waveforms; waveshaping (Tides-at-audio-rate); 2-op FM; granular formant; harmonic oscillator; wavetable; chords; vowel/speech; granular cloud; filtered noise; particle noise; inharmonic string (Rings-lite); modal resonator; analog kick; analog snare; analog hat.
+
+28. **Do not port Plaits.** Sixteen engines beside AnalogSynth + DFAM + WavMap + pad grains is a second synthesiser. The file already refused this: models resolve to the 212-patch catalogue. Keep that decision.
+29. **Steal the three Plaits models the catalogue cannot name.** Wavefolder (model 1), 2-op FM with feedback (model 2), modal/string resonator (models 11–12). AnalogSynth has saw/square/triangle/sine and a filter; it has no folder and no FM pair. DFAM is a drum voice, not Rings. Three opt-in oscillators, each a plan+render like CopyMachine, each off by default.
+30. **Wavefolder on AnalogSynth.** Asymmetric triangle → shaper → folder is Tides-at-audio-rate. `ANALOG_FOLDER=0..1` on the existing synth, not a new file. Fold is already a `space_fx` stage on the live chain; that is post, this is the oscillator.
+31. **2-op FM with the morph=feedback trick.** Plaits morph past 0.5 is op2→self (harsh), below is op2→op1 (chaotic). `FM_PAIR` as a lead voice, ENV off. The engine already has `FM_DRUMS=1` as the default kit — do not confuse them. A test that a sine+sine at ratio 2, index 0 is a sine, and at index 4 has sidebands, is the instrument.
+32. **Modal resonator / Rings-lite.** Strike a bank of decaying sinusoids (inharmonicity from `spectral_engine.rb` already has Fletcher B). Exciter: the crate transient, or dust when there is no trig. This is how a kick becomes a tuned plate, which is a Dilla flip by another name. `MODAL=1` on a drum or a vocal chop, never on the master.
+33. **Detune modes Prog / Equal / Power / Drift.** VoiceStack has unison/octaves/fifths/spread (musical intervals). P_4L’s four are spacing laws: progressive, equal cents, power-law, random walk. Add as `VOICE_STACK_DETUNE=power|drift|equal|prog` without removing the interval modes. Drift is the one that sounds like seven slightly different instruments; Power is the one that sounds like one thick one.
+34. **Per-voice ladder, not a shared filter.** VoiceStack already computes `cutoff_scale` and the comment says the caller uses it. Confirm a caller actually applies it; if the scale is planned and then ignored, that is the connect bug CATALOGUE named. Measure before adding a second filter.
+35. **Sample-and-hold as voltage offset.** P_4L uses S&H so each voice can sit at a different macro without an LFO. `DillaModulation` has a stepped family. A VoiceStack that freezes each voice’s macro on note-on is the same idea with no new DSP.
+36. **Audio-rate self-mod tap.** Pre-filter oscillator into its own FM/cutoff. Dangerous on a Ruby render (CPU). Prototype as a one-voice proof, never on the 451-part demo (`DEMO_VOICE_STACK_EVERY` exists because stacking all parts was too slow).
+37. **Random voltage, four algorithms.** P_4L’s RVG is not `rand()`. Four named walks (uniform, exponential, Lorenz-ish, clocked S&H) feeding the existing modulation matrix. `MOD_SOURCE=rvg`. Keep `MAX_ROUTES` as the ceiling.
+38. **Width as voice pan.** VoiceStack plans gain and cents, not pan. CopyMachine already pans copies. Same placement math on voices. `VOICE_STACK_WIDTH`.
+39. **Internal LPG per voice.** `LowPassGate` exists as a file processor. Running it per VoiceStack voice is the P_4L voice topology. Cost: N decode/encode passes. Plan it; do not put it on DEMO.
+
+**Copy Machine (https://ricola.gumroad.com/l/oiAby)**
+
+40. **The original assigns speeds for you.** Ours exposes families. A fourth family `:machine` that matches the M4L’s “mostly handled by the Copy Machine” curve (dense near 1.0, sparse at the extremes, some negatives) is the missing authenticity. Keep harmonic as default — spray is already the Copy Machine-ish one.
+41. **Negative speed = reverse + rate.** The M4L uses signed rates. Ours splits reverse into a coin-flip. Signed ratios in the plan (`ratio: -0.5` meaning reverse at 0.5x) collapse two knobs into one and match the device. The filter_complex already reverses before varispeed; this is a plan change.
+42. **Copies of the crate, not of the mix.** `COPY_MACHINE` currently clouds a source file. The musical use in a Dilla engine is clouding one dug loop, then chopping the cloud. A set that CopyMachines `samples/dug/` then `sample_flip`s the result is the experiment. Do not CopyMachine the master bus — that is a smeared album.
+43. **Duration policy is still the caller’s.** Slower copies pad with silence unless `-stream_loop`. Looping a dug record at 0.5x is a different piece than padding it. `COPY_MACHINE_LOOP=1` should be explicit, default off, because looping a vocal is a stutter and looping a chord is a pad.
+
+**Hocket II (https://ricola.gumroad.com/l/hocket)**
+
+Hocket II added, over Hocket 1: Note Repeat, Analog Shift Register, Pendulum, master channel select, MIDI note-kill, missing-note-off resistance.
+
+44. **Note Repeat mode is the one we do not have.** Same pitch sent to the next voice without consuming the next event — a flam across the ensemble. `HOCKET_MODE=repeat`. Distinct from `hold`, which keeps a voice on consecutive *different* notes.
+45. **Reverse order.** Pendulum turns at the ends. Reverse is a one-shot flip of the voice list. Cheap. `HOCKET_REV=1`.
+46. **Master channel select.** In Live, one send and many receives on other tracks. Here, voices are arrays. "Master" means "which voice keeps the leftover notes when voices < events." Today leftovers wrap. A `HOCKET_MASTER=0` that dumps leftovers onto voice 0 (the lead patch) keeps a centre the way CopyMachine keeps copy 0 as the anchor.
+47. **Note-off / kill do not apply.** The engine is offline; events have sustain, not note-off. Do not invent a hanging-note stopper. The Maboroshy M4L "Hanging Notes Stopper" is a Live problem.
+48. **Hocket the kit, not only the lead.** `HOCKET` currently splits a lead line. Hocketing kick/snare/hat across three drum patches is medieval hocket as a beat, which is closer to Dilla than hocketing a rhodes. `HOCKET_TARGET=lead|kit|chops`.
+49. **Voice = patch, not just transposition.** Split arrays must actually render through different patches (the comment says so). If all voices still hit the same soundfont program, the hocket is inaudible and the tests that count notes per voice will stay green. Pin a test that the voice-0 patch id ≠ voice-1 patch id when `HOCKET>=2`.
+
+**ringtone LFO (Patreon, extracted from P_4L II)**
+
+50. **Dual simultaneous families already exist.** Do not add a second LFO object. What the M4L still has that we may not: both families at once into the same eight destinations with independent depths. Confirm `DillaModulation` can route straight and curved to the same target; if it is one family per route, that is the gap.
+51. **Tempo-sync vs free.** Live’s LFO syncs to transport. Ours is Hz. `MOD_SYNC=1/4|1/8|1/16|bar` in addition to `MOD_RATE_HZ`. Phrase-rate modulation is how a filter breathes with the pocket rather than against it.
+52. **Eight destinations was the M4L ceiling; we allow 32.** Keep 32 as the cap, but a `live/` set that maps more than eight will be undebuggable. CATALOGUE: a demo patch of four routes is the teaching object.
+
+### Ableton Live 12 — what to steal for dilla (not a DAW)
+
+Live is a clip launcher with warp, a mixer, and a device chain. dilla is a seeded renderer. Steal algorithms and clip-level chance, not Session View.
+
+**Warp modes (six granular time-stretchers)**
+
+53. **Beats.** Transient-preserving; repeats or drops grains between hits. This is how Live turns a 93 BPM break into 86 without smearing the snare. `sample_flip` / crate stretch should name its algorithm. If it is always `atempo`+`asetrate`, that is Re-Pitch, not Beats. Measure.
+54. **Tones.** Single-pitch material (bass, vocal). Formant-ish grains. Use on `vocal_chop` and `acapella`, never on drums.
+55. **Texture.** Polyphonic / atmospheric. Closest to the pad grain cloud. Do not run Texture on a kick.
+56. **Re-Pitch.** Tape: pitch and time locked. CopyMachine already chose this for copies (`asetrate`). Crate playback that should sound like an MPC pitch knob is Re-Pitch. Keep it as the sample default; it is the Dilla one.
+57. **Complex / Complex Pro.** Phase-vocoder quality stretch. Expensive, artefacts on drums, useful on a whole record pitched −3 without chipmunks. Opt-in `WARP=complex` on dug loops only.
+58. **Warp as a named family on the crate, not a new engine.** One function `DillaWarp.apply(src, dest, mode:, bpm_from:, bpm_to:)` with a plan struct. Default mode remains whatever `sample_flip` does today.
+
+**MIDI Tools (Live 12 Generate + Transform)**
+
+Generate (Rhythm, Chord, Melody, Shape, Seeds) and Transform (Quantize, Strum, Arpeggiate, Connect, Ornament, Recombine, Time Warp; 12.1 added Chop, Glissando, LFO). They write into the clip; they are not playback MIDI effects.
+
+59. **Do not add a Generate panel.** The engine already generates. Harmony, groove, composition, improvisation modules are the generators. A second melody generator is a fork.
+60. **Steal Transform as functions over note events.** Same contract as Hocket/Bag. `MidiTransform.strum`, `.ornament`, `.time_warp`, `.chop`, `.recombine`. Each returns events, none writes audio.
+61. **Strum.** Spread a chord’s notes over 10–40 ms, direction up/down/alternate. Jazz-trio set (CATALOGUE 8) is the caller. Off by default — a rhodes that always strums is not this engine.
+62. **Ornament / grace.** 1–3 notes before/after, pitch ±1 scale degree, chance < 1. This is how a line stops sounding quantized without touching groove_engine. `ORNAMENT=0.2` as a probability, not a flood.
+63. **Time Warp (MIDI).** Speed curve over a selection: accelerando into the snare, ritard out. Distinct from `GROOVE_FEEL` (per-hit pocket). Phrase-level, which `dilla_principles.yml` already prefers over random jitter. Wire it to phrase boundaries in `groove_engine`, do not add a second pocket.
+64. **Chop (Live 12.1).** Split a long note into up to 64 with a gap pattern. Vocal chops already exist as audio. MIDI Chop on a pad note is a pulse without a new oscillator.
+65. **Recombine.** Hold start-times, shuffle pitch/length. Bag already swaps pitch and time between two sources. Recombine shuffles within one source. Tiny, and it is the "same rhythm, new melody from its own pitches" trick.
+66. **Note chance / probability lane.** Live 12 gives each note a 0–100% play chance. `composition_engine` section maps are deterministic given a seed. Per-event `chance` on ghost hats and grace notes is the one Live idea that matches Dilla’s conversational kit. Seeded. `NOTE_CHANCE` off by default so golden WAVs do not sprout holes.
+
+**Follow Actions**
+
+67. **Follow Actions as arrangement, not a clip launcher.** Live: Action A/B with relative weights (3:1 means 75/25). `composition_engine` already has form. A section map with weighted next-section is Follow Actions without Session View. Use it for the beat-tape set (CATALOGUE 5), not for the default 96-bar render.
+68. **Stop as a legal action.** Follow Action B = Stop is how Live inserts silence. Principles: silence is material. A 1/8 chance a four-bar cell does not play is more Dilla than adding a fill.
+
+**Spectral Resonator and Spectral Time (Live 11+ native)**
+
+69. **Spectral Resonator.** FFT → partials → retune those bins to a frequency or a chord, decay, hf/lf damp, mix. Ableton DSP object `abl.device.spectralresonator~`: decay, frequency, harmonics 1–256, shift, mod (none/ramp/random/granular). dilla equivalent: `afftfilt` or a Ruby STFT that snaps bins to `DillaHarmony` chord tones. `SPECTRAL_RESONATOR=1` on a noise layer or a vocal, never on the kick. This is how unpitched crate dust becomes the chord.
+70. **Spectral Time.** Partials into a frequency-dependent delay; freeze. The freeze is the Granulator "hold this texture" button. `SPECTRAL_FREEZE` at section boundaries (the filter-transition pattern in `dilla_principles.yml` arrangement).
+71. **Do not revive the deleted industrial `afftfilt` chain as the resonator.** That chain was unreached and removed on purpose. A new caller with a test, or nothing.
+
+**Granulator II (Henke) and Vector Grain (Bastan)**
+
+72. **Pad grains are not Granulator.** Granulator: scan position, grain size, spray, envelope, LFO on all of it, file-wide. Pad grains: chord-locked, pad-only. A `GRANULAR=file` that scans a dug loop (scan 0..1 over bars, grain 30–120 ms, spray, reverse fraction) is the missing instrument. Off by default. This is the IDM stretch people reach for `RENDER_MODE=warp` to get, and warp currently does not do it.
+73. **Scan ≠ playback speed.** Granulator Time at 100% is normal; below is freeze-scan. CopyMachine changes playback rate. Granular scan holds pitch (mostly) while crawling the file. Different effect; do not implement scan as `asetrate`.
+74. **Vector Grain maps particle physics to grain params.** Overkill for dilla. Steal one mapping: grain pan from a slow 2D walk, grain reverse from a threshold on that walk. No GUI particles.
+
+**PitchLoop89 (Henke, Publison DHM 89)**
+
+75. **Pitch in delay-line slices, not a shifter.** Parameters: Pitch ±24 st, Fine, Segment (slice length), Xing, Fade, Position (record-to-play distance), Bandwidth (sample-rate of the loop, which also caps delay and highs), Vibrato. Artefacts are the sound. `PITCHLOOP` on a vocal chop or a rhodes stab, Mix < 0.4, never on the kit. ffmpeg `rubberband` or a Ruby delay with two read heads. Prototype on one file; compare to Re-Pitch so we know they differ.
+
+**Inspired by Nature (Dillon Bastan, Live Suite)**
+
+Vector FM, Vector Grain, Vector Delay, Vector Map; Emit (spectrogram particles); Bouncy Notes; Tree (branch = resonator).
+
+76. **Vector Delay’s Recycle.** Delay with pitch shift in the feedback. Each repeat walks in pitch. `space_fx` space_echo has no pitch walk. `ECHO_SHIFT=±1` st per repeat, mix small. Dub-chamber already exists in warp mode — this is that idea with a sign.
+77. **Tree resonator is modal with a geometry.** Skip the tree. Modal (item 32) is the same DSP without the drawing.
+78. **Bouncy Notes is a MIDI physics sequencer.** Skip. Groove_engine is the time model here; a bouncing-ball MIDI generator fights it.
+79. **Emit’s spectrogram-as-playhead.** Play only the bin the particle is on. Related to Spectral Resonator. If Resonator lands, Emit is a modulation source onto it, not a second FFT.
+
+**Hybrid Reverb, FlexGroove, MPE, scale**
+
+80. **Hybrid Reverb = convolution + algo.** `space_fx` is algo. A crate-sourced IR (room noise from a dug record, trimmed) into a convolution before the algo is Hybrid. IR from the same record the beat is made of is the Dilla version of "the space the sample came from." `IR_FROM_CRATE=1`. Measure wet/dry so the default room does not move.
+81. **FlexGroove is off-grid MIDI sequencing** (push/pull, changing meters, odd swing). `groove_engine` already does independent clocks per part. FlexGroove’s meter-morph is the one idea worth a look for the long-form set, not for the default 4/4 pocket.
+82. **MPE / per-note expression.** No. The note-event contract is `[time, vel, {hz:}, sustain]`. Extending it to per-note pitch-bend is a rewrite of every renderer. Ornament + LPG + VoiceStack drift cover the musical need.
+83. **Scale-aware devices.** Live 12 MIDI effects follow clip scale. `theory_runtime.rb` and `modes.yml` already are the scale. New MIDI transforms must take the current mode, not twelve-tone. A transform that ignores `modes.yml` is how Ethio-jazz went missing last time.
+
+### Similar M4L / experimental — steal the idea, not the device
+
+84. **Factorsynth (NMF factorization).** Separates a sound into time-vs-spectrum factors you can resynthesize independently. Heavier than this engine. The cheap cousin: `radio_chop` already runs `htdemucs_6s` and throws the drum stem away (CATALOGUE 2). Keep the drum stem. That is factorization the crate already paid for.
+85. **Mutable Rings / Ringer.** Sympathetic strings. Modal item 32 covers it. Do not vendor a C++ Rings port into STUDIO.
+86. **Drox (glitch/jump/stutter).** Buffer jumps, stutters. `radio_chop` / vocal chop already stutter by nature of chops. A master-bus Drox is breakcore and fights the pocket. If at all: on one dug loop, `STUTTER=1/16` chance, seeded.
+87. **Auren / Spectral Time delay.** Covered by item 70.
+88. **Chromaphase 16-voice chorus.** VoiceStack + CopyMachine already thicken. A third thickener is a pile.
+89. **Catch (live sampler).** Live-only. Skip.
+90. **Brain Recordings (attractors, Van der Pol, lowercase).** Off-brand. Donuts is not microsound. Do not add a Lorenz oscillator to the kit.
+91. **Henke Granulator Character knob.** Pitch drift per grain. Pad grains may already shimmer in octaves; a cents-level Character on `GRANULAR` (item 72) is the one Granulator knob that makes grains analog. ±5 cents, not ±1 octave.
+92. **Publison Bandwidth as a sound.** PitchLoop89’s B/W drops the processing sample rate (20/10/5 kHz). That is a darkening that is not a filter. `PITCHLOOP_BW=10k` as an alternative to LPG on the same material — they darken differently (alias vs vactrol). A/B one chop, keep the one the operator prefers. `[yours]`.
+
+### Connect, don’t build (the CATALOGUE defect, applied)
+
+93. **`live/*.als.rb` still re-synthesise what the engine would hand them.** CATALOGUE said this. Wire CopyMachine / Hocket / Bag / WavMap / VoiceStack / LPG / BUS_PATCH into at least one liveset each, as ENV the set exports, not as new DSP. Three sets exist; none should remain on six knobs.
+94. **`dfam.als.rb` and `tape_loop.als.rb` are still catalogue, not files.** Build those two before any new experimental device. They exercise DSP that already landed.
+95. **`dilla_principles.yml` is still a draft with no Ruby reader.** Experimental devices that cite it (silence, independent clocks, transform more than copy) should be the first callers of a reader, or the citation is decoration. Do not write a second principles file for M4L.
+96. **Every new device follows CopyMachine’s shape.** `plan` (pure, seedable, printable) → `describe` (one line per voice/copy) → `build!` (nil if source missing) → CLI `--describe` that renders nothing. Tests pin the plan, not a WAV histogram. Golden WAVs are photographs of concerts.
+97. **ENV off unless the operator turns it on.** Pattern already used: `COPY_MACHINE`, `LPG`, `WAV_MAP`, `VOICE_STACK`, `HOCKET`, `MIDI_BAG`. New flags join that list. None enter `DILLA_STYLE_DEFAULTS`.
+98. **`RENDER_MODE=warp` is the playground, not a new style.** Warp currently enables spectral arp/stack, IDM bias, drum chops, cosmogramma, quartal, dub_chamber. New experimental DSP that would scare a soul beat belongs behind warp (or its own named mode), not behind `dilla`.
+99. **CPU budget is already measured.** `DEMO_VOICE_STACK_EVERY=3` exists because stacking every demo part was too slow. Anything per-sample Ruby (LPG-per-voice, modal, granular scan, STFT resonator) inherits that gate. A device that cannot run on a 16-bar sketch does not run on the overnight demo.
+100. **Do not Max-for-Live dilla.** No `.amxd`, no Live Object Model, no packing these as Ableton devices. The engine is Ruby + ffmpeg. A device that needs the LOM (clip launch, Push, follow-action inside Live) is out of scope. If the operator wants these inside Live, that is a different product and a PATH_OWNERSHIP `check`.
+
+### Highest leverage, in order
+
+101. **Keep the drum stem** (84 / CATALOGUE 2). Paid-for factorization.
+102. **Prove Hocket changes patch, not just array** (49). Otherwise the device is a test.
+103. **MIDI Bag timing source + velocity morph** (15, 18). Small, audible, on-brand.
+104. **Granular scan of a dug loop** (72). The actual experimental sampler gap.
+105. **Spectral resonator snapped to the chord** (69). Turns crate noise into harmony.
+106. **Modal / Rings-lite on a chop** (32). One new oscillator, Dilla-usable.
+107. **Warp-mode family named on the crate** (53–58). Stop calling every stretch the same thing.
+108. **Wire existing devices into live sets** (93–94) before item 109.
+109. **Only then: wavefolder, 2-op FM, PitchLoop, Hybrid IR, path-morph wav_Map.**
+
+If two of these mean the same, keep the one with the test. If a device would change how a default beat sounds, it is refused until it is a flag.
+
+## demo.wav wiring audit, KVR gems, engineer circle
+
+Unmeasured, 2026-09-12. STUDIO/dilla only. Do not change `DILLA_STYLE_DEFAULTS`, MixScore LUFS, or a rendered-sound default. The previous Ableton/ringtone intake named devices; this one asks whether the next `demo-all` actually runs them.
+
+The instrument: `SPEAK=0 ruby dilla.rb demo-all 12 demo.wav` (ENV_AND_RENDER.md). Bare `ruby dilla.rb` is `showcase_demo!`, a style medley, not the catalogue. `bin/demo_full.rb` is a third showcase that requires `sine_stream.rb` and never touches `CopyMachine` / Hocket / Bag.
+
+### What the next demo.wav actually turns on
+
+`ALBUM` defaults to 1. `apply_album_slot!` runs last in the demo-all loop and `force_env!`s the album table over everything above it.
+
+1. **HOCKET is on every album slot.** `RENDER_MODE_DEFAULTS[:album]` sets `HOCKET=3` `HOCKET_MODE=pendulum`. If ALBUM stays 1, the catalogue demo *does* split the lead. This is the one ringtone device the full demo already uses as a signature, not a sprinkle.
+2. **LPG is on every album slot.** Same table, `LPG=1`. RINGTONE_LAYER also sets it. Redundant, and it is on.
+3. **VOICE_STACK is not a sprinkle on album demos.** demo-all writes `VOICE_STACK=2` every third track else `1` (`DEMO_VOICE_STACK_EVERY`), then `apply_album_slot!` force-sets `VOICE_STACK=4` on every slot. The comment at 20134 still describes the sprinkle. The album signature wins. The overnight-CPU argument for every-third is void while ALBUM=1.
+4. **COPY_MACHINE is off three slots of four.** `album_slot_env` sets `COPY_MACHINE=6` only when `(idx+1) % ALBUM_DEVICE_EVERY == 0` (every 4). Other slots force `COPY_MACHINE=0`. RINGTONE_LAYER defaulted it to 6 at load via `||=`; force then kills it. The layer log can still say COPY_MACHINE=6 while the slot rendered 0.
+5. **WAV_MAP is the same every-fourth as Copy Machine, and the picture is a mandelbrot.** `album_wav_map_image` writes `scratch/album_wavmap.png` via `lavfi mandelbrot`. Not a crate still, not a postpro grade, not `samples/`. A dazzling showcase of wav_Map would rotate real images; this rotates one generated fractal.
+6. **MIDI_BAG is never set.** Not in RINGTONE_LAYER_DEFAULTS, not in album signature, not in DILLA_FULL, not in demo-all. Default off. The next demo.wav will not bag lead pitches onto the kit.
+7. **RINGTONE_LAYER does not include Hocket or Bag.** It sets Copy Machine, LPG, VoiceStack. Hocket arrives only through album. Bag arrives through nothing.
+8. **DILLA_FULL does not include any ringtone device.** Drums, organic_vary, mix buses, morphing leads, flutes. A `DILLA_FULL=1` render without ALBUM is not a ringtone showcase.
+9. **Granular scan, spectral resonator, modal/Rings, PitchLoop, wavefolder, 2-op FM, MIDI Bag morph, path-morph wav_Map do not exist as code.** They cannot be wired. Previous intake items 15–76 are build, not connect.
+10. **`PAD_GRANULAR` defaults on** (`25436`). That is the pad-layer grain cloud, chord-locked, not a dug-loop Granulator. The demo already has pad grains. It does not have scan-through-the-crate grains.
+11. **BUS_PATCH is not in album_slot.** Mix buses turn on with the every-fourth device bundle (`DILLA_MIX_BUSES=1`, `BUS_MOD_SYNC=1/8`). `BUS_PATCH=random` is never set. Modulation matrix exists; the random patch does not play.
+12. **showcase_demo! (bare dilla.rb) isolates children with `unsetenv_others: true`.** Each child reloads the engine, so RINGTONE_LAYER=1 applies (Copy Machine 6, LPG, VoiceStack 6). Album slot does not. Hocket stays 1 (no split). MIDI_BAG off. WAV_MAP off unless a file is passed. A short showcase is Copy-Machine-and-LPG, not the full shelf.
+13. **`bin/demo_full.rb` is a different record.** Sine pads, `drums_for_bar!`, `bass_line!`, `master_chain!`. No `lib/devices.rb`. A listener comparing demo.mp3 from that script to demo.wav from demo-all is comparing two engines.
+14. **HOCKET may still be inaudible.** Item 49 of the previous intake: if all three voices render the same soundfont program, the split is a note census. demo-all does not assert voice-0 patch ≠ voice-1 patch. Pin that before calling the album HOCKET=3 a showcase.
+15. **COPY_MACHINE on the every-fourth slot clouds whatever source `CopyMachine.build!` is handed.** If that is the mix, the slot smears the record. If it is the dug loop, it is the device. Trace the caller in the demo path; the header in devices.rb says it takes a file. Confirm which file demo-all passes.
+16. **VOICE_STACK=4 on every album slot is the CPU the sprinkle was invented to avoid.** 451 parts × 4.3× was the measured cost of stacking every lead. Album currently pays it. Either drop album VOICE_STACK to the sprinkle, or accept overnight and delete the DEMO_VOICE_STACK_EVERY comment.
+17. **A dazzling catalogue demo is a rotation plan, not “all flags on”.** Copy Machine, Hocket, Bag, wav_Map, VoiceStack, LPG, BUS_PATCH, pad grains, modal, resonator — if they all fire on every track the demo is one texture. Follow ALBUM_DEVICE_EVERY’s idea: coprime periods, each device a colour that comes and goes. MIDI_BAG on a different modulus than HOCKET so they do not coincide (demo-all already offsets rap vs stack this way).
+18. **Proposed demo-all device clock (do not apply without a 16-bar probe):** HOCKET every slot (already); LPG every slot (already); VOICE_STACK every 3 (restore sprinkle, album signature should not force 4); COPY_MACHINE every 5; WAV_MAP every 7 with a rotating image list; MIDI_BAG every 4, offset by 1 from Copy Machine; BUS_PATCH every 11. Periods pairwise coprime so the triple never repeats inside a 400-part run. ALBUM_BED_EVERY=3 already exists; do not factor-align with it.
+19. **WAV_MAP image rotation.** `samples/own/`, postpro out, `scratch/album_wavmap.png`, a crate still-frame if one exists. Mandelbrot as fallback only. A fractal under every fourth beat is a demo of lavfi, not of the device.
+20. **Provenance must record the slot’s device env after `apply_album_slot!`.** If provenance snapshots ENV before the album force, the JSON will claim COPY_MACHINE=6 on a slot that rendered 0. Check `lib/provenance.rb` timing against the demo-all loop.
+21. **RINGTONE_LAYER describe vs slot truth.** `ringtone_layer_describe` prints the load-time defaults. After album_slot force, those strings lie. Describe from current ENV at render, or do not print it on demo-all.
+22. **Do not turn MIDI_BAG on globally to “use the tools.”** Bag on every lead makes every melody a drum-grid. Sprinkle, like VoiceStack was supposed to be.
+23. **`RENDER_MODE=warp` is still the IDM playground** and is not the demo-all default. Spectral arp/stack, cosmogramma, dub_chamber live there. A dazzling soul catalogue and a warp showcase are two records. Do not merge them into one wav.
+24. **Measure before declaring the album HOCKET a win.** 16-bar A/B, HOCKET=1 vs 3, same seed, MixScore + a listen. If the split does not change patch, the next demo.wav is not more dazzling, it is three copies of one line.
+
+### KVR Audio — VST gems to emulate as Ruby/ffmpeg, not to vendor
+
+Do not ship a VST. Do not add a plugin host. Steal the *idea*, CopyMachine-shaped (`plan` / `describe` / `build!`), ENV off. AnalogSynth, DFAM, tape_hysteresis, SONITEX, VoiceStack already cover a lot of “vintage analog.” New oscillators only when the catalogue cannot name the character.
+
+**Famous analog / circuit**
+
+25. **u-he Diva’s lesson is component-level drift, not a Diva clone.** VoiceStack already detunes. SuperClassic (Hahmo DSP, KVR 2025) names the missing piece: each oscillator its own LFO, golden-ratio rate offsets, non-repeating drift. `VOICE_DRIFT=golden` on AnalogSynth / VoiceStack. Small cents, seeded.
+26. **TAL-U-No-LX / Juno-60: one DCO, chorus is the synth.** analog_synth has saw/square/tri/sine and a filter. The Juno sound is the BBD chorus on a single oscillator, not a second osc. `JUNO_CHORUS=1` as a pad voice, I/II/I+II rates. space_fx already has chorus; this wants the Juno’s specific 3-phase BBD, not a generic chorus stage.
+27. **Prophet-600 / Synapse Proxima (KVR 2025): Curtis CEM filter + early MIDI poly.** AnalogSynth is a generic VA. A CEM-ish 12/24 dB self-osc ladder with more noise in the resonance is the Prophet character. `FILTER=cem` opt-in on AnalogSynth, do not replace the default.
+28. **Roland MKS-80 / Synth-80 (Jun Murakami, KVR 2026): Super Jupiter, every param MIDI.** We do not need MIDI CC. We need the dual-layer analog (two complete synths per voice). VoiceStack fifths is an organ stop; MKS-80 layer is two patches. `VOICE_LAYER=a,b` resolving two catalogue patches, not a new engine.
+29. **JP-8000 supersaw (SuperClassic: 7 bandlimited saws, keytracked HPF, SuperDrift).** FM_DRUMS is the default kit, not a supersaw. A lead `SUPERSAW=7` with the keytracked HPF is the 90s trance cousin of Dilla’s digital-era texture. Warp-mode only. Do not put a supersaw under Donuts.
+30. **Moog ladder saturation at self-osc.** analog_synth filter: if it cannot scream, it is a cookbook filter. One test: resonance 0.95, a sine in, output is a sung pitch. If not, the “Moog” in VoiceStack MODELS[:analog] prefer-list is a name.
+31. **SP-1200 / MPC3000 as converters, not as kits.** SONITEX already has `sp1200` in SONITEX_ROTATION. Fairall mixed Fantastic Vol. 2 off MCI tape through SSL; the grit is the converter and the tape, not a bitcrush plugin. `DRUM_CRUSH_BITS=12` is already in album signature. Keep it there; do not add a second SP-1200 emulator.
+
+**Rare / interesting / new (KVR 2025–26)**
+
+32. **Pigments 7 Voice Modulator.** Per-note analog-style variation — VoiceStack macro spread is this. Do not rebuild. Confirm the demo’s VOICE_STACK=4 actually varies macro per voice, not only cents.
+33. **GrainCharlie (ukdf, free, Sep 2026).** Five modes: Melody (pitch follows MIDI), plus Slice / Slice Melody. The slice-melody mode is MIDI Bag’s cousin for audio: slice onsets become the rhythm, grain pitch follows the lead. That is item 72 (granular scan) with Bag’s timing split. One device, two names; keep Bag for notes and GrainCharlie-shaped scan for audio.
+34. **KVRDC26 Greenland: randomiser + chorder + 16-step sequencer with slide.** composition_engine / rhythm_macros already sequence. Steal the *slide between steps* (portamento on the sequencer, not on the synth). `STEP_SLIDE=1` on the lead arp. Off by default.
+35. **Airwindows (Chris Johnson).** Open algorithms, not a VST we host: Density, Channel, Tape, Desk, BussColors. The honest analog-console path in a Ruby engine is to port one Airwindows density/desk into the mix bus, with the license respected. Measure 2nd vs 3rd harmonic independently (already on the mix-research list at 153–156).
+36. **Klanghelm MJUC.** Daddy Kev: “one of the best plugins of all time and only $30.” Variable-mu / Fairchild-ish. We do not vendor it. We steal: slow attack, gentle ratio, transformer bump. Album already has MELT and MASTER_SMOOTH. If those are not variable-mu, say so in a comment; do not add a third bus compressor.
+37. **Valhalla / nonlinear reverb.** space_fx is textbook algo. The gem is *nonlinearity in the tank* (Valhalla VintageVerb’s color). A tanh in the feedback of space_echo, mix tiny. Opt-in `ECHO_SAT=1`.
+38. **RC-20 / cassette print.** `CASSETTE_PRINT=1` already exists in master_heuristics (`cassette_wow_parts`). Dilla told Cooley he wanted The Shining to sound like a cassette. The flag exists; demo-all does not rotate it. Put `cassette` in the SONITEX_ROTATION (it is already a symbol there) and confirm album_grade_for actually lands on it, not only donuts_warm.
+39. **Eventide / Yamaha SPX900 “Symphonic.”** Fairall: Dilla ran samples through SPX900 program Symphonic with the D-filter, “watery, bubbly.” That is a specific chorus+dynamic-filter, not space_fx chorus. `SYMPHONIC=1` on the dug loop only. This is the rarest Dilla-documented effect in the Reverb interviews. Higher leverage than a new synth.
+40. **ChowTape / Softube Tape.** tape_hysteresis.rb is the model. Do not add a second tape. Wire the existing one into a liveset (CATALOGUE 9) and into one demo-all slot modulus.
+41. **Decapitator-style pre-sum drive.** Fairall/Power: per-channel into SSL, not one saturator on the mix. DILLA_MIX_BUSES=1 is the grouping. Drive each bus a little, master a little, never only the master. Album every-fourth already turns buses on; the other three-fourths force them off (`DILLA_MIX_BUSES=0`). That fight is the same COPY_MACHINE fight. Pick one: buses always on at low drive, or the sprinkle. Forcing off is how a showcase becomes a gap.
+42. **Dexed / DX7.** VoiceStack MODELS[:glass] prefers `dx fm bell glass`. If the catalogue has those patches, we are done. If AnalogSynth is the only renderer those names hit, the DX character is missing. Measure: a “glass” slot should have inharmonic bell partials, not a filtered saw.
+43. **Surge XT / Vital wavetables.** WavMap is image-as-table. A second wavetable synth is a fork. If we want Vital-like frames, morph between two WavMap tables (`WAV_MAP_MORPH`). That is path-morph’s sibling.
+
+**Future of music (steal the constraint, not the hype)**
+
+44. **DDSP sidecar is already named.** `dilla_ml.rb`: “DDSP sidecar not installed — using heuristic spectral regen.” Do not start a neural synth. Finish the heuristic or install the sidecar behind `DILLA_ML=1`. A demo.wav that pretends to be the future by calling an absent sidecar is a log line.
+45. **Differentiable DSP / RAVE / text-to-music.** Out of scope. The engine is seeded Ruby + ffmpeg. A model that cannot reproduce a take from provenance.json is refused.
+46. **CLAP / MIDI 2.0 / MPE.** Previous intake refused MPE (rewrites the note contract). Still refused. MIDI 2.0 is a host problem.
+47. **Adaptive mastering (Waveroom and kin).** MixScore already scores LUFS/LRA/crest. An adaptive master that chases -8.5 LUFS (Daddy Kev’s 2017 tweet) would fight MixScore’s keeper range −18..−15. That contradiction is the finding; do not “fix” it by raising the ratchet. Donuts is not a 2017 beat-scene master.
+48. **Per-voice analog (Pigments Voice Modulator, SuperDrift, Diva).** The future that fits this engine is already VoiceStack. The demo must *use* it as a sprinkle, not as a wall (item 3, 16).
+
+### Dave Cooley (Elysian Masters) — rules, from his mouth
+
+Sources: Reverb “Engineering Dilla” (Morrison, 2021); FADER Diary interview (2016); Grown Up Rap (2017); Mass Appeal tape; Wikipedia/credits: Donuts, The Shining, The Diary, Madvillainy, Champion Sound, Lord Quas, Ruff Draft.
+
+49. **“Pretty much done when it arrived.”** Cooley on Donuts: sweetened, did not rebuild. dilla’s master stage should have a `MASTERING_INTENT=sweeten` that is EQ + timed compressor only, no new layers. Album mode currently adds devices at the same time as the signature finish. Split: devices in the mix, Cooley in the last 0.5 dB.
+50. **STC-8 release timed to the track tempo.** Cooley: timed Crane Song STC-8 releases to *Donuts* tempos “to preserve the really disorienting compression pump, to take that intensity even a little further.” This is the highest-value unported Cooley rule. `BUS_COMP_RELEASE=tempo` (e.g. 1/8 or 1/4 note in ms at the slot BPM). Distinct from groove_engine. If the bus compressor cannot take a tempo-relative release, it cannot do Donuts.
+51. **GML EQ, “matte” top, not slick.** Cooley “wasn’t into slick top end.” Album sets `MASTER_AIR_DB=0` `MASTER_TILT_DB=3` `MASTER_SMOOTH_DB=2`. Air at 0 is the matte decision. Do not “dazzle” the demo by adding air. A brighter demo is a different record.
+52. **Dilla asked for cassette on The Shining.** Mass Appeal: Cooley started “classic boom bap, cracky snare, pointy kick”; Dilla: “no, I want it to sound like it’s coming off a cassette… soft and musy… grainy and soft” like Madlib. `SONITEX=cassette` / `CASSETTE_PRINT=1` is that request. Album signature is melt/smooth/tilt, not cassette. Rotate cassette onto some slots or the catalogue never demonstrates the instruction Dilla actually gave his engineer.
+53. **One pass.** Grown Up Rap: Dilla and Madlib signed off almost immediately; “experience = less indecision.” demo-all already has LISTEN_PASSES knobs in other modes. Album sets KEEP_STEMS=0. Do not add a second mastering pass to demo-all “to be safe.”
+54. **Rush it in one day.** Donuts was mastered in a day from a CD-ROM/audio CD, already sequenced. The demo concatenates parts then optionally `DEMO_ALBUM_NORM=1`. One album-level norm after concat is Cooley’s job; per-part loudnorm is not. Confirm demo-all does not double-norm.
+55. **Preserve the pump.** The “disorienting compression pump” is a feature. MixScore LRA 4..9 LU: a master that kills LRA to chase LUFS deletes the pump Cooley timed the STC-8 to keep. A test: bus-comp on, LRA must not collapse below the keeper floor.
+56. **Restoration is a different job.** Cooley’s Light in the Attic / Betty Davis / Isaac Hayes work is tape salvage. `radio_chop` / crate loops are not restoration. Do not run a restorer on a loop that is supposed to be dirty.
+57. **Shootout got him the Stones Throw gig.** He won a comparison against the incumbent. MixScore is that shootout as a number. Keep the keepers (demo29/30) as the incumbent; a “dazzling” device layer that loses MixScore loses the gig.
+
+### Kevin Marques Moo — Daddy Kev (Cosmic Zoo / Low End Theory / FlyLo)
+
+Sources: MusicRadar compression guide (2022); Gravitas Create pro tips (2017); FACT tweet compilation (2014); In The Studio (2015); *Audio Dynamics* (2022) — settings book, not in-repo. Circle: Flying Lotus, Thundercat, Kamasi Washington *The Epic*, Low End Theory.
+
+58. **EQ is the fundamental solution; compression is the exception.** “In general, every element of the mix needs EQ. Few things need compression.” “I constantly remind myself… the solution should be an EQ thing.” dilla reaches for crush/tube/melt first. A `DO_LESS` mix mode (already item 53 in the mix-research list) that prefers a shelf to a compressor is Kev’s rule. Do not add more compressors to dazzle the demo.
+59. **Start compressors slow and gentle.** New to compression: ratio 1.5:1–2:1, attack and release slowest, then tighten. MusicRadar: threshold high, 2:1–4:1, attack 50–100 ms, release 100–300 ms. Album `MELT=0.7` is not those numbers. Document what MELT actually is (gain? saturation? both?) or Kev’s advice cannot land on it.
+60. **Tube/opto for pads and vocals; FET/VCA/diode for drums.** Topology metadata is already on the mix-research list (133). The demo should not put a brickwall on the pad bus.
+61. **808: turn compression off.** “Want your 808 to go BOOM and not ooom? Turn off compression. A high-pass around 15 Hz (−24 dB/oct) can add definition.” Bass: HPF ~40 Hz “on 70% of songs I master.” Map onto the sub/bass bus, not the kick. MixScore sub_vs_mid 0..5.5 dB is the check; a 15 Hz HPF that deletes the 808 fails it.
+62. **Limiter output −0.3 dBFS, never 0.** “Avoid 0 dBFS like the plague.” ffmpeg loudnorm / alimiter true-peak target. If demo-all peaks at 0.0, that is a Kev miss. Cheap, measurable.
+63. **Limiter attack fastest, release 3–5 ms, not 1 ms.** FACT tweets: 1 ms = max loudness + distortion; 3–5 ms = punch without the cost. Tempo-sync (Cooley STC-8) and 3–5 ms (Kev) disagree; that is a `contradiction` field for dilla_reference.yml (already requested at mix-research 202). Soul/Donuts → Cooley tempo. Beat-scene loudness → Kev 3–5 ms. Album mode is Donuts-adjacent: prefer Cooley.
+64. **Do not adopt Kev’s −8.5 LUFS target.** 2017 tip for beat-scene masters. MixScore keepers are −18..−15. Raising the ratchet to −8.5 is the loudness war Kev himself described as a trend he had to accommodate, not a virtue. Leave MixScore.
+65. **Listen at 85 dB SPL C-weighted (75 in a small room).** Cannot be automated. A comment in MixScore / master_heuristics that the numbers were taken at keeper-listen level, not at “whatever the laptop did,” is the honest version.
+66. **Mid/side EQ only if the mix is poor.** Gravitas: “I only employ side EQ during mastering if the mixdown is poor.” MASTER_WIDTH was measured to invert sub-vs-body by 7.2 dB and was kept out of DILLA_FULL. Stay out.
+67. **Priorities, not medium.** “Medium priorities are a cop-out in life, and in your mix.” For the demo: pocket, kick-vs-mid, LRA. Devices are colour. If a slot’s Copy Machine costs the kick-vs-mid range, the device loses.
+68. **Klanghelm MJUC + LiquidSonics Reverberate** as his cheap-stack recommendation. We emulate MJUC as variable-mu behaviour (36), not as a purchase. Reverb: crate IR (previous intake 80) over a new hall.
+69. **McDSP Moo X** is a hybrid analog mixer under his name, APB hardware. Out of scope. The idea — channel EQ + analog compression + saturation on many channels, instant recall — is DILLA_MIX_BUSES plus provenance. We already have the recall (ENV + seed). We do not have the analog channel.
+
+### Crane Song / Dave Hill (STC-8, HEDD, Phoenix, Avocet)
+
+Hill died 2023. Gear Cooley actually used on Donuts: STC-8. HEDD = Harmonically Enhanced Digital Device: Triode (2nd harmonic, low-level thicken), Pentode (3rd, grit), Tape. Analog-generated dither. Sub-picosecond clocking on later HEDD Quantum (imaging, not a plugin). Phoenix TDM: analog color, loudness without gain.
+
+70. **Triode / Pentode / Tape as three knobs, not one “analog.”** SONITEX and ANALOG_CHAIN collapse color into presets. A Cooley/Hill master is amount of 2nd, amount of 3rd, amount of tape, independently. `HEDD_TRIODE` `HEDD_PENTODE` `HEDD_TAPE` 0..1 on the master, default 0. Report harmonic orders (mix-research 153–154) so “I added analog” is a number.
+71. **KI/HARA on the STC-8.** The compressor’s tube-like insert. Album has DRUM_TUBE_DB=6 on the kit. Master-bus HARA is different (program compression with even harmonics). Do not reuse the drum tube as the STC-8.
+72. **Tempo-relative release is the Donuts trick** (item 50). Implement once, name it STC-8 in a comment, do not rename the compressor after the dead.
+73. **Analog dither, 16/20-bit.** HEDD’s dither is analog-generated. ffmpeg `dither` is TPDF. A shaped dither on the demo.mp3 encode (`DEMO_MP3_BITRATE`) is the cheap end; do not pretend it is HEDD. 16-bit demo.wav would be a different aesthetic (cassette-era). Default stays 24/float; `DITHER=hedd16` opt-in.
+74. **Phoenix: loudness without gain.** Density / even harmonics raising apparent loudness. MixScore LUFS would go up if we added gain; a Phoenix-like stage should move *perceived* density at the same LUFS. Test: LUFS within 0.3 of control, cymbal_crest and tilt may move. If LUFS jumps, it is a limiter, not Phoenix.
+75. **Do not emulate Avocet.** Monitor controller. Not a render stage.
+
+### The rest of the circle (Fairall, Power, Kennedy, Tom Coyne, Egon)
+
+Already a large mix-research block at Dave Cooley / Bob Power / Todd Fairall / Daddy Kev. New, sourced, not already listed:
+
+76. **Fairall: 40 Hz oscillator, kick-gated, very short.** Fantastic Vol. 2 kick: analog oscillator at ~40 Hz, gate triggered by the kick, no length. “That’s all over that record.” `KICK_SUB_OSC=40` `KICK_SUB_MS=40` or so. Album has LAYER_KICK=1; confirm that is this trick or a sample layer. If it is a sample, the oscillator is still missing.
+77. **Fairall: SPX900 Symphonic + D-filter on samples** (item 39). Highest-leverage Fairall colour. Dug loop, not the kit.
+78. **Fairall: Dilla mixed his own beats on the SSL, vocals were the engineer’s.** “When it came to the vocals, he was very hands-off… ‘OK, mix the vocals.’” demo-all ducking/vocal chain should be allowed to move the beat a little (Fairall: “if I had to move stuff in the beat for the vocals, he was perfectly cool with it”). A vocal slot that refuses to touch the bed is not how those records were made.
+79. **Power: high-pass and low-pass everything that does not need those frequencies.** “Keep the kaka out.” Per-layer HP/LP before the bus, not a master tilt. analog_chain / sonitex may already filter; the rule is *per element*. Kick keeps sub; bass is HPF’d out of the kick’s 40 Hz (Fairall oscillator + Power HPF = the same picture).
+80. **Power: the mix was in the sound choice.** “There wasn’t any question… immaculate sense of how things were going to sit.” Devices that add a new spectrum (wav_Map mandelbrot, supersaw, modal plate) can fight that. A slot that adds wav_Map should drop something else (pad or lead), not stack. ALBUM_DEVICE_EVERY without a corresponding mute is how the midrange crowds.
+81. **Power: SSL G high end is not sweet; you work to keep it from getting harsh.** MixScore tilt 14..26 dB and cymbal_crest 18..30 dB. A dazzling top that fails those is a G-series mistake. Cooley’s matte top is the correction.
+82. **Kennedy: saturate EQ, especially bass, on a Neve; “smash drums” by hitting the desk, not by compressing them.** DRUM_CRUSH and DRUM_TUBE are crush/tube, not desk saturation. Hitting a bus into gentle analog (Airwindows Density / HEDD triode) is closer to Kennedy than alimiter on the kit.
+83. **Kennedy on The Love Movement: Tom Coyne said there was little to do but balance levels.** Same as Cooley on Donuts. Two Dilla-adjacent masters, same moral: if MixScore is already in range, stop.
+84. **Egon / PB Wolf: rush the sequence, do not remix the hospital CD.** demo-all resume-skips existing parts (`DEMO_FORCE=1` to redo). Good. Do not add a “fix the old parts” pass that rewrites takes.
+85. **Questlove to Fairall: “the future of hip-hop.”** The future-of-music section above (44–48) is not that future. Dilla’s future was pocket, chops, and sound choice. Experimental devices earn a slot when they serve those, not when they look like 2026 KVR.
+
+### What to do to the next demo.wav, in order
+
+86. **Trace CopyMachine’s input file on an album slot** (15). If it is the mix, stop using it on demo-all until it points at a loop.
+87. **A/B HOCKET=1 vs 3 with patch-id assertion** (14, 24).
+88. **Restore VoiceStack as sprinkle under album, or delete the sprinkle comment** (3, 16).
+89. **Add MIDI_BAG to the coprime rotation, off by default on non-demo renders** (6, 17, 18, 22).
+90. **Rotate real WAV_MAP images; mandelbrot is the fallback** (5, 19).
+91. **Fairall 40 Hz gated kick osc + SPX900 Symphonic on the bed** (76, 77, 39). Documented Dilla colour the engine does not have.
+92. **STC-8 tempo-relative bus release, preserve LRA** (50, 55).
+93. **Cassette on some album grades, air stays 0** (51, 52, 38).
+94. **Limiter true-peak −0.3 dBFS** (62). Do not touch LUFS range.
+95. **Provenance after apply_album_slot!** (20, 21).
+96. **Do not enable the unbuilt Ableton list for this demo.** Granular scan, resonator, modal, PitchLoop wait until they exist and have a plan test. Wiring fiction is worse than a quiet slot.
+
+If a device cannot be heard on a 16-bar probe with provenance showing the flag, it is not in the showcase. The next demo.wav should rotate what is already built and proven, then Fairall/Cooley colour, not a wall of new ENV.
+
+## One demo, one mode, devices on
+
+Operator direction 2026-09-12. STUDIO/dilla. Convention over configuration: the cool work is the default, not a flag the operator has to know exists. The wiring audit above described the present machine; this section says what it is supposed to be. Where they disagree, this one wins.
+
+### The names
+
+1. **The catalogue concat is `demo`.** `ruby dilla.rb demo [bars] [out.wav]` writes `demo.wav` + `demo.mp3`. That is what ENV_AND_RENDER currently documents as `demo-all`. Rename the command. Help, lockfile messages, logs, `ENV_AND_RENDER.md`, CATALOGUE comments, and this file’s own “demo-all” citations follow.
+2. **`demo-all` stays as a one-line alias** for one release so old shells and MASTER callers do not 404, then delete it. A second name is a second thing to remember (dilla.rb:12976 already says this about detach).
+3. **`demo` currently calls `generate_demo`.** That is a 5×3 crate-vs-progression matrix into `samples__progression.wav` files, not the catalogue record. Retarget that work to `demo-crate` or fold it into `demo` as extra slots. Do not leave two commands both named the idea.
+4. **`demo-each` and `demo-quick` are still `demo` with a smaller order.** Same settings, same DNA. `DEMO_TRACKS=` and `DEMO_EACH=1` are implementation, not a mode the user picks. Help can say `demo --quick` if a flag is needed; do not keep three DISPATCH keys for one verb.
+5. **Bare `ruby dilla.rb` already aims at a finite demo.wav** (`showcase_demo!`). That medley of TRACK_PRESETS is not the catalogue. Either it becomes `demo` (the concat) or it dies. Two “no args / demo” paths is two conventions.
+6. **`album` the command is `album_master` of `data/album_tracks.yml`.** Keep the word for a mastered tracklist if that file is the record. It is not a render mode.
+
+### The mode
+
+7. **There is one mode.** `DEFAULT_RENDER_MODE` is already `dilla`. `normalize_render_mode!` already says “Single engine mode. Empty RENDER_MODE → dilla.” Honour that. `RENDER_MODE=album` is a second DNA and it is refused.
+8. **Delete `ALBUM=1` as a switch.** `album_enabled?` defaulting on is a mode the help does not name. Fold `RENDER_MODE_DEFAULTS[:album]` (kit, crush, tube, lead weight, Hocket, LPG, VoiceStack, melt, matte top) into `DILLA_STYLE_DEFAULTS` — the one table a bare render already gets.
+9. **`apply_album_slot!` is then leftover.** Slot rotation (grade, bed, devices) can remain as *demo catalogue variety*, not as a mode. It runs because you ran `demo`, not because `ALBUM=1`. A single `dilla` render of one track gets the full DNA without waiting for `(idx+1) % 4 == 0`.
+10. **`RENDER_MODE_DEFAULTS` still lists sketch / record / perform / long_soul / golden / warp / ambient / comfort.** Those are modes. Collapse: one DNA (`dilla`). Length, stems, listen-passes, and warp-as-playground become knobs (`BARS`, `KEEP_STEMS`, `LISTEN_PASSES`) or die. Warp was already documented as “opt-in knob, not a style”; it does not get to stay a RENDER_MODE if nothing else does. If IDM bias is wanted it is `SPECTRAL_ARP=1` on a track, not a fork of the engine.
+11. **Do not keep `RENDER_MODE=dilla` as a thing the user types.** Empty is dilla. The key exists for provenance (“this file was the DNA”). A caller should never have to set it.
+12. **`DILLA_FULL=1` and `RINGTONE_LAYER=1` are the same defect as album mode:** a second table of “the built work, please.” Fold their additive set into the one DNA. Then delete the modules or keep them as describe-only census of what the DNA contains.
+13. **Subtractive flags stay.** `DRUMS=0`, `HOCKET=1` (meaning one voice), `COPY_MACHINE=0` are how you turn a layer off. Convention over configuration is defaults on, not the inability to mute. `||=` / soft-fill, never a second mode name.
+
+### Devices on, no treasure map
+
+14. **Hocket, LPG, VoiceStack, Copy Machine, MIDI Bag, mix buses, organic vary, harmonic keep — on in the one DNA.** Not behind `RINGTONE_LAYER`, `MIDI_BAG=1`, `HOCKET=3` only when album, `COPY_MACHINE` only every fourth demo slot. A user who types `ruby dilla.rb dilla out.wav` hears them.
+15. **MIDI_BAG defaults on.** It is the one ringtone device the catalogue demo currently never sets. `MIDI_BAG=0` to mute.
+16. **WAV_MAP on when an image exists, silent when it does not.** No `WAV_MAP=<path>` required for the demo: pick a default picture from `samples/own/`, postpro out, or the mandelbrot fallback, and set it in the DNA so `wav_map_layer!` sees a file. A missing image is a missing layer (already the nil convention), not a flag nobody exported.
+17. **Copy Machine on for a single render, not only every fourth demo slot.** The every-fourth force-to-zero is album-mode thinking. Variety in `demo` can still rotate *family* or *copy count* per slot; the device itself is not a surprise.
+18. **VoiceStack on, at the DNA count (4 or 6), for a single render.** The demo-all sprinkle (`DEMO_VOICE_STACK_EVERY`) and the album force-to-4 fight each other; both are modes. One number in `DILLA_STYLE_DEFAULTS`. Demo catalogue may still vary count per slot as colour, documented in the slot log, not as a flag the user must set.
+19. **BUS_PATCH=random is cool and hidden.** Put a default patch on the bus (fixed seed from the render seed, so it repeats). `BUS_PATCH=0` to mute. Do not require the operator to know the name.
+20. **Stop printing a layer as on when the slot forced it off.** Provenance and `ringtone_layer_describe` after the last `force_env!`. Convention includes honest logs.
+21. **Help lists the DNA, not the switches.** `/help` / `ruby dilla.rb` with no args: what you get (hocket, bag, lpg, copy machine, …) in one paragraph. The ENV names live in `--explain` / provenance, for replay, not for discovery.
+22. **A flag whose default is on should not be in the README knob table.** README and ENV_AND_RENDER list overrides (`FOO=0` to disable), not the treasure map of things you could enable. RINGTONE_LAYER, DILLA_FULL, ALBUM, MIDI_BAG, HOCKET as “set this to hear it” are the anti-pattern.
+
+### What this supersedes
+
+23. **Wiring-audit items 4, 6, 7, 8, 17, 18, 22** (Copy Machine every-fourth, MIDI_BAG never, RINGTONE_LAYER without Bag, DILLA_FULL without devices, coprime moduli as the UX, Bag not global) — still true of the tree today; the fix is fold-into-DNA, not a smarter ALBUM_DEVICE_EVERY.
+24. **Wiring-audit item 16** (VoiceStack CPU). Measure a 16-bar with VoiceStack=4 vs 1 after the fold. If overnight demo-all becomes impossible, drop the default count, do not hide the device. `DEMO_VOICE_STACK_EVERY` is a mode.
+25. **Do not dazzle by stacking unbuilt devices.** Granular scan, spectral resonator, modal, PitchLoop still do not exist. Turning “all the cool stuff” on means everything that has a `build!` and a caller, today. New DSP lands on by default when it lands, or it does not land.
+26. **MixScore still gates.** Kick-vs-mid, LUFS −18..−15, LRA 4..9. A default that fails the keepers is not a default; mute or thin that layer. Convention over configuration does not outrank the keepers Cooley-style shootout (wiring 57).
+27. **No new RENDER_MODE to implement this.** The whole point.
+
+First patch: rename `demo-all` → `demo` (alias left), fold album signature + ringtone + bag into `DILLA_STYLE_DEFAULTS`, delete `album_enabled?` from the render path, prove one `ruby dilla.rb dilla /tmp/one.wav` without extra ENV contains HOCKET>1, LPG, COPY_MACHINE, MIDI_BAG, VOICE_STACK in provenance.
+
+### Measured first patch (2026-09-12)
+
+Census against `STUDIO/dilla/dilla.rb` and callers. Item 5 above was wrong: correct it here.
+
+28. **Bare `ruby dilla.rb` already runs `demo_all`.** `dilla.rb:35261–35269`. Not `showcase_demo!`. No-args is already the catalogue concat. The remaining name bug is DISPATCH: the same function is spelled `demo-all`, while `demo` is a different function.
+29. **`DISPATCH["demo"]` is `generate_demo`.** Five samples times three progressions into per-pair wav files. Steal the name `demo` for `demo_all`; move `generate_demo` to `demo-crate`.
+30. **`DISPATCH["demo-all"]` is the only production spelling of the catalogue.** Help at 28281, ENV_AND_RENDER:283, lock at 20047, abort at 20567, log `demo_all.log`. MASTER has zero callers. RAILS does not call it. No STUDIO test greps the string. Provenance sidecars under dilla logs reproduce with `ruby dilla.rb demo-all` — those are artifacts, not code; leave them.
+31. **`DISPATCH["album"]` is `album_master` of `data/album_tracks.yml`.** Untouched by this patch. The collision is the word album on `RENDER_MODE` / `ALBUM=1`, not this command.
+32. **`ALBUM` defaults to `"1"`** (`album_enabled?` at 19919). Demo-all then `force_env!`s `RENDER_MODE_DEFAULTS[:album]` per slot and sets `RENDER_MODE=album` if empty (20209). A bare one-track `dilla` render does **not** go through `apply_album_slot!`. So today: catalogue demo has Hocket/LPG/VoiceStack=4; `ruby dilla.rb dilla out.wav` does not, except RINGTONE_LAYER `||=` of Copy Machine / LPG / VoiceStack=6 at load.
+33. **RINGTONE_LAYER already defaults on** and at load sets COPY_MACHINE=6, LPG=1, VOICE_STACK=6 via `||=`. It does not set HOCKET or MIDI_BAG. Demo-all then overwrites VoiceStack and, on three of four slots, force-zeros Copy Machine. Fold into `DILLA_STYLE_DEFAULTS` so a `dilla` render and a `demo` slot share one table; stop load-time `||=` that demo-all then lies about.
+34. **`DILLA_STYLE_DEFAULTS` already has DFAM=1, SPECTRAL_ENGINE=1, THEORY_RUNTIME=1.** Cool stuff that found the one table. Missing from that table, present only in album or ringtone layer: HOCKET, HOCKET_MODE, LPG, COPY_MACHINE, VOICE_STACK, MIDI_BAG, LAYER_KICK, BACKBEAT_CLAP, DRUM_CRUSH_*, DRUM_TUBE_DB, LEAD_MIX_WEIGHT, MELT, EXTERNAL_KIT. (LPG/COPY_MACHINE/VOICE_STACK: ringtone layer sets these at load, not in the style table.)
+35. **HOCKET code default is `"1"`** (`ENV.fetch("HOCKET", "1")`). One voice = off. DNA must set `HOCKET=3` in `DILLA_STYLE_DEFAULTS`, not rely on album_slot.
+36. **MIDI_BAG code default is off** (`return unless ENV["MIDI_BAG"] == "1"`). DNA must set `MIDI_BAG=1`. Change the predicate to `!= "0"` while folding, so it matches LPG/DFAM/SPECTRAL_ENGINE CoC (`!= "0"`). A string-equal `"1"` is how a default-on flag still feels like a switch.
+37. **COPY_MACHINE on the bed:** confirm the caller around 26862 is the sampled loop, not the mix, before putting COPY_MACHINE=6 in the DNA. If it is the mix, default copies=3 or family=harmonic with tilt, not 6, until MixScore keepers pass. Wiring-audit 15/86 still apply.
+38. **RAILS `Shared::DillaProcessor` runs `ruby dilla.rb dilla <out> <bars>` with `RENDER_MODE=dilla`.** No demo-all. Folding devices into `DILLA_STYLE_DEFAULTS` changes every Solid Queue render (chat, attachments). That is the point of convention over configuration, and it is the blast radius. 16-bar MixScore on `style: dilla` before and after. Timeout is already 900s (`DILLA_SH_TIMEOUT`); VoiceStack=4 may blow it. If it does, DNA VoiceStack=2, not a RAILS-only override (that would be a second mode).
+39. **`RENDER_MODE_DEFAULTS` keys in this file:** sketch, record, perform, album, long_soul, ambient, golden, warp. Plus comfort via `DILLA_COMFORT_DEFAULTS` / `STREAM_COMFORT`. `apply_render_mode!` uses the album table only when `RENDER_MODE=album`. After fold, delete the `:album` key. Do not delete warp/long_soul in the first patch — one patch, one mode-name (`album`) plus the demo rename. Remaining mode keys are the next patch (item 10).
+40. **`DILLA_FULL` additive set** (drums, organic_vary, mix buses, morph, flutes) already defaults on at load. First patch does not need to touch it except: stop talking about it in help as a thing to set. Merge census into style table later if keys still duplicate.
+41. **`showcase_demo!` still exists** (18796) as TRACK_PRESETS medley. Nothing in DISPATCH calls it from a command name; grep who calls it. If only comments, it is dead. If something does, it is a third demo. First patch: do not revive it as `demo`.
+42. **Help line 28281** still says `demo-all`. Change with the DISPATCH key. ENV_AND_RENDER.md:283. `live/CATALOGUE.md` if it names the command.
+43. **`demo_all` the method can keep its name.** Internal. The command is `demo`. Same as `camel_mode?` remaining as an alias for `dilla_style?`.
+44. **Lockfile / `demo_all.log`:** rename messages to `demo`, leave the log filename one release if anything tails it. No test, no MASTER caller.
+45. **Acceptance for the first patch, one process, no extra ENV:**
+    - `ruby dilla.rb dilla /tmp/one.wav` provenance includes HOCKET>=2, LPG!=0, COPY_MACHINE>=2, MIDI_BAG!=0, VOICE_STACK>=2.
+    - `ruby dilla.rb demo` (and still `demo-all`) is the catalogue concat to demo.wav.
+    - `ruby dilla.rb demo-crate` is the old generate_demo matrix.
+    - `ALBUM=0 ruby dilla.rb demo` is not a different DNA (flag ignored or gone).
+    - `RENDER_MODE=album` either maps to dilla or is unknown and aborts (do not silent-fork).
+    - MixScore on the 16-bar still inside keeper ranges, or the DNA count is turned down in the same commit with a comment naming which keeper failed.
+46. **Do not render over `STUDIO/dilla/demo.wav` while probing.** Write `/tmp/` or `DILLA_OUTPUT_DIR`. Takes are irreplaceable.
+
+Next patch after that: remaining RENDER_MODE keys (warp as knobs, long_soul as FORM+BARS, comfort already STREAM_COMFORT), then `demo-each`/`demo-quick` as flags on `demo`.
+
+## Bach, Dilla, Aydın Esen — beautiful progressions
+
+Unmeasured intake, 2026-09-12. STUDIO/dilla only. Do not change a rendered-sound default. Harmony already has a lot; a second circle-of-fifths table is a duplicate. `DillaImprovisation` is the shape for a new *language* (root motion + quality, explicit Hz, `imp` tag). `DillaTheoryRuntime` is the shape for a *voicing operator*. `producer_dna.rb` is the shape for a *named loop*. Do not add a fourth place.
+
+Sources: Fux / Bach chorale practice (outer-voice contrary motion, prepared suspensions 4–3 7–6 9–8, circle-of-fifths sequences, Picardy, applied dominants); Charnas *Dilla Time* + `dilla_principles.yml` (ambiguity, incomplete resolution, rootless, transform); Rick Beato “Art of Soloing Ep. 2” on Esen’s *Behind the Light and Shine* (1985): parallel Dorian structures, common-tone scales, constant-structure melody, half-step same-function resolution; Esen interviews (flow, never the same voicing twice, classical+jazz as one theory); Chick Corea on Esen; Tigran Hamasyan / makam-adjacent jazz; Bill Evans / Herbie / Glasper / Mehldau / Wayne Shorter / McCoy quartal / Maiden Voyage sus; Mulatu qenit (already in `modes.yml`).
+
+### Already in the engine — do not rebuild
+
+1. **Five improvisation languages.** Bach descending fifths + suspension chain; Grieg pedal mixture; Dilla planing m9 / maj9 walk / slash pedal / chromatic drop; FlyLo quartal mediants; Röyksopp static sus. `lib/improvisation.rb`.
+2. **Theory runtime.** Dilla common-tone lock, slash/pedal bias, greedy Bach voice-lead, outer parallel 5ths/8ves nudge. `THEORY_DILLA` default on; `THEORY_BACH` only if the track name matches /bach|baroque|circle|fugue/ or `VOICING=drop2`.
+3. **Beautify pipeline.** Key borrow, backdoor bVII7, secondary-dominant insert, recap substitutions, voice-lead, bass-lead, then theory_runtime. Curated soul skips random reharm.
+4. **Voicing styles.** spread, quartal, drop2, drop3, rootless, so_what, kenny_barron, bill_evans, cluster.
+5. **Named DNA loops.** `circle_fifths_descent`, `walking_bass_descent` (Bach-labelled); `modal_quartal_ladder`, `minor_two_five_chain` (Esen-labelled); Dilla soul profiles including slash, backdoor, gospel bIII, line cliché, pedal upper structures.
+6. **Catalogue planing.** `planing_m9_chromatic`, `constant_structure_thirds`, `planing_minor_eleven`, line clichés, deceptive cadences — already rows in the progression table around dilla.rb:11235.
+7. **Polytonal generator.** `generate_polytonal_progression` — Esen cited in the comment (second triad at tritone / M2 / m7). **Blocked on soul profiles** (`BLOCKED_GENERATED` includes `:polytonal`).
+8. **Chromatic mediant generator.** Also blocked on soul. FlyLo language already *is* mediants via quartal.
+9. **Pedal-point applicator.** `apply_pedal_point` — Bach organ / film: freeze bass, move uppers.
+10. **Coltrane changes generator.** `generate_coltrane_changes` — major-third cycle. Mode keyword ignored on purpose.
+11. **Ethio qenit in `modes.yml`.** tizita, bati, ambassel (+ wollo disagreement recorded). Spine is no longer heptatonic-only.
+12. **HarmonyScore.** Voice-leading distance, common-tone ratio, contrary/oblique, strong root motion. Prefers 1–3 semitones/voice. Informational (`BEAUTY_REPORT`), not a gate — correctly, because a gate would reject Esen and Dilla planing.
+13. **`dilla_principles.yml` harmony.** Ambiguity, color, warmth, incomplete resolution; extended chords, rootless, suspended motion, modal borrowing. Still a draft with no Ruby reader.
+14. **Odd-bar nod labelled Esen.** Every 16th bar drops last two 16ths (`dilla.rb:22306`). Rhythm, not harmony.
+
+### Aydın Esen — the missing language
+
+Esen is named on two DNA loops and a polytonal generator. Those loops are generic jazz (Cm9–Fmaj9 cycle; Dm9–Gm9–C7b9 chain). They are not the harmonic fingerprint Beato transcribed from *Behind the Light and Shine*.
+
+15. **Parallel structures from different keys.** Bm11 → Gm11 → F#m7, each treated as Dorian of its own root (B Dorian, G Dorian, F# Dorian). Not a ii–V–I. Not modal interchange inside one collection. `DillaImprovisation.esen_parallel_dorian` — same quality (m11), roots that are *not* a single scale. Distinct from `dilla_planing_m9` (same quality, stepwise/chromatic roots, one key-feel).
+16. **Common-tone scales, not common-tone chords.** Theory_runtime locks shared *chord tones*. Esen locks shared *scale tones* across adjacent chord-scales: B Dorian ∩ G Dorian = D E A; G Dorian ∩ F# Dorian = E A; E and A survive all three. A melody or inner pedal on those pitches is legal over the whole cell. Operator: `esen_common_scale_tones(prev_mode, curr_mode)` returning pitch classes the lead/bag may hold. Wire into `improvised_line` and MIDI Bag, not only pads.
+17. **Constant-structure melody.** Over that cell Esen plays D–E–A as a Dsus2 arpeggio (the common tones themselves). The line is the intersection, not the chord. A lead generator that arpeggiates the intersection set rather than the chord’s 1–3–5–7. `LEAD_FROM=common_scale`.
+18. **Half-step resolution of the same function.** C (11th of Gm11) → B (11th of F#m11). Not 7–3 of a V–I. Same extension degree, down a semitone, as the root moves a semitone. `esen_parallel_resolve` — when two adjacent chords share quality and roots are 1–2 st apart, voice-lead each extension to the same extension. HarmonyScore currently rewards any small VL; pin this *specific* 11→11 (or 9→9, 3→3) so it is not an accident of greedy nearest-neighbour.
+19. **Harmonic rhythm is the other half.** Esen’s changes are fast (the common-tone trick exists *because* the chords fly). Dilla’s are slow (2–4 bars a chord, loop). Bach sequences are one chord per beat. `chord_bars` already exists on DNA. An Esen language with `chord_bars: 2` is Glasper; with 0.5 or 1 it is Esen. Do not reuse `modal_quartal_ladder`’s 2-bar harmonic rhythm and call it Esen.
+20. **Never the same voicing twice.** Esen to Beato: harmonic language changes week to week; never plays the same thing again. The engine’s DNA loops are recordings. An Esen slot should re-voice from the same roots every 8 bars (`CONTRAST_VOICINGS` already maps styles). Recap already flips voicing in beautify; turn that on for Esen-tagged progressions even when curated.
+21. **Polytonal is blocked on soul.** `BLOCKED_GENERATED` includes `:polytonal`, so the one generator whose comment names Esen never runs on a soul_profile track. Either: allow it on an `esen_*` language (not on Donuts DNA), or the comment is decoration. Do not unblock for `neo_soul` — that would fight Dilla economy.
+22. **Makam as a mode, 12-TET first.** Esen’s conservatory + Berklee is jazz over Turkish ears, not Arel-Ezgi microtones in a Rhodes pad. Add `hüseyni` (approx. A minor with prominent 5th, descending seyir) and `hicaz` (Phrygian-dominant: 0,1,4,5,7,8,10) to `modes.yml` the way qenit was added — three fields, source recorded. Microtonal perde is a later, flagged experiment (`MAKAM_COMMA=1`), never a default. Yarman 24/31 is research, not a render default.
+23. **Seyir (thematic flow), not just a scale.** Makam is a path: start, prominent note, cadence. `modes.yml` transitions are already a Markov of degrees. For hüseyni, weight descent to 1 more than ascent (the folk-song paper: 58% descent-ascent-descent). A mode whose transitions are symmetric is not a makam.
+24. **Anadolu as a set, not a scale.** Esen’s Columbia record is large-group, folk-tuned jazz. A liveset `anadolu.als.rb` that rotates hüseyni/hicaz pads under the existing pocket is connect. Do not invent a Turkish drummer; DFAM + pocket is enough.
+25. **Do not score Esen with Bach smoothness.** HarmonyScore’s “1–3 st/voice is smooth; zero is dead; large is bad” will punish parallel Dorian jumps (B→G is 4 st in the root, more in some voices) and reward a ii–V–I. If Esen lands, either a second scoring profile (`beauty: esen` = common-scale-tone ratio + same-function half-step count) or keep the score informational. Do not gate demo-all on it.
+
+### J.S. Bach — operators still missing
+
+The languages and the runtime exist. What is missing is *species behaviour as events*, not another Am9–Dm9–G7–Cmaj9 row (`circle_fifths_descent` already is that).
+
+26. **Prepared suspensions, not sus chords.** `bach_suspension_chain` emits a `sus4` quality. A real 4–3 is: the 4 is a chord tone of the *previous* chord, held, then falls by step to the 3 while the bass has already arrived. That is a timed inner-voice event, not a chord symbol. `DillaTheoryRuntime.bach_suspend!(chords, kind: :"4-3")` that rewrites two adjacent voicings and, if the pad is held across the bar, delays the 3. `harmony_lead` can sing the resolution. Tests: the held pitch is in chord n−1; it is not in chord n’s tertian stack until it moves.
+27. **7–6 and 9–8** as the other two species. Same operator, `kind:`. Chain them on `circle_fifths_descent` (Bach sequences are where suspensions live). Off on Dilla planing — a planed m9 that grows a 4–3 is no longer planing.
+28. **`THEORY_BACH` is off for the default DNA.** Track-name regex and `VOICING=drop2` are treasure-map switches. Fold the *safe* half (outer parallels, stepwise soprano) into the one DNA; keep species suspensions as `THEORY_BACH=1` or as a property of Bach-tagged languages. Parallel-avoid is already `THEORY_PARALLELS` default on.
+29. **Greedy nearest-neighbour is not SATB.** `bach_voice_lead!` assigns each previous pitch to the closest unused current pitch. Bach: soprano and bass are written first (melody + thoroughbass), inner voices fill. Prefer: lock bass from `bass_voice_lead` / pedal, lock soprano to the smallest step that is a chord tone, then fill. A test with a descending-fifth sequence should show soprano mostly steps, bass mostly leaps of 4th/5th, not the reverse.
+30. **Contrary motion when bass leaps** is in the theory_runtime header and not implemented as a named step (HarmonyScore *counts* contrary after the fact). When bass moves ≥P4, soprano should move opposite or oblique. Operator after bass_voice_lead.
+31. **Picardy third.** Minor cadence, last chord major. One flag on Bach languages and on minor DNA at the last bar of a form (`FORM` already has section). Dilla often stays minor; do not Picardy Donuts. `PICARDY=1` on `bach_*` and `circle_fifths_descent` only.
+32. **Neapolitan is blocked.** `BLOCKED_GENERATED` includes `:neapolitan`. bII6 in minor is Bach (and Chopin), and it is also gospel-adjacent as a colour. Allow as a *chord* in a Bach language (Phrygian II), not as a generator that rewrites soul loops. Unblock for `bach_*` names.
+33. **Applied / secondary ii–V, not a stub.** `insert_secondary_dominants` writes a chord named `V7/ii` whose hz come from `apply_voicing([one pitch])` — that is a voicing of a single note. Measure: if the output has <3 pitch classes, the insert is broken. Fix or delete. A real applied dominant is V7 of the *next* chord’s root, fully voiced, one bar or a pickup.
+34. **Sequence vs loop.** Bach sequences *modulate through* the fifths and do not loop until the cadence. Dilla *is* the loop. `bach_descending_fifths` currently returns home on chord 8 (`[0, "min"]` twice). That is a loop with Baroque flavour. A true sequence language of length 16 that cadences once at the end is the other piece. Demo can play both; do not replace the looped one (it sits in the catalogue).
+35. **Invertible counterpoint as two lines.** `improvised_line` + bass: at the octave or twelfth, swapable. Heavy. First: a test that bass and lead never make parallel 8/5 (runtime already nudges pads). Species on the *lead against the pad soprano* is the audible Bach in a beat, because nobody hears SATB in a Rhodes loop unless the lead cooperates.
+36. **Mehldau’s Bach.** Jazz pianist playing chorales as voicings under pop harmony. Already have `VOICING=drop2` triggering `bach_mode?`. That coupling is an accident of a regex. If drop2 is the default on some DNA, Bach operators turn on without the operator asking. Split: voicing is voicing; Bach operators are language-tagged or `THEORY_BACH`.
+
+### J Dilla — harmonic beauty as economy
+
+Principles already say it. The engine still adds.
+
+37. **Incomplete resolution is the Dilla cadence.** Do not “beautify” a loop by inserting a V–I at bar 8. `insert_backdoor` and `insert_secondary_dominants` on soul_profile *add function*. Curated pipeline correctly skips random reharm. Generated/improvised Dilla languages should skip them too. Gate: `dilla_*` and `soul_profile?` → no insert_backdoor. Backdoor as a *written* chord in DNA is fine (`backdoor_resolve` exists).
+38. **Delayed resolution is named in theory_runtime and not implemented.** Header: “keep tension tones an extra beat’s worth of voicing.” There is no operator that holds a 7 or 9 into the next chord. That is Esen’s half-step cousin and Bach’s suspension cousin. One `delay_tension!(chords, beat_frac: 0.25)` used by all three languages with different defaults (Bach: 4–3 on the beat; Dilla: 9 hangs into the downbeat; Esen: 11 resolves by step at the change).
+39. **Two or four chords, then stop.** Donuts cells are short. A generated 8-chord Dilla walk (`dilla_chromatic_drop`) is already the right length; beautify must not enrich it to 12. `enrich_progression` skip_passing on curated — extend to any `producer: :dilla` DNA.
+40. **The sample is the harmony.** `HARMONIC_KEEP` transposes pads onto the loop’s detected key. The stronger Dilla move: *detect the loop’s chord quality* and plan that quality (item 15’s cousin). If the chop is a maj7#11, the walk is maj9/maj7#11, not m9 planing. `sample_flip` already detects slice pitch against the chord; invert: chord from slice.
+41. **Slash / pedal without rewriting the upper structure.** `dilla_slash_pedal_bias!` replaces the lowest hz with a pedal. It is gated on track-name regex (`neo_soul|dilla|untitled|slash|…`) plus `THEORY_PEDAL=1`. Treasure map. If the language is `dilla_slash_pedal`, the operator always runs. Track-name regex is how Get Dis Money got special-cased and everything else did not.
+42. **Rootless when density allows** — already a voicing style. Default DNA `VOICING=rootless` is already the Dilla one in several profiles. Do not also force THEORY_BACH drop2 on them (item 36).
+43. **One surprise per 4–8 bars.** Written in the expansion-pack comment at producer_dna.rb:1087. Not enforced. A generator that puts *one* borrowed chord (bVI, bII, V/ii) per cell, not a beautify pass that can fire on every fourth chord (`reharm_every_fourth_loop` at 0.4 odds). Count surprises; cap at 1.
+44. **`dilla_principles.yml` still has no reader.** Harmony goals there should be the first caller, or stop citing it. Incomplete resolution vs insert_backdoor is the test of whether a reader would change a render.
+
+### Similar artists — new languages, not new engines
+
+Same `DillaImprovisation` slot. Twelve is the current set; adding four is a language, adding twenty is a dump.
+
+45. **Maiden Voyage / Herbie sus.** IVsus → IIIsus → IIsus → IIsus (or the actual tune’s D7sus–F7sus–Ebmaj7–D7sus). Already have `royksopp_static_sus` and `planing_sus_field`. Herbie’s is *functional sus* (sus as a dominant that does not resolve). `herbie_sus_cadence`: sus7 that *stays* sus. Distinct from Bach 4–3 which must resolve.
+46. **Wayne Shorter delayed cadence.** V does not go to I on the downbeat; it goes to I on beat 3 or the next bar. Harmony + groove. `DELAY_CADENCE=1` as theory_runtime, default off except `shorter_*` language. One language is enough: `shorter_speak_no_evil` as a named cell, not a catalogue of every Wayne tune.
+47. **Glasper / neo-soul ii–V with gospel plagal.** The engine has `gospel_bIII`, `half_time_gospel_plagal`, `church_sus`. Glasper’s fingerprint is *looped* ii–V that plagals home (IV–I) instead of V–I. `glasper_plagal_turn`: Dm9 G13 Fmaj9 Cmaj9. Tiny; add as DNA if not already a row (search before writing).
+48. **Tigran Hamasyan.** Odd meter + Armenian tetrachords + jazz planing. Odd meter is already the Esen 15/16 nod. Tetrachord: 0,1,4,5 (Hicaz cousin). If hicaz lands in modes.yml (item 22), Tigran is a voicing (clusters + folk ornaments in the lead) not a third mode. Do not add `tigran_*` until hicaz exists.
+49. **Bill Evans is a voicing, not a progression.** `bill_evans` already sits in VOICING_STYLES. His progressions are standards. Do not add a fake “Evans cycle.” Inner-voice independence (the chorale inside the voicing) is item 35.
+50. **McCoy / So What quartal** — already `so_what`, `kenny_barron`, FlyLo q4. Enough.
+51. **Ahmad Jamal.** Space, vamps, surprise stop. Harmony is often one or two chords. `two_chord_hypnosis` exists. Jamal is arrangement (remove notes) more than new changes. `dilla_principles` already: remove notes before adding. A Jamal language that is 2 chords × 16 bars with a stop on bar 15 is groove, file under composition_engine, not a new QUALITY.
+52. **Kurt Rosenwinkel / lyrical inner voice.** Lead that is the alto of the voicing, not an arp. `improvised_line` already claims this. If the line doubles the soprano, it is not Rosenwinkel. Test: lead pitch-class ≠ pad soprano more than 50% of events.
+53. **Andrew Hill / angular.** Clusters already a voicing. Skip as a language unless a documented 8-chord cell exists; do not invent “angular.”
+54. **e.s.t. / Bugge.** Nord + ostinato + one chord. `drone_quartal_wash` exists. Enough.
+
+### What “beautiful” means here (so we do not optimise the wrong thing)
+
+55. **Three beauties, not one score.** Bach: outer contrary, prepared dissonance, cadence. Dilla: common tone, incomplete cadence, short cell. Esen: common *scale* tone, parallel structure, same-function half-step. HarmonyScore today is Bach-shaped. Split the breakdown; do not average them into a number that makes Esen look ugly.
+56. **Home–away–home is Dilla/Bach, not Esen.** producer_dna expansion pack requires return by bar 8–16. Esen parallel Dorian does not return; FlyLo `flylo_unresolved_stack` already refuses tonic at the end. Keep that refusal. A beautify pass that “fixes” the last chord to the first is vandalism on those languages.
+57. **Guide tones (3 and 7) are jazz-functional.** Dilla planing *has* no 7-to-3 resolution; Esen m11s share 11s. A guide-tone extractor is useful for Bach/Glasper languages and misleading for planing. Compute it; do not steer planing with it.
+58. **Voice-leading beauty is register-bound.** `PAD_MIDI_MIN/MAX` 50–79 already prevents the 12-st lurch. Any new operator must clamp the same. A “beautiful” chorale that drops the Rhodes an octave is not beautiful in this mix (harmony_engine header already learned this).
+59. **Do not add negative harmony.** Blocked, and for cause. Levi-Strauss-via-Levy is a YouTube fad; it is not Bach, Dilla, or Esen.
+60. **Coltrane changes are a language, not a beautifier.** Running Giant Steps cycles under a Donuts loop is a different record (`RENDER_MODE=warp` territory, and even that is a mode the operator asked to collapse). Keep the generator; do not sprinkle it in beautify.
+
+### First harmonic patch (after the demo/DNA fold, not instead)
+
+61. **`esen_parallel_dorian` language** with fast harmonic rhythm, common-scale-tone lead, same-function half-step voice-lead. One 8-event cell. Test: three consecutive m11s, roots not diatonic to one heptatonic mode; intersection of adjacent Dorian scales is non-empty; soprano 11 resolves 11.
+62. **Implement `delay_tension!`** (item 38) and use it for Bach 4–3 (26) and Dilla hang (38). One operator, two call sites.
+63. **Fix or delete `insert_secondary_dominants`** (33). Measure pitch-class count.
+64. **Stop regex-gating Dilla pedal** (41). Language-tagged.
+65. **Split HarmonyScore profiles** (25, 55) before adding more generators, or the next language will be tuned to please a Bach metric.
+66. **`modes.yml`: hicaz + hüseyni** (22–23), 12-TET, sources named, disagreement recorded if sources split.
+67. **Do not Picardy or unblock Neapolitan on soul DNA.** Bach languages only.
+68. **Reader for `dilla_principles.yml` harmony.goals** (44) or stop citing the file.
+
+If two languages mean the same root motion and quality, keep the one with a test. If a “beautiful” pass changes a curated Dilla loop, it is refused.
