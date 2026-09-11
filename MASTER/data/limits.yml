@@ -1029,7 +1029,8 @@ loc_body_budgets:
   # proposes a candidate and MechanicalAutofix writes it only after WriteGuard
   # has judged it, where the two used to be one call with nothing between a
   # misfiring transform and the file.
-  lib/review: 10653
+  # 10653 -> 10654 for the ERB_HTML_SAFE call test; see data/spine.yml.
+  lib/review: 10654
   lib/trace: 2035
   lib/voice: 3402
   # 1616 -> 1637 so a comment that spans lines counts as a comment on every

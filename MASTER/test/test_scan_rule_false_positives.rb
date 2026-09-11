@@ -19,6 +19,9 @@ class TestScanRuleFalsePositives < Minitest::Test
     scanner.rules.find { |r| r.id.to_s == id.to_s } || raise("rule #{id} is not registered")
   end
 
+  # ERB_HTML_SAFE only looks at views, so its cases need a view path.
+  VIEW = "RAILS/shared/app/views/example/show.html.erb"
+
   def findings(id, source, path: "lib/example.rb")
     Array(rule(id).check(source, path: File.join(Master::ROOT, path)))
   end
@@ -854,5 +857,38 @@ end
 
   def test_an_unmarked_trailing_comment_still_fires
     refute_empty findings(:TRAILING_COMMENT, "value = 1 # why one\n")
+  end
+
+  # --- ERB_HTML_SAFE ------------------------------------------------------
+  # The escape read `/sanitize|strip_tags/` against the whole file, so any view
+  # that mentioned sanitizing in prose silenced a SECURITY rule at error
+  # severity for every line in it. The one view in the fleet carrying a raw
+  # html_safe — the 2FA QR code — was silenced by the comment explaining why
+  # sanitize is the wrong fix there, which left the rule looking honoured and
+  # the marker beside it doing nothing. A call in a view lives in an ERB tag.
+
+  def test_html_safe_is_not_excused_by_the_word_sanitize_in_prose
+    %W[<%\#\ we\ cannot\ sanitize\ this\ %>\n <p>we\ sanitize\ nothing</p>\n].each do |prose|
+      refute_empty findings(:ERB_HTML_SAFE, "#{prose}<%= @x.html_safe %>\n", path: VIEW),
+                   "#{prose.strip.inspect} silenced a security rule"
+    end
+  end
+
+  def test_a_real_sanitizing_call_still_excuses_it
+    ["<%= sanitize(@post.body).html_safe %>\n",
+     "<%= sanitize @post.body %>\n<%= @x.html_safe %>\n",
+     "<%= strip_tags(@a) %>\n<%= @x.html_safe %>\n",
+     "<%= @a.to_json.html_safe %>\n"].each do |source|
+      assert_empty findings(:ERB_HTML_SAFE, source, path: VIEW), source.strip.inspect
+    end
+  end
+
+  # And the marker is what excuses the QR code now, visibly, rather than a word
+  # in the sentence beside it.
+  def test_the_marker_excuses_it_and_nothing_else_does
+    raw = "<%\# scan: intentional — generated SVG %>\n<%= @qr.html_safe %>\n"
+
+    assert_empty findings(:ERB_HTML_SAFE, raw, path: VIEW)
+    refute_empty findings(:ERB_HTML_SAFE, raw.sub("scan: intentional — ", ""), path: VIEW)
   end
 end

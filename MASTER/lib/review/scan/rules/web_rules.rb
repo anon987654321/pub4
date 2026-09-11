@@ -154,7 +154,19 @@ module Master
           description: "html_safe only after sanitize" do |src, path:|
           next [] unless path.include?("/app/views/")
           next [] unless src.match?(/<%=\s*[^%]+\.html_safe\s*%>/)
-          next [] if src.match?(/sanitize|strip_tags|\.to_json\.html_safe/)
+          # The escape has to be a call, not the word. This read
+          # `/sanitize|strip_tags/` against the whole file, so any view that
+          # merely mentioned sanitizing — in prose, in a comment, in an
+          # attribute — silenced a SECURITY rule at error severity for every
+          # line in it. The one view in the fleet carrying a raw html_safe was
+          # silenced by the comment explaining why sanitize is the wrong fix
+          # there, which means the marker below was doing nothing and the rule
+          # looked honoured rather than off.
+          #
+          # A call in a view lives inside an ERB tag, so that is the test.
+          # `(?!#)` keeps `<%# … sanitize … %>` out: an ERB comment is prose.
+          next [] if src.match?(/<%[-=]?(?!#)[^%]*\b(?:sanitize|strip_tags)\b/)
+          next [] if src.include?(".to_json.html_safe")
           # The finding is about the file, so the marker is read from the file.
           # sanitize is the fix this rule names and it is the wrong one for
           # generated SVG — Rails' allowlist strips svg and path, so following

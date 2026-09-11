@@ -177,7 +177,13 @@ spine:
   # the way to break it. Not through RubyLLM: that is a registry of paid
   # endpoints with prices and capability flags, and a local daemon is one POST
   # to /api/chat. Verified against a running ollama, both streaming and not.
-  lib_body_ceiling: 38298
+  # 38298 -> 38299 for one line, and it is the line that makes ERB_HTML_SAFE a
+  # rule rather than a word. Its escape read /sanitize|strip_tags/ against the
+  # whole file, so any view mentioning sanitizing in prose silenced a SECURITY
+  # rule at error severity across it. The call test and the to_json case are
+  # two conditions and are written as two; folding a security guard onto one
+  # line to stay under a ceiling is the wrong instinct about both.
+  lib_body_ceiling: 38299
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753
