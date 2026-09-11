@@ -35,10 +35,6 @@ module Master
 
       def redo!(steps: 1) = replay(@redo, @stack, "redo", steps)
 
-      def depth
-        @stack.size
-      end
-
       def history(limit: 10)
         @stack.last(limit).reverse.map.with_index(1) do |entry, i|
           time = entry["ts"] ? Time.at(entry["ts"]).strftime("%H:%M:%S") : "?"

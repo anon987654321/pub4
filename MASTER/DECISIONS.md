@@ -571,3 +571,28 @@ copy in the private hooks directory is a second implementation that drifts from
 the tracked one.
 Its only test asserted that it skips when there is no git directory — a test of
 the inert path, which is what let it stand.
+
+## One Word Per Concept (2026-09-11)
+
+Two words for one concept means a reader cannot tell whether they name the same
+thing, and a search for one misses the other: `law/` and `rules.yml` held the
+same kind of object under two names for months, and `law_bridge_rule.rb` still
+uses both in one filename. The winner is the word already dominant in the tree,
+because a rename costs less when it moves the minority.
+
+**rule** wins, and `law`, `axiom`, `principle`, `convention`, `guideline`,
+`philosophy`, `doctrine`, `heuristic`, `standard` and `norm` lose. Measured
+across `MASTER/{lib,law,tools,bin}`: rule has 1,504 mentions over 35 paths, law
+356 — and law owns `law/`, which is the one real cost of the choice. `policy`
+is deliberately not on the losing list: `Ground::Policy` is runtime
+authorisation, a different concept that happens to be an English synonym.
+
+**check** is the unmeasured half, written down so the next person measures it
+rather than guesses. `gate` reads as a release gate, `lint` as a source pass and
+`probe` as a live request, which may be three real distinctions or three words
+for one act; `audit` and `verify` sit with them.
+
+This lived as a `synonyms` block in `data/lexicon.yml`, which `Voice::Lexicon`
+opens for `respellings` and nothing else, so a naming policy sat inside a
+text-to-speech table with no reader. It is prose about how to name things, and
+prose belongs where prose is read.

@@ -21,10 +21,6 @@ module Master
             tiers.empty? ? [30, 60, failover_cooldown_seconds] : tiers
           end
 
-          def failover_skip_ttl_ms
-            Io::ModelSkipCache.skip_ttl_ms
-          end
-
           # Categories that stop retrying a model and move on. nil when unconfigured,
           # so the caller supplies its own default rather than this file naming a
           # constant from lib/review and depending on its load order. See TODO.md,

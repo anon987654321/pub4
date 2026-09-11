@@ -43,10 +43,6 @@ module Master
         synchronize { @breakers.values.sum(&:session_total) + @global.session_total }
       end
 
-      def record_cost(amount)
-        @global.record_cost(amount)
-      end
-
       def call(cost_estimate, &blk)
         @global.call(cost_estimate, &blk)
       end

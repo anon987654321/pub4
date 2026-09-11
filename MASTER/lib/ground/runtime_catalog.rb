@@ -8,12 +8,6 @@ module Master
     # Replaces prose docs/ for invariants, UI philosophy, events, enhancements, etc.
     class RuntimeCatalog
       CATALOG_PATH = File.join(Master::ROOT, "data", "runtime.yml").freeze
-      SECTIONS = %w[
-        invariants ui_philosophy event_registry provider_economy
-        cognitive_spine face_enhancements micro_interactions
-        platform_topology collaboration repo_ecology
-        routing_architecture face3d_migration style_guides face_research
-      ].freeze
 
       @cache = {}
 
@@ -23,9 +17,12 @@ module Master
           @cache[key] ||= catalog.fetch(key, {})
         end
 
-        def all
-          SECTIONS.to_h { |section| [section, load(section)] }
-        end
+        # The file's own keys. A frozen SECTIONS list stood here naming fourteen
+        # of the sixteen, and the two it missed are the two the browser payload
+        # depends on most: `runtime`, read twice by web_boot_payload, and
+        # `tts_phrases`, read by TtsController. Nothing consulted the list but
+        # its own test, so the gap showed up as two sections no test covered.
+        def sections = catalog.keys
 
         def enhancements(area: nil, tier: nil)
           items = Array(load("face_enhancements")["enhancements"])

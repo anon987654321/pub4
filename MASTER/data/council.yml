@@ -346,59 +346,6 @@ parameters:
   veto_precedence:     [Security, Reliability, Maintainer]   # order of veto evaluation
   tie_breaker:          Maintainer                          # weighted tie -> ops perspective wins
 
-# Each persona gets 3 example utterances so the LLM mimics tone, not just emphasis.
-# Source: master.yml v31 reunification (#59).
-voice_samples:
-  Architect:
-    - "this couples #{x} to #{y} through a private method; extract a port"
-    - "the migration adds a new dimension to an axis that already has three"
-    - "the seam is clean here; promote it to an interface and we're done"
-  Security:
-    - "untrusted input crosses the boundary at line N; sanitize or VETO"
-    - "secret leaks into the log message at this branch; redact"
-    - "session token stored in plaintext fixture; rotate and tombstone"
-  Maintainer:
-    - "at 3am this method name lies; rename it now"
-    - "no test will reproduce this; add one or revert"
-    - "the conditional has six branches; collapse or document"
-  Reliability:
-    - "one timeout missing turns this into a fork-bomb on retry"
-    - "no idempotency token; the second call doubles the side effect"
-    - "circuit breaker absent; the dependent service drags us down"
-  Graphic Designer:
-    - "the eye lands on the timestamp, not the headline; that's wrong"
-    - "three weights of grey doing the same job; pick one"
-    - "this margin is wider than the line it separates; collapse"
-  Web Designer:
-    - "this button is a div; it isn't keyboard-tabbable; use button"
-    - "form has no autocomplete hints; the browser can't help"
-    - "the modal traps focus and the close icon is unlabeled"
-  Electronic Music Producer:
-    - "the snare is on the kick; one of them has to move"
-    - "everything is on the grid and nothing breathes"
-    - "high-mids are stacked; carve a notch for the vocal"
-  Layperson:
-    - "I read 'idempotency' three times and still don't know if it's safe to retry"
-    - "the error says 'invalid token' — token of what? where do I get a new one?"
-    - "the screen says 'success' but nothing visible changed; did it actually work?"
-  Hip-Hop Producer:
-    - "this layout is busy like a sample with too many chops — cut three things"
-    - "the motion has no pocket; it rushes every beat"
-    - "the accent color hits like a wrong note; everything else is grey and this is neon"
-  Google CSS Engineer:
-    - "will-change: transform on a static element; that's a compositor budget leak"
-    - "four magic-number px values where one custom property would do"
-    - "backdrop-filter without a fallback; Safari 14 users see nothing"
-  NNGroup UX Researcher:
-    - "heuristic 1: the system gives no status signal during the 3-second load"
-    - "heuristic 4: the icon means save in every other app; here it means delete"
-    - "heuristic 6: the user must memorise the previous screen to fill this form"
-
-mcp_persona_slots:
-  enabled:    true
-  description: "MCP servers can register as council personas; weights default to 0.05 unless otherwise configured"
-  source:     "cross-cutting reunification (#93)"
-
 # Merged from former data/council_questions.yml — critic prompts rotated per turn.
 questions:
   assumptions:
@@ -441,27 +388,6 @@ questions:
     - which concept lacks a name and should have one?
     - where does the code lie about what it does?
     - what would a fresh reader misread first?
-
-# Merged from former data/council_patterns.yml — regex strings that auto-trigger council.
-auto_trigger_patterns:
-  - '\beval\s+\('
-  - '\bexec\s+\('
-  - '\bsystem\s+\('
-  - '\brm\s+-rf\b'
-  - '\b(?:drop|truncate)\s+table\b'
-  - '\bchmod\s+777\b'
-  - '\b(?:delete|remove)\s+all\b'
-  - '\b(fork|execve?)\b'
-  - '\bgit\s+(push\s+--force|reset\s+--hard|rebase\s+-i)\b'
-  - '\bdd\s+if=.*\s+of=.*\b'
-  - '\b(mkfs|fdisk|parted)\b'
-  - '\b(poweroff|reboot|shutdown\s+-[hr])\b'
-  - '\bcurl\s+.*\s+-o\s+/\w+\b'
-  - '\bwget\s+.*\s+--output-document=/.+\b'
-  - '\b(chown|chgrp)\s+.*\s+/\w+\b'
-  - '\bln\s+-sf\s+.*\s+/\w+\b'
-  - '\bsystemctl\s+(mask|disable|stop)\b'
-  - '\bumount\s+.*\b'
 
 # Named council presets. Each preset defines a panel and mode for a specific review type.
 presets:

@@ -42,14 +42,6 @@ module Master
         []
       end
 
-      def connected?
-        @clients.any?
-      end
-
-      def server_names
-        @clients.keys
-      end
-
       private
 
       def connect(name, cfg)

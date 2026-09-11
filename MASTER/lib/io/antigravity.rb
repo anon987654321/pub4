@@ -203,10 +203,6 @@ module Master
           @skills.values.sort_by { |s| [-@usage.fetch(s[:name], 0).to_i, s[:name]] }
         end
 
-        def list
-          discover!
-        end
-
         def find(name)
           discover! if @skills.empty?
           @skills[name.to_s]
@@ -239,7 +235,7 @@ module Master
 
         # Progressive disclosure summary for system prompts
         def prompt_catalog
-          skills_list = list
+          skills_list = discover!
           return if skills_list.empty?
 
           items = skills_list.map do |s|
