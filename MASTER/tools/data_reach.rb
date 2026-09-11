@@ -18,6 +18,7 @@
 # a verdict: the ceiling exists so the NEXT unread declaration cannot arrive
 # silently, which is how all three above did.
 
+require "set"
 require "yaml"
 
 module Operator
@@ -76,13 +77,48 @@ module Operator
       "state.yml" => %w[state_path standing_orders],
     }.freeze
 
+    # The words inside every %w, %i, %W and %I literal in one file. A word list
+    # is a run of bare strings with no quote and no colon in front of any of
+    # them, so the quoted needle below cannot see one: nine of the thirty-seven
+    # keys this census called unnamed were sitting in a `%w[]` in plain sight,
+    # five of them in RuntimeCatalog::SECTIONS, the constant that lists the
+    # sections of the very file whose keys were reported unread.
+    def word_list_words(src)
+      words = []
+      src.scan(/%[wWiI]([\[({])(.*?)[\])}]/m) do
+        words.concat(::Regexp.last_match(2).split(/\s+/))
+      end
+      words
+    end
+
+    # Keyed by the source text rather than by its path, so a caller that hands
+    # this a corpus of its own — every test here does — gets the same answer as
+    # the census does over the tree.
+    def word_lists
+      @word_lists ||= Hash.new { |memo, src| memo[src] = word_list_words(src).to_set }
+    end
+
+    # One definition of "this source names this key", because the census asks
+    # the question three times and a needle that drifts between the three would
+    # make its two reports disagree about the same key.
+    def names?(key, src)
+      return true if src.match?(/["':]#{Regexp.escape(key.to_s)}\b/)
+
+      word_lists[src].include?(key.to_s)
+    end
+
+    def named_anywhere?(key)
+      code_files.each_value.any? { |src| names?(key, src) }
+    end
+
     # A key whose name appears in code that never mentions the yaml file is
     # counted as named by the census and still unread: success_criteria lived
     # in rules.yml while phase_gates.rb read session state under the same word.
     def attributed?(key, yaml_basename)
-      needle = /["':]#{Regexp.escape(key.to_s)}\b/
       handles = [yaml_basename, *ACCESSORS.fetch(yaml_basename, [])]
-      code_files.any? { |_path, src| src.match?(needle) && handles.any? { |handle| src.include?(handle) } }
+      code_files.any? do |_path, src|
+        names?(key, src) && handles.any? { |handle| src.include?(handle) }
+      end
     end
 
     def misattributed
@@ -92,7 +128,7 @@ module Operator
 
         basename = File.basename(path)
         doc.keys.filter_map do |key|
-          next unless code.match?(/["':]#{Regexp.escape(key.to_s)}\b/)
+          next unless named_anywhere?(key)
           next if attributed?(key, basename)
 
           "#{basename}##{key}"
@@ -117,7 +153,7 @@ module Operator
         next [] unless doc.is_a?(Hash)
 
         doc.keys.filter_map do |key|
-          "#{File.basename(path)}##{key}" unless code.match?(/["':]#{Regexp.escape(key.to_s)}\b/)
+          "#{File.basename(path)}##{key}" unless named_anywhere?(key)
         end
       end
     end
@@ -140,7 +176,11 @@ module Operator
     def run(ratchet: false)
       out = unnamed
       misplaced = misattributed
-      puts "data_reach: #{out.size} top-level keys no code names (ceiling #{ceiling})"
+      # Read once, before the ratchet overwrites the file it comes from.
+      # `ceiling` re-reads on every call, so the report compared the new low
+      # against itself and could only ever say "re-recorded".
+      was = ceiling
+      puts "data_reach: #{out.size} top-level keys no code names (ceiling #{was})"
       unless misplaced.empty?
         puts "data_reach: #{misplaced.size} named in code that never mentions their file:"
         misplaced.each { |key| puts "  #{key} — name appears, but not next to #{key.split('#', 2).first}" }
@@ -156,13 +196,13 @@ module Operator
       # the census is over, attribution comes from diffing against the commit
       # that set the ceiling; that is how business_plan and markdown_style were
       # identified on 2026-08-31.
-      if ratchet && out.size <= ceiling
+      if ratchet && out.size <= was
         File.write(CEILING, { "unnamed" => out.size, "unnamed_members" => out.sort }.to_yaml)
-        verb = out.size < ceiling ? "recorded #{out.size} as the new low" : "re-recorded #{out.size}"
+        verb = out.size < was ? "recorded #{out.size} as the new low" : "re-recorded #{out.size}"
         puts "data_reach: #{verb}, with its members"
         return 0
       end
-      return 0 unless out.size > ceiling
+      return 0 unless out.size > was
 
       report_new(out)
 

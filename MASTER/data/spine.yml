@@ -89,7 +89,7 @@ spine:
   # block with a guard now, which is three lines more and one decision less
   # per line. Readable code costs lines, and this row is where that trade is
   # said out loud rather than absorbed.
-  lib_body_ceiling: 38111
+  lib_body_ceiling: 38072
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753

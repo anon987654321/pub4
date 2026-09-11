@@ -11,7 +11,12 @@ class TestRuntimeCatalog < Minitest::Test
     assert_path_exists Master::Ground::RuntimeCatalog::CATALOG_PATH
     refute_path_exists File.join(Master::ROOT, "data", "runtime"), "runtime catalog must remain consolidated"
 
-    Master::Ground::RuntimeCatalog::SECTIONS.each do |section|
+    sections = Master::Ground::RuntimeCatalog.sections
+
+    assert_includes sections, "runtime", "web_boot_payload reads this section twice"
+    assert_includes sections, "tts_phrases", "TtsController reads this section"
+
+    sections.each do |section|
       data = Master::Ground::RuntimeCatalog.load(section)
       assert_kind_of Hash, data, "expected hash for #{section}"
       refute_empty data, "expected non-empty #{section}"

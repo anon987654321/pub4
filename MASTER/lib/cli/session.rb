@@ -70,10 +70,6 @@ module Master
         handle_repl_line(stripped)
       end
 
-      def process(input)
-        run_input(input)
-      end
-
       def run_input(input)
         return empty_input(:run_input) if input.strip.empty?
         blocked = check_budget_blocks(input)

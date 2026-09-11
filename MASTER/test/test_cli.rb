@@ -217,15 +217,15 @@ class TestCLI < Minitest::Test
   end
 
   def test_scan_profile_uses_explicit_keyword
-    profile, = Master::CLI::CommandRegistry.resolve_scan_profile("critical lib", Dir.pwd)
-    plain, = Master::CLI::CommandRegistry.resolve_scan_profile("criticality.rb", Dir.pwd)
+    profile, = Master::CLI::Scan::Request.resolve_scan_profile("critical lib", Dir.pwd)
+    plain, = Master::CLI::Scan::Request.resolve_scan_profile("criticality.rb", Dir.pwd)
 
     assert_equal "critical", profile
     assert_nil plain
   end
 
   def test_legacy_quick_scan_profile_resolves_to_core_report_filter
-    profile, = Master::CLI::CommandRegistry.resolve_scan_profile("quick lib", Master::ROOT)
+    profile, = Master::CLI::Scan::Request.resolve_scan_profile("quick lib", Master::ROOT)
 
     assert_equal "core", profile
   end
@@ -425,7 +425,7 @@ class TestCLI < Minitest::Test
     bus.expect(:publish, nil, ["cli:empty_input"], source: :run_input)
     cli = Master::CLI::Session.new(container: @container.merge(config: {}, bus:))
 
-    assert_nil cli.process("   ")
+    assert_nil cli.run_input("   ")
     bus.verify
   end
 

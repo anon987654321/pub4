@@ -128,10 +128,6 @@ module Master
                        severity_filter:, dry_run:).render
       end
 
-      def resolve_scan_profile(arg, root)
-        Scan::Request.resolve_scan_profile(arg, root)
-      end
-
       def dispatch_scan(scanner:, root:, ctx: nil)
         Scan::Live.ensure_sync!
         arg, dry_run, no_autofix, clean_arg, do_autofix = parse_scan_args(ctx)

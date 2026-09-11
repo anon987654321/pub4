@@ -50,10 +50,6 @@ module Master
           }
         end
 
-        def model_for(risk)
-          select_model(risk)
-        end
-
         def roles_for(intent)
           domain = intent_domain(intent)
           COUNCIL_ROLES.filter_map { |persona, domains| persona if domains.include?(domain) }

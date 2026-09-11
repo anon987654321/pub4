@@ -1,20 +1,11 @@
 ---
-unnamed: 37
+unnamed: 28
 unnamed_members:
 - attention_context.yml#runtime_uses
-- council.yml#auto_trigger_patterns
-- council.yml#mcp_persona_slots
-- council.yml#voice_samples
-- lexicon.yml#synonyms
 - models.yml#ollama_llama
 - models.yml#ollama_phi
 - models.yml#ollama_qwen
-- models.yml#trust_scoring
-- namespace_ceilings.yml#RAILS/shared/lib
 - personas.yml#british
-- personas.yml#hacker
-- personas.yml#sysadmin
-- prompts.yml#rewoo
 - providers.yml#mistral
 - pub_archive_restore.yml#pub
 - pub_archive_restore.yml#pub2

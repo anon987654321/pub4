@@ -24,10 +24,6 @@ module Master
         write(items)
       end
 
-      def pending
-        load
-      end
-
       def top(n = 5)
         load.last(n).reverse
       end
