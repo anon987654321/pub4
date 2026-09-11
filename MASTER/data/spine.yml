@@ -691,7 +691,16 @@ pub4_source_ceilings:
 # gate, its test and its registry row are gone; the one genuinely new check —
 # a literal backslash in gate JavaScript — stayed, folded into
 # gate_requires_resolve_test, whose subject is already half-landed moves.
-  RAILS: 2392
+# 2392 -> 2393 for amber/test/controllers/pwa_serving_test.rb. The manifest and
+# the service worker were served by a shared concern and asked for by nothing:
+# pwa_master_contract_test greps the ERB and pwa_offline_test covers the
+# offline page, so the two content types went unmeasured. Both are
+# load-bearing and invisible in a template — a manifest served as text/html
+# installs nothing, and a worker served as anything but JavaScript is refused
+# with a console error no deploy sees. It also pins the rescue path, which
+# answers with a minimal installing worker rather than a 500, because a 500
+# there leaves whatever is installed in place with no way to replace it.
+  RAILS: 2393
   # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
   # that are the whole defence against a shared index, and nothing tested any of
   # them — a hook that stopped firing looks exactly like a week in which nobody
