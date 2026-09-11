@@ -45,11 +45,12 @@ all four trees; `MASTER/bin/operator measure` prints every ratchet with its ceil
 Run the smallest check that proves the work, and never report done without its
 output.
 
-Inside the runtime there is one verb: `/through [path]` — scan, critique,
-principle map. `--only <stage>` runs one of them, and `/scan`, `/fix`,
-`/critique` and `/council` are those stages by name. **The scan stage fixes what
-it finds, on the spot**, so a scan writes to the tree unless `--no-autofix` or
-`--dry-run` holds it back.
+Inside the runtime there is one verb and three words for its parts. `/review
+[path]` runs the whole pass — scan, critique, principle map — and reads without
+writing. `/scan` is the detectors alone. `/critique` is the council. `/fix` is
+the scan **with writing on**, which is the only word here that changes the tree:
+a finding is cheapest to repair where it is found, so the fixing and the scanning
+are one stage, and the verb says which you asked for.
 
 Five things that will bite you, in order:
 
@@ -258,9 +259,9 @@ restores from HEAD. Say what you did rather than hoping it is unnoticed.
 every commit beneath yours, including other people's. Name in your report what
 went with you.
 
-**One verb, named stages.** `/through [path]` runs every stage: scan, critique,
+**One verb, named stages.** `/review [path]` runs every stage: scan, critique,
 principle map. `--only <stage>` runs one, and `/scan`, `/fix`, `/critique` and
-`/council` are those stages by name — `/scan` is `/through --only scan`. The
+`/council` are those stages by name — `/scan` is `/review --only scan`. The
 scan stage fixes what it finds as it finds it, so `/scan` and `/fix` name the
 same stage; a finding is cheapest to repair at the moment it is found.
 
@@ -332,7 +333,7 @@ touches disk on any other path.
 
 **Tier.** Two meanings, both live. `bin/gate` runs a *lexical* tier (law and the
 scan registry, deterministic, no model) and a *semantic* tier (the critique
-stage, `/through --only critique`, which reaches a provider); the semantic one is
+stage, `/review --only critique`, which reaches a provider); the semantic one is
 currently unreachable
 and reports as skipped rather than clean. On a `rules.yml` row, `tier:` is the
 rule's category — `clean_code`, `style`, `safety` — and is what resolves a
@@ -365,7 +366,7 @@ to edit it by hand. Editing the build is a fix that survives until the next
 | Worn type / layout gates | `data/rules.yml` `design_rules.worn_type` + `RAILS/gates/support/geometry_type.rb`. Feed is a short measure; legal/prose is 66ch. |
 | brgen city network / verticals | `RAILS/brgen/AGENTS.md` — one process, city apex + subdomain engines |
 
-Touch-map: `data/agent_map.yml`. Law sections live in `data/rules.yml`. Work is a sentence, or `/through [path]`. Slash set: `/through` `/status` `/undo` `/commit` `/model` `/pair` `/doctor` `/help` `/clear`.
+Touch-map: `data/agent_map.yml`. Law sections live in `data/rules.yml`. Work is a sentence, or `/review [path]`. Slash set: `/review` `/status` `/undo` `/commit` `/model` `/pair` `/doctor` `/help` `/clear`.
 
 ## Checks
 

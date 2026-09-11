@@ -16,7 +16,7 @@ class TestCapabilityInventory < Minitest::Test
 
   def test_current_inventory_covers_the_closed_slash_set
     slashes = @report[:current][:slashes]
-    %w[through status undo commit model pair doctor help clear].each do |name|
+    %w[review status undo commit model pair doctor help clear].each do |name|
       assert_includes slashes, name
     end
   end

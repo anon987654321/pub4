@@ -109,11 +109,11 @@ class TestCLI < Minitest::Test
 
   def test_help_uses_progressive_disclosure
     summary = Master::CLI::CommandRegistry.help_text
-    detail = Master::CLI::CommandRegistry.help_text("through")
+    detail = Master::CLI::CommandRegistry.help_text("review")
 
-    assert_includes summary, "/through - the one verb"
+    assert_includes summary, "/review - the whole pass"
     refute_includes summary, "--dry-run previews"
-    assert_includes detail, "/through [path]"
+    assert_includes detail, "/review [path]"
     assert_includes detail, "--dry-run"
     assert_includes detail, "--only", "the stages are the detail, not the summary"
   end
@@ -231,19 +231,19 @@ class TestCLI < Minitest::Test
   end
 
   # The closed set is what the list offers. /scan and /fix are named in the
-  # footer as stages of /through — `/through --only scan` — because they are
+  # footer as stages of /review — `/review --only scan` — because they are
   # what a person types, and a help page that pretends otherwise sends them to
   # find out by experiment. What must not appear is a `/scan - …` row: a second
   # entry in the list is a second command.
   def test_help_names_the_closed_set
     summary = Master::CLI::CommandRegistry.help_text
-    %w[through status undo commit model pair doctor help clear].each do |name|
+    %w[review status undo commit model pair doctor help clear].each do |name|
       assert_includes summary, "/#{name} - "
     end
     refute_includes summary, "/scan - "
     refute_includes summary, "/fix - "
     refute_includes summary, "/orient"
-    assert_includes summary, "/through --only <stage>"
+    assert_includes summary, "/review --only <stage>"
   end
 
   # ^C during a turn took the REPL down with "undefined method ok? for nil".

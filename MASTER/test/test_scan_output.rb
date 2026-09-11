@@ -100,7 +100,7 @@ class TestScanOutput < Minitest::Test
   end
 
   def test_help_documents_through_pass
-    detail = Master::CLI::CommandRegistry.help_text("through")
+    detail = Master::CLI::CommandRegistry.help_text("review")
     assert_includes detail, "critique"
   end
 end

@@ -161,7 +161,7 @@ module Master
       # `bin/operator rule <ID>` prints a card from. An argument filters by id or
       # name, so `/rules guard` narrows to the rules that govern guard clauses.
       #
-      # Read-only on purpose. The verb that enforces them is /through, and that now
+      # Read-only on purpose. The verb that enforces them is /review, and that now
       # needs --apply to write. A second verb that scans and fixes would be the same
       # pipeline under another name, which is the defect this repo keeps finding in
       # its own tree.

@@ -117,7 +117,7 @@ class TestScanAutofix < Minitest::Test
   end
 
   def test_help_documents_through_dry_run
-    detail = Master::CLI::CommandRegistry.help_text("through")
+    detail = Master::CLI::CommandRegistry.help_text("review")
     assert_includes detail, "--dry-run"
   end
 

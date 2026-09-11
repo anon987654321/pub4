@@ -15,7 +15,7 @@ class WorkflowInferenceTest < Minitest::Test
     refute_equal :unknown, router.classify("read CLAUDE.md")
   end
 
-  # /workflow is an alias of /through (see help.rb), so it renders the through
+  # /workflow is an alias of /review (see help.rb), so it renders the through
   # pipeline's sections. This test used to assert a "workflow: deliberation" /
   # "verdict:" shape from a design that no longer exists, and its doubles had
   # drifted from the real interfaces — FakeFixLoop had no #run and
@@ -27,7 +27,7 @@ class WorkflowInferenceTest < Minitest::Test
     ["mode", "aesthetic scan", "deep scan", "fix", "re-scan", "principle map"].each do |section|
       assert_includes out, "# #{section}"
     end
-    assert_match(/through\d+: complete/, out)
+    assert_match(/review\d+: complete/, out)
   end
 
   # --dry-run swaps the fix stage for a preview and drops the re-scan.
@@ -67,7 +67,7 @@ class WorkflowInferenceTest < Minitest::Test
     out = dispatch(critique: false, fix_loop: flaky, apply: true)
 
     assert_includes out, "fix failed: Errno::ENOENT"
-    assert_match(/through\d+: incomplete — fix failed/, out)
+    assert_match(/review\d+: incomplete — fix failed/, out)
     refute_includes out, "complete\n"
   end
 

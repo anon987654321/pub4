@@ -36,9 +36,9 @@ module Master
 
         def from_phase
           case @session.phase.to_s
-          when "discover" then [prop(action: "/through --dry-run", reason: "discover phase — survey state", weight: 0.4)]
+          when "discover" then [prop(action: "/review --dry-run", reason: "discover phase — survey state", weight: 0.4)]
           when "implement" then [prop(action: "/status", reason: "implement phase — check the tree", weight: 0.45)]
-          when "audit" then [prop(action: "/through", reason: "audit phase — full pass", weight: 0.5)]
+          when "audit" then [prop(action: "/review", reason: "audit phase — full pass", weight: 0.5)]
           else []
           end
         end
@@ -190,7 +190,7 @@ module Master
 
           module_name, total = hot
           [prop(
-            action: "/through",
+            action: "/review",
             reason: "#{module_name} accumulated #{total} violation(s) across 3 recent scans; architectural attention needed",
             weight: 0.67,
           )]
@@ -221,7 +221,7 @@ module Master
           return [] unless new_patterns
 
           [prop(
-            action: "/through",
+            action: "/review",
             reason: "#{new_patterns.first(3).join(', ')} surfaced repeatedly but are not in soul.yml; consider adding a constitutional axiom",
             weight: 0.64,
           )]
@@ -248,7 +248,7 @@ module Master
 
           rel, total = hot
           [prop(
-            action: "/through",
+            action: "/review",
             reason: "#{rel} has grown by #{total} lines across 3 recent commits; warn before it crosses the god_class threshold",
             weight: 0.66,
           )]

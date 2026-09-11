@@ -41,11 +41,11 @@ class TestBiasGuard < Minitest::Test
   def test_detects_the_decision_biases
     guard = Master::Ground::BiasGuard.new
     hits = {
-      "optimism_bias" => Proposal.new(action: "/through", reason: "quick trivial simple fix", weight: 0.5, confidence: 0.8, impact: 0.5, kind: :task),
-      "dunning_kruger_bias" => Proposal.new(action: "/through", reason: "obviously clearly straightforward", weight: 0.5, confidence: 0.8, impact: 0.5, kind: :task),
-      "bandwagon_bias" => Proposal.new(action: "/through", reason: "everyone uses this best practice", weight: 0.5, confidence: 0.8, impact: 0.5, kind: :task),
-      "framing_bias" => Proposal.new(action: "/through", reason: "the real problem is naming", weight: 0.5, confidence: 0.8, impact: 0.5, kind: :task),
-      "survivorship_bias" => Proposal.new(action: "/through", reason: "this always works never fails", weight: 0.5, confidence: 0.8, impact: 0.5, kind: :task),
+      "optimism_bias" => Proposal.new(action: "/review", reason: "quick trivial simple fix", weight: 0.5, confidence: 0.8, impact: 0.5, kind: :task),
+      "dunning_kruger_bias" => Proposal.new(action: "/review", reason: "obviously clearly straightforward", weight: 0.5, confidence: 0.8, impact: 0.5, kind: :task),
+      "bandwagon_bias" => Proposal.new(action: "/review", reason: "everyone uses this best practice", weight: 0.5, confidence: 0.8, impact: 0.5, kind: :task),
+      "framing_bias" => Proposal.new(action: "/review", reason: "the real problem is naming", weight: 0.5, confidence: 0.8, impact: 0.5, kind: :task),
+      "survivorship_bias" => Proposal.new(action: "/review", reason: "this always works never fails", weight: 0.5, confidence: 0.8, impact: 0.5, kind: :task),
     }
     hits.each do |name, proposal|
       assert_includes guard.detect(proposal), name

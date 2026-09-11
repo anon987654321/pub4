@@ -96,7 +96,7 @@ TIER = if ARGV.include?("--lexical-only")
 #
 # One line per tier, since 2026-09-06. The lexical pass used to be
 # `/scan`, `/fix`, `/scan` — three boots of the runtime for a pipeline that
-# already scans, fixes and re-scans inside one: /scan is /through --only scan,
+# already scans, fixes and re-scans inside one: /scan is /review --only scan,
 # whose stages are the aesthetic pass, the deep pass, the fix, and the re-scan
 # that proves it. Running it three times ran that sequence three times. The
 # semantic pass was `/critique` then `/review`, and both words name the critique

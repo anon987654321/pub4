@@ -30,11 +30,12 @@ all four trees; `MASTER/bin/operator measure` prints every ratchet with its ceil
 Run the smallest check that proves the work, and never report done without its
 output.
 
-Inside the runtime there is one verb: `/through [path]` — scan, critique,
-principle map. `--only <stage>` runs one of them, and `/scan`, `/fix`,
-`/critique` and `/council` are those stages by name. **The scan stage fixes what
-it finds, on the spot**, so a scan writes to the tree unless `--no-autofix` or
-`--dry-run` holds it back.
+Inside the runtime there is one verb and three words for its parts. `/review
+[path]` runs the whole pass — scan, critique, principle map — and reads without
+writing. `/scan` is the detectors alone. `/critique` is the council. `/fix` is
+the scan **with writing on**, which is the only word here that changes the tree:
+a finding is cheapest to repair where it is found, so the fixing and the scanning
+are one stage, and the verb says which you asked for.
 
 Five things that will bite you, in order:
 

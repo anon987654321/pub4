@@ -186,8 +186,8 @@ module Master
           "fix: #{message}",
           "alternatives:",
           "  1. /fix --dry-run #{target} to inspect intended changes without writing",
-          "  2. /through --dry-run #{target} for the full preview pass",
-          "  3. /through #{target} to scan, fix, and critique in one sequence",
+          "  2. /review --dry-run #{target} for the full preview pass",
+          "  3. /review #{target} to scan, fix, and critique in one sequence",
         ].join("\n")
       end
     end

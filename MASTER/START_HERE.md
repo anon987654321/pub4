@@ -8,9 +8,9 @@ before durable writes. The Rails face in `web/` mirrors runtime state at
 **Orientation:** `AGENTS.md` for task-scoped agent entry; this file for the full
 contract. Law and config live in YAML under `data/`. Prose stubs:
 `data/SOUL.md`, `data/IDENTITY.md`, generated `data/CANON.md`. Work is a
-sentence. The slash set is `/through` `/status` `/undo` `/commit` `/model`
+sentence. The slash set is `/review` `/status` `/undo` `/commit` `/model`
 `/pair` `/doctor` `/help` `/clear`. `/scan`, `/fix`, `/critique` and `/council`
-are not a second set: each is `/through --only <stage>`.
+are not a second set: each is `/review --only <stage>`.
 
 ## Safe First Commands
 
@@ -24,9 +24,9 @@ are not a second set: each is `/through --only <stage>`.
 - `bin/check --profile=full` — operator-grade probe path.
 - `bin/check --format=brief` — structured pass/fail with debt hints (pair with
   any profile).
-- Work: say the path. `/through [path]` is the one explicit pass, and its
+- Work: say the path. `/review [path]` is the one explicit pass, and its
   stages are `--only scan`, `--only critique` and `--only map`. `/scan`, `/fix`,
-  `/critique` and `/council` are those stages by name — `/scan` is `/through
+  `/critique` and `/council` are those stages by name — `/scan` is `/review
   --only scan`. **The scan stage fixes what it finds, on the spot**, so it
   writes unless `--dry-run` or `--no-autofix` holds it back.
 

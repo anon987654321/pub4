@@ -25,7 +25,7 @@ module Master
       ENTROPY_HOTSPOT_MIN_COUNT = 10
       GOD_CLASS_HOTSPOT_MIN_DELTA = 20
       LAST_ASSISTANT_PROPOSALS = [
-        [/violation[s]? found|need(s)? fixing|to fix/i, "/through", "assistant flagged violations", 0.85],
+        [/violation[s]? found|need(s)? fixing|to fix/i, "/review", "assistant flagged violations", 0.85],
         [/\bunchanged\b|\balready\b/i, "/undo", "assistant says nothing changed", 0.75],
         [/\bdiff\b|\bedit\b|\bpatch\b/i, "show the diff", "assistant referenced an edit/patch", 0.65],
         [/(error|fail|exception|crash)/i, "what went wrong?", "error/failure in last reply", 0.7],

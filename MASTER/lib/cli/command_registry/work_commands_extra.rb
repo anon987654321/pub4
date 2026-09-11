@@ -27,11 +27,11 @@ module Master
       end
 
       # Full singularity sequence (aesthetic → scan → fix → re-scan → critique).
-      # Invoked by natural-language inference, /workflow, /through, /triad — users need not memorize stages.
+      # Invoked by natural-language inference, /workflow, /review, /triad — users need not memorize stages.
       def dispatch_workflow(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, swarm: nil, **_legacy)
         raw = arg_for(ctx).to_s.strip
-        apply, critique, aesthetic, only, target = parse_through_flags(raw)
-        Master::CLI::Pipeline::Through.new(
+        apply, critique, aesthetic, only, target = parse_pass_flags(raw)
+        Master::CLI::Pipeline::Pass.new(
           scanner:,
           fix_loop:,
           root:,
@@ -42,7 +42,7 @@ module Master
         ).call(target:, apply:, critique:, aesthetic:, only:).render
       end
 
-      def dispatch_through(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, swarm: nil, **_legacy)
+      def dispatch_review(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, swarm: nil, **_legacy)
         dispatch_workflow(
           scanner:, fix_loop:, deliberation:,
           root:, bus:, ctx:, review_crew:, swarm:
@@ -51,14 +51,14 @@ module Master
 
       # `--only scan`, `--only scan,fix`, or `--only=critique`. This is how the
       # old stage verbs survive: /scan, /fix and /critique are rewritten into
-      # `/through --only <stage>` by TurnRouter, so there is one verb with named
+      # `/review --only <stage>` by TurnRouter, so there is one verb with named
       # stages instead of four verbs that each ran a different part of the same
       # pipeline. Without it, typing /scan ran the fix stage too.
       # Every spelling a flag answers to, and the flag it sets. A table rather
       # than a `case`, because the spellings are data: `--no-autofix` is
       # bin/gate's, and while it was missing it fell through to the path,
       # resolved nowhere, and the scan quietly ran over MASTER instead.
-      THROUGH_FLAGS = {
+      PASS_FLAGS = {
         "--dry-run" => [:apply, false], "preview" => [:apply, false], "dry" => [:apply, false],
         "--no-autofix" => [:apply, false], "no-autofix" => [:apply, false],
         "--apply" => [:apply, true], "apply" => [:apply, true], "fix" => [:apply, true],
@@ -71,11 +71,11 @@ module Master
       # the split spelling did before it was joined.
       ONLY_FLAG = /\A--only(?:=(.+))?\z/i
 
-      def parse_through_flags(raw)
+      def parse_pass_flags(raw)
         flags = { apply: nil, critique: nil, aesthetic: true, only: nil }
         path_bits = []
         joined_only(raw.split(/\s+/)).each do |token|
-          if (flag = THROUGH_FLAGS[token.downcase])
+          if (flag = PASS_FLAGS[token.downcase])
             flags[flag.first] = flag.last
           elsif token =~ ONLY_FLAG
             flags[:only] = Regexp.last_match(1)

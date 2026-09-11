@@ -150,7 +150,7 @@ class TestAstFixerTransforms < Minitest::Test
   end
 
   # Every case in this block shipped as a live break on 2026-08-18, out of one
-  # /through pass over OPENBSD: verbatim /etc mirrors re-indented, cron sh/ksh
+  # /review pass over OPENBSD: verbatim /etc mirrors re-indented, cron sh/ksh
   # scripts given -euo pipefail, Markdown hard breaks stripped, a chained
   # constant frozen mid-expression, and three executable scripts written back
   # 0644.

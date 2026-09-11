@@ -32,7 +32,7 @@ class GateContractSpec < Minitest::Test
   #
   # The lexical pass was `/scan`, `/fix`, `/scan` — three runtime boots for a
   # pipeline that already scans, fixes and re-scans inside one. /scan is
-  # /through --only scan, and that stage's sections are the aesthetic pass, the
+  # /review --only scan, and that stage's sections are the aesthetic pass, the
   # deep pass, the fix, and the re-scan that proves it; running the word three
   # times ran that sequence three times. The semantic pass was `/critique` then
   # `/review`, and both words name the critique stage, so the tier that costs

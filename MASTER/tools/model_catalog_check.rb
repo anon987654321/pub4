@@ -4,7 +4,7 @@
 #
 # A fallback chain padded with withdrawn models degrades one entry at a time and
 # says nothing until a run ends on "No endpoints found for <id>", which is how
-# this was found: a /through pass finished its scans, spent ¢390, and died in the
+# this was found: a /review pass finished its scans, spent ¢390, and died in the
 # council on google/gemma-2-9b-it:free.
 #
 #   ruby MASTER/tools/model_catalog_check.rb          # report

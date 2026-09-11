@@ -14,10 +14,10 @@ module Master
       # them a help topic would advertise a command the router cannot resolve,
       # which is why test_cli_domain_commands pins that /domain stays unlisted.
       HELP_TOPICS = {
-        "through" => {
-          summary: "the one verb: scan (which fixes), critique, principle map",
+        "review" => {
+          summary: "the whole pass, read-only: scan, critique, principle map",
           detail: [
-            "/through [path] — every stage: aesthetic scan, deep scan, fix, re-scan,",
+            "/review [path] — every stage: aesthetic scan, deep scan, fix, re-scan,",
             "critique, principle map. Or just say the path.",
             "",
             "--only <stage> runs one part. The stages are scan, critique and map;",
@@ -26,7 +26,7 @@ module Master
             "relocated later.",
             "",
             "/scan, /fix, /critique and /council are those stages by name —",
-            "/scan is /through --only scan. There is one verb underneath.",
+            "/scan is /review --only scan. There is one verb underneath.",
             "",
             "Mechanical autofix writes on each file as it is scanned;",
             "--dry-run / --no-autofix preview without writing.",
@@ -116,8 +116,9 @@ module Master
       def help_summary
         lines = HELP_TOPICS.map { |cmd, topic| "/#{cmd} - #{topic[:summary]}" }
         lines << ""
-        lines << "work is a sentence. /through is the one explicit pass, and"
-        lines << "/scan /fix /critique /council are its stages: /through --only <stage>."
+        lines << "work is a sentence. /review is the one explicit pass, and"
+        lines << "/scan reads, /critique asks the council, and /fix is the scan that"
+        lines << "writes — each is /review --only <stage>."
         lines.join("\n")
       end
     end

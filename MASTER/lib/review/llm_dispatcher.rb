@@ -90,7 +90,7 @@ module Master
 
       # Every LLM call in the tree arrives here — ideation, the council, the
       # semantic rules, the fix loop. With no provider key each one fails slowly
-      # somewhere below, so a /through pass sat at "crit0 deliberation" for ten
+      # somewhere below, so a /review pass sat at "crit0 deliberation" for ten
       # minutes and printed nothing. One refusal, at the one door.
       def send_with_cache(selected_model, messages, system: nil, stream: false, image: nil, temperature: nil, &blk)
         return Result.err(Master.no_api_key_message, category: :no_api_key) unless Master.any_api_key_present?

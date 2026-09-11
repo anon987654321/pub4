@@ -414,7 +414,7 @@ module Master
           # a well-explained class breached while a stripped one passed — the
           # counter DENSITY and lint:spine already retired, surviving here.
           # Core::Constitution read 348 under it while holding 250 lines of code,
-          # and the self_violation halted every /through fix stage; the only
+          # and the self_violation halted every /review fix stage; the only
           # "fix" the span offered was deleting the law's own reasoning.
           def class_breach(name, nodes, lines)
             public_defs = nodes.sum { |node| CodeMetrics.public_method_count(node) }

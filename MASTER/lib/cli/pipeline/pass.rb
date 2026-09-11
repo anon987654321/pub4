@@ -5,7 +5,7 @@ module Master
     class Pipeline
       # Full singularity pass: posture → aesthetic scan → deep scan → fix → re-scan → optional critique.
       # Progress is OpenBSD dmesg-style (device at bus: detail).
-      class Through
+      class Pass
         Result = Data.define(:target, :mode, :sections, :ok, :unit, :failed_stages) do
           def render
             lines = sections.flat_map { |title, body| ["# #{title}", body.to_s, ""] }
@@ -32,7 +32,7 @@ module Master
         # A NameError (NoMethodError included) or TypeError out of a stage is a
         # defect in MASTER, not a finding about the target. Formatting one into
         # the report as "fix failed: NoMethodError: …" and then printing
-        # "through0: complete" hid two live crashes for days. Operational failures
+        # "review0: complete" hid two live crashes for days. Operational failures
         # still degrade to prose so the rest of the pass survives; these do not.
         # ArgumentError is deliberately absent — stages raise it for bad user
         # input, which is a real condition and belongs in the report.
@@ -48,7 +48,7 @@ module Master
           @bus = bus
           @review_crew = review_crew
           @t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-          @unit = "through0"
+          @unit = "review0"
         end
 
         # The stages a caller can ask for by name, in the order they run.
@@ -79,7 +79,7 @@ module Master
           @apply = apply
 
           dmesg_boot(resolved, shell, posture, apply, critique, aesthetic)
-          @bus&.publish("through:start", target: resolved, mode: posture[:name], apply:)
+          @bus&.publish("review:start", target: resolved, mode: posture[:name], apply:)
 
           sections = build_sections(resolved:, shell:, posture:, apply:, critique:, aesthetic:)
 
@@ -88,7 +88,7 @@ module Master
           end
           elapsed = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - @t0).round
           Master::Trace::Dmesg.kv(@unit, complete: true, ok:, elapsed_s: elapsed, target: shell)
-          @bus&.publish("through:complete", target: resolved, apply:, ok:, elapsed_s: elapsed,
+          @bus&.publish("review:complete", target: resolved, apply:, ok:, elapsed_s: elapsed,
                                             failed_stages: @failed_stages)
           Result.new(target: resolved, mode: posture[:name], sections:, ok:, unit: @unit,
                      failed_stages: @failed_stages.dup)
@@ -115,7 +115,7 @@ module Master
         end
 
         # `--only` names stages; without it every stage runs, which is what
-        # /through has always meant. A name that is not a stage runs nothing and
+        # /review has always meant. A name that is not a stage runs nothing and
         # says so: silently widening a pass because a flag was misspelled is the
         # failure this flag exists to prevent, and silently narrowing one is the
         # same failure wearing the other coat.
@@ -160,7 +160,7 @@ module Master
 
         def dmesg_boot(resolved, shell, posture, apply, critique, aesthetic)
           Master::Trace::Dmesg.attach(@unit, "mainbus0",
-            "master through target=#{shell} mode=#{posture[:name]} " \
+            "master review target=#{shell} mode=#{posture[:name]} " \
             "apply=#{apply ? "yes" : "no"} aesthetic=#{aesthetic ? "yes" : "no"} " \
             "critique=#{critique ? "yes" : "no"} max_passes=#{posture[:max_fix_passes]}")
           Master::Trace::Dmesg.status(@unit, "root=#{@root}")
@@ -198,7 +198,7 @@ module Master
 # This returned true, so every route into the pipeline wrote: a flag, a
 # slash command, and — the one that matters — a sentence. On 2026-09-11 a
 # greeting typed into bin/cli on vm23 ("Hei MASTER … hva er du mest stolt
-# av i denne kodebasen?") was routed to /through with apply=yes against
+# av i denne kodebasen?") was routed to /review with apply=yes against
 # /home/dev/pub4, which is the checkout the deploy syncs from. It scanned
 # 333 of 1109 files before it was interrupted and wrote nothing, and that
 # was luck rather than design.

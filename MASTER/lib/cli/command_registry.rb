@@ -30,16 +30,16 @@ module Master
         }
       end
 
-      # Closed public surface. Scan/fix/critique stay as methods Pipeline::Through
+      # Closed public surface. Scan/fix/critique stay as methods Pipeline::Pass
       # calls; they are not slash verbs.
       def build(infra:, ai:, root:)
         d = work_command_deps(ai:, root:, infra:)
         undo = infra[:undo]
         {
           # Positional, and the order is load-bearing: Command#dependency_kwargs
-          # zips these against dispatch_through's keyword names in declaration
+          # zips these against dispatch_review's keyword names in declaration
           # order, so swarm goes last in both places.
-          "through" => command(:dispatch_through, d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus],
+          "review" => command(:dispatch_review, d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus],
             d[:review_crew], d[:swarm]),
           "status" => command(:dispatch_status, d[:root], d[:fix_loop], d[:bus], d[:git], d[:trace]),
           "undo" => command(:dispatch_undo, undo),

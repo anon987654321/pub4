@@ -27,7 +27,7 @@ class TestScanRuleFalsePositives < Minitest::Test
   # The line branch counted raw AST span, charging for rationale comments —
   # the counter DENSITY and lint:spine already retired. Core::Constitution
   # read 348 under it while holding 250 code lines, and the resulting
-  # self_violation halted every /through fix stage (2026-08-18). Both
+  # self_violation halted every /review fix stage (2026-08-18). Both
   # directions: comments never breach, code still does.
 
   def test_god_class_line_limit_does_not_charge_for_comments

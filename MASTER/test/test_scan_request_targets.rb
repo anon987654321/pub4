@@ -10,7 +10,7 @@ require "cli/command_registry"
 #
 # - "rails" names both a limits.yml scan profile and pub4/RAILS, and the
 #   profile reading won, leaving an empty target.
-# - parse_through_flags did not know --no-autofix (bin/gate's scan-only
+# - parse_pass_flags did not know --no-autofix (bin/gate's scan-only
 #   spelling), so the flag polluted the target string.
 # - Both fed the same amplifier: a target that resolved nowhere quietly
 #   became the scan root, so the wrong tree was measured with a green exit.
@@ -65,9 +65,9 @@ class TestScanRequestTargets < Minitest::Test
     assert_empty scanner.dirs, "fell back to scanning the root"
   end
 
-  def test_parse_through_flags_reads_no_autofix_as_measure_only
+  def test_parse_pass_flags_reads_no_autofix_as_measure_only
     apply, _critique, _aesthetic, only, path =
-      Master::CLI::CommandRegistry.parse_through_flags("--no-autofix ../RAILS")
+      Master::CLI::CommandRegistry.parse_pass_flags("--no-autofix ../RAILS")
 
     assert_equal false, apply
     assert_nil only, "no --only means every stage"
@@ -76,9 +76,9 @@ class TestScanRequestTargets < Minitest::Test
 
   # The stage flag rides beside the path and must not be eaten as one, which is
   # how --no-autofix once became a directory that resolved nowhere.
-  def test_parse_through_flags_reads_the_stage_beside_the_path
+  def test_parse_pass_flags_reads_the_stage_beside_the_path
     apply, _critique, _aesthetic, only, path =
-      Master::CLI::CommandRegistry.parse_through_flags("--only scan --no-autofix ../RAILS/amber")
+      Master::CLI::CommandRegistry.parse_pass_flags("--only scan --no-autofix ../RAILS/amber")
 
     assert_equal false, apply
     assert_equal "scan", only

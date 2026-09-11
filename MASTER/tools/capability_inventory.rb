@@ -33,12 +33,30 @@ module Operator
       new.report
     end
 
+    # A rename is not a loss, and a diff of names cannot tell them apart: each
+    # shows a word absent from the working tree. Recording the rename is what
+    # keeps this guard strict — a name no successor claims still fails.
+    #
+    # Each key is a word this surface no longer answers to, and each value is the
+    # word that took its work. /review is named for lib/review, the subsystem that
+    # scans and critiques.
+    RENAMES = { "through" => "review" }.freeze
+
     def report
       current = inventory(nil)
       baseline = inventory(baseline_ref)
-      lost = current.keys.to_h { |kind| [kind, Array(baseline[kind]) - Array(current[kind])] }
-                    .reject { |_, names| names.empty? }
+      lost = {}
+      current.each_key do |kind|
+        gone = Array(baseline[kind]) - Array(current[kind])
+        unclaimed = gone.reject { |name| renamed?(name, Array(current[kind])) }
+        lost[kind] = unclaimed unless unclaimed.empty?
+      end
       { current:, baseline_ref:, lost: }
+    end
+
+    def renamed?(name, present)
+      successor = RENAMES[name]
+      successor && present.include?(successor)
     end
 
     def inventory(ref)

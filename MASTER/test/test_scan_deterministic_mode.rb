@@ -3,7 +3,7 @@
 require_relative "test_helper"
 require "review/scan/rule_dsl"
 require "review/scan/infra_helpers"
-require "cli/pipeline/through"
+require "cli/pipeline/pass"
 
 # `bin/gate` calls /scan its lexical tier, and its own header says what that
 # means: "deterministic detectors, no model". The runtime disagreed with it in
@@ -41,7 +41,7 @@ class TestScanDeterministicMode < Minitest::Test
   # default_critique? reads only the environment, so the collaborators can be
   # nil — constructing a real scanner and fix loop here would test them, not it.
   def pipeline
-    Master::CLI::Pipeline::Through.new(scanner: nil, fix_loop: nil, root: Master::ROOT)
+    Master::CLI::Pipeline::Pass.new(scanner: nil, fix_loop: nil, root: Master::ROOT)
   end
 
   def agent_backed(scanner)

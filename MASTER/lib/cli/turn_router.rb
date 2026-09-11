@@ -33,7 +33,7 @@ module Master
 
         inferred = infer_operator_command(text, container:)
         return dispatch_inferred(inferred, container:, felt_sense:, on_turn:) if inferred
-        return dispatch_through_workflow(text, container:, felt_sense:, on_turn:) if full_workflow_intent?(text)
+        return dispatch_review_pass(text, container:, felt_sense:, on_turn:) if full_workflow_intent?(text)
         return casual_reply(text, container:, felt_sense:, on_chunk:, image:) if casual?(text)
 
         run_fold(text, container:, on_turn:)
@@ -41,15 +41,34 @@ module Master
 
       def visitor? = Fiber[:master_visitor] == true
 
-      def dispatch_through_workflow(text, container:, felt_sense: nil, on_turn: nil)
-        dispatch_inferred({ command: "through", args: through_args_from(text), confidence: 0.9 }, container:, felt_sense:, on_turn:)
+      def dispatch_review_pass(text, container:, felt_sense: nil, on_turn: nil)
+        dispatch_inferred({ command: "review", args: pass_args_from(text), confidence: 0.9 }, container:, felt_sense:, on_turn:)
       end
 
-      # Promote plain language to the full pass. Stage names are leftovers.
-      THROUGH_COMMANDS = %w[through workflow triad sweep scan fix self critique council review].freeze
+      # Two vocabularies, and they are not the same size on purpose.
+      #
+      # PIPELINE_COMMANDS is what a person types: four words where there were ten.
+      # The verb is /review, named for lib/review, the subsystem that scans and
+      # critiques; /scan and /critique are its stages, and /fix is the stage that
+      # writes and says so.
+      PIPELINE_COMMANDS = %w[review scan fix critique].freeze
+
+      # MODEL_ALIASES is what the intent router accepts from a model, which is not
+      # ours to shrink. A model asked to name the command may answer "sweep" or
+      # "triad" — words this surface no longer offers — and the cost of not
+      # accepting them is a request that falls silently to chat. They are read as
+      # /review; none of them reaches the registry under its own name.
+      MODEL_ALIASES = %w[through workflow triad sweep self council].freeze
+      PIPELINE_WORDS = (PIPELINE_COMMANDS + MODEL_ALIASES).freeze
       FOLD_SLASH = %w[fold run].freeze
       READ_SLASH = %w[explain why laws axioms principles].freeze
-      THROUGH_SLASH = %w[scan fix critique council self workflow triad review sweep].freeze
+      # What a typed slash is allowed to be. Wider than the four words the surface
+      # offers, and deliberately: /sweep and /council were spellings people had
+      # learned, and a retired word that falls silently to chat is a worse answer
+      # than one that still works. They rewrite to the canonical form; only four
+      # words are advertised, in help and in the contract.
+      PIPELINE_SLASH = %w[scan fix critique council self workflow triad sweep through].freeze
+
       INFER_MIN_CONFIDENCE = 0.62
 
       def infer_operator_command(text, container:)
@@ -59,12 +78,12 @@ module Master
         command = value.command.to_s
         conf = value.infer_confidence.to_f
         # Always accept through-class commands; other commands need confidence floor.
-        return if !THROUGH_COMMANDS.include?(command) && conf < INFER_MIN_CONFIDENCE
+        return if !PIPELINE_WORDS.include?(command) && conf < INFER_MIN_CONFIDENCE
 
         command = normalize_inferred_command(command, text)
         return if READ_SLASH.include?(command)
 
-        args = command == "through" ? through_command_args(value, text) : value.args.to_s
+        args = command == "review" ? pass_command_args(value, text) : value.args.to_s
 
         { command:, args:, confidence: conf }
       rescue StandardError => e
@@ -83,14 +102,14 @@ module Master
 
       def normalize_inferred_command(command, text)
         return command if text.match?(/--dry-run|--no-autofix|\bpreview\b/i)
-        return "through" if THROUGH_COMMANDS.include?(command)
+        return "review" if PIPELINE_WORDS.include?(command)
 
         command
       end
 
-      def through_command_args(value, text)
+      def pass_command_args(value, text)
         args = value.args.to_s
-        refined = through_args_from(text)
+        refined = pass_args_from(text)
         # Prefer refined path when Infer only captured a coarse alias (rails without app).
         args = refined if !refined.empty? && (args.empty? || refined.start_with?("#{args}/") || refined != args && refined.include?("/"))
         args = refined if args.empty?
@@ -105,7 +124,7 @@ module Master
           text.match?(/\b(?:through\s+(?:master|itself|rails)|singularity|self[-\s]?apply|run\s+(?:master|rails)\s+through)\b/i)
       end
 
-      def through_args_from(text)
+      def pass_args_from(text)
         if (m = text.match(%r{\brails(?:[:/]([\w./-]+))?}i))
           return m[1] ? "rails/#{m[1]}" : "rails"
         end
@@ -208,7 +227,7 @@ module Master
 
       # One verb, named stages. /scan, /fix and /critique are not separate
       # commands and have not been since the registry closed its public surface
-      # — but until 2026-09-06 they all rewrote to a bare /through, so asking to
+      # — but until 2026-09-06 they all rewrote to a bare /review, so asking to
       # scan ran the fix stage and the critique too. Each now carries the stage
       # it names; the words that mean the whole pass still mean the whole pass.
       #
@@ -221,17 +240,23 @@ module Master
         "fix" => "scan",
         "critique" => "critique",
         "council" => "critique",
-        "review" => "critique",
       }.freeze
+
+      # /fix is /scan with the writing on. The two name one stage — a finding is
+      # cheapest to repair where it is found — and the difference between them is
+      # whether the tree changes, which is the thing a reader most needs the verb
+      # to say.
+      WRITING_SLASH = %w[fix].freeze
 
       def rewrite_slash(input)
         name, rest = input.sub(%r{\A/}, "").split(/\s+/, 2)
         name = name.to_s.downcase
-        return input unless THROUGH_SLASH.include?(name)
+        return input unless PIPELINE_SLASH.include?(name)
 
         stage = STAGE_FOR_SLASH[name]
-        parts = ["/through", ("--only #{stage}" if stage), rest.to_s.strip].compact.reject(&:empty?)
-        parts.join(" ")
+        apply = "--apply" if WRITING_SLASH.include?(name)
+        parts = ["/review", ("--only #{stage}" if stage), apply, rest.to_s.strip]
+        parts.compact.reject(&:empty?).join(" ")
       end
 
       def dispatch_slash(input, container:, felt_sense: nil, on_turn: nil)

@@ -356,8 +356,8 @@ def command_rows
   operator = File.read(File.join(MASTER, "bin/operator"))
 
   verbs = (cli + control).scan(/^\s+"([a-z_?]+)" => command\(/).flatten
-  inferred = router[/THROUGH_COMMANDS = %w\[([^\]]+)\]/, 1].to_s.split
-  slashes = router[/THROUGH_SLASH = %w\[([^\]]+)\]/, 1].to_s.split
+  inferred = router[/PIPELINE_COMMANDS = %w\[([^\]]+)\]/, 1].to_s.split
+  slashes = router[/PIPELINE_SLASH = %w\[([^\]]+)\]/, 1].to_s.split
   subcommands = operator.scan(/^when "([a-z_?-]+)"/).flatten
   names = (verbs + inferred + slashes + subcommands).uniq.sort
 
