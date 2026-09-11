@@ -89,7 +89,11 @@ spine:
   # block with a guard now, which is three lines more and one decision less
   # per line. Readable code costs lines, and this row is where that trade is
   # said out loud rather than absorbed.
-  lib_body_ceiling: 38111
+  # 38111 -> 38104: ruby_llm_patch.rb stopped passing four constructor keys
+  # Model::Info#initialize does not read, and the constant that fed one of
+  # them. The fallback it builds is unchanged — the lines were data nothing
+  # consumed, which is the cheapest seven a ceiling ever buys back.
+  lib_body_ceiling: 38104
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753
