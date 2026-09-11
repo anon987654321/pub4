@@ -147,10 +147,22 @@
   flex: 0 0 auto;
 }
 
+/* The count is ink on --surface rather than a tint of the accent, and that is a
+   decision left open rather than a preference.
+   An accent is tuned to be legible as a fill with ink on top, which is the
+   opposite job from reading as small bold text on white. Measured at 18px bold,
+   where the floor is 4.5: Amazon's #cd9042 ran 2.74, the marketplace accent
+   that replaced it 3.48, and the accent's hover slot 6.03 — but this bar is
+   shared with takeaway, whose hover slot is 3.89, so the hover is not a shared
+   ink either.
+   A darker per-vertical ink for text-on-light is the right answer and it is a
+   colour the operator picks, the way --food-dash-ink was picked for takeaway's
+   eta chip. Until then the count takes --text at 12.63 and carries its emphasis
+   in weight and position, which is where the rest of this bar carries it. */
 .nav-cart-count {
   position: relative;
   top: -2px;
-  color: var(--accent);
+  color: var(--text);
   font-size: var(--text-base);
   font-weight: var(--weight-bold);
 }

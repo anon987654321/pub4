@@ -13,16 +13,96 @@
   },
   "elements": [
     {
+      "key": "#app-tab-bar",
+      "tag": "nav",
+      "rect": {
+        "x": 0,
+        "y": 844,
+        "w": 390,
+        "h": 54
+      },
+      "color": "#333333",
+      "bg": "#ffffff",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "fixed"
+    },
+    {
+      "key": "#app-tab-bar>a.tab-item",
+      "tag": "a",
+      "rect": {
+        "x": 0,
+        "y": 844,
+        "w": 56,
+        "h": 54
+      },
+      "color": "#009579",
+      "bg": "#f9f9f9",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "relative"
+    },
+    {
+      "key": "#app-tab-bar>button.tab-item.tab-item-button",
+      "tag": "button",
+      "rect": {
+        "x": 334,
+        "y": 844,
+        "w": 56,
+        "h": 54
+      },
+      "color": "#333333",
+      "bg": "#ffffff",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "relative"
+    },
+    {
+      "key": "#install-prompt>div.install-prompt-actions>button.install-prompt-primary",
+      "tag": "button",
+      "rect": {
+        "x": 270,
+        "y": 730,
+        "w": 89,
+        "h": 44
+      },
+      "color": "#efefef",
+      "bg": "#333333",
+      "font_size": 15.8,
+      "line_height": 15.8,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#install-prompt>div.install-prompt-actions>button.install-prompt-secondary",
+      "tag": "button",
+      "rect": {
+        "x": 180,
+        "y": 730,
+        "w": 82,
+        "h": 44
+      },
+      "color": "#666666",
+      "bg": "#ffffff",
+      "font_size": 15.8,
+      "line_height": 15.8,
+      "display": "block",
+      "position": "static"
+    },
+    {
       "key": "#main-content",
       "tag": "main",
       "rect": {
         "x": 0,
         "y": 62,
         "w": 390,
-        "h": 912
+        "h": 956
       },
-      "color": "#e0e0e0",
-      "bg": "#000000",
+      "color": "#333333",
+      "bg": "#efefef",
       "font_size": 18,
       "line_height": 20,
       "display": "block",
@@ -37,8 +117,8 @@
         "w": 390,
         "h": 844
       },
-      "color": "#e0e0e0",
-      "bg": "#000000",
+      "color": "#333333",
+      "bg": "#efefef",
       "font_size": 18,
       "line_height": 20,
       "display": "flex",
@@ -48,45 +128,109 @@
       "key": "#main-content>div.dating-app>section.dating-intro>footer.dating-intro-trust",
       "tag": "footer",
       "rect": {
-        "x": 23,
+        "x": 35,
         "y": 732,
-        "w": 345,
-        "h": 120
+        "w": 319,
+        "h": 102
       },
-      "color": "#969696",
-      "bg": "#000000",
+      "color": "#666666",
+      "bg": "#efefef",
       "font_size": 15.8,
       "line_height": 20,
       "display": "flex",
       "position": "static"
     },
     {
+      "key": "#nav_sections",
+      "tag": "nav",
+      "rect": {
+        "x": 107,
+        "y": 0,
+        "w": 175,
+        "h": 65
+      },
+      "color": "#333333",
+      "bg": "#efefef",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#nav_sections>div.nav_swiper_group.nav_swiper_group--verticals>a.nav_link",
+      "tag": "a",
+      "rect": {
+        "x": 107,
+        "y": 9,
+        "w": 108,
+        "h": 47
+      },
+      "color": "#666666",
+      "bg": "#efefef",
+      "font_size": 20.3,
+      "line_height": 20.3,
+      "display": "flex",
+      "position": "relative"
+    },
+    {
+      "key": "body.vertical-dating>div.theme-root>div.app-shell>button.tab-bar-peel",
+      "tag": "button",
+      "rect": {
+        "x": 171,
+        "y": 800,
+        "w": 48,
+        "h": 44
+      },
+      "color": "#666666",
+      "bg": "#efefef",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "fixed"
+    },
+    {
       "key": "div.dating-app>section.dating-intro>footer.dating-intro-trust>nav",
       "tag": "nav",
       "rect": {
-        "x": 217,
-        "y": 772,
-        "w": 151,
-        "h": 40
+        "x": 59,
+        "y": 790,
+        "w": 273,
+        "h": 44
       },
-      "color": "#969696",
-      "bg": "#000000",
+      "color": "#666666",
+      "bg": "#efefef",
       "font_size": 15.8,
       "line_height": 20,
       "display": "block",
       "position": "static"
     },
     {
+      "key": "html>body.vertical-dating>div.search_palette>button.search_palette_trigger",
+      "tag": "button",
+      "rect": {
+        "x": 286,
+        "y": 12,
+        "w": 44,
+        "h": 44
+      },
+      "color": "#333333",
+      "bg": "#efefef",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "grid",
+      "position": "fixed"
+    },
+    {
       "key": "html>body.vertical-dating>header>a.brand-mark.brgen-logo-mark",
       "tag": "a",
       "rect": {
         "x": 12,
-        "y": 9,
-        "w": 68,
+        "y": 11,
+        "w": 92,
         "h": 44
       },
-      "color": "#e0e0e0",
-      "bg": "#000000",
+      "color": "#333333",
+      "bg": "#efefef",
       "font_size": 16.9,
       "line_height": 16.9,
       "display": "flex",
@@ -96,16 +240,16 @@
       "key": "section.dating-intro>footer.dating-intro-trust>nav>a",
       "tag": "a",
       "rect": {
-        "x": 226,
-        "y": 772,
-        "w": 85,
-        "h": 19
+        "x": 59,
+        "y": 790,
+        "w": 81,
+        "h": 44
       },
-      "color": "#e0e0e0",
-      "bg": "#000000",
+      "color": "#333333",
+      "bg": "#efefef",
       "font_size": 15.8,
       "line_height": 20,
-      "display": "inline",
+      "display": "inline-flex",
       "position": "static"
     }
   ]

@@ -4640,34 +4640,86 @@ Every colour, typeface and crop here is a rendered value and the operator is a
 trained architect. Build the structure, measure the geometry, and bring the
 look back for a decision rather than choosing it.
 
-## layout_snapshot has been failing since August — 2026-09-11
+## What the snapshot gate was really reporting — closed 2026-09-11
 
-`ruby RAILS/gates/runner.rb rendered_suite` fails on fifteen surfaces, every
-one of them `LayoutSnapshotGate`, and the other eight leaves pass. The
-committed baselines under `gates/data/layout_snapshots/` were last written on
-2026-08-17, so the drift is twenty-five days of accumulated change rather than
-any one commit.
+`rendered_suite` failed on sixty-nine surfaces, every one of them
+`LayoutSnapshotGate`, against baselines last written 2026-08-17. The obvious
+reading was twenty-five days of unreviewed drift. It was not: the gate was
+comparing against a key format that no longer existed.
 
-The drift is real rather than instrument noise, and it names things that were
-deliberately retired: `a.btn.btn--primary` and `.btn--ghost` are the zen-era
-BEM twins `_zen_buttons.scss` says it retired, and `#app-tab-bar` is gone from
-amber's desktop snapshot. Beside them, `#install-prompt`'s two buttons are
-recorded on every surface and appear in no baseline — measured, not guessed:
-stripping the `role="region"` added on 2026-09-11 leaves all twenty-six
-mentions in place, so that is not the cause either.
+`walk.js` was extracted from a Ruby heredoc into a file read verbatim, and
+three regexes came with their heredoc escaping intact. In a heredoc `\\s` is
+what you write to get `\s`; in a file read as bytes it stays two characters,
+and `/\\s+/` in JavaScript matches a literal backslash followed by one or
+more letter s — which nothing on any page contains. Verified in Chrome rather
+than argued: `"brand-mark brgen-logo-mark".split(/\\s+/)` returns the whole
+string as one element, and `/rgba?\\(...\\)/.test("rgb(1, 2, 3)")` is
+false.
 
-Not regenerated, deliberately. `GATE_SNAPSHOT_UPDATE=1` accepts new baselines
-and this tree's contract is that accepting them is a reviewing act: fifteen
-files of layout under one session's name, covering a month of changes that
-session did not make, is the shape of a ratchet moved to absorb somebody
-else's growth. Somebody who knows which of those changes were intended should
-read the diff and take them.
+The one that mattered was in `classSig`. The class attribute was never split,
+so every element carrying more than one class keyed as
+`a.brand-mark brgen-logo-mark` instead of `a.brand-mark.brgen-logo-mark`, and
+`VOLATILE_CLASS` matched the whole blob or none of it — which is why
+`body.vertical-marketplace` vanished from ancestor paths whenever the blob
+happened to end in a volatile word. 739 removals and 965 additions across 69
+surfaces, none of them a layout change. Fixing it halved the removals
+immediately and moved elements into the MOVED bucket, where they belong: the
+instrument now compares like with like.
 
-Worth asking in the same pass why nothing noticed for twenty-five days. The
-gate is correct and was reporting the whole time; it sits under
-`rendered_suite`, which needs Chrome and a booted fleet, so a machine without
-`RAILS/bin/triangle up` degrades it to a warning. That is the designed
-behaviour and it is also how a real finding stayed quiet for a month.
+The other two broke the rgba fast path, which falls through to a canvas that
+answers correctly — slow rather than wrong, and invisible for exactly that
+reason. `gate_requires_resolve_test` now fails on a literal `\\` in any
+`.js` file under `gates/`, because the next extraction will do this again.
+
+What remained after the fix was real and all of it attributable: the edge
+grips and `#q` went with the rails and the search palette (operator,
+2026-08-27), the nav swiper groups went flat (operator, 2026-08-29),
+`#app-tab-bar` moved because dating and messenger left the immersive list on
+2026-09-11, and `#logo` went with the storefront's second wordmark the same
+day. The six content-level changes were all improvements: maps gained an `h1`
+where it had none, and messenger's title went from "Bergen" to
+"Meldinger — Bergen". Baselines regenerated after that review, and after the
+instrument was fixed — in that order, because accepting them first would have
+written the corrupted key format into all sixty-nine files permanently.
+
+## Bottom chrome and the peel handle — opened 2026-09-11
+
+Fixing the walk unmasked `rendered_geometry`, which had been reporting against
+the same corrupted keys. Six hard findings, in two groups, and both want an
+operator decision rather than a guess.
+
+**Three occlusions, and they are a consequence of one chrome.** On
+`brgen/dating` and `brgen/channels`, the `.tab-bar-peel` handle's centre pixel
+is owned by a link in the page — the dating intro's trust footer, a channel
+card's blurb. Fixed chrome cannot be scrolled out from under a blocker, so the
+handle is dead for the life of the page. It appeared because dating and
+messenger left the immersive list and got their bottom chrome back, over
+content written when there was none.
+
+The fix is a design decision that `_tab_bar.scss` has already half-stated:
+"Content and bottom-pinned chrome reclaim the space via --tab-bar-h → 0". So
+the intent is that content takes the space and the peel floats above it, which
+is exactly the overlap the gate is reporting. Either the peel floats and this
+finding is exempt, or bottom-reaching content clears it and the clearance
+wants a token of its own — the peel's height is `--tap-min` and nothing
+publishes it. `#install-prompt` needed the same clearance and now spells
+`max(var(--tab-bar-h, 0px), var(--tap-min, 44px))` inline; if a token is
+wanted, that is its first caller.
+
+**Three contrast failures, all one shape: an accent used as ink on a light
+surface.** messenger's `#6b7fd7` on white at 3.72, playlist's `#0e8a94` on the
+tunnel's `#14141a` at 4.44, and the storefront cart count, which ran Amazon's
+`#cd9042` at 2.74 and the marketplace accent at 3.48 before taking `--text` at
+12.63 on 2026-09-11.
+
+An accent is tuned to be legible as a fill carrying ink, which is the opposite
+job from reading as small text on white. The hover slot is not the answer
+either: marketplace's `#6f6149` clears at 6.03 but takeaway's `#c26a30` is
+3.89, and they share one storefront bar. What the map wants is a fourth slot —
+a darkened per-vertical ink for text-on-light, the way `--food-dash-ink` was
+picked for takeaway's eta chip. Seven colours, and every one of them the
+operator's.
+
 ## The external reassessment — assessed 2026-09-11
 
 Four ChatGPT logs and one execution brief, read against the tree rather than
@@ -6199,6 +6251,104 @@ The first 138 closed the legal/mailer second system, the event-name drift, and t
 178. **Don’t raise `hanging_marker_max_inset_px` to absorb `.prose` `1.25em` or legal `1.1rem`.** Hang in CSS (item 72). The geometry probe is Tschichold; the inset is not a ratchet.
 
 ---
+
+## Rails 8.1, Hotwire, and stimulus-components — opened 2026-09-11
+
+Measured against `gem "rails", "~> 8.1.2"`, Solid Queue/Cache/Cable 1.4/1.0/3.0, Propshaft, Falcon, and `shared/frontend/stimulus_boot.js`. Horizon items in `apps.horizon.yml` stay ignored. Kamal, Thruster, Inertia, Vite, ViewComponent, Google Places, glow effects, and restoring `timeago` / `content-loader` are out: this fleet deploys through OpenBSD rc.d, paints flat, and already deleted those two controllers with a measurement.
+
+Sources: Rails 8.0 and 8.1 release notes, edgeguides `sign_up_and_settings` and caching, gramantin/awesome-rails, Evil Martians Gemfile of Dreams (2026-04, Rails 8.1), stimulus-components.com (25+ catalog), StimulusReflex morph docs, ar5iv 1711.10399 / 2106.03819 (cold-start ranking). A finding is a hypothesis.
+
+### Already the Rails 8 default — do not re-buy
+
+The tree already has the 8.0 trifecta (Solid Queue, Solid Cache, Solid Cable), Propshaft, session auth with `rate_limit` on passwords/sessions, `bin/ci` via `shared/config/ci.rb`, `assume_ssl` without `force_ssl` (README), and Hotwire broadcasts. The 2026-09-11 awesome-list scan already closed most of gramantin/awesome-rails against this repo. What follows is what 8.1 and the Hotwire catalogs still name that this tree does not use, or uses half.
+
+### Rails 8.1 that would finish jobs and events
+
+1. **Active Job continuations on the long imports.** Rails 8.1 splits a job into steps that resume after a deploy SIGTERM. `AffiliateImportJob`, `PortsImportJob`, `WardrobeMediaJob`, `LinkConverterSyncJob` are the ones a 1 GB box kills mid-pass. `include ActiveJob::Continuable` and `step :page` around the feed cursor. Do not continue a job that must be atomic (payouts, refunds).
+2. **`Rails.event.notify` vs `ActivityTrackable` / `EventEmitter`.** 8.1’s structured reporter is the house logger; the city strip is the product. Don’t replace Activity. Do emit `Rails.event.notify("marketplace.order.paid", order_id:)` next to the existing emission so `/health` and deploy smoke can subscribe without parsing JSONL.
+3. **Markdown rendering is native in 8.1.** Posts and wiki go through Tiptap / `simple_format`, not Markdown. Leave them. The one fit is bsdports port `COMMENT` / `DESCR` if those arrive as md. Don’t add a second editor.
+4. **`rails credentials:fetch` is for Kamal.** Secrets live in `/etc/<app>.env`. Do not introduce `config/master.key`.
+5. **`unauthenticated_access_only` from the edge sign-up guide.** Sessions/passwords already `allow_unauthenticated_access`. Add the inverse on `SignUpsController` / `UsersController#new` so a signed-in person cannot hit the form. The guide’s `rate_limit to: 10, within: 3.minutes, only: :create` on sign-up is the same shape as `sessions_actions.rb` — copy it onto user create if missing (rate-limit census already lists many controllers; this one is the guide’s named action).
+6. **`allow_browser versions: :modern` is on MASTER web, not the three apps.** Edge Action Controller advanced topics. Soft guests on brgen would 406. Don’t copy blindly; if adopted, serve the existing `406-unsupported-browser.html` and keep dating/marketplace crawlers on a bot allow-list.
+7. **Turbo prefetch is off on every Pagy link.** `pagy.rb:17` `data-turbo-prefetch="false"`. The 8.x default is prefetch-on. Turn it on for the eight swiper destinations (already named in the first inventory); keep it off on pager “next” if that was the reason.
+8. **`fresh_when` / `stale?`.** Caching guide. Only `bsdports#ports#show` uses it. Add on `posts#show`, `listings#show`, `events#show`, `items#show` (ETag from `updated_at` + `Current.user&.id` so votes don’t 304 a stranger’s button).
+9. **Solid Cable is in the Gemfile.** Confirm `config/cable.yml` production adapter is `solid_cable` and not `async` leftover. Falcon + one worker means in-process cable still works; two workers without solid_cable drop broadcasts. One test that production cable.yml names solid_cable.
+10. **Do not add Kamal, Thruster, or a Dockerfile.** 8.0’s deploy story is not this box. `vps-deploy` + relayd stays.
+
+### Stimulus-components.com — wire what’s registered, don’t fetch the rest
+
+Catalog checked 2026-09-11. Boot already registers a subset. Dropped with a measurement: `timeago`, `content-loader`, `dialog`, `scroll-to`, `sound`, `speech-recognition`, `hotkey`. Required by `stimulus_components` gate: password-visibility, nested-form, carousel.
+
+11. **`password-visibility` is live on all three `sessions/new` via `password_visibility_field`.** Also put it on `passwords#edit` (the reset form) and `account_settings` password change. The helper’s `aria: { label: "Toggle password visibility" }` is English — `t("auth.toggle_password")`.
+12. **`nested-form` is live on amber outfits.** Marketplace listing variants (`Marketplace::Variant` + options) still look like a static fields_for. Same controller, `accepts_nested_attributes_for :variants`. One form.
+13. **`checkbox-select-all` is live on `admin/reports`.** Missing on community mod queue, bsdports maintainer port lists, amber declutter review. Same markup as reports.
+14. **`auto-submit` is registered and only used in unmounted `examples.html.erb`.** Marketplace facets, TV channel filters, bsdports search, amber `filter_controller` — those still wait for a button or a custom controller. Put `data-controller="auto-submit"` on the GET filter forms (debounce is built in). Don’t put it on POST checkout.
+15. **`sortable` is live on amber outfits and playlist tracks.** Dating prompt order and marketplace variant order are the two remaining nested lists. Don’t sortable the feed.
+16. **`clipboard` is live (`_copyable`, action bar).** Add on bsdports port `PKGPATH` / `MAKE_ARGS` copy, and playlist embed URL.
+17. **`animated-number` is live on post score.** Missing on listing `views_count`, takeaway ETA is `countdown` (keep), amber likes. Don’t animate money.
+18. **`popover` is live on the action bar.** Confirm dating overflow and marketplace listing actions use the same `data-controller="popover"` instead of a third menu.
+19. **`dropdown` is live on `posts/_post` feed-action-menu.** Reuse on events and stories; don’t add a second menu controller.
+20. **`reveal` is registered, only `examples.html.erb`.** Dating “optional details” is a `<details>` already. Unregister reveal or point it at legal footnotes. Don’t keep a boot entry for a demo file.
+21. **`read-more` is wired through `StimulusFormHelper#read_more`, not a literal in ERB.** Listing descriptions already call it. Second-pass item 34 overstated the hole. Remaining: dating bio and TV descriptions if they truncate in Ruby.
+22. **`carousel` stays lazy, CDN swiper, amber showcase only.** Don’t put it on brgen; media gallery and dating swipe are hand-rolled. Vendor swiper before any second caller (comment in `stimulus_boot.js:82-103` already says so).
+23. **`dialog` was pinned, vendored, registered, then dropped — zero ERB.** Native `<dialog>` is the 2024–26 replacement for custom modals (stimulus-components docs, MDN). Dating match overlay, report confirm, takeaway “cancel order”, amber declutter “let go” are the four confirms that should be `<dialog data-controller="dialog">` rather than a new overlay CSS. Restore the pin only with the first of those four views. No box-shadow on the backdrop beyond the recorded popover exception — `::backdrop { background: rgb(from var(--text) r g b / 0.45) }`.
+24. **Do not restore `scroll-to`.** Skip-link and `href="#main-content"` already exist. The component’s default smooth-scroll fights `prefers-reduced-motion`.
+25. **Do not add `chartjs`.** Amber `_visualization.scss` and `_dashboard.scss` already draw; Chart.js is a third renderer and a colour decision. bsdports is a CRT list, not a dashboard.
+26. **Do not add `places-autocomplete`.** It is Google Places. Maps already use OpenFreeMap + `request_location`. A Google script on a Norwegian city app is a third-party and a ToS.
+27. **Do not add `glow`.** Mouse-tracing highlight is the opposite of FLAT_UI / FLAT_PIXELS.
+28. **Do not add `color-picker` (Pickr) as a webfont/theme.** Amber item colour is a string/token, not a free-sRGB picker. If wardrobe colour becomes a chip, it’s a radio list, not Pickr.
+29. **Do not restore `timeago`.** Server `Shared::UiHelper#time_ago` is nb; date-fns was English. The comment in `importmap_baseline.rb:33-41` is the decision.
+30. **Do not restore `content-loader`.** Turbo frames with skeleton children are the replacement (`stimulus_boot.js:64-66`).
+31. **`sound` / `speech-recognition` / `hotkey` were dropped for no ERB.** Playlist already has a player controller; brgen has `feed-hotkey` and `voice-recorder`. Don’t re-pin the generic ones.
+32. **`prefetch` component vs Turbo Drive prefetch.** Prefer native `data-turbo-prefetch` (item 7). Don’t add a second prefetch controller.
+33. **`scroll-progress`.** A reading bar on wiki / legal / post show is the one honest use. Off by default; `prefers-reduced-motion: reduce { display: none }`. Optional.
+34. **`scroll-reveal` is already `pub4/scroll_reveal`, used on newsletter and amber timeline.** Don’t also register `@stimulus-components/scroll-reveal`.
+35. **`character-counter` is `pub4/character_counter`, not the npm package.** The gate lists both. One implementation. Don’t pin the package beside the local controller.
+36. **`textarea-autogrow` is pinned twice** (`@stimulus-components/textarea-autogrow` and `stimulus-textarea-autogrow`). Compose uses Tiptap, which grows itself. If no ERB asks for autogrow, drop both pins the way dialog was dropped.
+
+### Turbo and StimulusReflex — one morph story
+
+37. **StimulusReflex in this tree is infinite scroll + vote + notification-read + playlist timestamp comments.** `on_failed_sanity_checks = :warn`. Don’t add page-morph Reflexes for filters: Turbo frames + `auto-submit` (item 14) are the 8.x shape. SR page morphs re-run the controller action (~50ms docs); a frame is cheaper and survives morph.
+38. **`VoteReflex` and `votes#create.turbo_stream` both exist.** Two pipes for one arrow. Keep the stream (it has a function-layout test); make the Reflex a no-op wrapper or delete it once the stream is the only client.
+39. **`PlaylistTimestampedCommentsReflex` is the one non-scroll Reflex.** If TV video notes should work offline-of-cable, they need a `create.turbo_stream` too (second pass already said comments 500 without a template).
+40. **Turbo morph (`turbo:morph`) vs CableReady morphdom.** Both are vendored (`morphdom` pin overrides ga.jspm.io). Stimulus controllers that keep local state (tiptap, media-picker, map) must reconnect after morph — the 2025 `useMorphHandler` pattern. Add a test that `tiptap-editor` still has a ProseMirror after a `broadcasts_refreshes` on the post.
+41. **`data-turbo-permanent` on nav / theme toggle** was already proposed. Face primer and the compose draft are the other two permanents. Don’t permanent a cable stream.
+42. **Optimistic UI:** `optimistic-send` is registered; votes don’t use it. Wire vote arrows *or* delete the controller (first inventory 513). Dating like/dislike is the second caller if it stays.
+43. **Turbo Streams for the remaining redirects** (second pass 42–43) is the completion path, not more Reflexes: favorites, dating like, takeaway order status, playlist collab.
+44. **Futurism `futurize` is in the Gemfile, pin removed, zero `data-controller="futurism"`.** Comment points at “FINAL_TODO P0.4”. Either lazy-render the first page of listings/ports with `loading="lazy"` frames (no gem) or put the pin back with one index. Don’t leave the gem as a silent require.
+
+### Completing each app (what the catalogs actually buy)
+
+**brgen.** The models are `done` in `apps.yml`. Fruition is the last 300ms of the round-trip and the last empty state.
+
+45. **Faceted search is BeastMode’s demo and this tree’s LiveSearchable.** Deals still LIKE-search (first inventory 347). One helper, auto-submit (14), FTS when the table exists.
+46. **Cold-start feed without an LLM.** ar5iv 1711.10399: social neighbours beat global popularity for new users. Rank `hot` as `follows.posts ∪ city.popular` until the user has five votes. Horizon “AI feed ranking” stays ignored; this is a SQL union.
+47. **Match overlay / report / cancel-order as `<dialog>`** (23). The overlay CSS is the dating chrome the one-chrome pass is retiring.
+48. **Prefetch the eight nav destinations** (7). Measured win on 1 GB is cache, not CPU, if Solid Cache holds the gzipped first page.
+49. **Community wiki already `.prose`.** Legal still doesn’t (second pass 55). Same reading surface.
+50. **Inbound ActivityPub stays verified-and-dropped** (`apps.yml` / TODO 2.1). Don’t “complete” federation by storing remote media on this box.
+
+**amber.** Wardrobe is a catalog + outfit editor. pgvector / virtual fitting stay horizon.
+
+51. **Nested variants pattern → wardrobe `Item` photos already media-picker.** Completeness is: sortable already reorders outfits; timeline already scroll-reveals; `luxury-product` is on the card. Missing: declutter bulk checkbox-select-all (13), password on account, dialog on “let go”.
+52. **Weather-based suggestions are horizon.** Until then, `planned_outfits` dated for a day is the event planner the horizon list names — it exists. Don’t build a weather API.
+53. **Style embeddings are horizon.** Fingerprint/silhouette jobs are the visual similarity the box can run (libvips). UI must not say “similar” (first inventory 471).
+54. **Creator profile already `.prose`.** Shop/affiliate disclosure assertion still open from the first inventory.
+
+**bsdports.** A ports browser, not a dashboard.
+
+55. **Search form auto-submit** (14) + FTS in schema (first inventory 478). Completeness is the virtual table committed, not Chart.js.
+56. **`fresh_when` already on `ports#show`.** Copy to maintainer show.
+57. **Maintainer bulk: checkbox-select-all** if a bulk watch/unwatch exists; otherwise don’t add checkboxes for decoration.
+58. **Makefile `+=` / `?=` fixtures** (first inventory 481) are the parser completion. Horizon FreeBSD/NetBSD parsers stay ignored.
+
+### What the papers do not license
+
+59. **Kwai POSO / Deezer cold-start nets are production at their scale.** On one SQLite box the neighbour-union (46) is the portable result. Don’t vendor a two-tower model.
+60. **Evil Martians 2026 stack is Vite + Inertia + ViewComponent + Alba.** This tree chose importmaps, ERB, Hotwire, no LAYER_CAKE. Read them for job/continuations and CI, not for a React rewrite.
+
+---
+
 
 
 

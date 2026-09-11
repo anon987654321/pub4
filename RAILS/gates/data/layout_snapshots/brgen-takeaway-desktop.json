@@ -16,79 +16,15 @@
       "key": "#accountStuff>a.nav-block.nav-hover",
       "tag": "a",
       "rect": {
-        "x": 1349,
+        "x": 1351,
         "y": 129,
-        "w": 81,
+        "w": 79,
         "h": 44
       },
-      "color": "#ffffff",
-      "bg": "#131921",
+      "color": "#333333",
+      "bg": "#ffffff",
       "font_size": 15.8,
-      "line_height": 18.9,
-      "display": "flex",
-      "position": "static"
-    },
-    {
-      "key": "#app-tab-bar",
-      "tag": "nav",
-      "rect": {
-        "x": 0,
-        "y": 900,
-        "w": 1440,
-        "h": 54
-      },
-      "color": "#e0e0e0",
-      "bg": "#1a1a1a",
-      "font_size": 18,
-      "line_height": 20,
-      "display": "flex",
-      "position": "fixed"
-    },
-    {
-      "key": "#app-tab-bar>a.tab-item",
-      "tag": "a",
-      "rect": {
-        "x": 0,
-        "y": 900,
-        "w": 206,
-        "h": 54
-      },
-      "color": "#e07b39",
-      "bg": "#202020",
-      "font_size": 18,
-      "line_height": 20,
-      "display": "flex",
-      "position": "relative"
-    },
-    {
-      "key": "#app-tab-bar>button.tab-item.tab-item-button",
-      "tag": "button",
-      "rect": {
-        "x": 1234,
-        "y": 900,
-        "w": 206,
-        "h": 54
-      },
-      "color": "#e0e0e0",
-      "bg": "#1a1a1a",
-      "font_size": 18,
-      "line_height": 20,
-      "display": "flex",
-      "position": "relative"
-    },
-    {
-      "key": "#logo",
-      "tag": "a",
-      "rect": {
-        "x": 86,
-        "y": 130,
-        "w": 138,
-        "h": 41
-      },
-      "color": "#ffffff",
-      "bg": "#131921",
-      "font_size": 15.8,
-      "line_height": 18.9,
+      "line_height": 19.7,
       "display": "flex",
       "position": "static"
     },
@@ -99,10 +35,10 @@
         "x": 0,
         "y": 62,
         "w": 1440,
-        "h": 2958
+        "h": 900
       },
-      "color": "#e0e0e0",
-      "bg": "#000000",
+      "color": "#333333",
+      "bg": "#efefef",
       "font_size": 18,
       "line_height": 20,
       "display": "block",
@@ -113,11 +49,11 @@
       "tag": "form",
       "rect": {
         "x": 1,
-        "y": 385,
+        "y": 390,
         "w": 478,
-        "h": 54
+        "h": 53
       },
-      "color": "#e0e0e0",
+      "color": "#333333",
       "bg": "#cccccc",
       "font_size": 20.3,
       "line_height": 20,
@@ -129,12 +65,12 @@
       "tag": "header",
       "rect": {
         "x": 0,
-        "y": 220,
-        "w": 749,
+        "y": 225,
+        "w": 747,
         "h": 151
       },
-      "color": "#e0e0e0",
-      "bg": "#000000",
+      "color": "#333333",
+      "bg": "#efefef",
       "font_size": 18,
       "line_height": 20,
       "display": "flex",
@@ -145,12 +81,12 @@
       "tag": "h1",
       "rect": {
         "x": 18,
-        "y": 238,
-        "w": 288,
+        "y": 243,
+        "w": 276,
         "h": 39
       },
-      "color": "#e0e0e0",
-      "bg": "#000000",
+      "color": "#333333",
+      "bg": "#efefef",
       "font_size": 31.5,
       "line_height": 39.4,
       "display": "block",
@@ -160,64 +96,48 @@
       "key": "#nav_sections",
       "tag": "nav",
       "rect": {
-        "x": 86,
+        "x": 125,
         "y": 0,
-        "w": 1269,
+        "w": 1191,
         "h": 65
       },
-      "color": "#e0e0e0",
-      "bg": "#000000",
+      "color": "#333333",
+      "bg": "#efefef",
       "font_size": 18,
       "line_height": 20,
       "display": "flex",
       "position": "static"
     },
     {
-      "key": "#nav_sections>div.nav_swiper_group>a.nav_link",
+      "key": "#nav_sections>div.nav_swiper_group.nav_swiper_group--verticals>a.nav_link",
       "tag": "a",
       "rect": {
-        "x": 180,
+        "x": 326,
         "y": 9,
-        "w": 74,
+        "w": 108,
         "h": 47
       },
-      "color": "#969696",
-      "bg": "#000000",
+      "color": "#666666",
+      "bg": "#efefef",
       "font_size": 20.3,
       "line_height": 20.3,
       "display": "flex",
-      "position": "static"
-    },
-    {
-      "key": "#q",
-      "tag": "input",
-      "rect": {
-        "x": 1,
-        "y": 385,
-        "w": 478,
-        "h": 54
-      },
-      "color": "#aaaaaa",
-      "bg": "#000000",
-      "font_size": 20.3,
-      "line_height": 20,
-      "display": "block",
-      "position": "static"
+      "position": "relative"
     },
     {
       "key": "#sections>a.section.nav-hover",
       "tag": "a",
       "rect": {
-        "x": 86,
-        "y": 182,
-        "w": 116,
-        "h": 37
+        "x": 125,
+        "y": 181,
+        "w": 115,
+        "h": 44
       },
-      "color": "#ffffff",
-      "bg": "#232f3e",
+      "color": "#333333",
+      "bg": "#ffffff",
       "font_size": 15.8,
-      "line_height": 18.9,
-      "display": "block",
+      "line_height": 19.7,
+      "display": "flex",
       "position": "static"
     },
     {
@@ -225,14 +145,62 @@
       "tag": "section",
       "rect": {
         "x": 0,
-        "y": 440,
+        "y": 444,
         "w": 1440,
-        "h": 2571
+        "h": 261
       },
-      "color": "#e0e0e0",
-      "bg": "#000000",
+      "color": "#333333",
+      "bg": "#efefef",
       "font_size": 18,
       "line_height": 20,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#takeaway-restaurants-list>section.empty.empty-state",
+      "tag": "section",
+      "rect": {
+        "x": 468,
+        "y": 444,
+        "w": 504,
+        "h": 261
+      },
+      "color": "#666666",
+      "bg": "#efefef",
+      "font_size": 18,
+      "line_height": 27,
+      "display": "grid",
+      "position": "static"
+    },
+    {
+      "key": "#takeaway-restaurants-list>section.empty.empty-state>a.btn.btn-primary.empty-state-action",
+      "tag": "a",
+      "rect": {
+        "x": 678,
+        "y": 622,
+        "w": 85,
+        "h": 44
+      },
+      "color": "#110f19",
+      "bg": "#c26a30",
+      "font_size": 15.8,
+      "line_height": 23.6,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#takeaway-restaurants-list>section.empty.empty-state>h2.empty-state-title",
+      "tag": "h2",
+      "rect": {
+        "x": 568,
+        "y": 538,
+        "w": 304,
+        "h": 34
+      },
+      "color": "#333333",
+      "bg": "#efefef",
+      "font_size": 22.5,
+      "line_height": 33.8,
       "display": "block",
       "position": "static"
     },
@@ -240,15 +208,15 @@
       "key": "#topHalf>a.nav-block.nav-deliver.nav-hover",
       "tag": "a",
       "rect": {
-        "x": 228,
+        "x": 125,
         "y": 129,
-        "w": 92,
+        "w": 91,
         "h": 44
       },
-      "color": "#ffffff",
-      "bg": "#131921",
+      "color": "#333333",
+      "bg": "#ffffff",
       "font_size": 15.8,
-      "line_height": 18.9,
+      "line_height": 19.7,
       "display": "flex",
       "position": "static"
     },
@@ -256,15 +224,15 @@
       "key": "#topHalf>div.search.marketplace-nav-search>form",
       "tag": "form",
       "rect": {
-        "x": 331,
+        "x": 227,
         "y": 131,
-        "w": 1007,
+        "w": 1113,
         "h": 40
       },
-      "color": "#ffffff",
+      "color": "#333333",
       "bg": "#cccccc",
       "font_size": 20.3,
-      "line_height": 24.3,
+      "line_height": 25.3,
       "display": "flex",
       "position": "static"
     },
@@ -272,15 +240,15 @@
       "key": "#topHalf>div.search.marketplace-nav-search>form>button.nav-search-submit",
       "tag": "button",
       "rect": {
-        "x": 1293,
+        "x": 1295,
         "y": 131,
         "w": 45,
         "h": 44
       },
-      "color": "#111111",
-      "bg": "#febd69",
+      "color": "#110f19",
+      "bg": "#c26a30",
       "font_size": 20.3,
-      "line_height": 24.3,
+      "line_height": 25.3,
       "display": "flex",
       "position": "static"
     },
@@ -288,15 +256,15 @@
       "key": "#topHalf>div.search.marketplace-nav-search>form>input.nav-search-input",
       "tag": "input",
       "rect": {
-        "x": 331,
+        "x": 227,
         "y": 131,
-        "w": 962,
+        "w": 1068,
         "h": 40
       },
-      "color": "#111111",
-      "bg": "#ffffff",
+      "color": "#333333",
+      "bg": "#efefef",
       "font_size": 18,
-      "line_height": 21.6,
+      "line_height": 22.5,
       "display": "block",
       "position": "static"
     },
@@ -309,8 +277,8 @@
         "w": 48,
         "h": 44
       },
-      "color": "#969696",
-      "bg": "#000000",
+      "color": "#666666",
+      "bg": "#efefef",
       "font_size": 18,
       "line_height": 20,
       "display": "flex",
@@ -320,48 +288,32 @@
       "key": "body.vertical-takeaway>footer.site-legal>nav>a",
       "tag": "a",
       "rect": {
-        "x": 190,
-        "y": 959,
-        "w": 70,
-        "h": 20
+        "x": 184,
+        "y": 945,
+        "w": 80,
+        "h": 48
       },
-      "color": "#969696",
-      "bg": "#000000",
+      "color": "#666666",
+      "bg": "#efefef",
       "font_size": 13,
       "line_height": 20,
       "display": "block",
       "position": "static"
     },
     {
-      "key": "div.app-shell>div.layout>div.sidebar-swiper>button.edge-grip.edge-grip-left",
+      "key": "html>body.vertical-takeaway>div.search_palette>button.search_palette_trigger",
       "tag": "button",
       "rect": {
-        "x": 0,
-        "y": 426,
+        "x": 1336,
+        "y": 12,
         "w": 44,
-        "h": 48
+        "h": 44
       },
-      "color": "#ffffff",
-      "bg": "#000000",
+      "color": "#333333",
+      "bg": "#efefef",
       "font_size": 18,
       "line_height": 20,
-      "display": "block",
-      "position": "fixed"
-    },
-    {
-      "key": "div.app-shell>div.layout>div.widgets-swiper>button.edge-grip.edge-grip-right",
-      "tag": "button",
-      "rect": {
-        "x": 1396,
-        "y": 426,
-        "w": 44,
-        "h": 48
-      },
-      "color": "#ffffff",
-      "bg": "#000000",
-      "font_size": 18,
-      "line_height": 20,
-      "display": "block",
+      "display": "grid",
       "position": "fixed"
     },
     {
@@ -373,8 +325,8 @@
         "w": 1100,
         "h": 67
       },
-      "color": "#e0e0e0",
-      "bg": "#000000",
+      "color": "#333333",
+      "bg": "#efefef",
       "font_size": 13,
       "line_height": 20,
       "display": "flex",
@@ -386,11 +338,11 @@
       "rect": {
         "x": 190,
         "y": 959,
-        "w": 257,
+        "w": 252,
         "h": 20
       },
-      "color": "#e0e0e0",
-      "bg": "#000000",
+      "color": "#333333",
+      "bg": "#efefef",
       "font_size": 13,
       "line_height": 20,
       "display": "flex",
@@ -400,13 +352,13 @@
       "key": "html>body.vertical-takeaway>footer.site-legal>p.affiliate-fine",
       "tag": "p",
       "rect": {
-        "x": 465,
+        "x": 460,
         "y": 961,
-        "w": 785,
+        "w": 790,
         "h": 18
       },
-      "color": "#969696",
-      "bg": "#000000",
+      "color": "#666666",
+      "bg": "#efefef",
       "font_size": 12,
       "line_height": 18,
       "display": "block",
@@ -417,12 +369,12 @@
       "tag": "a",
       "rect": {
         "x": 12,
-        "y": 9,
-        "w": 68,
+        "y": 11,
+        "w": 91,
         "h": 44
       },
-      "color": "#e0e0e0",
-      "bg": "#000000",
+      "color": "#333333",
+      "bg": "#efefef",
       "font_size": 20.3,
       "line_height": 20.3,
       "display": "flex",

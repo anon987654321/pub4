@@ -17,7 +17,17 @@
 .install-prompt {
   position: fixed;
   inset-inline: var(--chrome-inset, 12px);
-  bottom: calc(var(--tab-bar-h, 0px) + var(--safe-bottom, 0px) + var(--chrome-inset, 12px));
+  /* max(), because the bottom chrome is one of two things: the open tab bar, or
+     the peel handle that opens it when the bar is closed. --tab-bar-h goes to
+     0px for the closed case by design — _tab_bar.scss says bottom-pinned chrome
+     reclaims the space — so reading it alone leaves this panel sitting on the
+     handle. Measured on amber/demo at 390px: the peel is 48x44 centred on the
+     bottom edge, this panel spans the width 12px above it, and the peel's
+     centre pixel was owned by the panel. Fixed chrome cannot be scrolled out
+     from under a blocker, so that handle was dead for the life of the page.
+     The nearby chat widget escapes this by sitting in the corner rather than
+     by clearing anything. */
+  bottom: calc(max(var(--tab-bar-h, 0px), var(--tap-min, 44px)) + var(--safe-bottom, 0px) + var(--chrome-inset, 12px));
   z-index: var(--z-toast, 1100);
   max-width: 32rem;
   margin-inline: auto;

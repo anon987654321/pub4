@@ -115,4 +115,38 @@ class GateRequiresResolveTest < Minitest::Test
 
     assert_empty missing, "gates.yml rows naming a file that is not on disk"
   end
+
+  # The same half-landed move, one layer down: JavaScript that used to live in a
+  # Ruby heredoc and now lives in a .js file the gate reads.
+  #
+  # In a heredoc, `\\s` is what you write to get `\s` into the string. In a file
+  # read verbatim it stays two characters, and `/\\s+/` in JavaScript matches a
+  # literal backslash followed by one or more letter s — which matches nothing
+  # any page contains, silently.
+  #
+  # walk.js carried three. The one that mattered was in classSig: the class
+  # attribute was never split, so every element with more than one class keyed
+  # as `a.brand-mark brgen-logo-mark` instead of `a.brand-mark.brgen-logo-mark`,
+  # and VOLATILE_CLASS filtered the whole blob or none of it. Every layout
+  # snapshot baseline written before the extraction compared against a key
+  # format that no longer existed: 739 removals and 965 additions across 69
+  # surfaces, none of which was a layout change. The other two broke the rgba
+  # fast path, which fell through to a canvas that answers correctly — slow
+  # rather than wrong, and invisible for exactly that reason.
+  #
+  # There is no legitimate double backslash in any of these files today. If one
+  # is ever wanted — a regex matching a real backslash — it needs a comment here
+  # saying so, which is the point: it has to be a decision rather than residue.
+  def test_no_gate_javascript_carries_heredoc_escaping
+    offenders = Dir.glob(File.join(GATES, "**", "*.js")).flat_map do |path|
+      File.readlines(path).each_with_index.filter_map do |line, index|
+        next unless line.include?('\\\\')
+
+        "#{path.sub(GATES + '/', '')}:#{index + 1} #{line.strip[0, 72]}"
+      end
+    end
+
+    assert_empty offenders,
+                 "a literal \\\\ in a .js file is heredoc residue: it matches a backslash, not an escape"
+  end
 end

@@ -17,14 +17,46 @@
       "tag": "input",
       "rect": {
         "x": 540,
-        "y": 528,
+        "y": 546,
         "w": 360,
-        "h": 52
+        "h": 49
       },
-      "color": "#2c2824",
-      "bg": "#ebe4da",
+      "color": "#333333",
+      "bg": "#ffffff",
       "font_size": 18,
       "line_height": 28.8,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#install-prompt>div.install-prompt-actions>button.install-prompt-primary",
+      "tag": "button",
+      "rect": {
+        "x": 915,
+        "y": 830,
+        "w": 74,
+        "h": 44
+      },
+      "color": "#efefef",
+      "bg": "#333333",
+      "font_size": 15.8,
+      "line_height": 15.8,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#install-prompt>div.install-prompt-actions>button.install-prompt-secondary",
+      "tag": "button",
+      "rect": {
+        "x": 816,
+        "y": 830,
+        "w": 91,
+        "h": 44
+      },
+      "color": "#666666",
+      "bg": "#ffffff",
+      "font_size": 15.8,
+      "line_height": 15.8,
       "display": "block",
       "position": "static"
     },
@@ -33,12 +65,12 @@
       "tag": "main",
       "rect": {
         "x": 522,
-        "y": 44,
+        "y": 70,
         "w": 396,
         "h": 900
       },
-      "color": "#2c2824",
-      "bg": "#f8f5f0",
+      "color": "#333333",
+      "bg": "#efefef",
       "font_size": 18,
       "line_height": 28.8,
       "display": "flex",
@@ -49,12 +81,12 @@
       "tag": "form",
       "rect": {
         "x": 540,
-        "y": 497,
+        "y": 516,
         "w": 360,
-        "h": 281
+        "h": 294
       },
-      "color": "#2c2824",
-      "bg": "#f8f5f0",
+      "color": "#333333",
+      "bg": "#efefef",
       "font_size": 18,
       "line_height": 28.8,
       "display": "block",
@@ -65,12 +97,12 @@
       "tag": "h1",
       "rect": {
         "x": 540,
-        "y": 365,
+        "y": 385,
         "w": 360,
         "h": 34
       },
-      "color": "#2c2824",
-      "bg": "#f8f5f0",
+      "color": "#333333",
+      "bg": "#efefef",
       "font_size": 27,
       "line_height": 33.8,
       "display": "block",
@@ -81,12 +113,12 @@
       "tag": "input",
       "rect": {
         "x": 540,
-        "y": 624,
+        "y": 638,
         "w": 288,
-        "h": 52
+        "h": 49
       },
-      "color": "#2c2824",
-      "bg": "#ebe4da",
+      "color": "#333333",
+      "bg": "#ffffff",
       "font_size": 18,
       "line_height": 28.8,
       "display": "block",
@@ -97,12 +129,12 @@
       "tag": "footer",
       "rect": {
         "x": 0,
-        "y": 998,
+        "y": 1024,
         "w": 1440,
         "h": 169
       },
-      "color": "#6b665f",
-      "bg": "#f8f5f0",
+      "color": "#666666",
+      "bg": "#efefef",
       "font_size": 15.8,
       "line_height": 25.2,
       "display": "flex",
@@ -113,28 +145,76 @@
       "tag": "footer",
       "rect": {
         "x": 170,
-        "y": 1207,
+        "y": 1233,
         "w": 1100,
         "h": 65
       },
-      "color": "#6b665f",
-      "bg": "#f8f5f0",
+      "color": "#666666",
+      "bg": "#efefef",
       "font_size": 13,
       "line_height": 20.8,
       "display": "flex",
       "position": "static"
     },
     {
-      "key": "div.auth-form>form>div.actions>input.btn.btn--primary",
+      "key": "body.auth-surface>div.theme-root>header.amber-logo-banner.amber-logo-banner--nav>a.amber-logo-home",
+      "tag": "a",
+      "rect": {
+        "x": 14,
+        "y": 9,
+        "w": 200,
+        "h": 52
+      },
+      "color": "#333333",
+      "bg": "#ffffff",
+      "font_size": 18,
+      "line_height": 0,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "div.app-shell>footer.site-legal>nav>a",
+      "tag": "a",
+      "rect": {
+        "x": 12,
+        "y": -52,
+        "w": 71,
+        "h": 57
+      },
+      "color": "#666666",
+      "bg": "#efefef",
+      "font_size": 18,
+      "line_height": 28.8,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "div.auth-form>form>div.actions>input.btn.btn-link",
+      "tag": "input",
+      "rect": {
+        "x": 658,
+        "y": 705,
+        "w": 178,
+        "h": 44
+      },
+      "color": "#666666",
+      "bg": "#efefef",
+      "font_size": 18,
+      "line_height": 28.8,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "div.auth-form>form>div.actions>input.btn.btn-primary",
       "tag": "input",
       "rect": {
         "x": 540,
-        "y": 694,
+        "y": 705,
         "w": 104,
         "h": 44
       },
-      "color": "#2c2824",
-      "bg": "#f8f5f0",
+      "color": "#efefef",
+      "bg": "#333333",
       "font_size": 15.8,
       "line_height": 25.2,
       "display": "flex",
@@ -145,15 +225,15 @@
       "tag": "a",
       "rect": {
         "x": 540,
-        "y": 756,
-        "w": 117,
-        "h": 22
+        "y": 767,
+        "w": 114,
+        "h": 44
       },
-      "color": "#7e6e55",
-      "bg": "#f8f5f0",
+      "color": "#000000",
+      "bg": "#efefef",
       "font_size": 15.8,
       "line_height": 22.1,
-      "display": "block",
+      "display": "flex",
       "position": "static"
     },
     {
@@ -161,12 +241,12 @@
       "tag": "p",
       "rect": {
         "x": 190,
-        "y": 1226,
+        "y": 1252,
         "w": 1060,
         "h": 18
       },
-      "color": "#6b665f",
-      "bg": "#f8f5f0",
+      "color": "#666666",
+      "bg": "#efefef",
       "font_size": 12,
       "line_height": 18,
       "display": "block",
@@ -176,13 +256,13 @@
       "key": "div.theme-root>header.amber-logo-banner.amber-logo-banner--nav>div.amber-nav-actions>a.btn-sm",
       "tag": "a",
       "rect": {
-        "x": 86,
-        "y": 0,
-        "w": 71,
+        "x": 1294,
+        "y": 13,
+        "w": 69,
         "h": 44
       },
-      "color": "#2c2824",
-      "bg": "#f8f8f8",
+      "color": "#333333",
+      "bg": "#f9f9f9",
       "font_size": 13.5,
       "line_height": 0,
       "display": "block",
@@ -193,12 +273,12 @@
       "tag": "button",
       "rect": {
         "x": 837,
-        "y": 628,
+        "y": 641,
         "w": 63,
         "h": 44
       },
-      "color": "#2c2824",
-      "bg": "#f1eee9",
+      "color": "#333333",
+      "bg": "#eaeaea",
       "font_size": 13.5,
       "line_height": 21.6,
       "display": "flex",
@@ -211,30 +291,14 @@
         "x": 0,
         "y": 0,
         "w": 1440,
-        "h": 44
+        "h": 70
       },
-      "color": "#2c2824",
+      "color": "#333333",
       "bg": "#ffffff",
       "font_size": 18,
       "line_height": 0,
       "display": "flex",
       "position": "sticky"
-    },
-    {
-      "key": "html>body.auth-surface>header>a.brand-mark",
-      "tag": "a",
-      "rect": {
-        "x": 12,
-        "y": 9,
-        "w": 72,
-        "h": 44
-      },
-      "color": "#2c2824",
-      "bg": "#f8f5f0",
-      "font_size": 20.3,
-      "line_height": 20.3,
-      "display": "flex",
-      "position": "fixed"
     }
   ]
 }

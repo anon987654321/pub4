@@ -25,9 +25,9 @@
   const parseRgb = (s) => {
     const str = String(s).trim();
     if (!str || str === 'transparent') return null;
-    const m = str.match(/rgba?\\(([^)]+)\\)/);
+    const m = str.match(/rgba?\(([^)]+)\)/);
     if (m) {
-      const p = m[1].split(/[,\\s\\/]+/).filter(Boolean).map(Number);
+      const p = m[1].split(/[,\s\/]+/).filter(Boolean).map(Number);
       if (p.length >= 3 && !p.some(Number.isNaN)) {
         return { r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1 };
       }
@@ -96,7 +96,7 @@
   // already covered by this group, which is why only its siblings showed.
   const VOLATILE_CLASS = /^(ng-|js-|is-|has-|turbo-|network-|battery-|power-)|(-|^)(connected|disconnected|loading|loaded|ready|active|open|closed|revealed|hidden|visible|scrolled|pending|selected|next|prev|duplicate)$/;
   const classSig = (el) => {
-    const cls = (el.getAttribute('class') || '').trim().split(/\\s+/)
+    const cls = (el.getAttribute('class') || '').trim().split(/\s+/)
       .filter(c => c && !VOLATILE_CLASS.test(c)).slice(0, 3);
     return cls.length ? '.' + cls.join('.') : '';
   };

@@ -13,16 +13,144 @@
   },
   "elements": [
     {
+      "key": "#app-tab-bar",
+      "tag": "nav",
+      "rect": {
+        "x": 0,
+        "y": 844,
+        "w": 390,
+        "h": 54
+      },
+      "color": "#333333",
+      "bg": "#ffffff",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "fixed"
+    },
+    {
+      "key": "#app-tab-bar>a.tab-item",
+      "tag": "a",
+      "rect": {
+        "x": 0,
+        "y": 844,
+        "w": 56,
+        "h": 54
+      },
+      "color": "#333333",
+      "bg": "#ffffff",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "relative"
+    },
+    {
+      "key": "#app-tab-bar>button.tab-item.tab-item-button",
+      "tag": "button",
+      "rect": {
+        "x": 334,
+        "y": 844,
+        "w": 56,
+        "h": 54
+      },
+      "color": "#333333",
+      "bg": "#ffffff",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "flex",
+      "position": "relative"
+    },
+    {
+      "key": "#install-prompt>div.install-prompt-actions>button.install-prompt-primary",
+      "tag": "button",
+      "rect": {
+        "x": 270,
+        "y": 730,
+        "w": 89,
+        "h": 44
+      },
+      "color": "#efefef",
+      "bg": "#333333",
+      "font_size": 15.8,
+      "line_height": 15.8,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#install-prompt>div.install-prompt-actions>button.install-prompt-secondary",
+      "tag": "button",
+      "rect": {
+        "x": 180,
+        "y": 730,
+        "w": 82,
+        "h": 44
+      },
+      "color": "#666666",
+      "bg": "#ffffff",
+      "font_size": 15.8,
+      "line_height": 15.8,
+      "display": "block",
+      "position": "static"
+    },
+    {
+      "key": "#live_search_results>section.empty.empty-state",
+      "tag": "section",
+      "rect": {
+        "x": 0,
+        "y": 270,
+        "w": 390,
+        "h": 245
+      },
+      "color": "#666666",
+      "bg": "#efefef",
+      "font_size": 15.8,
+      "line_height": 23.6,
+      "display": "grid",
+      "position": "static"
+    },
+    {
+      "key": "#live_search_results>section.empty.empty-state>a.btn.btn-primary.empty-state-action",
+      "tag": "a",
+      "rect": {
+        "x": 147,
+        "y": 439,
+        "w": 96,
+        "h": 44
+      },
+      "color": "#110f19",
+      "bg": "#5585c5",
+      "font_size": 15.8,
+      "line_height": 23.6,
+      "display": "flex",
+      "position": "static"
+    },
+    {
+      "key": "#live_search_results>section.empty.empty-state>h2.empty-state-title",
+      "tag": "h2",
+      "rect": {
+        "x": 118,
+        "y": 356,
+        "w": 154,
+        "h": 34
+      },
+      "color": "#333333",
+      "bg": "#efefef",
+      "font_size": 22.5,
+      "line_height": 33.8,
+      "display": "block",
+      "position": "static"
+    },
+    {
       "key": "#main-content",
       "tag": "main",
       "rect": {
         "x": 0,
         "y": 62,
         "w": 390,
-        "h": 2866
+        "h": 844
       },
-      "color": "#d8d6e0",
-      "bg": "#12151c",
+      "color": "#333333",
+      "bg": "#efefef",
       "font_size": 18,
       "line_height": 20,
       "display": "block",
@@ -34,11 +162,11 @@
       "rect": {
         "x": 16,
         "y": 142,
-        "w": 68,
+        "w": 64,
         "h": 28
       },
-      "color": "#d8d6e0",
-      "bg": "#12151c",
+      "color": "#333333",
+      "bg": "#efefef",
       "font_size": 22.5,
       "line_height": 28.1,
       "display": "block",
@@ -48,13 +176,13 @@
       "key": "#main-content>div.page-header>nav",
       "tag": "nav",
       "rect": {
-        "x": 295,
+        "x": 308,
         "y": 137,
-        "w": 79,
+        "w": 66,
         "h": 44
       },
-      "color": "#d8d6e0",
-      "bg": "#12151c",
+      "color": "#333333",
+      "bg": "#efefef",
       "font_size": 18,
       "line_height": 20,
       "display": "block",
@@ -64,13 +192,13 @@
       "key": "#main-content>div.page-header>nav>a.btn.btn-ghost",
       "tag": "a",
       "rect": {
-        "x": 295,
+        "x": 308,
         "y": 137,
-        "w": 79,
+        "w": 66,
         "h": 44
       },
-      "color": "#b6b3c8",
-      "bg": "#12151c",
+      "color": "#666666",
+      "bg": "#efefef",
       "font_size": 15.8,
       "line_height": 20,
       "display": "inline-flex",
@@ -83,9 +211,9 @@
         "x": 1,
         "y": 213,
         "w": 388,
-        "h": 57
+        "h": 56
       },
-      "color": "#d8d6e0",
+      "color": "#333333",
       "bg": "#cccccc",
       "font_size": 20.3,
       "line_height": 20,
@@ -93,68 +221,84 @@
       "position": "static"
     },
     {
-      "key": "#maps-places-list>article.place-card>h2",
-      "tag": "h2",
+      "key": "#nav_sections",
+      "tag": "nav",
       "rect": {
-        "x": 34,
-        "y": 286,
-        "w": 322,
-        "h": 20
+        "x": 107,
+        "y": 0,
+        "w": 175,
+        "h": 65
       },
-      "color": "#d8d6e0",
-      "bg": "#1b1e25",
+      "color": "#333333",
+      "bg": "#efefef",
       "font_size": 18,
       "line_height": 20,
-      "display": "block",
+      "display": "flex",
       "position": "static"
     },
     {
-      "key": "#maps-places-list>article.place-card>h2>a",
+      "key": "#nav_sections>div.nav_swiper_group.nav_swiper_group--verticals>a.nav_link",
       "tag": "a",
       "rect": {
-        "x": 34,
-        "y": 285,
-        "w": 149,
-        "h": 21
+        "x": 107,
+        "y": 9,
+        "w": 108,
+        "h": 47
       },
-      "color": "#d8d6e0",
-      "bg": "#1b1e25",
-      "font_size": 18,
-      "line_height": 20,
-      "display": "inline",
-      "position": "static"
+      "color": "#666666",
+      "bg": "#efefef",
+      "font_size": 20.3,
+      "line_height": 20.3,
+      "display": "flex",
+      "position": "relative"
     },
     {
-      "key": "#q",
-      "tag": "input",
+      "key": "body.vertical-maps>div.theme-root>div.app-shell>button.tab-bar-peel",
+      "tag": "button",
       "rect": {
-        "x": 1,
-        "y": 213,
-        "w": 388,
-        "h": 57
+        "x": 171,
+        "y": 800,
+        "w": 48,
+        "h": 44
       },
-      "color": "#aaaaaa",
-      "bg": "#cccccc",
-      "font_size": 20.3,
+      "color": "#666666",
+      "bg": "#efefef",
+      "font_size": 18,
       "line_height": 20,
-      "display": "inline-block",
-      "position": "static"
+      "display": "flex",
+      "position": "fixed"
     },
     {
       "key": "body.vertical-maps>footer.site-legal>nav>a",
       "tag": "a",
       "rect": {
-        "x": 20,
-        "y": 903,
-        "w": 70,
-        "h": 20
+        "x": 14,
+        "y": 889,
+        "w": 80,
+        "h": 48
       },
-      "color": "#b6b3c8",
-      "bg": "#12151c",
+      "color": "#666666",
+      "bg": "#efefef",
       "font_size": 13,
       "line_height": 20,
       "display": "block",
       "position": "static"
+    },
+    {
+      "key": "html>body.vertical-maps>div.search_palette>button.search_palette_trigger",
+      "tag": "button",
+      "rect": {
+        "x": 286,
+        "y": 12,
+        "w": 44,
+        "h": 44
+      },
+      "color": "#333333",
+      "bg": "#efefef",
+      "font_size": 18,
+      "line_height": 20,
+      "display": "grid",
+      "position": "fixed"
     },
     {
       "key": "html>body.vertical-maps>footer.site-legal",
@@ -165,8 +309,8 @@
         "w": 390,
         "h": 113
       },
-      "color": "#d8d6e0",
-      "bg": "#12151c",
+      "color": "#333333",
+      "bg": "#efefef",
       "font_size": 13,
       "line_height": 20,
       "display": "flex",
@@ -178,11 +322,11 @@
       "rect": {
         "x": 20,
         "y": 903,
-        "w": 257,
+        "w": 252,
         "h": 20
       },
-      "color": "#d8d6e0",
-      "bg": "#12151c",
+      "color": "#333333",
+      "bg": "#efefef",
       "font_size": 13,
       "line_height": 20,
       "display": "flex",
@@ -197,8 +341,8 @@
         "w": 350,
         "h": 36
       },
-      "color": "#b6b3c8",
-      "bg": "#12151c",
+      "color": "#666666",
+      "bg": "#efefef",
       "font_size": 12,
       "line_height": 18,
       "display": "block",
@@ -209,12 +353,12 @@
       "tag": "a",
       "rect": {
         "x": 12,
-        "y": 9,
-        "w": 69,
+        "y": 11,
+        "w": 92,
         "h": 44
       },
-      "color": "#d8d6e0",
-      "bg": "#12151c",
+      "color": "#333333",
+      "bg": "#efefef",
       "font_size": 16.9,
       "line_height": 16.9,
       "display": "flex",
