@@ -6344,6 +6344,232 @@ Catalog checked 2026-09-11. Boot already registers a subset. Dropped with a meas
 
 ---
 
+## Completing the four trees — papers, peers, and the rest of the ask — 2026-09-11
+
+Addresses the whole thread, not the last prompt: four-tree 10/10, unwired logic, Bringhurst, Rails completion, Rails 8.0+ / edge guides / awesome-rails, Stimulus / Turbo / StimulusReflex / stimulus-components.com, GitHub, tutorials, ar5iv. Does not restate the 1060, the 178, or the 60 above. Horizon (`apps.horizon.yml`) stays ignored. Rendered values stay the operator’s.
+
+`apps.yml` marks a feature `done` when the model exists. Fruition is the last reader, the last stream, the last ranking that is two-sided.
+
+### brgen — models are done; ranking and round-trips are not
+
+1. **Dating `ranked_for` is one-sided.** `Dating::Profile.ranked_for` (`profile.rb:86-101`) orders recency, prompt count, and a per-viewer shuffle. ar5iv [1401.8042](https://ar5iv.labs.arxiv.org/html/1401.8042) and [1501.06247](https://ar5iv.labs.arxiv.org/html/1501.06247): two-sided matching lifted first-contact replies ~45% vs suitor-only. `looking_for` / gender / orientation sit on the profile and `Matchmaking` never reads them for the deck. Rank candidates the viewer would like *and* who would like the viewer (same filters they set on themselves). SQL, not an LDA.
+2. **Mutual-match minting still walks `User.find_by` in a loop.** `Matchmaking#create_mutual_matches` (`matchmaking.rb:29-40`). Set intersection of ids is right; `User.find_by` per id is not. `User.where(id: mutual_ids)` once.
+3. **Certifeye-style verification is already `Dating::Verification`.** ar5iv [1303.4155](https://ar5iv.labs.arxiv.org/html/1303.4155): showing a verified age/photo badge reduced concern. The badge exists on the swipe card. Completeness is: the unreviewed queue has a reviewer UI that is not only `verifications#index` for the submitter. Operator-mod, not Facebook.
+4. **Do not intervene on who appears by race.** ar5iv [2103.03332](https://ar5iv.labs.arxiv.org/html/2103.03332): those interventions fight both culture and the platform’s goals. Keep radius + looking_for. No new attribute.
+5. **Marketplace trust is reviews + Vipps, not a second rating protocol.** Two-sided rating papers are for crowdsourcing effort. Here the seller rating is the mean of `Marketplace::Review`. Completeness: the mean is on the listing *and* the store; a buyer with no completed order cannot review (already gated). Don’t add a game-theoretic score.
+6. **Craigslist non-goods half.** `apps.yml` says kinds are done and points at this file. Job/housing/gig forms exist; the index defaults to goods. Completeness is a kind switcher that is a facet (already counted) *and* the empty state when you pick `job` in a city with none — not a fourth marketplace.
+7. **marketplace.brgen.no 500s.** Still open under one chrome. Diagnose the exception (log, `/500` with `exception_app`, or a request spec on the marketplace host) before any layout work. Until it serves, layout_snapshot of that host is fiction.
+8. **TV live is infrastructure, not an app gap.** `apps.yml` blocker: no MediaMTX, no ffmpeg on vm23. Hide `live_streams/new` behind a flag that is false, or the form is a lie (first inventory 415). Don’t install a media server from this list.
+9. **Takeaway courier on the map is the viewer’s own rider only.** Correct (privacy). Completeness: the waiting diner’s order show already has ETA (`countdown`). Stream status changes (pending→out_for_delivery) as turbo, not a public map of every rider.
+10. **Feed cold-start** remains the follow-union from the Hotwire section (item 46 there). Mastodon’s local/federated/home timelines are the peer: home = follows, local = city, federated = dropped inbound. Three tabs, three queries, no transformer.
+11. **Stories are Snap’s 24h, and `StoryStreak` exists.** Completeness is the ring on the feed, not a new model. If `story-rings` is only `_coverage_fills` geometry, the ring is still a grey box. Token-only is the floor; a horizontal scroller of avatars is the product.
+12. **Messenger voice notes exist; link previews exist.** Completeness: edit/unsend on the bubble via turbo stream, not a full reload (second pass redirects). Campfire (basecamp/once-campfire) is the SQLite chat peer — they morph the transcript. Copy the stream, not the Docker.
+
+### amber — capsule from the closet, not a new model
+
+13. **TasteRanker scores garments, not outfits.** ar5iv [1712.02662](https://ar5iv.labs.arxiv.org/html/1712.02662) (Hsiao & Grauman capsule) and [1804.09979](https://ar5iv.labs.arxiv.org/html/1804.09979) (outfit grader): the task is a *subset* of the closet that mix-and-matches. `OutfitGeneration` + `TasteRanker` + dressing-room carousels exist. Completeness: score a candidate *outfit* as the joint of its items’ scores minus a clash term (colour/material already on `Item`). No neural graph. `RecommendOutfitsJob` already has `limits_concurrency`; make the heuristic path the default and the LLM the fallback it already is.
+14. **Capsule “do more with less” is KonMari + underused + shopping_list.** Those three are `done`. The paper’s “minimal set, maximal outfits” is `ClosetOrganization` restraint tips. Completeness: the shopping list already says it will not invent global trends. Don’t add a Polyvore scrape.
+15. **Complementary “this top with those jeans”** (eBay Fashion-136K, Style2Vec) is `TasteRanker` revealed wear, not a skip-gram. When the owner opens one item, rank other *zones* from the same closet. Dressing room already counter-rotates zones. Wire `items#show` “wears well with” from that ranker, labelled rules not AI.
+16. **Zalando’s get-the-look is in-session.** Horizon embeddings. Until pgvector, CRC32 fingerprint is the honest neighbour (apps.yml). Don’t say similar.
+17. **Weather is prefilled from Weather Bergen on generate.** Horizon “richer weather agent” is more API. Completeness: if the fetch fails, the form still submits with season chips. Test the fail-open.
+18. **Declutter 30d box is the capsule’s deletion half.** Completeness: the hygiene job uniqueness (first inventory 475) and a dialog confirm (Hotwire section 23).
+
+### bsdports — FreshPorts, not a knowledge graph
+
+19. **FreshPorts.org is the peer: one port, one page, changelog, commit, vulnerability.** This tree has Port, SecurityAdvisory, Maintainer, dep tree. Completeness: advisory age on the port show (already a model) and the import job log (`ImportRun`) visible to a maintainer, not only in `/admin` if there is none.
+20. **`ports_fts` claimed done, tests skip if the table is missing.** First inventory 478. Fruition is the virtual table in `schema.rb` so `bin/ci` cannot skip the feature `apps.yml` calls done.
+21. **Explore assistant is rules + JSON.** Don’t add pgvector intelligence. Rate-limit the JSON action (Hotwire section already said so).
+22. **Platforms freebsd/netbsd are seeded inactive.** Horizon parsers. Completeness: the UI must not offer those platforms as if they imported. Hide or disable the chips.
+
+### Rails 8 / SQLite production (37signals, fractaledmind, edge caching)
+
+23. **WAL is already in all three `database.yml`.** Rails 8 IMMEDIATE transactions are adapter defaults (DHH on once-campfire #150). Don’t add a pragma pass.
+24. **ONCE `pre-backup` is `sqlite3 file ".backup dest"`.** `OPENBSD/bin/dr-pull` is the off-host copy. Completeness: before dr-pull, checkpoint WAL so the snapshot is consistent (`PRAGMA wal_checkpoint(TRUNCATE)` or `.backup`). That is the Campfire hook, without Docker. One line in `dr-pull` / a pre-hook, operator-priority because it touches the box.
+25. **Single writer.** Falcon `FALCON_WORKERS` is 1 on 1 GB. A second worker on SQLite primary is `SQLITE_BUSY`. Gate: production `database.yml` pool × workers = 1 writer to primary, or document that cable/cache/queue files are the extra writers (they are separate files — good).
+26. **`busy_timeout` is 5000.** Campfire/Rails 8 retry fairly without holding the GVL. If `/var/log` shows `database is locked` on vm23, raise timeout, don’t add Redis.
+27. **Solid Queue in a separate file is the Campfire-on-SQLite fork.** Already. Continuations (Hotwire section 1) are what 8.1 adds on top.
+
+### MASTER — discoverability, not features
+
+28. **The 10/10 line already in this file:** MASTER is done when it does not need to be told how to use MASTER. Completeness is `HELP_TOPICS` + completions generated from the live command table (first inventory 71), and `/review --only scan` as the advertised verb. Don’t add a fourth surface.
+29. **Event-name drift** is the second pass (visual_bridge). Completeness of the *face* is those regexes matching `rule_loop:pass`. Don’t start a new bus.
+30. **`bin/operator gate --explain` is the ladder.** START_HERE and OPENBSD/START_HERE still offer other “everything” commands. One paragraph each, already named. Do it.
+
+### OPENBSD — the box is the product
+
+31. **SQLite `.backup` before dr-pull** (24). Highest remaining deploy completeness that is not money.
+32. **relayctl vs restart** still open in the awesome-list section. Read the man page on the box.
+33. **Don’t adopt ONCE/Docker.** The box is OpenBSD, not a container host. Health `/up` already matches ONCE’s minimum; we already have it.
+
+### STUDIO — crate and help, not new engines
+
+34. **repligen chains exist; token does not.** Completeness is CLI honesty (first STUDIO list), not funding Replicate.
+35. **dilla `help` topics** (`help render`, `help knobs`) still the way a stranger finishes the engine without a 170-line dump.
+36. **Don’t change a rendered default.** Capsule/outfit papers do not apply to dilla.
+
+### Stimulus / Turbo leftovers the catalogs still name
+
+37. **`password_visibility_field` English aria** (Hotwire 11) — still the one i18n hole in a helper that is otherwise live.
+38. **`auto-submit` on GET filters** (Hotwire 14) is the GoRails/Chris Oliver bulk+filter demo applied here. Marketplace facets and bsdports search are the two that would feel finished.
+39. **Infinite-scroll Reflexes are the SR surface.** Don’t add BeastMode as a gem; LiveSearchable + auto-submit + existing `*InfiniteScrollReflex` is BeastMode. Completeness: every index that paginates has a reflex *or* a frame; maps places does (first inventory 432 duplication).
+40. **Turbo 8 morph + `broadcasts_refreshes`.** Posts/items already broadcast. Test tiptap survives morph (Hotwire 40). That test is the completion, not a new morph library (TurboBoost Streams / Idiomorph — don’t add a third morpher; morphdom is already pinned).
+
+### Tutorials worth stealing a *shape* from, not a stack
+
+41. **Edge guide sign-up + `rate_limit` + `unauthenticated_access_only`.** Hotwire section 5. Still the cheapest auth completeness.
+42. **GoRails “bulk operations” = checkbox-select-all** on declutter and mod queue (Hotwire 13).
+43. **Hotwire handbook: frame for the thing that changes.** Dating like, listing favorite, port watch — streams or frames, not SR page morphs.
+44. **Fractaled Mind / Campfire-on-SQLite load test.** If we ever need a number, `bin/ci` plus a local siege of `/up` and `/` is enough. Don’t import their Redis-era Campfire.
+
+### What this sitting will not open
+
+45. **Solidus, pgvector, MediaMTX, inbound ActivityPub storage, creator monetization, premium dating, donations.** Blockers are Postgres, RAM, ffmpeg, money. Named in `apps.yml`. Leave.
+46. **A fourth JS framework.** Importmaps + Stimulus + Turbo + the remaining SR scrolls. Evil Martians and Inertia stay on the shelf.
+47. **A neural outfit model, a two-tower feed, Chart.js, Google Places, glow.** Papers and catalogs that need a GPU, a ToS, or a shadow.
+
+---
+
+## Books — what can be law, what must stay the operator’s — 2026-09-11
+
+Assessed against MASTER `beauty:` / `TYPOGRAPHY` / `RAMS_CHECKLIST` / `markdown_style`, RAILS tokens and ScaleLint, and — for sound, mixing, and J Dilla — **STUDIO/dilla only** (`dilla_principles.yml` still `status: draft`, `groove_engine.rb`, `mix_score.rb`, `dilla_reference.yml`, `test_dilla_groove_timing.rb`). Face visemes and postpro headroom are not this sitting. Codify means a token, a detector, or a test. It does not mean a new colour, a new typeface, a new swing default, or a NURBS façade.
+
+A finding is a hypothesis. Sample the file the book would touch.
+
+### Already in the constitution (do not re-import as features)
+
+Bringhurst *Elements of Typographic Style* — measure 45–75ch, hanging punctuation, OpenType, tracking on caps only. Tschichold *The New Typography* — hang lists, optical not geometric edge (`geometry_type#check_hanging`). Müller-Brockmann *Grid Systems* — 8px rhythm, 12-col. Rams ten principles — `RAMS_CHECKLIST`. Ando — `markdown_style` and ma. Wroblewski *Mobile First* — `min-width` bands. Le Corbusier Modulor — `geometry_type` principle=modulor. EBU R128 / Katz *Mastering Audio* — `dilla_reference.yml` LUFS and true-peak windows. Charnas *Dilla Time* (the time-feel, not the biography) — `dilla_principles.yml` independent clocks, phrase-level drift, no fixed swing percentage; `groove_engine` and `test_dilla_groove_timing.rb` already distinguish straight (≤50) from swung.
+
+### Graphic design — codify the rest of the page, not a new look
+
+1. **Hochuli *Detail in Typography*.** Micro already named (`hyphenate-limit-lines: 2`, oldstyle on `.prose`). Completeness is applying `.prose` to legal/mailer (second pass 55–59), not a new YAML block.
+2. **Butterick *Practical Typography*.** Practical web rules overlap Bringhurst and are already the `TYPOGRAPHY` config. One extra that is not yet a detector: “one space after a period.” A lint on `  ` after `.` in `nb.yml`/`en.yml` prose values. Don’t run it on code.
+3. **Ellen Lupton *Thinking with Type*.** Alignment as a system: one ragged edge per column. Detector: a `.prose` / `.legal-prose` block that is `text-align: center` for body (kickers may stay). Centered running text is the defect; centered display type is not.
+4. **Josef Müller-Brockmann / Armin Hofmann *Graphic Design Manual*.** Contrast of size is `h1_body_min_ratio: 2.0` (second pass 82 — page titles are 1.75×). Completeness: decide which token is H1. Contrast of weight is 400/600/800 with 200 between steps — already. Don’t add 500/700.
+5. **Jan Tschichold *Asymmetric Typography*.** Body not centered, rules as structure not ornament. `NO_ASCII_DECORATION` covers the ornament. A source gate: `text-align: center` on `p` inside main. Leave splash/hero.
+6. **Itten *The Art of Color*.** Seven contrasts. **Do not pick hues.** The only codifiable slice: count distinct non-token hexes in a stylesheet (ScaleLint’s cousin). Magic colour is already `MAGIC_COLOR` / tokens. Don’t implement simultaneous contrast as a palette pass.
+7. **Meggs *History of Graphic Design* / Hollis.** History, not a detector. Skip.
+8. **Tufte *The Visual Display of Quantitative Information*.** Data-ink. Amber charts are CSS `--share` bars, no Chart.js — already Tufte. A test that `_histogram` / `_figure` contain no `<canvas>` and no box-shadow. Chartjunk is the glow/3D the law already forbids.
+9. **Vignelli *The Vignelli Canon*.** Few faces, grid, no decoration. `max_font_families: 2` per surface. Marketplace hero still breaks it (second pass 95). Completeness: kicker stays the body family.
+10. **Rand *Thoughts on Design* / *Don’t Make Me Think* (Krug).** Honesty of state is Rams `honest` and `COMPLETION_THEATER`. Empty/loading/error is `RAMS_CHECKLIST.thorough`. Already gated. Don’t add a second checklist.
+11. **Gestalt (proximity, similarity) via Lupton *New Basics*.** Detector: two adjacent interactive controls whose hit boxes overlap (tap 44 already). Similarity: one `btn` language — zen buttons vs `btn--primary` is the one-chrome pass, already open.
+
+### Architecture — haptic and parameters, not blobs
+
+12. **Pallasmaa *The Eyes of the Skin*.** Against ocularcentrism: tap, focus, motion, sound, skip-link. Already: `--tap-min` 44, skip-link, `prefers-reduced-motion`, `haptics` controller, `battery-aware`. Codify: `haptics` on dating like/dislike and takeaway “placed” if the controller is mounted and the view never fires it. Don’t add scent or fake material textures. Don’t add parallax as “depth of field” (FLAT_PIXELS).
+13. **Zumthor *Atmospheres*.** Material honesty: a token is a material; a gradient pretending to be light is not (dating button gradient, Hotwire leftover 146). Document or retire with the immersive chrome. Don’t invent a stone filter.
+14. **Alexander *A Pattern Language*.** Named patterns. `SURFACES.md` dialects and `LAYOUT.md` chrome *are* the pattern language. Completeness: `data-shell=` still queued (second pass 41). One attribute, two values (browsable / immersive), CSS already exists.
+15. **Kahn served/servant.** Chrome vs content column. One-chrome pass. Don’t restate.
+16. **Le Corbusier *Modulor*.** Already `principle=modulor` on type ratio. Soft fail. If H1 stays 1.75×, either lower the ratio in law (needs a deletion elsewhere) or raise the title token — operator’s call on the number.
+17. **Venturi *Complexity and Contradiction*.** “Less is a bore” fights Ando/Rams/FLAT_UI. **Do not codify.**
+
+### Parametric architecture — the heuristic that fits, the style that does not
+
+Schumacher *Autopoiesis* / Parametricist Manifesto: *avoid* right angles, repetition, rigid primitives; *prefer* NURBS, blobs, continuous differentiation. That style contradicts this tree’s CRT-flat zeros, 8px grid, and Ando planes. **Do not import the look.**
+
+The *method* is already the design system:
+
+18. **“Script associations between parameters.”** `design_tokens.yml` → `_dialect_tokens.scss` → `generate_face_root_css.rb`. A new px in a vertical sheet that is not a token is an uncorrelated subsystem — ScaleLint. Completeness: ERB `<style>` (legal/mailer) is the uncorrelated island. Point the lint there.
+19. **“Differentiate gradually, correlate systematically.”** `clamp()` on type and `--page-gutter`. `CLAMP_TYPOGRAPHY` already. Splash `clamp(2.5rem, 12vw, 5rem)` bypasses `--text-display` (second pass 119). Correlate or drop.
+20. **“Nothing remains pure; every subsystem inflects another.”** Shared `--z-*`, `--tap-min`, `--chrome-inset` across MASTER face and RAILS. Face still has 13 of 87 tokens in common (one chrome). Completeness is the chrome pass, not NURBS.
+21. **Negative heuristic we keep from Modernism, not Parametricism:** repetition of the *grid* is the point. Schumacher’s “avoid repetition” would fail every list row. Don’t add a detector for “too rectilinear.”
+22. **Frazer *An Evolutionary Architecture* / Burry *Scripting Cultures*.** Generate from constraints. Gates + ratchets + `FixLoop` are that. Don’t add a genetic façade generator.
+23. **Grasshopper analog.** Tokens are the sliders. A “param” that exists in YAML and is unread is `data_reach` unnamed — already the inert-config class.
+
+### Typography books beyond Bringhurst (implementation, not restatement)
+
+24. **Bringhurst ch. 8 (shaping the page) / ch. 10 (appendices, character set).** En-dash for ranges is a rule (`--` in running nb/en). Completeness: a locale lint for `2010-2014` that wants `2010–2014` in prose YAML, not in ISO dates or pkgpaths.
+25. **Hochuli: hyphenate-limit-lines.** Named in law, missing in CSS (second pass 100). One declaration on `.prose`.
+26. **Norwegian quotes.** Bringhurst + law `norwegian_guillemets`. CSS `quotes:` on `html[lang="nb"] .prose` (second pass 101). Don’t rewrite copy.
+27. **Kane / Felici.** Software manuals. Skip; Butterick covers the web case.
+
+### STUDIO/dilla — sound design, mixing, and J Dilla (this tree only)
+
+Chion’s visemes and postpro headroom were the wrong tree. Katz, Izhaki, Farnell, Sonnenschein, Snoman, Huber, and Charnas *Dilla Time* land on `STUDIO/dilla`. Never change a rendered-sound default. `dilla_principles.yml` names Charnas as primary bibliography and has **no Ruby reader** (grep hits only the file). That is inert law until `groove_engine` or a probe loads it.
+
+28. **Charnas *Dilla Time* — the time-feel, not the life.** Straight and swing at once, per part. `groove_engine.rules` already say independent clocks and no fixed swing%. Status is `draft`. Promote to `active` the same commit that makes `DillaSources` or `groove_engine.rb` `YAML.safe_load` the file. One test: on a two-bar groove, kick and hat offsets are not identical on every hit. `test_dilla_groove_timing.rb` already proves `swing_role_offset_ms` is per-role; it does not yet load the YAML.
+29. **Phrase-level drift, not random jitter.** Principle `Favor phrase-level drift over random jitter`. Detector already: `test_bare_rand_call_sites_do_not_grow`. Don’t add a hit-level noise source. Don’t retune `SWING`.
+30. **Single `SWING=` is the fallback, not the design.** Document in `dilla help knobs` that per-role offset is the Charnas move. Keep the knob. Changing its default is a rendered-sound change.
+31. **Silence is musical material / drums.ghost_notes.** Don’t auto-fill rests with hats. A probe that a pattern rest stays a rest — only if missing. Ghost notes are a priority in `drums:`; if the engine already writes them, the YAML is documentation; if not, don’t add them to a keeper take.
+32. **`remove_elements` / `simplify` twice in `generation_pipeline`.** That is COLLAPSE_BEFORE_ADDING for notes. Don’t add a density ceiling that strips a rendered default. Optional: a dry `dilla characterize` line that reports note-count per bar, no rewrite.
+33. **Sonnenschein / Izhaki — bands, not a new EQ.** `mix_score.rb` `REFERENCE` is measured from demo29/demo30 (kick_vs_mid, sub_vs_mid, cymbal_crest, tilt, LRA). Completeness: a stacked-leads fixture fails `spectral_audit` / MixScore; if it doesn’t, the audit is a comment. Leave the ranges. **Do not retune.**
+34. **Katz / EBU R128.** `dilla_reference.yml` `true_peak_max_dbtp: -1.0`, LUFS −20.5..−12.5. `MixScore::REFERENCE[:lufs]` is −18..−15. Two windows. Completeness: one source, the loss-gate test already pins reference ↔ quality. Don’t widen either to absorb a hot take.
+35. **`mixing.avoid: over_limiting, excessive_brightness, sterile_perfection` vs `anti_patterns: maximize_loudness, overcompress`.** Same rule twice in one file. Fold. `MixScore` LRA below 3 is “flat” — that is sterile_perfection as a number. Keep the number; delete the duplicate prose.
+36. **Farnell *Designing Sound*.** Procedural path is `analog_synth.rb` / `devices.rb`. Don’t add a third synth. Sampling path is `sampling_engine.operations` (chop, resample, pitch, filter, reverse_tail, truncate, layer) — RadioChop / sample_flip already. Completeness: `dilla help chop` names those operations in that order, or the YAML is unread.
+37. **Snoman / form.** `composition_engine.rb` + `test_dilla_form_map.rb`. `arrangement.patterns: introduce_small_changes, remove_elements, filter_transitions`. Don’t retune drops. Completeness: form-map test still runs under suite load (three probes were timing out — STUDIO “not worth chasing”).
+38. **Huber — signal chain as data.** Provenance sidecars. Completeness: `reproduce_command` includes pins when `USER_PINNED_ENV` is set (STUDIO 1000). No new bus processor.
+39. **`critic.scorecard` is five zeros and `acceptance: groove >= 0.95`.** Nothing in `lib/` reads it. Either `characterize` / council prints those five, or delete the block. A scorecard nobody scores is the inert-config defect.
+40. **`anti_patterns: copy_reference_track`.** The engine must not ingest a Dilla record. A test that `TRACK_SAMPLE_LOOPS` / crate paths do not match a denylist of catalog titles is enough. Don’t put audio in the repo to prove it.
+41. **Do not implement the biography.** Camp Amp, SP-1200, Donuts, Questlove interviews as narrative. `identity:` and `bibliography.primary` stay. No sample of a Dilla record. Chion *Audio-Vision* (mouth-sync) is MASTER face visemes — out of this list. Owsinski headroom on stills is postpro — out of this list.
+
+### What these books must not become
+
+42. **A Parametricist CSS** (splines, blobs, no right angles). Fights FLAT_UI, the 8px grid, and the CRT dialects.
+43. **An Itten palette generator.** Operator eye.
+44. **A global swing retune “because Charnas.”** The feel is per-role offsets that already exist. Changing `SWING` default is a rendered-sound change.
+45. **Pallasmaa as perfume, video, or WebGL fog.** Haptics and reduced-motion only.
+46. **A second type scale from Hofmann exercises.** One scale in `_tokens.scss`.
+47. **Importing a book as unread YAML.** `dilla_principles.yml` is the cautionary example (draft, parallel to the tests). If a new file is added, it needs a reader the same day — `test_dilla_groove_timing` or ScaleLint — or it is inert law.
+
+---
+
+## Agentic coding, agent OS, Rails tests, layout refine — 2026-09-11
+
+GitHub (sifted-awesome-ai-agents 2026-09-11, best-of-Agent-Harnesses, ANOLISA, agent-swarm, SWE-agent lineage) and ar5iv (APEX–SWE 2601.08806, SWE-Search 2410.20285, SWE-agent ACI). Rails: DHH’s 359→10 system tests, Rails 8.1 generators, Cuprite, capybara-screenshot-diff, visual_contract already in this tree.
+
+MASTER already is an agent OS: constitution, scan/fix, worktrees, taint, `OutputFilter`, `ReadFile` truncation, `QuotaGate`. RAILS already has layout JSON snapshots, visual_contract pixel_diff + console_errors + axe, system-test generators off. Steal *interfaces*, not Python runtimes or SaaS Percy.
+
+A finding is a hypothesis.
+
+### MASTER — harness, not a new kernel
+
+1. **APEX–SWE (ar5iv 2601.08806): epistemic discipline beats raw coding.** Pass@1 on production tasks is ~25%. The paper’s driver is “distinguish assumptions from verified facts, and resolve uncertainty before acting.” That is this repo’s “verify the instrument.” Completeness: a `Scan::Finding` field `status: hypothesis | measured` (scan findings start hypothesis; a test or `--explain` that ran is measured). Don’t add a second slogan.
+2. **Observability tasks, not just patches.** APEX–SWE’s second half is debug-from-logs. `/dmesg` and `Trace::Dmesg` exist; ChatController#dmesg is a hole (first inventory). Completeness: `/review --only scan MASTER/runtime/*.jsonl` (or the last N Swallow lines) with a fixture log that must flag a known bus-name mismatch. That is the observability bench for this tree.
+3. **Harness > model.** best-of-Agent-Harnesses / SWE-bench Pro: swapping the harness moved pass@1 more than swapping the model. START_HERE should say the product is the harness (`soul.yml` + tools + `OutputFilter`), not the default_model. One sentence.
+4. **Agent-computer interface (SWE-agent, Yang et al.).** Tools that return walls of text waste the window. `Io::ReadFile` already windows lines; `OutputFilter` already compresses diffs. Completeness: JSON tool results (WebSearch, GitContext, scan JSON) go through the same filter — `record_saved` already exists. Grep `Result.ok(` in `lib/io/` for payloads that skip it.
+5. **Span context, not whole files (SWE-Search 2410.20285).** File context as class/method spans with ids. `Io::SymbolLookup` exists and is untested (first inventory 51). Completeness: `/review` of a method takes the method body, not the 400-line file. Don’t build MCTS around it.
+6. **Don’t import MCTS / debate-of-three for FixLoop.** SWE-Search’s Value Agent is the council. Fifteen-pass FixLoop is enough. A discriminator debate is a third council.
+7. **Token-less / Headroom compression.** ANOLISA and Headroom (71k) compress tool output before the model. `research_thresholds.yml prompt_compression_ratio: 20` is unread-or-narrow. Wire it to `OutputFilter` for HTML/JSON, or delete the key. Don’t vendor a Python compressor.
+8. **Checkpoint / rollback of the working tree per fix pass.** SWE-Search keeps a git-like commit tree of states. `FixLoop` writes in place. Completeness: each autofix pass is a path-scoped commit on the worktree (`git commit -- path`) so `/fix` can `reset` one pass. Refuse on main (already worktree law).
+9. **Schema-validated agent results.** agent-swarm: JSON schema on worker output. Council/scan JSON already has a shape. Completeness: `Scan::Finding` schema in a test, not a new protobuf. Schema retries do not consume the agent budget (this TUI already says that).
+10. **Local cheap router.** use-agent-os Pilot Router: classify, send to cheapest capable model. `QuotaGate` + `providers.yml` exist. Completeness: `/scan` never calls a frontier model (`MASTER_SCAN_DETERMINISTIC`). Test that. Council stays the expensive path.
+11. **Do not adopt Docker worker fleets (OpenSandbox, agent-swarm containers, Orca ADE).** Production is one OpenBSD box; isolation is `operator worktree`. A Linux sandbox is a third runtime.
+12. **Do not become Hermes-as-OS.** Hermes RFC: process table of agents, cron, IPC. `FixLoop` / `WatchLoop` / `StandingOrders` are enough loops. A process table of subagents is the TUI’s job, not MASTER’s.
+13. **CaMeL taint is already `lib/ground/taint.rb`.** Completeness: WebFetch/WebSearch output is `Tainted` before it reaches a write tool. A test that a tainted URL cannot reach `AstEdit`.
+14. **ScreenAgent / computer-use.** Out. The face is not a VLM driver; CDP belongs to RAILS gates.
+15. **Skills as a filesystem (ANOLISA SkillFS).** `lib/cli/skills.rb` vs `data/patterns.yml` (first inventory 265). One list, index first, body on demand — “map, not encyclopedia.” Don’t dump every skill into the system prompt.
+
+### RAILS testing — few smokes, geometry over pixels
+
+16. **DHH / Rails 8.1: generators no longer emit system tests.** This tree already `config.generators.system_tests = nil` on brgen and bsdports. Amber: confirm the same line. Keep the handful that exist (`public_navigation`, `expanding_tabs`). Do not grow a 359-test browser suite. Integration tests for HTTP; gates for chrome.
+17. **Cuprite vs Selenium.** Guides and Evil Martians recommend Cuprite (Ferrum/CDP, no chromedriver). MASTER already uses Ferrum. RAILS Gemfiles still `selenium-webdriver`. Completeness: one driver family. Either Cuprite in `application_system_test_case.rb` or keep Selenium and stop implying CDP and Selenium are the same stack. Don’t run both.
+18. **Console logs in system tests.** visual_contract already records `console_errors`. System tests do not. If a smoke stays, fail on `page.driver.browser.logs` / Cuprite logger — same field as the gate.
+19. **Do not add `capybara-screenshot-diff` or Percy/Chromatic/Playwright.** visual_contract already has `pixel_diff_count` / `pixel_diff_ratio` / `pixel_diff_image` (ChunkyPNG). A second baseline set is a second source. layout_snapshot JSON is the *layout* ratchet; pixels are the *paint* ratchet. Don’t merge them.
+20. **Do not add Lookbook / lookbook_visual_tester.** ViewComponent / LAYER_CAKE decided against. Previews would be a third chrome.
+21. **axe-core-capybara is in brgen’s Gemfile.** Completeness: visual_contract `accessibility_violations` is the gate; don’t also run axe in every system test. One consumer.
+22. **Mask volatile regions in pixel_diff.** Timestamps, `time_ago`, animated-number, ads. visual_contract should exclude `[data-money]` jitter and `time` elements or the baseline will churn like layout_snapshot already does. Named selectors, not a looser ratio.
+23. **Count the system tests.** HEY kept ~10. `RAILS/**/test/system/**` is the census. If it is already ≤10 per app, write the number in `apps.yml` notes so the next agent does not add a 11th for “coverage.”
+
+### Automated layout refining — suggest tokens, don’t paint
+
+The tree’s layout tool is `geometry_probe` + `layout_snapshots/*.json` + `visual_contract`. Auto-refine means a *named token move*, not a pixel rewriter (operator eye).
+
+24. **Snapshot fail → token suggestion.** When a snapshot drifts, emit the ScaleLint/measure token that would absorb it (`--space-3`, `--measure`, `--tap-min`) instead of rewriting the JSON. A dry `layout_snapshot --explain` line. Don’t auto-commit a new baseline from an agent (the August drift is still open).
+25. **`walk.js` already walks the page.** Completeness: hanging-marker probe on legal/wiki (second pass 124). That *is* automated layout refine for Tschichold. Don’t add a ML layout model.
+26. **Don’t run an AI “make it pretty” pass on SCSS.** Rams honest + tokens. A model that rewrites `_typography.scss` is the opposite of the law.
+27. **Playwright `toHaveScreenshot` / Storybook.** Node. This check path is Ruby. Skip.
+28. **Ferrum in MASTER vs Selenium in RAILS.** Same browser, two drivers, two failure modes. Pick one for gates+smokes (Cuprite/Ferrum is the one MASTER already boots).
+
+### What this sitting will not open
+
+29. **Orca / herdr / holaOS / Electric as a MASTER rewrite.** Stars ≠ a constitution. Steal compression, span context, hypothesis-vs-measured, log review.
+30. **A second visual SaaS.** visual_contract + snapshots are the suite.
+31. **Cucumber.** DHH and this tree’s integration+gate split already replaced it.
+
+---
+
+
+
+
 
 
 
