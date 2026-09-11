@@ -6567,6 +6567,247 @@ The tree’s layout tool is `geometry_probe` + `layout_snapshots/*.json` + `visu
 
 ---
 
+## Bughunt — 2026-09-11
+
+New defects from reading the four trees after the inventories. Does not restate event-name drift, rate limits, English literals, job uniqueness, LUFS dual windows, or unread `dilla_principles.yml`. A finding is a hypothesis.
+
+### MASTER
+
+1. **`cable_bridge.rb` subscribes `"*"` and broadcasts every bus event on `master:events`.** `MASTER/web/config/initializers/cable_bridge.rb:18-25`. Visitor-safe prefixes exist on `EventsController`; Cable has none. A logged-in face tab receives `council:veto`, tool paths, `fix_loop:*`. Filter with the same allow-list as SSE, or don’t subscribe `*`.
+2. **That thread `rescue StandardError` to `Rails.logger.debug`.** A failed broadcast is silent in production (`debug`). `warn` or Swallow.log.
+3. **`MASTER_CABLE_BRIDGE_STARTED` is a constant flipped in `after_initialize`.** Reload in development can warn or skip a second boot. A module ivar, not a constant.
+4. **`TtsJob.spawn_worker` `report_on_exception = false`.** `tts_job.rb:86`. A worker death is invisible; the pool `reject!(&:alive?)` only notices on the next spawn. Log the exception before the loop, or leave report on.
+5. **`ai_boot.rb` `Thread.new { wl.run }` and `watcher.run_forever` with `abort_on_exception = false`.** Same: a dead WatchLoop looks like a hang. `abort_on_exception = true` in non-test, or join+restart with a log.
+6. **`bus.subscribe("fix_loop:clean") { Thread.new { propose_tree.call } }`.** Every clean/plateau starts an unbounded thread. If FixLoop fires often, this is a thread leak. One worker, or `Thread.new` only if the previous finished.
+7. **`OutputFilter` compresses git/ls/tree and long line-counts.** JSON from WebSearch / scan / GitContext can still dump. Route those `Result.ok` bodies through `filter` (agent-harness item 4). Brittle: `GIT_STATUS_RE` is a regex on the whole blob.
+8. **`YAML.load_file` in `RAILS/gates/release.rb:37` and `OPENBSD/verify_deploy_identity.rb:16`.** Ruby 3.4 `Psych.load_file` still permits aliases; not `safe_load_file`. These files are ours, but the habit is the bug. `YAML.safe_load_file`.
+9. **`World#write_atomic` rescue deletes tmp then re-raises.** Good. `File.delete(tmp)` if rename succeeded on a sibling crash? Only in rescue. Fine. The pitfall: if `abs` is on another device, `File.rename` raises EXDEV and the write never lands. Document, or copy+rename.
+
+### RAILS
+
+10. **`SecurityAdvisoryRefreshJob` sleeps 6s between ports, 50 ports → ~5 min on the bulk worker.** `bsdports/app/jobs/security_advisory_refresh_job.rb:8-19`. On a 1 GB box that is the whole queue. Drop the sleep; NVD is rate-limited in `NvdCve` or with `limits_concurrency`. `rescue StandardError` per port is fine; the sleep is the bottleneck.
+11. **When the cursor is past the last id, the job wraps to `Port.order(:id).limit(50)` forever.** Same file `:14`. Intended recycle, but it never idles. After a wrap, write cursor and `return` if the first id is ≤ the previous cursor.
+12. **Package index follows redirects with `URI.join` to any host.** `package_index_fetcher.rb:79`. If `mirror_url` or `Location` is `http://169.254.169.254/`, that’s SSRF. Allow-list host to the mirror’s host (and ftp.openbsd.org). Same shape as `OutboundHttp`.
+13. **`Hashtag.find_or_create_by!(name:)` under a unique index.** `taggable.rb:20`. Concurrent posts with the same tag raise `RecordNotUnique` and fail the `after_save`. Rescue and `find_by!`.
+14. **`Vote#apply_score_delta` uses `saved_change_to_value`.** Create: `[nil, 1]`, `nil.to_i` is 0, delta 1 — OK. `after_save` on a touch with no value change: `saved_change_to_value` is nil, `before, after = nil` → `nil.to_i` 0. OK. `after_destroy` uses `value` after destroy — still in memory. OK. Pitfall: `update_all` skips `updated_at` on the votable; WIRING_NOTES trap. Add `updated_at = ?` or leave if score is the only reader.
+15. **`usage_count` on hashtags is nullable.** `schema.rb:570`. `increment!` on nil raises. Default 0, NOT NULL (same family as listing `views_count`).
+16. **`Takeaway::Restaurant#update_columns(rating: avg&.round(1) || 0)`.** Average of integers rounded to 1 decimal is Fine; `round(1)` on a float is not money. Don’t store money this way. Rating is OK. Inconsistency: other counters use `increment!`.
+17. **Release gate `sleep 1` in a retry loop.** `gates/release.rb:99`. Fine for a laptop gate; don’t copy into a job.
+18. **`Date.today` in app code vs `Time.zone`.** Dating `ranked_for` seeds `Date.current` — good. Grep remaining `Date.today` in `app/` (not gates). UTC-vs-Oslo can shift daily picks at 00:00–02:00.
+19. **`amber` `config.generators.system_tests`.** brgen and bsdports set `nil`. If amber still generates system tests, the 8.1 policy is inconsistent.
+
+### STUDIO / OPENBSD
+
+20. **`MixScore.band` interpolates `path` into backticks.** `mix_score.rb:43`. `verify_fx.rb:83` interpolates `path` and `af`. `dilla.rb:15011` ffprobe the same. `live/rack.rb:182` uses `shellescape`. One helper: `Open3.capture2e("ffmpeg", "-i", path, ...)` with a timeout. A crate path with `"` is a command.
+21. **No timeout on those ffmpeg backticks.** A hung decode blocks `rake test` / characterize forever. `Open3` + `Timeout` or ffmpeg `-t`.
+22. **`measure` `.to_f` on a missed regex is `0.0`.** A failed ffmpeg looks like silence. Raise or return `nil` if the match is missing.
+23. **`OPERATOR.sh` `sleep 10` / `sleep 5` in loops.** Fine for boot. Pitfall: `set -e` with sleep is OK; an unquoted `$delay` is not if delay is empty. Quote `"$delay"`.
+24. **lora `YAML.load_file` in `render_config.rb` / `shoots.rb`.** Same as 8. Toolkit YAML is local; still `safe_load_file`.
+
+### Smells that are pitfalls, not style
+
+25. **FixLoop background + propose_tree threads + WatchLoop + cable_bridge + TTS workers.** Five unsupervised thread families in one Falcon process. A leak in one starves TTS. Bound them (`HostBudget`) or don’t start propose_tree from the web process.
+26. **`SecurityAdvisoryRefreshJob` + `sleep` + no uniqueness** (uniqueness was inventory). Together: two jobs, ten minutes of sleeps, NVD bans the IP. Continuations (Rails 8.1 list) + no sleep.
+27. **Redirect-follow without host pin** is the same class as DynamicHttp+SSRFGuard. One allow-list helper for all `Net::HTTP` in RAILS (`CrawlSupport.fetch` already exists per `file_length_ratchet_test` comment). Point the package index at it.
+
+### OPENBSD — locks, env, false greens
+
+28. **`.deploying-*` does not cover the window `resource_guard.sh` describes.** App `rc_pre` touches the flag, `pkill`, `sleep 1`, then `rm`. The 300s `/up` wait is after `rc_cmd`. Guard comment says the lock lasts through precompile, migrate, cold boot. A 5-minute tick can shed during the boot the lock was meant to protect.
+29. **master’s lock is the same hole, shifted.** `etc/rc.d/master` touches `.deploying` after `bundle34 install` and removes it at the end of `rc_pre` *before* the `/up` wait. Bundle and Falcon bind are uncovered.
+30. **`*_jobs` drop the app’s `set -a`.** `rc.d/brgen` exports the whole env file. `brgen_jobs` / `amber_jobs` / `bsdports_jobs` `. /etc/<app>.env && export RAILS_ENV SECRET_KEY_BASE HOME …` without `set -a`. VAPID, SMTP, and the rest of the file never reach Solid Queue. Push and mail from jobs fail closed-looking.
+31. **Two `PUB4_CI_LOCK` policies.** `lib/ci_lock.sh` only honours an override under `/var/db/pub4/`. `bin/with-ci-lock` honours any non-world-writable directory. Two mutexes.
+32. **`pub4_ensure_ci_lock` deletes `.holder` while a holder may own the flock.** Attribution races; running CI looks unheld.
+33. **`nsd-resign` reports health when it signed nothing.** Empty keys or empty zone dir → “all zones valid — nothing to do.” Pass on empty.
+34. **`bin/smoke-apps.sh` cannot fail master.** Master not listening is `skip`. A dead face plus live brgen exits 0.
+35. **`test_tracked_crontab.rb` never sees the uptime-check line.** `scheduled_commands` takes `line.split[5]` and keeps only paths starting `/`. Crontab `ALLOW_BSDPORTS_DOWN=1 /usr/local/bin/uptime-check.sh` — field 5 is the env assignment. The test would still pass if that wrapper vanished.
+36. **`drain-jobs.sh` turns a dead sqlite into “nothing due.”** Unreadable db → 0; `solid_queue_proof.rb` treats “nothing due” as proof the drain ran. A broken queue file keeps deploys green.
+37. **`drain-jobs.sh` uses `cut`.** Banned. Ruby or zsh split.
+38. **`core-reclaim.sh` RSS is `ps | grep | grep -v | head -1 | awk`.** Wrong pid; ceiling never fires. `head`/`awk` banned.
+39. **`emergency_cpu.sh` uses `head`.** Crisis path on OpenBSD `head`.
+40. **Weekly integrity lock is a no-op if `fuser` is absent.** `if [ -f "$LOCK" ] && fuser "$LOCK"` — missing fuser makes the condition false; the script proceeds and races CI.
+41. **`start_all_apps.sh` restarts relayd after a fixed 5s.** Amber rc.d waits up to 300s for `/up`. Relayd can reload onto empty backends.
+42. **`etc/rc.d/master` digest is unquoted.** `cksum $_face_assets …` word-splits. Empty list plus glob stamps a digest that is not the asset set.
+43. **`bin/vps-state` swallows a corrupt deploy stamp.** `JSON.parse` rescue nil → “never deployed.”
+44. **`resource_guard.sh` memory path fail-opens to 100%.** If top and vmstat fail, memory-only pressure never sheds.
+45. **`smtpd.conf` listens on `vio0`.** Interface rename and inbound 25 dies.
+46. **Hardcoded `/home/dev/pub4` in `start_all_apps.sh` and rc.d.** `PUB4_ROOT` / a worktree is ignored.
+47. **`dr-pull --check` exits 0 when `~/pub4-dr` is missing.** The local gate that should notice a stale backup is a skip on a Mac that never created the dir.
+48. **`amber_queue_sweep.sh` has no `QUEUE_DB` existence check.** `sqlite3` on a missing path creates an empty file, then SQL against missing tables dies — or plants an empty `production_queue.sqlite3`.
+
+### STUDIO — ffmpeg 0.0, scratch races, silent session
+
+49. **Album master is the same backtick hole as MixScore, with gain.** `dilla.rb:34535–34541`. Failed ffmpeg → `I=0` → `gain = target - 0` applies ~19 dB of make-up. Don’t ship that take. Open3 + status + abort.
+50. **`audio_duration_sec` discards status, rescue `0.0`.** `build_harmony_loud` then `[dur, 8.0].max` — a failed probe mixes **8 seconds** of a longer stem.
+51. **Scratch names are not pid-scoped.** `harmony_loud.wav`, `live_tmp.wav`, `dilla_drums.wav` … Two `dilla` processes (or `PARALLEL=3`) write the same files. Pid-scoped temps exist at `:5735` and are unused here.
+52. **Scratch fallback is per-uid, not per-process.** `Dir.tmpdir/dilla-scratch-#{uid}`. CI user plus a second render still collide.
+53. **`CompositionEngine.load!` silent `rescue StandardError`.** Truncated `session.json` becomes a brand-new session with no warn. Jam looks like it loaded last night’s work.
+54. **`crate_dig` / `VocalChop.loops` / `Acapella.index` JSON parse with no rescue.** Corrupt index is a backtrace on the vocal path. Refuse with the path.
+55. **`kaggle_session.rb` `JSON.parse` at load.** Missing file raises on `require`, not on `run`. `ruby -c` never sees it.
+56. **postpro comment-strip `gsub(/^.*\/\/.*$/, "")` kills JSON lines that contain `//`, including URLs in strings.**
+57. **Playlist/learn JSON loaders `rescue StandardError` → empty.** Corrupt catalog looks like a first run; the next save overwrites it.
+58. **`sine_stream.rb` mutates ENV at load.** `ENV["WONKY_TOP_DIRT"] ||= …`. A require from a test leaks knobs.
+59. **Two `capture` APIs.** Engine `capture` → `[stdout, stderr, status]`; `RadioChop.capture` → a string. Copy-paste of `.first` across the boundary is a type error.
+60. **`mix-score` never calls `tool_available?("ffmpeg")`.** Engine mix metrics do.
+61. **`STREAM_ITERATE_LOG` is one shared path, no flock.** Concurrent streams interleave lines.
+62. **`bin/crate` ROOT is `…/dilla/crate`.** That directory is gone. `list`/`fetch` write a third layout the engine never reads.
+63. **`isolation.rb` loads every `test_dilla_*.rb` in one `-e` process.** session.json mtime races and ENV pins leak by construction. `rake test:dilla` still runs that way.
+64. **`EnvSandbox` restores ENV, not constants.** Engine constants computed from ENV at load (`ONLY`/`EXCLUDE` in acapella) stay at first-process values.
+65. **Album encode `Open3.capture2e` ignores status, then `rm`s the staged file** and prints loudness from the missing dest (0.0 again).
+
+Highest cost if wrong: 28–30 (deploy lock + jobs env), 36 (drain false-green), 49–53 (ffmpeg 0.0, scratch, silent session).
+
+### MASTER — writes, taint, request path
+
+66. **`AstEdit` calls `atomic_write`; the helper is `write_atomic`.** `lib/io/ast_edit.rb:69,91`. Every write is `NoMethodError` caught as `Result.err`. The dangerous tool cannot edit. Rename the call.
+67. **PathGuard is prefix-only; World realpath-walks ancestors.** ReadFile/WriteFile use PathGuard. A symlink inside the root reaches `/etc`. Put World’s ancestor-realpath check in PathGuard.
+68. **`SearchFiles` `Dir.glob(File.join(@root, glob))`.** `File.join(root, "/etc/passwd")` is `/etc/passwd`. Reject absolute globs; PathGuard every hit.
+69. **`GitContext#show` takes `path` as a git ref.** `HEAD:.master/config.yml` dumps the web token. Blame/diff use `safe_path`; show does not. Never `rev:path`.
+70. **`ReadFile` `File.readlines` the whole file then slices.** A 200k-line file becomes prompt. Sacred paths block writes, not reads — `.master/config.yml` is ingestible. Line-range IO; refuse secret paths on read.
+71. **TTS `job_id` is SHA256(voice|text)[0,32].** `readable_job` skips ownership when ready. Anyone who can guess the utterance fetches the mp3; identical lines cross conversations. Random id; always `owned?`.
+72. **`GET /chat/tts` and `GET /chat/enhance` have side effects.** Prefetch and query logs trigger paid work. Enhance is not in `AUTHENTICATED_ACTIONS`. POST only; auth enhance.
+73. **`require_same_origin!` allows missing Origin when `Sec-Fetch-Site` is not `cross-site`.** curl CSRF from a sibling host with no fetch metadata passes. Command already skips CSRF. Require Origin or `same-origin`.
+74. **`GET /chat/skills`, `GET /chat/research`, `POST /chat/photo` are visitor-reachable.** Research is outbound HTTP; photo is 12MB + postpro. Authenticate or quota.
+75. **`GET /ingress/health` lists cron/webhook names unauthenticated.** Public health stays `{ok:true}`; names behind the token.
+76. **`production.rb` `host_authorization = { exclude: ->(_) { true } }`.** Any `Host:` is accepted behind relayd. Allow the real hosts only.
+77. **`DynamicHttp` interpolates `{param}` into URL/body with no escape.** Query injection; SsrfGuard sees the URI after interpolate. Escape by slot.
+78. **MCP SSE `cfg["url"]` has no SsrfGuard.** Writable `mcp_servers.yml` becomes an internal-network client.
+79. **`pairing.rb` `allowlist_path` `File.expand_path` can leave the tree.** Force under `.master/pairing/`.
+80. **`ensure_brain_files!` writes `data/IDENTITY.md` if missing**, bypassing sacred `data/`. Write under `.master/` or don’t create constitution files at runtime.
+81. **`Timeout.timeout` around `Net::HTTP` / UNIXSocket / Ferrum.** World already measured Timeout does not kill the child. Hung POST holds a Falcon worker. Use `read_timeout` / `IO.select` / Ferrum’s timeout; `quit` in ensure.
+82. **SSE loop `sleep 0.1` for up to 600s, `subscribe("*")` unbounded Queue.** Two Falcon workers plus chat SSE starve the 1 GB box. `Queue.pop(timeout:)`; cap; `HostBudget`.
+83. **`/health` SHA256s `Gemfile.lock` every poll** to memoise selftest. Relayd hits this. Hash on mtime+size change only.
+84. **Hard compact sends all `session.messages` into `agent.ask`.** That’s the window that overflowed. Summarise a tail.
+85. **`SqliteStore` WAL failure falls back to `:memory:`.** Pairing/memory vanish on restart; process looks healthy. Fail closed for durable stores.
+86. **Three atomic writes; only `Io::AtomicWrite` fsyncs.** World/Live can leave a 0-byte file after rename of an unflushed tmp. One helper.
+87. **`FileProcessor` lock is `CREAT|EXCL` then delete; `remove_stale_lock` is mtime then delete (TOCTOU).** A crash holds the scan 300s. `flock` on a stable lockfile.
+88. **`mode_posture#set!` writes `.master/mode` and sets `ENV["MASTER_MODE"]` process-wide.** One Falcon worker’s `/mode` changes every request on that process. Don’t mutate ENV.
+89. **`pairing#revoke` skips `with_store_lock`.** Redeem vs revoke can resurrect a deleted token.
+90. **`context_window` soft compact `Thread.new { compact! }` which `session.clear!` while a turn may still append.** Compact under the session mutex.
+
+### RAILS — strict load, mass assignment, uniqueness, GET writes
+
+91. **Listing show `reviewable_by?` hits `orders.where` after `increment!`.** `restrict_with_error` is still strict. Signed-in show 500s. Include `:orders` or query `Marketplace::Order.where(listing_id:)`.
+92. **TV feed preloads `video_file` not thumbnail.** `_item.html.erb` `video.thumbnail.attached?` → strict 500. `includes(thumbnail_attachment: :blob)`.
+93. **Users#show posts without `with_attached_image`.** Profile cards 500 or N+1. Mirror HomeController preloads.
+94. **Inbox `includes(:participants, :messages)` loads every message in every thread.** Drop `:messages`; unread already has `unread_counts_for`.
+95. **Listing params permit `:status` and `:kind`.** Seller POSTs `status=sold` or flips kind without details. Drop `:status`; lock `:kind` on update.
+96. **Stores permit `:stripe_connect_id`.** Owner points payouts at another Connect account. Server-only OAuth write.
+97. **Partner programs permit `:status`.** Owner opens a draft with no review. `open!` / `pause!` only.
+98. **Takeaway restaurants permit `:active`.** Hidden field unpublishes the kitchen. Dedicated action.
+99. **Playlist like uniqueness includes nullable `set_id`/`playlist_id`.** SQLite unique treats NULL as distinct — two likes on the same playlist both insert. Partial unique indexes.
+100. **Dating match unique is initiator+receiver only.** A→B and B→A are two rows (comment admits it). Unique on `LEAST/GREATEST`.
+101. **Mention uniqueness has no unique index.** Race on edit double-notifies.
+102. **Affiliate conversion `transaction_id` allow_nil unique.** Duplicate paid postbacks. Reject blank ids.
+103. **Vote `after_save` `update_all` score.** A rolled-back vote still moved `posts.score`. `after_commit`.
+104. **Dating like `after_create :check_mutual_match` inside the transaction.** Rollback can leave a Match. `after_create_commit`.
+105. **GET nearby `#room`/`#widget` `join!` + `ensure_guest_user!`.** Crawlers mint users. POST join, or join when a message is sent.
+106. **GET stories show `view_by!`.** Prefetch inflates counts. Beacon/POST.
+107. **GET ports/places/amber items `record_activity!`.** Activity table grows with every crawl. Skip bots.
+108. **Daily picks: two tabs both `create!`, rescue unique, return `chosen` not the rows that won.** Page shows five faces the DB does not have. Reload `existing`.
+109. **Amber `MoneyInOre` `cents / 100.0` is Float.** Outfit totals drift. `BigDecimal`.
+110. **Amber `planned_outfit` `this_week` uses `Date.today..7.days.from_now`.** Date vs Time, UTC vs Oslo. `Time.zone.today`.
+111. **TV `comments_count` / `likes_count` have no writer.** Rank/UI that reads them is 0. `counter_cache` + default 0, or drop the columns.
+112. **Ports importer upserts one-by-one, no transaction.** Nightly vs web → `BusyException`. Wrap in `Port.transaction`. `ApplicationJob` does not `retry_on SQLite3::BusyException`.
+113. **PWA share skips CSRF on posts#share and amber items#share.** Require Origin allowlist or a share nonce.
+114. **Playlist sets unknown privacy string is treated as public.** Typo in DB leaks private sets. Default deny.
+115. **Comments#create with neither event_id nor post_id → `@commentable` nil → 500.** `head :not_found`.
+
+---
+
+## Restructure — one job, one door — 2026-09-11
+
+Cherry-picked. Not the sprawl census, not “split this file,” not LAYER_CAKE, not folding `dilla/live/`, not nesting `shared/lib/operator`, not three sign-in screens, not merging `probe`/`dogfood`. The move is always: two things that do one job become one thing, or a dead copy is deleted.
+
+A finding is a hypothesis. Verify the second caller before you delete the first.
+
+### MASTER
+
+1. **One atomic write.** `Io::AtomicWrite` (fsyncs), `World#write_atomic`, `cli/scan/live.rb`. Callers of the last two can leave a 0-byte file. One helper; the others become wrappers or go.
+2. **One PathGuard.** Prefix check vs World ancestor-realpath. Reads use the weak one. One module, the strong check.
+3. **One constitution loader.** `Ground::Constitution` vs `Core::Constitution`. Rename Ground’s to `PrincipleStore` or fold. `Master.law` is the reader of `rules.yml`.
+4. **One memory search.** `ground/memory_search.rb` vs `ground/memory/search.rb`. Index vs query. Honest names, or one class.
+5. **One mood.** `PressureEngine`, `Trace::ContextPressure`, `Cognition::Affect`. Document which bus events each owns, or fold PressureEngine into Cognition. Three weathers is a forecast.
+6. **One attention table.** `cognition/attention.rb` vs `cli/attention_context.rb` vs `data/attention_context.yml`.
+7. **Delete the unwired command tables.** `memory_commands` / `system_commands` / `media_commands` / … are required and never merged into `CommandRegistry.build`. Wiring them duplicates live verbs. Delete the dead tables; keep the one command worth merging (`/tools` list).
+8. **One diagnose door.** `check` / `ci` / `audit` / `probe` / `smoke` / `dogfood` / `doctor`. `probe` and `dogfood` stay (measured). `smoke` → `check --profile=ci` subset; `audit` → `operator lint --staged`. Document the Venn once; don’t add an eighth.
+9. **`bin/cli` execs `bin/master`.** Two entrypoints, one REPL. Completions generate from `HELP_TOPICS`.
+10. **`spec/` vs `test/` vs `web/test/`.** Face tests live in three homes. Two at most: `test/` for Ruby, `web/test/` for the face. `spec/core_smoke.rb` is not `*_spec.rb`.
+11. **`lib/rails/` moves to `RAILS/gates/lib` or becomes `/rails audit`.** MASTER should not audit RAILS by walking `Master::ROOT`.
+12. **`lib/deploy/` → `lib/operator/deploy_docs.rb`.** The name collides with `OPENBSD/`.
+13. **`work_commands_extra.rb` / `work_commands_status.rb`.** Split by verb or fold into `work_commands.rb`. `extra` is a junk drawer.
+14. **One snapshot verb.** `tools/snapshot.rb` vs `Trace::Snapshot::Publisher`.
+15. **One dogfood.** `spec/dogfood_spec.rb` vs `bin/dogfood` vs `rake dogfood`.
+16. **One skills list.** `lib/cli/skills.rb` vs `data/patterns.yml` skills_registry. Index first, body on demand.
+17. **One dmesg.** `lib/trace/dmesg.rb` vs `ChatController#dmesg`.
+18. **One token job.** `MasterIngressToken` vs `MasterWebToken` — names by job (HMAC vs cookie), not two classes that look interchangeable.
+19. **One log directory.** `WebEventLogger` vs `Trace::Log` vs `Swallow` JSONL.
+20. **`OpenbsdConfig` / `HostBudget` read `OPENBSD/` once.** Don’t duplicate `vm_resource.yml` in MASTER data.
+21. **Runtime deps from `master.gemspec`; web Gemfile is Rails + Falcon.** Two Gemfiles, two locks, two platform `if`s.
+22. **Completions generated from the live table.** `_master` still completes `through`. Add `_operator`. No hand-maintained verb list.
+23. **`mask.js` and the three mask_* files.** Dead; delete with the tests that grep them.
+24. **Cable vs SSE vs `visual_bridge`.** Three event pipes. Cable broadcasts `*`. One pipe for the face; Cable goes or takes the visitor allow-list.
+
+### OPENBSD
+
+25. **`operator.yml` is the command list.** RUNBOOK, CLAUDE, START_HERE, RECIPES currently copy it. Pointers, not tables. RECIPES is thirteen lines — fill from yaml or delete.
+26. **One deploy verb.** `bin/vps-deploy` is canonical. `vps_deploy_master.sh` calls it. `vps_production_push` is `SKIP_CI=1 vps-deploy all`. `deploy_all.sh` dies or becomes a wrapper.
+27. **One uptime checker.** `bin/uptime-check.sh` execs `health_check.rb --public-only`. `usr/local/bin/uptime-check.sh` is the install target of the same file, or a one-line exec. One list of hosts from `deploy_inventory.json`.
+28. **One “on box” bootstrap.** `vps_install_all` vs `vps_on_vm_install`. Fold; delete the `git stash`.
+29. **`check` calls `check-openbsd` for the identity/smoke overlap**, or START_HERE draws the Venn. Contributors must not need both by folklore.
+30. **rc.d apps from one tmpl.** `rails-app.tmpl` disagrees with brgen (PATH, pexp, timeout). Generate amber/bsdports from the live brgen script, or delete the tmpl so OPERATOR cannot install the wrong one.
+31. **Jobs rc.d `set -a` like the app.** Same env file, same export. Three footers → one `jobs.footer` with APP filled in.
+32. **`ALL_DOMAINS` lives in `data/dns.yml`.** OPERATOR.sh, Ruby gates, and health_check parse a shell array today. One yaml; shell reads it with `ruby34 -ryaml`.
+33. **`SMOKE_SCRIPTS` / `FLEET_INVENTORIES` include `relayd-watchdog`.** Hardcoded backend tables elsewhere die.
+34. **`dotfiles/` declared Mac-only, check none**, or it leaves the OpenBSD tree.
+35. **`restore_backups.sh` → `restore_litestream.sh`.** First line of usage: `use bin/dr-pull`. Name is the architecture.
+
+### RAILS
+
+36. **One `WebPushJob`.** `brgen/app/jobs/web_push_job.rb` and `shared/app/jobs/shared/web_push_job.rb`.
+37. **Notifications: host or shared, not both.** brgen controller vs `Shared::NotificationsController`. Promote when city grouping unifies, or delete the stub.
+38. **Votes: host or shared reflex, not both.** `VoteReflex` and `votes#create.turbo_stream` — keep the stream (function-layout test); Reflex becomes a no-op or goes.
+39. **One `LiveSearchable` including deals.** Listings/stores/takeaway use the helper; deals still LIKE. Maps `#index` JSON vs HTML duplicates it.
+40. **One vertical nav partial.** `marketplace/_nav_bar.html.erb` vs `takeaway/_nav_bar.html.erb`. Accent var already on `body`.
+41. **One empty-state partial, callers pass `t(...)`.** TV channels still inline English titles.
+42. **One `finish_live_search`.** Duplicated across listings/stores/deals/restaurants/places.
+43. **Stimulus: one registration path.** `stimulus_boot.js` loads the fleet; unused reveal/auto-submit/content-loader still cost importmap. Register when present (carousel pattern) for the rest, or unregister.
+44. **One `application.js` Stimulus start.** Three app copies plus shared. If they only `import "controllers"`, one file in shared.
+45. **`lazy_image_tag` lives in the brgen host, called from dating.** Move the helper to shared so engine tests don’t need the host.
+46. **Legal/mailer `<style>` die.** `_typography.scss` is the type system. `.legal-prose` aliases `.prose`.
+47. **`.reading-column` / `.form-measure` are worn or deleted.** Defined, unused. Put them on legal and compose, or drop.
+48. **One money type.** Amber `MoneyInOre` float vs marketplace integer cents vs affiliate decimals. Integer minor units everywhere money is money. Ratings stay decimal.
+49. **One uniqueness helper for nullable FKs.** Playlist likes/collaborations. Don’t copy the NULL-is-distinct bug.
+50. **`after_commit` for anything that enqueues or `update_all`s.** Vote score, dating match, hashtags, mentions, listing alerts. One concern if the pattern repeats; don’t invent `AfterCommitable`.
+51. **Gates: `root:` kwarg.** Six gates rewrite `ROOT` at load. Tests shouldn’t.
+52. **`locale_contract` is the i18n door.** Don’t also append shared locale paths twice. Unused-key scan extends that test, not a gem.
+53. **System tests stay the handful.** Integration + gates. Cuprite/Ferrum as the one browser driver (MASTER already Ferrum). Selenium goes.
+
+### STUDIO
+
+54. **One `capture`.** Engine returns `[stdout, stderr, status]`; `RadioChop.capture` returns a string. One signature; Acapella and mix-score call it.
+55. **One ffmpeg runner.** MixScore, verify_fx, album master, `dilla.rb` ffprobe — backticks vs Open3 vs `tool_available?`. Open3 + timeout + non-zero abort. 0.0 is not a measurement.
+56. **Pid-scoped scratch everywhere.** The helper exists (`:5735`). `harmony_loud.wav` and friends use it.
+57. **`dilla_principles.yml` is loaded by `groove_engine` or deleted.** Draft YAML with no reader is a second constitution.
+58. **One LUFS window.** `dilla_reference.yml` vs `MixScore::REFERENCE[:lufs]`. Loss-gate test already wants them equal.
+59. **`bin/crate` writes the layout the engine reads, or it goes.** Third crate tree.
+60. **`rake test:dilla` is isolation’s process model, or isolation is not claimed.** One `-e` that requires every test file is how ENV and session.json leak.
+61. **`council` / `scan` slogans out of `dilla` dispatch.** Dead prose. Help topics stay.
+
+### Cross-tree
+
+62. **`operator gate` is the ladder.** OPENBSD `check-full` and `RAILS/test/run_all.rb` are rungs. START_HERE in each tree says so in one sentence.
+63. **PATH_OWNERSHIP lists live dirs only.** MASTER `docs:`/`reports:` are gone; `cognition/` / `law/` / `runtime/` are not listed. OPENBSD omits `data/`, `gates/`, `lib/`. A lint on undeclared top-level dirs.
+64. **TODO.md stays the backlog; DECISIONS.md stays the why.** Don’t add a third.
+65. **Harness files stay generated.** `rake docs:agent_contracts`. Don’t copy law into CLAUDE.md.
+
+Fenced: splitting `dilla.rb`, folding `live/`, LAYER_CAKE, ViewComponent, nesting operator, three sign-in, merging `probe`/`dogfood`, Kamal, Docker workers, a second type scale, a Parametricist CSS.
+
+---
+
+
+
+
+
 
 
 
