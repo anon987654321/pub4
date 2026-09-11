@@ -587,7 +587,7 @@ document.querySelectorAll('.tool').forEach(btn => {
 
 (function wireCommandPalette() {
   const COMMANDS = [
-    { cmd: '/through ', hint: 'scan → fix → critique a path' },
+    { cmd: '/review ', hint: 'scan → fix → critique a path' },
     { cmd: '/status', hint: 'one-frame health' },
     { cmd: '/undo', hint: 'revert last recorded change' },
     { cmd: '/commit', hint: 'record the current diff' },
