@@ -7470,4 +7470,331 @@ right one — re-measure and delete what fails.
 
 478 items. Re-measure before working. Closed findings stay closed.
 
+
+## STUDIO/dilla mix and reference research — ChatGPT intake 2026-09-11
+
+Unmeasured. Research-derived; not a claim the engine should imitate an artist.
+Already open: unread `dilla_principles.yml`, dual LUFS windows, MixScore 0.0 on
+ffmpeg fail, per-role swing vs global `SWING`, provenance pins, ENV census.
+Fenced: shipping copyrighted reference audio, golden WAV that overwrites a take,
+changing a rendered-sound default, “sounds more Dilla” as a gate, vinyl-as-effect.
+Objective render/analysis condition before complete. A finding is a hypothesis.
+
+### Source and arrangement
+
+1. Add a `SOURCE_FIRST` quality gate proving that tonal/frequency overlap is resolved at instrument/sample selection before corrective EQ.
+2. Add a kick/bass separation metric based on fundamental-frequency overlap, not merely low-frequency RMS.
+3. Add a test fixture where two different kick/bass timbres with identical EQ curves demonstrate why source choice matters more than corrective EQ.
+4. Add `ARRANGEMENT_SONIC_DENSITY` measurement for simultaneous occupied frequency regions.
+5. Add a metric for redundant spectral occupation between harmonic layers.
+6. Add a “great mix is a great arrangement” diagnostic that reports conflicts before mix processing.
+7. Add a per-layer `frequency_role` classification: sub, low, low-mid, mid, presence, air.
+8. Make layer-role conflicts visible in render diagnostics rather than silently corrected.
+9. Add a `TIMBRAL_FIT` score measuring whether a sound naturally occupies its assigned register.
+10. Add a regression proving that deleting corrective EQ does not materially degrade a deliberately well-arranged reference.
+11. Add a “minimal processing wins” comparison between source selection and post-EQ correction.
+12. Add an arrangement-density ceiling before bus processing begins.
+### Dilla timing
+
+13. Add a timing-analysis report separating grid deviation, swing, voice-specific offset and phrase-level drift.
+14. Add `MICROTIMING_PROFILE` fixtures for kick, snare, hat, ghost and percussion independently.
+15. Measure timing distributions rather than only average offsets.
+16. Add a `TIMING_ENTROPY` metric so perfectly repetitive offsets are distinguished from genuinely varied microtiming.
+17. Add a test proving that global swing and independent voice displacement are not interchangeable.
+18. Add a test proving that moving the kick with the snare destroys the engine's intended anchor relationship.
+19. Add phrase-level timing drift without changing the declared BPM.
+20. Add controlled “straight + swung simultaneously” fixtures.
+21. Add MPC-style shift-timing emulation as an explicit operation rather than hiding it inside swing.
+22. Add a timing-profile export so a render can be inspected without listening to it.
+23. Compare human-readable timing reports against millisecond-domain measurements.
+24. Add a regression preventing a future global-quantize operation from erasing voice-specific timing.
+25. Add a `NO_QUANTIZE` invariant that checks the final rendered event positions rather than only the input flag.
+26. Add a test showing that two grids with equal swing percentages can have materially different pocket.
+27. Add a “Dilla-time” diagnostic name only as an analytical label, not as a claim of stylistic authenticity.
+### Sampling and chopping
+
+28. Add sample-start micro-offsets independent from drum microtiming.
+29. Add sample-end seam quality measurement using waveform correlation.
+30. Add zero-crossing/seam diagnostics without forcing zero-crossing edits.
+31. Add loop-phase continuity analysis.
+32. Add a transient-preservation score for chopped samples.
+33. Add a sample-decay preservation score after varispeed.
+34. Measure pitch-dependent transient smearing after resampling.
+35. Compare independent resampling algorithms against the existing varispeed path.
+36. Add alias-energy measurement after every pitch/time transformation.
+37. Add a Nyquist-folding regression for heavily pitched-down samples.
+38. Add a deliberately degraded low-bit-depth sample fixture.
+39. Add a distinction between desirable sampler coloration and accidental digital aliasing.
+40. Add SP-1200-style bandwidth/bit-depth experiments as measured profiles rather than aesthetic claims.
+41. Add SP-303-style resampling experiments separately from SP-1200 emulation.
+42. Add MPC-style interpolation/resampling experiments separately from SP-family processing.
+43. Record source sample rate, bit depth, resampler and pitch ratio in render metadata.
+44. Make every transformed sample reproducible from its source plus transformation metadata.
+45. Add a “sample lineage” report from original source to final rendered event.
+46. Add source-window hashes so a changed source cannot silently invalidate an old analysis.
+47. Add a test proving that cached separation is invalidated when the source window changes.
+### Madlib / deliberately rough production
+
+48. Add a `ROUGH_HEWN` processing profile whose defining property is constrained processing, not generic distortion.
+49. Separate intentional bandwidth limitation from accidental clipping.
+50. Add a low-resolution sampler profile with independently measured noise, bandwidth and aliasing.
+51. Add a test proving that roughness can be retained while transient damage remains bounded.
+52. Add a `CHARACTER_PRESERVATION` score comparing pre/post processing spectral shape.
+53. Add a “do less” mix mode that refuses unnecessary corrective processing.
+54. Add a processing-budget report showing how many dB of cumulative EQ, compression and saturation have been applied.
+55. Add a cumulative nonlinear-processing metric across the complete signal path.
+56. Add a test where additional saturation is rejected because it no longer increases a desired measured characteristic.
+57. Add deliberate mono-source widening as an explicit operation, rather than assuming stereo width exists in the source.
+58. Measure correlation before and after widening.
+59. Reject widening that materially damages mono compatibility.
+60. Add a “rough but stable” reference fixture.
+61. Add a “clean but lifeless” counter-reference fixture to prevent optimization toward cleanliness.
+62. Add a `CONSTRAINTS` section to each production profile documenting which imperfections are intentional.
+### Dave Cooley / mastering
+
+63. Add a dedicated mastering stage that is analytically separate from mix processing.
+64. Make mix-bus output available before mastering so the two stages can be compared directly.
+65. Add pre-master crest-factor reporting.
+66. Add post-master crest-factor reporting.
+67. Add integrated, short-term and momentary loudness reporting.
+68. Add true-peak reporting alongside sample peak.
+69. Add intersample-peak detection.
+70. Add loudness-range reporting.
+71. Add spectral-balance reporting before and after mastering.
+72. Add stereo-width reporting before and after mastering.
+73. Add phase-correlation reporting before and after mastering.
+74. Add mono-collapse reporting before and after mastering.
+75. Add a mastering delta report: what actually changed rather than only the final numbers.
+76. Add a mastering invariant preventing loudness normalization from becoming the only optimization target.
+77. Add a regression where two masters with equal LUFS are distinguished by crest factor and transient preservation.
+78. Add a regression where a louder master is rejected when it materially increases distortion without improving intelligibility.
+79. Add a `MASTERING_INTENT` field separate from `LOUDNESS_TARGET`.
+80. Add separate digital, streaming and archival mastering profiles.
+81. Add a vinyl-oriented pre-master diagnostic without pretending that vinyl playback is a mastering effect.
+82. Add low-frequency mono compatibility analysis below configurable crossover points.
+83. Add a report identifying stereo information that disappears below mono fold-down.
+84. Add a test for low-frequency phase inversion.
+85. Add a test for stereo widening creating out-of-phase low end.
+86. Add a “mastering restraint” metric measuring cumulative broadband gain.
+### Bob Power / mix engineering
+
+87. Add per-channel tonal-role metadata to make source frequency choices explicit.
+88. Add channel-level headroom reporting.
+89. Add mix-bus headroom reporting.
+90. Add a headroom regression before nonlinear processing.
+91. Add a detector for cumulative gain staging that creates distortion before the intentional saturator.
+92. Add dynamic EQ fixtures for material whose timbre changes substantially with level.
+93. Add automated vocal proximity-effect diagnostics where vocal processing exists.
+94. Add dynamic spectral snapshots at multiple loudness percentiles.
+95. Add a test proving that static EQ cannot always solve level-dependent tonal changes.
+96. Add automation-aware spectral analysis.
+97. Add a report showing which frequency bands require automation rather than static EQ.
+98. Add serial-processing accounting so EQ/compression decisions can be inspected stage by stage.
+99. Add “two light stages versus one heavy stage” comparison fixtures.
+100. Add a compression artifact detector focused on transient flattening.
+101. Add release-time modulation detection for audible pumping.
+102. Add an attack-time diagnostic showing whether transients are being removed.
+103. Add parallel-compression fixtures preserving dry transients.
+104. Add parallel-compression phase/correlation checks.
+105. Add a mix-stage versus master-stage processing boundary test.
+### Todd Fairall / tracking-to-mix continuity
+
+106. Record whether a source entered the engine as simulated tape, digital sample, live recording or synthesized material.
+107. Preserve recording-medium metadata through the render pipeline.
+108. Add ADAT-like constrained-recording tests distinct from generic tape saturation.
+109. Add analog-console-style per-channel coloration before summing.
+110. Verify that per-channel nonlinearities occur before summing.
+111. Add a regression comparing pre-sum saturation against post-sum saturation.
+112. Add a bus-intermodulation diagnostic.
+113. Measure harmonic products created only after multiple channels are summed.
+114. Add a test proving that a master-only saturator cannot reproduce the same intermodulation structure.
+115. Add console headroom as an explicit simulation parameter.
+116. Add a console overload diagnostic separate from clipping.
+117. Add channel-strip variation so every channel is not mathematically identical.
+118. Add deterministic per-channel component variance.
+119. Add a test proving that channel variation remains reproducible under the same seed.
+120. Add an A/B render between identical strips and statistically varied strips.
+### Daddy Kev / Flying Lotus
+
+121. Add a dedicated `DENSE_EXPERIMENTAL` reference profile for highly layered material.
+122. Measure whether added layers actually remain distinguishable at the mix bus.
+123. Add an “information density” metric combining event density, spectral occupancy and dynamic contrast.
+124. Add a transient-density metric for complex drum programming.
+125. Add a contrast metric between dense and sparse sections.
+126. Add section-aware mastering analysis rather than only whole-track averages.
+127. Add a long-form loudness trace so dynamic architecture survives mastering.
+128. Add a “four-month-mastering” style analysis mode: allow iterative mastering passes while recording each delta.
+129. Store mastering-pass metadata and final decision rationale.
+130. Add an A/B/X listener fixture for tiny mastering differences.
+131. Add parallel compression as an explicit experimental bus mode.
+132. Add serial-compression experiments with artifact measurement after every stage.
+133. Add compressor topology metadata to every render.
+134. Add compressor attack/release normalization in milliseconds rather than only percentages.
+135. Add pumping detection synchronized against BPM.
+136. Add groove-aware compression diagnostics so compressor modulation can be compared with the beat grid.
+137. Add granular-processing fixtures inspired by FlyLo's documented recent return to audio-engineering study.
+138. Add grain-density, grain-size and randomization metadata to granular renders.
+139. Add deterministic granular seeds for reproducibility.
+140. Add a test proving that granular randomization does not alter timing-critical drum transients.
+141. Add a sound-palette registry for synth, reverb and spatial treatments rather than accumulating arbitrary effect knobs.
+### Rich Costey / complex mix architecture
+
+142. Add explicit stem groups for drums, bass, harmonic material, samples, effects and vocals.
+143. Add stem-level metering before the final bus.
+144. Add stem-to-stem masking analysis.
+145. Add stem solo/unsolo render comparison automation.
+146. Add a deterministic “mix inspection” render that outputs every stem's measurements.
+147. Add a final-bus report identifying which stem caused each master-bus threshold crossing.
+148. Add transient contribution analysis by stem.
+149. Add low-end contribution analysis by stem.
+150. Add stereo-field contribution analysis by stem.
+151. Add a test preventing a single stem from silently dominating the entire master-processing chain.
+### Tape, console and nonlinear DSP
+
+152. Separate tape compression, tape saturation, tape frequency response, wow/flutter and noise into independently measurable stages.
+153. Add harmonic-order reporting for every nonlinear stage.
+154. Report 2nd, 3rd, 4th and 5th harmonic energy independently.
+155. Add a regression for the existing symmetric-transfer-function limitation.
+156. Add asymmetric nonlinear fixtures specifically for even-harmonic generation.
+157. Add DC-bias removal verification after asymmetric nonlinear processing.
+158. Add oversampling-factor reporting for every nonlinear processor.
+159. Add alias-energy reporting before and after oversampling.
+160. Add an oversampling cost/quality table generated from actual renders.
+161. Add CPU-cost measurements for every nonlinear stage.
+162. Add a render-budget gate preventing an expensive DSP feature from silently multiplying render time.
+163. Add deterministic analog-model noise seeded separately from musical randomness.
+164. Add a distinction between correlated tape noise and independent channel noise.
+165. Add wow/flutter rate distributions rather than a single “wobble” parameter.
+166. Add dropout event metadata with deterministic seeds.
+167. Add dropout detection to quality reports.
+168. Add a test ensuring dropout processing cannot erase a transient-critical event.
+169. Add console transformer coloration separately from clipping.
+170. Add input/output transformer stages separately where the model supports them.
+171. Add phase-alignment diagnostics around console coloration.
+172. Measure whether multiple console instances produce qualitatively different spectra from one harder-driven instance.
+### Spatial and stereo engineering
+
+173. Add a stereo-image centroid measurement.
+174. Add mid/side energy reporting.
+175. Add mid/side spectral reporting.
+176. Add low-frequency side-energy reporting.
+177. Add a configurable maximum low-frequency side-energy threshold.
+178. Add mono-collapse RMS loss measurement.
+179. Add mono-collapse spectral loss measurement.
+180. Add phase-correlation traces over time.
+181. Add transient-specific stereo analysis.
+182. Add reverb-tail stereo-width analysis.
+183. Add a distinction between source stereo width and artificial widening.
+184. Add widening provenance metadata.
+185. Add a regression that rejects widening if it increases side energy without increasing perceptually useful information.
+### Reference listening / objective validation
+
+186. Create a small licensed reference corpus covering Dilla, Madlib and Flying Lotus-adjacent production characteristics.
+187. Do not ship copyrighted reference audio into the repository; store only derived measurements and hashes.
+188. Store reference metadata separately from generated fixtures.
+189. Add reference spectral-envelope summaries.
+190. Add reference crest-factor summaries.
+191. Add reference loudness summaries.
+192. Add reference stereo-correlation summaries.
+193. Add reference timing distributions.
+194. Add reference low-end distribution summaries.
+195. Add reference transient-density summaries.
+196. Add a `REFERENCE_DISTANCE` report comparing a render against derived reference features.
+197. Keep “artist resemblance” out of the pass/fail gate; measure engineering properties instead.
+198. Add perceptual listening notes beside numerical measurements.
+199. Require every perceptual claim in `dilla_reference.yml` to point to a reproducible measurement or source.
+200. Add provenance for each external research claim.
+201. Add a research-source date and URL to each reference entry.
+202. Add a contradiction field where two engineering sources disagree.
+203. Add confidence only where the evidence genuinely warrants it.
+204. Add explicit `unknown` states rather than inventing undocumented gear settings.
+205. Add a gate rejecting “sounds more Dilla” as a completion criterion.
+### Render reproducibility
+
+206. Hash the complete DSP configuration before every render.
+207. Include engine version, Ruby version, ffmpeg version and fluidsynth version in render metadata.
+208. Include sample-source hashes in render metadata.
+209. Include random seeds in render metadata.
+210. Include DSP oversampling settings in render metadata.
+211. Include all mastering parameters in render metadata.
+212. Add bit-for-bit deterministic rendering where the backend permits it.
+213. Add tolerance-based waveform comparison where codec output prevents bit identity.
+214. Add deterministic regression renders for every major Dilla profile.
+215. Store derived analysis beside each golden render.
+216. Make golden-render invalidation explicit when DSP changes.
+217. Add a `RENDER_SIGNATURE` command producing one compact reproducibility line.
+### Mix validation gates
+
+218. Add hard clipping detection before encoding.
+219. Add true-peak detection after encoding.
+220. Add NaN/Inf detection after every DSP stage.
+221. Add denormal-number detection where relevant to long-running DSP.
+222. Add DC-offset detection before final export.
+223. Add excessive-subsonic-energy detection.
+224. Add excessive-inaudible-ultrasonic-energy detection before final encoding.
+225. Add codec-preview rendering for MP3 output.
+226. Compare WAV and MP3 loudness after encoding rather than assuming equivalence.
+227. Compare WAV and MP3 true peak.
+228. Compare WAV and MP3 stereo correlation.
+229. Add a lossy-encoding artifact report.
+230. Add a final `MASTER_SAFE` gate combining peak, true peak, DC, subsonic, phase and loudness checks.
+231. Keep every gate independently inspectable rather than collapsing failures into one score.
+### Architecture / maintainability
+
+232. Audit `STUDIO/dilla` for DSP parameters that exist in documentation but have no reader.
+233. Audit the inverse: implemented parameters that are undocumented.
+234. Make every environment knob discoverable from one generated registry.
+235. Generate `ENV_AND_RENDER.md` parameter tables from the actual registry.
+236. Add a gate detecting documentation-only DSP controls.
+237. Add a gate detecting undocumented DSP controls.
+238. Collapse duplicate DSP constants only after measuring actual call-site semantics.
+239. Keep `DILLA_STYLE_DEFAULTS` and `DILLA_BEST_DEFAULTS` semantically distinct and document why.
+240. Add a test proving profile defaults cannot silently override explicit user pins.
+241. Add a test proving normalization cannot alter diagnostic A/B measurements.
+242. Add a test proving render-mode selection does not change unrelated profiles.
+243. Audit every `rescue StandardError` in dilla and classify it as recoverable, optional, or fatal.
+244. Ensure optional-engine failures are visible in render metadata rather than silently becoming a degraded render.
+245. Add an explicit degraded-render state.
+246. Make `dmesg` report the exact DSP degradation when a component is unavailable.
+247. Add render-stage timing to the dmesg output.
+248. Add per-stage CPU and wall-clock cost to quality JSON.
+249. Add a gate against DSP stages whose runtime grows unexpectedly with track length.
+250. Add maximum-memory reporting for separation and render stages.
+251. Add cleanup guarantees for temporary audio files after failed renders.
+252. Add an interrupted-render recovery test.
+### High-value experiments
+
+253. Build a Dilla-style comparison: straight grid → global swing → per-voice swing → free timing, with identical sounds.
+254. Build a Madlib-style comparison: clean digital → constrained sampler → rough constrained sampler → overprocessed, and measure where character turns into damage.
+255. Build a Cooley-style comparison: mix-only → restrained master → loud master, with objective deltas.
+256. Build a Bob Power-style comparison: source-choice correction versus EQ correction.
+257. Build a Fairall-style comparison: per-channel nonlinear processing versus master-only nonlinear processing.
+258. Build a Daddy Kev-style comparison: serial compression versus parallel compression.
+259. Build a Flying Lotus-style density test: sparse arrangement → dense arrangement → dense arrangement with intentional negative space.
+260. Build a “same LUFS, different music” test suite to prevent loudness from becoming the quality metric.
+261. Build a “same swing, different pocket” test suite.
+262. Build a “same EQ, different source” test suite.
+263. Build a “same saturation amount, different harmonic structure” test suite.
+264. Build a “same stereo width, different mono compatibility” test suite.
+265. Build a “same RMS, different crest factor” test suite.
+266. Build a “same spectral centroid, different transient structure” test suite.
+### Documentation / research corpus
+
+267. Expand `dilla_reference.yml` with Bob Power's source/timbre/frequency-selection observations.
+268. Add Todd Fairall's ADAT → studio-console workflow as a documented historical reference.
+269. Add Dave Cooley's Donuts/The Shining mastering role and preserve the distinction between mastering and mixing.
+270. Add Dave Cooley's Madlib/Quasimoto constrained-hardware workflow.
+271. Add David Kennedy's analog-console/tape workflow and room-acoustics observations.
+272. Add Daddy Kev's compression methodology as a technical reference.
+273. Add Flying Lotus' recent audio-engineering/granular-synthesis comments as a current research note.
+274. Add Rich Costey's mixing credit for *You're Dead!* to the engineering provenance.
+275. Record which facts are direct interviews, which are album credits and which are secondary analysis.
+276. Do not turn undocumented folklore about Dilla's exact gear/settings into hard engine requirements.
+277. Separate historically documented technique from modern recreation.
+278. Add a `research_status` field to every reference item: `verified`, `inferred`, `contested`, `unknown`.
+279. Add a `measurement_status` field: `measured`, `provisional`, `unmeasured`.
+280. Add a quarterly research-review task so new interviews/credits can be incorporated without silently changing historical claims.
+
+280 items. Measure before working. Do not retune a keeper take to pass a metric.
+
 ---
