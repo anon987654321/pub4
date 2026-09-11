@@ -84,7 +84,12 @@ spine:
   # are one condition each — a strict boot that does not raise on a count the
   # test harness inflated, and an external linter that waits for its config to
   # be reconciled with the law rather than autocorrecting against it.
-  lib_body_ceiling: 38108
+  # 38108 -> 38111: /rules stopped deciding two things on one line. The filter
+  # and the match were a single select with a boolean or in it; they are a
+  # block with a guard now, which is three lines more and one decision less
+  # per line. Readable code costs lines, and this row is where that trade is
+  # said out loud rather than absorbed.
+  lib_body_ceiling: 38111
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753
@@ -456,7 +461,7 @@ pub4_source_ceilings:
   # tree renders. Thirty-three reflex files, thirty-two classes, thirty-one
   # mounted. RAILS/test/infinite_scroll_reflex_contract_test.rb asserts the
   # property that would have caught it, and lives outside this count.
-# 2366 -> RAILS_COUNT, and it is three things a reader should be able to tell apart.
+# 2366 -> 2386, and it is three things a reader should be able to tell apart.
 #
 # Twenty files are the first test each for the twenty gates that had none, plus
 # the two harnesses they share — test/gates/gate_fixture.rb, which installs a
@@ -476,7 +481,7 @@ pub4_source_ceilings:
 # to 2366. The six-gate move subtracted six from a number nobody re-measured,
 # and the row read at-ceiling for an afternoon while the tree held seven more
 # files than it claimed. This records the tree rather than adding to it.
-  RAILS: RAILS_COUNT
+  RAILS: 2392
   # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
   # that are the whole defence against a shared index, and nothing tested any of
   # them — a hook that stopped firing looks exactly like a week in which nobody

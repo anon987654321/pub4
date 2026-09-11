@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require_relative "support/method_swap"
+require_relative "gates/method_swap"
 require_relative "../gates/lib/rendered/journey_invariant"
 require_relative "../gates/lib/rendered/cross_app"
 

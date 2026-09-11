@@ -48,6 +48,22 @@ Five things that will bite you, in order:
 5. dilla and postpro renders are irreplaceable. Never render over a take, and
    never change a rendered-sound default on your own judgement.
 
+**Plain lines over clever ones.** A dense chain that packs four operations into
+one expression is shorter to write and slower to read, and the reader is usually
+somebody debugging it at speed. Prefer several named steps to one line that has
+to be decoded:
+
+    rows = definitions.filter_map { |d| category_suffix(d) || stutter(d) }
+    by_name = rows.group_by { |row| [row.constant, File.dirname(row.file)] }
+    by_name.map { |_, group| group.min_by(&:file) }
+
+rather than the same three joined by dots. This is a preference about reading,
+not a rule about length: a chain whose steps are obvious stays a chain, and
+`.map(&:name).sort.uniq` needs no unpacking. What earns a line of its own is a
+step a reader would otherwise have to hold in their head while parsing the next
+one. The same goes for a regex doing three jobs, a ternary inside an
+interpolation, and a `reduce` that would read as a loop.
+
 Two habits this repo learned the hard way. **Verify the instrument before the
 finding** — naive pattern-matching over this tree produces mostly false
 positives, and a census that is wrong is worse than no census. **A comment

@@ -3,7 +3,7 @@
 require "minitest/autorun"
 require "tmpdir"
 require "fileutils"
-require_relative "support/method_swap"
+require_relative "gates/method_swap"
 require_relative "../gates/lib/live/human_walkthrough"
 require_relative "../gates/lib/live/first_screen"
 

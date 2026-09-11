@@ -2,7 +2,7 @@
 
 require "minitest/autorun"
 require "json"
-require_relative "support/method_swap"
+require_relative "gates/method_swap"
 require_relative "../gates/lib/rendered/rendered_invariants"
 
 # rendered_invariants decides three things from one probe payload: the served

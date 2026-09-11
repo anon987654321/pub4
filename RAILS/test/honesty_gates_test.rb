@@ -3,7 +3,7 @@
 require "minitest/autorun"
 require "tmpdir"
 require "fileutils"
-require_relative "support/method_swap"
+require_relative "gates/method_swap"
 require_relative "../gates/lib/source/payment_honesty"
 require_relative "../gates/lib/source/affiliate_honesty"
 

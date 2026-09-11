@@ -48,8 +48,22 @@ dir="${repo%/*}/pub4-${agent}"
 
 git -C "$repo" fetch -q origin
 
+# An existing worktree may hold somebody's unfinished work, and handing it over
+# is the shared-checkout hazard this command exists to avoid. Two agents were
+# given the same tree in one afternoon: one noticed a stranger's eleven modified
+# gate files and moved out, the other worked beside them for an hour. The line
+# that told them both was "worktree already exists", which reads as success.
+#
+# Dirty means occupied. A clean one is a leftover and is safe to reuse.
 if git -C "$repo" worktree list --porcelain | grep -q "worktree ${dir}$"; then
-  echo "worktree already exists: ${dir}"
+  dirt="$(git -C "${dir}" status --porcelain 2>/dev/null)"
+  if [ -n "${dirt}" ]; then
+    echo "worktree ${dir} is occupied — another session has uncommitted work in it:" >&2
+    echo "${dirt}" >&2
+    echo "pick another name, or finish that work first" >&2
+    exit 1
+  fi
+  echo "worktree already exists and is clean: ${dir}"
 else
   git -C "$repo" worktree add -B "$branch" "$dir" "$base"
 fi

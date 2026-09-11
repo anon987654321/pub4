@@ -168,7 +168,11 @@ module Master
       def dispatch_rules(_root, ctx: nil)
         filter = arg_for(ctx).downcase
         rules = Master.law("rules") || []
-        rows = rules.select { |rule| filter.empty? || "#{rule["id"]} #{rule["name"]}".downcase.include?(filter) }
+        rows = rules.select do |rule|
+          next true if filter.empty?
+
+          "#{rule["id"]} #{rule["name"]}".downcase.include?(filter)
+        end
         return "rules: nothing matches #{filter.inspect} in #{rules.size} declared" if rows.empty?
 
         lines = rows.map do |rule|

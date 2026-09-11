@@ -88,10 +88,10 @@ module Operator
       node.child_nodes.compact.flat_map do |child|
         case child
         when Prism::ClassNode, Prism::ModuleNode
-          name = child.constant_path.slice
-          rows = [{ constant: name.split("::").last, namespace: namespace + name.split("::")[0..-2],
-                    file: path, line: child.location.start_line }]
-          rows + collect(child, namespace + name.split("::"), path)
+          parts = child.constant_path.slice.split("::")
+          own = { constant: parts.last, namespace: namespace + parts[0..-2],
+                  file: path, line: child.location.start_line }
+          [own] + collect(child, namespace + parts, path)
         else
           collect(child, namespace, path)
         end
@@ -102,10 +102,10 @@ module Operator
     # files is one rename, and a report that lists it fourteen times buries the
     # thirty others under it — which is how a list stops being read.
     def candidates
-      definitions.filter_map { |definition| category_suffix(definition) || stutter(definition) }
-                 .group_by { |row| [row.constant, File.dirname(row.file)] }
-                 .map { |_, rows| rows.min_by(&:file) }
-                 .sort_by { |row| [row.proposal ? 0 : 1, row.file] }
+      found = definitions.filter_map { |definition| category_suffix(definition) || stutter(definition) }
+      by_name = found.group_by { |row| [row.constant, File.dirname(row.file)] }
+      one_each = by_name.map { |_, rows| rows.min_by(&:file) }
+      one_each.sort_by { |row| [row.proposal ? 0 : 1, row.file] }
     end
 
     # A name whose last word says which drawer it lives in rather than what it
