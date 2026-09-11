@@ -6941,20 +6941,533 @@ Continuation. Stars as of 2026-09-11: OpenCode 207k, OpenHands 87k, Cline 68k, W
 26. **Harbor / Cline-bench as a hosted eval.** `bin/check --profile=agent` is the eval. Don’t a third-party SWE farm.
 27. **Kilo / Roo as a Cline fork to absorb.** Same HITL idea (6).
 
+
+## ChatGPT proposed forward work — intake 2026-09-11
+
+Unmeasured. Pasted from an external session, converted to numbered items.
+Already open and not restated: `tts_socket` on `vps state`, TTS log `root:master`,
+`rb-kqueue` / `CHECKSUMS` / dirty lock, listing expiry, saved-search, favorites,
+rate-limit census, marketplace 500, one chrome, layout_snapshot drift.
+Fenced: golden WAV that overwrites a take, dark-mode restyle, full-site AAA as a vanity
+score, a second root `bin/check` beside `operator gate`, `/through` as a campaign name
+(the verb is `/review`). A finding is a hypothesis; the last item of this list is the
+right one — re-measure and delete what fails.
+
+### MASTER — correctness, architecture, and self-hosting
+
+1. Add a deployment check that fails when a daemon-owned log is not writable by the daemon user.
+2. Add a deployment check that verifies every expected daemon socket exists after restart.
+3. Add a deployment check that verifies the daemon's effective UID/GID rather than merely checking the process exists.
+4. Add a deployment check that verifies the configured TTS voice is the voice actually loaded by the running process.
+5. Add a deployment receipt containing commit SHA, effective config revision, process UID, socket state, and health state.
+6. Make `/health` expose the commit SHA that the running process actually booted.
+7. Make `/health` expose the loaded voice identifier.
+8. Make `/health` expose the loaded rules/config revision.
+9. Add a machine-readable `/health` schema test so new fields cannot silently change type.
+10. Add a negative health test for stale browser/runtime assets.
+11. Detect a browser payload whose revision differs from the server revision.
+12. Add a single operator command that compares source revision, deployed revision, service revision, and browser asset revision.
+13. Make deployment fail closed when those four revisions disagree unexpectedly.
+14. Record deployment drift in a durable machine-readable receipt rather than prose alone.
+15. Add a `vps diff` command that reports only actionable drift.
+16. Add a `vps repair-plan` command that produces commands without executing them.
+17. Add a `vps verify` command that performs only read-only post-deploy checks.
+18. Add a test proving every `vps` mutating command has an explicit dry-run path.
+### MASTER — Bundler, dependency, and OpenBSD portability
+
+19. Regenerate `MASTER/Gemfile.lock` after the `install_if` change and verify `BUNDLE_FROZEN=true` on both supported host families.
+20. Add CI coverage that evaluates the Gemfile under an OpenBSD-like platform.
+21. Add a CI check that detects platform-conditional dependencies absent from the committed lock.
+22. Add a lockfile consistency command specifically for OpenBSD deployment.
+23. Add a pre-deploy guard refusing to overwrite a known-good remote lock with a dirty local lock.
+24. Add a deployment diagnostic explaining precisely why a dirty lock is being retained.
+25. Add a test proving `git pull --ff-only` does not require stashing deployment-local lock repairs.
+26. Add a documented recovery path for a frozen Bundler failure without modifying the working tree destructively.
+27. Add a platform matrix covering macOS, OpenBSD, and the repository's declared Ruby versions.
+28. Audit every shell script for assumptions that work in Bash but not OpenBSD `/bin/sh`.
+29. Add a shell portability scanner for `[[`, Bash arrays, `source`, `read -p`, and other non-POSIX constructs.
+30. Add a test proving the scanner does not falsely flag intentionally Bash-specific scripts.
+31. Audit every `system`, backtick, and `Open3` call for argument-array usage.
+32. Add a command-injection rule for interpolated shell commands.
+33. Add explicit allowlisting for intentional shell interpolation so the rule remains useful.
+34. Audit every executable under `MASTER/bin` for executable-bit correctness.
+35. Add a check that every executable has a valid interpreter line.
+36. Add a check that every declared interpreter exists on the deployment host.
+### MASTER — error handling and observability
+
+37. Inventory all `rescue StandardError` sites and classify them as boundary, optional dependency, probe, retry, or bug suppression.
+38. Add a rule requiring a reason whenever a broad rescue intentionally converts an exception into a sentinel value.
+39. Add a rule forbidding broad rescue around state-changing operations unless the error is surfaced.
+40. Add a rule requiring logging for broad rescues that affect correctness.
+41. Distinguish “probe failed” from “system failed” in diagnostic APIs.
+42. Replace silent `{}` / `[]` / `false` rescue fallbacks where callers cannot distinguish failure from empty data.
+43. Add typed failure results to the most frequently rescued MASTER boundaries.
+44. Add a regression test for every rescue whose fallback affects a security decision.
+45. Audit rescue blocks that can hide `NameError`, especially optional-library boundaries.
+46. Add a rule detecting rescues that can mask missing constants.
+47. Audit `MASTER/lib/master.rb` binary detection fallback semantics.
+48. Add explicit tests for unreadable files, permission errors, binary files, and encoding errors.
+49. Audit `MASTER/lib/design.rb` CSS-reading fallback so missing CSS cannot masquerade as empty CSS.
+50. Add diagnostics distinguishing “CSS absent” from “CSS unreadable”.
+51. Audit `MASTER/bin/cleanup` tool failures so unavailable tools are not mistaken for successful cleanup.
+52. Add exit-status propagation for cleanup operations where failure matters.
+53. Audit `MASTER/bin/doctor` checks that are advisory-only and classify whether they should remain non-fatal.
+54. Add a machine-readable severity to doctor results.
+55. Add tests proving advisory checks cannot accidentally become hard failures.
+56. Add tests proving hard checks cannot accidentally become advisory.
+### MASTER — review engine and detector quality
+
+57. Add a detector contract test for every rule in `data/rules.yml` that claims to be scannable.
+58. Add a registry audit ensuring every detector ID is unique.
+59. Add a registry audit ensuring every detector class resolves to an existing constant.
+60. Add a registry audit ensuring every detector's declared file exists.
+61. Add a registry audit ensuring every detector's severity is valid.
+62. Add a registry audit ensuring every detector's tier is valid.
+63. Add a registry audit ensuring `autofix` declarations agree with actual fixer availability.
+64. Add a registry audit ensuring every principle-map rule ID resolves to a registry rule.
+65. Add a registry audit for rule IDs that differ only by case or punctuation.
+66. Add a registry audit for duplicate semantic descriptions.
+67. Add a detector test ensuring a rule cannot report the same finding twice for one AST node.
+68. Add a detector test ensuring line numbers remain stable after nested-node traversal.
+69. Add a detector test for CRLF input.
+70. Add a detector test for UTF-8 input containing non-ASCII identifiers.
+71. Add a detector test for Ruby heredocs containing misleading source patterns.
+72. Add a detector test for regex literals containing detector keywords.
+73. Add a detector test for comments containing detector keywords.
+74. Add a detector test for strings containing detector keywords.
+75. Add a detector test for generated test fixtures containing detector keywords.
+76. Add a global false-positive corpus and run every lexical rule against it.
+77. Add a global false-negative corpus containing deliberately planted violations.
+78. Require every new detector to contribute at least one positive and one negative fixture.
+79. Require every autofix-capable rule to contribute before/after semantic-preservation tests.
+80. Add an autofix rollback test that verifies the original source can always be restored.
+81. Add an autofix idempotence test: applying the same fix twice must equal applying it once.
+82. Add a detector determinism test across repeated runs.
+83. Add a detector ordering test so registry ordering cannot change findings unexpectedly.
+84. Add scan timing per detector rather than only aggregate scan timing.
+85. Add a slow-detector budget with a measured baseline.
+86. Add a detector timeout that produces a diagnostic rather than hanging the scan.
+87. Add a rule proving a detector cannot mutate repository files during scanning.
+### MASTER — AST and Ruby semantics
+
+88. Expand the Prism visibility census into a reusable visibility model shared by all Ruby structural rules.
+89. Add tests for `private`, `protected`, and `public` inside nested singleton/class scopes.
+90. Add tests for visibility changes after `class << self`.
+91. Add tests for visibility directives inherited across nested scopes.
+92. Add tests for `private :foo` and `public :foo`.
+93. Add tests for `private_class_method`.
+94. Add tests for aliasing a method before changing visibility.
+95. Add a rule detecting visibility declarations that reference nonexistent methods.
+96. Add a rule detecting contradictory visibility declarations.
+97. Add a rule detecting public APIs accidentally exposed by generated forwarding methods.
+98. Add AST coverage for `define_method`.
+99. Add AST coverage for `method_missing`.
+100. Add AST coverage for `respond_to_missing?`.
+101. Add AST coverage for `Forwardable`.
+102. Add AST coverage for refinements.
+103. Add AST coverage for singleton methods on expressions rather than named constants.
+104. Add AST coverage for `prepend`.
+105. Add AST coverage for `extend`.
+106. Add a semantic check that distinguishes intentional abstract methods from broken overrides.
+107. Add a test corpus for Liskov violations involving keyword arguments.
+108. Add a test corpus for Liskov violations involving positional/keyword separation.
+109. Add a test corpus for default-argument incompatibilities.
+110. Add a test corpus for block-acceptance incompatibilities.
+111. Add a test corpus for visibility narrowing in subclasses.
+112. Add a rule for overriding methods while silently changing keyword semantics.
+113. Add a rule for subclass methods that change accepted argument shape without an explicit contract.
+114. Add a rule for `super` calls whose arguments accidentally differ from the parent signature.
+### MASTER — architecture and dependency boundaries
+
+115. Generate a stable namespace-to-directory ownership report from Zeitwerk.
+116. Add a gate that prevents a constant from being defined in two Zeitwerk-owned files.
+117. Add a gate that detects namespace files defining unrelated leaf constants.
+118. Add a gate for namespace files whose body grows beyond their documented role.
+119. Add a gate detecting require aggregators that can be replaced by Zeitwerk loading.
+120. Audit every explicit `require_relative` for whether Zeitwerk already owns the dependency.
+121. Audit every autoload ignore entry for whether the ignored file still needs the exception.
+122. Add a test that every autoload ignore has a documented reason.
+123. Add a test that every ownership declaration maps to an existing path.
+124. Add a test that every owned path is reachable from exactly one owner.
+125. Add a graph showing cross-boundary calls between `core`, `ground`, `review`, `io`, and `ops`.
+126. Add a gate preventing newly introduced reverse dependencies between architectural layers.
+127. Add a dependency whitelist for intentionally shared infrastructure.
+128. Add a dependency blacklist for known forbidden directions.
+129. Add a test proving the architecture graph is deterministic.
+130. Add a compact architecture report suitable for `bin/check`.
+131. Add a “why is this dependency allowed?” annotation mechanism with expiry dates.
+132. Add a check for expired architectural exceptions.
+133. Add a check that architectural exceptions name an owner.
+134. Add a check that an exception has an explicit removal condition.
+### MASTER — test quality
+
+135. Re-measure the 69-file no-test figure in a clean worktree and record the exact definition beside the result.
+136. Generate a machine-readable untested-leaf-constant report.
+137. Rank untested files by production criticality rather than raw count.
+138. Prioritize tests for code involved in deployment, permissions, SSRF, patching, and repository mutation.
+139. Add mutation testing to a small representative subset of `lib/review`.
+140. Add mutation testing to `lib/io`.
+141. Add mutation testing to `lib/ops`.
+142. Add mutation testing to the deployment/operator layer.
+143. Add a test proving a mutated security decision fails.
+144. Add a test proving a mutated patch application failure is detected.
+145. Add a test proving a mutated Git status calculation fails.
+146. Add a test proving a mutated SSRF URL classification fails.
+147. Add a test proving a missing `require "uri"` cannot be hidden by a blanket rescue.
+148. Add regression coverage for permission substring false positives such as `sudo` inside `pseudo`.
+149. Add regression coverage for `patch(1)` failures reported on stdout.
+150. Add regression coverage for untracked directories collapsing into one Git status line.
+151. Add tests for worktrees where `.git` is a file rather than a directory.
+152. Add tests for Git execution when the current process is itself inside a Git worktree.
+153. Add tests proving snapshot paths never silently redirect to the user's Downloads directory.
+154. Add tests for missing Git executable behavior.
+155. Add tests for unknown commit state and ensure it cannot masquerade as a real SHA.
+156. Add a test for clean-worktree-only ratchets explicitly distinguishing skipped from passed.
+157. Add a CI summary that reports skipped tests separately from passed tests.
+158. Add a CI guard preventing a growing skip count from going unnoticed.
+159. Add a capability matrix explaining every environment-dependent skip.
+160. Add a command to run only tests currently skipped by environment capability.
+161. Add coverage for all operator/contributor test profiles.
+### MASTER — ratchets, metrics, and measurement integrity
+
+162. Make every ratchet record the measurement definition it uses.
+163. Make every ratchet record the command that produced its current value.
+164. Make every ratchet record the commit at which its baseline was established.
+165. Make every ratchet record whether the worktree was clean.
+166. Make ratchet measurements fail rather than silently returning zero on instrument errors.
+167. Add a distinct `measurement_unavailable` state.
+168. Add a distinct `measurement_skipped` state.
+169. Prevent unavailable measurements from being interpreted as green.
+170. Prevent skipped measurements from being interpreted as green.
+171. Add a ratchet consistency test ensuring ceiling and measurement use identical path filters.
+172. Add a ratchet consistency test ensuring file and directory keys cannot accidentally overlap.
+173. Add a report of all ratchets whose ceiling was raised historically.
+174. Require every ceiling raise to identify its purchased capability.
+175. Require every ceiling raise to identify the exact measured cost.
+176. Detect consecutive ceiling raises automatically.
+177. Fail when a non-raiseable ceiling is breached.
+178. Add a “paydown required” state distinct from generic failure.
+179. Add a ratchet-drift report showing values that have not been measured recently.
+180. Add an age threshold for stale measurements.
+181. Add a clean-worktree prerequisite to baseline creation.
+182. Add a test preventing a baseline from being recorded from a dirty tree.
+183. Add an audit proving every metric has at least one consumer.
+184. Remove metrics whose only consumer is historical prose.
+185. Add a report of detectors that never affect a gate or decision.
+186. Add a report of gates that never consume a detector.
+187. Add a report of rules that exist solely to support obsolete tests.
+### RAILS — platform foundation
+
+188. Run a full route-to-controller-to-view audit across every RAILS app.
+189. Run the route/view audit against mounted engines as well as top-level applications.
+190. Add a route coverage report showing routes with no browser journey.
+191. Add a browser journey for every public authentication flow.
+192. Add browser coverage for session expiry.
+193. Add browser coverage for CSRF rejection.
+194. Add browser coverage for authorization rejection.
+195. Add browser coverage for Turbo-frame navigation.
+196. Add browser coverage for Turbo-stream updates.
+197. Add browser coverage for non-JavaScript fallback paths.
+198. Add browser coverage for mobile viewport navigation.
+199. Add browser coverage for desktop keyboard navigation.
+200. Add browser coverage for focus restoration after Turbo navigation.
+201. Add browser coverage for modal open/close lifecycle.
+202. Add browser coverage for browser back/forward after Turbo transitions.
+203. Add a gate ensuring every interactive component has a no-JS or explicit degradation state.
+204. Add a gate ensuring every form has a visible validation failure state.
+205. Add a gate ensuring every destructive action has confirmation or equivalent safety.
+206. Add a gate ensuring every asynchronous action has pending, success, and failure states.
+207. Add a gate ensuring every loading indicator eventually resolves or reports failure.
+208. Add a gate for orphaned Stimulus controllers.
+209. Add a gate for Stimulus targets referenced in JS but absent from templates.
+210. Add a gate for template targets referenced in JS but never consumed.
+211. Add a gate for stale Stimulus controller registrations.
+212. Add a gate for duplicate frontend component names.
+213. Add a gate for CSS selectors that no current template emits.
+### RAILS — shared layout and design system
+
+214. Consolidate shared design tokens into one authoritative source.
+215. Audit every app-specific color against the shared token system.
+216. Audit every app-specific spacing value for duplication.
+217. Audit typography declarations for duplicated font stacks.
+218. Audit border radii for near-duplicate values.
+219. Audit shadows and effects for forbidden or unnecessary visual complexity.
+220. Add a token-consumption report showing unused design tokens.
+221. Add a report showing hard-coded values that should use tokens.
+222. Add a visual regression baseline for the shared shell.
+223. Add a visual regression baseline for navigation.
+224. Add a visual regression baseline for cards.
+225. Add a visual regression baseline for forms.
+226. Add a visual regression baseline for empty states.
+227. Add a visual regression baseline for error states.
+228. Add a visual regression baseline for mobile navigation.
+229. Add a visual regression baseline for dark mode if supported.
+230. Add a contrast audit for every shared component state.
+231. Add an automated AAA/AA report without allowing the report itself to become a vanity metric.
+232. Add keyboard-visible focus regression screenshots.
+233. Add reduced-motion visual tests.
+234. Add a density test for unusually sparse screens.
+235. Add a density test for overloaded screens.
+236. Add a maximum interactive-control distance rule for common workflows.
+### RAILS — Brgen
+
+237. Map the Brgen homepage into explicit information hierarchy zones.
+238. Reduce competing primary calls to action on the homepage.
+239. Establish one canonical global navigation model shared across Brgen sub-apps.
+240. Make marketplace, takeaway, messenger, maps, dating, and playlist entry points visually coherent.
+241. Add persistent identity/context when navigating between Brgen sub-apps.
+242. Add consistent unread indicators across messenger and other notification surfaces.
+243. Add a global notification center rather than app-specific notification silos.
+244. Add a universal search entry point.
+245. Add keyboard shortcut support for universal search.
+246. Add recent-search persistence.
+247. Add empty-state designs for every major Brgen collection.
+248. Add offline/network-failure states for interactive Brgen surfaces.
+249. Add optimistic UI only where rollback is deterministic.
+250. Add explicit rollback tests for optimistic mutations.
+251. Add mobile-first tests for the bottom navigation/tab model.
+252. Add deep-link tests for every mounted Brgen sub-app.
+253. Add authentication handoff tests between mounted apps.
+254. Add session-sharing tests between mounted apps.
+255. Add authorization boundary tests between mounted apps.
+256. Add a Brgen performance budget for first meaningful interaction.
+### RAILS — marketplace
+
+257. Establish a marketplace page grammar: header, search, category rail, result controls, result cards, pagination, and trust information.
+258. Create a canonical marketplace product-card component.
+259. Make product-card density responsive rather than duplicating mobile and desktop markup.
+260. Add product image aspect-ratio enforcement.
+261. Add graceful handling for missing product images.
+262. Add image loading and decoding performance tests.
+263. Add price formatting tests for NOK edge cases.
+264. Add seller identity presentation to every listing.
+265. Add seller trust signals without exposing sensitive seller data.
+266. Add listing condition presentation.
+267. Add location/distance presentation.
+268. Add listing timestamp/recency presentation.
+269. Add favorite/watchlist interaction.
+270. Add watchlist persistence tests.
+271. Add saved-search support.
+272. Add saved-search notification semantics.
+273. Add category navigation that survives back/forward navigation.
+274. Add filter state persistence in URLs.
+275. Add sort state persistence in URLs.
+276. Add canonical URL generation for marketplace searches.
+277. Add pagination/cursor semantics that remain stable under new listings.
+278. Add duplicate-listing detection.
+279. Add seller/listing moderation states.
+280. Add listing-report workflow.
+281. Add listing expiration semantics.
+282. Add relisting semantics.
+283. Add sold/unavailable state propagation to search results.
+284. Add stale-result handling when a listing disappears between search and detail.
+285. Add concurrency tests for two users editing the same listing.
+286. Add authorization tests proving sellers cannot mutate another seller's listing.
+287. Add authorization tests proving buyers cannot mutate seller-only fields.
+288. Add image abuse/oversized-upload limits.
+289. Add SSRF-safe image ingestion if remote image URLs are accepted.
+290. Add marketplace structured-data validation if public listing pages expose metadata.
+291. Add marketplace SEO canonicalization tests.
+292. Add marketplace accessibility journey tests.
+293. Add marketplace keyboard-only journey tests.
+294. Add marketplace narrow-mobile visual regression tests.
+295. Add marketplace wide-desktop visual regression tests.
+### RAILS — messenger
+
+296. Define the messenger interaction model as explicit states rather than one large UI state.
+297. Add tests for unread → read transitions.
+298. Add tests for read receipts.
+299. Add tests for typing indicators.
+300. Add tests for reconnecting WebSocket sessions.
+301. Add tests for duplicate incoming messages.
+302. Add tests for out-of-order incoming messages.
+303. Add tests for optimistic message sends.
+304. Add tests for failed sends and retry.
+305. Add tests for attachment upload failure.
+306. Add message pagination tests.
+307. Add conversation pagination tests.
+308. Add scroll-position preservation tests.
+309. Add “jump to newest” behavior tests.
+310. Add keyboard navigation across conversations.
+311. Add accessible naming for message actions.
+312. Add moderation/report actions to the message UI where required.
+313. Add message deletion semantics and tests.
+314. Add conversation archive semantics and tests.
+315. Add notification suppression when the active conversation is visible.
+316. Add notification restoration when focus leaves the conversation.
+317. Add reconnect backoff tests with an explicit maximum.
+318. Add a bounded retry budget for messenger network operations.
+319. Add a messenger memory-growth soak test.
+320. Add a messenger DOM-growth test after thousands of messages.
+321. Add a messenger mobile viewport regression suite.
+### RAILS — takeaway and transactional flows
+
+322. Define takeaway order state transitions as a finite state machine.
+323. Add tests for every legal order transition.
+324. Add tests proving illegal order transitions fail closed.
+325. Add idempotency keys to externally repeatable order mutations.
+326. Add duplicate-submission tests for order creation.
+327. Add concurrent order-update tests.
+328. Add timeout handling for unavailable vendors.
+329. Add explicit order failure states in the UI.
+330. Add retry semantics that cannot duplicate an order.
+331. Add cart persistence tests across authentication changes.
+332. Add cart expiry semantics.
+333. Add price snapshot semantics so historical orders cannot change with current menu prices.
+334. Add availability snapshot semantics.
+335. Add vendor closure handling.
+336. Add out-of-stock race tests.
+337. Add totals reconciliation tests.
+338. Add currency/rounding tests.
+339. Add delivery-area validation tests.
+340. Add address privacy tests.
+341. Add order-history authorization tests.
+342. Add customer/vendor boundary tests.
+343. Add transaction rollback tests around multi-record order creation.
+344. Add operational metrics for stuck orders.
+345. Add a gate detecting orders stuck beyond their expected state duration.
+### RAILS — data, security, and privacy
+
+346. Inventory every controller parameter that reaches persistence.
+347. Audit strong-parameter coverage across every app.
+348. Add a gate for models accepting attributes not explicitly permitted.
+349. Audit every raw SQL fragment.
+350. Audit every SQL fragment involving user-controlled values.
+351. Add an SQL-injection regression corpus.
+352. Audit every URL fetched server-side.
+353. Add SSRF tests for loopback IPv4.
+354. Add SSRF tests for loopback IPv6.
+355. Add SSRF tests for decimal/hex IP representations.
+356. Add SSRF tests for DNS rebinding.
+357. Add SSRF tests for redirects.
+358. Add SSRF tests for link-local addresses.
+359. Add SSRF tests for metadata-service addresses.
+360. Audit every file upload path.
+361. Add MIME/content-sniffing tests.
+362. Add path traversal tests.
+363. Add archive extraction traversal tests.
+364. Audit every user-visible exception for secret leakage.
+365. Add a secret-redaction test corpus.
+366. Add a check preventing tokens/API keys from appearing in logs.
+367. Add an audit of cookies and session configuration.
+368. Add a session fixation regression suite.
+369. Add authorization tests for every destructive controller action.
+370. Add authorization tests for every administrative action.
+371. Add rate-limit tests for authentication and expensive endpoints.
+372. Add abuse-budget tests for search, uploads, and messaging.
+373. Add privacy tests ensuring deleted users disappear from intended public surfaces.
+### OPENBSD — production hardening
+
+374. Add a post-deploy `relayd -n` validation before restart.
+375. Add an automatic post-restart `rcctl check relayd`.
+376. Add a deployment rollback path if relayd fails after application deployment.
+377. Add a deployment check for every expected listening socket.
+378. Add a deployment check for unexpected listening sockets.
+379. Add a PF rule audit against the documented service topology.
+380. Add a PF syntax check to deployment verification.
+381. Add an `rcctl` service inventory to the deployment receipt.
+382. Add an ownership audit for application runtime directories.
+383. Add an ownership audit for daemon logs.
+384. Add an ownership audit for daemon sockets.
+385. Add permission checks for `.env`-style files.
+386. Add a check that secrets are not world-readable.
+387. Add a check that deploy scripts do not widen permissions.
+388. Add pledge/unveil coverage for every privileged process.
+389. Add tests proving expected filesystem accesses remain available after unveil.
+390. Add tests proving unexpected filesystem accesses fail.
+391. Add a documented minimal privilege profile for each long-running daemon.
+392. Add a memory/CPU ceiling observation to the production health report.
+393. Add a disk-space threshold check.
+394. Add an inode-space threshold check.
+395. Add a log-growth threshold check.
+396. Add a stale-socket cleanup diagnostic.
+397. Add a stale-PID diagnostic.
+398. Add a boot-order dependency check between relayd and application daemons.
+399. Add a reboot verification procedure that exercises every production endpoint.
+### STUDIO — audio and creative tooling
+
+400. Define a deterministic seed mode for every procedural Dilla engine render.
+401. Add golden WAV regression renders for representative seeds.
+402. Add an audio duration invariant.
+403. Add sample-rate invariants.
+404. Add channel-count invariants.
+405. Add clipping detection to generated renders.
+406. Add DC-offset detection.
+407. Add silence/runaway-render detection.
+408. Add peak/RMS/LUFS reporting.
+409. Add a bounded render-time budget.
+410. Add tests for missing optional audio dependencies.
+411. Add tests for malformed sample files.
+412. Add tests for zero-length samples.
+413. Add tests for unusually long samples.
+414. Add deterministic swing tests.
+415. Add deterministic humanization tests.
+416. Add seed-isolation tests proving one instrument's randomization does not alter another's sequence.
+417. Add regression fixtures for the “Dilla pocket” timing distribution.
+418. Add tests proving swing remains bounded under tempo changes.
+419. Add tests proving tempo changes preserve intended musical duration.
+420. Add tests for FM parameter stability.
+421. Add tests for evolving modulation remaining bounded.
+422. Add tests for continuous generation stopping cleanly.
+423. Add tests for render cancellation.
+424. Add tests for subprocess cleanup after cancellation.
+425. Add a one-command smoke render for `STUDIO/dilla/live`.
+426. Add a machine-readable render receipt.
+427. Add an audio artifact checksum to deterministic fixtures.
+428. Add a minimal dependency profile for headless rendering.
+429. Add documentation mapping the Ableton writers to their generated artifacts.
+### Cross-tree governance
+
+430. Add a root inventory of every executable command in `MASTER`, `RAILS`, `OPENBSD`, and `STUDIO`.
+431. Add a root inventory of every CI workflow and what it actually gates.
+432. Add a check that every workflow has at least one meaningful failure condition.
+433. Add a check for workflows that can succeed while their main command fails.
+434. Add a check for swallowed workflow exit codes.
+435. Add a check for workflows that mutate production state without an explicit environment guard.
+436. Add a check that deployment workflows identify their target host.
+437. Add a check that destructive workflows require an explicit operator input.
+438. Add a root dependency map between the four trees.
+439. Add a gate preventing new undeclared cross-tree dependencies.
+440. Add a report of shared files consumed by multiple trees.
+441. Add a report of shared files that are copied rather than referenced.
+442. Add a duplication detector across Markdown operational instructions.
+443. Add a duplication detector across shell deployment procedures.
+444. Add a duplication detector across YAML configuration.
+445. Add a check for configuration keys declared in multiple authoritative locations.
+446. Add a check for constants duplicated across trees.
+447. Add a check for command names documented differently in different trees.
+448. Add a check for paths mentioned in documentation but absent from the repository.
+449. Add a check for repository paths that are never documented where documentation is mandatory.
+450. Add a generated `TREE.md` freshness check.
+451. Add a generated command index.
+452. Add a generated configuration-source index.
+453. Add a generated “authority chain” report showing which file owns each major policy.
+454. Add a single root `bin/check` entry point that delegates to each tree without duplicating logic.
+455. Add a single root smoke command that exercises the minimum viable path of every tree.
+456. Add a root failure report that preserves the first causal failure instead of only downstream symptoms.
+457. Add a machine-readable handoff format containing commit, tests, known failures, drift, and next action.
+458. Add a stale-handoff detector.
+459. Add a stale-TODO-reference detector.
+460. Add a detector for TODO items whose referenced file/path no longer exists, excluding intentionally historical references.
+461. Add a detector for TODO items whose verification command no longer exists.
+462. Add a detector for TODO items with no measurable completion condition.
+463. Require every new TODO item to state either a path, command, metric, user-visible behavior, or explicit decision required.
+464. Add a periodic backlog deduplication pass.
+465. Add a periodic backlog “prove this still exists” pass.
+466. Add a periodic backlog priority recalculation based on current architecture rather than age.
+467. Add a rule that closed findings are not copied back into forward work without new evidence.
+468. Add a rule that proposed work cannot claim a detector found something unless the detector was actually run.
+469. Add a rule that production observations identify observation date and host.
+470. Add a rule that every operational TODO distinguishes repository work from box/deployment work.
+471. Add a rule that every security TODO has a negative test.
+472. Add a rule that every performance TODO has a measured baseline.
+473. Add a rule that every visual TODO has a screenshot/render acceptance criterion.
+474. Add a rule that every architectural TODO names the dependency direction it intends to change.
+475. Add a rule that every proposed deletion names its replacement behavior.
+476. Add a rule that every proposed extraction states how its LOC budget changes.
+477. Add a rule that every proposed new subsystem identifies its owner directory before implementation.
+478. Add a final `/through` campaign that runs the complete repository against the additions above and removes any item whose premise fails measurement.
+
+478 items. Re-measure before working. Closed findings stay closed.
+
 ---
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
