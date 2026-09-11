@@ -1,10 +1,17 @@
 # MASTER
 
 <!-- The face reading this file aloud, in the voice data/voice.yml names. Recorded
-     by RAILS/gates/probes/face_loop_record.rb; loop.mp4 carries the sound, and
-     loop.gif is the same take without it, because GitHub's README sanitizer
-     strips <video> and renders an <img>. -->
-<img src="loop.gif" width="360" alt="The MASTER face, reading this page aloud">
+     by RAILS/gates/probes/face_loop_record.rb.
+
+     loop.mp4 carries the sound and loop.gif is the same take without it. The
+     frame is the gif because GitHub's sanitizer strips <video> — measured
+     2026-08-30 — so the mp4 is what the frame links to rather than what it
+     embeds: clicking the face opens the take with its audio.
+
+     An inline player with sound needs the mp4 uploaded through GitHub's web UI
+     and its user-attachments URL pasted here. That upload is the operator's; a
+     repo-relative <video src="loop.mp4"> renders as nothing. -->
+<a href="loop.mp4"><img src="loop.gif" width="360" alt="The MASTER face, reading this page aloud — click for sound"></a>
 
 **MASTER is the first artificial intelligence written in pure Ruby that governs
 itself by law, not by hope — grown in Norway, to run its own mind on power drawn

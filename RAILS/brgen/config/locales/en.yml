@@ -31,7 +31,6 @@ en:
   time:
     formats:
       event: "%b %-d at %H:%M"
-  hello: Hello
   legal:
     site_id_label: TradeDoubler Site ID
   app:

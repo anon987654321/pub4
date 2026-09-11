@@ -1,5 +1,4 @@
 nb:
-  hello: "Hei"
   app:
     name: "BSDports"
   skip_to_content: "Hopp til hovedinnhold"
