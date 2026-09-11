@@ -26,10 +26,12 @@ module Deploy
   class DnsZonesGate
     ROOT = File.expand_path("../..", __dir__)
     REGISTRY = File.join(ROOT, "RAILS", "brgen", "lib", "brgen", "domain_registry.rb")
-    NAMESERVER = "46.23.89.226"
+    # Both come from data/dns.yml, which is the file that renders the delegation
+    # these checks then verify. A literal here could disagree with the zones it
+    # is checking and the gate would pass on both halves of the disagreement.
+    NAMESERVER = RenderDns.policy.fetch("nameserver").fetch("ip")
     INVENTORY = File.join(ROOT, "OPENBSD", "deploy_inventory.json")
-    # Two, so one operator's blocked resolver is not a false finding.
-    PUBLIC_RESOLVERS = %w[1.1.1.1 9.9.9.9].freeze
+    PUBLIC_RESOLVERS = RenderDns.policy.fetch("resolvers").fetch("public").freeze
 
     def self.run
       new.run

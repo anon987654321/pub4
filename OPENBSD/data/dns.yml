@@ -19,6 +19,16 @@ nameserver:
   # what the CAA iodef record exists to compensate for.
   hostmaster: hostmaster
 
+# Resolvers a check asks when it wants the answer the rest of the internet gets,
+# as opposed to asking our own nameserver. Two, so one operator's blocked or
+# hijacked resolver is not a false finding, and neither of them is Google:
+# gates/dns_zones.rb picked these deliberately and wrote the reason down, while
+# OPERATOR.sh carried 8.8.8.8 at the head of its own copy with no argument for it.
+resolvers:
+  public:
+    - 1.1.1.1
+    - 9.9.9.9
+
 ttl: 3600
 
 soa:

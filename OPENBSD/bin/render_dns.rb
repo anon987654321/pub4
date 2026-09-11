@@ -95,11 +95,13 @@ module RenderDns
     lines << "@ IN A #{ip}"
 
     # www only where a certificate can cover it, which means only where there is
-    # an acme-client block — and those come from ALL_DOMAINS. The five zones that
-    # are not in it (the anti-gambling trio, bsdports.net, foodielicio.us) would
-    # otherwise advertise a www host pointing at a box holding no certificate for
-    # it: a name that resolves and then fails TLS, which a browser reports as an
-    # attack. config-drift-check flags exactly this, and flagged those five.
+    # an acme-client block — and those come from ALL_DOMAINS. The four zones that
+    # are not in it (the anti-gambling trio and foodielicio.us) would otherwise
+    # advertise a www host pointing at a box holding no certificate for it: a name
+    # that resolves and then fails TLS, which a browser reports as an attack.
+    # config-drift-check flags exactly this. This said five and named bsdports.net,
+    # which has no zone at all — bsdports.org is the one with a zone, and it is in
+    # ALL_DOMAINS, so it was never in this set.
     lines << "www IN A #{ip}" if city_zones.key?(domain)
 
     if mail

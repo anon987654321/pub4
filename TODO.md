@@ -5625,7 +5625,12 @@ Numbered 1–N across the four trees.
 638. **tools/tree.rb still DRIFTs a missing dir.** Prints `archive/recovery` as DRIFT. Drop both.
 639. **PATH_OWNERSHIP lists `archive/`.** Directory does not exist. Remove the row.
 640. **Retired-apps prose vs extra_zones.** RUNBOOK says foodielicio.us went with baibl; `data/dns.yml` `extra_zones` still serves them. Pick one source.
-641. **dns.yml comment vs ALL_DOMAINS.** “five zones not in ALL_DOMAINS (anti-gambling trio, bsdports.net, foodielicio.us)”. `bsdports.net` has no zone. Rewrite from `city_zones` + `extra_zones`.
+641. **Fixed 2026-09-12.** The comment lives in `render_dns.rb`, and it was wrong
+     twice: the count is four, not five, and `bsdports.net` has no zone at all —
+     `bsdports.org` is the one with a zone and it is in ALL_DOMAINS, so it was never
+     in that set. Computed from `city_zones` and `extra_zones`: 53 city, 13 extra,
+     four outside — the anti-gambling trio and foodielicio.us. render_dns reports in
+     sync across all 57 zones, so nothing rendered changed.
 642. **extra_zones duplicates ALL_DOMAINS.** Keep extras only for names not in ALL_DOMAINS.
 643. **doas.conf.example is a different policy.** Mark the example historical or generate it from the live file.
 644. **sshd_config is a fragment.** Either track the whole file or say this is a fragment OPERATOR merges.
@@ -5642,9 +5647,23 @@ Numbered 1–N across the four trees.
 655. **sync_deploy_inventory drops `standalone_apps`.** Preserve the key.
 656. **health_check public master is a literal.** `:411` `"ai.brgen.no"`. Read `deploy_inventory.json` `master_face`.
 657. **Two uptime checkers, two master policies.** One function, one list.
-658. **dns_zones NAMESERVER is a literal.** `gates/dns_zones.rb` `"46.23.89.226"`. `data/dns.yml` already has `nameserver.ip`.
-659. **OPERATOR PUBLIC_RESOLVERS includes 8.8.8.8.** `dns_zones.rb` uses `1.1.1.1 9.9.9.9`. One list in `data/dns.yml`.
-660. **BRGEN_IP / HYP_IP restated.** Scripts should read `dns.yml` (or a tiny `data/host.yml`).
+658. **Fixed 2026-09-12.** `data/dns.yml` declares `resolvers.public`, and
+     `gates/dns_zones.rb` reads it along with `nameserver.ip` instead of carrying
+     its own two literals. The copies had already drifted: OPERATOR.sh led with
+     8.8.8.8 while the gate used Cloudflare and Quad9 and had written down why, so
+     the gate's list won and OPERATOR.sh dropped Google. `test_dns_facts_agree`
+     fails if either copy moves without the other.
+659. **Fixed 2026-09-12.** `data/dns.yml` declares `resolvers.public`, and
+     `gates/dns_zones.rb` reads it along with `nameserver.ip` instead of carrying
+     its own two literals. The copies had already drifted: OPERATOR.sh led with
+     8.8.8.8 while the gate used Cloudflare and Quad9 and had written down why, so
+     the gate's list won and OPERATOR.sh dropped Google. `test_dns_facts_agree`
+     fails if either copy moves without the other.
+660. **Held rather than moved, 2026-09-12.** They stay as shell literals: the block
+     is sourced before anything runs, and making the deploy script shell out to
+     ruby34 to boot would put it behind an interpreter it is itself responsible for
+     installing. `test_dns_facts_agree` asserts BRGEN_IP is `nameserver.ip` and
+     HYP_IP the first `xfr_peers` entry, so the duplication now costs something.
 661. **relayd-watchdog BACKENDS table hardcoded four ports.** Add this file to `SMOKE_SCRIPTS` / `FLEET_INVENTORIES`.
 662. **vps-state APPS hardcoded.** `%w[brgen amber bsdports]`. Read apps.yml and master_face.
 663. **vps_ci_all apps hardcoded.** Same.
@@ -5742,11 +5761,19 @@ Numbered 1–N across the four trees.
 744. **rc.d/*_jobs footers are triplicated.** One `etc/rc.d/jobs.footer` comment file, or a shared tmpl with APP filled in.
 745. **Run `render_dns.rb --check` in `check-openbsd` directly** so a DNS edit does not require the Rails gate registry.
 746. **nsd.conf `server-count: 2` on 1 vCPU.** Put `server-count` in `data/dns.yml` (default 1 for vm23_small).
-747. **render_dns.rb extra_hosts key is unused in dns.yml.** Document extra_hosts or remove the dig.
+747. **False — checked 2026-09-12.** `render_dns.rb:84` reads it
+     (`policy.dig("extra_hosts", domain)`) and `dns.yml:119` carries
+     `brgen.no: [ns, amber]`, which is how ns.brgen.no and amber.brgen.no get their
+     A records. Both halves are live.
 748. **DMARC assert in `--check`.** Do not also emit `_dmarc` in zone_body for mail_domain.
 749. **domain_inventory.yml `state: unknown` never alarms.** Fail or skip-with-count so “32 unknown” is visible.
 750. **Nominet dates in inventory are already past.** Add `domain_watch --update` recipe in operator.yml.
-751. **ALL_DOMAINS is a shell array parsed by regex in three Ruby files.** Move the city list to `data/dns.yml` `city_zones:` and have OPERATOR.sh read it with `ruby34 -ryaml`.
+751. **Argued against, and the argument is in the file.** `data/dns.yml`'s header
+     states it: the domain list is deliberately not there, because ALL_DOMAINS is
+     already what `domain_alignment` binds `Brgen::DomainRegistry` to, and a yaml
+     copy would be a third list rather than one. The regex parse is real and is what
+     that costs. Moving it means moving the binding too, which is a deploy-path
+     decision and the operator's. See 32, which is the same proposal.
 752. **No test for bin/vps-deploy.** At least: refuse uid 0; `all` expands to the four names; `SKIP_CI=1` path names `${app}.sh`.
 753. **No test for OPERATOR.sh beyond zsh -n and idempotency grep.** Add: `ALL_DOMAINS` parse round-trip against `render_dns` city_zones.
 754. **resource_guard crisis path.** The test should fail if the crisis function’s path is not in `explicitly_installed`.

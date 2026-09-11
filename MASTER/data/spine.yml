@@ -783,7 +783,18 @@ pub4_source_ceilings:
 # right parser per file, and a script added tomorrow is covered by having a
 # shebang rather than by somebody remembering a list. It replaces the two lines
 # it supersedes, so check-openbsd got shorter. All 43 parse today.
-  OPENBSD: 113
+# 113 -> 114 for test/test_dns_facts_agree.rb. Four DNS facts were written down
+# twice and had already drifted: OPERATOR.sh led its resolver list with 8.8.8.8
+# while gates/dns_zones.rb used Cloudflare and Quad9 and had written down why.
+# The nameserver IP was a third literal in the gate that checks the delegation
+# data/dns.yml renders, so the gate could have passed on both halves of a
+# disagreement with the zones it was checking.
+#
+# The gate reads the policy file now. OPERATOR.sh cannot: its constants are
+# sourced before anything runs, and making the deploy script shell out to ruby34
+# to boot would put it behind an interpreter it installs. The duplication stays
+# and this test is what it costs.
+  OPENBSD: 114
   # 220 -> 222 for lora/seed_media.yml and lora/_toolkit/install_seed_media.rb,
   # the prompt set for every seeded photograph and the script that grades and
   # files what comes back from it. Two files, both named, neither foldable:

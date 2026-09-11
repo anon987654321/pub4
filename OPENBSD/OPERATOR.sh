@@ -406,12 +406,18 @@ source "${SCRIPT_DIR}/_net.sh"
 trap 'cleanup' EXIT
 trap 'error_handler $? $LINENO' ERR INT TERM
 
+# These four restate facts data/dns.yml already declares — BRGEN_IP is its
+# nameserver.ip, HYP_IP the first of its xfr_peers, PUBLIC_RESOLVERS its
+# resolvers.public. They stay as literals because this block is sourced before
+# anything, and making it shell out to ruby34 to boot would put the deploy
+# script behind an interpreter it also installs. test_dns_facts_agree fails if
+# either copy moves without the other.
 typeset -r BRGEN_IP="46.23.89.226"
 typeset -r HYP_IP="194.63.248.53"
 typeset -r LOCALHOST="127.0.0.1"
 typeset -r EMAIL_ADDRESS="bergen@pub.attorney"
 
-typeset -a PUBLIC_RESOLVERS=(8.8.8.8 1.1.1.1 9.9.9.9)
+typeset -a PUBLIC_RESOLVERS=(1.1.1.1 9.9.9.9)
 typeset -A APP_PORTS=(
   brgen 38182
   amber 61352
