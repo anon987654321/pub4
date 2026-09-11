@@ -4529,6 +4529,55 @@ _vertical_shell already tuned for contrast in both directions.
 Kaufland and the nineteen beside it are read the same way: take the mechanism,
 leave the paint.
 
+### The external Kaufland patch, assessed 2026-09-11
+
+A fifth log arrived proposing the catalogue redesign as one patch: replace the
+storefront header with a Kaufland utility strip and an `Alle Kategorien`
+control, repaint the chrome white with red, rebuild the product card, drop the
+hero, and move the filters into a persistent left rail. Most of it is either
+already done, already decided against, or a rendered value. Two parts are real
+and are the ones worth starting from.
+
+**Its premise was a comment rather than the code.** The patch opens by removing
+Amazon's dark palette wholesale, quoting `_marketplace_nav_bar.scss` calling
+itself "a faithful two-row Amazon clone". That sentence is history and the file
+says so; all eleven hex literals came out earlier the same day, and `#131921`,
+`#232f3e`, `#febd69`, `#f3a847` and `#cd9042` appear nowhere in RAILS source
+now. The bar has read `--surface`, `--text`, `--text-secondary` and `--accent`
+since. Its headline target — Kaufland's catalogue plus bol's cleanliness plus
+eBay's depth plus Vinted's simplicity plus brgen's local layer — is the
+operator's own sentence from the top of this section, handed back.
+
+**And it overturns a recorded position without knowing it existed.** The
+subsection above states that the storefront bar keeps Amazon's structure — a
+search field dominating the row, deliver-to, account, cart, sections beneath —
+because the structure was the part that was right. The patch replaces exactly
+that structure. The rule for all twenty references is the same one: take the
+mechanism, leave the paint.
+
+**The DOM is the real finding, and the log names it itself.**
+`shared/_live_search_index.html.erb` renders the search form — with the filter
+`<details>` captured inside it — and the results turbo frame as siblings. A
+persistent filter rail beside a product grid cannot be built over that shape
+with CSS; the helper has to let a caller place the form and the frame
+separately, or wrap both in a container it does not currently provide. That is
+structural, it is testable, and it blocks the catalogue layout whoever builds
+it. Do this one first.
+
+**The second is a card contract rather than a card look.** Kaufland's density
+comes from every product exposing the same fields at the same vertical
+positions: image, title, rating and count, price, reference price, discount,
+shipping, delivery window, seller, condition, unit price. markedsplass has the
+data — listings carry variants, facets, ratings, reviews and distance — and
+renders a subset in a different order per surface. A fixed ladder is a contract
+a gate can hold, and `distance_km` is the field Kaufland has no answer to.
+
+Everything else in the patch is a rendered value: the white canvas, the red
+accent, `object-fit: contain` on product photography, the card's borders and
+type scale, and removing the hero. Fenced, as the section below says. Build the
+information architecture, measure it at a set viewport, and bring the look back
+for a decision.
+
 ### Every unit is multi-city, multi-domain and multi-language
 
 brgen is one app over roughly twenty city domains, and the marketplace
