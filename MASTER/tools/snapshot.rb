@@ -30,7 +30,7 @@ module Operator
       ".js" => "javascript", ".mjs" => "javascript", ".ts" => "typescript",
       ".css" => "css", ".scss" => "scss", ".html" => "html", ".erb" => "erb",
       ".md" => "markdown", ".sh" => "bash", ".zsh" => "bash", ".ksh" => "bash",
-      ".sql" => "sql", ".conf" => "conf", ".toml" => "toml",
+      ".sql" => "sql", ".conf" => "conf", ".toml" => "toml"
     }.freeze
 
     module_function
@@ -109,6 +109,47 @@ module Operator
 
         Do not edit the mirrored tree until you have a written assessment and a trace for the path
         you intend to change.
+
+        ### 7. The law you are reviewing against
+
+        This repository is governed by MASTER, and its law is data rather than prose. Read it before
+        you judge anything, in this order — all four are inlined in `snapshot_MASTER.md`:
+
+        1. `MASTER/data/soul.yml` — the kernel: absolutes, work rules, anti-simulation.
+        2. `MASTER/data/rules.yml` — 242 declared rules, each with tier, severity and fix.
+        3. `MASTER/law/*.rb` — 122 domain rules, each carrying the example it must flag and the one
+           it must not. Those two examples **are** the rule; a fix that breaks either is wrong.
+        4. `MASTER/lib/review/scan/rules/*.rb` — 148 registry detectors.
+
+        The house rules that reject otherwise-correct patches:
+
+        - **Ruby and zsh only.** `sed`, `awk`, `find`, `head`, `tail`, `wc`, `perl` and `python` are
+          banned in scripts: the BSD variants break GNU idioms and this repo deploys to OpenBSD.
+        - **A comment states the present-tense reason.** Not what the code used to do — git holds that.
+          A patch that adds a changelog comment will be rejected on that alone.
+        - **The Rails apps default to Norwegian.** Assert through I18n keys, never English literals,
+          and every key needs both `en.yml` and `nb.yml`.
+        - **Renders are irreplaceable.** Never change a rendered-sound or graded-look default in
+          `STUDIO`; never alter a colour, font or layout value — the operator is a trained architect.
+        - **Ratchets.** `MASTER/bin/operator measure` records ~55 numbers with ceilings. Adding a file,
+          growing `lib/`, or introducing a finding moves one. A patch that moves a number must move the
+          ceiling in the same patch and say what paid for it. Slack is the same defect as debt.
+
+        ### 8. What to hand back
+
+        One **unified git diff**, and nothing interleaved with it:
+
+        - Produce it as if by `git diff`, with `a/` and `b/` prefixes and paths relative to the repo
+          root (`MASTER/lib/...`, not `lib/...`), so `git apply` takes it from the root of pub4.
+        - Include at least three lines of context per hunk; a patch that does not apply cleanly is a
+          patch nobody can use.
+        - One patch for everything you propose, ordered so that no hunk depends on a later one.
+        - New files as `/dev/null` → `b/path` hunks; deletions the mirror image. Do not emit binary
+          diffs — name the binary file and describe the change instead.
+        - Put your assessment, your traces and your reasoning **before** the patch, never inside it.
+          The patch body is code and its comments only.
+        - Every change must be something you can defend in one sentence naming the rule it serves or
+          the defect it removes. Prefer ten defensible hunks to a hundred stylistic ones.
       MD
     end
 
