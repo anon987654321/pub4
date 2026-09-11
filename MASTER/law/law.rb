@@ -22,14 +22,29 @@ module Law
   # comments (WHY_NOT_WHAT, TYPOGRAPHY_DISCIPLINE) declares `reads_comments
   # true`. Fixtures prove with file "-", which has no extension and so no
   # comment syntax — a fixture is always read whole.
-  COMMENT_LEADERS = {
-    ".rb" => ["#"], ".rake" => ["#"], ".gemspec" => ["#"],
-    ".yml" => ["#"], ".yaml" => ["#"],
-    ".zsh" => ["#"], ".sh" => ["#"], ".bash" => ["#"],
-    ".js" => ["//", "/*"], ".ts" => ["//", "/*"], ".jsx" => ["//", "/*"], ".tsx" => ["//", "/*"],
-    ".css" => ["/*"], ".scss" => ["//", "/*"], ".sass" => ["//", "/*"],
-    ".html" => ["<!--"], ".htm" => ["<!--"], ".erb" => ["<!--", "<%#"]
+  # Keyed by language rather than by extension, because an extension table here
+  # is a second copy of FILE_LANGUAGE_MAP that has to agree with it and does
+  # not. Adding .ksh, .ru and .mjs to that map made three more file types
+  # readable and left their comments unblanked, so DOLLAR_PAREN read the prose
+  # backticks in a ksh comment — `keepenv`, `sysctl | awk` — as command
+  # substitution. One table, and a new extension inherits its language's
+  # comment syntax for free.
+  LANGUAGE_COMMENT_LEADERS = {
+    "ruby" => ["#"], "yaml" => ["#"], "zsh" => ["#"],
+    "javascript" => ["//", "/*"],
+    "css" => ["/*"], "scss" => ["//", "/*"],
+    "html" => ["<!--"],
   }.freeze
+
+  # ERB is html by language and carries Ruby's comment tag as well, which is the
+  # one case the language alone does not answer.
+  EXTENSION_COMMENT_LEADERS = { ".erb" => ["<%#"] }.freeze
+
+  def self.comment_leaders(file)
+    language = Master.language_for(file)
+    LANGUAGE_COMMENT_LEADERS.fetch(language, []) +
+      EXTENSION_COMMENT_LEADERS.fetch(File.extname(file).downcase, [])
+  end
 
   # `ask` is the semantic half: a rule whose subject cannot be matched by a
   # regex states the question instead, and the model answers it. It sits beside
@@ -57,10 +72,26 @@ module Law
     # `path` takes a Regexp or a substring; `path_exclude` was already a Regexp,
     # and one member of a pair reading its argument the other way is a trap for
     # whoever writes the next law.
+    # A law that names no language applies everywhere. A law that names one
+    # applies to a file resolved to that language, and to nothing else.
+    #
+    # This read `language.nil? || languages.empty? || ...`, so an unresolved
+    # file satisfied every language-scoped law — the opposite of what the
+    # registry's Rule#applies_to? has always answered for the same question.
+    # 396 tracked files resolve to nil, and 302 of them are not source in any
+    # language: .gitignore, .svg, .toml, .env, Gemfile.lock. Each was measured
+    # against all 65 language-scoped laws, which is how FROZEN_STRING_LITERAL
+    # came to ask 172 non-Ruby files for a Ruby magic comment against 4 real
+    # ones.
+    #
+    # The clause was protecting the other 94 — Gemfile, Rakefile, and the
+    # executables under bin/ whose language is in their shebang. Those are
+    # resolved now rather than excused, by Master.language_for.
     def applies?(file, language)
       return false if path && !(path.is_a?(Regexp) ? file.match?(path) : file.include?(path))
       return false if path_exclude && file.match?(path_exclude)
-      language.nil? || languages.empty? || languages.include?(language)
+
+      languages.empty? || (language && languages.include?(language))
     end
 
     # A semantic rule has no detector to run here. It is carried to the model by
@@ -152,7 +183,7 @@ module Law
     # Comments and intentional-marked lines blanked, newlines kept, so a
     # multi-line detector still sees the file's shape.
     def considered_text(text, file)
-      leaders = reads_comments ? [] : COMMENT_LEADERS.fetch(File.extname(file), [])
+      leaders = reads_comments ? [] : Law.comment_leaders(file)
       continued = reads_comments ? [] : continued_comment_lines(text, file)
       return text if leaders.empty? && continued.empty? && !text.include?("scan:")
 
@@ -204,7 +235,7 @@ module Law
     end
 
     def scan_lines(text, file)
-      leaders = reads_comments ? [] : COMMENT_LEADERS.fetch(File.extname(file), [])
+      leaders = reads_comments ? [] : Law.comment_leaders(file)
       continued = reads_comments ? [] : continued_comment_lines(text, file)
       text.each_line.with_index(1).filter_map do |line, n|
         next if continued.include?(n - 1)

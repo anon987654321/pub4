@@ -183,7 +183,26 @@ spine:
   # rule at error severity across it. The call test and the to_json case are
   # two conditions and are written as two; folding a security guard onto one
   # line to stay under a ceiling is the wrong instinct about both.
-  lib_body_ceiling: 38299
+# 38299 -> 38329 buys one answer to "what language is this file".
+#
+# There were two. Rule#applies_to? asked `lang && languages.include?(lang)`,
+# so an unresolved file satisfied no language-scoped registry rule. Law#applies?
+# asked `language.nil? || ...`, so the same file satisfied every
+# language-scoped law. 396 tracked files resolve to nil under an
+# extension-only map, and 302 of them are not source in any language — which
+# is how FROZEN_STRING_LITERAL came to ask .gitignore, .svg, .toml and
+# Gemfile.lock for a Ruby magic comment: 176 findings, 4 of them on Ruby.
+#
+# The clause was protecting the other 94 — Gemfile, Rakefile, config.ru and
+# every executable under bin/ whose language lives in its shebang. Those are
+# resolved now rather than excused, so the permissive clause could go.
+#
+# The thirty lines are the resolver: the extension map first because it is
+# free and answers 3,876 of 4,272 tracked files, then the known names, then a
+# shebang read, memoised because the scanner asks once per rule per file.
+# Correctly typing three more extensions exposed sixteen real findings that
+# had never been measured, and each is fixed rather than recorded.
+  lib_body_ceiling: 38329
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753

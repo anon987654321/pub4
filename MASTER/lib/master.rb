@@ -47,13 +47,69 @@ module Master
   VIOLATION_TRUNCATE = 90
 
   FILE_LANGUAGE_MAP = {
-    ".rb" => "ruby", ".rake" => "ruby", ".gemspec" => "ruby",
+    ".rb" => "ruby", ".rake" => "ruby", ".gemspec" => "ruby", ".ru" => "ruby",
     ".yml" => "yaml", ".yaml" => "yaml", ".json" => "json",
-    ".js" => "javascript", ".ts" => "javascript", ".jsx" => "javascript", ".tsx" => "javascript",
-    ".sh" => "zsh", ".zsh" => "zsh", ".bash" => "zsh", ".md" => "markdown",
+    ".js" => "javascript", ".mjs" => "javascript", ".ts" => "javascript",
+    ".jsx" => "javascript", ".tsx" => "javascript",
+    ".sh" => "zsh", ".zsh" => "zsh", ".bash" => "zsh", ".ksh" => "zsh", ".md" => "markdown",
     ".html" => "html", ".htm" => "html", ".erb" => "html", ".css" => "css",
     ".scss" => "scss", ".sass" => "scss",
   }.freeze
+
+  # A Ruby file need not end in .rb, and an extension-only map calls every one
+  # of these unknown. 94 tracked files are in that position — Gemfile, Rakefile,
+  # and every executable under bin/ whose language lives in its shebang.
+  NAMED_LANGUAGES = {
+    "Gemfile" => "ruby", "Rakefile" => "ruby", "Guardfile" => "ruby",
+    "Capfile" => "ruby", "Brewfile" => "ruby", "Podfile" => "ruby",
+    "Vagrantfile" => "ruby", "config.ru" => "ruby",
+  }.freeze
+
+  SHEBANG_LANGUAGES = { /\bruby\b/ => "ruby", /\b(?:zsh|bash|ksh|sh)\b/ => "zsh" }.freeze
+
+  # One answer to "what language is this file", because two answers is how a
+  # rule comes to mean different things in two engines. Rule#applies_to? asks
+  # `lang && languages.include?(lang)` and Law#applies? asked
+  # `language.nil? || ...` — so an unresolved file satisfied every
+  # language-scoped law while satisfying no language-scoped registry rule. That
+  # let .gitignore, .svg, .toml and .env be told to carry a Ruby magic comment:
+  # of 176 FROZEN_STRING_LITERAL findings, 4 were on Ruby files.
+  #
+  # Extension first because it is free and covers 3,876 of 4,272 tracked files.
+  # The name and the shebang are the fallbacks, and the shebang is a read, so
+  # the answer is memoised: the scanner asks this once per rule per file.
+  def self.language_for(path)
+    @language_for ||= {}
+    key = path.to_s
+    return @language_for[key] if @language_for.key?(key)
+
+    @language_for[key] = resolve_language(key)
+  end
+
+  def self.resolve_language(path)
+    by_ext = FILE_LANGUAGE_MAP[File.extname(path).downcase]
+    return by_ext if by_ext
+
+    named = NAMED_LANGUAGES[File.basename(path)]
+    return named if named
+
+    shebang_language(path)
+  end
+
+  # Only the first line, and only when it is a shebang. A file that opens with
+  # anything else has nothing to say about its language here.
+  def self.shebang_language(path)
+    return nil unless File.file?(path)
+
+    first = File.open(path) { |io| io.gets.to_s }
+    return nil unless first.start_with?("#!")
+
+    match = SHEBANG_LANGUAGES.find { |pattern, _lang| pattern.match?(first) }
+    match&.last
+  rescue SystemCallError, IOError
+    nil
+  end
+  private_class_method :resolve_language, :shebang_language
 
   # NUL-byte sniff on the first 4KB. Errs on the side of "binary" so scanners
   # skip unreadable files instead of choking on them. Module function, not a

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawn } from "node:child_process";
@@ -9,29 +9,11 @@ const chrome = process.env.CHROME_PATH ||
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const timeoutMs = Number(process.env.PROBE_BROWSER_TIMEOUT || 15000);
 
-const html = `<!doctype html>
-<meta charset="utf-8">
-<title>MASTER WebGL guard probe</title>
-<script>
-  (function () {
-    var proto = window.HTMLCanvasElement && HTMLCanvasElement.prototype;
-    if (!proto || proto.__masterWebglGuard) return;
-    proto.__masterWebglGuard = true;
-    var original = proto.getContext;
-    proto.getContext = function (type) {
-      if (!window._primerFired && /webgl/i.test(String(type))) return null;
-      return original.apply(this, arguments);
-    };
-  })();
-</script>
-<button id="primer">tap to start</button>
-<canvas id="face" width="64" height="64"></canvas>
-<script>
-  document.getElementById("primer").addEventListener("click", function () {
-    window._primerFired = true;
-    document.body.classList.add("face-session");
-  });
-</script>`;
+// The page under test is probe_webgl_guard.html, beside this file. It carries
+// a verbatim copy of the pre-boot WebGL guard from chat/index.html.erb, which
+// is the point: this probe proves that exact code, so the two must not drift
+// by being edited apart.
+const html = await readFile(new URL("probe_webgl_guard.html", import.meta.url), "utf8");
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -162,7 +144,7 @@ async function main() {
       };
 
       const before = await evaluate(`(function () {
-        var canvas = document.getElementById("face");
+        const canvas = document.getElementById("face");
         return {
           primer: !!document.getElementById("primer"),
           primerFired: !!window._primerFired,
@@ -174,7 +156,7 @@ async function main() {
       await evaluate(`document.getElementById("primer").click()`);
 
       const after = await evaluate(`(function () {
-        var canvas = document.createElement("canvas");
+        const canvas = document.createElement("canvas");
         return {
           primerFired: !!window._primerFired,
           faceSession: document.body.classList.contains("face-session"),

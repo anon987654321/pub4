@@ -196,7 +196,11 @@ Master::Review::Scan::SourceMasking.without_foreign_heredocs(base)
         rescue Errno::ENOENT
           next
         end
-        lang = Master::FILE_LANGUAGE_MAP[File.extname(path)]&.to_sym
+        # Through Master.language_for, not the raw map: the map answers by
+        # extension alone, so this census called Rakefile and every shebang
+        # executable unknown while the scanner resolved them. Two answers to the
+        # same question is how a census and a gate disagree about one file.
+        lang = Master.language_for(path)&.to_sym
         relative = path.delete_prefix("#{ROOT}/")
         rules.each_value do |rule|
           next if rule.semantic? || !rule.applies?(path, lang)

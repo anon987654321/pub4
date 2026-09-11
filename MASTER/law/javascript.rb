@@ -43,10 +43,17 @@ Law.define(:NO_VAR) do
   severity :error
   languages %i[javascript]
   path_exclude %r{/public/three\.module\.js\z}
-  detect { |line| line.match?(/\bvar\s+\w/) }
+  # A declaration sits at a statement position: the start of a line, or straight
+  # after a brace, a semicolon or an opening paren. \bvar\s+\w alone matched the
+  # word anywhere, including inside a string — stt_endpointing.test.mjs carries
+  # Norwegian speech fixtures, and "det var veldig hyggelig å høre" is the verb
+  # "was", which this rule read as a variable declaration.
+  detect { |line| line.match?(/(?:^|[{};(])\s*var\s+\w/) }
   fix "Use const (default) or let (when reassigned)."
   bad  "var x = 1;"
-  good "const x = 1;"
+  # Both directions: a declaration is still caught after a brace, and the word
+  # inside a sentence is not a declaration.
+  good %(const x = 1;\nconst said = "det var veldig hyggelig";\n)
 end
 
 # Migrated from data/rules.yml NULLISH_COALESCING.

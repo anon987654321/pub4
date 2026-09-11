@@ -216,16 +216,24 @@ Law.define(:NO_INLINE_SCRIPT_BLOCK) do
   source "CSP script-src / separation of concerns — assets are files"
   severity :warn
   languages %i[html]
-  # A static error page renders when Rails is not answering, so it cannot
-  # reach the asset pipeline: no stylesheet_link_tag, no digested URL, nothing
-  # served by the app that just failed. Inline is the only thing that works
-  # there, which is why 404/422/500 carry their own style block.
-  path_exclude %r{/public/\d{3}\.html\z}
-  # A static error page renders when Rails is not answering, so it cannot reach
-  # the asset pipeline: no stylesheet_link_tag, no digested URL, nothing served
-  # by the app that just failed. Inline is the only thing that works there,
-  # which is why every app's 404/422/500 carries its own style block.
-  path_exclude %r{/public/\d{3}\.html\z}
+  # Two pages that cannot reach an asset pipeline, which is the only reason this
+  # rule yields.
+  #
+  # A static error page renders when Rails is not answering: no
+  # stylesheet_link_tag, no digested URL, nothing served by the app that
+  # failed. Inline is the only thing that works there, which is why every app's
+  # 404/422/500 carries its own style block.
+  #
+  # A probe fixture beside its script is loaded as a data: URL with no server at
+  # all, so an external src has nothing to resolve against. probe_webgl_guard's
+  # inline block is also the subject under test — it proves the pre-boot WebGL
+  # guard from chat/index.html.erb, which is inline by design because a blocking
+  # <script src> above it delays handler wiring and early taps look dead.
+  #
+  # This clause was written twice, identically, with its reason above each copy.
+  # The second silently replaced the first, so half of it had never been read by
+  # anything.
+  path_exclude %r{/public/\d{3}\.html\z|/script/probe_\w+\.html\z}
   detect { |line| line.match?(/<script(?![^>]*\bsrc=)|<style\b(?![^>]*\bhref=)/) }
   fix "Move it to an asset file and reference it with javascript_include_tag or stylesheet_link_tag."
   bad  "<div><script>boot()</script></div>"
