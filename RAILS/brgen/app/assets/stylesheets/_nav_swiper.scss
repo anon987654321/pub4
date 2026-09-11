@@ -18,6 +18,20 @@
   --nav-rule-w: 3px;
 }
 
+/* Light restates rather than carries, which is the shape $vertical-accents
+   already uses for this exact problem: a hue tuned to read in both directions
+   lands short of the text floor in one of them.
+
+   The rule under the active entry is a 3px band and has no text floor, but
+   .nav_link_badge paints "nytt!" in this colour at 12.15px, where AA wants
+   4.5:1. #d62828 measures 4.36 on #efefef and 4.19 on #000000 — short in both,
+   and no single red clears 4.5 both ways. So dark keeps the brand red and light
+   takes the smallest darkening that clears it: #cc2424, measured 4.75 on
+   #efefef. Same hue, same decision, one step down. */
+:root[data-theme="light"] {
+  --nav-rule: #cc2424;
+}
+
 .nav_swiper {
   position: fixed;
   inset-block-start: 0;

@@ -13,10 +13,14 @@ class RadioBergenManifestTest < ActiveSupport::TestCase
     assert_equal "J Dilla", dilla[:artist]
   end
 
+  # pub4/index.html is a path inside the anon987654321/pub2 archive, which is
+  # history and cannot be renamed. The rename that reached this line renamed a
+  # command — MASTER/bin/pub4 became bin/operator — and the repository is still
+  # pub4. A word-boundary rewrite cannot tell a live path from a cited one.
   test "archaeology lines reference pub4 index.html dig" do
     lines = Brgen::RadioBergenManifest.archaeology_lines
 
-    assert_includes lines.join("\n"), "operator/index.html"
+    assert_includes lines.join("\n"), "pub4/index.html"
     assert_includes lines.join("\n"), "monolithic index.html"
     assert_includes lines.join("\n"), "config/radio_bergen/tracks.yml"
   end

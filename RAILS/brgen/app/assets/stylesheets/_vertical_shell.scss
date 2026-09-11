@@ -52,11 +52,20 @@ body[class*="vertical-"] main {
   padding-top: 0;
 }
 
-/* Immersive verticals: full-screen product surface, all shell chrome hidden.
-   Browsable verticals (marketplace/takeaway/tv) keep the sidebar + widgets and
-   are intentionally excluded. .feed-header is already hidden above for every
-   vertical, so it is omitted here. */
-@each $surface in (maps, dating, messenger, playlist) {
+/* Full-bleed canvas surfaces: the product IS the viewport, so the shell chrome
+   is hidden. maps draws a map and playlist draws the radio tunnel; both are one
+   canvas that reaches every edge, and a nav bar over them covers the product
+   rather than framing it.
+
+   dating and messenger left this list on the operator's decision that every
+   surface wears the front page's chrome and any other chrome may be discarded.
+   Both render browsable content — profiles, threads — and both were wearing a
+   second chrome to do it: nav hidden, wordmark at 200px, full-bleed splash. The
+   note in _vertical_dating_shell.scss said removing it was a product decision
+   for the architect rather than a cleanup, and the architect made it.
+
+   marketplace, takeaway and tv were never in this list. */
+@each $surface in (maps, playlist) {
   /* No tab bar on these, so nothing pinned to the bottom edge needs to clear
      one — see --tab-bar-h in the shared shell. */
   body.vertical-#{$surface} { --tab-bar-h: 0px; }
@@ -133,4 +142,19 @@ body.vertical-takeaway .search-form {
   flex-wrap: wrap;
   gap: var(--space-2);
   align-items: center;
+}
+
+/* One column, one left edge.
+
+   <main> is already the same 600px column the front page uses, so the verticals
+   were never missing a container — only an inset. .page-header carried
+   var(--space-4) inline and the sections beneath it carried nothing, so a bare
+   section heading sat to the left of the intro text directly above it. Measured
+   on tv.brgen.no at 1440x900: the intro at x=439, "POPULÆRE VIDEOER" at x=419,
+   and the empty state centred at 720 — three left edges on one page.
+
+   The inset is the header's own token rather than its current value, so the two
+   cannot drift apart. */
+body[class*="vertical-"] main > section {
+  padding-inline: var(--space-4);
 }

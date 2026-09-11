@@ -8,8 +8,15 @@
     Locals: title (optional), body (optional). Defaults stay generic for unknown hosts. %>
 <% title = local_assigns[:title].presence || t("install.title") %>
 <% body = local_assigns[:body].presence || t("install.body") %>
+<%# role="region" with a name, because this sits outside main and outside every
+    other landmark: axe reported its heading and its body as content belonging to
+    no landmark, which is content a screen-reader user navigating by landmark
+    cannot reach. The name is the prompt's own title, so the region announces
+    what it offers rather than "region". %>
 <div id="install-prompt"
      class="install-prompt"
+     role="region"
+     aria-label="<%= title %>"
      hidden
      data-controller="install-prompt"
      data-install-prompt-ios-safari-value="<%= t("install.ios_safari") %>"

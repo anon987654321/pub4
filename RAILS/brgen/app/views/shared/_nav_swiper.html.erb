@@ -30,7 +30,13 @@
       were carrying nothing visible since the divider between them came out, and
       the bar is eight entries now rather than eleven, which is the size the
       grouping existed to buy. %>
-  <nav id="nav_sections" class="nav_swiper_bar" aria-label="<%= t("a11y.sections") %>" data-brgen-shell-target="navSections">
+  <%# Labelled as the primary navigation because that is what it is: the layout
+      calls this bar the canonical primary nav, the left rail that restated it
+      was removed on that reasoning, and it is the only landmark carrying the
+      verticals at desktop width. It announced itself as "Seksjoner" instead,
+      which named a part of the page rather than the navigation of the site, and
+      left the page with no primary navigation landmark at all. %>
+  <nav id="nav_sections" class="nav_swiper_bar" aria-label="<%= t("nav.primary_nav") %>" data-brgen-shell-target="navSections">
     <div class="nav_swiper_group nav_swiper_group--verticals">
       <% brgen_nav_items.each do |slug, label, href| %>
         <% active = nav_item_active?(slug) %>

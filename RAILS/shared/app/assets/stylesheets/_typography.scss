@@ -125,12 +125,22 @@ main#main-content > header h1 {
   margin-block-end: var(--space-4, 1rem);
 }
 
+/* The family is declared here because two rules described this element and
+   neither was complete. _shell_widgets' `section h2` dresses a widget label —
+   monospace, --text-xs, uppercase, wide tracking — and this rule, carrying an
+   id, won only on size. A vertical's section heading rendered at 22.5px in
+   monospace with label tracking, which is what neither rule asked for and what
+   made tv and marketplace read as a different product from the front page.
+   Stating the family completes the display rule rather than weakening the
+   widget one, which still dresses the sidebar labels it was written for. */
 .section-title,
 main#main-content > section > h2 {
+  font-family: var(--font);
   font-size: var(--text-title);
   line-height: var(--leading-tight);
   letter-spacing: var(--tracking-tight);
   font-weight: var(--weight-bold, 600);
+  text-transform: none;
   text-wrap: balance;
   margin-block-end: var(--space-3, 0.75rem);
 }

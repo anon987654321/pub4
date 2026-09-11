@@ -13,7 +13,7 @@ class PublicNavigationTest < ApplicationSystemTestCase
     assert_selector "h1", text: I18n.t("pages.ports", locale: locale)
     # Capybara has no `?` substitution — that is Rails' assert_select.
     assert_selector "[role='search'][aria-label='#{I18n.t("ports.search_label", locale: locale)}']"
-    assert_selector "input[aria-label='Search query']"
+    assert_selector "input[aria-label='#{I18n.t("search.query", locale:, default: "Search query")}']"
     # The skip link is off-screen until focused, and Selenium reports "" for a
     # hidden node's text — read textContent rather than filtering on a string
     # the driver can never see.
