@@ -135,5 +135,8 @@ pin "idb-keyval", to: "idb-keyval.js"
 # pin above. Pinned so the dynamic import() can resolve, not preloaded.
 %w[carousel].each { |name| sc_pin.call(name, preload: false) }
 
+# One pin, and it is the specifier stimulus_boot.js actually imports. The second
+# name — "stimulus-textarea-autogrow", the package's pre-scope spelling — pointed
+# at the same vendor file and nothing imported it, so every page carried a
+# modulepreload for a module no import could ask for.
 pin "@stimulus-components/textarea-autogrow", to: "@stimulus-components--textarea-autogrow.js"
-pin "stimulus-textarea-autogrow", to: "@stimulus-components--textarea-autogrow.js"

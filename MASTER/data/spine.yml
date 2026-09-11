@@ -502,7 +502,29 @@ pub4_source_ceilings:
   # only by making that census answer a second question against a modified
   # copy of every file, which is not what a ratchet over the tree as it stands
   # is for.
-  MASTER: 1050
+# 1050 -> 1051 for test/test_command_registry_dispatch.rb, which asserts that
+# every symbol CommandRegistry.build dispatches names a public method.
+#
+# Command#call ends in @receiver.public_send(@method_name, ...), so a symbol
+# naming nothing fails when a person types the verb rather than when the
+# registry is built, and nothing checked it. The gap is not theoretical: five
+# live dispatchers — dispatch_commit, dispatch_pair, dispatch_doctor,
+# dispatch_rules, dispatch_tree — were deleted and restored on 2026-09-11,
+# because they share a file with a dead slash table and a grep for the table's
+# name says nothing about a method reached as command(:dispatch_doctor, root).
+# The suite was green the whole time.
+#
+# It also pins the seven unmerged command tables, so an eighth cannot join
+# them quietly. It folds nowhere: test_cli covers what the commands do, and
+# nothing covered whether they can be called at all.
+# 1052 -> 1053 for test/test_ast_edit_writes.rb. AstEdit could not write: it
+# includes Io::AtomicWrite, which defines write_atomic, and both call sites
+# asked for atomic_write — the same two words reversed — so every rename and
+# every insertion raised NoMethodError on the line that was about to change
+# the file. Nothing in the suite named AstEdit, which is why a tool whose whole
+# job is writing had been unable to write. The test covers both operations and
+# asserts that every *atomic* call in that file names a method that exists.
+  MASTER: 1053
 
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:

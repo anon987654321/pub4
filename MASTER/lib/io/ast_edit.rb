@@ -66,7 +66,7 @@ module Master
           .gsub(/\b#{Regexp.escape(from)}\s*\(/, "#{to}(")
           .gsub(/\b#{Regexp.escape(from)}\b(?!\s*[:=])/) { |m| to }
 
-        atomic_write(fp, updated)
+        write_atomic(fp, updated)
         Master::Trace::WriteTracker.current&.record(fp)
         @bus&.publish("tool:after", tool: NAME, path: fp)
         @bus&.publish("tool:ast_edit", op: "rename", from:, to:, path: fp)
@@ -88,7 +88,7 @@ module Master
         lines.insert(insert_at, "\n", code.chomp + "\n")
 
         @undo.snapshot(fp)
-        atomic_write(fp, lines.join)
+        write_atomic(fp, lines.join)
         Master::Trace::WriteTracker.current&.record(fp)
         @bus&.publish("tool:after", tool: NAME, path: fp)
         @bus&.publish("tool:ast_edit", op: "add_after", after: after_name, path: fp)

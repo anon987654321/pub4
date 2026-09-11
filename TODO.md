@@ -9096,11 +9096,49 @@ A finding is a hypothesis.
 
 Continuation of the entropy pass. These have a path. Verify the second caller before deleting the first.
 
-1. **Unwired slash tables.** `CommandRegistry.build` never merges `memory_commands`, `system_commands`, `media_commands`, `core_commands`, `domain_commands`, `reach_commands`, `agent_commands`. Required, Zeitwerk-ignored, unused except `test_session_capture.rb` calling `memory_commands`. Delete the unused tables; keep a wanted verb only by adding it to `build`.
+1. **Unwired slash tables — verified, and the proposed fix would break five live
+   commands.** The claim is true: `CommandRegistry.build` merges
+   `control_commands` and nothing else, `build_fast` returns status and help,
+   and `slash_commands` is built from `HELP_TOPICS` — so `memory_commands`,
+   `system_commands` and `media_commands` are required at the top of
+   command_registry.rb and reachable from no path a person can type. They have
+   been unreachable since `7c23a5ee5` (2026-08-17, "slash surface is a sentence
+   and eight verbs"): the merge went then and the tables stayed. Help advertises
+   twelve verbs and none of them is one of these.
+
+   Deleting the three FILES breaks `/commit`, `/pair`, `/doctor`, `/rules` and
+   `/tree`. Measured by doing it: those five dispatchers live in
+   system_commands.rb beside the dead table, and `build` calls them by symbol —
+   `command(:dispatch_doctor, root)` — so a grep for the table's name says
+   nothing about them. `memory_search` is the same shape in memory_commands.rb,
+   with three callers in context_provider and cohesion.
+
+   The subtraction is method-level, and it needs reachability from a live root
+   rather than "has a caller": almost every dispatcher in these files is called
+   by its own table, so a caller census reads the dead set as live by
+   circularity. `code_reach` answers this at file granularity and reads 0 dead
+   files of 405, which is why nothing has caught it.
+
+And it is seven tables, not three. `agent_commands`, `core_commands`,
+`reach_commands` and `work_commands_extra` have no call site anywhere under
+lib, web, bin or tools; media, memory and system are called only by tests.
+`domain_commands`, `work_commands` and `work_commands_status` are the three
+that are reached. `test_command_registry_dispatch` pins that set so an eighth
+cannot join it quietly, and asserts that every symbol `build` dispatches
+names a public method — the guard that would have caught the near-miss above
+the moment it happened, where the whole suite stayed green.
+
+   `test_capture_command_is_registered` asserts that the table contains
+   "capture", not that the table reaches the registry, so it has passed for
+   every one of those 25 days. Fix the test first — assert reachability through
+   `CommandRegistry.build` — and it will name the dead set for you.
 2. **`mask.js` / `mask_generators.js` / `mask_topologies.js`.** `visual_governor_spec.rb:30` says mask.js is superseded. Comments in `cognition_ecology.js` and `visual_governor.js` still name it. Delete the three files and the comments.
-3. **`examples.html.erb`.** Unmounted. `deploy_backlog_test.rb` greps it for toast. Point the assertion at a live view; delete the demo; unregister `reveal` if it only lived there.
+3. **`examples.html.erb` — already gone.** The file is not in the tree and no
+   controller references it. Nothing to do.
 4. **Two `WebPushJob`s.** `RAILS/brgen/app/jobs/web_push_job.rb` and `RAILS/shared/app/jobs/shared/web_push_job.rb`. One class.
-5. **`futurism` gem, no `futurize` in ERB.** `importmap_baseline.rb:27-31`. One lazy index uses it, or the gem leaves all three Gemfiles.
+5. **`futurism` — the claim is false.** `futurize` appears in three ERB files,
+   so the pin has a reader. Whether one lazy index is worth a gem is a
+   different question from whether it is wired, and it is wired.
 6. **`bin/crate` writes `dilla/crate/`.** Directory gone; engine reads `samples/`. Delete or retarget.
 7. **`restore_backups.sh`.** Litestream. Rename; first usage line `use bin/dr-pull`.
 8. **Three atomic writes.** `Io::AtomicWrite` fsyncs; World and Live do not. One helper.
@@ -9110,7 +9148,10 @@ Continuation of the entropy pass. These have a path. Verify the second caller be
 12. **Host vs shared notifications controllers.** One.
 13. **Marketplace vs takeaway `_nav_bar`.** One partial.
 14. **Legal/mailer `<style>` vs `_typography.scss`.** Delete the ERB type systems.
-15. **`.reading-column` / `.form-measure`.** Wear them or delete them.
+15. **`.reading-column` / `.form-measure` — deliberate, and said so.** No view
+    wears either. `css_coverage_lint.rb:96` records them as opt-in measure
+    classes "worn by tokens, not yet by every view", so this is a decision
+    already taken rather than residue. Wearing them is design work.
 16. **MixScore backticks vs engine Open3 vs `RadioChop.capture`.** One ffmpeg runner, one `capture` signature.
 17. **`dilla_principles.yml` unread.** Load from `groove_engine` or delete.
 18. **Two LUFS windows.** One.
@@ -9127,7 +9168,11 @@ If two things mean the same thing, keep the one with the test.
 26. **`swarm.html` / `diag.html`.** Public extra HTML, `lang="en"`, inline script, not the face. Gate behind auth or delete from production `public/`.
 27. **`codebase.js` not in `face_assets.yml`.** Topology still names it. Add to a deferred group or stop naming it.
 28. **`offline_memory.js` is a scaffold.** Comment: no wiring into chat. Wire enqueue or delete.
-29. **Two importmap pins for one autogrow file.** `@stimulus-components/textarea-autogrow` and `stimulus-textarea-autogrow` both `to:` the same vendor file. Comments `_form_fields` uses it. Keep one pin.
+29. **Two importmap pins for one autogrow file — fixed 2026-09-11.** Both named
+    the same vendor file and only `@stimulus-components/textarea-autogrow` was
+    imported; `stimulus-textarea-autogrow` is the package's pre-scope spelling
+    and nothing asked for it, so every page carried a modulepreload no import
+    could resolve. One pin now.
 30. **`bin/master-core`.** Fold spine only; `bin/master` boots the rest. `bin/dogfood` still calls it. `bin/master --core` or keep and give it one test that it is the fold, not a second product.
 31. **Deals search is LIKE.** Listings/stores use `LiveSearchable`. One helper (restructure 39).
 32. **brgen `NotificationsController` is local; amber inherits `Shared::`.** Promote or delete the host copy.
@@ -9144,11 +9189,25 @@ If two things mean the same thing, keep the one with the test.
 43. **`STREAM_ITERATE_LOG` unsynchronized.** One flock or pid-scoped log.
 44. **`sine_stream.rb` mutates ENV at load.** Don’t require it from tests; or don’t set ENV in a library file.
 45. **`kaggle_session.rb` / `colab_session.rb` / `run_ai_toolkit.rb` ARGV at load.** Guard with `$PROGRAM_NAME`.
-46. **`postpro.log` committed next to source.** Gitignore `*.log` under postpro.
+46. **`postpro.log` — already ignored.** `git ls-files` tracks no log under
+    postpro. Nothing to do.
 47. **`MASTER/log/traces.log`, `tts.wav`, `runtime/` JSONL, `loop.gif`.** START_HERE says generated goes in `.master/` / `output/`. Gitignore or PATH_OWNERSHIP `check: none`.
-48. **`snapshot_*.md` at repo root.** TREE.md says the root is CLAUDE/AGENTS/TODO/TREE. Move under `.master/` or gitignore.
+48. **`snapshot_*.md` — already ignored.** `.gitignore:65` carries
+    `/snapshot_*.md` and `git ls-files` tracks none of them, so the root holds
+    what TREE.md says it holds. The four files are generated locally after a
+    push and never committed.
 49. **`PwaController` has no request test.** `pwa_master_contract_test.rb` greps ERB. `GET /manifest` 200 JSON.
-50. **`AstEdit` `atomic_write` vs `write_atomic`.** The write tool cannot write (bughunt 66). Fix the name or delete the tool until it can.
+50. **`AstEdit` could not write — fixed 2026-09-11.** Confirmed and repaired.
+    The class includes `Io::AtomicWrite`, which defines `write_atomic`, and
+    both call sites asked for `atomic_write` — the same two words reversed — so
+    every rename and every insertion raised NoMethodError on the line that was
+    about to change the file. It failed late: both paths validate, ask the
+    governor, and take an undo snapshot first, so a caller saw the tool accept
+    the work and then die, leaving an undo snapshot of a file nothing had
+    touched. Nothing in the suite named AstEdit, which is why it survived;
+    `test_ast_edit_writes` covers both operations and asserts that every
+    `*atomic*` call in the file names a method that exists. Proved by putting
+    the misspelling back: three failures, then none.
 
 Keep the one with the test. Then delete the other.
 
