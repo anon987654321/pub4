@@ -36,13 +36,12 @@ class SchemaMigrationGateTest < Minitest::Test
       %(  create_table "#{table}", force: :cascade do |t|\n) + body + "  end\nend\n"
   end
 
-  # The quoted table name. The gate's duplicate-table scan requires a closing
-  # quote, so a migration written `create_table :posts` is invisible to it —
-  # which is every migration in this repository, and a finding recorded in
-  # TODO.md rather than pinned here as if it were intended.
-  def migration(table)
-    "class Create#{table.capitalize} < ActiveRecord::Migration[8.0]\n" +
-      %(  def change\n    create_table "#{table}"\n  end\nend\n)
+  # The symbol form, because that is what every migration in this fleet writes.
+  # The scan read a colon as an opening delimiter and demanded a quote to close
+  # it, so this fixture had to use quotes to be seen at all.
+  def migration(table, body = nil)
+    "class Create#{table.capitalize} < ActiveRecord::Migration[8.0]\n" \
+      "  def change\n    #{body || "create_table :#{table}"}\n  end\nend\n"
   end
 
   def gate_over
@@ -77,7 +76,28 @@ class SchemaMigrationGateTest < Minitest::Test
     end
 
     refute result.ok?, "a table created twice passed"
-    assert(result.failures.any? { |line| line.match?(/duplicate create_table posts/) }, result.failures.join(", "))
+    assert(result.failures.any? { |line| line.match?(/second create_table posts/) }, result.failures.join(", "))
+  end
+
+# Sixteen second create_table calls exist across this fleet and every one is
+  # guarded. A check that counted calls would fail all sixteen; this one reads
+  # the guard, so each of the three forms in use here is spared.
+  GUARDS = [
+    "create_table :posts, if_not_exists: true",
+    "return if table_exists?(:posts)\n    create_table :posts",
+    "drop_table :posts if table_exists?(:posts)\n    create_table :posts",
+  ].freeze
+
+  def test_a_second_create_table_is_spared_when_the_migration_expects_one
+    GUARDS.each do |guard|
+      result = gate_over do |dir|
+        plant(dir, "RAILS/demo/db/migrate/20260102000000_again.rb", migration("posts", guard))
+        plant(dir, "RAILS/demo/db/schema.rb", schema("20260102000000", "posts", %w[title body]))
+      end
+
+      spared = result.failures.none? { |line| line.include?("create_table posts") }
+      assert spared, "#{guard[0, 40]} is a guard this fleet uses: #{result.failures.join(", ")}"
+    end
   end
 
   def test_a_route_naming_a_controller_nobody_wrote_fails

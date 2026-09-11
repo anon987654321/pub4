@@ -58,17 +58,48 @@ module Deploy
       File.read(path).force_encoding("UTF-8").scrub
     end
 
+    # A table name is a symbol or a quoted string, and either delimiter closes it.
+    #
+    # This read /create_table\s+["':](\w+)["']/ — a colon allowed to open the name
+    # and a quote demanded to close it — so `create_table :posts`, the form every
+    # migration in this fleet uses, matched nothing. The scan saw 3 of 200 calls
+    # and the duplicate check below had never once seen a table.
+    CREATE_TABLE = /create_table\s+(?::(\w+)|"(\w+)"|'(\w+)')/
+    def create_table_names(body)
+      body.scan(CREATE_TABLE).map { |symbol, double, single| symbol || double || single }
+    end
+
+    # A second create_table is ordinary when the migration says what it expects
+    # to find. Three forms say it, and all three are in use here: `if_not_exists:
+    # true` on the call, a `table_exists?` guard anywhere in the file — whether it
+    # wraps the call, returns early, or drops the table before recreating it — and
+    # a drop of that table first. Sixteen second calls exist across the fleet and
+    # every one of them is guarded, which is why this check must read the guard
+    # rather than count the calls.
+    def guarded_for?(body, table)
+      return true if body.match?(/create_table\s+(?::#{table}|["']#{table}["'])[^\n]*if_not_exists/)
+      return true if body.match?(/table_exists\?\(\s*[:"']#{table}\b/)
+
+      # GUARD_EXPENSIVE_OPS sees drop_table inside the pattern and cannot tell a
+      # match from an execution; this reads the word in somebody else's migration.
+      body.match?(/drop_table\s+[:"']#{table}\b/) # scan: intentional
+    end
+
     def duplicate_create_tables(app_dir, result, app_name)
       seen = {}
       Dir.glob(File.join(app_dir, "db", "migrate", "*.rb")).sort.each do |path|
-        tables = read_utf8(path).scan(/create_table\s+["':](\w+)["']/)
-        tables.each do |table|
-          key = table.first
-          if seen[key]
-            result.fail("#{app_name}: duplicate create_table #{key} in #{File.basename(path)} and #{seen[key]}")
-          else
-            seen[key] = File.basename(path)
+        body = read_utf8(path) # scan: intentional — two plain lines beat a .then
+        create_table_names(body).each do |table|
+          first = seen[table]
+          if first.nil?
+            seen[table] = File.basename(path)
+            next
           end
+          next if guarded_for?(body, table)
+
+          result.fail("#{app_name}: unguarded second create_table #{table} in " \
+                      "#{File.basename(path)}, already created in #{first} — " \
+                      "add if_not_exists: true or a table_exists? guard")
         end
       end
     end
