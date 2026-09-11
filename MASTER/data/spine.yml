@@ -127,7 +127,20 @@ spine:
   # budget against this figure. A model the registry does not know keeps the
   # flat rate: pricing an unknown model at zero would let it run until something
   # else stopped it.
-  lib_body_ceiling: 38116
+  # 38116 -> 38129 buys the exemption marker its own exemption. The marker is a
+  # trailing comment, and writing one lengthens the line it sits on, so the two
+  # rules that measure exactly those things charged every author who exempted a
+  # line correctly: 154 findings across the tree, 135 of them LONG_LINE and
+  # TRAILING_COMMENT, each one created by somebody doing the right thing.
+  #
+  # The thirteen lines are a walk backwards. Given the marker, find the comment
+  # opener nearest before it and read the line without that whole comment —
+  # which matters because the marker shares its comment with other directives
+  # (`# rubocop:disable Lint/RescueException -- scan: intentional` is one
+  # comment carrying two instructions), and because matching forward from the
+  # first hash would read a `#` inside a string literal as the comment start.
+  # A line still over the limit with its comment removed is still flagged.
+  lib_body_ceiling: 38129
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753

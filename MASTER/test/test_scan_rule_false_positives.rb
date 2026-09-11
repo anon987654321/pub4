@@ -810,4 +810,49 @@ end
     refute_empty smell_findings("sycophancy", "# absolutely, this is the right fix\n"),
       "sycophancy declares none, so it must still read the raw comment line"
   end
+
+  # --- the exemption marker ------------------------------------------------
+  # `scan: intentional` is a trailing comment, and writing one lengthens the
+  # line it sits on. LONG_LINE measures length and TRAILING_COMMENT measures
+  # trailing comments, so exempting a line correctly used to buy one of each:
+  # 154 findings across the tree, 135 of them from these two rules, every one
+  # created by an author doing the right thing.
+  #
+  # Both directions, because an exemption is the change most likely to turn a
+  # rule off by accident.
+
+  def test_a_line_over_the_limit_only_because_of_its_marker_is_not_long
+    line = "#{"x" * 100} # scan: intentional — the marker is not the defect\n"
+
+    assert_operator line.chomp.length, :>, 120, "the fixture must exceed the limit as written"
+    assert_empty findings(:LONG_LINE, line)
+  end
+
+  def test_a_line_over_the_limit_without_its_marker_is_still_long
+    refute_empty findings(:LONG_LINE, "#{"x" * 130} # scan: intentional — still too long\n")
+    refute_empty findings(:LONG_LINE, "#{"x" * 130}\n")
+  end
+
+  def test_a_marker_is_not_counted_as_the_trailing_comment_it_is
+    assert_empty findings(:TRAILING_COMMENT, "value = 1 # scan: intentional — deliberate\n")
+  end
+
+  # The marker shares its comment with other machine directives. Reading only
+  # from the marker's own word would leave the rubocop directive standing as a
+  # trailing comment, which is how master_container.rb kept its finding.
+  def test_a_marker_beside_another_directive_still_exempts
+    assert_empty findings(:TRAILING_COMMENT,
+                          "rescue Exception => e # rubocop:disable Lint/RescueException -- scan: intentional\n")
+  end
+
+  # Walking back from the marker to its opener, rather than matching forward
+  # from the first `#`, is what keeps a hash inside a string literal from being
+  # read as the start of the comment.
+  def test_a_hash_inside_a_string_is_not_read_as_the_comment_opener
+    assert_empty findings(:TRAILING_COMMENT, %(url = "https://example.com#frag" # scan: intentional — ok\n))
+  end
+
+  def test_an_unmarked_trailing_comment_still_fires
+    refute_empty findings(:TRAILING_COMMENT, "value = 1 # why one\n")
+  end
 end

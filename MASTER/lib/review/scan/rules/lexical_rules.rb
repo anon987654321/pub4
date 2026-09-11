@@ -54,11 +54,18 @@ module Master
   RuleDSL.rule :LONG_LINE,
     severity: :info, tags: %i[READABILITY], autofix: false,
     fires: "#{"x" * 121}\n",
-    does_not_fire: "#{"x" * 120}\n",
+    # Two cases that must not fire: a line at the limit, and a line that is only
+    # over it because a reviewer wrote down why the line is deliberate.
+    does_not_fire: "#{"x" * 120}\n#{"x" * 100} # scan: intentional — the marker is not the defect\n",
     description: "lines exceeding 120 characters" do |src, path:|
     next [] if path.to_s.match?(%r{/voice/personality\.rb|/io/llm\.rb})
     src.each_line.with_index(1).filter_map do |line, n|
-      finding(line: n, message: "line #{line.chomp.length} chars (max 120)") if line.chomp.length > 120
+      next unless line.chomp.length > 120
+      # Measured without the marker, so exempting a line does not create a
+      # finding against the exemption.
+      next unless without_scan_marker(line).length > 120
+
+      finding(line: n, message: "line #{line.chomp.length} chars (max 120)")
     end
   end
 
@@ -226,11 +233,17 @@ module Master
   RuleDSL.rule :TRAILING_COMMENT,
     severity: :info, tags: %i[BE_CONCISE],
     fires: "value = 1 # why one\n",
-    does_not_fire: "# why one\nvalue = 1\n",
+    # The marker is itself a trailing comment, so a line carrying only the
+    # marker must not read as one.
+    does_not_fire: "# why one\nvalue = 1\nvalue = 2 # scan: intentional — the exemption is not the defect\n",
     description: "trailing comment after code" do |src, path:|
     src.each_line.with_index(1).filter_map do |line, n|
       next if line.strip.start_with?("#")
-      finding(line: n, message: "trailing comment — promote above the line or delete") if line.match?(/\S\s+#\s+\S/)
+      # A line keeps its finding when a second trailing comment survives the
+      # marker's removal; it loses it when the marker was the whole of it.
+      next unless without_scan_marker(line).match?(/\S\s+#\s+\S/)
+
+      finding(line: n, message: "trailing comment — promote above the line or delete")
     end
   end
 

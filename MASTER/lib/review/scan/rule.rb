@@ -160,6 +160,36 @@ module Master
           end
         end
 
+        # The marker is a trailing comment, and adding one lengthens the line it
+        # sits on. Two rules measure exactly those two things, so exempting a
+        # line correctly used to buy a LONG_LINE and a TRAILING_COMMENT — 135
+        # findings across the tree, every one of them created by an author doing
+        # the right thing.
+        #
+        # Rules that measure the shape of a line read it without its marker. A
+        # line still too long with the marker removed is still too long.
+        #
+        # The marker can share its comment with other machine directives —
+        # `# rubocop:disable Lint/RescueException -- scan: intentional` is one
+        # comment carrying two instructions — so the exemption is the whole
+        # comment the marker sits in, found by walking back from the marker to
+        # whichever opener began it. Walking back rather than matching forward
+        # is what keeps a `#` inside a string literal from being read as the
+        # start of the comment.
+        COMMENT_OPENERS = ["#", "//", "/*", "<!--", "<%#"].freeze
+        SCAN_MARKER = /scan:\s*intentional\b/
+
+        def without_scan_marker(line)
+          text = line.chomp
+          marker = text.index(SCAN_MARKER)
+          return text unless marker
+
+          opener = COMMENT_OPENERS.filter_map { |token| text.rindex(token, marker) }.max
+          return text unless opener
+
+          text[0, opener].rstrip
+        end
+
         def default_confidence
           case @severity
           when :error then 0.9
