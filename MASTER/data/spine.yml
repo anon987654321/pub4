@@ -719,7 +719,20 @@ pub4_source_ceilings:
 # with a console error no deploy sees. It also pins the rescue path, which
 # answers with a minimal installing worker rather than a 500, because a 500
 # there leaves whatever is installed in place with no way to replace it.
-  RAILS: 2393
+# 2393 -> 2394 for shared/_site_legal.scss. The legal footer carried its type
+# system as an inline style element in a partial all three layouts render, so a
+# second type system shipped on every page of every app and NO_INLINE_STYLES
+# had a finding it could not act on. Five separate passes through TODO.md
+# reached that same paragraph independently, which is what a real defect looks
+# like from outside.
+#
+# The move changes nothing a reader sees, and that was the point: measured on
+# brgen.no/privacy before and after, .legal-prose is 724.397px wide with
+# 32px 20px 64px of padding and its h1 is 28.8px/33.12px either way. The values
+# are off this tree's scales — 1.6rem, 1.62 and .12em are on no list in
+# design_tokens — and snapping them is a separate decision, because every one
+# of those numbers is something somebody sees.
+  RAILS: 2394
   # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
   # that are the whole defence against a shared index, and nothing tested any of
   # them — a hook that stopped firing looks exactly like a week in which nobody

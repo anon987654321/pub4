@@ -108,7 +108,7 @@
 # the whole `<%# ... %>` span dropped that finding and one NO_INLINE_SCRIPT_BLOCK
 # of the same shape, and the detector still fires on markup that follows the
 # comment's close — proved on planted cases before the count was believed.
-findings: 274
+findings: 273
 by_rule:
   BARE_DIV_WRAPPER: 3
   BLANK_LINE_RUN: 1
@@ -122,7 +122,7 @@ by_rule:
   NEVER_BATCH_DELETE: 2
   NO_CHANGELOG_COMMENT: 16
   NO_COLUMN_ALIGN: 42
-  NO_INLINE_SCRIPT_BLOCK: 20
+  NO_INLINE_SCRIPT_BLOCK: 19
   NO_INLINE_STYLES: 2
   NO_MULTIPLE_LANGUAGES: 22
   NO_VAR: 2
@@ -267,7 +267,6 @@ finding_members:
   - NO_INLINE_SCRIPT_BLOCK RAILS/brgen/public/dilla/dilla.html:74
   - NO_INLINE_SCRIPT_BLOCK RAILS/shared/app/views/layouts/_mailer_styles.html.erb:1
   - NO_INLINE_SCRIPT_BLOCK RAILS/shared/app/views/shared/_link_converter.html.erb:19
-  - NO_INLINE_SCRIPT_BLOCK RAILS/shared/app/views/shared/_site_legal_footer.html.erb:3
   - NO_INLINE_SCRIPT_BLOCK RAILS/shared/app/views/shared/_theme_bootstrap.html.erb:1
   - NO_INLINE_STYLES MASTER/web/public/diag.html:7
   - NO_INLINE_STYLES RAILS/brgen/public/dilla/dilla.html:67
@@ -377,7 +376,7 @@ finding_members:
   - PROSE_ACTIVE_VOICE RAILS/brgen/test/jobs/prune_guest_users_job_test.rb:5
   - PROSE_ACTIVE_VOICE RAILS/shared/app/models/concerns/shared/strict_safe_associations.rb:13
   - PROSE_ACTIVE_VOICE STUDIO/postpro/postpro.rb:1822
-  - PROSE_ACTIVE_VOICE_NB RAILS/brgen/config/locales/nb.yml:1701
+  - PROSE_ACTIVE_VOICE_NB RAILS/brgen/config/locales/nb.yml:1700
   - PROSE_OMIT_QUALIFIERS MASTER/web/CLAUDE.md:263
   - PROSE_OMIT_QUALIFIERS MASTER/web/test/controllers/tts_controller_test.rb:28
   - PROSE_OMIT_QUALIFIERS RAILS/brgen/app/controllers/invites_controller.rb:48

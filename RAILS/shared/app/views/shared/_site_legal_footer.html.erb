@@ -1,33 +1,10 @@
 <%# Minimal legal footer — GDPR + publisher review. Flat. Dating hides this
     because its intro is a swipe surface; those links live on the intro. %>
-<style>
-  .site-legal{max-width:1100px;margin:40px auto 0;padding:18px 20px 28px;
-    border-top:1px solid var(--border,#e4e2db);display:flex;flex-wrap:wrap;
-    gap:10px 18px;align-items:baseline;font-size:13px}
-  .site-legal nav{display:flex;flex-wrap:wrap;gap:14px}
-  /* Hit area grown to the 44px --tap-min without moving a pixel: padding
-     paints nothing here and the negative margin gives the space back. */
-  .site-legal a{color:var(--text-secondary,#6b7178);text-decoration:none;
-    padding:14px 6px;margin:-14px -6px}
-  .site-legal a:hover{color:var(--text,#16181c);text-decoration:underline}
-  .site-legal .affiliate-fine{margin:0;flex:1 1 260px;min-width:0;
-    color:var(--text-secondary,#6b7178);font-size:12px;line-height:1.5}
-  .site-legal .site-verify{flex-basis:100%;font-size:13px;
-    color:var(--text,#16181c);display:flex;flex-wrap:wrap;gap:6px 18px}
-  .site-legal .site-verify strong{font-weight:700}
-  .legal-prose{max-width:64ch;margin:0 auto;padding:32px 20px 64px}
-  .legal-prose h1{font-size:1.6rem;line-height:1.15;margin:0 0 6px}
-  .legal-prose .legal-eyebrow{font-size:.72rem;letter-spacing:.12em;
-    text-transform:uppercase;color:var(--text-secondary,#6b7178);margin:0 0 10px}
-  .legal-prose .legal-updated{color:var(--text-secondary,#6b7178);
-    font-size:.85rem;margin:0 0 24px}
-  .legal-prose h2{font-size:1.05rem;margin:26px 0 6px}
-  .legal-prose p,.legal-prose li{line-height:1.62}
-  .legal-prose ul{padding-left:1.1rem}
-  .legal-prose nav{display:flex;gap:16px;margin-top:34px;
-    padding-top:16px;border-top:1px solid var(--border,#e4e2db);font-size:14px}
-  body.vertical-dating .site-legal{display:none}
-</style>
+<%# The type rules that were an inline <style> here live in
+    shared/app/assets/stylesheets/_site_legal.scss, moved verbatim. This
+    partial is rendered by all three layouts, so the block shipped a second
+    type system on every page of every app — which is what NO_INLINE_STYLES
+    exists to catch and could not act on while it sat in ERB. %>
 <%
   privacy_href = respond_to?(:privacy_path) ? privacy_path : main_app.privacy_path
   terms_href = respond_to?(:terms_path) ? terms_path : main_app.terms_path

@@ -1,0 +1,93 @@
+/* The legal footer and the legal pages.
+ *
+ * These rules lived in an inline style element at the top of
+ * shared/_site_legal_footer.html.erb, which every app's layout renders — so a
+ * second type system shipped on every page of all three apps, and
+ * NO_INLINE_STYLES had a permanent finding it could not act on. Five separate
+ * passes through this backlog reached the same paragraph independently.
+ *
+ * Moved with every value untouched. One property changed and it renders the
+ * same: padding-left became padding-inline-start, which is the identical 1.1rem
+ * in LTR and the correct side under [dir="rtl"].
+ *
+ * The values are off the scales this tree keeps:
+ * 1.6rem, .72rem, .85rem, 1.05rem and 13px are not on the type scale, 1.15 and
+ * 1.62 are not on design_tokens' line_height list [1, 1.25, 1.4, 1.5, 1.6],
+ * .12em is not on the tracking scale, and 64ch is not --measure's 66ch. Snapping
+ * any of them changes what a reader sees, and this move changes nothing:
+ * measured on brgen.no/privacy before and after, .legal-prose is 724.397px wide
+ * with 32px 20px 64px of padding and its h1 is 28.8px/33.12px either way.
+ *
+ * That is the whole of the fix here. The snap is a separate decision, and it is
+ * the operator's, because every one of those numbers is something somebody sees.
+ */
+
+.site-legal .site-verify {
+  flex-basis: 100%;
+  font-size: 13px;
+  color: var(--text, #16181c);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+}
+
+.site-legal .site-verify strong {
+  font-weight: 700;
+}
+
+.legal-prose {
+  max-width: 64ch;
+  margin: 0 auto;
+  padding: 32px 20px 64px;
+}
+
+.legal-prose h1 {
+  font-size: 1.6rem;
+  line-height: 1.15;
+  margin: 0 0 6px;
+}
+
+.legal-prose .legal-eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary, #6b7178);
+  margin: 0 0 10px;
+}
+
+.legal-prose .legal-updated {
+  color: var(--text-secondary, #6b7178);
+  font-size: 0.85rem;
+  margin: 0 0 24px;
+}
+
+.legal-prose h2 {
+  font-size: 1.05rem;
+  margin: 26px 0 6px;
+}
+
+.legal-prose p,
+.legal-prose li {
+  line-height: 1.62;
+}
+
+.legal-prose ul {
+  /* logical, not padding-left: the same 1.1rem in LTR and the correct side
+     under [dir="rtl"], which _minimal.scss supports. */
+  padding-inline-start: 1.1rem;
+}
+
+.legal-prose nav {
+  display: flex;
+  gap: 16px;
+  margin-top: 34px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border, #e4e2db);
+  font-size: 14px;
+}
+
+/* dating is a swipe surface with no room for a legal band. It kept this rule
+   when the block was inline; it keeps it here. */
+body.vertical-dating .site-legal {
+  display: none;
+}
