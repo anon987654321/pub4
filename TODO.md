@@ -9195,7 +9195,15 @@ If two things mean the same thing, keep the one with the test.
 38. **Three face stores.** `felt_state.js`, `face_state.js`, `ui_presence.js`. Document boot order or fold presence into felt.
 39. **`hello: Hei` in brgen and amber `nb.yml`.** Grep callers; delete unused scaffold keys.
 40. **`rails-app.tmpl` disagrees with live `rc.d/brgen`.** Generate apps from the live script or delete the tmpl so OPERATOR cannot install the wrong one.
-41. **`jobs` rc.d without `set -a`.** Same env file as the app (bughunt 30). One export path.
+41. **`jobs` rc.d without `set -a` — fixed 2026-09-11, and it was all three.**
+    brgen_jobs, amber_jobs and bsdports_jobs each sourced their env file with
+    a bare `.` and then exported `SECRET_KEY_BASE` by name, so that was the
+    only key from the file the worker could read. rc.d/brgen carries the
+    reason in its own comment — VAPID_PUBLIC_KEY sat in /etc/brgen.env for
+    hours while push failed silently — and the app was fixed with `set -a`
+    while the workers were not, which is where it matters most: WebPushJob is
+    one of the classes these workers run. `test_rc_env_export` pins it, and
+    holds rails-app.tmpl to the same rule.
 42. **`core-reclaim.sh` RSS — fixed 2026-09-11.** Both sites read
     `ps -axo rss,args | grep "127.0.0.1:$PORT" | grep -v grep | head -1 |
     awk '{print $1}'`: three banned tools, and fragile beyond that — it matched
@@ -9213,8 +9221,22 @@ If two things mean the same thing, keep the one with the test.
     scaling trick, and replacing it carelessly changes when the box sheds
     memory.
 43. **`STREAM_ITERATE_LOG` unsynchronized.** One flock or pid-scoped log.
-44. **`sine_stream.rb` mutates ENV at load.** Don’t require it from tests; or don’t set ENV in a library file.
-45. **`kaggle_session.rb` / `colab_session.rb` / `run_ai_toolkit.rb` ARGV at load.** Guard with `$PROGRAM_NAME`.
+44. **`sine_stream.rb` mutates ENV at load — real, and the fix changes sound.**
+    Confirmed: `demo_full.rb:14` does `require_relative "sine_stream"`, so it
+    is required as a library, and the file sets synthesis defaults from line
+    1793 — WONKY_TOP_DIRT, WONKY_HAT_DUCK, DRUM_FIELD_MIX and their
+    neighbours. They are `||=`, so an explicit environment still wins.
+
+    Moving them behind a `$PROGRAM_NAME` guard is not a refactor: demo_full
+    requires the file and currently inherits those defaults, so guarding them
+    changes what it renders. Rendered-sound defaults are the operator's, and
+    this one needs a listen rather than a decision from a scanner.
+45. **ARGV at load — a false positive.** All three are executables: mode 755,
+    `#!/usr/bin/env ruby`, and referenced only by README.md and a notebook
+    that describes them. Nothing requires any of them, and kaggle_session.rb
+    does not read ARGV at all. An executable reading ARGV at the top is an
+    executable; the `$PROGRAM_NAME` guard exists for files that are both a
+    library and a script, and these are only scripts.
 46. **`postpro.log` — already ignored.** `git ls-files` tracks no log under
     postpro. Nothing to do.
 47. **`MASTER/log/traces.log`, `tts.wav`, `runtime/` JSONL, `loop.gif`.** START_HERE says generated goes in `.master/` / `output/`. Gitignore or PATH_OWNERSHIP `check: none`.
@@ -9222,7 +9244,14 @@ If two things mean the same thing, keep the one with the test.
     `/snapshot_*.md` and `git ls-files` tracks none of them, so the root holds
     what TREE.md says it holds. The four files are generated locally after a
     push and never committed.
-49. **`PwaController` has no request test.** `pwa_master_contract_test.rb` greps ERB. `GET /manifest` 200 JSON.
+49. **`PwaController` request test — added 2026-09-11.**
+    `pwa_serving_test` asks for all three routes over HTTP. The content types
+    were the unmeasured half and both are load-bearing in a way no template
+    shows: a manifest served as text/html installs nothing, and a worker
+    served as anything but JavaScript is refused with a console error no
+    deploy sees. The rescue path is pinned too — a failed worker render
+    answers with a minimal installing worker rather than a 500, because a 500
+    leaves whatever is installed in place with no way to replace it.
 50. **`AstEdit` could not write — fixed 2026-09-11.** Confirmed and repaired.
     The class includes `Io::AtomicWrite`, which defines `write_atomic`, and
     both call sites asked for `atomic_write` — the same two words reversed — so
@@ -10677,5 +10706,25 @@ Unmeasured. Four top-level names stay: `MASTER/`, `RAILS/`, `OPENBSD/`, `STUDIO/
 
 Priority: 1–3 before affiliate code, 4–8 MASTER, 9 OPENBSD, 10 STUDIO, 11–13 repo-wide. Capability first; then the directory name.
 
+19. **`MASTER/bin/` is 25 executables.** Keep `master`, `operator`, `cli`. Fold `tts-bootstrap|e2e|speak|worker` under `operator tts` or `master tts`. Fold `smoke`/`smoke-web` into `check --profile=`. `nsaudit` → `rake lint:autoload`. `master-core` → `master --core`. `probe`/`dogfood` stay until their one caller moves.
+20. **OPENBSD Ruby gates live in three places.** Root (`integrity_gate.rb`, `health_check.rb`, `config_drift_gate.rb`, …), `OPENBSD/gates/`, and `RAILS/gates` for deploy. One `OPENBSD/checks/` (or keep `gates/` and stop dropping siblings at the OPENBSD root).
+21. **OPENBSD shell scripts at tree root vs `bin/` vs `usr/local/bin/`.** `deploy_all.sh`, `vps_*.sh`, `start_all_apps.sh`, `resource_guard.sh` sit beside `etc/`. Install targets belong under `usr/local/`; operator verbs under `bin/`; recovery under a named `recovery/` if they must stay. Don’t leave a third layout at the root.
+22. **`OPENBSD/dev/` is Mac workstation.** Declare `check: none` in PATH_OWNERSHIP or move out of the OpenBSD tree (tree grammar 9).
+23. **`OPENBSD/home/johann/`.** One operator’s mail helper. PATH_OWNERSHIP or `dotfiles/`.
+24. **`RAILS/shared/lib/operator/` is verification, not a product engine.** It is already the `verification/` that ChatGPT wants to rename `gates/` into. Don’t rename `gates/` and leave this pile. Point `gates/runner.rb` at it or move the lints under `gates/lib/source/`.
+25. **`RAILS/shared/reference/`.** Affiliate banner HTML demos. `test/` or delete; not a live engine.
+26. **`RAILS/shared/bin/thrust` / `docker-entrypoint`.** Rails 8 defaults. This fleet is Falcon + OpenBSD. Document unused, or delete so nobody runs Thruster on vm23.
+27. **`STUDIO/gate.rb` + `isolation.rb` at STUDIO root.** Fine as the studio door. Don’t add `STUDIO/tools/` until a third utility exists besides those two.
+28. **`dilla/*.wav` and `demo.mp3` beside `dilla.rb`.** Generated/demo. `renders/` or gitignore; `assets.json` already tracks crate hashes.
+29. **`dilla/scratch/`.** Gitignore. Not source.
+30. **`lora/_toolkit/`.** The underscore is “not a product.” Rename to `lora/toolkit/` or keep and document why `_` means private.
+31. **`postpro/postpro.log`.** Gitignore.
+32. **`RAILS/gates/data/layout_snapshots/`.** Evidence, not source. Already JSON baselines. Don’t mix with `gates/lib/`. PATH_OWNERSHIP: generated-or-baseline, check is the visual_contract.
+33. **`shared/frontend/` vs `shared/app/javascript`.** Stimulus lives in `frontend/` and is copied/importmapped. One home. Don’t add `app/javascript/controllers` as a third.
+34. **`brgen/app/lib` vs engines.** If `app/lib` is growing helpers that belong in an engine or in `shared`, move before it becomes `utils/`.
+
+Don’t mkdir empty `platform/` or `intelligence/`. Extract when the second consumer exists.
+
 ---
+
 
