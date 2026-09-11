@@ -91,10 +91,22 @@ body.vertical-takeaway .restaurant-card:hover {
   background: var(--hover-subtle);
 }
 
+/* Flat, and the vertical's own accent.
+
+   This painted every button on the surface with a 90deg blend of --food-dash
+   into --foodora — two competitors' brand hues, gradiented. Flat fills only is
+   a house rule this tree states in two places, and the blend also went around
+   _vertical_shell, which already carries takeaway's accent tuned for contrast
+   in both themes (#e07b39 dark, #c26a30 light) and --accent-ink for anything
+   painted on top of it: one dark ink measured 4.70 to 9.16 across all seven
+   vertical accents, so it clears AA here without a value of its own.
+
+   --food-dash and --foodora keep their other jobs — the eta chip's urgency red
+   and the discovery border — where they are one flat colour each. */
 body.vertical-takeaway .btn,
 body.vertical-takeaway .btn-primary {
-  background: linear-gradient(90deg, var(--food-dash), var(--foodora));
-  color: var(--text);
+  background: var(--accent);
+  color: var(--accent-ink);
   border-radius: var(--radius-pill);
   font-weight: var(--weight-bold);
 }

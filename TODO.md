@@ -4542,6 +4542,21 @@ Some city domains are expired or expiring, with funding for renewal in
 progress. Treat the domain list as a live set: read it, never hardcode it, and
 expect a surface to be unreachable without that being a defect in the surface.
 
+### Two search fields on one storefront, and the better-placed one is the worse one
+
+Measured on takeaway.brgen.no and markedsplass.brgen.no at 1440x900: two
+`input[type=search]` on the page with the same placeholder. The storefront
+bar's sits at y=131 and is a plain `form_with method: :get` — a full page
+navigation. The one in the page body sits at y=390 and is `live_search_index`,
+a turbo frame with results as you type.
+
+So the field in the right place does the worse thing, and the field doing the
+right thing is below the fold. Amazon — the functional model — has one, in the
+bar. The fix is to make the bar's field drive the live frame and drop the body
+copy, which is a decision about where search lives on these surfaces rather
+than a tidy-up, and the Kaufland pass will answer it. Left here so that pass
+starts from the measurement.
+
 ### The shape to aim for
 
 One unit vocabulary, declared once and rendered by every surface that takes
