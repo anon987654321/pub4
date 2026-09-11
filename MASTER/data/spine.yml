@@ -467,15 +467,17 @@ pub4_source_ceilings:
   # It folds into attention.rb only by putting two algorithms in the file
   # whose subject is one weight table: attention decides what matters, this
   # decides what was expected, and the second is the first one input.
-  # 1046 -> 1047 for ollama_sender.rb, the file above.
-  # 1047 -> 1049 for tools/stale_exemptions.rb and its test. EXEMPTIONS_EXPIRE
+  # 1046 -> 1048 for ollama_sender.rb and test/test_ollama_sender.rb, the
+  # files above. Recorded as one and corrected here: the sender was named and
+  # its test was not, which is the accounting this row exists to force.
+  # 1048 -> 1050 for tools/stale_exemptions.rb and its test. EXEMPTIONS_EXPIRE
   # is declared conduct in law/practice.rb — an opt-out that outlives its
   # subject is a hole in a gate nobody can see — and 143 markers across 89
   # files had never been checked by anything. It folds into self_findings.rb
   # only by making that census answer a second question against a modified
   # copy of every file, which is not what a ratchet over the tree as it stands
   # is for.
-  MASTER: 1049
+  MASTER: 1050
 
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:

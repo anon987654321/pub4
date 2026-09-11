@@ -68,7 +68,7 @@ module Operator
       javascript: ["//", "/*"], css: ["//", "/*"], scss: ["//", "/*"],
       html: ["<%#", "<!--"], markdown: ["<!--"],
     }.freeze
-    CLOSERS = { "/*" => "*/", "<!--" => "-->", "<%#" => "%>" }.freeze
+    CLOSERS = { "/*" => "*/", "<!--" => "-->", "<%#" => "%>" }.freeze # scan: intentional — a census of comment markers has to quote every language it reads
     # Only `unmarked` needs every opener at once: it strips markers from a file
     # whose language it has already decided is irrelevant to the strip.
     ANY_OPENER = COMMENT_OPENERS.values.flatten.uniq.freeze
