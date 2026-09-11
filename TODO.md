@@ -10727,4 +10727,167 @@ Don’t mkdir empty `platform/` or `intelligence/`. Extract when the second cons
 
 ---
 
+## Questions that expose weakness — asked, then proposed — 2026-09-11
+
+Sixty questions. Each answered with two or three proposals. Unmeasured. Do not restyle, retune sound, spend money, or sell trust. A finding is a hypothesis.
+
+### Survival
+
+1. **If vm23 is gone at 03:00, what still works?** (a) `dr-pull` + sqlite `.backup` before copy (bughunt 24). (b) One printed restore order in RUNBOOK that a stranger can follow. (c) Don’t enable litestream.
+2. **If relayd is up and the app is down, what does the user see?** (a) A timeout, not a 5xx — already the hang trap. (b) Health that distinguishes TLS-ok from app-ok. (c) `vps-state` names the closed port.
+3. **If Solid Queue never runs, which features silently rot?** (a) Comment every `recurring.yml` row with the rc.d that must be up. (b) Jobs rc.d `set -a` (bughunt 30). (c) Amber `perform_now` for mail until a worker exists.
+4. **If the checkout is dirty with three agents, who owns the next commit?** (a) Worktree default. (b) Path-scoped commit. (c) `git log origin/main..HEAD` before push.
+5. **If `TODO.md` is 10k lines, is it still a backlog?** (a) Dedup pass: delete disproven premises. (b) Every new item needs a path or a metric. (c) Don’t copy ChatGPT lists without a fence.
+
+### The stranger in 30 seconds
+
+6. **What is the one page that must work?** (a) City home in nb, light chrome, post or listing. (b) Not marketplace.brgen.no while it 500s. (c) `/up` is for relayd, not the stranger.
+7. **Can they post without an account?** (a) Guest is the product; keep it. (b) Rate-limit create. (c) Don’t add a fourth sign-in.
+8. **Can they sell something in Bergen tonight?** (a) Diagnose marketplace 500 first. (b) Sell form in nb, photos via MediaGuard. (c) Don’t wait for Solidus.
+9. **Can they find a restaurant that is open?** (a) Hours empty-state must not say closed. (b) `open now` is a filter, not a lie. (c) Don’t scrape Google.
+10. **Does the face load on a phone over 4G?** (a) No 21MB ONNX on the critical path. (b) 2D fallback. (c) TTS independent of WebGL.
+
+### MASTER honesty
+
+11. **Can MASTER scan itself without lying?** (a) Findings start `hypothesis`. (b) `measured` only after a test or `--explain`. (c) Don’t count skip as pass.
+12. **What does `/review` do that `/scan` doesn’t?** (a) Council. (b) Advertise `--only scan` as the default verb. (c) Completions must not still say `through`.
+13. **If AstEdit cannot write, why is it in DEFAULT_TOOL_MAP?** (a) Fix `write_atomic`. (b) Or remove until it can. (c) Test the write.
+14. **Does a visitor get Shell?** (a) `VISITOR_ALLOWED_TOOLS` from public names. (b) Test it. (c) Cable must not broadcast `*`.
+15. **Is the constitution one file or twelve readers?** (a) `Master.law`. (b) Collapse `reader_singularity`. (c) Don’t add a thirteenth YAML.
+
+### RAILS product
+
+16. **Is Brgen a city or a Craigslist skin?** (a) City hosts + verticals. (b) Guest post is the network. (c) Monetize business tools, not organic traffic.
+17. **Why is dating `ranked_for` one-sided?** (a) Filter `looking_for`. (b) SQL, not LDA. (c) Don’t sell boosts on the deck first.
+18. **Why increment views on GET?** (a) Counter table or drop the number. (b) Don’t fragment-cache it. (c) Beacon POST for humans.
+19. **Why do engines claim `done` when maps has zero tests?** (a) `apps.yml` means models. (b) Say so. (c) Add `PlacesControllerTest`.
+20. **Norwegian default, English in the sell form?** (a) `t()` every label. (b) Fail `default:` in views. (c) Don’t assert English literals.
+
+### OPENBSD box
+
+21. **Can you rebuild from zero with only the repo?** (a) RUNBOOK as the only procedure. (b) `operator.yml` the only command list. (c) A stranger’s first `vps-deploy` must not stash.
+22. **Does drain-jobs lie when sqlite is dead?** (a) Fail closed. (b) Don’t treat 0 as proof. (c) One lock for CI.
+23. **Why two uptime checkers?** (a) One script, inventory hosts. (b) Master not-listening is not skip. (c) Mail root on fail.
+24. **Is `etc/` the destination or a sketch?** (a) Keep name if it installs to `/etc`. (b) `doas.conf.example` historical. (c) Don’t a third copy in docs.
+25. **What is pledge for MASTER on the box?** (a) `ground/pledge.rb` named honestly. (b) Unveil the worktree. (c) Don’t fake kernel dmesg.
+
+### STUDIO / time
+
+26. **What must a render never do?** (a) Overwrite a take. (b) Change a default swing. (c) Treat ffmpeg 0.0 as silence.
+27. **Is `dilla_principles.yml` law or a drawer?** (a) Load it. (b) Or delete. (c) One LUFS window.
+28. **Can two `dilla` processes share scratch?** (a) Pid-scoped temps that already exist. (b) Don’t `harmony_loud.wav` globally. (c) Isolation as separate processes.
+29. **What is Dilla-time in this engine?** (a) Per-role offset, not global SWING%. (b) Label analytical, not authentic. (c) Test kick vs hat identity.
+30. **Where do samples live?** (a) `samples/` + provenance. (b) `bin/crate` must not invent a third layout. (c) Don’t commit copyrighted refs.
+
+### Money and trust
+
+31. **Start with a commission?** (a) No. Finta 0% + credits. (b) Verified business first. (c) Horizon stays ignored.
+32. **Can you buy a better moderation outcome?** (a) Never. (b) Test it. (c) Trust is infrastructure.
+33. **Affiliate without disclosure?** (a) Already a gate. (b) Assert on deals and amber shop. (c) Skatteetaten is operator/tax, not code.
+34. **One billing stack or three?** (a) One Commerce/Entitlements. (b) Verticals consume it. (c) Don’t TradeDoubler-per-engine.
+35. **What if there are no listings?** (a) Liquidity before ads. (b) Empty category is a seller prompt, not a sponsored slot. (c) Diagnose 500 first.
+
+### Agents and the shared index
+
+36. **What if every human has ten agents in this repo?** (a) Worktree is the OS. (b) Path-scoped commit. (c) Don’t Docker fleets.
+37. **How do you compact a 40-turn MASTER session?** (a) After the turn, under mutex. (b) Span context, not whole files. (c) Don’t Thread.new during append.
+38. **Which tools auto, which ask?** (a) Scan deterministic. (b) Write on worktree. (c) Visitor never Shell.
+39. **Is the harness the product?** (a) Yes. (b) START_HERE says so. (c) Don’t chase OpenClaw stars.
+40. **What should MASTER refuse?** (a) Rewrite soul.yml. (b) ClawHub unsigned skills. (c) Computer-use VLM of the box.
+
+### Design and type
+
+41. **Is `.prose` the type system?** (a) Yes; legal/mailer join it. (b) Don’t a second scale. (c) Operator look.
+42. **Why 1.75× H1 vs law 2.0?** (a) Pick the token. (b) Don’t invent 2.2rem as a ninth size. (c) Measure, don’t restyle from TODO.
+43. **Cards everywhere?** (a) List row vs card vs panel. (b) Nested cards go. (c) Density by vertical, one grammar.
+44. **Can the face die and chat live?** (a) Yes. (b) Static fallback same identity. (c) Don’t block composer.
+45. **What would Rams delete on the marketplace tile?** (a) Extra border. (b) English aria. (c) Hover that moves layout.
+
+### Performance
+
+46. **What is the first glob we stop repeating?** (a) One snapshot by tree SHA. (b) Scanners consume it. (c) Don’t cache verdicts.
+47. **Why is gate chain slow?** (a) Nested `operator` from `operator`. (b) Cheap reject first. (c) Council opt-in for fast.
+48. **Face 60fps vs 1GB box?** (a) Adaptive particles. (b) Simulation vs render tick. (c) Never drop TTS for cosmetics.
+49. **N+1 vs liquidity?** (a) Query budget on messenger/marketplace. (b) Liquidity still first. (c) Don’t optimize a 500.
+50. **Faster + less evidence?** (a) Regression. (b) Same decisions. (c) Item 500 of the MASTER performance list.
+
+### Adversarial / red team
+
+51. **How do you steal a listing photo URL?** (a) MediaGuard. (b) Signed blobs. (c) No open redirects on checkout.
+52. **How do you SSRF via package index redirect?** (a) Host allow-list. (b) OutboundHttp. (c) Test 169.254.
+53. **How do you guess TTS audio?** (a) Random job id. (b) Always `owned?`. (c) POST not GET.
+54. **How do you join every nearby room as a crawler?** (a) POST join. (b) Don’t mint guests on GET. (c) Rate-limit.
+55. **How does a seller set `stripe_connect_id`?** (a) Unpermit. (b) OAuth only. (c) Test mass assignment.
+
+### What would X delete?
+
+56. **DHH?** (a) System-test sprawl — already nil generators. (b) Extra bins. (c) Keep 10 smokes.
+57. **An OpenBSD hacker?** (a) GNU in scripts. (b) `head|awk` in core-reclaim. (c) Fake dmesg cosplay.
+58. **Strunk?** (a) English in nb views. (b) `hello: Hei`. (c) Narrating CLI.
+59. **Charnas?** (a) Global SWING as the design. (b) Identical kick/hat offsets. (c) “Sounds more Dilla” as a gate.
+60. **A Bergen shop owner?** (a) Commission on the first sale. (b) Dashboard they don’t open. (c) Ads over their own hours.
+
+### Futures (what survives)
+
+61. **10 users?** (a) Guest post, sell form, one city. (b) MASTER `/review --only scan`. (c) Box that reboots.
+62. **10,000 users?** (a) SQLite writer=1 still. (b) Don’t pretend pgvector. (c) Query budgets + Solid Queue actually running.
+63. **Software is free?** (a) Taste, crate, city trust, operator eye. (b) Those stay scarce. (c) Don’t sell CSS.
+64. **Every human has ten agents?** (a) Worktree. (b) Constitution. (c) Pairing allow-list.
+65. **The face never ships?** (a) Chat + TTS still MASTER. (b) brgen still the city. (c) Don’t block on WebGL.
+
+### Meta
+
+66. **What is pub4 not?** (a) Not Kamal. (b) Not Inertia. (c) Not a GPU recsys.
+67. **When is a TODO a lie?** (a) Premise unmeasured. (b) Path gone. (c) Dedup pass.
+68. **What is the Monty Hall of this repo?** (a) Switch off marketplace 500 before monetization. (b) Switch off AstEdit-broken before new tools. (c) Switch off jobs-without-env before CRM.
+69. **What should the next agent not add?** (a) Another ChatGPT dump without a fence. (b) A ninth type size. (c) A third crate layout.
+70. **What is the one subtraction this week?** (a) Dead slash tables (measured 1). (b) mask.js (2). (c) Dual WebPushJob (4). Pick one, keep the test.
+
+---
+
+## REM — lateral items after sleep
+
+Dreamed, then checked a path. Still hypotheses.
+
+71. **City as kernel, verticals as drivers.** `Current.city_record` is the process; engines are modules. A missing city on `lsangeles.com` must not Bergen-fallback (maps home coords).
+72. **Time is STUDIO’s kernel, not a knob.** Phrase drift is the syscall; `SWING=` is libc. Don’t retune libc to look like a syscall.
+73. **TODO.md as overlayfs.** ChatGPT intakes are upper dir; measured sections are lower. A merge that doesn’t check the lower is a whiteout of truth.
+74. **Pairing is unveil.** A channel without pairing is `unveil("/")`.
+75. **Guest is nobody, and nobody is a first-class uid.** Don’t make nobody prove they’re somebody to post.
+76. **The 500 is a stopped clock.** Monetization, layout_snapshot, and ads all read it. Fix the clock.
+77. **`hello: Hei` is a ghost process.** Kill unused keys.
+78. **Face particles as weather, not identity.** Morphology is bone; particles are climate. Don’t store climate in the identity seed.
+79. **Operator.yml is `/etc/rc.conf.local`.** Five docs that copy it are four `rc.conf` files.
+80. **Scratch without pid is `/tmp/foo` in 1995.** The helper at dilla.rb:5735 is the 2026 version. Use it.
+81. **Cable `*` is promiscuous mode.** Filter or don’t plug it into the face.
+82. **Legal `<style>` is a BIOS that ignores the OS.** `_typography.scss` is the kernel.
+83. **A golden WAV is a photograph of a concert.** Don’t shoot the band again to pass the histogram.
+84. **`apps.yml` done = schema present.** Write that on the tin so engines without tests stop looking finished.
+85. **Ten agents is a herd without fences.** Worktree is the fence; pre-commit tree-span is the gate.
+86. **Grok-as-intern in this repo.** Homework: `--explain` before `--apply`. No skill required.
+87. **Consensus map: city OS vs social network.** Sources agree verticals; they disagree whether Brgen is inventory or people. Product is people (guest post). Inventory is marketplace. Don’t invert.
+88. **Assumption audit: “Brgen needs ads.”** Neutral: Brgen needs a working sell path. Ads are a later mechanism.
+89. **What becomes scarce after AI writes the CSS?** Operator eye, crate, city trust, dilla takes. Those are PATH_OWNERSHIP `check` that a model cannot raise.
+90. **“You have six hours. Build whatever.”** The intern should take a worktree, fix AstEdit’s method name, and run the write test — not add item 501.
+
+---
+
+## Fun things to ask Grok, asked of pub4
+
+Research: brutally honest coach, red-team, assumption audit, consensus map, what survives multiple futures, intern with a feedback loop (x.ai bot guide), “six hours tonight.”
+
+91. **Brutally honest: what self-sabotage is this backlog?** Adding lists faster than deleting slash tables. Proposal: one deletion from measured 1–50 before the next intake.
+92. **Red-team Brgen.** Steal photos, SSRF the ports mirror, crawl-join nearby, guess TTS, POST `status=sold`. Proposals already 51–55.
+93. **If I were the operator’s intern, what homework?** Read `soul.yml` one rule at a time; run `operator gate --explain`; don’t touch `data/rules.yml`.
+94. **Consensus: is SQLite enough?** 37signals ONCE yes for this size; pgvector/Solidus no. Don’t switch the database to feel grown-up.
+95. **What would you demand I change tonight?** Marketplace 500 diagnosed, or AstEdit write, or jobs `set -a`. One.
+96. **Teach me to think with MASTER.** `/review --only scan` is grep with a constitution. Council is expensive. Default cheap.
+97. **Attention economy 2030 vs Brgen.** Guest post without an account is the opposite of engagement max. Keep it. Don’t add streak dark patterns.
+98. **Causal chain: one rogue agent on main.** `git commit -a` → four trees → push all. Pre-commit tree-span and worktree are the breakers. Don’t disable them.
+99. **Analogy: pledge is to OpenBSD as PathGuard is to MASTER.** Strengthen PathGuard (symlink). Don’t cosplay `kqueue`.
+100. **Monty Hall: switch?** Yes — from monetization and face morphology to the 500, the misspelled write, and the worker env. Those three doors hide the car.
+
+---
+
+
 
