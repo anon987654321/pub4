@@ -71,6 +71,18 @@ class TestStaleExemptions < Minitest::Test
     assert_match Census::MARKER, "value = 1 # scan: intentional — deliberate"
   end
 
+  # The strip cut `  <%# scan: … ` at the `#` inside `<%#` and left a bare `<%`,
+  # which opened an ERB tag over the rest of a multi-line comment. ERB_HTML_SAFE
+  # looks for a sanitizing call inside a tag, so it then matched the word
+  # "sanitize" in that comment's second line and stayed silent — the 2FA
+  # exemption read as stale because the strip built the thing that silenced it.
+  def test_stripping_an_erb_marker_does_not_leave_an_open_tag
+    stripped = Census.unmarked("  <%# scan: intentional — why\n      because sanitize strips svg %>\n", HTML)
+
+    refute_includes stripped.lines.first, "<%"
+    assert_equal 2, stripped.lines.size
+  end
+
   def test_the_reason_is_read_out_of_the_marker
     assert_equal "log rotation", Census.reason_in("x # scan: intentional — log rotation\n")
     assert_equal "brand hex", Census.reason_in("  color: #fff; /* scan: intentional — brand hex */\n")

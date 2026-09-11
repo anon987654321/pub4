@@ -6,43 +6,37 @@
 # `law/practice.rb` declares EXEMPTIONS_EXPIRE — an allowlist entry, baseline row
 # or opt-out that outlives its subject is a hole in a gate nobody can see,
 # because the thing it excuses is invisible. The tree carries 143 of these
-# markers across 89 files and nothing checked a single one. Declared conduct with
+# markers across 90 files and nothing checked a single one. Declared conduct with
 # no detector is the defect this repo names most often, and this is the detector.
 #
-# The method is the marker's own definition. Rule#scan_lines skips a line
-# carrying the marker; so strip every marker from a file, run the rules over what
-# is left, and see whether anything now lands on the marked line. A marker with a
-# finding under it is doing its job. A marker with nothing under it excuses
+# The method is a difference rather than a lookup: run every mechanical and
+# lexical rule over a file as it stands, run them again with its markers blanked,
+# and the findings that appear are what the markers hold back. A marker with
+# something behind it is doing its job; a marker with nothing behind it excuses
 # nothing.
 #
 #   ruby MASTER/tools/stale_exemptions.rb
 #   ruby MASTER/tools/stale_exemptions.rb --json
 #   ruby MASTER/tools/stale_exemptions.rb --all   # list the live ones too
 #
-# Two limits, both measured rather than assumed.
+# The first version asked the narrower question — is there a finding *under the
+# marked line* — and answered it wrongly twice, in opposite ways. A law whose
+# subject is an absence reads the marker off the raw text through `absent`,
+# because blanking a line cannot make a missing `set -euo pipefail` present; that
+# called dilla's two shell markers stale while STRICT_MODE_ZSH's own comment
+# names one of them as the reason `absent` exists. And a registry rule can grep
+# the whole file and report at line 1 — ERB_HTML_SAFE does — so the 2FA QR code's
+# exemption works file-wide from line 4. The difference sees both.
 #
-# A marker can be *named* rather than used: this repo's own documentation, rule
-# fixtures and false-positive tests all contain the string, and a census that
-# counts those reports thirteen stale exemptions that are prose. `quoted?`
-# separates them — backticked, inside a string literal, or nested inside another
-# comment of the same language — and every candidate of the first run was read by
-# hand against it.
-#
-# It leaves exactly one through, and the rule that would catch it is not worth
-# having: web_rules.rb:77 writes `/* scan: intentional */` inside a `#` comment,
-# and a filter for a foreign opener after the line's own one re-read every ERB
-# `<%#` as nesting and silently dropped twenty-six live markers. A disclosed
-# false positive beats a filter that loses what it was built to count.
-#
-# And a law that fires on what is MISSING honours the marker by a different
-# mechanism, which the strip method cannot see. Law#scan checks `absent` against
-# the raw text before anything is stripped, because blanking a line cannot make
-# an absent `set -euo pipefail` present. Three laws declare one —
-# STRICT_MODE_ZSH, STRICT_LOADING_MISSING, RATE_LIMITING_MISSING — and the first
-# run called dilla's two shell markers stale when STRICT_MODE_ZSH's own comment
-# names one of them as the reason `absent` exists. A marker in a file an
-# absence-based law applies to is live, and the census asks that question
-# separately rather than inferring it from a line.
+# One limit stands, and the rule that would close it is not worth having. A
+# marker can be *named* rather than used: this repo's documentation, rule
+# fixtures and false-positive tests all contain the string. `quoted?` separates
+# them — backticked, inside a string literal, or nested inside another comment of
+# the same language — and lets exactly one through, web_rules.rb:77, which writes
+# `/* scan: intentional */` inside a `#` comment. A filter for a foreign opener
+# after the line's own one caught it and re-read every ERB `<%#` as nesting,
+# dropping twenty-six live markers. A disclosed false positive beats a filter
+# that loses what it was built to count.
 
 require "English"
 require "json"
@@ -69,8 +63,7 @@ module Operator
       html: ["<%#", "<!--"], markdown: ["<!--"],
     }.freeze
     CLOSERS = { "/*" => "*/", "<!--" => "-->", "<%#" => "%>" }.freeze # scan: intentional — a census of comment markers has to quote every language it reads
-    # Only `unmarked` needs every opener at once: it strips markers from a file
-    # whose language it has already decided is irrelevant to the strip.
+    # The default for a caller that has no path to read a language from.
     ANY_OPENER = COMMENT_OPENERS.values.flatten.uniq.freeze
 
     Exemption = Struct.new(:path, :line, :reason, :rules, :code, keyword_init: true) do
@@ -179,25 +172,12 @@ module Operator
       end
     end
 
-    # What the marker sits beside: the line with the marker's whole comment cut
-    # out, head and tail both. Empty means the line is comment all the way
+    # What the marker sits beside. Empty means the line is comment all the way
     # through, which is what makes such a marker unable to excuse anything —
     # scan_lines skips the line the marker is on, and the code it was written
-    # about is the next one. The tail half matters: amber's logo closes its ERB
-    # comment and then carries markup on the same line.
-    def code_in(line, openers)
-      at = line.index(MARKER)
-      spots = opener_positions(line[0, at], openers)
-      # No opener on this line means the marker continues a block comment opened
-      # above it — a comment line, whatever the language.
-      return "" if spots.empty?
-
-      opener = spots.max
-      token = openers.find { |candidate| line[opener, candidate.length] == candidate }
-      closer = CLOSERS[token] && line.index(CLOSERS[token], at)
-      tail = closer ? line[(closer + CLOSERS[token].length)..] : ""
-      "#{line[0, opener]}#{tail}".strip
-    end
+    # about is the next one. A line with no opener at all is inside a block
+    # comment opened above it, which is the same answer.
+    def code_in(line, openers) = without_marker_comment(line, openers).strip
 
     def reason_in(line)
       line[/#{MARKER}\s*[—-]\s*(.+?)\s*(?:\*\/|%>|-->|\z)/, 1].to_s
@@ -206,14 +186,33 @@ module Operator
     # The marker removed and the line kept, so every line number still points
     # where it did. This is Rule#without_scan_marker, which cannot be called from
     # here — it is a private instance method on a rule.
-    def unmarked(text)
-      text.each_line.map do |line|
-        at = line.index(MARKER)
-        next line unless at
+    #
+    # Through the same language-aware openers the rest of this reads, because the
+    # naive `rindex` over every opener cut `  <%# scan: … ` at the `#` and left a
+    # bare `<%` behind. That opened an ERB tag over the rest of the comment, and
+    # ERB_HTML_SAFE's guard — which looks for a sanitizing call inside a tag —
+    # then matched the word "sanitize" in the comment's second line. The 2FA
+    # exemption read as stale because the strip built the thing that silenced it.
+    def unmarked(text, openers = ANY_OPENER)
+      text.each_line.map { |line| MARKER.match?(line) ? "#{without_marker_comment(line, openers)}\n" : line }.join
+    end
 
-        opener = ANY_OPENER.filter_map { |token| line.rindex(token, at) }.max
-        opener ? "#{line[0, opener].rstrip}\n" : line
-      end.join
+    # The marker's comment cut out and the rest of the line kept, head and tail
+    # both. The tail is the half that matters and the half this first got wrong:
+    # amber's logo closes its ERB comment and carries a `<textPath>` on the same
+    # line, so cutting from the opener to end-of-line deleted the markup three
+    # rules were about to flag — and the marker read as stale because the strip
+    # removed its subject along with it.
+    def without_marker_comment(line, openers)
+      at = line.index(MARKER)
+      spots = opener_positions(line[0, at], openers)
+      return "" if spots.empty?
+
+      opener = spots.max
+      token = openers.find { |candidate| line[opener, candidate.length] == candidate }
+      closer = CLOSERS[token] && line.index(CLOSERS[token], at)
+      tail = closer ? line[(closer + CLOSERS[token].length)..] : ""
+      "#{line[0, opener]}#{tail}".rstrip
     end
 
     def mechanical_rules
@@ -228,25 +227,46 @@ module Operator
 
     def exemptions
       @exemptions ||= marked.flat_map do |path, hits|
-        by_line = findings_without_markers(path)
-        absent = absence_laws_for(path)
-        hits.map { |line, reason, code| Exemption.new(path:, line:, reason:, code:, rules: by_line[line] + absent) }
+        held = suppressed(path)
+        hits.map do |line, reason, code|
+          Exemption.new(path:, line:, reason:, code:, rules: held[line] + held[:file])
+        end
       end
     end
 
-    # A law whose subject is an absence reads the marker off the raw text, so
-    # stripping it proves nothing about whether the exemption is doing work. Any
-    # such law that applies to this file is honouring the marker, file-wide.
-    def absence_laws_for(path)
-      language = Master::FILE_LANGUAGE_MAP[File.extname(path)]&.to_sym
+    # What this file's markers hold back: every rule run over the file as it
+    # stands and again with the markers blanked, and the difference.
+    #
+    # Asking only "is there a finding under the marked line" answered the wrong
+    # question twice. A law whose subject is an absence reads the marker off the
+    # raw text through `absent`, because blanking a line cannot make a missing
+    # `set -euo pipefail` present. And a registry rule can grep the whole file
+    # for the marker and report at line 1 — ERB_HTML_SAFE does, so the 2FA QR
+    # code's exemption is file-wide and sits on line 4. Both were called stale.
+    #
+    # A difference at a marked line belongs to that marker. A difference
+    # anywhere else is file-scope: the rule read the whole file, so which of its
+    # markers did the work cannot be told apart, and every marker in the file
+    # carries it. That over-reports live and never over-reports stale, which is
+    # the safe direction for a list a person has to read.
+    def suppressed(path)
       raw = File.read(path, encoding: "UTF-8").scrub
-      law.each_value.select do |rule|
-        rule.absent && rule.applies?(path, language) && raw.match?(rule.absent)
-      end.map { |rule| "#{rule.id}(absent)" }
+      openers = openers_for(path)
+      before = findings_by_line(path, raw)
+      after = findings_by_line(path, unmarked(raw, openers))
+      held = Hash.new { |hash, key| hash[key] = [] }
+      marked_lines = marked.fetch(path, []).map(&:first)
+      after.each do |line, rules|
+        gained = rules - before.fetch(line, [])
+        next if gained.empty?
+
+        key = marked_lines.include?(line) ? line : :file
+        held[key].concat(key == :file ? gained.map { |rule| "#{rule}(file)" } : gained)
+      end
+      held
     end
 
-    def findings_without_markers(path)
-      text = unmarked(File.read(path, encoding: "UTF-8").scrub)
+    def findings_by_line(path, text)
       language = Master::FILE_LANGUAGE_MAP[File.extname(path)]&.to_sym
       by_line = Hash.new { |hash, key| hash[key] = [] }
       mechanical_rules.each do |rule|
