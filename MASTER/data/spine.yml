@@ -566,7 +566,14 @@ pub4_source_ceilings:
 # a colour added to that map cannot arrive without an ink that reads on it.
 # Neither folds anywhere: no existing probe walks the verticals, and no
 # existing amber test asks the contrast module anything.
-  RAILS: 2393
+# 2393 -> 2394, which is two files in and one out. The contrast probe added
+# yesterday is a gate now — gates/lib/rendered/accent_contrast.rb and its
+# test — and gates/probes/accent_contrast_probe.rb went with the change
+# rather than staying beside it, because the same JS in two files is what the
+# single registry exists to prevent. A probe is a thing somebody has to
+# remember to run, and nine contrast failures across four surfaces are what
+# remembering had produced.
+  RAILS: 2394
   # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
   # that are the whole defence against a shared index, and nothing tested any of
   # them — a hook that stopped firing looks exactly like a week in which nobody
