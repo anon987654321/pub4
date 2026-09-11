@@ -17,7 +17,7 @@ doas rcctl restart master || doas rcctl start master
 # `set -euo pipefail` at the top did nothing for the loop below, because every
 # fallible step carried its own `|| log WARN` and a logged warning is a zero exit.
 # A deploy script that fails three apps and then prints "done" is read as evidence
-# that the deploy worked, which is the same defect restore_backups.sh was written
+# that the deploy worked, which is the same defect restore_litestream.sh was written
 # to stop repeating. Count the failures and let the exit status carry them.
 failed=0
 APPS=(brgen amber bsdports)

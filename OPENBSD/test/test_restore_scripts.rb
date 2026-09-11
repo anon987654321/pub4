@@ -10,19 +10,19 @@ require_relative "../lib/utf8"
 class RestoreScriptsTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
 
-  def test_restore_backups_is_litestream_restore
-    source = File.read(File.join(ROOT, "restore_backups.sh"))
+  def test_restore_litestream_is_litestream_restore
+    source = File.read(File.join(ROOT, "restore_litestream.sh"))
     assert_includes source, "litestream restore"
     assert_includes source, "extract_legacy_installers.sh"
     refute_includes source, "MASTER/RAILS"
   end
 
   # litestream is absent from this box and unpackageable, so every precondition
-  # in restore_backups.sh is false and a skipping version walked all three apps,
+  # in restore_litestream.sh is false and a skipping version walked all three apps,
   # restored none and exited 0. A restore that reports success having restored
   # nothing is read as evidence the backups work.
-  def test_restore_backups_fails_rather_than_skipping
-    source = File.read(File.join(ROOT, "restore_backups.sh"))
+  def test_restore_litestream_fails_rather_than_skipping
+    source = File.read(File.join(ROOT, "restore_litestream.sh"))
     assert_includes source, "require_litestream", "no check that the binary exists"
     refute_match(/log "skip \$app/, source, "a missing replica must fail, not skip")
     assert_match(/missing replica \$replica"; exit 1/, source)

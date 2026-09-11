@@ -1,11 +1,16 @@
 #!/usr/bin/env zsh
+# NOT the disaster-recovery script — use OPENBSD/bin/dr-pull for that.
+#
 # Restore Rails SQLite databases from on-disk Litestream replicas (vm23).
-# Stops app services, runs litestream restore, restarts services.
+# Stops app services, runs litestream restore, restarts services. It was called
+# restore_backups.sh, which is the name somebody reaches for in an actual
+# emergency, and vm23 has no litestream binary and no replicas — so the name
+# promised recovery the file cannot deliver. The name is the architecture.
 #
 # Usage (on vm23):
-#   DRY_RUN=1 zsh OPENBSD/restore_backups.sh          # print plan only
-#   zsh OPENBSD/restore_backups.sh brgen              # one app
-#   zsh OPENBSD/restore_backups.sh                    # all apps in etc/litestream.yml
+#   DRY_RUN=1 zsh OPENBSD/restore_litestream.sh          # print plan only
+#   zsh OPENBSD/restore_litestream.sh brgen              # one app
+#   zsh OPENBSD/restore_litestream.sh                    # all apps in etc/litestream.yml
 #
 # For repo-archaeology (pub3 heredocs), use extract_legacy_installers.sh instead.
 #

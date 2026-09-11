@@ -5328,7 +5328,13 @@ Numbered 1–N across the four trees.
 377. **Show page English paragraph.** `profiles/show.html.erb:61-74` visibility copy. All keys.
 378. **Edit photo alt.** `profiles/edit.html.erb:21` `alt: "Profile photo"`.
 379. **Swipe card `"anon"`.** `home/_card.html.erb:1`.
-380. **Engine locales are one key.** `engines/dating/config/locales/{en,nb}.yml` only `dating.bio: "Bio"`. Move all dating keys into the engine or delete the stub.
+380. **Already decided, and the record is in the file that owns it.** The engine's
+     locale header states the rule: Rails::Engine appends config/locales/*.yml to
+     I18n.load_path on its own and I18n deep-merges across load paths, so keys the
+     host already carries stay reachable and are deliberately not copied. The 78
+     dating keys in brgen's own locales are those. The stub exists so the next
+     engine string has somewhere to go that is not a literal in the markup — which
+     is the defect the header was written against. Deleting it would restore that.
 381. **LOOKING_FOR / GENDERS raw.** `profiles/new.html.erb:38,44`. `t("dating.looking_for_options.#{v}")`.
 382. **LikesController no rate_limit.** Burst 60/min like votes. Same for dislikes/rewinds/prompts/verifications.
 383. **`User.find` on like.** `likes_controller.rb:9` not scoped to visible profiles. `Dating::Profile.visible.find_by!(user_id:)`.
@@ -5765,7 +5771,13 @@ Numbered 1–N across the four trees.
 773. **Crisis tier on the box is missing the binary.** Confirm `explicitly_installed` scan matches `install -m 755 … emergency_cpu`. **Unverified scan.** If the install line does not match the regex, fix the regex, not the box.
 774. **etc/litestream.yml header still reads as a how-to.** First lines should be: inert by decision; not in ports; do not enable; dr-pull is the backup. Keep the yaml body.
 775. **OPERATOR `setup_litestream`.** Add `rcctl ls failed` must not contain litestream as a check in health_check.
-776. **restore_backups.sh is a litestream restore that must fail.** Rename to `restore_litestream.sh` so nobody runs it as DR, and print `use bin/dr-pull` on the first line of usage.
+776. **Fixed 2026-09-12.** `OPENBSD/restore_litestream.sh`. Three separate passes
+    asked for this rename, which is what a real defect looks like from outside.
+    Its first line now reads "NOT the disaster-recovery script — use
+    OPENBSD/bin/dr-pull for that", and the paragraph under it says why: vm23 has
+    no litestream binary and no replicas, so the old name promised recovery the
+    file cannot deliver, under exactly the name somebody reaches for in an
+    emergency.
 777. **port_inventory RETIRED_CONFIG_PATHS includes litestream.yml.** Add a positive test: litestream.yml may exist, must not appear in pkg_scripts.
 778. **vps-deploy drift gate is advisory.** Add `VPS_DEPLOY_DRIFT=fail` opt-in. Do not flip to blocking from here (box is dirty).
 779. **vps-deploy `DEPLOY_ALL` vs apps.yml.** Derive Rails names from yaml; keep master first and optional last as comments + a test.
@@ -6831,7 +6843,13 @@ A finding is a hypothesis. Verify the second caller before you delete the first.
 32. **`ALL_DOMAINS` lives in `data/dns.yml`.** OPERATOR.sh, Ruby gates, and health_check parse a shell array today. One yaml; shell reads it with `ruby34 -ryaml`.
 33. **`SMOKE_SCRIPTS` / `FLEET_INVENTORIES` include `relayd-watchdog`.** Hardcoded backend tables elsewhere die.
 34. **`dotfiles/` declared Mac-only, check none**, or it leaves the OpenBSD tree.
-35. **`restore_backups.sh` → `restore_litestream.sh`.** First line of usage: `use bin/dr-pull`. Name is the architecture.
+35. **Fixed 2026-09-12.** `OPENBSD/restore_litestream.sh`. Three separate passes
+    asked for this rename, which is what a real defect looks like from outside.
+    Its first line now reads "NOT the disaster-recovery script — use
+    OPENBSD/bin/dr-pull for that", and the paragraph under it says why: vm23 has
+    no litestream binary and no replicas, so the old name promised recovery the
+    file cannot deliver, under exactly the name somebody reaches for in an
+    emergency.
 
 ### RAILS
 
@@ -9228,7 +9246,13 @@ the moment it happened, where the whole suite stayed green.
    so the pin has a reader. Whether one lazy index is worth a gem is a
    different question from whether it is wired, and it is wired.
 6. **`bin/crate` writes `dilla/crate/`.** Directory gone; engine reads `samples/`. Delete or retarget.
-7. **`restore_backups.sh`.** Litestream. Rename; first usage line `use bin/dr-pull`.
+7. **Fixed 2026-09-12.** `OPENBSD/restore_litestream.sh`. Three separate passes
+    asked for this rename, which is what a real defect looks like from outside.
+    Its first line now reads "NOT the disaster-recovery script — use
+    OPENBSD/bin/dr-pull for that", and the paragraph under it says why: vm23 has
+    no litestream binary and no replicas, so the old name promised recovery the
+    file cannot deliver, under exactly the name somebody reaches for in an
+    emergency.
 8. **Three atomic writes.** `Io::AtomicWrite` fsyncs; World and Live do not. One helper.
 9. **Two PathGuards.** Prefix vs ancestor-realpath. One module, the strong check.
 10. **`ChatController#dmesg` vs `Trace::Dmesg`.** One.
