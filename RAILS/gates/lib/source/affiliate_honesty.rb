@@ -31,24 +31,31 @@ module Deploy
       "brgen/lib/brgen/affiliate_placeholders.rb" => %r{clk\.tradedoubler|pdt\.tradedoubler},
     }.freeze
 
-    def self.run
-      new.run
+    # rails_root: is what makes this gate testable. A contract table is only
+    # enforcement if a tree that violates it fails, and the only way to show
+    # that is to run the gate over a tree built to violate it.
+    def self.run(rails_root: RAILS)
+      new(rails_root: rails_root).run
+    end
+
+    def initialize(rails_root: RAILS)
+      @rails_root = rails_root
     end
 
     def run
       @result = GateResult.new
 
-      SourceContract.require_patterns(@result, root: RAILS, required: REQUIRED, gate: "affiliate_honesty")
+      SourceContract.require_patterns(@result, root: @rails_root, required: REQUIRED, gate: "affiliate_honesty")
 
       FORBIDDEN.each do |rel, pat|
-        path = File.join(RAILS, rel)
+        path = File.join(@rails_root, rel)
         next unless File.file?(path)
 
         body = File.read(path)
         @result.fail("affiliate_honesty: #{rel} must not invent TD tracking URLs") if body.match?(pat)
       end
 
-      client = File.read(File.join(RAILS, "shared/app/services/shared/tradedoubler.rb"))
+      client = read("shared/app/services/shared/tradedoubler.rb")
       unless client.match?(/def configured\?.*products_token|def configured\? = products_token/)
         @result.fail("affiliate_honesty: Tradedoubler.configured? must gate on token")
       end
@@ -56,13 +63,23 @@ module Deploy
         @result.fail("affiliate_honesty: Products API must use matrix URI + fid")
       end
 
-      webhook = File.read(File.join(RAILS, "brgen/app/controllers/webhooks/tradedoubler_controller.rb"))
+      webhook = read("brgen/app/controllers/webhooks/tradedoubler_controller.rb")
       unless webhook.match?(/return false if secret\.blank?|return head\(:unauthorized\)/)
         @result.fail("affiliate_honesty: conversions webhook must fail closed")
       end
 
       @result.checked!(REQUIRED.size + FORBIDDEN.size + 3)
       @result
+    end
+
+    private
+
+    # A deleted file is already reported by the REQUIRED table, so reading it
+    # back must not raise on top of that: an exception here reaches the runner
+    # as :errored, which blocks nothing and hides a finding already made.
+    def read(relative)
+      path = File.join(@rails_root, relative)
+      File.file?(path) ? File.read(path) : ""
     end
   end
 end
