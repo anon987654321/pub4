@@ -4824,3 +4824,1384 @@ one as a ticket without asking first.
 
 ---
 
+## In-depth refinement and micro-refinement opportunities — opened 2026-09-11
+
+Measured against MASTER, RAILS, OPENBSD and STUDIO on 2026-09-11. A finding is
+a hypothesis; re-measure before working. This list does not restate the scanner
+inventory (`ruby MASTER/tools/refinements.rb`), the deterministic tier already
+in this file, operator-priority box work, or anything decided against in
+`MASTER/DECISIONS.md` / `OPENBSD/DECISIONS.md`. Rendered values, money, a
+registrar login and a vm23 console are named and left.
+
+Each item names a path and a move. Items flagged **unverified** were opened far
+enough to name and not far enough to assert. Sample five, open the five lines,
+and decide whether the instrument is right before opening the sixth.
+
+Already open above and not restated: Gemfile.lock `CHECKSUMS` / `rb-kqueue`,
+TTS log ownership, `tts_socket` on `vps state`, `secrets_rotation`, `rule_deps`
+136, exemption-expiry detector, per-rule autofix classification, one chrome,
+marketplace 500, layout_snapshot drift, crate backup / `off_host_dr`,
+`libvips_local_build`, `multi_app_ram`, history rewrite, `bsdports.org` parking,
+relayctl instead of relayd restart, `growth.rails` source/test split.
+
+Fenced throughout: folding `dilla/live/`, splitting `dilla.rb`, merging techno
+renderers, changing a rendered look or sound, enabling litestream, Solidus on
+SQLite, pgvector, inbound ActivityPub storage, WebRTC, three sign-in methods,
+`shared/lib/operator` nesting, LAYER_CAKE / DEAD_ABSTRACTION, raising a ratchet
+to absorb growth, `emotion.rb#analyze`.
+
+Numbered 1–N across the four trees.
+
+### MASTER — dual sources and inert config
+
+1. **`tools.yml` names a dead adapter tree.** `MASTER/data/tools.yml:2` — “Adapters in `lib/master/tools/`”. Factories live in `lib/builder.rb` `DEFAULT_TOOL_MAP` and `lib/io/*.rb`. Rewrite the header.
+2. **Repligen/Postpro declared, never constructed.** `data/tools.yml:32-33` list them; `lib/builder.rb:16-53` has no factories. CLI shells STUDIO. Add factories or drop the rows.
+3. **`runtime.yml` still maps a deleted docs tree.** `data/runtime.yml:7` `source: docs/cognitive_runtime.md`; `landed_subsystems` names files under `MASTER/docs/`, which does not exist. Point each at the live file or delete.
+4. **`topologies.yml` is the deleted pixel-field, still loaded.** `data/topologies.yml:1-4`. `cell_grammar` / `emotional_mapping` / `palettes` sit in `data_reach.yml` `unnamed_members`. Drop those keys or wire one renderer.
+5. **Palette keys contradict one chrome.** `topologies.yml:34-42` operator/review/visitor palettes. Mark canvas-only and test that chrome does not read them, or delete.
+6. **`START_HERE.md` has a broken sentence.** `:142` “…`yml` (active read-modify-write…” — the filename was eaten. Restore the stem or cut the clause.
+7. **`START_HERE.md` still defends deleted YAML.** `:147-150` discusses `visual_clusters.yml` / `mobile_web_opportunities.yml`. They were deleted 2026-08-11. Move the paragraph to DECISIONS.
+8. **Three files, one voice string.** `soul.yml:9` `voice: en-NG-EzinneNeural`; `voice.yml:23` `neural:`; `tts.yml` for the engine. One reader (`Voice::Policy`) should own the string; the others cite it.
+9. **`limits.yml` still titled Tier 1 Law in START_HERE.** `:170`. `limits.yml:1-18` is explicit that most of it is unread `guidance:`. Retitle START_HERE to match `test_limits_split.rb`.
+10. **`project_context.yml` names `MASTER/exe/tts-worker`.** `:36` — worker is `MASTER/bin/tts-worker`.
+11. **`project_context.yml` still lists `visual_clusters.yml` as a fold exception.** `:27`. Remove.
+12. **`data/claude/` is empty but still a default corpus.** `lib/ground/memory_index.rb:11` and `lib/cli/brain_overlay.rb:7` still glob it. Drop it from `DEFAULT_DIRS`.
+13. **`data_reach.yml` 28 unnamed keys.** Including `runtime.yml#cognitive_spine`, `soul.yml#evolution_log`, `topologies.yml#palettes`, `models.yml#ollama_*`, `personas.yml#british`, `providers.yml#mistral`. For each: find a reader or delete. Do not build a repo-wide unread-key gate.
+14. **`reader_singularity.yml` still allows 10 readers of `rules.yml`.** Collapse remaining readers onto `Master.load_rules` / `Master.law`.
+15. **Dual constitution classes.** `lib/ground/constitution.rb` vs `lib/core/constitution.rb`. Rename Ground’s to `PrincipleStore`.
+16. **Dual memory search.** `lib/ground/memory_search.rb` vs `lib/ground/memory/search.rb`. Rename the index one `DocIndexSearch`.
+17. **Three mood systems.** `lib/pressure_engine.rb`, `lib/trace/context_pressure.rb`, `lib/cognition/affect.rb`. Document which bus events each consumes, or fold PressureEngine into Cognition.
+18. **Dual attention.** `lib/cognition/attention.rb` vs `lib/cli/attention_context.rb` vs `data/attention_context.yml`. One table of weights.
+19. **`bootstrap.yml` vs `bootstrap_docs.rb`.** Both mention `/tail` `/replay`. `/tail` is not in `CommandRegistry.build`. Confirm callers.
+20. **`security.yml` `gateway.port: 18789` is a second listen story.** Web Falcon is 53187. Add a sentence that 18789 is not the face.
+21. **`PATH_OWNERSHIP.yml` owns missing dirs.** `docs:` and `reports:` — neither exists. Delete the keys.
+22. **`PATH_OWNERSHIP.yml` omits live dirs.** No entries for `lib/cognition/`, `lib/pressure_engine.rb`, `law/`, `AEGIS.md`, `COGNITION.md`, `EXAMPLES.md`. Add them.
+23. **`PATH_OWNERSHIP.yml` `tools/` check is a source-grep spec.** `:179` `spec/lifecycle_tools_spec.rb` asserts `bin/doctor` contains `"check_yaml"`. Point the check at a real tool test.
+24. **`data/tools.yml` `name:` vs `Master::Io::`.** Header says `Master::Tools`. Runtime is `Master::Io::ReadFile`. Align the namespace.
+25. **`RuntimeCatalog.load("tts_phrases")` vs `data/tts.yml`.** Confirm `tts_phrases` exists in a catalog `sections` list (`runtime_catalog.rb:20-24` already records a miss).
+26. **`DATA_ALIASES` vs filenames.** Audit `lib/boot/data.rb` aliases against files on disk.
+27. **`soul.yml` `sacred_paths` includes `bin/cli`.** `:65`. `bin/master` is the instruction surface. Add it or drop `bin/cli` if it is only a pointer.
+28. **`soul.yml` `anti_simulation.forbidden: [will, would, could, might]`.** If the detector is lexical it is noise; if unused it is inert law.
+29. **`models.yml` ollama rows unnamed.** Delete or wire `QuotaGate` / router.
+30. **`personas.yml#british` unnamed.** Delete or add to `Personality.persona_names`.
+31. **`providers.yml#mistral` unnamed.** Row or reader, not both silent.
+32. **Three lists of council words.** `council.yml` vs `HELP_TOPICS` vs `TurnRouter::MODEL_ALIASES`. One table.
+
+### MASTER — untested lib
+
+33. **`HashDigCompat`.** `lib/boot/hash_dig_compat.rb` prepends `Hash#dig` process-wide. Prove MRI nil-short-circuit vs coltrane’s raise; prove `install_hash_dig_compat!` is idempotent.
+34. **`BrainOverlay`.** `lib/cli/brain_overlay.rb`. Test `core_brief` and `load_context` against a planted markdown dir, not empty `data/claude`.
+35. **`ResyncService`.** `lib/cli/resync_service.rb` — `git reset --hard origin/main`. Dry-run must not reset; live path refused without a flag.
+36. **`FixPreviewReport`.** `lib/cli/fix_preview_report.rb`. No test of render shape.
+37. **`DeliberationPrep`.** `lib/cli/deliberation_prep.rb` — `rescue StandardError` at `:17`. No unit test.
+38. **`CouncilCrit`.** `lib/cli/council_crit.rb`. No test.
+39. **`AstEdit`.** `lib/io/ast_edit.rb` — dangerous tool, in `DEFAULT_TOOL_MAP`. No test of Prism edit / governor.
+40. **`BatchReplace`.** `lib/io/batch_replace.rb`. Same.
+41. **`SearchKnowledge`.** `lib/io/search_knowledge.rb`. No test that it reads `knowledge/` and not `docs/`.
+42. **`WebChat`.** `lib/io/web_chat.rb` — Ferrum path from `llm_dispatcher.rb:367`. No test.
+43. **`WebSearch`.** `lib/io/web_search.rb` — only the string in `test_tool_profile.rb`. No `Io::WebSearch` call.
+44. **`AskLlm`.** `lib/io/ask_llm.rb`. Same: name only in the profile test.
+45. **`GitContext`.** `lib/io/git_context.rb`. No test of status/log summary.
+46. **`McpCoordinator`.** `lib/io/mcp_coordinator.rb` — booted in `boot_phases.rb:72`. No test.
+47. **`DynamicHttp`.** `lib/io/dynamic_http.rb` — SSRF-adjacent. `rescue StandardError` returns `Result.err` (`:37-38`). No test.
+48. **`IngressRunner`.** `lib/io/ingress_runner.rb` sets `Fiber[:master_visitor]` / `elevated`. No test that ensure clears fiber keys.
+49. **`Io::Clean`.** `lib/io/clean.rb` shells `OPENBSD/dev/clean.sh`. No test that `SCRIPT` exists and timeout fires.
+50. **`Io::Tree`.** `lib/io/tree.rb`. No test.
+51. **`Io::SymbolLookup`.** `lib/io/symbol_lookup.rb`. No test.
+52. **`Io::FeedbackRecord`.** `lib/io/feedback_record.rb`. No test.
+53. **`Io::BrgenBridge`.** `lib/io/brgen_bridge.rb` hits `127.0.0.1:38182` with `MASTER_INTERNAL_TOKEN`. No test of missing-token err or non-200.
+54. **`Ground::MemorySearch`.** `lib/ground/memory_search.rb`. No test of scoring.
+55. **`Ground::MemoryIndex`.** `lib/ground/memory_index.rb`. No test of rebuild against missing `data/claude`.
+56. **`UnfinishedLedger`.** `lib/fix/unfinished_ledger.rb`. No test of add/resolve/top.
+57. **`HotwireRefactorPolicy`.** `lib/rails/hotwire_refactor_policy.rb`. No test.
+58. **`PwaAudit`.** `lib/rails/pwa_audit.rb` — `initialize(root: Master::ROOT)` so a RAILS audit from MASTER root is the wrong tree unless callers pass `app_path`.
+59. **`MobilePwaOperator` / `MobileWebClusterCatalog` / `Rails8AppAudit` / `SwStrategy`.** `lib/rails/` — no spec/test names. Test or PATH_OWNERSHIP them as RAILS-only.
+60. **`BedrockStub`.** `lib/io/bedrock_stub.rb`. No test that `RubyLLM::Providers::Bedrock` is defined before `ruby_llm` loads.
+61. **`PressureEngine`.** Only constructed in `test_master_boot.rb:39`. No test of `ingest` / weather thresholds.
+62. **`CLI::Stages::Route#levenshtein`.** `lib/cli/stages/route.rb:53-66` — nested ternary inside `Array.new`. No test of “did you mean”. Split the init loop.
+
+### MASTER — declared, never wired
+
+63. **Command tables built by nobody.** `lib/cli/command_registry/help.rb:11-15` already states it: `memory_commands`, `system_commands`, `media_commands`, `core_commands`, `domain_commands`, `reach_commands`, `agent_commands` are required and never merged into `build`. Wire or delete.
+64. **`system_commands` duplicates live verbs.** `system_commands.rb:21-30` redefines `commit`, `doctor`, `pair` that `build` already has. Delete the duplicates from the dead table first.
+65. **Second `/commit` is unconfirmed `git add -u`.** `system_commands.rb:51-60`. Even unwired, it is a loaded gun. If kept, require paths.
+66. **`dispatch_snapshot` lowercases STUDIO.** `system_commands.rb:69` `File.expand_path("../studio", root)` — tree is `STUDIO/`.
+67. **`dispatch_reload` is a stub.** `system_commands.rb:82-84` always `"reload: not supported"`. Session `run_rebuild` actually execs. Two rebuild stories.
+68. **Session handlers vs registry.** `command_handlers.rb` implements `run_rebuild`, `run_context`, `run_checkpoint`, `run_verify` outside the closed slash table. `run_verify` hardcodes a 2026-era file list. Register or delete.
+69. **`/fold` exists as `core_commands` only.** `TurnRouter::FOLD_SLASH` rewrites `fold`/`run` but `build` does not register `fold`.
+70. **Help comment still says `through`.** `help.rb:10`. Rename was `/review`. `completions/_master:6` still completes `through`.
+71. **Completions list is the old closed set.** `completions/_master:5-15` — `through`, no `review`/`rules`/`why`/`orders`/`soul`. Generate from `HELP_TOPICS` + `ALIASES`.
+72. **START_HERE slash set is short.** `:11-13` lists 9 verbs; `HELP_TOPICS` has more. Add orders/soul/why/rules.
+73. **`TurnRouter` still accepts ten pipeline words.** `turn_router.rb:54-70`. Completions and START_HERE should say which four are advertised.
+74. **`IntentRouter::INTENTS` is a keyword soup.** `intent_router.rb:6-28`. Add tests for “why isn’t the homepage realtime?” and a plain “review this later” that must stay chat.
+75. **`bin/README.md` says `pub4` is the operator surface.** `:6` — the binary is `bin/operator`.
+76. **`bin/master-core` survived the two-spine merge.** Fold into `bin/master --core` or keep and give it a test.
+77. **`bin/nsaudit` is a two-spine leftover.** Confirm it still has a job; if it only audits namespaces, fold into `rake lint:autoload`.
+78. **`bin/gate` vs `bin/operator gate`.** `bin/README.md` still tells people to run `gate` as if it were the chain. One sentence: do not run `bin/gate` unless debugging the scanner.
+79. **Seven diagnose bins overlap.** `check` / `ci` / `audit` / `probe` / `smoke` / `dogfood` / `doctor`. Concrete: `smoke` → `check --profile=ci` subset; `audit` → `operator lint --staged`.
+80. **`bin/onboard` / `cleanup` / `handoff` / `playbook` / `reset-costs` / `sync-env`.** No tests except source greps in `lifecycle_tools_spec.rb`. Real subprocess test or fold into `doctor` / `operator`.
+81. **Four TTS bins.** `tts-e2e` should be `bin/check --profile=web` or a rake task.
+82. **`dispatch_tools` lives in unwired `system_commands`.** `/tools` cannot list tools. Merge that one command if nothing else.
+
+### MASTER — stale comments and names
+
+83. **`EventsController` “Wire into routes”.** `web/app/controllers/events_controller.rb:9-14` — route exists at `routes.rb:26`. Delete the how-to.
+84. **`EventsController` talks about “the orb”.** Live surface is the face. Rename in the comment; drop `autoloop:cycle` / `sweep:cycle` unless something still publishes them.
+85. **`NO_PUTS` exemption still names `pub4/gate_chain.rb`.** `lib/review/scan/rules/lexical_rules.rb:39`. File is `lib/operator/gate_chain.rb`. The regex does not match.
+86. **`FixLoop` “architectures #1–#15”.** `lib/fix/fix_loop.rb:18`. Architecture numbers went with `docs/`. Say what the two tiers are.
+87. **`Io::Clean` comment is a changelog.** `lib/io/clean.rb:11-15`. Present-tense: script is `OPENBSD/dev/clean.sh`.
+88. **`web/CLAUDE.md` dated 2026-07-10.** `:265-272` resource_guard paused — verify against `OPENBSD/resource_guard.sh` before trusting. Add a last-verified or cut numbers that drift.
+89. **`help.rb` “read-only” vs scan writes.** `:18` vs `:30-32`. Pick one sentence.
+90. **`MechanicalAutofix` “`/scan` and `/self`”.** `/self` is a model alias for `/review`. Say `/review --only scan`.
+91. **`lib/cli/README.md` still mentions `data/claude`.** `:33`. Empty dir.
+92. **`mask.js` header claims `window.MASTERMask`.** Spec says mask.js is superseded (`spec/web/visual_governor_spec.rb:30-36`). Delete the file or the claim.
+93. **`visual_governor.js:1` “before mask.js loads”.** mask.js does not load. “before face.js”.
+94. **`cognition_ecology.js:75` “see mask.js”.** Same.
+95. **`HealthController` comment block is a decision record.** Keep one line: git is not critical because dubious ownership under `master` user.
+96. **`eslint.config.mjs` `face3d_*.js`.** `:52` — no such files. Dead glob.
+97. **`eslint` globals `MASTERVisual`, `Face3DPreview`.** Grep and drop unused globals.
+98. **`lib/cli/session/command_handlers.rb`.** Vague; it is rebuild/context/checkpoint/verify. Rename or fold into `repl_flow.rb`.
+99. **`work_commands_extra.rb` / `work_commands_status.rb`.** Suffix `extra` is a junk drawer. Split by verb.
+100. **`lib/unwrap_error.rb` unnamed in PATH_OWNERSHIP.** Add a key or move under `lib/result/`.
+101. **`Operator::` is a foreign namespace.** `data/autoload.yml:75-76`. Collision risk with `lib/operator`. One prefix.
+102. **`lib/rails/` audits RAILS from MASTER.** Consider moving to `RAILS/gates/lib` on a sitting, or expose one `/rails audit` command.
+103. **`lib/grok/`.** If MASTER only ingests LoRA transcripts, name it `lib/io/grok_transcripts.rb`.
+104. **`lib/deploy/`.** Easy to confuse with `OPENBSD/`. Rename `lib/operator/deploy_docs.rb`.
+105. **`pressure_engine.rb` at lib root.** Not in PATH_OWNERSHIP. Move under `lib/cognition/` or `lib/trace/` and declare.
+106. **`cognition/` not in PATH_OWNERSHIP.** Add; purpose is already in `COGNITION.md`.
+107. **`web/script/` undeclared.** Add under `web/`.
+108. **`MASTER/log/traces.log` and `MASTER/tts.wav` at tree root.** START_HERE says local/generated is `.master/`, `output/`. Gitignore or move.
+109. **`MASTER/runtime/` JSONL undeclared.** Either `.master/` or declare `runtime/` as local.
+110. **`loop.gif` / `loop.mp4`.** Add to PATH_OWNERSHIP as generated media, check `none`.
+111. **`PATH_OWNERSHIP` `lib/providers/` check is a missing spec.** Points at `spec/providers/catalog_index_spec.rb`; file is `spec/io/catalog_index_spec.rb`.
+
+### MASTER — tests
+
+112. **Source-assertion ratchet is 222.** Worst: `test_web_ui.rb` (39), `spec/lifecycle_tools_spec.rb` (17), `test_cli.rb` (12). Convert lifecycle_tools tests to actually run `--help` / a dry flag.
+113. **`test_agent.rb` four skips “API moved”.** `:31-54`. Port or delete.
+114. **`test_suite_actually_runs.rb` skipped unless `SUITE_AUDIT=1`.** The test that the suite runs does not run. Put a cheap version in default `rake test`.
+115. **`test_self_scan.rb` skipped unless `MASTER_INTEGRATION`.** Document in START_HERE which integration tests exist.
+116. **`test_cli_boot_e2e.rb` needs `MASTER_CLI_E2E=1`.** Same.
+117. **`test_web_http.rb` / `test_browser.rb` excluded from `rake test`.** `--profile=web` must be the only advertised path; START_HERE lists operator profile without web.
+118. **`test_injection_guard_wiring.rb` uses `.allocate`.** `:50`. Construct with a fake governor.
+119. **`test_io_replicate_client_train.rb` allocate.** Same pattern `:8`.
+120. **`test_tool_registry_elevation.rb` allocate.** `:12`.
+121. **`spec/web/visual_governor_spec.rb` greps source for `let maxFps = 24`.** Drive the function if exported, or keep as a marked manifest test.
+122. **`test_web_ui.rb` asserts `File.read(visual_bridge.js)` includes `phantom:detected`.** Assert the method/event fires.
+123. **`test_design_rules_worn_type.rb` reads `rules.yml` text.** Call `Design::Thresholds.worn_profile`.
+124. **`test_edge_case_stub_generator.rb` asserts generated tests contain `skip`.** Generate real stubs or delete the generator.
+125. **`spec/core_smoke.rb` is not `*_spec.rb`.** `rake spec` does not run it; `rake core_smoke` does. Rename.
+126. **Three homes for face tests.** `web/test/`, `test/test_web_*.rb`, `spec/web/`. Pick two.
+127. **`web/test/locale_contract_test.rb` vs `RAILS/test/locale_contract_test.rb`.** Extract one helper.
+128. **`test_master_boot.rb` skips if `rules.yml` missing.** In this repo that skip can never fire usefully. Remove; let it fail.
+129. **`test_style_guides.rb` skips unless `OPERATOR` checked out.** OPERATOR is not a tree. Dead skip or wrong path.
+130. **`test_io_key_rotator.rb` skips unless two key vars.** Fixture ENV so empty/single-key branches run.
+131. **FakeConfig `send(k) rescue nil`.** `test_agent.rb:12`. Swallows everything. Stop.
+
+### MASTER — web face
+
+132. **`mask.js` is dead weight.** Still on disk; `visual_limits.test.mjs:72` still iterates it. Delete `mask.js`, `mask_generators.js`, `mask_topologies.js` if nothing imports them.
+133. **`codebase.js` not in `face_assets.yml`.** Topology `renderer: codebase.js` (`topologies.yml:95`) but the shell never loads it. Add to a deferred group or stop naming it.
+134. **`offline_memory.js` not in the manifest.** `sw.js:78` says drain lives there; the contract test only asserts the file exists.
+135. **`swarm.html` / `diag.html`.** Extra HTML, `lang="en"`, scanline overlay against FLAT_UI. Route behind auth or delete.
+136. **`index.html.erb` `<title>brgen</title>`.** `:17` hardcoded. `t("face.title")` in nb/en.
+137. **`en.yml` `hello: "Hello world"`.** Unused scaffold. Delete.
+138. **I18N_COVERAGE already flags `index.html.erb:17` and `:348`.** Fix with keys.
+139. **`BLANK_LINE_RUN` on `index.html.erb:1`.** One blank-line fix.
+140. **Face copy still English-first in JS.** `config/application.rb:70` is nb. Audit primer inline script against locale keys (`primer_title`).
+141. **`data-theme="dark"` + inline `#000` FOUC guard.** `index.html.erb:67-80`. When chrome moves, these three inline colour rules are the FOUC layer — change with the stylesheet, not before. Values stay the operator’s.
+142. **`chat.js` + `chat_actions.js`.** CLAUDE.md says `chat_actions.js` owns POST streaming. If `chat.js` is leftover, fold.
+143. **`boot_fsm.js` + two inline primer scripts.** One test that both cannot double-dismiss.
+144. **`face_vision_a.js`–`d.js` + `face_vision.bundle.js`.** Manifest loads the bundle. Stop serving sources as static.
+145. **`face.modules.bundle.js` vs eager `face.js` imports.** Confirm only one runs per tap.
+146. **Three particle systems.** `particle_kernel.js` + `particle_worker.js` + `face_particles.js`. Name the boot order in `face_assets.yml` comments (kernel is already called out).
+147. **Three ecology layers.** `cognition_ecology.js` + `_render.js` + `face_offscreen_ecology.js`. Same.
+148. **`smart_turn.js` fetches 21MB ONNX.** Default must stay off; add a test that `index.html.erb` does not `<script src>` the wasm.
+149. **`sw.js` cache name `brgen-`.** `:3`. MASTER face is `ai.brgen.no`. Rename to `master-`.
+150. **`sw.js` precaches `/manifest.json` not the Rails `pwa#manifest` path.** Confirm both URLs 200 or the SW precache fails silently.
+151. **`DYNAMIC_PREFIXES` includes `/bridge/`.** `sw.js:11`. No `bridge` route. Dead prefix.
+152. **Dashboard is a second chrome.** `views/dashboard/index.html.erb`. Under one chrome: brgen shell or fold into chat.
+153. **`ChatController#dmesg` shells `dmesg`.** `:32-35`. Bound it or drop; OpenBSD dmesg is not chat telemetry (`Trace::Dmesg` exists).
+154. **`skip_before_action :verify_authenticity_token, only: :command`.** Add a test that a sibling-host POST is 403.
+155. **Index without container still paints.** Ensure primer copy does not claim “ready”.
+156. **ActionCable `/cable` + SSE `/events/stream` + `visual_bridge.js`.** Three event pipes. Document Cable’s remaining job or remove.
+157. **`web/public/offline.html` BARE_DIV_WRAPPER.** One wrapper div.
+158. **`probe.rake` missing frozen_string_literal.** One magic comment.
+159. **NO_CHANGELOG_COMMENT on `tts_job.rb:45`, `master_container.rb:59`, `face_asset_paths.rb:6`, `face_assets_manifest_test.rb:19`.** Present-tense or delete.
+160. **Ferrum in both Gemfiles.** `MASTER/Gemfile:23` and `web/Gemfile:22`. Web could use the path gem’s test group.
+161. **`web/Gemfile:29-50` “must mirror root Gemfile”.** A comment is not a lock. Test that web’s runtime gems ⊇ what `lib/` requires, or a single `gemspec`.
+162. **`allow_browser versions: :modern`.** Test that an old UA gets 406, not a blank face.
+163. **`PwaController` has no controller test.** `pwa_master_contract_test.rb` greps the ERB and `sw.js`. Add a request test that `GET /manifest` is 200 JSON.
+164. **`chat_upload.css` / `face.css` not in `face_assets.yml` groups.** Loaded from the view. Digest hole of the same class as 2026-07-10. Add a `shell_css:` group.
+165. **`mic_capture_processor.js` / `whisper_mel.js` absolute `/…` URLs.** Propshaft digest will 404 if not in the manifest. Add to singletons.
+
+### MASTER — law, boot, docs, errors
+
+166. **`NO_PUTS` `puts\b(?!\s*\()`.** `puts("x")` is allowed, `puts "x"` is not. Detect any `puts`/`p`/`pp` in `lib/` except the exemption paths.
+167. **Exemption marker vs LONG_LINE / TRAILING_COMMENT.** Already named in the refinement inventory. Fix the two rules to ignore overage that is only the marker.
+168. **`lib/io/key_rotator.rb` exists; `secrets_rotation` still `rule_ids: []`.** A detector that keys in `/etc/*.env` have no `expires` is the honest gap. Do not point at a neighbour.
+169. **`principle_map` 175 `gap` of 272.** Fill `rule_ids` from a name match against `Law.define` / `RuleDSL.rule`. Do not invent detectors for conduct.
+170. **`scan_coverage.yml` exempts `tools/`, `bin/`, `web/`.** One glob that includes `bin/*` without claiming SelfCheck covers it.
+171. **`tools/` exemption is “arguable”.** Scan tools/ with a profile that ignores `$PROGRAM_NAME` scripts’ CLI `puts`.
+172. **`web/` exemption produces findings nobody acts on.** Scan `web/public/*.js` (sources only, not bundles) in SelfCheck or stop claiming FOR_OF is enforced.
+173. **`TODO_FIXME` examples in `voice.yml:85`.** If the rule scans YAML, those are findings or exemptions. Confirm `applies_to`.
+174. **`FILE_SPRAWL` still flags `lib/cli/propose/` one-file dir** if `candidate_sources.rb` remains alone.
+175. **Two Gemfiles, two locks, two platform `if`s.** Runtime deps should come from `master.gemspec`; web Gemfile should be Rails + falcon only.
+176. **`master.gemspec` exists but Gemfile lists gems directly.** `gemspec` in both Gemfiles so versions cannot drift.
+177. **Dilla gems in MASTER Gemfile.** `:44-52` `group :dilla`. STUDIO resolves its own gems. Trace `test_helper.rb` before deleting the group.
+178. **Zeitwerk ignores: 45.** If slash tables stay unwired, they should not be ignores forever — they are unused files Zeitwerk cannot load.
+179. **`required_manually: boot` comment vs file.** Comment still says `require_relative "boot/boot"`. Verify the require in `lib/master.rb`.
+180. **`Builder.build` vs `build_fast`.** `BootReceipt` should list what `build_fast` skipped.
+181. **`HashDigCompat` prepends Hash globally.** Install only after `require "coltrane"`, not on every MASTER boot, if coltrane is not loaded.
+182. **START_HERE `bin/check` default profile may name a renamed task.** If `lint:data_singularity` was renamed `reader_singularity`, the doc is wrong. Read `check_runner.rb`.
+183. **START_HERE runtime map omits `lib/cognition/`, `lib/operator/`, `lib/rails/`, `law/`.** Add one line each.
+184. **START_HERE “Do not optimize away: constitution self-scan debt”.** Selftest is 0 as of 2026-09-10. Cut or retarget.
+185. **`EXAMPLES.md` still shows “Good TODO Update”.** TODO policy is delete-on-close. Rewrite EXAMPLES to match.
+186. **TREE.md is the map; START_HERE still has an ASCII runtime map.** Point START_HERE at TREE.md.
+187. **DECISIONS still contains superseded two-spine text.** Add a one-line “current policy is One Spine” at the top of that section.
+188. **`ResyncService#call` rescues StandardError to a string.** A failed `reset --hard` looks like a chat line. `Result.err`.
+189. **`TtsController#synthesize` rescue returns `e.message` to the client.** Map to a stable `"synthesis_failed"`.
+190. **`ChatController#dmesg` ignores status, no timeout.** Use `Io::Exec` with timeout.
+191. **`cli/scan/request.rb:182` `rescue StandardError` without `=> e`.** Swallows without log.
+192. **`runtime_mode.rb:32-36` double rescue StandardError.** Empty. Log or let it raise.
+193. **`fold_risk.rb:23` rescue StandardError.** No log.
+194. **`voice/dilla.rb:40` rescue StandardError.** No log.
+195. **`rails/routes_views_audit.rb` five StandardError rescues.** An audit that cannot read a file should Result.err, not skip.
+196. **`SsrfGuard` DNS rebinding residual.** `ssrf_guard.rb:17-25` documents it. Pin IP or refuse hosts that resolve split.
+
+### MASTER — CLI, scan, tools, security, micro
+
+197. **No `completions/_operator`.** Add; generate from operator verbs.
+198. **Five “who reaches this” tools.** `operator readers` should be the one verb; `data_reach` / `code_reach` / `method_reach` / `method_graph` are implementation.
+199. **Three linters.** Document: `operator lint` = no model, `/review --only scan` = may write, `rake constitution` = self-findings budget.
+200. **`operator test` “smallest complete proof for dirty files”.** Print which test files it selected.
+201. **`operator land` rebase-push.** Refuse unless worktree (`git rev-parse --git-dir` is a file).
+202. **Live `/commit` still `git add -u`.** Make it path-scoped, or refuse when `git status` has files outside argv.
+203. **`/orders run` executes standing orders.** Test that it cannot run `git reset --hard`.
+204. **`/soul approve` amends constitution.** Test absolute sections refuse.
+205. **`grep_history` / `audit_changes` on CommandRegistry.** Not in `build`. Dead methods or missing `/grep` `/audit`.
+206. **`dispatch_save` exists, no `/save`.** Wire or delete.
+207. **`dispatch_reasoning` / `dispatch_persona`.** Not in `build`. Dead or missing commands.
+208. **`EXIT_ALIASES` includes `q`.** A `/q` typo. Require `quit`/`exit`.
+209. **`Pipeline::ParallelGroup` pool `nprocessors`.** On a 1-CPU VPS this still fans out. Cap at 2 in production via `HostBudget`.
+210. **`MASTER_SCAN_AUTOFIX` defaults to `"1"`.** Confirm `bin/cli /review` default is dry unless `--apply`.
+211. **Dual events `scan_autofix:applied` and `self_autofix:applied`.** One topic.
+212. **`FixLoop` STARTUP_DELAY 90s.** `build` must not start it unless asked. Test `MASTER_BACKGROUND=0`.
+213. **Four loops.** `RuleLoop` / `FixLoop` / `WatchLoop` / `Watcher`. Document which process may run which.
+214. **`CrossFileAnalysis` prescan is advisory.** Change the string to “advisory, not a gate”.
+215. **`EdgeCaseStubGenerator` generates skips.** Delete or make it a no-op.
+216. **`DatalogEngine` / `AutonomousRepairer`.** Confirm callers. If none, they are the next unified_diff_editor.
+217. **`rake constitution` budget 1500.** A number that large is not a ratchet. Lower only with a deletion of findings.
+218. **`spec/dogfood_spec.rb` vs `bin/dogfood` vs `rake dogfood`.** Three dogfoods. One.
+219. **`spec/lifecycle_tools_spec.rb` greps `bin/`.** Move to `test/test_bin_scripts.rb` and run processes.
+220. **`spec/smoke/pipeline_e2e_spec.rb` vs `test/test_pipeline.rb`.** Merge fixtures.
+221. **Flat `test/test_*.rb` outliers.** `test_aggressive_merge.rb` is not findable. Rename to `test_trace_*`.
+222. **`tools/todo.rb` is a second backlog if nobody runs it.** Wire `rake lint:todo` or delete.
+223. **`tools/example_scan.rb`.** No test, no rake. Delete or `rake lint:example_scan`.
+224. **`tools/history_valuables.rb`.** Test the regex does not match `TODO.md`.
+225. **`tools/method_graph.rb` / `method_reach.rb`.** Add `test/test_method_graph.rb` with the hook-false-positive fixtures the comments name.
+226. **`tools/namespace_ratchet.rb`.** Duplicate of `data/namespace_ceilings.yml`? One.
+227. **`tools/word_boundary_lint.rb`.** Add to `rake audit`.
+228. **`tools/swallowed_errors.rb`.** Should flag `scan/request.rb:182`. Add to audit.
+229. **`tools/dup_census.rb` / `design_baseline.rb`.** No unit test of the counter.
+230. **`tools/snapshot.rb` vs `Trace::Snapshot::Publisher`.** One snapshot verb.
+231. **`tools/test_naming.rb`.** Run in `rake lint:test_naming`.
+232. **`script/generate_canon.rb`.** Ensure `rake docs:` is the only writer of `data/CANON.md`.
+233. **`MASTERFace` leftovers in `public/`.** Grep non-bundle sources and delete.
+234. **Three globals.** `window.MASTER` vs `master_namespace.js` vs `MASTER_RUNTIME`. `master_namespace.js` should be the only assigner.
+235. **Three stores.** `felt_state.js` vs `face_state.js` vs `ui_presence.js`. Add a runtime test that `MASTERFeltState` exists before `visual_bridge` emits.
+236. **`attention_model.js` vs ONNX `smart-turn`.** Two “attention” in the face. Rename JS to `face_attention_field.js`.
+237. **TTS `Cache-Control: public, max-age=3600`.** `tts_controller.rb:44`. Body is per-user speech. `private`.
+238. **`/chat/tts/phrases` unauthenticated.** If phrases are idle nudges, visitors get them. Intentional? If not, authenticate.
+239. **CSP report-only unless `PUB4_CSP_ENFORCE=1`.** Production should enforce. Check `web/config/environments/production.rb`. **Unverified.**
+240. **CSP `style_src :unsafe_inline`.** Needed for FOUC. Nonce style?
+241. **YouTube in script_src / frame_src.** If unused, drop.
+242. **`face.part*.txt` in public/.** Concatenated at build; still served. Move to a build dir.
+243. **Ingress test skips if token empty.** Fixture a token so CI tests ingress auth.
+244. **`planned.tools.deny_patterns` unwired.** Leave; do not restore `risk_classifier.rb` without a caller.
+245. **WebFetch must not hit `127.0.0.1:38182`.** `BrgenBridge` is a dedicated client. Test SSRFGuard blocks the tool path.
+246. **`DynamicHttp` + SSRFGuard.** Confirm `resolve_and_validate_uri` calls `SsrfGuard`. If not, that is the hole.
+247. **`Fiber[:master_visitor]` process-wide in CLI.** Test a CLI Session does not leak into a later web request in the same Falcon process.
+248. **`/up` vs `/health`.** relayd should use `/up` for liveness and `/health` for deploy smoke. Document in `web/CLAUDE.md`.
+249. **`pages#radio_bergen`.** Extra surface. Auth? Content? If it is the Dilla tunnel, it belongs in playlist.
+250. **`web_boot_payload` vs `_minimal`.** Test `/runtime/config` is not a `<link preload>`.
+251. **Cognition `observe` on `**`.** Test a scan of 1000 events does not write 1000 YAML dumps.
+252. **`/review --only scan` must not start the council.** Test `MASTER_SCAN_DETERMINISTIC`.
+253. **JS `lang="en"` on swarm/diag/offline.** `lang="nb"` or generate from locale.
+254. **`skip_to_content` vs `skip_to_prompt` vs `face.skip_prompt`.** Three skip links. One on the face page.
+255. **Dashboard `rsi` / `rtk` untranslated.** If they stay jargon, a comment is enough.
+256. **Chat rate limits vs `security.yml`.** `CHAT_RATE_LIMIT = 30` in Ruby; ingress 30 in YAML. Chat should read a limits key (`test_security_defaults` pattern). Same for TTS 30 / poll 300.
+257. **Visitor must not `Shell`.** `VISITOR_ALLOWED_TOOLS` from `Tool::Profile.public_names`. Add a web controller test.
+258. **`ImagePresenter` `tmp/chat_uploads`.** Ensure PathGuard / not world-readable; purge job.
+259. **Two token classes.** `MasterIngressToken` / `MasterWebToken`. Name by job (ingress HMAC vs session cookie).
+260. **Three logs.** `WebEventLogger` vs `Trace::Log` vs `Swallow` JSONL. One directory.
+261. **Two dmesgs.** `lib/trace/dmesg.rb` vs `ChatController#dmesg`. Controller should call Trace::Dmesg or go away.
+262. **`lib/ground/openbsd_config.rb` vs `data/openbsd.yml` vs `OPENBSD/`.** One reader `OpenbsdConfig`. Must not drift from the tree.
+263. **`lib/ground/host_budget.rb` vs `OPENBSD/vm_resource.yml`.** Test the path; do not duplicate limits.
+264. **`lib/cli/web_server.rb` vs Rails `web/`.** If unused, delete. **Unverified** callers.
+265. **`lib/cli/skills.rb` vs `data/patterns.yml` skills_registry.** One skills list.
+266. **`lib/ground/standing_orders.rb` vs `orders.rb`.** Two names. Fold if one is a facade.
+267. **Four stores.** `lib/ground/memory.rb` vs `memory/store.rb` vs `sqlite_store.rb` vs `knowledge_store.rb`. Comment which is session vs knowledge vs sqlite.
+268. **Three semantic layers.** `semantic_cache.rb` vs `semantic_index.rb` vs `Review::Embeddings`. One paragraph in `lib/io/`.
+269. **Three quota objects.** Cross-link comments to `test_quota_gate.rb`.
+270. **`lib/io/ruby_llm_patch.rb`.** Test that `Model::Info.new` kwargs are a subset of the gem.
+271. **`lib/trace/metrics.rb` `summary` should not print zeros as if measured.**
+272. **`lib/voice/speech.rb` 471 body lines.** Split I/O (worker client) from policy. Do not change sound.
+273. **`lib/voice/personality_prompt_builder.rb` 386.** Split CORE_SECTIONS assembly from file IO.
+274. **`diag.html` yellow-on-black debug page is public.** Gate behind authenticated `/diag` or delete from production `public/`.
+275. **Static 400/404/406/422/500 English Rails defaults.** I18n or nb.
+276. **`AuthTier TOKEN_BYTES = 48` vs `MIN_TOKEN_LENGTH = 43`.** Align numbers in one comment.
+277. **`bin/cli` vs `bin/master`.** Two entrypoints to the same REPL. One file should exec the other.
+278. **`completions/_master` `compdef master` only.** Also `bin/cli`.
+279. **`HELP_TOPICS` `review` detail still says “aesthetic scan, deep scan, fix, re-scan”.** Align with `--only scan|critique|map`.
+280. **`test_source_assertions` PATTERN misses `refute_includes File.read`.** Extend or `refute` will grow as a dodge.
+281. **`lib/boot/data.rb` `unsafe_load` for aliases.** Test that a crafted alias cannot load a Ruby object. If unsafe is required, `permitted_classes` empty and aliases only.
+282. **Four YAML loaders.** `Master.law` / `Rules#data` / `RuntimeCatalog.load` / `YAML.load_file`. Grep `YAML.load_file` in `lib/` for stragglers.
+283. **Three ways to define a rule.** START_HERE should say: YAML `rules.yml` + `law/*.rb` + RuleDSL. No fourth.
+284. **`data/autofix_reach.yml` dangling 0.** Do not add transform names without code.
+285. **Ratchet yml without a rake task is inert.** `cohesion_census.yml` / `dup_census.yml` / `sprawl_census.yml` / `namespace_ceilings.yml` / `design_baseline.yml` / `doc_baselines.yml` / `violation_age.yml` — each needs `rake lint:*`.
+286. **`data/agent_map.yml` vs `agent_taxonomy.yml`.** `/btw` uses taxonomy. Map is unused or for snapshots. One.
+287. **`data/load.yml` dual with `boot_phases.rb`.** One.
+288. **`data/proposals.yml`.** If unread, it is `data_reach` unnamed. Reader or delete.
+289. **`data/radio_bergen_track_dossiers.yml` unnamed keys.** STUDIO/dilla data in MASTER/data. Move to STUDIO or give dilla the reader.
+290. **`data/pub_archive_restore.yml` / `recovery_pub.yml`.** Keep; mark `data_reach` reasons so they stop looking like defects.
+291. **`data/recovery/plugin_schema_v1.json`.** JSON in YAML-land. One schema language.
+292. **`data/maturity.yml` vs scorecard.** Two maturity sources? One.
+293. **`lib/ground/pledge.rb` vs OpenBSD pledge.** Name `OpenbsdPledge` if it is that; if not, do not confuse `OPENBSD/`.
+294. **`lib/fix/constants.rb`.** Dumping ground? Split or name the constants’ subject.
+295. **`SCAN_GLOB` vs extensionless `bin/`.** Implement include list for `bin/check`, `bin/gate`, `bin/cli`.
+296. **`lib/cli/scan/request.rb` TARGET_ALIASES `face`.** Test it points at `web/public` not generated bundles.
+297. **`bin/ruby` wrapper.** Test it execs 3.4.9 or prints.
+298. **`InjectionGuard` vs WebFetch.** Test Boot still builds `guard:` and WebFetch uses the same object, not a new one.
+299. **`BootReceipt` vs `maturity_scorecard.rb`.** Test the receipt includes rule count from the file the process loaded.
+300. **`lib/io/antigravity.rb` 231 lines after fold.** Under 300. Fine; skills test exists.
+
+### RAILS — brgen core
+
+301. **Stale layout comment.** `RAILS/brgen/app/views/layouts/application.html.erb:1-26` still says `data-theme="dark"` is load-bearing. Rewrite to the present-tense reason, or delete it. (Amber’s layout comment is already present-tense light.)
+302. **404 chrome vs live chrome.** `RAILS/brgen/public/404.html:8-11` forces `color-scheme: dark` and inline `--x-bg: #0f0f12` while the app default is light. Align static errors with `shared/public/styles/errors.css`. Look: name the seam, do not invent tokens.
+303. **404 hardcodes Bergen marketplace.** `RAILS/brgen/public/404.html:34` links `https://markedsplass.brgen.no/` so Oslo/LA 404s send people to Bergen. Build the href from `Brgen::DomainRegistry`.
+304. **404 English paragraph.** `RAILS/brgen/public/404.html:29`. i18n both, or drop the EN line.
+305. **Same for 500/422.** One generator or shared static template.
+306. **Mailer English subject.** `email_subscription_mailer.rb:10` `subject: "Confirm your Brgen subscription"`. Move to `t("mailers.email_subscription.confirm")`.
+307. **Mailer from-host.** `:4` `from: "Brgen <letters@brgen.no>"` ignores city hosts. Parameterize with the requested host.
+308. **No mailer tests.** No `email_subscription_mailer_test.rb`. Assert subject key, `confirm_url` token, and both html/text parts.
+309. **Newsletter/queue/verification mailers untested.** One request test per `deliver_*`.
+310. **`Tv::BaseController` is a stub.** `:3` “keep empty until shared vertical policy/layout lands.” Hoist vertical policy here or delete the promise.
+311. **Stream chat skips the TV base.** `Tv::StreamChatsController` inherits `ApplicationController`. Inherit the base; use `Current.user` not `current_user`.
+312. **Comments on TV show N+1.** `tv/videos/show.html.erb:123-128` walks `@video.comments` then `comment.user` with no `includes(:user)`.
+313. **`increment!` on listing/video views.** `Marketplace::ListingsController#show:56` and `Tv::VideosController#show:24`. Counter table or `update_counters`; do not fragment-cache that field.
+314. **Double view increment on TV.** `VideosController#show` increments, and `ViewEventsController#create` increments again. One writer.
+315. **`Tv::VideosController#show` creates a ViewEvent per GET.** Refresh = a row. Dedup per (user, video, hour) or only create from the player beacon.
+316. **Posts live search vs FTS.** `posts_controller.rb:35` `apply_live_search` on `title/content` while `posts_fts` exists. Use FTS when the table exists.
+317. **Conditional GET absent.** Add `fresh_when` on `posts#show`, `events#show`, `listings#show`. Only `bsdports` `ports#show` has it.
+318. **No `data-turbo-prefetch` on nav.** Turn on for the eight swiper destinations; keep `pagy.rb:17` prefetch-off on pager links.
+319. **Pagy disables prefetch globally.** Scope to pager anchors, not every Pagy link extra.
+320. **`data-turbo-permanent` missing on nav.** Mark the swiper + theme toggle permanent.
+321. **Feed sort is a full document.** Hot/New/Following should be a turbo frame.
+322. **`turbo: false` on channel join.** `channels/show.html.erb:78`. If join must full-reload, comment why; else drop it.
+323. **`turbo: false` on cart PSP forms.** Document, or use `data-turbo="false"` only on those two buttons via a helper.
+324. **Notifications still local.** `brgen/.../notifications_controller.rb` vs `shared/.../notifications_controller.rb`. Promote when city grouping unifies — or delete the shared stub.
+325. **Votes still local.** Same for `votes_controller.rb`. The shared reflex `vote_reflex.rb` already exists.
+326. **Follow schema split.** brgen `follower/followed` vs amber `follower/followee`. Until unifying, stop implying shared following in docs.
+327. **WebVitals logs only.** Persist p95 or drop the POST if logs are the product.
+328. **Server-Timing absent.** No middleware in `shared/config`. Cheap header for view/db/cache split.
+329. **Fragment cache hit/miss not timed.** Three cached partials. Emit `Server-Timing: miss|hit`.
+330. **Checkouts `allow_other_host: true`.** `Marketplace::CheckoutsController#create:56`. Allow-list host (`vipps.no`, `checkout.stripe.com`) rather than any URL `start_payment` returns.
+331. **Checkouts rescue `StandardError`.** Narrow to payment errors; let programming errors 500.
+332. **Flash interpolates exception.** `t("flash.marketplace.checkout_failed", message: e.message)` can leak Stripe internals. Map known errors.
+333. **`NotConfigured` flashes English class message.** i18n the provider name.
+334. **`hello: Hei` in nb.yml.** `brgen/config/locales/nb.yml:34`. Grep callers; delete if unused.
+335. **`nav.vertical_badge_new: "nytt!"`.** Confirm a reader; if the badge never renders, delete the key.
+336. **2FA inside engine.** Audit every engine `require_two_factor!` for `main_app` paths (kinds test already pinned a `UrlGenerationError`).
+337. **Anonymous TV comments unthrottled.** No `rate_limit` on `Tv::CommentsController`. Add named limit like posts.
+338. **Guest minting + prune.** Confirm `guest` + `created_at` index exists in all three schemas. If missing, `PruneGuestUsersJob` is a table scan.
+339. **`UserPurgeJob` vs guest prune overlap.** Two daily jobs at 3:45 and 3:50. Document which rows each owns.
+
+### RAILS — marketplace
+
+340. **Favorite button English aria.** `listings/_favorite_button.html.erb:12,20` `"Remove from saved"` / `"Save listing"`. Keys under `marketplace.wishlist.*`.
+341. **Saved-search hidden name.** `_live_search_results.html.erb:7` `value: "Marketplace search"`.
+342. **“All” chip.** same file `:15` `link_to "All"`.
+343. **Category label English.** `listings/new.html.erb:65` `f.label :category_id, "Category"`.
+344. **Saved searches “Browse” / “Any query” / “alerts on”.** `saved_searches/index.html.erb`.
+345. **Store “Partner program”.** `stores/show.html.erb:16`.
+346. **`t(..., default: "Store created")`.** `stores_controller.rb:36,47`. Add nb keys and drop defaults.
+347. **Deals search is LIKE, not LiveSearchable.** `deals_controller.rb:11-16`. One helper with listings/stores; FTS if a deals index exists.
+348. **Deals `#show` no `includes`.** `Deal.live.includes(listing: [:user, { photos_attachments: :blob }]).find`.
+349. **Stores `#show` other stores unscoped.** `:23` `limit(6)` with no city. Scope `Current.city_record`.
+350. **Stores `#show` listings not `includes`.** `with_attached_photos.includes(:user, :category)`.
+351. **Payouts on show, no pagination.** Frame + pagy.
+352. **Questions `#create` no rate_limit.** 10/min named `ask`.
+353. **Questions flash first error English.** Add `activerecord.attributes.marketplace/question`.
+354. **Reviews / returns / payouts / addresses / variants / favorites / saved_searches creates** — none contain `rate_limit` (only listings does in the engine). Add per-resource burst limits; names required when two limits share a controller.
+355. **Webhooks still unlimited.** `webhooks_controller.rb:15` comments the hole. `rate_limit` by IP even after signature verify.
+356. **Two Stripe webhook controllers.** Engine `Marketplace::WebhooksController` and `Webhooks::StripeController` both pay orders. One entry.
+357. **`views_count` nullable.** `schema.rb:738`. `increment!` on nil raises. Default 0, NOT NULL.
+358. **`status` on listings nullable.** `live` scope depends on it. NOT NULL + default `"active"`.
+359. **Add `(kind, category_id)` index** if facet queries filter both (they do: `listings_controller.rb:23-27`).
+360. **Duplicate indexes on gig/housing/job details.** Unique AND non-unique on `listing_id`. Drop the non-unique.
+361. **Checkout `#show` redirects to cart twice.** `checkouts_controller.rb:70` `checkout ? cart_path : cart_path`. Dead ternary.
+362. **Facets after kind filter.** Verify job/housing facets aren’t goods leftovers. Test already in `marketplace_saved_and_facets_test.rb`.
+363. **Top offers English default.** `_top_offers.html.erb:8` `default: "Picked for the city"`.
+364. **Listing show “Make an offer” default EN.** `listings/show.html.erb:99`.
+365. **Order status `humanize` fallback.** `orders/show.html.erb:13`. Exhaust `marketplace.order_statuses` in nb.
+366. **Condition `humanize`.** `_facets.html.erb:13`.
+367. **Anon fallback.** `listings/show.html.erb:39,85,141` `"anon"` instead of `t("chat.anon")`. Same in `_questions.html.erb:13`.
+368. **No engine test for stores/deals/addresses/payouts.** Add request tests for owner-only payout release and guest deal index.
+369. **Cart qty updates.** Turbo frame around cart lines after PSP return.
+370. **`SavedSearchAlertJob` no uniqueness.** `limits_concurrency to: 1, key: "saved-search-alerts"`.
+371. **`ListingExpiryJob` same.** Concurrency 1; row lock so two workers cannot both pass the read before `renewal_notice_sent_at`.
+372. **Variant out-of-stock hidden in Ruby.** `listings#show` `select(&:in_stock?)`. `scope :in_stock` on the relation instead of loading all.
+373. **`finish_live_search` duplicated** across listings/stores/deals/takeaway restaurants/maps places. Deals bypasses it for the query half only.
+374. **Solidus still Postgres-first.** `solidus_staging_contract_test.rb` must keep failing closed when `SOLIDUS_MARKETPLACE=1` on sqlite.
+375. **Two “deals” nouns.** `AffiliateProduct` vs `Marketplace::Deal`. Verify `deals#index` does not render affiliate placeholders as listings.
+
+### RAILS — dating, takeaway, tv, playlist, maps
+
+376. **“Make profile visible”.** `profiles/new.html.erb:52` and `edit.html.erb:65`. Add `dating.visible_label`.
+377. **Show page English paragraph.** `profiles/show.html.erb:61-74` visibility copy. All keys.
+378. **Edit photo alt.** `profiles/edit.html.erb:21` `alt: "Profile photo"`.
+379. **Swipe card `"anon"`.** `home/_card.html.erb:1`.
+380. **Engine locales are one key.** `engines/dating/config/locales/{en,nb}.yml` only `dating.bio: "Bio"`. Move all dating keys into the engine or delete the stub.
+381. **LOOKING_FOR / GENDERS raw.** `profiles/new.html.erb:38,44`. `t("dating.looking_for_options.#{v}")`.
+382. **LikesController no rate_limit.** Burst 60/min like votes. Same for dislikes/rewinds/prompts/verifications.
+383. **`User.find` on like.** `likes_controller.rb:9` not scoped to visible profiles. `Dating::Profile.visible.find_by!(user_id:)`.
+384. **`save!` no validation flash.** Failed like is 500. `save` + redirect alert.
+385. **Match overlay EN defaults.** `_match.html.erb:10`.
+386. **Vipps gate fail-open.** `base_controller.rb:13-21` if `VIPPS_CLIENT_ID` absent, dating is ungated. Document in `dating/README.md` that production must have Vipps.
+387. **`candidate_scope` plucks all like/dislike ids.** Unbounded. `NOT EXISTS` or a cap.
+388. **Daily picks / verification tests exist in host, not engine.** `cd engines/dating && rake test` is not a lie if they move or duplicate.
+389. **Intro JS.** `dating_intro_controller.js` — no test. If intro goes with immersive chrome, delete with the chrome.
+390. **Photos purge on edit untested in engine.** Confirm `profiles#update` permits `photos` + signed blob ids only (`media_guard`).
+391. **Age required in optional `<details>`.** `new.html.erb:45` `required: true` inside “optional”. Move age to essentials or drop required.
+392. **Takeaway engine `nb.yml` is empty.** `takeaway: {}`. Move the takeaway namespace into the engine.
+393. **Takeaway reviews / orders `#create` no rate_limit.** Orders: burst 5/10min per user (guest-capable).
+394. **`#update` kitchen status from params.** `orders_controller.rb:55` `params[:status]`. Allow-list `Takeaway::Order::TRANSITIONS`.
+395. **Menu items / favorite restaurants `#create` no test / no rate_limit.**
+396. **Group orders token in URL.** Rate-limit `create` so a host can’t mint unbounded open tickets.
+397. **Delivery drivers index `"anon"`.** `delivery_drivers/index.html.erb:13`.
+398. **`status` on `takeaway_orders` nullable.** NOT NULL + default `"pending"`. Same for `quantity`/`unit_price_cents` on items.
+399. **Courier layer cross-engine.** `maps/home_controller.rb:75` `Takeaway::Order` — add the gate row with that line exempted (awesome-list item already named the shape).
+400. **Hours “no rows = open”.** Empty-state on restaurant show should say so if hours missing, not “closed”.
+401. **Guest order push.** Test that a guest order doesn’t 500 on push (no VAPID). `WebPushJob` discard path.
+402. **Nav bar partial duplication.** `takeaway/_nav_bar.html.erb` vs `marketplace/_nav_bar.html.erb`. Shared `vertical_nav` with accent var already on body.
+403. **No takeaway controller tests in engine** except `order_test`. Missing: reviews, favorites, drivers, menu_items.
+404. **TV “New channel”.** `channels/index.html.erb:6`.
+405. **Empty search English.** `channels/_live_search_results.html.erb:10`.
+406. **“Add a note” / “Timestamp (seconds)” / “Add a comment”.** `videos/show.html.erb:106,113,144`.
+407. **`"anon"` on comments.** `videos/show.html.erb:126`.
+408. **Live streams aria English.** `live_streams/index.html.erb:3,9` despite `t(..., default: "Live streams")`.
+409. **`tv.channel_subtitle` default “Brgen TV channel”.** City-name it.
+410. **Viewers interpolation default.** `live_streams/show.html.erb:23` `default: "%{count} viewers"` — EN plural on :nb.
+411. **Notes/comments/stream_chats creates no rate_limit.**
+412. **`StreamChatsController` `save!`.** 500 on validation. `save` + 422 turbo.
+413. **`current_user` vs `Current.user`.** `stream_chats_controller.rb:9`. Always `Current.user`.
+414. **Missing: `ShowsController`, `EpisodesController` request tests.**
+415. **`live_streams/new` still exists.** If MediaMTX is absent, the form should say so (`apps.yml` blocker), not look like RTMP works.
+416. **`tv_content.rake`.** If it seeds English titles, mark demo-only (`content_honesty`).
+417. **Player Stimulus untested.** At least a request test that feed markup has `preload=none` and `100dvh`.
+418. **Watch time sendBeacon.** Test the controller rejects decreasing `watch_time_seconds`.
+419. **Channel tenant.** Verify comments/notes can’t POST across channels by id.
+420. **Playlist “New set” / “All sets”.** `sets/index.html.erb:9`, `sets/new.html.erb:8`.
+421. **`content_for :title, "Edit #{@set.name}"`.** `sets/edit.html.erb:1`. Same for hosted tracks.
+422. **Dilla sketches `"anon"` / `"by "`.** `_dilla_sketches.html.erb:24`.
+423. **Role select `editor/viewer`.** `_collaborators.html.erb:29` raw English values as labels.
+424. **Transport `t(..., default:)`.** Add nb keys in engine; drop defaults.
+425. **Imports `#create` no rate_limit.** Confirm `OutboundHttp` like link previews. Rate-limit 5/10min.
+426. **Party messages / listens `#create` no rate_limit.** Listens need a high ceiling, not none.
+427. **`increment! :tracks_count` / `plays_count`.** Schema NOT NULL default 0 (playlist test already hit nullable counters).
+428. **Listening party test exists; collaborations/imports/hosted_tracks do not.**
+429. **Embed player layout.** Verify `playlists#embed` uses a minimal layout (skip tab bar).
+430. **YouTube iframe aria default.** Engine nb has `youtube_player_aria`. View must use it without `default:`.
+431. **Maps engine has no `test/` directory.** Add `PlacesControllerTest` for check-in guest identity.
+432. **`#index` JSON vs HTML duplicates live_search.** `places_controller.rb:17` and `:25`. One scope builder.
+433. **`#check_in` no rate_limit.** GPS spam. 10/min. Length-validate the free-text param.
+434. **Home map default Bergen.** `home_controller.rb:13-14` `60.3913, 5.3221` when `Current.city_record` lacks coords. If nil, don’t pretend Bergen on `lsangeles.com`.
+435. **Places layer hardcoded path.** `home_controller.rb:32` `url: "/places/#{place.to_param}"`. Engine mount prefix will break. `place_path(place)`.
+436. **500 places, 200 events, 200 stories** loaded for one map. Viewport bbox filter.
+437. **`I18n.l(..., format: :event)`.** Depends on host `time.formats.event`. Keep host key or define in engine.
+438. **OpenFreeMap style URL.** CSP must allow `tiles.openfreemap.org`; `preconnect` or self-host tiles.
+439. **Engine nb only address/city/coordinates/kind/neighborhood.** Views use `maps.map`, `maps.aria_map`, `maps.hud_aria`, `maps.needs_js` — move into engine.
+440. **Filter `k.humanize`.** `places/index.html.erb:18`. `t("maps.kinds.#{k}")`.
+
+### RAILS — messenger, stories, events, amber, bsdports
+
+441. **Conversation search `"anon"`.** `conversations/search.html.erb:25`.
+442. **Voice recorder Stimulus untested.** Keep the request test; add a markup contract (`capture`/accept audio).
+443. **Link previews no image.** Deliberate. UI must not show an empty `<img>`.
+444. **`MessageExpirationJob` + sweep.** If both run, `expire!` must be idempotent.
+445. **`messages.expires_at` unindexed.** `ExpiredMessagesSweepJob:7` `where(expires_at: ..Time.current)`. Add index (partial where not null if SQLite supports).
+446. **`typing_indicators.expires_at` unindexed.** Sweep `where(expires_at: ..1.hour.ago)`. Index.
+447. **Events RSVP no rate_limit** on `event_rsvps_controller.rb`.
+448. **Events map horizon 7 days.** Document in the events index empty state when everything is next month.
+449. **Community wiki empty keys.** Confirm views use `wiki.empty_*` in nb.
+450. **Moderation queue regression.** Add a test if `moderation_audit_test` doesn’t load `reportable` after write (strict-load bug was fixed).
+451. **Blocks/bookmarks/invites controllers** — no rate_limit. Bookmarks create is easy to script.
+452. **Amber coverage floor 2 controllers.** `coverage_ratchet_test.rb`. Raise the floor as tests land; don’t lower.
+453. **`AiController` English notices.** `"Heuristic joy analysis applied"` / `"AI joy analysis applied"`.
+454. **`AiController` shells `bundle exec ruby bin/cli photograph`.** Timeout, no rate_limit, cwd `../../MASTER` — fails on copy-tree deploy. Guard with `Operator::DeployPaths`.
+455. **`WardrobeMediaJob` uniqueness is a LIKE on Solid Queue args.** Racey. Use `limits_concurrency` per `item_id`.
+456. **`pending_for?` rescue StandardError.** Returns false → double enqueue. Narrow rescue.
+457. **Zombie `RemoveBackgroundJob` / `SegmentGarmentImageJob`.** Comments say amber queue never drained. Operator: count rows on vm23; then delete classes. Don’t enqueue.
+458. **Amber jobs: no worker.** `ApplicationJob` comment: amber `perform_later` is “never” unless `run_inline!`. Either enable `rc.d/amber_jobs` (operator/RAM) or `perform_now` for media like password mail.
+459. **`recurring.yml` prune + declutter assume a worker.** If none, guests accumulate. Same as 458.
+460. **Creator profile form English.** `_form.html.erb:4,40,44`. Use `shared/errors`.
+461. **`creator_profiles/edit.html.erb`.** `default: "Edit creator profile"`, `"Add item"`.
+462. **Widgets English.** `_widgets.html.erb:27-28,35` `pluralize(..., "piece")`, `"Browse demo →"`, `"Talk to MASTER"`.
+463. **Item show aria `Color #{color}`.** `items/show.html.erb:25`.
+464. **Outfit aria `Items in #{name}`.** `_outfit.html.erb:11`.
+465. **Home `turbo: false` Ask AI.** If `master_embed` frame works, drop.
+466. **Wardrobe keys still have EN default.** Drop `default:` now that nb exists.
+467. **`hello: Hei` in amber nb.** Grep; delete if unused.
+468. **Connections/messages/live_streams/planned_outfits** — no dedicated request tests. Add blocked connection and message create rate.
+469. **Affiliate links destroy own vs other.** Missing test.
+470. **`GarmentSilhouette#png` nil must not 500 the item show.** Verify the view.
+471. **UI must not say “similar items”.** Fingerprint is not embeddings. Grep `similar` in amber views.
+472. **Raw `photo_polish_done` in ERB** should go through `analysis_status_label` helper.
+473. **Luxury chrome vs one-chrome.** Name `_variables.scss` / Caprasimo as the seam; don’t restyle.
+474. **`like!` increment likes_count.** Micro: turbo stream replace count.
+475. **Declutter 30d job uniqueness missing.**
+476. **Amber public 404/500 same dark+EN as brgen.** Same generator as 302.
+477. **`local: true` on search form.** `_widgets.html.erb:1` disables Turbo. Remove so live search can work.
+478. **bsdports FTS tests skipped.** `port_test.rb:137,144` — `ports_fts` not in `schema.rb`. Commit the virtual table to schema or stop calling the feature done in `apps.yml`.
+479. **Importer swallows FTS rebuild.** `Ports::Importer#rebuild_fts` `rescue StandardError`. `Ground::Swallow.log` and fail the import run row.
+480. **`semantic_search` is lexical.** Rename or UI-label “search” so the explore assistant doesn’t promise vectors.
+481. **MakefileParser `+=` vs `?=`.** Add a fixture Makefile with both. `makefile_parser_test.rb` exists — add those branches if missing.
+482. **`expand_vars` infinite recursion.** **Unverified** beyond line 80. If `${VAR}` can self-ref, cap depth.
+483. **`permit_file_distfiles`.** Importer must not skip license. Test one restricted port.
+484. **`PortsImportJob` no uniqueness.** Nightly + manual = two imports. `limits_concurrency to: 1, key: "ports-import"`.
+485. **`SecurityAdvisoryRefreshJob` no uniqueness.** Timeout + cache so it doesn’t hammer NVD.
+486. **`turbo: false` on JSON summary.** `ports/show.html.erb:53`. If it’s `render json`, keep false; else a frame.
+487. **Comments/reactions on bsdports.** If `comments_controller` is mounted without social tables, it’s a dead surface — unmount or add tables. **Unverified** routing.
+488. **PWA manifest English.** `bsdports/app/views/pwa/manifest.json.erb:37`. nb/en by locale.
+489. **No system test for search empty.**
+490. **Maintainers unique name.** Confirm model now validates unique index.
+491. **WCAG AAA claimed.** `apps.yml` “not a full-site AAA audit”. Don’t claim AAA in README.
+492. **Explore assistant.** Rate-limit; no LLM key should fail to a rules summary (amber pattern).
+493. **bsdports nightly import vs `rc.d/bsdports_jobs`.** If no worker, the schedule is fiction.
+
+### RAILS — shared, gates, i18n, a11y, jobs, schema, JS
+
+494. **Locale shadowing.** Shared locales load twice and win. Stop appending shared path twice; `locale_shadowing` should fail the double load, not only key collisions.
+495. **`t(..., default:)` hides missing nb.** Prefer required keys; `i18n_resolution_test` ignores defaults.
+496. **Unused-key check absent.** Extend `locale_contract_test.rb` with a reference scan over ERB/`t("` — no i18n-tasks gem.
+497. **Interpolation parity absent.** Assert `%{name}` sets match across nb/en.
+498. **`chrome_i18n` aria baseline 172.** Translating `_favorite_button` etc. must lower the baseline in the same commit.
+499. **Empty-state English still in TV channels.** Lint looks for `title: "No …"`; body literals aren’t covered. Extend a body rule or fix the two TV strings.
+500. **`Shared::Errors` vs local forms.** Creator profile reimplements errors. Always `render "shared/errors"`.
+501. **Sweeps can overlap.** `limits_concurrency` on bulk jobs (`retry_on` is not uniqueness).
+502. **`WebPushJob` duplicated.** `brgen/app/jobs/web_push_job.rb` and `shared/app/jobs/shared/web_push_job.rb`. One class.
+503. **`LiveSearchable` deals exception.** See 347.
+504. **New `after_commit` notifiers must `includes` at the job.** Grep `deliver_notification` without `strict_safe` / includes.
+505. **`ActivityTrackable` actor nil on failure.** Analytics drop silently. Log once per event name.
+506. **`examples.html.erb` English aria.** If routed, i18n; if not, don’t mount.
+507. **`_ad_slot.html.erb` inline display.** AdSense requirement; keep. Ensure consent wraps it.
+508. **Affiliate disclosure.** Must render on deals and amber shop. Add a view assertion per app.
+509. **`master_embed`.** Don’t double-load face JS.
+510. **CSP reports controller.** `skip_forgery_protection`. Rate-limit; cap body.
+511. **OmniAuth buttons still shown if provider unset.** Hide via `oauth_provider_slugs`.
+512. **`examples.html` / `jox_logo_controller.js`.** Grep; if only examples, don’t ship in boot.
+513. **`optimistic_send_controller.js`.** Votes don’t use it. Wire vote arrows or delete unused controller.
+514. **`parallax_tilt_controller.js`.** If unused in ERB, delete (`stimulus_wiring` will tell).
+515. **`stimulus_boot.js` loads full @stimulus-components fleet.** Split per layout.
+516. **PWA SW `networkTimeoutSeconds: 20`.** 3–5s then offline page.
+517. **SW caches status 0.** `CacheableResponsePlugin({ statuses: [0, 200] })` caches opaque failures. Drop 0.
+518. **`__APP_NAME__` cache names.** Must not collide across apps on `amber.brgen.no` vs `brgen.no`.
+519. **Offline page Retry.** Confirm bsdports uses shared offline, not a local copy.
+520. **Legal pages city TLD.** Grep `brgen.no` in `legal.*.yml`.
+521. **`VAPID_SUBJECT` default `admin@brgen.no`.** Wrong for bsdports.org. Per-app env.
+522. **`schema_migration` regex.** `/create_table\s+["':](\w+)["']/` misses `create_table :posts`. Fix regex + exempt `if_not_exists` repair migrations.
+523. **`css_minify_integrity` selector-loss dead.** dart-sass 1.101.0 doesn’t drop selectors. Keep compile check; skip loss half or detect sass version.
+524. **Six gates load-time ROOT.** Add `root:` kwarg so tests don’t rewrite constants.
+525. **`scale_ratchet` under-baseline is warning.** Fail until the number is lowered (same contract as chrome_i18n).
+526. **`frontend_auditor` advisory unless `GATE_AUDITOR_STRICT`.** Document in `runner.rb --explain`.
+527. **`visual_contract` without `--capture` must not print “ok”** as if pixels were measured.
+528. **Authenticated personas missing.** `GATE_ADEQUACY.md` gap 1: cart checkout, dating matches, sell form, amber mutations. Add a signed-in fixture user in triangle.
+529. **page_sim `:id` pages source-only.** Seed one listing/video id for live.
+530. **CDP flake → green.** `--all` should not treat <3 surfaces as pass.
+531. **No axe tree.** Don’t claim a11y complete. Accent_contrast is filled controls only.
+532. **`gate_mutation` doesn’t plant mobile_flow/page_simulation defects.** Extend plants.
+533. **Affiliate honesty.** Assert disclosure on deals index HTML fixture.
+534. **`css_constitution` — confirm planted illegal `px` fails.** If it still matches comments, it’s a spelling gate — fix the detector.
+535. **`coverage_ratchet` floors stale.** brgen 21/24, amber 2/10, bsdports 2/8. After new tests, raise in the same commit.
+536. **Maps engine invisible to some globs.** Any new gate must include `brgen/engines/*/app`.
+537. **`i18n_resolution_test` skips `default:`.** Fail on `default:` in views, or resolve with `raise_on_missing`.
+538. **Engine `en.yml`/`nb.yml` headers lie.** “Keys the host already carries are NOT copied” — then views add `default:` EN. Either use host keys without default, or copy into engine.
+539. **Playlist engine nb incomplete vs defaults in ERB.** Transport, add_track, sets_subtitle.
+540. **`marketplace.stores.*` defaults.** edit/delete/confirm.
+541. **`shared.errors` default in store form.**
+542. **`profile.edit` default.** `users/edit.html.erb`, `users/show.html.erb`.
+543. **`posts.add_photo` default.** `posts/new.html.erb:55,60` — aria uses `t(..., default: "Add photo")` and the button still says `Add photo`. Same on edit.
+544. **`nav.show_menu` default.** `_mobile_chrome.html.erb`.
+545. **`compose.*` used in dating/amber.** Keys in amber nb; brgen must have them too for dating toolbar.
+546. **`legal.dating_age`.** Used in dating new. Confirm nb.
+547. **Flash `full_messages.to_sentence`.** English AR. `activerecord.errors` nb.
+548. **`pluralize` in amber widgets.** Always English. `t("wardrobe.demo_pieces", count:)`.
+549. **PWA manifests descriptions EN** in all three apps.
+550. **Mailer subjects EN** besides subscriptions: `newsletter_mailer`, `verification_mailer`, `queue_failure_mailer`.
+551. **Time `distance_of_time_in_words` locale.** Deal countdown — `I18n.locale` must be nb.
+552. **City copy contract.** Add dating “Bergen” literals if any.
+553. **`nav.takeaway` default `"takeaway"`.** `maps/places/show.html.erb:66,69`.
+554. **OAuth nested defaults.** `_oauth_links.html.erb` three layers. One key.
+555. **Dating engine `bio: Bio`** while host has `about_you`. Dead key or wrong label.
+556. **172 EN aria-labels.** Start with favorite button, live streams, playlist transport (visible on :nb).
+557. **Error pages have no skip-link** and no `#main-content` id on `<main>`. Add both to static errors.
+558. **Color swatch `title` + aria English.** amber items show.
+559. **Outfit composition unlabeled list.** Should be a list of item names.
+560. **Live stream `role=list` without `listitem`.**
+561. **Form errors `tabindex=-1`.** Turbo 422 must move focus.
+562. **Video notes timestamp field unlabeled in nb.**
+563. **`lang` on `<html>`.** Verify application layouts; static errors are `lang="nb"` even for EN gloss children.
+564. **Marketplace `_card_media` empty alt.** Confirm `alt: listing.title`. Same for `_top_offers`, event covers, stories, dating picks/verifications, playlist player art, dressing-room imgs. Decorative avatars next to a name may stay empty; content photos may not.
+565. **Maps engine zero tests.** See 431.
+566. **Dating engine missing controller tests** (host has likes/rewind/unmatch/verification).
+567. **TV engine activity + view_event only** — no comments/notes/chat.
+568. **Playlist engine playlist + party only.**
+569. **Amber `AiController` untested** including Open3 branch.
+570. **`fediverse_test.rb:40` skip if no second city.** Seed a second city in fixtures so the skip never fires in CI.
+571. **`tradedoubler` skip unless table.** Migrations should make this impossible; if skip remains, schema load is incomplete.
+572. **`partner_attribution_report_test` skip unless constant.** Load path bug — require the model.
+573. **System tests:** no system test for dating swipe or marketplace checkout.
+574. **`query_budget_test.rb`.** Extend to listings#index with facets.
+575. **`attachment_preload_test.rb`.** Add TV show comments/notes and marketplace show questions.
+576. **`turbo_broadcast_contract_test.rb`.** Add stream_chat broadcast explicit `partial:`.
+577. **Engine `rake test` from engine dir.** Document `bin/ci` includes engines. Maps none.
+578. **`infinite_scroll_reflex` TV channels.** `_live_search_results` references `ChannelsInfiniteScrollReflex` — verify class exists under tv, not host.
+579. **Almost no `limits_concurrency`.** Only `RecommendOutfitsJob`. Add to: `AffiliateImportJob`, `PortsImportJob`, `NightlySearchIndexRebuildJob`, `ListingExpiryJob`, `SavedSearchAlertJob`, `ExpiredStoriesSweepJob`, `ExpiredMessagesSweepJob`, `ComposeNewsletterEditionJob`, `LinkConverterSyncJob`, `UserPurgeJob`, `DeclutterHygieneJob`.
+580. **`LinkConverterSyncJob` every 5 minutes.** Can stack. Concurrency 1 + uniqueness key.
+581. **`NightlySearchIndexRebuildJob` no-op without `posts_fts`.** Silent return. Log.
+582. **`GenerateBlurhashJob` uniqueness per blob.**
+583. **`DillaRenderJob`.** Must not overwrite takes. Assert output dir `STUDIO/dilla/renders/<seed>/` or brgen equivalent; never `$PWD`.
+584. **`PostproJob` from listing create.** If worker busy, listing has unprocessed photos. Status column?
+585. **`GoogleEnhancedConversionsJob`.** PII. Test it no-ops without env; don’t retry forever.
+586. **`ChannelBotReplyJob`.** Rate; loop guard.
+587. **`Fediverse::DeliveryJob` uniqueness per inbox+activity.**
+588. **`NotificationDeliveryJob` double-push.** **Unverified** internals. Test like/follow once.
+589. **`CableHealthJob` / `CacheHealthJob`.** If they alert, test; if not, don’t schedule.
+590. **`playlist` likes_count/plays_count nullable.** NOT NULL 0.
+591. **`tv_videos.views_count` nullable.** Default 0.
+592. **`identity_assurances.expires_at` unindexed.** If any scope queries it, index; if nothing reads it, don’t add. **Unverified** readers.
+593. **`notifications` polymorphic index.** Confirm `(notifiable_type, notifiable_id)` exists.
+594. **`marketplace_orders.variant_id` indexed?** Verify if `find_by(variant_id)` in stock decrement. **Unverified.**
+595. **Grep remaining `update_column` without `updated_at`.** WIRING_NOTES trap.
+596. **Vertical content column.** Shared `.page-header` / measure cap not applied on vertical homes. Use `.app-shell` column; don’t change accents. (One chrome, already open — this is the container half named per file.)
+597. **`_ui_refinements*` merge.** Boy Scout on next CSS touch — merge into domain partials, no visual change.
+598. **`_shared_coverage_fills.scss`.** If it exists only to satisfy css_coverage_lint, that’s a spelling gate — prefer real selectors or fix the lint.
+599. **`_stack_brgen.scss` vs `_stack.scss`.** Document why two.
+600. **`pull_to_refresh_controller.js`.** Confirm not fighting Turbo morph.
+601. **`tabs_controller.js` vs nav swiper.** Two tab patterns. Feed sort should reuse one.
+602. **`countdown_controller.js` vs `Deal#ends_in`.** Deals use `distance_of_time_in_words`. If countdown JS unused on deals, don’t load globally.
+603. **`share_controller.js`.** i18n toast.
+604. **`form_submit_controller.js#lock`.** Attach to listing create / takeaway order.
+605. **`lazy_image_controller.js` vs `responsive_image_tag`.** One path.
+606. **`lightbox_controller.js` vs lightgallery vendor.** Pick one.
+607. **Listing kinds `chip` vs `chip active`.** `aria-current`.
+608. **Stimulus controllers without a matching test.** `countdown`, `feed_updates`, `form_submit`, `lazy_image`, `lightbox`, `map`, `pull_to_refresh`, `push`, `radio_tunnel`, `request_location`, `share`, `swipe`, `tabs`, `toggle`, `typing`, `typing_input`, `voice_recorder`, `dating_intro`, `marketplace_logo`, `playlist_player`, `tv_feed`, `tv_player`, amber `filter` / `sortable` / `wardrobe_carousel`. One Node-free contract per controller, or a source contract that each is mounted by a view (the infinite-scroll pattern).
+609. **Webhook CSRF skip without rate_limit.** Engine + host Stripe/Vipps/TradeDoubler. Add IP limits.
+610. **`AiController` unbounded work.** Auth + rate_limit. Argv array is OK; still a 1 GB box.
+611. **`TrackImport` URLs.** SSRF like `LinkPreviewFetchJob`. Reuse `OutboundHttp`.
+612. **Mass assignment kinds.** `listing_params_for_kind` — ensure `kind` not user-switchable after create to skip price.
+613. **Push subscriptions controller.** Rate-limit subscribe. VAPID per app (521).
+614. **Guest photo upload.** Rate-limit + size via `MediaGuard`. Confirm `MediaGuard` on messages#create.
+615. **Posts new form English.** `posts/new.html.erb:13-14` `f.label :community_id, "Community"` / `include_blank: "Anywhere in Bergen"`; `:30` `"Body"`; `:60` `Add photo`; `:72` `"Post anonymously"`. All keys. City-aware blank, not Bergen on every host.
+616. **`users/new.html.erb:43` “Leave this field empty”.** Honeypot label. i18n; keep off-screen.
+617. **Playlist hosted tracks.** `"Replace audio file (keeps URL)"`, `"Upload track"`, `"Unknown artist"`, `"Create playlist"`, `"Only owners can invite collaborators."`
+618. **Shared empty_state comment example is English.** Fine as a comment. Callers must pass `t(...)`. Audit callers that pass English string literals.
+619. **Newsletter `_hero.html.erb:14` “Curated offers”.**
+620. **Untested engine models.** dating: `daily_pick`, `dislike`, `like`, `prompt`, `verification`. marketplace: `address`, `category`, `checkout`, `gig_detail`, `housing_detail`, `job_detail`, `listing`, `listing_favorite`, `payout`, `question`, `return`, `review`, `saved_search`, `store`, `variant`, `variant_option`. playlist: `audio_version`, `collaboration`, `dilla_sketch`, `like`, `listen`, `party_message`, `playlist_track`, `set`, `set_track`, `timestamped_comment`, `track`. takeaway: `delivery_driver`, `favorite_restaurant`, `menu_item`, `opening_hour`, `order_item`, `restaurant`, `review`. tv: `broadcast`, `channel`, `episode`, `live_stream`, `show`, `sound`, `stream_chat`, `subscription`, `video`, `video_note`. One model test each, starting with state machines and uniqueness.
+
+### OPENBSD — dual sources
+
+621. **`sh/` does not exist.** `OPENBSD/README.md` claims deploy tooling lives under `bin/`, `lib/`, `sh/`. There is no `OPENBSD/sh/`. Drop `sh/` from the sentence.
+622. **Same ghost path in law.** `OPENBSD/DECISIONS.md` “Repo Layout” still lists `sh/`. Align with the tree.
+623. **PATH_OWNERSHIP still names `openbsd/sh/vps_ci.sh`.** File is `OPENBSD/vps_ci.sh`. Fix the key and the `zsh -n` check path.
+624. **Network table is missing.** `SSH_ACCESS.md` and `RUNBOOK.md` both say the canonical network table is in `README.md`. `README.md` has none. Put one table in `SSH_ACCESS.md` and make the others pointers.
+625. **Uptime-check prose is a second URL list.** `RUNBOOK.md` still says the wrapper curls four hardcoded hosts. `bin/uptime-check.sh` now execs `health_check.rb --public-only`. Rewrite the paragraph.
+626. **Crontab table is incomplete and stale.** `RUNBOOK.md` lists four jobs; `etc/crontab.vm23` also schedules prune-guests, core-reclaim, keep-warm, drain-jobs, weekly-integrity. The relayd-watchdog row still says it heals `doas.conf` trailing newline; that heal was removed. Expand the table from the tracked crontab.
+627. **Production-push scope is wrong.** `RUNBOOK.md` table says `vps_production_push.sh` covers “master + brgen + amber”. The script also deploys bsdports.
+628. **httpd 6666 comment vs CLAUDE.** `CLAUDE.md` still says `httpd.conf` listens on `* port 6666`. Live file listens on `127.0.0.1 port 6666`.
+629. **MEM_RESTORE numbers drifted.** `CLAUDE.md` “thresholds are now 8/14”. `resource_guard.sh` is MEM_WARN 8 / MEM_RESTORE 10.
+630. **keep-warm OPTIONAL set is inverted.** Comment says “bsdports and master are resource_guard's OPTIONAL set”. Guard has `CORE="master brgen"` and `OPTIONAL="bsdports amber"`.
+631. **core-reclaim still names litestream in OPTIONAL.** Match `resource_guard.sh`.
+632. **Four recipe lists.** `data/operator.yml`, `RECIPES.md`, `START_HERE.md` Golden Commands, `RUNBOOK.md` deploy-all table. Make `operator.yml` the only command list.
+633. **RECIPES.md is thirteen lines.** Either fill it from `operator.yml` or delete and point.
+634. **Feature inventory stated twice.** `START_HERE.md` “App inventory” and “Feature inventory” both `RAILS/apps.yml`. One line.
+635. **DECISIONS vs unsigned zones in git.** “61 zones … none of them in git”. `var/nsd/zones/master/` holds 57 unsigned `*.zone` templates by design. Narrow the decision to signed artifacts / keys.
+636. **RUNBOOK still describes a fixed deploy_all header.** Current header says there is no archive. Update RUNBOOK.
+637. **deploy_all still logs archive/recovery.** `deploy_all.sh:49`. Delete the log line.
+638. **tools/tree.rb still DRIFTs a missing dir.** Prints `archive/recovery` as DRIFT. Drop both.
+639. **PATH_OWNERSHIP lists `archive/`.** Directory does not exist. Remove the row.
+640. **Retired-apps prose vs extra_zones.** RUNBOOK says foodielicio.us went with baibl; `data/dns.yml` `extra_zones` still serves them. Pick one source.
+641. **dns.yml comment vs ALL_DOMAINS.** “five zones not in ALL_DOMAINS (anti-gambling trio, bsdports.net, foodielicio.us)”. `bsdports.net` has no zone. Rewrite from `city_zones` + `extra_zones`.
+642. **extra_zones duplicates ALL_DOMAINS.** Keep extras only for names not in ALL_DOMAINS.
+643. **doas.conf.example is a different policy.** Mark the example historical or generate it from the live file.
+644. **sshd_config is a fragment.** Either track the whole file or say this is a fragment OPERATOR merges.
+645. **login.conf is the OpenBSD sample.** Confirm whether app login classes still live here; if unused, stop installing it.
+646. **vm_resource.yml falcon workers.** `master_falcon_workers: 2`. `etc/rc.d/master` uses `${FALCON_WORKERS:-1}` and comments “keep at 1 on 1GB”. Make the yaml match.
+647. **vm_resource.yml load comment vs guard.** Guard uses 5-minute load; yaml keys are `load_avg_1m_*`. Rename keys to 5m or stop claiming they mirror.
+648. **operator.yml Solid Queue vs rc.conf.local.** Add a one-line “must match pkg_scripts” note.
+649. **CLAUDE vs RUNBOOK on SKIP_CI.** Make RUNBOOK a pointer at CLAUDE’s section.
+650. **START_HERE “check-full chains local checks and the integrity gate”.** `bin/check-full` also runs `RAILS/test/run_all.rb`. Name that third step.
+651. **PATH_OWNERSHIP RAILS paths with lowercase `rails/`.** Use real paths `RAILS/` / `OPENBSD/`.
+652. **PATH_OWNERSHIP omits most of the tree.** Add rows or a glob policy for `data/`, `test/`, `gates/`, `lib/`, `dotfiles/`, `quarantine/`.
+653. **PATH_OWNERSHIP `tools/` check is `MASTER/tools/verify`.** Point at `OPENBSD/bin/check-openbsd` or a local test.
+654. **deploy_inventory `generated_at: 2026-07-15`.** Regenerate on apps.yml change or drop the date.
+655. **sync_deploy_inventory drops `standalone_apps`.** Preserve the key.
+656. **health_check public master is a literal.** `:411` `"ai.brgen.no"`. Read `deploy_inventory.json` `master_face`.
+657. **Two uptime checkers, two master policies.** One function, one list.
+658. **dns_zones NAMESERVER is a literal.** `gates/dns_zones.rb` `"46.23.89.226"`. `data/dns.yml` already has `nameserver.ip`.
+659. **OPERATOR PUBLIC_RESOLVERS includes 8.8.8.8.** `dns_zones.rb` uses `1.1.1.1 9.9.9.9`. One list in `data/dns.yml`.
+660. **BRGEN_IP / HYP_IP restated.** Scripts should read `dns.yml` (or a tiny `data/host.yml`).
+661. **relayd-watchdog BACKENDS table hardcoded four ports.** Add this file to `SMOKE_SCRIPTS` / `FLEET_INVENTORIES`.
+662. **vps-state APPS hardcoded.** `%w[brgen amber bsdports]`. Read apps.yml and master_face.
+663. **vps_ci_all apps hardcoded.** Same.
+664. **start_all_apps SERVICES hardcoded.** Derive from inventory + master.
+665. **keep-warm TARGETS hardcoded.** Read apps.yml in ksh the way uptime-check does.
+666. **usr/local/bin/uptime-check FALLBACK list.** If apps.yml is unreadable, fail; do not quietly check a 2026-08 fleet.
+
+### OPENBSD — scripts, expect, gates
+
+667. **vps_deploy_master.sh is a second MASTER deploy.** Keep as recovery (already decided) but have it call `vps-deploy master`.
+668. **vps_production_push vs vps-deploy all.** Make push `SKIP_CI=1 vps-deploy all` plus the optional demo seed.
+669. **vps_install_all vs vps_on_vm_install.** Fold into one “bootstrap on box” script; the other becomes a one-line wrapper.
+670. **vps_install_all stashes the box.** `git stash push`. Root TODO records that stashing Gemfile.lock on vm23 broke master. Delete the stash; `git pull --ff-only` only.
+671. **smoke-apps.sh vs deploy-smoke.sh.** Make smoke-apps a `deploy-smoke --local` alias or delete it and retarget `port_inventory` `SMOKE_SCRIPTS`.
+672. **check vs check-openbsd overlap.** Document a Venn in START_HERE, or have `check` call `check-openbsd` instead of repeating identity/smoke.
+673. **check-full vs integrity_gate.** Deduplicate the integrity list.
+674. **check-vps ON_VPS test is a third predicate.** One helper: `Operator::Environment.on_vps?`.
+675. **check-openbsd uses `RbConfig.ruby`, check uses `Operator::RubyRunner.gate_ruby`.** Use the gate runner everywhere.
+676. **tree.sh header still talks about “MASTER KISS/DRY redesign”.** One-line usage.
+677. **solid_queue_proof.sh is a doas trampoline.** In-line in the caller or `bin/`.
+678. **amber_queue_sweep.sh vs drain-jobs.sh.** Name the pair in RUNBOOK; give sweep `--help` and an app argument (it is amber-only today).
+679. **extract_legacy_installers.sh vs restore_backups.sh.** If the source is gone forever, make extract exit 2 with that sentence.
+680. **extract_legacy uses `tr`.** Banned. Use zsh `${rel//\//_}` or Ruby.
+681. **`_net.sh` `generate_random_port` always errors.** Delete if unused, or make unused-path fail at parse.
+682. **OPERATOR tmux falcon fallback.** Starts a second falcon as **dev**. Conflicts with `daemon_user="master"`. Remove or refuse if rc.d/master is enabled.
+683. **manual_master_deploy.ksh.** Add a first-line “untested recovery — read DECISIONS.md” and a `--help`. Do not fold.
+684. **deploy_all.sh default `SSH_KEY=~/.ssh/id_rsa`.** Every other file uses `id_ed25519_brgen`. Change the default.
+685. **deploy_all VPS_HOST is a bare IP.** Source `lib/ssh_vm23.sh` and drop the copy. Same for `vps_run_remote.sh`.
+686. **post-pull-checklist is a here-doc.** Generate from `operator.yml` or delete in favour of `operator status`.
+687. **deploy-diff.sh vs sync.rb vs config_drift_gate --remote.** Make deploy-diff a wrapper over the gate’s report.
+688. **dev/agent_worktree.sh vs MASTER/bin/operator worktree.** Exec the operator command or delete it.
+689. **dev/*.sh (backup, clean, lint, perms, replace, watch_tests).** Workstation helpers in the OpenBSD tree. Move to `dotfiles/` / `MASTER/tools/` or declare Mac-only with check `none`.
+690. **ptr_openbsd_amsterdam.rb has no test.** Add a dry-run test that the request is built, not sent.
+691. **relayd_prune_keypairs.rb writes /etc/relayd.conf with no dry-run.** Default to stdout/`--check`, require `--apply` to write.
+692. **sync.rb FIXED_SOURCES vs config_drift VERBATIM.** Make sync’s source list = VERBATIM + EXCLUDED so a hand-edit cannot hide in a file sync never copies.
+693. **vps_console.exp embeds a live pubkey.** Read `SSH_ACCESS.md` / a data file, or pass `$env(SSH_PUBKEY)`.
+694. **probe mode does not use `console_open`.** Use `console_open` so host/port/key stay one place.
+695. **status mode uses `head`.** `vps_console.exp:55`. Banned. Use `ruby -e` or `ps` limits.
+696. **No behavioural test for console ack.** Add a dry-run that `expect -d` with `I_UNDERSTAND_CONSOLE_RISK` unset exits 1. Do not fold the nine shims.
+697. **port_inventory RETIRED_ACTIVE_PATHS includes live console shims.** Rename the list; they are not retired.
+698. **No `--help` on the nine shims.** Document `vps_console.exp` usage in RUNBOOK’s occasional-tools table.
+699. **test_health_check.rb measures spelling.** Replace with a `--public-only` run against a stub CURL that returns 200/000.
+700. **`--public-only` not in the flag test.** It is the laptop path.
+701. **test_vps_safety_gate.rb is “gate passes”.** Add the shape it must flag: a doas.dev rule with `keepenv`.
+702. **vps_safety_gate skips basename `litestream`.** There is no `etc/rc.d/litestream`. Delete the skip.
+703. **vps_safety_gate only pins `I_UNDERSTAND_DNS_WIPE`.** Pin the other four or the whole `setenv { … }` string.
+704. **verify_openbsd_idempotency.rb is source grep on OPERATOR.sh.** Add a known-bad fixture (OPERATOR snippet missing the backup).
+705. **verify_deploy_identity.rb is string includes on `_deploy.sh`.** Assert the functions exist via `zsh -c 'source …; whence -w deploy_tracked_app'`.
+706. **No OPENBSD test for dns_zones / domain_alignment / port_inventory / installed_targets / deploy_smoke.** Each wants a known-bad fixture (decision 2026-08-22).
+707. **No test for integrity_gate.rb.** Assert skip_reason for `:vps` off-box, and that `:live_http` / `:repo` needs are actually consulted.
+708. **GateEnvironment skip_reason ignores `:repo` and `:live_http`.** Wire them or drop them from the structs.
+709. **test_gate_lib does not cover `GateResult#measured_nothing?`.** Add the empty-run vs checked! cases here.
+710. **config_drift_gate tests only crontab.** Add a VERBATIM file mismatch and an EXCLUDED file that must *not* fail.
+711. **installed_targets CONFIG_GLOBS miss usr/local.** Include `usr/local/bin/*` as referrers or document the hole.
+712. **check does not run installed_targets, dns_zones, vps_safety.** Those live only in `check-openbsd`. Either include them or say contributor must run both.
+713. **check-openbsd zsh -n covers two files.** Add `vps-deploy`, `vps_ci.sh`, `deploy_all.sh`; `ksh -n` for `resource_guard.sh`.
+714. **deploy_smoke_gate check_master_rc is a string hunt.** Assert “warmup hits a public unauthed path”, not that exact `chat/message?message=ping` query.
+715. **domain_watch population is nsd.conf.** Read `RenderDns.zones` so a zone not yet in nsd.conf still gets whois.
+716. **test_domain_expiry `--update` needs `/usr/bin/timeout`.** Document in START_HERE: refresh on vm23; local red is not a code defect.
+717. **domain_released.yml is empty while five domains fail.** Point failure output at this file so the next agent does not “fix” the test.
+718. **weekly.local runs domain_watch from the checkout as dev.** PATH_OWNERSHIP does not mention `bin/domain_watch.rb`. Add it.
+719. **config-drift-check cannot run as dev.** If nsd.conf unreadable, exit 2 “needs root” instead of treating empty nsd as “no zones”.
+720. **daily.local comments should state the two questions** (repo-versus-live `/etc` bytes vs relayd/acme/nsd consistency) in one line each.
+721. **bin/check loads all OPENBSD tests in one `-e` process.** One process per file, as check-full already does for Rails.
+722. **reach.rb vs installed_targets_gate.** Wire reach into check-openbsd or fold its unique checks into installed_targets.
+
+### OPENBSD — shell, rc.d, DNS, tests, remaining
+
+723. **vps_weekly_integrity.sh is `#!/usr/bin/env sh` and may use `fuser`.** **Unverified on box.** If missing, use the Ruby with-ci-lock nonblock.
+724. **ci_lock.sh comment still says “opened with lockf(1)” at line 20** then corrects to flock(2) at 44. Delete the first sentence.
+725. **emergency_cpu.sh unquoted fallback source.** Quote `. "${GUARD_REPO}/OPENBSD/usr/local/libexec/stale_ci_cleanup.ksh"`.
+726. **start_all_apps.sh: `set -e` without pipefail.** Add `set -eo pipefail`.
+727. **vps_deploy_master.sh: `set -e` only, `#!/bin/sh`.** Add pipefail.
+728. **amber_queue_sweep.sh: no pipefail, no usage.** Add `set -eu` and a usage line.
+729. **renew-certs.sh add `--help`.**
+730. **tree.sh `CDPATH= cd` vs `CDPATH='' cd --`.** Use the safer form.
+731. **dev/agent_worktree.sh add `--help`.**
+732. **vps_weekly_integrity re-exec.** Detect `dirname $0` = `/usr/local/bin` or refuse.
+733. **rails-app.tmpl is a third rc.d.** No PATH export, `pexp="ruby.*${port}"` not `ruby34`, `daemon_timeout="60"` not 120. Either regenerate apps from a fixed tmpl or delete the tmpl and stop OPERATOR from installing it.
+734. **irc_gateway has no PATH, no pexp.** Match brgen’s PATH/`bundle34 exec` shape so a go-live does not repeat the cron-PATH outage.
+735. **amber vs brgen env paths.** Document which of the three paths is live; drop the others from the scripts.
+736. **rc.d/master `bundle34 install` in rc_pre with `|| true`.** Fail the start if `bundle34 check` fails; do not install from rc.d.
+737. **rc.d/master pkill patterns include `operator/MASTER/web`.** Stale path after OPERATOR→OPENBSD. Confirm pexp still matches; drop dead pkills.
+738. **pf.stage1.conf has no 443 or 25.** RUNBOOK should say “stage-1 pf will not pass HTTPS or SMTP”.
+739. **httpd listens 0.0.0.0:80.** `deploy_smoke_gate` does not check httpd.conf exists or has the ACME location. Add a one-line assert.
+740. **acme-client.conf pair.** Mention in RUNBOOK that dns_zones `--check` diffs it so nobody byte-compares acme.
+741. **relayd keypair list vs LIVE_DOMAINS.** Add the six “waiting” cities from RUNBOOK as an explicit not-yet list.
+742. **OPERATOR.sh `EMAIL_ADDRESS="bergen@pub.attorney"`.** If unused, delete.
+743. **newsyslog misses `/var/log/domain_watch.log`, `git_gc.log`, `/tmp/config-drift.out`.** Add rotation or write under `/var/log/`.
+744. **rc.d/*_jobs footers are triplicated.** One `etc/rc.d/jobs.footer` comment file, or a shared tmpl with APP filled in.
+745. **Run `render_dns.rb --check` in `check-openbsd` directly** so a DNS edit does not require the Rails gate registry.
+746. **nsd.conf `server-count: 2` on 1 vCPU.** Put `server-count` in `data/dns.yml` (default 1 for vm23_small).
+747. **render_dns.rb extra_hosts key is unused in dns.yml.** Document extra_hosts or remove the dig.
+748. **DMARC assert in `--check`.** Do not also emit `_dmarc` in zone_body for mail_domain.
+749. **domain_inventory.yml `state: unknown` never alarms.** Fail or skip-with-count so “32 unknown” is visible.
+750. **Nominet dates in inventory are already past.** Add `domain_watch --update` recipe in operator.yml.
+751. **ALL_DOMAINS is a shell array parsed by regex in three Ruby files.** Move the city list to `data/dns.yml` `city_zones:` and have OPERATOR.sh read it with `ruby34 -ryaml`.
+752. **No test for bin/vps-deploy.** At least: refuse uid 0; `all` expands to the four names; `SKIP_CI=1` path names `${app}.sh`.
+753. **No test for OPERATOR.sh beyond zsh -n and idempotency grep.** Add: `ALL_DOMAINS` parse round-trip against `render_dns` city_zones.
+754. **resource_guard crisis path.** The test should fail if the crisis function’s path is not in `explicitly_installed`.
+755. **test_restore_scripts.rb.** Add an executable dry-run with `LITESTREAM_CONFIG` pointing at a missing file, expect exit 1.
+756. **test_githooks.rb.** PATH_OWNERSHIP should name `dev/githooks/` with this test as `check`.
+757. **test_tracked_crontab.rb vs config_drift crontab tests.** Fold or cross-reference so a new cron line needs one fixture.
+758. **No test for nsd-resign.** Fixture: a signed zone with a parseable RRSIG vs garbage. `rescue nil` on expiry parse swallows errors.
+759. **No test for renew-certs.sh intersection logic.** Unit-test CONFIGURED∩HELD in zsh with tmp crt/conf dirs.
+760. **No test for prune-guests.sh wait loop.** A ksh test with `PRUNE_GUESTS_LOAD_CEILING=0` should still run one tick.
+761. **No test for drain-jobs.sh / keep-warm skip-if-not-listening.**
+762. **health_check `--core` banner.** State that smtpd is required and master is a service not an app.
+763. **“Every gate carries its known-bad fixture” (2026-08-22).** Adopt-forward: next touch of each gate adds the pair.
+764. **“No staging environment” is still open.** Point `vm_resource.yml` at this entry so a “add staging” idea dies in one place.
+765. **“Auto-commit atomicity” is still open.** Belongs in MASTER/dev hooks, not OPENBSD/DECISIONS. Move or delete.
+766. **Deploy script names still say `RAILS/deploy.sh`.** If per-app `RAILS/<app>/<app>.sh` is the truth, fix the decision line. **Unverified** whether `RAILS/deploy.sh` exists (it does at tree root).
+767. **Gate kernel decision vs PATH_OWNERSHIP.** Add `lib/` row with the decision’s check.
+768. **doas install decision vs RUNBOOK.** RUNBOOK still says cron heal paths use `validate_doas.ksh`. Heals were removed.
+769. **health_check load_apps rescue returns standalone only.** If apps.yml is unreadable it warns and returns empty. Fail closed.
+770. **health_check `--core` still requires smtpd.** Document as required.
+771. **resource_guard ALL_APPS_FLAG vs start_all_apps.** Name the flag in PATH_OWNERSHIP.
+772. **emergency_cpu not under usr/local/bin in the repo.** Two layouts (root vs usr/local) for installed scripts. Same for `resource_guard.sh`, `config_drift_gate.rb`, `vps_weekly_integrity.sh`.
+773. **Crisis tier on the box is missing the binary.** Confirm `explicitly_installed` scan matches `install -m 755 … emergency_cpu`. **Unverified scan.** If the install line does not match the regex, fix the regex, not the box.
+774. **etc/litestream.yml header still reads as a how-to.** First lines should be: inert by decision; not in ports; do not enable; dr-pull is the backup. Keep the yaml body.
+775. **OPERATOR `setup_litestream`.** Add `rcctl ls failed` must not contain litestream as a check in health_check.
+776. **restore_backups.sh is a litestream restore that must fail.** Rename to `restore_litestream.sh` so nobody runs it as DR, and print `use bin/dr-pull` on the first line of usage.
+777. **port_inventory RETIRED_CONFIG_PATHS includes litestream.yml.** Add a positive test: litestream.yml may exist, must not appear in pkg_scripts.
+778. **vps-deploy drift gate is advisory.** Add `VPS_DEPLOY_DRIFT=fail` opt-in. Do not flip to blocking from here (box is dirty).
+779. **vps-deploy `DEPLOY_ALL` vs apps.yml.** Derive Rails names from yaml; keep master first and optional last as comments + a test.
+780. **vps_production_push DEMO_SEED_ON_DEPLOY defaults to 1.** Production hotfix seeds the demo. Default 0; require an explicit 1.
+781. **vps_deploy_master.sh `SECRET_KEY_BASE` openssl rand fallback.** Can boot master with a random key, wiping sessions. Refuse if `/etc/master.env` has no key.
+782. **vps_on_vm_install `SECRET_KEY_BASE:-dummy` for assets:precompile.** Same class of footgun. Read `/etc/master.env`.
+783. **`bin/vps-deploy` has usage on missing args, not `--help`.** Accept `-h`.
+784. **integrity_gate post_pull_warning still says `zsh OPENBSD/vps_ci.sh`.** Canonical is `bin/vps-deploy`.
+785. **deploy_inventory.json has no `standalone_apps` consumer except empty.** If unused, drop the key from the schema and the Inventory class.
+786. **dotfiles/ is a Mac desktop setup.** Declare `purpose: operator Mac; not installed by OPERATOR.sh; check none` or move out of OPENBSD.
+787. **fix_macos.sh references `FUN/config/`.** That tree does not exist. Point at `dotfiles/config/`.
+788. **PUB4_ROOT in fix_macos is `SCRIPT_DIR/..`.** That is OPENBSD/, not repo root. `cd "${SCRIPT_DIR}/../.."`.
+789. **zshrc.shared vs box `/home/dev/.zshrc`.** OPERATOR mentions `etc/.zshrc`. Find the tracked zshrc or stop syncing it. **Unverified path.**
+790. **quarantine/virus_museum.** PATH_OWNERSHIP check should name `MASTER/tools/security_sweep.rb`. RUNBOOK: recovery is `bin/dr-pull` and `manual_master_deploy.ksh`; quarantine is inert samples.
+791. **Missing `--help` / usage** on `bin/vps-deploy`, `vps-state`, `vps-logs`, `ds-records`, `render_dns.rb`, `domain_watch.rb`, `sync_deploy_inventory.rb`, `with-ci-lock`, `dr-pull` (**unverified**), `start_all_apps.sh`, `emergency_cpu.sh`, `amber_queue_sweep.sh`, `vps_ci.sh`, `vps_ci_all.sh`, `vps_install_all.sh`, `vps_on_vm_install.sh`, `vps_master_scan.sh`, `resource_guard.sh`, `core-reclaim.sh`, `keep-warm.sh`, `drain-jobs.sh`, `prune-guests.sh`, `tree.sh`. Pattern: `deploy-smoke.sh`.
+792. **uptime-check cron redirects all output.** Failures only if someone reads the log. Print a one-line summary to stdout on failure so cron mails root. Same for config-drift-check.
+793. **keep-warm has no heartbeat.** Touch `/var/db/keep_warm_seen` each run; health_check already has the pattern.
+794. **vps-logs looks in `/var/log/pub4/${app}.log` first.** Probe `rcctl get ${app} logger` or document “always daemon”.
+795. **OPERATOR.sh `2>/tmp/pkg_add.log`.** Use `/var/log/pub4/`.
+796. **home/johann/bin/mailimg.** PATH_OWNERSHIP should list it as the executable check (`ksh -n`).
+797. **stale_ci_cleanup.ksh lives under usr/local/libexec.** Include `/usr/local/libexec/` in installed_targets.
+798. **gates live under OPENBSD/gates but run via RAILS/gates/runner.rb.** One paragraph in START_HERE: registered in `RAILS/gates/gates.yml`, invoked by `check-openbsd`.
+799. **lib/utf8.rb is installed next to config_drift_gate.rb.** Awkward `/usr/local/bin/lib/utf8.rb`. Vendor the require as a relative file documented in the gate header.
+800. **bin/ds-records requires root to read signed zones.** Off-box it should skip, not traceback. Guard ZONE_DIR readability.
+801. **bin/render_dns.rb add `--help`.**
+802. **OPERATOR.sh pin `RUN_PRODUCTION_SEEDS` default 0 in the header.**
+803. **data/operator.yml `ssh brgen` vs IP.** Use the Host alias everywhere instead of the IP.
+804. **Three doors.** START_HERE should say “agents: CLAUDE.md; operators: RUNBOOK.md; first screen: README.md” in one sentence.
+805. **RUNBOOK “Always use tmux” then `doas zsh OPENBSD/OPERATOR.sh`.** vps-deploy must *not* be doas. Put that adjacent.
+806. **config_drift_gate SSH default `dev@brgen.no`.** Other scripts default to the IP. One default (`SSH_HOST` from operator.yml).
+807. **deploy_all still says `rails/<app>/<app>.sh` in usage.** Path is `RAILS/<app>/<app>.sh`.
+808. **START_HERE post-pull.** Add “do not stash”.
+809. **health_check encoding comment duplicated.** One `lib/utf8.rb` require is enough.
+810. **bin/check OptionParser without `--help` banner.** Add a banner listing profiles and which gates each runs.
+
+### STUDIO — dilla engine and crate
+
+811. **Stale part headers.** `STUDIO/dilla/dilla.rb` — every `# engine part:` block still says “split out of dilla.rb”. Rewrite to “inline, load order is document order.”
+812. **`ENGINE_SOURCES` assigned late.** `:34360` sets it after `wiring_dead_constants` and `parts_report` already close over the name. Move the assignment up with the require.
+813. **Wiring comment still names `lib/engine/`.** `:13735–13738`. Gate fails if that directory returns. Point at `DillaSources.all`.
+814. **`scan` still probes `dilla.html`.** `:13167`. No such file. Drop the key or fail if a documented face is missing.
+815. **`help` is a 170-line dump with no `--explain`.** Add a topic index (`help render`, `help chop`, `help knobs`) and keep the wall behind `help all`.
+816. **`council` is dead prose.** `:13186–13193` prints five slogans. Delete it or make it call a real command.
+817. **`parts` vs comment line count.** `:14674` says “35,000 lines / 83 markers”. Generate the sentence from `parts_report`.
+818. **Test that `dilla parts` lists every marker exactly once.** Do not extract the large parts.
+819. **Support ceiling is full.** `STUDIO/gate.rb:120` `DILLA_SUPPORT_CEILING = 56`. Fold before adding; the next file needs a priced raise.
+820. **`DillaSources.support` is only `lib/*.rb`.** Either extend `support` to match `DILLA_SUPPORT` or say the corpus is the engine plus `lib/` only.
+821. **`engine_sources` header still talks about five corpora.** Cut to “this is the engine; the gate counts support separately.”
+822. **Lazy requires vs the ceiling.** Document which of `console_strip`, `tape_hysteresis`, `mix_score`, `verify_fx`, `kit_dig` are command-only so a fold does not pull DSP into boot.
+823. **`spectral_audit.rb` is not required by the engine.** Dispatch `dilla spectral` through engine help, or stop counting it as engine support.
+824. **`knobs.rb` names `drum_kit.rb`.** That file is now `engine part: drum_kit`. Name the part.
+825. **Load-order comment vs practice.** `dilla.rb:231-235` says the order lives in `engine_sources.rb`. It does not; `:83-120` does. Put the order next to the requires, or generate it.
+826. **`FLYLO_` alias warn vs help.** Help still has `flylo_abstract`, `flylo_fm_shimmer` in `redo_nine.sh:39`. Present-tense: those are pocket/lead names, not the banned prefix.
+827. **`default_output_dir` vs `.gitignore`.** `.gitignore:22-24` still talks as if every renderer writes beside `dilla.rb`. Align with `OUTPUT_DIR`.
+828. **Pin `DILLA_SCRATCH_DIR` in `dilla_helper.rb`.** Scratch fallback is `Dir.tmpdir`; tests that assert `SCRATCH_DIR` under the tree will miss it.
+829. **UTF-8 at crate/knob readers.** 37 `File.read` sites in `lib/` inherit locale if a support file loads first. Add `encoding: "UTF-8"` at readers that parse titles.
+830. **`seed_providers.rb` URL seed still debug-gated.** `apply_external_url!` warns only if `DILLA_DEBUG`. Always warn, like the USGS path.
+831. **`demo_full.rb` swallows harmony failures.** `:44-46` `rescue StandardError; next`. Not an optional gem. Log with the progression name, then skip.
+832. **`demo_full.rb` hardcodes `/Users/mac/Music/dilla_sines/demo.mp3`.** Default to `ENV["DEMO_MP3"]` or `OUTPUT_DIR`. Do not touch that directory.
+833. **`sine_stream.rb` hardcodes checkout and Music paths.** `Dir.chdir("/Users/mac/Documents/GitHub/pub4/STUDIO/dilla")` breaks any worktree. Chdir to `File.expand_path("..", __dir__)`.
+834. **`sine_stream_player.rb` same Music path, no shebang.** Add `#!/usr/bin/env ruby`. Keep the player out of the engine require list.
+835. **`bin/crate` is unguarded.** Add `return unless __FILE__ == $PROGRAM_NAME`.
+836. **`bin/crate` help is comment-sliced.** A `--help` flag and a real usage string.
+837. **`bin/crate` `list` silent rescue.** Missing `crate/` vs empty crate vs corrupt `source.json` are three states. Warn per file; empty dir is the only quiet case.
+838. **Three crate layouts, one engine reader.** `bin/crate list` should say “engine will not see these until they are registered as chopped loops.”
+839. **`AudioGraph` comment vs tests.** Still cite `lib/engine/render_dilla.rb:640-695`. Point at `engine part: render_dilla`.
+840. **Industrial graph is a second spine.** Name in `help` that `industrial`/`techno`/`analog` still bypass `AudioGraph`. Do not merge renderers.
+841. **`characterize` is 1180 lines of inspection.** Add one line under “READING THE ENGINE.”
+842. **`vocab-check` in `STUDIO/dilla/README.md` Checks.** That README currently only names `rake test`.
+843. **`dilla.rb` header: tests and the gate depend on the CLI guard.** Stops the next split from dropping it.
+844. **`dilla_live.rb` is a second entry.** Either add `entry:` (guarded) or document it as parse-only like lora.
+845. **`playlist_learn_agent.sh` is bash.** `#!/usr/bin/env bash`. Law is zsh. `#!/bin/zsh` plus `set -euo pipefail`.
+846. **`librosa_analyze.py` is committed Python.** Ban is on committed scripts. Isolate as an optional tool with a Ruby wrapper that says “Python on PATH, not in this repo’s agent shell.” Paths point at `pub2` / `pub3`. **Unverified** whether `radio-bergen-librosa` is still dispatched.
+847. **`generate_tts.rb` assumes repo-root cwd.** Anchor to `File.expand_path("../../../MASTER/README.md", __dir__)`. Backticks for TTS belong behind Open3. Vendor path is `3.4.0` not `3.4.9`.
+848. **`redo_nine.sh` points at missing chops.** `samples/chopped/ubrukte_samples_0N/loop.wav`. Refuse with “no chopped rack” rather than render empty beds. Do not retune the rows.
+849. **`ENV_AND_RENDER.md` names `RAILS/shared/app/services/shared/dilla_processor.rb`.** **Unverified** that path still exists.
+850. **`data/modes.yml` never mentioned in help.** One line under SYNTHESIS.
+851. **`data/album_tracks.yml` / `dilla_principles.yml`.** Find the reader before calling them inert.
+852. **`reference_sonic.yml` / `dilla_reference.yml`.** Reader is `load_sonic_profiles` at `dilla.rb:4065`. Document it next to the file.
+853. **`stems/manifest.json` names missing demux dirs.** `dilla stems` should fail with “manifest names paths not on disk” the way `assets` does.
+854. **Tests should export `DILLA_FROZEN=1` in `DILLA_BOOT_ENV`.** A forgotten restore cannot dirty `project/session.json`.
+855. **`producer_dna.rb` comment “~60 presets” vs README.** Count from the file in `dilla knobs` / a `dilla dna` listing rather than restating.
+856. **`.gitignore` ignores `samples/` wholesale.** Keep audio out; stop ignoring `samples/**/*.provenance.json` and `samples/chopped/loops.json` so a lost crate still has URLs and slugs.
+857. **`.gitignore` ignores `*.wav` then comments `loop.wav` as keeper.** There is no `!loop.wav`. Either un-ignore the keeper or stop calling it tracked.
+858. **Quality sidecar rule duplicated.** `*.wav.quality.json` at `:8` and `:32`. One pattern. Same for `*_stems/`.
+859. **`assets.json` records four loops that are not on disk.** `dilla assets` exits 1; nothing in `rake test` runs it. Add a test that `DillaAssets.verify` is either clean or equal to the known rebuild set.
+860. **`DillaAssets.tracked_paths` only top-level drum wavs.** Not `custom/` or `fm/`. Include them or document that they are derived.
+861. **`tracked_paths` skips missing files.** Record expected paths even when absent.
+862. **`external_kit_cache` identity is a machine fact committed in `assets.json`.** Split host identity from crate hashes, or omit `present` from the tracked file.
+863. **`check_inputs!` wiring.** **Unverified** that every dispatch calls it. Probe one non-dilla renderer.
+864. **Dug sidecar has no URL.** Old sidecars fail `CrateDig.record!`. A one-time audit that lists sidecars without `url`.
+865. **Reproduce command names a gone path.** Provenance `command.argv` files must exist or the sidecar prints `UNREPRODUCIBLE`.
+866. **`crate.yml` is the YouTube pile.** `dilla.rb source` help should point at `lib/crate_dig.rb` first, this file second.
+867. **`RadioChop::DEFAULT_SOURCE` is `samples/ubrukte_samples.mp3`.** File not in the listing. `chop` with no args should say “default source missing”.
+868. **Chop registry JSON parse warns; `registered_loops` also rescues StandardError.** Parse once; drop bad rows with the slug.
+869. **`GENERIC_BASENAMES` vs `bin/crate` `source.wav`.** Add a test that `RadioChop` slug from `crate/sources/<slug>/source.wav` uses the directory.
+870. **`own/` sidecars vs gitignore.** Confirm with `git check-ignore`. **Unverified.** If ignored, un-ignore `**/*.provenance.json` under samples.
+871. **Vocal-fit sidecars without wavs.** `rap-vocal list` should say “sidecar only, audio missing” per row.
+872. **`_mislabelled_untitled_flac/meta.json`.** Add one sentence in `rap-vocal list` help so nobody “cleans” it.
+873. **`DillaAssets.manifest` JSON rescue returns empty crate.** Non-zero exit when `dilla assets` is the command, not when a test loads the module.
+
+### STUDIO — live, postpro, repligen, lora
+
+874. **Als files have no shebang.** Add `#!/usr/bin/env ruby` so a direct `./live/ambient_pads.als.rb` works off Homebrew. Do not fold live/.
+875. **`broadcast.sh` hardcodes Homebrew ruby.** Use `$(command -v ruby)` or `rbenv` like `dig_crate.sh:4`. Add `RBENV_VERSION=3.4.9`.
+876. **`broadcast.sh` set names are filenames.** Validate against `live/*.als.rb` before the loop.
+877. **`rack.rb` hardcodes `/opt/homebrew/bin/ffmpeg`.** Fallback to PATH when the Homebrew binary is absent is help/UX, not a sound change.
+878. **`dig_crate.rb` hardcodes yt-dlp Homebrew path.** `ENV["YTDLP"]` or PATH.
+879. **`dig_crate.sh` header** can point at `lib/crate_dig.rb` in one line so the two names stay distinct.
+880. **`recall.rb` add `--help`.** Unknown flags currently become a seed.
+881. **`recall.rb` `--keep` writes under `dilla/` root.** Say in the warn that the wav is ignored.
+882. **`CATALOGUE.md` item 11 vs `broadcast.sh` hard cuts.** Comment that crossfade is catalogue item 11, not this script’s job.
+883. **`CATALOGUE.md` counts “forty-two support modules.”** `lib/` has 44 `.rb` files. Generate or drop the number. Same for “401 chord progressions, 74 track presets.”
+884. **Als files `require_relative "rack"` with no `$PROGRAM_NAME` guard.** Loading a set in a test would play. A one-line guard would let a dry `--describe` exist without audio. Do not add playback flags that change the set.
+885. **`liveset.jsonl` torn-row behaviour.** Copy one sentence to `CATALOGUE.md` intro.
+886. **Duplicate frozen-string magic comment.** `postpro.rb:2-3`. Delete one.
+887. **Version banner is marketing.** `:5-7`. Present-tense reason or delete. The CLI has `--capabilities`.
+888. **No `--help` / `--explain` on postpro.** Flags are a hand-rolled `ARGV.include?` forest. `--help` listing every flag, and refuse non-flag argv when stdin is not a TTY.
+889. **`--video` exists; PHOTOGRAPHY.md says stills only.** Update PHOTOGRAPHY: video path exists, frame-by-frame, grain hold vs moving.
+890. **README “Running it” omits `--rescue`, `--video`, `--measure`, `--compare`, `--watch`.**
+891. **In-place grade from repligen.** `repligen.rb:760` `--input` and `--output` are the same path. Write a sibling and leave the download (REVERSIBILITY).
+892. **`postpro.log` is a committed logger stub.** Gitignore `*.log` under postpro, or stop opening a logfile next to source.
+893. **`CONFIG` from missing `master.json`.** Help should say “built-in tables only”.
+894. **Camera profiles: 6 JSON files, README says 121 bodies.** Say “six vendor files, 121 bodies.”
+895. **Golden tests cover four presets of 57.** Do not hash looks. Add one more family only if a preset class has no representative. **Unverified** whether `house` is in those four.
+896. **`motion.rb` `--explain` cost print.** Surface it as `postpro --video FILE --explain` (no grade).
+897. **`rake test:motion` should print the skip count.** Rakefile does not.
+898. **`--watch` / `--random` / `--auto` undocumented in README running block.**
+899. **README Checks should point at `rake postpro:bootstrap`** for a missing libvips host.
+900. **Repligen help banner omits `chain` / `chains`.** `:884`. Add them, plus `help`.
+901. **`--until` is parsed; `--from` is not.** Help should not imply resume. Document `--until` only.
+902. **README running block has no `chain` / `chains`.** Add `repligen.rb chain NAME --dry-run` and “needs `REPLICATE_API_TOKEN` without it”.
+903. **Token unreachability is abort-only on run.** `help` / missing token on `generate` should print where the token is read from and that `vocab-check` / `--dry-run` / `chains` need none.
+904. **`schema_audit` not in the tool help.** One line: “live schema: `cd STUDIO && rake repligen:schema_audit` (skipped without token).”
+905. **Default model vs FINAL vs README.** Options default `flux-2-pro`; `FINAL_MODEL` is `flux-2-max`; README still talks as if six models and `flux-1.1-pro` is the live default. Rewrite to match the table (11 entries).
+906. **`HOUSE_POSTPRO` default is untested.** Assert `HOUSE_POSTPRO == "portrait"` and that `--no-postpro` is false, without running postpro.
+907. **Chain path does not apply `HOUSE_POSTPRO`.** Same default as generate, or say chains are ungraded.
+908. **`relight_portrait.yml` will refuse until schema_audit.** Add those models as `unverified: true` or stop shipping the YAML. **Unverified** they exist in `MODEL_CAPABILITIES`.
+909. **`flux2_consistency.yml` untested against real `MODEL_CAPABILITIES`.** Add one test: `Chain.load("flux2_consistency")`.
+910. **`structure_ladder.yml` starts on `flux-1.1-pro-ultra`.** Comment in the YAML why Ultra is the establish stage.
+911. **`repligen.rb:985` mentions `test/tools/test_chain.rb`.** Actual path is `STUDIO/test/test_tools_chain.rb`.
+912. **Prompt-length warning vs README 30–80 words.** **Unverified** a test exists. Add one if missing.
+913. **README structured-fields list omits `--subject-distance`, `--key-side`, `--catchlight`, `--skin`, `--selfie-geometry`.**
+914. **Gallery / no `--output`.** Help should say outputs without `--output` are URLs only.
+915. **`rake test:repligen` should call `vocab_problems` once.** Dedup overlapping checks.
+916. **`generate` without token abort before compile,** with the three lookup paths.
+917. **No STUDIO test file for lora.** Minimum: `toolkit.sh` SUBJECT_DIR error path, `curate.rb` thresholds, `judge.rb --calibrate` on the seven ragnhild images, `render_config.rb` device profiles — all without training.
+918. **`toolkit.sh` error path names a directory that does not exist.** `STUDIO/lora/subjects/ragnhild/lora`. Wrappers live at `STUDIO/lora/ragnhild/lora`.
+919. **`run_generate.sh --all` is check, generate, postpro — not train.** Usage should say `--all` needs `weights/$MODEL/*.safetensors`.
+920. **README status vs disk.** “8 images in `dataset_1024/`”; disk is `ragnhild/dataset/` with 7 pairs. Captions are full sentences, not the stubs the README describes.
+921. **`08` and `11` are gone.** README:145–148. Drop the stale duplicate/filter warning or recurate.
+922. **`johann/train.yaml` `folder_path:` is empty.** `render_config.rb` should abort if `folder_path` blank.
+923. **`johann/train.yaml` optimizer `adamw8bit` on `device: mps`.** README says mps uses plain adamw. Stamp “generated, do not edit” on `train.yaml`; `render_config.rb` is the source. Do not hand-edit hyperparams.
+924. **Committed person photographs.** A test that `johann/dataset` is empty and that `git ls-files` for new `lora/**/*.jpg` fails unless an allowlist. Do not delete existing without the owner.
+925. **`contact_sheet.jpg` in `ragnhild/`.** If generated, gitignore and document the command.
+926. **Guides `.m4a`.** Do not regenerate. **Unverified** if tracked; gitignore if accidental.
+927. **`seed_media.ipynb` / `seed_media.yml`.** Find the reader. If Colab-only, say so in README next to the clone-is-public warning.
+928. **`run_ai_toolkit.rb` / `colab_session.rb` / `kaggle_session.rb` ARGV at load.** Guard them.
+929. **`setup_runpod.sh` SUBJECT_DIR matches real layout.** Copy that path into the toolkit error.
+930. **`run_train_replicate.rb` abort sentence on `./lora --train-replicate --help`.**
+931. **`judge.rb` thresholds YAML.** A test that the YAML loads and every key is numeric. Do not retune floors.
+932. **`curate.rb` `rescue Vips::Error`.** Log and skip the file; do not swallow the whole run.
+933. **`postpro_samples.rb` must refuse `dataset/`.** Confirm it only touches `out/`.
+934. **`sh -n` in the gate for `lora/_toolkit/*.sh` and `dilla/live/*.sh`.**
+935. **`lora/README.md` Norwegian then English.** One voice (README_PROSE). Do not lose the consent/likeness meaning.
+936. **FLUX.1-dev vs FLUX 2 base.** Comment at top of `run_train_replicate.rb` that the destination base is a generation choice, not a silent default.
+
+### STUDIO — tests, docs, isolation, micro
+
+937. **A test that loading postpro then repligen in one process fails** would document why `rake test` splits processes.
+938. **`isolation.rb` only globs `test_dilla_*.rb`.** Extend `files` or a second task `isolation:tools`.
+939. **Quoted-name parser is a spelling test.** All current files use `def test_`. Drop the rewrite or add one quoted example.
+940. **Suite rounds scrape Minitest failure lines.** A runner format change silently reports isolation green. Pin against a fixture failure.
+941. **`isolation` is not `rake default`.** Add “not part of `rake`” next to the command so a green `rake` is not read as isolation-clean.
+942. **`test_studio_gate.rb` still uses `lib/engine/chord_theory.rb` as a first-party path.** Replace with `dilla/lib/theory_runtime.rb`.
+943. **Gate test `test_every_declared_entry_point_is_on_disk_and_guarded` skips `entry: nil`.** Explicit assertion that lora’s nil is intentional.
+944. **`rake test:dilla` should fail CI when `DILLA_REQUIRE_CRATE=1` and crate is missing.**
+945. **`test_mix_metrics_returns_band_levels_when_demo_present` depends on gitignored `demo.wav`.** Fixture: generate a tiny wav in tmp, or stop calling it a unit test.
+946. **`test_shipped_demo_has_no_dead_stretch` shells `ffmpeg` with backticks.** Open3; `demo.mp3` is gitignored. Same skip trap.
+947. **`eval_in_engine` timeout.** Document `DILLA_PROBE_TIMEOUT` default 90s in `dilla/README.md` Checks.
+948. **Bare `rand` sites ratchet.** `test_bare_rand_call_sites_do_not_grow` without routing them through `render_rng`.
+949. **`test_dilla_take_write.rb` uses `SCRATCH_DIR` from the engine.** Pin `DILLA_SCRATCH_DIR` to tmp in `dilla_helper.rb`.
+950. **`librosa_analyze.py` is untested.** If the Ruby path is the one that matters, say so on the Python file.
+951. **`test_audio_graph*.rb` assert filter_complex strings.** Comment that a rename of a label is a behaviour change.
+952. **`test_dilla_engine_sources.rb` `assert_equal ".rb"`.** `bin/crate` is Ruby and excluded. Rename the test to `lib_and_entry_are_rb`.
+953. **No matching tests for `lib/taste.rb`, `lib/sample_worth.rb`, `lib/kit_dig.rb`, `lib/vocal_chop.rb`, `lib/acapella.rb`.** Add probes that do not render: e.g. `KitDig::ROLES` keys match drum filenames.
+954. **`tools_helper.rb` changes `$PROGRAM_NAME`.** A test that `command` is not executed: `vocab_problems` without `SystemExit`.
+955. **No test that `dilla.rb` `parts` markers are unique.** Scan `# engine part:` names, `assert_equal names, names.uniq`. **Unverified** if engine-probes already have it.
+956. **`studio_helper.rb` comments name `test/dilla/helper.rb`.** Those paths do not exist. Fix to `STUDIO/test/`.
+957. **Chord theory skip on missing 13.** Invert: skip only when absent, assert when present.
+958. **`which ffmpeg`.** Use `Open3` + `ffmpeg -version` like `motion.rb`. OpenBSD `which` differs.
+959. **`test_dilla_crate_dig.rb` does not open on-disk sidecars.** One test: every readable `samples/**/*.provenance.json` has a `url` or is listed as pre-URL-schema. Worktree without samples skips.
+960. **`STUDIO/README.md` has lists, tables, and a code block.** README_PROSE. Redo; move commands into sentences. Same for `dilla/README.md`, `postpro/README.md`, `repligen/README.md`, `lora/README.md`.
+961. **`PHOTOGRAPHY.md` “3,947 lines and 228 rules”.** **Unverified** now. Point at `ruby MASTER/tools/agent_context.rb` or drop the census.
+962. **`PHOTOGRAPHY.md` “Nothing applies it by default.”** False: `repligen.rb` `HOUSE_POSTPRO`. Update layer “Two things that are not true yet.”
+963. **`PHOTOGRAPHY.md` “postpro is stills only.”** False: `motion.rb`.
+964. **`AMBITION.md` “Today repligen is single-shot.”** False: `chain.rb` + `chains/`. Rewrite §A opener to “spine exists; execution still needs a token.” Mark items 1–2 built.
+965. **`dilla/README.md` `sample_loops.rb`.** File does not exist (`engine part: sample_loops`). Fix the restore-verify sentence.
+966. **`dilla/README.md` `crate/` restore story.** Present-tense: restore is copy onto `samples/<track>/loop.wav`; `bin/crate` is a third layout.
+967. **`repligen/README.md` “six declared models.”** Table has 11.
+968. **`ENV_AND_RENDER.md` command aliases “gone.”** Help still lists `loose_pocket`, `industrial`, `techno` as commands. Clarify: aliases gone, genre renderers remain.
+969. **Root `STUDIO/README.md` “inert config” examples are postpro history.** One present-tense sentence: “`--vocab-check` is how you see unread keys.”
+970. **`PHOTOGRAPHY.md` Studio Q URL has `portrportrait`.** Broken link. Fix or drop.
+971. **`gate.rb` `ruby_shebang?` rescues StandardError to false.** Unreadable file is treated as not Ruby and drops out of parse. Log; this is the gate, not an optional gem.
+972. **`PREDICTED_FINDINGS` does not include growth.** A unit test that a fake `dilla/lib/engine/x.rb` fails `check_growth`.
+973. **`VENDORED` includes `project/`.** A Ruby file dropped there would vanish from parse. Comment is already about worktrees named `tmp`.
+974. **`Rakefile` `repligen:schema_audit` parses the table with a regex.** Add a comment test: the regex matches the live file.
+975. **`schema_suggest` placeholders 3.0 / 28.** Print `unverified: true` in the suggested snippet so a paste cannot validate a guess.
+976. **`task default: %i[gate test]`.** Document as one sentence after the prose rewrite: does not run isolation or schema_audit.
+977. **`test:gate` is named, not globbed.** A new `test_studio_*.rb` would not run. Glob or comment the rule next to the filename.
+978. **Pin `RBENV_VERSION=3.4.9` in remaining STUDIO shells.** `broadcast.sh`; export in `toolkit.sh`.
+979. **Gate does not assert `frozen_string_literal`.** One parse-time test over `source_files`.
+980. **`scratch/` gitignore.** `.gitignore` does not name `scratch/`. **Unverified** whether tracked. If tracked logs, gitignore `dilla/scratch/`.
+981. **`demo_manifest.tsv` beside gitignored demo audio.** If tracked, it is a manifest without files. Either ignore or have `dilla assets` include it.
+982. **Two `capture_with_timeout` implementations.** Extracting would add a support file and raise the ceiling. Leave; comment they must both kill the process group.
+983. **`bin/crate` list rescues / `demo_full.rb` harmony `next` / `gate.rb` shebang reader / `seed_providers.rb` debug-gated warn.** Clear non-gem swallows. Log.
+984. **`live/rack.rb` rescues.** **Unverified** (ffprobe/json). If they hide a missing bed, warn; if kit-stat probes, skip.
+985. **`provenance.rb:101` `mtime rescue nil`.** Warn once per path.
+986. **`postpro` CLI `rescue StandardError, NoMethodError` at `:3739`.** Dispatch. Log; do not hide a missing method as a failed grade.
+987. **`crate_dig` vs `dig_crate`.** `dilla help` SAMPLE PIPELINE should name both in one sentence.
+988. **`ENGINE_PARTS` word in `dilla.rb:14900`.** The constant is gone; markers remain. Say `# engine part:`.
+989. **`test/dilla/` in comments.** Global replace to `STUDIO/test/`.
+990. **`dilla.html` / `dilla_live.rb` / `sine_stream.rb` are three “hear it” doors.** One sentence in dilla README.
+991. **`lib/sample_worth.rb` vs `project/sample_worth.json` vs `Rack::WORTH`.** Comment on the JSON: written by whom. **Unverified** writer.
+992. **`lib/taste.rb` vs `DillaKnobs`.** Confirm the suite covers `DillaTaste::DIMENSIONS` against knobs. If not, that is a real hole.
+993. **`Chain.parse` should require `description:`** so `chains` cannot print a blank line.
+994. **`lora/_toolkit/` underscore vs `subjects/` in the error string.** The drift.
+995. **`johann/lora` and `ragnhild/lora` are identical wrappers.** A test that both exec `run_generate.sh`.
+996. **`check_hf_flux_access.rb` without token** should fail like replicate, with the HF licence sentence from README.
+997. **Worktree empty crate vs main crate.** Document: “copy `samples/` in, or skip is the measurement.”
+998. **`dilla.rb` `help` STREAM_DEMO overwrites `demo.wav`.** Comment in help that this is the rolling capture, not a take.
+999. **`DILLA_OVERWRITE=1` is the only overwrite.** Help DEFAULT section does not mention it. One line.
+1000. **Provenance `reproduce_command` without pins was a known lie.** **Unverified** tests. If missing, assert a sidecar `note` includes at least one non-seed pin when `USER_PINNED_ENV` is non-empty.
+
+### Cross-tree micro-refinements (the rest of 10/10)
+
+1001. **Repo-root `snapshot_MASTER.md` / `snapshot_OPENBSD.md` / `snapshot_RAILS.md` / `snapshot_STUDIO.md`.** TREE.md says nothing else sits at the repo root but CLAUDE/AGENTS/GEMINI, TODO, TREE. Gitignore or move under `.master/` / `MASTER/output/`.
+1002. **`STUDIO/dilla/scratch/` logs and a png** next to source. Gitignore `dilla/scratch/`.
+1003. **`STUDIO/postpro/postpro.log`.** See 892.
+1004. **`MASTER/web/tmp/` and `web/storage/*.sqlite3`.** Confirm gitignored. list_dir showed them.
+1005. **`RAILS/tmp/` logs and pids.** Confirm gitignored.
+1006. **`RAILS/amber/public/assets` and `brgen/public/assets` carry vendor FIXME.** Generated. PathFilter must keep skipping them; a source-assertion that `public/assets` is not in `SCAN_GLOB`.
+1007. **Three `application_controller.js` copies** (amber, brgen, bsdports) plus shared. Confirm they are the Stimulus application instance, not duplicated logic; if duplicated, one shared file.
+1008. **`RAILS/*.sh` are reached** (already measured). Micro: each header should name its one caller so a fourth script cannot arrive unnamed.
+1009. **`OPENBSD/bin/check-rails` vs `ruby RAILS/gates/runner.rb`.** Two doors on the same registry. One sentence in both READMEs.
+1010. **`MASTER/bin/operator gate` vs `OPENBSD/bin/check-full` vs `RAILS/test/run_all.rb`.** Three “everything”. operator gate is the ladder; the others are rungs. START_HERE already says this; OPENBSD/START_HERE still offers check-full as if it were the ladder.
+1011. **`growth.studio` vs `DILLA_SUPPORT_CEILING`.** Two budgets on one tree. Document which counts files and which counts lines.
+1012. **`STUDIO/gate.rb` requires `OPENBSD/lib/gate_result`.** Fine. PATH_OWNERSHIP OPENBSD `lib/` should name this foreign caller.
+1013. **I18n `locale_contract` covers duplicate keys and nb/en parity; not unused keys or interpolation args.** Already named in the awesome-list scan. Still open. This is the RAILS half of 496–497.
+1014. **`chrome_i18n_lint` empty_copy is 0; aria is 172.** The next translated aria must lower 172 in the same commit.
+1015. **Maps Bergen fallback is the same defect as posts “Anywhere in Bergen”.** One helper: city blank label from `Current.city_record` or a generic `t("geo.anywhere_in_city")`.
+1016. **`increment!` on GET is the same shape in marketplace listings and TV videos.** One concern `ViewCounted` with a counter table, or accept the write and stop fragment-caching the count.
+1017. **Nullable counters** on listings, tv videos, playlist tracks/plays, takeaway orders. One migration family: default 0, NOT NULL.
+1018. **Job uniqueness** is one pattern: `limits_concurrency to: 1, key: "<job>"` on every recurring bulk job. A contract test that every `recurring.yml` class declares it.
+1019. **Engine `rake test` from the engine directory** is a lie for maps (zero tests) and thin for the other five. `ENGINES.md` should say which tests live in the host.
+1020. **`default:` in vertical ERB** is the hole `i18n_resolution_test` cannot see. A lint: `t(` with `default:` in `app/views` fails, or `raise_on_missing` in test env.
+1021. **Static error pages** (brgen, amber, MASTER web) are a third chrome: dark, English, no skip-link, hardcoded host. One generator from the live dialect.
+1022. **PWA manifests** are English in all four surfaces (three apps + MASTER). Locale or a shared partial.
+1023. **Service workers** name caches after the wrong product (`brgen-` on MASTER) and cache status 0. One SW contract test across the four.
+1024. **`--help` missing** is the same defect on OPENBSD bin scripts, dilla help-as-dump, postpro ARGV forest, repligen banner, lora toolkit. Unix voice: one job, usage on `-h`, silence on success.
+1025. **Hardcoded `/Users/mac/...` and `/opt/homebrew`.** `sine_stream.rb`, `demo_full.rb`, `broadcast.sh`, `rack.rb`, `dig_crate.rb`. Worktree-safe `__dir__` / `command -v`. Do not touch `~/Music/dilla_sines`.
+1026. **Shebang families.** OPENBSD mixes `env zsh`, `bin/sh`, `bin/ksh`, `env sh`. STUDIO has bash (`playlist_learn_agent.sh`). A census test: every committed script’s shebang is one of `{zsh, ksh, sh, ruby}` and `[[` only appears under zsh/ksh.
+1027. **Present-tense comments.** `dilla.rb` engine-part headers, `lib/engine/` wiring, `EventsController` “Wire into routes”, brgen layout `data-theme="dark"`, `NO_PUTS` exemption path, `FixLoop` architectures, `Io::Clean` changelog, `mask.js` claims, keep-warm OPTIONAL, core-reclaim litestream, CATALOGUE.md module counts. A comment states the present-tense reason.
+1028. **PATH_OWNERSHIP holes.** MASTER: cognition, pressure_engine, law, EXAMPLES, AEGIS, COGNITION, runtime, loop.gif. OPENBSD: data, test, gates, lib, dotfiles, quarantine, domain_watch, githooks. STUDIO has none. `rake lint` should fail on an undeclared top-level dir in MASTER and OPENBSD.
+1029. **Completions drift.** `_master` still completes `through`. Generate from `HELP_TOPICS` + `ALIASES`. Add `_operator`.
+1030. **Agent contracts vs TREE.md vs START_HERE.** Three maps. TREE.md is the map; START_HERE points; harness files are generated. A stale ASCII map in START_HERE is a second source.
+1031. **Maturity scorecard shelf life is 30 days.** Expect 8 of 8 again in a month. Re-read the predicate rather than re-dating the row. (Already in this file; the move is a calendar reminder, not a code change.)
+1032. **`scan: intentional` 162 markers, 95 files, nothing checks they still excuse something.** Awesome-list item. Still the highest-leverage detector not built.
+1033. **Relayd restart vs relayctl.** Awesome-list item. Still the highest-leverage box change not made. Read the man pages from vm23 first.
+1034. **Resource guard sheds per process and measures per box.** Awesome-list item. `ps -o rss= -p` per app into the same history line.
+1035. **`login.conf` rails class datasize 4096M on a 1 GB box.** Awesome-list item. Measure steady-state RSS on vm23 before guessing a cap.
+1036. **Same-disk snapshots.** `Shared::DatabaseSnapshotJob` + empty litestream restore path. Worth doing as soon as there is somewhere to put them; destination is an operator decision.
+1037. **Herb / HTML-aware ERB.** Revisit when Rails adopts it, not before. Cost: nothing yet.
+1038. **Face JS without a test, excluding bundles and vendor.** `chat_actions.js`, `cluster_miner.js`, `cognition_ecology.js`, `container_gate.js`, `face_2d_fallback.js`, `face_audio_bridge.js`, `face_blendshape_bridge.js`, `face_brutalist.js`, `face_council_multi.js`, `face_deferred_loader.js`, `face_expression_bridge.js`, `face_loops_music.js`, `face_loops_nudge.js`, `face_micro_interactions.js`, `face_minimal_ui.js`, `face_offscreen_ecology.js`, `face_particles.js`, `face_perf_guards.js`, `face_phosphor_trail.js`, `face_points_gl.js`, `face_semantics.js`, `face_tts_bridge.js`, `face_vision_{a,b,c,d,core}.js`, `mask.js` (delete if dead), `master_events.js`, `mic_capture_processor.js`, `particle_kernel.js`, `particle_worker.js`, `shortcut_sheet.js`, `smart_turn.js`, `sw.js` (has a presence test, not behaviour), `topology_registry.js`, `viewport_inset.js`, `visual_bridge.js`. One contract per file that is in `face_assets.yml`; delete or document each that is not.
+1039. **MASTER tools without a test naming the basename.** `example_scan.rb`, `namespace_ratchet.rb`, `readme_take.rb`, `refinements.rb`, `swallowed_errors.rb`, `word_boundary_lint.rb`. Plus those the MASTER pass named: `method_graph.rb`, `method_reach.rb`, `todo.rb`, `dup_census.rb`, `design_baseline.rb`.
+1040. **OPENBSD scripts without a behavioural test.** `bin/vps-deploy`, OPERATOR.sh beyond `zsh -n`, dns_zones, domain_alignment, port_inventory, installed_targets, deploy_smoke, integrity_gate skip_reason, nsd-resign, renew-certs, prune-guests, drain-jobs, keep-warm, ptr_openbsd_amsterdam, relayd_prune_keypairs.
+1041. **STUDIO files the gate cannot load-probe.** `bin/crate`, `run_ai_toolkit.rb`, `colab_session.rb`, `kaggle_session.rb`, `dilla_live.rb` (parse only), lora wrappers (shell). Guard or document.
+1042. **Hardcoded English in views (verified literals, not comments).** amber: Sparks joy, Body type, Public profile, Save profile, Add item, Wear once before deciding, Select item…, Select outfit…, Browse demo →, Talk to MASTER, Style evolution. brgen: Content missing, Community, Anywhere in Bergen, Body, Add photo, Post anonymously, Leave this field empty. dating: Profile photo, Make profile visible, Hide profile. marketplace: Remove from saved, Save listing, Marketplace search, Any query, Partner program, Category, Browse, Picked for the city, Make an offer. playlist: Replace audio file, Upload track, Unknown artist, Create playlist, All sets, New set, Only owners can invite…, Edit #{name}. tv: New channel, Channels will appear…, No channels match…, Live streams, Add a note, Timestamp, Add a comment. takeaway: anon on drivers. maps: kind humanize. shared: Curated offers. Each is one `t()` and one nb sentence.
+1043. **Mutating controllers without `rate_limit` (verified no `rate_limit` in the file; not inherited from ApplicationController — only sessions/passwords declare it).** Skip webhooks’ signature path except for a cheap IP limit. Do: blocks, bookmarks, communities, community memberships/bans/mods/wiki, conversation pins, conversations, crossposts, event RSVPs, events, follows, group conversations/members, notifications, partner memberships/programs, presences, push subscriptions, stories, story replies, typing indicators, dating likes/dislikes/matches/profiles/prompts/rewinds/verifications, marketplace addresses/checkouts/favorites/orders/payouts/questions/returns/reviews/saved_searches/stores/variants, playlist collaborations/dilla_sketches/hosted_tracks/imports/likes/listening_parties/listens/party_messages/playlists/sets/tracks, takeaway delivery_drivers/favorites/group_orders/menu_items/orders/restaurants/reviews, tv channels/comments/live_streams/stream_chats/video_notes/view_events, amber affiliate_links/ai/comments/connections/creator_profiles/declutter/follows/items/live_streams/messages/outfits/planned_outfits/posts/wardrobe_items, shared account_settings/csp_reports/notifications/reactions/review_cases/two_factor_setups/web_vitals. Named limits; `rate_limit_naming_test.rb` is the shape.
+1044. **`strict_loading` job paths.** `strict_loading_job_paths_test.rb` exists. Add `WardrobeMediaJob` actor/notification path if it reads `item.user`. Add TV show comments/notes and marketplace show questions to `attachment_preload_test.rb`.
+1045. **`recurring.yml` vs `rc.d/*_jobs`.** brgen_jobs is the only resident worker. Amber and bsdports recurring entries are fiction until RAM allows. Comment each recurring row with the rc.d that must be up, or stop scheduling them.
+1046. **City vanity TLS / relayd restart / openrsync** remain deploy blockers in this file. Micro on the repo side: `vps-deploy` should `rcctl check relayd` after any pass that restarts master (already paid for once).
+1047. **`rendered_suite` forty contrast pairs.** Operator colours. Do not retune. Record, don’t restyle. `layout_snapshot` is the reviewable baseline once someone who knows the month of changes accepts it.
+1048. **bsdports inbox link is unstyled.** Dead hook is gone; whether that link wears the nav class or the ghost button is a rendered decision.
+1049. **Face transitions exceeding `NO_LONG_TRANSITION`.** Held open deliberately. No baseline records them. Leave.
+1050. **Seventeen control classes still paint a visible border.** 2026-08-04 decision. Waits for the operator.
+1051. **`WORN_TYPE.profiles.map.rhythm_off_max_pct` declared in all seven profiles, read in none.** Instrumented where it matters.
+1052. **Browser half of the gates still opt-in.** `PUB4_DEPLOY_BROWSER_GATES=1`. Done when it runs somewhere unattended that is not vm23. `GATE_STRICT_ERRORS=1` is the cheap remaining half.
+1053. **dilla ENV switch census.** `knobs.rb` reports 727 knobs, 286 flags. The work is classification (additive / exclusive fork / operational) and deleting the dead ones, not the count. `dilla.rb:4498` comment claiming 156 of 405 is stale too.
+1054. **`NO_GOD_CLASS` remaining.** `bergen_demo_seeder.rb` 337 vs 300 — sixteen private methods, one per vertical. `conversation.rb` 28 public methods: IRC / geo rooms / unread are three subjects. `takeaway/order.rb` 26 methods: state machine vs display formatters. Display half to a presenter.
+1055. **`probe`/`check` pair.** Two doors, both have real callers. Do not fold `nsaudid` / `dogfood` (decided against). Document the Venn once in START_HERE and OPENBSD/START_HERE.
+1056. **Autofix classifies by transform, not yet per rule.** `Scan::Finding` declares `reversibility` and `blast_radius`; nothing under `lib/fix` reads either. A sitting that takes the classification as its subject.
+1057. **Findings have no portable form.** SARIF is ~60 lines. Worth doing only if the corpus is ever meant to be read outside pub4. No consumer today.
+1058. **Cross-engine references unmeasured.** One: maps reads `Takeaway::Order`. A source gate with that line as its declared exemption. Worth doing while the count is one.
+1059. **`operator.yml` vs RUNBOOK vs CLAUDE vs START_HERE vs RECIPES.** Five operator doors. `operator.yml` is the command list; CLAUDE is the gotchas; RUNBOOK is the box; START_HERE is the first screen; RECIPES points. Delete the copies.
+1060. **Verify the instrument before the next sitting.** Thirty of 22,417 scanner findings were sampled; roughly a quarter were actionable. This list was read against source in four explore passes and one parent census. It will still contain false positives. The first move on any item is to open the line.
+
+---
+
+## Unwired logic, oddities, and typography — opened 2026-09-11 (second pass)
+
+Does not restate 1–1060. Two subjects, measured the same day: event names and
+templates that do not meet their other half, and the house type system
+(`TYPOGRAPHY` in `rules.yml`, Bringhurst’s measure and hanging punctuation,
+Tschichold’s optical margins, Müller-Brockmann’s grid, Wroblewski’s
+mobile-first, Rams’s “as little design as possible”) against the SCSS that
+actually paints.
+
+Rendered values stay the operator’s. The move is structure: apply a token the
+law already names, hang a quote into the gutter, stop a second type system in
+an ERB `<style>` block. Sample five lines.
+
+`ScaleLint` sees `line-height:` literals, not `font:` shorthand.
+`MEASURE_OPTIMUM` only flags ≥800px, so 660/700/720 slip. `RhythmLint` only
+token files. Legal and mailer CSS live in ERB and are invisible to both.
+`NO_INLINE_STYLES` currently names `diag.html` and `dilla.html`, not these.
+
+### Unwired — event names, missing templates, dead registrations
+
+1. **`visual_bridge.js` listens for `rule_loop:(cycle|clean|converged)`.** `:158`. The bus publishes `rule_loop:pass` / `rule_loop:fix_applied` / `rule_loop:error` (`rule_loop.rb:110,186`). `master:rule_event` never fires. Same family as `swallow:error` vs `error:swallowed`. Align the regex with the producer.
+2. **Same file `phantom:retry` (`:197`).** Producer is `phantom:recovery` / `phantom:occurrence` / `phantom:halt` (`unwrap_error.rb`). Flinch never runs on a real retry.
+3. **Same file `pipeline:start` (`:26`).** Producer is `pipeline:stage_start` / `pipeline:complete`. Thinking tint never keys off a real stage start.
+4. **`council:vote|speech|end` (`visual_bridge.js:200`) vs bus `council:start|pass|veto`.** The rotator never stops from the bus. `council:speech` is an SSE name on the chat stream, not a bus topic.
+5. **`council:deliberation` in `EventsController::VISITOR_SAFE_PREFIX`.** Nothing publishes it. Use `council:start`.
+6. **`tool:used` in the EventsController comment.** Producers are `tool:before` / `tool:after`. Delete the comment or retarget.
+7. **`tts:prefetch` in `face_vision_core.js`.** No publisher. Dead classifier arm. The bundle copies the same regex.
+8. **`CanvasController#state` publishes `:canvas_state` (symbol).** Nothing subscribes by that name. Cognition’s `**` eats it as telemetry. Named consumer or stop publishing.
+9. **`POST /canvas/event` publishes `canvas:mood|mode|gesture|idle|tilt|palette|energy|breath`.** No named subscriber. A third canvas channel beside SSE `mood` and `felt:sense`. Fold or drop the allow-list.
+10. **`sse_contract.js` `SSE_EVENTS` lists `felt`, `mood`, `model`, `verdict`, `confidence`, `council:speech` with no `NAMED_HANDLERS`.** POST chat works only because `handleFaceNamedEvent` runs first. `MASTER_SSE.dispatchNamed` alone drops them. Put the handlers in the contract. Assert `SSE_EVENTS ⊆ NAMED_HANDLERS` (the test currently asserts the twelve handlers that exist, not the six listed).
+11. **GET EventSource `/chat/message` still lives in `face.runtime.js` after the POST path returns.** Duplicate named-event copy. Delete the GET branch or prove `startChatStream` can be absent.
+12. **`MasterChannel` streams `master:council` and `master:status`.** `cable_bridge.rb` broadcasts only `master:events`. The test asserts the empty streams. Broadcast or drop the two names.
+13. **`Trace::Metrics` subscribes `llm:response`.** Happy path also publishes `llm:call_complete` from `ruby_llm_sender.rb:143`. A dispatcher-only call never increments Metrics. One topic, or Metrics subscribes both.
+14. **`felt:sense` is SSE’d as `felt`.** POST `handleFaceNamedEvent` does not include `felt` (mood/model/verdict only). POST path drops felt entropy.
+15. **`content_kind` SSE is handled in face runtime, not in `SSE_EVENTS`.** Contract incomplete the other way.
+16. **`ChatService` writes SSE `pressure` from `pressure:updated`.** visual_bridge also maps `pressure:updated` → `master:pressure`. Two pipes. One should own it.
+17. **`publish(:canvas_state)` vs `publish("felt:sense")` in the same method.** One spelling.
+18. **`cache:hit` subscriber vs two publishers.** `semantic_cache.rb` and `ruby_llm_sender.rb` send different payloads (`key:` vs `model:`). Pin the fields.
+19. **`cluster_miner.js` keys `master:rule_event`.** Same dead name as item 1. Clusters never ingest a live pass.
+20. **`btw` SSE is fed by `btw:done`, published only from unwired `agent_commands.rb`.** Face `/btw` UI is the dead table’s other end. Wire `btw` into `CommandRegistry.build` or delete the SSE. Same for `client_action` / `media_commands`.
+21. **`agent:plan_done` subscribed in `active_plan.rb`, published only from unwired `agent_commands.rb`.** Active plan never pins from `/btw plan`.
+22. **`skills:loaded` published, never subscribed.** Wire `/skills` or stop publishing.
+23. **EventsController serializes most bus events as anonymous `data:` JSON, named `event:` only for `trace` and `link`.** Named EventSource listeners on `/events/stream` never see `mood`. Pick one encoding.
+24. **`MASTER_CONSENSUS_FIXES` defaults off.** No test sets it to `1` and asserts `consensus.approve_fix?`. On-path test or delete the gate.
+25. **`MASTER_WATCH=1` defaults off.** Tests pin `"0"`. No test that WatchLoop actually starts.
+26. **`web/app/helpers/application_helper.rb` is an empty module.** Delete or put a real helper there.
+27. **`pages#radio_bergen` redirects to playlist.** Face still `window.open("/radio_bergen")`. Works via bounce. Point the JS at playlist or keep the bounce with a test.
+28. **`ReportsController#create` `format.turbo_stream` and there is no `app/views/reports/`.** Turbo report submit 500s. Add `create.turbo_stream.erb` or drop the format. bsdports `comments#destroy` already inlines the stream for this reason.
+29. **`IdentityAssurer` is only called from `trust_and_identity_test.rb`.** No controller or job grants phone/bankid in production. Wire Vipps success into `grant!` or stop claiming identity levels.
+30. **`IdentityAssurance` / `ReputationScore` tables exist; no view reads them.** Show on `users/show` or stop writing `TrustScore`.
+31. **`Neighborhood` has no route/controller.** Dating and maps print the name. No neighborhood page. Add `maps/neighborhoods#show` or stop seeding Nordnes as if it were a page.
+32. **`Mention` has no view.** `Mentionable` writes rows; nothing lists “you were mentioned”. Notification kind or drop the model.
+33. **Stimulus `carousel` is lazy-registered.** Amber showcase is a CSS marquee with no `data-controller="carousel"`. Unregister or vendor swiper for a real caller.
+34. **`read-more` registered, zero `data-controller="read-more"` in ERB.** `Shared::StimulusFormHelper#read_more` is a helper that emits `.read-more-content`, not the Stimulus controller. Delete the registration and the pin.
+35. **`reveal` registered; only `examples.html.erb`.** examples is unmounted. Unregister.
+36. **`examples.html.erb` still demonstrates toast/clipboard/reveal/content-loader.** Unmounted. Delete or move under `test/`.
+37. **`content-loader` comment says retired; examples.html still has it.** Delete the markup.
+38. **`.lazy-loaded` CSS lives in `_coverage_fills.scss`.** Helper is live. Move the two selectors into a real partial so the fill file is not load-bearing.
+39. **`.luxury-product-ready` is named in `css_coverage_lint.rb` and has no class in SCSS/ERB/JS.** Drop from the comment list.
+40. **`jox-logo` lazy-registers; no `data-controller="jox-logo"` in any view.** CSS exists in amber/bsdports `_jsfiddle_chrome.scss`. Markup never asks for the controller. WIRING_NOTES says they get the animation. Either mount it on the mark or stop registering it.
+41. **`data-shell=` still queued in `SURFACES.md`.** Immersive vs browsable is CSS-encoded on `body[class*="vertical-"]`. Naming it in markup is still not built.
+42. **Carousel / takeaway / playlist / dating / TV mutations are redirect-only.** Favorite, like, dislike, rewind, comment, collaboration, import: full page reload. Stream the row or keep and test the redirect. Highest: `Tv::CommentsController` has no `tv/comments/` views and does not turbo-append despite `TvCommentCreated`.
+43. **`ConversationPinsController` / `GroupMembersController` redirect-only.** Pin does not reorder the rooms rail; adding a member does not append a row. Stream `_rooms_rail`.
+44. **`lazy_image_tag` lives in brgen host JS, called from dating engine views.** Engine `rake test` without the host helper fails. Move the helper/controller to shared.
+45. **`BSDPORTS_PORTS_TARBALL=1` defaults off.** Test covers the decline path only. Add a fixture tarball test.
+46. **`Shared::Reactable` is included on Port/Comment/Advisory while `BSDPORTS_SOCIAL` routes are off.** Don’t include the concern until the flag is on.
+47. **Amber layout comment: `_wardrobe_showcase` “used to render here” while `home/index.html.erb` still renders it.** Stale comment, live home.
+48. **`etc/rc.d/irc_gateway` has no producer in this repo.** Document as optional or stop OPERATOR from installing it.
+49. **`DEPLOY_ASSUME_VPS=1` lets a laptop pretend to be the box.** Refuse unless `/etc/relayd.conf` exists.
+50. **`health_check.rb --public-only` never curls `/events/stream`.** A hung SSE is invisible to uptime.
+51. **`DILLA_SPEAK` / `DILLA_RAW` default `"0"`.** No RAILS test sets them to `1`. On-path or drop from the env hash.
+52. **`demo_full.rb` is never called from `dilla.rb` dispatch.** Dead demo with a hard Music path.
+53. **`lib/cli/web_server.rb` is called from `boot/master_boot.rb:56`.** Item 264 of the first pass can close as false.
+54. **`DatalogEngine` / `AutonomousRepairer` have callers.** Item 216 of the first pass can close as false.
+
+### Typography — measure, hanging, OpenType (Bringhurst, Tschichold)
+
+The law already names the tokens. `.prose` in `_typography.scss` already hangs
+punctuation, hyphenates 6/3/2, orphans 3, and caps `--measure`. Almost no
+reading surface wears that class. Legal and mailer invented a second system
+in ERB `<style>` blocks that no lint reads.
+
+55. **Legal pages use `legal-prose`, not `.prose`.** `pages/terms.html.erb`, `privacy`, `cookies`. Law `optical_margins.apply_to: [legal]`. Add `.prose` or alias `.legal-prose` to the shared block.
+56. **`.legal-prose` is defined in `_site_legal_footer.html.erb` as an inline `<style>`.** `:18-28`. Second type system: `max-width:64ch` not `var(--measure)`; h1 `line-height:1.15` off `[1, 1.25, 1.4, 1.5, 1.6]`; body `line-height:1.62` off scale; `ul{padding-left:1.1rem}` physical, markers inside the measure; padding `32px 20px 64px`; h1 margin `6px` off the 8px grid; footer `font-size:13px` / `12px`. **Move:** delete the `<style>`; put legal on `_typography.scss` tokens. Values of colour stay; the seam is the file.
+57. **Same block `.site-legal{max-width:1100px}`.** Hits `MEASURE_OPTIMUM`. Footer is chrome (`do_not_apply_to: chrome`); keep a layout width, stop treating it as a text column.
+58. **Same block padding `18px 20px 28px`, gap `10px 18px`.** 10 and 18 are off `scale.space_px`. `--space-*`.
+59. **Mailer `_mailer_styles.html.erb` is a third type system.** Dark `#050505` vs fleet light default; Helvetica + Georgia + Arial = three families (`max_font_families: 2`); `letter-spacing: 0.28em / 0.22em / 0.18em / 0.04em` off `letter_spacing_em` (max caps 0.15, no 0.04 on lowercase CTA); line-heights 1.45, 1.35, 1.55, 1.2 off scale; font-size 11/12/13/14/15/16/17/24/34px private ladder; `.mail-shell { max-width: 620px }`; `border-radius: 18px` off `radius_px [0,2,4,8,12,16]`; CTA `letter-spacing: 0.04em` on mixed case; `.mail-deal-price` has no tabular nums; `padding-right` not logical; `linear-gradient` on `.mail-typo-hero`; `color: #050505 !important`. **Move:** one sans + optional Georgia for the lede; measure in `ch`; leading from `--leading-*`; tracking only on the uppercase kickers at `--tracking-wider` (0.08) or `--tracking-widest` (0.14); tabular on price. Do not pick new hex — if the letter stays dark, that is the operator’s; the type scale is not.
+60. **`NO_INLINE_STYLES` does not see ERB `<style>`.** Detector names two `.html` files. Legal footer and mailer styles are the real subjects. Extend the language to `.erb` or the rule is a spelling of a filename.
+61. **`.reading-column` and `.form-measure` are defined, never used in a view.** `css_coverage_lint.rb` already says “worn by tokens, not yet by every view.” Put them on legal, compose, item forms.
+62. **Listing description has `max-width: 66ch` as a spelling of `--measure`.** `_marketplace.scss:74-77`. No hanging, no hyphens, no OpenType. `var(--measure)` plus `.prose`.
+63. **Dating bio via `read_more`, no `.prose`.** `_vertical_dating_discover.scss` `.swipe-bio` is colour only. If it reads as a paragraph, `max-width: var(--measure-narrow)`.
+64. **`.page-header { max-width: 660px }` in `_minimal.scss:202` fights `_layout_chrome.scss` `var(--measure)`.** Drop the px.
+65. **bsdports `header { max-width: 660px }` and `header.page-header > p { max-width: 62ch }`.** Token, not 660/62.
+66. **amber `.item-detail { max-width: 700px }`.** If it is copy, `--measure`; if a product frame, leave and mark `scan: intentional`.
+67. **playlist `max-width: 720px` on back-link and `.playlist-app`.** Copy → `--measure`; chrome → `--container-max` / `--feed-max`, not 720px.
+68. **`.form-wrap { max-width: 480px }` and amber `_item_forms.scss` 480px and `_minimal.scss` `.form` 584px and bsdports `#search` 584px.** `--measure-narrow` (45ch) or `.form-measure`.
+69. **`.splash .tagline { max-width: 28em }`.** `--measure-narrow`.
+70. **errors.css `main article { width: min(100%, 30em) }`.** `var(--measure)` if tokens reach this sheet.
+71. **Print `.prose { max-width: 100% }` in `_zen_shell.scss`.** Drops the measure on the page that most needs it. Keep `--measure` in print; law `print_margins`.
+72. **`.prose ul, ol { padding-inline-start: 1.25em }` keeps markers inside the measure.** Bringhurst + `list_marker_hang` + geometry `check_hanging` (principle=tschichold): hang into the gutter. `_posts.scss` 1.5em is worse. Legal `padding-left: 1.1rem` is both physical and inside.
+73. **`.prose blockquote` padding + border sit inside the column.** Law `blockquote_border_in_margin`: pull the rule into the gutter.
+74. **`--feed-max: 600px` ≈ 45ch at brgen 18px.** Matches `WORN_TYPE.feed` 35–55. Do not widen the feed to 66ch. Marketplace opts out of `--feed-max` for tiles (`do_not_apply_to: marketplace_tile`); the listing *description* still wants 66ch.
+75. **amber `_editorial.scss` newsletter `--measure-narrow` is the feed profile.** Do not “fix” to 66ch.
+76. **Post show `_feed_post.scss` already `--measure` + hanging + hyphens.** Template for listing, legal, mailer, dating bio.
+77. **Wiki `.wiki-page .prose` already `var(--measure)`.** Hang lists still fail (item 72).
+
+### Typography — rhythm, scale, tracking
+
+78. **`--line-height: 20px` absolute on `:root`.** Recorded `scale: ok`. Law `forbid_absolute_px`. Seam: measured screenshot before unitless 1.25 at brgen 18px root. Do not change the number from a terminal.
+79. **`font:` shorthand hides off-scale leading from ScaleLint.** `_marketplace.scss` `1.5rem / 1.2`; `_canvas.scss` `10px/1.35`; `face.css` `#chat-log { font: 12px/1.42 }`. Extend the lint to the `font` shorthand, then put those leadings on the allowed steps.
+80. **`_canvas.scss` `font: 10px` and playlist `clamp(12px, 3vw, 14px)`.** Below `body_min_px: 16`. Chrome/kicker may stay small; they are not body. Name them as chrome so the lint can skip, or raise to `--text-xs` (0.75rem = 13.5px at brgen — still below 16; the iOS input floor is the 16px case, not labels).
+81. **`--text-display: 2.2rem` is a ninth size.** Law `max_font_sizes: 8`. xs/sm/base/lg/title/xl/2xl = 8. Display makes 9. 2.2rem is 35.2px @16, off the 8px grid, off the modular ratios (1.2 / 1.25 / 1.333 / 1.618). Map heroes to `--text-2xl` or accept display as the one sanctioned extra and stop citing 2.2rem as a ladder step — do not invent a tenth.
+82. **`.prose h1` and `main#main-content > header h1` are `--text-2xl` (1.75rem) / body 1rem = 1.75.** Law `h1_body_min_ratio: 2.0`. `--text-display` is 2.2× but is the ninth size. Do not pick a new px; decide which token is H1.
+83. **`.page-header h1` is `--text-title` (1.25×).** Chrome index titles. If the page is editorial, use the page-title rule.
+84. **Auth `h1` `--text-xl` (1.5×); dating `h1` clamp 1.5–1.875rem.** Below 2.0. Immersive/auth may stay; do not restyle as a palette pass.
+85. **`section h2` in `_shell_widgets.scss` is `--text-xs` + uppercase + mono.** `_typography.scss` already had to restore family on `main > section > h2`. Keep the widget rule scoped (`.sidebar section h2`), never `section h2`.
+86. **`--tracking-tightest: -0.03em` vs law `heading_tight_min_em: -0.02`.** Stop using tightest on `--weight-heavy` headings (splash h2, marketplace clamp −0.045em). `--tracking-tight` or 0.
+87. **Marketplace `letter-spacing: clamp(-0.045em, -0.9vw, -0.02em)`.** Floor past −0.02; clamp hides it from ScaleLint.
+88. **face.css `#primer h1` Inter lowercase `letter-spacing: .01em`.** Law: no letterspaced lowercase; scale has no 0.01.
+89. **face.css `.04em` and `#zsh-status { letter-spacing:.32em }`.** 0.04 off the scale; 0.32 over `all_caps_max_em: 0.15`. Terminal status may stay; primer h1 must not.
+90. **Legal eyebrow `.12em` is on the old five-way kicker set that was collapsed to `0.14`.** Use `--tracking-widest`.
+91. **Mailer kickers 0.28 / 0.22 / 0.18em.** Same. `--tracking-widest` (0.14) is the ceiling the tokens already named.
+92. **`font-size: 1.17em` / `0.92em` / `0.6em`.** Off modular 1.25. `--text-lg` / `--text-sm` / `--text-xs`.
+93. **Two paragraph rhythms.** `_posts.scss` `p { margin: 0 0 var(--space-5) }` vs `_typography` `p + p` `--space-3` vs law `paragraph_margin_em: 1.5`. One.
+94. **`max_font_weights: 3` vs `scale.font_weight` [400,500,600,700,800].** Dialect in use is 400/600/800. Stop shipping 500/700 in the lint scale if unused, or stop using them.
+95. **Marketplace hero `--font` + `--font-display` + `--font-mono` kicker = 3 families.** Law: 2. Kicker can stay same family, small caps/tracking. Playlist SF Mono is the recorded fifth-face fence — leave.
+96. **Mailer three families.** Item 59.
+97. **`--weight-heavy` (800) is synthesised on Caprasimo and JetBrains Mono.** Comment in `design_tokens.yml` already says so. Heavy belongs on `system-ui` headings only; editorial faces stay 400/700.
+98. **Brand logo `12px` / `24px` with stepped `@media (min-width: 768px)` vs `CLAMP_TYPOGRAPHY`.** Marks are not running text; `scan: intentional` if they stay px.
+
+### OpenType, numerals, quotes, hyphens
+
+99. **`.prose` has no `font-feature-settings` / `font-variant-numeric`.** Law `default_features: [kern, liga, clig, onum, pnum]`, `body_numerals: oldstyle-nums`. Set on `.prose`. Tabular + lining on `[data-money]` already correct (`_tokens.scss:244-251`).
+100. **No `hyphenate-limit-lines: 2` anywhere.** Chars 6 3 2 exist on `.prose` only. Add the line limit next to them.
+101. **No `quotes:` / Norwegian guillemets.** Law `quotes: locale`, `norwegian_guillemets: true`. `html[lang="nb"] .prose { quotes: "«" "»" "‘" "’"; }`. Do not change the glyphs the operator already set in copy; this is the CSS quotes property for generated quotation marks.
+102. **No `smcp` / `c2sc` for abbreviations.** Law `contextual_features.abbreviations`. Optional; wire on `.prose abbr` if any exist.
+103. **Orphans/widows and `hyphens: auto` only on `.prose` + post show.** Legal, mailer, listing, dating bio, errors, face log miss them.
+104. **No `text-align: justify` in source.** Good. Do not add on mobile.
+105. **`hanging-punctuation` is Safari-only.** Optical hang still needs hanging quotes/lists in CSS for Chromium (item 72). `geometry_type.rb#check_hanging` already measures marker_x vs text_x (Tschichold). A live legal/wiki page with lists should fail that probe; if it does not run on those surfaces, add them to `geometry_surfaces.yml`.
+106. **face.css `"ss01","ss03","cv05","kern"` missing liga/clig/onum/pnum.** Wire law defaults; keep ss03 only if Inter actually loads on the primer.
+107. **`.msg-body` liga+kern only.** Same.
+108. **Tabular nums missing on `.mail-deal-price`, legal dates, wiki history.** Prices/times on marketplace, tv, bsdports, amber dashboard already have them.
+109. **`_fonts.scss` jsDelivr CDN fallback for JetBrains Mono.** Self-hosted `/fonts/` already exists. Drop the CDN `src` so a missing local file does not fetch Nick2bad4u’s GitHub on every first paint (privacy + design: the face is not a third-party type foundry).
+110. **Libre Baskerville files sit in `shared/public/fonts/`.** Confirm a `@font-face` still names them. If amber editorial moved off them, they are dead weight; if they load, they are a second serif beside Georgia in the mailer and Caprasimo on amber — count families per surface.
+
+### Motion, flat UI, logical properties, mobile-first
+
+111. **`_search_yep.scss:41` `box-shadow: rgba(0,0,0,0.25) 0 1px 8px`.** Comment says the pen allowlist restored it after a flat-UI pass. Confirm `PEN_ALLOW` still names this file; if the pen retired, this is the one shadow besides the recorded popover arrow. Operator: keep or drop — do not invent a third.
+112. **`.search.active { border-radius: 16px }`.** 16 is on `radius_px`. Fine. Prefer `var(--radius-*)`.
+113. **`#ccc` border on `#search_suggestions`.** Not a token. `var(--border)`.
+114. **`background-color: white` on `.search.focus`.** Not a token. `var(--surface)`.
+115. **Vote animated-number `duration-value="900"`.** 900ms > `NO_LONG_TRANSITION` 300ms. JS, not CSS; the rule misses it. Cap at `--transition-normal` (300ms) or mark as a counted animation, not a UI transition.
+116. **`NO_LONG_TRANSITION` misses `1.2s` / `.42s`.** Face 1200ms/1800ms already fenced. Extend the detector to seconds so a new 1.2s cannot land in RAILS unnoticed.
+117. **Legal/mailer `padding-left` / `padding-right`.** `LOGICAL_PROPERTIES`. Inline-start/end.
+118. **`@media (max-width)` bands marked `scan: intentional` are not a conversion pass.** Leave. New work uses `min-width` from `design_tokens.yml#viewport`.
+119. **`--text-display` 2.2rem and canvas `clamp(2.5rem, 12vw, 5rem)` on splash h2.** Display type without a sanctioned home was why `--text-display` was added. Splash still bypasses it. One display slot.
+120. **`font-size: 13px` in `.site-legal`.** Below 16. Footer meta; name it `--text-xs` so it scales with the root instead of painting 13px on bsdports’ 12px root (13px there is *larger* than body). Absolute px meta on a 12px root is the defect `design_tokens.yml` scale comment already names.
+
+### Oddities and gaps the type system makes visible
+
+121. **Three roots, one rem.** amber 16 (18 at ≥1280), brgen 18, bsdports 12. Recorded, not a bug. Any new `ch` measure is true at that root; any new `px` measure is a lie on two of three apps. Prefer `ch` / `--measure` for copy, `px` only for chrome insets already so named.
+122. **`--space-4` is 1rem = 12px on bsdports and 18px on brgen.** Why tap/chrome are absolute. A legal `padding: 32px` is honest; a legal `padding: 2rem` is not the same page on three apps. Legal currently mixes both.
+123. **Instrument: `RhythmLint` only scans `_tokens.scss` and `_dialect_tokens.scss`.** Legal/mailer/listing spacing never enter. Point it at all stylesheets or at ERB `<style>` blocks, or it will keep saying ok.
+124. **Instrument: hanging is a geometry probe, not a stylesheet grep.** Surfaces without lists in `geometry_surfaces.yml` cannot fail `check_hanging`. Add legal, wiki, post show.
+125. **Instrument: `css_constitution` type_scale budget counts raw `font-size` literals.** ERB `<style>` is outside that budget. Same hole as 60/123.
+126. **`.coverage_fills` is still the box model for Event, Story, moderation.** Token-only geometry, no type. Those pages get flex and gap and body size. If they grow prose (wiki already did the right thing), they must opt into `.prose` rather than another fill.
+127. **Face `#primer` Inter + mono HUD + 12px chat log is a fourth dialect.** SURFACES.md already says one-theme black. Type: the primer is the only Inter; the log is the CRT. Do not mix Inter tracking into the log. Item 88 is the leak.
+128. **Bringhurst “choose a face for a function.”** Inter/system-ui social, Caprasimo editorial (amber only), JetBrains CRT (face + bsdports + kickers), Georgia mailer lede, Bricolage marketplace display, SF Mono playlist. That is six functions. The law’s max 2 is per *surface*, not per fleet — count on the page the reader is on, not in the repo. Marketplace hero is the surface that currently breaks it (item 95).
+129. **Tschichold / hanging quotes.** `hanging-punctuation: first allow-end last` is set; Chromium ignores it. A `text-indent` / negative margin on `q::before` / opening `“` is the cross-browser hang. Only on `.prose`.
+130. **Müller-Brockmann 8px / 12-col.** ScaleLint `off_scale_space: 16` is the remaining debt. Do not raise the baseline. Legal/mailer px gaps (10, 18, 6, 26, 34) would add to it the day the lint can see ERB.
+131. **Wroblewski mobile-first.** Viewport edges are declared; max-width bands are fenced. New copy columns should not introduce a fourth 584/620/640/660/700/720px “almost a measure.”
+132. **Rams “as little design as possible.”** Two complete type systems (shared `_typography.scss` vs legal/mailer `<style>`) is the opposite. Delete the second; do not add a third.
+133. **Ando / ma.** `--leading-loose` 1.6 is already the quote step. Legal 1.62 and mailer 1.55 invent a half-step of air that reads as unsettled next to 1.5 body (ScaleLint’s own diagnosis). Snap to 1.5 or 1.6.
+134. **Bringhurst on all-caps: letterspace.** Kickers that are `text-transform: uppercase` without tracking, or with tracking off the token ladder, are the defect. Shared widget `section h2` already tracks wide — and that rule leaked onto vertical section titles, which is why tv/marketplace read as a different product until `_typography.scss` restored the family. Keep that fence.
+135. **Bringhurst on lowercase: do not letterspace.** Primer h1 (item 88), mailer CTA 0.04em (item 59), face `.04em` (item 89).
+136. **Oldstyle in body, lining/tabular in tables and prices.** The money hook is lining+tabular. Body never got oldstyle. Inter and system-ui ship onum; JetBrains as a mono should stay lining (code/CRT). `.prose` yes; `.font-mono` no.
+137. **`void_target: 0.70` in micro typography.** Unverified whether any surface measures leftover space. If `geometry_type` does not, it is an unread key of the same class as `rhythm_off_max_pct`.
+138. **`check_hanging` severity `:soft`.** A list whose markers sit inside the measure will not fail a gate. If hanging is law, it is a fail; if it is advisory, say so next to `list_marker_hang`.
+
+### Remainder — face, verticals, motion, instruments
+
+The first 138 closed the legal/mailer second system, the event-name drift, and the unread OpenType keys. What follows is the rest of that sitting: surfaces the truncated pass still had open, and a few unwired flags that sitting also named.
+
+139. **`#primer h1` names Inter.** `MASTER/web/public/face.css:544`. HUD is `system-ui` + `--font-label` mono — three families on one page (`max_font_families: 2`). Inter is gone from `_fonts_brand.scss`. `var(--font-brand)` or `var(--font)`, not a third named Inter. Tracking `.01em` on that lowercase heading is item 88.
+140. **Splash chips `ui-monospace` on a system-ui splash.** `_canvas.scss:28`. Two families, at the cap. Leave if body stays one.
+141. **Legal eyebrow `.72rem` + `.12em` + uppercase.** `_site_legal_footer.html.erb:20-21`. Tracking is inside the all-caps band; size ≈11.5px below `body_min_px: 16`. `--text-xs` (chrome meta), `--tracking-widest`. No new size.
+142. **`.prose` has `text-wrap: pretty`; headings `balance`.** Listing, legal, mailer inherit neither until they join `.prose` (item 55).
+143. **Auth `h1` `--tracking-tighter` is allowed heading tight (−0.02).** `_auth_form.scss:41-46`. `.auth-form-lead` is unspaced — keep it that way; don’t letterspace the lead.
+144. **`chat_upload.css:42,48` `transition: … .42s`.** 420ms over the cap. Face 1.2s / 1.8s are the recorded fence (`TODO` layout pass). This file is not that fence. `var(--transition-normal)` (300ms), same easing.
+145. **`face.css:566` `ripple 680ms` is an animation.** ScaleLint `duration_ms` is transitions only. Don’t treat it as a transition-budget fix.
+146. **Dating `linear-gradient` on buttons.** `_vertical_dating_discover.scss:59` vs FLAT_UI uniform-at-rest. Name the seam; don’t pick a new fill. (One chrome already retires the immersive shell; this gradient goes with it or stays as a recorded exception.)
+147. **Splash title `transform: scale(1.02)` at rest.** `_canvas.scss:21`. Depth at rest. Optional: only `:active`. Primer `#primer:active h1 { scale(1.03) }` is the same pattern, already on a gesture.
+148. **`LOGICAL_PROPERTIES` only matches `(margin|padding)-(left|right)`.** Misses `left:` / `right:` / `top:` / `bottom:`. `face.css:369-370` mixes `top:` with `inset-inline-start`. New rules: `inset-block-start`.
+149. **`_tab_bar.scss:99` `@media (max-width: 639px)` without the `scan: intentional` comment.** Same 639 band as the fenced ones. Mark it or invert to a min-width default. Do not mass-convert the marked bands.
+150. **`_nearby_chat_widget.scss:116` `(hover: none), (max-width: 480px)`.** Capability query plus width. Leave hover; don’t treat as a measure rewrite.
+151. **`.post_body` `--leading-loose` (1.6) while `.prose` is 1.5.** `_posts.scss:69`. Show uses both classes. One leading.
+152. **Maps / marketplace-card uppercase labels.** `_maps.scss:121`, `_marketplace_cards.scss:88`. Pair `--tracking-wide` on the same rule if tracking is missing (`all_caps_min_em: 0.05`).
+153. **`.map-hud { max-width: 280px }` and nearby `320px`.** Chrome (`do_not_apply_to: chrome`), not a text measure. Leave.
+154. **Messenger `line-height: 1.25` is on scale.** `WORN_TYPE.chat` measure 0. Don’t hang punctuation in bubbles.
+155. **Marketplace `.market-hero { max-width: var(--measure) }` then h1 clamp 5.5rem.** `_vertical_marketplace.scss:31-33`. The masthead wraps at ~8–12 characters. Cap kicker/subcopy at `--measure`, not the display word.
+156. **Dating profile form already `--measure`.** `_vertical_dating.scss:34-38`. Good. `_vertical_dating_shell.scss:129` `--measure-narrow` on the shell: confirm it isn’t squeezing legal-length copy (the intro/legal links dating hides from the footer).
+157. **Takeaway uppercase + `--tracking-wide`.** `_vertical_takeaway.scss:121`. The pair Bringhurst asks for. Leave.
+158. **Playlist 720px + `clamp(12px, 3vw, 14px)`.** Don’t retune the playlist mono fence (`SURFACES.md`). Copy columns still want `--measure` (item 67), not 720px.
+159. **Amber `--luxury-letter-tight: -0.01em` matches `--tracking-tight`.** `_editorial.scss`, `_items_luxury.scss`. Don’t add a third tracking language. Product titles are headings — OK if not body.
+160. **Amber `h1,h2` `--measure-wide` (75ch).** `_layout.scss:22-31`. Fine for titles; body still `--measure`.
+161. **Creator bio already `.prose`.** `creator_profiles/show.html.erb:9`. One of the three views that got it right.
+162. **Dressing room `max-width: 420px`.** `WORN_TYPE.immersive` measure 0. Don’t force 66ch.
+163. **bsdports header h1 `clamp(1.75rem, 5vw, 2.5rem)` vs 12px CRT root.** Don’t raise the root to “fix” the h1/body ratio. Search `font-size: 16px` absolute is the iOS zoom floor — keep.
+164. **bsdports tabular-nums on ports (`:501`).** Extend to any remaining version numbers on the same rows.
+165. **Face `font: 16px/1.5 system-ui` has no `--measure`.** Overflow-hidden HUD. Chat log `12px/1.42` is off-scale leading and below 16; chat profile may stay dense — still pick an allowed step (`1.4` or `1.5`). `font-size: 14px` literals at `:283,683` map to a `face_root` token already there.
+166. **`PEN_ALLOW` still names `_search_yep.scss`.** `gate_autofix.rb:30`. Item 111’s shadow is the pen, not a leak. Don’t spread it. `_jsfiddle_chrome`, `_marketplace_nav_bar`, `_marketplace_animated_logo` are the other three.
+167. **`MASTER_INCREMENTAL=1` defaults off.** Confirm `test/` never sets it; if not, add one path or drop the flag.
+168. **`MASTER_WEB` defaults `"0"` (`runtime_mode.rb:16`).** Face is production. Test that the Falcon boot sets it, or the CLI/web split is fiction.
+169. **`MASTER_SKIP_SELF_TEST=1` defaults off.** No test that self-test is skipped and boot still returns a container.
+170. **`dashboard#live` JSON has no fetcher in `face_assets.yml`.** If the dashboard stays (item 152 of the first pass), name the poller; if chrome folds into chat, delete the endpoint.
+171. **`InvitesController#show` has no `views/invites/`.** Redirects only. Add a test that no implicit render happens. Same shape: `BlocksController`, `CrosspostsController`, `StoryRepliesController`.
+172. **`internal#dilla_publish`.** Unverified STUDIO caller. If dilla never POSTs it, the route is a hole.
+173. **`APPLY_PTR=1` defaults off.** `ptr_openbsd_amsterdam.rb`. On-path test: build the POST body, don’t send.
+174. **`vps_master_scan.sh` vs `MASTER/bin/operator gate`.** Second scan entry on the box. Fold or point at operator.
+175. **`postpro --watch` has no RAILS job.** If `PostproProcessor` is one-shot, `--watch` is a laptop-only door with no test.
+176. **ScaleLint still misses `letter-spacing` inside `clamp()`.** Marketplace −0.045em (item 87) is the exhibit. Parse clamp() mins.
+177. **`MEASURE_OPTIMUM` at ≥800px never sees 660/700/720/584.** Lower it for text columns, or assert `var(--measure)` on `optical_margins.apply_to` selectors. Don’t flag HUD 280/320.
+178. **Don’t raise `hanging_marker_max_inset_px` to absorb `.prose` `1.25em` or legal `1.1rem`.** Hang in CSS (item 72). The geometry probe is Tschichold; the inset is not a ratchet.
+
+---
+
+
+
+
+
+
