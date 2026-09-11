@@ -30,9 +30,20 @@ $vertical-accents: (
    to be legible as ink on a light surface, which makes them all too light to
    carry light ink: measured against --bg (#f7f6fa) they run 1.77–3.46:1, and
    .compose-btn and brgen's own .btn all paint color: var(--bg) on
-   background: var(--accent). Against #1a1824 the same seven run 4.70–9.16:1, so
-   one dark ink clears AA for all of them. Verified per accent, not assumed. */
-$vertical-accent-ink: #1a1824;
+   background: var(--accent). One dark ink clears AA for all of them.
+
+   The ink is verified against BOTH columns of the map above, which is the half
+   that was missing. #1a1824 was measured against the dark accents — 4.70 to
+   9.16, the range the previous note recorded — and the light variants in slot 3
+   arrived afterwards without being checked against it. Measured per accent:
+   against the light column #1a1824 runs 4.23 to 5.02, so playlist's #0e8a94 sat
+   at 4.23 and takeaway's #c26a30 at 4.50, both under the 4.5 floor for the
+   button type they carry.
+
+   #110f19 is the smallest step in the same near-black that clears it: light
+   4.59 to 5.45, dark 5.10 to 9.94. A step this size is not a visible change to
+   the ink; it is the ink meeting the contract this comment already claimed. */
+$vertical-accent-ink: #110f19;
 @each $v, $c in $vertical-accents {
   body.vertical-#{$v} {
     --accent: #{list.nth($c, 1)};

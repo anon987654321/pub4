@@ -36,10 +36,14 @@ body.vertical-maps article.place dd {
   margin: 0;
 }
 
+/* --accent-ink, not --maps-ink. --maps-ink is the ink for --maps-bg and
+   --maps-surface, which is what its other three uses ask of it, and on the
+   accent it measured 3.34 against the 4.5 floor. _vertical_shell tunes one ink
+   for anything painted on an accent; this is that. */
 body.vertical-maps .btn,
 body.vertical-maps .btn-primary {
   background: var(--maps-accent);
-  color: var(--maps-ink);
+  color: var(--accent-ink);
   border: 1px solid color-mix(in srgb, var(--maps-accent) 40%, var(--maps-border));
   border-radius: var(--radius-pill);
   font-weight: var(--weight-bold);

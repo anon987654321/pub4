@@ -122,15 +122,18 @@ animation: wardrobe_showcase_drift 46s var(--ease-linear) infinite;
   display: grid;
   place-items: center;
   background: var(--swatch, var(--surface));
+  color: var(--swatch-ink, var(--text));
 }
 
 /* difference against a pale swatch renders the letter invisible, which is the
-   one case the swatch exists for. Plain ink, and the swatches are chosen light
-   enough to carry it. */
+   one case the swatch exists for. Plain ink — and the ink comes with the
+   swatch, because they were not all chosen light enough to carry one: measured
+   against --text, charcoal ran 1.21 and navy 1.36. ApplicationHelper carries
+   the pair. */
 .wardrobe_slide_glyph {
   font-size: var(--text-lg, 1.125rem);
   font-weight: var(--weight-bold, 700);
-  color: var(--text);
+  color: var(--swatch-ink, var(--text));
 }
 
 .wardrobe_slide_title {

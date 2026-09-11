@@ -72,12 +72,16 @@ body.vertical-tv .preset-strip {
 body.vertical-tv .preset-opt input:checked + span {
   background: var(--tv-accent);
   border-color: var(--tv-accent);
-  color: var(--text);
+  color: var(--accent-ink);
 }
 
+/* --accent-ink, not --text: this paints ON the accent, and the shared .btn
+   rule already reads the ink _vertical_shell tuned for it. Overriding the
+   background here while leaving the ink behind put --text (#333333) on
+   #dc635c at 3.60, under the 4.5 floor for 15.8px type. */
 body.vertical-tv .btn-primary {
   background: var(--tv-accent);
-  color: var(--text);
+  color: var(--accent-ink);
   border-radius: var(--radius-pill);
 }
 

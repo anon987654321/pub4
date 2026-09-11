@@ -109,7 +109,11 @@
   width: 45px;
   border: 0;
   background-color: var(--accent);
-  color: var(--text);
+  /* --accent-ink, not --text. The glyph sits ON the accent, and _vertical_shell
+     tuned one dark ink for exactly that — measured 4.70 to 9.16 across all
+     seven vertical accents. --text on the same fill measured 3.63 on
+     markedsplass and 3.25 on takeaway, both under the 4.5 floor. */
+  color: var(--accent-ink);
   cursor: pointer;
 }
 

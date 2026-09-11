@@ -13,7 +13,7 @@
   <% else %>
     <%= link_to slide_path, class: "wardrobe_slide_media wardrobe_slide_swatch", title: item.title,
                 aria: { label: item.title }, tabindex: (-1 if muted),
-                style: "--swatch: #{wardrobe_color_swatch(item.color)};" do %>
+                style: "--swatch: #{wardrobe_color_swatch(item.color)}; --swatch-ink: #{wardrobe_swatch_ink(item.color)};" do %>
       <span class="wardrobe_slide_glyph" aria-hidden="true"><%= item.title.to_s.first&.upcase %></span>
     <% end %>
   <% end %>

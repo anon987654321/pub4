@@ -99,19 +99,49 @@ end
     CreatorProfile.find_by(user: Current.user)
   end
 
+  # A garment's colour, and the ink that reads on it.
+  #
+  # One map rather than two, because the second value only makes sense beside
+  # the first: the swatch stands in for a missing photograph, so it is whatever
+  # colour the garment is, and no single ink survives that. The note beside
+  # .wardrobe_slide_glyph said the swatches "are chosen light enough to carry"
+  # --text, which held for six of these ten and not for the other four —
+  # measured against #333333, charcoal ran 1.21, navy 1.36, tortoise 2.26 and
+  # terracotta 3.42, all under the 4.5 floor for the 18px name they carry.
+  #
+  # Black or white, whichever sits further from the swatch. The worst case
+  # across the map is terracotta at 5.11 and the best is ivory at 17.91.
+  # amber_swatch_ink_test pins every pair with Deploy::DesignMetrics::Contrast,
+  # so the numbers here are checked by the one implementation of that maths this
+  # repo trusts rather than restated by hand.
+  WARDROBE_SWATCHES = [
+    [/navy|indigo/, "#3c4858", "#ffffff"],
+    [/black|charcoal/, "#3c4043", "#ffffff"],
+    [/white|ivory|oatmeal|cream|pearl/, "#f8f9fa", "#111111"],
+    [/blush|rose|mauve/, "#f6d6d9", "#111111"],
+    [/sage|olive/, "#c8d5b9", "#111111"],
+    [/rust|terracotta/, "#c96b4b", "#111111"],
+    [/camel|tan|gold/, "#d4a574", "#111111"],
+    [/nude/, "#e8d2c5", "#111111"],
+    [/tortoise/, "#8b5e3c", "#ffffff"],
+  ].freeze
+
+  WARDROBE_SWATCH_DEFAULT = ["#e8eaed", "#111111"].freeze
+
   def wardrobe_color_swatch(color)
-    case color.to_s.downcase
-    when /navy|indigo/ then "#3c4858"
-    when /black|charcoal/ then "#3c4043"
-    when /white|ivory|oatmeal|cream|pearl/ then "#f8f9fa"
-    when /blush|rose|mauve/ then "#f6d6d9"
-    when /sage|olive/ then "#c8d5b9"
-    when /rust|terracotta/ then "#c96b4b"
-    when /camel|tan|gold/ then "#d4a574"
-    when /nude/ then "#e8d2c5"
-    when /tortoise/ then "#8b5e3c"
-    else "#e8eaed"
-    end
+    wardrobe_swatch_pair(color).first
+  end
+
+  def wardrobe_swatch_ink(color)
+    wardrobe_swatch_pair(color).last
+  end
+
+  def wardrobe_swatch_pair(color)
+    name = color.to_s.downcase
+    match = WARDROBE_SWATCHES.find { |pattern, _swatch, _ink| pattern.match?(name) }
+    return WARDROBE_SWATCH_DEFAULT unless match
+
+    [match[1], match[2]]
   end
 
   def responsive_image_url(attachment, preset: :card, widths: [ 400, 800, 1_200 ])
