@@ -5568,7 +5568,12 @@ Numbered 1–N across the four trees.
 626. **Crontab table is incomplete and stale.** `RUNBOOK.md` lists four jobs; `etc/crontab.vm23` also schedules prune-guests, core-reclaim, keep-warm, drain-jobs, weekly-integrity. The relayd-watchdog row still says it heals `doas.conf` trailing newline; that heal was removed. Expand the table from the tracked crontab.
 627. **Production-push scope is wrong.** `RUNBOOK.md` table says `vps_production_push.sh` covers “master + brgen + amber”. The script also deploys bsdports.
 628. **httpd 6666 comment vs CLAUDE.** `CLAUDE.md` still says `httpd.conf` listens on `* port 6666`. Live file listens on `127.0.0.1 port 6666`.
-629. **MEM_RESTORE numbers drifted.** `CLAUDE.md` “thresholds are now 8/14”. `resource_guard.sh` is MEM_WARN 8 / MEM_RESTORE 10.
+629. **MEM_RESTORE drift — fixed 2026-09-12.** OPENBSD/CLAUDE.md said 8/14 for a
+     month after resource_guard.sh moved MEM_RESTORE to 10 on 2026-08-14, a
+     recalibration the script records with the 1550 ticks behind it. The doc
+     names the current pair and points at the script;
+     `test_guard_thresholds_documented` refuses prose that names a different
+     number from the code.
 630. **keep-warm OPTIONAL set is inverted.** Comment says “bsdports and master are resource_guard's OPTIONAL set”. Guard has `CORE="master brgen"` and `OPTIONAL="bsdports amber"`.
 631. **core-reclaim still names litestream in OPTIONAL.** Match `resource_guard.sh`.
 632. **Four recipe lists.** `data/operator.yml`, `RECIPES.md`, `START_HERE.md` Golden Commands, `RUNBOOK.md` deploy-all table. Make `operator.yml` the only command list.
@@ -5799,7 +5804,12 @@ Numbered 1–N across the four trees.
 848. **`redo_nine.sh` points at missing chops.** `samples/chopped/ubrukte_samples_0N/loop.wav`. Refuse with “no chopped rack” rather than render empty beds. Do not retune the rows.
 849. **`ENV_AND_RENDER.md` names `RAILS/shared/app/services/shared/dilla_processor.rb`.** **Unverified** that path still exists.
 850. **`data/modes.yml` never mentioned in help.** One line under SYNTHESIS.
-851. **`data/album_tracks.yml` / `dilla_principles.yml`.** Find the reader before calling them inert.
+851. **Two files, two answers — checked 2026-09-12.** `album_tracks.yml` has a
+     reader: `dilla.rb:34552` builds the tracklist from it. `dilla_principles.yml`
+     has none — 3.9KB of draft research spec, `status: draft`, read by nothing.
+     Wiring it into `groove_engine` would change what dilla generates, so that
+     one is a rendered-sound decision and the operator's. The item's own advice
+     was right and the answer differs per file.
 852. **`reference_sonic.yml` / `dilla_reference.yml`.** Reader is `load_sonic_profiles` at `dilla.rb:4065`. Document it next to the file.
 853. **`stems/manifest.json` names missing demux dirs.** `dilla stems` should fail with “manifest names paths not on disk” the way `assets` does.
 854. **Tests should export `DILLA_FROZEN=1` in `DILLA_BOOT_ENV`.** A forgotten restore cannot dirty `project/session.json`.
@@ -6104,7 +6114,7 @@ reading surface wears that class. Legal and mailer invented a second system
 in ERB `<style>` blocks that no lint reads.
 
 55. **Legal pages use `legal-prose`, not `.prose`.** `pages/terms.html.erb`, `privacy`, `cookies`. Law `optical_margins.apply_to: [legal]`. Add `.prose` or alias `.legal-prose` to the shared block.
-56. **`.legal-prose` is defined in `_site_legal_footer.html.erb` as an inline `<style>`.** `:18-28`. Second type system: `max-width:64ch` not `var(--measure)`; h1 `line-height:1.15` off `[1, 1.25, 1.4, 1.5, 1.6]`; body `line-height:1.62` off scale; `ul{padding-left:1.1rem}` physical, markers inside the measure; padding `32px 20px 64px`; h1 margin `6px` off the 8px grid; footer `font-size:13px` / `12px`. **Move:** delete the `<style>`; put legal on `_typography.scss` tokens. Values of colour stay; the seam is the file.
+56. **Fixed 2026-09-12.** The inline block is `shared/app/assets/stylesheets/_site_legal.scss`, moved with every value untouched — measured on brgen.no/privacy before and after, `.legal-prose` is 724.397px wide and its h1 is 28.8px/33.12px either way. Snapping those values onto the scales is a separate decision and the operator's.
 57. **Same block `.site-legal{max-width:1100px}`.** Hits `MEASURE_OPTIMUM`. Footer is chrome (`do_not_apply_to: chrome`); keep a layout width, stop treating it as a text column.
 58. **Same block padding `18px 20px 28px`, gap `10px 18px`.** 10 and 18 are off `scale.space_px`. `--space-*`.
 59. **Mailer `_mailer_styles.html.erb` is a third type system.** Dark `#050505` vs fleet light default; Helvetica + Georgia + Arial = three families (`max_font_families: 2`); `letter-spacing: 0.28em / 0.22em / 0.18em / 0.04em` off `letter_spacing_em` (max caps 0.15, no 0.04 on lowercase CTA); line-heights 1.45, 1.35, 1.55, 1.2 off scale; font-size 11/12/13/14/15/16/17/24/34px private ladder; `.mail-shell { max-width: 620px }`; `border-radius: 18px` off `radius_px [0,2,4,8,12,16]`; CTA `letter-spacing: 0.04em` on mixed case; `.mail-deal-price` has no tabular nums; `padding-right` not logical; `linear-gradient` on `.mail-typo-hero`; `color: #050505 !important`. **Move:** one sans + optional Georgia for the lede; measure in `ch`; leading from `--leading-*`; tracking only on the uppercase kickers at `--tracking-wider` (0.08) or `--tracking-widest` (0.14); tabular on price. Do not pick new hex — if the letter stays dark, that is the operator’s; the type scale is not.
@@ -6772,7 +6782,7 @@ A finding is a hypothesis. Verify the second caller before you delete the first.
 43. **Stimulus: one registration path.** `stimulus_boot.js` loads the fleet; unused reveal/auto-submit/content-loader still cost importmap. Register when present (carousel pattern) for the rest, or unregister.
 44. **One `application.js` Stimulus start.** Three app copies plus shared. If they only `import "controllers"`, one file in shared.
 45. **`lazy_image_tag` lives in the brgen host, called from dating.** Move the helper to shared so engine tests don’t need the host.
-46. **Legal/mailer `<style>` die.** `_typography.scss` is the type system. `.legal-prose` aliases `.prose`.
+46. **Fixed 2026-09-12.** The inline block is `shared/app/assets/stylesheets/_site_legal.scss`, moved with every value untouched — measured on brgen.no/privacy before and after, `.legal-prose` is 724.397px wide and its h1 is 28.8px/33.12px either way. Snapping those values onto the scales is a separate decision and the operator's.
 47. **`.reading-column` / `.form-measure` are worn or deleted.** Defined, unused. Put them on legal and compose, or drop.
 48. **One money type.** Amber `MoneyInOre` float vs marketplace integer cents vs affiliate decimals. Integer minor units everywhere money is money. Ratings stay decimal.
 49. **One uniqueness helper for nullable FKs.** Playlist likes/collaborations. Don’t copy the NULL-is-distinct bug.
@@ -9162,7 +9172,7 @@ the moment it happened, where the whole suite stayed green.
 11. **`VoteReflex` vs `votes#create.turbo_stream`.** Keep the stream.
 12. **Host vs shared notifications controllers.** One.
 13. **Marketplace vs takeaway `_nav_bar`.** One partial.
-14. **Legal/mailer `<style>` vs `_typography.scss`.** Delete the ERB type systems.
+14. **Fixed 2026-09-12.** The inline block is `shared/app/assets/stylesheets/_site_legal.scss`, moved with every value untouched — measured on brgen.no/privacy before and after, `.legal-prose` is 724.397px wide and its h1 is 28.8px/33.12px either way. Snapping those values onto the scales is a separate decision and the operator's.
 15. **`.reading-column` / `.form-measure` — deliberate, and said so.** No view
     wears either. `css_coverage_lint.rb:96` records them as opt-in measure
     classes "worn by tokens, not yet by every view", so this is a decision
@@ -10875,7 +10885,7 @@ Dreamed, then checked a path. Still hypotheses.
 79. **Operator.yml is `/etc/rc.conf.local`.** Five docs that copy it are four `rc.conf` files.
 80. **Scratch without pid is `/tmp/foo` in 1995.** The helper at dilla.rb:5735 is the 2026 version. Use it.
 81. **Cable `*` is promiscuous mode.** Filter or don’t plug it into the face.
-82. **Legal `<style>` is a BIOS that ignores the OS.** `_typography.scss` is the kernel.
+82. **Fixed 2026-09-12.** The inline block is `shared/app/assets/stylesheets/_site_legal.scss`, moved with every value untouched — measured on brgen.no/privacy before and after, `.legal-prose` is 724.397px wide and its h1 is 28.8px/33.12px either way. Snapping those values onto the scales is a separate decision and the operator's.
 83. **A golden WAV is a photograph of a concert.** Don’t shoot the band again to pass the histogram.
 84. **`apps.yml` done = schema present.** Write that on the tin so engines without tests stop looking finished.
 85. **Ten agents is a herd without fences.** Worktree is the fence; pre-commit tree-span is the gate.
@@ -11424,3 +11434,77 @@ Same `DillaImprovisation` slot. Twelve is the current set; adding four is a lang
 68. **Reader for `dilla_principles.yml` harmony.goals** (44) or stop citing the file.
 
 If two languages mean the same root motion and quality, keep the one with a test. If a “beautiful” pass changes a curated Dilla loop, it is refused.
+
+## Stabilize `ruby dilla.rb` → demo.wav
+
+Common sense, 2026-09-12. STUDIO/dilla. Bare `ruby dilla.rb` already calls `demo_all` and writes `ROOT/demo.wav` (`dilla.rb:35261–35269`, dest default 20084). The command is the right convention; the run is not yet a record you can trust twice. This is evenness, exit codes, duration, and not lying. It does not add devices. Where it overlaps “One demo, one mode,” that section owns names and DNA; this one owns the *run*.
+
+### The command
+
+1. **`ruby dilla.rb` with no args is the product.** It must write `demo.wav` and `demo.mp3` beside the engine, exit non-zero if it cannot, and print one line that names the files. It already mostly does. Keep that. `help` is `ruby dilla.rb help`, never the no-arg path.
+2. **Rename the user-facing verb to `demo`** (already item 1 of one-demo). Until then, `ruby dilla.rb` and `ruby dilla.rb demo-all` are the same function with two spellings plus a third (`demo`) that is something else. Three spellings is how operators run the crate matrix by accident and wait an hour.
+3. **Do not overwrite a take the operator is listening to without saying so.** `demo.wav` in ROOT is gitignored and is also the listening copy. Write through `demo.wav.concat.wav` then `mv` (already). Print the previous file’s mtime/size before replacing it. `DEMO_OUT=` for a second copy; default stays `demo.wav`.
+4. **`help` must load fast.** `dilla.rb` is 35,277 lines / 1.7 MB and bootstraps gems before ARGV is read. `env -i ruby dilla.rb help` used to die on encoding; that is fixed. Still: help should not need fluidsynth. Lazy-require render stack after the command is known. A 4-second help is a broken CLI.
+5. **Unknown command exits 2, not help.** `DISPATCH[cmd] ? call : help` treats a typo as success with a man page. `ruby dilla.rb demoo` should not look like it rendered.
+
+### Exit codes and locks
+
+6. **Demo lock currently `exit 0` when another run holds it** (`acquire_demo_lock!` 20047–20048). That is a green no-op. Exit 1 (or 4: busy) and print the holder pid. A CI or agent that sees 0 will publish yesterday’s wav.
+7. **The lock is not atomic.** `File.exist?` then `File.write`. Two `ruby dilla.rb` started in the same second both pass. `File.open(path, File::WRONLY | File::CREAT | File::EXCL)` or flock. The comment at 20021 already names the shared-scratch race this lock exists to stop; a TOCTOU lock does not stop it.
+8. **`at_exit` removes the lock only if pid matches.** A SIGKILL leaves a stale lock; ESRCH cleanup exists. Also handle SIGTERM: finish the current part, write concat of what exists, *then* exit non-zero. An eight-hour run killed at track 18 currently throws the 17 away unless DEMO_KEEP_PARTS was set.
+9. **`abort "demo-all: no parts rendered"` is the only hard fail after the loop.** A run that is 12/19 silence-then-dropped can still concat the rest and exit 0. Exit 1 if `parts.length < order.length` after reject-dead, unless `DEMO_ALLOW_GAPS=1`. Print `ok: demo.wav (15/19 tracks)` already; the status code must match the fraction.
+
+### Evenness (level, length, key, feel)
+
+10. **Per-part levelling is on (`DEMO_LEVEL=1`) to −16.5 LUFS.** That is MixScore’s keeper centre and STREAM_LUFS. Keep it. Album-loudnorm of the concat (`DEMO_ALBUM_NORM`) stays off — it cannot close a 6 dB seam inside the file (comment at 19653, measured hip-hop −18.7 vs techno −12.5). Do not turn album-norm on as a “fix.”
+11. **Crossfade 1.5 s is the default** (`ALBUM_XFADE`). Hard concat is `DEMO_CROSSFADE=0`. Keep the crossfade; a catalogue demo that butts 19 keys is a folder, not a listen. The limiter in the xfade graph is load-bearing (sum of two parts). If xfade is on, skip a second alimiter in album-norm.
+12. **Same bar count is not the same duration.** 12 bars at 76 BPM ≠ 12 bars at 138 BPM. The demo *sounds* uneven even when MixScore per part is fine. For the catalogue concat only: either pin `BPM` to a band (e.g. 84–92, the Donuts neighbourhood) or time-pad/trim each part to `bars * 4 * 60 / demo_bpm` so joins land on a pulse. Do not time-stretch the groove; pad with the last bar’s tail or a 1.5 s xfade. Document the choice in provenance.
+13. **Techno slots vs soul slots.** `demo_techno_share` still injects a second renderer. That was the −12.5 vs −18.7 LUFS seam. A stable demo is one renderer. Techno as a *kit* on a soul progression (already a later patch in demo_all) or not at all. Two engines in one wav will never even out.
+14. **Rap every other track** (`DEMO_RAP_EVERY=2`) makes loudness and masking alternate even after LUFS match — vocals eat headroom. Either: every part instrumental for the default demo (harmony is the showcase), or every part has a vocal at the same mix weight. Alternation is a third record spliced into the first two. Operator 2026-08-09 asked for rap; satisfy it with a *fixed* cadence (e.g. last 8 bars of every track, or tracks 2,5,8…) that does not flip the whole mix, not 50/50 full-track rap.
+15. **Steady vs morph.** demo-all still rotates lead/synth/morph unless `DEMO_STEADY=1` (demo-each defaults steady). For a listen-through demo, steady is the even choice: the writing changes, the instrument does not. Default `DEMO_STEADY=1` on the no-arg path. Showcase of synthesis is `DEMO_STEADY=0` or a liveset.
+16. **Key chaos.** ModalFamily + KeyLock exist so the stream does not jump Lydian to Phrygian. `demo_all_order` is verified + improvisations and does not run KeyLock on the concat. Transpose the 19 to one tonic (Bb Dorian/Aeolian collection already defined) so the tape has a centre. Provenance records the original key. A demo that modulates every 40 s is not “range,” it is seasick.
+17. **Silence placeholders still get written** (`*_SILENCE.wav` via anullsrc) then dropped at join if dead. They still occupy a slot in the mental playlist and used to ship. Stop writing them. Fail the slot, keep the gap in `catalog.txt`, refill on re-run. A digital zero is not a part.
+18. **Suspect parts are a warning, not a retry.** `demo_report_suspect_parts` names quiet/short vs median. After hours, the operator is supposed to delete and re-run. Automate: if suspect and not `DEMO_KEEP_SUSPECT=1`, delete and retry once (the retry-minimal path already exists). Cap at one retry per slug so a systematically quiet language does not loop.
+
+### Resume, scratch, concurrency
+
+19. **Comments disagree about resume.** 20089–20109: empty the parts dir every time because stale parts judged a day of drum work. Also: `DEMO_KEEP_PARTS=1` for iterating; demo-each skip survivors; lock comment says two runs share `scratch/all_tracks_demo`. Pick one default: **keep parts that match this engine mtime + this seed + this bars**, delete the rest. That is resume without lying. Always-from-scratch is the right hammer for a release demo (`DEMO_FORCE=1`); it is the wrong default for `ruby dilla.rb` typed twice.
+20. **Staleness must include the DNA table, not just mtime of dilla.rb.** `lib/*.rb` and `data/*.yml` change the sound too. Hash `engine_sources` (already a module) into the part sidecar; mismatch → re-render that part.
+21. **Scratch is pid-scoped now** (cleanup comment at 20556). Keep it. A demo must not glob `.dilla_*` without pid. Add a test that starts a dummy scratch file with another pid and asserts it survives `cleanup_render_scratch!`.
+22. **`DILLA_STREAMING=1` is set on the demo** (20167). A catalogue render is not a stream. Whatever that flag changes (logging, supervisor, skip), it is a lying mode. Unset it on the no-arg path unless a comment names a caller that dies without it.
+23. **`STREAM_CONTINUOUS=0` is already set.** Good. Do not start afplay. The no-arg path is a file, not a concert.
+
+### Time and cost
+
+24. **Default catalogue is ~19 tracks** (7 verified recordings, first-name-wins, plus 12 improvisations), not 84. Help derives the count (`demo_catalog_sizes`). Timeout 420 s/track × 19 = 2.2 h worst case. A no-arg demo that cannot finish in a coffee (say 25 min) will be killed and will look flaky. Budget: 12 bars × 19 × ~60 s ≈ 20 min. If VoiceStack=4 blows that, drop the DNA count (one-demo item 38), do not raise the timeout.
+25. **Print ETA.** After each part: `ok 6/19 slug 48s remaining ~12 min`. Hours of silence is how agents assume a hang and SIGKILL (item 8).
+26. **`DEMO_TRACK_TIMEOUT` default 420 is longer than a 12-bar render should ever need.** A healthy 12-bar is tens of seconds. 90 s fail + retry-minimal 90 s is plenty. 420 s is how a stuck fluidsynth holds the lock all afternoon. Lower the default; pin 420 only if a measured part actually needs it.
+27. **One smoke in CI, not the catalogue.** `ruby dilla.rb demo` with `DEMO_TRACKS=<one verified>,<one improv>` `BARS=4` writing under `/tmp`. Assert files exist, MixScore LUFS in range, duration > 0, exit 0. Never write `STUDIO/dilla/demo.wav` in CI. Takes are irreplaceable.
+
+### Evenness of the *code* path
+
+28. **One process, one ENV table, last write wins.** Album slot, ringtone layer, voice_stack_every, rap_every, techno kit all `force_env!` in one loop. A missed reset leaks into the next slug (the RAP_VOCAL capture-once comment at 20147 is this bug class). Snapshot ENV at loop start, restore after each part except the slot’s own keys. Test: after a rap slot, the next instrumental has `RAP_VOCAL=0` in provenance.
+29. **Provenance after the last force** (one-demo item 20). The no-arg demo’s mp3 sidecar is the tracked artifact (comment 20648: wav is gitignored). If the sidecar says HOCKET=1 and the DNA says 3, the run is lying. Fail the part.
+30. **MixScore per part before join.** A part outside keeper LUFS/LRA/kick-vs-mid is a suspect (item 18), not a vibe. Do not fail the whole demo; do not ship it unmarked. A `catalog.txt` column for the score is enough.
+31. **Identical codec before xfade.** Crossfade path already re-encodes. Copy path checks uniformity. Do not mix mp3 parts into a wav concat (already documented). demo-each encodes mp3 and would poison a later concat if someone points `demo` at those files.
+
+### Split later, not as the first patch
+
+32. **35k lines is a stability problem** because nothing tests `demo_all` and no one can load the file in a reviewer. First patch does not split. Next: `demo_all` + join + lock into `lib/demo.rb` required only by the demo command, so `ruby dilla.rb help` and `ruby dilla.rb dilla out.wav` do not parse the catalogue runner. `engine_sources.rb` already lists the corpus.
+33. **Do not split before the no-arg path has a smoke test** (27). A split without a test is how dest stops defaulting to demo.wav.
+
+### Acceptance for a stable no-arg run
+
+34. **`ruby dilla.rb` (no env):**
+    - acquires an exclusive lock or exits busy (non-zero);
+    - writes `demo.wav` and `demo.mp3` under ROOT (or `DILLA_OUTPUT_DIR`);
+    - 19 parts or whatever `demo_catalog_sizes[:all]` is *today*, all with peak > −70 dBFS;
+    - per-part LUFS within ~2 dB of −16.5 after `DEMO_LEVEL`;
+    - crossfaded, one tonic family, steady instruments, no silence placeholders;
+    - sidecar on the mp3 lists every slug and the DNA flags actually used;
+    - exit 0 only if `parts == order`;
+    - a second concurrent invoke exits busy and does not touch the wav;
+    - does not glob another process’s scratch.
+35. **Do not render over a named take in `renders/`.** Only `demo.wav` / `demo.mp3` as the listening copies, which this command owns.
+
+If a fix makes the wav more even by hiding a language (dropping improvisations, dropping rap entirely, dropping xfade), say so in the commit and in catalog.txt. Evenness is not a smaller catalogue unless the operator asked for one.
