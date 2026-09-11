@@ -17,6 +17,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency "ruby_llm",   "~> 1.3"
   spec.add_dependency "tty-prompt", "~> 0.23"
   spec.add_dependency "pastel",     "~> 0.8"
-  spec.add_dependency "rouge",      "~> 4.4"
   spec.add_dependency "diffy",      "~> 3.4"
 end

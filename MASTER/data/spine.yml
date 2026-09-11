@@ -97,7 +97,13 @@ spine:
   # reads to tell a rename from a loss.
   # 38072 is the audit measured against its own branch; the rename landed four
   # lines it could not see. 38076 is the tree with both in it.
-  lib_body_ceiling: 38076
+  # 38076 -> 38069: ruby_llm_patch.rb stopped passing four constructor keys
+  # Model::Info#initialize does not read, and the constant that fed one of
+  # them. The fallback it builds is unchanged — the lines were data nothing
+  # consumed, which is the cheapest seven a ceiling ever buys back.
+  # Three branches measured this row against three bases, and each read its own
+  # subtraction from 38111. 38069 is the merged tree measured once.
+  lib_body_ceiling: 38069
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753
