@@ -916,10 +916,20 @@ Both instances are pinned. `percent_word_array_close?`
 (`lib/review/scan/ast_fixer/dead_code_and_commas.rb:140`) skips `%w %W %i %I`, held
 both directions by `test_trailing_commas_skip_percent_word_arrays`
 (`test/test_ast_fixer_transforms.rb:408`); `convert_string_concat`
-(`ast_fixer/web_transforms.rb:155`) declines a chain followed by `(`, with
-`test_public_js_has_no_template_literal_called_as_a_function` asserting the shape in
-the tree. **Other autofix transforms can still mangle**; `--no-autofix` remains the
-safe default on an unattended tree until each transform has that shape of test.
+(`ast_fixer/web_transforms.rb`) declines a chain followed by anything binding
+tighter than `+` — a call, a subscript, a member, a tag — which is the `walk.js`
+corruption above and `'a'.repeat(3)` beside it, both held by
+`test_string_concat_declines_a_chain_followed_by_a_subscript_or_member`.
+
+The general net is in now, and it is the reason this entry no longer ends in
+"never run it unattended". `AstFixer.propose` builds a candidate without touching
+the disk, `MechanicalAutofix` is the governed writer, and the same `WriteGuard`
+that judges every constitutional write judges the candidate — only what a fix
+*introduces* can refuse it, so a file carrying debt stays repairable. A deleting
+transform also waits for a person on both paths now rather than only on the
+rule-driven one. What the guard cannot see is a change that introduces no
+finding and is still wrong, which is exactly the `walk.js` shape, so a transform
+still earns its own test.
 
 Pipe mode used to ignore ARGV, so `bin/cli /scan RAILS` with no TTY printed nothing and
 exited 0. It honors the argument now, then stdin. Paths still resolve after
@@ -4604,6 +4614,128 @@ gate is correct and was reporting the whole time; it sits under
 `rendered_suite`, which needs Chrome and a booted fleet, so a machine without
 `RAILS/bin/triangle up` degrades it to a warning. That is the designed
 behaviour and it is also how a real finding stayed quiet for a month.
+## The external reassessment — assessed 2026-09-11
+
+Four ChatGPT logs and one execution brief, read against the tree rather than
+taken at their word. Three of the four logs were substantially wrong about what
+`main` contains, which is the usual shape: an external reader with repository
+access describes the repository it last saw. What follows is what survived being
+checked, and what did not, so neither half is re-derived.
+
+### What was wrong, and stays closed
+
+**The visibility test is not missing.** One log opened on the claim that
+`MASTER/test/test_visibility_semantics.rb` had been lost from `main` while
+`data/spine.yml` still sponsored it, and proposed restoring 109 lines of it. The
+file is on `main`, 140 lines, with all eight semantic cases the log listed —
+`public` reopening a scope, `protected` as a visibility rather than an end,
+`private` not reaching the singleton stream, `private_class_method`, retroactive
+named visibility, inline modifiers, `class << self` defaults, and another
+object's singleton. Nothing to restore.
+
+**`Core::Constitution` should keep reading `rules.yml` directly.** The proposal
+was to replace its `YAML.safe_load_file` with `Master.load_rules`, on the
+one-source argument. The one source is real and the fix is backwards: the class
+comment two lines above states the spine reaches nothing in `lib/`, and
+`load_rules` lives in `lib/boot/data.rb`. Taking the suggestion would invert the
+only dependency rule `core/` has, to buy a size limit on a 205 KB file, a
+timeout on a local read, and permitted classes for a file that holds no `Date`.
+`load_rules` performs no shard merge, so the two paths already return the same
+object. Recorded in `MASTER/DECISIONS.md`; do not reopen.
+
+**Cognition phases 3 through 8 are premature.** A log proposed eight phases —
+prediction, global workspace, thought generation, consolidation, dreams, goals,
+agency, beliefs, an HDC accelerator in Rust — as a staged programme over
+`lib/cognition/`. Phases 2A and the tick defect below were real and are done.
+The rest builds six new subsystems on a layer whose own loop had never run, and
+`COLLAPSE_BEFORE_ADDING` asks for the nine moves before any of them. Revisit
+when the persisted transition model has weeks of real event history in it and
+something in the tree reads it.
+
+### Open, sized, and real
+
+**The local tier's model list is a guess.** `OllamaSender` dispatches now, but
+`models.yml` names `qwen2.5-coder:7b`, `llama3.2:3b` and `phi4:mini` as the
+tier-D chain and nothing checks that any of them is pulled — a missing model
+reports cleanly as `ollama has no model <name>` and then the chain falls through
+to a paid provider. Either pull those three on the machines that enable the tier
+or have the chain read `/api/tags` and rank what is actually there. The second
+is the one that cannot go stale.
+
+**`Finding#reversibility` and `#blast_radius` still have no reader.** Both are
+first-class fields on `Finding`; only `meta_rules.rb` ever sets them and nothing
+in `lib/fix/` reads either. The review that raised this called it the whole of
+autofix safety and was wrong about that — `Scanner#should_autofix?` and
+`AstFixer::DELETING_TRANSFORMS` decide by what a transform *does*, which is the
+better question, and both autofix paths consult it now. What remains is the two
+unread fields: either give them a reader or delete them, because a declared
+field nobody reads is this tree's most common defect and these two have been
+sitting in the constructor since they were added.
+
+**`EXEMPTIONS_EXPIRE` is conduct with no detector.** The tree carries 259 `scan:
+intentional` markers across 136 files and `law/practice.rb:191` declares that an
+exemption outliving its subject is a hole nobody can see. Nothing checks. The
+detector is mechanical: strip the marker, rerun that rule, and report the
+exemption as stale when no finding comes back. Fixtures both directions, the
+report naming the exact rule each marker currently excuses, and a finding rather
+than an error until the corpus is understood.
+
+**No gate measures engine boundaries.** One intentional cross-engine constant
+reference exists — `maps -> Takeaway::Order` — and zero cross-engine
+associations. A source gate should detect constant references and model
+associations across `RAILS/brgen/engines/`, carry that one as a named exemption,
+and fail on the second unreviewed crossing. No Packwerk, no native dependency,
+for one check.
+
+**i18n has resolution checks and no hygiene checks.** The locale tests cover
+duplicates, homes, naming, parity and resolution. Unused keys and
+interpolation-variable parity between locales are both unmeasured. Build it on
+this repo's own search machinery: six mounted engines make a generic
+`i18n-tasks` configuration likely to misread the tree.
+
+### Operator-owned, recorded not opened
+
+Each of these needs the box, money, or a rendered decision, so they are named
+rather than done.
+
+- **relayd restart churn.** The deploy path restarts relayd whenever an
+  individual app comes back healthy, which drops the single HTTPS listener for
+  every other app and has already caused an outage. Read `relayd(8)`,
+  `relayd.conf(5)` and `relayctl(8)` from vm23 first; the likely shape is table
+  disable/enable rather than a daemon restart, with a genuine config change still
+  reloading properly.
+- **Per-process resource evidence.** `resource_guard.sh` sheds on aggregate box
+  load, so the log never says which process took the memory. Add per-process RSS
+  for the managed services, record an exited process as unavailable rather than
+  zero, and change no threshold in the same patch.
+- **Service resource limits.** The Rails `login.conf` class permits a datasize
+  larger than the physical box. Capture steady-state and peak RSS on vm23 first,
+  and open-file usage before touching `openfiles-cur`.
+- **Off-host snapshots.** Backups are same-disk and the restore path points
+  somewhere unusable. The destination and retention policy are the operator's;
+  what is buildable is the contract, the verification, the restore drill, and
+  backup freshness in `/health`.
+- **TTS daemon ownership.** Worker logs and sockets can be created as root while
+  the daemon runs as `master`. Find the writer before adding a periodic chown,
+  expose `tts_socket` in `bin/operator vps state --remote`, and make health
+  distinguish process-up from socket-usable.
+- **The multi-platform Bundler lock.** vm23 carries a hand-repaired
+  `MASTER/Gemfile.lock` whose checksums differ from the committed one; the cause
+  is the BSD-only dependency in `MASTER/Gemfile` and the fix is `install_if`. A
+  deploy-window change, in order: repair the Gemfile, regenerate on both
+  platforms, verify frozen Bundler, verify TTS, deploy, restart master, verify
+  `/health` and relayd, then close.
+- **The face's shader brightness floor.** Probe the live face at production
+  defaults against the README-sized render and change the shader, not a
+  recorder-only uniform. A rendered value: bring the number back for a decision.
+- **The accent question.** Render the front page, marketplace, takeaway, dating,
+  TV, Amber and MASTER with and without the vertical accent, compare interactive
+  affordance, and encode the winner as a token and a gate. One decision, not
+  another abstract colour discussion.
+- **Deep visual gates need a browser.** The measure output has CSS budget rows
+  that cannot be read without one, and an unreadable row must never count as
+  green. Run the deep audit only when a browser is present, keep screenshots and
+  geometry as the receipt, and report unavailable as unavailable.
 
 ## Wishes, not work
 

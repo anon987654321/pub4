@@ -572,6 +572,36 @@ the tracked one.
 Its only test asserted that it skips when there is no git directory — a test of
 the inert path, which is what let it stand.
 
+## The Fold Keeps Its Own YAML Read (2026-09-11)
+
+`Core::Constitution.load` calls `YAML.safe_load_file` on `data/rules.yml`
+directly, and `Master.load_rules` in `lib/boot/data.rb` is the canonical loader
+for that file everywhere else. An external review read that as a one-source
+violation and proposed replacing the direct read with the loader. Declined.
+
+The fix is backwards. The dependency rule from "One Spine, With The Dependency
+Rule Kept" runs one way: the fold must not reach into the application spine.
+`Constitution.load` takes `verify` and `sandbox` as arguments rather than
+requiring them, and the class comment says why twice — the spine reaches nothing
+in `lib/`. `load_rules` lives in `lib/boot/data.rb`, so taking the suggestion
+would make the constitution the first file to break the only structural rule the
+fold has.
+
+What the loader adds over the direct read, in full: a 10 MB size limit on a
+205 KB file, a 20-second timeout on a local read, permitted classes for a file
+that holds no `Date`, and a quiet-if-absent branch for foreign roots that has no
+meaning here. It performs no shard merge — it is `load_yaml` with a path — so
+the two paths return the same object today. The one real divergence is the
+permitted classes: a date added to `rules.yml` would load through `load_rules`
+and raise through the constitution. That is a reason to keep dates out of
+`rules.yml`, where there are none, and not a reason to invert the fold's
+dependency direction.
+
+`test/test_core_no_lib_backedges.rb` holds the boundary by inspecting `require`
+lines. A Zeitwerk-autoloaded call to `Master.load_rules` needs no `require`, so
+the test would not have caught this one — which is why the argument is written
+here rather than left to the gate.
+
 ## One Word Per Concept (2026-09-11)
 
 Two words for one concept means a reader cannot tell whether they name the same
