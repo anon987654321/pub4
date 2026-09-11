@@ -8582,4 +8582,213 @@ recorded popover shadow, Kaufland copy-styling. A finding is a hypothesis.
 
 264 items. Prefer deletion/consolidation. Do not restyle from this file.
 
+
+## master_cli_dmesg_model — ChatGPT intake 2026-09-11
+
+Unmeasured. `NO_ASCII_DECORATION` and `Trace::Dmesg` already exist; ChatController
+dmesg is a second door (restructure 17). Default CLI is already a log, not a TUI.
+Do not add a fake kernel boot, a second execution engine, or progress bars.
+One event stream; text by default, JSON on request. A finding is a hypothesis.
+
+### master_cli_dmesg_model
+
+1. Model normal CLI output as an append-only execution trace rather than a presentation dashboard.
+2. Make every important event express `subsystem: fact`.
+3. Prefer facts over prose explanations.
+4. Prefer topology and relationships over indentation.
+5. Prefer stable subsystem names over visual section headers.
+6. Prefer instance identifiers where multiple workers/components exist.
+7. Make execution hierarchy visible through names and relationships rather than nested UI.
+8. Avoid boxes, banners, decorative separators and dashboard panels in default output.
+9. Avoid progress bars in default output.
+10. Avoid spinners in default output.
+11. Avoid animated terminal repainting in default output.
+12. Avoid “AI assistant” presentation language.
+13. Avoid narrating obvious operations as sentences.
+14. Avoid redundant `starting...`, `working...`, `done!` chatter.
+15. Emit a line when a meaningful subsystem state changes.
+16. Do not emit a line merely because a method was called.
+17. Do not emit a line merely because an internal object changed.
+18. Preserve raw evidence where the evidence itself is useful.
+### subsystem grammar
+
+19. Define canonical subsystem names for MASTER execution.
+20. Use short stable names such as `master`, `repo`, `config`, `rules`, `soul`, `workflow`, `scan`, `sweep`, `council`, `git`, `test`, `patch`, `web`, `tts`, `error`.
+21. Allow subsystem instances where parallel or nested execution makes them useful.
+22. Keep subsystem identifiers stable across releases.
+23. Make subsystem names grep-friendly.
+24. Make subsystem names machine-parseable without requiring JSON.
+25. Avoid verbose class/module names in ordinary output.
+26. Avoid implementation-specific names unless debugging is enabled.
+### fact grammar
+
+27. Prefer `rules: loaded 187`
+28. Prefer `scan: 412 files`
+29. Prefer `violations: 3`
+30. Prefer `git: dirty`
+31. Prefer `patch: 7 files`
+32. Prefer `test: 42 passed`
+33. Prefer `tts: ready`
+34. Prefer `web: face runtime loaded`
+35. Avoid `MASTER has successfully loaded 187 rules`.
+36. Avoid `We are now scanning 412 files`.
+37. Avoid redundant natural-language narration.
+### topology
+
+38. Represent MASTER workflow relationships explicitly.
+39. Make `scan at repo`, `rules at config`, `validation at workflow` relationships available where useful.
+40. Treat the CLI trace as an observable execution topology.
+41. Make parent/child relationships reconstructable from emitted facts.
+42. Avoid visual nesting where semantic relationships can express the same information.
+43. Ensure a log excerpt remains interpretable when copied without its preceding lines.
+### boot
+
+44. Design startup as a compact boot trace.
+45. Report repository identity.
+46. Report effective configuration sources.
+47. Report constitutional sources.
+48. Report runtime identity.
+49. Report model/provider identity when relevant.
+50. Report initial invariants.
+51. Emit `master: ready` only after the boot invariants pass.
+52. Do not print a startup banner.
+53. Do not print an ASCII logo.
+54. Do not print a version splash screen.
+### workflow_trace
+
+55. Represent Discover → Analyze → Ideate → Design → Implement → Validate → Deliver → Learn as trace events.
+56. Enter each phase with one deterministic event.
+57. Emit only meaningful phase-local facts.
+58. Record phase completion only after its completion criteria pass.
+59. Record phase failure at the point of failure.
+60. Make the final trace reconstruct the workflow without a separate progress UI.
+61. Preserve chronological ordering.
+62. Avoid re-rendering previous output.
+### counts
+
+63. Use counts where they communicate concrete evidence.
+64. Prefer `scan: 412 files`.
+65. Prefer `rules: 187 active`.
+66. Prefer `test: 42 passed, 0 failed`.
+67. Prefer `violations: 3 unresolved`.
+68. Avoid percentage completion when completion cannot be measured honestly.
+69. Avoid arbitrary “progress” numbers generated merely to make the CLI feel active.
+70. Never display `100%` until the underlying operation is actually complete.
+### errors
+
+71. Make errors follow the same `subsystem: fact` grammar as successful output.
+72. Make the failed subsystem immediately identifiable.
+73. Include the actual failing resource.
+74. Include the underlying reason.
+75. Include recovery information only when it is deterministic.
+76. Avoid dramatic error formatting.
+77. Avoid color-dependent error semantics.
+78. Preserve the original exception in debug mode.
+79. Keep normal errors concise.
+### warnings
+
+80. Make warnings factual rather than conversational.
+81. Distinguish advisory warnings from blocking conditions.
+82. Include the affected subsystem.
+83. Include the affected path/resource.
+84. Avoid warning banners.
+85. Avoid repeating the same warning on every dependent operation.
+### paths
+
+86. Standardize path formatting.
+87. Prefer paths relative to the MASTER repository when that improves readability.
+88. Use absolute paths only when necessary to disambiguate.
+89. Preserve exact paths in machine-readable output.
+90. Make paths directly copyable into shell commands.
+91. Avoid shortening paths in a way that destroys identity.
+### repeated events
+
+92. Preserve repeated events when repetition itself is evidence.
+93. Collapse repeated noise only when it carries no diagnostic value.
+94. Never deduplicate genuine hardware/runtime failures merely for prettier output.
+95. Provide aggregation only as an optional presentation mode.
+96. Keep default output faithful to execution.
+### silence
+
+97. Make successful low-level operations silent when their result is not decision-relevant.
+98. Treat silence as a valid success state.
+99. Avoid emitting “ok” for every operation.
+100. Avoid emitting “complete” for every subtask.
+101. Avoid progress chatter merely to reassure the user that MASTER has not frozen.
+102. For long-running operations, emit sparse liveness facts only when needed.
+### terminal_independence
+
+103. Make default output correct when piped through `cat`.
+104. Make default output correct when piped through `less`.
+105. Make default output correct when redirected to a file.
+106. Make default output correct over SSH.
+107. Make default output correct on narrow terminals.
+108. Make default output correct without color.
+109. Make default output correct without cursor control.
+110. Make default output useful after losing the first half of the terminal buffer.
+### ansi
+
+111. Make ANSI formatting optional.
+112. Make monochrome output semantically complete.
+113. Respect `NO_COLOR`.
+114. Disable ANSI when stdout is not a TTY.
+115. Never encode semantic state exclusively through color.
+116. Keep the default palette extremely small.
+### dmesg_mode
+
+117. Add an explicit `--dmesg`/trace presentation mode only if a second presentation is actually necessary.
+118. Make the canonical default already conform to the dmesg grammar where practical.
+119. Do not create a second execution engine merely to support dmesg formatting.
+120. Render the same underlying event stream through human and machine presenters.
+121. Ensure dmesg presentation is append-only.
+122. Ensure dmesg presentation never rewrites previous lines.
+### machine_trace
+
+123. Define an internal event representation underneath CLI rendering.
+124. Give each event a timestamp/sequence only when needed.
+125. Give each event a subsystem.
+126. Give each event an event type.
+127. Give each event a severity.
+128. Give each event structured attributes.
+129. Render those events as terse text by default.
+130. Render the same events as JSON when requested.
+131. Ensure human and JSON output cannot disagree about execution state.
+### openbsd_fidelity
+
+132. Study actual OpenBSD dmesg grammar rather than approximating its appearance.
+133. Preserve the characteristic `device at parent` relationship where it maps naturally to MASTER.
+134. Preserve terse comma-separated facts.
+135. Preserve stable subsystem naming.
+136. Preserve chronological discovery.
+137. Preserve repeated lines when operationally meaningful.
+138. Preserve precise error messages.
+139. Avoid copying kernel-specific terminology where it has no semantic equivalent.
+140. Do not turn MASTER into a fake kernel boot log.
+141. Use dmesg as a behavioral/presentation reference, not cosplay.
+### self_test
+
+142. Add golden traces for successful canonical MASTER execution.
+143. Add golden traces for constitutional failure.
+144. Add golden traces for rule violations.
+145. Add golden traces for Git failure.
+146. Add golden traces for model/provider failure.
+147. Add golden traces for partial execution.
+148. Add golden traces for interrupted execution.
+149. Assert deterministic event ordering.
+150. Assert no decorative output in default mode.
+151. Assert no ANSI output under non-TTY execution.
+152. Assert stderr/stdout separation.
+153. Assert correct exit status for each terminal state.
+### final_constraint
+
+154. Review every CLI line with one question: “Would this line exist in a good system diagnostic trace?”
+155. Delete lines whose only purpose is to make the program feel busy.
+156. Delete lines whose only purpose is emotional reassurance.
+157. Delete lines that merely repeat the command being executed.
+158. Delete formatting that competes with the information.
+159. Preserve lines that establish topology, state, evidence or failure.
+160. Make the CLI feel like a system revealing itself rather than an application performing for the user.
+
+160 items. Would this line exist in a good system diagnostic? If not, delete it.
+
 ---
