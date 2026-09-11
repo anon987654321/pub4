@@ -931,6 +931,11 @@ rule-driven one. What the guard cannot see is a change that introduces no
 finding and is still wrong, which is exactly the `walk.js` shape, so a transform
 still earns its own test.
 
+The gate costs 90-180 ms per file it judges, plus 207 ms once to build the
+scanner, measured on this tree. It runs only on files that already have an
+autofixable finding, so a tree-wide pass pays it tens of times rather than
+thousands.
+
 Pipe mode used to ignore ARGV, so `bin/cli /scan RAILS` with no TTY printed nothing and
 exited 0. It honors the argument now, then stdin. Paths still resolve after
 `bin/master` chdirs into MASTER, so a sibling tree is `../RAILS` or the `rails` alias.
