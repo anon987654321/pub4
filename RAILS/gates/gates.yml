@@ -298,17 +298,6 @@ viewport_spill:
   pass: "ok: nothing hangs off the right edge at 390px"
   covered_by: rendered_suite
 
-# Only the controls that paint their own opaque background, where the
-# foreground/background pair is unambiguous. Text over an image, a gradient or
-# a translucent fill needs the whole ancestor stack composited, and that is
-# axe's question rather than this one.
-accent_contrast:
-  needs: [browser]
-  require: lib/rendered/accent_contrast
-  class: Deploy::AccentContrastGate
-  pass: "ok: text on every filled control clears its contrast floor"
-  covered_by: rendered_suite
-
 layout_snapshot:
   needs: [browser]
   require: lib/rendered/layout_snapshot

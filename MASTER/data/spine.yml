@@ -635,7 +635,22 @@ pub4_source_ceilings:
 # single registry exists to prevent. A probe is a thing somebody has to
 # remember to run, and nine contrast failures across four surfaces are what
 # remembering had produced.
-  RAILS: 2394
+# 2394 -> 2392: the contrast gate came back out, and this is the honest half of
+# that entry. rendered_geometry already measures contrast on every text pair it
+# can resolve, across 76 surface-viewport cells against 39, and it reports the
+# same failures — measured by reverting tv's accent ink and watching both gates
+# name the same element on the same surfaces. It is also strictly broader: it
+# caught the storefront cart count, which the new gate walked straight past
+# because that count is a span inside an anchor rather than a control painting
+# its own background.
+#
+# So the nine findings were never found by a new instrument. They were found by
+# running the suite and reading its output, which nobody had done since August
+# because fifteen layout_snapshot failures were sitting on top of them. The
+# gate, its test and its registry row are gone; the one genuinely new check —
+# a literal backslash in gate JavaScript — stayed, folded into
+# gate_requires_resolve_test, whose subject is already half-landed moves.
+  RAILS: 2392
   # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
   # that are the whole defence against a shared index, and nothing tested any of
   # them — a hook that stopped firing looks exactly like a week in which nobody

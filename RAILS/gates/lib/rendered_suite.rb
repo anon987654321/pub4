@@ -11,7 +11,6 @@ require_relative "rendered/mobile_flow"
 require_relative "rendered/cross_app"
 require_relative "rendered/webgl_surfaces"
 require_relative "rendered/viewport_spill"
-require_relative "rendered/accent_contrast"
 
 module Deploy
   # Composite for every gate that measures a real browser.
@@ -33,7 +32,6 @@ module Deploy
       CrossAppEquivalenceGate,
       LayoutSnapshotGate,
       ViewportSpillGate,
-      AccentContrastGate,
       # Last, because it is the only leaf that wants a GPU stack: it opens its
       # own session with SwiftShader rather than the shared --disable-gpu one.
       WebglSurfacesGate,
