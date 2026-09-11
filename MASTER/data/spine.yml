@@ -456,7 +456,12 @@ pub4_source_ceilings:
   # tree renders. Thirty-three reflex files, thirty-two classes, thirty-one
   # mounted. RAILS/test/infinite_scroll_reflex_contract_test.rb asserts the
   # property that would have caught it, and lives outside this count.
-  RAILS: 2366
+  # 2366 -> 2367 for test/repo_hygiene_contract_test.rb. deploy_gates_contract
+  # crossed its length ceiling and the ceiling was right about the shape: nine
+  # assertions about what the repository may hold — scripts reaching for a
+  # utility OpenBSD lacks, key material that must not be tracked, zone files
+  # that must be generated — share no subject with the gate registry.
+  RAILS: 2367
   # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
   # that are the whole defence against a shared index, and nothing tested any of
   # them — a hook that stopped firing looks exactly like a week in which nobody
@@ -537,7 +542,11 @@ pub4_source_ceilings:
   # a test asserting render_rand, a method the engine has never defined, and
   # five the sweep found dead. A catalogue of livesets is dilla's work and
   # belongs beside the three sets it was written after.
-  STUDIO: 148
+  # 148 -> 145: the trymbot skin is retired. It was one deletable file by
+  # design — the same MASTER process wearing a different host — plus its README
+  # and its test, and STUDIO/gate.rb no longer registers a subsystem that is not
+  # there.
+  STUDIO: 145
 
 # Executable files directly under each tree's own bin/ — the number CLAUDE.md's
 # "two surfaces, no third" makes a claim about while nothing counted it. MASTER

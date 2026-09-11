@@ -185,8 +185,8 @@ finding_members:
   - I18N_COVERAGE RAILS/brgen/engines/playlist/app/views/playlist/sets/show.html.erb:39
   - I18N_COVERAGE RAILS/brgen/engines/playlist/app/views/playlist/shared/_dilla_sketches.html.erb:13
   - I18N_COVERAGE RAILS/brgen/engines/takeaway/app/views/takeaway/_nav_bar.html.erb:15
-  - IMMUTABLE RAILS/gates/runner.rb:308
-  - IMMUTABLE RAILS/gates/runner.rb:319
+  - IMMUTABLE RAILS/gates/runner.rb:323
+  - IMMUTABLE RAILS/gates/runner.rb:334
   - MEANINGFUL_NAMES RAILS/brgen/engines/marketplace/app/services/marketplace/listing_facets.rb:47
   - MIGRATION_ADD_REFERENCE_NO_FK RAILS/brgen/db/migrate/20260524113000_create_brgen_social_tables.rb:15
   - MIGRATION_ADD_REFERENCE_NO_FK RAILS/brgen/db/migrate/20260602150000_add_neighborhood_to_dating_profiles.rb:5
@@ -380,7 +380,7 @@ finding_members:
   - PROSE_ACTIVE_VOICE RAILS/brgen/test/jobs/prune_guest_users_job_test.rb:5
   - PROSE_ACTIVE_VOICE RAILS/shared/app/models/concerns/shared/strict_safe_associations.rb:13
   - PROSE_ACTIVE_VOICE STUDIO/postpro/postpro.rb:1822
-  - PROSE_ACTIVE_VOICE_NB RAILS/brgen/config/locales/nb.yml:1686
+  - PROSE_ACTIVE_VOICE_NB RAILS/brgen/config/locales/nb.yml:1701
   - PROSE_OMIT_QUALIFIERS MASTER/web/CLAUDE.md:263
   - PROSE_OMIT_QUALIFIERS MASTER/web/test/controllers/tts_controller_test.rb:28
   - PROSE_OMIT_QUALIFIERS RAILS/brgen/app/controllers/invites_controller.rb:48
@@ -413,10 +413,10 @@ finding_members:
   - USE_THEN RAILS/shared/app/controllers/omniauth_callbacks_controller.rb:1
   - USE_THEN RAILS/shared/app/services/shared/newsletter_visuals.rb:1
   - USE_THEN RAILS/shared/app/services/shared/tradedoubler.rb:1
-registry_findings: 53
+registry_findings: 51
 registry_by_rule:
   NO_GOD_CLASS: 29
-  SILENT_RESCUE: 24
+  SILENT_RESCUE: 22
 registry_finding_members:
   - NO_GOD_CLASS MASTER/web/app/controllers/chat_controller.rb:7
   - NO_GOD_CLASS MASTER/web/app/services/chat_service.rb:7
@@ -464,10 +464,8 @@ registry_finding_members:
   - SILENT_RESCUE STUDIO/dilla/lib/verify_fx.rb:340
   - SILENT_RESCUE STUDIO/dilla/live/rack.rb:114
   - SILENT_RESCUE STUDIO/dilla/live/rack.rb:130
-  - SILENT_RESCUE STUDIO/gate.rb:435
+  - SILENT_RESCUE STUDIO/gate.rb:429
   - SILENT_RESCUE STUDIO/lora/_toolkit/curate.rb:160
   - SILENT_RESCUE STUDIO/postpro/postpro.rb:291
   - SILENT_RESCUE STUDIO/postpro/postpro.rb:302
   - SILENT_RESCUE STUDIO/test/test_dilla_engine_probes.rb:1283
-  - SILENT_RESCUE STUDIO/trymbot/trymbot.rb:163
-  - SILENT_RESCUE STUDIO/trymbot/trymbot.rb:258
