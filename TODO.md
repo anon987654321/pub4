@@ -9237,6 +9237,550 @@ If two things mean the same thing, keep the one with the test.
 
 Keep the one with the test. Then delete the other.
 
+
+## performance — ChatGPT intake 2026-09-11
+
+Unmeasured. MASTER already has ratchets, N+1 rules, face FPS watchdog,
+`operator measure`, and skipped-vs-passed gates. Do not make tests cheaper
+by running fewer of them. Cache facts, not verdicts. Parallelize independent
+work, not dependent reasoning. Every speedup proves quality stayed constant.
+A finding is a hypothesis. Rank, merge, delete.
+
+### performance measurement becomes a first-class invariant
+
+1. Add a `performance_budget.yml` registry with wall-clock, CPU, allocation, RSS and I/O ceilings for every major command.
+2. Record cold-start and warm-start baselines separately.
+3. Record Ruby process RSS at boot, steady state and peak.
+4. Record object allocation counts for the major CLI commands.
+5. Record GC count and GC time for each benchmark.
+6. Record filesystem read/write bytes during major commands.
+7. Record subprocess count and cumulative subprocess time.
+8. Record network calls and cumulative network latency.
+9. Record model/provider calls and token counts separately from local execution time.
+10. Add `bin/operator measure --performance`.
+11. Add `bin/operator measure --performance --json`.
+12. Add `bin/operator measure --performance --why <metric>`.
+13. Add historical performance ratchets beside existing structural ratchets.
+14. Fail only on statistically significant regressions rather than single noisy samples.
+15. Store median, p95 and worst-case rather than one timing.
+16. Require three cold runs and five warm runs before changing a baseline.
+17. Add coefficient-of-variation reporting.
+18. Reject baseline updates when variance exceeds a configured threshold.
+19. Record machine, Ruby, Bundler and kernel versions with benchmarks.
+20. Record Git SHA with every performance measurement.
+21. Add a performance ledger under `.master/performance/`.
+22. Keep generated performance measurements out of normal source-tree scans.
+23. Add a `performance_budget` rule to MASTER's constitutional registry.
+24. Make every performance claim include an instrument.
+25. Make “faster” invalid unless correctness/quality remains unchanged.
+26. Add a performance regression test for every optimization that lands.
+27. Add a quality-equivalence check beside every benchmark.
+28. Add deterministic benchmark fixtures.
+29. Add benchmark fixtures large enough to expose asymptotic regressions.
+30. Add tiny fixtures for fast developer feedback.
+31. Add `--quick` and `--full` performance profiles.
+32. Make CI run quick performance gates.
+33. Run full performance gates nightly.
+34. Track cold boot separately from application throughput.
+35. Track first meaningful output separately from total runtime.
+36. Track time-to-first-token separately from model completion time.
+37. Track time-to-first-pixel for the web face.
+38. Track time-to-interactive for the web UI.
+39. Track CLI startup before command dispatch.
+40. Track CLI startup after command dispatch.
+### eliminate repeated repository-wide work
+
+41. Build one shared repository file index.
+42. Cache that index by Git tree SHA.
+43. Make every scanner consume the shared index.
+44. Never recursively glob the same tree twice in one invocation.
+45. Add an in-process file-content cache.
+46. Key cached contents by path + stat signature.
+47. Prefer Git blob IDs when available.
+48. Avoid rereading unchanged files between scanner passes.
+49. Add a repository snapshot object to MASTER's runtime.
+50. Build the snapshot once at command startup.
+51. Pass the snapshot through scanner layers.
+52. Pass parsed ASTs through scanner layers.
+53. Pass YAML parse results through scanner layers.
+54. Pass Markdown parse results through scanner layers.
+55. Pass file classifications through scanner layers.
+56. Cache `Pathname`/absolute-path normalization.
+57. Cache relative-path calculations.
+58. Cache generated-file classification.
+59. Cache language detection.
+60. Cache file-size calculations.
+61. Cache line counts.
+62. Cache SHA256/blob identifiers.
+63. Cache Git status for a single command invocation.
+64. Cache `git diff --name-only`.
+65. Cache `git diff --numstat`.
+66. Cache changed-line ranges.
+67. Cache Git tree enumeration.
+68. Replace repeated `Dir.glob` calls with one traversal.
+69. Replace repeated `File.read` calls with shared content objects.
+70. Detect consumers that independently scan identical file sets.
+71. Add an instrumentation counter for filesystem traversal.
+72. Add an instrumentation counter for file reads.
+73. Fail performance tests when redundant scans exceed a threshold.
+74. Make scanner passes explicitly declare required indexes.
+75. Make indexes lazily materialized rather than eagerly building everything.
+76. Invalidate only the changed portion of an index.
+77. Persist expensive indexes between invocations where safe.
+78. Include repository SHA in persistent-index keys.
+79. Drop persistent indexes automatically after Git history rewrites.
+80. Add an explicit `--no-cache` diagnostic mode.
+### MASTER boot and Ruby execution
+
+81. Benchmark `bundle exec ruby bin/cli` cold startup.
+82. Benchmark `bundle exec ruby bin/operator status`.
+83. Benchmark `bundle exec ruby bin/operator lint`.
+84. Benchmark `bundle exec ruby bin/operator measure`.
+85. Benchmark `bundle exec ruby bin/operator gate --scan-only`.
+86. Identify the top 20 boot-time requires.
+87. Lazy-load optional CLI subsystems.
+88. Lazy-load council infrastructure.
+89. Lazy-load TTS infrastructure.
+90. Lazy-load web-only infrastructure.
+91. Lazy-load Dilla infrastructure.
+92. Lazy-load browser/Ferrum infrastructure.
+93. Avoid loading test dependencies for normal commands.
+94. Avoid loading OpenTelemetry unless explicitly enabled.
+95. Avoid loading RuboCop unless the command needs it.
+96. Avoid loading Reek unless the command needs it.
+97. Avoid loading Flay unless the command needs it.
+98. Avoid loading Ferrum outside browser gates.
+99. Avoid loading `tty-*` dependencies for noninteractive commands.
+100. Measure Zeitwerk boot cost separately.
+101. Identify constants loaded solely because of eager requires.
+102. Replace unnecessary top-level work with explicit initialization.
+103. Make expensive registries lazy.
+104. Freeze static configuration after loading.
+105. Avoid rebuilding immutable registries per command.
+106. Cache parsed `rules.yml` for the process lifetime.
+107. Cache parsed `soul.yml` for the process lifetime.
+108. Cache parsed workflow configuration.
+109. Cache path ownership configuration.
+110. Cache spine configuration.
+111. Cache application manifests.
+112. Make all configuration loaders expose memoized APIs.
+113. Ensure memoization cannot leak mutable state.
+114. Add allocation benchmarks around boot.
+115. Add RSS benchmarks around boot.
+116. Add “minimal CLI boot” mode.
+117. Ensure `--help` never initializes the LLM stack.
+118. Ensure `status` never initializes the LLM stack.
+119. Ensure `measure` never initializes the LLM stack unless necessary.
+120. Ensure deterministic scanners never initialize network providers.
+### subprocess elimination
+
+121. Instrument every `Open3.capture2e` invocation.
+122. Produce a subprocess cost report.
+123. Identify nested Ruby subprocesses.
+124. Replace safe Ruby-to-Ruby subprocesses with direct calls.
+125. Keep subprocess isolation only where it provides correctness value.
+126. Avoid invoking `bin/operator` from inside `bin/operator`.
+127. Avoid invoking `bin/gate` from inside another Ruby gate when direct APIs exist.
+128. Expose gate stages as callable Ruby objects.
+129. Preserve CLI boundaries at the outermost layer.
+130. Batch Git queries.
+131. Replace multiple `git status` calls with one snapshot.
+132. Replace multiple `git diff` calls with one parsed diff.
+133. Replace repeated `git rev-parse` calls with one repository context.
+134. Replace repeated `git ls-files` calls with one indexed result.
+135. Batch filesystem probes.
+136. Avoid spawning shells merely to execute Ruby.
+137. Avoid `rbenv exec` where the already-running Ruby is authoritative.
+138. Measure whether `bundle exec` is necessary for every command.
+139. Create a minimal-runtime command path.
+140. Make expensive external tools explicit rather than implicit.
+### GateChain itself
+
+141. Add dependency-aware stage skipping.
+142. Compute which stages can possibly be affected by changed paths.
+143. Preserve mandatory whole-tree stages where constitutionally required.
+144. Make unaffected deterministic gates cacheable.
+145. Cache successful gate results by Git tree SHA.
+146. Cache gate results by tool/version/config fingerprint.
+147. Invalidate only gates whose dependencies changed.
+148. Run independent read-only gates concurrently.
+149. Cap concurrency according to CPU count.
+150. Never allow unbounded gate threads.
+151. Preserve deterministic output ordering.
+152. Add critical-path timing to gate output.
+153. Show cumulative time beside every stage.
+154. Show cache hit/miss beside every stage.
+155. Show files examined beside every stage.
+156. Show subprocesses spawned beside every stage.
+157. Show allocations beside every stage in diagnostic mode.
+158. Run cheap rejection gates before expensive gates.
+159. Run syntax validation before semantic analysis.
+160. Run changed-file analysis before whole-tree analysis.
+161. Avoid council when deterministic gates already prove a hard failure.
+162. Avoid browser gates when source-level prerequisites fail.
+163. Avoid model calls when deterministic evidence is sufficient.
+164. Avoid expensive fixers when scan-only is requested.
+165. Make council explicitly opt-in for local fast mode.
+166. Preserve the current full-fidelity mode as the quality reference.
+167. Add a `--profile=fast|normal|full|forensic` operator profile.
+168. Make `full` the release-quality profile.
+169. Make `fast` suitable for interactive editing.
+170. Make `forensic` disable performance shortcuts.
+### scanner architecture
+
+171. Compile lexical rules once.
+172. Compile regexes once.
+173. Freeze compiled rule registries.
+174. Avoid reconstructing RuleDSL objects per file.
+175. Pre-index rules by file type.
+176. Pre-index rules by AST node type.
+177. Pre-index rules by lexical feature.
+178. Skip Ruby AST parsing for rules that are lexical-only.
+179. Skip Markdown parsing for rules that cannot apply to Markdown.
+180. Skip HTML parsing when only static asset rules are requested.
+181. Short-circuit impossible rule/file combinations.
+182. Add per-rule cost measurements.
+183. Rank rules by cumulative CPU cost.
+184. Rank rules by findings produced per millisecond.
+185. Identify zero-finding expensive rules.
+186. Identify duplicate detectors.
+187. Merge equivalent detectors.
+188. Compile multiple lexical rules into shared passes.
+189. Avoid scanning the same line once per rule.
+190. Build token indexes once per file.
+191. Reuse ASTs between detectors.
+192. Reuse comments between detectors.
+193. Reuse source locations between detectors.
+194. Cache Prism parse results by blob SHA.
+195. Cache parser failures by blob SHA.
+196. Benchmark Prism versus alternative parsing paths.
+197. Add AST complexity budgets.
+198. Avoid deep AST traversal where a shallow match proves impossibility.
+199. Add rule dependency declarations.
+200. Execute independent rules in deterministic batches.
+### review/council performance
+
+201. Measure persona dispatch cost independently from model latency.
+202. Cache deterministic persona context.
+203. Avoid constructing identical persona prompts repeatedly.
+204. Deduplicate overlapping persona questions.
+205. Collapse identical evidence extraction across personas.
+206. Precompute evidence once.
+207. Give every persona an evidence digest instead of rereading files.
+208. Cache evidence digests by Git tree SHA.
+209. Cache completed deterministic critique results.
+210. Never ask an LLM to rediscover filesystem facts already known to MASTER.
+211. Make council prompts reference compact evidence IDs.
+212. Compress repeated rule definitions.
+213. Avoid embedding entire files when relevant slices suffice.
+214. Add token-budget accounting before provider dispatch.
+215. Refuse oversized prompts before network transmission.
+216. Cache provider-independent intermediate reasoning artifacts where safe.
+217. Keep provider-specific serialization at the boundary.
+218. Parallelize independent personas with a bounded pool.
+219. Cancel remaining personas after a hard veto when constitution permits.
+220. Preserve complete evidence for audit even when execution is short-circuited.
+221. Record token savings per council optimization.
+222. Add a “deterministic-only” council mode.
+223. Add a “performance-only” review persona that uses measured data.
+224. Make performance claims require benchmark evidence.
+225. Prevent the performance agent from recommending optimizations without measurements.
+### web face / GPU
+
+226. Measure CPU time per `frame()`.
+227. Measure GPU frame time where supported.
+228. Measure draw-call count.
+229. Measure shader invocation cost where available.
+230. Measure particle count.
+231. Measure live-particle count.
+232. Measure buffer upload bytes per frame.
+233. Measure uniform updates per frame.
+234. Measure DOM mutations per frame.
+235. Measure event emissions per frame.
+236. Measure worker message volume.
+237. Measure worker serialization cost.
+238. Stop serializing unchanged particle state.
+239. Replace full particle-buffer copies with transferable ownership.
+240. Avoid copying `cells`, `decay` and `alive` every frame.
+241. Transfer only dirty ranges.
+242. Double-buffer worker state.
+243. Batch particle-worker updates.
+244. Cap worker frequency independently of render frequency.
+245. Run semantic particle simulation at a lower tick rate than rendering.
+246. Interpolate particle state between simulation ticks.
+247. Decouple visual FPS from simulation FPS.
+248. Reduce particle simulation when tab is backgrounded.
+249. Reduce simulation during sustained low FPS.
+250. Reduce simulation when CPU pressure is high.
+251. Reduce particle count before reducing visual quality.
+252. Preserve important facial landmarks before decorative particles.
+253. Add adaptive quality tiers based on measured frame time.
+254. Add hysteresis so quality does not oscillate.
+255. Add device-class performance profiles.
+256. Add low-end, mid-range and high-end targets.
+257. Make render scale respond to sustained frame-time debt.
+258. Make render scale recover gradually.
+259. Avoid resizing GPU resources unnecessarily.
+260. Debounce resize events.
+261. Cache canvas dimensions.
+262. Cache device-pixel-ratio.
+263. Recompute DPR only on relevant changes.
+264. Avoid unnecessary material uniform writes.
+265. Cache uniform values before assignment.
+266. Skip unchanged uniforms.
+267. Batch shader state changes.
+268. Minimize material switches.
+269. Minimize texture binds.
+270. Minimize geometry binds.
+271. Merge compatible particle draw calls.
+272. Use instancing where visually equivalent.
+273. Cull invisible particles.
+274. Cull particles outside the face bounds.
+275. Use spatial buckets for particle culling.
+276. Avoid per-particle object allocation.
+277. Avoid per-frame closures.
+278. Avoid per-frame array creation.
+279. Avoid per-frame template-string creation outside debug mode.
+280. Disable debug DOM generation unless requested.
+281. Remove debug calculations entirely from production frames.
+282. Sample FPS less frequently on production builds.
+283. Move FPS diagnostics into an optional module.
+284. Stop the watchdog entirely when the renderer is demonstrably healthy for a sustained interval.
+285. Back off watchdog frequency after stable operation.
+286. Make the fallback pump event-driven where possible.
+287. Avoid running both rAF and fallback work unnecessarily.
+288. Ensure fallback `setInterval` never runs while natural rAF is healthy.
+289. Measure watchdog CPU overhead.
+290. Add a zero-animation mode for accessibility and low-power devices.
+### browser/network delivery
+
+291. Measure JS payload sizes after compression.
+292. Measure parse/compile time for every major JS bundle.
+293. Measure script evaluation time.
+294. Measure stylesheet parse time.
+295. Split face code into capability-driven chunks.
+296. Lazy-load particle simulation.
+297. Lazy-load speech playback.
+298. Lazy-load visual bridge code.
+299. Lazy-load debug code.
+300. Lazy-load optional interaction layers.
+301. Preload only genuinely critical assets.
+302. Defer everything that cannot affect first paint.
+303. Add Brotli-size budgets.
+304. Add gzip-size budgets.
+305. Add transfer-size budgets.
+306. Add cache-hit budgets.
+307. Add immutable asset fingerprinting.
+308. Ensure static assets get long-lived cache headers.
+309. Ensure HTML gets short-lived cache semantics.
+310. Avoid duplicate JS copies under different names.
+311. Detect duplicate browser dependencies.
+312. Measure third-party asset cost.
+313. Remove unused browser dependencies.
+314. Add a route-level asset manifest.
+315. Load only assets required by the current route.
+316. Add image dimension metadata.
+317. Reserve image layout space before load.
+318. Use responsive image variants.
+319. Avoid loading hidden images.
+320. Add lazy loading to below-fold media.
+321. Preconnect only to genuinely required origins.
+322. Eliminate unnecessary DNS lookups.
+323. Measure TLS handshake cost.
+324. Measure TTFB independently from server execution.
+325. Add server timing headers to diagnostic mode.
+### RAILS application performance
+
+326. Add request-level SQL timing.
+327. Add query-count budgets by route.
+328. Add N+1 regression tests per major application.
+329. Add allocation budgets per controller action.
+330. Add response-size budgets.
+331. Add view-render timing.
+332. Add partial-render timing.
+333. Add fragment-cache hit/miss metrics.
+334. Add low-cardinality cache keys.
+335. Audit cache-key churn.
+336. Add cache stampede protection.
+337. Add bounded cache TTLs.
+338. Add cache invalidation tests.
+339. Add database index audits.
+340. Add missing-index detection from query plans.
+341. Add slow-query sampling.
+342. Add query-plan regression tests.
+343. Replace repeated count queries with precomputed counters where evidence supports it.
+344. Replace repeated existence queries with `exists?`.
+345. Ensure pagination is mandatory for unbounded collections.
+346. Replace offset pagination where datasets justify keyset pagination.
+347. Add keyset pagination helpers.
+348. Add maximum page-size enforcement.
+349. Add maximum eager-load cardinality checks.
+350. Detect accidental full-table materialization.
+351. Detect `.to_a` on potentially large relations.
+352. Detect repeated relation enumeration.
+353. Detect redundant database queries inside serializers.
+354. Detect repeated authorization queries.
+355. Cache immutable application configuration.
+356. Avoid reparsing manifests on every request.
+357. Precompute route metadata.
+358. Precompute application metadata.
+359. Measure boot cost separately for every RAILS app.
+360. Share common framework initialization where operationally safe.
+### background jobs / concurrency
+
+361. Measure queue wait time separately from execution time.
+362. Measure job service time.
+363. Measure retry amplification.
+364. Measure failed-job reprocessing cost.
+365. Add bounded worker concurrency.
+366. Tune concurrency from measured CPU/RAM capacity.
+367. Prevent concurrency from multiplying expensive model calls uncontrollably.
+368. Deduplicate identical queued work.
+369. Collapse bursts of identical filesystem scans.
+370. Coalesce repeated cache invalidations.
+371. Coalesce repeated browser updates.
+372. Add backpressure to streaming paths.
+373. Add bounded queues everywhere.
+374. Add queue-depth telemetry.
+375. Add queue-latency budgets.
+376. Add cancellation for obsolete work.
+377. Cancel superseded face-expression updates.
+378. Cancel superseded visual events.
+379. Cancel stale model requests where safe.
+380. Prevent abandoned futures/promises from retaining large payloads.
+### TTS and audio
+
+381. Cache identical TTS requests by voice + text + settings.
+382. Cache normalized text separately from generated audio.
+383. Deduplicate simultaneous identical TTS requests.
+384. Stream TTS output when provider supports it.
+385. Measure TTS first-byte latency.
+386. Measure TTS synthesis latency.
+387. Measure playback startup latency.
+388. Reuse audio buffers.
+389. Avoid rereading generated audio from disk unnecessarily.
+390. Add bounded TTS cache size.
+391. Evict by cost/value rather than only age.
+392. Add voice-specific cache namespaces.
+393. Detect unnecessary regeneration after deploy.
+394. Warm only the configured production voice.
+395. Keep optional voices cold.
+396. Move TTS health checks off the critical request path.
+397. Make TTS failure degrade without blocking core MASTER.
+398. Keep TTS worker CPU isolated from interactive work.
+399. Measure TTS worker RSS.
+400. Add TTS queue backpressure.
+### memory and object allocation
+
+401. Add allocation profiling for the top 20 commands.
+402. Identify the top allocation sites.
+403. Remove temporary arrays from hot paths.
+404. Remove temporary hashes from hot paths.
+405. Freeze static arrays.
+406. Freeze static hashes.
+407. Reuse buffers where ownership is clear.
+408. Replace repeated string interpolation in hot loops.
+409. Use symbols for stable internal keys where appropriate.
+410. Avoid repeated path-string construction.
+411. Avoid repeated `File.join` in inner loops.
+412. Avoid repeated regex compilation.
+413. Avoid repeated `Regexp#match` where `include?` suffices.
+414. Avoid `map` where no resulting array is needed.
+415. Avoid `select` followed by `map`.
+416. Avoid repeated `sort` when source ordering is stable.
+417. Avoid repeated `uniq` when data is already normalized.
+418. Avoid retaining full scanner output when only counts are needed.
+419. Stream large reports instead of constructing giant strings.
+420. Bound in-memory evidence collections.
+421. Add memory ceilings to repository-wide scans.
+422. Detect accidental retention of full source trees.
+423. Detect large objects captured by long-lived closures.
+424. Add GC-pressure benchmarks.
+425. Measure benefit before introducing object pools.
+### Git performance
+
+426. Centralize Git state acquisition.
+427. Prefer one `git status --porcelain=v2` snapshot.
+428. Parse Git output once.
+429. Avoid repeated `git diff`.
+430. Avoid repeated `git log` for the same ref.
+431. Cache commit metadata.
+432. Cache tree metadata.
+433. Cache blob metadata.
+434. Use Git's changed-path machinery instead of filesystem walks when the question is “what changed?”
+435. Use `git ls-files` instead of recursive discovery where appropriate.
+436. Add a Git-backed repository index.
+437. Add incremental invalidation by changed blob.
+438. Make Git cache keys explicit.
+439. Detect working-tree changes that invalidate caches.
+440. Never let stale Git caches influence correctness.
+### OpenBSD production performance
+
+441. Measure relayd latency separately from application latency.
+442. Measure TLS handshake latency.
+443. Measure backend connection reuse.
+444. Measure app accept latency.
+445. Measure socket backlog pressure.
+446. Measure worker saturation.
+447. Measure RSS per service.
+448. Measure CPU per service.
+449. Measure disk I/O per service.
+450. Add lightweight `/health?detail=performance` diagnostics.
+451. Keep normal `/health` cheap.
+452. Add service-level latency histograms.
+453. Add deploy-time before/after latency comparison.
+454. Add deploy-time RSS comparison.
+455. Add deploy-time CPU comparison.
+456. Alert on unexplained performance drift.
+457. Detect relayd regressions separately from application regressions.
+458. Keep diagnostic collection bounded.
+459. Avoid expensive health checks on every poll.
+460. Cache static health metadata.
+### STUDIO / Dilla
+
+461. Cache sample metadata.
+462. Cache sample duration.
+463. Cache sample fingerprints.
+464. Replace repeated `Dir.glob("samples/chopped/#{slug}*")` with one indexed directory scan.
+465. Build a sample catalog once.
+466. Persist the sample catalog.
+467. Incrementally update it when samples change.
+468. Cache waveform analysis.
+469. Cache MIDI parsing.
+470. Cache generated groove analysis.
+471. Avoid rereading WAV headers unnecessarily.
+472. Avoid decoding audio merely to inspect metadata.
+473. Batch filesystem metadata calls.
+474. Measure render CPU cost.
+475. Measure render allocation cost.
+476. Measure audio generation throughput.
+477. Add deterministic audio performance fixtures.
+478. Add render-quality hashes beside performance measurements.
+479. Ensure faster rendering produces bit-identical output where promised.
+480. Otherwise define perceptual-equivalence tests explicitly.
+### developer workflow
+
+481. Make every expensive command print a compact timing summary in diagnostic mode.
+482. Add `bin/operator doctor performance`.
+483. Add `bin/operator benchmark <target>`.
+484. Add `bin/operator benchmark --compare <ref>`.
+485. Add `bin/operator benchmark --baseline`.
+486. Add `bin/operator benchmark --regression`.
+487. Add `bin/operator profile <command>`.
+488. Add `bin/operator profile --allocations`.
+489. Add `bin/operator profile --gc`.
+490. Add `bin/operator profile --io`.
+491. Add `bin/operator profile --subprocess`.
+492. Add `bin/operator profile --network`.
+493. Add `bin/operator hotpaths`.
+494. Rank hot paths by total cost, not merely local cost.
+495. Rank optimizations by expected wall-clock savings.
+496. Rank optimizations by risk.
+497. Rank optimizations by quality impact.
+498. Prefer optimizations with zero semantic change.
+499. Require before/after evidence before retaining an optimization.
+500. Delete performance TODOs that measurements prove irrelevant.
+
+500 items. Never optimize by making the measurement cheaper than the thing measured.
+
 ---
-
-
