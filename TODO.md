@@ -10651,3 +10651,31 @@ business → subscriptions → promoted listings → analytics → credits → t
 Pro → sponsored placement → coupons → CRM → optional payments.
 
 ---
+
+## Tree grammar — ChatGPT intake 2026-09-11
+
+Unmeasured. Four top-level names stay: `MASTER/`, `RAILS/`, `OPENBSD/`, `STUDIO/`. Do not nest them under `apps/`. Do not move 800 files because the tree looks prettier. Structural ratchet: write ownership rules, then move only files that violate them. `PATH_OWNERSHIP.yml` and `TREE.md` already exist; TREE is a map, not a census — generate counts, don’t hand-edit a second filesystem. Fenced: LAYER_CAKE, `lib/services|helpers|utils|misc`, folding `dilla.rb`, renaming `OPENBSD/etc/` if it means `/etc`. `lib/pub4/` is already gone (spine still mentions it). A finding is a hypothesis.
+
+1. **RAILS `shared/` → explicit `platform/` only where the thing is reusable product infrastructure.** Authentication, media, notifications, commerce. Not a dump. Keep `shared/` until two real consumers exist for each extract.
+2. **Engines are product domains only.** marketplace, takeaway, messenger, dating, maps, playlist, tv, events. No technical helpers as engines.
+3. **`commerce/` as a first-class cross-app domain before affiliate work.** One ledger, tracking, promotions. Marketplace, takeaway, amber consume it. Do not start three affiliate stacks.
+4. **MASTER `lib/` stays responsibility-based.** boot / core / review / fix / ground / io / cli / voice. No `lib/services|helpers|utils|misc|common|support`.
+5. **Justify or forget `lib/pub4`.** Directory is gone; spine.yml still talks about it. Update spine comments. Don’t recreate the namespace as a junk drawer.
+6. **Split the giant `MASTER/Rakefile` into `lib/tasks/*.rake` or `tasks/*.rake`.** Root Rakefile lists commands; it does not implement the OS.
+7. **`bin/` becomes boring.** Keep `master`, `operator`, `cli`. The rest become subcommands (`operator measure`, `master doctor`). `probe` and `dogfood` stay until their one caller is retargeted (already decided not to fold blindly).
+8. **MASTER docs: README = what, START_HERE = how, `docs/` = deeper, `law/`+`data/` = normative.** Move AEGIS/COGNITION/EXAMPLES/DECISIONS under `docs/` only if agent contracts still point. `AGENTS.md` stays where harnesses find it.
+9. **OPENBSD: `etc/` stays if it is files that belong under `/etc`.** Distinguish `bin/`, checks, services, runbook, test. Don’t invent `config/` that copies `etc/`.
+10. **STUDIO: each tool `bin/lib/data/test` where warranted.** Don’t split `dilla.rb`. `renders/` is generated. `tools/` only if there are multiple independent utilities.
+11. **Ban unresolved ownership names repo-wide.** `misc/ helpers/ utils/ support/ common/ stuff/ other/ old/ new/ experimental/ miscellaneous/`. Escape hatches: `tools/` (standalone), `platform/` (deliberate reuse).
+12. **Source vs generated vs evidence.** `renders/ build/ tmp/ coverage/ reports/ artifacts/` never look like source. Don’t commit generated assets.
+13. **`TREE.md` generated from the tree for counts; prose map stays hand-written or the generator emits both.** Never a second filesystem edited by hand.
+14. **Domain vs machinery.** Product does vs system uses. `engines/marketplace` = domain. `verification/` or `gates/` = machinery. Rename `gates/` to `verification/` only if PATH_OWNERSHIP and runner paths move in one commit.
+15. **Amber intelligence dirs only when the domains exist.** perception / preference / recommendation / commerce. Don’t mkdir empty.
+16. **Root stays four trees + TODO + TREE + harness files.** Don’t add `docs/` at repo root that copies MASTER/OPENBSD runbooks.
+17. **Move only files whose current location violates the new rule.** MASTER checks the new tree is more explanatory. No pretty-tree rewrite.
+18. **`shared/lib/operator` stays flat.** Already decided.
+
+Priority: 1–3 before affiliate code, 4–8 MASTER, 9 OPENBSD, 10 STUDIO, 11–13 repo-wide. Capability first; then the directory name.
+
+---
+
