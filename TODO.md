@@ -8791,4 +8791,303 @@ One event stream; text by default, JSON on request. A finding is a hypothesis.
 
 160 items. Would this line exist in a good system diagnostic? If not, delete it.
 
+
+## pub4 subtraction and entropy — ChatGPT intake 2026-09-11
+
+Unmeasured repo-wide pass: what should exist, what should disappear, what should
+become simpler. `operator gate`, sprawl census, FILE_SPRAWL, restructure “one job,
+one door,” and soul `perfection is subtraction` already exist. Do not invent a
+second CI in git hooks, rewrite history for cosmetics, merge trees for visual
+similarity, or LAYER_CAKE. If two things mean the same thing, why do both exist?
+If complexity rises faster than capability, the next work is subtraction.
+A finding is a hypothesis.
+
+### Remove / consolidate
+
+1. Delete obsolete compatibility layers once their consumers are gone.
+2. Remove dead files, dead constants, dead methods and dead configuration.
+3. Remove duplicate YAML/JSON registries.
+4. Remove duplicate implementations of the same concept across MASTER/RAILS/OPENBSD/STUDIO.
+5. Remove historical migration code that no longer participates in startup/runtime.
+6. Remove stale TODO items that describe already-completed work.
+7. Remove TODO items whose premise has been disproven by measurement.
+8. Remove generated artifacts from source when they can be deterministically rebuilt.
+9. Remove manually maintained generated files where safe.
+10. Remove unused dependencies from every Gemfile/package manifest.
+11. Remove dependencies that duplicate Ruby/Rails standard functionality.
+12. Remove abandoned experiments rather than preserving them indefinitely “just in case.”
+13. Remove compatibility aliases with zero remaining callers.
+14. Remove obsolete environment variables.
+15. Remove configuration values that have only one possible value.
+16. Remove wrapper methods that add no semantic value.
+17. Remove one-line abstractions that merely rename another operation.
+18. Remove defensive code for impossible states once the invariant is enforced centrally.
+19. Remove duplicated validation between adjacent layers where one authoritative validation point is sufficient.
+20. Remove decorative CLI/UI machinery that doesn't expose useful state.
+21. Remove redundant logging.
+22. Remove noisy debug logging from normal execution.
+23. Remove duplicate tests that exercise identical behavior without adding coverage.
+24. Remove fixtures that encode obsolete behavior.
+25. Remove obsolete documentation that conflicts with actual behavior.
+26. Remove stale references to deleted files such as old `axioms.yml`-style paths.
+27. Remove abandoned branches/worktrees/scripts from the repository where they have no operational purpose.
+28. Remove “future work” language for work that is already implemented.
+29. Remove speculative abstractions before they acquire consumers.
+### Simplify architecture
+
+30. Establish one canonical configuration-loading path.
+31. Establish one canonical repository/root discovery mechanism.
+32. Establish one canonical runtime context object.
+33. Establish one canonical result/error representation.
+34. Establish one canonical violation representation.
+35. Establish one canonical rule representation.
+36. Establish one canonical workflow-phase representation.
+37. Establish one canonical model/provider representation.
+38. Establish one canonical subprocess execution layer.
+39. Establish one canonical filesystem abstraction where abstraction is actually justified.
+40. Establish one canonical command/event representation.
+41. Establish one canonical path-normalization policy.
+42. Establish one canonical logging/event emission mechanism.
+43. Establish one canonical timeout policy.
+44. Establish one canonical retry policy.
+45. Establish one canonical cancellation mechanism.
+46. Establish one canonical concurrency policy.
+47. Establish one canonical temporary-directory policy.
+48. Establish one canonical cleanup policy.
+### Dependency hygiene
+
+49. Produce a complete dependency inventory for each application.
+50. Identify dependencies used by only one trivial feature.
+51. Identify dependencies whose functionality overlaps.
+52. Identify transitive dependencies that can be eliminated by changing one direct dependency.
+53. Verify every runtime dependency has an actual runtime consumer.
+54. Verify development/test dependencies aren't loaded in production.
+55. Establish dependency update policy.
+56. Record intentionally pinned versions and why.
+57. Detect abandoned gems/packages.
+58. Detect duplicate libraries solving the same problem.
+59. Measure startup cost of heavyweight dependencies.
+60. Measure memory impact of major dependencies.
+61. Test clean installation from an empty environment.
+62. Test deployment with only declared dependencies.
+63. Remove accidental host-machine dependencies.
+### Ruby quality
+
+64. Run a whole-repository Ruby syntax pass.
+65. Run a whole-repository parser/AST pass.
+66. Establish one Ruby formatting/style source of truth.
+67. Detect methods with excessive branching.
+68. Detect excessive method length.
+69. Detect excessive class/module size.
+70. Detect excessive nesting.
+71. Detect high fan-out classes.
+72. Detect circular dependencies.
+73. Detect constants referenced across inappropriate boundaries.
+74. Detect private APIs being used externally.
+75. Detect accidental public methods.
+76. Audit `rescue StandardError`.
+77. Audit bare `rescue`.
+78. Audit exception swallowing.
+79. Audit `ensure` correctness.
+80. Audit subprocess handling.
+81. Audit shell interpolation.
+82. Audit filesystem race conditions.
+83. Audit temporary-file handling.
+84. Audit encoding assumptions.
+85. Audit timezone assumptions.
+86. Audit implicit global state.
+87. Audit mutable constants.
+88. Audit thread lifecycle.
+89. Audit unbounded queues.
+90. Audit unbounded loops.
+91. Audit implicit network calls.
+92. Audit methods whose names don't match their side effects.
+### Rails quality
+
+93. Audit controllers for business logic.
+94. Audit models for excessive responsibilities.
+95. Audit service objects for abstraction without justification.
+96. Audit callbacks for hidden side effects.
+97. Audit concerns for accidental coupling.
+98. Audit serializers/presenters/view models for duplication.
+99. Audit routes for obsolete endpoints.
+100. Audit jobs for retry/idempotency correctness.
+101. Audit mailers for stale templates.
+102. Audit ActiveRecord queries for N+1 behaviour.
+103. Audit unnecessary eager loading.
+104. Audit unnecessary database round trips.
+105. Audit missing indexes based on actual query patterns.
+106. Audit unused indexes.
+107. Audit database constraints vs application-only validation.
+108. Audit migrations for historical cruft.
+109. Audit authorization boundaries.
+110. Audit authentication assumptions.
+111. Audit CSRF/session/security defaults.
+112. Audit caching correctness and invalidation.
+113. Audit Solid Queue/Cache/Cable usage and lifecycle.
+114. Audit ActionCable channels for subscription cleanup.
+115. Audit background jobs for duplicate execution.
+116. Audit all external requests for timeouts.
+### Security
+
+117. Full secret/credential scan.
+118. Full shell-injection scan.
+119. Full command-injection scan.
+120. Full path-traversal scan.
+121. Full SSRF scan.
+122. Full unsafe-deserialization scan.
+123. Full HTML/ERB injection scan.
+124. Full SQL construction scan.
+125. Full URL handling scan.
+126. Full file-upload scan.
+127. Full authorization matrix.
+128. Full session/cookie configuration review.
+129. Full CORS review.
+130. Full CSP review.
+131. Full security-header review.
+132. Full dependency vulnerability audit.
+133. Verify production error responses don't leak internals.
+134. Verify logs don't leak secrets/tokens/PII.
+135. Verify debug endpoints cannot become production endpoints.
+136. Verify development-only routes/assets are unreachable in production.
+137. Add regression tests for every discovered security boundary.
+### Testing
+
+138. Measure branch coverage where useful.
+139. Measure mutation-testing value on critical logic.
+140. Identify untested failure paths.
+141. Identify tests that only test implementation details.
+142. Identify tests that pass while the feature is broken.
+143. Add contract tests between subsystems.
+144. Add property tests for parsers/configuration.
+145. Add fuzzing for hostile inputs.
+146. Add concurrency tests where state is shared.
+147. Add timeout tests.
+148. Add cancellation tests.
+149. Add retry tests.
+150. Add partial-failure tests.
+151. Add malformed-data tests.
+152. Add empty-repository tests.
+153. Add huge-repository tests.
+154. Add low-memory tests.
+155. Add offline tests.
+156. Add fresh-install tests.
+157. Add production-like deployment smoke tests.
+158. Add regression fixtures for every previously fixed serious bug.
+### Performance
+
+159. Boot-time benchmark.
+160. CLI startup benchmark.
+161. Rails boot benchmark.
+162. First-response latency.
+163. Streaming latency.
+164. Database query budget.
+165. Browser first meaningful render.
+166. Browser JS execution budget.
+167. Face/WebGL frame budget.
+168. TTS startup budget.
+169. Memory baseline.
+170. Repository scan throughput.
+171. Large-repository scaling test.
+172. Large-file scaling test.
+173. Concurrent-user baseline.
+174. Background-job throughput.
+175. Identify performance regressions in CI.
+176. Don't optimize measured non-problems.
+### Operational reliability
+
+177. Every network request gets a timeout.
+178. Every long-running operation gets cancellation semantics.
+179. Every background worker has bounded lifetime.
+180. Every queue has bounded behaviour.
+181. Every retry has a limit/backoff policy.
+182. Every external dependency has a degraded mode where practical.
+183. Every daemon has clean shutdown.
+184. Every temporary resource has deterministic cleanup.
+185. Every deployment has a rollback path.
+186. Every migration has failure/recovery considerations.
+187. Every production process exposes enough diagnostics to identify failure without attaching a debugger.
+### OpenBSD / deployment
+
+188. Rebuild a machine from zero using only repository documentation.
+189. Verify every documented package is actually required.
+190. Verify every service has one owner/configuration source.
+191. Audit `rc.d`/`rcctl` lifecycle.
+192. Audit `pf` rules.
+193. Audit `relayd`.
+194. Audit TLS renewal.
+195. Audit DNS configuration.
+196. Audit filesystem permissions.
+197. Audit service users/groups.
+198. Audit `doas` rules.
+199. Audit pledge/unveil boundaries.
+200. Test reboot recovery.
+201. Test service restart recovery.
+202. Test certificate renewal.
+203. Test disk-full behaviour.
+204. Test memory pressure.
+205. Test network interruption.
+206. Test application crash/restart.
+207. Test log rotation.
+208. Document the minimum viable production installation.
+### Documentation
+
+209. Every operational document gets an executable verification command.
+210. Every architectural document names the actual files implementing it.
+211. Remove documentation describing nonexistent architecture.
+212. Remove duplicate architecture documents.
+213. Make README claims mechanically testable where practical.
+214. Record invariants separately from implementation details.
+215. Record deliberate deviations from defaults.
+216. Add “why” only where the reason isn't obvious from code.
+217. Delete explanations that merely restate code.
+218. Keep historical archaeology separate from current architecture.
+219. Date/version genuinely historical decisions.
+220. Make generated documentation obviously generated.
+### Git hygiene
+
+221. Identify commits that introduced dead architecture.
+222. Identify reverted/reimplemented features.
+223. Identify files repeatedly rewritten without converging.
+224. Identify accidental generated-file commits.
+225. Identify large binaries/assets that don't belong in Git.
+226. Identify enormous commits that should have been decomposed.
+227. Identify misleading commit messages.
+228. Establish commit-message conventions only if they provide actual value.
+229. Add pre-commit checks only for cheap/high-value invariants.
+230. Avoid turning Git hooks into a second CI system.
+231. Preserve useful archaeology; don't rewrite history merely for cosmetic cleanliness.
+### Repository topology
+
+232. Count files by subsystem.
+233. Count LOC by subsystem.
+234. Count dependencies by subsystem.
+235. Count cross-subsystem imports/references.
+236. Build a dependency graph.
+237. Detect cycles.
+238. Detect isolated code.
+239. Detect “god directories.”
+240. Detect directories with only one meaningful file.
+241. Detect files with suspiciously high fan-in/fan-out.
+242. Detect concepts appearing in multiple trees.
+243. Identify candidates for consolidation.
+244. Identify boundaries that should remain separate.
+245. Measure whether `MASTER`, `RAILS`, `OPENBSD`, and `STUDIO` actually benefit from sharing code.
+### subtraction pass
+
+246. What can be deleted?
+247. What can be merged?
+248. What can become data instead of code?
+249. What can become one source of truth?
+250. What can become a standard-library call?
+251. What can become a test instead of runtime machinery?
+252. What can become an invariant instead of defensive code?
+253. What can disappear because the underlying problem no longer exists?
+
+### periodic architectural entropy audit
+
+254. Measure files, LOC, dependencies, duplicate concepts, cross-boundary references, dead code, configuration sources, and special cases against capabilities, coverage, reliability, performance, and maintainability. Prefer subtraction when complexity outruns capability.
+
+254 items. Capability first; then delete.
+
 ---
