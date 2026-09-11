@@ -103,6 +103,74 @@ class TestCognition < Minitest::Test
     end
   end
 
+  # The defect that made everything above moot: `tick!` had one caller in the
+  # tree, at boot, once. So the workspace never decayed, continuity never moved,
+  # nothing after the boot snapshot was written, and reflection could not fire —
+  # `ticks` stopped at 1 and `1 % REFLECT_EVERY` is not zero. The layer perceived
+  # for the life of the process and thought once, before anything had happened.
+  # Perception paces the loop now, so this asserts the count threshold: the first
+  # observations still write nothing, and the 256th ticks.
+  def test_perception_paces_the_loop_it_used_to_leave_unrun
+    Dir.mktmpdir("cognition") do |root|
+      mind = Cognition::Mind.new(root:, bus: Bus.new)
+      mind.observe(event: "tool:after", payload: { ok: true })
+
+      assert_equal 0, mind.snapshot.fetch("ticks"), "one observation is not a tick"
+
+      Cognition::Mind::TICK_EVERY_OBSERVATIONS.times { mind.observe(event: "tool:after") }
+
+      assert_operator mind.snapshot.fetch("ticks"), :>, 0, "the loop must run without a caller"
+      assert_path_exists File.join(root, Cognition::Mind::STATE_PATH)
+    end
+  end
+
+  # Prediction error used to be recurrence: seconds since that event last fired,
+  # off an instance variable that started empty every boot. So nothing MASTER had
+  # ever seen informed what it expected. A learned transition is the difference —
+  # a pair seen repeatedly stops being surprising, and Laplace keeps the second
+  # sighting of a coincidence from scoring as certainty.
+  def test_a_repeated_transition_stops_being_surprising
+    model = Cognition::Prediction.new
+    predictions = Cognition::State.new({}).predictions
+
+    assert_in_delta 1.0, model.observe!(predictions, event: "chat:message")
+    first = model.observe!(predictions, event: "tool:before")
+    4.times { model.observe!(predictions, event: "chat:message"); model.observe!(predictions, event: "tool:before") }
+    model.observe!(predictions, event: "chat:message")
+    later = model.observe!(predictions, event: "tool:before")
+
+    assert_in_delta 1.0, first, 0.001, "an unseen pair is fully surprising"
+    assert_operator later, :<, 0.5, "a pair seen five times is expected"
+    assert_equal "tool:before", model.expected(predictions, event: "chat:message")
+  end
+
+  # And the expectation survives the process, which the recurrence clock could
+  # not: it lived in an ivar and the state file held no trace of it.
+  def test_the_learned_expectation_survives_a_restart
+    Dir.mktmpdir("cognition") do |root|
+      first = Cognition::Mind.new(root:, bus: Bus.new)
+      6.times { first.observe(event: "chat:message"); first.observe(event: "tool:before") }
+      first.tick!
+
+      reloaded = Cognition::Mind.new(root:, bus: Bus.new)
+
+      assert_equal "tool:before",
+                   Cognition::Prediction.new.expected(reloaded.snapshot.fetch("predictions"), event: "chat:message")
+    end
+  end
+
+  # The working set is a competition. Keeping the twelve most RECENT let a burst
+  # of routine events evict the surprising one that arrived before them, which is
+  # the opposite of what a salience score is for.
+  def test_the_working_set_keeps_the_most_salient_not_the_most_recent
+    state = Cognition::State.new({})
+    state.remember_workspace("key" => "loud", "salience" => 0.99, "event" => "tool:error", "at" => 0)
+    20.times { |i| state.remember_workspace("key" => "quiet#{i}", "salience" => 0.1, "event" => "noise", "at" => i) }
+
+    assert_equal Cognition::State::MAX_WORKSPACE, state.workspace.size
+    assert_equal "loud", state.workspace.first["key"]
+  end
+
   # The claim the layer must not make, pinned so nothing quietly upgrades it.
   def test_the_self_model_stays_uncertain_about_consciousness
     Dir.mktmpdir("cognition") do |root|

@@ -140,7 +140,24 @@ spine:
   # comment carrying two instructions), and because matching forward from the
   # first hash would read a `#` inside a string literal as the comment start.
   # A line still over the limit with its comment removed is still flagged.
-  lib_body_ceiling: 38129
+  # 38129 -> 38175 for the cognitive loop, and the 46 lines are mostly one
+  # defect. tick! had exactly one caller in the tree — boot/master_boot.rb:40,
+  # once, at startup — so the workspace never decayed, continuity never moved,
+  # nothing after the boot snapshot was ever written, and reflection could not
+  # fire because ticks stopped at 1 and 1 % 16 is not zero. The layer perceived
+  # for the life of the process and thought once, before anything happened.
+  # Eleven of the lines pace it from perception, which is the one path every
+  # turn, scan, tool and daemon already reaches; the heartbeat is off by
+  # default and would have been the same defect wearing a schedule.
+  #
+  # The other 34 are prediction.rb, and they replace a measure that was not one.
+  # prediction_error read seconds since that event last fired off an instance
+  # variable that started empty on every boot, so every event was maximally
+  # surprising once per process forever and nothing MASTER had ever seen
+  # informed what it expected. A first-order transition table learned from the
+  # bus and kept in the state file is the smallest thing that is actually a
+  # prediction, and it survives a restart, which the clock could not.
+  lib_body_ceiling: 38175
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753
@@ -421,7 +438,16 @@ pub4_source_ceilings:
   # self_findings.rb answers a different question — what the law finds in MASTER,
   # at error severity, against a recorded ceiling — and carries no grouping, no
   # tree filter and no closing sentence per rule.
-  MASTER: 1045
+  #
+  # 1045 -> 1046 for lib/cognition/prediction.rb, which replaces a method
+  # rather than adding a subject. prediction_error read seconds since that
+  # event last fired, off an instance variable emptied by every restart, so
+  # nothing MASTER had ever seen informed what it expected. A learned
+  # transition table is the smallest thing that is actually a prediction.
+  # It folds into attention.rb only by putting two algorithms in the file
+  # whose subject is one weight table: attention decides what matters, this
+  # decides what was expected, and the second is the first one input.
+  MASTER: 1046
 
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:

@@ -986,7 +986,13 @@ loc_body_budgets:
   # the container that CLI::Stages::Render reads it from.
   lib/builder.rb: 216
   lib/cli: 5892
-  lib/cognition: 253
+  # 253 -> 294 for the loop the subsystem did not have. Everything the row
+  # priced at introduction was perception; tick! had one caller, at boot, once,
+  # so nothing decayed, nothing persisted after the first snapshot and
+  # reflection never fired. Eleven lines pace the loop from perception itself,
+  # and 34 are prediction.rb, which replaces a prediction_error that measured
+  # seconds since an event last fired off an ivar emptied by every restart.
+  lib/cognition: 294
   lib/core: 762
   lib/core.rb: 47
   lib/design.rb: 270

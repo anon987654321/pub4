@@ -11,7 +11,7 @@ module Master
     # The consciousness-adjacent numbers are proxies and are named as such
     # everywhere they are written. COGNITION.md carries the argument.
     #
-    # Two things here are load-bearing and were wrong in the first draft.
+    # Three things here are load-bearing and were each wrong once.
     #
     # The subscription is `**`, not `*`. EventBus compiles `*` to `[^:]*` and
     # `**` to `.*`, so `*` matches only colon-free event names — it would have
@@ -25,9 +25,28 @@ module Master
     # Perception marks the state dirty; `tick!` is what persists. The cost is
     # bounded: a crash loses the events since the last tick, which are in the
     # workspace and nowhere else by design.
+    #
+    # The third thing was worse than either, and invisible for the same reason
+    # both of those were: perception ran and the loop did not. `tick!` had one
+    # caller in the tree — boot/master_boot.rb:40, once, at startup — so the
+    # workspace never decayed, continuity never moved, nothing after the boot
+    # snapshot was ever written, and `REFLECT_EVERY` could not fire because
+    # `ticks` stopped at 1 and `1 % 16` is not zero. MASTER perceived for the
+    # life of the process and thought once, before anything had happened.
+    #
+    # So the cadence lives here rather than in a caller. The heartbeat was the
+    # obvious home and is the wrong one: it is off by default, off in
+    # boot/runtime.rb's guard list, and commented out in master.env.sample, so
+    # hanging the loop there would have been the same defect wearing a schedule.
+    # Perception is the one path every turn, scan, tool and daemon already
+    # reaches — it subscribes to `**` — so the layer paces itself from what it
+    # sees: a tick once a minute of activity, or every 256 observations,
+    # whichever comes first. Idle costs nothing, because an idle bus makes no
+    # observations to be due for.
     class Mind
       STATE_PATH = ".master/cognition/state.yml"
-      DECAY_S = 300
+      TICK_EVERY_S = 60
+      TICK_EVERY_OBSERVATIONS = 256
       WORKSPACE_HALF_LIFE_S = 900.0
       REFLECT_EVERY = 16
 
@@ -43,7 +62,12 @@ module Master
         @attention = Attention.new
         @affect = Affect.new
         @self_model = SelfModel.new
-        @recent_events = {}
+        @prediction = Prediction.new
+        @since_tick = 0
+        # From construction, not from the loaded state's `last_tick_at`: that one
+        # is wall-clock from a previous process and is days stale after a restart,
+        # which would make the first observation of every boot due.
+        @ticked_at = Time.now.to_i
         @dirty = false
         subscribe!
       end
@@ -53,7 +77,7 @@ module Master
         return if event.start_with?("cognition:")
 
         @mutex.synchronize do
-          error = prediction_error(event)
+          error = @prediction.observe!(@state.predictions, event:)
           salience = @attention.score(event:, payload:, prediction_error: error, affect: @state.affect)
           @affect.update!(@state.affect, prediction_error: error, salience:, **outcome(payload))
           @self_model.update!(@state.self_model, event:, payload:, salience:)
@@ -62,9 +86,14 @@ module Master
             "prediction_error" => error.round(4), "at" => Time.now.to_i
           )
           update_metrics!(salience:, error:)
-          @recent_events[event] = Time.now.to_f
+          @since_tick += 1
           @dirty = true
         end
+        # Outside the lock on purpose: tick! takes the same mutex, and a
+        # non-reentrant Mutex deadlocks the publishing thread rather than
+        # recursing. The bus itself is a Monitor and calls handlers unlocked, so
+        # the tick's own publish from inside this one is safe.
+        tick! if tick_due?
       rescue StandardError => e
         Ground::Swallow.log(e, context: "cognition.observe", event_bus: @bus)
       end
@@ -77,6 +106,8 @@ module Master
           decay_workspace!
           update_continuity!
           @state.tick!
+          @since_tick = 0
+          @ticked_at = Time.now.to_i
           persist!
         end
         @bus&.publish("cognition:tick", metrics: @state.metrics.dup, workspace: @state.workspace.size)
@@ -110,13 +141,10 @@ module Master
         end
       end
 
-      # Novelty as recurrence: an event unseen this session is fully surprising,
-      # and one that just fired is not.
-      def prediction_error(event)
-        last = @recent_events[event]
-        return 1.0 unless last
+      def tick_due?
+        return false if @since_tick.zero?
 
-        ((Time.now.to_f - last) / DECAY_S).clamp(0.05, 1.0)
+        @since_tick >= TICK_EVERY_OBSERVATIONS || Time.now.to_i - @ticked_at >= TICK_EVERY_S
       end
 
       # The bus merges symbol keys, so only a symbol lookup can hit. The first

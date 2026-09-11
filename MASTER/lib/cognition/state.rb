@@ -12,6 +12,7 @@ module Master
         "affect" => { "valence" => 0.0, "arousal" => 0.25, "novelty" => 0.0, "uncertainty" => 0.5 },
         "drives" => { "safety" => 1.0, "coherence" => 0.8, "curiosity" => 0.6, "agency" => 0.5, "affiliation" => 0.4 },
         "workspace" => [],
+        "predictions" => { "transitions" => {}, "previous_event" => nil, "last_error" => 0.0 },
         "self_model" => {},
         "thoughts" => [],
         "metrics" => { "integration" => 0.0, "prediction_error" => 0.0, "continuity" => 1.0, "attention" => 0.0 },
@@ -65,8 +66,14 @@ module Master
       # in the merge, not a case to paper over.
       DEFAULT.each_key { |section| define_method(section) { @data.fetch(section) } }
 
+      # The working set is a competition, not a queue. It used to keep the twelve
+      # most recent entries, so a burst of routine events evicted the surprising
+      # one that arrived before them — the opposite of what a salience score is
+      # for. Sorting by salience is what makes the bound mean "the twelve that
+      # matter most" rather than "the twelve that happened last".
       def remember_workspace(item)
-        @data["workspace"] = ([item] + workspace).uniq { |entry| entry["key"] }.first(MAX_WORKSPACE)
+        entries = ([item] + workspace).uniq { |entry| entry["key"] }
+        @data["workspace"] = entries.sort_by { |entry| -entry["salience"].to_f }.first(MAX_WORKSPACE)
       end
 
       def think(text, kind: "reflection")
