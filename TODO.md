@@ -4672,13 +4672,21 @@ unread fields: either give them a reader or delete them, because a declared
 field nobody reads is this tree's most common defect and these two have been
 sitting in the constructor since they were added.
 
-**`EXEMPTIONS_EXPIRE` is conduct with no detector.** The tree carries 259 `scan:
-intentional` markers across 136 files and `law/practice.rb:191` declares that an
-exemption outliving its subject is a hole nobody can see. Nothing checks. The
-detector is mechanical: strip the marker, rerun that rule, and report the
-exemption as stale when no finding comes back. Fixtures both directions, the
-report naming the exact rule each marker currently excuses, and a finding rather
-than an error until the corpus is understood.
+**Four exemptions excuse nothing, and `ERB_HTML_SAFE` may not fire at all.**
+`ruby MASTER/tools/stale_exemptions.rb` reads 143 markers in 89 files, 138 of
+them live. The four are a stale `.then` marker in `RAILS/gates/lib/source/
+schema_migration.rb:91`, an i18n marker on amber's wordmark, and two markers
+sitting on the tail line of a multi-line comment, where `scan_lines` has no code
+line to skip — `RAILS/brgen/.../\_root.scss:313` and
+`RAILS/shared/app/views/two\_factor\_setups/show.html.erb:4`. Each wants a
+person: delete it, move it onto the line it was written about, or find out why
+its rule stopped firing.
+
+That last one is the thread worth pulling. The marker on `show.html.erb:4` says
+`ERB_HTML_SAFE` names the fix, and `ERB_HTML_SAFE` is a mechanical registry rule
+that does not fire on `<%= @qr.html_safe %>` nine lines below it — with or
+without the marker. Either the rule's detector no longer matches the shape it was
+written for, or its language gate excludes `.erb`. Measure before assuming which.
 
 **No gate measures engine boundaries.** One intentional cross-engine constant
 reference exists — `maps -> Takeaway::Order` — and zero cross-engine
