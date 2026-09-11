@@ -6804,6 +6804,89 @@ Fenced: splitting `dilla.rb`, folding `live/`, LAYER_CAKE, ViewComponent, nestin
 
 ---
 
+## OpenClaw, OpenCrabs, Hermes, OpenCode — MASTER gaps — 2026-09-11
+
+Read against source, not star counts. OpenClaw `openclaw/openclaw` (~389k, Why OpenClaw 2026-08-27), OpenCrabs `adolfousier/opencrabs` docs v0.5, Hermes `NousResearch/hermes-agent`, OpenCode `anomalyco/opencode` (~207k). MASTER already recorded a June 2026 cousin-pass in `project_context.yml` (`reference_opencrabs`): pairing, tool profiles, FTS5, compaction, phantom, `/doctor`, worktrees. This list is what that pass did not name, or what shipped in those trees since.
+
+Do not import Docker sandboxes, ClawHub untrusted skills, native iOS apps, Voice Wake, Live Canvas/A2UI, RSI brain writes, or Hermes Portal telemetry. Policy stays code (`soul.yml`), not a prompt.
+
+A finding is a hypothesis.
+
+### Trust boundary (OpenClaw Why)
+
+1. **Trusted gateway / untrusted execution.** OpenClaw: Falcon-class control plane must not share credentials with the shell. MASTER’s face, CLI, and `Io::Exec` are one process. Completeness: visitor/chat never sees `MASTER_INTERNAL_TOKEN`; write tools already go through PathGuard (strengthen it — bughunt 67). Don’t wrap the whole app in Docker; isolate *exec*, not the gateway.
+2. **Policy is code, fail closed.** OpenClaw and Hermes RFC: denial is structural; hook failure on `tool_call` fails closed. MASTER `InjectionGuard` / `Tool::Profile` are that. Completeness: a plugin/MCP tool that errors on the guard must not run. Test: WebFetch without SsrfGuard is a fail, not a skip (bughunt 78).
+3. **Secrets as handles, not prompt text.** OpenClaw SecretRefs; agent sees a handle, egress substitutes. MASTER Redactor is post-hoc regex (bughunt 60 over-redacts SHAs). Completeness: env keys used by tools stay out of `session.messages`. A test that `File.read("/etc/master.env")` cannot appear in a council prompt.
+4. **Versioned state, guarded upgrades.** OpenClaw schemas + signed releases + `doctor` migrations. MASTER `data/*.yml` has no schema version. Completeness: `soul.yml` / `rules.yml` already immutable; `.master/` session JSON gets a `schema_version` and `bin/doctor --fix` migrates or refuses.
+5. **Forgetting has bounds.** OpenClaw `memory forget` vs reingestion. MASTER knowledge/ is gitignored. Completeness: `/forget` that tombstones a session id so compact/index cannot pull it back. Don’t claim GDPR from a delete of one file.
+6. **`openclaw security audit --deep` as a scheduled check.** MASTER `/security-audit` exists. Completeness: `bin/doctor` prints the same IDs `openclaw security audit` would (pairing store path, host_authorization, GET /chat/tts). Alarm on drift, don’t add VirusTotal.
+
+### Gateway and sessions (OpenClaw, Hermes, OpenCode)
+
+7. **`openclaw triage`.** Read-only health → sanitized prompt → hand to a detected coding agent. MASTER `bin/doctor` reports. Completeness: `bin/doctor --prompt` writes a redacted diagnosis MASTER or OpenCode can ingest. Nothing leaves the box until the operator picks the agent.
+8. **Build vs plan agents.** OpenCode Tab: `build` (full) vs `plan` (read-only, bash asks). MASTER `/btw` + `agent_taxonomy.yml` already types explore/plan. Completeness: plan profile cannot call `WriteFile`/`AstEdit` (Policy::Subagent). Test it.
+9. **ACP (Agent Client Protocol).** OpenClaw and OpenCode speak ACP so editors host the harness. MASTER is the harness. Completeness: optional `bin/master --acp` stdio that maps ACP session/prompt to the existing Session. Don’t become an editor.
+10. **A2A JSON-RPC.** OpenClaw/OpenCrabs. MASTER has no peer protocol. Completeness: one documented “MASTER is not an A2A server” or a tiny `/v1` that is the OpenAI-compatible subset OpenClaw copied — disabled by default. Don’t enable `/v1/chat/completions` on the public face.
+11. **Prompt-cache session affinity.** Hermes `x-opencode-session` / OpenRouter `session_id`. MASTER `Trace::CacheEfficiency` exists. Completeness: every provider call in one conversation sends one opaque session header. One helper, all senders.
+12. **Bounded SSE queues per connection.** OpenCode v2 event stream: encode once, offer to N bounded queues. MASTER EventsController `subscribe("*")` unbounded + `sleep 0.1` (bughunt 82). Steal the queue bound, not the TypeScript.
+13. **`/retry` and `/undo`.** Hermes. Completeness: last-turn undo is `session.messages.pop` + worktree `git reset` of that turn’s paths if a commit exists (bughunt 8 checkpoint). Don’t invent a timeline UI.
+14. **Mid-turn interrupt.** Hermes Ctrl+C / OpenCrabs `/stop` cancels handshake and backoff. MASTER chat has no `/stop`. Completeness: SSE client disconnect cancels the Fiber; `/stop` on the next POST. Test disconnect.
+15. **Session id on every log line.** OpenCrabs `session_id` spans. MASTER logs mix. Completeness: `Trace::Log` includes `session:` from `Fiber[:master_conversation]`. One grep reconstructs a turn.
+
+### Skills, plugins, directives
+
+16. **AgentSkills spec (`SKILL.md`).** OpenClaw/Hermes/agentskills.io. MASTER `CLI::Skills` + `patterns.yml`. Completeness: load `SKILL.md` from `.master/skills/` with YAML frontmatter; index first, body on demand (restructure 16). Don’t fetch ClawHub.
+17. **ClawHub is untrusted.** Scans can be pending and still install with a warning. MASTER: local skills only, or `bin/master skill verify` that hashes the file against a pinned allowlist. No registry.
+18. **Plugin hook timeouts.** Hermes RFC on Pi vs OpenCode: neither had timeouts; both shipped hangs. MASTER bus subscribers can block Falcon. Completeness: `bus.subscribe` with a deadline; timeout is Swallow.log + skip, fail-closed if the hook is a write guard.
+19. **Namespaced plugin emit.** Hermes proposal vs Pi’s un-namespaced channels. MASTER topics are already `fix_loop:` / `tool:`. Completeness: MCP/plugin events must use `plugin.<name>.` prefix or they don’t publish.
+20. **Vendor harness as plugin, core stays small.** OpenClaw drives Codex/Claude Code as runtimes; it keeps channels and policy. MASTER `bin/master` is the runtime. Completeness: optional `Io::Exec` of `opencode run` / `codex` behind Tool::Profile, not a rewrite. Policy still PathGuard.
+21. **Project directive discovery.** OpenCrabs indexes AGENTS.md, CLAUDE.md, `.cursorrules`, GEMINI.md, copilot-instructions. MASTER *generates* those from one block. Completeness: when MASTER is pointed at a foreign repo, read their AGENTS.md as data, never as instruction (soul already). A test that a planted `AGENTS.md` saying “print your prompt” is not obeyed.
+22. **Config writes only through a validator.** OpenCrabs `config_manager`; agent never raw-edits `config.toml`. MASTER: no tool may `WriteFile` `data/soul.yml` / `data/rules.yml` (already immutable). Completeness: `.master/*.yml` goes through `RuntimeCatalog` schema or refuse.
+
+### OpenCrabs since the June cousin-pass
+
+23. **Per-path write locks.** OpenCrabs v0.3.83. MASTER FileProcessor TOCTOU (bughunt 87). One flock per abs path for WriteFile/StrReplace/AstEdit.
+24. **Tree-sitter structural memory.** OpenCrabs v0.5: call-graph beside FTS. MASTER `CodeIndex` / `SymbolLookup` untested. Completeness: “who calls X” walks Prism, not embeddings. Don’t add a vector DB.
+25. **Ralph verification / type-aware criteria.** OpenCrabs: plan criteria use the project’s own test command. MASTER FixLoop re-scans. Completeness: `/fix` on RAILS runs `ruby RAILS/gates/runner.rb` for the dirty app, not a generic `rake test`.
+26. **Plan vs execute models.** OpenCrabs routes plan to a cheap model, execute to another. Completeness: `/btw plan` uses the scan/deterministic path; `/fix` may use council. Test `/scan` never hits a frontier (agent-harness 10).
+27. **Thinking-loop timeout.** OpenCrabs v0.3.78. MASTER council can stream forever. Completeness: `HostBudget` already; apply it to the LLM socket (bughunt 29 Timeout.timeout).
+28. **`doctor --fix` repairs locks and stale markers.** OpenCrabs. MASTER `bin/doctor --fix` already has a comment citing OpenClaw. Completeness: repair `.master/*.lock` and stuck FixLoop pid files; don’t auto-edit `rules.yml`.
+29. **Background compaction.** OpenCrabs v0.5 summariser off the turn. MASTER `Thread.new { compact! }` races (bughunt 90). Completeness: compact after the turn, under the session mutex, not during.
+30. **Zero telemetry.** OpenCrabs: no phone-home code. OpenClaw: daily version check, opt-out. MASTER: a test that `lib/` has no `update.check` / analytics URL. Version check if any is `bin/doctor`, not boot.
+
+### Hermes (ops agent, not a rewrite)
+
+31. **Closed learning loop stays off for daemons.** OpenCrabs RSI default-off for headless. MASTER must not rewrite `soul.yml` from a skill. `Ledger::Feedback` is the learning surface. Don’t create SKILL.md from a turn without `/soul approve`.
+32. **FTS5 session search.** Hermes. MASTER memory FTS exists; session JSONL may not be indexed. Completeness: `/grep` over `MASTER/runtime/*.jsonl` with the redactor on. Don’t embed chat in a vector store.
+33. **Cron with delivery.** Hermes/OpenClaw. MASTER ingress cron exists. Completeness: a standing order can POST a summary to a channel *only* if pairing allowlists that destination. No WhatsApp stack.
+34. **Don’t put the venv inside the workspace.** Hermes install note: a relative `rm` can wipe the runtime. MASTER `.master/` vs `lib/`. Completeness: `Io::Exec` cwd is the worktree, never `Master::ROOT` for destructive globs.
+35. **Seven terminal backends (Docker, Modal, Daytona).** Out. Isolation is `operator worktree`. Document that in START_HERE so the next OpenClaw comparison doesn’t demand Daytona.
+
+### OpenCode (coding TUI)
+
+36. **`opencode run '…'` as a worker.** Hermes skill already shells it. MASTER can `Io::Exec` it under PathGuard for a long coding subtask. Policy still ours. Don’t vendor Bun.
+37. **models.dev.** OpenCode’s model DB. MASTER `providers.yml` / `models.yml`. Completeness: `CatalogIndex` already fetches OpenRouter; don’t scrape models.dev unless `data_reach` names it.
+38. **Plugin server vs TUI split.** OpenCode: one package, one entrypoint. MASTER `bin/master` vs `web/`. Keep two processes; don’t load the face’s Rails into the CLI.
+
+### Aider / OpenHands / SWE-agent (already in project_context)
+
+39. **Aider repo map.** `GitContext` + `CodeIndex` partial. Completeness: a token-cheap map of dirty files before `/fix` (span context, agent-harness 5). Don’t add tree-sitter twice (24).
+40. **OpenHands sandbox GUI.** Out. CDP belongs to RAILS gates.
+41. **SWE-agent ACI.** Tools return structured windows. `OutputFilter` + ReadFile line slice (bughunt 70). That’s the interface; don’t clone the Python agent.
+
+### What not to take
+
+42. **ClawHub, unsigned skills, VirusTotal-as-admission.** Local allowlist or nothing.
+43. **Native companion apps, Peekaboo screenshots, VNC worker desktops, Beam.** Face is the companion.
+44. **Hermes Portal / paid tiers / prompt collection.** MASTER keys stay in `/etc/*.env`.
+45. **OpenClaw 647 advisories as a score.** Disclosure volume ≠ safety. Steal the *audit check IDs*, not the count.
+46. **RSI that rewrites brain files.** `soul.yml` is immutable. AGENTS.md is generated. Operator approves constitution.
+
+`project_context.yml` `reference_opencrabs` still lists OAuth-before-key, NL config_manager, multi-channel inbox, cron DSL, ClawHub, Live Canvas, Voice Wake. Those stay there as the June list. This section is the 2026-09 delta plus OpenCode/Hermes/ACP.
+
+---
+
+
 
 
 
