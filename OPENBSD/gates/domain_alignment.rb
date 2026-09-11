@@ -2,18 +2,18 @@
 
 require "json"
 require "pathname"
-require_relative "../../../../OPENBSD/lib/deploy_inventory"
-require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../OPENBSD/lib/deploy_inventory"
+require_relative "../../OPENBSD/lib/gate_result"
 
 begin
-  require_relative "../../../shared/lib/operator/deploy_paths"
+  require_relative "../../RAILS/shared/lib/operator/deploy_paths"
 rescue LoadError
   # ok for minimal ruby env
 end
 
 module Deploy
   class DomainAlignmentGate
-    ROOT = Pathname.new(File.expand_path("../../../..", __dir__))
+    ROOT = Pathname.new(File.expand_path("../..", __dir__))
     OPENBSD = ROOT.join("OPENBSD", "OPERATOR.sh")
     REGISTRY = ROOT.join("RAILS", "brgen", "lib", "brgen", "domain_registry.rb")
     DEPLOY_INVENTORY = ROOT.join("OPENBSD", "deploy_inventory.json")

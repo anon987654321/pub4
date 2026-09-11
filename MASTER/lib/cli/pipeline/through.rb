@@ -193,7 +193,21 @@ module Master
           }
         end
 
-        def default_apply?(*) = true
+# Measure unless asked to write.
+#
+# This returned true, so every route into the pipeline wrote: a flag, a
+# slash command, and — the one that matters — a sentence. On 2026-09-11 a
+# greeting typed into bin/cli on vm23 ("Hei MASTER … hva er du mest stolt
+# av i denne kodebasen?") was routed to /through with apply=yes against
+# /home/dev/pub4, which is the checkout the deploy syncs from. It scanned
+# 333 of 1109 files before it was interrupted and wrote nothing, and that
+# was luck rather than design.
+#
+# The ladder still writes, because writing is its job: bin/gate says
+# --apply in full-fix mode and --no-autofix in scan-only. Making both
+# explicit is the point — a caller that wants a write now says so, and
+# nothing arrives at one by being misread.
+def default_apply?(*) = false
 
   # MASTER_SCAN_DETERMINISTIC=1 means "no model in this pass", and the
   # council is the largest model call in it. Measured on lib/io, 46 files:

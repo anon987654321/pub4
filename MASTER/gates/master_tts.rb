@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../OPENBSD/lib/gate_result"
 
 module Deploy
   class MasterTtsGate
-    ROOT = File.expand_path("../../../..", __dir__)
+    ROOT = File.expand_path("../..", __dir__)
     MASTER = File.join(ROOT, "MASTER")
 
     CHECKS = {

@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require "resolv"
-require_relative "../../../../OPENBSD/lib/gate_result"
-require_relative "../../../../OPENBSD/bin/render_dns"
+require_relative "../../OPENBSD/lib/gate_result"
+require_relative "../../OPENBSD/bin/render_dns"
 
 module Deploy
   # The DNS the repo describes has to be the DNS the box serves.
@@ -24,7 +24,7 @@ module Deploy
   # but anyone can ask the nameserver. Signature freshness needs the files and
   # lives in OPENBSD/health_check.rb, which runs as root on vm23.
   class DnsZonesGate
-    ROOT = File.expand_path("../../../..", __dir__)
+    ROOT = File.expand_path("../..", __dir__)
     REGISTRY = File.join(ROOT, "RAILS", "brgen", "lib", "brgen", "domain_registry.rb")
     NAMESERVER = "46.23.89.226"
     INVENTORY = File.join(ROOT, "OPENBSD", "deploy_inventory.json")

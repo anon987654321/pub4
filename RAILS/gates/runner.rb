@@ -196,8 +196,23 @@ def run_kwargs(row)
   end
 end
 
+# A require that names a tree is resolved from the repo root; everything else
+# is relative to this file, as it always was.
+#
+# Six gates moved out on 2026-09-11 because they never belonged here: two check
+# MASTER's own face and one runs MASTER's scan chain, and three check the box —
+# DNS zones, domain alignment, the port inventory. A gate lives with the thing
+# it measures, and RAILS/gates is for the gates that only mean something with
+# the apps running. The row stays here either way: one registry, one
+# declaration per gate.
+def require_gate(path)
+  return require File.join(REPO_ROOT, path) if path.start_with?("MASTER/", "OPENBSD/", "STUDIO/")
+
+  require_relative path
+end
+
 def run_in_process(key, row, verbose:)
-  require_relative row.fetch("require")
+  require_gate(row.fetch("require"))
   klass = Object.const_get(row.fetch("class"))
   kwargs = run_kwargs(row)
   result = kwargs.empty? ? klass.run : klass.run(**kwargs)

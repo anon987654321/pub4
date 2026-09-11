@@ -2,14 +2,14 @@
 
 require "open3"
 require "yaml"
-require_relative "../../../../OPENBSD/lib/gate_result"
-require_relative "../../support/bounded_command"
+require_relative "../../OPENBSD/lib/gate_result"
+require_relative "../../RAILS/gates/support/bounded_command"
 
 module Deploy
   # Scan-only constitutional preflight: MASTER /scan on RAILS (+ optional OPENBSD).
   # Does not run /fix (no autonomous edits). Full chain: `cd MASTER && ruby bin/gate`.
   class ConstitutionalScanGate
-    ROOT = File.expand_path("../../../..", __dir__)
+    ROOT = File.expand_path("../..", __dir__)
     MASTER = File.join(ROOT, "MASTER")
     SAFE_ENV = {
       "MASTER_SAFE_MODE" => "1",
@@ -42,7 +42,7 @@ module Deploy
     # the full gate is ~11 minutes.
     attr_reader :targets, :skipped
 
-    BUDGET_PATH = File.expand_path("../../data/constitutional_budget.yml", __dir__)
+    BUDGET_PATH = File.expand_path("../data/constitutional_budget.yml", __dir__)
     # `scan: done [profile: full] 410 violations | top DEAD_CODE=99 …`
     VIOLATION_LINE = /^scan: done\b[^\n]*?\b(\d+) violations/
     # And the other spelling of the same number: `scan: done [profile: aesthetic]

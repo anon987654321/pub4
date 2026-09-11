@@ -43,11 +43,24 @@ PORT=38182
 # that a normal working day does not trip it, low enough that the box never
 # reaches the 91% swap this was written for.
 CEILING_MB=320
+# Swap pressure that a restart is worth answering. The box pages continuously
+# above roughly two thirds, and the first response measured 12.19s cold against
+# 0.40s warm — so this is the number a visitor feels, not a tidiness figure.
+SWAP_PCT_MAX=65
 # A restart costs a cold boot for whoever asks next, so not during a spike and
 # not more than once an hour. vm23 is 1 vCPU: load 1.0 is a busy core, not a
 # crisis, so this is about avoiding a restart storm rather than about load.
 LOAD_MAX=2.5
 MIN_INTERVAL_S=3000
+
+# A heartbeat, written every run, before any decision.
+#
+# This job logs only when it reclaims, so an empty log means either "nothing
+# needed doing" or "cron stopped calling me", and those are the same silence.
+# It read 12 days quiet while the box sat at 76% swap. health_check.rb reads
+# this file's mtime, so the two states are now different facts.
+mkdir -p /var/db 2>/dev/null || true
+date +%s > /var/db/core_reclaim_seen 2>/dev/null || true
 
 now=$(date +%s)
 if [ -r "$STATE" ]; then
@@ -60,7 +73,21 @@ fi
 rss_kb=$(ps -axo rss,args | grep "127.0.0.1:$PORT" | grep -v grep | head -1 | awk '{print $1}')
 [ -n "$rss_kb" ] || exit 0
 rss_mb=$(( rss_kb / 1024 ))
-[ "$rss_mb" -ge "$CEILING_MB" ] || exit 0
+
+# RSS or swap, because RSS alone could not see the case this exists for.
+#
+# The header above says it about master: RSS understates a swapped process. It
+# is just as true of brgen. Measured 2026-09-11 — brgen resident 199M against a
+# 320M ceiling, address space 877M, swap 968M/1264M — so the ceiling never
+# fired, this job never reclaimed once in twelve days, and the kernel did the
+# reclaiming instead: 21 `killed: out of swap` for brgen in one dmesg buffer,
+# one of them relayd. A ceiling that cannot fire under pressure is not a
+# ceiling; the pressure itself has to be readable.
+swap_pct=$(swapctl -l | grep -v Device | head -1 | tr -s ' ' | cut -d' ' -f5 | tr -d '%')
+[ -n "$swap_pct" ] || swap_pct=0
+if [ "$rss_mb" -lt "$CEILING_MB" ] && [ "$swap_pct" -lt "$SWAP_PCT_MAX" ]; then
+  exit 0
+fi
 
 # Field 1 is the 1-minute average, and it is the right one here while
 # resource_guard.sh:101 takes field 2. The two ask opposite questions. The guard

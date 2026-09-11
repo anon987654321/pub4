@@ -323,7 +323,18 @@ pub4_source_ceilings:
   # into review_crew.rb where they are read. Lowered in the same commit as the
   # deletions, so the room does not sit here waiting to be spent without an
   # argument.
-  MASTER: 1038
+  # 1038 -> 1040 is tools/rename.rb and test/test_rename.rb. MASTER reads this
+  # tree against 242 rules and could not rename one thing: four rules touch
+  # names, all four are autofix: false, and NOISE_NAME matches only a class
+  # whose whole name is the noise word — so ZSH_BANNED read as its own opposite
+  # and Master::MasterData stuttered in the boot path, both until a person
+  # noticed. The tool finds the category suffixes and the stutters, proposes the
+  # shorter name where that name is free, and performs the rename as a file move
+  # plus a word-boundary rewrite. It folds into nothing: no other file here
+  # moves a constant, and its test needs a planted repository rather than this
+  # one.
+  MASTER: 1040
+
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
   # it belongs beside the other probes and folds into nothing.
@@ -549,6 +560,27 @@ pub4_source_ceilings:
 # the strict superset of preflight's host checks: doctor is red on a laptop with
 # no TTS socket, and a probe that fails on every developer's box is a line people
 # learn to skip.
+# Names that say which drawer a thing lives in rather than what it holds, and
+# names that repeat the namespace they sit in. `ruby MASTER/tools/rename.rb`
+# lists them, with the shorter name where that name is free.
+#
+# A ceiling rather than a ban, because the proposal is the easy half. Dropping
+# a category suffix is mechanical; deciding that Shared::DillaProcessor should
+# be Shared::Dilla is not, and it should not be — that class processes dilla's
+# output and does not stand for dilla. So this number falls by a rename or by
+# an argument written beside the name, and rises by neither.
+# Every name a person or a model can type: the CLI's closed table, the words the
+# router accepts as the pipeline, and bin/operator's subcommands. An alias is a
+# name — `through workflow triad sweep scan fix self critique council review` is
+# ten words for one pass, and five slash names resolve to two stages.
+#
+# Counted for the same reason files are: adding a verb costs no file, moves no
+# other ceiling, and each one is a thing the next reader has to learn before
+# they can be sure which of them writes.
+command_surface: 36
+
+name_candidates: 23
+
 pub4_entrypoint_ceilings:
   MASTER: 26
   RAILS: 2

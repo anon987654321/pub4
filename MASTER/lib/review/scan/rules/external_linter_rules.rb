@@ -11,10 +11,14 @@ module Master
         # binary and run it for a parsed JSON report. Mixed in rather than inherited
         # so the helper itself never lands in the auto-registering Rule registry.
         module ExternalLinter
-          # Gated behind MASTER_EXTERNAL_LINT so shelling out to rubocop/reek is opt-in;
-          # then usable only when the binary is on PATH or vendored under the repo's bin/.
+          # The binary being installed is the configuration. A second switch in
+          # front of it meant the bridge stayed dark on every machine that had
+          # rubocop, which is the shape of inert wiring this repo keeps finding in
+          # its own tree: a declaration with no reader, here a reader with no
+          # declaration. MASTER_EXTERNAL_LINT=0 turns the bridge off where the
+          # binary exists and the findings are not wanted.
           def linter_available?(name)
-            return false unless ENV["MASTER_EXTERNAL_LINT"] == "1"
+            return false if ENV["MASTER_EXTERNAL_LINT"] == "0"
 
             ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? { |dir| File.executable?(File.join(dir, name)) } ||
               File.exist?(File.join(@root, "bin", name))

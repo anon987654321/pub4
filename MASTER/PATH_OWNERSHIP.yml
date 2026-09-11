@@ -31,6 +31,11 @@ ownership:
     purpose: the Rails face — chat shell, TTS endpoints, WebGL face assets
     risk: high
     check: bin/check --profile=web
+  gates/:
+    purpose: gates that measure MASTER itself — its face, its assets, its own scan
+      chain — declared in RAILS/gates/gates.yml and run by that runner
+    risk: medium
+    check: ruby RAILS/gates/runner.rb master_tts master_web_assets constitutional_scan
   bin/:
     purpose: executable entry points and validation wrappers
     risk: high

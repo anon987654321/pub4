@@ -2,12 +2,12 @@
 
 require "English"
 require "yaml"
-require_relative "../../../../OPENBSD/lib/deploy_inventory"
-require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../OPENBSD/lib/deploy_inventory"
+require_relative "../../OPENBSD/lib/gate_result"
 
 module Deploy
   class PortInventoryGate
-    ROOT = File.expand_path("../../../..", __dir__)
+    ROOT = File.expand_path("../..", __dir__)
     DEPLOY_INVENTORY = ENV.fetch("DEPLOY_INVENTORY", File.join(ROOT, "OPENBSD", "deploy_inventory.json"))
     OPENBSD_DEPLOY = File.join(ROOT, "OPENBSD", "OPERATOR.sh")
     APPS_YML = File.join(ROOT, "RAILS", "apps.yml")

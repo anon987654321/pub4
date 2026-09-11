@@ -1,4 +1,14 @@
 # The gate registry. One row per gate, and this file is the only place a gate
+# One registry, one runner, three trees. A gate's row lives here whatever tree
+# holds its implementation: `require` names the tree when the check belongs to
+# one — MASTER/gates for the gates that measure MASTER's own face and scan
+# chain, OPENBSD/gates for the ones that measure the box (DNS, domains, the
+# port inventory), and a bare path for the RAILS gates, which are most of them.
+#
+# Moved 2026-09-11. They had all lived under RAILS/gates/lib/host, where a gate
+# about nsd sat beside a gate about a Rails port. The runner stays here because
+# splitting it would be three runners with three ideas of what a gate result
+# is, which is the shape gate_result.rb exists to prevent.
 # is declared.
 #
 # It replaces four hand-maintained tables that had to agree with each other:
@@ -49,12 +59,12 @@ rendered_invariants:
   covered_by: rendered_suite
 
 dns_zones:
-  require: lib/host/dns_zones
+  require: OPENBSD/gates/dns_zones
   class: Deploy::DnsZonesGate
   pass: "dns_zones: repo and nsd agree (zones, nsd.conf, acme-client.conf)."
 
 domain_alignment:
-  require: lib/host/domain_alignment
+  require: OPENBSD/gates/domain_alignment
   class: Deploy::DomainAlignmentGate
   pass: "Domain alignment gate passed (city domains + deploy_inventory.json/relayd checks)."
   covered_by: release
@@ -82,13 +92,13 @@ human_walkthrough:
   pass: "Human walkthrough gate passed for %{apps} Rails apps."
 
 master_tts:
-  require: lib/host/master_tts
+  require: MASTER/gates/master_tts
   class: Deploy::MasterTtsGate
   pass: "MASTER TTS gate passed."
   covered_by: production
 
 master_web_assets:
-  require: lib/host/master_web_assets
+  require: MASTER/gates/master_web_assets
   class: Deploy::MasterWebAssetsGate
   pass: "MASTER/web assets gate passed (%{assets} required assets present)."
   covered_by: production
@@ -99,7 +109,7 @@ phantom_foreign_keys:
   pass: "phantom_foreign_keys: clean (%{schemas} schemas)"
 
 port_inventory:
-  require: lib/host/port_inventory
+  require: OPENBSD/gates/port_inventory
   class: Deploy::PortInventoryGate
   pass: "Port inventory gate passed for %{apps} Rails apps."
 
@@ -255,7 +265,7 @@ locale_shadowing:
 # minutes, which is right for the gate that fronts a release and wrong for every
 # CI run on a 1 vCPU box.
 constitutional_scan:
-  require: lib/meta/constitutional_scan
+  require: MASTER/gates/constitutional_scan
   class: Deploy::ConstitutionalScanGate
   pass: "Constitutional scan preflight completed."
   covered_by: release

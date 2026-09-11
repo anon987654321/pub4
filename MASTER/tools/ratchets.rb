@@ -91,7 +91,7 @@ module Operator
 
     def all(deep: false)
       rows = spine_rows + master_yaml_rows + rails_lint_rows + pub4_growth_rows +
-             entrypoint_rows + file_length_rows + coverage_rows
+             entrypoint_rows + command_rows + file_length_rows + coverage_rows
       # The placeholders only when the real numbers are not being fetched, or
       # every css_budget rule would appear twice under --deep.
       rows += deep ? css_constitution_rows : css_budget_rows
@@ -319,6 +319,58 @@ module Operator
     # rotted from 2 to 28 in silence; this is the reader that makes it fail.
     # Executables directly under a tree's own bin/, so a Rails app's generated
     # bin/rails and a STUDIO tool's private bin/ are not mistaken for surfaces.
+    # Names that carry a category or repeat their namespace. The register is
+    # where this belongs rather than the scanner: the detector can say a name is
+    # wrong and even propose a free shorter one, and it cannot say the proposal
+    # is better — so the number is measured on every run and moved by a person.
+    def name_rows
+      require File.join(MASTER, "tools/rename")
+      rows = Operator::Rename.candidates
+      [Row.new(name: "name_candidates", current: rows.size,
+               ceiling: YAML.safe_load_file(File.join(MASTER, "data/spine.yml")).fetch("name_candidates"),
+               direction: :down, source: "MASTER/data/spine.yml",
+               note: "names saying which drawer, not what (ruby MASTER/tools/rename.rb)",
+               members: rows.map { |row| "#{row.constant} -> #{row.proposal || '?'} (#{row.reason})" })]
+    rescue StandardError => e
+      [Row.new(name: "name_candidates", current: nil, ceiling: nil, direction: :down,
+               source: "MASTER/data/spine.yml", note: "unreadable: #{e.class}")]
+    end
+
+# Every name a person or a model can type, across the three surfaces that
+# accept one: the CLI's closed table, the words the router accepts as meaning
+# the pipeline, and bin/operator's subcommands.
+#
+# The file census counts files and the entrypoint census counts doors. This
+# counts what is behind a door, which is where command sprawl hides: adding a
+# verb costs no file and moves no ceiling. Measured 2026-09-11 at 36 names —
+# and ten of them, through workflow triad sweep scan fix self critique council
+# review, are one pipeline. Five slash names resolve to two stages.
+def command_rows
+  cli = File.read(File.join(MASTER, "lib/cli/command_registry.rb"))
+  control = begin
+    File.read(File.join(MASTER, "lib/cli/command_registry/control_commands.rb"))
+  rescue StandardError
+    ""
+  end
+  router = File.read(File.join(MASTER, "lib/cli/turn_router.rb"))
+  operator = File.read(File.join(MASTER, "bin/operator"))
+
+  verbs = (cli + control).scan(/^\s+"([a-z_?]+)" => command\(/).flatten
+  inferred = router[/THROUGH_COMMANDS = %w\[([^\]]+)\]/, 1].to_s.split
+  slashes = router[/THROUGH_SLASH = %w\[([^\]]+)\]/, 1].to_s.split
+  subcommands = operator.scan(/^when "([a-z_?-]+)"/).flatten
+  names = (verbs + inferred + slashes + subcommands).uniq.sort
+
+  [Row.new(name: "command_surface", current: names.size,
+           ceiling: YAML.safe_load_file(File.join(MASTER, "data/spine.yml")).fetch("command_surface"),
+           direction: :down, source: "MASTER/data/spine.yml",
+           note: "names a person or a model can type; an alias is a name",
+           members: names)]
+rescue StandardError => e
+  [Row.new(name: "command_surface", current: nil, ceiling: nil, direction: :down,
+           source: "MASTER/data/spine.yml", note: "unreadable: #{e.class}")]
+end
+
     def entrypoint_rows
       ceilings = YAML.safe_load_file(File.join(MASTER, "data/spine.yml")).fetch("pub4_entrypoint_ceilings")
       ceilings.map do |tree, ceiling|
@@ -546,8 +598,12 @@ module Operator
       YAML.safe_load_file(path).fetch("rules")
     end
 
-    def deep_rows
-      [
+def deep_rows
+  [
+    # Deep because it parses every tracked Ruby file in four trees with Prism.
+    # Fast means "reads files" in this register and name_candidates reads 2,500
+    # of them through a parser, which is the line the header draws.
+    *name_rows,
         shell_row("selftest", "MASTER", "bundle exec rake selftest", /self-test: (\d+) violation/, 0),
         shell_row("selfcheck", "MASTER", "bundle exec rake selfcheck", /selfcheck: (\d+) violation/, nil),
         # Deep because the rule registry is global and a suite run has test-defined

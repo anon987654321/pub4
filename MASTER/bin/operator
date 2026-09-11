@@ -69,7 +69,7 @@ when "gate"
   # changed, under its own name, so a bad fix is attributable to the stage that
   # made it rather than to the diff as a whole.
   require "operator/gate_chain"
-  scan_only = !ARGV.delete("--scan-only").nil? || ENV["PUB4_GATE_SCAN_ONLY"] == "1"
+  scan_only = !ARGV.delete("--scan-only").nil? || ENV["MASTER_GATE_SCAN_ONLY"] == "1"
   # --explain is the same question people actually ask before starting an hour
   # of gates: what is this going to run.
   list = !ARGV.delete("--list").nil? || !ARGV.delete("--explain").nil?

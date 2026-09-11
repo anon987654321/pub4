@@ -432,6 +432,43 @@ agent-automated). pf lockout from console: `doas pfctl -t bruteforce -T flush`.
 Any file changed on the VPS under `OPENBSD/` must be copied back to git and
 committed.
 
+## A daemon that answers ok and does nothing
+
+`rcctl check` asks whether a process exists. Three things on vm23 were dead
+behind a green answer, found 2026-09-11, and they are one class rather than
+three incidents: the evidence of work and the evidence of life were the same
+signal, so silence meant both.
+
+**pflogd, suspended for 34 days.** `rcctl check pflogd` said ok; the process
+title said `pflogd: [suspended]`. It had been handed a `/var/log/pflog` written
+with a different snaplen than its own `-s 160`, and `pflogd(8)` is explicit
+about what happens next: an invalid or incompatible file suspends logging until
+a SIGHUP or SIGALRM. It retried on every 60-second flush and wrote
+"Invalid/incompatible log file, move it away" into `/var/log/messages` each
+time, which nothing reads. Packet filter logging was off from 8 August.
+
+    doas pflogd -x -f /var/log/pflog        # integrity, without touching it
+    doas mv /var/log/pflog /var/log/pflog.incompatible-$(date +%Y%m%d)
+    doas rcctl restart pflogd
+    ps -axo command | grep pflogd           # must read [running], not [suspended]
+
+**brgen_jobs, failed.** The Solid Queue worker is not in `apps.yml`, so
+`health_check.rb` — which walks the apps and the core services — could not see
+it. `rcctl ls failed` names it. Nothing ran a background job for as long as it
+was down.
+
+**core-reclaim, inert since 30 August.** Its trigger was `rss_mb >= 320`, and
+brgen resident reads 199M while its address space is 877M and swap sits at 76%.
+The script's own header says RSS understates a swapped process; it then used
+RSS as its only signal. So the reclaim never fired under exactly the pressure
+it exists for, and the kernel did the work instead — `UVM: killed: out of swap`
+21 times for brgen in one dmesg buffer, plus relayd once and three root shells.
+It reads swap pressure as well as RSS now, and writes `/var/db/core_reclaim_seen`
+on every run so "nothing to do" and "never ran" stop being the same silence.
+
+`health_check.rb` asserts all three: the suspended title, `rcctl ls failed`, and
+the heartbeat's age.
+
 ## Repair playbooks
 
 - Integrity failure: run `ruby OPENBSD/integrity_gate.rb` and fix the first

@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
 require "json"
-require_relative "../../../tools/design_tokens"
-require_relative "../../../../OPENBSD/lib/gate_result"
+require_relative "../../RAILS/tools/design_tokens"
+require_relative "../../OPENBSD/lib/gate_result"
 
 module Deploy
   class MasterWebAssetsGate
-    ROOT = File.expand_path("../../../..", __dir__)
+    ROOT = File.expand_path("../..", __dir__)
     FACE_CSS = File.join(ROOT, "MASTER", "web", "public", "face.css")
     WEB_ROOT = File.join(ROOT, "MASTER", "web")
     ASSETS_DIR = File.join(WEB_ROOT, "public", "assets")

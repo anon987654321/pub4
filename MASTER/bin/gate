@@ -102,7 +102,7 @@ TIER = if ARGV.include?("--lexical-only")
 # semantic pass was `/critique` then `/review`, and both words name the critique
 # stage, so it ran the council twice — the tier that already costs the most.
 def lines_for(path)
-  lexical = SCAN_ONLY ? ["/scan --no-autofix #{path}"] : ["/scan #{path}"]
+  lexical = SCAN_ONLY ? ["/scan --no-autofix #{path}"] : ["/scan --apply #{path}"]
   semantic = ["/critique #{path}"]
   case TIER
   when :lexical then lexical

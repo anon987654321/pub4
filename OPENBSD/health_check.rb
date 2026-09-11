@@ -147,6 +147,38 @@ if on_box
   pf_ok = ok && out.include?("block") && out.include?("log all")
   failures << "pfctl: #{out.empty? ? "no rules output" : out}" unless pf_ok
 
+# Daemons that answer "ok" while doing nothing, and jobs whose only evidence is
+# an empty log.
+#
+# pflogd spent 34 days in its [suspended] state — `rcctl check pflogd` said ok
+# the whole time, because the process was alive; it had refused the log file it
+# was handed (a snaplen it did not write) and, per pflogd(8), suspends logging
+# until a SIGHUP. Packet filter logging was off and every health check passed.
+# The state is in the process title, which is the only place it appears.
+suspended, ps_out = run("/bin/ps", "-axo", "command")
+if suspended && ps_out.include?("pflogd: [suspended]")
+  failures << "pflogd: suspended — logging is off; move /var/log/pflog aside and SIGHUP (see RUNBOOK)"
+end
+
+# rcctl's own verdict on everything, not only the services this file lists.
+# brgen_jobs — the Solid Queue worker — is not in apps.yml, so the loop above
+# could not see it, and it sat failed with no background job running anywhere.
+failed_ok, failed_out = run(*privileged("/usr/sbin/rcctl", "ls", "failed"))
+if failed_ok
+  failed_out.split("\n").map(&:strip).reject(&:empty?).each do |service|
+    failures << "#{service}: rcctl lists it as failed"
+  end
+end
+
+# A job that logs only when it acts cannot be told from a job that stopped
+# running. core-reclaim writes a heartbeat every run for exactly that reason;
+# anything over three hours old means the hourly job is not firing.
+heartbeat = "/var/db/core_reclaim_seen"
+if File.exist?(heartbeat)
+  age_h = ((Time.now - File.mtime(heartbeat)) / 3600).round(1)
+  failures << "core-reclaim: heartbeat #{age_h}h old — the hourly job is not running" if age_h > 3
+end
+
   dns_ok = false
   if File.executable?("/usr/bin/dig")
     dns_ok, dns_out = run("/usr/bin/dig", "@127.0.0.1", "brgen.no", "SOA", "+short", "+time=2", "+tries=1")

@@ -42,6 +42,11 @@ if ENV["TTS_WORKER_REEXEC_DONE"] != "1"
     "LC_ALL" => ENV.fetch("LC_ALL", "C.UTF-8"),
     "BUNDLE_GEMFILE" => File.join(ROOT, "Gemfile"),
     "TTS_WORKER_REEXEC_DONE" => "1",
+    # The idle limit has to survive the re-exec. unsetenv_others drops every
+    # variable not named here, which is the point for the bundler keys and a
+    # trap for anything else: the knob read fine in the parent and the daemon
+    # that actually runs the loop never saw it.
+    "TTS_WORKER_IDLE_S" => ENV.fetch("TTS_WORKER_IDLE_S", "1800"),
   }
   exec(clean_env, RbConfig.ruby, __FILE__, *ARGV, unsetenv_others: true)
 end
@@ -206,7 +211,23 @@ if ARGV[0] == "--daemon"
   trap("INT", &cleanup)
   trap("TERM", &cleanup)
 
+  # Idle daemons exit. Nothing reaps them otherwise, and nothing ever did: every
+  # boot of bin/cli spawns a pool of two, none of them stops when the session
+  # ends, and they outlive the checkout they were spawned from. Twenty-one were
+  # found alive on 2026-09-11 across nine trees, six of which had been deleted
+  # hours earlier — a laptop that had run the suite a few times was carrying a
+  # worker pool for every worktree it had ever opened.
+  #
+  # Thirty minutes, because the socket is the contract: a caller that finds no
+  # daemon spawns one, and the cost of that is a boot rather than a failure.
+  idle_limit = Integer(ENV.fetch("TTS_WORKER_IDLE_S", "1800"))
+
   loop do
+    ready = IO.select([server], nil, nil, idle_limit)
+    unless ready
+      warn "tts-worker: idle #{idle_limit}s on #{sock_path} — exiting"
+      cleanup.call
+    end
     client = server.accept
     begin
       line = client.gets&.chomp

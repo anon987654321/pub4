@@ -153,6 +153,31 @@ module Master
         Master::Ground::SecurityAudit.report(root:)
       end
 
+      # The corpus, one line each, because the instruction every agent is given is to
+      # read the law before writing, and the only way to do that was a YAML one-liner
+      # in CLAUDE.md that iterated the wrong shape for months.
+      #
+      # A list, not a copy: it reads data/rules.yml at call time, the same file
+      # `bin/operator rule <ID>` prints a card from. An argument filters by id or
+      # name, so `/rules guard` narrows to the rules that govern guard clauses.
+      #
+      # Read-only on purpose. The verb that enforces them is /through, and that now
+      # needs --apply to write. A second verb that scans and fixes would be the same
+      # pipeline under another name, which is the defect this repo keeps finding in
+      # its own tree.
+      def dispatch_rules(root, ctx: nil)
+        filter = arg_for(ctx).downcase
+        rules = Master.law("rules") || []
+        rows = rules.select { |rule| filter.empty? || "#{rule["id"]} #{rule["name"]}".downcase.include?(filter) }
+        return "rules: nothing matches #{filter.inspect} in #{rules.size} declared" if rows.empty?
+
+        lines = rows.map do |rule|
+          kind = rule["detect_semantic"] ? "semantic" : "detector"
+          format("%-28s %-10s %-8s %s", rule["id"], rule["tier"], rule["severity"], kind)
+        end
+        ["#{rows.size} of #{rules.size} rules — bin/operator rule <ID> for one in full", *lines].join("\n")
+      end
+
       def dispatch_doctor(root, ctx: nil)
         script = File.join(root, "bin", "doctor")
         body = if File.file?(script)

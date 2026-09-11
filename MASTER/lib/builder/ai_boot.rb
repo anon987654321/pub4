@@ -97,7 +97,13 @@ module Master
       elsif !self_test.value!.ok?
         summary = self_test.value!
         bus&.publish("builder:self_test", ok: false, violations: summary.violation_count)
-        if ENV["MASTER_STRICT_BOOT"] == "1"
+        # Strict by default, because soul.yml's work rules put SURFACE_ERRORS_FIRST
+        # and a runtime that boots past its own constitution has already answered
+        # that question the other way. The tree reads 0 violations, so the strict
+        # path is the one every boot here already takes — it just was not saying so,
+        # and a default nobody exercises is a default nobody can trust.
+        # MASTER_STRICT_BOOT=0 for a boot that has to come up with known violations.
+        if ENV.fetch("MASTER_STRICT_BOOT", "1") != "0"
           raise "builder: self_test failed with #{summary.violation_count} violation(s)"
         end
       end
