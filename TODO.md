@@ -4576,6 +4576,35 @@ Every colour, typeface and crop here is a rendered value and the operator is a
 trained architect. Build the structure, measure the geometry, and bring the
 look back for a decision rather than choosing it.
 
+## layout_snapshot has been failing since August — 2026-09-11
+
+`ruby RAILS/gates/runner.rb rendered_suite` fails on fifteen surfaces, every
+one of them `LayoutSnapshotGate`, and the other eight leaves pass. The
+committed baselines under `gates/data/layout_snapshots/` were last written on
+2026-08-17, so the drift is twenty-five days of accumulated change rather than
+any one commit.
+
+The drift is real rather than instrument noise, and it names things that were
+deliberately retired: `a.btn.btn--primary` and `.btn--ghost` are the zen-era
+BEM twins `_zen_buttons.scss` says it retired, and `#app-tab-bar` is gone from
+amber's desktop snapshot. Beside them, `#install-prompt`'s two buttons are
+recorded on every surface and appear in no baseline — measured, not guessed:
+stripping the `role="region"` added on 2026-09-11 leaves all twenty-six
+mentions in place, so that is not the cause either.
+
+Not regenerated, deliberately. `GATE_SNAPSHOT_UPDATE=1` accepts new baselines
+and this tree's contract is that accepting them is a reviewing act: fifteen
+files of layout under one session's name, covering a month of changes that
+session did not make, is the shape of a ratchet moved to absorb somebody
+else's growth. Somebody who knows which of those changes were intended should
+read the diff and take them.
+
+Worth asking in the same pass why nothing noticed for twenty-five days. The
+gate is correct and was reporting the whole time; it sits under
+`rendered_suite`, which needs Chrome and a booted fleet, so a machine without
+`RAILS/bin/triangle up` degrades it to a warning. That is the designed
+behaviour and it is also how a real finding stayed quiet for a month.
+
 ## Wishes, not work
 
 Directions rather than tasks. They belong to the operator, and nobody should open
