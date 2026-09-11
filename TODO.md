@@ -10316,4 +10316,338 @@ A finding is a hypothesis. Rank, merge, delete.
 
 480 items. One snapshot layer beats hundreds of micro-optimizations. Same decisions.
 
+
+## Brgen monetization — ChatGPT intake 2026-09-11
+
+Unmeasured. Horizon (`apps.horizon.yml`) stays ignored for implementation:
+creator monetization, dating premium, donations, Solidus, pgvector.
+Already open: marketplace 500, ads/affiliate disclosure, Kaufland program,
+TradeDoubler. Fenced: selling moderation outcomes, dark patterns, mandatory
+commission, money/registrar/vm23 console. Do not start with a large cut of
+transactions. Hybrid: Finta-style 0% commission + Flon-style credits/boosts;
+Kaufland is visibility, not a tax on organic traffic. One Commerce/Billing/
+Entitlements domain, not a billing stack per vertical. A finding is a hypothesis.
+
+### Monetization architecture
+
+1. Define a single platform-wide monetization model.
+2. Separate buyer monetization from seller monetization.
+3. Separate consumer features from business features.
+4. Make every monetization mechanism optional at first.
+5. Add a first-class `plans` model.
+6. Add a first-class `subscriptions` model.
+7. Add `entitlements` rather than scattering plan checks through controllers.
+8. Add feature limits as data rather than constants.
+9. Make plans editable from admin.
+10. Add monthly and annual billing.
+11. Add free, Pro and Business tiers.
+12. Add a low-friction free seller tier.
+13. Never require payment before proving marketplace value.
+14. Add a transparent pricing page.
+15. Add a revenue dashboard.
+16. Add MRR tracking.
+17. Add ARR tracking.
+18. Add churn tracking.
+19. Add conversion tracking.
+20. Add revenue-per-active-seller tracking.
+### Marketplace monetization
+
+21. Add paid listing boosts.
+22. Add category-top placement.
+23. Add homepage promotion.
+24. Add “featured seller” placement.
+25. Add sponsored search results.
+26. Add sponsored category cards.
+27. Add promoted marketplace collections.
+28. Add seller storefronts.
+29. Add premium storefront themes.
+30. Add seller profile verification.
+31. Add seller badges.
+32. Add business identity verification.
+33. Add verified-local-business status.
+34. Add seller analytics.
+35. Add listing-view analytics.
+36. Add click analytics.
+37. Add conversion analytics.
+38. Add saved-search analytics.
+39. Add promotion analytics.
+40. Let sellers purchase promotion directly from their dashboard.
+### A very interesting Brgen model: credits
+
+41. Introduce optional seller credits.
+42. Give new businesses introductory credits.
+43. Allow credits to purchase boosts.
+44. Allow credits to purchase promoted listings.
+45. Allow credits to purchase homepage exposure.
+46. Allow credits to purchase category placement.
+47. Bundle credits into paid subscriptions.
+48. Sell additional credit packs.
+49. Give referral credits.
+50. Give promotional campaign credits.
+51. Make credit consumption completely transparent.
+52. Never make credits obscure transaction fees.
+53. Add credit expiry only where economically justified.
+54. Show estimated value before spending credits.
+55. Add a seller credit ledger.
+56. Add credit refunds for failed promotions.
+57. Add campaign-level credit budgets.
+58. Add automatic campaign stopping.
+59. Add credit-spend analytics.
+60. Add credit ROI analytics.
+### Business subscriptions
+
+61. Free business profile.
+62. Pro business profile.
+63. Business Plus.
+64. Verified Business.
+65. Marketplace Pro.
+66. Takeaway Pro.
+67. Messenger/business inbox features.
+68. Advanced analytics.
+69. More active listings.
+70. More images per listing.
+71. More staff accounts.
+72. Business opening-hours automation.
+73. Campaign creation.
+74. Customer segmentation.
+75. Customer messaging.
+76. Loyalty tools.
+77. Coupon tools.
+78. Automated review requests.
+79. Advanced storefront customization.
+80. Priority support.
+### Takeaway
+
+81. Give restaurants a free basic storefront.
+82. Add paid restaurant promotion.
+83. Add sponsored restaurant placement.
+84. Add sponsored dishes.
+85. Add promoted meal deals.
+86. Add restaurant subscription tiers.
+87. Add restaurant analytics.
+88. Add repeat-customer analytics.
+89. Add campaign analytics.
+90. Add loyalty programs.
+91. Add restaurant coupons.
+92. Add scheduled promotions.
+93. Add happy-hour campaigns.
+94. Add geographic targeting.
+95. Add “open now” sponsored placement.
+96. Add sponsored cuisine/category placement.
+97. Add restaurant CRM.
+98. Add customer segmentation.
+99. Add automated re-engagement.
+100. Add optional ordering commission rather than mandatory commission.
+### Local advertising
+
+101. Add a local advertising system.
+102. Sell sponsored business cards.
+103. Sell sponsored marketplace listings.
+104. Sell sponsored takeaway listings.
+105. Sell sponsored events.
+106. Sell sponsored map pins.
+107. Sell sponsored category pages.
+108. Sell sponsored search results.
+109. Sell homepage placements.
+110. Sell newsletter placements.
+111. Sell local campaign packages.
+112. Add self-service ad creation.
+113. Add campaign budgets.
+114. Add CPC campaigns.
+115. Add CPM campaigns where appropriate.
+116. Add fixed-price local placements.
+117. Add geographic targeting.
+118. Add category targeting.
+119. Add time-window targeting.
+120. Add frequency caps.
+121. Add advertiser analytics.
+122. Add conversion tracking.
+123. Add campaign receipts.
+124. Add VAT-aware billing.
+125. Add advertiser spending limits.
+### Brgen-specific network monetization
+
+126. Paid “boost this post”.
+127. Paid event promotion.
+128. Paid community promotion.
+129. Paid local announcement promotion.
+130. Paid job/listing boosts.
+131. Paid wanted-ad boosts.
+132. Paid dating/profile boosts.
+133. Paid playlist promotion.
+134. Paid creator profiles.
+135. Paid creator subscriptions.
+136. Paid business channels.
+137. Paid community channels.
+138. Paid newsletter sponsorships.
+139. Paid local guides.
+140. Paid “deal of the day” placement.
+### Trust as monetization
+
+141. Add optional business verification.
+142. Add verified-business subscription.
+143. Add verified seller badges.
+144. Add trust-score analytics for businesses.
+145. Add review-management tools.
+146. Add dispute-management tools.
+147. Add business documentation vault.
+148. Add verified opening hours.
+149. Add verified location.
+150. Add verified contact information.
+151. Add verified ownership.
+152. Add business profile completeness scoring.
+153. Add trust-enhancement recommendations.
+154. Never sell higher moderation outcomes.
+155. Never allow payment to bypass trust/safety controls.
+### Payments
+
+156. Integrate a proper payment abstraction.
+157. Support marketplace payments.
+158. Support subscriptions.
+159. Support one-off purchases.
+160. Support promotional credits.
+161. Support refunds.
+162. Support partial refunds.
+163. Support invoices.
+164. Support receipts.
+165. Track payment-provider fees separately.
+166. Track VAT separately.
+167. Track platform revenue separately.
+168. Track seller revenue separately.
+169. Track refunds separately.
+170. Reconcile payments automatically.
+171. Add failed-payment recovery.
+172. Add subscription grace periods.
+173. Add payment-method updates.
+174. Add seller payout reporting.
+175. Never make money flows implicit.
+### Conversion optimization
+
+176. Add seller onboarding funnel analytics.
+177. Measure signup → listing.
+178. Measure listing → first view.
+179. Measure first view → contact.
+180. Measure contact → transaction.
+181. Measure first transaction → repeat transaction.
+182. Measure free → paid conversion.
+183. Measure promotion → transaction.
+184. Measure seller retention.
+185. Measure buyer retention.
+186. Measure repeat-purchase rate.
+187. Measure seller lifetime value.
+188. Measure buyer lifetime value.
+189. Identify high-value seller cohorts.
+190. Identify dormant sellers.
+191. Identify dormant buyers.
+192. Trigger seller activation campaigns.
+193. Trigger buyer reactivation campaigns.
+194. Build abandoned-listing recovery.
+195. Build abandoned-cart recovery where applicable.
+196. Build “you have interested buyers” notifications.
+197. Build “your listing is getting views” notifications.
+198. Build “promote this listing” contextual prompts.
+199. Never make these notifications spammy.
+### Monetization UX
+
+200. Show exactly what the seller gets for every paid feature.
+201. Show expected reach before promotion.
+202. Show actual reach after promotion.
+203. Show spend before confirmation.
+204. Show projected budget consumption.
+205. Show ROI after campaigns.
+206. Let sellers pause campaigns.
+207. Let sellers cancel campaigns.
+208. Make promotion self-service.
+209. Make subscriptions self-service.
+210. Make cancellation easy.
+211. Never use dark patterns.
+212. Never hide fees.
+213. Never surprise sellers with commission.
+214. Provide downloadable invoices.
+215. Provide spending history.
+216. Provide revenue history.
+217. Provide tax/VAT information.
+218. Make pricing understandable in Norwegian.
+219. Make pricing understandable on mobile.
+220. Make monetization work without an app install.
+### Marketplace liquidity
+
+221. Add seller activation scoring.
+222. Identify empty categories.
+223. Identify under-supplied searches.
+224. Identify high-demand products.
+225. Identify high-demand services.
+226. Show sellers unmet local demand.
+227. Send sellers demand alerts.
+228. Add “customers are looking for…” recommendations.
+229. Add category supply dashboards.
+230. Add geographic supply dashboards.
+231. Identify marketplace cold spots.
+232. Identify marketplace hot spots.
+233. Give businesses free promotional credits in under-supplied categories.
+234. Give new sellers temporary visibility.
+235. Prevent paid placement from completely overwhelming organic discovery.
+236. Maintain quality-weighted ranking.
+237. Combine relevance, trust, quality and commercial signals.
+238. Measure marketplace liquidity.
+239. Measure time-to-first-response.
+240. Measure time-to-first-sale.
+### Messenger as monetization infrastructure
+
+241. Add business inboxes.
+242. Add team inboxes.
+243. Add multiple staff accounts.
+244. Add automated replies.
+245. Add business hours.
+246. Add conversation labels.
+247. Add customer history.
+248. Add saved replies.
+249. Add order context.
+250. Add marketplace-listing context.
+251. Add takeaway-order context.
+252. Add customer segmentation.
+253. Add broadcast campaigns.
+254. Add opt-in marketing messages.
+255. Add paid CRM features.
+256. Add message analytics.
+257. Add response-time analytics.
+258. Add conversion-from-chat analytics.
+259. Let sellers see which listings generate conversations.
+260. Let sellers promote listings directly from conversations.
+### The really big architectural TODOs
+
+261. Build a unified `Commerce` domain.
+262. Build a unified `Billing` domain.
+263. Build a unified `Promotion` domain.
+264. Build a unified `Credits` domain.
+265. Build a unified `Subscription` domain.
+266. Build a unified `Entitlements` domain.
+267. Build a unified `Ledger` domain.
+268. Build a unified `Campaign` domain.
+269. Make marketplace, takeaway and business profiles consume those domains.
+270. Do not create separate billing implementations per sub-app.
+271. Do not create separate promotion systems per sub-app.
+272. Do not create separate subscription systems per sub-app.
+273. Make revenue attribution cross-app.
+274. Make seller identity cross-app.
+275. Make business identity cross-app.
+276. Make analytics cross-app.
+277. Make customer identity cross-app where legally appropriate.
+278. Make consent explicit.
+279. Make VAT handling centralized.
+280. Make refunds centralized.
+281. Seller subscriptions
+282. Promoted listings
+283. Seller analytics
+284. Credits
+285. Takeaway business subscriptions
+286. Sponsored search/category placement
+287. Coupons/deals
+288. Business Messenger/CRM
+289. Optional transaction/payment revenue**
+
+289 items. Liquidity before squeezing another 2% out of queries. Rank: verified
+business → subscriptions → promoted listings → analytics → credits → takeaway
+Pro → sponsored placement → coupons → CRM → optional payments.
+
 ---
