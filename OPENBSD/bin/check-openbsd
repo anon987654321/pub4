@@ -36,8 +36,11 @@ failures << "deploy_smoke" unless runner.run("deploy smoke", RUBY, "OPENBSD/depl
 failures << "resource guard" unless runner.run("resource guard", "ksh",
                                                "OPENBSD/test/resource_guard_test.sh",
                                                "OPENBSD/resource_guard.sh")
-failures << "vps_ci_all syntax" unless runner.run("vps_ci_all syntax", "zsh", "-n", "OPENBSD/vps_ci_all.sh")
-failures << "openbsd deploy syntax" unless runner.run("openbsd deploy syntax", "zsh", "-n", "OPENBSD/OPERATOR.sh")
+# Two files were named here by hand out of 43, and the deploy path was not among
+# them: bin/vps-deploy, vps_ci.sh and deploy_all.sh are what a deploy runs.
+# shell_syntax_gate reads each script's shebang, so the set is the tree and the
+# parser is the one that file declares.
+failures << "shell syntax" unless runner.run("shell syntax", RUBY, "OPENBSD/shell_syntax_gate.rb")
 failures << "vps safety" unless runner.run("vps safety", RUBY, "OPENBSD/vps_safety_gate.rb")
 
 exit(failures.empty? ? 0 : 1)

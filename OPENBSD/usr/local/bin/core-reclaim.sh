@@ -1,7 +1,7 @@
 #!/bin/ksh
 # Return a core app's grown resident set to the box.
 #
-# resource_guard.sh sheds OPTIONAL="litestream bsdports amber" under pressure and
+# resource_guard.sh sheds OPTIONAL="bsdports amber" under pressure and
 # restores them when it clears. It never touches CORE="master brgen", by design —
 # those are the surfaces that must stay up. The consequence is that brgen's
 # worker grows and nothing ever gives the memory back.

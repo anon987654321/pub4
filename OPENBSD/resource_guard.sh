@@ -135,6 +135,14 @@ else
   free=$(vmstat -s | awk '/pages free$/{print $1}')
   if [[ -n $pages && -n $free && $pages -gt 0 ]]; then
     mem_avail_pct=$(( free * 100 / pages ))
+  else
+    # Both measurements gone. The load arm above fails to 9.9 for exactly this
+    # reason, and the memory arm used to fail the other way: it kept its 100%
+    # initialiser, so `mem_avail_pct -lt MEM_WARN` was never true and the guard
+    # went quietly deaf to memory-only pressure. 0 sheds on the next strike and
+    # refuses to restore, which is a state a human sees. 100 was silence.
+    mem_avail_pct=0
+    logger -t resource-guard "memory unmeasurable — top and vmstat both failed, treating as 0%"
   fi
 fi
 

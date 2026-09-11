@@ -4999,7 +4999,11 @@ Numbered 1–N across the four trees.
 85. **`NO_PUTS` exemption still names `pub4/gate_chain.rb`.** `lib/review/scan/rules/lexical_rules.rb:39`. File is `lib/operator/gate_chain.rb`. The regex does not match.
 86. **`FixLoop` “architectures #1–#15”.** `lib/fix/fix_loop.rb:18`. Architecture numbers went with `docs/`. Say what the two tiers are.
 87. **`Io::Clean` comment is a changelog.** `lib/io/clean.rb:11-15`. Present-tense: script is `OPENBSD/dev/clean.sh`.
-88. **`web/CLAUDE.md` dated 2026-07-10.** `:265-272` resource_guard paused — verify against `OPENBSD/resource_guard.sh` before trusting. Add a last-verified or cut numbers that drift.
+88. **Fixed 2026-09-12.** The paragraph said the guard was paused via
+    `/var/db/pub4_all_apps`. That flag does not exist on vm23 and the shed list is
+    empty, so the guard has been armed the whole time the doc said otherwise — two
+    months of it. It now states that, and points at the script for thresholds
+    instead of naming any.
 89. **`help.rb` “read-only” vs scan writes.** `:18` vs `:30-32`. Pick one sentence.
 90. **`MechanicalAutofix` “`/scan` and `/self`”.** `/self` is a model alias for `/review`. Say `/review --only scan`.
 91. **`lib/cli/README.md` still mentions `data/claude`.** `:33`. Empty dir.
@@ -5586,8 +5590,14 @@ Numbered 1–N across the four trees.
      names the current pair and points at the script;
      `test_guard_thresholds_documented` refuses prose that names a different
      number from the code.
-630. **keep-warm OPTIONAL set is inverted.** Comment says “bsdports and master are resource_guard's OPTIONAL set”. Guard has `CORE="master brgen"` and `OPTIONAL="bsdports amber"`.
-631. **core-reclaim still names litestream in OPTIONAL.** Match `resource_guard.sh`.
+630. **Fixed 2026-09-12.** The comment had it backwards in both directions: amber is
+     in `OPTIONAL="bsdports amber"` and master is in `CORE="master brgen"`. It no
+     longer reasons from the guard's sets at all — brgen and amber are simply the
+     two surfaces a visitor arrives on cold, and the shed case was already handled
+     six lines below by the per-target `nc -z`.
+631. **Fixed 2026-09-12.** `OPTIONAL="bsdports amber"` now, matching the guard.
+     litestream is doubly stale: `restore_backups.sh` records that no litestream
+     binary exists on vm23 and `/var/backups/litestream/` is empty.
 632. **Four recipe lists.** `data/operator.yml`, `RECIPES.md`, `START_HERE.md` Golden Commands, `RUNBOOK.md` deploy-all table. Make `operator.yml` the only command list.
 633. **RECIPES.md is thirteen lines.** Either fill it from `operator.yml` or delete and point.
 634. **Feature inventory stated twice.** `START_HERE.md` “App inventory” and “Feature inventory” both `RAILS/apps.yml`. One line.
@@ -5672,7 +5682,12 @@ Numbered 1–N across the four trees.
 710. **config_drift_gate tests only crontab.** Add a VERBATIM file mismatch and an EXCLUDED file that must *not* fail.
 711. **installed_targets CONFIG_GLOBS miss usr/local.** Include `usr/local/bin/*` as referrers or document the hole.
 712. **check does not run installed_targets, dns_zones, vps_safety.** Those live only in `check-openbsd`. Either include them or say contributor must run both.
-713. **check-openbsd zsh -n covers two files.** Add `vps-deploy`, `vps_ci.sh`, `deploy_all.sh`; `ksh -n` for `resource_guard.sh`.
+713. **Fixed 2026-09-12, and wider than asked.** `OPENBSD/shell_syntax_gate.rb`
+     reads each script's shebang and parses it with the interpreter that shebang
+     names, so the set is the tree rather than a list somebody maintains. It covers
+     43 scripts across zsh, ksh and sh — all of which parse today — and replaces the
+     two hand-named lines, so check-openbsd got shorter. Recorded as OPENBSD 112 ->
+     113 in spine.yml.
 714. **deploy_smoke_gate check_master_rc is a string hunt.** Assert “warmup hits a public unauthed path”, not that exact `chat/message?message=ping` query.
 715. **domain_watch population is nsd.conf.** Read `RenderDns.zones` so a zone not yet in nsd.conf still gets whois.
 716. **test_domain_expiry `--update` needs `/usr/bin/timeout`.** Document in START_HERE: refresh on vm23; local red is not a code defect.
@@ -6663,7 +6678,12 @@ New defects from reading the four trees after the inventories. Does not restate 
 41. **`start_all_apps.sh` restarts relayd after a fixed 5s.** Amber rc.d waits up to 300s for `/up`. Relayd can reload onto empty backends.
 42. **`etc/rc.d/master` digest is unquoted.** `cksum $_face_assets …` word-splits. Empty list plus glob stamps a digest that is not the asset set.
 43. **`bin/vps-state` swallows a corrupt deploy stamp.** `JSON.parse` rescue nil → “never deployed.”
-44. **`resource_guard.sh` memory path fail-opens to 100%.** If top and vmstat fail, memory-only pressure never sheds.
+44. **Fixed 2026-09-12.** Confirmed against vm23: `top -b -n 1` and `vmstat -s`
+    both answer on OpenBSD 7.8, so the fallback is live and only the both-failed
+    case was wrong. It kept the 100% initialiser, which made `mem_avail_pct -lt
+    MEM_WARN` unreachable and left the guard quietly deaf to memory-only pressure.
+    It now fails to 0 and logs why, matching the load arm six lines above, which
+    fails to 9.9 for the same stated reason.
 45. **`smtpd.conf` listens on `vio0`.** Interface rename and inbound 25 dies.
 46. **Hardcoded `/home/dev/pub4` in `start_all_apps.sh` and rc.d.** `PUB4_ROOT` / a worktree is ignored.
 47. **`dr-pull --check` exits 0 when `~/pub4-dr` is missing.** The local gate that should notice a stale backup is a skip on a Mac that never created the dir.

@@ -261,12 +261,13 @@ routed, dynamically-rendered response can.
 
 1 vCPU, ~1GB RAM, running `master`, `brgen`, `amber`, `bsdports`
 concurrently. A load average of 1.0 here means the single core is simply busy — not distress.
-`resource_guard.sh` (cron, every 5 min) is meant to shed `amber`/
-`bsdports` under real pressure, but as of 2026-07-10 it's
-paused (via its own `/var/db/pub4_all_apps` flag) after a threshold
-mismatch caused a brief full outage during a routine multi-app restart —
-see `OPENBSD/resource_guard.sh`'s header comment for the full story before
-re-enabling or retuning it. Restarting more than one or two of these apps
+`resource_guard.sh` (cron, every 5 min) sheds `amber` then `bsdports` under
+sustained pressure and restores them when it clears. It is armed: the pause
+flag `/var/db/pub4_all_apps` is absent on vm23, and this paragraph said it was
+paused for two months after that stopped being true. It has been recalibrated
+twice since, each time against the history log rather than a guess, so read the
+thresholds from the script and never from prose — `OPENBSD/CLAUDE.md` explains
+which log answers which question. Restarting more than one or two of these apps
 back-to-back spikes load into the 4–7 range for a few minutes purely
 from cold-start warm-up; that's expected, not a crisis, as long as swap
 isn't also climbing.

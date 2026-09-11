@@ -773,7 +773,17 @@ pub4_source_ceilings:
 # those recount what a value WAS. It folds into no existing OPENBSD test:
 # test_config_drift_gate compares the box against the repo, and this compares
 # the repo's prose against the repo's code.
-  OPENBSD: 112
+# 112 -> 113 for shell_syntax_gate.rb. check-openbsd named two shell scripts by
+# hand out of 43 and ran zsh -n on both. The deploy path was not among them:
+# bin/vps-deploy, vps_ci.sh and deploy_all.sh are what a deploy actually runs, so
+# a syntax error in any of the three was discovered by the deploy. resource_guard.sh
+# is ksh and a zsh list could not have covered it at all.
+#
+# The gate reads each script's shebang, which is both the complete set and the
+# right parser per file, and a script added tomorrow is covered by having a
+# shebang rather than by somebody remembering a list. It replaces the two lines
+# it supersedes, so check-openbsd got shorter. All 43 parse today.
+  OPENBSD: 113
   # 220 -> 222 for lora/seed_media.yml and lora/_toolkit/install_seed_media.rb,
   # the prompt set for every seeded photograph and the script that grades and
   # files what comes back from it. Two files, both named, neither foldable:

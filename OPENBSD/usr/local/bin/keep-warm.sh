@@ -24,10 +24,12 @@ export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 # the Ruby process resident, and going out through relayd and back would measure
 # the network as well as pay for TLS on a box that has no spare core.
 #
-# brgen and amber only. bsdports and master are resource_guard's OPTIONAL set —
-# warming what another job exists to shed is how two jobs fight over one box, and
-# master is 927M of address space that is correctly swapped out until someone
-# actually opens the face.
+# brgen and amber only, and not because of the guard's sets — amber is in
+# OPTIONAL="bsdports amber" and master is in CORE="master brgen", so naming the
+# guard here gets it backwards in both directions. These two are the surfaces a
+# visitor arrives on cold. bsdports is a low-traffic ports index nobody waits on,
+# and master is 927M of address space that is correctly swapped out until someone
+# actually opens the face. The shed case is handled below, per target.
 set -A TARGETS "brgen.no 38182" "amber.brgen.no 61352"
 
 # A real page, not /up. The health endpoint answers from a handful of objects and

@@ -101,7 +101,7 @@ class TestGitHooks < Minitest::Test
     out, _status = commit("spans two trees")
 
     assert_match(/PUB4_CROSS_TREE=1/, out)
-    assert_match(/bin\/pub4 worktree/, out, "the refusal should name the actual fix, not only the override")
+    assert_match(/bin\/operator worktree/, out, "the refusal should name the actual fix, not only the override")
   end
 
   def test_the_cross_tree_override_is_honoured
@@ -226,7 +226,7 @@ class TestGitHooks < Minitest::Test
     refute status.success?, "a three-commit push was allowed:\n#{out}"
     assert_match(/REFUSED — 3 commits would be published, not 1/, out)
     assert_match(/PUB4_PUSH_ALL=1/, out)
-    assert_match(/bin\/pub4 worktree/, out)
+    assert_match(/bin\/operator worktree/, out)
   ensure
     FileUtils.remove_entry(remote) if remote && File.directory?(remote)
   end
