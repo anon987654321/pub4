@@ -18,15 +18,22 @@ class TestRuleLoopPolicy < Minitest::Test
   end
 
   class Scanner
+    attr_reader :deletions_asked
+
     def initialize(allow_autofix: true)
       @allow_autofix = allow_autofix
+      @deletions_asked = []
     end
 
     def scan(_path, rules: nil)
       Master::Result.ok([{ rule: "TEST_RULE", severity: :warning, line: 1, message: "fix me" }])
     end
 
-    def should_autofix?(_rule_id, _confidence)
+    # The keyword mirrors Review::Scan::Scanner. A double that takes fewer
+    # arguments than the object it stands for reports a signature the tree does
+    # not have, and four tests here read :error for that reason alone.
+    def should_autofix?(_rule_id, _confidence, allow_deletions: false)
+      @deletions_asked << allow_deletions
       @allow_autofix
     end
   end
@@ -257,6 +264,32 @@ class TestRuleLoopPolicy < Minitest::Test
                           ))
 
       assert_equal :no_proposal, outcome
+    end
+  end
+
+  # MASTER_AUTOFIX is what a person asking looks like from inside the loop. The
+  # background convergence pass and the unattended four-tree ladder both leave
+  # it unset, and a transform that deletes is refused for them.
+  def test_the_loop_asks_for_deletions_only_when_a_person_did
+    assert_equal [true], deletions_asked_with("1")
+    assert_equal [false], deletions_asked_with(nil)
+  end
+
+  def deletions_asked_with(flag)
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "puts :x\n")
+      scanner = Scanner.new(allow_autofix: false)
+      loop = build_loop(root:, bus: FakeBus.new, scanner:, agent: Agent.new)
+
+      previous = ENV["MASTER_AUTOFIX"]
+      ENV["MASTER_AUTOFIX"] = flag
+      begin
+        loop.run_once([path])
+      ensure
+        ENV["MASTER_AUTOFIX"] = previous
+      end
+      scanner.deletions_asked
     end
   end
 

@@ -97,21 +97,39 @@ end)
           @bus&.publish("cost:record_error", error: e.message)
         end
 
+        # ruby_llm's registry carries a real price for every model it knows, and
+        # input and output are rarely the same number — Sonnet is $3 and $15 per
+        # million. COST_PER_TOKEN is that $15, and charging it to both directions
+        # of every model billed a free OpenRouter model — the ones KeyRotator
+        # exists to rotate — at the most expensive rate in the catalogue. The
+        # circuit breaker spends a dollar budget against this figure.
+        #
+        # A model the registry does not know keeps the flat rate. Pricing an
+        # unknown model at zero would let it run until something else stopped it.
+        def price_per_token(model, direction)
+          info = Master::Review::LLMDispatcher.model_info(model)
+          per_million = info && (direction == :output ? info.output_price_per_million : info.input_price_per_million)
+          return COST_PER_TOKEN unless per_million&.positive?
+
+          per_million.to_f / 1_000_000
+        end
+
         def record_estimated_usage(reply, model)
           tokens = Master::Trace::Session.estimate_tokens(reply.content)
           return if tokens.zero?
 
-          cost = (tokens * COST_PER_TOKEN).round(6)
+          cost = (tokens * price_per_token(model, :output)).round(6)
           @session.record_cost(cost, model:, tokens:)
           publish_llm_cost(model:, cost:, tokens:, tokens_in: tokens, tokens_out: 0, estimated: true)
         end
 
         def record_measured_usage(model, input:, output:, cached:, cache_write:, tokens:)
           regular = [input - cached - cache_write, 0].max
-          cost = ((regular * COST_PER_TOKEN) +
-                  (cached * COST_PER_TOKEN * CACHE_READ_RATIO) +
-                  (cache_write * COST_PER_TOKEN * CACHE_WRITE_RATIO) +
-                  (output * COST_PER_TOKEN)).round(6)
+          input_price = price_per_token(model, :input)
+          cost = ((regular * input_price) +
+                  (cached * input_price * CACHE_READ_RATIO) +
+                  (cache_write * input_price * CACHE_WRITE_RATIO) +
+                  (output * price_per_token(model, :output))).round(6)
           @session.record_cost(cost, model:, tokens:)
           publish_llm_cost(model:, cost:, tokens:, tokens_in: input, tokens_out: output, cached:, cache_write:)
           Trace::CacheEfficiency.record(input:, cached:, cache_write:)

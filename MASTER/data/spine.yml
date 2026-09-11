@@ -103,7 +103,31 @@ spine:
   # consumed, which is the cheapest seven a ceiling ever buys back.
   # Three branches measured this row against three bases, and each read its own
   # subtraction from 38111. 38069 is the merged tree measured once.
-  lib_body_ceiling: 38069
+  # 38069 -> 38116 buys three refusals, each one a place the runtime used to
+  # answer yes because it could not tell.
+  #
+  # Nineteen lines are the autofix safety tier: a transform that deletes waits
+  # for a person, where one that adds shows itself in the diff it makes. The
+  # method it replaces could refuse nothing — its thresholds were keyed to three
+  # words naming no rule, so every lookup missed and every rule came back
+  # allowed, under a backlog entry saying an unattended autofix pass corrupts
+  # code.
+  #
+  # Seventeen are the swarm reviewer, which read an unparseable reply as an
+  # approval twice over — an empty object and a JSON::ParserError both returned
+  # approved — and printed "swarm: approved" through Pipeline::Pass for a
+  # security review nobody reached. Six of those seventeen are one JSON
+  # extractor in Worker, replacing the copy each of three workers kept, which is
+  # how the three came to disagree about the empty case in the first place.
+  #
+  # Eleven are per-model cost. COST_PER_TOKEN is $15 per million, which is Sonnet's
+  # output price, and it was charged to both directions of every model — a free
+  # OpenRouter model included — while ruby_llm's registry carries the real
+  # numbers for all 1,170 entries it knows. The circuit breaker spends a dollar
+  # budget against this figure. A model the registry does not know keeps the
+  # flat rate: pricing an unknown model at zero would let it run until something
+  # else stopped it.
+  lib_body_ceiling: 38116
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753

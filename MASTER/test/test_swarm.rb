@@ -50,6 +50,28 @@ class TestSwarm < Minitest::Test
     assert result.value!["approved"]
   end
 
+  # The reviewer is the security layer, and its old parser read three different
+  # failures as consent: an empty object, prose with no JSON in it, and a
+  # JSON::ParserError. Each printed "swarm: approved" through Pipeline::Pass.
+  def test_an_unreadable_review_is_not_an_approval
+    ["", "Looks fine to me.", '{"approved": true', "{}"].each do |reply|
+      reviewer = Master::Review::Swarm::Workers::Reviewer.new(agent: FakeAgent.new(default: reply), event_bus: @bus)
+      result = reviewer.call(task: "check code", context_slice: { code: "puts 1" })
+
+      assert result.ok?, "the worker still answers; it is the verdict that changes"
+      refute result.value!["approved"], "approved on an unreadable reply: #{reply.inspect}"
+    end
+  end
+
+  # A verdict with violations and no approved key is a reviewer that found
+  # something and did not say the word. It is not an approval either.
+  def test_a_verdict_missing_the_key_is_not_an_approval
+    agent = FakeAgent.new(default: '{"violations": [{"type": "sql_injection", "line": 4}]}')
+    reviewer = Master::Review::Swarm::Workers::Reviewer.new(agent:, event_bus: @bus)
+
+    refute reviewer.call(task: "check", context_slice: {}).value!["approved"]
+  end
+
   def test_swarm_result_has_votes_field
     agent = FakeAgent.new(default: '{"approved": true, "violations": []}')
     coord = build_coordinator(agent)

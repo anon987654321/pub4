@@ -290,11 +290,21 @@ module Master
         []
       end
 
+      # A deleting transform runs only when a person asked this loop to fix, and
+      # MASTER_AUTOFIX is what a person asking looks like from here: the
+      # background convergence loop and the unattended ladder both leave it off.
+      # An addition is visible in the diff it makes; a deletion is invisible to
+      # anyone who does not already know what stood there.
+      def deletions_allowed?
+        ENV["MASTER_AUTOFIX"] == "1"
+      end
+
       def autofix_allowed?(violation)
         return true unless @scanner.respond_to?(:should_autofix?, true)
 
         confidence = violation[:confidence] || violation["confidence"] || 1.0
-        allowed = @scanner.__send__(:should_autofix?, violation[:rule], confidence)
+        allowed = @scanner.__send__(:should_autofix?, violation[:rule], confidence,
+                                    allow_deletions: deletions_allowed?)
         unless allowed
           @bus&.publish("rule_loop:autofix_skipped", rule: violation[:rule], confidence:)
           Master::Trace::Dmesg.status("fix0", "autofix_skipped rule=#{violation[:rule]} confidence=#{confidence}")

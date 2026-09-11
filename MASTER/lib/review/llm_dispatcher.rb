@@ -76,6 +76,23 @@ module Master
 
       TOOL_CAPABLE_RE = build_tool_capable_re.freeze
 
+      # One lookup per model id, held for the process. The registry is 1,170
+      # entries parsed from the gem's models.json, and a cost is recorded on
+      # every reply. nil means the registry does not carry the model, which the
+      # caller reads as "keep the flat rate" rather than as "free".
+      def self.model_info(model)
+        @model_info ||= {}
+        key = model.to_s
+        return @model_info[key] if @model_info.key?(key)
+
+        @model_info[key] = begin
+          RubyLLM.models.find(key)
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "LLMDispatcher.model_info(#{key})")
+          nil
+        end
+      end
+
       include ReactLoop
       include RubyLLMSender
       include ToolRegistry

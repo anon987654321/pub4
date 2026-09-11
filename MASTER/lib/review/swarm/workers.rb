@@ -24,10 +24,9 @@ module Master
           end
 
           def parse_result(raw)
-            match_str = raw.to_s.match(/\{.*\}/m)&.to_s || "{}"
-            parsed = JSON.parse(match_str)
-            Result.ok(parsed)
-          rescue JSON::ParserError => _e
+            parsed = json_object(raw)
+            return Result.ok(parsed) if parsed
+
             Result.ok({ summary: raw.to_s.strip, issues: [] })
           end
         end
@@ -74,14 +73,12 @@ module Master
 
           def parse_result(raw)
             text = raw.to_s.strip
-            parsed = JSON.parse(text.match(/\{.*\}/m)&.to_s || "{}")
+            parsed = json_object(raw) || {}
             summary = parsed["summary"] || text
             sources = Array(parsed["sources"])
             conf_key = parsed["confidence"].to_s.downcase
             conf = CONFIDENCE_MAP.fetch(conf_key, nil) || uncertainty_confidence(text)
             Result.ok({ summary:, sources:, confidence: conf })
-          rescue JSON::ParserError
-            Result.ok({ summary: text, sources: [], confidence: uncertainty_confidence(text) })
           end
         end
 
@@ -108,12 +105,25 @@ module Master
             parts.join("\n\n")
           end
 
+          # An unreadable reply is not an approval. This returned approved for an
+          # empty object and again for a parse error, so a reviewer that answered
+          # with prose, timed out into a truncated reply, or returned nothing at
+          # all printed "swarm: approved" — a security verdict nobody reached.
+          # Review::Consensus decides the same question and fails closed.
           def parse_result(raw)
-            parsed = JSON.parse(raw.to_s.match(/\{.*\}/m)&.to_s || "{}")
-            parsed["approved"] = true if parsed.empty?
+            parsed = json_object(raw)
+            return Result.ok(unread_reply(raw)) if parsed.nil? || parsed.empty?
+
+            parsed["approved"] = false unless parsed.key?("approved")
             Result.ok(parsed)
-          rescue JSON::ParserError => _e
-            Result.ok({ "approved" => true, "violations" => [] })
+          end
+
+          def unread_reply(raw)
+            {
+              "approved" => false,
+              "violations" => [{ "type" => "unreadable_review", "description" => "the reviewer returned no JSON verdict" }],
+              "summary" => raw.to_s.strip[0, 240],
+            }
           end
         end
       end

@@ -62,6 +62,24 @@ module Master
           Result.ok({ text:, confidence: uncertainty_confidence(text) })
         end
 
+        # A model told to answer in JSON often answers in JSON wrapped in prose.
+        # Every worker wanted the object out of the middle and each wrote the
+        # same line, so the six copies disagreed about the empty case: some read
+        # a missing object as an empty hash and went on, and the Reviewer read
+        # that hash as approval.
+        #
+        # nil means no object was found. A caller that treats absence as consent
+        # has to say so in its own words.
+        def json_object(raw)
+          match = raw.to_s.match(/\{.*\}/m)
+          return nil unless match
+
+          parsed = JSON.parse(match.to_s)
+          parsed.is_a?(Hash) ? parsed : nil
+        rescue JSON::ParserError
+          nil
+        end
+
         def uncertainty_confidence(text)
           hits = UNCERTAINTY_PHRASES.count { |p| text.downcase.include?(p) }
           [1.0 - (hits.to_f / [UNCERTAINTY_PHRASES.size, 1].max * 0.5), 0.0].max.round(2)

@@ -4083,21 +4083,20 @@ tree before it was written down — four candidates died on that check, includin
 one this scan first reported as missing and then found in all four
 `Gemfile.lock`s.
 
-- **Autofix has no safety tier, and the default is to fix.**
-  `Scan::Scanner#should_autofix?` returns true unless the rule has a
-  `prediction_engine` entry carrying a `confidence` threshold in `rules.yml`.
-  Three rules do — `null_usage`, `abbreviation`, `nesting_depth` — against 242
-  declared. The other 239 are fixed at any confidence. `Scan::Finding` already
-  declares `reversibility` and `blast_radius`, `semantic_rules.rb` and
-  `meta_rules.rb` populate them, and nothing under `lib/fix` reads either;
-  `Fix::RuleLoop` reads `confidence` alone. RuboCop and Standard both solve this
-  by declaring safety per rule and splitting the command — `--fix` against
-  `--fix-unsafely`. Cost: no dependency. A `safe` field on `Law::Rule` and on
-  the registry's `declare`, a default of unsafe for a rule that does not say,
-  and a flag on `/fix`. The work is classifying 242 rules, not writing the
-  field. Worth doing when someone is willing to make that classification the
-  session's subject; the ceiling on its value is already recorded above, where
-  `/scan`'s autofix is marked do-not-run-unattended.
+- **Autofix classifies by transform, not yet per rule.** The tier landed: a
+  transform that deletes waits for `MASTER_AUTOFIX=1`, and one that adds runs
+  unattended, because an addition shows itself in the diff it makes. Only four
+  of 242 rules declare a transform at all, so today that is
+  `remove_immediate_dead_code` on one side and three `add_*` on the other, and
+  the `prediction_engine` thresholds it replaced could refuse nothing — they
+  were keyed `null_usage`, `abbreviation` and `nesting_depth`, three words
+  naming no rule, so every lookup missed and every rule came back allowed.
+  What remains is the per-rule half. `Scan::Finding` declares `reversibility`
+  and `blast_radius`, `semantic_rules.rb` and `meta_rules.rb` populate them,
+  and nothing under `lib/fix` reads either. RuboCop and Standard split the
+  command instead — `--fix` against `--fix-unsafely`. The work is classifying
+  242 rules, not writing the field, and it is worth a session that takes the
+  classification as its subject rather than a pass that guesses.
 
 - **relayd is restarted every time an app comes back, and relayctl can do the
   same job without it.** All four `rc.d` scripts run `rcctl restart relayd` once
@@ -4197,6 +4196,82 @@ one this scan first reported as missing and then found in all four
   native parser" to "we have one, do `law/html.rb`'s regexes still earn their
   keep". Cost: nothing yet. Worth revisiting when that PR merges, and not
   before.
+
+## From the gem and ruby_llm audit — 2026-09-11
+
+Two questions were asked of the tree: what hand-rolled logic belongs to a gem,
+and what does MASTER hand-roll that the gem it already loads provides. Ten
+declared-and-never-required gems came off both lockfiles, the swarm reviewer
+stopped reading an unparseable reply as an approval, and cost stopped being one
+flat rate for every model. What follows is what the audit found and did not
+close.
+
+- **`relative_luminance` omits the gamma decode.**
+  `lib/review/scan/source_masking.rb:318` computes luma and calls it relative
+  luminance, so the `< 0.4` dark-background threshold beside it is calibrated
+  against the wrong quantity. `RAILS/gates/support/design_metrics/contrast.rb:34`
+  does the same named quantity correctly. Two implementations, one wrong.
+  Correcting it moves gate output, so it needs a recalibrated threshold in the
+  same change — otherwise the fix reads as a regression.
+
+- **MASTER pins ruby_llm `~> 1.3` and locks 1.13.2; stable is 1.16.0.** Four
+  things MASTER hand-rolls are in the version already locked. `with_schema`
+  takes a plain Hash and returns a parsed one, against six regex extractors.
+  `Model::Info#function_calling?` and `#supports_vision?` answer what
+  `TOOL_CAPABLE_RE`, `VISION_RE` and `NON_VISION_RE` are built to guess.
+  `request_timeout`, `max_retries` and `retry_backoff_factor` are never set in
+  `lib/boot/runtime.rb`, so ruby_llm retries three times inside each
+  circuit-breaker call and the breaker counts one. `with_tools(*t, calls: n)`
+  caps tool rounds, where `REACT_MAX_STEPS` guards only the emulated path, so
+  native tool calling runs uncapped. Each is a separate change with its own
+  test; the pin moves last.
+
+- **`KeyRotator.configure_current!` mutates process-wide `RubyLLM.configure`
+  while the fix loop runs rule groups in threads.** `RubyLLM.context { }` gives
+  per-call isolation and is in 1.13.2. The race is a wrong key on a concurrent
+  call, which reads as a provider error rather than as a race.
+
+- **A `:free` OpenRouter model is charged the flat rate.** Cost now reads the
+  registry, but the registry does not carry `...:free` ids, so they fall back
+  to $15 per million — the most expensive rate in the catalogue, for tokens
+  that cost nothing. Pricing them at zero is right only if `:free` is verified
+  per id rather than read off the suffix.
+
+- **`lib/review/embeddings.rb` is hand-written Net::HTTP against Ollama**, and
+  1.13.2 ships an ollama provider with `RubyLLM.embed`.
+
+- **`ruby_llm-test`, `-evaluations` and `-tribunal` are worth evaluating** —
+  provider mocking for the suite, and a quality framework for the council.
+  `ruby_llm-schema` is deprecated in favour of schematist and should not be
+  adopted; pass a Hash. Skip `-resilience`, `-top_secret`, `-agents`, `-team`
+  and `-template`: MASTER owns richer versions of each, and its circuit breaker
+  is dollar-budget-aware and survives a restart, where the gem version is
+  neither.
+
+- **`lib/review/scan/rules/lexical_rules.rb` re-implements about fifteen
+  RuboCop cops in 369 lines**, while `external_linter_rules.rb:47` shells out
+  to RuboCop. Real duplication, but each rule id is a name the law addresses,
+  so replacing them renames the law. Not small.
+
+- **Four hand-built RIFF headers in dilla** — `dilla.rb:25123`, `:34192`,
+  `lib/devices.rb:611`, `bin/sine_stream.rb:1670` — against `wavefile`, which
+  is already declared and already used at `lib/music_gems.rb:231`. Container
+  bytes only, identical PCM, so it changes no sound.
+
+- **`Route#suggest` carries a Levenshtein matrix**
+  (`lib/cli/stages/route.rb:53-67`) where `DidYouMean::SpellChecker` is a
+  stdlib default gem Ruby loads at boot. Verified to return the same answers
+  on the command list. No dependency, fifteen lines.
+
+Three things were checked and left hand-rolled on purpose.
+`RAILS/gates/support/cdp_framing.rb` implements RFC 6455 in 162 lines because
+gates run under bare `ruby` with no bundle, ferrum lives only inside the
+per-app bundles, and the gates need `host-resolver-rules`, which ferrum does
+not expose. `lib/trace/event_bus.rb` is not wisper: wisper broadcasts to
+listeners, where this does glob topic matching, redaction, Fiber-scoped
+conversation stamping and telemetry spans. And `estimate_tokens` stays
+`bytesize / 4`, because the accurate answer is `tiktoken_ruby`, a Rust native
+extension, and this repo deploys to OpenBSD.
 
 ## Wishes, not work
 

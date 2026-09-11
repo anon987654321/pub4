@@ -191,10 +191,43 @@ module Master
           {}
         end
 
-        def should_autofix?(rule_id, observed_conf)
-          t = prediction_thresholds[rule_id.to_s] || prediction_thresholds[rule_id]
-          return true unless t && t["confidence"]
-          observed_conf.to_f >= t["confidence"].to_f
+        # An autofix that takes code out is a different risk from one that puts an
+        # attribute in, and no confidence score says which. Four rules declare a
+        # transform: add_html_lang, add_lazy_loading and add_trailing_commas each
+        # add something a reader sees in the diff, and remove_immediate_dead_code
+        # deletes, where a wrong call is invisible to anyone who does not already
+        # know what stood there.
+        #
+        # Deletion waits for a person. The word is /fix, and an unattended pass —
+        # bin/gate over four trees — adds without deleting.
+        DELETING_TRANSFORMS = %w[remove_immediate_dead_code].freeze
+
+        def deleting_rule?(rule_id)
+          transform = rule_transforms[rule_id.to_s]
+          DELETING_TRANSFORMS.include?(transform.to_s)
+        end
+
+        def rule_transforms
+          @rule_transforms ||= begin
+            declared = Master.load_yaml(Master::RULES_PATH)["rules"] || []
+            declared.to_h { |rule| [rule["id"].to_s, rule["autofix"]] }
+          end
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "Scanner.rule_transforms")
+          {}
+        end
+
+        # Confidence answers "did it find the thing", never "is fixing it safe".
+        # A deterministic finding carries no confidence at all and Fix::RuleLoop
+        # reads the absence as 1.0, so a threshold here would wave through exactly
+        # the findings nobody scored.
+        def should_autofix?(rule_id, observed_conf, allow_deletions: false)
+          return false if !allow_deletions && deleting_rule?(rule_id)
+
+          threshold = prediction_thresholds[rule_id.to_s] || prediction_thresholds[rule_id]
+          return true unless threshold && threshold["confidence"]
+
+          observed_conf.to_f >= threshold["confidence"].to_f
         end
       end
     end
