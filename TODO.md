@@ -8264,4 +8264,322 @@ A finding is a hypothesis. Blind-tests of perceived intelligence are operator wo
 
 404 items. Hypothesis first; do not retune the live face from this file.
 
+
+## layout_micro_refinement — ChatGPT intake 2026-09-11
+
+Unmeasured. `RAILS/shared/design_tokens.yml`, `_typography.scss`, ScaleLint,
+`layout_snapshots`, visual_contract, and one chrome already exist. Do not invent
+a second token file. Apply the scale that is there. Look stays the operator’s:
+colours, radii that change the paint, dating immersive chrome, playlist SF Mono,
+recorded popover shadow, Kaufland copy-styling. A finding is a hypothesis.
+
+### master_design_system
+
+1. Establish one canonical spacing scale for MASTER and Brgen; replace arbitrary margins/padding with scale tokens.
+2. Establish one canonical radius scale; remove one-off border-radius values.
+3. Establish one canonical border hierarchy: structural, interactive, selected, disabled, destructive.
+4. Establish one canonical elevation model; eliminate decorative shadows that do not communicate hierarchy.
+5. Establish one canonical surface model: page, panel, elevated panel, interactive surface, overlay.
+6. Establish one canonical content-width system; prevent each vertical from inventing unrelated max-widths.
+7. Establish one canonical control-height scale for buttons, inputs, tabs, selects and compact controls.
+8. Establish one canonical icon-size scale.
+9. Establish one canonical avatar/media-size scale.
+10. Establish one canonical typography scale rather than component-specific font sizes.
+11. Establish one canonical line-height scale matched to the typography scale.
+12. Establish one canonical text-width measure for readable prose.
+13. Establish one canonical responsive breakpoint vocabulary.
+14. Establish one canonical motion-duration scale.
+15. Establish one canonical easing vocabulary.
+16. Establish one canonical focus-ring treatment.
+17. Establish one canonical disabled-state treatment.
+18. Establish one canonical loading/skeleton treatment.
+19. Establish one canonical empty-state treatment.
+20. Establish one canonical error-state treatment.
+21. Establish one canonical success/confirmation treatment.
+22. Establish one canonical tooltip/popover treatment.
+23. Establish one canonical modal/dialog geometry.
+24. Establish one canonical drawer/sheet geometry.
+25. Add design-token linting so new arbitrary values become measurable violations.
+26. Add a token-usage report showing which CSS values remain outside the design system.
+27. Add a duplicate-token detector for visually equivalent colors, spacing, radii and typography.
+28. Collapse visually equivalent tokens rather than preserving historical names indefinitely.
+### typography
+
+29. Audit every Brgen vertical for typographic hierarchy rather than merely font-size hierarchy.
+30. Make heading weight, size, line-height and spacing form one deliberate hierarchy.
+31. Reduce unnecessary font-weight variation.
+32. Reserve the strongest weight for genuinely important information.
+33. Establish a clear distinction between navigation text, labels, metadata, body text and primary actions.
+34. Reduce uppercase text where it harms readability.
+35. Audit letter-spacing independently for headings, labels, buttons and metadata.
+36. Prevent typography from becoming visually noisy through excessive bold text.
+37. Establish a maximum readable line length for marketplace descriptions and community posts.
+38. Establish compact measures for cards and dense transactional interfaces.
+39. Ensure numerical information uses consistent alignment and typographic treatment.
+40. Standardize price typography across marketplace and takeaway.
+41. Standardize timestamp typography across messenger, posts, comments and notifications.
+42. Standardize seller/shop/user metadata hierarchy.
+43. Standardize secondary text contrast without allowing metadata to disappear.
+44. Test Norwegian compound words and long labels at every responsive width.
+45. Test typography with unusually long usernames, product names and marketplace titles.
+46. Test typography with zero-width and empty states rather than designing only for populated content.
+47. Ensure truncation always preserves semantic recognition.
+48. Prefer multiline wrapping where truncation would hide important transactional information.
+49. Ensure text truncation never produces unexplained layout jumps.
+50. Audit icon-plus-text combinations for baseline alignment.
+51. Audit button labels for consistent optical centering rather than mathematically equal padding.
+52. Test font rendering at normal browser zoom, 125%, 150%, 200% and mobile text scaling.
+53. Test the interface using system font fallback when the preferred font is unavailable.
+54. Measure cumulative layout shift caused by font loading.
+55. Remove typography choices that exist only because they looked good in one screenshot.
+### optical_alignment
+
+56. Add an optical-alignment pass after geometric alignment.
+57. Correct icons that appear vertically misaligned despite equal CSS dimensions.
+58. Correct asymmetric icon shapes that require optical rather than mathematical centering.
+59. Audit circular avatars whose visual mass differs from their bounding box.
+60. Audit buttons with text/icons whose perceived center differs from their flex center.
+61. Audit cards where headings appear too close to one edge despite equal padding.
+62. Audit image crops for perceived rather than mathematical centering.
+63. Establish rules for optical inset compensation rather than scattered magic numbers.
+64. Prefer component-level optical tokens over individual CSS exceptions.
+### density
+
+65. Define explicit density modes for Brgen: comfortable, standard and compact.
+66. Make marketplace and takeaway intentionally denser than social/community surfaces.
+67. Keep messenger dense enough for scanning without becoming visually cramped.
+68. Keep landing/home surfaces calmer than transactional surfaces.
+69. Prevent every vertical from independently choosing its own information density.
+70. Measure information density using visible actions/content per viewport.
+71. Test whether additional whitespace actually improves comprehension before retaining it.
+72. Remove whitespace that merely separates elements without communicating hierarchy.
+73. Preserve whitespace where it establishes grouping or reduces cognitive load.
+74. Ensure density changes never alter the semantic hierarchy.
+### cards
+
+75. Stop treating every piece of content as a rounded card.
+76. Classify components as surface, list row, card, panel, section or overlay.
+77. Remove nested cards where a divider or spacing would communicate hierarchy better.
+78. Remove redundant borders around already-separated surfaces.
+79. Ensure card padding follows the spacing scale.
+80. Ensure card title/body/action spacing follows one rhythm.
+81. Establish maximum useful card complexity before content moves into a dedicated page.
+82. Ensure card hover states do not cause layout movement.
+83. Ensure card selection states are distinguishable without relying solely on color.
+84. Ensure cards with different content types still share the same structural grammar.
+85. Audit every “card within card” construction for unnecessary hierarchy.
+### navigation
+
+86. Reduce navigation choices visible simultaneously when they compete for attention.
+87. Establish one primary-navigation pattern shared by Brgen verticals.
+88. Establish one secondary-navigation pattern.
+89. Establish one breadcrumb pattern where breadcrumbs are useful.
+90. Make current location visually obvious without relying solely on color.
+91. Make back-navigation predictable across mobile and desktop.
+92. Prevent vertical-specific navigation from contradicting global Brgen navigation.
+93. Ensure deep links retain enough contextual identity to explain where the user is.
+94. Audit tab bars for excessive tab counts.
+95. Replace overflowed tab rows with deliberate scrolling or grouped navigation.
+96. Make navigation hierarchy match URL/application hierarchy.
+### marketplace
+
+97. Make product price the strongest visual element after the product image.
+98. Make availability, condition and location immediately scannable.
+99. Establish one consistent product-card anatomy.
+100. Standardize image aspect-ratio handling.
+101. Prevent seller metadata from competing visually with price.
+102. Establish a consistent distance between price and primary transaction action.
+103. Make filtering state persistent and visually explicit.
+104. Make sort/filter controls occupy predictable locations.
+105. Make search dominant without making the interface look like a generic search engine.
+106. Establish consistent result-count treatment.
+107. Make saved/favorite state persistent and unmistakable.
+108. Make product comparison easier without introducing dashboard-like complexity.
+109. Establish a consistent product-detail hierarchy: media → title → price → condition/availability → seller → action → details.
+110. Make transactional actions sticky only when measurement shows meaningful benefit.
+111. Ensure marketplace cards remain useful at narrow mobile widths.
+112. Test dense marketplace grids against Kaufland-like retail scanning patterns without copying proprietary styling.
+### takeaway
+
+113. Make restaurant/shop identity immediately distinguishable from individual products.
+114. Establish consistent food-image proportions.
+115. Make delivery/pickup status visible before secondary metadata.
+116. Make cart state persistent without overwhelming browsing.
+117. Keep category navigation stable while scrolling.
+118. Establish one consistent product-row anatomy.
+119. Make price/add controls visually subordinate to product identity but immediately accessible.
+120. Make unavailable items visually understandable without making the entire card look disabled.
+121. Establish one cart-summary hierarchy.
+122. Ensure restaurant/store information never gets visually mixed with product information.
+123. Audit checkout for unnecessary decorative UI.
+### messenger
+
+124. Establish a true conversation-list density model rather than reusing generic Brgen cards.
+125. Make unread state primarily typographic/structural, not decorative.
+126. Establish one message-grouping rhythm.
+127. Reduce repeated avatars/names when consecutive messages share an author.
+128. Establish consistent timestamp visibility rules.
+129. Make composer height predictable.
+130. Prevent the composer from visually competing with messages.
+131. Establish one attachment-preview anatomy.
+132. Establish one reply/quote anatomy.
+133. Make message actions discoverable without permanently exposing excessive controls.
+134. Ensure message hover actions do not cause content movement.
+135. Establish clear distinction between sent, received, system and failed messages.
+136. Make failed-message state recoverable in-place.
+137. Make typing/listening/recording states subtle rather than theatrical.
+138. Ensure the messenger remains usable when JavaScript or realtime connectivity degrades.
+### social / community
+
+139. Establish one post-header hierarchy.
+140. Reduce repeated metadata around posts.
+141. Make author identity visually strong but not dominant over content.
+142. Establish one reaction/action-row anatomy.
+143. Ensure comments do not visually become a second unrelated application.
+144. Establish nesting limits for replies.
+145. Prevent deep indentation from destroying usable text width.
+146. Establish one media-gallery treatment.
+147. Ensure post media dominates when media is the content rather than decoration.
+148. Establish one empty-feed treatment.
+149. Make feed loading visually quiet.
+### maps
+
+150. Make map controls share the global Brgen control language.
+151. Avoid allowing map-specific controls to become a visually separate application.
+152. Establish one location-marker grammar.
+153. Establish one selected-location treatment.
+154. Establish one map-result-card anatomy.
+155. Ensure overlays do not obscure important map content unnecessarily.
+156. Make mobile map/list transitions predictable.
+157. Ensure map controls remain usable at high browser zoom.
+### dating
+
+158. Remove generic dating-app visual tropes that conflict with Brgen identity.
+159. Establish a consistent profile hierarchy.
+160. Make identity, location and intent scannable before decorative profile information.
+161. Ensure interaction controls have the same geometry as other Brgen primary actions.
+162. Avoid introducing an independent design language for dating.
+163. Ensure profile-media treatment shares the same image rules as marketplace/community.
+### playlist / media
+
+164. Establish consistent album/artwork geometry.
+165. Standardize play controls with Brgen interaction conventions.
+166. Make active-track state structurally obvious.
+167. Avoid turning media controls into a separate visual operating system.
+168. Establish compact and expanded player states.
+169. Ensure player state survives navigation without layout instability.
+### maps_and_location
+
+170. Standardize location labels, distances and geographic metadata across every vertical.
+171. Use one representation for “nearby,” “distance,” “area” and “exact location.”
+172. Prevent each subapp from inventing independent location badges.
+173. Make location uncertainty explicit where precision is intentionally reduced.
+### cross_vertical_consistency
+
+174. Inventory every duplicated UI component across Brgen verticals.
+175. Identify visually equivalent components with different implementations.
+176. Consolidate equivalent components before adding new variants.
+177. Establish shared primitives for buttons, inputs, tabs, cards, lists, badges, avatars, media and menus.
+178. Establish shared primitives for loading/error/empty states.
+179. Establish shared primitives for pagination/infinite-scroll indicators.
+180. Establish shared primitives for notifications and toasts.
+181. Establish shared primitives for confirmation/destructive actions.
+182. Establish shared primitives for date/time formatting.
+183. Establish shared primitives for money/price formatting.
+184. Establish shared primitives for distance/location formatting.
+185. Establish shared primitives for user identity.
+186. Ensure verticals specialize through information architecture, not arbitrary styling.
+187. Detect when a vertical introduces a component that already exists elsewhere.
+188. Prefer extending an existing primitive over creating a visually similar sibling.
+189. Document intentional exceptions and require a reason for each.
+### responsive_refinement
+
+190. Treat mobile as a first-class composition rather than a compressed desktop.
+191. Audit every breakpoint for hierarchy changes rather than only width changes.
+192. Ensure primary actions remain reachable with one hand where appropriate.
+193. Prevent horizontal scrolling except where it is intentional.
+194. Test long Norwegian words at every breakpoint.
+195. Test keyboard navigation independently of pointer interaction.
+196. Test touch targets at minimum usable dimensions.
+197. Ensure sticky elements never cover content or focused controls.
+198. Ensure viewport-height changes on mobile do not break composers, carts or dialogs.
+199. Test browser chrome expansion/collapse effects on full-height layouts.
+200. Test landscape mobile layouts.
+201. Test large desktop displays without allowing content to become excessively stretched.
+### motion
+
+202. Define motion as a hierarchy rather than adding transitions globally.
+203. Reserve animation for state change, spatial relationship or feedback.
+204. Remove transitions that merely make static UI feel “slick.”
+205. Establish motion duration by interaction importance.
+206. Establish reduced-motion equivalents for every meaningful animation.
+207. Ensure hover animation never communicates information unavailable to keyboard users.
+208. Ensure loading animation has bounded visual complexity.
+209. Prevent multiple nested animations from synchronizing into visual noise.
+210. Establish a maximum simultaneous motion budget.
+211. Audit page transitions for unnecessary animation.
+### visual_noise_reduction
+
+212. Remove decorative gradients that do not communicate hierarchy.
+213. Remove ornamental borders that do not communicate structure.
+214. Remove redundant badges.
+215. Remove redundant icons.
+216. Remove repeated labels where position already communicates meaning.
+217. Remove shadows whose only purpose is aesthetic decoration.
+218. Remove duplicated status indicators.
+219. Remove competing accent colors.
+220. Remove one-off illustrations where typography or spacing communicates the same state.
+221. Apply “perfection is subtraction” as an explicit UI review criterion.
+### accessibility_as_design_system
+
+222. Make focus states part of the visual language rather than an accessibility afterthought.
+223. Ensure every state has a non-color representation where necessary.
+224. Ensure contrast is preserved across all surface combinations.
+225. Ensure text remains understandable at 200% zoom.
+226. Ensure interactive controls have predictable keyboard order.
+227. Ensure dialogs establish focus and return it correctly.
+228. Ensure dynamic content changes are announced appropriately.
+229. Ensure reduced-motion does not remove semantic feedback.
+230. Ensure screen-reader labels do not diverge from visible terminology.
+231. Audit icon-only controls for accessible names.
+### design_system_validation
+
+232. Add automated detection for arbitrary spacing values.
+233. Add automated detection for arbitrary radii.
+234. Add automated detection for arbitrary colors.
+235. Add automated detection for arbitrary typography values.
+236. Add automated detection for duplicate component styles.
+237. Add automated detection for inconsistent control heights.
+238. Add automated detection for inconsistent icon sizing.
+239. Add automated detection for inconsistent focus states.
+240. Add automated detection for inconsistent disabled states.
+241. Add visual regression snapshots for every major Brgen vertical.
+242. Add representative screenshots for desktop, tablet and mobile.
+243. Add “dense,” “normal” and “empty” fixture states.
+244. Add long-content fixtures using Norwegian text.
+245. Add pathological-content fixtures: long usernames, prices, titles, filenames and URLs.
+246. Compare visual regressions by semantic region rather than whole-page pixel difference alone.
+247. Record intentional visual differences as explicit design-system exceptions.
+248. Fail validation when a new component introduces an unregistered design token.
+249. Fail validation when equivalent components diverge without an explicit exception.
+### MASTER_alignment
+
+250. Map each visual-system rule to the corresponding MASTER law.
+251. Treat duplicated visual constants as SINGULARITY violations.
+252. Treat arbitrary component-specific styling as ABSTRACTION violations when an existing primitive covers the same need.
+253. Treat unnecessary decoration as DENSITY violations.
+254. Treat excessive nesting and indirection as LINEARITY violations.
+255. Treat visually unrelated controls placed far from their semantic content as PROXIMITY violations.
+256. Treat fragile responsive exceptions as ROBUSTNESS violations.
+257. Add a UI `/sweep` that reports these violations before visual redesign work is accepted.
+258. Make the UI sweep recursive across every Brgen vertical.
+259. Require evidence before declaring a layout improvement complete.
+260. Compare visual changes against the previous implementation rather than only the desired mockup.
+261. Prefer deletion/consolidation before adding another component or token.
+262. Require every new visual abstraction to have at least two real consumers unless there is a documented reason otherwise.
+263. Keep design-system exceptions measurable and searchable.
+264. Add a final “why does this exist?” pass to every major UI change.
+
+264 items. Prefer deletion/consolidation. Do not restyle from this file.
+
 ---
