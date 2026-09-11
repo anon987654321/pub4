@@ -126,7 +126,7 @@ What that authority does not extend to: anything that changes a rendered value
 registrar login, or a console on vm23. Name the seam and leave it. The operator
 is a trained architect, so restore or ask; never invent a layout fix.
 
-Three rules bound the work itself.
+Four rules bound the work itself.
 
 **Verify the instrument before the finding.** A census here has been wrong more
 often than the reasoning it fed: a dead-file sweep was wrong forty times out of
@@ -135,6 +135,15 @@ forty because it searched for `context_provider` while every caller wrote
 Before calling code dead, prove the scan on a case you already know the answer
 to. An entry whose premise turns out to be false is the most valuable thing you
 can bring back — say so plainly rather than working around it.
+
+**Say what you could not measure.** "Sweep until clean or blocked" names no
+bound, and the runtime gives itself one: `FixLoop` stops after fifteen passes or
+thirty minutes. Take the same bound. When the same file fails a third time, when
+a gate will not load, or when the triangle is down, stop and report the attempt
+rather than the outcome. A gate that could not measure is inconclusive, neither
+a pass nor a failure, and calling it a pass claims the code was read when
+nothing was. An unverified claim costs more than an unfinished task, because the
+next reader builds on it.
 
 **Never move a ratchet to absorb your own growth.** `MASTER/bin/operator
 measure` must end where it started, and slack is the same defect as debt: a
