@@ -95,7 +95,9 @@ spine:
   # lines are two vocabularies where there was one — what a person types and
   # what a model may emit — plus the rename record the capability inventory
   # reads to tell a rename from a loss.
-  lib_body_ceiling: 38072
+  # 38072 is the audit measured against its own branch; the rename landed four
+  # lines it could not see. 38076 is the tree with both in it.
+  lib_body_ceiling: 38076
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753
