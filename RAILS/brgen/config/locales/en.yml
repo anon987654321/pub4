@@ -1696,6 +1696,7 @@ en:
     messages_rate_limited: Slow down — too many messages. Try again shortly.
     chats_rate_limited: Slow down — too many chats started. Try again shortly.
     listings_rate_limited: Slow down — too many listings. Try again shortly.
+    videos_rate_limited: Slow down — too many uploads. Try again shortly.
     location_required_for_nearby: Enable location to join the nearby chat room.
     thats_you: That's you.
     no_longer_nearby: That person isn't nearby anymore.

@@ -4334,11 +4334,20 @@ session. Counts are findings, then files, which is the number of jobs.
   will be correct and want the marker instead.
 - **`FAIL_VISIBLY` — 5 in 5 files.** A failure reported into a return value that
   nobody reads.
-- **`RATE_LIMITING_MISSING` — 4 in 4 files.** `shared/authentication.rb` and
-  `shared/sso_user_provisioning.rb` are the two that matter: a login path and a
-  provisioning path with no throttle.
-- **`MIGRATION_ADD_REFERENCE_NO_FK` — 2 in 2 files.** `foreign_key: true` on
-  `create_brgen_social_tables` and `add_neighborhood_to_dating_profiles`.
+- **`RATE_LIMITING_MISSING` — closed, 1 of 4 was real.** `Tv::VideosController#create`
+  takes a video upload and had no throttle; it has 10 in five minutes now.
+  The other three were the rule reading file scope: `shared/authentication.rb`
+  and `dating/base_controller.rb` declare no actions at all, and the login and
+  password paths throttle through `sessions_actions.rb` and
+  `passwords_actions.rb` — 10 in three minutes, and 3 in fifteen for a magic
+  link.
+- **`MIGRATION_ADD_REFERENCE_NO_FK` — 1 of 2 was real, and it needs a new
+  migration.** `add_reference :reactions, :reactable, polymorphic: true` cannot
+  carry a foreign key, so that one is the rule misreading a polymorphic
+  reference. `add_neighborhood_to_dating_profiles` could, but the migration has
+  run on vm23 and an edit to a migration that has already run changes nothing —
+  the fix is a new migration, and it wants a check for orphan `neighborhood_id`
+  rows before the constraint goes on.
 - **`NO_DEBUG` — 2, `CONTROL_CHARS` — 2, `NULL_BLINDNESS` — 2.** Three edits.
 
 ### Before working any other group

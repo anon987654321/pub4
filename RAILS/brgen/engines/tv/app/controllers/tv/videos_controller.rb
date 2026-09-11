@@ -2,6 +2,16 @@
 
 class Tv::VideosController < Tv::BaseController
   allow_unauthenticated_access only: %i[show]
+
+  # create takes a video file, which is the most expensive thing a signed-in
+  # account can hand this box: a 1 GB VPS transcodes nothing in the background
+  # and stores what it is given. Ten in five minutes is generous for a person
+  # and useless to a script. Every other create in the tree throttles — votes
+  # at 60 a minute, messages at 30, nearby at 15 in five — and this one did not.
+  rate_limit to: 10, within: 5.minutes, only: :create,
+             by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip },
+             with: -> { redirect_back fallback_location: root_path, alert: t("flash.videos_rate_limited") }
+
   before_action :set_video, only: %i[show destroy]
   before_action :require_video_owner!, only: :destroy
 

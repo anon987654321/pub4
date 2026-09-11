@@ -108,7 +108,7 @@
 # the whole `<%# ... %>` span dropped that finding and one NO_INLINE_SCRIPT_BLOCK
 # of the same shape, and the detector still fires on markup that follows the
 # comment's close — proved on planted cases before the count was believed.
-findings: 277
+findings: 276
 by_rule:
   BARE_DIV_WRAPPER: 3
   BLANK_LINE_RUN: 1
@@ -131,7 +131,7 @@ by_rule:
   PROSE_ACTIVE_VOICE: 4
   PROSE_ACTIVE_VOICE_NB: 1
   PROSE_OMIT_QUALIFIERS: 17
-  RATE_LIMITING_MISSING: 4
+  RATE_LIMITING_MISSING: 3
   SQUINT_TEST: 5
   USE_THEN: 6
 finding_members:
@@ -398,7 +398,6 @@ finding_members:
   - PROSE_OMIT_QUALIFIERS STUDIO/lora/_toolkit/render_config.rb:365
   - PROSE_OMIT_QUALIFIERS STUDIO/postpro/postpro.rb:1497
   - RATE_LIMITING_MISSING RAILS/brgen/engines/dating/app/controllers/dating/base_controller.rb:1
-  - RATE_LIMITING_MISSING RAILS/brgen/engines/tv/app/controllers/tv/videos_controller.rb:1
   - RATE_LIMITING_MISSING RAILS/shared/app/controllers/concerns/shared/authentication.rb:1
   - RATE_LIMITING_MISSING RAILS/shared/app/controllers/concerns/shared/sso_user_provisioning.rb:1
   - SQUINT_TEST MASTER/web/app/views/chat/index.html.erb:1
