@@ -9783,4 +9783,537 @@ A finding is a hypothesis. Rank, merge, delete.
 
 500 items. Never optimize by making the measurement cheaper than the thing measured.
 
+
+## RAILS / OPENBSD / STUDIO performance — ChatGPT intake 2026-09-11
+
+Unmeasured. Three problems, not one MASTER list. RAILS = request/query/render.
+OPENBSD = boot/deploy/supervision, never a faster gate that proves less.
+STUDIO = sample I/O and DSP, never flattening musical behaviour.
+Extend visual-contract and existing gates; do not invent parallel subsystems.
+faster + same evidence + same decisions = optimization. faster + less evidence = regression.
+A finding is a hypothesis. Rank, merge, delete.
+
+### RAILS / measurement and budgets
+
+1. Add per-app boot-time baselines.
+2. Add per-app request latency baselines.
+3. Add p50/p95/p99 request measurements.
+4. Add controller-action latency budgets.
+5. Add database-query-count budgets per route.
+6. Add database-time budgets per route.
+7. Add template-render-time budgets.
+8. Add view-allocation budgets.
+9. Add response-size budgets.
+10. Add HTML parse-size budgets.
+11. Add JavaScript transfer-size budgets.
+12. Add CSS transfer-size budgets.
+13. Add image-byte budgets.
+14. Add font-byte budgets.
+15. Add first-byte latency measurements.
+16. Add DOM-content-loaded measurements.
+17. Add largest-contentful-paint measurements.
+18. Add interaction-latency measurements.
+19. Add navigation timing regression detection.
+20. Store performance baselines as machine-readable artifacts.
+21. Compare performance against the previous commit.
+22. Compare performance against the previous release.
+23. Fail only on statistically meaningful regressions.
+24. Separate cold-cache from warm-cache measurements.
+25. Measure local and production-like environments separately.
+### RAILS / boot and framework loading
+
+26. Profile every Rails application's boot path.
+27. Identify duplicate initializers across applications.
+28. Consolidate shared initializer work.
+29. Avoid loading application-specific code during shared boot.
+30. Audit eager-load paths.
+31. Remove unnecessary eager-loaded directories.
+32. Audit autoload paths.
+33. Remove redundant autoload paths.
+34. Measure Zeitwerk setup cost.
+35. Cache expensive development-only discovery.
+36. Avoid filesystem scans during request boot.
+37. Avoid YAML parsing during request boot.
+38. Avoid JSON parsing during request boot.
+39. Avoid repeated route-file reads.
+40. Precompute immutable route fragments.
+41. Avoid `instance_eval(File.read(...))` where equivalent static loading is possible.
+42. Measure route compilation time.
+43. Measure middleware construction time.
+44. Remove duplicate middleware.
+45. Audit environment-specific middleware.
+46. Delay optional service initialization.
+47. Delay expensive API client initialization.
+48. Delay browser-test dependencies outside browser tests.
+49. Keep test-only gems out of production boot.
+50. Establish maximum acceptable boot time per app.
+### RAILS / database
+
+51. Inventory every query executed by each primary route.
+52. Detect N+1 queries automatically.
+53. Add query-count regression tests.
+54. Add query-duration regression tests.
+55. Add missing-index detection.
+56. Detect unused indexes.
+57. Detect redundant indexes.
+58. Detect oversized indexes.
+59. Audit composite-index ordering.
+60. Audit foreign-key indexes.
+61. Audit polymorphic association indexes.
+62. Audit timestamp indexes.
+63. Replace repeated `COUNT(*)` calls with cached counters where correct.
+64. Batch repeated existence checks.
+65. Collapse duplicate queries within one request.
+66. Memoize immutable request-local lookups.
+67. Prevent accidental query execution from presenters.
+68. Prevent accidental query execution from serializers.
+69. Prevent accidental query execution from helpers.
+70. Prevent accidental query execution from logging.
+71. Add query budgets to messenger routes.
+72. Add query budgets to marketplace routes.
+73. Add query budgets to takeaway routes.
+74. Add query budgets to maps routes.
+75. Add query budgets to dating routes.
+### RAILS / ActiveRecord
+
+76. Audit every `includes`.
+77. Audit every `preload`.
+78. Audit every `eager_load`.
+79. Replace unnecessary eager loading with selective preload.
+80. Select only required columns on large collections.
+81. Avoid loading complete records for existence checks.
+82. Replace object materialization with `pluck` where semantics permit.
+83. Replace object materialization with `pick` where semantics permit.
+84. Replace Ruby-side filtering with SQL where equivalent.
+85. Replace Ruby-side sorting with SQL where equivalent.
+86. Replace repeated `.map` database transformations with database-side projections.
+87. Audit `find_each` batch sizes.
+88. Tune batch sizes empirically.
+89. Avoid oversized batches.
+90. Avoid one-row-at-a-time writes.
+91. Batch inserts.
+92. Batch updates.
+93. Batch deletes where safe.
+94. Use transactions deliberately around bulk mutations.
+95. Measure transaction contention.
+96. Detect accidental transactions spanning external calls.
+97. Detect queries performed inside loops.
+98. Detect repeated authorization queries.
+99. Cache request-local authorization facts.
+100. Add database statement timeout policies.
+### RAILS / views and rendering
+
+101. Profile slow ERB templates.
+102. Profile partial rendering counts.
+103. Detect repeated partial rendering.
+104. Detect partials rendered inside large loops.
+105. Replace pathological nested partials with collection rendering.
+106. Benchmark collection rendering.
+107. Cache immutable fragments.
+108. Add explicit fragment-cache invalidation tests.
+109. Detect cache-key explosions.
+110. Detect excessively large fragments.
+111. Avoid serializing complete models into views.
+112. Avoid duplicate helper computation.
+113. Memoize expensive helper calculations request-locally.
+114. Avoid filesystem access from helpers.
+115. Avoid database access from helpers.
+116. Avoid network access from views.
+117. Add view allocation profiling.
+118. Add template compilation measurements.
+119. Precompile production templates.
+120. Detect accidental development-only rendering paths in production.
+### RAILS / browser delivery
+
+121. Make lazy rendering actually paginated rather than merely visually deferred.
+122. Measure infinite-scroll request cadence.
+123. Prevent duplicate pagination requests.
+124. Cancel obsolete fetches.
+125. Debounce search requests.
+126. Abort stale search requests.
+127. Cache safe GET responses client-side.
+128. Cache immutable marketplace metadata.
+129. Cache category metadata.
+130. Cache static navigation fragments.
+131. Minimize initial HTML.
+132. Minimize above-the-fold JavaScript.
+133. Audit importmap dependency size.
+134. Remove unused importmap pins.
+135. Detect duplicate JavaScript dependencies.
+136. Detect duplicate CSS payloads.
+137. Defer non-critical JavaScript.
+138. Defer non-critical CSS.
+139. Add explicit image dimensions.
+140. Lazy-load below-fold images.
+141. Use responsive image sizes.
+142. Prevent oversized original images from reaching mobile clients.
+143. Add image transformation budgets.
+144. Add browser cache headers.
+145. Add immutable asset cache headers.
+146. Add compression regression tests.
+147. Measure Brotli/gzip effectiveness.
+148. Add HTTP/2 or HTTP/3 delivery measurements where applicable.
+149. Track performance per device class.
+150. Require every major RAILS performance change to demonstrate unchanged functional behavior.
+### OPENBSD / boot and service startup
+
+151. Measure complete VPS boot-to-ready time.
+152. Measure rcctl service startup individually.
+153. Record service dependency ordering.
+154. Detect unnecessary service restarts.
+155. Detect repeated service initialization.
+156. Avoid repeated configuration parsing.
+157. Cache immutable deployment metadata.
+158. Avoid network calls during local boot checks.
+159. Parallelize independent read-only health checks.
+160. Preserve deterministic output ordering after parallelization.
+161. Add boot-stage timing.
+162. Add deploy-stage timing.
+163. Add post-deploy timing.
+164. Add rollback timing.
+165. Add service-recovery timing.
+166. Establish maximum acceptable deploy duration.
+167. Establish maximum acceptable health-check duration.
+168. Establish maximum acceptable rollback duration.
+169. Detect pathological DNS latency during boot.
+170. Detect pathological filesystem latency during boot.
+### OPENBSD / filesystem
+
+171. Inventory every `Dir.glob` call.
+172. Replace repeated recursive scans with shared snapshots.
+173. Cache configuration-file inventories.
+174. Cache installed-target inventories.
+175. Cache service inventories.
+176. Cache executable inventories.
+177. Avoid scanning unchanged directories.
+178. Use directory mtimes as cheap invalidation hints.
+179. Use file mtimes as cheap invalidation hints.
+180. Use size-plus-mtime fingerprints before hashing.
+181. Hash only changed files.
+182. Avoid reading files whose metadata already proves irrelevance.
+183. Avoid repeated `File.read` of the same configuration.
+184. Share loaded configuration between gates.
+185. Avoid repeated YAML parsing.
+186. Avoid repeated JSON parsing.
+187. Avoid repeated regexp compilation.
+188. Avoid repeatedly resolving identical paths.
+189. Canonicalize paths once.
+190. Avoid repeated symlink resolution.
+191. Avoid repeated `File.realpath`.
+192. Add filesystem-operation counters to gates.
+193. Add maximum filesystem-operation budgets.
+194. Detect accidental recursive scans.
+195. Detect scans crossing repository boundaries.
+### OPENBSD / configuration
+
+196. Parse `apps.yml` once per invocation.
+197. Parse service configuration once per invocation.
+198. Share parsed configuration between health checks.
+199. Add configuration fingerprints.
+200. Skip reparsing unchanged configuration.
+201. Validate configuration before expensive checks.
+202. Fail early on syntactically invalid configuration.
+203. Avoid duplicate configuration validation.
+204. Consolidate duplicate relayd reads.
+205. Consolidate duplicate pf reads.
+206. Consolidate duplicate httpd reads.
+207. Consolidate duplicate rc.conf reads.
+208. Consolidate duplicate hostname reads.
+209. Consolidate duplicate DNS reads.
+210. Consolidate duplicate certificate reads.
+211. Cache certificate metadata.
+212. Cache certificate expiry calculations.
+213. Cache filesystem ownership checks.
+214. Cache permission checks within one gate run.
+215. Avoid redundant privilege checks.
+216. Avoid redundant `doas` invocations.
+217. Avoid redundant `pledge` setup.
+218. Avoid redundant `unveil` setup.
+219. Make security setup idempotent.
+220. Measure configuration-validation cost.
+### OPENBSD / subprocesses
+
+221. Inventory every `Open3` call.
+222. Record process-spawn counts.
+223. Record process-spawn latency.
+224. Remove redundant `ssh` calls.
+225. Batch remote inspection commands.
+226. Avoid invoking shell for simple filesystem operations.
+227. Avoid invoking `grep` when Ruby can inspect an already-loaded string.
+228. Avoid invoking `sed` when Ruby already owns the content.
+229. Avoid invoking `awk` for simple transformations.
+230. Avoid invoking `cat`.
+231. Avoid invoking `test` for checks Ruby already provides.
+232. Avoid repeated `git` invocations.
+233. Batch Git metadata queries.
+234. Cache Git HEAD.
+235. Cache Git status within one operation.
+236. Cache Git diff metadata.
+237. Avoid nested subprocess trees.
+238. Add subprocess budgets.
+239. Fail performance gates on accidental process explosions.
+240. Preserve subprocess boundaries where they provide real OpenBSD tooling semantics.
+### OPENBSD / network
+
+241. Measure DNS lookup latency.
+242. Measure TCP connection latency.
+243. Measure TLS handshake latency.
+244. Measure relayd proxy latency.
+245. Measure application upstream latency.
+246. Detect DNS retries.
+247. Detect connection retries.
+248. Detect unnecessary health-check frequency.
+249. Batch independent remote checks.
+250. Add bounded network concurrency.
+251. Add network-operation timeouts.
+252. Add timeout budgets by operation class.
+253. Avoid network access during offline validation.
+254. Make offline mode explicit.
+255. Cache immutable remote metadata.
+256. Detect slow certificate chains.
+257. Detect slow OCSP paths where relevant.
+258. Measure HTTP keepalive effectiveness.
+259. Measure relayd connection reuse.
+260. Add network regression baselines.
+### OPENBSD / deployment
+
+261. Make deployment phases measurable.
+262. Avoid copying unchanged files.
+263. Compare size and mtime before copying.
+264. Hash only ambiguous files.
+265. Batch deployment metadata.
+266. Avoid rereading files immediately after writing them.
+267. Validate generated files in memory before writing.
+268. Avoid repeated destination directory creation.
+269. Avoid repeated ownership changes.
+270. Avoid repeated permission changes.
+271. Avoid restarting unaffected services.
+272. Detect which service actually needs restart.
+273. Make restart decisions dependency-aware.
+274. Add deployment dry-run performance measurements.
+275. Add deployment transfer-size budgets.
+276. Add deployment file-count budgets.
+277. Add deployment subprocess budgets.
+278. Add deployment network-operation budgets.
+279. Add rollback-size budgets.
+280. Make rollback avoid unchanged restoration work.
+### OPENBSD / operational observability
+
+281. Make dmesg-style output cheap by default.
+282. Avoid constructing verbose strings when quiet.
+283. Avoid collecting diagnostics nobody requested.
+284. Add explicit `-v`/debug cost boundaries.
+285. Keep normal output allocation-light.
+286. Stream large diagnostics.
+287. Avoid building giant diagnostic arrays.
+288. Avoid duplicate log lines.
+289. Record elapsed time only when requested or configured.
+290. Make performance diagnostics composable.
+291. Add `-P` performance mode.
+292. Add machine-readable timing output.
+293. Add per-stage counters.
+294. Add per-stage syscall/process proxies.
+295. Add cache hit/miss reporting.
+296. Add filesystem scan counts.
+297. Add network-operation counts.
+298. Add subprocess counts.
+299. Add regression snapshots for deploy/health performance.
+300. Require every OPENBSD speedup to preserve the safety decision exactly.
+### STUDIO / real-time core
+
+301. Define hard real-time audio deadlines.
+302. Define maximum callback duration.
+303. Measure callback jitter.
+304. Measure callback worst-case latency.
+305. Measure underruns.
+306. Measure overruns.
+307. Count dropped audio buffers.
+308. Count late MIDI events.
+309. Count late scheduler events.
+310. Add real-time regression tests.
+311. Add long-running stability tests.
+312. Add 10-minute continuous playback tests.
+313. Add 1-hour continuous playback tests.
+314. Add CPU ceiling budgets.
+315. Add memory-growth budgets.
+316. Add allocation budgets inside audio callbacks.
+317. Ban garbage collection inside critical audio paths.
+318. Detect accidental allocation in DSP callbacks.
+319. Detect accidental filesystem I/O in DSP callbacks.
+320. Detect accidental network I/O in DSP callbacks.
+321. Detect accidental mutex contention in DSP callbacks.
+322. Detect blocking operations in DSP callbacks.
+323. Detect unbounded queues.
+324. Detect unbounded event buffers.
+325. Establish deterministic overload behavior.
+### STUDIO / Ruby runtime
+
+326. Profile Ruby allocation in live playback.
+327. Profile object churn per audio block.
+328. Reduce temporary arrays.
+329. Reduce temporary hashes.
+330. Reduce temporary strings.
+331. Reuse DSP buffers.
+332. Reuse envelope buffers.
+333. Reuse delay buffers.
+334. Reuse filter state.
+335. Reuse FFT buffers.
+336. Reuse MIDI event objects where safe.
+337. Avoid repeated symbol/string conversion.
+338. Avoid repeated numeric coercion.
+339. Avoid repeated sample-rate calculations.
+340. Cache immutable DSP coefficients.
+341. Cache oscillator increments.
+342. Cache envelope coefficients.
+343. Cache filter coefficients.
+344. Cache wavetable data.
+345. Cache MIDI note frequencies.
+346. Cache swing timing tables.
+347. Cache humanization distributions.
+348. Avoid rebuilding pattern structures every tick.
+349. Avoid rebuilding song state every block.
+350. Separate immutable composition data from mutable playback state.
+### STUDIO / Dilla engine
+
+351. Benchmark every Dilla engine generation.
+352. Establish v1 CPU baseline.
+353. Establish v2 CPU baseline.
+354. Establish v3 CPU baseline.
+355. Establish v4 CPU baseline.
+356. Compare musical output between generations.
+357. Cache deterministic groove calculations.
+358. Cache swing offsets.
+359. Cache velocity envelopes.
+360. Cache microtiming envelopes.
+361. Cache probability distributions.
+362. Avoid recalculating identical drum patterns.
+363. Avoid regenerating unchanged bars.
+364. Generate only changed pattern regions.
+365. Make groove mutation incremental.
+366. Make variation generation incremental.
+367. Separate deterministic seed state from runtime state.
+368. Avoid allocating during groove evolution.
+369. Bound generative search.
+370. Add CPU budgets for “nest” generations.
+371. Add musical-equivalence tests for optimizations.
+372. Add timing-equivalence tests.
+373. Add groove-statistics regression tests.
+374. Add velocity-distribution regression tests.
+375. Add swing-distribution regression tests.
+### STUDIO / sample library
+
+376. Build a persistent sample index.
+377. Avoid repeated recursive sample scans.
+378. Cache sample metadata.
+379. Cache duration.
+380. Cache sample rate.
+381. Cache channel count.
+382. Cache bit depth.
+383. Cache waveform summaries.
+384. Cache loudness measurements.
+385. Cache transient measurements.
+386. Cache zero-crossing data.
+387. Cache BPM estimates.
+388. Cache key estimates.
+389. Cache fingerprints.
+390. Invalidate metadata only when files change.
+391. Avoid `Dir.glob` for every crate entry.
+392. Replace repeated existence globs with an index.
+393. Detect duplicate samples by fingerprint.
+394. Detect duplicate samples by content hash.
+395. Detect near-duplicate samples where useful.
+396. Avoid decoding samples merely to inspect metadata.
+397. Decode only when processing requires it.
+398. Stream long samples instead of loading them completely.
+399. Memory-map large immutable sample data where practical.
+400. Establish sample-library memory budgets.
+### STUDIO / DSP
+
+401. Benchmark each DSP primitive independently.
+402. Benchmark oscillator implementations.
+403. Benchmark filters.
+404. Benchmark envelopes.
+405. Benchmark saturation.
+406. Benchmark compression.
+407. Benchmark delay.
+408. Benchmark reverb.
+409. Benchmark chorus.
+410. Benchmark FM synthesis.
+411. Benchmark physical-model synthesis.
+412. Benchmark Rhodes synthesis.
+413. Benchmark bass synthesis.
+414. Benchmark drum synthesis.
+415. Benchmark sample playback.
+416. Avoid recalculating static DSP coefficients.
+417. Precompute nonlinear lookup tables where accuracy permits.
+418. Benchmark lookup-table error.
+419. Use block processing where latency permits.
+420. Keep per-sample processing only where musically necessary.
+421. Fuse compatible DSP passes.
+422. Avoid redundant buffer copies.
+423. Avoid redundant channel interleaving.
+424. Avoid redundant sample-rate conversion.
+425. Detect unnecessary resampling.
+### STUDIO / MIDI and event scheduling
+
+426. Measure MIDI input latency.
+427. Measure MIDI output latency.
+428. Measure scheduling jitter.
+429. Use monotonic clocks consistently.
+430. Avoid wall-clock dependence in playback.
+431. Precompute event timestamps.
+432. Batch events by audio block.
+433. Avoid scanning all events every tick.
+434. Use cursor-based event consumption.
+435. Avoid repeatedly sorting unchanged events.
+436. Keep active-event queues bounded.
+437. Remove expired events eagerly.
+438. Detect duplicate MIDI events.
+439. Detect pathological event bursts.
+440. Add event-density budgets.
+441. Add maximum scheduler queue size.
+442. Add overload telemetry.
+443. Preserve event ordering exactly.
+444. Preserve microtiming exactly.
+445. Preserve probability semantics exactly.
+### STUDIO / rendering, post-processing and export
+
+446. Stream large renders.
+447. Avoid loading complete renders into memory.
+448. Parallelize independent post-processing stages.
+449. Avoid unnecessary subprocesses in post-processing.
+450. Require every STUDIO optimization to pass audio-output equivalence, timing-equivalence and long-run stability checks.
+451. Add a shared performance-budget vocabulary.
+452. Add a shared monotonic timing primitive.
+453. Add a shared benchmark-result format.
+454. Store baseline measurements beside the code that owns them.
+455. Compare against previous commit automatically.
+456. Compare against a known-good baseline.
+457. Distinguish cold-cache and warm-cache results.
+458. Distinguish wall time from CPU time.
+459. Track allocations separately from elapsed time.
+460. Track I/O separately from computation.
+461. Track subprocess time separately.
+462. Track network time separately.
+463. Track database time separately.
+464. Track serialization time separately.
+465. Track waiting time separately.
+466. Never treat cached execution as equivalent to uncached execution.
+467. Never optimize a gate by weakening what it proves.
+468. Never optimize a benchmark by changing its workload.
+469. Never hide regressions behind higher timeout thresholds.
+470. Never remove validation merely because it is expensive.
+471. Cache facts, not conclusions.
+472. Reuse snapshots, not stale decisions.
+473. Parallelize independent work only.
+474. Keep ordering deterministic.
+475. Make every cache invalidation explicit.
+476. Measure cache hit rate.
+477. Measure cache invalidation rate.
+478. Measure false-cache rate.
+479. Make stale data detectable.
+480. Make performance regressions first-class violations.
+
+480 items. One snapshot layer beats hundreds of micro-optimizations. Same decisions.
+
 ---
