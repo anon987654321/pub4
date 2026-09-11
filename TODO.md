@@ -4358,6 +4358,66 @@ exemption it should carry — not the file. That is how the 981-finding design
 backlog turned out to be 596 misreadings of correct markup, and it is why this
 section leads with the instrument rather than the total.
 
+## One chrome — opened 2026-09-11
+
+Operator decision: every surface wears brgen's front page chrome — its shell,
+its type, its flat light palette — and any other chrome may be discarded. That
+settles three questions this repo kept reopening, and it applies to the six
+verticals, to amber, and to MASTER's web face.
+
+Measured in headless Chrome at 1440x900 against the four local surfaces, which
+`RAILS/bin/triangle status` already had running. Two claims died on that
+measurement and are recorded here so nobody re-derives them:
+
+- **The verticals do not lack layouts.** All six render through brgen's
+  `application.html.erb` by design — the Rails engine pattern — so they already
+  carry the wordmark, the nav, the search palette, the theme and the footer.
+  Counting `app/views/layouts/*.erb` per engine reads zero and means the
+  opposite of what it looks like.
+- **The per-vertical accent is live and correct.** tv resolves `--accent` to
+  `#dc635c`, dating to `#009579`, playlist to `#0e8a94`, each the
+  contrast-tuned light-mode variant. An earlier reading of `#000000` was taken
+  off `documentElement`, and the accents are declared on `body` — the
+  instrument, not the tree.
+
+What is actually wrong, each seen rather than inferred:
+
+- **The browsable verticals have no content column.** On `tv.brgen.no` the
+  section intro starts at x=439, "POPULÆRE VIDEOER" at x=419, and the empty
+  state is centred at 720. Three left edges on one page, where the front page
+  holds a single column. This is the largest visible difference between a
+  vertical and the front page, and it is a container, not a palette.
+- **dating is a second chrome, and it goes.** `dating.brgen.no` renders
+  full-bleed with the nav hidden, a neon heart and a 200px wordmark — the
+  "immersive" variant in `_vertical_shell.scss`. Under the decision above it
+  gets the nav and the column like everything else. messenger is the other
+  immersive surface; same treatment.
+- **marketplace 500s.** `marketplace.brgen.no` raises where tv, dating and
+  playlist render. Nothing about layout can be judged there until it serves.
+- **amber speaks a different language entirely.** A serif tagline against
+  brgen's sans, pastel-green wordmark at roughly 1.3:1 against its own
+  background, a floating "Style notes" card aligned to nothing, and a hero SVG
+  whose wordmark is clipped at the left edge of its own box. Its header mark
+  sat flush at y=0 — 52px of mark inside a 44px bar with no block padding —
+  and that one is fixed.
+- **MASTER's web face shares 13 tokens with RAILS out of 87, and all 13 are
+  motion and z-index.** No colour, no type. It renders black with a particle
+  face and a terminal prompt where every other surface is flat light. Under the
+  decision above the face keeps its canvas and the chrome around it becomes
+  brgen's. The `#primer-voice` button can go; the full-viewport `#primer`
+  behind it cannot, because a browser will not start an AudioContext without a
+  gesture.
+- **The layout's own comment is stale.** `application.html.erb` opens with a
+  long paragraph explaining that `data-theme="dark"` is load-bearing.
+  `DEFAULT_SURFACE_THEME` is `"light"` and has been; the surfaces render
+  `#efefef`. A comment states the present-tense reason.
+
+Order of work: the content column first, because it is one container shared by
+six verticals and it is what makes them read as one product; then amber's type
+and palette; then MASTER's chrome; marketplace's 500 whenever someone is in
+that engine. Screenshot before and after — this section exists because two
+confident readings of the source were both wrong.
+
 ## Wishes, not work
 
 Directions rather than tasks. They belong to the operator, and nobody should open

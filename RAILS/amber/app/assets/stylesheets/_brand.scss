@@ -145,6 +145,12 @@
   justify-content: space-between;
   align-items: center;
   padding-inline: var(--space-3) var(--chrome-toggle-inline);
+  /* The mark inside this bar is 52px and --bar-height is 44, so the wordmark
+     overflowed its own bar and sat at y=0 with its ascenders against the
+     viewport edge — measured in Chrome at 1440x900, the anchor's box starting
+     at exactly 0. min-height is a floor rather than a height, so the block
+     padding both gives the mark its inset and lets the bar grow to hold it. */
+  padding-block: var(--space-2);
   min-height: var(--bar-height, 44px);
 }
 
