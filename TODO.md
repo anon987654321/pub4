@@ -6886,6 +6886,64 @@ A finding is a hypothesis.
 
 ---
 
+## Aider, Cline, Goose, OpenHands, Warp — MASTER delta — 2026-09-11
+
+Continuation. Stars as of 2026-09-11: OpenCode 207k, OpenHands 87k, Cline 68k, Warp 65k, Goose/AAIF 54k, Aider 49k, Continue 36k (read-only after Cursor acquihire). Read against `CodeIndex` (Prism graph, `references_to`, `impact`) and `GitContext` (log/blame/diff/status/show). Does not restate OpenClaw pairing, ClawHub, Docker, ACP, plan-vs-build.
+
+### Aider — the map, not the chat loop
+
+1. **Repo map is PageRank over a definition/reference graph, fitted to a token budget.** Aider: tree-sitter tags → MultiDiGraph → personalized PageRank → binary-search into `--map-tokens` (default ~1–2k). Chat files ×50, mentioned ids ×10. MASTER `CodeIndex#impact` already has callers; it does not emit a budgeted markdown map. Completeness: `Io::RepoMap` (or `CodeIndex#map(tokens:, chat_files:)`) using Prism, not tree-sitter. Fit by dropping lowest-rank files. Don’t dump the index.
+2. **Only `/add` files are writable; the map is read-only context.** Aider. MASTER WriteFile can touch anything PathGuard allows. Completeness: a session `writable:` set (git dirty + explicit add). Writes outside it fail closed. Map still shows the rest.
+3. **Invalid grammar must not crash the map.** Aider #5138: skip bad queries, keep filename-only. Prism parse failure → filename line, don’t abort `/fix`.
+4. **Auto-commit with a real message, path-scoped.** Aider commits every turn. MASTER law is `git commit -- <paths>` on a worktree. Completeness: optional `/commit` after a successful `/fix` pass using the finding ids as the body. Never `git add -u`.
+5. **Co-authored-by from verified session participants.** OpenClaw + Aider `--attribute-co-authored-by`. MASTER is one operator. Completeness: trailer `Co-authored-by: MASTER <master@brgen.no>` only on `/commit` from the runtime, so `git log` can tell agent commits from human ones. Don’t invent a team credit UI.
+
+### Cline — HITL, plan/act, headless JSON
+
+6. **Every edit and bash is a diff until auto-approve.** Cline Plan/Act. MASTER CLI operator is the human; the face visitor is not. Completeness: visitor profile already cannot Shell. Operator CLI: a `--ask` that prints the StrReplace hunk and waits. Default for `/fix` stays scan-with-write (law). Don’t add a VS Code extension.
+7. **Checkpoints to undo the agent.** Cline. Same as `/undo` + worktree reset (OpenClaw list 13). One implementation.
+8. **Headless JSON for CI.** `cline --json "…"`. MASTER `bin/master --json` / `operator gate --scan-only` already machine. Completeness: `/review --only scan --format json` is the contract test, not a new CLI.
+9. **Linter errors as a loop, not a later gate.** Cline watches diagnostics while editing. MASTER FixLoop already re-scans. Completeness: FastStage rubocop is that loop. Don’t spawn a language server.
+10. **`.clinerules` is another AGENTS.md.** OpenCrabs already discovers it. MASTER generates harness files. When pointed at a foreign tree, read as data (OpenClaw list 21). Don’t copy Cline’s rule format into pub4.
+11. **SDK as a second product.** Cline `@cline/sdk`. MASTER is `bin/master`. Don’t publish an npm SDK.
+
+### Goose (AAIF / Linux Foundation)
+
+12. **MCP-first extensions, not a tool zoo.** Goose. MASTER has MCP coordinator untested (first inventory). Completeness: one MCP client path with SsrfGuard (bughunt 78), stdio only on the box, HTTP behind the allow-list. Don’t “50 tools.”
+13. **Desktop + CLI + API.** Goose. MASTER is CLI + Falcon face. Completeness: the face *is* the API. Don’t a Tauri app.
+14. **Donated to AAIF.** Governance note, not a feature. MASTER stays this repo’s constitution, not a foundation product.
+
+### OpenHands, Warp, Open Interpreter
+
+15. **OpenHands sandbox GUI.** Out (OpenClaw list 40). Steal: a *named* workspace snapshot before a swarm, which is the worktree.
+16. **Warp ADE / Orca fleet.** Parallel agents with a subscription. MASTER FixLoop is one writer. Completeness: `operator worktree` per subagent (OpenCrabs 0.3.83), not a desktop fleet.
+17. **Open Interpreter.** Natural language → shell. MASTER Shell is elevated. Completeness: visitor never gets it; operator gets PathGuard. Don’t loosen.
+
+### OpenCode leftovers
+
+18. **Language servers for symbol context.** OpenCode. MASTER has Prism `CodeIndex`. Completeness: repo map (1) *is* the LSP-less equivalent. Don’t start `ruby-lsp` from the agent.
+19. **Parallel sessions.** OpenCode TUI split panes. MASTER Session is one Fiber. Completeness: two `bin/master` in two worktrees, already the law. Don’t multiplex two writes on main.
+20. **Sign in with Copilot/ChatGPT subscription.** OpenCode. MASTER keys in `/etc/*.env`. Completeness: document that a Copilot token is a provider row, not a product. Don’t OAuth in the face.
+
+### Continue is a tombstone
+
+21. **Continue joined Cursor; repo read-only.** Don’t follow Continue Hub, don’t vendor its autocomplete. If someone cites Continue as a peer, the answer is Cline or OpenCode.
+
+### Cross-cutting that these trees share and MASTER still splits
+
+22. **Dirty-set + map + budget is one prompt recipe.** Aider proved it. `/fix` today dumps files or greps. Completeness: prompt = (writable hunks) + (repo map ≤ N tokens) + (finding). Measure tokens; don’t guess.
+23. **Edit format is structured.** Aider search/replace vs diff vs whole-file. MASTER `StrReplace` / `AstEdit` (broken call, bughunt 66). Completeness: one edit tool that works; delete the one that `NoMethodError`s.
+24. **Git is the undo log.** Aider, Cline checkpoints, OpenClaw worktrees. MASTER shared-index law already. Completeness: `/fix` without a worktree refuses on a dirty main (restructure 8). That’s the product difference from Aider’s auto-commit-on-main.
+
+### Still out
+
+25. **VS Code / JetBrains / Warp as a shell around MASTER.** The face and `bin/master` are the surfaces.
+26. **Harbor / Cline-bench as a hosted eval.** `bin/check --profile=agent` is the eval. Don’t a third-party SWE farm.
+27. **Kilo / Roo as a Cline fork to absorb.** Same HITL idea (6).
+
+---
+
+
 
 
 
