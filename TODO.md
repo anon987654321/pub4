@@ -7797,4 +7797,471 @@ Objective render/analysis condition before complete. A finding is a hypothesis.
 
 280 items. Measure before working. Do not retune a keeper take to pass a metric.
 
+
+## MASTER web UI — future-human face — ChatGPT intake 2026-09-11
+
+Unmeasured. The face is a rendered look; TTS voice is a rendered sound. Defaults
+stay the operator’s. Implementable from this list: state machines, event streams,
+sync budgets, health/TTS reliability, reduced-motion, WebGL fallbacks, declarative
+payloads, measurements. Geometry, brightness, colour, and voice defaults are named
+and left. No cyberpunk implants, no neon, no “sounds more human” as a gate.
+A finding is a hypothesis. Blind-tests of perceived intelligence are operator work.
+
+### Evolutionary direction
+
+1. Define a written morphological hypothesis for the face before changing its geometry.
+2. Establish that the target is a plausible far-future human descendant, not a robot face.
+3. Preserve enough bilateral symmetry for the viewer to recognize a face immediately.
+4. Gradually break present-day human proportions rather than jumping directly to alien morphology.
+5. Introduce a larger cranial volume as a subtle long-term evolutionary signal.
+6. Reduce the visual dominance of the jaw and lower face.
+7. Experiment with a slightly smaller lower-face region.
+8. Increase forehead/upper-cranium visual mass.
+9. Explore slightly larger orbital regions without making the eyes cartoonishly large.
+10. Explore reduced visible sclera as an evolutionary variation.
+11. Test slightly increased interocular distance.
+12. Test reduced nasal prominence.
+13. Test a less projecting mouth region.
+14. Test subtler ears or partial loss of visible external ears.
+15. Explore a neck/head proportion suggesting reduced dependence on today's musculature.
+16. Introduce subtle cheek/temporal structural changes rather than cosmetic “alien” features.
+17. Create a morphology parameter space rather than one fixed future-human model.
+18. Establish a conservative default within that parameter space.
+19. Add one or more extreme experimental morphologies behind explicit development flags.
+20. Ensure morphology changes preserve recognizability.
+21. Measure recognizability against silhouette and landmark consistency.
+22. Add a morphology regression so future visual changes cannot accidentally return the face to generic human proportions.
+23. Add `FUTURE_HUMAN_MORPHOLOGY` as a conceptual profile, not an arbitrary collection of knobs.
+24. Document which morphological assumptions are speculative.
+25. Keep scientific plausibility separate from visual preference.
+26. Avoid claiming that any particular future morphology is scientifically predicted.
+27. Add a `morphology_rationale` section to the face documentation.
+### Far-future human visual language
+
+28. Develop a visual language based on biological continuity rather than cyberpunk aesthetics.
+29. Avoid glowing circuit traces, robot panels, mechanical eyes and obvious technological implants.
+30. Avoid conventional humanoid robot facial geometry.
+31. Avoid gratuitous neon effects.
+32. Avoid decorative HUD elements competing with the face.
+33. Let the unusual morphology carry the science-fiction quality.
+34. Use depth, density and motion rather than color to communicate intelligence.
+35. Make the face feel grown rather than manufactured.
+36. Make the geometry look computationally generated but biologically organized.
+37. Introduce controlled developmental asymmetry.
+38. Add tiny persistent asymmetries between left and right facial structures.
+39. Make asymmetry deterministic and seedable.
+40. Allow asymmetry to increase subtly with runtime age.
+41. Add slow morphological drift over long sessions.
+42. Ensure drift never changes identity abruptly.
+43. Make the face's “age” independent of conversation count.
+44. Add a very slow biological-style breathing/deformation field.
+45. Add subtle pulse-like depth modulation.
+46. Add extremely slow cranial surface movement.
+47. Keep all such movement below the threshold of distracting animation.
+### Eyes
+
+48. Redesign eye behavior around attention rather than animation.
+49. Separate gaze direction from cursor position.
+50. Add attention targets for user input, generated response and environmental events.
+51. Add gaze dwell time.
+52. Add gaze uncertainty.
+53. Add deliberate gaze shifts before speech.
+54. Add gaze stabilization during important TTS phrases.
+55. Add brief gaze release after completing a thought.
+56. Add blink timing influenced by conversational state.
+57. Prevent periodic blinking from looking like a fixed animation loop.
+58. Add correlated left/right eyelid movement with small natural asymmetry.
+59. Add occasional micro-saccades.
+60. Add saccade suppression during focused processing.
+61. Add a distinction between visual curiosity and visual attention.
+62. Make cursor attraction a weak cue rather than literal eye tracking.
+63. Add an “uncertain gaze” state for ambiguous input.
+64. Add a “deep attention” state for long reasoning/TTS segments.
+65. Add a “social attention” state when directly addressing the user.
+66. Add a “listening” gaze state.
+67. Add a “speaking” gaze state.
+68. Add a “thinking” gaze state without using the stereotypical looking-up animation.
+### Face geometry
+
+69. Separate anatomical landmark generation from point-cloud rendering.
+70. Generate a stable semantic landmark layer before scattering visual points.
+71. Give forehead, orbit, cheek, nose, mouth and jaw independently measurable regions.
+72. Add region-specific point density.
+73. Add depth-dependent point density.
+74. Add curvature-dependent point density.
+75. Add controlled biological growth fields.
+76. Make point density respond to morphology rather than merely depth.
+77. Prevent dense regions from becoming visually brighter solely because they contain more points.
+78. Normalize density-driven luminance.
+79. Add a geometry-preservation regression for major facial landmarks.
+80. Add silhouette comparison renders.
+81. Add depth-map comparison renders.
+82. Add face-area occupancy measurement.
+83. Add cranial-to-facial-area ratio measurement.
+84. Add upper-face/lower-face ratio measurement.
+85. Add orbital-area measurement.
+86. Add jaw-area measurement.
+87. Add facial-width measurement.
+88. Track these metrics across morphology changes.
+### Biological emergence
+
+89. Replace some purely random point placement with constrained growth processes.
+90. Generate secondary structures from primary facial landmarks.
+91. Add developmental growth fields.
+92. Use deterministic noise rather than uncontrolled randomness.
+93. Test reaction-diffusion-inspired surface structures.
+94. Test Voronoi-like cellular organization.
+95. Test branching patterns only where anatomically plausible.
+96. Reject patterns that look like circuitry.
+97. Test subtle vascular-like density variation.
+98. Test subtle neural-network-like structures only at microscopic visual scale.
+99. Ensure these structures disappear naturally when zoomed out.
+100. Add a distance-dependent representation: gross morphology at distance, microstructure close up.
+101. Make the face visually richer when inspected rather than merely larger.
+102. Add level-of-detail transitions that preserve morphology.
+103. Prevent LOD transitions from visibly popping.
+### Expression
+
+104. Replace a small set of explicit expressions with continuous affect dimensions.
+105. Separate affect from facial morphology.
+106. Model curiosity, attention, uncertainty, amusement, concern, confidence and calm as continuous values.
+107. Map affect onto multiple facial regions simultaneously.
+108. Avoid emoji-like expression changes.
+109. Avoid exaggerated eyebrow animation.
+110. Avoid mouth animations that resemble cartoon speech.
+111. Add micro-expression layers beneath deliberate expressions.
+112. Add expression inertia so state changes are gradual.
+113. Add expression recovery after emotionally intense responses.
+114. Add a neutral state that still feels alive.
+115. Add a low-energy state for long idle periods.
+116. Add an alert state for user interruption.
+117. Add an error state that communicates “something went wrong” without looking frightened.
+118. Add an unavailable state that communicates absence rather than failure.
+119. Add expression tests driven from recorded conversation states.
+### Listening behavior
+
+120. Make the face visibly listen while microphone input is active.
+121. Drive subtle facial changes from voice activity rather than loudness alone.
+122. Distinguish speech from background noise.
+123. Add input-energy smoothing.
+124. Add speech onset anticipation.
+125. Add speech offset relaxation.
+126. Prevent noisy microphones from producing frantic face motion.
+127. Add a listening confidence signal.
+128. Add an explicit “I hear you” state before transcription completes.
+129. Make listening visually distinct from thinking.
+130. Make thinking visually distinct from speaking.
+### TTS / speech embodiment
+
+131. Make TTS timing the primary driver of speaking animation.
+132. Synchronize facial activity to actual phoneme/word timing where available.
+133. Add viseme-independent speech motion so the face does not become a talking cartoon.
+134. Drive mouth-region density from speech energy.
+135. Drive subtle jaw movement from low-frequency speech energy.
+136. Drive upper-face attention independently from speech.
+137. Keep facial movement below exaggerated lip-sync thresholds.
+138. Add phrase-level breathing gaps.
+139. Add micro-pauses before important clauses.
+140. Add longer pauses where punctuation indicates conceptual boundaries.
+141. Preserve natural speech rhythm instead of maximizing speech throughput.
+142. Measure average pause duration.
+143. Measure phrase-length distribution.
+144. Add TTS prosody metadata to the browser payload.
+145. Expose pitch contour to the face only after smoothing.
+146. Expose energy contour to the face only after smoothing.
+147. Add speech-rate normalization.
+148. Ensure face animation remains coherent across different voices.
+149. Make the face respond to prosody rather than a specific voice's absolute frequency.
+150. Add a voice-independent TTS animation layer.
+151. Add voice-specific optional tuning on top of that layer.
+### Voice character
+
+152. Treat TTS voice as part of the MASTER persona rather than a disconnected browser feature.
+153. Preserve the constitutional voice policy as the source of truth.
+154. Add voice characteristics to the browser runtime payload.
+155. Add explicit speech-rate policy.
+156. Add explicit pitch policy.
+157. Add explicit pause policy.
+158. Add explicit emphasis policy.
+159. Add pronunciation overrides for technical vocabulary.
+160. Add pronunciation tests for MASTER-specific terminology.
+161. Add pronunciation tests for Ruby/Rails/OpenBSD terminology.
+162. Add pronunciation tests for mathematical notation where TTS encounters it.
+163. Add pronunciation tests for file paths and commands.
+164. Prevent raw shell commands from being spoken character by character unless explicitly requested.
+165. Add human-readable spoken forms for paths and identifiers.
+166. Add sentence-level speech normalization before synthesis.
+167. Keep displayed text and spoken text separate while retaining one semantic source.
+168. Add a speech transcript event stream so browser animation knows exactly what is being spoken.
+### TTS reliability
+
+169. Add an explicit TTS state machine: idle → preparing → speaking → paused → complete → failed.
+170. Expose that state to the browser.
+171. Make stale TTS state impossible after a failed synthesis.
+172. Add socket liveness detection.
+173. Add TTS worker restart detection.
+174. Add synthesis timeout detection.
+175. Add browser playback timeout detection.
+176. Add stale-audio detection.
+177. Add duplicate-audio detection.
+178. Add interrupted-speech cancellation.
+179. Add queue cancellation when a newer response supersedes an older one.
+180. Add bounded TTS queue length.
+181. Add backpressure reporting.
+182. Add browser-side retry only for transport failure, not synthesis failure.
+183. Add server-side retry only for transient worker failure.
+184. Never silently fall back to a different voice.
+185. Make degraded TTS visible in the face state.
+186. Add an audible/visual test covering worker death and recovery.
+187. Add a test covering browser reload during active speech.
+188. Add a test covering network interruption during speech.
+189. Add a test covering two simultaneous browser tabs.
+### Voice + face synchronization
+
+190. Create one timestamped event stream for text, TTS and face state.
+191. Use the same event timestamps for browser animation and audio.
+192. Measure audio-to-face latency.
+193. Measure face-to-audio lead/lag.
+194. Set a hard synchronization budget.
+195. Add automatic synchronization correction.
+196. Prevent animation from running ahead indefinitely when audio stalls.
+197. Prevent audio from continuing indefinitely after the face runtime dies.
+198. Add synchronization diagnostics to browser developer output.
+199. Add a recording mode capturing TTS plus face state for regression testing.
+200. Add golden synchronization traces.
+### Face as an interface
+
+201. Make the face itself communicate system state without requiring text.
+202. Define visual states for listening, thinking, speaking, idle, unavailable and error.
+203. Keep those states distinguishable at thumbnail size.
+204. Keep those states distinguishable without color.
+205. Add reduced-motion equivalents for every state.
+206. Add high-contrast equivalents for every state.
+207. Ensure screen readers are not forced to interpret decorative face animation.
+208. Expose semantic state through accessible text.
+209. Prevent animation from stealing keyboard focus.
+210. Ensure the face never blocks chat controls.
+211. Make face interaction optional.
+212. Add a minimal mode containing only the face and essential controls.
+213. Add a terminal-style mode for low-end hardware.
+214. Add a static fallback for WebGL failure.
+215. Add a low-resolution fallback for weak GPUs.
+216. Add a reduced-point-count fallback.
+217. Ensure the fallback preserves the same morphological identity.
+### Performance
+
+218. Measure face CPU usage separately from chat/TTS.
+219. Measure GPU frame time.
+220. Measure memory consumption.
+221. Measure shader compilation time.
+222. Measure first meaningful face render.
+223. Measure time from page load to face-ready.
+224. Keep TTS startup independent from face rendering.
+225. Prevent face initialization from delaying first interaction.
+226. Keep the existing no-prefetch rationale intact unless measurements change it.
+227. Add adaptive point-count scaling.
+228. Add adaptive animation-frequency scaling.
+229. Add thermal/CPU-pressure detection where available.
+230. Reduce face simulation rate before reducing interaction responsiveness.
+231. Never sacrifice TTS responsiveness to preserve cosmetic animation.
+232. Add performance telemetry to the browser test harness.
+233. Add a low-end benchmark representative of the production VPS/browser combination.
+### Rendering quality
+
+234. Replace fixed exposure tuning with a perceptual face-visibility test.
+235. Add automatic detection of a face whose points are technically present but visually unreadable.
+236. Measure minimum facial-region contrast.
+237. Measure depth readability.
+238. Measure silhouette readability.
+239. Add dark-background and light-background render tests.
+240. Add different-display-brightness tests.
+241. Add small-viewport tests.
+242. Add large-viewport tests.
+243. Add high-DPI tests.
+244. Add low-DPI tests.
+245. Prevent exposure from being the universal solution to poor geometry.
+246. Separate geometry visibility from exposure.
+247. Separate point alpha from exposure.
+248. Separate depth shading from exposure.
+249. Add a perceptual render-quality report.
+### Motion language
+
+250. Define a face motion grammar before adding more animations.
+251. Give every motion a semantic cause.
+252. Remove motion that exists solely because “the screen should move.”
+253. Add inertial transitions between states.
+254. Add different time constants for eye, face, jaw and microstructure movement.
+255. Prevent all facial regions from moving synchronously.
+256. Introduce subtle correlated-but-independent biological motion.
+257. Add low-frequency motion.
+258. Add medium-frequency attention motion.
+259. Add high-frequency micro-expression motion only where justified.
+260. Prevent high-frequency noise from reading as jitter.
+261. Add a motion-energy budget.
+262. Add a gate preventing excessive motion during speech.
+### Evolution over long sessions
+
+263. Give the face a persistent identity seed.
+264. Keep identity stable across reloads where policy permits.
+265. Allow tiny non-destructive morphological drift.
+266. Keep drift deterministic for reproducibility.
+267. Separate identity seed from conversation seed.
+268. Prevent different tabs from accidentally generating different identities.
+269. Add long-session tests lasting at least one hour.
+270. Add long-session memory/performance measurements.
+271. Add long-session visual-drift measurements.
+272. Prevent cumulative shader-state degradation.
+273. Prevent accumulated audio/face synchronization drift.
+274. Add a “generational drift” development mode for visual research only.
+### Generational morphology experiments
+
+275. Define Generation 0 as present-day human reference.
+276. Define Generation 1 as minimally divergent future human.
+277. Define Generation 2 as anatomically divergent but recognizable.
+278. Define Generation 3 as substantially post-human.
+279. Define Generation 4 as far-future descendant.
+280. Keep each generation reproducible.
+281. Document the morphological changes between generations.
+282. Avoid making later generations simply “more alien.”
+283. Change proportions, density, expression and movement independently.
+284. Add an evolution-comparison view for development.
+285. Add silhouette comparison between generations.
+286. Add depth-map comparison between generations.
+287. Add landmark comparison between generations.
+288. Add a subjective design review for each generation.
+289. Do not present speculative generations as scientific predictions.
+### Web layout refinement
+
+290. Establish a strict visual hierarchy: face → conversation → input → system state.
+291. Give the face enough negative space to read as an entity rather than an ornament.
+292. Reduce competing chrome around the face.
+293. Make chat content feel like a conversation with the face rather than a conventional chatbot dashboard.
+294. Make TTS activity visually subordinate to the face itself.
+295. Keep controls visually quiet until interaction.
+296. Make the primary input surface obvious without looking like a generic SaaS text box.
+297. Create a persistent but unobtrusive system-status region.
+298. Make connection/TTS state available without permanent status clutter.
+299. Establish one spacing scale for the entire MASTER UI.
+300. Establish one radius scale.
+301. Establish one border-weight scale.
+302. Establish one typography hierarchy.
+303. Establish one animation-duration scale.
+304. Remove one-off spacing values where equivalent tokens exist.
+305. Remove redundant shadows.
+306. Avoid decorative gradients whose only purpose is visual noise.
+307. Prefer depth created by spacing, translucency and geometry.
+308. Keep the face visually dominant without increasing its brightness arbitrarily.
+309. Ensure the chat surface never visually overwhelms the face.
+310. Ensure mobile layout preserves the same hierarchy.
+311. Add narrow-screen composition tests.
+312. Add ultra-wide composition tests.
+313. Add keyboard-only navigation tests.
+314. Add touch-target tests.
+315. Add reduced-motion layout tests.
+### Layout states
+
+316. Design a dedicated first-load state.
+317. Design a listening state.
+318. Design a thinking state.
+319. Design a speaking state.
+320. Design a waiting-for-input state.
+321. Design an offline state.
+322. Design a degraded-TTS state.
+323. Design a WebGL-unavailable state.
+324. Design a reconnecting state.
+325. Ensure every state preserves the same spatial hierarchy.
+326. Prevent layout shifts when TTS starts.
+327. Prevent layout shifts when the face changes rendering mode.
+328. Prevent chat history from moving the face unexpectedly.
+329. Add visual regression snapshots for every state.
+### Interaction refinement
+
+330. Add interruptible TTS.
+331. Add immediate visual acknowledgement when the user starts typing.
+332. Add immediate visual acknowledgement when speech input starts.
+333. Add a clear distinction between submitted and pending input.
+334. Add response streaming without making the face wait for the entire response.
+335. Let the face transition into thinking as soon as processing actually begins.
+336. Let the face transition into speaking only when audio actually begins.
+337. Stop speaking animation when playback actually stops.
+338. Make cancellation visually immediate.
+339. Preserve scroll position during streaming.
+340. Prevent streaming text from causing excessive layout reflow.
+341. Add conversation density controls without changing the underlying semantics.
+342. Add a distraction-free mode.
+343. Add a face-only focus mode.
+344. Add a text-only accessibility mode.
+### Asset and deployment correctness
+
+345. Keep source face modules and generated `face.runtime.js` provably synchronized.
+346. Add a byte-for-byte build verification for generated face artifacts.
+347. Keep the existing regression around stale `face.runtime.js`; it has already caught a real failure.
+348. Add a deployed-asset version stamp to the browser payload.
+349. Display asset-version mismatch as a development diagnostic.
+350. Add a production smoke test that loads the actual face asset rather than only checking source files.
+351. Add a production smoke test that speaks one short TTS phrase.
+352. Add a production smoke test that verifies face/TTS synchronization.
+353. Add a production smoke test for WebGL fallback.
+354. Add a production smoke test for stale cached face assets.
+355. Make cache invalidation deterministic after face-runtime changes.
+356. Ensure browser payload and server voice policy cannot silently disagree. The current chat view already exposes both persona and `MASTER_VOICE_POLICY` to the browser.
+### Research / scientific grounding
+
+357. Research human craniofacial evolution and distinguish robust evolutionary evidence from speculative futurism.
+358. Research encephalization and explicitly avoid equating brain size with intelligence.
+359. Research sensory-system evolution relevant to visual morphology.
+360. Research possible future effects of technology-assisted cognition without visually turning them into implants.
+361. Research reduced mastication hypotheses carefully; do not directly translate them into a smaller jaw without evidence.
+362. Research sexual selection versus functional selection in facial morphology.
+363. Research developmental constraints on facial evolution.
+364. Research bilateral symmetry and developmental noise.
+365. Research facial motion perception and human sensitivity to micro-expressions.
+366. Research uncanny-valley thresholds specifically for point-cloud faces.
+367. Research whether increased cranial proportions actually improve perceived intelligence or merely trigger science-fiction stereotypes.
+368. Record sources and confidence for every biological design assumption.
+369. Keep the visual design explicitly labeled as speculative evolutionary art rather than scientific prediction.
+### Master face research experiments
+
+370. Generate 10 morphology variants from the same identity seed.
+371. Blind-test recognizability.
+372. Blind-test perceived intelligence.
+373. Blind-test perceived age.
+374. Blind-test perceived biological versus artificial origin.
+375. Blind-test perceived emotional expressiveness.
+376. Measure which geometric changes produce the strongest perception shifts.
+377. Remove changes that create “alien” perception without improving the future-human hypothesis.
+378. Find the minimum morphological divergence that makes the face feel clearly post-human.
+379. Find the maximum divergence that remains recognizably human.
+380. Use that interval as the design envelope.
+381. Test morphology without animation.
+382. Test animation without morphology.
+383. Test both together.
+384. Prefer changes that remain convincing in all three conditions.
+### One-source-of-truth
+
+385. Make face morphology parameters declarative.
+386. Make TTS policy declarative.
+387. Make face/TTS state mappings declarative.
+388. Generate browser payload from those declarations.
+389. Generate documentation from those declarations where practical.
+390. Add a consistency gate between server voice policy, browser payload and runtime.
+391. Add a consistency gate between face source modules and generated runtime.
+392. Add a consistency gate between CSS layout tokens and rendered layout tests.
+393. Reject undocumented face parameters.
+394. Reject browser-only face state names that have no server/runtime semantic.
+395. Reject TTS states that have no browser representation.
+### Final design criterion
+
+396. The face must look alive without looking animated.
+397. The face must look evolved without looking alien.
+398. The face must look intelligent without relying on glowing eyes or UI clichés.
+399. The face must look biological without pretending to be a photograph.
+400. The face must communicate listening, thinking and speaking without cartoon expressions.
+401. The TTS must sound like a coherent entity rather than a text-to-speech subsystem.
+402. The web UI must feel like an interface to a future intelligence rather than a website containing a chatbot.
+403. Every visual effect must have a semantic, biological, perceptual or interaction reason.
+404. Delete effects that cannot explain why they exist.
+
+404 items. Hypothesis first; do not retune the live face from this file.
+
 ---
