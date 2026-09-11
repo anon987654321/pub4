@@ -142,16 +142,6 @@
   text-decoration: none;
 }
 
-section h2 {
-  font-size: var(--text-xs);
-  font-weight: var(--weight-bold);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wider);
-  color: var(--text-secondary);
-  margin-bottom: var(--sp, 8px);
-  font-family: ui-monospace, monospace;
-}
-
 // Pixel-art framing for avatars/thumbnails — hard edges, no smoothing.
 
 /* Unread state on a notification row: weight plus a leading accent dot —

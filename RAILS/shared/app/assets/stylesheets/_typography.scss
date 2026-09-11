@@ -125,16 +125,19 @@ main#main-content > header h1 {
   margin-block-end: var(--space-4, 1rem);
 }
 
-/* The family is declared here because two rules described this element and
-   neither was complete. _shell_widgets' `section h2` dresses a widget label —
-   monospace, --text-xs, uppercase, wide tracking — and this rule, carrying an
-   id, won only on size. A vertical's section heading rendered at 22.5px in
-   monospace with label tracking, which is what neither rule asked for and what
-   made tv and marketplace read as a different product from the front page.
-   Stating the family completes the display rule rather than weakening the
-   widget one, which still dresses the sidebar labels it was written for. */
+/* One rule dresses a section heading, at whatever depth it sits. The pair that
+   preceded it split the job: _shell_widgets' `section h2` dressed every h2 in
+   every section as a widget label — monospace, uppercase, wide tracking — and
+   this rule claimed only sections that were direct children of main, so it
+   never reached the nested ones. Measured on amber's front page, the four
+   wardrobe category headings came out 15.75px monospace uppercase at 1.26px
+   tracking, and the empty state's h2 was uppercased through its own class.
+   The widget rule matched no sidebar markup in any of the three apps, so it was
+   deleted rather than scoped, and this one takes the descendant combinator.
+   Specificity is deliberately class-free: .wardrobe_showcase_label and
+   .empty-state-title still win the properties they set. */
 .section-title,
-main#main-content > section > h2 {
+main section h2 {
   font-family: var(--font);
   font-size: var(--text-title);
   line-height: var(--leading-tight);

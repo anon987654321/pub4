@@ -4920,7 +4920,9 @@ Numbered 1–N across the four trees.
 17. **Three mood systems.** `lib/pressure_engine.rb`, `lib/trace/context_pressure.rb`, `lib/cognition/affect.rb`. Document which bus events each consumes, or fold PressureEngine into Cognition.
 18. **Dual attention.** `lib/cognition/attention.rb` vs `lib/cli/attention_context.rb` vs `data/attention_context.yml`. One table of weights.
 19. **`bootstrap.yml` vs `bootstrap_docs.rb`.** Both mention `/tail` `/replay`. `/tail` is not in `CommandRegistry.build`. Confirm callers.
-20. **`security.yml` `gateway.port: 18789` is a second listen story.** Web Falcon is 53187. Add a sentence that 18789 is not the face.
+20. **Fixed 2026-09-12.** The `planned:` block already said nothing reads it; it now
+    also says what does answer — Falcon on 53187, declared in `web/` and forwarded by
+    relayd — and that nothing has ever listened on 18789.
 21. **`PATH_OWNERSHIP.yml` owns missing dirs.** `docs:` and `reports:` — neither exists. Delete the keys.
 22. **`PATH_OWNERSHIP.yml` omits live dirs.** No entries for `lib/cognition/`, `lib/pressure_engine.rb`, `law/`, `AEGIS.md`, `COGNITION.md`, `EXAMPLES.md`. Add them.
 23. **`PATH_OWNERSHIP.yml` `tools/` check is a source-grep spec.** `:179` `spec/lifecycle_tools_spec.rb` asserts `bin/doctor` contains `"check_yaml"`. Point the check at a real tool test.
@@ -5411,7 +5413,14 @@ Numbered 1–N across the four trees.
 475. **Declutter 30d job uniqueness missing.**
 476. **Amber public 404/500 same dark+EN as brgen.** Same generator as 302.
 477. **`local: true` on search form.** `_widgets.html.erb:1` disables Turbo. Remove so live search can work.
-478. **bsdports FTS tests skipped.** `port_test.rb:137,144` — `ports_fts` not in `schema.rb`. Commit the virtual table to schema or stop calling the feature done in `apps.yml`.
+478. **ports_fts — already inventoried, and the choice is the operator's.**
+     `RAILS/test/raw_schema_objects_test.rb` holds the whole finding: `schema_format
+     = :ruby` cannot express an FTS5 virtual table, production runs `db:migrate` and
+     has it, everything built by `db:schema:load` — CI and every developer machine —
+     does not. brgen's `posts_fts` is in the same list. The test holds that inventory
+     at its current size and states why it goes no further: moving an app to
+     structure.sql changes what deploy loads. The feature is done on the box; the
+     test skip is the schema format, not the feature.
 479. **Importer swallows FTS rebuild.** `Ports::Importer#rebuild_fts` `rescue StandardError`. `Ground::Swallow.log` and fail the import run row.
 480. **`semantic_search` is lexical.** Rename or UI-label “search” so the explore assistant doesn’t promise vectors.
 481. **MakefileParser `+=` vs `?=`.** Add a fixture Makefile with both. `makefile_parser_test.rb` exists — add those branches if missing.
@@ -5424,7 +5433,10 @@ Numbered 1–N across the four trees.
 488. **PWA manifest English.** `bsdports/app/views/pwa/manifest.json.erb:37`. nb/en by locale.
 489. **No system test for search empty.**
 490. **Maintainers unique name.** Confirm model now validates unique index.
-491. **WCAG AAA claimed.** `apps.yml` “not a full-site AAA audit”. Don’t claim AAA in README.
+491. **WCAG AAA — checked 2026-09-12, no claim to withdraw.** No README claims
+     AAA. The only statement of it is `apps.yml`, which already carries the
+     caveat the item asks for on the same line: "not a full-site AAA audit".
+     Item 231 still stands and is the forward half.
 492. **Explore assistant.** Rate-limit; no LLM key should fail to a rules summary (amber pattern).
 493. **bsdports nightly import vs `rc.d/bsdports_jobs`.** If no worker, the schedule is fiction.
 
@@ -6146,7 +6158,14 @@ in ERB `<style>` blocks that no lint reads.
 82. **`.prose h1` and `main#main-content > header h1` are `--text-2xl` (1.75rem) / body 1rem = 1.75.** Law `h1_body_min_ratio: 2.0`. `--text-display` is 2.2× but is the ninth size. Do not pick a new px; decide which token is H1.
 83. **`.page-header h1` is `--text-title` (1.25×).** Chrome index titles. If the page is editorial, use the page-title rule.
 84. **Auth `h1` `--text-xl` (1.5×); dating `h1` clamp 1.5–1.875rem.** Below 2.0. Immersive/auth may stay; do not restyle as a palette pass.
-85. **`section h2` in `_shell_widgets.scss` is `--text-xs` + uppercase + mono.** `_typography.scss` already had to restore family on `main > section > h2`. Keep the widget rule scoped (`.sidebar section h2`), never `section h2`.
+85. **Fixed 2026-09-12.** `section h2` is deleted and `main#main-content > section >
+     h2` is now `main section h2`. The widget rule matched no sidebar markup in any
+     of the three apps — its only reach was content. Measured on amber's front page
+     before and after: the four wardrobe category headings were 15.75px monospace
+     uppercase at 1.26px tracking and are now 15.75px proportional, no transform,
+     -0.1575px; the empty state's h2 held its size and lost the uppercase its own
+     class never asked for. The new selector is deliberately class-free, so
+     `.wardrobe_showcase_label` and `.empty-state-title` still win what they set.
 86. **`--tracking-tightest: -0.03em` vs law `heading_tight_min_em: -0.02`.** Stop using tightest on `--weight-heavy` headings (splash h2, marketplace clamp −0.045em). `--tracking-tight` or 0.
 87. **Marketplace `letter-spacing: clamp(-0.045em, -0.9vw, -0.02em)`.** Floor past −0.02; clamp hides it from ScaleLint.
 88. **face.css `#primer h1` Inter lowercase `letter-spacing: .01em`.** Law: no letterspaced lowercase; scale has no 0.01.
@@ -6202,9 +6221,15 @@ in ERB `<style>` blocks that no lint reads.
 129. **Tschichold / hanging quotes.** `hanging-punctuation: first allow-end last` is set; Chromium ignores it. A `text-indent` / negative margin on `q::before` / opening `“` is the cross-browser hang. Only on `.prose`.
 130. **Müller-Brockmann 8px / 12-col.** ScaleLint `off_scale_space: 16` is the remaining debt. Do not raise the baseline. Legal/mailer px gaps (10, 18, 6, 26, 34) would add to it the day the lint can see ERB.
 131. **Wroblewski mobile-first.** Viewport edges are declared; max-width bands are fenced. New copy columns should not introduce a fourth 584/620/640/660/700/720px “almost a measure.”
-132. **Rams “as little design as possible.”** Two complete type systems (shared `_typography.scss` vs legal/mailer `<style>`) is the opposite. Delete the second; do not add a third.
+132. **Closed 2026-09-12 with the legal cluster.** The second type system was the
+     legal/mailer inline `<style>`; it is now `shared/_site_legal.scss`, moved with
+     every value untouched. One type system.
 133. **Ando / ma.** `--leading-loose` 1.6 is already the quote step. Legal 1.62 and mailer 1.55 invent a half-step of air that reads as unsettled next to 1.5 body (ScaleLint’s own diagnosis). Snap to 1.5 or 1.6.
-134. **Bringhurst on all-caps: letterspace.** Kickers that are `text-transform: uppercase` without tracking, or with tracking off the token ladder, are the defect. Shared widget `section h2` already tracks wide — and that rule leaked onto vertical section titles, which is why tv/marketplace read as a different product until `_typography.scss` restored the family. Keep that fence.
+134. **Uppercase without tracking — the widget leak half is fixed 2026-09-12.** The
+     leak onto vertical section titles is closed with item 85: nothing uppercases a
+     section heading now. The forward half stands — kickers that are still
+     `text-transform: uppercase` need tracking from the token ladder, and the footer
+     nav's h2 (15.75px, 0.7875px) is the one place measured so far that does.
 135. **Bringhurst on lowercase: do not letterspace.** Primer h1 (item 88), mailer CTA 0.04em (item 59), face `.04em` (item 89).
 136. **Oldstyle in body, lining/tabular in tables and prices.** The money hook is lining+tabular. Body never got oldstyle. Inter and system-ui ship onum; JetBrains as a mono should stay lining (code/CRT). `.prose` yes; `.font-mono` no.
 137. **`void_target: 0.70` in micro typography.** Unverified whether any surface measures leftover space. If `geometry_type` does not, it is an unread key of the same class as `rhythm_off_max_pct`.

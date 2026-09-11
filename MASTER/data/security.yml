@@ -57,7 +57,9 @@ pairing:
 # system with none of the three wired.
 planned:
   # A local HTTP gateway that does not listen by default. Io::Gateway exists and
-  # is instantiated in the live boot, but it takes no bind/port from here.
+  # is instantiated in the live boot, but it takes no bind/port from here. This
+  # is not the web face: that is Falcon on 53187, declared in web/ and forwarded
+  # by relayd. Nothing has ever listened on 18789.
   gateway:
     listen: false
     bind: "127.0.0.1"
