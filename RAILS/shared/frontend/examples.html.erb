@@ -22,13 +22,14 @@
   </div>
 </section>
 
-<%# Content loader + auto submit: live search container %>
+<%# Auto submit: live search. The content-loader container that used to sit
+    under this form is gone — stimulus_boot.js retired that controller on
+    2026-08-21, so copying the snippet gave you a div that never loaded. A lazy
+    turbo-frame shows its skeleton children until the fetch lands and needs no
+    controller. %>
 <form action="<%= local_assigns.fetch(:search_path, request.path) %>" method="get" data-controller="auto-submit" role="search" aria-label="Example search">
   <input type="search" name="q" value="<%= params[:q] %>" placeholder="Search" data-action="input->auto-submit#submit" aria-label="Search query">
 </form>
-<div data-controller="content-loader" data-content-loader-url-value="<%= local_assigns.fetch(:search_path, request.path) %>">
-  <p>Loading…</p>
-</div>
 
 <%# Lightbox gallery %>
 <div data-controller="lightbox">

@@ -444,7 +444,7 @@ assert_includes haystack, "turbo_prefetch: false",
 # "Copy selected examples into each app": it is a snippet library, so its
 # containing data-controller="toast" proves the documentation documents the
 # thing it documents. The line above already asserts the partial that is the
-# real artifact.
+# real artifact. What it does owe the reader is below.
 
     wardrobe_form = read_source(File.join(ROOT, "amber/app/views/wardrobe_items/_form.html.erb"))
     assert wardrobe_form.include?("textarea-autogrow") || wardrobe_form.include?("character-counter")
@@ -477,6 +477,25 @@ assert_includes haystack, "turbo_prefetch: false",
     assert_includes read_source(File.join(ROOT, "shared/app/views/shared/_post_card.html.erb")), "shared/feed_card"
     assert_includes read_source(File.join(ROOT, "shared/app/views/shared/_copyable.html.erb")),
                     'data-controller="clipboard"'
+  end
+
+  # A snippet library is copied by hand, so a snippet naming a controller that
+  # stimulus_boot.js no longer registers hands someone a dead element and no
+  # error. content-loader was retired 2026-08-21 and examples.html.erb kept
+  # offering it for three weeks. The registry is the authority; this asks only
+  # that the documentation stay inside it.
+  def test_every_controller_the_snippet_library_offers_is_registered
+    registry = read_source(File.join(ROOT, "shared/frontend/stimulus_boot.js"))
+    registered = registry.scan(/\["([a-z-]+)",/).flatten.to_set
+
+    refute_empty registered, "no registrations parsed — the scan broke, not the tree"
+
+    snippets = read_source(File.join(ROOT, "shared/frontend/examples.html.erb"))
+    offered = snippets.scan(/data-controller="([^"]+)"/).flatten.flat_map(&:split).to_set
+
+    refute_empty offered, "no snippets parsed — the scan broke, not the tree"
+    assert_empty(offered - registered,
+                 "examples.html.erb offers a controller stimulus_boot.js does not register")
   end
 
   def test_responsive_images_are_served_as_lazy_webp_pictures

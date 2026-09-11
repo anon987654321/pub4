@@ -5007,7 +5007,11 @@ Numbered 1–N across the four trees.
 89. **`help.rb` “read-only” vs scan writes.** `:18` vs `:30-32`. Pick one sentence.
 90. **`MechanicalAutofix` “`/scan` and `/self`”.** `/self` is a model alias for `/review`. Say `/review --only scan`.
 91. **`lib/cli/README.md` still mentions `data/claude`.** `:33`. Empty dir.
-92. **`mask.js` header claims `window.MASTERMask`.** Spec says mask.js is superseded (`spec/web/visual_governor_spec.rb:30-36`). Delete the file or the claim.
+92. **Done — verified 2026-09-12.** `mask.js` and the three `mask_*` files are off
+     disk and nothing loads them. The two textual matches left are a different
+     thing: `visual_bridge.js` names the `papua-mask` topology and a `#mask` DOM
+     id fallback, and `visual_governor_spec.rb:30` is the comment recording the
+     supersession.
 93. **`visual_governor.js:1` “before mask.js loads”.** mask.js does not load. “before face.js”.
 94. **`cognition_ecology.js:75` “see mask.js”.** Same.
 95. **`HealthController` comment block is a decision record.** Keep one line: git is not critical because dubious ownership under `master` user.
@@ -5018,8 +5022,12 @@ Numbered 1–N across the four trees.
 100. **`lib/unwrap_error.rb` unnamed in PATH_OWNERSHIP.** Add a key or move under `lib/result/`.
 101. **`Operator::` is a foreign namespace.** `data/autoload.yml:75-76`. Collision risk with `lib/operator`. One prefix.
 102. **`lib/rails/` audits RAILS from MASTER.** Consider moving to `RAILS/gates/lib` on a sitting, or expose one `/rails audit` command.
-103. **`lib/grok/`.** If MASTER only ingests LoRA transcripts, name it `lib/io/grok_transcripts.rb`.
-104. **`lib/deploy/`.** Easy to confuse with `OPENBSD/`. Rename `lib/operator/deploy_docs.rb`.
+103. **Done — verified 2026-09-12.** Neither `MASTER/lib/grok/` nor `MASTER/lib/deploy/`
+     exists; lib/ is boot, builder, cli, cognition, core, fix, ground, io,
+     operator, rails, review, trace, voice.
+104. **Done — verified 2026-09-12.** Neither `MASTER/lib/grok/` nor `MASTER/lib/deploy/`
+     exists; lib/ is boot, builder, cli, cognition, core, fix, ground, io,
+     operator, rails, review, trace, voice.
 105. **`pressure_engine.rb` at lib root.** Not in PATH_OWNERSHIP. Move under `lib/cognition/` or `lib/trace/` and declare.
 106. **`cognition/` not in PATH_OWNERSHIP.** Add; purpose is already in `COGNITION.md`.
 107. **`web/script/` undeclared.** Add under `web/`.
@@ -5053,7 +5061,11 @@ Numbered 1–N across the four trees.
 
 ### MASTER — web face
 
-132. **`mask.js` is dead weight.** Still on disk; `visual_limits.test.mjs:72` still iterates it. Delete `mask.js`, `mask_generators.js`, `mask_topologies.js` if nothing imports them.
+132. **Done — verified 2026-09-12.** `mask.js` and the three `mask_*` files are off
+     disk and nothing loads them. The two textual matches left are a different
+     thing: `visual_bridge.js` names the `papua-mask` topology and a `#mask` DOM
+     id fallback, and `visual_governor_spec.rb:30` is the comment recording the
+     supersession.
 133. **`codebase.js` not in `face_assets.yml`.** Topology `renderer: codebase.js` (`topologies.yml:95`) but the shell never loads it. Add to a deferred group or stop naming it.
 134. **`offline_memory.js` not in the manifest.** `sw.js:78` says drain lives there; the contract test only asserts the file exists.
 135. **`swarm.html` / `diag.html`.** Extra HTML, `lang="en"`, scanline overlay against FLAT_UI. Route behind auth or delete.
@@ -5784,7 +5796,7 @@ Numbered 1–N across the four trees.
 804. **Three doors.** START_HERE should say “agents: CLAUDE.md; operators: RUNBOOK.md; first screen: README.md” in one sentence.
 805. **RUNBOOK “Always use tmux” then `doas zsh OPENBSD/OPERATOR.sh`.** vps-deploy must *not* be doas. Put that adjacent.
 806. **config_drift_gate SSH default `dev@brgen.no`.** Other scripts default to the IP. One default (`SSH_HOST` from operator.yml).
-807. **deploy_all still says `rails/<app>/<app>.sh` in usage.** Path is `RAILS/<app>/<app>.sh`.
+807. **Fixed 2026-09-12.** `deploy_all.sh:13` says `RAILS/<app>/<app>.sh`.
 808. **START_HERE post-pull.** Add “do not stash”.
 809. **health_check encoding comment duplicated.** One `lib/utf8.rb` require is enough.
 810. **bin/check OptionParser without `--help` banner.** Add a banner listing profiles and which gates each runs.
@@ -6787,7 +6799,9 @@ A finding is a hypothesis. Verify the second caller before you delete the first.
 9. **`bin/cli` execs `bin/master`.** Two entrypoints, one REPL. Completions generate from `HELP_TOPICS`.
 10. **`spec/` vs `test/` vs `web/test/`.** Face tests live in three homes. Two at most: `test/` for Ruby, `web/test/` for the face. `spec/core_smoke.rb` is not `*_spec.rb`.
 11. **`lib/rails/` moves to `RAILS/gates/lib` or becomes `/rails audit`.** MASTER should not audit RAILS by walking `Master::ROOT`.
-12. **`lib/deploy/` → `lib/operator/deploy_docs.rb`.** The name collides with `OPENBSD/`.
+12. **Done — verified 2026-09-12.** Neither `MASTER/lib/grok/` nor `MASTER/lib/deploy/`
+     exists; lib/ is boot, builder, cli, cognition, core, fix, ground, io,
+     operator, rails, review, trace, voice.
 13. **`work_commands_extra.rb` / `work_commands_status.rb`.** Split by verb or fold into `work_commands.rb`. `extra` is a junk drawer.
 14. **One snapshot verb.** `tools/snapshot.rb` vs `Trace::Snapshot::Publisher`.
 15. **One dogfood.** `spec/dogfood_spec.rb` vs `bin/dogfood` vs `rake dogfood`.
@@ -6798,7 +6812,11 @@ A finding is a hypothesis. Verify the second caller before you delete the first.
 20. **`OpenbsdConfig` / `HostBudget` read `OPENBSD/` once.** Don’t duplicate `vm_resource.yml` in MASTER data.
 21. **Runtime deps from `master.gemspec`; web Gemfile is Rails + Falcon.** Two Gemfiles, two locks, two platform `if`s.
 22. **Completions generated from the live table.** `_master` still completes `through`. Add `_operator`. No hand-maintained verb list.
-23. **`mask.js` and the three mask_* files.** Dead; delete with the tests that grep them.
+23. **Done — verified 2026-09-12.** `mask.js` and the three `mask_*` files are off
+    disk and nothing loads them. The two textual matches left are a different
+    thing: `visual_bridge.js` names the `papua-mask` topology and a `#mask` DOM
+    id fallback, and `visual_governor_spec.rb:30` is the comment recording the
+    supersession.
 24. **Cable vs SSE vs `visual_bridge`.** Three event pipes. Cable broadcasts `*`. One pipe for the face; Cable goes or takes the visitor allow-list.
 
 ### OPENBSD
@@ -9261,7 +9279,15 @@ If two things mean the same thing, keep the one with the test.
 34. **`smart-turn` ONNX (~21MB) default off.** Test that `index.html.erb` does not `<script src>` the wasm. Don’t ship it in the critical path.
 35. **`bin/nsaudit`.** Two-spine leftover. Fold into `rake lint:autoload` or delete.
 36. **`smoke-apps.sh` vs `deploy-smoke.sh`.** One smoke; `port_inventory` `SMOKE_SCRIPTS` retargets.
-37. **`content-loader` retired in comments; `examples.html` still has it.** After deleting examples (3), drop the leftover markup if any remains.
+37. **Fixed 2026-09-12, and the class is closed with it.** `stimulus_boot.js` retired
+    content-loader on 2026-08-21 and `shared/frontend/examples.html.erb` went on
+    offering the snippet for three weeks — a snippet library is copied by hand, so
+    that handed someone a div that never loaded and no error. The container is gone.
+    `test_every_controller_the_snippet_library_offers_is_registered` now checks every
+    snippet against the registry: all 17 registered, every offer inside them, and the
+    test fails when the retired one is put back. examples.html.erb stays — it is
+    documentation, and item 3's proposal to delete it loses its argument now that it
+    cannot go stale silently.
 38. **Three face stores.** `felt_state.js`, `face_state.js`, `ui_presence.js`. Document boot order or fold presence into felt.
 39. **`hello: Hei` in brgen and amber `nb.yml`.** Grep callers; delete unused scaffold keys.
 40. **`rails-app.tmpl` disagrees with live `rc.d/brgen`.** Generate apps from the live script or delete the tmpl so OPERATOR cannot install the wrong one.

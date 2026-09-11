@@ -10,7 +10,7 @@
 # Usage:
 #   zsh OPENBSD/deploy_all.sh
 #   VPS_HOST=dev@46.23.89.226 SSH_KEY=~/.ssh/id_ed25519 zsh OPENBSD/deploy_all.sh
-#   zsh OPENBSD/deploy_all.sh --per-app   # also run rails/<app>/<app>.sh (copies to /home/<app>/app)
+#   zsh OPENBSD/deploy_all.sh --per-app   # also run RAILS/<app>/<app>.sh (copies to /home/<app>/app)
 set -euo pipefail
 
 SCRIPT_DIR=${0:a:h}
