@@ -3195,6 +3195,63 @@ nothing became unused in the exchange.
   inbox is a rail capped at 30 with search above it, and that cap now says so in
   `load_rail`.
 
+### Session of 2026-09-11 — nine source gates got a test, and two were not measuring
+
+Nine gates that read source text had no test at all: `phantom_foreign_keys`,
+`schema_migration`, `frontend_production`, `frontend_auditor`,
+`css_minify_integrity`, `scale_ratchet`, `dialect_purity`, `locale_shadowing`
+and `content_honesty`. Each has one now, and each plants the defect the gate
+exists to catch, asserts the gate fails and names it, removes the defect and
+asserts it passes. A test that only runs a gate over this tree and asserts clean
+proves nothing — it passes equally against a gate whose body is `return ok` —
+and every one of these was driven against a deliberately gutted gate to prove it
+goes red.
+
+Two of the nine were measuring less than their green line claimed.
+
+- **`schema_migration` has read 3 of the 200 `create_table` calls in this
+  repository.** Its duplicate-table scan is
+  `/create_table\s+["':](\w+)["']/`: the opening delimiter may be a colon but
+  the closing one must be a quote, so `create_table :posts` — the form every
+  migration in `amber`, `brgen` and `bsdports` uses — matches nothing. The check
+  has never seen a duplicate because it has never seen a table. Fixing the regex
+  is one character and is **not** a free win: it lights up 16 duplicates in
+  brgen, 7 of them `create_table … if_not_exists: true` inside deliberate repair
+  migrations (`repair_missing_identity_and_trust_tables`,
+  `ensure_locality_tables`, `fix_dating_foreign_keys`). So the check needs the
+  exemption before it needs the regex, and the two together are the work.
+- **`css_minify_integrity`'s selector-loss half cannot fire.** It compiles each
+  entrypoint `:expanded` and `:compressed` and fails when a selector in a
+  three-or-more item list is missing from the compressed output. That is a real
+  dart-sass bug and it shipped a full-width avatar on brgen.no. dart-sass 1.101.0
+  does not have it: a 30-item compound-selector list, quoted attribute values,
+  escaped and unicode selectors, `:is()`, `@media` and `@supports` all survive
+  compression intact here. What the gate still proves is that each app's
+  `application.scss` compiles, which is worth keeping and is what its test
+  pins. Re-check the loss half whenever sass-embedded moves.
+
+A third finding is about the shape of the gates rather than about any one of
+them. **Six of the nine resolve their subject from constants computed at load
+time and take no root argument** — `phantom_foreign_keys` (`ROOT`),
+`schema_migration` (`ROOT`, `RAILS_ROOT`), `frontend_auditor` (`ROOT`, `APPS`),
+`dialect_purity` (`RAILS`, `TOKENS`, `WIRING`), `locale_shadowing`
+(`RAILS_ROOT`, `APPS`, `BUDGET`) and `content_honesty` (`ROOT`, `RAILS`). The
+only way to run one over a planted tree is to rewrite those constants around the
+call, which `RAILS/test/gates/gate_fixture.rb` does and undoes. It works, and it
+is the wrong seam: `File.expand_path("../../../..", __dir__)` is the arithmetic
+this tree has now had wrong four times, and a `root:` keyword would make both
+the gate and its test say where they are looking. The three that already pass a
+path or a root — `frontend_production`'s `check_layout`/`check_views`,
+`css_minify_integrity`'s `check_app`, `frontend_auditor`'s underlying
+`Shared::FrontendAuditor.call(root:)` — needed none of it.
+
+Smaller, and closed by the tests rather than left open: `frontend_auditor`
+raises exactly one `:error` rule (`embedded_app_file`) and everything else is
+advisory unless `GATE_AUDITOR_STRICT=1`; `scale_ratchet` reports a count under
+its baseline as a warning asking for the new low to be recorded, never as a
+failure; and `content_honesty`'s live half says "sitemap not probed" rather than
+claiming a clean sitemap when nothing is listening.
+
 ## OPENBSD
 
 ### Operator debt — still open
