@@ -36,7 +36,15 @@ APP_DIR=/home/brgen/app
 daemon="/bin/ksh"
 # Same shape as rc.d/brgen: SECRET_KEY_BASE is sourced inside the shell by the
 # app user rather than interpolated here, where it would sit in ps(1) argv.
-daemon_flags="-c 'cd ${APP_DIR} && . /etc/brgen.env && export RAILS_ENV=production SECRET_KEY_BASE HOME=/home/brgen PUB4_ROOT=/home/dev/pub4 PUB4_RAILS_ROOT=/home/dev/pub4/RAILS && exec /usr/local/bin/bundle34 exec rake solid_queue:start'"
+# set -a, for the reason rc.d/brgen states: `.` sets a bare KEY=value
+# without exporting it, so naming keys after it is an allowlist nobody can
+# see. This line read `. /etc/brgen.env && export RAILS_ENV=production
+# SECRET_KEY_BASE ...`, so SECRET_KEY_BASE was the only thing in that file
+# the worker could read. Every other key — the VAPID pair among them — was
+# set and unexported, which is exactly the failure that left push silently
+# dead in the app before it was fixed there. The job classes this worker
+# runs are the ones that need those keys.
+daemon_flags="-c 'cd ${APP_DIR} && set -a && . /etc/brgen.env && set +a && export RAILS_ENV=production HOME=/home/brgen PUB4_ROOT=/home/dev/pub4 PUB4_RAILS_ROOT=/home/dev/pub4/RAILS && exec /usr/local/bin/bundle34 exec rake solid_queue:start'"
 daemon_user="brgen"
 daemon_execdir="/home/brgen/app"
 daemon_logger="daemon.notice"

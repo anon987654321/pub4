@@ -711,7 +711,16 @@ pub4_source_ceilings:
   # rather than a decision. It was also the single heaviest source of scan
   # findings in the tree, 535 of them, which is what a file nobody deploys and
   # nobody tests contributes to every census that reads the repo.
-  OPENBSD: 110
+# 110 -> 111 for test/test_rc_env_export.rb. An rc.d script that sources an env
+# file must export it: `.` sets a bare KEY=value unexported, so naming keys
+# after it is an allowlist nobody can see. rc.d/brgen carries what that cost —
+# VAPID_PUBLIC_KEY sat in /etc/brgen.env for hours while push failed silently —
+# and was fixed with `set -a`. The three job workers were not, and they are
+# where it matters most, since the classes they run want those same keys. All
+# three had it wrong on 2026-09-11, which is what a fix applied to one file of
+# a family looks like a month later. It folds into no existing OPENBSD test;
+# those are about the box, and this is about the shape of a script.
+  OPENBSD: 111
   # 220 -> 222 for lora/seed_media.yml and lora/_toolkit/install_seed_media.rb,
   # the prompt set for every seeded photograph and the script that grades and
   # files what comes back from it. Two files, both named, neither foldable:
