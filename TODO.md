@@ -9124,5 +9124,34 @@ Continuation of the entropy pass. These have a path. Verify the second caller be
 
 If two things mean the same thing, keep the one with the test.
 
+26. **`swarm.html` / `diag.html`.** Public extra HTML, `lang="en"`, inline script, not the face. Gate behind auth or delete from production `public/`.
+27. **`codebase.js` not in `face_assets.yml`.** Topology still names it. Add to a deferred group or stop naming it.
+28. **`offline_memory.js` is a scaffold.** Comment: no wiring into chat. Wire enqueue or delete.
+29. **Two importmap pins for one autogrow file.** `@stimulus-components/textarea-autogrow` and `stimulus-textarea-autogrow` both `to:` the same vendor file. Comments `_form_fields` uses it. Keep one pin.
+30. **`bin/master-core`.** Fold spine only; `bin/master` boots the rest. `bin/dogfood` still calls it. `bin/master --core` or keep and give it one test that it is the fold, not a second product.
+31. **Deals search is LIKE.** Listings/stores use `LiveSearchable`. One helper (restructure 39).
+32. **brgen `NotificationsController` is local; amber inherits `Shared::`.** Promote or delete the host copy.
+33. **`face.part*.txt` in `public/`.** Concatenated at build, still served. Move to a build dir.
+34. **`smart-turn` ONNX (~21MB) default off.** Test that `index.html.erb` does not `<script src>` the wasm. Don’t ship it in the critical path.
+35. **`bin/nsaudit`.** Two-spine leftover. Fold into `rake lint:autoload` or delete.
+36. **`smoke-apps.sh` vs `deploy-smoke.sh`.** One smoke; `port_inventory` `SMOKE_SCRIPTS` retargets.
+37. **`content-loader` retired in comments; `examples.html` still has it.** After deleting examples (3), drop the leftover markup if any remains.
+38. **Three face stores.** `felt_state.js`, `face_state.js`, `ui_presence.js`. Document boot order or fold presence into felt.
+39. **`hello: Hei` in brgen and amber `nb.yml`.** Grep callers; delete unused scaffold keys.
+40. **`rails-app.tmpl` disagrees with live `rc.d/brgen`.** Generate apps from the live script or delete the tmpl so OPERATOR cannot install the wrong one.
+41. **`jobs` rc.d without `set -a`.** Same env file as the app (bughunt 30). One export path.
+42. **`core-reclaim.sh` RSS via `ps | grep | head | awk`.** Wrong pid; banned tools. `ps -o rss= -p`.
+43. **`STREAM_ITERATE_LOG` unsynchronized.** One flock or pid-scoped log.
+44. **`sine_stream.rb` mutates ENV at load.** Don’t require it from tests; or don’t set ENV in a library file.
+45. **`kaggle_session.rb` / `colab_session.rb` / `run_ai_toolkit.rb` ARGV at load.** Guard with `$PROGRAM_NAME`.
+46. **`postpro.log` committed next to source.** Gitignore `*.log` under postpro.
+47. **`MASTER/log/traces.log`, `tts.wav`, `runtime/` JSONL, `loop.gif`.** START_HERE says generated goes in `.master/` / `output/`. Gitignore or PATH_OWNERSHIP `check: none`.
+48. **`snapshot_*.md` at repo root.** TREE.md says the root is CLAUDE/AGENTS/TODO/TREE. Move under `.master/` or gitignore.
+49. **`PwaController` has no request test.** `pwa_master_contract_test.rb` greps ERB. `GET /manifest` 200 JSON.
+50. **`AstEdit` `atomic_write` vs `write_atomic`.** The write tool cannot write (bughunt 66). Fix the name or delete the tool until it can.
+
+Keep the one with the test. Then delete the other.
+
 ---
+
 
