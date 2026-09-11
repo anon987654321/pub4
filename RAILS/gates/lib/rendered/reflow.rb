@@ -126,13 +126,21 @@ module Deploy
         return @result
       end
 
+      measured = 0
       GeometryProbe.with_browser do |cdp|
-        live.each { |surface| sweep(cdp, surface, widths) }
+        live.each { |surface| measured += 1 if sweep(cdp, surface, widths) }
       end
-      # Counted per surface, so one surface that could not be measured does not
-      # make the ones that were count for nothing.
-      @result.checked!(live.size)
-      @result.warn("reflow: swept #{widths.length} widths (#{widths.first}–#{widths.last}px) × #{live.size} surface(s)")
+      # Counted per surface swept, so one surface that could not be measured does
+      # not make the ones that were count for nothing — and a sweep where every
+      # width raised does not count as a sweep at all. A CDP error is a warning
+      # here, so counting attempts reported an empty sweep as a pass.
+      if measured.zero?
+        @result.inconclusive!("reflow: 0/#{live.size} surface(s) survived the sweep — no width was measured")
+        return @result
+      end
+
+      @result.checked!(measured)
+      @result.warn("reflow: swept #{widths.length} widths (#{widths.first}–#{widths.last}px) × #{measured} surface(s)")
       @result
     end
 
@@ -159,10 +167,11 @@ module Deploy
           next
         end
       end
-      return if samples.empty?
+      return false if samples.empty?
 
       check_overflow(surface, samples)
       check_breakpoints(surface, samples)
+      true
     end
 
     def check_overflow(surface, samples)

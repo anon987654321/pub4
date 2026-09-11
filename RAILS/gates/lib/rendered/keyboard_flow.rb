@@ -72,13 +72,22 @@ module Deploy
         return @result
       end
 
+      measured = 0
       GeometryProbe.with_browser do |cdp|
-        live.each { |surface| walk_tab_order(cdp, surface) }
+        live.each { |surface| measured += 1 if walk_tab_order(cdp, surface) }
       end
-      # Counted per surface, so one surface that could not be measured does not
-      # make the ones that were count for nothing.
-      @result.checked!(live.size)
-      @result.warn("keyboard_flow: walked tab order on #{live.size} surface(s)")
+      # Counted per surface walked, so one surface that could not be measured
+      # does not make the ones that were count for nothing — and a run where
+      # every surface refused to release focus, or timed out, walked no tab order
+      # at all. Both of those are warnings or unchecked preconditions rather than
+      # failures, so counting attempts reported them as a pass.
+      if measured.zero?
+        @result.inconclusive!("keyboard_flow: 0/#{live.size} surface(s) yielded a tab order — nothing was walked")
+        return @result
+      end
+
+      @result.checked!(measured)
+      @result.warn("keyboard_flow: walked tab order on #{measured} surface(s)")
       @result
     end
 
@@ -117,7 +126,7 @@ module Deploy
         else
           @result.fail("keyboard_flow: #{label} unreachable (#{err})")
         end
-        return
+        return false
       end
 
       # Start the walk from the top of the document, provably.
@@ -147,7 +156,7 @@ module Deploy
           "could not be measured from the start (an autofocus field holding focus reads as a " \
           "misplaced skip link)"
         )
-        return
+        return false
       end
 
       stops = []
@@ -167,13 +176,14 @@ module Deploy
       if stops.empty?
         @result.fail("keyboard_flow: #{label} has no keyboard-reachable element in #{MAX_TABS} tabs — " \
                      "the page cannot be operated without a mouse")
-        return
+        return true
       end
 
       check_skip_link_first(label, stops)
       check_document_order(label, stops)
       check_focus_ring(label, stops)
       check_offscreen_focus(label, stops)
+      true
     end
 
     # The skip link exists so a keyboard user does not tab through the whole

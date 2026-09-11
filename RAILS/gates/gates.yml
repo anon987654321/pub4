@@ -354,7 +354,6 @@ flow_journey:
 # Full-matrix UI/UX simulation: every full-page view (brgen · amber · MASTER).
 # Source always; live HTTP when triangle ports are open.
 page_simulation:
-  needs: [browser]
   require: lib/live/page_simulation
   class: Deploy::PageSimulationGate
   pass: "ok: page UI/UX simulations clean across inventory"

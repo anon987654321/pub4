@@ -151,8 +151,17 @@ module Deploy
         return @result
       end
 
-      GeometryProbe.with_browser { |cdp| live.each { |surface| probe(cdp, surface) } }
-      @result.checked!(live.size)
+      measured = 0
+      GeometryProbe.with_browser { |cdp| live.each { |surface| measured += 1 if probe(cdp, surface) } }
+      # Surfaces measured, not surfaces attempted. A navigation timeout is a
+      # warning here, so a run where Chrome opened and every page timed out
+      # pressed nothing at all — and counting the attempts reported that as a
+      # pass. mobile_flow already counts it this way.
+      if measured.zero?
+        @result.inconclusive!("occlusion: Chrome reached 0/#{live.size} surface(s) — nothing was pressed")
+      else
+        @result.checked!(measured)
+      end
       @result
     end
 
@@ -170,7 +179,7 @@ module Deploy
         else
           @result.fail("occlusion: #{label} unreachable (#{error})")
         end
-        return
+        return false
       end
 
       Array(cdp.evaluate(PROBE)).each do |hit|
@@ -179,6 +188,7 @@ module Deploy
           "is covered by #{hit["covered_by"]} at #{hit["at"].join(",")}; a press there misses it"
         )
       end
+      true
     end
   end
 end

@@ -456,7 +456,23 @@ pub4_source_ceilings:
   # tree renders. Thirty-three reflex files, thirty-two classes, thirty-one
   # mounted. RAILS/test/infinite_scroll_reflex_contract_test.rb asserts the
   # property that would have caught it, and lives outside this count.
-  RAILS: 2366
+  # 2366 -> 2382, and the sixteen are two things that should be read apart.
+  #
+  # Nine are new files: the first test each for the eleven gates that had none,
+  # and the harness the four browser-backed ones share. master_tts,
+  # port_inventory, rails_runtime, deploy_drift, page_simulation, occlusion,
+  # reflow, keyboard_flow, mobile_flow, web_vitals_budget and pwa_installable
+  # were all registered and all run by `runner.rb --all`, and not one had a test
+  # that planted a defect and watched the gate name it. Four of them counted the
+  # surfaces they attempted rather than the ones they measured, so a run where
+  # Chrome opened and every page timed out reported PASSED having pressed, swept
+  # and walked nothing.
+  #
+  # The other seven were already owed. git ls-files counts 2373 RAILS source
+  # files at 816b86424, the commit that lowered this row to 2366: the six-gate
+  # move subtracted six from a number nobody re-measured. This raise records the
+  # tree rather than adding to it.
+  RAILS: 2382
   # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
   # that are the whole defence against a shared index, and nothing tested any of
   # them — a hook that stopped firing looks exactly like a week in which nobody
