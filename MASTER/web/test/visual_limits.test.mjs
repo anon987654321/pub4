@@ -69,7 +69,7 @@ test("the profile is read from documentElement, where it is actually written", (
 
 // The defect itself: evaluate each consumer's own isReduced expression against
 // the real published limits, with the preference off.
-for (const file of ["mask.js", "cognition_ecology.js"]) {
+for (const file of ["cognition_ecology.js"]) {
   test(`${file} decides reduced motion from the preference, not the budget`, () => {
     const source = readFileSync(join(publicDir, file), "utf8");
     const match = source.match(/const isReduced = ([^;]+);/);

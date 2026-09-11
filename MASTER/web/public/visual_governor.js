@@ -1,4 +1,4 @@
-// MASTER visual governor: state-aware animation pressure control before mask.js loads.
+// MASTER visual governor: state-aware animation pressure control before face.js loads.
 //
 // These numbers are the source. The header used to say "Limits sourced from
 // data/ops/visual.yml (SINGULARITY / ONE_SOURCE). Do not duplicate." and nothing

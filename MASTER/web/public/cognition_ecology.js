@@ -72,7 +72,7 @@
     state.height = innerHeight;
 
     // Low internal resolution + upscale per data/topologies.yml + visual_clusters.yml.
-    // The media query alone — see mask.js. `limits.reducedMotionParticles < 100`
+    // The media query alone. `limits.reducedMotionParticles < 100`
     // asked a particle budget a yes/no question and got "yes" every time, so the
     // small branch below had never run for anyone.
     //

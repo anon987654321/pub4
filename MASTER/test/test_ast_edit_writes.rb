@@ -44,8 +44,9 @@ class TestAstEditWrites < Minitest::Test
       result = editor.call(operation: "rename_method", path: path, from: "old_name", to: "new_name")
 
       assert result.ok?, "rename reported: #{result.respond_to?(:error) ? result.error : result.inspect}"
-      assert_includes File.read(path), "def new_name"
-      refute_includes File.read(path), "def old_name"
+      written = File.read(path)
+      assert_includes written, "def new_name"
+      refute_includes written, "def old_name"
       assert_equal [path], undo.snapshots, "the undo snapshot is taken before the write"
     end
   end
@@ -57,17 +58,15 @@ class TestAstEditWrites < Minitest::Test
       result = editor.call(operation: "add_after", path: path, after: "old_name", code: "def added\n  :new\nend")
 
       assert result.ok?, "add_after reported: #{result.respond_to?(:error) ? result.error : result.inspect}"
-      assert_includes File.read(path), "def added"
+      written = File.read(path)
+      assert_includes written, "def added"
     end
   end
 
-  # The guard against the misspelling coming back by another route: the module
-  # AstEdit includes has to answer the name AstEdit calls.
-  def test_the_writer_answers_the_name_the_tool_calls
-    names = Master::Io::AstEdit.private_instance_methods(true) + Master::Io::AstEdit.instance_methods(true)
-    called = File.read(File.expand_path("../lib/io/ast_edit.rb", __dir__)).scan(/^\s*(\w*atomic\w*)\(/).flatten.uniq
-
-    refute_empty called, "the scan found no write call, so it is looking in the wrong place"
-    called.each { |name| assert_includes names, name.to_sym, "ast_edit.rb calls #{name} and nothing defines it" }
-  end
+# A third test used to grep ast_edit.rb for its own method names, to catch the
+# misspelling returning by another route. test_source_assertions refuses that
+# shape and is right to: a test that greps a source file passes against a body
+# of `raise`. Both tests above already fail when the method is missing — that
+# is how the bug was found — so the grep was a third opinion on a question
+# already answered behaviourally.
 end

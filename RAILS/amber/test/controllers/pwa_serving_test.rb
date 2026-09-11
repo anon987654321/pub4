@@ -30,24 +30,19 @@ class PwaServingTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_equal "application/javascript", response.media_type
-    assert_includes response.body, "self.addEventListener",
+
+    served = response.body
+    assert_includes served, "self.addEventListener",
                     "a worker that registers no listener is not a worker"
   end
 
-  # The concern rescues a render failure and answers with a minimal worker
-  # rather than an error page, because a 500 here leaves whatever is already
-  # installed in place with no way to replace it. That fallback is the half a
-  # template grep cannot see.
-  test "a worker that fails to render is still a valid worker" do
-    get pwa_service_worker_path
-    assert_response :success
-
-    source = File.read(Rails.root.join("../shared/app/controllers/concerns/shared/pwa_serving.rb"))
-    assert_includes source, "self.skipWaiting()",
-                    "the rescue path must still install; see the comment beside it"
-    assert_includes source, "application/javascript",
-                    "the rescue path must keep the content type, or the browser refuses it"
-  end
+  # The rescue path — a failed worker render answers with a minimal installing
+  # worker rather than a 500, because a 500 leaves whatever is installed in
+  # place with no way to replace it — is NOT covered here. Proving it needs a
+  # forced render failure, and the test that stood in for it grepped the
+  # concern's source for "self.skipWaiting()", which proves the text exists and
+  # nothing about what the server does. test_source_assertions is right to
+  # refuse that, so it is gone rather than rewritten into something weaker.
 
   test "the offline page renders without a session" do
     get pwa_offline_path

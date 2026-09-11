@@ -524,7 +524,13 @@ pub4_source_ceilings:
 # the file. Nothing in the suite named AstEdit, which is why a tool whose whole
 # job is writing had been unable to write. The test covers both operations and
 # asserts that every *atomic* call in that file names a method that exists.
-  MASTER: 1053
+# 1053 -> 1050. Three files arrived here and three left in another session
+# during the same hour — io/git_hooks.rb and review_crew/agents.rb went with
+# "a worktree is a checkout", bin/preflight was folded away — so the ceiling I
+# raised described a tree that no longer existed. This is the shared checkout
+# in one row: a ratchet is a measurement of now, not a running total of what
+# one session did.
+  MASTER: 1050
 
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
