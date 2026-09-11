@@ -10,12 +10,11 @@
 
 <div id="navBar">
   <div id="topHalf">
-    <div id="logoWrapper">
-      <%= link_to restaurants_path, id: "logo", class: "marketplace-logo-link nav-hover", aria: { label: "Takeaway" } do %>
-        <span class="nav-logo-word">takeaway<span class="nav-logo-tld">.no</span></span>
-      <% end %>
-    </div>
-
+    <%# No second wordmark, for the reason marketplace states: the fixed
+        .brgen-logo-mark already names the host on every surface and the shared
+        nav carries "Takeaway" as the way back here, so a "takeaway.no" logotype
+        put two wordmarks on one page. The sections row keeps its own entry to
+        the restaurants index. %>
     <%= link_to main_app.nearby_path, class: "nav-block nav-deliver nav-hover",
                 aria: { label: "#{t("storefront.deliver_to")} #{deliver_to}" } do %>
       <%= icon :nearby, size: 13 %> <%= deliver_to %>

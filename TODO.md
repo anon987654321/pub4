@@ -4418,6 +4418,149 @@ and palette; then MASTER's chrome; marketplace's 500 whenever someone is in
 that engine. Screenshot before and after — this section exists because two
 confident readings of the source were both wrong.
 
+## The ad design system, and the marketplace study — opened 2026-09-11
+
+Operator direction. marketplace and takeaway take **www.kaufland.de** as their
+shell, studied against nineteen more marketplaces rather than copied from one.
+Beside that, an ad design system built on photography and bold typography,
+because a marketplace front page is mostly large product images and large
+type — and the same system makes brgen's own ads, for the front page, the
+verticals and amber. Expected to take a while and to end up automated.
+
+The stated target is worth keeping verbatim, because it names what this is
+not: **Kaufland's catalogue + bol's cleanliness + eBay's marketplace depth +
+Vinted's simplicity + brgen's local and social layer** — rather than a
+Norwegian Amazon. That lands on an irony the tree already recorded:
+`_marketplace_nav_bar.scss` opens by saying it "was a two-row Amazon clone",
+and its eleven Amazon hex literals came out on 2026-09-11.
+
+This is a program, not an item.
+
+### The study — twenty marketplaces, and what each is for
+
+Research each thoroughly, and record measurements rather than impressions: a
+viewport, a screenshot, the grid's column count and gutter, the type scale of
+a price, the aspect ratio of a card.
+
+- **Kaufland** — the overall shell and catalogue UX. The model for our own.
+- **bol** — visual cleanliness, and the closest thing to this fleet's flat taste.
+- **Allegro** — search, filtering, and handling an enormous catalogue.
+- **OTTO** — merchandising and category presentation.
+- **Mercado Libre** — marketplace mechanics, seller and buyer interaction.
+- **eBay** — seller ecosystem and discovery depth.
+- **Walmart Marketplace** — the retail and marketplace hybrid.
+- **Rakuten** — marketplace ecosystem.
+- **Cdiscount** — European general merchandise.
+- **ManoMano** — a category-specific marketplace done extremely well; structured category expertise.
+- **Etsy** — seller identity and discovery; the human half.
+- **Vinted** — frictionless second-hand, and effortless listing.
+- **Back Market** — condition and quality communication; trust information.
+- **Shopee** — mobile-first marketplace mechanics.
+- **Taobao** — catalogue depth and social commerce.
+- **JD.com** — product information and logistics.
+- **Temu** — discovery and conversion mechanics.
+- **Zalando** — fashion marketplace and personalisation. Read this one for amber too.
+- **Mercari** — extremely simple peer-to-peer selling.
+- **Newegg** — electronics and product comparison.
+
+Check every idea against the tree before calling it missing. That habit is in
+this file for a measured reason: of the last external enumeration, thirty-nine
+items declared themselves done and another fourteen proved already true on a
+grep. A list arriving from outside is a hypothesis about this repo.
+
+### What exists already
+
+- **`Shared::Affiliate` is the one path over every network**, and
+  `affiliate_deals_for(category:, limit:)` is its reader. A new network appears
+  in every unit without editing a view.
+- **`shared/_affiliate_feed_unit`** is an in-feed band: product tiles packed
+  edge to edge by CSS grid with call-to-action tiles among them, a
+  `parallax-tilt` Stimulus controller over it, and an `--in_grid` modifier for
+  surfaces that are grids (amber's wardrobe and outfit galleries) rather than
+  lists (brgen's feed). It replaced a CodePen banner that needed five CDN
+  scripts, one of them GPLv3-or-paid.
+- **Models**: `Shared::AffiliateProduct`, `AffiliateVoucher`,
+  `AffiliateConversion`, plus amber's `AffiliateLink`. brgen has
+  `AffiliateImportJob` and `Brgen::AffiliatePlaceholders`.
+- **Disclosure** is its own partial, `shared/_affiliate_disclosure`, and the
+  band labels itself `affiliate.sponsored`. Whatever the ad system becomes, it
+  inherits that: an ad says it is one.
+- **Photography has a producer.** STUDIO's repligen generates imagery and fills
+  tv; lora trains on real subjects. An ad system needing product photography
+  has a generator in this repo rather than a stock budget.
+
+### What Kaufland does that markedsplass does not
+
+Read against markedsplass.brgen.no as it renders today, and not yet verified
+against the live site at a set viewport — do that first and record numbers,
+because this list is a description.
+
+- A full-bleed hero of photographic banners. markedsplass opens with a text
+  headline at display size and no image at all.
+- Category tiles as pictures rather than a text row. markedsplass has
+  `Ting Jobb Bolig Oppdrag` as plain links.
+- Offer grids with price as display type. A listing card's price here is body type.
+- Image-first cards at a consistent aspect ratio, which is what makes a dense
+  grid read as one surface rather than a ransom note.
+
+### Amazon is the functional model; the visual is ours
+
+Operator position: Amazon remains the main inspiration for how a storefront
+works, and its visual execution is below this fleet's standard. So the
+storefront bar keeps its Amazon structure — a search field dominating the row,
+deliver-to, account, cart, and a sections row beneath — because the structure
+is the part that was right. What came out on 2026-09-11 was the execution:
+eleven hardcoded Amazon hex values, #131921 and #232f3e navy, #febd69 and
+#f3a847 amber, #cd9042 on the cart count, in a fleet that paints from tokens
+everywhere else. The bar reads --surface, --text, --text-secondary and
+--accent now, so it follows the theme and carries the marketplace accent
+_vertical_shell already tuned for contrast in both directions.
+
+Kaufland and the nineteen beside it are read the same way: take the mechanism,
+leave the paint.
+
+### Every unit is multi-city, multi-domain and multi-language
+
+brgen is one app over roughly twenty city domains, and the marketplace
+subdomain is localised per country: `markedsplass.brgen.no` in Bergen,
+`marketplace.lsangeles.com` in Los Angeles, and nine more spellings in
+`Brgen::DomainRegistry::SUBAPP_ALIASES` — marche, markadur, markedsplads,
+markkinapaikka, marknadsplats, marktplaats, marktplatz, mercado, mercato.
+`DomainRegistry.resolve(host)` is the one way to ask which city and which
+vertical; never re-derive a subdomain.
+
+That constraint already caught something. The storefront header carried a
+hand-written logotype reading `markedsplass` + `.no`, and takeaway's read
+`takeaway` + `.no` — hardcoded Norwegian words and a Norwegian TLD rendered on
+every city, so `marketplace.lsangeles.com` said "markedsplass.no" in its own
+header. Both came out with the second wordmark on 2026-09-11, which means the
+fix landed as a side effect of the chrome decision rather than on its own
+merits. Anything the ad system renders — a category name, a price, a call to
+action, a crop with words burnt into it — carries the same exposure.
+
+Some city domains are expired or expiring, with funding for renewal in
+progress. Treat the domain list as a live set: read it, never hardcode it, and
+expect a surface to be unreachable without that being a defect in the surface.
+
+### The shape to aim for
+
+One unit vocabulary, declared once and rendered by every surface that takes
+ads: hero banner, category tile, offer tile, in-feed band. Each reads
+`Shared::Affiliate` or a brgen-authored equivalent through the same interface,
+so a house ad and an affiliate ad differ in their source and not in their
+markup. Typography comes from the existing scale rather than a second one, and
+each unit fixes one aspect ratio so the grid holds.
+
+Automation is the last step. A unit a person can fill by hand and that looks
+right is the thing to automate; automating the layout first produces a
+generator for a design nobody approved.
+
+### Fenced
+
+Every colour, typeface and crop here is a rendered value and the operator is a
+trained architect. Build the structure, measure the geometry, and bring the
+look back for a decision rather than choosing it.
+
 ## Wishes, not work
 
 Directions rather than tasks. They belong to the operator, and nobody should open

@@ -1,5 +1,4 @@
-/* scan: intentional-colors — the storefront chrome keeps its own dark palette.
- *
+/*
  * Storefront header, shared by marketplace and takeaway so the two verticals
  * cannot drift apart. Began as a faithful two-row Amazon clone; flattened
  * 2026-08-10 toward the front page nav — one line per entry, plain text, no
@@ -12,16 +11,19 @@
  * House rules that still bind: flat fills only (no glow, no gradient) and 44px
  * hit targets on touch.
  *
- *   #131921 top row   #232f3e sub row   #febd69 search button (#f3a847 hover)
- *   #cd9042 cart count
+ * Colours are tokens, not literals: --surface for both rows, --text and
+ * --text-secondary for type, and --accent for the search button and the
+ * cart count. The marketplace accent carries a light-mode variant tuned for
+ * contrast in _vertical_shell.scss, so the bar follows the theme rather than
+ * staying dark under a light page.
  */
 
 #navBar {
   /* Amazon's header is edge-to-edge. This partial renders inside main, which
      carries a clamp() gutter and a max-width, so break out to the viewport. */
   margin-inline: calc(50% - 50vw);
-  background-color: #131921;
-  color: #fff;
+  background-color: var(--surface);
+  color: var(--text);
   font-size: var(--text-sm);
   line-height: var(--leading-tight);
 }
@@ -45,53 +47,7 @@
 
 .nav-hover:hover,
 .nav-hover:focus-visible {
-  border-color: #fff;
-}
-
-/* ---- logo ------------------------------------------------------------- */
-
-#logoWrapper {
-  flex: 0 0 auto;
-}
-
-#navBar .marketplace-logo-link {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
-  color: inherit;
-  text-decoration: none;
-}
-
-/* The pen's mark is a fixed composition tuned for a 100px box — its inner
-   scale(1.35)/scale(3) transforms are absolute, so shrinking the box crops it
-   instead of resizing it. Keep the 100px the pen expects and scale the whole
-   thing down into a 44px slot, which preserves its geometry exactly. */
-.nav-logo-mark {
-  display: block;
-  width: var(--tap-min);
-  height: var(--tap-min);
-  overflow: hidden;
-}
-
-#logoWrapper .banner_wrapper {
-  width: 100px;
-  height: 100px; // scan: intentional — a drawn stage: the art has fixed dimensions, not flowing content
-  margin: 0;
-  padding: 0;
-  transform: scale(0.44);
-  transform-origin: top left;
-}
-
-.nav-logo-word {
-  font-size: var(--text-title, 1.25rem);
-  font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-tighter);
-}
-
-.nav-logo-tld {
-  font-size: var(--text-xs);
-  color: #ccc;
+  border-color: var(--text);
 }
 
 /* ---- nav blocks (deliver to, account, cart) ---------------------------- */
@@ -139,8 +95,8 @@
   padding: 0 10px;
   border: 0;
   border-radius: 0;
-  background: #fff;
-  color: #111;
+  background: var(--bg);
+  color: var(--text);
   font-size: var(--text-base);
   outline: none;
 }
@@ -152,20 +108,20 @@
   justify-content: center;
   width: 45px;
   border: 0;
-  background-color: #febd69;
-  color: #111;
+  background-color: var(--accent);
+  color: var(--text);
   cursor: pointer;
 }
 
 .nav-search-submit:hover {
-  background-color: #f3a847;
+  background-color: var(--vertical-marketplace-accent-hover, var(--accent));
 }
 
 /* Amazon rings the whole control on focus. Flat rule forbids a glow, so the
    ring is a real border on the wrapper instead. */
 #navBar .marketplace-nav-search.focus form,
 #navBar .marketplace-nav-search:focus-within form {
-  outline: 2px solid #febd69;
+  outline: 2px solid var(--accent);
   outline-offset: 0;
 }
 
@@ -190,13 +146,13 @@
 .nav-cart-count {
   position: relative;
   top: -2px;
-  color: #cd9042;
+  color: var(--accent);
   font-size: var(--text-base);
   font-weight: var(--weight-bold);
 }
 
 .nav-cart--active {
-  border-color: #febd69;
+  border-color: var(--accent);
 }
 
 /* ---- sub row ---------------------------------------------------------- */
@@ -208,7 +164,7 @@
   min-height: 39px;
   padding-inline: 10px;
   padding-inline-start: var(--brand-mark-inline);
-  background-color: #232f3e;
+  background-color: var(--surface);
 }
 
 #sections {
@@ -232,7 +188,7 @@
   align-items: center;
   min-height: var(--tap-min);
   padding: 8px;
-  color: #fff;
+  color: var(--text);
   text-decoration: none;
   white-space: nowrap;
 }
@@ -274,8 +230,8 @@ body.vertical-marketplace .search {
     /* Not the brand clearance here. This bar wraps at this width, and
        padding-inline-start indents every wrapped row, not just the one that sits
        beside the mark: measured at 390px, all four rows started at x=176, leaving
-       the search 173px of a 390px screen and pushing #logoWrapper's right edge to
-       400. Nothing is cleared by it either — .brand-mark is fixed at y 11–55 and
+       the search 173px of a 390px screen and running the account cluster past
+       the viewport. Nothing is cleared by it either — .brand-mark is fixed at y 11–55 and
        #topHalf sits inside .app-shell, which is pinned at top=62, so the two
        cannot meet at any scroll offset. */
     padding-inline-start: 10px;

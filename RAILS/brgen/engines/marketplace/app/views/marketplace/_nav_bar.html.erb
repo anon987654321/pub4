@@ -9,13 +9,11 @@
 
 <div id="navBar">
   <div id="topHalf">
-    <div id="logoWrapper">
-      <%= link_to root_path, id: "logo", class: "marketplace-logo-link nav-hover", aria: { label: "Markedsplass" } do %>
-        <span class="nav-logo-mark"><%= render "marketplace/animated_logo" %></span>
-        <span class="nav-logo-word">markedsplass<span class="nav-logo-tld">.no</span></span>
-      <% end %>
-    </div>
-
+    <%# No second wordmark. The fixed .brgen-logo-mark already names the host on
+        every surface, and the shared nav carries "Markedsplass" as the way back
+        to this root — so a "markedsplass.no" logotype here put two wordmarks on
+        one page, each claiming to say where the reader is. The sections row
+        below keeps its own entry to the listings index. %>
     <%= link_to main_app.nearby_path, class: "nav-block nav-deliver nav-hover",
                 aria: { label: "#{t("storefront.deliver_to")} #{deliver_to}" } do %>
       <%= icon :nearby, size: 13 %> <%= deliver_to %>

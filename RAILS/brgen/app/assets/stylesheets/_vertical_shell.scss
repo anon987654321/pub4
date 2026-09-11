@@ -52,40 +52,19 @@ body[class*="vertical-"] main {
   padding-top: 0;
 }
 
-/* Full-bleed canvas surfaces: the product IS the viewport, so the shell chrome
-   is hidden. maps draws a map and playlist draws the radio tunnel; both are one
-   canvas that reaches every edge, and a nav bar over them covers the product
-   rather than framing it.
+/* No surface hides the shell any more. Every vertical wears the front page's
+   chrome — operator decision, and the whole of it.
 
-   dating and messenger left this list on the operator's decision that every
-   surface wears the front page's chrome and any other chrome may be discarded.
-   Both render browsable content — profiles, threads — and both were wearing a
-   second chrome to do it: nav hidden, wordmark at 200px, full-bleed splash. The
-   note in _vertical_dating_shell.scss said removing it was a product decision
-   for the architect rather than a cleanup, and the architect made it.
+   maps and playlist were the last two here, on the reasoning that the product
+   IS the viewport and a nav bar over a canvas covers it rather than framing
+   it. That reasoning described the canvas, not the navigation: both surfaces
+   still need a way back to the rest of the city, and both were reachable only
+   through the browser's own back button. The canvas still reaches every edge
+   and the chrome sits above it, which is what --z-brand and the tunnel's
+   z-index arithmetic were already built for.
 
-   marketplace, takeaway and tv were never in this list. */
-@each $surface in (maps, playlist) {
-  /* No tab bar on these, so nothing pinned to the bottom edge needs to clear
-     one — see --tab-bar-h in the shared shell. */
-  body.vertical-#{$surface} { --tab-bar-h: 0px; }
-
-  body.vertical-#{$surface} {
-    .sidebar,
-    .widgets,
-    .tab-bar,
-    .tab-bar-peel,
-    .tab-bar-coach,
-    .theme-toggle,
-    .widget-search,
-    .mobile-sheet,
-    .mobile-sheet-backdrop,
-    .nav_swiper,
-    .edge-grip {
-      display: none !important;
-    }
-  }
-}
+   dating and messenger left before them, and marketplace, takeaway and tv
+   were never here. */
 
 /* Playlist uses the same fixed city brand (.brgen-logo-mark) as every other
    surface. Kill the tunnel's duplicate radio-header wordmark so nothing can sit
@@ -116,7 +95,6 @@ body.vertical-playlist .dg.ac {
    thing playlist genuinely needs is to win the stacking contest with the
    tunnel canvas. */
 body.vertical-playlist .brgen-logo-mark {
-  display: inline-flex !important; /* scan: intentional — re-shows the mark the immersive shell hides with its own !important armor */
   z-index: calc(var(--z-toast, 1100) + 1);
   color: var(--color-text, var(--text));
 }

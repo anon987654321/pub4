@@ -108,13 +108,13 @@
 # the whole `<%# ... %>` span dropped that finding and one NO_INLINE_SCRIPT_BLOCK
 # of the same shape, and the detector still fires on markup that follows the
 # comment's close — proved on planted cases before the count was believed.
-findings: 276
+findings: 274
 by_rule:
   BARE_DIV_WRAPPER: 3
   BLANK_LINE_RUN: 1
   FROZEN_STRING_LITERAL: 1
   GUARD_CLAUSE: 27
-  I18N_COVERAGE: 18
+  I18N_COVERAGE: 16
   IMMUTABLE: 2
   MEANINGFUL_NAMES: 1
   MIGRATION_ADD_REFERENCE_NO_FK: 2
@@ -168,7 +168,7 @@ finding_members:
   - GUARD_CLAUSE RAILS/shared/app/services/shared/amazon_associates.rb:1
   - GUARD_CLAUSE RAILS/shared/app/services/shared/tradedoubler.rb:1
   - I18N_COVERAGE MASTER/web/app/views/chat/index.html.erb:17
-  - I18N_COVERAGE MASTER/web/app/views/chat/index.html.erb:360
+  - I18N_COVERAGE MASTER/web/app/views/chat/index.html.erb:348
   - I18N_COVERAGE RAILS/brgen/app/views/email_subscription_mailer/confirm.html.erb:2
   - I18N_COVERAGE RAILS/brgen/app/views/posts/new.html.erb:75
   - I18N_COVERAGE RAILS/brgen/engines/dating/app/views/dating/home/index.html.erb:31
@@ -177,14 +177,12 @@ finding_members:
   - I18N_COVERAGE RAILS/brgen/engines/dating/app/views/dating/profiles/show.html.erb:49
   - I18N_COVERAGE RAILS/brgen/engines/dating/app/views/dating/profiles/show.html.erb:63
   - I18N_COVERAGE RAILS/brgen/engines/dating/app/views/dating/profiles/show.html.erb:65
-  - I18N_COVERAGE RAILS/brgen/engines/marketplace/app/views/marketplace/_nav_bar.html.erb:15
   - I18N_COVERAGE RAILS/brgen/engines/playlist/app/views/playlist/hosted_tracks/index.html.erb:5
   - I18N_COVERAGE RAILS/brgen/engines/playlist/app/views/playlist/playlists/_player.html.erb:35
   - I18N_COVERAGE RAILS/brgen/engines/playlist/app/views/playlist/playlists/_radio_tunnel.html.erb:34
   - I18N_COVERAGE RAILS/brgen/engines/playlist/app/views/playlist/playlists/_radio_tunnel.html.erb:68
   - I18N_COVERAGE RAILS/brgen/engines/playlist/app/views/playlist/sets/show.html.erb:39
   - I18N_COVERAGE RAILS/brgen/engines/playlist/app/views/playlist/shared/_dilla_sketches.html.erb:13
-  - I18N_COVERAGE RAILS/brgen/engines/takeaway/app/views/takeaway/_nav_bar.html.erb:15
   - IMMUTABLE RAILS/gates/runner.rb:323
   - IMMUTABLE RAILS/gates/runner.rb:334
   - MEANINGFUL_NAMES RAILS/brgen/engines/marketplace/app/services/marketplace/listing_facets.rb:47
@@ -251,9 +249,9 @@ finding_members:
   - NO_COLUMN_ALIGN MASTER/web/public/swarm.html:186
   - NO_COLUMN_ALIGN MASTER/web/public/swarm.html:235
   - NO_COLUMN_ALIGN MASTER/web/public/swarm.html:77
-  - NO_INLINE_SCRIPT_BLOCK MASTER/web/app/views/chat/index.html.erb:159
+  - NO_INLINE_SCRIPT_BLOCK MASTER/web/app/views/chat/index.html.erb:158
   - NO_INLINE_SCRIPT_BLOCK MASTER/web/app/views/chat/index.html.erb:21
-  - NO_INLINE_SCRIPT_BLOCK MASTER/web/app/views/chat/index.html.erb:375
+  - NO_INLINE_SCRIPT_BLOCK MASTER/web/app/views/chat/index.html.erb:363
   - NO_INLINE_SCRIPT_BLOCK MASTER/web/app/views/chat/index.html.erb:47
   - NO_INLINE_SCRIPT_BLOCK MASTER/web/app/views/chat/index.html.erb:62
   - NO_INLINE_SCRIPT_BLOCK MASTER/web/app/views/chat/index.html.erb:67

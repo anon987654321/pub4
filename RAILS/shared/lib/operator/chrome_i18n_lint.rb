@@ -186,7 +186,15 @@ module Operator
       # → 7 (2026-09-10): the shared reaction bar's label was built from the
       # kind and the target's Ruby class name, so a Norwegian reader heard
       # "Angry post"; it is t("reactions.aria") over a translated kind now.
-      "aria_label" => 7,
+      # → 5 (2026-09-11): the storefront bars stopped carrying a second
+      # wordmark, one label each. marketplace and takeaway hand-wrote
+      # aria-label "Markedsplass" and "Takeaway" on a logotype link whose own
+      # text was hardcoded "markedsplass.no" and "takeaway.no" — Norwegian
+      # words and a Norwegian TLD on every one of roughly twenty city domains,
+      # so marketplace.lsangeles.com announced itself as Markedsplass. The
+      # fixed .brgen-logo-mark already names the host on every surface, so both
+      # labels went out with the marks rather than being translated.
+      "aria_label" => 5,
       # 169 (first run, 2026-08-11: amber 48, brgen engines 48, brgen host 44,
       # shared 28, bsdports 1) → 141. The hand count that opened this debt said 144
       # and was blind to shared/app/controllers, whose sites ship to all three apps
