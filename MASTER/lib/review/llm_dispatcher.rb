@@ -6,6 +6,7 @@ require "json"
 require "open3"
 require "timeout"
 require_relative "llm_dispatcher/react_loop"
+require_relative "llm_dispatcher/ollama_sender"
 require_relative "llm_dispatcher/ruby_llm_sender"
 require_relative "llm_dispatcher/tool_registry"
 
@@ -94,6 +95,7 @@ module Master
       end
 
       include ReactLoop
+      include OllamaSender
       include RubyLLMSender
       include ToolRegistry
 
@@ -247,6 +249,7 @@ module Master
         return send_agy_cli(selected_model.delete_prefix("agy:"), messages, sys:, stream:, &blk) if agy_model?(selected_model)
         return send_claude_cli(selected_model.delete_prefix("claude-cli:"), messages, sys:) if claude_cli_model?(selected_model)
         return send_web_chat(selected_model.delete_prefix("web-chat:"), messages, sys:) if web_chat_model?(selected_model)
+        return send_ollama(selected_model, messages, sys:, stream:, &blk) if ollama_model?(selected_model)
         if !tool_capable?(selected_model) && @tools.any?
           return react_tool_loop(selected_model, messages, sys:, stream:, image:, &blk)
         end

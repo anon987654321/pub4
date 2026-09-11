@@ -157,7 +157,27 @@ spine:
   # informed what it expected. A first-order transition table learned from the
   # bus and kept in the state file is the smallest thing that is actually a
   # prediction, and it survives a restart, which the clock could not.
-  lib_body_ceiling: 38175
+  #
+  # 38175 -> 38197 for the autofix trust boundary, and it closes the half of
+  # the safety tier that was never covered. AstFixer transformed and wrote in
+  # one call, so the only thing between a misfiring transform and the file was
+  # the transform own judgement, and TODO.md records the trial run where one
+  # write in three was damage. It proposes a candidate now and MechanicalAutofix
+  # is the governed writer, judging it with the same WriteGuard every
+  # constitutional write passes. The other twelve are the deleting-transform
+  # gate: Scanner#should_autofix? refused remove_immediate_dead_code on the
+  # rule-driven path while AstFixer ran it unasked on this one.
+  #
+  # 38197 -> 38298 for the local tier, 97 of it lib/review/llm_dispatcher/
+  # ollama_sender.rb. models.yml has declared ollama: ids since the tier was
+  # written and ModelRouter drops them when OLLAMA_BASE_URL is unset, but the
+  # dispatcher had no branch — provider_availability.rb says so in a comment —
+  # so an id that passed the gate fell through to RubyLLM, which handed
+  # ollama:llama3:latest to OpenRouter and got an error. Enabling the tier was
+  # the way to break it. Not through RubyLLM: that is a registry of paid
+  # endpoints with prices and capability flags, and a local daemon is one POST
+  # to /api/chat. Verified against a running ollama, both streaming and not.
+  lib_body_ceiling: 38298
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753
@@ -447,7 +467,8 @@ pub4_source_ceilings:
   # It folds into attention.rb only by putting two algorithms in the file
   # whose subject is one weight table: attention decides what matters, this
   # decides what was expected, and the second is the first one input.
-  MASTER: 1046
+  # 1046 -> 1047 for ollama_sender.rb, the file above.
+  MASTER: 1047
 
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:

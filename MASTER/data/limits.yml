@@ -1020,7 +1020,16 @@ loc_body_budgets:
   # rescue nil` — the shape SilentRescue cannot match by construction. Scoped
   # to assignments after measuring: 28 modifier rescues discard fleet-wide and
   # 15 are best-effort side effects nobody reads a value from.
-  lib/review: 10469
+  # 10469 -> 10653, and the number is three things rather than one, because a
+  # row that has been OVER for a while absorbs the next change silently.
+  # 56 of it was already standing on main when this was measured and is named
+  # here rather than swallowed. 97 is llm_dispatcher/ollama_sender.rb: the
+  # local tier was declared, gated and undispatched, so enabling it sent an
+  # ollama: id to OpenRouter. 31 is the autofix trust boundary — AstFixer
+  # proposes a candidate and MechanicalAutofix writes it only after WriteGuard
+  # has judged it, where the two used to be one call with nothing between a
+  # misfiring transform and the file.
+  lib/review: 10653
   lib/trace: 2035
   lib/voice: 3402
   # 1616 -> 1637 so a comment that spans lines counts as a comment on every
