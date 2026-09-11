@@ -9166,7 +9166,18 @@ the moment it happened, where the whole suite stayed green.
 If two things mean the same thing, keep the one with the test.
 
 26. **`swarm.html` / `diag.html`.** Public extra HTML, `lang="en"`, inline script, not the face. Gate behind auth or delete from production `public/`.
-27. **`codebase.js` not in `face_assets.yml`.** Topology still names it. Add to a deferred group or stop naming it.
+27. **`codebase.js` has no loader, which is worse than not being declared.**
+    222 lines in `web/public/`, named by `topology_registry.js` and
+    `data/topologies.yml` as the Repository Body topology's renderer — and
+    that `renderer:` field is read by nothing. It is descriptive metadata, not
+    a load instruction. Since the file is absent from `face_assets.yml`,
+    `MASTER_ASSET_PATHS` does not carry it and `face.js` cannot import it, so
+    the topology can be named and never drawn.
+
+    Declaring it ships 222 lines to every visitor for a topology nothing
+    switches to; deleting it removes a built visualisation. Either is a
+    product decision, and the measurement is here so it can be made rather
+    than guessed.
 28. **`offline_memory.js` is a scaffold.** Comment: no wiring into chat. Wire enqueue or delete.
 29. **Two importmap pins for one autogrow file — fixed 2026-09-11.** Both named
     the same vendor file and only `@stimulus-components/textarea-autogrow` was
@@ -9185,7 +9196,22 @@ If two things mean the same thing, keep the one with the test.
 39. **`hello: Hei` in brgen and amber `nb.yml`.** Grep callers; delete unused scaffold keys.
 40. **`rails-app.tmpl` disagrees with live `rc.d/brgen`.** Generate apps from the live script or delete the tmpl so OPERATOR cannot install the wrong one.
 41. **`jobs` rc.d without `set -a`.** Same env file as the app (bughunt 30). One export path.
-42. **`core-reclaim.sh` RSS via `ps | grep | head | awk`.** Wrong pid; banned tools. `ps -o rss= -p`.
+42. **`core-reclaim.sh` RSS — fixed 2026-09-11.** Both sites read
+    `ps -axo rss,args | grep "127.0.0.1:$PORT" | grep -v grep | head -1 |
+    awk '{print $1}'`: three banned tools, and fragile beyond that — it matched
+    an args substring across every process on the box, so the answer depended
+    on which line came first, and `grep -v grep` was there because the pipeline
+    matched itself. One `rss_of_port` helper now, built on `pgrep -n -f` and
+    `ps -o rss= -p`. Verified on vm23 (OpenBSD 7.8) before writing: both forms
+    returned 52020 KB for master, and an absent port returns empty so the
+    existing `[ -n "$rss_kb" ] || exit 0` guard still fires.
+
+    Five banned-tool uses remain in that file, all parsing `swapctl -l` and
+    `sysctl -n vm.loadavg`. Four are field extraction that `set --` can do.
+    The fifth is `awk '{print ($1 > $2) ? 1 : 0}'`, a float comparison, and
+    OpenBSD ksh has integer arithmetic only — so that one needs a tool or a
+    scaling trick, and replacing it carelessly changes when the box sheds
+    memory.
 43. **`STREAM_ITERATE_LOG` unsynchronized.** One flock or pid-scoped log.
 44. **`sine_stream.rb` mutates ENV at load.** Don’t require it from tests; or don’t set ENV in a library file.
 45. **`kaggle_session.rb` / `colab_session.rb` / `run_ai_toolkit.rb` ARGV at load.** Guard with `$PROGRAM_NAME`.

@@ -62,6 +62,23 @@ MIN_INTERVAL_S=3000
 mkdir -p /var/db 2>/dev/null || true
 date +%s > /var/db/core_reclaim_seen 2>/dev/null || true
 
+# Resident size of the process listening on a port, in KB.
+#
+# Was `ps -axo rss,args | grep "127.0.0.1:$PORT" | grep -v grep | head -1 |
+# awk '{print $1}'`. grep, head and awk are banned in committed scripts here
+# because this deploys to OpenBSD and the BSD variants break GNU idioms, and
+# the pipeline was fragile on its own terms: it matched an args substring
+# across every process on the box, so the answer depended on which line came
+# first, and `grep -v grep` existed because the pipeline matched itself.
+#
+# pgrep -n -f names one pid, the newest match. Verified on vm23 against the
+# old form: both returned 52020 KB for master.
+rss_of_port() {
+  _pid=$(pgrep -n -f "127.0.0.1:$1" 2>/dev/null) || return 0
+  [ -n "$_pid" ] || return 0
+  ps -o rss= -p "$_pid" 2>/dev/null | tr -d ' '
+}
+
 now=$(date +%s)
 if [ -r "$STATE" ]; then
   last=$(cat "$STATE" 2>/dev/null || echo 0)
@@ -70,7 +87,7 @@ if [ -r "$STATE" ]; then
   fi
 fi
 
-rss_kb=$(ps -axo rss,args | grep "127.0.0.1:$PORT" | grep -v grep | head -1 | awk '{print $1}')
+rss_kb=$(rss_of_port "$PORT")
 [ -n "$rss_kb" ] || exit 0
 rss_mb=$(( rss_kb / 1024 ))
 
@@ -114,7 +131,7 @@ echo "$now" > "$STATE"
 sleep 10
 code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 45 \
        -H "Host: brgen.no" "http://127.0.0.1:$PORT/" 2>/dev/null || echo 000)
-rss_after=$(ps -axo rss,args | grep "127.0.0.1:$PORT" | grep -v grep | head -1 | awk '{print $1}')
+rss_after=$(rss_of_port "$PORT")
 swap_after=$(swapctl -l | tail -1 | awk '{print $3}')
 echo "$(date '+%Y-%m-%dT%H:%M:%S') reclaimed $APP ${rss_mb}M -> $(( ${rss_after:-0} / 1024 ))M, \
 swap $(( swap_before / 2048 ))M -> $(( swap_after / 2048 ))M, first response $code"
