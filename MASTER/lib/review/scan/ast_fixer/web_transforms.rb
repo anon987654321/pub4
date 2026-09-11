@@ -152,11 +152,28 @@ module Master
           # The transform cannot absorb a call expression, so it declines rather
           # than converting half of one. Same guard covers a call mid-chain
           # (`"a" + f(x) + "b"` matches up to `f`, and post_match starts `(`).
+          #
+          # Indexing and member access are the same fault with a different
+          # bracket, and the one this guard missed until it reached a file.
+          # `sel + '[' + seen[sel] + ']'` matches through `seen`, so the chain
+          # closes before the subscript and the template is then indexed by it:
+          #
+          #   return seen[sel] === 1 ? sel : sel + '[' + seen[sel] + ']';
+          #     -> return seen[sel] === 1 ? sel : `${sel}[${seen}`[sel] + ']';
+          #
+          # Every duplicate selector key comes back "undefined]". `node --check`
+          # passes, because the result is valid JavaScript and a different
+          # program — the worst shape this transform has. It reached
+          # RAILS/gates/support/geometry_probe/walk.js on the trial run recorded
+          # in TODO.md and was reverted by hand.
+          TRAILING_ACCESS = ["(", "[", ".", "`"].freeze
+          private_constant :TRAILING_ACCESS
+
           def convert_string_concat(src)
             changed = false
             out = src.gsub(CONCAT_CHAIN) do |match|
               next match if comment_context?(Regexp.last_match)
-              next match if Regexp.last_match.post_match.start_with?("(")
+              next match if trailing_access?(Regexp.last_match)
 
               literal = template_literal_for(match)
               next match unless literal
@@ -166,6 +183,14 @@ module Master
             end
             @transforms << :template_literals if changed
             out
+          end
+
+          # A postfix the chain pattern cannot see past: a call, a subscript, a
+          # further member, or a tag. Each one binds tighter than `+`, so the
+          # match ends in the middle of an expression and converting it moves
+          # the operator.
+          def trailing_access?(md)
+            TRAILING_ACCESS.include?(md.post_match[0])
           end
 
           def template_literal_for(chain)

@@ -25,7 +25,7 @@ module Master
         JS_EXTS = %w[.js .ts .jsx .tsx].freeze
         STYLE_EXTS = %w[.css .scss].freeze
 
-        Result = Struct.new(:path, :changed, :transforms, keyword_init: true)
+        Result = Struct.new(:path, :changed, :transforms, :content, keyword_init: true)
         Strategy = Struct.new(:predicate, :transforms, keyword_init: true)
         STRATEGIES = [
           Strategy.new(predicate: :ruby?, transforms: %i[add_frozen_header fix_bare_rescue freeze_mutable_constants remove_immediate_dead_code add_trailing_commas]),
@@ -53,14 +53,45 @@ module Master
         include WebTransforms
         include DeadCodeAndCommas
 
-        def self.fix(path, source, event_bus: nil)
-          new(path, source, event_bus:).apply
+        # A transform that takes code out is a different risk from one that puts
+        # an attribute in, and this is the one place that knows which is which.
+        # Scanner#should_autofix? has gated the rule-driven path on this list
+        # since the tier was written; nothing gated this one, so any file with
+        # any autofixable finding had every transform for its language run over
+        # it — deletions included — on an unattended `bin/operator gate` across
+        # four trees. The tier was real and covered one of the two ways in.
+        DELETING_TRANSFORMS = %w[remove_immediate_dead_code].freeze
+
+        # What a person asking looks like from here, and the same signal
+        # Fix::RuleLoop reads: the background convergence loop and the unattended
+        # ladder both leave MASTER_AUTOFIX off.
+        def self.deletions_allowed? = ENV["MASTER_AUTOFIX"] == "1"
+
+        def self.fix(path, source, event_bus: nil, allow_deletions: deletions_allowed?)
+          new(path, source, event_bus:, allow_deletions:).apply
         end
 
-        def initialize(path, source, event_bus: nil)
+        # A candidate without touching the filesystem, so a caller can judge the
+        # content before it becomes the file. MechanicalAutofix is the governed
+        # writer on the /scan path; `fix` above stays transform-and-write for the
+        # callers that have no gate to run.
+        def self.propose(path, source, event_bus: nil, allow_deletions: deletions_allowed?)
+          new(path, source, event_bus:, allow_deletions:).propose
+        end
+
+        # The other half of propose, for a caller that has judged the candidate.
+        # Same atomic rename and mode-preserving write `fix` performs, and the
+        # same event, so a governed write is indistinguishable downstream from
+        # the one that used to happen unasked.
+        def self.write(path, content, event_bus: nil, transforms: [])
+          new(path, content, event_bus:).write!(content, transforms:)
+        end
+
+        def initialize(path, source, event_bus: nil, allow_deletions: self.class.deletions_allowed?)
           @path = path
           @source = source
           @bus = event_bus
+          @allow_deletions = allow_deletions
           @transforms = []
         end
 
@@ -90,18 +121,30 @@ module Master
         GENERATED_LINE_LENGTH = 5000
 
         def apply
-          return Result.new(path: @path, changed: false, transforms: []) if verbatim_mirror?
-          return Result.new(path: @path, changed: false, transforms: []) if law_file?
-          return Result.new(path: @path, changed: false, transforms: []) if generated_bundle?
+          candidate = propose
+          write!(candidate.content, transforms: @transforms) if candidate.changed
+          candidate
+        end
 
-          out = @source
-          out = apply_strategies(out)
-          changed = out != @source
-          Result.new(path: @path, changed:, transforms: @transforms)
-            .tap { publish_and_write(out) if changed }
+        # The atomic, mode-preserving write and the event that says a file
+        # changed. Public because propose and this are the two halves a governed
+        # caller uses: transform, judge the candidate, then write it.
+        def write!(content, transforms: [])
+          write_back(content)
+          @bus&.publish("ast_fixer:transform", path: @path, transforms:)
+          content
+        end
+
+        def propose
+          return unchanged if verbatim_mirror? || law_file? || generated_bundle?
+
+          out = apply_strategies(@source)
+          Result.new(path: @path, changed: out != @source, transforms: @transforms, content: out)
         end
 
         private
+
+        def unchanged = Result.new(path: @path, changed: false, transforms: [], content: @source)
 
         def apply_strategies(src)
           out = apply_transforms(src, UNIVERSAL_TRANSFORMS.first(2))
@@ -137,6 +180,8 @@ module Master
         def apply_transforms(src, transforms)
           current = src
           transforms.each do |transform|
+            next if !@allow_deletions && DELETING_TRANSFORMS.include?(transform.to_s)
+
             transform_labels = @transforms.dup
             candidate = send(transform, current)
 
@@ -260,11 +305,6 @@ module Master
 
           @transforms << :final_newline
           src + "\n"
-        end
-
-        def publish_and_write(out)
-          write_back(out)
-          @bus&.publish("ast_fixer:transform", path: @path, transforms: @transforms)
         end
 
         def ruby? = File.extname(@path).downcase == ".rb"

@@ -2,6 +2,7 @@
 
 require "shellwords"
 require_relative "ast_fixer"
+require_relative "write_guard"
 
 module Master
   module Review
@@ -9,6 +10,15 @@ module Master
       # Deterministic AstFixer pass shared by /scan and /self.
       # Only runs on files that have findings whose rule has auto_fix=true.
       # Idempotent; safe to re-run. Opt out with --dry-run, --no-autofix, or MASTER_SCAN_AUTOFIX=0.
+      #
+      # This is the governed writer, and that word is the change. AstFixer used
+      # to transform and write in one call, so the only thing standing between a
+      # misfiring transform and the file was the transform's own judgement — and
+      # TODO.md records the trial run where one in three writes was damage, one
+      # of them a template-literal rewrite that `node --check` waved through.
+      # AstFixer proposes a candidate now; the same WriteGuard that judges every
+      # constitutional write judges this one, and only what a fix *introduces*
+      # can refuse it, so a file already carrying debt stays repairable.
       class MechanicalAutofix
         Applied = Struct.new(:path, :transforms, keyword_init: true)
 
@@ -16,10 +26,11 @@ module Master
           env.fetch("MASTER_SCAN_AUTOFIX", "1") != "0"
         end
 
-        def initialize(scanner:, root:, event_bus: nil)
+        def initialize(scanner:, root:, event_bus: nil, write_guard: nil)
           @scanner = scanner
           @root = root.to_s
           @bus = event_bus
+          @write_guard = write_guard
         end
 
         def apply(pairs)
@@ -36,14 +47,22 @@ module Master
           # at commit time. Untracked-new files are fine to fix (nothing to clobber).
           return if uncommitted_modification?(path)
 
-          result = AstFixer.fix(path, File.read(path, encoding: "UTF-8"), event_bus: @bus)
-          return unless result&.changed
+          candidate = AstFixer.propose(path, File.read(path, encoding: "UTF-8"), event_bus: @bus)
+          return unless candidate&.changed
 
           rel = relative_path(path)
-          applied = Applied.new(path: rel, transforms: result.transforms)
-          @bus&.publish("scan_autofix:applied", path: rel, transforms: result.transforms)
+          verdict = write_guard.verdict(path:, content: candidate.content)
+          if verdict.blocked?
+            @bus&.publish("scan_autofix:refused", path: rel, reason: verdict.reason)
+            return
+          end
+
+          transforms = candidate.transforms
+          AstFixer.write(path, candidate.content, event_bus: @bus, transforms:)
+          applied = Applied.new(path: rel, transforms:)
+          @bus&.publish("scan_autofix:applied", path: rel, transforms:)
           # Back-compat event name used by SelfScan consumers/tests
-          @bus&.publish("self_autofix:applied", path: rel, transforms: result.transforms)
+          @bus&.publish("self_autofix:applied", path: rel, transforms:)
           applied
         end
 
@@ -53,6 +72,12 @@ module Master
           out.to_s.lines.any? { |line| line =~ /\A(\sM|MM|AM|RM)/ }
         rescue StandardError
           false
+        end
+
+        # Built once and lazily: WriteGuard.default constructs a scanner over the
+        # whole tree, which a dry run or a disabled pass must not pay for.
+        def write_guard
+          @write_guard ||= WriteGuard.default
         end
 
         def relative_path(path)

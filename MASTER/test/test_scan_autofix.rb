@@ -43,6 +43,56 @@ class TestScanAutofix < Minitest::Test
     }
   end
 
+  # AstFixer used to transform and write in one call, so the only thing between a
+  # misfiring transform and the file was the transform's own judgement — and the
+  # trial run TODO.md records made three writes, two of them damage, one of which
+  # `node --check` waved through. The candidate is judged before it becomes the
+  # file now, by the same guard every constitutional write passes.
+  class RefusingGuard
+    def verdict(path:, content:)
+      Master::Review::Scan::WriteGuard::Verdict.new(
+        introduced: [{ rule: :NO_GOD_CLASS, line: 1, message: "would introduce #{path}/#{content.size}", severity: :error }],
+      )
+    end
+  end
+
+  def test_a_refused_candidate_never_reaches_the_file
+    Dir.mktmpdir do |root|
+      path = File.join(root, "example.rb")
+      original = "class Example\nend\n"
+      File.write(path, original)
+      autofix = Master::Review::Scan::MechanicalAutofix.new(
+        scanner: FakeScanner.new(findings_by_pass: [], rules: [FakeRule.new("FROZEN_LITERAL", true)]),
+        root:,
+        write_guard: RefusingGuard.new,
+      )
+
+      applied = autofix.apply([[path, Master::Result.ok([finding("FROZEN_LITERAL")])]])
+
+      assert_empty applied
+      assert_equal original, File.read(path), "a blocked candidate was written anyway"
+    end
+  end
+
+  # And only what a fix introduces can refuse it, or the first repair of a file
+  # carrying debt is the one thing the guard stops.
+  def test_a_clean_candidate_still_lands
+    Dir.mktmpdir do |root|
+      path = File.join(root, "example.rb")
+      File.write(path, "class Example\nend\n")
+      autofix = Master::Review::Scan::MechanicalAutofix.new(
+        scanner: FakeScanner.new(findings_by_pass: [], rules: [FakeRule.new("FROZEN_LITERAL", true)]),
+        root:,
+      )
+
+      applied = autofix.apply([[path, Master::Result.ok([finding("FROZEN_LITERAL")])]])
+
+      assert_equal 1, applied.size
+      # source-assertion: ok — reading back what the fixer wrote is the only way to see it landed
+      assert_includes File.read(path), "# frozen_string_literal: true"
+    end
+  end
+
   def test_mechanical_autofix_enabled_by_default
     assert Master::Review::Scan::MechanicalAutofix.enabled?(env: {})
     assert Master::Review::Scan::MechanicalAutofix.enabled?(env: { "MASTER_SCAN_AUTOFIX" => "1" })

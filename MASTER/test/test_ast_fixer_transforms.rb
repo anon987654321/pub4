@@ -126,6 +126,38 @@ class TestAstFixerTransforms < Minitest::Test
                  "produced a template literal called as a function")
   end
 
+  # The same fault with a different bracket, and the one the call guard missed.
+  # `sel + '[' + seen[sel] + ']'` matches through `seen`, so the chain closes
+  # before the subscript and the new template is then indexed by it:
+  #
+  #   sel + '[' + seen[sel] + ']'  ->  `${sel}[${seen}`[sel] + ']'
+  #
+  # Every duplicate key comes back "undefined]", and `node --check` passes. This
+  # was written into RAILS/gates/support/geometry_probe/walk.js on the trial run
+  # recorded in TODO.md and reverted by hand. `'a'.repeat(3)` is the member-access
+  # half: converting it moves the call onto the whole template.
+  def test_string_concat_declines_a_chain_followed_by_a_subscript_or_member
+    result = fix("walk.js", <<~JS)
+      const key = seen[sel] === 1 ? sel : sel + '[' + seen[sel] + ']';
+      const pad = prefix + 'a'.repeat(3);
+    JS
+
+    assert_includes result[:content], "sel + '[' + seen[sel] + ']';"
+    assert_includes result[:content], "prefix + 'a'.repeat(3);"
+    refute_includes result[:transforms], :template_literals
+    refute_includes result[:content], "`${sel}[${seen}`"
+  end
+
+  # And the guard declines only what it cannot see past: a chain with nothing
+  # bound tighter than `+` after it still converts, dotted paths included.
+  def test_string_concat_still_converts_a_chain_with_nothing_after_it
+    result = fix("path.js", "const p = base + '/' + id;\nconst m = a + '-' + b.c;\n")
+
+    assert_includes result[:content], "const p = `${base}/${id}`;"
+    assert_includes result[:content], "const m = `${a}-${b.c}`;"
+    assert_includes result[:transforms], :template_literals
+  end
+
   # Prose about code contains code. A JSDoc continuation line reading
   # `drain queue on 'online' + SW 'sync'` is a concat chain as far as
   # CONCAT_CHAIN can tell, and converting it rewrote documentation into a
@@ -289,22 +321,36 @@ class TestAstFixerTransforms < Minitest::Test
     refute_includes result[:transforms], :dead_code
   end
 
-  def test_dead_code_and_trailing_commas
-    result = fix("sample.rb", <<~RUBY)
-      ITEMS = [
-        "one"
-      ]
+  # An addition is visible in the diff it makes; a deletion is invisible to
+  # anyone who does not already know what stood there. Scanner#should_autofix?
+  # has said so since the safety tier was written, and AstFixer ran the deleting
+  # transform anyway — the tier covered the rule-driven path and MechanicalAutofix
+  # went the other way, so an unattended `bin/operator gate` deleted code no rule
+  # had asked it to. MASTER_AUTOFIX=1 is what a person asking looks like, the same
+  # signal Fix::RuleLoop reads.
+  BOTH_HALVES = <<~RUBY
+    ITEMS = [
+      "one"
+    ]
 
-      def call
-        return :done
-        log(:never)
-      end
-    RUBY
+    def call
+      return :done
+      log(:never)
+    end
+  RUBY
 
-    assert_includes result[:content], %("one",)
-    refute_includes result[:content], "log(:never)"
-    assert_includes result[:transforms], :trailing_commas
-    assert_includes result[:transforms], :dead_code
+  def test_a_deletion_waits_for_a_person_and_an_addition_does_not
+    unasked = fix("sample.rb", BOTH_HALVES)
+
+    assert_includes unasked[:content], %("one",), "the addition lands unasked"
+    assert_includes unasked[:content], "log(:never)", "the deletion must wait"
+    assert_includes unasked[:transforms], :trailing_commas
+    refute_includes unasked[:transforms], :dead_code
+
+    asked = fix("sample.rb", BOTH_HALVES, allow_deletions: true)
+
+    refute_includes asked[:content], "log(:never)"
+    assert_includes asked[:transforms], :dead_code
   end
 
   # Regression: remove_immediate_dead_code and add_trailing_commas are
@@ -558,12 +604,12 @@ class TestAstFixerTransforms < Minitest::Test
 
   private
 
-  def fix(filename, content)
+  def fix(filename, content, allow_deletions: false)
     Dir.mktmpdir do |dir|
       path = File.join(dir, filename)
       FileUtils.mkdir_p(File.dirname(path))
       File.write(path, content)
-      result = Master::Review::Scan::AstFixer.fix(path, content)
+      result = Master::Review::Scan::AstFixer.fix(path, content, allow_deletions:)
       { content: File.read(path), transforms: result.transforms }
     end
   end
