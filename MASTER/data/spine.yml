@@ -761,7 +761,19 @@ pub4_source_ceilings:
 # three had it wrong on 2026-09-11, which is what a fix applied to one file of
 # a family looks like a month later. It folds into no existing OPENBSD test;
 # those are about the box, and this is about the shape of a script.
-  OPENBSD: 111
+# 111 -> 112 for test/test_guard_thresholds_documented.rb. OPENBSD/CLAUDE.md
+# said "thresholds are now 8/14" for a month after resource_guard.sh moved
+# MEM_RESTORE from 14 to 10 on 2026-08-14 — a recalibration the script records
+# in full, with the 1550-tick dataset behind it. Anyone reading the doc to
+# judge whether the guard was tuned right was reading a number the running code
+# had abandoned, and this is the second time that same threshold drifted.
+#
+# The test allows the doc to name a threshold and refuses to let it name a
+# different one from the script, skipping sentences that carry a date because
+# those recount what a value WAS. It folds into no existing OPENBSD test:
+# test_config_drift_gate compares the box against the repo, and this compares
+# the repo's prose against the repo's code.
+  OPENBSD: 112
   # 220 -> 222 for lora/seed_media.yml and lora/_toolkit/install_seed_media.rb,
   # the prompt set for every seeded photograph and the script that grades and
   # files what comes back from it. Two files, both named, neither foldable:

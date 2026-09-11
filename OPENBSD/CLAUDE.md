@@ -147,7 +147,17 @@ Measured on 2026-07-29 over 916 ticks: shedding fired on 48% of ticks while the
 restore gate opened on 19%, and restore only releases one service per tick — so
 amber and bsdports had been down for days, not oscillating. `MEM_RESTORE` was
 20% against a median availability of 13%, i.e. the window sat outside the box's
-operating range; thresholds are now 8/14 and `LOAD_RESTORE` 2.0.
+operating range, so that pass set 8/14 and `LOAD_RESTORE` 2.0.
+
+It has been recalibrated once more since, and this paragraph said 8/14 for a
+month after it stopped being true. `MEM_RESTORE` is **10**, set on 2026-08-14
+from 1550 ticks: availability had moved from p50 13 to p50 9, so 14 had drifted
+back above p75 — the same condition the 2026-07-29 pass existed to fix, arriving
+a second time from the other direction. `MEM_WARN` is 8 and `LOAD_RESTORE` 2.0.
+
+Read the numbers from `resource_guard.sh`, which carries each recalibration with
+the dataset that justified it. A threshold copied into prose is a threshold that
+goes stale the next time the box changes.
 
 The check that distinguishes the two cases is
 `/var/log/resource_guard_history.log`, which records `load=`, `mem_avail=` and
