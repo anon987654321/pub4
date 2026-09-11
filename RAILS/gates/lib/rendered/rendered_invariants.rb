@@ -94,8 +94,13 @@ module Deploy
     end
 
     def run
+      # inconclusive!, not skipped_live: a missing browser is a precondition
+      # this machine does not meet, and only unchecked reasons reach the
+      # runner's "measured nothing, and why" list. Filed as a live skip, this
+      # gate went inconclusive with an empty reason list and the runner printed
+      # "exit 3, no reason given (subprocess gate)" for an in-process gate.
       unless CdpSession.available?
-        @result.skipped_live("rendered_invariants: no Chrome — nothing measured")
+        @result.inconclusive!("no Chrome/Chromium — theme, chat corner and top band not measured")
         return @result
       end
 
@@ -105,7 +110,7 @@ module Deploy
       end
       @result
     rescue CdpSession::Unavailable => e
-      @result.skipped_live("rendered_invariants: #{e.message}")
+      @result.inconclusive!("rendered_invariants: #{e.message}")
       @result
     end
 

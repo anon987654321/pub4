@@ -34,18 +34,25 @@ module Deploy
       "#{ENGINE}/config/routes.rb" => /(?=.*checkout)(?=.*webhooks)/m,
     }.freeze
 
-    def self.run
-      new.run
+    # rails_root: is what makes this gate testable. A contract table is only
+    # enforcement if a tree that violates it fails, and the only way to show
+    # that is to run the gate over a tree built to violate it.
+    def self.run(rails_root: RAILS)
+      new(rails_root: rails_root).run
+    end
+
+    def initialize(rails_root: RAILS)
+      @rails_root = rails_root
     end
 
     def run
       @result = GateResult.new
-      SourceContract.require_patterns(@result, root: RAILS, required: REQUIRED, gate: "payment_honesty")
+      SourceContract.require_patterns(@result, root: @rails_root, required: REQUIRED, gate: "payment_honesty")
 
       # Stripe/Vipps must raise NotConfigured when keys blank — source contract
-      stripe = File.read(File.join(RAILS, "brgen/app/services/marketplace/payments/stripe_checkout.rb"))
+      stripe = read("brgen/app/services/marketplace/payments/stripe_checkout.rb")
       @result.fail("payment_honesty: StripeCheckout must raise NotConfigured") unless stripe.match?(/raise NotConfigured/)
-      vipps = File.read(File.join(RAILS, "brgen/app/services/marketplace/payments/vipps_checkout.rb"))
+      vipps = read("brgen/app/services/marketplace/payments/vipps_checkout.rb")
       @result.fail("payment_honesty: VippsCheckout must raise NotConfigured") unless vipps.match?(/raise NotConfigured/)
       # The source contract above is the bulk of this gate and does not need a
       # booted app; only the cart probe does. Counting it stops a closed brgen port
@@ -57,6 +64,15 @@ module Deploy
     end
 
     private
+
+    # A deleted payment service is already reported by the REQUIRED table, so
+    # reading it back must not raise on top of that: an exception here reaches
+    # the runner as :errored, which blocks nothing and hides a finding the gate
+    # had already made.
+    def read(relative)
+      path = File.join(@rails_root, relative)
+      File.file?(path) ? File.read(path) : ""
+    end
 
     def live_cart_probe
       inv = Inventory.new(root: ROOT).apps.find { |a| a.name == "brgen" }

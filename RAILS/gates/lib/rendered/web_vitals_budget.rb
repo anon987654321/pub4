@@ -62,9 +62,13 @@ module Deploy
       end
 
       source = File.read(HOTWIRE)
+      # Deliberately not counted with checked!. This half is the blindness alarm,
+      # not the measurement: counting it let the gate print "LCP and CLS within
+      # budget" on a machine with no Chrome, having read three strings out of a
+      # JavaScript file and measured neither metric. A failure here still blocks,
+      # because failures outrank the check count.
       { "largest-contentful-paint" => "LCP", "layout-shift" => "CLS", "first-input" => "INP" }
         .each do |entry_type, metric|
-          @result.checked!
           next if source.include?(entry_type)
 
           @result.fail("web_vitals_budget: hotwire.js no longer observes #{entry_type} — #{metric} " \

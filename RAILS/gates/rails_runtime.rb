@@ -116,5 +116,15 @@ end
 apps = YAML.safe_load(File.read(APPS_YML)).fetch("apps")
 runtime = ARGV.include?("--runtime")
 
+# gates.yml invokes this gate with no arguments, so under the runner the runtime
+# half never runs and "rails_runtime" is the static production gate under a second
+# name. Say which half ran. A clean exit here otherwise reads as three apps booted,
+# their bundles checked, their routes proved against real controllers and their
+# bin/ci green — none of which this run touched.
+unless runtime
+  warn "rails_runtime: static half only — pass --runtime to boot each app " \
+       "(bundle check, db:prepare, dead routes, bin/ci)"
+end
+
 exit 1 unless static_gate!
 exit(runtime && !runtime_gate!(apps) ? 1 : 0)

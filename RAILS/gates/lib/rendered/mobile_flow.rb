@@ -121,7 +121,11 @@ module Deploy
           @result.fail("mobile_flow: BrgenVerticalSurfaces missing subapp #{sub}")
         end
       end
-      @result.checked!(1)
+      # Deliberately not counted as a check. It is a list read from source, and
+      # counting it let the gate report PASSED next to its own "Chrome navigated
+      # 0/N surfaces" line — one satisfied check standing in for the phone
+      # viewport this gate exists to measure. A failure above still blocks:
+      # failures outrank the check count.
 
       measured = 0
       GeometryProbe.with_browser(warm: live) do |cdp|

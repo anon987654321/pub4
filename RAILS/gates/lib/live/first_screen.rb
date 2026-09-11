@@ -40,7 +40,6 @@ module Deploy
     # sheet that had quietly dropped to 30px would pass — so TAP_MIN_PX re-reads
     # what the token resolves to and #assert_token_floor fails if it is not 44.
     TAP_MIN = 'min-height:\s*(?:44px|var\(--tap-min\))'
-    TOKENS = File.join(RAILS, "shared/app/assets/stylesheets/_dialect_tokens.scss")
 
     # Map surface labels (from SURFACES / verticals) → schema ids.
     # live_first_screen builds label as "app/label" (e.g. brgen/vertical_marketplace).
@@ -103,8 +102,16 @@ SCHEMA_FOR_LABEL = {
       end
     ).freeze
 
-    def self.run
-      new.run
+    # rails_root: is what makes the source half testable. The touch floor is a
+    # number read out of one stylesheet, and a floor nothing can be shown to
+    # fail against is a floor on paper.
+    def self.run(rails_root: RAILS)
+      new(rails_root: rails_root).run
+    end
+
+    def initialize(rails_root: RAILS)
+      @rails_root = rails_root
+      @tokens = File.join(rails_root, "shared/app/assets/stylesheets/_dialect_tokens.scss")
     end
 
     def run
@@ -134,13 +141,13 @@ SCHEMA_FOR_LABEL = {
       return if @token_floor_checked
 
       @token_floor_checked = true
-      unless File.file?(TOKENS)
-        @result.fail("first_screen: missing #{TOKENS} — --tap-min is unreadable, so the touch floor is unverified")
+      unless File.file?(@tokens)
+        @result.fail("first_screen: missing #{@tokens} — --tap-min is unreadable, so the touch floor is unverified")
         return
       end
 
       @result.checked!
-      declared = File.read(TOKENS)[/--tap-min:\s*([0-9]+)px/, 1]
+      declared = File.read(@tokens)[/--tap-min:\s*([0-9]+)px/, 1]
       if declared.nil?
         @result.fail("first_screen: _dialect_tokens.scss declares no --tap-min — sheets spell the floor with a token that does not exist")
       elsif declared.to_i < 44
@@ -152,7 +159,7 @@ SCHEMA_FOR_LABEL = {
       assert_token_floor
       Array(surface[:css_touch]).each do |rel, needle|
         @result.checked!
-        path = File.join(RAILS, rel)
+        path = File.join(@rails_root, rel)
         unless File.file?(path)
           @result.fail("first_screen: missing #{rel}")
           next

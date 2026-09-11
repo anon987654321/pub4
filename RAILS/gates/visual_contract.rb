@@ -310,10 +310,27 @@ module VisualContractGate
   end
 end
 
+# The tests require this file to exercise grade, identical_captures and
+# validate! without a browser. Only the script run navigates anything — and
+# only the script run may reach the `exit` below, which under `require` would
+# take the requiring process down with it.
+return unless $PROGRAM_NAME == __FILE__
+
 rows = VisualContractGate.validate!
 unless ARGV.delete("--capture")
+  # Exit 3, not 0. Without --capture this run reads the matrix declaration and
+  # navigates nothing: no screenshot, no status, no drift. It reported that as a
+  # clean pass under a runner line reading "Chrome present — 1 browser-backed
+  # gate(s) could measure", which is the false green this gate's own
+  # identical_captures check exists to catch one level down.
+  #
+  # validate! above is still a real check and still exits 1 when the matrix is
+  # malformed; 3 is the runner's code for "I could not measure", which never
+  # blocks by default and is counted apart from the passes.
   puts "ok: #{rows.length} seeded visual contract cells across #{VisualContractGate::ROUTES.length} apps"
-  return
+  warn "visual_contract: matrix shape only — no state was captured (VISUAL_CAPTURE=1 with a booted app captures)"
+  warn "visual_contract: nothing measured, so nothing is claimed"
+  exit 3
 end
 
 app_i = ARGV.index("--app")

@@ -60,8 +60,15 @@ module Deploy
       },
     }.freeze
 
-    def self.run
-      new.run
+    # rails_root: is what makes the source half testable. Every check here is a
+    # marker read out of a view, and a marker list nothing can be shown to fail
+    # against is the decorative _tab_bar.html.erb entry all over again.
+    def self.run(rails_root: RAILS_ROOT)
+      new(rails_root: rails_root).run
+    end
+
+    def initialize(rails_root: RAILS_ROOT)
+      @rails_root = rails_root
     end
 
     def run
@@ -80,7 +87,7 @@ module Deploy
 # Which file a piece of chrome sits in is an organisation decision; this
 # gate is about whether the chrome exists.
 def layout_with_partials(app)
-  root = File.join(RAILS_ROOT, app.name)
+  root = File.join(@rails_root, app.name)
   layout = File.read(File.join(root, "app/views/layouts/application.html.erb"))
   layout + Dir.glob(File.join(root, "app/views/{layouts,shared}/_*.erb"))
               .map { |partial| File.read(partial) }.join
@@ -89,7 +96,7 @@ rescue StandardError
 end
 
     def read_app_file(app, relative)
-      path = File.join(RAILS_ROOT, app, relative)
+      path = File.join(@rails_root, app, relative)
       File.file?(path) ? File.read(path) : ""
     end
 
@@ -127,7 +134,7 @@ end
         found = frontier.join("\n").scan(RENDER_CALL).flatten.uniq.filter_map do |name|
           dir, base = File.split(name)
           rel = "app/views/#{dir}/_#{base}.html.erb"
-          rel if File.file?(File.join(RAILS_ROOT, app, rel))
+          rel if File.file?(File.join(@rails_root, app, rel))
         end
         fresh = found - seen
         break if fresh.empty?
@@ -141,7 +148,7 @@ end
     # A listed path that does not exist reads as an empty file, which is a check
     # that cannot fail. Say so instead.
     def verify_listed_partials!(result, app, paths)
-      paths.reject { |rel| File.file?(File.join(RAILS_ROOT, app, rel)) }.each do |rel|
+      paths.reject { |rel| File.file?(File.join(@rails_root, app, rel)) }.each do |rel|
         result.fail("#{app}: nav_partials names #{rel}, which does not exist")
       end
     end
