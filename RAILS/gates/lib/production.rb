@@ -2,15 +2,18 @@
 
 require "open3"
 require "yaml"
-require_relative "../../../../OPENBSD/lib/gate_result"
-require_relative "../../support/bounded_command"
-require_relative "../source/apps_yml"
-require_relative "master_web_assets"
-require_relative "master_tts"
+require_relative "../../../OPENBSD/lib/gate_result"
+require_relative "../support/bounded_command"
+require_relative "../lib/source/apps_yml"
+# MASTER/gates, because these two measure MASTER rather than a Rails app. They
+# were siblings here until 2026-09-11 and the composite still folds their
+# verdicts into the production gate, which is why the path reaches across.
+require_relative "../../../MASTER/gates/master_web_assets"
+require_relative "../../../MASTER/gates/master_tts"
 
 module Deploy
   class ProductionGate
-    ROOT = File.expand_path("../../../..", __dir__)
+    ROOT = File.expand_path("../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
     APPS_YML = File.join(RAILS_ROOT, "apps.yml")
     SHARED_DEPLOY = File.join(RAILS_ROOT, "_deploy.sh")

@@ -4,11 +4,11 @@ if ENV["COVERAGE"] == "1"
   require "simplecov"
   SimpleCov.start do
     add_filter "/test/"
-    # The groups name directories that exist. These read lib/master/* until
-    # 2026-09-11 — a path shape from before the lib rename (now->cli,
-) +
-      %(    # judge->review), so three panes of the report had been empty for as long
-    # as anyone had run it.
+    # The groups name directories that exist. They read lib/master/scan,
+    # lib/master/stages and lib/master/council, a path shape from before the lib
+    # rename, so three panes of this report were empty for as long as anyone ran
+    # it with COVERAGE=1. Groups shape the report rather than the threshold, so
+    # the 85% minimum was never wrong; the reading of it was.
     add_group "Scan", "lib/review/scan"
     add_group "Stages", "lib/cli/stages"
     add_group "Council", "lib/review/council"

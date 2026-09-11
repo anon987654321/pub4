@@ -31,6 +31,12 @@ scan_coverage:
   # each Law.define does trip the security sweep, which is a different gate and
   # is handled where it belongs, in tools/security_sweep.rb.
   - law
+  # Three gates that measure MASTER — its face, its assets, its own scan chain.
+  # They moved here from RAILS/gates/lib/host on 2026-09-11, where a gate about
+  # nsd sat beside a gate about a Rails port, and arrived classified as neither
+  # scanned nor exempt: the state this file exists to make impossible. Scanned,
+  # because a gate is code and the code that judges the tree is subject to it.
+  - gates
   # Not scanned, and why. A reason is required: the lint fails on a blank one,
   # because "exempt: true" records the exemption without recording the argument,
   # and the argument is the part that rots.

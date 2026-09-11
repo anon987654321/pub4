@@ -125,7 +125,12 @@ module Operator
         Stage.new(name: "suites", purpose: suite_purpose(trees),
                   mutates: false, run: -> { suites(trees) }),
         Stage.new(name: "ratchets", purpose: "every recorded ceiling, current beside it", mutates: false,
-                  run: -> { capture(RUBY, File.join(MASTER, "bin", "operator"), "measure") }),
+                  # --deep, because this is the pass that can afford it. Fast mode
+                  # leaves eleven rows unreadable — the CSS budgets that need a
+                  # browser, selftest, selfcheck, principle_trace — and a ladder
+                  # running for forty minutes that skips them to save two has
+                  # measured the cheap half of its own register.
+                  run: -> { capture(RUBY, File.join(MASTER, "bin", "operator"), "measure", "--deep") }),
         Stage.new(name: "sprawl", purpose: "lone dirs, stutter, vague names, duplicate files",
                   mutates: !scan_only, run: -> { sprawl(scan_only:) }),
         Stage.new(name: "council", purpose: "/critique and /review, then the panel's picks back through the runtime",

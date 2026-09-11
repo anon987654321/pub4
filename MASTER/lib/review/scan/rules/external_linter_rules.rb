@@ -11,14 +11,16 @@ module Master
         # binary and run it for a parsed JSON report. Mixed in rather than inherited
         # so the helper itself never lands in the auto-registering Rule registry.
         module ExternalLinter
-          # The binary being installed is the configuration. A second switch in
-          # front of it meant the bridge stayed dark on every machine that had
-          # rubocop, which is the shape of inert wiring this repo keeps finding in
-          # its own tree: a declaration with no reader, here a reader with no
-          # declaration. MASTER_EXTERNAL_LINT=0 turns the bridge off where the
-          # binary exists and the findings are not wanted.
+          # Opt-in, and the reason is measured rather than argued. Default-on for one
+          # afternoon let rubocop autocorrect inside the four-tree ladder, and rubocop
+          # disagrees with this tree about trailing commas: its Style/TrailingComma*
+          # default is no_comma, while TRAILING_COMMAS here flags a multi-line collection
+          # that lacks one and add_trailing_commas puts it back. Twenty-one files were
+          # rewritten in one pass, and the next pass would have rewritten them again.
+          # Two style authorities that both autofix cannot share a tree, so this one
+          # waits until its config is reconciled with the law.
           def linter_available?(name)
-            return false if ENV["MASTER_EXTERNAL_LINT"] == "0"
+            return false unless ENV["MASTER_EXTERNAL_LINT"] == "1"
 
             ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? { |dir| File.executable?(File.join(dir, name)) } ||
               File.exist?(File.join(@root, "bin", name))

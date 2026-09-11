@@ -23,7 +23,7 @@ require "json"
 class DnsDelegationTest < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
   INVENTORY = File.join(ROOT, "..", "OPENBSD", "deploy_inventory.json")
-  GATE = File.join(ROOT, "gates", "lib", "host", "dns_zones.rb")
+  GATE = File.join(ROOT, "..", "OPENBSD", "gates", "dns_zones.rb")
 
   def apps
     @apps ||= JSON.parse(File.read(INVENTORY)).fetch("apps", [])

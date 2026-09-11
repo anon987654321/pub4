@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require_relative "../../../../OPENBSD/lib/gate_result"
-require_relative "../../support/dom_surface_schema"
-require_relative "../../support/visual_quality"
-require_relative "../../support/exemplar_structure"
+require_relative "../../../OPENBSD/lib/gate_result"
+require_relative "../support/dom_surface_schema"
+require_relative "../support/visual_quality"
+require_relative "../support/exemplar_structure"
 
 module Deploy
   # Tests the gates, not the apps.
@@ -18,8 +18,8 @@ module Deploy
   # Everything here is pure string work over committed fixtures: no browser,
   # no running app, deterministic, fast enough to run on every commit.
   class GateMutationGate
-    ROOT = File.expand_path("../../../..", __dir__)
-    GATES = File.expand_path("../..", __dir__)
+    ROOT = File.expand_path("../../..", __dir__)
+    GATES = File.expand_path("..", __dir__)
     SURFACES = File.join(GATES, "fixtures", "surfaces")
     EXEMPLARS = File.join(GATES, "fixtures", "exemplars")
 

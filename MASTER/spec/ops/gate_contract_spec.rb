@@ -86,7 +86,9 @@ class GateContractSpec < Minitest::Test
   # Every path the ladder names must exist — OPERATOR was folded into OPENBSD,
   # and a stale entry means the gate /scans a directory that is not there.
   def test_gate_deploy_paths_exist
-    paths = gate_explain.scan(%r{bin/cli /\w+(?: --no-autofix)? (\S+)}).flatten.uniq
+    # Any flags, not one named flag. This listed --no-autofix alone and read
+    # --apply as a directory the moment the full-fix line grew one.
+    paths = gate_explain.scan(%r{bin/cli /\w+((?:\s+--[\w-]+)*)\s+(\S+)}).map(&:last).uniq
 
     assert_operator paths.size, :>=, 4, "expected the default ladder to name all four trees"
     paths.each do |relative|

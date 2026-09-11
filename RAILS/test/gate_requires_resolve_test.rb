@@ -5,7 +5,7 @@ require "minitest/autorun"
 # Every gate must be able to load itself.
 #
 # `rails_runtime` required "lib/production" for months after that file moved to
-# "lib/host/production" — the gates were sorted into host/live/meta/rendered/
+# "lib/production" — the gates are sorted into live/rendered/source/ and a flat
 # research/source and this was the one caller the move missed. It failed at
 # require time rather than at a check, so the composite reported a red gate that
 # named no finding, and a red gate that names no finding is the easiest kind to
@@ -37,6 +37,8 @@ class GateRequiresResolveTest < Minitest::Test
   end
 
   GATES = File.expand_path("../gates", __dir__)
+
+  REPO = File.expand_path("../..", GATES)
   TREES = {
     "RAILS/gates" => GATES,
     "MASTER/lib" => File.expand_path("../../MASTER/lib", __dir__),
@@ -100,7 +102,12 @@ class GateRequiresResolveTest < Minitest::Test
       required = row["require"]
       next if required.nil? || required.to_s.empty?
 
-      path = File.expand_path(required.to_s, GATES)
+      # A require that names a tree resolves from the repo root, the way the
+      # runner resolves it. Six gates moved to the tree they measure on
+      # 2026-09-11 — MASTER's face and scan chain, the box's DNS and ports — and
+      # this read every one of them as a missing file.
+      base = required.to_s.start_with?("MASTER/", "OPENBSD/", "STUDIO/") ? REPO : GATES
+      path = File.expand_path(required.to_s, base)
       next if File.exist?(path) || File.exist?("#{path}.rb")
 
       "#{name} -> #{required}"

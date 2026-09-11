@@ -183,12 +183,12 @@ module Operator
     def apply!(old_name, new_name)
       moved = move_file(old_name, new_name)
       touched = rewrite(old_name, new_name, moved)
-      { moved: moved, files: touched }
+      { moved:, files: touched }
     end
 
     def move_file(old_name, new_name)
       path = defining_file(old_name)
-      return nil unless path && File.basename(path, ".rb") == snake(old_name)
+      return unless path && File.basename(path, ".rb") == snake(old_name)
 
       target = File.join(File.dirname(path), "#{snake(new_name)}.rb")
       system("git", "-C", ROOT, "mv", path, target) || raise("git mv failed: #{path}")
@@ -272,5 +272,5 @@ end
 if $PROGRAM_NAME == __FILE__
   args = ARGV.reject { |arg| arg.start_with?("--") }
   apply = ARGV.include?("--apply")
-  exit(args.size >= 2 ? Operator::Rename.report_plan(args[0], args[1], apply: apply) : Operator::Rename.report_candidates)
+  exit(args.size >= 2 ? Operator::Rename.report_plan(args[0], args[1], apply:) : Operator::Rename.report_candidates)
 end

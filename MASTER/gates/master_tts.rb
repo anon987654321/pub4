@@ -15,23 +15,23 @@ module Deploy
       ],
       "MASTER/lib/voice/tts_supervisor.rb" => [
         "BUNDLE_ISOLATION_KEYS",
-        "BUNDLE_ISOLATION_KEYS.each { |key| env[key] = nil }"
+        "BUNDLE_ISOLATION_KEYS.each { |key| env[key] = nil }",
       ],
       "MASTER/bin/tts-worker" => [
         "tts-worker --daemon",
         "EventMachine SSL support unavailable",
-        "BUNDLE_ISOLATION_KEYS.each { |key| ENV.delete(key) }"
+        "BUNDLE_ISOLATION_KEYS.each { |key| ENV.delete(key) }",
       ],
       "MASTER/bin/smoke" => [
         "tts-e2e poll",
-        "tts-e2e"
+        "tts-e2e",
       ],
       "OPENBSD/OPERATOR.sh" => [
-        "espeak"
+        "espeak",
       ],
       "OPENBSD/etc/rc.d/master" => [
         "Master::Voice::TtsSupervisor.ensure_daemon!",
-        "MASTER_TTS_TIMEOUT=45"
+        "MASTER_TTS_TIMEOUT=45",
       ],
     }.freeze
 

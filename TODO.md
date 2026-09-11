@@ -3296,7 +3296,7 @@ parking page. A check that reads a status code therefore calls the domain health
 while it serves someone else's page. `ruby RAILS/gates/runner.rb dns_zones` catches
 it by comparing the answer against 46.23.89.226, and bsdports.org is its one
 failure — that gate reads the three app domains
-(`RAILS/gates/lib/host/dns_zones.rb:69`), so no count of expired city domains
+(`OPENBSD/gates/dns_zones.rb:69`), so no count of expired city domains
 belongs in this row.
 
 The deadline is a certificate, not a registration. `/etc/ssl/bsdports.org.fullchain.pem`

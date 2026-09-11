@@ -286,7 +286,7 @@ writes `var(--tap-min)`, so it passed on every app while checking no app. They
 are `rendered_geometry` and `first_screen` now.
 
 **Each gate owns one assertion.** Two gates asserting the same property is two
-places to change it and two places for it to rot. `gates/lib/` was sliced by
+places to change it and two places for it to rot. `RAILS/gates/lib/` was sliced by
 mode — first screen, phone width, width sweep, keyboard, baseline — and every
 mode then re-asserted whatever it happened to see: touch targets in three gates,
 landmarks in four, overflow in four. Slice by assertion and the mode becomes a
@@ -301,7 +301,7 @@ invites the criterion to be re-declared inside it, which is this tree's dominant
 defect wearing a new hat. Name the gate for what it measures and have it read
 the number from MASTER.
 
-**A directory says what the thing needs before it can run.** `gates/lib/` is
+**A directory says what the thing needs before it can run.** `RAILS/gates/lib/` is
 `source/ live/ rendered/ host/ research/ meta/`: files only, a booted app, a
 browser, the machine, scores rather than verdicts, and gates about gates. The
 precondition was previously a comment, and a gate with a missing precondition

@@ -7,7 +7,7 @@ require_relative "../gates/lib/source/css_constitution"
 require_relative "../gates/support/design_metrics"
 require_relative "../gates/lib/research/design_metrics"
 require_relative "../gates/support/css_weight"
-require_relative "../gates/lib/meta/constitutional_scan"
+require_relative "../../MASTER/gates/constitutional_scan"
 
 # Two gaps, same shape: a rule that exists and measures nothing.
 #

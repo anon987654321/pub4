@@ -77,7 +77,14 @@ spine:
   # RuleRegistryAudit#mechanical adds thirteen and buys one statement of a
   # population three gate banners and rule_reach were each spelling for
   # themselves, at two different answers.
-  lib_body_ceiling: 38096
+  # 38096 -> 38108, and /rules is most of it. The law had no lister: the only
+  # way to enumerate 242 rules was a YAML one-liner in CLAUDE.md that iterated
+  # the wrong shape for months, so every agent told to read the law before
+  # writing had no command that would show it one. Beside it, two guards that
+  # are one condition each — a strict boot that does not raise on a count the
+  # test harness inflated, and an external linter that waits for its config to
+  # be reconciled with the law rather than autocorrecting against it.
+  lib_body_ceiling: 38108
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753
@@ -333,7 +340,13 @@ pub4_source_ceilings:
   # plus a word-boundary rewrite. It folds into nothing: no other file here
   # moves a constant, and its test needs a planted repository rather than this
   # one.
-  MASTER: 1040
+  # 1040 -> 1043 and RAILS 2372 -> 2366: six gates moved to the tree they
+  # measure. master_tts, master_web_assets and constitutional_scan check
+  # MASTER; dns_zones, domain_alignment and port_inventory check the box. The
+  # repo holds the same number of gates it did before — this is one move
+  # crossing three ledgers, which is why RAILS falls by the six that MASTER
+  # and OPENBSD gain.
+  MASTER: 1043
 
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
@@ -443,7 +456,7 @@ pub4_source_ceilings:
   # tree renders. Thirty-three reflex files, thirty-two classes, thirty-one
   # mounted. RAILS/test/infinite_scroll_reflex_contract_test.rb asserts the
   # property that would have caught it, and lives outside this count.
-  RAILS: 2372
+  RAILS: 2366
   # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
   # that are the whole defence against a shared index, and nothing tested any of
   # them — a hook that stopped firing looks exactly like a week in which nobody
@@ -457,7 +470,7 @@ pub4_source_ceilings:
   # invisible precisely because it passed. The rewrite that taught it to compare
   # root's crontab as a set of commands needs a test that fails when that
   # comparison is dropped again, and no existing OPENBSD test boots a gate.
-  OPENBSD: 108
+  OPENBSD: 111
   # 220 -> 222 for lora/seed_media.yml and lora/_toolkit/install_seed_media.rb,
   # the prompt set for every seeded photograph and the script that grades and
   # files what comes back from it. Two files, both named, neither foldable:

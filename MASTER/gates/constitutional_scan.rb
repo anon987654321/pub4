@@ -35,14 +35,17 @@ module Deploy
     SCAN_TIMEOUT_S = Integer(ENV.fetch("GATE_SCAN_TIMEOUT_S", 900))
 
     def self.run(targets: nil)
-      new(targets: targets).run
+      new(targets:).run
     end
 
     # Readable so target selection is assertable without paying for a scan;
     # the full gate is ~11 minutes.
     attr_reader :targets, :skipped
 
-    BUDGET_PATH = File.expand_path("../data/constitutional_budget.yml", __dir__)
+    # The budget sits with the gates whose scan it bounds. This gate runs MASTER's
+    # chain over RAILS, so the per-target seconds are RAILS' to declare, and a
+    # copy here would be a second source that drifts.
+    BUDGET_PATH = File.expand_path("../../RAILS/gates/data/constitutional_budget.yml", __dir__)
     # `scan: done [profile: full] 410 violations | top DEAD_CODE=99 …`
     VIOLATION_LINE = /^scan: done\b[^\n]*?\b(\d+) violations/
     # And the other spelling of the same number: `scan: done [profile: aesthetic]
@@ -223,7 +226,7 @@ module Deploy
     # zero and was being read as "no count here, try the next line".
     def first_pass_count(stdout)
       line = stdout.to_s.lines.find { |l| l.start_with?("scan: done") }
-      return nil unless line
+      return unless line
       return 0 if line.match?(CLEAN_LINE)
 
       digits = line[VIOLATION_LINE, 1]

@@ -1,15 +1,14 @@
 # The gate registry. One row per gate, and this file is the only place a gate
+# is declared.
+#
 # One registry, one runner, three trees. A gate's row lives here whatever tree
 # holds its implementation: `require` names the tree when the check belongs to
 # one — MASTER/gates for the gates that measure MASTER's own face and scan
 # chain, OPENBSD/gates for the ones that measure the box (DNS, domains, the
 # port inventory), and a bare path for the RAILS gates, which are most of them.
 #
-# Moved 2026-09-11. They had all lived under RAILS/gates/lib/host, where a gate
-# about nsd sat beside a gate about a Rails port. The runner stays here because
-# splitting it would be three runners with three ideas of what a gate result
-# is, which is the shape gate_result.rb exists to prevent.
-# is declared.
+# The runner stays single: three runners would be three ideas of what a gate
+# result is, which is the shape OPENBSD/lib/gate_result.rb exists to prevent.
 #
 # It replaces four hand-maintained tables that had to agree with each other:
 # runner.rb's GATE_MAP (name -> file), IN_PROCESS (name -> class),
@@ -45,7 +44,7 @@
 # Order is run order.
 
 production:
-  require: lib/host/production
+  require: lib/production
   class: Deploy::ProductionGate
   pass: "Production gate passed for %{apps} Rails apps."
   env_flags:
@@ -361,7 +360,7 @@ page_simulation:
   pass: "ok: page UI/UX simulations clean across inventory"
 
 gate_mutation:
-  require: lib/meta/gate_mutation
+  require: lib/gate_mutation
   class: Deploy::GateMutationGate
   pass: "ok: gates detect the defects they exist to prevent"
 

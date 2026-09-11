@@ -75,6 +75,40 @@ not fit.
 
 Ruby is pinned to 3.4.9: run `RBENV_VERSION=3.4.9 rbenv exec ruby ...`.
 
+## Ruby and zsh, never the GNU text tools
+
+`sed`, `awk`, `tr`, `cut`, `find`, `head`, `tail`, `wc`, `perl`, `python` and
+`bash` are banned — in what you type and in what you commit. This repo deploys to
+OpenBSD, where those tools are the BSD variants and every GNU idiom written
+against them breaks: `sed -i` takes an argument there, `head -n` differs, and a
+script that worked on the laptop fails on the box in a way whose error names the
+wrong thing.
+
+Reach for one of two things instead.
+
+**Ruby**, for anything that reads, parses or rewrites a file. `ruby -e` is
+available everywhere here and the repo is Ruby; a ten-line script that parses
+what it edits beats a regex that cannot see structure.
+
+**Modern zsh**, for shell work — and the forms are already in the law, at
+`zsh.native_patterns` in `MASTER/data/rules.yml`. They replace exactly what the
+ban takes away:
+
+    ${var//find/replace}     instead of sed s///g
+    ${(L)var} ${(U)var}      instead of tr a-z A-Z
+    ${(s:,:)var}             instead of cut -d, / awk -F,
+    ${(j:,:)arr}             instead of paste / awk OFS
+    ${(u)arr} ${(o)arr}      instead of sort -u / sort
+    ${(M)arr:#*pattern*}     instead of grep over a list
+    ${arr:#*pattern*}        instead of grep -v over a list
+
+`grep` itself stays: it reads and does not rewrite, and its BSD form is close
+enough. Zsh globs — `**/*.rb`, `*(.)`, `*(/)`, `*(om[1])` — replace `find`
+outright, and `setopt extended_glob nullglob` is what makes them safe.
+
+The scanner enforces the ban on committed scripts. Nothing enforces it on what
+you type, which is why it is written here.
+
 ## You decide, and you close
 
 You have decision authority over anything in `TODO.md`, and the backlog is

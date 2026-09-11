@@ -165,7 +165,7 @@ module Master
       # needs --apply to write. A second verb that scans and fixes would be the same
       # pipeline under another name, which is the defect this repo keeps finding in
       # its own tree.
-      def dispatch_rules(root, ctx: nil)
+      def dispatch_rules(_root, ctx: nil)
         filter = arg_for(ctx).downcase
         rules = Master.law("rules") || []
         rows = rules.select { |rule| filter.empty? || "#{rule["id"]} #{rule["name"]}".downcase.include?(filter) }
