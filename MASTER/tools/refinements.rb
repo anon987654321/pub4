@@ -43,7 +43,8 @@ module Operator
       "TRAILING_COMMAS" => "add the comma to the last element of each multi-line literal",
       "TAB_CHARACTER" => "convert the tabs to spaces, whole file at a time",
       "DOLLAR_PAREN" => "replace backticks with $( ) in the shell scripts",
-      "DOUBLE_BRACKET" => "replace [[ ]] with [ ] so the script runs under sh",
+      "DOUBLE_BRACKET" => "replace [ ] with [[ ]] — but read the shebang first, " \
+                          "because a file that declares itself POSIX sh is right as it stands",
       "STRICT_MODE_ZSH" => "add set -e and the pipefail equivalent at the top of each script",
       "NO_PUTS" => "route the output through the logger or the dmesg tag the file already uses",
       "NO_DEBUG" => "delete the call that halts execution for inspection",

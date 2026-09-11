@@ -57,11 +57,11 @@ class RepoHygieneContractTest < Minitest::Test
 
   # `command -v flock` before the call is the sanctioned degrade: the script
   # takes the lock where there is one and runs unlocked where there is not,
-  # which is what a portable script does with an optional utility. Without this,
-  # the gate reported four sites in OPENBSD/dotfiles/mov.sh that all guard
-  # correctly — a rule whose failures are all false is one people learn to skip.
-  # Scoped to the enclosing shell function, so a guard in one function does not
-  # excuse a bare call in the next.
+  # which is what a portable script does with an optional utility. Without the
+  # exemption every correctly guarded site reads as a failure, and a rule whose
+  # failures are all false is one people learn to skip. Scoped to the enclosing
+  # shell function, so a guard in one function does not excuse a bare call in
+  # the next.
   def guarded_by_command_v?(lines, index)
     start = index.downto(0).find { |n| lines[n].match?(/\A[\w:.-]+\s*\(\)\s*\{/) } || 0
     lines[start..index].any? { |line| line.match?(/command -v\s+(?:lockf|flock)\b/) }

@@ -389,7 +389,18 @@ pub4_source_ceilings:
   # repo holds the same number of gates it did before — this is one move
   # crossing three ledgers, which is why RAILS falls by the six that MASTER
   # and OPENBSD gain.
-  # 1043 -> 1044 for tools/refinements.rb, which groups every finding the scanner
+  # 1043 -> 1045 for two files, and the count is two rather than one because a
+  # growth row reads what git tracks: both were measured while still untracked,
+  # so each read as zero until the commit that added it. Measure this row after
+  # the commit, not before.
+  #
+  # test/test_autofix_safety_tier.rb pins which transforms may run unattended.
+  # The tier it covers decides by what the transform does — a deletion waits for
+  # a person, an addition does not — and the method it replaced could refuse
+  # nothing, so the test is the only thing standing between that and a silent
+  # return to allowing everything.
+  #
+  # tools/refinements.rb groups every finding the scanner
   # makes across the four trees into batches of one rule and one kind of edit.
   # It exists so the refinement backlog is a command rather than a written list:
   # 22,417 findings is a number that is wrong the day it is copied into a file,
@@ -397,7 +408,7 @@ pub4_source_ceilings:
   # self_findings.rb answers a different question — what the law finds in MASTER,
   # at error severity, against a recorded ceiling — and carries no grouping, no
   # tree filter and no closing sentence per rule.
-  MASTER: 1044
+  MASTER: 1045
 
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
@@ -541,7 +552,13 @@ pub4_source_ceilings:
   # invisible precisely because it passed. The rewrite that taught it to compare
   # root's crontab as a set of commands needs a test that fails when that
   # comparison is dropped again, and no existing OPENBSD test boots a gate.
-  OPENBSD: 111
+  # 111 -> 110: dotfiles/mov.sh left the repo. 2,343 lines of torrent-and-
+  # transcode, the largest shell file here, and nothing to do with vm23 — the
+  # owner's dotfile, kept because moving it was framed as a growth argument
+  # rather than a decision. It was also the single heaviest source of scan
+  # findings in the tree, 535 of them, which is what a file nobody deploys and
+  # nobody tests contributes to every census that reads the repo.
+  OPENBSD: 110
   # 220 -> 222 for lora/seed_media.yml and lora/_toolkit/install_seed_media.rb,
   # the prompt set for every seeded photograph and the script that grades and
   # files what comes back from it. Two files, both named, neither foldable:

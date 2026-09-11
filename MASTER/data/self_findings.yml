@@ -108,7 +108,7 @@
 # the whole `<%# ... %>` span dropped that finding and one NO_INLINE_SCRIPT_BLOCK
 # of the same shape, and the detector still fires on markup that follows the
 # comment's close — proved on planted cases before the count was believed.
-findings: 278
+findings: 277
 by_rule:
   BARE_DIV_WRAPPER: 3
   BLANK_LINE_RUN: 1
@@ -119,7 +119,7 @@ by_rule:
   MEANINGFUL_NAMES: 1
   MIGRATION_ADD_REFERENCE_NO_FK: 2
   MOBILE_FIRST: 1
-  NEVER_BATCH_DELETE: 3
+  NEVER_BATCH_DELETE: 2
   NO_CHANGELOG_COMMENT: 16
   NO_COLUMN_ALIGN: 42
   NO_INLINE_SCRIPT_BLOCK: 20
@@ -191,7 +191,6 @@ finding_members:
   - MIGRATION_ADD_REFERENCE_NO_FK RAILS/brgen/db/migrate/20260524113000_create_brgen_social_tables.rb:15
   - MIGRATION_ADD_REFERENCE_NO_FK RAILS/brgen/db/migrate/20260602150000_add_neighborhood_to_dating_profiles.rb:5
   - MOBILE_FIRST RAILS/shared/app/assets/stylesheets/_tab_bar.scss:99
-  - NEVER_BATCH_DELETE OPENBSD/dotfiles/mov.sh:1151
   - NEVER_BATCH_DELETE RAILS/shared/app/jobs/shared/database_snapshot_job.rb:41
   - NEVER_BATCH_DELETE STUDIO/dilla/bin/sine_stream_player.rb:55
   - NO_CHANGELOG_COMMENT MASTER/web/app/services/tts_job.rb:45

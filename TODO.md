@@ -3473,9 +3473,6 @@ committed and `git log` holds them.
   on `rcctl`, `pkill`, `chmod`, `install` and `rm -f`. `start_all_apps.sh:16-17`
   swallows enable and start and then fails correctly at :24. Read the exit path
   before flagging one.
-- **`dotfiles/mov.sh`.** 2,343 lines, the largest shell file here, thirty
-  banned-tool hits, and a torrent-and-transcode tool with nothing to do with vm23.
-  It is the owner's dotfile; moving it is a growth argument.
 - **The four `data/debt.yml` and `archive/recovery` mentions that remain.**
   `RUNBOOK.md:16-22` says in so many words to read `archive/recovery` as
   document-only, and `DECISIONS.md:200` and `PATH_OWNERSHIP.yml:17` both write
