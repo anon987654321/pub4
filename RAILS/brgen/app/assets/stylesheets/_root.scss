@@ -310,7 +310,7 @@ body[class*="vertical-"] main[role="main"] {
   /* 52px, off the scale on purpose: this clears the fixed vertical header, and
      48 and 56 are equidistant from it. Rounding down risks the header covering
      content; rounding up opens a visible gap. It wants deriving from the header
-     height rather than snapping. scan: intentional */
+     height rather than snapping. */
   padding-top: 3.25rem;
 }
 
