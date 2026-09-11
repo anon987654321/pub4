@@ -4273,6 +4273,85 @@ conversation stamping and telemetry spans. And `estimate_tokens` stays
 `bytesize / 4`, because the accurate answer is `tiktoken_ruby`, a Rust native
 extension, and this repo deploys to OpenBSD.
 
+## The refinement inventory — opened 2026-09-11
+
+`ruby MASTER/tools/refinements.rb` scans every tracked file in the four trees
+and groups what it finds into batches: one rule, one kind of edit, a known file
+list. `--items` prints every finding, `--tree` and `--rule` narrow it. The list
+is not written down anywhere, because a written copy of a scan is stale the day
+it is made. Run the tool.
+
+It reads **22,417 findings in 3,333 files across 131 groups**, and that number
+is an upper bound on an unverified instrument, not a count of defects. Thirty
+were sampled and read against their source. Roughly a quarter were actionable.
+The rest were the scanner misreading correct code, and the misreadings have
+shapes worth naming, because each one is a rule to fix rather than a file:
+
+- `magic_number` (4,492) counts array-slice bounds, quantifiers inside a test
+  assertion's regex, and event codes. `[0, 200]` is not a constant wanting a
+  name.
+- `NO_PUTS` (807) counts CLI tools, rake tasks and probe scripts, where `puts`
+  is the interface rather than a debug statement.
+- `duplicate_code` (784) counts locale YAML values, Markdown prose and
+  comments. "Text to copy" appearing twice in `en.yml` is a translation.
+- `FILE_SPRAWL` (664) and `SMALL_FILES` (261) report a per-directory condition
+  once per file, anchored to line 1, and count migrations — which accumulate by
+  design.
+- `CONFIG_HIERARCHY` (913) counts route fragments in gate flow fixtures and
+  prompt template lines in `council.yml`.
+- `TYPOGRAPHY_DISCIPLINE` (474) counts ASCII box drawing inside comments, which
+  is `NO_ASCII_LINE_ART`'s question and cosmetic in a comment either way.
+
+**The exemption marker trips two rules by existing.** 154 findings sit on lines
+carrying `scan: intentional`, and 135 of them are `LONG_LINE` and
+`TRAILING_COMMENT` — the marker is a trailing comment, and adding it pushes the
+line past the length limit. Every author who exempts a line correctly buys two
+new findings. Fix the two rules to skip a line whose only overage is the marker
+itself, and the count falls without a single file being touched.
+
+### The deterministic tier — 1,888 findings in 607 files
+
+These are the ones worth working. Each is mechanical, each has one right
+answer, and a wrong fix shows itself in the diff it makes. One group is one
+session. Counts are findings, then files, which is the number of jobs.
+
+- **`TRAILING_COMMAS` — 489 in 188 files.** RAILS 432. Add the comma to the
+  last element of each multi-line literal. Autofixable: `add_trailing_commas`.
+- **`TAB_CHARACTER` — 322 in 8 files.** OPENBSD 315. Eight files, whole-file
+  conversion each.
+- **`DOLLAR_PAREN` — 287 in 60 files.** Backticks to `$( )` in shell scripts.
+- **`DOUBLE_BRACKET` — 181 in 8 files.** All OPENBSD. `[[ ]]` to `[ ]`, so the
+  script runs under `sh`. This one matters on the box.
+- **`FROZEN_STRING_LITERAL` — 176 in 176 files.** One magic comment each.
+- **`NO_ASCII_LINE_ART` — 175 in 48 files.** STUDIO 94. Keep the words, delete
+  the box.
+- **`NO_COLUMN_ALIGN` — 143 in 31 files.** MASTER 103. Collapse aligned columns
+  to single spaces.
+- **`NO_GOD_CLASS` — 29 in 29 files.** RAILS 22. Not mechanical, but each one is
+  a class that has outgrown a single subject and already shows the seam.
+- **`SILENT_RESCUE` — 23 in 11 files.** STUDIO 22. `Ground::Swallow.log` is the
+  house form.
+- **`STRICT_MODE_ZSH` — 18 in 18 files.** OPENBSD 15.
+- **`NO_VAR` — 15 in 7 files.** `let` or `const`.
+- **`NEVER_BATCH_DELETE` — 13 in 9 files.** Read each before touching it; some
+  will be correct and want the marker instead.
+- **`FAIL_VISIBLY` — 5 in 5 files.** A failure reported into a return value that
+  nobody reads.
+- **`RATE_LIMITING_MISSING` — 4 in 4 files.** `shared/authentication.rb` and
+  `shared/sso_user_provisioning.rb` are the two that matter: a login path and a
+  provisioning path with no throttle.
+- **`MIGRATION_ADD_REFERENCE_NO_FK` — 2 in 2 files.** `foreign_key: true` on
+  `create_brgen_social_tables` and `add_neighborhood_to_dating_profiles`.
+- **`NO_DEBUG` — 2, `CONTROL_CHARS` — 2, `NULL_BLINDNESS` — 2.** Three edits.
+
+### Before working any other group
+
+Sample five findings, open the five lines, and decide whether the rule is right
+before opening the sixth. Where it is wrong, the fix is the rule and the
+exemption it should carry — not the file. That is how the 981-finding design
+backlog turned out to be 596 misreadings of correct markup, and it is why this
+section leads with the instrument rather than the total.
+
 ## Wishes, not work
 
 Directions rather than tasks. They belong to the operator, and nobody should open
