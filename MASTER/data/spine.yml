@@ -557,7 +557,16 @@ pub4_source_ceilings:
 # so the only src that could answer was cdn.jsdelivr.net, a third-party host
 # on amber every page load. Both users take var(--font) now, which is the same
 # token brgen sets, and amber renders in one family where it rendered in two.
-  RAILS: 2391
+# 2391 -> 2393 for two files that close a coverage hole rather than add a
+# feature. gates/probes/accent_contrast_probe.rb measures text contrast on
+# every filled control across all 39 declared surfaces; the suites run axe
+# against each app home page only, so the seven brgen verticals had none, and
+# nine failures were sitting there. amber/test/wardrobe_swatch_ink_test.rb
+# pins the garment-colour swatches against Deploy::DesignMetrics::Contrast, so
+# a colour added to that map cannot arrive without an ink that reads on it.
+# Neither folds anywhere: no existing probe walks the verticals, and no
+# existing amber test asks the contrast module anything.
+  RAILS: 2393
   # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
   # that are the whole defence against a shared index, and nothing tested any of
   # them — a hook that stopped firing looks exactly like a week in which nobody

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require_relative "../../../gates/support/design_metrics/contrast"
+require_relative "../../gates/support/design_metrics/contrast"
 
 # The swatch stands in for a missing photograph, so it is the garment's own
 # colour and carries the item's initial over it. One ink cannot serve ten
