@@ -4071,6 +4071,133 @@ for which nine written beside them.
   beside them, and it is the bare top-level `ROOT` that makes a subprocess the
   safe shape.
 
+## From the awesome-list horizon scan — 2026-09-11
+
+Ten curated lists were read against the tree: `awesome-ruby`, `ruby-bookmarks`,
+`analysis-tools-dev/static-analysis`, `awesome-rails`, two `awesome-hotwire`
+forks, `awesome-css`, `awesome-html5`, `awesome-markdown`, two
+`awesome-openbsd` lists and `awesome-selfhosted`. Almost everything they name
+this repo either has, has decided against with a measurement, or cannot run on
+one 1 GB box. What survived is below, and every item was checked against the
+tree before it was written down — four candidates died on that check, including
+one this scan first reported as missing and then found in all four
+`Gemfile.lock`s.
+
+- **Autofix has no safety tier, and the default is to fix.**
+  `Scan::Scanner#should_autofix?` returns true unless the rule has a
+  `prediction_engine` entry carrying a `confidence` threshold in `rules.yml`.
+  Three rules do — `null_usage`, `abbreviation`, `nesting_depth` — against 242
+  declared. The other 239 are fixed at any confidence. `Scan::Finding` already
+  declares `reversibility` and `blast_radius`, `semantic_rules.rb` and
+  `meta_rules.rb` populate them, and nothing under `lib/fix` reads either;
+  `Fix::RuleLoop` reads `confidence` alone. RuboCop and Standard both solve this
+  by declaring safety per rule and splitting the command — `--fix` against
+  `--fix-unsafely`. Cost: no dependency. A `safe` field on `Law::Rule` and on
+  the registry's `declare`, a default of unsafe for a rule that does not say,
+  and a flag on `/fix`. The work is classifying 242 rules, not writing the
+  field. Worth doing when someone is willing to make that classification the
+  session's subject; the ceiling on its value is already recorded above, where
+  `/scan`'s autofix is marked do-not-run-unattended.
+
+- **relayd is restarted every time an app comes back, and relayctl can do the
+  same job without it.** All four `rc.d` scripts run `rcctl restart relayd` once
+  their app answers `/up`, and `start_all_apps.sh` runs it again; `vps-deploy
+  all` therefore drops the single `listen on 0.0.0.0 port 443 tls` five times in
+  one pass, for every host on the box. The nine-minute outage of 2026-08-10 was
+  that restart. `relayctl(8)` has `table disable` / `table enable` and `poll`
+  ("Schedule an immediate check of all hosts"), which is exactly the kick the
+  comment in each script asks for and touches no listener; bracketing the
+  restart with `table disable` also stops relayd recording a booting app as
+  failed. Cost: base tools, three lines per script. Worth doing once the man
+  pages for `relayd.conf(5)` and `relayctl(8)` have been read from vm23 and one
+  app has been bracketed by hand. `relayctl reload` — not restart — is the
+  answer for a genuine `relayd.conf` change.
+
+- **162 `scan: intentional` markers, in 95 files, and nothing checks that any of
+  them still excuses something.** `law/practice.rb`'s `EXEMPTIONS_EXPIRE` says
+  an opt-out outliving its subject is a hole in a gate nobody can see, and it is
+  a `practice` rule, so it carries no detector. One half of it is detectable:
+  scan the file again with the marker stripped, and a marker whose line draws no
+  finding is stale. erb_lint ships this as `NoUnusedDisable`. Cost: no
+  dependency, one pass of an existing scanner and one ratchet row. Worth doing
+  now — the scanner is already there, the law is already declared, and the
+  number is unaudited.
+
+- **The resource guard sheds per process and measures per box.**
+  `resource_guard.sh` logs `load`, `mem_avail` and `shed` per tick and decides
+  which of amber and bsdports to drop, but never reads a single process's RSS,
+  so the log cannot say which daemon was the cost. Cost: `ps -o rss= -p` per
+  app, three lines, into the same history line the thresholds were already
+  recalibrated against. Worth doing before the thresholds are touched again;
+  8/14 and `LOAD_RESTORE` 2.0 were set against an aggregate.
+
+- **The `rails` login.conf class caps datasize at 4096M on a 1 GB box.**
+  brgen, amber and bsdports all inherit it, so the limit is not one.
+  `login.conf(5)` limits are honoured because `rc_exec` runs the daemon through
+  `su(1)` under a class named after the rc.d script. A realistic per-app
+  `datasize-cur` turns a leaking app into a `NoMemoryError` inside that app
+  rather than a swap storm that takes the box. `openfiles-cur` inherits 128 from
+  `daemon`, which is low for a fiber-per-connection Falcon. Cost: two lines per
+  class. Worth doing once each app's steady-state RSS has been measured on
+  vm23 — a number guessed low kills a healthy app, which is worse than the
+  swap.
+
+- **relayd's listen backlog is the default 10.** `relayd.conf(5)`: "The backlog
+  option is 10 by default, is limited to 512 and capped by `kern.somaxconn`."
+  Ten pending connections in front of four apps that take 30-40s to boot cold.
+  Cost: one word. Worth doing when someone can show connections being refused
+  during a restart rather than merely being slow.
+
+- **Two i18n checks the contract tests do not carry.** `locale_contract_test`
+  covers duplicate keys, one home per key, root naming and nb/en parity;
+  `i18n_resolution_test` covers every defaultless `t()` resolving. Absent: a key
+  defined in a locale file and referenced nowhere, and interpolation arguments
+  agreeing across locales — `%{count}` in `nb` and missing in `en` renders the
+  literal. i18n-tasks is the gem for both and is the wrong shape here: it needs
+  search paths declared for six mounted engines and `pub4-shared` or it reports
+  every engine key as unused. Cost: about thirty lines in each existing test
+  file, no dependency. Worth doing when a translation_missing or a bare
+  `%{count}` is seen on a page.
+
+- **Cross-engine references are unmeasured, and there is one.** Measured
+  2026-09-11 over all six engines under `brgen/engines`: one engine reads
+  another's constant — `maps/app/controllers/maps/home_controller.rb:75` reads
+  `Takeaway::Order`, deliberately, for the courier layer — and zero associations
+  cross an engine boundary. `isolate_namespace` does not prevent either.
+  Packwerk exists to prevent both and carries a C extension through
+  `better_html`. Cost: one row in `gates.yml` and a source gate reading text,
+  shipping with that one line as its declared exemption. Worth doing while the
+  count is one; at ten it is a cleanup rather than a line held.
+
+- **Snapshots never leave the disk they protect.**
+  `Shared::DatabaseSnapshotJob` writes `VACUUM INTO` copies beside the database
+  and says so in its own comment; `restore_backups.sh` restores from
+  `/var/backups/litestream/`, which `OPENBSD/DECISIONS.md` records as empty and
+  unfillable, litestream being Go and absent from ports. So the box has
+  same-disk snapshots and a restore path that points at nothing. Cost: base
+  tools — `openrsync -e ssh` is already used by every deploy, and the snapshots
+  are gzipped. Worth doing as soon as there is somewhere to put them; the
+  destination is an operator decision and the data is irreplaceable.
+
+- **Findings have no portable form.** `Scan::Finding` carries `rule_id`,
+  `message`, `line`, `severity` and `fix` — everything SARIF needs — and
+  `law/`'s rules carry the two fixtures that would fill a SARIF rule's help
+  text. 242 rules are currently legible only to this repo's own reporters. Cost:
+  about sixty lines of Ruby, no dependency. Worth doing only if the corpus is
+  ever meant to be read by something outside pub4; there is no consumer today,
+  and building one for a reader that does not exist is the defect this file
+  records most often.
+
+- **An HTML-aware ERB parser is arriving whether or not we choose it.** Herb
+  parses HTML and ERB into one tree and uses Prism for the Ruby inside the tags;
+  GitHub runs it on the monolith and there is an open PR to make it Rails'
+  HTML-aware ERB implementation. It is a C extension, so under the argument this
+  tree already used against tree-sitter it is a reject — but if Rails adopts it,
+  it lands on vm23 as a dependency and the argument changes from "do we want a
+  native parser" to "we have one, do `law/html.rb`'s regexes still earn their
+  keep". Cost: nothing yet. Worth revisiting when that PR merges, and not
+  before.
+
 ## Wishes, not work
 
 Directions rather than tasks. They belong to the operator, and nobody should open
