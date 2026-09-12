@@ -556,7 +556,23 @@ pub4_source_ceilings:
 # from the repo root alone called 198 live items stale, because most are
 # written from inside the tree they are about. It also caught a verdict I had
 # written by hand, where I checked the wrong examples.html.erb.
-  MASTER: 1051
+# 1051 -> 1052 for tools/backlog_claims.rb. TODO.md holds 2245 numbered items and
+# the honest way to work them is one at a time, which is also the slow way. The
+# part a machine can do is check whether an item is still talking about the tree
+# that exists: path:line citations, bare paths, and whether the file has that many
+# lines.
+#
+# Built on a hypothesis it then disproved, which is the useful part. Hand-worked
+# items had gone stale often enough that I expected a large fraction of the corpus
+# to be citing deleted files. The first run agreed — 154 stale — and the first run
+# was wrong: the resolver only tried <tree>/<path>, so every bare basename
+# (soul.yml, help.rb) read as absent. With suffix resolution and an ambiguity case
+# the real number is 1 in 2245.
+#
+# So the backlog is not mostly stale, and it cannot be cleared mechanically. That
+# is worth a file: it is the difference between 2245 items to read and 2245 items
+# to read plus a wrong idea about them.
+  MASTER: 1052
 
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:

@@ -8,7 +8,7 @@ require_relative "dilla_helper"
 # guess.
 #
 # The reference strings below are the shape render_dilla builds by hand around
-# lib/engine/render_dilla.rb:640-695 -- a labelled clause per source, amix with
+# dilla.rb:286 (class AudioGraph) -- a labelled clause per source, amix with
 # positional weights, then the master chain to [out].
 class TestAudioGraph < Minitest::Test
   def test_a_single_channel_is_not_run_through_amix

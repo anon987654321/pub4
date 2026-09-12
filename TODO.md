@@ -6097,7 +6097,11 @@ Numbered 1–N across the four trees.
 836. **`bin/crate` help is comment-sliced.** A `--help` flag and a real usage string.
 837. **`bin/crate` `list` silent rescue.** Missing `crate/` vs empty crate vs corrupt `source.json` are three states. Warn per file; empty dir is the only quiet case.
 838. **Three crate layouts, one engine reader.** `bin/crate list` should say “engine will not see these until they are registered as chopped loops.”
-839. **`AudioGraph` comment vs tests.** Still cite `lib/engine/render_dilla.rb:640-695`. Point at `engine part: render_dilla`.
+839. **Fixed 2026-09-12.** Both test headers cited `lib/engine/render_dilla.rb`, a path
+     with no file and no directory — dilla has one 35k-line dilla.rb plus lib/*.rb, and
+     never had lib/engine/. `AudioGraph` is `dilla.rb:286`. Found by
+     `MASTER/tools/backlog_claims.rb`, which checks every item against its own citation:
+     this was the only genuinely stale one in 2245.
 840. **Industrial graph is a second spine.** Name in `help` that `industrial`/`techno`/`analog` still bypass `AudioGraph`. Do not merge renderers.
 841. **`characterize` is 1180 lines of inspection.** Add one line under “READING THE ENGINE.”
 842. **`vocab-check` in `STUDIO/dilla/README.md` Checks.** That README currently only names `rake test`.

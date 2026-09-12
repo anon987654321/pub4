@@ -6,7 +6,7 @@ require_relative "dilla_helper"
 #
 # The spine is only worth moving a genre onto if it emits what the working
 # renderer already emits. This reconstructs render_dilla's stem mixdown
-# (lib/engine/render_dilla.rb around 637-692) as literal strings, builds the same
+# (dilla.rb:286, class AudioGraph) as literal strings, builds the same
 # thing through AudioGraph, and compares the two as text.
 #
 # The literals here are copied from that renderer, weights included. If someone
