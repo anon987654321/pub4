@@ -772,7 +772,14 @@ pub4_source_ceilings:
 # are off this tree's scales — 1.6rem, 1.62 and .12em are on no list in
 # design_tokens — and snapping them is a separate decision, because every one
 # of those numbers is something somebody sees.
-  RAILS: 2394
+  # 2394 -> 2393, a fall. gates/data/page_sim_inventory.yml and
+  # page_sim_report.yml left the index: gates/data/.gitignore already named both
+  # under "Outputs, not baselines -- keep out of git", and both were tracked
+  # anyway, so every page_simulation run dirtied a shared checkout. Nothing reads
+  # them. This row is what caught the first attempt not landing -- it read 2395
+  # while the branch claimed the removal, because a path-scoped commit rebuilds
+  # its paths from the working tree and put them back.
+  RAILS: 2393
   # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
   # that are the whole defence against a shared index, and nothing tested any of
   # them — a hook that stopped firing looks exactly like a week in which nobody
@@ -915,7 +922,11 @@ pub4_source_ceilings:
   # design — the same MASTER process wearing a different host — plus its README
   # and its test, and STUDIO/gate.rb no longer registers a subsystem that is not
   # there.
-  STUDIO: 145
+  # 145 -> 143, a fall nobody recorded. postpro/motion.rb and
+  # test/test_tools_motion.rb went and the ceiling stayed, so the row sat two
+  # files slack -- room the next change grows into without an argument, which is
+  # the other way a ratchet dies.
+  STUDIO: 143
 
 # Executable files directly under each tree's own bin/ — the number CLAUDE.md's
 # "two surfaces, no third" makes a claim about while nothing counted it. MASTER
