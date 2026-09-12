@@ -40,4 +40,23 @@ class MasterBootTest < Minitest::Test
     assert_respond_to engine, :pressure
     assert_kind_of Float, engine.pressure
   end
+
+  def test_hash_dig_compat_returns_nil_for_missing_intermediate_keys
+    assert_nil({}.dig(:missing, :nested))
+    assert_nil({ outer: {} }.dig(:outer, :missing, :nested))
+  end
+
+  def test_hash_dig_compat_preserves_nested_lookup
+    assert_equal "value", { outer: { inner: "value" } }.dig(:outer, :inner)
+  end
+
+  def test_hash_dig_compat_installation_is_idempotent
+    Master.install_hash_dig_compat!
+    first_ancestors = Hash.ancestors
+
+    Master.install_hash_dig_compat!
+
+    assert_equal first_ancestors, Hash.ancestors
+    assert_equal 1, Hash.ancestors.count { |ancestor| ancestor == Master::HashDigCompat }
+  end
 end
