@@ -195,6 +195,58 @@ def symbol_report
   puts "  ... #{working_set.size - 25} more" if working_set.size > 25
 end
 
+
+# Which tree does an item belong to?
+#
+# This is the partition to split the backlog on when more than one agent works it,
+# and it is not an arbitrary choice: `bin/operator hooks` installs a pre-commit
+# that REFUSES a commit spanning more than one top-level tree. So a per-tree split
+# is enforced by the repo itself — two agents on different trees cannot land in
+# each other's commit, and each tree has its own test command, so neither blocks
+# the other waiting for a suite.
+#
+# Splitting by bucket instead (prose vs testable) does not have that property: two
+# agents would both be editing TODO.md and both touching RAILS.
+#
+# An item with no tree signal goes to :shared — TODO.md itself, or prose about the
+# repo as a whole. Those are the ones to agree on by hand, and there are few.
+def tree_of(text)
+  hits = TREES.select { |t| text.include?("#{t}/") }
+  return hits.first if hits.size == 1
+  return :spans_trees if hits.size > 1
+
+  # No explicit prefix: infer from vocabulary that is unambiguous per tree.
+  return "RAILS" if text.match?(/\b(brgen|amber|bsdports|marketplace|takeaway|dating|radio|vertical|scss|erb|Stimulus|Turbo)\b/i)
+  return "STUDIO" if text.match?(/\b(dilla|postpro|repligen|lora|render|stem|bpm|sonic)\b/i)
+  return "OPENBSD" if text.match?(/\b(vm23|relayd|nsd|acme|pf\.conf|rc\.d|crontab|deploy|doas)\b/i)
+  return "MASTER" if text.match?(/\b(law|scanner|ratchet|council|fold|soul\.yml|rules\.yml|face|TTS)\b/i)
+
+  :shared
+end
+
+def partition_report
+  by_tree = Hash.new { |h, k| h[k] = [] }
+
+  items.each do |number, text|
+    next if text.match?(DECIDED)
+
+    by_tree[tree_of(text)] << number
+  end
+
+  total = by_tree.values.sum(&:size)
+  puts "#{total} undecided items, partitioned by the tree they touch."
+  puts "The pre-commit hook refuses a commit spanning two trees, so this split is"
+  puts "enforced rather than agreed: two agents on different trees cannot collide."
+  puts
+  by_tree.sort_by { |_, v| -v.size }.each do |tree, numbers|
+    puts "  #{tree.to_s.ljust(12)} #{numbers.size.to_s.rjust(4)}"
+  end
+  puts
+  puts "TODO.md itself is the one shared file — whoever edits it commits it with"
+  puts "their own tree's change, and :spans_trees plus :shared are the items to"
+  puts "divide by hand."
+end
+
   def run
     tally = Hash.new(0)
     stale = []
@@ -221,5 +273,11 @@ end
 end
 
 if $PROGRAM_NAME == __FILE__
-  ARGV.include?("--symbols") ? BacklogClaims.symbol_report : BacklogClaims.run
+  if ARGV.include?("--partition")
+    BacklogClaims.partition_report
+  elsif ARGV.include?("--symbols")
+    BacklogClaims.symbol_report
+  else
+    BacklogClaims.run
+  end
 end

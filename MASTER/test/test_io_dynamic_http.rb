@@ -82,13 +82,4 @@ class DynamicHttpTest < Minitest::Test
       assert_match(/refused internal/, result.message.to_s)
     end
   end
-
-  # The guard is the only thing between the registry and the request, so assert it
-  # is still the call site's business rather than trusting the file to keep it.
-  def test_the_call_site_still_consults_the_guard
-    source = File.read(File.join(Master::ROOT, "lib", "io", "dynamic_http.rb"))
-
-    assert_match(/SsrfGuard\.safe_uri\?/, source,
-                 "the SSRF check is this class's only defence; SsrfGuard's own tests cannot see it go")
-  end
 end

@@ -6045,6 +6045,45 @@ Numbered 1–N across the four trees.
      `test_cli_boot_e2e` and `test_self_scan` are deliberately env-gated, which is
      a different thing from a skip nobody can lift.
 
+1068. **Radio's visualizer: the code is all here, and nothing is wired.** Archaeology
+     done 2026-09-12 against the deleted root `index.html`, 144 revisions.
+
+     The best version is **`ba752d682`** (2026-01-17, "purple/magenta VGA synthwave
+     palette"), the last of sixteen revisions carrying all seven visualisers —
+     `PixelTunnel`, `InfinityGridViz`, `CymaticWavesViz`, `FractalCascadeViz`,
+     `VortexNestViz`, `NeuralWebViz`, `CosmicEmanationViz`, `HypergridSpiralViz` —
+     together with the behaviour that was asked for, written exactly this way:
+
+         window.vizMode = 0;                       // the tunnel, by default
+         window.vizRenderers = [tunnelRenderer, new InfinityGridViz(ctx), ...];
+         // on a new track:
+         vizMode = (vizMode + 1) % vizRenderers.length;
+
+     So the original visualiser IS the warp tunnel with the merged orb, it IS
+     index 0, and the cycle-per-track already existed. The six others were dropped
+     from index.html at `037d14ce0` (2026-01-29) in the orb/tunnel merge.
+
+     Nothing needs recovering from git. All seven classes AND the switching —
+     `vizRenderers`, `vizMode`, `vizNames`, `vizPsychedelicModes`, `lastTrackIndex`
+     — are already in the tree at `brgen/app/javascript/reference/visualizers_2d_reference.js`,
+     61KB, whose own header records the second half of the story: they had also
+     lived in `shared/frontend/layouts/visualizer.js`, bound to a `#canvas` no view
+     rendered, so they never ran and were compiled dead into brgen and amber until
+     `248e23795` deleted that copy and parked this one.
+
+     What radio runs today is `brgen/app/javascript/radio_brgen_tunnel.js` —
+     `AudioEngine`, `VisualEngine`, `RadioBrgen`. Its `VisualEngine` has no
+     visualiser modes at all, only a `performanceMode` toggle, and `nextTrack()`
+     changes the audio without touching the visuals. That is the whole defect: one
+     renderer, no cycle, with seven renderers and the cycle sitting unimported
+     beside it.
+
+     The work is a port, not a recovery: give the radio canvas the seven renderers,
+     restore `vizMode` at 0, and call the cycle from `nextTrack()`. The reference
+     file is `// Reference only. Not loaded, not imported, not compiled` and
+     `css_coverage_lint.rb:181` depends on it staying that way, so wiring it means
+     moving the classes rather than importing that file where it sits.
+
 1060. **`vps_weekly_integrity.sh` has never run.** `etc/crontab.vm23:97` schedules it
      `30 3 * * 0`. Read from vm23 on 2026-09-12, root's live crontab does not carry
      that line and `/usr/local/bin/vps_weekly_integrity.sh` does not exist — this is

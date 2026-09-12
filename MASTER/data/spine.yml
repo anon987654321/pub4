@@ -572,7 +572,18 @@ pub4_source_ceilings:
 # So the backlog is not mostly stale, and it cannot be cleared mechanically. That
 # is worth a file: it is the difference between 2245 items to read and 2245 items
 # to read plus a wrong idea about them.
-  MASTER: 1052
+# 1052 -> 1053 for test/test_io_dynamic_http.rb. DynamicHttp fetches a URL named
+# in data/tools.dynamic.yml, and DynamicTools::PATHS also reads
+# ~/.master/tools.dynamic.yml — so the URL is data, and the only thing between
+# that data and a request to 169.254.169.254 is one line calling
+# SsrfGuard.safe_uri?.
+#
+# SsrfGuard has twelve tests of its own. Its only call site had none, so the
+# guard was well covered and its use was not: reorder those two lines, or drop
+# the `unless`, and all twelve still pass. Nine tests here, none of which opens a
+# socket — every case is refused before the request, which is the point. Deleting
+# the guard fails three of them.
+  MASTER: 1053
 
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
