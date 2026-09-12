@@ -1,17 +1,26 @@
 # MASTER
 
-<!-- The face reading this file aloud, in the voice data/voice.yml names. Recorded
-     by RAILS/gates/probes/face_loop_record.rb.
+<!-- Two films, both rebuilt by MASTER/bin/loops.
 
-     loop.mp4 carries the sound and loop.gif is the same take without it. The
-     frame is the gif because GitHub's sanitizer strips <video> — measured
-     2026-08-30 — so the mp4 is what the frame links to rather than what it
-     embeds: clicking the face opens the take with its audio.
+     loop1 is the face reading this file aloud, in the voice data/voice.yml
+     names, with the ai.brgen.no wordmark in the corner — recorded by
+     RAILS/gates/probes/face_loop_record.rb. loop2 is a shell booting bin/cli,
+     cropped to the boot message and the prompt, recorded by
+     RAILS/gates/probes/shell_loop_record.rb. Its banner is read from
+     Master::CLI::BootBanner at record time rather than pasted, so changing the
+     banner changes the film.
+
+     Each mp4 carries the sound and each gif is the same take without it: GIF
+     has no audio track at all, which is why the pair exists rather than one
+     file. The frame is the gif because GitHub's sanitizer strips <video> —
+     measured 2026-08-30 — so the mp4 is what the frame links to rather than
+     what it embeds: clicking either opens the take with its audio.
 
      An inline player with sound needs the mp4 uploaded through GitHub's web UI
      and its user-attachments URL pasted here. That upload is the operator's; a
-     repo-relative <video src="loop.mp4"> renders as nothing. -->
-<a href="loop.mp4"><img src="loop.gif" width="360" alt="The MASTER face, reading this page aloud — click for sound"></a>
+     repo-relative <video src="loop1.mp4"> renders as nothing. -->
+<a href="loop1.mp4"><img src="loop1.gif" width="360" alt="The MASTER face, reading this page aloud — click for sound"></a>
+<a href="loop2.mp4"><img src="loop2.gif" width="360" alt="MASTER booting on vm23 — click for sound"></a>
 
 **MASTER is the first artificial intelligence written in pure Ruby that governs
 itself by law, not by hope — grown in Norway, to run its own mind on power drawn

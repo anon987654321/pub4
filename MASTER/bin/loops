@@ -1,0 +1,134 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# loops — rebuild the two README films.
+#
+#   MASTER/bin/loops            both
+#   MASTER/bin/loops face       loop1 only
+#   MASTER/bin/loops shell      loop2 only
+#
+# loop1 is the MASTER face reading the README aloud, with the ai.brgen.no
+# wordmark in the corner. loop2 is a shell booting bin/cli on vm23.
+#
+# Both carry STUDIO/dilla/demo.wav. loop1 MIXES it under the narration rather
+# than replacing it — the face's mouth is driven by that narration and swapping
+# the track would leave it lip-syncing to nothing. loop2 has no voice, so the
+# music is its whole soundtrack.
+#
+# The wordmark is drawn by Chrome, not by ffmpeg: this ffmpeg has no drawtext
+# (built without libfreetype), and the mark is type in the brand stack rather
+# than an image asset — shared/_brand_mark says "type only, no chip, no
+# background", so there is no logo file to overlay. White on black, composited
+# with a screen blend, which makes the black exactly vanish.
+#
+# Each step is skipped when its input is missing, and says so. A film built
+# without its audio is still a film; a film built from a stale face capture is
+# not, so the face take is never regenerated here.
+
+require "fileutils"
+
+ROOT = File.expand_path("../..", __dir__)
+MASTER = File.join(ROOT, "MASTER")
+DEMO = File.join(ROOT, "STUDIO", "dilla", "demo.wav")
+SOURCE = File.join(MASTER, "loop.mp4")
+MARK_PAGE = File.join(MASTER, "web", "public", "wordmark_ai.html")
+
+def sh(*args)
+  system(*args, out: File::NULL, err: File::NULL)
+end
+
+def report(path)
+  return puts("  #{File.basename(path)}: not written") unless File.file?(path)
+
+  puts "  #{File.basename(path)}: #{(File.size(path) / 1024.0 / 1024).round(2)} MB"
+end
+
+# A gif of whatever mp4 was just written, two-pass so the palette is the film's
+# own rather than the web-safe default.
+# Seconds, not the whole film: the README gif is a taste of the video behind it,
+# and the original was 7.5s at 8fps and 360px for 1.3MB. The same two-pass
+# palette over 266 seconds is 183MB, which is not a README asset.
+def gif_for(mp4, fps: 8, width: 360, seconds: 7.5)
+  gif = mp4.sub(/\.mp4\z/, ".gif")
+  palette = File.join(Dir.tmpdir, "#{File.basename(mp4, '.mp4')}_palette.png")
+  sh("ffmpeg", "-y", "-t", seconds.to_s, "-i", mp4, "-vf", "fps=#{fps},scale=#{width}:-1:flags=lanczos,palettegen", palette)
+  sh("ffmpeg", "-y", "-t", seconds.to_s, "-i", mp4, "-i", palette, "-lavfi",
+     "fps=#{fps},scale=#{width}:-1:flags=lanczos [x]; [x][1:v] paletteuse", gif)
+  File.delete(palette) if File.file?(palette)
+  report(gif)
+end
+
+def wordmark_png
+  out = File.join(Dir.tmpdir, "ai_wordmark.png")
+  return out if File.file?(out)
+
+  page = File.join(Dir.tmpdir, "ai_wordmark.html")
+  File.write(page, <<~HTML)
+    <!doctype html><meta charset="utf-8">
+    <style>
+      html,body{margin:0;background:#000}
+      #m{display:inline-block;
+         font:800 21px/1 "Helvetica Neue","HelveticaNeue","Helvetica",Arial,sans-serif;
+         letter-spacing:-0.02em;color:#fff}
+    </style><span id="m">ai.brgen.no</span>
+  HTML
+
+  script = File.join(Dir.tmpdir, "ai_wordmark.rb")
+  File.write(script, <<~RUBY)
+    $LOAD_PATH.unshift #{File.join(ROOT, 'RAILS', 'gates', 'support').inspect}
+    require "cdp_session"
+    require "json"
+    Deploy::CdpSession.open do |s|
+      s.viewport(300, 60)
+      s.navigate("file://#{page}", settle: 0.5)
+      box = JSON.parse(s.evaluate('(() => { const r = document.getElementById("m").getBoundingClientRect(); return JSON.stringify({ w: Math.ceil(r.width), h: Math.ceil(r.height) }); })()'))
+      s.screenshot(#{out.inspect}, clip: { "x" => 0, "y" => 0, "width" => box["w"], "height" => box["h"] })
+    end
+  RUBY
+  sh("ruby", script)
+  out
+end
+
+def build_face
+  puts "loop1 — the face, with the wordmark"
+  return puts("  #{SOURCE} missing; nothing to build from") unless File.file?(SOURCE)
+
+  mark = wordmark_png
+  out = File.join(MASTER, "loop1.mp4")
+
+  overlay = "[1:v]format=rgba,colorchannelmixer=aa=0.86[mk];" \
+            "[0:v][mk]overlay=W-w-18:18:format=auto:eval=init,format=yuv420p"
+
+  if File.file?(DEMO)
+    # The narration keeps the mouth honest, so the music sits under it.
+    sh("ffmpeg", "-y", "-i", SOURCE, "-i", mark, "-i", DEMO,
+       "-filter_complex", "#{overlay};[0:a][2:a]amix=inputs=2:duration=first:weights=1 0.35[a]",
+       "-map", "0:v", "-map", "[a]", "-c:v", "libx264", "-crf", "30", "-preset", "slow", "-pix_fmt", "yuv420p",
+       "-movflags", "+faststart", "-c:a", "aac", "-b:a", "192k", out)
+  else
+    warn "  #{DEMO} not rendered yet — keeping the narration alone"
+    sh("ffmpeg", "-y", "-i", SOURCE, "-i", mark, "-filter_complex", overlay,
+       "-c:v", "libx264", "-crf", "30", "-preset", "slow", "-movflags", "+faststart",
+       "-c:a", "copy", out)
+  end
+  report(out)
+  gif_for(out)
+end
+
+def build_shell
+  puts "loop2 — the shell"
+  sh("ruby", File.join(ROOT, "RAILS", "gates", "probes", "shell_loop_record.rb"),
+     "--out", File.join(MASTER, "loop2.mp4"), "--audio", DEMO, "--fps", "20")
+  report(File.join(MASTER, "loop2.mp4"))
+  gif_for(File.join(MASTER, "loop2.mp4"), seconds: 9)
+end
+
+require "tmpdir"
+
+case ARGV.first
+when "face" then build_face
+when "shell" then build_shell
+else
+  build_face
+  build_shell
+end

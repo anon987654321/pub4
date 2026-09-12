@@ -35,8 +35,11 @@ knowledge/
 # just that a probe ran.
 .constitutional_violations.jsonl
 .constitutional_locks/
+# Source material for the README films, not the films themselves. loop.mp4 is the
+# raw face take that bin/loops composites the wordmark onto; tts.wav is the
+# narration face_loop_record drives the mouth from. What ships is loop1.* and
+# loop2.*, which are tracked.
 loop.mp4
-# The README take is recorded from this, by gates/probes/face_loop_record.rb.
 tts.wav
 
 # reports/ is generated output — PATH_OWNERSHIP.yml calls it "regenerate, do not
