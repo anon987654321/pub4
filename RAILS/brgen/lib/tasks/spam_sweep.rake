@@ -15,7 +15,7 @@
 #                       and Latin — one bot, one phrasebook
 #
 # The subdomains in those titles are the tell. dating.cardff.uk, maps.cardff.uk,
-# marketplace.cardff.uk and playlist.cardff.uk were never linked anywhere: the
+# marketplace.cardff.uk and radio.cardff.uk were never linked anywhere: the
 # bots enumerated them from Certificate Transparency, which publishes every SAN
 # on every certificate we issue. Any host we get a certificate for is public
 # knowledge within minutes, whether or not it is announced.

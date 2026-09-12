@@ -5,7 +5,7 @@ import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
 
 // brgen is back, 2026-08-14. It had been hand-rolled since the precache manifest
-// pinned ~89 digested asset URLs and broke the PWA on playlist.brgen.no; escaping
+// pinned ~89 digested asset URLs and broke the PWA on radio.brgen.no; escaping
 // that cost it the offline form queue, periodic sync and the page cache, which
 // amber and bsdports kept. The manifest no longer pins digests (globIgnores
 // below, proved by putting two digested files under public/assets and watching
@@ -46,7 +46,7 @@ try {
       // manifest went from 17 entries to 19 and pinned both. The next deploy
       // re-digests every one, and `install` then fails with
       // bad-precaching-response against URLs that 404. That broke the PWA on
-      // playlist.brgen.no, and brgen's answer was to throw the whole Workbox
+      // radio.brgen.no, and brgen's answer was to throw the whole Workbox
       // worker away and hand-roll a minimal one — which also cost it the offline
       // form queue and periodic sync that amber and bsdports still have.
       //
