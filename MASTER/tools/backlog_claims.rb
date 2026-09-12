@@ -106,6 +106,95 @@ module BacklogClaims
     :prose
   end
 
+
+# Every identifier the tree defines, so an item's backticked tokens can be tested
+# against it.
+#
+# What this CANNOT do, and the reason it reports a stratification rather than a
+# verdict: a token the tree does not define is not thereby stale. Most of them are
+# external vocabulary — PerformanceObserver, data-turbo-prefetch, aria-busy,
+# prefers-reduced-motion are browser names; fresh_when and update_column are
+# Rails. A first version called all 719 of those "identifiers the tree does not
+# define", which is true and useless. Telling this tree's lost names from the
+# world's live ones needs an allowlist of Rails, DOM and CSS vocabulary, and an
+# allowlist nobody curates is where dead names hide.
+#
+# So the sound half is the positive one: an item whose every named identifier
+# exists here is an item about live code, and can be worked now. That bucket is
+# the working set.
+def symbols
+  @symbols ||= begin
+    index = Set.new
+    tracked.each do |path|
+      next unless path.match?(/\.(rb|yml|yaml|scss|js|mjs|erb|rake)\z/)
+      next if path.start_with?("snapshot_")
+
+      index << File.basename(path)
+      body = begin
+        File.read(File.join(ROOT, path), encoding: "UTF-8")
+      rescue StandardError
+        next
+      end
+
+      body.scan(/^\s*(?:class|module)\s+([A-Z][\w:]*)/) { |(c)| index << c.split("::").last; index << c }
+      body.scan(/^\s*def\s+(?:self\.)?([\w?!=\[\]<>+*\/-]+)/) { |(m)| index << m }
+      body.scan(/^\s*([A-Z][A-Z0-9_]{2,})\s*=/) { |(c)| index << c }
+      body.scan(/^\s{0,8}([a-z_][\w]*):\s/) { |(k)| index << k }
+      body.scan(/^\s*(?:--)([\w-]+):/) { |(v)| index << "--#{v}" }
+      body.scan(/^\s*\.([a-z][\w-]+)\s*[,{]/) { |(c)| index << ".#{c}" }
+    end
+    index
+  end
+end
+
+CODE_TOKEN = /`([A-Za-z_.#-][\w:.#?!\/-]{2,})`/
+
+def token_verdict(text)
+  tokens = text.scan(CODE_TOKEN).flatten
+               .reject { |t| t.include?(" ") }
+               .map { |t| t.sub(/\A#/, "").sub(/[#.]\z/, "") }
+               .reject(&:empty?)
+               .uniq
+               .reject { |t| t.include?("/") || t.match?(/\.\w{2,4}\z/) }
+  return :no_code_token if tokens.empty?
+
+  known = tokens.select { |t| symbols.include?(t) || symbols.include?(t.split(/[#.]/).last) }
+  return :every_name_is_ours if known.size == tokens.size
+  return :no_name_is_ours if known.empty?
+
+  :mixed_names
+end
+
+def symbol_report
+  tally = Hash.new(0)
+  working_set = []
+
+  items.each do |number, text|
+    if text.match?(DECIDED)
+      tally[:decided] += 1
+      next
+    end
+
+    kind = token_verdict(text)
+    tally[kind] += 1
+    working_set << [number, text.lines.first.strip[0, 88]] if kind == :every_name_is_ours
+  end
+
+  puts "TODO.md: #{items.size} items, #{symbols.size} identifiers indexed from the tree"
+  puts
+  tally.sort_by { |_, n| -n }.each { |k, n| puts "  #{k.to_s.ljust(20)} #{n}" }
+  puts
+  puts "decided            — a verdict is already written into the item"
+  puts "every_name_is_ours — every backticked identifier exists here: the working set"
+  puts "mixed_names        — some ours, some external vocabulary; needs reading"
+  puts "no_name_is_ours    — names only external vocabulary, or names something gone"
+  puts "no_code_token      — prose with no code anchor at all"
+  puts
+  puts "Working set (#{working_set.size}):"
+  working_set.first(Integer(ENV.fetch("LIMIT", "25"))).each { |n, head| puts "  #{n}. #{head}" }
+  puts "  ... #{working_set.size - 25} more" if working_set.size > 25
+end
+
   def run
     tally = Hash.new(0)
     stale = []
@@ -131,4 +220,6 @@ module BacklogClaims
   end
 end
 
-BacklogClaims.run if $PROGRAM_NAME == __FILE__
+if $PROGRAM_NAME == __FILE__
+  ARGV.include?("--symbols") ? BacklogClaims.symbol_report : BacklogClaims.run
+end
