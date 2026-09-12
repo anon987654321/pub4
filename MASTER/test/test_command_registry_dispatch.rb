@@ -53,12 +53,13 @@ class TestCommandRegistryDispatch < Minitest::Test
   # has to come here and say so.
   ROOT = File.expand_path("..", __dir__)
   SEARCHED = %w[lib web bin tools].freeze
+  SKIP = %r{/(node_modules|vendor|tmp|public/assets|coverage)/|\.(png|jpg|jpeg|gif|webp|woff2?|mp4|mp3|wav|ico|map)\z}
 
   def test_the_unmerged_command_tables_are_the_seven_we_know_about
     tables = Dir.glob(File.join(ROOT, "lib/cli/command_registry/*_commands*.rb"))
                 .map { |path| File.basename(path, ".rb") }
 
-    unmerged = tables.reject { |table| production_call_site?(table) }
+    unmerged = tables - called_tables(tables)
 
     assert_equal %w[agent_commands core_commands media_commands memory_commands
                     reach_commands system_commands work_commands_extra],
@@ -66,15 +67,34 @@ class TestCommandRegistryDispatch < Minitest::Test
                  "the unmerged set moved — wire the new one, or record here why it is unreachable"
   end
 
+  # One pass over the tree, not one grep per table. It was ten `grep -rn`
+  # subprocesses, each walking lib, web, bin and tools in full, and under suite
+  # load the whole test timed out — a guard that cannot finish measures nothing,
+  # which is the failure mode it was written to prevent in the code it reads.
+  # Ruby rather than grep for the same reason the rest of this repo prefers it:
+  # this runs on OpenBSD too.
+  #
   # A require names a file and a def names itself; neither is a call.
-  def production_call_site?(table)
-    dirs = SEARCHED.map { |dir| File.join(ROOT, dir) }.select { |dir| File.exist?(dir) }
-    lines = IO.popen(["grep", "-rn", "--", table, *dirs], err: File::NULL, &:read).split("\n")
+  def called_tables(tables)
+    found = []
+    source_files.each do |file|
+      text = File.read(file, encoding: "UTF-8")
+      next unless text.valid_encoding?
 
-    lines.any? do |line|
-      next false if line.include?("require_relative") || line.include?("def #{table}")
+      tables.each do |table|
+        next if found.include?(table)
+        next unless text.include?(table)
 
-      true
+        found << table if text.lines.any? { |line|
+          line.include?(table) && !line.include?("require_relative") && !line.include?("def #{table}")
+        }
+      end
     end
+    found
+  end
+
+  def source_files
+    SEARCHED.flat_map { |dir| Dir.glob(File.join(ROOT, dir, "**/*")) }
+            .reject { |path| path.match?(SKIP) || !File.file?(path) }
   end
 end
