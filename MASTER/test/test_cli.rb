@@ -2,7 +2,9 @@
 
 require_relative "test_helper"
 require "cli/brain_overlay"
+require "cli/deliberation_prep"
 require "cli/fix_preview_report"
+require "cli/fold_risk"
 require "cli/resync_service"
 
 class TestCLI < Minitest::Test
@@ -173,6 +175,19 @@ class TestCLI < Minitest::Test
     assert_includes output, "by rule:\n  STYLE"
     assert_includes output, "top files:\n  #{"a" * 60} 3"
     refute_includes output, "a" * 61
+  end
+
+  def test_deliberation_prep_publishes_and_returns_nil_when_ideation_fails
+    events = []
+    bus = Object.new
+    bus.define_singleton_method(:publish) { |event, **details| events << [event, details] }
+    container = { agent: Object.new, bus: }
+
+    Master::CLI::DeliberationPrep.stub(:run_ideation, ->(*) { raise "ideation unavailable" }) do
+      assert_nil Master::CLI::DeliberationPrep.prepare!(goal: "goal", container:, risk: :high)
+    end
+
+    assert_equal ["ideation:error", { message: "ideation unavailable" }], events.last
   end
 
   def test_help_uses_progressive_disclosure
