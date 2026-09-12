@@ -61,27 +61,12 @@ module Master
         # and a tier that reports both as a generic provider error sends the
         # reader to the wrong one.
         def ollama_post(body, stream:, &blk)
-          uri = URI.join("#{ollama_base_url}/", CHAT_PATH.delete_prefix("/"))
-          http = Net::HTTP.new(uri.host, uri.port)
-          http.use_ssl = uri.scheme == "https"
-          http.open_timeout = OPEN_TIMEOUT_S
-          http.read_timeout = READ_TIMEOUT_S
-          request = Net::HTTP::Post.new(uri.path, "Content-Type" => "application/json")
-          request.body = JSON.generate(body)
-
-          # Net::HTTP#request returns the response, not the block's value, so the
-          # outcome is assigned rather than returned — reading the body inside
-          # the block is what makes the streaming case stream at all.
+          uri = ollama_uri
+          request = ollama_request(uri, body)
           outcome = nil
-          http.start do |session|
+          ollama_http(uri).start do |session|
             session.request(request) do |response|
-              outcome = if !response.is_a?(Net::HTTPSuccess)
-                          ollama_http_error(response, body[:model])
-                        elsif stream
-                          read_ollama_stream(response, &blk)
-                        else
-                          read_ollama_reply(response)
-                        end
+              outcome = ollama_response(response, body[:model], stream:, &blk)
             end
           end
           outcome
@@ -89,6 +74,30 @@ module Master
           Result.err("ollama unreachable at #{ollama_base_url}: #{e.message}", category: :provider_error)
         rescue Net::OpenTimeout, Net::ReadTimeout => e
           Result.err("ollama timed out at #{ollama_base_url}: #{e.message}", category: :timeout)
+        end
+
+        def ollama_uri
+          URI.join("#{ollama_base_url}/", CHAT_PATH.delete_prefix("/"))
+        end
+
+        def ollama_http(uri)
+          http = Net::HTTP.new(uri.host, uri.port)
+          http.use_ssl = uri.scheme == "https"
+          http.open_timeout = OPEN_TIMEOUT_S
+          http.read_timeout = READ_TIMEOUT_S
+          http
+        end
+
+        def ollama_request(uri, body)
+          request = Net::HTTP::Post.new(uri.path, "Content-Type" => "application/json")
+          request.body = JSON.generate(body)
+          request
+        end
+
+        def ollama_response(response, model, stream:, &blk)
+          return ollama_http_error(response, model) unless response.is_a?(Net::HTTPSuccess)
+
+          stream ? read_ollama_stream(response, &blk) : read_ollama_reply(response)
         end
 
         def ollama_http_error(response, model)

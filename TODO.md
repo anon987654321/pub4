@@ -37,6 +37,7 @@ mentioned.
   `MASTER/lib/review/llm_dispatcher/ollama_sender.rb:63` has a 24-line
   `ollama_post` method against the 20-line density ceiling. The check labels
   this `agent-ignore` known debt; extract helpers and rerun the profile.
+  **Claimed 2026-09-12 by Copilot in `pub4-todo-ollama`.**
 - `MASTER/bin/operator status` reports Ruby 4.0.5, while the repository pins
   Ruby 3.4.9. Run checks through `RBENV_VERSION=3.4.9 rbenv exec ruby` and
   restore the local default if the mismatch is unintended.
