@@ -139,7 +139,13 @@ class PerCitySeederTest < ActiveSupport::TestCase
 # copy. Each set is several markers and the assertion needs one, so a rewrite
 # that keeps the dialect and changes the wording still passes.
 DIALECT_MARKERS = {
-  "brgen.no" => [ /\beg\b/i, /\bka\b/i, /\bdokker\b/i ],
+    # Bergen types bokmål and speaks bergensk — the operator's correction. The
+    # pronouns do not survive into writing; the vocabulary with no bokmål
+    # equivalent does — plus the idiom "den er brun" and the names only a
+    # Brann supporter writes, Bataljonen and Store Stå. A Bergen bank carrying
+    # none of these is any Norwegian city.
+    "brgen.no" => [ /\bboss(et)?\b/i, /\bsmau(et)?\b/i, /\bbekkalokk/i, /\bkjuagutt\b/i,
+                    /\btebrød\b/i, /\bbrun\b/i, /\bBataljonen\b/, /\bStore Stå\b/, /\beg\b/ ],
   "trndheim.no" => [ /\bæ\b/i, /\bitj\b/i, /\bdokker\b/i ],
   "stvanger.no" => [ /\beg\b/i, /\bikkje\b/i, /\bberre\b/i, /\bmykje\b/i, /\båleine\b/i ],
   "oshlo.no" => [ /\bklokka\b/i, /\bsola\b/i, /\bboka\b/i, /\bsyns\b/i ]

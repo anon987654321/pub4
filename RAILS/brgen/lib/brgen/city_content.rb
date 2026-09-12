@@ -112,26 +112,56 @@ module Brgen
     #               dialect markers to reach for, and pretending otherwise is
     #               worse than writing it plainly.
     #
+# The blend, and it is an editorial rule rather than a ratio: the dialect
+# carries the pronouns, the negation and the question words, and ordinary
+# bokmål carries everything else. People type the way they speak in the
+# words they think in and default to the written standard for the rest, so
+# a post that is dialect all the way down reads as an exhibition of a
+# dialect rather than as somebody asking about the bins.
+#
+# Stavanger is the exception and deliberately so. snl.no's Stavanger bymål
+# records `eg`, `ikkje` and the -a infinitive as the city's own folkemål —
+# "eg såg ikkje någen store båd" — and says the speech is clearly West
+# Norwegian and nynorsk-leaning in writing. So that bank stays nynorsk-
+# shaped; flattening it toward bokmål would be correcting the city.
+#
+# Sources, so the next editor argues with them rather than with taste:
+# bergensk — no feminine gender at all, an e-language, `eg`/`ka`
+# (no.wikipedia Bergensk dialekt; utdanningibergen's vocabulary list for
+# boss, smau, bekkalokk, kjuagutt, tebrød, "den e brun").
+# trøndersk — `æ`, `itj`, `ka`, `dokker`, `koss`, apokope, palatalisation,
+# sentence-final `sjø` (snl.no trøndersk; NTNU's ordliste).
+# stavangersk — snl.no Stavanger bymål, above.
+# oslo — east Norwegian has no dialect word to reach for, so the markers
+# are the colloquial feminine it actually speaks: boka, klokka, sola, sjæl.
+#
     # Places are real and specific. A post about Bybanen or Bakklandet belongs
     # to one city and could not have been generated for another, which is the
     # whole point of the exercise.
     POSTS_BY_DOMAIN = {
+      # Bergen types bokmål and speaks bergensk. The operator's own correction,
+      # 2026-09-12, and it is the half no source states: a bergenser writes
+      # "Hva gjør dere" on a forum and says "Ka gjør dokker" out loud. What crosses
+      # into writing is the vocabulary with no bokmål equivalent — boss, smau,
+      # bekkalokk, kjuagutt, tebrød — plus the occasional `eg` that slips through
+      # when somebody is annoyed. A thread written entirely in spoken bergensk is
+      # cosplay; a thread with none of it is any Norwegian city.
       "brgen.no" => [
-        [ "Ka gjør dokker når det bøtter ned hele helgen?", "Eg har gitt opp paraplyen. Kjøpte skikkelig regnjakke på Xhibition og nå e det nesten kjekt å gå i sentrum når det står rett ned.",
-          [ "Paraply i Bergen e bare noe turistene har. Velkommen etter.", "Regnbukse òg. Da kan du sitte på benken på Torgallmenningen uten å tenke på det." ] ],
-        [ "Bosset på Nordnes står igjen fjerde uken", "Nokon som veit ke det går i? Har ringt kommunen to ganger. Bekkalokket i smauet e tett òg.",
-          [ "Samme på Møhlenpris. Trur det e noe med ruten.", "Meld det inn på nett, da får du saksnummer. Telefon gir ingenting." ] ],
-        [ "Fløyen før klokken sju e en annen by", "Gikk opp i grålysningen i dag. Møtte tre stykker totalt. Byen lå under skodden og bare Ulriken stakk opp.",
-          [ "Det e den eneste tiden Fløyen e vår.", "Prøv Stoltzekleiven samme tid. Brutalt, men du har den for deg selv." ] ],
-        [ "Beste tebrød i Bergen — eg tar imot forslag", "Har testet meg gjennom sentrum. Fortsatt ikke funnet noe som slår det eg fikk på Møhlenpris i fjor.",
-          [ "Baker Brun på Bryggen, men bare før ti.", "Den e brun. Bokstavelig talt." ] ],
-        [ "Bybanen til Åsane — trur dokker på 2030?", "Har hørt den datoen så mange ganger nå at eg begynner å lure. Noen som følger med på reguleringen?",
-          [ "Eg har hørt den siden eg var student. Nå har eg barn på skolen.", "Følg bystyremøtene, det e der det faktisk avgjøres." ] ],
-        [ "Fisketorget lørdag: turist eller bergenser?", "Eg kjøper fortsatt fisken der, men aldri på lørdag. Da e det kø av folk som skal ha reker i beger.",
-          [ "Tirsdag morgen. Da e det oss.", "Prøv fiskebutikken i Sandviken i stedet, halve prisen." ] ],
+        [ "Hva gjør dere når det bøtter ned hele helgen?", "Har gitt opp paraplyen. Kjøpte skikkelig regnjakke på Xhibition, og nå er det nesten kjekt å gå i sentrum når det står rett ned.",
+          [ "Paraply i Bergen er noe turistene har. Velkommen etter.", "Regnbukse også. Da kan du sette deg på benken på Torgallmenningen uten å tenke på det." ] ],
+        [ "Bosset på Nordnes står igjen fjerde uken", "Noen som vet hva som skjer? Har ringt kommunen to ganger. Bekkalokket i smauet er tett også.",
+          [ "Samme på Møhlenpris. Tror det er noe med ruten.", "Meld det inn på nett, da får du saksnummer. Telefon gir ingenting." ] ],
+        [ "Fløyen før klokken sju er en annen by", "Gikk opp i grålysningen i dag. Møtte tre stykker totalt. Byen lå under skodden og bare Ulriken stakk opp.",
+          [ "Det er den eneste tiden Fløyen er vår.", "Prøv Stoltzekleiven på samme tid. Brutalt, men du har den for deg selv." ] ],
+        [ "Beste tebrød i Bergen — tar imot forslag", "Har testet meg gjennom sentrum. Fortsatt ikke funnet noe som slår det jeg fikk på Møhlenpris i fjor.",
+          [ "Baker Brun på Bryggen, men bare før ti.", "Den er brun. Bokstavelig talt." ] ],
+        [ "Bybanen til Åsane — tror dere på 2030?", "Har hørt den datoen så mange ganger nå at jeg begynner å lure. Noen som følger med på reguleringen?",
+          [ "Eg har hørt den siden jeg var student. Nå har jeg barn på skolen.", "Følg bystyremøtene, det er der det faktisk avgjøres." ] ],
+        [ "Fisketorget lørdag: turist eller bergenser?", "Kjøper fortsatt fisken der, men aldri på lørdag. Da er det kø av folk som skal ha reker i beger.",
+          [ "Tirsdag morgen. Da er det oss.", "Prøv fiskebutikken i Sandviken i stedet, halve prisen." ] ],
         [ "Kjuagutt søker fotballag i Årstad", "35, treig, men møter opp hver gang. Spilte på Nymark for hundre år siden.",
-          [ "Vi trenger folk på torsdager. Send melding.", "Møter opp hver gang e det eneste kravet som betyr noe." ] ],
-        [ "Brann på Stadion i regn e den ekte varen", "Bataljonen sto som vanlig. Den e brun, uansett hvordan det gikk.",
+          [ "Vi trenger folk på torsdager. Send melding.", "Møter opp hver gang er det eneste kravet som betyr noe." ] ],
+        [ "Brann på Stadion i regn er den ekte varen", "Bataljonen sto som vanlig. Den er brun, uansett hvordan det gikk.",
           [ "Sto på Store Stå i tre timer. Angrer ingenting.", "Regnet hører til. Sol på Stadion føles feil." ] ]
       ],
       "oshlo.no" => [
