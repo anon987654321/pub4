@@ -5966,6 +5966,20 @@ Numbered 1–N across the four trees.
      justifications, and deleting them would break the rule that a fall records
      what paid for it.
 
+1066. **A guard for listener-vs-topic drift is worth building and is not free.**
+     Four dead event names in `visual_bridge.js` were found by hand on 2026-09-12
+     (TODO 1 and 4). The shape of the check is: collect every `publish("ns:topic")`
+     in `MASTER/{lib,core,web}/**/*.rb` — 290 of them — and every `ns:topic` token in
+     the bridge, keep the tokens whose namespace the bus uses at all (37), and
+     require each to prefix-match a published topic, because the bridge tests with
+     regexes rather than equality.
+     Two things stop that being a five-line test. Comments count as tokens, so the
+     very comments explaining a removal read as the removal not having happened —
+     strip comments first. And several live names are SSE or DOM events rather than
+     bus topics (`council:speech`, `chat:append`, `input:focus`, `runtime:event`),
+     so the check needs a named allowlist, and an allowlist nobody curates becomes
+     the place dead names hide.
+
 1060. **`vps_weekly_integrity.sh` has never run.** `etc/crontab.vm23:97` schedules it
      `30 3 * * 0`. Read from vm23 on 2026-09-12, root's live crontab does not carry
      that line and `/usr/local/bin/vps_weekly_integrity.sh` does not exist — this is
@@ -6300,10 +6314,21 @@ token files. Legal and mailer CSS live in ERB and are invisible to both.
 
 ### Unwired — event names, missing templates, dead registrations
 
-1. **`visual_bridge.js` listens for `rule_loop:(cycle|clean|converged)`.** `:158`. The bus publishes `rule_loop:pass` / `rule_loop:fix_applied` / `rule_loop:error` (`rule_loop.rb:110,186`). `master:rule_event` never fires. Same family as `swallow:error` vs `error:swallowed`. Align the regex with the producer.
+1. **Fixed 2026-09-12.** `rule_loop.rb` publishes `pass`, `error`, `fix_applied`,
+   `write_error`, `fix_rejected` and `autofix_skipped`. The bridge tested
+   `rule_loop:(cycle|clean|converged)` — zero overlap with any of them, in a file
+   that matches by regex, so `master:rule_event` had never once fired. The listener
+   and the classify rows above it name the published topics now.
 2. **Same file `phantom:retry` (`:197`).** Producer is `phantom:recovery` / `phantom:occurrence` / `phantom:halt` (`unwrap_error.rb`). Flinch never runs on a real retry.
 3. **Same file `pipeline:start` (`:26`).** Producer is `pipeline:stage_start` / `pipeline:complete`. Thinking tint never keys off a real stage start.
-4. **`council:vote|speech|end` (`visual_bridge.js:200`) vs bus `council:start|pass|veto`.** The rotator never stops from the bus. `council:speech` is an SSE name on the chat stream, not a bus topic.
+4. **Fixed 2026-09-12.** The rotator started on `council:start`, which exists, and
+   could only be stopped by `tribunal:rendered` — of `vote|speech|end` none is a bus
+   topic and `council:speech` is an SSE name on the chat stream. So a council that
+   passed or vetoed left the face deliberating until something unrelated rendered a
+   tribunal. It stops on `council:pass|veto` now, keeping the SSE name and the
+   tribunal. Two dead alternates went with it: `council:deliberation` and
+   `phantom:retry` name nothing the bus publishes, and `pipeline:start` is not
+   `pipeline:stage_start`.
 5. **`council:deliberation` in `EventsController::VISITOR_SAFE_PREFIX`.** Nothing publishes it. Use `council:start`.
 6. **`tool:used` in the EventsController comment.** Producers are `tool:before` / `tool:after`. Delete the comment or retarget.
 7. **`tts:prefetch` in `face_vision_core.js`.** No publisher. Dead classifier arm. The bundle copies the same regex.

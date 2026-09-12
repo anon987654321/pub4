@@ -17,21 +17,21 @@
   };
 
   const FALLBACK_CLASSIFIER = [
-    [/phantom:detected|phantom:retry/i, { topology: "glitch", entropy: 0.88, confidence: 0.18, mode: "phantom" }],
+    [/phantom:(?:detected|halt|recovery)/i, { topology: "glitch", entropy: 0.88, confidence: 0.18, mode: "phantom" }],
     [/compaction:(start|done)|compact/i, { topology: "terrain", entropy: 0.42, confidence: 0.62, mode: "compact" }],
     [/btw:done|agent:(start|end)/i, { topology: "neural", entropy: 0.36, confidence: 0.74, mode: "side-agent" }],
     [/pipeline:stage|skills:triggered/i, { topology: "papua-mask", entropy: 0.30, confidence: 0.80, mode: "stage" }],
     [/ctx:footer/i, { topology: "neural", entropy: 0.22, confidence: 0.84, mode: "ctx" }],
     [/llm:escalation|fallback|retry/i, { topology: "serpent", entropy: 0.62, confidence: 0.46, mode: "escalation" }],
-    [/llm:request|agent:start|pipeline:start|infer:resolved|route:resolved|llm:routed/i, { topology: "papua-mask", entropy: 0.32, confidence: 0.72, mode: "thinking" }],
+    [/llm:request|agent:start|pipeline:stage_start|infer:resolved|route:resolved|llm:routed/i, { topology: "papua-mask", entropy: 0.32, confidence: 0.72, mode: "thinking" }],
     [/memory|retriev|context/i, { topology: "neural", entropy: 0.28, confidence: 0.76, mode: "memory" }],
     [/tool|scan|sweep|audit|rtk/i, { topology: "torus", entropy: 0.38, confidence: 0.70, mode: "tool" }],
     [/error|rollback|failed|failure/i, { topology: "serpent", entropy: 0.78, confidence: 0.24, mode: "error" }],
     [/done|complete|success|response/i, { topology: "papua-mask", entropy: 0.14, confidence: 0.92, mode: "complete" }],
     [/codebase:topology|fix_loop:pass/i, { topology: "codebase", entropy: 0.28, confidence: 0.78, mode: "codebase" }],
-    [/rule_loop:cycle|rule_loop:clean/i, { topology: "codebase", entropy: 0.45, confidence: 0.62, mode: "fixing" }],
+    [/rule_loop:(?:fix_applied|fix_rejected|write_error)/i, { topology: "codebase", entropy: 0.45, confidence: 0.62, mode: "fixing" }],
     [/fix_loop:idle/i, { topology: "codebase", entropy: 0.10, confidence: 0.95, mode: "settled" }],
-    [/rule_loop:converged/i, { topology: "codebase", entropy: 0.20, confidence: 0.82, mode: "converged" }]
+    [/rule_loop:pass/i, { topology: "codebase", entropy: 0.20, confidence: 0.82, mode: "converged" }]
   ];
 
   function classify(type, payload = {}) {
@@ -155,7 +155,11 @@
     if (/codebase:topology/i.test(type) && event.modules) {
       window.dispatchEvent(new CustomEvent("master:codebase", { detail: event }));
     }
-    if (/rule_loop:(cycle|clean|converged)/i.test(type)) {
+    // The topics rule_loop.rb publishes, which are not the ones this tested for:
+    // it read cycle|clean|converged and the bus sends pass, error, fix_applied,
+    // write_error, fix_rejected and autofix_skipped. Zero overlap, so
+    // master:rule_event had never once fired.
+    if (/rule_loop:(pass|error|fix_applied|write_error|fix_rejected|autofix_skipped)/i.test(type)) {
       window.dispatchEvent(new CustomEvent("master:rule_event", { detail: event }));
     }
     if (type === "self_violation") {
@@ -186,7 +190,9 @@
       const pct = event.pct ?? event.value ?? 0;
       window.dispatchEvent(new CustomEvent("master:pressure", { detail: { pct, ...event } }));
     }
-    if (/council:deliberation|council:start/i.test(type)) {
+    // council:start is the only one of these the bus has; council:deliberation was
+    // the other branch and names nothing, so it never contributed a match.
+    if (/council:start/i.test(type)) {
       startCouncilRotator();
       const spiritRadius = event.spirit_radius ?? event.spiritRadius ?? 1.14;
       window.dispatchEvent(new CustomEvent("master:visual", {
@@ -194,10 +200,15 @@
       }));
       document.documentElement.dataset.councilBreath = "1";
     }
-    if (/phantom:detected|phantom:retry/i.test(type)) {
+    // phantom:retry is not a bus topic — detected, halt, occurrence and recovery are.
+    if (/phantom:(?:detected|halt|recovery)/i.test(type)) {
       window.dispatchEvent(new CustomEvent("master:visual", { detail: { name: type, mode: "phantom", entropy: 0.9, confidence: 0.18, flinch: 1, raw: event } }));
     }
-    if (/council:(?:vote|speech|end)|tribunal:rendered/i.test(type)) {
+    // council:pass and council:veto are the bus outcomes; tribunal:rendered is a
+    // separate verdict and council:speech an SSE name on the chat stream. This read
+    // council:(vote|speech|end), and of those three only the SSE one exists — so a
+    // council that passed or vetoed never stopped the rotator.
+    if (/council:(?:pass|veto|speech)|tribunal:rendered/i.test(type)) {
       stopCouncilRotator();
       delete document.documentElement.dataset.councilBreath;
     }
