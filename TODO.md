@@ -7184,7 +7184,16 @@ Highest cost if wrong: 28–30 (deploy lock + jobs env), 36 (drain false-green),
 80. **`ensure_brain_files!` writes `data/IDENTITY.md` if missing**, bypassing sacred `data/`. Write under `.master/` or don’t create constitution files at runtime.
 81. **`Timeout.timeout` around `Net::HTTP` / UNIXSocket / Ferrum.** World already measured Timeout does not kill the child. Hung POST holds a Falcon worker. Use `read_timeout` / `IO.select` / Ferrum’s timeout; `quit` in ensure.
 82. **SSE loop `sleep 0.1` for up to 600s, `subscribe("*")` unbounded Queue.** Two Falcon workers plus chat SSE starve the 1 GB box. `Queue.pop(timeout:)`; cap; `HostBudget`.
-83. **`/health` SHA256s `Gemfile.lock` every poll** to memoise selftest. Relayd hits this. Hash on mtime+size change only.
+83. **`/health` SHA256s `Gemfile.lock` every poll — measured 2026-09-12, and
+    the finding is false in both halves.** The hash costs **27µs** on a 14,687-byte
+    lockfile (2,000 calls in 0.054s); ten times slower on vm23's vCPU is still
+    a third of a millisecond against a relayd poll. And the proposed fix is the
+    thing `speech.rb:154-158` already measured and rejected in writing: the
+    worker's own `bundler/setup` touches `Gemfile.lock`, so an mtime key is
+    invalidated by the very probe it memoises and every call spawns a full
+    subprocess. Content-keying is what makes the memo work. Kept as a guard —
+    a cheap-looking hash beside an expensive-looking name reads as waste, and
+    the expensive thing was the subprocess it prevents.
 84. **Hard compact sends all `session.messages` into `agent.ask`.** That’s the window that overflowed. Summarise a tail.
 85. **`SqliteStore` WAL failure falls back to `:memory:`.** Pairing/memory vanish on restart; process looks healthy. Fail closed for durable stores.
 86. **Three atomic writes; only `Io::AtomicWrite` fsyncs.** World/Live can leave a 0-byte file after rename of an unflushed tmp. One helper.
