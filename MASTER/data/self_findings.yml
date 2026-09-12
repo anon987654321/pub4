@@ -108,7 +108,14 @@
 # the whole `<%# ... %>` span dropped that finding and one NO_INLINE_SCRIPT_BLOCK
 # of the same shape, and the detector still fires on markup that follows the
 # comment's close — proved on planted cases before the count was believed.
-findings: 273
+#
+# 273 -> 272 on 2026-09-12. One MOBILE_FIRST finding, the last of eighteen in
+# RAILS. Fourteen of those carried a marker exempting them from the law; the
+# operator ruled the law wins, so seventeen queries were inverted to min-width
+# and the eighteenth does not match the detector. rule_audit.silent rose to 40
+# in the same pass and for the same reason, which is the trade that row's own
+# comment describes.
+findings: 272
 by_rule:
   BARE_DIV_WRAPPER: 3
   BLANK_LINE_RUN: 1

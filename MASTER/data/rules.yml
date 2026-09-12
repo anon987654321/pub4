@@ -4310,7 +4310,16 @@ rule_ratchets:
     # only finding is scored here as new debt. Splitting it would need the two
     # populations named separately — a rule whose pattern no configuration can
     # reach, against a rule the tree has simply stopped breaking.
-    silent: 39
+    #
+    # 40 on 2026-09-12, and it is the second population again: MOBILE_FIRST.
+    # RAILS held eighteen `@media (max-width:` queries, fourteen of them carrying
+    # a marker that exempted them from this very law. The operator ruled that the
+    # law wins, so seventeen were converted and one — _root.scss:334, an upper
+    # bound on an enhancement rather than a narrow-screen exception — was left and
+    # does not match the detector anyway. The rule fired on eighteen subjects
+    # before this pass and on none after, which is the same round trip the
+    # RUBY_SYMBOL_TO_PROC note above describes.
+    silent: 40
 
 
   hygiene:
