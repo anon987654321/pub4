@@ -33,7 +33,7 @@ require_relative "test_helper"
 # YAML probe result instead of asserting that the source contains `check_yaml`.
 class TestSourceAssertions < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  BASELINE = 216
+  BASELINE = 215
 
   # An assertion whose subject is the text of a file rather than a value the
   # code produced. `source`, `src` and `body` are this repo's names for that
