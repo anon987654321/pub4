@@ -19136,7 +19136,8 @@ def demo_slot_pad_env(idx)
     "PAD_VOICE" => DEMO_PAD_ROTATION[idx % DEMO_PAD_ROTATION.length],
     "PAD_ARP_MODE" => DEMO_PAD_ARP_ROTATION[idx % DEMO_PAD_ARP_ROTATION.length],
     "VOICING" => DEMO_VOICING_ROTATION[idx % DEMO_VOICING_ROTATION.length],
-    "PAD_LAYERS" => "1",
+    "PAD_LAYERS" => "0",
+    "CHORD_BARS" => "1",
     "RACK" => demo_slot_rack(idx),
   }
 end
@@ -19281,22 +19282,8 @@ end
 # often -- but a catalogue of 86 pieces now draws on 37 voices rather than
 # leaning on three.
 #
-# stack_world, stack_giga, stack_yamaha and stack_vintage are layer stacks
-# rather than single voices, so they arrive with their own internal blend; they
-# are spaced out rather than clustered, because two thick stacks in consecutive
-# slots read as one long stack.
 DEMO_PAD_ROTATION = %w[
-  stack_rhodes stack_prophet pad_dilla stack_soul rhodes
-  pad_wonky prophet stack_glass rhodes_solo stack_vapor
-  stack_rhodes pad_madlib moog stack_prophet vintage
-  stack_soul pad_royksopp blend stack_yamaha glass
-  stack_rhodes fm stack_vintage prophet nylon_soul
-  stack_prophet vapor stack_giga crystal stack_fm_epiano
-  stack_soul yamaha stack_world ice giga_fm
-  stack_rhodes neon supersaw_bed stack_prophet orchestral
-  pulse stack_soul vintage_choir stack_rhodes
-  harmonica stack_vapor accordion stack_glass yamaha_solo
-  stack_soul giga_stack stack_prophet texture
+  rhodes_solo pad_madlib yamaha_solo
 ].freeze
 DEMO_PAD_ARP_ROTATION = %w[held held wash shimmer held wash figure held].freeze
 DEMO_VOICING_ROTATION = %w[
@@ -20076,10 +20063,31 @@ def demo_part_rendered?(part)
   !demo_part_dead?(part)
 end
 
-def demo_all(bars_count = 12, destination = nil)
+def demo_ringtone_fx!(path)
+  return path if ENV.fetch("DEMO_FX", "ringtone") == "0"
+
+  filtered = "#{path}.ringtone.wav"
+  filter = [
+    "tremolo=f=6.7:d=0.28",
+    "aphaser=in_gain=0.7:out_gain=0.7:delay=3:decay=0.35:speed=0.23",
+    "chorus=0.65:0.7:35:0.32:0.4:2",
+    "acrusher=bits=10:mix=0.24:mode=lin:aa=1",
+    "aecho=0.82:0.72:420|840:0.24|0.12",
+    "stereowiden=delay=18:feedback=0.22:crossfeed=0.28",
+  ].join(",")
+  ok = system("ffmpeg", "-y", "-v", "error", "-i", path, "-af", filter,
+              "-c:a", "pcm_s16le", filtered)
+  abort "demo ringtone effects failed" unless ok && File.file?(filtered) && File.size(filtered).positive?
+
+  FileUtils.mv(filtered, path)
+  dmesg("demo fx=ringtone tremolo phaser chorus crusher echo stereo", unit: "demo0", parent: "dilla0")
+  path
+end
+
+def demo_all(bars_count = 4, destination = nil)
   acquire_demo_lock! unless ENV["DEMO_NO_LOCK"] == "1"
   bars_count = bars_count.to_i
-  bars_count = 12 unless bars_count.positive?
+  bars_count = 4 unless bars_count.positive?
   dest = destination.to_s
   dest = File.join(ROOT, "demo.wav") if dest.empty?
   # each-mode writes its mp3s to the dilla root and its transient wav straight
@@ -20615,6 +20623,7 @@ render_dilla(part, bars_count)
   tmp = "#{dest}.concat.wav"
   demo_join_parts!(parts, list, tmp)
   FileUtils.mv(tmp, dest)
+  demo_ringtone_fx!(dest)
   # Optional album-level loudnorm (off by default — long concats exceed sh timeout).
   if ENV.fetch("DEMO_ALBUM_NORM", "0") == "1"
     prev_to = ENV["DILLA_SH_TIMEOUT"]
@@ -34923,7 +34932,7 @@ DISPATCH = {
   # did the operator set this -- rather than is the key set. Same distinction
   # stream.rb draws, for the same reason.
   "demo-all" => lambda do
-    bars = (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || USER_PINNED_ENV["BARS"] || "12"
+    bars = (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || USER_PINNED_ENV["BARS"] || "4"
     out = ARGV.shift
     demo_all(bars.to_i, out)
   end,
@@ -34931,7 +34940,7 @@ DISPATCH = {
   # BARS is read here rather than left to apply_best_defaults!, which sets 32 and
   # would otherwise silently override the 12 this and demo-all both default to.
   "demo-each" => lambda do
-    bars = (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || USER_PINNED_ENV["BARS"] || "12"
+    bars = (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || USER_PINNED_ENV["BARS"] || "4"
     ENV["DEMO_EACH"] = "1"
     ENV["BARS"] = bars.to_s
     demo_all(bars.to_i)
@@ -34943,7 +34952,7 @@ DISPATCH = {
   # roughly six minutes each way — so a change can be heard while the previous
   # one is still fresh. Use demo-all for a final pass.
   "demo-quick" => lambda do
-    bars = (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || USER_PINNED_ENV["BARS"] || "8"
+    bars = (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || USER_PINNED_ENV["BARS"] || "4"
     out = ARGV.shift || File.join(ROOT, "demo_quick.wav")
     n = (ENV["DEMO_QUICK_TRACKS"] || "12").to_i.clamp(2, 84)
     order = demo_all_order
@@ -35266,7 +35275,7 @@ if __FILE__ == $PROGRAM_NAME
     # wrote, every sound synthesised. `readme_loop` still reaches the old
     # behaviour by name, and `dilla_live.rb` is the version that plays instead
     # of writing.
-    demo_all((USER_PINNED_ENV["BARS"] || "12").to_i)
+    demo_all((USER_PINNED_ENV["BARS"] || "4").to_i)
   elsif render_output_path?(cmd) && !DISPATCH.key?(cmd)
     ARGV.unshift(cmd)
     default_render!

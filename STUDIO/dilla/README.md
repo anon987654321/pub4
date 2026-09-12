@@ -12,6 +12,10 @@ twice — once naming a file that had not existed for months, once naming a
 directory that has never existed — and both times it sent an operator to
 validate nothing and read the result as passing.
 
+Bare `ruby dilla.rb` renders the catalogue at four bars per track and applies
+the local `DEMO_FX=ringtone` post-chain: tremolo, phaser, chorus, crusher, echo
+and stereo widening. Set `DEMO_FX=0` for a dry catalogue render.
+
 ENV knobs, the switch reference and the render path in detail are in
 `ENV_AND_RENDER.md`. Operator scripts, `redo_nine.sh` among them, live under
 `scripts/`.
