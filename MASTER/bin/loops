@@ -31,7 +31,6 @@ ROOT = File.expand_path("../..", __dir__)
 MASTER = File.join(ROOT, "MASTER")
 DEMO = File.join(ROOT, "STUDIO", "dilla", "demo.wav")
 SOURCE = File.join(MASTER, "loop.mp4")
-MARK_PAGE = File.join(MASTER, "web", "public", "wordmark_ai.html")
 
 def sh(*args)
   system(*args, out: File::NULL, err: File::NULL)
