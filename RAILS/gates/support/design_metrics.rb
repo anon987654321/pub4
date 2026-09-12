@@ -96,12 +96,14 @@ module Deploy
     # chosen against the accent column and measured there — "dark 5.10 to 9.94",
     # which is the accent column exactly. Nobody measured it against hover.
     def vertical_accent_ink(rails_root)
-      return @vertical_accent_ink if defined?(@vertical_accent_ink)
-
       shell = File.join(rails_root, "brgen/app/assets/stylesheets/_vertical_shell.scss")
-      @vertical_accent_ink = File.read(shell)[/\$vertical-accent-ink:\s*(#[0-9a-fA-F]{3,8})/, 1]
-    rescue StandardError
-      @vertical_accent_ink = nil
+      File.read(shell)[/\$vertical-accent-ink:\s*(#[0-9a-fA-F]{3,8})/, 1]
+    rescue StandardError => e
+      # Same posture as contrast_budget below: say so and drop the pairs this ink
+      # would have made, rather than reporting a clean hover column the gate
+      # never measured.
+      warn "design_metrics: vertical accent ink unreadable (#{e.class}) — hover fills unmeasured"
+      nil
     end
 
     # `accent` and `hover` are not the same kind of colour and were paired as
@@ -135,12 +137,12 @@ module Deploy
       verticals.flat_map do |vertical, row|
         next [] unless row.is_a?(Hash)
 
-        foreground_accent_pairs(vertical, row, social, light_only) +
-          hover_fill_pairs(vertical, row, ink)
+        foreground_accent_pairs(vertical:, row:, social:, light_only:) +
+          hover_fill_pairs(vertical:, row:, ink:)
       end
     end
 
-    def foreground_accent_pairs(vertical, row, social, light_only)
+    def foreground_accent_pairs(vertical:, row:, social:, light_only:)
       return [] if light_only.include?("#{vertical}_accent")
 
       fg = row["accent"]
@@ -156,7 +158,7 @@ module Deploy
       end
     end
 
-    def hover_fill_pairs(vertical, row, ink)
+    def hover_fill_pairs(vertical:, row:, ink:)
       hover = row["hover"]
       return [] unless hover && ink
 
