@@ -9648,7 +9648,20 @@ the moment it happened, where the whole suite stayed green.
    and no view in any app renders `shared/toast`, so the component is wired at
    the JavaScript end and reached from nowhere. Choosing where a toast appears
    is design work.
-4. **Two `WebPushJob`s.** `RAILS/brgen/app/jobs/web_push_job.rb` and `RAILS/shared/app/jobs/shared/web_push_job.rb`. One class.
+4. **Two `WebPushJob`s, and "one class" is false — but reading them side by
+   side found a real bug.** `WebPushJob` takes a `notification_id`, builds a
+   payload with a `tag` and a target path, and sends through `Webpush`
+   directly; `Shared::WebPushJob` takes `user_id, title:, body:, url:` and
+   delegates to `Shared::Pushable.deliver_now`. Different signatures,
+   different senders, both reached — brgen's from `Notification#deliver`,
+   shared's from `Pushable.push_to`. Folding them is a payload question
+   (`tag:`, `urgency:` and `target_path` have no home in `Pushable`), not a
+   duplicate-file cleanup.
+   What the comparison did find is fixed: brgen destroyed the subscription on
+   `Webpush::Unauthorized`, which is 401/403 — our VAPID credentials, failing
+   identically for every row — so one bad key rotation unsubscribed the whole
+   city, irreversibly. `Pushable` never listed it. The divergence was one
+   rescue clause.
 5. **`futurism` — the claim is false.** `futurize` appears in three ERB files,
    so the pin has a reader. Whether one lazy index is worth a gem is a
    different question from whether it is wired, and it is wired.
