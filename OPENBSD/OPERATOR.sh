@@ -334,11 +334,11 @@ sync_openbsd_apply() {
   # escalation the guard's own comment forbids. Deploying daily.local without
   # this would swap that for a check that silently never runs.
   #
-  # lib/utf8.rb goes too: the script's `require_relative "lib/utf8"` resolves
-  # beside itself, so the installed copy is only self-contained with it there.
-  install -d -m 755 /usr/local/bin/lib
-  if ! install -m 755 "${SCRIPT_DIR}/config_drift_gate.rb" /usr/local/bin/config_drift_gate.rb ||
-     ! install -m 644 "${SCRIPT_DIR}/lib/utf8.rb" /usr/local/bin/lib/utf8.rb; then
+  # One file, and nothing beside it. It used to need lib/utf8.rb installed into a
+  # /usr/local/bin/lib/ made for the purpose, because `require_relative` resolves
+  # beside the installed copy; the gate sets its own encoding now, so the install
+  # cannot half-succeed and the box carries no directory holding six lines.
+  if ! install -m 755 "${SCRIPT_DIR}/config_drift_gate.rb" /usr/local/bin/config_drift_gate.rb; then
     log ERROR "config_drift_gate install failed — daily.local would skip the drift check in silence"
     return 1
   fi

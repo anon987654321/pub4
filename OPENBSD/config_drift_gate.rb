@@ -22,7 +22,14 @@
 
 require "open3"
 require "digest"
-require_relative "lib/utf8"
+
+# Every sibling here reaches this through `require_relative "lib/utf8"`. This one
+# is the only file OPERATOR.sh installs to /usr/local/bin, and a require_relative
+# resolves beside the installed copy — so the shared file forced a whole
+# /usr/local/bin/lib/ directory onto the box to hold six lines, and an install that
+# could half-succeed. Minimal OpenBSD and CI environments default Ruby file reads to
+# US-ASCII, and this gate reads UTF-8 config regardless of the operator's locale.
+Encoding.default_external = Encoding::UTF_8
 
 # The repo is found, not assumed to be one level up.
 #
@@ -77,7 +84,6 @@ VERBATIM = {
   "resource_guard.sh" => "/usr/local/bin/resource_guard.sh",
   "emergency_cpu.sh" => "/usr/local/bin/emergency_cpu.sh",
   "config_drift_gate.rb" => "/usr/local/bin/config_drift_gate.rb",
-  "lib/utf8.rb" => "/usr/local/bin/lib/utf8.rb",
   "vps_weekly_integrity.sh" => "/usr/local/bin/vps_weekly_integrity.sh",
 }.freeze
 

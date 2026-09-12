@@ -5808,7 +5808,13 @@ Numbered 1–N across the four trees.
 769. **health_check load_apps rescue returns standalone only.** If apps.yml is unreadable it warns and returns empty. Fail closed.
 770. **health_check `--core` still requires smtpd.** Document as required.
 771. **resource_guard ALL_APPS_FLAG vs start_all_apps.** Name the flag in PATH_OWNERSHIP.
-772. **emergency_cpu not under usr/local/bin in the repo.** Two layouts (root vs usr/local) for installed scripts. Same for `resource_guard.sh`, `config_drift_gate.rb`, `vps_weekly_integrity.sh`.
+772. **Measured 2026-09-12 — the layout question is secondary to what it hides.**
+     `emergency_cpu.sh` is not on vm23 at all. `resource_guard.sh:298` guards with
+     `[ -x /usr/local/bin/emergency_cpu.sh ]` and otherwise logs "emergency_cpu not
+     installed", so the LOAD_CRIT crisis path — the one deliberately exempted from
+     the two-strike rule because a genuine crisis should not wait — has only ever
+     written a log line. Installing it needs doas on the box and is the operator's.
+     The repo-layout half (root vs usr/local/) still stands and is item 21's.
 773. **Crisis tier on the box is missing the binary.** Confirm `explicitly_installed` scan matches `install -m 755 … emergency_cpu`. **Unverified scan.** If the install line does not match the regex, fix the regex, not the box.
 774. **etc/litestream.yml header still reads as a how-to.** First lines should be: inert by decision; not in ports; do not enable; dr-pull is the backup. Keep the yaml body.
 775. **OPERATOR `setup_litestream`.** Add `rcctl ls failed` must not contain litestream as a check in health_check.
@@ -5841,7 +5847,21 @@ Numbered 1–N across the four trees.
 796. **home/johann/bin/mailimg.** PATH_OWNERSHIP should list it as the executable check (`ksh -n`).
 797. **stale_ci_cleanup.ksh lives under usr/local/libexec.** Include `/usr/local/libexec/` in installed_targets.
 798. **gates live under OPENBSD/gates but run via RAILS/gates/runner.rb.** One paragraph in START_HERE: registered in `RAILS/gates/gates.yml`, invoked by `check-openbsd`.
-799. **lib/utf8.rb is installed next to config_drift_gate.rb.** Awkward `/usr/local/bin/lib/utf8.rb`. Vendor the require as a relative file documented in the gate header.
+1060. **`vps_weekly_integrity.sh` has never run.** `etc/crontab.vm23:97` schedules it
+     `30 3 * * 0`. Read from vm23 on 2026-09-12, root's live crontab does not carry
+     that line and `/usr/local/bin/vps_weekly_integrity.sh` does not exist — this is
+     the "1 unscheduled" that `config_drift_gate --remote` reports. A weekly
+     integrity check that has never fired reads as green because nothing reports it,
+     which is the same shape as the daily.local finding this file already records.
+     Installing it and merging the crontab line needs doas on the box: the operator's.
+
+799. **Fixed 2026-09-12.** `config_drift_gate.rb` sets its own
+     `Encoding.default_external` with the reason beside it. It is the only file
+     OPERATOR.sh installs to /usr/local/bin, and `require_relative` resolves beside
+     the installed copy, so one shared six-line file forced a whole
+     `/usr/local/bin/lib/` onto the box and an install that could half-succeed. The
+     other seven callers run from the checkout and keep `require_relative
+     "lib/utf8"`. `installed-targets` clean: 12 named, 14 provided.
 800. **bin/ds-records requires root to read signed zones.** Off-box it should skip, not traceback. Guard ZONE_DIR readability.
 801. **bin/render_dns.rb add `--help`.**
 802. **OPERATOR.sh pin `RUN_PRODUCTION_SEEDS` default 0 in the header.**
