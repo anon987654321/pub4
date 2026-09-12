@@ -117,6 +117,23 @@ box.
 lock's dependency tree before calling one unused, the same way you check every
 tree before calling a constant unreached.
 
+**Two more event-drift findings died on verification, and both died the same
+way: the census looked at one end of the wire.**
+
+`Trace::Metrics` subscribes `llm:response` and `LlmDispatcher::RubyLlmSender`
+publishes `llm:call_complete`, which reads as drift until you look for the
+other publisher and the other subscriber. `llm:response` is published at
+`MASTER/lib/review/agent/fallback_chain.rb:152`; `llm:call_complete` is
+subscribed at `MASTER/lib/trace/ledger.rb:21`. Two events, two producers, two
+consumers, all four wired. Nothing is drifting.
+
+The lesson generalises past events: **a name that appears once as a subscriber
+and once as a publisher, in two different files, is not evidence of anything
+until both lists are complete.** The one-directional census that found the
+real `swallow:error` defect worked precisely because it compared the whole
+published set against the whole subscribed set — a pair of greps for two
+strings does not.
+
 **This file's own dominant defect is the duplicate, not the stale entry.**
 Fifty-one subjects are named in four or more different top-level sections —
 `apps.yml` in ten, `rules.yml` in eight, `dilla.rb` and `/health` in seven,
