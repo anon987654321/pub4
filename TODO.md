@@ -4931,10 +4931,23 @@ Numbered 1–N across the four trees.
 
 ### MASTER — dual sources and inert config
 
-1. **`tools.yml` names a dead adapter tree.** `MASTER/data/tools.yml:2` — “Adapters in `lib/master/tools/`”. Factories live in `lib/builder.rb` `DEFAULT_TOOL_MAP` and `lib/io/*.rb`. Rewrite the header.
+1. **Fixed 2026-09-12.** It named `lib/master/tools/`, a directory this tree has
+   never had. The adapters are the classes `lib/builder.rb`'s `DEFAULT_TOOL_MAP`
+   builds, which live in `lib/io/`. The one place a reader would look to answer
+   "where does the behaviour live" sent them nowhere.
 2. **Repligen/Postpro declared, never constructed.** `data/tools.yml:32-33` list them; `lib/builder.rb:16-53` has no factories. CLI shells STUDIO. Add factories or drop the rows.
-3. **`runtime.yml` still maps a deleted docs tree.** `data/runtime.yml:7` `source: docs/cognitive_runtime.md`; `landed_subsystems` names files under `MASTER/docs/`, which does not exist. Point each at the live file or delete.
-4. **`topologies.yml` is the deleted pixel-field, still loaded.** `data/topologies.yml:1-4`. `cell_grammar` / `emotional_mapping` / `palettes` sit in `data_reach.yml` `unnamed_members`. Drop those keys or wire one renderer.
+3. **Fixed 2026-09-12, and it was nine, not one.** Every `source: docs/<name>.md`
+   in `runtime.yml` — nine of them — named `MASTER/docs`, which does not exist.
+   `why_explainer.rb:116` prints that value to the operator as provenance, so each
+   showed a path that has never resolved for whoever read it. Not a broken link
+   either: `3797afea7` is "Codify MASTER docs into runtime catalog", so those
+   documents were folded INTO this file and the pointers outlived the files by
+   becoming the file they pointed at. Removed rather than repointed, with the
+   provenance stated once in the header.
+4. **False — checked 2026-09-12.** The Pixel Field is not deleted:
+   `particle_kernel.js` is live and declared at `web/config/face_assets.yml:70`,
+   which is the manifest the shell loads. `topologies.yml`'s header describes what
+   the tree actually renders.
 5. **Palette keys contradict one chrome.** `topologies.yml:34-42` operator/review/visitor palettes. Mark canvas-only and test that chrome does not read them, or delete.
 6. **`START_HERE.md` has a broken sentence.** `:142` “…`yml` (active read-modify-write…” — the filename was eaten. Restore the stem or cut the clause.
 7. **`START_HERE.md` still defends deleted YAML.** `:147-150` discusses `visual_clusters.yml` / `mobile_web_opportunities.yml`. They were deleted 2026-08-11. Move the paragraph to DECISIONS.
@@ -4942,7 +4955,8 @@ Numbered 1–N across the four trees.
 9. **`limits.yml` still titled Tier 1 Law in START_HERE.** `:170`. `limits.yml:1-18` is explicit that most of it is unread `guidance:`. Retitle START_HERE to match `test_limits_split.rb`.
 10. **`project_context.yml` names `MASTER/exe/tts-worker`.** `:36` — worker is `MASTER/bin/tts-worker`.
 11. **`project_context.yml` still lists `visual_clusters.yml` as a fold exception.** `:27`. Remove.
-12. **`data/claude/` is empty but still a default corpus.** `lib/ground/memory_index.rb:11` and `lib/cli/brain_overlay.rb:7` still glob it. Drop it from `DEFAULT_DIRS`.
+12. **Already done — checked 2026-09-12.** `MASTER/data/claude/` does not exist and
+    `lib/ground/memory_index.rb` no longer names it.
 13. **`data_reach.yml` 28 unnamed keys.** Including `runtime.yml#cognitive_spine`, `soul.yml#evolution_log`, `topologies.yml#palettes`, `models.yml#ollama_*`, `personas.yml#british`, `providers.yml#mistral`. For each: find a reader or delete. Do not build a repo-wide unread-key gate.
 14. **`reader_singularity.yml` still allows 10 readers of `rules.yml`.** Collapse remaining readers onto `Master.load_rules` / `Master.law`.
 15. **Dual constitution classes.** `lib/ground/constitution.rb` vs `lib/core/constitution.rb`. Rename Ground’s to `PrincipleStore`.
@@ -4959,7 +4973,9 @@ Numbered 1–N across the four trees.
 24. **`data/tools.yml` `name:` vs `Master::Io::`.** Header says `Master::Tools`. Runtime is `Master::Io::ReadFile`. Align the namespace.
 25. **`RuntimeCatalog.load("tts_phrases")` vs `data/tts.yml`.** Confirm `tts_phrases` exists in a catalog `sections` list (`runtime_catalog.rb:20-24` already records a miss).
 26. **`DATA_ALIASES` vs filenames.** Audit `lib/boot/data.rb` aliases against files on disk.
-27. **`soul.yml` `sacred_paths` includes `bin/cli`.** `:65`. `bin/master` is the instruction surface. Add it or drop `bin/cli` if it is only a pointer.
+27. **Confirmed and left, 2026-09-12.** `soul.yml:65` does list `bin/cli`. That file
+    is `paths.immutable` and outranks everything: an effect must not write it, and
+    neither should I. The change is the operator's, and it is one line.
 28. **`soul.yml` `anti_simulation.forbidden: [will, would, could, might]`.** If the detector is lexical it is noise; if unused it is inert law.
 29. **`models.yml` ollama rows unnamed.** Delete or wire `QuotaGate` / router.
 30. **`personas.yml#british` unnamed.** Delete or add to `Personality.persona_names`.

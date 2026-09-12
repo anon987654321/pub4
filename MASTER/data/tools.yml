@@ -1,6 +1,11 @@
-# Tool registry — declarative metadata for built-in tools. Adapters in
-# lib/master/tools/ supply behavior; this file supplies tier, visibility, and
-# default arguments. Operators tune visibility per tier without editing code.
+# Tool registry — declarative metadata for built-in tools. The adapters are the
+# classes lib/builder.rb's DEFAULT_TOOL_MAP builds, which live in lib/io/; this
+# file supplies tier, visibility and default arguments. Operators tune
+# visibility per tier without editing code.
+#
+# It said lib/master/tools/ until 2026-09-12, a directory this tree has never
+# had under that name — the one place a reader would look to answer "where does
+# the behaviour live" sent them nowhere.
 #
 # Schema:
 #   name        — class name (under Master::Tools)

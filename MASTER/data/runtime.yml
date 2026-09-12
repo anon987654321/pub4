@@ -1,10 +1,15 @@
 ---
+# Every entry here carried a `source: docs/<name>.md` naming MASTER/docs, and that
+# directory does not exist. It is not a broken link: 3797afea7 codified those
+# documents into this catalogue, so the pointers outlived the files by becoming
+# the file they pointed at. why_explainer.rb prints `source:` to the operator, so
+# nine of them showed a path that could never resolve. Removed rather than
+# repointed — this file is the document now, and git log holds the rest.
 cognitive_spine:
   id: cognitive_runtime
   tier: core
   area: runtime
   status: active
-  source: docs/cognitive_runtime.md
   target_shape:
   - models propose intents
   - orchestrator validates intents
@@ -87,7 +92,6 @@ collaboration:
   tier: ops
   area: workflow
   status: active
-  source: docs/collaboration_protocol.md
   hard_rule: Do not push directly to main when more than one session may be active
   branch_pattern: session/<agent>-<focus>-<yyyymmdd>
   branch_examples:
@@ -157,7 +161,6 @@ event_registry:
   tier: core
   area: bus
   status: active
-  source: docs/event_naming.md
   pattern: namespace:action
   namespaces:
   - namespace: master
@@ -1562,7 +1565,6 @@ invariants:
   tier: core
   area: runtime
   status: active
-  source: docs/non_negotiable_runtime_rules.md
   invariants:
   - id: no_direct_mutation
     rule: No agent directly mutates durable state.
@@ -2189,7 +2191,6 @@ platform_topology:
   tier: platform
   area: deploy
   status: active
-  source: docs/platform_topology.md
   primary_platform:
     id: brgen.no
     role: primary runtime surface and application umbrella
@@ -2323,7 +2324,6 @@ provider_economy:
   tier: core
   area: routing
   status: active
-  source: docs/provider_economy.md
   principle: The orchestrator owns provider selection; models do not select themselves.
   selection_criteria:
   - capability
@@ -2373,7 +2373,6 @@ repo_ecology:
   tier: core
   area: repository
   status: active
-  source: docs/repo_ecology.md
   core_principle: A repository is semantic topology, dependency ecology, cognitive geography, architectural history, and organizational memory — not a bag of files
   optimize_for:
   - comprehensibility
@@ -2522,7 +2521,6 @@ routing_architecture:
   tier: core
   area: routing
   status: applied
-  source: docs/ROUTING_REARCHITECTURE.md
   authority: analysis and applied fixes; data/soul.yml and data/rules.yml remain law
   current_path:
   - Master.default_model
@@ -2826,7 +2824,6 @@ ui_philosophy:
   tier: ui
   area: web
   status: active
-  source: docs/runtime_ui_direction.md
   feel_like:
   - control room
   - courtroom
