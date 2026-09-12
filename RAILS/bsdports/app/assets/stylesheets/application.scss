@@ -51,6 +51,18 @@
   --status-stale-text: #6b4405;
   color-scheme: light;
   --font: "JetBrains Mono", ui-monospace, monospace;
+  /* Two weights, because the face ships two. JetBrainsMono Nerd Font loads
+     Regular and Bold and nothing between, so the family ladder above — 400/600/800,
+     spaced for a system-ui Heavy that is actually drawn — asks the rasteriser to
+     invent both of its upper steps here. Measured on the front page at 390px:
+     20 elements at a drawn 400, 9 at a synthesised 600 and 2 at a synthesised 800,
+     so a third of the weighted text was smeared rather than set.
+     design_rules wants three weights with 200 between them; a two-cut family cannot
+     offer that, and a real Bold reads better than an invented Heavy. The token file
+     states the principle this follows: the heaviest step is defined by the stack it
+     renders in. */
+  --weight-bold: 700;
+  --weight-heavy: 700;
   /* rem (not px) so the dense listing keeps the auditor's body_font_px floor */
   --font-size: var(--text-xs);
   --line-height: 1rem;

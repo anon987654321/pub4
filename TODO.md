@@ -31,6 +31,16 @@ mentioned.
 
 ## MASTER
 
+### Audit findings — 2026-09-12
+
+- `MASTER/bin/check --profile=agent --format=brief` fails the self-test because
+  `MASTER/lib/review/llm_dispatcher/ollama_sender.rb:63` has a 24-line
+  `ollama_post` method against the 20-line density ceiling. The check labels
+  this `agent-ignore` known debt; extract helpers and rerun the profile.
+- `MASTER/bin/operator status` reports Ruby 4.0.5, while the repository pins
+  Ruby 3.4.9. Run checks through `RBENV_VERSION=3.4.9 rbenv exec ruby` and
+  restore the local default if the mismatch is unintended.
+
 Everything here was checked against the tree on 2026-09-10 and carries the number
 it read that day. Closed records are deleted rather than marked; `git log` holds
 them. What stays is forward work, the operator decisions, and the false positives
@@ -1627,6 +1637,26 @@ proves the detectors are right is worth more than one that proves the features e
 - **operator-priority** — humans should fix before declaring deploy healthy.
 
 ## RAILS
+
+### Audit findings — 2026-09-12
+
+- `ruby RAILS/gates/runner.rb production release layout_suite` fails the
+  `release` gate because `RAILS/gates/release.rb:39` resolves
+  `RAILS/gates/OPENBSD/gates/domain_alignment`, which does not exist. Fix the
+  require path and rerun the release gate.
+- `layout_suite` reports CSS files over its 200-line budget:
+  `brgen/app/assets/stylesheets/_coverage_fills.scss`,
+  `_marketplace.scss`, `_messenger_window.scss`,
+  `brgen/engines/playlist/app/assets/stylesheets/_vertical_playlist.scss`,
+  `amber/app/assets/stylesheets/_brand.scss`,
+  `shared/app/assets/stylesheets/_minimal.scss`,
+  `_nearby_chat_widget.scss`, `_shell.scss`, `_zen_shell.scss`, and
+  `MASTER/web/public/face.css` (1287 lines). Split only after measuring
+  cascade order and updating the ratchet deliberately.
+- `layout_suite` reports two marketplace accent/background pairs below WCAG AA
+  in `DesignMetricsGate`, plus repeated heading hierarchy violations across
+  amber, brgen, and shared stylesheets. Re-measure rendered surfaces before
+  changing tokens or typography.
 ### Parity gaps — forward work
 
 What brgen would need to read as a peer of TikTok, Snapchat, Mastodon, x.com,
@@ -6439,7 +6469,17 @@ in ERB `<style>` blocks that no lint reads.
 94. **`max_font_weights: 3` vs `scale.font_weight` [400,500,600,700,800].** Dialect in use is 400/600/800. Stop shipping 500/700 in the lint scale if unused, or stop using them.
 95. **Marketplace hero `--font` + `--font-display` + `--font-mono` kicker = 3 families.** Law: 2. Kicker can stay same family, small caps/tracking. Playlist SF Mono is the recorded fifth-face fence — leave.
 96. **Mailer three families.** Item 59.
-97. **`--weight-heavy` (800) is synthesised on Caprasimo and JetBrains Mono.** Comment in `design_tokens.yml` already says so. Heavy belongs on `system-ui` headings only; editorial faces stay 400/700.
+97. **Fixed 2026-09-12 for bsdports; the Caprasimo half is false.** Measured at 390px
+    across all three apps: Caprasimo never renders above 700 anywhere, and brgen and
+    amber have no synthesised weight at all. bsdports had 11 of 32 weighted elements
+    drawn by the rasteriser rather than the type designer — 9 at 600 and 2 at 800
+    against a JetBrainsMono that ships Regular and Bold and nothing between, so the
+    600 step was as invented as the 800 one and the item named only half of it.
+    bsdports' dialect now sets both `--weight-bold` and `--weight-heavy` to 700.
+    After: 20 elements at a drawn 400, 12 at a drawn 700, none synthesised.
+    design_rules wants three weights 200 apart; a two-cut family cannot offer that,
+    and the token file's own principle — the heaviest step is defined by the stack it
+    renders in — is what this follows.
 98. **Brand logo `12px` / `24px` with stepped `@media (min-width: 768px)` vs `CLAMP_TYPOGRAPHY`.** Marks are not running text; `scan: intentional` if they stay px.
 
 ### OpenType, numerals, quotes, hyphens
@@ -6466,9 +6506,19 @@ in ERB `<style>` blocks that no lint reads.
 115. **Vote animated-number `duration-value="900"`.** 900ms > `NO_LONG_TRANSITION` 300ms. JS, not CSS; the rule misses it. Cap at `--transition-normal` (300ms) or mark as a counted animation, not a UI transition.
 116. **`NO_LONG_TRANSITION` misses `1.2s` / `.42s`.** Face 1200ms/1800ms already fenced. Extend the detector to seconds so a new 1.2s cannot land in RAILS unnoticed.
 117. **Legal/mailer `padding-left` / `padding-right`.** `LOGICAL_PROPERTIES`. Inline-start/end.
-118. **`@media (max-width)` bands marked `scan: intentional` are not a conversion pass.** Leave. New work uses `min-width` from `design_tokens.yml#viewport`.
+118. **Overtaken 2026-09-12.** The conversion pass happened: 18 max-width queries went
+     to 1, the `scan: intentional` markers are gone with them, and MOBILE_FIRST now
+     finds nothing in RAILS. The one left, `_root.scss:334`, is a bounded band whose
+     max is an upper bound on an enhancement — see 1063.
 119. **`--text-display` 2.2rem and canvas `clamp(2.5rem, 12vw, 5rem)` on splash h2.** Display type without a sanctioned home was why `--text-display` was added. Splash still bypasses it. One display slot.
-120. **`font-size: 13px` in `.site-legal`.** Below 16. Footer meta; name it `--text-xs` so it scales with the root instead of painting 13px on bsdports’ 12px root (13px there is *larger* than body). Absolute px meta on a 12px root is the defect `design_tokens.yml` scale comment already names.
+120. **Measured 2026-09-12, and it is the operator's.** The three roots are 18px
+     (brgen), 16px (amber) and 12px (bsdports), so an absolute 13px is 0.72rem, 0.81rem
+     and 1.08rem of its own app — the item is right that on bsdports it outgrows the
+     body. `.site-verify` does not render on any front page, so the live cost today is
+     zero and the fix is a type change on pages that do. Naming it `--text-xs` makes it
+     13.5/12/9px respectively, and 9px is a decision about what bsdports' footer meta
+     should look like rather than a bug fix. `_site_legal.scss`'s own header already
+     fences this: every one of those numbers is something somebody sees.
 
 ### Oddities and gaps the type system makes visible
 
