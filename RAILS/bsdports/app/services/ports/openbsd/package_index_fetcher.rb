@@ -65,6 +65,24 @@ module Ports
         url.sub(%r{\Aftp://}, "https://")
       end
 
+      # A mirror is remote input, and `Location` is the mirror telling us where to
+      # send our next request. URI.join followed it anywhere: a mirror that is
+      # hostile, hijacked, or merely misconfigured could answer
+      # `Location: http://169.254.169.254/latest/meta-data/` and this process would
+      # fetch it from inside the box and hand the body to the parser. `base` is
+      # operator input too — BSDPORTS_MIRROR, or a Platform row.
+      #
+      # So a redirect may move the path and may not move the host or drop TLS. That
+      # is all an index mirror needs: cdn.openbsd.org redirects between paths, not
+      # to other hosts. Anything else is refused loudly rather than followed,
+      # because a silent nil here reads as an empty index, and an empty index reads
+      # as "this platform has no packages".
+      #
+      # brgen's OutboundHttp is the fuller rule — it resolves the name and rejects
+      # RFC1918, loopback and link-local — and it lives in another app. This is the
+      # same principle at the one seam that needs it here, rather than a second copy
+      # of that module. Folding OutboundHttp into RAILS/shared/ so both apps read
+      # one rule is the larger move.
       def get(url, limit: 3)
         raise "too many redirects for #{url}" if limit.zero?
 
@@ -76,11 +94,30 @@ module Ports
 
         case response
         when Net::HTTPSuccess then response.body
-        when Net::HTTPRedirection then get(URI.join(url, response["location"]).to_s, limit: limit - 1)
+        when Net::HTTPRedirection then follow(url, response["location"], limit)
         else
           Rails.logger.warn("bsdports mirror #{url} returned #{response.code}")
           nil
         end
+      end
+
+      def follow(from, location, limit)
+        origin = URI.parse(from)
+        target = URI.join(from, location.to_s)
+        return get(target.to_s, limit: limit - 1) if same_origin?(origin, target)
+
+        Rails.logger.error(
+          "bsdports mirror #{origin.host} redirected off-host to " \
+          "#{target.scheme}://#{target.host} — refused"
+        )
+        nil
+      rescue URI::InvalidURIError, ArgumentError => e
+        Rails.logger.error("bsdports mirror sent an unusable Location: #{e.class}: #{e.message}")
+        nil
+      end
+
+      def same_origin?(origin, target)
+        target.host.to_s.casecmp?(origin.host.to_s) && target.scheme == origin.scheme
       end
     end
   end
