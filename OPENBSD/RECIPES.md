@@ -1,13 +1,10 @@
 # Recipes
 
-Runtime authority: `OPENBSD/data/operator.yml` — list with `cd MASTER && bundle
-exec ruby bin/cli` then `/orient deploy`, or `MASTER/bin/operator status`.
+The recipes are `OPENBSD/data/operator.yml`, and that file is the command list
+rather than a copy of one. Print it with `MASTER/bin/operator status` for the
+posture and next command, or with `/orient deploy` inside `MASTER/bin/cli` for
+the whole thing — `MASTER/lib/operator/operator_docs.rb` renders it either way.
 
-## Repo shape (visual overview)
-
-```bash
-zsh OPENBSD/tree.sh . --pub4-overview
-```
-
-Prunes vendor/tmp/log/storage/node_modules/builds. Shows Rails apps collapsed,
-MASTER/lib subsystems, alignment notes.
+This file is a door, not a table. It was thirteen lines of pointer plus one
+recipe the yaml did not carry, which is how a pointer becomes a fifth copy; that
+recipe is in the yaml now. Add a recipe there and every door shows it.

@@ -15,26 +15,18 @@ NSD/acme, Rails 8 apps, MASTER web, and operator recovery tools.
 
 ## Golden Commands
 
-- `MASTER/bin/operator status` — one-screen repo/VPS posture and next command.
-- `OPENBSD/RECIPES.md` — copy-paste operator recipes.
-- `OPENBSD/bin/check --profile=contributor` — fast static deploy gates.
-- `OPENBSD/bin/check-rails --profile=contributor` — Rails source gates (skips
-  runtime on Ruby mismatch).
-- `OPENBSD/bin/check-openbsd` checks OpenBSD config/deploy identity locally.
-- `OPENBSD/bin/check-vps` is the explicit VPS/live gate wrapper; run it only on
-  vm23 or with SSH/operator intent.
-- `OPENBSD/bin/check-full` chains the local checks and the integrity gate.
-- `OPENBSD/bin/vps-state` / `MASTER/bin/operator vps deploy <app>` — deployed vs dev
-  tree on vm23.
+`MASTER/bin/operator status` gives you the one-screen posture and the next
+command. Every other command lives in `OPENBSD/data/operator.yml`, which is the
+command list — `MASTER/lib/operator/operator_docs.rb` reads it and `/orient
+deploy` prints it. This section used to be a second list and was the more
+complete of the two, carrying four checks the authority did not; they are in the
+yaml now.
 
 ## Source Of Truth
 
-- App inventory: `RAILS/apps.yml`.
-- Public/deploy identity: `OPENBSD/deploy_inventory.json`.
-- OpenBSD configs: `OPENBSD/etc/`.
-- Operator runbook: `OPENBSD/RUNBOOK.md`.
-- Feature inventory: `RAILS/apps.yml`. Open debt: repo-root `TODO.md`. Horizon:
-  `apps.horizon.yml` (agent: ignore). Runtime: `/orient deploy`.
+`OPENBSD/data/operator.yml`'s `single_source_of_truth:` block, which names
+features, horizon, debt and deploy identity. The OpenBSD configs themselves are
+`OPENBSD/etc/`, and the procedure is `RUNBOOK.md`.
 
 ## Safety Defaults
 

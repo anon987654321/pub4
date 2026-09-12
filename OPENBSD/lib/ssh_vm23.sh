@@ -12,6 +12,11 @@ set -euo pipefail
 #   zsh OPENBSD/lib/ssh_vm23.sh tmux deploy 'doas zsh OPENBSD/OPERATOR.sh'
 #
 # Env: SSH_USER SSH_HOST SSH_KEY REMOTE_PUB4
+#
+# SSH_HOST here is the host ALONE — the login is SSH_USER, and they are joined as
+# ${SSH_USER}@${SSH_HOST} below. config_drift_gate.rb and bin/deploy-diff.sh give
+# the same variable the opposite meaning, login@host in one string, so exporting
+# one file's SSH_HOST into another's yields dev@dev@brgen.no and every ssh fails.
 
 : "${SSH_USER:=dev}"
 : "${SSH_HOST:=46.23.89.226}"

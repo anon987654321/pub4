@@ -37,6 +37,27 @@ recipes:
   - want: Fast local contributor check
     run: OPENBSD/bin/check --profile=contributor && cd MASTER && bin/check --profile=contributor
     expect: static gates ok
+  # The check family lived only in START_HERE.md's Golden Commands, so the file
+  # that calls itself the command list was missing four of the commands and the
+  # stub that points here was the more complete of the two.
+  - want: Rails source gates
+    run: OPENBSD/bin/check-rails --profile=contributor
+    expect: source gates ok; runtime skipped on a Ruby mismatch
+  - want: OpenBSD config and deploy identity, locally
+    run: OPENBSD/bin/check-openbsd
+    expect: identity, installed targets, dns, shell syntax, vps safety
+  - want: The live VPS gates
+    run: OPENBSD/bin/check-vps
+    expect: run on vm23, or with SSH and operator intent — never casually
+  - want: Everything local, then integrity
+    run: OPENBSD/bin/check-full
+    expect: the local checks chained ahead of the integrity gate
+  - want: Deployed tree vs dev tree on vm23
+    run: OPENBSD/bin/vps-state
+    expect: per-app SHA, what a deploy would move
+  - want: The repo shape, pruned
+    run: zsh OPENBSD/tree.sh . --pub4-overview
+    expect: Rails apps collapsed, MASTER/lib subsystems, no vendor or node_modules
   - want: After git pull on vm23
     run: OPENBSD/bin/post-pull-checklist && MASTER/bin/operator vps state
     expect: drift visible; follow deploy list

@@ -5616,8 +5616,22 @@ Numbered 1–N across the four trees.
 631. **Fixed 2026-09-12.** `OPTIONAL="bsdports amber"` now, matching the guard.
      litestream is doubly stale: `restore_backups.sh` records that no litestream
      binary exists on vm23 and `/var/backups/litestream/` is empty.
-632. **Four recipe lists.** `data/operator.yml`, `RECIPES.md`, `START_HERE.md` Golden Commands, `RUNBOOK.md` deploy-all table. Make `operator.yml` the only command list.
-633. **RECIPES.md is thirteen lines.** Either fill it from `operator.yml` or delete and point.
+632. **Fixed 2026-09-12.** `data/operator.yml` is the command list and now carries
+     the whole of it: the check family (check-rails, check-openbsd, check-vps,
+     check-full), vps-state and tree.sh lived only in START_HERE.md's Golden
+     Commands, so the stub that pointed here was the more complete of the two.
+     START_HERE's Golden Commands and Source Of Truth sections are pointers now,
+     and RECIPES.md is a door rather than a table. `operator_docs.rb` reads the
+     yaml and `/orient deploy` prints it, so a recipe added there shows at every
+     door.
+633. **Fixed 2026-09-12.** `data/operator.yml` is the command list and now carries
+     the whole of it: the check family (check-rails, check-openbsd, check-vps,
+     check-full), vps-state and tree.sh lived only in START_HERE.md's Golden
+     Commands, so the stub that pointed here was the more complete of the two.
+     START_HERE's Golden Commands and Source Of Truth sections are pointers now,
+     and RECIPES.md is a door rather than a table. `operator_docs.rb` reads the
+     yaml and `/orient deploy` prints it, so a recipe added there shows at every
+     door.
 634. **Feature inventory stated twice.** `START_HERE.md` “App inventory” and “Feature inventory” both `RAILS/apps.yml`. One line.
 635. **DECISIONS vs unsigned zones in git.** “61 zones … none of them in git”. `var/nsd/zones/master/` holds 57 unsigned `*.zone` templates by design. Narrow the decision to signed artifacts / keys.
 636. **RUNBOOK still describes a fixed deploy_all header.** Current header says there is no archive. Update RUNBOOK.
@@ -5831,10 +5845,21 @@ Numbered 1–N across the four trees.
 800. **bin/ds-records requires root to read signed zones.** Off-box it should skip, not traceback. Guard ZONE_DIR readability.
 801. **bin/render_dns.rb add `--help`.**
 802. **OPERATOR.sh pin `RUN_PRODUCTION_SEEDS` default 0 in the header.**
-803. **data/operator.yml `ssh brgen` vs IP.** Use the Host alias everywhere instead of the IP.
+803. **Partly fixed 2026-09-12; the alias stays.** `ssh brgen` needs a Host block in
+     the operator's own ~/.ssh/config, so making it the repo-wide default fails item
+     21's test — a stranger rebuilding from the repo alone has no such alias. What
+     was fixed is the disagreement between the files that do not use it: see 806.
 804. **Three doors.** START_HERE should say “agents: CLAUDE.md; operators: RUNBOOK.md; first screen: README.md” in one sentence.
 805. **RUNBOOK “Always use tmux” then `doas zsh OPENBSD/OPERATOR.sh`.** vps-deploy must *not* be doas. Put that adjacent.
-806. **config_drift_gate SSH default `dev@brgen.no`.** Other scripts default to the IP. One default (`SSH_HOST` from operator.yml).
+806. **Fixed 2026-09-12, and the real defect was worse.** `bin/deploy-diff.sh`
+     defaulted to `dev@46.23.89.226` and now matches config_drift_gate's
+     `dev@brgen.no`, which is the form the repo contract names. Underneath that,
+     `SSH_HOST` means two different things: login@host in those two files, host alone
+     in `lib/ssh_vm23.sh` where `SSH_USER` sits beside it. Exporting one for the other
+     yields `dev@dev@brgen.no`. All three files say which they mean now.
+     `deploy_all.sh`'s own usage example told the operator to pass
+     `VPS_HOST=dev@46.23.89.226`, which the script joins with VPS_USER — so the
+     documented invocation could not have worked.
 807. **Fixed 2026-09-12.** `deploy_all.sh:13` says `RAILS/<app>/<app>.sh`.
 808. **START_HERE post-pull.** Add “do not stash”.
 809. **health_check encoding comment duplicated.** One `lib/utf8.rb` require is enough.
@@ -6104,7 +6129,14 @@ Numbered 1–N across the four trees.
 1056. **Autofix classifies by transform, not yet per rule.** `Scan::Finding` declares `reversibility` and `blast_radius`; nothing under `lib/fix` reads either. A sitting that takes the classification as its subject.
 1057. **Findings have no portable form.** SARIF is ~60 lines. Worth doing only if the corpus is ever meant to be read outside pub4. No consumer today.
 1058. **Cross-engine references unmeasured.** One: maps reads `Takeaway::Order`. A source gate with that line as its declared exemption. Worth doing while the count is one.
-1059. **`operator.yml` vs RUNBOOK vs CLAUDE vs START_HERE vs RECIPES.** Five operator doors. `operator.yml` is the command list; CLAUDE is the gotchas; RUNBOOK is the box; START_HERE is the first screen; RECIPES points. Delete the copies.
+1059. **Fixed 2026-09-12.** `data/operator.yml` is the command list and now carries
+     the whole of it: the check family (check-rails, check-openbsd, check-vps,
+     check-full), vps-state and tree.sh lived only in START_HERE.md's Golden
+     Commands, so the stub that pointed here was the more complete of the two.
+     START_HERE's Golden Commands and Source Of Truth sections are pointers now,
+     and RECIPES.md is a door rather than a table. `operator_docs.rb` reads the
+     yaml and `/orient deploy` prints it, so a recipe added there shows at every
+     door.
 1060. **Verify the instrument before the next sitting.** Thirty of 22,417 scanner findings were sampled; roughly a quarter were actionable. This list was read against source in four explore passes and one parent census. It will still contain false positives. The first move on any item is to open the line.
 
 ---
@@ -6860,7 +6892,14 @@ A finding is a hypothesis. Verify the second caller before you delete the first.
 
 ### OPENBSD
 
-25. **`operator.yml` is the command list.** RUNBOOK, CLAUDE, START_HERE, RECIPES currently copy it. Pointers, not tables. RECIPES is thirteen lines — fill from yaml or delete.
+25. **Fixed 2026-09-12.** `data/operator.yml` is the command list and now carries
+     the whole of it: the check family (check-rails, check-openbsd, check-vps,
+     check-full), vps-state and tree.sh lived only in START_HERE.md's Golden
+     Commands, so the stub that pointed here was the more complete of the two.
+     START_HERE's Golden Commands and Source Of Truth sections are pointers now,
+     and RECIPES.md is a door rather than a table. `operator_docs.rb` reads the
+     yaml and `/orient deploy` prints it, so a recipe added there shows at every
+     door.
 26. **One deploy verb.** `bin/vps-deploy` is canonical. `vps_deploy_master.sh` calls it. `vps_production_push` is `SKIP_CI=1 vps-deploy all`. `deploy_all.sh` dies or becomes a wrapper.
 27. **One uptime checker.** `bin/uptime-check.sh` execs `health_check.rb --public-only`. `usr/local/bin/uptime-check.sh` is the install target of the same file, or a one-line exec. One list of hosts from `deploy_inventory.json`.
 28. **One “on box” bootstrap.** `vps_install_all` vs `vps_on_vm_install`. Fold; delete the `git stash`.
@@ -9294,7 +9333,14 @@ the moment it happened, where the whole suite stayed green.
 16. **MixScore backticks vs engine Open3 vs `RadioChop.capture`.** One ffmpeg runner, one `capture` signature.
 17. **`dilla_principles.yml` unread.** Load from `groove_engine` or delete.
 18. **Two LUFS windows.** One.
-19. **`operator.yml` vs RUNBOOK vs CLAUDE vs START_HERE vs RECIPES.** One command list.
+19. **Fixed 2026-09-12.** `data/operator.yml` is the command list and now carries
+     the whole of it: the check family (check-rails, check-openbsd, check-vps,
+     check-full), vps-state and tree.sh lived only in START_HERE.md's Golden
+     Commands, so the stub that pointed here was the more complete of the two.
+     START_HERE's Golden Commands and Source Of Truth sections are pointers now,
+     and RECIPES.md is a door rather than a table. `operator_docs.rb` reads the
+     yaml and `/orient deploy` prints it, so a recipe added there shows at every
+     door.
 20. **Four deploy verbs.** Wrappers around `vps-deploy`.
 21. **Two uptime-check scripts.** One file, one host list.
 22. **Face tests in `spec/`, `test/`, `web/test/`.** Two homes at most.

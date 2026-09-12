@@ -3,13 +3,17 @@
 #
 # Usage:
 #   zsh OPENBSD/bin/deploy-diff.sh
-#   SSH_HOST=dev@46.23.89.226 SSH_KEY=~/.ssh/id_ed25519_brgen zsh OPENBSD/bin/deploy-diff.sh
+#   SSH_HOST=dev@brgen.no SSH_KEY=~/.ssh/id_ed25519_brgen zsh OPENBSD/bin/deploy-diff.sh
+#
+# SSH_HOST here is login@host in one string, which is how config_drift_gate.rb
+# reads it too. OPENBSD/lib/ssh_vm23.sh gives the same name the opposite meaning
+# — host alone, with SSH_USER beside it — so never export one for the other.
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 REPO_ETC="${ROOT}/OPENBSD/etc"
-SSH_HOST=${SSH_HOST:-dev@46.23.89.226}
+SSH_HOST=${SSH_HOST:-dev@brgen.no}
 SSH_KEY=${SSH_KEY:-~/.ssh/id_ed25519_brgen}
 SSH_OPTS=(-o BatchMode=yes -o ConnectTimeout=10 -i "$SSH_KEY")
 

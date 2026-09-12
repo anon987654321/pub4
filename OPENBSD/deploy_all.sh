@@ -9,7 +9,10 @@
 #
 # Usage:
 #   zsh OPENBSD/deploy_all.sh
-#   VPS_HOST=dev@46.23.89.226 SSH_KEY=~/.ssh/id_ed25519 zsh OPENBSD/deploy_all.sh
+# VPS_HOST is the host alone and VPS_USER the login; they are joined below as
+# ${SSH_USER}@${SSH_HOST}, so a `dev@` prefix here produces dev@dev@46.23.89.226
+# and every ssh fails. This example carried that prefix.
+#   VPS_HOST=46.23.89.226 VPS_USER=dev SSH_KEY=~/.ssh/id_ed25519 zsh OPENBSD/deploy_all.sh
 #   zsh OPENBSD/deploy_all.sh --per-app   # also run RAILS/<app>/<app>.sh (copies to /home/<app>/app)
 set -euo pipefail
 
