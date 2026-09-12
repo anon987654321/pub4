@@ -132,7 +132,17 @@ exemplars:
 
 # Page-level visual quality rubric (HTML structure; not pixel baseline).
 quality:
-  target_score: 80
+  # 100, on the operator's instruction of 2026-09-12: every Rails surface scores
+  # full marks on every design measure, no exception. All ten do today — brgen
+  # and its six verticals, amber and bsdports, measured live.
+  #
+  # A target equal to the maximum means the first point lost is a failure, which
+  # is the point. It is affordable only because the rubric was corrected the
+  # same day: cta_budget counted every <button> in the document, including a
+  # collapsed composer's toolbar, two dismiss buttons and a PWA install prompt,
+  # and took 9 points off all three live surfaces for chrome. No design work
+  # could have paid that back.
+  target_score: 100
   weights:
     landmarks: 20
     hierarchy: 20
@@ -149,8 +159,9 @@ quality:
       max_h1: 1
       min_h1: 0  # warn soft if 0
     cta_budget:
-      # too many peer primary actions above fold (Hick)
-      max_submit_buttons: 4
+      # The peer-choice limit is MASTER's: rules.yml UX_LAWS.hick
+      # max_visible_choices. It is not restated here, because it was, as 4
+      # against the law's 7, and the private copy won for months.
       max_btn_primary: 3
     guest_open:
       forbid: 'Sign in to continue'

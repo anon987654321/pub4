@@ -401,7 +401,13 @@ vertical_accents:
   # sentence that used to end this note — "small text in this vertical wears
   # `hover` instead" — went with it: `hover` is read in one place,
   # _marketplace_nav_bar.scss:121, and there it is a background-color.
-  marketplace: { accent: "#98876e", hover: "#6f6149", light: "#98876e" }  # taupe storefront + serif
+  # hover was #6f6149 and is #8d7e66 — lighter, which is the direction a dark
+  # ink needs. .nav-search-submit:hover keeps color: var(--accent-ink) and swaps
+  # the fill to this, so the pair that gets drawn is #110f19 on the hover, and
+  # at #6f6149 that measured 3.15:1 against a 4.5 floor. It is 4.80 now, with
+  # 1.14 of separation still left from the accent so the hover reads as a state
+  # rather than as the same button. Operator decision 2026-09-12.
+  marketplace: { accent: "#98876e", hover: "#8d7e66", light: "#98876e" }  # taupe storefront + serif
   tv: { accent: "#dc635c", hover: "#b83a33", light: "#dc635c" }        # lifted from #d6473f (3.74:1 on surface_elevated)
   dating: { accent: "#00d4aa", hover: "#00b391", light: "#009579" }       # Nordic teal (not warm coral)
   takeaway: { accent: "#e07b39", hover: "#c26a30", light: "#c26a30" }

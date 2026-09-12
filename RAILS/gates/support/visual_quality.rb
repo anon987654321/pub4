@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "yaml"
+require_relative "../../shared/lib/operator/master_design"
 
 module Deploy
   # Page-level visual *quality* (not pixel regression).
@@ -128,17 +129,46 @@ module Deploy
       pts
     end
 
+    # Hick's law, and the law is MASTER's.
+    #
+    # rules.yml UX_LAWS.hick says "more than 7 peer choices without progressive
+    # disclosure". This file said 4, in its own copy, and counted every <button>
+    # in the document — so on markedsplass it counted 20: three tiptap toolbar
+    # buttons inside a composer that is closed, a composer open and a composer
+    # close, two tab-bar coach buttons, a menu peel, two PWA install-prompt
+    # buttons, and a chat widget's own tab and close. One of the twenty is a call
+    # to action. The page scored 6 of 15 for chrome, on all three live surfaces,
+    # and no amount of design work could have moved it.
+    #
+    # Two sources of one law is this repo's named defect, and here the private
+    # copy was both stricter and wrong. The number comes from MasterDesign now.
+    #
+    # TIER: lexical. "Visible peer choices" is a visual fact and this is a regex
+    # over HTML, so it can only approximate: it counts submits and primary
+    # actions, and subtracts the chrome it can name. A dismiss button is an
+    # escape, not a choice; a toolbar inside a collapsed composer is progressive
+    # disclosure, which the law explicitly exempts. The authority on what is
+    # actually visible is the geometry probe — the same split WORN_TYPE already
+    # makes between what the stylesheet declares and what the visitor wears.
+    CHROME = /
+      close|dismiss|cancel|peel|coach|toggle|trigger|
+      install-prompt|widget-tab|tiptap|composer-|push-enable
+    /xi
+
     def score_cta_budget(body, notes)
       pts = w(:cta_budget)
-      submits = body.scan(/type=["']submit["']|<button\b/i).size
-      primary = body.scan(/btn-primary|button_to/i).size
-      max_sub = @rules.dig("cta_budget", "max_submit_buttons").to_i
+      max_choices = Operator::MasterDesign.dig("ux_laws", "hick", "max_visible_choices").to_i
+      max_choices = @rules.dig("cta_budget", "max_visible_choices").to_i if max_choices <= 0
+      max_choices = 7 if max_choices <= 0
       max_pri = @rules.dig("cta_budget", "max_btn_primary").to_i
-      max_sub = 4 if max_sub <= 0
       max_pri = 3 if max_pri <= 0
+
+      choices = peer_choices(body)
+      primary = body.scan(/btn-primary|button_to/i).size
+
       score = pts
-      if submits > max_sub
-        notes << "cta:submits=#{submits}"
+      if choices > max_choices
+        notes << "cta:choices=#{choices}"
         score = (score * 0.4).floor
       end
       if primary > max_pri
@@ -146,6 +176,13 @@ module Deploy
         score = (score * 0.5).floor
       end
       score
+    end
+
+    # Buttons that ask the reader to pick, minus the ones that let them leave.
+    def peer_choices(body)
+      buttons = body.scan(/<button\b[^>]*>/i).reject { |tag| tag.match?(CHROME) }
+      submits = body.scan(/<input[^>]*type=["']submit["'][^>]*>/i)
+      (buttons + submits).size
     end
 
     def score_guest_open(body, notes)

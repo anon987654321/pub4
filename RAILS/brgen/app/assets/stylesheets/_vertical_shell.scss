@@ -18,7 +18,7 @@ $vertical-accents: (
   // 2.47:1 and takeaway 2.97:1 (visual_contract_lint low_contrast, WCAG
   // 1.4.11 wants 3:1), so light mode wears a darkened variant of the same
   // hue. Verticals whose dark hue already clears 3:1 on white repeat it.
-  marketplace: (#98876e, #6f6149, #98876e), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
+  marketplace: (#98876e, #8d7e66, #98876e), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
   tv:          (#dc635c, #b83a33, #dc635c), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
   dating:      (#00d4aa, #00b391, #009579), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents
   takeaway:    (#e07b39, #c26a30, #c26a30), // scan: intentional — definition, mirrors design_tokens.yml vertical_accents

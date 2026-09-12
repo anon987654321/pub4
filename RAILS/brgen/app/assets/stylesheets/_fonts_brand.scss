@@ -49,16 +49,21 @@ $latin: "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,
 // dependency for a family no brgen rule names. amber keeps its own copy in
 // _fonts_editorial.scss, where --amber-editorial-serif does name it.
 
-// Pangram Pangram — marketplace TOP OFFERS only (drop licensed woff2 into
-// public/fonts/). Until files exist, local() + Arial fallback in
-// .marketplace-top-offers --offer-display keeps catalog readable.
-// License: App/Web from pangrampangram.com — not free for production.
+// Pangram Pangram — marketplace TOP OFFERS only. --font-display in
+// _vertical_marketplace.scss names the family first, so a visitor who owns
+// the font wears it and everyone else falls to Bricolage.
+//
+// local() only. The three url()s pointed at
+// /fonts/pp-neue-montreal-latin-<w>-normal.woff2 and public/fonts/ holds one
+// file, which is Bricolage — so each weight cost a 404 on top of its bytes,
+// for a face that cannot be served anyway: the licence is App/Web from
+// pangrampangram.com and not free for production. Drop the licensed woff2 in
+// and add the url()s back with it.
 @each $w in (400, 600, 700) {
   @font-face {
     font-family: "PP Neue Montreal";
     src: local("PP Neue Montreal"),
-         local("Neue Montreal"),
-         url("/fonts/pp-neue-montreal-latin-#{$w}-normal.woff2") format("woff2");
+         local("Neue Montreal");
     font-weight: $w;
     font-style: normal;
     font-display: optional;

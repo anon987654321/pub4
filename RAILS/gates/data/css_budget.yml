@@ -184,7 +184,20 @@ rules:
   # on bg is 4.96 — AA, short of the 7.0 target. Forcing those to AAA means either
   # a darker red on every surface or dropping the semantic, and neither is a
   # contrast decision.
-  contrast_below_aaa: 37
+  #
+  # 37 -> 38 on 2026-09-12, and it is accounting rather than absorption. The
+  # pair that joined did not exist in this census before that morning: the gate
+  # was pairing marketplace_hover as a foreground against the page background,
+  # which is text nothing draws, and the pair that IS drawn — the vertical ink
+  # on that hover fill — went unmeasured. It measured 3.15 and was below AA.
+  # Lightening the hover to #8d7e66 puts it at 4.80, so it left the below_aa
+  # count (now 0, its ceiling) and entered this band.
+  #
+  # It is not pushed to AAA. #ab9c84 would reach 7.07 and is lighter than the
+  # accent it replaces, so the hover would outshine the resting button. And the
+  # accent itself is 5.45, in this same band: holding a hover to a stricter
+  # standard than the token it belongs to is not a contrast decision either.
+  contrast_below_aaa: 38
   # These two are what gives design_rules.yml's `typography` block a reader.
   # type_scale counts font-size literals off the --text-* ladder in
   # _tokens.scss; weight_ladder counts font-weight literals off
@@ -302,7 +315,24 @@ rules:
 # saving is real rather than a build artefact, and a number that may fall and
 # never rise is recorded when it falls.
 weight_kb:
-  brgen: 206
+  # 206 -> 207 on 2026-09-12, named rather than absorbed. 0574a3ecc added
+  # 1,598B for the two-band phone chrome — the wordmark over the nav, icons in
+  # one corner — across _nav_swiper.scss and _root.scss. That is a deliberate
+  # design change, so cutting it would undo the work rather than pay for it.
+  #
+  # 210B came back the same day and are subtracted from the raise: the three
+  # PP Neue Montreal @font-face blocks each carried a url() for
+  # /fonts/pp-neue-montreal-latin-<w>-normal.woff2, and public/fonts/ holds one
+  # file, which is Bricolage. Each was a 404 as well as its bytes, for a face
+  # whose licence forbids serving it anyway. local() stays, so a visitor who
+  # owns the font still wears it.
+  #
+  # The reserve the note above named is smaller than it looked. Those font
+  # url()s were most of the "~1KB" it offered, and the 134 unused selectors are
+  # not spendable without reading them: the census counts `woff2`, `type`,
+  # `nth` and `ProseMirror` among them, and the last is applied by the editor
+  # at runtime.
+  brgen: 207
   amber: 109
 # 64 -> 65 on 2026-09-12. Mobile-first costs bytes: stating the phone case
 # unconditionally and restoring the wider one at a min-width edge writes each

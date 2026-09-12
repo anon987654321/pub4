@@ -76,7 +76,7 @@ main#main-content > header.market-hero h1 {
    Only the light theme has the problem — on the dark ground --accent is 5.02:1 —
    so only the light theme swaps, to the deeper taupe of the same pair at 6.03:1. */
 :root[data-theme="light"] .market-hero-kicker {
-  color: var(--vertical-marketplace-accent-hover, #6f6149);
+  color: var(--vertical-marketplace-accent-hover, #8d7e66);
 }
 
 .market-hero p:not([class]) {
