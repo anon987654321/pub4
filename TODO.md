@@ -93,6 +93,30 @@ blocks 29–55, 65–74, 97–123, 139–169 and 202–221, which are about how 
 surface *looks* rather than which token it applies. Those are the operator's,
 and an agent sweeping them would be redesigning the product by grep.
 
+**The verification pass's single best deletion candidate was wrong, and it said
+so itself before anyone checked.** It reported `wisper`, `tty-reader` and
+`flay` as declared in the Gemfiles and referenced by no code in any tree —
+true, as far as a grep for their constants goes — and then flagged the finding
+as low-confidence on the grounds that "a gem nobody uses does not usually get
+added twice".
+
+It was right to doubt it. `Gemfile.lock:222-227` has `tty-prompt` requiring
+`tty-reader`, and `tty-reader` requiring `wisper`; `tty-prompt` is used at
+`MASTER/lib/cli/session.rb:14` and `MASTER/lib/fix/governor.rb:3`. Removing
+either gem line would change nothing but the Gemfile's honesty, and removing
+the lock entries with them would stop the daemon booting under
+`BUNDLE_FROZEN=true` (`OPENBSD/etc/rc.d/master:34`).
+
+Only `flay` (`MASTER/Gemfile:30`, `require: false`, no lock dependents, no
+caller) is genuinely unreferenced — and taking it out is still a lockfile
+change, which this repo records as structurally hazardous from a Mac because
+`rb-kqueue` is BSD-only and resolves differently here. It wants doing on the
+box.
+
+**The transferable rule: a gem's callers are not only in the code.** Check the
+lock's dependency tree before calling one unused, the same way you check every
+tree before calling a constant unreached.
+
 **This file's own dominant defect is the duplicate, not the stale entry.**
 Fifty-one subjects are named in four or more different top-level sections —
 `apps.yml` in ten, `rules.yml` in eight, `dilla.rb` and `/health` in seven,
