@@ -6,8 +6,8 @@ Proposals against three stated goals, 2026-08-25:
    visuals unlike anything seen before — new cinematography, new colour.
 2. **lora** produces stunning selfies that are actually good photography, on
    FLUX 2 or whatever is current.
-3. **postpro** is the house filter on every photo and video, emulates real
-   analog, and rescues what can be rescued.
+3. **postpro** is the house filter on every photo, emulates real analog, and
+   rescues what can be rescued.
 
 Grounded in `PHOTOGRAPHY.md` (the four layers), the Replicate survey in
 `repligen/README.md` and `lora/README.md`, and what the three tools verifiably
@@ -167,7 +167,10 @@ no account of subsurface scattering.
 
 ## H. Postpro on video (117–128)
 
-Currently impossible: libvips, and every input glob is `jpg/jpeg/png/webp`.
+Not built. A frame-by-frame path existed and was removed: it shelled out to a
+fresh interpreter per frame, so a minute of 1080p cost about an hour while its
+own estimate promised six minutes, and two of its eight tests timed out rather
+than passed. Whatever replaces it grades in-process or not at all.
 
 117. An ffmpeg path beside the vips one — this tree has deep ffmpeg experience in dilla. **[deep]**
 118. Reuse dilla's filter-graph knowledge, including the parameter traps already documented there.

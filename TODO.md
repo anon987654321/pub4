@@ -6218,15 +6218,12 @@ Numbered 1–N across the four trees.
 886. **Duplicate frozen-string magic comment.** `postpro.rb:2-3`. Delete one.
 887. **Version banner is marketing.** `:5-7`. Present-tense reason or delete. The CLI has `--capabilities`.
 888. **No `--help` / `--explain` on postpro.** Flags are a hand-rolled `ARGV.include?` forest. `--help` listing every flag, and refuse non-flag argv when stdin is not a TTY.
-889. **`--video` exists; PHOTOGRAPHY.md says stills only.** Update PHOTOGRAPHY: video path exists, frame-by-frame, grain hold vs moving.
-890. **README “Running it” omits `--rescue`, `--video`, `--measure`, `--compare`, `--watch`.**
+890. **README “Running it” omits `--rescue`, `--measure`, `--compare`, `--watch`.**
 891. **In-place grade from repligen.** `repligen.rb:760` `--input` and `--output` are the same path. Write a sibling and leave the download (REVERSIBILITY).
 892. **`postpro.log` is a committed logger stub.** Gitignore `*.log` under postpro, or stop opening a logfile next to source.
 893. **`CONFIG` from missing `master.json`.** Help should say “built-in tables only”.
 894. **Camera profiles: 6 JSON files, README says 121 bodies.** Say “six vendor files, 121 bodies.”
 895. **Golden tests cover four presets of 57.** Do not hash looks. Add one more family only if a preset class has no representative. **Unverified** whether `house` is in those four.
-896. **`motion.rb` `--explain` cost print.** Surface it as `postpro --video FILE --explain` (no grade).
-897. **`rake test:motion` should print the skip count.** Rakefile does not.
 898. **`--watch` / `--random` / `--auto` undocumented in README running block.**
 899. **README Checks should point at `rake postpro:bootstrap`** for a missing libvips host.
 900. **Repligen help banner omits `chain` / `chains`.** `:884`. Add them, plus `help`.
@@ -6290,12 +6287,11 @@ Numbered 1–N across the four trees.
 955. **No test that `dilla.rb` `parts` markers are unique.** Scan `# engine part:` names, `assert_equal names, names.uniq`. **Unverified** if engine-probes already have it.
 956. **`studio_helper.rb` comments name `test/dilla/helper.rb`.** Those paths do not exist. Fix to `STUDIO/test/`.
 957. **Chord theory skip on missing 13.** Invert: skip only when absent, assert when present.
-958. **`which ffmpeg`.** Use `Open3` + `ffmpeg -version` like `motion.rb`. OpenBSD `which` differs.
+958. **`which ffmpeg`.** Use `Open3` + `ffmpeg -version`. OpenBSD `which` differs.
 959. **`test_dilla_crate_dig.rb` does not open on-disk sidecars.** One test: every readable `samples/**/*.provenance.json` has a `url` or is listed as pre-URL-schema. Worktree without samples skips.
 960. **`STUDIO/README.md` has lists, tables, and a code block.** README_PROSE. Redo; move commands into sentences. Same for `dilla/README.md`, `postpro/README.md`, `repligen/README.md`, `lora/README.md`.
 961. **`PHOTOGRAPHY.md` “3,947 lines and 228 rules”.** **Unverified** now. Point at `ruby MASTER/tools/agent_context.rb` or drop the census.
 962. **`PHOTOGRAPHY.md` “Nothing applies it by default.”** False: `repligen.rb` `HOUSE_POSTPRO`. Update layer “Two things that are not true yet.”
-963. **`PHOTOGRAPHY.md` “postpro is stills only.”** False: `motion.rb`.
 964. **`AMBITION.md` “Today repligen is single-shot.”** False: `chain.rb` + `chains/`. Rewrite §A opener to “spine exists; execution still needs a token.” Mark items 1–2 built.
 965. **`dilla/README.md` `sample_loops.rb`.** File does not exist (`engine part: sample_loops`). Fix the restore-verify sentence.
 966. **`dilla/README.md` `crate/` restore story.** Present-tense: restore is copy onto `samples/<track>/loop.wav`; `bin/crate` is a third layout.

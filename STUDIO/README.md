@@ -3,7 +3,7 @@
 **A claim about an image or a sound is worth nothing until something measures
 it.** Four media tools share that conviction. `dilla/` builds beats, Detroit in
 its lean and genre-agnostic in intent. `postpro/` is the house grade, analog
-photographic emulation for stills and video. `repligen/` generates images, and
+photographic emulation for stills. `repligen/` generates images, and
 chains radically different models to do it. `lora/` trains person-specific
 fine-tunes, so a name survives across worlds. Each keeps its own contract in its
 own README.
