@@ -12,6 +12,7 @@ Studio::Tools.load_tool("postpro/postpro.rb")
 # No image is opened here. Everything under test is table shape and scalar
 # arithmetic, so this runs without libvips having anything to do.
 class TestPostproFilm < Minitest::Test
+  POSTPRO_SOURCE = File.join(Studio::ROOT, "postpro", "postpro.rb")
   COLOUR_STOCKS = (STOCKS.keys - %i[tri_x ilford_hp5 ilford_delta3200]).freeze
 
   # --- the tables agree about which films exist ---------------------------
@@ -311,6 +312,119 @@ class TestPostproFilm < Minitest::Test
 
   # Colour, not grey. A monochrome probe makes desaturate, ortho_film,
   # skin_protect and stock_matrix look inert when they are behaving correctly —
+  # --- the grain model is a claim, so it is measured -----------------------
+
+  # A flat patch at one tone, and the sigma the grain step lays on it.
+  def grain_sigma(stock, iso, value, intensity = 1.0)
+    $postpro_seed = 1
+    flat = (Vips::Image.black(512, 512) + value).cast("uchar")
+    flat = flat.bandjoin([flat, flat]).copy(interpretation: :srgb)
+    (grain(flat, iso, stock, intensity).colourspace("b-w").cast("float") -
+      flat.colourspace("b-w").cast("float")).deviate
+  end
+
+  # STOCKS[:grain] means peak luma sigma in 8-bit levels at mid-grey, or it means
+  # nothing. Before the Boolean model it meant nothing: Portra at preset strength
+  # laid 0.27 levels on flat grey, and no reading of any constant said so.
+  def test_a_stock_grains_at_the_strength_it_declares
+    { kodak_portra: 400, tri_x: 400, ilford_delta3200: 3200, fuji_velvia: 50 }.each do |stock, iso|
+      declared = STOCKS[stock][:grain] * GRAIN_SIGMA_SCALE
+      measured = grain_sigma(stock, iso, 128)
+      assert_in_delta declared, measured, declared * 0.15,
+                      "#{stock} declares #{declared.round(2)} levels at mid-grey and lays #{measured.round(2)}"
+    end
+  end
+
+  # The Boolean model's amplitude is sqrt(u(1-u)), not u(1-u). The difference is
+  # a highlight carrying 1.7 times less grain than a midtone rather than three.
+  def test_grain_follows_the_boolean_amplitude_across_the_curve
+    peak = STOCKS[:tri_x][:grain] * GRAIN_SIGMA_SCALE
+    [48, 96, 176, 216].each do |value|
+      u = value / 255.0
+      model = 2 * Math.sqrt(u * (1 - u)) * peak
+      assert_in_delta model, grain_sigma(:tri_x, 400, value), model * 0.2,
+                      "sRGB #{value} is off the model curve"
+    end
+  end
+
+  # Crystal size and observer blur are separate parameters. They were one, and
+  # the blur sat at half the grain it was filtering at every resolution.
+  def test_the_scan_blur_does_not_track_the_crystal
+    source = File.read(POSTPRO_SOURCE)
+    body = source[/^def grain_field\b.*?^end$/m]
+    assert body, "grain_field must exist"
+    assert_includes body, "gaussblur(GRAIN_SCAN_SIGMA)",
+                    "the observer blur must be its own constant, not a multiple of the cell"
+    refute_match(/gaussblur\(sp\)/, body)
+  end
+
+  # Two passes add in quadrature, and 57 of 61 presets carry their own grain.
+  def test_the_finishing_pass_stands_down_for_a_chain_that_grains_itself
+    probe = (Vips::Image.black(16, 16) + 128).cast("uchar")
+    probe = probe.bandjoin([probe, probe]).copy(interpretation: :srgb)
+    assert_equal probe, apply_finishing_grain(probe, :portrait)
+    refute_equal probe, apply_finishing_grain(probe, :quality_uplift) if
+      PRESETS[:quality_uplift] && !Array(PRESETS[:quality_uplift][:fx]).include?("grain")
+  end
+
+  # --- halation, tone scale, chains ---------------------------------------
+
+  # Light returns off the base a base-thickness away, so the halo peaks OUTSIDE
+  # the highlight. Summing two Gaussians put its maximum at the source instead.
+  def test_halation_puts_its_light_in_a_ring
+    width = 400
+    spot = Vips::Image.gaussmat(width / 12.0, 0.001, separable: false, precision: :float)
+    spot = spot.linear([320.0 / spot.max], [0]).embed((width - spot.width) / 2, (width - spot.height) / 2, width, width)
+    probe = ((Vips::Image.black(width, width) + 40) + spot).cast("uchar")
+    probe = probe.bandjoin([probe, probe]).copy(interpretation: :srgb)
+    delta = (halation(probe, 1.0).cast("float") - probe.cast("float")).extract_band(0)
+    row = delta.extract_area(width / 2, width / 2, width / 2, 1)
+    profile = (0...150).map { |x| row.getpoint(x, 0)[0] }
+    # How far the source is still bright enough to halate, measured off the probe
+    # rather than guessed, because the answer scales with the probe.
+    source = probe.colourspace("b-w").extract_area(width / 2, width / 2, width / 2, 1)
+    lit = (0...150).count { |x| source.getpoint(x, 0)[0] > 235 }
+    assert_operator profile.index(profile.max), :>, lit,
+                    "the halo peaks inside the highlight at #{profile.index(profile.max)} px, source lit to #{lit}"
+  end
+
+  def test_every_tone_curve_is_monotonic_and_lands_mid_grey_somewhere_sane
+    %i[aces hable hbd agx aces2].each do |type|
+      encoded = [0.02, 0.09, 0.18, 0.4, 1.0, 4.0].map do |scene|
+        flat = (Vips::Image.black(16, 16) + scene).cast("float")
+        image = flat.bandjoin([flat, flat]).copy(interpretation: :scrgb).colourspace("srgb")
+        tonemap(image, type: type, intensity: 1.0).colourspace("b-w").avg
+      end
+      assert_equal encoded.sort, encoded, "#{type} is not monotonic: #{encoded.inspect}"
+      assert_operator encoded[2], :>, 40, "#{type} crushes mid-grey"
+      assert_operator encoded[2], :<, 200, "#{type} blows mid-grey"
+    end
+  end
+
+  # A chain that can repeat an effect has to be an ordered list, because a Hash
+  # cannot hold the same key twice.
+  def test_a_random_chain_is_ordered_always_grains_and_may_repeat
+    seen_duplicate = false
+    40.times do |seed|
+      chain = random_chain(Random.new(seed))
+      assert_kind_of Array, chain
+      assert_equal RANDOM_ALWAYS, chain.last.first, "grain must be the last word"
+      names = chain.map(&:first)
+      assert(names.all? { |fx| RECIPE_ALLOWED.include?(fx) }, "chain names an effect recipe cannot call")
+      ranks = names[0...-1].map { |fx| random_stage_rank[fx] }
+      assert_equal ranks.sort, ranks, "chain is out of stage order: #{names.inspect}"
+      seen_duplicate ||= names.tally.any? { |_, count| count > 1 }
+    end
+    assert seen_duplicate, "forty chains and not one repeated an effect"
+  end
+
+  def test_the_toy_filter_pool_is_gone
+    source = File.read(POSTPRO_SOURCE)
+    %w[grain_basic sepia_basic glitch_basic random_fx].each do |name|
+      refute_includes source, "def #{name}", "#{name} survived the collapse into recipe()"
+    end
+  end
+
   # they have nothing to act on. Each band gets its own noise field and its own
   # offset, so there is chroma, luminance detail and a hard edge.
   def build_probe

@@ -1020,10 +1020,19 @@ PRESETS = {
 # Finishing grain uses the preset's own stock and box speed, not a second
 # Portra-400 emulsion on top of Tri-X. Random/unspecified presets fall back
 # to Portra so the four output paths still share one call.
-def apply_finishing_grain(image, preset_name = nil)
+# The last pass of grain, for the chains that carry none of their own.
+#
+# It used to run on every output, which grained 57 of the 61 presets twice and
+# stood as a --vocab-check note for as long as the note has existed. Two passes
+# add in quadrature, so a stock quoted at 6.0 levels of granularity arrived at
+# 8.5 — which cost nothing while the grain was invisible and costs the whole
+# calibration now that it is not.
+def apply_finishing_grain(image, preset_name = nil, grained: nil)
   data = PRESETS[preset_name.to_s.to_sym] || {}
-  stock = data[:stock] || :kodak_portra
-  grain(image, preset_effective_iso(data), stock, 0.35)
+  already = grained.nil? ? Array(data[:fx]).include?("grain") : grained
+  return image if already
+
+  grain(image, preset_effective_iso(data), data[:stock] || :kodak_portra, 0.70)
 end
 
 # Box speed, doubled per stop of push. A preset may override with iso:.
@@ -1522,89 +1531,199 @@ def color_separate(image, intensity = 0.6)
   safe_cast(image * (1 - intensity) + separated * intensity)
 end
 
-GRAIN_CELL_BASE = 4.0  # Perlin cell size in px at GRAIN_REFERENCE_WIDTH
-# Cell sizes were calibrated at 2K. Scale with width so a 600 px hero and a
-# 4k print share an emulsion; Newson grain is a crystal size, not a fraction
-# of the picture.
+# Grain is a Boolean model. Silver halide crystals are disks dropped by a
+# Poisson process whose density respects the local gray level, and the picture
+# is what you see when you filter that binary field (Newson, Delon & Galerne,
+# CGF 36, 2017). Two facts follow from it, and this file had both backwards.
+#
+# The filtered indicator has VARIANCE u(1-u), so the amplitude, being a standard
+# deviation, goes as sqrt(u(1-u)). The envelope here was 4L^0.8(1-L) — the
+# variance curve used as an amplitude — which cost a highlight about three times
+# the grain it should carry against a midtone, where film costs it 1.7.
+#
+# And the crystal radius and the blur it is observed through are independent.
+# One belongs to the emulsion, the other to the enlarger, the scanner and the
+# eye; Newson keeps the filter in OUTPUT pixels for exactly that reason. This
+# file derived both from one cell size, so the filter sat at roughly half the
+# grain it was filtering at every resolution and no amplitude could survive it.
+# Measured before the change: Portra at preset strength laid 0.27 levels of luma
+# sigma on flat grey, against the 3 to 8 a 35 mm scan carries.
 GRAIN_REFERENCE_WIDTH = 2048.0
-# Amplitude denominator, tuned for scRGB [0,1] space. Rebased from 400 when the
-# ISO term moved to being relative to box speed: the old term was a constant
-# sqrt(800/100) = 2.83 for every preset, so dividing the denominator by that
-# keeps the overall grain level where it was calibrated while letting the speed
-# term vary. (No render has ever shown this grain -- see the fractsurf note in
-# grain() -- so "where it was calibrated" means on paper, not on screen.)
-GRAIN_AMP_SCALE = 141.0
-# 3-tap horizontal convolution kernel for grain anisotropy (film transport direction).
-# Film grain is slightly elongated along the direction of film travel — this
-# kernel applies a subtle horizontal elongation without visible smearing.
-GRAIN_ANISO_KERNEL = Vips::Image.new_from_array([[0.18, 0.64, 0.18]]).freeze
+# Crystal size in pixels at the reference width. An emulsion property, so it
+# scales with the picture and a 600 px hero and a 4K print share a film.
+GRAIN_CELL_BASE = 4.0
+# The observer, in output pixels, and deliberately not a function of crystal
+# size. Enlarger, scanner and eye, which is what Newson's sigma models.
+GRAIN_SCAN_SIGMA = 0.62
+# STOCKS[:grain] times this is the stock's peak luma sigma in 8-bit levels at
+# midtone, and --fit-grain measures that same quantity off a scan. Tri-X at 25
+# reads 6.0, Portra at 15 reads 3.6, Delta 3200 at 38 reads 9.1 — the band a
+# 35 mm scan carries. It replaces GRAIN_AMP_SCALE = 141, a denominator in scRGB
+# whose output no instrument could interpret and no measurement could check.
+GRAIN_SIGMA_SCALE = 0.24
+# Grain is exposed in linear light and read in 8-bit levels, and the sRGB
+# transfer curve between them is steep in the shadows and flat in the
+# highlights — at sRGB 16 a level is worth twelve times the linear light it is
+# worth at sRGB 240. A constant linear amplitude therefore reads as four times
+# the model's grain in the blacks and a fifth of it in the whites, which is the
+# shape of a digital noise floor rather than of an emulsion.
+#
+# So the curve is carried in the domain it was measured in. This is the slope
+# at mid-grey, which is the tone GRAIN_SIGMA_SCALE is quoted at, and
+# grain_encoding_slope divides out the rest of it per tone.
+GRAIN_MIDTONE_SLOPE = 255.0 * (1.055 / 2.4) * (HD.srgb_to_linear(128 / 255.0)**(1.0 / 2.4 - 1.0))
 
-# Perlin + fractsurf grain with horizontal anisotropy and shadow-weighted envelope.
-# Perlin (70%) gives crystalline cluster structure; fractsurf (30%) adds multi-scale
-# fBm detail. The midtone envelope 4L^0.8(1-L) peaks slightly toward the shadow
-# side of mid-gray, matching real halide clump statistics. A mild horizontal
-# directional kernel elongates grain clusters along the film-transport axis.
+# 255 * d(sRGB)/d(linear) at the tone an 8-bit value encodes.
+def grain_encoding_slope(value)
+  linear = HD.srgb_to_linear(value / 255.0)
+  return 255.0 * 12.92 if linear <= 0.0031308
+
+  255.0 * (1.055 / 2.4) * (linear**(1.0 / 2.4 - 1.0))
+end
+# One crystal layer shadows the next, so chroma grain is correlated with luma
+# grain rather than drawn three times independently — AFGS1 signals the same
+# thing as a luma-to-chroma coefficient. Mixed as sqrt(1-p^2) own + p shared,
+# which is the mix that leaves the field at unit variance.
+GRAIN_CHROMA_CORRELATION = 0.35
+# Worley, not Perlin: a Worley field is a random cell tessellation, which is
+# what a halide layer is, where Perlin is a smooth gradient field, which is what
+# a cloud is. Measured on the same construction, Worley returns kurtosis 3.50
+# against Perlin's 3.05, and the heavy tail is the clumping — a scanned grain
+# field runs 3.3 to 4, and a Gaussian is exactly 3. That is the difference
+# between grain and noise.
+#
+# It costs: 2.3 s against 0.9 s for one grain pass over a 1024 x 1365 frame,
+# because Worley's price is the cell count and the cells are small. Worth it on
+# a still. :perlin is the fast path and is still a defensible emulsion.
+GRAIN_CRYSTAL_FIELD = :worley
+# The tile the normalisation is measured on.
+GRAIN_STATISTICS_TILE = 384
+# Film grain is slightly elongated along the transport axis.
+GRAIN_ANISO_KERNEL = Vips::Image.new_from_array([[0.18, 0.64, 0.18]]).freeze
+# AFGS1 carries grain strength as a piecewise-linear function of luma rather
+# than as a formula, so that a measured emulsion is allowed to disagree with the
+# model. These sixteen knots are the Boolean model's own sqrt(u(1-u)) normalised
+# to peak at 1; a stock overrides them with `grain_knots:` when a scan says
+# otherwise, and --fit-grain prints a measured set in this shape.
+GRAIN_SCALING_KNOTS = [0.000, 0.499, 0.680, 0.800, 0.884, 0.943, 0.980, 0.998,
+                       0.998, 0.980, 0.943, 0.884, 0.800, 0.680, 0.499, 0.000].freeze
+
+# The scaling function as a 256-entry LUT: the knots interpolated, then divided
+# by the encoding slope so that what comes out the other end follows the knots
+# rather than the transfer curve. Normalised to 1 at mid-grey, which is where
+# GRAIN_SIGMA_SCALE is calibrated.
+def grain_scaling_lut(knots)
+  (@grain_scaling_lut ||= {})[knots] ||= begin
+    span = knots.length - 1
+    table = (0...256).map do |i|
+      position = (i / 255.0) * span
+      low = position.floor.clamp(0, span)
+      knots_at = knots[low] + (knots[[low + 1, span].min] - knots[low]) * (position - low)
+      knots_at * GRAIN_MIDTONE_SLOPE / grain_encoding_slope(i)
+    end
+    midtone = table[128]
+    Vips::Image.new_from_array([table.map { |v| v / midtone }]).cast("float")
+  end
+end
+
+# Where on that curve each pixel sits.
+#
+# Indexed on the ENCODED gray level, not on linear light. The Boolean model's
+# u is the fraction of the frame a crystal covers, which is the developed
+# density — what a scan reads and what an 8-bit file stores. Indexing it on
+# linear light instead reads midtone as u = 0.18, lands a third of the way up
+# a curve that peaks at 0.5, and quietly costs every midtone a quarter of its
+# grain. The noise is still ADDED in linear light, where the exposure happened.
+def grain_envelope(image, stock_data)
+  lut = grain_scaling_lut(stock_data[:grain_knots] || GRAIN_SCALING_KNOTS)
+  rgb_bands(image).colourspace("b-w").cast("uchar").maplut(lut)
+end
+
+# A unit-variance crystal field at the given radius, seen through the observer.
+#
+# Normalising by the field's own measured deviation after the clumping and the
+# blur is the whole trick: whatever the filter takes out, the measurement puts
+# back, so crystal size and grain strength stop fighting each other and a stock
+# can be quoted in levels rather than in an amplitude that survives by luck.
+def grain_field(width, height, radius, sublayers, seed)
+  cluster = Vips::Image.gaussnoise(width, height, sigma: GRAIN_LOGNORM_SIGMA, mean: 0.0, seed: seed)
+                       .gaussblur([radius * 2.5, 0.4].max).exp
+                       .linear([1.0 / GRAIN_LOGNORM_MEAN], [0])
+  layers = sublayers.each_with_index.map do |sublayer, index|
+    cell = [radius * (2.0**sublayer[:sensitivity_shift]) * sublayer[:grain_scale], 1.0].max.round
+    crystals = grain_crystals(width, height, cell, seed + index * 7)
+    # A second octave four times coarser is the multi-scale detail a single
+    # cell size cannot carry; real emulsion clumps at more than one scale.
+    coarse = grain_crystals(width, height, [cell * 4, 4].max, seed + index * 7 + 3)
+    (crystals * 0.70 + coarse * 0.30).linear([sublayer[:weight]], [0])
+  end
+  raw = layers.reduce(:+) * cluster
+  anisotropic = raw * 0.55 + raw.conv(GRAIN_ANISO_KERNEL, precision: :float) * 0.45
+  # Materialised once. vips is lazy, so deviate, avg and the caller's use are
+  # three passes over the same construction unless the field is held — and the
+  # construction is sixteen noise images, which is most of what grain costs.
+  observed = anisotropic.gaussblur(GRAIN_SCAN_SIGMA).copy_memory
+  mean, deviation = grain_field_statistics(observed)
+  return observed.linear([0], [0]) if deviation < 1e-9
+
+  observed.linear([1.0 / deviation], [-mean / deviation])
+end
+
+# Off a centre tile, not the whole frame. The field is stationary by
+# construction, so a tile is the same measurement for a fraction of the work,
+# and on a 24 MP scan that difference is most of a second.
+def grain_field_statistics(field)
+  side = [GRAIN_STATISTICS_TILE, field.width, field.height].min
+  tile = field.extract_area((field.width - side) / 2, (field.height - side) / 2, side, side)
+  [tile.avg, tile.deviate]
+end
+
+# Three unit-variance channel fields, correlated by GRAIN_CHROMA_CORRELATION, do
+# not sum to a unit-variance luma: the Rec.709 weights and the per-stock channel
+# scales decide that, and they differ per stock. Dividing the factor out is what
+# lets GRAIN_SIGMA_SCALE mean the same number of levels for Ektar and for Delta.
+def grain_luma_factor(scales)
+  weighted = [0.2126, 0.7152, 0.0722].each_with_index.map { |weight, i| weight * scales[i] }
+  cross = weighted.combination(2).sum { |a, b| a * b }
+  Math.sqrt(weighted.sum { |v| v * v } + 2 * GRAIN_CHROMA_CORRELATION**2 * cross)
+end
+
+# Both fields are zero-mean and roughly unit-scale before normalisation; the
+# caller normalises, so only the correlation structure matters here.
+def grain_crystals(width, height, cell, seed)
+  if GRAIN_CRYSTAL_FIELD == :worley
+    Vips::Image.worley(width, height, cell_size: cell, seed: seed % 2_147_483_647).cast("float")
+  else
+    Vips::Image.perlin(width, height, cell_size: cell, seed: seed % 2_147_483_647)
+  end
+end
+
 def grain(image, iso = 400, stock = :kodak_portra, intensity = 0.4)
   data = STOCKS[stock] || STOCKS[:kodak_portra]
   scales = GRAIN_CHAN_SCALE[stock] || [1.0, 1.0, 1.0]
   sublayers = data[:sublayers] || [{ sensitivity_shift: 0.0, grain_scale: 1.0, weight: 1.0 }]
-  cell_base = [GRAIN_CELL_BASE * (image.width.to_f / GRAIN_REFERENCE_WIDTH), 1.0].max
-  # Relative to the stock's OWN box speed, not to a fixed ISO 100.
-  #
-  # sqrt(iso/100) against a per-stock sigma double-counts: data[:grain] already
-  # encodes how grainy this emulsion is (8 for Velvia, 38 for Delta 3200), and
-  # multiplying that by a speed term measured from 100 applies the same spread
-  # twice. Rated at box speed every stock now comes out at its own sigma, which
-  # is what the sigma was calibrated to mean, and the ISO argument does the one
-  # job left over: saying you rated the film at something other than box speed,
-  # which is what pushing is and what pushing costs.
+  radius = [GRAIN_CELL_BASE * (image.width / GRAIN_REFERENCE_WIDTH), 0.5].max
+  # Rated against the stock's OWN box speed: at box speed a film comes out at
+  # its own granularity, and every stop of push costs sqrt(2) more.
   box_speed = (data[:speed] || 400).to_f
-  iso_factor = Math.sqrt(iso.to_f / box_speed)
-  base_amplitude = data[:grain] * iso_factor * intensity / GRAIN_AMP_SCALE
+  levels = data[:grain].to_f * GRAIN_SIGMA_SCALE * Math.sqrt(iso.to_f / box_speed) * intensity
+  peak = levels / (GRAIN_MIDTONE_SLOPE * grain_luma_factor(scales))
 
   linear = image.colourspace("scrgb")
-  r, g, b = linear.bandsplit
-  luma = r * 0.2126 + g * 0.7152 + b * 0.0722
-  # Shadow-biased envelope: luma^0.8 shifts peak toward shadows vs symmetric 4L(1-L)
-  envelope = ((luma.linear([1], [0])**0.80) * luma.linear([-1], [1])).linear([4], [0])
-
-  # Lognormal cluster field: silver halide crystals cluster in groups whose
-  # amplitude follows a lognormal distribution. exp(gaussian_noise) produces
-  # the characteristic long-tail clumping seen in real emulsion grain scans.
-  cluster_sigma = [cell_base * 2.5, 1.0].max
-  cluster_field = Vips::Image.gaussnoise(image.width, image.height, sigma: GRAIN_LOGNORM_SIGMA, mean: 0.0,
-                                                                   seed: postpro_seed(11))
-                             .gaussblur(cluster_sigma).exp
-                             .linear([1.0 / GRAIN_LOGNORM_MEAN], [0])
+  envelope = grain_envelope(image, data)
+  shared = grain_field(image.width, image.height, radius, sublayers, postpro_seed(11))
+  mix = Math.sqrt(1.0 - GRAIN_CHROMA_CORRELATION**2)
 
   bands = scales.each_with_index.map do |chan_scale, ci|
-    sp = [cell_base * GRAIN_CHANNEL_SPATIAL[ci] * 0.7, 0.3].max
-    sublayers.map do |sl|
-      cell = [cell_base * (2.0**sl[:sensitivity_shift]) * sl[:grain_scale], 1.5].max.round
-      amplitude = base_amplitude * chan_scale * sl[:grain_scale] * sl[:weight]
-      perlin = Vips::Image.perlin(image.width, image.height, cell_size: cell, seed: postpro_seed(100 + ci))
-      # Was Vips::Image.fractsurf(w, h, 2.5, seed:). fractsurf takes no seed
-      # argument, in this libvips or any other, so this line raised on every
-      # call -- and grain rescues to `image`, which means the grain step of all
-      # 46 presets that carry one produced a bit-identical copy of its input.
-      # The most-used effect in the file was the one that never ran.
-      #
-      # A second Perlin octave four times coarser is the multi-scale detail the
-      # comment above asks fBm for, and unlike fractsurf it takes the seed this
-      # file threads everywhere for reproducibility.
-      fractal = Vips::Image.perlin(image.width, image.height, cell_size: [cell * 4, 4].max, seed: postpro_seed(200 + ci))
-      raw = (perlin * 0.70 + fractal * 0.30)
-      # Anisotropy: slight horizontal elongation along film-transport axis
-      aniso = raw.conv(GRAIN_ANISO_KERNEL, precision: :float)
-      clustered = (raw * 0.55 + aniso * 0.45) * cluster_field
-      clustered.gaussblur(sp).linear([amplitude], [0.0])
-    end.reduce(:+)
+    own = grain_field(image.width, image.height, radius * GRAIN_CHANNEL_SPATIAL[ci], sublayers,
+                      postpro_seed(100 + ci))
+    (own * mix + shared * GRAIN_CHROMA_CORRELATION).linear([peak * chan_scale], [0])
   end
 
-  noise = Vips::Image.bandjoin(bands)
-  safe_cast((linear + noise * envelope).colourspace("srgb"))
+  safe_cast((linear + Vips::Image.bandjoin(bands) * envelope).colourspace("srgb"))
 rescue StandardError => e
-  $logger.error "grain failed: #{e.message}"; image
+  $logger.error "grain failed: #{e.message}"
+  image
 end
 
 def base_tint(image, color = [252, 248, 240], intensity = 0.08)
@@ -2715,6 +2834,19 @@ HALATION_TINT_VISION3 = [0.92, 0.15, 0.04].freeze
 HALATION_TINT_PORTRA = [0.88, 0.12, 0.04].freeze
 HALATION_TINT_TRI_X = [0.45, 0.45, 0.45].freeze
 HALATION_THRESHOLD = 0.7
+# Halation is an annulus. Light that gets through the emulsion reflects off the
+# rear face of the base by total internal reflection and re-enters the emulsion
+# a base-thickness away, so it re-exposes a ring around the highlight — not a
+# halo centred on it. This summed a narrow and a wide Gaussian, which puts the
+# most returned light exactly where the highlight already is, the one place it
+# cannot land. A difference of Gaussians is the ring; the narrow lobe stays on
+# as the scatter that never left the emulsion.
+HALATION_SCATTER = 0.25
+# A difference of Gaussians keeps a fraction of the energy the sum carried, so
+# the strength has to come back somewhere. Measured on a probe carrying a blown
+# specular, the summed form peaked at 5 levels on the highlight's own edge and
+# this peaks at 7 a little outside it, which is the move that was wanted.
+HALATION_GAIN = 2.6
 
 # Halation: resolution-aware σ ≈ width/45 (≈43px at 2K, calibrated from agx
 # emulsion measurements). Luma-based bright mask rather than red-only, so
@@ -2738,6 +2870,13 @@ HALATION_THRESHOLD = 0.7
 # Two fixes and both change what those presets look like — move halation ahead
 # of film_curve, or lower the threshold — so neither is taken here. Found by
 # POSTPRO_EXPLAIN=1, which is what that flag is for.
+# The returned light, as a ring of radius sigma plus the scatter that stayed.
+def halation_ring(bright, sigma)
+  core = bright.gaussblur([sigma * 0.55, 0.3].max)
+  ring = bright.gaussblur(sigma * 1.6) - core
+  (ring > 0).ifthenelse(ring, 0) + core * HALATION_SCATTER
+end
+
 def halation(image, intensity = 1.0, tint: HALATION_TINT_VISION3)
   sigma_r = [image.width / 45.0, 6.0].max.clamp(6.0, 120.0)
   sigma_g = sigma_r * 0.55
@@ -2747,11 +2886,9 @@ def halation(image, intensity = 1.0, tint: HALATION_TINT_VISION3)
   luma = r * 0.2126 + g * 0.7152 + b * 0.0722
   excess = luma.linear([1], [-HALATION_THRESHOLD])
   bright = (excess > 0).ifthenelse(excess, 0) ** 2
-  # Lorentzian-approx PSF: sharp core (30%) + wide wings (70%) per wavelength band.
-  halo_r = (bright.gaussblur(sigma_r * 0.7) * 0.30 + bright.gaussblur(sigma_r * 1.6) * 0.70) * (tint[0] * intensity)
-  halo_g = (bright.gaussblur(sigma_g * 0.7) * 0.30 + bright.gaussblur(sigma_g * 1.6) * 0.70) * (tint[1] * intensity)
-  halo_b = (bright.gaussblur(sigma_b * 0.7) * 0.30 + bright.gaussblur(sigma_b * 1.6) * 0.70) * (tint[2] * intensity)
-  halo = Vips::Image.bandjoin([halo_r, halo_g, halo_b])
+  halo = Vips::Image.bandjoin([sigma_r, sigma_g, sigma_b].each_with_index.map do |sigma, band|
+    halation_ring(bright, sigma) * (tint[band] * intensity * HALATION_GAIN)
+  end)
   safe_cast(clamp01(linear + halo).colourspace("srgb"))
 end
 
@@ -2766,6 +2903,29 @@ TONEMAP_HABLE = { a: 0.15, b: 0.50, c: 0.10, d: 0.20, e: 0.02, f: 0.30, w: 1.0 }
 # Hejl-Burgess-Dawson: no division path in shadows, slight toe lift.
 # Good for scenes where ACES reads too contrasty in the blacks.
 TONEMAP_HBD = { a: 6.2, b: 0.5, c: 1.7, d: 0.06 }.freeze
+# AgX (Troy Sobotka): rotate into a narrower set of primaries, log-encode,
+# run a sigmoid there, rotate back. The rotation is the point — it is what
+# stops a channel reaching clip from dragging hue with it, which is exactly
+# what the 2016 per-channel fit above does to a saturated light source.
+AGX_INSET = [[0.842401070950469, 0.042401070950469, 0.042401070950469],
+             [0.078436501561803, 0.878436501561803, 0.078436501561803],
+             [0.079162427487729, 0.079162427487729, 0.879162427487729]].freeze
+AGX_OUTSET = [[1.196998661311914, -0.053001338688086, -0.053001338688086],
+              [-0.098045626952253, 1.151954373047747, -0.098045626952253],
+              [-0.098953034359661, -0.098953034359661, 1.151046965640339]].freeze
+AGX_MIN_EV = -12.473931188332413
+AGX_MAX_EV = 4.026068811667588
+# The published sixth-order fit to AgX's default contrast curve.
+AGX_SIGMOID = [-0.00232, 0.1191, 0.4298, -6.868, 31.96, -40.14, 15.5].freeze
+# The ACES 2 tone scale — Daniele Evo, a Michaelis-Menten curve with a flare
+# term — at SDR peak luminance. ACES 1's RRT is the fit in TONEMAP_ACES, and
+# its highlight desaturation is the "ACES look" ACES 2 was built to remove.
+#
+# The tone scale only. ACES 2 also carries chroma compression and gamut
+# mapping in a JMh appearance model, which is a colour pipeline rather than a
+# curve and does not belong inside a per-channel tonemap; AgX above is the
+# hue-preserving option here.
+ACES2_PEAK_LUMINANCE = 100.0
 
 def tonemap(image, type: :aces, exposure: 0.0, intensity: 1.0)
   linear = image.colourspace("scrgb")
@@ -2773,6 +2933,8 @@ def tonemap(image, type: :aces, exposure: 0.0, intensity: 1.0)
   curved = case type.to_sym
             when :hable then tonemap_hable(exposed)
             when :hbd   then tonemap_hbd(exposed)
+            when :agx   then tonemap_agx(exposed)
+            when :aces2 then tonemap_aces2(exposed)
             else             tonemap_aces(exposed)
             end
   blended = linear * (1 - intensity) + clamp01(curved) * intensity
@@ -2801,6 +2963,55 @@ def tonemap_hable(linear)
     num / den - e / f
   end
   Vips::Image.bandjoin(curved).linear([1.0 / white] * 3, [0, 0, 0])
+end
+
+def tonemap_agx(linear)
+  positive = (linear > 1e-10).ifthenelse(linear, 1e-10)
+  log2 = positive.log10.linear([1.0 / Math.log10(2.0)] * 3, [0, 0, 0])
+  span = AGX_MAX_EV - AGX_MIN_EV
+  x = clamp01(log2.linear([1.0 / span] * 3, [-AGX_MIN_EV / span] * 3))
+  shaped = AGX_SIGMOID.each_with_index.reduce(nil) do |sum, (coefficient, power)|
+    term = (power.zero? ? x.linear([0] * 3, [coefficient] * 3) : (x**power) * coefficient)
+    sum ? sum + term : term
+  end
+  # AgX hands back a display-encoded picture; tonemap's callers expect display
+  # LINEAR, so decode before returning rather than gamma-encoding twice.
+  srgb_decode(clamp01(shaped)).recomb(AGX_OUTSET)
+end
+
+# The sRGB transfer function, backwards, on an image rather than a scalar.
+def srgb_decode(image)
+  bands = image.bands
+  low = image.linear([1.0 / 12.92] * bands, [0] * bands)
+  high = image.linear([1.0 / 1.055] * bands, [0.055 / 1.055] * bands)**2.4
+  (image <= 0.04045).ifthenelse(low, high)
+end
+
+# Michaelis-Menten with a flare term, per the ACES 2 tone scale library.
+def aces2_tonescale_params(peak = ACES2_PEAK_LUMINANCE)
+  @aces2_tonescale_params ||= {}
+  @aces2_tonescale_params[peak] ||= begin
+    n_r = 100.0
+    g = 1.15
+    t_1 = 0.04
+    r_hit = 128.0 + (896.0 - 128.0) * (Math.log(peak / n_r) / Math.log(100.0))
+    m_1 = 0.5 * ((peak / n_r) + Math.sqrt((peak / n_r) * ((peak / n_r) + 4.0 * t_1)))
+    m = m_1 / (((r_hit / m_1) / ((r_hit / m_1) + 1.0))**g)
+    c_t = 10.013 / n_r * (1.0 + (Math.log(peak / 100.0) / Math.log(2.0)) * 0.14)
+    g_ip = 0.5 * (c_t + Math.sqrt(c_t * (c_t + 4.0 * t_1)))
+    w_2 = 0.18 / (-(m_1 * ((g_ip / m)**(1.0 / g))) / (((g_ip / m)**(1.0 / g)) - 1.0))
+    { g:, t_1:, s_2: w_2 * m_1, m_2: m_1 / (((r_hit / m_1) / ((r_hit / m_1) + w_2))**g) }
+  end
+end
+
+def tonemap_aces2(linear)
+  p = aces2_tonescale_params
+  positive = (linear > 0).ifthenelse(linear, 0)
+  curved = positive.bandsplit.map do |x|
+    f = ((x / x.linear([1], [p[:s_2]]))**p[:g]) * p[:m_2]
+    (f * f) / f.linear([1], [p[:t_1]])
+  end
+  Vips::Image.bandjoin(curved)
 end
 
 def tonemap_hbd(linear)
@@ -2969,7 +3180,7 @@ def preset(image, name)
     before_stats = PostproExplain.snapshot(processed)
     processed = case fx
              when "optical_blur"        then optical_blur(processed, 0.5 * head[:blur])
-             when "tonemap"             then tonemap(processed, type: :aces, exposure: p.fetch(:tonemap_ev, 0.0), intensity: p[:intensity] * 0.85)
+             when "tonemap"             then tonemap(processed, type: p.fetch(:tonemap, :aces2), exposure: p.fetch(:tonemap_ev, 0.0), intensity: p[:intensity] * 0.85)
              when "halation"            then halation(processed, p[:intensity] * 0.60, tint: halation_tint_for(p[:stock]))
              when "film_curve"          then film_curve(processed, p[:stock], p[:intensity] * head[:curve])
              when "stock_matrix"        then stock_matrix(processed, p[:stock], p[:intensity] * 0.85)
@@ -2997,7 +3208,7 @@ def preset(image, name)
              # film faster than it is and paying for it in grain. Safe to change
              # today of all days: grain raised on every call until this session,
              # so no render anywhere has a grain pattern to preserve.
-             when "grain"               then grain(processed, preset_effective_iso(p), p[:stock], p[:intensity] * 0.30)
+             when "grain"               then grain(processed, preset_effective_iso(p), p[:stock], p[:intensity])
              when "color_separate"      then color_separate(processed, p[:intensity] * 0.55)
              when "chromatic_aberration" then chromatic_aberration(processed, p[:intensity] * 0.25 * head[:fringe])
              when "vintage_lens"        then vintage_lens(processed, p.fetch(:lens, "zeiss"), p[:intensity] * 0.70)
@@ -3081,99 +3292,61 @@ ensure
 end
 
 # Random Effects
-def random_fx(image, effects, mode)
-  processed = image
-  effects.each do |fx|
-    intensity = mode == "experimental" ? rand(0.5..1.5) : rand(0.3..0.8)
-    processed = case fx
-             when "grain" then grain_basic(processed, intensity)
-             when "leaks" then leaks_basic(processed, intensity)
-             when "sepia" then sepia_basic(processed, intensity)
-             when "bloom" then bloom_basic(processed, intensity)
-             when "teal_orange" then teal_orange(processed, intensity)
-             when "cross" then cross_basic(processed, intensity)
-             when "vhs" then vhs_basic(processed, intensity)
-             when "chroma" then chroma_basic(processed, intensity)
-             when "glitch" then glitch_basic(processed, intensity)
-             when "flare" then flare_basic(processed, intensity)
-             else processed
-             end
+# A random chain, drawn from everything recipe() can call.
+#
+# The pool here used to be ten *_basic helpers — a sepia, a glitch, a toy VHS —
+# which is the vocabulary of a phone filter, and ten of them produce ten
+# flavours of one joke. It is now every effect in RECIPE_ALLOWED, the same set
+# the presets are built from, so a random run reaches the whole emulsion
+# instead of a novelty shelf bolted to the side of it.
+#
+# Duplicates are drawn on purpose. Two passes of halation at different radii is
+# what a bright window through a thick base does; grain over a print stock over
+# grain is what a duplicated negative looks like. A filter cannot do either,
+# because a filter is one lookup table.
+RANDOM_CHAIN_LENGTH = (4..9)
+RANDOM_DUPLICATE_CHANCE = 0.3
+# Grain is not optional, ever. The argument of this whole file is that an
+# emulsion is a physical process, and a chain with no crystals in it is a
+# colour filter with opinions.
+RANDOM_ALWAYS = "grain"
+RANDOM_OUTPUTS = (3..5)
+
+# Where each effect belongs in a chain, measured from the sixty-one that exist.
+#
+# A chain in a random order is mush: a print stock before the film curve, a
+# vignette before the lens. Rather than declare a stage table that would drift
+# from the presets, read the presets — each one is a colourist's ordering, and
+# the mean normalised position of an effect across all of them is the order it
+# wants to run in. An effect no preset uses sits with the artefacts, late.
+def random_stage_rank
+  @random_stage_rank ||= begin
+    positions = Hash.new { |table, key| table[key] = [] }
+    PRESETS.each_value do |p|
+      chain = Array(p[:fx])
+      chain.each_with_index do |fx, index|
+        positions[fx] << (chain.size < 2 ? 0.5 : index.to_f / (chain.size - 1))
+      end
+    end
+    measured = positions.transform_values { |seen| seen.sum / seen.size }
+    RECIPE_ALLOWED.to_h { |fx| [fx, measured.fetch(fx, 0.85)] }
   end
-  processed
 end
 
-def grain_basic(image, intensity)
-  noise = Vips::Image.gaussnoise(image.width, image.height, sigma: 25 * intensity)
-  safe_cast(image + rgb_bands(noise) * 0.2)
+# An ordered list of [effect, params] pairs, which is what recipe() iterates.
+# A list rather than a hash precisely so an effect can appear twice.
+def random_chain(rng = Random.new(postpro_seed))
+  pool = RECIPE_ALLOWED - [RANDOM_ALWAYS]
+  picks = pool.sample(rng.rand(RANDOM_CHAIN_LENGTH), random: rng)
+  picks += picks.sample(rng.rand(1..2), random: rng) if rng.rand < RANDOM_DUPLICATE_CHANCE
+  ranked = picks.sort_by { |fx| [random_stage_rank[fx], rng.rand] }
+  chain = ranked.map { |fx| [fx, (0.35 + rng.rand * 0.55).round(2)] }
+  chain << [RANDOM_ALWAYS, { "intensity" => (0.6 + rng.rand * 0.5).round(2),
+                             "stock" => STOCKS.keys.sample(random: rng).to_s }]
 end
 
-def leaks_basic(image, intensity)
-  overlay = Vips::Image.black(image.width, image.height, bands: 3)
-  rand(2..5).times do
-    x, y = rand(image.width), rand(image.height)
-    radius = image.width / rand(2..4)
-    color = [255 * intensity, 180 * intensity, 80 * intensity]
-    overlay = overlay.draw_circle(color, x, y, radius, fill: true)
-  end
-  safe_cast(image + overlay.gaussblur(15 * intensity) * 0.3)
-end
-
-def sepia_basic(image, intensity)
-  # recomb wants rows, not a flat run of nine numbers -- given the flat form it
-  # reads a 9x1 matrix and demands a 9-band image, which is what
-  # "recomb: image must one band" was complaining about. Every other recomb in
-  # this file passes nested rows; this one did not, so sepia raised on every
-  # call and took the whole file down with it through random_fx.
-  matrix = [[0.9, 0.7, 0.2], [0.3, 0.8, 0.1], [0.2, 0.6, 0.1]]
-  sepia = image.recomb(matrix)
-  safe_cast(image.cast("float") * (1.0 - intensity) + sepia.cast("float") * intensity)
-end
-
-def bloom_basic(image, intensity)
-  bright = image.linear([1.8 * intensity], [0]).gaussblur(12 * intensity)
-  safe_cast(image + bright * 0.3)
-end
-
-def cross_basic(image, intensity)
-  r, g, b = image.bandsplit
-  r = r.linear([1 + 0.2 * intensity], [10 * intensity])
-  g = g.linear([1 - 0.1 * intensity], [0])
-  b = b.linear([1 + 0.3 * intensity], [-5 * intensity])
-  safe_cast(Vips::Image.bandjoin([r, g, b]))
-end
-
-def vhs_basic(image, intensity)
-  noise = rgb_bands(Vips::Image.gaussnoise(image.width, image.height, sigma: 40 * intensity))
-  lines = rgb_bands(Vips::Image.sines(image.width, image.height).linear(0.3 * intensity, 150))
-  safe_cast(image + noise * 0.4 + lines * 0.3)
-end
-
-def chroma_basic(image, intensity)
-  shift = 3 * intensity
-  r, g, b = image.bandsplit
-  r = r.embed(shift, 0, image.width, image.height)
-  b = b.embed(-shift, 0, image.width, image.height)
-  safe_cast(Vips::Image.bandjoin([r, g, b]))
-end
-
-def glitch_basic(image, intensity)
-  r, g, b = image.bandsplit
-  shift = (15 * intensity).round
-  r = r.embed(rand(-shift..shift), rand(-shift..shift), image.width, image.height)
-  g = g.embed(rand(-shift..shift), rand(-shift..shift), image.width, image.height)
-  b = b.embed(rand(-shift..shift), rand(-shift..shift), image.width, image.height)
-  noise = rgb_bands(Vips::Image.gaussnoise(image.width, image.height, sigma: 20 * intensity))
-  safe_cast(Vips::Image.bandjoin([r, g, b]) + noise * 0.4)
-end
-
-def flare_basic(image, intensity)
-  flare = Vips::Image.black(image.width, image.height, bands: 3)
-  rand(3..6).times do
-    x, y = rand(image.width), rand(image.height)
-    length = 200 * intensity
-    flare = flare.draw_line([255, 220, 180], x, y, x + length, y)
-  end
-  safe_cast(image + flare.gaussblur(8 * intensity) * 0.3)
+def random_chain_name(chain)
+  chain.map { |fx, _| fx }.tally.map { |fx, n| n > 1 ? "#{fx}x#{n}" : fx }.join("-")
 end
 
 RECIPE_ALLOWED = %w[
@@ -3182,8 +3355,7 @@ RECIPE_ALLOWED = %w[
   push_pull halation optical_blur tonemap dir_coupler spectral_temp color_temp
   skin_protect desaturate warmth green_push cross_fade infrared cyanotype
   lith_print technicolor kodachrome_sim faded_print base_tint dual_base_density
-  reciprocity_failure bloom_pro teal_orange grain_basic leaks_basic sepia_basic
-  bloom_basic cross_basic vhs_basic chroma_basic glitch_basic flare_basic
+  reciprocity_failure bloom_pro teal_orange
   emulsion_defocus adjacency_effects longitudinal_ca lens_distortion bokeh_rendering
   anamorphic_flare diffraction_blur scan_noise newton_rings dust_and_hair
   film_curl_vignette selenium_tone dye_fade darkroom_print film_base_density
@@ -3368,6 +3540,7 @@ def preset_chain(image, names)
 end
 
 def process_file(file, variations, preset_name = nil, recipe_data = nil, random_effects = nil, mode = "professional")
+  recipe_data ||= random_effects
   image = load_image(file)
   return 0 unless image
 
@@ -3400,18 +3573,17 @@ def process_file(file, variations, preset_name = nil, recipe_data = nil, random_
                      preset(image, preset_name)
                    elsif recipe_data
                      recipe(image, recipe_data)
-                   elsif random_effects
-                     random_fx(image, random_effects, mode)
                    else
                      next
                    end
 
       next unless processed
 
-      processed = apply_finishing_grain(processed, preset_name)
+      grained = recipe_data&.any? { |fx, _| fx.to_s == RANDOM_ALWAYS }
+      processed = apply_finishing_grain(processed, preset_name, grained:)
       processed = rgb_bands(processed)
       timestamp = Time.now.strftime("%Y%m%d%H%M%S")
-      suffix = preset_name || "processed"
+      suffix = preset_name || (recipe_data ? random_chain_name(recipe_data)[0, 60] : "processed")
       # Built from dirname + basename, not String#sub on the extension: sub
       # matches the first occurrence anywhere in the path, so a directory
       # component containing the extension (shoots/2024.jpg/frame.jpg) was
@@ -3425,6 +3597,9 @@ def process_file(file, variations, preset_name = nil, recipe_data = nil, random_
       else
         processed.write_to_file(output, Q: quality)
       end
+      # A preset can be looked up again by name; a random chain cannot be looked up
+      # at all, so it goes out beside the picture or it is gone.
+      write_chain_sidecar(file, output, recipe_data) if recipe_data
       PostproBootstrap.dmesg "write out=#{File.basename(output)} q=#{quality}"
       processed_count += 1
 
@@ -3531,6 +3706,19 @@ def write_grade_sidecar(input_path, output_path, preset_name, original, processe
   data
 end
 
+def write_chain_sidecar(input_path, output_path, chain)
+  File.write("#{output_path}.json", JSON.pretty_generate(
+    schema: "postpro.chain.v1",
+    generated_at: Time.now.utc.iso8601,
+    input: File.expand_path(input_path),
+    output: File.expand_path(output_path),
+    seed: $postpro_seed,
+    chain: chain.map { |fx, params| { fx => params } }
+  ) + "\n")
+rescue StandardError => e
+  $logger.error "chain sidecar: #{e.message}"
+end
+
 def write_comparison(original, processed, output_path)
   return unless ARGV.include?("--compare")
 
@@ -3551,7 +3739,7 @@ def one_shot_mode?
 end
 
 def introspect_mode?
-  (ARGV & %w[--vocab-check --capabilities --list-presets --list-stocks --list-lenses --describe-preset --css-filter --export-lut]).any?
+  (ARGV & %w[--vocab-check --capabilities --list-presets --list-stocks --list-lenses --describe-preset --css-filter --export-lut --fit-grain]).any?
 end
 
 # Does every preset name things that exist, and does every table have a row for
@@ -3570,6 +3758,82 @@ end
 # wrong and a log that says everything ran.
 #
 # No image processing and no files touched — it reads the tables.
+# What grain does this scan actually carry?
+#
+# Until this existed the only way to set STOCKS[:grain] was to choose a number
+# that looked about right, and every number in that column was chosen that way.
+# Zhang, Wang, Tian and Pappas (TOG 42:4, 2023) derive the Boolean model's
+# statistics in closed form and, with them, estimators that run backwards from
+# a scan to the parameters. This is that estimator at the resolution this file
+# needs: sigma per tone, which is the scaling function, and the correlation
+# radius, which is the crystal.
+#
+# Point it at a flat frame — a sky, a wall, a grey card, a clear rebate.
+# Structure in the picture reads as grain and inflates the answer, which is why
+# the bins are printed rather than one confident number.
+#
+# Run against this file's own output at a known strength it reads about 15% low
+# and one step fine: tri_x rendered at a declared 6.0 levels and a 4.0 px
+# crystal comes back 5.0 and 3.4. The residual is a high-pass, so the grain's
+# coarsest octave is subtracted along with the picture. Read the figures as a
+# floor, and read the knots, which are a ratio and carry none of the bias.
+FIT_GRAIN_BINS = 16
+FIT_GRAIN_LAGS = 12
+
+def fit_grain(path)
+  image = load_image(path)
+  return "fit-grain: cannot read #{path}" unless image
+
+  luma = rgb_bands(image).colourspace("b-w").cast("float")
+  local = luma.gaussblur(4.0)
+  residual = luma - local
+  pixels = luma.width * luma.height
+
+  bins = (0...FIT_GRAIN_BINS).map do |bin|
+    low = bin * 256.0 / FIT_GRAIN_BINS
+    mask = ((local >= low) & (local < low + 256.0 / FIT_GRAIN_BINS)).linear([1.0 / 255], [0])
+    share = mask.avg
+    next [low.round, nil, 0] if share * pixels < 256
+
+    [low.round, Math.sqrt((residual * residual * mask).avg / share), (share * pixels).round]
+  end
+
+  [fit_grain_report(path, luma, bins), fit_grain_correlation(residual)].join("\n")
+end
+
+# The first lag at which the residual stops agreeing with itself is the
+# crystal, in pixels of this scan.
+def fit_grain_correlation(residual)
+  width = residual.width
+  variance = residual.deviate**2
+  return "  correlation: flat residual, nothing to measure" if variance < 1e-9
+
+  correlations = (1..FIT_GRAIN_LAGS).map do |lag|
+    shifted = residual.extract_area(lag, 0, width - lag, residual.height)
+    (residual.extract_area(0, 0, width - lag, residual.height) * shifted).avg / variance
+  end
+  crossing = correlations.index { |c| c < Math::E**-1 }
+  radius = crossing ? crossing + 1 : FIT_GRAIN_LAGS
+  implied = radius * GRAIN_REFERENCE_WIDTH / width
+  format("  correlation radius %d px at this width, which is GRAIN_CELL_BASE %.1f at the 2048 px reference\n" \
+         "  lags 1..%d: %s", radius, implied, FIT_GRAIN_LAGS, correlations.map { |c| c.round(2) }.join(" "))
+end
+
+def fit_grain_report(path, luma, bins)
+  midtone = bins.map { |low, sigma, _| [((low + 8) - 128).abs, sigma] }.reject { |_, s| s.nil? }.min_by(&:first)
+  peak = midtone&.last
+  knots = bins.map { |_, sigma, _| peak && sigma ? (sigma / peak).round(3) : 0.0 }
+  lines = ["fit-grain #{File.basename(path)} #{luma.width}x#{luma.height}"]
+  bins.each do |low, sigma, count|
+    lines << format("  sRGB %3d-%3d  sigma %s  (%d px)", low, low + (256 / FIT_GRAIN_BINS) - 1,
+                    sigma ? format("%5.2f", sigma) : "    -", count)
+  end
+  lines << format("  mid-grey sigma %.2f levels, which is STOCKS[:grain] %.0f at GRAIN_SIGMA_SCALE %.2f",
+                  peak || 0.0, (peak || 0.0) / GRAIN_SIGMA_SCALE, GRAIN_SIGMA_SCALE)
+  lines << "  grain_knots: [#{knots.join(", ")}]"
+  lines.join("\n")
+end
+
 def vocab_check
   implemented = File.read(__FILE__)[/^def preset\(image, name\).*?^end$/m]
                     .scan(/when "([a-z0-9_]+)"/).flatten.uniq
@@ -3646,7 +3910,7 @@ def vocab_check
     stops: %w[push_pull], age: %w[faded_print dye_fade expired_film],
     print_stock: %w[print_film], exposure_secs: %w[reciprocity_failure],
     k1: %w[lens_distortion], f_number: %w[diffraction_blur], tonemap_ev: %w[tonemap],
-    temp: %w[spectral_temp color_temp],
+    temp: %w[spectral_temp color_temp], tonemap: %w[tonemap],
   }
   PRESETS.each do |name, p|
     key_readers.each do |key, readers|
@@ -3695,19 +3959,47 @@ def vocab_check
   #
   # Read out of this file rather than asserted in prose, because the split had
   # already survived one round of being written down and left alone.
-  finishing_grain = "apply_finishing_grain(processed"
+  # Reaching the finishing pass counts, and calling it by name is only one way to
+  # reach it: run_random writes through process_file, and asserting on the
+  # spelling failed a path whose behaviour was right. A check that measures a
+  # spelling measures a spelling.
   source = File.read(__FILE__)
-  ungrained = %w[process_file run_random run_one_shot run_watch].reject do |name|
-    source[/^def #{name}\b.*?^end$/m]&.include?(finishing_grain)
+  ungrained = %w[process_file run_random run_uplift run_one_shot run_watch].reject do |name|
+    body = source[/^def #{name}\b.*?^end$/m]
+    body&.include?("apply_finishing_grain") || body&.include?("process_file(")
   end
   unless ungrained.empty?
     problems << "output paths disagree on the finishing grain: #{ungrained.join(", ")} " \
                 "#{ungrained.one? ? "does" : "do"} not run apply_finishing_grain, the rest do"
   end
 
-  double_grained = PRESETS.count { |_, p| Array(p[:fx]).include?("grain") }
-  notes << "every output is grained a second time at the preset's own stock and box speed " \
-           "(#{double_grained} of #{PRESETS.length} presets already grain in their own chain)"
+  # apply_finishing_grain now stands down for a chain that grains itself, so the
+  # standing note about every output being grained twice became a thing to check
+  # rather than a thing to report.
+  own = PRESETS.select { |_, p| Array(p[:fx]).include?("grain") }
+  probe = Vips::Image.black(8, 8).bandjoin([Vips::Image.black(8, 8)] * 2).copy(interpretation: :srgb) + 128
+  passed_through = apply_finishing_grain(probe, own.keys.first)
+  problems << "apply_finishing_grain still runs over a chain that grains itself" unless passed_through == probe
+  notes << "#{own.length} of #{PRESETS.length} presets grain in their own chain; " \
+           "the rest take the finishing pass"
+
+  # The grain model has its own vocabulary now, and the same rule applies to it:
+  # a table nothing reads and a name nothing implements both fail quietly.
+  problems << "GRAIN_CRYSTAL_FIELD is #{GRAIN_CRYSTAL_FIELD}, which grain_crystals does not build" \
+    unless %i[worley perlin].include?(GRAIN_CRYSTAL_FIELD)
+  STOCKS.each do |name, data|
+    knots = data[:grain_knots]
+    next if knots.nil?
+
+    problems << "#{name} grain_knots needs at least two knots" if knots.length < 2
+    problems << "#{name} grain_knots go negative" if knots.any?(&:negative?)
+  end
+  quoted = STOCKS.reject { |_, d| d[:grain].nil? }.transform_values { |d| d[:grain] * GRAIN_SIGMA_SCALE }
+  wild = quoted.select { |_, levels| levels < 0.5 || levels > 14.0 }
+  problems << "granularity outside anything a scan measures: " \
+              "#{wild.map { |n, l| "#{n} at #{l.round(1)} levels" }.join(", ")}" unless wild.empty?
+  notes << "grain is quoted in 8-bit levels at mid-grey: " \
+           "#{quoted.minmax_by { |_, l| l }.map { |n, l| "#{n} #{l.round(1)}" }.join(" to ")}"
 
   # CONFIG is empty unless a master.json sits beside this file, which is the
   # normal state. Saying so is the difference between a default and a setting
@@ -3761,6 +4053,8 @@ def run_introspect
     puts list_lenses
   elsif (name = argv_flag("--describe-preset"))
     puts describe_preset(name)
+  elsif (scan = argv_flag("--fit-grain"))
+    puts fit_grain(scan)
   elsif (name = argv_flag("--css-filter"))
     puts css_filter(name.to_sym)
   elsif (name = argv_flag("--export-lut"))
@@ -3835,65 +4129,69 @@ def downloads_dir
   candidates.compact.find { |d| File.directory?(d) }
 end
 
-# --random [DIR] [experimental]
-# Without "experimental": random preset per file (uplift — maximally cinematic).
-# With "experimental": chaotic short random chains (happy accidents).
+# --random [DIR] [uplift] [--count N]
+#
+# Three to five pictures per run, each through its own chain, written beside
+# the source — Downloads if there is one, the working directory otherwise.
+#
+# The default used to be a pair of stacked presets applied to every image in
+# the folder, which for a folder of two hundred is a long afternoon and two
+# hundred near neighbours. A run is now a handful of genuinely different
+# attempts, which is what random is for. `uplift` still stacks presets.
 def run_random
-  experimental = ARGV.include?("experimental")
   dir = downloads_dir
   files = Dir.glob(File.join(dir, "**", "*.{jpg,jpeg,JPG,JPEG,png,PNG,webp,WEBP}"))
              .reject { |f| File.basename(f).match?(/processed|masterpiece|postpro|_v\d+_/) }
-
   if files.empty?
     $cli_logger.error "No images in #{dir}"
     return
   end
 
-  PostproBootstrap.dmesg "random dir=#{dir} files=#{files.count} mode=#{experimental ? 'experimental' : 'uplift'}"
-  count = (argv_flag("--count") || argv_flag("-n") || 4).to_i.clamp(1, 6)
-  # warmth is an effect and masterpiece does not exist at all; preset() returns
-  # the image untouched for an unknown name, so both silently dropped a layer
-  # out of the two-preset chain below. Verified against PRESETS rather than
-  # trimmed by eye — vocab_check never looked at this list.
-  uplift_presets = %i[portrait cinematic magic_hour blockbuster golden_age reversal
-                      noir anamorphic aged_kodachrome analog_scan
-                      cinema_scan nitrate fiber_print expired reticulated ortho
-                      tilt_shift_look haunted quality_uplift]
-  unknown = uplift_presets.reject { |name| PRESETS.key?(name) }
-  $cli_logger.warn "random: dropping unknown presets #{unknown.join(', ')}" if unknown.any?
-  uplift_presets -= unknown
+  return run_uplift(dir, files) if ARGV.include?("uplift")
 
+  # A fresh seed per run unless one was asked for, because the point of a random
+  # run is that the next one differs. It is printed and written into every
+  # sidecar, so POSTPRO_SEED=<that> renders the same three pictures again.
+  $postpro_seed = Random.new_seed % 2_147_483_647 unless ENV.key?("POSTPRO_SEED")
+  rng = Random.new(postpro_seed)
+  count = (argv_flag("--count") || argv_flag("-n"))&.to_i || rng.rand(RANDOM_OUTPUTS)
+  PostproBootstrap.dmesg "random dir=#{dir} pool=#{files.count} outputs=#{count} seed=#{$postpro_seed}"
+
+  count.clamp(1, 24).times do |index|
+    file = files.sample(random: rng)
+    chain = random_chain(rng)
+    $cli_logger.info "#{index + 1}/#{count}: #{File.basename(file)} — #{random_chain_name(chain)}"
+    process_file(file, 1, nil, chain)
+  rescue StandardError => e
+    $logger.error "random #{index + 1}: #{e.message}"
+  end
+end
+
+# The older behaviour, kept because stacking two presets is a different and
+# still useful thing: it asks what the house grade does twice, where a random
+# chain asks what the emulsion can do at all.
+def run_uplift(dir, files)
+  presets = PRESETS.keys.shuffle
+  count = (argv_flag("--count") || argv_flag("-n") || 4).to_i.clamp(1, 6)
+  PostproBootstrap.dmesg "uplift dir=#{dir} files=#{files.count}"
   files.each_with_index do |file, index|
     $cli_logger.info "#{index + 1}/#{files.count}: #{File.basename(file)}"
-    begin
-      if experimental
-        fx_pool = %w[grain leaks sepia bloom teal_orange cross vhs chroma glitch flare]
-        count.times do
-          effects = fx_pool.shuffle.take(rand(4..7))
-          process_file(file, 1, nil, nil, effects, "experimental")
-        end
-      else
-        pool = uplift_presets.shuffle
-        count.times do |i|
-          base = pool[i % pool.size]
-          layer = (pool - [base]).sample
-          image = load_image(file)
-          next unless image
-          processed = preset_chain(image, [base, layer])
-          processed = apply_finishing_grain(processed, base)
-          processed = rgb_bands(processed)
-          timestamp = Time.now.strftime("%Y%m%d%H%M%S")
-          ext = File.extname(file)
-      output = File.join(File.dirname(file), "#{File.basename(file, ext)}_#{base}+#{layer}_v#{i + 1}_#{timestamp}#{ext}")
-          quality = CONFIG["jpeg_quality"] || 95
-          processed.write_to_file(output, Q: quality)
-          PostproBootstrap.dmesg "write chain=#{base}+#{layer} out=#{File.basename(output)}"
-        end
-      end
-      GC.start if (index % 5).zero?
-    rescue StandardError => e
-      $cli_logger.error "Error #{File.basename(file)}: #{e.message}"
+    count.times do |i|
+      base = presets[(index + i) % presets.size]
+      layer = (presets - [base]).sample
+      image = load_image(file)
+      next unless image
+
+      processed = rgb_bands(apply_finishing_grain(preset_chain(image, [base, layer]), base))
+      ext = File.extname(file)
+      output = File.join(File.dirname(file),
+                         "#{File.basename(file, ext)}_#{base}+#{layer}_v#{i + 1}_#{Time.now.strftime("%Y%m%d%H%M%S")}#{ext}")
+      processed.write_to_file(output, Q: CONFIG["jpeg_quality"] || 95)
+      PostproBootstrap.dmesg "write chain=#{base}+#{layer} out=#{File.basename(output)}"
     end
+    GC.start if (index % 5).zero?
+  rescue StandardError => e
+    $cli_logger.error "Error #{File.basename(file)}: #{e.message}"
   end
 end
 
@@ -3979,10 +4277,7 @@ def auto_launch
               when :preset
                 process_file(file, variations, config[:preset])
               when :random
-                fx = %w[grain leaks sepia bloom teal_orange cross vhs chroma glitch flare]
-                selected = config[:mode] == "experimental" ? fx : fx.first(6)
-                random_effects = selected.shuffle.take(config[:fx])
-                process_file(file, variations, nil, nil, random_effects, config[:mode])
+                process_file(file, variations, nil, random_chain)
               when :recipe
                 process_file(file, variations, nil, config[:recipe])
               else
