@@ -5622,10 +5622,25 @@ Numbered 1–N across the four trees.
 621. **`sh/` does not exist.** `OPENBSD/README.md` claims deploy tooling lives under `bin/`, `lib/`, `sh/`. There is no `OPENBSD/sh/`. Drop `sh/` from the sentence.
 622. **Same ghost path in law.** `OPENBSD/DECISIONS.md` “Repo Layout” still lists `sh/`. Align with the tree.
 623. **PATH_OWNERSHIP still names `openbsd/sh/vps_ci.sh`.** File is `OPENBSD/vps_ci.sh`. Fix the key and the `zsh -n` check path.
-624. **Network table is missing.** `SSH_ACCESS.md` and `RUNBOOK.md` both say the canonical network table is in `README.md`. `README.md` has none. Put one table in `SSH_ACCESS.md` and make the others pointers.
-625. **Uptime-check prose is a second URL list.** `RUNBOOK.md` still says the wrapper curls four hardcoded hosts. `bin/uptime-check.sh` now execs `health_check.rb --public-only`. Rewrite the paragraph.
-626. **Crontab table is incomplete and stale.** `RUNBOOK.md` lists four jobs; `etc/crontab.vm23` also schedules prune-guests, core-reclaim, keep-warm, drain-jobs, weekly-integrity. The relayd-watchdog row still says it heals `doas.conf` trailing newline; that heal was removed. Expand the table from the tracked crontab.
-627. **Production-push scope is wrong.** `RUNBOOK.md` table says `vps_production_push.sh` covers “master + brgen + amber”. The script also deploys bsdports.
+624. **Fixed 2026-09-12.** `README.md` carries no table at all — zero table rows,
+     checked. `SSH_ACCESS.md` now names its own Architecture block as the network
+     map, which is what it always was, three lines under the pointer that sent the
+     reader elsewhere for it.
+625. **Fixed 2026-09-12.** The paragraph named four hosts; `bin/uptime-check.sh`
+     execs `health_check.rb --public-only --all-ready-apps` and has no URL list of
+     its own. It now says that, and says what `--public-only` costs: the service,
+     certificate and relayd checks are the same script without the flag.
+626. **Fixed 2026-09-12.** Four rows against ten scheduled jobs, so six self-healing
+     jobs — uptime-check, drain-jobs, core-reclaim, keep-warm, prune-guests and
+     weekly-integrity — existed only in `etc/crontab.vm23` and not in the table an
+     operator reads. All ten are listed. The `relayd-watchdog` row credited it with
+     healing `doas.conf`; that step ran `validate_doas.ksh` from a dev-owned
+     checkout as root every five minutes and was deliberately removed, which its own
+     header records. The weekly-integrity row carries its never-installed state
+     rather than implying it runs.
+627. **Fixed 2026-09-12.** `vps_production_push.sh` deploys bsdports too — its own
+     first line says so and line 36 runs it. The table said master + brgen + amber,
+     which understates a footgun, and understating that one is the wrong direction.
 628. **httpd 6666 comment vs CLAUDE.** `CLAUDE.md` still says `httpd.conf` listens on `* port 6666`. Live file listens on `127.0.0.1 port 6666`.
 629. **MEM_RESTORE drift — fixed 2026-09-12.** OPENBSD/CLAUDE.md said 8/14 for a
      month after resource_guard.sh moved MEM_RESTORE to 10 on 2026-08-14, a

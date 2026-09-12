@@ -276,7 +276,7 @@ deliberately:
 | Script | CI | Scope | When |
 |--------|----|-------|------|
 | `zsh OPENBSD/vps_ci_all.sh` | **Yes** — serial `vps_ci.sh` per app | brgen, amber, bsdports | Normal code change; tests must pass |
-| `zsh OPENBSD/vps_production_push.sh` | **No** — sets `SKIP_CI=1` | master + brgen + amber | Fast hotfix; skips test gate |
+| `zsh OPENBSD/vps_production_push.sh` | **No** — sets `SKIP_CI=1` | master + brgen + amber + bsdports | Fast hotfix; skips test gate |
 | `zsh OPENBSD/deploy_all.sh` | **No** | Runs from a workstation: syncs pub4 to vm23 and runs `OPERATOR.sh`, so it reapplies `/etc`, relayd and the services, not just app code. `--per-app` also runs each `RAILS/<app>/<app>.sh` | The box's config has drifted or a fresh install needs redoing — not for shipping a code change |
 | `doas ksh OPENBSD/start_all_apps.sh` | **No** — not a deploy at all | Enables and starts master, brgen, amber, bsdports, restarts relayd, then `health_check.rb --all-ready-apps` | Recovery. It writes `/var/db/pub4_all_apps`, which pins the four against `resource_guard.sh` shedding |
 
@@ -306,10 +306,20 @@ Tracked mirror: `OPENBSD/etc/crontab.vm23` (installed idempotently by
 
 | Job | Schedule | Log / signal |
 |-----|----------|--------------|
-| `relayd-watchdog` | `*/5 * * * *` | syslog tag `relayd-watchdog` — restarts relayd when unhealthy or backend table stale; heals `doas.conf` trailing newline |
+| `relayd-watchdog` | `*/5 * * * *` | syslog tag `relayd-watchdog` — restarts relayd when unhealthy or backend table stale. It does **not** heal `doas.conf`: that step ran `validate_doas.ksh` from a dev-owned checkout as root every five minutes and was removed, with the reason in the script's own header |
 | `config-drift-check` | `*/15 * * * *` | `/var/log/config_drift.log` — relayd Host routes vs acme SANs vs NSD zones vs DNSSEC paths |
-| `resource_guard.sh` | `*/5 * * * *` | load shedding when vm23 is overloaded |
+| `resource_guard.sh` | `*/5 * * * *` | sheds bsdports then amber under sustained pressure; `/var/log/resource_guard_history.log` |
+| `uptime-check.sh` | `*/5 * * * *` | `/var/log/uptime-check.log`, with `ALLOW_BSDPORTS_DOWN=1` |
+| `drain-jobs.sh` | `5 * * * *` | `/var/log/drain-jobs.log` |
+| `core-reclaim.sh` | `40 * * * *` | `/var/log/core-reclaim.log` — returns a core app's grown resident set |
+| `keep-warm.sh` | `*/10 * * * *` | `/var/log/keep-warm.log` — brgen and amber only |
+| `prune-guests.sh` | `20 4 * * *` | `/var/log/prune-guests.log` |
 | `renew-certs.sh` | `0 2 * * 1` | `/var/log/cert-renewal.log` |
+| `vps_weekly_integrity.sh` | `30 3 * * 0` | **tracked and never installed** — absent from root's live crontab and from `/usr/local/bin`, measured 2026-09-12. See TODO 1060. |
+
+Ten rows because `etc/crontab.vm23` schedules ten jobs. This table listed four
+for long enough that six self-healing jobs existed only in the file nobody
+reads next to the one they do.
 
 `nsd-resign` is **not** in root crontab — it runs from `etc/daily.local` (daily
 DNSSEC re-sign + backup pass). Failures surface in syslog (`daily.local` tag)
@@ -323,10 +333,12 @@ Off-box detection (no alerting pipeline yet):
 sh OPENBSD/bin/uptime-check.sh
 ```
 
-Curls `https://ai.brgen.no/up`, `https://brgen.no/up`,
-`https://amber.brgen.no/up`, `https://bsdports.org/up`. Runs from a laptop or
-vm23; exit 0 only when all four respond. Complements `health_check.rb` (which
-also checks services, certs, relayd locally on vm23).
+A wrapper with no URL list of its own: it execs `health_check.rb --public-only
+--all-ready-apps`, which derives the fleet from `RAILS/apps.yml` and the deploy
+inventory. A second list here is how the paragraph came to name four hosts after
+the wrapper had stopped naming any. Runs from a laptop or vm23, and `--public-only`
+means it asks the internet and checks nothing on the box — the service, certificate
+and relayd checks are the same script without that flag.
 
 ## Post-deploy smoke (one page)
 

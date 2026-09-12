@@ -2,7 +2,7 @@
 
 Operator notes from live verification and [OpenBSD
 Amsterdam](https://www.openbsd.amsterdam) docs research (2026-06-25). Canonical
-network table remains in `README.md`.
+network map is the Architecture block below. It pointed at `README.md`, which carries no table at all — checked 2026-09-12, zero table rows in the file.
 
 ## Architecture
 
