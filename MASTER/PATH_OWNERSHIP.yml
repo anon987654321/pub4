@@ -181,15 +181,6 @@ ownership:
     purpose: style guide sync and canon generation gates run from Rakefile
     risk: medium
     check: bin/check
-  docs/:
-    purpose: human-curated reference notes not consumed by code
-    risk: low
-    check: none
-  reports/:
-    purpose: generated report snapshots (dossiers, screenshots) — regenerate,
-      don't hand-edit
-    risk: local
-    check: none
   completions/:
     purpose: shell completion script for bin/cli
     risk: low

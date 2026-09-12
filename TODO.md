@@ -4971,7 +4971,7 @@ Numbered 1–N across the four trees.
 20. **Fixed 2026-09-12.** The `planned:` block already said nothing reads it; it now
     also says what does answer — Falcon on 53187, declared in `web/` and forwarded by
     relayd — and that nothing has ever listened on 18789.
-21. **`PATH_OWNERSHIP.yml` owns missing dirs.** `docs:` and `reports:` — neither exists. Delete the keys.
+21. **`PATH_OWNERSHIP.yml` owns missing dirs.** `docs:` and `reports:` — neither exists. Delete the keys. **Fixed 2026-09-12 by Copilot.**
 22. **`PATH_OWNERSHIP.yml` omits live dirs.** No entries for `lib/cognition/`, `lib/pressure_engine.rb`, `law/`, `AEGIS.md`, `COGNITION.md`, `EXAMPLES.md`. Add them.
 23. **`PATH_OWNERSHIP.yml` `tools/` check is a source-grep spec.** `:179` `spec/lifecycle_tools_spec.rb` asserts `bin/doctor` contains `"check_yaml"`. Point the check at a real tool test.
 24. **`data/tools.yml` `name:` vs `Master::Io::`.** Header says `Master::Tools`. Runtime is `Master::Io::ReadFile`. Align the namespace.
