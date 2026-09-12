@@ -20,6 +20,7 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
 # fallback (curl || print 000), so set -e only guards the plumbing.
 set -eo pipefail
 
+fail=0
 PUB4_ROOT=${PUB4_ROOT:-/home/dev/pub4}
 FALLBACK='brgen,https://brgen.no/up
 master,https://ai.brgen.no/up
@@ -43,7 +44,6 @@ app_targets() {
 	' "$PUB4_ROOT" 2>/dev/null
 }
 
-fail=0
 check() {
 	url=$1
 	code=$(curl -fsS -o /dev/null -w '%{http_code}' --max-time "${UPTIME_CHECK_TIMEOUT:-20}" "$url") || code=000
@@ -56,10 +56,17 @@ check() {
 	esac
 }
 
+# Falling back is a finding, not a quiet substitution. The built-in names are
+# still checked — knowing those four are up is worth more than checking nothing —
+# but the run exits nonzero whatever they answer, because this script cannot then
+# tell you a fifth app exists and is down. A green uptime check measuring a fleet
+# that is one deploy out of date is the failure the header at the top describes.
 targets=$(app_targets) || targets=
 if [[ -z $targets ]]; then
-	print -u2 "uptime-check: no app list under $PUB4_ROOT — checking the built-in names"
+	print -u2 "uptime-check: FAIL — no app list under $PUB4_ROOT, so the fleet is unknown."
+	print -u2 "uptime-check: checking the built-in names anyway; this exit code is the missing list, not them."
 	targets=$FALLBACK
+	fail=1
 fi
 
 # A for loop, not a pipe: pdksh runs the last stage of a pipeline in a subshell,

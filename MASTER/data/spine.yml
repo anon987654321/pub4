@@ -794,7 +794,17 @@ pub4_source_ceilings:
 # sourced before anything runs, and making the deploy script shell out to ruby34
 # to boot would put it behind an interpreter it installs. The duplication stays
 # and this test is what it costs.
-  OPENBSD: 114
+# 114 -> 115 for test/test_vps_deploy_contract.rb. bin/vps-deploy is the
+# entrypoint for every production deploy and had no test at all. Running it is
+# not an option, so this reads the source for the three promises a reader cannot
+# otherwise check: that DEPLOY_ALL is apps.yml plus master, that the order which
+# makes the pass survive its own side effects is still that order, and that the
+# uid guard exits rather than warns.
+#
+# Mutation-checked rather than asserted into existence: dropping master fails 2,
+# reordering fails 1, turning the root guard into a warning fails 1, and gutting
+# the SKIP_CI branch fails 1, with the unmutated source at 0.
+  OPENBSD: 115
   # 220 -> 222 for lora/seed_media.yml and lora/_toolkit/install_seed_media.rb,
   # the prompt set for every seeded photograph and the script that grades and
   # files what comes back from it. Two files, both named, neither foldable:

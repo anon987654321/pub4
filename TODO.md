@@ -5632,7 +5632,9 @@ Numbered 1–N across the four trees.
      and RECIPES.md is a door rather than a table. `operator_docs.rb` reads the
      yaml and `/orient deploy` prints it, so a recipe added there shows at every
      door.
-634. **Feature inventory stated twice.** `START_HERE.md` “App inventory” and “Feature inventory” both `RAILS/apps.yml`. One line.
+634. **Fixed 2026-09-12.** START_HERE.md's Source Of Truth section listed
+     `RAILS/apps.yml` under both "App inventory" and "Feature inventory". That whole
+     section is a pointer to `operator.yml`'s `single_source_of_truth:` now.
 635. **DECISIONS vs unsigned zones in git.** “61 zones … none of them in git”. `var/nsd/zones/master/` holds 57 unsigned `*.zone` templates by design. Narrow the decision to signed artifacts / keys.
 636. **RUNBOOK still describes a fixed deploy_all header.** Current header says there is no archive. Update RUNBOOK.
 637. **deploy_all still logs archive/recovery.** `deploy_all.sh:49`. Delete the log line.
@@ -5679,11 +5681,26 @@ Numbered 1–N across the four trees.
      installing. `test_dns_facts_agree` asserts BRGEN_IP is `nameserver.ip` and
      HYP_IP the first `xfr_peers` entry, so the duplication now costs something.
 661. **relayd-watchdog BACKENDS table hardcoded four ports.** Add this file to `SMOKE_SCRIPTS` / `FLEET_INVENTORIES`.
-662. **vps-state APPS hardcoded.** `%w[brgen amber bsdports]`. Read apps.yml and master_face.
+662. **Fixed 2026-09-12.** The names come from the same read as the ports, twelve
+     lines below where the frozen `%w[brgen amber bsdports]` used to sit — the file
+     was already loading apps.yml for ports and keeping a second inventory for
+     names, so a fourth app would have shown its port and never its row. master
+     keeps its own block: it is not under /home/*/app and not in apps.yml.
 663. **vps_ci_all apps hardcoded.** Same.
 664. **start_all_apps SERVICES hardcoded.** Derive from inventory + master.
-665. **keep-warm TARGETS hardcoded.** Read apps.yml in ksh the way uptime-check does.
-666. **usr/local/bin/uptime-check FALLBACK list.** If apps.yml is unreadable, fail; do not quietly check a 2026-08 fleet.
+665. **Declined 2026-09-12, and the file now says why.** TARGETS is a curated pair,
+     not a stale copy of the fleet: brgen and amber are the surfaces a visitor
+     arrives on cold. Reading apps.yml would warm bsdports, a low-traffic index
+     nobody waits on, and master, whose 927M of address space is correctly swapped
+     out until someone opens the face. The shed case is handled per target by the
+     `nc -z` below the list.
+666. **Fixed 2026-09-12.** Falling back is a finding now: the built-in names are
+     still checked, because knowing those four are up beats checking nothing, but
+     the run exits nonzero whatever they answer and says the exit code is the
+     missing list rather than them. A green uptime check measuring a fleet one
+     deploy out of date is exactly what the file's own header warns about. The
+     fallback names and the derived list agree today: brgen, amber, bsdports,
+     master.
 
 ### OPENBSD — scripts, expect, gates
 
@@ -5788,7 +5805,10 @@ Numbered 1–N across the four trees.
      copy would be a third list rather than one. The regex parse is real and is what
      that costs. Moving it means moving the binding too, which is a deploy-path
      decision and the operator's. See 32, which is the same proposal.
-752. **No test for bin/vps-deploy.** At least: refuse uid 0; `all` expands to the four names; `SKIP_CI=1` path names `${app}.sh`.
+752. **Fixed 2026-09-12.** `OPENBSD/test/test_vps_deploy_contract.rb` — refuses uid
+     0 with an exit rather than a warning, `all` expands to apps.yml plus master in
+     the order the script argues for, and SKIP_CI=1 still runs `${app}.sh`, which is
+     what reaches rails_runtime_gate. See 779 for the mutation check.
 753. **No test for OPERATOR.sh beyond zsh -n and idempotency grep.** Add: `ALL_DOMAINS` parse round-trip against `render_dns` city_zones.
 754. **resource_guard crisis path.** The test should fail if the crisis function’s path is not in `explicitly_installed`.
 755. **test_restore_scripts.rb.** Add an executable dry-run with `LITESTREAM_CONFIG` pointing at a missing file, expect exit 1.
@@ -5805,7 +5825,12 @@ Numbered 1–N across the four trees.
 766. **Deploy script names still say `RAILS/deploy.sh`.** If per-app `RAILS/<app>/<app>.sh` is the truth, fix the decision line. **Unverified** whether `RAILS/deploy.sh` exists (it does at tree root).
 767. **Gate kernel decision vs PATH_OWNERSHIP.** Add `lib/` row with the decision’s check.
 768. **doas install decision vs RUNBOOK.** RUNBOOK still says cron heal paths use `validate_doas.ksh`. Heals were removed.
-769. **health_check load_apps rescue returns standalone only.** If apps.yml is unreadable it warns and returns empty. Fail closed.
+769. **Fixed 2026-09-12, and the premise needs a correction.** It did not fail open:
+     measured in an isolated checkout with no apps.yml, the old code still exited 1
+     — but by way of "brgen: missing port in apps.yml", because `core_apps` hardcodes
+     brgen. The right answer for the wrong reason, and only by accident of that
+     hardcoding. The real cause went to stderr where the --json consumers never saw
+     it. It is a first-class entry in `failures` now, so the JSON carries it.
 770. **health_check `--core` still requires smtpd.** Document as required.
 771. **resource_guard ALL_APPS_FLAG vs start_all_apps.** Name the flag in PATH_OWNERSHIP.
 772. **Measured 2026-09-12 — the layout question is secondary to what it hides.**
@@ -5827,7 +5852,14 @@ Numbered 1–N across the four trees.
     emergency.
 777. **port_inventory RETIRED_CONFIG_PATHS includes litestream.yml.** Add a positive test: litestream.yml may exist, must not appear in pkg_scripts.
 778. **vps-deploy drift gate is advisory.** Add `VPS_DEPLOY_DRIFT=fail` opt-in. Do not flip to blocking from here (box is dirty).
-779. **vps-deploy `DEPLOY_ALL` vs apps.yml.** Derive Rails names from yaml; keep master first and optional last as comments + a test.
+779. **Fixed 2026-09-12 as a test, not a derivation.** Deriving the list would lose
+     the ordering argument the script writes down — master leads because it is
+     independent and gets forgotten, amber and bsdports go last because every deploy
+     sheds them and deploying them last folds the restore into the same pass.
+     `test_vps_deploy_contract` asserts DEPLOY_ALL is apps.yml plus master and holds
+     both ends of the order. Closes 752 with it: the same file covers the uid-0
+     refusal and the SKIP_CI branch. Mutation-checked — dropping master fails 2,
+     reordering 1, warning instead of exiting 1, gutting SKIP_CI 1, clean source 0.
 780. **vps_production_push DEMO_SEED_ON_DEPLOY defaults to 1.** Production hotfix seeds the demo. Default 0; require an explicit 1.
 781. **vps_deploy_master.sh `SECRET_KEY_BASE` openssl rand fallback.** Can boot master with a random key, wiping sessions. Refuse if `/etc/master.env` has no key.
 782. **vps_on_vm_install `SECRET_KEY_BASE:-dummy` for assets:precompile.** Same class of footgun. Read `/etc/master.env`.

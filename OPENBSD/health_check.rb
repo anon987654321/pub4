@@ -41,6 +41,8 @@ end.parse!
 options[:all_ready_apps] = false if options[:core]
 
 failures = []
+# Written by load_apps when it cannot read the fleet, read once apps are loaded.
+APPS_UNREADABLE = +""
 
 # A missing binary is a named failure, not a backtrace. This raised Errno::ENOENT
 # out of Open3 and killed the whole run at the first check: off the box that is
@@ -77,7 +79,12 @@ def load_apps
   load_standalone_apps.each { |name, metadata| merged[name] = metadata }
   merged
 rescue StandardError => e
-  warn "apps.yml unreadable: #{e.class}: #{e.message}"
+  # Returning the standalone apps here warned and then carried on, so a run that
+  # could not read the fleet checked master alone and printed "health check ok".
+  # The three Rails apps went unexamined and nothing downstream said so.
+  # APPS_UNREADABLE is picked up as a failure below, which is the only honest
+  # answer a health check has when it does not know what it is meant to check.
+  APPS_UNREADABLE.replace("apps.yml unreadable: #{e.class}: #{e.message}")
   load_standalone_apps
 end
 
@@ -121,6 +128,7 @@ def curl_ok?(url, timeout: HTTP_TIMEOUT)
 end
 
 apps = load_apps
+failures << APPS_UNREADABLE unless APPS_UNREADABLE.empty?
 app_ports = apps.transform_values { |metadata| metadata.fetch("port") }
 app_domains = apps.transform_values { |metadata| metadata.fetch("domain") }
 

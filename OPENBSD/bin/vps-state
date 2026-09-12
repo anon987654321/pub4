@@ -9,7 +9,6 @@ ROOT = File.expand_path("../..", __dir__)
 $LOAD_PATH.unshift(File.join(ROOT, "MASTER", "lib"))
 require "operator/environment"
 
-APPS = %w[brgen amber bsdports].freeze
 STAMP_DIR = "/var/db/pub4"
 
 def git_short(path)
@@ -111,6 +110,12 @@ end
 
 apps_yml = YAML.safe_load(File.read(File.join(ROOT, "RAILS", "apps.yml")))
 ports = apps_yml.fetch("apps").transform_values { |m| m.fetch("port").to_i }
+# The names come from the same read as the ports. They were a frozen
+# %w[brgen amber bsdports] twelve lines above this, which is a second fleet
+# inventory sitting beside the file that is the first one — a fourth app would
+# have shown its port here and never its row. master is not in apps.yml because
+# it is not under /home/*/app, so it keeps the block of its own below.
+apps = ports.keys
 
 payload = {
   host: `hostname`.strip,
@@ -123,7 +128,7 @@ payload = {
     last_deploy: deploy_stamp("master"),
     deploy_in_progress: deploy_in_progress("master"),
   },
-  apps: APPS.map { |name| app_row(name, ports.fetch(name)) },
+  apps: apps.map { |name| app_row(name, ports.fetch(name)) },
 }
 
 if ARGV.include?("--json")
