@@ -95,10 +95,16 @@ html.chrome-hidden .tab-bar {
    behind an opaque panel — instead of leaving a control that is painted over,
    still focusable, and still counted as a target. The drawer's own dismissal
    brings it back. At md and above the drawer stops short of centre and the peel
-   is reachable, so the rule stops there too. */
-@media (max-width: 639px) {
+   is reachable, so the min-width step below gives it back — the phone case is the
+   unconditional rule and the wider screen is the enhancement, which is the
+   direction MOBILE_FIRST asks for and the reason this is not a max-width. */
+html.drawer-open .tab-bar-peel {
+  display: none;
+}
+
+@media (min-width: 640px) {
   html.drawer-open .tab-bar-peel {
-    display: none;
+    display: inline-flex;
   }
 }
 
