@@ -1671,9 +1671,22 @@ proves the detectors are right is worth more than one that proves the features e
   `_nearby_chat_widget.scss`, `_shell.scss`, `_zen_shell.scss`, and
   `MASTER/web/public/face.css` (1287 lines). Split only after measuring
   cascade order and updating the ratchet deliberately.
-- `layout_suite` fails `css_constitution weight`: brgen's `application.css` is
-  207KB against a 206KB ceiling, over by one. Find what grew and cut it — the
-  ceiling is not the thing to move.
+- **`css_constitution weight`: brgen is 1,004 bytes over, and it is one
+  commit.** `application.css` is 211,948B against the 206KB ceiling
+  (210,944B). Read per commit the way the last breach was:
+  `ec1fea549` 210,127 → `e6a652a4c` 210,350 → `0574a3ecc` **211,948**, so
+  the phone-chrome commit added 1,598B and carried no cut. `css_budget.yml`'s
+  own note predicted exactly this — "the next messenger-shaped commit has to
+  carry its own cut" — so the cut belongs to that commit's author, not to a
+  passer-by golfing a stylesheet an hour old.
+  Of the two places that note names to look, one has shrunk since it was
+  written. The three PP Neue Montreal `@font-face` blocks are **not** dead:
+  `_vertical_marketplace.scss:16` puts the family first in `--font-display`,
+  so `local()` still resolves for a visitor who has it installed. Only the
+  three `url("/fonts/pp-neue-montreal-latin-*.woff2")` lines are dead —
+  `brgen/public/fonts/` holds one file and it is Bricolage — and they cost a
+  404 per face as well as their bytes. That is ~180B, not the 1KB the note
+  assumed. The 134 unused selectors are the real reserve.
 - **The two marketplace pairs closed by being wrong**, which is the fourth
   entry in this file to close that way. `DesignMetricsGate` paired
   `marketplace.hover` as a foreground against the page backgrounds; that token
