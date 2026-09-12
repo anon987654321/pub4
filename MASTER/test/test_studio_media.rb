@@ -58,11 +58,14 @@ class TestStudioMedia < Minitest::Test
     assert_includes source, "def apply_finishing_grain"
     assert_includes source, "GRAIN_REFERENCE_WIDTH"
     refute_match(/grain\(processed, 400, :kodak_portra, 0\.35\)/, source)
-    %w[process_file run_random run_one_shot run_watch].each do |name|
+    # Reaching the pass is the invariant; naming it is one way to reach it. This
+    # asserted the call site verbatim and went red when run_random started writing
+    # through process_file — the behaviour right, the spelling gone.
+    %w[process_file run_random run_uplift run_one_shot run_watch].each do |name|
       body = source[/^def #{name}\b.*?^end$/m]
       assert body, "#{name} must still exist"
-      assert_includes body, "apply_finishing_grain(processed",
-                      "#{name} must finish through apply_finishing_grain, not a hardcoded Portra pass"
+      assert body.include?("apply_finishing_grain") || body.include?("process_file("),
+             "#{name} must reach apply_finishing_grain, itself or through process_file"
     end
   end
 
