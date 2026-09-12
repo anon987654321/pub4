@@ -226,6 +226,31 @@ is worth less than a single definition. Split from `style.yml`, it defined
 `typography` twice with different numbers, under a `SelfTest` exemption that
 named the duplication and allowed it.
 
+## The Voice Is Data, And No Test Asserts Its Name (2026-09-12)
+
+MASTER speaks `en-US-JennyNeural` — US English, female — on the operator's ask.
+It spoke `en-NG-EzinneNeural` before that and `ms-MY-OsmanNeural` before that,
+and each change cost fourteen files because the name was written in fourteen
+places rather than read from one.
+
+`data/voice.yml` `tts.single_voice` and `tts.neural` are the decision. Everything
+else cites them: `Voice::Policy::FALLBACK` is the unreadable-file case and has to
+be kept in step by hand, the browser reads `Policy.browser_payload`, and
+`soul.yml` carries `voice`, `tts_voice` and `language.dialect` because the
+constitution describes the speaker.
+
+Two things changed shape with the name this time. `test_yaml_registries.rb` no
+longer asserts any voice name; it had shipped the suite red on `origin/main`
+twice by measuring a spelling, and what it holds now is that every reader agrees
+with `voice.yml` — which is what actually broke each time. And `default_rate`
+went back to `+0%`: `-4%` was measured by ear on Ezinne, and rate and pitch
+tuning does not survive a voice change, so carrying it forward would repeat the
+`-20Hz` that was picked for en-GB Ryan and ended up on a Norwegian voice.
+
+`VOICE_IDLE_SIGNATURES` has no `jenny` row in either `lib/voice/expression.rb`
+or `face.part1.txt`, on purpose. Nobody has heard the voice yet, and the two
+fallbacks are identical, so both sides idle alike. Add a row to both or neither.
+
 ## Phrase Rhythm Ships On, Phrase Language Ships Off (2026-08-17)
 
 `Melody` plans phrase segmentation, inter-phrase rests, a pentatonic pitch
@@ -238,7 +263,7 @@ and the asymmetry between them is deliberate:
 - **`melodic_threshold`** still gates the pentatonic contour alone. That is a
   stylistic mode and belongs to lyrical text only.
 - **`phrase_language_switching: false`.** `data/voice.yml` sets `single_voice:
-  ezinne` and `persona_affects_text_only: true`. Reading a Norwegian clause with
+  jenny` and `persona_affects_text_only: true`. Reading a Norwegian clause with
   `nb-NO-FinnNeural` means two voices in one utterance, which is the one thing
   that contradicts that policy. The mechanism is built so the choice is a flag
   rather than a rewrite; flipping it is an operator decision about identity, not

@@ -257,8 +257,8 @@ function setVoiceName(voice, opts = {}) {
   // back onto the Norwegian voice, which is the opposite of the policy whatever
   // the policy voice happens to be: a voice asked for is the voice used. The
   // single-voice lock lives in guardVoice, which reads MASTER_VOICE_POLICY, not
-  // in a hardcoded rewrite here. (Policy voice is en-NG-EzinneNeural as of
-  // 2026-09-08; nothing in this function should need to know that.)
+  // in a hardcoded rewrite here. (Policy voice is en-US-JennyNeural as of
+  // 2026-09-12; nothing in this function should need to know that.)
   const next = VOICE_ALIASES[raw.toLowerCase()] || raw;
   const prev = State.voiceName || '';
   if (prev === next && window.MASTER_FACE?.tts?.voice === next) return;
@@ -2232,7 +2232,7 @@ const TTS_STORE = 'blobs';
 // with nothing said. This literal has been wrong in both directions — Pernille
 // here while the policy said Osman, then Osman here while the policy said
 // Pernille — which is the two-halves bug voice.yml's own header documents.
-const TTS_DEFAULT_VOICE = window.MASTER_VOICE_POLICY?.neural || 'en-NG-EzinneNeural';
+const TTS_DEFAULT_VOICE = window.MASTER_VOICE_POLICY?.neural || 'en-US-JennyNeural';
 const TTS_STREAM_LIVE_KEY = 'master:tts-stream-live';
 function ttsStreamLiveEnabled() {
   try {
@@ -2408,17 +2408,13 @@ async function prefetchTtsPhraseBank() {
     });
   } catch (err) { window.MASTER_LOG?.warn?.("face_speech_runtime:prefetch_phrase_bank", err); }
 }
-function _quirkifyTts(text, voice, opts = {}) {
+// Quirks are voice-independent. The two that keyed on a voice name took the
+// alias, and the only caller passes the policy voice's full neural name, so
+// neither ever fired; they are gone and the parameter with them.
+function _quirkifyTts(text, opts = {}) {
   if (!opts.quirky) return text;
   if (text.length < 12) return text;
   const r = Math.random;
-  if (voice === 'ezinne' && r() < 0.55) {
-    const dim = ['uh... ', 'duh, ', 'hmm... me think... ', 'brain hurt. ', 'oh! oh! ', 'okay um... ', 'wait... what? ', 'ohhh, ', 'me confuse. ', 'numbers? me no like numbers. '];
-    text = dim[(r() * dim.length) | 0] + text;
-  }
-  if (voice === 'ezinne' && r() < 0.4) {
-    text = text.replace(/\b(the|a|of|and|is|are|was|were)\b/gi, '').replace(/\s+/g, ' ').trim() + '. ugh.';
-  }
   if (r() < 0.06) {
     const mid = Math.max(20, Math.floor(text.length * 0.55));
     const cut = text.indexOf(' ', mid);
@@ -2884,7 +2880,7 @@ function enqueueSpeech(text, opts = {}) {
   if (!clean) return;
   if (!shouldEnqueueTtsChunk(clean, opts)) return;
   const _v = _nextTtsVoice();
-  const decorated = _quirkifyTts(clean, _v, opts);
+  const decorated = _quirkifyTts(clean, opts);
   applyParalinguisticState(decorated);
   if (tts.meta.size > 32) tts.meta.clear();
   tts.meta.set(decorated, {
@@ -3055,12 +3051,10 @@ function speakWithBrowserTTS(text, token) {
   // utterance — so the fallback contradicted the policy voice precisely when it
   // was the only thing speaking.
   //
-  // Deliberately still en-US now that the policy voice is en-NG-EzinneNeural:
-  // the words are English either way, and a browser is far likelier to ship an
-  // en-US voice than an en-NG one. Asking for a locale the platform lacks gets
-  // an arbitrary substitute, which is worse than a plain English fallback. The
-  // Nigerian accent is a property of the neural voice, not something this path
-  // can reproduce.
+  // en-US because that is the policy locale: en-US-JennyNeural. This path used
+  // to ask for a locale the policy voice did not speak, and asking for a locale
+  // the platform lacks gets an arbitrary substitute rather than a refusal. The
+  // two agree now, so the fallback loses the neural voice and not the accent.
   const lang = tts.lang === 'nb' ? 'nb-NO' : 'en-US';
   const voice = pickBrowserVoice(lang);
   if (!voice) { primeBrowserVoices(); return false; }

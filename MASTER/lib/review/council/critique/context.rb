@@ -19,7 +19,7 @@ module Master
               - Particles form 3D face shape, morph between poses like a swarm
               - Black background, white/grey/dark-red particles, 1px only
               - Chat panel slides in from right, oh-my-zsh style prompt
-              - Edge-tts Ezinne voice, server-side, AudioContext playback
+              - Edge-tts Jenny voice, server-side, AudioContext playback
               - Visitor access (no token), authenticated (token) tiers
               Critique CSS, JS, HTML semantics, animation, typography, layout, hierarchy, accessibility, and data-ink economy.
             CTX

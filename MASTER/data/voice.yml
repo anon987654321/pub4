@@ -3,14 +3,13 @@
 # Persona registries (personas.yml, soul.yml) affect LLM text/style only when persona_affects_text_only is true.
 # Engine chain / transcendent mode: data/tts.yml (not used by web TtsJob). VPS env: OPENBSD/etc/rc.d/master.
 tts:
-  # MASTER speaks English in a Nigerian woman's voice. Operator decision
-  # 2026-09-08, chosen by ear against the README read aloud.
+  # MASTER speaks English in an American woman's voice. Operator decision
+  # 2026-09-12, asked for as US English and female.
   #
-  # en-NG-EzinneNeural is an English (Nigeria) neural voice, so the accent is
-  # the locale's own rather than a second language reading English — which is
+  # en-US-JennyNeural is an English (United States) neural voice, so the accent
+  # is the locale's own rather than a second language reading English — which is
   # why soul.yml keeps language.primary: english and moves only `dialect`, to
-  # nigerian. Edge publishes no Ghanaian voice, and this is the nearest West
-  # African woman in its catalogue.
+  # american.
   #
   # A name lives in more places than the value, and every earlier voice change
   # left the tree disagreeing with itself by moving one of them. So this pass
@@ -19,8 +18,8 @@ tts:
   # idle signatures in expression.rb and face.part1.txt, the JS fallback in
   # face_speech_runtime.js and face.runtime.js, and the assertions in
   # test_yaml_registries.rb.
-  single_voice: ezinne
-  neural: en-NG-EzinneNeural
+  single_voice: jenny
+  neural: en-US-JennyNeural
   persona_affects_text_only: true
   # ON as of 2026-08-14. pushLiveStreamTts (face.part1.txt) pulls each finished
   # sentence off the model's stream and speaks it while the rest is still being
@@ -48,13 +47,13 @@ tts:
   # every utterance (Personality#browser_profile substitutes them for the
   # persona's own).
   #
-  # -4% and +0Hz are the settings the README was read at when this voice was
-  # chosen, so they are this voice's own measurement rather than an inheritance.
-  # Pitch tuning does not survive a voice change: -35Hz was measured on Osman,
-  # and the -20Hz before it was picked for en-GB Ryan and then carried onto a
-  # Norwegian voice it had never been heard on. Roughly ±15% rate and ±50Hz is
-  # where Azure neural voices stay natural, so a later listener has room.
-  default_rate: "-4%"
+  # Neutral, because this voice has not been heard yet. Rate and pitch tuning
+  # does not survive a voice change: -4% was measured on Ezinne, -35Hz on Osman
+  # before her, and the -20Hz before that was picked for en-GB Ryan and then
+  # carried onto a Norwegian voice it had never been heard on. Roughly ±15% rate
+  # and ±50Hz is where Azure neural voices stay natural, so whoever reads the
+  # README aloud on Jenny has room to move these.
+  default_rate: "+0%"
   default_pitch: "+0Hz"
   # No default_volume. The daemon protocol is {voice,rate,pitch,text} and
   # RbEdgeTTS::Communicate takes rate: and pitch: only, so a volume here was

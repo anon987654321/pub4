@@ -145,20 +145,15 @@ class TestRulesYamlRegistry < Minitest::Test
   def test_voice_yml_tts_policy_single_voice
     voice = Master.load_yaml(File.join(DATA, "voice.yml"))
     tts = voice["tts"] || {}
-    # Ezinne since 2026-09-08 (operator decision), chosen by ear against the
-    # README read aloud. en-NG-EzinneNeural is an English (Nigeria) voice, so
-    # the accent is the locale's own, which is why soul.yml keeps
-    # language.primary: english and moves only dialect, to nigerian.
-    #
-    # This assertion has now been left behind by a voice.yml change twice, in
-    # both directions, shipping MASTER's suite red on origin/main each time. The
-    # data is the decision; the test follows it. The three structural assertions
-    # below are the ones worth having — they hold whatever the name is.
-    assert_equal "ezinne", tts["single_voice"]
-    assert_equal "en-NG-EzinneNeural", tts["neural"]
+    # No voice name is asserted here. This test was left behind by a voice.yml
+    # change three times, in both directions, shipping MASTER's suite red on
+    # origin/main each time — a check measuring a spelling while the behaviour
+    # it stood for was right. data/voice.yml is the operator's decision and owns
+    # the name; what a test can hold is that every reader agrees with it, which
+    # is what the assertions below do and what actually broke each time.
     assert_equal true, tts["persona_affects_text_only"]
-    assert_equal :ezinne, Master::Voice::Policy.single_voice_key
-    assert_equal "en-NG-EzinneNeural", Master::Voice::Policy.neural_voice
+    assert_equal tts["single_voice"].to_sym, Master::Voice::Policy.single_voice_key
+    assert_equal tts["neural"], Master::Voice::Policy.neural_voice
     # The pair has to agree: single_voice is what Ruby hands the synthesizer,
     # neural is what the browser reads, and they drifted apart once already.
     assert_equal tts["neural"], Master::Voice::Speech::VOICES.fetch(tts["single_voice"].to_sym)

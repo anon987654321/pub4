@@ -237,9 +237,11 @@ end
       STYLES_CHAINABLE = %i[whispered ethereal intimate calm robotic].freeze
 
       VOICE_IDLE_SIGNATURES = {
-        # Matches face.part1.txt's 'en-NG-EzinneNeural' entry. The policy voice
-        # needs its own tuning here or the face idles on the generic fallback
-        # while the browser idles on the real one.
+        # The policy voice needs its own tuning here or the face idles on the
+        # generic fallback while the browser idles on the real one. jenny is the
+        # policy voice and is absent from both tables on purpose: nobody has
+        # heard it yet, and this fallback is byte-for-byte face.part1.txt's, so
+        # the two sides still idle alike. Add a row here and there together.
         ezinne: { breath: 1.10, saccade: 0.26, pulse_floor: 0.12, blink_ms: 3400 },
         osman: { breath: 1.08, saccade: 0.24, pulse_floor: 0.14, blink_ms: 3200 },
         ryan: { breath: 0.96, saccade: 0.18, pulse_floor: 0.08, blink_ms: 2800 },
