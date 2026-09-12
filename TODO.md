@@ -4984,7 +4984,7 @@ Numbered 1–N across the four trees.
 29. **`models.yml` ollama rows unnamed.** Delete or wire `QuotaGate` / router. **Closed 2026-09-12 by Copilot:** `ModelRouter` selects the env-gated rows and `LLMDispatcher` routes their `ollama:` ids to `OllamaSender`; routing tests pass.
 30. **`personas.yml#british` unnamed.** Delete or add to `Personality.persona_names`. **Closed 2026-09-12 by Copilot:** `Personality.persona_names` reads the complete persona registry through `Rules#data(:personas)`; persona and web tests pass.
 31. **`providers.yml#mistral` unnamed.** Row or reader, not both silent. **Closed 2026-09-12 by Copilot:** provider configuration loads the full provider registry, including Mistral; provider and web tests pass.
-32. **Three lists of council words.** `council.yml` vs `HELP_TOPICS` vs `TurnRouter::MODEL_ALIASES`. One table.
+32. **Three lists of council words.** `council.yml` vs `HELP_TOPICS` vs `TurnRouter::MODEL_ALIASES`. One table. **Closed 2026-09-12 by Copilot:** these are different vocabularies with different contracts — council persona aliases, advertised slash commands, and model-generated pipeline aliases. `TurnRouter` documents the deliberate separation; merging them would advertise retired commands and broaden the council panel.
 
 ### MASTER — untested lib
 
