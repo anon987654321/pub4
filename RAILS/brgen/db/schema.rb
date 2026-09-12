@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_06_222500) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_13_000000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -1326,7 +1326,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_06_222500) do
     t.integer "crossposted_from_id"
     t.integer "crossposts_count", default: 0, null: false
     t.string "flair"
-    t.integer "karma"
     t.decimal "latitude", precision: 10, scale: 6
     t.decimal "longitude", precision: 10, scale: 6
     t.datetime "removed_at"
@@ -1778,7 +1777,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_06_222500) do
     t.string "email_verification_token"
     t.datetime "email_verified_at"
     t.boolean "guest", default: false, null: false
-    t.integer "karma"
     t.decimal "latitude", precision: 10, scale: 7
     t.datetime "location_updated_at"
     t.decimal "longitude", precision: 10, scale: 7

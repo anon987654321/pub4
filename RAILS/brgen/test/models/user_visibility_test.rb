@@ -37,14 +37,14 @@ class UserVisibilityTest < ActiveSupport::TestCase
     end
   end
 
-  test "voting on a post by a city-less author updates karma instead of raising" do
+  test "voting on a post by a city-less author updates the author's content score instead of raising" do
     ActsAsTenant.with_tenant(@city) do
       community = Community.create!(slug: "visibility-vote", name: "Visibility Vote", user: @author, city: @city)
       post = Post.create!(user: @author, community: community, title: "Karma", content: "Hei")
 
       Vote.create!(user: @voter, votable: post, value: 1)
 
-      assert_equal 1, @author.reload.karma
+      assert_equal 1, @author.reputation_scores.find_by(scope: ContentScore::SCOPE).score
     end
   end
 

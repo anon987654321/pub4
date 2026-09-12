@@ -14,14 +14,14 @@ class VoteTest < ActiveSupport::TestCase
     ActsAsTenant.current_tenant = nil
   end
 
-  test "updates author karma when post is upvoted" do
+  test "updates author the author's content score when post is upvoted" do
     ActsAsTenant.with_tenant(@city) do
       community = Community.create!(slug: "vote-test", name: "Vote Test", user: @author, city: @city)
       post = Post.create!(user: @author, community: community, title: "Karma check", content: "Hello")
 
       Vote.create!(user: @voter, votable: post, value: 1)
 
-      assert_equal 1, @author.reload.karma
+      assert_equal 1, @author.reputation_scores.find_by(scope: ContentScore::SCOPE).score
     end
   end
 
