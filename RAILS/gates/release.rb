@@ -34,9 +34,21 @@ RELEASE_GATE_CLASSES = %w[
   Deploy::StimulusComponentsGate
 ].freeze
 
-YAML.load_file(File.join(__dir__, "gates.yml")).then { |manifest| manifest["gates"] || manifest }
+manifest_path = File.join(__dir__, "gates.yml")
+repo_root = File.expand_path("../../..", manifest_path)
+YAML.load_file(manifest_path).then { |manifest| manifest["gates"] || manifest }
     .each_value.select { |row| row.is_a?(Hash) && RELEASE_GATE_CLASSES.include?(row["class"]) }
-    .each { |row| require_relative row.fetch("require") }
+    .each do |row|
+      require_path = row.fetch("require")
+      # Paths starting with a known tree (MASTER, RAILS, OPENBSD, STUDIO) are repo-relative.
+      # Others are RAILS-relative.
+      full_path = if require_path.match?(%r{\A(?:MASTER|RAILS|OPENBSD|STUDIO)/})
+                    File.join(repo_root, require_path)
+                  else
+                    File.join(__dir__, require_path)
+                  end
+      require full_path
+    end
 
 ROOT = File.expand_path("..", __dir__)
 APPS = %w[amber brgen bsdports].freeze
