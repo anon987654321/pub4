@@ -38,9 +38,15 @@ mentioned.
   `ollama_post` method against the 20-line density ceiling. The check labels
   this `agent-ignore` known debt; extract helpers and rerun the profile.
   **Claimed 2026-09-12 by Copilot in `pub4-todo-ollama`.**
-- `MASTER/bin/operator status` reports Ruby 4.0.5, while the repository pins
-  Ruby 3.4.9. Run checks through `RBENV_VERSION=3.4.9 rbenv exec ruby` and
-  restore the local default if the mismatch is unintended.
+- **The Ruby 4.0.5 line is not a repo defect and closes here.**
+  `Operator::Environment#ruby_mismatch_message` reads it correctly, prints
+  `MISMATCH` beside the path, and `next:` already routes to `MASTER/bin/ruby`,
+  which resolves 3.4. What is actually wrong is on the machine: rbenv's shims
+  are not on PATH and `rbenv global` is `system`, so a bare `ruby` gets
+  Homebrew's 4.0.5 while `RBENV_VERSION=3.4.9` sits in the environment doing
+  nothing. That is a line in a shell profile, not a change any tree owns. Left
+  here only because the next reader will measure it again and reach for the
+  code.
 
 Everything here was checked against the tree on 2026-09-10 and carries the number
 it read that day. Closed records are deleted rather than marked; `git log` holds
@@ -107,6 +113,21 @@ credentials, a look somebody has to see, and another tree's ratchet.
   a terminal is the floor's value: `design_tokens.yml`'s `face_root.anchors` is pinned
   by a production gate, and matching the take's apparent brightness is a thing you judge
   by eye against a render, once.
+- **One colour decides `contrast_below_aa`, and it is a hover fill.** The
+  marketplace search submit keeps `color: var(--accent-ink)` through its hover
+  and swaps the background to `vertical_accents.marketplace.hover` — so the
+  vertical ink `#110f19` lands on `#6f6149` and measures **3.15:1**, under the
+  4.5 floor `_vertical_shell.scss`'s own comment claims. The ink was verified
+  against the accent and light columns; the hover column was never measured, in
+  either file. tv (3.34) and maps (4.31) fail the same way and reach no pixel
+  yet, because only marketplace wires its hover — they land the day another
+  vertical does. `design_metrics` reports the one that is drawn and the ceiling
+  stays 0, so `layout_suite` is red until a colour moves. Lightening
+  `marketplace.hover` is the obvious direction — it is currently *darker* than
+  the accent it replaces, which is backwards for a dark ink — but which value
+  is a thing you judge by eye. The gate was reporting two different pairs here
+  until 2026-09-12, both of them text that is never drawn; that instrument is
+  fixed and this is what was underneath it.
 - **Whether the one scheme keeps an accent.** `magic_hex` is ratcheted at 77 and
   `contrast_below_aaa` at 37, of which the bulk are `--danger`, deliberately the one
   non-grey. `vertical_accents` still gives marketplace, tv, dating and the rest their
@@ -1641,13 +1662,6 @@ proves the detectors are right is worth more than one that proves the features e
 
 ### Audit findings — 2026-09-12
 
-- `ruby RAILS/gates/runner.rb production release layout_suite` fails the
-  `release` gate because `RAILS/gates/release.rb:39` resolves
-  `RAILS/gates/OPENBSD/gates/domain_alignment`, which does not exist. Fix the
-  require path and rerun the release gate.
-  **Fixed 2026-09-12 by Copilot:** Path resolution now detects tree-prefixed paths
-  (MASTER/, OPENBSD/, etc.) and resolves them from repo root instead of relative to
-  RAILS/gates/. Release gate loads successfully.
 - `layout_suite` reports CSS files over its 200-line budget:
   `brgen/app/assets/stylesheets/_coverage_fills.scss`,
   `_marketplace.scss`, `_messenger_window.scss`,
@@ -1657,10 +1671,19 @@ proves the detectors are right is worth more than one that proves the features e
   `_nearby_chat_widget.scss`, `_shell.scss`, `_zen_shell.scss`, and
   `MASTER/web/public/face.css` (1287 lines). Split only after measuring
   cascade order and updating the ratchet deliberately.
-- `layout_suite` reports two marketplace accent/background pairs below WCAG AA
-  in `DesignMetricsGate`, plus repeated heading hierarchy violations across
-  amber, brgen, and shared stylesheets. Re-measure rendered surfaces before
-  changing tokens or typography.
+- `layout_suite` fails `css_constitution weight`: brgen's `application.css` is
+  207KB against a 206KB ceiling, over by one. Find what grew and cut it — the
+  ceiling is not the thing to move.
+- **The two marketplace pairs closed by being wrong**, which is the fourth
+  entry in this file to close that way. `DesignMetricsGate` paired
+  `marketplace.hover` as a foreground against the page backgrounds; that token
+  is read in exactly one place and there it is a `background-color`, so both
+  findings described text nothing draws. The instrument is fixed and the pair
+  that IS drawn — the vertical ink on that hover fill, 3.15:1 — is now the one
+  failure, recorded under the operator's section above because it is a colour.
+  The heading-hierarchy half of this entry was never measured; `layout_suite`
+  reports 74 non-blocking auditor warnings and no hierarchy failures.
+
 ### Parity gaps — forward work
 
 What brgen would need to read as a peer of TikTok, Snapchat, Mastodon, x.com,
