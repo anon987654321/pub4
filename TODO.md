@@ -4972,7 +4972,7 @@ Numbered 1–N across the four trees.
     also says what does answer — Falcon on 53187, declared in `web/` and forwarded by
     relayd — and that nothing has ever listened on 18789.
 21. **`PATH_OWNERSHIP.yml` owns missing dirs.** `docs:` and `reports:` — neither exists. Delete the keys. **Fixed 2026-09-12 by Copilot.**
-22. **`PATH_OWNERSHIP.yml` omits live dirs.** No entries for `lib/cognition/`, `lib/pressure_engine.rb`, `law/`, `AEGIS.md`, `COGNITION.md`, `EXAMPLES.md`. Add them.
+22. **`PATH_OWNERSHIP.yml` omits live dirs.** No entries for `lib/cognition/`, `lib/pressure_engine.rb`, `law/`, `AEGIS.md`, `COGNITION.md`, `EXAMPLES.md`. Add them. **Fixed 2026-09-12 by Copilot:** `law/` already had an entry; the remaining live paths now declare their purpose and check.
 23. **`PATH_OWNERSHIP.yml` `tools/` check is a source-grep spec.** `:179` `spec/lifecycle_tools_spec.rb` asserts `bin/doctor` contains `"check_yaml"`. Point the check at a real tool test.
 24. **`data/tools.yml` `name:` vs `Master::Io::`.** Header says `Master::Tools`. Runtime is `Master::Io::ReadFile`. Align the namespace.
 25. **`RuntimeCatalog.load("tts_phrases")` vs `data/tts.yml`.** Confirm `tts_phrases` exists in a catalog `sections` list (`runtime_catalog.rb:20-24` already records a miss).

@@ -23,10 +23,30 @@ ownership:
     purpose: the constitution as code — one domain file per body of law
     risk: critical
     check: bin/check --profile=agent
+  AEGIS.md:
+    purpose: maritime safety concept and sensing boundary
+    risk: low
+    check: bin/check
+  COGNITION.md:
+    purpose: cognitive layer model, loop and engineering limits
+    risk: medium
+    check: bin/check --profile=agent
+  EXAMPLES.md:
+    purpose: worked patch and closeout examples
+    risk: low
+    check: bin/check
   lib/:
     purpose: runtime source; every subdirectory declares its own purpose below
     risk: high
     check: bin/check
+  lib/cognition/:
+    purpose: persistent perception, salience, affect and reflection
+    risk: high
+    check: bin/check --profile=agent
+  lib/pressure_engine.rb:
+    purpose: unified event pressure and stability model
+    risk: high
+    check: bin/check --profile=agent
   web/:
     purpose: the Rails face — chat shell, TTS endpoints, WebGL face assets
     risk: high
