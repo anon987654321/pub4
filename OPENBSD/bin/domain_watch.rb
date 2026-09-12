@@ -17,8 +17,11 @@
 #   ruby OPENBSD/bin/domain_watch.rb --update   # rewrite the snapshot (OpenBSD/Linux)
 #   ruby OPENBSD/bin/domain_watch.rb --json
 #
-# --update shells to /usr/bin/timeout. macOS has no that binary; refresh the
-# snapshot on vm23.
+# Every lookup is bounded in Ruby rather than by /usr/bin/timeout, which does
+# not exist on macOS — so --update ran only on vm23, and the snapshot went
+# three weeks stale while the expiry guard read from it. A watcher whose
+# refresh needs a different machine than the operator is sitting at is a
+# watcher that reports last month.
 #
 # whois is rate-limited and several registries refuse queries from unknown
 # clients. Anything we cannot determine is reported "unknown" and never counted
@@ -57,16 +60,47 @@ module Deploy
       File.read(NSD_CONF).scan(/^\s*name:\s*"?([^"\s]+)"?/).flatten.uniq.sort
     end
 
+    # Bounded, portable, and no shell. /usr/bin/timeout is OpenBSD's and absent
+    # on macOS; homebrew's sits at a different path, so naming either one picks
+    # a machine. Ruby can wait on its own child: read the merged stream, and if
+    # the deadline passes, TERM the process group and take what arrived.
+    #
+    # Killing the group rather than the pid matters because whois(1) on some
+    # systems re-execs for a referral, and a bare kill leaves the child holding
+    # the pipe open — the read never ends and the timeout never lands.
+    TIMEOUT_S = 15
+
+    def capture_bounded(*argv, seconds: TIMEOUT_S)
+      out = +""
+      Open3.popen2e(*argv, pgroup: true) do |stdin, stream, wait|
+        stdin.close
+        reader = Thread.new { out << stream.read.to_s }
+        unless wait.join(seconds)
+          begin
+            Process.kill("TERM", -wait.pid)
+          rescue Errno::ESRCH, Errno::EPERM
+            nil
+          end
+          wait.join(2)
+        end
+        reader.join(2)
+      end
+      out
+    rescue StandardError => e
+      warn "domain_watch: #{argv.first} failed (#{e.class}: #{e.message.lines.first.to_s.strip})"
+      ""
+    end
+
     def whois_query(domain)
       server = SERVERS[domain.split(".").last]
       argv = ["whois"]
       argv += ["-h", server] if server
       argv << domain
-      # Unqualified `timeout` is a cron PATH bug this tree has already shipped
-      # (the snapshot was right and nothing looked at it). The interpolated
-      # string was also a shell, so a zone name from nsd.conf would be parsed.
-      # /usr/bin/timeout is the OpenBSD binary OPERATOR.sh already calls.
-      out, = Open3.capture2e("/usr/bin/timeout", "15", *argv)
+      # No shell, so a zone name out of nsd.conf is an argument and not a
+      # command. The bound is capture_bounded's, in Ruby — an unqualified
+      # `timeout` was a cron PATH bug this tree has already shipped, and naming
+      # /usr/bin/timeout instead traded that for a macOS the tool cannot run on.
+      out = capture_bounded(*argv)
       return { "state" => "unknown", "note" => "lookup failed" } if out.to_s.strip.empty?
 
       # A referral answer describes the TLD, not the name. Without this, .us and
@@ -127,7 +161,7 @@ module Deploy
 
   def rdap_base(tld)
     @rdap_bases ||= begin
-      out, = Open3.capture2e("/usr/bin/timeout", "20", "curl", "-sS", BOOTSTRAP)
+      out = capture_bounded("curl", "-sS", BOOTSTRAP, seconds: 20)
       parsed = JSON.parse(out.to_s)
       parsed.fetch("services", []).each_with_object({}) do |(tlds, urls), map|
         tlds.each { |t| map[t] = urls.first }
@@ -146,7 +180,7 @@ module Deploy
     return nil unless base
 
     url = "#{base.chomp("/")}/domain/#{domain}"
-    out, = Open3.capture2e("/usr/bin/timeout", "20", "curl", "-sSL", "-w", "\n%{http_code}", url)
+    out = capture_bounded("curl", "-sSL", "-w", "\n%{http_code}", url, seconds: 20)
     lines = out.to_s.lines
     code = lines.last.to_s.strip
     return { "state" => "available" } if code == "404"

@@ -1,23 +1,21 @@
+# Written by OPENBSD/bin/domain_watch.rb --update. Committed so a domain
+# changing hands is a reviewable diff rather than a surprise outage.
 ---
 amstrdam.nl:
   state: registered
   created: '2026-05-18'
   registrar: GoDaddy.com
 antibettingblog.com:
-  state: unknown
-  note: No match for "ANTIBETTINGBLOG.COM".
+  state: available
 anticasinoblog.com:
-  state: unknown
-  note: No match for "ANTICASINOBLOG.COM".
+  state: available
 antigamblingblog.com:
-  state: unknown
-  note: No match for "ANTIGAMBLINGBLOG.COM".
+  state: available
 austn.us:
   state: unknown
   note: registry referral, not a domain record
 brdeaux.fr:
-  state: unknown
-  note: registry referral, not a domain record
+  state: available
 brgen.no:
   state: registered
   created: '2020-08-25'
@@ -30,8 +28,7 @@ brmingham.uk:
 brssels.be:
   state: registered
 bsddocs.org:
-  state: unknown
-  note: registry referral, not a domain record
+  state: available
 bsdports.org:
   state: registered
   created: '2022-08-08T14:15:10Z'
@@ -52,8 +49,7 @@ denvr.us:
   expires: '2026-08-13T11:20:09Z'
   registrar: Domeneshop AS dba domainnameshop.com
 discordb.org:
-  state: unknown
-  note: registry referral, not a domain record
+  state: available
 dllas.us:
   state: unknown
   note: registry referral, not a domain record
@@ -80,11 +76,9 @@ foodielicio.us:
 frankfrt.de:
   state: registered
 freehelp.legal:
-  state: unknown
-  note: registry referral, not a domain record
+  state: available
 gdnsk.pl:
-  state: unknown
-  note: No information available about domain name gdnsk.pl in the R
+  state: available
 glasgw.uk:
   state: registered
   created: 24-Jun-2021
@@ -95,8 +89,7 @@ gtebrg.se:
   state: unknown
   note: "# Copyright (c) 1997- The Swedish Internet Foundation."
 hlsinki.fi:
-  state: unknown
-  note: registry referral, not a domain record
+  state: available
 houstn.us:
   state: unknown
   note: registry referral, not a domain record
@@ -110,14 +103,11 @@ lisbon.pt:
   state: unknown
   note: lisbon.pt - Forbiden Name
 lndon.uk:
-  state: unknown
-  note: ''
+  state: available
 longyearbyn.no:
-  state: unknown
-  note: registry referral, not a domain record
+  state: available
 lsangeles.com:
-  state: unknown
-  note: No match for "LSANGELES.COM".
+  state: available
 lverpool.uk:
   state: registered
   created: 25-Jun-2021
@@ -137,11 +127,9 @@ mnchester.uk:
   status: Renewal required.
   registrar: Domeneshop AS t/a Domain Name Shop [Tag = DOMENESHOP-NO]
 mnnesota.com:
-  state: unknown
-  note: No match for "MNNESOTA.COM".
+  state: available
 mrseille.fr:
-  state: unknown
-  note: registry referral, not a domain record
+  state: available
 newyrk.us:
   state: unknown
   note: registry referral, not a domain record
@@ -149,23 +137,18 @@ oshlo.no:
   state: registered
   created: '2020-08-22'
 prtland.com:
-  state: unknown
-  note: No match for "PRTLAND.COM".
+  state: available
 pub.attorney:
-  state: unknown
-  note: registry referral, not a domain record
+  state: available
 pub.healthcare:
-  state: unknown
-  note: registry referral, not a domain record
+  state: available
 reykjavk.is:
-  state: unknown
-  note: "% This is the ISNIC Whois server."
+  state: available
 rottrdam.nl:
   state: unknown
   note: rottrdam.nl is free
 stacyspassion.com:
-  state: unknown
-  note: No match for "STACYSPASSION.COM".
+  state: available
 stholm.se:
   state: unknown
   note: "# Copyright (c) 1997- The Swedish Internet Foundation."
@@ -173,21 +156,18 @@ stvanger.no:
   state: registered
   created: '2020-08-22'
 trmso.no:
-  state: unknown
-  note: registry referral, not a domain record
+  state: available
 trndheim.no:
   state: registered
   created: '2020-08-22'
 utrcht.nl:
-  state: unknown
-  note: utrcht.nl is free
+  state: available
 wrsawa.pl:
-  state: unknown
-  note: 'No information available about domain name wrsawa.pl in the '
+  state: available
 wshingtondc.com:
   state: registered
   created: '2021-08-22T04:10:03Z'
-  expires: '2026-08-22T04:10:03Z'
+  expires: '2027-08-22T04:10:03Z'
   registrar: Domeneshop AS dba domainnameshop.com
 zrich.ch:
   state: unknown

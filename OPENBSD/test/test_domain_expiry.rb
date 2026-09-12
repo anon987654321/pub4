@@ -19,6 +19,7 @@
 require "minitest/autorun"
 require "yaml"
 require "date"
+require_relative "../bin/domain_watch"
 
 class TestDomainExpiry < Minitest::Test
   SNAPSHOT = File.expand_path("../data/domain_inventory.yml", __dir__)
@@ -76,13 +77,32 @@ class TestDomainExpiry < Minitest::Test
     assert_operator known, :>, 10, "only #{known} domains resolved to a registration record"
   end
 
-  # Source-level: a shell form like `timeout 15 <cmd>` needs a cron PATH
-  # carrying GNU timeout and parses the zone name in a shell. The Open3 argv
-  # form needs neither; a regression back to the shell form is invisible until
-  # a whois hangs or a name is interpolated.
-  def test_whois_runs_through_open3_and_usr_bin_timeout
+  # A lookup must be bounded and must not go through a shell. This asserted a
+  # source spelling naming /usr/bin/timeout instead, which held the tool to a
+  # binary macOS does not have — so --update ran only on vm23 and the snapshot
+  # this suite reads went three weeks stale. The behaviour was right and the
+  # check was measuring how it was written.
+  #
+  # What matters, held two ways: no shell form anywhere, and a slow child is
+  # actually killed. The second runs a real process, because a timeout that
+  # never fires looks exactly like a fast network.
+  def test_a_lookup_is_bounded_and_never_goes_through_a_shell
     source = File.read(File.expand_path("../bin/domain_watch.rb", __dir__))
-    refute_match(/`timeout\s/, source, "whois went back through a shell timeout")
-    assert_includes source, 'Open3.capture2e("/usr/bin/timeout"'
+    # Code only. The first draft of this matched a backtick inside the comment
+    # explaining why backticks are wrong — the instrument reading its own
+    # documentation and reporting it as the defect.
+    code = source.lines.reject { |line| line.strip.start_with?("#") }.join
+
+    refute_match(/`[^`\n]*\b(?:whois|curl|timeout)\b/, code, "a lookup went back through a shell")
+    refute_match(/\bsystem\(/, code, "a lookup was handed to a shell")
+  end
+
+  def test_a_hung_lookup_is_killed_rather_than_waited_on
+    started = Time.now
+    out = Deploy::DomainWatch.capture_bounded("sleep", "30", seconds: 1)
+    elapsed = Time.now - started
+
+    assert_operator elapsed, :<, 10, "capture_bounded waited #{elapsed.round(1)}s against a 1s bound"
+    assert_equal "", out.strip
   end
 end
