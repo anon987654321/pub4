@@ -36,8 +36,8 @@ and `TREE.md`, the map of the four trees. (`WISHLIST.md` folded into `TODO.md`
 on 2026-09-06 — one backlog, forward work as its last section.) Build output
 never sits at the root whatever the tool's default: dilla writes to `$PWD`
 unless `DILLA_OUTPUT_DIR` says otherwise, and one session's renders lived at the
-root for weeks because of it. They belong under
-`STUDIO/dilla/renders/<seed>/`.
+root for weeks because of it. They belong beside `STUDIO/dilla/dilla.rb`, which
+is where dilla falls back when invoked from the root.
 
 ## Commands
 

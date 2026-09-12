@@ -3993,16 +3993,6 @@ change is the owner's.
   schedule builders and look like three copies of one renderer. They hold
   genuinely different arrangements, and merging on surface similarity flattens
   three sounds into one. Read all three before proposing it again.
-- **Flattening `STUDIO/dilla/renders/` into the dilla root.** Counted before
-  doing it: `slum` emits fourteen files, `loose_pocket beats` twenty-eight, plus
-  `foundry_pulse.mp3`, `hate_session.mp3`, `ALBUM.mp3` and `beat.wav` — about
-  forty-six named files, before the contents of `renders/{wav,demo,mastered,
-  beats,rescued}/`. `demo.wav` in the dilla root is the demo's own path and is
-  already how `demo_all` defaults; every batch renderer keeps `renders/`. The
-  session CLAUDE.md records was about the REPO root, and that half is closed:
-  `DILLA_OUTPUT_DIR` defaults to the invoking directory, except when that
-  directory is the repo root, where dilla refuses and writes to
-  `STUDIO/dilla/renders/` with a line on stderr.
 - **Blanket rescues in STUDIO.** The remaining discards are optional gem probes,
   external binaries whose output is parsed, optional state files and process
   teardown, and they are correct as they stand. A census that reports them again
@@ -5806,7 +5796,7 @@ Numbered 1–N across the four trees.
 580. **`LinkConverterSyncJob` every 5 minutes.** Can stack. Concurrency 1 + uniqueness key.
 581. **`NightlySearchIndexRebuildJob` no-op without `posts_fts`.** Silent return. Log.
 582. **`GenerateBlurhashJob` uniqueness per blob.**
-583. **`DillaRenderJob`.** Must not overwrite takes. Assert output dir `STUDIO/dilla/renders/<seed>/` or brgen equivalent; never `$PWD`.
+583. **`DillaRenderJob`.** Must not overwrite takes. Assert the output lands beside `STUDIO/dilla/dilla.rb` or the brgen equivalent; never `$PWD`.
 584. **`PostproJob` from listing create.** If worker busy, listing has unprocessed photos. Status column?
 585. **`GoogleEnhancedConversionsJob`.** PII. Test it no-ops without env; don’t retry forever.
 586. **`ChannelBotReplyJob`.** Rate; loop guard.

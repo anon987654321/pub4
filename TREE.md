@@ -63,7 +63,7 @@ pub4/
 │   └── dotfiles/             sketchybar, skhd — priced OS paths
 │
 └── STUDIO/                   media tools
-    ├── dilla/                beats — renders belong under renders/<seed>/
+    ├── dilla/                beats — renders land beside dilla.rb
     ├── postpro/              grade
     ├── repligen/
     ├── lora/
