@@ -13,7 +13,9 @@ module Master
         @bus = bus
       end
 
-      def call(dry_run: false)
+      def call(dry_run: false, confirm: false)
+        return "resync: refused without confirm flag" unless dry_run || confirm
+
         lines = [start_line]
         lines << "  tagged #{tag_name}" unless dry_run
         return dry_run_lines(lines) if dry_run

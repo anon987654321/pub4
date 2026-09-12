@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "cli/brain_overlay"
+require "cli/resync_service"
 
 class TestCLI < Minitest::Test
   def setup
@@ -125,6 +126,27 @@ class TestCLI < Minitest::Test
     overlay = Master::CLI::BrainOverlay.new(markdown_dirs: [])
 
     assert_includes overlay.core_brief, "Ruby policy is authoritative"
+  end
+
+  def test_resync_dry_run_fetches_without_resetting
+    git = Minitest::Mock.new
+    git.expect(:head, "abc123")
+    git.expect(:fetch, nil)
+    git.expect(:ahead_behind, [2, 1])
+    service = Master::CLI::ResyncService.new(root: "/tmp/master", git:)
+
+    output = service.call(dry_run: true)
+
+    assert_includes output, "dry-run: reset --hard origin/main (ahead=2 behind=1)"
+    git.verify
+  end
+
+  def test_resync_refuses_live_reset_without_confirmation
+    git = Minitest::Mock.new
+    service = Master::CLI::ResyncService.new(root: "/tmp/master", git:)
+
+    assert_equal "resync: refused without confirm flag", service.call
+    git.verify
   end
 
   def test_help_uses_progressive_disclosure
