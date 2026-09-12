@@ -153,9 +153,10 @@ end
 # the usage line in its own header.
 if $PROGRAM_NAME == __FILE__
   root = File.expand_path("..", __dir__)
-  out_dir = ARGV[0] || File.join(root, "renders", "spectro")
-  tracks = (Dir[File.join(root, "renders", "library", "*", "*.mp3")] +
-            Dir[File.join(root, "demo*.mp3")]).sort
+  # Renders sit beside dilla.rb, so the audit reads them there. Its images and
+  # table are disposable, so they go to scratch/ rather than to a new folder.
+  out_dir = ARGV[0] || File.join(root, "scratch")
+  tracks = Dir[File.join(root, "*.mp3")].sort
 
   abort "no tracks found under #{root}" if tracks.empty?
 

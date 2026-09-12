@@ -148,20 +148,18 @@ ENGINE_FILE = File.expand_path(__FILE__)
 # files in a shared checkout, which is how another session's `git status` fills
 # with audio it did not make.
 #
-# The invoking directory stays the default everywhere else. Moving it wholesale
-# to renders/ would relocate output for every session that runs dilla from its
-# own directory and would strand four gitignore patterns that are anchored to
-# this one — and a render nobody can find is as lost as a render nobody kept.
+# The invoking directory stays the default everywhere else. The refusal lands
+# beside dilla.rb, where every renderer already writes and where the operator
+# wants every render: no renders/ subdirectory, and STUDIO/dilla/.gitignore
+# already names the audio that lands there.
 def default_output_dir
   cwd = Dir.pwd
   repo_root = File.expand_path("../..", ROOT)
   return cwd unless File.expand_path(cwd) == repo_root
 
-  fallback = File.join(ROOT, "renders")
-  warn "dilla: refusing to write renders to the repo root; using #{fallback} " \
+  warn "dilla: refusing to write renders to the repo root; using #{ROOT} " \
        "(set DILLA_OUTPUT_DIR to choose)"
-  FileUtils.mkdir_p(fallback)
-  fallback
+  ROOT
 end
 
 OUTPUT_DIR = ENV.fetch("DILLA_OUTPUT_DIR") { default_output_dir }
@@ -20066,6 +20064,13 @@ end
 def demo_ringtone_fx!(path)
   return path if ENV.fetch("DEMO_FX", "ringtone") == "0"
 
+  # The chain is a colour, not a fader, and it has to leave the level where it
+  # found it. Its in/out gains multiply to about -21 LU: parts at -18.8 LUFS come
+  # out at -40.3, and DEMO_ALBUM_NORM cannot recover that because
+  # normalise_master! caps a correction at 12 dB. Restoring the measured level
+  # afterwards keeps what the crusher and the echo do to a quiet signal and gives
+  # back only the gain.
+  before = album_loudness(path)[:i]
   filtered = "#{path}.ringtone.wav"
   filter = [
     "tremolo=f=6.7:d=0.28",
@@ -20079,6 +20084,17 @@ def demo_ringtone_fx!(path)
               "-c:a", "pcm_s16le", filtered)
   abort "demo ringtone effects failed" unless ok && File.file?(filtered) && File.size(filtered).positive?
 
+  after = album_loudness(filtered)[:i]
+  if before.negative? && after.negative?
+    matched = "#{path}.matched.wav"
+    gain = (before - after).round(2)
+    limiter = "alimiter=limit=#{TRUE_PEAK_CEILING_LINEAR}:attack=1:release=40:level=disabled"
+    ok = system("ffmpeg", "-y", "-v", "error", "-i", filtered, "-af", "volume=#{gain}dB,#{limiter}",
+                "-c:a", "pcm_s16le", matched)
+    abort "demo ringtone level match failed" unless ok && File.file?(matched) && File.size(matched).positive?
+
+    FileUtils.mv(matched, filtered)
+  end
   FileUtils.mv(filtered, path)
   dmesg("demo fx=ringtone tremolo phaser chorus crusher echo stereo", unit: "demo0", parent: "dilla0")
   path
@@ -28332,12 +28348,12 @@ def help
 
     SYNTHESIS
       loose_pocket [out.wav|mp3]         Dirty pocket drums + VLC FX (default on)
-      loose_pocket beats [dir]           Batch beat_01..14 wav+mp3 → renders/beats/
+      loose_pocket beats [dir]           Batch beat_01..14 wav+mp3 beside dilla.rb
       DELICIOUS=1 (default)        0.72x pocket BPM | VLC=1 (default) all audio effects
       dilla [out.mp3]              J Dilla beat — TRACK= preset (default pedal_e_descent)
       hiphop [out.mp3]             Slum Village engine (default TRACK=syncopated_slash_ninth)
-      slum [dir]                   Batch session_01..14 → renders/ (Sonitex on)
-      industrial [out.mp3]         Industrial techno (default renders/foundry_pulse.mp3)
+      slum [dir]                   Batch session_01..14 beside dilla.rb (Sonitex on)
+      industrial [out.mp3]         Industrial techno (default foundry_pulse.mp3)
       techno [out.mp3]             Hard distorted techno (#{TECHNO_BPM} BPM)
       analog [out.mp3]             Full analog pad restoration renderer
       analog_liveset [out] [min]   Long-form analog render
