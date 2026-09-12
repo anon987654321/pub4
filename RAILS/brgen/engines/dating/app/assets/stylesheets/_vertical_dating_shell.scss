@@ -42,9 +42,12 @@ body.vertical-dating {
 
 /* Immersive-vertical chrome hiding is centralised in _vertical_shell.scss. */
 
+/* Full bleed because dating is an immersive vertical: _vertical_shell.scss
+   hides the core chrome here, so there is no column for content to sit in.
+   The two grid-template declarations that used to sit above max-width were
+   inert — .layout is display:flex in _shell.scss on every surface, measured
+   flex on brgen, dating, playlist and markedsplass alike. */
 body.vertical-dating .layout {
-  grid-template-areas: "main";
-  grid-template-columns: 1fr;
   max-width: 100%;
 }
 

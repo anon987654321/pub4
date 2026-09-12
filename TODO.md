@@ -5566,7 +5566,32 @@ Numbered 1–N across the four trees.
 593. **`notifications` polymorphic index.** Confirm `(notifiable_type, notifiable_id)` exists.
 594. **`marketplace_orders.variant_id` indexed?** Verify if `find_by(variant_id)` in stock decrement. **Unverified.**
 595. **Grep remaining `update_column` without `updated_at`.** WIRING_NOTES trap.
-596. **Vertical content column.** Shared `.page-header` / measure cap not applied on vertical homes. Use `.app-shell` column; don’t change accents. (One chrome, already open — this is the container half named per file.)
+1061. **`.page-header` is five different elements across the verticals.** Measured at
+     1440px on 2026-09-12: absent on markedsplass and playlist, 0px wide on dating,
+     747.03px on takeaway (max 747.035px), 600px on tv, and absent on brgen's front
+     page, which uses `.feed-header` instead. So the shared page-header contract in
+     `shared/LAYOUT.md` describes an element that four of seven surfaces do not
+     render and one renders at zero width. Either the contract names the wrong
+     element or the verticals do — deciding which is a layout call and the
+     operator's; the measurement is here so it is not made blind.
+
+596. **The prescription is wrong, and measuring it found a smaller real thing.**
+     Measured at 1440px on 2026-09-12, `.layout` max-width: brgen 600px, tv 600px,
+     markedsplass / dating / playlist / takeaway all 100%. `--feed-max` is 600px on
+     every one of them, so the four are opting out by rule, not missing a token —
+     and each opt-out has an argument. marketplace and takeaway are storefronts:
+     takeaway's own comment says the 600px column crushes the two-row #navBar and
+     leaves the restaurant grid no room, and Kaufland is the model there. dating and
+     playlist are immersive verticals — `_vertical_shell.scss` hides the core chrome
+     on them, so there is no column for content to sit in. tv is the browsable one
+     and already has the column. Applying `.app-shell`'s measure cap to all four
+     would undo two deliberate decisions.
+
+     What was real: dating and playlist each set `grid-template-areas: "main"` and
+     `grid-template-columns: 1fr` on `.layout`, which is `display: flex` in
+     `_shell.scss` on every surface — measured flex on brgen, dating, playlist and
+     markedsplass alike. Four inert declarations, removed; max-width and display
+     measured identical before and after.
 597. **`_ui_refinements*` merge.** Boy Scout on next CSS touch — merge into domain partials, no visual change.
 598. **`_shared_coverage_fills.scss`.** If it exists only to satisfy css_coverage_lint, that’s a spelling gate — prefer real selectors or fix the lint.
 599. **`_stack_brgen.scss` vs `_stack.scss`.** Document why two.
