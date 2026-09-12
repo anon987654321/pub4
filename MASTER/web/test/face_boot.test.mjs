@@ -210,8 +210,14 @@ test("probe_chat_e2e script covers primer chat and felt state", () => {
 test("probe_webgl_guard covers before-tap canvas lock and after-tap unlock", () => {
   const probe = readFileSync(join(root, "script", "probe_webgl_guard.mjs"), "utf8");
   const ciProbe = readFileSync(join(root, "script", "ci_web_probe"), "utf8");
-  assert.match(probe, /HTMLCanvasElement/);
-  assert.match(probe, /getContext/);
+// Not /HTMLCanvasElement/. The probe used to name the class because it
+// patched the prototype; it now asks a canvas it did not have before the
+// tap — document.createElement("canvas") inside the after block — which is
+// the stronger proof, since a guard that only covers the one element on the
+// page is not a guard. The assertion was measuring the old spelling of a
+// check that had got better.
+assert.match(probe, /createElement\("canvas"\)/);
+assert.match(probe, /getContext/);
   assert.match(probe, /WebGL escaped guard before tap/);
   assert.match(probe, /WebGL unavailable after tap/);
   assert.match(probe, /PROBE_REQUIRE_BROWSER/);

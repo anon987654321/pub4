@@ -294,7 +294,14 @@ class TestWebUI < Minitest::Test
     %w[/review /status /undo /commit /model /pair /doctor /help].each do |verb|
       assert_includes chat, verb, "the slash surface lost #{verb}"
     end
-    assert_includes File.read(File.expand_path("../web/public/visual_bridge.js", __dir__)), "phantom:detected"
+# Matched, not included. visual_bridge writes the phantom topics as one
+# alternation — /phantom:(?:detected|halt|recovery)/ — because detected,
+# halt, occurrence and recovery are what the bus publishes and phantom:retry
+# never was. The literal substring stopped existing when the handler got
+# broader, so a substring assertion failed a file that had improved.
+bridge_source = File.read(File.expand_path("../web/public/visual_bridge.js", __dir__))
+assert_match(/phantom:[^\n]*detected/, bridge_source,
+             "visual_bridge stopped handling the phantom topics")
     assert_includes actions, "addEventListener('compaction'"
     assert_includes actions, "startsWith('!')"
     assert_includes service, "compaction:done"
