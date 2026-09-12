@@ -92,6 +92,37 @@ module Deploy
       light_only.select { |_, only| only }.keys
     end
 
+    # The vertical accent ink, read from the file that sets it. #110f19 was
+    # chosen against the accent column and measured there — "dark 5.10 to 9.94",
+    # which is the accent column exactly. Nobody measured it against hover.
+    def vertical_accent_ink(rails_root)
+      return @vertical_accent_ink if defined?(@vertical_accent_ink)
+
+      shell = File.join(rails_root, "brgen/app/assets/stylesheets/_vertical_shell.scss")
+      @vertical_accent_ink = File.read(shell)[/\$vertical-accent-ink:\s*(#[0-9a-fA-F]{3,8})/, 1]
+    rescue StandardError
+      @vertical_accent_ink = nil
+    end
+
+    # `accent` and `hover` are not the same kind of colour and were paired as
+    # though they were.
+    #
+    # `accent` is assigned straight to --accent under body.vertical-<v>, and
+    # --accent is read as `color:` all over the tree, so pairing it against the
+    # page backgrounds asks a question the tree answers.
+    #
+    # `hover` is read in exactly one place -- _marketplace_nav_bar.scss:121, as a
+    # background-color on .nav-search-submit:hover -- and in no place as a
+    # foreground. Pairing it against the page background reported marketplace
+    # 3.13 and 3.48 for text that is never drawn, while the pair that IS drawn
+    # went unmeasured: the button keeps color: var(--accent-ink) through the
+    # hover, so the ink lands on the hover fill. That measures 3.15 on
+    # marketplace, 3.34 on tv and 4.31 on maps -- three real failures under the
+    # 4.5 floor _vertical_shell.scss's own comment claims, hidden behind two
+    # false ones.
+    #
+    # design_tokens.yml still says "Small text in this vertical wears `hover`
+    # instead"; .market-hero-kicker, the rule it names, is gone.
     def vertical_accent_pairs(tokens, rails_root = nil)
       verticals = tokens["vertical_accents"]
       social = tokens[VERTICAL_SURFACE_DIALECT] || tokens["social"]
@@ -99,22 +130,41 @@ module Deploy
 
       # Computed once, not per vertical.
       light_only = rails_root ? light_only_vertical_keys(rails_root) : []
+      ink = rails_root ? vertical_accent_ink(rails_root) : nil
 
       verticals.flat_map do |vertical, row|
         next [] unless row.is_a?(Hash)
 
-        row.slice("accent", "hover").reject { |key, _| light_only.include?("#{vertical}_#{key}") }
-           .flat_map do |key, fg|
-          VERTICAL_BACKGROUNDS.filter_map do |bg_key|
-            bg = social[bg_key]
-            ratio = bg && contrast_ratio(fg, bg)
-            next unless ratio
-
-            { label: "vertical_accents.#{vertical}_#{key}/#{VERTICAL_SURFACE_DIALECT}.#{bg_key}", fg: fg, bg: bg,
-              fg_key: "#{vertical}_#{key}", bg_key: bg_key, ratio: ratio }
-          end
-        end
+        foreground_accent_pairs(vertical, row, social, light_only) +
+          hover_fill_pairs(vertical, row, ink)
       end
+    end
+
+    def foreground_accent_pairs(vertical, row, social, light_only)
+      return [] if light_only.include?("#{vertical}_accent")
+
+      fg = row["accent"]
+      return [] unless fg
+
+      VERTICAL_BACKGROUNDS.filter_map do |bg_key|
+        bg = social[bg_key]
+        ratio = bg && contrast_ratio(fg, bg)
+        next unless ratio
+
+        { label: "vertical_accents.#{vertical}_accent/#{VERTICAL_SURFACE_DIALECT}.#{bg_key}", fg: fg, bg: bg,
+          fg_key: "#{vertical}_accent", bg_key: bg_key, ratio: ratio }
+      end
+    end
+
+    def hover_fill_pairs(vertical, row, ink)
+      hover = row["hover"]
+      return [] unless hover && ink
+
+      ratio = contrast_ratio(ink, hover)
+      return [] unless ratio
+
+      [{ label: "vertical_accent_ink/vertical_accents.#{vertical}_hover", fg: ink, bg: hover,
+         fg_key: "accent_ink", bg_key: "#{vertical}_hover", ratio: ratio }]
     end
 
     # Values of a custom property that survive the cascade.

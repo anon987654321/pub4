@@ -42,7 +42,13 @@ $vertical-accents: (
 
    #110f19 is the smallest step in the same near-black that clears it: light
    4.59 to 5.45, dark 5.10 to 9.94. A step this size is not a visible change to
-   the ink; it is the ink meeting the contract this comment already claimed. */
+   the ink; it is the ink meeting the contract this comment already claimed.
+
+   BOTH was two of three. The map has a hover column, .nav-search-submit:hover
+   swaps the fill to it and keeps color: var(--accent-ink), and nobody measured
+   the ink there: marketplace 3.15, tv 3.34, maps 4.31, all under 4.5. Only
+   marketplace's hover is wired today, so only that one reaches a pixel, and
+   design_metrics reports it. Moving a colour to fix it is the operator's. */
 $vertical-accent-ink: #110f19;
 @each $v, $c in $vertical-accents {
   body.vertical-#{$v} {
