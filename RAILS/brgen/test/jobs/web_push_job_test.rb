@@ -38,6 +38,18 @@ class WebPushJobTest < ActiveSupport::TestCase
     assert_includes sent, "https://push.example/1"
   end
 
+  # Unauthorized is 401/403 — our VAPID keys, not this reader's browser. It
+  # fails the same way for every row, so destroying on it unsubscribes the whole
+  # city on one bad rotation, and nothing on our side can put those rows back.
+  test "keeps the subscription when the push service rejects our credentials" do
+    Rails.application.config.x.vapid = { subject: "mailto:a@b.c", public_key: "x", private_key: "y" }
+    sub = PushSubscription.create!(user: @user, endpoint: "https://push.example/live", p256dh: "p", auth: "a")
+    Webpush.stub(:payload_send, ->(**) { raise Webpush::Unauthorized.allocate }) do
+      assert_raises(Webpush::Unauthorized) { WebPushJob.new.perform(@notification.id) }
+    end
+    assert PushSubscription.exists?(sub.id)
+  end
+
   test "prunes a subscription the push service has expired" do
     Rails.application.config.x.vapid = { subject: "mailto:a@b.c", public_key: "x", private_key: "y" }
     sub = PushSubscription.create!(user: @user, endpoint: "https://push.example/gone", p256dh: "p", auth: "a")

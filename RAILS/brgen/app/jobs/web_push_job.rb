@@ -70,8 +70,19 @@ class WebPushJob < ApplicationJob
       vapid: vapid,
       urgency: "normal"
     )
-  rescue Webpush::ExpiredSubscription, Webpush::InvalidSubscription, Webpush::Unauthorized
+  rescue Webpush::ExpiredSubscription, Webpush::InvalidSubscription
+    # The endpoint is gone for good; the row is what is wrong, so remove it.
     subscription.destroy
+  rescue Webpush::Unauthorized => e
+    # NOT a dead subscription. The gem raises this on 401, 403 and FCM's
+    # UnauthorizedRegistration, every one of which says OUR VAPID credentials
+    # are wrong -- so it fails identically for every row. Destroying on it meant
+    # one bad key rotation silently unsubscribed every browser in the city, and
+    # a push subscription cannot be restored from our side: the reader has to go
+    # back to the browser and grant it again. Shared::Pushable.deliver_now never
+    # listed it, and says why one clause away.
+    Rails.logger.error("web push unauthorized — check config.x.vapid, not the subscription: #{e.message.to_s[0, 120]}")
+    raise
   rescue StandardError => e
     Rails.logger.warn("web push failed: #{e.class}: #{e.message}")
   end
