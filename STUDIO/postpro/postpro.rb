@@ -1713,6 +1713,13 @@ end
 # frame. The ratio is bounded because an unbounded division by a blurred
 # luminance will find a black background and multiply it by four hundred.
 RELIGHT_SCALE = 12.0
+# A blur whose sigma is a fraction of the frame is a blur nobody can afford at
+# full resolution: sigma 227 on a 2720 px contact sheet took 65 seconds and
+# killed a batch part way through. The field it produces is low-frequency by
+# definition, so it is built on a small copy and resized back, which costs
+# nothing the field had — this is the one place in the file where working at a
+# lower resolution is not an approximation.
+LOW_FREQUENCY_TILE = 256.0
 RELIGHT_FLOOR = 0.004
 RELIGHT_RATIO_CEILING = 3.0
 RELIGHT_KEY_MIX = 0.65
@@ -1720,7 +1727,8 @@ RELIGHT_KEY_MIX = 0.65
 def relight(image, intensity = 0.5, azimuth: 135.0, shape: 1.25, throw: 0.8)
   linear = image.colourspace("scrgb")
   r, g, b = linear.bandsplit
-  light = (r * 0.2126 + g * 0.7152 + b * 0.0722).gaussblur([image.width / RELIGHT_SCALE, 4.0].max)
+  light = low_frequency_field(r * 0.2126 + g * 0.7152 + b * 0.0722,
+                             [image.width / RELIGHT_SCALE, 4.0].max)
   held = (light > RELIGHT_FLOOR).ifthenelse(light, RELIGHT_FLOOR)
   mean = [held.avg, RELIGHT_FLOOR].max
   # The light it already had, with its own falloff deepened.
@@ -1735,6 +1743,18 @@ def relight(image, intensity = 0.5, azimuth: 135.0, shape: 1.25, throw: 0.8)
 rescue StandardError => e
   $logger.error "relight: #{e.message}"
   image
+end
+
+# A heavy blur, done where it is cheap.
+def low_frequency_field(luma, sigma)
+  shrink = luma.width / LOW_FREQUENCY_TILE
+  return luma.gaussblur(sigma) if shrink <= 1.5
+
+  small = luma.resize(1.0 / shrink)
+  blurred = small.gaussblur([sigma / shrink, 0.6].max)
+  grown = blurred.resize(luma.width.to_f / blurred.width,
+                         vscale: luma.height.to_f / blurred.height)
+  grown.embed(0, 0, luma.width, luma.height, extend: :copy)
 end
 
 # A normalised ramp across the frame, so the key falls off away from where it
@@ -1774,7 +1794,7 @@ def aerial_depth(image, intensity = 0.5)
   linear = image.colourspace("scrgb")
   r, g, b = linear.bandsplit
   luma = r * 0.2126 + g * 0.7152 + b * 0.0722
-  acutance = (luma - luma.gaussblur(2.0)).abs.gaussblur([image.width / 40.0, 3.0].max)
+  acutance = low_frequency_field((luma - luma.gaussblur(2.0)).abs, [image.width / 40.0, 3.0].max)
   scale = [acutance.avg * 2.0, 1e-5].max
   far = clamp01(acutance.linear([-1.0 / scale], [1.0]))**AERIAL_FALLOFF
   fade = far.linear([intensity * AERIAL_DEPTH_CAP], [0])
