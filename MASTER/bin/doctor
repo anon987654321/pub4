@@ -11,7 +11,31 @@ $LOAD_PATH.unshift File.join(ROOT, "lib")
 require "ground/env_loader"
 Master::Ground::EnvLoader.load!
 
-Check = Struct.new(:name, :ok, :detail, keyword_init: true)
+# A check has three answers, not two.
+#
+# `ok` was a boolean, so a check that could not measure anything had to lie in
+# one direction or the other, and both lies were in the file. model-quota and
+# cache-efficiency returned `ok: true, detail: "module not loaded"` — printing
+# OK for a check nobody ran, which is the green line that means nobody looked.
+# content-dedup went the other way: it raised into `ok: false`, so a crashed
+# instrument was indistinguishable from a real finding.
+#
+# `state` is :pass, :fail or :unmeasured. Unmeasured never fails the exit
+# code — an absent optional module is not a sick host — but it is printed as
+# its own word and counted in its own line, which is the whole point. The
+# gate runner already works this way: "2 gate(s) measured nothing, and why".
+#
+# ok stays as a reader so nothing downstream breaks on the shape change.
+Check = Struct.new(:name, :state, :detail, keyword_init: true) do
+  def ok = state != :fail
+  def unmeasured? = state == :unmeasured
+  def label = { pass: "OK", fail: "FAIL", unmeasured: "SKIP" }.fetch(state, "FAIL")
+end
+
+# Kept so the twenty existing call sites read the same.
+def pass(name, detail) = Check.new(name:, state: :pass, detail:)
+def fail_check(name, detail) = Check.new(name:, state: :fail, detail:)
+def unmeasured(name, detail) = Check.new(name:, state: :unmeasured, detail:)
 
 def run(*argv, chdir: ROOT)
   stdout, stderr, status = Open3.capture3(*argv, chdir: chdir)
@@ -24,17 +48,17 @@ def check_ruby
   ok, out, err = run("ruby", "--version")
   version = out[/ruby (\d+\.\d+\.\d+)/, 1]
   good = ok && version && Gem::Version.new(version) >= Gem::Version.new("3.3.0")
-  Check.new(name: "ruby", ok: good, detail: out.empty? ? err : out)
+  Check.new(name: "ruby", state: (good) ? :pass : :fail, detail: out.empty? ? err : out)
 end
 
 def check_command(name, *cmd)
   ok, out, err = run(*cmd, chdir: REPO)
-  Check.new(name: name, ok: ok, detail: ok ? out.lines.first.to_s.strip : err)
+  Check.new(name:, state: ok ? :pass : :fail, detail: ok ? out.lines.first.to_s.strip : err)
 end
 
 def check_bundle
   ok, out, err = run("bundle", "check", chdir: ROOT)
-  Check.new(name: "bundle", ok: ok, detail: if ok
+  Check.new(name: "bundle", state: (ok) ? :pass : :fail, detail: if ok
 "dependencies satisfied"
 else
 (err.empty? ? out : err)
@@ -48,7 +72,7 @@ def check_yaml
   rescue Psych::Exception => e
     "#{path.sub(ROOT + '/', '')}: #{e.message.lines.first.to_s.strip}"
   end
-  Check.new(name: "yaml", ok: errors.empty?, detail: errors.empty? ? "ok" : errors.join("; "))
+  Check.new(name: "yaml", state: (errors.empty?) ? :pass : :fail, detail: errors.empty? ? "ok" : errors.join("; "))
 end
 
 # Advisory only, matching PrincipleMapRepair's dangling-reference check --
@@ -59,66 +83,66 @@ def check_content_dedup
   dups = Master::Fix::ContentDedupScan.scan(root: ROOT)
   detail = dups.empty? ? "no duplicate lines" : "#{dups.size} duplicate line(s), top: #{dups.first.text[0, 50]} (x#{dups.first.count})"
   # ok: true unconditionally -- advisory only, never fails doctor's exit code.
-  Check.new(name: "content-dedup", ok: true, detail:)
+  Check.new(name: "content-dedup", state: :pass, detail:)
 rescue StandardError => e
-  Check.new(name: "content-dedup", ok: false, detail: "#{e.class}: #{e.message}")
+  Check.new(name: "content-dedup", state: :fail, detail: "#{e.class}: #{e.message}")
 end
 
 def check_api_keys
   keys = %w[XAI_API_KEY OPENROUTER_API_KEY ANTHROPIC_API_KEY OPENAI_API_KEY DEEPSEEK_API_KEY GEMINI_API_KEY]
   present = keys.select { |var| ENV[var].to_s.length >= 16 }
   if present.any?
-    return Check.new(name: "api-keys", ok: true, detail: present.join(", "))
+    return Check.new(name: "api-keys", state: :pass, detail: present.join(", "))
   end
   keyless = ENV["MASTER_KEYLESS"].to_s != "" || ENV["MASTER_WEB_CHAT"].to_s != "" || present.empty?
   detail = keyless ? "keyless browser mode (web-chat:grok → chatgpt → kimi)" : "none configured"
-  Check.new(name: "api-keys", ok: keyless, detail: detail)
+  Check.new(name: "api-keys", state: (keyless) ? :pass : :fail, detail: detail)
 end
 
 def check_tts_socket
   path = File.join(ROOT, ".master", "tts.sock")
   alive = File.socket?(path) && (UNIXSocket.open(path, &:close); true)
-  Check.new(name: "tts-socket", ok: alive, detail: alive ? path : "not running")
+  Check.new(name: "tts-socket", state: (alive) ? :pass : :fail, detail: alive ? path : "not running")
 rescue StandardError => e
-  Check.new(name: "tts-socket", ok: false, detail: e.message)
+  Check.new(name: "tts-socket", state: :fail, detail: e.message)
 end
 
 def check_web_token
   cfg_path = File.join(ROOT, ".master", "config.yml")
   cfg = YAML.safe_load_file(cfg_path, aliases: true) rescue {}
   tok = cfg["web_token"].to_s
-  Check.new(name: "web-token", ok: tok.length >= 8, detail: tok.empty? ? "unset in .master/config.yml" : "configured")
+  Check.new(name: "web-token", state: (tok.length >= 8) ? :pass : :fail, detail: tok.empty? ? "unset in .master/config.yml" : "configured")
 end
 
 def check_key_rotator
   count = Master::Io::KeyRotator.keys.size
-  Check.new(name: "key-rotator", ok: count.positive?, detail: "#{count} OpenRouter key(s)")
+  Check.new(name: "key-rotator", state: (count.positive?) ? :pass : :fail, detail: "#{count} OpenRouter key(s)")
 rescue NameError
   keys = %w[OPENROUTER_API_KEY OPENROUTER_API_KEY_2 OPENROUTER_API_KEY_3]
   count = keys.count { |var| ENV[var].to_s.length >= 16 }
-  Check.new(name: "key-rotator", ok: count.positive?, detail: "#{count} OpenRouter key(s)")
+  Check.new(name: "key-rotator", state: (count.positive?) ? :pass : :fail, detail: "#{count} OpenRouter key(s)")
 end
 
 def check_model_quota
   snap = Master::Io::ModelQuota.snapshot
   exhausted = snap[:exhausted]
   detail = exhausted.empty? ? "ok (#{snap[:models].size} tracked)" : "exhausted: #{exhausted.join(', ')}"
-  Check.new(name: "model-quota", ok: exhausted.empty?, detail: detail)
+  Check.new(name: "model-quota", state: (exhausted.empty?) ? :pass : :fail, detail: detail)
 rescue NameError
-  Check.new(name: "model-quota", ok: true, detail: "module not loaded")
+  Check.new(name: "model-quota", state: :unmeasured, detail: "Io::ModelQuota did not load")
 end
 
 def check_cache_efficiency
   snap = Master::Trace::CacheEfficiency.snapshot
-  Check.new(name: "cache-efficiency", ok: true,
+  Check.new(name: "cache-efficiency", state: :pass,
             detail: "#{snap[:efficiency_pct]}% (#{snap[:cached_tokens]}/#{snap[:input_tokens]} tokens)")
 rescue NameError
-  Check.new(name: "cache-efficiency", ok: true, detail: "module not loaded")
+  Check.new(name: "cache-efficiency", state: :unmeasured, detail: "Trace::CacheEfficiency did not load")
 end
 
 def check_provider_catalog
   path = File.join(ROOT, "bin", "provider-catalog")
-  Check.new(name: "provider-catalog", ok: File.exist?(path), detail: File.exist?(path) ? path : "missing")
+  Check.new(name: "provider-catalog", state: (File.exist?(path)) ? :pass : :fail, detail: File.exist?(path) ? path : "missing")
 end
 
 $LOAD_PATH.unshift File.join(ROOT, "lib")
@@ -155,7 +179,7 @@ checks = [
 
 puts "MASTER doctor"
 checks.each do |check|
-  puts "#{check.ok ? 'OK' : 'FAIL'} #{check.name}: #{check.detail}"
+  puts "#{check.label} #{check.name}: #{check.detail}"
 end
 
 # The receipt, under the probes rather than instead of them. doctor answers
@@ -172,6 +196,15 @@ begin
   puts Master::Ground::MaturityScorecard.load.summary_line
 rescue StandardError => e
   puts "receipt: unavailable — #{e.class}: #{e.message.lines.first.to_s.strip}"
+end
+
+# Named, not skipped. A host with three unmeasured checks is not the same host
+# as one with none, and the exit code cannot say so — so the line does.
+unmeasured_checks = checks.select(&:unmeasured?)
+if unmeasured_checks.any?
+  puts
+  puts "#{unmeasured_checks.size} check(s) measured nothing, and why:"
+  unmeasured_checks.each { |check| puts "  #{check.name}: #{check.detail}" }
 end
 
 failed = checks.reject(&:ok)
