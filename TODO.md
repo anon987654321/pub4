@@ -4975,8 +4975,8 @@ Numbered 1–N across the four trees.
 22. **`PATH_OWNERSHIP.yml` omits live dirs.** No entries for `lib/cognition/`, `lib/pressure_engine.rb`, `law/`, `AEGIS.md`, `COGNITION.md`, `EXAMPLES.md`. Add them. **Fixed 2026-09-12 by Copilot:** `law/` already had an entry; the remaining live paths now declare their purpose and check.
 23. **`PATH_OWNERSHIP.yml` `tools/` check is a source-grep spec.** `:179` `spec/lifecycle_tools_spec.rb` asserts `bin/doctor` contains `"check_yaml"`. Point the check at a real tool test. **Fixed 2026-09-12 by Copilot:** the doctor case now runs the CLI and asserts its emitted YAML probe result.
 24. **`data/tools.yml` `name:` vs `Master::Io::`.** Header says `Master::Tools`. Runtime is `Master::Io::ReadFile`. Align the namespace. **Fixed 2026-09-12 by Copilot:** both headers now name `Master::Io`.
-25. **`RuntimeCatalog.load("tts_phrases")` vs `data/tts.yml`.** Confirm `tts_phrases` exists in a catalog `sections` list (`runtime_catalog.rb:20-24` already records a miss).
-26. **`DATA_ALIASES` vs filenames.** Audit `lib/boot/data.rb` aliases against files on disk.
+25. **`RuntimeCatalog.load("tts_phrases")` vs `data/tts.yml`.** Confirm `tts_phrases` exists in a catalog `sections` list (`runtime_catalog.rb:20-24` already records a miss). **Closed 2026-09-12 by Copilot:** `RuntimeCatalog.sections` reads live `data/runtime.yml` keys, which include `tts_phrases`, and `test_ground_runtime_catalog.rb` asserts the section.
+26. **`DATA_ALIASES` vs filenames.** Audit `lib/boot/data.rb` aliases against files on disk. **Closed 2026-09-12 by Copilot:** the aliases live in `lib/ground/rules.rb`; `workflow` resolves to `limits.yml`, `ruby_style` and `rails_stack` resolve to `rules.yml` sections, and `standing_orders` resolves to `state.yml`.
 27. **Confirmed and left, 2026-09-12.** `soul.yml:65` does list `bin/cli`. That file
     is `paths.immutable` and outranks everything: an effect must not write it, and
     neither should I. The change is the operator's, and it is one line.
