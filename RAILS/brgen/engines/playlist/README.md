@@ -1,8 +1,8 @@
 # brgen playlist
 
 **Music is better when someone is listening with you.** playlist is a mountable
-Rails engine served at `playlist.<city>` — `playlist.brgen.no`,
-`playlist.lsangeles.com`. `../../ENGINES.md` is the recipe; `../../AGENTS.md` is
+Rails engine served at `playlist.<city>` — `radio.brgen.no`,
+`radio.lsangeles.com`. `../../ENGINES.md` is the recipe; `../../AGENTS.md` is
 the topology.
 
 Users build playlists and sets, import hosted tracks, and collaborate on them.

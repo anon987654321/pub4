@@ -201,7 +201,7 @@ flows:
     steps:
       - name: playlist
         get: /
-        host: playlist.brgen.no
+        host: radio.brgen.no
         expect_status: [200]
         forbid_body: ["Sign in to continue"]
       - name: tv
@@ -321,20 +321,20 @@ flows:
     steps:
       - name: root
         get: /
-        host: playlist.brgen.no
+        host: radio.brgen.no
         expect_status: [200]
         forbid_body: ["Sign in to continue"]
       - name: sets
         get: /sets
-        host: playlist.brgen.no
+        host: radio.brgen.no
         expect_status: [200]
       - name: hosted
         get: /hosted_tracks
-        host: playlist.brgen.no
+        host: radio.brgen.no
         expect_status: [200]
       - name: en_host
         get: /
-        host: playlist.brgen.no
+        host: radio.brgen.no
         expect_status: [200]
 
   - id: brgen_tv_depth

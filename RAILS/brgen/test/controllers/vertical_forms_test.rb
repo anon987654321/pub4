@@ -21,7 +21,7 @@ class VerticalFormsTest < ActionDispatch::IntegrationTest
 
   test "playlist set form renders and creates under the playlist_set scope" do
     sign_in_as(@owner)
-    host! "playlist.brgen.no"
+    host! "radio.brgen.no"
 
     get playlist.new_set_path
     assert_response :success
@@ -41,7 +41,7 @@ class VerticalFormsTest < ActionDispatch::IntegrationTest
   end
 
   test "playlist sets and hosted tracks indexes resolve their models" do
-    host! "playlist.brgen.no"
+    host! "radio.brgen.no"
     # Playlist::Set inside `module Playlist` resolved to Playlist::Playlist::Set.
     get playlist.sets_path
     assert_response :success

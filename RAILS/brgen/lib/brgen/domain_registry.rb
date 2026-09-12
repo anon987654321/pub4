@@ -13,7 +13,7 @@ module Brgen
       "dating" => :dating,
       "maps" => :maps,
       "messenger" => :messenger,
-      "playlist" => :playlist,
+      "radio" => :playlist,
       "takeaway" => :takeaway,
       "tv" => :tv,
       "marche" => :marketplace,
@@ -31,15 +31,24 @@ module Brgen
 
     TV_SUBDOMAINS = %w[tv].freeze
     DATING_SUBDOMAINS = %w[dating].freeze
-    # `playlist` in every city, including the Norwegian ones. `spilleliste` was
-    # here as a second Norwegian-language host for the same engine, and it was
-    # the odd one out: marketplace is translated per country because the word is
-    # part of the brand in each market (markedsplass, marknadsplats, marktplatz,
-    # mercato), while dating, tv, takeaway, maps and messenger are the same word
-    # everywhere and were never translated. Playlist is in that second group.
-    # It also never resolved — spilleliste.brgen.no and spilleliste.oshlo.no were
-    # both NXDOMAIN, so every gate and flow pointing at it was measuring nothing.
-    PLAYLIST_SUBDOMAINS = %w[playlist].freeze
+    # `radio` in every city, and nothing else. It was `playlist` until 2026-09-12,
+    # when the public name changed; no alias was kept, so playlist.<city> is gone
+    # rather than deprecated.
+    #
+    # Not translated, for the reason this file applies to the whole group:
+    # marketplace is translated per country because the word is part of the brand in
+    # each market (markedsplass, marknadsplats, marktplatz, mercato), while dating,
+    # tv, takeaway, maps and messenger are the same word everywhere. radio is the
+    # same word in every language these cities speak, so it belongs to that second
+    # group. `spilleliste` was once here as a Norwegian-language second host and was
+    # the odd one out; it also never resolved — spilleliste.brgen.no and
+    # spilleliste.oshlo.no were both NXDOMAIN, so every gate pointing at it was
+    # measuring nothing.
+    #
+    # The engine is still Playlist: its directory, module and tables keep that name,
+    # and the constant below is RADIO_SUBDOMAINS because what it constrains is the
+    # host. Renaming the engine is a separate pass.
+    RADIO_SUBDOMAINS = %w[radio].freeze
     TAKEAWAY_SUBDOMAINS = %w[takeaway].freeze
     MARKETPLACE_SUBDOMAINS = SUBAPP_ALIASES.select { |_subdomain, subapp| subapp == :marketplace }.keys.freeze
     MAPS_SUBDOMAINS = %w[maps].freeze

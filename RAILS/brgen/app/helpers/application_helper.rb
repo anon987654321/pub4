@@ -103,8 +103,10 @@ module ApplicationHelper
 # the active entry and what a test can name; the label is display text and now
 # varies by locale, so comparing it to Current.subapp would have made the
 # active underline appear only for readers whose language happened to match
-# the token. "Radio" is the playlist vertical — the label the operator wants on
-# the bar — so its slug stays `playlist`, which is what Current.subapp reports.
+# the token. Radio is the host and the label; the slug stays `playlist` because
+# that is what Current.subapp reports — the engine, its directory and its
+# playlist_* tables all still carry that name. The public name moved on
+# 2026-09-12 and the engine did not.
 def brgen_nav_items
   domain = Current.domain
   [
@@ -113,7 +115,7 @@ def brgen_nav_items
     # The surface stays — its route, controller and rate limit are untouched, and
     # _mobile_chrome and nearby still link to it.
     [ "ai",          nav_label("ai"),          brgen_ai_url ],
-    [ "playlist",    nav_label("radio"),       "//playlist.#{domain}/" ],
+    [ "playlist",    nav_label("radio"),       "//radio.#{domain}/" ],
     # nb keeps markedsplass, which is the name on the host itself; en reads
     # Marketplace. The 2026-08-17 note that argued for one Norwegian label in an
     # otherwise English bar is answered by the bar having no fixed language now.

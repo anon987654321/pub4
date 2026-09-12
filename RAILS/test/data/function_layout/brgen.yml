@@ -129,6 +129,6 @@ checks:
   - {id: live.marketplace, live: {path: /, host: markedsplass.brgen.no, status: 200, has: [market]}}
   - {id: live.takeaway, live: {path: /, host: takeaway.brgen.no, status: 200, has: [restaurant]}}
   - {id: live.tv, live: {path: /, host: tv.brgen.no, status: 200, has: [tv]}}
-  - {id: live.playlist, live: {path: /, host: playlist.brgen.no, status: 200, has: [play]}}
+  - {id: live.playlist, live: {path: /, host: radio.brgen.no, status: 200, has: [play]}}
   - {id: live.maps, live: {path: /, host: maps.brgen.no, status: 200, has: [map]}}
   - {id: live.messenger, live: {path: /, host: messenger.brgen.no, status: 200, has: [conversation]}}

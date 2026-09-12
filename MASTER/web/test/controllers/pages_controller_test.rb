@@ -7,6 +7,6 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     get "/radio_bergen"
 
     assert_response :see_other
-    assert_equal "https://playlist.brgen.no/", response.headers["Location"]
+    assert_equal "https://radio.brgen.no/", response.headers["Location"]
   end
 end

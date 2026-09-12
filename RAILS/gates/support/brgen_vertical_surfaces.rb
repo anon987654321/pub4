@@ -34,9 +34,9 @@ module Deploy
         expect_body: [/dating|swipe|Oppdag|profile|main|swipe-action/i],
       },
       # One entry, not two. This was "playlist" on spilleliste.brgen.no and
-      # "playlist_en" on playlist.brgen.no, a pair that existed to prove the
+      # "playlist_en" on radio.brgen.no, a pair that existed to prove the
       # Norwegian alias and the English name both reached the engine. The alias
-      # is gone (see Brgen::DomainRegistry::PLAYLIST_SUBDOMAINS) and, for as long
+      # is gone (see Brgen::DomainRegistry::RADIO_SUBDOMAINS) and, for as long
       # as it had been declared, spilleliste.brgen.no was NXDOMAIN — so the half
       # of the pair that justified the split had never once resolved.
       {

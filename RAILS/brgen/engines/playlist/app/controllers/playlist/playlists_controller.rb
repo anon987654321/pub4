@@ -8,7 +8,7 @@ class Playlist::PlaylistsController < Playlist::BaseController
   before_action :authorize_owner_or_editor, only: %i[edit update destroy]
 
   def index
-    # Minimal immersive view for playlist.brgen.no: the shared .brgen-logo-mark
+    # Minimal immersive view for radio.brgen.no: the shared .brgen-logo-mark
     # brand, the warp visualizer, and the tap overlay.
     # No library, trending, archaeology notes, nav, or now-playing.
   end

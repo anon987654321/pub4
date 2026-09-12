@@ -32,7 +32,7 @@ markedsplass.brgen.no    marketplace.lsangeles.com     markedsplass.oshlo.no
 | Takeaway | `engines/takeaway` | `takeaway.brgen.no` | `takeaway.lsangeles.com` |
 | TV | `engines/tv` | `tv.brgen.no` | `tv.lsangeles.com` |
 | Maps | `engines/maps` | `maps.brgen.no` | `maps.lsangeles.com` |
-| Playlist | `engines/playlist` | `playlist.brgen.no` | `playlist.lsangeles.com` |
+| Playlist | `engines/playlist` | `radio.brgen.no` | `radio.lsangeles.com` |
 | Messenger | host routes, not an engine | `messenger.brgen.no` | `messenger.lsangeles.com` |
 
 Marketplace is the only vertical whose **subdomain word** is localized

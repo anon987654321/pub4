@@ -14,7 +14,7 @@ class PwaDesignContractTest < Minitest::Test
   #
   # brgen was hand-rolled because the Workbox build froze ~89 fingerprinted asset
   # URLs in its precache manifest, every deploy re-digested them, `install` failed
-  # with bad-precaching-response, and the PWA broke on playlist.brgen.no.
+  # with bad-precaching-response, and the PWA broke on radio.brgen.no.
   # Precaching content-addressed bundles is the wrong tool — but the tool was the
   # glob, not Workbox: build_workbox now ignores assets/**, so the manifest holds
   # only stable URLs and brgen is back on the shared worker with the offline form

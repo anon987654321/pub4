@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Drawn on the isolated engine (helpers unprefixed here, playlist.* from the host).
-# Host mounts under constraints(subdomain: PLAYLIST_SUBDOMAINS) — see brgen config/routes.rb.
+# Host mounts under constraints(subdomain: RADIO_SUBDOMAINS) — see brgen config/routes.rb.
 Playlist::Engine.routes.draw do
     root "playlists#index"
     resources :playlists do

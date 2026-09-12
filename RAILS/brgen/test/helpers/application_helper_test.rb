@@ -202,7 +202,7 @@ class ApplicationHelperTest < ActionView::TestCase
     slug, label, href = brgen_nav_items.find { |s, _, _| s == "playlist" }
     assert_equal "playlist", slug
     assert_equal "Radio", label
-    assert_equal "//playlist.brgen.no/", href
+    assert_equal "//radio.brgen.no/", href
   end
 
   # The active entry is decided by slug against Current.subapp, never by the
@@ -213,7 +213,7 @@ class ApplicationHelperTest < ActionView::TestCase
     refute nav_item_active?("playlist")
 
     Current.subapp = :playlist
-    assert nav_item_active?("playlist"), "Radio wears the rule on playlist.brgen.no"
+    assert nav_item_active?("playlist"), "Radio wears the rule on radio.brgen.no"
     refute nav_item_active?("front")
   end
 

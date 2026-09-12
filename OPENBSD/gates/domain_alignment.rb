@@ -18,7 +18,7 @@ module Deploy
     REGISTRY = ROOT.join("RAILS", "brgen", "lib", "brgen", "domain_registry.rb")
     DEPLOY_INVENTORY = ROOT.join("OPENBSD", "deploy_inventory.json")
     RELAYD = ROOT.join("OPENBSD", "etc", "relayd.conf")
-    COMMON_SUBAPPS = %w[playlist dating tv takeaway maps messenger].freeze
+    COMMON_SUBAPPS = %w[radio dating tv takeaway maps messenger].freeze
     MASTER_ONLY_SUBAPPS = %w[ai].freeze
 
     def self.run
@@ -59,10 +59,12 @@ module Deploy
         end
       end
 
+      # The key stays :playlist — that is the engine, and the engine keeps its
+      # name. The label is the host, which became radio on 2026-09-12.
       routes.fetch(:playlist).each do |label|
-        next if label == "playlist"
+        next if label == "radio"
 
-        result.fail("routes playlist lists unknown label #{label}")
+        result.fail("routes radio lists unknown label #{label}")
       end
 
       master = parse_deploy_inventory
@@ -187,7 +189,7 @@ module Deploy
       {
         tv: extract_constant(text, "TV_SUBDOMAINS"),
         dating: extract_constant(text, "DATING_SUBDOMAINS"),
-        playlist: extract_constant(text, "PLAYLIST_SUBDOMAINS"),
+        playlist: extract_constant(text, "RADIO_SUBDOMAINS"),
         takeaway: extract_constant(text, "TAKEAWAY_SUBDOMAINS"),
         maps: extract_constant(text, "MAPS_SUBDOMAINS"),
         messenger: extract_constant(text, "MESSENGER_SUBDOMAINS"),

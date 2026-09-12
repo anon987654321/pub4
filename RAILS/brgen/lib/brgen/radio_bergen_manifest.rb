@@ -116,7 +116,7 @@ module Brgen
 
         [
           "$ git dig --follow pub4/index.html",
-          "object: pub2 monolithic index.html → playlist.brgen.no warp tunnel",
+          "object: pub2 monolithic index.html → radio.brgen.no warp tunnel",
           "archive: #{meta['source_archive'] || 'anon987654321/pub2'} @ #{pub2_head}",
           # These two are rendered to the visitor on the playlist surface, so
           # they name paths that exist. studio/radio-bergen/ was removed in

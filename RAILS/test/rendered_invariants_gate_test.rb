@@ -108,7 +108,7 @@ class RenderedInvariantsGateTest < Minitest::Test
   # The product decision, pinned separately: a surface that flips agrees with
   # itself perfectly and would otherwise pass.
   def test_a_surface_that_flips_its_declared_theme_fails_even_when_the_pixels_agree
-    result = check(:check_theme, "playlist.brgen.no", :dark, payload(declared: "light", luma: 0.93))
+    result = check(:check_theme, "radio.brgen.no", :dark, payload(declared: "light", luma: 0.93))
 
     assert_names result, /declares data-theme="light" but this gate expects dark/
   end
@@ -126,13 +126,13 @@ class RenderedInvariantsGateTest < Minitest::Test
   # An exemption whose reason has evaporated is the other half of the contract:
   # a surface declared :raised that is flush must fail, or the list rots.
   def test_a_surface_declared_raised_that_sits_flush_fails
-    result = check(:check_chat_corner, "playlist.brgen.no", payload(chat: { "right" => 0, "bottom" => 0 }))
+    result = check(:check_chat_corner, "radio.brgen.no", payload(chat: { "right" => 0, "bottom" => 0 }))
 
     assert_names result, /declares :raised but the chat tab is flush/
   end
 
   def test_a_surface_declared_raised_that_clears_its_tab_bar_passes
-    assert_empty check(:check_chat_corner, "playlist.brgen.no", payload(chat: { "right" => 0, "bottom" => 60 })).failures
+    assert_empty check(:check_chat_corner, "radio.brgen.no", payload(chat: { "right" => 0, "bottom" => 60 })).failures
   end
 
   def test_a_surface_declared_absent_that_renders_a_widget_fails

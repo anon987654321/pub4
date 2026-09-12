@@ -117,7 +117,7 @@ class RecentFeaturesIntegrationTest < ActionDispatch::IntegrationTest
   end
 
   test "listening party can be started on a set" do
-    host! "playlist.brgen.no"
+    host! "radio.brgen.no"
     user = User.create!(
       email_address: "dj@brgen.no",
       password: "password123",

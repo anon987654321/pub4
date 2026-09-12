@@ -57,7 +57,7 @@ choose. Numbers are for citation, not for order.
 10. **`long_form.als.rb`** [cheap] — twenty minutes rather than three. The pad
     set is already the shape; only `TOTAL` and the swell period stand in the way,
     and a set you can leave running is a different use than a set you audition.
-11. **`radio.als.rb`** [deep] — never ends. `live/broadcast.sh` rotates four
+11. **`playlist.als.rb`** [deep] — never ends. `live/broadcast.sh` rotates four
     processes with hard cuts between them; a set that crossfades its own
     successor is the thing that was actually wanted.
 12. **`field.als.rb`** [yours] — a bed that is a place rather than a record.
@@ -233,7 +233,7 @@ choose. Numbers are for citation, not for order.
     A set should end on a bar.
 69. **A visible transport** [cheap] — bar number, section, next change. The banner
     prints once and then ninety-six seconds pass in silence.
-70. **The rig on the box** [yours] — `playlist.brgen.no` is the label. A set
+70. **The rig on the box** [yours] — `radio.brgen.no` is the label. A set
     rendering nightly on vm23 into the catalogue is a different project than a set
     played on a laptop, and the capacity ceiling there is real.
 
@@ -264,7 +264,7 @@ choose. Numbers are for citation, not for order.
     and lies about speech over music, which matters for 7.
 80. **A sleeve** [yours] — `STUDIO/postpro` grades images and `repligen` generates
     them. A catalogue with covers is a release.
-81. **Publish the tracklist** [yours] — `playlist.brgen.no` exists and is empty of
+81. **Publish the tracklist** [yours] — `radio.brgen.no` exists and is empty of
     this.
 82. **Delete nothing automatically** [cheap] — the scratchpad sweeps audio, and a
     long render that lands there is gone. Renders must be written outside it and

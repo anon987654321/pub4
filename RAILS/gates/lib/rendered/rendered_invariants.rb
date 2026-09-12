@@ -39,7 +39,7 @@ module Deploy
     # quiet the way it did when this list still called both storefronts dark.
     SURFACES = [
       { host: "brgen.no", theme: :dark },
-      { host: "playlist.brgen.no", theme: :dark },
+      { host: "radio.brgen.no", theme: :dark },
       { host: "markedsplass.brgen.no", theme: :light },
       { host: "takeaway.brgen.no", theme: :light },
       { host: "dating.brgen.no", theme: :dark },
@@ -58,7 +58,7 @@ module Deploy
       # Lifted clear of the transport bar, whose height it reads from
       # --tab-bar-h. Sitting flush would put it under a bar that intercepts the
       # click.
-      "playlist.brgen.no" => :raised,
+      "radio.brgen.no" => :raised,
       # Same mechanism, same reason: both storefronts set bottom: var(--tab-bar-h)
       # and clear their tab bar by its own declared height (44px here, 60px on
       # playlist). Measured rather than assumed — at rest the bar is translated

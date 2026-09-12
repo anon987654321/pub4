@@ -65,7 +65,7 @@ Full aliases and GitHub keys: `OPENBSD/SSH_ACCESS.md`. Network table:
 | brgen | `https://brgen.no` |
 | brgen · marketplace | `https://markedsplass.brgen.no` |
 | brgen · dating | `https://dating.brgen.no` |
-| brgen · playlist | `https://playlist.brgen.no` |
+| brgen · playlist | `https://radio.brgen.no` |
 | brgen · takeaway | `https://takeaway.brgen.no` |
 | brgen · tv | `https://tv.brgen.no` |
 | brgen · messenger | `https://messenger.brgen.no` |

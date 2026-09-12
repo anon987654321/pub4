@@ -96,7 +96,7 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     # markedsplass, not marketplace: the subdomain is per-city and Norwegian on
     # a .no city, which is the whole reason the bar's label for it is a locale
     # question rather than a string. helper_test pins the host itself.
-    %w[playlist markedsplass takeaway messenger maps tv].each do |host|
+    %w[radio markedsplass takeaway messenger maps tv].each do |host|
       assert_match(%r{class="nav_link[^"]*"[^>]*href="//#{host}\.brgen\.no/"}, response.body,
                    "#{host} should be reachable from the nav swiper")
     end

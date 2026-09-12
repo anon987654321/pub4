@@ -40,7 +40,7 @@ Rails.application.routes.draw do
 
   TV_SUBDOMAINS = Brgen::DomainRegistry::TV_SUBDOMAINS
   DATING_SUBDOMAINS = Brgen::DomainRegistry::DATING_SUBDOMAINS
-  PLAYLIST_SUBDOMAINS = Brgen::DomainRegistry::PLAYLIST_SUBDOMAINS
+  RADIO_SUBDOMAINS = Brgen::DomainRegistry::RADIO_SUBDOMAINS
   TAKEAWAY_SUBDOMAINS = Brgen::DomainRegistry::TAKEAWAY_SUBDOMAINS
   MARKETPLACE_SUBDOMAINS = Brgen::DomainRegistry::MARKETPLACE_SUBDOMAINS
   MAPS_SUBDOMAINS = Brgen::DomainRegistry::MAPS_SUBDOMAINS
@@ -205,7 +205,7 @@ get "i/:token" => "invites#show", as: :invite
   # playlist vertical extracted to engines/playlist (mountable engine). Top-level mount with
   # constraints: keyword — NOT a constraints(subdomain:) block, which would drop the
   # playlist.* mounted helper. See brgen/ENGINES.md.
-  mount Playlist::Engine, at: "/", as: "playlist", constraints: { subdomain: PLAYLIST_SUBDOMAINS }
+  mount Playlist::Engine, at: "/", as: "playlist", constraints: { subdomain: RADIO_SUBDOMAINS }
 
   # takeaway vertical extracted to engines/takeaway (mountable engine). Top-level mount with
   # constraints: keyword — NOT a constraints(subdomain:) block, which would drop the

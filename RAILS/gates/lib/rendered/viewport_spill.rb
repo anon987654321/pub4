@@ -32,7 +32,7 @@ module Deploy
       { app: "brgen", host: "dating.brgen.no", paths: %w[/] },
       { app: "brgen", host: "tv.brgen.no", paths: %w[/ /feed /channels] },
       { app: "brgen", host: "takeaway.brgen.no", paths: %w[/] },
-      { app: "brgen", host: "playlist.brgen.no", paths: %w[/] },
+      { app: "brgen", host: "radio.brgen.no", paths: %w[/] },
       { app: "brgen", host: "maps.brgen.no", paths: %w[/] },
       { app: "brgen", host: "messenger.brgen.no", paths: %w[/] },
       { app: "amber", host: "amber.brgen.no", paths: %w[/ /items] },

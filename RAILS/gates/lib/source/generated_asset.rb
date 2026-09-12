@@ -182,7 +182,7 @@ module Deploy
     # its service worker at all. Workbox froze ~89 fingerprinted asset URLs in
     # a precache manifest; every deploy re-digests those assets, so `install`
     # started failing with bad-precaching-response and the PWA broke on
-    # playlist.brgen.no. brgen replaced the bundle with a hand-rolled worker
+    # radio.brgen.no. brgen replaced the bundle with a hand-rolled worker
     # that precaches only /offline. Telling that app to "run npm run build:pwa"
     # is telling it to reintroduce the outage — and the freshness comparison is
     # meaningless for a file no generator writes.

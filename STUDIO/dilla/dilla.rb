@@ -728,7 +728,7 @@ INLINE_SONIC_PROFILES = {
   },
 }.freeze
 
-# playlist.brgen.no study output — inlined so stream mode works without sidecar YAML.
+# radio.brgen.no study output — inlined so stream mode works without sidecar YAML.
 INLINE_RADIO_BERGEN_LEARNINGS = {
   "stream_rotation_weights" => {
     "maj7_minor_cycle" => 14, "neo_soul" => 10, "neo_soul_pocket" => 9, "electronium_loop" => 8,
@@ -3357,7 +3357,7 @@ RADIO_BERGEN_SONIC_PATH = File.expand_path("reference_sonic.yml", ROOT).freeze
 RADIO_BERGEN_MANIFEST_PATH =
   File.expand_path("../../RAILS/brgen/config/radio_bergen/tracks.yml", ROOT).freeze
 
-# Study playlist.brgen.no manifest → sonic learnings (also: ruby dilla.rb radio-bergen-study).
+# Study radio.brgen.no manifest → sonic learnings (also: ruby dilla.rb radio-bergen-study).
 module RadioBergenStudy
   AUDIO_ROOT = File.expand_path("../audio", ROOT).freeze
 
@@ -3475,7 +3475,7 @@ module RadioBergenStudy
 
     {
       "meta" => {
-        "source" => "playlist.brgen.no", "manifest" => RADIO_BERGEN_MANIFEST_PATH,
+        "source" => "radio.brgen.no", "manifest" => RADIO_BERGEN_MANIFEST_PATH,
         "studied_at" => Time.now.utc.iso8601, "track_count" => studied.length,
         "local_count" => studied.count { |r| r[:source] == "local_mp3" },
         "youtube_count" => studied.count { |r| r[:source] == "youtube_reference" },
@@ -20821,7 +20821,7 @@ def stream(bars_count = STREAM_BARS_COUNT)
         ENV["TRACK"] = track
         sync_progression_to_track!(track)
         stream_rotate_drums!(idx)
-        stream_track_banner("← playlist.brgen.no")
+        stream_track_banner("← radio.brgen.no")
       else
         stream_track_banner
       end
@@ -28316,7 +28316,7 @@ def help
       SPEAK_VOICE=en-US-AndrewNeural   Funny-clear voice (GuyNeural also works)
       SPEAK_RATE=-48%                  Slower speech (default in stream)
       SPEAK=0                          Beat only — skip speech overlay
-      RADIO_BERGEN=0 (stream default)  Set 1 to bias TRACK from playlist.brgen.no
+      RADIO_BERGEN=0 (stream default)  Set 1 to bias TRACK from radio.brgen.no
       radio-bergen-study [--audio-root PATH]  Refresh learnings YAML from manifest
       radio-bergen-analyze [--audio-root PATH]  Per-track dossiers (drums/texture/harmony)
       radio-bergen-librosa            Librosa deep analysis (optional .venv)
@@ -28358,7 +28358,7 @@ def help
                                    Saves project/learnings/last_learn.json; --apply sets ENV
       learn-apply                  Re-apply hints from last learn report
       learn-playlist [--all] [--limit N] [--force] [--no-deep] [--no-resume]
-                                   Batch playlist.brgen.no (YouTube + local MP3) → demucs → analysis
+                                   Batch radio.brgen.no (YouTube + local MP3) → demucs → analysis
       learn-playlist-agent [--foreground]  Background/resume agent → catalog + promote + calibrate
       learn-promote                  Merge catalog copyable_dna → learned_engine.json (runtime)
       learn-calibrate [--audio-root] Measured dossiers → global BPM/swing calibration
@@ -33626,7 +33626,7 @@ def learn_playlist_row!(row, deep: true, force: false)
 
   aff = RadioBergenStudy.affinity_for(row[:artist])
   dossier = RadioBergenStudy.dossier_for(slug)
-  meta = { id: slug, artist: row[:artist], title: row[:title], source: "playlist.brgen.no",
+  meta = { id: slug, artist: row[:artist], title: row[:title], source: "radio.brgen.no",
            affinity: aff, dossier: }
 
   if row[:source] == "local_mp3"
@@ -33667,7 +33667,7 @@ end
 
 def learn_register_texture_stems!(stem_dir, slug, bpm: nil)
   return unless stem_dir && File.directory?(stem_dir)
-  stems_register("learn_#{slug}", stem_dir, bpm:, source: "playlist.brgen.no/#{slug}")
+  stems_register("learn_#{slug}", stem_dir, bpm:, source: "radio.brgen.no/#{slug}")
 rescue StandardError => e
   warn "stem register: #{e.message}"
 end

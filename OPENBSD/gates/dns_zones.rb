@@ -203,7 +203,7 @@ module Deploy
     # that got no usable response, so a dropped packet is indistinguishable from
     # a missing record at this API. That fix held for one run and then blocked
     # again on three names — takeaway.brgen.no, takeaway.oshlo.no,
-    # playlist.trndheim.no — all three of which `dig` answered immediately.
+    # radio.trndheim.no — all three of which `dig` answered immediately.
     #
     # So retry both, and only believe the answer after RETRIES agree. A genuine
     # NXDOMAIN is still NXDOMAIN three times and still fails the gate, which is

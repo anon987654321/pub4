@@ -638,7 +638,7 @@ pages:
 - id: brgen/playlist/hosted_tracks/edit
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/hosted_tracks/edit.html.erb
-  host: playlist.brgen.no
+  host: radio.brgen.no
   path: "/hosted_tracks/:id/edit"
   action: edit
   persona: auth
@@ -646,7 +646,7 @@ pages:
 - id: brgen/playlist/hosted_tracks/index
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/hosted_tracks/index.html.erb
-  host: playlist.brgen.no
+  host: radio.brgen.no
   path: "/hosted_tracks"
   action: index
   persona: guest
@@ -654,7 +654,7 @@ pages:
 - id: brgen/playlist/hosted_tracks/new
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/hosted_tracks/new.html.erb
-  host: playlist.brgen.no
+  host: radio.brgen.no
   path: "/hosted_tracks/new"
   action: new
   persona: auth
@@ -662,7 +662,7 @@ pages:
 - id: brgen/playlist/hosted_tracks/show
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/hosted_tracks/show.html.erb
-  host: playlist.brgen.no
+  host: radio.brgen.no
   path: "/hosted_tracks/:id"
   action: show
   persona: guest
@@ -670,7 +670,7 @@ pages:
 - id: brgen/playlist/listening_parties/show
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/listening_parties/show.html.erb
-  host: playlist.brgen.no
+  host: radio.brgen.no
   path: "/sets/:set_id/listening_party"
   action: show
   persona: guest
@@ -678,7 +678,7 @@ pages:
 - id: brgen/playlist/playlists/edit
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/playlists/edit.html.erb
-  host: playlist.brgen.no
+  host: radio.brgen.no
   path: "/playlists/:id/edit"
   action: edit
   persona: auth
@@ -686,7 +686,7 @@ pages:
 - id: brgen/playlist/playlists/embed
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/playlists/embed.html.erb
-  host: playlist.brgen.no
+  host: radio.brgen.no
   path: "/playlists/:id/embed"
   action: embed
   persona: guest
@@ -694,7 +694,7 @@ pages:
 - id: brgen/playlist/playlists/index
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/playlists/index.html.erb
-  host: playlist.brgen.no
+  host: radio.brgen.no
   path: "/"
   action: index
   persona: guest
@@ -702,7 +702,7 @@ pages:
 - id: brgen/playlist/playlists/new
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/playlists/new.html.erb
-  host: playlist.brgen.no
+  host: radio.brgen.no
   path: "/playlists/new"
   action: new
   persona: auth
@@ -710,7 +710,7 @@ pages:
 - id: brgen/playlist/playlists/show
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/playlists/show.html.erb
-  host: playlist.brgen.no
+  host: radio.brgen.no
   path: "/playlists/:id"
   action: show
   persona: guest
@@ -718,7 +718,7 @@ pages:
 - id: brgen/playlist/sets/edit
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/sets/edit.html.erb
-  host: playlist.brgen.no
+  host: radio.brgen.no
   path: "/sets/:id/edit"
   action: edit
   persona: auth
@@ -726,7 +726,7 @@ pages:
 - id: brgen/playlist/sets/index
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/sets/index.html.erb
-  host: playlist.brgen.no
+  host: radio.brgen.no
   path: "/sets"
   action: index
   persona: guest
@@ -734,7 +734,7 @@ pages:
 - id: brgen/playlist/sets/new
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/sets/new.html.erb
-  host: playlist.brgen.no
+  host: radio.brgen.no
   path: "/sets/new"
   action: new
   persona: auth
@@ -742,7 +742,7 @@ pages:
 - id: brgen/playlist/sets/show
   app: brgen
   view: RAILS/brgen/engines/playlist/app/views/playlist/sets/show.html.erb
-  host: playlist.brgen.no
+  host: radio.brgen.no
   path: "/sets/:id"
   action: show
   persona: guest

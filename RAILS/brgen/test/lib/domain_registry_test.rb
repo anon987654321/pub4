@@ -72,7 +72,7 @@ class DomainRegistryTest < ActiveSupport::TestCase
   test "subdomain constants match routes constraints" do
     assert_equal %w[tv], Brgen::DomainRegistry::TV_SUBDOMAINS
     assert_equal %w[dating], Brgen::DomainRegistry::DATING_SUBDOMAINS
-    assert_includes Brgen::DomainRegistry::PLAYLIST_SUBDOMAINS, "playlist"
+    assert_equal %w[radio], Brgen::DomainRegistry::RADIO_SUBDOMAINS
     assert_includes Brgen::DomainRegistry::MARKETPLACE_SUBDOMAINS, "markedsplass"
   end
 

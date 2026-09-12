@@ -27,7 +27,7 @@ class PlaylistVisibilityTest < ActionDispatch::IntegrationTest
 
   test "a private playlist is members-only, not a 404" do
     sign_in_as(@stranger)
-    host! "playlist.brgen.no"
+    host! "radio.brgen.no"
 
     get playlist.playlist_path(@playlist)
     assert_response :forbidden
@@ -36,7 +36,7 @@ class PlaylistVisibilityTest < ActionDispatch::IntegrationTest
 
   test "the owner still sees a private playlist" do
     sign_in_as(@owner)
-    host! "playlist.brgen.no"
+    host! "radio.brgen.no"
 
     get playlist.playlist_path(@playlist)
     assert_response :success

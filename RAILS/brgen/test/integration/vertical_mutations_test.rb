@@ -164,7 +164,7 @@ class VerticalMutationsTest < ActionDispatch::IntegrationTest
     dj = make_user("dj_import")
     pl = Playlist::Playlist.create!(name: "Import test", user: dj)
 
-    host! "playlist.brgen.no"
+    host! "radio.brgen.no"
     sign_in_with_session_cookie!(dj)
 
     assert_difference -> { Playlist::Track.count }, 1 do
