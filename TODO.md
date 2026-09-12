@@ -25,6 +25,74 @@ before the finding.
 An item leaves this file when a check proves it, not when it stops being
 mentioned.
 
+**645 of these items were verified against the tree on 2026-09-12, and 297 of
+them were not work.** 255 ALREADY BUILT, 42 FALSE, 337 real, 12 needing vm23,
+3 fenced by the intake's own preface. **Forty-six percent evaporated on contact
+with the code.**
+
+Six read-only passes covered: both performance intakes, both halves of
+"ChatGPT proposed forward work", "pub4 subtraction and entropy", the layout
+and typography passes, and the first 81 of the refinement inventory.
+
+**Where the intake is most wrong, by density of already-built:** the shared
+design system (214–233), Brgen (238–256), marketplace (258–295), security and
+privacy (352–373), cross-tree governance (438–468). Whole ranges of it
+describe a tree that already exists.
+
+**Where it is most right:** browser coverage of the Turbo, modal and focus
+lifecycle (195–207), messenger resilience under reconnect and long threads
+(300–320), OpenBSD ownership, unveil and stale-resource audits (382–397), and
+CI workflow integrity (431–437).
+
+**And one distinction that changes what the real items cost.** The intake
+repeatedly asks for a *gate* over something the tree already has as a
+*mechanism* — confirmations, loading states, CSRF tokens, empty states all
+exist and are unwatched. Those are honestly REAL, but the work is a detector,
+not a feature, and that is a much smaller day than the wording suggests.
+
+**What the already-built ones have in common is that the tree does not spell
+them the way the intake does.** The RAILS database work is `QueryBudgetTest`,
+`Bullet.raise`, `strict_loading_by_default`, `counter_cache` and
+`CurrentAttributes` — none of which contain the word performance. MASTER's is
+Zeitwerk autoloading, `Gemfile` `require: false`, `language_for`,
+`reader_singularity`, `CodeIndex#incremental_build`, `dup_census`,
+`code_reach`, `method_graph`. A grep for the proposal's own vocabulary reports
+every one of them open.
+
+**Two warnings for whoever reads a verdict table below.**
+
+A verifier is an instrument and fails the same way its subject does. One pass
+reported `MASTER_SCAN_ONLY` as set by nobody, having searched only `MASTER/`;
+four callers set it, in `RAILS/` and `OPENBSD/`. Another was asked for the
+deletion list and came back with its four strongest "the intake is wrong"
+calls *and* eight findings it was not confident about, including its own best
+deletion candidate — three gems it could find no caller for, declared in two
+Gemfiles, which it flagged as looking exactly like the `context_provider`
+census that was wrong forty times out of forty. **Read the not-confident list
+before acting on the confident one.**
+
+And a FALSE verdict is worth more than a REAL one here. The fifteen false
+items in the RAILS performance table name duplicated initializers that are
+not duplicated, `eager_load_paths` that are commented out, and `.preload(`
+call sites that number zero — each one a morning spent proving a negative.
+
+
+**The layout pass measured its own subject, and the number is the one this
+repo already knew.** Of 73 items: 15 false outright, and 12 more where the
+finding is right and the file, line or figure is wrong — a legal padding
+quoted as one thing and written as another, a tracking value already paired,
+a scale counted as 9 steps when the ladder has 8. **37% defective**, against
+the 596-of-981 this repo measured on its last design backlog. Treat every
+citation in a layout item as a hypothesis about a line number too.
+
+**And a large part of that section is not ours at all.** The pass separated
+out everything that moves a rendered value — mailer type scale and tracking,
+the pen shadow, playlist's 720px, the marketplace hero clamp, which token is
+H1 on five surfaces, the dating gradient, paragraph leading, and the whole of
+blocks 29–55, 65–74, 97–123, 139–169 and 202–221, which are about how a
+surface *looks* rather than which token it applies. Those are the operator's,
+and an agent sweeping them would be redesigning the product by grep.
+
 **This file's own dominant defect is the duplicate, not the stale entry.**
 Fifty-one subjects are named in four or more different top-level sections —
 `apps.yml` in ten, `rules.yml` in eight, `dilla.rb` and `/health` in seven,
