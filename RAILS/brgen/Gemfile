@@ -48,7 +48,13 @@ gem "ruby_llm"
 gem "faker", require: false
 
 group :development, :test do
-  gem "ferrum"
+  # require: false, like faker above. Bundler.require loads every gem in the
+  # groups it is given, so ferrum was constructed into every development and
+  # test boot -- a browser driver, for a tree whose two callers already ask
+  # for it themselves: RAILS/tools/crawl_browser.rb:88 and
+  # shared/app/services/shared/scrape.rb:8 both `require "ferrum"` in the
+  # method that needs it.
+  gem "ferrum", require: false
   gem "minitest", "~> 5.25"
 
   gem "brakeman"
