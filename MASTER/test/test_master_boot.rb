@@ -17,7 +17,6 @@ class MasterBootTest < Minitest::Test
 
   def test_master_data_load_yaml_reads_rules
     path = Master.data_path("rules.yml")
-    skip "rules.yml missing" unless File.file?(path)
 
     body = Master.load_yaml(path)
     assert body.is_a?(Hash)

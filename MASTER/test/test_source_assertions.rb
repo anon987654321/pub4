@@ -24,9 +24,14 @@ require_relative "test_helper"
 # was two additions the pattern could not tell from the thing it hunts, which is
 # the argument for the marker rather than for a wider regex: `body` catches a
 # parsed SKILL.md body as readily as a file's text.
+# 222 -> 221: test_design_rules_worn_type asserted that rules.yml contains the
+# string "Design::Thresholds.micro_typography". The six assertions above it call
+# that reader and check what it returns, which is what having a reader means; the
+# seventh passed when the method was deleted and the comment stayed, and would
+# have failed on a rename that broke nothing.
 class TestSourceAssertions < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  BASELINE = 222
+  BASELINE = 221
 
   # An assertion whose subject is the text of a file rather than a value the
   # code produced. `source`, `src` and `body` are this repo's names for that

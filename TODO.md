@@ -5079,12 +5079,20 @@ Numbered 1–N across the four trees.
 120. **`test_tool_registry_elevation.rb` allocate.** `:12`.
 121. **`spec/web/visual_governor_spec.rb` greps source for `let maxFps = 24`.** Drive the function if exported, or keep as a marked manifest test.
 122. **`test_web_ui.rb` asserts `File.read(visual_bridge.js)` includes `phantom:detected`.** Assert the method/event fires.
-123. **`test_design_rules_worn_type.rb` reads `rules.yml` text.** Call `Design::Thresholds.worn_profile`.
+123. **Fixed 2026-09-12.** It already called `Thresholds.worn_profile`; what was left
+     was a seventh assertion that `rules.yml` *contains the string*
+     "Design::Thresholds.micro_typography". The six above it call that reader and
+     check what it returns, which is what having a reader means — the seventh passed
+     if the method were deleted and the comment stayed, and failed on a rename that
+     broke nothing. Removed, and `TestSourceAssertions::BASELINE` lowered 222 -> 221
+     so the gain cannot be handed back silently; that test demanded it.
 124. **`test_edge_case_stub_generator.rb` asserts generated tests contain `skip`.** Generate real stubs or delete the generator.
 125. **`spec/core_smoke.rb` is not `*_spec.rb`.** `rake spec` does not run it; `rake core_smoke` does. Rename.
 126. **Three homes for face tests.** `web/test/`, `test/test_web_*.rb`, `spec/web/`. Pick two.
 127. **`web/test/locale_contract_test.rb` vs `RAILS/test/locale_contract_test.rb`.** Extract one helper.
-128. **`test_master_boot.rb` skips if `rules.yml` missing.** In this repo that skip can never fire usefully. Remove; let it fail.
+128. **Fixed 2026-09-12.** Removed. `rules.yml` is tracked and `paths.immutable`, so
+     the skip could never fire in this repo; if it ever could, the boot test should
+     say so rather than pass.
 129. **`test_style_guides.rb` skips unless `OPERATOR` checked out.** OPERATOR is not a tree. Dead skip or wrong path.
 130. **`test_io_key_rotator.rb` skips unless two key vars.** Fixture ENV so empty/single-key branches run.
 131. **FakeConfig `send(k) rescue nil`.** `test_agent.rb:12`. Swallows everything. Stop.
@@ -5100,7 +5108,8 @@ Numbered 1–N across the four trees.
 134. **`offline_memory.js` not in the manifest.** `sw.js:78` says drain lives there; the contract test only asserts the file exists.
 135. **`swarm.html` / `diag.html`.** Extra HTML, `lang="en"`, scanline overlay against FLAT_UI. Route behind auth or delete.
 136. **`index.html.erb` `<title>brgen</title>`.** `:17` hardcoded. `t("face.title")` in nb/en.
-137. **`en.yml` `hello: "Hello world"`.** Unused scaffold. Delete.
+137. **Already done — verified 2026-09-12.** No `hello:` key and no "Hello world"
+     string anywhere under RAILS or MASTER.
 138. **I18N_COVERAGE already flags `index.html.erb:17` and `:348`.** Fix with keys.
 139. **`BLANK_LINE_RUN` on `index.html.erb:1`.** One blank-line fix.
 140. **Face copy still English-first in JS.** `config/application.rb:70` is nb. Audit primer inline script against locale keys (`primer_title`).
@@ -6009,6 +6018,16 @@ Numbered 1–N across the four trees.
      bus topics (`council:speech`, `chat:append`, `input:focus`, `runtime:event`),
      so the check needs a named allowlist, and an allowlist nobody curates becomes
      the place dead names hide.
+
+1067. **Four tests in `test_agent.rb` were skipped as "drifted", and were dead.**
+     Removed 2026-09-12. They exercised `tool_capable?` and `cache_key_for`, and
+     neither method exists anywhere in `lib/` or `core/` — nor did the behaviour
+     move: there is no `supports_tools`, no `cache_key`, nothing. So they were not
+     drifted pending a port, they asserted against an API that had been deleted,
+     while reading as coverage from every angle except the one that counts. Five
+     live tests remain in that file. MASTER's skips went 11 -> 6; of what is left,
+     `test_cli_boot_e2e` and `test_self_scan` are deliberately env-gated, which is
+     a different thing from a skip nobody can lift.
 
 1060. **`vps_weekly_integrity.sh` has never run.** `etc/crontab.vm23:97` schedules it
      `30 3 * * 0`. Read from vm23 on 2026-09-12, root's live crontab does not carry
