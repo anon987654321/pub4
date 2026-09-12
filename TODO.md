@@ -5936,6 +5936,36 @@ Numbered 1–N across the four trees.
      need the two elements' default display values, which have no rule anywhere in
      the tree and sit behind the same login. Left deliberately.
 
+1064. **radio.<city> is live on vm23 — deployed 2026-09-12.** DNS, certificate and
+     relayd landed together, because DNS alone would have made radio.<city> resolve
+     to a box holding no certificate for it, which a browser reports as an attack.
+     Order: 44 zone files copied and `nsd-resign --force` re-signed and reloaded all
+     57 with the existing keys (no KSK touched, DS unchanged, NOERROR through a
+     validating resolver); `acme-client.conf` installed and `renew-certs.sh`
+     reissued 7 of 9 held certificates, so `brgen.no` now carries
+     `DNS:radio.brgen.no` and no longer carries playlist; relayd restarted once by
+     that script. Verified: `https://radio.brgen.no/up` answers 200,
+     `playlist.brgen.no` resolves nowhere, and `health_check --public-only
+     --all-ready-apps` reports bsdports.org as its only failure, which is the
+     registrar parking already recorded.
+     The zone directory was backed up to
+     `/var/backups/pub4/nsd-zones-pre-radio-*.tar.gz` first, and relayd.conf and
+     acme-client.conf to the same directory.
+
+1065. **trymbot is off vm23 — done 2026-09-12.** The repo retired it on 2026-08-28
+     (`spine.yml` 148 -> 145) and production ran it for two more weeks:
+     `/etc/relayd.conf` held a `tls keypair` line and a Host match to `<master>`,
+     and `/etc/ssl` held `trymbot.brgen.no.{crt,key}` symlinks plus a
+     `brgen.no.fullchain.pem.bak-trymbot`. All removed. It had no DNS record and no
+     acme SAN, so it had already stopped resolving.
+     This is the case `relayd.conf repo-vs-live divergence` warns about, in its
+     sharpest form: the repo was MISSING two lines the box was running, so
+     installing the repo copy wholesale would have deleted a live host. The two
+     files are byte-identical now, and both dropped off `config_drift --remote`.
+     Two mentions stay in `spine.yml` and `dup_census.yml`; they are ratchet-fall
+     justifications, and deleting them would break the rule that a fall records
+     what paid for it.
+
 1060. **`vps_weekly_integrity.sh` has never run.** `etc/crontab.vm23:97` schedules it
      `30 3 * * 0`. Read from vm23 on 2026-09-12, root's live crontab does not carry
      that line and `/usr/local/bin/vps_weekly_integrity.sh` does not exist — this is
