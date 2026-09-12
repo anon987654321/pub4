@@ -106,6 +106,10 @@ print share an emulsion. And the finishing pass now stands down for any chain
 that grains itself, which is 57 of the 61 presets; two passes add in quadrature,
 and a stock quoted at six levels was arriving at eight and a half.
 
+Random chains ask for a third to two thirds of a stock's granularity rather than
+all of it, which is where the grain of a print sits rather than the grain of a
+negative seen at 1:1.
+
 ### Halation is a ring
 
 Light that gets through the emulsion reflects off the rear face of the base and
@@ -116,6 +120,37 @@ is, the one place it cannot land. Differencing them gives the ring, and the
 narrow lobe stays on as the scatter that never left the emulsion. Per-channel
 radii still model wavelength-dependent penetration, red furthest, which is why
 `cinestill_800t` blooms red and why halation is the point of that stock.
+
+### Light, and depth
+
+A grade cannot move a shadow to the other side of a nose. It can move the light
+that made the shadow, and until now this file could not do even that.
+
+`relight` splits the picture into illumination and reflectance — a heavy blur of
+the luminance is the light, and what is left over is the surface — then puts the
+light back differently and leaves the surface exactly alone. The correction
+rides as a ratio on all three channels, so texture, grain and hue survive it
+untouched; only the modelling moves. Measured on a portrait at full strength it
+deepens low-frequency contrast by twenty-one percent and moves texture by one.
+That is a power window done by arithmetic, and it is the whole of what
+relighting can honestly mean inside a grade. `shape` above one deepens the
+falloff the light already made, which is depth with no new contrast anywhere.
+`azimuth` swings the key around the frame. The ratio is bounded, because an
+unbounded division by a blurred luminance will find a black background and
+multiply it by four hundred.
+
+`aerial_depth` is the oldest depth cue in painting. Distance costs contrast,
+costs saturation and cools, because what sits between you and the far thing is
+air full of scattered skylight. Every other depth cue here is optical — defocus,
+vignette, tilt — and optics is where the amateur version lives, because a
+blurred background reads as a filter while haze reads as a room. What is near is
+what is sharp, so local high-frequency energy stands in for proximity. It is a
+proxy and it is named as one: it will read a sharp cloud as near. The mask is
+cubed before use, because straight off the acutance it covers half the frame at
+a mean of 0.57 and that is a global wash wearing a depth cue as a name; cubed it
+sits at 0.32 and lives where the detail is not. Over the sharpest fifth of a
+portrait it reads zero either way, so the face was never at risk — what the
+curve buys is the middle distance.
 
 ### The tone scale
 
@@ -156,13 +191,24 @@ at the position those presets on average give it. The graph is dense enough to
 carry it, so the constraint buys coherence without costing variety.
 
 Three rules do the rest, and they are the difference between a grade and a
-stack. One or two steps carry the look, between 0.55 and 0.95, and everything
-else sits under 0.28 — nine effects at half strength each is mud, and it is the
-clearest tell of an amateur pass. Damage never leads: dust and hair at 0.94 is
-the artefact becoming the picture, and no more than two marks of wear appear at
-all, because two is a print that has been handled and five is a prop. Neither
-does the backbone lead — most presets carry optical blur, so leading with it is
-not a look, it is an out-of-focus photograph.
+stack. One or two steps carry the look, between 0.38 and 0.66, and everything
+else sits under 0.16 — nine effects at half strength each is mud, and it is the
+clearest tell of an amateur pass. Those numbers came down: a lead at 0.95
+announces itself, and the honest reading of subtlety is that a viewer should not
+be able to name the effect. Depth is not loudness.
+
+The wear shelf — dust, scanner noise, tape dropouts, fogged fixer, gate weave —
+is off entirely unless `--rough` asks for it. It may never lead, because dust at
+0.94 is the artefact becoming the picture, but the deeper problem is that it is
+loud by construction and reads as an effect where the rest of this file is
+trying to read as a photograph. With `--rough` it comes back capped at two
+marks, because two is a print that has been handled and five is a prop. The
+backbone never leads either — most presets carry optical blur, so leading with
+it is not a look, it is an out-of-focus photograph.
+
+Every chain shapes the light. One of `relight` or `aerial_depth` runs in every
+picture and it is one of the leads, because a chain that leaves the light alone
+is a chain about texture, and texture is the shallow half of a photograph.
 
 Then one step is allowed to disagree with the family, quietly, because a chain
 that is only coherent is a template and the interest is in the one thing that
@@ -280,6 +326,7 @@ instead of hardcoding the file location.
 ```sh
 ruby STUDIO/postpro/postpro.rb --input in.jpg --output out.jpg --preset portrait
 ruby STUDIO/postpro/postpro.rb --random              # three to five chains, into Downloads
+ruby STUDIO/postpro/postpro.rb --random --rough      # the same, with the wear shelf in
 ruby STUDIO/postpro/postpro.rb --vocab-check         # are the tables consistent?
 ruby STUDIO/postpro/postpro.rb --fit-grain scan.tif  # what grain does this scan carry?
 ruby STUDIO/postpro/postpro.rb --list-presets        # every preset and its chain

@@ -381,9 +381,10 @@ class TestPostproFilm < Minitest::Test
   # a chain stays inside one family without anyone declaring the families.
   def test_every_step_co_occurs_with_every_other_in_some_preset
     40.times do |seed|
-      names = random_chain(Random.new(seed)).map(&:first) - [RANDOM_ALWAYS]
-      # The wildcard is the one step allowed to disagree, so drop the worst
-      # offender before judging the rest.
+      names = random_chain(Random.new(seed)).map(&:first) - [RANDOM_ALWAYS] - RANDOM_SHAPES
+      # The wildcard is the one drawn step allowed to disagree, so drop the worst
+      # offender before judging the rest. The shape step is out already: it is
+      # appended rather than drawn, because every photograph has light in it.
       stranger = names.max_by { |fx| (names - [fx]).count { |other| random_affinity[[fx, other].sort].zero? } }
       (names - [stranger]).combination(2) do |a, b|
         next if a == b
@@ -421,10 +422,10 @@ class TestPostproFilm < Minitest::Test
   def test_damage_never_leads_and_never_piles_up
     40.times do |seed|
       chain = random_chain(Random.new(seed))
-      assert_empty leads_of(chain) & RANDOM_NEVER_LEADS, "damage is leading: #{random_chain_name(chain)}"
+      assert_empty leads_of(chain) & RANDOM_WEAR, "damage is leading: #{random_chain_name(chain)}"
       assert_empty leads_of(chain) & random_common_spine, "the backbone is leading: #{random_chain_name(chain)}"
-      marks = chain.map(&:first) & RANDOM_NEVER_LEADS
-      assert_operator marks.length, :<=, RANDOM_ARTEFACT_CEILING, "#{marks.length} marks: #{marks.inspect}"
+      marks = chain.map(&:first) & RANDOM_WEAR
+      assert_operator marks.length, :<=, RANDOM_WEAR_CEILING, "#{marks.length} marks: #{marks.inspect}"
     end
   end
 
@@ -437,6 +438,69 @@ class TestPostproFilm < Minitest::Test
     assert_operator pairs.max, :<=, 0.5, "two chains out of one run are near neighbours"
     stocks = drawn.map { |chain| chain.last.last["stock"] }
     assert_equal stocks.uniq.length, stocks.length, "a run reused a stock: #{stocks.inspect}"
+  end
+
+  # --- light and depth ----------------------------------------------------
+
+  def portrait_probe
+    path = File.join(Studio::ROOT, "lora", "ragnhild", "dataset", "a_photo_of_ragnhild_01.jpg")
+    File.file?(path) ? rgb_bands(Vips::Image.new_from_file(path)) : build_probe
+  end
+
+  def low_frequency(image) = image.colourspace("b-w").cast("float").gaussblur(24.0).deviate
+  def high_frequency(image)
+    luma = image.colourspace("b-w").cast("float")
+    (luma - luma.gaussblur(1.0)).deviate
+  end
+
+  # The whole claim of relighting as a grade: the modelling moves and the surface
+  # does not, because the correction rides as a ratio on all three channels.
+  def test_relight_moves_the_light_and_leaves_the_surface
+    source = portrait_probe
+    lit = relight(source, 0.8, shape: 1.6)
+    assert_operator low_frequency(lit), :>, low_frequency(source) * 1.05,
+                    "relight did not deepen the modelling"
+    assert_in_delta high_frequency(source), high_frequency(lit), high_frequency(source) * 0.08,
+                    "relight moved the texture, which is the one thing it must not"
+  end
+
+  def test_relight_swings_the_key_with_azimuth
+    source = portrait_probe
+    left = relight(source, 0.9, azimuth: 180.0).colourspace("b-w")
+    right = relight(source, 0.9, azimuth: 0.0).colourspace("b-w")
+    half = source.width / 2
+    lean = ->(image) { image.extract_area(0, 0, half, image.height).avg - image.extract_area(half, 0, half, image.height).avg }
+    assert_operator lean.call(left), :>, lean.call(right), "the key did not move with the azimuth"
+  end
+
+  # Haze belongs where the detail is not, or it is a global wash wearing the name
+  # of a depth cue.
+  def test_aerial_depth_leaves_the_sharp_parts_alone
+    source = portrait_probe
+    hazed = aerial_depth(source, 1.0)
+    assert_in_delta high_frequency(source), high_frequency(hazed), high_frequency(source) * 0.06,
+                    "the haze reached the detail"
+    assert_operator low_frequency(hazed), :<, low_frequency(source), "nothing receded"
+  end
+
+  # Every picture gets one, and it leads.
+  def test_every_chain_shapes_the_light
+    30.times do |seed|
+      chain = random_chain(Random.new(seed))
+      shaping = chain.map(&:first) & RANDOM_SHAPES
+      assert_equal 1, shaping.length, "#{shaping.length} shape steps: #{random_chain_name(chain)}"
+      assert_includes leads_of(chain), shaping.first, "the shape step is not leading"
+    end
+  end
+
+  # Quieter than it was, deliberately, and the wear shelf is out unless asked for.
+  def test_the_default_posture_is_subtle
+    30.times do |seed|
+      chain = random_chain(Random.new(seed))
+      assert_empty chain.map(&:first) & RANDOM_WEAR, "wear without --rough: #{random_chain_name(chain)}"
+      assert_operator chain.last.last["intensity"], :<=, 0.65, "grain is loud again"
+      assert_operator strengths(chain).map(&:last).max, :<=, RANDOM_LEAD_STRENGTH.last
+    end
   end
 
   # --- halation, tone scale, chains ---------------------------------------

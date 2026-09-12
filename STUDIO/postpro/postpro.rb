@@ -1693,6 +1693,101 @@ rescue StandardError => e
   image
 end
 
+# Relighting, which is the one thing a grade can do to light and the one thing
+# this file could not do.
+#
+# PHOTOGRAPHY.md splits a photograph into geometry, light, expression and
+# optics, and says light is PARTLY fixable: gradeable as tonality, and a grade
+# cannot move a shadow to the other side of a nose. Both halves are true, and
+# the gradeable half has a standard method nobody here had written.
+#
+# Split the picture into illumination and reflectance — a heavy blur of the
+# luminance is the light, and what is left over is the surface — then put the
+# light back differently and leave the surface alone. Because the correction
+# rides as a RATIO on all three channels, texture, grain and hue survive it
+# exactly; only the modelling moves. That is a power window, done by arithmetic
+# rather than by hand, and it is why relighting belongs in a grade at all.
+#
+# `shape` above 1 deepens the modelling the light already made, which is depth
+# without a single new pixel of contrast. `azimuth` swings the key around the
+# frame. The ratio is bounded because an unbounded division by a blurred
+# luminance will find a black background and multiply it by four hundred.
+RELIGHT_SCALE = 12.0
+RELIGHT_FLOOR = 0.004
+RELIGHT_RATIO_CEILING = 3.0
+RELIGHT_KEY_MIX = 0.65
+
+def relight(image, intensity = 0.5, azimuth: 135.0, shape: 1.25, throw: 0.8)
+  linear = image.colourspace("scrgb")
+  r, g, b = linear.bandsplit
+  light = (r * 0.2126 + g * 0.7152 + b * 0.0722).gaussblur([image.width / RELIGHT_SCALE, 4.0].max)
+  held = (light > RELIGHT_FLOOR).ifthenelse(light, RELIGHT_FLOOR)
+  mean = [held.avg, RELIGHT_FLOOR].max
+  # The light it already had, with its own falloff deepened.
+  deepened = (held.linear([1.0 / mean], [0])**shape).linear([mean], [0])
+  # And that light swung toward a new key, renormalised so the exposure holds.
+  keyed = deepened * relight_key(held, azimuth, throw)
+  keyed = keyed.linear([mean / [keyed.avg, RELIGHT_FLOOR].max], [0])
+  mix = intensity * RELIGHT_KEY_MIX
+  ratio = ((held.linear([1.0 - mix], [0]) + keyed.linear([mix], [0])) / held)
+  bounded = (ratio < RELIGHT_RATIO_CEILING).ifthenelse(ratio, RELIGHT_RATIO_CEILING)
+  safe_cast((linear * bounded.bandjoin([bounded, bounded])).colourspace("srgb"))
+rescue StandardError => e
+  $logger.error "relight: #{e.message}"
+  image
+end
+
+# A normalised ramp across the frame, so the key falls off away from where it
+# is thrown from. It multiplies the existing light rather than replacing it: a
+# dark background stays dark, which is the difference between relighting a
+# photograph and painting over one.
+def relight_key(light, azimuth, throw)
+  radians = azimuth * Math::PI / 180.0
+  grid = Vips::Image.xyz(light.width, light.height)
+  across = grid.extract_band(0).linear([1.0 / light.width], [-0.5]) * Math.cos(radians)
+  down = grid.extract_band(1).linear([1.0 / light.height], [-0.5]) * Math.sin(radians)
+  ramp = (across + down).linear([throw], [1.0])
+  (ramp > 0.05).ifthenelse(ramp, 0.05)
+end
+
+# Depth, by the oldest cue in painting.
+#
+# Distance costs contrast, costs saturation and cools, because what is between
+# you and the far thing is air full of scattered skylight. Every other depth
+# cue in this file is optical — defocus, vignette, tilt — and optics is where
+# the amateur version lives, because a blurred background reads as a filter
+# while haze reads as a room.
+#
+# What is near is what is sharp, so local high-frequency energy stands in for
+# proximity. It is a proxy and it is named as one: it will read a sharp cloud
+# as near. On a portrait, which is what this is for, it reads the face.
+AERIAL_HAZE = [0.74, 0.83, 1.00].freeze
+AERIAL_DEPTH_CAP = 0.45
+# The mask has to be selective or the effect is global haze wearing a depth
+# cue as a name. Straight off the acutance it covers half the frame at a mean
+# of 0.57; cubed it sits at 0.32 and lives where the detail is not. Measured
+# over the sharpest fifth of a portrait it reads 0.00 either way, so the face
+# was never at risk — what the curve buys is the middle distance.
+AERIAL_FALLOFF = 3.0
+
+def aerial_depth(image, intensity = 0.5)
+  linear = image.colourspace("scrgb")
+  r, g, b = linear.bandsplit
+  luma = r * 0.2126 + g * 0.7152 + b * 0.0722
+  acutance = (luma - luma.gaussblur(2.0)).abs.gaussblur([image.width / 40.0, 3.0].max)
+  scale = [acutance.avg * 2.0, 1e-5].max
+  far = clamp01(acutance.linear([-1.0 / scale], [1.0]))**AERIAL_FALLOFF
+  fade = far.linear([intensity * AERIAL_DEPTH_CAP], [0])
+  level = [luma.avg, 0.02].max
+  haze = Vips::Image.bandjoin(AERIAL_HAZE.map { |channel| fade.linear([0], [channel * level]) })
+  keep = fade.linear([-1], [1])
+  safe_cast((linear * keep.bandjoin([keep, keep]) + haze * fade.bandjoin([fade, fade]))
+              .colourspace("srgb"))
+rescue StandardError => e
+  $logger.error "aerial_depth: #{e.message}"
+  image
+end
+
 def base_tint(image, color = [252, 248, 240], intensity = 0.08)
   overlay = Vips::Image.black(image.width, image.height, bands: 3) + color
   overlay_norm = overlay.cast("float") / 255.0
@@ -3181,6 +3276,8 @@ def preset(image, name)
              when "vintage_lens"        then vintage_lens(processed, p.fetch(:lens, "zeiss"), p[:intensity] * 0.70)
              when "teal_orange"         then teal_orange(processed, p[:intensity] * 0.80)
              when "bloom_pro"           then bloom_pro(processed, p[:intensity] * 0.25)
+             when "relight"             then relight(processed, p[:intensity] * 0.55, azimuth: p.fetch(:azimuth, 135.0), shape: p.fetch(:shape, 1.25))
+             when "aerial_depth"        then aerial_depth(processed, p[:intensity] * 0.45)
              when "desaturate"          then desaturate(processed, p[:intensity] * 0.45)
              when "warmth"              then warmth(processed, p[:intensity] * 0.25)
              when "green_push"          then green_push(processed, p[:intensity] * 0.15)
@@ -3285,26 +3382,38 @@ RANDOM_OUTPUTS = (3..5)
 # Nine effects at half strength each is mud, and it is the clearest tell of an
 # amateur stack: everything turned up, nothing decided. A grade has a subject.
 RANDOM_LEADS = (1..2)
-# Damage is never the subject. Dust and hair at 0.94 is the amateur move in a
-# single line — the artefact becomes the picture, and the picture becomes a
-# joke about wear. These may join a chain and may season it. They may not lead
-# it. A preset is free to disagree; a preset was written by somebody.
-RANDOM_NEVER_LEADS = %w[dust_and_hair newton_rings scan_noise gate_weave
+# Every chain shapes the light, because a chain that leaves the light alone is
+# a chain about texture, and texture is the shallow half of a photograph. One
+# of these runs in every picture, and it leads.
+RANDOM_SHAPES = %w[relight aerial_depth].freeze
+# The wear shelf: dust, scanner noise, tape dropouts, fogged fixer, gate weave.
+#
+# Off by default, and that is the change. These may not lead — dust and hair at
+# 0.94 is the amateur move in a single line, the artefact becoming the picture
+# — but the deeper problem is that they are loud by construction. They read as
+# an effect where the rest of this file is trying to read as a photograph.
+# `--rough` brings them back for the runs that want a handled print, still
+# capped and still never leading. A preset is free to disagree; a preset was
+# written by somebody.
+RANDOM_WEAR = %w[dust_and_hair newton_rings scan_noise gate_weave
                         dodgeburn_artifacts fixing_bath_fog reticulation
                         film_curl_vignette lens_ghosting anamorphic_flare
                         vhs_luma_bleed vhs_chroma_delay vhs_head_switch_band
                         vhs_tracking_noise vhs_interlace_comb
                         crt_phosphor_bloom crt_scanlines minidv_block_dropout
                         hi8_chroma_noise].freeze
-RANDOM_LEAD_STRENGTH = (0.55..0.95)
-RANDOM_SUPPORT_STRENGTH = (0.08..0.28)
+# Lower than they were. At 0.55 to 0.95 a lead announces itself, and two of
+# them argue; the brief was subtlety and the honest reading of subtlety is that
+# a viewer should not be able to name the effect. Depth is not loudness.
+RANDOM_LEAD_STRENGTH = (0.38..0.66)
+RANDOM_SUPPORT_STRENGTH = (0.05..0.16)
 # And one step is allowed to disagree with the family, quietly. A chain that is
 # only coherent is a template; the interest is in the one thing that should not
 # be there, at a strength that makes it a suggestion rather than a joke.
 RANDOM_WILDCARD_CHANCE = 0.5
-RANDOM_WILDCARD_STRENGTH = (0.10..0.30)
-# Two marks of damage is a print that has been handled. Five is a prop.
-RANDOM_ARTEFACT_CEILING = 2
+RANDOM_WILDCARD_STRENGTH = (0.06..0.16)
+# Two marks of wear is a print that has been handled. Five is a prop.
+RANDOM_WEAR_CEILING = 2
 # A repeat is a second pass, not a second effect: halation twice at different
 # radii is what a bright window through a thick base does, and it only means
 # anything when the first pass was one of the leads.
@@ -3318,9 +3427,16 @@ RANDOM_DRAW_ATTEMPTS = 40
 # some preset, so that the walk has somewhere to go.
 def random_seeds
   @random_seeds ||= begin
-    paired = random_affinity.keys.flatten.uniq
-    (RECIPE_ALLOWED - [RANDOM_ALWAYS] - RANDOM_NEVER_LEADS - random_common_spine) & paired
+    (random_pool - random_common_spine) & random_affinity.keys.flatten.uniq
   end
+end
+
+# What a chain may draw from. The wear shelf is not in it unless --rough says
+# so, and the shape step is appended rather than drawn, so it never has to
+# argue with the co-occurrence graph it appears in no preset of.
+def random_pool
+  rough = ARGV.include?("--rough")
+  RECIPE_ALLOWED - [RANDOM_ALWAYS] - RANDOM_SHAPES - (rough ? [] : RANDOM_WEAR)
 end
 
 # Which effects a colourist actually puts together, counted off the presets.
@@ -3398,7 +3514,7 @@ end
 
 # Grow from one effect, admitting only what some preset puts beside all of it.
 def random_draw(rng)
-  pool = RECIPE_ALLOWED - [RANDOM_ALWAYS]
+  pool = random_pool
   target = rng.rand(RANDOM_CHAIN_LENGTH)
   # Seeded on something that could be the subject, and that can grow. Starting
   # from an artefact grows a chain of nothing but damage — reticulation into
@@ -3410,8 +3526,8 @@ def random_draw(rng)
   picked = [random_seeds.sample(random: rng)]
   while picked.length < target
     admissible = (pool - picked).select do |candidate|
-      next false if RANDOM_NEVER_LEADS.include?(candidate) &&
-                    (picked & RANDOM_NEVER_LEADS).length >= RANDOM_ARTEFACT_CEILING
+      next false if RANDOM_WEAR.include?(candidate) &&
+                    (picked & RANDOM_WEAR).length >= RANDOM_WEAR_CEILING
 
       picked.all? { |held| random_affinity[[candidate, held].sort].positive? }
     end
@@ -3420,20 +3536,26 @@ def random_draw(rng)
     picked << admissible.sample(random: rng)
   end
   wildcard = rng.rand < RANDOM_WILDCARD_CHANCE ? (pool - picked).sample(random: rng) : nil
-  [picked + [wildcard].compact, wildcard]
+  [picked + [wildcard].compact + [RANDOM_SHAPES.sample(random: rng)], wildcard]
 end
 
 def random_finish(picked, wildcard, rng, avoid = [])
   # Nor is the backbone the subject. optical_blur, spectral_temp and film_curve
   # are in most presets because most pictures want a little of each; leading
   # with optical_blur at 0.95 is not a look, it is an out-of-focus photograph.
-  candidates = picked - [wildcard] - RANDOM_NEVER_LEADS - random_common_spine
+  candidates = picked - [wildcard] - RANDOM_WEAR - random_common_spine
   candidates = picked - [wildcard] if candidates.empty?
-  leads = candidates.sample(rng.rand(RANDOM_LEADS), random: rng)
+  # The shape step is one of the leads, not an extra one: three leads is three
+  # things asking to be looked at.
+  shaping = picked & RANDOM_SHAPES
+  leads = shaping | candidates.sample(rng.rand(RANDOM_LEADS) - shaping.length, random: rng)
   # A second pass belongs a quarter of the way further along the process, not at
   # the end and not next to the first: two adjacent passes of one effect are
   # just one stronger pass, and the interest is in what happened in between.
-  repeat = leads.sample(random: rng) if leads.any? && rng.rand < RANDOM_DUPLICATE_CHANCE
+  # Never the shape step. Relighting twice in a row is relighting once, harder,
+  # and the whole argument for a repeat is what happens between the passes.
+  repeatable = leads - RANDOM_SHAPES
+  repeat = repeatable.sample(random: rng) if repeatable.any? && rng.rand < RANDOM_DUPLICATE_CHANCE
   keyed = picked.map { |fx| [fx, random_stage_rank[fx], rng.rand] }
   keyed << [repeat, [random_stage_rank[repeat] + 0.25, 1.0].min, rng.rand] if repeat
   ordered = keyed.sort_by { |_, rank, jitter| [rank, jitter] }.map(&:first)
@@ -3446,7 +3568,7 @@ def random_finish(picked, wildcard, rng, avoid = [])
            end
     [fx, (band.first + rng.rand * (band.last - band.first)).round(2)]
   end
-  chain << [RANDOM_ALWAYS, { "intensity" => (0.6 + rng.rand * 0.5).round(2),
+  chain << [RANDOM_ALWAYS, { "intensity" => (0.3 + rng.rand * 0.35).round(2),
                              "stock" => random_stock(rng, avoid).to_s }]
 end
 
@@ -3471,7 +3593,7 @@ RECIPE_ALLOWED = %w[
   push_pull halation optical_blur tonemap dir_coupler spectral_temp color_temp
   skin_protect desaturate warmth green_push cross_fade infrared cyanotype
   lith_print technicolor kodachrome_sim faded_print base_tint dual_base_density
-  reciprocity_failure bloom_pro teal_orange
+  reciprocity_failure bloom_pro teal_orange relight aerial_depth
   emulsion_defocus adjacency_effects longitudinal_ca lens_distortion bokeh_rendering
   anamorphic_flare diffraction_blur scan_noise newton_rings dust_and_hair
   film_curl_vignette selenium_tone dye_fade darkroom_print film_base_density
@@ -3534,6 +3656,9 @@ RECIPE_ADAPTERS = {
   # failure at all, so intensity picks a plausible long exposure instead.
   "reciprocity_failure" => ->(img, i, p) {
     reciprocity_failure(img, (p["exposure_seconds"] || (1.0 + (i * 60.0))).to_f, recipe_stock(p, :cinestill_800t))
+  },
+  "relight" => ->(img, i, p) {
+    relight(img, i, azimuth: (p["azimuth"] || 135.0).to_f, shape: (p["shape"] || 1.25).to_f)
   },
   # keyword-only signatures: these raised rather than misfired
   "tonemap" => ->(img, i, p) { tonemap(img, type: (p["type"] || "aces").to_sym, exposure: (p["exposure"] || 0.0).to_f, intensity: i) },
@@ -4027,6 +4152,7 @@ def vocab_check
     print_stock: %w[print_film], exposure_secs: %w[reciprocity_failure],
     k1: %w[lens_distortion], f_number: %w[diffraction_blur], tonemap_ev: %w[tonemap],
     temp: %w[spectral_temp color_temp], tonemap: %w[tonemap],
+    azimuth: %w[relight], shape: %w[relight],
   }
   PRESETS.each do |name, p|
     key_readers.each do |key, readers|
@@ -4103,8 +4229,8 @@ def vocab_check
   # a table nothing reads and a name nothing implements both fail quietly.
   problems << "GRAIN_CRYSTAL_FIELD is #{GRAIN_CRYSTAL_FIELD}, which grain_crystals does not build" \
     unless %i[worley perlin].include?(GRAIN_CRYSTAL_FIELD)
-  stale = RANDOM_NEVER_LEADS - RECIPE_ALLOWED
-  problems << "RANDOM_NEVER_LEADS names effects no chain can call: #{stale.join(", ")}" unless stale.empty?
+  stale = RANDOM_WEAR - RECIPE_ALLOWED
+  problems << "RANDOM_WEAR names effects no chain can call: #{stale.join(", ")}" unless stale.empty?
   STOCKS.each do |name, data|
     knots = data[:grain_knots]
     next if knots.nil?
