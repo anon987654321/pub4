@@ -29,9 +29,11 @@ require_relative "test_helper"
 # that reader and check what it returns, which is what having a reader means; the
 # seventh passed when the method was deleted and the comment stayed, and would
 # have failed on a rename that broke nothing.
+# 221 -> 216: lifecycle_tools_spec now runs bin/doctor and checks its emitted
+# YAML probe result instead of asserting that the source contains `check_yaml`.
 class TestSourceAssertions < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  BASELINE = 221
+  BASELINE = 216
 
   # An assertion whose subject is the text of a file rather than a value the
   # code produced. `source`, `src` and `body` are this repo's names for that

@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "open3"
+require "rbconfig"
 
 class LifecycleToolsSpec < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
@@ -10,11 +12,17 @@ class LifecycleToolsSpec < Minitest::Test
   end
 
   def test_doctor_reports_ok_fail_lines
-    source = read_tool("doctor")
-    assert_includes source, "MASTER doctor"
-    assert_includes source, "OK"
-    assert_includes source, "FAIL"
-    assert_includes source, "check_yaml"
+    output, = Open3.capture3(
+      { "MASTER_KEYLESS" => "1" },
+      RbConfig.ruby,
+      File.join(ROOT, "bin", "doctor"),
+      chdir: ROOT,
+    )
+
+    assert_includes output, "MASTER doctor"
+    assert_match(/^(?:OK|FAIL) yaml:/, output)
+    assert_match(/^OK (?:ruby|git):/, output)
+    assert_match(/^(?:OK|FAIL) [a-z-]+:/, output)
   end
 
   def test_smoke_web_waits_for_bootstrap
