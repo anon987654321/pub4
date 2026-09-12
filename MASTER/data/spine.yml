@@ -202,7 +202,20 @@ spine:
 # shebang read, memoised because the scanner asks once per rule per file.
 # Correctly typing three more extensions exposed sixteen real findings that
 # had never been measured, and each is fixed rather than recorded.
-  lib_body_ceiling: 38329
+# 38329 -> 38334 for five lines that stop `git show` reading a file.
+#
+# GitContext#show takes no path: its argument is a git ref handed to `git show`,
+# and its sanitiser explicitly allowed `:` and `/`. `git show <rev>:<path>` prints
+# that path's blob, so the colon form was a file read of any tracked file at any
+# revision — including ones deleted since — that never passed through PathGuard,
+# while log, blame and diff all route their path through safe_path. Io::LLM::GitContext
+# exposes this to a model, which is the difference between an odd API and a way
+# out of the root. No caller in this tree passes <rev>:<path>, so it is refused.
+#
+# Written as a guard with its own `if`, not folded onto one line to fit: the
+# 38298 -> 38299 entry above settled that, for a security rule, on the same
+# argument. test_io_path_guard.rb covers it and fails 2 of 3 without the guard.
+  lib_body_ceiling: 38334
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753

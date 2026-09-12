@@ -59,8 +59,24 @@ module Master
         Result.ok(out.strip.empty? ? "(clean)" : out.strip)
       end
 
+      # `git show <rev>:<path>` prints that path's blob, so a colon in the ref turns a
+      # commit viewer into a file reader — any tracked file, at any revision, including
+      # ones deleted since. Every other operation here routes its path through
+      # safe_path and is bounded by PathGuard; show takes no path argument at all, so
+      # the colon form was the only way to ask it for one and nothing bounded it. This
+      # is an LLM-callable tool (Io::LLM::GitContext), which is the difference between
+      # an odd API and a way out of the root.
+      #
+      # Refused rather than sanitised: no caller in this tree passes <rev>:<path>, and
+      # `--stat` already says this is meant to describe a commit.
       def git_show(ref)
-        ref_s = (ref.to_s.empty? ? "HEAD" : ref.to_s).gsub(/[^a-zA-Z0-9._~^:\-\/]/, "")
+        raw = ref.to_s.empty? ? "HEAD" : ref.to_s
+        if raw.include?(":")
+          return Result.err("git_context show: ref must name a commit, not <rev>:<path> — " \
+                            "use blame or log for a file", category: :validation)
+        end
+
+        ref_s = raw.gsub(/[^a-zA-Z0-9._~^\-\/]/, "")
         out = IO.popen(["git", "-C", @root, "show", "--stat", "--no-color", ref_s], err: File::NULL, &:read)
         Result.ok(out.strip.empty? ? "(not found)" : out.strip[0..MAX_OUTPUT_CHARS])
       end

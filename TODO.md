@@ -7012,7 +7012,20 @@ Highest cost if wrong: 28–30 (deploy lock + jobs env), 36 (drain false-green),
 
 67. **PathGuard is prefix-only; World realpath-walks ancestors.** ReadFile/WriteFile use PathGuard. A symlink inside the root reaches `/etc`. Put World’s ancestor-realpath check in PathGuard.
 68. **`SearchFiles` `Dir.glob(File.join(@root, glob))`.** `File.join(root, "/etc/passwd")` is `/etc/passwd`. Reject absolute globs; PathGuard every hit.
-69. **`GitContext#show` takes `path` as a git ref.** `HEAD:.master/config.yml` dumps the web token. Blame/diff use `safe_path`; show does not. Never `rev:path`.
+69. **Fixed 2026-09-12.** Confirmed before fixing: the sanitiser allowed `:` and `/`
+    explicitly, so `show` with `HEAD:<path>` printed that path's blob — any tracked
+    file, at any revision, including ones deleted since — while log, blame and diff
+    all route their path through `safe_path` and PathGuard. `show` has no path
+    argument, so the colon form was the only way to ask it for one and nothing
+    bounded it. `Io::LLM::GitContext` exposes the tool to a model, which is what
+    made this worth more than tidying. Refused rather than sanitised, since no
+    caller in the tree passes `<rev>:<path>` and `--stat` already says the argument
+    describes a commit. `test_io_path_guard.rb` covers it and fails 2 of 3 with the
+    guard removed.
+    Cost: `spine.lib_body_ceiling` 38329 -> 38334, recorded with the reason. I first
+    compressed the guard onto one line to stay under the ceiling and then put it
+    back — the 38298 -> 38299 entry in `spine.yml` had already settled that exact
+    instinct, for a security rule, against itself.
 70. **`ReadFile` `File.readlines` the whole file then slices.** A 200k-line file becomes prompt. Sacred paths block writes, not reads — `.master/config.yml` is ingestible. Line-range IO; refuse secret paths on read.
 71. **TTS `job_id` is SHA256(voice|text)[0,32].** `readable_job` skips ownership when ready. Anyone who can guess the utterance fetches the mp3; identical lines cross conversations. Random id; always `owned?`.
 72. **`GET /chat/tts` and `GET /chat/enhance` have side effects.** Prefetch and query logs trigger paid work. Enhance is not in `AUTHENTICATED_ACTIONS`. POST only; auth enhance.
