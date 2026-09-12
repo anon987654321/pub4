@@ -9853,6 +9853,33 @@ Keep the one with the test. Then delete the other.
 
 ## performance — ChatGPT intake 2026-09-11
 
+**Items 1–131 were verified against the tree on 2026-09-12. Read this before
+implementing any of them.** 30 are ALREADY BUILT under a different name, 89
+are real, and none are outright false — the intake was written without reading
+the code, so it re-proposes what exists.
+
+Already satisfied, with the line that satisfies it: 9 (`trace/metrics.rb:32`),
+14 (`check_runner.rb:35` `SLOW_STEP_FRACTION`), 22 (`path_filter.rb:57`), 24
+(`AGENTS.md:83` + `tools/instruments.rb`), 52 and 69 (`file_processor.rb:35-39`
+— one read, one Prism parse, shared with every rule), 55 and 59
+(`master.rb:81` `language_for` memo), 70 (`reader_singularity.yml`), 76
+(`code_index.rb:253` `incremental_build`), 77 and 79
+(`co_change_graph.rb:42`), 87–98 (Zeitwerk autoload, and `Gemfile` already
+carries `require: false` on opentelemetry, ferrum and the rest), 104
+(`ground/rules.rb:124`), 107–109, 116–119 (`bin/cli:18`, `bin/operator:13`
+— the fast paths already exist).
+
+**Item 120 is wrong, and how it went wrong is the useful part.** It reports
+that nothing sets `MASTER_SCAN_ONLY`, so `Builder.build_scan_only` is a dead
+capability. Four callers set it: `RAILS/_runtime_gate.sh:15`,
+`OPENBSD/vps_master_scan.sh:31`, `OPENBSD/OPERATOR.sh:286` and the example in
+`OPENBSD/bin/with-ci-lock:9`. The search was scoped to `MASTER/` and mistook
+its own boundary for the tree — the exact failure this file opens by warning
+about. What survives is narrower and real: `bin/gate` has its own
+`MASTER_GATE_SCAN_ONLY` for "do not autofix" and never sets the boot-mode
+variable, so `--scan-only` still boots providers in every subprocess. Two
+variables one word apart, which is most of why this was misread.
+
 Unmeasured. MASTER already has ratchets, N+1 rules, face FPS watchdog,
 `operator measure`, and skipped-vs-passed gates. Do not make tests cheaper
 by running fewer of them. Cache facts, not verdicts. Parallelize independent
@@ -10398,6 +10425,33 @@ A finding is a hypothesis. Rank, merge, delete.
 
 
 ## RAILS / OPENBSD / STUDIO performance — ChatGPT intake 2026-09-11
+
+**Items 1–80 were verified against the tree on 2026-09-12.** 20 ALREADY BUILT,
+**15 FALSE**, 44 real, 1 unverifiable without vm23.
+
+False, and each would have cost somebody a morning: 27 (no duplicated
+initializers — 21 of 23 live in `shared/config/initializers/`), 30 and 31
+(`eager_load_paths` is commented out in all three apps), 36–39 (no boot-time
+YAML, JSON or rescan anywhere under `config/`), 44 and 45 (the one stacked
+middleware is a deliberate second `ActionDispatch::Static` for the engine's
+own `public/`), 47, 67 (no presenters exist), 70, 77–79 (zero `.preload(`,
+`.eager_load(` or `.references(` call sites to audit).
+
+Already built: the database half is mostly done and does not spell itself
+"performance", which is why a grep for budget or latency reports it open —
+`QueryBudgetTest` (`brgen/test/controllers/query_budget_test.rb:53`, `:71`,
+`:117`), `Bullet.raise = true`, `strict_loading_by_default`,
+`counter_cache`, `Repost#load_viewer_memos!`, `Current.reposted_post_ids`,
+and `css_budget.yml weight_kb`. Item 60's "unindexed foreign keys" reads as
+27 gaps under a naive scan and is zero once polymorphic `[type, id]`
+composites are counted as covering.
+
+The two cheap real ones: **35, brgen has no bootsnap at all** while amber and
+bsdports both carry it, and brgen is the app with six engines. Adding it is a
+new gem and therefore a `Gemfile.lock` change, which this repo records as
+structurally hazardous from a Mac (`rb-kqueue` is BSD-only), so it wants doing
+on the box or with the lock regenerated there. And **48, ferrum without
+`require: false`** — fixed, since both callers already require it themselves.
 
 Unmeasured. Three problems, not one MASTER list. RAILS = request/query/render.
 OPENBSD = boot/deploy/supervision, never a faster gate that proves less.
