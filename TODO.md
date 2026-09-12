@@ -117,6 +117,24 @@ box.
 lock's dependency tree before calling one unused, the same way you check every
 tree before calling a constant unreached.
 
+**And a third, for the reason this file already documents.** `canvas:*` and
+`:canvas_state` were reported as published with no subscriber —
+`MASTER/web/app/controllers/canvas_controller.rb:63` and
+`app/services/chat_service.rb:189` publish, and no file names them in a
+`subscribe`. True, and not the question. `cable_bridge.rb:18` subscribes
+`"*"` and broadcasts every bus event to the browser over ActionCable, so
+every published topic has a consumer by construction.
+
+This file's own "Declared and never wired" section states it outright:
+published-never-subscribed is 238 of 285 and **every row is noise, because the
+wildcard subscribers consume the lot**. The direction worth running is the
+other one — subscribed-never-published was 4, two were wildcards, and both of
+the remaining two were real defects.
+
+**So an agent asked to find dead events will find hundreds, and be wrong about
+all of them.** Three of the three event findings checked today were false for
+this reason. Give it the subscriber list, not the publisher list.
+
 **Two more event-drift findings died on verification, and both died the same
 way: the census looked at one end of the wire.**
 
