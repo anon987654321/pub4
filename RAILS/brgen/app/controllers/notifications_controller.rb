@@ -4,7 +4,7 @@
 # Turbo broadcasts to brgen:notifications:*, and custom presenters.
 # See shared/app/controllers/shared/notifications_controller.rb for the thin
 # engine stub used by amber/bsdports.
-# Duplication intentional until city inbox + vote karma are unified across apps.
+# Duplication intentional until city inbox + vote scoring are unified across apps.
 # See RAILS/shared/WIRING_NOTES.md "Deferred DRY" and "Notification model".
 class NotificationsController < ApplicationController
   before_action :require_real_user

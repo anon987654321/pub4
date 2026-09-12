@@ -2,7 +2,7 @@
 
 # Brgen-specific VotesController.
 # See shared for Reactable/Votable concern. Local controller kept for
-# karma side-effects and city-specific behavior.
+# content-score side-effects and city-specific behavior.
 # See RAILS/shared/WIRING_NOTES.md "Deferred DRY".
 class VotesController < ApplicationController
   # Post includes Shared::Sluggable, so to_param is the slug and
