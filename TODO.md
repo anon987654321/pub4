@@ -1645,6 +1645,9 @@ proves the detectors are right is worth more than one that proves the features e
   `release` gate because `RAILS/gates/release.rb:39` resolves
   `RAILS/gates/OPENBSD/gates/domain_alignment`, which does not exist. Fix the
   require path and rerun the release gate.
+  **Fixed 2026-09-12 by Copilot:** Path resolution now detects tree-prefixed paths
+  (MASTER/, OPENBSD/, etc.) and resolves them from repo root instead of relative to
+  RAILS/gates/. Release gate loads successfully.
 - `layout_suite` reports CSS files over its 200-line budget:
   `brgen/app/assets/stylesheets/_coverage_fills.scss`,
   `_marketplace.scss`, `_messenger_window.scss`,
