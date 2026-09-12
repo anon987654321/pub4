@@ -3314,6 +3314,15 @@ RANDOM_DUPLICATE_CHANCE = 0.3
 RANDOM_SIMILARITY_CEILING = 0.34
 RANDOM_DRAW_ATTEMPTS = 40
 
+# Effects that can start a chain: not damage, not the backbone, and known to
+# some preset, so that the walk has somewhere to go.
+def random_seeds
+  @random_seeds ||= begin
+    paired = random_affinity.keys.flatten.uniq
+    (RECIPE_ALLOWED - [RANDOM_ALWAYS] - RANDOM_NEVER_LEADS - random_common_spine) & paired
+  end
+end
+
 # Which effects a colourist actually puts together, counted off the presets.
 def random_affinity
   @random_affinity ||= begin
@@ -3391,10 +3400,14 @@ end
 def random_draw(rng)
   pool = RECIPE_ALLOWED - [RANDOM_ALWAYS]
   target = rng.rand(RANDOM_CHAIN_LENGTH)
-  # Seeded on something that could be the subject. Starting from an artefact
-  # grows a chain of nothing but damage — reticulation into fixing-bath fog
-  # into gate weave — and then something has to lead it, and dust does.
-  picked = [(pool - RANDOM_NEVER_LEADS - random_common_spine).sample(random: rng)]
+  # Seeded on something that could be the subject, and that can grow. Starting
+  # from an artefact grows a chain of nothing but damage — reticulation into
+  # fixing-bath fog into gate weave — and then something has to lead it, and dust
+  # does. Starting from an effect no preset uses grows nothing at all: five of the
+  # seventy-three have no affinity with anything, and seeding on one of those
+  # rendered a picture whose whole grade was dual_base_density and grain. They
+  # stay reachable as the wildcard, which is where a stranger belongs.
+  picked = [random_seeds.sample(random: rng)]
   while picked.length < target
     admissible = (pool - picked).select do |candidate|
       next false if RANDOM_NEVER_LEADS.include?(candidate) &&

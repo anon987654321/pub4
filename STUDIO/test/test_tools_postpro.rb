@@ -394,6 +394,17 @@ class TestPostproFilm < Minitest::Test
     end
   end
 
+  # A chain of one effect and some grain is a wasted render. It happened: the
+  # five effects no preset uses have no affinity with anything, so seeding on one
+  # dead-ended the walk immediately.
+  def test_a_chain_is_never_a_single_effect_and_some_grain
+    40.times do |seed|
+      chain = random_chain(Random.new(seed))
+      assert_operator chain.length, :>=, RANDOM_CHAIN_LENGTH.first,
+                      "short chain: #{random_chain_name(chain)}"
+    end
+  end
+
   # Nine effects at half strength is mud. One or two carry it.
   def test_one_or_two_steps_carry_the_look_and_the_rest_are_seasoning
     40.times do |seed|
