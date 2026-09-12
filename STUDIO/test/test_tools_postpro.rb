@@ -367,6 +367,67 @@ class TestPostproFilm < Minitest::Test
       PRESETS[:quality_uplift] && !Array(PRESETS[:quality_uplift][:fx]).include?("grain")
   end
 
+  # --- a chain is a process, not a filter menu ----------------------------
+
+  def strengths(chain)
+    chain.filter_map { |fx, params| [fx, params] if params.is_a?(Numeric) }
+  end
+
+  def leads_of(chain)
+    strengths(chain).select { |_, value| value >= RANDOM_LEAD_STRENGTH.first }.map(&:first)
+  end
+
+  # Every step joins where some preset already put it beside everything held, so
+  # a chain stays inside one family without anyone declaring the families.
+  def test_every_step_co_occurs_with_every_other_in_some_preset
+    40.times do |seed|
+      names = random_chain(Random.new(seed)).map(&:first) - [RANDOM_ALWAYS]
+      # The wildcard is the one step allowed to disagree, so drop the worst
+      # offender before judging the rest.
+      stranger = names.max_by { |fx| (names - [fx]).count { |other| random_affinity[[fx, other].sort].zero? } }
+      (names - [stranger]).combination(2) do |a, b|
+        next if a == b
+
+        assert_operator random_affinity[[a, b].sort], :>, 0,
+                        "no preset puts #{a} with #{b}: #{names.inspect}"
+      end
+    end
+  end
+
+  # Nine effects at half strength is mud. One or two carry it.
+  def test_one_or_two_steps_carry_the_look_and_the_rest_are_seasoning
+    40.times do |seed|
+      chain = random_chain(Random.new(seed))
+      leads = leads_of(chain)
+      assert_includes RANDOM_LEADS, leads.length, "#{leads.length} leads: #{random_chain_name(chain)}"
+      support = strengths(chain).reject { |fx, _| leads.include?(fx) }.map(&:last)
+      assert(support.all? { |value| value <= RANDOM_LEAD_STRENGTH.first },
+             "a supporting step is as loud as a lead: #{random_chain_name(chain)}")
+    end
+  end
+
+  # Dust at 0.94 is the amateur move in one line, and so is dust five times.
+  def test_damage_never_leads_and_never_piles_up
+    40.times do |seed|
+      chain = random_chain(Random.new(seed))
+      assert_empty leads_of(chain) & RANDOM_NEVER_LEADS, "damage is leading: #{random_chain_name(chain)}"
+      assert_empty leads_of(chain) & random_common_spine, "the backbone is leading: #{random_chain_name(chain)}"
+      marks = chain.map(&:first) & RANDOM_NEVER_LEADS
+      assert_operator marks.length, :<=, RANDOM_ARTEFACT_CEILING, "#{marks.length} marks: #{marks.inspect}"
+    end
+  end
+
+  # Five versions of one picture is the other way to waste an afternoon.
+  def test_a_run_of_chains_does_not_repeat_itself
+    rng = Random.new(31)
+    drawn = []
+    6.times { drawn << random_chain(rng, avoid: drawn) }
+    pairs = drawn.combination(2).map { |a, b| random_similarity(a.map(&:first), b.map(&:first)) }
+    assert_operator pairs.max, :<=, 0.5, "two chains out of one run are near neighbours"
+    stocks = drawn.map { |chain| chain.last.last["stock"] }
+    assert_equal stocks.uniq.length, stocks.length, "a run reused a stock: #{stocks.inspect}"
+  end
+
   # --- halation, tone scale, chains ---------------------------------------
 
   # Light returns off the base a base-thickness away, so the halo peaks OUTSIDE
@@ -411,7 +472,10 @@ class TestPostproFilm < Minitest::Test
       assert_equal RANDOM_ALWAYS, chain.last.first, "grain must be the last word"
       names = chain.map(&:first)
       assert(names.all? { |fx| RECIPE_ALLOWED.include?(fx) }, "chain names an effect recipe cannot call")
-      ranks = names[0...-1].map { |fx| random_stage_rank[fx] }
+      # Over first occurrences: a second pass of an effect deliberately runs later
+      # than its own stage, so it is the process that has to be in order, not the
+      # literal sequence.
+      ranks = names[0...-1].uniq.map { |fx| random_stage_rank[fx] }
       assert_equal ranks.sort, ranks, "chain is out of stage order: #{names.inspect}"
       seen_duplicate ||= names.tally.any? { |_, count| count > 1 }
     end

@@ -384,39 +384,6 @@ if ARGV.include?("--rescue")
   exit 0
 end
 
-if ARGV.include?("--video")
-  require_relative "motion"
-  source = ARGV[ARGV.index("--video") + 1]
-  target = ARGV.include?("--output") ? ARGV[ARGV.index("--output") + 1] : nil
-  preset = ARGV.include?("--preset") ? ARGV[ARGV.index("--preset") + 1] : "house"
-  grain = ARGV.include?("--grain-hold") ? :hold : :moving
-  seed = Integer(ENV.fetch("POSTPRO_SEED", "1"), exception: false) || 1
-
-  if source.nil? || !File.file?(source)
-    PostproBootstrap.dmesg("ERROR --video needs a readable file")
-    exit 1
-  end
-  if target.nil?
-    PostproBootstrap.dmesg("ERROR --video needs --output FILE")
-    exit 1
-  end
-
-  begin
-    probe = Postpro::Motion.probe(source)
-    estimate = Postpro::Motion.estimate(probe)
-    # Said before the work, not discovered during it: this decodes every frame
-    # to disk and grades each one as a photograph.
-    PostproBootstrap.dmesg("video #{probe.width}x#{probe.height} #{probe.fps.round(3)}fps — " \
-                           "#{estimate[:frames]} frames, roughly #{estimate[:seconds]}s of grading")
-    Postpro::Motion.grade(source, target, preset: preset, seed: seed, grain: grain,
-                          io: $stdout)
-  rescue Postpro::Motion::Unavailable => e
-    PostproBootstrap.dmesg("ERROR video: #{e.message}")
-    exit 1
-  end
-  exit 0
-end
-
 if ARGV.include?("--measure")
   require_relative "uncanny"
   subject = ARGV[ARGV.index("--measure") + 1]
@@ -3292,25 +3259,69 @@ ensure
 end
 
 # Random Effects
-# A random chain, drawn from everything recipe() can call.
+# A random chain, grown rather than sampled.
 #
-# The pool here used to be ten *_basic helpers — a sepia, a glitch, a toy VHS —
-# which is the vocabulary of a phone filter, and ten of them produce ten
-# flavours of one joke. It is now every effect in RECIPE_ALLOWED, the same set
-# the presets are built from, so a random run reaches the whole emulsion
-# instead of a novelty shelf bolted to the side of it.
+# A random subset of seventy-three effects is the Photoshop filter menu, and it
+# looks like one: tilt-shift and selenium toning and teal-orange on the same
+# frame, each at half strength, none of them agreeing about what the picture is.
+# What makes a chain read as a grade instead is that its steps belong to one
+# process — a stock, a development, a print, one way of having been damaged.
 #
-# Duplicates are drawn on purpose. Two passes of halation at different radii is
-# what a bright window through a thick base does; grain over a print stock over
-# grain is what a duplicated negative looks like. A filter cannot do either,
-# because a filter is one lookup table.
-RANDOM_CHAIN_LENGTH = (4..9)
-RANDOM_DUPLICATE_CHANCE = 0.3
+# Nobody declares those families here. They are read off the sixty-one presets,
+# which are sixty-one colourists' answers to the same question: a candidate may
+# join the chain only where some preset already puts it beside everything
+# already picked. The graph is dense enough to carry it — greedy walks run five
+# to thirteen effects, median eight — so the constraint buys coherence without
+# costing variety.
+RANDOM_CHAIN_LENGTH = (4..8)
 # Grain is not optional, ever. The argument of this whole file is that an
-# emulsion is a physical process, and a chain with no crystals in it is a
-# colour filter with opinions.
+# emulsion is a physical process, and a chain with no crystals in it is a colour
+# filter with opinions.
 RANDOM_ALWAYS = "grain"
 RANDOM_OUTPUTS = (3..5)
+
+# One or two steps carry the look and the rest are barely there.
+#
+# Nine effects at half strength each is mud, and it is the clearest tell of an
+# amateur stack: everything turned up, nothing decided. A grade has a subject.
+RANDOM_LEADS = (1..2)
+# Damage is never the subject. Dust and hair at 0.94 is the amateur move in a
+# single line — the artefact becomes the picture, and the picture becomes a
+# joke about wear. These may join a chain and may season it. They may not lead
+# it. A preset is free to disagree; a preset was written by somebody.
+RANDOM_NEVER_LEADS = %w[dust_and_hair newton_rings scan_noise gate_weave
+                        dodgeburn_artifacts fixing_bath_fog reticulation
+                        film_curl_vignette lens_ghosting anamorphic_flare
+                        vhs_luma_bleed vhs_chroma_delay vhs_head_switch_band
+                        vhs_tracking_noise vhs_interlace_comb
+                        crt_phosphor_bloom crt_scanlines minidv_block_dropout
+                        hi8_chroma_noise].freeze
+RANDOM_LEAD_STRENGTH = (0.55..0.95)
+RANDOM_SUPPORT_STRENGTH = (0.08..0.28)
+# And one step is allowed to disagree with the family, quietly. A chain that is
+# only coherent is a template; the interest is in the one thing that should not
+# be there, at a strength that makes it a suggestion rather than a joke.
+RANDOM_WILDCARD_CHANCE = 0.5
+RANDOM_WILDCARD_STRENGTH = (0.10..0.30)
+# Two marks of damage is a print that has been handled. Five is a prop.
+RANDOM_ARTEFACT_CEILING = 2
+# A repeat is a second pass, not a second effect: halation twice at different
+# radii is what a bright window through a thick base does, and it only means
+# anything when the first pass was one of the leads.
+RANDOM_DUPLICATE_CHANCE = 0.3
+# No two pictures out of one run may be near neighbours. Jaccard over the effect
+# sets, with a fresh stock each time.
+RANDOM_SIMILARITY_CEILING = 0.34
+RANDOM_DRAW_ATTEMPTS = 40
+
+# Which effects a colourist actually puts together, counted off the presets.
+def random_affinity
+  @random_affinity ||= begin
+    pairs = Hash.new(0)
+    PRESETS.each_value { |p| Array(p[:fx]).uniq.combination(2) { |a, b| pairs[[a, b].sort] += 1 } }
+    pairs
+  end
+end
 
 # Where each effect belongs in a chain, measured from the sixty-one that exist.
 #
@@ -3333,16 +3344,108 @@ def random_stage_rank
   end
 end
 
-# An ordered list of [effect, params] pairs, which is what recipe() iterates.
-# A list rather than a hash precisely so an effect can appear twice.
-def random_chain(rng = Random.new(postpro_seed))
+# An ordered list of [effect, params] pairs, which is what recipe() iterates. A
+# list rather than a hash precisely so an effect can appear twice.
+#
+# `avoid` holds the chains this run has already drawn. A draw that overlaps one
+# of them too far is thrown back, up to a bounded number of attempts, after
+# which the least similar of them is used — a run of five pictures that are five
+# versions of one picture is the other way to waste somebody's afternoon.
+def random_chain(rng = Random.new(postpro_seed), avoid: [])
+  closest = nil
+  RANDOM_DRAW_ATTEMPTS.times do
+    picked, wildcard = random_draw(rng)
+    overlap = avoid.map { |other| random_similarity(picked, other.map(&:first)) }.max || 0.0
+    return random_finish(picked, wildcard, rng, avoid) if overlap <= RANDOM_SIMILARITY_CEILING
+
+    closest = [overlap, picked, wildcard] if closest.nil? || overlap < closest.first
+  end
+  random_finish(closest[1], closest[2], rng, avoid)
+end
+
+# Two chains that share optical_blur, spectral_temp and film_curve share a
+# spine, not a look — most presets carry all three. Similarity is measured over
+# what is distinctive, meaning the effects fewer than half the presets use, so
+# the common backbone stops reading as a resemblance.
+def random_similarity(one, two)
+  left = random_distinctive(one)
+  right = random_distinctive(two)
+  return 0.0 if left.empty? || right.empty?
+
+  (left & right).length.to_f / (left | right).length
+end
+
+def random_distinctive(names) = names - random_common_spine
+
+# The steps more than half the presets carry: today spectral_temp, film_curve,
+# grain and optical_blur.
+def random_common_spine
+  @random_common_spine ||= begin
+    counts = Hash.new(0)
+    PRESETS.each_value { |p| Array(p[:fx]).uniq.each { |fx| counts[fx] += 1 } }
+    counts.select { |_, n| n > PRESETS.length / 2 }.keys
+  end
+end
+
+# Grow from one effect, admitting only what some preset puts beside all of it.
+def random_draw(rng)
   pool = RECIPE_ALLOWED - [RANDOM_ALWAYS]
-  picks = pool.sample(rng.rand(RANDOM_CHAIN_LENGTH), random: rng)
-  picks += picks.sample(rng.rand(1..2), random: rng) if rng.rand < RANDOM_DUPLICATE_CHANCE
-  ranked = picks.sort_by { |fx| [random_stage_rank[fx], rng.rand] }
-  chain = ranked.map { |fx| [fx, (0.35 + rng.rand * 0.55).round(2)] }
+  target = rng.rand(RANDOM_CHAIN_LENGTH)
+  # Seeded on something that could be the subject. Starting from an artefact
+  # grows a chain of nothing but damage — reticulation into fixing-bath fog
+  # into gate weave — and then something has to lead it, and dust does.
+  picked = [(pool - RANDOM_NEVER_LEADS - random_common_spine).sample(random: rng)]
+  while picked.length < target
+    admissible = (pool - picked).select do |candidate|
+      next false if RANDOM_NEVER_LEADS.include?(candidate) &&
+                    (picked & RANDOM_NEVER_LEADS).length >= RANDOM_ARTEFACT_CEILING
+
+      picked.all? { |held| random_affinity[[candidate, held].sort].positive? }
+    end
+    break if admissible.empty?
+
+    picked << admissible.sample(random: rng)
+  end
+  wildcard = rng.rand < RANDOM_WILDCARD_CHANCE ? (pool - picked).sample(random: rng) : nil
+  [picked + [wildcard].compact, wildcard]
+end
+
+def random_finish(picked, wildcard, rng, avoid = [])
+  # Nor is the backbone the subject. optical_blur, spectral_temp and film_curve
+  # are in most presets because most pictures want a little of each; leading
+  # with optical_blur at 0.95 is not a look, it is an out-of-focus photograph.
+  candidates = picked - [wildcard] - RANDOM_NEVER_LEADS - random_common_spine
+  candidates = picked - [wildcard] if candidates.empty?
+  leads = candidates.sample(rng.rand(RANDOM_LEADS), random: rng)
+  # A second pass belongs a quarter of the way further along the process, not at
+  # the end and not next to the first: two adjacent passes of one effect are
+  # just one stronger pass, and the interest is in what happened in between.
+  repeat = leads.sample(random: rng) if leads.any? && rng.rand < RANDOM_DUPLICATE_CHANCE
+  keyed = picked.map { |fx| [fx, random_stage_rank[fx], rng.rand] }
+  keyed << [repeat, [random_stage_rank[repeat] + 0.25, 1.0].min, rng.rand] if repeat
+  ordered = keyed.sort_by { |_, rank, jitter| [rank, jitter] }.map(&:first)
+  seen = Hash.new(0)
+  chain = ordered.map do |fx|
+    repeat = (seen[fx] += 1) > 1
+    band = if repeat || fx == wildcard then wildcard_or_repeat_strength(fx, wildcard)
+           elsif leads.include?(fx) then RANDOM_LEAD_STRENGTH
+           else RANDOM_SUPPORT_STRENGTH
+           end
+    [fx, (band.first + rng.rand * (band.last - band.first)).round(2)]
+  end
   chain << [RANDOM_ALWAYS, { "intensity" => (0.6 + rng.rand * 0.5).round(2),
-                             "stock" => STOCKS.keys.sample(random: rng).to_s }]
+                             "stock" => random_stock(rng, avoid).to_s }]
+end
+
+# A repeat is a lighter second pass; a wildcard is a suggestion. Same band.
+def wildcard_or_repeat_strength(_fx, _wildcard) = RANDOM_WILDCARD_STRENGTH
+
+# A fresh emulsion per picture while there are any left unused this run.
+def random_stock(rng, avoid)
+  spent = avoid.filter_map { |chain| chain.last&.last }
+               .filter_map { |params| params.is_a?(Hash) ? params["stock"] : nil }
+  (STOCKS.keys - spent.map(&:to_sym)).then { |left| left.empty? ? STOCKS.keys : left }
+                                     .sample(random: rng)
 end
 
 def random_chain_name(chain)
@@ -3987,6 +4090,8 @@ def vocab_check
   # a table nothing reads and a name nothing implements both fail quietly.
   problems << "GRAIN_CRYSTAL_FIELD is #{GRAIN_CRYSTAL_FIELD}, which grain_crystals does not build" \
     unless %i[worley perlin].include?(GRAIN_CRYSTAL_FIELD)
+  stale = RANDOM_NEVER_LEADS - RECIPE_ALLOWED
+  problems << "RANDOM_NEVER_LEADS names effects no chain can call: #{stale.join(", ")}" unless stale.empty?
   STOCKS.each do |name, data|
     knots = data[:grain_knots]
     next if knots.nil?
@@ -4157,9 +4262,16 @@ def run_random
   count = (argv_flag("--count") || argv_flag("-n"))&.to_i || rng.rand(RANDOM_OUTPUTS)
   PostproBootstrap.dmesg "random dir=#{dir} pool=#{files.count} outputs=#{count} seed=#{$postpro_seed}"
 
+  # Every chain is drawn against the ones already made this run, and so is every
+  # source: five near-identical pictures of one face is the other way to waste
+  # somebody's afternoon.
+  drawn = []
+  used = []
   count.clamp(1, 24).times do |index|
-    file = files.sample(random: rng)
-    chain = random_chain(rng)
+    file = (files - used).sample(random: rng) || files.sample(random: rng)
+    used << file
+    chain = random_chain(rng, avoid: drawn)
+    drawn << chain
     $cli_logger.info "#{index + 1}/#{count}: #{File.basename(file)} — #{random_chain_name(chain)}"
     process_file(file, 1, nil, chain)
   rescue StandardError => e

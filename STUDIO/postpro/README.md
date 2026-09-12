@@ -142,19 +142,42 @@ written beside the source — Downloads if there is one, the working directory
 otherwise, with a JSON sidecar naming every effect and the seed, because a chain
 nobody wrote down is a chain nobody can render again.
 
-The pool used to be ten toy helpers: a sepia, a glitch, a novelty VHS. That is
-the vocabulary of a phone filter, and ten of them produce ten flavours of one
-joke. The pool is now every effect a recipe can call, the same set the presets
-are built from, ordered by where each effect actually sits in the sixty-one
-chains that exist rather than by a stage table that would drift from them.
-Effects are allowed to repeat, and sometimes do: two passes of halation at
-different radii is what a bright window through a thick base does, and grain over
-a print stock over grain is what a duplicated negative looks like. Grain is never
-optional. A chain with no crystals in it is a colour filter with opinions.
+A chain is grown, not sampled. A random subset of seventy-three effects is the
+Photoshop filter menu and it looks like one: tilt-shift and selenium toning and
+teal-orange on the same frame, each at half strength, none of them agreeing
+about what the picture is. What makes a chain read as a grade instead is that
+its steps belong to one process — a stock, a development, a print, one way of
+having been damaged.
 
-Every run picks a fresh seed and prints it, so the next run differs and any run
-can be had again by setting `POSTPRO_SEED`. `uplift` still stacks two presets
-over every file in the folder, which asks a different and narrower question.
+Nobody declares those families. They are read off the sixty-one presets, which
+are sixty-one colourists' answers to the same question: a step may join only
+where some preset already puts it beside everything already picked, and it runs
+at the position those presets on average give it. The graph is dense enough to
+carry it, so the constraint buys coherence without costing variety.
+
+Three rules do the rest, and they are the difference between a grade and a
+stack. One or two steps carry the look, between 0.55 and 0.95, and everything
+else sits under 0.28 — nine effects at half strength each is mud, and it is the
+clearest tell of an amateur pass. Damage never leads: dust and hair at 0.94 is
+the artefact becoming the picture, and no more than two marks of wear appear at
+all, because two is a print that has been handled and five is a prop. Neither
+does the backbone lead — most presets carry optical blur, so leading with it is
+not a look, it is an out-of-focus photograph.
+
+Then one step is allowed to disagree with the family, quietly, because a chain
+that is only coherent is a template and the interest is in the one thing that
+should not be there. Effects may repeat, a quarter of the way further along the
+process rather than back to back: two passes of halation at different radii is
+what a bright window through a thick base does, and the interest is in what
+happened between them. Grain is never optional. A chain with no crystals in it
+is a colour filter with opinions.
+
+Within a run, each picture is drawn against the ones already made — distinctive
+effects only, since sharing a backbone is not a resemblance — and each takes a
+stock no other picture in that run used. Every run picks a fresh seed and prints
+it, so the next run differs and any run can be had again by setting
+`POSTPRO_SEED`. `uplift` still stacks two presets over every file in the folder,
+which asks a different and narrower question.
 
 ### What this does not model
 
