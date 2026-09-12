@@ -25,6 +25,25 @@ before the finding.
 An item leaves this file when a check proves it, not when it stops being
 mentioned.
 
+**This file's own dominant defect is the duplicate, not the stale entry.**
+Fifty-one subjects are named in four or more different top-level sections —
+`apps.yml` in ten, `rules.yml` in eight, `dilla.rb` and `/health` in seven,
+`bin/crate` and `soul.yml` in six. Each section opened its subject
+independently, so closing one leaves the others open and the next pass opens
+one more. That is most of why a backlog is twelve thousand lines.
+`dilla_principles.yml` was nine and is seven after the fold below.
+
+Measure it before adding a section, with the file as its own input:
+
+```zsh
+ruby -e 'ls=File.readlines("TODO.md"); s=[]; ls.each_with_index{|l,i| s<<[i,l.chomp.sub("## ","")] if l.start_with?("## ")}; o=Array.new(ls.size); s.each_with_index{|(i,t),n| (i...(s[n+1]?s[n+1][0]:ls.size)).each{|k| o[k]=t}}; h=Hash.new{|x,k| x[k]=[]}; ls.each_with_index{|l,i| l.scan(/`([A-Za-z0-9_\/.:-]{6,})`/).flatten.each{|t| h[t]<<o[i] if t=~%r{[/._]}}}; h.map{|t,v| [t,v.compact.uniq]}.select{|_,v| v.size>=4}.sort_by{|_,v| -v.size}.each{|t,v| puts "#{v.size}  #{t}"}'
+```
+
+**So search this file for the subject before writing an entry about it, and
+fold rather than append.** The `dilla_principles.yml` consolidation of
+2026-09-12 is the worked example: eight entries, one measured answer, and not
+one of the eight had run `git grep` for the reader.
+
 **Forward work is the last section of this file**, merged from `WISHLIST.md` on
 2026-09-06.
 ---
@@ -135,6 +154,19 @@ credentials, a look somebody has to see, and another tree's ratchet.
   link with no colour needs an underline instead. Both ratchets count RAILS, so this
   belongs beside the RAILS section rather than here.
 - **The deploy.** See the box state below; nothing is blocking it.
+- **`dilla_principles.yml` gets a reader or gets deleted, and either is a
+  rendered-sound decision.** 3.9KB of draft research spec, `status: draft`,
+  and `git grep dilla_principles` over `STUDIO/` returns one line: the file's
+  own first. Wiring it into `groove_engine` changes what dilla generates, so
+  it is not an outsider's to take — and deleting research the operator
+  restored from `Downloads/dilla.yml` is not either.
+  It is recorded once here because it was recorded eight times. Five entries
+  across five sections asked "load it or delete it" as if it were open, in
+  `Restructure`, `Measured subtraction candidates`, `Questions that expose
+  weakness` and twice in `Bach, Dilla, Aydın Esen`; two more cited it while
+  making a different point. Every one predates the measurement, none had
+  looked for the reader, and the answer was the same for all eight.
+
 - **`SILENT_RESCUE` 26 belongs to dilla's owner.** Every one is in STUDIO and nineteen
   are in dilla, where a `rescue StandardError` around an optional gem call is
   load-bearing for a render. Narrowing one on an outsider's judgement is the change this
@@ -5071,7 +5103,6 @@ Numbered 1–N across the four trees.
 74. **`IntentRouter::INTENTS` is a keyword soup.** `intent_router.rb:6-28`. Add tests for “why isn’t the homepage realtime?” and a plain “review this later” that must stay chat.
 75. **`bin/README.md` says `pub4` is the operator surface.** `:6` — the binary is `bin/operator`.
 76. **`bin/master-core` survived the two-spine merge.** Fold into `bin/master --core` or keep and give it a test.
-77. **`bin/nsaudit` is a two-spine leftover.** Confirm it still has a job; if it only audits namespaces, fold into `rake lint:autoload`.
 78. **`bin/gate` vs `bin/operator gate`.** `bin/README.md` still tells people to run `gate` as if it were the chain. One sentence: do not run `bin/gate` unless debugging the scanner.
 79. **Seven diagnose bins overlap.** `check` / `ci` / `audit` / `probe` / `smoke` / `dogfood` / `doctor`. Concrete: `smoke` → `check --profile=ci` subset; `audit` → `operator lint --staged`.
 80. **`bin/onboard` / `cleanup` / `handoff` / `playbook` / `reset-costs` / `sync-env`.** No tests except source greps in `lifecycle_tools_spec.rb`. Real subprocess test or fold into `doctor` / `operator`.
@@ -6969,7 +7000,7 @@ Chion’s visemes and postpro headroom were the wrong tree. Katz, Izhaki, Farnel
 44. **A global swing retune “because Charnas.”** The feel is per-role offsets that already exist. Changing `SWING` default is a rendered-sound change.
 45. **Pallasmaa as perfume, video, or WebGL fog.** Haptics and reduced-motion only.
 46. **A second type scale from Hofmann exercises.** One scale in `_tokens.scss`.
-47. **Importing a book as unread YAML.** `dilla_principles.yml` is the cautionary example (draft, parallel to the tests). If a new file is added, it needs a reader the same day — `test_dilla_groove_timing` or ScaleLint — or it is inert law.
+47. **Importing a book as unread YAML.** `dilla_principles.yml` is the cautionary example, and the cost is now measured: 3.9KB of draft spec, no reader, and eight separate backlog entries asking whether to load or delete it before anyone checked. If a new file is added, it needs a reader the same day — `test_dilla_groove_timing` or ScaleLint — or it is inert law that also breeds inert backlog.
 
 ---
 
@@ -7284,7 +7315,6 @@ A finding is a hypothesis. Verify the second caller before you delete the first.
 54. **One `capture`.** Engine returns `[stdout, stderr, status]`; `RadioChop.capture` returns a string. One signature; Acapella and mix-score call it.
 55. **One ffmpeg runner.** MixScore, verify_fx, album master, `dilla.rb` ffprobe — backticks vs Open3 vs `tool_available?`. Open3 + timeout + non-zero abort. 0.0 is not a measurement.
 56. **Pid-scoped scratch everywhere.** The helper exists (`:5735`). `harmony_loud.wav` and friends use it.
-57. **`dilla_principles.yml` is loaded by `groove_engine` or deleted.** Draft YAML with no reader is a second constitution.
 58. **One LUFS window.** `dilla_reference.yml` vs `MixScore::REFERENCE[:lufs]`. Loss-gate test already wants them equal.
 59. **`bin/crate` writes the layout the engine reads, or it goes.** Third crate tree.
 60. **`rake test:dilla` is isolation’s process model, or isolation is not claimed.** One `-e` that requires every test file is how ENV and session.json leak.
@@ -9685,7 +9715,6 @@ the moment it happened, where the whole suite stayed green.
     classes "worn by tokens, not yet by every view", so this is a decision
     already taken rather than residue. Wearing them is design work.
 16. **MixScore backticks vs engine Open3 vs `RadioChop.capture`.** One ffmpeg runner, one `capture` signature.
-17. **`dilla_principles.yml` unread.** Load from `groove_engine` or delete.
 18. **Two LUFS windows.** One.
 19. **Fixed 2026-09-12.** `data/operator.yml` is the command list and now carries
      the whole of it: the check family (check-rails, check-openbsd, check-vps,
@@ -9728,7 +9757,6 @@ If two things mean the same thing, keep the one with the test.
 32. **brgen `NotificationsController` is local; amber inherits `Shared::`.** Promote or delete the host copy.
 33. **`face.part*.txt` in `public/`.** Concatenated at build, still served. Move to a build dir.
 34. **`smart-turn` ONNX (~21MB) default off.** Test that `index.html.erb` does not `<script src>` the wasm. Don’t ship it in the critical path.
-35. **`bin/nsaudit`.** Two-spine leftover. Fold into `rake lint:autoload` or delete.
 36. **`smoke-apps.sh` vs `deploy-smoke.sh`.** One smoke; `port_inventory` `SMOKE_SCRIPTS` retargets.
 37. **Fixed 2026-09-12, and the class is closed with it.** `stimulus_boot.js` retired
     content-loader on 2026-08-21 and `shared/frontend/examples.html.erb` went on
@@ -11253,7 +11281,7 @@ Unmeasured. Four top-level names stay: `MASTER/`, `RAILS/`, `OPENBSD/`, `STUDIO/
 
 Priority: 1–3 before affiliate code, 4–8 MASTER, 9 OPENBSD, 10 STUDIO, 11–13 repo-wide. Capability first; then the directory name.
 
-19. **`MASTER/bin/` is 25 executables.** Keep `master`, `operator`, `cli`. Fold `tts-bootstrap|e2e|speak|worker` under `operator tts` or `master tts`. Fold `smoke`/`smoke-web` into `check --profile=`. `nsaudit` → `rake lint:autoload`. `master-core` → `master --core`. `probe`/`dogfood` stay until their one caller moves.
+19. **`MASTER/bin/` is 25 executables.** Keep `master`, `operator`, `cli`. Fold `tts-bootstrap|e2e|speak|worker` under `operator tts` or `master tts`. Fold `smoke`/`smoke-web` into `check --profile=`. `master-core` → `master --core`. Not `nsaudit`: that fold is decided against, with the argument beside `bin/probe`, which calls it in three profiles. `probe`/`dogfood` stay until their one caller moves.
 20. **OPENBSD Ruby gates live in three places.** Root (`integrity_gate.rb`, `health_check.rb`, `config_drift_gate.rb`, …), `OPENBSD/gates/`, and `RAILS/gates` for deploy. One `OPENBSD/checks/` (or keep `gates/` and stop dropping siblings at the OPENBSD root).
 21. **OPENBSD shell scripts at tree root vs `bin/` vs `usr/local/bin/`.** `deploy_all.sh`, `vps_*.sh`, `start_all_apps.sh`, `resource_guard.sh` sit beside `etc/`. Install targets belong under `usr/local/`; operator verbs under `bin/`; recovery under a named `recovery/` if they must stay. Don’t leave a third layout at the root.
 22. **`OPENBSD/dev/` is Mac workstation.** Declare `check: none` in PATH_OWNERSHIP or move out of the OpenBSD tree (tree grammar 9).
@@ -11321,7 +11349,6 @@ Sixty questions. Each answered with two or three proposals. Unmeasured. Do not r
 ### STUDIO / time
 
 26. **What must a render never do?** (a) Overwrite a take. (b) Change a default swing. (c) Treat ffmpeg 0.0 as silence.
-27. **Is `dilla_principles.yml` law or a drawer?** (a) Load it. (b) Or delete. (c) One LUFS window.
 28. **Can two `dilla` processes share scratch?** (a) Pid-scoped temps that already exist. (b) Don’t `harmony_loud.wav` globally. (c) Isolation as separate processes.
 29. **What is Dilla-time in this engine?** (a) Per-role offset, not global SWING%. (b) Label analytical, not authentic. (c) Test kick vs hat identity.
 30. **Where do samples live?** (a) `samples/` + provenance. (b) `bin/crate` must not invent a third layout. (c) Don’t commit copyrighted refs.
@@ -11609,7 +11636,7 @@ Vector FM, Vector Grain, Vector Delay, Vector Map; Emit (spectrogram particles);
 
 93. **`live/*.als.rb` still re-synthesise what the engine would hand them.** CATALOGUE said this. Wire CopyMachine / Hocket / Bag / WavMap / VoiceStack / LPG / BUS_PATCH into at least one liveset each, as ENV the set exports, not as new DSP. Three sets exist; none should remain on six knobs.
 94. **`dfam.als.rb` and `tape_loop.als.rb` are still catalogue, not files.** Build those two before any new experimental device. They exercise DSP that already landed.
-95. **`dilla_principles.yml` is still a draft with no Ruby reader.** Experimental devices that cite it (silence, independent clocks, transform more than copy) should be the first callers of a reader, or the citation is decoration. Do not write a second principles file for M4L.
+95. **Do not write a second principles file for M4L.** Devices that cite `dilla_principles.yml` cite a file with no reader, and whether it gets one is settled and the operator's — see the MASTER operator section. A second draft beside it would be two.
 96. **Every new device follows CopyMachine’s shape.** `plan` (pure, seedable, printable) → `describe` (one line per voice/copy) → `build!` (nil if source missing) → CLI `--describe` that renders nothing. Tests pin the plan, not a WAV histogram. Golden WAVs are photographs of concerts.
 97. **ENV off unless the operator turns it on.** Pattern already used: `COPY_MACHINE`, `LPG`, `WAV_MAP`, `VOICE_STACK`, `HOCKET`, `MIDI_BAG`. New flags join that list. None enter `DILLA_STYLE_DEFAULTS`.
 98. **`RENDER_MODE=warp` is the playground, not a new style.** Warp currently enables spectral arp/stack, IDM bias, drum chops, cosmogramma, quartal, dub_chamber. New experimental DSP that would scare a soul beat belongs behind warp (or its own named mode), not behind `dilla`.
@@ -11918,7 +11945,6 @@ Principles already say it. The engine still adds.
 41. **Slash / pedal without rewriting the upper structure.** `dilla_slash_pedal_bias!` replaces the lowest hz with a pedal. It is gated on track-name regex (`neo_soul|dilla|untitled|slash|…`) plus `THEORY_PEDAL=1`. Treasure map. If the language is `dilla_slash_pedal`, the operator always runs. Track-name regex is how Get Dis Money got special-cased and everything else did not.
 42. **Rootless when density allows** — already a voicing style. Default DNA `VOICING=rootless` is already the Dilla one in several profiles. Do not also force THEORY_BACH drop2 on them (item 36).
 43. **One surprise per 4–8 bars.** Written in the expansion-pack comment at producer_dna.rb:1087. Not enforced. A generator that puts *one* borrowed chord (bVI, bII, V/ii) per cell, not a beautify pass that can fire on every fourth chord (`reharm_every_fourth_loop` at 0.4 odds). Count surprises; cap at 1.
-44. **`dilla_principles.yml` still has no reader.** Harmony goals there should be the first caller, or stop citing it. Incomplete resolution vs insert_backdoor is the test of whether a reader would change a render.
 
 ### Similar artists — new languages, not new engines
 
@@ -11953,7 +11979,6 @@ Same `DillaImprovisation` slot. Twelve is the current set; adding four is a lang
 65. **Split HarmonyScore profiles** (25, 55) before adding more generators, or the next language will be tuned to please a Bach metric.
 66. **`modes.yml`: hicaz + hüseyni** (22–23), 12-TET, sources named, disagreement recorded if sources split.
 67. **Do not Picardy or unblock Neapolitan on soul DNA.** Bach languages only.
-68. **Reader for `dilla_principles.yml` harmony.goals** (44) or stop citing the file.
 
 If two languages mean the same root motion and quality, keep the one with a test. If a “beautiful” pass changes a curated Dilla loop, it is refused.
 
