@@ -140,6 +140,23 @@
     if (boot.topologies) mergeRemoteTopologies(boot.topologies);
   }
 
+  // /runtime/topologies is data/topologies.yml rendered verbatim —
+  // RuntimeController#topologies does `Master.load_yaml` and renders it with no
+  // transformation — so every key arrives in the YAML's own lower_snake_case.
+  // This read them in the JS convention for a constant: remote.TOPOLOGIES,
+  // remote.PALETTES, remote.CANONICAL_EVENTS, remote.RUNTIME_MODES,
+  // remote.RESOLUTIONS, remote.EVENT_CLASSIFIER. All six were undefined, so
+  // `|| {}` swallowed every one and the whole remote merge had never once
+  // changed a value since it was written.
+  //
+  // Fixed at the reader rather than by renaming the YAML: lower_snake_case is
+  // the data file's convention and SHOUTING is this file's convention for a
+  // frozen table. A reader that has to translate between two conventions is
+  // where the translation belongs.
+  function remoteKey(remote, name) {
+    return remote[name.toLowerCase()] ?? remote[name];
+  }
+
   async function bootRemoteTopologies() {
     if (!window.MASTER_RUNTIME) return;
     mergeBootTopologies();
@@ -147,14 +164,16 @@
       const res = await fetch("/runtime/topologies");
       if (!res.ok) return;
       const remote = await res.json();
-      if (Array.isArray(remote.EVENT_CLASSIFIER)) {
-        remote.EVENT_CLASSIFIER.forEach(([pattern, meta]) => mergeRemoteClassifier([{ pattern, meta }]));
+      const classifier = remoteKey(remote, "EVENT_CLASSIFIER");
+      if (Array.isArray(classifier)) {
+        classifier.forEach(([pattern, meta]) => mergeRemoteClassifier([{ pattern, meta }]));
       }
-      mergeRemoteTopologies(remote.TOPOLOGIES);
-      if (remote.CANONICAL_EVENTS) CANONICAL_EVENTS.splice(0, CANONICAL_EVENTS.length, ...remote.CANONICAL_EVENTS);
-      Object.assign(PALETTES, remote.PALETTES || {});
-      Object.assign(RUNTIME_MODES, remote.RUNTIME_MODES || {});
-      Object.assign(RESOLUTIONS, remote.RESOLUTIONS || {});
+      mergeRemoteTopologies(remoteKey(remote, "TOPOLOGIES"));
+      const canonical = remoteKey(remote, "CANONICAL_EVENTS");
+      if (canonical) CANONICAL_EVENTS.splice(0, CANONICAL_EVENTS.length, ...canonical);
+      Object.assign(PALETTES, remoteKey(remote, "PALETTES") || {});
+      Object.assign(RUNTIME_MODES, remoteKey(remote, "RUNTIME_MODES") || {});
+      Object.assign(RESOLUTIONS, remoteKey(remote, "RESOLUTIONS") || {});
       window.dispatchEvent(new CustomEvent("master:topology", { detail: { id: "registry:merged", source: "runtime" } }));
     } catch (err) { window.MASTER_LOG?.warn?.("topology_registry:boot_remote", err); }
   }
