@@ -5061,7 +5061,7 @@ Numbered 1–N across the four trees.
 35. **`ResyncService`.** `lib/cli/resync_service.rb` — `git reset --hard origin/main`. Dry-run must not reset; live path refused without a flag. **Closed 2026-09-12 by Copilot:** `call` now requires `confirm: true` for live reset, while `test_cli.rb` verifies dry-run fetch/report behavior and refusal without confirmation.
 36. **`FixPreviewReport`.** `lib/cli/fix_preview_report.rb`. No test of render shape. **Closed 2026-09-12 by Copilot:** `test_cli.rb` covers clean/skipped output, violation summaries, rule/file sections, and sixty-character file-name truncation.
 37. **`DeliberationPrep`.** `lib/cli/deliberation_prep.rb` — `rescue StandardError` at `:17`. No unit test. **Closed 2026-09-12 by Copilot:** `test_cli.rb` verifies ideation exceptions publish `ideation:error` and return `nil` without escaping.
-38. **IN PROGRESS — Copilot, 2026-09-12.** **`CouncilCrit`.** `lib/cli/council_crit.rb`. Add focused tests for empty diffs, missing deliberation, veto/pass events, truncation, and runner wiring.
+38. **`CouncilCrit`.** `lib/cli/council_crit.rb`. Add focused tests for empty diffs, missing deliberation, veto/pass events, truncation, and runner wiring. **Closed 2026-09-12 by Copilot:** `test_cli.rb` covers all listed paths, including event payloads and container runner dependencies.
 39. **`AstEdit`.** `lib/io/ast_edit.rb` — dangerous tool, in `DEFAULT_TOOL_MAP`. No test of Prism edit / governor.
 40. **`BatchReplace`.** `lib/io/batch_replace.rb`. Same.
 41. **`SearchKnowledge`.** `lib/io/search_knowledge.rb`. No test that it reads `knowledge/` and not `docs/`.

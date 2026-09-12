@@ -2,6 +2,7 @@
 
 require_relative "test_helper"
 require "cli/brain_overlay"
+require "cli/council_crit"
 require "cli/deliberation_prep"
 require "cli/fix_preview_report"
 require "cli/fold_risk"
@@ -188,6 +189,96 @@ class TestCLI < Minitest::Test
     end
 
     assert_equal ["ideation:error", { message: "ideation unavailable" }], events.last
+  end
+
+  def test_council_crit_returns_clean_for_an_empty_diff
+    Master::CLI::CouncilCrit.stub(:diff_artifact, " \n") do
+      result = Master::CLI::CouncilCrit.run(root: "/tmp/master", deliberation: Object.new)
+
+      assert result.ok?
+      assert_equal "critique: no changes to review", result.value!
+    end
+  end
+
+  def test_council_crit_reports_missing_deliberation
+    Master::CLI::CouncilCrit.stub(:diff_artifact, "diff --git a/a b/a\n") do
+      result = Master::CLI::CouncilCrit.run(root: "/tmp/master", deliberation: nil)
+
+      assert result.err?
+      assert_equal "critique: deliberation unavailable", result.message
+      assert_equal :infrastructure, result.category
+    end
+  end
+
+  def test_council_crit_publishes_veto_and_preserves_error
+    events = []
+    bus = Object.new
+    bus.define_singleton_method(:publish) { |event, **details| events << [event, details] }
+    deliberation = Object.new
+    deliberation.define_singleton_method(:review) do |_artifact, context:|
+      raise "unexpected context: #{context}" unless context == "pre-ship council gate (staged)"
+
+      Master::Result.err("blocked", category: :policy)
+    end
+
+    Master::CLI::CouncilCrit.stub(:diff_artifact, "diff") do
+      result = Master::CLI::CouncilCrit.run(
+        root: "/tmp/master",
+        deliberation:,
+        scope: "staged",
+        bus:,
+      )
+
+      assert_equal "blocked", result.message
+      assert_equal ["council:start", { scope: "staged", bytes: 4 }], events[0]
+      assert_equal ["council:veto", { message: "blocked" }], events[1]
+    end
+  end
+
+  def test_council_crit_summarizes_pass_and_truncates_large_artifacts
+    reviewed = nil
+    events = []
+    bus = Object.new
+    bus.define_singleton_method(:publish) { |event, **details| events << [event, details] }
+    deliberation = Object.new
+    deliberation.define_singleton_method(:review) do |artifact, context:|
+      reviewed = artifact
+      Master::Result.ok(
+        [
+          { persona: "Rhea", feedback: "looks good\nwith detail", role: "Reviewer" },
+          { persona: "Synthesis", feedback: "ship it", role: "Synthesis" },
+        ],
+      )
+    end
+
+    status = Object.new
+    status.define_singleton_method(:success?) { true }
+    Open3.stub(:capture2e, ["x" * 40_000, status]) do
+      result = Master::CLI::CouncilCrit.run(root: "/tmp/master", deliberation:, bus:)
+
+      assert result.ok?
+      assert_includes result.value!, "critique: council pass"
+      assert_includes result.value!, "Rhea: looks good"
+      assert_includes result.value!, "synthesis: ship it"
+      assert_equal Master::CLI::CouncilCrit::MAX_DIFF_BYTES + "\n... [truncated]".bytesize, reviewed.bytesize
+      assert_equal ["council:pass", { jurors: 2 }], events.last
+    end
+  end
+
+  def test_council_crit_runner_uses_container_dependencies
+    deliberation = Object.new
+    deliberation.define_singleton_method(:review) do |_artifact, context:|
+      Master::Result.ok([{ persona: "Rhea", feedback: context, role: "Reviewer" }])
+    end
+    bus = Object.new
+    bus.define_singleton_method(:publish) { |_event, **_details| }
+    runner = Master::CLI::CouncilCrit.runner_for({ deliberation:, bus: })
+
+    Master::CLI::CouncilCrit.stub(:diff_artifact, "diff") do
+      result = runner.call(root: "/tmp/master")
+
+      assert_includes result.value!, "Rhea: pre-ship council gate (diff)"
+    end
   end
 
   def test_help_uses_progressive_disclosure
