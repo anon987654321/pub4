@@ -336,12 +336,19 @@ body.vertical-marketplace #navBar {
   .compose-icon { display: block; }
 }
 
-@media (max-width: 767px) { // scan: intentional — narrow-screen exception band in a banded system (wave C ruling: inverting is a redesign)
+/* Inline only. The block axis is the shared rule's job — restating it as a
+   bare --space-2 dropped --top-band-nudge and left the control on 31 against
+   the bar's 33, the same misalignment as desktop in a smaller dose. */
+.theme-toggle {
+  inset-inline-end: var(--space-2);
+}
+
+/* From lg up, the shared rule's inline compensation applies: the toggle carries
+   12px of transparent padding, so the icon sits --chrome-inset from the edge
+   only if that padding is subtracted back off. See _shell_widgets.scss. */
+@media (min-width: 768px) {
   .theme-toggle {
-    /* Inline only. The block axis is the shared rule's job — restating it as a
-       bare --space-2 dropped --top-band-nudge and left the control on 31 against
-       the bar's 33, the same misalignment as desktop in a smaller dose. */
-    inset-inline-end: var(--space-2);
+    inset-inline-end: calc(var(--chrome-inset, 12px) + var(--safe-right, 0px) - 12px);
   }
 }
 

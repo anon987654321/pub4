@@ -359,17 +359,23 @@ h1, .display, .wordmark {
   gap: var(--space-6);
   grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-md), 1fr));
 }
+/* One column of tiles has no spare axis to span, so the hero starts as a plain
+   cell and only becomes a hero from sm up. This base carried span 2 with a
+   max-width block below cutting it back to 1 — inverting the block without
+   moving the base left span 2 at every width. */
 .items-grid > :first-child,
 .wardrobe-grid > :first-child {
-  grid-column: span 2;
-  grid-row: span 2;
+  grid-column: span 1;
+  grid-row: span 1;
 }
 
-@media (max-width: 36rem) { // scan: intentional — narrow-screen exception band in a banded system (wave C ruling: inverting is a redesign)
+/* The first tile is a plain cell until there is room for a hero. One column of
+   tiles has no spare axis to span, so span 2 only means anything from sm up. */
+@media (min-width: 576px) {
   .items-grid > :first-child,
   .wardrobe-grid > :first-child {
-    grid-column: span 1;
-    grid-row: span 1;
+    grid-column: span 2;
+    grid-row: span 2;
   }
 }
 

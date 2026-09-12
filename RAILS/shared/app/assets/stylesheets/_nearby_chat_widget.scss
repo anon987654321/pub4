@@ -113,7 +113,7 @@
  * does not fit a viewport narrower than that, mouse or not. This is now the
  * ONLY place the panel's small-screen geometry is set.
  */
-@media (hover: none), (max-width: 480px) {
+@media (hover: none) {
   /* Only while open. Closed, the tab stays a corner chip — and the tab is
      already visibility:hidden when the panel is open, so widening the container
      cannot stretch it. The :has() selector is the same one used above. */
@@ -366,14 +366,4 @@
   border-bottom: 0;
 }
 
-@media (max-width: 480px) { // scan: intentional — narrow-screen exception band in a banded system (wave C ruling: inverting is a redesign)
-  /* The panel's narrow-screen geometry used to live here as
-     `width: 100vw; height: min(70vh, 520px)`. It has moved up to the sheet
-     block next to the panel's own rule — two mobile treatments in one file, 300
-     lines apart, silently disagreed: whichever came last won, and this one did,
-     so the sheet capped at 520px and the change made above it did nothing. */
-
-  /* The 88px mobile twin of the 72px rule above, removed with it — the token
-     carries the height at every width now. */
-}
 

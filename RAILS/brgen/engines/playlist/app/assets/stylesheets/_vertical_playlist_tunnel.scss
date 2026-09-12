@@ -80,7 +80,12 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--text-sm);
+  /* Ramped rather than stepped. The phone treatment for this panel was a
+     clamp inside a `max-width: 767px` query — a width-adaptive value wrapped in
+     a width test, which made it jump from 14px to 15.75px at one pixel. The
+     clamp does that job by itself, so the query is gone. px floor for the same
+     reason as _canvas.scss: brgen roots at 18px, so --text-sm is 15.75px here. */
+  font-size: clamp(12px, 3vw, var(--text-sm));
   /* Pinned, not themed, and opaque rather than translucent. This panel floats
      over the tunnel's WebGL canvas, so with rgba(0,0,0,0.7) its real background
      was whatever the animation happened to be rendering — there was no stable
@@ -91,7 +96,7 @@
   font-family: var(--font-mono);
   background: #14141a; // scan: intentional — the tunnel floor, not a theme surface
   border-radius: 0;
-  padding: 0.25rem 0.75rem;
+  padding: clamp(var(--space-1), 1vw, 0.25rem) clamp(0.5rem, 2vw, 0.75rem);
 }
 
 /* Minimal home: keep title readable above the tab safe area / home indicator. */

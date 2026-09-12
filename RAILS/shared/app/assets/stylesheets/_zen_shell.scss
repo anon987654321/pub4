@@ -372,7 +372,6 @@ progress::-webkit-progress-value {
 
 .direct-upload {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(80px, 2fr) auto;
   align-items: center;
   gap: var(--space-2);
   margin-block-start: var(--space-2);
@@ -403,14 +402,32 @@ progress::-webkit-progress-value {
   color: var(--color-danger);
 }
 
-@media (max-width: 480px) { // scan: intentional — narrow-screen exception band in a banded system (wave C ruling: inverting is a redesign)
+/* The phone shape: two tracks, with the progress bar wrapped onto a row of its
+   own. `.direct-upload-progress` has no rule outside this one, so stating it here
+   is the whole of its placement. This was the other way round — three tracks in
+   the base and a max-width: 480px block cutting back to two — which also made 480
+   a ceiling while the inversions elsewhere in this pass made it a floor. At
+   exactly 480px both matched and source order decided; breakpoint_lint calls that
+   ambiguous_edge and it was the failure that caught this file. */
+.direct-upload {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.direct-upload-progress {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+/* From xs up there is room for the third track, and the progress bar rejoins the
+   row instead of wrapping under it. */
+@media (min-width: 480px) {
   .direct-upload {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) minmax(80px, 2fr) auto;
   }
 
   .direct-upload-progress {
-    grid-column: 1 / -1;
-    grid-row: 2;
+    grid-column: auto;
+    grid-row: auto;
   }
 }
 

@@ -1,8 +1,21 @@
+/* Two columns on a phone, four from md up. auto-fit with a floor would compute
+   this and give the tablet a three-column step, which is the better answer — but
+   the floor has to be measured against the real dashboard container, and that
+   page is behind a login this probe cannot reach. Guessing a floor that turns out
+   wider than the column would silently drop desktop from four columns to three.
+   Recorded in TODO.md; until then this is the same two counts, stated phone-first. */
 .dash-stats dl {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-8);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
   margin-bottom: var(--space-6);
+}
+
+@media (min-width: 640px) {
+  .dash-stats dl {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-8);
+  }
 }
 
 .dash-stats dl > div {
@@ -25,20 +38,28 @@
   font-weight: var(--weight-bold);
 }
 
-@media (max-width: 639px) { // scan: intentional — narrow-screen exception band in a banded system (wave C ruling: inverting is a redesign)
-  .dash-stats dl {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-3);
-  }
+/* .plan-row / .cpw-row keep a query: stacking a row into a column is a layout
+   decision at a known width, not a size the browser can work out. Stated
+   phone-first, undone from md up. */
+.plan-row,
+.cpw-row {
+  align-items: flex-start;
+}
 
+.cpw-row {
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+@media (min-width: 640px) {
   .plan-row,
   .cpw-row {
-    align-items: flex-start;
+    align-items: center;
   }
 
   .cpw-row {
-    flex-direction: column;
-    gap: var(--space-2);
+    flex-direction: row;
+    gap: var(--space-4);
   }
 }
 
