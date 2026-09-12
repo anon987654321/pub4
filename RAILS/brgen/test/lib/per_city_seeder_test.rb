@@ -129,4 +129,41 @@ class PerCitySeederTest < ActiveSupport::TestCase
     assert_equal city.id, admin.reload.city_id, "an unassigned admin should be adopted into its domain's city"
     assert_equal 1, ActsAsTenant.without_tenant { User.where(email_address: "admin@#{city.domain}").count }
   end
+# A city's bank must sound like that city. These are the markers the sources
+# record, not an impression of them, and they are the half a later cleanup
+# pass would flatten first — "Ka gjør dokker" reads like a typo to anyone
+# correcting toward bokmål.
+DIALECT_MARKERS = {
+  "brgen.no" => [ /\beg\b/, /\bKa\b/ ],
+  "trndheim.no" => [ /\bæ\b/i, /\bitj\b/ ],
+  "stvanger.no" => [ /\beg\b/, /\bkor\b|\bmykje\b|\bsjølv\b/ ],
+  "oshlo.no" => [ /\bklokka\b|\bsola\b|\bboka\b/ ]
+}.freeze
+
+test "every city bank is written in that city's dialect" do
+  DIALECT_MARKERS.each do |domain, markers|
+    bank = Brgen::CityContent.posts_for(domain)
+    refute_nil bank, "#{domain} lost its post bank"
+    text = bank.flatten.join(" ")
+    markers.each do |marker|
+      assert_match marker, text, "#{domain} no longer sounds like #{domain}"
+    end
+  end
+end
+
+test "no two cities share a post" do
+  banks = Brgen::CityContent::POSTS_BY_DOMAIN
+  titles = banks.values.flatten(1).map(&:first)
+  assert_equal titles.uniq.size, titles.size, "a post is seeded under two cities"
+end
+
+# Bergen's own seeder owns brgen.no, so a bank for a domain with no city
+# would seed nothing and read as a silent gap rather than a failure.
+test "every bank names a domain the registry knows" do
+  known = Brgen::DomainRegistry::ENTRIES_BY_DOMAIN.keys
+  Brgen::CityContent::POSTS_BY_DOMAIN.each_key do |domain|
+    assert_includes known, domain, "#{domain} has a post bank and no registry entry"
+  end
+end
+
 end

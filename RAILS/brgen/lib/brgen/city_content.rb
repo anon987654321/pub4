@@ -88,7 +88,83 @@ module Brgen
       "PL" => "pl"
     }.freeze
 
+    # What a city actually sounds like.
+    #
+    # PerCitySeeder used Faker for every city but Bergen, so oshlo.no and
+    # trndheim.no got Norwegian-locale lorem: grammatical, placeless, and in
+    # nobody's dialect. A city network whose whole argument is that a visitor on
+    # lsangeles.com never sees Bergen cannot seed all four with the same voice.
+    #
+    # Each bank is written in the city's own dialect, checked against the
+    # features the sources actually record rather than an impression of them:
+    #
+    #   bergensk    `eg`, `ka`, and no feminine gender at all — `boken`,
+    #               `jenten`, never `boka`. An e-language: `å hente`, not
+    #               `å henta`. Local words: boss (søppel), smau (alley),
+    #               kjuagutt (a real Bergenser), hallaien, "den e brun".
+    #   trøndersk   `æ`, `itj`, `ka`, `dokker`, `koss`; apokope drops the final
+    #               vowel (`å kast`, `mått`); palatalisation writes `mannj`,
+    #               `kvellj`; `sjø` closes a sentence for emphasis.
+    #   stavangersk `eg` and an a-language — `å kasta`, `ei visa` — with the
+    #               plural -ar the city shares with north Rogaland.
+    #   oslo        east-Norwegian bokmål with the colloquial feminine kept:
+    #               `boka`, `jenta`, `sjæl`. It is the one of the four with no
+    #               dialect markers to reach for, and pretending otherwise is
+    #               worse than writing it plainly.
+    #
+    # Places are real and specific. A post about Bybanen or Bakklandet belongs
+    # to one city and could not have been generated for another, which is the
+    # whole point of the exercise.
+    POSTS_BY_DOMAIN = {
+      "brgen.no" => [
+        [ "Ka gjør dokker når det bøtter ned hele helgen?", "Eg har gitt opp paraplyen. Kjøpte skikkelig regnjakke på Xhibition og nå e det nesten kjekt å gå i sentrum når det står rett ned." ],
+        [ "Bosset på Nordnes står igjen fjerde uken", "Nokon som veit ke det går i? Har ringt kommunen to ganger. Bekkalokket i smauet e tett òg." ],
+        [ "Fløyen før klokken sju e en annen by", "Gikk opp i grålysningen i dag. Møtte tre stykker totalt. Byen lå under skodden og bare Ulriken stakk opp." ],
+        [ "Beste tebrød i Bergen — eg tar imot forslag", "Har testet meg gjennom sentrum. Fortsatt ikke funnet noe som slår det eg fikk på Møhlenpris i fjor." ],
+        [ "Bybanen til Åsane — trur dokker på 2030?", "Har hørt den datoen så mange ganger nå at eg begynner å lure. Noen som følger med på reguleringen?" ],
+        [ "Fisketorget lørdag: turist eller bergenser?", "Eg kjøper fortsatt fisken der, men aldri på lørdag. Da e det kø av folk som skal ha reker i beger." ],
+        [ "Kjuagutt søker fotballag i Årstad", "35, treig, men møter opp hver gang. Spilte på Nymark for hundre år siden." ],
+        [ "Brann på Stadion i regn e den ekte varen", "Bataljonen sto som vanlig. Den e brun, uansett hvordan det gikk." ]
+      ],
+      "oshlo.no" => [
+        [ "Hvorfor er det alltid kø på Sognsvann når sola kommer?", "Dro dit klokka sju i går for å slippe unna. Klokka ni var det folk overalt. Hele byen har samme idé samtidig." ],
+        [ "Grünerløkka er ikke Grünerløkka lenger", "Bodde der fra 2011. Kom tilbake i helga og kjente igjen tre steder. Er det bare meg som syns det gikk fort?" ],
+        [ "Beste kebab øst for Akerselva?", "Har spist meg gjennom Grønland og Tøyen i to år. Kommer stadig tilbake til det samme stedet, men vil gjerne bli overbevist." ],
+        [ "T-banen til Ekeberg — noen som vet noe?", "Står fast igjen på Jernbanetorget. Tredje gang denne uka. Skjønner ikke hva som skjer med signalanlegget." ],
+        [ "Nordmarka i september slår Nordmarka i juli", "Ingen mygg, ingen folk, og sopp overalt. Gikk fra Sognsvann til Ullevålseter og møtte fire personer." ],
+        [ "Vippa eller Aker Brygge for folk som besøker?", "Har søskenbarn på besøk fra Bergen og vil ikke ta dem med et sted de kommer til å le av meg for." ],
+        [ "Bislett om morgenen, hvem løper der?", "Prøver å komme i gang igjen. Er banen åpen for vanlige folk før jobb, eller er det klubbene som har den?" ],
+        [ "Operaen-taket er fortsatt gratis og fortsatt best", "Folk glemmer det. Gå opp en tirsdag kveld, ta med kaffe, se utover fjorden. Koster ingenting." ]
+      ],
+      "stvanger.no" => [
+        [ "Kor mange turistar tåler Preikestolen?", "Var der i går og det stod folk i kø på sjølve platået. Eg er glad folk kjem, men det byrjar å bli mykje." ],
+        [ "Fargegaten i regn er faktisk finare", "Alle tar bilete når sola skin, men Øvre Holmegate i regnvêr er noko for seg sjølv. Fargane blir mettare." ],
+        [ "Nokon som handlar fisk i Vågen framleis?", "Eg gjer det kvar fredag. Byrjar å bli få av oss, verkar det som." ],
+        [ "Oljemuseet med ungar — verdt det?", "Har to på seks og ni. Er det noko å sjå på for dei, eller blir det for mykje tekst på veggane?" ],
+        [ "Tou Scene har blitt bra igjen", "Var der på konsert i helga. Lokalet fungerer betre no enn for fem år sidan." ],
+        [ "Sykla til Sola mot vinden i dag", "Tjue minutt ut, ti minutt heim. Slik er det å bu her." ],
+        [ "Gamle Stavanger er tomt om vinteren", "Gjekk gjennom kvitbyen i går kveld og møtte ingen. Litt trist, litt fint." ],
+        [ "Breiavatnet-svanene har fått ungar igjen", "Sju stykk. Stod og såg på dei i tjue minutt før eg gjekk på jobb." ]
+      ],
+      "trndheim.no" => [
+        [ "Ka gjør dokker på Solsiden når det regn?", "Æ har prøvd alt. Til slutt blir det bare å sett sæ inne og vent, sjø." ],
+        [ "Bakklandet e fullt av folk som itj bor her", "Skjønne det godt, det e jo fint. Men det e blitt vanskelig å få bord nå." ],
+        [ "Koss kjem æ mæ opp Trampen uten å se dum ut?", "Har bodd her i tre år og itj klart det enda. Noen som har en teknikk?" ],
+        [ "Nidelva om morran e det beste med byen", "Går langs elva til jobb hver dag. Tar ti minutt lenger, verdt det hver gang." ],
+        [ "Gløshaugen-kantina — kor et dokker egentlig?", "Æ e lei av det samme. Noen som har funnet noe bedre i gåavstand?" ],
+        [ "Munkholmen siste båt i september", "Rakk den så vidt i fjor. Noen som vet om de kjører ut oktober i år?" ],
+        [ "Samfundet på en tirsdag e undervurdert", "Ingen kø, folk prater faktisk sammen. Helgene e itj det samme." ],
+        [ "Tyholttårnet snurre fortsatt, eller?", "Sto og så på det i går og klarte itj å avgjøre om det gikk rundt." ]
+      ]
+    }.freeze
+
     module_function
+
+    # Nil when the city has no bank, so the caller keeps its Faker path rather
+    # than seeding a Bergen post under a Trondheim domain.
+    def posts_for(domain)
+      POSTS_BY_DOMAIN[domain.to_s]
+    end
 
     def subreddits_for(domain)
       SUBREDDITS_BY_DOMAIN.fetch(domain) { [ domain.to_s.split(".").first ] }

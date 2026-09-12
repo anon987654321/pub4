@@ -30,7 +30,10 @@ end
 if City.table_exists?
   puts 'Seeding flagship per-city content (brgen.no, lsangeles.com, amstrdam.nl, oshlo.no)...'
   City.where(domain: %w[brgen.no lsangeles.com amstrdam.nl oshlo.no]).find_each do |city|
-    Brgen::PerCitySeeder.new(city, posts_per_city: 4).seed!
+# Eight, not four. The four cities with a dialect bank carry eight posts
+# each and PerCitySeeder walks them in order, so asking for four seeded
+# half of every bank and dropped the second half of what was written.
+Brgen::PerCitySeeder.new(city, posts_per_city: 8).seed!
   end
 end
 

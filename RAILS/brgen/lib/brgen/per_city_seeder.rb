@@ -107,6 +107,9 @@ module Brgen
 
     def seed_posts(admin, users, communities)
       pool = users + [ admin ]
+      bank = Brgen::CityContent.posts_for(@city.domain)
+      return seed_posts_from_bank(pool, communities, bank) if bank
+
       # Faker::Lorem is Latin in every locale, so localising Faker did nothing
       # for post bodies. PlausibleContent carries real sentences; Norwegian
       # cities get Norwegian, everywhere else falls back to English.
@@ -118,6 +121,27 @@ module Brgen
           community: communities.sample,
           title: Brgen::PlausibleContent.post_title(@city.name, norwegian: norwegian),
           content: Brgen::PlausibleContent.post_body(norwegian: norwegian)
+        )
+      end
+    end
+
+    # A city with a bank gets its own voice instead of localised filler.
+    # PlausibleContent writes correct Norwegian, which is not the same thing as
+    # Bergen Norwegian or Trondheim Norwegian, and a network whose argument is
+    # that every city is its own place cannot seed four of them alike.
+    #
+    # Taken in order and wrapped, not sampled: the bank is written so the first
+    # posts are the ones worth seeing, and sampling four of eight would leave a
+    # demo missing the post about Bybanen half the time.
+    def seed_posts_from_bank(pool, communities, bank)
+      @posts_per_city.times do |index|
+        title, content = bank[index % bank.size]
+        Post.create!(
+          user: pool.sample,
+          city: @city,
+          community: communities.sample,
+          title: title,
+          content: content
         )
       end
     end
