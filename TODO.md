@@ -213,7 +213,7 @@ which nothing had deployed — the shape `OPENBSD/CLAUDE.md` describes as the fr
 door rather than a backend. `relayd -n` validated, and `doas rcctl restart relayd`
 restored it. Check `rcctl check relayd` after any deploy that restarts master.
 
-**MASTER's voice is `en-NG-EzinneNeural`** (`data/voice.yml:23`), and vm23 speaks
+**MASTER's voice is `en-US-JennyNeural`** (`data/voice.yml`), and vm23 speaks
 with whatever it booted on: the daemon reads that file at boot, so the change is live
 only after a deploy and `rcctl restart master`. The browser half comes from
 `Policy.browser_payload` in the page, so a stale `face.runtime.js` on the box would
@@ -4955,7 +4955,7 @@ Numbered 1–N across the four trees.
 5. **Palette keys contradict one chrome.** `topologies.yml:34-42` operator/review/visitor palettes. Mark canvas-only and test that chrome does not read them, or delete.
 6. **`START_HERE.md` has a broken sentence.** `:142` “…`yml` (active read-modify-write…” — the filename was eaten. Restore the stem or cut the clause.
 7. **`START_HERE.md` still defends deleted YAML.** `:147-150` discusses `visual_clusters.yml` / `mobile_web_opportunities.yml`. They were deleted 2026-08-11. Move the paragraph to DECISIONS.
-8. **Three files, one voice string.** `soul.yml:9` `voice: en-NG-EzinneNeural`; `voice.yml:23` `neural:`; `tts.yml` for the engine. One reader (`Voice::Policy`) should own the string; the others cite it.
+8. **Three files, one voice string.** `soul.yml` `voice:`; `voice.yml` `neural:`; `tts.yml` for the engine. One reader (`Voice::Policy`) should own the string; the others cite it. The 2026-09-12 move to `en-US-JennyNeural` touched fourteen files to change one value, which is the cost this entry names.
 9. **`limits.yml` still titled Tier 1 Law in START_HERE.** `:170`. `limits.yml:1-18` is explicit that most of it is unread `guidance:`. Retitle START_HERE to match `test_limits_split.rb`.
 10. **`project_context.yml` names `MASTER/exe/tts-worker`.** `:36` — worker is `MASTER/bin/tts-worker`.
 11. **`project_context.yml` still lists `visual_clusters.yml` as a fold exception.** `:27`. Remove.
