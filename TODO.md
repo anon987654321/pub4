@@ -5904,6 +5904,23 @@ Numbered 1–N across the four trees.
 796. **home/johann/bin/mailimg.** PATH_OWNERSHIP should list it as the executable check (`ksh -n`).
 797. **stale_ci_cleanup.ksh lives under usr/local/libexec.** Include `/usr/local/libexec/` in installed_targets.
 798. **gates live under OPENBSD/gates but run via RAILS/gates/runner.rb.** One paragraph in START_HERE: registered in `RAILS/gates/gates.yml`, invoked by `check-openbsd`.
+1062. **`.dash-stats dl` wants auto-fit and could not be verified for it.** Amber's
+     stat grid is four columns, two below md, and nothing between — a tablet gets
+     the phone grid. `repeat(auto-fit, minmax(<floor>, 1fr))` computes the count and
+     adds the three-column step, which is the right shape. It was written and then
+     reverted on 2026-09-12: the floor has to be measured against the real dashboard
+     container, that page is behind a login the CDP probe cannot reach, and a floor
+     guessed wider than the column silently drops desktop from four columns to
+     three. Measure the container, then set the floor.
+
+1063. **`_root.scss:334` is the last max-width, and it is not a violation.**
+     `(min-width: 768px) and (max-width: 1264px)` swaps `.compose-label` for
+     `.compose-icon` in a band. MOBILE_FIRST does not flag it — the detector reads
+     `@media (max-width` and this opens with min-width — and the max is the upper
+     bound of an enhancement rather than a narrow-screen exception. Closing it would
+     need the two elements' default display values, which have no rule anywhere in
+     the tree and sit behind the same login. Left deliberately.
+
 1060. **`vps_weekly_integrity.sh` has never run.** `etc/crontab.vm23:97` schedules it
      `30 3 * * 0`. Read from vm23 on 2026-09-12, root's live crontab does not carry
      that line and `/usr/local/bin/vps_weekly_integrity.sh` does not exist — this is

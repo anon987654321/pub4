@@ -413,35 +413,63 @@ kbd { padding: var(--space-0-5) 4px; border: 1px solid var(--border); border-bot
   text-align: center;
 }
 
-@media (max-width: 639px) { // scan: intentional — narrow-screen exception band in a banded system (wave C ruling: inverting is a redesign)
+/* Phone first. The nav wraps onto two rows with the brand taking the whole of the
+   first, so body needs 104px of clearance rather than 64; the search collapses to
+   one column and a port's definition list stacks its terms.
+   `.search-form .btn` had a width: 100% in the block this replaces, which the
+   probe read as 100% at 640 and 1440 too — the base already sets it, so it is
+   dropped rather than carried over. */
+body {
+  padding-block-start: 104px;
+}
+
+body > nav[aria-label="Primary navigation"] {
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+}
+
+body > nav[aria-label="Primary navigation"] .brand {
+  flex-basis: 100%;
+}
+
+.search-form {
+  grid-template-columns: 1fr;
+}
+
+article dl {
+  grid-template-columns: 1fr;
+  gap: var(--space-1);
+}
+
+article dd + dt {
+  margin-block-start: var(--space-3);
+}
+
+@media (min-width: 640px) {
   body {
-    padding-block-start: 104px;
+    padding-block-start: 64px;
   }
 
   body > nav[aria-label="Primary navigation"] {
-    flex-wrap: wrap;
-    gap: var(--space-2) var(--space-4);
+    flex-wrap: nowrap;
+    gap: var(--space-4);
   }
 
   body > nav[aria-label="Primary navigation"] .brand {
-    flex-basis: 100%;
+    flex-basis: auto;
   }
 
   .search-form {
-    grid-template-columns: 1fr;
-  }
-
-  .search-form .btn {
-    width: 100%;
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   article dl {
-    grid-template-columns: 1fr;
-    gap: var(--space-1);
+    grid-template-columns: minmax(7rem, max-content) minmax(0, 1fr);
+    gap: var(--space-2) var(--space-4);
   }
 
   article dd + dt {
-    margin-block-start: var(--space-3);
+    margin-block-start: 0;
   }
 }
 

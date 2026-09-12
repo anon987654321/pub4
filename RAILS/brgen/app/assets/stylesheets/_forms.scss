@@ -77,9 +77,18 @@
   overflow-y: auto;
 }
 
-@media (max-width: 767px) { // scan: intentional — narrow-screen exception band in a banded system (wave C ruling: inverting is a redesign)
+/* Room for the soft keyboard, which only ever exists here. env() is 0 wherever
+   there is no keyboard, so the term is self-cancelling — but the --space-2 beside
+   it is not, and .compose-box has no other padding rule in the tree, so leaving
+   this unconditional would put 8px under the composer on desktop where there is
+   none today. The min-width step below takes it back off. */
+.compose-box {
+  padding-bottom: calc(var(--space-2) + max(env(keyboard-inset-height, 0px), var(--keyboard-inset, 0px)));
+}
+
+@media (min-width: 768px) {
   .compose-box {
-    padding-bottom: calc(var(--space-2) + max(env(keyboard-inset-height, 0px), var(--keyboard-inset, 0px)));
+    padding-bottom: 0;
   }
 }
 

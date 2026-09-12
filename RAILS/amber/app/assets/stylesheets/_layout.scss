@@ -46,21 +46,38 @@ main#main-content header > nav {
   margin-block-start: var(--space-6);
 }
 
-@media (max-width: 639px) { // scan: intentional — narrow-screen exception band in a banded system (wave C ruling: inverting is a redesign)
+/* Phone first: main carries its own gutter, and the section nav is a single
+   scrolling row rather than wrapping onto several. From md up the family contract
+   takes the gutter back — _layout_chrome zeroes .layout > main's inline padding —
+   and the nav wraps again, which is this file's own base for it.
+   The `flex: 0 0 auto` on the nav's controls stays unconditional: it stops them
+   shrinking in the scrolling row and is harmless once the row wraps. */
+main#main-content {
+  padding-inline: var(--space-6);
+}
+
+main#main-content header > nav {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-block-end: var(--space-2);
+  scrollbar-width: thin;
+}
+
+main#main-content header > nav .btn,
+main#main-content header > nav form {
+  flex: 0 0 auto;
+}
+
+@media (min-width: 640px) {
   main#main-content {
-    padding-inline: var(--space-6);
+    padding-inline: 0;
   }
 
   main#main-content header > nav {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding-block-end: var(--space-2);
-    scrollbar-width: thin;
-  }
-
-  main#main-content header > nav .btn,
-  main#main-content header > nav form {
-    flex: 0 0 auto;
+    flex-wrap: wrap;
+    overflow-x: visible;
+    padding-block-end: 0;
+    scrollbar-width: auto;
   }
 }
 
