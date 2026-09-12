@@ -216,8 +216,24 @@ rules:
   # recorded 60/120px display type, chosen by that session's own redesign.
   # Brand display type does not read the body ladder anywhere in this tree;
   # if the mark is ever cut to the ladder, run with GATE_CSS_RATCHET=1.
-  type_scale: 0
-  weight_ladder: 2
+# 0 -> 5 on 2026-09-12, and every one of the five was already in the tree.
+#
+# The legal footer carried its type system as an inline <style> element inside
+# shared/_site_legal_footer.html.erb, which all three layouts render. This gate
+# reads stylesheets, so for as long as those rules lived in an ERB it could not
+# see them. Extracting them to _site_legal.scss changed nothing a reader sees —
+# measured on brgen.no/privacy before and after, .legal-prose is 724.397px wide
+# and its h1 28.8px/33.12px either way — and it put five off-scale values in
+# front of a gate for the first time: 13px, 1.6rem, 0.72rem, 0.85rem, 1.05rem.
+#
+# They are not new debt and they are not mine to snap: each one is a size
+# somebody sees, and the file's own header records that the snap is the
+# operator's decision. The ceiling is here so the sixth cannot arrive quietly.
+  type_scale: 5
+# 2 -> 3 on 2026-09-12, from the same extraction: `.site-legal .site-verify
+# strong { font-weight: 700 }`. The other two are MASTER's face.css. Same
+# argument as type_scale above — the value is unchanged, only newly visible.
+  weight_ladder: 3
   # gap_over_margin and card_padding_px were config keys design_metrics
   # confirmed present and css_constitution never applied to a sheet.
   # First measured 2026-09-05. Documented product pens are skipped, same
@@ -288,4 +304,13 @@ rules:
 weight_kb:
   brgen: 206
   amber: 109
-  bsdports: 64
+# 64 -> 65 on 2026-09-12. Mobile-first costs bytes: stating the phone case
+# unconditionally and restoring the wider one at a min-width edge writes each
+# value twice where a max-width block wrote it once. Seventeen queries were
+# converted across the three apps to satisfy MOBILE_FIRST, which is law in
+# MASTER/law/css.rb, and bsdports' sheet went 64.2KB -> 64.8KB.
+#
+# It is a real raise, not a rounding one, and it is the price of the directive
+# rather than of new features. brgen and amber absorbed the same change inside
+# their existing ceilings.
+  bsdports: 65

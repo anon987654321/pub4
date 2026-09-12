@@ -22,6 +22,33 @@
  * the operator's, because every one of those numbers is something somebody sees.
  */
 
+/* The tap floor, without moving anything.
+ *
+ * Measured at 390px on 2026-09-12: these three links are 91x21, 45x21 and
+ * 161x21 on every brgen surface and 42x35, 36x35, 47x35 on amber — against the
+ * --tap-min: 44px this tree declares in _layout_chrome.scss. They are chrome,
+ * not prose, so the floor applies to them.
+ *
+ * The hit area is expanded with a pseudo-element rather than with padding or a
+ * min-height, because those would grow the footer and the visible type is the
+ * operator s. inset-inline: 0 keeps the growth on the block axis where the gap
+ * between links is not; the -webkit-tap-highlight stays default so the expanded
+ * area still shows it was hit.
+ */
+.site-legal nav a {
+  position: relative;
+}
+
+.site-legal nav a::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 50%;
+  block-size: var(--tap-min, 44px);
+  min-inline-size: var(--tap-min, 44px);
+  transform: translateY(-50%);
+}
+
 .site-legal .site-verify {
   flex-basis: 100%;
   font-size: 13px;
