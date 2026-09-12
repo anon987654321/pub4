@@ -3,6 +3,7 @@
 require "json"
 require "yaml"
 require_relative "../../tools/generate_route_manifest"
+require_relative "brgen_vertical_surfaces"
 
 module Deploy
   # Canonical inventory of full-page Rails surfaces for UI/UX simulation.
@@ -11,13 +12,24 @@ module Deploy
   module PageInventory
     ROOT = File.expand_path("../../..", __dir__)
     APEX = "brgen.no"
+    # Derived, not declared. This table held playlist.<apex> for a day after
+    # RADIO_SUBDOMAINS renamed the host, because a rename sweeping literal
+    # hostnames cannot see one built by interpolation — so the gate autofixed the
+    # inventory onto a host that 404s and then failed against its own fix.
+    # BrgenVerticalSurfaces owns the reader; it is the file whose header declares
+    # the "hosts must match DomainRegistry" invariant, and the lighter of the two
+    # to load.
+
     VERTICAL_HOSTS = {
-      "dating" => "dating.#{APEX}",
+      "dating" => "#{BrgenVerticalSurfaces.registry_subdomain('DATING_SUBDOMAINS')}.#{APEX}",
+      # The one translated subdomain, so it stays written out: it comes from the
+      # city row rather than a flat constant — markedsplass here, marknadsplats
+      # in Stockholm. Every other vertical is the same word in every city.
       "marketplace" => "markedsplass.#{APEX}",
-      "playlist" => "playlist.#{APEX}",
-      "tv" => "tv.#{APEX}",
-      "takeaway" => "takeaway.#{APEX}",
-      "maps" => "maps.#{APEX}",
+      "playlist" => "#{BrgenVerticalSurfaces.registry_subdomain('RADIO_SUBDOMAINS')}.#{APEX}",
+      "tv" => "#{BrgenVerticalSurfaces.registry_subdomain('TV_SUBDOMAINS')}.#{APEX}",
+      "takeaway" => "#{BrgenVerticalSurfaces.registry_subdomain('TAKEAWAY_SUBDOMAINS')}.#{APEX}",
+      "maps" => "#{BrgenVerticalSurfaces.registry_subdomain('MAPS_SUBDOMAINS')}.#{APEX}",
     }.freeze
 
     APPS = {

@@ -20,6 +20,28 @@ class RouteManifestInventoryTest < Minitest::Test
 
   def find(id) = inventory.find { |page| page[:id] == id }
 
+  # playlist.<apex> became radio.<apex> on 2026-09-12 and two gate support files
+  # kept the old spelling, because both built the host by interpolation and the
+  # rename swept literal hostnames. page_simulation then autofixed its own
+  # inventory onto a host that 404s and failed against the fix. Both tables read
+  # DomainRegistry now; this holds the next hand-written host to the same rule.
+  def test_every_vertical_host_is_a_subdomain_the_registry_declares
+    registry = File.read(Deploy::BrgenVerticalSurfaces::REGISTRY)
+    declared = registry.scan(/%w\[([^\]]+)\]/).flatten.flat_map { |list| list.split(/\s+/) }.reject(&:empty?)
+    declared |= registry.scan(/"([a-z]+)" => :[a-z_]+/).flatten
+    apex = Deploy::PageInventory::APEX
+
+    hosts = Deploy::PageInventory::VERTICAL_HOSTS.values +
+            Deploy::BrgenVerticalSurfaces::SURFACES.map { |surface| surface[:host] }
+    hosts.uniq.each do |host|
+      next if host == apex
+
+      subdomain = host.delete_suffix(".#{apex}")
+      assert_includes declared, subdomain,
+                      "#{host} names a subdomain domain_registry.rb does not declare"
+    end
+  end
+
   def test_manifest_covers_every_app_the_inventory_probes
     assert_equal %w[amber brgen bsdports], manifest.fetch("apps").keys.sort
     manifest["apps"].each_value do |row|

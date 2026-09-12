@@ -6,6 +6,25 @@ module Deploy
   module BrgenVerticalSurfaces
     APEX = "brgen.no"
 
+    # The header's "must match DomainRegistry" was a sentence, not a check, and
+    # the rename of playlist.<apex> to radio.<apex> walked straight past it: a
+    # sweep over literal hostnames cannot see one built by interpolation. Read
+    # the subdomain out of the registry source the way
+    # OPENBSD/gates/domain_alignment.rb does, so the sentence is enforced by
+    # being the only way the host is spelled. Source text rather than the
+    # constant, because a gate must not need the Rails app booted.
+    REGISTRY = File.expand_path("../../brgen/lib/brgen/domain_registry.rb", __dir__)
+
+    def self.registry_subdomain(constant)
+      @registry_text ||= File.read(REGISTRY)
+      match = @registry_text.match(/#{constant}\s*=\s*%w\[([^\]]+)\]/)
+      raise "missing #{constant} in domain_registry.rb" unless match
+
+      match[1].split(/\s+/).reject(&:empty?).first
+    end
+
+    RADIO = "#{registry_subdomain('RADIO_SUBDOMAINS')}.#{APEX}"
+
     # label, host, path, body expectations (any match)
     SURFACES = [
       {
@@ -41,7 +60,7 @@ module Deploy
       # of the pair that justified the split had never once resolved.
       {
         label: "playlist",
-        host: "playlist.#{APEX}",
+        host: RADIO,
         path: "/",
         expect_body: [/playlist|track|set|main|search/i],
       },
@@ -136,13 +155,13 @@ module Deploy
       # Playlist secondary
       {
         label: "playlist_sets",
-        host: "playlist.#{APEX}",
+        host: RADIO,
         path: "/sets",
         expect_body: [/set|playlist|track|main|search/i],
       },
       {
         label: "playlist_hosted",
-        host: "playlist.#{APEX}",
+        host: RADIO,
         path: "/hosted_tracks",
         expect_body: [/track|host|upload|playlist|main/i],
       },
