@@ -196,10 +196,24 @@ module Master
         false
       end
 
+      # The voice for one utterance.
+      #
+      # MASTER_TTS_VOICE still wins outright: an operator naming a voice by hand is
+      # asking for that voice, not for a lottery. Absent it, Policy decides — one
+      # name while `rotation` holds fewer than two, a random pick from it otherwise.
+      #
+      # Per utterance rather than per process, so a long reply can change speaker
+      # between sentences. That is the intent: two people narrating one piece of
+      # work, rather than one person who occasionally sounds different.
       def default_voice
-        ENV.fetch("MASTER_TTS_VOICE", DEFAULT_VOICE.to_s).to_sym.tap do |voice|
-          return VOICES.key?(voice) ? voice : DEFAULT_VOICE
+        named = ENV["MASTER_TTS_VOICE"].to_s.strip
+        unless named.empty?
+          sym = named.to_sym
+          return VOICES.key?(sym) ? sym : DEFAULT_VOICE
         end
+
+        chosen = Policy.voice_for_utterance
+        VOICES.key?(chosen) ? chosen : DEFAULT_VOICE
       end
 
       def default_style

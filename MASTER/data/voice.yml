@@ -20,6 +20,23 @@ tts:
   # test_yaml_registries.rb.
   single_voice: jenny
   neural: en-US-JennyNeural
+  # Two mouths, one script. Operator decision 2026-09-13.
+  #
+  # single_voice stays the contract and stays jenny: every reader still agrees
+  # with it, an absent or single-entry rotation changes nothing downstream, and
+  # the browser payload carries both so the face rotates with the server rather
+  # than drifting from it.
+  #
+  # This is NOT a persona list. personas.yml affects LLM text only, and
+  # persona_affects_text_only above is still true; a rotation changes which
+  # mouth says the same sentence and nothing about what the sentence is.
+  #
+  # Chosen at random per utterance rather than round-robin. A session is not a
+  # sequence anybody counts, and strict alternation makes the pattern audible,
+  # which draws attention to the mechanism instead of the words.
+  rotation:
+    - jenny
+    - christopher
   persona_affects_text_only: true
   # ON as of 2026-08-14. pushLiveStreamTts (face.part1.txt) pulls each finished
   # sentence off the model's stream and speaks it while the rest is still being

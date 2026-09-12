@@ -142,6 +142,35 @@ class TestRulesYamlRegistry < Minitest::Test
     assert strunk, "voice.yml must define voice.strunk"
   end
 
+# A rotation is additive: single_voice stays the contract, every name in the
+# list has to be a voice the synthesiser knows, and an absent or single-entry
+# rotation must leave the one-voice behaviour exactly as it was. The last
+# clause is the one worth holding — it is what lets this be reverted by
+# deleting four lines of YAML.
+def test_voice_rotation_is_additive
+  tts = Master.load_yaml(File.join(DATA, "voice.yml"))["tts"] || {}
+  rotation = Array(tts["rotation"])
+
+  rotation.each do |name|
+    assert Master::Voice::Speech::VOICES.key?(name.to_sym),
+           "voice.yml rotation names #{name}, which Speech::VOICES does not have"
+  end
+
+  if rotation.size > 1
+    assert Master::Voice::Policy.rotating?
+    assert_includes rotation.map(&:to_sym), Master::Voice::Policy.voice_for_utterance
+    assert_includes rotation, tts["single_voice"],
+                    "single_voice must be one of the voices actually spoken"
+  else
+    refute Master::Voice::Policy.rotating?
+    assert_equal Master::Voice::Policy.single_voice_key,
+                 Master::Voice::Policy.voice_for_utterance
+  end
+
+  assert_equal rotation.map(&:to_s), Master::Voice::Policy.browser_payload[:rotation],
+               "the face rotates from browser_payload; it must carry the same list"
+end
+
   def test_voice_yml_tts_policy_single_voice
     voice = Master.load_yaml(File.join(DATA, "voice.yml"))
     tts = voice["tts"] || {}

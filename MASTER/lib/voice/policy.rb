@@ -17,6 +17,7 @@ module Master
         "stream_live_default" => true,
         "default_rate" => "+0%",
         "default_pitch" => "+0Hz",
+        "rotation" => %w[jenny christopher],
       }.freeze
 
       module_function
@@ -38,6 +39,30 @@ module Master
         sym = FALLBACK["single_voice"].to_sym if sym == :""
         sym
       end
+
+# The voices MASTER may speak in, when the operator has declared more than
+# one.
+#
+# `single_voice` stayed the contract for as long as there was one voice,
+# and every reader still agrees with it — an empty or absent `rotation`
+# leaves this returning exactly that one name, so nothing downstream sees
+# a change. What it is NOT is a persona list: personas affect text only
+# (`persona_affects_text_only`), and a rotation affects only which mouth
+# says the same sentence.
+def rotation_keys
+  Array(data["rotation"]).map { |name| name.to_s.strip.downcase.to_sym }.reject { |name| name == :"" }
+end
+
+def rotating? = rotation_keys.size > 1
+
+# A voice for one utterance. Random rather than round-robin: a session is
+# not a sequence anybody counts, and alternating strictly makes the
+# pattern audible in a way that draws attention to the mechanism.
+def voice_for_utterance
+  return single_voice_key unless rotating?
+
+  rotation_keys.sample
+end
 
       def neural_voice
         data["neural"].to_s.strip.empty? ? FALLBACK["neural"] : data["neural"].to_s
@@ -65,6 +90,7 @@ module Master
         {
           single_voice: single_voice_key.to_s,
           neural: neural_voice,
+          rotation: rotation_keys.map(&:to_s),
           persona_affects_text_only: persona_affects_text_only?,
           stream_live_default: stream_live_default?,
           default_rate:,

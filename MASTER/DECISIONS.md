@@ -226,6 +226,33 @@ is worth less than a single definition. Split from `style.yml`, it defined
 `typography` twice with different numbers, under a `SelfTest` exemption that
 named the duplication and allowed it.
 
+## Two Voices, Declared (2026-09-13)
+
+MASTER speaks as Jenny or Christopher, chosen at random for each utterance,
+on the operator's ask. `data/voice.yml` `tts.rotation` is the list and the
+only place it is decided.
+
+**`single_voice` is not retired, and that is the point.** It stays `jenny`,
+every reader still agrees with it, and a `rotation` of fewer than two entries
+leaves `voice_for_utterance` returning exactly that one name — so the whole
+change reverts by deleting four lines of YAML, and nothing downstream has to
+know it happened. `test_voice_rotation_is_additive` holds that clause
+specifically, because it is the half a later cleanup would drop.
+
+**It is not a persona list.** `persona_affects_text_only` is still true:
+personas change what is said, a rotation changes which mouth says it. The two
+were kept separate deliberately when the single-voice policy was written and
+they stay separate now.
+
+**Random, not round-robin.** A session is not a sequence anybody counts, and
+strict alternation makes the pattern audible — which draws attention to the
+mechanism rather than the words. `MASTER_TTS_VOICE` still wins outright: an
+operator naming a voice by hand is asking for that voice, not for a lottery.
+
+`browser_payload` carries the list, so the face rotates with the server
+instead of drifting from it — the failure mode the previous record describes,
+where a name lived in more places than the value.
+
 ## The Voice Is Data, And No Test Asserts Its Name (2026-09-12)
 
 MASTER speaks `en-US-JennyNeural` — US English, female — on the operator's ask.
