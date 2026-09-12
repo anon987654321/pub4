@@ -133,7 +133,17 @@
       that used to carry it are gone. %>
   <%= render "shared/search_palette" %>
   <% unless vertical_surface? %>
-    <div role="region" aria-label="<%= t("theme.region") %>">
+    <%# One corner, two controls. Operator, 2026-09-12: sign-in and light/dark
+        sit together in the upper-left on a phone, with the wordmark centred
+        above the nav. .chrome-corner in _root.scss owns the placement and
+        returns the pair to the trailing corner from md up. %>
+    <div class="chrome-corner" role="region" aria-label="<%= t("theme.region") %>">
+      <%# brgen mints a guest for every cookieless request, so Current.user is
+          always set — the question is whether it is a real account. %>
+      <% if Current.user.nil? || Current.user.guest? %>
+        <%= link_to new_session_path, class: "chrome-auth", title: t("nav.sign_in"),
+                    "aria-label": t("nav.sign_in") do %><%= icon("sign_in", size: 20) %><% end %>
+      <% end %>
 <%# The one theme mechanism: the shared toggle writes data-theme through
     the Stimulus controller, and the shared bootstrap restores it at
     parse time so a saved light theme does not flash dark first. The

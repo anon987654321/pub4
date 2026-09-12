@@ -132,9 +132,19 @@ a:hover { text-decoration: underline; }
    .compose-trigger lands inside the bar's band, which is the exact collision
    that turned the nav into a drawer in the first place. Content scrolls UNDER
    the bar from here, which is what its opaque background is for. */
+/* Two bands on a phone since 2026-09-12: the wordmark sits on its own band and
+   the nav runs under it, so the shell clears both. One band from md up, where
+   the nav is beside the mark again — that is the arrangement the note above
+   describes and the `inset` below restores. */
 .app-shell {
   position: fixed;
-  inset: var(--nav-swiper-h, 3.5rem) 0 0 0;
+  inset: calc(var(--top-band-block) + var(--nav-swiper-h, 3.5rem) + var(--safe-top, 0px)) 0 0 0;
+}
+
+@media (min-width: 768px) {
+  .app-shell {
+    inset: var(--nav-swiper-h, 3.5rem) 0 0 0;
+  }
 }
 
 /* Wordmark is lowercase "brgen" (MASTER .top-left-logo) — pure type only. */
@@ -357,4 +367,73 @@ body.vertical-marketplace #navBar {
 table.lines {
   max-width: 100%;
   overflow-wrap: anywhere;
+}
+
+/* Phone chrome — operator, 2026-09-12.
+   The wordmark is centred on its own band and a step larger; the nav runs under
+   it (see _nav_swiper); sign-in and light/dark sit together in the upper-left
+   corner. inset-inline: 0 with auto margins is what centres a fixed box — the
+   shared rule sets inset-inline-end: auto to let it shrink-wrap, so both ends
+   have to be restated here or the box keeps hugging the leading edge. */
+.brand-mark.brgen-logo-mark {
+  inset-inline: 0;
+  margin-inline: auto;
+  justify-content: center;
+  font-size: clamp(1.125rem, 5.2vw, 1.375rem);
+}
+
+/* Both icon controls in one corner, in a row, at the same optical top as the
+   wordmark. The shared .theme-toggle carries 12px of transparent padding and
+   compensates for it on the inline axis, which is why this zeroes the
+   compensation rather than repeating it: inside a flex row the padding is the
+   gap, not an offset from the screen edge. */
+.chrome-corner {
+  position: fixed;
+  z-index: var(--z-chrome-toggle);
+  inset-block-start: calc(var(--chrome-inset-block, 8px) + var(--safe-top, 0px) + var(--top-band-nudge, 0px));
+  inset-inline-start: calc(var(--chrome-inset, 12px) + var(--safe-left, 0px) - 12px);
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+}
+
+.chrome-corner .theme-toggle {
+  position: static;
+  inset: auto;
+}
+
+.chrome-corner .chrome-auth {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  padding: 12px;
+  color: var(--text);
+  opacity: 0.75;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.chrome-corner .chrome-auth:hover,
+.chrome-corner .chrome-auth:focus-visible {
+  opacity: 1;
+}
+
+/* From md the wordmark returns to the leading edge beside the nav, and the
+   light/dark control returns to the opposite corner — the arrangement every
+   rule above this block was written for. */
+@media (min-width: 768px) {
+  .brand-mark.brgen-logo-mark {
+    inset-inline-start: calc(var(--chrome-inset, 12px) + var(--safe-left, 0px));
+    inset-inline-end: auto;
+    margin-inline: 0;
+    justify-content: flex-start;
+    font-size: clamp(0.9375rem, 2.8vw, 1.125rem);
+  }
+
+  .chrome-corner {
+    inset-inline-start: auto;
+    inset-inline-end: calc(var(--chrome-inset, 12px) + var(--safe-right, 0px) - 12px);
+  }
 }

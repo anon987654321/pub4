@@ -32,15 +32,25 @@
   --nav-rule: #cc2424;
 }
 
+/* Under the wordmark on a phone, beside it from md up. --top-band-block is the
+   fixed band's own height, published by _layout_chrome for exactly this: the
+   next piece of chrome inherits the measurement instead of guessing it. */
 .nav_swiper {
   position: fixed;
-  inset-block-start: 0;
+  inset-block-start: calc(var(--top-band-block) + var(--safe-top, 0px));
   inset-inline: 0;
   z-index: var(--z-nav);
   pointer-events: auto;
   transition: transform var(--transition-normal) var(--ease-out),
               opacity var(--transition-normal) var(--ease-out);
 }
+
+@media (min-width: 768px) {
+  .nav_swiper {
+    inset-block-start: 0;
+  }
+}
+
 
 /* Rests visible, then gets out of the way — operator instruction 2026-08-17,
    which supersedes the "always visible" note above. The collision that made it a
@@ -91,7 +101,10 @@
      `center` overflows equally in both directions and the first link becomes
      unreachable behind the leading edge. `safe center` falls back to flex-start
      exactly then, which is also when the bar becomes a swiper again. */
-  --nav-clear: max(var(--brand-mark-inline), var(--chrome-toggle-inline));
+  /* Zero on a phone: the bar sits under the wordmark, so there is no fixed
+     control on its row to clear. The md rule below restores the clearance for
+     the arrangement that needs it. */
+  --nav-clear: 0px;
   /* margin, not padding. Padding insets where the content *starts*; it cannot
      say where the scrolling viewport ends, so once the run overflows — 1208px
      against a 390px screen — any link can be dragged under the fixed wordmark
@@ -109,7 +122,7 @@
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
   scroll-snap-type: x proximity;
-  scroll-padding-inline: var(--brand-mark-inline) var(--space-1);
+  scroll-padding-inline: var(--space-1);
   background: var(--bg);
   /* Fades BOTH edges, and the two do different jobs.
      Right: the "there is more, drag me" signal the operator asked for.
@@ -127,10 +140,13 @@
      The ramp has to FINISH where the toggle starts, not begin there: ending
      it at the toggle's edge left a link ~59% opaque under the sun icon and
      the two read as one smudge, so it completes over the 2.5rem before it. */
-  --nav-fade-stop: calc(100% - var(--chrome-toggle-inline));
+  /* On a phone both fades are edge fades — the only thing to dissolve into is
+     the screen edge, because nothing overlaps the bar any more. */
+  --nav-fade-lead: 0px;
+  --nav-fade-stop: calc(100% - var(--space-4));
   --nav-fade-start: calc(var(--nav-fade-stop) - 2.5rem);
-  mask-image: linear-gradient(to right, transparent 0, var(--bg) var(--brand-mark-inline), var(--bg) var(--nav-fade-start), transparent var(--nav-fade-stop));
-  -webkit-mask-image: linear-gradient(to right, transparent 0, var(--bg) var(--brand-mark-inline), var(--bg) var(--nav-fade-start), transparent var(--nav-fade-stop));
+  mask-image: linear-gradient(to right, transparent 0, var(--bg) var(--nav-fade-lead), var(--bg) var(--nav-fade-start), transparent var(--nav-fade-stop));
+  -webkit-mask-image: linear-gradient(to right, transparent 0, var(--bg) var(--nav-fade-lead), var(--bg) var(--nav-fade-start), transparent var(--nav-fade-stop));
 }
 
 .nav_swiper_bar::-webkit-scrollbar { display: none; }
@@ -253,3 +269,15 @@
   vertical-align: super;
 }
 
+
+/* From md the bar shares its row with the wordmark and the toggle again, so the
+   clearances and the leading fade come back. Same values the phone rule zeroes;
+   stated once here rather than duplicated into both branches. */
+@media (min-width: 768px) {
+  .nav_swiper_bar {
+    --nav-clear: max(var(--brand-mark-inline), var(--chrome-toggle-inline));
+    --nav-fade-lead: var(--brand-mark-inline);
+    --nav-fade-stop: calc(100% - var(--chrome-toggle-inline));
+    scroll-padding-inline: var(--brand-mark-inline) var(--space-1);
+  }
+}
