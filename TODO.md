@@ -4989,7 +4989,7 @@ Numbered 1–N across the four trees.
 ### MASTER — untested lib
 
 33. **`HashDigCompat`.** `lib/boot/hash_dig_compat.rb` prepends `Hash#dig` process-wide. Prove MRI nil-short-circuit vs coltrane’s raise; prove `install_hash_dig_compat!` is idempotent. **Closed 2026-09-12 by Copilot:** `test_master_boot.rb` covers missing intermediate keys, nested lookup, and repeated installation without duplicate ancestors.
-34. **`BrainOverlay`.** `lib/cli/brain_overlay.rb`. Test `core_brief` and `load_context` against a planted markdown dir, not empty `data/claude`.
+34. **`BrainOverlay`.** `lib/cli/brain_overlay.rb`. Test `core_brief` and `load_context` against a planted markdown dir, not empty `data/claude`. **Closed 2026-09-12 by Copilot:** `test_cli.rb` plants nested markdown, verifies the contextual index and matching/missing loads, and checks the Ruby-policy core brief.
 35. **`ResyncService`.** `lib/cli/resync_service.rb` — `git reset --hard origin/main`. Dry-run must not reset; live path refused without a flag.
 36. **`FixPreviewReport`.** `lib/cli/fix_preview_report.rb`. No test of render shape.
 37. **`DeliberationPrep`.** `lib/cli/deliberation_prep.rb` — `rescue StandardError` at `:17`. No unit test.

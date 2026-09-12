@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "cli/brain_overlay"
 
 class TestCLI < Minitest::Test
   def setup
@@ -105,6 +106,25 @@ class TestCLI < Minitest::Test
     command = Master::CLI::CommandRegistry::Command.new(receiver, :dispatch_example, "/tmp/root")
 
     assert_equal "/tmp/root:ok", command.call(args: "ok")
+  end
+
+  def test_brain_overlay_loads_context_from_markdown_directories
+    Dir.mktmpdir do |dir|
+      nested = File.join(dir, "notes")
+      FileUtils.mkdir_p(nested)
+      File.write(File.join(nested, "brief.md"), "# Brief\n\nUse the planted context.\n")
+      overlay = Master::CLI::BrainOverlay.new(root: dir, markdown_dirs: [dir])
+
+      assert_equal ["notes/brief.md — brief.md"], overlay.contextual_index
+      assert_includes overlay.load_context("brief"), "planted context"
+      assert_nil overlay.load_context("missing")
+    end
+  end
+
+  def test_brain_overlay_core_brief_names_ruby_policy
+    overlay = Master::CLI::BrainOverlay.new(markdown_dirs: [])
+
+    assert_includes overlay.core_brief, "Ruby policy is authoritative"
   end
 
   def test_help_uses_progressive_disclosure
