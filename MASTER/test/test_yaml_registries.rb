@@ -168,19 +168,57 @@ def test_the_post_chain_is_read_and_applied
                   "the gain must come before the limiter"
 end
 
-# The bed is declared here and rendered by whoever plays it, so what this can
-# hold is that the declaration names a progression dilla actually carries.
-def test_the_bed_names_a_progression_dilla_carries
-  bed = Master::Voice::Policy.bed
-  skip "no bed declared" unless bed
+  # The bed is declared here and rendered by whoever plays it, so what this can
+  # hold is that the declaration names progressions dilla actually carries, that
+  # every chord in them has a patch, and that the drums are not routed through
+  # the pad chain.
+  def test_the_bed_names_progressions_dilla_carries
+    bed = Master::Voice::Policy.bed
+    skip "no bed declared" unless bed
 
-  dilla = File.expand_path("../../STUDIO/dilla/dilla.rb", __dir__)
-  skip "dilla not in this checkout" unless File.file?(dilla)
+    dilla = File.expand_path("../../STUDIO/dilla/dilla.rb", __dir__)
+    skip "dilla not in this checkout" unless File.file?(dilla)
 
-  assert_match(/^\s*#{Regexp.escape(bed["progression"])}:/, File.read(dilla),
-               "voice.yml names #{bed['progression']}, which CHORD_PROGRESSIONS does not have")
-  assert_operator bed["gain_db"].to_i, :<, 0, "the bed must sit under the voice"
-end
+    source = File.read(dilla)
+    names = Array(bed["progressions"])
+    refute_empty names, "the bed declares no progression"
+    names.each do |name|
+      assert_match(/^\s*#{Regexp.escape(name)}:/, source,
+                   "voice.yml names #{name}, which CHORD_PROGRESSIONS does not have")
+    end
+    assert_operator bed["gain_db"].to_i, :<, 0, "the bed must sit under the voice"
+  end
+
+  # One patch per chord. One timbre across twelve chords is one instrument
+  # playing one long piece, and the ear files that as wallpaper.
+  def test_every_bed_chord_has_its_own_patch
+    bed = Master::Voice::Policy.bed
+    skip "no bed declared" unless bed
+
+    patches = Array(bed["patches"])
+    assert_equal Array(bed["progressions"]).size * 4, patches.size,
+                 "four chords to a progression, one patch each"
+    assert_equal patches.size, patches.map { |patch| patch["name"] }.uniq.size,
+                 "two patches share a name"
+    patches.each do |patch|
+      assert_includes %w[saw square pulse triangle sine], patch["wave"],
+                      "#{patch["name"]}: unknown oscillator"
+      assert_operator patch["cutoff"].to_i, :>, 0, "#{patch["name"]}: no ladder cutoff"
+    end
+  end
+
+  # The drums take their own chain. The pad chain rolls off at 2.6 kHz and a hat
+  # lives above that, so routing them together removes the hat silently.
+  def test_bed_drums_do_not_take_the_pad_chain
+    bed = Master::Voice::Policy.bed
+    skip "no bed declared" unless bed
+    drums = bed["drums"]
+    skip "no drums declared" unless drums
+
+    refute_equal bed["chain"], drums.dig("kick", "chain")
+    assert_equal "anoisesrc", drums.dig("hat", "source"),
+                 "random() inside an aeval expression is a lookup, not a noise source"
+  end
 
   def test_voice_rotation_is_additive
     tts = Master.load_yaml(File.join(DATA, "voice.yml"))["tts"] || {}
