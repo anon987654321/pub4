@@ -7,6 +7,7 @@
 #   ruby RAILS/gates/runner.rb --all
 #   ruby RAILS/gates/runner.rb production domain_alignment
 #   ruby RAILS/gates/runner.rb --list
+#   ruby RAILS/gates/runner.rb --explain
 #
 # Every gate is declared in gates.yml and nowhere else. Most run in-process via
 # a Deploy::* class returning a GateResult; three keep a subprocess because they
@@ -382,11 +383,50 @@ def list_gates
   end
 end
 
+# The switches that change a verdict without appearing on the command line. Each
+# is read somewhere deep in a gate, so a run that behaves differently on the
+# deploy host than on a laptop is usually one of these, and nothing else lists
+# them together.
+ENV_SWITCHES = {
+  "GATE_STRICT_INCONCLUSIVE" => "a gate that measured nothing fails instead of reading inconclusive",
+  "GATE_STRICT_ERRORS" => "a gate that raised fails instead of blocking nothing",
+  "GATE_STRICT_SOFT" => "soft findings (contrast pairs, surface schema) fail instead of warning",
+  "GATE_AUDITOR_STRICT" => "frontend_auditor fails on warnings; without it only auditor errors block " \
+                           "and warnings are reported, so the warning half is advisory",
+  "GATE_AUTOFIX" => "0 makes fixing gates report-only; unset they fix and remeasure",
+  "GATE_SKIP_NESTED" => "production skips the leaves it would otherwise run itself",
+  "VISUAL_CAPTURE" => "1 lets visual_contract capture pixels (VISUAL_CAPTURE_APP, VISUAL_CAPTURE_BASE); " \
+                      "without it the gate compares nothing and exits inconclusive",
+  "GATES_FILE" => "reads a different gate registry in place of gates.yml",
+}.freeze
+
+# What --all would do, without doing it: every gate in run order, what it runs,
+# what it needs, which composite already covers it and the line it prints when
+# it passes. Pass lines are shown as declared, placeholders unresolved, so
+# explaining never walks the inventory.
+def explain_gates
+  puts "Gates in run order (#{GATES.size}):"
+  GATES.each do |name, row|
+    kind = subprocess?(row) ? "subprocess #{row['script']}" : row["class"]
+    notes = []
+    notes << "needs #{needs(name).join(', ')}" if needs(name).any?
+    notes << "covered by #{row['covered_by']}" if row["covered_by"]
+    row.fetch("env_flags", {}).each { |var, keyword| notes << "#{var}=1 -> #{keyword}" }
+    puts "  #{name.ljust(22)} #{kind}#{notes.empty? ? '' : " (#{notes.join('; ')})"}"
+    pass = row["pass"] || "exit 0 passes, exit #{SUBPROCESS_INCONCLUSIVE} is inconclusive"
+    puts "  #{' ' * 22} pass: #{pass}"
+  end
+  puts
+  puts "Environment switches:"
+  ENV_SWITCHES.each { |var, meaning| puts "  #{var.ljust(24)} #{meaning}" }
+end
+
 options = {}
 OptionParser.new do |opts|
   opts.banner = "Usage: ruby RAILS/gates/runner.rb [options] [gate_names...]"
   opts.on("--all", "Run all registered gates") { options[:all] = true }
   opts.on("--list", "List available gates") { options[:list] = true }
+  opts.on("--explain", "Explain each gate and the environment switches, running nothing") { options[:explain] = true }
   opts.on("--ledger", "Report each gate's outcome history (fire rate, error rate)") { options[:ledger] = true }
   opts.on("-h", "--help", "Show this help") do
     puts opts
@@ -396,6 +436,11 @@ end.parse!
 
 if options[:list]
   list_gates
+  exit
+end
+
+if options[:explain]
+  explain_gates
   exit
 end
 

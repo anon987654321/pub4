@@ -9,8 +9,8 @@ module Deploy
     APPS = %w[amber brgen bsdports].freeze
     SHARED = Pathname.new(File.join(ROOT, "RAILS", "shared"))
 
-    # GATE_AUDITOR_STRICT=1 fails on warnings (old behavior).
-    # Default: only :error findings block layout_suite; warnings are reported.
+    # GATE_AUDITOR_STRICT=1 fails on warnings. Without it only :error findings
+    # block layout_suite and warnings are reported; runner.rb --explain says so.
     def self.strict_warnings?(env = ENV)
       %w[1 true yes on].include?(env["GATE_AUDITOR_STRICT"].to_s.strip.downcase)
     end
