@@ -1,6 +1,6 @@
-Thanks for signing up to Brgen city updates.
+<%= t("mailer.confirm_lede") %>
 
-Confirm: <%= @confirm_url %>
+<%= t("mailer.confirm_button") %>: <%= @confirm_url %>
 
-If you didn't sign up, ignore this email.
-Unsubscribe: <%= @unsubscribe_url %>
+<%= t("mailer.not_you") %>
+<%= t("newsletter.unsubscribe_link") %>: <%= @unsubscribe_url %>

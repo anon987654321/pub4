@@ -1,7 +1,7 @@
-Welcome to Brgen.
+<%= t("mailer.verify_welcome") %>
 
-Confirm this email address to start posting under your account:
+<%= t("mailer.verify_body") %>
 
 <%= verify_email_url(@token) %>
 
-If you didn't create a Brgen account, ignore this message — nothing happens until you confirm.
+<%= t("mailer.verify_ignore") %>

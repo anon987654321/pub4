@@ -1,21 +1,8 @@
 <!DOCTYPE html>
-<%# data-theme is written on every page so the OS gets no vote.
-
-    shared/_tokens.scss ends with
-
-      @media (prefers-color-scheme: light) {
-        :root:not([data-theme="dark"]) { ...light palette... }
-      }
-
-    and `:root:not(...)` outranks a bare `:root`, so without an explicit value
-    the visitor's OS setting would pick the palette and a page could flash one
-    theme before settling on the other. Every vertical inherits this layout, so
-    the attribute decides all eight surfaces at once.
-
-    The value is ApplicationHelper::DEFAULT_SURFACE_THEME, light, returned by
-    #surface_theme for every surface; a per-vertical exception would live there.
-    A reader who wants dark still has it: the toggle writes localStorage and
-    _theme_bootstrap restores it before paint. %>
+<%# data-theme is written, never left to the OS, so a light default stays light
+    on a dark-mode machine and nothing flashes before paint. The value lives in
+    ApplicationHelper::DEFAULT_SURFACE_THEME, with the reason; _theme_bootstrap
+    overwrites it from localStorage when the reader has chosen. %>
 <%# --brand-mark-glyphs is how the gutter learns the wordmark's length.
 
     The mark is a city domain, so it is not one width: brgen.no draws 8

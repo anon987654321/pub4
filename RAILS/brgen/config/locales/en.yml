@@ -1492,6 +1492,8 @@ en:
     action: Install
   mailer:
     confirm_subscription: Confirm your subscription
+    confirm_lede: Thanks for trusting us with your inbox. We send one curated city letter — not noise.
+    queue_failure_digest_subject: Brgen queue dead letter digest
     permission_marketing: Permission marketing
     confirm_button: Confirm subscription
     verify_welcome: Welcome to Brgen.

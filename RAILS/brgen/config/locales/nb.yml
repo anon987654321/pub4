@@ -1500,6 +1500,8 @@ nb:
     action: Installer
   mailer:
     confirm_subscription: Bekreft abonnementet
+    confirm_lede: Takk for at du gir oss plass i innboksen. Vi sender ett kuratert bybrev — ikke støy.
+    queue_failure_digest_subject: Brgen-køen — døde jobber siste døgn
     permission_marketing: Samtykkebasert markedsføring
     confirm_button: Bekreft abonnementet
     verify_welcome: Velkommen til Brgen.
