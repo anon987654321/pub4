@@ -2244,7 +2244,7 @@ class TestDilla < Minitest::Test
   def test_mix_metrics_returns_band_levels_when_demo_present
     demo = File.expand_path("../dilla/demo.wav", __dir__)
     skip "demo.wav missing" unless File.file?(demo)
-    skip "ffmpeg not available" unless system("which ffmpeg > /dev/null 2>&1")
+    skip "ffmpeg not available" unless system("ffmpeg", "-version", out: File::NULL, err: File::NULL)
     result = eval_in_engine(<<~RUBY)
       m = mix_metrics(#{demo.dump})
       puts JSON.generate(m)
@@ -2268,7 +2268,7 @@ class TestDilla < Minitest::Test
   def test_shipped_demo_has_no_dead_stretch_and_lands_near_its_loudness_target
     demo = File.expand_path("../dilla/demo.mp3", __dir__)
     skip "demo.mp3 missing" unless File.file?(demo)
-    skip "ffmpeg not available" unless system("which ffmpeg > /dev/null 2>&1")
+    skip "ffmpeg not available" unless system("ffmpeg", "-version", out: File::NULL, err: File::NULL)
 
     out = `ffmpeg -hide_banner -nostats -i #{demo.dump} -af silencedetect=n=-70dB:d=5,ebur128 -f null - 2>&1`
 

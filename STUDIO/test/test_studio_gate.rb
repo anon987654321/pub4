@@ -106,7 +106,7 @@ class TestStudioGate < Minitest::Test
   # --- the self-check -----------------------------------------------------
 
   def test_the_self_check_predicts_each_class_of_finding
-    assert_equal %w[studio\ inventory: studio\ load: studio\ parse:].sort,
+    assert_equal %w[studio\ growth: studio\ inventory: studio\ load: studio\ parse:].sort,
                  GATE::PREDICTED_FINDINGS.keys.sort,
                  "a prediction was added or dropped without the fixture that produces it"
     GATE::PREDICTED_FINDINGS.each_value { |why| refute_empty why.to_s.strip }

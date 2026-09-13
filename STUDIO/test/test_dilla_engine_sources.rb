@@ -53,7 +53,7 @@ class TestEngineSources < Minitest::Test
     refute_match(%r{require_relative "lib/engine/}, entry, "the entry requires a part that should be inline")
   end
 
-  def test_every_file_in_the_corpus_is_readable_ruby
+  def test_lib_and_entry_are_rb
     DillaSources.all.each do |path|
       assert File.file?(path), "#{path} is in the corpus and not on disk"
       assert_equal ".rb", File.extname(path)

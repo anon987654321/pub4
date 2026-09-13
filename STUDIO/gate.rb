@@ -88,7 +88,8 @@ module Deploy
     # environments, generated output, and audio working directories. Excluded
     # from every check, because a demucs virtualenv under dilla/scratch is 24k
     # files and none of them are ours (MASTER/lib/review/scan/scanner.rb hit the
-    # same directory for the same reason).
+    # same directory for the same reason). project/ is data the engine writes, so
+    # a Ruby file dropped there is not parsed either.
     VENDORED = %r{/(scratch|renders|stems|samples|project|tmp|node_modules|venv|\.venv|site-packages)/}
 
     PROBE_TIMEOUT = Integer(ENV.fetch("STUDIO_PROBE_TIMEOUT", "60"))
@@ -148,6 +149,7 @@ module Deploy
       end
 
       check_parse(files)
+      check_frozen_literals(files)
       check_inventory(files)
       check_growth(files)
       check_entry_points
@@ -176,7 +178,10 @@ module Deploy
       return false unless File.file?(path)
 
       File.open(path, "rb") { |file| file.readline(256).match?(RUBY_SHEBANG) }
-    rescue StandardError
+    rescue EOFError
+      false # an empty file has no shebang
+    rescue SystemCallError => e
+      warn "studio gate: cannot read #{path} (#{e.class}), so it is not parsed"
       false
     end
 
@@ -192,6 +197,17 @@ module Deploy
         @result.fail("studio parse: #{rel(path)} — #{e.message.lines.first.to_s.strip}")
       end
     end
+
+# Every first-party file declares its string literals frozen, and all of
+# them do; this keeps the next one from arriving without it.
+def check_frozen_literals(files)
+  files.each do |path|
+    next if File.foreach(path).first(3).any? { |line| line.include?("frozen_string_literal: true") }
+
+    @result.fail("studio frozen: #{rel(path)} has no frozen_string_literal magic comment", severity: :soft)
+  end
+  @result.checked!(1)
+end
 
     # A name DillaSources carries with no file behind it stops the engine at
     # load. The other direction -- a file on disk that nothing requires -- is not
@@ -335,6 +351,7 @@ module Deploy
       "studio parse:" => "a file that does not parse",
       "studio load:" => "an entry point that raises at load",
       "studio inventory:" => "a file belonging to no declared tree",
+      "studio growth:" => "dilla/lib/engine/ coming back",
     }.freeze
 
     def self_check
@@ -363,6 +380,7 @@ module Deploy
     # Build the known-bad input, run a second gate over it, return what it said.
     def broken_tree_findings
       require "tmpdir"
+      require "fileutils"
       Dir.mktmpdir("studio-gate-selfcheck") do |dir|
         Dir.mkdir(File.join(dir, "postpro"))
         File.write(File.join(dir, "postpro", "postpro.rb"), <<~RUBY)
@@ -377,6 +395,8 @@ module Deploy
         RUBY
         File.write(File.join(dir, "postpro", "unparseable.rb"), "def broken(\n")
         File.write(File.join(dir, "orphan.rb"), "# belongs to no declared tree\n")
+        FileUtils.mkdir_p(File.join(dir, "dilla", "lib", "engine"))
+        File.write(File.join(dir, "dilla", "lib", "engine", "part.rb"), "# the split, returning\n")
 
         trees = [{ name: "postpro", glob: "postpro/*.rb", entry: "postpro/boot.rb", owner: "fixture" }]
         result = self.class.new(root: dir, trees: trees, dilla: nil).run_without_self_check
@@ -391,6 +411,7 @@ module Deploy
       files = source_files
       check_parse(files)
       check_inventory(files)
+      check_growth(files)
       check_entry_points
       @result
     end
