@@ -115,6 +115,23 @@ class TvFeedTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # Ten videos preloading at once is a few hundred megabytes on a phone, and a
+  # feed screen shorter than the viewport leaves the next clip peeking in.
+  test "feed videos preload nothing and the feed fills the dynamic viewport" do
+    video(title: "Forhåndslast")
+    host! "tv.brgen.no"
+
+    get tv.feed_path
+    assert_response :success
+    assert_select "video.tv-feed-video[preload=none][playsinline]", 1
+    assert_select "video.tv-feed-video[autoplay]", 0
+
+    stylesheet = File.read(Rails.root.join("engines/tv/app/assets/stylesheets/_vertical_tv.scss"))
+    feed_rule = stylesheet[/^\.tv-feed \{.*?^\}/m]
+    assert feed_rule, "the .tv-feed rule is gone from _vertical_tv.scss"
+    assert_match "height: 100dvh", feed_rule
+  end
+
   test "the next screenful appends rather than replacing" do
     (Tv::FeedController::PAGE + 2).times { |i| video(title: "Klipp #{i}") }
     host! "tv.brgen.no"

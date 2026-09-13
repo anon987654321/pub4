@@ -232,7 +232,9 @@ nb:
       chat: Chat
       new: Ny direktesending
       title: Direktesendinger
-      viewers: "%{count} seere"
+      viewers:
+        one: "%{count} seer"
+        other: "%{count} seere"
     create_channel: Opprett kanal
     upload: Last opp
     note_placeholder: Tidsstemplet notat…
@@ -244,7 +246,7 @@ nb:
     live_badge: Direkte
     live_now: Direkte nå
     live_streams_label: Direktesendinger nå
-    channel_subtitle: Brgen TV-kanal
+    channel_subtitle: "%{city} TV-kanal"
     edit_channel: Rediger kanal
     new_channel: Ny kanal
     upload_video: Last opp video

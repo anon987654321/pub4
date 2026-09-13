@@ -7,7 +7,7 @@
   <% else %>
     <%= render "shared/empty_state",
           title: t("empty.no_channels"),
-          body: live_search_query.present? ? "No channels match this search." : "Channels will appear when creators publish.",
+          body: live_search_query.present? ? t("tv.no_channels_match") : t("tv.channels_empty_body"),
           action: live_search_query.present? ?
             { label: t("empty.clear_search"), path: channels_path } :
             { label: t("actions.tv_home"), path: root_path } %>

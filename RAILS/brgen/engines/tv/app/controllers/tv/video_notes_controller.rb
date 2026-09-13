@@ -1,18 +1,26 @@
 # frozen_string_literal: true
 
 module Tv
-  class VideoNotesController < ApplicationController
+  class VideoNotesController < Tv::BaseController
+    before_action :require_user_session
     before_action :set_video
 
     def create
-      @video_note = @video.video_notes.build(video_note_params)
-      @video_note.user = current_user if respond_to?(:current_user, true)
-      @video_note.save!
+      @video_note = @video.video_notes.build(video_note_params.merge(user: Current.user))
 
-      respond_to do |format|
-        format.html { redirect_to video_path(@video) }
-        format.turbo_stream
-        format.json { render json: { id: @video_note.id }, status: :created }
+      if @video_note.save
+        respond_to do |format|
+          format.html { redirect_to video_path(@video) }
+          format.turbo_stream
+          format.json { render json: { id: @video_note.id }, status: :created }
+        end
+      else
+        alert = @video_note.errors.full_messages.to_sentence
+        respond_to do |format|
+          format.html { redirect_to video_path(@video), alert: }
+          format.turbo_stream { head :unprocessable_entity }
+          format.json { render json: { errors: @video_note.errors }, status: :unprocessable_entity }
+        end
       end
     end
 

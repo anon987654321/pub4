@@ -64,7 +64,7 @@ module Tv
     private
 
     def set_live_stream
-      @live_stream = Tv::LiveStream.includes(:user).find(params[:id])
+      @live_stream = Tv::LiveStream.includes(:user, channel: { banner_attachment: :blob }).find(params[:id])
     end
 
     def resolve_channel(id_or_slug)

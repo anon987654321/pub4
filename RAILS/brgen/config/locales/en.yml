@@ -228,7 +228,9 @@ en:
       chat: Chat
       new: New live stream
       title: Live streams
-      viewers: "%{count} viewers"
+      viewers:
+        one: "%{count} viewer"
+        other: "%{count} viewers"
     create_channel: Create channel
     upload: Upload
     note_placeholder: Timestamped note…
@@ -240,7 +242,7 @@ en:
     live_badge: Live
     live_now: Live now
     live_streams_label: Live streams now
-    channel_subtitle: Brgen TV channel
+    channel_subtitle: "%{city} TV channel"
     edit_channel: Edit channel
     new_channel: New channel
     upload_video: Upload video

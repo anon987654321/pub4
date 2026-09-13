@@ -72,7 +72,7 @@
 </article>
 
 <section>
-  <h2><%= t("tv.channel_subtitle") %></h2>
+  <h2><%= t("tv.channel_subtitle", city: city_name) %></h2>
   <article>
     <strong><%= link_to @video.channel.name, channel_path(@video.channel) %></strong>
     <p>
@@ -103,14 +103,14 @@
   <% if authenticated? %>
     <%= form_with url: video_video_notes_path(@video), scope: :video_note, id: "video_note_form", data: { turbo: true } do |f| %>
       <div class="field">
-        <%= f.label :body, "Add a note" %>
+        <%= f.label :body, t("tv.add_note") %>
         <div data-controller="character-counter" data-character-counter-countdown-value="true">
   <%= f.text_area :body, rows: 2, placeholder: t("tv.note_placeholder") , maxlength: 2000, data: { character_counter_target: "input" } %>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div>
       </div>
       <div class="field">
-        <%= f.label :timestamp, "Timestamp (seconds)" %>
+        <%= f.label :timestamp, t("tv.note_timestamp") %>
         <%= f.number_field :timestamp, min: 0, step: 1, inputmode: "numeric" %>
       </div>
       <%= f.submit t("tv.save_note"), class: "btn btn-primary btn-sm" %>
@@ -123,7 +123,7 @@
   <% if @video.comments.any? %>
     <% @video.comments.order(created_at: :asc).each do |comment| %>
       <article>
-        <p><%= comment.user&.display_name || "anon" %></p>
+        <p><%= comment.user&.display_name || t("chat.anon") %></p>
         <%= tag.p comment.body %>
       </article>
     <% end %>
@@ -141,7 +141,7 @@
         came back 400. The video-notes form above sets its scope the same way. %>
     <%= form_with url: video_comments_path(@video), scope: :tv_comment, data: { turbo: true } do |f| %>
       <div class="field">
-        <%= f.label :body, "Add a comment" %>
+        <%= f.label :body, t("tv.add_comment") %>
         <div data-controller="character-counter" data-character-counter-countdown-value="true">
   <%= f.text_area :body, rows: 3, placeholder: t("tv.comment_placeholder") , maxlength: 1000, data: { character_counter_target: "input" } %>
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>

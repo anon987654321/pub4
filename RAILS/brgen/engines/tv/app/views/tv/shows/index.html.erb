@@ -1,7 +1,7 @@
 <% content_for :title, t("tv.shows_title") %>
 
 <div class="page-header">
-  <%= tag.h1 t("tv.shows_on", channel: @channel&.name || "Brgen TV") %>
+  <%= tag.h1 t("tv.shows_on", channel: @channel&.name || t("tv.city_tv", city: city_name)) %>
 </div>
 
 <% if @shows.any? %>

@@ -10,9 +10,17 @@
 # Keys the host already carries are NOT copied here. Use them.
 en:
   tv:
+    add_comment: "Add a comment"
+    add_note: "Add a note"
     channel_actions_aria: "Channel actions"
     channel_results_aria: "TV channel results"
+    channels_empty_body: "Channels will appear when creators publish."
+    city_tv: "%{city} TV"
     discussion: "Discussion"
+    live_streams_list_aria: "Live streams list"
+    live_streams_unavailable: "Live streaming is not running yet. The form saves the stream, but no streaming server can receive video and sound."
+    no_channels_match: "No channels match this search."
+    note_timestamp: "Timestamp (seconds)"
     notes: "Notes"
     recent: "Recent"
     share: "Share"

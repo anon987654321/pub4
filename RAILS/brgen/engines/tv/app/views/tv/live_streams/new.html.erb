@@ -1,7 +1,10 @@
-<% content_for :title, t("tv.live_streams.new", default: "New live stream") %>
+<% content_for :title, t("tv.live_streams.new") %>
 
 <%= tag.section class: "tv-live-stream-form" do %>
-  <%= tag.h1 t("tv.live_streams.new", default: "New live stream") %>
+  <%= tag.h1 t("tv.live_streams.new") %>
+  <%# No media server runs yet (RAILS/apps.yml, live stream infrastructure), so
+      the form saves a stream record and nothing can broadcast to it. %>
+  <%= tag.p t("tv.live_streams_unavailable") %>
 
   <%# Same doubled-prefix trap as playlist sets: route_key is already
       "tv_live_streams", and create only exists nested under a channel. %>

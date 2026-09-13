@@ -21,11 +21,11 @@
 
   <%= tag.section class: "live-stream-details" do %>
     <%= tag.p @live_stream.description if @live_stream.description.present? %>
-    <%= tag.p t("tv.live_streams.viewers", count: @live_stream.viewer_count, default: "%{count} viewers") %>
+    <%= tag.p t("tv.live_streams.viewers", count: @live_stream.viewer_count) %>
   <% end %>
 
   <%= tag.section class: "live-stream-chat" do %>
-    <%= tag.h2 t("tv.live_streams.chat", default: "Chat") %>
+    <%= tag.h2 t("tv.live_streams.chat") %>
     <%= turbo_stream_from "tv:live_stream:#{@live_stream.id}:entries" %>
     <%= tag.div id: "tv-live-stream-#{@live_stream.id}-entries" do %>
       <%= render partial: "tv/stream_chats/stream_chat", collection: @stream_chats, as: :stream_chat %>

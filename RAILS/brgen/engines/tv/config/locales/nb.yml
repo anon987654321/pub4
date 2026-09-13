@@ -10,9 +10,17 @@
 # Keys the host already carries are NOT copied here. Use them.
 nb:
   tv:
+    add_comment: "Skriv en kommentar"
+    add_note: "Legg til et notat"
     channel_actions_aria: "Kanalhandlinger"
     channel_results_aria: "Resultater for TV-kanaler"
+    channels_empty_body: "Kanaler dukker opp her når noen publiserer."
+    city_tv: "%{city} TV"
     discussion: "Diskusjon"
+    live_streams_list_aria: "Liste over direktesendinger"
+    live_streams_unavailable: "Direktesending er ikke i drift ennå. Skjemaet lagrer sendingen, men ingen strømmeserver kan ta imot bilde og lyd."
+    no_channels_match: "Ingen kanaler passer til søket."
+    note_timestamp: "Tidspunkt (sekunder)"
     notes: "Notater"
     recent: "Nylig"
     share: "Del"

@@ -7,7 +7,7 @@
 
 <% if @video %>
   <div class="video-player" data-controller="tv-player">
-    <%= render "tv/videos/tv_video", video: @video %>
+    <%= render "tv/videos/tv_video", tv_video: @video %>
   </div>
 <% else %>
   <%= render "shared/empty_state",

@@ -5,7 +5,7 @@ module Tv
     def show
       @channel = Tv::Channel.find_by!(slug: params[:channel_slug])
       @show = @channel.shows.find_by!(slug: params[:slug])
-      @episode = @show.episodes.find_by!(number: params[:number])
+      @episode = @show.episodes.includes(video: [:channel, { thumbnail_attachment: :blob }]).find_by!(number: params[:number])
       @video = @episode.video
     end
   end
