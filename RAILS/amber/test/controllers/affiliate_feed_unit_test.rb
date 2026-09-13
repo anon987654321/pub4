@@ -79,6 +79,18 @@ class AffiliateFeedUnitTest < ActionDispatch::IntegrationTest
     assert_not_includes response.body, "affiliate_feed_grid"
   end
 
+  # affiliate_honesty reads the partial's source; this reads the page a buyer
+  # sees next to the garment's shop links.
+  def test_an_item_page_carries_the_affiliate_disclosure_in_its_footer
+    user = sign_in_as("disclosure-#{SecureRandom.hex(4)}@example.test")
+    item = user.items.create!(title: "Ullkåpe", category: "Outerwear")
+
+    get item_path(item)
+
+    assert_response :success
+    assert_select "footer.site-legal p.affiliate-fine[role=note]", text: /#{Regexp.escape(I18n.t("legal.affiliate_disclosure"))}/
+  end
+
   def test_no_inventory_renders_no_band_rather_than_an_empty_one
     seed_posts(FEED_EVERY + 1)
 

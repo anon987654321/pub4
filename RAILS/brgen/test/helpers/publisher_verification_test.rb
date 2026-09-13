@@ -64,6 +64,18 @@ class PublisherVerificationTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # affiliate_honesty reads the partial's source; this reads the page where the
+  # affiliate deals sit. markedsplass is an engine on its own host, so its
+  # layout is the one that has to carry the footer.
+  test "the marketplace listings index discloses affiliate links to a signed-out visitor" do
+    host! "markedsplass.brgen.no"
+    get marketplace.listings_path
+
+    assert_response :success
+    assert_select "footer.site-legal p.affiliate-fine[role=note]",
+                  text: /#{Regexp.escape(I18n.t("legal.affiliate_disclosure", locale: :nb))}/
+  end
+
   # "Your site should also have a GDPR cookie policy visible."
   test "the cookie policy is linked from the footer and loads for a signed-out visitor" do
     get root_path
