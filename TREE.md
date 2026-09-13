@@ -79,3 +79,13 @@ would run it in the unit suite and drop it from `rails test:system`;
 those two stayed. The three counts come from
 `MASTER/data/sprawl_census.yml`; `bin/operator measure --why sprawl.lone_dirs`
 names the members rather than leaving this paragraph to remember them.
+
+The grammar that keeps this map short. The four trees stay at the root and are
+never nested under an `apps/`. Files move only when their location breaks a
+rule, never because a listing would look tidier. `RAILS/shared/` gives nothing
+to a `platform/` until a second app consumes it, and brgen's engines are product
+domains only. `RAILS/gates/` keeps its name: renaming it `verification/` would
+move the runner, `gates.yml` and every ownership row for no reader.
+Ownership-free names (`misc/`, `utils/`, `common/`, `old/`) are refused
+everywhere a framework does not dictate them; Rails `app/helpers/` is
+convention, not a drawer.
