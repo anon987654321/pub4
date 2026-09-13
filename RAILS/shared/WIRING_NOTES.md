@@ -76,6 +76,53 @@ out on all index views.
 **Mailers:** `render "layouts/mailer_styles"` (shared partial; inline `<style>`
 required for email clients).
 
+## Speed proposals decided against (2026-09-13)
+
+The "134 ways to feel instant" intake was verified against the tree; about half
+was already here. Turbo 8 hover-prefetches every link unless told not to (only
+sign-out and Pagy links opt out), the nav bars are `data-turbo-permanent`, the
+city feed appends new posts to a staging list behind a chip rather than
+refreshing, `action_controller.js` and `optimistic_send_controller.js` are the
+shared optimistic patterns, `feed_hotkey_controller.js` has `j`/`k`,
+`importmap_preload_audit` and `ImportmapExternalHostsExamples` hold the CDN line,
+`touch-action: manipulation` sits on `.app-shell`, `QueryBudgetTest` and
+`front_page_weight_test` are the query and payload budgets, and the motion
+tokens live in `design_tokens.yml`. The rest was refused for these reasons.
+
+Nothing more is preloaded or pre-connected. Every preload, `preconnect` and
+Speculation Rules prerender is a real request or socket against one 1 GB, one
+vCPU box, and a prerender bypasses Turbo and renders the whole document twice.
+Hover prefetch already spends the head start on links a reader is about to
+choose. Pressing on `mousedown` instead is worse than hover, and the live search
+keeps its 300 ms debounce for the same reason: halving it roughly doubles
+queries while typing.
+
+No page is cached for everyone. brgen's and amber's pages carry per-viewer
+chrome — vote state, badge counts, the signed-in nav — that no record's
+`updated_at` covers, so `fresh_when`, `expires_in public: true`, a cached nav or
+Russian-doll comments would show one reader's state to another. bsdports'
+`ports#show` and the avatar route are anonymous data, which is why they are the
+exceptions. The first feed image stays lazy for the same reason: `_post` is
+fragment-cached on a key with no position in it, so a card cannot know it is
+first.
+
+No structural rewrite without a measurement. Cursor pagination cannot follow the
+hot feed's computed rank, and no city is near `OFFSET` pain. The fresh feed's
+plan is `index_posts_on_city_id` plus a temp B-tree sort over one city's posts
+(brgen.no's sitemap listed 1,376 on 2026-08-12); a `(city_id, created_at)` index
+is worth its migration when a city passes tens of thousands. `select` of fewer
+columns raises `MissingAttributeError` wherever a partial read meets a method
+that needs the column. Streaming, 103 Early Hints and SSE all meet relayd and
+Falcon on a box with no spare core, and SSE holds a fiber per reader. Windowing
+breaks find-in-page and the accessibility tree; `content-visibility` already
+covers long feeds. `contain: paint` clips card menus. A server-rendered card
+cannot be optimistically inserted without a second template in JavaScript, and a
+vote queued offline and replayed later is an optimistic update nobody can roll
+back. Per-surface or critical CSS trades one immutable cached file for a miss on
+every surface's first visit. AVIF encoding is CPU the box does not have, and
+WebP already reaches every current browser. `broadcast_*_later` would enqueue a
+job nothing on vm23 runs, which `Post#broadcast_live_refresh` says in place.
+
 ## Social endpoints
 
 Amber and brgen eval `shared/config/routes/social.rb` (notifications, reactions,
