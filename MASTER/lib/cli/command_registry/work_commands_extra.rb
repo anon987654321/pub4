@@ -13,19 +13,6 @@ module Master
         .git .bundle node_modules vendor tmp log coverage storage cache dist build knowledge public var
       ].freeze
 
-      def review_target(arg, root:, deliberation:, bus:, review_crew:)
-        target = arg.empty? ? "." : arg
-        crew_result = review_crew&.run(target:)
-        artifact = snapshot_artifact(expand_or_root(target, root))
-        crew_text = if crew_result&.ok?
-                      crew_result.value![:summary].to_s
-                    elsif crew_result
-                      crew_result.message.to_s
-                    end
-        review_text = run_tribunal(deliberation:, artifact:, target:, bus:)
-        [crew_text, review_text].compact.reject(&:empty?).join("\n\n")
-      end
-
       # Full singularity sequence (aesthetic → scan → fix → re-scan → critique).
       # Invoked by natural-language inference, /workflow, /review, /triad — users need not memorize stages.
       def dispatch_workflow(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, swarm: nil, **_legacy)
@@ -93,12 +80,6 @@ module Master
         tokens.each_with_object([]) do |token, out|
           out.last&.casecmp?("--only") ? out[-1] = "--only=#{token}" : out << token
         end
-      end
-
-      def run_tribunal(deliberation:, artifact:, target:, bus: nil)
-        run_deliberation(deliberation:, payload: artifact, context: target) { |feedback| TribunalFeedback.new(feedback, event_bus: bus).render }
-      rescue StandardError => e
-        "tribunal: #{e.message}"
       end
 
       def run_deliberation(deliberation:, payload:, context:)
@@ -247,42 +228,6 @@ module Master
         return local if local
         agent.ask_once(Voice::Personality.why_prompt(rule))
       end
-
-      # The 8-law constitutional self-test gate is the single most load-bearing
-      # check in the codebase (blocks /fix entirely on any violation), but the
-      # law names are Latin-abstract enough that decoding one meant reading
-      # self_test.rb itself. Surfaces name -> plain-English meaning ->
-      # enforcing method, sourced from the same data/rules.yml the gate
-      # actually reads, so this can never drift from what SelfTest enforces.
-      def dispatch_laws(root:, ctx: nil)
-        arg = arg_for(ctx).to_s.strip.upcase
-        laws = Master.load_yaml(File.join(root, "data", "rules.yml")).dig("self_test", "laws_apply_to_self") || {}
-        return "no self_test.laws_apply_to_self entries in data/rules.yml" if laws.empty?
-        return laws_report(laws) if arg.empty?
-
-        law_detail(laws, arg)
-      end
-
-      def laws_report(laws)
-        laws.map { |law, meaning| "#{law.ljust(18)} #{meaning}" }.join("\n")
-      end
-
-      def law_detail(laws, arg)
-        return "unknown law #{arg.inspect} — try /laws for the full list" unless laws.key?(arg)
-
-        "#{arg}\n#{laws[arg]}\nenforced by: Master::Review::Scan::SelfTest (#{LAW_METHODS.fetch(arg, "law_checks")})"
-      end
-
-      LAW_METHODS = {
-        "ROBUSTNESS" => "bare_rescue_findings (+ deploy/timeout/js-catch/library-verify checks)",
-        "SINGULARITY" => "duplicate_rule_id_findings (+ cross-yaml/deploy duplicate-id checks)",
-        "LINEARITY" => "structural_findings(NestingDepthRule)",
-        "PROXIMITY" => "rule_test_proximity_findings",
-        "ABSTRACTION" => "structural_findings(GodClassRule)",
-        "DENSITY" => "structural_findings(SmallFunctionsRule)",
-        "KERNEL_ADHERENCE" => "kernel_wiring_findings",
-        "PRINCIPLE_MAP" => "principle_map_findings",
-      }.freeze
     end
   end
 end

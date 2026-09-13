@@ -38,63 +38,26 @@ class TestCommandRegistryDispatch < Minitest::Test
                     "build dispatches at least the ten verbs help advertises; a smaller number means the scan broke"
   end
 
-  # A table under command_registry/ is merged by a builder or it is unreachable,
-  # and seven of the ten are unreachable. `build` merges control_commands and
-  # nothing else; `build_fast` returns status and help; `slash_commands` is built
-  # from HELP_TOPICS. The subtraction list in TODO.md named three of these —
-  # memory, system and media, unreachable since 7c23a5ee5 cut the slash surface
-  # to eight verbs — and the measurement says four more.
-  #
-  # None is deletable as a FILE. Each holds live dispatchers beside its dead
-  # table: system_commands.rb alone carries dispatch_commit, dispatch_pair,
-  # dispatch_doctor and dispatch_rules, all of which `build` reaches by symbol.
-  #
-  # This pins the set so a new table cannot join it quietly, and so closing one
-  # has to come here and say so.
-  ROOT = File.expand_path("..", __dir__)
-  SEARCHED = %w[lib web bin tools].freeze
-  SKIP = %r{/(node_modules|vendor|tmp|public/assets|coverage)/|\.(png|jpg|jpeg|gif|webp|woff2?|mp4|mp3|wav|ico|map)\z}
+  # A table is a method returning verb => Command, and it is reachable only if
+  # `build` merges it. Seven were not — agent, core, domain, media, memory,
+  # reach and system — and the suite passed for weeks, because their tests
+  # called the tables directly. They and their dispatchers are gone; the live
+  # dispatchers that shared their files stayed. This fails the moment a table
+  # is defined that command_registry.rb does not call.
+  REGISTRY_DIR = File.expand_path("../lib/cli/command_registry", __dir__)
 
-  def test_the_unmerged_command_tables_are_the_seven_we_know_about
-    tables = Dir.glob(File.join(ROOT, "lib/cli/command_registry/*_commands*.rb"))
-                .map { |path| File.basename(path, ".rb") }
-
-    unmerged = tables - called_tables(tables)
-
-    assert_equal %w[agent_commands core_commands media_commands memory_commands
-                    reach_commands system_commands work_commands_extra],
-                 unmerged.sort,
-                 "the unmerged set moved — wire the new one, or record here why it is unreachable"
-  end
-
-  # One pass over the tree, not one grep per table. It was ten `grep -rn`
-  # subprocesses, each walking lib, web, bin and tools in full, and under suite
-  # load the whole test timed out — a guard that cannot finish measures nothing,
-  # which is the failure mode it was written to prevent in the code it reads.
-  # Ruby rather than grep for the same reason the rest of this repo prefers it:
-  # this runs on OpenBSD too.
-  #
-  # A require names a file and a def names itself; neither is a call.
-  def called_tables(tables)
-    found = []
-    source_files.each do |file|
-      text = File.read(file, encoding: "UTF-8")
-      next unless text.valid_encoding?
-
-      tables.each do |table|
-        next if found.include?(table)
-        next unless text.include?(table)
-
-        found << table if text.lines.any? { |line|
-          line.include?(table) && !line.include?("require_relative") && !line.include?("def #{table}")
-        }
+  def test_every_table_is_merged_by_the_registry
+    sources = [REGISTRY, *Dir[File.join(REGISTRY_DIR, "**", "*.rb")]]
+    # A def whose body builds Commands; slash_commands returns names, not a table.
+    tables = sources.flat_map do |path|
+      File.read(path).split(/^(?=\s*def )/).filter_map do |body|
+        body[/\A\s*def (\w+_commands)\b/, 1] if body.include?("command(:")
       end
-    end
-    found
-  end
+    end.uniq
+    registry = File.read(REGISTRY).lines.reject { |line| line =~ /^\s*def / }.join
 
-  def source_files
-    SEARCHED.flat_map { |dir| Dir.glob(File.join(ROOT, dir, "**/*")) }
-            .reject { |path| path.match?(SKIP) || !File.file?(path) }
+    assert_includes tables, "control_commands", "the scan must find the one table build merges"
+    unmerged = tables.reject { |name| registry.match?(/\b#{name}\(/) }
+    assert_empty unmerged, "defined and merged by nothing, so no person can type them: #{unmerged.join(", ")}"
   end
 end

@@ -500,8 +500,7 @@ Law.define(:USE_THEN) do
   # The binding has to die at that second call. Adjacency alone says nothing
   # about whether the name is used again, and in this tree it usually is:
   # DiffStager builds an entry, persists it, and then publishes and returns
-  # three of its fields; SessionCapture parses, writes, and then feeds the same
-  # capture to three more updaters. Chaining those drops a variable the rest of
+  # three of its fields. Chaining that drops a variable the rest of
   # the method needs — applying this rule to its own eight findings introduced
   # three NameErrors, which is how the check below was earned.
   #

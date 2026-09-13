@@ -33,10 +33,6 @@ module Master
         Result.err("#{tool}: #{e.class}: #{e.message}", category: :infrastructure)
       end
 
-      def run_string(root:, tool:, arg: "")
-        run(root:, tool:, arg:).then { |r| r.ok? ? r.value! : r.message }
-      end
-
       # Launch MASTER from its own directory, the pub4 workspace root,
       # or another repository it operates on. Media entrypoints stay
       # discoverable in every case.

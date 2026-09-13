@@ -447,7 +447,7 @@ class TestCLI < Minitest::Test
       Dir.mktmpdir do |downloads|
         prior = ENV["MASTER_SNAPSHOT_DIR"]
         ENV["MASTER_SNAPSHOT_DIR"] = downloads
-        output = Master::CLI::CommandRegistry.publish_snapshot(target, "TEST")
+        output = Master::Trace::Snapshot::Publisher.write(target:, label: "TEST", repo_root: File.expand_path("..", target), mode: :archive).first
         archive = Dir.glob(File.join(downloads, "TEST_snapshot_*.md")).first
         body = File.read(archive)
 
@@ -477,7 +477,7 @@ class TestCLI < Minitest::Test
         prior = ENV["MASTER_SNAPSHOT_DIR"]
         ENV["MASTER_SNAPSHOT_DIR"] = downloads
         digest = File.join(downloads, "TEST_snapshot.md")
-        output = Master::CLI::CommandRegistry.publish_snapshot_digest(target, "TEST")
+        output = Master::Trace::Snapshot::Publisher.write(target:, label: "TEST", repo_root: File.expand_path("..", target), mode: :digest).first
 
         assert_includes output, "snapshot:test:"
         body = File.read(digest)

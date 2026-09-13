@@ -8,11 +8,8 @@ module Master
       # One topic per registered command, and the registry is the whole list:
       # `build` returns clear, commit, doctor, help, model, orders, pair,
       # rollback, soul, status, through, undo and why, and nothing else reaches
-      # Stages::Route. The other command tables in this directory — memory,
-      # system, media, core, domain, reach, agent — are built by no caller, so
-      # /dilla, /btw, /tree and the rest have a dispatcher and no route. Writing
-      # them a help topic would advertise a command the router cannot resolve,
-      # which is why test_cli_domain_commands pins that /domain stays unlisted.
+      # Stages::Route. A topic for anything else would advertise a command the
+      # router cannot resolve.
       HELP_TOPICS = {
         "review" => {
           summary: "the whole pass, read-only: scan, critique, principle map",

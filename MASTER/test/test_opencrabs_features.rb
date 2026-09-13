@@ -87,11 +87,6 @@ class TestOpenCrabsFeatures < Minitest::Test
     FileUtils.rm_rf(dir)
   end
 
-  def test_dispatch_rtk_command
-    out = Master::CLI::CommandRegistry.dispatch_rtk(Master::ROOT)
-    assert_includes out, "RTK output filter stats"
-  end
-
   def test_agent_pool_capacity
     bus = Master::Trace::EventBus.new
     # The capacity under test is the taxonomy's, so it is stated here rather

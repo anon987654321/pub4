@@ -3,14 +3,8 @@
 require_relative "command_registry/command"
 require_relative "command_registry/formatter"
 require_relative "command_registry/help"
-require_relative "command_registry/memory_commands"
 require_relative "command_registry/work_commands"
 require_relative "command_registry/system_commands"
-require_relative "command_registry/media_commands"
-require_relative "command_registry/core_commands"
-require_relative "command_registry/domain_commands"
-require_relative "command_registry/reach_commands"
-require_relative "command_registry/agent_commands"
 require "open3"
 
 module Master

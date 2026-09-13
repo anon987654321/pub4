@@ -50,10 +50,4 @@ class TestRuntimeMode < Minitest::Test
     missing = named.reject { |m| Dir.exist?(File.join(Master::ROOT, "lib", m)) }
     assert_empty missing, "the agent bootstrap names lib/ directories that do not exist: #{missing.join(", ")}"
   end
-
-  def test_tools_command_lists_registered_tools
-    output = Master::CLI::CommandRegistry.dispatch_tools(Master::ROOT, nil, ctx: { args: "" })
-    assert_includes output, "ReadFile"
-    assert_includes output, "io"
-  end
 end

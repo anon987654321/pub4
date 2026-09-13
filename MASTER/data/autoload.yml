@@ -27,13 +27,7 @@ autoload:
     - cli/session/thinking_indicator.rb
     # Master::CLI::CommandRegistry -- one file per command family. command.rb
     # and formatter.rb define their own constants and are left autoloadable.
-    - cli/command_registry/agent_commands.rb
-    - cli/command_registry/core_commands.rb
-    - cli/command_registry/domain_commands.rb
     - cli/command_registry/help.rb
-    - cli/command_registry/media_commands.rb
-    - cli/command_registry/memory_commands.rb
-    - cli/command_registry/reach_commands.rb
     - cli/command_registry/system_commands.rb
     - cli/command_registry/work_commands.rb
     - cli/command_registry/work_commands_extra.rb
