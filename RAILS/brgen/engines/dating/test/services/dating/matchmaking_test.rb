@@ -79,6 +79,23 @@ class Dating::MatchmakingTest < ActiveSupport::TestCase
     end
   end
 
+  test "every mutual like is matched from one users query" do
+    ActsAsTenant.with_tenant(@city) do
+      ingrid = user("mm_ingrid@brgen.no")
+      [ @kari, @jonas, ingrid ].each { |person| profile(person) }
+      [ @jonas, ingrid ].each do |other|
+        like(@kari, other)
+        like(other, @kari)
+      end
+
+      assert_queries_match(/FROM "users" WHERE "users"\."id" IN/, count: 1) do
+        Dating::Matchmaking.call(@kari)
+      end
+      assert_equal 1, matches_between(@kari, @jonas).count
+      assert_equal 1, matches_between(@kari, ingrid).count
+    end
+  end
+
   test "no mutual like creates no match" do
     ActsAsTenant.with_tenant(@city) do
       profile(@kari)

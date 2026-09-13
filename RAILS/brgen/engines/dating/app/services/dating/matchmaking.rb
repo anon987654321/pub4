@@ -33,12 +33,7 @@ module Dating
       likes_received = Dating::Like.where(likee: user).pluck(:liker_id)
       mutual_ids = likes_given & likes_received
 
-      mutual_ids.filter_map do |other_id|
-        other = User.find_by(id: other_id)
-        next unless other
-
-        match_with(other)
-      end
+      User.where(id: mutual_ids).map { |other| match_with(other) }
     end
 
     # A match is symmetric and the unique index is not: it covers
