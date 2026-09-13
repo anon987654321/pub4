@@ -39,7 +39,9 @@ module Master
 
       def resolve_search_directory(topic)
         directory = topic ? File.join(@knowledge_root, topic.to_s) : @knowledge_root
-        if Dir.exist?(directory) && File.realpath(directory).start_with?(@knowledge_root)
+        # A separator-bounded prefix, so topic "../knowledge_private" does not
+        # pass for living under knowledge/.
+        if Dir.exist?(directory) && PathGuard.inside_root?(File.realpath(directory), @knowledge_root)
           return Result.ok(directory)
         end
 
