@@ -12,10 +12,11 @@ Canonical inventories: `RAILS/apps.yml`, `OPENBSD/deploy_inventory.json`. The
 JSON is generated from `apps.yml` by `ruby OPENBSD/bin/sync_deploy_inventory.rb`,
 and the `domain_alignment` gate fails when the two disagree. Deploy
 gates (`integrity_gate.rb`, `verify_deploy_identity.rb`,
-`deploy_inventory.json`) live at `OPENBSD/` top level, and so does the one
-recovery pen that exists, `quarantine/`, which holds inert samples and nothing
-to run. There is no `archive/`: it was a pub3-era path, and git history holds
-the old installers.
+`deploy_inventory.json`) live at `OPENBSD/` top level, and so does
+`quarantine/virus_museum/`, a pen for inert samples that nothing runs and
+`MASTER/tools/security_sweep.rb` holds to that. It is not a recovery path:
+`bin/dr-pull` recovers the databases and `manual_master_deploy.ksh` a stalled
+master deploy. There is no `archive/`; git history holds the old installers.
 
 ## Deployment map
 
