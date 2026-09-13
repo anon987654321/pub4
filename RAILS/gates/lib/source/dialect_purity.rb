@@ -103,9 +103,11 @@ module Deploy
         body = File.read(brgen_root)
         @result.fail("dialect_purity: brgen _root missing brgen-old or dialect tokens") unless body.match?(/brgen-old|dialect_tokens|brgen_old/i)
       end
-      bsd = File.join(@rails, "bsdports/app/assets/stylesheets/application.scss")
-      if File.file?(bsd)
-        body = File.read(bsd)
+      # bsdports' dialect root is _ports_shell.scss, which application.scss @uses.
+      bsd = %w[application.scss _ports_shell.scss].map { |name| File.join(@rails, "bsdports/app/assets/stylesheets", name) }
+                                                  .select { |path| File.file?(path) }
+      if bsd.any?
+        body = bsd.map { |path| File.read(path) }.join
         @result.fail("dialect_purity: bsdports missing CRT green identity") unless body.include?("#63c363") || body.include?("openbsd")
       end
       amber = File.join(@rails, "amber/app/assets/stylesheets/_variables.scss")
