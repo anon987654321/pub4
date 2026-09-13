@@ -31,7 +31,7 @@ module Maps
 
     def show
       @place = Place.includes(:city, :neighborhood).find(params[:id])
-      @place.record_activity!("PlaceViewed", source_vertical: "maps")
+      @place.record_activity!("PlaceViewed", source_vertical: "maps") unless passive_request?
       @recent_check_ins = @place.place_check_ins.includes(:user).recent.limit(10)
       # Guests may check in (see the require_user_session gate on #check_in),
       # so the "already here" flag has to follow the same identity. With

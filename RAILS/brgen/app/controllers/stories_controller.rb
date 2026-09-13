@@ -16,7 +16,7 @@ class StoriesController < ApplicationController
     # surface is concerned, whether or not the sweep has run yet. Otherwise the
     # link keeps working for as long as the job is behind.
     @story = Story.alive.includes(:user).find(params[:id])
-    @story.view_by!(Current.user)
+    @story.view_by!(Current.user) unless prefetch_request?
     @ring = Story.alive.where(user_id: @story.user_id).newest_first.to_a
     @viewers = @story.story_views.includes(:user).limit(50) if own_story?
   end

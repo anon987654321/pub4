@@ -56,6 +56,16 @@ class StoriesControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # Turbo prefetches a link on hover. A hover is not a view.
+  test "a prefetch of someone's story records no view" do
+    sign_in_as(@viewer)
+
+    assert_no_difference -> { StoryView.count } do
+      get story_path(@story), headers: { "X-Sec-Purpose" => "prefetch" }
+    end
+    assert_response :success
+  end
+
   # An expired story is gone as far as every surface is concerned, whether or
   # not the sweep has run yet — otherwise the link keeps working while the job
   # is behind.

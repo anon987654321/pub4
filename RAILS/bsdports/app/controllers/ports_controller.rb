@@ -57,7 +57,7 @@ class PortsController < ApplicationController
         "(pkg_info not available in this env)"
       end
     end
-    @port.record_activity!("PortViewed", source_vertical: "bsdports")
+    @port.record_activity!("PortViewed", source_vertical: "bsdports") unless passive_request?
   end
 
   def watch

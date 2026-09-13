@@ -44,7 +44,7 @@ class ItemsController < ApplicationController
   end
 
   def show
-    @item.record_activity!("AmberItemViewed", source_vertical: "amber")
+    @item.record_activity!("AmberItemViewed", source_vertical: "amber") unless passive_request?
     @ai_available = WardrobeAi.configured?
     # AffiliateLink.new, not @item.affiliate_links.build: build appends the
     # unsaved record to the loaded association, so the view's

@@ -39,6 +39,13 @@ class VisitCountingTest < ActionDispatch::IntegrationTest
   # test had set: in isolation these passed, and in the full suite a request
   # meant for oshlo.no arrived at brgen.no. A test about telling seven domains
   # apart must not itself be ambiguous about which one it asked for.
+  def test_a_turbo_prefetch_is_not_a_visit
+    browse "http://oshlo.no/", headers: { "X-Sec-Purpose" => "prefetch" }
+
+    assert_response :success
+    assert_equal({}, Shared::VisitCount.by_host)
+  end
+
   def test_each_city_domain_accumulates_separately
     browse "http://oshlo.no/"
     browse "http://brgen.no/"

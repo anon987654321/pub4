@@ -15,6 +15,6 @@ class CategoriesController < ApplicationController
   def show
     @category = Category.find_by!(slug: params[:id])
     @pagy, @ports = pagy(@category.ports.order(:name))
-    @category.record_activity!("CategoryViewed", source_vertical: "bsdports")
+    @category.record_activity!("CategoryViewed", source_vertical: "bsdports") unless passive_request?
   end
 end

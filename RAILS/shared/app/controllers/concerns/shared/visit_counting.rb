@@ -28,7 +28,7 @@ module Shared
       return if request.xhr?
       return unless response.media_type == "text/html"
       return unless response.successful?
-      return if Shared::VisitCount.bot?(request.user_agent)
+      return if passive_request?
 
       Shared::VisitCount.record(app: visit_counting_app, host: request.host, route: "#{controller_path}##{action_name}")
     rescue StandardError => e
@@ -37,6 +37,20 @@ module Shared
       # which is the one conclusion this table exists to prevent.
       Rails.logger.warn("[visit_count] #{e.class}: #{e.message}")
       nil
+    end
+
+    # A request nobody is looking at: a crawler, or Turbo prefetching a link the
+    # pointer hovers over (it sends X-Sec-Purpose: prefetch). A GET that records
+    # a view or an activity asks this first, so a hover or a crawl does not
+    # count as someone having seen the page.
+    def passive_request?
+      Shared::VisitCount.bot?(request.user_agent) || prefetch_request?
+    end
+
+    # A signed-in view is a person already, so a story view asks only this.
+    def prefetch_request?
+      request.headers["X-Sec-Purpose"].to_s.include?("prefetch") ||
+        request.headers["Sec-Purpose"].to_s.include?("prefetch")
     end
 
     # The fleet's idiom, used the same way by Shared::OutboundClicksController,
