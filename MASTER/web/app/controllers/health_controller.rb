@@ -117,11 +117,10 @@ class HealthController < ActionController::API
     { error: e.message }
   end
 
+  # The commit this process booted, not the checkout's HEAD now; see
+  # config/initializers/booted_sha.rb.
   def git_sha
-    repo = Rails.root.join("..").to_s
-    out, status = Open3.capture2("git", "-c", "safe.directory=#{repo}", "-C", repo,
-                                 "rev-parse", "--short", "HEAD")
-    status.success? ? out.strip : nil
+    Rails.application.config.x.booted_sha
   end
 
   def tts_socket_alive?

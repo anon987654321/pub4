@@ -18,6 +18,31 @@ class HealthControllerTest < ActionDispatch::IntegrationTest
     assert body["deploy"].key?("face_runtime_digest")
   end
 
+  # Callers parse these on an interval, so a type change is a break even when
+  # the key survives.
+  test "the payload keeps its types" do
+    get "/health"
+
+    body = JSON.parse(response.body)
+    assert_kind_of String, body["status"]
+    body["checks"].each_value { |value| assert_includes [true, false], value }
+    assert_includes [String, NilClass], body.dig("deploy", "git_sha").class
+    assert_includes [true, false], body.dig("deploy", "tts_socket")
+    assert_kind_of Hash, body.dig("deploy", "voice_policy")
+  end
+
+  # A pull on the box moves HEAD while the process keeps running the old code,
+  # so the SHA must be the one read at boot, not the checkout's HEAD now.
+  test "git_sha is the commit the process booted" do
+    original = Rails.application.config.x.booted_sha
+    Rails.application.config.x.booted_sha = "b00ted1"
+    get "/health"
+
+    assert_equal "b00ted1", JSON.parse(response.body).dig("deploy", "git_sha")
+  ensure
+    Rails.application.config.x.booted_sha = original
+  end
+
   # Plain minitest: mocha is not in this bundle, so `any_instance` does not
   # exist. Redefining the predicate on the class and putting it back is the
   # smallest way to ask what /health does when one check is false.
