@@ -902,4 +902,20 @@ end
     assert_empty findings(:ERB_HTML_SAFE, raw, path: VIEW)
     refute_empty findings(:ERB_HTML_SAFE, raw.sub("scan: intentional — ", ""), path: VIEW)
   end
+
+  # --- CONTRAST_TOKENS ----------------------------------------------------
+  # Light text on a dark background is excused, and "dark" was judged on
+  # gamma-encoded luma. Pure red reads 0.21 that way and so passed as dark,
+  # while white on it is 4.0:1, under AA. Greys judge exactly as they did.
+
+  CSS = "RAILS/shared/app/assets/stylesheets/example.scss"
+
+  def test_light_text_on_a_saturated_mid_colour_is_not_excused_as_dark
+    refute_empty findings(:CONTRAST_TOKENS, ".a {\n  background: #ff0000;\n  color: #fff;\n}\n", path: CSS)
+  end
+
+  def test_light_text_on_a_dark_grey_is_still_excused
+    assert_empty findings(:CONTRAST_TOKENS, ".a {\n  background: #555;\n  color: #fff;\n}\n", path: CSS)
+    refute_empty findings(:CONTRAST_TOKENS, ".a {\n  background: #777;\n  color: #fff;\n}\n", path: CSS)
+  end
 end

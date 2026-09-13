@@ -312,14 +312,24 @@ end end.join
       block = lines[start..(line_number - 1)].to_s
       hex = block.scan(BACKGROUND_HEX).flatten.last or return false
 
-      relative_luminance(hex) < 0.4
+      relative_luminance(hex) < DARK_BACKGROUND_LUMINANCE
     end
 
+    # WCAG relative luminance: each sRGB channel is gamma-decoded before the
+    # weights apply, as RAILS/gates/support/design_metrics/contrast.rb does.
     def relative_luminance(hex)
       h = hex.length < 6 ? hex.chars.flat_map { |c| [c, c] }.join : hex
-      r, g, b = h[0, 6].scan(/../).map { |pair| pair.to_i(16) / 255.0 }
+      r, g, b = h[0, 6].scan(/../).map { |pair| srgb_to_linear(pair.to_i(16) / 255.0) }
       (0.2126 * r) + (0.7152 * g) + (0.0722 * b)
     end
+
+    def srgb_to_linear(channel)
+      channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055)**2.4
+    end
+
+    # The luminance of a 40% sRGB grey, so every grey background is judged
+    # exactly as before and only saturated colours move to their true weight.
+    DARK_BACKGROUND_LUMINANCE = ((0.4 + 0.055) / 1.055)**2.4
       end
     end
   end
