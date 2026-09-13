@@ -18,8 +18,7 @@ module Master
       def discover!
         @loaded = []
         load_antigravity_skills
-        load_directory_skills
-        load_registry_skills({})
+        load_registry_skills
         @loaded = sort_by_recency(@loaded)
         @bus&.publish("skills:loaded", count: @loaded.size)
         @loaded
@@ -50,8 +49,8 @@ module Master
         body = skill[:body].to_s.strip
         return body[0, 4_000] unless body.empty?
 
-        md_path = File.join(skill[:dir], "SKILL.md")
-        return skill[:description].to_s unless File.file?(md_path)
+        md_path = skill[:dir] && File.join(skill[:dir], "SKILL.md")
+        return skill[:description].to_s unless md_path && File.file?(md_path)
 
         File.read(md_path, encoding: "UTF-8")[0, 4_000]
       rescue StandardError => e
@@ -90,7 +89,7 @@ module Master
         Master::Ground::Swallow.log(e, context: "skills.load_antigravity", event_bus: @bus)
       end
 
-      def load_registry_skills(_seen)
+      def load_registry_skills
         path = File.join(@root, "data", REGISTRY_PATH)
         return unless File.file?(path)
 
@@ -101,30 +100,6 @@ module Master
         end
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "skills.load_registry", event_bus: @bus)
-      end
-
-      def load_directory_skills
-        pattern = File.join(@root, "data", SKILLS_DIR, "*", "SKILL.md")
-        Dir.glob(pattern).sort.each { |path| load_skill_file(path) }
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "skills.load_directory", event_bus: @bus)
-      end
-
-      def load_skill_file(path)
-        metadata, body = parse_skill_file(path)
-        name = metadata["name"].to_s
-        return if name.empty? || find(name)
-
-        @loaded << {
-          name:,
-          description: metadata["description"].to_s,
-          triggers: Array(metadata["triggers"]),
-          body:,
-          dir: File.dirname(path),
-          has_ruby: Dir.glob(File.join(File.dirname(path), "*.rb")).any?,
-        }
-      rescue Psych::Exception, Errno::EACCES => e
-        Master::Ground::Swallow.log(e, context: "skills.load_file", event_bus: @bus, path:)
       end
 
       def registry_skill(row)
@@ -138,14 +113,9 @@ module Master
           description: row["description"].to_s,
           triggers: Array(row["triggers"]),
           body: row["body"].to_s,
-          dir: File.join(@root, "data", SKILLS_DIR),
+          dir: nil,
           has_ruby: false,
         }
-      end
-
-      def parse_skill_file(path)
-        source = File.read(path, encoding: "UTF-8")
-        Master::Ground::Frontmatter.split(source, context: "cli.skills.frontmatter", path:) || [{}, ""]
       end
 
       def sort_by_recency(skills)
@@ -173,7 +143,6 @@ module Master
         Master::Ground::Swallow.log(e, context: "skills.persist_usage", event_bus: @bus)
       end
 
-      SKILLS_DIR = "skills".freeze
       REGISTRY_PATH = "patterns.yml".freeze
     end
   end

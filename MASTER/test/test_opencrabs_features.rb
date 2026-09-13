@@ -98,13 +98,12 @@ class TestOpenCrabsFeatures < Minitest::Test
 
   def test_skills_body_for_returns_description_fallback
     dir = Dir.mktmpdir("master-skill-")
-    skill_dir = File.join(dir, "data", "skills", "demo")
-    FileUtils.mkdir_p(skill_dir)
-    File.write(File.join(skill_dir, "SKILL.md"), "---\nname: demo\ndescription: demo skill\ntriggers:\n  - fix loop\n---\n\nDo the thing.\n")
+    FileUtils.mkdir_p(File.join(dir, "data"))
+    File.write(File.join(dir, "data", "patterns.yml"),
+               "skills_registry:\n  skills:\n    - name: demo\n      description: demo skill\n      triggers: [\"fix loop\"]\n")
     skills = Master::CLI::Skills.new(root: dir)
     skills.discover!
-    body = skills.body_for("demo")
-    assert_includes body, "Do the thing"
+    assert_equal "demo skill", skills.body_for("demo")
   ensure
     FileUtils.rm_rf(dir)
   end

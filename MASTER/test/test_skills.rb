@@ -44,14 +44,23 @@ class TestSkills < Minitest::Test
     end
   end
 
-  def test_discover_ignores_legacy_skill_markdown
+  # data/ holds no markdown but SOUL, CANON, IDENTITY and principles/, and
+  # RUNTIME_DOCS_YAML refuses the rest at error severity, so a skill written as
+  # data/skills/*.md or data/skills/*/SKILL.md is not a skill.
+  def test_discover_ignores_skill_markdown_under_data
     Dir.mktmpdir do |root|
       skills_dir = File.join(root, "data", "skills")
-      FileUtils.mkdir_p(skills_dir)
+      FileUtils.mkdir_p(File.join(skills_dir, "lint"))
       File.write(File.join(skills_dir, "scan.md"), <<~MD)
         ---
         name: scan
         description: scan files and directories
+        ---
+      MD
+      File.write(File.join(skills_dir, "lint", "SKILL.md"), <<~MD)
+        ---
+        name: lint
+        description: lint staged lines
         ---
       MD
       File.write(File.join(root, "data", "patterns.yml"), <<~YAML)
