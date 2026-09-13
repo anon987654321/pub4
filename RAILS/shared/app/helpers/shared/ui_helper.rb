@@ -205,7 +205,7 @@ module Shared
     # The attributes every image helper here starts from: the reserved box,
     # the caller's options over it, and a loading policy unless the caller set
     # one. amber's own responsive_image_tag starts here too.
-    def reserved_image_options(source, options, loading)
+    def reserved_image_options(source, options, loading:)
       image_options = image_dimensions(source).merge(options)
       image_options[:loading] ||= loading
       image_options
@@ -222,7 +222,7 @@ module Shared
     # views call it, and an engine view should not depend on its host's helper.
     # main_app.url_for because those views render inside an isolated engine.
     def lazy_image_tag(source, alt:, blurhash: nil, **options)
-      image_options = reserved_image_options(source, options, "lazy")
+      image_options = reserved_image_options(source, options, loading: "lazy")
       blurhash ||= source.try(:blurhash) || source.try(:blob).try(:blurhash) || source.try(:metadata).try(:[], "blurhash")
       image_options[:data] = (image_options[:data] || {}).merge(
         controller: "lazy-image",
@@ -242,7 +242,7 @@ module Shared
     # wins over this one: it serves preprocessed named variants first and
     # resolves through the ambient url_for.
     def responsive_image_tag(attachment, alt:, widths: [ 400, 800, 1_200 ], sizes: "(max-width: 768px) 100vw, 800px", loading: "lazy", **options)
-      image_options = reserved_image_options(attachment, options, loading)
+      image_options = reserved_image_options(attachment, options, loading:)
 
       return image_tag(attachment, alt: alt, **image_options) unless attachment.respond_to?(:variant)
 
