@@ -138,6 +138,57 @@ class QueryBudgetTest < ActionDispatch::IntegrationTest
     end
   end
 
+def seed_listings(count, categories:)
+  seller = User.strict_loading(false).create!(
+    email_address: "listing-#{SecureRandom.hex(4)}@brgen.no",
+    password: "password123", city: @city,
+  )
+  conditions = %w[fair good like_new]
+
+  Array.new(count) do |i|
+    listing = Marketplace::Listing.create!(
+      user: seller, title: "Sykkel #{i}-#{SecureRandom.hex(2)}", kind: "goods",
+      category: categories[i % categories.size], condition: conditions[i % conditions.size],
+      price_cents: 10_000 * (i + 1),
+    )
+    listing.photos.attach(io: StringIO.new(PIXEL_PNG), filename: "l#{i}.png", content_type: "image/png")
+    listing
+  end
+end
+
+# The listings grid is the one index that also counts facets, a query per
+# facet dimension, so a per-row repeat hides easily among them. Filtered and
+# unfiltered both, because the facet counts drop their own filter.
+test "the marketplace listings index with facets does not spend queries per listing" do
+  ActsAsTenant.with_tenant(@city) do
+    categories = Array.new(3) do |i|
+      Marketplace::Category.create!(name: "Kategori #{i}", slug: "kategori-#{i}-#{SecureRandom.hex(3)}")
+    end
+    host! "markedsplass.brgen.no"
+    faceted = { category_id: categories.first.id, condition: "good", min_price: 50, sort: "price_low" }
+
+    seed_listings(3, categories:)
+    get marketplace.listings_path
+    assert_response :success
+    few = count_queries { get marketplace.listings_path }
+
+    seed_listings(12, categories:)
+    many = count_queries { get marketplace.listings_path }
+    assert_operator many, :<=, few + 2,
+                    "listings index cost grew with the number of listings (#{few} -> #{many})"
+    assert_not_empty controller.instance_variable_get(:@facets).categories,
+                     "the index counted no facets, so the budget measured nothing"
+
+    [ {}, faceted ].each do |params|
+      get marketplace.listings_path(params)
+      assert_response :success
+      repeats = repeated_shapes { get marketplace.listings_path(params) }
+      assert_empty repeats.map { |sql, n| "#{params.inspect}: #{n}x #{sql[0, 90]}" },
+                   "one query per listing on the marketplace index is an N+1"
+    end
+  end
+end
+
   # communities#show was the most expensive endpoint in the app: 816 queries and
   # a 3.5s p50 across 2,584 logged requests on 2026-08-01, worst case 110s. It
   # had drifted from the feed controllers in two ways at once — it preloaded
