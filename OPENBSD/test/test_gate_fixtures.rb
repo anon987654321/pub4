@@ -192,6 +192,71 @@ class DeployIdentityFixtureTest < Minitest::Test
   end
 end
 
+require_relative "../gates/port_inventory"
+
+# port_inventory handed the fleet with one port moved, so each mirror it reads
+# must notice apps.yml and its copy no longer agree.
+class PortInventoryFixtureTest < Minitest::Test
+  GATE = Deploy::PortInventoryGate
+
+  def apps = @apps ||= Deploy::Inventory.new(root: GATE::ROOT).apps
+
+  # The fleet as apps.yml would describe it after brgen moved to port 40000.
+  def moved = apps.map { |app| app.name == "brgen" ? app.dup.tap { |a| a.port = 40_000 } : app }
+
+  def findings(check, fleet, *rest)
+    result = Deploy::GateResult.new
+    GATE.new.send(check, result, fleet, *rest)
+    result.failures
+  end
+
+  def test_relayd_forwarding_to_the_old_port_fails
+    old = apps.find { |app| app.name == "brgen" }.port
+
+    assert_includes findings(:check_relayd_ports, moved),
+                    "brgen: relayd.conf forwards to port #{old}, apps.yml says 40000"
+  end
+
+  def test_a_smoke_probe_on_the_old_port_fails
+    assert_match(/probes port \d{5}, which no app in apps.yml listens on \(line names brgen\)/,
+                 findings(:check_smoke_probes, moved).join(" | "))
+  end
+
+  # A probe that names one app and another app's port warms the wrong process,
+  # and the bare `smoke <app> <port>` form is read as well as the URL form.
+  def test_a_probe_naming_one_app_on_another_apps_port_fails
+    named, other = apps.first(2)
+    Dir.mktmpdir("smoke") do |dir|
+      File.write(File.join(dir, "smoke.sh"), <<~SH)
+        smoke #{named.name} #{other.port}
+        curl -fsS http://127.0.0.1:#{named.port}/up
+      SH
+      result = Deploy::GateResult.new
+      GATE.new.send(:check_smoke_probes, result, apps, root: dir, scripts: ["smoke.sh"])
+
+      assert_equal ["smoke.sh:1 probes port #{other.port}, which no app in apps.yml listens on (line names #{named.name})"],
+                   result.failures
+    end
+  end
+
+  def test_operator_app_ports_on_the_old_port_fails
+    assert_includes findings(:check_openbsd_ports, moved).join(" | "), "brgen: OpenBSD APP_PORTS"
+  end
+
+  def test_two_apps_on_one_port_fail
+    clash = apps.first(2).map(&:dup).each { |app| app.port = 40_000 }
+
+    assert_equal ["port collision 40000: #{clash.map(&:name).join(', ')}"], findings(:check_uniques, clash, :port)
+  end
+
+  def test_the_committed_tree_passes
+    result = GATE.run
+
+    assert_equal :passed, result.outcome, result.failures.join("\n")
+    assert_operator apps.size, :>=, 3
+  end
+end
+
 class DeploySmokeFixtureTest < Minitest::Test
   OPENBSD = File.expand_path("..", __dir__)
   require File.join(OPENBSD, "deploy_smoke_gate.rb")

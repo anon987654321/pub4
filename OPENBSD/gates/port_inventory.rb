@@ -190,12 +190,12 @@ module Deploy
     # `-m 5` timeout cannot collide with it.
     PORT_TOKEN = /(?<![\d.])(\d{5})(?![\d])/
 
-    def check_smoke_probes(result, apps)
+    def check_smoke_probes(result, apps, root: ROOT, scripts: SMOKE_SCRIPTS)
       by_name = apps.to_h { |app| [app.name, app.port] }
       known = by_name.values + [MASTER_PORT]
 
-      SMOKE_SCRIPTS.each do |relative|
-        path = File.join(ROOT, relative)
+      scripts.each do |relative|
+        path = File.join(root, relative)
         unless File.file?(path)
           result.fail("missing smoke script #{relative}")
           next
