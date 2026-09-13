@@ -40,6 +40,20 @@ class VerticalFormsTest < ActionDispatch::IntegrationTest
     assert_redirected_to playlist.set_path(Playlist::Set.order(:id).last)
   end
 
+  # A privacy value outside the list reached the row some way other than the
+  # form. It used to fall through to "visible to everyone".
+  test "a set with an unknown privacy value is hidden from strangers" do
+    host! "radio.brgen.no"
+    set = Playlist::Set.create!(user: @owner, name: "Skjult")
+    get playlist.set_path(set)
+    assert_response :success
+
+    set.update_column(:privacy, "privat")
+
+    get playlist.set_path(set)
+    assert_response :not_found
+  end
+
   test "playlist sets and hosted tracks indexes resolve their models" do
     host! "radio.brgen.no"
     # Playlist::Set inside `module Playlist` resolved to Playlist::Playlist::Set.

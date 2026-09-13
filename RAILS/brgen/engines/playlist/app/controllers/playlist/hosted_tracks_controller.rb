@@ -77,8 +77,8 @@ class Playlist::HostedTracksController < Playlist::BaseController
   def track_visible_to_viewer?
     case @track.privacy.to_s
     when "", "public", "unlisted" then true
-    when "private" then Current.user && @track.user_id == Current.user.id
-    else true
+    # Anything not named public is private, so a stray value hides the track.
+    else Current.user && @track.user_id == Current.user.id
     end
   end
 

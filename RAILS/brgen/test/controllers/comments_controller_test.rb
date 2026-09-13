@@ -82,4 +82,9 @@ class CommentsControllerTest < ActionDispatch::IntegrationTest
       assert_select "#comments_empty"
     end
   end
+
+  test "a comment posted to no parent is a 404, not a 500" do
+    post comments_path, params: { comment: { content: "til ingen" } }
+    assert_response :not_found
+  end
 end

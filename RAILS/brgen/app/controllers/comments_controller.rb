@@ -6,7 +6,7 @@ class CommentsController < ApplicationController
              by: -> { Current.user&.id ? "u#{Current.user.id}" : request.remote_ip }
   before_action :require_verified_email, only: :create
   before_action :require_real_user, only: [ :destroy, :generate_summary ]
-  before_action :set_commentable
+  before_action :set_commentable, only: :create
 
   def create
     @comment = @commentable.comments.build(comment_params)
@@ -64,6 +64,8 @@ class CommentsController < ApplicationController
     elsif params[:comment_id]
       @commentable = Comment.find(params[:comment_id])
     end
+    # POST /comments names no parent at all; that is a missing record, not a 500.
+    raise ActiveRecord::RecordNotFound unless @commentable
     return unless @commentable.respond_to?(:readable_by?)
     raise ActiveRecord::RecordNotFound unless @commentable.readable_by?(Current.user)
   end

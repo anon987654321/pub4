@@ -36,7 +36,10 @@ class Playlist::SetsController < ApplicationController
 
   def show
     @set_tracks = @set.set_tracks.includes(:track)
-    @tracks = @set.tracks
+    # A query, not the association: iterating @set.tracks lazily loaded it off
+    # a set found by id, which strict loading refuses, so every set page 500'd.
+    # timestamped_comments is a :destroy cascade, which strict loading spares.
+    @tracks = Playlist::Track.where(id: Playlist::SetTrack.where(playlist_set_id: @set.id).select(:playlist_track_id)).to_a
     @dilla_sketches = @set.dilla_sketches.recent.includes(:user)
     # Prepare full waveform player + per-track timestamp comments on collection
     @track_comments = @tracks.each_with_object({}) do |tr, h|
@@ -80,7 +83,7 @@ class Playlist::SetsController < ApplicationController
   private
 
   def set_set
-    @set = Playlist::Set.find(params[:id])
+    @set = Playlist::Set.includes(:user).find(params[:id])
     return if set_visible_to_viewer?
 
     raise ActiveRecord::RecordNotFound
@@ -89,12 +92,14 @@ class Playlist::SetsController < ApplicationController
   def set_visible_to_viewer?
     case @set.privacy.to_s
     when "", "public", "unlisted" then true
-    when "private"
+    # Anything not named public is private: a privacy value outside the list
+    # reached the database some way other than the form, and a typo must not
+    # publish a set its owner hid.
+    else
       Current.user && (
         @set.user_id == Current.user.id ||
         @set.collaborations.exists?(user_id: Current.user.id)
       )
-    else true
     end
   end
 
