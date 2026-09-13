@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "open3"
+require "rbconfig"
 # Every read below inspects UTF-8 source. Under a C locale -- which is how the
 # weekly integrity run invokes these on vm23 -- Ruby defaults file reads to
 # US-ASCII and each one raises "invalid byte sequence". Same require, same
@@ -71,7 +73,18 @@ class RestoreScriptsTest < Minitest::Test
   def test_vps_deploy_verifies_the_page_stylesheet_resolves
     source = File.read(File.join(ROOT, "bin/vps-deploy"))
     assert_includes source, "css_href", "no stylesheet verification after restart"
-    assert_match(%r{grep -oE '/assets/\[\^"\]\+\\\.css'}, source, "must read the href off the rendered page")
+    # The reader is run rather than matched: what matters is the href it finds
+    # on a page that links one, and nothing, not a failure, on a page that does
+    # not — under set -e a failing read ends the deploy with no stamp.
+    reader = source[/^css_href=\$\(.*ruby34 -e '([^']+)'\)$/, 1]
+    assert reader, "must read the href off the rendered page"
+    link = '<link rel="stylesheet" href="/assets/application-1a2b.css">'
+    found, status = Open3.capture2(RbConfig.ruby, "-e", reader, stdin_data: link)
+    assert_equal ["/assets/application-1a2b.css", true], [found, status.success?]
+    found, status = Open3.capture2(RbConfig.ruby, "-e", reader, stdin_data: "<p>no link</p>")
+    assert_equal ["", true], [found, status.success?]
+    assert_match(/^home_page=\$\(curl .*\) \|\| \{\n\s*write_stamp "\$app" failed/, source,
+                 "a home page that does not answer must fail the deploy with a stamp")
     assert_includes source, 'Host: ${domain}', "must ask through the app's own Host or it 403s"
     assert_match(/css_href.*\n.*write_stamp "\$app" failed/m.freeze, source[/if \[\[ -n \$css_href \]\].*?^fi/m].to_s,
                  "a 404 stylesheet must fail the deploy, not warn")
