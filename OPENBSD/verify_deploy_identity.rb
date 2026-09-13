@@ -3,16 +3,39 @@
 
 # Verifies low-level OPERATOR identity hygiene without requiring app dependencies.
 # Run from the repository root:
-#   ruby OPENBSD/verify_deploy_identity.rb
+#   ruby OPENBSD/verify_deploy_identity.rb [path/to/_deploy.sh]
 
+require "open3"
 require "yaml"
 require_relative "lib/utf8"
+
+# The functions every app's deploy script reaches through _deploy.sh.
+SHARED_FUNCTIONS = %w[deploy_tracked_app need_cmd bundle_install_as_app install_rcd relayd_add_relay].freeze
+
+# Which of `names` the shell does not define after sourcing `library`.
+#
+# Asked of zsh rather than of the text: "deploy_tracked_app()" in a comment, or
+# in a function defined in a file _deploy.sh no longer sources, satisfied a
+# string search while every app deploy would have died on "command not found".
+# Sourcing is safe because the library files only define functions.
+def shell_functions_missing(library, names)
+  out, = Open3.capture2e("zsh", "-c", 'source "$1" && shift && whence -w "$@"', "zsh", library, *names)
+  defined = out.scan(/^(\w+): function$/).flatten
+  names - defined
+rescue Errno::ENOENT
+  names
+end
+
+return unless $PROGRAM_NAME == __FILE__
 
 ROOT = File.expand_path("..", __dir__)
 RAILS_ROOT = File.join(ROOT, "RAILS")
 APPS_FILE = File.join(RAILS_ROOT, "apps.yml")
 SHARED_DEPLOY = File.join(RAILS_ROOT, "_deploy.sh")
 SHARED_BUNDLE = File.join(RAILS_ROOT, "_bundle.sh")
+# An argument names another library to source, so a test can hand the function
+# check one that defines nothing and watch the run fail.
+FUNCTION_LIBRARY = ARGV.fetch(0, SHARED_DEPLOY)
 metadata = YAML.load_file(APPS_FILE).fetch("apps")
 
 failures = []
@@ -21,6 +44,8 @@ domains = Hash.new { |h, k| h[k] = [] }
 shared_functions = File.file?(SHARED_DEPLOY) ? File.read(SHARED_DEPLOY) : ""
 shared_functions += File.file?(SHARED_BUNDLE) ? File.read(SHARED_BUNDLE) : ""
 failures << "missing shared deploy functions: #{SHARED_DEPLOY}" if shared_functions.empty?
+missing_functions = File.file?(FUNCTION_LIBRARY) ? shell_functions_missing(FUNCTION_LIBRARY, SHARED_FUNCTIONS) : SHARED_FUNCTIONS
+failures << "sourcing #{FUNCTION_LIBRARY} defines no #{missing_functions.join(', ')}" if missing_functions.any?
 failures << "shared bundler helper missing deployment config" unless shared_functions.include?(
   "bundle config set --local deployment true"
 )
@@ -28,7 +53,6 @@ failures << "shared bundler helper missing without config" unless shared_functio
   'bundle config set --local without \"development test\"'
 )
 shared_checks = {
-  "deploy_tracked_app()" => "shared deploy helper missing deploy_tracked_app",
   "need_cmd ruby34 bundle doas" => "shared deploy helper must require ruby34/bundle/doas",
   'doas mkdir -p "${APP_DIR}/.bundle"' => "shared deploy helper missing app .bundle mkdir",
   'bundle_install_as_app "$APP_NAME" "$APP_DIR"' => "shared deploy helper missing bundler install",

@@ -144,3 +144,50 @@ class IdempotencyFixtureTest < Minitest::Test
     assert status.success?, out
   end
 end
+
+# Every app deploy calls into RAILS/_deploy.sh. The identity check used to find
+# the function by its spelling, which a comment satisfies as well as a definition.
+class DeployIdentityFixtureTest < Minitest::Test
+  OPENBSD = File.expand_path("..", __dir__)
+  load File.join(OPENBSD, "verify_deploy_identity.rb")
+
+  def missing(body)
+    Dir.mktmpdir("identity") do |dir|
+      File.write(File.join(dir, "helper.sh"), "need_cmd() { :; }\n")
+      library = File.join(dir, "_deploy.sh")
+      File.write(library, body)
+      shell_functions_missing(library, %w[deploy_tracked_app need_cmd])
+    end
+  end
+
+  def test_a_function_named_only_in_a_comment_is_missing
+    assert_equal %w[deploy_tracked_app need_cmd], missing("# deploy_tracked_app() lives here\n")
+  end
+
+  def test_a_function_from_a_sourced_file_counts
+    body = %(. "${${(%):-%x}:A:h}/helper.sh"\ndeploy_tracked_app() { :; }\n)
+
+    assert_empty missing(body)
+  end
+
+  def test_the_committed_library_defines_every_shared_function
+    assert_empty shell_functions_missing(File.join(OPENBSD, "..", "RAILS", "_deploy.sh"), SHARED_FUNCTIONS)
+  end
+
+  def test_the_run_fails_on_a_library_that_defines_nothing
+    Dir.mktmpdir("identity") do |dir|
+      library = File.join(dir, "_deploy.sh")
+      File.write(library, "# deploy_tracked_app() lives here\n")
+      out, status = Open3.capture2e(RbConfig.ruby, File.join(OPENBSD, "verify_deploy_identity.rb"), library)
+
+      refute status.success?
+      assert_includes out, "defines no deploy_tracked_app"
+    end
+  end
+
+  def test_the_committed_tree_passes
+    out, status = Open3.capture2e(RbConfig.ruby, File.join(OPENBSD, "verify_deploy_identity.rb"))
+
+    assert status.success?, out
+  end
+end
