@@ -5,6 +5,6 @@ export MASTER_STARSHIP=1
 export TERMINAL="/Applications/Ghostty.app/Contents/MacOS/ghostty"
 
 typeset -g PUB4_ROOT="${PUB4_ROOT:-${HOME}/Documents/GitHub/pub4}"
-[[ -d "${PUB4_ROOT}/FUN" ]] || PUB4_ROOT="${HOME}/pub4"
-source "${PUB4_ROOT}/FUN/zshrc.shared"
+[[ -d "${PUB4_ROOT}/OPENBSD" ]] || PUB4_ROOT="${HOME}/pub4"
+source "${PUB4_ROOT}/OPENBSD/dotfiles/zshrc.shared"
 # <<< pub4 fix_macos <<<

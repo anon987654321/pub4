@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
-# fix_macos.sh
-# Autonomous macOS setup — configs tracked in FUN/config/, aesthetic via MASTER_AESTHETIC.
+# Operator Mac only; OPERATOR.sh never installs anything from OPENBSD/dotfiles/.
+# Autonomous macOS setup — configs tracked in OPENBSD/dotfiles/config/, aesthetic via MASTER_AESTHETIC.
 # Default: openbsd wscons green. Optional: MASTER_AESTHETIC=phosphor SKETCHYBAR=1.
 # Single execution required. Restart + Accessibility approvals afterward.
 
@@ -10,7 +10,6 @@ trap 'print -P "%F{red}Setup interrupted.%f"; exit 1' INT
 typeset SCRIPT_DIR=${0:A:h}
 typeset CONFIG_DIR="${SCRIPT_DIR}/config"
 typeset AESTHETIC=${MASTER_AESTHETIC:-wscons}
-typeset PUB4_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 install_file() {
     typeset src=$1 dest=$2
@@ -101,13 +100,20 @@ else
     install_file "${CONFIG_DIR}/aerospace/aerospace.toml" ~/.config/aerospace/aerospace.toml
 fi
 
-# Zsh — replace pub4 block or append fresh block
+# Zsh — replace the pub4 block, keeping everything else in ~/.zshrc
 print -P "Updating shell configuration..."
-touch ~/.zshrc
-if grep -q '# >>> pub4 fix_macos >>>' ~/.zshrc 2>/dev/null; then
-    perl -0pi -e 's/# >>> pub4 fix_macos >>>.*?# <<< pub4 fix_macos <<<\n?//ms' ~/.zshrc
+typeset zshrc=~/.zshrc
+typeset block_start='# >>> pub4 fix_macos >>>' block_end='# <<< pub4 fix_macos <<<'
+touch "${zshrc}"
+typeset rc_body="$(<"${zshrc}")"
+rc_body=${rc_body//"${block_start}"*"${block_end}"/}
+while [[ ${rc_body} == *$'\n' ]]; do rc_body=${rc_body%$'\n'}; done
+if [[ -n ${rc_body} ]]; then
+    print -r -- "${rc_body}" >| "${zshrc}"
+else
+    : >| "${zshrc}"
 fi
-cat "${CONFIG_DIR}/zshrc.macos" >> ~/.zshrc
+cat "${CONFIG_DIR}/zshrc.macos" >> "${zshrc}"
 
 # Start services
 print -P "Starting services..."
