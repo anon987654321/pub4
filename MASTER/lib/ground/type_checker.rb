@@ -53,7 +53,9 @@ module Master
       BUILT_IN_CONSTRAINTS = {
         FROZEN_STRING_LITERAL: lambda { |node, src|
           next unless node.is_a?(Prism::ProgramNode)
-          next if src.start_with?("# frozen_string_literal: true")
+          # The same anchor as law/ruby.rb's FROZEN_STRING_LITERAL: a shebang may
+          # precede the comment and Ruby still honours it.
+          next if src.match?(/\A(?:#![^\n]*\n)?# frozen_string_literal: true/)
           { message: "missing frozen_string_literal magic comment",
             complement: "# frozen_string_literal: true" }
         },
