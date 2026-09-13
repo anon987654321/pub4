@@ -141,32 +141,61 @@ tts:
       - { name: rhodes,        wave: sine,     cutoff: 1400, res: 3.0, attack: 0.1,  voices: 3, sub: true }
       - { name: viola section, wave: saw,      cutoff: 1150, res: 4.5, attack: 1.7,  voices: 4, sub: false }
       - { name: bass clarinet, wave: triangle, cutoff: 700,  res: 6.0, attack: 0.7,  voices: 2, sub: true }
-    # The drummer is Karriem Riggins: Detroit, jazz drummer and hip-hop
-    # producer both, known for punchy behind-the-beat drums and ghost snares
-    # placed just before the hits that count. Three things make that, and a
-    # machine has none of them by default — the offbeat sixteenths land late,
-    # every hit wanders a few milliseconds, and the snare sits later still.
+    # The drummer is Dilla time, as Dan Charnas sets it out in the book of that
+    # name, played on a kit that owes its sound to Karriem Riggins.
+    #
+    # Charnas claim is precise and it is not loose drums. Before Dilla there
+    # were two time-feels: straight, where the beats are even, and swing, where
+    # they are not. What Dilla did with the MPCs swing and shift was run both
+    # at once  leaving some elements rigid on the grid and pulling others off
+    # it, so the parts disagree and the ear cannot resolve them into one feel.
+    # He pushed snares forward so they sounded rushed and let kicks lag. The
+    # friction is the music, and none of it was accidental, which is why feels
+    # below is a table rather than a random walk.
+    #
+    # drift is a few milliseconds of wander and is small on purpose. A human
+    # drummer has it; the machine did not, and the feel is a placement rather
+    # than an imprecision.
     #
     # The kit is dusty and small-room, not a warehouse: nothing above 8.5 kHz,
-    # hats well down, and the snare carried by noise rather than by its tone
-    # sines, which is what stopped it reading as a pitch.
+    # hats well down, and no oscillator anywhere except the kick  a pure sine
+    # on a drum hit is a bleep, which is what it sounded like.
     #
-    # The drums do not take the pad chain above. It rolls off at 2.6 kHz,
-    # which removes a hat entirely.
+    # The drums do not take the pad chain above. It rolls off at 2.6 kHz, which
+    # removes a hat entirely.
     drums:
-      reference: karriem_riggins
+      reference: dilla_time
+      kit: karriem_riggins
       gain_db: -12
-      swing: 0.17
-      lay_back_seconds: 0.022
-      humanise_seconds: 0.016
       dropped_backbeat_odds: 0.16
-      # The pitch fall is integrated, not multiplied. sin(2*PI*t*f(t)) is not a
-      # tone at f(t) — its instantaneous frequency picks up a term in t, and
-      # over a bar that term swept kilohertz downward, which is a laser gun.
-      kick: { from_hz: 106, to_hz: 48, fall_ms: 16, patterns: 5, phase: integrated }
-      snare: { tone_hz: [188, 331], band_hz: [600, 2400], ghost_velocity: [0.22, 0.34] }
+      # seconds; shift is negative for early, positive for late
+      feels:
+        hat:   { swing: 0.0,  shift: 0.0,    drift: 0.0 }
+        snare: { swing: 0.0,  shift: -0.014, drift: 0.002 }
+        kick:  { swing: 0.17, shift: 0.016,  drift: 0.004 }
+        ghost: { swing: 0.17, shift: 0.026,  drift: 0.004 }
+      # Three layers, because one oscillator is a tone and three are a drum. The
+      # punch is the layer the ear reads as hard; the click is what carries the
+      # hit through speech at bed level.
+      #
+      # Every envelope clamps its span at zero. exp() is evaluated across the
+      # whole bar including the seconds before the hit, where the exponent is
+      # large and positive; at these decay rates it overflows to infinity, the
+      # gate multiplies that by zero, and the bar comes out NaN  silent and
+      # clipped. Five bars in six were doing exactly that.
+      kick:
+        patterns: 8
+        envelope_span: clamped
+        sub: { hz: 46, fall_ms: 14, phase: integrated }
+        punch: { hz: 92, fall_ms: 8, phase: integrated }
+        click: { source: anoisesrc, band_hz: [1400, 5000], gain_db: -16 }
+      snare: { source: anoisesrc, body_hz: [120, 340], rasp_hz: [600, 2400], ghost_velocity: [0.22, 0.34] }
       hat: { source: anoisesrc, band_hz: [4000, 9000], gain_db: -20, open_odds: 0.35 }
-      bus: "highpass=f=32,lowpass=f=8500,alimiter=limit=0.9"
+      # The 12 ms fade is not cosmetic: every envelope is cut at the bar line and
+      # a decay truncated mid-flight is a step discontinuity, which is a click on
+      # every join, once a bar, all session.
+      bar_end_fade_ms: 12
+      bus: "highpass=f=30,lowpass=f=8500,alimiter=limit=0.9"
   # No default_volume. The daemon protocol is {voice,rate,pitch,text} and
   # RbEdgeTTS::Communicate takes rate: and pitch: only, so a volume here was
   # read by nothing for as long as it existed. Adding one back means

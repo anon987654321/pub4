@@ -204,23 +204,28 @@ end
     end
   end
 
-  # The drummer plays behind the beat, and the kit is a small dusty room. Both
-  # are settings, so both can drift; these are the two that were wrong once.
-  def test_the_bed_drums_are_played_not_programmed
-    bed = Master::Voice::Policy.bed
-    skip "no bed declared" unless bed
-    drums = bed["drums"]
-    skip "no drums declared" unless drums
+# Dilla time is a juxtaposition, not a wobble: some elements rigid on the
+# grid while others are pulled off it. Two ways to lose it  swing everything,
+# or swing nothing  and both read as "fixed the drums" in a diff.
+def test_the_bed_drums_keep_conflicting_time_feels
+  bed = Master::Voice::Policy.bed
+  skip "no bed declared" unless bed
+  drums = bed["drums"]
+  skip "no drums declared" unless drums
 
-    assert_operator drums["swing"].to_f, :>, 0, "a quantised grid is not a drummer"
-    assert_operator drums["lay_back_seconds"].to_f, :>, 0, "the snare must be late"
-    assert_equal "anoisesrc", drums.dig("hat", "source"),
-                 "random() inside an aeval expression is a lookup, not a noise source"
-    refute_equal bed["chain"], drums["bus"],
-                 "the pad chain rolls off at 2.6 kHz and would remove the hat"
-    assert_operator drums.dig("hat", "band_hz").last.to_i, :<=, 9000,
-                    "a hat above 9 kHz is a modern bright kit, not this one"
-  end
+  feels = drums["feels"]
+  assert_equal 0.0, feels.dig("hat", "swing").to_f,
+               "the hats are the rigid reference; swing them and there is no friction"
+  assert_operator feels.dig("kick", "swing").to_f, :>, 0, "the kick carries the swing"
+  assert_operator feels.dig("snare", "shift").to_f, :<, 0, "the snare is rushed, not laid back"
+  assert_operator feels.dig("kick", "shift").to_f, :>, 0, "the kick lags"
+  assert_equal "anoisesrc", drums.dig("hat", "source"),
+               "random() inside an aeval expression is a lookup, not a noise source"
+  refute_equal bed["chain"], drums["bus"],
+               "the pad chain rolls off at 2.6 kHz and would remove the hat"
+  assert_operator drums.dig("hat", "band_hz").last.to_i, :<=, 9000,
+                  "a hat above 9 kHz is a modern bright kit, not this one"
+end
 
   # Two synthesis bugs that were audible before they were visible, and the
   # spectrogram named both. Neither is a preference, so both are pinned.
@@ -230,10 +235,12 @@ end
 
     assert_operator bed["oversample"].to_i, :>=, 2,
                     "a modulo saw has a vertical edge; at 1x its harmonics fold back as bleeps"
-    assert_equal "integrated", bed.dig("drums", "kick", "phase"),
+    assert_equal "integrated", bed.dig("drums", "kick", "sub", "phase"),
                  "sin(2*PI*t*f(t)) sweeps kilohertz downward over a bar, which is a laser gun"
-    assert_operator bed.dig("drums", "kick", "fall_ms").to_i, :<=, 30,
+    assert_operator bed.dig("drums", "kick", "sub", "fall_ms").to_i, :<=, 30,
                     "a pitch fall slow enough to follow is a sound effect, not a drum"
+    assert_equal "clamped", bed.dig("drums", "kick", "envelope_span"),
+                 "an unclamped exp() overflows before its hit and the gate turns it to NaN"
   end
 
   def test_voice_rotation_is_additive
