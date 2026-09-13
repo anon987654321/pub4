@@ -30,7 +30,7 @@
     { name: "safety", angle: 5.4, radius: 0.44, charge: 0.65, hue: "225,205,172" }
   ];
 
-  // Start of ecology habitats port to ParticleKernel (visual_clusters.yml + topologies.yml).
+  // Start of ecology habitats port to ParticleKernel (topologies.yml).
   // The 7 agent spirits are now backed by semantic cells (kind based on role).
   let agentsPool = null;
   if (window.ParticleKernel) {
@@ -71,7 +71,7 @@
     state.width = innerWidth;
     state.height = innerHeight;
 
-    // Low internal resolution + upscale per data/topologies.yml + visual_clusters.yml.
+    // Low internal resolution + upscale per data/topologies.yml.
     // The media query alone. `limits.reducedMotionParticles < 100`
     // asked a particle budget a yes/no question and got "yes" every time, so the
     // small branch below had never run for anyone.
