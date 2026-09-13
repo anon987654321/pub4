@@ -16,14 +16,6 @@ module Ports
       @ports_count = 0
     end
 
-    # No local tree is the NORMAL case, not a fatal one. platform.tree_path is
-    # /usr/ports, which a base OpenBSD install does not ship and vm23 does not
-    # have, and BSDPORTS_TREE_PATH is set nowhere in this repo. The old order
-    # raised on a nil root *before* the FTP fallback line, so the fallback built
-    # for exactly this situation could only ever run when a tree existed and
-    # yielded zero ports. That is why bsdports.org has shown "Ingen porter
-    # funnet" since launch: the import failed into an ImportRun row every night
-    # and the site has no surface that reports one.
     # Three sources, best metadata first. Each is tried only if the one above
     # produced nothing, and the run fails loudly if all three do.
     #
@@ -193,10 +185,14 @@ module Ports
       @import_run&.update!(error_message: [ @import_run.error_message, message ].compact.join(" | "))
     end
 
+    # The ports are imported either way, so a failed rebuild does not fail the
+    # run; it is recorded on the run, where a stale search index can be traced.
     def rebuild_fts
       Port.connection.execute("INSERT INTO ports_fts(ports_fts) VALUES('rebuild')")
-    rescue StandardError => e
-      Rails.logger.warn("bsdports fts rebuild skipped: #{e.message}")
+    rescue ActiveRecord::StatementInvalid => e
+      message = "fts rebuild failed: #{e.message}"
+      Rails.logger.warn("bsdports import: #{message}")
+      @import_run&.update!(error_message: [ @import_run.error_message, message ].compact.join(" | "))
     end
   end
 end

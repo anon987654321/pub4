@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "tmpdir"
 
 class Ports::ImporterTest < ActiveSupport::TestCase
   test "imports ports from fixture tree with dependencies" do
@@ -18,6 +19,43 @@ class Ports::ImporterTest < ActiveSupport::TestCase
     assert_equal 2, git.dependencies.count
     assert git.dependencies.exists?(depends_on: gettext, dep_type: "build")
     assert_equal "succeeded", result.import_run.status
+  end
+
+  test "a restricted port is imported with its distfiles flag off" do
+    platform = platforms(:openbsd)
+
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "games", "restricted"))
+      File.write(File.join(dir, "games", "restricted", "Makefile"), <<~MAKE)
+        COMMENT = game with a no-redistribution licence
+        DISTNAME = restricted-1.0
+        PERMIT_PACKAGE = no redistribution
+      MAKE
+
+      Ports::Importer.call(platform:, tree_path: dir, use_ftp_fallback: false)
+    end
+
+    port = Port.find_by!(platform:, pkgpath: "games/restricted")
+    assert_equal false, port.permit_file_distfiles
+  end
+
+  test "a failed search index rebuild is recorded on the run without failing it" do
+    platform = platforms(:openbsd)
+    tree_path = Rails.root.join("test/fixtures/ports/openbsd")
+    connection = Port.connection
+    execute = connection.method(:execute)
+    failing = lambda do |sql, *rest|
+      raise ActiveRecord::StatementInvalid, "no such table: ports_fts" if sql.include?("ports_fts")
+
+      execute.call(sql, *rest)
+    end
+
+    result = connection.stub(:execute, failing) do
+      Ports::Importer.call(platform:, tree_path:, use_ftp_fallback: false)
+    end
+
+    assert_equal "succeeded", result.import_run.reload.status
+    assert_includes result.import_run.error_message, "fts rebuild failed"
   end
 
   # The defect that kept bsdports.org empty from launch: with no tree on disk

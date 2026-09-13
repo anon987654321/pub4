@@ -3,6 +3,10 @@
 class PortsImportJob < ApplicationJob
   queue_as :bulk
 
+  # The nightly run and a manual rake import would otherwise write the same
+  # rows at once. Six hours covers a full tarball import.
+  limits_concurrency to: 1, key: "ports-import", duration: 6.hours, on_conflict: :discard
+
   def perform(platform_slug: "openbsd", tree_path: nil, use_ftp_fallback: true)
     platform = Platform.find_by!(slug: platform_slug)
     Shared::EventEmitter.call("bsdports.import.started", platform: platform.slug, tree_path:) if defined?(Shared::EventEmitter)

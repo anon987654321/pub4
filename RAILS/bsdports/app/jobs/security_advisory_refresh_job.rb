@@ -3,6 +3,9 @@
 class SecurityAdvisoryRefreshJob < ApplicationJob
   queue_as :bulk
 
+  # Two runs would share one cursor and one NVD budget.
+  limits_concurrency to: 1, key: "advisory-refresh", duration: 1.hour, on_conflict: :discard
+
   BATCH_SIZE = 50
   CURSOR_KEY = "bsdports:advisory_refresh_cursor"
 

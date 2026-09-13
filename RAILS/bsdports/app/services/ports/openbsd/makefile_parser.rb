@@ -5,8 +5,9 @@ require "pathname"
 module Ports
   module Openbsd
     class MakefileParser
-      ASSIGNMENT = /\A([A-Z][A-Z0-9_]*)\s*(?:\?\+=|\+=|\?=|=)\s*(.*)\z/
-      PLUS_ASSIGNMENT = /\A([A-Z][A-Z0-9_]*)\s*\+=\s*(.*)\z/
+      # make(1) operators: = and := assign, += appends, ?= assigns only when the
+      # variable is unset. != runs a shell command and is not evaluated here.
+      ASSIGNMENT = /\A([A-Z][A-Z0-9_]*)\s*(\+=|\?=|:=|=)\s*(.*)\z/
 
       def self.parse(path) = new(path).parse
 
@@ -47,17 +48,16 @@ module Ports
           line = line.strip
           next if line.blank? || line.start_with?("#", ".", "\t")
 
-          if (match = PLUS_ASSIGNMENT.match(line))
-            key, value = match.captures
-            vars[key] = [ vars[key], value.strip ].compact.join(" ")
-            next
-          end
-
           match = ASSIGNMENT.match(line)
           next unless match
 
-          key, value = match.captures
-          vars[key] = value.strip
+          key, operator, value = match.captures
+          value = value.strip
+          case operator
+          when "+=" then vars[key] = [ vars[key].presence, value ].compact.join(" ")
+          when "?=" then vars[key] = value unless vars.key?(key)
+          else vars[key] = value
+          end
         end
         vars
       end
@@ -100,10 +100,11 @@ module Ports
         descr.read.strip
       end
 
+      # bsd.port.mk(5): PERMIT_DISTFILES is "Yes" or the reason it may not be
+      # mirrored, and defaults to "Yes" when PERMIT_PACKAGE is "Yes".
       def permit_distfiles?(vars)
-        %w[PERMIT_PACKAGE_CDROM_DISTFILES PERMIT_PACKAGE_FTP_DISTFILES].any? do |key|
-          vars[key].to_s.strip.casecmp("yes").zero?
-        end
+        value = vars.key?("PERMIT_DISTFILES") ? vars["PERMIT_DISTFILES"] : vars["PERMIT_PACKAGE"]
+        value.to_s.strip.casecmp?("yes")
       end
     end
   end
