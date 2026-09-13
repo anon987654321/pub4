@@ -326,9 +326,11 @@ unless ARGV.delete("--capture")
   #
   # validate! above is still a real check and still exits 1 when the matrix is
   # malformed; 3 is the runner's code for "I could not measure", which never
-  # blocks by default and is counted apart from the passes.
-  puts "ok: #{rows.length} seeded visual contract cells across #{VisualContractGate::ROUTES.length} apps"
-  warn "visual_contract: matrix shape only — no state was captured (VISUAL_CAPTURE=1 with a booted app captures)"
+  # blocks by default and is counted apart from the passes. No line here starts
+  # with "ok", because a reader skimming for it would take a declaration for a
+  # measurement.
+  warn "visual_contract: matrix declares #{rows.length} cells across #{VisualContractGate::ROUTES.length} apps; " \
+       "none was captured (VISUAL_CAPTURE=1 with a booted app captures)"
   warn "visual_contract: nothing measured, so nothing is claimed"
   exit 3
 end

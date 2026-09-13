@@ -89,6 +89,7 @@ class VisualContractBlindnessTest < Minitest::Test
 
     assert_equal 3, status.exitstatus, out
     assert_includes out, "nothing measured, so nothing is claimed"
+    refute_match(/^ok\b/, out, "an uncaptured run printed an ok line as if pixels were measured")
   end
 
   def with_routes(routes)
