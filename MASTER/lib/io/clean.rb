@@ -6,13 +6,8 @@ require "timeout"
 module Master
   module Io
     # Clean — removes trailing whitespace, CRLF, and excess blank lines
-    # from text files under a given path, using OPENBSD/clean.sh.
+    # from text files under a given path, using OPENBSD/dev/clean.sh.
     class Clean
-      # OPENBSD/dev/clean.sh, which is where the script is. The note that used
-      # to stand here described fixing this exact defect — the path was
-      # corrected from sh/clean.sh to OPENBSD/clean.sh and the script had
-      # already moved to OPENBSD/dev/, so every call still failed silently
-      # under the ROBUSTNESS guard below.
       SCRIPT = File.expand_path("../../../OPENBSD/dev/clean.sh", __dir__).freeze
       NAME = "clean".freeze
       TIER = :dangerous
