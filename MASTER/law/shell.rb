@@ -110,8 +110,8 @@ Law.define(:STRICT_MODE_ZSH) do
   # which is all `scan: intentional` does — considered_text removes the marker
   # and the absent `set -e` is still absent. `absent` is checked against the raw
   # text before that, so it is the opt-out an absence-based law can honour, and
-  # dilla's live/broadcast.sh needs one: aborting on the first non-zero exit
-  # would end an all-night rotation at its first failed render.
+  # an all-night rotation script needs one: aborting on the first non-zero exit
+  # would end the night at its first failed render.
   absent %r{scan:\s*intentional}
   # daily.local, weekly.local and monthly.local are sourced into /etc/daily,
   # /etc/weekly and /etc/monthly, so `set -e` in one would abort the base
