@@ -54,11 +54,31 @@ every browser leaf.
    default run only validates matrix shape.
 7. **bsdports** — out of product focus triangle but still a Rails app; must
    appear in family `--all`.
-8. **No network/perf budget** — no LCP/INP or request waterfall gate.
+8. **No server-side perf budget** — `web_vitals_budget` ratchets LCP and CLS
+   on a real load, but nothing fails on p95 server time or payload bytes per
+   route in the crawl manifest.
 9. **No screen-reader path** — landmarks yes; no axe/full a11y tree walk beyond
    visual_contract capture helpers.
 10. **gate_mutation** does not prove mobile_flow / page_simulation catch defects
     yet.
+
+## Three instrument rules, each paid for
+
+A gate that demands one of several correct outcomes reports the environment as
+the tree: amber's `/demo` redirects home without a seeded wardrobe and brgen's
+marketplace shows an empty state without listings, so a check that demands the
+populated branch reads an empty database as a broken app. Name the set of
+correct answers and keep each falsifiable.
+
+A test that runs a gate over this tree and asserts clean proves nothing — it
+passes against a gate whose body is `return ok`. Plant the defect, assert red
+and named, remove it, assert green, and drive the test once against a gutted
+gate.
+
+Check what the instrument opens before believing what it says. A stylesheet
+lint that globs a directory misses what the bundle pulls in through `@use` and
+`@forward`, and a class extractor that stops at a quote cannot read a Ruby class
+value with interpolation in it.
 
 ## Perfectionist run recipe
 

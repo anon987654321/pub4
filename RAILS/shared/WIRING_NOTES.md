@@ -484,6 +484,21 @@ plus `shared/config/ci.rb`, `gates/lib/source/scale_ratchet.rb` and nine tests.
 That is a cross-tree rename of a ratchet table bought for one path segment, on a
 checkout where the commit hook refuses a cross-tree commit for good reason.
 
+## Cohesion census proposals measured and rejected (2026-09-08)
+
+The census keeps proposing these, and each was read and refused. The three
+per-app `Current` models stay: amber's and bsdports' are identical six-liners,
+brgen's is a strict superset, and `Current.user` needs a bare constant. The
+`brgen/app/models/user/*_associations.rb` files stay in the host, because
+`brgen/ENGINES.md` keeps `User` there. The `honesty` shelf in
+`gates/lib/source/` is three files united by a word, and `gates.yml` addresses
+each by require and class. The ActiveRecord regroups (`item`, `declutter`,
+`community`, `fedi`, `story`) collide — `OutfitItem` as `Item::Outfit` meets
+`Outfit` — and each costs `class_name:` churn through strict-loading
+associations for a path segment. All ten `RAILS/*.sh` scripts are reached.
+`MASTER/tools/cohesion.rb <dir>` reads one directory deep; use `--census
+--tree=RAILS --list` for the tree.
+
 ## Vertical ownership (2026-08-10)
 
 brgen hosts five mountable engines and two plain namespaces. Which is which

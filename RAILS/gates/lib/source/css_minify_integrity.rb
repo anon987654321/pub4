@@ -13,6 +13,12 @@ module Deploy
   # :compressed mode and fails if any selector present in the expanded output
   # is missing from the compressed output -- catching that bug class before
   # it ships, regardless of which SCSS file introduces it next.
+  #
+  # The selector-loss half cannot fire on the pinned dart-sass (1.101.0): long
+  # compound lists, quoted attributes, escaped and unicode selectors, :is(),
+  # @media and @supports all survive compression intact. What this gate proves
+  # today is that each entrypoint compiles. Re-check the loss half whenever
+  # sass-embedded moves in a Gemfile.lock.
   class CssMinifyIntegrityGate
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
