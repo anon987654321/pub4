@@ -8,7 +8,9 @@ place.
 ## Repo layout
 
 `MASTER/`, `RAILS/`, `OPENBSD/`, `STUDIO/` at the repo root, plus dotfolders.
-Canonical inventories: `RAILS/apps.yml`, `OPENBSD/deploy_inventory.json`. Deploy
+Canonical inventories: `RAILS/apps.yml`, `OPENBSD/deploy_inventory.json`. The
+JSON is generated from `apps.yml` by `ruby OPENBSD/bin/sync_deploy_inventory.rb`,
+and the `domain_alignment` gate fails when the two disagree. Deploy
 gates (`integrity_gate.rb`, `verify_deploy_identity.rb`,
 `deploy_inventory.json`) live at `OPENBSD/` top level, and so does the one
 recovery pen that exists, `quarantine/`.
