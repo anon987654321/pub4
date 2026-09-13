@@ -299,7 +299,21 @@ module Master
         ENV["MASTER_AUTOFIX"] == "1"
       end
 
+      # A finding may say what undoing its fix costs (rules.yml
+      # schema_metadata: reversibility, blast_radius). A fix nobody can undo, or
+      # one that reaches past the file it was found in, waits for a person the
+      # same way a deletion does.
+      def needs_a_person?(violation)
+        radius = violation[:blast_radius]
+        files_touched = radius.is_a?(Hash) ? (radius["files_touched"] || radius[:files_touched]).to_i : 0
+        violation[:reversibility].to_s == "impossible" || files_touched > 1
+      end
+
       def autofix_allowed?(violation)
+        if needs_a_person?(violation) && !deletions_allowed?
+          @bus&.publish("rule_loop:autofix_skipped", rule: violation[:rule], reason: :needs_a_person)
+          return false
+        end
         return true unless @scanner.respond_to?(:should_autofix?, true)
 
         confidence = violation[:confidence] || violation["confidence"] || 1.0

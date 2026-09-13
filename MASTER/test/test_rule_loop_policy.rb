@@ -275,6 +275,27 @@ class TestRuleLoopPolicy < Minitest::Test
     assert_equal [false], deletions_asked_with(nil)
   end
 
+  # reversibility and blast_radius travel from the finding to the violation, and
+  # an irreversible or multi-file fix waits for a person like a deletion does.
+  def test_an_irreversible_or_wide_fix_waits_for_a_person
+    Dir.mktmpdir do |root|
+      loop = build_loop(root:, bus: FakeBus.new, scanner: Scanner.new, agent: Agent.new)
+      base = { rule: "TEST_RULE", severity: :warning, line: 1, message: "fix me" }
+      path = File.join(root, "sample.rb")
+      violation = ->(extra) { Master::Fix::Violation.from_finding(base.merge(extra), file: path, ext: ".rb") }
+
+      previous = ENV["MASTER_AUTOFIX"]
+      ENV["MASTER_AUTOFIX"] = nil
+      refute loop.send(:autofix_allowed?, violation.call(reversibility: "impossible"))
+      refute loop.send(:autofix_allowed?, violation.call(blast_radius: { "files_touched" => 3 }))
+      assert loop.send(:autofix_allowed?, violation.call(reversibility: "cheap", blast_radius: { "files_touched" => 1 }))
+      ENV["MASTER_AUTOFIX"] = "1"
+      assert loop.send(:autofix_allowed?, violation.call(reversibility: "impossible"))
+    ensure
+      ENV["MASTER_AUTOFIX"] = previous
+    end
+  end
+
   def deletions_asked_with(flag)
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")

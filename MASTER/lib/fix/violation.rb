@@ -2,7 +2,8 @@
 
 module Master
   module Fix
-    Violation = Struct.new(:file, :line, :rule, :message, :severity, :fix, :confidence, :ext, :fingerprint, keyword_init: true) do
+    Violation = Struct.new(:file, :line, :rule, :message, :severity, :fix, :confidence, :ext, :fingerprint,
+                           :reversibility, :blast_radius, keyword_init: true) do
       def self.from_finding(finding, file:, ext: nil)
         data = finding.respond_to?(:to_h) ? finding.to_h : finding
         new(
@@ -15,6 +16,8 @@ module Master
           confidence: data[:confidence] || data["confidence"],
           ext:,
           fingerprint: data[:fingerprint] || data["fingerprint"],
+          reversibility: data[:reversibility] || data["reversibility"],
+          blast_radius: data[:blast_radius] || data["blast_radius"],
         )
       end
 
@@ -33,6 +36,8 @@ module Master
           confidence:,
           ext:,
           fingerprint:,
+          reversibility:,
+          blast_radius:,
         }.compact
       end
     end
