@@ -221,8 +221,17 @@ module Master
           order["state"] = carry["state"] || "pending"
           order["last_run_at"] = carry["last_run_at"] || 0
           order["last_error"] = carry["last_error"] if carry["last_error"]
+          mark_interrupted(order) if order["state"] == "running"
         end
         defs
+      end
+
+      # A fresh process runs nothing yet, so a carried "running" is a run the last
+      # process died inside. Its outcome is unknown: neither done nor retried, but
+      # parked as an error that says so, until the operator resets it.
+      def mark_interrupted(order)
+        order["state"] = "error"
+        order["last_error"] = "interrupted: the process stopped before this run finished"
       end
 
       def read_defs

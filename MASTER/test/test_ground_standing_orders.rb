@@ -61,13 +61,30 @@ class StandingOrdersTest < Minitest::Test
     end
   end
 
-  # A previous failure must not park an order forever — but "running" must not be
-  # picked up twice either.
+  # An errored order waits for /orders reset, and "running" must not be picked up
+  # twice.
   def test_due_skips_running_and_errored_orders
     with_orders([order("name" => "running", "state" => "running"),
                  order("name" => "errored", "state" => "error"),
                  order("name" => "done", "state" => "done")]) do
       assert_equal %w[done], @orders.due.map { |o| o["name"] }
+    end
+  end
+
+  # A process that died mid-run left "running" on disk. The next boot must say
+  # the run did not finish, rather than leave it running forever or call it done.
+  def test_a_run_interrupted_by_a_restart_is_reported_not_left_running
+    carried = { "test_order" => { "state" => "running", "last_run_at" => 7 },
+                "idle" => { "state" => "done", "last_run_at" => 7 } }
+
+    @orders.stub(:read_defs, [order, order("name" => "idle")]) do
+      @orders.stub(:read_state, carried) do
+        restored = @orders.send(:load_orders)
+
+        assert_equal "error", restored.first["state"]
+        assert_match(/interrupted/, restored.first["last_error"])
+        assert_equal "done", restored.last["state"], "only a carried running state is an interruption"
+      end
     end
   end
 
