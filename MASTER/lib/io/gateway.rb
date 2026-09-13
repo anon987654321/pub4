@@ -10,12 +10,6 @@ module Master
         @session = session
         @bus = event_bus
         @container = container
-        @adapters = {}
-      end
-
-      def register(channel, adapter_or_proc = nil, &block)
-        handler = adapter_or_proc || block
-        @adapters[channel.to_sym] = handler
       end
 
       def receive(channel:, message:, metadata: {})
@@ -31,7 +25,6 @@ module Master
 
         ctx = { user_message: message_text, channel:, metadata:, turn_id: }
         result = route_message(message_text, ctx)
-        render_to_adapter(channel, result, metadata)
 
         err_msg = result.ok? ? nil : result.message&.to_s&.[](0, 120)
         @bus&.publish("gateway:turn_done", turn_id:, ok: result.ok?, error: err_msg)
@@ -54,36 +47,11 @@ module Master
         client_actions.any? ? attach_client_actions(result, client_actions) : result
       end
 
-      # The adapter contract, and this line is the whole of it: anything that
-      # answers `render(text, metadata)` or `call(text, metadata)`. It used to be
-      # stated twice — as an `Adapter` module declaring `render` and raising
-      # NotImplementedError, which nothing included and which would have broken
-      # any adapter that did include it, since including the contract makes
-      # respond_to?(:render) true and sends every turn into the raise.
-      def render_to_adapter(channel, result, metadata)
-        adapter = @adapters[channel]
-        return unless adapter
-
-        text = result.ok? ? extract_text(result) : result.to_s
-        adapter.respond_to?(:render) ? adapter.render(text, metadata) : adapter.call(text, metadata)
-      end
-
-      def channels
-        CHANNELS.map do |ch|
-          status = @adapters.key?(ch) ? "active" : "available"
-          "#{ch}: #{status}"
-        end.join("\n")
-      end
+      # The caller renders the returned Result; the gateway pushes nothing
+      # out on a channel of its own.
+      def channels = CHANNELS.join("\n")
 
       private
-
-      def extract_text(result)
-        output = result.value!
-        output.is_a?(Hash) && output[:rendered] ? output[:rendered] : output.to_s
-      rescue StandardError => e
-        @bus&.publish("gateway:extract_error", error: e.message)
-        result.to_s
-      end
 
       def attach_client_actions(result, client_actions)
         return result unless result.ok?
