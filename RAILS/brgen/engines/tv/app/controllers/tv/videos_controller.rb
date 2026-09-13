@@ -15,11 +15,15 @@ class Tv::VideosController < Tv::BaseController
   before_action :set_video, only: %i[show destroy]
   before_action :require_video_owner!, only: :destroy
 
+  # One view row per viewer per video per hour: a refresh reopens the row the
+  # player is already reporting against instead of adding an empty one, and it
+  # does not count as another view. The ivar hands the player that row.
+  VIEW_WINDOW = 1.hour
+
   def show
-    # Kept in an ivar so the player can PATCH watch time onto this exact row.
-    # Before that it was created and abandoned: watch_time_seconds and completed
-    # were never written by anything, so the table recorded that a signed-in
-    # user opened the page and nothing about whether they watched it.
+    @view_event = recent_view_event if authenticated?
+    return if @view_event
+
     @view_event = @video.view_events.create!(user: Current.user) if authenticated?
     @video.increment!(:views_count)
   end
@@ -61,6 +65,7 @@ class Tv::VideosController < Tv::BaseController
   def destroy = (@video.destroy and redirect_to root_path)
 
   private
+  def recent_view_event = @video.view_events.where(user: Current.user, created_at: VIEW_WINDOW.ago..).order(:id).last
   def own_channel = Current.user.tv_channels.find_by!(slug: params[:channel_slug])
   # ApplicationRecord sets strict_loading_by_default, and the show view reads
   # channel, comments and notes off the record -- unpreloaded that raises

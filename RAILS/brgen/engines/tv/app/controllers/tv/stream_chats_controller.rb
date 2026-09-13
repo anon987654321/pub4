@@ -1,18 +1,26 @@
 # frozen_string_literal: true
 
 module Tv
-  class StreamChatsController < ApplicationController
+  class StreamChatsController < Tv::BaseController
+    before_action :require_user_session
     before_action :set_live_stream
 
     def create
-      @stream_chat = @live_stream.stream_chats.build(stream_chat_params)
-      @stream_chat.user = current_user if respond_to?(:current_user, true)
-      @stream_chat.save!
+      @stream_chat = @live_stream.stream_chats.build(stream_chat_params.merge(user: Current.user))
 
-      respond_to do |format|
-        format.html { redirect_to live_stream_path(@live_stream) }
-        format.turbo_stream
-        format.json { render json: { id: @stream_chat.id }, status: :created }
+      if @stream_chat.save
+        respond_to do |format|
+          format.html { redirect_to live_stream_path(@live_stream) }
+          format.turbo_stream
+          format.json { render json: { id: @stream_chat.id }, status: :created }
+        end
+      else
+        alert = @stream_chat.errors.full_messages.to_sentence
+        respond_to do |format|
+          format.html { redirect_to live_stream_path(@live_stream), alert: }
+          format.turbo_stream { head :unprocessable_entity }
+          format.json { render json: { errors: @stream_chat.errors }, status: :unprocessable_entity }
+        end
       end
     end
 

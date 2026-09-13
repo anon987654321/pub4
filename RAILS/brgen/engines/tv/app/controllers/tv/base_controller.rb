@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-# Namespace hook for tv/* — keep empty until shared vertical policy/layout lands.
+# The parent of every tv/* controller. Videos, channels and shows are slug-routed,
+# so nested lookups resolve slug-or-id here once.
 class Tv::BaseController < ApplicationController
   include Shared::FindableBySlug # videos are slug-routed; nested lookups resolve slug-or-id
 end
