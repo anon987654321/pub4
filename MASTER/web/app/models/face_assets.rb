@@ -30,11 +30,13 @@ module FaceAssets
   # lazily-imported groups, which look their paths up in the same map.
   def module_names = MODULE_GROUPS.flat_map { |name| group(name) }.uniq.freeze
 
-  # Every file this manifest claims the shell loads, as bare filenames. The
+  # Every file this manifest claims the shell loads, stylesheets included, as
+  # bare filenames. The
   # include_tag group carries no extension, so it gets one here.
   def all_filenames
     names = MODULE_GROUPS.flat_map { |name| group(name) } + singletons.values
     names += group("shell_blocking") + group("shell_boot") + group("shell_early") + group("shell_late")
+    names += group("shell_css")
     names += group("shell_manifest").map { |name| "#{name}.js" }
     names.uniq.sort.freeze
   end

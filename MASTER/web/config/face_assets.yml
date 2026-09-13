@@ -134,3 +134,9 @@ shell_late:
   - master_events.js
   - shortcut_sheet.js
   - viewport_inset.js
+
+# Stylesheets the shell links by asset_path. Not JavaScript, but digested the
+# same way, so rc.d's precompile-skip digest has to see an edit to them too.
+shell_css:
+  - face.css
+  - chat_upload.css

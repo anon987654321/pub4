@@ -18,7 +18,7 @@ root = File.expand_path("..", __dir__)
 manifest = YAML.safe_load_file(File.join(root, "config", "face_assets.yml"))
 
 names = %w[face_eager face_runtime_deferred face_vision_deferred
-           shell_blocking shell_boot shell_early shell_late]
+           shell_blocking shell_boot shell_early shell_late shell_css]
         .flat_map { |group| Array(manifest[group]) }
 names += manifest.fetch("singletons", {}).values
 names += Array(manifest["shell_manifest"]).map { |name| "#{name}.js" }

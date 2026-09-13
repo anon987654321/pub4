@@ -62,7 +62,17 @@ class FaceAssetsManifestTest < ActiveSupport::TestCase
     assert_empty unmanaged, "index.html.erb loads these outside config/face_assets.yml"
   end
 
-  test "the view renders its ordered manifest from the yaml, not a literal list" do
+# A stylesheet is digested like a script, and the rc.d digest reads this
+# manifest, so a linked stylesheet outside it is edited with precompile skipped.
+test "every stylesheet the view links by asset_path is in the manifest" do
+  linked = view_source.scan(/asset_path\("([\w.]+\.css)"\)/).flatten.uniq
+
+  refute_empty linked
+  assert_empty linked - FaceAssets.all_filenames, "index.html.erb links these outside config/face_assets.yml"
+  linked.each { |name| assert PUBLIC.join(name).file?, "#{name} is missing from public/" }
+end
+
+test "the view renders its ordered manifest from the yaml, not a literal list" do
     assert_match(/javascript_include_tag\(\*FaceAssets\.group\("shell_manifest"\)/, view_source)
     refute_match(/javascript_include_tag\(\*%w\[/, view_source)
   end
