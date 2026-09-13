@@ -209,8 +209,7 @@ module Master
       end
 
       def evidence_config
-        @evidence_config ||= Master.load_yaml(File.join(@root || Master::ROOT, "data", "rules.yml"))
-                                   .fetch("evidence_scoring", {})
+        @evidence_config ||= (Master.load_rules(root: @root || Master::ROOT) || {}).fetch("evidence_scoring", {})
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "Pipeline.evidence_config")
         {}

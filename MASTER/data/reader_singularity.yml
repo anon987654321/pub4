@@ -24,7 +24,7 @@ reader_singularity:
   ceiling:
     models.yml: 9
     patterns.yml: 6
-    rules.yml: 10
+    rules.yml: 8
     soul.yml: 8
     tools.yml: 2
     tts.yml: 2

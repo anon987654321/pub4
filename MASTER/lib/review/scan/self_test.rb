@@ -106,7 +106,7 @@ module Master
         def initialize(root:, event_bus: nil)
           @root = root
           @bus = event_bus
-          rules = Master.load_yaml(File.join(root, "data", "rules.yml")) || {}
+          rules = Master.load_rules(root:) || {}
           @checks = rules.dig("self_test", "laws_apply_to_self") || {}
         end
 

@@ -50,8 +50,7 @@ module Master
           # which reads as a tree with no veto violations. An unreadable
           # rules.yml retires every veto at once, so say so.
           def load_patterns(root)
-            data = Master.load_yaml(File.join(root, "data", "rules.yml")) || {}
-            data.fetch("veto_patterns", {})
+            (Master.load_rules(root:) || {}).fetch("veto_patterns", {})
           rescue StandardError => e
             Master::Ground::Swallow.log(e, context: "VetoPatternRule.load_patterns", severity: :load_bearing)
             raise

@@ -17,6 +17,14 @@
 # generically never names its keys), so this is a census with a ceiling, not
 # a verdict: the ceiling exists so the NEXT unread declaration cannot arrive
 # silently, which is how all three above did.
+#
+# The corpus is MASTER's Ruby, so three kinds of live key sit in the member
+# list for good: keys a reader iterates without naming (models.yml's ollama
+# rows, every persona, every provider, RuntimeCatalog's runtime.yml sections),
+# keys served whole to the face and read in JavaScript (topologies.yml), and
+# keys read from another tree (pub_archive_restore.yml by RAILS,
+# radio_bergen_track_dossiers.yml by STUDIO/dilla). A member is a defect only
+# after all three are ruled out.
 
 require "set"
 require "yaml"
