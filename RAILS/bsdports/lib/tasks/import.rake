@@ -13,7 +13,7 @@ namespace :ports do
 
   desc "Run ports tree import synchronously (platform=openbsd tree_path=...)"
   task import_now: :environment do
-    platform = Platform.find_by!(slug: ENV.fetch("PLATFORM", "openbsd"))
+    platform = Platform.active.find_by!(slug: ENV.fetch("PLATFORM", "openbsd"))
     result = Ports::Importer.call(
       platform:,
       tree_path: ENV["BSDPORTS_TREE_PATH"],

@@ -8,7 +8,9 @@ class PortsImportJob < ApplicationJob
   limits_concurrency to: 1, key: "ports-import", duration: 6.hours, on_conflict: :discard
 
   def perform(platform_slug: "openbsd", tree_path: nil, use_ftp_fallback: true)
-    platform = Platform.find_by!(slug: platform_slug)
+    # Every importer reads the OpenBSD tree or mirror, so an inactive platform
+    # would be filled with OpenBSD ports under its own name.
+    platform = Platform.active.find_by!(slug: platform_slug)
     Shared::EventEmitter.call("bsdports.import.started", platform: platform.slug, tree_path:) if defined?(Shared::EventEmitter)
     Rails.logger.info("bsdports import started platform=#{platform.slug} tree_path=#{tree_path}")
 
