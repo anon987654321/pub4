@@ -89,6 +89,34 @@ class TestFeedbackLedger < Minitest::Test
     FileUtils.remove_entry(root) if root && Dir.exist?(root)
   end
 
+  # Tools publish tool:after only when they succeed, so a failing tool left no
+  # row at all and every tool the ledger knew read as healthy.
+  def test_a_failing_model_called_tool_is_a_failure_and_status_reports_the_rate
+    root = Dir.mktmpdir("tool_failure")
+    bus = FakeBus.new
+    learnings = Master::Ground::KnowledgeStore.new(root:)
+    Master::Trace::Ledger::Feedback.new(event_bus: bus, learnings:).attach
+    broken = Class.new do
+      const_set(:NAME, "web_fetch")
+      def call(**) = Master::Result.err("timeout", category: :infrastructure)
+    end
+    wrapper = Master::Io::LLM::WebFetch.new(broken.new, bus:)
+
+    3.times { assert_match(/\AError: timeout/, wrapper.execute(url: "https://example.org")) }
+    3.times { bus.publish("tool:after", tool: "dynamic_http", status: 503) }
+    3.times { bus.publish("tool:after", tool: "read_file") }
+
+    failures = learnings.opportunities.select { |row| row[:category] == :high_failure }
+    assert_equal %w[dynamic_http web_fetch], failures.map { |row| row[:dimension] }.sort
+    status = Master::CLI::CommandRegistry.render_status_lines(
+      { ahead_behind: [0, 0], svc: {}, evts: [], failures: [], rsi: learnings.opportunities },
+    )
+    assert_includes status, "rsi     high_failure web_fetch 100% of 3"
+  ensure
+    learnings&.close
+    FileUtils.remove_entry(root) if root && Dir.exist?(root)
+  end
+
   def test_provider_errors_are_queryable_separately_with_metadata
     root = Dir.mktmpdir("provider_errors")
     learnings = Master::Ground::KnowledgeStore.new(root:)

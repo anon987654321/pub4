@@ -9,8 +9,10 @@ module Master
       module_function
 
       # /status — one-frame health panel. Replaces seven probing tool calls.
-      def dispatch_status(root:, fix_loop:, bus:, git: Io::GitOperations.new(File.expand_path("..", root)), trace: nil, ctx: nil)
+      def dispatch_status(root:, fix_loop:, bus:, git: Io::GitOperations.new(File.expand_path("..", root)), trace: nil,
+                          learnings: nil, ctx: nil)
         gather_status_data(root:, fix_loop:, git:, trace:)
+          .merge(rsi: rsi_opportunities(learnings))
           .then { |data| render_status_lines(data) }.join("\n")
       rescue StandardError => e
         "status: #{e.message}"
@@ -52,7 +54,23 @@ module Master
         ]
         d[:evts].each { |e| lines << "  #{e[:ago]} #{e[:event]} #{e[:summary]}" }
         d[:failures].each { |e| lines << "  !#{e[:ago]} #{e[:event]} #{e[:summary]}" }
+        Array(d[:rsi]).each { |row| lines << "rsi     #{format_opportunity(row)}" }
         lines
+      end
+
+      # The feedback ledger's reading of the last week: a tool failing a fifth
+      # of its calls, a correction or a provider error that keeps recurring.
+      def rsi_opportunities(learnings)
+        learnings.respond_to?(:opportunities) ? learnings.opportunities : []
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "CommandRegistry.rsi_opportunities")
+        []
+      end
+
+      def format_opportunity(row)
+        return "#{row[:category]} #{row[:dimension]} x#{row[:count]}" unless row[:fail_rate]
+
+        "#{row[:category]} #{row[:dimension]} #{(row[:fail_rate] * 100).round}% of #{row[:total]}"
       end
 
       def last_event(root, pattern)

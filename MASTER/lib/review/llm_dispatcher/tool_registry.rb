@@ -30,7 +30,7 @@ module Master
             next if allowed && !allowed.include?(name)
             next if allowed.nil? && !Fiber[:master_elevated] && dangerous
             next if tier == "cheap" && dangerous
-            wrapper.new(tool)
+            wrapper.new(tool, bus: @bus)
           end
         rescue StandardError => err
           @bus&.publish("agent:llm_tools_error", error: err.message)

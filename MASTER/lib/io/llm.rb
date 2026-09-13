@@ -15,18 +15,30 @@ module Master
       # the error line are the same everywhere, so they live here: `execute`
       # coerces its declared params and hands them to #forward.
       module ToolForwarding
-        def initialize(tool) = @tool = tool
+        def initialize(tool, bus: nil)
+          @tool = tool
+          @bus = bus
+        end
 
         private
 
         # Yields the value when the caller wants a shaped success; without a
         # block the value is the reply.
+        #
+        # A tool publishes tool:after only once it has succeeded, so a failure
+        # is published here, where every model-called tool returns: without it
+        # the feedback ledger recorded successes and nothing else.
         def forward(**args)
           result = @tool.call(**args)
-          return "Error: #{result.message}" unless result.ok?
+          unless result.ok?
+            @bus&.publish("tool:failed", tool: tool_name, category: result.category, error: result.message.to_s[0, 200])
+            return "Error: #{result.message}"
+          end
 
           block_given? ? yield(result.value!) : result.value!
         end
+
+        def tool_name = @tool.class.const_defined?(:NAME) ? @tool.class::NAME : @tool.class.name.split("::").last
       end
 
       class ReadFile < RubyLLM::Tool

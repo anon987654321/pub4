@@ -18,6 +18,7 @@ module Master
 
         def attach
           @bus&.subscribe("tool:after") { |payload| record_tool(payload) }
+          @bus&.subscribe("tool:failed") { |payload| record_tool_failure(payload) }
           @bus&.subscribe("llm:call_complete") { |payload| record_llm(payload) }
           @bus&.subscribe("llm:provider_outcome") { |payload| record_provider(payload) }
           @bus&.subscribe("user_correction") { |payload| record_user_correction(payload) }
@@ -29,11 +30,20 @@ module Master
 
         private
 
+        # tool:after is published on success, so it counts as one unless its own
+        # outcome says otherwise: a non-zero exit, or an HTTP status of 400 and up.
         def record_tool(payload)
           dim = payload[:tool] || payload["tool"] || "unknown"
-          value = payload[:exit_code] || payload["exit_code"]
-          event_type = value.to_i.zero? ? "tool_success" : "tool_failure"
-          record(event_type:, dimension: dim, value:, metadata: payload)
+          exit_code = payload[:exit_code] || payload["exit_code"]
+          status = (payload[:status] || payload["status"]).to_i
+          event_type = exit_code.to_i.nonzero? || status >= 400 ? "tool_failure" : "tool_success"
+          record(event_type:, dimension: dim, value: exit_code || status.nonzero?, metadata: payload)
+        end
+
+        def record_tool_failure(payload)
+          dim = payload[:tool] || payload["tool"] || "unknown"
+          category = (payload[:category] || payload["category"]).to_s
+          record(event_type: "tool_failure", dimension: dim, value: category, metadata: payload)
         end
 
         def record_llm(payload)

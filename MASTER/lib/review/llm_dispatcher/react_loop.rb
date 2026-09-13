@@ -122,7 +122,7 @@ module Master
             return Result.wrap(raw).value_or(raw.to_s)
           end
 
-          llm_tool = wrapper.new(tool)
+          llm_tool = wrapper.new(tool, bus: @bus)
           reply = llm_tool.call(heal_args(llm_tool, args))
           return reply unless reply.is_a?(Hash) && reply[:error]
 

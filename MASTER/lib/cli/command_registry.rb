@@ -22,7 +22,7 @@ module Master
         trace = infra[:trace]
         {
           "status" => Command.new do |ctx|
-            dispatch_status(root:, fix_loop: nil, bus:, git:, trace:, ctx:)
+            dispatch_status(root:, fix_loop: nil, bus:, git:, trace:, learnings: infra[:learnings], ctx:)
           end,
           "help" => command(:help_text, nil),
         }
@@ -41,7 +41,7 @@ module Master
           # order, so swarm goes last in both places.
           "review" => command(:dispatch_review, d[:scanner], d[:fix_loop], d[:deliberation], d[:root], d[:bus],
             d[:review_crew], d[:swarm]),
-          "status" => command(:dispatch_status, d[:root], d[:fix_loop], d[:bus], d[:git], d[:trace]),
+          "status" => command(:dispatch_status, d[:root], d[:fix_loop], d[:bus], d[:git], d[:trace], d[:learnings]),
           "undo" => command(:dispatch_undo, undo),
           "rollback" => command(:dispatch_undo, undo),
           "clear" => command(:dispatch_clear, infra[:session]),
@@ -70,6 +70,7 @@ module Master
           config: infra[:config],
           metrics: infra[:metrics],
           trace: infra[:trace],
+          learnings: infra[:learnings],
         }
       end
 
