@@ -1,5 +1,12 @@
 #!/usr/bin/env sh
 # Print mandatory follow-up after git pull on vm23.
+#
+# A here-doc on purpose. MASTER/bin/operator post-pull and data/operator.yml both
+# run this, and the steps are an order for a person rather than data a program
+# reads: generating fifteen lines from YAML adds a reader to keep in step and
+# changes nothing anyone sees. operator status prints one next command for the
+# checkout it stands in, not the five-step order a pull on vm23 leaves to follow,
+# so it does not replace this.
 set -eu
 
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)"
@@ -11,7 +18,7 @@ post-pull: never git stash to force a pull through; a stashed Gemfile.lock took 
 
 Next (serial — one app at a time):
   1. ruby34 OPENBSD/bin/vps-state
-  2. zsh OPENBSD/bin/vps-deploy <app>     # or: zsh OPENBSD/vps_ci.sh <app>
+  2. zsh OPENBSD/bin/vps-deploy <app>     # not vps_ci.sh: it syncs and tests, never migrates or restarts
   3. ruby34 OPENBSD/integrity_gate.rb
   4. ruby34 OPENBSD/health_check.rb --public --all-ready-apps
   5. sh OPENBSD/bin/deploy-smoke.sh       # fast local+public smoke (ALLOW_AMBER_DOWN=1 if needed)
