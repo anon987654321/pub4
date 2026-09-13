@@ -1250,7 +1250,7 @@ dropped with a measurement. No two-tower feed, neural outfit model or pgvector
 ranking runs on a 1 GB SQLite box; the portable result of those papers is a SQL
 union, filed under `RAILS/apps.horizon.yml`. The shared snippet library
 `shared/frontend/examples.html.erb` stays: it is documentation, and
-`deploy_backlog_test.rb` holds it to registered controllers.
+`shared_stimulus_components_test.rb` holds it to registered controllers.
 
 Books are read for detectors, never for a look. Parametricism, an Itten palette,
 a second type scale, Pallasmaa as texture or fog, and a swing retune "because
