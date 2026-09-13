@@ -45,6 +45,7 @@ gem "quilt" # BRGEN_OLD's identicon avatars (pub/__OLD_BACKUPS/BRGEN_OLD)
 gem "futurism"
 gem "ruby_llm"
 
+gem "bootsnap", require: false
 gem "faker", require: false
 
 group :development, :test do

@@ -184,6 +184,8 @@ GEM
     base64 (0.3.0)
     bcrypt (3.1.22)
     bigdecimal (4.1.2)
+    bootsnap (1.24.2)
+      msgpack (~> 1.2)
     brakeman (8.0.4)
       racc
     builder (3.3.0)
@@ -713,6 +715,7 @@ DEPENDENCIES
   async-http
   axe-core-capybara
   bcrypt (~> 3.1)
+  bootsnap
   brakeman
   brgen-dating!
   brgen-maps!
@@ -790,6 +793,7 @@ CHECKSUMS
   base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
   bcrypt (3.1.22) sha256=1f0072e88c2d705d94aff7f2c5cb02eb3f1ec4b8368671e19112527489f29032
   bigdecimal (4.1.2) sha256=53d217666027eab4280346fba98e7d5b66baaae1b9c3c1c0ffe89d48188a3fbd
+  bootsnap (1.24.2) sha256=d2900f85a75088d62c9d03dab5e55b20820748c62d427a59fa76899e398c2d1c
   brakeman (8.0.4) sha256=7bf921fa9638544835df9aa7b3e720a9a72c0267f34f92135955edd80d4dcf6f
   brgen-dating (0.1.0)
   brgen-maps (0.1.0)
