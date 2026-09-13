@@ -157,10 +157,12 @@ Law.define(:MIGRATION_ADD_REFERENCE_NO_FK) do
   severity :error
   languages %i[ruby]
   path "/db/migrate/"
-  detect { |line| line.match?(/add_reference(?!.*foreign_key:)/) }
+  # A polymorphic reference names no single table, so it cannot carry a
+  # foreign key; asking for one is asking for a migration that will not run.
+  detect { |line| line.match?(/add_reference(?!.*(?:foreign_key:|polymorphic:\s*true))/) }
   fix "Add `foreign_key: true` to enforce referential integrity."
   bad  "add_reference :posts, :user"
-  good "add_reference :posts, :user, foreign_key: true"
+  good "add_reference :posts, :user, foreign_key: true\nadd_reference :reactions, :reactable, polymorphic: true\n"
 end
 
 # Migrated from data/rules.yml MIGRATION_FIND_OR_CREATE_BY.
@@ -224,8 +226,19 @@ Law.define(:RATE_LIMITING_MISSING) do
   languages %i[ruby]
   scope :file
   path "/app/controllers/"
-  absent /rate_limit|throttle/
-  detect { |text| text.match?(/(login|signup|sign_up|password|reset)/m) }
+  # A controller that includes the shared actions module inherits its limits,
+  # and the module is scanned on its own.
+  absent /rate_limit|throttle|include\s+(?:\w+::)*\w*(?:Sessions|Passwords|Registrations)Actions\b/
+  # An action, not a word. Reading the file for "password" anywhere flagged
+  # the authentication concern for calling reset_session, SSO provisioning for
+  # generating a random password, and dating's base controller for a predicate
+  # named vipps_login_available? — none of which is an endpoint. What takes a
+  # credential is a controller or actions module named for sessions, passwords
+  # or registrations, or an action whose own name says login, signup or reset.
+  detect do |text|
+    text.match?(/^\s*(?:class|module)\s+(?:\w+::)*\w*(?:Sessions|Passwords|Registrations|Signups?)(?:Controller|Actions)\b/) ||
+      text.match?(/^\s*def\s+\w*(?:login|signup|sign_up|password|reset)\w*(?![\w?!])/)
+  end
   fix "Add rate_limit/throttle to sensitive actions."
   bad <<~X
     def login
@@ -234,6 +247,8 @@ Law.define(:RATE_LIMITING_MISSING) do
   good <<~X
     rate_limit to: 5, within: 1.minute
     def login
+    end
+    def vipps_login_available?
     end
   X
 end
