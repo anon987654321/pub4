@@ -38,7 +38,7 @@ module Shared
 
     def rotate(dir)
       snapshots = Dir.glob(File.join(dir, "production-*.sqlite3.gz")).sort
-      snapshots[0...-KEEP].to_a.each { |old| File.delete(old) rescue nil }
+      snapshots[0...-KEEP].to_a.each { |old| File.delete(old) rescue nil } # scan: intentional — retention: this job's own snapshots past KEEP
     end
   end
 end
