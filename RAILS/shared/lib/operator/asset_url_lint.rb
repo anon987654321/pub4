@@ -56,7 +56,7 @@ module Operator
     # IE9 fallback. It sits last in a `src:` list behind woff2/woff/ttf, all
     # three of which are present, so no browser that exists asks for it and
     # adding a file nothing requests is worse than recording it.
-    BASELINES = { "missing_asset" => 4 }.freeze
+    BASELINES = { "missing_asset" => 1 }.freeze
 
     Finding = Struct.new(:kind, :ref, :sheet, :tried)
 

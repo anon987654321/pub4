@@ -211,7 +211,7 @@ for unified graph + Turbo Stream consumers.
 ## Write races on SQLite, and the owner's own fields (2026-09-13)
 
 Rails 8.1 opens every SQLite transaction `BEGIN IMMEDIATE`
-(`activerecord/.../sqlite3/database_statements.rb`), so each save takes the
+(ActiveRecord's SQLite3 database statements), so each save takes the
 database's single writer lock before its validations read. A uniqueness
 validation and the insert behind it therefore cannot interleave with another
 writer, and a callback's `update_all` rolls back with the save it belongs to.

@@ -33,6 +33,7 @@
         <div class="text-end">
           <%= tag.strong item.total_display, data: { money: true } %>
           <div class="cluster">
+            <%# destructive: no-confirm-ok — a cart line comes back by adding the listing again %>
             <%= button_to t("actions.remove"), cart_item_path(item),
                   method: :delete, class: "btn btn-ghost btn-sm" %>
           </div>

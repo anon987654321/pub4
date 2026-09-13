@@ -57,7 +57,9 @@ module Operator
       # Recursive: test/gates/ holds nine more, and check-full has always
       # globbed **/*_test.rb. A narrower glob here would run 401 of the 496 and
       # print a green line about it.
-      all = Dir.glob(File.join(TEST_DIR, "**", "*_test.rb")).sort
+      # Written from the repository root so MASTER/tools/runs.rb reads the glob
+      # and counts every file it selects as run.
+      all = Dir.glob(File.join(RAILS_ROOT, "..", "RAILS/test/**/*_test.rb")).map { |path| File.expand_path(path) }.sort
       @filter ? all.select { |path| path.include?(@filter) } : all
     end
 
