@@ -97,7 +97,16 @@ class TestRatchets < Minitest::Test
     forget_tracked_files
   end
 
-  def forget_tracked_files = Operator::Ratchets.instance_variable_set(:@tracked_source_files, nil)
+  # A growth row that counted tests taxed coverage at the rate it taxed sprawl.
+  def test_growth_counts_source_and_not_tests
+    master = Operator::Ratchets.pub4_growth_rows.find { |row| row.name == "growth.master" }
+
+    assert_includes master.members, "MASTER/tools/ratchets.rb", "a source file must still be counted"
+    refute_includes master.members, "MASTER/test/test_ratchets.rb", "a test is coverage, not sprawl"
+    refute_includes master.members, "MASTER/web/test/test_helper.rb", "a nested test directory is still tests"
+  end
+
+  def forget_tracked_files =Operator::Ratchets.instance_variable_set(:@tracked_source_files, nil)
 
   # The whole value of --why is that the list and the number are the same
   # measurement. A row whose members do not add up to its own count is worse than

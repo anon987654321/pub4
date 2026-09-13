@@ -301,13 +301,18 @@ module Operator
     TREE_EXCLUDE = %r{/(\.git|node_modules|tmp|renders|[\w.-]*stems|samples|scratch|project|crate|venv|\.venv|site-packages|vendor|storage|\.cache|builds|coverage|\.master|knowledge|output)/|/public/assets/|\.wav\.quality\.json\z}
     TREE_SOURCE_EXT = %w[.rb .rake .erb .scss .css .js .mjs .yml .yaml .md .sh .ksh .exp .html .json].freeze
 
+    # Tests are not sprawl. A row that cannot tell a new test from a new god class
+    # charges coverage and sprawl against one allowance, so a path under a test/
+    # or spec/ directory is left out of the count.
+    TEST_PATH = %r{/(test|spec)/}
+
     def pub4_growth_rows
       ceilings = YAML.safe_load_file(File.join(MASTER, "data/spine.yml")).fetch("pub4_source_ceilings")
       ceilings.map do |tree, ceiling|
-        files = tree_source_files(tree)
+        files = tree_source_files(tree).grep_v(TEST_PATH)
         Row.new(name: "growth.#{tree.downcase}", current: files.size,
                 ceiling:, direction: :down, source: "MASTER/data/spine.yml",
-                note: "tracked source files; a new file folds in or raises this",
+                note: "tracked source files outside test/ and spec/; a new file folds in or raises this",
                 members: files)
       end
     rescue StandardError => e

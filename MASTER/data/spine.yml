@@ -237,6 +237,12 @@ spine:
 # a finer per-part guard in STUDIO/gate.rb. On-disk source files (code, style,
 # markup, config, docs), vendored/generated excluded.
 pub4_source_ceilings:
+  # UNIT CHANGED 2026-09-13: source files only. A path under a test/ or spec/
+  # directory no longer counts, so a new test is not charged as sprawl and
+  # coverage grows without an argument. Each ceiling fell by exactly the tracked
+  # test files its tree held at the change -- MASTER 373, RAILS 413, OPENBSD 16,
+  # STUDIO 24 -- so every row kept the reading it had. The "a -> b" figures in
+  # the notes below are in the old unit.
   # Lowered when the per-tree backlog files were consolidated into the repo-root
   # TODO.md (which sits in no tree and so counts toward none): MASTER -1 (DEBT.md),
   # RAILS -2 (TODO.md, BLOCKERS.md), OPENBSD -1 (data/debt.yml).
@@ -583,7 +589,7 @@ pub4_source_ceilings:
 # the `unless`, and all twelve still pass. Nine tests here, none of which opens a
 # socket — every case is refused before the request, which is the point. Deleting
 # the guard fails three of them.
-  MASTER: 1053
+  MASTER: 680
 
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
@@ -779,7 +785,7 @@ pub4_source_ceilings:
   # them. This row is what caught the first attempt not landing -- it read 2395
   # while the branch claimed the removal, because a path-scoped commit rebuilds
   # its paths from the working tree and put them back.
-  RAILS: 2393
+  RAILS: 1980
   # 106 -> 107 is test/test_githooks.rb. dev/githooks holds the three guards
   # that are the whole defence against a shared index, and nothing tested any of
   # them — a hook that stopped firing looks exactly like a week in which nobody
@@ -851,7 +857,7 @@ pub4_source_ceilings:
 # Mutation-checked rather than asserted into existence: dropping master fails 2,
 # reordering fails 1, turning the root guard into a warning fails 1, and gutting
 # the SKIP_CI branch fails 1, with the unmutated source at 0.
-  OPENBSD: 115
+  OPENBSD: 99
   # 220 -> 222 for lora/seed_media.yml and lora/_toolkit/install_seed_media.rb,
   # the prompt set for every seeded photograph and the script that grades and
   # files what comes back from it. Two files, both named, neither foldable:
@@ -926,7 +932,7 @@ pub4_source_ceilings:
   # test/test_tools_motion.rb went and the ceiling stayed, so the row sat two
   # files slack -- room the next change grows into without an argument, which is
   # the other way a ratchet dies.
-  STUDIO: 143
+  STUDIO: 119
 
 # Executable files directly under each tree's own bin/ — the number CLAUDE.md's
 # "two surfaces, no third" makes a claim about while nothing counted it. MASTER
