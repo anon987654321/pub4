@@ -8,6 +8,7 @@ case ${1:-} in
   exit 0
   ;;
 esac
+
 # curl is a package (/usr/local/bin/curl) and resource_guard.sh calls this from
 # root's cron, whose PATH has no /usr/local/bin — so the /up wait below could
 # only ever time out on the path that actually matters, and every crisis
@@ -71,18 +72,15 @@ do
   pkill -f "$pat" 2>/dev/null && echo "pkill $pat" || true
 done
 
-
 # A start already in flight is not a wedge, and killing one is how this script
 # became the thing it exists to fix.
 #
 # master's rc_pre rebuilds the face bundles and can run assets:precompile, which
-# takes over five minutes on one vCPU. The pkill below matches 'operator/MASTER/web',
-# and an in-flight `rcctl start master` carries exactly that in its command line
-# (cd /home/dev/pub4/MASTER/web && ...) -- so this killed the start it was about
-# to re-issue, waited 75s, gave up, and cron ran the guard again five minutes
-# later. Each pass left another precompile behind, which kept load critical,
-# which triggered the next pass. Measured 2026-08-27: master could not complete
-# a single start for hours, and the box reached 100% swap.
+# takes over five minutes on one vCPU. Stopping master under it and starting it
+# again abandons that precompile and begins another, cron runs the guard again
+# five minutes later, and each pass leaves one more precompile behind to keep the
+# load critical. Measured 2026-08-27: master could not complete a single start
+# for hours, and the box reached 100% swap.
 _master_starting=0
 if pgrep -f 'rcctl start master' >/dev/null 2>&1; then
   echo 'master start already in flight — not touching it'
@@ -95,7 +93,6 @@ pkill -f 'ruby34.*53187' 2>/dev/null || true
 pkill -f 'falcon.*38182' 2>/dev/null || true
 pkill -f 'ruby34.*38182' 2>/dev/null || true
 pkill -f '/home/brgen/app' 2>/dev/null || true
-[[ "$_master_starting" = "0" ]] && pkill -f 'operator/MASTER/web' 2>/dev/null || true
 sleep 2
 
 echo "=== restart core (master then brgen) ==="
