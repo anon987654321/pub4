@@ -77,7 +77,11 @@ class FileLengthRatchetTest < Minitest::Test
     # grown one. Playlist import, track ownership, hosted tracks and set likes
     # are playlist_wiring_test.rb: four tests that arrived one at a time and
     # read as one contract. It reads its tree through the same SourceReader.
-    "brgen/test/services/deploy_backlog_test.rb" => 557,
+    #
+    # 566 -> 510 on 2026-09-13. The shared Stimulus components — what
+    # stimulus_boot.js registers, the views wired to them, and the snippet
+    # library held to the registry — are shared_stimulus_components_test.rb.
+    "brgen/test/services/deploy_backlog_test.rb" => 510,
 # 522 -> 442 on 2026-08-26. Token contrast and the budget that judges it —
 # check_token_contrast, judge_contrast_budget, contrast_budget — are
 # design_metrics/contrast_checks.rb. One subject, and the maths it calls
@@ -216,7 +220,6 @@ class FileLengthRatchetTest < Minitest::Test
     # ties with it at 0-1-0, which is why the forward goes immediately BEFORE
     # zen_shell rather than after: the media block has to keep the later word.
     "shared/app/assets/stylesheets/_zen_shell.scss" => 454,
-    "brgen/engines/playlist/app/views/playlist/playlists/_player.html.erb" => 155,
   }.freeze
 
   COMMENT_STARTS = ["#", "//", "/*", "*", "<%#"].freeze
