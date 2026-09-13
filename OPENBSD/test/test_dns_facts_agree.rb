@@ -70,3 +70,131 @@ class DnsFactsAgreeTest < Minitest::Test
     refute_empty POLICY.fetch("resolvers").fetch("public")
   end
 end
+
+require_relative "../gates/dns_zones"
+require_relative "../gates/domain_alignment"
+
+# The two gates that hold those facts to the zones and the registry, each beside
+# the drift it exists to catch (decision 2026-08-22). The network half of
+# dns_zones is handed a resolver that answers what the fixture says, so the
+# verdict is the gate's and no packet leaves the machine.
+class DnsZonesGateFixtureTest < Minitest::Test
+  GATE = Deploy::DnsZonesGate
+
+  # A resolver whose every name answers `addresses`, or raises `error`.
+  Resolver = Struct.new(:addresses, :error) do
+    def getaddresses(_name) = error ? raise(error) : addresses
+    def getaddress(_name) = error ? raise(error) : addresses.first
+  end
+
+  def gate
+    @gate ||= GATE.new.tap { |g| g.instance_variable_set(:@result, Deploy::GateResult.new) }
+  end
+
+  def result = gate.instance_variable_get(:@result)
+
+  # RenderDns answers `name` with `replacement` applied to its real answer while
+  # the gate runs `check`.
+  def with_render(name, replacement, check)
+    original = RenderDns.method(name)
+    RenderDns.define_singleton_method(name) { replacement.call(original.call) }
+    gate.send(check)
+  ensure
+    RenderDns.define_singleton_method(name, original)
+  end
+
+  # bsdports.org, owned and paid and parked at the registrar.
+  def test_an_app_domain_that_resolves_nowhere_fails
+    gate.send(:check_delegation, Resolver.new([]), "bsdports", "bsdports.org")
+
+    assert_match(/bsdports\.org \(bsdports\) resolves nowhere/, result.failures.join)
+  end
+
+  def test_an_app_domain_delegated_somewhere_else_fails
+    gate.send(:check_delegation, Resolver.new(["192.0.2.1"]), "brgen", "brgen.no")
+
+    assert_match(/resolves to 192\.0\.2\.1, not #{Regexp.escape(GATE::NAMESERVER)}/, result.failures.join)
+  end
+
+  def test_an_app_domain_pointing_here_passes_and_counts
+    gate.send(:check_delegation, Resolver.new([GATE::NAMESERVER]), "brgen", "brgen.no")
+
+    assert_empty result.failures
+    assert_equal 1, result.checks_ran
+  end
+
+  # A dropped packet is not a missing record: three timeouts skip, three
+  # NXDOMAINs fail.
+  def test_a_vertical_our_nameserver_does_not_answer_fails_and_a_timeout_only_skips
+    gate.send(:check_domain, Resolver.new(nil, Resolv::ResolvError), "brgen.no", %w[tv])
+
+    assert_match(/does not answer for brgen\.no, tv\.brgen\.no, www\.brgen\.no/, result.failures.join)
+
+    timed_out = GATE.new.tap { |g| g.instance_variable_set(:@result, Deploy::GateResult.new) }
+    timed_out.send(:check_domain, Resolver.new(nil, Resolv::ResolvTimeout), "brgen.no", %w[tv])
+    outcome = timed_out.instance_variable_get(:@result)
+
+    assert_empty outcome.failures
+    assert_equal 1, outcome.live_skips
+  end
+
+  def test_a_domain_with_no_zone_block_in_nsd_conf_fails
+    with_render(:zones, ->(zones) { zones.merge("ghost.example" => []) }, :every_domain_has_a_zone)
+
+    assert_match(/nsd\.conf has no zone block for ghost\.example/, result.failures.join)
+  end
+
+  # The hand-edit the generator exists to stop: nsd.conf on disk is no longer
+  # what data/dns.yml renders.
+  def test_an_nsd_conf_the_generator_would_not_write_fails
+    with_render(:nsd_conf_body, ->(body) { "#{body}# hand-edited\n" }, :generated_output_matches)
+
+    assert_match(/generated file\(s\) differ .*nsd\.conf/, result.failures.join)
+  end
+
+  def test_the_committed_zones_match_what_the_generator_renders
+    gate.send(:generated_output_matches)
+    gate.send(:every_domain_has_a_zone)
+
+    assert_empty result.failures
+    assert_operator result.checks_ran, :>, 50
+  end
+end
+
+class DomainAlignmentGateFixtureTest < Minitest::Test
+  GATE = Deploy::DomainAlignmentGate
+
+  def setup
+    @gate = GATE.new
+    @registry = @gate.send(:parse_registry_entries).keys
+    @keys = @gate.send(:parse_relayd_keypairs)
+    @declared = @gate.send(:extract_constant, GATE::REGISTRY.read, "LIVE_DOMAINS")
+  end
+
+  def alignment_failures(keys)
+    result = Deploy::GateResult.new
+    @gate.send(:live_domains_check, result, @registry, keys)
+    result.failures.join(" | ")
+  end
+
+  # Too many: the city network links a hostname relayd holds no certificate for.
+  def test_a_live_domain_with_no_keypair_fails
+    assert_match(/LIVE_DOMAINS names #{Regexp.escape(@declared.last)} with no tls keypair/,
+                 alignment_failures(@keys - [@declared.last]))
+  end
+
+  # Too few: a city relayd serves and nothing links.
+  def test_a_certified_city_left_out_of_live_domains_fails
+    unlisted = (@registry - @declared).first
+
+    refute_nil unlisted, "every registry domain is live, so this fixture has nothing to plant"
+    assert_match(/LIVE_DOMAINS omits #{Regexp.escape(unlisted)}/, alignment_failures(@keys + [unlisted]))
+  end
+
+  def test_the_committed_tree_passes
+    result = GATE.run
+
+    assert_equal :passed, result.outcome, result.failures.join("\n")
+    assert_equal @declared.size, result.checks_ran
+  end
+end
