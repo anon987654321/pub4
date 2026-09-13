@@ -296,6 +296,7 @@ class WorldTest < Minitest::Test
 
       assert_equal ["mine.rb"], committed_paths(root)
       refute_includes committed_paths(root), "theirs.rb", "the fold committed another session's staged file"
+      assert_includes `git -C #{root} log -1 --format=%B`, Master::Core::World::COMMIT_TRAILER
     end
   end
 

@@ -183,11 +183,17 @@ module Master::Core
       end
     end
 
+    # Every commit the runtime makes carries this trailer, and every commit
+    # site reads it from here. Everything in this checkout commits as one
+    # author, so the trailer is the only thing `git log --grep` can tell a
+    # runtime commit from a human one by.
+    COMMIT_TRAILER = "Co-authored-by: MASTER"
+
     def do_git_commit(paths, message)
       scoped = paths.map(&:to_s).reject(&:empty?)
       return Observation.no("git commit needs paths: an unscoped commit takes the shared index") if scoped.empty?
 
-      Observation.ok(git_capture("commit", "-m", message.to_s, "--", *scoped))
+      Observation.ok(git_capture("commit", "-m", message.to_s, "-m", COMMIT_TRAILER, "--", *scoped))
     end
 
     def do_ask(prompt:, options: nil, **)

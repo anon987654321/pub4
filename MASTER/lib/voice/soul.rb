@@ -156,7 +156,8 @@ module Master
         return false unless add_status.success?
 
         _, commit_status = Master::Io::Exec.capture2e(
-          "git", "-C", @root, "commit", "-m", "soul: v#{version} — evolution protocol update"
+          "git", "-C", @root, "commit", "-m", "soul: v#{version} — evolution protocol update",
+          "-m", Master::Core::World::COMMIT_TRAILER
         )
         commit_status.success?
       end

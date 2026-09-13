@@ -14,7 +14,8 @@ module Master
         end
 
         def commit(message)
-          Master::Io::Exec.capture2e("git", "-C", @root_path, "commit", "-m", message.to_s)
+          Master::Io::Exec.capture2e("git", "-C", @root_path, "commit", "-m", message.to_s,
+                                     "-m", Master::Core::World::COMMIT_TRAILER)
         end
 
         def push

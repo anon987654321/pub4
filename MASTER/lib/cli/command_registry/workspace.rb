@@ -32,7 +32,8 @@ module Master
         return "commit: no message came back, so nothing was committed" if message.empty?
 
         Master::Io::Exec.capture2e("git", "-C", root, "add", "--", *paths)
-        out, = Master::Io::Exec.capture2e("git", "-C", root, "commit", "-m", message, "--", *paths)
+        out, = Master::Io::Exec.capture2e("git", "-C", root, "commit", "-m", message,
+                                          "-m", Master::Core::World::COMMIT_TRAILER, "--", *paths)
         [evolution, out.strip].reject(&:empty?).join("\n")
       end
 

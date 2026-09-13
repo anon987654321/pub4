@@ -46,6 +46,8 @@ class TestCommitCommand < Minitest::Test
     Registry.dispatch_commit(@agent, @root, ctx: { args: "mine.rb new.rb" })
 
     assert_equal "Record the named change", git("log", "-1", "--format=%s").strip
+    assert_equal "MASTER", git("log", "-1", "--format=%(trailers:key=Co-authored-by,valueonly)").strip,
+                 "a runtime commit says so, since every commit here has the same author"
     assert_equal %w[mine.rb new.rb], git("show", "--name-only", "--format=", "HEAD").split.sort
     assert_includes git("status", "--porcelain"), " M theirs.rb", "an unnamed change must stay uncommitted"
   end
