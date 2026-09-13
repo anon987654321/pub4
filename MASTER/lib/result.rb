@@ -13,15 +13,9 @@ module Master
     # Retry-policy classification for Result::Err — separate from Err's own
     # value-identity and monad-chaining methods.
     #
-    # Result::CATEGORIES declares fourteen. This classified five, so nine —
-    # including rate_limit and every provider failure — answered false to both
-    # questions. A caller asking `retriable?` about a rate limit would have been
-    # told no and given up on the one failure that is retriable by definition.
-    #
-    # Nothing asks yet: neither predicate has a caller anywhere in lib/, which is
-    # why the gap was invisible and why closing it changes no behaviour. It is
-    # closed now rather than when something finally reads it, because the shape
-    # of that bug is a retry loop that quietly does not retry.
+    # FallbackChain reads `permanent?` to stop retrying a model whose request was
+    # refused, so a category missing from both lists is a retry loop that quietly
+    # sleeps through backoff it cannot cure.
     #
     # The partition is total and disjoint, and test_err_classification.rb holds
     # it to both — a category added to CATEGORIES and to neither list here is the

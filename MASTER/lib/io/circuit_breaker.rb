@@ -73,6 +73,13 @@ module Master
       rescue RubyLLM::RateLimitError => e
         # API rate limit is infrastructure noise — don't open the circuit.
         Result.err("rate_limit: #{e.message}", category: :rate_limit)
+      rescue RubyLLM::PaymentRequiredError => e
+        Result.err(e.message, category: :budget)
+      rescue RubyLLM::BadRequestError, RubyLLM::UnauthorizedError, RubyLLM::ForbiddenError,
+             RubyLLM::ModelNotFoundError => e
+        # The provider refused the request itself. Sending it again gets the same
+        # refusal, and a refusal says nothing about whether the backend is up.
+        Result.err(e.message, category: :validation)
       rescue StandardError => e
         error_message = e.message.to_s
         # Config errors aren't backend failures — don't penalize the breaker.

@@ -108,6 +108,21 @@ class TestCircuitBreakerStates < Minitest::Test
     assert_equal :closed, circuit.state
   end
 
+  # A refused request is permanent: the fallback chain must see it as such, and
+  # it is not evidence the backend is down.
+  def test_a_refused_request_is_permanent_and_does_not_open_it
+    circuit = breaker
+    result = nil
+    with_keys do
+      (Master::Io::CircuitBreaker::FAILURE_THRESHOLD * 2).times do
+        result = circuit.call(0.0) { raise RubyLLM::BadRequestError.new(nil, "bad schema") }
+      end
+    end
+
+    assert_predicate result, :permanent?
+    assert_equal :closed, circuit.state
+  end
+
   # An absent key is a configuration problem, not a backend that fell over, so
   # it must not count toward the threshold either.
   def test_a_missing_key_does_not_open_it

@@ -80,7 +80,7 @@ module Master
             return response if response.is_a?(Master::Result::Ok)
 
             last_response = response
-            break if failover_skip_model?(response)
+            break if failover_skip_model?(response) || permanent_failure?(response)
 
             backoff_before_retry(selected_model, mode, retry_index) if retry_index < retry_count
           end
@@ -102,6 +102,12 @@ module Master
           return false unless response.is_a?(Master::Result::Err)
 
           skip_categories.include?(response.category)
+        end
+
+        # A refused request fails identically on every retry, so retrying it only
+        # spends the 30s and 60s backoff. The next model or mode still gets a turn.
+        def permanent_failure?(response)
+          response.is_a?(Master::Result::Err) && response.permanent?
         end
 
         def skip_categories

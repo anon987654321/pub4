@@ -67,6 +67,21 @@ class TestFallbackChain < Minitest::Test
     assert_equal "z-ai/glm-4.5-air:free", dispatcher.calls[1]
   end
 
+  def test_a_permanent_failure_is_not_retried_on_the_same_model
+    dispatcher = CountingDispatcher.new(
+      "ghost-model" => -> { Master::Result.err("no such model", category: :validation) },
+      "z-ai/glm-4.5-air:free" => -> { Master::Result.ok("fallback ok") },
+    )
+    agent = build_agent(dispatcher)
+    agent.define_singleton_method(:backoff_before_retry) { |*| flunk "slept before retrying a refused request" }
+
+    response = agent.send(:attempt_chat_with_fallbacks, candidate_models: %w[ghost-model z-ai/glm-4.5-air:free],
+                                                        prompt: "hi", context: [], stream: false)
+
+    assert_equal "fallback ok", response.value!
+    assert_equal %w[ghost-model z-ai/glm-4.5-air:free], dispatcher.calls
+  end
+
   def test_failover_skip_model_identifies_transient_errors
     agent = build_agent(CountingDispatcher.new({}))
     timeout = Master::Result.err("timed out", category: :timeout)

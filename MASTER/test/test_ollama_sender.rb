@@ -112,14 +112,24 @@ class TestOllamaSender < Minitest::Test
   end
 
   # Enabled-and-wrong and enabled-and-down are different operator actions, so
-  # they are different messages rather than one generic provider error.
+  # they are different messages rather than one generic provider error. A
+  # missing model is permanent, so the fallback chain does not sleep 30s and
+  # 60s retrying it.
   def test_a_missing_model_names_the_model
     with_stub(status: "404 Not Found", body: %({"error":"model 'ghost' not found"})) do |sender, _s, _b, _stub|
       result = ask(sender, "ollama:ghost", "hi")
 
       assert_predicate result, :err?
-      assert_equal :provider_error, result.category
+      assert_predicate result, :permanent?
       assert_includes result.message, "ghost"
+    end
+  end
+
+  def test_a_rate_limit_stays_retriable
+    with_stub(status: "429 Too Many Requests", body: %({"error":"busy"})) do |sender, _s, _b, _stub|
+      result = ask(sender, "ollama:llama3:latest", "hi")
+
+      assert_equal :rate_limit, result.category
     end
   end
 
