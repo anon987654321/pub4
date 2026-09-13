@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "tmpdir"
 
 class PathGuardTest < Minitest::Test
   def setup
@@ -21,6 +22,19 @@ class PathGuardTest < Minitest::Test
     result = @tool.resolve("lib/io/path_guard.rb")
     assert result.ok?
     assert result.value!.start_with?(@root)
+  end
+
+  def test_rejects_a_symlink_inside_root_that_points_outside
+    Dir.mktmpdir do |dir|
+      root = File.realpath(File.join(dir, "root").tap { |r| Dir.mkdir(r) })
+      outside = File.join(dir, "outside").tap { |o| Dir.mkdir(o) }
+      File.symlink(outside, File.join(root, "link"))
+      tool = @tool.class.new(root)
+
+      assert tool.resolve("link/secret.txt").err?, "an existing link must not lead out"
+      assert tool.resolve("link/new/deeper.txt").err?, "nor a not-yet-created path beneath it"
+      assert tool.resolve("plain/new.txt").ok?, "a not-yet-created path under the real root is fine"
+    end
   end
 end
 

@@ -10,6 +10,10 @@ module Master
       module Live
         module_function
 
+        # write_atomic here, fsync and all, is safe inside the INT/TERM trap below:
+        # Tempfile takes no Mutex, which is the one thing a trap cannot do.
+        extend Master::Io::AtomicWrite
+
         SNAPSHOT_REL = File.join(".master", "scan_last.txt").freeze
         TMP_SNAPSHOT = "/tmp/master_scan_last.txt".freeze
 
@@ -41,19 +45,13 @@ module Master
 
           path = File.join(root.to_s, SNAPSHOT_REL)
           FileUtils.mkdir_p(File.dirname(path))
-          atomic_write(path, body)
-          atomic_write(TMP_SNAPSHOT, body)
+          write_atomic(path, body)
+          write_atomic(TMP_SNAPSHOT, body)
           emit("snapshot path=#{path} also=#{TMP_SNAPSHOT}") if announce
           path
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Scan::Live.snapshot!")
           nil
-        end
-
-        def atomic_write(path, body)
-          tmp = "#{path}.#{Process.pid}.tmp"
-          File.write(tmp, body)
-          File.rename(tmp, path)
         end
 
         def with_interrupt_dump(root:)
