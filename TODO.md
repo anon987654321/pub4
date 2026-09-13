@@ -968,14 +968,6 @@ symbol names over line numbers.
   deliberate); the `cohesion.rb` regroups; and the three engine probes that skip
   under suite load while passing alone.
 
-## Cross-cutting programs
-
-- **Bringhurst: `line-height` literals do not come off `--leading-*`.**
-  `css_constitution.rb:61` lists `line_height` with no reader; 87 literals across
-  the fleet on 2026-09-10, seven in `face.css`. The detector is a `css_budget` row
-  held at today's count; moving a literal onto a token is the operator's, because
-  it changes leading.
-
 ## The layout pass — open
 
 **Seventeen control classes paint a border beside a fill**, from `.deal-cat`

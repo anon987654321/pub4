@@ -257,6 +257,11 @@ rules:
   # One hit: shared/_minimal.scss:212 `.card { padding: 1rem }`. 1rem is
   # 16px; the law is 24. Changing it is a look decision, so it is banked.
   card_padding: 1
+  # line-height literals not written as var(--leading-*), first measured
+  # 2026-09-13 at 85 across the fleet and MASTER/web. Moving one onto a token
+  # changes leading unless the literal equals a step, so the snap is the
+  # operator's; the ceiling is here so the eighty-sixth cannot arrive quietly.
+  leading: 85
 
 # Built-stylesheet weight, in kilobytes, per app. Same ratchet as the counts
 # above: measured from the tree, never from another product's published figure,

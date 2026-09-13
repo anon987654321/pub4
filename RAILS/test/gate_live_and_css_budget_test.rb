@@ -238,4 +238,17 @@ class GateLiveAndCssBudgetTest < Minitest::Test
 
     assert_equal [ "fixture.scss:1 1rem" ], gate.tally.fetch("card_padding")
   end
+
+  def test_a_line_height_literal_is_counted_and_a_leading_token_is_not
+    gate = spacing_gate
+    gate.instance_variable_set(:@design, {})
+    gate.send(:count_budget_rules, "fixture.scss", "fixture.scss", <<~CSS)
+      .a { line-height: 1.5; }
+      .b { line-height: var(--leading-normal); }
+      .c { line-height: normal; }
+      .d { font-size: 14px; line-height: 20px; }
+    CSS
+
+    assert_equal [ "fixture.scss:1 1.5", "fixture.scss:4 20px" ], gate.tally.fetch("leading")
+  end
 end

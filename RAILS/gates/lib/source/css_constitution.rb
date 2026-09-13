@@ -65,6 +65,10 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
     # (12/14/16/18/20) and a hardcoded 13/15/17 borrowed from x.com.
     FONT_SIZE = /(?:\A|[;{\s])font-size\s*:\s*([^;}]+)/
     FONT_WEIGHT = /(?:\A|[;{\s])font-weight\s*:\s*([^;}]+)/
+    # line_height was the one typography key with no reader. The --leading-*
+    # ladder in _typography.scss is the vocabulary, so a literal — even one equal
+    # to a step — is leading that retuning the token cannot reach.
+    LINE_HEIGHT = /(?:\A|[;{\s])line-height\s*:\s*([^;}]+)/
     TIMING = /(?:transition(?:-timing-function)?|animation)\s*:\s*([^;}]+)/
     # Keyword timing functions are what CINEMA_PALETTE ("cubic-bezier easing on
     # every transition") exists to forbid; the tokens are the way to satisfy it.
@@ -115,7 +119,7 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
       @tally = {
         "important" => [], "rhythm" => [], "magic_hex" => [],
         "type_scale" => [], "weight_ladder" => [],
-        "child_margin" => [], "card_padding" => []
+        "child_margin" => [], "card_padding" => [], "leading" => []
       }
       files.each { |path| scan(path) }
       judge_budgets
@@ -216,6 +220,11 @@ VAR_FALLBACK = /var\(\s*--[\w-]+\s*,[^()]*\)/
           px = normalize_size(value)
           @tally["type_scale"] << "#{where} #{value}" if px && !size_ladder.include?(px)
         end
+      end
+
+      if (m = line.match(LINE_HEIGHT))
+        value = m[1].strip
+        (@tally["leading"] ||= []) << "#{where} #{value}" unless value.start_with?("var(", "inherit", "normal")
       end
 
       return unless (m = line.match(FONT_WEIGHT))
