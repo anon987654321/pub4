@@ -88,8 +88,6 @@ module Deploy
       { id: "master/face", view: "MASTER/web/app/views/chat/index.html.erb", path: "/", persona: "guest" },
       { id: "master/dashboard", view: "MASTER/web/app/views/dashboard/index.html.erb", path: "/dashboard", persona: "guest" },
       { id: "master/offline", view: "MASTER/web/public/offline.html", path: "/offline.html", persona: "guest" },
-      { id: "master/diag", view: "MASTER/web/public/diag.html", path: "/diag.html", persona: "guest" },
-      { id: "master/swarm", view: "MASTER/web/public/swarm.html", path: "/swarm.html", persona: "guest" },
     ].freeze
 
     # Guest-open bsdports catalogue paths (family completeness — CRT dialect).

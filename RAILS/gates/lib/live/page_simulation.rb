@@ -154,7 +154,7 @@ module Deploy
         static_public = page[:path].to_s.end_with?(".html")
         has_main = body.match?(/main-content|<main\b|id="face"|id="zin"|role="main"/i)
         if !has_main
-          # MASTER offline/diag/swarm are bare public assets, not app layouts.
+          # MASTER offline.html is a bare public asset, not an app layout.
           findings << (static_public ? soft("static page missing main landmark") : hard("missing main landmark / face root"))
         end
         has_skip = body.match?(/skip-link|Skip to|#main-content|#zin|id="primer"/i)
