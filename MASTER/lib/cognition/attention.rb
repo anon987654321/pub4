@@ -6,14 +6,15 @@ module Master
     # it is, and how aroused the affect model already is. A salience heuristic
     # borrowed from global-workspace architectures, not a claim to reproduce
     # biological attention.
+    #
+    # Every row names an event something in the tree publishes. A weight for an
+    # event nobody publishes is a salience the layer never computes, so a new
+    # row lands with its publisher.
     class Attention
       EVENT_WEIGHTS = {
         "error:swallowed" => 0.95,
-        "tool:error" => 0.9,
-        "chat:message" => 0.8,
         "scan:complete" => 0.7,
         "tool:after" => 0.65,
-        "pressure:changed" => 0.45,
         "standing_order:ran" => 0.35,
       }.freeze
 

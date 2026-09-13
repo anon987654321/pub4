@@ -14,10 +14,9 @@ module Master
     # Three things here are load-bearing and were each wrong once.
     #
     # The subscription is `**`, not `*`. EventBus compiles `*` to `[^:]*` and
-    # `**` to `.*`, so `*` matches only colon-free event names — it would have
-    # seen `error` and missed `tool:after`, `chat:message`, `scan:complete` and
-    # `pressure:changed`, which is five of the seven rows in Attention's own
-    # weight table. The layer would have been near-inert and looked wired.
+    # `**` to `.*`, so `*` matches only colon-free event names, and every row in
+    # Attention's weight table carries a colon. Under `*` the layer sees none of
+    # the events it weighs and still looks wired.
     #
     # And nothing writes to disk from `observe`. A bus handler runs inside every
     # publish, a scan publishes thousands of events, and a YAML dump of the whole
