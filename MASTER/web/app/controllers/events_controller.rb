@@ -1,33 +1,21 @@
 # frozen_string_literal: true
 
-# EventsController — SSE stream of EventBus events to the orb visualizer.
+# EventsController — SSE stream of EventBus events to the orb visualizer, at
+# GET /events/stream. It subscribes to every bus topic and writes each event
+# as an anonymous `data:` line; the orb reads them with
+# `new EventSource("/events/stream")` and `onmessage`.
 #
-# The orb already exists (web/app/views/chat/index.html.erb). What it lacked
-# was a real signal. This controller subscribes to the container's EventBus,
-# serializes each event as Server-Sent Event, and streams them.
-#
-# Wire into routes:
-#   get "/events/stream" => "events#stream"
-#
-# Consume from the orb JS:
-#   const es = new EventSource("/events/stream");
-#   es.onmessage = e => handleEvent(JSON.parse(e.data));
-#
-# Event types the orb can react to (emitted by existing pipeline stages):
-#   llm:request           → burst pulse
-#   llm:escalation        → color shift
-#   tool:used             → ripple
-#   scan:complete         → stabilization flash
-#   autoloop:cycle        → rotation increment
-#   sweep:cycle           → slow rotation
-#   pipeline:rollback     → red glitch (from Pipeline rollback)
+# Topics the orb reacts to, each with a publisher in lib/: llm:request,
+# llm:escalation, tool:before and tool:after, scan:complete and
+# pipeline:rollback. A visitor sees only VISITOR_SAFE_PREFIX, and tts and
+# stage events only for their own conversation.
 class EventsController < ApplicationController
   include ActionController::Live
 
   POLL_INTERVAL_S    = 0.1
   KEEPALIVE_EVERY_S  = 15.0  # SSE comment cadence — long enough to be silent, short enough to keep proxies happy
   MAX_STREAM_S       = 600   # hard cap — 10 minute stream ceiling
-  VISITOR_SAFE_PREFIX = %r{\A(?:tts:|pipeline:stage|pressure:updated|council:deliberation|link)}i.freeze
+  VISITOR_SAFE_PREFIX = %r{\A(?:tts:|pipeline:stage|pressure:updated|council:start|link)}i.freeze
 
   def stream
     visitor_tier = request.env["master.tier"].to_s == "visitor"

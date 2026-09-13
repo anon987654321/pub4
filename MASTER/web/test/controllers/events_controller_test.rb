@@ -2,30 +2,44 @@
 
 require "test_helper"
 
-# Note: EventsController#stream is a real-time SSE loop (ActionController::Live)
-# that only returns after MAX_STREAM_S (600s) or a client disconnect -- there's
-# no existing Ruby-side pattern in this suite for exercising it via a bounded
-# request/response cycle (SSE coverage elsewhere is JS-side: sse_contract.test.mjs).
-# Testing the full stream action here risked hanging the test run for up to 10
-# minutes with no safe short-circuit, so this covers the one piece that's both
-# real logic and safely testable in isolation: the visitor-tier event filter.
+# EventsController#stream is an ActionController::Live loop that returns only
+# after MAX_STREAM_S or a disconnect, so this covers the part that is real logic
+# and safe to run in isolation: what a visitor is allowed to see.
 class EventsControllerTest < ActionDispatch::IntegrationTest
+  MINE = "conv-1"
+
   def controller
     @controller ||= EventsController.new
   end
 
-  test "visitor_safe_event? allows tts and pipeline:stage events" do
-    assert controller.send(:visitor_safe_event?, type: "tts:started")
-    assert controller.send(:visitor_safe_event?, type: "pipeline:stage_complete")
-    assert controller.send(:visitor_safe_event?, type: "pressure:updated")
-    assert controller.send(:visitor_safe_event?, type: "council:deliberation")
-    assert controller.send(:visitor_safe_event?, type: "link")
+  def safe?(type, conversation: nil)
+    data = conversation ? { conversation: conversation } : {}
+    controller.send(:visitor_safe_event?, { type: type, data: data }, MINE)
+  end
+
+  test "visitor_safe_event? passes the orb's public signals" do
+    assert safe?("pressure:updated")
+    assert safe?("council:start")
+    assert safe?("link")
+  end
+
+  test "visitor_safe_event? passes tts and stage events only for the visitor's own conversation" do
+    assert safe?("tts:started", conversation: MINE)
+    assert safe?("pipeline:stage_complete", conversation: MINE)
+    refute safe?("tts:started", conversation: "someone-else")
+    refute safe?("pipeline:stage_complete")
   end
 
   test "visitor_safe_event? blocks everything else" do
-    refute controller.send(:visitor_safe_event?, type: "llm:request")
-    refute controller.send(:visitor_safe_event?, type: "tool:used")
-    refute controller.send(:visitor_safe_event?, type: "scan:complete")
-    refute controller.send(:visitor_safe_event?, type: "autoloop:cycle")
+    refute safe?("llm:request")
+    refute safe?("tool:before")
+    refute safe?("scan:complete")
+    refute safe?("autoloop:cycle")
+  end
+
+  test "the visitor payload drops the tts job id and the conversation" do
+    event = { type: "tts:started", data: { job_id: "j", conversation: MINE, text: "hei" } }
+
+    assert_equal({ text: "hei" }, controller.send(:visitor_safe_payload, event)[:data])
   end
 end

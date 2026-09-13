@@ -118,6 +118,10 @@ module Deploy
     # progressions once at load, improvised_line writes a lead and a bass over a
     # progression per render and knows nothing about which progressions exist,
     # and space_fx is per-sample DSP that knows nothing about music at all.
+    #
+    # Not the same budget as `growth.studio` in MASTER/tools/ratchets.rb, which
+    # counts every tracked file in STUDIO. This one counts dilla's Ruby beside
+    # the engine and nothing else.
     DILLA_SUPPORT = %r{/dilla/(?:lib|bin|live|scripts)/}
     DILLA_SUPPORT_CEILING = 56
 
