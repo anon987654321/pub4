@@ -74,3 +74,51 @@ class FediverseSsrfTest < Minitest::Test
     Net::HTTP.alias_method(:request, :real_request)
   end
 end
+
+# Every outbound HTTP call in app code carries a timeout.
+#
+# Net::HTTP's defaults are sixty seconds to open and sixty to read, and the
+# convenience calls — Net::HTTP.get, get_response, post, post_form — accept no
+# timeout at all. On a one-vCPU box a feed read that hangs inside a render holds
+# a Falcon fiber and the page for two minutes. A call that opens a connection
+# (start, new, URI.open) must name read_timeout in the same file; a convenience
+# call is refused outright, because it cannot be given one.
+class OutboundHttpTimeoutTest < Minitest::Test
+  RAILS = File.expand_path("..", __dir__)
+  SOURCES = "{amber,brgen,bsdports,shared}/{app,lib,engines}/**/*.rb"
+
+  UNBOUNDABLE = /Net::HTTP\.(get|get_response|post|post_form)\s*\(/
+  OPENS = /Net::HTTP\.(start|new)\s*\(|URI\.open\s*\(/
+
+  def self.findings(source, label)
+    code = source.lines.reject { |line| line.lstrip.start_with?("#") }.join
+    found = code.scan(UNBOUNDABLE).map { |(call)| "#{label}: Net::HTTP.#{call} cannot take a timeout — use Net::HTTP.start with open_timeout/read_timeout" }
+    found << "#{label}: opens a connection and never names read_timeout" if code.match?(OPENS) && !code.include?("read_timeout")
+    found
+  end
+
+  def test_no_app_file_makes_an_unbounded_call
+    files = Dir.glob(File.join(RAILS, SOURCES)).reject { |path| path.include?("/test/") }
+    assert_operator files.size, :>, 500, "the glob read #{files.size} files — the instrument is pointed at the wrong place"
+
+    found = files.flat_map { |path| self.class.findings(File.read(path).scrub, path.delete_prefix("#{RAILS}/")) }
+    assert_empty found, found.join("\n")
+  end
+
+  def test_a_convenience_call_is_named
+    found = self.class.findings("res = Net::HTTP.get_response(uri)\n", "planted.rb")
+    assert_equal 1, found.size
+    assert_match(/Net::HTTP.get_response cannot take a timeout/, found.first)
+  end
+
+  def test_a_connection_without_read_timeout_is_named
+    found = self.class.findings("Net::HTTP.start(host, 443, use_ssl: true) { |h| h.get(path) }\n", "planted.rb")
+    assert_match(/never names read_timeout/, found.first.to_s)
+  end
+
+  def test_a_bounded_connection_and_a_comment_pass
+    source = "# Net::HTTP.get takes no timeout, so this does not use it\n" \
+             "Net::HTTP.start(host, 443, open_timeout: 5, read_timeout: 10) { |h| h.get(path) }\n"
+    assert_empty self.class.findings(source, "planted.rb")
+  end
+end

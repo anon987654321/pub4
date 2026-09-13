@@ -4,7 +4,7 @@ require "test_helper"
 
 # The three PWA routes, asked for over HTTP.
 #
-# `pwa_master_contract_test` greps the ERB and `pwa_offline_test` covers the
+# `pwa_master_contract_test` greps the ERB and brgen's `pages_smoke_test` covers the
 # offline page, so what the manifest and the service worker actually serve was
 # unmeasured: their content types, and whether the worker survives a render
 # failure. Both are load-bearing and neither is visible in a template.

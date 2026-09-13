@@ -167,8 +167,12 @@ class TradedoublerTest < ActiveSupport::TestCase
     }
   end
 
+  # get_json opens a bounded connection with Net::HTTP.start and sends a Get, so
+  # the stub answers that request with whatever the responder builds for its URI.
   def stub_http(responder)
-    Net::HTTP.stub(:get_response, responder) { yield }
+    connection = Object.new
+    connection.define_singleton_method(:request) { |request| responder.call(request.uri) }
+    Net::HTTP.stub(:start, ->(*_args, **_opts, &block) { block.call(connection) }) { yield }
   end
 
   test "import! upserts feed rows and is idempotent across runs" do
@@ -264,7 +268,7 @@ class TradedoublerTest < ActiveSupport::TestCase
     ENV["TRADEDOUBLER_TOKEN"] = "tok_test"
     ENV["TRADEDOUBLER_FEED_IDS"] = "1"
     failure = Net::HTTPForbidden.new(nil, "403", "Forbidden")
-    Net::HTTP.stub(:get_response, ->(_uri) { failure }) do
+    stub_http(->(_uri) { failure }) do
       assert_equal 0, Shared::Tradedoubler.import!
     end
     assert_equal 0, Shared::AffiliateProduct.where(source: "tradedoubler").count

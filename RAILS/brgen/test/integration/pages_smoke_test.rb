@@ -15,4 +15,14 @@ class PagesSmokeTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "footer.site-legal a[href=?]", "/privacy"
   end
+  # /offline is what the service worker serves with no connection. It answered
+  # 500 in all three apps, because `render partial: "shared/offline_page",
+  # layout: "application"` asks for a partial layout none of them has. The
+  # layout is the point: rendered bare there is no stylesheet link.
+  test "the offline page renders inside the application layout" do
+    get "/offline"
+    assert_response :success
+    assert_includes response.body, "offline-page"
+    assert_match(/<link[^>]+stylesheet/, response.body, "offline page rendered without the layout, so it has no CSS")
+  end
 end

@@ -8,7 +8,7 @@
 # test that can only run on a machine without Chrome runs nowhere.
 #
 # minitest/mock is not in the bundled Minitest these standalone tests run
-# under, and RAILS/test/fediverse_ssrf_test.rb already does this by hand. This
+# under, and RAILS/test/outbound_http_test.rb already does this by hand. This
 # is that idiom, named once, with the restore in an ensure so a raising block
 # cannot leave a stub behind for the rest of the file.
 #

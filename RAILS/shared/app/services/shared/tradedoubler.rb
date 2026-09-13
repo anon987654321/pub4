@@ -263,8 +263,13 @@ expires_in: cache_ttl_for(:search_results)) do
         uri
       end
 
+      # Net::HTTP.get_response takes no timeout, and its defaults are a minute
+      # each way; a feed read inside a page render must give up well before that.
       def get_json(uri)
-        res = Net::HTTP.get_response(uri)
+        res = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https",
+                                                  open_timeout: 5, read_timeout: 10) do |http|
+          http.request(Net::HTTP::Get.new(uri))
+        end
         return nil unless res.is_a?(Net::HTTPSuccess)
 
         JSON.parse(res.body)
