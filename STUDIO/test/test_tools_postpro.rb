@@ -443,7 +443,7 @@ class TestPostproFilm < Minitest::Test
   # --- light and depth ----------------------------------------------------
 
   def portrait_probe
-    path = File.join(Studio::ROOT, "lora", "ragnhild", "dataset", "a_photo_of_ragnhild_01.jpg")
+    path = File.join(Studio::ROOT, "lora", "ragnhild", "dataset", "a_photo_of_ragnhild_02.jpg")
     File.file?(path) ? rgb_bands(Vips::Image.new_from_file(path)) : build_probe
   end
 

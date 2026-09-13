@@ -6435,7 +6435,6 @@ Numbered 1–N across the four trees.
 922. **`johann/train.yaml` `folder_path:` is empty.** `render_config.rb` should abort if `folder_path` blank.
 923. **`johann/train.yaml` optimizer `adamw8bit` on `device: mps`.** README says mps uses plain adamw. Stamp “generated, do not edit” on `train.yaml`; `render_config.rb` is the source. Do not hand-edit hyperparams.
 924. **Committed person photographs.** A test that `johann/dataset` is empty and that `git ls-files` for new `lora/**/*.jpg` fails unless an allowlist. Do not delete existing without the owner.
-925. **`contact_sheet.jpg` in `ragnhild/`.** If generated, gitignore and document the command.
 926. **Guides `.m4a`.** Do not regenerate. **Unverified** if tracked; gitignore if accidental.
 927. **`seed_media.ipynb` / `seed_media.yml`.** Find the reader. If Colab-only, say so in README next to the clone-is-public warning.
 928. **`run_ai_toolkit.rb` / `colab_session.rb` / `kaggle_session.rb` ARGV at load.** Guard them.

@@ -273,6 +273,7 @@ STUDIO/lora/*/dataset_*/
 STUDIO/lora/*/retouched/
 STUDIO/lora/*/out/
 STUDIO/lora/*/weights/
+STUDIO/lora/*/contact_sheet.jpg
 
 # Claude Code per-machine permission allowlist. settings.json is the shared
 # one; this file names local paths and belongs to the checkout, not the repo.
