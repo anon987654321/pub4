@@ -68,12 +68,13 @@ module Operator
 
     # t("key", default: "English") in a shipped view.
     #
-    # The most effective hiding place in the codebase, because it defeats two guards
-    # at once: this lint skips any line containing t( (it looks for strings that
-    # never reach I18n at all), and i18n_resolution_test deliberately ignores keys
-    # carrying a default, since a default means the key is optional.
-    # config.i18n.raise_on_missing_translations does not fire either — a default IS
-    # the translation as far as Rails is concerned.
+    # The most effective hiding place in the codebase. This lint skips any line
+    # containing t( (it looks for strings that never reach I18n at all), and
+    # config.i18n.raise_on_missing_translations does not fire — a default IS the
+    # translation as far as Rails is concerned. i18n_resolution_test still requires
+    # the primary key in nb and en, so what this rule catches is the English
+    # fallback left behind once the key exists: dead today, live the day a key is
+    # renamed.
     #
     # So the ambient chat widget shipped fourteen English strings to amber and
     # bsdports, including every "why you are not in #nearby" recovery message, and
