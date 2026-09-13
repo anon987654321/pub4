@@ -16,7 +16,9 @@ require "rbconfig"
 
 root = File.expand_path("../..", __dir__)
 filter = ARGV.first
-files = Dir.glob(File.join(__dir__, "**", "test_*.rb")).sort
+# Written out from the repository root, so MASTER/tools/runs.rb reads the glob
+# and counts every file it selects as run.
+files = Dir.glob(File.join(root, "OPENBSD/test/**/test_*.rb")).sort
 files = files.select { |path| path.include?(filter) } if filter
 abort "openbsd contracts: no test files#{filter ? " matching #{filter.inspect}" : ''}" if files.empty?
 

@@ -240,7 +240,7 @@ production has one mutex; the looser rule exists so tests can lock a tmpdir.
 
 ## `/etc/doas.conf` Installs Only On A Deliberate Root Run (2026-08-02)
 
-**Status:** accepted. Moved here from the old OPENBSD/data/debt.yml register,
+**Status:** accepted. Moved here from the old OPENBSD debt register,
 where it was the tail of a closed entry — it is policy, not debt.
 
 dev's rule is a five-variable `setenv` allowlist (`I_UNDERSTAND_DNS_WIPE`,
@@ -407,7 +407,7 @@ unattended turn cannot reach this rule. The guard it replaces was not one:
 unattended is the case that matters. That warning is gone with the gap it
 described; a warning in front of a refusal is two announcements of one answer.
 MASTER's own restarts are unaffected —
-`orders.rb`, `relayd.rb` and `resync_service.rb` spawn `doas` through `Io::Exec`
+`orders.rb`, `relayd.rb` and the since-deleted ResyncService spawn `doas` through `Io::Exec`
 and never pass this gate. Note for anyone reopening it: `zsh.forbidden_commands`
 in `MASTER/data/rules.yml` is not the place. It is a style list of GNU tools, it
 names `doas` as the recommended replacement for `sudo`, and adding `doas` to it
@@ -482,7 +482,7 @@ and is live: `OPERATOR.sh` installs the file and the deploy writes its output. T
 hardcoded ports in the smoke scripts are compared against `apps.yml` by
 `port_inventory`, which passes. Most of the hundred `|| true` are idempotence on
 `rcctl`, `pkill`, `chmod`, `install` and `rm -f`; read the exit path before
-flagging one. The remaining mentions of `data/debt.yml` and `archive/recovery` are
+flagging one. The remaining mentions of the old debt register and `archive/recovery` are
 history, and `RUNBOOK.md` says so. `config_drift_gate.rb` (repo against live
 `/etc` bytes and root's crontab) and `config-drift-check` (relayd, acme and nsd
 consistency, readable only as root) are two questions one letter apart, and
