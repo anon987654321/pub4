@@ -24,6 +24,8 @@ module Webhooks
     TOLERANCE_SECONDS = 300
 
     skip_forgery_protection
+    include Shared::WriteThrottle
+    self.write_throttle_limit = 300
 
     # Events that mean money is reserved / taken — treat as paid for marketplace.
     PAID_NAMES = %w[AUTHORIZED CAPTURED].freeze

@@ -25,6 +25,7 @@ class Fediverse::InboxesController < ApplicationController
   # head :too_many_requests rather than a redirect: every other response on this
   # action is a bare status, and a remote server is reading them, not a person.
   rate_limit to: 300, within: 1.minute, only: :create, with: -> { head :too_many_requests }
+  skip_write_throttle
 
   # A body larger than this is not a real activity. Read before parsing, so a
   # malicious sender cannot make us allocate their way.

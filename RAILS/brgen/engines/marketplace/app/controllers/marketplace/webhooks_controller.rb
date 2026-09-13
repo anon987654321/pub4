@@ -3,16 +3,17 @@
 class Marketplace::WebhooksController < ActionController::Base
   # Standalone — no session; PSP webhooks only.
   skip_forgery_protection
+  include Shared::WriteThrottle
+  # A payment provider retries in bursts from a handful of addresses.
+  self.write_throttle_limit = 300
 
   # Reject events whose signed timestamp is further than this from now, so a
   # captured request cannot be replayed indefinitely.
   SIGNATURE_TOLERANCE = 5.minutes
 
-  # Both handlers FAIL CLOSED. Previously stripe only checked that a
-  # Stripe-Signature header was non-blank (and only when the secret happened to
-  # be set), and vipps checked nothing at all — so an unauthenticated POST could
-  # mark any order paid. Order ids are sequential, and these routes are public
-  # with skip_forgery_protection and no rate limit.
+  # Both handlers FAIL CLOSED: an unverified POST marks nothing paid. Order ids
+  # are sequential and these routes are public with skip_forgery_protection, so
+  # the signature is the only thing standing between a guess and a paid order.
   def stripe
     payload = request.body.read
     return head(:unauthorized) unless verified_stripe?(payload)

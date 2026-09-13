@@ -11,6 +11,8 @@ module Webhooks
   # TRADEDOUBLER_WEBHOOK_SECRET (or CONVERSIONS token). Fail closed when unset.
   class TradedoublerController < ActionController::Base
     skip_forgery_protection
+    include Shared::WriteThrottle
+    self.write_throttle_limit = 300
 
     def create
       return head(:unauthorized) unless authorized?

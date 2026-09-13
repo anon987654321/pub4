@@ -8,6 +8,8 @@
 # This is the endpoint that fills those two columns in.
 class Tv::ViewEventsController < Tv::BaseController
   before_action :require_user_session
+  # A feed flicked quickly opens and closes a view per clip, two writes each.
+  self.write_throttle_limit = 600
 
   # POST /videos/:video_id/view_events
   #

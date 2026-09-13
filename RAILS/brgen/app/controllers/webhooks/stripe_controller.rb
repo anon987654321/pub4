@@ -15,6 +15,9 @@ module Webhooks
   # Important: verify against the raw request body bytes, not a re-serialized JSON object.
   class StripeController < ActionController::Base
     skip_forgery_protection
+    include Shared::WriteThrottle
+    # A payment provider retries in bursts from a handful of addresses.
+    self.write_throttle_limit = 300
 
     TOLERANCE_SECONDS = 300
 

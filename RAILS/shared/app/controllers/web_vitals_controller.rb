@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class WebVitalsController < ActionController::API
+  include Shared::WriteThrottle
+
   # The beacon's inp_target is a selector the browser built from the DOM, so it
   # is reduced to selector characters before it reaches the log line.
   TARGET_UNSAFE = /[^\w.#\-\[\]=:]/

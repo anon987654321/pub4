@@ -10,6 +10,7 @@ class CspReportsController < ActionController::API
   # Browsers post these unauthenticated, cross-origin, with no CSRF token and
   # with content-type application/csp-report.
   skip_forgery_protection if respond_to?(:skip_forgery_protection)
+  include Shared::WriteThrottle
 
   MAX_BYTES = 8_192
 
