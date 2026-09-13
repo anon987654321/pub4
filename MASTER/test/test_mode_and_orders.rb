@@ -74,25 +74,6 @@ class TestModeAndOrders < Minitest::Test
     assert_empty duplicated, "same dispatch name defined in two files; the later load silently wins: #{duplicated}"
   end
 
-  def test_every_bootstrap_docs_section_resolves
-    keys = Master::Ground::BootstrapDocs.keys - ["bootstrap"]
-    refute_empty keys
-    keys.each do |topic|
-      body = Master::Ground::BootstrapDocs.section(topic)
-      refute_nil body, "BootstrapDocs #{topic} is empty"
-      refute_includes body.to_s, "/orient #{topic}",
-                      "BootstrapDocs #{topic} answers by naming a removed /orient command"
-    end
-  end
-
-  def test_bootstrap_indexes_every_other_section
-    index = Master::Ground::BootstrapDocs.section("bootstrap")
-
-    (Master::Ground::BootstrapDocs.keys - ["bootstrap"]).each do |key|
-      assert_includes index, key
-    end
-  end
-
   # Ground::Orders::Backup existed, was reachable by no key, and pointed three
   # directories above MASTER instead of one.
   def test_backup_order_is_registered

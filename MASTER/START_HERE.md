@@ -195,7 +195,7 @@ authority read `RAILS/shared/WIRING_NOTES.md`, which is maintained.
 
 **Tier 5 — Everything else:**
 
-- `bootstrap.yml`, `project_context.yml`, `patterns.yml`, etc. — operational
+- `project_context.yml`, `patterns.yml`, etc. — operational
   memory. Consolidation target: fold into `patterns.yml` per the 2026-05 defrag
   plan in `project_context.yml`.
 

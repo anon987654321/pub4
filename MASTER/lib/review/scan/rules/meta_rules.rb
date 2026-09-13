@@ -115,7 +115,7 @@ module Master
           end
         end
 
-        # Runtime authority lives in YAML + Ground::BootstrapDocs — not markdown under data/.
+        # Runtime authority lives in YAML — not markdown under data/.
         RuleDSL.rule :RUNTIME_DOCS_YAML,
           severity: :error,
           tags: %i[CONSTITUTION DOCS],
@@ -155,7 +155,7 @@ module Master
 
           [finding(
             line: 1,
-            message: "runtime docs belong in #{target} — delete #{rel} (see Ground::BootstrapDocs)",
+            message: "runtime docs belong in #{target} — delete #{rel}",
           )]
         end
 

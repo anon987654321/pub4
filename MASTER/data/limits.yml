@@ -624,8 +624,6 @@ guidance:
       production_ops:
         required:
         - data/patterns.yml#operator_playbook
-        optional:
-        - data/bootstrap.yml#trace
         note: VPS friction, relayd, recovery — run bin/playbook when signals match.
     mandatory_reads:
     - See reading_tiers — START_HERE.md first; full constitution only for structural edits.

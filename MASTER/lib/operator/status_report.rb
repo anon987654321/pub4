@@ -132,10 +132,8 @@ module Operator
       Master::Operator::OperatorDocs::DEBT_RELATIVE
     end
 
-    # One reader for the register, in the module BootstrapDocs deploy already uses. The
-    # second copy that used to live here answered the same question with its own
-    # path arithmetic, and a register with two readers is how the broken one goes
-    # unnoticed — it was, for weeks.
+    # One reader for the register, OperatorDocs. A register with two readers is
+    # how the broken one goes unnoticed.
     def backlog_open_count
       Master::Operator::OperatorDocs.open_debt_count(root: @root)
     end
