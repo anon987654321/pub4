@@ -16,7 +16,7 @@
   </div>
 </article>
 
-<%= form_with model: @order, url: restaurant_orders_path(@restaurant), html: { role: "form", "aria-label": t("takeaway.place_order_from", restaurant: @restaurant.name) } do |form| %>
+<%= form_with model: @order, url: restaurant_orders_path(@restaurant), html: { role: "form", "aria-label": t("takeaway.place_order_from", restaurant: @restaurant.name) }, data: { controller: "form-submit", action: "submit->form-submit#lock" } do |form| %>
   <%= render "shared/errors", object: @order %>
 
   <section role="region" aria-label="<%= t("takeaway.menu") %>">

@@ -9,4 +9,5 @@
 #
 # Keys the host already carries are NOT copied here. Use them.
 en:
-  takeaway: {}
+  takeaway:
+    driver_updated: "Driver updated."

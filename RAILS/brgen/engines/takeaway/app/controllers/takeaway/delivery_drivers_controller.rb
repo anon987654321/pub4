@@ -7,7 +7,7 @@ module Takeaway
     before_action :authorize_owner!, only: :update
 
     def index
-      @delivery_drivers = Takeaway::DeliveryDriver.available.limit(100)
+      @delivery_drivers = Takeaway::DeliveryDriver.available.includes(:user).limit(100)
     end
 
     def show
@@ -15,7 +15,7 @@ module Takeaway
 
     def update
       if @delivery_driver.update(driver_params)
-        redirect_to delivery_driver_path(@delivery_driver), notice: t("takeaway.driver_updated", default: "Driver updated")
+        redirect_to delivery_driver_path(@delivery_driver), notice: t("takeaway.driver_updated")
       else
         render :show, status: :unprocessable_entity
       end

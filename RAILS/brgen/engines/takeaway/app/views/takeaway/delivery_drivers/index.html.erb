@@ -10,7 +10,7 @@
 <% if @delivery_drivers.any? %>
   <div class="order-list" role="list" aria-label="<%= t("aria.delivery_drivers") %>">
     <% @delivery_drivers.each do |driver| %>
-      <% label = driver.user&.display_name || "anon" %>
+      <% label = driver.user&.display_name || t("takeaway.anon") %>
       <%= render "shared/feed_card",
         name: label,
         meta: "#{driver.vehicle_type.presence || t("takeaway.vehicle_unset")} · #{driver.available? ? t("takeaway.available") : t("takeaway.unavailable")}",

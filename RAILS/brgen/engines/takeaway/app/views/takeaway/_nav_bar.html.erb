@@ -6,7 +6,7 @@
 <% active = local_assigns.fetch(:active, "restaurants") %>
 <% search_url = local_assigns.fetch(:search_url, restaurants_path) %>
 <% search_placeholder = local_assigns.fetch(:search_placeholder, t("search.restaurants")) %>
-<% deliver_to = local_assigns.fetch(:deliver_to, Current.city_record&.name.presence || "Bergen") %>
+<% deliver_to = local_assigns.fetch(:deliver_to, Current.city_record&.name.presence || Current.city_name) %>
 
 <div id="navBar">
   <div id="topHalf">

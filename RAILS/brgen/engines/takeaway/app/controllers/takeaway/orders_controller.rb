@@ -50,10 +50,16 @@ class Takeaway::OrdersController < Takeaway::BaseController
   end
 
   def update
-    @order = Takeaway::Order.includes(:restaurant).find(params[:id])
+    # restaurant: :user, because transition_to! names the kitchen's owner as the
+    # activity actor, and a preloaded restaurant is strict about its own user.
+    @order = Takeaway::Order.includes(restaurant: :user).find(params[:id])
     if @order.restaurant.owner?(Current.user)
       target_status = params[:status].presence || @order.next_status
-      @order.transition_to!(target_status)
+      # transition_to! refuses any step Takeaway::Order::TRANSITIONS does not
+      # list, and says so rather than raising; the kitchen should see it too.
+      unless @order.transition_to!(target_status)
+        return redirect_to(order_path(@order), alert: @order.errors.full_messages.to_sentence)
+      end
     end
     redirect_to order_path(@order)
   end

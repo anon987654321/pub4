@@ -9,4 +9,5 @@
 #
 # Keys the host already carries are NOT copied here. Use them.
 nb:
-  takeaway: {}
+  takeaway:
+    driver_updated: "Sjåføren er oppdatert."
