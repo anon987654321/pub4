@@ -203,17 +203,25 @@ class ProjectTree
     end.sort
   end
 
+  # Measured, like print_pub4_alignment: a verdict typed as a literal describes
+  # the tree on the day it was typed.
   def print_deploy_alignment
+    repo = repo_root
     puts
-    puts "OPENBSD alignment (far-away):"
-    puts "  ✓ SENSIBLE  openbsd/etc + rc.d — production truth for vm23 (relayd, pf, acme)"
-    puts "  ✓ SENSIBLE  rails/apps.yml inventory + shared engine — multi-tenant spine"
-    puts "  ✓ SENSIBLE  brgen: social core + vertical engines (dating, maps, playlist, tv…)"
-    puts "  ✓ SENSIBLE  openbsd/*.rb gates + openbsd/tools/ Ruby helpers"
-    puts "  ✓ SENSIBLE  Gate scripts at rails/*.rb + bin/check* — deploy safety net"
-    puts "  ⚠ DRIFT     Duplicate MD pairs with MASTER: DECISIONS, EXAMPLES, REPAIR, DEBT"
-    puts "  ⚠ DRIFT     apps.horizon.yml — agent-ignore; keep out of contributor path"
-    puts "  ✗ NOISE     rails/node_modules, log/, storage/, app/assets/builds/"
+    puts "OPENBSD alignment (far-away, measured):"
+
+    rc_dir = File.join(repo, "OPENBSD", "etc", "rc.d")
+    services = ["master", *rails_apps(repo)]
+    missing = services.reject { |service| File.exist?(File.join(rc_dir, service)) }
+    line(drift_or_ok(missing.empty?), "etc/rc.d: #{services.size - missing.size} of #{services.size} services (#{services.join(' ')}) " \
+                                      "have a script#{missing.any? ? "; missing: #{missing.join(' ')}" : ''}")
+
+    dupes = duplicate_docs(repo)
+    line(:drift, "MASTER + OPENBSD share doc names: #{dupes.join(' ')} — same name, different scope") if dupes.any?
+
+    horizon = File.exist?(File.join(repo, "RAILS", "apps.horizon.yml"))
+    line(:drift, "RAILS/apps.horizon.yml — agent-ignore; keep out of contributor path") if horizon
+
     puts "  → Gates: OPENBSD/bin/check-full | check-rails --profile=contributor"
   end
 
@@ -364,12 +372,8 @@ class ProjectTree
       return 1 if rel == "web" || rel.match?(%r{^web/[^/]+$})
       return 1 if rel == "kernel"
     when :deploy
-      return 0 if rel.match?(%r{^rails/[^/]+/app/[^/]+})
-      return 1 if rel.match?(%r{^rails/[^/]+/app$})
-      return 1 if rel.match?(%r{^rails/[^/]+$})
-      return 0 if rel == "rails/test" || rel.start_with?("rails/test/")
-      return 1 if rel == "openbsd/etc"
-      return 1 if rel.start_with?("openbsd/tools")
+      # --deploy-overview roots the walk at OPENBSD/, so paths are relative to it.
+      return 1 if %w[etc tools test].any? { |dir| rel == dir || rel.start_with?("#{dir}/") }
     end
 
     # pub4-wide (root = repo) or fallback
