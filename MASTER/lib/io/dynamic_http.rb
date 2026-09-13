@@ -48,19 +48,23 @@ module Master
       end
 
       def perform_request(uri, method, defn, params)
-        # Socket-level timeouts rather than Timeout.timeout, which raises into
-        # whatever the thread is doing and can leave the connection half-closed.
-        Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https",
-                        open_timeout: TIMEOUT, read_timeout: TIMEOUT, write_timeout: TIMEOUT) do |http|
-          case method
-          when "POST", "PUT", "PATCH"
-            req = Net::HTTP.const_get(method.capitalize).new(uri)
-            body = build_body(defn, params)
-            req["Content-Type"] = defn.fetch("content_type", "application/json")
-            req.body = body
-            http.request(req)
-          else
-            http.get(uri.request_uri)
+        # The socket timeouts bound each connect, write and read; only the outer
+        # deadline bounds a server that drips one byte inside every read_timeout.
+        # A blocked socket read is interruptible, and Net::HTTP.start's block
+        # closes the connection as the Timeout::Error unwinds through it.
+        Timeout.timeout(TIMEOUT * 2) do
+          Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https",
+                          open_timeout: TIMEOUT, read_timeout: TIMEOUT, write_timeout: TIMEOUT) do |http|
+            case method
+            when "POST", "PUT", "PATCH"
+              req = Net::HTTP.const_get(method.capitalize).new(uri)
+              body = build_body(defn, params)
+              req["Content-Type"] = defn.fetch("content_type", "application/json")
+              req.body = body
+              http.request(req)
+            else
+              http.get(uri.request_uri)
+            end
           end
         end
       end

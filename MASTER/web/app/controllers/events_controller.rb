@@ -12,7 +12,7 @@
 class EventsController < ApplicationController
   include ActionController::Live
 
-  POLL_INTERVAL_S    = 0.1
+  QUEUE_CAP          = 256
   KEEPALIVE_EVERY_S  = 15.0  # SSE comment cadence — long enough to be silent, short enough to keep proxies happy
   MAX_STREAM_S       = 600   # hard cap — 10 minute stream ceiling
   VISITOR_SAFE_PREFIX = %r{\A(?:tts:|pipeline:stage|pressure:updated|council:start|link)}i.freeze
@@ -29,29 +29,20 @@ class EventsController < ApplicationController
 
     bus      = container[:bus]
     mine     = conversation_id
-    received = Queue.new
-    sub      = bus.subscribe("*") do |ev|
-      received << { t: Time.now.to_f, type: ev[:event], data: ev }
-    end
+    received = SizedQueue.new(QUEUE_CAP)
+    sub      = bus.subscribe("*") { |ev| offer(received, ev, visitor_tier:, mine:) }
     deadline       = Time.now + MAX_STREAM_S
     next_keepalive = Time.now + KEEPALIVE_EVERY_S
 
-    loop do
-      break if Time.now > deadline
-      if received.empty?
-        if Time.now >= next_keepalive
-          response.stream.write(": keepalive\n\n")  # SSE comment, prevents proxy timeout
-          response.stream.write("event: link\ndata: {\"state\":\"quiet\"}\n\n") rescue nil
-          next_keepalive = Time.now + KEEPALIVE_EVERY_S
-        end
-        sleep POLL_INTERVAL_S
-      else
-        event = received.pop(true) rescue nil
-        next unless event
-        next if visitor_tier && !visitor_safe_event?(event, mine)
-
+    while Time.now < deadline
+      event = received.pop(timeout: [next_keepalive - Time.now, 0].max)
+      if event
         payload = visitor_tier ? visitor_safe_payload(event) : event
         response.stream.write("data: #{payload.to_json}\n\n")
+      elsif Time.now >= next_keepalive
+        response.stream.write(": keepalive\n\n")  # SSE comment, prevents proxy timeout
+        response.stream.write("event: link\ndata: {\"state\":\"quiet\"}\n\n") rescue nil
+        next_keepalive = Time.now + KEEPALIVE_EVERY_S
       end
     end
   rescue IOError, ActionController::Live::ClientDisconnected
@@ -62,6 +53,20 @@ class EventsController < ApplicationController
   end
 
   private
+
+  # Runs on the publisher's thread, so it never blocks: the visitor filter
+  # applies before the queue, and a full queue drops the event. A slow client
+  # loses frames of the orb rather than growing memory on a 1 GB box or
+  # stalling whoever published.
+  def offer(queue, ev, visitor_tier:, mine:)
+    event = { t: Time.now.to_f, type: ev[:event], data: ev }
+    return false if visitor_tier && !visitor_safe_event?(event, mine)
+
+    queue.push(event, true)
+    true
+  rescue ThreadError
+    false
+  end
 
   def visitor_safe_event?(event, mine)
     type = event[:type].to_s

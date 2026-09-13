@@ -2,9 +2,9 @@
 
 require "test_helper"
 
-# EventsController#stream is an ActionController::Live loop that returns only
-# after MAX_STREAM_S or a disconnect, so this covers the part that is real logic
-# and safe to run in isolation: what a visitor is allowed to see.
+# EventsController#stream is an SSE loop that only returns after MAX_STREAM_S or
+# a client disconnect, so these cover the logic beside it: the visitor filter
+# and the bounded, non-blocking hand-off from the bus to the stream.
 class EventsControllerTest < ActionDispatch::IntegrationTest
   MINE = "conv-1"
 
@@ -41,5 +41,15 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     event = { type: "tts:started", data: { job_id: "j", conversation: MINE, text: "hei" } }
 
     assert_equal({ text: "hei" }, controller.send(:visitor_safe_payload, event)[:data])
+  end
+
+  test "offer filters before the queue and drops when full instead of blocking" do
+    queue = SizedQueue.new(2)
+    refute controller.send(:offer, queue, { event: "llm:request" }, visitor_tier: true, mine: "c1")
+    assert_equal 0, queue.size
+
+    2.times { assert controller.send(:offer, queue, { event: "link" }, visitor_tier: true, mine: "c1") }
+    refute controller.send(:offer, queue, { event: "link" }, visitor_tier: true, mine: "c1")
+    assert_equal 2, queue.size
   end
 end
