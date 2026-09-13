@@ -63,7 +63,7 @@ class CohesionTest < Minitest::Test
     _, err = capture_io { status = Operator::Cohesion.run(@tmp) }
 
     assert_equal 2, status
-    assert_includes err, "nothing was read"
+    assert_includes err, "nothing was read" # source-assertion: ok — stderr of the run, not a source file
   end
 
   def test_two_files_are_below_the_family_floor

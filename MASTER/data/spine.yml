@@ -231,7 +231,7 @@ spine:
 # Boot built it into the CLI container and nothing ever called advance!,
 # meet_gate! or status; the seven phases it gated are Policy::Workflow::PHASES,
 # the copy the brain overlay reads.
-  lib_body_ceiling: 37802
+  lib_body_ceiling: 35558
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753
@@ -606,7 +606,7 @@ pub4_source_ceilings:
 # socket — every case is refused before the request, which is the point. Deleting
 # the guard fails three of them.
   # 680 -> 675: five lib files nothing reached, named under lib_body_ceiling.
-  MASTER: 675
+  MASTER: 653
 
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
@@ -874,7 +874,7 @@ pub4_source_ceilings:
 # Mutation-checked rather than asserted into existence: dropping master fails 2,
 # reordering fails 1, turning the root guard into a warning fails 1, and gutting
 # the SKIP_CI branch fails 1, with the unmutated source at 0.
-  OPENBSD: 99
+  OPENBSD: 98
   # 220 -> 222 for lora/seed_media.yml and lora/_toolkit/install_seed_media.rb,
   # the prompt set for every seeded photograph and the script that grades and
   # files what comes back from it. Two files, both named, neither foldable:
@@ -949,7 +949,7 @@ pub4_source_ceilings:
   # test/test_tools_motion.rb went and the ceiling stayed, so the row sat two
   # files slack -- room the next change grows into without an argument, which is
   # the other way a ratchet dies.
-  STUDIO: 119
+  STUDIO: 117
 
 # Executable files directly under each tree's own bin/ — the number CLAUDE.md's
 # "two surfaces, no third" makes a claim about while nothing counted it. MASTER
@@ -1009,5 +1009,5 @@ name_candidates: 23
 pub4_entrypoint_ceilings:
   MASTER: 26
   RAILS: 2
-  OPENBSD: 17
+  OPENBSD: 16
   STUDIO: 0

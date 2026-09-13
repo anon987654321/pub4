@@ -72,7 +72,7 @@ class PathGuardEscapeTest < Minitest::Test
 
   def test_read_limit_is_clamped
     body = read_file.call(path: "notes.txt", limit: 1_000_000).value!
-    assert_match(/truncated, 5000 total lines/, body)
+    assert_match(/truncated, 5000 total lines/, body) # source-assertion: ok — the tool's returned text, not a source file
   end
 
   def test_search_files_stays_inside_the_root

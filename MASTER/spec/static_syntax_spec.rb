@@ -5,7 +5,7 @@ require "yaml"
 require "open3"
 
 class StaticSyntaxSpec < Minitest::Test
-  ROOT = File.expand_path("../..", __dir__)
+  ROOT = File.expand_path("..", __dir__)
 
   def test_yaml_files_parse
     Dir.glob(File.join(ROOT, "data", "**", "*.yml")).each do |path|

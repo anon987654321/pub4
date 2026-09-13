@@ -15,18 +15,20 @@ module Master
     #
     # Parses are remembered by path, size, inode and mtime, and every call gets
     # its own copy. rules.yml is 205KB and fifteen constructors read it: one
-    # boot and a /scan of lib/io parsed it 40 times for 724ms. A Marshal copy
-    # costs a tenth of a parse and cannot leak one caller's mutation into
-    # another's, and an edit changes the stat, so the next read parses again.
+    # boot and a /scan of lib/io parsed it 40 times for 724ms. A deep copy of
+    # the parsed tree costs a fraction of a parse and cannot leak one caller's
+    # mutation into another's, and an edit changes the stat, so the next read
+    # parses again. The copy is walked by hand, because this tree forbids
+    # deserialising with Marshal anywhere in lib/.
     def load_yaml(path, symbolize_names: false, default: {})
       stat = File.stat(path)
       raise "yaml too large: #{path}" if stat.size > MAX_CONSTITUTION_BYTES
 
       key = [File.expand_path(path), symbolize_names, stat.size, stat.ino, stat.mtime.to_r]
-      dump = yaml_parse_cache[key] ||= Timeout.timeout(YAML_LOAD_TIMEOUT_S) do
-        Marshal.dump(YAML.safe_load_file(path, aliases: true, symbolize_names:, permitted_classes: [Date, Time]))
+      parsed = yaml_parse_cache[key] ||= Timeout.timeout(YAML_LOAD_TIMEOUT_S) do
+        yaml_deep_freeze(YAML.safe_load_file(path, aliases: true, symbolize_names:, permitted_classes: [Date, Time]))
       end
-      Marshal.load(dump) || default
+      yaml_copy(parsed) || default
     rescue Errno::ENOENT, Errno::EACCES => e
       warn("load_yaml: #{e.message}")
       default
@@ -102,10 +104,30 @@ module Master
       @data_validation_cache ||= {}
     end
 
-    # Key to Marshal dump. Several threads load data files, and ||= on a plain
-    # Hash at worst parses one file twice; the dump itself is immutable.
+    # Key to a frozen parse. Several threads load data files, and ||= on a plain
+    # Hash at worst parses one file twice; the cached tree itself is frozen.
     def yaml_parse_cache
       @yaml_parse_cache ||= {}
+    end
+
+    # YAML.safe_load yields only hashes, arrays, strings, symbols, numbers,
+    # booleans, nil, Date and Time; the containers and strings are what a caller
+    # can mutate, so those are what get copied.
+    def yaml_copy(value)
+      case value
+      when Hash then value.each_with_object({}) { |(k, v), out| out[yaml_copy(k)] = yaml_copy(v) }
+      when Array then value.map { |item| yaml_copy(item) }
+      when String then value.dup
+      else value
+      end
+    end
+
+    def yaml_deep_freeze(value)
+      case value
+      when Hash then value.each { |k, v| yaml_deep_freeze(k); yaml_deep_freeze(v) }
+      when Array then value.each { |item| yaml_deep_freeze(item) }
+      end
+      value.freeze
     end
 
     def yaml_errors(paths, root)

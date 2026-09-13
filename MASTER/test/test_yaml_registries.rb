@@ -433,7 +433,7 @@ end
 class TestConstitutionYamlLoading < Minitest::Test
   ALLOWED_DIRECT_LOADS = %w[
     lib/master.rb
-    spec/smoke/static_syntax_spec.rb
+    spec/static_syntax_spec.rb
   ].freeze
 
   def test_data_yml_runtime_readers_use_master_loader

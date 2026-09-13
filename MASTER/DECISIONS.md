@@ -388,7 +388,7 @@ parameter.
 
 **MASTER names the law; RAILS names the measurement.** The Rails gate called
 `reflow` measured horizontal overflow and restated 320px as "the WCAG 1.4.10
-floor" — while `MASTER/lib/ground/axioms.rb` already declares that
+floor" — while `Ground::Axioms` then declared that
 criterion and `REFLOW_WIDTH_PX = 320`. `soul.yml` uses "reflow" for a third
 thing, a refactoring verb beside "rename". A gate named after a criterion
 invites the criterion to be re-declared inside it, which is this tree's dominant
@@ -1031,7 +1031,7 @@ features exist.
 ## Performance Work Starts From A Measured Cost (2026-09-13)
 
 Two ChatGPT intakes of 2026-09-11 proposed 980 performance items across all four
-trees: a `performance_budget.yml` registry, a ledger under `.master/performance/`,
+trees: a performance budget registry, a ledger under `.master/performance/`,
 `bin/operator benchmark`, `profile` and `hotpaths` commands, gate verdicts cached
 by tree SHA, concurrent gates, a fast/forensic profile ladder, per-rule and
 per-DSP-primitive benchmarks, and inventories of every `Dir.glob`, `Open3` and
@@ -1321,7 +1321,7 @@ question with no path is not yet an item.
 to `PrincipleStore` would reintroduce `principle`, the word One Word Per Concept
 retired, to separate two classes the namespace already separates.
 
-`Ground::MemorySearch` keeps its name too. With `data/claude` gone from
+`Ground::MemorySearch` keeps its name too. With the data/claude directory gone from
 `MemoryIndex::DEFAULT_DIRS`, the index covers `.master/memory` and nothing
 else, so a search over it is a memory search. That it is not
 `Ground::Memory::Search` is recorded in `data/proposals.yml`
@@ -1353,7 +1353,7 @@ message; it now stages and commits only the named paths and still waits for
 
 `bin/smoke` and `bin/tts-e2e` are not folded into `bin/check`. Both talk to a
 running face over HTTP, and a `bin/check` profile that needs a live server is
-red on every machine without one. `bin/audit` is gone: it read `rules.yml` as
+red on every machine without one. The audit script is gone: it read `rules.yml` as
 the hash it stopped being, so its kernel set was always empty, and
 `bin/operator lint --staged --changed-lines` answers the same question. The
 same pass found `bin/master` already execs `bin/cli`, so there is one REPL with
@@ -1379,7 +1379,7 @@ Rails, `test/test_web_*.rb` runs in MASTER's bundle, and `web/test/*.mjs` runs
 under node. `web/test/locale_contract_test.rb` and RAILS' copy stay apart; a
 helper shared across two apps with two bundles couples their deploys.
 
-The face's split sources (`face_vision_a.js` to `d.js`, `face.part*.txt`) stay in
+The face's split sources (`face_vision_a.js` through `face_vision_d.js`, `face.part*.txt`) stay in
 `public/`. The bundle tasks and `face_runtime_matches_its_sources` read them
 there, and serving a source file costs nothing a visitor does not already get
 from the bundle.

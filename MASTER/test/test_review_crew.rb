@@ -54,7 +54,7 @@ class TestReviewCrew < Minitest::Test
     messages = findings_for(Crew::MinimalistAgent.new, code).map { |row| row[1] }
 
     assert_includes messages, "commented-out code"
-    assert_includes messages, "parameter 'unused' appears unused in its own method body"
+    assert_includes messages, "parameter 'unused' appears unused in its own method body" # source-assertion: ok — the reviewer's findings, not a source file
     assert_includes messages, "'helper' has exactly one call site"
   end
 

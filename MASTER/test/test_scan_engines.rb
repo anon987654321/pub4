@@ -58,7 +58,7 @@ class TestScanEngines < Minitest::Test
     refute_includes m.without_override_media(SAMPLE), "animation"
     refute_includes m.without_foreign_heredocs(SAMPLE), "primerFired"
     refute_includes m.without_rule_fixtures(SAMPLE), "bad shape"
-    assert_match(/<img src="\s+"\s+alt=/, m.tag_source(SAMPLE).lines[3])
+    assert_match(/<img src="\s+"\s+alt=/, m.tag_source(SAMPLE).lines[3]) # source-assertion: ok — the scanner's rendered tag, not a source file
   end
 
   def test_a_button_named_by_its_text_is_not_nameless

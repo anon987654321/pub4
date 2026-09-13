@@ -36,6 +36,8 @@ module Operator
       OPENBSD/bin/check-rails
       OPENBSD/bin/check-openbsd
       OPENBSD/bin/check-vps
+      OPENBSD/test/run_all.rb
+      RAILS/test/run_all.rb
       RAILS/gates/runner.rb
       RAILS/gates/release.rb
       package.json
