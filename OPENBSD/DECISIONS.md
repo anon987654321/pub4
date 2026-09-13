@@ -416,3 +416,43 @@ and a health check made faster by proving less is a regression. Latency work on
 the box starts from a symptom a visitor or a log names, and it runs on vm23,
 where the measurement means something — the MASTER record "Performance Work
 Starts From A Measured Cost" holds the rule for every tree.
+
+## Eight shapes that read as defects and are not — 2026-09-13
+
+**Status:** accepted. Each was counted as debt at least once and each died on
+measurement. They are recorded here so a census does not reopen them.
+
+The seven readers of the load average cannot share a library, because two of them
+must disagree: `core-reclaim.sh` takes the 1-minute figure before it costs someone
+a cold boot, and `resource_guard.sh` takes the 5-minute figure so a spike never
+sheds a site. A shared file would also be a new root-owned install target, since
+root sources only root-owned absolute paths. The nine two-line expect shims each
+delegate to `vps_console.exp`, and `vps_safety_gate.rb` names all nine and fails
+when one stops delegating; folding them means weakening the gate that makes
+`require_console_risk_ack` unbypassable. Ruby entry points sit below the
+definitions they call, which is the language's order; `config_drift_gate.rb`
+splits them behind a `$PROGRAM_NAME` guard so its test can require it.
+
+`bin/vps-deploy`'s `[[ -x /usr/local/bin/config_drift_gate.rb ]]` guard looks dead
+and is live: `OPERATOR.sh` installs the file and the deploy writes its output. The
+hardcoded ports in the smoke scripts are compared against `apps.yml` by
+`port_inventory`, which passes. Most of the hundred `|| true` are idempotence on
+`rcctl`, `pkill`, `chmod`, `install` and `rm -f`; read the exit path before
+flagging one. The remaining mentions of `data/debt.yml` and `archive/recovery` are
+history, and `RUNBOOK.md` says so. `config_drift_gate.rb` (repo against live
+`/etc` bytes and root's crontab) and `config-drift-check` (relayd, acme and nsd
+consistency, readable only as root) are two questions one letter apart, and
+renaming either breaks an install line and a crontab entry.
+
+And one domain fact: amberapp.com is not ours. It is an Afternic for-sale lander
+at GoDaddy, and a 114-byte redirect page was once read as a purchase. Read whois
+before calling a domain ours. amber lives at amber.brgen.no, and a move off
+brgen.no ends cross-app sign-in, because the session cookie is `domain: :all`.
+
+## relayd keeps its default listen backlog — 2026-09-13
+
+**Status:** accepted until measured otherwise. relayd.conf(5) sets the backlog to
+10 by default, capped at 512 and by `kern.somaxconn`, and four apps take 30–40
+seconds to boot cold behind it. No refused connection has been observed; slow
+restarts have, and a larger queue does not make a booting app answer sooner.
+Raise it the day a restart shows refusals rather than delay.

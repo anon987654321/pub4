@@ -993,3 +993,53 @@ guards.
 
 So the next intake of this shape closes the same way: find the reader and the
 measurement first, and a proposal that names neither is not yet an item.
+
+## What The Gem Audit Left Hand-Rolled, And Why (2026-09-13)
+
+The 2026-09-11 audit asked what MASTER hand-rolls that a gem provides. These
+answers are no, each for a stated reason, so the next audit starts past them.
+
+`RAILS/gates/support/cdp_framing.rb` implements RFC 6455 because gates run under
+bare `ruby` with no bundle, ferrum lives only in the app bundles, and the gates
+need `host-resolver-rules`, which ferrum does not expose. `lib/trace/event_bus.rb`
+is not wisper: it does glob topic matching, redaction, Fiber-scoped conversation
+stamping and telemetry spans, where wisper broadcasts to listeners.
+`estimate_tokens` stays `bytesize / 4`, because the accurate answer is
+`tiktoken_ruby`, a Rust extension, and this repo deploys to OpenBSD.
+
+`Route#closest_command` keeps its Levenshtein matrix. The audit said
+`DidYouMean::SpellChecker` returns the same answers; measured over 709 one-edit
+typos of the command list, it disagrees on 40, catching transpositions the matrix
+misses and missing first-letter slips and short commands the matrix catches. That
+is a trade, not a fold. `lexical_rules.rb` keeps its fifteen RuboCop-shaped rules:
+each id is a name the law addresses, so delegating to RuboCop renames the law.
+
+The ruby_llm satellite gems are not adopted. `ruby_llm-schema` is deprecated in
+favour of passing a Hash. `-resilience`, `-top_secret`, `-agents`, `-team` and
+`-template` are thinner than what MASTER owns; its circuit breaker is
+dollar-budget-aware and survives a restart. `-test`, `-evaluations` and
+`-tribunal` would mock providers and grade the council, but each is a new lock
+entry, which this repo changes only on the box; evaluate them there, one at a
+time, against a named test they would replace.
+
+## Two Formats And One Parser Wait For A Consumer (2026-09-13)
+
+**SARIF output is not built.** `Scan::Finding` carries everything SARIF needs, and
+about sixty lines would emit it, but nothing outside pub4 reads the corpus. A
+writer for a reader that does not exist is the inert-config defect this repo
+records most often. Build it the day a consumer is named.
+
+**Herb is not adopted.** It parses HTML and ERB into one tree and would replace
+`law/html.rb`'s regexes, but it is a C extension, and the argument that refused
+tree-sitter refuses it. Revisit when Rails merges Herb as its ERB implementation,
+because then it lands on vm23 anyway and the question becomes whether the regexes
+still earn their keep.
+
+## Onboarding Is The Contract Chain, Not A New Program (2026-09-13)
+
+A first-contact path from clone to green check exists as documents:
+`CLAUDE.md` and its generated siblings point at `START_HERE.md`, and
+`bin/operator gate --explain` prints the ladder without running it.
+`bin/onboard` writes `.master/config.yml` and runs no check, and that is its job.
+A third onboarding surface would restate the first two and drift from them, which
+is how the previous root `CLAUDE.md` died.

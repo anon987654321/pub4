@@ -11,6 +11,8 @@ horizon:
       - { name: inbound ActivityPub storage, status: planned, notes: "outbound federation is done; the inbox verifies remote Create/Announce/Like and drops them, because storing them needs remote media proxying, remote moderation and a blocklist" }
       - { name: recurring events / ticketing beyond an external link, status: planned }
       - { name: messenger voice and video calls (WebRTC), status: planned }
+
+      - { name: city population in seeds, status: planned, notes: "no column or reader in any schema; CitySeed covers all 43 registry cities otherwise" }
     subapp_tv:
       - { name: live stream infrastructure, status: planned }
     subapp_dating:

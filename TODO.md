@@ -839,1001 +839,199 @@ Each item carries a hidden HTML-comment marker on its own line under its heading
 
 <!-- open-debt -->
 
-vm23 runs a locally built libvips and `pkg_add -u` will replace it with the stock
-package, which sets `-Drsvg=disabled` and so carries no svgload at all. amber's
-garment cut-outs need it, and the loss is quiet: `Amber::GarmentSilhouette#png`
-returns nil and logs one line when vips cannot read SVG, and the seeder keeps
-whatever photos the items already had, so the site does not break — the cut-outs
-merely stop regenerating. Healthy on 2026-09-11: `vips --version` reads 8.14.5,
-`vips -l` lists four svgload operators, and the rebuilt package is still at
-/usr/ports/packages/amd64/all/libvips-8.14.5.tgz. Detection is live at
-`/etc/daily.local:71`, which reads the loader list every morning and names the
-recovery. What stays open is conditional operator work: after any `pkg_add -u`
-touching graphics, run `make reinstall` in /usr/ports/graphics/libvips — the port
-path for the dependency is x11/gnome/librsvg, not graphics — and confirm four
-svgload operators again.
+vm23 runs a locally built libvips with svgload; `pkg_add -u` swaps in the stock
+package, which has none, and amber's garment cut-outs quietly stop regenerating.
+`/etc/daily.local:71` detects it. After any `pkg_add -u` touching graphics, run
+`make reinstall` in /usr/ports/graphics/libvips and confirm `vips -l` lists four
+svgload operators.
 
 #### `off_host_dr`  — tag: operator-priority
 
 <!-- open-debt -->
 
-One purchase is left: an off-host object store. `ruby OPENBSD/bin/dr-pull --check`
-reports the newest pull one day old and seven kept, integrity-checked on arrival
-and restore-drilled, but those copies sit on the operator Mac — one other disk,
-not a bucket.
-
-The same purchase closes the crate, and that is the sharper half. `STUDIO/dilla/
-samples/` is 84 MB on exactly one disk, of which 75 MB is `own/` — the operator's
-and named collaborators' own recordings — and `.gitignore` excludes all of it.
-dr-pull cannot help: it pulls from vm23 to the Mac, and the crate is already on
-the Mac, so writing it into `~/pub4-dr/` puts a second copy on the disk it is
-already on. Until there is a bucket, the crate has no backup at all, and
-`samples/dug/` is down to one record from 161 as the standing demonstration of
-what that costs. litestream is absent by decision: it is not in OpenBSD ports,
-neither the binary nor an rc.d script exists on the box, and it is out of
-`pkg_scripts`, which reads master brgen amber bsdports brgen_jobs.
-`OPENBSD/etc/litestream.yml` stays correct for the day someone builds the binary,
-and nothing else may name it as a backup. The shed ladder it used to head is two
-real services: `ksh OPENBSD/test/resource_guard_test.sh OPENBSD/resource_guard.sh`
-passes all eight cases and sheds bsdports first, amber last, so the guard's
-cheapest step takes a site down.
+One purchase, an off-host object store, closes three gaps. `OPENBSD/bin/dr-pull`
+keeps seven verified pulls, but on the operator Mac. `STUDIO/dilla/samples/`
+(84 MB, 75 MB of it `own/` recordings) is gitignored and on one disk, and dr-pull
+cannot help because the crate is already on that disk. `Shared::DatabaseSnapshotJob`
+writes `VACUUM INTO` copies beside the database, and `restore_litestream.sh` restores from
+an empty litestream directory. litestream is absent by decision (not in ports).
 
 #### `multi_app_ram`  — tag: operator-priority
 
 <!-- open-debt -->
 
-The operator command is a provider resize of vm23, and nothing in this repository
-can do it; after it lands `sysctl hw.physmem` must read at least 2147483648.
-Measured 2026-09-11: `hw.physmem` is 1056952320 and `swapctl -s` reports 1652096
-of 2588672 blocks used, 64 percent — down from 84 two days earlier, which is
-core-reclaim working rather than the ceiling moving. A resize was recorded here
-as scheduled for a Friday in August and the box is unchanged, so read the box,
-never a date. The standing decision is to stay at 1 GB with one
-resident worker, brgen_jobs, and it reopens only if amber earns its own. Two
-shapes read as a broken app rather than as memory: amber needs about twenty
-seconds to signal ready and a bare `falcon serve` defaults to a thirty-second
-health-check window, so reproduce a start by hand only with
-`--health-check-timeout 300`, which the rc.d passes; and `bin/vps-deploy:180`
-already stands the app's job worker down for the CI run, so standing it down by
-hand first makes that step skip.
+A provider resize of vm23; done when `sysctl hw.physmem` reads at least
+2147483648 (1056952320 on 2026-09-11). The standing decision is 1 GB with one
+resident worker, brgen_jobs. Reproduce a start by hand only with
+`--health-check-timeout 300`, and do not stand a job worker down before
+`bin/vps-deploy`, which does it.
 
 #### `home_partition_full_from_git_history`  — tag: operator-priority
 
 <!-- open-debt -->
 
-What is open is a coordinated history rewrite, and only the operator can schedule
-it. The ten largest objects in history are 80–87 MB WAV renders under a
-`DEPLOY/dilla/renders/beats/` path that no longer exists, every deploy pulls them,
-and the fix is a force-push to a public repo with a vm23 re-clone in the same hour
-and every session quiescent. Strip the blobs and the key purge in one pass. It is
-not pressure: measured 2026-09-11, /home is 69 percent with 5.1G free of 17G, /var
-is 16 and / is 18, and /home/dev/pub4's .git is 3.6G. Re-read it
-with `ssh dev@brgen.no 'df -h /home; du -sh /home/dev/pub4/.git'`.
+A coordinated history rewrite: strip the 80–87 MB WAV renders under the old
+`DEPLOY/dilla/renders/beats/` and the key purge in one force-push, with a vm23
+re-clone in the same hour and every session quiescent. Not pressure: /home was
+69 percent on 2026-09-11.
 
 #### `bsdports_org_delegated_to_parking`  — tag: operator-priority
 
 <!-- open-debt -->
 
-One registrar change, at Domeneshop and nowhere else: set bsdports.org's
-nameservers to ns.hyp.net and ns.brgen.no. It costs nothing — whois reads status
-ACTIVE, autoRenewPeriod, and a registry expiry of 2027-08-08T14:15:10Z, so the
-registration is paid and only the delegation is wrong. The app is well and
-answers 200 on 127.0.0.1:47312 behind relayd; the domain is parked.
+At Domeneshop, set bsdports.org's nameservers to ns.hyp.net and ns.brgen.no; the
+registration is paid to 2027-08-08. The deadline is the certificate
+(`notAfter=Nov 10 2026`), because acme-client's HTTP-01 needs the name to resolve
+here. Done when `ruby RAILS/gates/runner.rb dns_zones` passes. `ALLOW_BSDPORTS_DOWN=1`
+on the uptime-check crontab line comes off the same day; `bin/deploy-smoke.sh`
+names the delegation until then.
 
-Measured 2026-09-11: the .org registry still delegates to
-ns1/2/3.expireddomain.hyp.net, those publish 185.134.245.114 and
-2a01:5b40:0:bc04::1, `https://bsdports.org/up` returns 000 because parking
-terminates no TLS, and `http://bsdports.org/up` returns 200 from Domeneshop's
-parking page. A check that reads a status code therefore calls the domain healthy
-while it serves someone else's page. `ruby RAILS/gates/runner.rb dns_zones` catches
-it by comparing the answer against 46.23.89.226, and bsdports.org is its one
-failure — that gate reads the three app domains
-(`OPENBSD/gates/dns_zones.rb:69`), so no count of expired city domains
-belongs in this row.
+### Waiting for the box
 
-The deadline is a certificate, not a registration. `/etc/ssl/bsdports.org.fullchain.pem`
-carries `notAfter=Nov 10 16:56:43 2026 GMT`, and acme-client renews over HTTP-01,
-which needs the name to resolve here — so a delegation still wrong that week ends
-TLS for bsdports.org until it is fixed. It is done when `dns_zones` passes.
+Each of these needs vm23: a root run, a man page read there, or a measurement
+only the box can take.
 
-Nothing else in OPENBSD reads the parking as the app being down. `uptime-check`
-carries `ALLOW_BSDPORTS_DOWN=1` on its crontab line, with the reason and the
-condition to drop it; `bin/deploy-smoke.sh` keeps the public check required and
-names the delegation when it fails, while `http://127.0.0.1:47312/up` stays
-required and is what actually measures the app.
-
-### Guards worth not re-discovering
-
-A fixed finding is not a backlog item and is deleted when it closes; `git log`
-holds the why. What stays here is the false positive worth not paying twice.
-
-**dev's passwordless root is decided, not open.** `/etc/doas.conf:39` reads
-`permit nopass setenv { … } dev as root` and it stays. The exposure, the four
-mitigations it rests on, and the one narrowing someone could actually walk are in
-`OPENBSD/DECISIONS.md` — "dev keeps passwordless root, and here is the exposure",
-with a review trigger. Two things before reopening it. Check the rule with `doas
--C /etc/doas.conf id` and never with `-u dev`: `-u` names the target user, so the
-`-u dev` form asks whether dev may run a command as dev, which no rule permits,
-and it printed `deny` against `permit nopass` for the plain form on the same box
-in the same minute. This row read as done for weeks on that backwards
-measurement. And the remote half is already closed — `/etc/rc.d/master:64` carries
-`daemon_user="master"`, like the three apps. Before moving any app off its own
-daemon_user, note what the master switch cost: `Bundler.setup` ends in
-`Definition#write_lock`, which touches Gemfile.lock on every boot, and under a
-new user that is EACCES with a trace naming `File.utime` and nothing about
-permissions. `BUNDLE_FROZEN=true` in the daemon's env is the fix and is
-load-bearing.
-
-**amberapp.com is not ours.** A row here once recorded it as bought and certified
-after reading a 114-byte JS-redirect page. That page is Afternic's for-sale
-lander; the domain has been at GoDaddy since 2019 with `ns1/ns2.afternic.com` and
-a fast-transfer record, and the listing asks USD 5,999. Read whois before calling
-a domain ours. amber is canonical at amber.brgen.no, buying the apex is a spend
-decision for Johann and Ragnhild, and the coupling matters: the session cookie is
-`domain: :all`, scoped to the registrable domain, so a move off brgen.no silently
-ends cross-app sign-in, and `Shared::SsoToken` is consume-only in this tree.
-
-### The shell tree — what is still open
-
-Re-verified 2026-09-10 against the box, read-only. brgen, amber and bsdports all
-answer 200 on `/up`, and master answers on 53187.
-
-#### The box is not this repository, and one OPERATOR.sh run closes every difference
-
-`SSH_HOST=dev@brgen.no ruby OPENBSD/config_drift_gate.rb --remote` is the way to
-ask, and it is the only form of this row that cannot go stale. The enumeration
-that used to sit here named eight files and was wrong within a day: re-run
-2026-09-10, ten differ, `etc/rc.d/master` has since come into line, and
-`core-reclaim.sh`, `resource_guard.sh` and `config_drift_gate.rb` have joined.
-Read the gate, not this paragraph.
-
-Two facts the gate reports that a re-run will not explain. Two targets are absent
-from the box altogether rather than merely different: `emergency_cpu.sh`, which
-is the only thing `resource_guard.sh`'s crisis tier can run, and
-`vps_weekly_integrity.sh`. And in every case the repo is the newer side, so there
-is nothing to copy back.
-
-Root's crontab is the eleventh and it hid the longest. `crontab.vm23:97`
-schedules `/usr/local/bin/vps_weekly_integrity.sh`, `OPERATOR.sh:311` installs
-it, and the box has neither the line, nor the file, nor `/var/log/pub4/` for it
-to write into — re-checked over ssh 2026-09-10, all three still absent — so the
-weekly integrity pass has never run once, while every `/etc` file the drift gate
-compared matched and it said clean. The gate now compares the crontab too, as a
-set of commands rather than bytes (OPERATOR.sh merges the pub4 lines onto
-OpenBSD's own, so a byte compare would always fail), scoped to `/usr/local` so
-the four base-system lines are not four permanent false alarms.
-`test/test_config_drift_gate.rb` carries the shape it must flag and the shape it
-must not.
-
-Nothing here can install any of it. `MASTER/bin/operator vps deploy` does not do it
-either — this is `doas zsh OPENBSD/OPERATOR.sh` on the box, and it is the whole
-of what this row still wants. The two repairs the script itself needed are
-committed and `git log` holds them.
-
-#### Not worth chasing
-
-- **The three deploy scripts nothing calls.** `deploy_all.sh`,
-  `vps_run_remote.sh` and `manual_master_deploy.ksh` stay, as recovery paths for
-  three cases `bin/vps-deploy` does not cover. Decided 2026-09-10; the argument is
-  in `OPENBSD/DECISIONS.md` and the count is not to reopen it.
-- **The seven readers of the load average.** They cannot share a library and two
-  of them must not agree. `core-reclaim.sh:65` takes the 1-minute figure because
-  it is about to cost somebody a cold boot; `resource_guard.sh:101` takes the
-  5-minute one because it must not shed a site over a spike. Both lines now say
-  so. A shared file would also have to be installed to `/usr/local` — root sources
-  only root-owned absolute paths (`resource_guard.sh:135`) — which is a new install
-  target rather than a fold. The banned-tools rule governs MASTER's shell effect,
-  not what this tree commits.
-- **Nine two-line expect shims.** `vps_console_status.exp`, `_probe`, `_short`,
-  `_install`, `_fix_key`, `_poll_install`, `_start_install`, `_sync_and_install`
-  and `vps_drop_install.exp` each delegate one line to `vps_console.exp`.
-  `vps_safety_gate.rb:63-74` names all nine and fails when one stops delegating,
-  which is how `require_console_risk_ack` cannot be bypassed by adding a tenth.
-  Folding them means changing that gate, and the gate is the point.
-- **Ruby entry points come last, everywhere.** `installed_targets_gate.rb`'s `run`
-  and `health_check.rb`'s first `def` sit below the definitions they use. The
-  language wants the definition before the call and the tree is consistent about
-  it. Reordering buys nothing. `config_drift_gate.rb` is the one exception and it
-  is deliberate: a `$PROGRAM_NAME == __FILE__` guard splits definitions from the
-  run so its test can require the file without the skip line exiting the test
-  process.
-- **`bin/vps-deploy:153`'s `[[ -x /usr/local/bin/config_drift_gate.rb ]]` guard.**
-  It has the shape `installed_targets_gate.rb` records as a dead guard, and it is
-  not one: `OPERATOR.sh` installs that file, the box has it dated Aug 25, and it
-  wrote `/tmp/vps-deploy-drift.out` on the last deploy.
-- **Hardcoded ports in `bin/smoke-apps.sh` and `bin/deploy-smoke.sh`.** `ruby
-  RAILS/gates/runner.rb port_inventory` compares them against `apps.yml` and
-  passes.
-- **Most `|| true`.** About a hundred instances, and the majority are idempotence
-  on `rcctl`, `pkill`, `chmod`, `install` and `rm -f`. `start_all_apps.sh:16-17`
-  swallows enable and start and then fails correctly at :24. Read the exit path
-  before flagging one.
-- **The four `data/debt.yml` and `archive/recovery` mentions that remain.**
-  `RUNBOOK.md:16-22` says in so many words to read `archive/recovery` as
-  document-only, and `DECISIONS.md:200` and `PATH_OWNERSHIP.yml:17` both write
-  "the old data/debt.yml", which is history rather than a live path. The two that
-  pointed at files which never existed — `vps_console_common.exp`'s refusal
-  naming `VPS_SAFETY.md` and `OPERATOR_CONTRACT.md`, and `deploy_all.sh`'s header
-  citing a manifest inside an `archive/` this repo does not create — are fixed.
-- **Four gates that pass and mean it.** `OPENBSD/installed_targets_gate.rb` is
-  clean at 12 configured targets against 15 the repo provides,
-  `OPENBSD/tools/reach.rb` reports 10 cron, 8 rcd and 57 zones with none
-  unreachable, and `OPENBSD/deploy_smoke_gate.rb` and `port_inventory` pass.
-  `/usr/local/bin/config-drift-check` cannot be run as dev at all — it exits on
-  EACCES reading /var/nsd/etc/nsd.conf — so its green is a root measurement, not one
-  a session can take.
-- **The `config_drift_gate.rb` and `config-drift-check` name pair.** Two
-  questions — repo-versus-live `/etc` bytes, and relayd, acme and nsd consistency —
-  under two names one letter apart, and the confusion has already cost a check its
-  life once. Renaming either breaks an install line and a crontab entry.
+- **One `doas zsh OPENBSD/OPERATOR.sh` run closes the drift.** Ask
+  `SSH_HOST=dev@brgen.no ruby OPENBSD/config_drift_gate.rb --remote`, never a
+  list; the repo is the newer side everywhere. `emergency_cpu.sh` (the only thing
+  `resource_guard.sh`'s crisis tier runs), `vps_weekly_integrity.sh`, its root
+  crontab line and `/var/log/pub4/` are absent, so the weekly integrity pass has
+  never run.
+- **relayd restarts five times per `vps-deploy all`.** Each rc.d script and
+  `start_all_apps.sh` run `rcctl restart relayd` once an app answers `/up`,
+  dropping the one TLS listener; the 2026-08-10 nine-minute outage was that.
+  `relayctl table disable|enable` and `relayctl poll` do the kick without touching
+  the listener. Read relayd.conf(5) and relayctl(8) on vm23 and bracket one app by
+  hand first.
+- **The `rails` login.conf class caps datasize at 4096M on a 1 GB box**, and
+  `openfiles-cur` inherits 128. Set per-app `datasize-cur` from each app's
+  steady-state RSS measured on vm23; a number guessed low kills a healthy app.
 
 ## STUDIO
 
-No standing backlog file exists for STUDIO, and none is invented here. dilla,
-postpro, repligen and lora carry their working decisions in their own
-`README`/`AMBITION`/`ENV_AND_RENDER` docs and in operator memory. Two standing
-constraints bound any agent work in this tree:
+Re-measured 2026-09-11 against the real crate. `samples/` is gitignored, so a
+worktree shows an empty crate that is not; dilla is under active edit, so trust
+symbol names over line numbers.
 
-- **Renders are irreplaceable.** dilla and postpro write real output with rotating
-  seeds; never render over a take that matters, and never change a rendered-sound
-  or graded-look default on your own judgement.
-- **dilla is production tooling**, aimed at being genre-agnostic — Detroit lean,
-  but techno, soul and jazz must blend as parameters. That is a design goal, not a
-  backlog item to close unprompted.
+### The owner's calls
 
-Re-measured 2026-09-11 against the crate itself, and most of what stood here was
-describing a crate this machine does not have. `samples/` is gitignored, so a
-worktree shows an empty crate that is not empty; the figures below come from
-copying the real `samples/` in and asking the engine, which is the only way to
-measure it without writing to the operator's only copy. dilla is under active
-edit; line numbers inside `dilla.rb` move, symbol names do not.
+- **The crate holds `drums`, `dug`, `own` and `rauingar`, and no 124 racks.**
+  `74d9e4c1b` cleared it on 2026-08-16 on the operator's call; only he can say
+  whether he expected the racks back. `samples/dug/` is down to one record, and
+  the other 160 sources cannot be re-fetched to the same bytes.
+- **Which crate layout survives.** The engine reads `samples/chopped/loops.json`
+  through `RadioChop.registered_loops`; `lib/crate_dig.rb` writes `samples/dug/`
+  from public-domain archives; `live/dig_crate.rb` rips YouTube and warns on every
+  run; `bin/crate` declares a `crate/` layout that no longer exists.
+- **`ruby STUDIO/dilla/dilla.rb assets` exits 1**: three loops missing, eight files
+  changed (seven re-synthesised one-shots, and the `rauingar` re-cut).
+  `dilla assets record` blesses whatever is on disk, so it is the operator's.
+- **Two staging directories outside the repo.** `~/dilla-crate-incoming` holds two
+  source FLACs and their demucs stems from an abandoned 61-track fetch;
+  `~/Music/dilla_sines/` is a running installation beside three drifted twins of
+  tracked scripts. Keep, move or delete is his, never an agent's.
+- **Sound that moves under a pinned seed.** Eight bare `rand` calls and one
+  `.sample` in `dilla.rb` escape `render_rng`, which is why a pinned render moves
+  about 0.012 dB. Routing each changes what that site renders: one site at a
+  time, by ear.
+- **The `HARM_VOL` bump stays a pass behind itself**: 2.4 plus 0.05 is the 2.45
+  default, and raising the base is a mix value (`composition_engine.rb`).
+- **Chop rows in `TRACK_PRESETS`**, when there are chops again. A slug with no row
+  falls through to `:timeless`; the `sheger_*` derivation in `dilla.rb` is
+  mechanical and whether it sounds right is his.
 
-### The crate — read this first
+### Blocked while `dilla.rb` is under another session's edit
 
-**There is no `samples/chopped/` on this machine, and there are no 124 racks.**
-This section described 124 rack directories, 161 registry rows, 13 byte-identical
-wavs and 153 mid-phrase cuts; none of it is on disk. `RadioChop.registered_loops`
-returns nothing, `TRACK_SAMPLE_LOOPS` is the five builtins, and `samples/` holds
-`drums`, `dug`, `own` and `rauingar` and nothing else. Every file in it is dated
-2026-08-31.
+- **Classify dilla's default-off flags** into additive, exclusive fork and
+  operational, and delete the dead ones. `lib/knobs.rb` is the instrument (727
+  knobs, 286 flags, 206 default-off); the counts in `dilla.rb`'s own comments
+  are stale.
+- **Four hand-built RIFF headers**, at `dilla.rb` (two), `lib/devices.rb` and
+  `bin/sine_stream.rb`, where `wavefile` is declared and used at
+  `lib/music_gems.rb:231`. Container bytes only; prove identical output bytes
+  without rendering a take.
 
-The likely account is the one the engine's own test writes down: `74d9e4c1b`
-cleared the crate on 2026-08-16 on the operator's call — 133 renders and 498
-samples — and it is being rebuilt from source. The test's whitelist matches disk
-exactly today, naming `kembara_rindu`, `semua_untuk_mu`, `lo_borges` and
-`arat_swost_wolet` as the four builtins awaiting the rebuild and treating
-`rauingar` as present, which is what disk says. A backlog measured against 124
-racks after that clearing was measuring something else.
+### Guards
 
-**If the operator expected 124 racks to be there, they are not, and only they can
-say whether that is the August clearing or a later loss.** Nothing in this
-repository can restore them and no session should assume either answer.
-
-- **What is left is in no backup, and that is the open item.**
-  `STUDIO/dilla/.gitignore:19` ignores `samples/` wholesale, so not one file is
-  tracked. The irreplaceable half is `samples/own/` — 75 MB of the operator's own
-  and named collaborators' recordings — plus `rauingar` and the 1.1 MB drum rack,
-  84 MB in all, on exactly one disk. That is the state `samples/dug/` was in the
-  day it went, and dug is down to one record.
-
-  `OPENBSD/bin/dr-pull` cannot be the answer and this row used to say it could.
-  dr-pull pulls FROM vm23 TO the Mac; the crate is already on the Mac, so writing
-  it into `~/pub4-dr/<stamp>/` puts a second copy on the same disk, which is not a
-  backup. This is the same blocker as `off_host_dr` above — one purchase, an
-  off-host object store — and the two rows are one row.
-- **160 of the crate's sources are gone, and no loop is reproducible from its
-  sidecar.** `samples/dug/` holds one record, `arat_swost_wolet.mp3`, with its
-  provenance sidecar. The sidecars carry a reproduce command naming a path that no
-  longer exists, and only the titles survive, in the slugs; re-fetching by title
-  returns a different upload, so offsets and mastering will not match. New fetches
-  record the HTTP URL — `CrateDig.archive_entry` and `ccmixter_entry` store `url`
-  and `record!` refuses an entry without one. `dilla/crate/` from `bin/crate` is
-  gone the same way, taking with it the two takes whose sidecars name
-  `crate/loops/semua_untukmu`.
-- **The eight `sheger_*` rows are half alive, and deleting them would throw away
-  measured tuning.** This is settled, not open, and it is written here so nobody
-  re-derives the wrong half. `TRACK=sheger_01` renders today: `TRACK_PRESETS` has
-  a live row for it carrying its own measured tempo and progression. What it lacks
-  is the bed — `TRACK_SAMPLE_LOOP_ALIASES` resolves it to `ubrukte_samples_01`,
-  which RadioChop registered out of the crate that was cleared, so
-  `sample_loop_entry` finds nothing and says nothing. Eight half-working tracks
-  read as eight working ones. `test_every_sample_loop_alias_names_a_loop_something
-  _registers` pins the eight as known-dead, tightens as each chop re-registers,
-  and fails on a ninth; the same test asserts the preset rows are live so nobody
-  deletes them on the strength of the aliases.
-- **Eight of the sixteen recorded assets are not the files that were recorded.**
-  `ruby STUDIO/dilla/dilla.rb assets` exits 1 today: three loops missing — the
-  crate-rebuild three — and eight changed. Seven of the eight are drum one-shots
-  that kept their byte count and changed their hash, so they were re-synthesised
-  after the manifest was written; the eighth is `samples/rauingar/loop.wav`, which
-  went from 920,358 bytes to 3,397,694 and is the re-cut the engine's test already
-  records as "rauingar is back on disk". Nothing runs this check, which is why it
-  has been red without anyone knowing. `dilla assets record` closes it and blesses
-  whatever is on disk as canonical, which is the operator's to say — a re-record
-  that includes a wrong file makes the check agree with the wrong file forever.
-  The report itself is fixed: it decided on the hash and printed the byte count,
-  so a re-encoded one-shot read as "12426 bytes → 12426" and looked like a bug in
-  the check rather than a difference in the file.
-- **Writing `TRACK_PRESETS` rows for chops is still forbidden to an agent, when
-  there are chops again.** A slug with no preset row falls through to
-  `TRACK_PRESETS[:timeless]`, so appending rows changes what those slugs render.
-  `dilla.rb` writes down a mechanical derivation for the `sheger_*` rows — take
-  `progression` and `feel` from the existing preset nearest the chop's measured
-  tempo — and whether that derivation is the right sound is the owner's. Nothing
-  else moves if rows are appended: `demo_all_order`, the stream rotation and
-  `chopped_bed_pick` all read `TRACK_SAMPLE_LOOPS` or `RadioChop.registry` rather
-  than `TRACK_PRESETS`, and only the explicit `showcase` subcommand enumerates the
-  preset table.
-
-### Which crate layout survives is the owner's call
-
-dilla has four crate surfaces and three layouts with one reader. The engine reads
-`samples/chopped/loops.json` through `RadioChop.registered_loops`
-(`lib/radio_chop.rb:634`). `lib/crate_dig.rb` writes `samples/dug/` from the
-Internet Archive and LibriVox, filtered to expired copyright. `live/dig_crate.rb`
-rips YouTube with `yt-dlp`. `bin/crate` declares a third layout,
-`crate/{sources,stems,loops}`, calling itself the replacement for `samples/`, and
-that directory no longer exists.
-
-The licensing half of this is closed. `crate_dig` and `dig_crate` are one word
-order apart and used to take opposite positions in silence — crate_dig's header
-said YouTube rips are "neither licensed nor defensible, and this does not add to
-that pile" while its near-namesake did exactly that and said nothing — so a
-reader learned the tree's position from whichever file they opened. dig_crate now
-leads with what it is, points at the path that clears, and warns on stderr on
-every run; crate_dig says its sentence is about itself. Which layout survives is
-still the owner's, and neither file can clear a recording.
-
-### The engine is one file, and its support directory is full
-
-`dilla.rb` is about 35,200 lines and carries the 83 `# engine part:` parts that
-were under `lib/engine/`, in the order they were required, because that order was
-load-bearing. `DillaSources` defines the corpus and `STUDIO/gate.rb` fails if
-`lib/engine/` reappears.
-
-`DILLA_SUPPORT_CEILING` is 56 and now counts every first-party Ruby file dilla
-carries beside the engine, at any depth: 44 in `lib/`, 4 in `bin/`, 6 in `live/`
-and 2 in `scripts/`. It used to count `%r{/dilla/lib/[^/]+\.rb\z}` alone, which
-was an escape hatch in both directions — `MASTER/tools/cohesion.rb` proposes three
-regroups into subdirectories of that same `lib/`, and taking any one of them
-would have dropped the guarded count to 35 and quietly disabled the ceiling it
-appeared to relieve, while twelve support files in `bin/`, `live/` and `scripts/`
-sat outside it entirely. A regroup is free now and a fifty-seventh file is not.
-
-Folding the 44 into fewer files is undone, and 14 of them use `__dir__` or
-`__FILE__`, which shift a directory level when a file moves — the bug that broke
-three tests during the first fold, and the reason to do the second one
-deliberately rather than as a tail-end.
-
-A second entry used to sit under "From the 2026-08-31 session" telling the next
-session to split the monolith along its seams, and the two could not both be
-followed. It is gone, and this is the resolution: the direction is out of the
-monolith, but every destination is a file under `lib/` and
-`DILLA_SUPPORT_CEILING` leaves no room for one. A split therefore starts by
-moving support code together, not by moving engine parts out, and until somebody
-does that the honest answer is that the monolith stays.
-
-`dilla parts` is the index the engine's map never had: every `# engine part:`
-marker with the line it starts at and how many it holds, `dilla parts <needle>`
-to filter, generated so it cannot go stale. Its test catches the two ways the
-index can lie without a render noticing — a marker lost in an edit, and two parts
-sharing a name. The seams worth naming are the parts over 1,000 lines — `patch`
-1578, `progression_tables` 1210 (pure data, the most extractable thing in the
-file), `render_dilla` 1191, `characterize` 1180, `cli_commands` 1164 and
-`render_techno` 1071. **Splitting any of them is not proposed here**, and the
-decision not to reopen `lib/engine/` stands.
-
-### The engine probes pass, and the seed question is smaller than it looked
-
-`rake test:dilla` is 305 runs and 0 failures, with 3 skips when the real
-`samples/` is present and 4 in a worktree. Both failures this section recorded
-are gone. `test_every_genre_renderer_reaches_the_master_bus` passes —
-`render_analog` reaches the bus — and `test_every_hand_cut_sample_loop_is
-_reachable_as_a_track_preset` passes with `semua_untuk_mu` among the four
-builtins its whitelist names as awaiting the crate rebuild. Three of the skips
-are the timeouts recorded under "not worth chasing" below; the fourth is the
-loop-file check standing down because a worktree has no crate to measure, which
-is where it used to fail on `rauingar` and send a session after the engine.
-
-`RENDER_SEED` stays open and is a quarter the size this said. `test_dilla_render
-_seed.rb` pins `stable_hash`, `seed_for`, `noise_seed`, `render_pick` and
-`render_rng`. The claim was that 92 sites in `dilla.rb` call bare `rand`,
-`Array#sample` or `Random.new` outside those helpers; measured, 31 of the 32
-`.sample` calls already pass `random:`, and of the 76 `Random.new` calls all but
-thirteen carry a seed while those thirteen are `seed ? Random.new(seed) :
-Random.new`, unpinned only when their caller passes none. What actually varies
-under a pinned seed is eight bare `rand` calls and one `.sample` — which is why a
-pinned render still moves by about 0.012 dB. Routing any of them through
-`render_rng` changes what that site renders, so it is the owner's, one site at a
-time, but it is now a list somebody could finish.
-
-### Two knob findings, and eight of the ten conflicts were the scanner
-
-Six of the ten "knobs whose default differs between files" were the scanner's own
-reading, and two more were per-command arguments. `DillaKnobs.conflicts` reports
-seven names now, each with the site and the enclosing method, and
-`test_the_set_of_knobs_with_two_defaults_does_not_grow` pins the set so an eighth
-fails. `ruby dilla.rb knobs conflicts` is the report.
-
-The three the scanner should never have called defaults: `MELODIC_LEAD`, whose
-`"0"` is the comparand in `ENV.fetch("MELODIC_LEAD", "0") != "0"` one line below a
-`return false if ENV["MELODIC_LEAD"] == "0"` and is therefore reachable only when
-the knob is unset; `HARM_VOL`, whose `"2.4"` is the base of an increment on a line
-that both reads and writes the knob; and `EVOLVE_EVERY`, whose `"2"` is the tail
-of a chain that belongs to `STREAM_HARMONY_EVERY`. `EVOLVE_HARMONY_W` and
-`EVOLVE_GROOVE_W` each read two of their literals in the two arms of one `if`
-inside `evolve_weights`. `LISTEN_PASSES` is 0 in the render path and 3 in the
-`listen_loop` subcommand, which its own help text documents. `TRACK`, `BARS` and
-`BPM` are per-command — and `BPM`'s two literals are a silence placeholder and a
-positional argument, while the site that decides every render reads `ENV["BPM"] ||
-DEFAULT_BPM` and is 86, which no scan of literals can see. Opaque sites are
-counted and printed now, so an incomplete list says it is incomplete.
-
-Of the three that survived, two are closed and one is the owner's ear. The
-`RENDER_BEAUTY_MIN` "conflict" was a ladder read as a disagreement — 65 to keep
-iterating, 68 to keep a streamed take, 70 to keep a rendered one — and both gates
-now say so beside their literal. `stream_iterate_evolve_harmony!` no longer
-destroys a pinned `EVOLVE_HARMONY_W`; it applies the `USER_PINNED_ENV` rule
-`style_env_write!` applies everywhere else, and an unpinned stream walks exactly
-as before. **The `HARM_VOL` bump stays a pass behind itself**, because 2.4 plus
-0.05 is the 2.45 the engine already defaults to and raising the base is a mix
-value: `composition_engine.rb` carries the measurement beside the line, and the
-change is the owner's.
-
-### Small, mechanical, and none of them touch sound
-
-- The `#!/usr/bin/env ruby` scripts under `dilla/bin` no longer disagree with the
-  tree: all three now carry `# frozen_string_literal: true`, which the other 104
-  Ruby files in STUDIO already had, so all 107 do. The `.sh` strict-mode row and the
-  `NEVER_BATCH_DELETE` row that used to sit here named `dilla/bin/*.sh` and
-  `bin/sine_stream_ticks.rb`, and neither exists: `dilla/bin` is four files.
-- `lib/knobs.rb` and `dilla.rb` used to state the knob count in prose — 632 across
-  119 files, and 610 — against a census the tool computes on demand and which
-  reports 729 across 45. Both now point at the command instead of restating it,
-  which is the only form of that sentence that cannot go stale.
-
-#### Not worth chasing
-
-- **Folding `dilla/live/`.** The three `*.als.rb` sets share 10 identical code
-  lines out of 81, 94 and 104, and the duplication is already extracted into
-  `Rack`, which each calls 7 to 15 times — so folding them would collapse three
-  distinct arrangements rather than three copies of one. Decided 2026-09-11: they
-  stay. `broadcast.sh:24` and `recall.rb:89` resolve a set by filename and
-  `Rack.journal!` writes the set name into `project/liveset.jsonl` as data, so a
-  rename also breaks replay of every journalled pass — free today, because the
-  journal holds 32 rows and not one carries `seed` or `set`, and never free again
-  once a pass is played with the keys the sets now write. `dig_crate.rb` was the
-  one movable piece, on the argument that crate ingest belongs beside
-  `lib/crate_dig.rb`; it stays where it is, because moving a tool the crate
-  rebuild is actively run from is a hazard for a filing improvement, and the
-  confusion the move was meant to fix — two files one word order apart taking
-  opposite positions on licensing — is fixed in the files themselves.
-- **The three scripts that live twice.** `/Users/mac/Music/dilla_sines/` holds six
-  Ruby files, three with a tracked twin — `sine_stream.rb` 2,023 lines outside
-  against 2,027 tracked, `demo_full.rb` 130 against 127, `player.rb` 61 against
-  `sine_stream_player.rb` — and not one pair is byte-identical. It is not a stale
-  copy of the scripts, which is what this row assumed: the directory is a running
-  installation, with its own renders, logs and shell runners beside them
-  (`now.wav`, `proof.wav`, `beat.wav`, `stream.log`, `run_sines.sh`). Retiring the
-  outside copies orphans the output next to them, so it is the operator's and it
-  is a move rather than a delete. Nothing in this repository may touch the
-  operator's home directory, and no census can see it — `dup_census` reads tracked
-  files only and excludes `STUDIO/` besides.
-- **Merging the three techno renderers.** `render_industrial`,
-  `render_hate_techno` and `render_techno` share `techno_harmony_roots` and the
-  schedule builders and look like three copies of one renderer. They hold
-  genuinely different arrangements, and merging on surface similarity flattens
-  three sounds into one. Read all three before proposing it again.
-- **Blanket rescues in STUDIO.** The remaining discards are optional gem probes,
-  external binaries whose output is parsed, optional state files and process
-  teardown, and they are correct as they stand. A census that reports them again
-  is measuring the idiom.
-- **Preset reach in `postpro` and `lora`.** A reach census read 27 false positives
-  here: presets are selected by name from argv (`postpro.rb:2942`, `:3335`,
-  `:3457`), so a table driven that way has no in-tree reference by design, and the
-  `PRINT_STOCKS` half came from a lookbehind excluding `:` when every use is
-  written `print_stock: :kodak_2383`. `postpro` already owns the question in
-  `vocab_check` (`postpro.rb:3573`), which asks whether a stock, lens or print
-  stock is defined and used by no preset. Do not add a second census.
-- **The 37 slugs in `sample_worth.json` that name no rack.** `loops.json` is gone
-  with the crate, so there is nothing to compare them against; stale rows are
-  dropped at load (`radio_chop.rb:637`) and pruned on the next chop (`:879`).
-  Inert by design, and a rebuilt crate prunes it.
-- **The sample rate declared ten times under three names.** `SAMPLE_RATE` in
-  `dilla.rb`, `lib/acapella.rb`, `lib/radio_chop.rb` and `lib/vocal_chop.rb`;
-  `RATE` in `lib/analog_synth.rb`, `lib/sample_flip.rb`, `lib/space_fx.rb`,
-  `lib/verify_fx.rb` and `bin/sine_stream.rb`; and `SU_TUNNEL_IR_RATE` in
-  `dilla.rb`. Every library one is namespaced, so nothing collides, and 44,100 is
-  not a matter of taste. `lib/sample_worth.rb:18` is an eleventh `RATE` and not one
-  of these: it is 11,025 on purpose, with the Nyquist reason beside it. The bare
-  literal appears 46 times more, most of them inside ffmpeg filter strings, and
-  interpolating those would touch render-path strings for no behavioural gain.
-- **The three `cohesion.rb` regroups.** They no longer evade
-  `DILLA_SUPPORT_CEILING`, which counts at any depth now, so the only argument
-  left against them is the one the backlog already made: nine files with 14
-  `__dir__`/`__FILE__` references between them, moved to satisfy a shape rather
-  than to answer a question anyone has.
-- **The three engine tests that time out under suite load.**
-  `test_smoke_two_bar_render`, `test_provenance_separates` and
-  `test_dilla_frozen_reads` pass in about 23 seconds alone against the 90-second
-  `PROBE_TIMEOUT` (`test_dilla_engine_probes.rb:26`), and skipped rather than
-  failed in the full 87-second `rake test:dilla` run today. Not a defect in what
-  they measure; the budget does not survive a loaded machine, and a green subset
-  here proves only that.
+- The eight `sheger_*` rows are half alive: the preset rows are live and tuned,
+  the bed aliases point at a cleared chop. A test pins both halves; delete
+  neither.
+- The monolith stays. `DILLA_SUPPORT_CEILING` (56, any depth) leaves no room for a
+  destination file, so any split starts by folding support code, and 14 support
+  files use `__dir__`/`__FILE__`. `dilla parts` indexes the engine.
+- Not worth chasing, each measured: folding `dilla/live/` (three arrangements,
+  and renames break journal replay); merging the three techno renderers (three
+  sounds); blanket rescues in STUDIO (optional probes and teardown); preset reach
+  in `postpro`/`lora` (selected by name from argv; `vocab_check` owns it); the 37
+  stale `sample_worth.json` slugs (pruned on the next chop); the sample rate
+  declared under three names (all namespaced; `sample_worth.rb`'s 11,025 is
+  deliberate); the `cohesion.rb` regroups; and the three engine probes that skip
+  under suite load while passing alone.
 
 ## Cross-cutting programs
 
-Larger efforts that span trees or do not belong to any single one. Each is a
-program with its own sitting, listed so they are visible in one place rather
-than implied across four.
+- **Bringhurst: `line-height` literals do not come off `--leading-*`.**
+  `css_constitution.rb:61` lists `line_height` with no reader; 87 literals across
+  the fleet on 2026-09-10, seven in `face.css`. The detector is a `css_budget` row
+  held at today's count; moving a literal onto a token is the operator's, because
+  it changes leading.
 
-- **Seed realism.** Only population is missing, and the entry used to imply more.
-  Measured 2026-09-10: `CitySeed::COORDINATES` and `TIME_ZONES` each hold 43
-  keys against `DomainRegistry::ENTRIES`'s 43 cities, the set difference is empty
-  both ways, and `rows_from_registry` uses `.fetch`, so a new registry entry
-  without a row raises at load. Population has no column in any of the three
-  schemas and no seed anywhere.
-- **Bringhurst typography codification.** Most of it is enforced already, and
-  what is left is three named gaps rather than a programme. The size ladder
-  (`_tokens.scss:52-65`), the weight ladder (`_dialect_tokens.scss:84-86`) and
-  the measure, leading and tracking ladders (`_typography.scss:14-28`) are
-  tokens; `css_constitution.rb:212-227` reads both ladders out of the
-  stylesheets so no gate copy can drift, and `css_budget.yml` holds `type_scale`
-  at 0 and `weight_ladder` at 2. `check_caps_tracking`, `MEASURE_OPTIMUM` and
-  `geometry_type.rb`'s rendered measure and modular-scale checks cover the rest.
-  What is not enforced: no lint says a `line-height` literal must come off
-  `--leading-*` (`css_constitution.rb:61` lists `line_height` as a config key
-  that never got a reader). Sized 2026-09-10 before anybody opens it — 87
-  literals across the fleet, seven of them in `face.css` — so it is a new
-  `css_budget` row and a pass over the operator's own stylesheets, not a lint
-  somebody adds on the way past. `MASTER/web/public/face.css` sits outside the asset
-  pipeline and cannot read the ladders, which is the whole of the residual +2 on
-  `weight_ladder`; and `rules.yml`'s `beauty.typography_bringhurst` is four
-  slogans with no detector.
-- **The layout pass.** Roughly 178 proposals from a study of joi.com, kimi.com
-  and medium.com, worked one category at a time; about sixty are closed. Its own
-  section below carries the state and the doctrine it produced.
-- **Web-face redo.** The MASTER web face (WebGL + TTS) wants a rebuild; see the
-  web-face notes in the MASTER debt records for the current failure map.
-- **Onboarding.** A first-contact path that gets a new agent or contributor from
-  clone to a green check without reading every contract. `MASTER/bin/onboard` is
-  not it: it writes `.master/config.yml` and never runs a check.
-- **Local-LLM fallback**, and it is not "one method", which is what this entry
-  said until somebody wrote it. `Master::Review::LLMDispatcher#send_llm_request`
-  has branches for `agy:`, `claude-cli:` and `web-chat:` and none for `ollama:`,
-  so a chain that reaches the local tier ships the id to the OpenRouter client
-  and errors. The branch is easy; paying for it is the work. Written and
-  measured 2026-09-10 as an `OllamaSender` module beside `RubyLLMSender`: 51
-  body lines and one file. `llm_dispatcher.rb` cannot hold it — the class is at
-  298 code lines against NO_GOD_CLASS's 300 — and every ceiling it lands against
-  sits at exactly its value, so it costs a `growth.master` raise and a
-  `spine.lib_body_ceiling` raise, and `models.yml` gains a reader against a
-  `reader_singularity` ceiling that is also full. Done when somebody spends
-  those deliberately, or absorbs 51 lines elsewhere in `lib/` first. The tier is
-  correctly absent unless `OLLAMA_BASE_URL` is set — it used to sit in every
-  fallback chain on every machine.
-- **Aegis, seaborne.** A safety agent for the water, and the first body the
-  embryo could plausibly take. It is a program rather than a feature because
-  most of it is gated on hardware; the section below says what is buildable now
-  and what is not.
+## The layout pass — open
 
-## The layout pass — opened 2026-09-02
-
-A study of joi.com, kimi.com and medium.com, read against this tree, produced
-roughly 178 proposals, worked one category at a time. The list itself lived in a
-conversation and was never written down, so the closed items are recoverable
-only from `git log` and perhaps forty of the open ones are gone. What follows is
-what survived, not a copy of the original.
-
-What the pass taught, which is worth more than the list:
-
-- **Most proposals were not problems.** Of the three raised against motion, two
-  were already satisfied — `transition: all` was two sites rather than a
-  pattern, and `REDUCED_MOTION` was met. The real defect was thirty byte-
-  identical copies of one reduced-motion reset, which no proposal named.
-- **A finding against the design system is usually a finding against the
-  instrument.** `--transition-fast` looked undeclared in every bundle until the
-  resolver was found to follow `@use` and not `@forward`; `.42s` read as 42000ms
-  until the regex was fixed. Compile the three apps before and after, and
-  compare, rather than trusting a scan.
-- **A value-preserving snap is a fix; a value-changing one is a decision.**
-  160ms is `--transition-fast` written 20ms apart, and whether those are one
-  step or two is a question about how a hover should feel. Off-scale values that
-  cannot move without changing the render are recorded as baselines in
-  `design_tokens.yml` with the argument beside them, never snapped to silence a
-  lint.
-- **A retirement is not finished while a test still names the retired thing.**
-  Collapsing `--measure-body` left `layout_contract_test` asserting the retired
-  spelling, and the obvious way to make it green was to re-declare the twin.
-- **Sticky hover is not a defect here.** 122 `:hover` declarations across 52
-  files against four `@media (hover: ...)` guards reads alarming until the
-  hovers are classified: eighty-two only repaint, thirty declare nothing that
-  matters on touch, and the ten that move or reveal are opacity or transform
-  nudges. Nothing strands a tap. Re-classify before re-opening this.
-
-### Open, by category
-
-These five numbers are the whole record and nothing enumerates their members —
-no file, no ledger, no commit. The commit that wrote this section says so
-outright, and re-reading the tree for it in 2026-09-10 found nothing either. So
-they cannot be worked from: re-run the study, or work from the verified items
-below, which do name their files.
-
-- **Controls** — 10 left.
-- **brgen** — 9 left.
-- **Radius** — 6 left.
-- **amber** — 5 left.
-- **Instrument** — 4 left.
-
-### Held open deliberately
-
-**Four face transitions exceed `NO_LONG_TRANSITION`.** `face.css:380` at 1200ms,
-`:635` at 1800ms, `:867` at 400ms, `:1015` at 600ms, and `chat_upload.css:42,48`
-at 420ms each. Left alone: this is the operator's own face timing, and the rule
-caps UI transitions, not a deliberate slow reveal. No baseline records them, so
-this line is the only thing standing between them and a well-meaning fix.
-
-**Seventeen control classes still paint a visible border, and one question
-covers all of them.** `.deal-cat` at `RAILS/brgen/app/assets/stylesheets/_marketplace.scss:48`
-sets `border: 1px solid var(--border)` beside `background: var(--surface-elevated)`
-on line 47, so it carries both the fill and the line the 2026-08-04 decision
-traded away (`WIRING_NOTES.md:359,378-381`). Its six call sites are all in the
-marketplace engine — takeaway has none — and sixteen other control-like classes
-across eleven stylesheets do the same, from `.carousel-btn` to `.pager-link`. So
-this is not a one-line lint fix on one class: it is whether the 2026-08-04
-decision reaches controls that were never revisited. It changes rendering, so it
-waits for the operator.
-
-### Closed 2026-09-10, and none of the three was a defect
-
-- **A shared display-type slot stays unbuilt, and the argument is now at the
-  rule.** `_typography.scss` carries it above `main#main-content > header h1`:
-  the marketplace hero is the fleet's only opt-out and matches the id itself to
-  outrank it; lowering the shared rule to a class changes which override wins on
-  every surface that has one, and `:not()` ties rather than wins because it takes
-  its argument's specificity. An opt-out is a design decision about what display
-  type means, not a refactor.
-- **playlist's two scales are one recorded fence and one already-recorded gap.**
-  `SURFACES.md:65` has held the `--edge-*` hairlines against a shared edge scale
-  that does not exist since before this entry was written, so the line was a
-  second copy of it. `--font-mono` is the fifth face and it is deliberate — the
-  vertical is branded on the SF family, stated at the head of
-  `_vertical_playlist.scss`, and the token is scoped to `body.vertical-playlist`
-  so nothing else inherits it. Recorded in `SURFACES.md` under Fences.
-- **`WORN_TYPE.profiles.map.label_min_px` has a reader** — `MASTER/test/test_design_rules_worn_type.rb:48-71`,
-  which names it deliberately unwired and says enforcing it means measuring
-  rendered label sizes. The same test found the larger unread key,
-  `rhythm_off_max_pct`, declared in all seven profiles and read in none.
-  Instrumented where it matters; it does not need a backlog line.
+**Seventeen control classes paint a border beside a fill**, from `.deal-cat`
+(`_marketplace.scss:48`) to `.pager-link`, which the 2026-08-04 decision traded
+away (`WIRING_NOTES.md`). Whether that decision reaches controls is a rendering
+call, and the operator's. The pass's doctrine lives in `WIRING_NOTES.md`.
 
 ## From the 2026-09-01 audit
 
-- **The browser half of the gates still measures nothing unattended.** The live
-  half no longer does: `vps-deploy` runs nine gates on every deploy with
-  `GATE_REQUIRE_LIVE=1` as of 2026-09-10, on the one host where a closed port is
-  a deploy that did not come up rather than a laptop. What is still opt-in is
-  `PUB4_DEPLOY_BROWSER_GATES=1`, and the argument against making it the default
-  is in `vps-deploy` beside the flag: the box is 1GB with four apps resident and
-  `resource_guard` sheds amber and bsdports under exactly the pressure Chrome
-  adds, so a deploy that takes the site down to check the site has failed at the
-  only thing it was for. Done when the browser half runs somewhere unattended
-  that is not vm23. `GATE_STRICT_ERRORS=1` is the cheap remaining half and can
-  go into the same line the day somebody has read one ledger's worth of errored
-  gates.
-- **The 61-track crate fetch was abandoned at 2, and the staging is bigger than
-  this entry said.** `~/dilla-crate-incoming` holds two FLACs (42 MB), four fetch
-  scripts, four logs and `stems/htdemucs_ft/` with demucs output for both tracks
-  — eight wavs, 161 MB, 202 MB in all, every file dated 2026-08-31. Nothing in
-  the repo references the directory. Not closed here on purpose: those two FLACs
-  are source audio, renders reproduce and samples do not, and deleting the
-  operator's audio on an agent's judgement is the one move this repo's own
-  memory forbids. His call, and only his.
+- **The browser half of the gates runs nowhere unattended.** vm23 cannot host it
+  (Chrome under 1 GB sheds amber and bsdports; the argument sits beside
+  `PUB4_DEPLOY_BROWSER_GATES` in `vps-deploy`), so it needs a second host.
+  `GATE_STRICT_ERRORS=1` can join the deploy line once someone has read one
+  ledger's worth of errored gates.
 
 ---
 
 # Forward work
 
-Merged from `WISHLIST.md` on 2026-09-06, which is now deleted. That file held
-wishes, hypotheses and the shape a tree would take if somebody rebuilt it,
-while this one held records with a measurement behind each. Two files meant two
-places to look and two places to go stale, and the split cost more than it
-bought: a reader chasing one subject had to know which half owned it, and three
-entries above already point across the seam.
-
-What was true of the old file stays true of this section. **Every section is
-dated and says who wrote it**, because several are not by the same hand and
-disagree in places. An item leaves this section when the tree ships it, not
-when it stops being mentioned. Where a wish has been measured against the tree
-it belongs above, as a record, not here.
+Wishes and measured proposals not yet shipped; each section is dated.
 
 ## Open from the enumerations — 2026-09-09
 
-Four enumerations sat here: 112 things from 2026-08-29, twelve external
-hypotheses, two near-identical 220-item wish lists written from outside the tree,
-and 110 wishes from 2026-09-06. All 674 items were read against the tree.
-Thirty-nine declared themselves done, another fourteen proved already true on a
-grep, and the two 220-item lists were unmeasured advice — several items name gems
-this fleet does not run, among them sidekiq, CarrierWave, ransack, searchkick and
-`has_and_belongs_to_many` — so both went whole. What survived is below, each item
-naming the file it concerns and what closing it looks like.
-
-The enumerations proved their own opening claim, which is the half worth keeping:
-a finding is a hypothesis until the instrument has been checked. A second pass on
-2026-09-10 proved it again on the survivors: of sixteen items, one asserted the
-opposite of the truth, three had numbers that did not reproduce by any method,
-and two named the wrong file. Seven closed. The instrument entries closed by
-being built — `bin/operator measure --why <row>` names the members behind a number
-and checks that they add up to it, `--since <ref>` reads the recorded ceilings
-out of git so a session can diff its own effect before pushing, `bin/operator gate
---tree <TREE>` drops the stages that prove another tree, and `bin/operator rule <ID>`
-prints the declaration, whether it reaches a detector, and the definition
-verbatim with the comment that earned its exemption.
-
-Two of those closures need saying rather than deleting, because the next reader
-will otherwise re-open them. **Silent detectors were already measured**:
-`measure` has carried `rule_audit.silent` as a ratchet row all along and it
-reads 39, and `--why rule_audit.silent` now names them. Its corpus is `law/`'s
-rules over `MASTER/lib`, `law/`, `RAILS/shared` and the two hand-written
-JavaScript homes — chosen deliberately and widened once already — not the whole
-fleet, which is what `bin/operator gate` and `self_findings.registry` measure.
-**Gate cost is measured, not declared**: `gates.yml` gained a `needs` field
-consolidating runner.rb's hardcoded browser list, and refused a `cost` field on
-the ground that a declaration cannot show the failure a cost field is for. A
-gate that doubles reads the same as a gate that did not; only a history can tell
-them apart, so `runner.rb` prints each gate's measured median from the ledger
-before it starts and the ledger flags a gate whose last five runs are twice its
-earlier ones. And the deploy question the third gate entry left open is
-answered: `vps-deploy` runs nine gates on every deploy, with the cost argument
-for which nine written beside them.
-
-### STUDIO
-
-- **The dilla ENV switch census does not reproduce, by any method.** The entry
-  said 138 default off. `lib/knobs.rb` — the engine's own registry, which infers
-  type and default from source — reports 727 knobs, 286 of them flags, of which
-  80 default on, 38 carry an explicit `"0"` and 168 have no default at all: 206
-  default-off flags, 189 once `DILLA_FULL`'s eighteen are subtracted. An
-  independent regex over `dilla.rb` and `lib/*.rb` gives 475. `dilla.rb:4498`'s
-  own comment claims 156 of 405 and is stale too. The count is not the work; the
-  classification is. Done when the default-off flags are sorted into additive,
-  exclusive fork and operational, and the dead ones deleted rather than renamed —
-  `knobs.rb` is the instrument to do it with, and it already answers the type
-  half.
-
-### RAILS and MASTER
-
-- **`NO_GOD_CLASS` is the fleet's largest single piece of design debt.** It is
-  not growing: the entry that said so compared
-  `bergen_demo_seeder.rb`'s 902 raw lines against its own 834 code lines, the
-  same file measured two ways on the same day. That file is now 337 code lines —
-  the five hundred lines of literal Bergen it carried moved to
-  `bergen_demo_data.rb` and come back through `include`, and its six tests pass
-  unchanged. It still breaches, at 337 against a 300 limit, and it stays counted:
-  what is left is sixteen private methods, one per vertical, driven by one
-  `seed!`, and splitting that means ten files with one caller each — a god class
-  traded for FILE_SPRAWL.
-
-  The other two breach on public method count, not length, and each wants a
-  different cut. `brgen/app/models/conversation.rb` is 28 public methods over
-  178 code lines and is genuinely several subjects: IRC channels (`:17-104`),
-  geo rooms (`:106-132`) and unread counting (`:236-321`) are three
-  self-contained blocks with their own constants, and the last is a pure query
-  concern. `takeaway/order.rb` is 26 methods over 179 lines and is one subject in
-  three layers — a state machine, delivery and ETA, and eight pure display
-  formatters. Moving the five `*_display` methods to a presenter drops it to 21
-  and the five status aliases to a generated loop drops it to 16, so neither
-  half clears the limit alone and the real cut is the state machine.
-- **The `probe`/`check` pair is the ladder with two doors**, and both doors have
-  real callers — `RUNBOOK.md` and `bootstrap_docs.rb` for probe, `CLAUDE.md` and
-  thirty `PATH_OWNERSHIP.yml` rows for check. `probe`'s `ci` entry shells
-  `bin/ci` which shells `check --profile=ci`, and `check`'s `full` profile shells
-  `probe all`. `gate`, `audit`, `doctor` and `check` are four genuinely distinct
-  things, not eleven. The two folds this entry used to propose — `nsaudit` and
-  `dogfood` into `check` — are decided against: `bin/probe` carries the argument
-  beside them, and it is the bare top-level `ROOT` that makes a subprocess the
-  safe shape.
+- **`NO_GOD_CLASS`.** `bergen_demo_seeder.rb` stays at 337 against 300: sixteen
+  private per-vertical methods under one `seed!`, and splitting it is ten
+  one-caller files. `brgen/app/models/conversation.rb` (IRC channels, geo rooms,
+  unread counting) and `takeaway/order.rb` (state machine, delivery and ETA,
+  display formatters) are several subjects each and want splitting.
 
 ## From the awesome-list horizon scan — 2026-09-11
 
-Ten curated lists were read against the tree: `awesome-ruby`, `ruby-bookmarks`,
-`analysis-tools-dev/static-analysis`, `awesome-rails`, two `awesome-hotwire`
-forks, `awesome-css`, `awesome-html5`, `awesome-markdown`, two
-`awesome-openbsd` lists and `awesome-selfhosted`. Almost everything they name
-this repo either has, has decided against with a measurement, or cannot run on
-one 1 GB box. What survived is below, and every item was checked against the
-tree before it was written down — four candidates died on that check, including
-one this scan first reported as missing and then found in all four
-`Gemfile.lock`s.
-
-- **Autofix classifies by transform, not yet per rule.** The tier landed: a
-  transform that deletes waits for `MASTER_AUTOFIX=1`, and one that adds runs
-  unattended, because an addition shows itself in the diff it makes. Only four
-  of 242 rules declare a transform at all, so today that is
-  `remove_immediate_dead_code` on one side and three `add_*` on the other, and
-  the `prediction_engine` thresholds it replaced could refuse nothing — they
-  were keyed `null_usage`, `abbreviation` and `nesting_depth`, three words
-  naming no rule, so every lookup missed and every rule came back allowed.
-  What remains is the per-rule half. `Scan::Finding` declares `reversibility`
-  and `blast_radius`, `semantic_rules.rb` and `meta_rules.rb` populate them,
-  and nothing under `lib/fix` reads either. RuboCop and Standard split the
-  command instead — `--fix` against `--fix-unsafely`. The work is classifying
-  242 rules, not writing the field, and it is worth a session that takes the
-  classification as its subject rather than a pass that guesses.
-
-- **relayd is restarted every time an app comes back, and relayctl can do the
-  same job without it.** All four `rc.d` scripts run `rcctl restart relayd` once
-  their app answers `/up`, and `start_all_apps.sh` runs it again; `vps-deploy
-  all` therefore drops the single `listen on 0.0.0.0 port 443 tls` five times in
-  one pass, for every host on the box. The nine-minute outage of 2026-08-10 was
-  that restart. `relayctl(8)` has `table disable` / `table enable` and `poll`
-  ("Schedule an immediate check of all hosts"), which is exactly the kick the
-  comment in each script asks for and touches no listener; bracketing the
-  restart with `table disable` also stops relayd recording a booting app as
-  failed. Cost: base tools, three lines per script. Worth doing once the man
-  pages for `relayd.conf(5)` and `relayctl(8)` have been read from vm23 and one
-  app has been bracketed by hand. `relayctl reload` — not restart — is the
-  answer for a genuine `relayd.conf` change.
-
-- **162 `scan: intentional` markers, in 95 files, and nothing checks that any of
-  them still excuses something.** `law/practice.rb`'s `EXEMPTIONS_EXPIRE` says
-  an opt-out outliving its subject is a hole in a gate nobody can see, and it is
-  a `practice` rule, so it carries no detector. One half of it is detectable:
-  scan the file again with the marker stripped, and a marker whose line draws no
-  finding is stale. erb_lint ships this as `NoUnusedDisable`. Cost: no
-  dependency, one pass of an existing scanner and one ratchet row. Worth doing
-  now — the scanner is already there, the law is already declared, and the
-  number is unaudited.
-
-- **The resource guard sheds per process and measures per box.**
-  `resource_guard.sh` logs `load`, `mem_avail` and `shed` per tick and decides
-  which of amber and bsdports to drop, but never reads a single process's RSS,
-  so the log cannot say which daemon was the cost. Cost: `ps -o rss= -p` per
-  app, three lines, into the same history line the thresholds were already
-  recalibrated against. Worth doing before the thresholds are touched again;
-  8/14 and `LOAD_RESTORE` 2.0 were set against an aggregate.
-
-- **The `rails` login.conf class caps datasize at 4096M on a 1 GB box.**
-  brgen, amber and bsdports all inherit it, so the limit is not one.
-  `login.conf(5)` limits are honoured because `rc_exec` runs the daemon through
-  `su(1)` under a class named after the rc.d script. A realistic per-app
-  `datasize-cur` turns a leaking app into a `NoMemoryError` inside that app
-  rather than a swap storm that takes the box. `openfiles-cur` inherits 128 from
-  `daemon`, which is low for a fiber-per-connection Falcon. Cost: two lines per
-  class. Worth doing once each app's steady-state RSS has been measured on
-  vm23 — a number guessed low kills a healthy app, which is worse than the
-  swap.
-
-- **relayd's listen backlog is the default 10.** `relayd.conf(5)`: "The backlog
-  option is 10 by default, is limited to 512 and capped by `kern.somaxconn`."
-  Ten pending connections in front of four apps that take 30-40s to boot cold.
-  Cost: one word. Worth doing when someone can show connections being refused
-  during a restart rather than merely being slow.
-
-- **Two i18n checks the contract tests do not carry.** `locale_contract_test`
-  covers duplicate keys, one home per key, root naming and nb/en parity;
-  `i18n_resolution_test` covers every defaultless `t()` resolving. Absent: a key
-  defined in a locale file and referenced nowhere, and interpolation arguments
-  agreeing across locales — `%{count}` in `nb` and missing in `en` renders the
-  literal. i18n-tasks is the gem for both and is the wrong shape here: it needs
-  search paths declared for six mounted engines and `pub4-shared` or it reports
-  every engine key as unused. Cost: about thirty lines in each existing test
-  file, no dependency. Worth doing when a translation_missing or a bare
-  `%{count}` is seen on a page.
-
-- **Cross-engine references are unmeasured, and there is one.** Measured
-  2026-09-11 over all six engines under `brgen/engines`: one engine reads
-  another's constant — `maps/app/controllers/maps/home_controller.rb:75` reads
-  `Takeaway::Order`, deliberately, for the courier layer — and zero associations
-  cross an engine boundary. `isolate_namespace` does not prevent either.
-  Packwerk exists to prevent both and carries a C extension through
-  `better_html`. Cost: one row in `gates.yml` and a source gate reading text,
-  shipping with that one line as its declared exemption. Worth doing while the
-  count is one; at ten it is a cleanup rather than a line held.
-
-- **Snapshots never leave the disk they protect.**
-  `Shared::DatabaseSnapshotJob` writes `VACUUM INTO` copies beside the database
-  and says so in its own comment; `restore_backups.sh` restores from
-  `/var/backups/litestream/`, which `OPENBSD/DECISIONS.md` records as empty and
-  unfillable, litestream being Go and absent from ports. So the box has
-  same-disk snapshots and a restore path that points at nothing. Cost: base
-  tools — `openrsync -e ssh` is already used by every deploy, and the snapshots
-  are gzipped. Worth doing as soon as there is somewhere to put them; the
-  destination is an operator decision and the data is irreplaceable.
-
-- **Findings have no portable form.** `Scan::Finding` carries `rule_id`,
-  `message`, `line`, `severity` and `fix` — everything SARIF needs — and
-  `law/`'s rules carry the two fixtures that would fill a SARIF rule's help
-  text. 242 rules are currently legible only to this repo's own reporters. Cost:
-  about sixty lines of Ruby, no dependency. Worth doing only if the corpus is
-  ever meant to be read by something outside pub4; there is no consumer today,
-  and building one for a reader that does not exist is the defect this file
-  records most often.
-
-- **An HTML-aware ERB parser is arriving whether or not we choose it.** Herb
-  parses HTML and ERB into one tree and uses Prism for the Ruby inside the tags;
-  GitHub runs it on the monolith and there is an open PR to make it Rails'
-  HTML-aware ERB implementation. It is a C extension, so under the argument this
-  tree already used against tree-sitter it is a reject — but if Rails adopts it,
-  it lands on vm23 as a dependency and the argument changes from "do we want a
-  native parser" to "we have one, do `law/html.rb`'s regexes still earn their
-  keep". Cost: nothing yet. Worth revisiting when that PR merges, and not
-  before.
+- **Autofix classifies by transform, not per rule.** `Scan::Finding` declares
+  `reversibility` and `blast_radius`, `semantic_rules.rb` and `meta_rules.rb` fill
+  them, and nothing under `lib/fix` reads either.
+- **The resource guard sheds per process and measures per box.** Add each app's
+  RSS (`ps -o rss= -p`) to the history line `resource_guard.sh` already writes,
+  before the thresholds move again.
+- **Cross-engine references are unmeasured.** One engine reads another's
+  constant (`maps/home_controller.rb` reads `Takeaway::Order`, deliberately);
+  a source gate holding that as its one exemption keeps it at one.
 
 ## From the gem and ruby_llm audit — 2026-09-11
 
-Two questions were asked of the tree: what hand-rolled logic belongs to a gem,
-and what does MASTER hand-roll that the gem it already loads provides. Ten
-declared-and-never-required gems came off both lockfiles, the swarm reviewer
-stopped reading an unparseable reply as an approval, and cost stopped being one
-flat rate for every model. What follows is what the audit found and did not
-close.
-
-- **`relative_luminance` omits the gamma decode.**
-  `lib/review/scan/source_masking.rb:318` computes luma and calls it relative
-  luminance, so the `< 0.4` dark-background threshold beside it is calibrated
-  against the wrong quantity. `RAILS/gates/support/design_metrics/contrast.rb:34`
-  does the same named quantity correctly. Two implementations, one wrong.
-  Correcting it moves gate output, so it needs a recalibrated threshold in the
-  same change — otherwise the fix reads as a regression.
-
-- **MASTER pins ruby_llm `~> 1.3` and locks 1.13.2; stable is 1.16.0.** Four
-  things MASTER hand-rolls are in the version already locked. `with_schema`
-  takes a plain Hash and returns a parsed one, against six regex extractors.
-  `Model::Info#function_calling?` and `#supports_vision?` answer what
-  `TOOL_CAPABLE_RE`, `VISION_RE` and `NON_VISION_RE` are built to guess.
-  `request_timeout`, `max_retries` and `retry_backoff_factor` are never set in
-  `lib/boot/runtime.rb`, so ruby_llm retries three times inside each
-  circuit-breaker call and the breaker counts one. `with_tools(*t, calls: n)`
-  caps tool rounds, where `REACT_MAX_STEPS` guards only the emulated path, so
-  native tool calling runs uncapped. Each is a separate change with its own
-  test; the pin moves last.
-
-- **`KeyRotator.configure_current!` mutates process-wide `RubyLLM.configure`
-  while the fix loop runs rule groups in threads.** `RubyLLM.context { }` gives
-  per-call isolation and is in 1.13.2. The race is a wrong key on a concurrent
-  call, which reads as a provider error rather than as a race.
-
-- **A `:free` OpenRouter model is charged the flat rate.** Cost now reads the
-  registry, but the registry does not carry `...:free` ids, so they fall back
-  to $15 per million — the most expensive rate in the catalogue, for tokens
-  that cost nothing. Pricing them at zero is right only if `:free` is verified
-  per id rather than read off the suffix.
-
-- **`lib/review/embeddings.rb` is hand-written Net::HTTP against Ollama**, and
-  1.13.2 ships an ollama provider with `RubyLLM.embed`.
-
-- **`ruby_llm-test`, `-evaluations` and `-tribunal` are worth evaluating** —
-  provider mocking for the suite, and a quality framework for the council.
-  `ruby_llm-schema` is deprecated in favour of schematist and should not be
-  adopted; pass a Hash. Skip `-resilience`, `-top_secret`, `-agents`, `-team`
-  and `-template`: MASTER owns richer versions of each, and its circuit breaker
-  is dollar-budget-aware and survives a restart, where the gem version is
-  neither.
-
-- **`lib/review/scan/rules/lexical_rules.rb` re-implements about fifteen
-  RuboCop cops in 369 lines**, while `external_linter_rules.rb:47` shells out
-  to RuboCop. Real duplication, but each rule id is a name the law addresses,
-  so replacing them renames the law. Not small.
-
-- **Four hand-built RIFF headers in dilla** — `dilla.rb:25123`, `:34192`,
-  `lib/devices.rb:611`, `bin/sine_stream.rb:1670` — against `wavefile`, which
-  is already declared and already used at `lib/music_gems.rb:231`. Container
-  bytes only, identical PCM, so it changes no sound.
-
-- **`Route#suggest` carries a Levenshtein matrix**
-  (`lib/cli/stages/route.rb:53-67`) where `DidYouMean::SpellChecker` is a
-  stdlib default gem Ruby loads at boot. Verified to return the same answers
-  on the command list. No dependency, fifteen lines.
-
-Three things were checked and left hand-rolled on purpose.
-`RAILS/gates/support/cdp_framing.rb` implements RFC 6455 in 162 lines because
-gates run under bare `ruby` with no bundle, ferrum lives only inside the
-per-app bundles, and the gates need `host-resolver-rules`, which ferrum does
-not expose. `lib/trace/event_bus.rb` is not wisper: wisper broadcasts to
-listeners, where this does glob topic matching, redaction, Fiber-scoped
-conversation stamping and telemetry spans. And `estimate_tokens` stays
-`bytesize / 4`, because the accurate answer is `tiktoken_ruby`, a Rust native
-extension, and this repo deploys to OpenBSD.
+- **ruby_llm 1.13.2 already provides what MASTER hand-rolls.** `request_timeout`
+  and `max_retries` are unset in `lib/boot/runtime.rb`, so the gem retries inside
+  each circuit-breaker call; native tool calling is uncapped where
+  `REACT_MAX_STEPS` caps only the emulated path; `Model::Info` answers what
+  `TOOL_CAPABLE_RE` and `VISION_RE` guess; `with_schema` would replace six regex
+  extractors; `lib/review/embeddings.rb` is Net::HTTP beside `RubyLLM.embed`.
+  The `~> 1.3` pin moves last, on the box.
+- **`KeyRotator.configure_current!` mutates process-wide `RubyLLM.configure`**
+  while the fix loop runs rule groups in threads; `RubyLLM.context` isolates a
+  call.
+- **A `:free` OpenRouter model is charged $15 per million**, because the registry
+  lacks `:free` ids. The provider catalog carries per-id prices; zero only when it
+  says so.
 
 ## The refinement inventory — opened 2026-09-11
 
