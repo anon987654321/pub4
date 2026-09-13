@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nb">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1, viewport-fit=cover">
-<title>brgen — offline</title>
+<title>brgen — frakoblet</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; background: #000; color: #f5f0e8; font: 400 16px/1.5 "Inter", system-ui, sans-serif; }
@@ -22,18 +22,18 @@ button:active { transform: scale(.98); }
 </style>
 </head>
 <body>
-<div>brgen</div>
-<p id="status">you're offline — reconnect to continue</p>
-<button type="button" id="retry">retry</button>
+<header>brgen</header>
+<p id="status">du er frakoblet — koble til igjen for å fortsette</p>
+<button type="button" id="retry">prøv igjen</button>
 <script>
 document.getElementById('retry').addEventListener('click', function() {
   var status = document.getElementById('status');
-  status.textContent = 'retrying…';
+  status.textContent = 'prøver igjen…';
   fetch('/', { cache: 'no-store' }).then(function(res) {
     if (res.ok) { location.reload(); return; }
-    status.textContent = 'still offline — check connection';
+    status.textContent = 'fortsatt frakoblet — sjekk tilkoblingen';
   }).catch(function() {
-    status.textContent = 'still offline — check connection';
+    status.textContent = 'fortsatt frakoblet — sjekk tilkoblingen';
   });
 });
 window.addEventListener('online', function() { location.reload(); });

@@ -1,5 +1,10 @@
 "use strict";
 
+// Locale text from the view (window.MASTER_T); the fallback is what a page without it shows.
+function gateT(key, fallback) {
+  return window.MASTER_T ? window.MASTER_T(key, fallback) : fallback;
+}
+
 const SMOKE_MESSAGES = /^(ping|pong|health|up)$/i;
 const POLL_MS = 3000;
 const POLL_MS_FAST = 1000;
@@ -28,11 +33,12 @@ function setReady(isReady, detail) {
   if (input) {
     input.disabled = !isReady;
     if (!input.dataset.defaultPlaceholder) input.dataset.defaultPlaceholder = input.placeholder || "ask anything";
-    input.placeholder = isReady ? input.dataset.defaultPlaceholder : "master warming up…";
+    input.placeholder = isReady ? input.dataset.defaultPlaceholder : gateT("warming_up_placeholder", "master warming up…");
   }
   const ui = document.getElementById("ui-status");
-  if (ui && !isReady) ui.textContent = "master warming up";
-  else if (ui && isReady && (ui.textContent === "master warming up" || ui.textContent === "master still starting…")) {
+  const warming = gateT("warming_up", "master warming up");
+  if (ui && !isReady) ui.textContent = warming;
+  else if (ui && isReady && (ui.textContent === warming || ui.textContent === gateT("still_starting", "master still starting…"))) {
     ui.textContent = "";
   }
   if (isReady && detail?.model) {
@@ -56,7 +62,7 @@ function ensureRetryBootButton() {
   btn.id = "master-retry-boot";
   btn.type = "button";
   btn.className = "tool master-retry-boot";
-  btn.textContent = "retry boot";
+  btn.textContent = gateT("retry_boot", "retry boot");
   btn.addEventListener("click", () => {
     pollCount = 0;
     if (pollTimer) clearTimeout(pollTimer);
@@ -64,7 +70,7 @@ function ensureRetryBootButton() {
     window.MASTER?.boot?.transition?.("RECOVERING", { source: "retry_boot_button" });
     pollTick();
     const ui = document.getElementById("ui-status");
-    if (ui) ui.textContent = "retrying boot…";
+    if (ui) ui.textContent = gateT("retrying_boot", "retrying boot…");
   });
   const shell = document.getElementById("zsh") || document.body;
   shell.appendChild(btn);
@@ -73,9 +79,9 @@ function ensureRetryBootButton() {
 
 function setWarmupStalled(reason) {
   const ui = document.getElementById("ui-status");
-  if (ui) ui.textContent = "master still starting…";
+  if (ui) ui.textContent = gateT("still_starting", "master still starting…");
   const errLive = document.getElementById("error-live");
-  if (errLive) errLive.textContent = reason || "master warming up — retry shortly";
+  if (errLive) errLive.textContent = reason || gateT("warming_retry", "master warming up — retry shortly");
   ensureRetryBootButton();
   window.dispatchEvent(new CustomEvent("master:container-timeout", { detail: { reason } }));
 }
@@ -84,7 +90,7 @@ async function pollStatus() {
   try {
     const resp = await fetch("/runtime/status");
     if (!resp.ok) {
-      if (resp.status === 503) setWarmupStalled("master container booting");
+      if (resp.status === 503) setWarmupStalled(gateT("container_booting", "master container booting"));
       return false;
     }
     const data = await resp.json();
@@ -99,9 +105,10 @@ async function pollStatus() {
 function blockingSend(text) {
   if (window.MASTER_CONTAINER_READY !== false) return false;
   if (SMOKE_MESSAGES.test(String(text || "").trim())) return false;
-  window._chatOnDmesg?.("master warming up");
+  const warming = gateT("warming_up", "master warming up");
+  window._chatOnDmesg?.(warming);
   const errLive = document.getElementById("error-live");
-  if (errLive) errLive.textContent = "master warming up";
+  if (errLive) errLive.textContent = warming;
   return true;
 }
 
@@ -125,7 +132,7 @@ async function pollTick() {
   const ready = await pollStatus();
   if (ready) return;
   if (pollCount >= MAX_POLLS) {
-    setWarmupStalled("master did not become ready — reload or retry in a minute");
+    setWarmupStalled(gateT("not_ready", "master did not become ready — reload or retry in a minute"));
     return;
   }
   schedulePollTick();

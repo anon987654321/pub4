@@ -1,5 +1,10 @@
 "use strict";
 
+// Locale text from the view (window.MASTER_T); the fallback is what a page without it shows.
+function chatT(key, fallback, vars) {
+  return window.MASTER_T ? window.MASTER_T(key, fallback, vars) : fallback;
+}
+
 function escapeHtml(str) {
   return str.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
@@ -160,8 +165,8 @@ function appendMsg(role, text = '') {
     cur.className = 'cursor';
     const copyBtn = document.createElement('button');
     copyBtn.className = 'msg-copy';
-    copyBtn.title = 'Copy';
-    copyBtn.setAttribute('aria-label', 'Copy response');
+    copyBtn.title = chatT('copy', 'Copy');
+    copyBtn.setAttribute('aria-label', chatT('copy_response', 'Copy response'));
     copyBtn.addEventListener('click', () => {
       navigator.clipboard?.writeText(body.textContent || '').then(() => {
         copyBtn.textContent = '\u2713';
@@ -174,7 +179,7 @@ function appendMsg(role, text = '') {
     d.appendChild(copyBtn);
     const actions = document.createElement('div');
     actions.className = 'msg-actions';
-    actions.innerHTML = '<button type="button" data-act="like" title="Rate up">👍</button><button type="button" data-act="retry" title="Retry">🔁</button><button type="button" data-act="delete" title="Delete">🗑</button><button type="button" data-act="simpler" title="Explain simpler">⇣</button><button type="button" data-act="deeper" title="Go deeper">⇡</button>';
+    actions.innerHTML = `<button type="button" data-act="like" title="${escapeHtml(chatT('rate_up', 'Rate up'))}">👍</button><button type="button" data-act="retry" title="${escapeHtml(chatT('retry', 'Retry'))}">🔁</button><button type="button" data-act="delete" title="${escapeHtml(chatT('delete', 'Delete'))}">🗑</button><button type="button" data-act="simpler" title="${escapeHtml(chatT('simpler', 'Explain simpler'))}">⇣</button><button type="button" data-act="deeper" title="${escapeHtml(chatT('deeper', 'Go deeper'))}">⇡</button>`;
     actions.addEventListener('click', (ev) => {
       const act = ev.target?.dataset?.act;
       if (!act) return;
@@ -266,10 +271,10 @@ window._chatOnChunk = (raw) => {
   _chunkCount++;
   if (/booting/i.test(raw) && /retry/i.test(raw)) {
     const ui = document.getElementById('ui-status');
-    if (ui) ui.textContent = 'master warming up — retry shortly';
+    if (ui) ui.textContent = chatT('warming_retry', 'master warming up — retry shortly');
     const errLive = document.getElementById('error-live');
-    if (errLive) errLive.textContent = 'master warming up';
-    _streamEl.textContent = 'master is still starting — try again in a moment.';
+    if (errLive) errLive.textContent = chatT('warming_up', 'master warming up');
+    _streamEl.textContent = chatT('still_starting_reply', 'master is still starting — try again in a moment.');
     return;
   }
   if (raw.startsWith('ERROR:')) {
@@ -404,7 +409,7 @@ window._chatOnCompaction = (payload) => {
   note.setAttribute('role', 'note');
   const title = document.createElement('div');
   title.className = 'compaction-title';
-  title.textContent = 'context compacted';
+  title.textContent = chatT('context_compacted', 'context compacted');
   const body = document.createElement('pre');
   body.className = 'compaction-body';
   body.textContent = payload.summary;
@@ -626,8 +631,8 @@ document.querySelectorAll('.tool').forEach(btn => {
     root.id = 'cmd-palette';
     root.setAttribute('role', 'dialog');
     root.setAttribute('aria-modal', 'true');
-    root.setAttribute('aria-label', 'Command palette');
-    root.innerHTML = '<div id="cmd-palette-panel"><input id="cmd-palette-input" type="search" autocomplete="off" spellcheck="false" placeholder="command or action" aria-label="Filter commands"><ul id="cmd-palette-list" role="listbox"></ul></div>';
+    root.setAttribute('aria-label', chatT('command_palette', 'Command palette'));
+    root.innerHTML = '<div id="cmd-palette-panel"><input id="cmd-palette-input" type="search" autocomplete="off" spellcheck="false" placeholder="' + escapeHtml(chatT('command_placeholder', 'command or action')) + '" aria-label="' + escapeHtml(chatT('filter_commands', 'Filter commands')) + '"><ul id="cmd-palette-list" role="listbox"></ul></div>';
     document.body.appendChild(root);
   }
 
@@ -763,13 +768,13 @@ document.querySelectorAll('.tool').forEach(btn => {
   if (!panel) {
     panel = document.createElement('aside');
     panel.id = 'chat-history-panel';
-    panel.setAttribute('aria-label', 'Session history');
+    panel.setAttribute('aria-label', chatT('session_history', 'Session history'));
     panel.innerHTML =
       '<header class="history-head">' +
-      '<span class="history-title">history</span>' +
-      '<button type="button" id="history-close" aria-label="Close history">×</button>' +
+      '<span class="history-title">' + escapeHtml(chatT('history', 'history')) + '</span>' +
+      '<button type="button" id="history-close" aria-label="' + escapeHtml(chatT('close_history', 'Close history')) + '">×</button>' +
       '</header>' +
-      '<input id="history-search" type="search" autocomplete="off" spellcheck="false" placeholder="search turns" aria-label="Search history">' +
+      '<input id="history-search" type="search" autocomplete="off" spellcheck="false" placeholder="' + escapeHtml(chatT('search_turns', 'search turns')) + '" aria-label="' + escapeHtml(chatT('search_history', 'Search history')) + '">' +
       '<ul id="history-list" role="list"></ul>';
     document.body.appendChild(panel);
   }
@@ -896,8 +901,9 @@ document.querySelectorAll('.tool').forEach(btn => {
     const status = document.getElementById('ui-status');
     if (status) {
       const prev = status.textContent;
-      status.textContent = 'exported';
-      setTimeout(() => { if (status.textContent === 'exported') status.textContent = prev; }, 900);
+      const exported = chatT('exported', 'exported');
+      status.textContent = exported;
+      setTimeout(() => { if (status.textContent === exported) status.textContent = prev; }, 900);
     }
     window.MASTERVisual?.event?.('session:export', { topology: 'terrain', entropy: 0.1, confidence: 0.95, mode: 'export' });
   }
@@ -970,7 +976,7 @@ document.querySelectorAll('.tool').forEach(btn => {
       chip.id = RETRY_ID;
       chip.type = 'button';
       chip.className = 'stream-retry';
-      chip.textContent = 'retry';
+      chip.textContent = chatT('stream_retry', 'retry');
       chip.addEventListener('click', () => {
         const last = window._lastUserMessageText || '';
         if (last && window.sendMessage) window.sendMessage(last);
@@ -978,7 +984,7 @@ document.querySelectorAll('.tool').forEach(btn => {
       });
       document.getElementById('zsh')?.appendChild(chip);
     }
-    announceError(reason.includes('rate') ? 'slow down — rate limit' : 'stream failed — retry?');
+    announceError(reason.includes('rate') ? chatT('rate_limited', 'slow down — rate limit') : chatT('stream_failed', 'stream failed — retry?'));
     window.MASTERVisual?.event?.('chat:retry', { topology: 'serpent', entropy: 0.5, confidence: 0.4, mode: 'retry' });
   };
 
@@ -990,7 +996,7 @@ document.querySelectorAll('.tool').forEach(btn => {
     details.className = 'msg-collapse';
     details.open = true;
     const summary = document.createElement('summary');
-    summary.textContent = `response (${text.length} chars)`;
+    summary.textContent = chatT('long_response', 'response (%{n} chars)', { n: text.length });
     const inner = document.createElement('div');
     inner.className = 'msg-body';
     inner.innerHTML = bodyEl.innerHTML;
@@ -1022,9 +1028,9 @@ document.querySelectorAll('.tool').forEach(btn => {
         inputEl = document.createElement('input');
         inputEl.id = 'log-search';
         inputEl.type = 'search';
-        inputEl.placeholder = 'filter visible log';
+        inputEl.placeholder = chatT('filter_log', 'filter visible log');
         inputEl.className = 'log-search';
-        inputEl.setAttribute('aria-label', 'Filter chat log');
+        inputEl.setAttribute('aria-label', chatT('filter_log_aria', 'Filter chat log'));
         inputEl.addEventListener('input', () => {
           const q = inputEl.value.trim().toLowerCase();
           log?.querySelectorAll('.message').forEach((msg) => {

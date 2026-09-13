@@ -19,8 +19,13 @@ require "yaml"
 class AuthTier
   PUBLIC_PATHS = %w[/up /health /ingress/health /manifest.json /icon.png /icon.svg /sw.js /face.css /face.js].freeze
   PUBLIC_PREFIX = %w[/assets/].freeze
+  # A seeded token is 48 random bytes (64 urlsafe-base64 characters). Any stored
+  # token of at least 32 bytes (43 characters) is kept rather than rotated, so a
+  # token seeded before the size rose still works. MasterWebToken::MIN_LENGTH
+  # must equal MIN_TOKEN_LENGTH; test/services/master_web_token_test.rb pins
+  # the pair.
   TOKEN_BYTES = 48
-  MIN_TOKEN_LENGTH = 43 # 32 random bytes encoded as urlsafe base64.
+  MIN_TOKEN_LENGTH = 43
   COOKIE_NAME = "master_session"
   COOKIE_MAX_AGE = 60 * 60 * 24 * 30
 

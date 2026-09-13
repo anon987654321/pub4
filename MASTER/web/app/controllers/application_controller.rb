@@ -12,24 +12,25 @@ class ApplicationController < ActionController::Base
   AUTHENTICATED_ACTIONS = %i[history live metrics metrics_prometheus].freeze
   TTS_SYNTH_ACTIONS = %i[show].freeze
   TTS_POLL_ACTIONS = %i[status stream].freeze
-  CHAT_RATE_LIMIT = 30  # requests per 60s per IP
-  CHAT_WINDOW_S   = 60
-  TTS_RATE_LIMIT  = 30
-  TTS_WINDOW_S    = 60
-  # status/stream are cheap, read-only progress polls — pollTTSJob calls status
-  # every 250ms-1.5s per in-flight job, so a couple of concurrent utterances
-  # legitimately produce dozens of polls per minute. They used to share
-  # TTS_RATE_LIMIT with `show` (the actual synthesis request); polling for an
-  # existing job isn't synthesis abuse, and a 429 here made the client's
-  # pollTTSJob throw and silently fall back to the browser's native voice —
-  # same failure mode as the enqueue race, different trigger. Give polling its
-  # own, much larger budget.
-  TTS_POLL_RATE_LIMIT = 300
-  TTS_POLL_WINDOW_S   = 60
-  WEB_READ_RATE_LIMIT  = 120
-  WEB_READ_WINDOW_S    = 60
-  WEB_WRITE_RATE_LIMIT = 60
-  WEB_WRITE_WINDOW_S   = 60
+  # data/security.yml#web_rate_limits is the source; these literals are the
+  # fallback for a checkout without it, as IngressController does for ingress.
+  WEB_RATE_LIMIT_DEFAULTS = {
+    chat: [30, 60], tts: [30, 60], tts_poll: [300, 60], read: [120, 60], write: [60, 60],
+  }.freeze
+
+  # [per_window, window_seconds] for one budget.
+  def self.web_rate_limit(name)
+    per, window = WEB_RATE_LIMIT_DEFAULTS.fetch(name)
+    row = web_rate_limits_config[name.to_s] || {}
+    [Integer(row["per_window"] || per), Integer(row["window_seconds"] || window)]
+  end
+
+  def self.web_rate_limits_config
+    @web_rate_limits_config ||= (Master.load_yaml(Master.data_path("security.yml")) || {}).fetch("web_rate_limits", {})
+  rescue StandardError => e
+    Master::Ground::Swallow.log(e, context: "ApplicationController.web_rate_limits", severity: :load_bearing)
+    {}
+  end
 
   before_action :set_locale
   before_action :set_html_no_store, if: -> { request.format.html? }
@@ -231,26 +232,26 @@ class ApplicationController < ActionController::Base
   end
 
   def enforce_chat_rate_limit
-    enforce_rate_limit!("master:rl:chat:#{request.remote_ip}", limit: CHAT_RATE_LIMIT, window: CHAT_WINDOW_S)
+    enforce_rate_limit!("master:rl:chat:#{request.remote_ip}", *self.class.web_rate_limit(:chat))
   end
 
   def enforce_tts_rate_limit
-    enforce_rate_limit!("master:rl:tts:#{request.remote_ip}", limit: TTS_RATE_LIMIT, window: TTS_WINDOW_S)
+    enforce_rate_limit!("master:rl:tts:#{request.remote_ip}", *self.class.web_rate_limit(:tts))
   end
 
   def enforce_tts_poll_rate_limit
-    enforce_rate_limit!("master:rl:tts:poll:#{request.remote_ip}", limit: TTS_POLL_RATE_LIMIT, window: TTS_POLL_WINDOW_S)
+    enforce_rate_limit!("master:rl:tts:poll:#{request.remote_ip}", *self.class.web_rate_limit(:tts_poll))
   end
 
   def enforce_web_read_rate_limit
-    enforce_rate_limit!("master:rl:web:read:#{request.remote_ip}", limit: WEB_READ_RATE_LIMIT, window: WEB_READ_WINDOW_S)
+    enforce_rate_limit!("master:rl:web:read:#{request.remote_ip}", *self.class.web_rate_limit(:read))
   end
 
   def enforce_web_write_rate_limit
-    enforce_rate_limit!("master:rl:web:write:#{request.remote_ip}", limit: WEB_WRITE_RATE_LIMIT, window: WEB_WRITE_WINDOW_S)
+    enforce_rate_limit!("master:rl:web:write:#{request.remote_ip}", *self.class.web_rate_limit(:write))
   end
 
-  def enforce_rate_limit!(key, limit:, window:)
+  def enforce_rate_limit!(key, limit, window)
     count = increment_rate_limit!(key, window:)
     return if count <= limit
 

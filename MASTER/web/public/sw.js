@@ -1,14 +1,15 @@
 const CACHE_VERSION_MATCH = self.location.search.match(/[?&]v=([^&]+)/);
 const CACHE_VERSION = CACHE_VERSION_MATCH ? CACHE_VERSION_MATCH[1] : 'v2';
-const CACHE_NAME = `brgen-${CACHE_VERSION}-assets`;
+const CACHE_NAME = `master-${CACHE_VERSION}-assets`;
 const OFFLINE_URL = '/offline.html';
-// Precache only shell assets that are stable across deploys. Digested /assets/*
+// Precache only shell assets that are stable across deploys. /manifest.json is
+// pwa#manifest through the route's optional format, not a static file. Digested /assets/*
 // URLs are cached opportunistically on successful fetch (network-first below).
 const STATIC_ASSETS = [
   OFFLINE_URL,
   '/manifest.json'
 ];
-const DYNAMIC_PREFIXES = ['/chat/', '/canvas/', '/events/', '/runtime/', '/bridge/', '/dashboard/'];
+const DYNAMIC_PREFIXES = ['/chat/', '/canvas/', '/events/', '/runtime/', '/dashboard/'];
 
 self.addEventListener('install', e => {
   e.waitUntil(

@@ -14,7 +14,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>brgen</title>
+  <title><%= t("face.title") %></title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23030303'/%3E%3Ccircle cx='16' cy='16' r='7' fill='%23fff'/%3E%3C/svg%3E">
   <link rel="manifest" href="<%= pwa_manifest_path(format: :json) %>">
   <link rel="apple-touch-icon" href="<%= asset_path("icon.png") %>">
@@ -51,6 +51,11 @@
     window.MASTER_VOICE_POLICY = <%= raw Master::Voice::Policy.browser_payload.to_json %>;
     window.MASTER_SOUL_SUMMARY = "persona <%= persona&.name || 'anchor' %>; voice <%= Master::Voice::Policy.neural_voice %> (TTS fixed; persona affects text only); constitutional face";
     window.MASTER_RUNTIME = <%= raw Master::Ground::RuntimeCatalog.web_boot_payload_minimal.to_json %>;
+    window.MASTER_I18N = <%= raw t("face.js").to_json %>;
+    window.MASTER_T = function (key, fallback, vars) {
+      var text = window.MASTER_I18N && typeof window.MASTER_I18N[key] === "string" ? window.MASTER_I18N[key] : fallback;
+      return vars ? text.replace(/%\{(\w+)\}/g, function (_, name) { return vars[name]; }) : text;
+    };
   </script>
   <link rel="preload" href="<%= asset_path("face.css") %>" as="style">
   <%# No prefetch of face.js or THREE — on a 1-CPU VPS it competes with primer tap on the main thread. %>
@@ -117,10 +122,6 @@
     </svg>
     <span class="sr-only" data-mic-state-text></span>
   </div>
-  <div id="yt-player-a" aria-hidden="true" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none"></div> <%# scan: intentional — the radio stash is positioned inline so no stylesheet can accidentally reveal it %>
-  <div id="yt-player-b" aria-hidden="true" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none"></div> <%# scan: intentional — the radio stash is positioned inline so no stylesheet can accidentally reveal it %>
-  <iframe id="yt-fallback-a" src="about:blank" title="Radio A" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay;encrypted-media" style="position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none"></iframe> <%# scan: intentional — the radio stash is positioned inline so no stylesheet can accidentally reveal it %>
-  <iframe id="yt-fallback-b" src="about:blank" title="Radio B" aria-hidden="true" tabindex="-1" width="1" height="1" frameborder="0" allow="autoplay;encrypted-media" style="position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none"></iframe> <%# scan: intentional — the radio stash is positioned inline so no stylesheet can accidentally reveal it %>
   <div id="tts-live" class="sr-only" aria-live="polite" aria-atomic="true"></div>
   <%# Small synchronous prerequisite: every deferred ecology/worker module and
       the post-primer face import may assume window.ParticleKernel exists. %>
@@ -345,7 +346,7 @@
   <form id="zsh" role="search" aria-label="<%= t("face.prompt_aria") %>" autocomplete="off">
     <button id="photo-button" type="button" aria-label="<%= t("face.attach_photo") %>">+</button>
     <input id="photo" type="file" accept="image/*" capture="environment" hidden>
-    <span class="pp" aria-hidden="true">user</span><span class="sep2" aria-hidden="true">$ </span>
+    <span class="pp" aria-hidden="true"><%= t("face.prompt_user") %></span><span class="sep2" aria-hidden="true">$ </span>
     <textarea id="zin" rows="1" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="<%= t("face.placeholder") %>" aria-label="<%= t("face.message_aria") %>" required></textarea>
     <span id="zsh-status" aria-live="polite" aria-atomic="true"></span>
 

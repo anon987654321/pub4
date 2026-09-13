@@ -67,6 +67,22 @@ class TtsControllerTest < ActionDispatch::IntegrationTest
     assert response.headers["X-TTS-Visemes"].present?
     assert_equal voice.to_s, response.headers["X-TTS-Voice"]
     assert_equal style.to_s, response.headers["X-TTS-Style"]
+    assert_includes response.headers["Cache-Control"], "private"
+    refute_includes response.headers["Cache-Control"], "public"
+  end
+
+  test "a synthesis failure answers a stable code, not the exception text" do
+    original = TtsJob.method(:enqueue)
+    TtsJob.define_singleton_method(:enqueue) { |**| raise "worker died at /home/master/secret" }
+    begin
+      get "/chat/tts", params: { text: "fail please" }
+    ensure
+      TtsJob.define_singleton_method(:enqueue, original)
+    end
+
+    assert_response :service_unavailable
+    assert_equal "synthesis_failed", JSON.parse(response.body)["error"]
+    refute_includes response.body, "secret"
   end
 
   test "status returns audio when job is ready" do

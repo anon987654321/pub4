@@ -1,18 +1,20 @@
 (() => {
   "use strict";
 
+  const t = (key, fallback) => (window.MASTER_T ? window.MASTER_T(key, fallback) : fallback);
+
   const SHORTCUTS = [
-    ["Ctrl/Cmd+K", "Command palette"],
-    ["Ctrl/Cmd+Shift+H", "Toggle history sidebar"],
-    ["Ctrl/Cmd+Shift+E", "Export session markdown"],
-    ["/", "Open palette from empty input"],
-    ["?", "Shortcut cheat sheet"],
-    ["Esc", "Close palette / interrupt stream"],
-    ["Space (hold)", "Push-to-talk"],
-    ["t", "Toggle TTS mute"],
-    ["m", "Toggle microphone"],
-    ["f", "Focus face canvas"],
-    ["Ctrl+[ / ]", "TTS playback rate"]
+    ["Ctrl/Cmd+K", t("sc_palette", "Command palette")],
+    ["Ctrl/Cmd+Shift+H", t("sc_history", "Toggle history sidebar")],
+    ["Ctrl/Cmd+Shift+E", t("sc_export", "Export session markdown")],
+    ["/", t("sc_slash", "Open palette from empty input")],
+    ["?", t("sc_sheet", "Shortcut cheat sheet")],
+    ["Esc", t("sc_escape", "Close palette / interrupt stream")],
+    [t("space_hold", "Space (hold)"), t("sc_talk", "Push-to-talk")],
+    ["t", t("sc_mute", "Toggle TTS mute")],
+    ["m", t("sc_mic", "Toggle microphone")],
+    ["f", t("sc_face", "Focus face canvas")],
+    ["Ctrl+[ / ]", t("sc_rate", "TTS playback rate")]
   ];
 
   function ensureDialog() {
@@ -20,13 +22,21 @@
     if (el) return el;
     el = document.createElement("dialog");
     el.id = "shortcut-sheet";
-    el.setAttribute("aria-label", "Keyboard shortcuts");
-    el.innerHTML = '<form method="dialog"><header><strong>shortcuts</strong></header><table></table><button value="close">close</button></form>';
+    el.setAttribute("aria-label", t("shortcuts_aria", "Keyboard shortcuts"));
+    el.innerHTML = '<form method="dialog"><header><strong></strong></header><table></table><button value="close"></button></form>';
+    el.querySelector("strong").textContent = t("shortcuts_title", "shortcuts");
+    el.querySelector("button").textContent = t("close", "close");
     document.body.appendChild(el);
     const table = el.querySelector("table");
     SHORTCUTS.forEach(([key, desc]) => {
       const row = document.createElement("tr");
-      row.innerHTML = `<td><kbd>${key}</kbd></td><td>${desc}</td>`;
+      const keyCell = document.createElement("td");
+      const kbd = document.createElement("kbd");
+      kbd.textContent = key;
+      keyCell.appendChild(kbd);
+      const descCell = document.createElement("td");
+      descCell.textContent = desc;
+      row.append(keyCell, descCell);
       table.appendChild(row);
     });
     return el;

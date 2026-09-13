@@ -1193,7 +1193,7 @@ if (qs("hud") !== "1") return;
 
   V.register(93, "share card hook", async (ctx) => {
     const data = {
-      title: "MASTER face",
+      title: window.MASTER_T ? window.MASTER_T("share_title", "MASTER face") : "MASTER face",
       text: ctx.detail.text || `mood ${V.state().mood || "idle"}`,
       url: location.href
     };
@@ -1354,7 +1354,7 @@ if (qs("hud") !== "1") return;
       legend.className = "particle-legend sr-only";
       body.appendChild(legend);
     }
-    legend.textContent = "Particle face: eyes attend, mouth speaks, terrain reflects mood.";
+    legend.textContent = window.MASTER_T ? window.MASTER_T("face_legend", "Particle face: eyes attend, mouth speaks, terrain reflects mood.") : "Particle face: eyes attend, mouth speaks, terrain reflects mood.";
   });
 
   V.register(113, "tts-live viseme highlight", (ctx) => {
@@ -1681,7 +1681,7 @@ V.register(119, "build version on the root, not on the screen", () => {
       btn.id = "face-boot-retry";
       btn.type = "button";
       btn.className = "face-boot-retry";
-      btn.textContent = "retry face boot";
+      btn.textContent = window.MASTER_T ? window.MASTER_T("retry_face_boot", "retry face boot") : "retry face boot";
       btn.addEventListener("click", () => {
         delete body.dataset.faceBooting;
         btn.remove();
@@ -1969,7 +1969,7 @@ V.register(119, "build version on the root, not on the screen", () => {
     root.dataset.zeroJsShell = noscript ? "noscript-present" : "js-required";
     if (!noscript) {
       const el = document.createElement("noscript");
-      el.textContent = "MASTER particle face requires JavaScript.";
+      el.textContent = window.MASTER_T ? window.MASTER_T("needs_js", "MASTER particle face requires JavaScript.") : "MASTER particle face requires JavaScript.";
       body.appendChild(el);
     }
   });

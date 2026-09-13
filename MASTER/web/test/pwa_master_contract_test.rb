@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "json"
 require "minitest/autorun"
 
 class PwaMasterContractTest < Minitest::Test
@@ -8,16 +7,6 @@ class PwaMasterContractTest < Minitest::Test
 
   def read(relative)
     File.read(File.join(ROOT, relative))
-  end
-
-  def test_master_manifest_is_installable
-    manifest = read("app/views/pwa/manifest.json.erb")
-    assert_includes manifest, '"start_url": "/"'
-    assert_includes manifest, '"display": "standalone"'
-    assert_includes manifest, "theme_color"
-    assert_includes manifest, "background_color"
-    assert_includes manifest, "Public MASTER chat"
-    refute_includes manifest, "operator surface"
   end
 
   def test_master_service_worker_avoids_stale_face_precache

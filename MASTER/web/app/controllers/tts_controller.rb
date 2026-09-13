@@ -41,13 +41,15 @@ class TtsController < ApplicationController
     set_viseme_header("X-TTS-Visemes", stream[:viseme_plan] || stream[:visemes])
     response.headers["X-TTS-Job"] = job.job_id
     response.headers["ETag"] = etag
-    response.headers["Cache-Control"] = "public, max-age=3600"
+    # private: the body is one conversation's speech, so no shared cache may keep it.
+    response.headers["Cache-Control"] = "private, max-age=3600"
     return head(:not_modified) if request.headers["If-None-Match"].to_s.split(",").map(&:strip).include?(etag)
 
     tts_job_response(job)
   rescue StandardError => e
     web_logger.warn("tts failed: #{e.class}: #{e.message}")
-    render(json: { error: e.message, status: "failed" }, status: :service_unavailable)
+    # A stable code, not the exception text, which can carry paths and worker stderr.
+    render(json: { error: "synthesis_failed", status: "failed" }, status: :service_unavailable)
   end
 
   def phrases

@@ -357,7 +357,7 @@ function startMic(btn) {
   }
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const input = chatInput();
-  if (!SR) { if (input) input.placeholder = "mic unavailable in this browser"; return; }
+  if (!SR) { if (input) input.placeholder = window.MASTER_T ? window.MASTER_T("mic_unavailable", "mic unavailable in this browser") : "mic unavailable in this browser"; return; }
   if (btn._rec) { try { btn._rec.stop(); } catch (err) { window.MASTER_LOG?.warn?.("chat:mic_stop", err); } btn._rec = null; btn.classList.remove("active"); return; }
   const rec = new SR();
   rec.lang = navigator.language || "en-US";

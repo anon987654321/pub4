@@ -124,7 +124,7 @@
 
   V.register(93, "share card hook", async (ctx) => {
     const data = {
-      title: "MASTER face",
+      title: window.MASTER_T ? window.MASTER_T("share_title", "MASTER face") : "MASTER face",
       text: ctx.detail.text || `mood ${V.state().mood || "idle"}`,
       url: location.href
     };
@@ -285,7 +285,7 @@
       legend.className = "particle-legend sr-only";
       body.appendChild(legend);
     }
-    legend.textContent = "Particle face: eyes attend, mouth speaks, terrain reflects mood.";
+    legend.textContent = window.MASTER_T ? window.MASTER_T("face_legend", "Particle face: eyes attend, mouth speaks, terrain reflects mood.") : "Particle face: eyes attend, mouth speaks, terrain reflects mood.";
   });
 
   V.register(113, "tts-live viseme highlight", (ctx) => {

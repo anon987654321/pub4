@@ -13,13 +13,13 @@ Rails.application.configure do
   config.content_security_policy do |policy|
     policy.default_src :self
     policy.font_src :self, :data
-    policy.img_src :self, :data, "https://i.ytimg.com"
+    policy.img_src :self, :data
     policy.object_src :none
-    policy.script_src :self, :blob, "https://www.youtube.com", "https://s.ytimg.com"
+    policy.script_src :self, :blob
     policy.style_src :self, :unsafe_inline
-    policy.connect_src :self, "https://www.youtube.com", "https://youtu.be"
+    policy.connect_src :self
     policy.media_src :self, :blob
-    policy.frame_src "https://www.youtube.com", "https://www.youtube-nocookie.com"
+    policy.frame_src :none
     policy.frame_ancestors :self, *embed_hosts
   end
 

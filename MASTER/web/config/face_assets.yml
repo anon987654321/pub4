@@ -15,6 +15,19 @@
 # Order within each group is load order and is part of the boot contract. Read
 # the group comments before moving anything between them.
 
+# Three files touch particles and three touch the ecology; each has one job and
+# boots in a different group below.
+#
+#   particles  particle_kernel.js (shell_blocking) defines window.ParticleKernel,
+#              the cell pool. particle_worker.js (shell_manifest) is the Worker
+#              that steps a transferred pool off the main thread. face_particles.js
+#              (face_eager) builds the step context from face State after the tap.
+#   ecology    cognition_ecology.js (face_vision_deferred) owns the 2D canvas and
+#              window.MASTEREcology; cognition_ecology_render.js draws it, loaded
+#              straight after. face_offscreen_ecology.js (face_eager) moves that
+#              buffer to an OffscreenCanvas where the browser has one, and returns
+#              early when MASTEREcology is not up yet.
+
 # Imported eagerly by public/face.js immediately after the primer tap, in this
 # order. particle_kernel consumers must not precede attention_model.
 face_eager:

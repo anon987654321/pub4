@@ -2,6 +2,10 @@
 
 require "yaml"
 
+# The operator token for the web face: read from .master/config.yml (seeded by
+# AuthTier) and matched against the bearer header, X-Token or the
+# master_session cookie. MasterIngressToken is the other one, an env bearer
+# for webhook and cron POSTs to /ingress.
 class MasterWebToken
   MIN_LENGTH = 43
 

@@ -71,7 +71,7 @@ V.register(119, "build version on the root, not on the screen", () => {
       btn.id = "face-boot-retry";
       btn.type = "button";
       btn.className = "face-boot-retry";
-      btn.textContent = "retry face boot";
+      btn.textContent = window.MASTER_T ? window.MASTER_T("retry_face_boot", "retry face boot") : "retry face boot";
       btn.addEventListener("click", () => {
         delete body.dataset.faceBooting;
         btn.remove();
@@ -359,7 +359,7 @@ V.register(119, "build version on the root, not on the screen", () => {
     root.dataset.zeroJsShell = noscript ? "noscript-present" : "js-required";
     if (!noscript) {
       const el = document.createElement("noscript");
-      el.textContent = "MASTER particle face requires JavaScript.";
+      el.textContent = window.MASTER_T ? window.MASTER_T("needs_js", "MASTER particle face requires JavaScript.") : "MASTER particle face requires JavaScript.";
       body.appendChild(el);
     }
   });

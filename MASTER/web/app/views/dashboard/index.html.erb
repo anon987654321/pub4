@@ -49,7 +49,7 @@
       <div class="panel"><h2><%= t("dashboard.panels.bus") %></h2><pre id="bus" aria-live="polite"><%= t("dashboard.loading") %></pre></div>
     </div>
   </main>
-  <script>
+  <script nonce="<%= content_security_policy_nonce %>">
     const grid = document.getElementById('mission-grid');
     const L = (key, fallback = '') => grid?.dataset[key] || fallback;
 

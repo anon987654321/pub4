@@ -94,3 +94,40 @@ for (const file of ["cognition_ecology.js"]) {
     assert.doesNotMatch(code, /reducedMotionParticles\s*<\s*\d+/);
   });
 }
+
+// A hidden tab gets no frames: the governor parks every callback and releases
+// them together on the visibilitychange that shows the tab again.
+test("a hidden tab holds animation frames until it is visible again", () => {
+  const listeners = {};
+  const nativeFrames = [];
+  const sandbox = {
+    window: {
+      matchMedia: () => ({ matches: false }),
+      requestAnimationFrame: (callback) => nativeFrames.push(callback),
+      cancelAnimationFrame: () => {},
+    },
+    document: {
+      hidden: true,
+      body: { dataset: {} },
+      documentElement: { dataset: {} },
+      addEventListener: (name, callback) => { listeners[name] = callback; },
+      querySelector: () => null,
+    },
+    Array,
+    setTimeout,
+  };
+  sandbox.window.window = sandbox.window;
+  sandbox.window.document = sandbox.document;
+  runInContext(governorSource, createContext(sandbox));
+
+  const ran = [];
+  sandbox.window.requestAnimationFrame(() => ran.push("a"));
+  sandbox.window.requestAnimationFrame(() => ran.push("b"));
+  assert.equal(nativeFrames.length, 0, "a hidden tab asked the browser for a frame");
+
+  sandbox.document.hidden = false;
+  listeners.visibilitychange();
+  assert.equal(nativeFrames.length, 1, "both parked callbacks share one native frame");
+  nativeFrames.shift()(1000);
+  assert.deepEqual(ran, ["a", "b"]);
+});
