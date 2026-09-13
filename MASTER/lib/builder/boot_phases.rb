@@ -48,8 +48,7 @@ module Master
         homeostat = Fix::Homeostat.new(event_bus: @bus)
         governor = Fix::Governor.new(config: @config, event_bus: @bus)
         diff_stager = @config["staging_enabled"] ? Fix::DiffStager.new(root: @root, event_bus: @bus) : nil
-        phase_gates = Ground::PhaseGates.new(root: @root, event_bus: @bus)
-        { homeostat:, governor:, diff_stager:, phase_gates: }
+        { homeostat:, governor:, diff_stager: }
       end
     end
 

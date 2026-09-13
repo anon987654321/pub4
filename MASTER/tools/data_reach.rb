@@ -113,7 +113,7 @@ module Operator
 
     # A key whose name appears in code that never mentions the yaml file is
     # counted as named by the census and still unread: success_criteria lived
-    # in rules.yml while phase_gates.rb read session state under the same word.
+    # in rules.yml while a session-state reader used the same word for its own key.
     def attributed?(key, yaml_basename)
       handles = [yaml_basename, *ACCESSORS.fetch(yaml_basename, [])]
       code_files.any? do |_path, src|

@@ -225,7 +225,11 @@ spine:
 # given back: ProposeTree#describe_entry lost its `subs =` assignment in an
 # extraction and raised NameError on every directory under lib/, so the
 # proposal it runs on fix_loop:clean never reached a model.
-  lib_body_ceiling: 37946
+# 37946 -> 37737: Ground::PhaseGates, 207 body lines plus its two boot wires.
+# Boot built it into the CLI container and nothing ever called advance!,
+# meet_gate! or status; the seven phases it gated are Policy::Workflow::PHASES,
+# the copy the brain overlay reads.
+  lib_body_ceiling: 37737
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753
@@ -599,8 +603,8 @@ pub4_source_ceilings:
 # the `unless`, and all twelve still pass. Nine tests here, none of which opens a
 # socket — every case is refused before the request, which is the point. Deleting
 # the guard fails three of them.
-  # 680 -> 675: five lib files nothing reached, named under lib_body_ceiling.
-  MASTER: 675
+  # 680 -> 674: six lib files nothing reached, named under lib_body_ceiling.
+  MASTER: 674
 
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:

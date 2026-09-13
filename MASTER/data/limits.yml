@@ -980,14 +980,16 @@ guidance:
 # onto another session's in-flight number.
 loc_body_budgets:
   lib/boot: 276
-  lib/builder: 252
+  # 252 -> 251: the PhaseGates boot wire, deleted with PhaseGates.
+  lib/builder: 251
   # 214 -> 216 for the two lines that construct Voice::OutputGuard in each of
   # the two boot paths, so the evidence contract on MASTER's own reply reaches
   # the container that CLI::Stages::Render reads it from.
   lib/builder.rb: 216
   # 5892 -> 5827: run_rebuild, run_context, run_checkpoint, run_verify and
-  # changed_lib_files, unreachable from any dispatch, deleted.
-  lib/cli: 5827
+  # changed_lib_files, unreachable from any dispatch, deleted; 5827 -> 5826 for
+  # the container field PhaseGates no longer fills.
+  lib/cli: 5826
   # 253 -> 294 for the loop the subsystem did not have. Everything the row
   # priced at introduction was perception; tick! had one caller, at boot, once,
   # so nothing decayed, nothing persisted after the first snapshot and
@@ -1002,8 +1004,9 @@ loc_body_budgets:
   # reachable only from the deleted CLI methods, less the one line that restores
   # ProposeTree#describe_entry's lost `subs` assignment.
   lib/fix: 2727
-  # 4812 -> 4667: context_provider.rb, reachable only from run_context.
-  lib/ground: 4667
+  # 4812 -> 4460: context_provider.rb, reachable only from run_context, and
+  # phase_gates.rb, built at boot and never called.
+  lib/ground: 4460
   lib/io: 4175
   # 136 -> 137 for Master.git_checkout?, one line and one comment. It tests
   # File.exist?(.git) rather than File.directory?, because a worktree carries
