@@ -11,3 +11,25 @@
 en:
   dating:
     bio: "Bio"
+    gender: "Gender"
+    location: "Location"
+    visible_label: "Make profile visible"
+    profile_photo: "Profile photo"
+    photo_of: "Photo of %{name}"
+    selfie_of: "Selfie from %{name}"
+    visibility: "Visibility"
+    visibility_visible: "visible"
+    visibility_hidden: "hidden"
+    visible_note: "Your profile is visible to others in your city."
+    hidden_note: "Your profile is hidden — no one can see it."
+    hide_profile: "Hide profile"
+    show_profile: "Show profile"
+    genders:
+      man: "Man"
+      woman: "Woman"
+      nonbinary: "Non-binary"
+      other: "Other"
+    looking_for_options:
+      man: "Men"
+      woman: "Women"
+      everyone: "Everyone"

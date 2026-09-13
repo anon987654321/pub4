@@ -40,10 +40,12 @@ class Dating::BaseController < ApplicationController
     return scope unless Current.user.present?
 
     profile = current_dating_profile
-    liked_ids = Dating::Like.where(liker_id: Current.user.id).pluck(:likee_id)
-    disliked_ids = Dating::Dislike.where(disliker_id: Current.user.id).pluck(:dislikee_id)
-    excluded = (liked_ids + disliked_ids + [ Current.user.id ]).uniq
-    scope = scope.where.not(user_id: excluded)
+    # NOT EXISTS rather than plucked ids: someone who has swiped for a year would
+    # otherwise send every answer back to the database as a literal list.
+    profile_user_id = Dating::Profile.arel_table[:user_id]
+    liked = Dating::Like.where(liker_id: Current.user.id).where(Dating::Like.arel_table[:likee_id].eq(profile_user_id))
+    disliked = Dating::Dislike.where(disliker_id: Current.user.id).where(Dating::Dislike.arel_table[:dislikee_id].eq(profile_user_id))
+    scope = scope.where.not(user_id: Current.user.id).where(liked.arel.exists.not).where(disliked.arel.exists.not)
     # Orientation: mutual gender preference, so it's a dating app rather than a
     # random-person feed. See Dating::Profile.oriented_for.
     scope = scope.oriented_for(profile) if profile

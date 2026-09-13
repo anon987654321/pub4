@@ -11,3 +11,25 @@
 nb:
   dating:
     bio: "Bio"
+    gender: "Kjønn"
+    location: "Sted"
+    visible_label: "Gjør profilen synlig"
+    profile_photo: "Profilbilde"
+    photo_of: "Bilde av %{name}"
+    selfie_of: "Selfie fra %{name}"
+    visibility: "Synlighet"
+    visibility_visible: "synlig"
+    visibility_hidden: "skjult"
+    visible_note: "Profilen din er synlig for andre i byen din."
+    hidden_note: "Profilen din er skjult — ingen kan se den."
+    hide_profile: "Skjul profilen"
+    show_profile: "Vis profilen"
+    genders:
+      man: "Mann"
+      woman: "Kvinne"
+      nonbinary: "Ikke-binær"
+      other: "Annet"
+    looking_for_options:
+      man: "Menn"
+      woman: "Kvinner"
+      everyone: "Alle"

@@ -1,4 +1,4 @@
-<% display_name = profile.user&.display_name.presence || "anon" %>
+<% display_name = profile.user&.display_name.presence || t("chat.anon") %>
 <% first_prompt = profile.prompts.min_by { |prompt| [prompt.position.to_i, prompt.id] } %>
 <article
   class="swipe-card swipe-card--stack-<%= index %>"
@@ -41,8 +41,8 @@
       </p>
     <% end %>
     <div class="chips swipe-chips">
-      <% if profile.gender.present? %><span class="chip"><%= profile.gender %></span><% end %>
-      <% if profile.looking_for.present? %><span class="chip"><%= t("dating.looking_for") %> <%= profile.looking_for %></span><% end %>
+      <% if profile.gender.present? %><span class="chip"><%= profile.gender_label %></span><% end %>
+      <% if profile.looking_for.present? %><span class="chip"><%= t("dating.looking_for") %> <%= profile.looking_for_label %></span><% end %>
     </div>
     <% if Current.user.present? && Current.user != profile.user %>
       <details class="swipe-overflow">

@@ -14,6 +14,14 @@ DATING_SUBDOMAINS)`. Root is the candidate feed and `GET next` advances it;
 `resource :profile` is the user's own card, `likes` and `dislikes` record swipes,
 and `matches#index` lists the mutuals.
 
+Making or editing a profile asks for Vipps Login first, because a verified phone
+number is what puts a real person behind a face shown to strangers. The gate
+fails open. When `VIPPS_CLIENT_ID` is absent the Vipps provider never registers,
+the check is skipped, and anyone signed in can put a profile in the deck; a
+missing variable should not lock a whole city out of the vertical. Production
+must therefore carry the Vipps keys in `/etc/brgen.env`, or dating runs with no
+identity check at all.
+
 The engine depends on `pub4-shared` for `User`, authentication, tenancy and the
 design system. The host reaches its helpers namespaced, as
 `dating.matches_url(…, subdomain: "dating")`.

@@ -18,9 +18,9 @@
           <div class="photo-strip">
             <% @profile.photos.each do |photo| %>
               <label class="photo-thumb-wrap">
-                <%= lazy_image_tag photo, alt: "Profile photo", class: "photo-thumb" %>
-                <%= check_box_tag "dating_profile[remove_photo_ids][]", photo.id, false %>
-                Remove
+                <%= lazy_image_tag photo, alt: t("dating.profile_photo"), class: "photo-thumb" %>
+                <%= check_box_tag "#{f.object_name}[remove_photo_ids][]", photo.id, false, id: dom_id(photo, :remove) %>
+                <%= t("actions.remove") %>
               </label>
             <% end %>
           </div>
@@ -48,21 +48,21 @@
       </div>
       <div class="field">
         <%= f.label :looking_for, t("dating.looking_for") %>
-        <%= f.select :looking_for, Dating::Profile::LOOKING_FOR, { include_blank: "—" } %>
+        <%= f.select :looking_for, Dating::Profile.looking_for_options, { include_blank: "—" } %>
       </div>
+      <div class="field"><%= f.label :age, t("dating.age") %><%= f.number_field :age, min: 18, max: 99, required: true, inputmode: "numeric" %></div>
+      <p><%= t("legal.dating_age") %></p>
     </fieldset>
 
     <details class="dating-profile-more">
       <summary><%= t("dating.more_details") %></summary>
-      <div class="field"><%= f.label :gender %><%= f.select :gender, Dating::Profile::GENDERS, { include_blank: "—" } %></div>
-      <div class="field"><%= f.label :age %><%= f.number_field :age, min: 18, max: 99, required: true, inputmode: "numeric" %></div>
-      <p><%= t("legal.dating_age") %></p>
-      <div class="field"><%= f.label :location %><%= f.text_field :location %></div>
+      <div class="field"><%= f.label :gender, t("dating.gender") %><%= f.select :gender, Dating::Profile.gender_options, { include_blank: "—" } %></div>
+      <div class="field"><%= f.label :location, t("dating.location") %><%= f.text_field :location %></div>
       <div class="field">
         <%= f.label :neighborhood_id, t("dating.neighborhood") %>
         <%= f.select :neighborhood_id, @neighborhoods.map { |n| [n.name, n.id] }, { include_blank: "—" } %>
       </div>
-      <div class="field field--check"><%= f.check_box :visible %><%= f.label :visible, "Make profile visible" %></div>
+      <div class="field field--check"><%= f.check_box :visible %><%= f.label :visible, t("dating.visible_label") %></div>
     </details>
 
     <div class="field">

@@ -46,23 +46,23 @@
         anonymous flex items and the gap would land inside a pair, not between. %>
     <p class="profile-meta">
       <span><%= t("dating.age") %> · <%= @profile.age || "—" %></span>
-      <span>Gender · <%= @profile.gender || "—" %></span>
-      <span><%= t("dating.looking_for") %> · <%= @profile.looking_for || "—" %></span>
+      <span><%= t("dating.gender") %> · <%= @profile.gender_label || "—" %></span>
+      <span><%= t("dating.looking_for") %> · <%= @profile.looking_for_label || "—" %></span>
     </p>
   </article>
 
   <article>
     <p class="profile-meta">
       <span>
-        Location · <%= @profile.location.presence || "—" %>
-        <% if @profile.neighborhood&.name.present? %> · Bydel · <%= @profile.neighborhood.name %><% end %>
+        <%= t("dating.location") %> · <%= @profile.location.presence || "—" %>
+        <% if @profile.neighborhood&.name.present? %> · <%= t("dating.neighborhood") %> · <%= @profile.neighborhood.name %><% end %>
       </span>
       <span>
-        Visibility ·
+        <%= t("dating.visibility") %> ·
         <% if @profile.visible? %>
-          <span class="text-visible">visible</span>
+          <span class="text-visible"><%= t("dating.visibility_visible") %></span>
         <% else %>
-          <span class="text-hidden">hidden</span>
+          <span class="text-hidden"><%= t("dating.visibility_hidden") %></span>
         <% end %>
       </span>
     </p>
@@ -70,8 +70,8 @@
 
   <article>
     <p class="text-sm">
-      Your profile is <%= @profile.visible? ? "visible to others in your city" : "hidden — no one can see it" %>.
-      <%= link_to(@profile.visible? ? "Hide profile" : "Show profile", edit_profile_path, class: "link-inherit") %>.
+      <%= t(@profile.visible? ? "dating.visible_note" : "dating.hidden_note") %>
+      <%= link_to(t(@profile.visible? ? "dating.hide_profile" : "dating.show_profile"), edit_profile_path, class: "link-inherit") %>.
     </p>
   </article>
 </section>

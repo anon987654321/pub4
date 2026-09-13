@@ -6,7 +6,9 @@ class Dating::LikesController < Dating::BaseController
   # A like may carry a prompt it is about and a sentence about it — the Hinge
   # interaction — or neither, which is still a like.
   def create
-    user = User.find(params[:user_id])
+    # Only someone the deck could have shown: a paused or under-age profile, or
+    # an account with no profile at all, is not somebody to like by id.
+    user = Dating::Profile.visible.includes(:user).find_by!(user_id: params[:user_id]).user
     if Current.user.respond_to?(:blocking?) && (Current.user.blocking?(user) || user.blocking?(Current.user))
       redirect_back fallback_location: root_path, alert: t("shared.flash.not_authorized")
       return
@@ -14,9 +16,11 @@ class Dating::LikesController < Dating::BaseController
     like = Dating::Like.find_or_initialize_by(liker: Current.user, likee: user)
     like.dating_prompt_id = prompt_id_for(user)
     like.comment = params[:comment].presence
-    like.save!
-
-    redirect_back fallback_location: root_path
+    if like.save
+      redirect_back fallback_location: root_path
+    else
+      redirect_back fallback_location: root_path, alert: like.errors.full_messages.to_sentence
+    end
   end
 
   # Who liked you. Kept out of the deck rather than folded into it: a list of

@@ -22,6 +22,12 @@ class Dating::Profile < ApplicationRecord
   GENDERS = %w[man woman nonbinary other].freeze
   LOOKING_FOR = %w[man woman everyone].freeze
 
+  # The stored values are English identifiers; every surface shows the label.
+  def self.gender_options = GENDERS.map { |value| [ I18n.t("dating.genders.#{value}"), value ] }
+  def self.looking_for_options = LOOKING_FOR.map { |value| [ I18n.t("dating.looking_for_options.#{value}"), value ] }
+  def gender_label = gender.present? ? I18n.t("dating.genders.#{gender}") : nil
+  def looking_for_label = looking_for.present? ? I18n.t("dating.looking_for_options.#{looking_for}") : nil
+
   # Mutual orientation for discovery: show the viewer only the gender they're
   # looking for (unless "everyone"/blank), and only profiles who'd want the
   # viewer back. nil/"everyone" stay open on both sides, so nobody is filtered to
