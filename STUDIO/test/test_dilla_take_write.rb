@@ -39,6 +39,24 @@ class TestTakeWrite < Minitest::Test
     end
   end
 
+  # Two renders share SCRATCH_DIR. Each wipes its own pid-scoped files at the
+  # top of a render and must leave the other's alone, or a concurrent demo and
+  # stream delete each other's stems mid-mix.
+  def test_scratch_cleanup_spares_another_process
+    FileUtils.mkdir_p(SCRATCH_DIR)
+    other_pid = Process.pid + 1_000_000
+    mine = dilla_render_tmp("cleanup_probe")
+    theirs = File.join(SCRATCH_DIR, "dilla_cleanup_probe.#{other_pid}.wav")
+    File.write(mine, "x")
+    File.write(theirs, "x")
+    cleanup_render_scratch!
+
+    refute File.exist?(mine), "this process's scratch file survived"
+    assert File.exist?(theirs), "another process's scratch file was deleted"
+  ensure
+    FileUtils.rm_f([mine, theirs].compact)
+  end
+
   def test_a_retry_of_the_same_take_is_not_a_second_take
     Dir.mktmpdir do |dir|
       path = File.join(dir, "loop.wav")
