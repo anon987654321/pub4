@@ -32,6 +32,12 @@ def apply_production_baseline(config, hosts:, mailer_host: nil, vapid_note: nil,
   config.assume_ssl = true
   config.force_ssl = false
 
+  # A slow page on this box is usually paging, not code. Server-Timing splits a
+  # response into sql, view and cache time in one header, so `curl -I` on vm23
+  # tells the two apart. One entry per event name, a few hundred bytes — well
+  # inside relayd's 8 KB response-header limit.
+  config.server_timing = true
+
   config.log_tags = [ :request_id ]
   config.logger = ActiveSupport::TaggedLogging.logger(STDOUT)
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "warn")
