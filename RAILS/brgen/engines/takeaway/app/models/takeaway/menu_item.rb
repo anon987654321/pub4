@@ -21,5 +21,7 @@ class Takeaway::MenuItem < ApplicationRecord
   # tracks_activity actor — runs in an after_commit on a menu item loaded by id,
   # where `restaurant&.user` was a lazy read. See Shared::StrictSafeAssociations.
   def restaurant_owner = strict_safe(:restaurant)&.user
-  def available_for_order? = available? && restaurant&.active?
+  # OrderItem validates through this on a dish a controller found by id, with
+  # no restaurant preloaded; a plain read raised before the order was saved.
+  def available_for_order? = available? && strict_safe(:restaurant)&.active?
 end
