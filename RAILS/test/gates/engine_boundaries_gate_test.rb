@@ -5,20 +5,22 @@ require "tmpdir"
 require_relative "gate_fixture"
 require_relative "../../gates/lib/source/engine_boundaries"
 
-# One engine naming another engine's constant. The gate reads a ROOT fixed at
-# load time, so these plant two engines in a temporary tree and rewrite ROOT
-# around the call.
+# One engine naming another engine's constant. These plant two engines in a
+# temporary tree and pass it as the gate's root.
 class EngineBoundariesGateTest < Minitest::Test
   include GateFixture
 
   GATE = Deploy::EngineBoundariesGate
 
-  def over(files)
+  # A braceless string-keyed hash arrives as keywords, so the planted files are
+  # taken from either place.
+  def over(files = {}, exempt: GATE::EXEMPT, **planted)
+    files = files.merge(planted)
     Dir.mktmpdir do |dir|
       plant(dir, "RAILS/brgen/engines/dating/lib/dating/engine.rb", "module Dating\n  class Engine\n    isolate_namespace Dating\n  end\nend\n")
       plant(dir, "RAILS/brgen/engines/takeaway/lib/takeaway/engine.rb", "module Takeaway\n  class Engine\n    isolate_namespace Takeaway\n  end\nend\n")
       files.each { |rel, body| plant(dir, "RAILS/brgen/engines/#{rel}", body) }
-      with_constants(GATE, ROOT: dir) { GATE.run }
+      GATE.run(root: dir, exempt:)
     end
   end
 
@@ -46,19 +48,18 @@ class EngineBoundariesGateTest < Minitest::Test
   end
 
   def test_a_declared_read_passes_and_only_for_its_file
-    with_constants(GATE, EXEMPT: { "dating" => { "app/controllers/dating/home_controller.rb" => %w[Takeaway] } }) do
-      result = over(
-        "dating/app/controllers/dating/home_controller.rb" => "Takeaway::Order.where(user_id: 1)\n",
-        "dating/app/controllers/dating/other_controller.rb" => "Takeaway::Order.where(user_id: 1)\n"
-      )
+    result = over(
+      { "dating/app/controllers/dating/home_controller.rb" => "Takeaway::Order.where(user_id: 1)\n",
+        "dating/app/controllers/dating/other_controller.rb" => "Takeaway::Order.where(user_id: 1)\n" },
+      exempt: { "dating" => { "app/controllers/dating/home_controller.rb" => %w[Takeaway] } }
+    )
 
-      assert_equal 1, result.failures.size, result.failures.join(", ")
-      assert_match(/other_controller/, result.failures.first)
-    end
+    assert_equal 1, result.failures.size, result.failures.join(", ")
+    assert_match(/other_controller/, result.failures.first)
   end
 
   def test_no_engines_is_inconclusive_rather_than_clean
-    result = Dir.mktmpdir { |dir| with_constants(GATE, ROOT: dir) { GATE.run } }
+    result = Dir.mktmpdir { |dir| GATE.run(root: dir) }
 
     assert_equal :inconclusive, result.outcome
   end

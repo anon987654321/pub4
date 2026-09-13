@@ -26,8 +26,13 @@ module Deploy
       "maps" => { "app/controllers/maps/home_controller.rb" => %w[Takeaway] },
     }.freeze
 
-    def self.run
-      new.run
+    def self.run(root: ROOT, exempt: EXEMPT)
+      new(root:, exempt:).run
+    end
+
+    def initialize(root: ROOT, exempt: EXEMPT)
+      @root = root
+      @exempt = exempt
     end
 
     def run
@@ -41,7 +46,7 @@ module Deploy
         reference = /(?<![A-Za-z0-9_])(#{foreign.join('|')})::[A-Z]/
         Dir.glob(File.join(engines_root, dir, SOURCE_GLOB)).sort.each do |path|
           rel = path.delete_prefix("#{File.join(engines_root, dir)}/")
-          allowed = EXEMPT.dig(dir, rel) || []
+          allowed = @exempt.dig(dir, rel) || []
           File.foreach(path).with_index(1) do |line, number|
             next if line.lstrip.start_with?("#", "<%#")
 
@@ -60,7 +65,7 @@ module Deploy
 
     private
 
-    def engines_root = File.join(ROOT, "RAILS", "brgen", "engines")
+    def engines_root = File.join(@root, "RAILS", "brgen", "engines")
 
     def namespaces
       Dir.glob(File.join(engines_root, "*", "lib", "*", "engine.rb")).sort.each_with_object({}) do |path, out|
