@@ -73,7 +73,10 @@
         <%= t("chat.posting_as") %> <%= tag.strong handle %><% if Current.user.guest? %> — <%= t("chat.no_signup") %><% end %>.
       </p>
     <% else %>
-      <%# Soft guest should already exist; if not, one round-trip mints it. %>
+      <%# Soft guest should already exist; if not, one round-trip mints it. A full
+          load, not a Turbo visit: the cable connection authenticates once, when it
+          opens, from the session guest id, so only a fresh page reconnects it as
+          the guest this request creates. %>
       <p class="channel-signin"><%= t("chat.anyone_join") %></p>
       <p><%= link_to t("chat.join_room"), channel_path(@conversation.slug), class: "btn btn-primary", data: { turbo: false } %></p>
     <% end %>
