@@ -62,7 +62,7 @@ class ItemsController < ApplicationController
   def create
     @item = Current.user.items.build(item_params)
     if @item.save
-      WardrobeMediaJob.enqueue_for(@item.id) if @item.photos.attached?
+      WardrobeMediaJob.perform_later(@item.id) if @item.photos.attached?
       @item.record_activity!("AmberItemCreated", source_vertical: "amber")
       redirect_to(@item, notice: t("flash.item_added"))
     else
@@ -75,7 +75,7 @@ class ItemsController < ApplicationController
   def update
     return render(:edit, status: :unprocessable_entity) unless @item.update(item_params)
 
-    WardrobeMediaJob.enqueue_for(@item.id) if @item.photos.attached?
+    WardrobeMediaJob.perform_later(@item.id) if @item.photos.attached?
     @item.record_activity!("AmberItemUpdated", source_vertical: "amber")
     redirect_to(@item, notice: t("flash.updated"))
   end

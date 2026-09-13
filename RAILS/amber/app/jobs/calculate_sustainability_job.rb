@@ -3,6 +3,9 @@
 class CalculateSustainabilityJob < ApplicationJob
   queue_as :default
 
+  # A second calculation for an item already waiting would write the same row.
+  limits_concurrency to: 1, key: ->(item_id) { item_id }, duration: 2.hours, on_conflict: :discard
+
   def perform(item_id)
     # Preloaded, not bare: ApplicationRecord sets strict_loading_by_default in
     # every environment, so reading the association off a plain find raised

@@ -5,23 +5,14 @@
 class WardrobeMediaJob < ApplicationJob
   queue_as :bulk
 
+  # One job per item holds the semaphore from enqueue until it finishes, so an
+  # edit that enqueues again while the first still waits is discarded instead
+  # of polishing the same photos twice. The duration outlasts amber's hourly
+  # drain window, or the semaphore would expire before the job ran.
+  limits_concurrency to: 1, key: ->(item_id) { item_id }, duration: 2.hours, on_conflict: :discard
+
   # Keep in lockstep with Item::PHOTO_VARIANTS (named ActiveStorage variants).
   VARIANTS = Item::PHOTO_VARIANTS
-
-  def self.pending_for?(item_id)
-    needle = "Item/#{item_id}"
-    SolidQueue::Job.where(finished_at: nil, class_name: name)
-      .where("arguments LIKE ?", "%#{needle}%").exists?
-  rescue StandardError => e
-    Rails.logger.warn("pending_for? check failed for item #{item_id}: #{e.message}")
-    false
-  end
-
-  def self.enqueue_for(item_id)
-    return if pending_for?(item_id)
-
-    perform_later(item_id)
-  end
 
   def perform(item_id)
     item = Item.find(item_id)
@@ -44,24 +35,7 @@ class WardrobeMediaJob < ApplicationJob
       item.update!(analysis_status: "no_photos") if item.respond_to?(:analysis_status=)
     end
 
-    enqueue_once(FingerprintGarmentJob, item.id)
-    enqueue_once(CalculateSustainabilityJob, item.id)
-  end
-
-  private
-
-  def enqueue_once(job_class, item_id)
-    return if job_pending?(job_class, item_id)
-
-    job_class.perform_later(item_id)
-  end
-
-  def job_pending?(job_class, item_id)
-    needle = item_id.to_s
-    SolidQueue::Job.where(finished_at: nil, class_name: job_class.name)
-      .where("arguments LIKE ?", "%#{needle}%").exists?
-  rescue StandardError => e
-    Rails.logger.warn("job_pending? check failed for #{job_class.name}/#{item_id}: #{e.message}")
-    false
+    FingerprintGarmentJob.perform_later(item.id)
+    CalculateSustainabilityJob.perform_later(item.id)
   end
 end

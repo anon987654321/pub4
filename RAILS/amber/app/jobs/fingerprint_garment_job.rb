@@ -5,6 +5,9 @@
 class FingerprintGarmentJob < ApplicationJob
   queue_as :default
 
+  # A second fingerprint for an item already waiting would write the same row.
+  limits_concurrency to: 1, key: ->(item_id) { item_id }, duration: 2.hours, on_conflict: :discard
+
   def perform(item_id)
     # Both associations preloaded: strict_loading_by_default made the bare find
     # raise on item.user before this job ever wrote a fingerprint.

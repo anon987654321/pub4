@@ -4,6 +4,9 @@
 class DeclutterHygieneJob < ApplicationJob
   queue_as :default
 
+  # The recurring run and a manual enqueue must not both nudge the same box.
+  limits_concurrency to: 1, key: "declutter-hygiene", duration: 1.hour, on_conflict: :discard
+
   BOX_DAYS = 30
   # The reason text is written to a row that outlives any locale change,
   # so the key travels with it in metadata and the copy is rendered from it.
