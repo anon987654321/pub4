@@ -164,6 +164,20 @@ tts:
     #   prophet  the poly answer: two to four detuned oscillators and a pulse
     #            width never quite square, which is why its pads are wide where
     #            the Moog is thick.
+    # The harmony gets written down.
+    #
+    # It existed only inside an ffmpeg expression: a sum of sawtooths evaluated
+    # per sample, with no representation of a note anywhere. Writing it as MIDI
+    # makes it inspectable and diffable, and it lets a sampler play it —
+    # fluidsynth with a multisampled bank is a recording of an instrument
+    # somebody sat down at, which is the argument the drums already won.
+    #
+    # The bank is 40 MB and is not in the repo: it is fetched once and lives
+    # beside the renderer. Everything still works without it, one step worse,
+    # which is the only acceptable shape for an optional dependency.
+    midi: { ticks_per_quarter: 480, format: 0 }
+    soundfont: { path: "~/.claude/hooks/bed_renders/bank.sf2", optional: true }
+    gm_programs: { rhodes: [4, 5], moog: [89, 88, 81], prophet: [90, 51, 52] }
     families: [rhodes, moog, prophet]
     patches:
       - { name: rhodes mk1,        family: rhodes,  wave: fm_wood,  cutoff: 1400, res: 2.0, attack: 0.04, voices: 2, sub: true }
@@ -301,12 +315,47 @@ tts:
       # through a sampler, and every stage is in what you hear. dilla keeps a
       # crate; these are its files, triggered, each hit delayed to its place and
       # scaled by its velocity. The pattern stays ours, the sound is a record.
+      # The grids are read, not written.
+      #
+      # dilla shipped a MIDI library of 62 drum grids, one file per voice per grid,
+      # and its own export-midi and import-midi commands are built around that
+      # directory. They went out with the crate in August and are recoverable from
+      # the tree at 92e3c1b94. Reading them is the difference between patterns
+      # somebody played and patterns guessed at from a description:
+      # dilla_fantastic puts kicks on 0, 6, 10 and 11 with the backbeat doubled at
+      # 7 and 15, which no amount of reasoning about Dilla Time would produce.
+      # dillas own import-midi agrees with this reader hit for hit.
+      #
+      # The hand-written shapes stay as the fallback for a checkout with no crate.
+      # samples/ is deliberately untracked, so the library lives on disk.
+      grids: STUDIO/dilla/samples/midi
+      grid_banks:
+        dilla: [dilla_*, head_nod, soul_shuffle, questlove_pocket, neo_busy, half_soul]
+        flylo: [flylo_*, knxwledge_haze, hiatus_broken, ghost_cloud, air_pocket]
+        techno: [four_floor_soul, push_*, uk_skip, footwork_lite, euclid_*]
+        industrial: [industrial_techno, sp1200, sp303, mpc3000, madlib_dusty, crate_dig, boom_*]
       crate: STUDIO/dilla/samples/drums
       samples: { kick: kick.wav, snare: snare.wav, ghost: ghost.wav, hat: hat.wav, open_hat: open_hat.wav, clap: ind_clap.wav }
       # The accent contour, the other half of why a hand sounds different from a
       # grid: downbeats hard, the sixteenths between them soft. Not a random
       # velocity per hit, which is noise. A shape.
       hat_accents: { downbeat: 0.95, eighth: 0.7, sixteenth: 0.45, jitter: 0.3 }
+      # Tape first, then the slam, then the sampler, and the order is the whole
+      # thing.
+      #
+      # Tape is not one filter: a head bump at 60, a soft knee into saturation, wow
+      # at a fraction of a hertz and flutter at a few, and a top that rolls off
+      # because a head gap cannot resolve it. Each on its own is subtle; together
+      # they are why a recorded drum sounds different from a triggered one, and
+      # this kit had two of the four.
+      #
+      # The slam is parallel compression, the New York trick: one copy crushed at
+      # 12:1 with 8 dB of makeup until it is all body and no transient, mixed UNDER
+      # the clean copy rather than replacing it. The clean copy keeps the attack,
+      # the crushed copy fills between the hits, and it hits harder without the
+      # peaks moving at all. Squashing the kit itself only makes it quieter.
+      tape: { head_bump_hz: 60, head_bump_db: 3.4, drive: 1.7, wow_hz: 0.31, flutter_hz: 6.2, rolloff_hz: 14000 }
+      slam: { threshold_db: -38, ratio: 12, attack_ms: 0.6, release_ms: 90, makeup_db: 8, blend: 0.6 }
       finish: sonitex_sp1200
       machines: [sp1200, mpc3000]
       gain_db: -5

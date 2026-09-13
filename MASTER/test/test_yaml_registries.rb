@@ -247,6 +247,20 @@ end
                  "the kit is finished on dillas sampler, not left as a synthesiser"
   end
 
+  # The grids are dillas, read from its own MIDI library rather than guessed
+  # at from a description of how Dilla programmed. Its own import-midi reads
+  # the same directory, so the path is a contract between two readers.
+  def test_the_bed_reads_dillas_grid_library
+    bed = Master::Voice::Policy.bed
+    skip "no bed declared" unless bed
+
+    assert_equal "STUDIO/dilla/samples/midi", bed.dig("drums", "grids"),
+                 "dillas export-midi and import-midi are built around this directory"
+    banks = bed.dig("drums", "grid_banks")
+    assert_operator banks.keys.size, :>=, 3, "one bank is one pocket all session"
+    assert banks["dilla"], "the bank the whole bed is named for"
+  end
+
   # Boom bap first. Every shape puts a backbeat somewhere, and the hats stay
   # straight; a bar with no two and four is not a bar of hip-hop, and swinging
   # the hats removes the thing everything else is heard against.
