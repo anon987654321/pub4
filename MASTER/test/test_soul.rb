@@ -85,6 +85,19 @@ class TestSoul < Minitest::Test
     refute File.exist?(File.join(@root, ".master", "soul_proposal.md"))
   end
 
+  # A proposal edited on disk after `propose` accepted it must not carry an
+  # absolute section out of SOUL.md at approval.
+  def test_approve_refuses_a_proposal_that_drops_an_absolute_section
+    soul = Master::Voice::Soul.new(root: @root)
+    soul.define_singleton_method(:commit_approval) { |_version| flunk "approval must not commit" }
+    proposal = File.join(@root, ".master", "soul_proposal.md")
+    FileUtils.mkdir_p(File.dirname(proposal))
+    File.write(proposal, DOCUMENT.sub(/The anti-simulation rule.*\n/, ""))
+
+    assert_match(/BLOCKED/, soul.approve)
+    assert_equal DOCUMENT, File.read(File.join(@root, "data", "SOUL.md"))
+  end
+
   def test_approve_updates_version_at_instance_root
     draft = DOCUMENT + "\nA small clarification.\n"
     soul = Master::Voice::Soul.new(root: @root, agent: Agent.new(draft))

@@ -9,6 +9,7 @@ topics:
       - data/tts.yml
       - lib/voice/policy.rb
       - lib/voice/speech.rb
+      - lib/voice/speech_worker.rb
       - lib/voice/tts_supervisor.rb
       - web/app/services/tts_job.rb
       - web/app/controllers/tts_controller.rb

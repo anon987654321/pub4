@@ -33,10 +33,12 @@ module Master
 
       def council_brief
         brief
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "Voice::Dilla.council_brief")
         begin
           ProductionDna.brief
         rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "Voice::Dilla.council_brief ProductionDna")
           "Dilla production profile failed to load: #{e.message}."
         end
       end

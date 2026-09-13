@@ -461,7 +461,7 @@ voice:
     preambles: ["In summary,", "Consequently,", "Therefore,", "Notably,", "Importantly,"]
     hedges: ["I think that", "I believe", "will", "would", "might", "could", "perhaps", "seems", "appears"]
     endings: ["as a result.", "for this reason.", "thus.", "in effect.", "accordingly."]
-    code_preambles: ["# TODO: clarify intent", "# FIXME: review edge cases", "# NOTE: performance considerations", "# HACK: temporary workaround", "# REVIEW: assess after refactor"]
+    code_preambles: ["# TODO: clarify intent", "# FIXME: review edge cases", "# NOTE: performance considerations", "# HACK: temporary workaround", "# REVIEW: assess after refactor"]  # scan: intentional — the markers the prompt forbids, not markers
     apply_to: [prose, comments, documentation, strings]
     never_apply_to: [code_logic, algorithms, data_structures]
     safeguards:

@@ -32,6 +32,11 @@ module Master
         def approve
           return "no pending proposal" unless File.exist?(@proposal_path)
 
+          # The proposal is a file under .master/, and anything can write it after
+          # `propose` checked it. Approval is the write, so it checks again.
+          drift = measure_drift(@soul, proposal)
+          return blocked_proposal_message(drift) if drift[:absolute_changed].any?
+
           version = bump_version(extract_version, :patch)
           updated = with_version_and_changelog(proposal, version)
           persist(@soul_path, updated)
