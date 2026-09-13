@@ -215,21 +215,23 @@ spine:
 # Written as a guard with its own `if`, not folded onto one line to fit: the
 # 38298 -> 38299 entry above settled that, for a security rule, on the same
 # argument. test_io_path_guard.rb covers it and fails 2 of 3 without the guard.
-# 38334 -> 37946, a fall of 389 body lines, and every one was unreachable.
+# 38334 -> 38011, a fall of 324 body lines, and every one was unreachable.
 # CLI::Session's run_rebuild, run_context, run_checkpoint and run_verify were
 # private methods no dispatch table, NL pattern or test named; /rebuild and
 # /verify are the registry's live copies. What only they reached went with
-# them: Fix::DoneChecker, Fix::PatchVerifier, Fix::UnfinishedLedger,
-# Fix::Checkpoint and Ground::ContextProvider. The ceiling falls by exactly
+# them: Fix::DoneChecker, Fix::PatchVerifier, Fix::UnfinishedLedger and
+# Ground::ContextProvider. Fix::Checkpoint is kept: it has a test, and
+# specified-but-unused is not dead (lib/operator/readers.rb records the deletion
+# that taught that). The ceiling falls by exactly
 # the deletion, so the row keeps the overage it had. One line of the fall is
 # given back: ProposeTree#describe_entry lost its `subs =` assignment in an
 # extraction and raised NameError on every directory under lib/, so the
 # proposal it runs on fix_loop:clean never reached a model.
-# 37946 -> 37737: Ground::PhaseGates, 207 body lines plus its two boot wires.
+# 38011 -> 37802: Ground::PhaseGates, 207 body lines plus its two boot wires.
 # Boot built it into the CLI container and nothing ever called advance!,
 # meet_gate! or status; the seven phases it gated are Policy::Workflow::PHASES,
 # the copy the brain overlay reads.
-  lib_body_ceiling: 37737
+  lib_body_ceiling: 37802
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753
@@ -603,8 +605,8 @@ pub4_source_ceilings:
 # the `unless`, and all twelve still pass. Nine tests here, none of which opens a
 # socket — every case is refused before the request, which is the point. Deleting
 # the guard fails three of them.
-  # 680 -> 674: six lib files nothing reached, named under lib_body_ceiling.
-  MASTER: 674
+  # 680 -> 675: five lib files nothing reached, named under lib_body_ceiling.
+  MASTER: 675
 
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
