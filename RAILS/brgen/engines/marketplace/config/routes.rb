@@ -27,6 +27,7 @@ end
   # Amazon-like cart (pending orders act as cart items for the buyer)
   resource :cart, only: :show, controller: "carts" do
     post :send_offers
+    resources :items, only: %i[update destroy], controller: "cart_items"
   end
   resource :checkout, only: %i[create show], controller: "checkouts"
   # Where the parcel goes. Its own record rather than fields on the checkout, so

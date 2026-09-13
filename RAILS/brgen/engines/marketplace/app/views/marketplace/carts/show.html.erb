@@ -17,13 +17,24 @@
       <div class="cart-item">
         <div> <%# scan: intentional — the item's text block; the cart row is the layout %>
           <strong><%= link_to item.listing.title, listing_path(item.listing) %></strong>
-          <div><%= item.listing.price_display %> × <%= item.quantity || 1 %></div> <%# scan: intentional — a line of text inside the item block %>
+          <%# A one-of-a-kind listing has one to buy, so only stocked lines get a
+              quantity to change. %>
+          <% if item.listing.one_of_a_kind? %>
+            <div><%= item.listing.price_display %> × <%= item.quantity || 1 %></div> <%# scan: intentional — a line of text inside the item block %>
+          <% else %>
+            <%= form_with url: cart_item_path(item), method: :patch, class: "cluster" do |f| %>
+              <span><%= item.listing.price_display %> ×</span>
+              <%= f.number_field :quantity, value: item.quantity || 1, min: 1, max: item.listing.available_quantity,
+                    inputmode: "numeric", aria: { label: t("marketplace.order_quantity") } %>
+              <%= f.submit t("marketplace.update_quantity"), class: "btn btn-ghost btn-sm" %>
+            <% end %>
+          <% end %>
         </div>
         <div class="text-end">
           <%= tag.strong item.total_display, data: { money: true } %>
           <div class="cluster">
-            <%= button_to t("actions.remove"), listing_order_path(item.listing, item),
-                  method: :patch, params: { decline: true }, class: "btn btn-ghost btn-sm" %>
+            <%= button_to t("actions.remove"), cart_item_path(item),
+                  method: :delete, class: "btn btn-ghost btn-sm" %>
           </div>
         </div>
       </div>

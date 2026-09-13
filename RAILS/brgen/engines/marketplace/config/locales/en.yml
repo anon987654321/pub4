@@ -52,6 +52,10 @@ en:
     store_updated: Store updated
     store_deleted: Store removed
     store_not_allowed: Only the owner can change this store
+    update_quantity: Update
+    cart_quantity_updated: Quantity updated.
+    cart_quantity_refused: Choose a quantity between 1 and %{available}.
+    cart_item_removed: Removed from cart.
     payment_providers:
       stripe: Stripe
       vipps: Vipps

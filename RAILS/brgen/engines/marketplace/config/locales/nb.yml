@@ -52,6 +52,10 @@ nb:
     store_updated: Butikken er oppdatert
     store_deleted: Butikken er fjernet
     store_not_allowed: Bare eieren kan endre denne butikken
+    update_quantity: Oppdater
+    cart_quantity_updated: Antallet er oppdatert.
+    cart_quantity_refused: Velg et antall mellom 1 og %{available}.
+    cart_item_removed: Fjernet fra handlekurven.
     payment_providers:
       stripe: Stripe
       vipps: Vipps

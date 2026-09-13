@@ -85,6 +85,39 @@ class MarketplaceBasketTest < ActionDispatch::IntegrationTest
     assert_redirected_to marketplace.cart_path
   end
 
+  test "the buyer changes how many of a stocked line, within the stock" do
+    stocked = listing.tap { |row| row.update!(stock: 3) }
+    order = Marketplace::Order.create!(buyer: @buyer, listing: stocked, quantity: 1, price_cents: 20_000)
+    sign_in_as(@buyer)
+    in_market
+
+    get marketplace.cart_path
+    assert_select "input[name=quantity][max='3']"
+
+    patch marketplace.cart_item_path(order), params: { quantity: 2 }
+    assert_redirected_to marketplace.cart_path
+    assert_equal 2, order.reload.quantity
+
+    patch marketplace.cart_item_path(order), params: { quantity: 4 }
+    assert_equal I18n.t("marketplace.cart_quantity_refused", available: 3), flash[:alert]
+    assert_equal 2, order.reload.quantity
+  end
+
+  test "a line leaves the cart when the buyer removes it, and only the buyer can" do
+    order = Marketplace::Order.create!(buyer: @buyer, listing: listing, quantity: 1, price_cents: 20_000)
+    sign_in_as(@seller)
+    in_market
+    delete marketplace.cart_item_path(order)
+    assert_response :not_found
+    assert_equal "pending", order.reload.status
+
+    sign_in_as(@buyer)
+    in_market
+    delete marketplace.cart_item_path(order)
+    assert_redirected_to marketplace.cart_path
+    assert_equal "declined", order.reload.status
+  end
+
   test "the cart shows the delivery address it will use" do
     @buyer.marketplace_addresses.create!(
       recipient: "Kari", line1: "Marken 4", postcode: "5017", city_name: "Bergen",
