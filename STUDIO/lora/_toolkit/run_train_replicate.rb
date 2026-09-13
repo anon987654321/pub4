@@ -4,6 +4,9 @@
 # Dual-track train: zip the curated dataset, train via Replicate
 # ostris/flux-dev-lora-trainer, pull LoRA weights into weights/#{MODEL}/.
 #
+# The trainer fixes the base at FLUX.1-dev. Moving to a FLUX 2 base is a choice
+# of model generation, made by changing the trainer, not a default to drift into.
+#
 # Usage:
 #   ./run_train_replicate.rb
 #   ./run_train_replicate.rb --dry-run

@@ -98,6 +98,8 @@ def main
   postpro = options[:postpro] || root.join("STUDIO", "postpro", "postpro.rb")
   abort "warn: postpro missing at #{postpro}" unless postpro.file?
   abort "warn: input dir missing #{options[:input_dir]}" unless options[:input_dir].directory?
+  # The dataset is the training set; a graded copy written into it trains the grade.
+  abort "warn: refusing to write into a dataset directory (#{options[:output_dir]})" if options[:output_dir].each_filename.include?("dataset")
 
   if options[:clean_output] && !options[:dry_run]
     Dir.glob(options[:output_dir].join("*_portrait.jpg")).each { |path| FileUtils.rm_f(path) } # scan: intentional — portraits regenerated into this run's output dir

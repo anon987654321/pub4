@@ -75,7 +75,7 @@ def main
   token = read_token
   unless token
     warn "warn: Hugging Face auth missing"
-    warn "fix: set HF_TOKEN or run hf auth login"
+    warn "fix: set HF_TOKEN or run hf auth login, and accept the FLUX.1-dev licence at #{FLUX_URL}"
     return 1
   end
 

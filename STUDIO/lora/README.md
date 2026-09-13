@@ -137,15 +137,12 @@ steps of a 12B model is not a run anyone finishes.
 
 ## Status
 
-- **ragnhild**: 8 images in `dataset_1024/`, 1024 on the short edge with every
-  original aspect ratio kept, built by `curate.rb`. No `.safetensors`. The
-  captions are STUBS — `ragnhild, woman, ` and nothing after it — and want
-  editing by hand before any run; a guessed caption teaches the wrong word.
+- **ragnhild**: six captioned pairs, `02` to `07`, in `ragnhild/dataset/`, 1024 on
+  the short edge with every original aspect ratio kept, built by `curate.rb`. No
+  `.safetensors`. Each caption is a full sentence naming the setting, clothing
+  and light after the trigger word.
 
-  The set is at the bottom of the ten-to-thirty the guidance asks for, and two
-  of the eight are arguable: `07` and `08` are the same moment seconds apart, which
-  trains one example twice, and `11` has a filter already baked in that a LoRA
-  learns as part of her face.
+  The set is below the ten-to-thirty the guidance asks for.
 
   An earlier 17-image set is gone, along with the 40
   source photographs it came from — removed at `b7d47d6b6` because the subject

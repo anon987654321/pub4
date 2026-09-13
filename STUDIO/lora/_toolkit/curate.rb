@@ -68,6 +68,7 @@ module Lora
         # A file vips cannot open is not a candidate, and is worth saying so
         # rather than dropping silently — a HEIC in a set of JPEGs is the usual
         # cause and it is fixable.
+        warn "curate: vips cannot open #{path}, skipped"
         nil
       end
     end

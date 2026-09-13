@@ -18,7 +18,8 @@ Usage: lora [--check | --train | --train-kaggle | --train-colab | --train-replic
   --train-replicate  Zip dataset, train on Replicate (ostris/flux-dev-lora-trainer)
   --generate         Sample from latest checkpoint, then optional postpro
   --postpro          Portrait postpro on generated samples in out/
-  --all              check, generate, postpro (default)
+  --all              check, generate, postpro (default) -- not train; needs
+                     weights/$MODEL/*.safetensors from a train lane first
 
 Anything after a lane flag (--train-kaggle, --train-colab, --train-replicate)
 is passed to that lane, e.g.
