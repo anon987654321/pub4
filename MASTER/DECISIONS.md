@@ -1321,11 +1321,11 @@ question with no path is not yet an item.
 to `PrincipleStore` would reintroduce `principle`, the word One Word Per Concept
 retired, to separate two classes the namespace already separates.
 
-`Ground::MemorySearch` keeps its name too. With the data/claude directory gone from
-`MemoryIndex::DEFAULT_DIRS`, the index covers `.master/memory` and nothing
-else, so a search over it is a memory search. That it is not
-`Ground::Memory::Search` is recorded in `data/proposals.yml`
-(`memory-is-a-family-in-lib-ground`) and enforced by `tools/cohesion.rb`.
+Memory search lives in one place, `Ground::Memory::Search`, the recall mixin on the
+sqlite store. `MemorySearch` and `MemoryIndex` had no caller outside their own
+test and indexed a directory no code writes, so they were deleted rather than
+renamed; `data/proposals.yml` (`memory-is-a-family-in-lib-ground`) keeps the
+case `tools/cohesion.rb` learned from them.
 
 `Cognition::Attention` and `CLI::AttentionContext` are not two attention
 tables. The first scores event salience; the second renders the map/zoom/act
