@@ -9,58 +9,82 @@ module Maps
     EVENT_HORIZON = 7.days
 
     def index
-      city = Current.city_record
-      @map_center_lat = city&.latitude.presence || 60.3913
-      @map_center_lng = city&.longitude.presence || 5.3221
-
-      # One array, four layers. The Stimulus controller styles a marker from
-      # point.type and reads title/subtitle/url — it always did, and the server
-      # was sending name/kind/city instead, so every marker on this map was
-      # labelled "Map point" with an Open link pointing at "#".
-      @points_json = (places_layer + events_layer + stories_layer + courier_layer).to_json
+      points = map_points
+      @map_center_lat, @map_center_lng = map_center(points)
+      @points_json = points.to_json
     end
 
     private
 
+    # One array, four layers. The Stimulus controller styles a marker from
+    # point.type and reads title/subtitle/url.
+    def map_points
+      places_layer + events_layer + stories_layer + courier_layer
+    end
+
+    # The city's own coordinates, else the middle of what is on the map. A city
+    # with neither gets no centre at all: the map opens on the world rather
+    # than on Bergen for a city that is not Bergen.
+    def map_center(points)
+      city = Current.city_record
+      return [ city.latitude, city.longitude ] if city&.latitude.present? && city&.longitude.present?
+      return [ nil, nil ] if points.empty?
+
+      [ points.sum { |p| p[:lat] } / points.size, points.sum { |p| p[:lng] } / points.size ]
+    end
+
+    # sw_lat, sw_lng, ne_lat, ne_lng, all four or none. A bounds box that
+    # crosses the antimeridian (sw_lng > ne_lng) is not filtered: no brgen city
+    # sits on it, and a wrong filter would hide pins rather than add them.
+    def bbox
+      return @bbox if defined?(@bbox)
+
+      values = %i[sw_lat sw_lng ne_lat ne_lng].map { |key| Float(params[key], exception: false) }
+      @bbox = if values.all? { |v| v&.finite? } && values[0] <= values[2] && values[1] <= values[3]
+                { latitude: values[0]..values[2], longitude: values[1]..values[3] }
+      end
+    end
+
+    def within_bbox(scope)
+      bbox ? scope.where(bbox) : scope
+    end
+
     def places_layer
       scope = Place.includes(:neighborhood)
       scope = scope.where(city: Current.city_record) if Current.city_record
-      scope.limit(500).map do |place|
+      within_bbox(scope).limit(500).map do |place|
         point(place.latitude, place.longitude,
               type: "place", title: place.name,
-              subtitle: [ place.kind, place.neighborhood&.name ].compact_blank.join(" · "),
-              url: "/places/#{place.to_param}")
+              subtitle: [ place_kind_label(place.kind), place.neighborhood&.name ].compact_blank.join(" · "),
+              url: place_path(place))
       end
     end
 
     # Events already carry coordinates — inherited from their Place or entered
-    # by the organiser — and nothing drew them.
+    # by the organiser.
     def events_layer
-      Event.upcoming.includes(:neighborhood)
-           .where.not(latitude: nil)
-           .where("starts_at <= ?", Time.current + EVENT_HORIZON)
-           .limit(200)
-           .map do |event|
-             point(event.latitude, event.longitude,
-                   type: "event", title: event.title,
-                   subtitle: I18n.l(event.starts_at, format: :event),
-                   url: public_href(event))
-           end
+      scope = Event.upcoming.includes(:neighborhood)
+                   .where.not(latitude: nil)
+                   .where("starts_at <= ?", Time.current + EVENT_HORIZON)
+      within_bbox(scope).limit(200).map do |event|
+        point(event.latitude, event.longitude,
+              type: "event", title: event.title,
+              subtitle: I18n.l(event.starts_at, format: :event),
+              url: public_href(event))
+      end
     end
 
     # The Snap-Map half. Story coordinates are coarsened to ~1 km when written,
     # so a pin says "around here" rather than "at this address" — which is the
     # only reason putting them on a public map is acceptable at all.
     def stories_layer
-      Story.alive.in_current_city.includes(:user)
-           .where.not(latitude: nil)
-           .limit(200)
-           .map do |story|
-             point(story.latitude, story.longitude,
-                   type: "story", title: story.user.display_name,
-                   subtitle: story.caption.to_s.truncate(60),
-                   url: public_href(story))
-           end
+      scope = Story.alive.in_current_city.includes(:user).where.not(latitude: nil)
+      within_bbox(scope).limit(200).map do |story|
+        point(story.latitude, story.longitude,
+              type: "story", title: story.user.display_name,
+              subtitle: story.caption.to_s.truncate(60),
+              url: public_href(story))
+      end
     end
 
     # Deliberately only the viewer's own courier, and only while that order is

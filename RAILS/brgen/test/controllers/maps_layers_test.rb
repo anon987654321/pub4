@@ -152,4 +152,13 @@ class MapsLayersTest < ActionDispatch::IntegrationTest
     get "/"
     assert_nil points.find { |p| p["type"] == "courier" }
   end
+
+  test "a bounds box keeps only the pins inside it" do
+    Place.create!(city: @city, name: "Bryggen", kind: "attraction", latitude: 60.3974, longitude: 5.3244)
+    Place.create!(city: @city, name: "Ulriken", kind: "attraction", latitude: 60.3780, longitude: 5.3880)
+    in_maps
+
+    get "/", params: { sw_lat: 60.39, sw_lng: 5.32, ne_lat: 60.40, ne_lng: 5.33 }
+    assert_equal [ "Bryggen" ], points.select { |p| p["type"] == "place" }.map { |p| p["title"] }
+  end
 end

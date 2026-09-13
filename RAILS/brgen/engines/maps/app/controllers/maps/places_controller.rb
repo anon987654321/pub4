@@ -8,13 +8,10 @@ module Maps
     before_action :require_user_session, only: :check_in
 
     def index
-      scope = Place.includes(:city, :neighborhood)
-      scope = scope.where(city: Current.city_record) if Current.city_record
-      scope = scope.where(kind: params[:kind]) if params[:kind].present?
+      scope = places_scope
 
       respond_to do |format|
         format.json do
-          scope = apply_live_search(scope, columns: %w[name kind], vertical: "maps") if live_search_query.present?
           render json: scope.limit(200).map { |p|
             { id: p.id, name: p.name, kind: p.kind,
               lat: p.latitude, lng: p.longitude,
@@ -22,7 +19,6 @@ module Maps
           }
         end
         format.html do
-          scope = apply_live_search(scope, columns: %w[name kind], vertical: "maps") if live_search_query.present?
           @pagy, @places = pagy(scope.order(:name))
           finish_live_search(partial: "maps/places/live_search_results")
         end
@@ -54,6 +50,17 @@ module Maps
     end
 
     private
+
+    # The one place the list and its JSON twin decide which places match: city,
+    # kind filter, then the live search.
+    def places_scope
+      scope = Place.includes(:city, :neighborhood)
+      scope = scope.where(city: Current.city_record) if Current.city_record
+      scope = scope.where(kind: params[:kind]) if params[:kind].present?
+      return scope if live_search_query.blank?
+
+      apply_live_search(scope, columns: %w[name kind], vertical: "maps")
+    end
 
     def nearby_places_for(place)
       return Place.none unless place.geo?
