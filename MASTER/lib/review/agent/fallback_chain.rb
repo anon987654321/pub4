@@ -23,9 +23,10 @@ module Master
             next unless response
 
             if response.is_a?(Master::Result::Ok)
-              publish_llm_success(attempt.fetch(:model), response)
+              answered = response.model || attempt.fetch(:model)
+              publish_llm_success(answered, response)
               @bus&.publish("agent:stage_warnings", warnings: stage_warnings) unless stage_warnings.empty?
-              return response
+              return response.with_model(answered)
             end
             last_response = response
           end

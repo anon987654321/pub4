@@ -49,4 +49,16 @@ class TestSession < Minitest::Test
       refute_equal session.token_est, session.tokens_billed
     end
   end
+
+  def test_a_flat_rate_row_says_it_is_approximate_and_a_billed_row_does_not
+    Dir.mktmpdir("session_cost") do |dir|
+      session = Master::Trace::Session.new(root: dir)
+      session.record_cost(0.5, model: "unlisted-model", tokens: 10, approximate: true)
+      session.record_cost(0.1, model: "priced-model", tokens: 10)
+
+      rows = File.readlines(File.join(dir, ".master", "costs.jsonl")).map { |line| JSON.parse(line) }
+      assert_equal [true, nil], rows.map { |row| row["approximate"] }
+      assert_equal %w[unlisted-model priced-model], rows.map { |row| row["model"] }
+    end
+  end
 end

@@ -201,8 +201,9 @@ end
         return recovery_result if recovery_result
 
         @session.add_message(role: :assistant, content: text)
-        publish_ctx_footer(dispatch[:selected_model])
-        Result.ok(text)
+        answered = (response.model if response.respond_to?(:model)) || dispatch[:selected_model]
+        publish_ctx_footer(answered)
+        Result::Ok.new(text, answered)
       end
 
       # A hard compaction that failed leaves the window at 90% or more, and a

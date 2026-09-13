@@ -202,12 +202,16 @@ module Master
         msg
       end
 
-      def record_cost(amount, model:, tokens:)
+      # The row names the model that answered, which after a fallback is not
+      # the one routed, and says when the amount is a guess: a model the
+      # price registry does not carry is billed at a flat rate.
+      def record_cost(amount, model:, tokens:, approximate: false)
         entry = nil
         @mutex.synchronize do
           @cost += amount
           @tokens_billed += tokens.to_i
           entry = { ts: Time.now.to_i, amount:, model:, tokens: tokens.to_i, total: @cost, billed: @tokens_billed }
+          entry[:approximate] = true if approximate
         end
         rotate_costs! if File.exist?(@costs_path) && File.size(@costs_path) > COSTS_MAX_BYTES
         File.open(@costs_path, "a") { |f| f.puts(JSON.generate(entry)) }

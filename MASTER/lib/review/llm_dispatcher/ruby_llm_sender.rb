@@ -132,12 +132,24 @@ end)
         # The registry carries no `:free` ids, so those are zero only where the
         # provider catalog's own row says zero — never on the suffix alone.
         def price_per_token(model, direction)
-          info = Master::Review::LLMDispatcher.model_info(model)
-          per_million = info && (direction == :output ? info.output_price_per_million : info.input_price_per_million)
+          per_million = listed_price_per_million(model, direction)
           return 0.0 if !per_million&.positive? && catalog_free?(model)
           return COST_PER_TOKEN unless per_million&.positive?
 
           per_million.to_f / 1_000_000
+        end
+
+        def listed_price_per_million(model, direction)
+          info = Master::Review::LLMDispatcher.model_info(model)
+          info && (direction == :output ? info.output_price_per_million : info.input_price_per_million)
+        end
+
+        # True when either direction fell to the flat rate, so the amount is a
+        # ceiling charged to a model nobody priced rather than a bill.
+        def flat_rate?(model)
+          %i[input output].any? do |direction|
+            !listed_price_per_million(model, direction)&.positive? && !catalog_free?(model)
+          end
         end
 
         def catalog_free?(model)
@@ -152,8 +164,9 @@ end)
           return if tokens.zero?
 
           cost = (tokens * price_per_token(model, :output)).round(6)
-          @session.record_cost(cost, model:, tokens:)
-          publish_llm_cost(model:, cost:, tokens:, tokens_in: tokens, tokens_out: 0, estimated: true)
+          approximate = flat_rate?(model)
+          @session.record_cost(cost, model:, tokens:, approximate:)
+          publish_llm_cost(model:, cost:, tokens:, tokens_in: tokens, tokens_out: 0, estimated: true, approximate:)
         end
 
         def record_measured_usage(model, input:, output:, cached:, cache_write:, tokens:)
@@ -163,16 +176,18 @@ end)
                   (cached * input_price * CACHE_READ_RATIO) +
                   (cache_write * input_price * CACHE_WRITE_RATIO) +
                   (output * price_per_token(model, :output))).round(6)
-          @session.record_cost(cost, model:, tokens:)
+          approximate = flat_rate?(model)
+          @session.record_cost(cost, model:, tokens:, approximate:)
           @session.record_input_tokens(input) if @session.respond_to?(:record_input_tokens)
-          publish_llm_cost(model:, cost:, tokens:, tokens_in: input, tokens_out: output, cached:, cache_write:)
+          publish_llm_cost(model:, cost:, tokens:, tokens_in: input, tokens_out: output, cached:, cache_write:, approximate:)
           Trace::CacheEfficiency.record(input:, cached:, cache_write:)
           @bus&.publish("cache:hit", model:, cached:, cache_write:) if cached.positive? || cache_write.positive?
         end
 
-        def publish_llm_cost(model:, cost:, tokens:, tokens_in: 0, tokens_out: 0, cached: 0, cache_write: 0, estimated: false)
-          line = "[$#{format('%.4f', cost.to_f)}, #{tokens.to_i} tokens]"
-          payload = { model:, cost:, tokens:, cached:, cache_write:, estimated:, line: }
+        def publish_llm_cost(model:, cost:, tokens:, tokens_in: 0, tokens_out: 0, cached: 0, cache_write: 0, estimated: false,
+                             approximate: false)
+          line = "[#{'~' if approximate}$#{format('%.4f', cost.to_f)}, #{tokens.to_i} tokens]"
+          payload = { model:, cost:, tokens:, cached:, cache_write:, estimated:, approximate:, line: }
           @bus&.publish("llm:cost", **payload)
           @bus&.publish("llm:call_complete",
             model:,

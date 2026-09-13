@@ -131,7 +131,9 @@ module Master
         # as :provider_error and no lane ever walked.
         result = reclassify_provider_error(result)
         record_provider_result(model: selected_model, result:, started:)
-        result
+        # Stamped after MASTER_MODEL and the vision swap, so it names the model
+        # that was actually asked rather than the one the caller passed in.
+        result.is_a?(Master::Result::Ok) ? result.with_model(selected_model) : result
       rescue Io::CircuitBreaker::CircuitError => err
         record_provider_outcome(selected_model, err.category, latency_ms: elapsed_ms(started), error: err.message)
         Result.err(redact_secrets(err.message), category: err.category)

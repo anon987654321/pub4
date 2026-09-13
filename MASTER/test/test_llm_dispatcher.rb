@@ -25,8 +25,8 @@ class TestLLMDispatcher < Minitest::Test
       @messages = []
     end
 
-    def record_cost(amount, model:, tokens:)
-      @costs << { amount:, model:, tokens: }
+    def record_cost(amount, model:, tokens:, approximate: false)
+      @costs << { amount:, model:, tokens:, approximate: }
     end
   end
 
@@ -42,7 +42,7 @@ class TestLLMDispatcher < Minitest::Test
     event = bus.events.find { |name, _payload| name == "llm:cost" }
     assert_equal "test-model", event.last[:model]
     assert_equal 150, event.last[:tokens]
-    assert_match(/\A\[\$\d+\.\d{4}, 150 tokens\]\z/, event.last[:line])
+    assert_match(/\A\[~\$\d+\.\d{4}, 150 tokens\]\z/, event.last[:line])
     assert_equal event.last[:line], bus.events.find { |name, _| name == "llm:transparency" }.last[:line]
     complete = bus.events.find { |name, _payload| name == "llm:call_complete" }
     assert_equal 100, complete.last[:tokens_in]
@@ -60,7 +60,7 @@ class TestLLMDispatcher < Minitest::Test
     event = bus.events.find { |name, _payload| name == "llm:cost" }
     assert_equal true, event.last[:estimated]
     assert_equal 250, event.last[:tokens]
-    assert_equal "[$0.0038, 250 tokens]", event.last[:line]
+    assert_equal "[~$0.0038, 250 tokens]", event.last[:line]
     complete = bus.events.find { |name, _payload| name == "llm:call_complete" }
     assert_equal 250, complete.last[:tokens_in]
     assert_equal 0, complete.last[:tokens_out]
@@ -273,6 +273,55 @@ end
     Master::Io::CatalogIndex.stub(:verified_free?, false) do
       assert_equal flat, dispatcher.send(:price_per_token, "vendor/unlisted-model:free", :output)
     end
+  end
+
+  # The flat rate is a ceiling for a model the registry cannot price, and a
+  # row billed at it says so; a priced model's row does not.
+  def test_a_flat_rate_charge_is_marked_approximate_and_a_priced_one_is_not
+    priced = Struct.new(:input_price_per_million, :output_price_per_million).new(3.0, 15.0)
+    unpriced, unpriced_session, unpriced_bus = build_dispatcher
+    Master::Review::LLMDispatcher.stub(:model_info, nil) do
+      unpriced.send(:record_usage, ReplyWithUsage.new(100, 50, 0, 0), "vendor/unlisted-model")
+    end
+    billed, billed_session, billed_bus = build_dispatcher
+    Master::Review::LLMDispatcher.stub(:model_info, priced) do
+      billed.send(:record_usage, ReplyWithUsage.new(100, 50, 0, 0), "anthropic/claude-sonnet")
+    end
+
+    assert unpriced_session.costs.last[:approximate]
+    assert unpriced_bus.events.find { |name, _| name == "llm:cost" }.last[:approximate]
+    refute billed_session.costs.last[:approximate]
+    assert_match(/\A\[\$0\.00\d\d, 150 tokens\]\z/, billed_bus.events.find { |name, _| name == "llm:cost" }.last[:line])
+  end
+
+  # MASTER_MODEL rewrites the model at the door, so the answer carries the
+  # model that was asked, not the one the caller named.
+  def test_an_answer_names_the_model_the_door_actually_asked
+    dispatcher, = build_dispatcher
+    asked = []
+    breaker = Object.new
+    breaker.define_singleton_method(:call) { |_cost, &blk| blk.call }
+    cache = Object.new
+    cache.define_singleton_method(:fetch) { |_key, _model, &blk| blk.call }
+    dispatcher.instance_variable_set(:@cache, cache)
+    dispatcher.define_singleton_method(:breaker_for) { |_model| breaker }
+    dispatcher.define_singleton_method(:record_provider_result) { |**| nil }
+    dispatcher.define_singleton_method(:send_llm_request) do |model, *, **|
+      asked << model
+      Master::Result.ok("hello")
+    end
+
+    saved = ENV["MASTER_MODEL"]
+    ENV["MASTER_MODEL"] = "claude-cli:claude-opus-4-8"
+    result = Master.stub(:any_api_key_present?, true) do
+      dispatcher.send_with_cache("routed-model", [{ role: "user", content: "hi" }])
+    end
+
+    assert_equal "hello", result.value!
+    assert_equal ["claude-cli:claude-opus-4-8"], asked
+    assert_equal "claude-cli:claude-opus-4-8", result.model
+  ensure
+    ENV["MASTER_MODEL"] = saved
   end
 
   def test_the_catalog_verifies_zero_from_the_providers_row_not_the_price_column

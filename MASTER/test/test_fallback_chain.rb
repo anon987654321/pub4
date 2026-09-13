@@ -80,6 +80,7 @@ class TestFallbackChain < Minitest::Test
 
     assert_equal "fallback ok", response.value!
     assert_equal %w[ghost-model z-ai/glm-4.5-air:free], dispatcher.calls
+    assert_equal "z-ai/glm-4.5-air:free", response.model, "the answer names the routed head, not the model that spoke"
   end
 
   def test_failover_skip_model_identifies_transient_errors

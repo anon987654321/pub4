@@ -97,12 +97,19 @@ module Master
     class Ok < Result
       include OkChaining
 
-      attr_reader :value
+      # `model` is the model that produced the value, when a model did. After a
+      # fallback it is not the model that was routed, and the answer is the only
+      # place a caller can still learn which one spoke. Positional, so a bare
+      # hash value is never read as keywords.
+      attr_reader :value, :model
 
-      def initialize(value)
+      def initialize(value, model = nil)
         @value = value
+        @model = model
         freeze
       end
+
+      def with_model(id) = Ok.new(@value, id)
 
       def ok? = true
       def err? = false
