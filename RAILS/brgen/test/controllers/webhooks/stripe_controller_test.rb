@@ -78,6 +78,48 @@ class Webhooks::StripeControllerTest < ActionDispatch::IntegrationTest
     assert_response :ok
   end
 
+  def paid_listing_setup
+    seller = User.create!(email_address: "sw_seller@example.com", password: "secret1234")
+    @buyer = User.create!(email_address: "sw_buyer@example.com", password: "secret1234")
+    @category = Marketplace::Category.create!(name: "Probe", slug: "probe-#{SecureRandom.hex(4)}")
+    @listing = Marketplace::Listing.create!(title: "Stripe probe", price_cents: 1000, user: seller, category: @category)
+  end
+
+  test "a signed session pays the order its client reference names" do
+    paid_listing_setup
+    order = Marketplace::Order.create!(listing: @listing, buyer: @buyer)
+    payload = { type: "checkout.session.completed",
+                data: { object: { id: "cs_probe", payment_status: "paid", client_reference_id: "order_id:#{order.id}" } } }.to_json
+
+    post_event(payload, sign(payload))
+    assert_response :ok
+    assert_equal "paid", order.reload.payment_status
+    assert_equal "cs_probe", order.payment_reference
+  end
+
+  # A session still settling (bank debit) is completed but not paid.
+  test "a completed session that is not yet paid leaves the order unpaid" do
+    paid_listing_setup
+    order = Marketplace::Order.create!(listing: @listing, buyer: @buyer)
+    payload = event(payment_status: "unpaid", reference: "order_id:#{order.id}")
+
+    post_event(payload, sign(payload))
+    assert_response :ok
+    assert_equal "unpaid", order.reload.payment_status
+  end
+
+  # A replayed event must not reopen what has since been refunded.
+  test "a refunded order stays refunded when the event is replayed" do
+    paid_listing_setup
+    order = Marketplace::Order.create!(listing: @listing, buyer: @buyer)
+    order.update!(payment_status: "refunded", status: "paid")
+    payload = event(reference: "order_id:#{order.id}")
+
+    post_event(payload, sign(payload))
+    assert_response :ok
+    assert_equal "refunded", order.reload.payment_status
+  end
+
   test "reports malformed json as a bad request rather than a server error" do
     payload = "{not json"
     post_event(payload, sign(payload))

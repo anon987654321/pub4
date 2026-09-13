@@ -5,14 +5,22 @@ module Webhooks
   module PaymentPaid
     module_function
 
+    # mark_paid! notifies the seller (listing.user) and the buyer and reads the
+    # listing title. Every model is strict_loading by default and production
+    # raises on a violation, so those associations arrive preloaded.
     def find_order_by_id(id)
-      Marketplace::Order.find_by(id: id) if defined?(Marketplace::Order)
+      Marketplace::Order.includes(:buyer, listing: :user).find_by(id: id) if defined?(Marketplace::Order)
     end
 
     def find_checkout_by_id(id)
       Marketplace::Checkout.find_by(id: id) if defined?(Marketplace::Checkout)
     end
 
+    # StripeCheckout stamps the payable twice: client_reference_id as
+    # "order_id:N" or "checkout_id:N", and the same id under metadata. A basket
+    # and an order share an id sequence only by accident, so the prefix decides
+    # which table the number belongs to. A session carrying neither falls back
+    # to the session id that mark_payment_pending! stored.
     def find_order_from_stripe_session(session)
       ref = session["client_reference_id"].to_s
       meta = session["metadata"] || {}
@@ -21,10 +29,12 @@ module Webhooks
         find_order_by_id(ref.split(":", 2).last)
       elsif ref.start_with?("checkout_id:")
         find_checkout_by_id(ref.split(":", 2).last)
-      elsif meta["order_id"].present?
-        find_order_by_id(meta["order_id"])
       elsif meta["checkout_id"].present?
         find_checkout_by_id(meta["checkout_id"])
+      elsif meta["order_id"].present?
+        find_order_by_id(meta["order_id"])
+      elsif session["id"].present?
+        find_by_payment_reference(session["id"])
       end
     end
 
@@ -34,29 +44,35 @@ module Webhooks
         return find_order_by_id(m[1])
       end
 
-      # Fallback: payment_reference column
-      if defined?(Marketplace::Order) && Marketplace::Order.column_names.include?("payment_reference")
-        Marketplace::Order.find_by(payment_reference: reference)
-      end
+      find_by_payment_reference(reference)
     end
 
-    def mark_paid!(order, provider:, reference:)
-      # Idempotent: already paid with same or any reference
-      if order.respond_to?(:payment_status) && order.payment_status.to_s == "paid"
-        return order
-      end
+    # A basket and its lines share one payment_reference, so the basket is asked
+    # first: finding a line first pays one seller and leaves the basket open.
+    def find_by_payment_reference(reference)
+      return if reference.blank? || !defined?(Marketplace::Order)
 
-      if order.respond_to?(:mark_paid!)
-        order.mark_paid!(provider: provider, reference: reference)
-      else
-        attrs = {}
-        attrs[:payment_status] = "paid" if order.respond_to?(:payment_status=)
-        attrs[:payment_provider] = provider if order.respond_to?(:payment_provider=)
-        attrs[:payment_reference] = reference if order.respond_to?(:payment_reference=)
-        attrs[:paid_at] = Time.current if order.respond_to?(:paid_at=)
-        order.update!(attrs) if attrs.any?
-      end
-      order
+      Marketplace::Checkout.find_by(payment_reference: reference) ||
+        Marketplace::Order.includes(:buyer, listing: :user).find_by(payment_reference: reference)
+    end
+
+    # Only a payable order or basket moves to paid, so a replayed or late event
+    # cannot reopen a refunded or cancelled one. The models guard the transition
+    # itself inside their own transaction.
+    #
+    # Out of stock is answered, not raised: the buyer paid for the last one after
+    # someone else did, the webhook has nothing to retry, and a 4xx or 5xx would
+    # have Stripe redeliver it for three days.
+    def mark_paid!(payable, reference:)
+      return payable unless payable.payable?
+
+      payable.mark_paid!(reference: reference)
+      payable
+    rescue RuntimeError => e
+      raise unless e.message.include?("not in stock")
+
+      Rails.logger.warn("[webhooks] #{payable.class.name}##{payable.id} paid while out of stock")
+      payable
     end
 
     def attach_gclid!(order, gclid)

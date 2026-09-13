@@ -116,11 +116,7 @@ module Webhooks
       order = Webhooks::PaymentPaid.find_order_from_vipps_reference(reference)
       return if order.nil?
 
-      Webhooks::PaymentPaid.mark_paid!(
-        order,
-        provider: "vipps",
-        reference: reference
-      )
+      Webhooks::PaymentPaid.mark_paid!(order, reference: reference)
       Webhooks::PaymentPaid.enqueue_google_conversion(order)
     end
   end

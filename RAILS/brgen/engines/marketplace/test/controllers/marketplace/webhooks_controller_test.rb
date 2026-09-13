@@ -24,7 +24,7 @@ class Marketplace::WebhooksControllerTest < ActionDispatch::IntegrationTest
 
   def stripe_payload
     { type: "checkout.session.completed",
-      data: { object: { id: "ref_probe", metadata: { order_id: @order.id } } } }.to_json
+      data: { object: { id: "ref_probe", payment_status: "paid", metadata: { order_id: @order.id } } } }.to_json
   end
 
   def signed_headers(payload, secret: SECRET, timestamp: Time.current.to_i)
@@ -75,6 +75,9 @@ class Marketplace::WebhooksControllerTest < ActionDispatch::IntegrationTest
 
       assert_response :ok
       assert_equal "paid", @order.reload.payment_status
+      # One Stripe handler for both URLs: this host reaches the controller
+      # brgen's own /webhooks/stripe does.
+      assert_instance_of Webhooks::StripeController, controller
     end
   end
 

@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# Vipps callbacks on the marketplace host. Stripe has no action here: the engine
+# routes webhooks/stripe to the host's Webhooks::StripeController, the one
+# Stripe handler.
 class Marketplace::WebhooksController < ActionController::Base
   # Standalone — no session; PSP webhooks only.
   skip_forgery_protection
@@ -7,37 +10,9 @@ class Marketplace::WebhooksController < ActionController::Base
   # A payment provider retries in bursts from a handful of addresses.
   self.write_throttle_limit = 300
 
-  # Reject events whose signed timestamp is further than this from now, so a
-  # captured request cannot be replayed indefinitely.
-  SIGNATURE_TOLERANCE = 5.minutes
-
-  # Both handlers FAIL CLOSED: an unverified POST marks nothing paid. Order ids
-  # are sequential and these routes are public with skip_forgery_protection, so
-  # the signature is the only thing standing between a guess and a paid order.
-  def stripe
-    payload = request.body.read
-    return head(:unauthorized) unless verified_stripe?(payload)
-
-    event = JSON.parse(payload)
-    if event["type"] == "checkout.session.completed"
-      obj = event.dig("data", "object") || {}
-      ref = obj["id"]
-      meta = obj["metadata"] || {}
-      # Basket sessions stamp checkout_id. Looking that number up on Order
-      # used to mark a colliding sequential Order paid and leave the basket open.
-      if meta["checkout_id"].present?
-        mark_paid_checkout(Marketplace::Checkout.find_by(id: meta["checkout_id"]), ref)
-      else
-        order_id = meta["order_id"].presence || obj["client_reference_id"].to_s.delete_prefix("order_id:")
-        order = payable_scope.find_by(id: order_id) || payable_scope.find_by(payment_reference: ref)
-        mark_paid(order, ref)
-      end
-    end
-    head :ok
-  rescue JSON::ParserError
-    head :bad_request
-  end
-
+  # FAILS CLOSED: an unverified POST marks nothing paid. Order ids are
+  # sequential and this route is public with skip_forgery_protection, so the
+  # signature is the only thing standing between a guess and a paid order.
   def vipps
     body = request.body.read
     return head(:unauthorized) unless verified_vipps?(body)
@@ -46,14 +21,8 @@ class Marketplace::WebhooksController < ActionController::Base
     ref = payload["reference"] || payload.dig("payment", "reference")
     state = payload["name"] || payload["state"] || payload.dig("payment", "state")
     if state.to_s.match?(/AUTHORIZED|CAPTURED|SALE|RESERVED/i)
-      # Checkout and its lines share one payment_reference. Looking the Order
-      # up first paid a single seller and left the basket open.
-      checkout = Marketplace::Checkout.find_by(payment_reference: ref)
-      if checkout
-        mark_paid_checkout(checkout, ref)
-      else
-        mark_paid(payable_scope.find_by(payment_reference: ref), ref)
-      end
+      payable = Webhooks::PaymentPaid.find_by_payment_reference(ref)
+      Webhooks::PaymentPaid.mark_paid!(payable, reference: ref) if payable
     end
     head :ok
   rescue JSON::ParserError
@@ -61,50 +30,6 @@ class Marketplace::WebhooksController < ActionController::Base
   end
 
   private
-
-  # mark_paid! notifies both the seller (listing.user) and the buyer, and reads
-  # the listing title. Every model here is strict_loading by default (shared
-  # ApplicationRecord) and production raises on a violation, so the associations
-  # that path touches are preloaded rather than walked lazily. Marketplace::Order
-  # also guards each of those reads itself — this avoids the extra queries.
-  def payable_scope
-    Marketplace::Order.includes(:buyer, listing: :user)
-  end
-
-  # Only transition orders that are actually awaiting payment, so a replayed or
-  # duplicated event cannot re-open a refunded or cancelled order.
-  def mark_paid(order, reference)
-    return unless order&.payable?
-
-    order.mark_paid!(reference: reference)
-  rescue RuntimeError => e
-    raise unless e.message.include?("not in stock")
-  end
-
-  def mark_paid_checkout(checkout, reference)
-    return unless checkout&.payable?
-
-    checkout.mark_paid!(reference: reference)
-  rescue RuntimeError => e
-    raise unless e.message.include?("not in stock")
-  end
-
-  # Stripe's documented scheme: `Stripe-Signature: t=<unix>,v1=<hex hmac>`,
-  # HMAC-SHA256 over "<t>.<raw body>" keyed with the endpoint's whsec_ secret.
-  # This needs no stripe gem — the previous comment claiming otherwise is why
-  # the check was never implemented.
-  def verified_stripe?(payload)
-    secret = ENV["STRIPE_WEBHOOK_SECRET"].to_s
-    return false if secret.empty?
-
-    parts = parse_signature_header(request.headers["Stripe-Signature"])
-    timestamp = parts["t"].to_s.to_i
-    return false if timestamp.zero? || (Time.current.to_i - timestamp).abs > SIGNATURE_TOLERANCE.to_i
-
-    expected = OpenSSL::HMAC.hexdigest("SHA256", secret, "#{timestamp}.#{payload}")
-    # Stripe may send several v1 signatures during key rotation; any match is valid.
-    Array(parts["v1"]).any? { |candidate| secure_equal?(expected, candidate) }
-  end
 
   # NOTE: confirm against the current Vipps MobilePay webhook docs before
   # enabling in production — the header name and signed string differ between
@@ -119,22 +44,6 @@ class Marketplace::WebhooksController < ActionController::Base
     return false if provided.empty?
 
     expected = Base64.strict_encode64(OpenSSL::HMAC.digest("SHA256", secret, payload))
-    secure_equal?(expected, provided)
-  end
-
-  def parse_signature_header(header)
-    header.to_s.split(",").each_with_object(Hash.new { |h, k| h[k] = [] }) do |pair, acc|
-      key, value = pair.strip.split("=", 2)
-      next if key.nil? || value.nil?
-
-      acc[key] << value
-    end.transform_values { |values| values.size == 1 ? values.first : values }
-  end
-
-  def secure_equal?(expected, candidate)
-    candidate = candidate.to_s
-    return false if candidate.empty?
-
-    ActiveSupport::SecurityUtils.secure_compare(expected, candidate)
+    ActiveSupport::SecurityUtils.secure_compare(expected, provided)
   end
 end

@@ -13,6 +13,10 @@ module Webhooks
   #   Signing secret → STRIPE_WEBHOOK_SECRET (whsec_…)
   #
   # Important: verify against the raw request body bytes, not a re-serialized JSON object.
+  #
+  # The one Stripe handler. The marketplace engine routes its own
+  # /webhooks/stripe here too, because an endpoint registered on
+  # markedsplass.<city> before the two were merged still has to be paid.
   class StripeController < ActionController::Base
     skip_forgery_protection
     include Shared::WriteThrottle
@@ -94,11 +98,7 @@ module Webhooks
       order = Webhooks::PaymentPaid.find_order_from_stripe_session(session)
       return if order.nil?
 
-      Webhooks::PaymentPaid.mark_paid!(
-        order,
-        provider: "stripe",
-        reference: session["id"].to_s
-      )
+      Webhooks::PaymentPaid.mark_paid!(order, reference: session["id"].to_s)
       gclid = session.dig("metadata", "gclid")
       Webhooks::PaymentPaid.attach_gclid!(order, gclid) if gclid.present?
       Webhooks::PaymentPaid.enqueue_google_conversion(order)
@@ -111,11 +111,7 @@ module Webhooks
       order = Webhooks::PaymentPaid.find_order_by_id(order_id)
       return if order.nil?
 
-      Webhooks::PaymentPaid.mark_paid!(
-        order,
-        provider: "stripe",
-        reference: intent["id"].to_s
-      )
+      Webhooks::PaymentPaid.mark_paid!(order, reference: intent["id"].to_s)
       Webhooks::PaymentPaid.enqueue_google_conversion(order)
     end
   end
