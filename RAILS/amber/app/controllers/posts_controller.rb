@@ -53,7 +53,12 @@ class PostsController < ApplicationController
   def like
     @post.like!
     @post.record_activity!("AmberPostLiked", source_vertical: "amber")
-    redirect_back fallback_location: posts_path
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.replace(helpers.dom_id(@post, :like), partial: "posts/like_button", locals: { post: @post })
+      end
+      format.html { redirect_back fallback_location: posts_path }
+    end
   end
 
   private

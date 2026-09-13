@@ -4,7 +4,7 @@
 <% cache [post, Current.user&.id, post.anonymous?, I18n.locale] do %>
   <% post_actions = capture do %>
     <% unless guest? %>
-      <%= button_to t("post.like_count", count: post.likes_count), like_post_path(post), method: :post %>
+      <%= render "posts/like_button", post: post %>
     <% end %>
     <% if post.user == Current.user && !guest? %>
       <%= button_to t("actions.delete"), post_path(post), method: :delete, data: { turbo_confirm: t("actions.confirm_delete") } %>

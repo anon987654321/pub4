@@ -35,7 +35,9 @@ class Post < ApplicationRecord
     body.to_s
   end
 
-  def like! = increment!(:likes_count)
+  # touch: posts/_post is fragment-cached on the post, and a counter update
+  # alone leaves updated_at, so the card kept its old count.
+  def like! = increment!(:likes_count, touch: true)
 
   private
 

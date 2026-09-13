@@ -117,7 +117,15 @@ class OutfitsController < ApplicationController
   def like
     @outfit.like!
     @outfit.record_activity!("AmberOutfitLiked", source_vertical: "amber")
-    redirect_to @outfit
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: [
+          turbo_stream.replace(helpers.dom_id(@outfit, :like), partial: "outfits/like_button", locals: { outfit: @outfit }),
+          turbo_stream.replace(helpers.dom_id(@outfit, :likes), partial: "outfits/likes_tag", locals: { outfit: @outfit })
+        ]
+      end
+      format.html { redirect_to @outfit }
+    end
   end
 
   def share

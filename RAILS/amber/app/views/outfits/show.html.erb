@@ -9,7 +9,7 @@
 
 <div class="tag-row">
   <span class="tag"><%= t("outfits.linked_items", count: @outfit.items.count) %></span>
-  <span class="tag"><%= t("outfits.likes_on_page", count: @outfit.likes_count.to_i) %></span>
+  <%= render "outfits/likes_tag", outfit: @outfit %>
   <span class="tag"><%= t("outfits.combined_wears", count: @outfit.total_wears) %></span>
   <% if @outfit.estimated_value.positive? %><span class="tag"><%= t("outfits.wardrobe_value", amount: number_to_currency(@outfit.estimated_value)) %></span><% end %>
 </div>
@@ -39,7 +39,7 @@
 </section>
 
 <nav role="navigation" aria-label="<%= t("outfits.actions_label") %>">
-  <%= button_to t("actions.like_count", count: @outfit.likes_count.to_i), like_outfit_path(@outfit), method: :post, class: "btn" %>
+  <%= render "outfits/like_button", outfit: @outfit %>
   <%= button_to t("outfits.share_brgen"), share_outfit_path(@outfit), method: :post, class: "btn" %>
   <%= button_to t("outfits.wear_again"), wear_outfit_path(@outfit), method: :post, class: "btn" %>
   <%= link_to t("actions.edit"), edit_outfit_path(@outfit), class: "btn" %>
