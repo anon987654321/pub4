@@ -73,6 +73,11 @@ def parse_initial_message_options(argv)
   options
 end
 
+# Help is answered before the runtime boots. The parser that prints it runs
+# after Master.boot everywhere else, and a full boot costs seconds and can
+# raise before the usage text is ever reached.
+initial_message_from_argv(ARGV.dup) if ARGV.include?("-h") || ARGV.include?("--help")
+
 cli = nil
 
 def save_cli_session_safely(cli)
