@@ -11,11 +11,6 @@ validate_ip() {
   return 0
 }
 
-generate_random_port() {
-  log ERROR "missing APP_PORTS entry; assign a fixed port in OPERATOR.sh"
-  exit 1
-}
-
 cleanup_nsd() {
   log INFO "Cleaning nsd(8)"
   [[ -d /var/nsd ]] || { log ERROR "/var/nsd missing"; exit 1 }

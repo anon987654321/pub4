@@ -42,7 +42,11 @@ Rare:
   doas zsh OPERATOR.sh --stage-1        # requires I_UNDERSTAND_DNS_WIPE=1
   doas zsh OPERATOR.sh --stage-2
 
---sync-configs is an alias for the default."
+--sync-configs is an alias for the default.
+
+Env:
+  RUN_PRODUCTION_SEEDS=1   run db:seed during app bootstrap (default 0: never seed production)
+  I_UNDERSTAND_DNS_WIPE=1  required by --stage-1"
 }
 
 # Helpers inlined ( _lib.sh removed for ONE_SOURCE/singularity). Pure Zsh: log, backup_directory, install_*, sync_openbsd_configs (now ships .zshrc to /home/dev too).
@@ -390,9 +394,11 @@ sync_openbsd_apply() {
     return 1
   }
 
+  # No fallback falcon: one started here would run as dev beside rc.d/master's
+  # daemon_user="master" — a second server on the same port, as the account that
+  # can become root. A slow master gets the longer wait and then fails the run.
   if ! wait_for_up 53187 master 12 5; then
-    log WARN "master slow — starting dev tmux falcon fallback"
-    su -m dev -c 'tmux kill-session -t falcon53187 2>/dev/null; tmux new -d -s falcon53187 "cd /home/dev/pub4/MASTER/web && export RAILS_ENV=production MASTER_SAFE_MODE=1 MASTER_SKIP_SELF_TEST=1 MASTER_BACKGROUND=0 SECRET_KEY_BASE_DUMMY=1 PATH=/usr/local/bin:/usr/bin:/bin && exec bundle34 exec falcon serve -n 1 --health-check-timeout 300 --bind http://127.0.0.1:53187 >> /tmp/falcon53187.log 2>&1"'
+    log WARN "master slow — waiting longer for rc.d/master"
     wait_for_up 53187 master 24 5 || return 1
   fi
   wait_for_up 38182 brgen 24 5 || return 1
@@ -415,7 +421,6 @@ trap 'error_handler $? $LINENO' ERR INT TERM
 typeset -r BRGEN_IP="46.23.89.226"
 typeset -r HYP_IP="194.63.248.53"
 typeset -r LOCALHOST="127.0.0.1"
-typeset -r EMAIL_ADDRESS="bergen@pub.attorney"
 
 typeset -a PUBLIC_RESOLVERS=(1.1.1.1 9.9.9.9)
 typeset -A APP_PORTS=(
@@ -508,8 +513,8 @@ stage_1() {
   # Without it TTS produced un-concatenated or unconverted audio on the VPS with
   # no error anywhere — working on a Mac and silently degrading in production,
   # which is the worst failure shape. See TODO.md "Host TTS Binaries".
-  pkg_add -U ldns-utils ruby%3.4 zap zsh fish neovim tmux fontconfig fzf ripgrep fd espeak ffmpeg 2>/tmp/pkg_add.log \
-    || { log ERROR "pkg_add failed. See /tmp/pkg_add.log"; exit 1 }
+  pkg_add -U ldns-utils ruby%3.4 zap zsh fish neovim tmux fontconfig fzf ripgrep fd espeak ffmpeg 2>/var/log/pkg_add.log \
+    || { log ERROR "pkg_add failed. See /var/log/pkg_add.log"; exit 1 }
 
   [[ -f /etc/rc.conf.local && $(<"/etc/rc.conf.local") == *"pf=NO"* ]] && log WARN "pf disabled in rc.conf.local"
   ifconfig vio0 >/dev/null 2>&1 || { log ERROR "Interface vio0 not found"; exit 1 }
@@ -687,8 +692,8 @@ setup_mail_client() {
   # flavourless build, which is the one this needs.
   # w3m renders HTML mail, pdftotext (poppler-utils) flattens PDF
   # attachments, chafa draws images as terminal blocks -- see ~johann/.mailcap.
-  pkg_add -I mutt-- w3m-- poppler-utils chafa 2>/tmp/pkg_add_mail.log \
-    || { log ERROR "pkg_add (mail client) failed. See /tmp/pkg_add_mail.log"; exit 1 }
+  pkg_add -I mutt-- w3m-- poppler-utils chafa 2>/var/log/pkg_add_mail.log \
+    || { log ERROR "pkg_add (mail client) failed. See /var/log/pkg_add_mail.log"; exit 1 }
 
   getent passwd johann >/dev/null \
     || /usr/sbin/useradd -m -c "Johann (brgen.no mail)" -s /bin/ksh johann \

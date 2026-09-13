@@ -93,15 +93,15 @@ module SolidQueueProof
   end
 
   def load_env(app)
-    %W[/etc/#{app}.env /etc/rails/#{app}.env].each do |path|
-      next unless File.readable?(path)
+    # The same one file rc.d/<app> hands the running app.
+    path = "/etc/#{app}.env"
+    return unless File.readable?(path)
 
-      File.foreach(path) do |line|
-        key, value = line.strip.split("=", 2)
-        next if key.nil? || key.start_with?("#") || value.nil?
+    File.foreach(path) do |line|
+      key, value = line.strip.split("=", 2)
+      next if key.nil? || key.start_with?("#") || value.nil?
 
-        ENV[key] = value
-      end
+      ENV[key] = value
     end
   end
 

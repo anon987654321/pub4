@@ -7,9 +7,9 @@
 export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 PORT=61352
 APP_DIR=/home/amber/app
-[[ -r /etc/rails/common.env ]] && . /etc/rails/common.env
+# /etc/amber.env is the one env file: daemon_flags sources nothing else, so a
+# key anywhere else never reaches the app.
 [[ -r /etc/amber.env ]] && . /etc/amber.env
-[[ -f /etc/rails/amber.env ]] && . /etc/rails/amber.env
 : "${SECRET_KEY_BASE:?missing SECRET_KEY_BASE in /etc/amber.env}"
 daemon="/bin/ksh"
 # --health-check-timeout: Falcon defaults to 30s, and on 1 vCPU with master and

@@ -7,9 +7,9 @@
 export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 PORT=38182
 APP_DIR=/home/brgen/app
-[[ -r /etc/rails/common.env ]] && . /etc/rails/common.env
+# /etc/brgen.env is the one env file: daemon_flags sources nothing else, so a
+# key anywhere else never reaches the app.
 [[ -r /etc/brgen.env ]] && . /etc/brgen.env
-[[ -f /etc/rails/brgen.env ]] && . /etc/rails/brgen.env
 : "${SECRET_KEY_BASE:?missing SECRET_KEY_BASE in /etc/brgen.env}"
 daemon="/bin/ksh"
 # The env file is sourced under `set -a` so everything in it is exported, NOT

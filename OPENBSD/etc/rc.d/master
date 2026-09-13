@@ -71,20 +71,17 @@ rc_bg=YES
 rc_reload=NO
 
 rc_pre() {
-  # Production bundle must not require dev-only gems (ferrum, debug).
-  (cd /home/dev/pub4/MASTER/web && bundle34 config set --local without 'development test' 2>/dev/null
-    BUNDLE_GEMFILE=Gemfile bundle34 check 2>/dev/null) || \
-    (cd /home/dev/pub4/MASTER/web && bundle34 config set --local without 'development test' \
-      BUNDLE_GEMFILE=Gemfile bundle34 install) 2>/dev/null || true
-  # The tts-worker + media tools use MASTER/Gemfile (root), NOT web's. A drifted
-  # root lock (e.g. new dilla gems never installed) crashes tts-worker at
-  # Bundler.setup on every spawn -> silent TTS outage / degraded /health. Ensure
-  # it here too so a restart self-heals the exact recurring failure.
-  (cd /home/dev/pub4/MASTER && BUNDLE_GEMFILE=Gemfile bundle34 check 2>/dev/null) || \
-    (cd /home/dev/pub4/MASTER && BUNDLE_GEMFILE=Gemfile bundle34 install) 2>/dev/null || true
+  # Check, never install. rc_pre runs as root, and a root `bundle34 install` in
+  # dev's checkout leaves root-owned gems and .bundle/config that the next dev
+  # deploy cannot rewrite. vps_deploy_master.sh installs both bundles as dev; a
+  # failed check here is logged by name so the restart that follows a drifted
+  # lock says why, instead of healing it in a way nothing records.
+  for _gemfile in /home/dev/pub4/MASTER/web/Gemfile /home/dev/pub4/MASTER/Gemfile; do
+    (cd "${_gemfile%/Gemfile}" && BUNDLE_GEMFILE="$_gemfile" BUNDLE_WITHOUT=development:test bundle34 check >/dev/null 2>&1) ||
+      logger -t master "bundle34 check failed for $_gemfile — run vps-deploy master as dev to install"
+  done
   pkill -f "falcon.*${PORT}" 2>/dev/null
   pkill -f "ruby34.*${PORT}" 2>/dev/null
-  pkill -f "operator/MASTER/web" 2>/dev/null
   pkill -f "/home/dev/pub4/MASTER/bin/tts-worker" 2>/dev/null
   rm -f /home/dev/pub4/MASTER/.master/tts.sock /home/dev/pub4/MASTER/.master/tts-0.sock /home/dev/pub4/MASTER/.master/tts-1.sock 2>/dev/null || true
   # Propshaft must not re-digest public/assets/ (nested assets/assets wedges boot).

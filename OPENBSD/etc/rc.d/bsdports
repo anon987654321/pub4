@@ -7,9 +7,9 @@
 export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 PORT=47312
 APP_DIR=/home/bsdports/app
-[[ -r /etc/rails/common.env ]] && . /etc/rails/common.env
+# /etc/bsdports.env is the one env file: daemon_flags sources nothing else, so a
+# key anywhere else never reaches the app.
 [[ -r /etc/bsdports.env ]] && . /etc/bsdports.env
-[[ -f /etc/rails/bsdports.env ]] && . /etc/rails/bsdports.env
 : "${SECRET_KEY_BASE:?missing SECRET_KEY_BASE in /etc/bsdports.env}"
 daemon="/bin/ksh"
 # SOLID_QUEUE_IN_PUMA is Solid Queue's env name — supervisor runs inside Falcon, not Puma.

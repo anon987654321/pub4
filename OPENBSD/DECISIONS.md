@@ -140,12 +140,24 @@ had ever run — including 150 `MessageExpirationJob`, so disappearing messages
 had never disappeared, and `PruneGuestUsersJob`, so 143,000 stale guest rows had
 never been pruned.
 
-The variable is gone from all three `rc.d` files and the template. A Solid Queue
-worker under Falcon needs its own process: `etc/rc.d/<app>_jobs` exists for each
-app and is deliberately not enabled — read its footer, because vm23 is 1 GB and
-already cannot hold what it runs. `health_check.rb` fails when a queue has
-unfinished work and no registered process, so whichever way that goes it is
-visible.
+What went unrun: 150 `MessageExpirationJob`s, `PruneGuestUsersJob` over 141,753
+stale guest rows, 1520 Turbo broadcast jobs, `DatabaseSnapshotJob`, and every
+digest, rollup, newsletter, reindex and health job in `recurring.yml`.
+
+The variable is gone from all three `rc.d` files. A Solid Queue worker under
+Falcon needs its own process: `etc/rc.d/<app>_jobs` exists for each app.
+`brgen_jobs` is enabled (2026-08-25, e511ccba1); `amber_jobs` and
+`bsdports_jobs` are not, because vm23 is 1 GB and each is another resident Ruby
+process with the whole app loaded. Enabling one is the operator's call:
+
+    doas rcctl enable <app>_jobs
+    doas rcctl start <app>_jobs
+    sqlite3 -readonly /home/<app>/app/storage/production_queue.sqlite3 \
+      'select count(*) from solid_queue_processes;'   # a registered process is the only proof
+
+Add it to `pkg_scripts` in `etc/rc.conf.local` in the same change.
+`health_check.rb` fails when a queue has due work and no registered process,
+so whichever way that goes it is visible.
 
 **And the deploy was deleting the queue (2026-08-13).**
 `rails_prepare_secondary_dbs_as_app` in `RAILS/_database.sh` ran

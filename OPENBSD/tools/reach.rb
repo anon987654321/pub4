@@ -101,7 +101,6 @@ module Operator
       enabling = starters
       Dir.glob(File.join(root, "etc", "rc.d", "*")).sort.filter_map do |path|
         name = File.basename(path)
-        next if name.end_with?(".tmpl")
         next if enabling.match?(/\b#{Regexp.escape(name)}\b/)
         next if File.read(path, encoding: "UTF-8").match?(/not enabled by default|disabled by default/i)
 
@@ -134,7 +133,7 @@ module Operator
 
     def counts
       { "cron" => cron_commands.size,
-        "rcd" => Dir.glob(File.join(root, "etc", "rc.d", "*")).count { |f| !f.end_with?(".tmpl") },
+        "rcd" => Dir.glob(File.join(root, "etc", "rc.d", "*")).size,
         "zones" => Dir.glob(File.join(root, "var", "nsd", "zones", "master", "*.zone")).size }
     end
 
