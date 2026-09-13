@@ -105,43 +105,68 @@ tts:
   # -14dB, not lower. At -26 it mixed correctly and was inaudible, which is the
   # same as not running.
   bed:
-    # Three of dilla's ARTIST_VERIFIED_PROGRESSIONS, cycled. One four-bar loop
-    # repeating all session becomes wallpaper; three harmonic worlds do not.
-    progressions: [maj7_minor_cycle, e_major_third_rise, d_add9_soul_arc]
-    bar_seconds: 4
+    # dillas whole CHORD_PROGRESSIONS table, read at render time rather than
+    # copied. 242 progressions; a copy of four of them drifts, a reader does
+    # not. Every pass picks different ones, so nothing loops.
+    source: STUDIO/dilla/dilla.rb
+    progressions: all
+    bpm: 88
+    bars_per_chord: 2
+    chords_per_pass: 12
     gain_db: -14
+    # The oscillators render at four times the sample rate and come back down
+    # through the resampler. A saw or square written as a modulo has a vertical
+    # edge, so every harmonic above 22 kHz folds back as an inharmonic tone;
+    # sixteen of them is a field of bleeps that moves with the notes.
+    oversample: 4
     chain: "equalizer=f=520:t=q:w=1.1:g=3.0,equalizer=f=1480:t=q:w=1.3:g=2.0,chorus=0.5:0.7:19|27:0.3|0.26:0.24|0.2:0.9|1.4,highpass=f=70,lowpass=f=2600"
-    # One patch per chord, twelve in all. The recipe is fixed — an oscillator
-    # shape, a detune spread, a ladder cutoff with resonance, an attack — and
-    # only the settings move, which is how a Minimoog reached for instruments
-    # it could not be. Each name is what the patch aims at, not what it hits.
+    # One patch per chord, drawn fresh each pass. The recipe is fixed — an
+    # oscillator shape, a detune spread, a ladder cutoff with resonance, an
+    # attack — and only the settings move, which is how a Minimoog reached for
+    # instruments it could not be. Each name is what the patch aims at.
     patches:
-      - { name: bowed cello,  wave: saw,      cutoff: 900,  res: 5.5, attack: 1.4,  voices: 3, sub: true }
-      - { name: muted brass,  wave: pulse,    cutoff: 1500, res: 7.0, attack: 0.35, voices: 2, sub: true }
-      - { name: wood flute,   wave: triangle, cutoff: 2300, res: 2.0, attack: 0.9,  voices: 3, sub: false }
-      - { name: bassoon,      wave: square,   cutoff: 560,  res: 8.5, attack: 0.6,  voices: 2, sub: true }
-      - { name: glass bells,  wave: sine,     cutoff: 2100, res: 1.5, attack: 0.06, voices: 4, sub: false }
-      - { name: reed organ,   wave: pulse,    cutoff: 1250, res: 6.0, attack: 0.5,  voices: 3, sub: false }
-      - { name: string choir, wave: saw,      cutoff: 1050, res: 4.0, attack: 2.0,  voices: 4, sub: false }
-      - { name: clavinet,     wave: square,   cutoff: 1850, res: 9.0, attack: 0.06, voices: 2, sub: false }
-      - { name: french horn,  wave: saw,      cutoff: 780,  res: 6.5, attack: 1.1,  voices: 3, sub: true }
-      - { name: harmonica,    wave: square,   cutoff: 1650, res: 7.5, attack: 0.25, voices: 3, sub: false }
-      - { name: vibraphone,   wave: sine,     cutoff: 2000, res: 2.5, attack: 0.08, voices: 3, sub: false }
-      - { name: tuba,         wave: triangle, cutoff: 620,  res: 8.0, attack: 0.8,  voices: 2, sub: true }
-    # The reference is the HATE podcast series: raw, hypnotic, industrial,
-    # warehouse. Sparse and repetitive, because a busy pattern under speech is
-    # noise — kick on every beat, one open hat on the offbeat of 2 and 4.
+      - { name: bowed cello,   wave: saw,      cutoff: 900,  res: 5.5, attack: 1.4,  voices: 3, sub: true }
+      - { name: muted brass,   wave: pulse,    cutoff: 1500, res: 7.0, attack: 0.35, voices: 2, sub: true }
+      - { name: wood flute,    wave: triangle, cutoff: 2300, res: 2.0, attack: 0.9,  voices: 3, sub: false }
+      - { name: bassoon,       wave: square,   cutoff: 560,  res: 8.5, attack: 0.6,  voices: 2, sub: true }
+      - { name: glass bells,   wave: sine,     cutoff: 2100, res: 1.5, attack: 0.06, voices: 4, sub: false }
+      - { name: reed organ,    wave: pulse,    cutoff: 1250, res: 6.0, attack: 0.5,  voices: 3, sub: false }
+      - { name: string choir,  wave: saw,      cutoff: 1050, res: 4.0, attack: 2.0,  voices: 4, sub: false }
+      - { name: clavinet,      wave: square,   cutoff: 1850, res: 9.0, attack: 0.06, voices: 2, sub: false }
+      - { name: french horn,   wave: saw,      cutoff: 780,  res: 6.5, attack: 1.1,  voices: 3, sub: true }
+      - { name: harmonica,     wave: square,   cutoff: 1650, res: 7.5, attack: 0.25, voices: 3, sub: false }
+      - { name: vibraphone,    wave: sine,     cutoff: 2000, res: 2.5, attack: 0.08, voices: 3, sub: false }
+      - { name: tuba,          wave: triangle, cutoff: 620,  res: 8.0, attack: 0.8,  voices: 2, sub: true }
+      - { name: oboe,          wave: pulse,    cutoff: 1950, res: 8.0, attack: 0.4,  voices: 2, sub: false }
+      - { name: rhodes,        wave: sine,     cutoff: 1400, res: 3.0, attack: 0.1,  voices: 3, sub: true }
+      - { name: viola section, wave: saw,      cutoff: 1150, res: 4.5, attack: 1.7,  voices: 4, sub: false }
+      - { name: bass clarinet, wave: triangle, cutoff: 700,  res: 6.0, attack: 0.7,  voices: 2, sub: true }
+    # The drummer is Karriem Riggins: Detroit, jazz drummer and hip-hop
+    # producer both, known for punchy behind-the-beat drums and ghost snares
+    # placed just before the hits that count. Three things make that, and a
+    # machine has none of them by default — the offbeat sixteenths land late,
+    # every hit wanders a few milliseconds, and the snare sits later still.
     #
-    # The hats are anoisesrc gated by an envelope. ffmpeg's random() inside an
-    # aeval expression is a deterministic lookup, not a noise generator, and
-    # the first version built its hats out of it: they read as a buzz.
+    # The kit is dusty and small-room, not a warehouse: nothing above 8.5 kHz,
+    # hats well down, and the snare carried by noise rather than by its tone
+    # sines, which is what stopped it reading as a pitch.
     #
     # The drums do not take the pad chain above. It rolls off at 2.6 kHz,
-    # which removes a hat entirely; they get dilla's dirt instead.
+    # which removes a hat entirely.
     drums:
-      gain_db: -13
-      kick: { from_hz: 130, to_hz: 48, fall_ms: 90, chain: "acrusher=bits=6:mode=log:aa=1,alimiter=limit=0.72,asubboost=dry=1:wet=0.5:decay=0.7,highpass=f=26" }
-      hat:  { source: anoisesrc, band_hz: [5200, 12000], on_beats: [2, 4], offbeat: true, gain_db: -11 }
+      reference: karriem_riggins
+      gain_db: -12
+      swing: 0.17
+      lay_back_seconds: 0.022
+      humanise_seconds: 0.016
+      dropped_backbeat_odds: 0.16
+      # The pitch fall is integrated, not multiplied. sin(2*PI*t*f(t)) is not a
+      # tone at f(t) — its instantaneous frequency picks up a term in t, and
+      # over a bar that term swept kilohertz downward, which is a laser gun.
+      kick: { from_hz: 106, to_hz: 48, fall_ms: 16, patterns: 5, phase: integrated }
+      snare: { tone_hz: [188, 331], band_hz: [600, 2400], ghost_velocity: [0.22, 0.34] }
+      hat: { source: anoisesrc, band_hz: [4000, 9000], gain_db: -20, open_odds: 0.35 }
+      bus: "highpass=f=32,lowpass=f=8500,alimiter=limit=0.9"
   # No default_volume. The daemon protocol is {voice,rate,pitch,text} and
   # RbEdgeTTS::Communicate takes rate: and pitch: only, so a volume here was
   # read by nothing for as long as it existed. Adding one back means

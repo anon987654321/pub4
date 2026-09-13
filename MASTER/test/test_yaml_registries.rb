@@ -169,35 +169,32 @@ def test_the_post_chain_is_read_and_applied
 end
 
   # The bed is declared here and rendered by whoever plays it, so what this can
-  # hold is that the declaration names progressions dilla actually carries, that
-  # every chord in them has a patch, and that the drums are not routed through
-  # the pad chain.
-  def test_the_bed_names_progressions_dilla_carries
+  # hold is the shape of the declaration: that it points at dillas table rather
+  # than copying it, that every chord has a patch to reach for, and that the
+  # drums are not routed through the pad chain.
+  def test_the_bed_reads_dillas_progression_table
     bed = Master::Voice::Policy.bed
     skip "no bed declared" unless bed
 
-    dilla = File.expand_path("../../STUDIO/dilla/dilla.rb", __dir__)
+    assert_equal "all", bed["progressions"],
+                 "a copy of four progressions drifts; the reader does not"
+    dilla = File.expand_path("../../#{bed["source"]}", __dir__)
     skip "dilla not in this checkout" unless File.file?(dilla)
 
-    source = File.read(dilla)
-    names = Array(bed["progressions"])
-    refute_empty names, "the bed declares no progression"
-    names.each do |name|
-      assert_match(/^\s*#{Regexp.escape(name)}:/, source,
-                   "voice.yml names #{name}, which CHORD_PROGRESSIONS does not have")
-    end
+    assert_match(/^CHORD_PROGRESSIONS/, File.read(dilla),
+                 "the bed names #{bed["source"]}, which declares no CHORD_PROGRESSIONS")
     assert_operator bed["gain_db"].to_i, :<, 0, "the bed must sit under the voice"
   end
 
-  # One patch per chord. One timbre across twelve chords is one instrument
-  # playing one long piece, and the ear files that as wallpaper.
-  def test_every_bed_chord_has_its_own_patch
+  # One patch per chord, drawn fresh each pass. One timbre across every chord is
+  # one instrument playing one long piece, and the ear files that as wallpaper.
+  def test_every_bed_chord_has_a_patch_to_reach_for
     bed = Master::Voice::Policy.bed
     skip "no bed declared" unless bed
 
     patches = Array(bed["patches"])
-    assert_equal Array(bed["progressions"]).size * 4, patches.size,
-                 "four chords to a progression, one patch each"
+    assert_operator patches.size, :>=, bed["chords_per_pass"].to_i,
+                    "fewer patches than chords in a pass means a pass repeats a timbre"
     assert_equal patches.size, patches.map { |patch| patch["name"] }.uniq.size,
                  "two patches share a name"
     patches.each do |patch|
@@ -207,17 +204,36 @@ end
     end
   end
 
-  # The drums take their own chain. The pad chain rolls off at 2.6 kHz and a hat
-  # lives above that, so routing them together removes the hat silently.
-  def test_bed_drums_do_not_take_the_pad_chain
+  # The drummer plays behind the beat, and the kit is a small dusty room. Both
+  # are settings, so both can drift; these are the two that were wrong once.
+  def test_the_bed_drums_are_played_not_programmed
     bed = Master::Voice::Policy.bed
     skip "no bed declared" unless bed
     drums = bed["drums"]
     skip "no drums declared" unless drums
 
-    refute_equal bed["chain"], drums.dig("kick", "chain")
+    assert_operator drums["swing"].to_f, :>, 0, "a quantised grid is not a drummer"
+    assert_operator drums["lay_back_seconds"].to_f, :>, 0, "the snare must be late"
     assert_equal "anoisesrc", drums.dig("hat", "source"),
                  "random() inside an aeval expression is a lookup, not a noise source"
+    refute_equal bed["chain"], drums["bus"],
+                 "the pad chain rolls off at 2.6 kHz and would remove the hat"
+    assert_operator drums.dig("hat", "band_hz").last.to_i, :<=, 9000,
+                    "a hat above 9 kHz is a modern bright kit, not this one"
+  end
+
+  # Two synthesis bugs that were audible before they were visible, and the
+  # spectrogram named both. Neither is a preference, so both are pinned.
+  def test_the_bed_does_not_alias_or_sweep
+    bed = Master::Voice::Policy.bed
+    skip "no bed declared" unless bed
+
+    assert_operator bed["oversample"].to_i, :>=, 2,
+                    "a modulo saw has a vertical edge; at 1x its harmonics fold back as bleeps"
+    assert_equal "integrated", bed.dig("drums", "kick", "phase"),
+                 "sin(2*PI*t*f(t)) sweeps kilohertz downward over a bar, which is a laser gun"
+    assert_operator bed.dig("drums", "kick", "fall_ms").to_i, :<=, 30,
+                    "a pitch fall slow enough to follow is a sound effect, not a drum"
   end
 
   def test_voice_rotation_is_additive
