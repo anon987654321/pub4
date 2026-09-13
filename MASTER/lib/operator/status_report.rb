@@ -129,13 +129,13 @@ module Operator
     end
 
     def backlog_source
-      Master::Operator::OperatorDocs::DEBT_RELATIVE
+      OperatorDocs::DEBT_RELATIVE
     end
 
     # One reader for the register, OperatorDocs. A register with two readers is
     # how the broken one goes unnoticed.
     def backlog_open_count
-      Master::Operator::OperatorDocs.open_debt_count(root: @root)
+      OperatorDocs.open_debt_count(root: @root)
     end
 
     def horizon_count
