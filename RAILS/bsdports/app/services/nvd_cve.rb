@@ -7,8 +7,37 @@ require "uri"
 class NvdCve
   BASE = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 
-  def self.crossref(port, limit: 5)
-    new(port).crossref(limit: limit)
+  # NVD publishes a rate limit rather than leaving callers to guess at one:
+  # five requests in a rolling thirty seconds anonymously, fifty with a key.
+  # The budget lives here, where the request is made. It used to live in
+  # SecurityAdvisoryRefreshJob as a six-second sleep between ports, which
+  # spent five minutes of the bulk queue enforcing a limit it could not see
+  # and protected no other caller.
+  WINDOW_SECONDS = 30.0
+  REQUESTS_PER_WINDOW = { keyed: 50, anonymous: 5 }.freeze
+
+  @window = []
+  @window_lock = Mutex.new
+
+  class << self
+    def crossref(port, limit: 5)
+      new(port).crossref(limit: limit)
+    end
+
+    # Waits only as long as the oldest request in the window still has to live.
+    # A fixed sleep pays the full price on every call; this pays nothing until
+    # the budget is actually spent.
+    def throttle!
+      budget = ENV["NVD_API_KEY"].present? ? REQUESTS_PER_WINDOW[:keyed] : REQUESTS_PER_WINDOW[:anonymous]
+      delay = @window_lock.synchronize do
+        now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        @window.reject! { |at| now - at >= WINDOW_SECONDS }
+        wait = @window.size < budget ? 0 : (WINDOW_SECONDS - (now - @window.first))
+        @window << (now + wait)
+        wait
+      end
+      sleep(delay) if delay.positive?
+    end
   end
 
   def initialize(port)
@@ -16,6 +45,7 @@ class NvdCve
   end
 
   def crossref(limit: 5)
+    self.class.throttle!
     q = "openbsd #{@port.name}"
     uri = URI("#{BASE}?keywordSearch=#{URI.encode_www_form_component(q)}&resultsPerPage=#{limit}")
 
