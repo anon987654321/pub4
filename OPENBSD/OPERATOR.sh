@@ -270,7 +270,7 @@ sync_openbsd_apply() {
   /sbin/pfctl -e 2>/dev/null || log WARN "pf already enabled or enable skipped"
 
   if [[ -x /usr/bin/ruby34 ]] || command -v ruby34 >/dev/null 2>&1; then
-    ruby34 "${SCRIPT_DIR}/relayd_prune_keypairs.rb" /etc/relayd.conf \
+    ruby34 "${SCRIPT_DIR}/relayd_prune_keypairs.rb" --apply /etc/relayd.conf \
       || log WARN "relayd keypair prune failed"
   fi
   relayd -n -f /etc/relayd.conf || { log ERROR "relayd.conf invalid after sync"; return 1 }

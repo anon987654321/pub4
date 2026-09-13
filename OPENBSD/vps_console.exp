@@ -4,18 +4,36 @@
 #   install  sync_and_install  drop_install
 #
 # Thin wrappers: vps_console_<mode>.exp and vps_drop_install.exp exec this file.
+# What each mode does: OPENBSD/RUNBOOK.md, "vps_console.exp modes".
+#
+# Usage: I_UNDERSTAND_CONSOLE_RISK=1 expect -f OPENBSD/vps_console.exp <mode> [args...]
+#        expect -f OPENBSD/vps_console.exp --help
+
+set mode [lindex $argv 0]
+if {$mode eq "" || $mode eq "-h" || $mode eq "--help"} {
+  puts "usage: I_UNDERSTAND_CONSOLE_RISK=1 vps_console.exp <mode> \[args...\]"
+  puts "modes: short \[cmd\] | status | probe | fix_key | start_install | poll_install | install | sync_and_install | drop_install"
+  puts "recovery-only; see OPENBSD/RUNBOOK.md, \"vps_console.exp modes\""
+  exit [expr {$mode eq "" ? 1 : 0}]
+}
 
 source [file join [file dirname $argv0] vps_console_common.exp]
 require_console_risk_ack
 
-set mode [lindex $argv 0]
-if {$mode eq ""} {
-  puts "usage: vps_console.exp <mode> \[args...\]"
-  exit 1
-}
+# Host, port and key live here once; console_spawn is the only ssh line.
+set keyfile [expr {[info exists env(SSH_KEY)] ? $env(SSH_KEY) : "$env(HOME)/.ssh/id_ed25519_brgen"}]
+set console_host dev@server4.openbsd.amsterdam
+set console_port 31415
 
-set keyfile $env(HOME)/.ssh/id_ed25519_brgen
-set pubkey "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIvQvuXFIeKTs6vZbni6iePov95D6Hfd+eYmDc5KJq5E dev@brgen.no vm23 server4"
+# fix_key installs the public half of the key this script connects with, read at
+# run time, so rotating the key leaves no stale pasted copy to re-install.
+proc public_key {} {
+  global keyfile
+  set fh [open "$keyfile.pub"]
+  set key [string trim [read $fh]]
+  close $fh
+  return $key
+}
 
 proc at_prompt {} {
   expect -re {brgen\$ $}
@@ -25,9 +43,13 @@ proc at_prompt_loose {} {
   expect -re {brgen\$ }
 }
 
+proc console_spawn {} {
+  global keyfile console_host console_port
+  spawn ssh -tt -i $keyfile -p $console_port -o StrictHostKeyChecking=accept-new $console_host vmctl console vm23
+}
+
 proc console_open {} {
-  global keyfile
-  spawn ssh -tt -i $keyfile -p 31415 -o StrictHostKeyChecking=accept-new dev@server4.openbsd.amsterdam vmctl console vm23
+  console_spawn
   expect -re {Connected to /dev/ttypx}
   send "\r"
 }
@@ -52,7 +74,7 @@ switch -- $mode {
     set timeout 20
     console_open
     at_prompt_loose
-    send "tail -15 /tmp/pub4_install_latest.log 2>/dev/null; ps aux | grep bundle | grep -v grep | head -3\r"
+    send "tail -15 /tmp/pub4_install_latest.log 2>/dev/null; pgrep -lf bundle\r"
     at_prompt_loose
     send "doas rcctl check master brgen amber bsdports 2>/dev/null\r"
     at_prompt_loose
@@ -60,7 +82,7 @@ switch -- $mode {
   }
   probe {
     set timeout 60
-    spawn ssh -tt -i $keyfile -p 31415 -o StrictHostKeyChecking=accept-new dev@server4.openbsd.amsterdam vmctl console vm23
+    console_spawn
     sleep 2
     send "\r\r\r"
     expect {
@@ -73,13 +95,15 @@ switch -- $mode {
   }
   fix_key {
     set timeout 30
+    set pubkey [public_key]
+    set keybody [lindex $pubkey 1]
     console_open
     at_prompt
     send "whoami; hostname; uname -a\r"
     at_prompt
     send "mkdir -p /home/dev/.ssh && chmod 700 /home/dev/.ssh\r"
     at_prompt
-    send "grep -q 'AAAAC3NzaC1lZDI1NTE5AAAAIIvQvuXFIeKTs6vZbni6iePov95D6Hfd+eYmDc5KJq5E' /home/dev/.ssh/authorized_keys 2>/dev/null || echo '$pubkey' >> /home/dev/.ssh/authorized_keys\r"
+    send "grep -q '$keybody' /home/dev/.ssh/authorized_keys 2>/dev/null || echo '$pubkey' >> /home/dev/.ssh/authorized_keys\r"
     at_prompt
     send "chown -R dev:dev /home/dev/.ssh && chmod 600 /home/dev/.ssh/authorized_keys\r"
     at_prompt
@@ -103,7 +127,7 @@ switch -- $mode {
     set timeout 25
     console_open
     at_prompt
-    send "tail -25 /tmp/pub4_on_vm_install.log 2>/dev/null; echo ---; ps aux | egrep 'bundle|vps_on_vm|brgen.sh|amber.sh|bsdports.sh' | grep -v grep | head -6\r"
+    send "tail -25 /tmp/pub4_on_vm_install.log 2>/dev/null; echo ---; pgrep -lf 'bundle|vps_on_vm|vps_install_all|brgen.sh|amber.sh|bsdports.sh'\r"
     at_prompt
     send "doas rcctl check master brgen amber bsdports 2>&1\r"
     at_prompt
@@ -115,7 +139,7 @@ switch -- $mode {
     at_prompt
     send "cd /home/dev/pub4/MASTER && bundle install\r"
     at_prompt
-    send "cd /home/dev/pub4/MASTER/web && bundle install && RAILS_ENV=production SECRET_KEY_BASE=\${SECRET_KEY_BASE:-dummy} bundle exec rails assets:precompile && bundle exec ruby /home/dev/pub4/RAILS/gates/runner.rb master_web_assets && doas rcctl restart master\r"
+    send "cd /home/dev/pub4/MASTER/web && bundle install && RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1 bundle exec rails assets:precompile && bundle exec ruby /home/dev/pub4/RAILS/gates/runner.rb master_web_assets && doas rcctl restart master\r"
     at_prompt
     send "for a in brgen amber bsdports; do sed -i '' 's|ruby34 /home/dev/pub4/MASTER/bin/cli|(cd /home/dev/pub4/MASTER \\&\\& bundle exec ruby bin/cli|g' /home/dev/pub4/RAILS/\$a/\$a.sh; done\r"
     at_prompt

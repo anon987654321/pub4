@@ -18,7 +18,15 @@ LOG=/var/log/pub4/weekly_integrity.log
 # as root, and the inherited descriptor keeps the log root:wheel 640, which is
 # what etc/newsyslog.conf rotates it as. Every gate below only measures, so dev
 # is enough to run them; dev is also the account bin/vps-deploy already runs as.
+INSTALLED=/usr/local/bin/vps_weekly_integrity.sh
 if [ "$(id -u)" -eq 0 ]; then
+  # Only the root-owned copy may run as root. Invoked from the checkout, root
+  # would already be executing a dev-writable file by the time it reached the
+  # privilege drop below.
+  if [ "$0" != "$INSTALLED" ]; then
+    echo "vps_weekly_integrity: as root, run $INSTALLED, not $0" >&2
+    exit 2
+  fi
   mkdir -p /var/log/pub4
   chmod 755 /var/log/pub4
   exec su "$RUNAS" -c "PUB4_ROOT='$ROOT' '$0'" >>"$LOG" 2>&1
@@ -28,7 +36,9 @@ fi
 . "${ROOT}/OPENBSD/lib/ci_lock.sh"
 LOCK=$(pub4_ci_lock_path)
 
-if [ -f "$LOCK" ] && fuser "$LOCK" >/dev/null 2>&1; then
+# Held means flocked, which is how with-ci-lock and CiGuard take it — asked with
+# the same primitive rather than fuser, which reports any open descriptor.
+if [ -f "$LOCK" ] && ruby34 -e 'exit(File.open(ARGV[0]).flock(File::LOCK_EX | File::LOCK_NB) ? 1 : 0)' "$LOCK"; then
   echo "$(date -u +%FT%TZ) skip: pub4 CI lock held"
   exit 0
 fi

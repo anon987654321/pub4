@@ -1,8 +1,18 @@
 #!/bin/ksh
+# UNTESTED RECOVERY PATH — read OPENBSD/DECISIONS.md, "The three unrun deploy
+# scripts stay", before running it. Nothing exercises this file.
+#
 # Manual MASTER deploy — use when vps_deploy_master.sh stalls.
 # Run on VPS: tmux new-session -d -s masterdeploy /home/dev/pub4/OPENBSD/manual_master_deploy.ksh
 # Watch: tail -f /tmp/master_manual.log
+# FORCE_PRECOMPILE=1 precompiles even when a manifest exists.
 
+case ${1:-} in
+-h|--help)
+  echo "usage: ksh OPENBSD/manual_master_deploy.ksh   (FORCE_PRECOMPILE=1; output goes to /tmp/master_manual.log)"
+  exit 0
+  ;;
+esac
 
 # set -e and pipefail: a failed step inside a manual deploy used to continue
 # to the next one, and with only set -e a failed `sysctl | awk` yields an empty
@@ -27,7 +37,9 @@ echo "SHA=$(git -C /home/dev/pub4 rev-parse --short HEAD)"
 
 cd /home/dev/pub4/MASTER/web || exit 1
 export RAILS_ENV=production
-export SECRET_KEY_BASE="${SECRET_KEY_BASE:-$(openssl rand -hex 16)}"
+# The build needs a secret to boot Rails and never uses it; the server takes its
+# real key from /etc/master.env through rc.d/master.
+export SECRET_KEY_BASE_DUMMY=1
 
 MANIFEST=/home/dev/pub4/MASTER/web/public/assets/.manifest.json
 if [[ -f "$MANIFEST" ]] && [[ "${FORCE_PRECOMPILE:-0}" != "1" ]]; then

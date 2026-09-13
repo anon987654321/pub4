@@ -29,6 +29,12 @@ def read(path)
   File.read(path, encoding: "UTF-8")
 rescue Errno::ENOENT
   nil
+rescue Errno::EACCES
+  # An unreadable nsd.conf or relayd.conf read as empty would report "no zones"
+  # and "no hosts" — a clean bill of health from a check that saw nothing. As
+  # dev that is every run, so say what it needs instead.
+  warn "config-drift: cannot read #{path} — this check needs root (doas /usr/local/bin/config-drift-check)"
+  exit 2
 end
 
 relayd_conf = read("/etc/relayd.conf") || ""
@@ -121,6 +127,10 @@ failures << "relayd not ok: #{out.strip}" unless status.success? && out.include?
 
 if failures.any?
   failures.each { |msg| warn "config-drift: #{msg}" }
+  # cron sends this job's output to /var/log/config_drift.log, which nothing reads
+  # unprompted; one syslog line puts the failure where daily.out and an operator
+  # tailing /var/log/messages will see it.
+  system("logger", "-t", "config-drift-check", "#{failures.size} drift finding(s) - see /var/log/config_drift.log")
   exit 1
 end
 

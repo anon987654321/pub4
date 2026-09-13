@@ -1,7 +1,9 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-ROOT = File.expand_path("..", __dir__)
+# VPS_SAFETY_ROOT lets the test point this at a fixture tree holding the shapes
+# it must flag; unset, it reads this checkout.
+ROOT = ENV.fetch("VPS_SAFETY_ROOT", File.expand_path("..", __dir__))
 OPENBSD = File.join(ROOT, "OPENBSD")
 TOOLING = File.join(ROOT, "OPENBSD")
 failures = []
@@ -23,9 +25,13 @@ if File.file?(doas_conf)
     failures << "etc/doas.conf has no `dev as root` rule"
   else
     failures << "etc/doas.conf: dev rule must not use keepenv (root RCE via RUBYOPT)" if dev_rule.include?("keepenv")
-    unless dev_rule.match?(/setenv\s*\{[^}]*\bI_UNDERSTAND_DNS_WIPE\b[^}]*\}/)
-      failures << "etc/doas.conf: dev rule must setenv-allowlist I_UNDERSTAND_DNS_WIPE " \
-                  "(OPERATOR.sh --stage-1's documented gate cannot cross without it)"
+    # The whole measured allowlist (DECISIONS.md): each is read by a script run
+    # under doas and assigned by none, so dropping one silently breaks that
+    # script — --stage-1's DNS-wipe gate, the console gate, production seeds, the
+    # deploy scan skip, the mail image format.
+    allowlist = dev_rule[/setenv\s*\{([^}]*)\}/, 1].to_s.split
+    %w[I_UNDERSTAND_DNS_WIPE I_UNDERSTAND_CONSOLE_RISK RUN_PRODUCTION_SEEDS SKIP_MASTER_SCAN MAIL_IMG_FMT].each do |name|
+      failures << "etc/doas.conf: dev rule must setenv-allowlist #{name}" unless allowlist.include?(name)
     end
   end
 else
@@ -75,7 +81,6 @@ end
 
 Dir.glob(File.join(OPENBSD, "etc", "rc.d", "*")).sort.each do |path|
   next unless File.file?(path)
-  next if File.basename(path) == "litestream"
 
   text = File.read(path)
   rel = path.delete_prefix("#{ROOT}/")

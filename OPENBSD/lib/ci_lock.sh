@@ -16,8 +16,8 @@
 # follow. That also lets the mode drop from 666 to 644.
 #
 # Three scripts held their own copy of the path (vps_ci.sh, vps_master_scan.sh,
-# vps_weekly_integrity.sh); this is the single source. The lock is opened with
-# lockf(1) by dev, so it stays dev-owned; only the directory is root's.
+# vps_weekly_integrity.sh); this is the single source. The lock file is dev-owned;
+# only the directory is root's.
 
 PUB4_CI_LOCK_DIR=/var/db/pub4
 PUB4_CI_LOCK_NAME=ci.lock
@@ -42,10 +42,8 @@ pub4_ci_lock_path() {
 # exists to prevent.
 #
 # The lock itself is taken by OPENBSD/bin/with-ci-lock and Operator::CiGuard, both
-# flock(2). This comment used to say lockf(1), and vps_master_scan.sh called it:
-# OpenBSD has no lockf(1) and no flock(1) either, so that line was `command not
-# found` on every run and the documented way to scan vm23 never took a lock or
-# ran a scan.
+# flock(2). OpenBSD has neither lockf(1) nor flock(1), so no shell script here can
+# take the lock with a command; vps_master_scan.sh once tried and never ran.
 #
 # Note what this function does and does not do. It ENSURES the file — creates it
 # with the right owner and mode. It does not lock anything. vps_ci.sh calls it

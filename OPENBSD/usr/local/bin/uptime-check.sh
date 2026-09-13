@@ -81,4 +81,10 @@ for row in $targets; do
   check "$url"
 done
 
+# cron sends this job's output to /var/log/uptime-check.log, which nothing reads
+# unprompted; one syslog line puts a failure where an operator will see it.
+if [[ $fail != 0 ]]; then
+	logger -t uptime-check "a public endpoint is down - see /var/log/uptime-check.log"
+fi
+
 exit "$fail"
