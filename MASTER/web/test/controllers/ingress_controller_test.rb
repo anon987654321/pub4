@@ -3,8 +3,18 @@
 require "test_helper"
 
 class IngressControllerTest < ActionDispatch::IntegrationTest
+  # A fixed token, so the authenticated paths run on every machine rather
+  # than skipping wherever MASTER_INGRESS_TOKEN is unset.
+  TOKEN = "ingress-test-token-0123456789"
+
   def setup
+    @previous_token = ENV["MASTER_INGRESS_TOKEN"]
+    ENV["MASTER_INGRESS_TOKEN"] = TOKEN
     @token = MasterIngressToken.read
+  end
+
+  def teardown
+    ENV["MASTER_INGRESS_TOKEN"] = @previous_token
   end
 
   def test_health_public_hides_job_names
@@ -32,10 +42,14 @@ class IngressControllerTest < ActionDispatch::IntegrationTest
   end
 
   def test_cron_unknown_job
-    skip "ingress token not configured" if @token.empty?
     post "/ingress/cron/missing-job-xyz",
          headers: { "Authorization" => "Bearer #{@token}" },
          as: :json
     assert_response :not_found
+  end
+
+  def test_cron_with_a_wrong_token_is_unauthorized
+    post "/ingress/cron/self_test", headers: { "Authorization" => "Bearer not-the-token-at-all" }, as: :json
+    assert_response :unauthorized
   end
 end

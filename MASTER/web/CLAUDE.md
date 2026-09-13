@@ -9,7 +9,9 @@ the boot sequence or the deploy path — it'll save you re-deriving all of it.
 
 The web tier is Rails 8 on Falcon, bound to loopback port 53187 and published
 at https://ai.brgen.no through relayd. The chat surface at `GET /` combines
-the assistant stream and the face runtime. Health is at `GET /up`. Streaming
+the assistant stream and the face runtime. Liveness is `GET /up`, which relayd
+and rc.d poll because it answers before the container boots; `GET /health`
+reports TTS, git and the container and is the deploy smoke check. Streaming
 endpoints include `POST /chat/message` (preferred assistant stream),
 `GET /chat/message` (legacy fallback), `GET /chat/metrics` (session metrics),
 and `GET /events/stream` (event bus).

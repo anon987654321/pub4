@@ -34,6 +34,9 @@ class ChatControllerTest < ActionDispatch::IntegrationTest
     refute_includes response.body, "have a code?"
     refute_includes response.body, "operator surface"
     assert_includes response.body, 'lang="nb"'
+    # /runtime/config is fetched after the tap; preloading it would pay for it
+    # on every visit that never taps.
+    refute_match(%r{<link[^>]*preload[^>]*runtime/config}, response.body)
   end
 
   test "index is English when the browser asks" do

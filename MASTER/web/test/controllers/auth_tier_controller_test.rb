@@ -107,4 +107,33 @@ class AuthTierControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :accepted
   end
+
+  # The CSRF token is skipped on /chat/command, so the origin check is the
+  # guard: an authenticated POST from a sibling host must still be refused.
+  test "an authenticated command posted from a sibling host is forbidden" do
+    post "/chat/command", params: { command: "/help" }, as: :json,
+                          headers: auth_headers.merge("Origin" => "https://brgen.no")
+
+    assert_response :forbidden
+  end
+
+  test "an authenticated command marked cross-site with no Origin is forbidden" do
+    post "/chat/command", params: { command: "/help" }, as: :json,
+                          headers: auth_headers.merge("Sec-Fetch-Site" => "cross-site")
+
+    assert_response :forbidden
+  end
+
+  test "a browser too old for the face gets 406, not a blank page" do
+    get "/", headers: { "User-Agent" => "Mozilla/5.0 (Windows NT 6.1; Trident/7.0; rv:11.0) like Gecko" }
+
+    assert_response :not_acceptable
+  end
+
+  test "a visitor's tools never include Shell or a writer" do
+    allowed = ApplicationController::VISITOR_ALLOWED_TOOLS
+
+    refute_empty allowed
+    %w[Shell WriteFile StrReplace BatchReplace AstEdit Clean].each { |tool| refute_includes allowed, tool }
+  end
 end

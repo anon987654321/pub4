@@ -16,8 +16,8 @@ class FaceAssetsManifestTest < ActiveSupport::TestCase
     assert_empty missing, "manifest names files that are not in public/"
   end
 
-  # The eager list and the path map used to be two hand-written literals
-  # repeating the same twelve names. The map is derived now; this pins that.
+  # The path map is derived from the manifest rather than written beside the
+  # eager list, so it must contain every eager name.
   test "the path map is a superset of the eager list" do
     assert_operator FaceAssets.module_names.size, :>, FaceAssets.eager.size
     assert_empty FaceAssets.eager - FaceAssets.module_names

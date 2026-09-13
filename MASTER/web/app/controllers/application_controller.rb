@@ -232,26 +232,31 @@ class ApplicationController < ActionController::Base
   end
 
   def enforce_chat_rate_limit
-    enforce_rate_limit!("master:rl:chat:#{request.remote_ip}", *self.class.web_rate_limit(:chat))
+    limit, window = self.class.web_rate_limit(:chat)
+    enforce_rate_limit!("master:rl:chat:#{request.remote_ip}", limit:, window:)
   end
 
   def enforce_tts_rate_limit
-    enforce_rate_limit!("master:rl:tts:#{request.remote_ip}", *self.class.web_rate_limit(:tts))
+    limit, window = self.class.web_rate_limit(:tts)
+    enforce_rate_limit!("master:rl:tts:#{request.remote_ip}", limit:, window:)
   end
 
   def enforce_tts_poll_rate_limit
-    enforce_rate_limit!("master:rl:tts:poll:#{request.remote_ip}", *self.class.web_rate_limit(:tts_poll))
+    limit, window = self.class.web_rate_limit(:tts_poll)
+    enforce_rate_limit!("master:rl:tts:poll:#{request.remote_ip}", limit:, window:)
   end
 
   def enforce_web_read_rate_limit
-    enforce_rate_limit!("master:rl:web:read:#{request.remote_ip}", *self.class.web_rate_limit(:read))
+    limit, window = self.class.web_rate_limit(:read)
+    enforce_rate_limit!("master:rl:web:read:#{request.remote_ip}", limit:, window:)
   end
 
   def enforce_web_write_rate_limit
-    enforce_rate_limit!("master:rl:web:write:#{request.remote_ip}", *self.class.web_rate_limit(:write))
+    limit, window = self.class.web_rate_limit(:write)
+    enforce_rate_limit!("master:rl:web:write:#{request.remote_ip}", limit:, window:)
   end
 
-  def enforce_rate_limit!(key, limit, window)
+  def enforce_rate_limit!(key, limit:, window:)
     count = increment_rate_limit!(key, window:)
     return if count <= limit
 
