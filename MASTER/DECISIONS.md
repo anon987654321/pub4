@@ -1055,3 +1055,17 @@ A first-contact path from clone to green check exists as documents:
 `bin/onboard` writes `.master/config.yml` and runs no check, and that is its job.
 A third onboarding surface would restate the first two and drift from them, which
 is how the previous root `CLAUDE.md` died.
+
+## Autofix Tiers By Transform, And That Is Per Rule Today (2026-09-13)
+
+The horizon scan asked autofix to read each finding's `reversibility` and
+`blast_radius`, the way RuboCop splits `--fix` from `--fix-unsafely`. It already
+does what that split is for. Four registry rules name a transform, and
+`AstFixer::DELETING_TRANSFORMS` puts the one that deletes behind
+`MASTER_AUTOFIX=1` while the three that add run unattended; a rule with no
+transform cannot autofix at all. The two fields are filled only by the semantic
+and meta rules, whose findings carry `fix: nil` and so never reach `lib/fix`, and
+`rules.yml` declares the vocabulary (`free | cheap | surgical | impossible`) on no
+rule. Reading the fields would gate nothing. Reopen this when a fifth transform
+lands whose risk the add-or-delete split cannot state, and classify that rule in
+`rules.yml` by hand then.

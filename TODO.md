@@ -1005,11 +1005,6 @@ Wishes and measured proposals not yet shipped; each section is dated.
   unread counting) and `takeaway/order.rb` (state machine, delivery and ETA,
   display formatters) are several subjects each and want splitting.
 
-## From the awesome-list horizon scan — 2026-09-11
-
-- **Autofix classifies by transform, not per rule.** `Scan::Finding` declares
-  `reversibility` and `blast_radius`, `semantic_rules.rb` and `meta_rules.rb` fill
-  them, and nothing under `lib/fix` reads either.
 
 ## The refinement inventory — opened 2026-09-11
 
