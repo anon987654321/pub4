@@ -31,6 +31,11 @@ resolvers:
 
 ttl: 3600
 
+# nsd.conf(5) server-count: how many nsd server processes to start. One per
+# core is the ceiling worth having, and vm23 has one core and 1 GB, so a second
+# server is only a second resident process.
+server_count: 1
+
 soa:
   refresh: 1800
   retry: 900
@@ -59,11 +64,13 @@ caa:
 # advertised sixty mail servers that do not exist and would accept nothing.
 mail_domain: brgen.no
 
-# Zones outside the city network. Registered or not, nsd serves them, and the
-# ones that are NXDOMAIN today cost nothing to keep ready.
+# Zones outside ALL_DOMAINS, and only those: a name already in ALL_DOMAINS gets
+# its zone from there, and listing it here too changed nothing while reading as
+# if it did. Registered or not, nsd serves these, and the ones that are NXDOMAIN
+# today cost nothing to keep ready.
 #
-# Measured 2026-08-12: every one of these that is not brgen-adjacent is NXDOMAIN
-# at its registrar. The anti-gambling trio and foodielicio.us are older ideas;
+# Measured 2026-08-12: all four are NXDOMAIN at their registrar. The anti-gambling
+# trio and foodielicio.us are older ideas;
 # bsdports.net is a defensive registration for bsdports.org and has no zone:
 # it resolved to this box with no relayd entry, no acme-client block and no
 # certificate, so the name completed DNS and then failed TLS. Owning a name is
@@ -77,16 +84,7 @@ extra_zones:
   antibettingblog.com: {}
   anticasinoblog.com: {}
   antigamblingblog.com: {}
-  bsdports.org: {}
-  discordb.org: {}
-  bsddocs.org: {}
   foodielicio.us: {}
-  foball.no: {}
-  freehelp.legal: {}
-  pub.attorney: {}
-  pub.healthcare: {}
-  stacyspassion.com: {}
-  amber.brgen.no: {}
 
 # Records that cannot be derived. Emitted verbatim after the generated ones.
 extra_records:

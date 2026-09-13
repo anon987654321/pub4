@@ -2,20 +2,28 @@
 #
 # brgen IRC bridge gateway. NOT enabled by default — see RAILS/brgen/IRC_BRIDGE.md
 # for the go-live checklist (pf listener port, rc.conf.local pkg_scripts, optional
-# TLS 6697 via relayd). Binds 127.0.0.1:6667 by default; expose it deliberately.
+# TLS 6697 via relayd). Binds 127.0.0.1:6667 by default; expose it deliberately
+# by putting IRC_HOST in /etc/brgen.env.
+#
+# Same shape as rc.d/brgen, for the same reasons. rc.subr starts the daemon
+# through a login shell as the daemon user, which resets the environment, so
+# anything exported from rc_pre never reaches it: the env file is sourced inside
+# daemon_flags under set -a instead. PATH is set here because rcctl inherits its
+# caller's, and root cron's has no /usr/local/bin. pexp names the ruby34 process
+# the gateway actually runs as, with .* at both ends because rc.subr matches it
+# against the whole argv with pgrep -xf.
+export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 
-daemon="/usr/local/bin/bundle34"
-daemon_flags="exec ruby bin/irc-gateway"
+daemon="/bin/ksh"
+daemon_flags="-c 'cd /home/brgen/app && export IRC_HOST=127.0.0.1 IRC_PORT=6667 && set -a && . /etc/brgen.env && set +a && export RAILS_ENV=production HOME=/home/brgen && exec /usr/local/bin/bundle34 exec ruby34 bin/irc-gateway'"
 daemon_user="brgen"
 daemon_execdir="/home/brgen/app"
+daemon_logger="daemon.notice"
 
 . /etc/rc.d/rc.subr
 
+pexp=".*ruby34.*bin/irc-gateway.*"
 rc_bg=YES
-
-rc_pre() {
-  . /etc/brgen.env 2>/dev/null || true
-  export RAILS_ENV=production HOME=/home/brgen IRC_HOST=127.0.0.1 IRC_PORT=6667
-}
+rc_reload=NO
 
 rc_cmd $1

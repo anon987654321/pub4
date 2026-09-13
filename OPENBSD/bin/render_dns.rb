@@ -164,6 +164,23 @@ module RenderDns
     candidate > old ? candidate : (old.to_i + 1).to_s
   end
 
+  # Two invariants the zone files cannot show by looking at them. An extra zone
+  # that is also in ALL_DOMAINS is a second declaration of one zone, which is how
+  # the list once carried nine entries that did nothing. And each zone gets
+  # exactly one DMARC record: zone_body writes p=reject for every domain but the
+  # mail domain, whose record lives in extra_records, so a _dmarc added to another
+  # domain's extra_records would publish two, and receivers treat that as none.
+  def policy_errors
+    errors = (policy.fetch("extra_zones").keys & city_zones.keys).map do |domain|
+      "#{domain} is in both extra_zones and ALL_DOMAINS"
+    end
+    zones.each do |domain, subdomains|
+      count = zone_body(domain, subdomains).scan(/^_dmarc\s+IN\s+TXT\b/).size
+      errors << "#{domain}.zone has #{count} _dmarc records, not 1" unless count == 1
+    end
+    errors
+  end
+
   def render_zones(check:)
     FileUtils.mkdir_p(ZONES_DIR)
     written = []
@@ -209,7 +226,7 @@ module RenderDns
     out << "  zonesdir: \"/var/nsd/zones/master\""
     out << "  zonelistfile: \"/var/nsd/db/zone.list\""
     out << "  xfrdfile: \"/var/nsd/run/xfrd.state\""
-    out << "  server-count: 2"
+    out << "  server-count: #{policy.fetch('server_count')}"
     out << "  rrl-size: 1000000"
     out << "  rrl-ratelimit: 200"
     out << "  rrl-slip: 2"
@@ -294,7 +311,25 @@ module RenderDns
     end
   end
 
+  USAGE = <<~TEXT
+    usage: ruby OPENBSD/bin/render_dns.rb [--check]
+
+      (no flag)  write every zone, nsd.conf and acme-client.conf from data/dns.yml and ALL_DOMAINS
+      --check    write nothing; exit 1 if a file on disk differs or the policy breaks an invariant
+  TEXT
+
   def run(argv)
+    if argv.intersect?(%w[-h --help])
+      puts USAGE
+      return 0
+    end
+
+    errors = policy_errors
+    unless errors.empty?
+      errors.each { |error| warn "render_dns: #{error}" }
+      return 1
+    end
+
     check = argv.include?("--check")
     written, stale = render_zones(check: check)
 
