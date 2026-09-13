@@ -9,7 +9,11 @@ module Tv
     belongs_to :channel, class_name: "Tv::Channel"
     has_many :episodes, class_name: "Tv::Episode", dependent: :destroy
 
-    validates :title, :description, presence: true
+    # slug is NOT NULL and the show routes by it, but RedditSeed and the x rake
+    # task create shows from a title alone; deriving it is what lets them save.
+    before_validation { self.slug = title.to_s.parameterize if slug.blank? }
+
+    validates :title, :description, :slug, presence: true
     validates :slug, uniqueness: { scope: :channel_id }
 
     scope :published, -> { where(published: true) }
