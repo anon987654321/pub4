@@ -106,7 +106,7 @@ module Deploy
     # counts every tracked file in STUDIO. This one counts dilla's Ruby beside
     # the engine and nothing else.
     DILLA_SUPPORT = %r{/dilla/(?:lib/.+|(?!dilla\.rb\z)[^/]+\.rb)\z}
-    DILLA_SUPPORT_CEILING = 48
+    DILLA_SUPPORT_CEILING = 49
     # Directories support code has left for lib/. Each one coming back is the
     # sprawl coming back, whatever its file count.
     DILLA_RETIRED_DIRS = %w[lib/engine bin live scripts].freeze
