@@ -106,6 +106,11 @@ exceptions. The first feed image stays lazy for the same reason: `_post` is
 fragment-cached on a key with no position in it, so a card cannot know it is
 first.
 
+`Server-Timing` stays development-only (`config.server_timing` in
+`shared/config/environments/development.rb`): in production it subscribes to
+every notification on every request on one vCPU and hands view and database
+timings to any visitor. The field INP sample now logs its target element instead.
+
 No structural rewrite without a measurement. Cursor pagination cannot follow the
 hot feed's computed rank, and no city is near `OFFSET` pain. The fresh feed's
 plan is `index_posts_on_city_id` plus a temp B-tree sort over one city's posts
