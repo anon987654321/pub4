@@ -16,7 +16,10 @@ issues << "nsd backup does not precede destructive delete" unless backup_idx && 
 # $svc) drift over time, but the two guarantees these check for - a backup copy
 # into a quoted destination, and a restart-with-start-fallback - must survive.
 issues << "missing guarded /home backup copy path" unless script =~ %r{cp -R "\$\{?src\}?[^"]*"[^\n]*?"[^"]*"}
-issues << "missing idempotent Rails DB create/migrate guard" unless script.include?("db:create db:migrate")
+# db:prepare, not db:migrate: it loads db/schema.rb into an empty database, so a
+# fresh box builds its tables whether or not the migrations that wrote the schema
+# are still in the tree.
+issues << "missing idempotent Rails DB prepare" unless script.match?(/bin\/rails db:prepare\b/)
 issues << "missing restart/start fallback for rc.d services" unless script =~ %r{rcctl restart \$\{?\w+\}?[^\n]*?\|\|[^\n]*?rcctl start \$\{?\w+\}?}
 
 if issues.any?

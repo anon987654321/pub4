@@ -6,7 +6,7 @@
 # VERIFIED AGAINST: OpenBSD 7.8 manual pages (2026-01-06)
 #
 # IDEMPOTENCY NOTES (CC14):
-# - Safe to re-run: bootstrap_rails_app (cp tree, bundle install, db:migrate), sync_openbsd_configs
+# - Safe to re-run: bootstrap_rails_app (cp tree, bundle install, db:prepare), sync_openbsd_configs
 #   (backs up /etc first), relayd/pf template installs when configs already match, rcctl enable/start.
 # - DESTRUCTIVE on re-run: stage_1 deletes /var/nsd/etc/* and /var/nsd/zones/master/* before
 #   regenerating signed zones. Never re-run stage_1 on a live authoritative server without backup.
@@ -738,8 +738,8 @@ bootstrap_rails_app() {
   su -l dev -c "gem install --user-install rails bundler falcon" >/dev/null 2>&1 || :
   su -l dev -c "cd $app_dir && bundle config set --local deployment true && bundle config set --local without development:test && RAILS_ENV=production bundle install" \
     || { log ERROR "bundle install failed for $app"; return 1 }
-  su -l dev -c "cd $app_dir && RAILS_ENV=production bin/rails db:create db:migrate" \
-    || log WARN "db:create/migrate non-zero for $app (idempotent skip likely)"
+  su -l dev -c "cd $app_dir && RAILS_ENV=production bin/rails db:prepare" \
+    || log WARN "db:prepare non-zero for $app (idempotent skip likely)"
   if [[ -f $app_dir/db/seeds.rb ]]; then
     if [[ ${RUN_PRODUCTION_SEEDS:-0} == 1 ]]; then
       log WARN "$app: RUN_PRODUCTION_SEEDS=1 set; running production db:seed"
