@@ -24865,8 +24865,15 @@ def render_one_pad_layer!(voice_path, pad_events, duration, voice, role)
 end
 
 def render_pad_stack!(path, pad_events, duration)
-  # Morph path is opt-in only — multi-layer stack is the quality default.
-  return render_pad_morph_fluidsynth(path, pad_events, duration) if synth_morph_enabled? && ENV["PAD_LAYERS"] == "0"
+  # Morph path is opt-in only — multi-layer stack is the quality default. It
+  # morphs between the chords it is handed, so an empty list is not a morph: the
+  # bass bus calls through here with no pad chords on purpose, and the morph path
+  # wrote no layer for it, so the mix that followed failed on a missing file and
+  # every PAD_LAYERS=0 track fell to the stripped-down retry. The stack path
+  # handles an empty list and writes the silent bed the mix expects.
+  if synth_morph_enabled? && ENV["PAD_LAYERS"] == "0" && playable_note_events?(pad_events)
+    return render_pad_morph_fluidsynth(path, pad_events, duration)
+  end
   # warm_dilla_pad_post reads this to choose between two post chains, and the
   # soundfont branch exists to tame a sampled Rhodes. Oscillators do not need
   # taming, and they do want the patch :fx the other branch applies, so the flag
