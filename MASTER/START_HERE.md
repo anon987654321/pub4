@@ -32,6 +32,15 @@ sentence. The slash set is `/review` `/status` `/undo` `/commit` `/model`
 - `bin/check --profile=full` — operator-grade probe path.
 - `bin/check --format=brief` — structured pass/fail with debt hints (pair with
   any profile).
+- The other diagnose verbs each answer one question. `bin/ci` is
+  `bin/check --profile=ci` under the name workflows call. `bin/doctor` asks
+  whether this host can run MASTER: ruby, bundle, keys, the TTS socket, the web
+  token. `bin/smoke` boots the runtime and checks its wiring, and `bin/smoke-web`
+  asks the same of a running face over HTTP. `bin/dogfood` drives `bin/cli` and
+  `bin/master-core` end to end, where `rake dogfood` proves law/ against its
+  own fixtures. `bin/probe` runs any of them, and the RAILS and OPENBSD gates,
+  as named subprocesses (`quick`, `all`, `deploy`). Staged lines go to
+  `bin/operator lint --staged --changed-lines`.
 - Work: say the path. `/review [path]` is the one explicit pass, and its
   stages are `--only scan`, `--only critique` and `--only map`. `/scan`, `/fix`,
   `/critique` and `/council` are those stages by name — `/scan` is `/review
