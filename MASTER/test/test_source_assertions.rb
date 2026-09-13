@@ -42,6 +42,12 @@ class TestSourceAssertions < Minitest::Test
   # text; File.read inline is the same thing written out.
   PATTERN = /assert_(?:includes|match|no_match)\b[^\n]*\b(?:source|src|body|read|File\.read)\b/
 
+  # The same assertion negated. Counted apart so a refute cannot become the way
+  # round the assert ceiling, and so the existing refutes are measured without
+  # moving the number above.
+  REFUTE_PATTERN = /refute_(?:includes|match)\b[^\n]*\b(?:source|src|body|read|File\.read)\b/
+  REFUTE_BASELINE = 20
+
   # The exception the header already names, made writable. A test that reads a
   # file the code under test just wrote is asserting an output, not grepping a
   # source — test_scan_autofix.rb reads back the magic comment the fixer
@@ -50,14 +56,14 @@ class TestSourceAssertions < Minitest::Test
   # somebody wrote rather than a hole in the pattern.
   OPT_OUT = "source-assertion: ok"
 
-  def self.occurrences
+  def self.occurrences(pattern = PATTERN)
     Dir.glob(File.join(ROOT, "{test,spec}", "**", "*.rb")).sort.flat_map do |path|
       rel = path.sub("#{ROOT}/", "")
       next [] if rel == "test/test_source_assertions.rb"
 
       lines = File.readlines(path)
       lines.each_with_index.filter_map do |line, i|
-        next unless line.match?(PATTERN)
+        next unless line.match?(pattern)
         next if line.include?(OPT_OUT) || (i.positive? && lines[i - 1].include?(OPT_OUT))
 
         "#{rel}:#{i + 1}"
@@ -82,5 +88,13 @@ class TestSourceAssertions < Minitest::Test
     assert_operator found.size, :>=, BASELINE,
                     "source-text assertions fell to #{found.size} — lower BASELINE to match, " \
                     "so the gain cannot be given back silently."
+  end
+  def test_source_text_refutations_hold_their_own_ceiling_both_ways
+    found = self.class.occurrences(REFUTE_PATTERN)
+
+    assert_operator found.size, :<=, REFUTE_BASELINE,
+                    "negated source-text assertions rose to #{found.size}:\n  #{found.first(10).join("\n  ")}"
+    assert_operator found.size, :>=, REFUTE_BASELINE,
+                    "negated source-text assertions fell to #{found.size} — lower REFUTE_BASELINE to match."
   end
 end

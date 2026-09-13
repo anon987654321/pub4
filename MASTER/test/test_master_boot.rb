@@ -66,4 +66,17 @@ class MasterBootTest < Minitest::Test
   def test_the_suite_runs_on_mris_dig
     refute_includes Hash.ancestors.map(&:to_s), "Master::HashDigCompat"
   end
+  # rules.yml needs aliases, which is why load_yaml allows them. Aliases are
+  # references inside the document; a Ruby object tag is still refused.
+  def test_load_yaml_follows_aliases_and_refuses_ruby_objects
+    Dir.mktmpdir do |dir|
+      aliased = File.join(dir, "aliased.yml")
+      File.write(aliased, "base: &base\n  size: 3\ncopy: *base\n")
+      assert_equal({ "size" => 3 }, Master.load_yaml(aliased)["copy"])
+
+      tagged = File.join(dir, "tagged.yml")
+      File.write(tagged, "--- !ruby/object:OpenStruct\ntable: {}\n")
+      assert_raises(Psych::DisallowedClass) { Master.load_yaml(tagged) }
+    end
+  end
 end
