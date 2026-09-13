@@ -42,7 +42,7 @@ module Master
 
       def resolve(path)
         full = File.expand_path(path, @root)
-        return Result.err("path escapes project root: #{path}", category: :validation) unless PathGuard.inside_root?(full, @root)
+        return Result.err("path escapes project root: #{path}", category: :validation) unless PathGuard.inside_real_root?(full, @root)
         return Result.err("not a directory: #{path}", category: :validation) unless File.directory?(full)
         Result.ok(full)
       end

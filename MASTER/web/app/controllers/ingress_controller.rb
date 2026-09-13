@@ -34,13 +34,15 @@ class IngressController < ApplicationController
     Integer(security_defaults.dig("ingress", "window_seconds") || DEFAULT_WINDOW_S)
   end
 
+  # Public health answers liveness only. The job names map the trigger surface,
+  # so only a caller holding the ingress token sees them.
   def health
-    render json: {
-      ok: true,
-      service: "master-ingress",
-      cron_jobs: Master::Io::IngressJobs.cron_jobs.map { |j| j["name"] },
-      webhooks: Master::Io::IngressJobs.webhook_jobs.map { |j| j["name"] },
-    }
+    body = { ok: true, service: "master-ingress" }
+    if ingress_token_valid?
+      body[:cron_jobs] = Master::Io::IngressJobs.cron_jobs.map { |j| j["name"] }
+      body[:webhooks] = Master::Io::IngressJobs.webhook_jobs.map { |j| j["name"] }
+    end
+    render json: body
   end
 
   def cron
@@ -109,10 +111,13 @@ class IngressController < ApplicationController
     }
   end
 
+  def ingress_token_valid?
+    token = request.headers["Authorization"].to_s.sub(/\ABearer\s+/i, "").strip
+    MasterIngressToken.valid?(token)
+  end
+
   def require_ingress_token!
-    header = request.headers["Authorization"].to_s
-    token = header.sub(/\ABearer\s+/i, "").strip
-    return if MasterIngressToken.valid?(token)
+    return if ingress_token_valid?
 
     render json: { error: "ingress auth required" }, status: :unauthorized
   end

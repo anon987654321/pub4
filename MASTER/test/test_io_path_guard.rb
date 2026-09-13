@@ -38,6 +38,53 @@ class PathGuardTest < Minitest::Test
   end
 end
 
+# The prefix check alone passed a symlink inside the root that points out of it,
+# and passed credential files to ReadFile. These run the tools on a scratch root.
+class PathGuardEscapeTest < Minitest::Test
+  def setup
+    @dir = File.realpath(Dir.mktmpdir("path_guard"))
+    @root = File.join(@dir, "root")
+    @outside = File.join(@dir, "outside")
+    FileUtils.mkdir_p([@root, @outside])
+    File.write(File.join(@outside, "passwd"), "root:x:0:0\n")
+    File.write(File.join(@root, "notes.txt"), "hello\n" * 5000)
+    File.write(File.join(@root, ".env"), "SECRET=hunter2\n")
+    File.symlink(@outside, File.join(@root, "link"))
+  end
+
+  def teardown = FileUtils.rm_rf(@dir)
+
+  def read_file = Master::Io::ReadFile.new(root: @root, undo: nil)
+
+  def test_a_symlink_out_of_the_root_is_refused_for_reads_and_writes
+    refute read_file.call(path: "link/passwd").ok?
+    writer = Master::Io::WriteFile.new(root: @root, undo: nil, governor: nil)
+    result = writer.call(path: "link/planted.txt", content: "x")
+    refute result.ok?
+    refute File.exist?(File.join(@outside, "planted.txt"))
+  end
+
+  def test_credential_files_are_refused_on_read
+    result = read_file.call(path: ".env")
+    refute result.ok?
+    refute_includes result.message.to_s, "hunter2"
+  end
+
+  def test_read_limit_is_clamped
+    body = read_file.call(path: "notes.txt", limit: 1_000_000).value!
+    assert_match(/truncated, 5000 total lines/, body)
+  end
+
+  def test_search_files_stays_inside_the_root
+    search = Master::Io::SearchFiles.new(root: @root)
+    %w[../outside/* link/* **/*].each do |glob|
+      out = search.call(pattern: "root:x", glob:).value!
+      refute_includes out, "root:x", "#{glob} reached outside the root"
+    end
+    refute_includes search.call(pattern: "SECRET", glob: ".*").value!, "hunter2"
+  end
+end
+
 # GitContext#show is the one operation in that class taking no path: its argument
 # is a git ref, handed straight to `git show`. `git show <rev>:<path>` prints that
 # path's blob, so the colon form was a file read that never passed through

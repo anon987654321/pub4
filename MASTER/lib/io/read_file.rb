@@ -24,6 +24,10 @@ module Master
       end
 
       def call(path:, offset: 0, limit: MAX_LINES, hashline: false)
+        # The model chooses limit, so it is clamped: an uncapped limit turns a
+        # 200k-line file into prompt.
+        offset = [offset.to_i, 0].max
+        limit = limit.to_i.clamp(1, MAX_LINES)
         key = [path, offset, limit, hashline]
         return @cache[key] if @cache.key?(key)
         resolved = resolve(path)

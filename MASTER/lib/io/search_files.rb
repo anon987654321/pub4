@@ -70,7 +70,15 @@ module Master
 
       def cached_paths(glob)
         key = [:glob, glob]
-        @cache[key] ||= Dir.glob(File.join(@root, glob)).select { |path| File.file?(path) }
+        @cache[key] ||= Dir.glob(File.join(@root, glob)).select { |path| searchable?(path) }
+      end
+
+      # A glob can climb with `..` and a hit can be a symlink out of the root,
+      # so every hit is checked by its realpath rather than by the pattern.
+      def searchable?(path)
+        File.file?(path) &&
+          PathGuard.inside_real_root?(File.expand_path(path), @root) &&
+          !PathGuard.secret?(path)
       end
 
       def binary_file?(path)

@@ -16,22 +16,31 @@ module Master
       end
 
       # expand_path does not follow symlinks, so a link inside the root that
-      # points outside it passes the prefix check. The realpath of the nearest
-      # existing ancestor must sit under the real root too; Core::World#within
-      # makes the same check on its side of the core/lib boundary.
-      def self.real_inside_root?(full, root)
+      # points at /etc passes the prefix check. The realpath of the nearest
+      # existing ancestor must sit under the real root too, the same walk
+      # Core::World#within makes. `root` is already a realpath.
+      def self.inside_real_root?(full, root)
+        return false unless inside_root?(full, root)
+
         existing = full
-        existing = File.dirname(existing) until File.exist?(existing) || existing == File.dirname(existing)
-        inside_root?(File.realpath(existing), File.realpath(root))
+        existing = File.dirname(existing) until File.exist?(existing)
+        inside_root?(File.realpath(existing), root)
       rescue SystemCallError
         false
       end
 
+      # Credential files inside the checkout are refused for reads as well as
+      # writes, by the rule Core::World applies to its own reads.
+      def self.secret?(path)
+        Master::Core::World::SECRET_BASENAME.match?(File.basename(path.to_s))
+      end
+
       def resolve(path)
         full = File.expand_path(path, @root)
-        unless PathGuard.inside_root?(full, @root) && PathGuard.real_inside_root?(full, @root)
+        unless PathGuard.inside_real_root?(full, @root)
           return Result.err("path escapes project root: #{path}", category: :validation)
         end
+        return Result.err("credential path refused: #{path}", category: :validation) if PathGuard.secret?(full)
 
         rel = full.delete_prefix(@root + "/")
         if sacred?(rel)
