@@ -7,6 +7,7 @@ horizon:
   brgen:
     core:
       - { name: AI feed ranking, status: planned }
+      - { name: "cold-start feed as follows ∪ city popular, home and local tabs", status: planned }
       - { name: creator monetization, status: planned }
       - { name: inbound ActivityPub storage, status: planned, notes: "outbound federation is done; the inbox verifies remote Create/Announce/Like and drops them, because storing them needs remote media proxying, remote moderation and a blocklist" }
       - { name: recurring events / ticketing beyond an external link, status: planned }
@@ -23,6 +24,9 @@ horizon:
       - { name: live stream infrastructure, status: planned }
     subapp_dating:
       - { name: premium memberships / boost / super-like purchases, status: planned }
+
+      - { name: premium memberships / boost purchases, status: planned }
+      - { name: two-sided ranked_for (looking_for both ways), status: planned }
     subapp_marketplace:
       - { name: AI recommendations, status: planned }
       - { name: coupons / referral credit / bundle pricing, status: planned }
@@ -57,6 +61,7 @@ horizon:
       - { name: event outfit planner, status: planned }
       - { name: sustainable styles / resale, status: planned }
       - { name: weather-based suggestions, status: planned }
+      - { name: "outfit scored as a whole (item scores minus clash); wears-well-with on items#show", status: planned }
       - { name: global trends / local designer highlights, status: planned }
       - { name: style agents (MASTER integration), status: planned }
   bsdports:
