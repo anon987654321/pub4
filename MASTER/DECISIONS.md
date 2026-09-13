@@ -417,6 +417,87 @@ The face runtime must not create a WebGL context before the primer tap. The
 guard in `web/app/views/chat/index.html.erb` protects the tap-to-start path from
 eager or stale assets.
 
+## The Face Intake Was A Design Brief, And The Design Is The Operator's (2026-09-13)
+
+A 404-item ChatGPT intake asked for a far-future-human face. Most of its
+engineering half already exists under other names: `attention_model.js`
+drives gaze, dwell, saccades and blinks from conversational state at
+physiological rates; `boot_fsm.js` is the boot state machine; the face
+handles `webglcontextlost`, falls back to 2D, honours reduced motion and
+forced colours, and pauses when the tab is hidden; `face_brutalist.js` and
+`face_minimal_ui.js` are the terminal and minimal modes; visemes read
+`audio.currentTime`, so speech and mouth share one clock by construction;
+`ttsSkipHard` flushes every lane; TTS fetches carry a timeout, a watchdog
+and a backoff; `Voice::TtsSupervisor` replaces a worker that stops
+answering; `Speech#clean_text` drops code blocks and links before
+synthesis; `test_face_runtime_matches_its_sources` holds the generated
+runtime byte for byte; and `browser_payload` now carries the voice names, so
+the face and the server cannot resolve a voice differently.
+
+**Refused, because the tree already answers them another way.** A formal TTS
+state enum, a unified timestamped event stream, a synchronisation budget with
+golden traces, and gates matching browser state names against server ones
+all measure a gap the audio clock closes. The event bus forwards every topic
+to the browser through the `cable_bridge` wildcard, so a state "with no
+browser representation" cannot be found by comparing names. Pause-length and
+phrase-length distributions, GPU frame-time telemetry, thermal detection and
+an hour-long soak test have no reader, on a face whose one operator sees it
+every day on a one-core box.
+
+**Left to the operator, because they are the look and the voice.** Morphology,
+cranial and orbital proportion, asymmetry, generational variants, expression
+and motion grammar, layout hierarchy and every visual state, how paths and
+figures are spoken, and every blind test of perceived intelligence. The
+speculative-evolution research the intake asked for serves those decisions
+and has no other consumer.
+
+## dilla Measures From Kept Takes, Not From An Intake (2026-09-13)
+
+A 280-item ChatGPT intake asked the engine to gate its mixes against
+engineering folklore attributed to Dilla, Madlib, Cooley, Power, Fairall,
+Daddy Kev and Flying Lotus. The measuring half already exists:
+`<track>.quality.json` reads integrated loudness, true peak, loudness range,
+phase correlation, mono RMS and a spectral delta against a baseline on the
+delivered file; `SpectralAudit` reads shape, crest, DC offset, stereo
+correlation and now mono-fold loss and low-end side energy; `MixScore` and
+`Taste` read the rest; `VerifyFx` proves each stage moves its own
+measurement; `DillaProvenance` records the seed, the pins, the commit, the
+toolchain versions and every warning; `DillaKnobs` derives every knob from
+the code; `console_strip.rb` saturates per channel before the sum;
+`tape_hysteresis.rb` carries Ornstein-Uhlenbeck wow and flutter; per-role
+microtiming and its drift are tested; `reference_sonic.yml` stores derived
+measurements only; and `dilla_principles.yml` already separates documented
+evidence from hypothesis.
+
+**Refused: scores and gates nobody has measured.** `TIMBRAL_FIT`,
+`TIMING_ENTROPY`, `REFERENCE_DISTANCE`, `CHARACTER_PRESERVATION`,
+`MASTER_SAFE` and their kin would each need a threshold, and `mix_score.rb`
+states the engine's rule: a threshold picked in advance measures the person
+who picked it, so targets come from takes that were kept after listening. A
+metric with no reader is inert config, which is this tree's dominant defect.
+Harmonic-order tables, oversampling cost tables, per-stage CPU and memory in
+the quality JSON fall under the same rule; dmesg already prints each tool's
+seconds.
+
+**Refused: artist-named comparison suites, golden renders and A/B/X
+fixtures.** Renders are not deterministic to the byte and are irreplaceable,
+so a golden file either fails on noise or overwrites a take. A/B here is
+`DILLA_FROZEN` and interleaved listening.
+
+**Refused: a research ledger.** `research_status`, contradiction fields,
+per-engineer history notes and a quarterly review have no reader in the
+engine; `dilla_principles.yml` carries evidence levels where a reader exists.
+
+**Refused: NaN, infinity and denormal detection on the file.** A delivered
+take is integer PCM or MP3, where none can exist; a NaN in the float graph
+arrives as silence or clipping, which crest, band and clip readings already
+see. And generated tables in `ENV_AND_RENDER.md` would be a second source
+beside `dilla knobs`, which prints the registry from the code.
+
+What stays open is sound: new processing profiles, a separate mastering
+stage, stem routing, widening, channel variance and sample-start offsets
+change how a take sounds and are the operator's.
+
 ## Self-Test Is A Loud Gate
 
 `rake selftest` runs `rules.yml.self_test` against MASTER itself. It is allowed
