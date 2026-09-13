@@ -547,3 +547,18 @@ is the measurement these are waiting for.
 **No per-component screenshot baselines, density tests or control-distance
 rules.** `layout_snapshot` commits reviewable geometry for the surfaces, and how
 dense a screen should be is the operator's call about how it looks.
+
+## relayd.conf carries no list of cities still waiting — 2026-09-14
+
+**Status:** accepted. The keypair lines in `etc/relayd.conf` are the live
+cities and nothing else. The six registered cities still waiting on
+delegation are listed once, in `RUNBOOK.md` under "Bringing a city domain up",
+beside the order that brings one live.
+
+A second list inside relayd.conf would have no reader. `domain_alignment`
+holds `LIVE_DOMAINS` against the keypair lines, `render_dns.rb` derives the
+zones and acme blocks from `ALL_DOMAINS`, and the waiting set is the
+difference of those two, so a typed copy of it is a fourth place for the same
+names to disagree. It would also sit inside the file that gate parses: the
+gate scans for `tls keypair "…"` with no regard for a leading `#`, so a
+waiting list written in keypair form is read as six live cities.
