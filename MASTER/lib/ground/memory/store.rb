@@ -3,6 +3,9 @@
 module Master
   module Ground
     class Memory
+      # Memory's session store: typed entries in .master/memory.yml, pruned and
+      # consolidated in place. SqliteStore opens the databases, KnowledgeStore
+      # records fix outcomes, and neither holds a conversation's memory.
       module Store
         include Master::Io::AtomicWrite
 

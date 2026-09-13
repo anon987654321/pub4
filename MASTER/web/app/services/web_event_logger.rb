@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# The web tier's logger publishes onto the bus as web:log rather than writing a
+# file, so its lines reach Trace::Log and the face with every other event;
+# Ground::Swallow's JSONL is the separate record of errors that were caught.
 class WebEventLogger
   def initialize(bus)
     @bus = bus
