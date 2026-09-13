@@ -208,6 +208,27 @@ which `ApplicationRecord` includes.
 Emit activity via `Shared::EventEmitter` / `include Shared::StructuredEvents`
 for unified graph + Turbo Stream consumers.
 
+## Write races on SQLite, and the owner's own fields (2026-09-13)
+
+Rails 8.1 opens every SQLite transaction `BEGIN IMMEDIATE`
+(`activerecord/.../sqlite3/database_statements.rb`), so each save takes the
+database's single writer lock before its validations read. A uniqueness
+validation and the insert behind it therefore cannot interleave with another
+writer, and a callback's `update_all` rolls back with the save it belongs to.
+Findings that ask for `LEAST/GREATEST` indexes, partial unique indexes for
+nullable scopes, or `after_commit` to undo a rolled-back counter all assume a
+database that interleaves writers; this one does not. Note the corollary before
+wrapping a long import in one transaction: it would hold that lock for the
+whole import.
+
+Some permitted params look like privilege and are the owner's own controls:
+a listing's `status` (the edit form's sold/reserved select), a partner
+program's `status` (no review step exists), a restaurant's `active` checkbox,
+and a store's `stripe_connect_id`, which has no OAuth flow to replace it and
+only points the owner's own payouts. `kind` is different and is locked on
+update. Money is stored as integer minor units everywhere; `MoneyInOre`'s
+float reader divides one integer sum for display and accumulates nothing.
+
 ## CI gate (per app)
 
 ```bash

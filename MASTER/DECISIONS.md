@@ -406,6 +406,75 @@ reported a clean pass — see the exit-3 work in the same day's commits.
 disagree they eventually will, so `covered_by` is derived from the path, never
 maintained beside it.
 
+## The Public Face Is The Product, So Its Endpoints Stay Open (2026-09-13)
+
+`GET /chat/enhance`, `/chat/research`, `/chat/skills` and `POST /chat/photo`
+stay reachable by visitors. The face at ai.brgen.no is a public chatbot, and a
+visitor already spends more through `POST /chat/message` than any of these
+cost. They are fetched by script and linked from nowhere, so no prefetcher or
+crawler finds them, and each sits under a per-IP rate limit. Moving them to
+POST or behind auth would change the face's JavaScript for no measured abuse.
+
+`require_same_origin!` accepting a request with neither Origin nor
+`Sec-Fetch-Site: cross-site` is not a CSRF hole. Every browser that carries a
+victim's cookies sends one or the other on a POST; a request with neither is
+curl, and curl has no victim session to ride.
+
+The TTS job id is a hash of voice and text on purpose: identical lines share
+one synthesis and one cache entry. Guessing an id requires knowing the
+utterance, and the mp3 holds nothing beyond it. Pending jobs still check
+ownership, which is where a random id would matter.
+
+`production.rb` accepting any Host is sound here. Falcon binds loopback only,
+and relayd forwards only `Host: ai.brgen.no` to it; unmatched hosts go to
+brgen. The allow-list already exists, one hop earlier.
+
+## What The Runtime Keeps Process-Wide, And Why (2026-09-13)
+
+`/mode` writes `.master/mode` and sets `MASTER_MODE` for the process. Posture
+is the operator's, not a visitor's, and the file is shared by every process
+anyway, so a per-request posture would be a second, weaker source.
+
+`SqliteStore` falling back to `:memory:` is right for its one user,
+`KnowledgeStore`, which is a rebuildable index over gitignored files. Pairing
+and memory are YAML under `.master/`, not SQLite, and never reach that
+fallback.
+
+An SSE MCP server is not passed through `SsrfGuard`. `mcp_servers.yml` is
+operator configuration that can already name a stdio command, which is more
+than a URL can do, and the ordinary SSE server is on loopback, which the guard
+would refuse.
+
+`Timeout.timeout` around a socket read is kept. A blocked read is
+interruptible and the socket's block closes it as the error unwinds; what does
+not survive `Timeout` is a child process, and `Io::Exec` and `Core::World`
+already handle those by process group. `read_timeout` alone cannot bound a
+server that drips one byte inside every window.
+
+## Agent Harnesses Are Read, Not Wired (2026-09-13)
+
+OpenClaw, OpenCrabs, Hermes, OpenCode, Aider, Cline, Goose, OpenHands, Warp
+and Continue were read against source in September 2026. MASTER takes ideas
+from them and speaks none of their protocols. No ACP stdio mode, no A2A or
+OpenAI-compatible `/v1`, no `opencode run` or `codex` behind `Io::Exec`, no
+models.dev scrape, no npm SDK, no editor extension, no desktop app, no hosted
+eval farm, no registry of skills. Each would make MASTER a backend to someone
+else's policy, which the constitution forbids, or add a second surface beside
+`bin/master` and the face.
+
+The same pass rejected, by name: Docker, Modal and Daytona terminal backends
+(isolation is `operator worktree`); ClawHub and any unsigned or
+VirusTotal-admitted skill; native companion apps, screenshots and VNC workers
+(the face is the companion); paid tiers and prompt collection; advisory counts
+as a safety score; and any learning loop that writes `soul.yml`, which is
+immutable. Continue is read-only since Cursor absorbed it, so it is not a peer
+to follow.
+
+What was worth taking is either built or open in `TODO.md`: bounded SSE
+queues, prefix compaction under the session lock, per-path scan locks, tool
+output compression, clamped reads, read-only subagent profiles and a
+no-phone-home test are in the tree.
+
 ## Local Knowledge Stays Local
 
 `knowledge/` is gitignored and skipped by scanners/snapshots, but it still

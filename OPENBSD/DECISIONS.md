@@ -212,6 +212,32 @@ Two related traps found the same day:
 - `RAILS/<app>/<app>.sh` — one app's copy-tree deploy, named by `apps.yml`'s
   `deploy_script`; `RAILS/deploy.sh` is only a dispatcher over these
 
+## Scripts Name `/home/dev/pub4`, And Keep Their Separate Jobs (2026-09-13)
+
+rc.d scripts and `start_all_apps.sh` name `/home/dev/pub4` outright. They run
+as root from rc(8) and cron with no caller environment, so a `PUB4_ROOT`
+there would have to be set in the same files it replaced; production has one
+checkout and a worktree is never a deploy target.
+
+`deploy_all.sh`, `bin/vps-deploy` and `vps_production_push.sh` are not three
+spellings of one verb. RUNBOOK's deploy table gives each its job: vps-deploy
+ships code, deploy_all reapplies `/etc`, relayd and the services. The two
+uptime checkers already share `RAILS/apps.yml` as their host list, and
+`relayd-watchdog`'s backend table is held by the port inventory gate.
+
+`bin/check` and `bin/check-openbsd` overlap on the identity and deploy smoke
+gates, seconds of work, and answer different questions: the fleet from any
+machine, the box from the box. The five-second relayd restart in
+`start_all_apps.sh` is not a race either, since each app's rc.d start blocks
+in its own `/up` wait before returning. `rails-app.tmpl` is installed only for
+an app that ships no rc.d script of its own, and three jobs footers stay three
+files, since generating them would add a build step to the box for the sake of
+fifty lines each.
+
+`with-ci-lock` honours a private `PUB4_CI_LOCK` directory while `ci_lock.sh`
+honours only `/var/db/pub4`. Both default to `/var/db/pub4/ci.lock`, so
+production has one mutex; the looser rule exists so tests can lock a tmpdir.
+
 ## `/etc/doas.conf` Installs Only On A Deliberate Root Run (2026-08-02)
 
 **Status:** accepted. Moved here from the old OPENBSD/data/debt.yml register,
