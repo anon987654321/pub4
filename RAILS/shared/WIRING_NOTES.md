@@ -547,9 +547,6 @@ real logic:
   name from a host route set and from `Shared::PasswordResetJob`; the rake tasks
   reach every app because `Rails::Engine#run_tasks_blocks` loads the engine's
   `lib/tasks/**/*.rake`.
-- `jox_logo_controller.js` lives in `frontend/` and registers through
-  `LAZY_COMPONENTS`, so amber and bsdports get the logo animation and brgen,
-  which has no such logo, pays one importmap line and no fetch.
 
 Deliberately left duplicated:
 

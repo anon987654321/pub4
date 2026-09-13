@@ -110,10 +110,10 @@ module Deploy
         ],
       },
       "amber" => {
-        "jox chrome" => %w[app/assets/stylesheets/_jsfiddle_chrome.scss app/views/shared/_jox_logo.html.erb],
+        "jox chrome" => %w[app/assets/stylesheets/_jsfiddle_chrome.scss],
       },
       "bsdports" => {
-        "jox chrome" => %w[app/assets/stylesheets/_jsfiddle_chrome.scss app/views/shared/_jox_logo.html.erb],
+        "jox chrome" => %w[app/assets/stylesheets/_jsfiddle_chrome.scss],
       },
     }.freeze
 
