@@ -1312,3 +1312,22 @@ runs all three, so a move would buy tidiness and measure nothing new.
 So the next intake of this shape closes the same way: a subtraction lands with
 the second caller found and the test that keeps the survivor honest, and a
 question with no path is not yet an item.
+
+## Shared Last Names Stay When The Namespaces Differ (2026-09-13)
+
+`Ground::Constitution` and `Core::Constitution` keep their names.
+`Ground::Constitution` loads operator-declared prompt text from
+`data/principles/*.md`; `Core::Constitution` judges effects. Renaming the first
+to `PrincipleStore` would reintroduce `principle`, the word One Word Per Concept
+retired, to separate two classes the namespace already separates.
+
+`Ground::MemorySearch` keeps its name too. With `data/claude` gone from
+`MemoryIndex::DEFAULT_DIRS`, the index covers `.master/memory` and nothing
+else, so a search over it is a memory search. That it is not
+`Ground::Memory::Search` is recorded in `data/proposals.yml`
+(`memory-is-a-family-in-lib-ground`) and enforced by `tools/cohesion.rb`.
+
+`Cognition::Attention` and `CLI::AttentionContext` are not two attention
+tables. The first scores event salience; the second renders the map/zoom/act
+protocol from `data/attention_context.yml` into the prompt. Only the first
+carries weights.
