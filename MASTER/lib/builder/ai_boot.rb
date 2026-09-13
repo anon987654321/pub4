@@ -204,29 +204,7 @@ module Master
     end
 
     def subscribe_fix_loop_events(bus:, propose_tree:, rollback:, fix_loop:, lean_boot:)
-      unless lean_boot
-        # One proposer at a time.
-        #
-        # fix_loop:clean and fix_loop:plateau both fire every time a pass
-        # settles, and each started a thread with nothing to stop a second one
-        # starting while the first was still working. A fix loop that settles
-        # often — which is what a working one does — leaked a thread per
-        # settle, and they pile up invisibly because none of them is joined.
-        proposing = { busy: false }
-        gate = Mutex.new
-        propose_once = lambda do
-          claimed = gate.synchronize { proposing[:busy] ? false : (proposing[:busy] = true) }
-          next unless claimed
-
-          watched_thread(bus, "propose_tree") do
-            propose_tree.call
-          ensure
-            gate.synchronize { proposing[:busy] = false }
-          end
-        end
-        bus.subscribe("fix_loop:clean") { propose_once.call }
-        bus.subscribe("fix_loop:plateau") { propose_once.call }
-      end
+      subscribe_single_proposer(bus:, propose_tree:) unless lean_boot
       bus.subscribe("fix_loop:oscillation") { |payload| rollback.call(Master::Result.err("fix loop oscillation", category: :policy)) }
       bus.subscribe("fix_loop:cycle_detected") { |payload| rollback.call(Master::Result.err("fix loop cycle detected", category: :policy)) }
       bus.subscribe("system:crit") do
@@ -242,6 +220,30 @@ module Master
 
       bus.subscribe("fix_loop:llm_skipped") { homeostat.observe(:llm_failure) }
       bus.subscribe("fix_loop:timeout") { homeostat.observe(:llm_failure) }
+    end
+
+    # One proposer at a time.
+    #
+    # fix_loop:clean and fix_loop:plateau both fire every time a pass settles,
+    # and each started a thread with nothing to stop a second one starting while
+    # the first was still working. A fix loop that settles often — which is what
+    # a working one does — leaked a thread per settle, and they pile up
+    # invisibly because none of them is joined.
+    def subscribe_single_proposer(bus:, propose_tree:)
+      proposing = { busy: false }
+      gate = Mutex.new
+      propose_once = lambda do
+        claimed = gate.synchronize { proposing[:busy] ? false : (proposing[:busy] = true) }
+        next unless claimed
+
+        watched_thread(bus, "propose_tree") do
+          propose_tree.call
+        ensure
+          gate.synchronize { proposing[:busy] = false }
+        end
+      end
+      bus.subscribe("fix_loop:clean") { propose_once.call }
+      bus.subscribe("fix_loop:plateau") { propose_once.call }
     end
 
     # MASTER_WATCHER=0 disables the OpenBSD load watcher; on by default.
