@@ -15,7 +15,8 @@ require_relative "violation"
 
 module Master
   module Fix
-  # Two-tier act-react loop — architectures #1, #2, #3, #14, #15.
+    # Scan, fix and rescan until CLEAN_RUNS clean passes in a row, a plateau over
+    # PLATEAU_WINDOW passes, MAX_PASSES, or the wall-clock budget, whichever first.
     class FixLoop
       include ConvergenceConfig
       include BackgroundRunner
@@ -128,9 +129,8 @@ module Master
           # :timeout matches LLMDispatcher's category for the same situation, so
           # a caller that wants to treat "ran out of time" differently from
           # "genuinely failed" can, and one that does not gets the truth by
-          # default. All three callers already handle err: watch_loop ignores
-          # the return, through_pipeline logs "fail", and work_commands_status
-          # renders alternatives.
+          # default. Both callers already handle err: watch_loop ignores
+          # the return and through_pipeline logs "fail".
           return Result.err("wall-clock timeout (#{budget_seconds}s) after #{i} pass(es)", category: :timeout)
         end
 

@@ -148,9 +148,6 @@ module Master
           # directory stays empty, which it is.
           next [] if rel.match?(%r{\Adata/principles/[^/]+\.md\z})
 
-          # One target, because the two the case statement carried both named
-          # somewhere gone: data/claude/ has no files and rules.yml has no
-          # operator_principles section.
           target = "the YAML runtime (project_context.yml, patterns.yml#skills_registry) or law/ for conduct"
 
           [finding(

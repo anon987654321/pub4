@@ -30,6 +30,6 @@ turns a tool a subagent may not touch into a refusal instead of a call.
 
 `brain_overlay.rb` assembles the standing brief a turn opens with: the Ruby
 policy briefs that are authoritative, and an index of the markdown under
-`data/claude` and `.master/memory` that a turn may pull in by name.
+`.master/memory` that a turn may pull in by name.
 
 Enter through `MASTER/bin/master`, `MASTER/bin/cli`, or `bin/dogfood`.

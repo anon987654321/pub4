@@ -95,7 +95,6 @@ module Master
         def import_external!
           import_brain_files!
           import_project_context!
-          import_claude_md_legacy!
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "memory.preload_context")
         end
@@ -114,13 +113,6 @@ module Master
             body = entry["body"].to_s.strip
             remember(key, body, type: entry["type"].to_s) unless body.empty?
           end
-        end
-
-        def import_claude_md_legacy!
-          dir = File.join(@root, "data", "claude")
-          return unless Dir.exist?(dir)
-
-          Dir.glob(File.join(dir, "*.md")).each { |path| import_external_file(path) }
         end
 
         def import_brain_files!
