@@ -36,16 +36,10 @@ echo "==> bsdports"
 zsh "$repo/OPENBSD/bin/vps-deploy" bsdports
 
 echo "==> health"
-for svc in master brgen amber bsdports; do
-  doas rcctl check "$svc" || echo "WARN: rcctl check $svc"
-done
-curl -fsS http://127.0.0.1:53187/up >/dev/null && echo "master /up ok"
-curl -fsS http://127.0.0.1:38182/up >/dev/null && echo "brgen /up ok"
-curl -fsS http://127.0.0.1:61352/up >/dev/null && echo "amber /up ok"
-curl -fsS http://127.0.0.1:47312/up >/dev/null && echo "bsdports /up ok"
-if [[ -x $repo/OPENBSD/bin/smoke-apps.sh ]]; then
-  sh "$repo/OPENBSD/bin/smoke-apps.sh" || echo "WARN: smoke-apps partial"
-fi
+# rcctl and loopback /up for every app and relayd, from the one smoke script
+# that reads nothing but its own list; a failure warns rather than aborts
+# because the deploys above have already landed.
+sh "$repo/OPENBSD/bin/deploy-smoke.sh" --local || echo "WARN: deploy-smoke --local failed"
 ruby "$repo/MASTER/web/script/probe_http" 2>/dev/null || true
 
 echo "==> production push complete"

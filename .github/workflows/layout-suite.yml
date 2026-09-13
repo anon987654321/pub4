@@ -8,7 +8,7 @@ name: Layout suite + app smoke
 #
 # The same gates locally:
 #   GATE_AUTOFIX=0 ruby RAILS/gates/runner.rb layout_suite
-#   sh OPENBSD/bin/smoke-apps.sh
+#   sh OPENBSD/bin/deploy-smoke.sh --local
 
 on:
   workflow_dispatch:

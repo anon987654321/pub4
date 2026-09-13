@@ -20,9 +20,7 @@ module Deploy
     # app down forever, or reports a different app's health under this app's
     # name once the number is reused.
     SMOKE_SCRIPTS = [
-      "OPENBSD/bin/smoke-apps.sh",
       "OPENBSD/bin/deploy-smoke.sh",
-      "OPENBSD/vps_production_push.sh",
       # keep-warm pairs a host with a port on one line and runs on
       # a timer against production, so a number that stops being true here does
       # not fail -- it quietly warms nothing, which is the same shape as a probe
@@ -54,9 +52,7 @@ module Deploy
       "OPENBSD/etc/relayd.conf" => "checked: check_relayd_ports",
       "RAILS/crawl_manifest.yml" => "checked: check_crawl_manifest",
       "RAILS/README.md" => "checked: check_readmes",
-      "OPENBSD/bin/smoke-apps.sh" => "checked: check_smoke_probes",
       "OPENBSD/bin/deploy-smoke.sh" => "checked: check_smoke_probes",
-      "OPENBSD/vps_production_push.sh" => "checked: check_smoke_probes",
       "OPENBSD/usr/local/bin/keep-warm.sh" => "checked: check_smoke_probes",
       "RAILS/test/deploy_smoke_contract_test.rb" => "asserts the smoke scripts' own content",
       "CLAUDE.md" => "prose: the shed-vs-outage triage note, trap 3",
