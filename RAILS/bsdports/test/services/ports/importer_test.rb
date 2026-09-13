@@ -129,6 +129,39 @@ class Ports::ImporterTest < ActiveSupport::TestCase
     assert_nil tarball.with_tree { |_| flunk "must not extract while disabled" }
   end
 
+  # The tarball is built from the fixture tree at test time and handed to the
+  # download step, so the switched-on path extracts a real ports.tar.gz and the
+  # importer walks what came out of it.
+  test "the ports tarball, switched on, imports the tree it extracts" do
+    platform = platforms(:openbsd)
+    tarball = Ports::Openbsd::PortsTarball.new(platform:, release: "7.9")
+
+    Dir.mktmpdir do |dir|
+      FileUtils.cp_r(Rails.root.join("test/fixtures/ports/openbsd"), File.join(dir, "ports"))
+      archive = File.join(dir, "ports.tar.gz")
+      assert system("tar", "czf", archive, "-C", dir, "ports"), "tar must build the fixture archive"
+
+      tarball.define_singleton_method(:download) { |_from, to, **| FileUtils.cp(archive, to) || true }
+      tarball.define_singleton_method(:free_bytes) { |_path| Ports::Openbsd::PortsTarball::REQUIRED_FREE_BYTES }
+      fetcher = FakeIndexFetcher.new([])
+      previous = ENV["BSDPORTS_PORTS_TARBALL"]
+      ENV["BSDPORTS_PORTS_TARBALL"] = "1"
+
+      result = Ports::Openbsd::PackageIndexFetcher.stub(:new, ->(**) { fetcher }) do
+        Ports::Openbsd::PortsTarball.stub(:new, ->(**) { tarball }) do
+          Ports::Importer.call(platform:, tree_path: "/nonexistent/ports", use_ftp_fallback: true)
+        end
+      end
+
+      assert_equal 2, result.ports_count
+      assert_equal tarball.url, result.tree_path
+      refute fetcher.consulted, "the package index is the fallback only when the tarball yields nothing"
+      assert_equal "devel", Port.includes(:category).find_by!(platform:, pkgpath: "devel/git").category.slug
+    ensure
+      previous.nil? ? ENV.delete("BSDPORTS_PORTS_TARBALL") : ENV["BSDPORTS_PORTS_TARBALL"] = previous
+    end
+  end
+
   class FakeTarball
     def with_tree = nil
     def url = "fake"
