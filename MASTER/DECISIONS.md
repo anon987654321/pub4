@@ -958,3 +958,38 @@ in `call` are an ordered table of one door. What the roadmap underrates is that
 MASTER's gap is discoverability and detector reach, not features: an acceptance
 suite that proves the detectors right is worth more than one that proves the
 features exist.
+
+## Performance Work Starts From A Measured Cost (2026-09-13)
+
+Two ChatGPT intakes of 2026-09-11 proposed 980 performance items across all four
+trees: a `performance_budget.yml` registry, a ledger under `.master/performance/`,
+`bin/operator benchmark`, `profile` and `hotpaths` commands, gate verdicts cached
+by tree SHA, concurrent gates, a fast/forensic profile ladder, per-rule and
+per-DSP-primitive benchmarks, and inventories of every `Dir.glob`, `Open3` and
+`File.read`. Not one item carried a measurement. Declined as a class. A
+measurement subsystem built ahead of a measured slowness is accretion, and the
+tree already holds the instruments that earned their place: the `operator measure`
+ratchets, `QueryBudgetTest`, `Bullet.raise`, strict loading, `css_budget.yml`, the
+face watchdog, and `bin/gate`'s stage timeouts.
+
+The rule instead. An optimization lands with its instrument in the commit — the
+number before, the number after — and a check that the output did not change.
+Cache facts keyed by what invalidates them, never verdicts: a gate is not skipped
+because it passed last time, and a suite is not made cheaper by running less of
+it. Subprocess nesting in `bin/operator gate` stays, because a separate process is
+what gives each stage its timeout and its attribution of changed files.
+
+Applying that rule to the intakes found six real costs, each fixed with its
+number: `load_yaml` parsed `rules.yml` forty times in one boot and scan (724ms, now
+three parses); `bin/cli --help` built the whole runtime before printing usage;
+brgen was the one app without bootsnap (warm test boot 4.0–4.6s, 2.4–2.5s with it);
+the face cloned its particle pool twice per frame on the way to the worker;
+`MASTER_SCAN_ONLY` had no reader, so deploy scans ran the model-backed rules; and
+marketplace and maps had no per-row query guard. It refuted as many: Falcon
+already gzips HTML (brgen.no answers `content-encoding: gzip`), the watchdog's
+fallback pump already stops when rAF resumes, gems already load `require: false`,
+and dig_crate.rb's per-slug glob costs microseconds beside the demucs run it
+guards.
+
+So the next intake of this shape closes the same way: find the reader and the
+measurement first, and a proposal that names neither is not yet an item.
