@@ -139,25 +139,13 @@ folded: `council.yml` (8+ consumers across the whole deliberation subsystem,
 protected by its own scanner rule), `state.yml` (backs
 standing-orders/autocommit via `DATA_ALIASES`), `topologies.yml`/`tts.yml` (feed
 the live web boot payload and TTS), `tools.dynamic.yml` (two-tier
-repo+user-override merge), yml` (active read-modify-write targets, not static
-config — folding would make routine runtime events rewrite the shared
-source-of-truth file). Folding any of these needs a real design decision, not a
+repo+user-override merge), `openbsd.yml` (`Trace::SessionCapture` writes it,
+so folding it would let a runtime capture rewrite the shared source-of-truth
+file). Folding any of these needs a real design decision, not a
 mechanical move.
 
-`visual_clusters.yml` and `mobile_web_opportunities.yml` were on that list,
-defended as "deliberately parallel sources in `ClusterRegistry`".
-`ClusterRegistry` was deleted 2026-08-03 — 109 lines with zero callers — so the
-defense described a reader that did not run. **Both files deleted 2026-08-11.**
-Checked before cutting, because `data/runtime.yml` still listed
-`visual_clusters.yml` as the "canonical cluster registry" and that file *is*
-loaded (`lib/ground/runtime_catalog.rb`): the entry was a claim, not a reader.
-The live cluster source is `web/public/cluster_miner.js`, which mines them from
-events at runtime and never opens the YAML, and nothing serves either file to
-the browser. The `SelfTest` `clusters` SINGULARITY exemption went with them — an
-exemption outliving its subject is a hole in a gate nobody can see (`soul.yml`
-EXEMPTIONS_EXPIRE).
-
-**Tier 1 — Law (4 files, do not collapse without a migration):**
+**Tier 1 — The constitution, the law, and the values beside it (4 files, do not
+collapse without a migration):**
 
 - `soul.yml` — constitutional schema, sacred paths, anti-simulation. Separate
   from `rules.yml` because it outranks it: the constitution cannot sit inside
@@ -168,7 +156,9 @@ EXEMPTIONS_EXPIRE).
   `operator_principles:`. Read it through `Master.law(section)`;
   `Ground::Rules#data(stem)` answers the call sites that ask by file stem.
 - `limits.yml` — budgets, scan profiles, standing orders. Values, not law: a
-  number folded in among rules reads as a rule.
+  number folded in among rules reads as a rule. Only the top-level keys
+  `test/test_limits_split.rb` names have a reader; everything under `guidance:`
+  is prose for people.
 - `voice.yml` — persona, TTS, speech
 
 Rules live in one file because rules split across several grow definitions that
