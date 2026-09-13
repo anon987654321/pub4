@@ -1,8 +1,8 @@
 // The seven 2D renderers radio cycles through after the tunnel, one step per
 // track: infinity grid, cymatic waves, fractal cascade, vortex nest, neural web,
 // cosmic emanation, hypergrid spiral. Their bodies, colours and timings are the
-// original source unchanged; only the three globals they read became module
-// names, because the page that set those globals is not the page they run on.
+// original source. The three globals they read are module names here, because
+// the page that set those globals is not the page they run on.
 //
 // They write pixels into an ImageData buffer. The tunnel canvas already carries
 // a WebGL context and a canvas holds one context, so they draw on a second
