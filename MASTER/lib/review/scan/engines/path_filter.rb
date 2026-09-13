@@ -22,16 +22,19 @@ module Master
         # either can be authored or refactored — and /fix descends the same
         # tree, so an autofix pass could rewrite a vendored Python package that
         # the next `pip install` silently reverts.
+        #
+        # reports/ is generated output. Scanning it meant the top
+        # COPY_PASTE_BLOCK findings were JSON manifests from three
+        # screenshot-calibration runs, which share keys because they share a
+        # schema — and the advice attached to them was "extract a module or
+        # template". Nothing in there is authored, so nothing can be refactored.
+        #
+        # Comments stay above the %w literal: inside it, every word of one is an
+        # entry, and a directory named "schema" or "module" would vanish.
         SKIP_PATH_SEGMENTS = %w[
           .git vendor node_modules tmp log coverage .bundle storage cache dist build
           knowledge fixtures var .cache scratch
           site-packages venv .venv venv-demucs __pycache__
-          # reports/ is generated output. Scanning it meant the top
-          # COPY_PASTE_BLOCK findings were JSON manifests from three
-          # screenshot-calibration runs, which share keys because they share a
-          # schema — and the advice attached to them was "extract a module or
-          # template". Nothing in here is authored, so nothing in here can be
-          # refactored.
           reports
         ].freeze
         # Spelled relative to MASTER, and matched relative to whatever root the
@@ -71,7 +74,10 @@ module Master
         # visualizers_2d_reference.js opens with "Reference only. Not loaded,
         # not imported, not compiled into anything" and already carries an
         # opt-out marker for a second linter that read it as live.
+        # public/assets/ is what Propshaft precompiles into, gitignored in every
+        # app, and a finding there is a finding against a digest copy.
         SKIP_PATH_FRAGMENTS = %w[
+          public/assets/
           app/assets/builds/
           app/javascript/reference/
         ].freeze

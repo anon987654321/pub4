@@ -145,6 +145,10 @@ class TestScanner < Minitest::Test
       File.write(File.join(dir, "web", "public", "assets", "face-123.js"), "console.log('asset')\n")
       File.write(File.join(dir, "web", "public", "face.js"), "console.log('source')\n")
       File.write(File.join(dir, "web", "script", "three_build", "vendor.js"), "console.log('vendor')\n")
+      FileUtils.mkdir_p(File.join(dir, "RAILS", "amber", "public", "assets"))
+      File.write(File.join(dir, "RAILS", "amber", "public", "assets", "application-1a2b.js"), "console.log('digest')\n")
+      FileUtils.mkdir_p(File.join(dir, "db", "schema"))
+      File.write(File.join(dir, "db", "schema", "module.rb"), "puts 'authored'\n")
       scanner = PathScanner.new(rules: [])
 
       result = scanner.scan_dir(dir)
@@ -152,7 +156,8 @@ class TestScanner < Minitest::Test
       # The Result first: an empty `seen` reads the same whether the filter
       # excluded everything or the walk died on the first file.
       assert result.ok?, -> { "scan_dir failed: #{result.message}" }
-      assert_equal [File.join(dir, "app", "good.rb"), File.join(dir, "web", "public", "face.js")].sort,
+      assert_equal [File.join(dir, "app", "good.rb"), File.join(dir, "db", "schema", "module.rb"),
+                    File.join(dir, "web", "public", "face.js")].sort,
         scanner.seen.sort
     end
   end
