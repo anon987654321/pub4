@@ -291,4 +291,52 @@ class TestScanRuleContracts < Minitest::Test
     assert_empty law_ids & registry_ids
   end
 
+  # Every registered rule over one planted source carrying what fools a line
+  # scanner: a comment and a string naming what rules look for, a heredoc, a
+  # regex literal, non-ASCII identifiers. Measured 2026-09-13 across 148 rules:
+  # none raised, none answered differently twice, none reported one finding
+  # twice, and CRLF moved no line number. This keeps it that way.
+  PLANTED = <<~'RUBY'
+    # frozen_string_literal: true
+
+    # A comment naming system("rm -rf #{dir}") and eval and TODO.
+    class Ærlig
+      def søk(verdi, mønster = /eval|password/)
+        tekst = "sudo password=#{verdi}"
+        sql = <<~SQL
+          SELECT * FROM users WHERE name = '#{verdi}'
+        SQL
+        [tekst, sql, mønster]
+      end
+    end
+  RUBY
+
+  def test_every_rule_is_stable_across_runs_line_endings_and_duplicates
+    scanner = Master::Review::Scan::InfraHelpers.build_scanner(root: Master::ROOT)
+    path = File.join(Master::ROOT, "lib", "example_input_shapes.rb")
+    rules = scanner.rules.select { |rule| rule.respond_to?(:check) }
+    defects = rules.flat_map { |rule| input_shape_defects(rule, path) }
+
+    assert_operator rules.size, :>, 100, "the registry is not being read"
+    assert_empty defects, defects.join("\n")
+  end
+
+  private
+
+  def input_shape_defects(rule, path)
+    first = Array(rule.check(PLANTED, path:))
+    again = Array(rule.check(PLANTED, path:))
+    windows = Array(rule.check(PLANTED.gsub("\n", "\r\n"), path:))
+    problems = []
+    problems << "answers differently on a second run" unless first == again
+    problems << "reports a finding twice" unless first.size == first.uniq.size
+    unless finding_lines(first) == finding_lines(windows)
+      problems << "moves lines under CRLF: #{finding_lines(first)} vs #{finding_lines(windows)}"
+    end
+    problems.map { |problem| "#{rule.id}: #{problem}" }
+  rescue StandardError => e
+    ["#{rule.id}: raised #{e.class}: #{e.message.lines.first}"]
+  end
+
+  def finding_lines(findings) = findings.map { |finding| finding.line.to_i }.sort
 end
