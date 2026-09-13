@@ -399,3 +399,20 @@ wants them gone, the argument to beat is not "nothing calls them" — nothing is
 supposed to — it is "this capability is not wanted", and that is the operator's
 sentence to write.
 
+
+## Deploy and health tooling is not tuned for speed without a symptom — 2026-09-13
+
+**Status:** accepted. A ChatGPT intake of 2026-09-11 proposed 150 OpenBSD
+performance items: inventories of every `Dir.glob`, `Open3`, `doas` and `ssh`
+call, cached certificate and ownership checks, parallel health checks, per-stage
+deploy and rollback budgets, a `-P` timing mode, and latency histograms for DNS,
+TLS, relayd and each backend. None named a slow command. Declined as a class.
+
+The box's measured performance problem is memory, not the cost of a gate's
+system calls. vm23 has 1 GB and one core; amber's home measured 12.19s to first
+byte cold against 0.40s warm, and `core-reclaim.sh` and `keep-warm.sh` exist
+because of it. A deploy script's seconds matter less than its safety decision,
+and a health check made faster by proving less is a regression. Latency work on
+the box starts from a symptom a visitor or a log names, and it runs on vm23,
+where the measurement means something — the MASTER record "Performance Work
+Starts From A Measured Cost" holds the rule for every tree.
