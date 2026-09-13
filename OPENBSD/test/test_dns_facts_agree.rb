@@ -73,6 +73,25 @@ end
 
 require_relative "../gates/dns_zones"
 require_relative "../gates/domain_alignment"
+require_relative "../bin/domain_watch"
+
+# domain_watch asks the registry about every zone the policy declares, including
+# one not yet rendered into nsd.conf.
+class DomainWatchPopulationTest < Minitest::Test
+  def test_a_zone_the_policy_declares_is_watched_before_nsd_conf_has_it
+    original = RenderDns.method(:zones)
+    RenderDns.define_singleton_method(:zones) { original.call.merge("ghost.example" => []) }
+
+    assert_includes Deploy::DomainWatch.zones, "ghost.example"
+  ensure
+    RenderDns.define_singleton_method(:zones, original)
+  end
+
+  def test_the_watched_zones_are_the_rendered_zones
+    assert_equal RenderDns.zones.keys.sort, Deploy::DomainWatch.zones
+    assert_operator Deploy::DomainWatch.zones.size, :>, 40
+  end
+end
 
 # The two gates that hold those facts to the zones and the registry, each beside
 # the drift it exists to catch (decision 2026-08-22). The network half of

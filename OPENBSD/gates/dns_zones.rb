@@ -61,10 +61,9 @@ module Deploy
     # Domeneshop's parking servers, which publish no A record. The app has been
     # publicly unreachable and every check we had said it was fine.
     #
-    # Nothing could have caught it. domain_watch reads its population from
-    # nsd.conf, and bsdports.org is not a zone we serve, so it was never looked
-    # at; the expiry watch reads expiry, and the registration is paid. Owned,
-    # paid, configured, and dark.
+    # Nothing else catches it. domain_watch asks the registry whether the name is
+    # held and when it expires, and the registration is paid. Owned, paid,
+    # configured, and dark.
     #
     # Asked against a public resolver rather than ours, because "does the world
     # agree" is the whole question.

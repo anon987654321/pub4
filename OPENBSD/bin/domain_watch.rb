@@ -9,7 +9,7 @@
 # nothing was watching. lndon.uk dropped the same way. Four .uk domains sit in
 # Nominet's grace window right now.
 #
-# nsd.conf lists the zones we serve. This asks each registry whether we still
+# RenderDns.zones lists the zones we serve. This asks each registry whether we still
 # hold the name, and diffs the answer against a committed snapshot so a domain
 # changing hands shows up as a reviewable diff instead of an outage.
 #
@@ -31,11 +31,11 @@ require "date"
 require "json"
 require "open3"
 require "yaml"
+require_relative "render_dns"
 
 module Deploy
   module DomainWatch
     ROOT = File.expand_path("../..", __dir__)
-    NSD_CONF = File.join(ROOT, "OPENBSD/var/nsd/etc/nsd.conf")
     SNAPSHOT = File.join(ROOT, "OPENBSD/data/domain_inventory.yml")
 
     # Registries whose referral the local whois does not follow correctly.
@@ -56,8 +56,10 @@ module Deploy
 
     module_function
 
+    # The zones data/dns.yml and OPERATOR.sh declare, which is where nsd.conf is
+    # rendered from, so a zone declared and not yet rendered is still watched.
     def zones
-      File.read(NSD_CONF).scan(/^\s*name:\s*"?([^"\s]+)"?/).flatten.uniq.sort
+      RenderDns.zones.keys.sort
     end
 
     # Bounded, portable, and no shell. /usr/bin/timeout is OpenBSD's and absent
@@ -96,7 +98,7 @@ module Deploy
       argv = ["whois"]
       argv += ["-h", server] if server
       argv << domain
-      # No shell, so a zone name out of nsd.conf is an argument and not a
+      # No shell, so a zone name out of the DNS policy is an argument and not a
       # command. The bound is capture_bounded's, in Ruby — an unqualified
       # `timeout` was a cron PATH bug this tree has already shipped, and naming
       # /usr/bin/timeout instead traded that for a macOS the tool cannot run on.
