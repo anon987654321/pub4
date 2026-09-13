@@ -204,7 +204,7 @@ module Master
             # the words, wherever they are written, and the whitespace smell this
             # was first written for had to see the raw line or every comment would
             # read as trailing space.
-            source = smell["skip_comments"] ? without_comment_lines(code) : code
+            source = smell["skip_comments"] ? code_only(code) : code
             source.each_line.with_index(1).filter_map do |line, line_number|
               next if line.match?(/scan:\s*intentional\b/)
               next unless line.match?(pattern)
@@ -223,6 +223,30 @@ module Master
           end
 
           private
+
+          # What a smell that skips comments is asking about is the code, and a
+          # comment is only one of the places a line carries text that is not.
+          # magic_number read 4,679 findings over the four trees with comment
+          # lines blanked, and 1,309 of them were digits inside a quoted literal
+          # — an ffmpeg filter graph, an SVG path, an ENV.fetch default the
+          # variable's name already explains. 94 more were a regex quantifier or
+          # a trailing comment, and 183 a slice bound: `message[0, 200]` and
+          # `lines.last(120)` say how much to keep, and a constant named for the
+          # 200 says it again. Length-preserving, so line numbers still land.
+          #
+          # A regex literal counts only in operand position — after an opening
+          # bracket, a comma, an operator or the line start — because `ms / 60 /
+          # 60` has two slashes and no regex.
+          QUOTED = /"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\\n]|\\.)*`/
+          REGEX_OPERAND = /(?:^|(?<=[(\[{,=~!|&;:])|(?<=[(\[{,=~!|&;:]\s))\/(?:[^\/\\\n]|\\.)+\/[mixo]*|%r\{[^}\n]*\}[mixo]*/
+          TRAILING_COMMENT = /\s(?:#|\/\/)\s[^\n]*|\/\*[^\n]*?\*\//
+          SLICE_BOUND = /(?<=[\w\])])\[\s*-?\d+\s*(?:,\s*-?\d+\s*|\.\.\.?\s*-?\d*\s*)?\]|\.(?:first|last|take|truncate)\(\s*\d+\s*\)/
+
+          def code_only(code)
+            [QUOTED, REGEX_OPERAND, TRAILING_COMMENT, SLICE_BOUND].reduce(without_comment_lines(code)) do |text, region|
+              text.gsub(region) { |match| match.gsub(/[^\n]/, " ") }
+            end
+          end
 
           def reload_learned_smells_if_stale
             return if @rules_mtime == rules_mtime

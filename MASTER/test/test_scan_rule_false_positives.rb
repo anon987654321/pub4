@@ -843,6 +843,20 @@ end
     refute_empty smell_findings("magic_number", "schedule(4200)\n")
   end
 
+  # Text a line carries is not the line's code: a quoted literal, a regex
+  # quantifier, a trailing comment, a slice bound. Each spared, and the same
+  # number written as code beside each still fires — including the division
+  # whose two slashes are not a regex.
+  def test_magic_number_reads_code_not_the_text_code_carries
+    assert_empty smell_findings("magic_number", %(run("aecho=0.8:0.32:489:0.28")\n))
+    assert_empty smell_findings("magic_number", "ok = line.match?(/[a-z]{16,}/)\n")
+    assert_empty smell_findings("magic_number", "wait(timeout) # the relay answers in 30\n")
+    assert_empty smell_findings("magic_number", "publish(message[0, 200], lines.last(120))\n")
+    refute_empty smell_findings("magic_number", %(run("aecho", 489)\n))
+    refute_empty smell_findings("magic_number", "minutes = elapsed / 60 / 24\n")
+    refute_empty smell_findings("magic_number", "publish(message[0, 200], retries * 30)\n")
+  end
+
   def test_skip_comments_is_opt_in_so_a_smell_without_it_reads_comments
     assert_empty smell_findings("magic_number", "# retry after 4200 ms\n"),
       "magic_number declares skip_comments, so a number in prose is masked"
