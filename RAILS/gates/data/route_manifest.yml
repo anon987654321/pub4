@@ -2,7 +2,7 @@
 schema: 1
 apps:
   brgen:
-    digest: e4c992154875f83e
+    digest: a6267aa7b581f3f4
     routes:
       rails/pwa#offline:
       - "/offline"

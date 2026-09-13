@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 require "active_support/core_ext/integer/time"
+# The host allowlist below reads brgen's domain registry, which config time
+# reaches before autoloading; production.rb requires it the same way. It is a
+# plain data file, so amber and bsdports load it for their allowlist too.
+require File.expand_path("../../../brgen/lib/brgen/domain_registry", __dir__)
 
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.

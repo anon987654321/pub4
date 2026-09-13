@@ -171,7 +171,9 @@ class RawSchemaObjectsTest < Minitest::Test
 
       case behaviour
       when :returns
-        assert_match(/return unless.*(?:data_source_exists\?|table_exists\?)/, body,
+        # Either spelling of the guard: a one-line `return unless`, or an `unless`
+        # block that logs the skip before it returns.
+        assert_match(/(?:return )?unless\s.*(?:data_source_exists\?|table_exists\?)(?:.*\n)*?\s*return\b/, body,
                      "#{relative} no longer guards; it now raises in every schema-loaded environment")
       when :rescues
         assert_match(/rescue StandardError/, body, "#{relative} no longer rescues")
