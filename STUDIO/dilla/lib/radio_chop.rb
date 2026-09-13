@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "frozen_state"
+require "digest"
 require "fileutils"
 require "json"
 require_relative "sample_worth"
@@ -273,18 +274,38 @@ module RadioChop
   # naming them after their source window. Separation is minutes of the run and
   # nothing about it changes when the scoring does, so re-tuning what gets kept
   # should not cost another pass. CHOP_FRESH=1 clears the lot.
+  #
+  # A name is not the content, though. A source re-downloaded or re-trimmed under
+  # the same slug cuts the same window to different audio, and the stems beside
+  # the old name would be reused as if they came from it. So each stem directory
+  # carries the digest of the cut it was separated from, and a cut whose bytes
+  # no longer match is separated again. A directory without the stamp predates it
+  # and cannot say what it came from, so it is separated again too.
+  STAMP = "cut.sha256"
+
   def stem_dir_for(cut, out_dir) = File.join(out_dir, MODEL, File.basename(cut, ".*"))
 
-  def separated?(dir) = KEEP_STEMS.all? { |s| File.file?(File.join(dir, "#{s}.wav")) }
+  def cut_digest(cut) = Digest::SHA256.file(cut).hexdigest
+
+  def separated?(dir, cut)
+    stamp = File.join(dir, STAMP)
+    KEEP_STEMS.all? { |s| File.file?(File.join(dir, "#{s}.wav")) } &&
+      File.file?(stamp) && File.read(stamp).strip == cut_digest(cut)
+  end
+
+  def stamp!(dir, cut)
+    File.write(File.join(dir, STAMP), "#{cut_digest(cut)}\n") if File.directory?(dir)
+  end
 
   def separate!(cuts, demucs:, out_dir:)
     FileUtils.mkdir_p(out_dir)
-    todo = cuts.reject { |c| separated?(stem_dir_for(c, out_dir)) }
+    todo = cuts.reject { |c| separated?(stem_dir_for(c, out_dir), c) }
     if todo.empty?
       puts "chop: stems already separated for all #{cuts.length} cuts — reusing"
     else
       puts "chop: #{cuts.length - todo.length} cached, separating #{todo.length}" if todo.length < cuts.length
       run!(*demucs, "-n", MODEL, "-o", out_dir, *todo, label: "demucs", quiet: false)
+      todo.each { |c| stamp!(stem_dir_for(c, out_dir), c) }
     end
     cuts.to_h { |c| [c, stem_dir_for(c, out_dir)] }
   end

@@ -3,6 +3,7 @@
 require_relative "studio_helper"
 require "fileutils"
 require "json"
+require "rbconfig"
 require "tmpdir"
 require_relative "../dilla/lib/crate_dig"
 require_relative "../dilla/lib/radio_chop"
@@ -79,6 +80,44 @@ class TestCrateDig < Minitest::Test
 
   def test_chop_sidecar_does_not_invent_a_url
     assert_nil RadioChop.source_url_for("/tmp/unknown.mp3", items: [])
+  end
+
+  # Cached stems are keyed by the cut's name, and a re-trimmed source cuts the
+  # same name to different audio. The fake demucs writes the four kept stems and
+  # counts its calls, so the test measures when separation runs, not what it does.
+  def test_cached_stems_are_reused_only_for_the_bytes_they_came_from
+    Dir.mktmpdir do |dir|
+      cut = File.join(dir, "slug_0012.wav")
+      File.write(cut, "first take")
+      calls = File.join(dir, "calls")
+      fake = <<~RUBY
+        out = ARGV[ARGV.index("-o") + 1]
+        ARGV.drop(ARGV.index("-o") + 2).each do |c|
+          d = File.join(out, #{RadioChop::MODEL.inspect}, File.basename(c, ".*"))
+          require "fileutils"; FileUtils.mkdir_p(d)
+          #{RadioChop::KEEP_STEMS.inspect}.each { |s| File.write(File.join(d, s + ".wav"), "x") }
+        end
+        File.write(#{calls.inspect}, "x", mode: "a")
+      RUBY
+      # A script file, not -e: ruby would read demucs's own `-n` as its switch.
+      script = File.join(dir, "demucs.rb")
+      File.write(script, fake)
+      demucs = [RbConfig.ruby, script]
+      out = File.join(dir, "stems")
+      separate = -> { capture_io { RadioChop.separate!([cut], demucs:, out_dir: out) } }
+
+      separate.call
+      separate.call
+      assert_equal 1, File.size(calls), "the second pass over the same bytes reuses the stems"
+
+      File.write(cut, "second take, same name")
+      separate.call
+      assert_equal 2, File.size(calls), "a cut whose bytes changed is separated again"
+
+      FileUtils.rm_f(File.join(RadioChop.stem_dir_for(cut, out), RadioChop::STAMP))
+      separate.call
+      assert_equal 3, File.size(calls), "stems that cannot say what they came from are not trusted"
+    end
   end
 
   private
