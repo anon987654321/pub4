@@ -87,6 +87,32 @@ class TestScanRuleContracts < Minitest::Test
     end
   end
 
+  # Rails names these files itself, so their count is the framework's; the
+  # same names in a tree that is not Rails are still judged.
+  def test_file_sprawl_spares_what_rails_names_and_nothing_else
+    Dir.mktmpdir do |root|
+      write = lambda do |rel|
+        path = File.join(root, rel)
+        FileUtils.mkdir_p(File.dirname(path))
+        File.write(path, "module Tiny\nend\n")
+        path
+      end
+      sprawl = ->(path) { Rules::FileSprawlRule.new(root:).check(File.read(path), path:) }
+
+      write.call("site/config/application.rb")
+      %w[site/app/models/tag.rb site/app/models/city.rb site/config/initializers/a.rb site/config/initializers/b.rb
+         site/db/seeds.rb site/db/cache_schema.rb].each { |rel| assert_empty sprawl.call(write.call(rel)), rel }
+
+      write.call("site/engines/tv/lib/tv/engine.rb")
+      assert_empty sprawl.call(write.call("site/engines/tv/lib/tv/version.rb"))
+
+      write.call("plain/app/one.rb")
+      refute_empty sprawl.call(write.call("plain/app/two.rb")), "an app/ outside Rails is still judged"
+      write.call("site/lib/site/helper.rb")
+      refute_empty sprawl.call(write.call("site/lib/site/other.rb")), "a Rails app's own lib/ is still judged"
+    end
+  end
+
   # UNBOUNDED_RETRY is the first retired law/registry twin: the registry block
   # is gone and law/ is the one implementation, so the
   # contract asserts through the bridge — the id must reach the scanner's

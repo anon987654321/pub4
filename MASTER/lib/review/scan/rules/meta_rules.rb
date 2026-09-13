@@ -316,9 +316,22 @@ module Master
         # consolidation decision), lib/core (the spine's file count is a
         # ratcheted invariant in data/spine.yml), test/spec (fixture files are
         # legitimately small), and everything generated.
+        #
+        # And the files a Rails application or engine names for itself, where the
+        # file count is the framework's. Zeitwerk loads one constant from one
+        # file, so a thirteen-line model under app/ cannot be absorbed into its
+        # owner without breaking the load; an initializer or environment under
+        # config/ is one file per concern by the same contract; a migration's
+        # filename is its schema_migrations key, and each database keeps its own
+        # schema file beside seeds.rb; and an engine's gemspec requires
+        # lib/<name>/version.rb while Rails requires lib/<name>/engine.rb. The
+        # root is found by what makes it Rails — config/application.rb, or a
+        # lib/*/engine.rb — rather than by a directory named app, so a plain
+        # Ruby tree with its own app/ is still judged.
         class FileSprawlRule < Rule
           TINY_CODE_LINES = 25
           SKIP_RE = %r{/(?:law|core|test|spec|fixtures|templates|node_modules)/|/web/public/}
+          RAILS_NAMED = %r{\A(?:app|config|db)/|\Alib/[^/]+/(?:engine|version)\.rb\z}
           def self.auto_build? = false
 
           declare id: "FILE_SPRAWL", severity: :warning, tags: %i[FLAT_HIERARCHY COLLAPSE_BEFORE_ADDING],
@@ -328,11 +341,13 @@ module Master
             super()
             @root = File.expand_path(root)
             @dir_entries = {}
+            @rails_roots = {}
           end
 
           def check(code, path:)
             return [] unless path.to_s.end_with?(".rb")
             return [] if path.to_s.match?(SKIP_RE)
+            return [] if rails_named?(File.expand_path(path.to_s))
             # A tiny file can be tiny by contract: boot/paths.rb exists so four
             # files can require paths without boot order. The opt-out names its
             # reason in the file itself, where the next reader finds it.
@@ -378,7 +393,26 @@ module Master
             ]
           end
 
-          def relative(path) = path.delete_prefix("#{@root}/")
+          def rails_named?(path)
+            root = rails_root(File.dirname(path))
+            root ? path.delete_prefix("#{root}/").match?(RAILS_NAMED) : false
+          end
+
+          def rails_root(dir)
+            return if dir == File.dirname(dir)
+
+            @rails_roots.fetch(dir) do
+              @rails_roots[dir] = rails_root?(dir) ? dir : rails_root(File.dirname(dir))
+            end
+          end
+
+          def rails_root?(dir)
+            File.file?(File.join(dir, "config", "application.rb")) || Dir.glob(File.join(dir, "lib", "*", "engine.rb")).any?
+          end
+
+          # A sibling tree's path is named from the repository root, so a
+          # RAILS finding reads RAILS/brgen/lib/ rather than an absolute path.
+          def relative(path) = path.delete_prefix("#{@root}/").delete_prefix("#{File.dirname(@root)}/")
         end
 
         # PATH_PURPOSE — PATH_OWNERSHIP.yml states what every path in this tree
