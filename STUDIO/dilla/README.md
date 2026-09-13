@@ -18,6 +18,15 @@ widening, with the phaser and echo back only under `HATE_TUNNEL=1`. Set
 `DEMO_FX=0` for a dry catalogue render. Techno tracks alternate with hip-hop
 ones and play a four-bar drum phrase over the same pads and leads.
 
+The native synth recipes follow the physical source rather than treating every
+instrument as a generic pad. Rhodes uses a tine-like FM pair with a bright
+attack and bell partial; Moog uses one oscillator into a resonant low-pass with
+pitch/filter envelopes; Prophet uses two detuned oscillators, a low-pass
+envelope and restrained pulse-width movement; VP-330 uses choir/string
+formants, ensemble modulation and a slow attack, so it remains a vocal/string
+texture rather than pretending to be an FM keyboard. FM is appropriate for the
+Rhodes and transient percussion, not for every instrument in the catalogue.
+
 ENV knobs, the switch reference and the render path in detail are in
 `ENV_AND_RENDER.md`. Operator scripts live under `scripts/`.
 

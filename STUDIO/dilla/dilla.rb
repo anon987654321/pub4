@@ -19176,11 +19176,30 @@ end
 
 def demo_slot_pad_env(idx)
   {
+    "BPM" => "92",
+    "NO_ARP" => "0",
+    "LEAD_ARP" => "1",
+    "HARMONY_LEAD" => "1",
+    "SCALE_LEAD" => "1",
+    "CREATIVE_LEAD" => "1",
     "PAD_VOICE" => DEMO_PAD_ROTATION[idx % DEMO_PAD_ROTATION.length],
     "PAD_ARP_MODE" => DEMO_PAD_ARP_ROTATION[idx % DEMO_PAD_ARP_ROTATION.length],
     "VOICING" => DEMO_VOICING_ROTATION[idx % DEMO_VOICING_ROTATION.length],
     "PAD_LAYERS" => "0",
     "CHORD_BARS" => "1",
+    # The catalogue is a listening reference, not a pad loudness test. Keep
+    # the documented single voice, but leave room for the pocket, bass and
+    # short lead fragments that define the source records.
+    "PAD_VOL" => "38",
+    "HARM_MIX_WEIGHT" => "0.78",
+    "HARM_BUS_VOL" => "0.88",
+    "DRUM_BUS_VOL" => "1.55",
+    "DRUM_BUS_GAIN" => "1.35",
+    "DRUM_MIX_WEIGHT" => "1.65",
+    "HARMONIC_LEAD_VOLUME" => "1.75",
+    "HARMONIC_LEAD_ARP_VOLUME" => "1.8",
+    "HARMONIC_SCALE_LEAD_VOLUME" => "1.65",
+    "HARMONIC_HARMONY_LEAD_VOLUME" => "1.55",
     "RACK" => demo_slot_rack(idx),
   }
 end
@@ -20523,10 +20542,18 @@ voice_stack_every = (ENV["DEMO_VOICE_STACK_EVERY"] || "3").to_i
 if demo_techno_slot?(idx, slug)
   force_env!({ "DRUM_PRESET" => "industrial_techno",
                "POCKET_SET" => "industrial",
+               "BPM" => "92",
                "SNARE_EARLY" => "0",
                "KICK_LATE" => "0",
                # The four-bar phrase in schedule_eclectic_percussion! plays over
                # the pads and leads, not instead of them.
+               "DFAM" => "1",
+               "DFAM_FM" => "65",
+               "DFAM_NOISE" => "55",
+               "DFAM_FILTER" => "4200",
+               "DFAM_RES" => "70",
+               "DFAM_DECAY" => "110",
+               "DFAM_PATTERN" => "78,34,92,22,65,45,88,30,55,25,96,40,72,18,84,50",
                "ECLECTIC_PERC" => "1" },
              label: "demo_all[#{idx}] techno kit")
   dmesg("techno drums: four-bar eclectic phrase over the pads",
