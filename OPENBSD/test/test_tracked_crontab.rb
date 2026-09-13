@@ -26,14 +26,20 @@ class TrackedCrontabTest < Minitest::Test
 
   def operator_source = @operator_source ||= File.read(OPERATOR)
 
-  # A cron line is five time fields then the command.
+  # A cron line is five time fields then the command, which may be led by
+  # VAR=value assignments: `ALLOW_BSDPORTS_DOWN=1 /usr/local/bin/uptime-check.sh`
+  # names its command in field six, not five.
   def scheduled_commands
     crontab_source.each_line.filter_map do |line|
       next if line.strip.empty? || line.lstrip.start_with?("#")
 
-      command = line.split[5]
+      command = line.split.drop(5).find { |word| !word.match?(/\A[A-Za-z_][A-Za-z0-9_]*=/) }
       command if command&.start_with?("/")
     end.uniq
+  end
+
+  def test_env_prefixed_lines_are_parsed
+    assert_includes scheduled_commands, "/usr/local/bin/uptime-check.sh" if crontab_source.include?("uptime-check.sh")
   end
 
   def test_the_tracked_crontab_actually_schedules_something

@@ -100,7 +100,28 @@ rss_mb=$(( rss_kb / 1024 ))
 # reclaiming instead: 21 `killed: out of swap` for brgen in one dmesg buffer,
 # one of them relayd. A ceiling that cannot fire under pressure is not a
 # ceiling; the pressure itself has to be readable.
-swap_pct=$(swapctl -l | grep -v Device | head -1 | tr -s ' ' | cut -d' ' -f5 | tr -d '%')
+# swapctl -l prints a Device header, then one row per device: device, blocks,
+# used, avail, capacity, priority. Read with ksh itself rather than a grep,
+# head, cut and tr pipeline. swap_pct is the first device's capacity and
+# swap_used the used blocks of the last row, as the pipelines this replaces
+# read them.
+swap_pct() {
+  swapctl -l 2>/dev/null | while read -r _dev _blocks _used _avail _cap _prio; do
+    [[ "$_dev" = "Device" ]] && continue
+    print -r -- "${_cap%\%}"
+    break
+  done
+}
+swap_used() {
+  swapctl -l 2>/dev/null | {
+    _last=0
+    while read -r _dev _blocks _used _rest; do
+      [[ "$_dev" = "Device" ]] || _last=$_used
+    done
+    print -r -- "$_last"
+  }
+}
+swap_pct=$(swap_pct)
 [[ -n "$swap_pct" ]] || swap_pct=0
 if [[ "$rss_mb" -lt "$CEILING_MB" ]] && [[ "$swap_pct" -lt "$SWAP_PCT_MAX" ]]; then
   exit 0
@@ -112,14 +133,16 @@ fi
 # script is about to cost somebody a cold boot, so it wants to know whether the box
 # is busy in this minute. Reading the same field in both would make one of them
 # wrong, which is why there is no shared helper for this line.
-load=$(sysctl -n vm.loadavg | awk '{print $1}')
-over=$(echo "$load $LOAD_MAX" | awk '{print ($1 > $2) ? 1 : 0}')
+set -- $(sysctl -n vm.loadavg)
+load=$1
+# ksh has no floating point, so the comparison is ruby34's.
+over=$(ruby34 -e 'print(ARGV[0].to_f > ARGV[1].to_f ? 1 : 0)' "$load" "$LOAD_MAX")
 if [[ "$over" = "1" ]]; then
   echo "$(date '+%Y-%m-%dT%H:%M:%S') skip $APP ${rss_mb}M — load $load over $LOAD_MAX"
   exit 0
 fi
 
-swap_before=$(swapctl -l | tail -1 | awk '{print $3}')
+swap_before=$(swap_used)
 rcctl restart "$APP" >/dev/null 2>&1 || {
   echo "$(date '+%Y-%m-%dT%H:%M:%S') FAILED to restart $APP at ${rss_mb}M"
   exit 1
@@ -132,6 +155,6 @@ sleep 10
 code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 45 \
        -H "Host: brgen.no" "http://127.0.0.1:$PORT/" 2>/dev/null || echo 000)
 rss_after=$(rss_of_port "$PORT")
-swap_after=$(swapctl -l | tail -1 | awk '{print $3}')
+swap_after=$(swap_used)
 echo "$(date '+%Y-%m-%dT%H:%M:%S') reclaimed $APP ${rss_mb}M -> $(( ${rss_after:-0} / 1024 ))M, \
 swap $(( swap_before / 2048 ))M -> $(( swap_after / 2048 ))M, first response $code"

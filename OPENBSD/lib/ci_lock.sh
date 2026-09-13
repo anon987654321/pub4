@@ -58,7 +58,6 @@ pub4_ensure_ci_lock() {
     mkdir -p '${PUB4_CI_LOCK_DIR}'
     chown root:wheel '${PUB4_CI_LOCK_DIR}'
     chmod 755 '${PUB4_CI_LOCK_DIR}'
-    rm -f '${lock}.holder' 2>/dev/null || true
     [ -e '${lock}' ] || : > '${lock}'
     chown '${PUB4_CI_LOCK_OWNER}' '${lock}'
     chmod 644 '${lock}'

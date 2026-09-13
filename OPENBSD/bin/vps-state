@@ -57,8 +57,10 @@ def deploy_stamp(app)
   return nil unless File.file?(path)
 
   JSON.parse(File.read(path))
-rescue StandardError
-  nil
+rescue StandardError => e
+  # A stamp that exists and will not parse is a deploy that wrote half a file,
+  # not a deploy that never happened, so it says so rather than reading as nil.
+  { "sha" => "CORRUPT", "at" => "#{path}: #{e.class}" }
 end
 
 # In-progress deploy status (RAILS/_core.sh's deploy_status, written by both

@@ -36,9 +36,10 @@ fi
 . "${ROOT}/OPENBSD/lib/ci_lock.sh"
 LOCK=$(pub4_ci_lock_path)
 
-# Held means flocked, which is how with-ci-lock and CiGuard take it — asked with
-# the same primitive rather than fuser, which reports any open descriptor.
-if [ -f "$LOCK" ] && ruby34 -e 'exit(File.open(ARGV[0]).flock(File::LOCK_EX | File::LOCK_NB) ? 1 : 0)' "$LOCK"; then
+# Probe the flock with-ci-lock and CiGuard take, rather than asking fuser(1):
+# where fuser is missing the old test was simply false, and the run went ahead
+# racing CI. ruby34 exits 0 only when the lock is held by someone else.
+if [ -f "$LOCK" ] && ruby34 -e 'exit(File.open(ARGV[0]).flock(File::LOCK_EX | File::LOCK_NB) ? 1 : 0)' "$LOCK" 2>/dev/null; then
   echo "$(date -u +%FT%TZ) skip: pub4 CI lock held"
   exit 0
 fi

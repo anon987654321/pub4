@@ -24,6 +24,13 @@ QUEUE_DB="${DIR}/storage/production_queue.sqlite3"
 # doas test, not [ -f ]: app homes are 750, so dev cannot see the file itself.
 doas test -f "$QUEUE_DB" || { echo "amber_queue_sweep: no queue database at ${QUEUE_DB}" >&2; exit 1; }
 
+# sqlite3 creates a missing database on open, so without this the sweep would
+# plant an empty production_queue.sqlite3 and then fail on its missing tables.
+if [ ! -f "${QUEUE_DB}" ]; then
+  echo "amber_queue_sweep: no queue database at ${QUEUE_DB}" >&2
+  exit 1
+fi
+
 report_queue() {
   echo "==> ${APP} queue report (${QUEUE_DB})"
   doas su -m "${APP}" -c "sqlite3 '${QUEUE_DB}' \"

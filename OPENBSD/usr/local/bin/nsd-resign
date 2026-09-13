@@ -71,12 +71,16 @@ def sign(zone, zone_file, keys, expiry)
 end
 
 changed = []
+failed = []
+keyed = 0
 
 Dir[File.join(ZONES_DIR, "*.zone")].sort.each do |zone_file|
   zone = File.basename(zone_file, ".zone")
   signed = "#{zone_file}.signed"
   keys = keys_for(zone)
   next if keys.empty?
+
+  keyed += 1
 
   needs_sign = FORCE
   unless needs_sign
@@ -86,7 +90,10 @@ Dir[File.join(ZONES_DIR, "*.zone")].sort.each do |zone_file|
     log "#{zone} expires #{exp || "unknown"} — resigning"
   end
 
-  next unless sign(zone, zone_file, keys, Date.today + VALIDITY_DAYS)
+  unless sign(zone, zone_file, keys, Date.today + VALIDITY_DAYS)
+    failed << zone
+    next
+  end
 
   changed << zone
 end
@@ -95,6 +102,17 @@ if changed.any?
   changed.each { |z| system("nsd-control", "reload", z) }
   system("nsd-control", "notify")
   log "reloaded #{changed.size} zone(s): #{changed.join(", ")}"
-else
-  log "all zones valid — nothing to do"
 end
+
+# "Nothing to do" is only true of zones that were looked at. No zone files, no
+# keys, or a failed signing is a broken signer, and daily.local mails the
+# exit status, so each of them fails rather than reading as healthy.
+if keyed.zero?
+  log "FAIL no signable zones: no *.zone with keys under #{ZONES_DIR}"
+  exit 1
+end
+if failed.any?
+  log "FAIL #{failed.size} zone(s) not signed: #{failed.join(", ")}"
+  exit 1
+end
+log "all #{keyed} zones valid — nothing to do" if changed.empty?

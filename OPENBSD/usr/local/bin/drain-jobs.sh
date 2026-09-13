@@ -1,7 +1,7 @@
 #!/bin/sh
 # set -e with the three deliberate failures guarded below: a drain window
 # ending in timeout(1) killing rake IS the design, and an unreadable queue
-# db defaults to zero counts rather than aborting the sweep.
+# db is reported as FAIL for that app while the sweep goes on to the next.
 set -eo pipefail
 # Run the background job queue for a few minutes, hourly, because vm23 cannot
 # hold a worker that stays up.
@@ -91,16 +91,13 @@ queue_counts() {
   \"" 2>/dev/null
 }
 
-# cut, not ruby34 -e: the first version was
-#
-#   printf '%s\n' "$1" | ruby34 -e 'print(ARGF.read...)' "$2"
-#
-# and ARGF treats a trailing argument as a FILENAME, so it tried to open "0" and
-# died with ENOENT while the caller quietly substituted a default. Every field
-# came back 0 and the report read "nothing due (ahead=0 failed=0)" against a
-# queue holding 82 scheduled jobs — plausible, and wrong. cut has no such trap.
-field() {
-  printf '%s\n' "$1" | cut -d'|' -f"$2"
+# Split "due|ahead|failed" with the shell's own read. ruby34 -e was tried first
+# and ARGF took a trailing argument for a FILENAME, so every field read 0 against
+# a queue holding 82 jobs; cut(1) is on the banned list. read has neither trap.
+split_counts() {
+  IFS='|' read -r due ahead failed <<EOF
+$1
+EOF
 }
 
 if ! wait_for_quiet; then
@@ -108,6 +105,7 @@ if ! wait_for_quiet; then
   exit 0
 fi
 
+status=0
 for app in brgen amber bsdports; do
   [ -d "/home/$app/app" ] || continue
   [ -f "/home/$app/app/storage/production_queue.sqlite3" ] || continue
@@ -116,13 +114,16 @@ for app in brgen amber bsdports; do
     continue
   fi
 
+  # An unreadable queue is not an empty one. Reading it as zero printed
+  # "nothing due", which solid_queue_proof.rb takes as proof the drain ran, so a
+  # broken queue file kept every deploy green.
   counts=$(queue_counts "$app") || counts=""
-  due=$(field "$counts" 1)
-  ahead=$(field "$counts" 2)
-  failed=$(field "$counts" 3)
-  [ -n "$due" ] || due=0
-  [ -n "$ahead" ] || ahead=0
-  [ -n "$failed" ] || failed=0
+  if [ -z "$counts" ]; then
+    echo "$(stamp) $app FAIL queue unreadable: /home/$app/app/storage/production_queue.sqlite3"
+    status=1
+    continue
+  fi
+  split_counts "$counts"
 
   if [ "$due" -eq 0 ]; then
     echo "$(stamp) $app nothing due (ahead=$ahead failed=$failed)"
@@ -134,6 +135,10 @@ for app in brgen amber bsdports; do
   su -m "$app" -c "cd /home/$app/app && set -a && . /etc/$app.env && set +a && HOME=/home/$app RAILS_ENV=production timeout -k 20 -s TERM $SECONDS_PER_APP /usr/local/bin/bundle34 exec rake solid_queue:start" \
     >>/var/log/drain-jobs.detail.log 2>&1 || true
 
+  before_due=$due
   after=$(queue_counts "$app") || after=""
-  echo "$(stamp) $app due $due -> $(field "$after" 1)  ahead=$(field "$after" 2) failed=$(field "$after" 3) (ran ${SECONDS_PER_APP}s)"
+  split_counts "$after"
+  echo "$(stamp) $app due $before_due -> ${due:-?}  ahead=${ahead:-?} failed=${failed:-?} (ran ${SECONDS_PER_APP}s)"
 done
+
+exit "$status"

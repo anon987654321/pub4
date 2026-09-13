@@ -23,9 +23,19 @@ elif [[ -f ${GUARD_REPO}/OPENBSD/usr/local/libexec/stale_ci_cleanup.ksh ]]; then
   . "${GUARD_REPO}/OPENBSD/usr/local/libexec/stale_ci_cleanup.ksh"
 fi
 
+# The first N lines of stdin, in ksh, so the crisis path does not depend on
+# head(1).
+first_lines() {
+  _n=0
+  while [ "$_n" -lt "$1" ] && IFS= read -r _line; do
+    print -r -- "$_line"
+    _n=$((_n + 1))
+  done
+}
+
 echo "=== before ==="
 uptime
-top -b -n1 | head -18
+top -b -n1 | first_lines 18
 
 echo "=== stop optional app services ==="
 for svc in amber bsdports; do
@@ -102,8 +112,8 @@ rcctl restart relayd 2>/dev/null || true
 sleep 3
 echo "=== after ==="
 uptime
-top -b -n1 | head -18
+top -b -n1 | first_lines 18
 rcctl check master relayd brgen 2>/dev/null || true
-relayctl show hosts 2>/dev/null | head -12 || true
+relayctl show hosts 2>/dev/null | first_lines 12 || true
 
 echo "Done. git pull, sync rc.d/master (-n 2), then probe: ruby34 MASTER/web/script/probe_http"
