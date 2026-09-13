@@ -113,10 +113,23 @@ Law.define(:STRICT_MODE_ZSH) do
   # dilla's live/broadcast.sh needs one: aborting on the first non-zero exit
   # would end an all-night rotation at its first failed render.
   absent %r{scan:\s*intentional}
+  # daily.local, weekly.local and monthly.local are sourced into /etc/daily,
+  # /etc/weekly and /etc/monthly, so `set -e` in one would abort the base
+  # system's own maintenance run at its first non-zero command.
+  path_exclude %r{/etc/(?:daily|weekly|monthly)\.local\z}
   # Only a shell shebang, not any shebang: a #!/usr/bin/env ruby script has no
   # set -euo pipefail to add, and flagging one is the false positive an
   # extensionless bin/ tool trips when its language cannot be read from a suffix.
-  detect { |text| text.match?(%r{\A#![^\n]*\b(?:sh|bash|zsh|ksh|dash)\b}) && !text.match?(/^\s*set\s+-[eE]/) }
+  #
+  # Two more shapes are not missing strict mode. `#!/bin/bash -e` sets it on the
+  # shebang. An rc.d(8) script sources rc.subr, whose functions return non-zero
+  # as control flow, so strict mode there stops the daemon script mid-check.
+  detect do |text|
+    text.match?(%r{\A#![^\n]*\b(?:sh|bash|zsh|ksh|dash)\b}) &&
+      !text.match?(/^\s*set\s+-[eE]/) &&
+      !text.match?(/\A#![^\n]*\s-[a-zA-Z]*e/) &&
+      !text.match?(%r{^\s*\.\s+/etc/rc\.d/rc\.subr\b})
+  end
   fix "Add 'set -euo pipefail' after shebang."
   bad <<~X
     #!/usr/bin/env zsh
