@@ -946,10 +946,6 @@ symbol names over line numbers.
   operational, and delete the dead ones. `lib/knobs.rb` is the instrument (727
   knobs, 286 flags, 206 default-off); the counts in `dilla.rb`'s own comments
   are stale.
-- **Four hand-built RIFF headers**, at `dilla.rb` (two), `lib/devices.rb` and
-  `bin/sine_stream.rb`, where `wavefile` is declared and used at
-  `lib/music_gems.rb:231`. Container bytes only; prove identical output bytes
-  without rendering a take.
 
 ### Guards
 
@@ -965,8 +961,10 @@ symbol names over line numbers.
   in `postpro`/`lora` (selected by name from argv; `vocab_check` owns it); the 37
   stale `sample_worth.json` slugs (pruned on the next chop); the sample rate
   declared under three names (all namespaced; `sample_worth.rb`'s 11,025 is
-  deliberate); the `cohesion.rb` regroups; and the three engine probes that skip
-  under suite load while passing alone.
+  deliberate); the `cohesion.rb` regroups; the three engine probes that skip
+  under suite load while passing alone; and the four hand-packed RIFF headers
+  (`wavefile` loads only when MASTER's bundle is present, so a writer through it
+  still needs the four-line pack as its fallback).
 
 ## The layout pass — open
 
