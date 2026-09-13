@@ -314,9 +314,9 @@ end
   end
 
   # A Claude lane splits the persona prompt so its static half is cached. The
-  # split read the persona from the proc and ignored the prompt it was handed,
-  # so a caller's own system prompt — a swarm reviewer's JSON verdict contract —
-  # never reached a Claude model.
+  # split reads the persona from the proc, so it applies only when the prompt it
+  # was handed is that persona; anything else, such as a swarm reviewer's JSON
+  # verdict contract, goes to the model as given.
   def test_a_claude_lane_sends_the_system_prompt_it_was_handed
     dispatcher, = build_dispatcher
     dispatcher.instance_variable_set(:@system_prompt_proc, -> { { static: "PERSONA", dynamic: "TURN" } })
