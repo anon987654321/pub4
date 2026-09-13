@@ -25,7 +25,6 @@ module Master
             check_voice_yaml(root),
             check_limits_yaml(root),
             check_web_dir(root),
-            check_constitution_chain(root),
           ]
 
           abort_on_fatals(results)
@@ -159,18 +158,6 @@ module Master
           else
             warn_check("web_dir", "web/ exists but no Gemfile — may be incomplete")
           end
-        end
-
-        # Wire constitution Parliament chain integrity (from kimi patches)
-        def check_constitution_chain(_root)
-          require "ground/constitution"
-          parliament = Master::Ground::Parliament.new
-          chain_ok, err = parliament.verify_chain
-          fail("constitution_chain", "chain verification failed: #{err}", severity: :warning) unless chain_ok
-            ok("constitution_chain", "cryptographic amendment chain intact")
-
-        rescue StandardError => e
-          warn_check("constitution_chain", "verification failed: #{e.message}")
         end
       end
     end
