@@ -2774,205 +2774,39 @@ Numbered 1–N across the four trees.
 809. **health_check encoding comment duplicated.** One `lib/utf8.rb` require is enough.
 810. **bin/check OptionParser without `--help` banner.** Add a banner listing profiles and which gates each runs.
 
-### STUDIO — dilla engine and crate
+### STUDIO — dilla
 
-811. **Stale part headers.** `STUDIO/dilla/dilla.rb` — every `# engine part:` block still says “split out of dilla.rb”. Rewrite to “inline, load order is document order.”
-812. **`ENGINE_SOURCES` assigned late.** `:34360` sets it after `wiring_dead_constants` and `parts_report` already close over the name. Move the assignment up with the require.
-813. **Wiring comment still names `lib/engine/`.** `:13735–13738`. Gate fails if that directory returns. Point at `DillaSources.all`.
-814. **`scan` still probes `dilla.html`.** `:13167`. No such file. Drop the key or fail if a documented face is missing.
-815. **`help` is a 170-line dump with no `--explain`.** Add a topic index (`help render`, `help chop`, `help knobs`) and keep the wall behind `help all`.
-816. **`council` is dead prose.** `:13186–13193` prints five slogans. Delete it or make it call a real command.
-817. **`parts` vs comment line count.** `:14674` says “35,000 lines / 83 markers”. Generate the sentence from `parts_report`.
-818. **Test that `dilla parts` lists every marker exactly once.** Do not extract the large parts.
-819. **Support ceiling is full.** `STUDIO/gate.rb:120` `DILLA_SUPPORT_CEILING = 56`. Fold before adding; the next file needs a priced raise.
-820. **`DillaSources.support` is only `lib/*.rb`.** Either extend `support` to match `DILLA_SUPPORT` or say the corpus is the engine plus `lib/` only.
-821. **`engine_sources` header still talks about five corpora.** Cut to “this is the engine; the gate counts support separately.”
-822. **Lazy requires vs the ceiling.** Document which of `console_strip`, `tape_hysteresis`, `mix_score`, `verify_fx`, `kit_dig` are command-only so a fold does not pull DSP into boot.
-823. **`spectral_audit.rb` is not required by the engine.** Dispatch `dilla spectral` through engine help, or stop counting it as engine support.
-824. **`knobs.rb` names `drum_kit.rb`.** That file is now `engine part: drum_kit`. Name the part.
-825. **Load-order comment vs practice.** `dilla.rb:231-235` says the order lives in `engine_sources.rb`. It does not; `:83-120` does. Put the order next to the requires, or generate it.
-827. **`default_output_dir` vs `.gitignore`.** `.gitignore:22-24` still talks as if every renderer writes beside `dilla.rb`. Align with `OUTPUT_DIR`.
-828. **Pin `DILLA_SCRATCH_DIR` in `dilla_helper.rb`.** Scratch fallback is `Dir.tmpdir`; tests that assert `SCRATCH_DIR` under the tree will miss it.
-829. **UTF-8 at crate/knob readers.** 37 `File.read` sites in `lib/` inherit locale if a support file loads first. Add `encoding: "UTF-8"` at readers that parse titles.
-830. **`seed_providers.rb` URL seed still debug-gated.** `apply_external_url!` warns only if `DILLA_DEBUG`. Always warn, like the USGS path.
-831. **`demo_full.rb` swallows harmony failures.** `:44-46` `rescue StandardError; next`. Not an optional gem. Log with the progression name, then skip.
-832. **`demo_full.rb` hardcodes `/Users/mac/Music/dilla_sines/demo.mp3`.** Default to `ENV["DEMO_MP3"]` or `OUTPUT_DIR`. Do not touch that directory.
-833. **`sine_stream.rb` hardcodes checkout and Music paths.** `Dir.chdir("/Users/mac/Documents/GitHub/pub4/STUDIO/dilla")` breaks any worktree. Chdir to `File.expand_path("..", __dir__)`.
-834. **`sine_stream_player.rb` same Music path, no shebang.** Add `#!/usr/bin/env ruby`. Keep the player out of the engine require list.
-835. **`bin/crate` is unguarded.** Add `return unless __FILE__ == $PROGRAM_NAME`.
-836. **`bin/crate` help is comment-sliced.** A `--help` flag and a real usage string.
-837. **`bin/crate` `list` silent rescue.** Missing `crate/` vs empty crate vs corrupt `source.json` are three states. Warn per file; empty dir is the only quiet case.
-838. **Three crate layouts, one engine reader.** `bin/crate list` should say “engine will not see these until they are registered as chopped loops.”
-839. **Fixed 2026-09-12.** Both test headers cited `lib/engine/render_dilla.rb`, a path
-     with no file and no directory — dilla has one 35k-line dilla.rb plus lib/*.rb, and
-     never had lib/engine/. `AudioGraph` is `dilla.rb:286`. Found by
-     `MASTER/tools/backlog_claims.rb`, which checks every item against its own citation:
-     this was the only genuinely stale one in 2245.
-840. **Industrial graph is a second spine.** Name in `help` that `industrial`/`techno`/`analog` still bypass `AudioGraph`. Do not merge renderers.
-841. **`characterize` is 1180 lines of inspection.** Add one line under “READING THE ENGINE.”
-842. **`vocab-check` in `STUDIO/dilla/README.md` Checks.** That README currently only names `rake test`.
-843. **`dilla.rb` header: tests and the gate depend on the CLI guard.** Stops the next split from dropping it.
-844. **`dilla_live.rb` is a second entry.** Either add `entry:` (guarded) or document it as parse-only like lora.
-846. **`librosa_analyze.py` is committed Python.** Ban is on committed scripts. Isolate as an optional tool with a Ruby wrapper that says “Python on PATH, not in this repo’s agent shell.” Paths point at `pub2` / `pub3`. **Unverified** whether `radio-bergen-librosa` is still dispatched.
-847. **`generate_tts.rb` assumes repo-root cwd.** Anchor to `File.expand_path("../../../MASTER/README.md", __dir__)`. Backticks for TTS belong behind Open3. Vendor path is `3.4.0` not `3.4.9`.
-849. **`ENV_AND_RENDER.md` names `RAILS/shared/app/services/shared/dilla_processor.rb`.** **Unverified** that path still exists.
-850. **`data/modes.yml` never mentioned in help.** One line under SYNTHESIS.
-851. **Two files, two answers — checked 2026-09-12.** `album_tracks.yml` has a
-     reader: `dilla.rb:34552` builds the tracklist from it. `dilla_principles.yml`
-     has none — 3.9KB of draft research spec, `status: draft`, read by nothing.
-     Wiring it into `groove_engine` would change what dilla generates, so that
-     one is a rendered-sound decision and the operator's. The item's own advice
-     was right and the answer differs per file.
-852. **`reference_sonic.yml` / `dilla_reference.yml`.** Reader is `load_sonic_profiles` at `dilla.rb:4065`. Document it next to the file.
-853. **`stems/manifest.json` names missing demux dirs.** `dilla stems` should fail with “manifest names paths not on disk” the way `assets` does.
-854. **Tests should export `DILLA_FROZEN=1` in `DILLA_BOOT_ENV`.** A forgotten restore cannot dirty `project/session.json`.
-855. **`producer_dna.rb` comment “~60 presets” vs README.** Count from the file in `dilla knobs` / a `dilla dna` listing rather than restating.
-856. **`.gitignore` ignores `samples/` wholesale.** Keep audio out; stop ignoring `samples/**/*.provenance.json` and `samples/chopped/loops.json` so a lost crate still has URLs and slugs.
-857. **`.gitignore` ignores `*.wav` then comments `loop.wav` as keeper.** There is no `!loop.wav`. Either un-ignore the keeper or stop calling it tracked.
-858. **Quality sidecar rule duplicated.** `*.wav.quality.json` at `:8` and `:32`. One pattern. Same for `*_stems/`.
-859. **`assets.json` records four loops that are not on disk.** `dilla assets` exits 1; nothing in `rake test` runs it. Add a test that `DillaAssets.verify` is either clean or equal to the known rebuild set.
-860. **`DillaAssets.tracked_paths` only top-level drum wavs.** Not `custom/` or `fm/`. Include them or document that they are derived.
-861. **`tracked_paths` skips missing files.** Record expected paths even when absent.
-862. **`external_kit_cache` identity is a machine fact committed in `assets.json`.** Split host identity from crate hashes, or omit `present` from the tracked file.
-863. **`check_inputs!` wiring.** **Unverified** that every dispatch calls it. Probe one non-dilla renderer.
-864. **Dug sidecar has no URL.** Old sidecars fail `CrateDig.record!`. A one-time audit that lists sidecars without `url`.
-865. **Reproduce command names a gone path.** Provenance `command.argv` files must exist or the sidecar prints `UNREPRODUCIBLE`.
-866. **`crate.yml` is the YouTube pile.** `dilla.rb source` help should point at `lib/crate_dig.rb` first, this file second.
-867. **`RadioChop::DEFAULT_SOURCE` is `samples/ubrukte_samples.mp3`.** File not in the listing. `chop` with no args should say “default source missing”.
-868. **Chop registry JSON parse warns; `registered_loops` also rescues StandardError.** Parse once; drop bad rows with the slug.
-869. **`GENERIC_BASENAMES` vs `bin/crate` `source.wav`.** Add a test that `RadioChop` slug from `crate/sources/<slug>/source.wav` uses the directory.
-870. **`own/` sidecars vs gitignore.** Confirm with `git check-ignore`. **Unverified.** If ignored, un-ignore `**/*.provenance.json` under samples.
-871. **Vocal-fit sidecars without wavs.** `rap-vocal list` should say “sidecar only, audio missing” per row.
-872. **`_mislabelled_untitled_flac/meta.json`.** Add one sentence in `rap-vocal list` help so nobody “cleans” it.
-873. **`DillaAssets.manifest` JSON rescue returns empty crate.** Non-zero exit when `dilla assets` is the command, not when a test loads the module.
+Re-measured 2026-09-13; 190 entries became these. The first group is real and
+blocked only because `STUDIO/dilla/dilla.rb`, `lib/producer_dna.rb`,
+`README.md` and `ENV_AND_RENDER.md` carry another session's uncommitted work.
+Take them the day those files are clean.
 
-### STUDIO — live, postpro, repligen, lora
+811. **dilla.rb comments that describe the split.** 80 `# engine part:` headers still say "split out of dilla.rb"; `:230` says load order lives in `engine_sources.rb`; `:248`, `:13733`, `:14870`, `:20805` still name `lib/engine/`; `:14900` names the gone `ENGINE_PARTS`; `:14672` hardcodes "35,000 lines / 83 markers" instead of asking `parts_report`. `:35237` should say the gate and tests depend on the CLI guard.
+812. **`ENGINE_SOURCES = DillaSources.all` sits at `:34385`,** after `wiring_dead_constants` and `parts_report` close over it. Move it up to the require at `:36`.
+814. **`scan` probes `dilla.html` (`:13165`),** a file that does not exist. Drop the key.
+815. **`help` is one 170-line dump.** Topic index (`help render|chop|knobs|sample`) with the wall behind `help all`. The topics owe these lines: `industrial`/`techno`/`analog` bypass AudioGraph; `characterize` under READING THE ENGINE; `source` points at `lib/crate_dig.rb` before `project/crate.yml`, and `live/dig_crate.rb` is the YouTube digger; chop lists RadioChop's operations in order; `STREAM_DEMO` overwrites the rolling `demo.wav`, not a take; `DILLA_OVERWRITE=1` is the only overwrite; `SWING=` is the fallback and per-role offsets are the Charnas move.
+816. **`council` (`:13184`) prints five slogans.** Delete it or make it run a command.
+822. **Lazy requires are undocumented.** Say beside the requires which of `console_strip`, `tape_hysteresis`, `mix_score`, `verify_fx`, `kit_dig` are command-only, so a fold does not pull DSP into boot.
+829. **Locale.** brgen's CI loads dilla.rb as user brgen; set `Encoding.default_external = Encoding::UTF_8` at the top of dilla.rb rather than touching 37 `File.read` sites.
+846. **`radio-bergen-librosa` cannot run.** `scripts/librosa_analyze.py` reads `scripts/radio_bergen_tracks.yml`, which does not exist, and audio roots in `pub2`/`pub3`; it is also committed Python. Delete the dispatch arm (`:34877`) and the script together.
+853. **`dilla stems` should refuse** when `stems/manifest.json` names `samples/demux/…` paths not on disk, as `dilla assets` does.
+855. **"~60 presets"** in `producer_dna.rb` and the README: count in `dilla knobs` instead of restating.
+868. **Chop registry JSON is parsed twice** (`:18223` warns, `registered_loops` rescues again). Parse once; drop bad rows by slug.
+871. **`rap-vocal list`** should mark sidecar-only rows "audio missing", and say `_mislabelled_untitled_flac/` is deliberate so nobody cleans it.
+873. **`dilla assets` exits 0 on an unreadable `data/assets.json`.** The module warns and returns an empty crate; the command should exit non-zero.
+965. **dilla README and ENV_AND_RENDER.md.** README names `sample_loops.rb` (it is an engine part), tells a pre-`bin/crate` restore story, and never says a worktree has no crate so crate tests skip; ENV_AND_RENDER.md says command aliases are gone while `loose_pocket`, `industrial` and `techno` remain as genre renderers. One sentence should name the three ways to hear it: `dilla.html`, `dilla_live.rb`, `bin/sine_stream.rb`.
+1000. **Provenance pins.** Confirm a probe asserts the sidecar note carries a non-seed pin when `USER_PINNED_ENV` is set; add one to `test_dilla_engine_probes.rb` if not.
 
-874. **Als files have no shebang.** Add `#!/usr/bin/env ruby` so a direct `./live/ambient_pads.als.rb` works off Homebrew. Do not fold live/.
-875. **`broadcast.sh` hardcodes Homebrew ruby.** Use `$(command -v ruby)` or `rbenv` like `dig_crate.sh:4`. Add `RBENV_VERSION=3.4.9`.
-876. **`broadcast.sh` set names are filenames.** Validate against `live/*.als.rb` before the loop.
-877. **`rack.rb` hardcodes `/opt/homebrew/bin/ffmpeg`.** Fallback to PATH when the Homebrew binary is absent is help/UX, not a sound change.
-878. **`dig_crate.rb` hardcodes yt-dlp Homebrew path.** `ENV["YTDLP"]` or PATH.
-879. **`dig_crate.sh` header** can point at `lib/crate_dig.rb` in one line so the two names stay distinct.
-880. **`recall.rb` add `--help`.** Unknown flags currently become a seed.
-881. **`recall.rb` `--keep` writes under `dilla/` root.** Say in the warn that the wav is ignored.
-882. **`CATALOGUE.md` item 11 vs `broadcast.sh` hard cuts.** Comment that crossfade is catalogue item 11, not this script’s job.
-883. **`CATALOGUE.md` counts “forty-two support modules.”** `lib/` has 44 `.rb` files. Generate or drop the number. Same for “401 chord progressions, 74 track presets.”
-884. **Als files `require_relative "rack"` with no `$PROGRAM_NAME` guard.** Loading a set in a test would play. A one-line guard would let a dry `--describe` exist without audio. Do not add playback flags that change the set.
-885. **`liveset.jsonl` torn-row behaviour.** Copy one sentence to `CATALOGUE.md` intro.
-886. **Duplicate frozen-string magic comment.** `postpro.rb:2-3`. Delete one.
-887. **Version banner is marketing.** `:5-7`. Present-tense reason or delete. The CLI has `--capabilities`.
-888. **No `--help` / `--explain` on postpro.** Flags are a hand-rolled `ARGV.include?` forest. `--help` listing every flag, and refuse non-flag argv when stdin is not a TTY.
-890. **README “Running it” omits `--rescue`, `--measure`, `--compare`, `--watch`.**
-891. **In-place grade from repligen.** `repligen.rb:760` `--input` and `--output` are the same path. Write a sibling and leave the download (REVERSIBILITY).
-892. **`postpro.log` is a committed logger stub.** Gitignore `*.log` under postpro, or stop opening a logfile next to source.
-893. **`CONFIG` from missing `master.json`.** Help should say “built-in tables only”.
-894. **Camera profiles: 6 JSON files, README says 121 bodies.** Say “six vendor files, 121 bodies.”
-895. **Golden tests cover four presets of 57.** Do not hash looks. Add one more family only if a preset class has no representative. **Unverified** whether `house` is in those four.
-898. **`--watch` / `--random` / `--auto` undocumented in README running block.**
-899. **README Checks should point at `rake postpro:bootstrap`** for a missing libvips host.
-900. **Repligen help banner omits `chain` / `chains`.** `:884`. Add them, plus `help`.
-901. **`--until` is parsed; `--from` is not.** Help should not imply resume. Document `--until` only.
-902. **README running block has no `chain` / `chains`.** Add `repligen.rb chain NAME --dry-run` and “needs `REPLICATE_API_TOKEN` without it”.
-903. **Token unreachability is abort-only on run.** `help` / missing token on `generate` should print where the token is read from and that `vocab-check` / `--dry-run` / `chains` need none.
-904. **`schema_audit` not in the tool help.** One line: “live schema: `cd STUDIO && rake repligen:schema_audit` (skipped without token).”
-905. **Default model vs FINAL vs README.** Options default `flux-2-pro`; `FINAL_MODEL` is `flux-2-max`; README still talks as if six models and `flux-1.1-pro` is the live default. Rewrite to match the table (11 entries).
-906. **`HOUSE_POSTPRO` default is untested.** Assert `HOUSE_POSTPRO == "portrait"` and that `--no-postpro` is false, without running postpro.
-907. **Chain path does not apply `HOUSE_POSTPRO`.** Same default as generate, or say chains are ungraded.
-908. **`relight_portrait.yml` will refuse until schema_audit.** Add those models as `unverified: true` or stop shipping the YAML. **Unverified** they exist in `MODEL_CAPABILITIES`.
-909. **`flux2_consistency.yml` untested against real `MODEL_CAPABILITIES`.** Add one test: `Chain.load("flux2_consistency")`.
-910. **`structure_ladder.yml` starts on `flux-1.1-pro-ultra`.** Comment in the YAML why Ultra is the establish stage.
-911. **`repligen.rb:985` mentions `test/tools/test_chain.rb`.** Actual path is `STUDIO/test/test_tools_chain.rb`.
-912. **Prompt-length warning vs README 30–80 words.** **Unverified** a test exists. Add one if missing.
-913. **README structured-fields list omits `--subject-distance`, `--key-side`, `--catchlight`, `--skin`, `--selfie-geometry`.**
-914. **Gallery / no `--output`.** Help should say outputs without `--output` are URLs only.
-915. **`rake test:repligen` should call `vocab_problems` once.** Dedup overlapping checks.
-916. **`generate` without token abort before compile,** with the three lookup paths.
-917. **No STUDIO test file for lora.** Minimum: `toolkit.sh` SUBJECT_DIR error path, `curate.rb` thresholds, `judge.rb --calibrate` on the seven ragnhild images, `render_config.rb` device profiles — all without training.
-918. **`toolkit.sh` error path names a directory that does not exist.** `STUDIO/lora/subjects/ragnhild/lora`. Wrappers live at `STUDIO/lora/ragnhild/lora`.
-919. **`run_generate.sh --all` is check, generate, postpro — not train.** Usage should say `--all` needs `weights/$MODEL/*.safetensors`.
-920. **README status vs disk.** “8 images in `dataset_1024/`”; disk is `ragnhild/dataset/` with 7 pairs. Captions are full sentences, not the stubs the README describes.
-921. **`08` and `11` are gone.** README:145–148. Drop the stale duplicate/filter warning or recurate.
-922. **`johann/train.yaml` `folder_path:` is empty.** `render_config.rb` should abort if `folder_path` blank.
-923. **`johann/train.yaml` optimizer `adamw8bit` on `device: mps`.** README says mps uses plain adamw. Stamp “generated, do not edit” on `train.yaml`; `render_config.rb` is the source. Do not hand-edit hyperparams.
-924. **Committed person photographs.** A test that `johann/dataset` is empty and that `git ls-files` for new `lora/**/*.jpg` fails unless an allowlist. Do not delete existing without the owner.
-926. **Guides `.m4a`.** Do not regenerate. **Unverified** if tracked; gitignore if accidental.
-927. **`seed_media.ipynb` / `seed_media.yml`.** Find the reader. If Colab-only, say so in README next to the clone-is-public warning.
-928. **`run_ai_toolkit.rb` / `colab_session.rb` / `kaggle_session.rb` ARGV at load.** Guard them.
-929. **`setup_runpod.sh` SUBJECT_DIR matches real layout.** Copy that path into the toolkit error.
-930. **`run_train_replicate.rb` abort sentence on `./lora --train-replicate --help`.**
-931. **`judge.rb` thresholds YAML.** A test that the YAML loads and every key is numeric. Do not retune floors.
-932. **`curate.rb` `rescue Vips::Error`.** Log and skip the file; do not swallow the whole run.
-933. **`postpro_samples.rb` must refuse `dataset/`.** Confirm it only touches `out/`.
-934. **`sh -n` in the gate for `lora/_toolkit/*.sh` and `dilla/live/*.sh`.**
-935. **`lora/README.md` Norwegian then English.** One voice (README_PROSE). Do not lose the consent/likeness meaning.
-936. **FLUX.1-dev vs FLUX 2 base.** Comment at top of `run_train_replicate.rb` that the destination base is a generation choice, not a silent default.
+These are the operator's, because each changes a sound or accepts a changed input:
 
-### STUDIO — tests, docs, isolation, micro
+850. **`data/modes.yml` has no reader.** Nothing in STUDIO loads it — `tizita`, `bati`, `ambassel` appear only in the file, and the `chord_theory.rb` it names is gone. Wiring it into the harmony spine changes what dilla generates; the other choice is deleting it. Same decision as `dilla_principles.yml`.
+859. **The crate on main disagrees with `data/assets.json`.** `DillaAssets.verify` there: `samples/{kembara_rindu,lo_borges,semua_untuk_mu}/loop.wav` missing, and seven one-shots under `samples/drums/` changed hash at the same size. Restore them, or `dilla assets record` to accept the new drums as the inputs.
 
-937. **A test that loading postpro then repligen in one process fails** would document why `rake test` splits processes.
-938. **`isolation.rb` only globs `test_dilla_*.rb`.** Extend `files` or a second task `isolation:tools`.
-939. **Quoted-name parser is a spelling test.** All current files use `def test_`. Drop the rewrite or add one quoted example.
-940. **Suite rounds scrape Minitest failure lines.** A runner format change silently reports isolation green. Pin against a fixture failure.
-941. **`isolation` is not `rake default`.** Add “not part of `rake`” next to the command so a green `rake` is not read as isolation-clean.
-942. **`test_studio_gate.rb` still uses `lib/engine/chord_theory.rb` as a first-party path.** Replace with `dilla/lib/theory_runtime.rb`.
-943. **Gate test `test_every_declared_entry_point_is_on_disk_and_guarded` skips `entry: nil`.** Explicit assertion that lora’s nil is intentional.
-944. **`rake test:dilla` should fail CI when `DILLA_REQUIRE_CRATE=1` and crate is missing.**
-945. **`test_mix_metrics_returns_band_levels_when_demo_present` depends on gitignored `demo.wav`.** Fixture: generate a tiny wav in tmp, or stop calling it a unit test.
-946. **`test_shipped_demo_has_no_dead_stretch` shells `ffmpeg` with backticks.** Open3; `demo.mp3` is gitignored. Same skip trap.
-947. **`eval_in_engine` timeout.** Document `DILLA_PROBE_TIMEOUT` default 90s in `dilla/README.md` Checks.
-948. **Bare `rand` sites ratchet.** `test_bare_rand_call_sites_do_not_grow` without routing them through `render_rng`.
-949. **`test_dilla_take_write.rb` uses `SCRATCH_DIR` from the engine.** Pin `DILLA_SCRATCH_DIR` to tmp in `dilla_helper.rb`.
-950. **`librosa_analyze.py` is untested.** If the Ruby path is the one that matters, say so on the Python file.
-951. **`test_audio_graph*.rb` assert filter_complex strings.** Comment that a rename of a label is a behaviour change.
-952. **`test_dilla_engine_sources.rb` `assert_equal ".rb"`.** `bin/crate` is Ruby and excluded. Rename the test to `lib_and_entry_are_rb`.
-953. **No matching tests for `lib/taste.rb`, `lib/sample_worth.rb`, `lib/kit_dig.rb`, `lib/vocal_chop.rb`, `lib/acapella.rb`.** Add probes that do not render: e.g. `KitDig::ROLES` keys match drum filenames.
-954. **`tools_helper.rb` changes `$PROGRAM_NAME`.** A test that `command` is not executed: `vocab_problems` without `SystemExit`.
-955. **No test that `dilla.rb` `parts` markers are unique.** Scan `# engine part:` names, `assert_equal names, names.uniq`. **Unverified** if engine-probes already have it.
-956. **`studio_helper.rb` comments name `test/dilla/helper.rb`.** Those paths do not exist. Fix to `STUDIO/test/`.
-957. **Chord theory skip on missing 13.** Invert: skip only when absent, assert when present.
-958. **`which ffmpeg`.** Use `Open3` + `ffmpeg -version`. OpenBSD `which` differs.
-959. **`test_dilla_crate_dig.rb` does not open on-disk sidecars.** One test: every readable `samples/**/*.provenance.json` has a `url` or is listed as pre-URL-schema. Worktree without samples skips.
-960. **`STUDIO/README.md` has lists, tables, and a code block.** README_PROSE. Redo; move commands into sentences. Same for `dilla/README.md`, `postpro/README.md`, `repligen/README.md`, `lora/README.md`.
-961. **`PHOTOGRAPHY.md` “3,947 lines and 228 rules”.** **Unverified** now. Point at `ruby MASTER/tools/agent_context.rb` or drop the census.
-962. **`PHOTOGRAPHY.md` “Nothing applies it by default.”** False: `repligen.rb` `HOUSE_POSTPRO`. Update layer “Two things that are not true yet.”
-964. **`AMBITION.md` “Today repligen is single-shot.”** False: `chain.rb` + `chains/`. Rewrite §A opener to “spine exists; execution still needs a token.” Mark items 1–2 built.
-965. **`dilla/README.md` `sample_loops.rb`.** File does not exist (`engine part: sample_loops`). Fix the restore-verify sentence.
-966. **`dilla/README.md` `crate/` restore story.** Present-tense: restore is copy onto `samples/<track>/loop.wav`; `bin/crate` is a third layout.
-967. **`repligen/README.md` “six declared models.”** Table has 11.
-968. **`ENV_AND_RENDER.md` command aliases “gone.”** Help still lists `loose_pocket`, `industrial`, `techno` as commands. Clarify: aliases gone, genre renderers remain.
-969. **Root `STUDIO/README.md` “inert config” examples are postpro history.** One present-tense sentence: “`--vocab-check` is how you see unread keys.”
-970. **`PHOTOGRAPHY.md` Studio Q URL has `portrportrait`.** Broken link. Fix or drop.
-971. **`gate.rb` `ruby_shebang?` rescues StandardError to false.** Unreadable file is treated as not Ruby and drops out of parse. Log; this is the gate, not an optional gem.
-972. **`PREDICTED_FINDINGS` does not include growth.** A unit test that a fake `dilla/lib/engine/x.rb` fails `check_growth`.
-973. **`VENDORED` includes `project/`.** A Ruby file dropped there would vanish from parse. Comment is already about worktrees named `tmp`.
-974. **`Rakefile` `repligen:schema_audit` parses the table with a regex.** Add a comment test: the regex matches the live file.
-975. **`schema_suggest` placeholders 3.0 / 28.** Print `unverified: true` in the suggested snippet so a paste cannot validate a guess.
-976. **`task default: %i[gate test]`.** Document as one sentence after the prose rewrite: does not run isolation or schema_audit.
-977. **`test:gate` is named, not globbed.** A new `test_studio_*.rb` would not run. Glob or comment the rule next to the filename.
-978. **Pin `RBENV_VERSION=3.4.9` in remaining STUDIO shells.** `broadcast.sh`; export in `toolkit.sh`.
-979. **Gate does not assert `frozen_string_literal`.** One parse-time test over `source_files`.
-980. **`scratch/` gitignore.** `.gitignore` does not name `scratch/`. **Unverified** whether tracked. If tracked logs, gitignore `dilla/scratch/`.
-981. **`demo_manifest.tsv` beside gitignored demo audio.** If tracked, it is a manifest without files. Either ignore or have `dilla assets` include it.
-982. **Two `capture_with_timeout` implementations.** Extracting would add a support file and raise the ceiling. Leave; comment they must both kill the process group.
-983. **`bin/crate` list rescues / `demo_full.rb` harmony `next` / `gate.rb` shebang reader / `seed_providers.rb` debug-gated warn.** Clear non-gem swallows. Log.
-984. **`live/rack.rb` rescues.** **Unverified** (ffprobe/json). If they hide a missing bed, warn; if kit-stat probes, skip.
-985. **`provenance.rb:101` `mtime rescue nil`.** Warn once per path.
-986. **`postpro` CLI `rescue StandardError, NoMethodError` at `:3739`.** Dispatch. Log; do not hide a missing method as a failed grade.
-987. **`crate_dig` vs `dig_crate`.** `dilla help` SAMPLE PIPELINE should name both in one sentence.
-988. **`ENGINE_PARTS` word in `dilla.rb:14900`.** The constant is gone; markers remain. Say `# engine part:`.
-989. **`test/dilla/` in comments.** Global replace to `STUDIO/test/`.
-990. **`dilla.html` / `dilla_live.rb` / `sine_stream.rb` are three “hear it” doors.** One sentence in dilla README.
-991. **`lib/sample_worth.rb` vs `project/sample_worth.json` vs `Rack::WORTH`.** Comment on the JSON: written by whom. **Unverified** writer.
-992. **`lib/taste.rb` vs `DillaKnobs`.** Confirm the suite covers `DillaTaste::DIMENSIONS` against knobs. If not, that is a real hole.
-993. **`Chain.parse` should require `description:`** so `chains` cannot print a blank line.
-994. **`lora/_toolkit/` underscore vs `subjects/` in the error string.** The drift.
-995. **`johann/lora` and `ragnhild/lora` are identical wrappers.** A test that both exec `run_generate.sh`.
-996. **`check_hf_flux_access.rb` without token** should fail like replicate, with the HF licence sentence from README.
-997. **Worktree empty crate vs main crate.** Document: “copy `samples/` in, or skip is the measurement.”
-998. **`dilla.rb` `help` STREAM_DEMO overwrites `demo.wav`.** Comment in help that this is the rolling capture, not a take.
-999. **`DILLA_OVERWRITE=1` is the only overwrite.** Help DEFAULT section does not mention it. One line.
-1000. **Provenance `reproduce_command` without pins was a known lie.** **Unverified** tests. If missing, assert a sidecar `note` includes at least one non-seed pin when `USER_PINNED_ENV` is non-empty.
+### STUDIO — postpro, repligen, lora
+
+907. **Chains are ungraded by default.** `generate` applies `HOUSE_POSTPRO` (`portrait`); `chain` grades its final frame only when `--postpro` is given. Whether chains share the house grade is a graded-look call.
+926. **`lora/guides/*.m4a` are tracked TTS output** beside their `.txt` scripts. Keep them in git or untrack them; either is the operator's.
+931. **`lora/_toolkit/judge_thresholds.yml` was calibrated on seven images;** `ragnhild/dataset/` now holds six. Recalibrating moves the quality floors.
 
 ### Cross-tree micro-refinements (the rest of 10/10)
 
