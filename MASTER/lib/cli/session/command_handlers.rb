@@ -14,65 +14,6 @@ module Master
         puts @refs.renderer.render("<< for multiline. anything else is a prompt.", mode: :dim) if arg.empty?
       end
 
-      def run_rebuild
-        puts @refs.renderer.render("rebuild: syntax check + session save + hot-restart", mode: :dim)
-        lib_dir = File.join(Master::ROOT, "lib")
-        errors = []
-        changed_lib_files(lib_dir).each do |path|
-          ok = system(RbConfig.ruby, "-c", path, out: File::NULL, err: File::NULL)
-          errors << path unless ok
-        end
-        if errors.any?
-          errors.each { |p| puts @refs.renderer.render("  syntax error: #{p}", mode: :warning) }
-          puts @refs.renderer.render("rebuild: aborted — fix errors first", mode: :warning)
-          return
-        end
-        @refs.session.save!
-        puts @refs.renderer.render("rebuild: ok — exec'ing fresh process", mode: :dim)
-        $stdout.flush
-        ::Kernel.exec(RbConfig.ruby, $PROGRAM_NAME, *ARGV)
-      end
-
-      def run_context
-        query = @last_input.to_s
-        puts @refs.renderer.render("context: gathering for query=#{query[0, 60]}", mode: :dim)
-        provider = Master::Ground::ContextProvider.new
-        rows = provider.brief(query, limit: 8)
-        if rows.empty?
-          puts @refs.renderer.render("context: nothing found", mode: :dim)
-        else
-          rows.each { |r| puts @refs.renderer.render("  #{r}", mode: :dim) }
-        end
-        @refs.bus&.publish("attention:context", query:, rows: rows.size)
-      end
-
-      def run_checkpoint
-        puts @refs.renderer.render("checkpoint: snapshotting changed files", mode: :dim)
-        lib_dir = File.join(Master::ROOT, "lib")
-        files = changed_lib_files(lib_dir)
-        cp = Master::Fix::Checkpoint.new
-        result = cp.create(label: "manual", files:)
-        id = result.respond_to?(:fetch) ? result[:id] : result.to_s
-        puts @refs.renderer.render("checkpoint: #{id} (#{files.size} file(s))", mode: :dim)
-      end
-
-      def run_verify
-        puts @refs.renderer.render("verify: checking recently landed operator symbols", mode: :dim)
-        plan = {
-          files: %w[lib/cli/intent_router.rb lib/cli/attention_context.rb
-                    lib/fix/unfinished_ledger.rb lib/ground/policy/orchestration.rb],
-          symbols: %w[Master::CLI::IntentRouter Master::CLI::AttentionContext
-                      Master::Fix::UnfinishedLedger Master::Ground::Policy::Orchestration],
-          callers: %w[run_rebuild run_context run_checkpoint run_verify],
-        }
-        checker = Master::Fix::DoneChecker.new
-        result = checker.call(plan)
-        result.each do |key, check_result|
-          icon = check_result.is_a?(TrueClass) || check_result == :ok ? "ok" : "!!"
-          puts @refs.renderer.render("  #{icon} #{key}", mode: check_result == false ? :warning : :dim)
-        end
-      end
-
       def safe_read_line
         Reline.readline("", true)&.chomp
       rescue StandardError => e

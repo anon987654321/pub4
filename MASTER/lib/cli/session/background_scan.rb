@@ -72,17 +72,6 @@ module Master
         puts @refs.renderer.render(line, mode: result.ok? ? :dim : :warning)
       end
 
-      def changed_lib_files(lib_dir)
-        out, = Master::Io::Exec.capture2e("git", "-C", @refs.root, "diff", "--name-only", "HEAD")
-        return [] if out.strip.empty?
-        out.lines
-           .map { |l| File.join(@refs.root, l.strip) }
-           .select { |p| p.start_with?(lib_dir) && p.end_with?(".rb") && File.exist?(p) }
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "cli.changed_lib_files", event_bus: @refs.bus)
-        []
-      end
-
       def scan_files(paths)
         Result.ok(paths.map { |p| [p, @refs.scanner.scan(p, depth: :deep)] })
       end

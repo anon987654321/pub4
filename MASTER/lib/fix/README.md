@@ -14,17 +14,9 @@ Three files hold the pressure back. `homeostat.rb` reads runtime pressure and
 adapts. `governor.rb` limits rate and throughput across runs. `self_check.rb`
 stands in front of the one dangerous case, a loop about to mutate its own source.
 
-The reversible path is `checkpoint.rb`, `diff_stager.rb`, `patch_applier.rb` and
-`rollback.rb`. `checkpoint.rb` copies the files a pass is about to touch into
-`.master/checkpoints` and copies them back on request, refusing any path that
-escapes the root either way. `conflict_resolver.rb` settles two fixes that want
-the same lines, and `propose_tree.rb` is where a proposal evolves before either
-of them sees it.
-
-Verification closes the loop. `patch_verifier.rb` asks whether a change landed —
-the file is there, the symbol is somewhere under `lib/`, the caller names it — and `done_checker.rb` puts that question to a whole plan and answers
-done or not done. `unfinished_ledger.rb` keeps what was left open, so a pass that
-stopped short says so instead of reading as finished.
+The reversible path is `diff_stager.rb`, `patch_applier.rb` and `rollback.rb`.
+`conflict_resolver.rb` settles two fixes that want the same lines, and
+`propose_tree.rb` is where a proposal evolves before either of them sees it.
 
 `content_dedup_scan.rb` reads the other direction: it flags lines that repeat
 across the constitution files, and reports rather than repairs, because which

@@ -985,7 +985,9 @@ loc_body_budgets:
   # the two boot paths, so the evidence contract on MASTER's own reply reaches
   # the container that CLI::Stages::Render reads it from.
   lib/builder.rb: 216
-  lib/cli: 5892
+  # 5892 -> 5827: run_rebuild, run_context, run_checkpoint, run_verify and
+  # changed_lib_files, unreachable from any dispatch, deleted.
+  lib/cli: 5827
   # 253 -> 294 for the loop the subsystem did not have. Everything the row
   # priced at introduction was perception; tick! had one caller, at boot, once,
   # so nothing decayed, nothing persisted after the first snapshot and
@@ -996,8 +998,11 @@ loc_body_budgets:
   lib/core: 762
   lib/core.rb: 47
   lib/design.rb: 270
-  lib/fix: 2905
-  lib/ground: 4812
+  # 2905 -> 2726: done_checker, patch_verifier, unfinished_ledger and checkpoint,
+  # reachable only from the deleted CLI methods.
+  lib/fix: 2726
+  # 4812 -> 4667: context_provider.rb, reachable only from run_context.
+  lib/ground: 4667
   lib/io: 4175
   # 136 -> 137 for Master.git_checkout?, one line and one comment. It tests
   # File.exist?(.git) rather than File.directory?, because a worktree carries

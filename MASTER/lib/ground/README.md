@@ -38,8 +38,7 @@ A move is a constant rename, and it has two traps that bite in this order. Befor
 moving a file, look for callers that write the bare constant inside `module Ground`,
 because a bare name resolves by lexical scope and breaks the moment its neighbour
 leaves — `PressureEngine` reads as dead to any census that greps the qualified name
-and is built on every boot, and `DoneChecker` defaulted an argument to a bare
-`PatchVerifier.new`. After moving it, read the moved file for its own bare
+and is built on every boot. After moving it, read the moved file for its own bare
 references to constants that stayed behind, `Swallow` and `FailureTaxonomy` and
 `Frontmatter` among them, and write them out as `Master::Ground::` in full. The
 first trap breaks the caller and the second breaks the file you just moved; the

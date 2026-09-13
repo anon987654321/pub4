@@ -215,7 +215,14 @@ spine:
 # Written as a guard with its own `if`, not folded onto one line to fit: the
 # 38298 -> 38299 entry above settled that, for a security rule, on the same
 # argument. test_io_path_guard.rb covers it and fails 2 of 3 without the guard.
-  lib_body_ceiling: 38334
+# 38334 -> 37945, a fall of 389 body lines, and every one was unreachable.
+# CLI::Session's run_rebuild, run_context, run_checkpoint and run_verify were
+# private methods no dispatch table, NL pattern or test named; /rebuild and
+# /verify are the registry's live copies. What only they reached went with
+# them: Fix::DoneChecker, Fix::PatchVerifier, Fix::UnfinishedLedger,
+# Fix::Checkpoint and Ground::ContextProvider. The ceiling falls by exactly
+# the deletion, so the row keeps the overage it had.
+  lib_body_ceiling: 37945
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753
@@ -589,7 +596,8 @@ pub4_source_ceilings:
 # the `unless`, and all twelve still pass. Nine tests here, none of which opens a
 # socket — every case is refused before the request, which is the point. Deleting
 # the guard fails three of them.
-  MASTER: 680
+  # 680 -> 675: five lib files nothing reached, named under lib_body_ceiling.
+  MASTER: 675
 
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
