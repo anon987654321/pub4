@@ -227,15 +227,27 @@ module Master::Core
     SECRET_BASENAME = /
       \A(?:
         \.env |
+        [a-z0-9_-]+\.env\z |
         (?:credentials?|secrets?|tokens?)(?:[._-]|\z) |
         (?:[a-z0-9]+[._-])?keys?(?:[._-]|\z) |
-        id_(?:rsa|dsa|ecdsa|ed25519)
+        id_(?:rsa|dsa|ecdsa|ed25519) |
+        \.(?:netrc|pgpass|npmrc)\z |
+        [a-z0-9._-]+\.pem\z
       )
     /xi
 
-    def secret_path?(path)
-      SECRET_BASENAME.match?(File.basename(path.to_s))
+    # Some secrets have ordinary names and are identified only by where they
+    # live. .master/config.yml holds web_token, and "config.yml" is as generic
+    # as a filename gets, so the basename rule could never catch it without
+    # refusing every config file in the tree.
+    SECRET_PATH = %r{(?:\A|/)\.master/config\.ya?ml\z}i
+
+    def self.secret?(path)
+      text = path.to_s
+      SECRET_BASENAME.match?(File.basename(text)) || SECRET_PATH.match?(text)
     end
+
+    def secret_path?(path) = World.secret?(path)
 
     # Paths are sandboxed to root; nothing escapes the workspace.
     def within(path)

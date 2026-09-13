@@ -32,7 +32,7 @@ module Master
       # Credential files inside the checkout are refused for reads as well as
       # writes, by the rule Core::World applies to its own reads.
       def self.secret?(path)
-        Master::Core::World::SECRET_BASENAME.match?(File.basename(path.to_s))
+        Master::Core::World.secret?(path)
       end
 
       def resolve(path)
