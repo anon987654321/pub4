@@ -37,9 +37,9 @@ module Deploy
 
     module_function
 
-    def skip_reason(gate)
+    def skip_reason(gate, on_vps: Operator::Environment.on_vps?)
       needs = Array(gate.needs)
-      if needs.include?(:vps) && !Operator::Environment.on_vps?
+      if needs.include?(:vps) && !on_vps
         return "not on VPS"
       end
       if needs.include?(:bundle) && Operator::RubyRunner.runtime_gate_skipped?

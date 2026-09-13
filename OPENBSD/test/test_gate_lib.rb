@@ -1,8 +1,12 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "fileutils"
+require "stringio"
+require "tmpdir"
 require_relative "../lib/gate_result"
 require_relative "../lib/gate_environment"
+require_relative "../integrity_gate"
 
 class GateLibTest < Minitest::Test
   def test_gate_result_tracks_failures_and_warnings
@@ -65,15 +69,10 @@ class GateLibTest < Minitest::Test
   def test_skip_reason_consults_the_needs_it_declares
     vps_gate = Deploy::GateEnvironment::Gate.new(name: "x", path: "y", needs: %i[vps])
     plain = Deploy::GateEnvironment::Gate.new(name: "x", path: "y")
-    previous = ENV.delete("DEPLOY_ASSUME_VPS")
-    if File.file?("/etc/relayd.conf")
-      assert_nil Deploy::GateEnvironment.skip_reason(vps_gate)
-    else
-      assert_equal "not on VPS", Deploy::GateEnvironment.skip_reason(vps_gate)
-    end
-    assert_nil Deploy::GateEnvironment.skip_reason(plain)
-  ensure
-    ENV["DEPLOY_ASSUME_VPS"] = previous if previous
+
+    assert_equal "not on VPS", Deploy::GateEnvironment.skip_reason(vps_gate, on_vps: false)
+    assert_nil Deploy::GateEnvironment.skip_reason(vps_gate, on_vps: true)
+    assert_nil Deploy::GateEnvironment.skip_reason(plain, on_vps: false)
   end
 
   # A need nothing reads is a claim with no effect; integrity_gate.rb skips on
@@ -95,5 +94,65 @@ class GateLibTest < Minitest::Test
     assert_equal "OPENBSD/health_check.rb", gate.path
     assert_equal ["--core"], gate.args
     assert_includes gate.needs, :vps
+  end
+end
+
+# integrity_gate.rb's loop, handed fake gates and a recording executor so the
+# verdicts are its own and no real gate runs.
+class IntegrityRunTest < Minitest::Test
+  Gate = Deploy::GateEnvironment::Gate
+
+  def setup
+    @root = Dir.mktmpdir("integrity")
+    %w[pass.rb fail.rb soft.rb box.rb].each { |name| File.write(File.join(@root, name), "") }
+    @ran = []
+  end
+
+  def teardown = FileUtils.rm_rf(@root)
+
+  def run_chain(gates, on_vps:)
+    execute = lambda do |cmd|
+      script = File.basename(cmd[1])
+      @ran << script
+      [script == "pass.rb" ? "" : "boom\n", script == "pass.rb"]
+    end
+    integrity_run(gates, root: @root, on_vps:, execute:, io: StringIO.new)
+  end
+
+  def test_a_vps_gate_off_the_box_is_skipped_and_never_executed
+    report = run_chain([Gate.new(name: "vps_health", path: "box.rb", needs: %i[vps])], on_vps: false)
+
+    assert_equal ["vps_health: not on VPS"], report[:skipped]
+    assert_empty @ran
+    assert_empty report[:failures]
+  end
+
+  def test_a_vps_gate_on_the_box_runs_and_its_failure_blocks
+    report = nil
+    _, err = capture_io { report = run_chain([Gate.new(name: "vps_health", path: "box.rb", needs: %i[vps])], on_vps: true) }
+
+    assert_equal ["box.rb"], @ran
+    assert_equal ["vps_health"], report[:failures]
+    assert_empty err, "the post-pull note is for a connect failure, not every failure"
+  end
+
+  def test_required_failures_block_and_optional_ones_warn
+    gates = [
+      Gate.new(name: "good", path: "pass.rb"),
+      Gate.new(name: "bad", path: "fail.rb"),
+      Gate.new(name: "soft", path: "soft.rb", optional: true),
+    ]
+    report = run_chain(gates, on_vps: false)
+
+    assert_equal %w[pass.rb fail.rb soft.rb], @ran
+    assert_equal ["bad"], report[:failures]
+    assert_equal ["soft: boom"], report[:warnings]
+  end
+
+  def test_a_gate_whose_script_is_gone_is_a_warning_not_a_pass
+    report = run_chain([Gate.new(name: "ghost", path: "nowhere.rb")], on_vps: true)
+
+    assert_equal ["ghost: missing nowhere.rb"], report[:warnings]
+    assert_empty @ran
   end
 end
