@@ -47,6 +47,16 @@ class VoiceMessageTest < ActionDispatch::IntegrationTest
     assert message.attachment.attached?
   end
 
+  test "an attachment that is neither a voice note nor a photo is refused" do
+    sign_in_as(@sender)
+    script = Rack::Test::UploadedFile.new(StringIO.new("#!/bin/sh\necho hi\n"), "text/x-shellscript", true, original_filename: "run.sh")
+
+    assert_no_difference -> { @conversation.messages.count } do
+      post conversation_messages_path(@conversation),
+           params: { message: { message_type: "file", attachment: script } }
+    end
+  end
+
   test "a text message with no body is still refused" do
     sign_in_as(@sender)
 

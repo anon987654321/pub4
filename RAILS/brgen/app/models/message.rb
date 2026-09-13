@@ -41,6 +41,12 @@ class Message < ApplicationRecord
   validates :content, length: { maximum: 10_000 }
   validates :message_type, inclusion: { in: %w[text image file audio] }
 
+  # The composer accepts audio/* and image/*, and the server holds the same
+  # line: a voice note or a photo, within the shared media size cap. Anything
+  # else posted straight at the endpoint is refused before it reaches storage.
+  ATTACHMENT_TYPE = %r{\A(?:image/(?:jpeg|png|webp|heic|heif|gif)|audio/[\w.+-]+)\z}
+  validate :attachment_is_voice_or_photo, if: -> { attachment.attached? }
+
   # Live delivery. The declarative `broadcasts_to` re-renders _message inside
   # Turbo's broadcast job (no request), where the reloaded message's belongs_to
   # reads — conversation.channel?, sender.channel_handle — hit the default :all
@@ -155,6 +161,12 @@ class Message < ApplicationRecord
   def maybe_summon_bot = ChannelBotReplyJob.set(wait: rand(2..6).seconds).perform_later(id)
 
   private
+
+  def attachment_is_voice_or_photo
+    blob = attachment.blob
+    errors.add(:attachment, :attachment_type) unless blob.content_type.to_s.match?(ATTACHMENT_TYPE)
+    errors.add(:attachment, :attachment_too_large) if blob.byte_size.to_i > Shared::MediaGuard::MEDIA_MAX_BYTES
+  end
 
   def broadcast_to_logs
     fresh = Message.strict_loading(false).includes(:sender, :conversation, :link_preview).find(id)
