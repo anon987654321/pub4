@@ -124,7 +124,6 @@ class ChatService
     subscribe("phantom:detected") { |ev| write_json_event("phantom", phantom_payload(ev)) }
     subscribe("pipeline:stage_start") { |ev| write_json_event("stage", { stage: ev[:stage], phase: "start" }) }
     subscribe("pipeline:stage_complete") { |ev| write_json_event("stage", { stage: ev[:stage], phase: "done", ms: ev[:ms] }) }
-    subscribe("btw:done") { |ev| write_json_event("btw", { type: ev[:type], summary: ev[:summary].to_s[0, 500] }) }
     subscribe("skills:triggered") { |ev| write_json_event("thought", "skill #{ev[:skill]}") }
     subscribe("felt:sense") { |ev| write_json_event("felt", { mood: ev[:mood], entropy: ev[:entropy], confidence: ev[:confidence] }) }
     subscribe("fold:risk") { |ev| write_json_event("dmesg", "fold0 at master0: risk=#{ev[:risk]} intent=#{ev[:intent]}") }
@@ -494,7 +493,6 @@ end
     when "compaction:done" then "compacted ctx to #{payload[:token_est]} tokens"
     when "compaction:start" then "compaction at #{payload[:token_est]} tokens"
     when "phantom:detected" then "phantom #{Array(payload[:patterns]).join(',')}"
-    when "btw:done" then "btw #{payload[:type]} done"
     when "agent:start" then "agent #{payload[:type]} start"
     when "agent:end" then "agent #{payload[:type]} end"
     else rest&.tr("_", " ") || sub

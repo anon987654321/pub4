@@ -48,10 +48,6 @@ module Master
         rescue StandardError => e
           bus.publish("plan:pin_error", error: e.message)
         end
-        bus.subscribe("agent:plan_done") do |ev|
-          summary = ev[:summary] || ev["summary"]
-          pin(root, summary, bus:) if summary.to_s.strip != ""
-        end
       end
 
       def prompt_section(root)
