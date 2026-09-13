@@ -61,10 +61,10 @@ module Deploy
     def self.log_file(app) = File.join(RUN_DIR, "#{app[:name]}.log")
 
     def self.migrate(app)
-      out, status = Open3.capture2e(env_for(app), "rbenv", "exec", "bundle", "exec", "bin/rails", "db:migrate", chdir: app[:dir])
+      out, status = Open3.capture2e(env_for(app), "rbenv", "exec", "bundle", "exec", "bin/rails", "db:prepare", chdir: app[:dir])
       return true if status.success?
 
-      warn "triangle: #{app[:name]} db:migrate failed\n#{out.lines.last(8).join}"
+      warn "triangle: #{app[:name]} db:prepare failed\n#{out.lines.last(8).join}"
       false
     end
 
