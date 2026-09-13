@@ -6327,7 +6327,6 @@ Numbered 1–N across the four trees.
 823. **`spectral_audit.rb` is not required by the engine.** Dispatch `dilla spectral` through engine help, or stop counting it as engine support.
 824. **`knobs.rb` names `drum_kit.rb`.** That file is now `engine part: drum_kit`. Name the part.
 825. **Load-order comment vs practice.** `dilla.rb:231-235` says the order lives in `engine_sources.rb`. It does not; `:83-120` does. Put the order next to the requires, or generate it.
-826. **`FLYLO_` alias warn vs help.** Help still has `flylo_abstract`, `flylo_fm_shimmer` in `redo_nine.sh:39`. Present-tense: those are pocket/lead names, not the banned prefix.
 827. **`default_output_dir` vs `.gitignore`.** `.gitignore:22-24` still talks as if every renderer writes beside `dilla.rb`. Align with `OUTPUT_DIR`.
 828. **Pin `DILLA_SCRATCH_DIR` in `dilla_helper.rb`.** Scratch fallback is `Dir.tmpdir`; tests that assert `SCRATCH_DIR` under the tree will miss it.
 829. **UTF-8 at crate/knob readers.** 37 `File.read` sites in `lib/` inherit locale if a support file loads first. Add `encoding: "UTF-8"` at readers that parse titles.
@@ -6350,10 +6349,8 @@ Numbered 1–N across the four trees.
 842. **`vocab-check` in `STUDIO/dilla/README.md` Checks.** That README currently only names `rake test`.
 843. **`dilla.rb` header: tests and the gate depend on the CLI guard.** Stops the next split from dropping it.
 844. **`dilla_live.rb` is a second entry.** Either add `entry:` (guarded) or document it as parse-only like lora.
-845. **`playlist_learn_agent.sh` is bash.** `#!/usr/bin/env bash`. Law is zsh. `#!/bin/zsh` plus `set -euo pipefail`.
 846. **`librosa_analyze.py` is committed Python.** Ban is on committed scripts. Isolate as an optional tool with a Ruby wrapper that says “Python on PATH, not in this repo’s agent shell.” Paths point at `pub2` / `pub3`. **Unverified** whether `radio-bergen-librosa` is still dispatched.
 847. **`generate_tts.rb` assumes repo-root cwd.** Anchor to `File.expand_path("../../../MASTER/README.md", __dir__)`. Backticks for TTS belong behind Open3. Vendor path is `3.4.0` not `3.4.9`.
-848. **`redo_nine.sh` points at missing chops.** `samples/chopped/ubrukte_samples_0N/loop.wav`. Refuse with “no chopped rack” rather than render empty beds. Do not retune the rows.
 849. **`ENV_AND_RENDER.md` names `RAILS/shared/app/services/shared/dilla_processor.rb`.** **Unverified** that path still exists.
 850. **`data/modes.yml` never mentioned in help.** One line under SYNTHESIS.
 851. **Two files, two answers — checked 2026-09-12.** `album_tracks.yml` has a
@@ -6540,7 +6537,7 @@ Numbered 1–N across the four trees.
 1023. **Service workers** name caches after the wrong product (`brgen-` on MASTER) and cache status 0. One SW contract test across the four.
 1024. **`--help` missing** is the same defect on OPENBSD bin scripts, dilla help-as-dump, postpro ARGV forest, repligen banner, lora toolkit. Unix voice: one job, usage on `-h`, silence on success.
 1025. **Hardcoded `/Users/mac/...` and `/opt/homebrew`.** `sine_stream.rb`, `demo_full.rb`, `broadcast.sh`, `rack.rb`, `dig_crate.rb`. Worktree-safe `__dir__` / `command -v`. Do not touch `~/Music/dilla_sines`.
-1026. **Shebang families.** OPENBSD mixes `env zsh`, `bin/sh`, `bin/ksh`, `env sh`. STUDIO has bash (`playlist_learn_agent.sh`). A census test: every committed script’s shebang is one of `{zsh, ksh, sh, ruby}` and `[[` only appears under zsh/ksh.
+1026. **Shebang families.** OPENBSD mixes `env zsh`, `bin/sh`, `bin/ksh`, `env sh`. A census test: every committed script’s shebang is one of `{zsh, ksh, sh, ruby}` and `[[` only appears under zsh/ksh.
 1027. **Present-tense comments.** `dilla.rb` engine-part headers, `lib/engine/` wiring, `EventsController` “Wire into routes”, brgen layout `data-theme="dark"`, `NO_PUTS` exemption path, `FixLoop` architectures, `Io::Clean` changelog, `mask.js` claims, keep-warm OPTIONAL, core-reclaim litestream, CATALOGUE.md module counts. A comment states the present-tense reason.
 1028. **PATH_OWNERSHIP holes.** MASTER: cognition, pressure_engine, law, EXAMPLES, AEGIS, COGNITION, runtime, loop.gif. OPENBSD: data, test, gates, lib, dotfiles, quarantine, domain_watch, githooks. STUDIO has none. `rake lint` should fail on an undeclared top-level dir in MASTER and OPENBSD.
 1029. **Completions drift.** `_master` still completes `through`. Generate from `HELP_TOPICS` + `ALIASES`. Add `_operator`.
