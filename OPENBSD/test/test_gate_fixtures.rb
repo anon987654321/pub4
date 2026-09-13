@@ -88,3 +88,59 @@ class InstalledTargetsGateFixtureTest < Minitest::Test
     assert_empty GATE.orphans
   end
 end
+
+# OPERATOR.sh re-runs on a live box, so each destructive step has to be one a
+# second run survives. The check reads the script for four guarantees; these
+# hand it the script with one of them broken.
+class IdempotencyFixtureTest < Minitest::Test
+  OPENBSD = File.expand_path("..", __dir__)
+  CHECK = File.join(OPENBSD, "verify_openbsd_idempotency.rb")
+  BACKUP = "backup_directory /var/nsd/zones/master nsd-zones\n"
+  DELETE = "rm -rf /var/nsd/etc/*(/) /var/nsd/zones/master/*(/)\n" # scan: intentional — fixture text, never run
+  REST = <<~SH
+    cp -R "${src}/home" "/var/backups/home"
+    bin/rails db:prepare
+    rcctl restart ${svc} || rcctl start ${svc}
+  SH
+
+  def verdict(body)
+    Dir.mktmpdir("idempotency") do |dir|
+      path = File.join(dir, "OPERATOR.sh")
+      File.write(path, body)
+      out, status = Open3.capture2e(RbConfig.ruby, CHECK, path)
+      [status.success?, out]
+    end
+  end
+
+  def test_the_zones_deleted_with_no_backup_is_refused
+    ok, out = verdict(DELETE + REST)
+
+    refute ok, "a zone wipe with no backup passed"
+    assert_includes out, "nsd backup does not precede destructive delete"
+  end
+
+  def test_a_backup_taken_after_the_delete_is_refused
+    ok, = verdict(DELETE + BACKUP + REST)
+
+    refute ok, "a backup of zones already deleted passed"
+  end
+
+  def test_a_restart_with_no_start_fallback_is_refused
+    ok, out = verdict(BACKUP + DELETE + REST.sub(" || rcctl start ${svc}", ""))
+
+    refute ok
+    assert_includes out, "missing restart/start fallback"
+  end
+
+  def test_the_snippet_with_every_guarantee_passes
+    ok, out = verdict(BACKUP + DELETE + REST)
+
+    assert ok, out
+  end
+
+  def test_the_committed_operator_script_passes
+    out, status = Open3.capture2e(RbConfig.ruby, CHECK)
+
+    assert status.success?, out
+  end
+end
