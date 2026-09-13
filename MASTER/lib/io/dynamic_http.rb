@@ -21,6 +21,9 @@ module Master
       def call(name:, params: {})
         defn = Io::DynamicTools.lookup(name)
         return Result.err("dynamic_http: unknown tool #{name}", category: :validation) unless defn
+        if DynamicTools.elevated?(defn) && !Fiber[:master_elevated]
+          return Result.err("dynamic_http: #{name} waits for an elevated session", category: :policy)
+        end
 
         perm = @governor.permit?(NAME, TIER, "#{name} #{params}")
         return perm if perm.err?

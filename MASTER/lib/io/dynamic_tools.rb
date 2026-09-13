@@ -28,20 +28,11 @@ module Master
         []
       end
 
-      def registry_rows
-        load_definitions.map do |row|
-          {
-            "name" => "DynamicHttp",
-            # An HTTP endpoint reaches the open world, so a row that does not
-            # declare itself unelevated waits for elevation.
-            "elevated" => row["elevated"] != false,
-            "visitor" => row["visitor"] == true,
-            "default" => true,
-            "dynamic_name" => row["name"],
-            "description" => row["description"] || "HTTP tool #{row['name']}",
-          }
-        end
-      end
+      # Per row, at call time. Every row reaches a model through the one
+      # DynamicHttp tool, whose single registry entry cannot carry a different
+      # exposure per row. An HTTP endpoint reaches the open world, so a row that
+      # does not declare itself unelevated waits for elevation.
+      def elevated?(row) = row["elevated"] != false
 
       def lookup(name)
         load_definitions.find { |row| row["name"].to_s == name.to_s }

@@ -60,12 +60,6 @@ class ToolRegistryElevationTest < Minitest::Test
     Fiber[:master_elevated] = nil
   end
 
-  def test_a_dynamic_tool_that_declares_nothing_waits_for_elevation
-    Master::Io::DynamicTools.stub(:load_definitions, [{ "name" => "ping", "url" => "https://example.com" }]) do
-      assert_equal true, Master::Io::DynamicTools.registry_rows.first["elevated"]
-    end
-  end
-
   # Exposure is one boolean here and approval is the adapter's TIER, so the two
   # cannot disagree about a word: "safe" meant exposed in tools.yml and
   # unguarded to the governor, and WebFetch was both at once.

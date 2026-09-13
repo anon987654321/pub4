@@ -31,9 +31,25 @@ class DynamicHttpTest < Minitest::Test
   end
 
   def call(url, name: "probe", **extra)
-    with_tool({ "name" => name, "url" => url }.merge(extra)) do
+    with_tool({ "name" => name, "url" => url, "elevated" => false }.merge(extra)) do
       @http.call(name: name, params: {})
     end
+  end
+
+  # Each row carries its own exposure, so two rows never share one verdict.
+  def test_a_row_waits_for_elevation_unless_it_declares_otherwise
+    @governor.answer = Master::Result.err("denied", category: :validation)
+
+    waiting = with_tool({ "name" => "ping", "url" => "https://example.com/" }) { @http.call(name: "ping", params: {}) }
+    open = call("https://example.com/", name: "status")
+
+    assert_match(/waits for an elevated session/, waiting.message.to_s)
+    assert_match(/denied/, open.message.to_s, "an unelevated row reaches the governor")
+    Fiber[:master_elevated] = true
+    elevated = with_tool({ "name" => "ping", "url" => "https://example.com/" }) { @http.call(name: "ping", params: {}) }
+    assert_match(/denied/, elevated.message.to_s)
+  ensure
+    Fiber[:master_elevated] = nil
   end
 
   def test_an_unknown_tool_is_refused_before_anything_else
@@ -90,7 +106,7 @@ class DynamicHttpTest < Minitest::Test
   # The URL is a template interpolated with caller-supplied params, so the guard
   # has to run on the interpolated result rather than on the template.
   def test_a_param_cannot_smuggle_an_internal_host_through_the_template
-    with_tool({ "name" => "probe", "url" => "http://{host}/" }) do
+    with_tool({ "name" => "probe", "url" => "http://{host}/", "elevated" => false }) do
       result = @http.call(name: "probe", params: { host: "169.254.169.254" })
 
       refute result.ok?, "interpolation must be guarded, not just the template"
