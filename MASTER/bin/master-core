@@ -58,12 +58,32 @@ world = Master::Core::World.new(root:)
 memory = Master::Core::Memory.new
 model = options[:real] ? Master::Core::Model.new(**{ model_id: options[:model] }.compact) : NullModel.new(goal)
 
+refusals = []
+observer = lambda do |turn:, effect:, observation:|
+  refusals << observation.detail if effect.done? && !observation.ok?
+end
+
 result = Master::Core::Fold.new(
   model:,
   constitution:,
   world:,
   memory:,
-  max_turns: options.fetch(:max_turns)
+  max_turns: options.fetch(:max_turns),
+  observer:
 ).run(goal)
 
 puts "master-core: #{result.reason} turns=#{result.turns} summary=#{result.summary}"
+
+# The exit status is the verdict bin/dogfood reads, so it has to mean something.
+# A real model must complete. The scripted one must not: its exec effects carry
+# evidence labels that no test, scan or review produced, Proof scores them zero,
+# and the constitution has to refuse its done. A no-op that completed would mean
+# the evidence gate had opened, which is the failure worth a red smoke.
+if options[:real]
+  exit(result.reason == :complete ? 0 : 1)
+elsif result.reason == :complete || refusals.none? { |detail| detail.include?("evidence_for_done") }
+  warn "master-core: the no-op fold was not refused by evidence_for_done"
+  exit 1
+else
+  puts "master-core: done refused without evidence, as the constitution requires"
+end
