@@ -9,10 +9,8 @@ class NvdCve
 
   # NVD publishes a rate limit rather than leaving callers to guess at one:
   # five requests in a rolling thirty seconds anonymously, fifty with a key.
-  # The budget lives here, where the request is made. It used to live in
-  # SecurityAdvisoryRefreshJob as a six-second sleep between ports, which
-  # spent five minutes of the bulk queue enforcing a limit it could not see
-  # and protected no other caller.
+  # The budget lives here, where the request is made. A caller that paces itself
+  # enforces a limit it cannot see and protects no other caller.
   WINDOW_SECONDS = 30.0
   REQUESTS_PER_WINDOW = { keyed: 50, anonymous: 5 }.freeze
 

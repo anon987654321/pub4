@@ -11,10 +11,10 @@ class SecurityAdvisoryRefreshJob < ApplicationJob
 
   # No sleep between ports.
   #
-  # It was six seconds, and fifty ports meant the job held the bulk queue for
-  # five minutes on a box with one core and a gigabyte of memory. The sleep was
-  # standing in for rate limiting, and rate limiting belongs where the request
-  # is made: NvdCve owns the NVD budget, and concurrency belongs to the queue.
+  # Fifty ports at six seconds apart holds the bulk queue for five minutes on a
+  # box with one core and a gigabyte of memory. Rate limiting belongs where the
+  # request is made — NvdCve owns the NVD budget — and concurrency belongs to the
+  # queue, so this loop does neither.
   #
   # The wrap is bounded too. When the cursor ran past the last id the batch came
   # back empty and the job restarted from the first row, forever, so it never
