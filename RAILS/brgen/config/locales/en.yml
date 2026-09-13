@@ -1328,6 +1328,17 @@ en:
       job: Jobs
       housing: Housing
       gig: Gigs
+    kind_empty:
+      goods: Nothing for sale in %{city} yet
+      job: No jobs in %{city} yet
+      housing: No homes in %{city} yet
+      gig: No gigs in %{city} yet
+    kind_empty_body: The first listing here can be yours.
+    kind_empty_action:
+      goods: Sell something
+      job: Post a job
+      housing: List a home
+      gig: Post a gig
     employment_types:
       full_time: Full time
       part_time: Part time

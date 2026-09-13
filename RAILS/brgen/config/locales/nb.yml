@@ -1335,6 +1335,17 @@ nb:
       job: Jobb
       housing: Bolig
       gig: Oppdrag
+    kind_empty:
+      goods: Ingen ting til salgs i %{city} ennå
+      job: Ingen jobber i %{city} ennå
+      housing: Ingen boliger i %{city} ennå
+      gig: Ingen oppdrag i %{city} ennå
+    kind_empty_body: Den første annonsen her er din.
+    kind_empty_action:
+      goods: Selg noe
+      job: Legg ut en jobb
+      housing: Legg ut en bolig
+      gig: Legg ut et oppdrag
     employment_types:
       full_time: Heltid
       part_time: Deltid

@@ -130,6 +130,26 @@ class MarketplaceKindsTest < ActionDispatch::IntegrationTest
     assert_not_includes response.body, goods.title
   end
 
+  # Narrowing the jobs list must not drop the reader back on goods.
+  test "the jobs index keeps its kind on every link that rebuilds it" do
+    sign_in_as(@lister)
+    create_listing("job", :job_detail, { employer: "Kommunen" })
+
+    get marketplace.listings_path(kind: "job")
+    assert_select "a[href*='category_id=#{@category.id}'][href*='kind=job']"
+    assert_select "a[href*='from=person'][href*='kind=job']"
+    assert_select "input[type=hidden][name=kind][value=job]"
+  end
+
+  test "an empty kind names itself and offers the form for that kind" do
+    host! "markedsplass.brgen.no"
+
+    get marketplace.listings_path(kind: "gig")
+    assert_response :success
+    assert_select "a[href*='/new'][href*='kind=gig']", text: I18n.t("marketplace.kind_empty_action.gig", locale: :nb)
+    assert_not_includes response.body, I18n.t("actions.sell_something", locale: :nb)
+  end
+
 # two_factor_required? turns on the moment an account has an active listing, so
 # the second listing is the first request the guard ever refuses — and from
 # inside the engine the bare helper resolved against the engine's routes and
