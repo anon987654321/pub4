@@ -17,6 +17,11 @@ module Master
     scan_lines(src, /\b(binding\.pry|debugger|byebug|binding\.irb)\b/, message: "debug breakpoint")
   end
 
+  # A file that runs itself: `Tool.run(ARGV) if $PROGRAM_NAME == __FILE__`, or
+  # the same guard opening a block or closing a `return unless`.
+  PROGRAM_GUARD = /^[^#\n]*(?:\$PROGRAM_NAME|\$0|__FILE__)\s*==\s*(?:\$PROGRAM_NAME|\$0|__FILE__)\s*$/
+  PROGRAM_PATH = %r{/test/|/db/seeds(?:\.rb\z|/)|\.rake\z|/Rakefile\z}
+
   RuleDSL.rule :NO_PUTS,
     severity: :warning, tags: %i[CLEAN_CODE], applies_to: %i[ruby],
     fires: "  puts(\"ready\")\n",
@@ -38,6 +43,12 @@ module Master
     # progress -- which step is running and how it ended -- so a buffered return
     # would deliver the whole account after the run it was meant to narrate.
     next [] if path.to_s.match?(%r{/exe/|/spec/|/bin/|/cli/session|/operator/(?:gate_chain|check_runner)\.rb\z})
+    # A program's output is its interface, and the rule is about library code.
+    # Measured over the four trees: 750 of 941 findings sat in a program — a
+    # script with a shebang, a file that runs itself under a $PROGRAM_NAME
+    # guard, a rake task, a seed file or a test — where `puts "ok: synced"` is
+    # the line the operator reads and a logger would hide it.
+    next [] if src.start_with?("#!") || src.match?(PROGRAM_GUARD) || path.to_s.match?(PROGRAM_PATH)
     # Parenthesised or not: puts("x") prints exactly as puts "x" does.
     scan_lines(src, /^\s*(?:puts\s*$|(?:puts|pp?)(?:\(|[ \t]+["':@$A-Za-z0-9_\[({%]))/,
                message: "puts/p/pp — use event bus or logger")

@@ -449,6 +449,22 @@ end
     refute_empty findings(:NO_PUTS, %(  puts "hello"\n), path: "lib/ground/rules.rb")
   end
 
+  # A program prints for a living: its output is the interface the operator
+  # reads. Each shape a program takes, and the library file beside it that
+  # still fires — a guard written as prose in a comment names no program.
+  def test_no_puts_spares_a_program_and_still_reads_a_library
+    printed = %(  puts "ok: synced"\n)
+
+    assert_empty findings(:NO_PUTS, "#!/usr/bin/env ruby\n#{printed}", path: "tools/sync.rb")
+    assert_empty findings(:NO_PUTS, "#{printed}Sync.run if $PROGRAM_NAME == __FILE__\n", path: "tools/sync.rb")
+    assert_empty findings(:NO_PUTS, "#{printed}return unless __FILE__ == $0\n", path: "gates/sync.rb")
+    assert_empty findings(:NO_PUTS, printed, path: "RAILS/brgen/lib/tasks/sync.rake")
+    assert_empty findings(:NO_PUTS, printed, path: "RAILS/brgen/db/seeds.rb")
+    assert_empty findings(:NO_PUTS, printed, path: "test/test_sync.rb")
+    refute_empty findings(:NO_PUTS, printed, path: "lib/sync.rb")
+    refute_empty findings(:NO_PUTS, "#{printed}# run it with: Sync.run if $PROGRAM_NAME == __FILE__\n", path: "lib/sync.rb")
+  end
+
   # --- veto sql_injection -------------------------------------------------
   # Was `execute|query.*#\{`, which binds as `(execute)|(query.*#\{)` — so the
   # bare word `execute` anywhere on a line was an unconditional merge blocker.
