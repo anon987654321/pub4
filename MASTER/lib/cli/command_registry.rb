@@ -1,11 +1,15 @@
 # frozen_string_literal: true
 
 require_relative "command_registry/command"
-require_relative "command_registry/formatter"
 require_relative "command_registry/help"
-require_relative "command_registry/work_commands"
-require_relative "command_registry/system_commands"
-require "open3"
+require_relative "command_registry/review"
+require_relative "command_registry/scan"
+require_relative "command_registry/status"
+require_relative "command_registry/model"
+require_relative "command_registry/rules"
+require_relative "command_registry/host"
+require_relative "command_registry/workspace"
+require_relative "../review/review_crew"
 
 module Master
   module CLI
@@ -24,10 +28,12 @@ module Master
         }
       end
 
-      # Closed public surface. Scan/fix/critique stay as methods Pipeline::Pass
+      # Closed public surface: every verb here has a help topic, and every file
+      # under command_registry/ holds the dispatchers these verbs reach or the
+      # stages Pipeline::Pass calls. Scan and critique stay as methods the pass
       # calls; they are not slash verbs.
       def build(infra:, ai:, root:)
-        d = work_command_deps(ai:, root:, infra:)
+        d = command_deps(ai:, root:, infra:)
         undo = infra[:undo]
         {
           # Positional, and the order is load-bearing: Command#dependency_kwargs
@@ -49,68 +55,37 @@ module Master
         }.merge(control_commands(ai[:standing], ai[:soul]))
       end
 
+      def command_deps(ai:, root:, infra:)
+        {
+          root:,
+          scanner: ai[:scanner],
+          fix_loop: ai[:fix_loop],
+          deliberation: ai[:deliberation],
+          agent: ai[:agent],
+          review_crew: Review::ReviewCrew.new(agent: ai[:agent], event_bus: infra[:bus], root:,
+                                             code_index: ai[:code_index], reference_graph: ai[:reference_graph]),
+          git: ai.fetch(:git) { Io::GitOperations.new(File.expand_path("..", root)) },
+          swarm: ai[:swarm],
+          bus: infra[:bus],
+          config: infra[:config],
+          metrics: infra[:metrics],
+          trace: infra[:trace],
+        }
+      end
+
       def dispatch_clear(session, ctx: nil)
         session.clear!
         "context cleared"
-      end
-
-      def dispatch_save(session, ctx: nil)
-        session.save!
-        "session saved"
       end
 
       def dispatch_undo(undo, ctx: nil) = undo_line("reverted", undo.undo!)
 
       def undo_line(verb, result) = result.ok? ? "#{verb}: #{result.value!}" : result.message
 
-      def dispatch_reasoning(config, ctx: nil)
-        arg = arg_for(ctx)
-        Master::Review::Modes::SUPPORTED.include?(arg) ?
-          (config["reasoning_mode"] = arg; config.save!; "reasoning: #{arg}") :
-          "reasoning: #{config.reasoning_mode} (supported: #{Master::Review::Modes::SUPPORTED.join(", ")})"
-      end
-
-      def dispatch_persona(config, ctx: nil)
-        arg = arg_for(ctx)
-        return "persona: #{config.persona}" if arg.empty?
-
-        known = Master::Voice::Personality.persona_names.map(&:to_s)
-        unless known.include?(arg.downcase)
-          return "persona: '#{arg}' isn't a known persona (#{known.join(', ')}) -- unchanged, still #{config.persona}"
-        end
-
-        config["persona"] = arg.downcase
-        config.save!
-        "persona: #{arg.downcase}"
-      end
-
-      def grep_history(session, pattern)
-        needle = pattern.to_s.strip
-        return "usage: /grep <pattern>" if needle.empty?
-
-        rows = session.messages.select { |msg| msg[:content].to_s.match?(Regexp.new(Regexp.escape(needle), Regexp::IGNORECASE)) }
-        return "grep: no matches" if rows.empty?
-
-        rows.last(20).map { |msg| "[#{msg[:role]}] #{msg[:content].to_s.gsub(/\s+/, " ")[0, 160]}" }.join("\n")
-      end
-
-      def audit_changes(root)
-        out, status = Master::Io::Exec.capture2e("git", "-C", root, "diff", "--numstat", "HEAD")
-        return "audit: unavailable" unless status.success?
-        rows = out.lines.map(&:strip).reject(&:empty?)
-        return "audit: clean" if rows.empty?
-
-        rows.map { |line| Formatter.audit_numstat(line) }.join("\n")
-      rescue StandardError => e
-        "audit: #{e.message}"
-      end
-
-      # /orders and /soul. Built here since the surface closed and merged into
-      # it by nothing, so data/state.yml described standing orders running
-      # "via /orders" and data/soul.yml described amendment as
-      # `soul propose -> soul approve`, and neither verb existed. The amendment
-      # path the constitution names has to be reachable from the runtime the
-      # constitution governs.
+      # /orders and /soul. data/state.yml describes standing orders running
+      # "via /orders" and data/soul.yml describes amendment as
+      # `soul propose -> soul approve`; the amendment path the constitution
+      # names has to be reachable from the runtime the constitution governs.
       def control_commands(standing, soul)
         {
           "orders" => command(:dispatch_orders, standing),

@@ -54,14 +54,14 @@ puts "backlog: TODO.md — #{open_debt_count} open operator-debt item(s) (OPENBS
 puts
 
 puts "feature inventory: RAILS/apps.yml (horizon: apps.horizon.yml)"
-puts "quick status: bin/operator status · /orient deploy"
+puts "quick status: MASTER/bin/operator status · MASTER/bin/operator vps state"
 puts
 puts "golden checks (contributor profile):"
 puts "  cd MASTER && bin/check --profile=contributor"
 puts "  OPENBSD/bin/check --profile=contributor"
 puts "  OPENBSD/bin/check-rails --profile=contributor"
 puts "  ruby OPENBSD/integrity_gate.rb"
-puts "  cd MASTER && bundle exec ruby bin/cli /scan RAILS/<app>"
+puts "  cd MASTER && bundle exec ruby bin/cli \"/review --only scan ../RAILS/<app>\""
 puts
 
 ports = {

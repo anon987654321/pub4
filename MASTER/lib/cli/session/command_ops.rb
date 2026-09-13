@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "../command_registry/formatter"
-
 module Master
   module CLI
     class Session

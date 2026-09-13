@@ -1,10 +1,7 @@
 # frozen_string_literal: true
 
-require "open3"
+require "time"
 require_relative "../../trace/log"
-require_relative "formatter"
-require_relative "../resync_service"
-require_relative "../fix_preview_report"
 
 module Master
   module CLI
@@ -126,69 +123,6 @@ module Master
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "CommandRegistry.recent_events")
         []
-      end
-
-      def dispatch_fix(fix_loop:, root:, scanner: nil, ctx: nil, arg: nil)
-        arg = arg || arg_for(ctx)
-        sub, rest = arg.split(/\s+/, 2)
-        case sub
-        when "--dry-run" then preview_fix(fix_loop, rest, root, "fix dry-run")
-        when "loop" then "fix loop: use /watch on for background watching"
-        when "stop" then "fix stop: use /watch off for background watching"
-        when "preview" then preview_fix(fix_loop, rest, root, "fix preview")
-        else
-          run_fix_and_prescan(fix_loop, scanner, arg, root)
-        end
-      end
-
-      def preview_fix(fix_loop, rest, root, label)
-        result = fix_loop.preview(expand_or_root(rest.to_s.strip, root))
-        return "#{label}: #{result.message}" unless result.ok?
-
-        FixPreviewReport.new(result.value!).render
-      end
-
-      def run_fix_and_prescan(fix_loop, scanner, arg, root)
-        target = expand_or_root(arg, root)
-        prescan = anti_sprawl_prescan(scanner:, target:, root:)
-        result = fix_loop.run(target)
-        output = result.ok? ? result.value! : fix_failure_with_alternatives(result.message, target)
-        [prescan, output].reject(&:empty?).join("\n")
-      end
-
-      def anti_sprawl_prescan(scanner:, target:, root:)
-        paths = prescan_paths(target)
-        return "" if paths.empty?
-
-        pairs = Master::Review::Scan::CrossFileAnalysis.new(root:).call(paths)
-        findings = pairs.flat_map { |_path, result| Master::Result.wrap(result).value_or([]) }
-        return "Checking for side effects...\nprescan: clean. Moving on." if findings.empty?
-
-        lines = ["Checking for side effects...", "prescan: #{findings.size} cross-file risk(s) — Flat Hierarchy: merge/rename before local patch"]
-        findings.first(8).each { |finding| lines << "  #{finding[:rule]}: #{finding[:message]}" }
-        lines.join("\n")
-      rescue StandardError => e
-        scanner&.instance_variable_get(:@bus)&.publish("fix:prescan_error", path: target, error: e.message)
-        "prescan: unavailable (#{e.class})"
-      end
-
-      def prescan_paths(target)
-        path = target.to_s.empty? ? "." : target
-        return [path] if File.file?(path)
-        return [] unless File.directory?(path)
-
-        Dir.glob(File.join(path, Master::Review::Scan::Scanner::SCAN_GLOB))
-           .select { |entry| File.file?(entry) && !Master::Review::Scan::Scanner.skip_path?(entry, root: path) }
-      end
-
-      def fix_failure_with_alternatives(message, target)
-        [
-          "fix: #{message}",
-          "alternatives:",
-          "  1. /fix --dry-run #{target} to inspect intended changes without writing",
-          "  2. /review --dry-run #{target} for the full preview pass",
-          "  3. /review #{target} to scan, fix, and critique in one sequence",
-        ].join("\n")
       end
     end
   end

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "command_handlers"
+require_relative "repl_io"
 
 module Master
   module CLI

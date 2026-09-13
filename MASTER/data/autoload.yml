@@ -20,18 +20,21 @@ autoload:
     - cli/session/background_scan.rb
     - cli/session/bridge_run.rb
     - cli/session/command_ops.rb
-    - cli/session/command_handlers.rb
     - cli/session/repl_flow.rb
+    - cli/session/repl_io.rb
     - cli/session/result_display.rb
     - cli/session/signals.rb
     - cli/session/thinking_indicator.rb
-    # Master::CLI::CommandRegistry -- one file per command family. command.rb
-    # and formatter.rb define their own constants and are left autoloadable.
+    # Master::CLI::CommandRegistry -- one file per verb or pipeline stage.
+    # command.rb defines its own constant and is left autoloadable.
     - cli/command_registry/help.rb
-    - cli/command_registry/system_commands.rb
-    - cli/command_registry/work_commands.rb
-    - cli/command_registry/work_commands_extra.rb
-    - cli/command_registry/work_commands_status.rb
+    - cli/command_registry/host.rb
+    - cli/command_registry/model.rb
+    - cli/command_registry/review.rb
+    - cli/command_registry/rules.rb
+    - cli/command_registry/scan.rb
+    - cli/command_registry/status.rb
+    - cli/command_registry/workspace.rb
     # Master::Review::Scan::Rules -- each file is RuleDSL.rule calls into the
     # shared registry, not a constant of its own. The structural_rules
     # DIRECTORY beside structural_rules.rb does autoload.
@@ -71,8 +74,8 @@ autoload:
 
   # Loaded by hand because order matters or the entrypoint is a plain require.
   required_manually:
-    # require_relative "boot/boot" at the bottom of lib/master.rb, which must
-    # run after loader.setup.
+    # boot/paths, boot/data, boot/runtime and boot/master_boot are required by
+    # name after loader.setup in lib/master.rb, and the order is load-bearing.
     - boot
     # The directory; llm_dispatcher.rb itself autoloads as LLMDispatcher.
     - review/llm_dispatcher

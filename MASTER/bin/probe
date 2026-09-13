@@ -86,8 +86,8 @@ CHECKS = {
   # tree, and a probe that is red on every developer's box is a line people
   # learn to skip. bin/ci is what preflight actually contributed to `all`.
   "audit" => {
-    desc: "Staged-file constitutional audit",
-    cmd: [RUBY, File.join(MASTER_ROOT, "bin", "audit")],
+    desc: "Staged lines judged by the law (bin/operator lint)",
+    cmd: [RUBY, File.join(MASTER_ROOT, "bin", "operator"), "lint", "--staged", "--changed-lines"],
     cwd: REPO_ROOT,
     needs_ruby3: true,
     skip: lambda {
@@ -127,7 +127,7 @@ CHECKS = {
   "core" => {
     desc: "Core integration smoke (Effect → Constitution → World)",
     # -I lib because core_smoke requires "master"; nothing else puts it on the path.
-    cmd: [RUBY, "-I", File.join(MASTER_ROOT, "lib"), File.join(MASTER_ROOT, "spec", "core_smoke.rb")],
+    cmd: [RUBY, "-I", File.join(MASTER_ROOT, "lib"), File.join(MASTER_ROOT, "spec", "core_smoke_spec.rb")],
     cwd: MASTER_ROOT,
     needs_ruby3: true,
   },

@@ -8,14 +8,19 @@ module Master
     module CommandRegistry
       module_function
 
+      SNAPSHOT_FILE_BYTES = 8_000
+      SNAPSHOT_DIR_FILE_BYTES = 1_200
+      SNAPSHOT_DIR_TOTAL_BYTES = 32_000
+      SNAPSHOT_DIR_FILE_LIMIT = 40
       SNAPSHOT_EXTENSIONS = %w[.rb .erb .yml].freeze
       SNAPSHOT_SKIP_SEGMENTS = %w[
         .git .bundle node_modules vendor tmp log coverage storage cache dist build knowledge public var
       ].freeze
 
-      # Full singularity sequence (aesthetic → scan → fix → re-scan → critique).
-      # Invoked by natural-language inference, /workflow, /review, /triad — users need not memorize stages.
-      def dispatch_workflow(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, swarm: nil, **_legacy)
+      # /review — the whole pass (aesthetic → scan → fix → re-scan → critique),
+      # reached by the verb, by natural-language inference, and by the retired
+      # words TurnRouter rewrites into it.
+      def dispatch_review(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, swarm: nil, **_legacy)
         raw = arg_for(ctx).to_s.strip
         apply, critique, aesthetic, only, target = parse_pass_flags(raw)
         Master::CLI::Pipeline::Pass.new(
@@ -27,13 +32,6 @@ module Master
           review_crew:,
           swarm:,
         ).call(target:, apply:, critique:, aesthetic:, only:).render
-      end
-
-      def dispatch_review(scanner:, fix_loop:, deliberation:, root:, bus:, ctx: nil, review_crew: nil, swarm: nil, **_legacy)
-        dispatch_workflow(
-          scanner:, fix_loop:, deliberation:,
-          root:, bus:, ctx:, review_crew:, swarm:
-        )
       end
 
       # `--only scan`, `--only scan,fix`, or `--only=critique`. This is how the
@@ -89,6 +87,52 @@ module Master
         return result.message if result.err?
 
         yield result.value!
+      end
+
+      # The critique stage of /review. Pipeline::Pass calls it.
+      def dispatch_critique(deliberation:, root:, ctx: nil)
+        arg = arg_for(ctx)
+        return "usage: /critique <file|text>" if arg.empty?
+        path = expand_or_root(arg, root)
+        # respond_to?, not `&.agent` — the safe-navigation operator guards a nil
+        # deliberation but not a deliberation that has no agent (lean
+        # boot, or a test double), which raised NoMethodError from here.
+        has_agent = deliberation.respond_to?(:agent) && deliberation.agent
+        return general_council_critique(deliberation, path) if has_agent && File.exist?(path)
+
+        payload = File.exist?(path) ? snapshot_artifact(path) : arg
+        run_deliberation(deliberation:, payload:, context: "explicit /critique session") do |feedback|
+          TribunalFeedback.new(feedback).render_full
+        end
+      end
+
+      # Same persona-panel -> ideation -> cherry-pick pipeline the product
+      # critiques (ui/sound/dilla) use, generalized to whatever the scan stage
+      # just processed instead of a fixed file list.
+      def general_council_critique(deliberation, path)
+        files = File.directory?(path) ? snapshot_files(path) : [path]
+        return "critique: no reviewable files under #{path}" if files.empty?
+
+        critic = Master::Review::Council::Critique.new(
+          mode: :general, agent: deliberation.agent, event_bus: deliberation.bus, files:,
+        )
+        result = critic.run
+        return "critique: #{result.message}" unless result.ok?
+
+        general_critique_report(result.value!, path)
+      rescue StandardError => e
+        "critique failed: #{e.class}: #{e.message}"
+      end
+
+      def general_critique_report(data, path)
+        lines = ["critique #{path}: #{Array(data[:cherry_picks]).size} cherry-pick(s) (MASTER council)"]
+        Array(data[:feedback]).each do |f|
+          first = f[:feedback].to_s.lines.first.to_s.strip
+          lines << "  [#{f[:persona]}] #{first}"
+        end
+        Array(data[:cherry_picks]).each { |p| lines << "  cherry: #{p}" }
+        lines << "  harvested: #{data[:harvest]}" if data[:harvest]
+        lines.join("\n")
       end
 
       def snapshot_artifact(abs_path)
@@ -147,86 +191,6 @@ module Master
 
       def snapshot_file?(path)
         File.file?(path) && SNAPSHOT_EXTENSIONS.include?(File.extname(path))
-      end
-
-      def dispatch_critique(deliberation:, root:, ctx: nil)
-        arg = arg_for(ctx)
-        return "usage: /critique <file|text>" if arg.empty?
-        path = expand_or_root(arg, root)
-        # respond_to?, not `&.agent` — the safe-navigation operator guards a nil
-        # deliberation but not a deliberation that has no agent (lean
-        # boot, or a test double), which raised NoMethodError from here.
-        has_agent = deliberation.respond_to?(:agent) && deliberation.agent
-        return general_council_critique(deliberation, path) if has_agent && File.exist?(path)
-
-        payload = File.exist?(path) ? snapshot_artifact(path) : arg
-        run_deliberation(deliberation:, payload:, context: "explicit /critique session") do |feedback|
-          TribunalFeedback.new(feedback).render_full
-        end
-      end
-
-      # Same persona-panel -> ideation -> cherry-pick pipeline the product
-      # critiques (ui/sound/dilla) use, generalized to whatever /scan or
-      # /fix just processed instead of a fixed file list.
-      def general_council_critique(deliberation, path)
-        files = File.directory?(path) ? snapshot_files(path) : [path]
-        return "critique: no reviewable files under #{path}" if files.empty?
-
-        critic = Master::Review::Council::Critique.new(
-          mode: :general, agent: deliberation.agent, event_bus: deliberation.bus, files:,
-        )
-        result = critic.run
-        return "critique: #{result.message}" unless result.ok?
-
-        general_critique_report(result.value!, path)
-      rescue StandardError => e
-        "critique failed: #{e.class}: #{e.message}"
-      end
-
-      def general_critique_report(data, path)
-        lines = ["critique #{path}: #{Array(data[:cherry_picks]).size} cherry-pick(s) (MASTER council)"]
-        Array(data[:feedback]).each do |f|
-          first = f[:feedback].to_s.lines.first.to_s.strip
-          lines << "  [#{f[:persona]}] #{first}"
-        end
-        Array(data[:cherry_picks]).each { |p| lines << "  cherry: #{p}" }
-        lines << "  harvested: #{data[:harvest]}" if data[:harvest]
-        lines.join("\n")
-      end
-
-      def dispatch_model(agent:, config:, metrics:, root:, ctx: nil, arg: nil)
-        arg = arg || arg_for(ctx)
-        return list_models(root:, metrics:, agent:) if arg == "list"
-        return "model: #{agent.model} (use /model list for available models)" if arg.empty?
-        agent.model = arg; config.save!; "model: #{arg}"
-      end
-
-      def list_models(root:, metrics:, agent:)
-        yml_path = File.join(root, "data", "models.yml")
-        return "model: #{agent.model}" unless File.exist?(yml_path)
-        data = Master.load_yaml(yml_path)
-        tiers = data["models"] || {}
-        current = agent.model.to_s
-        model_lines = tiers.flat_map do |tier, ms|
-          ms.to_a.map do |mod|
-            marker = mod["id"].to_s == current ? "→ " : "  "
-            "#{marker} [#{tier}] #{mod["id"]}"
-          end
-        end
-        quality_lines = Array(metrics&.model_quality&.map do |mod, stat|
-          "  #{mod}: #{stat[:calls]} calls, fail_rate=#{stat[:fail_rate]}"
-        end)
-        sections = ["available models:"] + model_lines
-        sections += ["", "quality (this session):"] + quality_lines unless quality_lines.empty?
-        sections.join("\n")
-      end
-
-      def dispatch_why(agent:, root:, ctx: nil)
-        rule = arg_for(ctx)
-        return "usage: /why <law|scan_rule|anti_pattern|style.key>" if rule.empty?
-        local = Trace::WhyExplainer.new(root:).explain(rule)
-        return local if local
-        agent.ask_once(Voice::Personality.why_prompt(rule))
       end
     end
   end

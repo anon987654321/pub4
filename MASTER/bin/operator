@@ -15,7 +15,7 @@ require "operator/status_report"
 
 def usage
   <<~HELP
-    pub4 — repo-wide operator surface
+    operator — repo-wide operator surface
 
     Usage:
       bin/operator gate [--scan-only] [--only=a,b] [--tree=T] [--list]  every gate in the repo, fixing as it goes
@@ -36,6 +36,7 @@ def usage
       bin/operator hooks                  install the shared-tree commit guard
       bin/operator readers <path>         who reaches this file, across all four trees
       bin/operator pushed? <path>...      is this content on origin/main, or only here
+      bin/operator snapshot [...]         regenerate the snapshot packs (MASTER/tools/snapshot.rb)
 
     Profiles (passed through to check scripts):
       OPENBSD/bin/check --profile=contributor
@@ -180,12 +181,18 @@ when "land"
   abort("usage: bin/operator land -m <message> <path>...  (paths are required; nothing is swept)") if paths.empty?
   abort("usage: bin/operator land needs -m <message> or -F <file>") unless message || message_file
 
+  # A worktree carries .git as a file. In the shared checkout the rebase below
+  # would carry other sessions' local commits onto origin/main with this one.
+  unless File.file?(File.join(ROOT, ".git"))
+    abort("land: refused outside a worktree — `bin/operator worktree <name>` first; the shared checkout holds other sessions' commits")
+  end
+
   def run!(*cmd, chdir: ROOT)
     out, status = Open3.capture2e(*cmd, chdir: chdir)
     [out.strip, status.success?]
   end
 
-  measure_out, measure_ok = run!(File.join(__dir__, "pub4"), "measure")
+  measure_out, measure_ok = run!(File.join(__dir__, "operator"), "measure")
   unless measure_ok
     warn measure_out
     abort("land: a ratchet is off before you started — fix that first, or it lands with your change")
@@ -203,7 +210,7 @@ when "land"
 
   # The same measurement again. A rebase brings other people's commits under
   # yours, and theirs can put a ceiling over the edge that yours did not.
-  after_out, after_ok = run!(File.join(__dir__, "pub4"), "measure")
+  after_out, after_ok = run!(File.join(__dir__, "operator"), "measure")
   unless after_ok
     warn after_out
     abort("land: green before the rebase, off after it — origin/main moved under you")
@@ -476,6 +483,9 @@ when "test"
     abort("pub4 test: no suite maps to #{paths.first(3).join(', ')}")
   end
 
+  # Say what was chosen before running it, so a surprising suite is visible
+  # up front rather than after a long run.
+  puts "pub4 test: #{paths.size} path(s) -> #{jobs.map(&:first).join(', ')}"
   failed = jobs.reject do |name, cmd, dir, env|
     puts "== #{name}"
     system(env, *cmd, chdir: dir)

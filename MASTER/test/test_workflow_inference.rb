@@ -77,7 +77,7 @@ class WorkflowInferenceTest < Minitest::Test
     args << (critique ? "--critique" : "--no-critique")
 
     Master::CLI::CommandRegistry.stub(:dispatch_scan, ->(*, **) { "clean -- no violations" }) do
-      Master::CLI::CommandRegistry.dispatch_workflow(
+      Master::CLI::CommandRegistry.dispatch_review(
         scanner: FakeScanner.new,
         fix_loop:,
         deliberation:,

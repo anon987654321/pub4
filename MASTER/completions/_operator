@@ -1,0 +1,31 @@
+#compdef operator
+
+# bin/operator's subcommands, one line each. test/test_completions.rb fails when
+# this list and the `when` branches in bin/operator differ.
+_operator() {
+  local -a commands
+  commands=(
+    'gate:every gate in the repo, fixing as it goes'
+    'status:what is dirty, per tree'
+    'measure:every ratchet, current against ceiling'
+    'lint:judge files by the law, no model'
+    'test:smallest complete proof for the paths'
+    'land:commit, rebase, re-check, push from a worktree'
+    'snapshot:regenerate the snapshot packs'
+    'post-pull:the checklist after a pull'
+    'worktree:own checkout, or finish one'
+    'rule:one rule, its exemption, and what it finds'
+    'readers:who reaches this file, across all four trees'
+    'hooks:install the shared-tree commit guard'
+    'vps:state, deploy or logs on the box'
+    'pushed?:is this content on origin/main'
+  )
+
+  _arguments -C '1: :->command' '*:: :->args'
+
+  case $state in
+    command) _describe 'operator commands' commands ;;
+  esac
+}
+
+_operator "$@"

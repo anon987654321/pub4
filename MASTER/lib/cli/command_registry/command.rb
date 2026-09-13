@@ -11,6 +11,10 @@ module Master
         # + `git commit` with an LLM-written message and zero confirmation.
         CONFIRM_FLAG = "--confirm"
 
+        # The dispatcher a built verb reaches, so a test can prove it exists
+        # without calling it.
+        attr_reader :method_name
+
         def initialize(receiver = nil, method_name = nil, *args, review_gate: false, **kwargs, &handler)
           @receiver = receiver
           @method_name = method_name

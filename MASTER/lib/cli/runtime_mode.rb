@@ -24,11 +24,13 @@ module Master
         owner = slot[:owner].to_s.empty? ? "none" : slot[:owner]
         posture = begin
           Master::Ground::ModePosture.current[:name]
-        rescue StandardError
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "RuntimeMode.loop_line posture")
           "balanced"
         end
         "#{autofix}, loop #{slot[:selected] || "none"}, owner #{owner}, posture #{posture}"
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "RuntimeMode.loop_line")
         autofix = ENV["MASTER_AUTOFIX"] == "1" ? "autofix" : "no-autofix"
         "#{autofix}, loop none"
       end

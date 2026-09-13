@@ -2,62 +2,48 @@
 
 require_relative "test_helper"
 
-# Every command the registry builds must be able to run.
+# Every command the registry builds must be able to run, and the built surface,
+# the help pages and the module's tables must describe one set of verbs.
 #
 # Command#call ends in `@receiver.public_send(@method_name, ...)`, so a symbol
 # that names no public method fails when a person types the verb rather than
-# when the registry is built. Nothing checked that, and the gap is not
-# theoretical: on 2026-09-11 five live dispatchers — dispatch_commit,
-# dispatch_pair, dispatch_doctor, dispatch_rules and dispatch_tree — were nearly
-# deleted with the dead slash tables they share a file with, because a grep for
-# the table's name says nothing about a method dispatched as `command(:dispatch_doctor, root)`.
-# The suite was green throughout; only booting the runtime would have caught it.
-#
-# Static rather than built: building the registry wants the whole dependency
-# graph, and the question here is narrower than a boot.
+# when the registry is built. The command tables that `build` never merged are
+# deleted; the third test keeps a new one from arriving unmerged.
 class TestCommandRegistryDispatch < Minitest::Test
-  REGISTRY = File.expand_path("../lib/cli/command_registry.rb", __dir__)
+  Registry = Master::CLI::CommandRegistry
 
-  def dispatched_symbols
-    File.read(REGISTRY).scan(/command\(:(\w+)/).flatten.uniq
+  def built
+    @built ||= Registry.build(
+      infra: { session: Master::Trace::Session.new, config: {}, root: Master::ROOT, bus: nil },
+      ai: { agent: nil },
+      root: Master::ROOT,
+    )
   end
 
-  def test_every_dispatched_symbol_names_a_public_method
-    unresolvable = dispatched_symbols.reject do |name|
-      Master::CLI::CommandRegistry.respond_to?(name)
+  def test_every_built_command_names_a_public_method
+    unresolvable = built.filter_map do |verb, command|
+      name = command.method_name
+      "/#{verb} -> #{name}" unless name.nil? || Registry.respond_to?(name)
     end
 
-    assert_empty unresolvable,
-                 "the registry dispatches these by symbol and nothing answers them: #{unresolvable.join(', ')}"
+    assert_operator built.size, :>=, 10, "a registry this small means build broke, not that the surface shrank"
+    assert_empty unresolvable, "these verbs dispatch to a method nothing answers: #{unresolvable.join(', ')}"
   end
 
-  # A guard that finds nothing because it is looking in the wrong place is the
-  # failure this file exists to prevent, so the population is asserted too.
-  def test_the_guard_reads_a_real_population
-    assert_operator dispatched_symbols.size, :>=, 10,
-                    "build dispatches at least the ten verbs help advertises; a smaller number means the scan broke"
+  # A verb with no page is a command nobody can find, and a page with no verb
+  # sends the reader to type something the router cannot resolve.
+  def test_help_pages_and_the_built_surface_are_one_set
+    paged = Registry::HELP_TOPICS.keys + Registry::ALIASES.keys
+
+    assert_equal built.keys.sort, paged.sort
   end
 
-  # A table is a method returning verb => Command, and it is reachable only if
-  # `build` merges it. Seven were not — agent, core, domain, media, memory,
-  # reach and system — and the suite passed for weeks, because their tests
-  # called the tables directly. They and their dispatchers are gone; the live
-  # dispatchers that shared their files stayed. This fails the moment a table
-  # is defined that command_registry.rb does not call.
-  REGISTRY_DIR = File.expand_path("../lib/cli/command_registry", __dir__)
+  # A `*_commands` method is a table of verbs. Only control_commands exists,
+  # and build merges it; slash_commands is the help list, not a table.
+  def test_no_command_table_is_left_unmerged
+    tables = Registry.singleton_methods.map(&:to_s).grep(/_commands\z/) - %w[slash_commands]
 
-  def test_every_table_is_merged_by_the_registry
-    sources = [REGISTRY, *Dir[File.join(REGISTRY_DIR, "**", "*.rb")]]
-    # A def whose body builds Commands; slash_commands returns names, not a table.
-    tables = sources.flat_map do |path|
-      File.read(path).split(/^(?=\s*def )/).filter_map do |body|
-        body[/\A\s*def (\w+_commands)\b/, 1] if body.include?("command(:")
-      end
-    end.uniq
-    registry = File.read(REGISTRY).lines.reject { |line| line =~ /^\s*def / }.join
-
-    assert_includes tables, "control_commands", "the scan must find the one table build merges"
-    unmerged = tables.reject { |name| registry.match?(/\b#{name}\(/) }
-    assert_empty unmerged, "defined and merged by nothing, so no person can type them: #{unmerged.join(", ")}"
+    assert_equal %w[control_commands], tables.sort,
+                 "a new command table has to be merged by build, or it is a verb with no route"
   end
 end

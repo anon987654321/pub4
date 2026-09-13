@@ -179,7 +179,8 @@ module Master
           value = [data["principle_groups"] || {}, data["scan_profiles"] || {}]
           @workflow_profiles_cache[path] = { mtime:, value: }
           value
-        rescue StandardError
+        rescue StandardError => e
+          Master::Ground::Swallow.log(e, context: "Scan::Request.workflow_profiles")
           EMPTY_WORKFLOW_PROFILES
         end
 

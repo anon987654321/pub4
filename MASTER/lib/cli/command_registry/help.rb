@@ -6,27 +6,24 @@ module Master
       module_function
 
       # One topic per registered command, and the registry is the whole list:
-      # `build` returns clear, commit, doctor, help, model, orders, pair,
-      # rollback, soul, status, through, undo and why, and nothing else reaches
-      # Stages::Route. A topic for anything else would advertise a command the
-      # router cannot resolve.
+      # `build` returns clear, commit, doctor, help, model, orders, pair, review,
+      # rollback, rules, soul, status, undo and why, and nothing else reaches
+      # Stages::Route. test_command_registry_dispatch holds the two together, so a
+      # verb cannot be built without a page or paged without being built.
       HELP_TOPICS = {
         "review" => {
-          summary: "the whole pass, read-only: scan, critique, principle map",
+          summary: "the whole pass, read-only unless --apply: scan, critique, principle map",
           detail: [
-            "/review [path] — every stage: aesthetic scan, deep scan, fix, re-scan,",
-            "critique, principle map. Or just say the path.",
+            "/review [path] — every stage: scan, critique, principle map. Or just say the path.",
             "",
-            "--only <stage> runs one part. The stages are scan, critique and map;",
-            "`fix` is a spelling of scan and `council` of critique, because the scan",
-            "stage fixes what it finds on the spot rather than leaving it to be",
-            "relocated later.",
+            "--only <stage> runs one part: --only scan, --only critique or --only map.",
+            "`fix` is a spelling of scan and `council` of critique.",
             "",
             "/scan, /fix, /critique and /council are those stages by name —",
-            "/scan is /review --only scan. There is one verb underneath.",
+            "/scan is /review --only scan, and /fix is /review --only scan --apply.",
             "",
-            "Mechanical autofix writes on each file as it is scanned;",
-            "--dry-run / --no-autofix preview without writing.",
+            "Nothing is written unless --apply is given; --dry-run and --no-autofix",
+            "hold it back even then.",
           ],
         },
         "status" => {
@@ -38,10 +35,10 @@ module Master
           detail: ["/undo — /rollback is the same."],
         },
         "commit" => {
-          summary: "record the current diff",
+          summary: "commit the named paths",
           detail: [
-            "/commit — git add -u and git commit. No confirmation flag.",
-            "Path-scope from a worktree. Never run this on a shared checkout.",
+            "/commit <path>... --confirm — stage and commit the named paths and nothing else,",
+            "with a model-written message. Paths are relative to MASTER/.",
           ],
         },
         "model" => {
@@ -74,6 +71,11 @@ module Master
           detail: ["/soul — the summary. /soul version, /soul diff.",
                    "/soul propose <rationale> then /soul approve or /soul reject;",
                    "/soul rollback undoes the last amendment. Absolute sections do not move."],
+        },
+        "rules" => {
+          summary: "the declared rules, one line each",
+          detail: ["/rules [filter] — id, tier, severity and kind from data/rules.yml.",
+                   "bin/operator rule <ID> prints one in full."],
         },
         "why" => {
           summary: "what a rule says, and where it comes from",

@@ -9,41 +9,46 @@ before durable writes. The Rails face in `web/` mirrors runtime state at
 contract. Law and config live in YAML under `data/`. Prose stubs:
 `data/SOUL.md`, `data/IDENTITY.md`, generated `data/CANON.md`. Work is a
 sentence. The slash set is `/review` `/status` `/undo` `/commit` `/model`
-`/pair` `/doctor` `/help` `/clear`. `/scan`, `/fix`, `/critique` and `/council`
-are not a second set: each is `/review --only <stage>`.
+`/pair` `/doctor` `/rules` `/why` `/orders` `/soul` `/help` `/clear`, with
+`/rollback` as `/undo` and `/exit` or `/quit` to leave. `/scan`, `/fix`,
+`/critique` and `/council` are not a second set: each is `/review --only
+<stage>`. The router still accepts retired words a model may answer with —
+`through`, `workflow`, `triad`, `sweep`, `self` — and reads every one as
+`/review`; only the four stage words are advertised.
 
 ## Safe First Commands
 
-- `bin/check` — default gate. Runs the **operator** profile (`test`, `spec`,
-  `security_sweep`, `test:core`, `lint:data_singularity`), not the contributor
-  one; `--profile=contributor` is the same list minus `test:core`.
-- `bin/check --profile=agent` — `selftest` + `lint:data_singularity` only (may
-  fail on known debt).
+- `bin/check` — default gate. Runs the **operator** profile, not the contributor
+  one; `--profile=contributor` is the same list minus `test:core`. The step
+  lists are `PROFILES` in `bin/check`, and that table is the only copy.
+- `bin/check --profile=agent` — `selftest`, the data and dedup lints,
+  `lint:word_boundary` and `studio`; no unit suite.
 - `bin/check --profile=web` — face/assets; set `MASTER_WEB_LIVE=1` for live web
-  checks.
+  checks. It is the only path to `test_web_ui.rb`, `test_web_http.rb` and
+  `test_browser.rb`, which `rake test` excludes.
+- Opt-in tests, off in every default run: `rake test:cli_e2e` boots `bin/cli`
+  as a subprocess (`MASTER_CLI_E2E=1`), and `SUITE_AUDIT=1` runs
+  `test_suite_actually_runs.rb`, one process per test file.
 - `bin/check --profile=full` — operator-grade probe path.
 - `bin/check --format=brief` — structured pass/fail with debt hints (pair with
   any profile).
 - Work: say the path. `/review [path]` is the one explicit pass, and its
   stages are `--only scan`, `--only critique` and `--only map`. `/scan`, `/fix`,
   `/critique` and `/council` are those stages by name — `/scan` is `/review
-  --only scan`. **The scan stage fixes what it finds, on the spot**, so it
-  writes unless `--dry-run` or `--no-autofix` holds it back.
+  --only scan`. Nothing is written unless `--apply` is given, which is what
+  `/fix` adds; `--dry-run` and `--no-autofix` hold it back even then.
 
 ## Runtime Map
 
-```text
-bin/cli → Master.bootstrap_container
-       → lib/cli (pipeline, commands, web adapters)
-       → lib/review (scanners, council, routing, review)
-       → lib/fix (fix/watch/self-check)
-       → lib/io (tools, external actions)
-       → lib/trace (evidence, session, telemetry)
-       → lib/ground (constitution, memory, policy)
-       → lib/voice (persona, TTS, SOUL evolution)
-       → web/ (Rails chat face)
-lib/core.rb + lib/core/ — the constitutional fold spine (Effect → Constitution → World → Memory)
-```
+The repo-root `TREE.md` is the map of every directory, `lib/` included. The
+path a turn takes: `bin/cli` builds the container with
+`Master.bootstrap_container`, `lib/cli` routes the turn, `lib/review` scans and
+deliberates, `lib/io` acts, `lib/fix` repairs, and `lib/trace` records. Beside
+that path sit `lib/core` (the fold spine: Effect, Constitution, World, Memory),
+`lib/ground` (configuration and policy), `lib/voice` (persona and speech),
+`lib/cognition` (perception and affect, argued in `COGNITION.md`),
+`lib/operator` (the libraries behind `bin/operator` and `bin/check`), `law/`
+(one domain file per body of law) and `web/` (the Rails face).
 
 High-risk boundaries: `data/soul.yml`, `data/rules.yml`, `lib/master.rb`,
 `lib/core.rb`, `web/app/views/chat/index.html.erb`, `web/public/face*`,
@@ -71,8 +76,7 @@ command and first failure class; document intentional exceptions.
 
 **Do not optimize away:** the fold spine's independence from the rest of `lib/`
 — `lib/core*` requires nothing outside its own namespace, held by
-`test/test_core_no_lib_backedges.rb`; deferred WebGL until primer tap;
-constitution self-scan debt during unrelated UI work.
+`test/test_core_no_lib_backedges.rb`; deferred WebGL until primer tap.
 
 ## Do Not Touch (unless the task requires it)
 
@@ -139,10 +143,9 @@ folded: `council.yml` (8+ consumers across the whole deliberation subsystem,
 protected by its own scanner rule), `state.yml` (backs
 standing-orders/autocommit via `DATA_ALIASES`), `topologies.yml`/`tts.yml` (feed
 the live web boot payload and TTS), `tools.dynamic.yml` (two-tier
-repo+user-override merge), `openbsd.yml` (`Trace::SessionCapture` writes it,
-so folding it would let a runtime capture rewrite the shared source-of-truth
-file). Folding any of these needs a real design decision, not a
-mechanical move.
+repo+user-override merge) and `openbsd.yml` (the validator table
+`Ground::OpenbsdConfig` reads). Folding any of these needs a real design
+decision, not a mechanical move.
 
 **Tier 1 — The constitution, the law, and the values beside it (4 files, do not
 collapse without a migration):**
@@ -166,6 +169,12 @@ disagree with nothing to notice. Split, `typography` carried two — `65ch`
 against an ideal of `66ch` — under a `SelfTest` exemption that permitted the
 duplication by name, and Nielsen's heuristics carried two sets, ten feeding a
 prompt and twelve feeding nothing.
+
+A rule has three homes and no fourth. `rules.yml` declares it; `law/*.rb`
+defines domain law with `Law.define`, each carrying the example it must flag and
+the one it must not; and `lib/review/scan/rules/*.rb` builds the scanner
+registry, by `RuleDSL.rule` or a `Rule` subclass that calls `declare`. A rule
+defined anywhere else reaches no gate.
 
 **Tier 2 — Registries (edit when adding providers, models, tools):**
 

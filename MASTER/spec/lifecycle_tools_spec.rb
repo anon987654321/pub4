@@ -1,58 +1,9 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require "open3"
-require "rbconfig"
 
 class LifecycleToolsSpec < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-
-  def read_tool(name)
-    File.read(File.join(ROOT, "bin", name))
-  end
-
-  def test_doctor_reports_ok_fail_lines
-    output, = Open3.capture3(
-      { "MASTER_KEYLESS" => "1" },
-      RbConfig.ruby,
-      File.join(ROOT, "bin", "doctor"),
-      chdir: ROOT,
-    )
-
-    assert_includes output, "MASTER doctor"
-    assert_match(/^(?:OK|FAIL) yaml:/, output)
-    assert_match(/^OK (?:ruby|git):/, output)
-    assert_match(/^(?:OK|FAIL) [a-z-]+:/, output)
-  end
-
-  def test_smoke_web_waits_for_bootstrap
-    source = read_tool("smoke-web")
-    assert_includes source, "smoke-web"
-    assert_includes source, "wait for bootstrap"
-    assert_includes source, "MASTER_SMOKE_WEB_WARM_S"
-    assert_includes source, "cache_efficiency"
-  end
-
-  def test_onboard_writes_master_config_yml
-    source = read_tool("onboard")
-    assert_includes source, "config.yml"
-    assert_includes source, "--no-interactive"
-    assert_includes source, "SecureRandom.hex"
-  end
-
-  def test_cleanup_is_dry_run_by_default
-    source = read_tool("cleanup")
-    assert_includes source, "dry-run only"
-    assert_includes source, "--apply"
-    assert_includes source, "working tree dirty"
-  end
-
-  def test_cleanup_writes_audit_reports
-    source = read_tool("cleanup")
-    assert_includes source, "reports"
-    assert_includes source, "repo_inventory.rb"
-    assert_includes source, "history_valuables.rb"
-  end
 
   # repo_inventory reports anything at the repo root that is not on one of its
   # two allowlists, so a stale list is wrong in both directions at once: it

@@ -20,7 +20,8 @@ module Master
         risk = :high if repo_wide?(goal)
         risk = bump_risk(risk, route[:intent])
         { risk:, intent: route[:intent] }
-      rescue StandardError
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "FoldRisk.assess")
         { risk: :medium, intent: :unknown }
       end
 

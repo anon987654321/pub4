@@ -1331,3 +1331,30 @@ else, so a search over it is a memory search. That it is not
 tables. The first scores event salience; the second renders the map/zoom/act
 protocol from `data/attention_context.yml` into the prompt. Only the first
 carries weights.
+
+## The Slash Surface Is What Build Returns (2026-09-13)
+
+Seven command tables under `lib/cli/command_registry/` were merged by no
+builder, so `/tools`, `/dilla`, `/btw`, `/memory`, `/domain`, `/music`,
+`/fold`, `/tree` and a second `/commit` had dispatchers and no route; so did
+`/mode`, `/graph`, `/laws`, `/fix`, `/persona`, `/reasoning`, `/save`, `/grep`
+and `/audit` inside the tables that were merged. They are deleted, not wired.
+The surface closed on purpose: work is a sentence, TurnRouter reaches the Fold
+and MediaIntent reaches STUDIO from plain language, and every verb added is one
+more thing a reader must learn before knowing which of them writes. What is
+left is one file per built verb or pipeline stage, and
+`test_command_registry_dispatch.rb` fails when a verb has no help page or a
+`*_commands` table appears that `build` does not merge.
+
+`/commit` stays and takes paths. It ran `git add -u`, which on a checkout
+several sessions share commits their unfinished work under this session's
+message; it now stages and commits only the named paths and still waits for
+`--confirm`.
+
+`bin/smoke` and `bin/tts-e2e` are not folded into `bin/check`. Both talk to a
+running face over HTTP, and a `bin/check` profile that needs a live server is
+red on every machine without one. `bin/audit` is gone: it read `rules.yml` as
+the hash it stopped being, so its kernel set was always empty, and
+`bin/operator lint --staged --changed-lines` answers the same question. The
+same pass found `bin/master` already execs `bin/cli`, so there is one REPL with
+two doors rather than two REPLs.

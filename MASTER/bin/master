@@ -43,15 +43,15 @@ if ARGV.first == "--help" || ARGV.first == "-h"
       bin/master                        interactive session
       bin/master "<instruction>"        run one instruction, then interactive
       bin/master --fold "<goal>"        route one coding goal through the core Fold
-      bin/master --fast                 status/orient/tools/help only (1GB hosts)
+      bin/master --fast                 no boot scan, TTS or web; one command, then exit (1GB hosts)
       echo '/status' | bin/master       pipe mode
 
-    Slash commands (/status, /orient, /scan, /fix, /review, …) work as they do
+    Slash commands (/review, /status, /commit, /help, …) work as they do
     in MASTER/bin/cli — this is the same runtime, booted from MASTER/ so that
     data/soul.yml and the sibling RAILS, OPENBSD and STUDIO trees all resolve.
 
     Repo operator surface (unchanged): bin/operator status | vps | post-pull
-    Gate chain over the whole tree:    cd MASTER && ruby bin/gate
+    Gate chain over the whole tree:    bin/operator gate
   HELP
   exit 0
 end

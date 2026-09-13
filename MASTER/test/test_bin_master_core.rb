@@ -22,8 +22,7 @@ class TestBinMasterCore < Minitest::Test
     out, status = run_core
 
     assert status.success?, out
-    assert_includes out, "master-core: max_turns turns=6"
-    assert_includes out, "done refused without evidence"
+    assert_includes out, "held — done refused without passing evidence"
   end
 
   def test_a_no_op_that_completes_fails_the_smoke

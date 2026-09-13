@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require_relative "../command_registry/formatter"
-
 module Master
   module CLI
+    # The REPL's terminal: help, line reading, completion, history, exit,
+    # multiline input and the first-boot screens.
     class Session
       private
 

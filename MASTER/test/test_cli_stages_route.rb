@@ -47,6 +47,11 @@ class TestCliStagesRoute < Minitest::Test
     assert_equal 1, distance.call("review", "reviews")
   end
 
+  def test_only_the_listed_exit_words_end_the_session
+    %w[exit quit].each { |word| assert_equal :shutdown, route.call(command(word)).category }
+    %w[q bye].each { |word| refute_equal :shutdown, route.call(command(word)).category }
+  end
+
   def test_llm_intent_routes_to_the_agent
     result = route.call(Ctx.new(intent: :llm, command: nil))
 

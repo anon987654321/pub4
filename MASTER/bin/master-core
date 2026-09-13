@@ -5,12 +5,14 @@ require "optparse"
 require "rbconfig"
 
 # The fold spine only. bin/master boots the full runtime (soul, scan, voice).
-# This drives lib/core.rb with a scripted no-op model unless --real.
+# This drives lib/core.rb with a scripted model unless --real.
 #
-# Was `unshift "../core"` + `require "master"`, which resolved to core/master.rb
-# purely by load-path order — two files named master.rb, one process, and the
-# winner decided by whichever directory came first. The fold spine is lib/core.rb
-# since 2026-08-12, so this is now the ordinary fold entrypoint.
+# The scripted run is a check of the constitution, not a completed goal. It
+# execs three commands that label themselves as evidence without being able to
+# produce any, then declares done. Core::Proof scores evidence only from a
+# command that can produce it, so `done` must be refused: exit 0 says the fold
+# held, and exit 1 says it admitted done on self-graded evidence. With --real,
+# exit 0 means the model's goal completed.
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "master"
 
@@ -24,6 +26,8 @@ class NullModel
       Master::Core::Effect.done("noop complete: #{@goal}"),
     ]
   end
+
+  def turns = @script.size
 
   def propose(_context, verbs:)
     unsupported = @script.map(&:verb).uniq - verbs
@@ -39,7 +43,7 @@ parser = OptionParser.new do |opts|
   opts.banner = "usage: master-core [--root PATH] [--max-turns N] [--real [--model ID]] GOAL"
   opts.on("--root PATH") { |path| options[:root] = path }
   opts.on("--max-turns N", Integer) { |n| options[:max_turns] = n }
-  opts.on("--real", "drive a live LLM (needs a provider key); default is the scripted no-op") { options[:real] = true }
+  opts.on("--real", "drive a live LLM (needs a provider key); default is the scripted constitution check") { options[:real] = true }
   opts.on("--model ID") { |id| options[:model] = id }
 end
 
@@ -57,7 +61,6 @@ constitution = Master::Core::Constitution.load(data_dir:)
 world = Master::Core::World.new(root:)
 memory = Master::Core::Memory.new
 model = options[:real] ? Master::Core::Model.new(**{ model_id: options[:model] }.compact) : NullModel.new(goal)
-
 refusals = []
 observer = lambda do |turn:, effect:, observation:|
   refusals << observation.detail if effect.done? && !observation.ok?
@@ -68,22 +71,19 @@ result = Master::Core::Fold.new(
   constitution:,
   world:,
   memory:,
-  max_turns: options.fetch(:max_turns),
-  observer:
+  max_turns: options[:real] ? options.fetch(:max_turns) : model.turns,
+  observer:,
 ).run(goal)
 
-puts "master-core: #{result.reason} turns=#{result.turns} summary=#{result.summary}"
-
-# The exit status is the verdict bin/dogfood reads, so it has to mean something.
-# A real model must complete. The scripted one must not: its exec effects carry
-# evidence labels that no test, scan or review produced, Proof scores them zero,
-# and the constitution has to refuse its done. A no-op that completed would mean
-# the evidence gate had opened, which is the failure worth a red smoke.
 if options[:real]
+  puts "master-core: #{result.reason} turns=#{result.turns} summary=#{result.summary}"
   exit(result.reason == :complete ? 0 : 1)
-elsif result.reason == :complete || refusals.none? { |detail| detail.include?("evidence_for_done") }
-  warn "master-core: the no-op fold was not refused by evidence_for_done"
-  exit 1
-else
-  puts "master-core: done refused without evidence, as the constitution requires"
 end
+
+if result.reason != :complete && refusals.any? { |detail| detail.include?("evidence_for_done") }
+  puts "master-core: held — done refused without passing evidence (#{refusals.last})"
+  exit 0
+end
+
+puts "master-core: #{result.reason} — the scripted done was not refused for want of evidence"
+exit 1

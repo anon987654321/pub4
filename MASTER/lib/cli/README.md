@@ -4,10 +4,11 @@
 that runs one.** The REPL, the turn pipeline, the command registry, model routing,
 and script dispatch all live here.
 
-`cli/` is the REPL flow, the command handlers, the container wiring, and the
-result display. `command_registry/` holds the slash commands and their
-formatters. `routing/` is the model router with provider health and quarantine.
-`stages/` is the turn's steps.
+`cli/` is the REPL flow, its terminal input and output, the container wiring,
+and the result display. `command_registry/` holds one file per slash verb or
+review stage, and the registry builds exactly the verbs the help pages name.
+`routing/` is the model router with provider health and quarantine. `stages/`
+is the turn's steps.
 
 `TurnRouter` runs six of the eight stages, in order. `infer` promotes a
 natural-language message to a `:command` intent. `intake` parses it into an

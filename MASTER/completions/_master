@@ -1,23 +1,26 @@
-#compdef master
+#compdef master cli
 
-# The command list is CommandRegistry::HELP_TOPICS plus exit;
-# test/test_completions.rb fails when the two disagree.
+# The slash surface CommandRegistry.build returns, one line per help topic and
+# alias. test/test_completions.rb fails when this list and the registry differ.
 _master() {
   local -a commands
   commands=(
-    'review:the whole pass: scan, critique, principle map'
+    'review:the whole pass, read-only unless --apply'
     'status:one-frame health'
     'undo:revert the last recorded change'
-    'commit:record the current diff'
+    'rollback:the same as undo'
+    'commit:commit the named paths'
     'model:show or switch the active model'
     'pair:issue or redeem a pairing code'
     'doctor:host, provider, and exposure health'
-    'help:list commands'
-    'clear:clear the session transcript'
+    'rules:the declared rules, one line each'
+    'why:what a rule says, and where it comes from'
     'orders:standing orders'
     'soul:read and amend the constitution'
-    'why:what a rule says, and where it comes from'
-    'exit:exit MASTER'
+    'help:list commands'
+    'clear:clear the session transcript'
+    'exit:leave MASTER'
+    'quit:leave MASTER'
   )
 
   _arguments -C '1: :->command' '*:: :->args'

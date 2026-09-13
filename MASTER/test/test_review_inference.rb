@@ -160,6 +160,17 @@ end
     assert_equal :run_full_workflow, r.classify("run master through")
   end
 
+  # A verb put off is not a request. "review this later" scored as a review
+  # and reached the pass; it has to reach the chat path, where casual? sends
+  # an :unknown, while the same verb asked for now still scores.
+  def test_intent_router_leaves_a_deferred_request_to_chat
+    r = Master::CLI::IntentRouter.new
+    assert_equal :unknown, r.classify("review this later")
+    assert_equal :unknown, r.classify("remind me to fix the deploy tomorrow")
+    refute_equal :unknown, r.classify("review this")
+    assert Master::CLI::TurnRouter.casual?("review this later")
+  end
+
   # SPRAWL-105: the coordinator was constructed under MASTER_FULL_BOOT and read
   # by nothing. These two pin both halves of the wiring -- that a lean boot
   # still runs the pass it ran, and that a full boot reaches the coordinator.

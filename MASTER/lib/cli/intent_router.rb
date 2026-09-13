@@ -42,6 +42,11 @@ module Master
       TEST_RUN = /\b(?:re-?)?run\s+#{TEST_QUALIFIER}*(?:tests?|specs?|suites?|minitest)\b|
                   \b(?:tests?|specs?|suite)\s+(?:green|passing|failing)\b/xi
 
+      # "review this later" names a verb and asks for nothing now. Scored, it
+      # became a review; deferred, it is conversation, and the chat path is
+      # where a person says what they mean to do later.
+      DEFERRAL = /\b(?:later|tomorrow|next week|some ?time|eventually|remind me)\b/i
+
       # "read CLAUDE.md" is a file request. Token-scoring "read" alone would
       # also match "I read that", so the path-with-extension form is the
       # intent; the keyword list above is a secondary score, not the door.
@@ -83,6 +88,7 @@ module Master
         return :run_relevant_tests if downcased.match?(TEST_RUN)
         return :diagnose_behaviour if downcased.match?(DIAGNOSIS)
         return STANDING_SEMANTICS[downcased] if STANDING_SEMANTICS.key?(downcased)
+        return :unknown if downcased.match?(DEFERRAL)
 
         # Exact token match, not substring/prefix: short keywords like "ui",
         # "go", "no", "up" are common word PREFIXES too ("norwegian" starts

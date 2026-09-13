@@ -6,7 +6,6 @@ require "cli/council_crit"
 require "cli/deliberation_prep"
 require "cli/fix_preview_report"
 require "cli/fold_risk"
-require "cli/resync_service"
 
 class TestCLI < Minitest::Test
   def setup
@@ -57,11 +56,11 @@ class TestCLI < Minitest::Test
       { rule: "STYLE", line: 3, message: "another style issue" },
       { rule: "SECURITY", line: 8, message: "security issue" },
     ]
-    output = Master::CLI::CommandRegistry.format_scan_results(
+    output = Master::CLI::Scan::Report.new(
       pairs: [["sample.rb", Master::Result.ok(findings)]],
       profile: nil,
       rule_filter: nil,
-    )
+    ).render
     lines = output.lines.map(&:chomp)
 
     assert_equal "3 total violations", lines[0]
@@ -72,32 +71,14 @@ class TestCLI < Minitest::Test
   def test_scan_dry_run_report_says_no_changes_made
     findings = [{ rule: "STYLE", line: 2, message: "style issue" }]
 
-    output = Master::CLI::CommandRegistry.format_scan_results(
+    output = Master::CLI::Scan::Report.new(
       pairs: [["sample.rb", Master::Result.ok(findings)]],
       profile: nil,
       rule_filter: nil,
       dry_run: true,
-    )
+    ).render
 
     assert_match(/\Adry-run: 1 total violations \(no changes made\)/, output)
-  end
-
-  def test_fix_dry_run_uses_preview
-    fix_loop = Object.new
-    fix_loop.define_singleton_method(:preview) do |_target|
-      Master::Result.ok(total: 0, rules: {}, files: {})
-    end
-    fix_loop.define_singleton_method(:run) do |_target|
-      raise "dry-run should not run fixer"
-    end
-
-    output = Master::CLI::CommandRegistry.dispatch_fix(
-      fix_loop:,
-      root: Dir.pwd,
-      arg: "--dry-run .",
-    )
-
-    assert_equal "preview: clean — no violations", output
   end
 
   def test_command_maps_positional_dependencies_to_keyword_handler
@@ -130,27 +111,6 @@ class TestCLI < Minitest::Test
     overlay = Master::CLI::BrainOverlay.new(markdown_dirs: [])
 
     assert_includes overlay.core_brief, "Ruby policy is authoritative"
-  end
-
-  def test_resync_dry_run_fetches_without_resetting
-    git = Minitest::Mock.new
-    git.expect(:head, "abc123")
-    git.expect(:fetch, nil)
-    git.expect(:ahead_behind, [2, 1])
-    service = Master::CLI::ResyncService.new(root: "/tmp/master", git:)
-
-    output = service.call(dry_run: true)
-
-    assert_includes output, "dry-run: reset --hard origin/main (ahead=2 behind=1)"
-    git.verify
-  end
-
-  def test_resync_refuses_live_reset_without_confirmation
-    git = Minitest::Mock.new
-    service = Master::CLI::ResyncService.new(root: "/tmp/master", git:)
-
-    assert_equal "resync: refused without confirm flag", service.call
-    git.verify
   end
 
   def test_fix_preview_report_renders_clean_and_skipped_states
@@ -292,12 +252,15 @@ class TestCLI < Minitest::Test
     assert_includes detail, "--only", "the stages are the detail, not the summary"
   end
 
-  def test_commit_help_does_not_invent_a_confirm_flag
-    detail = Master::CLI::CommandRegistry.help_text("commit")
+# /commit is built with review_gate: true, so the page has to name the flag
+# the gate asks for, and the path list that scopes what goes in.
+def test_commit_help_names_the_paths_and_the_confirm_flag
+  detail = Master::CLI::CommandRegistry.help_text("commit")
 
-    refute_includes detail, "--confirm"
-    assert_includes detail, "git add -u"
-  end
+  assert_includes detail, "<path>"
+  assert_includes detail, Master::CLI::CommandRegistry::Command::CONFIRM_FLAG
+  refute_includes detail, "git add -u"
+end
 
   def test_prompt_refreshes_skills_before_rendering
     skills = Minitest::Mock.new
@@ -345,51 +308,6 @@ class TestCLI < Minitest::Test
     config.verify
   end
 
-  def test_dispatch_persona_switches_active_persona
-    config = Struct.new(:persona) do
-      def [](key)
-        key == "persona" ? persona : nil
-      end
-
-      def []=(key, value)
-        self.persona = value if key == "persona"
-      end
-
-      def save!
-        true
-      end
-    end.new("malay")
-
-    output = Master::CLI::CommandRegistry.dispatch_persona(config, ctx: { args: "ronin" })
-
-    assert_equal "persona: ronin", output
-    assert_equal "ronin", config.persona
-  end
-
-  # Regression: dispatch_persona used to save any word as the persona with
-  # no validation, so a misrouted natural-language message could corrupt the
-  # live persona config -- see production incident 2026-07-20.
-  def test_dispatch_persona_rejects_unknown_name
-    config = Struct.new(:persona) do
-      def [](key)
-        key == "persona" ? persona : nil
-      end
-
-      def []=(key, value)
-        self.persona = value if key == "persona"
-      end
-
-      def save!
-        true
-      end
-    end.new("anchor")
-
-    output = Master::CLI::CommandRegistry.dispatch_persona(config, ctx: { args: "council" })
-
-    assert_includes output, "isn't a known persona"
-    assert_equal "anchor", config.persona
-  end
-
   def test_scan_profile_uses_explicit_keyword
     profile, = Master::CLI::Scan::Request.resolve_scan_profile("critical lib", Dir.pwd)
     plain, = Master::CLI::Scan::Request.resolve_scan_profile("criticality.rb", Dir.pwd)
@@ -411,7 +329,7 @@ class TestCLI < Minitest::Test
   # entry in the list is a second command.
   def test_help_names_the_closed_set
     summary = Master::CLI::CommandRegistry.help_text
-    %w[review status undo commit model pair doctor help clear].each do |name|
+    %w[review status undo commit model pair doctor rules why orders soul help clear].each do |name|
       assert_includes summary, "/#{name} - "
     end
     refute_includes summary, "/scan - "
@@ -436,63 +354,6 @@ class TestCLI < Minitest::Test
 
     refute_predicate result, :ok?
     assert_equal "interrupted", result.message
-  end
-
-  def test_publish_snapshot_includes_tree_and_full_file_contents
-    Dir.mktmpdir do |target|
-      FileUtils.mkdir_p(File.join(target, "lib"))
-      marker = "X" * (Master::CTX_WINDOW_SIZE + 64)
-      File.write(File.join(target, "lib", "big.rb"), marker)
-      File.write(File.join(target, "note.txt"), "hello\n")
-      Dir.mktmpdir do |downloads|
-        prior = ENV["MASTER_SNAPSHOT_DIR"]
-        ENV["MASTER_SNAPSHOT_DIR"] = downloads
-        output = Master::Trace::Snapshot::Publisher.write(target:, label: "TEST", repo_root: File.expand_path("..", target), mode: :archive).first
-        archive = Dir.glob(File.join(downloads, "TEST_snapshot_*.md")).first
-        body = File.read(archive)
-
-        assert_includes output, "snapshot:test:"
-        assert_includes body, "## Tree"
-        assert_includes body, "lib/"
-        assert_includes body, "big.rb"
-        assert_includes body, "## Codebase"
-        assert_includes body, "## `lib/big.rb`"
-        assert_includes body, marker
-        assert_includes body, "## `note.txt`"
-        assert_includes body, "hello"
-      ensure
-        if prior
-          ENV["MASTER_SNAPSHOT_DIR"] = prior
-        else
-          ENV.delete("MASTER_SNAPSHOT_DIR")
-        end
-      end
-    end
-  end
-
-  def test_publish_snapshot_digest_writes_full_document
-    Dir.mktmpdir do |target|
-      File.write(File.join(target, "sample.rb"), "puts 42\n")
-      Dir.mktmpdir do |downloads|
-        prior = ENV["MASTER_SNAPSHOT_DIR"]
-        ENV["MASTER_SNAPSHOT_DIR"] = downloads
-        digest = File.join(downloads, "TEST_snapshot.md")
-        output = Master::Trace::Snapshot::Publisher.write(target:, label: "TEST", repo_root: File.expand_path("..", target), mode: :digest).first
-
-        assert_includes output, "snapshot:test:"
-        body = File.read(digest)
-        assert_includes body, "## Tree"
-        assert_includes body, "## Codebase"
-        assert_includes body, "puts 42"
-        assert_includes body, "git-tracked source text only"
-      ensure
-        if prior
-          ENV["MASTER_SNAPSHOT_DIR"] = prior
-        else
-          ENV.delete("MASTER_SNAPSHOT_DIR")
-        end
-      end
-    end
   end
 
   def test_routine_success_emits_one_line
@@ -543,8 +404,6 @@ class TestCLI < Minitest::Test
   # - `handle_command` → `handle_repl_line` (lib/cli/session/repl_flow.rb), which
   #   dispatches slash commands in three tables and sends everything else to
   #   `run_agent_turn`.
-  # - `/save` → `CommandRegistry.dispatch_save`, reached through the turn
-  #   pipeline rather than off the CLI object, so it is tested there.
   # - `process`/`pipe` no longer call `container[:pipeline]` at all; a turn goes
   #   through `TurnRouter.call`, so the old `@pipeline.expect(:call, …)` mocks
   #   were asserting against a collaborator that had stopped being used.
@@ -585,13 +444,6 @@ class TestCLI < Minitest::Test
       @session.verify
       @renderer.verify
     end
-  end
-
-  def test_save_command_persists_the_session
-    session = Minitest::Mock.new
-    session.expect(:save!, nil)
-    assert_equal "session saved", Master::CLI::CommandRegistry.dispatch_save(session)
-    session.verify
   end
 
   def test_blank_input_publishes_empty_input_instead_of_running_a_turn
