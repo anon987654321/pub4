@@ -132,7 +132,10 @@ task :constitution do
   triage = Master::Review::Scan::ConstitutionTriage.new(root:)
   buckets = triage.buckets(violations)
   actionable = triage.actionable_count(violations)
-  budget = Integer(ENV.fetch("MASTER_CONSTITUTION_MAX_ACTIONABLE", "1500"))
+  # The measured count of true violations, so a new one fails the task. It only
+  # falls, and only when findings are deleted; a budget far above the count
+  # gated nothing.
+  budget = Integer(ENV.fetch("MASTER_CONSTITUTION_MAX_ACTIONABLE", "85"))
 
   if violations.empty?
     puts "constitution: clean"
@@ -197,9 +200,9 @@ task :autoload do
   puts "autoload: clean"
 end
 
-desc "Run spec/core_smoke.rb — Effect → Constitution → World loop"
+desc "Run spec/core_smoke_spec.rb — Effect → Constitution → World loop"
 task :core_smoke do
-  sh RbConfig.ruby, "-I#{File.join(__dir__, "lib")}", File.join(__dir__, "spec", "core_smoke.rb")
+  sh RbConfig.ruby, "-I#{File.join(__dir__, "lib")}", File.join(__dir__, "spec", "core_smoke_spec.rb")
 end
 
 namespace :test do
@@ -778,6 +781,7 @@ AUDIT_GATES = %w[
   lint:principle_trace lint:scan_coverage lint:reader_singularity lint:doc_citations
   lint:do_not_touch lint:instruments lint:constant_collisions
   lint:capability lint:cohesion lint:rule_reach lint:models lint:dedup
+  lint:word_boundary lint:test_naming
   loc_budget
 ].freeze
 

@@ -13,7 +13,7 @@ class TestSnapshotAgentGuide < Minitest::Test
     assert_includes body, "OPERATOR_snapshot.md"
   end
 
-  def test_publish_snapshot_digest_includes_agent_protocol
+  def test_snapshot_digest_includes_agent_protocol
     Dir.mktmpdir do |target|
       File.write(File.join(target, "sample.rb"), "puts 42\n")
       Dir.mktmpdir do |downloads|

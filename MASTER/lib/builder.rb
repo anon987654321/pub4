@@ -5,7 +5,6 @@ require_relative "builder/boot_phases"
 require_relative "builder/ai_boot"
 require_relative "fix/rollback"
 require_relative "trace/ledger"
-require_relative "trace/snapshot/publisher"
 
 module Master
   module Builder
@@ -210,22 +209,6 @@ module Master
       commands["gateway"] = ->(_ctx) { gateway.channels }
       runtime = runtime.merge(gateway:)
       [pipeline, gateway, runtime]
-    end
-
-    def boot_snapshot(container)
-      root = container[:root]
-      pub = Trace::Snapshot::Publisher
-      out = File.join(root, ".master", "snapshot.md")
-      if pub.boot_current?(root, out)
-        container[:bus]&.publish("boot:snapshot_skipped")
-        return
-      end
-      content = pub.boot_light(root)
-      FileUtils.mkdir_p(File.dirname(out))
-      File.write(out, content)
-      container[:bus]&.publish("boot:snapshot")
-    rescue StandardError => e
-      container[:bus]&.publish("boot:snapshot_error", error: e.message)
     end
   end
 end

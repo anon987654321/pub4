@@ -7,7 +7,7 @@ require_relative "write_guard"
 module Master
   module Review
     module Scan
-      # Deterministic AstFixer pass shared by /scan and /self.
+      # Deterministic AstFixer pass behind `/review --only scan --apply`.
       # Only runs on files that have findings whose rule has auto_fix=true.
       # Idempotent; safe to re-run. Opt out with --dry-run, --no-autofix, or MASTER_SCAN_AUTOFIX=0.
       #
@@ -61,8 +61,6 @@ module Master
           AstFixer.write(path, candidate.content, event_bus: @bus, transforms:)
           applied = Applied.new(path: rel, transforms:)
           @bus&.publish("scan_autofix:applied", path: rel, transforms:)
-          # Back-compat event name used by SelfScan consumers/tests
-          @bus&.publish("self_autofix:applied", path: rel, transforms:)
           applied
         end
 

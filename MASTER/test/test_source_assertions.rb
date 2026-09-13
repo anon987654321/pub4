@@ -31,9 +31,11 @@ require_relative "test_helper"
 # have failed on a rename that broke nothing.
 # 221 -> 216: lifecycle_tools_spec now runs bin/doctor and checks its emitted
 # YAML probe result instead of asserting that the source contains `check_yaml`.
+# 215 -> 186: bin/ lifecycle and command-table tests run processes and drive
+# dispatchers instead of reading their source.
 class TestSourceAssertions < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  BASELINE = 215
+  BASELINE = 186
 
   # An assertion whose subject is the text of a file rather than a value the
   # code produced. `source`, `src` and `body` are this repo's names for that

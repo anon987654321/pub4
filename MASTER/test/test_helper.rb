@@ -27,11 +27,10 @@ require "timeout"
 # Load MASTER without booting the CLI
 $LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
 require "master"
-# Not inlined here. dilla/lib/music_gems.rb requires this same file by absolute
-# path right after `require "coltrane"`, and inlining it broke that require —
-# see the file's own header.
-require_relative "../lib/boot/hash_dig_compat"
-Master.install_hash_dig_compat!
+# Hash#dig stays MRI's here. HashDigCompat repairs coltrane's replacement, and
+# only dilla loads coltrane; installing it for every MASTER test ran the suite
+# on a dig the runtime never has. test_master_boot proves the compat in a
+# child process so this one keeps the real method.
 
 # Bound individual tests to prevent hangs, while leaving integration fixtures
 # enough room on slower local runs.
@@ -52,11 +51,6 @@ Minitest::Test.class_eval do
   rescue Timeout::Error
     failures << Minitest::UnexpectedError.new(Timeout::Error.new("timed out after #{test_timeout}s"))
     self
-  end
-
-  def before_setup
-    Master.install_hash_dig_compat!
-    super
   end
 
   # Shared by every scan-rule test (test_cosmetic_rules, test_web_rules,

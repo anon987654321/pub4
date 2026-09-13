@@ -15,6 +15,14 @@ class TestPipeline < Minitest::Test
     def call(_ctx) = Master::Result.err("boom", category: @cat)
   end
 
+  # Records what reached it, so a short circuit can be seen from the far side.
+  class RecordStage
+    attr_reader :calls
+
+    def initialize = @calls = []
+    def call(ctx) = (@calls << ctx[:user_message]; Master::Result.ok(ctx))
+  end
+
   class RaiseStage
     def call(_ctx) = raise "stage exploded"
   end
@@ -103,10 +111,40 @@ class TestPipeline < Minitest::Test
   end
 
   def test_first_error_short_circuits
-    pipe = Master::CLI::Pipeline.new([OkStage.new, ErrStage.new, OkStage.new])
+    after = RecordStage.new
+    pipe = Master::CLI::Pipeline.new([OkStage.new, ErrStage.new, after])
     result = pipe.call(Master::Result.ok(user_message: "hi"))
     refute result.ok?
     assert_equal "boom", result.message
+    assert_empty after.calls, "a stage after the error still ran"
+  end
+
+  def test_intake_parses_a_slash_command
+    result = Master::CLI::Pipeline.new([Master::CLI::Stages::Intake.new])
+                                   .call(Master::CLI::PipelineContext.build(user_message: "/scan lib/"))
+
+    assert result.ok?, result.inspect
+    assert_equal :command, result.value![:intent]
+    assert_equal "scan", result.value![:command]
+    assert_equal "lib/", result.value![:args]
+  end
+
+  def test_intake_reads_plain_text_as_an_llm_turn_and_hands_it_on
+    recorder = RecordStage.new
+    result = Master::CLI::Pipeline.new([Master::CLI::Stages::Intake.new, recorder])
+                                   .call(Master::CLI::PipelineContext.build(user_message: "what is fix_loop for?"))
+
+    assert result.ok?, result.inspect
+    assert_equal :llm, result.value![:intent]
+    assert_equal ["what is fix_loop for?"], recorder.calls
+  end
+
+  def test_intake_rejects_an_empty_message
+    result = Master::CLI::Pipeline.new([Master::CLI::Stages::Intake.new])
+                                   .call(Master::CLI::PipelineContext.build(user_message: "   "))
+
+    refute result.ok?
+    assert_match(/empty/, result.message)
   end
 
   def test_raise_in_stage_becomes_err

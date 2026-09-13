@@ -388,7 +388,7 @@ guidance:
         when: new class, renamed constant, or cross-file behavior in one lib/ module
         read:
         - module entrypoint
-        - /graph one-hop dependents
+        - one-hop dependents (bin/operator readers)
         - affected tests
       structural_change:
         when: pipeline stage, scan rule, constitution data, or OPERATOR topology

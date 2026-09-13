@@ -10,4 +10,4 @@ quality framework it argues within. `swarm/` is the coordinator, the vote engine
 and the worker roles. `review_crew/` is the set of review agents narrow enough to
 name.
 
-Enter through `MASTER/bin/audit`, `MASTER/bin/gate`, or `rake selftest`.
+Enter through `MASTER/bin/operator lint`, `MASTER/bin/gate`, or `rake selftest`.

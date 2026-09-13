@@ -23,6 +23,35 @@ class TestMasterLoop < Minitest::Test
     end
   end
 
+  # Building the runtime must not start the fix loop, which sleeps STARTUP_DELAY
+  # and then rewrites lib/ in the background. MASTER_AUTOFIX=1 is the only key;
+  # process defaults set it to 0 and MASTER_LOOP=fix is how a person asks.
+  def test_build_starts_the_fix_loop_only_when_autofix_is_asked_for
+    started = []
+    fake_loop = Object.new
+    build = lambda do
+      Master::Fix::FixLoop.stub(:new, fake_loop) do
+        Master::Builder.stub(:start_fix_loop_background, ->(loop, **) { started << loop }) do
+          Master::Builder.build_fix_loop(root: Master::ROOT, infra: {}, agent: nil, scanner: nil, axioms: nil,
+                                         rules: nil, learnings: nil, rollback: nil, bus: nil, git: nil)
+        end
+      end
+    end
+
+    with_clean_env do
+      assert_equal "0", Master::MasterRuntime::PROCESS_DEFAULTS["MASTER_AUTOFIX"]
+      build.call
+      assert_empty started, "an unset MASTER_AUTOFIX starts nothing"
+      ENV["MASTER_AUTOFIX"] = "0"
+      build.call
+      assert_empty started
+
+      ENV["MASTER_AUTOFIX"] = "1"
+      build.call
+      assert_equal [fake_loop], started
+    end
+  end
+
   # The early-boot mode map and data/limits.yml#process are the same fact in two
   # places; this pins them so heartbeat->env and the "fix"/"autofix" alias cannot
   # drift the way they had ("MASTER_BACKGROUND" vs "MASTER_HEARTBEAT").

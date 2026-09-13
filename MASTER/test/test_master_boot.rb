@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "open3"
 
 class MasterBootTest < Minitest::Test
   def test_boot_loader_requires_all_modules
@@ -34,22 +35,35 @@ class MasterBootTest < Minitest::Test
     assert Master.respond_to?(:validate_data!)
   end
 
-  def test_hash_dig_compat_returns_nil_for_missing_intermediate_keys
-    assert_nil({}.dig(:missing, :nested))
-    assert_nil({ outer: {} }.dig(:outer, :missing, :nested))
+  # In a child process, because the install prepends onto Hash for good and
+  # this suite must keep MRI's dig. The child plants coltrane 2.1.5's
+  # replacement, shows it raising, then installs the compat twice.
+  COLTRANE_DIG_PROBE = <<~RUBY
+    require #{File.expand_path("../lib/boot/hash_dig_compat", __dir__).inspect}
+    class Hash
+      def dig(*args) = args.size > 1 ? self[args.shift].dig(*args) : self[args[0]]
+    end
+    broken = begin
+      {}.dig(:missing, :nested)
+      "no-raise"
+    rescue NoMethodError
+      "raised"
+    end
+    Master.install_hash_dig_compat!
+    Master.install_hash_dig_compat!
+    puts [broken, {}.dig(:missing, :nested).inspect, { outer: {} }.dig(:outer, :missing, :nested).inspect,
+          { outer: { inner: "value" } }.dig(:outer, :inner),
+          Hash.ancestors.count { |a| a == Master::HashDigCompat }].join(" ")
+  RUBY
+
+  def test_hash_dig_compat_repairs_coltrane_dig_and_installs_once
+    out, status = Open3.capture2e(RbConfig.ruby, "-e", COLTRANE_DIG_PROBE)
+
+    assert status.success?, out
+    assert_equal "raised nil nil value 1", out.strip
   end
 
-  def test_hash_dig_compat_preserves_nested_lookup
-    assert_equal "value", { outer: { inner: "value" } }.dig(:outer, :inner)
-  end
-
-  def test_hash_dig_compat_installation_is_idempotent
-    Master.install_hash_dig_compat!
-    first_ancestors = Hash.ancestors
-
-    Master.install_hash_dig_compat!
-
-    assert_equal first_ancestors, Hash.ancestors
-    assert_equal 1, Hash.ancestors.count { |ancestor| ancestor == Master::HashDigCompat }
+  def test_the_suite_runs_on_mris_dig
+    refute_includes Hash.ancestors.map(&:to_s), "Master::HashDigCompat"
   end
 end

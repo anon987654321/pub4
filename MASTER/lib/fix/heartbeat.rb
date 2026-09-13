@@ -18,7 +18,6 @@ module Master
         "check_models" => :check_model_availability,
         "self_test" => :run_self_test,
         "prune_undo" => :prune_undo_journal,
-        "snapshot" => :run_snapshot,
         "personal_pulse" => :personal_pulse,
       }.freeze
 
@@ -157,12 +156,6 @@ module Master
         "pruned undo: kept #{keep}/#{lines.size} entries"
       end
 
-      def run_snapshot
-        container = { root: @root, bus: @bus }
-        Builder.boot_snapshot(container)
-        "snapshot: generated"
-      end
-
       def personal_pulse
         Master::Ground::PersonalWorkspace.pulse(root: @root)
       end
@@ -184,7 +177,6 @@ module Master
           { "name" => "prune_memory", "action" => "prune_memory", "interval_seconds" => SECONDS_PER_HOUR },
           { "name" => "self_test", "action" => "self_test", "interval_seconds" => SECONDS_PER_HOUR },
           { "name" => "prune_undo", "action" => "prune_undo", "interval_seconds" => 86_400 },
-          { "name" => "snapshot", "action" => "snapshot", "interval_seconds" => 14_400 },
         ]
       end
 

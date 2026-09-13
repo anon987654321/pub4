@@ -12,18 +12,17 @@
 # Prepending restores MRI's behaviour without needing the original C method
 # back, and it is idempotent so repeated bootstraps are free.
 #
-# This file lives here rather than inside its callers because it has two, in
-# different trees: MASTER/test/test_helper.rb and STUDIO's
-# dilla/lib/music_gems.rb, which requires it by absolute path right after
-# `require "coltrane"`.
+# It is installed only where coltrane is loaded: STUDIO's
+# dilla/lib/music_gems.rb requires it by absolute path right after
+# `require "coltrane"`, and MASTER never loads coltrane, so neither MASTER's
+# boot nor its test suite installs it. test_master_boot proves it in a child
+# process.
 #
-# It was merged into test_helper.rb on 2026-08-2x under the note "its only
-# reader is this helper", and dilla's require then raised LoadError. That
-# require sits inside load_gem's `rescue LoadError`, so coltrane was marked
-# unavailable and the engine fell back to inline theory — a silent change to
-# what dilla renders, found only because two tests in test:dilla went red and
-# stayed red. Deleting this file again costs the same thing, so grep both trees
-# before believing a reader count.
+# That require sits inside load_gem's `rescue LoadError`, so a missing file
+# marks coltrane unavailable and the engine falls back to inline theory — a
+# silent change to what dilla renders. Moving or deleting this file breaks a
+# reader in another tree; `bin/operator readers` finds it where a grep of
+# MASTER does not.
 module Master
   module HashDigCompat
     def dig(*keys)

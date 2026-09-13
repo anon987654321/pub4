@@ -21,9 +21,6 @@ thresholds:
     warn: 1024
     crit: 2048
 
-# Back-off policy: heartbeat and fix_loop subscribe to system:warn/crit.
-# - warn: skip the next idle scan cycle, log only.
-# - crit: stop fix_loop background, defer autofix until system:sample shows ok.
-policy:
-  warn: skip_idle_scan
-  crit: stop_fix_loop_background
+# What a crossing does is code, not a key here: system:crit stops the fix loop's
+# background runner (lib/builder/ai_boot.rb); system:warn reaches only the
+# wildcard subscribers that mirror the bus to the face and the event log.

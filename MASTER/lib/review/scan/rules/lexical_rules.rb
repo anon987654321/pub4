@@ -19,25 +19,28 @@ module Master
 
   RuleDSL.rule :NO_PUTS,
     severity: :warning, tags: %i[CLEAN_CODE], applies_to: %i[ruby],
-    fires: "  puts \"ready\"\n",
-    does_not_fire: "  @bus.publish(\"ready\")\n",
-    description: "no bare puts in library code" do |src, path:|
+    fires: "  puts(\"ready\")\n",
+    # A local named p is not Kernel#p: assignment, a method call on it, and a
+    # bare p (which prints nothing) all stay quiet.
+    does_not_fire: "  @bus.publish(\"ready\")\n  p = point\n  p.x\n  p == q\n  p\n",
+    description: "no puts, p or pp in library code" do |src, path:|
     # The REPL prints for a living, so the path it lives at is exempt. This
     # exemption carries the whole of lib/cli/session/ -- 100 deliberate puts --
     # and it has to move whenever that directory does. An exemption whose
     # subject moves out from under it is a gate that starts firing on exactly
     # what it exempted: when lib/now/ became lib/cli/ and this address stayed,
     # 105 findings arrived in selfcheck's largest actionable bucket overnight.
-    # operator/gate_chain.rb is the eleventh and last exemption, and it is the one
-    # file rather than its directory: lib/operator is the operator surface's
+    # operator/gate_chain.rb and operator/check_runner.rb are one file each
+    # rather than their directory: lib/operator is the operator surface's
     # library, and its sibling status_report.rb renders a string that bin/operator
-    # prints, which is the shape this rule asks for. gate_chain cannot take it.
-    # The ladder runs for many minutes and the report is the progress -- which
-    # stage is running, and which files it changed under that stage's name --
-    # so a buffered return would deliver the whole account after the run it was
-    # meant to narrate.
-    next [] if path.to_s.match?(%r{/exe/|/spec/|/bin/|/cli/session|/operator/gate_chain\.rb\z})
-    scan_lines(src, /^\s*puts\b(?!\s*\()/, message: "bare puts — use event bus or logger")
+    # prints, which is the shape this rule asks for. Those two cannot take it.
+    # The gate ladder and bin/check run for minutes and the report is the
+    # progress -- which step is running and how it ended -- so a buffered return
+    # would deliver the whole account after the run it was meant to narrate.
+    next [] if path.to_s.match?(%r{/exe/|/spec/|/bin/|/cli/session|/operator/(?:gate_chain|check_runner)\.rb\z})
+    # Parenthesised or not: puts("x") prints exactly as puts "x" does.
+    scan_lines(src, /^\s*(?:puts\s*$|(?:puts|pp?)(?:\(|[ \t]+["':@$A-Za-z0-9_\[({%]))/,
+               message: "puts/p/pp — use event bus or logger")
   end
 
   RuleDSL.rule :FROZEN_LITERAL,

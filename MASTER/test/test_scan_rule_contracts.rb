@@ -77,6 +77,13 @@ class TestScanRuleContracts < Minitest::Test
       FileUtils.mkdir_p(File.dirname(core))
       File.write(core, "module Fold\nend\n")
       assert_empty Rules::FileSprawlRule.new(root:).check(File.read(core), path: core)
+
+      # a lone directory whose owner file sits beside it is a nested constant
+      nested = File.join(root, "lib", "cli", "propose", "candidate_sources.rb")
+      FileUtils.mkdir_p(File.dirname(nested))
+      File.write(nested, "module CandidateSources\nend\n" + ("x = 1\n" * 30))
+      File.write(File.join(root, "lib", "cli", "propose.rb"), "class Propose\nend\n")
+      assert_empty Rules::FileSprawlRule.new(root:).check(File.read(nested), path: nested)
     end
   end
 

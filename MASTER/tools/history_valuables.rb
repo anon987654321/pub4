@@ -3,77 +3,83 @@
 
 require "open3"
 
-ROOT = File.expand_path("../..", __dir__)
-VALUABLE_PATTERNS = [
-  /class\s+\w+/,
-  /module\s+\w+/,
-  /def\s+\w+/,
-  /CREATE TABLE/i,
-  /add_index/i,
-  /foreign_key/i,
-  /TODO|FIXME|XXX/,
-  /OPENROUTER|SECRET|TOKEN|API_KEY/,
-  /public_key|private_key/i,
-  /rcctl|relayd|httpd|pfctl|doas/,
-  /Stimulus|Turbo|Rails|Falcon/,
-  /MASTER|OPERATOR|converge|council|critique/i,
-].freeze
+# Lines that recent commits deleted or moved and that look worth a second look:
+# definitions, schema, secrets, OpenBSD daemons.
+#
+#   ruby MASTER/tools/history_valuables.rb [paths...]
+module HistoryValuables
+  ROOT = File.expand_path("../..", __dir__)
+  VALUABLE_PATTERNS = [
+    /class\s+\w+/,
+    /module\s+\w+/,
+    /def\s+\w+/,
+    /CREATE TABLE/i,
+    /add_index/i,
+    /foreign_key/i,
+    /TODO|FIXME|XXX/,
+    /OPENROUTER|SECRET|TOKEN|API_KEY/,
+    /public_key|private_key/i,
+    /rcctl|relayd|httpd|pfctl|doas/,
+    /Stimulus|Turbo|Rails|Falcon/,
+    /MASTER|OPERATOR|converge|council|critique/i,
+  ].freeze
 
-WINDOW = ENV.fetch("HISTORY_WINDOW", "--since=90.days.ago")
-PATHS = ARGV.empty? ? ["."] : ARGV
+  # The backlog closes an entry by deleting it, and nearly every line in it names
+  # MASTER, a TODO or a daemon, so every closed entry would read as a lost
+  # valuable and bury the real ones.
+  DELETED_BY_DESIGN = %w[TODO.md].freeze
 
-def run_git(*argv)
-  stdout, status = Open3.capture2e("git", *argv, chdir: ROOT)
-  abort "err: git #{argv.join(" ")} failed\n#{stdout}" unless status.success?
-  stdout
-end
+  module_function
 
-log = run_git(
-  "log",
-  WINDOW,
-  "--find-renames",
-  "--find-copies",
-  "--diff-filter=DMR",
-  "--patch",
-  "--",
-  *PATHS,
-)
+  def hits(log)
+    commit = nil
+    file = nil
+    log.each_line.filter_map do |line|
+      if line.start_with?("commit ")
+        commit = line.split.fetch(1)
+        file = nil
+        next
+      end
+      if line.start_with?("diff --git ")
+        file = line.split.last&.delete_prefix("b/")
+        next
+      end
 
-current_commit = nil
-current_file = nil
-hits = []
+      text = deleted_text(line)
+      next unless text && valuable?(text) && !DELETED_BY_DESIGN.include?(file)
 
-log.each_line do |line|
-  if line.start_with?("commit ")
-    current_commit = line.split.fetch(1)
-    current_file = nil
-    next
+      { commit:, file:, line: text[0, 220] }
+    end
   end
 
-  if line.start_with?("diff --git ")
-    current_file = line.split.last&.delete_prefix("b/")
-    next
+  def deleted_text(line)
+    return unless line.start_with?("-") && !line.start_with?("---")
+
+    text = line.delete_prefix("-").strip
+    text.empty? ? nil : text
   end
 
-  next unless line.start_with?("-")
-  next if line.start_with?("---")
+  def valuable?(text) = VALUABLE_PATTERNS.any? { |pattern| text.match?(pattern) }
 
-  text = line.delete_prefix("-").strip
-  next if text.empty?
-  next unless VALUABLE_PATTERNS.any? { |pattern| text.match?(pattern) }
-
-  hits << {
-    commit: current_commit,
-    file: current_file,
-    line: text[0, 220],
-  }
-end
-
-if hits.empty?
-  puts "ok: no deleted or moved valuables matched in #{WINDOW} for #{PATHS.join(", ")}"
-else
-  hits.each do |hit|
-    puts "#{hit[:commit]} #{hit[:file]} :: #{hit[:line]}"
+  def git_log(window, paths)
+    stdout, status = Open3.capture2e("git", "log", window, "--find-renames", "--find-copies",
+                                     "--diff-filter=DMR", "--patch", "--", *paths, chdir: ROOT)
+    abort "err: git log failed\n#{stdout}" unless status.success?
+    stdout
   end
-  abort "err: possible lost valuables detected (#{hits.size})"
+
+  def run(argv)
+    window = ENV.fetch("HISTORY_WINDOW", "--since=90.days.ago")
+    paths = argv.empty? ? ["."] : argv
+    found = hits(git_log(window, paths))
+    if found.empty?
+      puts "ok: no deleted or moved valuables matched in #{window} for #{paths.join(", ")}"
+      return
+    end
+
+    found.each { |hit| puts "#{hit[:commit]} #{hit[:file]} :: #{hit[:line]}" }
+    abort "err: possible lost valuables detected (#{found.size})"
+  end
 end
+
+HistoryValuables.run(ARGV) if $PROGRAM_NAME == __FILE__

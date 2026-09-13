@@ -9,7 +9,7 @@ class TestAgent < Minitest::Test
 
   # Fake collaborators — just enough to construct an Agent.
   FakeConfig  = Struct.new(:model, :task_type, :reasoning_mode) do
-    def [](k) = send(k) rescue nil
+    def [](key) = respond_to?(key) ? public_send(key) : nil
   end
   FakeSession = Struct.new(:messages) { def add_message(**) = messages << _1 }
   FakeCB      = Struct.new(:out) { def check_rate!; end; def call(_, &b); b.call; end }

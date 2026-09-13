@@ -58,16 +58,18 @@ scan_coverage:
       fixture that deliberately contains a violation into a violation, which is
       how a self-scanning gate learns to fail on its own evidence.
     spec: >-
-      Same as test/. spec/core_smoke.rb asserts on the fold by running it.
+      Same as test/. spec/core_smoke_spec.rb asserts on the fold by running it.
     tools: >-
       Standalone scripts run by rake and by hand, outside the Zeitwerk loader and
-      outside the runtime. They are first-party and the exemption is arguable —
-      it is written down here so somebody can argue it, which was the whole
-      problem with core/.
+      outside the runtime. Exempt from SelfCheck only: tools/self_findings.rb
+      counts MASTER/tools under its ratchet, so a finding here is measured and
+      cannot grow silently.
     script: >-
       One-off migration and probe scripts, kept for the record rather than run.
     web: >-
       A Rails application with its own gates (bin/check --profile=web,
       test:web_ui, test:integration_web). MASTER's scanner law is written for the
       runtime, and applying rules like DENSITY to ERB-adjacent controllers
-      produces findings nobody acts on.
+      produces findings nobody acts on. The face law (FOR_OF, TEMPLATE_LITERALS,
+      NO_JQUERY and the rest) is still counted: tools/self_findings.rb reads
+      MASTER/web under its ratchet, skipping only generated bundles.

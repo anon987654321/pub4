@@ -89,19 +89,6 @@ class TestFeedbackLedger < Minitest::Test
     FileUtils.remove_entry(root) if root && Dir.exist?(root)
   end
 
-  def test_analyze_self_command_reports_ledger_opportunities
-    root = Dir.mktmpdir("analyze_self")
-    learnings = Master::Ground::KnowledgeStore.new(root:)
-    3.times { learnings.record_event(event_type: "provider_error", dimension: "flaky-model") }
-
-    output = Master::CLI::CommandRegistry.dispatch_analyze_self(learnings:)
-
-    assert_includes output, "provider_errors flaky-model count=3"
-  ensure
-    learnings&.close
-    FileUtils.remove_entry(root) if root && Dir.exist?(root)
-  end
-
   def test_provider_errors_are_queryable_separately_with_metadata
     root = Dir.mktmpdir("provider_errors")
     learnings = Master::Ground::KnowledgeStore.new(root:)

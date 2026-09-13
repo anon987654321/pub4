@@ -115,7 +115,18 @@ module Master
           return true if SKIP_PATH_FRAGMENTS.any? { |fragment| rel.include?(fragment) }
           return true if VENDORED_ASSET.match?(rel)
 
-          SKIP_RELATIVE_PATHS.any? { |prefix| rel == prefix || rel.start_with?("#{prefix}/") }
+          SKIP_RELATIVE_PATHS.any? { |prefix| under?(rel, prefix) || under?(master_relative(path), prefix) }
+        end
+
+        def under?(rel, prefix) = rel == prefix || rel.start_with?("#{prefix}/")
+
+        # A scan rooted inside MASTER — `/scan face` is web/public — sees
+        # face.runtime.js as a bare basename that no MASTER-relative entry
+        # matches, so the generated bundles and web/public/assets were walked and
+        # offered to /fix. Anchoring on MASTER as well makes the list hold from any
+        # root beneath it.
+        def master_relative(path)
+          relative_path(path, Master::ROOT)
         end
 
         def relative_segments(path, root)

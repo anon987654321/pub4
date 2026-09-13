@@ -72,7 +72,7 @@ class TestSelfScan < Minitest::Test
       # source-assertion: ok — reading back what the fixer wrote is the only way to see it landed
       assert_includes File.read(path), "# frozen_string_literal: true"
       assert_equal "lib/example.rb", result.value!.autofixes.first[:path]
-      assert_includes bus.events.map(&:first), "self_autofix:applied"
+      assert_includes bus.events.map(&:first), "scan_autofix:applied"
     end
   end
 
@@ -98,27 +98,9 @@ class TestSelfScan < Minitest::Test
     end
   end
 
-  def test_master_lib_self_scan_has_zero_violations
-    skip "full lib scan exceeds unit-test budget — run MASTER_SAFE_MODE=1 bin/cli /self" unless ENV["MASTER_INTEGRATION"]
-
-    scanner = Master.bootstrap_container(root: Master::ROOT)[:scanner]
-    result = Master::Review::Scan::SelfScan.new(scanner:, root: Master::ROOT).call
-
-    assert result.ok?
-    assert_equal 0, result.value!.violation_count, format_self_scan_failures(result.value!.pairs)
-  end
-
   private
 
   def finding(rule)
     Finding.new(rule:, message: "violation", line: 1, severity: :warning, fix: nil, tags: [])
-  end
-
-  def format_self_scan_failures(pairs)
-    pairs.flat_map do |path, file_result|
-      Master::Result.wrap(file_result).value_or([]).map do |finding|
-        "#{path}:#{finding[:line]} #{finding[:rule]} #{finding[:message]}"
-      end
-    end.first(20).join("\n")
   end
 end

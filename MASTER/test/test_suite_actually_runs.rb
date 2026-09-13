@@ -12,6 +12,8 @@ require "open3"
 #
 # Slow by construction: it runs each file in its own process. Opt in with
 # SUITE_AUDIT=1, or a full `rake test` would fork the whole suite per file.
+# test_every_suite_file_defines_tests_it_runs.rb is the static half that runs
+# by default.
 class SuiteActuallyRunsTest < Minitest::Test
   RUN_COUNT = /(\d+) runs?, \d+ assertions/
 

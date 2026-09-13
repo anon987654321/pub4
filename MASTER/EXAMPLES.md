@@ -42,23 +42,27 @@ ROBUSTNESS: timeout findings remain known debt; no unrelated edits.
 Scanner false positive: SQL detector flagged as SQL injection; needs scanner exemption, not code removal.
 ```
 
-## Good TODO Update
+## Good TODO Close
 
-```markdown
-- [x] Fold the four rule shards into `data/rules.yml`.
-      Verified by reading live consumers in `lib/review/output_check.rb`,
-      `lib/fix/fix_loop/rule_order.rb`, and `lib/boot/data.rb`, then proving
-      `Master.load_rules` deep-equal to its pre-fold output before deleting them.
+A finished entry is deleted from `TODO.md`, never ticked. The evidence goes in
+the commit that deletes it:
+
+```text
+master: the four rule shards are one file
+
+Read the live consumers in lib/review/output_check.rb,
+lib/fix/fix_loop/rule_order.rb and lib/boot/data.rb, and proved
+Master.load_rules deep-equal to its pre-fold output before deleting them.
 ```
 
-## Bad TODO Update
+## Bad TODO Close
 
 ```markdown
 - [x] Fix constitution scan.
 ```
 
-This hides the count, the command, and whether findings were fixed or merely
-reclassified.
+A ticked box keeps a closed record in the backlog and hides the count, the
+command, and whether findings were fixed or merely reclassified.
 
 ## Good Refusal To Refactor
 

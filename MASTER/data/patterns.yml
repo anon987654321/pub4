@@ -770,15 +770,14 @@ cli:
   history_limit: 2000
 
 # Merged from former heartbeat.yml — heartbeat jobs, all disabled. Schedule-based
-# maintenance removed. These actions are now triggered by events or manual
-# slash commands: prune_memory -> /dreams, self_test -> auto_default standing
-# order (fires after any source mutation), prune_undo -> manual: /prune undo,
-# snapshot -> manual: /snapshot.
+# maintenance removed. self_test runs as the auto_default standing order (after
+# any source mutation); snapshot is `bin/operator snapshot`; prune_memory and
+# prune_undo have no command.
 heartbeat:
   - name: prune_memory
     action: prune_memory
     enabled: false
-    description: Use /dreams instead.
+    description: Disabled; no command replaces it.
   - name: self_test
     action: self_test
     interval_seconds: 3600
@@ -787,11 +786,7 @@ heartbeat:
   - name: prune_undo
     action: prune_undo
     enabled: false
-    description: Use /prune undo instead.
-  - name: snapshot
-    action: snapshot
-    enabled: false
-    description: Use /snapshot instead.
+    description: Disabled; no command replaces it.
   - name: personal_pulse
     action: personal_pulse
     interval_seconds: 1800

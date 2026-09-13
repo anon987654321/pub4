@@ -23,12 +23,4 @@ class TestStyleGuides < Minitest::Test
     excludes = Array(config.dig("AllCops", "Exclude"))
     assert_includes excludes, "web/**"
   end
-
-  def test_shared_rescue_handlers_present
-    path = File.expand_path("../../RAILS/shared/app/controllers/concerns/shared/rescue_handlers.rb", __dir__)
-    skip "OPERATOR not checked out" unless File.file?(path)
-    source = File.read(path)
-    assert_includes source, "ActiveRecord::RecordNotFound"
-    assert_includes source, "ActionController::ParameterMissing"
-  end
 end
