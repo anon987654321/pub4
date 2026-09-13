@@ -137,24 +137,25 @@ steps of a 12B model is not a run anyone finishes.
 
 ## Status
 
-- **ragnhild**: six captioned pairs, `02` to `07`, in `ragnhild/dataset/`, 1024 on
-  the short edge with every original aspect ratio kept, built by `curate.rb`. No
-  `.safetensors`. Each caption is a full sentence naming the setting, clothing
-  and light after the trigger word.
+**ragnhild**: six captioned pairs, `02` to `07`, in `ragnhild/dataset/`, 1024 on
+the short edge with every original aspect ratio kept, built by `curate.rb`. No
+`.safetensors`. Each caption is a full sentence naming the setting, clothing
+and light after the trigger word.
 
-  The set is below the ten-to-thirty the guidance asks for.
+The set is below the ten-to-thirty the guidance asks for.
 
-  An earlier 17-image set is gone, along with the 40
-  source photographs it came from — removed at `b7d47d6b6` because the subject
-  disliked them and they did not look much like her. `retouched/` and
-  `weights/` went with them, so the log naming the earlier Replicate run is
-  gone too. The destination model was `basicfeatures/ragnhild`; the version
-  hash survives here only as `6197a9e1…`, truncated. If that model is still on
-  the account it can be recovered with a token — but it was trained on the
-  photographs that were rejected, so it is the wrong LoRA of the right person.
-- **johann**: no images at all. `johann/` holds a launcher, `subject.env` and
-  `train.yaml`, and nothing to train on. Curate twelve to eighteen varied
-  photos — angles, light, expressions — into `johann/sources/`, caption them, then pick a lane.
+An earlier 17-image set is gone, along with the 40
+source photographs it came from — removed at `b7d47d6b6` because the subject
+disliked them and they did not look much like her. `retouched/` and
+`weights/` went with them, so the log naming the earlier Replicate run is
+gone too. The destination model was `basicfeatures/ragnhild`; the version
+hash survives here only as `6197a9e1…`, truncated. If that model is still on
+the account it can be recovered with a token — but it was trained on the
+photographs that were rejected, so it is the wrong LoRA of the right person.
+
+**johann**: no images at all. `johann/` holds a launcher, `subject.env` and
+`train.yaml`, and nothing to train on. Curate twelve to eighteen varied
+photos — angles, light, expressions — into `johann/sources/`, caption them, then pick a lane.
 
 The free Kaggle lane exists because neither of the other two has produced FLUX
 weights: one needs hardware this Mac does not have, the other needs money per

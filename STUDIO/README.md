@@ -23,18 +23,20 @@ source against a case whose answer you already know.
 
 Three from one session, all of which read as correct until checked:
 
-- `POSTPRO_EXPLAIN` reported per-step `avg` and `spread`, and both are nearly
-  blind to a gaussian blur. It logged `spread-0.0021` — small enough to ignore —
-  for the step that removed 57% of a picture's texture. The grade had been
-  destroying photographs for as long as anyone had been running it, and the
-  per-step report agreed everything was fine. It measures texture now.
-- A dead-effect sweep reported 11 effects that changed nothing. Four were real.
-  The probe image was greyscale, which made `desaturate` a legitimate no-op —
-  the probe was the confound.
-- A reproducibility test compared two readings and failed at the tenth decimal
-  on byte-identical output. libvips reduces across threads and the summation
-  order is not fixed, so the grade was reproducible and the instrument was not.
-  It hashes the file now.
+`POSTPRO_EXPLAIN` reported per-step `avg` and `spread`, and both are nearly
+blind to a gaussian blur. It logged `spread-0.0021` — small enough to ignore —
+for the step that removed 57% of a picture's texture. The grade had been
+destroying photographs for as long as anyone had been running it, and the
+per-step report agreed everything was fine. It measures texture now.
+
+A dead-effect sweep reported 11 effects that changed nothing. Four were real.
+The probe image was greyscale, which made `desaturate` a legitimate no-op —
+the probe was the confound.
+
+A reproducibility test compared two readings and failed at the tenth decimal
+on byte-identical output. libvips reduces across threads and the summation
+order is not fixed, so the grade was reproducible and the instrument was not.
+It hashes the file now.
 
 **Inert config and dead wiring.** Declarations with no reader are everywhere:
 a `lens:` key named in five presets that no effect read, nine stocks' worth of
@@ -168,38 +170,46 @@ answer than a grade that was never going to work.
 A subject LoRA learns **whatever is constant across its training images.** Every
 practical rule follows from that one sentence.
 
-- **Never grade a dataset.** The model would learn Portra's grain as part of the
-  person's face, welded on and impossible to ask for less of later. A graded set
-  looks better in a contact sheet, which is exactly when someone will be tempted.
-- **Normalise exposure, because brightness says nothing about a face.** Correct
-  toward the set's own median so the correction cannot introduce a centre the
-  photographs did not already have.
-- **Leave colour variety alone unless it is extreme.** The more the light differs
-  between frames, the harder the model works to separate the person from the
-  room. Only a cast strong enough to become an attribute of the face is a
-  problem. Measure it as a channel *ratio* — levels conflate cast with exposure,
-  so a dark frame reads far cleaner than it is.
-- **Vary everything else on purpose**: angle, distance, expression, background,
-  light. Ten frames of one moment are one example with nine copies.
-- **Bucket, do not crop.** Trainers bucket by aspect ratio; centre-cropping a
-  1080×1920 phone photograph discards 44% of it and takes the crown of the head
-  whenever the subject is not dead centre.
-- **One short edge across the set.** A 2048 px image holds four times the
-  information of a 1024 px one, and hyperparameters tuned for 1024 turn
-  destructive against it. And never train above the source: a 1080p original
-  trained at 2048 teaches the upscaler's artefacts and calls them the subject.
-- **`autorot` before measuring anything.** A JPEG stores sensor pixels plus an
-  orientation tag; viewers apply it, libvips hands back what is stored. Four
-  frames in one set were `orientation=6`, measured as landscape, and written into
-  the dataset on their side. A LoRA trained on that learns a sideways face.
-- **The filename carries no training signal.** ai-toolkit resolves `<stem>.txt`,
-  then `default.txt`, then a configured default, then the empty string — it never
-  reads the filename. So hashes and readable stems are equally safe, and the
-  thing worth checking is that both halves of a pair still agree. A broken pair
-  is not an error; it is a silently uncaptioned image, indistinguishable from the
-  8% that `caption_dropout_rate` empties on purpose.
-- **Edit every caption by hand.** The token is knowable; what is *in* the picture
-  is not measurable from pixels, and a guessed caption teaches the wrong word.
+**Never grade a dataset.** The model would learn Portra's grain as part of the
+person's face, welded on and impossible to ask for less of later. A graded set
+looks better in a contact sheet, which is exactly when someone will be tempted.
+
+**Normalise exposure, because brightness says nothing about a face.** Correct
+toward the set's own median so the correction cannot introduce a centre the
+photographs did not already have.
+
+**Leave colour variety alone unless it is extreme.** The more the light differs
+between frames, the harder the model works to separate the person from the
+room. Only a cast strong enough to become an attribute of the face is a
+problem. Measure it as a channel *ratio* — levels conflate cast with exposure,
+so a dark frame reads far cleaner than it is.
+
+**Vary everything else on purpose**: angle, distance, expression, background,
+light. Ten frames of one moment are one example with nine copies.
+
+**Bucket, do not crop.** Trainers bucket by aspect ratio; centre-cropping a
+1080×1920 phone photograph discards 44% of it and takes the crown of the head
+whenever the subject is not dead centre.
+
+**One short edge across the set.** A 2048 px image holds four times the
+information of a 1024 px one, and hyperparameters tuned for 1024 turn
+destructive against it. And never train above the source: a 1080p original
+trained at 2048 teaches the upscaler's artefacts and calls them the subject.
+
+**`autorot` before measuring anything.** A JPEG stores sensor pixels plus an
+orientation tag; viewers apply it, libvips hands back what is stored. Four
+frames in one set were `orientation=6`, measured as landscape, and written into
+the dataset on their side. A LoRA trained on that learns a sideways face.
+
+**The filename carries no training signal.** ai-toolkit resolves `<stem>.txt`,
+then `default.txt`, then a configured default, then the empty string — it never
+reads the filename. So hashes and readable stems are equally safe, and the
+thing worth checking is that both halves of a pair still agree. A broken pair
+is not an error; it is a silently uncaptioned image, indistinguishable from the
+8% that `caption_dropout_rate` empties on purpose.
+
+**Edit every caption by hand.** The token is knowable; what is *in* the picture
+is not measurable from pixels, and a guessed caption teaches the wrong word.
 
 ## Checks
 
