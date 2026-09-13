@@ -425,6 +425,17 @@ end
     assert_empty findings(:NO_PUTS, %(  puts "hello"\n), path: "MASTER/bin/master")
   end
 
+  # The gate ladder's exemption names one file, so it is checked against the
+  # file where it lives: the source read here raises the day gate_chain moves,
+  # and the rule fires on it the day the exemption's address goes stale.
+  def test_no_puts_exempts_gate_chain_where_it_actually_lives
+    relative = "lib/operator/gate_chain.rb"
+    source = File.read(File.join(Master::ROOT, relative))
+
+    assert_match(/^\s*puts\b/, source, "gate_chain no longer prints; the exemption has no subject")
+    assert_empty findings(:NO_PUTS, source, path: relative)
+  end
+
   def test_no_puts_still_catches_a_bare_puts_in_library_code
     refute_empty findings(:NO_PUTS, %(  puts "hello"\n), path: "lib/ground/rules.rb")
   end
