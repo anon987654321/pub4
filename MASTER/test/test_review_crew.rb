@@ -24,7 +24,8 @@ class TestReviewCrew < Minitest::Test
   def setup
     @root = Dir.mktmpdir("crew_")
     FileUtils.mkdir_p(File.join(@root, "app", "auth"))
-    File.write(File.join(@root, "app", "auth", "login.rb"), "def go(a)\n  system(\"ls\")  \nend\n")
+    File.write(File.join(@root, "app", "auth", "login.rb"), "def go(a)\n  a  \nend\n")
+    File.write(File.join(@root, "plain.rb"), "x = 1\n")
   end
 
   def teardown
@@ -83,6 +84,13 @@ class TestReviewCrew < Minitest::Test
                  result.value![:agents].map { |entry| entry[:agent] }.sort
     assert_equal "summary 1\n\nsummary 2", result.value![:summary]
     assert_match(/OWASP/, agent.prompts.last, "a file under auth/ triggers the security audit")
+  end
+
+  def test_a_quiet_file_outside_a_sensitive_path_gets_no_audit
+    agent = Agent.new([], false)
+    Crew.new(agent:, root: @root).run(target: "plain.rb")
+
+    assert_equal 1, agent.prompts.size
   end
 
   def test_without_the_model_the_crew_still_summarises_locally
