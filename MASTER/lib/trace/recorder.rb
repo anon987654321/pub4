@@ -83,7 +83,9 @@ module Master
       def load_last_from_disk
         files = Dir.glob(File.join(@dir, "*.jsonl")).sort
         return if files.empty?
-        File.foreach(files.last) { |l| last_line = l }
+
+        # Streamed rather than read whole: a day of turns can be a large file.
+        last_line = File.foreach(files.last).inject(nil) { |_, line| line }
         last_line ? JSON.parse(last_line, symbolize_names: true) : nil
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "recorder.load_last_from_disk")

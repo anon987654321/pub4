@@ -35,9 +35,13 @@ module Master
       rescue StandardError; @enabled = false
       end
 
-      def self.span(_name, _attrs = {})
-        yield unless @enabled && @tracer
-      rescue StandardError; yield
+      # The block runs exactly once whatever the tracer does: a span wraps
+      # event_bus.publish and the audit append, so skipping it drops events and
+      # re-running it after a raise appends twice.
+      def self.span(name, attrs = {}, &block)
+        return yield unless @enabled && @tracer
+
+        @tracer.in_span(name, attributes: stringify(attrs), &block)
       end
 
       def self.stringify(hash)
