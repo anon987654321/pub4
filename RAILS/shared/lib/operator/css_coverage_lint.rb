@@ -178,11 +178,6 @@ module Operator
 # next one that does not is a real finding on the day it lands rather than a
 # number someone argues about later.
 #
-# unused_selector is not zero because visualizers_2d_reference.js is preserved
-# source that nothing loads, imports or compiles -- its own header says so --
-# and it carries this file's sanctioned opt-out marker. Its class names are out
-# of the used set, so rules elsewhere that only it referenced read as orphans.
-# Recorded rather than chased, and recorded rather than hidden.
 # 154 -> 153 (2026-09-08), and the reason is the instrument rather than the CSS.
 # `deal-cat` left the unused set. It was never unused: every one of its call
 # sites wrote `class: "deal-cat#{" active" if …}"`, and a literal search cannot

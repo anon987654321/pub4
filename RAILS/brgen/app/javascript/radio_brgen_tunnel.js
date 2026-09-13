@@ -37,8 +37,9 @@ const BAND_BASS = 0.012
 const BAND_MID = 0.09
 
 class AudioEngine {
-  constructor({ iframe, trackDisplay, tracks = DEFAULT_TRACKS }) {
+  constructor({ iframe, trackDisplay, tracks = DEFAULT_TRACKS, onTrackChange }) {
     this.iframe = iframe
+    this.onTrackChange = onTrackChange
     this.trackDisplay = trackDisplay
     this.tracks = tracks.length ? tracks : DEFAULT_TRACKS
     this.isPlaying = false
@@ -178,6 +179,7 @@ class AudioEngine {
     this.retryCount = 0
     this.loadCurrentTrack()
     this.updateTrackDisplay()
+    this.onTrackChange?.()
   }
 
   getAudioData() {
@@ -809,11 +811,15 @@ export class RadioBrgen {
     this.isStarted = false
     this.isMobile = window.innerWidth < 768 || "ontouchstart" in window
     this._boundHandlers = []
+    // 0 is the tunnel. Each new track steps to the next of radio_visualizers.js's
+    // seven 2D renderers and wraps back round to the tunnel.
+    this.vizMode = 0
 
     this.audioEngine = new AudioEngine({
       iframe: options.youtubePlayer,
       trackDisplay: options.trackDisplay,
-      tracks: options.tracks
+      tracks: options.tracks,
+      onTrackChange: () => this.cycleVisualizer()
     })
     this.visualEngine = new VisualEngine(this.canvas)
 
@@ -833,6 +839,23 @@ export class RadioBrgen {
     this.audioEngine.start()
     if (this.overlay) this.overlay.hidden = true
     this.onStart?.()
+  }
+
+  // The renderers load on the first track change rather than with the page, so
+  // a visit that hears one track fetches none of them.
+  async cycleVisualizer() {
+    this._deck ??= import("radio_visualizers")
+      .then(({ VisualizerDeck }) => new VisualizerDeck(this.canvas))
+      .catch((error) => {
+        console.warn("radio_brgen_tunnel: visualizers unavailable, staying on the tunnel", error)
+        this._deck = null
+        return null
+      })
+    const deck = await this._deck
+    if (!deck || this._destroyed) return
+    this.deck = deck
+    this.vizMode = (this.vizMode + 1) % deck.size
+    deck.show(this.vizMode, this.visualEngine.w, this.visualEngine.h)
   }
 
   setupGUI() {
@@ -905,7 +928,10 @@ export class RadioBrgen {
     }
     const onResize = () => {
       clearTimeout(this._resizeTimer)
-      this._resizeTimer = setTimeout(() => this.visualEngine.resize(), 250)
+      this._resizeTimer = setTimeout(() => {
+        this.visualEngine.resize()
+        this.deck?.resize(this.vizMode, this.visualEngine.w, this.visualEngine.h)
+      }, 250)
     }
 
     document.addEventListener("mousemove", onMouseMove)
@@ -964,7 +990,10 @@ export class RadioBrgen {
       try {
         const audioData = this.audioEngine.getAudioData()
         this.visualEngine.update(audioData)
-        this.visualEngine.render()
+        // The tunnel keeps its state moving underneath a 2D renderer, so it
+        // resumes mid-flight rather than from a cold start when the cycle returns.
+        if (this.vizMode === 0 || !this.deck) this.visualEngine.render()
+        else this.deck.frame(this.vizMode, audioData)
       } catch (error) {
         if (typeof console !== "undefined" && console.warn) {
           console.warn("radio_brgen_tunnel: animation frame failed, continuing", error)
@@ -976,7 +1005,9 @@ export class RadioBrgen {
   }
 
   destroy() {
+    this._destroyed = true
     cancelAnimationFrame(this._raf)
+    this.deck?.destroy()
     this.audioEngine.stop()
     if (this.gui) this.gui.destroy()
     this._boundHandlers.forEach(([target, event, handler]) => {
