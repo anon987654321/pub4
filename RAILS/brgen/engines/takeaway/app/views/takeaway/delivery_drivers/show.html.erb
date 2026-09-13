@@ -17,6 +17,7 @@
 
 <% if authenticated? && Current.user == @delivery_driver.user %>
   <%= form_with model: @delivery_driver, url: delivery_driver_path(@delivery_driver), scope: :delivery_driver, method: :patch do |form| %>
+    <%= render "shared/errors", object: @delivery_driver %>
     <div class="field">
       <%= form.label :vehicle_type %>
       <%= form.select :vehicle_type, Takeaway::DeliveryDriver::VEHICLE_TYPES.map { |type| [type.humanize, type] }, include_blank: true %>

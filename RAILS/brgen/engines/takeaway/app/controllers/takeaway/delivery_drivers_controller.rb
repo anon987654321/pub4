@@ -24,7 +24,9 @@ module Takeaway
     private
 
     def set_driver
-      @delivery_driver = Takeaway::DeliveryDriver.find(params[:id])
+      # includes(:user): show names the driver, and strict loading raises on a
+      # lazy belongs_to read off a record found by id.
+      @delivery_driver = Takeaway::DeliveryDriver.includes(:user).find(params[:id])
     end
 
     def authorize_owner!

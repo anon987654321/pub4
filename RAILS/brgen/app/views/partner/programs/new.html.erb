@@ -3,6 +3,7 @@
 <section>
   <%= tag.h1 t("partner.new_heading", store: @store.name) %>
   <%= form_with model: @program, url: partner_programs_path(store_id: @store.slug), class: "form-wrap" do |f| %>
+    <%= render "shared/errors", object: @program %>
     <%= hidden_field_tag :store_id, @store.slug %>
     <div class="field"><%= f.label :name %><%= f.text_field :name, required: true %></div>
     <div class="field">

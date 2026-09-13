@@ -6,6 +6,7 @@
   <%# Same doubled-prefix trap as playlist sets: route_key is already
       "tv_live_streams", and create only exists nested under a channel. %>
   <%= form_with model: @live_stream, url: channel_live_streams_path(@channel) do |form| %>
+    <%= render "shared/errors", object: @live_stream %>
     <%= tag.fieldset do %>
       <%= form.label :title %>
       <%= form.text_field :title, required: true %>

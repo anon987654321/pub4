@@ -6,6 +6,7 @@
     <%= tag.h1 @live_stream.title %>
     <%= tag.span @live_stream.status, class: "live-badge" %>
   <% end %>
+  <%= render "shared/errors", object: @live_stream %>
 
   <div data-controller="tv-player" data-tv-player-auto-wake-lock-value="true">
     <div class="tv-media">

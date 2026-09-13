@@ -20,9 +20,11 @@ class RegistrationsController < ApplicationController
       return
     end
 
-    user = User.new(registration_params)
-    if user.save
-      start_new_session_for user
+    # An ivar so the re-rendered form shows why the save failed; a local left the
+    # view building a blank User.new with no errors to show.
+    @user = User.new(registration_params)
+    if @user.save
+      start_new_session_for @user
       redirect_to root_path, notice: t("flash.welcome")
     else
       render :new, status: :unprocessable_entity

@@ -3,6 +3,7 @@
 <section>
   <%= tag.h1 t("partner.edit_heading") %>
   <%= form_with model: @program, url: partner_program_path(@program), method: :patch, class: "form-wrap" do |f| %>
+    <%= render "shared/errors", object: @program %>
     <div class="field"><%= f.label :name %><%= f.text_field :name, required: true %></div>
     <div class="field"><%= f.label :status %><%= f.select :status, Partner::Program::STATUSES %></div>
     <div class="field"><%= f.label :commission_model %><%= f.select :commission_model, Partner::Program::COMMISSION_MODELS %></div>
