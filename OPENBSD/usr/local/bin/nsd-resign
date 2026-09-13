@@ -21,7 +21,8 @@ def expiry_date(signed_zone)
   File.read(signed_zone).scan(/RRSIG\s+\S+\s+\d+\s+\d+\s+\d+\s+(\d{14})/).flatten.map { |s|
     Date.strptime(s, "%Y%m%d%H%M%S")
   }.min
-rescue
+rescue StandardError => e
+  log "cannot read expiry from #{signed_zone} (#{e.class}: #{e.message}) — resigning"
   nil
 end
 

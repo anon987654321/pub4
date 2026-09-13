@@ -23,8 +23,8 @@
 ZERO = "0" * 40
 
 def commits(range)
-  IO.popen(["git", "log", "--format=%h%an%ar%s", range], &:read)
-    .lines(chomp: true).reject(&:empty?).map { |line| line.split("") }
+  IO.popen(["git", "log", "--format=%h%x01%an%x01%ar%x01%s", range], &:read)
+    .lines(chomp: true).reject(&:empty?).map { |line| line.split("\x01") }
 end
 
 # What this session committed, per post-commit. Absent, this is empty and every
@@ -43,7 +43,8 @@ def session_commits
     recorded_id, sha = line.split(" ", 2)
     sha if recorded_id == id
   end
-rescue StandardError
+rescue StandardError => e
+  warn "pre-push: session ledger unreadable (#{e.class}: #{e.message}); every commit reads as unknown"
   []
 end
 
