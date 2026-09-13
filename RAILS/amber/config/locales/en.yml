@@ -390,6 +390,7 @@ en:
     master_photo_html: "MASTER photograph is enabled (<code>AMBER_ENABLE_MASTER_PHOTO=1</code>) — look photos may attach when generation succeeds."
     submit_to_compose: "Submit the form to compose from clothes you already own."
   pwa:
+    description: "Social fashion. Share outfits, keep a wardrobe, and dress with people you follow."
     add_item: "Add item"
     item: "Item"
     create_outfit: "Create outfit"

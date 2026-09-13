@@ -43,6 +43,27 @@ class PortsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, ports_path(sort: "updated")
   end
 
+  def test_a_search_with_no_results_renders_the_empty_state
+    port = seed_port
+    get ports_url(q: "zzzz-no-such-port")
+    assert_response :success
+    assert_select "#ports a[href=?]", port_path(port), count: 0
+    assert_includes response.body, I18n.t("empty.no_ports")
+    assert_includes response.body, I18n.t("ports.empty_body")
+    assert_not_includes response.body, I18n.t("ports.empty_unimported")
+  end
+
+  def test_the_review_notice_is_translated
+    port = seed_port
+    user = User.strict_loading(false).create!(email_address: "rev-#{SecureRandom.hex(4)}@bsdports.test", password: "password")
+    post session_path, params: { email_address: user.email_address, password: "password" }
+
+    post review_port_path(port)
+
+    issues = [ I18n.t("flash.review_issue.missing_homepage"), I18n.t("flash.review_issue.weak_comment") ].join(", ")
+    assert_equal I18n.t("flash.review_issues", issues: issues), flash[:notice]
+  end
+
   private
 
   # A Port needs a platform and a category; the fixtures carry only the platform.

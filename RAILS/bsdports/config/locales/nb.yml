@@ -99,6 +99,19 @@ nb:
     unwatch: "Slutt å følge"
     watch: "Følg"
     confirm_delete_comment: "Slette denne kommentaren?"
+    explore_assistant:
+      identity: "%{name} (%{version}) i %{category} — %{comment}."
+      no_comment: "ingen beskrivelse registrert"
+      uncategorized: "ukategorisert"
+      maintainer: "Vedlikeholder: %{name}."
+      unknown: "ukjent"
+      pkgpath: "Pkgpath: %{pkgpath}."
+      no_dependencies: "Ingen registrerte avhengigheter."
+      runtime_deps: "Kjøretidsavhengigheter: %{names}"
+      build_deps: "Byggavhengigheter: %{names}"
+      no_advisories: "Ingen nylige sikkerhetsvarsler i den lokale databasen."
+      advisories: "Sikkerhetsnotater: %{list}."
+      reverse_deps: "Andre porter som avhenger av denne: %{names}."
   empty:
     no_ports: "Ingen porter funnet"
     no_catalog: "Ingen porter importert"
@@ -120,6 +133,7 @@ nb:
     all_categories: "Alle kategorier"
     all_maintainers: "Alle maintainere"
   pwa:
+    description: "Bla gjennom og søk i BSD-portsamlingen. Finn pakker, følg versjoner og utforsk BSD-økosystemet."
     search_ports: "Søk porter"
     search: "Søk"
   install:
@@ -144,6 +158,11 @@ nb:
   # The app's one hardcoded flash string, translated 2026-08-11.
   flash:
     cve_cross_reference_complete: "CVE-kryssreferansen er fullført."
+    review_issues: "MASTER-gjennomgang: %{issues}"
+    review_clean: "MASTER-gjennomgang: ingen problemer funnet i demoskanningen"
+    review_issue:
+      missing_homepage: "mangler HOMEPAGE"
+      weak_comment: "svak COMMENT"
   # Shared::PlaceHelper renders these wherever a record carries coordinates.
   place:
     within_a_km: "under 1 km unna"

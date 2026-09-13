@@ -99,6 +99,19 @@ en:
     unwatch: "Unwatch"
     watch: "Watch"
     confirm_delete_comment: "Delete this comment?"
+    explore_assistant:
+      identity: "%{name} (%{version}) in %{category} — %{comment}."
+      no_comment: "no comment recorded"
+      uncategorized: "uncategorized"
+      maintainer: "Maintainer: %{name}."
+      unknown: "unknown"
+      pkgpath: "Pkgpath: %{pkgpath}."
+      no_dependencies: "No recorded dependencies."
+      runtime_deps: "Runtime deps: %{names}"
+      build_deps: "Build deps: %{names}"
+      no_advisories: "No recent security advisories in local DB."
+      advisories: "Security notes: %{list}."
+      reverse_deps: "Other ports depending on this: %{names}."
   empty:
     no_ports: "No ports found"
     no_catalog: "No ports imported"
@@ -122,6 +135,7 @@ en:
     all_categories: "All categories"
     all_maintainers: "All maintainers"
   pwa:
+    description: "Browse and search the BSD ports collection. Find packages, track versions, and explore the BSD ecosystem."
     search_ports: "Search ports"
     search: "Search"
   install:
@@ -146,6 +160,11 @@ en:
   # Mirrors nb.yml's flash: block.
   flash:
     cve_cross_reference_complete: "CVE cross-reference complete."
+    review_issues: "MASTER review: %{issues}"
+    review_clean: "MASTER review: clean (no issues found in demo scan)"
+    review_issue:
+      missing_homepage: "missing HOMEPAGE"
+      weak_comment: "weak COMMENT"
   # Shared::PlaceHelper renders these wherever a record carries coordinates.
   place:
     within_a_km: "less than 1 km away"

@@ -389,6 +389,7 @@ nb:
     master_photo_html: "MASTER-fotografering er slått på (<code>AMBER_ENABLE_MASTER_PHOTO=1</code>) — bilder kan følge med når genereringen lykkes."
     submit_to_compose: "Send inn skjemaet for å sette sammen antrekk av klær du allerede eier."
   pwa:
+    description: "Sosial mote. Del antrekk, hold orden på garderoben og kle deg sammen med folk du følger."
     add_item: "Legg til plagg"
     item: "Plagg"
     create_outfit: "Opprett antrekk"

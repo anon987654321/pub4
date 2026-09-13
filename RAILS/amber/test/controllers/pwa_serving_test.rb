@@ -22,6 +22,7 @@ class PwaServingTest < ActionDispatch::IntegrationTest
     manifest = JSON.parse(response.body)
     assert_equal "Amber", manifest["name"], "the app name comes from pwa_app_name"
     refute_empty manifest["icons"], "an installable manifest needs an icon"
+    assert_equal I18n.t("pwa.description", locale: :nb), manifest["description"]
     assert_includes %w[standalone fullscreen minimal-ui], manifest["display"]
   end
 
