@@ -146,6 +146,17 @@ class TestKernelSpine < Minitest::Test
     assert_equal :scope_creep, verdict.by
   end
 
+  # The repo root holds four trees. A bin/ or dotfiles/ segment sits inside one
+  # of them, so a MASTER-relative bin/ write is not a third tree.
+  def test_a_bin_segment_is_not_a_tree
+    memory = Master::Core::Memory.new
+    memory.record(Master::Core::Effect.write("MASTER/a.rb", "x"), Master::Core::Observation.ok("ok"))
+    memory.record(Master::Core::Effect.write("RAILS/b.rb", "x"), Master::Core::Observation.ok("ok"))
+
+    assert_nil Master::Core::Constitution.scope_creep_reason("bin/check", memory.proof)
+    assert_nil Master::Core::Constitution.scope_creep_reason("dotfiles/zshrc", memory.proof)
+  end
+
   def test_two_hats_blocks_a_mixed_large_commit
     memory = Master::Core::Memory.new
     memory.record(Master::Core::Effect.write("MASTER/a.rb", "x\n" * 201), Master::Core::Observation.ok("ok"))
