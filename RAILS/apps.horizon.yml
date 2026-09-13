@@ -8,12 +8,17 @@ horizon:
     core:
       - { name: AI feed ranking, status: planned }
       - { name: creator monetization, status: planned }
+      - { name: inbound ActivityPub storage, status: planned, notes: "outbound federation is done; the inbox verifies remote Create/Announce/Like and drops them, because storing them needs remote media proxying, remote moderation and a blocklist" }
+      - { name: recurring events / ticketing beyond an external link, status: planned }
+      - { name: messenger voice and video calls (WebRTC), status: planned }
     subapp_tv:
       - { name: live stream infrastructure, status: planned }
     subapp_dating:
-      - { name: premium memberships / boost purchases, status: planned }
+      - { name: premium memberships / boost / super-like purchases, status: planned }
     subapp_marketplace:
       - { name: AI recommendations, status: planned }
+      - { name: coupons / referral credit / bundle pricing, status: planned }
+      - { name: anonymised buyer-seller contact relay, status: planned, notes: "needs inbound mail routing and per-listing addresses on vm23; brgen.no mail is outbound-verified only" }
     subapp_playlist:
       - { name: creator donations / ad-free tier, status: planned }
   amber:
