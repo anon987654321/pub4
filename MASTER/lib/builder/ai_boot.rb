@@ -178,10 +178,10 @@ module Master
     # A thread whose death says so.
     #
     # abort_on_exception is false on every background thread here, which is
-    # right — a watcher falling over must not take the process with it. What was
-    # missing is the other half: with report/abort both off and no rescue, the
-    # thread simply stops and the symptom is that a feature quietly does
-    # nothing. A dead WatchLoop looks exactly like a hang.
+    # right — a watcher falling over must not take the process with it. The rescue
+    # is the other half: with report and abort both off and nothing rescuing, a
+    # thread simply stops, its feature quietly does nothing, and a dead WatchLoop is
+    # indistinguishable from a hang.
     #
     # So the exception is published on the bus and logged, and the thread still
     # dies alone.
@@ -224,11 +224,10 @@ module Master
 
     # One proposer at a time.
     #
-    # fix_loop:clean and fix_loop:plateau both fire every time a pass settles,
-    # and each started a thread with nothing to stop a second one starting while
-    # the first was still working. A fix loop that settles often — which is what
-    # a working one does — leaked a thread per settle, and they pile up
-    # invisibly because none of them is joined.
+    # fix_loop:clean and fix_loop:plateau both fire every time a pass settles.
+    # Without the claim below each one starts a thread while the last still runs,
+    # and a fix loop that settles often — which is what a working one does — piles
+    # up threads that nothing ever joins.
     def subscribe_single_proposer(bus:, propose_tree:)
       proposing = { busy: false }
       gate = Mutex.new

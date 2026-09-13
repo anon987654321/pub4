@@ -84,10 +84,9 @@ class TtsJob
     Thread.new do
       Thread.current.name = "tts-job-worker"
       # report_on_exception is off because a synthesis failure is not a
-      # backtrace the operator needs. What replaces it is the rescue below:
-      # without one, a single bad job killed the worker outright and the pool
-      # only noticed on the next spawn, so TTS went quiet with nothing in the
-      # log to say why.
+      # backtrace the operator needs, and the rescue below is what makes that safe:
+      # without it one bad job kills the worker, the pool notices only on the next
+      # spawn, and TTS goes quiet with nothing in the log to say why.
       Thread.current.report_on_exception = false
       loop do
         entry = @queue_mutex.synchronize do

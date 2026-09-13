@@ -44,9 +44,9 @@ Rails.application.config.after_initialize do
         "master:events",
         ev.merge(event: type, type:),
       )
-      # warn, not debug. A broadcast that fails is the operator console going
-      # quiet, and production runs at info — logging it at debug meant the one
-      # symptom anybody would notice had no line in the log explaining it.
+      # warn, not debug. A broadcast that fails is the operator console going quiet,
+      # and production logs at info, so at debug the one symptom anybody notices has
+      # no line in the log explaining it.
     rescue StandardError => e
       Rails.logger.warn("cable_bridge: #{e.class}: #{e.message}")
     end
