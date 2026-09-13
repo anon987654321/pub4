@@ -23,10 +23,13 @@ module Master
             next unless wrapper
             name = tool.class.name.split("::").last
             meta = @tool_registry.fetch(name, {})
+            # A tool data/tools.yml never classified is withheld like a dangerous
+            # one: what nobody has judged is not safe by omission.
+            dangerous = meta.fetch("tier", "dangerous") == "dangerous"
             next unless tool_available_for_context?(meta)
             next if allowed && !allowed.include?(name)
-            next if allowed.nil? && !Fiber[:master_elevated] && meta["tier"] == "dangerous"
-            next if tier == "cheap" && meta["tier"] == "dangerous"
+            next if allowed.nil? && !Fiber[:master_elevated] && dangerous
+            next if tier == "cheap" && dangerous
             wrapper.new(tool)
           end
         rescue StandardError => err

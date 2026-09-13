@@ -32,7 +32,9 @@ module Master
         load_definitions.map do |row|
           {
             "name" => "DynamicHttp",
-            "tier" => row.fetch("tier", "safe"),
+            # An HTTP endpoint reaches the open world, so a row that does not
+            # declare itself safe is not treated as safe.
+            "tier" => row.fetch("tier", "dangerous"),
             "visitor" => row["visitor"] == true,
             "default" => true,
             "dynamic_name" => row["name"],

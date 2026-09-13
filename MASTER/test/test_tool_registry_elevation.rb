@@ -44,6 +44,27 @@ class ToolRegistryElevationTest < Minitest::Test
     Fiber[:master_paired] = nil
   end
 
+  def test_an_unclassified_tool_is_withheld_until_elevated
+    harness = RegistryHarness.new
+    harness.tools << Master::Io::WebFetch.allocate
+    Fiber[:master_visitor] = false
+    Fiber[:master_elevated] = false
+
+    names = harness.send(:build_llm_tools).map { |tool| tool.class.name }
+
+    refute_includes names, "Master::Io::LLM::WebFetch"
+    assert_includes names, "Master::Io::LLM::ReadFile"
+  ensure
+    Fiber[:master_visitor] = nil
+    Fiber[:master_elevated] = nil
+  end
+
+  def test_a_dynamic_tool_without_a_tier_is_dangerous
+    Master::Io::DynamicTools.stub(:load_definitions, [{ "name" => "ping", "url" => "https://example.com" }]) do
+      assert_equal "dangerous", Master::Io::DynamicTools.registry_rows.first["tier"]
+    end
+  end
+
   def test_paired_visitor_does_not_receive_shell
     harness = RegistryHarness.new
     Fiber[:master_visitor] = true
