@@ -1,7 +1,6 @@
 {
   "schema": 1,
   "generated_from": "RAILS/apps.yml",
-  "generated_at": "2026-07-15",
   "apps": [
     {
       "name": "amber",
@@ -19,7 +18,6 @@
       "port": 47312
     }
   ],
-  "standalone_apps": [],
   "master_face": {
     "name": "master",
     "domain": "ai.brgen.no",

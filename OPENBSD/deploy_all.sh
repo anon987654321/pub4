@@ -84,7 +84,7 @@ if command -v jq >/dev/null 2>&1; then
   while IFS=$'\t' read -r app port; do
     vssh "nc -z 127.0.0.1 ${port}" 2>/dev/null && log "  ${app} listening on :${port}" \
       || log "WARN: ${app} not listening on :${port}"
-  done < <(jq -r '(.apps[]?, .standalone_apps[]?) | [.name, .port] | @tsv' "${DEPLOY_ROOT}/deploy_inventory.json")
+  done < <(jq -r '.apps[] | [.name, .port] | @tsv' "${DEPLOY_ROOT}/deploy_inventory.json")
 fi
 
 if [[ $RUN_REMOTE_HEALTH == 1 ]]; then

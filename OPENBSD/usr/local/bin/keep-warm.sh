@@ -20,6 +20,11 @@
 set -e
 export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 
+# A heartbeat on every run, because this job logs only when a hit is slow or
+# fails: without it "all warm" and "never ran" are the same empty log.
+# health_check.rb reads the file's age.
+date +%s > /var/db/keep_warm_seen 2>/dev/null || true
+
 # Loopback and a Host header rather than the public name: this is about keeping
 # the Ruby process resident, and going out through relayd and back would measure
 # the network as well as pay for TLS on a box that has no spare core.

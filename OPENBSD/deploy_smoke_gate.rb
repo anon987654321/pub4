@@ -36,10 +36,6 @@ def check_relayd(failures)
   master_json = File.join(ROOT, "OPENBSD", "deploy_inventory.json")
   if File.file?(master_json)
     inventory = JSON.parse(File.read(master_json))
-    Array(inventory.fetch("standalone_apps", [])).each do |entry|
-      assert_forward(relayd, failures, entry.fetch("name"), entry.fetch("port"), entry.fetch("domain"))
-    end
-
     if (master_entry = inventory.dig("master_face"))
       master_port = master_entry.fetch("port")
       failures << "relayd: master backend missing" unless relayd.include?("forward to <master>")

@@ -1,8 +1,18 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# Regenerate OPENBSD/deploy_inventory.json from RAILS/apps.yml.
+#   ruby OPENBSD/bin/sync_deploy_inventory.rb
+# No date in the output: a stamp that moves on every run makes an unchanged
+# inventory look changed, and port_inventory already says when the two disagree.
+
 require "json"
 require "yaml"
+
+if ARGV.intersect?(%w[-h --help])
+  puts "usage: ruby OPENBSD/bin/sync_deploy_inventory.rb   # rewrites OPENBSD/deploy_inventory.json from RAILS/apps.yml"
+  exit 0
+end
 
 ROOT = File.expand_path("../..", __dir__)
 APPS_YML = File.join(ROOT, "RAILS", "apps.yml")
@@ -16,7 +26,6 @@ end.sort_by { |row| row["name"] }
 payload = {
   "schema" => 1,
   "generated_from" => "RAILS/apps.yml",
-  "generated_at" => Time.now.utc.strftime("%Y-%m-%d"),
   "apps" => apps,
   "master_face" => {
     "name" => "master",

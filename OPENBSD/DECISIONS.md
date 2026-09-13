@@ -196,7 +196,9 @@ Two related traps found the same day:
 
 - `OPENBSD/OPERATOR.sh` — full vm23 OpenBSD installer (etc/usr/var, relayd,
   services)
-- `RAILS/deploy.sh` — Rails app copy-tree deploy only (brgen, amber, bsdports)
+- `OPENBSD/bin/vps-deploy <app|all>` — the routine deploy, run as dev
+- `RAILS/<app>/<app>.sh` — one app's copy-tree deploy, named by `apps.yml`'s
+  `deploy_script`; `RAILS/deploy.sh` is only a dispatcher over these
 
 ## `/etc/doas.conf` Installs Only On A Deliberate Root Run (2026-08-02)
 
@@ -241,12 +243,13 @@ copy.
 - **Web "tap to start" hardening** — platform-level guard in
   `chat/index.html.erb` blocks WebGL until primer tap.
 
-## Open decisions (2026-07-10)
+## No staging environment (2026-07-10)
 
-- **No staging environment.** vm23 is the only environment; a full staging copy
-  would worsen 1-vCPU/1GB pressure (see `OPENBSD/resource_guard.sh`).
-- **Auto-commit atomicity.** Unrelated automated commits to `main` sometimes
-  bundle unrelated changes; scope commits to one concern each.
+vm23 is the only environment. A full staging copy would worsen 1-vCPU/1GB
+pressure (see `OPENBSD/resource_guard.sh` and `vm_resource.yml`), so a proposal
+to add one has to arrive with a second box, not a second set of services on this
+one. Commit atomicity, once listed beside this, is enforced by the pre-commit
+hook in `dev/githooks/` and is not deploy policy.
 
 ## Every gate carries its known-bad fixture — 2026-08-22
 

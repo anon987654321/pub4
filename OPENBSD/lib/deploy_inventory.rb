@@ -26,15 +26,6 @@ module Deploy
       data.fetch("apps").map { |entry| app_from_json(entry) }
     end
 
-    def standalone_apps(path: File.join(root, "OPENBSD", "deploy_inventory.json"))
-      data = JSON.parse(File.read(path))
-      Array(data["standalone_apps"]).map { |entry| app_from_json(entry) }
-    end
-
-    def all_deploy_apps(path: File.join(root, "OPENBSD", "deploy_inventory.json"))
-      master_apps(path: path) + standalone_apps(path: path)
-    end
-
     private
 
     REQUIRED_APP_KEYS = %w[domain port deploy_script deploy_root].freeze

@@ -16,12 +16,8 @@ require "open3"
 # only installed deliberately by OPERATOR.sh (root-run), never auto-synced from
 # a user-writable tree. See TODO.md root_dot_sources_dev_owned_repo.
 
-BACKENDS = {
-  "brgen" => 38182,
-  "amber" => 61352,
-  "master" => 53187,
-  "bsdports" => 47312
-}.freeze
+# No port table here: stale_backends reads each table's name and port from
+# `relayctl show hosts`, so relayd.conf is the only list this watchdog follows.
 
 def run(*cmd)
   out, status = Open3.capture2e(*cmd)

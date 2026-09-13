@@ -1,8 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# encoding: utf-8
-
 require "json"
 require "open3"
 require "optparse"
@@ -25,7 +23,8 @@ options = {
 
 OptionParser.new do |parser|
   parser.banner = "Usage: ruby34 OPENBSD/health_check.rb [--core|--all-ready-apps] [--public|--public-only] [--json]"
-  parser.on("--core", "Check only core infrastructure plus brgen/master") { options[:core] = true }
+  parser.on("--core", "Core services only: nsd, httpd, relayd, smtpd (required — it carries johann@brgen.no), " \
+                      "brgen, and master, which is a service rather than an apps.yml app") { options[:core] = true }
   parser.on("--all-ready-apps", "Require every app listed in RAILS/apps.yml") { options[:all_ready_apps] = true }
   parser.on("--public", "Check public HTTPS endpoints, cert files, and externally-routed names") { options[:public] = true }
   # Everything else in this file needs rcctl, pfctl, /etc/relayd.conf and localhost
@@ -45,6 +44,7 @@ options[:all_ready_apps] = false if options[:core]
 failures = []
 # Written by load_apps when it cannot read the fleet, read once apps are loaded.
 APPS_UNREADABLE = +""
+MASTER_FACE_UNREADABLE = +""
 
 # A missing binary is a named failure, not a backtrace. This raised Errno::ENOENT
 # out of Open3 and killed the whole run at the first check: off the box that is
@@ -67,48 +67,31 @@ end
 
 def load_apps
   body = YAML.safe_load(File.read(APPS_YML)) || {}
-  apps = body.fetch("apps")
-  merged = apps.to_h do |name, metadata|
-    [
-      name.to_s,
-      {
-        "domain" => metadata.fetch("domain").to_s,
-        "port" => Integer(metadata.fetch("port")),
-        "standalone" => false,
-      },
-    ]
+  body.fetch("apps").to_h do |name, metadata|
+    [name.to_s, { "domain" => metadata.fetch("domain").to_s, "port" => Integer(metadata.fetch("port")) }]
   end
-  load_standalone_apps.each { |name, metadata| merged[name] = metadata }
-  merged
 rescue StandardError => e
-  # Returning the standalone apps here warned and then carried on, so a run that
-  # could not read the fleet checked master alone and printed "health check ok".
-  # The three Rails apps went unexamined and nothing downstream said so.
-  # APPS_UNREADABLE is picked up as a failure below, which is the only honest
-  # answer a health check has when it does not know what it is meant to check.
+  # A run that cannot read the fleet must not print "health check ok" having
+  # checked master alone. APPS_UNREADABLE is picked up as a failure below, which
+  # is the only honest answer a health check has when it does not know what it
+  # is meant to check.
   APPS_UNREADABLE.replace("apps.yml unreadable: #{e.class}: #{e.message}")
-  load_standalone_apps
+  {}
 end
 
-def load_standalone_apps
-  path = File.join(ROOT, "OPENBSD", "deploy_inventory.json")
-  return {} unless File.file?(path)
+# master is not an apps.yml app — it is not under /home/*/app — so its domain
+# and port come from the deploy inventory, the one other place the fleet is
+# written down, rather than from a literal here. The fallback keeps a run with
+# no inventory checking something, and the failure it records says why.
+MASTER_FACE_FALLBACK = { "domain" => "ai.brgen.no", "port" => 53_187 }.freeze
 
-  data = JSON.parse(File.read(path))
-  Array(data["standalone_apps"]).to_h do |entry|
-    name = entry.fetch("name").to_s
-    [
-      name,
-      {
-        "domain" => entry.fetch("domain").to_s,
-        "port" => Integer(entry.fetch("port")),
-        "standalone" => true
-      }
-    ]
-  end
+def master_face
+  path = File.join(ROOT, "OPENBSD", "deploy_inventory.json")
+  face = JSON.parse(File.read(path)).fetch("master_face")
+  { "domain" => face.fetch("domain").to_s, "port" => Integer(face.fetch("port")) }
 rescue StandardError => e
-  warn "deploy_inventory.json standalone_apps unreadable: #{e.class}: #{e.message}"
-  {}
+  MASTER_FACE_UNREADABLE.replace("deploy_inventory.json master_face unreadable: #{e.class}: #{e.message}")
+  MASTER_FACE_FALLBACK
 end
 
 def service_running?(service)
@@ -131,6 +114,8 @@ end
 
 apps = load_apps
 failures << APPS_UNREADABLE unless APPS_UNREADABLE.empty?
+master = master_face
+failures << MASTER_FACE_UNREADABLE unless MASTER_FACE_UNREADABLE.empty?
 app_ports = apps.transform_values { |metadata| metadata.fetch("port") }
 app_domains = apps.transform_values { |metadata| metadata.fetch("domain") }
 
@@ -187,6 +172,14 @@ heartbeat = "/var/db/core_reclaim_seen"
 if File.exist?(heartbeat)
   age_h = ((Time.now - File.mtime(heartbeat)) / 3600).round(1)
   failures << "core-reclaim: heartbeat #{age_h}h old — the hourly job is not running" if age_h > 3
+end
+
+# keep-warm runs every ten minutes and writes the same kind of heartbeat, so an
+# hour of silence is six missed ticks rather than a quiet box.
+warm_beat = "/var/db/keep_warm_seen"
+if File.exist?(warm_beat)
+  age_h = ((Time.now - File.mtime(warm_beat)) / 3600).round(1)
+  failures << "keep-warm: heartbeat #{age_h}h old — the ten-minute job is not running" if age_h > 1
 end
 
   dns_ok = false
@@ -303,9 +296,7 @@ end
 # Read-only and per app, from the queue database directly rather than by booting
 # Rails, so it costs nothing on a 1 vCPU box.
 if on_box
-  apps.each do |name, metadata|
-    next if metadata["standalone"]
-
+  apps.each_key do |name|
     queue_db = "/home/#{name}/app/storage/production_queue.sqlite3"
     next unless File.readable?(queue_db)
 
@@ -368,7 +359,7 @@ if on_box
   failures.concat(df_ok ? Deploy::DiskUsage.failures(df_out) : ["disk: #{df_out}"])
 end
 
-up_checks = on_box ? { "master" => 53_187 } : {}
+up_checks = on_box ? { "master" => master.fetch("port") } : {}
 ready_apps.each do |name|
   port = app_ports[name]
   failures << "#{name}: missing port in apps.yml" unless port
@@ -380,7 +371,6 @@ up_checks.each do |name, port|
   failures << "#{name} up: #{out.empty? ? "no response on :#{port}" : out}" unless ok
 
   next unless ready_apps.include?(name)
-  next if apps.dig(name, "standalone")
 
   health_ok, health_out = curl_ok?("http://127.0.0.1:#{port}/health", timeout: 20)
   unless health_ok
@@ -444,7 +434,7 @@ end
 
 if options[:public]
   https_checks = {
-    "ai.brgen.no" => "https://ai.brgen.no/up",
+    master.fetch("domain") => "https://#{master.fetch('domain')}/up",
     "brgen.no" => "https://brgen.no/up"
   }
   ready_apps.each do |name|
