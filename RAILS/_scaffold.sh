@@ -3,7 +3,7 @@ set -euo pipefail
 # _scaffold.sh — bootstrap a brand-new Rails app (rails new, Solid stack,
 # auth, storage, action text, security tools, production config). Distinct
 # from deploying an already-tracked app — see _deploy.sh for that.
-# Source this file; do not execute directly. Requires _core.sh, _bundle.sh sourced first.
+# Source this file; do not execute directly. Requires _core.sh, _bundle.sh and _sync.sh sourced first.
 
 create_rails_app() {
   local app_dir=$1
@@ -24,8 +24,8 @@ create_rails_app() {
       log "Bootstrapping gems from amber"
       mkdir -p "${bundle_home}"
       ${_PRIV} mkdir -p "${bundle_home}/gems" "${bundle_home}/cache"
-      ${_PRIV} openrsync -a /home/amber/.bundle/gems/ "${bundle_home}/gems/"
-      ${_PRIV} openrsync -a /home/amber/.bundle/cache/ "${bundle_home}/cache/" 2>/dev/null || true
+      sync_tree /home/amber/.bundle/gems "${bundle_home}/gems" 0
+      [[ -d /home/amber/.bundle/cache ]] && sync_tree /home/amber/.bundle/cache "${bundle_home}/cache" 0 || true
     fi
     mkdir -p "${app_dir}/.bundle"
     print "---\nBUNDLE_PATH: \"${bundle_home}/gems\"" > "${app_dir}/.bundle/config"

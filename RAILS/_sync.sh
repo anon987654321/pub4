@@ -3,6 +3,8 @@ set -euo pipefail
 # _sync.sh — copy-tree sync and shared-file overlays for copy-tree deploy.
 # Source this file; do not execute directly. Requires _core.sh sourced first.
 
+# The tar copy is the default path. openrsync runs only when SYNC_USE_OPENRSYNC
+# is set, and a failure there warns and falls through to the same tar copy.
 sync_tree() {
   local src=$1 dst=$2
   local delete=${3:-1}
