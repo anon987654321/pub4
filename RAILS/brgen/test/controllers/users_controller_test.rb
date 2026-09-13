@@ -41,6 +41,23 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert user, "expected the account to exist"
     assert_not user.guest?
     assert user.sessions.any?, "expected a session for the new account"
+    assert_equal I18n.t("flash.welcome"), flash[:notice]
+  end
+
+  test "a signed-in user is sent past sign-up, and a second post creates nothing" do
+    post users_path, params: { accept_terms: "1", accept_age: "1", user: {
+      email_address: "already@example.test", password: "password123", password_confirmation: "password123"
+    } }
+
+    get new_user_path
+    assert_redirected_to root_path
+
+    assert_no_difference -> { User.where(guest: false).count } do
+      post users_path, params: { accept_terms: "1", accept_age: "1", user: {
+        email_address: "second@example.test", password: "password123", password_confirmation: "password123"
+      } }
+    end
+    assert_redirected_to root_path
   end
 
   test "signup carries the guest's posts onto the new account" do
@@ -66,6 +83,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 
     user = User.find_by(email_address: "carryover@example.test")
     assert_equal user.id, Post.strict_loading(false).find(guest_post.id).user_id
+    assert_equal I18n.t("flash.welcome_guest_merged"), flash[:notice]
   end
 
   test "signup without accepting terms creates no account" do

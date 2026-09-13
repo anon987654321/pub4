@@ -39,6 +39,14 @@ module Shared
 
         skip_before_action :resume_session, **options
       end
+
+      # Sign-up is for visitors without an account; a signed-in user reaching it
+      # goes where a fresh sign-in would. Guests are not authenticated, so a
+      # guest still reaches the form that turns it into an account.
+      def unauthenticated_access_only(**options)
+        allow_unauthenticated_access(**options)
+        before_action :redirect_authenticated_user, **options
+      end
     end
 
     private
@@ -92,6 +100,10 @@ module Shared
 
     def after_authentication_url
       root_path
+    end
+
+    def redirect_authenticated_user
+      redirect_to after_authentication_url if authenticated?
     end
 
     # Sessions live in the main application's router. `new_session_path` on its

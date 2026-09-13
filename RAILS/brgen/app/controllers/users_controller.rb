@@ -1,8 +1,12 @@
 # frozen_string_literal: true
 
 class UsersController < ApplicationController
-  allow_unauthenticated_access only: %i[show new create]
-  rate_limit to: 10, within: 10.minutes, only: :create,
+  allow_unauthenticated_access only: :show
+  unauthenticated_access_only only: %i[new create]
+  # Sign-up writes a user, not a guest row; minting a guest here would give
+  # every newcomer a merge of nothing.
+  skip_before_action :ensure_guest_user!, only: :create
+  rate_limit to: 10, within: 10.minutes, only: :create, name: "signup",
     with: -> { redirect_to new_user_path, alert: t("shared.flash.rate_limited") }
 
   def show
@@ -68,7 +72,7 @@ class UsersController < ApplicationController
     @user = User.new(user_params)
     @user.guest = false
     @user.require_email_verification = true # a public signup must confirm before posting
-    guest = Current.user if Current.user&.guest?
+    guest = Current.user if Current.user&.guest? && Current.user.persisted?
 
     unless @user.save
       render :new, status: :unprocessable_entity
@@ -82,13 +86,7 @@ class UsersController < ApplicationController
 
     merged = merge_guest_into(@user, guest)
     start_new_session_for @user
-    notice =
-      if merged
-        "Welcome to Brgen — your guest posts and chats are on this account."
-      else
-        "Welcome to Brgen."
-      end
-    redirect_to after_authentication_url, notice: notice
+    redirect_to after_authentication_url, notice: t(merged ? "flash.welcome_guest_merged" : "flash.welcome")
   end
 
   private

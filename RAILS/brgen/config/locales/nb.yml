@@ -1787,6 +1787,7 @@ nb:
     content_unavailable: Innholdet er ikke tilgjengelig lenger.
     report_submitted: Rapporten er sendt.
     welcome: Velkommen til Brgen.
+    welcome_guest_merged: Velkommen til Brgen — innleggene og samtalene dine som gjest ligger nå på denne kontoen.
   restricted:
     title: Bare for medlemmer
     body: Dette er bare for medlemmer av dette rommet.

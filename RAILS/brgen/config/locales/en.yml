@@ -1777,6 +1777,7 @@ en:
     content_unavailable: That content is no longer available.
     report_submitted: Report submitted.
     welcome: Welcome to Brgen.
+    welcome_guest_merged: Welcome to Brgen — your guest posts and chats are on this account.
   restricted:
     title: Members only
     body: This is only for members of this space.

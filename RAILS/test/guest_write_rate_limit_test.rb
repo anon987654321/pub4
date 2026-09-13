@@ -31,8 +31,12 @@ class GuestWriteRateLimitTest < Minitest::Test
   # brgen gates guests with a `require_real_user` before_action rather than with
   # Rails' own allow_unauthenticated_access, so skipping it is the second way an
   # action becomes guest-reachable. Missing this is how a checker reports zero.
+  # unauthenticated_access_only grants the same access and adds a redirect for
+  # the signed-in, so it opens an action exactly as its sibling does.
+  UNAUTHENTICATED = /(?:allow_unauthenticated_access|unauthenticated_access_only)/
+
   GUEST_GATES = [
-    /allow_unauthenticated_access(?!\s*,?\s*only)/,
+    /#{UNAUTHENTICATED}(?!\s*,?\s*only)/,
     /skip_before_action\s+:require_real_user/,
   ].freeze
 
@@ -58,8 +62,8 @@ class GuestWriteRateLimitTest < Minitest::Test
 
     return defined_writes if GUEST_GATES.any? { |re| src.match?(re) }
 
-    scoped = src[/allow_unauthenticated_access\s+only:\s*(%i\[[^\]]*\]|\[[^\]]*\])/, 1]
-    defined_writes & (action_list(scoped) || [])
+    scoped = src.scan(/#{UNAUTHENTICATED}\s+only:\s*(%i\[[^\]]*\]|\[[^\]]*\]|:\w+)/).flatten
+    defined_writes & scoped.flat_map { |fragment| action_list(fragment) }
   end
 
   # Which actions a rate_limit in this file covers. A rate_limit with no `only:`
@@ -106,6 +110,7 @@ class GuestWriteRateLimitTest < Minitest::Test
       "brgen/app/controllers/fediverse/inboxes_controller.rb" => "create",
       "brgen/app/controllers/email_subscriptions_controller.rb" => "create",
       "amber/app/controllers/registrations_controller.rb" => "create",
+      "brgen/app/controllers/users_controller.rb" => "create",
     }.each do |file, action|
       src = File.read(File.join(RAILS_ROOT, file))
 
