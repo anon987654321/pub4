@@ -998,9 +998,10 @@ loc_body_budgets:
   lib/core: 762
   lib/core.rb: 47
   lib/design.rb: 270
-  # 2905 -> 2726: done_checker, patch_verifier, unfinished_ledger and checkpoint,
-  # reachable only from the deleted CLI methods.
-  lib/fix: 2726
+  # 2905 -> 2727: done_checker, patch_verifier, unfinished_ledger and checkpoint,
+  # reachable only from the deleted CLI methods, less the one line that restores
+  # ProposeTree#describe_entry's lost `subs` assignment.
+  lib/fix: 2727
   # 4812 -> 4667: context_provider.rb, reachable only from run_context.
   lib/ground: 4667
   lib/io: 4175
