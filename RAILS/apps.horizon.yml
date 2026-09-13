@@ -13,6 +13,12 @@ horizon:
       - { name: messenger voice and video calls (WebRTC), status: planned }
 
       - { name: city population in seeds, status: planned, notes: "no column or reader in any schema; CitySeed covers all 43 registry cities otherwise" }
+
+      - { name: recent searches in the search palette, status: planned }
+      - { name: messenger conversation archive, status: planned }
+      - { name: messenger notification suppressed while its conversation is open, status: planned }
+    subapp_takeaway:
+      - { name: delivery-area validation and cart expiry, status: planned }
     subapp_tv:
       - { name: live stream infrastructure, status: planned }
     subapp_dating:
@@ -21,6 +27,8 @@ horizon:
       - { name: AI recommendations, status: planned }
       - { name: coupons / referral credit / bundle pricing, status: planned }
       - { name: anonymised buyer-seller contact relay, status: planned, notes: "needs inbound mail routing and per-listing addresses on vm23; brgen.no mail is outbound-verified only" }
+
+      - { name: duplicate-listing detection, status: planned }
     subapp_playlist:
       - { name: creator donations / ad-free tier, status: planned }
     # Fences on every row below: no mandatory commission, no dark patterns, no
