@@ -53,7 +53,9 @@ module Deploy
       schema = File.join(app_dir, "db", "schema.rb")
       return nil unless File.file?(schema)
 
-      read_utf8(schema)[/define\(version:\s*(\d+)\)/, 1]&.to_i
+      # Rails dumps the version with digit separators (2026_09_13_120000), so a
+      # bare \d+ never matched a real schema.rb and this comparison never ran.
+      read_utf8(schema)[/define\(version:\s*([\d_]+)\)/, 1]&.delete("_")&.to_i
     end
 
     def read_utf8(path)

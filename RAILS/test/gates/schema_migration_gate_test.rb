@@ -67,6 +67,21 @@ class SchemaMigrationGateTest < Minitest::Test
     assert_match(/schema version #{VERSION} != latest migration 20260202000000/, result.failures.first)
   end
 
+  # Rails writes the version as 2026_01_01_000000, and a digits-only read of
+  # that never matched, so the comparison above never ran on a real schema.rb.
+  def test_a_schema_dumped_with_digit_separators_is_read
+    behind = gate_over do |dir|
+      plant(dir, "RAILS/demo/db/schema.rb", schema("2026_01_01_000000", "posts", %w[title body]))
+      plant(dir, "RAILS/demo/db/migrate/20260202000000_add_slug.rb", migration("slugs"))
+    end
+    current = gate_over do |dir|
+      plant(dir, "RAILS/demo/db/schema.rb", schema("2026_01_01_000000", "posts", %w[title body]))
+    end
+
+    assert_match(/schema version #{VERSION} != latest migration 20260202000000/, behind.failures.first.to_s)
+    assert current.ok?, current.failures.join(", ")
+  end
+
   def test_two_migrations_creating_one_table_fail
     result = gate_over do |dir|
       plant(dir, "RAILS/demo/db/migrate/#{VERSION}_create_posts.rb", migration("posts"))
