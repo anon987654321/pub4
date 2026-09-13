@@ -1285,379 +1285,92 @@ Numbered 1–N across the four trees.
 
 ### RAILS — brgen core
 
-301. **Stale layout comment.** `RAILS/brgen/app/views/layouts/application.html.erb:1-26` still says `data-theme="dark"` is load-bearing. Rewrite to the present-tense reason, or delete it. (Amber’s layout comment is already present-tense light.)
-302. **404 chrome vs live chrome.** `RAILS/brgen/public/404.html:8-11` forces `color-scheme: dark` and inline `--x-bg: #0f0f12` while the app default is light. Align static errors with `shared/public/styles/errors.css`. Look: name the seam, do not invent tokens.
-303. **404 hardcodes Bergen marketplace.** `RAILS/brgen/public/404.html:34` links `https://markedsplass.brgen.no/` so Oslo/LA 404s send people to Bergen. Build the href from `Brgen::DomainRegistry`.
-304. **404 English paragraph.** `RAILS/brgen/public/404.html:29`. i18n both, or drop the EN line.
-305. **Same for 500/422.** One generator or shared static template.
-306. **Mailer English subject.** `email_subscription_mailer.rb:10` `subject: "Confirm your Brgen subscription"`. Move to `t("mailers.email_subscription.confirm")`.
-307. **Mailer from-host.** `:4` `from: "Brgen <letters@brgen.no>"` ignores city hosts. Parameterize with the requested host.
-308. **No mailer tests.** No `email_subscription_mailer_test.rb`. Assert subject key, `confirm_url` token, and both html/text parts.
-309. **Newsletter/queue/verification mailers untested.** One request test per `deliver_*`.
-310. **`Tv::BaseController` is a stub.** `:3` “keep empty until shared vertical policy/layout lands.” Hoist vertical policy here or delete the promise.
-311. **Stream chat skips the TV base.** `Tv::StreamChatsController` inherits `ApplicationController`. Inherit the base; use `Current.user` not `current_user`.
-312. **Comments on TV show N+1.** `tv/videos/show.html.erb:123-128` walks `@video.comments` then `comment.user` with no `includes(:user)`.
-313. **`increment!` on listing/video views.** `Marketplace::ListingsController#show:56` and `Tv::VideosController#show:24`. Counter table or `update_counters`; do not fragment-cache that field.
-314. **Double view increment on TV.** `VideosController#show` increments, and `ViewEventsController#create` increments again. One writer.
-315. **`Tv::VideosController#show` creates a ViewEvent per GET.** Refresh = a row. Dedup per (user, video, hour) or only create from the player beacon.
-316. **Posts live search vs FTS.** `posts_controller.rb:35` `apply_live_search` on `title/content` while `posts_fts` exists. Use FTS when the table exists.
-317. **Conditional GET absent.** Add `fresh_when` on `posts#show`, `events#show`, `listings#show`. Only `bsdports` `ports#show` has it.
-318. **No `data-turbo-prefetch` on nav.** Turn on for the eight swiper destinations; keep `pagy.rb:17` prefetch-off on pager links.
-319. **Pagy disables prefetch globally.** Scope to pager anchors, not every Pagy link extra.
-320. **`data-turbo-permanent` missing on nav.** Mark the swiper + theme toggle permanent.
-321. **Feed sort is a full document.** Hot/New/Following should be a turbo frame.
-322. **`turbo: false` on channel join.** `channels/show.html.erb:78`. If join must full-reload, comment why; else drop it.
-323. **`turbo: false` on cart PSP forms.** Document, or use `data-turbo="false"` only on those two buttons via a helper.
-324. **Notifications still local.** `brgen/.../notifications_controller.rb` vs `shared/.../notifications_controller.rb`. Promote when city grouping unifies — or delete the shared stub.
-325. **Votes still local.** Same for `votes_controller.rb`. The shared reflex `vote_reflex.rb` already exists.
-326. **Follow schema split.** brgen `follower/followed` vs amber `follower/followee`. Until unifying, stop implying shared following in docs.
-327. **WebVitals logs only.** Persist p95 or drop the POST if logs are the product.
-328. **Server-Timing absent.** No middleware in `shared/config`. Cheap header for view/db/cache split.
-329. **Fragment cache hit/miss not timed.** Three cached partials. Emit `Server-Timing: miss|hit`.
-330. **Checkouts `allow_other_host: true`.** `Marketplace::CheckoutsController#create:56`. Allow-list host (`vipps.no`, `checkout.stripe.com`) rather than any URL `start_payment` returns.
-331. **Checkouts rescue `StandardError`.** Narrow to payment errors; let programming errors 500.
-332. **Flash interpolates exception.** `t("flash.marketplace.checkout_failed", message: e.message)` can leak Stripe internals. Map known errors.
-333. **`NotConfigured` flashes English class message.** i18n the provider name.
-334. **`hello: Hei` in nb.yml.** `brgen/config/locales/nb.yml:34`. Grep callers; delete if unused.
-335. **`nav.vertical_badge_new: "nytt!"`.** Confirm a reader; if the badge never renders, delete the key.
-336. **2FA inside engine.** Audit every engine `require_two_factor!` for `main_app` paths (kinds test already pinned a `UrlGenerationError`).
-337. **Anonymous TV comments unthrottled.** No `rate_limit` on `Tv::CommentsController`. Add named limit like posts.
-338. **Guest minting + prune.** Confirm `guest` + `created_at` index exists in all three schemas. If missing, `PruneGuestUsersJob` is a table scan.
-339. **`UserPurgeJob` vs guest prune overlap.** Two daily jobs at 3:45 and 3:50. Document which rows each owns.
+Closed 2026-09-13 by doing, measuring or deciding; the declined proposals and
+their reasons are in `RAILS/shared/WIRING_NOTES.md` under "Declined, with the
+reason". What is left needs the operator, vm23, a browser, or is larger than a
+sitting.
 
-### RAILS — marketplace
+**Operator — the look.**
 
-340. **Favorite button English aria.** `listings/_favorite_button.html.erb:12,20` `"Remove from saved"` / `"Save listing"`. Keys under `marketplace.wishlist.*`.
-341. **Saved-search hidden name.** `_live_search_results.html.erb:7` `value: "Marketplace search"`.
-342. **“All” chip.** same file `:15` `link_to "All"`.
-343. **Category label English.** `listings/new.html.erb:65` `f.label :category_id, "Category"`.
-344. **Saved searches “Browse” / “Any query” / “alerts on”.** `saved_searches/index.html.erb`.
-345. **Store “Partner program”.** `stores/show.html.erb:16`.
-346. **`t(..., default: "Store created")`.** `stores_controller.rb:36,47`. Add nb keys and drop defaults.
-347. **Deals search is LIKE, not LiveSearchable.** `deals_controller.rb:11-16`. One helper with listings/stores; FTS if a deals index exists.
-348. **Deals `#show` no `includes`.** `Deal.live.includes(listing: [:user, { photos_attachments: :blob }]).find`.
-349. **Stores `#show` other stores unscoped.** `:23` `limit(6)` with no city. Scope `Current.city_record`.
-350. **Stores `#show` listings not `includes`.** `with_attached_photos.includes(:user, :category)`.
-351. **Payouts on show, no pagination.** Frame + pagy.
-352. **Questions `#create` no rate_limit.** 10/min named `ask`.
-353. **Questions flash first error English.** Add `activerecord.attributes.marketplace/question`.
-354. **Reviews / returns / payouts / addresses / variants / favorites / saved_searches creates** — none contain `rate_limit` (only listings does in the engine). Add per-resource burst limits; names required when two limits share a controller.
-355. **Webhooks still unlimited.** `webhooks_controller.rb:15` comments the hole. `rate_limit` by IP even after signature verify.
-356. **Two Stripe webhook controllers.** Engine `Marketplace::WebhooksController` and `Webhooks::StripeController` both pay orders. One entry.
-357. **`views_count` nullable.** `schema.rb:738`. `increment!` on nil raises. Default 0, NOT NULL.
-358. **`status` on listings nullable.** `live` scope depends on it. NOT NULL + default `"active"`.
-359. **Add `(kind, category_id)` index** if facet queries filter both (they do: `listings_controller.rb:23-27`).
-360. **Duplicate indexes on gig/housing/job details.** Unique AND non-unique on `listing_id`. Drop the non-unique.
-361. **Checkout `#show` redirects to cart twice.** `checkouts_controller.rb:70` `checkout ? cart_path : cart_path`. Dead ternary.
-362. **Facets after kind filter.** Verify job/housing facets aren’t goods leftovers. Test already in `marketplace_saved_and_facets_test.rb`.
-363. **Top offers English default.** `_top_offers.html.erb:8` `default: "Picked for the city"`.
-364. **Listing show “Make an offer” default EN.** `listings/show.html.erb:99`.
-365. **Order status `humanize` fallback.** `orders/show.html.erb:13`. Exhaust `marketplace.order_statuses` in nb.
-366. **Condition `humanize`.** `_facets.html.erb:13`.
-367. **Anon fallback.** `listings/show.html.erb:39,85,141` `"anon"` instead of `t("chat.anon")`. Same in `_questions.html.erb:13`.
-368. **No engine test for stores/deals/addresses/payouts.** Add request tests for owner-only payout release and guest deal index.
-369. **Cart qty updates.** Turbo frame around cart lines after PSP return.
-370. **`SavedSearchAlertJob` no uniqueness.** `limits_concurrency to: 1, key: "saved-search-alerts"`.
-371. **`ListingExpiryJob` same.** Concurrency 1; row lock so two workers cannot both pass the read before `renewal_notice_sent_at`.
-372. **Variant out-of-stock hidden in Ruby.** `listings#show` `select(&:in_stock?)`. `scope :in_stock` on the relation instead of loading all.
-373. **`finish_live_search` duplicated** across listings/stores/deals/takeaway restaurants/maps places. Deals bypasses it for the query half only.
-374. **Solidus still Postgres-first.** `solidus_staging_contract_test.rb` must keep failing closed when `SOLIDUS_MARKETPLACE=1` on sqlite.
-375. **Two “deals” nouns.** `AffiliateProduct` vs `Marketplace::Deal`. Verify `deals#index` does not render affiliate placeholders as listings.
+- **Static error pages keep a dark palette the app no longer uses.**
+  `{brgen,amber,bsdports}/public/{404,422,500}.html` set `color-scheme: dark`
+  and inline `--x-*` colours over `shared/public/styles/errors.css`, while every
+  app renders light; bsdports' 404 and 500 are still Rails' English defaults.
+  Decide the palette; the seam is `errors.css` plus each page's inline `:root`.
+- **`.page-header` is five different elements across the verticals.** Measured
+  at 1440px on 2026-09-12: absent on markedsplass and playlist, 0px wide on
+  dating, 747px on takeaway, 600px on tv, and brgen's front page uses
+  `.feed-header`. The contract in `shared/LAYOUT.md` describes an element four
+  of seven surfaces do not render. Whether the contract or the verticals are
+  wrong is a layout call. Two inert `grid-template-*` pairs remain on `.layout`
+  (a flex box) in `_vertical_messenger_list.scss:20-21` and
+  `engines/maps/.../_vertical_maps_shell.scss:45-46`; remove them with a
+  before/after measurement.
 
-### RAILS — dating, takeaway, tv, playlist, maps
+**vm23.**
 
-376. **“Make profile visible”.** `profiles/new.html.erb:52` and `edit.html.erb:65`. Add `dating.visible_label`.
-377. **Show page English paragraph.** `profiles/show.html.erb:61-74` visibility copy. All keys.
-378. **Edit photo alt.** `profiles/edit.html.erb:21` `alt: "Profile photo"`.
-379. **Swipe card `"anon"`.** `home/_card.html.erb:1`.
-380. **Already decided, and the record is in the file that owns it.** The engine's
-     locale header states the rule: Rails::Engine appends config/locales/*.yml to
-     I18n.load_path on its own and I18n deep-merges across load paths, so keys the
-     host already carries stay reachable and are deliberately not copied. The 78
-     dating keys in brgen's own locales are those. The stub exists so the next
-     engine string has somewhere to go that is not a literal in the markup — which
-     is the defect the header was written against. Deleting it would restore that.
-381. **LOOKING_FOR / GENDERS raw.** `profiles/new.html.erb:38,44`. `t("dating.looking_for_options.#{v}")`.
-382. **LikesController no rate_limit.** Burst 60/min like votes. Same for dislikes/rewinds/prompts/verifications.
-383. **`User.find` on like.** `likes_controller.rb:9` not scoped to visible profiles. `Dating::Profile.visible.find_by!(user_id:)`.
-384. **`save!` no validation flash.** Failed like is 500. `save` + redirect alert.
-385. **Match overlay EN defaults.** `_match.html.erb:10`.
-386. **Vipps gate fail-open.** `base_controller.rb:13-21` if `VIPPS_CLIENT_ID` absent, dating is ungated. Document in `dating/README.md` that production must have Vipps.
-387. **`candidate_scope` plucks all like/dislike ids.** Unbounded. `NOT EXISTS` or a cap.
-388. **Daily picks / verification tests exist in host, not engine.** `cd engines/dating && rake test` is not a lie if they move or duplicate.
-389. **Intro JS.** `dating_intro_controller.js` — no test. If intro goes with immersive chrome, delete with the chrome.
-390. **Photos purge on edit untested in engine.** Confirm `profiles#update` permits `photos` + signed blob ids only (`media_guard`).
-391. **Age required in optional `<details>`.** `new.html.erb:45` `required: true` inside “optional”. Move age to essentials or drop required.
-392. **Takeaway engine `nb.yml` is empty.** `takeaway: {}`. Move the takeaway namespace into the engine.
-393. **Takeaway reviews / orders `#create` no rate_limit.** Orders: burst 5/10min per user (guest-capable).
-394. **`#update` kitchen status from params.** `orders_controller.rb:55` `params[:status]`. Allow-list `Takeaway::Order::TRANSITIONS`.
-395. **Menu items / favorite restaurants `#create` no test / no rate_limit.**
-396. **Group orders token in URL.** Rate-limit `create` so a host can’t mint unbounded open tickets.
-397. **Delivery drivers index `"anon"`.** `delivery_drivers/index.html.erb:13`.
-398. **`status` on `takeaway_orders` nullable.** NOT NULL + default `"pending"`. Same for `quantity`/`unit_price_cents` on items.
-399. **Courier layer cross-engine.** `maps/home_controller.rb:75` `Takeaway::Order` — add the gate row with that line exempted (awesome-list item already named the shape).
-400. **Hours “no rows = open”.** Empty-state on restaurant show should say so if hours missing, not “closed”.
-401. **Guest order push.** Test that a guest order doesn’t 500 on push (no VAPID). `WebPushJob` discard path.
-402. **Nav bar partial duplication.** `takeaway/_nav_bar.html.erb` vs `marketplace/_nav_bar.html.erb`. Shared `vertical_nav` with accent var already on body.
-403. **No takeaway controller tests in engine** except `order_test`. Missing: reviews, favorites, drivers, menu_items.
-404. **TV “New channel”.** `channels/index.html.erb:6`.
-405. **Empty search English.** `channels/_live_search_results.html.erb:10`.
-406. **“Add a note” / “Timestamp (seconds)” / “Add a comment”.** `videos/show.html.erb:106,113,144`.
-407. **`"anon"` on comments.** `videos/show.html.erb:126`.
-408. **Live streams aria English.** `live_streams/index.html.erb:3,9` despite `t(..., default: "Live streams")`.
-409. **`tv.channel_subtitle` default “Brgen TV channel”.** City-name it.
-410. **Viewers interpolation default.** `live_streams/show.html.erb:23` `default: "%{count} viewers"` — EN plural on :nb.
-411. **Notes/comments/stream_chats creates no rate_limit.**
-412. **`StreamChatsController` `save!`.** 500 on validation. `save` + 422 turbo.
-413. **`current_user` vs `Current.user`.** `stream_chats_controller.rb:9`. Always `Current.user`.
-414. **Missing: `ShowsController`, `EpisodesController` request tests.**
-415. **`live_streams/new` still exists.** If MediaMTX is absent, the form should say so (`apps.yml` blocker), not look like RTMP works.
-416. **`tv_content.rake`.** If it seeds English titles, mark demo-only (`content_honesty`).
-417. **Player Stimulus untested.** At least a request test that feed markup has `preload=none` and `100dvh`.
-418. **Watch time sendBeacon.** Test the controller rejects decreasing `watch_time_seconds`.
-419. **Channel tenant.** Verify comments/notes can’t POST across channels by id.
-420. **Playlist “New set” / “All sets”.** `sets/index.html.erb:9`, `sets/new.html.erb:8`.
-421. **`content_for :title, "Edit #{@set.name}"`.** `sets/edit.html.erb:1`. Same for hosted tracks.
-422. **Dilla sketches `"anon"` / `"by "`.** `_dilla_sketches.html.erb:24`.
-423. **Role select `editor/viewer`.** `_collaborators.html.erb:29` raw English values as labels.
-424. **Transport `t(..., default:)`.** Add nb keys in engine; drop defaults.
-425. **Imports `#create` no rate_limit.** Confirm `OutboundHttp` like link previews. Rate-limit 5/10min.
-426. **Party messages / listens `#create` no rate_limit.** Listens need a high ceiling, not none.
-427. **`increment! :tracks_count` / `plays_count`.** Schema NOT NULL default 0 (playlist test already hit nullable counters).
-428. **Listening party test exists; collaborations/imports/hosted_tracks do not.**
-429. **Embed player layout.** Verify `playlists#embed` uses a minimal layout (skip tab bar).
-430. **YouTube iframe aria default.** Engine nb has `youtube_player_aria`. View must use it without `default:`.
-431. **Maps engine has no `test/` directory.** Add `PlacesControllerTest` for check-in guest identity.
-432. **`#index` JSON vs HTML duplicates live_search.** `places_controller.rb:17` and `:25`. One scope builder.
-433. **`#check_in` no rate_limit.** GPS spam. 10/min. Length-validate the free-text param.
-434. **Home map default Bergen.** `home_controller.rb:13-14` `60.3913, 5.3221` when `Current.city_record` lacks coords. If nil, don’t pretend Bergen on `lsangeles.com`.
-435. **Places layer hardcoded path.** `home_controller.rb:32` `url: "/places/#{place.to_param}"`. Engine mount prefix will break. `place_path(place)`.
-436. **500 places, 200 events, 200 stories** loaded for one map. Viewport bbox filter.
-437. **`I18n.l(..., format: :event)`.** Depends on host `time.formats.event`. Keep host key or define in engine.
-438. **OpenFreeMap style URL.** CSP must allow `tiles.openfreemap.org`; `preconnect` or self-host tiles.
-439. **Engine nb only address/city/coordinates/kind/neighborhood.** Views use `maps.map`, `maps.aria_map`, `maps.hud_aria`, `maps.needs_js` — move into engine.
-440. **Filter `k.humanize`.** `places/index.html.erb:18`. `t("maps.kinds.#{k}")`.
+- **Zombie amber jobs.** `RemoveBackgroundJob` and `SegmentGarmentImageJob` have
+  no enqueuer; count their rows in amber's production queue, then delete both
+  classes (their headers state the precondition).
+- **Two recurring schedules never fire.** amber's `declutter_hygiene` (6am) and
+  bsdports' nightly import (3am) sit in `recurring.yml`, but those apps have no
+  resident worker and `drain-jobs.sh` runs three minutes at :05 only when jobs
+  are due, so the scheduler is never up at that minute. Choose: an hourly
+  schedule, or a cron line on the box that enqueues them.
+- **After the next deploy, check:** a signed Stripe test event returns 200 at
+  both `https://<city>/webhooks/stripe` and the markedsplass host; a Vipps
+  checkout redirect lands on `*.vipps.no`; `/deals` with a badged deal; a kitchen
+  status button redirects; editing a dating profile keeps its photos;
+  `/etc/brgen.env` carries `VIPPS_CLIENT_ID`; `curl -I` shows `Server-Timing`
+  under relayd's 8 KB header limit; migration `20260913140000` ran; after an
+  amber drain, `SolidQueue::BlockedExecution` and `Semaphore` rows are not left
+  behind; bsdports' next import rewrites every port's distfiles flag.
 
-### RAILS — messenger, stories, events, amber, bsdports
+**Needs a browser.**
 
-441. **Conversation search `"anon"`.** `conversations/search.html.erb:25`.
-442. **Voice recorder Stimulus untested.** Keep the request test; add a markup contract (`capture`/accept audio).
-443. **Link previews no image.** Deliberate. UI must not show an empty `<img>`.
-444. **`MessageExpirationJob` + sweep.** If both run, `expire!` must be idempotent.
-445. **`messages.expires_at` unindexed.** `ExpiredMessagesSweepJob:7` `where(expires_at: ..Time.current)`. Add index (partial where not null if SQLite supports).
-446. **`typing_indicators.expires_at` unindexed.** Sweep `where(expires_at: ..1.hour.ago)`. Index.
-447. **Events RSVP no rate_limit** on `event_rsvps_controller.rb`.
-448. **Events map horizon 7 days.** Document in the events index empty state when everything is next month.
-449. **Community wiki empty keys.** Confirm views use `wiki.empty_*` in nb.
-450. **Moderation queue regression.** Add a test if `moderation_audit_test` doesn’t load `reportable` after write (strict-load bug was fixed).
-451. **Blocks/bookmarks/invites controllers** — no rate_limit. Bookmarks create is easy to script.
-452. **Amber coverage floor 2 controllers.** `coverage_ratchet_test.rb`. Raise the floor as tests land; don’t lower.
-453. **`AiController` English notices.** `"Heuristic joy analysis applied"` / `"AI joy analysis applied"`.
-454. **`AiController` shells `bundle exec ruby bin/cli photograph`.** Timeout, no rate_limit, cwd `../../MASTER` — fails on copy-tree deploy. Guard with `Operator::DeployPaths`.
-455. **`WardrobeMediaJob` uniqueness is a LIKE on Solid Queue args.** Racey. Use `limits_concurrency` per `item_id`.
-456. **`pending_for?` rescue StandardError.** Returns false → double enqueue. Narrow rescue.
-457. **Zombie `RemoveBackgroundJob` / `SegmentGarmentImageJob`.** Comments say amber queue never drained. Operator: count rows on vm23; then delete classes. Don’t enqueue.
-458. **Amber jobs: no worker.** `ApplicationJob` comment: amber `perform_later` is “never” unless `run_inline!`. Either enable `rc.d/amber_jobs` (operator/RAM) or `perform_now` for media like password mail.
-459. **`recurring.yml` prune + declutter assume a worker.** If none, guests accumulate. Same as 458.
-460. **Creator profile form English.** `_form.html.erb:4,40,44`. Use `shared/errors`.
-461. **`creator_profiles/edit.html.erb`.** `default: "Edit creator profile"`, `"Add item"`.
-462. **Widgets English.** `_widgets.html.erb:27-28,35` `pluralize(..., "piece")`, `"Browse demo →"`, `"Talk to MASTER"`.
-463. **Item show aria `Color #{color}`.** `items/show.html.erb:25`.
-464. **Outfit aria `Items in #{name}`.** `_outfit.html.erb:11`.
-465. **Home `turbo: false` Ask AI.** If `master_embed` frame works, drop.
-466. **Wardrobe keys still have EN default.** Drop `default:` now that nb exists.
-467. **`hello: Hei` in amber nb.** Grep; delete if unused.
-468. **Connections/messages/live_streams/planned_outfits** — no dedicated request tests. Add blocked connection and message create rate.
-469. **Affiliate links destroy own vs other.** Missing test.
-470. **`GarmentSilhouette#png` nil must not 500 the item show.** Verify the view.
-471. **UI must not say “similar items”.** Fingerprint is not embeddings. Grep `similar` in amber views.
-472. **Raw `photo_polish_done` in ERB** should go through `analysis_status_label` helper.
-473. **Luxury chrome vs one-chrome.** Name `_variables.scss` / Caprasimo as the seam; don’t restyle.
-474. **`like!` increment likes_count.** Micro: turbo stream replace count.
-475. **Declutter 30d job uniqueness missing.**
-476. **Amber public 404/500 same dark+EN as brgen.** Same generator as 302.
-477. **`local: true` on search form.** `_widgets.html.erb:1` disables Turbo. Remove so live search can work.
-478. **ports_fts — already inventoried, and the choice is the operator's.**
-     `RAILS/test/raw_schema_objects_test.rb` holds the whole finding: `schema_format
-     = :ruby` cannot express an FTS5 virtual table, production runs `db:migrate` and
-     has it, everything built by `db:schema:load` — CI and every developer machine —
-     does not. brgen's `posts_fts` is in the same list. The test holds that inventory
-     at its current size and states why it goes no further: moving an app to
-     structure.sql changes what deploy loads. The feature is done on the box; the
-     test skip is the schema format, not the feature.
-479. **Importer swallows FTS rebuild.** `Ports::Importer#rebuild_fts` `rescue StandardError`. `Ground::Swallow.log` and fail the import run row.
-480. **`semantic_search` is lexical.** Rename or UI-label “search” so the explore assistant doesn’t promise vectors.
-481. **MakefileParser `+=` vs `?=`.** Add a fixture Makefile with both. `makefile_parser_test.rb` exists — add those branches if missing.
-482. **`expand_vars` infinite recursion.** **Unverified** beyond line 80. If `${VAR}` can self-ref, cap depth.
-483. **`permit_file_distfiles`.** Importer must not skip license. Test one restricted port.
-484. **`PortsImportJob` no uniqueness.** Nightly + manual = two imports. `limits_concurrency to: 1, key: "ports-import"`.
-485. **`SecurityAdvisoryRefreshJob` no uniqueness.** Timeout + cache so it doesn’t hammer NVD.
-486. **`turbo: false` on JSON summary.** `ports/show.html.erb:53`. If it’s `render json`, keep false; else a frame.
-487. **Comments/reactions on bsdports.** If `comments_controller` is mounted without social tables, it’s a dead surface — unmount or add tables. **Unverified** routing.
-488. **PWA manifest English.** `bsdports/app/views/pwa/manifest.json.erb:37`. nb/en by locale.
-489. **No system test for search empty.**
-490. **Maintainers unique name.** Confirm model now validates unique index.
-491. **WCAG AAA — checked 2026-09-12, no claim to withdraw.** No README claims
-     AAA. The only statement of it is `apps.yml`, which already carries the
-     caveat the item asks for on the same line: "not a full-site AAA audit".
-     Item 231 still stands and is the forward half.
-492. **Explore assistant.** Rate-limit; no LLM key should fail to a rules summary (amber pattern).
-493. **bsdports nightly import vs `rc.d/bsdports_jobs`.** If no worker, the schedule is fiction.
+- **`stimulus_boot.js` boots all 56 imports, 14 of them `@stimulus-components`,
+  in every app.** Register each component only in the apps whose views mount
+  it; verify on a booted triangle, because a missed registration fails silently.
+- **No system test drives the dating swipe or marketplace checkout.** Add both
+  beside `brgen/test/system/public_navigation_test.rb`.
 
-### RAILS — shared, gates, i18n, a11y, jobs, schema, JS
+**Larger than a sitting.**
 
-494. **Locale shadowing.** Shared locales load twice and win. Stop appending shared path twice; `locale_shadowing` should fail the double load, not only key collisions.
-495. **`t(..., default:)` hides missing nb.** Prefer required keys; `i18n_resolution_test` ignores defaults.
-496. **Unused-key check absent.** Extend `locale_contract_test.rb` with a reference scan over ERB/`t("` — no i18n-tasks gem.
-497. **Interpolation parity absent.** Assert `%{name}` sets match across nb/en.
-498. **`chrome_i18n` aria baseline 172.** Translating `_favorite_button` etc. must lower the baseline in the same commit.
-499. **Empty-state English still in TV channels.** Lint looks for `title: "No …"`; body literals aren’t covered. Extend a body rule or fix the two TV strings.
-500. **`Shared::Errors` vs local forms.** Creator profile reimplements errors. Always `render "shared/errors"`.
-501. **Sweeps can overlap.** `limits_concurrency` on bulk jobs (`retry_on` is not uniqueness).
-502. **`WebPushJob` duplicated.** `brgen/app/jobs/web_push_job.rb` and `shared/app/jobs/shared/web_push_job.rb`. One class.
-503. **`LiveSearchable` deals exception.** See 347.
-504. **New `after_commit` notifiers must `includes` at the job.** Grep `deliver_notification` without `strict_safe` / includes.
-505. **`ActivityTrackable` actor nil on failure.** Analytics drop silently. Log once per event name.
-506. **`examples.html.erb` English aria.** If routed, i18n; if not, don’t mount.
-507. **`_ad_slot.html.erb` inline display.** AdSense requirement; keep. Ensure consent wraps it.
-508. **Affiliate disclosure.** Must render on deals and amber shop. Add a view assertion per app.
-509. **`master_embed`.** Don’t double-load face JS.
-510. **CSP reports controller.** `skip_forgery_protection`. Rate-limit; cap body.
-511. **OmniAuth buttons still shown if provider unset.** Hide via `oauth_provider_slugs`.
-512. **`examples.html` / `jox_logo_controller.js`.** Grep; if only examples, don’t ship in boot.
-513. **`optimistic_send_controller.js`.** Votes don’t use it. Wire vote arrows or delete unused controller.
-514. **`parallax_tilt_controller.js`.** If unused in ERB, delete (`stimulus_wiring` will tell).
-515. **`stimulus_boot.js` loads full @stimulus-components fleet.** Split per layout.
-516. **PWA SW `networkTimeoutSeconds: 20`.** 3–5s then offline page.
-517. **SW caches status 0.** `CacheableResponsePlugin({ statuses: [0, 200] })` caches opaque failures. Drop 0.
-518. **`__APP_NAME__` cache names.** Must not collide across apps on `amber.brgen.no` vs `brgen.no`.
-519. **Offline page Retry.** Confirm bsdports uses shared offline, not a local copy.
-520. **Legal pages city TLD.** Grep `brgen.no` in `legal.*.yml`.
-521. **`VAPID_SUBJECT` default `admin@brgen.no`.** Wrong for bsdports.org. Per-app env.
-522. **`schema_migration` regex.** `/create_table\s+["':](\w+)["']/` misses `create_table :posts`. Fix regex + exempt `if_not_exists` repair migrations.
-523. **`css_minify_integrity` selector-loss dead.** dart-sass 1.101.0 doesn’t drop selectors. Keep compile check; skip loss half or detect sass version.
-524. **Six gates load-time ROOT.** Add `root:` kwarg so tests don’t rewrite constants.
-525. **`scale_ratchet` under-baseline is warning.** Fail until the number is lowered (same contract as chrome_i18n).
-526. **`frontend_auditor` advisory unless `GATE_AUDITOR_STRICT`.** Document in `runner.rb --explain`.
-527. **`visual_contract` without `--capture` must not print “ok”** as if pixels were measured.
-528. **Authenticated personas missing.** `GATE_ADEQUACY.md` gap 1: cart checkout, dating matches, sell form, amber mutations. Add a signed-in fixture user in triangle.
-529. **page_sim `:id` pages source-only.** Seed one listing/video id for live.
-530. **CDP flake → green.** `--all` should not treat <3 surfaces as pass.
-531. **No axe tree.** Don’t claim a11y complete. Accent_contrast is filled controls only.
-532. **`gate_mutation` doesn’t plant mobile_flow/page_simulation defects.** Extend plants.
-533. **Affiliate honesty.** Assert disclosure on deals index HTML fixture.
-534. **`css_constitution` — confirm planted illegal `px` fails.** If it still matches comments, it’s a spelling gate — fix the detector.
-535. **`coverage_ratchet` floors stale.** brgen 21/24, amber 2/10, bsdports 2/8. After new tests, raise in the same commit.
-536. **Maps engine invisible to some globs.** Any new gate must include `brgen/engines/*/app`.
-537. **`i18n_resolution_test` skips `default:`.** Fail on `default:` in views, or resolve with `raise_on_missing`.
-538. **Engine `en.yml`/`nb.yml` headers lie.** “Keys the host already carries are NOT copied” — then views add `default:` EN. Either use host keys without default, or copy into engine.
-539. **Playlist engine nb incomplete vs defaults in ERB.** Transport, add_track, sets_subtitle.
-540. **`marketplace.stores.*` defaults.** edit/delete/confirm.
-541. **`shared.errors` default in store form.**
-542. **`profile.edit` default.** `users/edit.html.erb`, `users/show.html.erb`.
-543. **`posts.add_photo` default.** `posts/new.html.erb:55,60` — aria uses `t(..., default: "Add photo")` and the button still says `Add photo`. Same on edit.
-544. **`nav.show_menu` default.** `_mobile_chrome.html.erb`.
-545. **`compose.*` used in dating/amber.** Keys in amber nb; brgen must have them too for dating toolbar.
-546. **`legal.dating_age`.** Used in dating new. Confirm nb.
-547. **Flash `full_messages.to_sentence`.** English AR. `activerecord.errors` nb.
-548. **`pluralize` in amber widgets.** Always English. `t("wardrobe.demo_pieces", count:)`.
-549. **PWA manifests descriptions EN** in all three apps.
-550. **Mailer subjects EN** besides subscriptions: `newsletter_mailer`, `verification_mailer`, `queue_failure_mailer`.
-551. **Time `distance_of_time_in_words` locale.** Deal countdown — `I18n.locale` must be nb.
-552. **City copy contract.** Add dating “Bergen” literals if any.
-553. **`nav.takeaway` default `"takeaway"`.** `maps/places/show.html.erb:66,69`.
-554. **OAuth nested defaults.** `_oauth_links.html.erb` three layers. One key.
-555. **Dating engine `bio: Bio`** while host has `about_you`. Dead key or wrong label.
-556. **172 EN aria-labels.** Start with favorite button, live streams, playlist transport (visible on :nb).
-557. **Error pages have no skip-link** and no `#main-content` id on `<main>`. Add both to static errors.
-558. **Color swatch `title` + aria English.** amber items show.
-559. **Outfit composition unlabeled list.** Should be a list of item names.
-560. **Live stream `role=list` without `listitem`.**
-561. **Form errors `tabindex=-1`.** Turbo 422 must move focus.
-562. **Video notes timestamp field unlabeled in nb.**
-563. **`lang` on `<html>`.** Verify application layouts; static errors are `lang="nb"` even for EN gloss children.
-564. **Marketplace `_card_media` empty alt.** Confirm `alt: listing.title`. Same for `_top_offers`, event covers, stories, dating picks/verifications, playlist player art, dressing-room imgs. Decorative avatars next to a name may stay empty; content photos may not.
-565. **Maps engine zero tests.** See 431.
-566. **Dating engine missing controller tests** (host has likes/rewind/unmatch/verification).
-567. **TV engine activity + view_event only** — no comments/notes/chat.
-568. **Playlist engine playlist + party only.**
-569. **Amber `AiController` untested** including Open3 branch.
-570. **`fediverse_test.rb:40` skip if no second city.** Seed a second city in fixtures so the skip never fires in CI.
-571. **`tradedoubler` skip unless table.** Migrations should make this impossible; if skip remains, schema load is incomplete.
-572. **`partner_attribution_report_test` skip unless constant.** Load path bug — require the model.
-573. **System tests:** no system test for dating swipe or marketplace checkout.
-574. **`query_budget_test.rb`.** Extend to listings#index with facets.
-575. **`attachment_preload_test.rb`.** Add TV show comments/notes and marketplace show questions.
-576. **`turbo_broadcast_contract_test.rb`.** Add stream_chat broadcast explicit `partial:`.
-577. **Engine `rake test` from engine dir.** Document `bin/ci` includes engines. Maps none.
-578. **`infinite_scroll_reflex` TV channels.** `_live_search_results` references `ChannelsInfiniteScrollReflex` — verify class exists under tv, not host.
-579. **Almost no `limits_concurrency`.** Only `RecommendOutfitsJob`. Add to: `AffiliateImportJob`, `PortsImportJob`, `NightlySearchIndexRebuildJob`, `ListingExpiryJob`, `SavedSearchAlertJob`, `ExpiredStoriesSweepJob`, `ExpiredMessagesSweepJob`, `ComposeNewsletterEditionJob`, `LinkConverterSyncJob`, `UserPurgeJob`, `DeclutterHygieneJob`.
-580. **`LinkConverterSyncJob` every 5 minutes.** Can stack. Concurrency 1 + uniqueness key.
-581. **`NightlySearchIndexRebuildJob` no-op without `posts_fts`.** Silent return. Log.
-582. **`GenerateBlurhashJob` uniqueness per blob.**
-583. **`DillaRenderJob`.** Must not overwrite takes. Assert the output lands beside `STUDIO/dilla/dilla.rb` or the brgen equivalent; never `$PWD`.
-584. **`PostproJob` from listing create.** If worker busy, listing has unprocessed photos. Status column?
-585. **`GoogleEnhancedConversionsJob`.** PII. Test it no-ops without env; don’t retry forever.
-586. **`ChannelBotReplyJob`.** Rate; loop guard.
-587. **`Fediverse::DeliveryJob` uniqueness per inbox+activity.**
-588. **`NotificationDeliveryJob` double-push.** **Unverified** internals. Test like/follow once.
-589. **`CableHealthJob` / `CacheHealthJob`.** If they alert, test; if not, don’t schedule.
-590. **`playlist` likes_count/plays_count nullable.** NOT NULL 0.
-591. **`tv_videos.views_count` nullable.** Default 0.
-592. **`identity_assurances.expires_at` unindexed.** If any scope queries it, index; if nothing reads it, don’t add. **Unverified** readers.
-593. **`notifications` polymorphic index.** Confirm `(notifiable_type, notifiable_id)` exists.
-594. **`marketplace_orders.variant_id` indexed?** Verify if `find_by(variant_id)` in stock decrement. **Unverified.**
-595. **Grep remaining `update_column` without `updated_at`.** WIRING_NOTES trap.
-1061. **`.page-header` is five different elements across the verticals.** Measured at
-     1440px on 2026-09-12: absent on markedsplass and playlist, 0px wide on dating,
-     747.03px on takeaway (max 747.035px), 600px on tv, and absent on brgen's front
-     page, which uses `.feed-header` instead. So the shared page-header contract in
-     `shared/LAYOUT.md` describes an element that four of seven surfaces do not
-     render and one renders at zero width. Either the contract names the wrong
-     element or the verticals do — deciding which is a layout call and the
-     operator's; the measurement is here so it is not made blind.
-
-596. **The prescription is wrong, and measuring it found a smaller real thing.**
-     Measured at 1440px on 2026-09-12, `.layout` max-width: brgen 600px, tv 600px,
-     markedsplass / dating / playlist / takeaway all 100%. `--feed-max` is 600px on
-     every one of them, so the four are opting out by rule, not missing a token —
-     and each opt-out has an argument. marketplace and takeaway are storefronts:
-     takeaway's own comment says the 600px column crushes the two-row #navBar and
-     leaves the restaurant grid no room, and Kaufland is the model there. dating and
-     playlist are immersive verticals — `_vertical_shell.scss` hides the core chrome
-     on them, so there is no column for content to sit in. tv is the browsable one
-     and already has the column. Applying `.app-shell`'s measure cap to all four
-     would undo two deliberate decisions.
-
-     What was real: dating and playlist each set `grid-template-areas: "main"` and
-     `grid-template-columns: 1fr` on `.layout`, which is `display: flex` in
-     `_shell.scss` on every surface — measured flex on brgen, dating, playlist and
-     markedsplass alike. Four inert declarations, removed; max-width and display
-     measured identical before and after.
-597. **`_ui_refinements*` merge.** Boy Scout on next CSS touch — merge into domain partials, no visual change.
-598. **`_shared_coverage_fills.scss`.** If it exists only to satisfy css_coverage_lint, that’s a spelling gate — prefer real selectors or fix the lint.
-599. **`_stack_brgen.scss` vs `_stack.scss`.** Document why two.
-600. **`pull_to_refresh_controller.js`.** Confirm not fighting Turbo morph.
-601. **`tabs_controller.js` vs nav swiper.** Two tab patterns. Feed sort should reuse one.
-602. **`countdown_controller.js` vs `Deal#ends_in`.** Deals use `distance_of_time_in_words`. If countdown JS unused on deals, don’t load globally.
-603. **`share_controller.js`.** i18n toast.
-604. **`form_submit_controller.js#lock`.** Attach to listing create / takeaway order.
-605. **`lazy_image_controller.js` vs `responsive_image_tag`.** One path.
-606. **`lightbox_controller.js` vs lightgallery vendor.** Pick one.
-607. **Listing kinds `chip` vs `chip active`.** `aria-current`.
-608. **Stimulus controllers without a matching test.** `countdown`, `feed_updates`, `form_submit`, `lazy_image`, `lightbox`, `map`, `pull_to_refresh`, `push`, `radio_tunnel`, `request_location`, `share`, `swipe`, `tabs`, `toggle`, `typing`, `typing_input`, `voice_recorder`, `dating_intro`, `marketplace_logo`, `playlist_player`, `tv_feed`, `tv_player`, amber `filter` / `sortable` / `wardrobe_carousel`. One Node-free contract per controller, or a source contract that each is mounted by a view (the infinite-scroll pattern).
-609. **Webhook CSRF skip without rate_limit.** Engine + host Stripe/Vipps/TradeDoubler. Add IP limits.
-610. **`AiController` unbounded work.** Auth + rate_limit. Argv array is OK; still a 1 GB box.
-611. **`TrackImport` URLs.** SSRF like `LinkPreviewFetchJob`. Reuse `OutboundHttp`.
-612. **Mass assignment kinds.** `listing_params_for_kind` — ensure `kind` not user-switchable after create to skip price.
-613. **Push subscriptions controller.** Rate-limit subscribe. VAPID per app (521).
-614. **Guest photo upload.** Rate-limit + size via `MediaGuard`. Confirm `MediaGuard` on messages#create.
-615. **Posts new form English.** `posts/new.html.erb:13-14` `f.label :community_id, "Community"` / `include_blank: "Anywhere in Bergen"`; `:30` `"Body"`; `:60` `Add photo`; `:72` `"Post anonymously"`. All keys. City-aware blank, not Bergen on every host.
-616. **`users/new.html.erb:43` “Leave this field empty”.** Honeypot label. i18n; keep off-screen.
-617. **Playlist hosted tracks.** `"Replace audio file (keeps URL)"`, `"Upload track"`, `"Unknown artist"`, `"Create playlist"`, `"Only owners can invite collaborators."`
-618. **Shared empty_state comment example is English.** Fine as a comment. Callers must pass `t(...)`. Audit callers that pass English string literals.
-619. **Newsletter `_hero.html.erb:14` “Curated offers”.**
-620. **Untested engine models.** dating: `daily_pick`, `dislike`, `like`, `prompt`, `verification`. marketplace: `address`, `category`, `checkout`, `gig_detail`, `housing_detail`, `job_detail`, `listing`, `listing_favorite`, `payout`, `question`, `return`, `review`, `saved_search`, `store`, `variant`, `variant_option`. playlist: `audio_version`, `collaboration`, `dilla_sketch`, `like`, `listen`, `party_message`, `playlist_track`, `set`, `set_track`, `timestamped_comment`, `track`. takeaway: `delivery_driver`, `favorite_restaurant`, `menu_item`, `opening_hour`, `order_item`, `restaurant`, `review`. tv: `broadcast`, `channel`, `episode`, `live_stream`, `show`, `sound`, `stream_chat`, `subscription`, `video`, `video_note`. One model test each, starting with state machines and uniqueness.
+- **Gate work, to re-measure against main, where gates take `root:`.**
+  `css_constitution` has no planted test (an off-rhythm px must fail, a
+  commented one must not); `css_minify_integrity`'s selector-loss half is
+  unproven against sass-embedded 1.101.0 — prove it or report inconclusive;
+  `page_inventory.rb:206` silently drops every `needs_id` page from live
+  simulation — seed ids or name the skipped pages; `gate_mutation` plants
+  nothing for `mobile_flow` or `page_simulation`; signed-in personas
+  (`GATE_ADEQUACY.md` gap 1) need a seeded fixture user in triangle.
+  `locale_shadowing`'s header and failure text still say shared outranks the
+  app; since shared locales load once, ahead of the app, its shadowed count is
+  the set of deliberate app overrides and the wording must say so.
+- **Unused locale keys.** No detector. A naive scan finds about 84 candidates
+  and is wrong on single-segment keys, lazy `t(".x")`, dynamic prefixes,
+  `scope:` lookups and keys built by construction; build it in
+  `RAILS/test/locale_contract_test.rb` and verify each hit with `git grep`.
+- **Affiliate disclosure has no rendered assertion.** It renders through
+  `shared/_site_legal_footer.html.erb:19`; `affiliate_honesty` only matches
+  source. Assert it in the HTML of brgen's listings index and amber's item page.
+- **Stimulus controllers carry no mounted-by-a-view contract.**
+  `stimulus_wiring` checks view to controller only; add the reverse, with a
+  named exemption list, over brgen, its engines, amber, bsdports and shared.
+- **Two image helpers.** `lazy_image_tag` (8 calls, blurhash) and
+  `responsive_image_tag` (22). Fold one into the other without changing markup,
+  and move the result to shared so engine tests do not need the host.
+- **A listing's postpro photo has no status.** `PostproJob` adds the processed
+  photo after create; a busy worker leaves the listing with originals only and
+  nothing says so. Needs a column or a derived state.
+- **Model tests still missing.** dating `daily_pick`, `dislike`, `verification`;
+  marketplace `category`, `gig_detail`, `housing_detail`, `job_detail`,
+  `listing_favorite`, `question`, `store`, `variant`, `variant_option`; playlist
+  `audio_version`, `collaboration`, `dilla_sketch`, `like`, `listen`,
+  `party_message`, `set`, `set_track`, `timestamped_comment`; takeaway
+  `favorite_restaurant`, `menu_item`, `order_item`; tv `channel`, `episode`,
+  `show`, `sound`, `stream_chat`, `subscription`, `video_note`. Validations,
+  state machines and uniqueness first.
 
 ### OPENBSD — dual sources
 
