@@ -8,7 +8,7 @@ class Playlist::DillaSketchesController < Playlist::BaseController
     sketch = @parent.dilla_sketches.build(dilla_sketch_params.merge(user: Current.user, render_status: "idle"))
     if sketch.save
       sketch.enqueue_render!(publish: truthy?(params[:publish])) if truthy?(params[:render_now])
-      redirect_to(parent_path, notice: t("dilla.sketch_saved", default: "Dilla sketch saved"))
+      redirect_to(parent_path, notice: t("playlist.sketch_saved"))
     else
       redirect_to(parent_path, alert: sketch.errors.full_messages.to_sentence)
     end
@@ -17,7 +17,7 @@ class Playlist::DillaSketchesController < Playlist::BaseController
   def update
     sketch = @parent.dilla_sketches.find(params[:id])
     if sketch.update(dilla_sketch_params)
-      redirect_to(parent_path, notice: t("dilla.sketch_updated", default: "Sketch updated"))
+      redirect_to(parent_path, notice: t("playlist.sketch_updated"))
     else
       redirect_to(parent_path, alert: sketch.errors.full_messages.to_sentence)
     end
@@ -26,13 +26,13 @@ class Playlist::DillaSketchesController < Playlist::BaseController
   def destroy
     sketch = @parent.dilla_sketches.find(params[:id])
     sketch.destroy
-    redirect_to(parent_path, notice: t("dilla.sketch_removed", default: "Sketch removed"))
+    redirect_to(parent_path, notice: t("playlist.sketch_removed"))
   end
 
   def render_audio
     sketch = @parent.dilla_sketches.find(params[:id])
     sketch.enqueue_render!(publish: truthy?(params.fetch(:publish, "1")))
-    redirect_to(parent_path, notice: t("dilla.render_queued", default: "Dilla render queued — refresh for audio"))
+    redirect_to(parent_path, notice: t("playlist.render_queued"))
   end
 
   private
@@ -82,7 +82,7 @@ class Playlist::DillaSketchesController < Playlist::BaseController
       editor = %w[owner editor].include?(collab.role)
     end
     unless owner || editor
-      redirect_to(parent_path, alert: t("dilla.not_allowed", default: "Not allowed to edit dilla sketches in this collab"))
+      redirect_to(parent_path, alert: t("playlist.sketches_not_allowed"))
     end
   end
 

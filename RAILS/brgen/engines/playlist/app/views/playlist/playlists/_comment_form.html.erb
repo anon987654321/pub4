@@ -2,8 +2,8 @@
     locals: none — the player renders it only on the non-embedded surface.
     Lifted out of _player.html.erb, which was one line over its length ceiling. %>
 <div class="playlist-comment-form" hidden data-playlist-player-target="commentForm">
-  <input type="text" placeholder="<%= t("playlist.comment_at_time", default: "Comment at this time…") %>"
-         aria-label="<%= t("playlist.comment_at_time", default: "Comment at this time…") %>"
+  <input type="text" placeholder="<%= t("playlist.comment_at_time") %>"
+         aria-label="<%= t("playlist.comment_at_time") %>"
          data-playlist-player-target="commentInput">
   <button type="button" data-action="playlist-player#submitComment"><%= t("actions.save") %></button>
   <button type="button" data-action="playlist-player#cancelComment"><%= t("actions.cancel") %></button>

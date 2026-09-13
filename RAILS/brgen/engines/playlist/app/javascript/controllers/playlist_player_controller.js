@@ -19,7 +19,9 @@ export default class extends Controller {
     trackComments: { type: Object, default: {} },
     showArtwork: { type: Boolean, default: true },
     compact: { type: Boolean, default: false },
-    hideBranding: { type: Boolean, default: false }
+    hideBranding: { type: Boolean, default: false },
+    untitledLabel: String,
+    unknownArtistLabel: String
   }
 
   #resizeWaveform
@@ -262,8 +264,8 @@ export default class extends Controller {
       this.embedTarget.hidden = !embed
     }
 
-    if (this.hasTitleTarget) this.titleTarget.textContent = title || "Untitled"
-    if (this.hasArtistTarget) this.artistTarget.textContent = artist || "Unknown artist"
+    if (this.hasTitleTarget) this.titleTarget.textContent = title || this.untitledLabelValue
+    if (this.hasArtistTarget) this.artistTarget.textContent = artist || this.unknownArtistLabelValue
     if (this.hasArtworkTarget && artwork) {
       this.artworkTarget.src = artwork
       this.artworkTarget.hidden = false

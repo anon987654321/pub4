@@ -52,7 +52,7 @@
         parent: @set,
         sketches: @dilla_sketches,
         create_url: set_dilla_sketches_path(@set),
-        render_path_proc: ->(sk) { render_audio_playlist_set_dilla_sketch_path(@set, sk) },
+        render_path_proc: ->(sk) { render_audio_set_dilla_sketch_path(@set, sk) },
         destroy_path_proc: ->(sk) { set_dilla_sketch_path(@set, sk) },
         can_manage: set_can_manage,
         rich_form: false %>
@@ -81,13 +81,13 @@
 <% else %>
   <%= render "shared/empty_state",
         title: t("empty.no_tracks"),
-        body: t("playlist.add_track_body", default: "Add a track to build this set."),
+        body: t("playlist.add_track_body"),
         action: { label: t("playlist.browse_sets"), path: sets_path } %>
 <% end %>
 
 <% if authenticated? && (Current.user == @set.user || @set.collaborations.exists?(user: Current.user, role: %w[owner editor])) %>
   <div class="section-divider">
-    <p class="section-heading"><%= t("playlist.add_track", default: "Add a track") %></p>
+    <p class="section-heading"><%= t("playlist.add_track") %></p>
     <div class="form-wrap form-wrap--flush">
       <%= form_with url: set_tracks_path(@set), scope: :playlist_track do |form| %>
         <div class="field"><%= form.text_field :title, placeholder: t("playlist.title"), aria: { label: t("playlist.title") }, required: true %></div>

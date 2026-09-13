@@ -9,7 +9,7 @@
 <section role="region" aria-label="<%= t("aria.dilla_sketches") %>">
   <h2><%= t("playlist.dilla_sketches") %></h2>
   <p>
-    Collaborative beat patterns. Lab:
+    <%= t("playlist.sketches_blurb") %>
     <a href="/dilla/dilla.html<%= local_assigns[:lab_query] %>" target="_blank" rel="noopener">dilla.html</a>
   </p>
   <% if sketches.any? %>
@@ -18,10 +18,10 @@
         <%= tag.strong sk.name %>
 
           <%= sk.try(:style).presence || "dilla" %>
-          · <%= sk.try(:bars).presence || 12 %> bars
-          · <%= sk.render_status || "idle" %>
+          · <%= t("playlist.bars_count", count: sk.try(:bars).presence || 12) %>
+          · <%= t("playlist.render_statuses.#{sk.render_status || "idle"}") %>
 
-        by <%= sk.user&.try(:display_name) || sk.user&.email || "anon" %>
+        <%= t("playlist.sketch_by", name: sk.user&.try(:display_name) || sk.user&.email || t("chat.anon")) %>
         <% if sk.lab_url.present? %>
           <a href="<%= sk.lab_url %>" target="_blank" rel="noopener" class="btn btn-ghost btn-sm"><%= t("playlist.open_in_lab") %></a>
         <% end %>
@@ -36,7 +36,7 @@
           <audio controls preload="none" src="<%= main_app.url_for(sk.render) %>"></audio>
         <% end %>
         <% if sk.try(:track_id).present? %>
-          track #<%= sk.track_id %>
+          <%= t("playlist.sketch_track", id: sk.track_id) %>
         <% end %>
         <% if sk.try(:render_error).present? %>
           <p role="alert"><%= sk.render_error %></p>
@@ -56,9 +56,9 @@
       <% if rich_form %>
         <%= form_with model: [:playlist, parent, Playlist::DillaSketch.new], url: create_url, class: "dilla-sketch-form" do |f| %>
           <%= f.text_field :name, placeholder: t("playlist.sketch_name"), aria: { label: t("playlist.sketch_name") }, required: true %>
-          <%= f.select :style, %w[dilla flylo baroque neo-soul jazz], { selected: "dilla" }, { aria: { label: t("playlist.style", default: "Style") } } %>
-          <%= f.number_field :bars, value: 12, min: 4, max: 64, aria: { label: t("playlist.bars", default: "Bars") }, inputmode: "numeric" %>
-          <%= f.text_area :state, value: { pat_: {}, aud_: {}, mix_: { style: "dilla", bars: 12 } }.to_json, rows: 3, aria: { label: t("playlist.sketch_state", default: "Sketch state (JSON)") } %>
+          <%= f.select :style, %w[dilla flylo baroque neo-soul jazz], { selected: "dilla" }, { aria: { label: t("playlist.style") } } %>
+          <%= f.number_field :bars, value: 12, min: 4, max: 64, aria: { label: t("playlist.bars") }, inputmode: "numeric" %>
+          <%= f.text_area :state, value: { pat_: {}, aud_: {}, mix_: { style: "dilla", bars: 12 } }.to_json, rows: 3, aria: { label: t("playlist.sketch_state") } %>
           <%= f.text_field :notes, placeholder: t("playlist.notes_optional"), aria: { label: t("playlist.notes_optional") } %>
           <label><input type="checkbox" name="render_now" value="1" checked /> <%= t("playlist.render_now") %></label>
           <label><input type="checkbox" name="publish" value="1" checked /> <%= t("playlist.publish_as_track") %></label>
@@ -68,8 +68,8 @@
         <%= form_with url: create_url, scope: local_assigns[:form_scope] || :playlist_dilla_sketch do |f| %>
           <div class="field"><%= f.text_field :name, placeholder: t("playlist.beat_name"), aria: { label: t("playlist.beat_name") }, required: true %></div>
           <div class="field" data-controller="character-counter" data-character-counter-countdown-value="true">
-            <%= f.text_area :state, placeholder: t("playlist.paste_state", default: "Paste JSON state from lab"),
-                  aria: { label: t("playlist.paste_state", default: "Paste JSON state from lab") },
+            <%= f.text_area :state, placeholder: t("playlist.paste_state"),
+                  aria: { label: t("playlist.paste_state") },
                   rows: 3, data: { character_counter_target: "input" } %>
             <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
           </div>

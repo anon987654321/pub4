@@ -1,7 +1,4 @@
 <%# locals: (playlist:, tracks:, active_track: nil, playlist_name: nil, tracks_count: nil, plays_count: nil, color: "#00d4ff", comments: [], track_comments: {}) %>
-<%# color/comments/track_comments were read via local_assigns below but never
-    declared here. Strict locals raise on any keyword the declaration omits, so
-    show.html.erb — which passes all three — 500'd on every playlist page. %>
 <% rows = tracks.map { |entry| entry.is_a?(Playlist::Track) ? entry : entry.track } %>
 <% active = active_track || rows.first %>
 <% heading = playlist_name || playlist.name %>
@@ -28,6 +25,8 @@
   data-playlist-player-show-artwork-value="<%= (local_assigns[:show_artwork].nil? ? true : local_assigns[:show_artwork]) %>"
   data-playlist-player-compact-value="<%= !!local_assigns[:compact] %>"
   data-playlist-player-hide-branding-value="<%= !!local_assigns[:hide_branding] %>"
+  data-playlist-player-untitled-label-value="<%= t("playlist.untitled") %>"
+  data-playlist-player-unknown-artist-label-value="<%= t("playlist.unknown_artist") %>"
 >
   <% unless local_assigns[:embedded] %>
 <header class="playlist-top">
@@ -146,7 +145,7 @@
         <span class="playlist-queue-index"><%= index + 1 %></span>
         <span class="playlist-queue-art" aria-hidden="true">
           <% if track_art %>
-            <%= image_tag track_art, alt: "", width: 48, height: 48 %>
+            <%= image_tag track_art, alt: track.title, width: 48, height: 48 %>
           <% end %>
         </span>
         <span class="playlist-queue-meta">

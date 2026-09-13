@@ -6,12 +6,12 @@ class Playlist::LikesController < Playlist::BaseController
 
   def create
     @set.likes.find_or_create_by!(user: Current.user, playlist_id: nil)
-    redirect_to set_path(@set), notice: t("playlist.set_liked", default: "Set liked")
+    redirect_to set_path(@set), notice: t("playlist.set_liked")
   end
 
   def destroy
     @set.likes.where(user: Current.user).destroy_all
-    redirect_to set_path(@set), notice: t("playlist.set_unliked", default: "Like removed")
+    redirect_to set_path(@set), notice: t("playlist.set_unliked")
   end
 
   private

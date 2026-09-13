@@ -8,7 +8,7 @@
   <h2><%= t("playlist.collaborators") %></h2>
   <% if collaborations.any? %>
     <% collaborations.includes(:user).each do |c| %>
-      <%= c.user&.username || c.user&.email %> (<%= c.role %>)
+      <%= c.user&.username || c.user&.email %> (<%= t("playlist.roles.#{c.role}") %>)
       <% if Current.user == parent.user || c.user == Current.user %>
         <%= button_to t("actions.remove"), collaboration_path_proc.call(c), method: :delete, class: "btn btn-ghost btn-sm",
               data: { turbo_confirm: t("playlist.confirm_remove_collaborator") } %>
@@ -17,7 +17,7 @@
   <% else %>
     <%= render "shared/empty_state",
           title: t("empty.no_collaborators"),
-          body: can_manage ? "Invite an editor or viewer by username in the form below." : "Only owners can invite collaborators.",
+          body: can_manage ? t("playlist.collaborators_invite_body") : t("playlist.collaborators_owner_only_body"),
           action: { label: t("playlist.browse_playlists"), path: root_path } %>
   <% end %>
 
@@ -26,7 +26,7 @@
       <%= form_with url: collaborations_path, method: :post do |f| %>
         <div class="field field--row">
           <%= f.text_field :username, placeholder: t("playlist.username"), aria: { label: t("playlist.username") }, class: "field--grow" %>
-          <%= f.select :role, %w[editor viewer], {}, { aria: { label: t("playlist.role", default: "Role") } } %>
+          <%= f.select :role, %w[editor viewer].map { |role| [t("playlist.roles.#{role}"), role] }, {}, { aria: { label: t("playlist.role") } } %>
           <%= f.submit t("playlist.add_collaborator"), class: "btn btn-primary btn-sm" %>
         </div>
       <% end %>

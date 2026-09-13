@@ -5,7 +5,7 @@
     <p><%= t("playlist.set_kicker") %></p>
     <%= tag.h1 t("playlist.new_set") %>
   </hgroup>
-  <%= link_to "All sets", sets_path, class: "btn btn-ghost btn-sm" %>
+  <%= link_to t("playlist.all_sets"), sets_path, class: "btn btn-ghost btn-sm" %>
 </div>
 
 <%= render "form", set: @set %>

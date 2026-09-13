@@ -98,6 +98,6 @@ class Playlist::HostedTracksController < Playlist::BaseController
   def authorize_owner!
     return if Current.user && @track.user_id == Current.user.id
 
-    redirect_to hosted_tracks_path, alert: t("playlist.not_allowed", default: "Not allowed")
+    redirect_to hosted_tracks_path, alert: t("shared.flash.not_authorized")
   end
 end

@@ -14,6 +14,9 @@ class Playlist::Listen < ApplicationRecord
 
   private
   def increment_plays
-    track.playlists.each { |pl| pl.increment!(:plays_count) }
+    # One UPDATE across every playlist holding the track. update_counters reads
+    # a NULL counter as zero and needs no loaded association.
+    ::Playlist::Playlist.where(id: ::Playlist::PlaylistTrack.where(playlist_track_id: playlist_track_id).select(:playlist_playlist_id))
+                        .update_counters(plays_count: 1)
   end
 end

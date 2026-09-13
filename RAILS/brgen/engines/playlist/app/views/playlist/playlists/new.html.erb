@@ -6,7 +6,7 @@
 
 <turbo-frame id="playlist-new" data-turbo-action="replace">
 <div class="form-wrap">
-  <%= form_with model: @playlist, url: playlists_path, html: { role: "form", "aria-label": "Create playlist" } do |f| %>
+  <%= form_with model: @playlist, url: playlists_path, html: { role: "form", "aria-label": t("playlist.new_playlist") } do |f| %>
     <%= render "shared/errors", object: @playlist %>
     <div class="field"><%= f.label :name %><%= f.text_field :name %></div>
     <div class="field"><%= f.label :description %><div data-controller="character-counter" data-character-counter-countdown-value="true">
@@ -14,7 +14,7 @@
   <span class="char-counter" data-character-counter-target="counter" aria-live="polite"></span>
 </div></div>
     <div class="field field--check"><%= f.check_box :public_access %><%= f.label :public_access, t("playlist.public_access") %></div>
-    <div class="field field--check"><%= f.check_box :collaborative %><%= f.label :collaborative, "Collaborative" %></div>
+    <div class="field field--check"><%= f.check_box :collaborative %><%= f.label :collaborative, t("playlist.collaborative") %></div>
     <div class="field"><%= f.submit t("playlist.create"), class: "btn btn-primary" %></div>
   <% end %>
 </div>

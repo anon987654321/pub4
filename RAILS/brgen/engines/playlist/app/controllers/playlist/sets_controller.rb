@@ -35,11 +35,10 @@ class Playlist::SetsController < ApplicationController
   end
 
   def show
-    @set_tracks = @set.set_tracks.includes(:track)
-    # A query, not the association: iterating @set.tracks lazily loaded it off
-    # a set found by id, which strict loading refuses, so every set page 500'd.
-    # timestamped_comments is a :destroy cascade, which strict loading spares.
-    @tracks = Playlist::Track.where(id: Playlist::SetTrack.where(playlist_set_id: @set.id).select(:playlist_track_id)).to_a
+    # Tracks come off the preloaded rows rather than @set.tracks: the set is
+    # strict-loaded, so reading the through association raises.
+    @set_tracks = @set.set_tracks.includes(:user, track: [{ audio_file_attachment: :blob }, { artwork_attachment: :blob }])
+    @tracks = @set_tracks.map(&:track)
     @dilla_sketches = @set.dilla_sketches.recent.includes(:user)
     # Prepare full waveform player + per-track timestamp comments on collection
     @track_comments = @tracks.each_with_object({}) do |tr, h|
@@ -58,7 +57,7 @@ class Playlist::SetsController < ApplicationController
 
     if @set.save
       @set.record_activity!("PlaylistSetCreated", actor: Current.user, source_vertical: "playlist")
-      redirect_to set_path(@set), notice: t("playlist.set_created", default: "Set created")
+      redirect_to set_path(@set), notice: t("playlist.set_created")
     else
       render :new, status: :unprocessable_entity
     end
@@ -69,7 +68,7 @@ class Playlist::SetsController < ApplicationController
 
   def update
     if @set.update(set_params)
-      redirect_to set_path(@set), notice: t("playlist.set_updated", default: "Set updated")
+      redirect_to set_path(@set), notice: t("playlist.set_updated")
     else
       render :edit, status: :unprocessable_entity
     end
@@ -77,7 +76,7 @@ class Playlist::SetsController < ApplicationController
 
   def destroy
     @set.destroy
-    redirect_to sets_path, notice: t("playlist.set_deleted", default: "Set removed")
+    redirect_to sets_path, notice: t("playlist.set_deleted")
   end
 
   private

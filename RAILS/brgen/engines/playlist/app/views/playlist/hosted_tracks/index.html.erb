@@ -2,11 +2,11 @@
 
 <div class="page-header">
   <hgroup>
-    <p>Playlist</p>
+    <p><%= t("playlist.home_title") %></p>
     <%= tag.h1 t("playlist.hosted_tracks") %>
   </hgroup>
   <% if authenticated? %>
-    <%= link_to "Upload track", new_hosted_track_path, class: "btn btn-primary btn-sm" %>
+    <%= link_to t("playlist.upload_track"), new_hosted_track_path, class: "btn btn-primary btn-sm" %>
   <% end %>
 </div>
 
@@ -15,7 +15,7 @@
     <% @tracks.each do |track| %>
       <article>
         <h2><%= link_to track.title, hosted_track_path(track) %></h2>
-        <p><%= track.artist.presence || "Unknown artist" %> · <%= track.duration_formatted %></p>
+        <p><%= track.artist.presence || t("playlist.unknown_artist") %> · <%= track.duration_formatted %></p>
       </article>
     <% end %>
   <% else %>

@@ -32,7 +32,7 @@ module Tv
       @live_stream.stream_key ||= SecureRandom.hex(16)
 
       if @live_stream.save
-        redirect_to live_stream_path(@live_stream), notice: t("tv.live_stream_created", default: "Live stream created")
+        redirect_to live_stream_path(@live_stream), notice: t("tv.live_stream_created")
       else
         render :new, status: :unprocessable_entity
       end
@@ -40,7 +40,7 @@ module Tv
 
     def update
       if @live_stream.update(live_stream_params)
-        redirect_to live_stream_path(@live_stream), notice: t("tv.live_stream_updated", default: "Live stream updated")
+        redirect_to live_stream_path(@live_stream), notice: t("tv.live_stream_updated")
       else
         render :show, status: :unprocessable_entity
       end
@@ -48,7 +48,7 @@ module Tv
 
     def destroy
       @live_stream.destroy
-      redirect_to live_streams_path, notice: t("tv.live_stream_deleted", default: "Live stream removed")
+      redirect_to live_streams_path, notice: t("tv.live_stream_deleted")
     end
 
     def go_live
