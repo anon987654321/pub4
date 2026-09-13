@@ -67,6 +67,7 @@ class TestFixLoopFileCollector < Minitest::Test
         reports/run.yml
         vendor/gem/lib/dep.rb
         knowledge/note.md
+        RAILS/brgen/app/views/pwa/service-worker.js
       ].each do |rel|
         path = write(dir, rel, "x\n")
 

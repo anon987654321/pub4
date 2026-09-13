@@ -93,7 +93,11 @@ module Master
         # next, on a shared git index where a stray modification gets swept into
         # someone else's commit. Matched by suffix rather than prefix because
         # they sit under RAILS/<app>/, and the scan root is the repo.
-        SKIP_PATH_SUFFIXES = %w[db/schema.rb db/structure.sql].freeze
+        #
+        # app/views/pwa/service-worker.js is Workbox's minified bundle, written per
+        # app by `npm run build:pwa` (RAILS/tools/build_workbox.mjs): every finding
+        # in it is about Workbox, and the next build undoes any fix.
+        SKIP_PATH_SUFFIXES = %w[db/schema.rb db/structure.sql app/views/pwa/service-worker.js].freeze
 
         def skip_path?(path, root: nil)
           segments = relative_segments(path, root)

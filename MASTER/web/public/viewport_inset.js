@@ -5,7 +5,7 @@
   "use strict";
   const KEYBOARD_MIN = 80;
   const vv = window.visualViewport;
-  var frame = 0;
+  let frame = 0;
 
   function editing() {
     const el = document.activeElement;
@@ -15,7 +15,7 @@
   }
 
   function apply() {
-    var inset = 0;
+    let inset = 0;
     if (vv) {
       const remainder = window.innerHeight - vv.height - vv.offsetTop;
       if (remainder > KEYBOARD_MIN && editing()) inset = remainder;
