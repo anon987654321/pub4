@@ -205,22 +205,54 @@ module Crate
   # --- list ----------------------------------------------------------------
 
   def list
-    slugs = Dir.children(SOURCES).sort rescue []
+    unless Dir.exist?(SOURCES)
+      warn("crate: no crate at #{SOURCES}")
+      return
+    end
+    slugs = Dir.children(SOURCES).sort
     return puts("crate: empty") if slugs.empty?
-
+  
     slugs.each do |slug|
-      meta = JSON.parse(File.read(File.join(SOURCES, slug, "source.json"))) rescue {}
+      meta_path = File.join(SOURCES, slug, "source.json")
+      meta = begin
+        JSON.parse(File.read(meta_path))
+      rescue Errno::ENOENT
+        warn("crate: #{slug} has no source.json")
+        {}
+      rescue JSON::ParserError => e
+        warn("crate: #{slug}/source.json is corrupt (#{e.message[0, 60]})")
+        {}
+      end
       stems = Dir.glob(File.join(STEMS, slug, "*.wav")).size
       loops = Dir.glob(File.join(LOOPS, slug, "*.wav")).reject { |f| f =~ /_x\d+\.wav\z/ }.size
       puts format("%-28s %-34s %5ds  %d stems  %d loops", slug,
                   (meta["title"] || "?")[0, 34], meta["duration_s"].to_i, stems, loops)
     end
+    # The engine reads samples/chopped/loops.json, not this tree.
+    puts "crate: the engine will not see these loops until they are registered as chopped loops"
   end
 end
 
 require "tmpdir"
 
+USAGE = <<~TXT
+  usage: bin/crate <command> [args]
+
+    fetch "<query or URL>" [--slug=name]   download a source and record where it came from
+    split <slug>                           demucs stems into crate/stems/<slug>/
+    cut   <slug> <start_s> <length_s> [--name x] [--stem vocals]
+    loop  <slug>/<name> [times]            concatenate a cut and play it
+    list                                   every source, with its stem and loop counts
+TXT
+
+# Loading this file for its Crate module must not run a command.
+return unless __FILE__ == $PROGRAM_NAME
+
 command = ARGV.shift
+if command.nil? || %w[-h --help help].include?(command)
+  puts USAGE
+  exit(command.nil? ? 1 : 0)
+end
 args = ARGV.reject { |a| a.start_with?("--") }
 flags = ARGV.select { |a| a.start_with?("--") }.to_h { |f| k, v = f.sub("--", "").split("=", 2); [k, v || true] }
 # `--name x` and `--stem x` as two tokens, which is how they read on a command line.
@@ -235,5 +267,7 @@ when "cut"   then Crate.cut(args.fetch(0), args.fetch(1).to_f, args.fetch(2).to_
 when "loop"  then Crate.loop(args.fetch(0), (args[1] || 6).to_i)
 when "list"  then Crate.list
 else
-  puts File.read(__FILE__).lines[4..30].map { |l| l.sub(/\A# ?/, "") }.join
+  warn("crate: unknown command #{command.inspect}")
+  warn(USAGE)
+  exit 1
 end

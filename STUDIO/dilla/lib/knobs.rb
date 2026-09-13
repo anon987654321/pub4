@@ -15,7 +15,7 @@ require_relative "engine_sources"
 #                     rendered with the flag set to turn samples ON and no
 #                     sample in them. Nothing said so, because nothing knew
 #                     SAMPLE_LOOP was a path.
-#   DILLA_RENDER_SEED is WRITTEN by drum_kit.rb. Replaying a recorded manifest
+#   DILLA_RENDER_SEED is WRITTEN by the drum_kit engine part. Replaying a recorded manifest
 #                     verbatim feeds an output back in as an input.
 #   a typo'd knob     is indistinguishable from an unset one. SONITEXT=heavy
 #                     renders donuts_warm and says nothing.

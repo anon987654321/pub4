@@ -10,12 +10,16 @@
 # Progressions cross-fade into each other and several are rendered into one
 # file, because afplay leaves a gap between files and a gap is the one thing
 # this stream is not allowed to have.
-Dir.chdir("/Users/mac/Documents/GitHub/pub4/STUDIO/dilla")
+# The engine resolves its data and samples from the working directory, so run
+# from the dilla root this file sits under, whichever checkout that is.
+Dir.chdir(File.expand_path("..", __dir__))
 require_relative "../dilla"
 require "fileutils"
 
 RATE = 44_100
 OUT = "/Users/mac/Music/dilla_sines"
+# Homebrew ffmpeg where it is installed, PATH otherwise.
+SINE_FFMPEG = File.executable?("/opt/homebrew/bin/ffmpeg") ? "/opt/homebrew/bin/ffmpeg" : "ffmpeg"
 PROGRESS = File.join(OUT, "now_playing.txt")
 STOP = File.join(OUT, "STOP")
 XFADE = (ENV["SINE_XFADE_SECS"] || "0.5").to_f
@@ -158,7 +162,7 @@ end
 # The kit comes from DRUM_PATTERN_SETS, not from this file.
 #
 # Twelve patterns were written here by hand when the instruction was to keep
-# switching the beat, while lib/engine/drum_patterns.rb already held eighty-five
+# switching the beat, while the drum_patterns engine part already held eighty-five
 # feels -- each with eight kick variants, six snare, six ghost and five hat, which
 # recombine into far more than twelve. That is the Dilla Time research, and the
 # stream was playing around it rather than through it. Same error as building an
@@ -585,7 +589,7 @@ end
 
 # The master chain: Sonitex, then NastyVCS, then the standard tools.
 #
-# SONITEX_STX1260 in lib/engine/engine_defaults.rb is a measured parameter set,
+# SONITEX_STX1260 in the engine_defaults engine part is a measured parameter set,
 # not a guess -- its signal flow is documented there from Sound On Sound and
 # Tone Projects' own description. This runs that flow on the buffer, so what
 # comes out is the same chain the engine's master bus runs, arrived at without
@@ -1028,7 +1032,7 @@ def master_chain!(l, r)
   tmp_in = File.join(OUT, "master_in_#{Process.pid}.wav")
   tmp_out = File.join(OUT, "master_out_#{Process.pid}.wav")
   write_wav(tmp_in, l, r)
-  ok = system("/opt/homebrew/bin/ffmpeg", "-y", "-i", tmp_in, "-af", master_filter_chain,
+  ok = system(SINE_FFMPEG, "-y", "-i", tmp_in, "-af", master_filter_chain,
               "-c:a", "pcm_s16le", tmp_out, out: File::NULL, err: File::NULL)
   got = ok && File.file?(tmp_out) && File.size(tmp_out) > 1000 ? read_wav(tmp_out) : nil
   FileUtils.rm_f(tmp_in)
@@ -1227,7 +1231,7 @@ end
 # and put the current kit over it. What comes out is the old take's harmony under
 # new drums, which is the Detroit method pointed at our own back catalogue.
 RECYCLE_DIRS = [
-  "/Users/mac/Documents/GitHub/pub4/STUDIO/dilla/scratch/all_tracks_demo",
+  File.join(ROOT, "scratch", "all_tracks_demo"),
   "/Users/mac/Music/dilla_showcase/queue",
 ].freeze
 
@@ -1787,7 +1791,7 @@ end
 PAD_STACKS = PAD_LAYER_STACKS.keys.freeze
 
 # The analog drum bus ships at zero. WONKY_TOP_DIRT and WONKY_HAT_DUCK are both
-# `ENV[...] || 0` in lib/engine/drum_bus.rb, so the dual-bus split, the top-end
+# `ENV[...] || 0` in the drum_bus engine part, so the dual-bus split, the top-end
 # dirt and the kick-triggered hat duck are all built, all documented, and all
 # silent unless something asks for them. This asks.
 ENV["WONKY_TOP_DIRT"] ||= "0.42"

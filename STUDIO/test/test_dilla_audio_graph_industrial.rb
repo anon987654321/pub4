@@ -4,8 +4,8 @@ require_relative "dilla_helper"
 
 # Parity for the second renderer, and the one the spine exists to rescue.
 #
-# render_industrial builds its bed by hand at lib/engine/render_industrial.rb
-# 155-171: four sources, one of them conditional on a file existing, summed with
+# render_industrial (the render_industrial engine part in dilla.rb) builds its
+# bed by hand: four sources, one of them conditional on a file existing, summed with
 # positional weights. This reproduces that bed through AudioGraph and compares
 # the emitted graph as text, in both the with-texture and without-texture cases,
 # because the conditional channel is where a hand-built weights list is easiest

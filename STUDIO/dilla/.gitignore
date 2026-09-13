@@ -2,9 +2,7 @@
 
 # A/B comparison renders from master-chain work; regenerate, do not track.
 full_track_*.wav
-# Every render's quality sidecar, not only full_track's. loop.wav is ignored
-# twenty lines down and loop.wav.quality.json sat untracked beside it, which is
-# the rule below about sidecars, unapplied.
+# Every render's quality sidecar, at any depth.
 *.wav.quality.json
 
 # Stem splits. A stems render writes <name>_stems/ beside the render: four wavs
@@ -19,9 +17,9 @@ crate/
 samples/
 project/learnings/vocals/**/*.wav
 *.320kbps.original.mp3
-# Every renderer writes beside dilla.rb now rather than into renders/, so the
-# ignore rules have to name what lands here. A sidecar for a render that is not
-# tracked is not tracked either.
+# Renders land in OUTPUT_DIR: the working directory, or beside dilla.rb when the
+# command is typed from the repo root. Audio is never tracked wherever it lands,
+# and neither is the sidecar of an untracked render.
 *.wav
 *.mp3
 # Anchored to this directory. The vocal-fit sidecars under project/learnings are
@@ -29,16 +27,12 @@ project/learnings/vocals/**/*.wav
 # and an unanchored pattern would sweep them up with the render sidecars.
 /*.wav.provenance.json
 /*.mp3.provenance.json
-*.wav.quality.json
-*_stems/
 
 # Installed tools. The demucs virtualenv is 23,783 files and was living in
 # scratch/, where its own venv .gitignore happened to cover it -- protection
 # that would not extend to the next tool put beside it.
 tools/
 
-# dilla.rb refuses to write renders to the repo root and falls back here, so
-# this directory now catches the output of an invocation typed from the
-# checkout. The whole tree, not a pattern list: the anchored sidecar rules
-# above are relative to this file and stop matching one level down.
+# Render sessions filed away by hand. The whole tree, not a pattern list: the
+# anchored sidecar rules above stop matching one level down.
 renders/

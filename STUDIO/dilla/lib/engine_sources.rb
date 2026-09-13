@@ -1,25 +1,16 @@
 # frozen_string_literal: true
 
-# What "the engine" is, in one place.
+# What "the engine" is, in one place: dilla.rb plus lib/*.rb.
 #
-# Five different pieces of code have needed to answer "which files is the engine
-# made of", and every one of them answered it separately -- three different
-# corpora, and the disagreements were not academic. The parse check reported
-# "ruby syntax: ok" over a set that excluded all thirty lib/*.rb files, which is
-# the check MASTER's autofix has already broken this engine past. Provenance's
-# glob went one level deeper than the others and dropped 484 of 610 knobs out of
-# every manifest without failing anything.
+# Provenance, the parse check and the test suite all ask which files the engine
+# is made of, and this file is the only answer, so no caller re-derives a corpus
+# of its own. It has no dependencies -- not on dilla.rb, not on ROOT, not on a
+# gem -- so those callers can require it without booting the engine.
 #
-# So this file is the definition and nothing else re-derives it. It deliberately
-# has no dependencies -- not on dilla.rb, not on ROOT, not on a gem -- so that
-# provenance and the test suite can require it directly without booting the
-# engine.
-#
-# The engine is one file now. It was 81 parts under lib/engine/ required in a
-# hand-pinned order, and that order was load-bearing, so concatenating them in
-# it is what the order always meant. Two ways the list could lie went with the
-# split: a part on disk that nothing required, and a name in the list with no
-# file behind it. Neither is expressible any more.
+# The engine is one file, with its parts inline in load order. bin/, live/ and
+# scripts/ are tools beside the engine rather than part of it; STUDIO/gate.rb
+# counts them with lib/ against DILLA_SUPPORT_CEILING, which is a separate
+# question from what the engine loads.
 module DillaSources
   class << self
     def root = File.expand_path("..", __dir__)

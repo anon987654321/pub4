@@ -12,6 +12,14 @@ require_relative "../dilla/lib/radio_chop"
 # file is deleted after the chop, and a sidecar that only names a local path
 # cannot re-fetch the transfer that was cut.
 class TestCrateDig < Minitest::Test
+  # bin/crate names every fetch crate/sources/<slug>/source.wav, so the slug has
+  # to come from the directory; from the basename, six records would share one
+  # rack and the second chop would clear the first.
+  def test_crate_source_wav_slugs_by_its_directory
+    assert_equal "semua_untukmu", RadioChop.slug_for("crate/sources/semua_untukmu/source.wav")
+    assert_equal "side_a", RadioChop.slug_for("samples/dug/jazz/side_a.mp3")
+  end
+
   def test_archive_entry_stores_the_fetched_url
     doc = { "identifier" => "abc78", "year" => "1924", "title" => "Side A",
             "creator" => "Band" }

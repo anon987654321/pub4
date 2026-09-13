@@ -74,7 +74,7 @@ module DillaSeeds
     end
     ENV["VINYL"] = (data["vinyl"].to_f * 100).round.to_s if data["vinyl"]
   rescue StandardError => e
-    warn "DILLA_SEED_URL failed: #{e.message}" if ENV["DILLA_DEBUG"]
+    warn "DILLA_SEED_URL: fetch failed (#{e.class}: #{e.message}) — SWING, BPM and GEN_SEED keep their values"
   end
 
   def apply_seismic_stub!

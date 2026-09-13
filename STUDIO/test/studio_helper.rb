@@ -33,7 +33,7 @@ module Studio
   # several agents share one checkout is how engine state ends up swept into
   # somebody else's `git commit -a`.
   #
-  # This lives in the shared helper rather than in test/dilla/helper.rb, where it
+  # This lives in the shared helper rather than in test/dilla_helper.rb, where it
   # started, because test_studio_gate.rb dirties them too: the gate's load probe
   # boots dilla in a subprocess of its own. With the guard only on the dilla
   # suite, `rake test` came out clean solely because test:dilla runs after
@@ -72,7 +72,7 @@ end
 # suite went on dirtying dilla/project/*.json exactly as the note above says it
 # must not.
 #
-# It was not noticed because test/dilla/test_engine_probes.rb had grown a second
+# It was not noticed because test/test_dilla_engine_probes.rb had grown a second
 # restore hook of its own, as a Minitest.after_run block, which does run after
 # the tests and did work. Two hooks with snapshots taken at different moments is
 # its own bug -- see that file -- so the duplicate is gone and this one is

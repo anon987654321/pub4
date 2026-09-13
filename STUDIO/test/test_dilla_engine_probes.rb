@@ -36,7 +36,7 @@ class TestDilla < Minitest::Test
   # SNAPSHOTS TAKEN AT DIFFERENT MOMENTS.
   #
   #   test/studio_helper.rb        binreads project/**/*.json when the helper loads.
-  #   test/dilla/helper.rb  then requires the engine, WHICH WRITES session.json.
+  #   test/dilla_helper.rb  then requires the engine, WHICH WRITES session.json.
   #   this file             binread the same paths after that, at its own load.
   #
   # So the helper held the pristine bytes and this file held the already-dirtied
@@ -2790,7 +2790,7 @@ class TestDilla < Minitest::Test
       assert_operator manifest.fetch("environment").length, :>, pinned.length,
                       "environment still records everything, for reading rather than for replaying"
 
-      # DILLA_RENDER_SEED is written by drum_kit.rb from the seed above it.
+      # DILLA_RENDER_SEED is written by the drum_kit engine part from the seed above it.
       # Feeding it back in as an input is feeding a result back in as a cause.
       refute manifest.fetch("environment").key?("DILLA_RENDER_SEED")
       assert manifest.fetch("derived").key?("DILLA_RENDER_SEED")

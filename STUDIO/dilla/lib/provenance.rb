@@ -286,7 +286,7 @@ module DillaProvenance
       engine_env_keys.each_with_object({}) do |key, acc|
         next if ENV_DENY.include?(key) || key.match?(ENV_DENY_PATTERN)
         # A knob the engine WRITES is an output of this render, not an input to
-        # it. DILLA_RENDER_SEED is set by drum_kit.rb from the seed that is
+        # it. DILLA_RENDER_SEED is set by the drum_kit engine part from the seed that is
         # already recorded above, so replaying a manifest verbatim fed a result
         # back in as a cause. Recorded separately below, under a name that says
         # what it is.

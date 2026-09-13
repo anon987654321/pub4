@@ -6,9 +6,12 @@
 # load probe depends on, tested directly in test_engine_sources.rb.
 
 require_relative "studio_helper"
+require "tmpdir"
 
-# Silence the boot chatter; the engine writes a dmesg banner on load.
+# Silence the boot chatter; the engine writes a dmesg banner on load. Scratch
+# goes to the system temp directory, so a test run leaves nothing under the tree.
 DILLA_BOOT_ENV = {
+  "DILLA_SCRATCH_DIR" => File.join(Dir.tmpdir, "dilla-test-scratch-#{Process.uid}"),
   "DILLA_QUIET" => "1",
   "DILLA_ASSET_CHECK" => "0",
   "DILLA_KNOB_CHECK" => "0",

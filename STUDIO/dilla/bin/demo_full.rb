@@ -21,7 +21,7 @@ TARGET = (ENV["DEMO_SECS"] || "600").to_f
 # path meant ten minutes of finished rendering died at the very last step,
 # trying to open a file inside demo.mp3/. Ruby warned about the reinitialised
 # constant and the warning went by in a log nobody was reading.
-DEMO_MP3 = "/Users/mac/Music/dilla_sines/demo.mp3"
+DEMO_MP3 = ENV.fetch("DEMO_MP3", File.join(OUT, "demo.mp3"))
 cfg = dilla_resolve_config
 xf = (RATE * 0.6).to_i
 
@@ -41,7 +41,8 @@ names.each_with_index do |name, ni|
 
     p1, = DillaHarmony.beautify_pipeline(p0, cfg.merge(progression: name))
     (p1 && !p1.empty? ? p1 : p0)
-  rescue StandardError
+  rescue StandardError => e
+    warn "  #{name}: harmony failed, skipped (#{e.class}: #{e.message})"
     next
   end
   flow = flow_shape(ni)
@@ -49,7 +50,7 @@ names.each_with_index do |name, ni|
   stack = stacks[(ni * 3) % stacks.length]
   ENV["PAD_VOICE"] = stack.to_s
   ev = pads.each_with_index.map { |c, i| [i * SECS, 0.85, c, SECS * 1.02] }
-  tmp = "/Users/mac/Music/dilla_sines/df_pad.wav"
+  tmp = File.join(OUT, "df_pad.wav")
   pl = []; pr = []
   begin
     render_pad_stack!(tmp, ev, pads.length * SECS)
@@ -117,9 +118,9 @@ edge.times do |i|
   l[i] *= g; r[i] *= g
   l[-1 - i] *= g; r[-1 - i] *= g
 end
-wav = "/Users/mac/Music/dilla_sines/demo_full.wav"
+wav = File.join(OUT, "demo_full.wav")
 write_wav(wav, l, r)
-system("/opt/homebrew/bin/ffmpeg", "-y", "-i", wav, "-codec:a", "libmp3lame", "-b:a", "320k",
+system(SINE_FFMPEG, "-y", "-i", wav, "-codec:a", "libmp3lame", "-b:a", "320k",
        DEMO_MP3, out: File::NULL, err: File::NULL)
 FileUtils.rm_f(wav)
 File.write(DEMO_MP3.sub(/\.mp3\z/, ".tracklist.txt"), log.join("\n") + "\n")
