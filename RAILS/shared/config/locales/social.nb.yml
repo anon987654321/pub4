@@ -78,6 +78,7 @@ nb:
     delete: "Slett konto"
     delete_confirm: "Slette kontoen om 30 dager?"
   auth:
+    toggle_password_visibility: "Vis eller skjul passordet"
     enable_2fa: "Slå på 2FA"
     verification_code: "Verifiseringskode"
     # shared/_oauth_links renders in all three apps and reads these first,

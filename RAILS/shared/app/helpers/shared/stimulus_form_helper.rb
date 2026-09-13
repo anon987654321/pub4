@@ -44,7 +44,7 @@ module Shared
             type: "button",
             class: "btn btn-ghost btn-sm password-toggle",
             data: { action: "password-visibility#toggle" },
-            aria: { label: "Toggle password visibility" },
+            aria: { label: I18n.t("auth.toggle_password_visibility") },
           ) do
             safe_join([
               tag.span(I18n.t("actions.show"), data: { password_visibility_target: "icon" }),

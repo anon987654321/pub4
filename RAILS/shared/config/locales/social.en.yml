@@ -80,6 +80,7 @@ en:
     delete: "Delete account"
     delete_confirm: "Delete account in 30 days?"
   auth:
+    toggle_password_visibility: "Show or hide the password"
     enable_2fa: "Enable 2FA"
     verification_code: "Verification code"
     # Mirrors social.nb.yml. See there for why these live in the engine.
