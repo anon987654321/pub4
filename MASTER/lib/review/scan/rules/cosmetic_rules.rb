@@ -215,11 +215,19 @@ module Master
           [finding(line: 1, message: "uppercase without letter-spacing — add tracking per design_rules.yml")]
         end
 
+        # A tab is indentation in source and a field separator in data. A .tsv is
+        # tabs by definition, and login.conf and newsyslog.conf are kept as the
+        # base system ships them, $OpenBSD$ id and tab-aligned columns included,
+        # so a diff against the base file stays readable.
+        TAB_DELIMITED_BASENAMES = %w[login.conf newsyslog.conf].freeze
+
         RuleDSL.rule :TAB_CHARACTER,
           severity: :warning, tags: %i[HYGIENE],
           fires: "def call\n\tvalue\nend\n",
           does_not_fire: "def call\n  value\nend\n",
           description: "tabs forbidden — use two spaces" do |src, path:|
+          next [] if path.to_s.end_with?(".tsv") || TAB_DELIMITED_BASENAMES.include?(File.basename(path.to_s))
+
           scan_lines(src, /\t/, message: "tab character — indent with two spaces")
         end
 

@@ -8,6 +8,16 @@ class TestCosmeticRules < Minitest::Test
     refute_empty law_findings("RUBY_SNAKE_METHODS", "def fetchAlbum\nend\n", path: "lib/foo.rb")
   end
 
+  # A tab separates fields in a .tsv and in the two base-system config files
+  # kept as OpenBSD ships them; in a script it is still indentation.
+  def test_tab_character_spares_tab_delimited_data
+    row = "name\tdomain\n"
+    assert_empty rule("TAB_CHARACTER").check(row, path: "STUDIO/dilla/demo_manifest.tsv")
+    assert_empty rule("TAB_CHARACTER").check(row, path: "OPENBSD/etc/login.conf")
+    assert_empty rule("TAB_CHARACTER").check(row, path: "OPENBSD/etc/newsyslog.conf")
+    refute_empty rule("TAB_CHARACTER").check("f() {\n\tprint hi\n}\n", path: "OPENBSD/usr/local/bin/uptime-check.sh")
+  end
+
   def test_en_dash_range_flags_hyphen_range_in_prose
     findings = rule("EN_DASH_RANGE").check("Ideal line length is 45-75 characters.\n", path: "README.md")
     refute_empty findings
