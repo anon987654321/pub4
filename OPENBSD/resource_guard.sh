@@ -207,7 +207,17 @@ fi
 # same mistake. This gives a real dataset (`awk '{print $4}' | sort -n` etc.)
 # to recalibrate from once enough ticks have accumulated. One line/5min ==
 # ~2000 lines/week; rotated weekly via newsyslog (OPENBSD/etc/newsyslog.conf).
-echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) load=$load mem_avail=${mem_avail_pct}% shed=$shed deploy=$deploying" \
+#
+# The box-wide figures say pressure exists, not who made it, so each daemon
+# user's resident memory follows them: every app runs as its own daemon_user,
+# and summing by user counts the job worker and every Falcon fork with it. The
+# fields go last so the positions a recalibration reads stay where they are.
+rss=""
+for app in $CORE $OPTIONAL; do
+  kb=$(ps -o rss= -U "$app" 2>/dev/null | awk '{ s += $1 } END { printf "%d", s }')
+  rss="$rss rss_$app=$(( ${kb:-0} / 1024 ))M"
+done
+echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) load=$load mem_avail=${mem_avail_pct}% shed=$shed deploy=$deploying$rss" \
   >> /var/log/resource_guard_history.log 2>/dev/null || true
 
 if [[ -f $ALL_APPS_FLAG ]]; then

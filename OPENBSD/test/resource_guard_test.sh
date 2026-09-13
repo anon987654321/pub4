@@ -50,6 +50,13 @@ shift 2 2>/dev/null || true
 print "$*" >> "$FAKE_STATE_DIR/log"
 EOF
 
+# Two processes per daemon user, 256M each, in ps's kilobytes.
+cat > "$BIN/ps" <<'EOF'
+#!/bin/ksh
+print 262144
+print 262144
+EOF
+
 cat > "$BIN/vmstat" <<'EOF'
 #!/bin/ksh
 print "pages managed 100"
@@ -120,6 +127,14 @@ print "5. the old behaviour would have shed both on tick 1"
 reset
 GUARD_SHED_STRIKES=1 FAKE_FREE=$BREACH ksh "$SANDBOX/guard_under_test.sh" >/dev/null 2>&1 || true
 check "with strikes=1 only one goes, not both" "amber" "$(running)"
+
+print "6. every tick charges resident memory to each daemon user"
+last=""
+while IFS= read -r line; do last=$line; done < "$SANDBOX/log/history"
+got=""
+for field in $last; do [[ $field == rss_* ]] && got="$got $field"; done
+check "history names each app's rss, summed over its processes" \
+  "rss_master=512M rss_brgen=512M rss_bsdports=512M rss_amber=512M" "${got# }"
 
 rm -rf "$SANDBOX"
 [[ $fail -eq 0 ]] && print "\nALL PASS" || { print "\nFAILURES"; exit 1; }
