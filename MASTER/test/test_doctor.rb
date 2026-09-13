@@ -47,6 +47,14 @@ class TestDoctor < Minitest::Test
                  "unmeasured must not count as a failure for the exit code")
   end
 
+  # content-dedup passes whatever it finds, so its crash path must not be the
+  # one way an advisory check fails the host's exit code.
+  def test_advisory_check_crash_is_unmeasured_not_a_failure
+    body = File.read(DOCTOR)[/^def check_content_dedup.*?^end/m]
+    refute_nil body, "check_content_dedup moved; this test reads its body"
+    refute_match(/state: :fail/, body, "the advisory content-dedup check can fail the host")
+  end
+
   # Every construction goes through the three-state struct. A stray `ok:` is an
   # ArgumentError at runtime, which is how this was found: doctor crashed on
   # its first check after the struct changed.

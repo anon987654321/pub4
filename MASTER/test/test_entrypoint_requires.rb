@@ -82,6 +82,22 @@ class TestEntrypointRequires < Minitest::Test
     refute_empty entrypoints, "no executable entry points found -- the glob is wrong, not the tree"
   end
 
+  # entrypoints selects on the executable bit, so a script that lost it would
+  # drop out of every check here instead of failing one. This reads bin/ whole.
+  def test_every_bin_script_is_executable_with_a_shebang
+    broken = Dir.glob(File.join(MASTER_ROOT, "bin", "*")).sort.filter_map do |path|
+      next unless File.file?(path)
+      next if File.extname(path) == ".md"
+
+      problems = []
+      problems << "not executable" unless File.executable?(path)
+      problems << "no shebang" unless File.open(path) { |file| file.read(2) } == "#!"
+      "#{relative(path)}: #{problems.join(', ')}" unless problems.empty?
+    end
+
+    assert_empty broken, "A bin/ script that cannot be run directly:\n#{broken.join("\n")}"
+  end
+
   def test_internal_requires_resolve
     missing = ruby_entrypoints.flat_map do |script, source|
       source.scan(/^\s*require\s+["']([^"']+)["']/).filter_map do |(feature)|

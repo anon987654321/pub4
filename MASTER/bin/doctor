@@ -85,7 +85,8 @@ def check_content_dedup
   # ok: true unconditionally -- advisory only, never fails doctor's exit code.
   Check.new(name: "content-dedup", state: :pass, detail:)
 rescue StandardError => e
-  Check.new(name: "content-dedup", state: :fail, detail: "#{e.class}: #{e.message}")
+  # An advisory check cannot fail the host by crashing when its finding never can.
+  Check.new(name: "content-dedup", state: :unmeasured, detail: "#{e.class}: #{e.message}")
 end
 
 def check_api_keys

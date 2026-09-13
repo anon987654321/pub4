@@ -35,19 +35,25 @@ def write_report(name, body)
   path
 end
 
+# A tool that could not run still leaves a report, so the before-state is on disk
+# either way — but the line says WARN, because a report holding only the failure
+# is not the snapshot the rest of this run assumes it took.
 def maybe_run_tool(name, *argv)
-  capture(*argv, chdir: ROOT)
+  [capture(*argv, chdir: ROOT), true]
 rescue StandardError => e
-  "#{name}: unavailable: #{e.message}\n"
+  ["#{name}: unavailable: #{e.message}\n", false]
 end
 
 abort "FAIL cleanup: working tree dirty" unless clean_tree?
 
-inventory = maybe_run_tool("inventory", "ruby", "tools/repo_inventory.rb", "--json")
-history = maybe_run_tool("history", "ruby", "tools/history_valuables.rb", ".")
-
-puts "OK wrote #{write_report('inventory_before.json', inventory)}"
-puts "OK wrote #{write_report('history_before.txt', history)}"
+reports = {
+  "inventory_before.json" => maybe_run_tool("inventory", "ruby", "tools/repo_inventory.rb", "--json"),
+  "history_before.txt" => maybe_run_tool("history", "ruby", "tools/history_valuables.rb", "."),
+}
+reports.each do |file, (body, ran)|
+  path = write_report(file, body)
+  puts ran ? "OK wrote #{path}" : "WARN wrote #{path}, but the tool did not run: #{body.strip}"
+end
 
 candidates = Dir.glob(File.join(REPO, "test_*.jpg")).map { |path| path.sub(REPO + "/", "") }
 puts candidates.empty? ? "OK no root test_*.jpg candidates" : "WARN cleanup candidates:\n#{candidates.map { |c| "  #{c}" }.join("\n")}"
