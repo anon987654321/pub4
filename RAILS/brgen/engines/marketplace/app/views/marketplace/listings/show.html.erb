@@ -36,7 +36,7 @@
       <%= button_to t("marketplace.renew"), renew_listing_path(@listing), method: :post, class: "btn btn-primary btn-sm" %>
     <% end %>
   <% end %>
-  <p><%= [(@listing.condition.present? ? t("marketplace.conditions.#{@listing.condition}", default: @listing.condition) : nil), @listing.location, @listing.user&.display_name || "anon"].compact.join(" · ") %></p>
+  <p><%= [(@listing.condition.present? ? t("marketplace.conditions.#{@listing.condition}", default: @listing.condition) : nil), @listing.location, @listing.user&.display_name || t("chat.anon")].compact.join(" · ") %></p>
   <p><%= t("marketplace.views", count: @listing.views_count.to_i) %> · <%= t("marketplace.saves", count: @listing.favorites.size) %> · <%= t("marketplace.reviews_count", count: @listing.reviews_count.to_i) %></p>
   <% if @listing.reviews_count.to_i.positive? %>
     <p><%= t("marketplace.seller_rating", rating: number_with_precision(@listing.rating, precision: 1)) %></p>
@@ -60,7 +60,7 @@
   <%= render "shared/affiliate_disclosure" %>
 </article>
 
-<%= render "shared/also_nearby", items: @nearby_listings, title: t("marketplace.nearby_listings", default: "Nearby") %>
+<%= render "shared/also_nearby", items: @nearby_listings, title: t("marketplace.nearby_listings") %>
 
 <%= render "marketplace/listings/questions", listing: @listing, questions: @questions, question_form: @question %>
 
@@ -82,7 +82,7 @@
     <% @reviews.each do |review| %>
       <article>
         <strong><%= number_with_precision(review.rating, precision: 0) %> ★</strong>
-         — <%= review.user&.display_name || "anon" %>
+         — <%= review.user&.display_name || t("chat.anon") %>
         <%= simple_format(review.body) if review.body.present? %>
       </article>
     <% end %>
@@ -96,7 +96,7 @@
 
 <% if Current.user.present? && Current.user != @listing.user && @listing.buyable? %>
   <div id="make-offer" class="section-divider">
-    <p class="section-heading--md"><%= t("marketplace.make_offer", default: "Make an offer") %></p>
+    <p class="section-heading--md"><%= t("marketplace.make_offer") %></p>
     <p><%= t("marketplace.message_seller_hint") %></p>
     <div class="form-wrap form-wrap--flush">
       <% draft_key = "brgen-marketplace-order-#{@listing.to_param}-new" %>
@@ -138,7 +138,7 @@
     <% if @listing.orders.any? %>
       <% @listing.orders.includes(:buyer).each do |order| %>
         <article>
-          <%= tag.strong order.buyer&.display_name || "anon" %>
+          <%= tag.strong order.buyer&.display_name || t("chat.anon") %>
            — <%= order.status %>
           <% if order.message.present? %><%= tag.p order.message %><% end %>
           <% if order.status == "pending" %>

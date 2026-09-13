@@ -17,16 +17,17 @@ class Marketplace::ListingsController < Marketplace::BaseController
   def index
     scope = policy_scope(Marketplace::Listing).with_attached_photos.includes(:user, :category)
     scope = apply_live_search(scope, columns: %w[title description location], vertical: "marketplace", filters: { category_id: params[:category_id] }.compact) if live_search_query.present?
-    # Counted before the facet filters narrow it: a facet's own number has to be
-    # "how many if you pick this", not "how many of what you already picked".
-    @facets = Marketplace::ListingFacets.new(scope, params)
-    scope = scope.where(category_id: params[:category_id]) if params[:category_id].present?
-    scope = scope.where(condition: params[:condition]) if params[:condition].present?
     # goods unless asked otherwise: a bicycle search should not turn up a job.
     @kind = Marketplace::Listing::KINDS.include?(params[:kind]) ? params[:kind] : "goods"
     scope = scope.where(kind: @kind)
     scope = scope.casual if params[:from] == "person"
     scope = scope.from_shops if params[:from] == "shop"
+    # Counted after kind and source, which the grid always applies, and before
+    # the facet filters narrow it: a facet's own number has to be "how many if
+    # you pick this", not "how many of what you already picked".
+    @facets = Marketplace::ListingFacets.new(scope, params)
+    scope = scope.where(category_id: params[:category_id]) if params[:category_id].present?
+    scope = scope.where(condition: params[:condition]) if params[:condition].present?
     @search_lat = params[:lat].presence
     @search_lng = params[:lng].presence
     @radius_km = Marketplace::Listing.radius_from(params[:radius_km].presence || Marketplace::Listing::DEFAULT_RADIUS_KM)
@@ -59,7 +60,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
     @review = Marketplace::Review.new if Current.user.present? && @listing.reviewable_by?(Current.user)
     @nearby_listings = nearby_listings_for(@listing)
     @questions = @listing.questions.includes(:user, :answered_by).for_display
-    @variants = @listing.variants.ordered.includes(:options).select(&:in_stock?)
+    @variants = @listing.variants.ordered.includes(:options).in_stock
     @question = Marketplace::Question.new if Current.user.present?
   end
 
@@ -75,7 +76,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
 
   def create
     authorize Marketplace::Listing
-    @listing = Current.user.marketplace_listings.build(listing_params_for_kind)
+    @listing = Current.user.marketplace_listings.build(listing_params_for_kind(listing_params[:kind].presence || "goods"))
     if @listing.save
       preset = params[:listing][:preset].presence
       PostproJob.perform_later(@listing.to_gid.to_s, preset, "photos") if preset && @listing.photos.attached?
@@ -102,7 +103,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
 
   def update
     authorize @listing
-    if @listing.update(listing_params_for_kind(locked_kind: @listing.kind))
+    if @listing.update(listing_update_params)
       Shared::DomainEvent.record!(
         actor: Current.user, action: "listing.updated", subject: @listing,
         source_vertical: "marketplace", locality: @listing.location
@@ -142,19 +143,17 @@ class Marketplace::ListingsController < Marketplace::BaseController
   # Only the detail block for the kind being listed. Permitting all three would
   # let a job advert arrive carrying rent, and the row would sit there with
   # nothing rendering it.
-  #
-  # An update keeps the kind the listing was created with: the edit form has no
-  # kind field, and a posted kind would turn a sofa into a job advert with no job
-  # details behind it.
-  def listing_params_for_kind(locked_kind: nil)
+  def listing_params_for_kind(kind)
     permitted = listing_params
-    permitted[:kind] = locked_kind if locked_kind
-    kind = permitted[:kind].presence || "goods"
     %w[job housing gig].each do |other_kind|
       permitted.delete("#{other_kind}_detail_attributes") unless kind == other_kind
     end
     permitted
   end
+
+  # kind is fixed at create. Switching a goods listing to a job afterwards would
+  # drop the price requirement from a listing buyers already hold offers on.
+  def listing_update_params = listing_params_for_kind(@listing.kind).except(:kind)
 
   def nearby_listings_for(listing)
     return Marketplace::Listing.none unless listing.geo?

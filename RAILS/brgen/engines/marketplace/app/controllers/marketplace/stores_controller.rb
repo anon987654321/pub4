@@ -33,7 +33,7 @@ module Marketplace
       @store.owner = Current.user
 
       if @store.save
-        redirect_to shop_path(@store.slug), notice: t("marketplace.store_created", default: "Store created")
+        redirect_to shop_path(@store.slug), notice: t("marketplace.store_created")
       else
         render :new, status: :unprocessable_entity
       end
@@ -44,7 +44,7 @@ module Marketplace
 
     def update
       if @store.update(store_params)
-        redirect_to shop_path(@store.slug), notice: t("marketplace.store_updated", default: "Store updated")
+        redirect_to shop_path(@store.slug), notice: t("marketplace.store_updated")
       else
         render :edit, status: :unprocessable_entity
       end
@@ -52,7 +52,7 @@ module Marketplace
 
     def destroy
       @store.destroy
-      redirect_to shops_path, notice: t("marketplace.store_deleted", default: "Store removed")
+      redirect_to shops_path, notice: t("marketplace.store_deleted")
     end
 
     private
@@ -67,7 +67,7 @@ module Marketplace
     def authorize_owner
       return if Current.user && @store.owner_id == Current.user.id
 
-      redirect_to shop_path(@store.slug), alert: t("marketplace.store_not_allowed", default: "Not allowed")
+      redirect_to shop_path(@store.slug), alert: t("marketplace.store_not_allowed")
     end
 
     def store_params

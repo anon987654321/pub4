@@ -61,6 +61,15 @@ class MarketplaceQuestionsTest < ActionDispatch::IntegrationTest
     assert Notification.where(user_id: @buyer.id, kind: "alert").exists?
   end
 
+  test "a refused question is explained in the reader's language" do
+    sign_in_as(@buyer)
+
+    assert_no_difference -> { Marketplace::Question.count } do
+      post marketplace.listing_questions_path(@listing), params: { question: { body: "" } }
+    end
+    assert_includes flash[:alert], I18n.t("activerecord.attributes.marketplace/question.body")
+  end
+
   # An answered question is what a reader came for; an unanswered one is a
   # question they may have too.
   test "answered questions come first" do

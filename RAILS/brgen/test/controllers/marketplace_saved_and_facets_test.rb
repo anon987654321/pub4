@@ -57,6 +57,20 @@ class MarketplaceSavedAndFacetsTest < ActionDispatch::IntegrationTest
     assert_equal 1, narrowed.conditions["fair"]
   end
 
+  # The grid shows one kind at a time, so a facet counting every kind promises
+  # listings that picking it will not show.
+  test "the index counts facets within the kind on screen" do
+    listing("Sykkelbud", category: @bikes, kind: "job")
+    host! "markedsplass.brgen.no"
+
+    get marketplace.listings_path(kind: "goods")
+    assert_response :success
+    assert_equal 2, controller.instance_variable_get(:@facets).categories[@bikes.id]
+
+    get marketplace.listings_path(kind: "job")
+    assert_equal 1, controller.instance_variable_get(:@facets).categories[@bikes.id]
+  end
+
   test "price bands count in kroner" do
     bands = facets.price_bands
     assert_equal 1, bands[[ nil, 500 ]]

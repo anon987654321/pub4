@@ -1,6 +1,6 @@
 <% listing = deal.listing %>
 <% photo = listing&.photos&.attached? ? listing.photos.first : nil %>
-<% badge = deal.badge.presence || (deal.discount_percent.present? ? "#{deal.discount_percent.to_i}% off" : nil) %>
+<% badge = deal.badge.presence || (deal.discount_percent.present? ? t("marketplace.percent_off", percent: deal.discount_percent.to_i) : nil) %>
 <%= link_to deal_path(deal),
       class: "deal-card deal",
       aria: { label: deal.headline } do %>

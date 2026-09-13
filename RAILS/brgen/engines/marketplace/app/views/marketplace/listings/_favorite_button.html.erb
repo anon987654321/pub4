@@ -9,7 +9,7 @@
           method: :delete,
           class: "deal-fav deal-fav--on",
           form: { class: "deal-fav-form", data: { turbo: true } },
-          aria: { label: "Remove from saved", pressed: true } do %>
+          aria: { label: t("marketplace.wishlist.remove"), pressed: true } do %>
       <%= icon :like, size: 18 %>
     <% end %>
   <% else %>
@@ -17,7 +17,7 @@
           method: :post,
           class: "deal-fav",
           form: { class: "deal-fav-form", data: { turbo: true } },
-          aria: { label: "Save listing", pressed: false } do %>
+          aria: { label: t("marketplace.wishlist.add"), pressed: false } do %>
       <%= icon :like, size: 18 %>
     <% end %>
   <% end %>

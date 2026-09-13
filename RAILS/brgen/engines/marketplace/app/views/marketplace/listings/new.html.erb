@@ -7,7 +7,8 @@
 
 <turbo-frame id="marketplace-new-listing" data-turbo-action="replace">
 <div class="form-wrap">
-  <%= form_with model: @listing, url: listings_path, html: { role: "form", "aria-label": t("marketplace.new_listing_form") } do |f| %>
+  <%= form_with model: @listing, url: listings_path, html: { role: "form", "aria-label": t("marketplace.new_listing_form") },
+                data: { controller: "form-submit", action: "submit->form-submit#lock", form_submit_blank: t("feed.compose_blank") } do |f| %>
     <%= render "shared/errors", object: @listing %>
     <%# What is being listed, chosen before anything else: a job advert has no
         price and no condition, and a form that asks for both is a form people
@@ -15,7 +16,7 @@
     <nav class="listing-kinds" aria-label="<%= t("marketplace.kinds_label") %>">
       <% Marketplace::Listing::KINDS.each do |kind| %>
         <%= link_to t("marketplace.kinds.#{kind}"), new_listing_path(kind: kind),
-              class: "chip#{" active" if @kind == kind}" %>
+              class: "chip#{" active" if @kind == kind}", aria: { current: (@kind == kind ? "page" : nil) } %>
       <% end %>
     </nav>
     <%= f.hidden_field :kind, value: @kind %>
@@ -62,7 +63,7 @@
       <% end %>
     <% end %>
 
-    <div class="field"><%= f.label :category_id, "Category" %><%= f.collection_select :category_id, @categories, :id, :name, { include_blank: "—" } %></div>
+    <div class="field"><%= f.label :category_id, t("marketplace.category") %><%= f.collection_select :category_id, @categories, :id, :name, { include_blank: "—" } %></div>
     <div class="field"><%= f.label :location %><%= f.text_field :location %></div>
     <details class="advanced-fields">
       <summary><%= t("marketplace.precise_coordinates") %></summary>
@@ -79,12 +80,12 @@
             capture: "environment",
             direct_upload: true,
             class: "media-input-hidden",
-            aria: { label: t("marketplace.add_photos", default: "Add photos") },
+            aria: { label: t("marketplace.add_photos") },
             data: { media_picker_target: "input", action: "change->media-picker#pick" } %>
       <div class="media-actions">
         <button type="button" class="media-btn" data-action="click->media-picker#trigger">
           <%= icon :camera, size: 20 %>
-          Photos / Camera
+          <%= t("posts.photo_camera") %>
         </button>
       </div>
       <div class="media-preview" data-media-picker-target="preview"></div>

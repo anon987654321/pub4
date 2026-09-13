@@ -4,7 +4,7 @@
       <%= form.hidden_field :query, value: params[:q] %>
       <%= form.hidden_field :category_id, value: params[:category_id] %>
       <%= form.hidden_field :location, value: params[:location] %>
-      <%= form.hidden_field :name, value: "Marketplace search" %>
+      <%= form.hidden_field :name, value: t("marketplace.saved_search_default_name") %>
       <%= form.submit t("marketplace.save_search"), class: "btn btn-ghost btn-sm" %>
     <% end %>
   </div>
@@ -12,7 +12,7 @@
 
 <% if @categories.any? %>
   <div class="deal-cats" aria-label="<%= t("aria.categories") %>">
-    <%= link_to "All", listings_path, class: "deal-cat#{" active" unless params[:category_id]}" %>
+    <%= link_to t("marketplace.all_categories"), listings_path, class: "deal-cat#{" active" unless params[:category_id]}" %>
     <% @categories.each do |cat| %>
       <%= link_to cat.name, listings_path(category_id: cat.id, q: params[:q].presence), class: "deal-cat#{" active" if params[:category_id].to_s == cat.id.to_s}" %>
     <% end %>

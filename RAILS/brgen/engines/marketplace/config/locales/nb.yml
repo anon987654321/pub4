@@ -39,3 +39,21 @@ nb:
       blocked: blokkert
     deals:
       ends_in: "slutter om %{time}"
+    wishlist:
+      add: Lagre annonsen
+      remove: Fjern fra lagrede
+    saved_search_default_name: Søk på markedsplassen
+    all_categories: Alle
+    category: Kategori
+    any_query: Alle søkeord
+    alerts_on: varsler på
+    partner_program: Partnerprogram
+    store_created: Butikken er opprettet
+    store_updated: Butikken er oppdatert
+    store_deleted: Butikken er fjernet
+    store_not_allowed: Bare eieren kan endre denne butikken
+  activerecord:
+    attributes:
+      marketplace/question:
+        body: Spørsmål
+        answer: Svar

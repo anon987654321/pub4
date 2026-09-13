@@ -6,6 +6,8 @@
     a deal leads with its discount, a listing with its meta row, and one
     body partial serving both would be the parameter soup the
     purchasable-row refutation warned about. %>
+<%# alt stays empty: both callers wrap this slot in a link named by the title
+    and print the title beside it, so a filled alt reads the title twice. %>
 <div class="deal-card-img">
   <% if photo %>
     <%= responsive_image_tag photo, alt: "", widths: [360, 720], sizes: "(max-width: 768px) 50vw, 220px" %>
