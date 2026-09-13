@@ -1609,7 +1609,6 @@ nb:
       cart_empty: Handlekurven er tom.
       cart_not_payable: Ingenting i handlekurven kan betales.
       unknown_provider: Ukjent betalingsleverandør.
-      checkout_failed: 'Betalingen gikk ikke gjennom: %{message}'
       payment_recorded: Betaling %{status} via %{provider}.
       listing_saved: Annonsen er lagret.
       listing_unsaved: Annonsen er fjernet fra lagrede.

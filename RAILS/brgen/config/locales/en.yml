@@ -1600,7 +1600,6 @@ en:
       cart_empty: Your cart is empty.
       cart_not_payable: Nothing in the cart can be paid for.
       unknown_provider: Unknown payment provider.
-      checkout_failed: 'Checkout failed: %{message}'
       payment_recorded: Payment %{status} via %{provider}.
       listing_saved: Listing saved.
       listing_unsaved: Listing removed from saved.

@@ -24,7 +24,7 @@ class AppFlashI18nTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
 
   # tree => [nb file, en file]. The shared engine ships its locales to all three
-  # apps through the shared.i18n initializer.
+  # apps through Rails::Engine's own config/locales path.
   LOCALES = {
     "shared" => ["shared/config/locales/social.nb.yml", "shared/config/locales/social.en.yml"],
     "amber" => ["amber/config/locales/nb.yml", "amber/config/locales/en.yml"],
@@ -69,8 +69,13 @@ class AppFlashI18nTest < Minitest::Test
       File.readlines(file, encoding: "UTF-8")
           .reject { |line| line.strip.start_with?("#") }
           .join
-          .scan(/"((?:[\w.]*\.)?flash\.[\w.]*?)\#\{/).flatten
+          .then { |code| code.scan(/"((?:[\w.]*\.)?flash\.[\w.]*?)\#\{/).flatten + scoped_prefixes(code) }
     end.uniq
+  end
+
+  # t(key, scope: "flash.review_issue") resolves every leaf under that scope.
+  def scoped_prefixes(code)
+    code.scan(/scope:\s*"((?:[\w.]*\.)?flash\.[\w.]+)"/).flatten.map { |scope| "#{scope}." }
   end
 
   def resolve(locale_hash, dotted)
@@ -79,7 +84,7 @@ class AppFlashI18nTest < Minitest::Test
 
   # The engine's own pair, loaded once: a shared.* key belongs to the engine
   # whichever app asks for it, because every app loads these two files through the
-  # shared.i18n initializer.
+  # engine's config/locales path.
   def shared_locales
     @shared_locales ||= [load_locale(LOCALES.fetch("shared").first, "nb"),
                          load_locale(LOCALES.fetch("shared").last, "en")]
@@ -193,27 +198,25 @@ class AppFlashI18nTest < Minitest::Test
     end
   end
 
-  # The engine ships its locale files to every app; if the initializer stops
-  # loading them every flash in the family becomes a missing span at once.
-  #
-  # Asserted as "every file it carries is loaded", not as the literal string
-  # `config/locales/social.`, which is what this used to look for. The
-  # initializer named that one file and affiliate.en.yml sat beside it unloaded;
-  # widening it to a glob was the fix, and left this assertion looking for a
-  # string the corrected code no longer contains. A test that fails when the bug
-  # it describes is fixed is a test measuring the wrong thing.
-  def test_the_engine_still_loads_every_locale_file_it_carries
+  # The engine ships its locale files to every app through Rails::Engine's
+  # default config/locales path, which loads them ahead of the host app so an
+  # app can word a shared string its own way. Two ways to break that, both
+  # measured on a booted bsdports: a hand-written initializer that appends the
+  # files to I18n.load_path a second time (after the app, so shared wins every
+  # key both define), or a paths override that stops the engine loading them.
+  def test_the_engine_loads_its_locale_files_once_and_ahead_of_the_app
     engine = File.read(File.join(ROOT, "shared/lib/shared/engine.rb"))
-    loaded = engine[/Dir\[root\.join\("(config\/locales\/[^"]+)"\)/, 1]
+    code = engine.lines.reject { |line| line.strip.start_with?("#") }.join
 
-    assert loaded, "the i18n initializer no longer globs config/locales"
-    assert_includes engine, "i18n.load_path"
+    refute_match(/i18n\.load_path\s*(<<|\+=|\.concat|\.push|\.unshift)/, code,
+                 "shared/lib/shared/engine.rb registers locale files by hand; Rails::Engine already " \
+                 "loads config/locales, so this loads them twice and the second copy outranks the app")
+    refute_match(/paths\[["']config\/locales["']\]/, code,
+                 "shared/lib/shared/engine.rb overrides the engine's config/locales path")
 
-    shipped = Dir.glob(File.join(ROOT, "shared/config/locales/*.yml")).map { |path| File.basename(path) }
-    pattern = File.join(ROOT, "shared", loaded)
-    covered = Dir.glob(pattern).map { |path| File.basename(path) }
-
-    assert_equal shipped.sort, covered.sort,
-                 "the engine carries locale files the initializer does not load: #{(shipped - covered).join(', ')}"
+    shipped = Dir.glob(File.join(ROOT, "shared/config/locales/**/*")).select { |path| File.file?(path) }
+    refute_empty shipped
+    assert shipped.all? { |path| path.end_with?(".yml", ".rb") },
+           "Rails::Engine loads only .yml and .rb from config/locales"
   end
 end

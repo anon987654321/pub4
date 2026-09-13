@@ -28,16 +28,11 @@ app/jobs app/reflexes].each do |dir|
 
     %w[app/channels].each { |dir| config.autoload_paths << root.join(dir).to_s }
 
-    initializer "shared.i18n" do |app|
-      # Every locale file the engine carries, not one named set. This listed
-      # social.<locale>.yml literally, so affiliate.en.yml — added when the
-      # affiliate stack moved here so amber could render the same in-feed unit —
-      # was on disk and never loaded, and the unit would have rendered
-      # translation-missing spans in the app it was moved for.
-      Dir[root.join("config/locales/*.{en,nb}.yml").to_s].sort.each do |path|
-        app.config.i18n.load_path << path
-      end
-    end
+    # No i18n initializer. Rails::Engine already adds config/locales/**/*.yml to
+    # I18n.load_path ahead of the host app, which is what lets an app word a
+    # shared string its own way. A second, hand-written registration appended
+    # every shared file again after the app's own, so shared won every key both
+    # defined; locale_shadowing now fails if one comes back.
 
     initializer "shared.view_paths" do
       ActiveSupport.on_load(:action_controller_base) do
