@@ -114,7 +114,11 @@ class Message < ApplicationRecord
 
   # Expiry is unsend, not destroy: a hard delete holes a thread and orphans
   # replies (the reason unsend! exists). Attachments go with the body.
+  # Idempotent: the sweep and the per-message job can both reach one message,
+  # and a second pass must not restamp deleted_at.
   def expire!
+    return if deleted_at.present?
+
     unsend!
     attachment.purge if attachment.attached?
   end

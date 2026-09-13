@@ -2,9 +2,10 @@
 
 class ExpiredMessagesSweepJob < ApplicationJob
   queue_as :bulk
+  limits_concurrency to: 1, key: "expired-messages-sweep", duration: 15.minutes, on_conflict: :discard
 
   def perform
-    Message.where(expires_at: ..Time.current).find_each(&:expire!)
+    Message.where(expires_at: ..Time.current, deleted_at: nil).find_each(&:expire!)
 
     # Typing rows that were never sent. Message#after_create deletes the sender's
     # indicator, so the ones left behind belong to people who started a reply and

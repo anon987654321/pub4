@@ -22,7 +22,7 @@
     <% @messages.each do |message| %>
       <li role="listitem">
         <%= link_to conversation_path(message.conversation) do %>
-          <%= tag.strong message.sender&.display_name || "anon" %>
+          <%= tag.strong message.sender&.display_name || t("chat.anon") %>
           <%= truncate(message.content.to_s, length: 140) %>
           <time datetime="<%= message.created_at.iso8601 %>"><%= time_ago(message.created_at) %></time>
         <% end %>

@@ -63,16 +63,16 @@
       <%= tag.h2 t("maps.at_this_place") %>
       <ul>
         <% @place.restaurants.active.limit(8).each do |restaurant| %>
-          <li><%= link_to restaurant.name, record_public_href(restaurant) %> · <%= t("nav.takeaway", default: "takeaway") %></li>
+          <li><%= link_to restaurant.name, record_public_href(restaurant) %> · <%= t("nav.takeaway") %></li>
         <% end %>
         <% @place.stores.active.limit(8).each do |store| %>
-          <li><%= link_to store.name, record_public_href(store) %> · <%= t("nav.marketplace", default: "marketplace") %></li>
+          <li><%= link_to store.name, record_public_href(store) %> · <%= t("nav.marketplace") %></li>
         <% end %>
       </ul>
     </section>
   <% end %>
 
-  <%= render "shared/also_nearby", items: @nearby_places, title: t("maps.nearby_places", default: "Nearby") %>
+  <%= render "shared/also_nearby", items: @nearby_places, title: t("maps.nearby_places") %>
 
   <% if @recent_check_ins.any? %>
     <section>
