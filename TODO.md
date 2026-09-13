@@ -2068,6 +2068,51 @@ STUDIO
   ENV but not constants computed from it at load (acapella `ONLY`/`EXCLUDE`).
   Run each file in its own process, or stop calling it isolation.
 
+## OpenCrabs borrow list — ChatGPT intake 2026-09-13
+
+Fifty-three idea groups, read against the tree by caller and test rather than by
+name. Eleven landed with a test each on 2026-09-13: permanent LLM failures stop
+retrying, an interrupted standing order says so, unclassified and untiered
+dynamic tools are withheld, the prose phantom detectors detect, edit claims are
+checked against the turn's writes, turn-level memory recall, the react loop
+calls tools through their wrappers and heals guessed names, the fold reports its
+rollback, atomic session saves, one RSI log line per recurrence, and config
+typos. The refusals are in `MASTER/DECISIONS.md` under "The OpenCrabs Intake
+Borrows Mechanisms, Not A Second Runtime". What stays open is below, each a
+hypothesis with its seam.
+
+1. **The interactive CLI can never approve a Request.** `CoreBridge.build_fold`
+   builds `World.new` without `ask:`, so the push, hard reset and deploy the
+   sandbox routes to a person are refused at a terminal as they are in the
+   daemon. Needs a TTY surface that does not fight the thinking indicator, and
+   the operator's word that approval belongs there at all.
+2. **A failed hard compaction lets the turn run over the window.**
+   `compact!` publishes `compaction:error` and returns an `Err`, and
+   `agent.rb:206` drops it, so the turn goes out at 90% pressure with nothing
+   compacted. Pressure is the character estimate, while `ruby_llm_sender` records
+   the provider's `input_tokens`.
+3. **The ledger counts every tool but Shell as a success.** Only Shell publishes
+   `exit_code`, and `Ledger::Feedback#record_tool` reads a missing one as zero.
+   `user_correction` has no live producer, and `dispatch_analyze_self` is not a
+   registered command, so the RSI opportunities it reports are built from
+   successes.
+4. **Two tier vocabularies.** `data/tools.yml` says safe or dangerous; each
+   class's `TIER` says safe, guarded, dangerous or open, and WebFetch is safe in
+   one and guarded in the other. Exposure reads the first, Governor the second.
+5. **A write does not refuse a file changed since it was read.** `GroundTruth`
+   hashes every read, and `fresh?` is consulted only at FixLoop commit.
+6. **Inert, by caller census.** MCP tools reach `@tools` and never a model,
+   because `build_llm_tools` skips a class `LLM_TOOL_MAP` does not name;
+   `AgentPool#spawn`, `CLI::BrainOverlay`, `Ground::MemorySearch`,
+   `Ground::SchemaCheck`, `Parliament#propose` and `Io::Gateway` adapters have no
+   caller outside tests; `ActivePlan` subscribes to `agent:plan_done`, which
+   nothing publishes. Each is wire-or-delete.
+7. **Every dynamic HTTP row shares one registry key.** `load_tool_registry` keys
+   them all `DynamicHttp`, so the last row's tier stands for every row.
+8. **A fallback leaves no trace on the answer.** The chain publishes which model
+   answered but neither the `Result` nor the cost row carries it, and a
+   flat-rate charge for an uncatalogued model is not marked approximate.
+
 ## ChatGPT proposed forward work — intake 2026-09-11
 
 478 items, worked 2026-09-13. About 306 were built, false or already open

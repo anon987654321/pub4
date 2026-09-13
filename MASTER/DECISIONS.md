@@ -1187,6 +1187,45 @@ screenshot criterion of every item would put law about prose in `rules.yml`,
 which is immutable to effects and read by the runtime. The two tools above check
 what an item cites, and `TODO.md`'s preamble carries the habit.
 
+## The OpenCrabs Intake Borrows Mechanisms, Not A Second Runtime (2026-09-13)
+
+A ChatGPT comparison of MASTER with OpenCrabs listed fifty-three groups of ideas
+and called its own conclusion "OpenCrabs-style runtime under MASTER's law". The
+part worth taking was the detector engineering: failures classified before a
+retry, a claim checked against what ran, a restart that says a run did not
+finish. Those landed with tests. What follows is refused once, so the next
+comparison does not reopen it.
+
+**No lazy tool schemas or tool search.** OpenCrabs sends a core set from more
+than a hundred tools. MASTER has sixteen, already narrowed by profile, tier and
+file type, so a search step would cost a round trip to save a few hundred
+tokens.
+
+**No target URIs or channel model.** `here` and `oc://` exist because OpenCrabs
+answers Telegram and Discord. MASTER has two surfaces, the CLI and the face, and
+"Agent Harnesses Are Read, Not Wired" already refuses A2A.
+
+**No epistemic belief store beside memory.** Verified, inferred, uncertain and
+contradicted would be a second record of the same facts. Memory has types, age
+decay and an archive, and the gap that matters, forgetting that sticks, is
+already open in `TODO.md` as a tombstone.
+
+**No execution-context object.** Session, surface, elevation and subagent type
+travel as fiber locals read at the boundary that needs them. One object would
+change every tool's signature, and no failure has been traced to a missing field.
+
+**No Mission Control inbox, profiles, cost-aware RSI loop or live judge panel.**
+`/soul propose`, approve and rollback is the proposal lifecycle, with
+`data/proposals.yml` as its ledger. `Ground::Config` and `ModePosture` cover what
+a profile would. Autofix is off by default and the circuit breaker caps spend.
+`bin/check --profile=agent` stays the eval: repeated multi-provider runs judged
+by other models spend money on a question no finding has asked.
+
+**No durable notification queue or background task table.** One host, one bus,
+synchronous delivery; `StandingOrders` persists what must survive a restart, and
+the earlier refusal of an agent process table stands. The TUI, browser
+verification and parallel change streams were refused before this intake.
+
 ## What The Catalogs, Papers And Books Do Not License (2026-09-13)
 
 Four intake passes on 2026-09-11 read awesome lists, agent harnesses, arXiv
