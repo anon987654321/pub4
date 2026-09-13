@@ -266,6 +266,15 @@ class TestDevices < Minitest::Test
     assert_operator counts.last, :<, counts[2], "the last voice should be the rarest"
   end
 
+  # Reverse enters on voice 0 and then walks down: the mirror of round robin.
+  def test_reverse_walks_the_ensemble_downward
+    events = (0...6).map { |i| [i * 0.25, 0.7, { hz: [220.0 + i] }, 0.2] }
+    split = MidiDevices::Hocket.split(events, voices: 3, mode: :reverse)
+    voice_of = events.to_h { |e| [e[0], split.index { |v| v.include?(e) }] }
+
+    assert_equal [0, 2, 1, 0, 2, 1], events.map { |e| voice_of[e[0]] }
+  end
+
   # ---------------------------------------------------------------- midi bag
 
   def test_the_bag_takes_time_from_one_source_and_pitch_from_the_other
@@ -328,6 +337,15 @@ class TestDevices < Minitest::Test
   # amix's own default rescales by input count. Without normalize=0 an
   # eight-copy cloud would arrive a third of the level of a two-copy one, which
   # reads as "more copies did nothing".
+  # The machine curve hands out its near neighbours first: distance from unity,
+  # in octaves, never shrinks as copies are added.
+  def test_the_machine_family_is_dense_near_unity
+    distance = CopyMachine.plan(copies: 16, family: :machine).map { |c| Math.log2(c.ratio).abs }
+
+    distance.each_cons(2) { |near, far| assert_operator far, :>=, near - 0.02 }
+    assert_operator distance[1..4].max, :<, 0.1, "the first four copies should sit within a semitone"
+  end
+
   def test_the_graph_disables_amix_normalisation
     graph = CopyMachine.filter_complex(CopyMachine.plan(copies: 4), input: "0:a")
 
@@ -779,6 +797,46 @@ end
   # P_4L's actual move: one macro position becomes n DIFFERENT positions. If the
   # voices all landed on the same value the stack would be one voice rendered n
   # times, which is louder and nothing else.
+  # The spacing laws keep every voice at the written pitch and spread only the
+  # cents, reaching exactly the requested drift on the outer pair.
+  def test_spacing_laws_stay_at_pitch_and_reach_the_drift
+    VoiceStack::SPACING_LAWS.each do |law|
+      plan = VoiceStack.plan(voices: 7, detune_mode: law, drift: 12.0)
+
+      assert_equal [0], plan.map(&:semitones).uniq, "#{law} moved a semitone"
+      assert(plan.all? { |v| v.cents.abs <= 12.0 }, "#{law} passed the drift")
+      assert_in_delta 12.0, plan.last.cents.abs, 1e-6, "#{law} outer pair short of the drift"
+      assert_equal plan.map(&:cents),
+                   VoiceStack.plan(voices: 7, detune_mode: law, drift: 12.0).map(&:cents),
+                   "#{law} is not reproducible"
+    end
+  end
+
+  # Power is the one thick instrument: tighter than prog inside the edge, and
+  # prog, the section, is tighter than equal.
+  def test_power_is_tighter_than_prog_which_is_tighter_than_equal
+    cents = ->(law) { VoiceStack.plan(voices: 7, detune_mode: law, drift: 12.0).map { |v| v.cents.abs } }
+    equal = cents.call(:equal)
+    prog = cents.call(:prog)
+    power = cents.call(:power)
+
+    assert_equal [0.0, 4.0, 4.0, 8.0, 8.0, 12.0, 12.0], equal
+    (1..4).each do |i|
+      assert_operator power[i], :<, prog[i], "voice #{i}"
+      assert_operator prog[i], :<, equal[i], "voice #{i}"
+    end
+  end
+
+  # Adding laws must not disturb the interval modes a golden take was made with.
+  def test_the_interval_modes_are_unchanged_by_the_laws
+    plan = VoiceStack.plan(voices: 4, detune_mode: :fifths, drift: 9.0, seed: 4242)
+    rng = Random.new(4242)
+    expected = (1...4).map { |i| ((i.odd? ? 1 : -1) * 9.0 * (0.4 + (0.6 * rng.rand))).round(2) }
+
+    assert_equal [0, 12, 7, 19], plan.map(&:semitones)
+    assert_equal [0.0] + expected, plan.map(&:cents)
+  end
+
   def test_the_stack_gives_every_voice_its_own_macro_position
     plan = VoiceStack.plan(voices: 5, macro: 0.5, variation: 0.4)
 

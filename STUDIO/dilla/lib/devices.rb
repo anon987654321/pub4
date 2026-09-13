@@ -74,12 +74,19 @@ module CopyMachine
   #               or five copies stops being harmony and becomes texture. The
   #               Copy Machine setting, and the one that sounds least like a
   #               plugin.
+  #
+  #   :machine    the curve the original device picks for you: dense near unity
+  #               (quarter- and half-tone neighbours first), sparse at the
+  #               extremes. A few copies are a chorus; sixteen reach the octaves
+  #               and fifths. Opt-in through COPY_MACHINE_FAMILY=machine.
   RATIOS = {
     harmonic: [1.0, 2.0, 0.5, 1.5, 0.6667, 3.0, 0.3333, 1.3333,
                0.75, 4.0, 0.25, 2.5, 0.4, 1.25, 0.8, 5.0].freeze,
     chromatic: (-8..7).map { |s| (2.0**(s / 12.0)).round(6) }.freeze,
     spray: [1.0, 1.4142, 0.7071, 1.7321, 0.5774, 2.2361, 0.4472, 1.2599,
             0.7937, 2.6458, 0.3780, 1.5874, 0.6300, 3.3166, 0.3015, 1.9129].freeze,
+    machine: [1.0, 1.0293, 0.9715, 1.0595, 0.9439, 1.1225, 0.8909, 1.2599,
+              0.7937, 1.5, 0.6667, 2.0, 0.5, 3.0, 0.3333, 4.0].freeze,
   }.freeze
 
   # A copy slower than this is a drone rather than a copy -- the sound stops
@@ -260,9 +267,13 @@ module MidiDevices
     #                 then change, which is how a pattern that is not a pattern
     #                 sounds. This is the Buchla/Serge idea, not a random choice
     #                 with a nice name -- the state is a register and it shifts.
+    #   :reverse      4, 3, 2, 1, 4, 3, 2, 1 after the first note. Round robin
+    #                 walking the other way, so the line enters on voice 1 and
+    #                 travels down the ensemble. Hocket II names it; cheap and
+    #                 audibly different from round robin once voices are patches.
     #   :random       independent draws. Included because it is the honest
     #                 baseline the others should be compared against.
-    MODES = %i[round_robin pendulum shift_register random].freeze
+    MODES = %i[round_robin pendulum shift_register reverse random].freeze
 
     # events:  note events, in any order (sorted here).
     # voices:  how many destinations.
@@ -292,6 +303,7 @@ module MidiDevices
 
         case mode.to_sym
         when :round_robin then cursor += 1
+        when :reverse then cursor = (cursor - 1) % n
         when :pendulum
           # Turn at the ends without repeating the end voice: at the top the next
           # is n-2, not n-1 again. Repeating it makes one voice twice as busy as
@@ -799,7 +811,20 @@ module VoiceStack
   #   :spread   voices fan outward by whole tones. Deliberately not a chord: it
   #             blurs the pitch instead of harmonising it, which is the cluster
   #             sound rather than the choir sound.
-  DETUNE_MODES = %i[unison octaves fifths spread].freeze
+  #
+  # Four more are spacing LAWS rather than intervals, after P_4L II: every voice
+  # sits at the written pitch and the drift in cents follows the law, measured
+  # outward from voice 0 in pairs (one sharp, one flat).
+  #
+  #   :equal    each pair the same step further out. The even chorus.
+  #   :prog     each step wider than the last, so the outer pair is far out while
+  #             the inner voices stay close. Sounds like a section.
+  #   :power    square-law: tight around the centre, only the edge pair reaching
+  #             full drift. Sounds like one thick instrument.
+  #   :drift    a seeded random walk outward. Seven slightly different
+  #             instruments, reproducible from the seed.
+  SPACING_LAWS = %i[equal prog power drift].freeze
+  DETUNE_MODES = (%i[unison octaves fifths spread] + SPACING_LAWS).freeze
 
   SEMITONE_PLAN = {
     unison: [0, 0, 0, 0, 0, 0, 0],
@@ -826,7 +851,9 @@ module VoiceStack
   def plan(voices: 4, macro: 0.5, variation: 0.25, detune_mode: :fifths,
            drift: 9.0, key_track: 0.5, tilt: 0.4, seed: 4242)
     n = voices.to_i.clamp(1, 7)
-    steps = SEMITONE_PLAN.fetch(detune_mode.to_sym) { SEMITONE_PLAN[:fifths] }
+    law = SPACING_LAWS.include?(detune_mode.to_sym) ? detune_mode.to_sym : nil
+    steps = law ? SEMITONE_PLAN[:unison] : SEMITONE_PLAN.fetch(detune_mode.to_sym) { SEMITONE_PLAN[:fifths] }
+    law_cents = law ? spacing_cents(law, n, drift.to_f, seed) : nil
     # The P_4L move, and the reason DillaMacros.spread exists: one position
     # becomes n positions centred on it.
     positions = DillaMacros.spread(macro, amount: variation, count: n, seed:)
@@ -835,7 +862,10 @@ module VoiceStack
       semis = steps[i]
       # Alternating sign so the drift does not all pull one way, which would be a
       # tuning offset rather than a chorus.
-      cents = i.zero? ? 0.0 : ((i.odd? ? 1 : -1) * drift.to_f * (0.4 + (0.6 * rng.rand))).round(2)
+      cents = if i.zero? then 0.0
+              elsif law_cents then law_cents[i]
+              else ((i.odd? ? 1 : -1) * drift.to_f * (0.4 + (0.6 * rng.rand))).round(2)
+              end
       Voice.new(
         index: i,
         semitones: semis,
@@ -847,6 +877,30 @@ module VoiceStack
         # Key tracking, as a multiplier on whatever cutoff the caller uses.
         cutoff_scale: (2.0**((semis / 12.0) * key_track.to_f.clamp(0.0, 1.0))).round(4)
       )
+    end
+  end
+
+  # Cents per voice under a spacing law. Voice 0 is the anchor at 0; voices
+  # 1 and 2 are the first pair, 3 and 4 the second, and the outermost pair reaches
+  # the full drift. Its own Random, so the interval modes keep their draw order.
+  def spacing_cents(law, count, drift, seed)
+    pairs = count / 2
+    return Array.new(count, 0.0) if pairs.zero?
+
+    walk = [0.0]
+    walker = Random.new(seed ^ 0x5eed)
+    pairs.times { walk << walk.last + 0.5 + walker.rand }
+    (0...count).map do |i|
+      next 0.0 if i.zero?
+
+      k = (i + 1) / 2
+      share = case law
+              when :equal then k.to_f / pairs
+              when :prog then (k * (k + 1)) / (pairs * (pairs + 1)).to_f
+              when :power then (k.to_f / pairs)**2
+              else walk[k] / walk[pairs]
+              end
+      ((i.odd? ? 1 : -1) * drift * share).round(2)
     end
   end
 
