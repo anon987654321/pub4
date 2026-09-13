@@ -83,6 +83,11 @@ class TtsJob
   def self.spawn_worker
     Thread.new do
       Thread.current.name = "tts-job-worker"
+      # report_on_exception is off because a synthesis failure is not a
+      # backtrace the operator needs. What replaces it is the rescue below:
+      # without one, a single bad job killed the worker outright and the pool
+      # only noticed on the next spawn, so TTS went quiet with nothing in the
+      # log to say why.
       Thread.current.report_on_exception = false
       loop do
         entry = @queue_mutex.synchronize do
@@ -93,7 +98,13 @@ class TtsJob
           @queue_ready.wait(@queue_mutex, 5) while @queue.empty?
           @queue.shift
         end
-        materialize!(entry[:job]) if entry
+        next unless entry
+
+        begin
+          materialize!(entry[:job])
+        rescue StandardError => e
+          Rails.logger.warn("tts_job: #{entry[:job]} failed: #{e.class}: #{e.message}")
+        end
       end
     end
   end

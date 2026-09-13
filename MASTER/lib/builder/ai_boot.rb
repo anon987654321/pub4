@@ -175,23 +175,63 @@ module Master
       fix_loop.start_background!(root)
     end
 
+    # A thread whose death says so.
+    #
+    # abort_on_exception is false on every background thread here, which is
+    # right — a watcher falling over must not take the process with it. What was
+    # missing is the other half: with report/abort both off and no rescue, the
+    # thread simply stops and the symptom is that a feature quietly does
+    # nothing. A dead WatchLoop looks exactly like a hang.
+    #
+    # So the exception is published on the bus and logged, and the thread still
+    # dies alone.
+    def watched_thread(bus, where, &block)
+      Thread.new do
+        block.call
+      rescue StandardError, ScriptError => e
+        bus&.publish("boot:thread_died", where:, error: "#{e.class}: #{e.message}")
+        warn("[boot] #{where} thread died: #{e.class}: #{e.message}")
+      end.tap { |t| t.abort_on_exception = false }
+    end
+
     # MASTER_WATCH=1 enables reactive file-watching (requires rb-kqueue or rb-inotify).
     def build_watch_loop(rules:, agent:, scanner:, root:, bus:, learnings:, fix_loop: nil)
       return unless ENV["MASTER_WATCH"] == "1"
 
       wl = Fix::WatchLoop.new(rules:, agent:, scanner:, root:, bus:, learnings:, fix_loop:)
-      Thread.new { wl.run }.tap { |t| t.abort_on_exception = false }
+      watched_thread(bus, "watch_loop") { wl.run }
       wl
     end
 
     def subscribe_fix_loop_events(bus:, propose_tree:, rollback:, fix_loop:, lean_boot:)
       unless lean_boot
-        bus.subscribe("fix_loop:clean") { Thread.new { propose_tree.call } }
-        bus.subscribe("fix_loop:plateau") { Thread.new { propose_tree.call } }
+        # One proposer at a time.
+        #
+        # fix_loop:clean and fix_loop:plateau both fire every time a pass
+        # settles, and each started a thread with nothing to stop a second one
+        # starting while the first was still working. A fix loop that settles
+        # often — which is what a working one does — leaked a thread per
+        # settle, and they pile up invisibly because none of them is joined.
+        proposing = { busy: false }
+        gate = Mutex.new
+        propose_once = lambda do
+          claimed = gate.synchronize { proposing[:busy] ? false : (proposing[:busy] = true) }
+          next unless claimed
+
+          watched_thread(bus, "propose_tree") do
+            propose_tree.call
+          ensure
+            gate.synchronize { proposing[:busy] = false }
+          end
+        end
+        bus.subscribe("fix_loop:clean") { propose_once.call }
+        bus.subscribe("fix_loop:plateau") { propose_once.call }
       end
       bus.subscribe("fix_loop:oscillation") { |payload| rollback.call(Master::Result.err("fix loop oscillation", category: :policy)) }
       bus.subscribe("fix_loop:cycle_detected") { |payload| rollback.call(Master::Result.err("fix loop cycle detected", category: :policy)) }
-      bus.subscribe("system:crit") { Thread.new { fix_loop.stop_background! if fix_loop.background_alive? } }
+      bus.subscribe("system:crit") do
+        watched_thread(bus, "stop_background") { fix_loop.stop_background! if fix_loop.background_alive? }
+      end
       bus.subscribe("self_violation") { |payload| fix_loop.halt!(reason: "self_violation #{payload[:violations]} violations") }
 
       # Close the Homeostat loop for the fix_loop events PassRunner/
@@ -208,7 +248,7 @@ module Master
     def build_watcher(bus:, root:)
       watcher = Fix::Watcher.new(bus:, root:)
       if ENV["MASTER_WATCHER"] != "0"
-        Thread.new { watcher.run_forever }.tap { |t| t.abort_on_exception = false }
+        watched_thread(bus, "load_watcher") { watcher.run_forever }
       end
       watcher
     end
