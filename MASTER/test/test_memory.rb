@@ -81,6 +81,61 @@ class TestMemory < Minitest::Test
     assert key.start_with?("auto/feedback/")
   end
 
+  # Twelve user-typed fillers take all ten of context_summary's slots, since it
+  # orders user entries first. That is the case recall exists for: a store too
+  # big to inject whole.
+  def fill_past_the_summary
+    12.times { |i| @mem.remember("filler_#{i}", "unrelated note number #{i} about lunch", type: "user") }
+  end
+
+  def test_turn_recall_brings_back_an_entry_the_message_is_about
+    @mem.remember("relayd_limit", "relayd discards response headers larger than eight kilobytes")
+    fill_past_the_summary
+
+    recalled = @mem.turn_recall("why does relayd drop the response headers?")
+
+    assert_match(/relayd_limit/, recalled)
+    assert_match(/not instructions/, recalled)
+  end
+
+  def test_turn_recall_needs_two_shared_words_and_stays_in_budget
+    @mem.remember("relayd_limit", "relayd discards response headers larger than eight kilobytes")
+    @mem.remember("long_note", "relayd headers #{'x' * 3000}")
+    fill_past_the_summary
+
+    assert_nil @mem.turn_recall("tell me about relayd"), "one shared word recalled an entry"
+    recalled = @mem.turn_recall("relayd headers again")
+    assert_operator recalled.length, :<=, Master::Ground::Memory::RECALL_CHARS + 80
+  end
+
+  class PromptHost
+    include Master::Review::Agent::PromptBuilder
+
+    Config = Struct.new(:task_type) do
+      def [](_) = nil
+    end
+
+    def initialize(memory, messages)
+      @memory = memory
+      @session = Struct.new(:messages, :topic).new(messages, nil)
+      @config = Config.new("code")
+    end
+
+    def filter_prompt(text) = text
+    def prompt = dynamic_prompt
+  end
+
+  def test_the_agent_prompt_carries_recall_for_the_message_being_answered
+    @mem.remember("relayd_limit", "relayd discards response headers larger than eight kilobytes")
+    fill_past_the_summary
+    messages = [{ role: :user, content: "relayd drops response headers" }, { role: :assistant, content: "ok" },
+                { role: :user, content: "what about lunch notes" }]
+
+    refute_match(/relayd_limit/, PromptHost.new(@mem, messages).prompt, "recall answered an older message")
+    messages << { role: :user, content: "back to relayd response headers" }
+    assert_match(/Recalled from memory.*relayd_limit/m, PromptHost.new(@mem, messages).prompt)
+  end
+
   def test_tfidf_recall_finds_relevant_entry
     @mem.remember("ruby_tip", "use frozen_string_literal in all Ruby files")
     @mem.remember("git_tip", "commit frequently with short messages")

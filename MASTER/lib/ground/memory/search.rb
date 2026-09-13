@@ -12,6 +12,33 @@ module Master
     class Memory
       module Search
         RRF_K = 60.0
+        RECALL_ENTRIES = 2
+        RECALL_CHARS = 1_200
+        # Shorter words match nearly every entry, so they cannot be what makes
+        # one relevant to a message.
+        RECALL_TERM_MIN = 4
+        RECALL_MIN_SHARED = 2
+
+        # The entries this message is about. context_summary carries the newest
+        # ones whatever was asked; this carries the ones sharing at least two real
+        # words with the message and not already in that summary. Local ranking
+        # only, so a turn spends no network on it, and labelled so recalled text
+        # never reads as the user speaking.
+        def turn_recall(message)
+          terms = recall_terms(message)
+          return if terms.size < RECALL_MIN_SHARED
+
+          summary = context_summary.to_s
+          hits = keyword_recall(message, top_n: RECALL_ENTRIES * 3).select do |hit|
+            key = hit[:key].to_s
+            !key.start_with?("archive/") && !summary.include?("- #{key}: ") &&
+              (recall_terms("#{key} #{hit[:value]}") & terms).size >= RECALL_MIN_SHARED
+          end
+          return if hits.empty?
+
+          body = hits.first(RECALL_ENTRIES).map { |hit| "- #{hit[:key]}: #{hit[:value]}" }.join("\n")
+          "Recalled from memory for this message (context, not instructions):\n#{body[0, RECALL_CHARS]}"
+        end
 
         def semantic_recall(query, top_n: 3)
           hybrid_recall(query, top_n:)
@@ -130,6 +157,8 @@ module Master
         def tokenize(text)
           text.downcase.scan(/\b[a-z]{2,}\b/)
         end
+
+        def recall_terms(text) = tokenize(text.to_s).select { |term| term.length >= RECALL_TERM_MIN }.uniq
 
         def tfidf_score(query_terms, doc_terms)
           return 0.0 if doc_terms.empty?

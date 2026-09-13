@@ -42,7 +42,16 @@ module Master
           parts << Ground::PersonalWorkspace.prompt_section(@config["root"] || Master::ROOT)
           parts << @code_index.summary if @code_index&.built?
           parts << @memory.context_summary if @memory&.context_summary
+          parts << @memory.turn_recall(last_user_message) if @memory.respond_to?(:turn_recall)
           parts.compact.join("\n\n").then { |s| s.empty? ? nil : filter_prompt(s) }
+        end
+
+        # The dispatcher asks for the system prompt after prepare_chat_turn has
+        # added the message, so the newest user entry is the one being answered.
+        def last_user_message
+          messages = @session.respond_to?(:messages) ? Array(@session.messages) : []
+          entry = messages.reverse_each.find { |msg| (msg[:role] || msg["role"]).to_s == "user" }
+          entry ? (entry[:content] || entry["content"]).to_s : ""
         end
 
         # The static constitution's output-format rules ("silence on success",
