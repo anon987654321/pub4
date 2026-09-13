@@ -2,6 +2,7 @@
 
 module Tv
   class LiveStreamsController < ApplicationController
+    before_action :require_live_streaming!, only: %i[new create]
     before_action :require_user_session, only: %i[new create]
     before_action :set_live_stream, only: %i[show update destroy go_live end_live]
     before_action :require_live_stream_owner!, only: %i[update destroy go_live end_live]
@@ -62,6 +63,10 @@ module Tv
     end
 
     private
+
+    def require_live_streaming!
+      render_http_error(:not_found, "not_found") unless Rails.application.config.x.tv_live_streaming
+    end
 
     def set_live_stream
       @live_stream = Tv::LiveStream.includes(:user, channel: { banner_attachment: :blob }).find(params[:id])

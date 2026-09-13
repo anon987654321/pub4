@@ -72,13 +72,19 @@ class VerticalFormsTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_match tv.channel_videos_path(channel), response.body
 
-    get tv.new_channel_live_stream_path(channel)
-    assert_response :success
-    stream_scope = response.body[/name="([a-z_]+)\[title\]"/, 1]
-    assert_equal "live_stream", stream_scope, "the form's own scope"
+    streaming_before = Rails.application.config.x.tv_live_streaming
+    begin
+      Rails.application.config.x.tv_live_streaming = true
+      get tv.new_channel_live_stream_path(channel)
+      assert_response :success
+      stream_scope = response.body[/name="([a-z_]+)\[title\]"/, 1]
+      assert_equal "live_stream", stream_scope, "the form's own scope"
 
-    assert_difference -> { Tv::LiveStream.count }, 1 do
-      post tv.channel_live_streams_path(channel), params: { stream_scope => { title: "Contract stream" } }
+      assert_difference -> { Tv::LiveStream.count }, 1 do
+        post tv.channel_live_streams_path(channel), params: { stream_scope => { title: "Contract stream" } }
+      end
+    ensure
+      Rails.application.config.x.tv_live_streaming = streaming_before
     end
 
     stranger = User.strict_loading(false).create!(email_address: "stranger@brgen.no", password: "password123", guest: false)

@@ -148,10 +148,35 @@ class TvShowsAndNotesTest < ActionDispatch::IntegrationTest
   end
 
   test "the new live stream form says streaming is not running" do
-    sign_in_as(@owner)
+    with_live_streaming(true) do
+      sign_in_as(@owner)
 
-    get tv.new_channel_live_stream_path(@channel)
-    assert_response :success
-    assert_match I18n.t("tv.live_streams_unavailable"), response.body
+      get tv.new_channel_live_stream_path(@channel)
+      assert_response :success
+      assert_match I18n.t("tv.live_streams_unavailable"), response.body
+    end
+  end
+
+  test "with live streaming off, the owner gets no form and creates no stream" do
+    with_live_streaming(false) do
+      sign_in_as(@owner)
+
+      get tv.new_channel_live_stream_path(@channel)
+      assert_response :not_found
+      assert_no_difference -> { Tv::LiveStream.count } do
+        post tv.channel_live_streams_path(@channel), params: { live_stream: { title: "Ingen server" } }
+      end
+      assert_response :not_found
+    end
+  end
+
+  private
+
+  def with_live_streaming(enabled)
+    before = Rails.application.config.x.tv_live_streaming
+    Rails.application.config.x.tv_live_streaming = enabled
+    yield
+  ensure
+    Rails.application.config.x.tv_live_streaming = before
   end
 end

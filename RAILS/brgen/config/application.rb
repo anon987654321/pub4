@@ -41,6 +41,11 @@ module App
     # disagree about which form is on. See shared/app/views/shared/_icon_sprite.
     config.x.icon_sprite = true
 
+    # TV's new-stream form and its create answer 404 while this is false: vm23
+    # runs no media server (RAILS/apps.yml, live stream infrastructure), so a
+    # saved stream has nothing to broadcast to.
+    config.x.tv_live_streaming = false
+
     config.time_zone = "Europe/Oslo"
     config.i18n.default_locale = :nb
     # Two, because two ship. de/fr/nl held five keys each against en's 1579 and
