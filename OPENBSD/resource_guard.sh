@@ -174,7 +174,7 @@ if awk -v l="$load" -v w="$LOAD_WARN" 'BEGIN{exit !(l>=w)}'; then shed=1; fi
 if [[ $mem_avail_pct -lt $MEM_WARN ]]; then shed=1; fi
 
 # A deploy is load this box was told to make. rc.d/{master,amber,brgen,bsdports}
-# touch /home/dev/pub4/.deploying* for the duration of rc_pre() — precompile,
+# touch /home/dev/pub4/.deploying* from rc_pre() until the /up wait ends — precompile,
 # migrate, cold boot — which is exactly the transient breach SHED_STRIKES above
 # describes, and exactly when this guard used to take amber and bsdports down.
 # Restore then crawls back one service per 5-minute tick, so a deploy cost those
@@ -191,9 +191,24 @@ if [[ $mem_avail_pct -lt $MEM_WARN ]]; then shed=1; fi
 # Only the shed side. Restore still waits for pressure to clear on its own
 # terms — a deploy ending does not mean memory is free, and the one-per-tick
 # stagger below exists because simultaneous cold boots re-trigger this guard.
+#
+# The flag comes off after the rc.d /up wait, so an rc.d run killed mid-wait
+# leaves it behind. A flag older than DEPLOY_FLAG_MAX_AGE seconds (default 30
+# minutes, well past the longest measured start) is treated as stale, or one
+# interrupted restart would disable shedding for good.
+DEPLOY_FLAG_MAX_AGE=${GUARD_DEPLOY_FLAG_MAX_AGE:-1800}
 deploying=0
-if ls /home/dev/pub4/.deploying* >/dev/null 2>&1; then
-  deploying=1
+_now=$(date +%s)
+for _flag in /home/dev/pub4/.deploying*; do
+  [ -e "$_flag" ] || continue
+  _mtime=$(stat -f %m "$_flag" 2>/dev/null || echo 0)
+  if [ $((_now - _mtime)) -le "$DEPLOY_FLAG_MAX_AGE" ]; then
+    deploying=1
+  else
+    logger -t resource-guard "ignoring stale deploy flag $_flag"
+  fi
+done
+if [[ $deploying -eq 1 ]]; then
   if [[ $shed -eq 1 ]]; then
     logger -t resource-guard \
       "deploy in progress (load=$load mem_avail=${mem_avail_pct}%) — not shedding"

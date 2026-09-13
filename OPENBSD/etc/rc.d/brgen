@@ -56,7 +56,6 @@ rc_pre() {
   pkill -f "falcon.*${PORT}" 2>/dev/null || true
   pkill -f "ruby34.*${PORT}" 2>/dev/null || true
   sleep 1
-  rm -f /home/dev/pub4/.deploying-brgen 2>/dev/null || true
 }
 
 rc_cmd $1
@@ -78,5 +77,10 @@ if [[ "$1" = "start" ]] || [[ "$1" = "restart" ]]; then
       logger -t brgen "relayd skipped: /up not ready after restart"
     fi
   fi
+fi
+# rc_pre touched the deploy flag; it comes off here, after the /up wait, so the
+# cold boot is inside the window resource_guard reads it for.
+if [ "$1" = "start" ] || [ "$1" = "restart" ]; then
+  rm -f /home/dev/pub4/.deploying-brgen 2>/dev/null || true
 fi
 exit $rc
