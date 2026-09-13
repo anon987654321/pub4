@@ -17,11 +17,15 @@ cleanupOutdatedCaches()
 clientsClaim()
 self.skipWaiting()
 
+// Four seconds, then the cached page or /offline: a reader on a dead train
+// connection should not stare at a blank tab for twenty. Only 200 is cached;
+// status 0 is an opaque response whose real status is hidden, so caching it
+// can pin a failure in place of the page.
 const pages = new NetworkFirst({
   cacheName: `${APP_NAME}-pages-${CACHE_VERSION}`,
-  networkTimeoutSeconds: 20,
+  networkTimeoutSeconds: 4,
   plugins: [
-    new CacheableResponsePlugin({ statuses: [0, 200] }),
+    new CacheableResponsePlugin({ statuses: [200] }),
     new ExpirationPlugin({ maxEntries: 40, maxAgeSeconds: 24 * 60 * 60 }),
   ],
 })
@@ -29,7 +33,7 @@ const pages = new NetworkFirst({
 const dynamic = new StaleWhileRevalidate({
   cacheName: `${APP_NAME}-dynamic-${CACHE_VERSION}`,
   plugins: [
-    new CacheableResponsePlugin({ statuses: [0, 200] }),
+    new CacheableResponsePlugin({ statuses: [200] }),
     new ExpirationPlugin({ maxEntries: 80, maxAgeSeconds: 12 * 60 * 60 }),
   ],
 })
@@ -37,7 +41,7 @@ const dynamic = new StaleWhileRevalidate({
 const assets = new CacheFirst({
   cacheName: `${APP_NAME}-assets-${CACHE_VERSION}`,
   plugins: [
-    new CacheableResponsePlugin({ statuses: [0, 200] }),
+    new CacheableResponsePlugin({ statuses: [200] }),
     new ExpirationPlugin({ maxEntries: 160, maxAgeSeconds: 30 * 24 * 60 * 60 }),
   ],
 })
