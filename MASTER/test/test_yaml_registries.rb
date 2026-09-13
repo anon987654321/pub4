@@ -147,29 +147,64 @@ class TestRulesYamlRegistry < Minitest::Test
 # rotation must leave the one-voice behaviour exactly as it was. The last
 # clause is the one worth holding — it is what lets this be reverted by
 # deleting four lines of YAML.
-def test_voice_rotation_is_additive
-  tts = Master.load_yaml(File.join(DATA, "voice.yml"))["tts"] || {}
-  rotation = Array(tts["rotation"])
+# A chain nothing applies is a declaration with no reader, which is this
+# tree's most-recorded defect — so this holds that Speech reaches for it, not
+# merely that voice.yml contains it.
+def test_the_post_chain_is_read_and_applied
+  chain = Master::Voice::Policy.post_chain
+  refute_nil chain, "voice.yml declares no post_chain"
+  assert_equal chain, Master::Voice::Policy.browser_payload[:post_chain],
+               "the face shapes from browser_payload; it must carry the same chain"
 
-  rotation.each do |name|
-    assert Master::Voice::Speech::VOICES.key?(name.to_sym),
-           "voice.yml rotation names #{name}, which Speech::VOICES does not have"
-  end
+  source = File.read(File.expand_path("../lib/voice/speech.rb", __dir__))
+  assert_match(/Policy\.post_chain/, source, "Speech never reads the chain")
+  assert_match(/shaped\(/, source, "Speech never applies the chain")
 
-  if rotation.size > 1
-    assert Master::Voice::Policy.rotating?
-    assert_includes rotation.map(&:to_sym), Master::Voice::Policy.voice_for_utterance
-    assert_includes rotation, tts["single_voice"],
-                    "single_voice must be one of the voices actually spoken"
-  else
-    refute Master::Voice::Policy.rotating?
-    assert_equal Master::Voice::Policy.single_voice_key,
-                 Master::Voice::Policy.voice_for_utterance
-  end
-
-  assert_equal rotation.map(&:to_s), Master::Voice::Policy.browser_payload[:rotation],
-               "the face rotates from browser_payload; it must carry the same list"
+  # loudnorm before the gain, gain before the limiter. Reversed, the first is
+  # only peak-lifting and the second is distortion rather than loudness.
+  assert_operator chain.index("loudnorm"), :<, chain.index("volume="),
+                  "loudnorm must come before the gain"
+  assert_operator chain.index("volume="), :<, chain.index("alimiter"),
+                  "the gain must come before the limiter"
 end
+
+# The bed is declared here and rendered by whoever plays it, so what this can
+# hold is that the declaration names a progression dilla actually carries.
+def test_the_bed_names_a_progression_dilla_carries
+  bed = Master::Voice::Policy.bed
+  skip "no bed declared" unless bed
+
+  dilla = File.expand_path("../../STUDIO/dilla/dilla.rb", __dir__)
+  skip "dilla not in this checkout" unless File.file?(dilla)
+
+  assert_match(/^\s*#{Regexp.escape(bed["progression"])}:/, File.read(dilla),
+               "voice.yml names #{bed['progression']}, which CHORD_PROGRESSIONS does not have")
+  assert_operator bed["gain_db"].to_i, :<, 0, "the bed must sit under the voice"
+end
+
+  def test_voice_rotation_is_additive
+    tts = Master.load_yaml(File.join(DATA, "voice.yml"))["tts"] || {}
+    rotation = Array(tts["rotation"])
+
+    rotation.each do |name|
+      assert Master::Voice::Speech::VOICES.key?(name.to_sym),
+             "voice.yml rotation names #{name}, which Speech::VOICES does not have"
+    end
+
+    if rotation.size > 1
+      assert Master::Voice::Policy.rotating?
+      assert_includes rotation.map(&:to_sym), Master::Voice::Policy.voice_for_utterance
+      assert_includes rotation, tts["single_voice"],
+                      "single_voice must be one of the voices actually spoken"
+    else
+      refute Master::Voice::Policy.rotating?
+      assert_equal Master::Voice::Policy.single_voice_key,
+                   Master::Voice::Policy.voice_for_utterance
+    end
+
+    assert_equal rotation.map(&:to_s), Master::Voice::Policy.browser_payload[:rotation],
+                 "the face rotates from browser_payload; it must carry the same list"
+  end
 
   def test_voice_yml_tts_policy_single_voice
     voice = Master.load_yaml(File.join(DATA, "voice.yml"))

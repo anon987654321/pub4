@@ -18,6 +18,8 @@ module Master
         "default_rate" => "+0%",
         "default_pitch" => "+0Hz",
         "rotation" => %w[jenny christopher],
+        "post_chain" => nil,
+        "bed" => nil,
       }.freeze
 
       module_function
@@ -68,6 +70,23 @@ end
         data["neural"].to_s.strip.empty? ? FALLBACK["neural"] : data["neural"].to_s
       end
 
+# The ffmpeg chain applied after synthesis, or nil when none is declared.
+#
+# Nil rather than an empty string, so a caller writes `if chain` and a
+# missing declaration cannot be confused with a chain that does nothing.
+def post_chain
+  value = data["post_chain"].to_s.strip
+  value.empty? ? nil : value
+end
+
+# The musical bed, as declared. Nil when absent; the renderer is the
+# caller's, because MASTER's web face and a terminal narrator mix audio
+# in entirely different ways.
+def bed
+  row = data["bed"]
+  row.is_a?(Hash) && !row.empty? ? row : nil
+end
+
       def persona_affects_text_only?
         data["persona_affects_text_only"] != false
       end
@@ -91,6 +110,8 @@ end
           single_voice: single_voice_key.to_s,
           neural: neural_voice,
           rotation: rotation_keys.map(&:to_s),
+          post_chain:,
+          bed:,
           persona_affects_text_only: persona_affects_text_only?,
           stream_live_default: stream_live_default?,
           default_rate:,

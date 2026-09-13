@@ -483,14 +483,39 @@ module Master
 
         2.times do |attempt|
           sock_path = synthesize_edge_socket(text:, voice_name:, style_config:, audio_path:)
-          return sock_path if sock_path
+          return shaped(sock_path) if sock_path
           break unless attempt.zero? && edge_tts_available?
 
           TtsSupervisor.ensure_daemon!
           sleep 0.15
         end
 
-        synthesize_edge_oneshot(text:, voice_name:, style_config:, audio_path:)
+        shaped(synthesize_edge_oneshot(text:, voice_name:, style_config:, audio_path:))
+      end
+
+      # data/voice.yml tts.post_chain, applied.
+      #
+      # Edge returns a bare neural voice with no shaping of its own, so every
+      # decision about how MASTER sounds past the choice of mouth lives in that
+      # chain — and a chain nothing applies is a declaration with no reader, which
+      # is this tree's most-recorded defect.
+      #
+      # The original file survives any failure: no ffmpeg, a bad filter, a zero-byte
+      # result all return the unshaped path. A missing effect must cost the effect,
+      # never the sentence.
+      def shaped(path)
+        chain = Policy.post_chain
+        return path unless path && chain && File.size?(path)
+
+        out = path.sub(/\.mp3\z/, "_shaped.mp3")
+        _stdout, _stderr, status = Master::Io::Exec.capture3("ffmpeg", "-y", "-i", path, "-af", chain, out)
+        return path unless status.success? && File.size?(out)
+
+        File.unlink(path)
+        out
+      rescue StandardError => e
+        warn_tts("post_chain skipped: #{e.class}: #{e.message.lines.first.to_s.strip}")
+        path
       end
 
       def synthesize_edge_oneshot(text:, voice_name:, style_config:, audio_path:)

@@ -226,6 +226,47 @@ is worth less than a single definition. Split from `style.yml`, it defined
 `typography` twice with different numbers, under a `SelfTest` exemption that
 named the duplication and allowed it.
 
+## MASTER Is Shaped After Synthesis, In dilla's Vocabulary (2026-09-13)
+
+Edge returns a bare neural voice at roughly broadcast level and no shaping of
+its own, so every decision about how MASTER sounds past the choice of mouth
+is post-processing. `data/voice.yml` `tts.post_chain` is that decision, read
+by `Voice::Policy.post_chain`, applied by `Speech#shaped`, and carried in
+`browser_payload` so the face shapes the same way the server does.
+
+**The chain is dilla's, borrowed rather than invented.**
+`STUDIO/dilla/dilla.rb:2719` carries a vocoder wash built as three resonant
+peaks near the vowel formants — 520, 1480 and 2520 Hz — and its own comment
+says it is only the formant *half* of a vocoder, "because a real vocoder
+needs a modulator the renderer does not have". A speaking voice is that
+modulator. Those peaks were tuned for a synth pad and land on speech for the
+first time here: they sit where a voice already puts its energy and lift it.
+
+**Order is the load-bearing part.** `loudnorm` before the gain, gain before
+the limiter. Normalising first brings quiet sentences up to meet loud ones
+rather than only lifting peaks; gain after a limiter is distortion rather
+than loudness. `test_the_post_chain_is_read_and_applied` asserts both
+orderings, because a later tidy-up would reorder them without hearing it.
+
+**A missing effect costs the effect, never the sentence.** `shaped` returns
+the unprocessed file on any failure — no ffmpeg, a bad filter, a zero-byte
+result — and `Policy::FALLBACK` carries a nil chain, so an unreadable
+voice.yml speaks dry instead of crashing.
+
+**`tts.bed` is a musical bed under the speech**, so a pause is not silence:
+dilla's own `maj7_minor_cycle` (Dbmaj9, Cm9, Fm9, Bbm9) from
+`CHORD_PROGRESSIONS`, which the engine lists under
+`ARTIST_VERIFIED_PROGRESSIONS`. Borrowing a verified progression rather than
+inventing one is the difference between a bed and a drone. It is declared
+here and **rendered by whoever plays it** — the web face and a terminal
+narrator mix audio in entirely different ways, and a renderer in this file
+would serve neither. `-14dB` and not lower: at `-26` it mixed correctly and
+was inaudible, which is the same as not running.
+
+Nothing in `STUDIO/dilla` was touched. dilla writes real takes with rotating
+seeds and its renders are irreplaceable; what is borrowed is its vocabulary,
+never its renderer.
+
 ## Two Voices, Declared (2026-09-13)
 
 MASTER speaks as Jenny or Christopher, chosen at random for each utterance,
