@@ -72,6 +72,21 @@ class DynamicHttpTest < Minitest::Test
     end
   end
 
+  # A request that raises comes back as an infrastructure Err rather than
+  # escaping into the tool loop. The guard and the request are stubbed, so no
+  # socket opens.
+  def test_a_failing_request_is_an_infrastructure_err
+    Master::Io::SsrfGuard.stub(:safe_uri?, true) do
+      @http.stub(:perform_request, ->(*) { raise Errno::ECONNREFUSED }) do
+        result = call("https://example.com/")
+
+        refute result.ok?
+        assert_equal :infrastructure, result.category
+        assert_match(/dynamic_http: .*refused/i, result.message.to_s)
+      end
+    end
+  end
+
   # The URL is a template interpolated with caller-supplied params, so the guard
   # has to run on the interpolated result rather than on the template.
   def test_a_param_cannot_smuggle_an_internal_host_through_the_template

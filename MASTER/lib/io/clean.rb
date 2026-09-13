@@ -14,10 +14,11 @@ module Master
       # clean.sh must not wedge the pipeline (ROBUSTNESS)
       TIMEOUT_S = 120
 
-      def initialize(root:, governor:, event_bus: nil)
+      def initialize(root:, governor:, event_bus: nil, timeout_s: TIMEOUT_S)
         @bus = event_bus
         @root = root
         @governor = governor
+        @timeout_s = timeout_s
       end
 
       def call(path: nil)
@@ -29,7 +30,7 @@ module Master
         return guard if guard.err?
 
         out, err, status = run_bounded("zsh", SCRIPT, target)
-        return Result.err("clean timed out after #{TIMEOUT_S}s", category: :timeout) if status.nil?
+        return Result.err("clean timed out after #{@timeout_s}s", category: :timeout) if status.nil?
         return Result.err("clean failed: #{err.strip}", category: :unknown) unless status.success?
 
         cleaned = out.lines.grep(/^Cleaned:/).map { |l| l.sub("Cleaned: ", "").chomp }
@@ -53,7 +54,7 @@ module Master
           out_reader = Thread.new { stdout.read }
           err_reader = Thread.new { stderr.read }
           begin
-            Timeout.timeout(TIMEOUT_S) { wait_thr.value }
+            Timeout.timeout(@timeout_s) { wait_thr.value }
             [out_reader.value, err_reader.value, wait_thr.value]
           rescue Timeout::Error
             terminate(wait_thr.pid)

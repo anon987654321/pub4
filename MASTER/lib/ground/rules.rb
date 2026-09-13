@@ -89,10 +89,9 @@ module Master
       def initialize(root: nil)
         @root = root || Master::ROOT
         @data_dir = File.join(@root, "data")
-        @rules_path = File.join(@data_dir, "rules.yml")
         @soul_path = File.join(@data_dir, "soul.yml")
         @voice_path = Master.data_file("voice.yml")
-        @data = load_yaml(@rules_path) || {}
+        @data = Master.load_rules(root: @root) || {}
         @voice_data = load_yaml(@voice_path) || {}
         # limits.yml is no longer parsed here. It was loaded on every Rules
         # construction purely to back two accessors nobody called; the callers that

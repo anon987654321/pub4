@@ -39,8 +39,8 @@ module Master
 
       def resolve_search_directory(topic)
         directory = topic ? File.join(@knowledge_root, topic.to_s) : @knowledge_root
-        # A separator-bounded prefix, so topic "../knowledge_private" does not
-        # pass for living under knowledge/.
+        # inside_root? rather than start_with?, so a topic of ../knowledge_old cannot
+        # reach a sibling directory that merely shares the prefix.
         if Dir.exist?(directory) && PathGuard.inside_root?(File.realpath(directory), @knowledge_root)
           return Result.ok(directory)
         end

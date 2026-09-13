@@ -54,7 +54,7 @@ module Master
         safe = safe_path(path)
         return Result.err("git_context blame: file not found: #{path}",
           category: :validation) unless File.exist?(File.join(@root, safe))
-        out = IO.popen(["git", "-C", @root, "blame", "--no-color", "-l", safe], err: File::NULL, &:read)
+        out = IO.popen(["git", "-C", @root, "blame", "-l", safe], err: File::NULL, &:read)
         Result.ok(out.strip.empty? ? "(no blame data)" : out.strip)
       end
 
@@ -65,8 +65,10 @@ module Master
         Result.ok(out.strip.empty? ? "(no unstaged changes)" : out.strip)
       end
 
+      # Neither `git status` nor `git blame` takes --no-color; passing it makes git
+      # exit on an unknown option with empty stdout, which read as "(clean)".
       def git_status
-        out = IO.popen(["git", "-C", @root, "status", "--short", "--no-color"], err: File::NULL, &:read)
+        out = IO.popen(["git", "-c", "color.status=false", "-C", @root, "status", "--short"], err: File::NULL, &:read)
         Result.ok(out.strip.empty? ? "(clean)" : out.strip)
       end
 

@@ -38,7 +38,7 @@ module Master
       private
 
       def estimate_cost(prompt)
-        Master::Trace::Session.estimate_tokens(prompt) * Review::Agent::COST_PER_TOKEN
+        Master::Trace::Session.estimate_tokens(prompt) * Review::LLMDispatcher::COST_PER_TOKEN
       end
     end
   end

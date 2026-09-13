@@ -144,7 +144,7 @@ module Master
     path = File.join(root, "data", "rules.yml")
     mtime = File.mtime(path)
     @law = nil unless @law_stamp == [path, mtime]
-    @law ||= (load_yaml(path, default: {}) || {}).tap { @law_stamp = [path, mtime] }
+    @law ||= (load_rules(root:) || {}).tap { @law_stamp = [path, mtime] }
     @law.fetch(section.to_s) { raise KeyError, "data/rules.yml has no #{section}: section" }
   end
 

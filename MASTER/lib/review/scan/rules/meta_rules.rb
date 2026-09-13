@@ -234,7 +234,7 @@ module Master
           end
 
           def reload_learned_smells!
-            @learned_smells = Array(Master.load_yaml(rules_path)&.fetch("learned_smells", [])).select { |item| item.is_a?(Hash) }
+            @learned_smells = Array((Master.load_rules(root: @root) || {}).fetch("learned_smells", [])).select { |item| item.is_a?(Hash) }
             @rules_mtime = rules_mtime
           rescue StandardError
             @learned_smells = []

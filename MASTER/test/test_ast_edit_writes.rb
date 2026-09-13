@@ -63,6 +63,39 @@ class TestAstEditWrites < Minitest::Test
     end
   end
 
+  Governor = Struct.new(:answer) do
+    def permit?(_name, _tier, _path) = answer
+  end
+
+  # AstEdit is a dangerous tool in DEFAULT_TOOL_MAP, so the governor's refusal is
+  # the whole of its safety: no write, and no undo snapshot of a file left as it was.
+  def test_a_refusing_governor_leaves_the_file_and_the_undo_stack_untouched
+    with_ruby_file do |root, path|
+      before = File.read(path)
+      undo = RecordingUndo.new
+      governor = Governor.new(Master::Result.err("refused", category: :policy))
+      editor = Master::Io::AstEdit.new(root:, undo:, governor:)
+
+      rename = editor.call(operation: "rename_method", path: path, from: "old_name", to: "new_name")
+      insert = editor.call(operation: "add_after", path: path, after: "old_name", code: "def added; end")
+
+      refute rename.ok?
+      refute insert.ok?
+      assert_equal before, File.read(path)
+      assert_empty undo.snapshots
+    end
+  end
+
+  def test_invalid_names_and_paths_outside_the_root_are_refused
+    with_ruby_file do |root, path|
+      editor = Master::Io::AstEdit.new(root:, undo: RecordingUndo.new)
+
+      refute editor.call(operation: "rename_method", path: path, from: "old_name", to: "Bad Name").ok?
+      refute editor.call(operation: "find_method", path: "../../etc/hosts", name: "x").ok?
+      assert_equal "old_name: lines 3–5", editor.call(operation: "method_lines", path: path, name: "old_name").value!
+    end
+  end
+
 # A third test used to grep ast_edit.rb for its own method names, to catch the
 # misspelling returning by another route. test_source_assertions refuses that
 # shape and is right to: a test that greps a source file passes against a body

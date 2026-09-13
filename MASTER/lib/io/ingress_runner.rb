@@ -15,12 +15,11 @@ module Master
         end
       end
 
+      # Both keys are written, so an untrusted turn cannot inherit elevation
+      # already sitting on the calling fiber.
       def with_fiber(elevated:)
-        if elevated
-          Fiber[:master_elevated] = true
-        else
-          Fiber[:master_visitor] = true
-        end
+        Fiber[:master_elevated] = elevated ? true : nil
+        Fiber[:master_visitor] = elevated ? nil : true
         yield
       ensure
         Fiber[:master_elevated] = nil
