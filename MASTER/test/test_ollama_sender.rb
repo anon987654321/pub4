@@ -163,6 +163,15 @@ class TestOllamaSender < Minitest::Test
     assert_equal ["ollama:llama3:latest"], reached
   end
 
+  def test_a_v1_base_url_still_reaches_api_chat_at_the_host_root
+    sender, = build_sender
+    ENV["OLLAMA_BASE_URL"] = "http://localhost:11434/v1/"
+
+    assert_equal "/api/chat", sender.send(:ollama_uri).path
+  ensure
+    ENV.delete("OLLAMA_BASE_URL")
+  end
+
   private
 
   def build_sender

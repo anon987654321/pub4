@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+require "json"
+require "net/http"
+require "uri"
+
 module Master
   module CLI
     module Routing
@@ -113,7 +117,46 @@ module Master
             gate.empty? ? false : ENV[gate].to_s != ""
           end
 
-          def ollama_model?(model_id) = model_id.to_s.start_with?("ollama:", "ollama/")
+def ollama_model?(model_id) = model_id.to_s.start_with?("ollama:", "ollama/")
+
+# models.yml names the local chain, and a name nobody pulled answers
+# "ollama has no model" and falls through to a paid provider. The daemon
+# lists what it holds at /api/tags, so an enabled tier offers only those.
+# When the daemon cannot say — down, slow, or answering nonsense — the
+# configured list stands and the dispatcher names the failure per call.
+def ollama_pulled?(model_id)
+  installed = ollama_installed_models
+  return true if installed.nil?
+
+  name = model_id.to_s.sub(%r{\Aollama[:/]}, "")
+  installed.include?(name) || installed.include?("#{name}:latest")
+end
+
+# Read once per router: the answer changes when someone runs
+# `ollama pull`, not between two turns.
+def ollama_installed_models
+  return @ollama_installed_models if defined?(@ollama_installed_models)
+
+  @ollama_installed_models = fetch_ollama_tags
+end
+
+OLLAMA_TAGS_TIMEOUT_S = 2
+
+def fetch_ollama_tags
+  base = ENV["OLLAMA_BASE_URL"].to_s.strip.chomp("/").delete_suffix("/v1")
+  uri = URI("#{base}/api/tags")
+  response = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https",
+                                                 open_timeout: OLLAMA_TAGS_TIMEOUT_S,
+                                                 read_timeout: OLLAMA_TAGS_TIMEOUT_S) do |http|
+    http.get(uri.request_uri)
+  end
+  return nil unless response.is_a?(Net::HTTPSuccess)
+
+  Array(JSON.parse(response.body.to_s)["models"]).filter_map { |row| row["name"]&.to_s }
+rescue StandardError => e
+  Master::Ground::Swallow.log(e, context: "model_router.ollama_tags")
+  nil
+end
 
           # Live free slugs refreshed into the SQLite catalog; read-only, never creates the DB.
           def live_free_models

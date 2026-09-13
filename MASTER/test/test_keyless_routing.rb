@@ -2,6 +2,8 @@
 
 require_relative "test_helper"
 require_relative "support_fake_config"
+require "json"
+require "socket"
 
 class TestKeylessRouting < Minitest::Test
   FakeConfig = Master::TestSupport::FakeConfig
@@ -84,9 +86,54 @@ class TestKeylessRouting < Minitest::Test
       config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT,
     )
 
+    # A daemon that cannot list its models leaves the configured chain standing.
+    router.define_singleton_method(:ollama_installed_models) { nil }
+
     assert router.ollama_enabled?
     refute_empty router.fallback_chain(task_type: :exploration).grep(/\Aollama[:\/]/)
   ensure
+    ENV.delete("OLLAMA_BASE_URL")
+  end
+
+  # models.yml names three local models and nothing checked any was pulled; a
+  # missing one answered "no model" and the chain fell through to a paid lane.
+  def test_local_tier_offers_only_the_models_the_daemon_holds
+    ENV["OPENROUTER_API_KEY"] = "sk-or-v1-#{'a' * 64}"
+    ENV["OLLAMA_BASE_URL"] = "http://localhost:11434"
+    router = Master::CLI::Routing::ModelRouter.new(
+      config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT,
+    )
+    router.define_singleton_method(:ollama_installed_models) { ["llama3.2:3b", "nomic-embed-text:latest"] }
+
+    local = router.fallback_chain(task_type: :exploration).grep(/\Aollama[:\/]/)
+
+    assert_equal ["ollama:llama3.2:3b"], local
+  ensure
+    ENV.delete("OLLAMA_BASE_URL")
+  end
+
+  # The daemon's own answer, read over a real socket.
+  def test_ollama_tags_are_read_from_the_daemon
+    server = TCPServer.new("127.0.0.1", 0)
+    body = JSON.generate("models" => [{ "name" => "phi4:mini" }, { "name" => "qwen2.5-coder:7b" }])
+    thread = Thread.new do
+      socket = server.accept
+      nil until socket.gets.to_s.strip.empty?
+      socket.print("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: #{body.bytesize}\r\n" \
+                   "Connection: close\r\n\r\n#{body}")
+      socket.close
+    end
+    ENV["OLLAMA_BASE_URL"] = "http://127.0.0.1:#{server.addr[1]}/v1"
+    router = Master::CLI::Routing::ModelRouter.new(
+      config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT,
+    )
+
+    assert_equal ["phi4:mini", "qwen2.5-coder:7b"], router.ollama_installed_models
+    assert router.ollama_pulled?("ollama:phi4:mini")
+    refute router.ollama_pulled?("ollama:llama3.2:3b")
+  ensure
+    thread&.kill
+    server&.close
     ENV.delete("OLLAMA_BASE_URL")
   end
 

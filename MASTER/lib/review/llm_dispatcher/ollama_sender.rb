@@ -51,9 +51,13 @@ module Master
           system.empty? ? rows : [{ role: "system", content: system }] + rows
         end
 
+        # OpenAI-compatible clients spell the same daemon with a /v1 suffix, and
+        # embeddings.rb and the router already read past it to the host root.
+        # Kept here, /api/chat became /v1/api/chat and every call read as a
+        # missing model.
         def ollama_base_url
           url = ENV["OLLAMA_BASE_URL"].to_s.strip
-          url.empty? ? DEFAULT_BASE_URL : url.chomp("/")
+          url.empty? ? DEFAULT_BASE_URL : url.chomp("/").delete_suffix("/v1")
         end
 
         # Every failure names itself. "Ollama is enabled but unreachable" and
