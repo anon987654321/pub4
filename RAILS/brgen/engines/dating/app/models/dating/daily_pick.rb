@@ -22,18 +22,26 @@ class Dating::DailyPick < ApplicationRecord
   # same five faces do not come back every morning, and anyone already liked or
   # passed on, because a pick you have answered is not a pick.
   def self.for_today(viewer, scope:, day: Date.current)
-    existing = where(user_id: viewer.id, picked_on: day)
-               .includes(profile: [ :user, { photos_attachments: :blob } ]).map(&:profile)
+    existing = picked(viewer, day)
     return existing if existing.any?
 
     recent = where(user_id: viewer.id, picked_on: (day - 6)..day).pluck(:profile_id)
     chosen = scope.where.not(id: recent).limit(PER_DAY).to_a
+    raced = false
     chosen.each do |profile|
       create!(user_id: viewer.id, profile_id: profile.id, picked_on: day)
     rescue ActiveRecord::RecordNotUnique
       # Two tabs opened the page at the same second; the row that exists wins.
-      nil
+      raced = true
     end
-    chosen
+    # After a race the other tab's rows are today's list, so read them back
+    # rather than showing faces this tab drew and the database refused.
+    raced ? picked(viewer, day) : chosen
   end
+
+  def self.picked(viewer, day)
+    where(user_id: viewer.id, picked_on: day)
+      .includes(profile: [ :user, { photos_attachments: :blob } ]).map(&:profile)
+  end
+  private_class_method :picked
 end

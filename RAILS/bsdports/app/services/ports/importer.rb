@@ -71,6 +71,10 @@ module Ports
 
     attr_reader :platform, :tree_path, :use_ftp_fallback, :pending_deps, :ports_count
 
+    # One transaction per port, deliberately. A transaction around the whole
+    # import would hold SQLite's single writer lock for the minutes an import
+    # takes, and every web write in that window would wait out its 5 s
+    # busy_timeout and fail. Per-port saves interleave with the web instead.
     def import_from_tree(root)
       TreeLocator.each_port(root) do |_category, _name, makefile|
         metadata = Openbsd::MakefileParser.parse(makefile)
