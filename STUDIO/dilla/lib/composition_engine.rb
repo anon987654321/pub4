@@ -433,9 +433,12 @@ module DillaComposition
     # House target is quiet/warm (-20..-16 LUFS, per MASTER_LUFS_BY_STYLE),
     # not broadcast-loud (-14..-11) — that range was pulled down after direct
     # "way too loud" feedback (see dilla.rb MASTER_LUFS_BY_STYLE comment).
-    # Scoring against the old broadcast target penalized correctly-mastered
-    # output on every generation.
-    def lufs_score(lufs, target: -20.0..-16.0)
+    # Scoring against the broadcast target penalized correctly-mastered output
+    # on every generation. The advice below names the same window the score
+    # uses, so a low score never recommends the loudness it just marked down.
+    HOUSE_LUFS = (-20.0..-16.0).freeze
+
+    def lufs_score(lufs, target: HOUSE_LUFS)
       return 70 unless lufs
       lufs = lufs.to_f
       target.cover?(lufs) ? 95 : 65
@@ -454,7 +457,7 @@ module DillaComposition
       recs << "Push snare early / hats late for MPC pocket." if scores[:groove] < 80
       recs << "Thin hat grid on chop bars — let kick/snare breathe." if scores[:groove] < 72
       recs << "Widen stereo image on hook — raise lead/EP pan spread." if scores[:stereo] < 80
-      recs << "Target LUFS -14..-11 for delivery." if scores[:lufs] && scores[:lufs] < 80
+      recs << "Target LUFS #{HOUSE_LUFS.begin.to_i}..#{HOUSE_LUFS.end.to_i} for delivery." if scores[:lufs] && scores[:lufs] < 80
       recs << "Track feels balanced — evolve motifs for next pass." if recs.empty?
       recs.uniq
     end
