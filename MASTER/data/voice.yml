@@ -70,7 +70,15 @@ tts:
   # carried onto a Norwegian voice it had never been heard on. Roughly ±15% rate
   # and ±50Hz is where Azure neural voices stay natural, so whoever reads the
   # README aloud on Jenny has room to move these.
-  default_rate: "+0%"
+  # A little slower than edge-tts ships, and no more than that.
+  #
+  # This sat at -48% for a session and the paragraph above is why that was
+  # wrong: roughly plus or minus fifteen percent is where these voices stay
+  # natural, and past about -30% the synthesiser stretches vowels without
+  # stretching the pauses, so prosody flattens and a long sentence gets harder
+  # to follow rather than easier. What gives a listener time is silence between
+  # sentences, which belongs in post_chain, not here.
+  default_rate: "-18%"
   default_pitch: "+0Hz"
 
   # What the voice is put through after synthesis. Operator decision 2026-09-13,
