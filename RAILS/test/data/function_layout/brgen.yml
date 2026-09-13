@@ -17,7 +17,7 @@ checks:
   # nothing and asserted nothing about the three legal links it names.
   - {id: chrome.legal_footer, in: shared/app/views/shared/_site_legal_footer.html.erb, has: [privacy, terms, cookies]}
   - {id: chrome.mobile_tab_bar, in: brgen/app/views/shared/_mobile_chrome.html.erb, has: [tab-bar, nav.home, nav.explore]}
-  - {id: chrome.nav_swiper, in: brgen/app/views/shared/_nav_swiper.html.erb, has: [nav_swiper, a11y.sections]}
+  - {id: chrome.nav_swiper, in: brgen/app/views/shared/_nav_swiper.html.erb, has: [nav_swiper, nav.primary_nav]}
   # --- design tokens / layout standards ---
   - {id: design.tap_min, in: shared/app/assets/stylesheets/_layout_chrome.scss, has: ["--tap-min: 44px", "--bar-height: 44px"]}
   - {id: design.feed_max, in: shared/app/assets/stylesheets/_layout_chrome.scss, has: ["--feed-max: 600px"]}

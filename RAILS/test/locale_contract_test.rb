@@ -30,7 +30,13 @@ require "psych"
 #   nb UI, several of them keys that existed in en.yml and not in nb.yml. The
 #   fallback is what makes this invisible, so the check has to be on the files.
 #
-# All three pass. That is the point — they are here so the next one fails a test
+#   A reader per key. A key no source can reach is copy nobody sees, and it is
+#   the copy the next author edits when the page says something else. The search
+#   is conservative on purpose: a lazy t(".x"), an interpolated key, a scope: and
+#   a fetched subtree each spare what they could reach, so a hit is a key no
+#   spelling in the tree can produce.
+#
+# They all pass. That is the point — they are here so the next one fails a test
 # instead of shipping.
 class LocaleContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
@@ -156,9 +162,115 @@ class LocaleContractTest < Minitest::Test
                  interpolation_mismatches(en, nb)
   end
 
+  # Per unit, against the source that can load its files: an app's copy of a key
+  # that only another app renders is still dead in the app that carries it.
+  def test_every_key_has_a_reader
+    unread = locale_units.flat_map do |unit|
+      unread_keys(keys_for(unit, "en"), sources_for(unit)).map { |key| "#{unit} #{key}" }
+    end
+
+    assert_empty unread, "#{unread.size} key(s) no source reads — delete them from en and nb:\n  #{unread.join("\n  ")}"
+  end
+
+  def test_the_reader_search_flags_an_unread_key_and_spares_every_way_a_key_is_built
+    keys = %w[
+      nav.home nav.dead errors.messages.blank save
+      listings.index.heading orders.show.flash.done kinds.bike
+      status.open cta.buy mark_open review.issue.spam app.title nav.from_config
+    ]
+    sources = {
+      "app/views/layouts/_nav.html.erb" => %(<%= t("nav.home") %> <%= t(:save) %>),
+      "app/views/listings/index.html.erb" => %(<%= t(".heading") %>),
+      "app/controllers/orders_controller.rb" => %(redirect_to root_path, notice: t(".flash.done")),
+      "app/controllers/map_controller.rb" => %(I18n.t(kind, scope: "kinds")),
+      "app/models/order.rb" => %(I18n.t("status.\#{status}")),
+      "app/views/shared/_cta.html.erb" => %(<%= t("cta").values.sample %> <%= t("review.issue").keys %>),
+      "app/helpers/mark_helper.rb" => %(t(:"mark_\#{state}")),
+      "app/services/banner.rb" => %(SCOPE = "app"\ndef t(key) = I18n.t(key, scope: SCOPE)),
+      "config/menu.yml" => %(items:\n  - label: nav.from_config\n),
+    }
+
+    assert_equal %w[nav.dead], unread_keys(keys, sources)
+  end
+
   private
 
   def rel(path) = path.sub("#{ROOT}/", "")
+
+  # Keys no source in `sources` (relative path => text) can reach.
+  def unread_keys(keys, sources)
+    literal, prefixes, shapes = reader_evidence(sources)
+    keys.reject do |key|
+      segments = key.split(".")
+      FRAMEWORK_ROOTS.include?(segments.first) || literal.include?(key) ||
+        (1...segments.size).any? { |depth| literal.include?(segments.first(depth).join(".")) } ||
+        prefixes.any? { |prefix| key.start_with?(prefix) } || shapes.any? { |shape| key.match?(shape) }
+    end.sort
+  end
+
+  # rails-i18n, ActiveModel and the form builder read these by convention.
+  FRAMEWORK_ROOTS = %w[errors activerecord activemodel time date datetime number helpers support i18n].freeze
+  KEY_LITERAL = /["'`:]([a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+)(?![\w.])/
+  # A config file names a key as a bare YAML value.
+  YAML_KEY_VALUE = /:[ \t]+([a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+)[ \t]*$/
+  BARE_KEY_CALL = /\bt\(\s*:?["']?([a-z][a-z0-9_]*)\b(?!\.)/
+  # A dotted head anywhere, or any head as the first argument of t(): "a#{x}"
+  # outside a call is a string, not a key.
+  INTERPOLATED_KEY = /["'`]([a-z][a-z0-9_]*\.[\w.]*)#\{[^}]*\}([\w.]*)|\bt\(\s*:?["']([a-z][a-z0-9_]*)#\{[^}]*\}([\w.]*)/
+  SCOPE_STRING = /(?:scope:|SCOPE\s*=)\s*:?["']?([a-z][a-z0-9_.]*)/
+
+  # Three kinds of evidence: exact keys, prefixes under which any key may be
+  # built, and shapes an interpolated key can take.
+  def reader_evidence(sources)
+    literal = Set.new
+    prefixes = []
+    shapes = []
+    sources.each do |path, text|
+      text.scan(KEY_LITERAL) { |(key)| literal << key }
+      text.scan(YAML_KEY_VALUE) { |(key)| literal << key } if path.end_with?(".yml")
+      text.scan(BARE_KEY_CALL) { |(key)| literal << key }
+      text.scan(INTERPOLATED_KEY) do |dotted, dotted_tail, called, called_tail|
+        shapes << /\A#{Regexp.escape(dotted || called)}[\w.]+#{Regexp.escape(dotted_tail || called_tail)}\z/
+      end
+      text.scan(SCOPE_STRING) { |(scope)| prefixes << "#{scope}." }
+      lazy = lazy_base(path)
+      next unless lazy && text.match?(/\bt\(\s*["']\./)
+
+      if path.include?("/views/")
+        text.scan(/\bt\(\s*["']\.([a-z0-9_.]+)["']/) { |(tail)| literal << "#{lazy}.#{tail}" }
+      else
+        prefixes << "#{lazy}."
+      end
+    end
+    [literal, prefixes, shapes]
+  end
+
+  # What Rails prefixes a lazy t(".x") with. A view's is its own path, partial
+  # underscore dropped; a controller or mailer adds the action, which a text
+  # read cannot know, so everything under the controller is spared.
+  def lazy_base(path)
+    if (view = path[%r{app/views/(.+)\z}, 1])
+      view.sub(/\..*\z/, "").split("/").map { |segment| segment.delete_prefix("_") }.join(".")
+    elsif (owner = path[%r{app/(?:controllers|mailers)/(.+?)(?:_controller)?\.rb\z}, 1])
+      owner.tr("/", ".")
+    end
+  end
+
+  # The source that can load a unit's locale files. brgen's engines mount only in
+  # brgen, and shared's keys are read by all three apps.
+  def sources_for(unit)
+    trees = case unit
+            when "shared" then %w[brgen amber bsdports shared]
+            when %r{\Abrgen(?:/|\z)} then %w[brgen shared]
+            else [unit, "shared"]
+            end
+    @sources ||= {}
+    @sources[trees] ||= trees.flat_map { |tree| Dir.glob(File.join(ROOT, tree, "**/*.{rb,erb,js,rake,jbuilder,yml,json}")) }
+                             .reject { |path| path.match?(READER_SKIP) }
+                             .to_h { |path| [rel(path), File.read(path)] }
+  end
+
+  READER_SKIP = %r{/(?:test|vendor|node_modules|tmp|log|storage|coverage)/|/public/assets/|/config/locales/}
 
   # Keys both locales declare whose %{} names differ, one line each.
   def interpolation_mismatches(en, nb)

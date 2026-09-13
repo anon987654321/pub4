@@ -15,7 +15,6 @@ en:
     cancel: "Cancel"
     delete: "Delete"
     remove: "Remove"
-    update: "Update"
     create: "Create"
     follow: "Follow"
     unfollow: "Unfollow"
@@ -25,12 +24,10 @@ en:
     message: "Message"
     mark_read: "Mark read"
     confirm_delete: "Delete?"
-    search: "Search"
     accept: "Accept"
     block: "Block"
     read_more: "Read more"
     read_less: "Read less"
-    more: "More"
   comments:
     placeholder: "What do you think?"
     submit: "Comment"
@@ -92,7 +89,6 @@ en:
     with_vipps: "Sign in with Vipps"
     two_factor_lead: "Scan the QR code or enter the secret in your authenticator app."
     magic_link: "Email me a sign-in link"
-    magic_link_send: "Send the link"
   # Live regions in shared/_live_search_form and autosave_controller. bsdports had no copy of these and shipped "translation missing" into the announced values.
   status:
     updating_results: "Updating results…"
@@ -193,7 +189,6 @@ en:
     edit: "Edit"
     delete: "Delete"
     confirm: "Are you sure?"
-    errors: "Please review the form"
     # See the nb file for why this is a whole phrase and not a suffix.
     time_ago: "%{time} ago"
     # Mirrors social.nb.yml's flash: block. Both files carry the same key set, and
@@ -259,8 +254,6 @@ en:
     results_for:
       one: "%{count} result for “%{query}”"
       other: "%{count} results for “%{query}”"
-  showcase:
-    devices: "The app on desktop and mobile"
   # The service worker's offline shell. Rendered by all three apps.
   offline:
     badge: "Offline"

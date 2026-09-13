@@ -37,15 +37,12 @@ nb:
   app:
     name: Brgen
   feed:
-    title: Lokale nyheter
     compose_prompt: Del noe spennende nå
     compose_blank: Skriv noe først.
     compose_title: Opprett innlegg
     posting_as_guest: Anon
     post_action: Publiser
-    guest_hint: Poster som anon · %{remaining} av %{limit} innlegg igjen i denne nettleseren
     advanced_post: Utvidet innlegg med bilde
-    your_feed: Din strøm
   nav:
     # The eight names on the swiper. Their own namespace, so renaming what the
     # bar calls a surface cannot move the wording in the mobile drawer or the
@@ -64,10 +61,6 @@ nb:
       maps: Kart
       tv: TV
     vertical_badge_new: "nytt!"
-    group_discover: "Oppdag"
-    group_inbox: "Innboks"
-    group_city: "Byen"
-    group_account: "Konto"
     pagination: Sidenavigasjon
     trending_tags: Populære emneknagger
     home: Hjem
@@ -81,24 +74,16 @@ nb:
     new_community: "+ Nytt fellesskap"
     messages: Meldinger
     nearby: I nærheten
-    events: Hva skjer
-    stories: Historier
     profile: Profil
     more: Mer
-    post: Post
     channels: Kanaler
-    ai_assistant: AI-assistent
     search: Søk
     search_placeholder: Søk i Brgen
-    show_sidebar: Vis sidemeny
-    show_widgets: Vis widgets
     show_menu: Vis meny
     menu_coach: Menyen er nederst — trykk på stripen eller scroll opp.
     menu_coach_dismiss: Skjønner
     mobile_nav: Mobilnavigasjon
     primary_nav: Hovednavigasjon
-    sidebar: Sidemeny
-    widgets: Widgets
     quick_actions: Hurtighandlinger
     brand_home: Brgen hjem
     main: Hovedinnhold
@@ -116,16 +101,9 @@ nb:
       one: 1 nytt innlegg
       other: "%{count} nye innlegg"
     show_new_posts: Vis nye
-    intro_title: "%{city}, akkurat nå"
-    live: Live
-    marketplace: Markedsplass
-    messages: Meldinger
-    no_signup: " — ingen registrering"
-    ask_ai: Spør Brgen AI
     follow_sign_in: Logg inn
     follow_hint: " for å se innlegg fra folk du følger."
     local_posts: Lokale innlegg
-    today_empty: Ingenting nytt i byen ennå.
   auth:
     honeypot_label: La dette feltet stå tomt
     sign_in: Logg inn
@@ -395,7 +373,6 @@ nb:
     playlist_label: Søk spillelister
     tv: Søk kanaler og videoer…
     tv_label: Søk TV
-    vertical_heading: "%{vertical}"
   messages:
     anonymous: "anon"
     from_aria: Melding fra %{name}
@@ -409,7 +386,6 @@ nb:
     no_people: "Ingen med det navnet her ennå."
     find_people: "Søk etter noen"
     username: Brukernavn
-    start_chat: Start chat
     empty_title: Ingen samtaler ennå
     # Shadowed by shared/config/locales/social.*.yml, which loads after this
     # file and wins the merge. Kept so the key resolves if the shared engine
@@ -420,13 +396,11 @@ nb:
     back_all: "← alle"
     back_channels: "← kanaler"
     disappearing: Forsvinnende meldinger
-    header_label: Samtaleoverskrift
     nav_label: Samtalenavigasjon
     unread_one: "%{count} ny melding ↓"
     unread_other: "%{count} nye meldinger ↓"
     pin: Fest
     unpin: Løsne
-    pinned: Festet
     search_title: Søk i meldinger
     actions: Meldingsvalg
     replying_to: "Svarer %{name}"
@@ -683,7 +657,6 @@ nb:
     find_people: Finn folk i feeden
     following_none_body: Følg folk du liker, så samles innleggene deres her.
     following_none: Du følger ingen ennå
-    add_tracks: Legg til eller importer spor for å spille.
     no_posts: Ingen innlegg
     no_posts_search: Ingen innlegg matcher søket.
     no_posts_yet: Ingen innlegg ennå
@@ -735,7 +708,6 @@ nb:
     no_menu_available: Ingen menyelementer er tilgjengelige nå.
     no_reports: Ingen rapporter ennå
     reports_clear: Moderasjonskøen er tom.
-    no_sessions: Ingen økter planlagt
     create_playlist: Opprett en for å starte radioen.
     first_restaurant: Legg til den første restauranten i området.
     restaurants_appear: Restauranter dukker opp her.
@@ -761,10 +733,7 @@ nb:
     sell_something: Selg noe
     new_set: Nytt sett
     tv_home: TV-hjem
-    city_feed: Byfeed
-    compose_outfit: Sett sammen antrekk
     all_categories: Alle kategorier
-    all_maintainers: Alle maintainere
     save_search_body: Søk i markedsplassen, og lagre søket.
     all_restaurants: Alle restauranter
     all_orders: Alle ordrer
@@ -773,7 +742,6 @@ nb:
     edit: Rediger
     back: Tilbake
     open: Åpne
-    review: Gjennomgå
     reorder: Bestill på nytt
     copyable_text: Tekst som kopieres
     select_all: Velg alle
@@ -788,7 +756,6 @@ nb:
     my_orders: Mine ordrer
     all_posts: Alle innlegg
     edit_post: Rediger innlegg
-    channels: Kanaler
     places: Steder
     new_message: Ny melding
     home_title: "%{city}"
@@ -874,11 +841,6 @@ nb:
     pass: Hopp over
     no_likes_title: Ingen har likt deg ennå
     no_likes_body: Svar på et par spørsmål i profilen — det gir folk noe å svare på.
-    add_prompt: Legg til svar
-    remove_prompt: Fjern
-    your_prompts: Dine svar
-    comment_placeholder: Si noe om svaret…
-    like_with_comment: Lik og si noe
     prompts:
       q_sunday: En perfekt søndag er
       q_bergen: Det beste med %{city} er
@@ -1185,13 +1147,10 @@ nb:
     price_help: Skriv prisen i øre; for eksempel er 25000 NOK 250.
     post_review: Publiser anmeldelse
     send_offer: Send bud
-    send: Send
     list_it: Legg ut
     save_search: Lagre dette søket
     message_seller: Melding til selger (valgfritt)
     message_seller_btn: Meld selger
-    latitude: Breddegrad
-    longitude: Lengdegrad
     radius_km: Radius km
     radius_label: Radius i kilometer
     accept: Godta
@@ -1214,7 +1173,6 @@ nb:
     cart_sellers_hint: Selgere får varsel for hvert ventende bud. De godtar eller
       avslår individuelt.
     payment_methods: Betalingsmetoder
-    cart_header: Handlekurv-header
     item:
       one: "%{count} vare"
       other: "%{count} varer"
@@ -1308,7 +1266,6 @@ nb:
     return_refused_title: Returen er avslått
     return_refused_body: Selgeren avslo returen.
     return_received_title: Selgeren har den tilbake
-    return_received_body: Pengene kommer etterpå.
     return_refunded_body: Pengene er sendt tilbake.
     return_statuses:
       requested: Retur bedt om
@@ -1394,7 +1351,6 @@ nb:
     place_order: Legg inn bestilling
     rating: Vurdering (1–5)
     comments_optional: Kommentarer (valgfritt)
-    post_review: Publiser anmeldelse
     add: Legg til
     save: Lagre
     update: Oppdater
@@ -1418,16 +1374,13 @@ nb:
     order_from: Bestill fra %{restaurant}
     sold_out: Utsolgt
     operations: Takeaway-drift
-    available_items: tilgjengelige retter
     min_order_line: 'Minstebeløp: %{min} · Levering: %{fee} ·'
     reload_to_order: Last inn på nytt for å bestille — gjester kan bestille uten registrering.
     saves:
       one: "%{count} lagret"
       other: "%{count} lagret"
-    driver_header: Budsjåfør
     anon: anonym
     driver_details: Sjåførdetaljer
-    restaurant_header: Restaurant
     restaurant_info: Restaurantinfo
     min_order_delivery: 'Minstebeløp: %{min} · Levering: %{fee}'
     available_count:
@@ -1458,7 +1411,6 @@ nb:
     open_group: Del denne bestillingen
     group_link: Lenken du deler
     order_title: "Ordre #%{id}"
-    order_details: Ordredetaljer
     order_item: Ordrelinje
     order_items: Varer
     order_actions: Ordrehandlinger
@@ -1627,9 +1579,7 @@ nb:
     ai_assistant: AI-assistent
     unfollow_user: Avfølg %{name}
     follow_user: Følg %{name}
-    sections: Seksjoner
     report_target: Rapporter %{type}
-    user_profile: Brukerprofil
   fediverse:
     following_title: Følger andre steder
     following_eyebrow: Fødiverset
@@ -1833,12 +1783,9 @@ nb:
     bans: Utestengte
     ban_author: Utesteng
     lift_ban: Opphev
-    ban_reason: Grunn
-    ban_days: Dager (tom = permanent)
     banned_notification: Du kan ikke lenger poste i %{community}
     ban_permanent: Permanent
     ban_until: Til %{time}
-    banned_here: Du er utestengt fra dette fellesskapet.
     no_bans: Ingen er utestengt
     rules: Regler
     rules_hint: Én regel per linje.
@@ -1890,7 +1837,6 @@ nb:
     join: Bli med
     leave: Forlat
     no_bans_body: Utestengelser fra dette fellesskapet vises her.
-    header: Fellesskap
     posts_count:
       one: "%{count} innlegg"
       other: "%{count} innlegg"
@@ -1932,19 +1878,14 @@ nb:
     brgen_dating: Brgen dating
     profile_sections: Profilseksjoner
     places: Steder
-    place_details_header: Overskrift for stedsdetaljer
     place_navigation: Stedsnavigasjon
     place_information: Stedsinformasjon
-    marketplace_category_header: Overskrift for kategori i markedsplassen
     category_listings: Annonser i kategorien
     featured_deals: Utvalgte tilbud
     categories: Kategorier
     listings: Annonser
-    new_marketplace_listing_header: Overskrift for ny annonse
     listing_actions: Handlinger for annonsen
-    order_details_header: Overskrift for bestillingsdetaljer
     order_messages: Meldinger om bestillingen
-    saved_searches_header: Overskrift for lagrede søk
     stores_list: Butikkliste
     store_listings: Annonser i butikken
     track_management: Sporadministrasjon
@@ -1954,14 +1895,10 @@ nb:
     timestamped_comments: Kommentarer med tidsstempel
     playlist_navigation: Spillelistenavigasjon
     git_archaeology_log: Git-arkeologilogg
-    new_playlist_header: Overskrift for ny spilleliste
-    playlist_sets_header: Overskrift for sett
     playlist_set_actions: Handlinger for settet
     collaborators: Medskapere
     dilla_sketches: Dilla-skisser
-    delivery_drivers_header: Overskrift for bud
     delivery_drivers: Bud
-    my_orders_header: Overskrift for mine bestillinger
     order_history: Bestillingshistorikk
     channel_videos: Kanalvideoer
     trending_videos: Populære videoer

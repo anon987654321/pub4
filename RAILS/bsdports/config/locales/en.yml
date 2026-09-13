@@ -119,7 +119,6 @@ en:
     no_categories_search: "No categories match this search."
     no_maintainers: "No maintainers"
     no_maintainers_search: "No maintainers match this search."
-    clear_search: "Clear search"
   # feed-hotkey is on the layout body now, so / and Cmd/Ctrl-K reach the search from
   # every page instead of only the ports index.
   hotkeys:

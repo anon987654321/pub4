@@ -37,15 +37,12 @@ en:
   app:
     name: Brgen
   feed:
-    title: Local news
     compose_prompt: What are you up to today?
     compose_blank: Write something first.
     compose_title: Create post
     posting_as_guest: Anon
     post_action: Post
-    guest_hint: Posting as anon · %{remaining} of %{limit} posts left in this browser
     advanced_post: Advanced post with photo
-    your_feed: Your feed
   nav:
     # The eight names on the swiper. Their own namespace, so renaming what the
     # bar calls a surface cannot move the wording in the mobile drawer or the
@@ -60,10 +57,6 @@ en:
       maps: Maps
       tv: TV
     vertical_badge_new: "new!"
-    group_discover: "Discover"
-    group_inbox: "Inbox"
-    group_city: "The city"
-    group_account: "Account"
     pagination: Pagination
     trending_tags: Trending tags
     home: Home
@@ -77,24 +70,16 @@ en:
     new_community: "+ New community"
     messages: Messages
     nearby: Nearby
-    events: What is on
-    stories: Stories
     profile: Profile
     more: More
-    post: Post
     channels: Channels
-    ai_assistant: AI assistant
     search: Search
     search_placeholder: Search Brgen
-    show_sidebar: Show sidebar
-    show_widgets: Show widgets
     show_menu: Show menu
     menu_coach: Menu is down here — tap the bar or scroll up.
     menu_coach_dismiss: Got it
     mobile_nav: Mobile navigation
     primary_nav: Primary navigation
-    sidebar: Sidebar
-    widgets: Widgets
     quick_actions: Quick actions
     brand_home: Brgen home
     main: Main content
@@ -112,16 +97,9 @@ en:
       one: 1 new post
       other: "%{count} new posts"
     show_new_posts: Show new
-    intro_title: "%{city}, right now"
-    live: Live
-    marketplace: Marketplace
-    messages: Messages
-    no_signup: " — no signup required"
-    ask_ai: Ask Brgen AI
     follow_sign_in: Sign in
     follow_hint: " to see posts from people you follow."
     local_posts: Local posts
-    today_empty: Nothing new across the city yet.
   auth:
     honeypot_label: Leave this field empty
     sign_in: Sign in
@@ -390,7 +368,6 @@ en:
     playlist_label: Playlist search
     tv: Search channels and videos…
     tv_label: TV search
-    vertical_heading: "%{vertical}"
   messages:
     anonymous: "anon"
     from_aria: Message from %{name}
@@ -404,7 +381,6 @@ en:
     no_people: "Nobody by that name here yet."
     find_people: "Search for someone"
     username: Username
-    start_chat: Start chat
     empty_title: No conversations yet
     # Shadowed by shared/config/locales/social.*.yml, which loads after this
     # file and wins the merge. Kept so the key resolves if the shared engine
@@ -415,13 +391,11 @@ en:
     back_all: "← all"
     back_channels: "← channels"
     disappearing: Disappearing messages
-    header_label: Conversation header
     nav_label: Conversation nav
     unread_one: "%{count} new message ↓"
     unread_other: "%{count} new messages ↓"
     pin: Pin
     unpin: Unpin
-    pinned: Pinned
     search_title: Search messages
     actions: Message actions
     replying_to: "Replying to %{name}"
@@ -677,7 +651,6 @@ en:
     find_people: Find people in the feed
     following_none_body: Follow people you like and their posts gather here.
     following_none: You are not following anyone yet
-    add_tracks: Add or import tracks to play.
     no_posts: No posts
     no_posts_search: No posts match this search.
     no_posts_yet: No posts yet
@@ -730,7 +703,6 @@ en:
     no_menu_available: No menu items are currently available.
     no_reports: No reports yet
     reports_clear: Moderation queue is clear.
-    no_sessions: No sessions scheduled
     create_playlist: Create one to start the radio.
     first_restaurant: Add the first restaurant for this area.
     restaurants_appear: Restaurants will appear here.
@@ -756,10 +728,7 @@ en:
     sell_something: Sell something
     new_set: New set
     tv_home: TV home
-    city_feed: City feed
-    compose_outfit: Compose an outfit
     all_categories: All categories
-    all_maintainers: All maintainers
     save_search_body: Search the marketplace, then save the search.
     all_restaurants: All restaurants
     all_orders: All orders
@@ -768,7 +737,6 @@ en:
     edit: Edit
     back: Back
     open: Open
-    review: Review
     reorder: Reorder
     copyable_text: Text to copy
     select_all: Select all
@@ -783,7 +751,6 @@ en:
     my_orders: My Orders
     all_posts: All posts
     edit_post: Edit post
-    channels: Channels
     places: Places
     new_message: New message
     home_title: "%{city}"
@@ -869,11 +836,6 @@ en:
     no_likes_title: Nobody has liked you yet
     no_likes_body: Answer a couple of prompts on your profile — it gives people something
       to reply to.
-    add_prompt: Add an answer
-    remove_prompt: Remove
-    your_prompts: Your answers
-    comment_placeholder: Say something about this answer…
-    like_with_comment: Like and say something
     prompts:
       q_sunday: A perfect Sunday is
       q_bergen: The best thing about %{city} is
@@ -1178,13 +1140,10 @@ en:
     price_help: Enter the price in øre; for example, 25000 is NOK 250.
     post_review: Post review
     send_offer: Send offer
-    send: Send
     list_it: List it
     save_search: Save this search
     message_seller: Message to seller (optional)
     message_seller_btn: Message seller
-    latitude: Latitude
-    longitude: Longitude
     radius_km: Radius km
     radius_label: Radius in kilometres
     accept: Accept
@@ -1207,7 +1166,6 @@ en:
     cart_sellers_hint: Sellers get a notification for each pending offer. They accept
       or decline individually.
     payment_methods: Payment methods
-    cart_header: Cart header
     item:
       one: "%{count} item"
       other: "%{count} items"
@@ -1301,7 +1259,6 @@ en:
     return_refused_title: Your return was refused
     return_refused_body: The seller refused the return.
     return_received_title: The seller has it back
-    return_received_body: The refund follows.
     return_refunded_body: The refund has been sent.
     return_statuses:
       requested: Return requested
@@ -1387,7 +1344,6 @@ en:
     place_order: Place order
     rating: Rating (1–5)
     comments_optional: Comments (optional)
-    post_review: Post review
     add: Add
     save: Save
     update: Update
@@ -1411,16 +1367,13 @@ en:
     order_from: Order from %{restaurant}
     sold_out: Sold out
     operations: Takeaway operations
-    available_items: available items
     min_order_line: 'Min order: %{min} · Delivery: %{fee} ·'
     reload_to_order: Reload to place an order — guests can order without signup.
     saves:
       one: "%{count} save"
       other: "%{count} saves"
-    driver_header: Delivery driver
     anon: anon
     driver_details: Driver details
-    restaurant_header: Restaurant
     restaurant_info: Restaurant info
     min_order_delivery: 'Min order: %{min} · Delivery: %{fee}'
     available_count:
@@ -1451,7 +1404,6 @@ en:
     open_group: Share this order
     group_link: The link to share
     order_title: "Order #%{id}"
-    order_details: Order details
     order_item: Order item
     order_items: Items
     order_actions: Order actions
@@ -1618,9 +1570,7 @@ en:
     ai_assistant: AI assistant
     unfollow_user: Unfollow %{name}
     follow_user: Follow %{name}
-    sections: Sections
     report_target: Report %{type}
-    user_profile: User profile
   fediverse:
     following_title: Following elsewhere
     following_eyebrow: The fediverse
@@ -1823,12 +1773,9 @@ en:
     bans: Banned people
     ban_author: Ban
     lift_ban: Lift
-    ban_reason: Reason
-    ban_days: Days (blank = permanent)
     banned_notification: You can no longer post in %{community}
     ban_permanent: Permanent
     ban_until: Until %{time}
-    banned_here: You are banned from this community.
     no_bans: Nobody is banned
     rules: Rules
     rules_hint: One rule per line.
@@ -1880,7 +1827,6 @@ en:
     join: Join
     leave: Leave
     no_bans_body: Bans from this community show up here.
-    header: Community
     posts_count:
       one: "%{count} post"
       other: "%{count} posts"
@@ -1922,19 +1868,14 @@ en:
     brgen_dating: Brgen dating
     profile_sections: Profile sections
     places: Places
-    place_details_header: Place details header
     place_navigation: Place navigation
     place_information: Place information
-    marketplace_category_header: Marketplace category header
     category_listings: Category listings
     featured_deals: Featured deals
     categories: Categories
     listings: Listings
-    new_marketplace_listing_header: New marketplace listing header
     listing_actions: Listing actions
-    order_details_header: Order details header
     order_messages: Order messages
-    saved_searches_header: Saved searches header
     stores_list: Stores list
     store_listings: Store listings
     track_management: Track management
@@ -1944,14 +1885,10 @@ en:
     timestamped_comments: Timestamped comments
     playlist_navigation: Playlist navigation
     git_archaeology_log: Git archaeology log
-    new_playlist_header: New playlist header
-    playlist_sets_header: Playlist sets header
     playlist_set_actions: Playlist set actions
     collaborators: Collaborators
     dilla_sketches: Dilla sketches
-    delivery_drivers_header: Delivery drivers header
     delivery_drivers: Delivery drivers
-    my_orders_header: My orders header
     order_history: Order history
     channel_videos: Channel videos
     trending_videos: Trending videos

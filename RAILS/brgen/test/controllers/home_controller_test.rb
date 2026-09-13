@@ -40,13 +40,10 @@ class HomeControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "search_palette"
     # The city right now is the feed, not a strip of links above it.
     assert_not_includes response.body, "city-today"
-    # Through the key, not the English. The sidebar link stopped carrying a
-    # hardcoded aria-label="AI assistant" when it became link_to
-    # t("nav.ai_assistant") — its visible text is its accessible name now — and
-    # this assertion went red on a page that was rendering the link correctly,
-    # in Norwegian, exactly as intended. brgen renders nb; an English literal in
-    # an assertion here is testing the locale, not the markup.
-    assert_includes response.body, I18n.t("nav.ai_assistant", locale: :nb)
+    # Through the key, not the English: the tab bar's AI link is named by
+    # t("a11y.ai_assistant") in shared/_ai_nav_link. brgen renders nb; an English
+    # literal in an assertion here is testing the locale, not the markup.
+    assert_includes response.body, I18n.t("a11y.ai_assistant", locale: :nb)
     assert_includes response.body, "form-submit-blank"
     # No sign-up link on root any more, and that is a decision rather than a
     # regression that slipped through: the "sign up" chip rode the nav bar, and

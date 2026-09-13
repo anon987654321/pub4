@@ -13,7 +13,6 @@ nb:
     cancel: "Avbryt"
     delete: "Slett"
     remove: "Fjern"
-    update: "Oppdater"
     create: "Opprett"
     follow: "Følg"
     unfollow: "Avfølg"
@@ -23,12 +22,10 @@ nb:
     message: "Melding"
     mark_read: "Merk som lest"
     confirm_delete: "Slette?"
-    search: "Søk"
     accept: "Godta"
     block: "Blokker"
     read_more: "Les mer"
     read_less: "Vis mindre"
-    more: "Mer"
   comments:
     placeholder: "Hva tenker du?"
     submit: "Kommenter"
@@ -92,7 +89,6 @@ nb:
     with_vipps: "Logg inn med Vipps"
     two_factor_lead: "Skann QR-koden eller skriv inn hemmeligheten i autentiseringsappen din."
     magic_link: "Send meg en innloggingslenke"
-    magic_link_send: "Send lenken"
   status:
     updating_results: "Oppdaterer resultater…"
     results_updated: "Resultater oppdatert"
@@ -191,7 +187,6 @@ nb:
     edit: "Rediger"
     delete: "Slett"
     confirm: "Er du sikker?"
-    errors: "Se over skjemaet"
     # Norwegian marks a past span on both sides — "for … siden" — so a relative
     # time cannot be built by appending a suffix to time_ago_in_words. Fourteen
     # views did exactly that and every post page read "rundt 2 måneder ago".
@@ -262,8 +257,6 @@ nb:
     results_for:
       one: "%{count} treff for «%{query}»"
       other: "%{count} treff for «%{query}»"
-  showcase:
-    devices: "Appen på skrivebord og mobil"
   # The service worker's offline shell. Rendered by all three apps.
   offline:
     badge: "Frakoblet"
