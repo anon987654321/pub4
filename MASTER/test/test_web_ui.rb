@@ -786,14 +786,36 @@ assert_match(/phantom:[^\n]*detected/, bridge_source,
   # stdout. The worker outlives the task, the pipe stays open, and rc.d/master --
   # which reads that pipe -- blocks forever on a precompile that already exited.
   # That is master unable to start at all, from a file that looks fine.
+  #
+  # ensure! is called directly by cable_bridge.rb's thread too, so the guard is
+  # proved on ensure! itself. The loader runs in a child process under a stub
+  # Rails whose TtsSupervisor exits 3 when called; the second run, with no asset
+  # task in ARGV, proves the stub is reached at all.
   def test_container_does_not_boot_during_an_assets_task
-    loader = File.read(File.expand_path("../web/config/initializers/master_container.rb", __dir__))
+    loader = File.expand_path("../web/config/initializers/master_container.rb", __dir__)
+    probe = <<~RUBY
+      X = Struct.new(:master_start_ms, :master_container, :master_container_mutex, :master_bootstrap_started)
+      Config = Struct.new(:x) { def after_initialize; end }
+      module Rails
+        def self.application = (@app ||= Struct.new(:config).new(Config.new(X.new)))
+        def self.root = Pathname.new(Dir.pwd)
+        def self.logger = Logger.new(nil)
+      end
+      module Master
+        def self.prepare_runtime! = nil
+        module Voice; module TtsSupervisor; def self.ensure_daemon!(**) = exit!(3); end; end
+      end
+      require "logger"
+      require "pathname"
+      ARGV.replace(ARGV.first == "asset" ? ["assets:precompile"] : [])
+      load #{loader.inspect}
+      exit!(MasterContainerLoader.ensure!.nil? ? 0 : 1)
+    RUBY
 
-    assert_includes loader, "next if MasterContainerLoader.asset_task?",
-                    "after_initialize must skip the bootstrap for asset tasks"
-    assert_includes loader, "def asset_task?"
-    assert_match(/ARGV\.any\?.*assets:/, loader,
-                 "the guard has to recognise assets:precompile and its siblings")
+    system(RbConfig.ruby, "-e", probe, "asset")
+    assert_equal 0, $?.exitstatus, "ensure! must not spawn tts-worker under assets:precompile"
+    system(RbConfig.ruby, "-e", probe, "serve")
+    assert_equal 3, $?.exitstatus, "outside an asset task ensure! must reach the TTS supervisor"
   end
 
   # A note that outlives its turn is the same bug pointed the other way: the

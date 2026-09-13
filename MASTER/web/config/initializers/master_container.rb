@@ -71,7 +71,13 @@ module MasterContainerLoader
     nil
   end
 
+  # The asset-task guard sits here as well as in after_initialize because
+  # cable_bridge.rb calls ensure! from its own after_initialize thread. rc_pre
+  # runs assets:precompile as root, so a container built there spawns
+  # tts-worker as root and leaves .master/tts-worker-*.log root-owned, which
+  # the master user then cannot write.
   def ensure!(config = Rails.application.config)
+    return nil if asset_task?
     return config.x.master_container if config.x.master_container
 
     config.x.master_container_mutex.synchronize do
