@@ -126,13 +126,42 @@ class LocaleContractTest < Minitest::Test
     assert_empty problems, "en and nb disagree:\n#{problems.join("\n")}"
   end
 
+  # A key both locales declare must interpolate the same names. `%{count}` in nb
+  # and absent from en renders fine in en and raises MissingInterpolationArgument
+  # nowhere, because the caller passes count; the reverse renders the literal
+  # `%{count}` on the page. app_flash_i18n_test holds this for flash keys only.
+  def test_nb_and_en_interpolate_the_same_names
+    placeholders = ->(text) { text.to_s.scan(/%\{(\w+)\}/).flatten.uniq.sort }
+
+    problems = %w[brgen amber bsdports shared].flat_map do |app|
+      en = values_for(app, "en")
+      nb = values_for(app, "nb")
+      (en.keys & nb.keys).sort.filter_map do |key|
+        want = placeholders.call(en[key])
+        got = placeholders.call(nb[key])
+        "#{app} #{key}: en #{want.inspect}, nb #{got.inspect}" unless want == got
+      end
+    end
+
+    assert_empty problems, "nb and en interpolate different names:\n  #{problems.join("\n  ")}"
+  end
+
   private
 
   def rel(path) = path.sub("#{ROOT}/", "")
 
-  def keys_for(app, locale)
+  def locale_paths(app, locale)
     pattern = app == "shared" ? "shared/config/locales/*.#{locale}.yml" : "#{app}/config/locales/*#{locale}.yml"
-    Dir.glob(File.join(ROOT, pattern)).flat_map { |path| flat_keys(path) }.uniq
+    Dir.glob(File.join(ROOT, pattern)).sort
+  end
+
+  def keys_for(app, locale)
+    locale_paths(app, locale).flat_map { |path| flat_keys(path) }.uniq
+  end
+
+  # Sorted, so a key with two homes takes the value Rails renders.
+  def values_for(app, locale)
+    locale_paths(app, locale).each_with_object({}) { |path, out| out.merge!(flat_values(path)) }
   end
 
   # The files Rails merges into one store, keyed by the app that owns the directory
