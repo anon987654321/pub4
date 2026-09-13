@@ -9,6 +9,7 @@ require "optparse"
 require "yaml"
 require_relative "lib/utf8"
 require_relative "lib/guard_state"
+require_relative "lib/permission_audit"
 
 ROOT = File.expand_path("..", __dir__)
 APPS_YML = File.join(ROOT, "RAILS", "apps.yml")
@@ -338,6 +339,27 @@ if on_box && File.readable?(Deploy::GuardState::SHED_STATE)
   running = ->(svc) { service_running?(svc).first }
   down = Deploy::GuardState.shed_and_down(shed: shed_list, running:)
   failures << down if down
+end
+
+# Secrets and app data other users can read, and daemon logs the daemon cannot
+# write. The rule and the two times it has been broken are in the library.
+if on_box
+  require "etc"
+  stat_entry = lambda do |path|
+    stat = File.stat(path)
+    owner = begin
+      Etc.getpwuid(stat.uid).name
+    rescue ArgumentError # scan: intentional — a uid with no passwd entry is reported by number
+      stat.uid.to_s
+    end
+    { path:, mode: stat.mode, owner: }
+  end
+  failures.concat(Deploy::PermissionAudit.failures(
+    secrets: Dir.glob("/etc/*.env").map(&stat_entry),
+    private_dirs: Dir.glob("/home/*/app/storage").map(&stat_entry),
+    daemon_logs: Dir.glob("/home/dev/pub4/MASTER/.master/tts-worker-*.log").map(&stat_entry),
+    daemon_user: "master"
+  ))
 end
 
 up_checks = on_box ? { "master" => 53_187 } : {}
