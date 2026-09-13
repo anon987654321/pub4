@@ -21,6 +21,23 @@ horizon:
       - { name: anonymised buyer-seller contact relay, status: planned, notes: "needs inbound mail routing and per-listing addresses on vm23; brgen.no mail is outbound-verified only" }
     subapp_playlist:
       - { name: creator donations / ad-free tier, status: planned }
+    # Fences on every row below: no mandatory commission, no dark patterns, no
+    # hidden fees, and payment never buys a moderation or trust outcome. One
+    # Commerce/Billing/Entitlements domain in shared, consumed by the verticals —
+    # never a billing, promotion or subscription stack per engine.
+    monetization:
+      - { name: plans / subscriptions / entitlements as data (free, Pro, Business), status: planned }
+      - { name: shared Commerce, Ledger and Campaign domains, status: planned, notes: "before any affiliate or promotion code; marketplace, takeaway and amber consume it" }
+      - { name: verified business and seller verification badges, status: planned }
+      - { name: paid listing boosts and category/homepage placement, status: planned, notes: "organic discovery stays quality-weighted; paid never overwhelms it" }
+      - { name: seller credits with a transparent ledger, status: planned, notes: "Finta-style 0% commission plus Flon-style credits" }
+      - { name: seller, listing and promotion analytics, status: planned }
+      - { name: self-service local advertising (CPC/CPM/fixed, geo and time targeting), status: planned }
+      - { name: takeaway Pro (restaurant promotion, coupons, loyalty), status: planned }
+      - { name: business inbox and CRM on messenger, status: planned }
+      - { name: payments abstraction (refunds, invoices, VAT, reconciliation), status: planned }
+      - { name: revenue dashboard (MRR, churn, conversion funnel), status: planned }
+      - { name: marketplace liquidity signals (empty categories, unmet demand), status: planned, notes: "liquidity before ads" }
   amber:
     wardrobe:
       - { name: fashion embeddings (pgvector), status: planned }
