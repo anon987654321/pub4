@@ -14,6 +14,14 @@ module Operator
     def repligen_script = first_file(repligen_candidates)
     def dilla_script = first_file(dilla_candidates)
     def radio_bergen_study_script = first_file(radio_bergen_study_candidates)
+    def master_root = master_candidates.map(&:expand_path).uniq.find { |path| File.directory?(path.join("bin")) }
+
+    def master_candidates
+      [
+        repo_join("MASTER"),
+        Pathname.new("#{DEFAULT_REPO}/MASTER"),
+      ]
+    end
 
     def postpro_candidates
       [

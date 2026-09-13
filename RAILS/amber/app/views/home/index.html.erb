@@ -108,6 +108,8 @@
     <p class="amber-guest-secondary">
       <%= link_to t("nav.sign_in"), new_session_path %>
       <span aria-hidden="true"> · </span>
+      <%# A full load: master=1 renders the MASTER embed layout, whose head differs
+          from this one, and a Turbo visit keeps the old head. %>
       <%= link_to t("home.ask_ai"), root_path(master: 1), data: { turbo: false } %>
     </p>
   </section>

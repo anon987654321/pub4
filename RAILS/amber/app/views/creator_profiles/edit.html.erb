@@ -1,6 +1,6 @@
-<% content_for :title, t("creator_profiles.edit_title", default: "Edit creator profile") %>
+<% content_for :title, t("creator_profiles.edit_title") %>
 
-<%= tag.h1 t("creator_profiles.edit_title", default: "Edit creator profile") %>
+<%= tag.h1 t("creator_profiles.edit_title") %>
 <%= render "form", profile: @profile %>
 
 <section>
@@ -24,9 +24,9 @@
   <% end %>
 
   <%= form_with url: creator_profile_wardrobe_items_path(handle: @profile.handle), method: :post, class: "form-wrap" do |f| %>
-    <%= f.label :item_id, "Add item" %>
+    <%= f.label :item_id, t("home.add_item") %>
     <%= f.collection_select :item_id, Current.user.items.order(:title), :id, :title, include_blank: true %>
-    <%= f.label :caption, "Caption" %>
+    <%= f.label :caption, t("creator.caption") %>
     <%= f.text_field :caption %>
     <%= f.submit t("creator.add_showcase") %>
   <% end %>

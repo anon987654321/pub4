@@ -236,6 +236,7 @@ nb:
     go_feed: "Stil-feed"
     retry: "Prøv igjen"
   wardrobe:
+    talk_to_master: "Snakk med MASTER"
     occasion_map: "Anledningskart"
     closet_intelligence: "Garderobe-intelligens"
     items_region: "Garderobeplagg"
@@ -332,6 +333,12 @@ nb:
     today_in: "I dag i %{city}"
     curated_offers: "Utvalgte tilbud"
   ai:
+    items_reviewed:
+      one: "%{count} plagg vurdert"
+      other: "%{count} plagg vurdert"
+    gap_count:
+      one: "%{count} hull"
+      other: "%{count} hull"
     palette_aria: "Fargeprøver fra garderoben"
     why_it_works: "Hvorfor det funker:"
     occasion: "Anledning"
@@ -396,6 +403,7 @@ nb:
     action: "Installer"
 
   items:
+    color_named: "Farge: %{color}"
     add_header_label: "Legg til plagg"
     mood_label: "Stemning: %{mood}"
     worn_times_short: "Brukt %{count}×"
@@ -474,6 +482,7 @@ nb:
       one: "%{count} plagg"
       other: "%{count} plagg"
   outfits:
+    items_in: "Plagg i %{name}: %{items}"
     wardrobe_value: "%{amount} garderobeverdi"
     add_item: "Legg til plagg"
     remove_item: "Fjern"
@@ -542,6 +551,7 @@ nb:
       ended: "avsluttet"
       cancelled: "avlyst"
   creator:
+    caption: "Bildetekst"
     add_showcase: "Legg til showcase"
     profile_label: "Skaperprofil"
     remix_friendly: "Remiksvennlig garderobe"
@@ -590,6 +600,9 @@ nb:
     generate_save: "Generer og lagre første som antrekk"
     search_placeholder: "f.eks. noe varmt men ikke klumpete til møte"
   creator_profiles:
+    public_label: "Offentlig profil"
+    save: "Lagre profil"
+    create: "Opprett profil"
     edit_title: "Rediger skaperprofil"
     new_title: "Opprett skaperprofil"
     new_lead: "Del en offentlig garderobeutstilling som andre kan remikse når du tillater det."
@@ -896,6 +909,9 @@ nb:
     recycled: "gjenvunnet"
     released: "sluppet"
   flash:
+    no_outfit_suggestion: "Fant ikke noe antrekk å foreslå."
+    joy_analysis_heuristic: "Gledesanalysen er gjort med lokale regler."
+    joy_analysis_ai: "Gledesanalysen er gjort med AI."
     comment_not_yours: Du kan bare slette dine egne kommentarer.
     posted: Publisert.
     posted_anonymously: Publisert anonymt.

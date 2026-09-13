@@ -5,13 +5,25 @@ require "open3"
 class AiController < ApplicationController
   before_action :require_real_user
 
+  # suggest_outfits is a GET that asks a model for outfits and, when the MASTER
+  # photograph bridge is enabled, renders a photograph in this request. The
+  # write throttle does not see a GET, so it carries its own limit, and each
+  # photograph is one bounded subprocess: a 1 GB box cannot hold a request open
+  # on an unbounded render.
+  MASTER_PHOTOGRAPHS_PER_REQUEST = 1
+  MASTER_PHOTOGRAPH_TIMEOUT = 120
+
+  rate_limit to: 10, within: 10.minutes, only: :suggest_outfits,
+             by: -> { "u#{Current.user&.id}" },
+             with: -> { redirect_to items_path, alert: t("shared.flash.rate_limited") }
+
   def analyze_item
     item = Current.user.items.find(params[:id])
     result = WardrobeAi.new(Current.user).analyze_joy(item)
     item.update!(spark_joy: result["sparks_joy"]) if result["sparks_joy"].in?([ true, false ])
     respond_to do |format|
       format.turbo_stream { render turbo_stream: turbo_stream.replace("item_#{item.id}_analysis", partial: "ai/analysis", locals: { result: result, item: item }) }
-      format.html { redirect_to item, notice: result["source"] == "heuristic" ? "Heuristic joy analysis applied" : "AI joy analysis applied" }
+      format.html { redirect_to item, notice: result["source"] == "heuristic" ? t("flash.joy_analysis_heuristic") : t("flash.joy_analysis_ai") }
       format.json { render json: result }
     end
   end
@@ -37,16 +49,11 @@ class AiController < ApplicationController
 
     return unless @master_photo
 
-    master_root = Rails.root.join("..", "..", "MASTER").to_s
-    @suggestions.each do |s|
-      next unless s.is_a?(Hash)
+    master_root = Operator::DeployPaths.master_root.to_s
+    @suggestions.select { |s| s.is_a?(Hash) }.first(MASTER_PHOTOGRAPHS_PER_REQUEST).each do |s|
       combo = "professional fashion photography of outfit '#{s['name']}' with #{Array(s['items']).join(', ')}. #{s['description']}. model, kodak portra, cinematic"
       begin
-        # brakeman :ignore Execute
-        out, _status = Open3.capture2e(
-          { chdir: master_root },
-          "bundle", "exec", "ruby", "bin/cli", "photograph", combo
-        )
+        out = photograph(master_root, combo)
         if out =~ /postpro.*(output\/[^\s]+_postpro)/
           pdir = File.join(master_root, $1)
           imgf = Dir.glob(File.join(pdir, "*.{jpg,jpeg,png}")).first
@@ -165,13 +172,28 @@ class AiController < ApplicationController
       occasion: params[:occasion], season: params[:season]
     )
     suggestion = Array(suggestions).first
-    return redirect_to(ai_suggest_outfits_path, alert: t("amber.outfits.no_vision", default: "No outfit suggestion generated")) unless suggestion
+    return redirect_to(ai_suggest_outfits_path, alert: t("flash.no_outfit_suggestion")) unless suggestion
 
     outfit = create_outfit_from_vision_suggestion(suggestion)
-    redirect_to(outfit, notice: t("amber.outfits.vision_created", default: "Outfit created from wardrobe suggestion"))
+    redirect_to(outfit, notice: t("flash.outfit_created"))
   end
 
   private
+
+  # Argv array, never a shell string: the prompt carries text a model wrote.
+  # The child is killed at the timeout and its output so far is returned.
+  def photograph(master_root, prompt)
+    # brakeman :ignore Execute
+    Open3.popen2e("bundle", "exec", "ruby", "bin/cli", "photograph", prompt, chdir: master_root) do |stdin, output, wait|
+      stdin.close
+      reader = Thread.new { output.read }
+      unless wait.join(MASTER_PHOTOGRAPH_TIMEOUT)
+        Process.kill("TERM", wait.pid)
+        wait.join(5) || Process.kill("KILL", wait.pid)
+      end
+      reader.value.to_s
+    end
+  end
 
   def create_outfit_from_vision_suggestion(suggestion)
     name = suggestion["name"].presence || "Suggested outfit"

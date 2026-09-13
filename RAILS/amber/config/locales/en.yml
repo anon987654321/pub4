@@ -237,6 +237,7 @@ en:
     go_feed: "Style feed"
     retry: "Try again"
   wardrobe:
+    talk_to_master: "Talk to MASTER"
     occasion_map: "Occasion map"
     closet_intelligence: "Closet intelligence"
     items_region: "Wardrobe items"
@@ -333,6 +334,12 @@ en:
     today_in: "Today in %{city}"
     curated_offers: "Curated offers"
   ai:
+    items_reviewed:
+      one: "%{count} item reviewed"
+      other: "%{count} items reviewed"
+    gap_count:
+      one: "%{count} gap"
+      other: "%{count} gaps"
     palette_aria: "Colour swatches from wardrobe"
     why_it_works: "Why it works:"
     occasion: "Occasion"
@@ -397,6 +404,7 @@ en:
     action: "Install"
 
   items:
+    color_named: "Color: %{color}"
     add_header_label: "Add wardrobe item"
     mood_label: "Mood: %{mood}"
     worn_times_short: "Worn %{count}×"
@@ -475,6 +483,7 @@ en:
       one: "%{count} piece"
       other: "%{count} pieces"
   outfits:
+    items_in: "Items in %{name}: %{items}"
     wardrobe_value: "%{amount} wardrobe value"
     add_item: "Add a garment"
     remove_item: "Remove"
@@ -543,6 +552,7 @@ en:
       ended: "ended"
       cancelled: "cancelled"
   creator:
+    caption: "Caption"
     add_showcase: "Add to showcase"
     profile_label: "Creator profile"
     remix_friendly: "Remix-friendly wardrobe"
@@ -591,6 +601,9 @@ en:
     generate_save: "Generate & save first as outfit"
     search_placeholder: "e.g. something warm but not bulky for a meeting"
   creator_profiles:
+    public_label: "Public profile"
+    save: "Save profile"
+    create: "Create profile"
     edit_title: "Edit creator profile"
     new_title: "Create creator profile"
     new_lead: "Share a public wardrobe showcase others can remix when you allow it."
@@ -894,6 +907,9 @@ en:
     recycled: "recycled"
     released: "released"
   flash:
+    no_outfit_suggestion: "No outfit suggestion generated."
+    joy_analysis_heuristic: "Heuristic joy analysis applied."
+    joy_analysis_ai: "AI joy analysis applied."
     comment_not_yours: You can only delete your own comments.
     posted: Posted.
     posted_anonymously: Posted anonymously.

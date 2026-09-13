@@ -1,14 +1,5 @@
 <%= form_with model: profile, url: my_creator_profile_path, method: (profile.persisted? ? :patch : :post) do |form| %>
-  <% if profile.errors.any? %>
-    <%= tag.section role: "alert" do %>
-      <%= tag.h2 t("shared.errors", count: profile.errors.count, default: "Please review the form") %>
-      <%= tag.ul do %>
-        <% profile.errors.full_messages.each do |message| %>
-          <%= tag.li message %>
-        <% end %>
-      <% end %>
-    <% end %>
-  <% end %>
+  <%= render "shared/errors", object: profile %>
 
   <%= tag.fieldset do %>
     <%= form.label :handle %>
@@ -37,9 +28,9 @@
   <% end %>
 
   <%= tag.fieldset do %>
-    <%= form.label :public, "Public profile" %>
+    <%= form.label :public, t("creator_profiles.public_label") %>
     <%= form.check_box :public %>
   <% end %>
 
-  <%= form.submit profile.persisted? ? "Save profile" : "Create profile" %>
+  <%= form.submit profile.persisted? ? t("creator_profiles.save") : t("creator_profiles.create") %>
 <% end %>

@@ -24,13 +24,13 @@
 <% elsif @demo_items&.any? %>
   <div class="sidebar-card">
     <%= tag.h3 t("wardrobe.demo_capsule") %>
-    <p><%= pluralize(@demo_items.size, "piece") %> · <%= pluralize(@demo_outfits&.size.to_i, "outfit") %></p>
-    <p><%= link_to "Browse demo →", demo_wardrobe_path %></p>
+    <p><%= t("items.pieces", count: @demo_items.size) %> · <%= t("outfits.count", count: @demo_outfits&.size.to_i) %></p>
+    <p><%= link_to t("home.browse_demo"), demo_wardrobe_path %></p>
   </div>
 <% end %>
 
 <div class="sidebar-card">
   <%= tag.h3 t("wardrobe.style_notes") %>
   <p><%= t("wardrobe.style_notes_body") %></p>
-  <p><%= link_to "Talk to MASTER", root_path(master: 1) %></p>
+  <p><%= link_to t("wardrobe.talk_to_master"), root_path(master: 1) %></p>
 </div>

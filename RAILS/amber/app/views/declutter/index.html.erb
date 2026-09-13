@@ -97,7 +97,7 @@
         <% @duplicates.each do |group| %>
           <article role="article" aria-label="<%= t("declutter.duplicate_group") %>">
             <% items = group.respond_to?(:items) ? group.items : Array(group[:items] || group["items"] || group) %>
-            <%= tag.h3 pluralize(items.size, "item") %>
+            <%= tag.h3 t("items.pieces", count: items.size) %>
             <div class="items-grid">
               <% items.each do |item| %>
                 <%= render "items/item", item: item %>

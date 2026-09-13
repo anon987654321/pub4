@@ -49,7 +49,7 @@ class WardrobeAi
     return false if ENV["CI"] == "1" || Rails.env.test?
     return false unless ENV["AMBER_ENABLE_MASTER_PHOTO"].to_s == "1"
 
-    File.directory?(Rails.root.join("..", "..", "MASTER"))
+    Operator::DeployPaths.master_root.present?
   end
 
   # Pass client: nil to force offline heuristics (explicit); omit for auto OpenRouter.

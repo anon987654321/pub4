@@ -1,14 +1,5 @@
 <%= form_with model: wardrobe_item do |form| %>
-  <% if wardrobe_item.errors.any? %>
-    <%= tag.section role: "alert" do %>
-      <%= tag.h2 t("shared.errors", count: wardrobe_item.errors.count, default: "Please review the form") %>
-      <%= tag.ul do %>
-        <% wardrobe_item.errors.full_messages.each do |message| %>
-          <%= tag.li message %>
-        <% end %>
-      <% end %>
-    <% end %>
-  <% end %>
+  <%= render "shared/errors", object: wardrobe_item %>
 
   <%= tag.fieldset do %>
     <%= form.label :item_id %>

@@ -22,7 +22,7 @@
       </hgroup>
       <% if @item.spark_joy? %><span class="badge"><%= t("items.sparks_joy") %></span><% end %>
       <% if @item.color.present? %>
-        <span class="color-swatch" style="--swatch: <%= wardrobe_color_swatch(@item.color) %>" title="<%= @item.color %>" aria-label="Color <%= @item.color %>"></span>
+        <span class="color-swatch" style="--swatch: <%= wardrobe_color_swatch(@item.color) %>" title="<%= t("items.color_named", color: @item.color) %>" aria-label="<%= t("items.color_named", color: @item.color) %>"></span>
       <% end %>
     </header>
 

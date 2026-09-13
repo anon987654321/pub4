@@ -40,7 +40,7 @@ class WardrobeItemsController < ApplicationController
 
     if @wardrobe_item.save
       @wardrobe_item.record_activity!("AmberWardrobeItemCreated", source_vertical: "amber")
-      redirect_to wardrobe_items_path, notice: t("amber.wardrobe_item_created", default: "Item added")
+      redirect_to wardrobe_items_path, notice: t("flash.item_added")
     else
       render :new, status: :unprocessable_entity
     end
@@ -53,13 +53,13 @@ class WardrobeItemsController < ApplicationController
     return render :edit, status: :unprocessable_entity unless @wardrobe_item.update(wardrobe_item_params)
 
     @wardrobe_item.record_activity!("AmberWardrobeItemUpdated", source_vertical: "amber")
-    redirect_to wardrobe_items_path, notice: t("amber.wardrobe_item_updated", default: "Item updated")
+    redirect_to wardrobe_items_path, notice: t("flash.updated")
   end
 
   def destroy
     @wardrobe_item.record_activity!("AmberWardrobeItemRemoved", source_vertical: "amber")
     @wardrobe_item.destroy
-    redirect_to wardrobe_items_path, notice: t("amber.wardrobe_item_deleted", default: "Item removed")
+    redirect_to wardrobe_items_path, notice: t("flash.item_removed")
   end
 
   private

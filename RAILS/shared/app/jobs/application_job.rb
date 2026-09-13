@@ -19,11 +19,11 @@ class ApplicationJob < ActiveJob::Base
 
   # Run this job in the caller's process instead of enqueuing it.
   #
-  # Only brgen runs a queue. `rc.d/brgen_jobs` is enabled and its supervisor,
-  # scheduler, worker and dispatcher are up; amber and bsdports have no worker
-  # registered, so `perform_later` in those two still means "never". Password
-  # reset cannot wait on that: the controller says "we sent you an email", no
-  # email is ever sent, and the account is gone. So the jobs marked
+  # Only brgen keeps a worker up (`rc.d/brgen_jobs`). amber and bsdports are
+  # drained for three minutes an hour by OPENBSD's drain-jobs.sh, so
+  # `perform_later` there means "within the hour", and only when the box is
+  # quiet. Password reset cannot wait on that: the controller says "we sent you
+  # an email" and the reader is waiting for it. So the jobs marked
   # `queue_as :critical` run here and now, in every app.
   #
   # Keeping this on brgen too is deliberate. A worker that exists can still be

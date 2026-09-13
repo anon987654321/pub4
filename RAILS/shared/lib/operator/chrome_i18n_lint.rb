@@ -194,7 +194,8 @@ module Operator
       # so marketplace.lsangeles.com announced itself as Markedsplass. The
       # fixed .brgen-logo-mark already names the host on every surface, so both
       # labels went out with the marks rather than being translated.
-      "aria_label" => 5,
+      # → 3: amber's colour swatch and outfit composition labels are keys.
+      "aria_label" => 3,
       # 169 (first run, 2026-08-11: amber 48, brgen engines 48, brgen host 44,
       # shared 28, bsdports 1) → 141. The hand count that opened this debt said 144
       # and was blind to shared/app/controllers, whose sites ship to all three apps

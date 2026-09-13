@@ -1,9 +1,9 @@
-<% content_for :title, t("amber.wardrobe.title", default: "Wardrobe") %>
+<% content_for :title, t("amber.wardrobe.title") %>
 
 <%= tag.section class: "wardrobe-items" do %>
   <%= tag.header do %>
-    <%= tag.h1 t("amber.wardrobe.title", default: "Wardrobe") %>
-    <%= link_to t("amber.wardrobe.add", default: "Add item"), new_wardrobe_item_path %>
+    <%= tag.h1 t("amber.wardrobe.title") %>
+    <%= link_to t("amber.wardrobe.add"), new_wardrobe_item_path %>
   <% end %>
 
   <% if @wardrobe_items.any? %>
@@ -11,18 +11,18 @@
       <%= tag.div class: "wardrobe-grid" do %>
         <% @wardrobe_items.each do |wardrobe_item| %>
           <%= tag.article class: "wardrobe-card" do %>
-            <%= tag.h2 wardrobe_item.item&.title || wardrobe_item.item&.name || t("amber.wardrobe.untitled", default: "Untitled item") %>
+            <%= tag.h2 wardrobe_item.item&.title || wardrobe_item.item&.name || t("amber.wardrobe.untitled") %>
             <%= tag.p wardrobe_item.condition if wardrobe_item.condition.present? %>
             <%= tag.p wardrobe_item.notes if wardrobe_item.notes.present? %>
-            <%= link_to t("shared.view", default: "View"), wardrobe_item_path(wardrobe_item) %>
+            <%= link_to t("shared.view"), wardrobe_item_path(wardrobe_item) %>
           <% end %>
         <% end %>
       <% end %>
     <% end %>
   <% else %>
     <%= render "shared/empty_state",
-          title: t("amber.wardrobe.empty", default: "No wardrobe items yet."),
+          title: t("amber.wardrobe.empty"),
           body: t("amber.wardrobe.empty_body"),
-          action: { label: t("amber.wardrobe.add", default: "Add item"), path: new_wardrobe_item_path } %>
+          action: { label: t("amber.wardrobe.add"), path: new_wardrobe_item_path } %>
   <% end %>
 <% end %>

@@ -19,8 +19,8 @@
 
 <% if @result["items"].present? %>
   <div class="tag-row">
-    <span class="tag"><%= pluralize(@result["items"].size, "item reviewed") %></span>
-    <span class="tag"><%= pluralize(Array(@result["gap_items"]).size, "gap") %></span>
+    <span class="tag"><%= t("ai.items_reviewed", count: @result["items"].size) %></span>
+    <span class="tag"><%= t("ai.gap_count", count: Array(@result["gap_items"]).size) %></span>
   </div>
 
   <div class="capsule-list">
