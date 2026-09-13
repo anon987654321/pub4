@@ -692,3 +692,15 @@ request.
 row and the SCSS, but marketplace carries a cart link and six sections against
 takeaway's four, so one partial would need injected blocks for both halves. Two
 fifty-line files are plainer than one partial with holes.
+
+**The countdown controller stays eagerly registered.** It is mounted only on a
+takeaway order page, but every file importmap pins is preloaded with
+`modulepreload`, so lazy registration would move when the thirty-line module is
+evaluated, not whether it is fetched. Saving that evaluation is not worth a
+second loading path for one controller.
+
+**`update_column` stays where it writes nothing a page caches.** The seven
+calls in brgen set a message's link preview and expiry, an order's gclid and
+conversion stamp, and two seeder backfills. No fragment cache keys on a message
+or an order, and the seeder runs before any cache exists, so the stale-cache
+trap this file names does not apply to them.
