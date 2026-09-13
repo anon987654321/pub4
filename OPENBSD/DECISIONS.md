@@ -551,9 +551,10 @@ dense a screen should be is the operator's call about how it looks.
 ## relayd.conf carries no list of cities still waiting — 2026-09-14
 
 **Status:** accepted. The keypair lines in `etc/relayd.conf` are the live
-cities and nothing else. The six registered cities still waiting on
-delegation are listed once, in `RUNBOOK.md` under "Bringing a city domain up",
-beside the order that brings one live.
+cities and nothing else. The six cities that hold a zone and wait on delegation
+are listed once, in `RUNBOOK.md` under "Bringing a city domain up", beside the
+order that brings one live; whether each is still registered is
+`data/domain_inventory.yml`'s question.
 
 A second list inside relayd.conf would have no reader. `domain_alignment`
 holds `LIVE_DOMAINS` against the keypair lines, `render_dns.rb` derives the
