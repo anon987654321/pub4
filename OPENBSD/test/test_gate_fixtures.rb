@@ -191,3 +191,61 @@ class DeployIdentityFixtureTest < Minitest::Test
     assert status.success?, out
   end
 end
+
+class DeploySmokeFixtureTest < Minitest::Test
+  OPENBSD = File.expand_path("..", __dir__)
+  require File.join(OPENBSD, "deploy_smoke_gate.rb")
+
+  PUBLIC = %w[/up /health].freeze
+
+  def rc_findings(body)
+    failures = []
+    check_master_rc(failures, body, PUBLIC)
+    failures
+  end
+
+  def test_a_warmup_that_needs_a_token_is_refused
+    body = %(curl -fsS "http://127.0.0.1:${PORT}/chat/metrics?token=${TOKEN}"\n)
+    named = rc_findings(body).join(" | ")
+
+    assert_includes named, "carries a credential"
+    assert_includes named, "needs auth since the tier gate"
+    assert_includes named, "no warmup request asks a path AuthTier serves without a token"
+  end
+
+  def test_a_start_block_with_nothing_to_warm_is_refused
+    assert_includes rc_findings("rcctl restart relayd\n"), "rc.d/master: no warmup request to the local port"
+  end
+
+  # The query string is the script's own business, which the old check was not:
+  # it wanted `chat/message?message=ping` spelled exactly.
+  def test_any_credential_free_warmup_through_a_public_path_passes
+    body = %(curl -fsS "http://127.0.0.1:${PORT}/up"\ncurl -fsS "http://127.0.0.1:${PORT}/chat/message?message=hello"\n)
+
+    assert_empty rc_findings(body)
+  end
+
+  def test_the_committed_start_block_passes_against_the_real_middleware
+    failures = []
+    check_master_rc(failures)
+
+    assert_empty failures
+    refute_empty auth_tier_public_paths, "AuthTier's public paths read as empty, so every warmup would fail"
+  end
+
+  def test_a_relayd_host_route_that_is_missing_is_named
+    relayd = File.read(RELAYD)
+    port = YAML.safe_load_file(APPS_YML).dig("apps", "brgen", "port")
+    failures = []
+    assert_forward(relayd.sub(/^\s*match request header "Host" value "brgen\.no" forward to <brgen>.*$/, ""),
+                   failures, "brgen", port, "brgen.no")
+
+    assert_equal ["relayd: missing Host route for brgen.no in brgen"], failures
+  end
+
+  def test_the_committed_tree_passes
+    out, status = Open3.capture2e(RbConfig.ruby, File.join(OPENBSD, "deploy_smoke_gate.rb"))
+
+    assert status.success?, out
+  end
+end

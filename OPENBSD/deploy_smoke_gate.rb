@@ -65,13 +65,43 @@ def check_httpd(failures)
   end
 end
 
-def check_master_rc(failures)
-  master_rc = File.join(ROOT, "OPENBSD", "etc", "rc.d", "master")
-  return unless File.file?(master_rc)
+MASTER_RC = File.join(ROOT, "OPENBSD", "etc", "rc.d", "master")
+AUTH_TIER = File.join(ROOT, "MASTER", "web", "app", "middleware", "auth_tier.rb")
 
-  rc_text = File.read(master_rc)
-  failures << "rc.d/master: container warmup must use smoke ping" unless rc_text.include?("chat/message?message=ping")
-  failures << "rc.d/master: container warmup must not require authed metrics" if rc_text.include?('chat/metrics"') && rc_text.include?('"model"')
+# Every path rc.d/master's post-start block asks the local Falcon for, with the
+# line that asks.
+def warmup_requests(rc_text)
+  rc_text.each_line.filter_map do |line|
+    path = line[%r{http://127\.0\.0\.1:\$\{?PORT\}?(/[^"'\s]*)}, 1]
+    [path, line] if path && line.include?("curl")
+  end
+end
+
+# The paths AuthTier serves before it looks for a token, read from the
+# middleware so this list cannot drift from the one that decides.
+def auth_tier_public_paths
+  return [] unless File.file?(AUTH_TIER)
+
+  File.read(AUTH_TIER)[/PUBLIC_PATHS\s*=\s*%w\[([^\]]+)\]/, 1].to_s.split
+end
+
+# The warmup has to be answerable by a process holding no token. It once waited
+# 240s on metrics the tier gate had put behind one, and the restart logged "not
+# ready" for a service that was fine. So: something to warm, at least one path
+# AuthTier serves without asking, no credential on any request, and nothing under
+# /chat/metrics. Which query string it sends is its own business.
+def check_master_rc(failures, rc_text = (File.read(MASTER_RC) if File.file?(MASTER_RC)), public_paths = auth_tier_public_paths)
+  return unless rc_text
+
+  requests = warmup_requests(rc_text)
+  failures << "rc.d/master: no warmup request to the local port" if requests.empty?
+  unless requests.any? { |path, _| public_paths.include?(path.split("?").first) }
+    failures << "rc.d/master: no warmup request asks a path AuthTier serves without a token (#{public_paths.join(' ')})"
+  end
+  requests.each do |path, line|
+    failures << "rc.d/master: warmup #{path} carries a credential" if line.match?(/token=|Authorization:|X-Token/i)
+    failures << "rc.d/master: warmup #{path} needs auth since the tier gate" if path.start_with?("/chat/metrics")
+  end
 end
 
 def check_apps_production(failures)
@@ -160,6 +190,10 @@ def check_system_configs(failures)
     failures << "MASTER/runtime: actioncable_fallback enhancement missing" unless enhancements.include?("actioncable_fallback")
   end
 end
+
+# Definitions above, the run below, so test/test_gate_fixtures.rb can hand each
+# check the shape it must flag.
+return unless $PROGRAM_NAME == __FILE__
 
 failures = []
 check_relayd(failures)
