@@ -1014,6 +1014,18 @@ misses and missing first-letter slips and short commands the matrix catches. Tha
 is a trade, not a fold. `lexical_rules.rb` keeps its fifteen RuboCop-shaped rules:
 each id is a name the law addresses, so delegating to RuboCop renames the law.
 
+Three ruby_llm features stay unused. `Model::Info#function_calling?` and
+`#supports_vision?` cannot replace `TOOL_CAPABLE_RE` and `VISION_RE`: the registry
+carries none of the `:free` ids MASTER routes to most, and `ruby_llm_patch.rb`
+answers an unknown id with a capability-less stand-in, so every free model would
+read as unable to call tools. `with_schema` cannot retire the `/\{.*\}/m`
+extractors in `consensus.rb`, `swarm/worker.rb`, `core/model.rb` and
+`stages/enhance.rb`, because free models ignore `response_format` often enough
+that the extractor is the path that works. `lib/review/embeddings.rb` keeps its
+Net::HTTP for the reason `OllamaSender` gives: a local daemon has no price or
+capability row, the gem's Ollama provider speaks the OpenAI-compatible `/v1`
+surface rather than `/api/embeddings`, and the client is two small methods.
+
 The ruby_llm satellite gems are not adopted. `ruby_llm-schema` is deprecated in
 favour of passing a Hash. `-resilience`, `-top_secret`, `-agents`, `-team` and
 `-template` are thinner than what MASTER owns; its circuit breaker is

@@ -43,6 +43,33 @@ module Master::Io
       },
     }.freeze
 
+    # Whether the refreshed catalog prices this id at zero both ways, read from the
+    # provider's own row. The normalised price columns cannot answer it: a missing
+    # price is stored as 0.0 as well. Opened read-only, and false with no catalog,
+    # because a cost path must never create the database. Memoised per process.
+    def self.verified_free?(id, source: "openrouter", db_path: DEFAULT_DB)
+      @verified_free ||= {}
+      @verified_free.fetch([db_path, source, id.to_s]) do |key|
+        @verified_free[key] = read_verified_free(id.to_s, source, db_path)
+      end
+    end
+
+    def self.read_verified_free(id, source, db_path)
+      return false unless File.file?(db_path)
+
+      database = SQLite3::Database.new(db_path, readonly: true)
+      raw = database.get_first_value("SELECT raw_json FROM provider_models WHERE source = ? AND id = ?", [source, id])
+      pricing = raw && JSON.parse(raw)["pricing"]
+      return false unless pricing.is_a?(Hash) && pricing.key?("prompt") && pricing.key?("completion")
+
+      pricing["prompt"].to_s.strip.match?(/\A0+(\.0+)?\z/) && pricing["completion"].to_s.strip.match?(/\A0+(\.0+)?\z/)
+    rescue SQLite3::Exception, JSON::ParserError
+      false
+    ensure
+      database&.close
+    end
+    private_class_method :read_verified_free
+
     def initialize(db_path: DEFAULT_DB)
       @db_path = db_path
       FileUtils.mkdir_p(File.dirname(db_path))

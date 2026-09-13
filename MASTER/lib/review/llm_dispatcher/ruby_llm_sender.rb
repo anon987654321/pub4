@@ -8,6 +8,8 @@ module Master
   module Review
     class LLMDispatcher
       module RubyLLMSender
+        ToolRoundLimit = Class.new(StandardError)
+
         private
 
         def send_ruby_llm(selected_model, messages, sys:, stream:, image: nil, temperature: nil, &blk)
@@ -23,13 +25,18 @@ module Master
                     end
             record_usage(reply, selected_model)
             Result.ok(extract_response(reply, selected_model))
+          rescue ToolRoundLimit => e
+            Result.err("#{selected_model}: #{e.message}", category: :llm_call_failure)
           ensure
             cleanup_temp_file(temp_file)
           end
         end
 
         def build_chat_session(selected_model, messages, sys:, image:, temperature: nil)
-          chat_session = RubyLLM.chat(model: selected_model)
+          # A context copies the configuration, so the key this call sends is the key
+          # it started with. KeyRotator swaps the global key under rule groups that
+          # run in threads, and a shared config handed that swap to calls in flight.
+          chat_session = RubyLLM.context.chat(model: selected_model)
           final_sys = build_final_system(selected_model, sys)
           chat_session.with_instructions(final_sys) if final_sys
           chat_session.with_temperature(temperature) if temperature && chat_session.respond_to?(:with_temperature)
@@ -39,8 +46,24 @@ module Master
           end
 
           available_tools = llm_tools(selected_model)
-          chat_session.with_tools(*available_tools) unless available_tools.empty?
+          unless available_tools.empty?
+            chat_session.with_tools(*available_tools)
+            cap_tool_rounds(chat_session)
+          end
           chat_session
+        end
+
+        # The gem answers every tool call by asking again, with no limit; its
+        # `calls:` option chooses one call or several per turn, not how many turns.
+        # REACT_MAX_STEPS already bounds the emulated loop, so it bounds this one.
+        def cap_tool_rounds(chat_session)
+          rounds = 0
+          chat_session.on_end_message do |message|
+            next unless message.respond_to?(:tool_call?) && message.tool_call?
+
+            rounds += 1
+            raise ToolRoundLimit, "tool calling passed #{REACT_MAX_STEPS} rounds" if rounds > REACT_MAX_STEPS
+          end
         end
 
         def build_ask_arg(last_text, image)
@@ -106,12 +129,22 @@ end)
         #
         # A model the registry does not know keeps the flat rate. Pricing an
         # unknown model at zero would let it run until something else stopped it.
+        # The registry carries no `:free` ids, so those are zero only where the
+        # provider catalog's own row says zero — never on the suffix alone.
         def price_per_token(model, direction)
           info = Master::Review::LLMDispatcher.model_info(model)
           per_million = info && (direction == :output ? info.output_price_per_million : info.input_price_per_million)
+          return 0.0 if !per_million&.positive? && catalog_free?(model)
           return COST_PER_TOKEN unless per_million&.positive?
 
           per_million.to_f / 1_000_000
+        end
+
+        def catalog_free?(model)
+          return false unless model.to_s.end_with?(":free")
+
+          require_relative "../../io/catalog_index"
+          Master::Io::CatalogIndex.verified_free?(model)
         end
 
         def record_estimated_usage(reply, model)

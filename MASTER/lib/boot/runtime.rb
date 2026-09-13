@@ -20,7 +20,13 @@ module Master
       require_relative "../io/bedrock_stub"
       require "ruby_llm"
       require_relative "../io/ruby_llm_patch"
-      RubyLLM.configure { |config| apply_api_keys(config) }
+      RubyLLM.configure do |config|
+        apply_api_keys(config)
+        # models.yml failover.max_retries is the one retry count, spent by
+        # FallbackChain. The gem's default three retries would repeat every one of
+        # those attempts inside a circuit-breaker call that counts one.
+        config.max_retries = 0
+      end
       Io::KeyRotator.configure_current!
       [Io::ModelQuota, Trace::CacheEfficiency].each(&:name)
       Trace::CacheEfficiency.load!

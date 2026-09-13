@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "tmpdir"
 
 class TestLLMDispatcher < Minitest::Test
   class FakeBus
@@ -235,6 +236,81 @@ end
     assert_equal 15, dispatcher.send(:agy_cli_timeout_s)
   ensure
     old.nil? ? ENV.delete("MASTER_AGY_CLI_TIMEOUT") : ENV["MASTER_AGY_CLI_TIMEOUT"] = old
+  end
+
+  # The gem answers each tool call by asking again with no limit of its own.
+  class FakeChat
+    def on_end_message(&block) = @on_end = block
+    def end_message(message) = @on_end.call(message)
+  end
+
+  ToolCallMessage = Struct.new(:tool_call?)
+
+  def test_native_tool_calling_stops_after_react_max_steps_rounds
+    dispatcher, = build_dispatcher
+    chat = FakeChat.new
+    dispatcher.send(:cap_tool_rounds, chat)
+    limit = Master::Review::LLMDispatcher::REACT_MAX_STEPS
+
+    limit.times { chat.end_message(ToolCallMessage.new(true)) }
+    chat.end_message(ToolCallMessage.new(false))
+    assert_raises(Master::Review::LLMDispatcher::RubyLLMSender::ToolRoundLimit) do
+      chat.end_message(ToolCallMessage.new(true))
+    end
+  end
+
+  # A :free id is absent from the registry, so it is zero only where the
+  # provider catalog row itself says zero both ways.
+  def test_a_free_model_costs_nothing_only_when_the_catalog_says_so
+    dispatcher, = build_dispatcher
+    flat = Master::Review::LLMDispatcher::COST_PER_TOKEN
+    require "io/catalog_index"
+
+    Master::Io::CatalogIndex.stub(:verified_free?, true) do
+      assert_equal 0.0, dispatcher.send(:price_per_token, "vendor/unlisted-model:free", :output)
+      assert_equal flat, dispatcher.send(:price_per_token, "vendor/unlisted-model", :output), "zero off the suffix alone"
+    end
+    Master::Io::CatalogIndex.stub(:verified_free?, false) do
+      assert_equal flat, dispatcher.send(:price_per_token, "vendor/unlisted-model:free", :output)
+    end
+  end
+
+  def test_the_catalog_verifies_zero_from_the_providers_row_not_the_price_column
+    require "io/catalog_index"
+    Dir.mktmpdir do |dir|
+      db = File.join(dir, "catalog.sqlite3")
+      rows = [
+        { id: "a/zero:free", price_prompt: 0.0, price_completion: 0.0, raw: { "pricing" => { "prompt" => "0", "completion" => "0" } } },
+        { id: "b/unpriced:free", price_prompt: 0.0, price_completion: 0.0, raw: { "id" => "b/unpriced:free" } },
+        { id: "c/paid:free", price_prompt: 0.000001, price_completion: 0.0, raw: { "pricing" => { "prompt" => "0.000001", "completion" => "0" } } },
+      ]
+      Master::Io::CatalogIndex.new(db_path: db).send(:replace_models, "openrouter", rows)
+
+      assert Master::Io::CatalogIndex.verified_free?("a/zero:free", db_path: db)
+      refute Master::Io::CatalogIndex.verified_free?("b/unpriced:free", db_path: db), "a missing price read as free"
+      refute Master::Io::CatalogIndex.verified_free?("c/paid:free", db_path: db)
+      refute Master::Io::CatalogIndex.verified_free?("a/zero:free", db_path: File.join(dir, "absent.sqlite3"))
+      refute File.exist?(File.join(dir, "absent.sqlite3")), "a cost lookup created the catalog"
+    end
+  end
+
+  # KeyRotator swaps the global key while rule groups run in threads; a chat
+  # built before the swap keeps sending the key it started with.
+  def test_a_chat_keeps_its_key_when_the_global_key_rotates
+    dispatcher, = build_dispatcher
+    saved = RubyLLM.config.openrouter_api_key
+    openrouter_model = RubyLLM.models.all.find { |model| model.provider == "openrouter" }.id
+    RubyLLM.config.openrouter_api_key = "key-before"
+    chat = dispatcher.stub(:llm_tools, []) do
+      dispatcher.stub(:build_final_system, nil) do
+        dispatcher.send(:build_chat_session, openrouter_model,[{ role: "user", content: "hi" }], sys: nil, image: nil)
+      end
+    end
+    RubyLLM.config.openrouter_api_key = "key-after"
+
+    assert_equal "key-before", chat.instance_variable_get(:@config).openrouter_api_key
+  ensure
+    RubyLLM.config.openrouter_api_key = saved
   end
 
   private

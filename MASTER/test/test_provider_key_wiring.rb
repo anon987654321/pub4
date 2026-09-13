@@ -67,4 +67,13 @@ class TestProviderKeyWiring < Minitest::Test
   ensure
     ENV.delete("MASTER_TEST_UNKNOWN_KEY")
   end
+
+  # FallbackChain retries failover.max_retries times per model; a gem retrying
+  # underneath it multiplies every attempt and the breaker sees one.
+  def test_the_gem_does_not_retry_underneath_the_fallback_chain
+    RubyLLM.config.max_retries = 3
+    Master.configure_providers!
+
+    assert_equal 0, RubyLLM.config.max_retries
+  end
 end

@@ -1011,22 +1011,6 @@ Wishes and measured proposals not yet shipped; each section is dated.
   `reversibility` and `blast_radius`, `semantic_rules.rb` and `meta_rules.rb` fill
   them, and nothing under `lib/fix` reads either.
 
-## From the gem and ruby_llm audit — 2026-09-11
-
-- **ruby_llm 1.13.2 already provides what MASTER hand-rolls.** `request_timeout`
-  and `max_retries` are unset in `lib/boot/runtime.rb`, so the gem retries inside
-  each circuit-breaker call; native tool calling is uncapped where
-  `REACT_MAX_STEPS` caps only the emulated path; `Model::Info` answers what
-  `TOOL_CAPABLE_RE` and `VISION_RE` guess; `with_schema` would replace six regex
-  extractors; `lib/review/embeddings.rb` is Net::HTTP beside `RubyLLM.embed`.
-  The `~> 1.3` pin moves last, on the box.
-- **`KeyRotator.configure_current!` mutates process-wide `RubyLLM.configure`**
-  while the fix loop runs rule groups in threads; `RubyLLM.context` isolates a
-  call.
-- **A `:free` OpenRouter model is charged $15 per million**, because the registry
-  lacks `:free` ids. The provider catalog carries per-id prices; zero only when it
-  says so.
-
 ## The refinement inventory — opened 2026-09-11
 
 `ruby MASTER/tools/refinements.rb` scans every tracked file in the four trees
