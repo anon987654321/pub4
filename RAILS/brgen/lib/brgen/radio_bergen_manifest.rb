@@ -41,9 +41,9 @@ module Brgen
       def sonic_learnings_candidates
         [
           rails_root.join("config/radio_bergen/sonic.yml"),
-          rails_root.join("../../../STUDIO/dilla/reference_sonic.yml").expand_path,
-          Operator::DeployPaths.repo_join("STUDIO/dilla/reference_sonic.yml"),
-          Pathname.new("#{Operator::DeployPaths::DEFAULT_REPO}/STUDIO/dilla/reference_sonic.yml")
+          rails_root.join("../../../STUDIO/dilla/data/reference_sonic.yml").expand_path,
+          Operator::DeployPaths.repo_join("STUDIO/dilla/data/reference_sonic.yml"),
+          Pathname.new("#{Operator::DeployPaths::DEFAULT_REPO}/STUDIO/dilla/data/reference_sonic.yml")
         ]
       end
 
@@ -123,7 +123,7 @@ module Brgen
           # 41b20306d; the manifest moved into this app and the learnings into
           # the dilla engine.
           "manifest: RAILS/brgen/config/radio_bergen/tracks.yml",
-          "learnings: STUDIO/dilla/reference_sonic.yml (ruby scripts/radio_bergen_study.rb)",
+          "learnings: STUDIO/dilla/data/reference_sonic.yml (ruby radio_bergen_study.rb)",
           "lesson: do_not_restore monolithic index.html — manifest + Rails vertical instead",
           "excavated: #{local_count} local_mp3 metadata rows · #{youtube_count} youtube references",
           "policy: #{manifest.dig('external_reference', 'policy') || 'reference_only_until_rights_review'}",

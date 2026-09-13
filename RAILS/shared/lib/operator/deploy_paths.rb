@@ -52,9 +52,9 @@ module Operator
     # was removed; same three-candidate shape as its neighbours above.
     def radio_bergen_study_candidates
       [
-        repo_join("STUDIO/dilla/scripts/radio_bergen_study.rb"),
-        Pathname.new("#{DEFAULT_REPO}/STUDIO/dilla/scripts/radio_bergen_study.rb"),
-        rails_root.join("../../STUDIO/dilla/scripts/radio_bergen_study.rb"),
+        repo_join("STUDIO/dilla/radio_bergen_study.rb"),
+        Pathname.new("#{DEFAULT_REPO}/STUDIO/dilla/radio_bergen_study.rb"),
+        rails_root.join("../../STUDIO/dilla/radio_bergen_study.rb"),
       ]
     end
 
