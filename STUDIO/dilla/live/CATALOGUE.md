@@ -9,9 +9,9 @@ catalogue, and this is the list of what would make it one.
 
 One fact shapes most of what follows. `dilla.rb` already carries the sound
 design: devices (`COPY_MACHINE`, `HOCKET`, `VOICE_STACK`, `LPG`, `BUS_PATCH`,
-`WAV_MAP`, `MIDI_BAG`), section maps, four mix buses, a modulation matrix, 401
-chord progressions, 74 track presets, and forty-two support modules under
-`lib/`. The three sets reach for about six of its knobs and re-synthesise from
+`WAV_MAP`, `MIDI_BAG`), section maps, four mix buses, a modulation matrix,
+hundreds of chord progressions, dozens of track presets, and the support
+modules under `lib/`. The three sets reach for about six of its knobs and re-synthesise from
 scratch what the engine would have handed them. So a large share of this list is
 not *build* — it is *connect*, which is this repo's dominant defect written down
 in `MEMORY` as inert config and dead wiring.

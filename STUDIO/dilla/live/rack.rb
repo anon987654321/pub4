@@ -21,9 +21,14 @@ require "shellwords"
 
 module Rack
   D = File.expand_path("..", __dir__)
-  FF = "/opt/homebrew/bin/ffmpeg"
-  FFPLAY = "/opt/homebrew/bin/ffplay"
-  FFPROBE = "/opt/homebrew/bin/ffprobe"
+  # Homebrew's build where it is installed, whatever PATH resolves otherwise.
+  def self.tool(name)
+    brew = "/opt/homebrew/bin/#{name}"
+    File.executable?(brew) ? brew : name
+  end
+  FF = tool("ffmpeg")
+  FFPLAY = tool("ffplay")
+  FFPROBE = tool("ffprobe")
   JOURNAL = File.join(D, "project", "liveset.jsonl")
   WORTH = File.join(D, "project", "sample_worth.json")
 

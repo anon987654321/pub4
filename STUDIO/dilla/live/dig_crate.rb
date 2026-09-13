@@ -30,7 +30,7 @@
 require "yaml"
 
 D = File.expand_path("..", __dir__)
-YTDLP = "/opt/homebrew/bin/yt-dlp"
+YTDLP = ENV.fetch("YTDLP") { File.executable?("/opt/homebrew/bin/yt-dlp") ? "/opt/homebrew/bin/yt-dlp" : "yt-dlp" }
 # Eight minutes. A thirty-eight-minute ambient set is 417MB of source and hours
 # of demucs for a loop nobody will chop; the crate is songs, not sets.
 MAX_SECONDS = 480

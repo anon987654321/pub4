@@ -1,10 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
-# frozen_string_literal: true
 
-# Postpro.rb - Professional Cinematic Post-Processing
-# Version: 20.0.0 - Photo quality research: adaptive contrast, filmic shoulder/toe,
-#   clarity (local contrast), edge-aware NR, selective sharpening; quality_uplift preset
+# postpro: film emulation and photo grading over libvips. `--help` lists the
+# flags; `--capabilities` says what this build can do.
 
 require "logger"
 require "json"
@@ -340,6 +338,30 @@ BOOTSTRAP = PostproBootstrap.run
 # prompt. postpro is libvips and every input glob is jpg/jpeg/png/webp, so this
 # is the half of "the house filter on all our photos and videos" that did not
 # exist.
+POSTPRO_USAGE = <<~TXT
+  usage: postpro.rb [flags]           with no flags, asks what to grade
+
+    --input FILE --output FILE --preset NAME   grade one image
+    --reference FILE                  add a quality report against a reference
+    --compare                         side-by-side after a one-shot grade
+    --random [--count N] [--rough]    three to five chains, into Downloads
+    --watch [DIR] [--preset NAME]     grade every new photo that lands in DIR
+    --auto                            grade the default globs without prompting
+    --from-repligen                   grade what repligen just wrote
+    --rescue FILE [--output FILE]     diagnose a photograph, then apply the fix
+    --measure FILE [--against AFTER]  read texture numbers, or how a grade moved them
+    --vocab-check                     are the tables consistent?
+    --capabilities                    what this build can do
+    --list-presets | --list-stocks | --list-lenses
+    --describe-preset NAME | --css-filter NAME | --fit-grain SCAN
+    --export-lut NAME [--output FILE] [--size N]
+    CONFIG is the built-in tables unless POSTPRO_CONFIG or master.json beside this file names more.
+TXT
+if (ARGV & %w[-h --help]).any?
+  puts POSTPRO_USAGE
+  exit 0
+end
+
 # What is wrong with this photograph, and which half a grade can reach.
 #
 # --rescue FILE diagnoses and stops. Add --output FILE and it applies the
@@ -4292,7 +4314,7 @@ def vocab_check
       out = preset(probe, name)
       problems << "preset #{name} returned nothing for an 8x8 probe" unless out
     end
-  rescue StandardError, NoMethodError => e
+  rescue StandardError => e
     problems << "preset chain raises on an 8x8 probe: #{e.class}: #{e.message}"
   end
 

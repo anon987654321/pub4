@@ -14,6 +14,22 @@ class TestRepligenPrompt < Minitest::Test
   SCHNELL = "black-forest-labs/flux-schnell"
   KONTEXT = "black-forest-labs/flux-kontext-pro"
 
+  # The house grade is a graded-look default, so a change to it has to be a
+  # deliberate edit that fails here first.
+  def test_every_generation_is_graded_portrait_unless_the_shell_says_otherwise
+    skip "REPLIGEN_POSTPRO is set in this shell" if ENV.key?("REPLIGEN_POSTPRO")
+
+    assert_equal "portrait", HOUSE_POSTPRO
+  end
+
+  def test_a_prompt_past_the_word_ceiling_warns_and_one_inside_it_does_not
+    _, quiet = capture_io { send(:warn_prompt_length, (["word"] * PROMPT_WORD_CEILING).join(" "), SCHNELL) }
+    _, loud = capture_io { send(:warn_prompt_length, (["word"] * (PROMPT_WORD_CEILING + 1)).join(" "), SCHNELL) }
+
+    assert_empty quiet
+    assert_match(/#{PROMPT_WORD_CEILING + 1} words/, loud)
+  end
+
   # --- capabilities -------------------------------------------------------
 
   def test_an_unknown_model_gets_the_conservative_default

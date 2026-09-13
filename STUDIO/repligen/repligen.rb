@@ -881,7 +881,15 @@ cache = File.expand_path(ENV.fetch("REPLIGEN_CATALOG", "~/.cache/repligen/models
 blob_cache_dir = File.expand_path(ENV.fetch("REPLIGEN_BLOB_CACHE", "~/.cache/repligen/blobs"))
 options = { model: ENV.fetch("REPLIGEN_MODEL", "black-forest-labs/flux-2-pro"), aspect_ratio: nil, limit: 100, dry_run: false, batch: 1 }
 parser = OptionParser.new do |p|
-  p.banner = "Usage: repligen.rb generate|search|sync|stats|capabilities|vocab-check [options]"
+  p.banner = <<~TXT.chomp
+    Usage: repligen.rb generate|search|sync|stats|capabilities|vocab-check|chains|chain NAME|help [options]
+
+    generate without --output prints the result URLs and writes nothing.
+    The token is REPLICATE_API_TOKEN, then REPLICATE_API_KEY, then api_token in
+    ~/.config/repligen/config.json. vocab-check, chains and --dry-run need none.
+    chain NAME --until STAGE stops after that stage; a chain does not resume.
+    Live schemas: cd STUDIO && rake repligen:schema_audit (skipped without a token).
+  TXT
   p.on("--prompt TEXT") { |v| options[:prompt] = v }
   p.on("--model MODEL") { |v| options[:model] = v; options[:model_explicit] = true }
   p.on("--aspect-ratio RATIO") { |v| options[:aspect_ratio] = v }
@@ -982,7 +990,7 @@ when "chain"
 
   # The loop itself lives in Chain.run, which takes this block. It is injected
   # so the carry-forward can be tested without spending anything — see
-  # test/tools/test_chain.rb, which hands in a recorder and asserts that stage
+  # STUDIO/test/test_tools_chain.rb, which hands in a recorder and asserts that stage
   # N+1 is given stage N's file. That is the one thing a chain must get
   # right and the one thing that fails silently: a model handed no image
   # generates from the prompt and returns something plausible.
@@ -1031,6 +1039,10 @@ when "vocab-check"
   vocab_check
 when "generate"
   abort parser.to_s if options[:prompt].to_s.strip.empty?
+  if !options[:dry_run] && Master::Io::ReplicateClient.load_token.to_s.strip.empty?
+    abort "repligen: generate needs a token (REPLICATE_API_TOKEN, REPLICATE_API_KEY, or api_token in " \
+          "~/.config/repligen/config.json); --dry-run compiles the prompt without one"
+  end
   abort "warn: --preview and --final ask for different models" if options[:preview] && options[:final]
 
   options[:model] = PREVIEW_MODEL if options[:preview] && !ENV.key?("REPLIGEN_MODEL") && !options[:model_explicit]

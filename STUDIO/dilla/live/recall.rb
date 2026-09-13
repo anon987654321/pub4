@@ -60,7 +60,13 @@ def show(rows)
   puts "  live/recall.rb <seed> --keep   render it beside dilla.rb"
 end
 
+if (ARGV & %w[-h --help]).any?
+  puts File.read(__FILE__).lines.grep(/\A#   live/).map { |l| l.sub(/\A# /, "") }
+  exit 0
+end
 keep = ARGV.delete("--keep")
+unknown = ARGV.select { |a| a.start_with?("-") }
+abort("recall: unknown flag #{unknown.join(" ")} -- see live/recall.rb --help") if unknown.any?
 seed = ARGV.shift
 
 rows = passes
@@ -90,7 +96,7 @@ if keep
   # The journal line is the sidecar. It already holds every decision the pass
   # made, so writing a second description of it would be a second source.
   File.write(File.join(dir, "take.json"), JSON.pretty_generate(row))
-  warn "keeping #{label} -> #{dir}"
+  warn "keeping #{label} -> #{dir} (the wav is gitignored; take.json is the tracked record)"
 else
   warn "replaying #{label}"
 end
