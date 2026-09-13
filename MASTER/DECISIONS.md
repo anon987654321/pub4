@@ -1358,3 +1358,52 @@ the hash it stopped being, so its kernel set was always empty, and
 `bin/operator lint --staged --changed-lines` answers the same question. The
 same pass found `bin/master` already execs `bin/cli`, so there is one REPL with
 two doors rather than two REPLs.
+
+## Conduct Principles Keep Empty rule_ids (2026-09-13)
+
+`data/principle_map.yml` has about 170 rows marked `gap`, and most are conduct:
+how to work, not a shape a line of code can have. law/ carries those as the
+`conduct` kind precisely because no detector can exist for them. Filling their
+`rule_ids` by matching names against `Law.define` would point each row at a
+neighbour that happens to share a word, which is the false coverage the file's
+own comments forbid. A gap closes when a real detector for that principle
+exists, as FEATURE_ENVY, PRIMITIVE_OBSESSION and FILE_SPRAWL did. `secrets_rotation`
+stays empty because nothing in the tree expires a key: `Io::KeyRotator` spreads
+load across live keys, and a detector for unexpiring keys in `/etc/*.env` would
+have to run on vm23.
+
+## Small Refusals From The Backlog (2026-09-13)
+
+Face tests keep three homes because they need three runtimes: `web/test/` boots
+Rails, `test/test_web_*.rb` runs in MASTER's bundle, and `web/test/*.mjs` runs
+under node. `web/test/locale_contract_test.rb` and RAILS' copy stay apart; a
+helper shared across two apps with two bundles couples their deploys.
+
+The face's split sources (`face_vision_a.js` to `d.js`, `face.part*.txt`) stay in
+`public/`. The bundle tasks and `face_runtime_matches_its_sources` read them
+there, and serving a source file costs nothing a visitor does not already get
+from the bundle.
+
+`window.MASTER` is assigned in four files, each as `window.MASTER || {}`, so load
+order cannot erase a namespace; `master_namespace.js` is the one that builds it.
+`attention_model.js` keeps its name, because a rename moves the manifest, the
+generated runtime and every loader to change a word.
+
+`style_src :unsafe_inline` stays: the FOUC guard is inline by design, and a
+nonce would move the colours the operator owns. `/chat/tts/phrases` stays
+public, because the phrases are the face's idle lines and visitors hear them.
+`Fiber[:master_visitor]` cannot leak from a CLI session into a web request:
+fiber storage is copied into a fiber at creation, and every Falcon request runs
+in its own fiber.
+
+Three logs are three jobs: `web:log` events, `Trace::Log`'s event file, and
+Swallow's record of caught errors. `Trace::Metrics#summary` reports counts,
+and a zero there is a count. `spec/dogfood_spec.rb` is what `rake dogfood`
+runs; `bin/dogfood` drives the CLI end to end, so they are not duplicates.
+`data/recovery/plugin_schema_v1.json` stays JSON: it is a JSON Schema
+document, and the format is the standard. `BootReceipt` describes a full build because `bin/doctor`, its reader,
+always does one. The ratchet files under `data/` each have a reader in `tools/`
+or the Rakefile. Extensionless `bin/` scripts stay outside `SCAN_GLOB` because
+`data/scan_coverage.yml` exempts entry points from SelfCheck on purpose.
+`DupCensus` and `DesignBaseline` count the tracked tree through git, and
+`test_ratchets` already fails when either counter moves.
