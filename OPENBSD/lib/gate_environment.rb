@@ -18,18 +18,21 @@ module Deploy
     # gate rather than a file so the two cannot drift. It used to point at
     # per-gate scripts at the RAILS root; those were shims over the same classes
     # the runner already loads in-process.
+    #
+    # `needs` names only what skip_reason consults: :vps, :bundle and :browser.
+    # Every gate here needs the repo, so saying so decided nothing.
     INTEGRITY_GATES = [
-      Gate.new(name: "deploy_identity", path: "OPENBSD/verify_deploy_identity.rb", needs: %i[repo]),
-      Gate.new(name: "production", path: RAILS_GATES, args: %w[production], needs: %i[repo]),
-      Gate.new(name: "phantom_fk", path: RAILS_GATES, args: %w[phantom_foreign_keys], needs: %i[repo]),
-      Gate.new(name: "frontend", path: RAILS_GATES, args: %w[frontend_production], needs: %i[repo]),
-      Gate.new(name: "relayd_smoke", path: "OPENBSD/deploy_smoke_gate.rb", needs: %i[repo]),
-      Gate.new(name: "domain_align", path: RAILS_GATES, args: %w[domain_alignment], needs: %i[repo]),
-      Gate.new(name: "crawl_inventory", path: "RAILS/tools/crawl_probe.rb", needs: %i[repo]),
-      Gate.new(name: "schema_migration", path: RAILS_GATES, args: %w[schema_migration], needs: %i[repo]),
-      Gate.new(name: "asset_freshness", path: RAILS_GATES, args: %w[generated_asset], needs: %i[repo]),
-      Gate.new(name: "human_walkthrough", path: RAILS_GATES, args: %w[human_walkthrough], needs: %i[repo]),
-      Gate.new(name: "vps_health", path: "OPENBSD/health_check.rb", args: ["--core"], needs: %i[vps live_http], optional: false),
+      Gate.new(name: "deploy_identity", path: "OPENBSD/verify_deploy_identity.rb"),
+      Gate.new(name: "production", path: RAILS_GATES, args: %w[production]),
+      Gate.new(name: "phantom_fk", path: RAILS_GATES, args: %w[phantom_foreign_keys]),
+      Gate.new(name: "frontend", path: RAILS_GATES, args: %w[frontend_production]),
+      Gate.new(name: "relayd_smoke", path: "OPENBSD/deploy_smoke_gate.rb"),
+      Gate.new(name: "domain_align", path: RAILS_GATES, args: %w[domain_alignment]),
+      Gate.new(name: "crawl_inventory", path: "RAILS/tools/crawl_probe.rb"),
+      Gate.new(name: "schema_migration", path: RAILS_GATES, args: %w[schema_migration]),
+      Gate.new(name: "asset_freshness", path: RAILS_GATES, args: %w[generated_asset]),
+      Gate.new(name: "human_walkthrough", path: RAILS_GATES, args: %w[human_walkthrough]),
+      Gate.new(name: "vps_health", path: "OPENBSD/health_check.rb", args: ["--core"], needs: %i[vps]),
     ].freeze
 
     module_function
@@ -54,7 +57,7 @@ module Deploy
 
       <<~WARN
         integrity: note — source updated in /home/dev/pub4; deployed /home/<app>/app trees are unchanged.
-        integrity: note — run: zsh OPENBSD/vps_ci.sh <app>  (serial, one app at a time)
+        integrity: note — run: zsh OPENBSD/bin/vps-deploy <app>  (serial, one app at a time)
         integrity: note — then: ruby34 OPENBSD/integrity_gate.rb
       WARN
     end

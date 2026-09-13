@@ -3,6 +3,18 @@
 # Usage: zsh OPENBSD/bin/vps-deploy all|brgen|amber|bsdports|master
 set -euo pipefail
 
+usage() {
+  print -r -- "usage: zsh OPENBSD/bin/vps-deploy all|APP|master   (run as dev, never under doas)
+
+  all          master, then every app, amber and bsdports last
+  SKIP_CI=1    skip vps_ci.sh; \${app}.sh and its runtime gate still run
+  VPS_DEPLOY_DRIFT=fail   refuse to deploy when the box's configs differ from the repo
+  PUB4_DEPLOY_BROWSER_GATES=1   add the browser gates after restart"
+}
+case ${1:-} in
+  -h|--help) usage; exit 0 ;;
+esac
+
 # Run as dev, not under doas. This script escalates for the individual steps
 # that need root and pulls as dev for the one that must not: root has no
 # github.com host key, so `doas vps-deploy master` dies at step one with
@@ -27,7 +39,7 @@ if [[ $(id -u) -eq 0 ]]; then
 fi
 
 app=${1:-}
-[[ -n $app ]] || { print -u2 "usage: vps-deploy all|APP|master"; exit 2 }
+[[ -n $app ]] || { usage >&2; exit 2 }
 
 # A full deploy outlives the ssh session that starts it. When that session is
 # cut — a timeout, a dropped link — the pipe carrying its output dies with it and
@@ -164,7 +176,13 @@ if [[ -x /usr/local/bin/config_drift_gate.rb ]]; then
     drift_count=$(/usr/local/bin/ruby34 -e \
       'print File.read("/tmp/vps-deploy-drift.out").scan(/: DRIFT -/).size' 2>/dev/null)
     print "vps-deploy: $app WARNING — ${drift_count:-?} config(s) on the box differ from the repo being deployed"
-    print "vps-deploy: $app see /tmp/vps-deploy-drift.out (TODO.md, OPENBSD: the shell tree)"
+    print "vps-deploy: $app see /tmp/vps-deploy-drift.out"
+    # Blocking is opt-in until the box has run clean once; the default stays the
+    # warning above so an unscheduled OPERATOR.sh run cannot freeze every deploy.
+    if [[ ${VPS_DEPLOY_DRIFT:-warn} == fail ]]; then
+      print -u2 "vps-deploy: $app refused — VPS_DEPLOY_DRIFT=fail and the box has drifted"
+      exit 1
+    fi
   fi
 fi
 
@@ -285,7 +303,7 @@ fi
 queue_schema="$repo/RAILS/${app}/db/queue_schema.rb"
 if [[ -f $queue_schema ]] && ! grep -q 'define(version: 0)' "$queue_schema" 2>/dev/null; then
   print "vps-deploy: $app (solid_queue proof)"
-  ksh "$repo/OPENBSD/solid_queue_proof.sh" "$app" \
+  doas ruby34 "$repo/OPENBSD/solid_queue_proof.rb" "$app" \
     || { write_stamp "$app" failed; print -u2 "vps-deploy: solid_queue proof failed for $app"; exit 1; }
 fi
 

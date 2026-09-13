@@ -1,11 +1,19 @@
 #!/usr/bin/env zsh
 # Run all active Rails app CIs serially on vm23 — never parallel.
-# Usage: zsh OPENBSD/vps_ci_all.sh
+# Usage: zsh OPENBSD/vps_ci_all.sh      (PUB4_CI_MAX_LOAD=4 waits while load is higher)
 set -euo pipefail
+
+if [[ ${1:-} == -h || ${1:-} == --help ]]; then
+  print "usage: zsh OPENBSD/vps_ci_all.sh — vps_ci.sh for every app in RAILS/apps.yml, serially"
+  exit 0
+fi
 
 repo=${PUB4_ROOT:-/home/dev/pub4}
 script=${repo}/OPENBSD/vps_ci.sh
-apps=(brgen amber bsdports)
+# The fleet is apps.yml's, in its order; a literal list here keeps testing three
+# apps after a fourth ships.
+apps=(${(f)"$(ruby34 -ryaml -e 'puts YAML.safe_load_file(ARGV[0]).fetch("apps").keys' "${repo}/RAILS/apps.yml")"})
+(( ${#apps} )) || { print -u2 "vps_ci_all: no apps read from ${repo}/RAILS/apps.yml"; exit 1 }
 max_load=${PUB4_CI_MAX_LOAD:-4}
 
 # The 5-minute average, and one ruby34 rather than two awks per tick — the same

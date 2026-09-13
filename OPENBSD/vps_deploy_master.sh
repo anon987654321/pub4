@@ -1,5 +1,10 @@
 #!/bin/sh
 # Deploy MASTER web + lib to vm23 after git pull.
+#
+# This is the body of `bin/vps-deploy master`, which also writes the deploy
+# stamp; run that. Calling this file directly deploys without a stamp, which
+# is only right when vps-deploy itself is what is broken.
+#
 # Usage (from dev laptop):
 #   zsh OPENBSD/lib/ssh_vm23.sh exec 'zsh /home/dev/pub4/OPENBSD/vps_deploy_master.sh'
 #   zsh OPENBSD/vps_deploy_master.sh --from-laptop
@@ -10,17 +15,21 @@ if [ "${1:-}" = "--from-laptop" ]; then
   exec zsh "$_lib" exec "zsh /home/dev/pub4/OPENBSD/vps_deploy_master.sh" "$@"
 fi
 
-set -e
+set -eo pipefail
 ROOT="${ROOT:-/home/dev/pub4}"
 WEB="$ROOT/MASTER/web"
 
 echo "==> git pull"
-cd "$ROOT" && git pull origin main
+cd "$ROOT" && git pull --ff-only origin main
 
 cd "$WEB"
 export LANG=C.UTF-8 LC_ALL=C.UTF-8
 export RAILS_ENV=production
-export SECRET_KEY_BASE="${SECRET_KEY_BASE:-$(openssl rand -hex 32)}"
+# The build steps below need a secret to boot Rails and never use it; the
+# running server takes its real key from /etc/master.env through rc.d/master.
+# SECRET_KEY_BASE_DUMMY says that outright, where a random key could be
+# mistaken for, or leak into, the real one.
+export SECRET_KEY_BASE_DUMMY=1
 
 # Primary database. This script had no db step at all, and MASTER/web's schema
 # was not even tracked, so production.sqlite3 sat at zero tables while

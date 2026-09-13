@@ -1,45 +1,40 @@
 #!/usr/bin/env zsh
-# Production push: master + brgen + amber + bsdports (serial, fast path skips CI).
-# Usage (on vm23): zsh OPENBSD/vps_production_push.sh
-# Guest demo density: DEMO_SEED_ON_DEPLOY=1 zsh OPENBSD/vps_production_push.sh
+# Production push, the fast path: `bin/vps-deploy all` with the CI and runtime
+# gates skipped, then an optional demo seed.
+#
+# Usage (on vm23, as dev):
+#   zsh OPENBSD/vps_production_push.sh
+#   DEMO_SEED_ON_DEPLOY=1 zsh OPENBSD/vps_production_push.sh   # also seed brgen's guest demo
+#
+# One deploy path, not two. vps-deploy owns the order (master first, amber and
+# bsdports last), the pull, the per-app health gate, the deploy stamp, the
+# restore of shed apps and the post-restart gates; this file only chooses the
+# fast flags. SKIP_CI=1 skips vps_ci.sh and SKIP_RUNTIME_GATE=1 skips the bin/ci
+# runtime gate inside ${app}.sh, which is OOM-prone on 1 GB. What still runs is
+# the loopback gate set vps-deploy runs after every restart.
+#
+# The demo seed is opt-in. A hotfix is the wrong moment to write demo content
+# into production, so it takes an explicit DEMO_SEED_ON_DEPLOY=1.
 set -euo pipefail
 
+if [[ ${1:-} == -h || ${1:-} == --help ]]; then
+  print "usage: zsh OPENBSD/vps_production_push.sh   (DEMO_SEED_ON_DEPLOY=1 to seed brgen's demo)"
+  exit 0
+fi
+
 repo=${PUB4_ROOT:-/home/dev/pub4}
-cd "$repo"
-git pull --ff-only origin main
 
 export SKIP_CI=1
-# Production push is a fast path: skip full bin/ci runtime gate (OOM-prone on 1GB).
-# Precompile + migrate still run via deploy_tracked_app / vps-deploy.
 export SKIP_RUNTIME_GATE=${SKIP_RUNTIME_GATE:-1}
+zsh "$repo/OPENBSD/bin/vps-deploy" all
 
-echo "==> master"
-zsh "$repo/OPENBSD/vps_deploy_master.sh"
-
-echo "==> brgen"
-zsh "$repo/OPENBSD/bin/vps-deploy" brgen
-
-# Default ON for guest demo path (Live + marketplace density). Opt out: DEMO_SEED_ON_DEPLOY=0
-# doas only permits dev→root; app user hop is doas sh + su -m (see RAILS/_database.sh).
-if [[ ${DEMO_SEED_ON_DEPLOY:-1} == 1 ]]; then
-  echo "==> bergen demo seed (posts, Live notes, listings)"
-  # shellcheck disable=SC1091
+if [[ ${DEMO_SEED_ON_DEPLOY:-0} == 1 ]]; then
+  print "==> bergen demo seed (posts, Live notes, listings)"
+  # doas only permits dev->root; the app user hop is doas sh + su -m (RAILS/_database.sh).
   source "${repo}/RAILS/_core.sh"
   source "${repo}/RAILS/_database.sh"
   seed_demo_as_app brgen /home/brgen/app
 fi
 
-echo "==> amber"
-zsh "$repo/OPENBSD/bin/vps-deploy" amber
-
-echo "==> bsdports"
-zsh "$repo/OPENBSD/bin/vps-deploy" bsdports
-
-echo "==> health"
-# rcctl and loopback /up for every app and relayd, from the one smoke script
-# that reads nothing but its own list; a failure warns rather than aborts
-# because the deploys above have already landed.
-sh "$repo/OPENBSD/bin/deploy-smoke.sh" --local || echo "WARN: deploy-smoke --local failed"
-ruby "$repo/MASTER/web/script/probe_http" 2>/dev/null || true
-
-echo "==> production push complete"
+sh "$repo/OPENBSD/bin/deploy-smoke.sh" --local || print "WARN: deploy-smoke partial"
+print "==> production push complete"

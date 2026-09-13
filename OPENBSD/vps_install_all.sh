@@ -1,6 +1,13 @@
 #!/usr/bin/env zsh
 # Run ON the VPS (vm23) as dev — installs MASTER web + each Rails app deploy script.
+# The one bootstrap-on-box script: vps_on_vm_install.sh execs this file.
+# Usage: zsh OPENBSD/vps_install_all.sh     (LOG=/path to choose the log file)
 set -euo pipefail
+
+if [[ ${1:-} == -h || ${1:-} == --help ]]; then
+  print "usage: zsh OPENBSD/vps_install_all.sh — bundle and precompile MASTER, then every apps.yml app's deploy script"
+  exit 0
+fi
 
 PUB4=${PUB4:-/home/dev/pub4}
 LOG=${LOG:-/tmp/pub4_install_$(date +%Y%m%d_%H%M%S).log}
@@ -22,8 +29,9 @@ failed=0
 
 if [[ -d ${PUB4}/.git ]]; then
   log "git pull"
-  git -C "$PUB4" stash push -m "auto-before-install-$(date +%Y%m%d)" -u 2>/dev/null || true
-  git -C "$PUB4" pull origin main || log "WARN: git pull failed (continuing with tree on disk)"
+  # --ff-only and never a stash: a stashed Gemfile.lock on this box once took
+  # master down, and a stash hides local edits where nobody looks for them.
+  git -C "$PUB4" pull --ff-only origin main || log "WARN: git pull failed (continuing with tree on disk)"
   git -C "$PUB4" log -1 --oneline
 fi
 
@@ -34,17 +42,14 @@ bundle install
 cd "${PUB4}/MASTER/web"
 bundle config set --local path vendor/bundle
 bundle install
-RAILS_ENV=production SECRET_KEY_BASE="${SECRET_KEY_BASE:-dummy}" bundle exec rails assets:precompile
+RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1 bundle exec rails assets:precompile
 bundle exec ruby "${PUB4}/RAILS/gates/runner.rb" master_web_assets
 doas rcctl restart master 2>/dev/null || doas rcctl start master
 doas rcctl check master || { log "WARN: master not ok"; failed=$((failed + 1)); }
 
 typeset -a APPS
-if command -v jq >/dev/null 2>&1 && [[ -f ${PUB4}/OPENBSD/deploy_inventory.json ]]; then
-  APPS=("${(@f)$(jq -r '.apps[].name' "${PUB4}/OPENBSD/deploy_inventory.json")}")
-else
-  APPS=(brgen amber bsdports)
-fi
+APPS=(${(f)"$(ruby34 -ryaml -e 'puts YAML.safe_load_file(ARGV[0]).fetch("apps").keys' "${PUB4}/RAILS/apps.yml")"})
+(( ${#APPS} )) || { log "ERR: no apps read from ${PUB4}/RAILS/apps.yml"; exit 1 }
 
 for app in $APPS; do
   typeset script="${PUB4}/RAILS/${app}/${app}.sh"

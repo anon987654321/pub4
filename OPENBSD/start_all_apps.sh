@@ -1,12 +1,25 @@
 #!/bin/ksh
 # Start every pub4 service on vm23 and pin them against resource_guard shedding.
 # Usage: doas ksh /home/dev/pub4/OPENBSD/start_all_apps.sh
+#
+# The services are master plus every app in RAILS/apps.yml, read at run time:
+# master is not an apps.yml app, and a literal list keeps starting three apps
+# after a fourth ships.
 
-set -e
+set -eo pipefail
+
+case ${1:-} in
+-h|--help)
+  echo "usage: doas ksh OPENBSD/start_all_apps.sh — enable and start master and every apps.yml app, pin them against shedding"
+  exit 0
+  ;;
+esac
 
 ROOT=/home/dev/pub4
 ALL_APPS_FLAG=/var/db/pub4_all_apps
-SERVICES="master brgen amber bsdports"
+APPS=$(ruby34 -ryaml -e 'puts YAML.safe_load_file(ARGV[0]).fetch("apps").keys.join(" ")' "$ROOT/RAILS/apps.yml")
+[ -n "$APPS" ] || { echo "start_all_apps: no apps read from $ROOT/RAILS/apps.yml" >&2; exit 1; }
+SERVICES="master $APPS"
 
 install -d -m 755 /var/db
 : > "$ALL_APPS_FLAG"

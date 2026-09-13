@@ -68,23 +68,20 @@ module Deploy
     # generated. Scanning them reports the model's own transcript as an inventory.
     FLEET_SCAN_SKIP = %r{/(\.git|node_modules|\.master|knowledge|output|public/assets|tmp|log|storage)/}
 
-    RETIRED_ACTIVE_PATHS = [
+    # Files that must not name a retired app outside a comment: the scripts and
+    # tooling that run, and the config files a retired app leaves itself in. Every
+    # entry is a live file; the retired thing is the name. On 2026-08-12, two months after
+    # DECISIONS.md recorded "baibl + blognet removed — apps, relayd, acme, nsd,
+    # litestream, rc.d, inventories", vm23 still had both users, both home
+    # directories, both rc.d scripts, both /etc/*.env files, both login classes,
+    # both certificate symlinks, both DNS zones, and blognet in litestream.yml.
+    # The config half of this list is where those leftovers lived.
+    SCANNED_FOR_RETIRED_NAMES = [
       "OPENBSD/vps_console_install.exp",
       "OPENBSD/vps_console_poll_install.exp",
       "OPENBSD/usr/local/bin/relayd-watchdog",
       "RAILS/env.sample",
       "RAILS/tools/build_workbox.mjs",
-    ].freeze
-    # The config files a retired app leaves itself in. A hand-kept list goes
-    # RETIRED_ACTIVE_PATHS alone — five scripts — and none of them was where the
-    # leftover references actually lived. On 2026-08-12, two months after DECISIONS.md
-    # recorded "baibl + blognet removed — apps, relayd, acme, nsd, litestream,
-    # rc.d, inventories", vm23 still had both users, both home directories
-    # (547M and 553M), both rc.d scripts, both /etc/*.env files, both login
-    # classes, both certificate symlinks, both DNS zones, and blognet in
-    # litestream.yml. The decision was written and half executed, and nothing
-    # compared the two.
-    RETIRED_CONFIG_PATHS = [
       "OPENBSD/etc/rc.conf.local",
       "OPENBSD/etc/login.conf",
       "OPENBSD/etc/litestream.yml",
@@ -381,7 +378,7 @@ module Deploy
     end
 
     def check_retired_names_not_active(result)
-      (RETIRED_ACTIVE_PATHS + RETIRED_CONFIG_PATHS).each do |relative|
+      SCANNED_FOR_RETIRED_NAMES.each do |relative|
         path = File.join(ROOT, relative)
         next unless File.file?(path)
 
