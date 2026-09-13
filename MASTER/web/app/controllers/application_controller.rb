@@ -9,7 +9,7 @@ class ApplicationController < ActionController::Base
   allow_browser versions: :modern
 
   VISITOR_ALLOWED_TOOLS = Master::Ground::Tool::Profile.public_names.freeze
-  AUTHENTICATED_ACTIONS = %i[dmesg history live metrics metrics_prometheus].freeze
+  AUTHENTICATED_ACTIONS = %i[history live metrics metrics_prometheus].freeze
   TTS_SYNTH_ACTIONS = %i[show].freeze
   TTS_POLL_ACTIONS = %i[status stream].freeze
   CHAT_RATE_LIMIT = 30  # requests per 60s per IP
@@ -39,7 +39,7 @@ class ApplicationController < ActionController::Base
   before_action :enforce_chat_rate_limit, if: -> { action_in?(:message) }
   before_action :enforce_tts_rate_limit, if: -> { controller_name == "tts" && action_in?(TTS_SYNTH_ACTIONS) }
   before_action :enforce_tts_poll_rate_limit, if: -> { controller_name == "tts" && action_in?(TTS_POLL_ACTIONS) }
-  before_action :enforce_web_read_rate_limit, if: -> { action_in?(%i[dmesg history live metrics]) }
+  before_action :enforce_web_read_rate_limit, if: -> { action_in?(%i[history live metrics]) }
   before_action :enforce_web_write_rate_limit, if: -> { action_in?(%i[command enhance photo post_event state]) }
 
   private

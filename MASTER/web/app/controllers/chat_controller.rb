@@ -29,12 +29,6 @@ class ChatController < ApplicationController
     render layout: false
   end
 
-  def dmesg
-    out, = Open3.capture2e("dmesg")
-    lines = out.lines.first(20).map(&:chomp)
-    render json: { lines: }
-  end
-
   def metrics
     c = container
     return render(json: { error: "warming up" }, status: :service_unavailable) unless c

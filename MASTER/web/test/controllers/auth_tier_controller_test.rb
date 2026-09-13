@@ -3,18 +3,6 @@
 require "test_helper"
 
 class AuthTierControllerTest < ActionDispatch::IntegrationTest
-  test "visitor cannot read dmesg" do
-    get "/chat/dmesg"
-
-    assert_response :unauthorized
-  end
-
-  test "authenticated client can read dmesg" do
-    get "/chat/dmesg", headers: auth_headers
-
-    assert_response :success
-  end
-
   test "visitor cannot read chat history" do
     get "/chat/history"
 

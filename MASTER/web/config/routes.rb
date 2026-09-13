@@ -19,7 +19,6 @@ Rails.application.routes.draw do
   post "chat/command", to: "chat#command"
   get  "chat/metrics", to: "chat#metrics"
   get  "chat/skills",  to: "chat#skills"
-  get  "chat/dmesg",    to: "chat#dmesg"
   get  "runtime/config", to: "runtime#boot_config"
   get  "runtime/status", to: "runtime#status"
   get  "runtime/topologies", to: "runtime#topologies"

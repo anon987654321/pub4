@@ -4,7 +4,7 @@ require_relative "test_helper"
 require "rack/test"
 
 # Minimal Rack test harness for the web UI chat controller.
-# Tests cover SSE stream, TTS endpoint, dmesg, and metrics.
+# Tests cover SSE stream, TTS endpoint, and metrics.
 
 ENV["RAILS_ENV"] = "test"
 
@@ -119,7 +119,7 @@ class TestWebUI < Minitest::Test
     app_controller = File.read(File.expand_path("../web/app/controllers/application_controller.rb", __dir__))
 
     assert_includes app_controller, "AUTHENTICATED_ACTIONS = %i["
-    assert_includes app_controller, "dmesg history live metrics"
+    assert_includes app_controller, "history live metrics metrics_prometheus"
     assert_includes app_controller, "before_action :require_authenticated!, if: -> { action_in?(AUTHENTICATED_ACTIONS) }"
     assert_includes app_controller, 'master_tier != "authenticated"'
     assert_includes app_controller, 'render json: { error: "authentication required" }, status: :unauthorized'
@@ -130,7 +130,7 @@ class TestWebUI < Minitest::Test
 
     assert_includes app_controller, "WEB_READ_RATE_LIMIT  = 120"
     assert_includes app_controller, "WEB_WRITE_RATE_LIMIT = 60"
-    assert_includes app_controller, "before_action :enforce_web_read_rate_limit, if: -> { action_in?(%i[dmesg history live metrics]) }"
+    assert_includes app_controller, "before_action :enforce_web_read_rate_limit, if: -> { action_in?(%i[history live metrics]) }"
     assert_includes app_controller, "before_action :enforce_web_write_rate_limit, if: -> { action_in?(%i[command enhance photo post_event state]) }"
   end
 
