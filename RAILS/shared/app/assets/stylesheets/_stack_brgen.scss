@@ -1,3 +1,7 @@
+// brgen's stack is _stack.scss less two files. _minimal is the base amber and
+// bsdports build on, and brgen has its own chrome; _modal is the dialog and
+// sheet rules extracted from brgen's _mobile.scss, which brgen still carries.
+// Forwarding either here would declare those selectors twice.
 @forward "fonts";
 @forward "tokens";
 @forward "typography";

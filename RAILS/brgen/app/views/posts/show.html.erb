@@ -95,8 +95,9 @@
     <button type="button" class="feed-action" data-controller="share"
             data-share-title-value="<%= @post.title %>"
             data-share-url-value="<%= request.original_url %>"
+            data-share-copied-value="<%= t("posts.link_copied") %>"
             data-action="click->share#share" aria-label="<%= t("posts.share_post") %>">
-      <%= render "shared/feed_icon", name: "share" %> <%= t("posts.share") %>
+      <%= render "shared/feed_icon", name: "share" %> <span data-share-target="label"><%= t("posts.share") %></span>
     </button>
     <%# shared/_report_button, ReportsController, ModerationWorkflow, the admin
         queue and the notification job all existed, but no view rendered the

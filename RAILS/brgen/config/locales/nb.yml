@@ -748,6 +748,7 @@ nb:
     within_a_km: "under 1 km unna"
     km_away: "%{count} km unna"
   posts:
+    link_copied: Lenken er kopiert
     community_label: Fellesskap
     anywhere_in: "Hvor som helst i %{city}"
     body_label: Tekst

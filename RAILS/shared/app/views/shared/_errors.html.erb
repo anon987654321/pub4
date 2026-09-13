@@ -1,5 +1,8 @@
+<%# autofocus: after a 422 Turbo renders the form again and focuses the first
+    [autofocus] element, so a keyboard or screen-reader user lands on what went
+    wrong instead of at the top of the page. %>
 <% if object.errors.any? %>
-  <section class="errors" role="alert" aria-labelledby="form-errors-title" tabindex="-1">
+  <section class="errors" role="alert" aria-labelledby="form-errors-title" tabindex="-1" autofocus>
     <h2 id="form-errors-title" class="errors-title"><%= t("shared.errors_prevented", count: object.errors.count) %></h2>
     <ul class="errors-list">
     <% object.errors.full_messages.each do |msg| %>

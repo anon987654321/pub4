@@ -742,6 +742,7 @@ en:
     within_a_km: "less than 1 km away"
     km_away: "%{count} km away"
   posts:
+    link_copied: Link copied
     community_label: Community
     anywhere_in: "Anywhere in %{city}"
     body_label: Body

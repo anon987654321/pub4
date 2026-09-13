@@ -20,7 +20,7 @@
 
   <% if @event.cover.attached? %>
     <div class="event-hero">
-      <%= responsive_image_tag @event.cover, alt: "" %>
+      <%= responsive_image_tag @event.cover, alt: @event.title %>
     </div>
   <% end %>
 
