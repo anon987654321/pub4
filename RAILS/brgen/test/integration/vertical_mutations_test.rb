@@ -107,6 +107,12 @@ class VerticalMutationsTest < ActionDispatch::IntegrationTest
   test "dating mutual likes create a match" do
     a = make_user("dater_a")
     b = make_user("dater_b")
+    # A like reaches only a profile the deck could show, so both need a visible one.
+    [ a, b ].each do |user|
+      profile = Dating::Profile.new(user:, age: 30, visible: true)
+      attach_pixel!(profile.photos)
+      profile.save!
+    end
 
     host! "dating.brgen.no"
     sign_in_with_session_cookie!(a)

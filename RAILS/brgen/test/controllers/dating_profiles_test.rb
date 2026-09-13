@@ -69,7 +69,7 @@ class DatingProfilesTest < ActionDispatch::IntegrationTest
     assert_equal [ photos.last.id ], profile_for(@me).photos.map(&:id)
   end
 
-  test "an upload MediaGuard refuses saves nothing" do
+  test "a refused upload saves nothing" do
     sign_in_as(@me)
 
     patch dating.profile_path, params: { profile: { bio: "endret", photos: [ upload(content_type: "text/plain", filename: "x.txt") ] } }

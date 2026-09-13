@@ -3,7 +3,6 @@ nb:
   errors:
     messages:
       attachment_type: må være et lydklipp eller et bilde
-      attachment_too_large: er for stor
       last_owner: kan ikke fjernes — fellesskapet ville stå uten eier
       before_start: kan ikke være før start
     not_found_title: Siden finnes ikke

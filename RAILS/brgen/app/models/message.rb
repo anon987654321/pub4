@@ -165,7 +165,6 @@ class Message < ApplicationRecord
   def attachment_is_voice_or_photo
     blob = attachment.blob
     errors.add(:attachment, :attachment_type) unless blob.content_type.to_s.match?(ATTACHMENT_TYPE)
-    errors.add(:attachment, :attachment_too_large) if blob.byte_size.to_i > Shared::MediaGuard::MEDIA_MAX_BYTES
   end
 
   def broadcast_to_logs

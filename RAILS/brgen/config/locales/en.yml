@@ -3,7 +3,6 @@ en:
   errors:
     messages:
       attachment_type: must be a voice note or a photo
-      attachment_too_large: is too large
       last_owner: cannot be removed — the community would have no owner
       before_start: cannot be before the start
     not_found_title: Page not found

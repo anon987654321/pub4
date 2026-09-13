@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 class Dating::ProfilesController < Dating::BaseController
-  include Shared::MediaGuard
-
   before_action :require_user_session
   # Joining is Vipps-only. Everything else on this vertical stays readable to a
   # signed-in person; what a verified identity buys is the right to appear in
@@ -76,17 +74,23 @@ class Dating::ProfilesController < Dating::BaseController
     true
   end
 
-  # A direct upload arrives as a signed blob id and a plain form post as a file;
-  # MediaGuard's type and size limits hold for both.
+  # A direct upload arrives as a signed blob id and a plain form post as a file.
+  # Both are held here to the image limits Shared::AttachmentLimits applies on
+  # save, so a refused photo fails the whole update before anything is replaced.
   def accepted_photo(upload)
-    return (upload if validate_media_upload(upload) == :ok) if upload.respond_to?(:read)
+    limits = Shared::AttachmentLimits::KINDS.fetch(:image)
+    type, size =
+      if upload.respond_to?(:read)
+        [ upload.content_type, upload.size ]
+      else
+        blob = ActiveStorage::Blob.find_signed(upload.to_s)
+        return nil unless blob
+        [ blob.content_type, blob.byte_size ]
+      end
+    return nil if size.to_i > limits[:max_bytes]
+    return nil unless limits[:types].any? { |prefix| type.to_s.downcase.start_with?(prefix) }
 
-    blob = ActiveStorage::Blob.find_signed(upload.to_s)
-    return nil unless blob
-    return nil unless MEDIA_ALLOWED_TYPES.include?(blob.content_type.to_s.downcase)
-    return nil if blob.byte_size > MEDIA_MAX_BYTES
-
-    blob
+    blob || upload
   end
 
   def enqueue_photo_processing
