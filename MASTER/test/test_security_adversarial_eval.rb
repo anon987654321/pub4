@@ -19,9 +19,9 @@ class TestSecurityAdversarialEval < Minitest::Test
   # not just untested ones. Fixed alongside this file, same commit.
   DENY_CASES = {
     "rm_root" => "rm -rf /",
-    "rm_home" => "rm -rf ~",
+    "rm_home" => "rm -rf ~", # scan: intentional — the attack under test
     "rm_home_var" => 'rm -rf "$HOME"',
-    "rm_home_flags_reversed" => "rm -fr ~",
+    "rm_home_flags_reversed" => "rm -fr ~", # scan: intentional — the attack under test
     "rm_home_longflags" => "rm --recursive --force ~",
     "rm_home_longflags_reversed" => "rm --force --recursive ~",
     "rm_home_split_short_flags" => "rm -r -f ~",

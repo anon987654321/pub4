@@ -141,10 +141,10 @@ class TestScanRuleContracts < Minitest::Test
 
   def test_never_batch_delete_still_fires_on_an_unknown_set
     [
-      %(stale.each { |f| File.delete(f) }\n),
-      %(Dir["tmp/*.log"].each { |f| File.delete(f) }\n),
-      %(snapshots[0...-KEEP].to_a.each { |old| File.delete(old) }\n),
-      %(Array(old).each { |f| FileUtils.rm_f(f) }\n),
+      %(stale.each { |f| File.delete(f) }\n), # scan: intentional — the law fixture
+      %(Dir["tmp/*.log"].each { |f| File.delete(f) }\n), # scan: intentional — the law fixture
+      %(snapshots[0...-KEEP].to_a.each { |old| File.delete(old) }\n), # scan: intentional — the law fixture
+      %(Array(old).each { |f| FileUtils.rm_f(f) }\n), # scan: intentional — the law fixture
     ].each do |source|
       refute_empty law_findings("NEVER_BATCH_DELETE", source, path: "cleanup.rb"),
                    "#{source.inspect} deletes a set nothing on the line bounds"

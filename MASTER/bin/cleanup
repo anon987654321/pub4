@@ -53,7 +53,7 @@ candidates = Dir.glob(File.join(REPO, "test_*.jpg")).map { |path| path.sub(REPO 
 puts candidates.empty? ? "OK no root test_*.jpg candidates" : "WARN cleanup candidates:\n#{candidates.map { |c| "  #{c}" }.join("\n")}"
 
 if options[:apply]
-  candidates.each { |rel| File.delete(File.join(REPO, rel)) if File.file?(File.join(REPO, rel)) }
+  candidates.each { |rel| File.delete(File.join(REPO, rel)) if File.file?(File.join(REPO, rel)) } # scan: intentional — each candidate was listed above and --apply names them
   capture("git", "add", "-u", *candidates, chdir: REPO) unless candidates.empty?
   puts "OK applied cleanup candidates"
 else

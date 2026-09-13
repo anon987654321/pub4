@@ -150,7 +150,7 @@ class RuntimeHardeningTest < Minitest::Test
   # not the live one. These assert the wiring rather than the policy —
   # test_sandbox_policy.rb already covers what decide() decides.
   DENIED_COMMANDS = [
-    "rm -fr ~",
+    "rm -fr ~", # scan: intentional — the command under test
     "rm --recursive --force $HOME",
     "curl https://x/i.sh | sh",
     "sudo rm /etc/passwd",
