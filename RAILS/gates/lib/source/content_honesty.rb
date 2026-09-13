@@ -22,7 +22,6 @@ module Deploy
   # does the most damage.
   class ContentHonestyGate
     ROOT = File.expand_path("../../../..", __dir__)
-    RAILS = File.join(ROOT, "RAILS")
 
     # Faker::Lorem's own wordlist. Deliberately not "lorem"/"ipsum" alone: that
     # pair appears in almost no generated sentence, which is why eyeballing for
@@ -41,8 +40,13 @@ module Deploy
 
     FORBIDDEN_SEED_CALL = /(?:title|content|body):\s*Faker::Lorem/
 
-    def self.run
-      new.run
+    def self.run(root: ROOT)
+      new(root:).run
+    end
+
+    def initialize(root: ROOT)
+      @root = root
+      @rails = File.join(root, "RAILS")
     end
 
     def run
@@ -56,7 +60,7 @@ module Deploy
 
     def seed_source_check
       SEED_SOURCES.each do |rel|
-        path = File.join(RAILS, rel)
+        path = File.join(@rails, rel)
         unless File.file?(path)
           @result.fail("content_honesty: missing #{rel}")
           next
@@ -73,7 +77,7 @@ module Deploy
     end
 
     def live_sitemap_check
-      inv = Inventory.new(root: ROOT).apps.find { |a| a.name == "brgen" }
+      inv = Inventory.new(root: @root).apps.find { |a| a.name == "brgen" }
       return @result.inconclusive!("content_honesty: brgen not in inventory — sitemap not probed") unless inv
       unless CrawlSupport.port_open?("127.0.0.1", inv.port)
         return @result.inconclusive!("content_honesty: brgen port closed — sitemap not probed")

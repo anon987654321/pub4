@@ -7,12 +7,15 @@ module Deploy
   # Dialect purity: social / luxury / CRT / face stay separate; vertical accents single map.
   class DialectPurityGate
     ROOT = File.expand_path("../../../..", __dir__)
-    RAILS = File.join(ROOT, "RAILS")
-    TOKENS = File.join(RAILS, "shared", "design_tokens.yml")
-    WIRING = File.join(RAILS, "shared", "WIRING_NOTES.md")
 
-    def self.run
-      new.run
+    def self.run(root: ROOT)
+      new(root:).run
+    end
+
+    def initialize(root: ROOT)
+      @rails = File.join(root, "RAILS")
+      @tokens = File.join(@rails, "shared", "design_tokens.yml")
+      @wiring = File.join(@rails, "shared", "WIRING_NOTES.md")
     end
 
     def run
@@ -28,11 +31,11 @@ module Deploy
     private
 
     def check_tokens
-      unless File.file?(TOKENS)
+      unless File.file?(@tokens)
         @result.fail("dialect_purity: missing design_tokens.yml")
         return
       end
-      data = YAML.safe_load_file(TOKENS)
+      data = YAML.safe_load_file(@tokens)
       @result.checked!(7)
       %w[social luxury openbsd_wscons face_root vertical_accents].each do |key|
         @result.fail("dialect_purity: design_tokens missing #{key}") unless data.key?(key)
@@ -44,9 +47,9 @@ module Deploy
     end
 
     def check_wiring_notes
-      return @result.fail("dialect_purity: missing WIRING_NOTES.md") unless File.file?(WIRING)
+      return @result.fail("dialect_purity: missing WIRING_NOTES.md") unless File.file?(@wiring)
 
-      notes = File.read(WIRING)
+      notes = File.read(@wiring)
       @result.checked!(3)
       @result.fail("dialect_purity: WIRING_NOTES lost dialect table") unless notes.match?(/social|luxury|openbsd_wscons|face_root/i)
       @result.fail("dialect_purity: WIRING_NOTES lost Flat rule") unless notes.match?(/Flat rule|box-shadow/i)
@@ -54,7 +57,7 @@ module Deploy
     end
 
     def check_vertical_accents
-      shell = File.join(RAILS, "brgen/app/assets/stylesheets/_vertical_shell.scss")
+      shell = File.join(@rails, "brgen/app/assets/stylesheets/_vertical_shell.scss")
       return @result.fail("dialect_purity: missing _vertical_shell.scss") unless File.file?(shell)
 
       shell_body = File.read(shell)
@@ -65,8 +68,8 @@ module Deploy
       # keeps _vertical_shell and messenger, the other twelve _vertical_*.scss
       # live under engines/<name>/app/assets/stylesheets. Globbing the host alone
       # left this gate reading two files and calling it the dialect.
-      vertical_sheets = Dir.glob(File.join(RAILS, "brgen/app/assets/stylesheets/_vertical_*.scss")) +
-                        Dir.glob(File.join(RAILS, "brgen/engines/*/app/assets/stylesheets/_vertical_*.scss"))
+      vertical_sheets = Dir.glob(File.join(@rails, "brgen/app/assets/stylesheets/_vertical_*.scss")) +
+                        Dir.glob(File.join(@rails, "brgen/engines/*/app/assets/stylesheets/_vertical_*.scss"))
       vertical_sheets.each do |path|
         next if path.end_with?("_vertical_shell.scss")
 
@@ -80,37 +83,37 @@ module Deploy
     end
 
     def check_no_twitter_blue
-      sheets = Dir.glob(File.join(RAILS, "{brgen,amber,bsdports,shared}/app/assets/stylesheets/**/*.{scss,css}")) +
-               Dir.glob(File.join(RAILS, "brgen/engines/*/app/assets/stylesheets/**/*.{scss,css}"))
+      sheets = Dir.glob(File.join(@rails, "{brgen,amber,bsdports,shared}/app/assets/stylesheets/**/*.{scss,css}")) +
+               Dir.glob(File.join(@rails, "brgen/engines/*/app/assets/stylesheets/**/*.{scss,css}"))
       sheets.each do |path|
         next if path.include?("/builds/")
 
         @result.checked!
         body = File.read(path)
         if body.match?(/#1d9bf0|#1DA1F2/i)
-          @result.fail("dialect_purity: twitter blue in #{path.sub(RAILS + '/', '')}")
+          @result.fail("dialect_purity: twitter blue in #{path.sub(@rails + '/', '')}")
         end
       end
     end
 
     def check_dialect_roots
       # brgen uses brgen_old / social; amber luxury; bsdports openbsd greens
-      brgen_root = File.join(RAILS, "brgen/app/assets/stylesheets/_root.scss")
+      brgen_root = File.join(@rails, "brgen/app/assets/stylesheets/_root.scss")
       if File.file?(brgen_root)
         body = File.read(brgen_root)
         @result.fail("dialect_purity: brgen _root missing brgen-old or dialect tokens") unless body.match?(/brgen-old|dialect_tokens|brgen_old/i)
       end
-      bsd = File.join(RAILS, "bsdports/app/assets/stylesheets/application.scss")
+      bsd = File.join(@rails, "bsdports/app/assets/stylesheets/application.scss")
       if File.file?(bsd)
         body = File.read(bsd)
         @result.fail("dialect_purity: bsdports missing CRT green identity") unless body.include?("#63c363") || body.include?("openbsd")
       end
-      amber = File.join(RAILS, "amber/app/assets/stylesheets/_variables.scss")
-      amber = File.join(RAILS, "amber/app/assets/stylesheets/application.scss") unless File.file?(amber)
+      amber = File.join(@rails, "amber/app/assets/stylesheets/_variables.scss")
+      amber = File.join(@rails, "amber/app/assets/stylesheets/application.scss") unless File.file?(amber)
       if File.file?(amber)
         # soft check — luxury or brand present
         body = File.read(amber)
-        @result.warn("dialect_purity: amber dialect markers weak") unless body.match?(/luxury|brand|editorial|caprasimo|jsfiddle/i) || File.file?(File.join(RAILS, "amber/app/assets/stylesheets/_jsfiddle_chrome.scss"))
+        @result.warn("dialect_purity: amber dialect markers weak") unless body.match?(/luxury|brand|editorial|caprasimo|jsfiddle/i) || File.file?(File.join(@rails, "amber/app/assets/stylesheets/_jsfiddle_chrome.scss"))
       end
     end
   end

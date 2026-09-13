@@ -19,8 +19,8 @@ require_relative "../../gates/lib/source/content_honesty"
 # "lorem ipsum", which appears in almost no generated sentence and is why
 # eyeballing missed a thousand rows.
 #
-# The gate resolves the seeders from constants fixed at load time, so the
-# fixture is installed by rewriting ROOT and RAILS.
+# The fixture tree is passed as root:, the same keyword the runner leaves at
+# its default.
 class ContentHonestyGateTest < Minitest::Test
   include GateFixture
 
@@ -32,7 +32,7 @@ class ContentHonestyGateTest < Minitest::Test
     Dir.mktmpdir do |dir|
       plant_apps_yml(dir, "brgen")
       GATE::SEED_SOURCES.each { |rel| plant(dir, File.join("RAILS", rel), seeds) }
-      with_constants(GATE, ROOT: dir, RAILS: File.join(dir, "RAILS")) { GATE.run }
+      GATE.run(root: dir)
     end
   end
 
@@ -64,7 +64,7 @@ class ContentHonestyGateTest < Minitest::Test
   def test_a_missing_seeder_fails_rather_than_passing_unread
     result = Dir.mktmpdir do |dir|
       plant_apps_yml(dir, "brgen")
-      with_constants(GATE, ROOT: dir, RAILS: File.join(dir, "RAILS")) { GATE.run }
+      GATE.run(root: dir)
     end
 
     refute result.ok?, "an absent seeder passed"

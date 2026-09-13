@@ -9,29 +9,9 @@ require "fileutils"
 # ok`. The test has to plant the defect the gate exists to catch, watch it fail,
 # remove the defect and watch it pass.
 #
-# Several source gates make that awkward. They resolve their subject from a
-# constant computed at load time — `ROOT = File.expand_path("../../../..",
-# __dir__)` and the paths derived from it — and offer no root argument, so the
-# only way to run one over a fixture is to rewrite those constants around the
-# call. `with_constants` does that and puts them back, so one test cannot change
-# what the next one measures. Gates that already take a path or a root keyword
-# need none of this and do not use it.
+# Each gate takes `root:` (the repository root it measures), defaulting to this
+# checkout, so a test plants a tree in a temporary directory and passes it.
 module GateFixture
-  def with_constants(owner, values)
-    previous = values.keys.to_h { |name| [name, owner.const_get(name)] }
-    values.each { |name, value| swap_constant(owner, name, value) }
-    yield
-  ensure
-    previous&.each { |name, value| swap_constant(owner, name, value) }
-  end
-
-  # remove_const first, so redefining does not print "already initialized
-  # constant" for every swap and bury the test output.
-  def swap_constant(owner, name, value)
-    owner.send(:remove_const, name) if owner.const_defined?(name, false)
-    owner.const_set(name, value)
-  end
-
   # Writes body at rel under dir, creating the directories rel names. Returns
   # the absolute path.
   def plant(dir, rel, body)

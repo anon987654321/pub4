@@ -17,9 +17,8 @@ require_relative "../../gates/lib/source/locale_shadowing"
 # check compares values that disagree, and a key resolving to nothing disagrees
 # with nobody.
 #
-# The gate reads the tree and its budget file from constants fixed at load time,
-# so the fixture is installed by rewriting RAILS_ROOT, APPS and BUDGET. The app
-# is named brgen because the orphan half walks a hardcoded tree list.
+# The fixture tree, app list and budget file are passed as keywords. The app is
+# named brgen because the orphan half walks a hardcoded tree list.
 class LocaleShadowingGateTest < Minitest::Test
   include GateFixture
 
@@ -27,10 +26,10 @@ class LocaleShadowingGateTest < Minitest::Test
 
   def gate_over(shared:, app:, budget: "brgen: 0\n")
     Dir.mktmpdir do |dir|
-      plant(dir, "shared/config/locales/social.nb.yml", shared)
-      plant(dir, "brgen/config/locales/nb.yml", app)
+      plant(dir, "RAILS/shared/config/locales/social.nb.yml", shared)
+      plant(dir, "RAILS/brgen/config/locales/nb.yml", app)
       budget_path = plant(dir, "locale_shadowing.yml", budget)
-      with_constants(GATE, RAILS_ROOT: dir, APPS: %w[brgen], BUDGET: budget_path) { GATE.run }
+      GATE.run(root: dir, apps: %w[brgen], budget: budget_path)
     end
   end
 
@@ -91,8 +90,8 @@ class LocaleShadowingGateTest < Minitest::Test
 
   def test_no_shared_locales_at_all_is_inconclusive
     result = Dir.mktmpdir do |dir|
-      plant(dir, "brgen/config/locales/nb.yml", locale('"Brgen home"'))
-      with_constants(GATE, RAILS_ROOT: dir, APPS: %w[brgen], BUDGET: File.join(dir, "none.yml")) { GATE.run }
+      plant(dir, "RAILS/brgen/config/locales/nb.yml", locale('"Brgen home"'))
+      GATE.run(root: dir, apps: %w[brgen], budget: File.join(dir, "none.yml"))
     end
 
     assert_equal :inconclusive, result.outcome

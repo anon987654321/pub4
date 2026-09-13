@@ -33,7 +33,6 @@ module Deploy
   # duplication is one people learn to skip.
   class LocaleShadowingGate
     ROOT = File.expand_path("../../../..", __dir__)
-    RAILS_ROOT = File.join(ROOT, "RAILS")
     APPS = %w[amber brgen bsdports].freeze
     BUDGET = File.join(__dir__, "../../data/locale_shadowing.yml")
 
@@ -41,23 +40,26 @@ module Deploy
     # Getting this wrong does not fail loudly: the gate registers, appears in
     # --list, and reports "ERRORED and blocked nothing", which is a green-ish
     # line for a gate that never ran.
-    def self.run
-      new.run
+    def self.run(root: ROOT, apps: APPS, budget: BUDGET)
+      new(root:, apps:, budget:).run
     end
 
-    def initialize(result = GateResult.new)
+    def initialize(result = GateResult.new, root: ROOT, apps: APPS, budget: BUDGET)
       @result = result
+      @rails_root = File.join(root, "RAILS")
+      @apps = apps
+      @budget = budget
     end
 
     def run
-      shared = load_locales(File.join(RAILS_ROOT, "shared/config/locales/**/*.yml"))
+      shared = load_locales(File.join(@rails_root, "shared/config/locales/**/*.yml"))
       if shared.empty?
         @result.inconclusive!("locale_shadowing: no shared locale files found at shared/config/locales")
         return @result
       end
 
       budgets = read_budget
-      APPS.each do |app|
+      @apps.each do |app|
         judge(app, shared, budgets)
         @result.checked!
       end
@@ -84,7 +86,7 @@ module Deploy
     # warns there and fails here.
     def judge_orphans
       %w[shared amber brgen bsdports].each do |tree|
-        Dir[File.join(RAILS_ROOT, tree, "config/locales/**/*.yml")].sort.each do |path|
+        Dir[File.join(@rails_root, tree, "config/locales/**/*.yml")].sort.each do |path|
           doc = begin
             YAML.safe_load_file(path, aliases: true)
           rescue StandardError
@@ -100,7 +102,7 @@ module Deploy
           end
           next if empties.empty?
 
-          rel = path.sub("#{RAILS_ROOT}/", "")
+          rel = path.sub("#{@rails_root}/", "")
           message = "locale_shadowing #{rel}: #{empties.length} key(s) with no value " \
                     "(#{empties.first(4).join(', ')}) — a bare key parses as nil and nil " \
                     "REPLACES a hash in I18n's merge"
@@ -121,7 +123,7 @@ module Deploy
     end
 
     def judge(app, shared, budgets)
-      own = load_locales(File.join(RAILS_ROOT, app, "config/locales/**/*.yml"))
+      own = load_locales(File.join(@rails_root, app, "config/locales/**/*.yml"))
       return @result.inconclusive!("locale_shadowing #{app}: no locale files") if own.empty?
 
       shadowed = own.keys.select { |key| shared.key?(key) && own[key] != shared[key] }
@@ -176,19 +178,19 @@ module Deploy
     end
 
     def read_budget
-      return {} unless File.file?(BUDGET)
+      return {} unless File.file?(@budget)
 
-      YAML.safe_load_file(BUDGET).to_h { |k, v| [k.to_s, Integer(v)] }
+      YAML.safe_load_file(@budget).to_h { |k, v| [k.to_s, Integer(v)] }
     rescue StandardError => e
       # An empty budget is every ceiling at zero, which reads as a gate that
       # found nothing rather than one that could not read its own limits.
-      warn "locale_shadowing: #{File.basename(BUDGET)} unreadable (#{e.class}: #{e.message.lines.first.to_s.strip}) — no budgets applied"
+      warn "locale_shadowing: #{File.basename(@budget)} unreadable (#{e.class}: #{e.message.lines.first.to_s.strip}) — no budgets applied"
       {}
     end
 
     def record_low(app, count)
       budgets = read_budget.merge(app => count)
-      File.write(BUDGET, budgets.sort.to_h.to_yaml)
+      File.write(@budget, budgets.sort.to_h.to_yaml)
     end
   end
 end

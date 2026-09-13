@@ -12,8 +12,7 @@ require_relative "../../gates/lib/source/dialect_purity"
 # stylesheet re-setting --accent for itself, which takes the colour out of
 # _vertical_shell's map and puts it somewhere nothing else reads.
 #
-# The gate resolves every file it reads from constants fixed at load time, so
-# the fixture tree is installed by rewriting RAILS, TOKENS and WIRING.
+# The fixture tree is passed as root:, so every file the gate reads comes from it.
 class DialectPurityGateTest < Minitest::Test
   include GateFixture
 
@@ -55,10 +54,7 @@ class DialectPurityGateTest < Minitest::Test
     Dir.mktmpdir do |dir|
       sound_tree(dir)
       yield dir
-      rails = File.join(dir, "RAILS")
-      with_constants(GATE, RAILS: rails,
-                           TOKENS: File.join(rails, "shared", "design_tokens.yml"),
-                           WIRING: File.join(rails, "shared", "WIRING_NOTES.md")) { GATE.run }
+      GATE.run(root: dir)
     end
   end
 

@@ -15,7 +15,9 @@ module Deploy
       %w[1 true yes on].include?(env["GATE_AUDITOR_STRICT"].to_s.strip.downcase)
     end
 
-    def self.run
+    # root: and apps: name the fleet to walk. The auditor's own code always loads
+    # from this checkout's engine; only the subject moves.
+    def self.run(root: ROOT, apps: APPS)
       result = GateResult.new
       load SHARED.join("app/services/shared/frontend_auditor.rb")
 
@@ -23,10 +25,10 @@ module Deploy
       errors = 0
       warnings = 0
 
-      (APPS + ["shared"]).each do |app|
-        root = app == "shared" ? SHARED : Pathname.new(File.join(ROOT, "RAILS", app))
+      (apps + ["shared"]).each do |app|
+        root_path = app == "shared" ? SHARED : Pathname.new(File.join(root, "RAILS", app))
         result.checked!
-        findings = Shared::FrontendAuditor.call(root: root)
+        findings = Shared::FrontendAuditor.call(root: root_path)
         errs = findings.select { |f| f.severity == :error }
         warns = findings.select { |f| f.severity == :warning }
         infos = findings.select { |f| f.severity == :info }

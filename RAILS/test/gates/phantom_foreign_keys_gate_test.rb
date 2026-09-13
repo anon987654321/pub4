@@ -12,8 +12,8 @@ require_relative "../../gates/lib/source/phantom_foreign_keys"
 # prefix. Rails only resolves the real name at migrate time, so the defect ships
 # in schema.rb and surfaces as a failed migration on the box.
 #
-# The gate reads `RAILS/*/db/schema.rb` off a ROOT constant fixed at load time
-# and takes no root argument, so these tests rewrite ROOT around the call.
+# The gate reads `RAILS/*/db/schema.rb` under root:, so these tests pass a
+# fixture tree.
 class PhantomForeignKeysGateTest < Minitest::Test
   include GateFixture
 
@@ -24,7 +24,7 @@ class PhantomForeignKeysGateTest < Minitest::Test
       schemas.each_with_index do |body, index|
         plant(dir, "RAILS/app#{index}/db/schema.rb", body)
       end
-      with_constants(GATE, ROOT: dir) { GATE.run }
+      GATE.run(root: dir)
     end
   end
 
@@ -61,7 +61,7 @@ class PhantomForeignKeysGateTest < Minitest::Test
   # No schema at all is an unread tree, not a clean one: every app keeps one, so
   # an empty glob means the path moved under the gate.
   def test_an_empty_tree_is_inconclusive_rather_than_clean
-    result = Dir.mktmpdir { |dir| with_constants(GATE, ROOT: dir) { GATE.run } }
+    result = Dir.mktmpdir { |dir| GATE.run(root: dir) }
 
     assert result.measured_nothing?, "an empty glob reported a pass"
     assert_equal :inconclusive, result.outcome

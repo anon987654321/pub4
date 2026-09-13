@@ -17,10 +17,9 @@ require_relative "../../shared/app/services/shared/frontend_auditor"
 # tree without ever appearing in a diff. Everything else is a warning, and
 # whether warnings block is GATE_AUDITOR_STRICT's decision.
 #
-# The auditor takes a root, so the defect is planted in a temporary app. The
-# gate itself resolves its app list from constants fixed at load time, so those
-# are rewritten to point the fleet walk at the fixture — the shared engine stays
-# real, because the gate loads the auditor out of it.
+# The auditor takes a root, so the defect is planted in a temporary app, and the
+# gate takes root: and apps: to walk that fixture. The shared engine stays real,
+# because the gate loads the auditor out of it.
 class FrontendAuditorGateTest < Minitest::Test
   include GateFixture
 
@@ -38,7 +37,7 @@ class FrontendAuditorGateTest < Minitest::Test
   def gate_over(script_body)
     Dir.mktmpdir do |dir|
       plant(dir, "RAILS/demo/bin/generate.sh", script_body)
-      with_constants(GATE, ROOT: dir, APPS: %w[demo]) { GATE.run }
+      GATE.run(root: dir, apps: %w[demo])
     end
   end
 

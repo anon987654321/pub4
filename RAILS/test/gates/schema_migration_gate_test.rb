@@ -13,8 +13,7 @@ require_relative "../../gates/lib/source/schema_migration"
 # removed and proved to pass.
 #
 # The gate walks the fleet through Deploy::Inventory, which reads apps.yml under
-# a ROOT constant fixed at load time. There is no root argument, so the fixture
-# tree is installed by rewriting ROOT and RAILS_ROOT around the call.
+# root:, so a fixture tree with its own apps.yml is the whole fleet.
 class SchemaMigrationGateTest < Minitest::Test
   include GateFixture
 
@@ -48,7 +47,7 @@ class SchemaMigrationGateTest < Minitest::Test
     Dir.mktmpdir do |dir|
       sound_tree(dir)
       yield dir
-      with_constants(GATE, ROOT: dir, RAILS_ROOT: File.join(dir, "RAILS")) { GATE.run }
+      GATE.run(root: dir)
     end
   end
 
@@ -135,7 +134,7 @@ class SchemaMigrationGateTest < Minitest::Test
   def test_an_empty_inventory_is_inconclusive
     result = Dir.mktmpdir do |dir|
       plant(dir, "RAILS/apps.yml", "apps: {}\n")
-      with_constants(GATE, ROOT: dir, RAILS_ROOT: File.join(dir, "RAILS")) { GATE.run }
+      GATE.run(root: dir)
     end
 
     assert_equal :inconclusive, result.outcome

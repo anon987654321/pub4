@@ -6,19 +6,23 @@ require_relative "../../../../OPENBSD/lib/deploy_inventory"
 module Deploy
   class SchemaMigrationGate
     ROOT = File.expand_path("../../../..", __dir__)
-    RAILS_ROOT = File.join(ROOT, "RAILS")
 
-    def self.run
-      new.run
+    def self.run(root: ROOT)
+      new(root:).run
+    end
+
+    def initialize(root: ROOT)
+      @root = root
+      @rails_root = File.join(root, "RAILS")
     end
 
     def run
       result = GateResult.new
-      inventory = Inventory.new(root: ROOT)
+      inventory = Inventory.new(root: @root)
       return result.inconclusive!("schema_migration: the inventory lists no apps — nothing was read") if inventory.apps.empty?
 
       inventory.apps.each do |app|
-        app_dir = File.join(RAILS_ROOT, app.name)
+        app_dir = File.join(@rails_root, app.name)
         next unless File.directory?(app_dir)
 
         result.checked!
