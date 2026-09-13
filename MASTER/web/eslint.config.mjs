@@ -8,11 +8,8 @@ const browser = {
     globals: {
       ...globals.browser,
       MASTER_RUNTIME: "readonly",
-      MASTER_ASSET_PATHS: "readonly",
       MASTERVisual: "readonly",
-      MASTER_FACE: "readonly",
       ParticleKernel: "readonly",
-      Face3DPreview: "readonly",
     },
   },
   rules: {
@@ -45,14 +42,6 @@ export default [
     languageOptions: {
       ...browser.languageOptions,
       sourceType: "script",
-    },
-  },
-  {
-    ...browser,
-    files: ["public/face3d_*.js"],
-    languageOptions: {
-      ...browser.languageOptions,
-      sourceType: "module",
     },
   },
 ];
