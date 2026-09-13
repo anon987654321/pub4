@@ -55,19 +55,20 @@ if anyone widens that listener again, pf becomes the exposure's only guard.
 
 ## `SKIP_CI=1` does not mean "skip CI"
 
-`bin/vps-deploy <app>` branches in two ways (see `bin/vps-deploy` ~line 40):
+`bin/vps-deploy <app>` takes one of two branches:
 
-- **Default** (`SKIP_CI` unset): runs `vps_ci.sh <app>`, which syncs the repo to
-  the app's copy-tree and runs the full `bin/ci` gate (see below) against a
-  throwaway test DB.
-- **`SKIP_CI=1`** (used by `vps_production_push.sh` for fast hotfixes): skips
-  `vps_ci.sh` entirely and instead runs `RAILS/<app>/<app>.sh` directly, which
-  calls `deploy_tracked_app` → `rails_runtime_gate`.
+- **Default** (`SKIP_CI` unset): `vps_ci.sh <app>` syncs the repo into a CI
+  mirror and runs `bin/ci` (see below) against a throwaway test DB.
+- **`SKIP_CI=1`**: skips `vps_ci.sh` and runs `RAILS/<app>/<app>.sh`, which
+  calls `deploy_tracked_app` → `rails_runtime_gate`. That gate bundles,
+  prepares the databases, precompiles assets and runs `bin/ci` inside the
+  deployed `/home/<app>/app` tree. CI still runs, in a different place.
 
-The name suggests "no gate runs at all." That's false — `rails_runtime_gate` is
-still a real gate, it's just a *different, narrower* one than `bin/ci` (no
-RuboCop, no Brakeman, no `bin/rails test`). If a hotfix broke something `bin/ci`
-would have caught, `SKIP_CI=1` is why it slipped through, not a tooling bug.
+The flag that skips CI is `SKIP_RUNTIME_GATE=1`, which returns from
+`rails_runtime_gate` before any of that. `vps_production_push.sh` sets both, so
+the hotfix path runs no `bin/ci` at all, only the loopback gates `vps-deploy`
+runs after every restart. If a hotfix broke something `bin/ci` would have
+caught, that pair of flags is why, not a tooling bug.
 
 ## `bin/ci`'s `Setup` step behaves differently locally vs. on the VPS
 
