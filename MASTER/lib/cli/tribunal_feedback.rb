@@ -41,7 +41,7 @@ module Master
         return if vetoes.empty?
 
         lines << "" << "vetoes:"
-        vetoes.each { |item| lines << "  #{item[:persona]}: #{item[:feedback].to_s.strip.sub(/\AVETO:\s*/i, "")}" }
+        vetoes.each { |item| lines << "  #{item[:persona]}: #{one_line(item[:feedback]).sub(/\AVETO:\s*/i, "")}" }
       end
 
       def append_jurors(lines)
@@ -51,9 +51,12 @@ module Master
 
       def juror_line(item)
         axiom = item[:axiom] ? "[#{item[:axiom]}] " : ""
-        body = item[:feedback].to_s.strip.lines.first(3).map(&:chomp).join(" ")
-        "  #{axiom}#{item[:persona]} (#{item[:role]}): #{body}"
+        "  #{axiom}#{item[:persona]} (#{item[:role]}): #{one_line(item[:feedback])}"
       end
+
+      # A summary line holds at most three lines of a juror's text, joined, so a
+      # multi-line veto cannot break the indented list it sits in.
+      def one_line(text) = text.to_s.strip.lines.first(3).map(&:chomp).join(" ")
 
       def full_item(item)
         veto = item[:veto_role] ? " [VETO ELIGIBLE]" : ""
