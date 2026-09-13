@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "shellwords"
+require_relative "ffmpeg_probe"
 
 # Proves each effect stage actually does something.
 #
@@ -80,8 +81,7 @@ module VerifyFx
   end
 
   def measure(path, af)
-    out = `ffmpeg -v info -i "#{path}" -af "#{af}" -f null - 2>&1`
-    out[/mean_volume: ([-0-9.]+)/, 1].to_f
+    FfmpegProbe.number(FfmpegProbe.run(path, af), /mean_volume: ([-0-9.]+)/, what: "mean_volume")
   end
 
   # Energy above the fundamental. On a pure sine this can only be harmonics the

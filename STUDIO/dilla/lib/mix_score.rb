@@ -11,7 +11,7 @@
 # The targets are not invented. They are measured from tracks that were kept
 # after listening, which is the only defensible source for a "should sound like"
 # number -- a threshold picked in advance measures the person who picked it.
-require "open3"
+require_relative "ffmpeg_probe"
 
 module MixScore
   # Measured from demo29 and demo30, the two renders kept on their merits.
@@ -42,20 +42,14 @@ module MixScore
 
   def band(path, lo, hi, stat = :mean)
     key = stat == :peak ? "max_volume" : "mean_volume"
-    out = ffmpeg(path, "highpass=f=#{lo},lowpass=f=#{hi},volumedetect")
-    out[/#{key}: ([-0-9.]+)/, 1].to_f
+    log = FfmpegProbe.run(path, "highpass=f=#{lo},lowpass=f=#{hi},volumedetect")
+    FfmpegProbe.number(log, /#{key}: ([-0-9.]+)/, what: key)
   end
 
   def loudness(path)
-    out = ffmpeg(path, "ebur128=framelog=quiet")
-    [out[/I:\s*([-0-9.]+)/, 1].to_f, out[/LRA:\s*([-0-9.]+)/, 1].to_f]
-  end
-
-  # An argv, not a shell string: a render path holding a quote or a dollar sign
-  # broke the backtick form, and stderr is where ffmpeg prints both summaries.
-  def ffmpeg(path, filter)
-    out, = Open3.capture2e("ffmpeg", "-v", "info", "-i", path.to_s, "-af", filter, "-f", "null", "-")
-    out
+    log = FfmpegProbe.run(path, "ebur128=framelog=quiet")
+    [FfmpegProbe.number(log, /I:\s*([-0-9.]+)/, what: "integrated loudness"),
+     FfmpegProbe.number(log, /LRA:\s*([-0-9.]+)/, what: "loudness range")]
   end
 
   def measure(path)
