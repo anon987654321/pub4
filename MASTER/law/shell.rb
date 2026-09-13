@@ -110,8 +110,8 @@ Law.define(:STRICT_MODE_ZSH) do
   # which is all `scan: intentional` does — considered_text removes the marker
   # and the absent `set -e` is still absent. `absent` is checked against the raw
   # text before that, so it is the opt-out an absence-based law can honour, and
-  # dilla's redo_nine.sh needs one: aborting on the first non-zero exit would
-  # kill the other eight renders, which is the opposite of a batch script's job.
+  # dilla's live/broadcast.sh needs one: aborting on the first non-zero exit
+  # would end an all-night rotation at its first failed render.
   absent %r{scan:\s*intentional}
   # Only a shell shebang, not any shebang: a #!/usr/bin/env ruby script has no
   # set -euo pipefail to add, and flagging one is the false positive an
