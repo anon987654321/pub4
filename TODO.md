@@ -2808,665 +2808,79 @@ These are the operator's, because each changes a sound or accepts a changed inpu
 926. **`lora/guides/*.m4a` are tracked TTS output** beside their `.txt` scripts. Keep them in git or untrack them; either is the operator's.
 931. **`lora/_toolkit/judge_thresholds.yml` was calibrated on seven images;** `ragnhild/dataset/` now holds six. Recalibrating moves the quality floors.
 
-### Cross-tree micro-refinements (the rest of 10/10)
-
-1001. **Repo-root `snapshot_MASTER.md` / `snapshot_OPENBSD.md` / `snapshot_RAILS.md` / `snapshot_STUDIO.md`.** TREE.md says nothing else sits at the repo root but CLAUDE/AGENTS/GEMINI, TODO, TREE. Gitignore or move under `.master/` / `MASTER/output/`.
-1002. **`STUDIO/dilla/scratch/` logs and a png** next to source. Gitignore `dilla/scratch/`.
-1003. **`STUDIO/postpro/postpro.log`.** See 892.
-1004. **`MASTER/web/tmp/` and `web/storage/*.sqlite3`.** Confirm gitignored. list_dir showed them.
-1005. **`RAILS/tmp/` logs and pids.** Confirm gitignored.
-1006. **`RAILS/amber/public/assets` and `brgen/public/assets` carry vendor FIXME.** Generated. PathFilter must keep skipping them; a source-assertion that `public/assets` is not in `SCAN_GLOB`.
-1007. **Three `application_controller.js` copies** (amber, brgen, bsdports) plus shared. Confirm they are the Stimulus application instance, not duplicated logic; if duplicated, one shared file.
-1008. **`RAILS/*.sh` are reached** (already measured). Micro: each header should name its one caller so a fourth script cannot arrive unnamed.
-1009. **`OPENBSD/bin/check-rails` vs `ruby RAILS/gates/runner.rb`.** Two doors on the same registry. One sentence in both READMEs.
-1010. **`MASTER/bin/operator gate` vs `OPENBSD/bin/check-full` vs `RAILS/test/run_all.rb`.** Three “everything”. operator gate is the ladder; the others are rungs. START_HERE already says this; OPENBSD/START_HERE still offers check-full as if it were the ladder.
-1011. **`growth.studio` vs `DILLA_SUPPORT_CEILING`.** Two budgets on one tree. Document which counts files and which counts lines.
-1012. **`STUDIO/gate.rb` requires `OPENBSD/lib/gate_result`.** Fine. PATH_OWNERSHIP OPENBSD `lib/` should name this foreign caller.
-1013. **I18n `locale_contract` covers duplicate keys and nb/en parity; not unused keys or interpolation args.** Already named in the awesome-list scan. Still open. This is the RAILS half of 496–497.
-1014. **`chrome_i18n_lint` empty_copy is 0; aria is 172.** The next translated aria must lower 172 in the same commit.
-1015. **Maps Bergen fallback is the same defect as posts “Anywhere in Bergen”.** One helper: city blank label from `Current.city_record` or a generic `t("geo.anywhere_in_city")`.
-1016. **`increment!` on GET is the same shape in marketplace listings and TV videos.** One concern `ViewCounted` with a counter table, or accept the write and stop fragment-caching the count.
-1017. **Nullable counters** on listings, tv videos, playlist tracks/plays, takeaway orders. One migration family: default 0, NOT NULL.
-1018. **Job uniqueness** is one pattern: `limits_concurrency to: 1, key: "<job>"` on every recurring bulk job. A contract test that every `recurring.yml` class declares it.
-1019. **Engine `rake test` from the engine directory** is a lie for maps (zero tests) and thin for the other five. `ENGINES.md` should say which tests live in the host.
-1020. **`default:` in vertical ERB** is the hole `i18n_resolution_test` cannot see. A lint: `t(` with `default:` in `app/views` fails, or `raise_on_missing` in test env.
-1021. **Static error pages** (brgen, amber, MASTER web) are a third chrome: dark, English, no skip-link, hardcoded host. One generator from the live dialect.
-1022. **PWA manifests** are English in all four surfaces (three apps + MASTER). Locale or a shared partial.
-1023. **Service workers** name caches after the wrong product (`brgen-` on MASTER) and cache status 0. One SW contract test across the four.
-1024. **`--help` missing** is the same defect on OPENBSD bin scripts, dilla help-as-dump, postpro ARGV forest, repligen banner, lora toolkit. Unix voice: one job, usage on `-h`, silence on success.
-1025. **Hardcoded `/Users/mac/...` and `/opt/homebrew`.** `sine_stream.rb`, `demo_full.rb`, `broadcast.sh`, `rack.rb`, `dig_crate.rb`. Worktree-safe `__dir__` / `command -v`. Do not touch `~/Music/dilla_sines`.
-1026. **Shebang families.** OPENBSD mixes `env zsh`, `bin/sh`, `bin/ksh`, `env sh`. A census test: every committed script’s shebang is one of `{zsh, ksh, sh, ruby}` and `[[` only appears under zsh/ksh.
-1027. **Present-tense comments.** `dilla.rb` engine-part headers, `lib/engine/` wiring, `EventsController` “Wire into routes”, brgen layout `data-theme="dark"`, `NO_PUTS` exemption path, `FixLoop` architectures, `Io::Clean` changelog, `mask.js` claims, keep-warm OPTIONAL, core-reclaim litestream, CATALOGUE.md module counts. A comment states the present-tense reason.
-1028. **PATH_OWNERSHIP holes.** MASTER: cognition, pressure_engine, law, EXAMPLES, AEGIS, COGNITION, runtime, loop.gif. OPENBSD: data, test, gates, lib, dotfiles, quarantine, domain_watch, githooks. STUDIO has none. `rake lint` should fail on an undeclared top-level dir in MASTER and OPENBSD.
-1029. **Completions drift.** `_master` still completes `through`. Generate from `HELP_TOPICS` + `ALIASES`. Add `_operator`.
-1030. **Agent contracts vs TREE.md vs START_HERE.** Three maps. TREE.md is the map; START_HERE points; harness files are generated. A stale ASCII map in START_HERE is a second source.
-1031. **Maturity scorecard shelf life is 30 days.** Expect 8 of 8 again in a month. Re-read the predicate rather than re-dating the row. (Already in this file; the move is a calendar reminder, not a code change.)
-1032. **`scan: intentional` 162 markers, 95 files, nothing checks they still excuse something.** Awesome-list item. Still the highest-leverage detector not built.
-1033. **Relayd restart vs relayctl.** Awesome-list item. Still the highest-leverage box change not made. Read the man pages from vm23 first.
-1034. **Resource guard sheds per process and measures per box.** Awesome-list item. `ps -o rss= -p` per app into the same history line.
-1035. **`login.conf` rails class datasize 4096M on a 1 GB box.** Awesome-list item. Measure steady-state RSS on vm23 before guessing a cap.
-1036. **Same-disk snapshots.** `Shared::DatabaseSnapshotJob` + empty litestream restore path. Worth doing as soon as there is somewhere to put them; destination is an operator decision.
-1037. **Herb / HTML-aware ERB.** Revisit when Rails adopts it, not before. Cost: nothing yet.
-1038. **Face JS without a test, excluding bundles and vendor.** `chat_actions.js`, `cluster_miner.js`, `cognition_ecology.js`, `container_gate.js`, `face_2d_fallback.js`, `face_audio_bridge.js`, `face_blendshape_bridge.js`, `face_brutalist.js`, `face_council_multi.js`, `face_deferred_loader.js`, `face_expression_bridge.js`, `face_loops_music.js`, `face_loops_nudge.js`, `face_micro_interactions.js`, `face_minimal_ui.js`, `face_offscreen_ecology.js`, `face_particles.js`, `face_perf_guards.js`, `face_phosphor_trail.js`, `face_points_gl.js`, `face_semantics.js`, `face_tts_bridge.js`, `face_vision_{a,b,c,d,core}.js`, `mask.js` (delete if dead), `master_events.js`, `mic_capture_processor.js`, `particle_kernel.js`, `particle_worker.js`, `shortcut_sheet.js`, `smart_turn.js`, `sw.js` (has a presence test, not behaviour), `topology_registry.js`, `viewport_inset.js`, `visual_bridge.js`. One contract per file that is in `face_assets.yml`; delete or document each that is not.
-1039. **MASTER tools without a test naming the basename.** `example_scan.rb`, `namespace_ratchet.rb`, `readme_take.rb`, `refinements.rb`, `swallowed_errors.rb`, `word_boundary_lint.rb`. Plus those the MASTER pass named: `method_graph.rb`, `method_reach.rb`, `todo.rb`, `dup_census.rb`, `design_baseline.rb`.
-1040. **OPENBSD scripts without a behavioural test.** `bin/vps-deploy`, OPERATOR.sh beyond `zsh -n`, dns_zones, domain_alignment, port_inventory, installed_targets, deploy_smoke, integrity_gate skip_reason, nsd-resign, renew-certs, prune-guests, drain-jobs, keep-warm, ptr_openbsd_amsterdam, relayd_prune_keypairs.
-1041. **STUDIO files the gate cannot load-probe.** `bin/crate`, `run_ai_toolkit.rb`, `colab_session.rb`, `kaggle_session.rb`, `dilla_live.rb` (parse only), lora wrappers (shell). Guard or document.
-1042. **Hardcoded English in views (verified literals, not comments).** amber: Sparks joy, Body type, Public profile, Save profile, Add item, Wear once before deciding, Select item…, Select outfit…, Browse demo →, Talk to MASTER, Style evolution. brgen: Content missing, Community, Anywhere in Bergen, Body, Add photo, Post anonymously, Leave this field empty. dating: Profile photo, Make profile visible, Hide profile. marketplace: Remove from saved, Save listing, Marketplace search, Any query, Partner program, Category, Browse, Picked for the city, Make an offer. playlist: Replace audio file, Upload track, Unknown artist, Create playlist, All sets, New set, Only owners can invite…, Edit #{name}. tv: New channel, Channels will appear…, No channels match…, Live streams, Add a note, Timestamp, Add a comment. takeaway: anon on drivers. maps: kind humanize. shared: Curated offers. Each is one `t()` and one nb sentence.
-1043. **Mutating controllers without `rate_limit` (verified no `rate_limit` in the file; not inherited from ApplicationController — only sessions/passwords declare it).** Skip webhooks’ signature path except for a cheap IP limit. Do: blocks, bookmarks, communities, community memberships/bans/mods/wiki, conversation pins, conversations, crossposts, event RSVPs, events, follows, group conversations/members, notifications, partner memberships/programs, presences, push subscriptions, stories, story replies, typing indicators, dating likes/dislikes/matches/profiles/prompts/rewinds/verifications, marketplace addresses/checkouts/favorites/orders/payouts/questions/returns/reviews/saved_searches/stores/variants, playlist collaborations/dilla_sketches/hosted_tracks/imports/likes/listening_parties/listens/party_messages/playlists/sets/tracks, takeaway delivery_drivers/favorites/group_orders/menu_items/orders/restaurants/reviews, tv channels/comments/live_streams/stream_chats/video_notes/view_events, amber affiliate_links/ai/comments/connections/creator_profiles/declutter/follows/items/live_streams/messages/outfits/planned_outfits/posts/wardrobe_items, shared account_settings/csp_reports/notifications/reactions/review_cases/two_factor_setups/web_vitals. Named limits; `rate_limit_naming_test.rb` is the shape.
-1044. **`strict_loading` job paths.** `strict_loading_job_paths_test.rb` exists. Add `WardrobeMediaJob` actor/notification path if it reads `item.user`. Add TV show comments/notes and marketplace show questions to `attachment_preload_test.rb`.
-1045. **`recurring.yml` vs `rc.d/*_jobs`.** brgen_jobs is the only resident worker. Amber and bsdports recurring entries are fiction until RAM allows. Comment each recurring row with the rc.d that must be up, or stop scheduling them.
-1046. **City vanity TLS / relayd restart / openrsync** remain deploy blockers in this file. Micro on the repo side: `vps-deploy` should `rcctl check relayd` after any pass that restarts master (already paid for once).
-1047. **`rendered_suite` forty contrast pairs.** Operator colours. Do not retune. Record, don’t restyle. `layout_snapshot` is the reviewable baseline once someone who knows the month of changes accepts it.
-1048. **bsdports inbox link is unstyled.** Dead hook is gone; whether that link wears the nav class or the ghost button is a rendered decision.
-1049. **Face transitions exceeding `NO_LONG_TRANSITION`.** Held open deliberately. No baseline records them. Leave.
-1050. **Seventeen control classes still paint a visible border.** 2026-08-04 decision. Waits for the operator.
-1051. **`WORN_TYPE.profiles.map.rhythm_off_max_pct` declared in all seven profiles, read in none.** Instrumented where it matters.
-1052. **Browser half of the gates still opt-in.** `PUB4_DEPLOY_BROWSER_GATES=1`. Done when it runs somewhere unattended that is not vm23. `GATE_STRICT_ERRORS=1` is the cheap remaining half.
-1053. **dilla ENV switch census.** `knobs.rb` reports 727 knobs, 286 flags. The work is classification (additive / exclusive fork / operational) and deleting the dead ones, not the count. `dilla.rb:4498` comment claiming 156 of 405 is stale too.
-1054. **`NO_GOD_CLASS` remaining.** `bergen_demo_seeder.rb` 337 vs 300 — sixteen private methods, one per vertical. `conversation.rb` 28 public methods: IRC / geo rooms / unread are three subjects. `takeaway/order.rb` 26 methods: state machine vs display formatters. Display half to a presenter.
-1055. **`probe`/`check` pair.** Two doors, both have real callers. Do not fold `nsaudid` / `dogfood` (decided against). Document the Venn once in START_HERE and OPENBSD/START_HERE.
-1056. **Autofix classifies by transform, not yet per rule.** `Scan::Finding` declares `reversibility` and `blast_radius`; nothing under `lib/fix` reads either. A sitting that takes the classification as its subject.
-1057. **Findings have no portable form.** SARIF is ~60 lines. Worth doing only if the corpus is ever meant to be read outside pub4. No consumer today.
-1058. **Cross-engine references unmeasured.** One: maps reads `Takeaway::Order`. A source gate with that line as its declared exemption. Worth doing while the count is one.
-1059. **Fixed 2026-09-12.** `data/operator.yml` is the command list and now carries
-     the whole of it: the check family (check-rails, check-openbsd, check-vps,
-     check-full), vps-state and tree.sh lived only in START_HERE.md's Golden
-     Commands, so the stub that pointed here was the more complete of the two.
-     START_HERE's Golden Commands and Source Of Truth sections are pointers now,
-     and RECIPES.md is a door rather than a table. `operator_docs.rb` reads the
-     yaml and `/orient deploy` prints it, so a recipe added there shows at every
-     door.
-1060. **Verify the instrument before the next sitting.** Thirty of 22,417 scanner findings were sampled; roughly a quarter were actionable. This list was read against source in four explore passes and one parent census. It will still contain false positives. The first move on any item is to open the line.
-
 ---
 
-## Unwired logic, oddities, and typography — opened 2026-09-11 (second pass)
-
-Does not restate 1–1060. Two subjects, measured the same day: event names and
-templates that do not meet their other half, and the house type system
-(`TYPOGRAPHY` in `rules.yml`, Bringhurst’s measure and hanging punctuation,
-Tschichold’s optical margins, Müller-Brockmann’s grid, Wroblewski’s
-mobile-first, Rams’s “as little design as possible”) against the SCSS that
-actually paints.
-
-Rendered values stay the operator’s. The move is structure: apply a token the
-law already names, hang a quote into the gutter, stop a second type system in
-an ERB `<style>` block. Sample five lines.
-
-`ScaleLint` sees `line-height:` literals, not `font:` shorthand.
-`MEASURE_OPTIMUM` only flags ≥800px, so 660/700/720 slip. `RhythmLint` only
-token files. Legal and mailer CSS live in ERB and are invisible to both.
-`NO_INLINE_STYLES` currently names `diag.html` and `dilla.html`, not these.
-
-### Unwired — event names, missing templates, dead registrations
-
-1. **Fixed 2026-09-12.** `rule_loop.rb` publishes `pass`, `error`, `fix_applied`,
-   `write_error`, `fix_rejected` and `autofix_skipped`. The bridge tested
-   `rule_loop:(cycle|clean|converged)` — zero overlap with any of them, in a file
-   that matches by regex, so `master:rule_event` had never once fired. The listener
-   and the classify rows above it name the published topics now.
-2. **Same file `phantom:retry` (`:197`).** Producer is `phantom:recovery` / `phantom:occurrence` / `phantom:halt` (`unwrap_error.rb`). Flinch never runs on a real retry.
-3. **Same file `pipeline:start` (`:26`).** Producer is `pipeline:stage_start` / `pipeline:complete`. Thinking tint never keys off a real stage start.
-4. **Fixed 2026-09-12.** The rotator started on `council:start`, which exists, and
-   could only be stopped by `tribunal:rendered` — of `vote|speech|end` none is a bus
-   topic and `council:speech` is an SSE name on the chat stream. So a council that
-   passed or vetoed left the face deliberating until something unrelated rendered a
-   tribunal. It stops on `council:pass|veto` now, keeping the SSE name and the
-   tribunal. Two dead alternates went with it: `council:deliberation` and
-   `phantom:retry` name nothing the bus publishes, and `pipeline:start` is not
-   `pipeline:stage_start`.
-5. **`council:deliberation` in `EventsController::VISITOR_SAFE_PREFIX`.** Nothing publishes it. Use `council:start`.
-6. **`tool:used` in the EventsController comment.** Producers are `tool:before` / `tool:after`. Delete the comment or retarget.
-7. **`tts:prefetch` in `face_vision_core.js`.** No publisher. Dead classifier arm. The bundle copies the same regex.
-8. **`CanvasController#state` publishes `:canvas_state` (symbol).** Nothing subscribes by that name. Cognition’s `**` eats it as telemetry. Named consumer or stop publishing.
-9. **`POST /canvas/event` publishes `canvas:mood|mode|gesture|idle|tilt|palette|energy|breath`.** No named subscriber. A third canvas channel beside SSE `mood` and `felt:sense`. Fold or drop the allow-list.
-10. **`sse_contract.js` `SSE_EVENTS` lists `felt`, `mood`, `model`, `verdict`, `confidence`, `council:speech` with no `NAMED_HANDLERS`.** POST chat works only because `handleFaceNamedEvent` runs first. `MASTER_SSE.dispatchNamed` alone drops them. Put the handlers in the contract. Assert `SSE_EVENTS ⊆ NAMED_HANDLERS` (the test currently asserts the twelve handlers that exist, not the six listed).
-11. **GET EventSource `/chat/message` still lives in `face.runtime.js` after the POST path returns.** Duplicate named-event copy. Delete the GET branch or prove `startChatStream` can be absent.
-12. **`MasterChannel` streams `master:council` and `master:status`.** `cable_bridge.rb` broadcasts only `master:events`. The test asserts the empty streams. Broadcast or drop the two names.
-13. **`Trace::Metrics` subscribes `llm:response`.** Happy path also publishes `llm:call_complete` from `ruby_llm_sender.rb:143`. A dispatcher-only call never increments Metrics. One topic, or Metrics subscribes both.
-14. **`felt:sense` is SSE’d as `felt`.** POST `handleFaceNamedEvent` does not include `felt` (mood/model/verdict only). POST path drops felt entropy.
-15. **`content_kind` SSE is handled in face runtime, not in `SSE_EVENTS`.** Contract incomplete the other way.
-16. **`ChatService` writes SSE `pressure` from `pressure:updated`.** visual_bridge also maps `pressure:updated` → `master:pressure`. Two pipes. One should own it.
-17. **`publish(:canvas_state)` vs `publish("felt:sense")` in the same method.** One spelling.
-18. **`cache:hit` subscriber vs two publishers.** `semantic_cache.rb` and `ruby_llm_sender.rb` send different payloads (`key:` vs `model:`). Pin the fields.
-19. **`cluster_miner.js` keys `master:rule_event`.** Same dead name as item 1. Clusters never ingest a live pass.
-20. **`btw` SSE is fed by `btw:done`, published only from unwired `agent_commands.rb`.** Face `/btw` UI is the dead table’s other end. Wire `btw` into `CommandRegistry.build` or delete the SSE. Same for `client_action` / `media_commands`.
-21. **`agent:plan_done` subscribed in `active_plan.rb`, published only from unwired `agent_commands.rb`.** Active plan never pins from `/btw plan`.
-22. **`skills:loaded` published, never subscribed.** Wire `/skills` or stop publishing.
-23. **EventsController serializes most bus events as anonymous `data:` JSON, named `event:` only for `trace` and `link`.** Named EventSource listeners on `/events/stream` never see `mood`. Pick one encoding.
-24. **`MASTER_CONSENSUS_FIXES` defaults off.** No test sets it to `1` and asserts `consensus.approve_fix?`. On-path test or delete the gate.
-25. **`MASTER_WATCH=1` defaults off.** Tests pin `"0"`. No test that WatchLoop actually starts.
-26. **`web/app/helpers/application_helper.rb` is an empty module.** Delete or put a real helper there.
-27. **`pages#radio_bergen` redirects to playlist.** Face still `window.open("/radio_bergen")`. Works via bounce. Point the JS at playlist or keep the bounce with a test.
-28. **`ReportsController#create` `format.turbo_stream` and there is no `app/views/reports/`.** Turbo report submit 500s. Add `create.turbo_stream.erb` or drop the format. bsdports `comments#destroy` already inlines the stream for this reason.
-29. **`IdentityAssurer` is only called from `trust_and_identity_test.rb`.** No controller or job grants phone/bankid in production. Wire Vipps success into `grant!` or stop claiming identity levels.
-30. **`IdentityAssurance` / `ReputationScore` tables exist; no view reads them.** Show on `users/show` or stop writing `TrustScore`.
-31. **`Neighborhood` has no route/controller.** Dating and maps print the name. No neighborhood page. Add `maps/neighborhoods#show` or stop seeding Nordnes as if it were a page.
-32. **`Mention` has no view.** `Mentionable` writes rows; nothing lists “you were mentioned”. Notification kind or drop the model.
-33. **Stimulus `carousel` is lazy-registered.** Amber showcase is a CSS marquee with no `data-controller="carousel"`. Unregister or vendor swiper for a real caller.
-34. **`read-more` registered, zero `data-controller="read-more"` in ERB.** `Shared::StimulusFormHelper#read_more` is a helper that emits `.read-more-content`, not the Stimulus controller. Delete the registration and the pin.
-35. **`reveal` registered; only `examples.html.erb`.** examples is unmounted. Unregister.
-36. **`examples.html.erb` still demonstrates toast/clipboard/reveal/content-loader.** Unmounted. Delete or move under `test/`.
-37. **`content-loader` comment says retired; examples.html still has it.** Delete the markup.
-38. **`.lazy-loaded` CSS lives in `_coverage_fills.scss`.** Helper is live. Move the two selectors into a real partial so the fill file is not load-bearing.
-39. **`.luxury-product-ready` is named in `css_coverage_lint.rb` and has no class in SCSS/ERB/JS.** Drop from the comment list.
-40. **`jox-logo` lazy-registers; no `data-controller="jox-logo"` in any view.** CSS exists in amber/bsdports `_jsfiddle_chrome.scss`. Markup never asks for the controller. WIRING_NOTES says they get the animation. Either mount it on the mark or stop registering it.
-41. **`data-shell=` still queued in `SURFACES.md`.** Immersive vs browsable is CSS-encoded on `body[class*="vertical-"]`. Naming it in markup is still not built.
-42. **Carousel / takeaway / playlist / dating / TV mutations are redirect-only.** Favorite, like, dislike, rewind, comment, collaboration, import: full page reload. Stream the row or keep and test the redirect. Highest: `Tv::CommentsController` has no `tv/comments/` views and does not turbo-append despite `TvCommentCreated`.
-43. **`ConversationPinsController` / `GroupMembersController` redirect-only.** Pin does not reorder the rooms rail; adding a member does not append a row. Stream `_rooms_rail`.
-44. **`lazy_image_tag` lives in brgen host JS, called from dating engine views.** Engine `rake test` without the host helper fails. Move the helper/controller to shared.
-45. **`BSDPORTS_PORTS_TARBALL=1` defaults off.** Test covers the decline path only. Add a fixture tarball test.
-46. **`Shared::Reactable` is included on Port/Comment/Advisory while `BSDPORTS_SOCIAL` routes are off.** Don’t include the concern until the flag is on.
-47. **Amber layout comment: `_wardrobe_showcase` “used to render here” while `home/index.html.erb` still renders it.** Stale comment, live home.
-48. **`etc/rc.d/irc_gateway` has no producer in this repo.** Document as optional or stop OPERATOR from installing it.
-49. **`DEPLOY_ASSUME_VPS=1` lets a laptop pretend to be the box.** Refuse unless `/etc/relayd.conf` exists.
-50. **`health_check.rb --public-only` never curls `/events/stream`.** A hung SSE is invisible to uptime.
-51. **`DILLA_SPEAK` / `DILLA_RAW` default `"0"`.** No RAILS test sets them to `1`. On-path or drop from the env hash.
-52. **`demo_full.rb` is never called from `dilla.rb` dispatch.** Dead demo with a hard Music path.
-53. **`lib/cli/web_server.rb` is called from `boot/master_boot.rb:56`.** Item 264 of the first pass can close as false.
-54. **`DatalogEngine` / `AutonomousRepairer` have callers.** Item 216 of the first pass can close as false.
-
-### Typography — measure, hanging, OpenType (Bringhurst, Tschichold)
-
-The law already names the tokens. `.prose` in `_typography.scss` already hangs
-punctuation, hyphenates 6/3/2, orphans 3, and caps `--measure`. Almost no
-reading surface wears that class. Legal and mailer invented a second system
-in ERB `<style>` blocks that no lint reads.
-
-55. **Legal pages use `legal-prose`, not `.prose`.** `pages/terms.html.erb`, `privacy`, `cookies`. Law `optical_margins.apply_to: [legal]`. Add `.prose` or alias `.legal-prose` to the shared block.
-56. **Fixed 2026-09-12.** The inline block is `shared/app/assets/stylesheets/_site_legal.scss`, moved with every value untouched — measured on brgen.no/privacy before and after, `.legal-prose` is 724.397px wide and its h1 is 28.8px/33.12px either way. Snapping those values onto the scales is a separate decision and the operator's.
-57. **Same block `.site-legal{max-width:1100px}`.** Hits `MEASURE_OPTIMUM`. Footer is chrome (`do_not_apply_to: chrome`); keep a layout width, stop treating it as a text column.
-58. **Same block padding `18px 20px 28px`, gap `10px 18px`.** 10 and 18 are off `scale.space_px`. `--space-*`.
-59. **Mailer `_mailer_styles.html.erb` is a third type system.** Dark `#050505` vs fleet light default; Helvetica + Georgia + Arial = three families (`max_font_families: 2`); `letter-spacing: 0.28em / 0.22em / 0.18em / 0.04em` off `letter_spacing_em` (max caps 0.15, no 0.04 on lowercase CTA); line-heights 1.45, 1.35, 1.55, 1.2 off scale; font-size 11/12/13/14/15/16/17/24/34px private ladder; `.mail-shell { max-width: 620px }`; `border-radius: 18px` off `radius_px [0,2,4,8,12,16]`; CTA `letter-spacing: 0.04em` on mixed case; `.mail-deal-price` has no tabular nums; `padding-right` not logical; `linear-gradient` on `.mail-typo-hero`; `color: #050505 !important`. **Move:** one sans + optional Georgia for the lede; measure in `ch`; leading from `--leading-*`; tracking only on the uppercase kickers at `--tracking-wider` (0.08) or `--tracking-widest` (0.14); tabular on price. Do not pick new hex — if the letter stays dark, that is the operator’s; the type scale is not.
-60. **`NO_INLINE_STYLES` does not see ERB `<style>`.** Detector names two `.html` files. Legal footer and mailer styles are the real subjects. Extend the language to `.erb` or the rule is a spelling of a filename.
-61. **`.reading-column` and `.form-measure` are defined, never used in a view.** `css_coverage_lint.rb` already says “worn by tokens, not yet by every view.” Put them on legal, compose, item forms.
-62. **Listing description has `max-width: 66ch` as a spelling of `--measure`.** `_marketplace.scss:74-77`. No hanging, no hyphens, no OpenType. `var(--measure)` plus `.prose`.
-63. **Dating bio via `read_more`, no `.prose`.** `_vertical_dating_discover.scss` `.swipe-bio` is colour only. If it reads as a paragraph, `max-width: var(--measure-narrow)`.
-64. **`.page-header { max-width: 660px }` in `_minimal.scss:202` fights `_layout_chrome.scss` `var(--measure)`.** Drop the px.
-65. **bsdports `header { max-width: 660px }` and `header.page-header > p { max-width: 62ch }`.** Token, not 660/62.
-66. **amber `.item-detail { max-width: 700px }`.** If it is copy, `--measure`; if a product frame, leave and mark `scan: intentional`.
-67. **playlist `max-width: 720px` on back-link and `.playlist-app`.** Copy → `--measure`; chrome → `--container-max` / `--feed-max`, not 720px.
-68. **`.form-wrap { max-width: 480px }` and amber `_item_forms.scss` 480px and `_minimal.scss` `.form` 584px and bsdports `#search` 584px.** `--measure-narrow` (45ch) or `.form-measure`.
-69. **`.splash .tagline { max-width: 28em }`.** `--measure-narrow`.
-70. **errors.css `main article { width: min(100%, 30em) }`.** `var(--measure)` if tokens reach this sheet.
-71. **Print `.prose { max-width: 100% }` in `_zen_shell.scss`.** Drops the measure on the page that most needs it. Keep `--measure` in print; law `print_margins`.
-72. **`.prose ul, ol { padding-inline-start: 1.25em }` keeps markers inside the measure.** Bringhurst + `list_marker_hang` + geometry `check_hanging` (principle=tschichold): hang into the gutter. `_posts.scss` 1.5em is worse. Legal `padding-left: 1.1rem` is both physical and inside.
-73. **`.prose blockquote` padding + border sit inside the column.** Law `blockquote_border_in_margin`: pull the rule into the gutter.
-74. **`--feed-max: 600px` ≈ 45ch at brgen 18px.** Matches `WORN_TYPE.feed` 35–55. Do not widen the feed to 66ch. Marketplace opts out of `--feed-max` for tiles (`do_not_apply_to: marketplace_tile`); the listing *description* still wants 66ch.
-75. **amber `_editorial.scss` newsletter `--measure-narrow` is the feed profile.** Do not “fix” to 66ch.
-76. **Post show `_feed_post.scss` already `--measure` + hanging + hyphens.** Template for listing, legal, mailer, dating bio.
-77. **Wiki `.wiki-page .prose` already `var(--measure)`.** Hang lists still fail (item 72).
-
-### Typography — rhythm, scale, tracking
-
-78. **`--line-height: 20px` absolute on `:root`.** Recorded `scale: ok`. Law `forbid_absolute_px`. Seam: measured screenshot before unitless 1.25 at brgen 18px root. Do not change the number from a terminal.
-79. **`font:` shorthand hides off-scale leading from ScaleLint.** `_marketplace.scss` `1.5rem / 1.2`; `_canvas.scss` `10px/1.35`; `face.css` `#chat-log { font: 12px/1.42 }`. Extend the lint to the `font` shorthand, then put those leadings on the allowed steps.
-80. **`_canvas.scss` `font: 10px` and playlist `clamp(12px, 3vw, 14px)`.** Below `body_min_px: 16`. Chrome/kicker may stay small; they are not body. Name them as chrome so the lint can skip, or raise to `--text-xs` (0.75rem = 13.5px at brgen — still below 16; the iOS input floor is the 16px case, not labels).
-81. **`--text-display: 2.2rem` is a ninth size.** Law `max_font_sizes: 8`. xs/sm/base/lg/title/xl/2xl = 8. Display makes 9. 2.2rem is 35.2px @16, off the 8px grid, off the modular ratios (1.2 / 1.25 / 1.333 / 1.618). Map heroes to `--text-2xl` or accept display as the one sanctioned extra and stop citing 2.2rem as a ladder step — do not invent a tenth.
-82. **`.prose h1` and `main#main-content > header h1` are `--text-2xl` (1.75rem) / body 1rem = 1.75.** Law `h1_body_min_ratio: 2.0`. `--text-display` is 2.2× but is the ninth size. Do not pick a new px; decide which token is H1.
-83. **`.page-header h1` is `--text-title` (1.25×).** Chrome index titles. If the page is editorial, use the page-title rule.
-84. **Auth `h1` `--text-xl` (1.5×); dating `h1` clamp 1.5–1.875rem.** Below 2.0. Immersive/auth may stay; do not restyle as a palette pass.
-85. **Fixed 2026-09-12.** `section h2` is deleted and `main#main-content > section >
-     h2` is now `main section h2`. The widget rule matched no sidebar markup in any
-     of the three apps — its only reach was content. Measured on amber's front page
-     before and after: the four wardrobe category headings were 15.75px monospace
-     uppercase at 1.26px tracking and are now 15.75px proportional, no transform,
-     -0.1575px; the empty state's h2 held its size and lost the uppercase its own
-     class never asked for. The new selector is deliberately class-free, so
-     `.wardrobe_showcase_label` and `.empty-state-title` still win what they set.
-86. **`--tracking-tightest: -0.03em` vs law `heading_tight_min_em: -0.02`.** Stop using tightest on `--weight-heavy` headings (splash h2, marketplace clamp −0.045em). `--tracking-tight` or 0.
-87. **Marketplace `letter-spacing: clamp(-0.045em, -0.9vw, -0.02em)`.** Floor past −0.02; clamp hides it from ScaleLint.
-88. **face.css `#primer h1` Inter lowercase `letter-spacing: .01em`.** Law: no letterspaced lowercase; scale has no 0.01.
-89. **face.css `.04em` and `#zsh-status { letter-spacing:.32em }`.** 0.04 off the scale; 0.32 over `all_caps_max_em: 0.15`. Terminal status may stay; primer h1 must not.
-90. **Legal eyebrow `.12em` is on the old five-way kicker set that was collapsed to `0.14`.** Use `--tracking-widest`.
-91. **Mailer kickers 0.28 / 0.22 / 0.18em.** Same. `--tracking-widest` (0.14) is the ceiling the tokens already named.
-92. **`font-size: 1.17em` / `0.92em` / `0.6em`.** Off modular 1.25. `--text-lg` / `--text-sm` / `--text-xs`.
-93. **Two paragraph rhythms.** `_posts.scss` `p { margin: 0 0 var(--space-5) }` vs `_typography` `p + p` `--space-3` vs law `paragraph_margin_em: 1.5`. One.
-94. **`max_font_weights: 3` vs `scale.font_weight` [400,500,600,700,800].** Dialect in use is 400/600/800. Stop shipping 500/700 in the lint scale if unused, or stop using them.
-95. **Marketplace hero `--font` + `--font-display` + `--font-mono` kicker = 3 families.** Law: 2. Kicker can stay same family, small caps/tracking. Playlist SF Mono is the recorded fifth-face fence — leave.
-96. **Mailer three families.** Item 59.
-97. **Fixed 2026-09-12 for bsdports; the Caprasimo half is false.** Measured at 390px
-    across all three apps: Caprasimo never renders above 700 anywhere, and brgen and
-    amber have no synthesised weight at all. bsdports had 11 of 32 weighted elements
-    drawn by the rasteriser rather than the type designer — 9 at 600 and 2 at 800
-    against a JetBrainsMono that ships Regular and Bold and nothing between, so the
-    600 step was as invented as the 800 one and the item named only half of it.
-    bsdports' dialect now sets both `--weight-bold` and `--weight-heavy` to 700.
-    After: 20 elements at a drawn 400, 12 at a drawn 700, none synthesised.
-    design_rules wants three weights 200 apart; a two-cut family cannot offer that,
-    and the token file's own principle — the heaviest step is defined by the stack it
-    renders in — is what this follows.
-98. **Brand logo `12px` / `24px` with stepped `@media (min-width: 768px)` vs `CLAMP_TYPOGRAPHY`.** Marks are not running text; `scan: intentional` if they stay px.
-
-### OpenType, numerals, quotes, hyphens
-
-99. **`.prose` has no `font-feature-settings` / `font-variant-numeric`.** Law `default_features: [kern, liga, clig, onum, pnum]`, `body_numerals: oldstyle-nums`. Set on `.prose`. Tabular + lining on `[data-money]` already correct (`_tokens.scss:244-251`).
-100. **No `hyphenate-limit-lines: 2` anywhere.** Chars 6 3 2 exist on `.prose` only. Add the line limit next to them.
-101. **No `quotes:` / Norwegian guillemets.** Law `quotes: locale`, `norwegian_guillemets: true`. `html[lang="nb"] .prose { quotes: "«" "»" "‘" "’"; }`. Do not change the glyphs the operator already set in copy; this is the CSS quotes property for generated quotation marks.
-102. **No `smcp` / `c2sc` for abbreviations.** Law `contextual_features.abbreviations`. Optional; wire on `.prose abbr` if any exist.
-103. **Orphans/widows and `hyphens: auto` only on `.prose` + post show.** Legal, mailer, listing, dating bio, errors, face log miss them.
-104. **No `text-align: justify` in source.** Good. Do not add on mobile.
-105. **`hanging-punctuation` is Safari-only.** Optical hang still needs hanging quotes/lists in CSS for Chromium (item 72). `geometry_type.rb#check_hanging` already measures marker_x vs text_x (Tschichold). A live legal/wiki page with lists should fail that probe; if it does not run on those surfaces, add them to `geometry_surfaces.yml`.
-106. **face.css `"ss01","ss03","cv05","kern"` missing liga/clig/onum/pnum.** Wire law defaults; keep ss03 only if Inter actually loads on the primer.
-107. **`.msg-body` liga+kern only.** Same.
-108. **Tabular nums missing on `.mail-deal-price`, legal dates, wiki history.** Prices/times on marketplace, tv, bsdports, amber dashboard already have them.
-109. **`_fonts.scss` jsDelivr CDN fallback for JetBrains Mono.** Self-hosted `/fonts/` already exists. Drop the CDN `src` so a missing local file does not fetch Nick2bad4u’s GitHub on every first paint (privacy + design: the face is not a third-party type foundry).
-110. **Libre Baskerville files sit in `shared/public/fonts/`.** Confirm a `@font-face` still names them. If amber editorial moved off them, they are dead weight; if they load, they are a second serif beside Georgia in the mailer and Caprasimo on amber — count families per surface.
-
-### Motion, flat UI, logical properties, mobile-first
-
-111. **`_search_yep.scss:41` `box-shadow: rgba(0,0,0,0.25) 0 1px 8px`.** Comment says the pen allowlist restored it after a flat-UI pass. Confirm `PEN_ALLOW` still names this file; if the pen retired, this is the one shadow besides the recorded popover arrow. Operator: keep or drop — do not invent a third.
-112. **`.search.active { border-radius: 16px }`.** 16 is on `radius_px`. Fine. Prefer `var(--radius-*)`.
-113. **`#ccc` border on `#search_suggestions`.** Not a token. `var(--border)`.
-114. **`background-color: white` on `.search.focus`.** Not a token. `var(--surface)`.
-115. **Vote animated-number `duration-value="900"`.** 900ms > `NO_LONG_TRANSITION` 300ms. JS, not CSS; the rule misses it. Cap at `--transition-normal` (300ms) or mark as a counted animation, not a UI transition.
-116. **`NO_LONG_TRANSITION` misses `1.2s` / `.42s`.** Face 1200ms/1800ms already fenced. Extend the detector to seconds so a new 1.2s cannot land in RAILS unnoticed.
-117. **Legal/mailer `padding-left` / `padding-right`.** `LOGICAL_PROPERTIES`. Inline-start/end.
-118. **Overtaken 2026-09-12.** The conversion pass happened: 18 max-width queries went
-     to 1, the `scan: intentional` markers are gone with them, and MOBILE_FIRST now
-     finds nothing in RAILS. The one left, `_root.scss:334`, is a bounded band whose
-     max is an upper bound on an enhancement — see 1063.
-119. **`--text-display` 2.2rem and canvas `clamp(2.5rem, 12vw, 5rem)` on splash h2.** Display type without a sanctioned home was why `--text-display` was added. Splash still bypasses it. One display slot.
-120. **Measured 2026-09-12, and it is the operator's.** The three roots are 18px
-     (brgen), 16px (amber) and 12px (bsdports), so an absolute 13px is 0.72rem, 0.81rem
-     and 1.08rem of its own app — the item is right that on bsdports it outgrows the
-     body. `.site-verify` does not render on any front page, so the live cost today is
-     zero and the fix is a type change on pages that do. Naming it `--text-xs` makes it
-     13.5/12/9px respectively, and 9px is a decision about what bsdports' footer meta
-     should look like rather than a bug fix. `_site_legal.scss`'s own header already
-     fences this: every one of those numbers is something somebody sees.
-
-### Oddities and gaps the type system makes visible
-
-121. **Three roots, one rem.** amber 16 (18 at ≥1280), brgen 18, bsdports 12. Recorded, not a bug. Any new `ch` measure is true at that root; any new `px` measure is a lie on two of three apps. Prefer `ch` / `--measure` for copy, `px` only for chrome insets already so named.
-122. **`--space-4` is 1rem = 12px on bsdports and 18px on brgen.** Why tap/chrome are absolute. A legal `padding: 32px` is honest; a legal `padding: 2rem` is not the same page on three apps. Legal currently mixes both.
-123. **Instrument: `RhythmLint` only scans `_tokens.scss` and `_dialect_tokens.scss`.** Legal/mailer/listing spacing never enter. Point it at all stylesheets or at ERB `<style>` blocks, or it will keep saying ok.
-124. **Instrument: hanging is a geometry probe, not a stylesheet grep.** Surfaces without lists in `geometry_surfaces.yml` cannot fail `check_hanging`. Add legal, wiki, post show.
-125. **Instrument: `css_constitution` type_scale budget counts raw `font-size` literals.** ERB `<style>` is outside that budget. Same hole as 60/123.
-126. **`.coverage_fills` is still the box model for Event, Story, moderation.** Token-only geometry, no type. Those pages get flex and gap and body size. If they grow prose (wiki already did the right thing), they must opt into `.prose` rather than another fill.
-127. **Face `#primer` Inter + mono HUD + 12px chat log is a fourth dialect.** SURFACES.md already says one-theme black. Type: the primer is the only Inter; the log is the CRT. Do not mix Inter tracking into the log. Item 88 is the leak.
-128. **Bringhurst “choose a face for a function.”** Inter/system-ui social, Caprasimo editorial (amber only), JetBrains CRT (face + bsdports + kickers), Georgia mailer lede, Bricolage marketplace display, SF Mono playlist. That is six functions. The law’s max 2 is per *surface*, not per fleet — count on the page the reader is on, not in the repo. Marketplace hero is the surface that currently breaks it (item 95).
-129. **Tschichold / hanging quotes.** `hanging-punctuation: first allow-end last` is set; Chromium ignores it. A `text-indent` / negative margin on `q::before` / opening `“` is the cross-browser hang. Only on `.prose`.
-130. **Müller-Brockmann 8px / 12-col.** ScaleLint `off_scale_space: 16` is the remaining debt. Do not raise the baseline. Legal/mailer px gaps (10, 18, 6, 26, 34) would add to it the day the lint can see ERB.
-131. **Wroblewski mobile-first.** Viewport edges are declared; max-width bands are fenced. New copy columns should not introduce a fourth 584/620/640/660/700/720px “almost a measure.”
-132. **Closed 2026-09-12 with the legal cluster.** The second type system was the
-     legal/mailer inline `<style>`; it is now `shared/_site_legal.scss`, moved with
-     every value untouched. One type system.
-133. **Ando / ma.** `--leading-loose` 1.6 is already the quote step. Legal 1.62 and mailer 1.55 invent a half-step of air that reads as unsettled next to 1.5 body (ScaleLint’s own diagnosis). Snap to 1.5 or 1.6.
-134. **Uppercase without tracking — the widget leak half is fixed 2026-09-12.** The
-     leak onto vertical section titles is closed with item 85: nothing uppercases a
-     section heading now. The forward half stands — kickers that are still
-     `text-transform: uppercase` need tracking from the token ladder, and the footer
-     nav's h2 (15.75px, 0.7875px) is the one place measured so far that does.
-135. **Bringhurst on lowercase: do not letterspace.** Primer h1 (item 88), mailer CTA 0.04em (item 59), face `.04em` (item 89).
-136. **Oldstyle in body, lining/tabular in tables and prices.** The money hook is lining+tabular. Body never got oldstyle. Inter and system-ui ship onum; JetBrains as a mono should stay lining (code/CRT). `.prose` yes; `.font-mono` no.
-137. **`void_target: 0.70` in micro typography.** Unverified whether any surface measures leftover space. If `geometry_type` does not, it is an unread key of the same class as `rhythm_off_max_pct`.
-138. **`check_hanging` severity `:soft`.** A list whose markers sit inside the measure will not fail a gate. If hanging is law, it is a fail; if it is advisory, say so next to `list_marker_hang`.
-
-### Remainder — face, verticals, motion, instruments
-
-The first 138 closed the legal/mailer second system, the event-name drift, and the unread OpenType keys. What follows is the rest of that sitting: surfaces the truncated pass still had open, and a few unwired flags that sitting also named.
-
-139. **`#primer h1` names Inter.** `MASTER/web/public/face.css:544`. HUD is `system-ui` + `--font-label` mono — three families on one page (`max_font_families: 2`). Inter is gone from `_fonts_brand.scss`. `var(--font-brand)` or `var(--font)`, not a third named Inter. Tracking `.01em` on that lowercase heading is item 88.
-140. **Splash chips `ui-monospace` on a system-ui splash.** `_canvas.scss:28`. Two families, at the cap. Leave if body stays one.
-141. **Legal eyebrow `.72rem` + `.12em` + uppercase.** `_site_legal_footer.html.erb:20-21`. Tracking is inside the all-caps band; size ≈11.5px below `body_min_px: 16`. `--text-xs` (chrome meta), `--tracking-widest`. No new size.
-142. **`.prose` has `text-wrap: pretty`; headings `balance`.** Listing, legal, mailer inherit neither until they join `.prose` (item 55).
-143. **Auth `h1` `--tracking-tighter` is allowed heading tight (−0.02).** `_auth_form.scss:41-46`. `.auth-form-lead` is unspaced — keep it that way; don’t letterspace the lead.
-144. **`chat_upload.css:42,48` `transition: … .42s`.** 420ms over the cap. Face 1.2s / 1.8s are the recorded fence (`TODO` layout pass). This file is not that fence. `var(--transition-normal)` (300ms), same easing.
-145. **`face.css:566` `ripple 680ms` is an animation.** ScaleLint `duration_ms` is transitions only. Don’t treat it as a transition-budget fix.
-146. **Dating `linear-gradient` on buttons.** `_vertical_dating_discover.scss:59` vs FLAT_UI uniform-at-rest. Name the seam; don’t pick a new fill. (One chrome already retires the immersive shell; this gradient goes with it or stays as a recorded exception.)
-147. **Splash title `transform: scale(1.02)` at rest.** `_canvas.scss:21`. Depth at rest. Optional: only `:active`. Primer `#primer:active h1 { scale(1.03) }` is the same pattern, already on a gesture.
-148. **`LOGICAL_PROPERTIES` only matches `(margin|padding)-(left|right)`.** Misses `left:` / `right:` / `top:` / `bottom:`. `face.css:369-370` mixes `top:` with `inset-inline-start`. New rules: `inset-block-start`.
-149. **`_tab_bar.scss:99` `@media (max-width: 639px)` without the `scan: intentional` comment.** Same 639 band as the fenced ones. Mark it or invert to a min-width default. Do not mass-convert the marked bands.
-150. **`_nearby_chat_widget.scss:116` `(hover: none), (max-width: 480px)`.** Capability query plus width. Leave hover; don’t treat as a measure rewrite.
-151. **`.post_body` `--leading-loose` (1.6) while `.prose` is 1.5.** `_posts.scss:69`. Show uses both classes. One leading.
-152. **Maps / marketplace-card uppercase labels.** `_maps.scss:121`, `_marketplace_cards.scss:88`. Pair `--tracking-wide` on the same rule if tracking is missing (`all_caps_min_em: 0.05`).
-153. **`.map-hud { max-width: 280px }` and nearby `320px`.** Chrome (`do_not_apply_to: chrome`), not a text measure. Leave.
-154. **Messenger `line-height: 1.25` is on scale.** `WORN_TYPE.chat` measure 0. Don’t hang punctuation in bubbles.
-155. **Marketplace `.market-hero { max-width: var(--measure) }` then h1 clamp 5.5rem.** `_vertical_marketplace.scss:31-33`. The masthead wraps at ~8–12 characters. Cap kicker/subcopy at `--measure`, not the display word.
-156. **Dating profile form already `--measure`.** `_vertical_dating.scss:34-38`. Good. `_vertical_dating_shell.scss:129` `--measure-narrow` on the shell: confirm it isn’t squeezing legal-length copy (the intro/legal links dating hides from the footer).
-157. **Takeaway uppercase + `--tracking-wide`.** `_vertical_takeaway.scss:121`. The pair Bringhurst asks for. Leave.
-158. **Playlist 720px + `clamp(12px, 3vw, 14px)`.** Don’t retune the playlist mono fence (`SURFACES.md`). Copy columns still want `--measure` (item 67), not 720px.
-159. **Amber `--luxury-letter-tight: -0.01em` matches `--tracking-tight`.** `_editorial.scss`, `_items_luxury.scss`. Don’t add a third tracking language. Product titles are headings — OK if not body.
-160. **Amber `h1,h2` `--measure-wide` (75ch).** `_layout.scss:22-31`. Fine for titles; body still `--measure`.
-161. **Creator bio already `.prose`.** `creator_profiles/show.html.erb:9`. One of the three views that got it right.
-162. **Dressing room `max-width: 420px`.** `WORN_TYPE.immersive` measure 0. Don’t force 66ch.
-163. **bsdports header h1 `clamp(1.75rem, 5vw, 2.5rem)` vs 12px CRT root.** Don’t raise the root to “fix” the h1/body ratio. Search `font-size: 16px` absolute is the iOS zoom floor — keep.
-164. **bsdports tabular-nums on ports (`:501`).** Extend to any remaining version numbers on the same rows.
-165. **Face `font: 16px/1.5 system-ui` has no `--measure`.** Overflow-hidden HUD. Chat log `12px/1.42` is off-scale leading and below 16; chat profile may stay dense — still pick an allowed step (`1.4` or `1.5`). `font-size: 14px` literals at `:283,683` map to a `face_root` token already there.
-166. **`PEN_ALLOW` still names `_search_yep.scss`.** `gate_autofix.rb:30`. Item 111’s shadow is the pen, not a leak. Don’t spread it. `_jsfiddle_chrome`, `_marketplace_nav_bar`, `_marketplace_animated_logo` are the other three.
-167. **`MASTER_INCREMENTAL=1` defaults off.** Confirm `test/` never sets it; if not, add one path or drop the flag.
-168. **`MASTER_WEB` defaults `"0"` (`runtime_mode.rb:16`).** Face is production. Test that the Falcon boot sets it, or the CLI/web split is fiction.
-169. **`MASTER_SKIP_SELF_TEST=1` defaults off.** No test that self-test is skipped and boot still returns a container.
-170. **`dashboard#live` JSON has no fetcher in `face_assets.yml`.** If the dashboard stays (item 152 of the first pass), name the poller; if chrome folds into chat, delete the endpoint.
-171. **`InvitesController#show` has no `views/invites/`.** Redirects only. Add a test that no implicit render happens. Same shape: `BlocksController`, `CrosspostsController`, `StoryRepliesController`.
-172. **`internal#dilla_publish`.** Unverified STUDIO caller. If dilla never POSTs it, the route is a hole.
-173. **`APPLY_PTR=1` defaults off.** `ptr_openbsd_amsterdam.rb`. On-path test: build the POST body, don’t send.
-174. **`vps_master_scan.sh` vs `MASTER/bin/operator gate`.** Second scan entry on the box. Fold or point at operator.
-175. **`postpro --watch` has no RAILS job.** If `PostproProcessor` is one-shot, `--watch` is a laptop-only door with no test.
-176. **ScaleLint still misses `letter-spacing` inside `clamp()`.** Marketplace −0.045em (item 87) is the exhibit. Parse clamp() mins.
-177. **`MEASURE_OPTIMUM` at ≥800px never sees 660/700/720/584.** Lower it for text columns, or assert `var(--measure)` on `optical_margins.apply_to` selectors. Don’t flag HUD 280/320.
-178. **Don’t raise `hanging_marker_max_inset_px` to absorb `.prose` `1.25em` or legal `1.1rem`.** Hang in CSS (item 72). The geometry probe is Tschichold; the inset is not a ratchet.
-
----
-
-## Rails 8.1, Hotwire, and stimulus-components — opened 2026-09-11
-
-Measured against `gem "rails", "~> 8.1.2"`, Solid Queue/Cache/Cable 1.4/1.0/3.0, Propshaft, Falcon, and `shared/frontend/stimulus_boot.js`. Horizon items in `apps.horizon.yml` stay ignored. Kamal, Thruster, Inertia, Vite, ViewComponent, Google Places, glow effects, and restoring `timeago` / `content-loader` are out: this fleet deploys through OpenBSD rc.d, paints flat, and already deleted those two controllers with a measurement.
-
-Sources: Rails 8.0 and 8.1 release notes, edgeguides `sign_up_and_settings` and caching, gramantin/awesome-rails, Evil Martians Gemfile of Dreams (2026-04, Rails 8.1), stimulus-components.com (25+ catalog), StimulusReflex morph docs, ar5iv 1711.10399 / 2106.03819 (cold-start ranking). A finding is a hypothesis.
-
-### Already the Rails 8 default — do not re-buy
-
-The tree already has the 8.0 trifecta (Solid Queue, Solid Cache, Solid Cable), Propshaft, session auth with `rate_limit` on passwords/sessions, `bin/ci` via `shared/config/ci.rb`, `assume_ssl` without `force_ssl` (README), and Hotwire broadcasts. The 2026-09-11 awesome-list scan already closed most of gramantin/awesome-rails against this repo. What follows is what 8.1 and the Hotwire catalogs still name that this tree does not use, or uses half.
-
-### Rails 8.1 that would finish jobs and events
-
-1. **Active Job continuations on the long imports.** Rails 8.1 splits a job into steps that resume after a deploy SIGTERM. `AffiliateImportJob`, `PortsImportJob`, `WardrobeMediaJob`, `LinkConverterSyncJob` are the ones a 1 GB box kills mid-pass. `include ActiveJob::Continuable` and `step :page` around the feed cursor. Do not continue a job that must be atomic (payouts, refunds).
-2. **`Rails.event.notify` vs `ActivityTrackable` / `EventEmitter`.** 8.1’s structured reporter is the house logger; the city strip is the product. Don’t replace Activity. Do emit `Rails.event.notify("marketplace.order.paid", order_id:)` next to the existing emission so `/health` and deploy smoke can subscribe without parsing JSONL.
-3. **Markdown rendering is native in 8.1.** Posts and wiki go through Tiptap / `simple_format`, not Markdown. Leave them. The one fit is bsdports port `COMMENT` / `DESCR` if those arrive as md. Don’t add a second editor.
-4. **`rails credentials:fetch` is for Kamal.** Secrets live in `/etc/<app>.env`. Do not introduce `config/master.key`.
-5. **`unauthenticated_access_only` from the edge sign-up guide.** Sessions/passwords already `allow_unauthenticated_access`. Add the inverse on `SignUpsController` / `UsersController#new` so a signed-in person cannot hit the form. The guide’s `rate_limit to: 10, within: 3.minutes, only: :create` on sign-up is the same shape as `sessions_actions.rb` — copy it onto user create if missing (rate-limit census already lists many controllers; this one is the guide’s named action).
-6. **`allow_browser versions: :modern` is on MASTER web, not the three apps.** Edge Action Controller advanced topics. Soft guests on brgen would 406. Don’t copy blindly; if adopted, serve the existing `406-unsupported-browser.html` and keep dating/marketplace crawlers on a bot allow-list.
-7. **Turbo prefetch is off on every Pagy link.** `pagy.rb:17` `data-turbo-prefetch="false"`. The 8.x default is prefetch-on. Turn it on for the eight swiper destinations (already named in the first inventory); keep it off on pager “next” if that was the reason.
-8. **`fresh_when` / `stale?`.** Caching guide. Only `bsdports#ports#show` uses it. Add on `posts#show`, `listings#show`, `events#show`, `items#show` (ETag from `updated_at` + `Current.user&.id` so votes don’t 304 a stranger’s button).
-9. **Solid Cable is in the Gemfile.** Confirm `config/cable.yml` production adapter is `solid_cable` and not `async` leftover. Falcon + one worker means in-process cable still works; two workers without solid_cable drop broadcasts. One test that production cable.yml names solid_cable.
-10. **Do not add Kamal, Thruster, or a Dockerfile.** 8.0’s deploy story is not this box. `vps-deploy` + relayd stays.
-
-### Stimulus-components.com — wire what’s registered, don’t fetch the rest
-
-Catalog checked 2026-09-11. Boot already registers a subset. Dropped with a measurement: `timeago`, `content-loader`, `dialog`, `scroll-to`, `sound`, `speech-recognition`, `hotkey`. Required by `stimulus_components` gate: password-visibility, nested-form, carousel.
-
-11. **`password-visibility` is live on all three `sessions/new` via `password_visibility_field`.** Also put it on `passwords#edit` (the reset form) and `account_settings` password change. The helper’s `aria: { label: "Toggle password visibility" }` is English — `t("auth.toggle_password")`.
-12. **`nested-form` is live on amber outfits.** Marketplace listing variants (`Marketplace::Variant` + options) still look like a static fields_for. Same controller, `accepts_nested_attributes_for :variants`. One form.
-13. **`checkbox-select-all` is live on `admin/reports`.** Missing on community mod queue, bsdports maintainer port lists, amber declutter review. Same markup as reports.
-14. **`auto-submit` is registered and only used in unmounted `examples.html.erb`.** Marketplace facets, TV channel filters, bsdports search, amber `filter_controller` — those still wait for a button or a custom controller. Put `data-controller="auto-submit"` on the GET filter forms (debounce is built in). Don’t put it on POST checkout.
-15. **`sortable` is live on amber outfits and playlist tracks.** Dating prompt order and marketplace variant order are the two remaining nested lists. Don’t sortable the feed.
-16. **`clipboard` is live (`_copyable`, action bar).** Add on bsdports port `PKGPATH` / `MAKE_ARGS` copy, and playlist embed URL.
-17. **`animated-number` is live on post score.** Missing on listing `views_count`, takeaway ETA is `countdown` (keep), amber likes. Don’t animate money.
-18. **`popover` is live on the action bar.** Confirm dating overflow and marketplace listing actions use the same `data-controller="popover"` instead of a third menu.
-19. **`dropdown` is live on `posts/_post` feed-action-menu.** Reuse on events and stories; don’t add a second menu controller.
-20. **`reveal` is registered, only `examples.html.erb`.** Dating “optional details” is a `<details>` already. Unregister reveal or point it at legal footnotes. Don’t keep a boot entry for a demo file.
-21. **`read-more` is wired through `StimulusFormHelper#read_more`, not a literal in ERB.** Listing descriptions already call it. Second-pass item 34 overstated the hole. Remaining: dating bio and TV descriptions if they truncate in Ruby.
-22. **`carousel` stays lazy, CDN swiper, amber showcase only.** Don’t put it on brgen; media gallery and dating swipe are hand-rolled. Vendor swiper before any second caller (comment in `stimulus_boot.js:82-103` already says so).
-23. **`dialog` was pinned, vendored, registered, then dropped — zero ERB.** Native `<dialog>` is the 2024–26 replacement for custom modals (stimulus-components docs, MDN). Dating match overlay, report confirm, takeaway “cancel order”, amber declutter “let go” are the four confirms that should be `<dialog data-controller="dialog">` rather than a new overlay CSS. Restore the pin only with the first of those four views. No box-shadow on the backdrop beyond the recorded popover exception — `::backdrop { background: rgb(from var(--text) r g b / 0.45) }`.
-24. **Do not restore `scroll-to`.** Skip-link and `href="#main-content"` already exist. The component’s default smooth-scroll fights `prefers-reduced-motion`.
-25. **Do not add `chartjs`.** Amber `_visualization.scss` and `_dashboard.scss` already draw; Chart.js is a third renderer and a colour decision. bsdports is a CRT list, not a dashboard.
-26. **Do not add `places-autocomplete`.** It is Google Places. Maps already use OpenFreeMap + `request_location`. A Google script on a Norwegian city app is a third-party and a ToS.
-27. **Do not add `glow`.** Mouse-tracing highlight is the opposite of FLAT_UI / FLAT_PIXELS.
-28. **Do not add `color-picker` (Pickr) as a webfont/theme.** Amber item colour is a string/token, not a free-sRGB picker. If wardrobe colour becomes a chip, it’s a radio list, not Pickr.
-29. **Do not restore `timeago`.** Server `Shared::UiHelper#time_ago` is nb; date-fns was English. The comment in `importmap_baseline.rb:33-41` is the decision.
-30. **Do not restore `content-loader`.** Turbo frames with skeleton children are the replacement (`stimulus_boot.js:64-66`).
-31. **`sound` / `speech-recognition` / `hotkey` were dropped for no ERB.** Playlist already has a player controller; brgen has `feed-hotkey` and `voice-recorder`. Don’t re-pin the generic ones.
-32. **`prefetch` component vs Turbo Drive prefetch.** Prefer native `data-turbo-prefetch` (item 7). Don’t add a second prefetch controller.
-33. **`scroll-progress`.** A reading bar on wiki / legal / post show is the one honest use. Off by default; `prefers-reduced-motion: reduce { display: none }`. Optional.
-34. **`scroll-reveal` is already `pub4/scroll_reveal`, used on newsletter and amber timeline.** Don’t also register `@stimulus-components/scroll-reveal`.
-35. **`character-counter` is `pub4/character_counter`, not the npm package.** The gate lists both. One implementation. Don’t pin the package beside the local controller.
-36. **`textarea-autogrow` is pinned twice** (`@stimulus-components/textarea-autogrow` and `stimulus-textarea-autogrow`). Compose uses Tiptap, which grows itself. If no ERB asks for autogrow, drop both pins the way dialog was dropped.
-
-### Turbo and StimulusReflex — one morph story
-
-37. **StimulusReflex in this tree is infinite scroll + vote + notification-read + playlist timestamp comments.** `on_failed_sanity_checks = :warn`. Don’t add page-morph Reflexes for filters: Turbo frames + `auto-submit` (item 14) are the 8.x shape. SR page morphs re-run the controller action (~50ms docs); a frame is cheaper and survives morph.
-38. **`VoteReflex` and `votes#create.turbo_stream` both exist.** Two pipes for one arrow. Keep the stream (it has a function-layout test); make the Reflex a no-op wrapper or delete it once the stream is the only client.
-39. **`PlaylistTimestampedCommentsReflex` is the one non-scroll Reflex.** If TV video notes should work offline-of-cable, they need a `create.turbo_stream` too (second pass already said comments 500 without a template).
-40. **Turbo morph (`turbo:morph`) vs CableReady morphdom.** Both are vendored (`morphdom` pin overrides ga.jspm.io). Stimulus controllers that keep local state (tiptap, media-picker, map) must reconnect after morph — the 2025 `useMorphHandler` pattern. Add a test that `tiptap-editor` still has a ProseMirror after a `broadcasts_refreshes` on the post.
-41. **`data-turbo-permanent` on nav / theme toggle** was already proposed. Face primer and the compose draft are the other two permanents. Don’t permanent a cable stream.
-42. **Optimistic UI:** `optimistic-send` is registered; votes don’t use it. Wire vote arrows *or* delete the controller (first inventory 513). Dating like/dislike is the second caller if it stays.
-43. **Turbo Streams for the remaining redirects** (second pass 42–43) is the completion path, not more Reflexes: favorites, dating like, takeaway order status, playlist collab.
-44. **Futurism `futurize` is in the Gemfile, pin removed, zero `data-controller="futurism"`.** Comment points at “FINAL_TODO P0.4”. Either lazy-render the first page of listings/ports with `loading="lazy"` frames (no gem) or put the pin back with one index. Don’t leave the gem as a silent require.
-
-### Completing each app (what the catalogs actually buy)
-
-**brgen.** The models are `done` in `apps.yml`. Fruition is the last 300ms of the round-trip and the last empty state.
-
-45. **Faceted search is BeastMode’s demo and this tree’s LiveSearchable.** Deals still LIKE-search (first inventory 347). One helper, auto-submit (14), FTS when the table exists.
-46. **Cold-start feed without an LLM.** ar5iv 1711.10399: social neighbours beat global popularity for new users. Rank `hot` as `follows.posts ∪ city.popular` until the user has five votes. Horizon “AI feed ranking” stays ignored; this is a SQL union.
-47. **Match overlay / report / cancel-order as `<dialog>`** (23). The overlay CSS is the dating chrome the one-chrome pass is retiring.
-48. **Prefetch the eight nav destinations** (7). Measured win on 1 GB is cache, not CPU, if Solid Cache holds the gzipped first page.
-49. **Community wiki already `.prose`.** Legal still doesn’t (second pass 55). Same reading surface.
-50. **Inbound ActivityPub stays verified-and-dropped** (`apps.yml` / TODO 2.1). Don’t “complete” federation by storing remote media on this box.
-
-**amber.** Wardrobe is a catalog + outfit editor. pgvector / virtual fitting stay horizon.
-
-51. **Nested variants pattern → wardrobe `Item` photos already media-picker.** Completeness is: sortable already reorders outfits; timeline already scroll-reveals; `luxury-product` is on the card. Missing: declutter bulk checkbox-select-all (13), password on account, dialog on “let go”.
-52. **Weather-based suggestions are horizon.** Until then, `planned_outfits` dated for a day is the event planner the horizon list names — it exists. Don’t build a weather API.
-53. **Style embeddings are horizon.** Fingerprint/silhouette jobs are the visual similarity the box can run (libvips). UI must not say “similar” (first inventory 471).
-54. **Creator profile already `.prose`.** Shop/affiliate disclosure assertion still open from the first inventory.
-
-**bsdports.** A ports browser, not a dashboard.
-
-55. **Search form auto-submit** (14) + FTS in schema (first inventory 478). Completeness is the virtual table committed, not Chart.js.
-56. **`fresh_when` already on `ports#show`.** Copy to maintainer show.
-57. **Maintainer bulk: checkbox-select-all** if a bulk watch/unwatch exists; otherwise don’t add checkboxes for decoration.
-58. **Makefile `+=` / `?=` fixtures** (first inventory 481) are the parser completion. Horizon FreeBSD/NetBSD parsers stay ignored.
-
-### What the papers do not license
-
-59. **Kwai POSO / Deezer cold-start nets are production at their scale.** On one SQLite box the neighbour-union (46) is the portable result. Don’t vendor a two-tower model.
-60. **Evil Martians 2026 stack is Vite + Inertia + ViewComponent + Alba.** This tree chose importmaps, ERB, Hotwire, no LAYER_CAKE. Read them for job/continuations and CI, not for a React rewrite.
-
----
-
-## Completing the four trees — papers, peers, and the rest of the ask — 2026-09-11
-
-Addresses the whole thread, not the last prompt: four-tree 10/10, unwired logic, Bringhurst, Rails completion, Rails 8.0+ / edge guides / awesome-rails, Stimulus / Turbo / StimulusReflex / stimulus-components.com, GitHub, tutorials, ar5iv. Does not restate the 1060, the 178, or the 60 above. Horizon (`apps.horizon.yml`) stays ignored. Rendered values stay the operator’s.
-
-`apps.yml` marks a feature `done` when the model exists. Fruition is the last reader, the last stream, the last ranking that is two-sided.
-
-### brgen — models are done; ranking and round-trips are not
-
-1. **Dating `ranked_for` is one-sided.** `Dating::Profile.ranked_for` (`profile.rb:86-101`) orders recency, prompt count, and a per-viewer shuffle. ar5iv [1401.8042](https://ar5iv.labs.arxiv.org/html/1401.8042) and [1501.06247](https://ar5iv.labs.arxiv.org/html/1501.06247): two-sided matching lifted first-contact replies ~45% vs suitor-only. `looking_for` / gender / orientation sit on the profile and `Matchmaking` never reads them for the deck. Rank candidates the viewer would like *and* who would like the viewer (same filters they set on themselves). SQL, not an LDA.
-2. **Mutual-match minting still walks `User.find_by` in a loop.** `Matchmaking#create_mutual_matches` (`matchmaking.rb:29-40`). Set intersection of ids is right; `User.find_by` per id is not. `User.where(id: mutual_ids)` once.
-3. **Certifeye-style verification is already `Dating::Verification`.** ar5iv [1303.4155](https://ar5iv.labs.arxiv.org/html/1303.4155): showing a verified age/photo badge reduced concern. The badge exists on the swipe card. Completeness is: the unreviewed queue has a reviewer UI that is not only `verifications#index` for the submitter. Operator-mod, not Facebook.
-4. **Do not intervene on who appears by race.** ar5iv [2103.03332](https://ar5iv.labs.arxiv.org/html/2103.03332): those interventions fight both culture and the platform’s goals. Keep radius + looking_for. No new attribute.
-5. **Marketplace trust is reviews + Vipps, not a second rating protocol.** Two-sided rating papers are for crowdsourcing effort. Here the seller rating is the mean of `Marketplace::Review`. Completeness: the mean is on the listing *and* the store; a buyer with no completed order cannot review (already gated). Don’t add a game-theoretic score.
-6. **Craigslist non-goods half.** `apps.yml` says kinds are done and points at this file. Job/housing/gig forms exist; the index defaults to goods. Completeness is a kind switcher that is a facet (already counted) *and* the empty state when you pick `job` in a city with none — not a fourth marketplace.
-7. **marketplace.brgen.no 500s.** Still open under one chrome. Diagnose the exception (log, `/500` with `exception_app`, or a request spec on the marketplace host) before any layout work. Until it serves, layout_snapshot of that host is fiction.
-8. **TV live is infrastructure, not an app gap.** `apps.yml` blocker: no MediaMTX, no ffmpeg on vm23. Hide `live_streams/new` behind a flag that is false, or the form is a lie (first inventory 415). Don’t install a media server from this list.
-9. **Takeaway courier on the map is the viewer’s own rider only.** Correct (privacy). Completeness: the waiting diner’s order show already has ETA (`countdown`). Stream status changes (pending→out_for_delivery) as turbo, not a public map of every rider.
-10. **Feed cold-start** remains the follow-union from the Hotwire section (item 46 there). Mastodon’s local/federated/home timelines are the peer: home = follows, local = city, federated = dropped inbound. Three tabs, three queries, no transformer.
-11. **Stories are Snap’s 24h, and `StoryStreak` exists.** Completeness is the ring on the feed, not a new model. If `story-rings` is only `_coverage_fills` geometry, the ring is still a grey box. Token-only is the floor; a horizontal scroller of avatars is the product.
-12. **Messenger voice notes exist; link previews exist.** Completeness: edit/unsend on the bubble via turbo stream, not a full reload (second pass redirects). Campfire (basecamp/once-campfire) is the SQLite chat peer — they morph the transcript. Copy the stream, not the Docker.
-
-### amber — capsule from the closet, not a new model
-
-13. **TasteRanker scores garments, not outfits.** ar5iv [1712.02662](https://ar5iv.labs.arxiv.org/html/1712.02662) (Hsiao & Grauman capsule) and [1804.09979](https://ar5iv.labs.arxiv.org/html/1804.09979) (outfit grader): the task is a *subset* of the closet that mix-and-matches. `OutfitGeneration` + `TasteRanker` + dressing-room carousels exist. Completeness: score a candidate *outfit* as the joint of its items’ scores minus a clash term (colour/material already on `Item`). No neural graph. `RecommendOutfitsJob` already has `limits_concurrency`; make the heuristic path the default and the LLM the fallback it already is.
-14. **Capsule “do more with less” is KonMari + underused + shopping_list.** Those three are `done`. The paper’s “minimal set, maximal outfits” is `ClosetOrganization` restraint tips. Completeness: the shopping list already says it will not invent global trends. Don’t add a Polyvore scrape.
-15. **Complementary “this top with those jeans”** (eBay Fashion-136K, Style2Vec) is `TasteRanker` revealed wear, not a skip-gram. When the owner opens one item, rank other *zones* from the same closet. Dressing room already counter-rotates zones. Wire `items#show` “wears well with” from that ranker, labelled rules not AI.
-16. **Zalando’s get-the-look is in-session.** Horizon embeddings. Until pgvector, CRC32 fingerprint is the honest neighbour (apps.yml). Don’t say similar.
-17. **Weather is prefilled from Weather Bergen on generate.** Horizon “richer weather agent” is more API. Completeness: if the fetch fails, the form still submits with season chips. Test the fail-open.
-18. **Declutter 30d box is the capsule’s deletion half.** Completeness: the hygiene job uniqueness (first inventory 475) and a dialog confirm (Hotwire section 23).
-
-### bsdports — FreshPorts, not a knowledge graph
-
-19. **FreshPorts.org is the peer: one port, one page, changelog, commit, vulnerability.** This tree has Port, SecurityAdvisory, Maintainer, dep tree. Completeness: advisory age on the port show (already a model) and the import job log (`ImportRun`) visible to a maintainer, not only in `/admin` if there is none.
-20. **`ports_fts` claimed done, tests skip if the table is missing.** First inventory 478. Fruition is the virtual table in `schema.rb` so `bin/ci` cannot skip the feature `apps.yml` calls done.
-21. **Explore assistant is rules + JSON.** Don’t add pgvector intelligence. Rate-limit the JSON action (Hotwire section already said so).
-22. **Platforms freebsd/netbsd are seeded inactive.** Horizon parsers. Completeness: the UI must not offer those platforms as if they imported. Hide or disable the chips.
-
-### Rails 8 / SQLite production (37signals, fractaledmind, edge caching)
-
-23. **WAL is already in all three `database.yml`.** Rails 8 IMMEDIATE transactions are adapter defaults (DHH on once-campfire #150). Don’t add a pragma pass.
-24. **ONCE `pre-backup` is `sqlite3 file ".backup dest"`.** `OPENBSD/bin/dr-pull` is the off-host copy. Completeness: before dr-pull, checkpoint WAL so the snapshot is consistent (`PRAGMA wal_checkpoint(TRUNCATE)` or `.backup`). That is the Campfire hook, without Docker. One line in `dr-pull` / a pre-hook, operator-priority because it touches the box.
-25. **Single writer.** Falcon `FALCON_WORKERS` is 1 on 1 GB. A second worker on SQLite primary is `SQLITE_BUSY`. Gate: production `database.yml` pool × workers = 1 writer to primary, or document that cable/cache/queue files are the extra writers (they are separate files — good).
-26. **`busy_timeout` is 5000.** Campfire/Rails 8 retry fairly without holding the GVL. If `/var/log` shows `database is locked` on vm23, raise timeout, don’t add Redis.
-27. **Solid Queue in a separate file is the Campfire-on-SQLite fork.** Already. Continuations (Hotwire section 1) are what 8.1 adds on top.
-
-### MASTER — discoverability, not features
-
-28. **The 10/10 line already in this file:** MASTER is done when it does not need to be told how to use MASTER. Completeness is `HELP_TOPICS` + completions generated from the live command table (first inventory 71), and `/review --only scan` as the advertised verb. Don’t add a fourth surface.
-29. **Event-name drift** is the second pass (visual_bridge). Completeness of the *face* is those regexes matching `rule_loop:pass`. Don’t start a new bus.
-30. **`bin/operator gate --explain` is the ladder.** START_HERE and OPENBSD/START_HERE still offer other “everything” commands. One paragraph each, already named. Do it.
-
-### OPENBSD — the box is the product
-
-31. **SQLite `.backup` before dr-pull** (24). Highest remaining deploy completeness that is not money.
-32. **relayctl vs restart** still open in the awesome-list section. Read the man page on the box.
-33. **Don’t adopt ONCE/Docker.** The box is OpenBSD, not a container host. Health `/up` already matches ONCE’s minimum; we already have it.
-
-### STUDIO — crate and help, not new engines
-
-34. **repligen chains exist; token does not.** Completeness is CLI honesty (first STUDIO list), not funding Replicate.
-35. **dilla `help` topics** (`help render`, `help knobs`) still the way a stranger finishes the engine without a 170-line dump.
-36. **Don’t change a rendered default.** Capsule/outfit papers do not apply to dilla.
-
-### Stimulus / Turbo leftovers the catalogs still name
-
-37. **`password_visibility_field` English aria** (Hotwire 11) — still the one i18n hole in a helper that is otherwise live.
-38. **`auto-submit` on GET filters** (Hotwire 14) is the GoRails/Chris Oliver bulk+filter demo applied here. Marketplace facets and bsdports search are the two that would feel finished.
-39. **Infinite-scroll Reflexes are the SR surface.** Don’t add BeastMode as a gem; LiveSearchable + auto-submit + existing `*InfiniteScrollReflex` is BeastMode. Completeness: every index that paginates has a reflex *or* a frame; maps places does (first inventory 432 duplication).
-40. **Turbo 8 morph + `broadcasts_refreshes`.** Posts/items already broadcast. Test tiptap survives morph (Hotwire 40). That test is the completion, not a new morph library (TurboBoost Streams / Idiomorph — don’t add a third morpher; morphdom is already pinned).
-
-### Tutorials worth stealing a *shape* from, not a stack
-
-41. **Edge guide sign-up + `rate_limit` + `unauthenticated_access_only`.** Hotwire section 5. Still the cheapest auth completeness.
-42. **GoRails “bulk operations” = checkbox-select-all** on declutter and mod queue (Hotwire 13).
-43. **Hotwire handbook: frame for the thing that changes.** Dating like, listing favorite, port watch — streams or frames, not SR page morphs.
-44. **Fractaled Mind / Campfire-on-SQLite load test.** If we ever need a number, `bin/ci` plus a local siege of `/up` and `/` is enough. Don’t import their Redis-era Campfire.
-
-### What this sitting will not open
-
-45. **Solidus, pgvector, MediaMTX, inbound ActivityPub storage, creator monetization, premium dating, donations.** Blockers are Postgres, RAM, ffmpeg, money. Named in `apps.yml`. Leave.
-46. **A fourth JS framework.** Importmaps + Stimulus + Turbo + the remaining SR scrolls. Evil Martians and Inertia stay on the shelf.
-47. **A neural outfit model, a two-tower feed, Chart.js, Google Places, glow.** Papers and catalogs that need a GPU, a ToS, or a shadow.
-
----
-
-## Books — what can be law, what must stay the operator’s — 2026-09-11
-
-Assessed against MASTER `beauty:` / `TYPOGRAPHY` / `RAMS_CHECKLIST` / `markdown_style`, RAILS tokens and ScaleLint, and — for sound, mixing, and J Dilla — **STUDIO/dilla only** (`dilla_principles.yml` still `status: draft`, `groove_engine.rb`, `mix_score.rb`, `dilla_reference.yml`, `test_dilla_groove_timing.rb`). Face visemes and postpro headroom are not this sitting. Codify means a token, a detector, or a test. It does not mean a new colour, a new typeface, a new swing default, or a NURBS façade.
-
-A finding is a hypothesis. Sample the file the book would touch.
-
-### Already in the constitution (do not re-import as features)
-
-Bringhurst *Elements of Typographic Style* — measure 45–75ch, hanging punctuation, OpenType, tracking on caps only. Tschichold *The New Typography* — hang lists, optical not geometric edge (`geometry_type#check_hanging`). Müller-Brockmann *Grid Systems* — 8px rhythm, 12-col. Rams ten principles — `RAMS_CHECKLIST`. Ando — `markdown_style` and ma. Wroblewski *Mobile First* — `min-width` bands. Le Corbusier Modulor — `geometry_type` principle=modulor. EBU R128 / Katz *Mastering Audio* — `dilla_reference.yml` LUFS and true-peak windows. Charnas *Dilla Time* (the time-feel, not the biography) — `dilla_principles.yml` independent clocks, phrase-level drift, no fixed swing percentage; `groove_engine` and `test_dilla_groove_timing.rb` already distinguish straight (≤50) from swung.
-
-### Graphic design — codify the rest of the page, not a new look
-
-1. **Hochuli *Detail in Typography*.** Micro already named (`hyphenate-limit-lines: 2`, oldstyle on `.prose`). Completeness is applying `.prose` to legal/mailer (second pass 55–59), not a new YAML block.
-2. **Butterick *Practical Typography*.** Practical web rules overlap Bringhurst and are already the `TYPOGRAPHY` config. One extra that is not yet a detector: “one space after a period.” A lint on `  ` after `.` in `nb.yml`/`en.yml` prose values. Don’t run it on code.
-3. **Ellen Lupton *Thinking with Type*.** Alignment as a system: one ragged edge per column. Detector: a `.prose` / `.legal-prose` block that is `text-align: center` for body (kickers may stay). Centered running text is the defect; centered display type is not.
-4. **Josef Müller-Brockmann / Armin Hofmann *Graphic Design Manual*.** Contrast of size is `h1_body_min_ratio: 2.0` (second pass 82 — page titles are 1.75×). Completeness: decide which token is H1. Contrast of weight is 400/600/800 with 200 between steps — already. Don’t add 500/700.
-5. **Jan Tschichold *Asymmetric Typography*.** Body not centered, rules as structure not ornament. `NO_ASCII_DECORATION` covers the ornament. A source gate: `text-align: center` on `p` inside main. Leave splash/hero.
-6. **Itten *The Art of Color*.** Seven contrasts. **Do not pick hues.** The only codifiable slice: count distinct non-token hexes in a stylesheet (ScaleLint’s cousin). Magic colour is already `MAGIC_COLOR` / tokens. Don’t implement simultaneous contrast as a palette pass.
-7. **Meggs *History of Graphic Design* / Hollis.** History, not a detector. Skip.
-8. **Tufte *The Visual Display of Quantitative Information*.** Data-ink. Amber charts are CSS `--share` bars, no Chart.js — already Tufte. A test that `_histogram` / `_figure` contain no `<canvas>` and no box-shadow. Chartjunk is the glow/3D the law already forbids.
-9. **Vignelli *The Vignelli Canon*.** Few faces, grid, no decoration. `max_font_families: 2` per surface. Marketplace hero still breaks it (second pass 95). Completeness: kicker stays the body family.
-10. **Rand *Thoughts on Design* / *Don’t Make Me Think* (Krug).** Honesty of state is Rams `honest` and `COMPLETION_THEATER`. Empty/loading/error is `RAMS_CHECKLIST.thorough`. Already gated. Don’t add a second checklist.
-11. **Gestalt (proximity, similarity) via Lupton *New Basics*.** Detector: two adjacent interactive controls whose hit boxes overlap (tap 44 already). Similarity: one `btn` language — zen buttons vs `btn--primary` is the one-chrome pass, already open.
-
-### Architecture — haptic and parameters, not blobs
-
-12. **Pallasmaa *The Eyes of the Skin*.** Against ocularcentrism: tap, focus, motion, sound, skip-link. Already: `--tap-min` 44, skip-link, `prefers-reduced-motion`, `haptics` controller, `battery-aware`. Codify: `haptics` on dating like/dislike and takeaway “placed” if the controller is mounted and the view never fires it. Don’t add scent or fake material textures. Don’t add parallax as “depth of field” (FLAT_PIXELS).
-13. **Zumthor *Atmospheres*.** Material honesty: a token is a material; a gradient pretending to be light is not (dating button gradient, Hotwire leftover 146). Document or retire with the immersive chrome. Don’t invent a stone filter.
-14. **Alexander *A Pattern Language*.** Named patterns. `SURFACES.md` dialects and `LAYOUT.md` chrome *are* the pattern language. Completeness: `data-shell=` still queued (second pass 41). One attribute, two values (browsable / immersive), CSS already exists.
-15. **Kahn served/servant.** Chrome vs content column. One-chrome pass. Don’t restate.
-16. **Le Corbusier *Modulor*.** Already `principle=modulor` on type ratio. Soft fail. If H1 stays 1.75×, either lower the ratio in law (needs a deletion elsewhere) or raise the title token — operator’s call on the number.
-17. **Venturi *Complexity and Contradiction*.** “Less is a bore” fights Ando/Rams/FLAT_UI. **Do not codify.**
-
-### Parametric architecture — the heuristic that fits, the style that does not
-
-Schumacher *Autopoiesis* / Parametricist Manifesto: *avoid* right angles, repetition, rigid primitives; *prefer* NURBS, blobs, continuous differentiation. That style contradicts this tree’s CRT-flat zeros, 8px grid, and Ando planes. **Do not import the look.**
-
-The *method* is already the design system:
-
-18. **“Script associations between parameters.”** `design_tokens.yml` → `_dialect_tokens.scss` → `generate_face_root_css.rb`. A new px in a vertical sheet that is not a token is an uncorrelated subsystem — ScaleLint. Completeness: ERB `<style>` (legal/mailer) is the uncorrelated island. Point the lint there.
-19. **“Differentiate gradually, correlate systematically.”** `clamp()` on type and `--page-gutter`. `CLAMP_TYPOGRAPHY` already. Splash `clamp(2.5rem, 12vw, 5rem)` bypasses `--text-display` (second pass 119). Correlate or drop.
-20. **“Nothing remains pure; every subsystem inflects another.”** Shared `--z-*`, `--tap-min`, `--chrome-inset` across MASTER face and RAILS. Face still has 13 of 87 tokens in common (one chrome). Completeness is the chrome pass, not NURBS.
-21. **Negative heuristic we keep from Modernism, not Parametricism:** repetition of the *grid* is the point. Schumacher’s “avoid repetition” would fail every list row. Don’t add a detector for “too rectilinear.”
-22. **Frazer *An Evolutionary Architecture* / Burry *Scripting Cultures*.** Generate from constraints. Gates + ratchets + `FixLoop` are that. Don’t add a genetic façade generator.
-23. **Grasshopper analog.** Tokens are the sliders. A “param” that exists in YAML and is unread is `data_reach` unnamed — already the inert-config class.
-
-### Typography books beyond Bringhurst (implementation, not restatement)
-
-24. **Bringhurst ch. 8 (shaping the page) / ch. 10 (appendices, character set).** En-dash for ranges is a rule (`--` in running nb/en). Completeness: a locale lint for `2010-2014` that wants `2010–2014` in prose YAML, not in ISO dates or pkgpaths.
-25. **Hochuli: hyphenate-limit-lines.** Named in law, missing in CSS (second pass 100). One declaration on `.prose`.
-26. **Norwegian quotes.** Bringhurst + law `norwegian_guillemets`. CSS `quotes:` on `html[lang="nb"] .prose` (second pass 101). Don’t rewrite copy.
-27. **Kane / Felici.** Software manuals. Skip; Butterick covers the web case.
-
-### STUDIO/dilla — sound design, mixing, and J Dilla (this tree only)
-
-Chion’s visemes and postpro headroom were the wrong tree. Katz, Izhaki, Farnell, Sonnenschein, Snoman, Huber, and Charnas *Dilla Time* land on `STUDIO/dilla`. Never change a rendered-sound default. `dilla_principles.yml` names Charnas as primary bibliography and has **no Ruby reader** (grep hits only the file). That is inert law until `groove_engine` or a probe loads it.
-
-28. **Charnas *Dilla Time* — the time-feel, not the life.** Straight and swing at once, per part. `groove_engine.rules` already say independent clocks and no fixed swing%. Status is `draft`. Promote to `active` the same commit that makes `DillaSources` or `groove_engine.rb` `YAML.safe_load` the file. One test: on a two-bar groove, kick and hat offsets are not identical on every hit. `test_dilla_groove_timing.rb` already proves `swing_role_offset_ms` is per-role; it does not yet load the YAML.
-29. **Phrase-level drift, not random jitter.** Principle `Favor phrase-level drift over random jitter`. Detector already: `test_bare_rand_call_sites_do_not_grow`. Don’t add a hit-level noise source. Don’t retune `SWING`.
-30. **Single `SWING=` is the fallback, not the design.** Document in `dilla help knobs` that per-role offset is the Charnas move. Keep the knob. Changing its default is a rendered-sound change.
-31. **Silence is musical material / drums.ghost_notes.** Don’t auto-fill rests with hats. A probe that a pattern rest stays a rest — only if missing. Ghost notes are a priority in `drums:`; if the engine already writes them, the YAML is documentation; if not, don’t add them to a keeper take.
-32. **`remove_elements` / `simplify` twice in `generation_pipeline`.** That is COLLAPSE_BEFORE_ADDING for notes. Don’t add a density ceiling that strips a rendered default. Optional: a dry `dilla characterize` line that reports note-count per bar, no rewrite.
-33. **Sonnenschein / Izhaki — bands, not a new EQ.** `mix_score.rb` `REFERENCE` is measured from demo29/demo30 (kick_vs_mid, sub_vs_mid, cymbal_crest, tilt, LRA). Completeness: a stacked-leads fixture fails `spectral_audit` / MixScore; if it doesn’t, the audit is a comment. Leave the ranges. **Do not retune.**
-34. **Katz / EBU R128.** `dilla_reference.yml` `true_peak_max_dbtp: -1.0`, LUFS −20.5..−12.5. `MixScore::REFERENCE[:lufs]` is −18..−15. Two windows. Completeness: one source, the loss-gate test already pins reference ↔ quality. Don’t widen either to absorb a hot take.
-35. **`mixing.avoid: over_limiting, excessive_brightness, sterile_perfection` vs `anti_patterns: maximize_loudness, overcompress`.** Same rule twice in one file. Fold. `MixScore` LRA below 3 is “flat” — that is sterile_perfection as a number. Keep the number; delete the duplicate prose.
-36. **Farnell *Designing Sound*.** Procedural path is `analog_synth.rb` / `devices.rb`. Don’t add a third synth. Sampling path is `sampling_engine.operations` (chop, resample, pitch, filter, reverse_tail, truncate, layer) — RadioChop / sample_flip already. Completeness: `dilla help chop` names those operations in that order, or the YAML is unread.
-37. **Snoman / form.** `composition_engine.rb` + `test_dilla_form_map.rb`. `arrangement.patterns: introduce_small_changes, remove_elements, filter_transitions`. Don’t retune drops. Completeness: form-map test still runs under suite load (three probes were timing out — STUDIO “not worth chasing”).
-38. **Huber — signal chain as data.** Provenance sidecars. Completeness: `reproduce_command` includes pins when `USER_PINNED_ENV` is set (STUDIO 1000). No new bus processor.
-39. **`critic.scorecard` is five zeros and `acceptance: groove >= 0.95`.** Nothing in `lib/` reads it. Either `characterize` / council prints those five, or delete the block. A scorecard nobody scores is the inert-config defect.
-40. **`anti_patterns: copy_reference_track`.** The engine must not ingest a Dilla record. A test that `TRACK_SAMPLE_LOOPS` / crate paths do not match a denylist of catalog titles is enough. Don’t put audio in the repo to prove it.
-41. **Do not implement the biography.** Camp Amp, SP-1200, Donuts, Questlove interviews as narrative. `identity:` and `bibliography.primary` stay. No sample of a Dilla record. Chion *Audio-Vision* (mouth-sync) is MASTER face visemes — out of this list. Owsinski headroom on stills is postpro — out of this list.
-
-### What these books must not become
-
-42. **A Parametricist CSS** (splines, blobs, no right angles). Fights FLAT_UI, the 8px grid, and the CRT dialects.
-43. **An Itten palette generator.** Operator eye.
-44. **A global swing retune “because Charnas.”** The feel is per-role offsets that already exist. Changing `SWING` default is a rendered-sound change.
-45. **Pallasmaa as perfume, video, or WebGL fog.** Haptics and reduced-motion only.
-46. **A second type scale from Hofmann exercises.** One scale in `_tokens.scss`.
-47. **Importing a book as unread YAML.** `dilla_principles.yml` is the cautionary example, and the cost is now measured: 3.9KB of draft spec, no reader, and eight separate backlog entries asking whether to load or delete it before anyone checked. If a new file is added, it needs a reader the same day — `test_dilla_groove_timing` or ScaleLint — or it is inert law that also breeds inert backlog.
-
----
-
-## Agentic coding, agent OS, Rails tests, layout refine — 2026-09-11
-
-GitHub (sifted-awesome-ai-agents 2026-09-11, best-of-Agent-Harnesses, ANOLISA, agent-swarm, SWE-agent lineage) and ar5iv (APEX–SWE 2601.08806, SWE-Search 2410.20285, SWE-agent ACI). Rails: DHH’s 359→10 system tests, Rails 8.1 generators, Cuprite, capybara-screenshot-diff, visual_contract already in this tree.
-
-MASTER already is an agent OS: constitution, scan/fix, worktrees, taint, `OutputFilter`, `ReadFile` truncation, `QuotaGate`. RAILS already has layout JSON snapshots, visual_contract pixel_diff + console_errors + axe, system-test generators off. Steal *interfaces*, not Python runtimes or SaaS Percy.
-
-A finding is a hypothesis.
-
-### MASTER — harness, not a new kernel
-
-1. **APEX–SWE (ar5iv 2601.08806): epistemic discipline beats raw coding.** Pass@1 on production tasks is ~25%. The paper’s driver is “distinguish assumptions from verified facts, and resolve uncertainty before acting.” That is this repo’s “verify the instrument.” Completeness: a `Scan::Finding` field `status: hypothesis | measured` (scan findings start hypothesis; a test or `--explain` that ran is measured). Don’t add a second slogan.
-2. **Observability tasks, not just patches.** APEX–SWE’s second half is debug-from-logs. `/dmesg` and `Trace::Dmesg` exist; ChatController#dmesg is a hole (first inventory). Completeness: `/review --only scan MASTER/runtime/*.jsonl` (or the last N Swallow lines) with a fixture log that must flag a known bus-name mismatch. That is the observability bench for this tree.
-3. **Harness > model.** best-of-Agent-Harnesses / SWE-bench Pro: swapping the harness moved pass@1 more than swapping the model. START_HERE should say the product is the harness (`soul.yml` + tools + `OutputFilter`), not the default_model. One sentence.
-4. **Agent-computer interface (SWE-agent, Yang et al.).** Tools that return walls of text waste the window. `Io::ReadFile` already windows lines; `OutputFilter` already compresses diffs. Completeness: JSON tool results (WebSearch, GitContext, scan JSON) go through the same filter — `record_saved` already exists. Grep `Result.ok(` in `lib/io/` for payloads that skip it.
-5. **Span context, not whole files (SWE-Search 2410.20285).** File context as class/method spans with ids. `Io::SymbolLookup` exists and is untested (first inventory 51). Completeness: `/review` of a method takes the method body, not the 400-line file. Don’t build MCTS around it.
-6. **Don’t import MCTS / debate-of-three for FixLoop.** SWE-Search’s Value Agent is the council. Fifteen-pass FixLoop is enough. A discriminator debate is a third council.
-7. **Token-less / Headroom compression.** ANOLISA and Headroom (71k) compress tool output before the model. `research_thresholds.yml prompt_compression_ratio: 20` is unread-or-narrow. Wire it to `OutputFilter` for HTML/JSON, or delete the key. Don’t vendor a Python compressor.
-8. **Checkpoint / rollback of the working tree per fix pass.** SWE-Search keeps a git-like commit tree of states. `FixLoop` writes in place. Completeness: each autofix pass is a path-scoped commit on the worktree (`git commit -- path`) so `/fix` can `reset` one pass. Refuse on main (already worktree law).
-9. **Schema-validated agent results.** agent-swarm: JSON schema on worker output. Council/scan JSON already has a shape. Completeness: `Scan::Finding` schema in a test, not a new protobuf. Schema retries do not consume the agent budget (this TUI already says that).
-10. **Local cheap router.** use-agent-os Pilot Router: classify, send to cheapest capable model. `QuotaGate` + `providers.yml` exist. Completeness: `/scan` never calls a frontier model (`MASTER_SCAN_DETERMINISTIC`). Test that. Council stays the expensive path.
-11. **Do not adopt Docker worker fleets (OpenSandbox, agent-swarm containers, Orca ADE).** Production is one OpenBSD box; isolation is `operator worktree`. A Linux sandbox is a third runtime.
-12. **Do not become Hermes-as-OS.** Hermes RFC: process table of agents, cron, IPC. `FixLoop` / `WatchLoop` / `StandingOrders` are enough loops. A process table of subagents is the TUI’s job, not MASTER’s.
-13. **CaMeL taint is already `lib/ground/taint.rb`.** Completeness: WebFetch/WebSearch output is `Tainted` before it reaches a write tool. A test that a tainted URL cannot reach `AstEdit`.
-14. **ScreenAgent / computer-use.** Out. The face is not a VLM driver; CDP belongs to RAILS gates.
-15. **Skills as a filesystem (ANOLISA SkillFS).** `lib/cli/skills.rb` vs `data/patterns.yml` (first inventory 265). One list, index first, body on demand — “map, not encyclopedia.” Don’t dump every skill into the system prompt.
-
-### RAILS testing — few smokes, geometry over pixels
-
-16. **DHH / Rails 8.1: generators no longer emit system tests.** This tree already `config.generators.system_tests = nil` on brgen and bsdports. Amber: confirm the same line. Keep the handful that exist (`public_navigation`, `expanding_tabs`). Do not grow a 359-test browser suite. Integration tests for HTTP; gates for chrome.
-17. **Cuprite vs Selenium.** Guides and Evil Martians recommend Cuprite (Ferrum/CDP, no chromedriver). MASTER already uses Ferrum. RAILS Gemfiles still `selenium-webdriver`. Completeness: one driver family. Either Cuprite in `application_system_test_case.rb` or keep Selenium and stop implying CDP and Selenium are the same stack. Don’t run both.
-18. **Console logs in system tests.** visual_contract already records `console_errors`. System tests do not. If a smoke stays, fail on `page.driver.browser.logs` / Cuprite logger — same field as the gate.
-19. **Do not add `capybara-screenshot-diff` or Percy/Chromatic/Playwright.** visual_contract already has `pixel_diff_count` / `pixel_diff_ratio` / `pixel_diff_image` (ChunkyPNG). A second baseline set is a second source. layout_snapshot JSON is the *layout* ratchet; pixels are the *paint* ratchet. Don’t merge them.
-20. **Do not add Lookbook / lookbook_visual_tester.** ViewComponent / LAYER_CAKE decided against. Previews would be a third chrome.
-21. **axe-core-capybara is in brgen’s Gemfile.** Completeness: visual_contract `accessibility_violations` is the gate; don’t also run axe in every system test. One consumer.
-22. **Mask volatile regions in pixel_diff.** Timestamps, `time_ago`, animated-number, ads. visual_contract should exclude `[data-money]` jitter and `time` elements or the baseline will churn like layout_snapshot already does. Named selectors, not a looser ratio.
-23. **Count the system tests.** HEY kept ~10. `RAILS/**/test/system/**` is the census. If it is already ≤10 per app, write the number in `apps.yml` notes so the next agent does not add a 11th for “coverage.”
-
-### Automated layout refining — suggest tokens, don’t paint
-
-The tree’s layout tool is `geometry_probe` + `layout_snapshots/*.json` + `visual_contract`. Auto-refine means a *named token move*, not a pixel rewriter (operator eye).
-
-24. **Snapshot fail → token suggestion.** When a snapshot drifts, emit the ScaleLint/measure token that would absorb it (`--space-3`, `--measure`, `--tap-min`) instead of rewriting the JSON. A dry `layout_snapshot --explain` line. Don’t auto-commit a new baseline from an agent (the August drift is still open).
-25. **`walk.js` already walks the page.** Completeness: hanging-marker probe on legal/wiki (second pass 124). That *is* automated layout refine for Tschichold. Don’t add a ML layout model.
-26. **Don’t run an AI “make it pretty” pass on SCSS.** Rams honest + tokens. A model that rewrites `_typography.scss` is the opposite of the law.
-27. **Playwright `toHaveScreenshot` / Storybook.** Node. This check path is Ruby. Skip.
-28. **Ferrum in MASTER vs Selenium in RAILS.** Same browser, two drivers, two failure modes. Pick one for gates+smokes (Cuprite/Ferrum is the one MASTER already boots).
-
-### What this sitting will not open
-
-29. **Orca / herdr / holaOS / Electric as a MASTER rewrite.** Stars ≠ a constitution. Steal compression, span context, hypothesis-vs-measured, log review.
-30. **A second visual SaaS.** visual_contract + snapshots are the suite.
-31. **Cucumber.** DHH and this tree’s integration+gate split already replaced it.
+## Wiring, type and Rails leftovers — the 2026-09-11 second pass, compressed 2026-09-13
+
+Six sections opened 2026-09-11 (cross-tree micro-refinements, unwired logic
+and typography, Rails 8.1 and stimulus-components, completing the four trees,
+books, agentic coding) re-measured into this one. The cross-tree list was
+almost entirely a restatement of the numbered inventory above and the
+awesome-list scan, and closed as duplicates. Refusals are argued in
+`MASTER/DECISIONS.md` ("What The Catalogs, Papers And Books Do Not License");
+three ranking ideas moved to `RAILS/apps.horizon.yml`.
+
+Two guards worth keeping. `data/modes.yml` has no reader (see STUDIO 850), so
+entries elsewhere that treat it as the live scale are wrong. And the
+`MASTER/web` suite is not run by anything that fails: `events_controller_test`
+errored on both tests for as long as it existed.
+
+### MASTER face and bus — real, and the face's behaviour
+
+2. **Face regexes name topics nothing publishes.** `phantom:retry` (`face_semantics.js:162`, `topology_registry.js:22`, `data/topologies.yml:7`) where the bus publishes `phantom:recovery|occurrence|halt`; `pipeline:start` (`face_semantics.js:192`, `face_perf_guards.js:68`, `topologies.yml:13`) where it publishes `pipeline:stage_start`; `council:deliberation` in `face_semantics.js`, `face_council_multi.js`, `cognition_ecology.js`. Renaming makes the face flinch and tint on events it ignores today, so the operator should see it once; the bundle rebuilds at `assets:precompile`.
+10. **`sse_contract.js` lists `felt`, `mood`, `model`, `verdict`, `confidence`, `council:speech` with no handler,** and `content_kind` is handled but unlisted. POST chat works only because `handleFaceNamedEvent` passes them as extensions, and it omits `felt`. Put the handlers in the contract and assert `SSE_EVENTS ⊆ NAMED_HANDLERS` in `sse_contract.test.mjs`.
+11. **`face.runtime.js` keeps a GET EventSource `/chat/message` path beside the POST one.** Edit `face.part*.txt`, not the generated file.
+20. **Command tables built by no caller.** `agent_commands.rb` publishes `btw:done` and `agent:plan_done`, which `chat_service.rb:127` and `active_plan.rb:51` subscribe; `CommandRegistry.build` never builds that table (help.rb says so). Register `/btw` or delete the table with both subscribers.
+24. **`MASTER_CONSENSUS_FIXES`, `MASTER_WATCH`, `MASTER_INCREMENTAL`, `MASTER_SKIP_SELF_TEST` have no on-path test,** and `MASTER_WEB` has no test that the Falcon boot sets it. One test each that the `=1` path runs.
+170. **`/dashboard/live` has one fetcher,** `dashboard/index.html.erb:57`, and the dashboard is not in `face_assets.yml`. Keep both or fold both into chat.
+
+### RAILS wiring
+
+28. **A report sent by Turbo answers 422.** `ReportsController#create` offers `format.turbo_stream` with no template; a test posting with Turbo's Accept header reproduced 422, and removing the format still gave 422 with `ActiveRecord::RecordInvalid: Flaggable må eksistere`, while the same post without the header creates the report. Find why the Turbo path loses the flaggable before touching the format.
+29. **Identity, reputation, neighbourhoods and mentions are models without an inlet or a page.** `IdentityAssurer` is called only by a test; `IdentityAssurance`/`ReputationScore` have no view; `Neighborhood` has no route though dating and maps print the name; `Mention` rows have no "you were mentioned". Each wants a reader or deletion — a product call per model.
+42. **Mutations that reload the page.** Favorite, like, dislike, rewind, comment, collaboration, import, conversation pins and group members redirect; `Tv::CommentsController` has no views despite `TvCommentCreated`. Stream the row (Turbo), not a new Reflex; `VoteReflex` beside `votes#create.turbo_stream` is the same arrow twice, and `optimistic-send` has no caller.
+44. **`lazy_image_tag` lives in brgen's host but dating's engine views call it,** so the engine's own tests cannot render them. Move it to shared.
+45. **`BSDPORTS_PORTS_TARBALL=1` has only its decline path tested.** Add a fixture tarball.
+R5. **Sign-up has no `unauthenticated_access_only` and no named rate limit on create,** the edge guide's two lines.
+R8. **`fresh_when` only on bsdports `ports#show`.** Add to post, listing, event, item and maintainer show with an ETag that includes `Current.user&.id`.
+R12. **Marketplace variants are a static `fields_for`;** amber's `nested-form` and `sortable` already do this. Same for dating prompt order.
+R14. **`auto-submit` has no caller outside the snippet library.** Put it on the GET filter forms: marketplace facets, TV channels, bsdports search, amber filters.
+R23. **Four confirms want native `<dialog>`:** dating match overlay, report confirm, takeaway cancel, amber "let go". Re-pin `dialog` with the first view.
+R40. **No test that `tiptap-editor` survives a `broadcasts_refreshes` morph.**
+R44. **`futurism` is in amber's Gemfile with zero callers and no pin.** Remove the gem or give it one index.
+C2. **`Matchmaking#create_mutual_matches` looks users up one id at a time;** `User.where(id: mutual_ids)` once.
+C6. **Marketplace defaults to goods;** the kind switcher and the empty state for a kind a city lacks are missing.
+C8. **`tv/live_streams/new` offers a form for infrastructure vm23 does not have.** Hide it behind a false flag.
+C20. **`ports_fts` is created by migration and skipped by tests when absent.** Put the virtual table where `bin/ci` builds it, so a done feature cannot skip.
+C22. **bsdports offers FreeBSD and NetBSD chips that import nothing.** Disable them.
+A17. **RAILS runs Selenium while every gate drives Chrome over CDP.** Pick one driver for the few system tests (1 amber, 2 brgen, 1 bsdports); they already fail nothing on console errors.
+
+### Instruments — detectors that measure, never repaint
+
+60. **Lint reach.** `NO_INLINE_STYLES` names two `.html` files and never reads ERB `<style>`; `RhythmLint` reads only the two token files; `ScaleLint` misses the `font:` shorthand and `letter-spacing` inside `clamp()`; `NO_LONG_TRANSITION` misses seconds (`.42s`, `1.2s`) and JS `duration-value`; `LOGICAL_PROPERTIES` matches only margin/padding; `MEASURE_OPTIMUM` fires only at ≥800px. Extending each will surface findings, which go to the operator's list below, never into a raised ceiling.
+124. **Hanging markers are a soft geometry probe on surfaces without lists.** Add legal, wiki and post show to `geometry_surfaces.yml`; say beside `list_marker_hang` whether it is law or advice. `void_target: 0.70` and `rhythm_off_max_pct` have no reader.
+A1. **Findings carry no `status: hypothesis | measured`,** and nothing tests the `Scan::Finding` shape. `research_thresholds.yml prompt_compression_ratio` is unread; JSON tool results may skip `OutputFilter` (grep `Result.ok(` in `lib/io/`); no test that a tainted WebFetch result cannot reach `AstEdit`; no test that `/scan` never reaches a frontier model under `MASTER_SCAN_DETERMINISTIC`.
+A22. **`visual_contract` pixel diffs will churn on `time`, `time_ago`, animated numbers and `[data-money]`.** Mask those selectors.
+B2. **Prose lints nobody runs:** two spaces after a period and `2010-2014` instead of an en dash in locale YAML prose values; centred body text inside `main`.
+
+### The operator's — each changes how a page looks
+
+55. **Reading surfaces that do not wear `.prose`:** legal (`legal-prose`), mailer, listing description (`66ch` literal), dating bio, errors. Joining `.prose` brings measure, hanging, hyphenation, `text-wrap: pretty`, orphans, oldstyle numerals; `.reading-column` and `.form-measure` exist and no view wears them.
+59. **The mailer is a third type system** — three families, private size ladder, tracking 0.04–0.28em, off-scale radius and leading, dark `#050505`, no tabular price. Snap to the tokens; the letter's colour stays the operator's.
+64. **Measures in px:** `.page-header` 660, bsdports header 660/62ch, amber `.item-detail` 700, playlist 720, forms 480/584, splash tagline 28em, errors 30em, print `.prose` 100%. Chrome widths (map HUD 280/320, dressing room 420, `--feed-max`) stay.
+78. **Scale and rhythm:** `--line-height: 20px` absolute; `--text-display` is a ninth size and H1 is 1.75× body against a 2.0 law — decide which token is H1; `font-size` 1.17/0.92/0.6em; two paragraph rhythms; 500/700 weights unused; legal 1.62 and mailer 1.55 leading; `.post_body` 1.6 against `.prose` 1.5.
+86. **Tracking:** `--tracking-tightest` −0.03 on heavy headings and marketplace −0.045em; primer h1 lowercase `.01em`; face `.04em` and `.32em`; legal eyebrow `.12em` at `.72rem`; mailer kickers; uppercase labels in maps and marketplace cards without tracking.
+95. **Families per surface:** marketplace hero three families; face primer names Inter beside system-ui and mono; splash chips mono on a system-ui splash.
+99. **OpenType and quotes on `.prose`:** `onum pnum liga clig`, `hyphenate-limit-lines: 2`, `quotes` for nb, `smcp` on `abbr`, tabular numerals on mailer price, legal dates and wiki history; face `font-feature-settings` lacks the defaults.
+109. **`_fonts.scss` falls back to jsDelivr for JetBrains Mono** though `/fonts/` is self-hosted, and Libre Baskerville files may have no `@font-face`. Dropping the CDN is a first-paint change on a missing file.
+111. **Flat UI residue:** `_search_yep.scss` shadow (PEN_ALLOW), `#ccc` and `white` on search, dating button gradient, splash `scale(1.02)` at rest, `chat_upload.css` `.42s`, vote `duration-value="900"`, `_tab_bar.scss:99` max-width band unmarked, marketplace masthead clamp 5.5rem.
+B16. **Modulor:** if H1 stays 1.75×, lower the ratio in law or raise the title token.
+A24. **A drifted snapshot could print the token that would absorb it** (`layout_snapshot --explain`), without writing a baseline.
+
+### Needs vm23
+
+C24. **Checkpoint WAL before `dr-pull`** (`PRAGMA wal_checkpoint(TRUNCATE)` or `.backup`), so the off-host copy is consistent.
+C26. **If `/var/log` shows `database is locked`, raise `busy_timeout`;** confirm one writer per primary with `FALCON_WORKERS` at 1.
 
 ---
 
