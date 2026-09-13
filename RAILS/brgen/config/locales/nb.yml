@@ -517,6 +517,69 @@ nb:
     save: Lagre
   activerecord:
     attributes:
+      comment:
+        content: "Kommentar"
+      community:
+        name: "Navn"
+        slug: "Adresse"
+        description: "Beskrivelse"
+        rules: "Regler"
+        privacy: "Synlighet"
+      event:
+        title: "Tittel"
+        description: "Beskrivelse"
+        starts_at: "Starter"
+        ends_at: "Slutter"
+        status: "Status"
+        capacity: "Kapasitet"
+      message:
+        content: "Melding"
+        message_type: "Meldingstype"
+        attachment: "Vedlegg"
+      story:
+        caption: "Bildetekst"
+        media: "Bilde eller video"
+      user:
+        email_address: "E-postadresse"
+        username: "Brukernavn"
+        display_name: "Visningsnavn"
+        password: "Passord"
+      email_subscription:
+        email: "E-post"
+      marketplace/address:
+        recipient: "Mottaker"
+        line1: "Adresse"
+        postcode: "Postnummer"
+        city_name: "Sted"
+        country_code: "Land"
+      marketplace/question:
+        body: "Spørsmål"
+        answer: "Svar"
+      marketplace/review:
+        rating: "Vurdering"
+        body: "Omtale"
+      marketplace/return:
+        status: "Status"
+        reason: "Årsak"
+      tv/comment:
+        body: "Kommentar"
+      tv/stream_chat:
+        message: "Melding"
+      tv/video_note:
+        body: "Notat"
+        timestamp: "Tidspunkt"
+      takeaway/review:
+        rating: "Vurdering"
+        order_id: "Bestilling"
+      takeaway/menu_item:
+        name: "Navn"
+        price_cents: "Pris"
+      playlist/set:
+        name: "Navn"
+        privacy: "Synlighet"
+      dating/prompt:
+        question: "Spørsmål"
+        answer: "Svar"
       partner/program:
         name: Navn
         status: Status

@@ -512,6 +512,69 @@ en:
     save: Save
   activerecord:
     attributes:
+      comment:
+        content: "Comment"
+      community:
+        name: "Name"
+        slug: "Address"
+        description: "Description"
+        rules: "Rules"
+        privacy: "Privacy"
+      event:
+        title: "Title"
+        description: "Description"
+        starts_at: "Starts"
+        ends_at: "Ends"
+        status: "Status"
+        capacity: "Capacity"
+      message:
+        content: "Message"
+        message_type: "Message type"
+        attachment: "Attachment"
+      story:
+        caption: "Caption"
+        media: "Photo or video"
+      user:
+        email_address: "Email address"
+        username: "Username"
+        display_name: "Display name"
+        password: "Password"
+      email_subscription:
+        email: "Email"
+      marketplace/address:
+        recipient: "Recipient"
+        line1: "Address"
+        postcode: "Postcode"
+        city_name: "City"
+        country_code: "Country"
+      marketplace/question:
+        body: "Question"
+        answer: "Answer"
+      marketplace/review:
+        rating: "Rating"
+        body: "Review"
+      marketplace/return:
+        status: "Status"
+        reason: "Reason"
+      tv/comment:
+        body: "Comment"
+      tv/stream_chat:
+        message: "Message"
+      tv/video_note:
+        body: "Note"
+        timestamp: "Timestamp"
+      takeaway/review:
+        rating: "Rating"
+        order_id: "Order"
+      takeaway/menu_item:
+        name: "Name"
+        price_cents: "Price"
+      playlist/set:
+        name: "Name"
+        privacy: "Privacy"
+      dating/prompt:
+        question: "Question"
+        answer: "Answer"
       partner/program:
         name: Name
         status: Status

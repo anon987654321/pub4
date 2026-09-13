@@ -878,6 +878,19 @@ en:
     next: "Next"
     position: "Page %{page} of %{pages}"
   activerecord:
+    attributes:
+      comment:
+        content: "Comment"
+      outfit:
+        name: "Name"
+      post:
+        body: "Post"
+      affiliate_link:
+        url: "Link"
+        merchant: "Shop"
+        commission_rate: "Commission"
+      planned_outfit:
+        planned_date: "Date"
     errors:
       models:
         connection:

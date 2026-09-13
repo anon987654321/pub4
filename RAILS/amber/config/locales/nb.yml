@@ -876,6 +876,19 @@ nb:
     next: "Neste"
     position: "Side %{page} av %{pages}"
   activerecord:
+    attributes:
+      comment:
+        content: "Kommentar"
+      outfit:
+        name: "Navn"
+      post:
+        body: "Innlegg"
+      affiliate_link:
+        url: "Lenke"
+        merchant: "Butikk"
+        commission_rate: "Provisjon"
+      planned_outfit:
+        planned_date: "Dato"
     errors:
       models:
         connection:
