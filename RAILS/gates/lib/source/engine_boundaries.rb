@@ -40,6 +40,7 @@ module Deploy
       engines = namespaces
       return result.inconclusive!("engine_boundaries: no isolate_namespace under RAILS/brgen/engines — nothing was read") if engines.empty?
 
+      used = []
       engines.each do |dir, own|
         result.checked!
         foreign = engines.values - [own]
@@ -51,7 +52,10 @@ module Deploy
             next if line.lstrip.start_with?("#", "<%#")
 
             line.scan(reference).flatten.uniq.each do |other|
-              next if allowed.include?(other)
+              if allowed.include?(other)
+                used << [dir, rel, other]
+                next
+              end
 
               result.fail("engine_boundaries: #{dir}/#{rel}:#{number} names #{other}:: — " \
                           "#{own} reaches into another engine; go through the host app, or " \
@@ -60,12 +64,21 @@ module Deploy
           end
         end
       end
+      stale_exemptions(used).each do |dir, rel, other|
+        result.fail("engine_boundaries: EXEMPT #{dir}/#{rel} => #{other} matches no reference — delete the row")
+      end
       result
     end
 
     private
 
     def engines_root = File.join(@root, "RAILS", "brgen", "engines")
+
+    # A row whose read has gone excuses the next crossing someone adds to that file.
+    def stale_exemptions(used)
+      declared = @exempt.flat_map { |dir, files| files.flat_map { |rel, others| others.map { |other| [dir, rel, other] } } }
+      declared - used
+    end
 
     def namespaces
       Dir.glob(File.join(engines_root, "*", "lib", "*", "engine.rb")).sort.each_with_object({}) do |path, out|
