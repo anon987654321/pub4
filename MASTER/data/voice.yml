@@ -106,23 +106,37 @@ tts:
   # same as not running.
   bed:
     # dillas whole CHORD_PROGRESSIONS table, read at render time rather than
-    # copied. 242 progressions; a copy of four of them drifts, a reader does
-    # not. Every pass picks different ones, so nothing loops.
+    # copied. 242 progressions; a copy of four drifts, a reader does not. Every
+    # pass picks different ones, so nothing loops.
+    #
+    # Not all 242 evenly. The table carries whole-tone bridges and chains of bare
+    # dominants alongside the ninth-chord writing, and under speech the bare ones
+    # sound like an exercise. A progression qualifies when three quarters of its
+    # chords are extended.
     source: STUDIO/dilla/dilla.rb
     progressions: all
+    progression_filter: extended
     bpm: 88
     bars_per_chord: 2
     chords_per_pass: 12
     gain_db: -14
+    # Open voicings, not clusters. Forcing every note into one octave stacks
+    # seconds and a ninth chord comes out as a smear; these spread, with at least
+    # a minor third between neighbours, the way a player lays them out.
+    voicing: { spread_semitones: 3, bass_range: [33, 45], upper_range: [52, 84] }
     # The oscillators render at four times the sample rate and come back down
     # through the resampler. A saw or square written as a modulo has a vertical
     # edge, so every harmonic above 22 kHz folds back as an inharmonic tone;
     # sixteen of them is a field of bleeps that moves with the notes.
     oversample: 4
+    # About one chord in six plays backwards. A reversed pad swell is the oldest
+    # trick on a sampler and it still works: the attack arrives where the release
+    # should be.
+    reverse_odds: 0.17
     chain: "equalizer=f=520:t=q:w=1.1:g=3.0,equalizer=f=1480:t=q:w=1.3:g=2.0,chorus=0.5:0.7:19|27:0.3|0.26:0.24|0.2:0.9|1.4,highpass=f=70,lowpass=f=2600"
-    # One patch per chord, drawn fresh each pass. The recipe is fixed — an
+    # One patch per chord, drawn fresh each pass. The recipe is fixed  an
     # oscillator shape, a detune spread, a ladder cutoff with resonance, an
-    # attack — and only the settings move, which is how a Minimoog reached for
+    # attack  and only the settings move, which is how a Minimoog reached for
     # instruments it could not be. Each name is what the patch aims at.
     patches:
       - { name: bowed cello,   wave: saw,      cutoff: 900,  res: 5.5, attack: 1.4,  voices: 3, sub: true }
@@ -141,33 +155,63 @@ tts:
       - { name: rhodes,        wave: sine,     cutoff: 1400, res: 3.0, attack: 0.1,  voices: 3, sub: true }
       - { name: viola section, wave: saw,      cutoff: 1150, res: 4.5, attack: 1.7,  voices: 4, sub: false }
       - { name: bass clarinet, wave: triangle, cutoff: 700,  res: 6.0, attack: 0.7,  voices: 2, sub: true }
+    # The bass plays the kick. The bar shape is chosen once and handed to both,
+    # so every bass note lands on a kick and the two read as one instrument. A
+    # bassline written independently of the drums is the clearest single way to
+    # make a track sound programmed. Raw: a saw and a square an octave apart,
+    # driven, nothing above 220 Hz, no chorus and no movement.
+    bass: { follows: kick, waves: [saw, square], lowpass_hz: 220, gain_db: -4 }
+    # Ringtone Tools are Max for Live MIDI utilities that decouple rhythm from
+    # pitch. Hocket II splits a line into single-note events across up to eight
+    # channels, so one melody is played by many voices in turn; MIDI Bag stores
+    # notes and triggers whatever is in the bag when new MIDI arrives.
+    #
+    # So the rhythm is the bars own kick and ghost placements, the pitches are a
+    # shuffled bag of the chords upper voices, and every successive note goes to
+    # a different waveform and a different side of the stereo field. One line,
+    # many mouths. It plays on about half the bars, because a lead on every bar
+    # is a melody and a melody competes with speech.
+    lead:
+      reference: ringtone_tools
+      rhythm_from: bar_shape
+      pitch_from: chord_bag
+      hocket_voices: [saw, square, pulse, triangle]
+      plays_odds: 0.5
+      gain_db: -9
+    # The pads and the lead duck under the kick, keyed on the kit itself, so the
+    # pumping follows what the drummer just played rather than a fixed rate.
+    # Warping them to the drums is what stops the bed being two records at once.
+    sidechain:
+      pads: { threshold: 0.055, ratio: 7, attack_ms: 4, release_ms: 190, makeup: 1.6 }
+      lead: { threshold: 0.08, ratio: 4, attack_ms: 3, release_ms: 150, makeup: 1.2 }
     # The drummer is Dilla time, as Dan Charnas sets it out in the book of that
-    # name, played on a kit that owes its sound to Karriem Riggins.
+    # name, on a kit that owes its sound to Karriem Riggins and its finish to
+    # dillas Sonitex.
     #
-    # Charnas claim is precise and it is not loose drums. Before Dilla there
-    # were two time-feels: straight, where the beats are even, and swing, where
-    # they are not. What Dilla did with the MPCs swing and shift was run both
-    # at once  leaving some elements rigid on the grid and pulling others off
-    # it, so the parts disagree and the ear cannot resolve them into one feel.
-    # He pushed snares forward so they sounded rushed and let kicks lag. The
-    # friction is the music, and none of it was accidental, which is why feels
-    # below is a table rather than a random walk.
+    # Charnas claim is precise and it is not loose drums. Before Dilla there were
+    # two time-feels: straight, where the beats are even, and swing, where they
+    # are not. What Dilla did with the MPCs swing and shift was run both at once
+    #  leaving some elements rigid on the grid and pulling others off it, so the
+    # parts disagree and the ear cannot resolve them into one feel. He pushed
+    # snares forward so they sounded rushed and let kicks lag. The friction is
+    # the music, and none of it was accidental, which is why feels is a table
+    # rather than a random walk.
     #
-    # drift is a few milliseconds of wander and is small on purpose. A human
-    # drummer has it; the machine did not, and the feel is a placement rather
-    # than an imprecision.
-    #
-    # The kit is dusty and small-room, not a warehouse: nothing above 8.5 kHz,
-    # hats well down, and no oscillator anywhere except the kick  a pure sine
-    # on a drum hit is a bleep, which is what it sounded like.
-    #
-    # The drums do not take the pad chain above. It rolls off at 2.6 kHz, which
-    # removes a hat entirely.
+    # The patterns are boom bap first: kick on one, snare on two and four, hats
+    # in straight eighths, and the backbeat never in doubt. All the invention is
+    # in the kick and in the placement. A bar with no two and four is not a bar
+    # of hip-hop, so the variation lives in the arrangement instead.
     drums:
       reference: dilla_time
       kit: karriem_riggins
-      gain_db: -12
-      dropped_backbeat_odds: 0.16
+      finish: sonitex_sp1200
+      gain_db: -5
+      # One shape runs four bars and the fourth is its variation. A beat is a
+      # loop held long enough for the conflict inside it to become the groove,
+      # and then broken; re-rolling every bar sounds busy and reads as
+      # indecision.
+      arrangement: { bars_per_shape: 4, variation_bar: 4 }
+      shapes: [so far, workin, runnin, the light, stakes, dont cry, fall in love, two turntables]
       # seconds; shift is negative for early, positive for late
       feels:
         hat:   { swing: 0.0,  shift: 0.0,    drift: 0.0 }
@@ -184,18 +228,34 @@ tts:
       # gate multiplies that by zero, and the bar comes out NaN  silent and
       # clipped. Five bars in six were doing exactly that.
       kick:
-        patterns: 8
         envelope_span: clamped
         sub: { hz: 46, fall_ms: 14, phase: integrated }
         punch: { hz: 92, fall_ms: 8, phase: integrated }
-        click: { source: anoisesrc, band_hz: [1400, 5000], gain_db: -16 }
-      snare: { source: anoisesrc, body_hz: [120, 340], rasp_hz: [600, 2400], ghost_velocity: [0.22, 0.34] }
-      hat: { source: anoisesrc, band_hz: [4000, 9000], gain_db: -20, open_odds: 0.35 }
+        click: { source: anoisesrc, band_hz: [1400, 5000], gain_db: -13 }
+      # The doubled snare  a second hit a sixteenth behind the backbeat, quieter
+      #  is the single most recognisable thing in his drums.
+      snare:
+        source: anoisesrc
+        body_hz: [120, 340]
+        rasp_hz: [600, 2400]
+        double_velocity: 0.55
+        ghost_velocity: [0.22, 0.34]
+      # anoisesrc rather than random() inside an aeval expression, because a
+      # declared source states its colour and amplitude. Not because random() is
+      # fake: measured at entropy 0.84 and flat factor 0, it is real noise, and
+      # dilla uses it for tape hiss. The old hats were simply far too bright and
+      # the snare underneath them was made of sine waves.
+      hat: { source: anoisesrc, band_hz: [4000, 9000], gain_db: -17, open_odds: 0.35 }
+      # Sonitex STX-1260, sp1200 preset, with dillas own measured constants from
+      # dilla.rb:10033  compressor, tape saturation between pre- and de-emphasis,
+      # vinyl bandwidth with a resonant head bump, wow and flutter, the sampler
+      # itself at 12 bits and 26.09 kHz, then an output limiter. Its numbers, not
+      # ours: changing them changes a rendered sound.
+      sonitex: { preset: sp1200, crush_bits: 12, crush_hz: 26095, crush_mix: 0.52, head_bump_hz: 58, drive: 1.45 }
       # The 12 ms fade is not cosmetic: every envelope is cut at the bar line and
       # a decay truncated mid-flight is a step discontinuity, which is a click on
       # every join, once a bar, all session.
       bar_end_fade_ms: 12
-      bus: "highpass=f=30,lowpass=f=8500,alimiter=limit=0.9"
   # No default_volume. The daemon protocol is {voice,rate,pitch,text} and
   # RbEdgeTTS::Communicate takes rate: and pitch: only, so a volume here was
   # read by nothing for as long as it existed. Adding one back means

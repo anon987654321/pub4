@@ -227,6 +227,39 @@ def test_the_bed_drums_keep_conflicting_time_feels
                   "a hat above 9 kHz is a modern bright kit, not this one"
 end
 
+  # The bed is a band now, and the two relationships that make it one are the
+  # ones an edit breaks silently: the bass reading the kicks own placement, and
+  # the harmony ducking under the kit. Lose either and it is two records played
+  # at once.
+  def test_the_bed_is_locked_to_its_drummer
+    bed = Master::Voice::Policy.bed
+    skip "no bed declared" unless bed
+
+    assert_equal "kick", bed.dig("bass", "follows"),
+                 "a bassline written independently of the drums sounds programmed"
+    assert_equal "bar_shape", bed.dig("lead", "rhythm_from"),
+                 "Ringtone Tools decouple rhythm from pitch; the rhythm is the bars"
+    assert_equal "chord_bag", bed.dig("lead", "pitch_from"),
+                 "the lead reads the chord back and cannot play outside it"
+    assert bed.dig("sidechain", "pads"), "the pads must duck under the kick"
+    assert_equal "sonitex_sp1200", bed.dig("drums", "finish"),
+                 "the kit is finished on dillas sampler, not left as a synthesiser"
+  end
+
+  # Boom bap first. Every shape puts a backbeat somewhere, and the hats stay
+  # straight; a bar with no two and four is not a bar of hip-hop, and swinging
+  # the hats removes the thing everything else is heard against.
+  def test_every_bed_shape_keeps_a_backbeat
+    bed = Master::Voice::Policy.bed
+    skip "no bed declared" unless bed
+
+    shapes = Array(bed.dig("drums", "shapes"))
+    assert_operator shapes.size, :>=, 4, "one groove all session is a preset"
+    assert_equal shapes.size, shapes.uniq.size, "two shapes share a name"
+    assert_equal 4, bed.dig("drums", "arrangement", "bars_per_shape"),
+                 "re-rolling the shape every bar sounds busy and reads as indecision"
+  end
+
   # Two synthesis bugs that were audible before they were visible, and the
   # spectrogram named both. Neither is a preference, so both are pinned.
   def test_the_bed_does_not_alias_or_sweep
