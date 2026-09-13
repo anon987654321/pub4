@@ -68,3 +68,14 @@ vertical, driven by one `seed!`, and splitting them makes ten files with one
 caller each, which trades a god class for `FILE_SPRAWL`. The finding is accepted
 here. Models that hold several subjects split the other way, into concerns in a
 directory named after the model, as `Conversation` and `Takeaway::Order` do.
+
+## The storefront nav bars stay two partials
+
+`marketplace/_nav_bar.html.erb` and `takeaway/_nav_bar.html.erb` share their
+markup skeleton and every style, from `_marketplace_nav_bar.scss`, so their
+geometry cannot drift apart. What differs is content: marketplace carries a
+cart and six sections, takeaway no cart and four different sections, and each
+names its own engine's routes and search keys. One partial would take the
+section list, the cart and the labels as locals, which moves two readable
+templates into a table of hashes that each engine fills in. It would also have
+to live outside both engines. The duplication is the cheaper shape.

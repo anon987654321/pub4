@@ -307,6 +307,35 @@ markup. Before believing a number, check what it measured — the standing examp
 is a scan that searched for a bare constant name while every caller wrote it
 qualified, and reported forty dead files that were all alive.
 
+## The layout micro-refinement intake (2026-09-13)
+
+A 264-item ChatGPT intake asked for "one canonical" scale of nearly everything,
+per-vertical anatomy rules and a battery of design validators. It measured
+nothing and named no file. The system it asked for is here. `design_tokens.yml`
+carries the spacing ladder from `space_2xs` to `space_2xl`, the radii, the type
+sizes and line heights, a 66ch prose measure, `tap_min`, `focus_ring`, the motion
+durations and easings, and the breakpoint vocabulary under `viewport`.
+`ScaleLint` and the `scale_ratchet` gate, `BreakpointLint`, `RhythmLint`,
+`EmptyStateLint`, `DestructiveActionLint`, `LayoutStabilityLint`,
+`css_coverage_lint`, `MAGIC_COLOR` and `css_budget.yml` hold arbitrary values
+down. `layout_snapshot`, `visual_contract` and the `reflow` width sweep, with
+its 320px floor, are the rendered checks. MASTER already scans this tree
+through `bin/gate`, so a separate UI sweep mapped onto its laws would be a second
+door.
+
+**Refused.** A second token file, a duplicate-token detector and collapsing
+"visually equivalent" tokens: the social, luxury and `brgen_old` dialects repeat
+names with different values on purpose, and a snap between them changes paint.
+Density modes, optical-inset tokens and a motion budget have no reader and no
+finding behind them.
+
+**The operator's.** Everything about how a surface looks: type hierarchy and
+weight, uppercase and tracking, card and list anatomy, the marketplace, takeaway,
+messenger, feed, maps, dating and playlist layouts, density, decorative
+gradients and borders, and where motion belongs. An agent sweeping those would
+be redesigning the product by grep. A rendered finding with a page and a width
+reopens any of them as a single item.
+
 ## Visual design system (2026-07-19)
 
 **Reference:** x.com interaction patterns. Source of truth:
