@@ -165,13 +165,11 @@ class DeployGatesContractTest < Minitest::Test
     assert_includes source, 'runner.run("rails contracts"'
     # Was an inline Dir[...].each { require } that loaded all sixty-nine files
     # into one process. run_all.rb runs them one process per file over the same
-    # `**/*_test.rb` glob -- pinned there, and pinned here so the step cannot
-    # quietly go back to a loader that shares a namespace across the suite.
+    # recursive glob, and this pins the step to it so it cannot quietly go back
+    # to a loader that shares a namespace across the suite.
     assert_includes source, "RAILS/test/run_all.rb"
-
-    runner = File.read(File.join(ROOT, "test", "run_all.rb"))
-    assert_includes runner, '"**", "*_test.rb"',
-                    "run_all.rb must glob recursively or test/gates/ stops being run"
+    # That run_all.rb reaches test/gates/ is measured by running its file list,
+    # in test_the_contract_runner_sees_the_whole_suite below.
   end
 
   # The runner must actually see every file the old loader saw. A narrower glob
