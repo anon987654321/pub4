@@ -2,7 +2,6 @@
 # frozen_string_literal: true
 
 require "optparse"
-require "rbconfig"
 require_relative "../../MASTER/lib/operator/check_runner"
 require_relative "../../MASTER/lib/operator/ruby_runner"
 
@@ -11,17 +10,33 @@ RUBY = Operator::RubyRunner.gate_ruby
 STEP_TIMEOUT = Integer(ENV.fetch("DEPLOY_CHECK_TIMEOUT", "240"))
 profile = "operator"
 OptionParser.new do |parser|
+  parser.banner = <<~BANNER
+    Usage: OPENBSD/bin/check [--profile=operator|contributor]
+
+    Local deploy gates, no box required:
+      openbsd              OPENBSD/bin/check-openbsd (identity, installed targets, ports,
+                           dns zones, deploy smoke, resource guard, shell syntax, vps safety)
+      production           RAILS/gates/runner.rb production
+      phantom fk           RAILS/gates/runner.rb phantom_foreign_keys
+      domain align         RAILS/gates/runner.rb domain_alignment
+      dr freshness         OPENBSD/bin/dr-pull --check (skips off the operator Mac)
+      openbsd contracts    OPENBSD/test/run_all.rb, one process per file
+
+    Both profiles run the same steps; contributor only adds the reminder that
+    OPENBSD/bin/check-full is the one that runs the integrity chain.
+  BANNER
   parser.on("--profile=PROFILE", "contributor or operator (default)") { |value| profile = value }
 end.parse!
 
 runner = Operator::CheckRunner.new(prefix: "deploy-check", root: ROOT, timeout: STEP_TIMEOUT)
 
 failures = []
-failures << "identity" unless runner.run("identity", RUBY, "OPENBSD/verify_deploy_identity.rb")
+# check-openbsd owns identity and the deploy smoke gate, and brings installed
+# targets, dns zones and vps safety into the one command most people type.
+failures << "openbsd" unless runner.run("openbsd", RUBY, "OPENBSD/bin/check-openbsd")
 failures << "production" unless runner.run("production", RUBY, "RAILS/gates/runner.rb", "production")
 failures << "phantom_fk" unless runner.run("phantom fk", RUBY, "RAILS/gates/runner.rb", "phantom_foreign_keys")
 failures << "domain_align" unless runner.run("domain align", RUBY, "RAILS/gates/runner.rb", "domain_alignment")
-failures << "openbsd_smoke" unless runner.run("openbsd smoke", RUBY, "OPENBSD/deploy_smoke_gate.rb")
 
 # The only copy of production data that leaves vm23 is dr-pull's, and it stopped
 # for seven nights without anything noticing. This asks how old the newest pull
@@ -29,12 +44,7 @@ failures << "openbsd_smoke" unless runner.run("openbsd smoke", RUBY, "OPENBSD/de
 # anywhere but the operator's Mac, which is the one place it can be true.
 failures << "dr_freshness" unless runner.run("dr freshness", RUBY, "OPENBSD/bin/dr-pull", "--check")
 
-# OPENBSD/test was reachable from no entrypoint at all (MASTER/tools/runs.rb):
-# four files covering the gate library, health check, restore scripts and the VPS
-# safety gate, 80 assertions, running nowhere. They pass, and passing tests that
-# never execute prove nothing.
-contracts = 'Dir["OPENBSD/test/**/test_*.rb"].sort.each { |file| require File.expand_path(file) }'
-failures << "openbsd_contracts" unless runner.run("openbsd contracts", RUBY, "-e", contracts)
+failures << "openbsd_contracts" unless runner.run("openbsd contracts", RUBY, "OPENBSD/test/run_all.rb")
 
 if profile == "contributor"
   puts "deploy-check: extended gates     skip — contributor profile (use OPENBSD/bin/check-full for integrity)"

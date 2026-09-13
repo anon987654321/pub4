@@ -1,26 +1,23 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require "rbconfig"
 require_relative "../../MASTER/lib/operator/check_runner"
+require_relative "../../MASTER/lib/operator/ruby_runner"
 
 ROOT = File.expand_path("../..", __dir__)
-RUBY = RbConfig.ruby
+RUBY = Operator::RubyRunner.gate_ruby
 STEP_TIMEOUT = Integer(ENV.fetch("DEPLOY_CHECK_TIMEOUT", "600"))
 runner = Operator::CheckRunner.new(prefix: "deploy-full", root: ROOT, timeout: STEP_TIMEOUT)
 
+# The release gate, with each gate once. The integrity chain already runs
+# identity, production, phantom_fk, the deploy smoke gate and domain_alignment,
+# so bin/check is not a step here; this adds only what the chain does not: the
+# OpenBSD config gates, the two contract suites, and the backup freshness check.
 failures = []
-failures << "local check" unless runner.run("local check", RUBY, "OPENBSD/bin/check")
-# One process per file, via RAILS/test/run_all.rb. This step was an inline
-# `Dir["RAILS/test/**/*_test.rb"].sort.each { |f| require File.expand_path(f) }`,
-# which loaded all sixty-nine into a single process: every constant they declare
-# at class scope shared one namespace, and one `exit` in any of them -- four
-# shell out to the gate runner, which exits on its own failure paths -- would
-# have ended the run with Minitest reporting on whatever it had collected so far.
-# It also attributed a red file to nothing in particular. Same 496 runs; the
-# runner names the file and this is now runnable on its own, which is why three
-# of these were found red on main.
+failures << "openbsd" unless runner.run("openbsd", RUBY, "OPENBSD/bin/check-openbsd")
+failures << "openbsd contracts" unless runner.run("openbsd contracts", RUBY, "OPENBSD/test/run_all.rb")
 failures << "rails contracts" unless runner.run("rails contracts", RUBY, "RAILS/test/run_all.rb")
+failures << "dr freshness" unless runner.run("dr freshness", RUBY, "OPENBSD/bin/dr-pull", "--check")
 failures << "integrity" unless runner.run("integrity", RUBY, "OPENBSD/integrity_gate.rb")
 
 exit(failures.empty? ? 0 : 1)

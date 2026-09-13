@@ -1,12 +1,12 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require "rbconfig"
 require_relative "../../MASTER/lib/operator/check_runner"
 require_relative "../../MASTER/lib/operator/environment"
+require_relative "../../MASTER/lib/operator/ruby_runner"
 
 ROOT = File.expand_path("../..", __dir__)
-RUBY = RbConfig.ruby
+RUBY = Operator::RubyRunner.gate_ruby
 STEP_TIMEOUT = Integer(ENV.fetch("DEPLOY_CHECK_TIMEOUT", "240"))
 runner = Operator::CheckRunner.new(prefix: "deploy-openbsd", root: ROOT, timeout: STEP_TIMEOUT)
 
@@ -20,24 +20,22 @@ failures << "identity" unless runner.run("identity", RUBY, "OPENBSD/verify_deplo
 # the one that did (daily.local -> config_drift_gate.rb) went unnoticed for as
 # long as it existed because the only check that could see it ran on the box.
 failures << "installed targets" unless runner.run("installed targets", RUBY, "OPENBSD/installed_targets_gate.rb")
+# The other half of the same question: every cron line, rc.d service and nsd
+# zone reaches a file the tree ships.
+failures << "reach" unless runner.run("reach", RUBY, "OPENBSD/tools/reach.rb")
 failures << "ports" unless runner.run("ports", RUBY, "RAILS/gates/runner.rb", "port_inventory")
-# dns_zones was registered in RAILS/gates/gates.yml and invoked by nothing — the
-# only one of the 47 that no script in this repo named, so `runner.rb --all`
-# being uncalled (TODO.md: rails_gates_not_wired) meant it had never run.
-# It belongs here rather than in check-rails: what it compares is
-# OPENBSD/var/nsd/zones against what bin/render_dns.rb generates, plus a live
-# query to our own nameserver. Nothing about it is a Rails concern except the
-# directory its file happens to sit in.
+# The generator's own --check first, so a DNS edit is judged without the Rails
+# gate registry; dns_zones then adds the live query to our own nameserver.
+failures << "dns render" unless runner.run("dns render", RUBY, "OPENBSD/bin/render_dns.rb", "--check")
+# dns_zones is registered in RAILS/gates/gates.yml. It belongs here rather than
+# in check-rails: what it compares is OPENBSD/var/nsd/zones against what
+# bin/render_dns.rb generates, plus a live query to our own nameserver.
 failures << "dns_zones" unless runner.run("dns zones", RUBY, "RAILS/gates/runner.rb", "dns_zones", env: LIVE_ENV)
 failures << "deploy_smoke" unless runner.run("deploy smoke", RUBY, "OPENBSD/deploy_smoke_gate.rb")
-# The shed ladder decides which site goes down under memory pressure, and its
-# test was named by nothing. It asserted litestream went first for as long as the
-# guard had stopped shedding it, and read green because nobody ran it.
+# The shed ladder decides which site goes down under memory pressure.
 failures << "resource guard" unless runner.run("resource guard", "ksh",
                                                "OPENBSD/test/resource_guard_test.sh",
                                                "OPENBSD/resource_guard.sh")
-# Two files were named here by hand out of 43, and the deploy path was not among
-# them: bin/vps-deploy, vps_ci.sh and deploy_all.sh are what a deploy runs.
 # shell_syntax_gate reads each script's shebang, so the set is the tree and the
 # parser is the one that file declares.
 failures << "shell syntax" unless runner.run("shell syntax", RUBY, "OPENBSD/shell_syntax_gate.rb")
