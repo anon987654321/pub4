@@ -52,6 +52,12 @@ en:
     store_updated: Store updated
     store_deleted: Store removed
     store_not_allowed: Only the owner can change this store
+    payment_providers:
+      stripe: Stripe
+      vipps: Vipps
+    checkout_errors:
+      not_configured: Payment with %{provider} is not set up here yet.
+      provider_failed: "%{provider} did not answer as expected. Nothing was charged — try again shortly."
   activerecord:
     attributes:
       marketplace/question:

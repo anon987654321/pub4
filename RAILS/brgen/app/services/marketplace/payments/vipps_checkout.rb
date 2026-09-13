@@ -79,10 +79,10 @@ module Marketplace
         req.body = JSON.generate(payload)
         res = Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 8, read_timeout: 20) { |http| http.request(req) }
         data = JSON.parse(res.body)
-        raise "Vipps error: #{data["title"] || data["message"] || res.code}" unless res.is_a?(Net::HTTPSuccess)
+        raise ProviderError, "Vipps error: #{data["title"] || data["message"] || res.code}" unless res.is_a?(Net::HTTPSuccess)
 
         order.mark_payment_pending!(provider: "vipps", reference: reference)
-        data.dig("redirectUrl") || data.dig("url") || raise("Vipps response missing redirectUrl")
+        data.dig("redirectUrl") || data.dig("url") || raise(ProviderError, "Vipps response missing redirectUrl")
       end
 
       def self.access_token

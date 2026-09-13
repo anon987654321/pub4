@@ -36,9 +36,9 @@ module Marketplace
         data = JSON.parse(res.body)
         return data if res.is_a?(Net::HTTPSuccess)
 
-        raise "Stripe error: #{data.dig("error", "message") || res.code}"
+        raise ProviderError, "Stripe error: #{data.dig("error", "message") || res.code}"
       rescue JSON::ParserError
-        raise "Stripe error: #{res.code}"
+        raise ProviderError, "Stripe error: #{res.code}"
       end
       private_class_method :parse!
     end

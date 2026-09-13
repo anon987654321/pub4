@@ -52,6 +52,12 @@ nb:
     store_updated: Butikken er oppdatert
     store_deleted: Butikken er fjernet
     store_not_allowed: Bare eieren kan endre denne butikken
+    payment_providers:
+      stripe: Stripe
+      vipps: Vipps
+    checkout_errors:
+      not_configured: Betaling med %{provider} er ikke satt opp her ennå.
+      provider_failed: "%{provider} svarte ikke som ventet. Ingenting er trukket — prøv igjen om litt."
   activerecord:
     attributes:
       marketplace/question:

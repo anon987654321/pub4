@@ -3,6 +3,23 @@
 class Marketplace::CheckoutsController < Marketplace::BaseController
   before_action :require_user_session
 
+  # What can go wrong between us and a PSP: the provider refusing, the network
+  # failing, or a reply missing what we asked for. Anything else is a defect
+  # here and raises.
+  PAYMENT_ERRORS = [
+    Marketplace::Payments::ProviderError,
+    Net::OpenTimeout, Net::ReadTimeout, SocketError, OpenSSL::SSL::SSLError,
+    Errno::ECONNREFUSED, Errno::ECONNRESET, JSON::ParserError, KeyError
+  ].freeze
+
+  # The only hosts a checkout may send a buyer to. The URL comes back from the
+  # provider's API, and an open redirect would hand a buyer mid-payment to
+  # whatever that reply named.
+  PROVIDER_HOSTS = {
+    "stripe" => %w[checkout.stripe.com],
+    "vipps" => %w[vipps.no]
+  }.freeze
+
   # POST /checkout  provider=stripe|vipps
   #
   # Two shapes, deliberately. order_id pays a single listing — the classifieds
@@ -53,12 +70,21 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
     url = start_payment(provider, payable)
     return if url.nil? || performed?
 
+    unless provider_url?(provider, url)
+      Rails.logger.error("[checkout] #{provider} returned a redirect off its own hosts: #{url}")
+      redirect_to cart_path, alert: t("marketplace.checkout_errors.provider_failed", provider: provider_name(provider))
+      return
+    end
+
     redirect_to url, allow_other_host: true
-  rescue Marketplace::Payments::NotConfigured => e
-    redirect_to cart_path, alert: e.message
-  rescue StandardError => e
+  rescue Marketplace::Payments::NotConfigured
+    redirect_to cart_path, alert: t("marketplace.checkout_errors.not_configured", provider: provider_name(provider))
+  # The buyer is told which provider failed and that nothing was charged. The
+  # provider's own words go to the log: they name API fields and account
+  # states, not anything a buyer can act on.
+  rescue *PAYMENT_ERRORS => e
     Ground::Swallow.log(e, context: "Marketplace::CheckoutsController#create") if defined?(Ground::Swallow)
-    redirect_to cart_path, alert: t("flash.marketplace.checkout_failed", message: e.message)
+    redirect_to cart_path, alert: t("marketplace.checkout_errors.provider_failed", provider: provider_name(provider))
   end
 
   # GET return from PSP. The webhook remains the source of truth for payment —
@@ -137,6 +163,19 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
     order.record_activity!("MarketplaceOfferSent", actor: Current.user, source_vertical: "marketplace")
     order
   end
+
+  # The host itself or a subdomain of it, over https. Vipps answers from
+  # landing.vipps.no in production and a -mt variant in test.
+  def provider_url?(provider, url)
+    uri = URI.parse(url.to_s)
+    return false unless uri.is_a?(URI::HTTPS) && uri.host.present?
+
+    PROVIDER_HOSTS.fetch(provider, []).any? { |host| uri.host == host || uri.host.end_with?(".#{host}") }
+  rescue URI::InvalidURIError
+    false
+  end
+
+  def provider_name(provider) = t("marketplace.payment_providers.#{provider}")
 
   def provider_configured?(provider)
     case provider
