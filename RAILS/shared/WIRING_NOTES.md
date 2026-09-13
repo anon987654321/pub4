@@ -86,8 +86,11 @@ refreshing, `action_controller.js` and `optimistic_send_controller.js` are the
 shared optimistic patterns, `feed_hotkey_controller.js` has `j`/`k`,
 `importmap_preload_audit` and `ImportmapExternalHostsExamples` hold the CDN line,
 `touch-action: manipulation` sits on `.app-shell`, `QueryBudgetTest` and
-`front_page_weight_test` are the query and payload budgets, and the motion
-tokens live in `design_tokens.yml`. The rest was refused for these reasons.
+`front_page_weight_test` are the query and payload budgets, the Workbox worker
+(`shared/pwa/service_worker.js`) precaches assets, serves pages network-first
+with a cached fallback and replays offline POSTs through Background Sync, and
+the motion tokens live in `design_tokens.yml`. The rest was refused for these
+reasons.
 
 Nothing more is preloaded or pre-connected. Every preload, `preconnect` and
 Speculation Rules prerender is a real request or socket against one 1 GB, one
@@ -121,9 +124,12 @@ that needs the column. Streaming, 103 Early Hints and SSE all meet relayd and
 Falcon on a box with no spare core, and SSE holds a fiber per reader. Windowing
 breaks find-in-page and the accessibility tree; `content-visibility` already
 covers long feeds. `contain: paint` clips card menus. A server-rendered card
-cannot be optimistically inserted without a second template in JavaScript, and a
-vote queued offline and replayed later is an optimistic update nobody can roll
-back. Per-surface or critical CSS trades one immutable cached file for a miss on
+cannot be optimistically inserted without a second template in JavaScript.
+Frame navigation for the feed's sort chips would leave the lit chip, which sits
+outside the list, stale; lazy frames for side panels turn one request into
+several. Lazy-registering Stimulus controllers and subsetting or preloading
+fonts change what loads and paints, and wait for a measurement that names a
+cost. Per-surface or critical CSS trades one immutable cached file for a miss on
 every surface's first visit. AVIF encoding is CPU the box does not have, and
 WebP already reaches every current browser. `broadcast_*_later` would enqueue a
 job nothing on vm23 runs, which `Post#broadcast_live_refresh` says in place.
