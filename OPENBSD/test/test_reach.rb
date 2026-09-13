@@ -105,6 +105,24 @@ class ReachTest < Minitest::Test
     assert_empty checks("rcd")
   end
 
+  # ---- boot list ------------------------------------------------------------
+
+  def test_a_boot_name_with_a_shipped_script_reaches
+    write("etc/rc.d/thing", "#!/bin/ksh\n# not enabled by default\n")
+    write("etc/rc.conf.local", "pf=YES\npkg_scripts=thing\n")
+
+    assert_empty checks("boot")
+  end
+
+  # litestream's config may ship; the service may not boot, because there is no
+  # script and no binary to run.
+  def test_a_boot_name_with_no_script_is_reported
+    write("etc/litestream.yml", "dbs: []\n")
+    write("etc/rc.conf.local", "pkg_scripts=litestream\n")
+
+    assert_equal ["litestream"], checks("boot").map(&:subject)
+  end
+
   # ---- zones ----------------------------------------------------------------
 
   def test_a_zone_named_and_present_reaches
@@ -142,6 +160,14 @@ class ReachTest < Minitest::Test
 
     assert_operator counts["cron"], :>=, 5, "a probe over an empty population passes having measured nothing"
     assert_operator counts["rcd"], :>=, 5
+    assert_operator counts["boot"], :>=, 4
     assert_operator counts["zones"], :>=, 50
+  end
+
+  def test_litestream_config_ships_and_litestream_does_not_boot
+    R.root = R::DEFAULT_ROOT
+
+    assert File.file?(File.join(R.root, "etc", "litestream.yml"))
+    refute_includes R.boot_names, "litestream"
   end
 end

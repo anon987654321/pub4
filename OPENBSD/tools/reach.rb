@@ -109,6 +109,23 @@ module Operator
       end
     end
 
+    # The other direction: rc(8) starts every pkg_scripts name at boot, so a name
+    # with no script is a service that fails every boot and keeps `rcctl ls
+    # failed` non-empty. litestream is the case: its config ships, its rc.d
+    # script does not, and it is off the boot list. Every name today is a tracked
+    # script; a package's own rc.d script would be the first exception.
+    def boot_names
+      read("etc", "rc.conf.local")[/^pkg_scripts=(.*)$/, 1].to_s.split
+    end
+
+    def boot_findings
+      boot_names.filter_map do |name|
+        next if File.file?(File.join(root, "etc", "rc.d", name))
+
+        Finding.new(check: "boot", subject: name, detail: "pkg_scripts starts it and etc/rc.d ships no script for it")
+      end
+    end
+
     # --- zones ---------------------------------------------------------------
 
     # Both directions. A zone file nsd.conf does not name is a zone nsd will not
@@ -128,12 +145,13 @@ module Operator
     # --- report --------------------------------------------------------------
 
     def findings
-      cron_findings + cron_path_findings + rcd_findings + zone_findings
+      cron_findings + cron_path_findings + rcd_findings + boot_findings + zone_findings
     end
 
     def counts
       { "cron" => cron_commands.size,
         "rcd" => Dir.glob(File.join(root, "etc", "rc.d", "*")).size,
+        "boot" => boot_names.size,
         "zones" => Dir.glob(File.join(root, "var", "nsd", "zones", "master", "*.zone")).size }
     end
 
