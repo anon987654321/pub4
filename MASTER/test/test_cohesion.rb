@@ -55,6 +55,17 @@ class CohesionTest < Minitest::Test
     assert_equal "regroup", plans.first[:plan], "Zeitwerk refuses two constants at one path"
   end
 
+  def test_a_directory_with_no_ruby_at_its_top_level_is_unread_not_clean
+    FileUtils.mkdir_p(File.join(@tmp, "deep"))
+    write("deep/thing_a.rb", "def thing_a = 1\n")
+
+    status = nil
+    _, err = capture_io { status = Operator::Cohesion.run(@tmp) }
+
+    assert_equal 2, status
+    assert_includes err, "nothing was read"
+  end
+
   def test_two_files_are_below_the_family_floor
     write("pair_a.rb", "def pair_a = pair_b\n")
     write("pair_b.rb", "def pair_b = pair_a\n")

@@ -275,7 +275,16 @@ return if collisions.any?
       File.read(sources)[/ENGINE_PARTS\s*=\s*%w\[(.*?)\]/m, 1].to_s.split(/\s+/).reject(&:empty?)
     end
 
+    # Families are siblings, so the read is one directory deep. Pointed at a tree
+    # root such as RAILS/shared it reads zero files, and "nothing to merge" over
+    # zero files is a blind instrument, not a clean one — so it says so and exits 2.
     def run(dir, json: false)
+      if Dir.glob(File.join(dir, "*.rb")).empty?
+        warn "cohesion: #{dir} holds no .rb file at its top level — nothing was read; " \
+             "for a whole tree use --census --tree=<TREE> --list"
+        return 2
+      end
+
       manifest = manifest_order(dir)
       found = families(dir).filter_map do |name, files, kind|
         flat = files.reject { |f| namespaced?(f) }
