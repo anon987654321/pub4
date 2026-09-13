@@ -2,6 +2,7 @@
 
 require "yaml"
 require "fileutils"
+require "did_you_mean"
 require_relative "../io/atomic_write"
 
 module Master
@@ -97,7 +98,7 @@ module Master
         errors << "history_max must be >= 0" unless history_max >= 0
         errors << "cache_ttl must be >= 0" unless cache_ttl >= 0
         errors << "model must not be empty" if model.to_s.empty?
-        errors
+        errors + misspelled_keys
       end
 
       def valid? = validate.empty?
@@ -120,12 +121,31 @@ module Master
 
       private
 
+      # The key set is open — the web tier and pairing read keys DEFAULTS never
+      # names — so an unknown key is not an error. One a letter or two away from
+      # a default is: `budget_mx: 2` is silently ignored and the $10 default
+      # spends instead.
+      def misspelled_keys(settings = @mutex.synchronize { @settings })
+        (settings.keys - DEFAULTS.keys).filter_map do |key|
+          guess = DEFAULTS.keys.find { |known| near_miss?(key, known) }
+          "config key '#{key}' is not read; did you mean '#{guess}'?" if guess
+        end
+      end
+
+      # Two edits on a long name, one on a short one, where two would turn
+      # `auto` into a dozen unrelated words.
+      def near_miss?(key, known)
+        allowed = known.length > 6 ? 2 : 1
+        DidYouMean::Levenshtein.distance(key, known) <= allowed
+      end
+
       def load_config
         defaults = deep_dup(DEFAULTS)
         return defaults unless File.exist?(@path)
         raw = YAML.safe_load_file(@path, aliases: true)
-        loaded = raw.is_a?(Hash) ? raw : {}
-        deep_merge(defaults, stringify_keys(loaded))
+        loaded = raw.is_a?(Hash) ? stringify_keys(raw) : {}
+        misspelled_keys(loaded).each { |issue| warn "config: #{issue}" }
+        deep_merge(defaults, loaded)
       rescue Psych::Exception => e
         warn "config: failed to parse #{@path}: #{e.message}"
         defaults
