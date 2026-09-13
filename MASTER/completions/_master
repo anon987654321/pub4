@@ -1,17 +1,22 @@
 #compdef master
 
+# The command list is CommandRegistry::HELP_TOPICS plus exit;
+# test/test_completions.rb fails when the two disagree.
 _master() {
   local -a commands
   commands=(
-    'through:scan → fix → critique a path'
+    'review:the whole pass: scan, critique, principle map'
     'status:one-frame health'
-    'undo:revert last recorded change'
+    'undo:revert the last recorded change'
     'commit:record the current diff'
-    'model:show or switch the model'
+    'model:show or switch the active model'
     'pair:issue or redeem a pairing code'
-    'doctor:host and exposure health'
+    'doctor:host, provider, and exposure health'
     'help:list commands'
     'clear:clear the session transcript'
+    'orders:standing orders'
+    'soul:read and amend the constitution'
+    'why:what a rule says, and where it comes from'
     'exit:exit MASTER'
   )
 
