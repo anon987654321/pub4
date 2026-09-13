@@ -313,6 +313,21 @@ end
     RubyLLM.config.openrouter_api_key = saved
   end
 
+  # A Claude lane splits the persona prompt so its static half is cached. The
+  # split read the persona from the proc and ignored the prompt it was handed,
+  # so a caller's own system prompt — a swarm reviewer's JSON verdict contract —
+  # never reached a Claude model.
+  def test_a_claude_lane_sends_the_system_prompt_it_was_handed
+    dispatcher, = build_dispatcher
+    dispatcher.instance_variable_set(:@system_prompt_proc, -> { { static: "PERSONA", dynamic: "TURN" } })
+
+    role = dispatcher.send(:build_final_system, "anthropic/claude-sonnet-4", "LAW\n\nanswer in JSON")
+    persona = dispatcher.send(:build_final_system, "anthropic/claude-sonnet-4", "PERSONA\n\nTURN")
+
+    assert_equal ["LAW\n\nanswer in JSON"], role.value.map { |block| block[:text] }
+    assert_equal %w[PERSONA TURN], persona.value.map { |block| block[:text] }
+  end
+
   private
 
   def build_dispatcher

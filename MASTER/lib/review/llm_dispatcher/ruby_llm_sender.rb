@@ -201,10 +201,13 @@ end)
           [directive, sys].compact.join("\n\n")
         end
 
+        # The static/dynamic split caches the persona prompt, so it applies only
+        # when sys is that prompt. A caller's own system prompt is other text, and
+        # sending the persona split in its place drops the caller's instructions.
         def build_final_system(selected_model, sys)
           return sys unless claude_model?(selected_model)
           raw = @system_prompt_proc.call
-          if raw.is_a?(Hash) && raw[:static]
+          if raw.is_a?(Hash) && raw[:static] && sys.to_s.start_with?(raw[:static])
             static_text = nemotron_system_prompt(selected_model, raw[:static])
             blocks = [{ type: "text", text: static_text, cache_control: { type: "ephemeral" } }]
             blocks << { type: "text", text: raw[:dynamic] } if raw[:dynamic]
