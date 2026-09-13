@@ -46,9 +46,9 @@ $vertical-accents: (
 
    BOTH was two of three. The map has a hover column, .nav-search-submit:hover
    swaps the fill to it and keeps color: var(--accent-ink), and nobody measured
-   the ink there: marketplace 3.15, tv 3.34, maps 4.31, all under 4.5. Only
-   marketplace's hover is wired today, so only that one reaches a pixel, and
-   design_metrics reports it. Moving a colour to fix it is the operator's. */
+   the ink there. marketplace's hover, the only one wired, measures 4.80 since
+   the operator lightened it; tv 3.34 and maps 4.31 are still under 4.5 and
+   reach no pixel until their hover is wired. Moving a colour is the operator's. */
 $vertical-accent-ink: #110f19;
 @each $v, $c in $vertical-accents {
   body.vertical-#{$v} {

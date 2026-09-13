@@ -200,6 +200,8 @@ that a fresh agent gets wrong on its first attempt.
 `RBENV_VERSION=3.4.9 rbenv exec ruby ...`. Bare `ruby` picks up whatever is on
 PATH; `RAILS/gates/runner.rb` prints a one-line warning about it and carries on,
 so app-bundle gates then fail for the interpreter rather than for a finding.
+`RBENV_VERSION` alone does nothing where rbenv's shims are not on PATH, which
+is this Mac: bare `ruby` is Homebrew's 4.0.5. `MASTER/bin/ruby` resolves 3.4.
 
 **The checkout is shared and usually dirty.** Never `git add -A`. Commit
 path-scoped: `git commit -- <paths>`. When the pre-commit hook refuses over
@@ -217,6 +219,22 @@ and `git worktree prune`. Delete the worktree in the same session that made it.
 about the code more often than the code is wrong about the world. Check a probe
 against a case whose answer is already known before believing what it reports,
 and never report a check as done without its output.
+
+**A census has more than one end, and the tree has four.** A gem is used by the
+gems that require it in `Gemfile.lock` as well as by code: `tty-prompt` needs
+`tty-reader`, which needs `wisper`. Every bus topic has a consumer, because
+`web/config/initializers/cable_bridge.rb` subscribes `"*"`; published and never
+subscribed is all noise, and only subscribed and never published is worth
+reading. An env var set by nobody in `MASTER/` may be set in `RAILS/` or
+`OPENBSD/`. And before recording an orphan, ask what it is a second copy of —
+that question, not "who calls it", is what has actually paid for deletions.
+
+**Read a ratchet in a clean worktree, once, after the tree stops moving.**
+`bin/operator measure` in the shared checkout counts other sessions'
+uncommitted edits, `test_no_ratchet_is_slack` skips whenever a measured tree is
+dirty, and a low recorded mid-session locks in a state that was not clean. Read
+the live figures from the command; a number quoted in prose is stale within a
+day.
 
 **Comments state the present-tense reason.** Dates and "used to be" belong in
 git — `NO_CHANGELOG_COMMENT` in `law/universal.rb` enforces it.
