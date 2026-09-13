@@ -6,7 +6,7 @@
 # OpenBSD has neither lockf(1) nor flock(1). Both are FreeBSD/Linux utilities,
 # and `vps_master_scan.sh` called the first of them:
 #
-#     lockf -k "$lock" env MASTER_SCAN_ONLY=1 ... bundle34 exec ruby bin/cli "$@"
+#     lockf -k "$lock" env MASTER_SCAN_DETERMINISTIC=1 ... bundle34 exec ruby bin/cli "$@"
 #
 # On vm23 that is `lockf: Command not found`, every time. The documented way to
 # run a MASTER scan on the box has never once acquired a lock, and never once

@@ -283,7 +283,7 @@ sync_openbsd_apply() {
     log WARN "MASTER scan skipped (SKIP_MASTER_SCAN)"
   elif [[ -x /home/dev/pub4/MASTER/bin/cli ]]; then
     log INFO "MASTER rules scan (OPERATOR) — strict pre-apply per rules.yml (ROBUSTNESS/SINGULARITY/LINEARITY/PROXIMITY/ABSTRACTION/DENSITY + veto)"
-    if ! su dev -c 'cd /home/dev/pub4/MASTER && MASTER_SCAN_ONLY=1 MASTER_SAFE_MODE=1 bundle34 exec ruby bin/cli /scan OPENBSD --depth deep' 2>&1 | tee /tmp/master_deploy_scan.log; then
+    if ! su dev -c 'cd /home/dev/pub4/MASTER && MASTER_SCAN_DETERMINISTIC=1 MASTER_SAFE_MODE=1 bundle34 exec ruby bin/cli /scan OPENBSD --depth deep' 2>&1 | tee /tmp/master_deploy_scan.log; then
       log ERROR "MASTER scan found violations — refusing sync/apply (self_violation would occur per rules.yml)"
       return 1
     fi

@@ -28,4 +28,4 @@ print "vps_master_scan: lock $lock $*"
 # scan. bin/with-ci-lock is the same idea in the one language this box is
 # guaranteed to have.
 ruby34 "$repo/OPENBSD/bin/with-ci-lock" \
-  env MASTER_SCAN_ONLY=1 MASTER_SAFE_MODE=1 bundle34 exec ruby bin/cli "$@"
+  env MASTER_SCAN_DETERMINISTIC=1 MASTER_SAFE_MODE=1 bundle34 exec ruby bin/cli "$@"
