@@ -16,8 +16,9 @@ project, **[yours]** when it is a decision rather than work.
 
 ## A. The chain engine — repligen's missing spine (1–24)
 
-Today repligen is single-shot: one model, optionally one `--postpro` handoff.
-Everything in §B depends on this existing first.
+The spine exists: `repligen/chain.rb` runs the YAML chains under
+`repligen/chains/` with `--until` and a validating `--dry-run`. Running one still
+needs a Replicate token. Items 1, 2, 6 and 9 are built.
 
 1. A `Chain` object: an ordered list of stages, each `{model, inputs, inherits}`. **[deep]**
 2. Declarative chains as YAML under `repligen/chains/`, so a look is a file, not a shell history. **[deep]**

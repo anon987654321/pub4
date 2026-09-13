@@ -133,7 +133,7 @@ Neither runs as part of `rake`. Both need the network and a token, and a check
 that cannot run says so rather than passing.
 
 **Surveyed 2026-08-25.** Nothing here is broken — `flux-1.1-pro` is live and
-carries no deprecation notice. But the six declared models are a generation
+carries no deprecation notice. But most of the declared models are a generation
 behind what Replicate now leads with, and none of these is named here:
 
 `black-forest-labs/flux-2-max` is BFL's current highest-fidelity image model.

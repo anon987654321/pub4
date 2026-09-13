@@ -120,15 +120,13 @@ That split is the useful part. It says get geometry and expression right at
 generation — where, unusually, both are *promptable* — and leave the optical
 signature to the grade, where there is a real emulation stack already built.
 
-## Two things that are not true yet
+## What is true of the grade today
 
-- **postpro is stills only.** libvips, and every input glob is
-  `jpg/jpeg/png/webp`. "The standard filter on all our photos and videos" is
-  currently half of that. Video would want an ffmpeg path — which this tree has
-  deep experience of in dilla, so it is a real option rather than a wish.
-- **Nothing applies it by default.** repligen's `--postpro PRESET` is opt-in,
-  one flag on one command. If the grade is meant to be the house look on
-  everything, that is a default and a pipeline, not a flag.
+repligen grades every generation with the `portrait` preset unless
+`--no-postpro` or `REPLIGEN_POSTPRO` says otherwise, so the house look is a
+default rather than a flag. A chain grades only its final frame, and only when
+`--postpro` names a preset; whether chains should share the house default is
+the operator's call.
 
 ## Sources
 
@@ -137,7 +135,7 @@ Focal length and distance: [DIYP](https://www.diyphotography.net/85mm-portrait-l
 [Fstoppers on what actually flatters](https://fstoppers.com/gear/right-focal-length-portraits-isnt-what-most-people-think-901135).
 Lighting patterns: [Fstoppers](https://fstoppers.com/lighting/getting-started-portrait-lighting-4-classic-patterns-explained-901256),
 [SLR Lounge](https://www.slrlounge.com/common-key-light-patterns/),
-[Studio Q](https://www.studioqphotography.com/blog/portrportrait-lighting-patterns-butterfly-loop-rembrandt-split-short-broad).
+[Studio Q](https://www.studioqphotography.com/blog/portrait-lighting-patterns-butterfly-loop-rembrandt-split-short-broad).
 Expression: [Rafal Wegiel](https://www.rafalwegiel.com/rafalwegielblog/the-power-of-facial-expression-in-headshot-photography-a-technical-and-psychological-perspective),
 [RMCAD](https://www.rmcad.edu/blog/the-psychology-of-portrait-photography-making-subjects-feel-at-ease/).
 The AI tell: [Imagera](https://imagera.ai/blog/fix-ai-skin-plastic-look-2026),
@@ -145,8 +143,8 @@ The AI tell: [Imagera](https://imagera.ai/blog/fix-ai-skin-plastic-look-2026),
 
 ## MASTER's law, refitted
 
-`MASTER/data/rules.yml` is 3,947 lines and 228 rules, and none of them can see a
-photograph — they are evaluated over source text, and the only image reference
+None of the rules in `MASTER/data/rules.yml` (`ruby MASTER/tools/agent_context.rb`
+enumerates them) can see a photograph — they are evaluated over source text, and the only image reference
 in the whole scanner tree is a payload encoder attaching files to an LLM
 request. The single rule that mentions imagery, `ANALOG_WARMTH`, is a
 `detect_semantic` question asked of *code* at severity `info`.
