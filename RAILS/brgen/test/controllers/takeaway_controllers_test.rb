@@ -181,7 +181,7 @@ class TakeawayControllersTest < ActionDispatch::IntegrationTest
     Rails.application.config.x.vapid = { subject: "mailto:a@b.c", public_key: "x", private_key: "y" }
     sent = []
     Webpush.stub(:payload_send, ->(**kw) { sent << kw[:endpoint] }) do
-      WebPushJob.new.perform(notification.id)
+      Shared::WebPushJob.new.perform(notification_id: notification.id)
     end
     assert_empty sent
   ensure

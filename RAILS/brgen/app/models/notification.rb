@@ -45,7 +45,26 @@ class Notification < ApplicationRecord
   # same call and is enqueued by nothing; its own header holds the box check that
   # lets it go, and this line goes with it.
   after_create_commit do
-    WebPushJob.perform_later(id) if PUSHABLE_KINDS.include?(kind)
+    Shared::WebPushJob.perform_later(notification_id: id) if PUSHABLE_KINDS.include?(kind)
+  end
+
+  # Where tapping the push lands. Paths are built by hand rather than through
+  # url_helpers: a job has no request, so it has no host, and the service worker
+  # opens a path anyway. Anything unrecognised falls back to the list rather
+  # than guessing.
+  def push_path
+    return "/notifications" if source_id.blank?
+
+    case source_type
+    when "Takeaway::Order", "Marketplace::Order" then "/orders/#{source_id}"
+    when "Marketplace::Listing" then "/listings/#{source_id}"
+    when "Marketplace::SavedSearch" then "/saved_searches"
+    when "Event" then "/events/#{source_id}"
+    when "Post" then "/posts/#{source_id}"
+    when "Message" then "/conversations"
+    when "Community" then "/communities/#{source_id}"
+    else "/notifications"
+    end
   end
 
   def read?

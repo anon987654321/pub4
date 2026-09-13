@@ -100,19 +100,16 @@ class NotificationPushTest < ActiveSupport::TestCase
   # The payload url was hardcoded to "/", so tapping a push about a parcel
   # landed on the city home page and left the reader to find it themselves.
   test "the push payload points at the thing it is about" do
-    job = WebPushJob.new
-    path = job.send(:target_path, Notification.new(source_type: "Takeaway::Order", source_id: 42))
+    path = Notification.new(source_type: "Takeaway::Order", source_id: 42).push_path
     assert_equal "/orders/42", path
 
-    assert_equal "/events/7", job.send(:target_path, Notification.new(source_type: "Event", source_id: 7))
+    assert_equal "/events/7", Notification.new(source_type: "Event", source_id: 7).push_path
     assert_equal "/saved_searches",
-                 job.send(:target_path, Notification.new(source_type: "Marketplace::SavedSearch", source_id: 3))
+                 Notification.new(source_type: "Marketplace::SavedSearch", source_id: 3).push_path
   end
 
   test "an unknown or absent source falls back rather than guessing" do
-    job = WebPushJob.new
-
-    assert_equal "/notifications", job.send(:target_path, Notification.new(source_type: "Whatever", source_id: 1))
-    assert_equal "/notifications", job.send(:target_path, Notification.new(source_type: "Post", source_id: nil))
+    assert_equal "/notifications", Notification.new(source_type: "Whatever", source_id: 1).push_path
+    assert_equal "/notifications", Notification.new(source_type: "Post", source_id: nil).push_path
   end
 end
