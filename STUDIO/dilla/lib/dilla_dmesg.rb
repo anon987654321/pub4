@@ -59,11 +59,16 @@ module DillaDmesg
     emit(unit, msg, parent:)
   end
 
+  # These print to the stream rather than through Kernel#warn, so the
+  # provenance tap on Warning.warn cannot see them; they are handed over here,
+  # and before `emit`, because DILLA_DMESG=0 silences the line but not the fault.
   def warn(msg, unit: "warn0", parent: "dilla0")
+    DillaProvenance.record_warning("#{unit}: warn #{msg}") if defined?(DillaProvenance)
     emit(unit, "warn #{msg}", parent:)
   end
 
   def error(msg, unit: "error0", parent: "dilla0")
+    DillaProvenance.record_warning("#{unit}: error #{msg}") if defined?(DillaProvenance)
     emit(unit, "error #{msg}", parent:)
   end
 

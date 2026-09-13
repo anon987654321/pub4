@@ -45,6 +45,17 @@ module DillaProvenance
   # from, and .cache holds generated copies nothing should be asked to rebuild.
   SKIP = %r{/(\.git|\.cache|node_modules)/}
 
+  # See tap_warnings!. The limit keeps a stream that warns every bar from
+  # writing a megabyte of sidecar; the count still says how many there were.
+  WARNING_LIMIT = 200
+
+  module WarningTap
+    def warn(message, *args, **kwargs)
+      DillaProvenance.record_warning(message)
+      super
+    end
+  end
+
   class << self
     attr_reader :seed, :started_at
 
@@ -60,7 +71,36 @@ module DillaProvenance
       @seed = pin_seed!
       @before = snapshot
       @explicit = @explicit_seed
+      tap_warnings!
       at_exit { finish! }
+    end
+
+    # What the run said went wrong, kept for the manifest.
+    #
+    # The engine rescues an optional stage — a missing sample, a gem that hangs,
+    # a tool that is not installed — by warning and carrying on, over a hundred
+    # times in dilla.rb alone. That is right for a render and wrong for its
+    # record: the take comes out degraded and its sidecar read exactly like a
+    # clean one's. Every such warning goes through Kernel#warn, which calls
+    # Warning.warn, so tapping that one method sees all of them without touching
+    # a single rescue. A manifest with no `warnings` key is a run that warned
+    # about nothing.
+    def tap_warnings!
+      Warning.extend(WarningTap) unless Warning.singleton_class.include?(WarningTap)
+    end
+
+    def record_warning(message)
+      @warning_count = warning_count + 1
+      recorded_warnings << message.to_s.strip if recorded_warnings.size < WARNING_LIMIT
+    end
+
+    def warning_count = @warning_count || 0
+    def recorded_warnings = @recorded_warnings ||= []
+
+    def warnings_record
+      return nil if warning_count.zero?
+
+      { "count" => warning_count, "lines" => recorded_warnings.dup }
     end
 
     # A seed exists for every render. An explicitly set RENDER_SEED is left
@@ -125,6 +165,9 @@ module DillaProvenance
         # moved since. Worth recording: it is the difference between a take that
         # can be compared with another and one that cannot.
         "frozen" => (DillaFrozen.skips if DillaFrozen.on?),
+        # Present only when something warned, so its presence is the flag: a
+        # stage fell back or gave up, and the take may be missing a layer.
+        "warnings" => warnings_record,
         # What this file was joined from, when it was joined rather than
         # rendered. A compilation gets both blocks: the environment describes
         # the run that produced its parts, `assembly` describes the parts.
@@ -288,7 +331,28 @@ module DillaProvenance
         # git could not be asked, which is not the same as clean.
         "working_tree_clean" => status.nil? ? nil : status.empty?,
         "ruby" => RUBY_VERSION,
+        # Every filter in a render is ffmpeg's and every General MIDI voice is
+        # fluidsynth's, so the same seed and commit on another version of
+        # either is a different render. The Mac and vm23 do not carry the same
+        # builds. nil means the tool could not be asked, not that it is absent.
+        "ffmpeg" => toolchain["ffmpeg"],
+        "fluidsynth" => toolchain["fluidsynth"],
       }
+    end
+
+    # One process asks once: a render writes a manifest per file it produces.
+    def toolchain
+      @toolchain ||= {
+        "ffmpeg" => tool_version(%w[ffmpeg -version], /ffmpeg version (\S+)/),
+        "fluidsynth" => tool_version(%w[fluidsynth --version], /FluidSynth runtime version (\S+)/),
+      }
+    end
+
+    def tool_version(argv, pattern)
+      out = IO.popen(argv, err: File::NULL, &:read)
+      out[pattern, 1] if $CHILD_STATUS&.success?
+    rescue StandardError
+      nil
     end
 
     # --- assembly ---------------------------------------------------------------

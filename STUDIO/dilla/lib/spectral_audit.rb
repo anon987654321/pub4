@@ -20,6 +20,7 @@ require "fileutils"
 #   * spectral centroid and rolloff, averaged over the whole file
 #   * crest factor, DC offset, clipped-sample count
 #   * stereo correlation — 1.0 means the render is effectively mono
+#   * what a mono fold loses, and the side energy left under 120 Hz
 #   * a PNG spectrogram
 module SpectralAudit
   # Bands chosen for what goes wrong in this engine specifically: sub for the
@@ -100,6 +101,39 @@ module SpectralAudit
     (vals.sum / vals.size).round(3)
   end
 
+  # Overall RMS in dBFS after a filter chain, with -120 standing for silence.
+  def rms_db(path, chain)
+    raw = sh("ffmpeg", "-hide_banner", "-nostats", "-i", path,
+             "-af", "#{chain},astats=measure_perchannel=none",
+             "-f", "null", "-")
+    m = raw[/RMS level dB:\s*(-?[\d.]+|-inf)/, 1]
+    m.nil? || m == "-inf" ? -120.0 : m.to_f
+  end
+
+  MID = "pan=mono|c0=0.5*c0+0.5*c1"
+  SIDE = "pan=mono|c0=0.5*c0-0.5*c1"
+  LOW_HZ = 120
+
+  # What a mono playback loses, and how much of the low end is out of phase.
+  #
+  # Correlation is one number for the whole band, so a wide, decorrelated top
+  # can sit beside a bass that cancels on a phone speaker or a club's mono sub
+  # and the average reads healthy. mono_fold_loss_db is the level the mid
+  # channel gives up against the stereo file: 0 for a mono render, about 3 for
+  # uncorrelated channels, and large when the channels cancel.
+  # low_side_to_mid_db is the side energy under LOW_HZ against the mid energy
+  # there, which is the part a mono-bass stage is meant to remove. Both are
+  # reported, not judged: neither has a threshold measured from a kept take.
+  def mono_fold(path)
+    stereo = rms_db(path, "anull")
+    mid = rms_db(path, MID)
+    low = "lowpass=f=#{LOW_HZ}:p=2,lowpass=f=#{LOW_HZ}:p=2"
+    {
+      "mono_fold_loss_db" => (stereo - mid).round(1),
+      "low_side_to_mid_db" => (rms_db(path, "#{SIDE},#{low}") - rms_db(path, "#{MID},#{low}")).round(1),
+    }
+  end
+
   def spectrogram(path, out_png)
     FileUtils.mkdir_p(File.dirname(out_png))
     sh("ffmpeg", "-y", "-hide_banner", "-nostats", "-i", path,
@@ -121,7 +155,7 @@ module SpectralAudit
       "flatness" => spec["flatness"],
       "stereo_correlation" => stereo_correlation(path),
       "spectrogram" => spectrogram(path, File.join(png_dir, "#{name}.png")),
-    }.merge(time_stats(path))
+    }.merge(time_stats(path)).merge(mono_fold(path))
   end
 
   # Findings are stated as thresholds with the number attached, so a
