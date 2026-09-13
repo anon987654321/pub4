@@ -84,6 +84,14 @@ class MarketplaceStoresTest < ActionDispatch::IntegrationTest
     assert_equal @stranger.id, Marketplace::Store.order(:id).last.owner_id
   end
 
+  test "a refused shop shows the shared error block" do
+    sign_in_as(@stranger)
+
+    post marketplace.shops_path, params: { store: { name: "" } }
+    assert_response :unprocessable_entity
+    assert_select "section.errors[role=alert] li.error-msg"
+  end
+
   test "a stranger cannot release the owner's payout" do
     payout = payout_for_delivery(20.days.ago)
     sign_in_as(@stranger)

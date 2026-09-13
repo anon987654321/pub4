@@ -11,7 +11,7 @@
 
   <%= link_to listing_path(listing),
         class: "deal-card-hit",
-        aria: { label: "#{listing.title}, #{listing.price_display}" } do %>
+        aria: { label: t("marketplace.card_label", title: listing.title, price: listing.price_display) } do %>
     <%# Sold outranks casual outranks condition, and only sold is loud. %>
     <% badge, badge_soft =
          if listing.sold? then [t("marketplace.sold"), false]

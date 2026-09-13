@@ -1,14 +1,5 @@
 <%= form_with model: [:marketplace, store], url: store.persisted? ? shop_path(store.slug) : shops_path do |form| %>
-  <% if store.errors.any? %>
-    <%= tag.section role: "alert" do %>
-      <%= tag.h2 t("shared.errors", default: "Please review the form") %>
-      <%= tag.ul do %>
-        <% store.errors.full_messages.each do |message| %>
-          <%= tag.li message %>
-        <% end %>
-      <% end %>
-    <% end %>
-  <% end %>
+  <%= render "shared/errors", object: store %>
 
   <%= tag.fieldset do %>
     <%= form.label :name %>

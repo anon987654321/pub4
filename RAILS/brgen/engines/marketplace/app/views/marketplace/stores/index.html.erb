@@ -1,4 +1,4 @@
-<% content_for :title, t("marketplace.stores.title", default: "Stores") %>
+<% content_for :title, t("marketplace.stores.title") %>
 
 <%= render "marketplace/nav_bar",
       active: "stores",
@@ -7,7 +7,7 @@
       cart_count: (Current.user.present? ? Current.user.marketplace_orders.where(status: "pending").count : 0) %>
 
 <%= tag.section class: "marketplace-stores", role: "region", "aria-label": t("marketplace.stores.title") do %>
-  <%= tag.h1 class: "visually-hidden" do %><%= t("marketplace.stores.title", default: "Stores") %><% end %>
+  <%= tag.h1 class: "visually-hidden" do %><%= t("marketplace.stores.title") %><% end %>
 
   <%= tag.nav class: "deal-cats", "aria-label": t("marketplace.store_categories") do %>
     <% Marketplace::Store::VERTICALS.each do |vertical| %>

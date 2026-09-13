@@ -5,7 +5,7 @@
 <% search_url = local_assigns.fetch(:search_url, listings_path) %>
 <% search_placeholder = local_assigns.fetch(:search_placeholder, t("search.marketplace")) %>
 <% cart_count = local_assigns[:cart_count].to_i %>
-<% deliver_to = local_assigns.fetch(:deliver_to, Current.city_record&.name.presence || "Bergen") %>
+<% deliver_to = local_assigns.fetch(:deliver_to, Current.city_record&.name.presence || Current.city_name) %>
 
 <div id="navBar">
   <div id="topHalf">
