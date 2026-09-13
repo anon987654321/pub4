@@ -17,6 +17,9 @@ module Deploy
     WATCHED = [
       "app/assets/stylesheets/application.scss",
       "app/assets/stylesheets/**/*.scss",
+      # brgen's application.scss @uses each vertical's partials from its engine
+      # (vertical_maps_shell and the rest), so an engine edit stales the build too.
+      "engines/*/app/assets/stylesheets/**/*.scss",
     ].freeze
 
     # An app's application.css is compiled from its own stylesheets *and* the

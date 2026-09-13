@@ -39,7 +39,7 @@ module Operator
 
     def scan
       findings = []
-      Dir.glob(File.join(rails_root, "*/app/views/**/*.erb")).each do |path|
+      Dir.glob([ File.join(rails_root, "*/app/views/**/*.erb"), File.join(rails_root, "*/engines/*/app/views/**/*.erb") ]).each do |path|
         lines = File.readlines(path, encoding: "UTF-8")
         lines.each_with_index do |line, i|
           next unless line.match?(PATTERN)
