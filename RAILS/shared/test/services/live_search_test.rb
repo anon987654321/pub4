@@ -14,6 +14,21 @@ unless defined?(Rails)
 end
 
 class SharedLiveSearchTest < Minitest::Test
+  # A real SQLite relation, because the defect was in the SQL: sanitize_sql_like
+  # escapes % with a backslash and SQLite ignores that without an ESCAPE clause.
+  def test_a_percent_sign_in_the_query_is_literal_on_sqlite
+    require "sqlite3"
+    ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: ":memory:")
+    ActiveRecord::Base.connection.create_table(:live_search_items) { |t| t.string :title }
+    model = Class.new(ActiveRecord::Base) { self.table_name = "live_search_items" }
+    model.create!(title: "100% ull")
+    model.create!(title: "1000 ting")
+
+    found = Shared::LiveSearch.search(model.all, query: "100%", columns: %w[title], app: "test").scope.pluck(:title)
+
+    assert_equal [ "100% ull" ], found
+  end
+
   def test_empty_query_returns_original_scope
     scope = Object.new
     result = Shared::LiveSearch.search(scope, query: "", columns: %w[title])

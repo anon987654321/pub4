@@ -48,7 +48,9 @@ module Shared
       like = "%#{ActiveRecord::Base.sanitize_sql_like(query)}%"
       operator = sqlite? ? "LIKE" : "ILIKE"
       table = scope_model.table_name
-      predicate = columns.map { |column| "#{table}.#{column} #{operator} :query" }.join(" OR ")
+      # ESCAPE names the backslash sanitize_sql_like escapes with. SQLite has no
+      # default escape character, so without it "50%" searched for a backslash.
+      predicate = columns.map { |column| "#{table}.#{column} #{operator} :query ESCAPE '\\'" }.join(" OR ")
       scope.where(predicate, query: like)
     end
 
