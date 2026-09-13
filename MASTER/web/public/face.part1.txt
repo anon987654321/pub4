@@ -213,20 +213,10 @@ function setTtsRate(r) {
   const el = document.getElementById('tts-rate');
   if (el) el.textContent = rate.toFixed(2) + 'x';
 }
-const VOICE_ALIASES = {
-  osman: 'ms-MY-OsmanNeural',
-  ryan: 'en-GB-RyanNeural',
-  finn: 'nb-NO-FinnNeural',
-  andrew: 'en-US-AndrewNeural',
-  guy: 'en-US-GuyNeural',
-  william: 'en-AU-WilliamNeural',
-  christopher: 'en-US-ChristopherNeural',
-  eric: 'en-US-EricNeural',
-  pernille: 'nb-NO-PernilleNeural',
-  wayne: 'en-SG-WayneNeural',
-  ezinne: 'en-NG-EzinneNeural',
-  jenny: 'en-US-JennyNeural'
-};
+// The server's own name table (Voice::Policy.voice_aliases). Empty when the page
+// carries no policy; an unresolved name then goes to /tts as typed, and the
+// server resolves it there.
+const VOICE_ALIASES = window.MASTER_VOICE_POLICY?.voices || {};
 const VOICE_IDLE_SIGNATURES = {
   'ms-MY-OsmanNeural': { breath: 1.08, saccade: 0.24, pulse_floor: 0.14, blink_ms: 3200 },
   'en-GB-RyanNeural': { breath: 0.96, saccade: 0.18, pulse_floor: 0.08, blink_ms: 2800 },

@@ -315,6 +315,20 @@ end
                  "the face rotates from browser_payload; it must carry the same list"
   end
 
+  def test_the_face_resolves_voice_names_from_the_servers_table
+    voices = Master::Voice::Policy.browser_payload.fetch(:voices)
+
+    Master::Voice::Speech::VOICES.each do |name, neural|
+      next if name.to_s.end_with?("Neural")
+
+      assert_equal neural, voices.fetch(name.to_s), "the face cannot resolve #{name}, which the server speaks"
+    end
+    refute(voices.keys.any? { |name| name.end_with?("Neural") }, "the aliases are short names only")
+    face = File.read(File.expand_path("../web/public/face.part1.txt", __dir__))
+    refute_match(/christopher:\s*'en-US-ChristopherNeural'/, face,
+                 "a second name table in the face is the drift this payload replaced")
+  end
+
   def test_voice_yml_tts_policy_single_voice
     voice = Master.load_yaml(File.join(DATA, "voice.yml"))
     tts = voice["tts"] || {}

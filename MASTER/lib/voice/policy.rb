@@ -103,6 +103,14 @@ module Master
         data["default_pitch"].to_s
       end
 
+      # Short name to Edge voice, from Speech::VOICES. The face resolved the
+      # names in a table of its own that had already lost `davis`; a name the
+      # server can speak and the face cannot resolve is the drift this payload
+      # exists to prevent, so the face reads the server's table instead.
+      def voice_aliases
+        Speech::VOICES.reject { |name, _| name.to_s.end_with?("Neural") }.transform_keys(&:to_s)
+      end
+
       # edge-tts --volume. Raises the synthesised signal itself, so the browser
       # chain is not the only place loudness comes from.
       def browser_payload
@@ -110,6 +118,7 @@ module Master
           single_voice: single_voice_key.to_s,
           neural: neural_voice,
           rotation: rotation_keys.map(&:to_s),
+          voices: voice_aliases,
           post_chain:,
           bed:,
           persona_affects_text_only: persona_affects_text_only?,
