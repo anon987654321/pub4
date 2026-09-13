@@ -259,10 +259,26 @@ module Master::Core
 
     # Write via tmp+rename: an OOM kill or crash mid-write can never leave a
     # half-written file, since rename is atomic on a POSIX filesystem. The tmp
-    # sits beside the target so the rename stays on one device.
+    # sits beside the target so the rename stays on one device, which is also
+    # why EXDEV cannot arise here however far apart root and target are.
+    #
+    # fsync before the rename, because atomic and durable are different
+    # promises. Rename guarantees a reader sees the old file or the new one and
+    # never half of one; it guarantees nothing about the data having reached the
+    # disk. On a power loss the rename can survive while the bytes it points at
+    # do not, and the result is an intact filename over a zero-length file —
+    # worse than a half-written one, because it looks fine.
+    #
+    # Io::AtomicWrite does the same job with Tempfile and a directory fsync.
+    # core/ does not reach into lib/, so this stays its own few lines rather
+    # than inverting that dependency to save them.
     def write_atomic(abs, content)
       tmp = "#{abs}.tmp.#{Process.pid}.#{SecureRandom.hex(4)}"
-      File.write(tmp, content)
+      File.open(tmp, "wb") do |file|
+        file.write(content)
+        file.flush
+        file.fsync
+      end
       File.rename(tmp, abs)
     rescue StandardError
       File.delete(tmp) if tmp && File.exist?(tmp)

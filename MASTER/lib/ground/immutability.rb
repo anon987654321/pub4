@@ -8,6 +8,8 @@ module Master
   module Ground
     # Verifies checksums for the sacred paths declared in data/soul.yml.
     class Immutability
+    include Master::Io::AtomicWrite
+
       STORE_REL = "data/checksums.yml"
       SHA256 = /\A[0-9a-f]{64}\z/.freeze
       Violation = Class.new(StandardError)
@@ -134,13 +136,16 @@ module Master
         )
       end
 
+      # Through Io::AtomicWrite rather than its own tmp+rename.
+      #
+      # atomic and durable are different promises. Rename guarantees a reader
+      # sees the old file or the new one and never half of one; it guarantees
+      # nothing about the bytes having reached the disk. On a power loss the
+      # rename can survive while the data does not, leaving an intact filename
+      # over an empty file — worse than a truncated one, because it looks fine.
+      # The helper fsyncs the file and the directory, and cleans up on error.
       def write_store(path, digests)
-        FileUtils.mkdir_p(File.dirname(path))
-        temporary = "#{path}.tmp.#{Process.pid}"
-        File.write(temporary, YAML.dump(digests), mode: "w", perm: 0o600)
-        File.rename(temporary, path)
-      ensure
-        File.delete(temporary) if temporary && File.exist?(temporary)
+        write_atomic(path, YAML.dump(digests), mode: 0o600)
       end
 
       def format_drift(drift)

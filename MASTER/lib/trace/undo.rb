@@ -8,6 +8,8 @@ module Master
   # Persistent undo: snapshots file content before writes, restores on demand.
   # Journal survives restarts via .master/undo_journal.jsonl.
     class Undo
+      include Master::Io::AtomicWrite
+
       MAX_JOURNAL = 50
 
       def initialize(session:, event_bus: nil, root: Dir.pwd)
@@ -69,9 +71,7 @@ module Master
         if content.nil?
           File.delete(path) if File.exist?(path)
         else
-          tmp_path = "#{path}.tmp.#{Process.pid}"
-          File.write(tmp_path, content)
-          File.rename(tmp_path, path)
+          write_atomic(path, content)
         end
       rescue StandardError => e
         delete_tmp_file(tmp_path) if defined?(tmp_path)
@@ -92,10 +92,7 @@ module Master
       end
 
       def persist_journal
-        FileUtils.mkdir_p(File.dirname(@journal))
-        tmp_path = "#{@journal}.tmp.#{Process.pid}"
-        File.open(tmp_path, "w") { |f| @stack.each { |entry| f.puts(JSON.generate(entry)) } }
-        File.rename(tmp_path, @journal)
+        write_atomic(@journal, @stack.map { |entry| "#{JSON.generate(entry)}\n" }.join)
       rescue StandardError => e
         delete_tmp_file(tmp_path) if defined?(tmp_path)
         raise
