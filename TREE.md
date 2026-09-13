@@ -31,10 +31,12 @@ pub4/
 │   │   ├── review/           scanners
 │   │   ├── ground/
 │   │   ├── io/
-│   │   ├── voice/            Osman; Playback speaks a TTY reply
+│   │   ├── voice/            speech, persona; Playback speaks a TTY reply
 │   │   ├── fix/
 │   │   ├── boot/
-│   │   └── pub4/
+│   │   ├── cognition/        perception, affect, reflection (COGNITION.md)
+│   │   ├── operator/         bin/operator and bin/check libraries
+│   │   └── trace/            event bus, logs, session, undo
 │   ├── spec/                 flattened — isolation, smells, lifecycle sit here
 │   ├── test/
 │   ├── tools/
