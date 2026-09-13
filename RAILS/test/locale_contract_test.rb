@@ -36,15 +36,25 @@ class LocaleContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
 
   # Our own locale files, not the ones vendored gems ship. railties alone carries
-  # an en.yml under vendor/bundle in every app.
+  # an en.yml under vendor/bundle in every app. brgen's verticals are engines,
+  # and each carries its own config/locales that Rails loads beside the host's.
   def locale_files
-    @locale_files ||= Dir.glob(File.join(ROOT, "{brgen,amber,bsdports,shared}/config/locales/**/*.yml")).sort
+    @locale_files ||= Dir.glob(File.join(ROOT, "{brgen,amber,bsdports,shared,brgen/engines/*}/config/locales/**/*.yml")).sort
+  end
+
+  # Each unit that owns a locale directory, so a vertical's strings are held to
+  # the same parity as the app mounting it.
+  def locale_units
+    @locale_units ||= %w[brgen amber bsdports shared] +
+                      Dir.glob(File.join(ROOT, "brgen/engines/*/config/locales")).sort.map { |dir| rel(dir).delete_suffix("/config/locales") }
   end
 
   def test_the_glob_finds_the_locale_files
     refute_empty locale_files, "no locale files found — the glob is wrong, not the tree"
     assert_operator locale_files.size, :>=, 10,
                     "expected at least 10 locale files, found #{locale_files.size}"
+    assert_operator locale_units.count { |unit| unit.start_with?("brgen/engines/") }, :>=, 6,
+                    "fewer than six engine locale directories — the glob is wrong, not the tree"
   end
 
   def test_no_locale_file_repeats_a_key
@@ -108,7 +118,7 @@ class LocaleContractTest < Minitest::Test
   # that is intent, not duplication — the contract is that each app says the same
   # things in both languages, not that all apps say the same things.
   def test_nb_and_en_declare_the_same_keys
-    problems = %w[brgen amber bsdports shared].filter_map do |app|
+    problems = locale_units.filter_map do |app|
       en = keys_for(app, "en")
       nb = keys_for(app, "nb")
       next if en.empty? && nb.empty?
@@ -131,24 +141,34 @@ class LocaleContractTest < Minitest::Test
   # nowhere, because the caller passes count; the reverse renders the literal
   # `%{count}` on the page. app_flash_i18n_test holds this for flash keys only.
   def test_nb_and_en_interpolate_the_same_names
-    placeholders = ->(text) { text.to_s.scan(/%\{(\w+)\}/).flatten.uniq.sort }
-
-    problems = %w[brgen amber bsdports shared].flat_map do |app|
-      en = values_for(app, "en")
-      nb = values_for(app, "nb")
-      (en.keys & nb.keys).sort.filter_map do |key|
-        want = placeholders.call(en[key])
-        got = placeholders.call(nb[key])
-        "#{app} #{key}: en #{want.inspect}, nb #{got.inspect}" unless want == got
-      end
+    problems = locale_units.flat_map do |app|
+      interpolation_mismatches(values_for(app, "en"), values_for(app, "nb")).map { |line| "#{app} #{line}" }
     end
 
     assert_empty problems, "nb and en interpolate different names:\n  #{problems.join("\n  ")}"
   end
 
+  def test_the_interpolation_check_flags_a_missing_or_renamed_name_and_spares_order
+    en = { "cart.count" => "%{count} items in %{city}", "cart.sum" => "%{count} total", "cart.title" => "%{city}: %{count}" }
+    nb = { "cart.count" => "%{count} varer", "cart.sum" => "%{antall} totalt", "cart.title" => "%{count} i %{city}" }
+
+    assert_equal [ %(cart.count: en ["city", "count"], nb ["count"]), %(cart.sum: en ["count"], nb ["antall"]) ],
+                 interpolation_mismatches(en, nb)
+  end
+
   private
 
   def rel(path) = path.sub("#{ROOT}/", "")
+
+  # Keys both locales declare whose %{} names differ, one line each.
+  def interpolation_mismatches(en, nb)
+    placeholders = ->(text) { text.to_s.scan(/%\{(\w+)\}/).flatten.uniq.sort }
+    (en.keys & nb.keys).sort.filter_map do |key|
+      want = placeholders.call(en[key])
+      got = placeholders.call(nb[key])
+      "#{key}: en #{want.inspect}, nb #{got.inspect}" unless want == got
+    end
+  end
 
   def locale_paths(app, locale)
     pattern = app == "shared" ? "shared/config/locales/*.#{locale}.yml" : "#{app}/config/locales/*#{locale}.yml"
