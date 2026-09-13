@@ -908,8 +908,8 @@ operator_playbook:
     - id: master_scan_bundle_exec
       area: deploy
       signal: "OPERATOR.sh --sync-configs aborts: cannot load such file -- zeitwerk"
-      action: "MASTER bin/cli must run as dev via bundle34 exec (OPERATOR.sh uses su dev, not su -m — -m keeps HOME=/root). Set MASTER_SCAN_ONLY=1 MASTER_SAFE_MODE=1."
-      proof: "su dev -c 'cd MASTER && MASTER_SCAN_ONLY=1 bundle34 exec ruby bin/cli /scan OPENBSD --depth deep' exits 0"
+      action: "MASTER bin/cli must run as dev via bundle34 exec (OPERATOR.sh uses su dev, not su -m — -m keeps HOME=/root). Set MASTER_SCAN_DETERMINISTIC=1 MASTER_SAFE_MODE=1."
+      proof: "su dev -c 'cd MASTER && MASTER_SCAN_DETERMINISTIC=1 bundle34 exec ruby bin/cli /scan OPENBSD --depth deep' exits 0"
 
     - id: relayd_csp_overwrites_rails
       area: master_web

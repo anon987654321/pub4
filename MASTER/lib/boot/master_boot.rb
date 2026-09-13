@@ -3,10 +3,6 @@
 module Master
   # Builder and CLI boot orchestration for Master.*.
   module MasterBoot
-    def build(root: Dir.pwd)
-      ENV["MASTER_SCAN_ONLY"] == "1" ? Builder.build_scan_only(root:) : Builder.build(root:)
-    end
-
     def start_constitution_drift(container)
       return unless ENV["MASTER_DRIFT"] == "1"
 

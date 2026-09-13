@@ -91,17 +91,6 @@ module Master
       runtime
     end
 
-    def build_scan_only(root: Dir.pwd)
-      Ground::BootChecks.run(root:)
-      config = Ground::Config.new(root)
-      boot_config = config.freeze_boot
-      trace = boot_trace(root:, config:)
-      bus = trace[:bus]
-      code_index = Review::CodeIndex.new(root:, event_bus: bus)
-      scanner = build_scanner(root:, bus:)
-      trace.merge(config:, boot_config:, code_index:, scanner:, root:)
-    end
-
     def build_fast(root: Dir.pwd)
       Ground::BootChecks.run(root:)
       config = Ground::Config.new(root)
