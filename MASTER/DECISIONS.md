@@ -800,3 +800,22 @@ This lived as a `synonyms` block in `data/lexicon.yml`, which `Voice::Lexicon`
 opens for `respellings` and nothing else, so a naming policy sat inside a
 text-to-speech table with no reader. It is prose about how to name things, and
 prose belongs where prose is read.
+
+## The Rakefile Stays One File, And The Docs Stay At The Root (2026-09-13)
+
+A tree-grammar intake asked for `MASTER/Rakefile` (977 lines) to become
+`tasks/*.rake`, and for `AEGIS.md`, `COGNITION.md`, `EXAMPLES.md` and this file
+to move under a new `docs/`. Both are refused.
+
+The Rakefile is a corpus, not only a task list. `tools/runs.rb`,
+`tools/data_reach.rb`, `tools/method_graph.rb`, `test_readme_env_names.rb` and
+`test_limits_split.rb` each name the file to find who runs a test, who reads a
+data key or which ENV name is live. A split would leave every one of them green
+and blind, which is the engines-migration defect this repo already paid for
+once. A long file every instrument can see costs less than short ones that five
+instruments cannot.
+
+The documents are named by path in `AGENTS.md`, `START_HERE.md`,
+`PATH_OWNERSHIP.yml`, `data/doc_baselines.yml`, `lib/cognition/` and
+`test_doc_paths.rb`. Moving them buys a tidier listing and
+costs a sweep of every pointer, for no reader who cannot already find them.
