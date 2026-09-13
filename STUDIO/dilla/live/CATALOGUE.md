@@ -329,3 +329,22 @@ choose. Numbers are for citation, not for order.
     lengths, whether any were performance sets rather than beat sketches, what a
     typical one had on its channels. Four sentences from the operator are worth
     more than any twenty items above them.
+
+### What the engine refuses
+
+These were proposed by the Ableton, ringtone.tools, KVR and harmony intakes of
+2026-09-12 and are settled. dilla does not port Plaits: sixteen engines beside
+AnalogSynth, DFAM and WavMap would be a second synthesiser, so VoiceStack models
+resolve to the patch catalogue instead. It does not become a Max for Live device,
+host a plugin, vendor a C++ Rings, or extend the note-event contract for MPE,
+because every renderer reads that contract and the musical need is met by
+ornament, LPG and VoiceStack drift. Neural synthesis is out while a take must
+reproduce from its provenance. A second tape model, a second SP-1200, a third
+thickener, a Generate panel, a hanging-note stopper for an engine with no
+note-off, particle sequencers, attractor oscillators and monitor-controller
+emulation all duplicate something here or solve a problem this engine does not
+have. MixScore keeps its keeper range of −18 to −15 LUFS against the beat-scene
+−8.5 target, negative harmony stays blocked, Coltrane changes stay a language
+rather than a beautifier, a supersaw lives only behind warp, and wav_Map never
+becomes the default pad. The deleted industrial `afftfilt` chain comes back only
+with a caller and a test.
