@@ -44,14 +44,28 @@ const webVitalsSampled = () => {
   return window.__pub4WebVitalsSampled
 }
 
+// The element behind the slowest interaction, so a slow INP in the log names
+// the control ("button.vote-btn[data-controller=action]") rather than only a number.
+const describeTarget = (element) => {
+  if (!(element instanceof Element)) return ""
+
+  const tag = element.tagName.toLowerCase()
+  const id = element.id ? `#${element.id}` : ""
+  const classes = [...element.classList].slice(0, 2).map((name) => `.${name}`).join("")
+  const controller = element.closest("[data-controller]")?.dataset.controller
+  const scope = controller ? `[data-controller=${controller}]` : ""
+  return `${tag}${id}${classes}${scope}`.slice(0, 120)
+}
+
 const relayWebVitals = (metrics, path) => {
-  const { lcp, inp, cls } = metrics
+  const { lcp, inp, cls, inpTarget } = metrics
   if (lcp == null && inp == null && cls == null) return
 
   const body = new URLSearchParams({
     lcp: lcp ?? "",
     inp: inp ?? "",
     cls: cls ?? "",
+    inp_target: inpTarget ?? "",
     path
   })
 
@@ -100,11 +114,12 @@ const observeWebVitalsFallback = (metrics, report) => {
   })
 
   let maxInp = null
-  const trackInp = (duration) => {
+  const trackInp = (duration, target) => {
     const ms = Math.round(duration)
     if (maxInp == null || ms > maxInp) {
       maxInp = ms
       metrics.inp = ms
+      metrics.inpTarget = describeTarget(target)
       report()
     }
   }
@@ -113,14 +128,14 @@ const observeWebVitalsFallback = (metrics, report) => {
     entries.forEach((entry) => {
       if (!entry.interactionId) return
       const delay = entry.processingStart - entry.startTime
-      trackInp(delay + entry.duration)
+      trackInp(delay + entry.duration, entry.target)
     })
   })
 
   observe("first-input", (entries) => {
     const entry = entries[0]
     if (!entry) return
-    trackInp(entry.processingStart - entry.startTime)
+    trackInp(entry.processingStart - entry.startTime, entry.target)
   })
 
   return () => observers.forEach((observer) => observer.disconnect())
@@ -135,6 +150,7 @@ const observeWebVitals = (metrics, report) =>
       })
       onINP((metric) => {
         metrics.inp = Math.round(metric.value)
+        metrics.inpTarget = describeTarget(metric.entries.find((entry) => entry.target)?.target)
         report()
       })
       onCLS((metric) => {
@@ -149,14 +165,14 @@ const bootWebVitalsSampling = () => {
   if (!webVitalsSampled()) return
 
   let teardown = () => {}
-  let metrics = { lcp: null, inp: null, cls: null }
+  let metrics = { lcp: null, inp: null, cls: null, inpTarget: null }
   let path = window.location.pathname
 
   const report = () => relayWebVitals(metrics, path)
 
   const arm = () => {
     teardown()
-    metrics = { lcp: null, inp: null, cls: null }
+    metrics = { lcp: null, inp: null, cls: null, inpTarget: null }
     path = window.location.pathname
     observeWebVitals(metrics, report).then((stop) => {
       teardown = stop
