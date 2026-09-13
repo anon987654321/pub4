@@ -9,7 +9,7 @@
 # scan: intentional — no strict mode. This is an all-night rotation: set -e
 # would end the broadcast on the first render that exits non-zero instead of
 # moving to the next set, and set -u breaks the documented no-argument form,
-# where $1 is unset by design. Same argument as redo_nine.sh.
+# where $1 is unset by design.
 export PATH=/opt/homebrew/bin:/usr/bin:/bin
 cd "${0:h}/.." || exit 1
 

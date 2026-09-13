@@ -17,8 +17,7 @@ the local `DEMO_FX=ringtone` post-chain: tremolo, phaser, chorus, crusher, echo
 and stereo widening. Set `DEMO_FX=0` for a dry catalogue render.
 
 ENV knobs, the switch reference and the render path in detail are in
-`ENV_AND_RENDER.md`. Operator scripts, `redo_nine.sh` among them, live under
-`scripts/`.
+`ENV_AND_RENDER.md`. Operator scripts live under `scripts/`.
 
 ## What happens during a render
 
