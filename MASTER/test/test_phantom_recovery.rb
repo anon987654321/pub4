@@ -125,6 +125,63 @@ class TestPhantomRecovery < Minitest::Test
     refute_includes Master::PhantomRecovery.style_only_detectors, "text_repetition_loop"
   end
 
+  # The react loop ends when it can parse no call, so a broken one comes back
+  # as the answer. That is the malfunction xml_tool_call_failure names.
+  def test_a_malformed_tool_call_is_a_malfunction
+    assert_includes Master::PhantomRecovery.detect(%(<tool_call>{"name": "ReadFile", "args": {</tool_call>))[:patterns],
+                    "xml_tool_call_failure"
+    assert_includes Master::PhantomRecovery.detect(%(Reading it now. <tool_call>{"name": "ReadFile"}))[:patterns],
+                    "xml_tool_call_failure"
+  end
+
+  def test_a_well_formed_or_fenced_tool_call_is_not
+    assert_nil Master::PhantomRecovery.detect(%(<tool_call>{"name": "ReadFile", "args": {}}</tool_call>))
+    assert_nil Master::PhantomRecovery.detect("Call a tool with:\n```\n<tool_call>{...}\n```")
+  end
+
+  # The prose detectors used to compile into regexes matching only their own
+  # sentence, which a reply quoting data/rules.yml would trip.
+  def test_a_prose_detector_is_not_compiled_into_a_pattern
+    assert_nil Master::PhantomRecovery.detect("tool returned nil twice in a row")
+  end
+
+  class ReactHarness
+    include Master::Review::LLMDispatcher::ReactLoop
+
+    NilTool = Class.new { def call(**) = nil }
+
+    attr_reader :bus
+
+    def initialize
+      @tools = [NilTool.new]
+      @tool_registry = {}
+      @bus = FakeBus.new
+      @sends = 0
+    end
+
+    attr_reader :sends
+
+    def send_ruby_llm(*, **)
+      @sends += 1
+      Master::Result.ok(%(<tool_call>{"name": "NilTool", "args": {}}</tool_call>))
+    end
+
+    def tool_available_for_context?(_) = true
+  end
+
+  def test_the_react_loop_stops_after_two_empty_tool_rounds
+    harness = ReactHarness.new
+    result = Master::CLI::SubagentContext.stub(:permits?, true) do
+      Master::Ground::Tool::Profile.stub(:allow?, true) do
+        harness.send(:react_tool_loop, "m", [{ role: "user", content: "go" }], sys: nil, stream: false)
+      end
+    end
+
+    assert_predicate result, :err?
+    assert_equal 2, harness.sends, "the loop kept asking a model whose tools answered nothing"
+    assert harness.bus.events.any? { |event, payload| event == "phantom:detected" && payload[:patterns] == ["empty_tool_response"] }
+  end
+
   def test_judge_agent_calls_master_phantom_recovery
     source = File.read(File.join(Master::ROOT, "lib", "review", "agent.rb"))
     assert_includes source, "Master::PhantomRecovery.handle"

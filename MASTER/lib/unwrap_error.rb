@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "json"
+
 module Master
   # Calling #value! on an Err result raises this.
   class UnwrapError < RuntimeError; end
@@ -9,6 +11,16 @@ module Master
     REPETITION_SPAN = 60
     REPETITION_MIN = 3
     HALT_ON = 3
+    TOOL_CALL_BODY = %r{<tool_call>(.*?)</tool_call>}m
+    CODE_FENCE = /```.*?```/m
+
+    # data/rules.yml writes these detectors as sentences, not /regexes/, because
+    # no regex can say them. Compiled as patterns they matched only a reply that
+    # quoted the sentence back, so Ruby answers them instead.
+    PREDICATES = {
+      "text_repetition_loop" => :repetition_loop?,
+      "xml_tool_call_failure" => :malformed_tool_call?,
+    }.freeze
 
     @occurrences = Hash.new(0)
     @occurrence_mutex = Mutex.new
@@ -31,7 +43,7 @@ module Master
       detectors.each do |name, pattern|
         hits << name if pattern.is_a?(Regexp) && t.match?(pattern)
       end
-      hits << "text_repetition_loop" if repetition_loop?(t)
+      PREDICATES.each { |name, check| hits << name if send(check, t) }
 
       return if hits.empty?
 
@@ -124,11 +136,25 @@ module Master
       false
     end
 
+    # A tool call the react loop could not parse ends the loop, and the broken
+    # call comes back as the answer. A fenced example of the syntax is not one.
+    def malformed_tool_call?(text)
+      prose = text.gsub(CODE_FENCE, "")
+      return true if prose.scan("<tool_call>").size > prose.scan("</tool_call>").size
+
+      prose.scan(TOOL_CALL_BODY).any? do |(body)|
+        JSON.parse(body.strip)
+        false
+      rescue JSON::ParserError
+        true
+      end
+    end
+
     def compile_detector(value)
       return value unless value.is_a?(String)
 
       literal = value.match(%r{\A/(.*)/([imx]*)\z})
-      return Regexp.new(value, Regexp::IGNORECASE) unless literal
+      return unless literal
 
       flags = literal[2].chars.reduce(0) do |opts, flag|
         opts | { "i" => Regexp::IGNORECASE, "m" => Regexp::MULTILINE, "x" => Regexp::EXTENDED }.fetch(flag, 0)

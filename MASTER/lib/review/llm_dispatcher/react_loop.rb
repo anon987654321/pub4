@@ -13,6 +13,7 @@ module Master
           react_sys = build_react_system(sys)
           history = messages.dup
           last = nil
+          empty_rounds = 0
 
           REACT_MAX_STEPS.times do |step|
             result, done = react_step(step, selected_model:, history:, react_sys:, stream:, image:, blk:)
@@ -20,6 +21,11 @@ module Master
 
             last = result
             break if done
+
+            # data/rules.yml's empty_tool_response: two rounds in which every tool
+            # answered nothing is a model calling into a void, not progress.
+            empty_rounds = empty_tool_round?(history.last[:content]) ? empty_rounds + 1 : 0
+            return empty_tool_failure(selected_model) if empty_rounds >= 2
           end
 
           last || Result.err("react: no response generated", category: :llm_call_failure)
@@ -39,6 +45,15 @@ module Master
           tool_results = calls.map { |c| execute_react_tool(c["name"], c["args"] || {}) }
           history << { role: TOOL_RESULT_ROLE, content: tool_results.join("\n\n") }
           [result, false]
+        end
+
+        def empty_tool_round?(tool_results)
+          tool_results.to_s.scan(%r{<tool_result name="[^"]*">(.*?)</tool_result>}m).all? { |(body)| body.strip.empty? }
+        end
+
+        def empty_tool_failure(selected_model)
+          @bus&.publish("phantom:detected", patterns: ["empty_tool_response"], model: selected_model)
+          Result.err("react: tools returned nothing twice in a row", category: :llm_failure)
         end
 
         def build_react_system(base_sys)
