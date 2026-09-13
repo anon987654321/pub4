@@ -2481,12 +2481,10 @@ Numbered 1–N across the four trees.
 675. **check-openbsd uses `RbConfig.ruby`, check uses `Operator::RubyRunner.gate_ruby`.** Use the gate runner everywhere.
 676. **tree.sh header still talks about “MASTER KISS/DRY redesign”.** One-line usage.
 677. **solid_queue_proof.sh is a doas trampoline.** In-line in the caller or `bin/`.
-678. **amber_queue_sweep.sh vs drain-jobs.sh.** Name the pair in RUNBOOK; give sweep `--help` and an app argument (it is amber-only today).
 679. **extract_legacy_installers.sh vs restore_backups.sh.** If the source is gone forever, make extract exit 2 with that sentence.
 680. **extract_legacy uses `tr`.** Banned. Use zsh `${rel//\//_}` or Ruby.
 681. **`_net.sh` `generate_random_port` always errors.** Delete if unused, or make unused-path fail at parse.
 682. **OPERATOR tmux falcon fallback.** Starts a second falcon as **dev**. Conflicts with `daemon_user="master"`. Remove or refuse if rc.d/master is enabled.
-683. **manual_master_deploy.ksh.** Add a first-line “untested recovery — read DECISIONS.md” and a `--help`. Do not fold.
 684. **deploy_all.sh default `SSH_KEY=~/.ssh/id_rsa`.** Every other file uses `id_ed25519_brgen`. Change the default.
 685. **deploy_all VPS_HOST is a bare IP.** Source `lib/ssh_vm23.sh` and drop the copy. Same for `vps_run_remote.sh`.
 686. **post-pull-checklist is a here-doc.** Generate from `operator.yml` or delete in favour of `operator status`.
@@ -2494,19 +2492,10 @@ Numbered 1–N across the four trees.
 688. **dev/agent_worktree.sh vs MASTER/bin/operator worktree.** Exec the operator command or delete it.
 689. **dev/*.sh (backup, clean, lint, perms, replace, watch_tests).** Workstation helpers in the OpenBSD tree. Move to `dotfiles/` / `MASTER/tools/` or declare Mac-only with check `none`.
 690. **ptr_openbsd_amsterdam.rb has no test.** Add a dry-run test that the request is built, not sent.
-691. **relayd_prune_keypairs.rb writes /etc/relayd.conf with no dry-run.** Default to stdout/`--check`, require `--apply` to write.
 692. **sync.rb FIXED_SOURCES vs config_drift VERBATIM.** Make sync’s source list = VERBATIM + EXCLUDED so a hand-edit cannot hide in a file sync never copies.
-693. **vps_console.exp embeds a live pubkey.** Read `SSH_ACCESS.md` / a data file, or pass `$env(SSH_PUBKEY)`.
-694. **probe mode does not use `console_open`.** Use `console_open` so host/port/key stay one place.
-695. **status mode uses `head`.** `vps_console.exp:55`. Banned. Use `ruby -e` or `ps` limits.
-696. **No behavioural test for console ack.** Add a dry-run that `expect -d` with `I_UNDERSTAND_CONSOLE_RISK` unset exits 1. Do not fold the nine shims.
 697. **port_inventory RETIRED_ACTIVE_PATHS includes live console shims.** Rename the list; they are not retired.
-698. **No `--help` on the nine shims.** Document `vps_console.exp` usage in RUNBOOK’s occasional-tools table.
 699. **test_health_check.rb measures spelling.** Replace with a `--public-only` run against a stub CURL that returns 200/000.
 700. **`--public-only` not in the flag test.** It is the laptop path.
-701. **test_vps_safety_gate.rb is “gate passes”.** Add the shape it must flag: a doas.dev rule with `keepenv`.
-702. **vps_safety_gate skips basename `litestream`.** There is no `etc/rc.d/litestream`. Delete the skip.
-703. **vps_safety_gate only pins `I_UNDERSTAND_DNS_WIPE`.** Pin the other four or the whole `setenv { … }` string.
 704. **verify_openbsd_idempotency.rb is source grep on OPERATOR.sh.** Add a known-bad fixture (OPERATOR snippet missing the backup).
 705. **verify_deploy_identity.rb is string includes on `_deploy.sh`.** Assert the functions exist via `zsh -c 'source …; whence -w deploy_tracked_app'`.
 706. **No OPENBSD test for dns_zones / domain_alignment / port_inventory / installed_targets / deploy_smoke.** Each wants a known-bad fixture (decision 2026-08-22).
@@ -2527,23 +2516,17 @@ Numbered 1–N across the four trees.
 716. **test_domain_expiry `--update` needs `/usr/bin/timeout`.** Document in START_HERE: refresh on vm23; local red is not a code defect.
 717. **domain_released.yml is empty while five domains fail.** Point failure output at this file so the next agent does not “fix” the test.
 718. **weekly.local runs domain_watch from the checkout as dev.** PATH_OWNERSHIP does not mention `bin/domain_watch.rb`. Add it.
-719. **config-drift-check cannot run as dev.** If nsd.conf unreadable, exit 2 “needs root” instead of treating empty nsd as “no zones”.
 720. **daily.local comments should state the two questions** (repo-versus-live `/etc` bytes vs relayd/acme/nsd consistency) in one line each.
 721. **bin/check loads all OPENBSD tests in one `-e` process.** One process per file, as check-full already does for Rails.
 722. **reach.rb vs installed_targets_gate.** Wire reach into check-openbsd or fold its unique checks into installed_targets.
 
 ### OPENBSD — shell, rc.d, DNS, tests, remaining
 
-723. **vps_weekly_integrity.sh is `#!/usr/bin/env sh` and may use `fuser`.** **Unverified on box.** If missing, use the Ruby with-ci-lock nonblock.
-724. **ci_lock.sh comment still says “opened with lockf(1)” at line 20** then corrects to flock(2) at 44. Delete the first sentence.
-725. **emergency_cpu.sh unquoted fallback source.** Quote `. "${GUARD_REPO}/OPENBSD/usr/local/libexec/stale_ci_cleanup.ksh"`.
 726. **start_all_apps.sh: `set -e` without pipefail.** Add `set -eo pipefail`.
 727. **vps_deploy_master.sh: `set -e` only, `#!/bin/sh`.** Add pipefail.
-728. **amber_queue_sweep.sh: no pipefail, no usage.** Add `set -eu` and a usage line.
 729. **renew-certs.sh add `--help`.**
 730. **tree.sh `CDPATH= cd` vs `CDPATH='' cd --`.** Use the safer form.
 731. **dev/agent_worktree.sh add `--help`.**
-732. **vps_weekly_integrity re-exec.** Detect `dirname $0` = `/usr/local/bin` or refuse.
 733. **rails-app.tmpl is a third rc.d.** No PATH export, `pexp="ruby.*${port}"` not `ruby34`, `daemon_timeout="60"` not 120. Either regenerate apps from a fixed tmpl or delete the tmpl and stop OPERATOR from installing it.
 734. **irc_gateway has no PATH, no pexp.** Match brgen’s PATH/`bundle34 exec` shape so a go-live does not repeat the cron-PATH outage.
 735. **amber vs brgen env paths.** Document which of the three paths is live; drop the others from the scripts.
@@ -2637,10 +2620,8 @@ Numbered 1–N across the four trees.
 788. **PUB4_ROOT in fix_macos is `SCRIPT_DIR/..`.** That is OPENBSD/, not repo root. `cd "${SCRIPT_DIR}/../.."`.
 789. **zshrc.shared vs box `/home/dev/.zshrc`.** OPERATOR mentions `etc/.zshrc`. Find the tracked zshrc or stop syncing it. **Unverified path.**
 790. **quarantine/virus_museum.** PATH_OWNERSHIP check should name `MASTER/tools/security_sweep.rb`. RUNBOOK: recovery is `bin/dr-pull` and `manual_master_deploy.ksh`; quarantine is inert samples.
-791. **Missing `--help` / usage** on `bin/vps-deploy`, `vps-state`, `vps-logs`, `ds-records`, `render_dns.rb`, `domain_watch.rb`, `sync_deploy_inventory.rb`, `with-ci-lock`, `dr-pull` (**unverified**), `start_all_apps.sh`, `emergency_cpu.sh`, `amber_queue_sweep.sh`, `vps_ci.sh`, `vps_ci_all.sh`, `vps_install_all.sh`, `vps_on_vm_install.sh`, `vps_master_scan.sh`, `resource_guard.sh`, `core-reclaim.sh`, `keep-warm.sh`, `drain-jobs.sh`, `prune-guests.sh`, `tree.sh`. Pattern: `deploy-smoke.sh`.
-792. **uptime-check cron redirects all output.** Failures only if someone reads the log. Print a one-line summary to stdout on failure so cron mails root. Same for config-drift-check.
+791. **Missing `--help` / usage** on `bin/vps-deploy`, `vps-state`, `ds-records`, `render_dns.rb`, `domain_watch.rb`, `sync_deploy_inventory.rb`, `with-ci-lock`, `dr-pull` (**unverified**), `start_all_apps.sh`, `emergency_cpu.sh`, `vps_ci.sh`, `vps_ci_all.sh`, `vps_install_all.sh`, `vps_on_vm_install.sh`, `vps_master_scan.sh`, `resource_guard.sh`, `core-reclaim.sh`, `keep-warm.sh`, `drain-jobs.sh`, `prune-guests.sh`, `tree.sh`. Pattern: `deploy-smoke.sh`.
 793. **keep-warm has no heartbeat.** Touch `/var/db/keep_warm_seen` each run; health_check already has the pattern.
-794. **vps-logs looks in `/var/log/pub4/${app}.log` first.** Probe `rcctl get ${app} logger` or document “always daemon”.
 795. **OPERATOR.sh `2>/tmp/pkg_add.log`.** Use `/var/log/pub4/`.
 796. **home/johann/bin/mailimg.** PATH_OWNERSHIP should list it as the executable check (`ksh -n`).
 797. **stale_ci_cleanup.ksh lives under usr/local/libexec.** Include `/usr/local/libexec/` in installed_targets.
@@ -3713,7 +3694,6 @@ New defects from reading the four trees after the inventories. Does not restate 
 33. **`smtpd.conf` listens on `vio0`.** Interface rename and inbound 25 dies.
 34. **Hardcoded `/home/dev/pub4` in `start_all_apps.sh` and rc.d.** `PUB4_ROOT` / a worktree is ignored.
 35. **`dr-pull --check` exits 0 when `~/pub4-dr` is missing.** The local gate that should notice a stale backup is a skip on a Mac that never created the dir.
-36. **`amber_queue_sweep.sh` has no `QUEUE_DB` existence check.** `sqlite3` on a missing path creates an empty file, then SQL against missing tables dies — or plants an empty `production_queue.sqlite3`.
 
 ### STUDIO — ffmpeg 0.0, scratch races, silent session
 
