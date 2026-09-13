@@ -1,12 +1,10 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
-require "json"
-require "net/http"
 
-# Three small tool surfaces the agent can reach: FeedbackRecord writes to the
-# learnings ledger, Clean runs OPENBSD/dev/clean.sh under a governor and a time
-# budget, and BrgenBridge reads brgen's internal status over loopback.
+# Two small tool surfaces the agent can reach: FeedbackRecord writes to the
+# learnings ledger, and Clean runs OPENBSD/dev/clean.sh under a governor and a
+# time budget.
 class TestIoSmallTools < Minitest::Test
   Governor = Struct.new(:answer) do
     def permit?(_name, _tier, _detail) = answer
@@ -49,46 +47,5 @@ class TestIoSmallTools < Minitest::Test
     assert_equal "x  \n", File.read(File.join(root, "a.txt"))
   ensure
     FileUtils.rm_rf(root)
-  end
-
-  def test_brgen_bridge_needs_its_token_before_it_opens_a_socket
-    ENV.delete("MASTER_INTERNAL_TOKEN")
-    opened = false
-    result = Net::HTTP.stub(:start, ->(*) { opened = true }) { Master::Io::BrgenBridge.status }
-
-    assert_equal :validation, result.category
-    refute opened
-  end
-
-  def test_brgen_bridge_summary_asks_once_and_renders_the_counts
-    calls = 0
-    body = { "city" => "bergen", "generated_at" => "now", "marketplace_listings" => 3 }.to_json
-    response = Struct.new(:code, :body).new("200", body)
-    with_token do
-      summary = Net::HTTP.stub(:start, lambda { |*|
-        calls += 1
-        response
-      }) { Master::Io::BrgenBridge.summary }
-
-      assert_match(/\Aok: brgen tenant=bergen at now\nmarketplace_listings=3 /, summary)
-    end
-    assert_equal 1, calls, "one summary is one status request"
-  end
-
-  def test_brgen_bridge_reports_a_non_200_as_infrastructure
-    response = Struct.new(:code, :body).new("503", "")
-    with_token do
-      result = Net::HTTP.stub(:start, ->(*) { response }) { Master::Io::BrgenBridge.status }
-
-      assert_equal "brgen: internal status 503", result.message
-    end
-  end
-
-  def with_token
-    previous = ENV["MASTER_INTERNAL_TOKEN"]
-    ENV["MASTER_INTERNAL_TOKEN"] = "t"
-    yield
-  ensure
-    previous.nil? ? ENV.delete("MASTER_INTERNAL_TOKEN") : ENV["MASTER_INTERNAL_TOKEN"] = previous
   end
 end
