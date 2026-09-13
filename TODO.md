@@ -1010,9 +1010,6 @@ Wishes and measured proposals not yet shipped; each section is dated.
 - **Autofix classifies by transform, not per rule.** `Scan::Finding` declares
   `reversibility` and `blast_radius`, `semantic_rules.rb` and `meta_rules.rb` fill
   them, and nothing under `lib/fix` reads either.
-- **The resource guard sheds per process and measures per box.** Add each app's
-  RSS (`ps -o rss= -p`) to the history line `resource_guard.sh` already writes,
-  before the thresholds move again.
 - **Cross-engine references are unmeasured.** One engine reads another's
   constant (`maps/home_controller.rb` reads `Takeaway::Order`, deliberately);
   a source gate holding that as its one exemption keeps it at one.
