@@ -1117,3 +1117,35 @@ directory spends a shared machine's CPU on a question no finding has asked.
 screenshot criterion of every item would put law about prose in `rules.yml`,
 which is immutable to effects and read by the runtime. The two tools above check
 what an item cites, and `TODO.md`'s preamble carries the habit.
+
+## What The Catalogs, Papers And Books Do Not License (2026-09-13)
+
+Four intake passes on 2026-09-11 read awesome lists, agent harnesses, arXiv
+papers and design books against the tree. What they proposed that contradicts
+the tree is refused here once, so the next pass does not reopen it.
+
+MASTER takes no Docker worker fleet, no agent process table in the manner of
+Hermes, no MCTS or debate-of-three around FixLoop, no computer-use driver and no
+Python compressor. The box is one OpenBSD host, isolation is `operator worktree`,
+the council is already the value agent, and MASTER is pure Ruby with no external
+agent integrations. What those projects teach is an interface — compressed tool
+output, span context, hypothesis versus measured — and it is taken as that.
+
+RAILS takes no Kamal, Thruster, Dockerfile, Inertia, Vite, ViewComponent,
+Lookbook, Cucumber, Percy, Chromatic, Playwright or capybara-screenshot-diff.
+Deploy is rc.d and relayd; the frontend is importmaps, ERB, Stimulus and Turbo;
+`visual_contract` and `layout_snapshot` are the one paint and one layout
+baseline. It takes no Chart.js, Google Places, glow, Pickr, scroll-to, timeago
+or content-loader either: each is a third renderer, a third party on a
+Norwegian city app, or an effect FLAT_UI forbids, and the last three were
+dropped with a measurement. No two-tower feed, neural outfit model or pgvector
+ranking runs on a 1 GB SQLite box; the portable result of those papers is a SQL
+union, filed under `RAILS/apps.horizon.yml`. The shared snippet library
+`shared/frontend/examples.html.erb` stays: it is documentation, and
+`deploy_backlog_test.rb` holds it to registered controllers.
+
+Books are read for detectors, never for a look. Parametricism, an Itten palette,
+a second type scale, Pallasmaa as texture or fog, and a swing retune "because
+Charnas" all change a rendered value, which is the operator's; Venturi is not
+codified because it argues against Rams and Ando, which already are law. A book
+imported as YAML needs a reader the same day, or it becomes `dilla_principles.yml`.
