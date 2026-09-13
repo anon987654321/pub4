@@ -32,6 +32,24 @@ require "digest"
 
 ZONE_DIR = ENV.fetch("NSD_ZONE_DIR", "/var/nsd/zones/master")
 
+if ARGV.intersect?(%w[-h --help])
+  puts "usage: doas ruby34 OPENBSD/bin/ds-records   (NSD_ZONE_DIR=dir, default #{ZONE_DIR})"
+  puts "  one DS record per KSK in every *.zone.signed, derived from the zone rather than any .ds file"
+  exit 0
+end
+
+# Two different answers that an empty glob gives alike. No zone directory is a
+# machine that is not the nameserver, and there is nothing to derive. A directory
+# this user cannot read is vm23 run without doas, and "no signed zones" there
+# names the wrong problem.
+unless File.directory?(ZONE_DIR)
+  warn "ds-records: skip - no #{ZONE_DIR} on this machine; run it on vm23"
+  exit 0
+end
+unless File.readable?(ZONE_DIR) && File.executable?(ZONE_DIR)
+  abort "ds-records: #{ZONE_DIR} is not readable by this user; run: doas ruby34 #{__FILE__}"
+end
+
 # Owner name in DNS wire format: each label length-prefixed, root label to end.
 # This is the first half of the DS digest input (RFC 4034 s5.1.4).
 def wire_name(name)
