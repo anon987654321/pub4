@@ -13,7 +13,7 @@ module Master
       def run(goal, root:, bus: nil, model: nil, model_id: nil, max_turns: 40, on_turn: nil, memory: nil,
               container: nil, risk: :low)
         transcript = []
-        observer = build_turn_observer(transcript, bus:, on_turn:)
+        observer = build_turn_observer(transcript, root:, bus:, on_turn:)
 
         memory ||= Master::Core::Memory.new(risk:)
         critique_runner = container ? CouncilCrit.runner_for(container) : nil
@@ -23,10 +23,15 @@ module Master
         { reason: done.reason, turns: done.turns, summary: done.summary, transcript:, risk: memory.proof.risk }
       end
 
-      def build_turn_observer(transcript, bus:, on_turn:)
+      # The Fold writes through World rather than the Io tools, so the turn's
+      # WriteTracker hears of a write only from here.
+      def build_turn_observer(transcript, root:, bus:, on_turn:)
         lambda do |turn:, effect:, observation:|
           line = "#{turn}: #{effect} -> #{observation}"
           transcript << line
+          if effect.verb == :write && observation.ok?
+            Master::Trace::WriteTracker.current&.record(File.expand_path(effect.args[:path].to_s, root))
+          end
           bus&.publish("core:turn", turn:, effect: effect.to_s, ok: observation.ok?, detail: observation.message)
           on_turn&.call(line)
         end

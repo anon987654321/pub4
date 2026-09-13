@@ -36,6 +36,42 @@ class TestOutputGuard < Minitest::Test
     assert result.ok?, result.err? ? result.message : result.value!.to_s
   end
 
+  # A fence satisfies the diff check, so a reply can dress a phantom edit in
+  # one. What the turn wrote is the evidence the shape of the reply cannot fake.
+  def test_rejects_an_edit_claim_when_the_turn_wrote_nothing
+    text = "I've updated the parser.\n```diff\n+line\n```"
+    result = @guard.validate(text, context: :modification, writes: [])
+
+    refute result.ok?
+    assert_match(/nothing was written/, result.message)
+  end
+
+  def test_accepts_an_edit_claim_the_turn_backs
+    text = "I've updated the parser.\n```diff\n+line\n```"
+
+    assert @guard.validate(text, context: :modification, writes: ["/tmp/parser.rb"]).ok?
+    assert @guard.validate(text, context: :modification).ok?, "an unknown write set judged the claim anyway"
+  end
+
+  def test_a_third_person_change_is_not_an_edit_claim
+    text = "That commit changed the parser.\n```\nabc123\n```"
+
+    assert @guard.validate(text, context: :modification, writes: []).ok?
+  end
+
+  def test_the_fold_reports_its_writes_to_the_tracker
+    tracker = Master::Trace::WriteTracker.new
+    observer = Master::CLI::CoreBridge.build_turn_observer([], root: "/srv/app", bus: nil, on_turn: nil)
+    Master::Trace::WriteTracker.stub(:current, tracker) do
+      observer.call(turn: 1, effect: Master::Core::Effect.write("lib/a.rb", "x"),
+                    observation: Master::Core::Observation.ok("wrote"))
+      observer.call(turn: 2, effect: Master::Core::Effect.write("lib/b.rb", "x"),
+                    observation: Master::Core::Observation.no("blocked"))
+    end
+
+    assert_equal ["/srv/app/lib/a.rb"], tracker.paths
+  end
+
   def test_rejects_collapsed_boot_banner
     result = @guard.validate("master: one line only", context: :boot)
 

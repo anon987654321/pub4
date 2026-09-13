@@ -43,7 +43,8 @@ module Master
         def guard_findings(rendered, mode)
           return [] unless @output_guard
 
-          result = @output_guard.validate(rendered, context: @renderer.output_context(mode))
+          result = @output_guard.validate(rendered, context: @renderer.output_context(mode),
+                                                    writes: Trace::WriteTracker.current&.paths)
           return [] if result.ok?
 
           result.message.split("; ").map do |issue|

@@ -7,6 +7,10 @@ module Master
       COLLAPSED_DIAGNOSTIC_LINE_LENGTH = 120
       COMPLETION_CLAIM = /\b(fixed|completed|done|applied|updated|removed|added|wired|implemented)\b/i
       MODIFICATION_CLAIM = /\b(changed|modified|edited|patched|replaced|refactored)\b/i
+      # First person and past tense: MASTER saying it touched a file. A fence
+      # beside the claim proves nothing was written, so this is checked against
+      # the turn's recorded writes instead of against the reply's shape.
+      FIRST_PERSON_EDIT = /\bI(?:'ve| have)?\s+(?:just\s+)?(?:changed|modified|edited|patched|replaced|refactored|rewrote|updated|fixed|wrote)\b/i
       # A shell prompt or an exit code: what a real transcript carries and a
       # block written to look like one does not.
       TRANSCRIPT_EVIDENCE = /^\s*\$ .+|exit code:?\s*\d/i
@@ -41,8 +45,11 @@ module Master
         out
       end
 
-      def validate(text, context: :routine)
+      # writes: the paths this turn actually wrote, or nil when the caller cannot
+      # know, in which case only the reply's own evidence is judged.
+      def validate(text, context: :routine, writes: nil)
         issues = []
+        issues << "edit claimed but nothing was written this turn" if writes&.empty? && text.to_s.match?(FIRST_PERSON_EDIT)
         issues << "boot message must remain 5-line dmesg style" if context == :boot && boot_message_collapsed?(text)
         issues << "diagnostic output collapsed" if diagnostic_context?(context) && collapsed_diagnostic?(text)
         issues << "help output missing syntax/example detail" if context == :help && incomplete_help?(text)
