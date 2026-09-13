@@ -21,6 +21,13 @@ module Master
 
       def restricted? = !Fiber[:subagent_allowed].nil?
 
+      # The bounds this fiber runs under, for the prompt; nil outside a child.
+      def brief
+        return unless restricted?
+
+        Ground::Policy::Subagent.brief(active_type, Fiber[:subagent_allowed])
+      end
+
       def permits?(tool_name)
         allowed = Fiber[:subagent_allowed]
         return true if allowed.nil?

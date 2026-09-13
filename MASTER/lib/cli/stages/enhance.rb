@@ -96,7 +96,7 @@ module Master
         end
 
         def enhance(msg)
-          raw = @agent.ask_once(msg, system: SYSTEM)
+          raw = @agent.ask_once(msg, system: SYSTEM, law: false)
           parsed = JSON.parse(raw.to_s.strip)
           { enhanced: parsed["enhanced"].to_s.strip, changed: parsed["changed"] == true }
         rescue JSON::ParserError

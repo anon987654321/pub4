@@ -1426,3 +1426,24 @@ table, which holds no resource figures, so there is no copy to remove.
 a loader for it would be one more reader with no producer. The index comes
 from the `patterns.yml` registry and the workspace skills, and `body_for`
 reads a body only when a skill is asked for.
+
+## A Role Prompt Rides Under The Law, Except Enhance's (2026-09-14)
+
+A swarm worker, an ideation round and an AgentPool child each hand `ask_once`
+a system prompt naming their role. The dispatcher took that prompt in place of
+the persona prompt, so every one of them ran with no constitution at all.
+`ask_once` now composes: the operator's declared principles and soul's absolute
+and kernel tiers first, the child's bounds next when it runs under
+`SubagentContext`, the role last. The law comes first because the priority
+order puts it there; the role comes last because it owns the output contract,
+and that is why the law context leaves out the persona's identity, its output
+format and the style corpus. It adds about 2,200 characters to a call.
+
+Enhance is the one caller that passes `law: false`. Its output is not MASTER
+speaking or acting: it is the user's own message, tightened, and it goes on to
+the real turn, which carries the full persona prompt and the law with it.
+Composed with the law, the rewriter reads "show diff or file content" and "never
+assert" as its own instructions, and its fourth rule tells it to add format
+hints, so the user's question comes back asking for a diff. That changes what
+the user asked, which Enhance's seventh rule forbids. The law binds MASTER's
+answer to the message, not the rewording of it.

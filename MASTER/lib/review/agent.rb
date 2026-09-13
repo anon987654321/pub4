@@ -80,11 +80,12 @@ module Master
 # fallback_policy.on the chain reads, so the two lists cannot drift.
 SINGLE_CALL_FAILOVER = %i[budget rate_limit timeout no_api_key].freeze
 
-      def ask_once(prompt, system: nil, model: nil, image: nil, temperature: nil)
+      def ask_once(prompt, system: nil, law: true, model: nil, image: nil, temperature: nil)
         messages = [{ role: "user", content: filter_prompt(prompt) }]
         chosen = live_model(model || self.model)
-        result = @dispatcher.send_with_cache(chosen, messages, system: filter_prompt(system), stream: false, image:, temperature:)
-        result = retry_on_broke_lane(result, chosen, messages, system: filter_prompt(system), image:, temperature:)
+        sys = role_system(system, law:)
+        result = @dispatcher.send_with_cache(chosen, messages, system: sys, stream: false, image:, temperature:)
+        result = retry_on_broke_lane(result, chosen, messages, system: sys, image:, temperature:)
         raise StandardError, result.message if result.is_a?(Master::Result::Err)
         result.to_s
       end

@@ -79,6 +79,55 @@ def test_ask_once_fails_over_to_the_cli_lane_on_budget_errors
   assert_equal 2, fake.models.size, "expected exactly one failover hop"
   assert fake.models.last.to_s.start_with?("claude-cli:"), "hop must land on the claude_code chain head"
 end
+# A caller's system prompt names a role, and the dispatcher sends it in place of
+# the persona prompt, so a role sent bare carries none of the law. The law goes
+# first and the role last.
+def test_ask_once_carries_the_law_ahead_of_a_role
+  systems = capture_ask_once_systems
+  @agent.instance_variable_set(:@personality, law_persona)
+
+  @agent.ask_once("review this", system: "Answer in JSON.")
+  Master::CLI::SubagentContext.run(type: :verify, allowed: %w[shell]) do
+    @agent.ask_once("check this", system: "Report pass or fail.")
+  end
+  @agent.ask_once("rewrite this", system: "Rewrite the message.", law: false)
+  @agent.ask_once("plain")
+
+  role, child, bare, persona = systems
+  assert_equal "LAW\n\nAnswer in JSON.", role
+  brief = Master::Ground::Policy::Subagent.brief(:verify, %w[shell])
+  assert_equal ["LAW", brief, "Report pass or fail."].join("\n\n"), child
+  assert_equal "Rewrite the message.", bare
+  assert_nil persona, "no role leaves the dispatcher on the full persona prompt"
+end
+
+# An AgentPool child that chats rather than asks gets the full persona prompt,
+# law included, and its bounds ride in the per-turn half.
+def test_a_child_turn_is_told_its_bounds
+  refute_includes @agent.send(:dynamic_prompt).to_s, "subagent"
+
+  Master::CLI::SubagentContext.run(type: :explore, allowed: %w[ReadFile]) do
+    assert_includes @agent.send(:dynamic_prompt), "explore subagent"
+  end
+end
+
+def capture_ask_once_systems
+  systems = []
+  fake = Object.new
+  fake.define_singleton_method(:send_with_cache) do |_model, _messages, system: nil, **|
+    systems << system
+    Master::Result.ok("ok")
+  end
+  @agent.instance_variable_set(:@dispatcher, fake)
+  systems
+end
+
+def law_persona
+  persona = Object.new
+  def persona.system_prompt(context: :full) = context == :law ? "LAW" : "FULL PERSONA"
+  persona
+end
+
 def test_ask_also_takes_the_hop_on_budget_errors
   fake = Class.new do
     attr_reader :models

@@ -153,11 +153,13 @@ module Master
           { type:, allowed: allowed_tool_names(type, parent_tools) }
         end
 
-        def brief(type = :general)
-          policy = TYPES.fetch(parse(type))
-          allowed = allow_list_for(type)
-          allowed_text = allowed ? allowed.join(", ") : "all parent tools minus recursive/dangerous tools"
-          "Subagent policy: #{policy[:label]} gets #{allowed_text}; always exclude #{ALWAYS_EXCLUDED.join(', ')}."
+        # What a child is told about its own bounds. `allowed` is the list the
+        # fiber carries and the react loop refuses against, so the prompt names
+        # exactly the tools a call can reach.
+        def brief(type, allowed)
+          tools = allowed.empty? ? "no tools" : "only #{allowed.join(', ')}"
+          "You run as a #{parse(type)} subagent: #{prompt_for(type)}. You may call #{tools}; " \
+            "any other tool call is refused, and a subagent cannot spawn another."
         end
       end
     end

@@ -25,6 +25,13 @@ module Master
         master_medical_disclaimer master_special_disclaimer master_refusal_policy
       ].freeze
 
+      # What an agent running under a role prompt carries ahead of that role:
+      # soul's golden rule and anti-simulation, and the kernel tier. Not the
+      # output format, which a role's JSON or bullet contract overrides, and not
+      # the style corpus, which is ten times the size and judged downstream.
+      LAW_SECTIONS = %w[master_constitution_absolute master_constitution_kernel].freeze
+      NARROWED_SECTIONS = { core: CORE_SECTIONS, law: LAW_SECTIONS }.freeze
+
       include PersonalityStyleSections
 
       private
@@ -36,7 +43,7 @@ module Master
         add_constitution(sections, soul)
         add_priority(sections)
         add_output_format(sections)
-        add_contextual_sections(sections) unless context == :core
+        add_contextual_sections(sections) if context == :full
         add_disclaimer(sections)
         add_refusal_policy(sections)
         ordered_sections(sections, soul, context:)
@@ -331,14 +338,15 @@ module Master
       def ordered_sections(sections, soul, context: :full)
         ordering = Array(soul["prompt_ordering"])
         ordering = sections.keys if ordering.empty?
-        unordered = sections.keys - ordering - (context == :core ? [] : [])
+        unordered = sections.keys - ordering
         unless unordered.empty?
           Master::Ground::Swallow.log(
             RuntimeError.new("prompt sections built but absent from soul prompt_ordering: #{unordered.join(', ')}"),
             context: "PromptBuilder.ordered_sections", severity: :load_bearing,
           )
         end
-        ordering = ordering & CORE_SECTIONS if context == :core
+        narrowed = NARROWED_SECTIONS[context]
+        ordering &= narrowed if narrowed
         ordering.filter_map { |key| sections[key] }.join("\n\n")
       end
     end

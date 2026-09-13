@@ -69,6 +69,21 @@ class TestOpenCrabsFeatures < Minitest::Test
     assert Master::CLI::SubagentContext.permits?("WriteFile")
   end
 
+  # The brief names the list the react loop refuses against, not the type's
+  # declared allow list, so a child is told exactly what a call can reach.
+  def test_subagent_brief_names_the_tools_the_fiber_permits
+    assert_nil Master::CLI::SubagentContext.brief
+
+    Master::CLI::SubagentContext.run(type: :explore, allowed: %w[ReadFile]) do
+      brief = Master::CLI::SubagentContext.brief
+      assert_includes brief, "explore subagent"
+      assert_includes brief, "only ReadFile"
+    end
+    Master::CLI::SubagentContext.run(type: :verify, allowed: []) do
+      assert_includes Master::CLI::SubagentContext.brief, "no tools"
+    end
+  end
+
   def test_phantom_repetition_detector
     span = "x" * 60
     text = ([span] * 4).join(" ")

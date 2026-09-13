@@ -20,6 +20,31 @@ module Master
           @reasoning_modes.wrap(message, mode:)
         end
 
+        # A caller's system prompt names a role; it does not repeal the law. The
+        # dispatcher sends whatever system prompt it is given in place of the
+        # persona prompt, so a role sent bare leaves a swarm worker or an
+        # ideation round with no constitution. The law comes first, where the
+        # priority order puts it, and the role last, where it sets the output
+        # contract.
+        #
+        # `law: false` is for a transform whose output is the user's own words
+        # rather than MASTER's assertion or effect. DECISIONS.md, "A Role Prompt
+        # Rides Under The Law, Except Enhance's", carries why.
+        def role_system(role, law:)
+          return filter_prompt(role) unless role && law
+
+          filter_prompt([law_prompt, CLI::SubagentContext.brief, role].compact.join("\n\n"))
+        end
+
+        # The operator's declared principles and soul's absolute and kernel
+        # tiers: the part of static_prompt that binds whatever role is asked for.
+        def law_prompt
+          parts = []
+          parts << @constitution.system_prompt if @constitution && !@constitution.empty?
+          parts << @personality.system_prompt(context: :law) if @personality
+          parts.compact.join("\n\n").then { |s| s.empty? ? nil : s }
+        end
+
         def static_prompt
           parts = []
           parts << @constitution.system_prompt if @constitution && !@constitution.empty?
@@ -34,6 +59,7 @@ module Master
           # constant, never anything the visitor typed -- a note assembled
           # from user input would be an instruction the user wrote for us.
           parts << Fiber[:master_persona_note]
+          parts << CLI::SubagentContext.brief
           parts << conversational_register_line if casual_task?
           parts << felt_sense_section if @felt_sense.is_a?(Hash)
           parts << "Current task: #{@session.topic}" if @session.respond_to?(:topic) && @session.topic

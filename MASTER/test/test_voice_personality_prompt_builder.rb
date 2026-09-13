@@ -37,6 +37,19 @@ def test_strunk_scope_reaches_the_constitution
   assert_includes prompt, "style_safeguards: never_delete_variable_names"
 end
 
+# A role prompt sets its own output contract, so the law context carries
+# soul's absolute and kernel tiers and nothing that would contradict the role.
+def test_law_context_is_the_constitution_alone
+  prompt = Master::Voice::Personality.new(:anchor).system_prompt(context: :law)
+
+  assert_includes prompt, "<master_constitution tier=\"absolute\">"
+  assert_includes prompt, "<master_constitution tier=\"kernel\">"
+  assert_includes prompt, "anti_simulation:"
+  refute_includes prompt, "master_output_format"
+  refute_includes prompt, "master_identity"
+  refute_includes prompt, "<master_style>"
+end
+
 def test_core_context_keeps_constitution_and_output_contract
     persona = Master::Voice::Personality.new(:medic)
     core_prompt = persona.system_prompt(context: :core)
