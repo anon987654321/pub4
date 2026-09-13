@@ -1407,3 +1407,22 @@ or the Rakefile. Extensionless `bin/` scripts stay outside `SCAN_GLOB` because
 `data/scan_coverage.yml` exempts entry points from SelfCheck on purpose.
 `DupCensus` and `DesignBaseline` count the tracked tree through git, and
 `test_ratchets` already fails when either counter moves.
+
+## Context Pressure, Affect And The Host Budget Are Separate Jobs (2026-09-14)
+
+With PressureEngine deleted, two of the three weathers remain, and neither
+owns a bus event. `Trace::ContextPressure` turns a session token estimate into
+a band for the dashboard; `Cognition::Affect` is the bounded mood `Mind`
+updates from prediction error. One counts tokens and the other scores
+surprise, so a fold would join two formulas that share a word.
+
+`HostBudget` does not read `OPENBSD/vm_resource.yml` at runtime. It measures
+the host through `hw.physmem`, which is what a budget must trust, and
+`test_host_budget.rb` fails when the declared box stops reading as
+constrained. `OpenbsdConfig` reads `data/openbsd.yml`, the daemon validator
+table, which holds no resource figures, so there is no copy to remove.
+
+`CLI::Skills` loads no `.master/skills/`. Nothing writes that directory, and
+a loader for it would be one more reader with no producer. The index comes
+from the `patterns.yml` registry and the workspace skills, and `body_for`
+reads a body only when a skill is asked for.
