@@ -112,7 +112,7 @@ drum chops, `GROOVE_DNA=cosmogramma`, quartal voicing, dub_chamber chain.
 | `RENDER_SEED` | Pins the whole render. Drawn and recorded when unset — see Provenance |
 | `DILLA_OVERWRITE` | Replace an existing named take. Unset, `render_dilla` refuses rather than overwrite |
 | `DEMO_TRACKS` | Explicit comma-separated order; beats every other rule in `demo_all_order` |
-| `DEMO_FX` | Catalogue post-chain; `ringtone` (default) adds tremolo, phaser, chorus, crusher, echo and stereo widening; `0` disables it |
+| `DEMO_FX` | Catalogue post-chain; `ringtone` (default) adds tremolo, chorus, crusher and stereo widening, and the phaser and echo under `HATE_TUNNEL=1`; `0` disables it |
 | `RENDER_BEAUTY_MIN` | Harmony floor before a render is kept (55–78 across profiles) |
 
 Three of these are worth stating outright because each one is a documented

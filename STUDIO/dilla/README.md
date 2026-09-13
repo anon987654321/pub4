@@ -13,8 +13,10 @@ directory that has never existed — and both times it sent an operator to
 validate nothing and read the result as passing.
 
 Bare `ruby dilla.rb` renders the catalogue at four bars per track and applies
-the local `DEMO_FX=ringtone` post-chain: tremolo, phaser, chorus, crusher, echo
-and stereo widening. Set `DEMO_FX=0` for a dry catalogue render.
+the local `DEMO_FX=ringtone` post-chain: tremolo, chorus, crusher and stereo
+widening, with the phaser and echo back only under `HATE_TUNNEL=1`. Set
+`DEMO_FX=0` for a dry catalogue render. Techno tracks alternate with hip-hop
+ones and play a four-bar drum phrase over the same pads and leads.
 
 ENV knobs, the switch reference and the render path in detail are in
 `ENV_AND_RENDER.md`. Operator scripts live under `scripts/`.

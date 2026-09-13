@@ -2806,6 +2806,7 @@ class TestDilla < Minitest::Test
   # all -- and it has to be provable in both directions, or "frozen" is a claim
   # rather than a behaviour.
   def test_dilla_frozen_reads_the_learned_state_and_writes_none_of_it
+    require File.expand_path("../dilla/lib/provenance", __dir__)
     session = File.expand_path("../dilla/project/session.json", __dir__)
     skip "no session state on this machine yet" unless File.file?(session)
 

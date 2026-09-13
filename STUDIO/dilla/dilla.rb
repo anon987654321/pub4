@@ -5230,12 +5230,57 @@ KIT_ONLY_FEELS = %i[timeless organic syncopated_slash_ninth loose_pocket
                     detroit_stumble la_beat_scene techno_drive default].freeze
 
 def schedule_eclectic_percussion!(events, duration, beat_p, bar_p, cfg, n_bars)
-  return if KIT_ONLY_FEELS.include?(cfg[:feel]&.to_sym)
-
   rng = Random.new(stable_hash(cfg[:track].to_s) + 909)
   step_p = beat_p / 4.0
   family = cfg[:style_family]
   feel = cfg[:feel]
+
+  if ENV["DRUM_PRESET"] == "industrial_techno"
+    # Four-bar machine phrase: the kick grid remains readable while the
+    # accents rotate 3:2, the metallic hits answer on odd sixteenths, and the
+    # final bar compresses into a fill. DFAM=1 adds a pitched/noise voice; this
+    # layer supplies the clocked objects around it.
+    techno_kicks = [[3, 7, 11, 14], [2, 6, 10, 15], [1, 5, 9, 13], [3, 6, 10, 14]]
+    techno_rims = [[1, 6, 10, 15], [2, 5, 9, 14], [1, 4, 8, 12], [3, 7, 11, 12, 15]]
+    techno_hats = [[1, 3, 5, 7, 9, 11, 13, 15], [0, 3, 6, 9, 12, 15],
+                   [1, 4, 7, 10, 13], (0..15).to_a]
+    bars = (duration / bar_p).floor
+    bars.times do |bar|
+      base = bar * bar_p
+      phase = bar % 4
+      techno_kicks[phase].each do |step|
+        events[:kick] ||= []
+        events[:kick] << [(base + step * step_p).round(6),
+                          dilla_velocity(0.58, bar, step, spread: 0.04)]
+        events[:glitch] ||= []
+        events[:glitch] << [(base + step * step_p).round(6),
+                            dilla_velocity(0.22, bar, step, spread: 0.04), :ind_stab]
+      end
+      techno_rims[phase].each do |step|
+        events[:rim] ||= []
+        events[:rim] << [(base + step * step_p).round(6),
+                         dilla_velocity(0.34, bar, step, spread: 0.05), :rim]
+      end
+      techno_hats[phase].each do |step|
+        events[:hat] ||= []
+        events[:hat] << [(base + step * step_p).round(6),
+                         dilla_velocity(0.32, bar, step, spread: 0.04)]
+      end
+      next unless phase == 3
+
+      (12..15).each do |step|
+        events[:woodblock] ||= []
+        events[:woodblock] << [(base + step * step_p * 0.5).round(6),
+                               dilla_velocity(0.26, bar, step, spread: 0.03)]
+      end
+    end
+    return events
+  end
+
+  # After the techno phrase, not before it: a techno slot keeps its
+  # progression's feel, and most of those are kit-only feels such as :timeless,
+  # so returning first skipped the phrase on seven of the nine techno slots.
+  return if KIT_ONLY_FEELS.include?(feel&.to_sym)
 
   # Polyrhythm 5:4 layer
   poly5 = bar_p / 5.0
@@ -19572,7 +19617,10 @@ def demo_techno_slot?(idx, slug)
   # means. DEMO_TECHNO_EVERY=2 puts techno on every second slot exactly, and 3
   # on every third. It still defers to the sampled-record exemption below,
   # because a chopped record on a techno slot loses the record.
-  every = ENV["DEMO_TECHNO_EVERY"].to_i
+  # The default catalogue alternates genres deterministically, as the operator
+  # asked. A random share put the opening verified progression into the
+  # industrial kit, which hid both its harmony and its pocket.
+  every = ENV.fetch("DEMO_TECHNO_EVERY", "2").to_i
   if every.positive?
     return false unless techno_harmony_enabled? || !sampled_track?(slug)
 
@@ -20072,14 +20120,18 @@ def demo_ringtone_fx!(path)
   # back only the gain.
   before = album_loudness(path)[:i]
   filtered = "#{path}.ringtone.wav"
-  filter = [
+  # without_tunnel, because the echo and the phaser are the tunnel the operator
+  # cut from the techno drums, and this chain runs over every slot. HATE_TUNNEL=1
+  # puts them back.
+  stages = without_tunnel([
     "tremolo=f=6.7:d=0.28",
     "aphaser=in_gain=0.7:out_gain=0.7:delay=3:decay=0.35:speed=0.23",
     "chorus=0.65:0.7:35:0.32:0.4:2",
     "acrusher=bits=10:mix=0.24:mode=lin:aa=1",
     "aecho=0.82:0.72:420|840:0.24|0.12",
     "stereowiden=delay=18:feedback=0.22:crossfeed=0.28",
-  ].join(",")
+  ])
+  filter = stages.join(",")
   ok = system("ffmpeg", "-y", "-v", "error", "-i", path, "-af", filter,
               "-c:a", "pcm_s16le", filtered)
   abort "demo ringtone effects failed" unless ok && File.file?(filtered) && File.size(filtered).positive?
@@ -20096,7 +20148,8 @@ def demo_ringtone_fx!(path)
     FileUtils.mv(matched, filtered)
   end
   FileUtils.mv(filtered, path)
-  dmesg("demo fx=ringtone tremolo phaser chorus crusher echo stereo", unit: "demo0", parent: "dilla0")
+  names = stages.map { |stage| stage[/\A\w+/] }
+  dmesg("demo fx=ringtone #{names.join(" ")}", unit: "demo0", parent: "dilla0")
   path
 end
 
@@ -20471,8 +20524,13 @@ if demo_techno_slot?(idx, slug)
   force_env!({ "DRUM_PRESET" => "industrial_techno",
                "POCKET_SET" => "industrial",
                "SNARE_EARLY" => "0",
-               "KICK_LATE" => "0" },
+               "KICK_LATE" => "0",
+               # The four-bar phrase in schedule_eclectic_percussion! plays over
+               # the pads and leads, not instead of them.
+               "ECLECTIC_PERC" => "1" },
              label: "demo_all[#{idx}] techno kit")
+  dmesg("techno drums: four-bar eclectic phrase over the pads",
+        unit: "techno0", parent: "demo0")
 end
 
     dmesg(
@@ -20519,10 +20577,13 @@ render_dilla(part, bars_count)
       ENV["SYNTH_MORPH"] = "0"
       ENV["SELF_SAMPLE"] = "0"
       ENV["VINYL"] = "0"
-      ENV["LEAD_ARP"] = "1"
-      ENV["HARMONY_LEAD"] = "0"
-      ENV["SCALE_LEAD"] = "0"
-      ENV["CREATIVE_LEAD"] = "0"
+      # Keep the audible lead layers. The retry only removes optional vocal
+      # and morph work; disabling harmony/scale/creative leads made a
+      # successful fallback sound like a pad-only render.
+      ENV["LEAD_ARP"] = saved["LEAD_ARP"] || "1"
+      ENV["HARMONY_LEAD"] = saved["HARMONY_LEAD"] || "1"
+      ENV["SCALE_LEAD"] = saved["SCALE_LEAD"] || "1"
+      ENV["CREATIVE_LEAD"] = saved["CREATIVE_LEAD"] || "1"
       begin
         Timeout.timeout(track_timeout) do
           render_dilla(part, [bars_count, 8].min)
