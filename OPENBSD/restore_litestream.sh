@@ -12,8 +12,6 @@
 #   zsh OPENBSD/restore_litestream.sh brgen              # one app
 #   zsh OPENBSD/restore_litestream.sh                    # all apps in etc/litestream.yml
 #
-# For repo-archaeology (pub3 heredocs), use extract_legacy_installers.sh instead.
-#
 # Every precondition below is a hard failure, not a skip. On vm23 litestream is
 # absent and /var/backups/litestream/ is empty, so a skipping restore walked all
 # three apps, restored none of them and printed "done" — a disaster-recovery

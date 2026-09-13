@@ -13,7 +13,6 @@ class RestoreScriptsTest < Minitest::Test
   def test_restore_litestream_is_litestream_restore
     source = File.read(File.join(ROOT, "restore_litestream.sh"))
     assert_includes source, "litestream restore"
-    assert_includes source, "extract_legacy_installers.sh"
     refute_includes source, "MASTER/RAILS"
   end
 
@@ -76,11 +75,5 @@ class RestoreScriptsTest < Minitest::Test
     assert_includes source, 'Host: ${domain}', "must ask through the app's own Host or it 403s"
     assert_match(/css_href.*\n.*write_stamp "\$app" failed/m.freeze, source[/if \[\[ -n \$css_href \]\].*?^fi/m].to_s,
                  "a 404 stylesheet must fail the deploy, not warn")
-  end
-
-  def test_extract_legacy_installers_targets_top_level_rails
-    source = File.read(File.join(ROOT, "extract_legacy_installers.sh"))
-    assert_includes source, 'scripts_root="$ROOT_DIR/RAILS"'
-    refute_includes source, "MASTER/RAILS"
   end
 end

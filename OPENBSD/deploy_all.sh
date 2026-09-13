@@ -3,35 +3,27 @@
 #
 # Canonical app list: OPENBSD/deploy_inventory.json (active Rails apps).
 #
-# deploy_inventory.json is the whole list. There is no OPENBSD/archive/ to
-# consult beside it: that is a pub3-era path nothing in this repository creates,
-# and RUNBOOK.md says to read every mention of it as document-only.
-#
 # Usage:
 #   zsh OPENBSD/deploy_all.sh
-# VPS_HOST is the host alone and VPS_USER the login; they are joined below as
-# ${SSH_USER}@${SSH_HOST}, so a `dev@` prefix here produces dev@dev@46.23.89.226
-# and every ssh fails. This example carried that prefix.
-#   VPS_HOST=46.23.89.226 VPS_USER=dev SSH_KEY=~/.ssh/id_ed25519 zsh OPENBSD/deploy_all.sh
 #   zsh OPENBSD/deploy_all.sh --per-app   # also run RAILS/<app>/<app>.sh (copies to /home/<app>/app)
+#
+# Host, login and key come from lib/ssh_vm23.sh, the one copy of them:
+# SSH_HOST is the host alone and SSH_USER the login, so `SSH_HOST=dev@…` yields
+# dev@dev@… and every ssh fails.
 set -euo pipefail
 
+# DEPLOY_ROOT is OPENBSD/ itself, not its parent: deploy_inventory.json lives
+# here, and the rsync path below mirrors exactly this directory to the remote
+# OPENBSD/.
 SCRIPT_DIR=${0:a:h}
-DEPLOY_ROOT=${SCRIPT_DIR:h}
-PUB4_ROOT=${PUB4_ROOT:-${DEPLOY_ROOT:h:h}}
+DEPLOY_ROOT=${SCRIPT_DIR}
 
-: "${VPS_HOST:=46.23.89.226}"
-: "${VPS_USER:=dev}"
-: "${SSH_KEY:=${HOME}/.ssh/id_rsa}"
-: "${REMOTE_PUB4:=/home/dev/pub4}"
 : "${USE_GIT_PULL:=1}"
 : "${REMOTE_RUBY:=ruby34}"
 : "${RUN_REMOTE_HEALTH:=1}"
 : "${ALLOW_PARTIAL_DEPLOY:=0}"
 
 source "${SCRIPT_DIR}/lib/ssh_vm23.sh"
-SSH_HOST=$VPS_HOST
-SSH_USER=$VPS_USER
 
 log() { printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*" }
 error() { log "ERROR: $*"; exit 1 }
@@ -49,10 +41,9 @@ else
 fi
 
 log "pub4 deploy — ${#APPS[@]} apps from deploy_inventory.json"
-log "Archived (not in this run): see archive/recovery"
 
 log "Testing VPS connectivity..."
-vssh 'uname -a' || error "Cannot connect to ${VPS_USER}@${VPS_HOST}"
+vssh 'uname -a' || error "Cannot connect to ${SSH_USER}@${SSH_HOST}"
 
 if [[ $USE_GIT_PULL == 1 ]]; then
   log "Git pull on VPS at ${REMOTE_PUB4}..."

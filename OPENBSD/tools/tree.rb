@@ -209,11 +209,10 @@ class ProjectTree
     puts "  ✓ SENSIBLE  openbsd/etc + rc.d — production truth for vm23 (relayd, pf, acme)"
     puts "  ✓ SENSIBLE  rails/apps.yml inventory + shared engine — multi-tenant spine"
     puts "  ✓ SENSIBLE  brgen: social core + vertical engines (dating, maps, playlist, tv…)"
-    puts "  ✓ SENSIBLE  openbsd/*.rb gates + openbsd/tools/ Ruby helpers; sh/ is shell-only"
+    puts "  ✓ SENSIBLE  openbsd/*.rb gates + openbsd/tools/ Ruby helpers"
     puts "  ✓ SENSIBLE  Gate scripts at rails/*.rb + bin/check* — deploy safety net"
     puts "  ⚠ DRIFT     Duplicate MD pairs with MASTER: DECISIONS, EXAMPLES, REPAIR, DEBT"
     puts "  ⚠ DRIFT     apps.horizon.yml — agent-ignore; keep out of contributor path"
-    puts "  ⚠ DRIFT     archive/recovery — legacy pub2/pub3 installers; document-only"
     puts "  ✗ NOISE     rails/node_modules, log/, storage/, app/assets/builds/"
     puts "  → Gates: OPENBSD/bin/check-full | check-rails --profile=contributor"
   end
@@ -370,9 +369,7 @@ class ProjectTree
       return 1 if rel.match?(%r{^rails/[^/]+$})
       return 0 if rel == "rails/test" || rel.start_with?("rails/test/")
       return 1 if rel == "openbsd/etc"
-      return 1 if rel.start_with?("openbsd/sh")
       return 1 if rel.start_with?("openbsd/tools")
-      return 1 if rel == "archive/recovery"
     end
 
     # pub4-wide (root = repo) or fallback

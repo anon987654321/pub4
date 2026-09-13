@@ -1,18 +1,11 @@
 #!/bin/sh
 set -eu
 
-# OPENBSD/tree.sh
-#
-# Thin portable wrapper around the constitution-aware tree generator.
-# Provides the "full overview" requested during MASTER KISS/DRY redesign work.
-# Works in both zsh and plain sh/linux environments.
+# OPENBSD/tree.sh — portable sh wrapper around tools/tree.rb.
 #
 # Usage:
-#   ./tree.sh [--max-depth=4] [--summary]
-#   ./tree.sh /some/other/root --max-depth=3
-#
-# Created on demand per explicit user request for overview before
-# implementing major architectural simplifications.
+#   ./tree.sh [root] [--max-depth=4] [--summary] [--pub4-overview]
+#   ./tree.sh --help      # every mode tools/tree.rb takes
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 RUBY_TREE="$SCRIPT_DIR/tools/tree.rb"

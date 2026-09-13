@@ -2,7 +2,8 @@
 
 **Production is one box, and this tree is everything that puts it there and keeps
 it honest.** It holds the VPS configuration under `etc/`, `usr/` and `var/`, and
-the deploy tooling under `bin/`, `lib/`, `sh/` and the gates beside them.
+the deploy tooling under `bin/`, `lib/` and `gates/`, with the deploy scripts
+themselves at the top of the tree.
 
 Start at `START_HERE.md`. The full runbook, the one to read before touching the
 box, is `RUNBOOK.md`, and `RECIPES.md` is the copy-paste companion for paths you

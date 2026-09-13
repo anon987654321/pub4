@@ -13,15 +13,9 @@ JSON is generated from `apps.yml` by `ruby OPENBSD/bin/sync_deploy_inventory.rb`
 and the `domain_alignment` gate fails when the two disagree. Deploy
 gates (`integrity_gate.rb`, `verify_deploy_identity.rb`,
 `deploy_inventory.json`) live at `OPENBSD/` top level, and so does the one
-recovery pen that exists, `quarantine/`.
-
-There is no `archive/`, in `OPENBSD/` or at the repo root. The name still
-appears in prose — `tools/tree.rb` prints `archive/recovery` as a DRIFT line,
-`deploy_all.sh`'s header cites `archive/recovery/manifest.json` — but it is a
-pub3-era path and nothing in this repo creates it.
-`extract_legacy_installers.sh` reads it as an optional source and logs `missing
-source` when it is absent, which is what it does today. Do not go looking for
-the directory; read those mentions as document-only.
+recovery pen that exists, `quarantine/`, which holds inert samples and nothing
+to run. There is no `archive/`: it was a pub3-era path, and git history holds
+the old installers.
 
 ## Deployment map
 
@@ -56,8 +50,7 @@ One session at a time. Rapid reconnects trip pf bruteforce.
 | VMM host | `ssh -p 31415 -i ~/.ssh/id_ed25519_brgen dev@server4.openbsd.amsterdam` |
 | Console | `vmctl console vm23` then `doas pfctl -t bruteforce -T flush` |
 
-Full aliases and GitHub keys: `OPENBSD/SSH_ACCESS.md`. Network table:
-`OPENBSD/README.md`.
+Full aliases, GitHub keys and the network map: `OPENBSD/SSH_ACCESS.md`.
 
 ## Domains
 
@@ -111,9 +104,10 @@ The stack serves three Rails apps (brgen, amber, bsdports) plus MASTER. `baibl`,
 `blognet` and `hjerterom` are retired; on 2026-08-12 their users, home
 directories (1.6 GB between them), rc.d scripts, `/etc/*.env` files, login
 classes, certificate symlinks and DNS zones were removed from vm23, and their
-vanity/megablog domains (`baibl.no`, `blognet.no`, `hjerterom.no`,
-`foodielicio.us`, `anti{casino,gambling,betting}blog.com`) with them. Databases
-are kept at `/var/backups/pub4/{hjerterom,deleted-apps}-20260812`.
+own domains (`baibl.no`, `blognet.no`, `hjerterom.no`) with them. Databases are
+kept at `/var/backups/pub4/{hjerterom,deleted-apps}-20260812`. `foodielicio.us`
+and the `anti{casino,gambling,betting}blog.com` trio were not removed: they stay
+in `data/dns.yml`'s `extra_zones`, and nsd still serves them.
 
 Note the date against the release-history line in `DECISIONS.md` that says baibl
 and blognet were removed: that was written two months earlier and was true of

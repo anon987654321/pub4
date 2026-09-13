@@ -34,7 +34,7 @@ processes there. relayd does declare exactly one relay — `listen on 0.0.0.0 po
 443 tls` — but relayd is not the only daemon on the box.
 
 What port 80 answers is a 301 to HTTPS, plus ACME HTTP-01 challenges out of
-`/acme`; `/etc/httpd.conf` is twelve lines and says so. So a request to 80
+`/acme`; the first server block in `/etc/httpd.conf` says so. So a request to 80
 returns 301 whether or not a single Rails app is running, which is why it
 carries no information about a shed or a relayd failure — the same conclusion
 the old paragraph reached from a false premise, and it is worth keeping the
@@ -48,12 +48,10 @@ http://brgen.no:443/up` speaks plain HTTP at a TLS port and returns 000, so a
 check written that way reports both ports refusing and looks exactly like the
 outage it is inventing.
 
-`httpd.conf`'s second server block listens on `* port 6666` and serves
-`/postpro` — personal photographs — with no TLS and no auth. It is unreachable
-from outside only because `pf.conf` line 14 is `block log all` and the pass
-rules name 22, 53, 80 and 443 and nothing else; verified 000 from off-box on
-2026-08-25. One daemon's config is relying on another's to not be an exposure,
-so treat any pf change as touching that too.
+`httpd.conf`'s second server block serves `/postpro` — personal photographs —
+with no TLS and no auth, on `127.0.0.1 port 6666`. Reach it over an ssh tunnel.
+It listened on `*` until pf's default deny was the only thing keeping it private;
+if anyone widens that listener again, pf becomes the exposure's only guard.
 
 ## `SKIP_CI=1` does not mean "skip CI"
 

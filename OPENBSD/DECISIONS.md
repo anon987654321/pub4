@@ -30,7 +30,7 @@ green.
 
 - `RAILS/` — Rails apps + shared engine (was `DEPLOY/rails`)
 - `OPENBSD/` — VPS config backup (`etc/`, `usr/`, `var/`) plus deploy tooling
-  (`bin/`, `lib/`, `sh/`, gates)
+  (`bin/`, `lib/`, `gates/`, and the deploy scripts at the top level)
 - The `DEPLOY → OPERATOR → OPENBSD` renames completed 2026-07-14; legacy path
   strings still resolve, through `RAILS/shared/lib/operator/deploy_paths.rb`, which
   is what `Operator::DeployPaths` is
@@ -42,19 +42,22 @@ for package names, service management, relayd, pf, NSD, and Ruby command names.
 
 ## The Nameserver Owns The Zones, Not The Repo (2026-08-02)
 
-We run our own authoritative nsd with a lot of domains — 61 zones in
-`/var/nsd/zones/master`, none of them in git, and that is deliberate. The signed
-artifacts (`*.zone.signed`, `K*.key`, `K*.ds`) are regenerated on every re-sign,
-so mirroring zone data would put a churning copy of the DNS into every diff
-while the nameserver stays the real source of truth.
+We run our own authoritative nsd with a lot of domains, and the signed zones and
+their keys are not in git, deliberately. The signed artifacts (`*.zone.signed`,
+`K*.key`, `K*.ds`) are regenerated on every re-sign, so mirroring them would put
+a churning copy of the DNS into every diff while the nameserver stays the real
+source of truth. The unsigned `*.zone` files under `var/nsd/zones/master/` are a
+different thing: `bin/render_dns.rb` generates them from `data/dns.yml` and
+`ALL_DOMAINS`, and they are committed so `--check` can compare box and repo.
 
 `OPENBSD/sync.rb` used to glob all four zone patterns. It had never actually
 been run, which is the only reason the repo is clean of them; the globs are now
-removed so the first person to run it does not import 61 zones by accident.
-`nsd.conf` is still mirrored — that is server configuration, not zone data.
+removed so the first person to run it does not import the signed zones by
+accident. `nsd.conf` is still mirrored — that is server configuration, not zone
+data.
 
-An audit that reports "61 zone files missing from the repo" is describing this
-decision, not a gap. Do not close it.
+An audit that reports signed zones or keys missing from the repo is describing
+this decision, not a gap. Do not close it.
 
 ## `OPENBSD/lib/` Owns The Gate Kernel, On Purpose (2026-08-13)
 
