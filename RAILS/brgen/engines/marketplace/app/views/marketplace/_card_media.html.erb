@@ -15,6 +15,6 @@
     <div class="deal-card-placeholder" aria-hidden="true"><%= fallback_char %></div>
   <% end %>
   <% if badge.present? %>
-    <span class="deal-badge<%= " deal-badge--soft" if badge_soft %>"><%= badge %></span>
+    <span class="deal-badge<%= " deal-badge--soft" if local_assigns[:badge_soft] %>"><%= badge %></span>
   <% end %>
 </div>

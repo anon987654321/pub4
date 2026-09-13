@@ -20,19 +20,24 @@
   <% end %>
 
   <% if @payouts %>
-    <section aria-label="<%= t("marketplace.payouts") %>">
-      <h2><%= t("marketplace.payouts") %></h2>
-      <% @payouts.each do |payout| %>
-        <article>
-          <p data-money><%= Shared::MoneyDisplay.format(payout.amount_cents, payout.currency) %> · <%= t("marketplace.payout_statuses.#{payout.status}") %></p>
-          <% if payout.releasable? %>
-            <%= button_to t("marketplace.payout_release"), shop_payouts_path(@store, payout_id: payout.id), method: :post, data: { turbo_confirm: t("marketplace.payout_release_confirm") }, class: "btn btn-sm" %>
-          <% elsif payout.pending? %>
-            <p><%= t("marketplace.payout_held") %></p>
-          <% end %>
-        </article>
-      <% end %>
-    </section>
+    <%# A frame, so paging through payouts leaves the listings below in place. The
+        release button targets _top: its redirect is the whole store page. %>
+    <%= turbo_frame_tag "store-payouts" do %>
+      <section aria-label="<%= t("marketplace.payouts") %>">
+        <h2><%= t("marketplace.payouts") %></h2>
+        <% @payouts.each do |payout| %>
+          <article>
+            <p data-money><%= Shared::MoneyDisplay.format(payout.amount_cents, payout.currency) %> · <%= t("marketplace.payout_statuses.#{payout.status}") %></p>
+            <% if payout.releasable? %>
+              <%= button_to t("marketplace.payout_release"), shop_payouts_path(@store, payout_id: payout.id), method: :post, form: { data: { turbo_frame: "_top" } }, data: { turbo_confirm: t("marketplace.payout_release_confirm") }, class: "btn btn-sm" %>
+            <% elsif payout.pending? %>
+              <p><%= t("marketplace.payout_held") %></p>
+            <% end %>
+          </article>
+        <% end %>
+        <%= render "shared/pager", pagy: @pagy_payouts, label: t("marketplace.payouts") %>
+      </section>
+    <% end %>
   <% end %>
 
   <div class="deal-grid" aria-label="<%= t("aria.store_listings") %>">

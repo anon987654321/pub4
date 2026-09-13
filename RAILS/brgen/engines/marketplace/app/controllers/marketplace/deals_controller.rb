@@ -15,7 +15,7 @@ module Marketplace
     end
 
     def show
-      @deal = Marketplace::Deal.live.find(params[:id])
+      @deal = Marketplace::Deal.live.includes(listing: [ :user, { photos_attachments: :blob } ]).find(params[:id])
       @listing = @deal.listing
     end
   end

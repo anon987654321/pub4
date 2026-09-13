@@ -19,9 +19,9 @@ module Marketplace
     end
 
     def show
-      @listings = @store.listings.live.recent.limit(100)
+      @listings = @store.listings.live.recent.with_attached_photos.includes(:user, :category).limit(100)
       @other_stores = Marketplace::Store.active.where.not(id: @store.id).limit(6)
-      @payouts = @store.payouts.order(created_at: :desc).limit(20) if Current.user&.id == @store.owner_id
+      @pagy_payouts, @payouts = pagy(@store.payouts.order(created_at: :desc), limit: 20) if Current.user&.id == @store.owner_id
     end
 
     def new

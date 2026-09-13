@@ -67,7 +67,7 @@ class Marketplace::CheckoutsController < Marketplace::BaseController
   def show
     if params[:checkout_id].present?
       checkout = Current.user.marketplace_checkouts.find_by(id: params[:checkout_id])
-      redirect_to(checkout ? cart_path : cart_path,
+      redirect_to(cart_path,
                   notice: t("flash.marketplace.payment_recorded",
                             status: t("flash.marketplace.payment_statuses.#{checkout&.status || 'open'}"),
                             provider: checkout&.payment_provider || params[:provider]))
