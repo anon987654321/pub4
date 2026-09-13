@@ -121,12 +121,29 @@ class VerticalFormsTest < ActionDispatch::IntegrationTest
 
   test "reporting a post locates the signed global id" do
     community = Community.create!(slug: "reportable", name: "Reportable", user: @owner, city: @city)
-    post_row = Post.create!(user: @owner, community: community, title: "Reportable", content: "hei")
+    post_row = Post.create!(user: @owner, community: community, city: @city, title: "Reportable", content: "hei")
     sign_in_as(@owner)
 
     assert_difference -> { ModerationReport.count }, 1 do
       post reports_path, params: { target_gid: post_row.to_signed_global_id.to_s, reason: "spam" }
     end
+    assert_response :redirect
+  end
+
+  # The post carries its city because ModerationFlag's required flaggable is
+  # reloaded through the city tenant scope; a city-less post fails that check
+  # and both formats answer 422.
+  test "reporting a post over Turbo creates the report and answers a stream" do
+    community = Community.create!(slug: "reportable-turbo", name: "Reportable", user: @owner, city: @city)
+    post_row = Post.create!(user: @owner, community: community, city: @city, title: "Reportable", content: "hei")
+    sign_in_as(@owner)
+
+    assert_difference -> { ModerationReport.count }, 1 do
+      post reports_path, params: { target_gid: post_row.to_signed_global_id.to_s, reason: "spam" },
+                         headers: { "Accept" => "text/vnd.turbo-stream.html, text/html, application/xhtml+xml" }
+    end
+    assert_response :success
+    assert_equal "text/vnd.turbo-stream.html", response.media_type
   end
 
   test "an unlocatable global id is refused instead of raising" do
