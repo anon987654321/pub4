@@ -49,7 +49,7 @@ Env:
   I_UNDERSTAND_DNS_WIPE=1  required by --stage-1"
 }
 
-# Helpers inlined ( _lib.sh removed for ONE_SOURCE/singularity). Pure Zsh: log, backup_directory, install_*, sync_openbsd_configs (now ships .zshrc to /home/dev too).
+# Helpers inlined for ONE_SOURCE. Pure Zsh: log, backup_directory, install_*, sync_openbsd_configs.
 log() {
   typeset level=$1; shift
   print -r -- "[$(date +'%Y-%m-%d %H:%M:%S')] [$level] $*" | tee -a /var/log/openbsd_setup.log >&2
@@ -246,13 +246,9 @@ install_root_configs() {
 
   install_tracked_crontab || return 1
 
-  if [[ -f $src/etc/.zshrc ]]; then
-    install -d -o dev -g dev -m 700 /home/dev 2>/dev/null || true
-    cp "$src/etc/.zshrc" /home/dev/.zshrc
-    chown dev:dev /home/dev/.zshrc 2>/dev/null || true
-    chmod 600 /home/dev/.zshrc 2>/dev/null || true
-    log INFO "synced .zshrc to /home/dev"
-  fi
+  # /home/dev/.zshrc is not installed from etc/.zshrc. That file is sync.rb's
+  # redacted mirror of the live one, so copying it back would replace dev's API
+  # keys with __REDACTED__.
 
   log INFO "OpenBSD config tree install complete (with backup)"
 }
