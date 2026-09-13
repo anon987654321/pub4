@@ -307,6 +307,12 @@ if $PROGRAM_NAME == __FILE__
   available = current.select { |_, r| r["state"] == "available" }.keys
   puts "\nnot registered (#{available.size}):\n  #{available.join(', ')}" if available.any?
 
+  # Counted and named, and deliberately not in the exit status. They are whois
+  # referrals (.us, .dk, .li, .ch) and answers this parser does not read (.se,
+  # .it, .pt, .nl): properties of the registries, the same every week, so failing
+  # on them makes weekly.local log an alarm every Saturday until the alarm means
+  # nothing. The exit carries what someone can act on: a domain lost,
+  # re-registered or inside the renewal window.
   unknown = current.select { |_, r| r["state"] == "unknown" }.keys
   puts "\nlookup inconclusive (#{unknown.size}):\n  #{unknown.join(', ')}" if unknown.any?
 
