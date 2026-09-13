@@ -4,6 +4,14 @@ module Master
   module Review
     class LLMDispatcher
       module ReactLoop
+        # Names models reach for when they guess a parameter. Renamed only when
+        # the tool declares the target and not the guess, so no real key moves.
+        ARG_ALIASES = {
+          file_path: :path, filepath: :path, filename: :path, file: :path, dir: :path, directory: :path,
+          cmd: :command, old_str: :old_string, old_text: :old_string, new_str: :new_string,
+          new_text: :new_string, regex: :pattern, search: :pattern, q: :query,
+        }.freeze
+
         private
 
         # Emulates function calling for models that lack native tool support.
@@ -62,14 +70,14 @@ module Master
             meta = @tool_registry.fetch(name, {})
             next unless tool_available_for_context?(meta)
             desc = meta["description"] || name.gsub(/([A-Z])/, ' \1').strip
-            "- #{name}: #{desc}"
+            "- #{name}#{param_signature(t)}: #{desc}"
           end.join("\n")
 
           react_instructions = <<~INST.strip
             You have access to these tools. Call a tool with:
             <tool_call>{"name": "ToolName", "args": {"param": "value"}}</tool_call>
 
-            Available tools:
+            Available tools (* marks a required parameter):
             #{schema}
 
             Reason step-by-step. When finished, give your final answer without any <tool_call> blocks.
@@ -98,12 +106,45 @@ module Master
             return "<tool_result name=\"#{name}\">error: tool denied</tool_result>"
           end
 
-          sym_args = args.transform_keys(&:to_sym)
-          raw = tool.respond_to?(:call) ? tool.call(**sym_args) : "unsupported"
-          out = Result.wrap(raw).value_or(raw.to_s)
+          out = invoke_react_tool(tool, args.transform_keys(&:to_sym))
           "<tool_result name=\"#{name}\">\n#{out}\n</tool_result>"
         rescue StandardError => e
           "<tool_result name=\"#{name}\">error: #{e.message}</tool_result>"
+        end
+
+        # Through the same RubyLLM wrapper a native tool call uses, so both paths
+        # read one parameter list and one coercion: calling the Io tool directly
+        # handed it names like SearchFiles' `path` that only the wrapper maps.
+        def invoke_react_tool(tool, args)
+          wrapper = LLM_TOOL_MAP[tool.class]
+          unless wrapper
+            raw = tool.respond_to?(:call) ? tool.call(**args) : "unsupported"
+            return Result.wrap(raw).value_or(raw.to_s)
+          end
+
+          llm_tool = wrapper.new(tool)
+          reply = llm_tool.call(heal_args(llm_tool, args))
+          return reply unless reply.is_a?(Hash) && reply[:error]
+
+          "error: #{reply[:error]}; parameters are #{param_signature(tool)}"
+        end
+
+        def heal_args(llm_tool, args)
+          declared = llm_tool.parameters.keys
+          args.to_h do |key, value|
+            target = ARG_ALIASES[key]
+            next [key, value] unless target && !declared.include?(key) && declared.include?(target) && !args.key?(target)
+
+            @bus&.publish("tool:healed", tool: llm_tool.class.name.split("::").last, from: key, to: target)
+            [target, value]
+          end
+        end
+
+        def param_signature(tool)
+          wrapper = LLM_TOOL_MAP[tool.class]
+          return "" unless wrapper
+
+          "(#{wrapper.parameters.values.map { |param| "#{param.name}#{'*' if param.required}" }.join(', ')})"
         end
 
         def text_prompt_for(messages)

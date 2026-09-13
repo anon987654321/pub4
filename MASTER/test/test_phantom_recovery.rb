@@ -182,6 +182,43 @@ class TestPhantomRecovery < Minitest::Test
     assert harness.bus.events.any? { |event, payload| event == "phantom:detected" && payload[:patterns] == ["empty_tool_response"] }
   end
 
+  def react_call(harness, tool, name, args)
+    harness.instance_variable_set(:@tools, [tool])
+    Master::CLI::SubagentContext.stub(:permits?, true) do
+      Master::Ground::Tool::Profile.stub(:allow?, true) { harness.send(:execute_react_tool, name, args) }
+    end
+  end
+
+  def search_tool
+    Master::Io::SearchFiles.allocate.tap do |tool|
+      tool.define_singleton_method(:call) { |**kw| Master::Result.ok(kw.sort.to_h.inspect) }
+    end
+  end
+
+  # The react loop called the Io tool with the model's keys, and SearchFiles
+  # takes glob: and context_lines:, so the path and context its own wrapper
+  # advertises raised a missing-keyword error.
+  def test_a_react_call_goes_through_the_wrapper_parameters
+    out = react_call(ReactHarness.new, search_tool, "SearchFiles", { "pattern" => "def", "path" => "lib", "context" => 1 })
+
+    assert_includes out, "glob: \"lib\""
+    assert_includes out, "context_lines: 1"
+  end
+
+  def test_a_guessed_parameter_name_is_healed_and_reported
+    harness = ReactHarness.new
+    out = react_call(harness, search_tool, "SearchFiles", { "regex" => "def", "dir" => "lib" })
+
+    assert_includes out, "pattern: \"def\""
+    assert harness.bus.events.any? { |event, payload| event == "tool:healed" && payload[:from] == :regex }
+  end
+
+  def test_an_unhealable_call_is_told_the_parameters
+    out = react_call(ReactHarness.new, search_tool, "SearchFiles", { "needle" => "def" })
+
+    assert_match(/error: .*missing keyword: pattern.*parameters are \(pattern\*, path, context\)/, out)
+  end
+
   def test_judge_agent_calls_master_phantom_recovery
     source = File.read(File.join(Master::ROOT, "lib", "review", "agent.rb"))
     assert_includes source, "Master::PhantomRecovery.handle"
