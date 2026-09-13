@@ -12,9 +12,10 @@ at https://ai.brgen.no through relayd. The chat surface at `GET /` combines
 the assistant stream and the face runtime. Liveness is `GET /up`, which relayd
 and rc.d poll because it answers before the container boots; `GET /health`
 reports TTS, git and the container and is the deploy smoke check. Streaming
-endpoints include `POST /chat/message` (preferred assistant stream),
-`GET /chat/message` (legacy fallback), `GET /chat/metrics` (session metrics),
-and `GET /events/stream` (event bus).
+endpoints include `POST /chat/message` (the face's assistant stream),
+`GET /chat/message` (the smoke ping rc.d and `bin/smoke-web` warm up with; no
+page script calls it), `GET /chat/metrics` (session metrics), and
+`GET /events/stream` (event bus).
 
 The single HTML entrypoint is `app/views/chat/index.html.erb` via
 `ChatController#index`. Runtime assets live under `public/`: `face.js` for
@@ -48,10 +49,12 @@ code read.
 - SSE may remain open; tests must not wait for network idle on the face page.
 - `MASTER_FACE` is the public face runtime global; do not add new
   `MASTERFace` call sites.
-- `MASTERChat.startChatStream()` is the preferred chat transport. Keep the
-  old `EventSource` GET path only as fallback, and preserve named SSE face
-  reactions (`mood`, `model`, `verdict`, `council:speech`, `confidence`,
-  `felt`) on the POST path.
+- `MASTERChat.startChatStream()` is the face's only chat transport. When
+  `chat_actions.js` has not loaded, a send fails visibly and logs
+  `face_runtime:chat_transport_missing`; there is no GET `EventSource`
+  fallback to mask it. Preserve the named SSE face reactions (`mood`, `model`,
+  `verdict`, `council:speech`, `confidence`, `felt`, `content_kind`) in
+  `handleFaceNamedEvent()`.
 - Web TTS style is unlocked by default (`auto`) so the server can infer style.
   Only send `style` with `style_locked=1` after an explicit user style choice.
 - Browser `speechSynthesis` fallback must be recoverable; do not make one

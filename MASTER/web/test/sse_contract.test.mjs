@@ -123,7 +123,7 @@ test("chat index keeps THREE behind the primer tap", () => {
 
 test("face runtime logs failures for chat and TTS paths", () => {
   const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
-  assert.match(runtime, /evtSrc\.onerror/);
+  assert.match(runtime, /face_runtime:chat_transport_missing/);
   assert.match(runtime, /speakFailure/);
   assert.match(runtime, /tts fail/);
 });

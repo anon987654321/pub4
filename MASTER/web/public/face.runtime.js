@@ -3500,7 +3500,6 @@ function flashViolation() {
 }
 
 function cancelStream() {
-  if (evtSrc) { try { evtSrc.close(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:cancel_stream_close", err); } evtSrc = null; }
   window._chatCancel?.();
   ttsSkip();
   State.mode = 'idle';
@@ -3989,7 +3988,6 @@ setInterval(() => {
   }
 }, 3000);
 
-let evtSrc = null;
 let stageTimer = null;
 let stageSlowTimer = null;
 let thinkingAloudTimer = null;
@@ -4250,7 +4248,6 @@ async function sendMessage(text) {
     window._chatOnDone?.();
     return;
   }
-  if (evtSrc) { try { evtSrc.close(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:send_message_close_stream", err); } }
   window.MASTER_FACE?.ttsSkip?.();
   window._chatOnUser?.(text);
   showStage("routing…", 0);
@@ -4279,104 +4276,19 @@ async function sendMessage(text) {
     _firstChatSent = true;
     window.MASTERVisual?.event?.('chat:first', { topology: 'papua-mask', entropy: 0.14, confidence: 0.9, provider: State.modelName || State.model, mode: 'first' });
   }
-  if (window.MASTERChat?.startChatStream) {
-    const imageToken = window._imageToken || null;
-    window._imageToken = null;
-    let pending = '', totalTTSChars = 0, ttsSuppressed = false, ttsFirst = true, ttsStreamSpokenLen = 0;
-    window._streamContentKind = '';
-    const stallTimer = setTimeout(() => {
-      rootBody.dataset.networkStall = '1';
-      window._chatOnDmesg?.('link thinking');
-      State.breath = Math.max(0.5, (State.breath || 1) * 0.7);
-    }, 4000);
-    const onMessage = (rawData) => {
-      const raw = rawData || '';
-      clearTimeout(stallTimer);
-      delete rootBody.dataset.networkStall;
-      if (raw.length < 200 && raw.startsWith('{')) {
-        try {
-          const parsed = JSON.parse(raw);
-          if (parsed && parsed.type === 'trace') return;
-        } catch (_) { /* not JSON, fall through to normal content handling */ }
-      }
-      if (raw === '[DONE]') {
-        if (shouldSpeakStreamReply(pending, ttsSuppressed)) {
-          tts.lastText = pending.trim();
-          flushStreamTts(pending, { prependTimestamp: ttsFirst && tts.prependTimestamp });
-        }
-        pending = '';
-        State.mode = 'idle';
-        clearThinkingAloud();
-        showStage("");
-        if (navigator.vibrate) navigator.vibrate([60]);
-        window._chatOnDone?.();
-        return;
-      }
-      if (raw.startsWith('ERROR:')) {
-        window._chatOnChunk?.(`\n${raw}\n`);
-        State.mode = 'error'; State.flash = 1; applyShake(0.8);
-        fadeColorTo(TINT.veto);
-        morphCurrent = Math.max(0, morphCurrent - 0.7); morphTarget = 1.0;
-        clearThinkingAloud();
-        speakFailure("Sorry, I hit a snag.");
-        window._chatOnError?.();
-        return;
-      }
-      const chunk = raw.replace(/\\n/g, '\n').replace(/\\\\/g, '\\');
-      clearThinkingAloud();
-      if (uiStatus && uiStatus.textContent !== "speaking…") showStage("speaking…", 900);
-      window._chatOnChunk?.(chunk);
-      pending += chunk;
-      totalTTSChars += chunk.length;
-      State.pulse = Math.min(0.6, State.pulse + 0.05);
-      if (window._streamContentKind === 'listing') ttsSuppressed = true;
-      if (!ttsSuppressed && (looksLikeListingStream(pending) || totalTTSChars >= TTS_STREAM_CHAR_CAP)) ttsSuppressed = true;
-      if (!ttsSuppressed) ttsStreamSpokenLen = pushLiveStreamTts(pending, ttsStreamSpokenLen);
-    };
-    window.MASTERChat.startChatStream({
-      message: finalText,
-      state: window.collectFeltState?.() || feltFallback,
-      preEnhanced,
-      imageToken
-    }, {
-      onMessage,
-      onNamed: (event, data) => handleFaceNamedEvent(event, data) || window.MASTER_SSE?.dispatchNamed?.(event, data) || window.MASTERVisual?.event?.(`sse:${event}`, { raw: data, mode: event }),
-      onError: () => {
-        clearTimeout(stallTimer);
-        State.flash = 1; applyShake(0.8); State.mode = 'error';
-        window.MASTERVisual?.event?.('chat:error', { topology: 'serpent', entropy: 0.72, confidence: 0.28, mode: 'error' });
-        clearThinkingAloud();
-        window._chatOnDmesg?.('link quiet');
-        window._chatOnError?.('stream interrupted');
-        speakFailure("Sorry, I hit a snag.");
-      }
-    }).catch(() => {});
-    return;
-  }
-  const stateBlob = encodeURIComponent(window.collectFeltState?.() || feltFallback);
-  const imgTok = window._imageToken ? `&image_token=${encodeURIComponent(window._imageToken)}` : '';
-  const url = `/chat/message?message=${encodeURIComponent(finalText)}&state=${stateBlob}${preEnhanced ? '&pre_enhanced=1' : ''}${imgTok}`;
-  if (window._imageToken) window._imageToken = null;
-  evtSrc = new EventSource(url);
+  const imageToken = window._imageToken || null;
+  window._imageToken = null;
   let pending = '', totalTTSChars = 0, ttsSuppressed = false, ttsFirst = true, ttsStreamSpokenLen = 0;
   window._streamContentKind = '';
-  let _stallTimer = setTimeout(() => {
+  const stallTimer = setTimeout(() => {
     rootBody.dataset.networkStall = '1';
     window._chatOnDmesg?.('link thinking');
     State.breath = Math.max(0.5, (State.breath || 1) * 0.7);
   }, 4000);
-  evtSrc.onmessage = (ev) => {
-    const raw = ev.data || '';
-    clearTimeout(_stallTimer);
+  const onMessage = (rawData) => {
+    const raw = rawData || '';
+    clearTimeout(stallTimer);
     delete rootBody.dataset.networkStall;
-    // ChatService writes the trace id twice: once as a properly named SSE
-    // "trace" event (which nothing here listens for) and once as a plain
-    // unnamed data: line, which lands right here in onmessage alongside real
-    // reply text. Nothing filtered it out, so `{"type":"trace","trace_id":"…"}`
-    // got silently prepended to `pending` and read aloud verbatim next to the
-    // actual answer — a raw internal id in the middle of natural conversation
-    // is exactly the kind of thing a socially fluent assistant should never
-    // say. Recognize and drop it before it reaches the content path.
     if (raw.length < 200 && raw.startsWith('{')) {
       try {
         const parsed = JSON.parse(raw);
@@ -4388,18 +4300,11 @@ async function sendMessage(text) {
         tts.lastText = pending.trim();
         flushStreamTts(pending, { prependTimestamp: ttsFirst && tts.prependTimestamp });
       }
-      if (/\b(i do not know|i don't know|not sure|unsure|uncertain)\b/i.test(pending)) {
-        rootBody.dataset.uncertain = '1';
-        State.questionPulse = 1.0;
-        State.surpriseY = Math.max(State.surpriseY || 0, 0.4);
-        setTimeout(() => { delete rootBody.dataset.uncertain; }, 900);
-      }
       pending = '';
       State.mode = 'idle';
       clearThinkingAloud();
       showStage("");
       if (navigator.vibrate) navigator.vibrate([60]);
-      try { evtSrc.close(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:stream_done_close", err); }
       window._chatOnDone?.();
       return;
     }
@@ -4424,135 +4329,33 @@ async function sendMessage(text) {
     if (!ttsSuppressed && (looksLikeListingStream(pending) || totalTTSChars >= TTS_STREAM_CHAR_CAP)) ttsSuppressed = true;
     if (!ttsSuppressed) ttsStreamSpokenLen = pushLiveStreamTts(pending, ttsStreamSpokenLen);
   };
-  evtSrc.addEventListener('content_kind', (ev) => {
-    const kind = (ev.data || '').trim();
-    if (kind === 'listing') window._streamContentKind = 'listing';
-  });
-  evtSrc.addEventListener('mood', (ev) => {
-    const m = (ev.data || '').trim();
-    if (!m) return;
-    State.mood = m;
-    updateMoodHistory(m);
-    if (m === 'curious') State.surpriseY = 0.7;
-    if (TINT[m]) fadeColorTo(TINT[m]);
-    const live = document.getElementById('mood-live');
-    if (live) live.textContent = 'mood: ' + m;
-    syncShareStateUrl();
-  });
-  evtSrc.addEventListener('model', (ev) => {
-    const m = (ev.data || '').trim();
-    if (!m) return;
-    State.model = m; State.modelName = m.split('/').pop();
-    const key = Object.keys(TINT).find(k => m.toLowerCase().includes(k));
-    if (key) fadeColorTo(TINT[key]);
-    if (mouthPool && window.ParticleKernel) {
-      const K = window.ParticleKernel;
-      for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
-        const b = i * K.FIELDS_PER_CELL;
-        mouthPool.cells[b + K.FIELD.valence] = Math.min(1, (mouthPool.cells[b + K.FIELD.valence] || 0.5) + 0.25);
-      }
-      setTimeout(() => {
-        if (!mouthPool) return;
-        for (let i = 0; i < mouthPool.count; i++) if (mouthPool.alive[i]) {
-          const b = i * K.FIELDS_PER_CELL;
-          mouthPool.cells[b + K.FIELD.valence] = Math.max(0.3, (mouthPool.cells[b + K.FIELD.valence] || 0.5) - 0.15);
-        }
-      }, 1000);
-    }
-    showModelBadge(State.modelName || m);
-    State.modelSwitch = 1.0;
-    syncShareStateUrl();
-    const tier = document.querySelector('meta[name="master-tier"]')?.content || '';
-    const live = document.getElementById('mood-live');
-    if (live) live.textContent = `model ${State.modelName || m}${tier ? ` tier ${tier}` : ''}`;
-  });
-  evtSrc.addEventListener('verdict', (ev) => {
-    const v = (ev.data || '').trim();
-    if (TINT[v]) fadeColorTo(TINT[v]);
-    State.pulse = 0.6;
-    State.jitter = (State.confidence < 0.45 ? 0.75 : 0.15);
-    if (State.confidence > 0.75) State.pulse = 0.9;
-    if (v === 'pass') {
-      beep(880, 0.06);
-      morphTarget = 1.0; morphCurrent = Math.min(1, morphCurrent + 0.3);
-      State.bloom = 1.0;
-    }
-    if (v === 'veto') {
-      beep(220, 0.10); applyShake(0.6); if (isRichMotionProfile()) dollyZoom(0.8);
-      morphCurrent = Math.max(0, morphCurrent - 0.8); morphTarget = 1.0;
-      State.fracture = 1.0;
-      const prevPh = zshIn?.placeholder;
-      if (zshIn) { zshIn.placeholder = 'try a tighter question'; setTimeout(() => { if (zshIn.placeholder === 'try a tighter question') zshIn.placeholder = prevPh || 'ask anything'; }, 9000); }
-    }
-    const tally = (window.MASTER_VOTE_TALLY ||= { pass: 0, veto: 0 });
-    if (v === 'pass') tally.pass += 1;
-    if (v === 'veto') tally.veto += 1;
-    if (uiStatus) uiStatus.textContent = `votes ${tally.pass} / ${tally.veto}`;
-  });
-  evtSrc.addEventListener('council:speech', (ev) => {
-    try {
-      const payload = JSON.parse(ev.data || '{}');
-      const { voice, text, persona, label, viseme_lane: lane, viseme_plan: plan, expression: ex, blendshapes } = payload;
-      if (persona) {
-        rootBody.dataset.councilPersona = persona;
-        applyPersonaVisual(persona);
-        if (uiStatus) uiStatus.textContent = `council: ${label || persona}${voice ? ` / ${voice}` : ''}`;
-      }
-      if (lane) offsetCouncilMouthPool?.(lane, 0.22);
-      if (plan?.length) tts.visemePlan = plan;
-      if (ex && window.Face3DPreview?.engine?.setBlend) window.Face3DPreview.engine.setBlend(blendshapes || ex.blendshapes || {});
-      if (voice && text && !tts.playing) {
-        playDuo([[guardVoice(voice), text]], null, _nextTtsStyle(voice), { persona: label || persona, lane });
-      }
-      setTimeout(() => {
-        if (rootBody.dataset.councilPersona === persona) delete rootBody.dataset.councilPersona;
-        if (uiStatus && uiStatus.textContent && uiStatus.textContent.startsWith('council: ')) uiStatus.textContent = '';
-      }, 8000);
-    } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_council_speech", err); }
-  });
-  evtSrc.addEventListener('confidence', (ev) => {
-    const c = parseFloat(ev.data); if (isNaN(c)) return;
-    State.confidence = c;
-  });
-  evtSrc.addEventListener('dmesg', (ev) => {
-    try { window._chatOnDmesg?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_dmesg", err); }
-  });
-  evtSrc.addEventListener('compaction', (ev) => {
-    try { window._chatOnCompaction?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_compaction", err); }
-  });
-  evtSrc.addEventListener('ctx_footer', (ev) => {
-    try { window._chatOnCtxFooter?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_ctx_footer", err); }
-  });
-  evtSrc.addEventListener('phantom', (ev) => {
-    try { window._chatOnPhantom?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_phantom", err); }
-  });
-  evtSrc.addEventListener('tool_stack', (ev) => {
-    try { window._chatOnToolStack?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_tool_stack", err); }
-  });
-  evtSrc.addEventListener('stage', (ev) => {
-    try { window._chatOnStage?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_stage", err); }
-  });
-  evtSrc.addEventListener('btw', (ev) => {
-    try { window._chatOnBtw?.(JSON.parse(ev.data)); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_btw", err); }
-  });
-  evtSrc.addEventListener('felt', (ev) => {
-    try {
-      const payload = JSON.parse(ev.data || '{}');
-      if (payload.mood) State.mood = payload.mood;
-      if (typeof payload.entropy === 'number') State.entropy = payload.entropy;
-      if (typeof payload.confidence === 'number') State.confidence = payload.confidence;
-    } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_felt", err); }
-  });
-  evtSrc.onerror = () => {
-    clearTimeout(_stallTimer);
+  const onError = () => {
+    clearTimeout(stallTimer);
     State.flash = 1; applyShake(0.8); State.mode = 'error';
     window.MASTERVisual?.event?.('chat:error', { topology: 'serpent', entropy: 0.72, confidence: 0.28, mode: 'error' });
     clearThinkingAloud();
     window._chatOnDmesg?.('link quiet');
     window._chatOnError?.('stream interrupted');
     speakFailure("Sorry, I hit a snag.");
-    try { evtSrc.close(); } catch (err) { window.MASTER_LOG?.warn?.("face_runtime:sse_error_close", err); }
   };
+  // chat_actions.js owns the one chat transport, POST /chat/message. When it
+  // did not load, the turn fails the way a dropped stream does, so a broken
+  // transport shows on the first message instead of hiding behind a second one.
+  if (!window.MASTERChat?.startChatStream) {
+    window.MASTER_LOG?.error?.("face_runtime:chat_transport_missing", new Error("MASTERChat.startChatStream is not defined"));
+    onError();
+    return;
+  }
+  window.MASTERChat.startChatStream({
+    message: finalText,
+    state: window.collectFeltState?.() || feltFallback,
+    preEnhanced,
+    imageToken
+  }, {
+    onMessage,
+    onNamed: (event, data) => handleFaceNamedEvent(event, data) || window.MASTER_SSE?.dispatchNamed?.(event, data) || window.MASTERVisual?.event?.(`sse:${event}`, { raw: data, mode: event }),
+    onError
+  }).catch(() => {});
 }
 
 setInterval(() => {

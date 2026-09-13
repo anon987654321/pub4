@@ -433,7 +433,7 @@ test("face runtime keeps chat stream and particle worker boot paths", () => {
   const runtime = readFileSync(join(publicDir, "face.runtime.js"), "utf8");
   assert.match(runtime, /function sendMessage/);
   assert.match(runtime, /MASTERChat\.startChatStream/);
-  assert.match(runtime, /const url = `\/chat\/message\?message=/);
+  assert.doesNotMatch(runtime, /new EventSource\(/, "the face sends through chat_actions' POST stream only");
   assert.match(runtime, /new Worker\('\/particle_worker\.js'\)|new Worker\("\/particle_worker\.js"\)/);
   assert.match(runtime, /window\.MASTER_FACE/);
 });
