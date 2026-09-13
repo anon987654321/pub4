@@ -8,7 +8,6 @@ module Master
     # Conservative shell-output compression before context ingest (RTK-inspired).
     module OutputFilter
       REL_STATS = "runtime/rtk_stats.json".freeze
-      GIT_STATUS_RE = /\A(?:##[^\n]*\n)?(?:[ MADRCU?!]{1,3} .+\n)+\z/m.freeze
       GENERIC_COMPRESS_LINE_COUNT = 80
       GIT_COMPRESS_LINE_COUNT = 24
       DIFF_COMPRESS_BYTES = 2_000

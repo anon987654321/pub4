@@ -9,6 +9,7 @@ module Master
       NAME = "git_context".freeze
       DESCRIPTION = "Query git log, blame, diff, and status for the project.".freeze
       MAX_OUTPUT_CHARS = 4000
+      MAX_LOG = 200
 
       def initialize(root:, event_bus: nil)
         @root = File.realpath(root)
@@ -16,20 +17,30 @@ module Master
       end
 
       def call(operation:, path: nil, limit: 20)
-        case operation.to_s
-        when "log" then git_log(path, limit.to_i)
-        when "blame" then git_blame(path)
-        when "diff" then git_diff(path)
-        when "status" then git_status
-        when "show"   then git_show(path)
-        else
-          Result.err("git_context: unknown operation: #{operation}", category: :validation)
-        end
+        result =
+          case operation.to_s
+          when "log" then git_log(path, limit.to_i.clamp(1, MAX_LOG))
+          when "blame" then git_blame(path)
+          when "diff" then git_diff(path)
+          when "status" then git_status
+          when "show"   then git_show(path)
+          else
+            return Result.err("git_context: unknown operation: #{operation}", category: :validation)
+          end
+        bounded(result, operation)
       rescue StandardError => e
         Result.err("git_context: #{e.message}", category: :unknown)
       end
 
       private
+
+      # A tree-wide diff or a blame of a long file is model context, so it goes
+      # through the compression Shell already applies to git output.
+      def bounded(result, operation)
+        return result unless result.ok?
+
+        Result.ok(OutputFilter.filter(command: "git #{operation}", output: result.value!))
+      end
 
       def git_log(path, limit)
         args = ["git", "-C", @root, "log", "--oneline", "--no-color", "-#{limit}"]
@@ -83,7 +94,7 @@ module Master
 
       def safe_path(path)
         full = File.expand_path(path.to_s, @root)
-        raise "path escapes root" unless PathGuard.inside_root?(full, @root)
+        raise "path escapes root" unless PathGuard.inside_real_root?(full, @root)
         Pathname.new(full).relative_path_from(@root).to_s
       end
     end

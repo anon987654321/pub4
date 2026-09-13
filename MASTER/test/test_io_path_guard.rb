@@ -119,4 +119,11 @@ class GitContextShowTest < Minitest::Test
     assert show("HEAD").ok?
     refute show("HEAD:").ok?
   end
+
+  # Blame of a long file is model context; it passes through OutputFilter.
+  def test_long_output_is_compressed
+    body = @git.call(operation: "blame", path: "lib/io/path_guard.rb").value!.to_s
+    assert_operator body.lines.size, :<=, 81
+    assert_operator @git.call(operation: "log", limit: 100_000).value!.to_s.lines.size, :<=, 81
+  end
 end
