@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_13_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_13_130000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -1721,12 +1721,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_13_120000) do
 
   create_table "tv_videos", force: :cascade do |t|
     t.boolean "allow_duets", default: true, null: false
-    t.integer "comments_count"
     t.datetime "created_at", null: false
     t.text "description"
     t.integer "duet_of_id"
     t.integer "duration_seconds"
-    t.integer "likes_count"
     t.datetime "published_at"
     t.string "slug"
     t.integer "sound_id"
