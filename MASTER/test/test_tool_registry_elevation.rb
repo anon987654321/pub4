@@ -12,8 +12,8 @@ class ToolRegistryElevationTest < Minitest::Test
       root = Master::ROOT
       @tools = [Master::Io::Shell.new(root:, governor: Object.new), Master::Io::ReadFile.new(root:, undo: nil)]
       @tool_registry = {
-        "Shell" => { "tier" => "dangerous" },
-        "ReadFile" => { "tier" => "safe" },
+        "Shell" => { "elevated" => true },
+        "ReadFile" => { "elevated" => false },
       }
       @config = Data.define(:model).new("test/model")
       @model_router = Class.new do
@@ -60,9 +60,21 @@ class ToolRegistryElevationTest < Minitest::Test
     Fiber[:master_elevated] = nil
   end
 
-  def test_a_dynamic_tool_without_a_tier_is_dangerous
+  def test_a_dynamic_tool_that_declares_nothing_waits_for_elevation
     Master::Io::DynamicTools.stub(:load_definitions, [{ "name" => "ping", "url" => "https://example.com" }]) do
-      assert_equal "dangerous", Master::Io::DynamicTools.registry_rows.first["tier"]
+      assert_equal true, Master::Io::DynamicTools.registry_rows.first["elevated"]
+    end
+  end
+
+  # Exposure is one boolean here and approval is the adapter's TIER, so the two
+  # cannot disagree about a word: "safe" meant exposed in tools.yml and
+  # unguarded to the governor, and WebFetch was both at once.
+  def test_tools_yml_declares_exposure_as_a_boolean_and_no_tier
+    rows = Master.load_yaml(File.join(Master::ROOT, "data", "tools.yml"))
+
+    rows.each do |row|
+      refute row.key?("tier"), "#{row["name"]} carries a second tier vocabulary"
+      assert_includes [true, false], row["elevated"], "#{row["name"]} does not declare elevated"
     end
   end
 

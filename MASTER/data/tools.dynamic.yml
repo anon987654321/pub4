@@ -5,5 +5,5 @@
 #   enabled: false
 #   method: GET
 #   url: "https://ai.brgen.no/health"
-#   tier: safe
+#   elevated: false
 #   description: Ping production health endpoint

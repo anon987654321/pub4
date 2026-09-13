@@ -33,8 +33,8 @@ module Master
           {
             "name" => "DynamicHttp",
             # An HTTP endpoint reaches the open world, so a row that does not
-            # declare itself safe is not treated as safe.
-            "tier" => row.fetch("tier", "dangerous"),
+            # declare itself unelevated waits for elevation.
+            "elevated" => row["elevated"] != false,
             "visitor" => row["visitor"] == true,
             "default" => true,
             "dynamic_name" => row["name"],

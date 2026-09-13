@@ -1,35 +1,41 @@
 # Tool registry — declarative metadata for built-in tools. The adapters are the
 # classes lib/builder.rb's DEFAULT_TOOL_MAP builds, which live in lib/io/; this
-# file supplies tier, visibility and default arguments. Operators tune
-# visibility per tier without editing code.
+# file supplies exposure, visibility and boot state. Operators tune which
+# tools a model is handed without editing code.
+#
+# `elevated` is exposure, not approval. Each adapter's TIER constant (safe,
+# guarded, dangerous, open) is what Fix::Governor paces and asks about once a
+# tool is called; `elevated` decides whether an unelevated model is handed the
+# tool at all. WebFetch is guarded and not elevated: any session may fetch, and
+# the governor rate-limits it.
 #
 # Schema:
 #   name        — adapter class name (under Master::Io)
-#   tier        — safe | dangerous (filters which tools the LLM can call)
+#   elevated    — true withholds the tool from a model until the session is elevated
 #   visitor     — true if visitors can call (visitor allow-list)
 #   default     — true to enable on boot; false leaves it off until /enable
 #   file_types  — optional list of file extensions that should activate the tool
 #   description — one-line, surfaced in tool list
 
 ---
-- { name: AskLlm,         tier: safe,      visitor: true,  default: true,  description: Sub-LLM call for nested reasoning, required_context: "A specific sub-question and optional context.", usage_rules: ["Use for isolated reasoning that should not pollute current context."], error_recovery: "If too broad, rewrite as one concrete question." }
-- { name: ReadFile,       tier: safe,      visitor: false, default: true,  description: Read a file from disk, required_context: "Specific file path.", usage_rules: ["Never guess path names.", "Read before modifying related files."], error_recovery: "If missing, ask for exact path or run directory listing first." }
-- { name: WriteFile,      tier: dangerous, visitor: false, default: true,  description: Write a new file, required_context: "Target path and complete content.", usage_rules: ["Prefer patch-like edits when file exists.", "Keep writes minimal and reversible."], error_recovery: "If uncertain, read the file first and propose a diff." }
-- { name: StrReplace,     tier: dangerous, visitor: false, default: true,  description: Replace exact string in a file, required_context: "Exact unique old string and replacement.", usage_rules: ["Fail if old string is ambiguous."], error_recovery: "If multiple matches, refine old_string with more context." }
-- { name: BatchReplace,   tier: dangerous, visitor: false, default: true,  description: Replace many files in one call }
-- { name: AstEdit,        tier: dangerous, visitor: false, default: true,  file_types: [".rb"], description: Prism AST-aware Ruby edit }
-- { name: Tree,           tier: safe,      visitor: false, default: true,  description: Directory tree summary }
-- { name: ListDir,        tier: safe,      visitor: false, default: true,  description: List a single directory }
-- { name: SearchFiles,    tier: safe,      visitor: false, default: true,  description: Glob/grep file search }
-- { name: SearchKnowledge, tier: safe,     visitor: false, default: true,  description: Search knowledge/ snapshots }
-- { name: SymbolLookup,   tier: safe,      visitor: false, default: true,  description: Look up symbol via code_index }
-- { name: Shell,          tier: dangerous, visitor: false, default: true,  description: Execute zsh command, required_context: "Concrete command and expected effect.", usage_rules: ["Prefer read-only commands first.", "Never use destructive commands without explicit confirmation."], error_recovery: "If blocked or risky, suggest safer equivalent command." }
-- { name: GitContext,     tier: safe,      visitor: false, default: true,  description: git status/log summary }
-- { name: WebFetch,       tier: safe,      visitor: false, default: true,  description: Fetch URL content }
-- { name: WebSearch,      tier: safe,      visitor: true,  default: true,  description: Web search (visitor allowed) }
-- { name: Clean,          tier: dangerous, visitor: false, default: true,  description: Remove tmp/build artifacts }
-- { name: FeedbackRecord, tier: safe,      visitor: false, default: true,  description: Record operator feedback into corrections.yml }
-- { name: MemoryRecord,   tier: safe,      visitor: false, default: true,  description: Append durable context to data/project_context.yml }
-- { name: SubdomainOrchestrator, tier: safe, visitor: true, default: true, description: "Inspect or synchronize a pub4 subdomain cluster (marketplace, maps, amber, bsdports, etc.)" }
-- { name: DynamicHttp, tier: safe, visitor: false, default: true, description: Call HTTP endpoints declared in data/tools.dynamic.yml (name + params) }
+- { name: AskLlm, elevated: false, visitor: true, default: true, description: Sub-LLM call for nested reasoning, required_context: "A specific sub-question and optional context.", usage_rules: ["Use for isolated reasoning that should not pollute current context."], error_recovery: "If too broad, rewrite as one concrete question." }
+- { name: ReadFile, elevated: false, visitor: false, default: true, description: Read a file from disk, required_context: "Specific file path.", usage_rules: ["Never guess path names.", "Read before modifying related files."], error_recovery: "If missing, ask for exact path or run directory listing first." }
+- { name: WriteFile, elevated: true, visitor: false, default: true, description: Write a new file, required_context: "Target path and complete content.", usage_rules: ["Prefer patch-like edits when file exists.", "Keep writes minimal and reversible."], error_recovery: "If uncertain, read the file first and propose a diff." }
+- { name: StrReplace, elevated: true, visitor: false, default: true, description: Replace exact string in a file, required_context: "Exact unique old string and replacement.", usage_rules: ["Fail if old string is ambiguous."], error_recovery: "If multiple matches, refine old_string with more context." }
+- { name: BatchReplace, elevated: true, visitor: false, default: true, description: Replace many files in one call }
+- { name: AstEdit, elevated: true, visitor: false, default: true, file_types: [".rb"], description: Prism AST-aware Ruby edit }
+- { name: Tree, elevated: false, visitor: false, default: true, description: Directory tree summary }
+- { name: ListDir, elevated: false, visitor: false, default: true, description: List a single directory }
+- { name: SearchFiles, elevated: false, visitor: false, default: true, description: Glob/grep file search }
+- { name: SearchKnowledge, elevated: false, visitor: false, default: true, description: Search knowledge/ snapshots }
+- { name: SymbolLookup, elevated: false, visitor: false, default: true, description: Look up symbol via code_index }
+- { name: Shell, elevated: true, visitor: false, default: true, description: Execute zsh command, required_context: "Concrete command and expected effect.", usage_rules: ["Prefer read-only commands first.", "Never use destructive commands without explicit confirmation."], error_recovery: "If blocked or risky, suggest safer equivalent command." }
+- { name: GitContext, elevated: false, visitor: false, default: true, description: git status/log summary }
+- { name: WebFetch, elevated: false, visitor: false, default: true, description: Fetch URL content }
+- { name: WebSearch, elevated: false, visitor: true, default: true, description: Web search (visitor allowed) }
+- { name: Clean, elevated: true, visitor: false, default: true, description: Remove tmp/build artifacts }
+- { name: FeedbackRecord, elevated: false, visitor: false, default: true, description: Record a tool, provider or correction outcome in the feedback ledger }
+- { name: MemoryRecord, elevated: false, visitor: false, default: true, description: Append durable context to data/project_context.yml }
+- { name: SubdomainOrchestrator, elevated: false, visitor: true, default: true, description: "Inspect or synchronize a pub4 subdomain cluster (marketplace, maps, amber, bsdports, etc.)" }
+- { name: DynamicHttp, elevated: false, visitor: false, default: true, description: Call HTTP endpoints declared in data/tools.dynamic.yml (name + params) }
 # Postpro and Repligen are not adapters: Io::MediaIntent shells STUDIO for them.
