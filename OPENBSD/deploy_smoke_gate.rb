@@ -8,6 +8,7 @@ require_relative "lib/utf8"
 ROOT = File.expand_path("..", __dir__)
 RAILS_ROOT = File.join(ROOT, "RAILS")
 RELAYD = File.join(ROOT, "OPENBSD", "etc", "relayd.conf")
+HTTPD = File.join(ROOT, "OPENBSD", "etc", "httpd.conf")
 APPS_YML = File.join(RAILS_ROOT, "apps.yml")
 
 def assert_forward(relayd_text, failures, name, port, domain)
@@ -41,6 +42,26 @@ def check_relayd(failures)
       failures << "relayd: master backend missing" unless relayd.include?("forward to <master>")
       failures << "relayd: master missing http /up check" unless relayd.include?("forward to <master> port #{master_port} check http \"/up\"")
     end
+  end
+end
+
+# Port 80 is httpd's, and the part of it that matters is the ACME location:
+# acme-client writes HTTP-01 challenges to /var/www/acme, which is "/acme" inside
+# httpd's chroot. Lose the location and renewal fails without a word until every
+# certificate lapses.
+def check_httpd(failures)
+  unless File.file?(HTTPD)
+    failures << "missing tracked httpd.conf"
+    return
+  end
+
+  httpd = File.read(HTTPD)
+  failures << "httpd: no listener on port 80" unless httpd.match?(/^\s*listen on \S+ port 80\b/)
+  acme = httpd[%r{location "/\.well-known/acme-challenge/\*" \{(.*?)\}}m, 1]
+  if acme.nil?
+    failures << "httpd: no /.well-known/acme-challenge/ location"
+  elsif !acme.include?('root "/acme"')
+    failures << "httpd: the ACME location must serve root \"/acme\", acme-client's challengedir inside the chroot"
   end
 end
 
@@ -142,6 +163,7 @@ end
 
 failures = []
 check_relayd(failures)
+check_httpd(failures)
 check_master_rc(failures)
 check_apps_production(failures)
 check_master_web(failures)
@@ -155,4 +177,4 @@ if failures.any?
 end
 
 apps_count = YAML.safe_load(File.read(APPS_YML)).fetch("apps", {}).size
-puts "Deploy smoke gate passed (relayd template + #{apps_count} production configs + MASTER/web probes)."
+puts "Deploy smoke gate passed (relayd and httpd templates + #{apps_count} production configs + MASTER/web probes)."
