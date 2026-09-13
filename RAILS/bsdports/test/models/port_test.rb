@@ -112,36 +112,33 @@ class PortTest < ActiveSupport::TestCase
 
   # --- full-text search ---------------------------------------------------
   #
-  # ports_fts is an fts5 virtual table created by raw `execute` in
-  # 20260528000100_create_ports_fts.rb, along with three triggers that keep it in
-  # step with `ports`. schema_format is :ruby, and the Ruby schema dumper cannot
-  # express a virtual table or a trigger, so db/schema.rb contains neither: every
-  # database built by db:schema:load -- this test environment, and any freshly
-  # provisioned box -- has no search index at all.
-  #
-  # Nothing shouts about it. Ports::Importer#rebuild_fts rescues StandardError
-  # and logs a warning, and the ports index page searches with LIKE through
-  # apply_live_search rather than through this scope, so the only visible symptom
-  # is a search index that is never built.
-  #
-  # Skipped rather than deleted: the skip is the finding, stated where the method
-  # is used. RAILS/test/raw_schema_objects_test.rb states it for the tree.
-  FTS_ABSENT = "ports_fts is not in schema.rb — see RAILS/test/raw_schema_objects_test.rb"
-
-  def fts_table? = Port.connection.table_exists?("ports_fts")
+  # ports_fts and its triggers are raw SQL that schema.rb cannot carry;
+  # config/application.rb builds them after every schema load, so these run
+  # against the index rather than skipping without it.
 
   # A MATCH against an empty index must return nothing, not everything.
   # `ids.any? ? where(id: ids) : none` is what makes that true; a bare
   # `where(id: ids)` would have looked identical and returned the whole table.
   test "a search that matches nothing returns nothing" do
-    skip FTS_ABSENT unless fts_table?
     port("curl")
 
     assert_empty Port.search("a_term_that_matches_no_port").to_a
   end
 
+  test "the triggers keep the index in step with created, renamed and deleted ports" do
+    curl = port("curl", comment: "transfer tool")
+    assert_equal [ curl ], Port.search("transfer").to_a
+
+    curl.update!(name: "wcurl")
+    assert_equal [ curl ], Port.search("wcurl").to_a
+    assert_empty Port.search("curl").to_a
+
+    curl.destroy!
+    assert_empty Port.search("wcurl").to_a
+  end
+
   test "semantic_search is still the lexical search and says so" do
-    skip FTS_ABSENT unless fts_table?
+    port("curl")
 
     assert_equal Port.search("curl").to_sql, Port.semantic_search("curl").to_sql
   end

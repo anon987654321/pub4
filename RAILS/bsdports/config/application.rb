@@ -48,5 +48,23 @@ module App
     # <use> against it. One config value, read by Shared::UiHelper#icon_sprite?
     # and the layout, so both agree (brgen's arrangement, adopted 2026-08-21).
     config.x.icon_sprite = true
+
+    # ports_fts and its three sync triggers exist only as raw SQL in a
+    # migration, and schema.rb cannot carry a trigger. So every schema load —
+    # bin/ci's db:test:prepare, each parallel test worker, a fresh db:prepare —
+    # reruns that idempotent migration, and search has its index wherever the
+    # schema does.
+    initializer "bsdports.ports_fts_on_schema_load" do
+      ActiveRecord::Tasks::DatabaseTasks.singleton_class.prepend(Module.new do
+        def load_schema(...)
+          super
+          # The cable, cache and queue databases load schemas too, with no ports.
+          return unless migration_connection.data_source_exists?("ports")
+
+          require Rails.root.join("db/migrate/20260914120000_create_ports_fts_triggers.rb").to_s
+          ActiveRecord::Migration.suppress_messages { CreatePortsFtsTriggers.new.up }
+        end
+      end)
+    end
   end
 end
