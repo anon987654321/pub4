@@ -76,6 +76,36 @@ class ListingExpiryTest < ActiveSupport::TestCase
     end
   end
 
+  # Two workers can both read the listing before either stamps it; only one
+  # may send.
+  test "a listing is claimed once however many workers read it" do
+    soon = listing
+    soon.update_columns(expires_at: 3.days.from_now)
+    read_by_both = Marketplace::Listing.find(soon.id)
+    job = ListingExpiryJob.new
+
+    assert job.send(:claim, read_by_both)
+    assert_not job.send(:claim, read_by_both)
+  end
+
+  test "a notice that fails gives its claim back" do
+    soon = listing
+    soon.update_columns(expires_at: 3.days.from_now)
+    job = ListingExpiryJob.new
+    claimed = Marketplace::Listing.includes(:user).find(soon.id)
+    assert job.send(:claim, claimed)
+    claimed.define_singleton_method(:deliver_notification) { |*, **| raise "push down" }
+
+    assert_raises(RuntimeError) { job.send(:notify, claimed) }
+    assert_nil soon.reload.renewal_notice_sent_at
+  end
+
+  test "the expiry and saved-search runs never overlap themselves" do
+    assert_equal 1, ListingExpiryJob.concurrency_limit
+    assert_equal 1, SavedSearchAlertJob.concurrency_limit
+    assert_equal :discard, SavedSearchAlertJob.concurrency_on_conflict
+  end
+
   test "renewing clears the notice so the next lapse is announced again" do
     soon = listing
     soon.update_columns(expires_at: 3.days.from_now)

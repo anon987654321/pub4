@@ -11,6 +11,11 @@
 # saved search (price reductions on existing listings), not only brand-new rows.
 class SavedSearchAlertJob < ApplicationJob
   queue_as :bulk
+  # One run at a time. Two overlapping runs both read the same due searches
+  # before either stamps last_notified_at, and the reader is told twice; a run
+  # that finds another still going is dropped, since the next one is half an
+  # hour away.
+  limits_concurrency to: 1, key: "saved-search-alerts", duration: 30.minutes, on_conflict: :discard
 
   def perform
     now = Time.current
