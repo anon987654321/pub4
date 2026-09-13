@@ -1,17 +1,14 @@
-# Litestream — continuous SQLite replication. Each `dbs` entry must point at a
-# single database FILE (not a directory); the earlier `path: <dir>` + `pattern:`
-# was invalid, so litestream refused to start and nothing was ever replicated.
+# Inert by decision. litestream is not in OpenBSD ports, so vm23 has no binary,
+# and the service is out of pkg_scripts and rcctl-disabled. Do not enable it.
+# The backup is OPENBSD/bin/dr-pull. DECISIONS.md, "rcctl owns rc.conf.local,
+# and litestream is off the boot list", carries the argument.
 #
-# Only production.sqlite3 is streamed per app — it holds the irreplaceable user
-# data. The cache/queue/cable databases are regeneratable and are left out to keep
-# WAL churn low on the 1-vCPU box.
-#
-# NOTE: the file:// replica is on the SAME disk as the source (accidental-delete /
-# corruption / point-in-time recovery, NOT disk-failure DR). For real DR add an
-# off-host replica (an s3:// URL with credentials, or sftp:// to a second host).
-# Litestream must also be installed first (`doas pkg_add litestream`) — it is not
-# currently on the box. Until both land, Shared::DatabaseSnapshotJob provides
-# local point-in-time snapshots of production.sqlite3.
+# The config stays correct for the day someone builds litestream from Go and
+# adds an off-host replica. Each `dbs` entry names one database file, not a
+# directory. Only production.sqlite3 is streamed, because it holds the user data
+# and the cache, queue and cable databases regenerate. A file:// replica sits on
+# the source disk, so it covers deletion and point-in-time recovery, never disk
+# failure; real recovery needs an s3:// or sftp:// replica on another host.
 dbs:
   - path: /home/brgen/app/storage/production.sqlite3
     replicas:
