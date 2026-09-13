@@ -289,7 +289,8 @@ class TestWebUI < Minitest::Test
     %w[/review /status /undo /commit /model /pair /doctor /help].each do |verb|
       assert_includes chat, verb, "the slash surface lost #{verb}"
     end
-    # visual_bridge's phantom flinch is driven in web/test/visual_bridge_phantom.test.mjs.
+    # visual_bridge's phantom flinch, and every topic it listens for, are held in
+    # web/test/visual_bridge_topics.test.mjs.
     assert_includes actions, "addEventListener('compaction'"
     assert_includes actions, "startsWith('!')"
     assert_includes service, "compaction:done"

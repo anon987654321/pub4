@@ -19,7 +19,7 @@
   const FALLBACK_CLASSIFIER = [
     [/phantom:(?:detected|halt|recovery)/i, { topology: "glitch", entropy: 0.88, confidence: 0.18, mode: "phantom" }],
     [/compaction:(start|done)|compact/i, { topology: "terrain", entropy: 0.42, confidence: 0.62, mode: "compact" }],
-    [/btw:done|agent:(start|end)/i, { topology: "neural", entropy: 0.36, confidence: 0.74, mode: "side-agent" }],
+    [/agent:(start|end)/i, { topology: "neural", entropy: 0.36, confidence: 0.74, mode: "side-agent" }],
     [/pipeline:stage|skills:triggered/i, { topology: "papua-mask", entropy: 0.30, confidence: 0.80, mode: "stage" }],
     [/ctx:footer/i, { topology: "neural", entropy: 0.22, confidence: 0.84, mode: "ctx" }],
     [/llm:escalation|fallback|retry/i, { topology: "serpent", entropy: 0.62, confidence: 0.46, mode: "escalation" }],
@@ -172,9 +172,6 @@
       window.dispatchEvent(new CustomEvent("tts:style:active", { detail: event }));
       window.dispatchEvent(new CustomEvent("master:visual", { detail: { ...event, name: type, raw: event } }));
     }
-    if (/^tts:playback:/.test(type)) {
-      window.dispatchEvent(new CustomEvent(type, { detail: event }));
-    }
     if (type === "tts:viseme:plan") {
       window.dispatchEvent(new CustomEvent("tts:viseme:plan", { detail: event }));
     }
@@ -186,12 +183,11 @@
       window.dispatchEvent(new CustomEvent("user:expression", { detail: event }));
       window.dispatchEvent(new CustomEvent("master:visual", { detail: { ...event, name: type, expression: event.expression, raw: event } }));
     }
-    if (/pressure:updated|ctx:footer/i.test(type)) {
+    if (/ctx:footer/i.test(type)) {
       const pct = event.pct ?? event.value ?? 0;
       window.dispatchEvent(new CustomEvent("master:pressure", { detail: { pct, ...event } }));
     }
-    // council:start is the only one of these the bus has; council:deliberation was
-    // the other branch and names nothing, so it never contributed a match.
+    // council:start is the one topic the bus publishes when a council opens.
     if (/council:start/i.test(type)) {
       startCouncilRotator();
       const spiritRadius = event.spirit_radius ?? event.spiritRadius ?? 1.14;
@@ -204,11 +200,9 @@
     if (/phantom:(?:detected|halt|recovery)/i.test(type)) {
       window.dispatchEvent(new CustomEvent("master:visual", { detail: { name: type, mode: "phantom", entropy: 0.9, confidence: 0.18, flinch: 1, raw: event } }));
     }
-    // council:pass and council:veto are the bus outcomes; tribunal:rendered is a
-    // separate verdict and council:speech an SSE name on the chat stream. This read
-    // council:(vote|speech|end), and of those three only the SSE one exists — so a
-    // council that passed or vetoed never stopped the rotator.
-    if (/council:(?:pass|veto|speech)|tribunal:rendered/i.test(type)) {
+    // council:pass and council:veto are the bus outcomes, and tribunal:rendered is
+    // a separate verdict; any of them stops the rotator.
+    if (/council:(?:pass|veto)|tribunal:rendered/i.test(type)) {
       stopCouncilRotator();
       delete document.documentElement.dataset.councilBreath;
     }
