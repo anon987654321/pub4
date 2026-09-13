@@ -5,6 +5,7 @@ require "minitest/autorun"
 # under a C locale, where Ruby reads files as US-ASCII and every read of this
 # UTF-8 source raises "invalid byte sequence".
 require_relative "../lib/utf8"
+require_relative "../config_drift_gate"
 
 # etc/crontab.vm23 is the tracked half of root's crontab, and OPERATOR.sh's
 # install_tracked_crontab merges it onto the box. Both halves can be complete
@@ -26,31 +27,24 @@ class TrackedCrontabTest < Minitest::Test
 
   def operator_source = @operator_source ||= File.read(OPERATOR)
 
-  # A cron line is five time fields then the command, which may be led by
-  # VAR=value assignments: `ALLOW_BSDPORTS_DOWN=1 /usr/local/bin/uptime-check.sh`
-  # names its command in field six, not five.
-  def scheduled_commands
-    crontab_source.each_line.filter_map do |line|
-      next if line.strip.empty? || line.lstrip.start_with?("#")
-
-      command = line.split.drop(5).find { |word| !word.match?(/\A[A-Za-z_][A-Za-z0-9_]*=/) }
-      command if command&.start_with?("/")
-    end.uniq
-  end
+  # One parser for a cron line, the drift gate's, so the shapes it must and must
+  # not read (an env prefix, a redirect, a PATH line) have one set of fixtures, in
+  # test_config_drift_gate.rb, and a new cron line is proved once.
+  def scheduled = scheduled_commands(crontab_source)
 
   def test_env_prefixed_lines_are_parsed
-    assert_includes scheduled_commands, "/usr/local/bin/uptime-check.sh" if crontab_source.include?("uptime-check.sh")
+    assert_includes scheduled, "/usr/local/bin/uptime-check.sh" if crontab_source.include?("uptime-check.sh")
   end
 
   def test_the_tracked_crontab_actually_schedules_something
-    refute_empty scheduled_commands,
+    refute_empty scheduled,
                  "no cron lines parsed out of etc/crontab.vm23 — this test would pass having measured nothing"
   end
 
   # The repo may not schedule a command it does not ship. If it does, the merge
   # loop skips the line on every run and the job is tracked but never installed.
   def test_every_scheduled_command_is_shipped_by_this_repo
-    missing = scheduled_commands.reject do |command|
+    missing = scheduled.reject do |command|
       base = File.basename(command)
       File.file?(File.join(ROOT, "usr", "local", "bin", base)) || File.file?(File.join(ROOT, base))
     end
@@ -63,7 +57,7 @@ class TrackedCrontabTest < Minitest::Test
   # install(1) sets the mode on the box, but a non-executable source is a sign
   # the wrapper was written and never wired, and it is free to check here.
   def test_shipped_cron_wrappers_are_executable_in_the_repo
-    not_executable = scheduled_commands.filter_map do |command|
+    not_executable = scheduled.filter_map do |command|
       base = File.basename(command)
       path = [File.join(ROOT, "usr", "local", "bin", base), File.join(ROOT, base)].find { |p| File.file?(p) }
       path if path && !File.executable?(path)

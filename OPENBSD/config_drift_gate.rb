@@ -171,6 +171,31 @@ def scheduled_commands(text)
   end.uniq
 end
 
+# Every VERBATIM mirror under `mirror` byte-compared with its live copy in
+# `live_map` (live path => contents, nil when unreadable). Only VERBATIM is read,
+# so an EXCLUDED file that differs on the box, as a templated one always does, is
+# never drift.
+def verbatim_report(live_map, mirror: MIRROR)
+  report = { drift: {}, missing: [], compared: [], unfound: [] }
+  VERBATIM.each do |repo_rel, live_path|
+    repo_path = File.join(mirror, repo_rel)
+    # Counted, not skipped: a gate that cannot find the repo compares nothing,
+    # and nothing compared must not exit 0.
+    next report[:unfound] << repo_rel unless File.file?(repo_path)
+
+    live = live_map[live_path]
+    next report[:missing] << repo_rel if live.nil? || live.empty?
+
+    repo = File.read(repo_path)
+    next report[:compared] << repo_rel if repo == live
+
+    repo_sha = Digest::SHA256.hexdigest(repo)[0, 12]
+    live_sha = Digest::SHA256.hexdigest(live)[0, 12]
+    report[:drift][repo_rel] = "repo sha=#{repo_sha} (#{repo.bytesize}B) vs live sha=#{live_sha} (#{live.bytesize}B)"
+  end
+  report
+end
+
 def split_stream(out, paths)
   result = paths.to_h { |path| [path, nil] }
   out.split(MARKER)[1..].to_a.each do |chunk|
@@ -252,36 +277,8 @@ unless REMOTE || on_vps?
   exit 0
 end
 
-drift = {}
-missing = []
-compared = []
-unfound = []
 live_map = live_files(VERBATIM.values)
-
-VERBATIM.each do |repo_rel, live_path|
-  repo_path = File.join(MIRROR, repo_rel)
-  unless File.file?(repo_path)
-    # Recorded, not merely warned. `next` alone left this out of every tally, so
-    # a gate that could not find the repo at all still exited 0.
-    unfound << repo_rel
-    next
-  end
-
-  live = live_map[live_path]
-  if live.nil? || live.empty?
-    missing << repo_rel
-    next
-  end
-
-  repo = File.read(repo_path)
-  if repo == live
-    compared << repo_rel
-  else
-    repo_sha = Digest::SHA256.hexdigest(repo)[0, 12]
-    live_sha = Digest::SHA256.hexdigest(live)[0, 12]
-    drift[repo_rel] = "repo sha=#{repo_sha} (#{repo.bytesize}B) vs live sha=#{live_sha} (#{live.bytesize}B)"
-  end
-end
+drift, missing, compared, unfound = verbatim_report(live_map).values_at(:drift, :missing, :compared, :unfound)
 
 crontab_mirror_path = File.join(MIRROR, CRONTAB_MIRROR)
 cron = crontab_report(

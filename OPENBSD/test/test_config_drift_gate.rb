@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "tmpdir"
 # See test_restore_scripts.rb: the weekly integrity run on vm23 invokes these
 # under a C locale, where Ruby reads files as US-ASCII and every read of this
 # UTF-8 source raises "invalid byte sequence".
@@ -109,5 +110,61 @@ class ConfigDriftGateCrontabTest < Minitest::Test
 
     refute_empty commands, "etc/crontab.vm23 parsed to no commands — the check would pass having measured nothing"
     assert(commands.all? { |c| c.start_with?("/") }, "a parsed command is not an absolute path: #{commands.inspect}")
+  end
+end
+
+# The byte-compare half: the doas keepenv root-RCE stayed live for days because
+# nothing compared the mirror with /etc.
+class ConfigDriftGateVerbatimTest < Minitest::Test
+  # The box exactly as the repo describes it.
+  def matching_box
+    VERBATIM.to_h { |repo_rel, live_path| [live_path, File.read(File.join(MIRROR, repo_rel))] }
+  end
+
+  def test_the_mirror_is_found_and_matches_itself
+    report = verbatim_report(matching_box)
+
+    assert_empty report[:unfound], "the gate cannot find the repo mirror, so it compares nothing"
+    assert_equal VERBATIM.size, report[:compared].size
+    assert_empty report[:drift]
+  end
+
+  # The installed copy once resolved its mirror beside itself, found none, and
+  # said clean having compared nothing. Unfound is counted, not skipped.
+  def test_a_mirror_that_is_not_there_is_unfound_rather_than_clean
+    Dir.mktmpdir("no-mirror") do |empty|
+      report = verbatim_report(matching_box, mirror: empty)
+
+      assert_equal VERBATIM.keys, report[:unfound]
+      assert_empty report[:compared]
+    end
+  end
+
+  # The shape it must flag: a hand-edit on the box.
+  def test_a_live_file_that_differs_from_its_mirror_is_drift
+    box = matching_box
+    box["/etc/doas.conf"] = "permit keepenv persist :wheel\n"
+    report = verbatim_report(box)
+
+    assert_equal ["etc/doas.conf"], report[:drift].keys
+    assert_match(/repo sha=\h{12} .* vs live sha=\h{12}/, report[:drift]["etc/doas.conf"])
+  end
+
+  def test_a_live_file_that_is_absent_is_missing_not_clean
+    box = matching_box
+    box["/usr/local/bin/emergency_cpu.sh"] = nil
+
+    assert_equal ["emergency_cpu.sh"], verbatim_report(box)[:missing]
+  end
+
+  # The shape it must not flag: relayd.conf is installed from a template, so the
+  # live copy always differs, and comparing it would be a permanent false alarm.
+  def test_an_excluded_file_that_differs_on_the_box_is_not_drift
+    box = matching_box
+    EXCLUDED.each { |repo_rel| box["/#{repo_rel}"] = "templated on the box\n" }
+    report = verbatim_report(box)
+
+    assert_empty report[:drift]
+    assert_empty VERBATIM.keys & EXCLUDED, "a file cannot be both byte-compared and excluded"
   end
 end
