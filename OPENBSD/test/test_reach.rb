@@ -105,12 +105,6 @@ class ReachTest < Minitest::Test
     assert_empty checks("rcd")
   end
 
-  def test_the_rails_template_is_not_a_service
-    write("etc/rc.d/rails-app.tmpl", "#!/bin/ksh\n")
-
-    assert_empty checks("rcd")
-  end
-
   # ---- zones ----------------------------------------------------------------
 
   def test_a_zone_named_and_present_reaches

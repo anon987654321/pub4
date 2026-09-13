@@ -20,9 +20,8 @@ require "minitest/autorun"
 class RcEnvExportTest < Minitest::Test
   RC_D = File.expand_path("../etc/rc.d", __dir__)
 
-  # rails-app.tmpl is the generator for a new app rather than a running service.
-  # It is held to the same rule, because a template that teaches the bug writes
-  # the bug into every app made from it.
+  # A new app's script is generated from rc.d/brgen by OPERATOR.sh, so holding
+  # brgen to the rule holds every app made from it.
   def scripts
     Dir.glob(File.join(RC_D, "*")).select { |path| File.file?(path) }.sort
   end

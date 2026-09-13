@@ -765,7 +765,15 @@ bootstrap_rails_app() {
   chmod 640 /etc/${app}.env 2>/dev/null || true
 
   typeset svc=$app
-  [[ -f ${CONFIG_ROOT}/etc/rc.d/${svc} ]] || install_template etc/rc.d/rails-app.tmpl /etc/rc.d/${svc}
+  # An app with no rc.d script of its own gets brgen's with the name and port
+  # swapped, so a new service starts from the one running in production: set -a
+  # around the env file, the PATH for curl, rc_pre and the relayd kick. A
+  # separate template drifted from it and would have installed none of those.
+  if [[ ! -f ${CONFIG_ROOT}/etc/rc.d/${svc} ]]; then
+    typeset _rc; _rc=$(<"${CONFIG_ROOT}/etc/rc.d/brgen")
+    _rc=${_rc//brgen/${app}}
+    print -r -- "${_rc//38182/${port}}" > /etc/rc.d/${svc}
+  fi
   # 555, the mode brgen, amber and bsdports already carry on vm23 — see
   # install_root_configs for why this repo's rc.d scripts are read-only and
   # OpenBSD's own are not. 755 here would flatten that on the next app install.
