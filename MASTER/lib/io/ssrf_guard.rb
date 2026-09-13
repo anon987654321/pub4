@@ -54,10 +54,17 @@ module Master
         nil
       end
 
-      def self.http_for(uri, address)
+      # Bounded by default, so a caller that forgets a timeout still cannot hang
+      # a turn on a host that accepts and never answers; callers may tighten it.
+      DEFAULT_TIMEOUT_S = 15
+
+      def self.http_for(uri, address, timeout: DEFAULT_TIMEOUT_S)
         Net::HTTP.new(uri.host, uri.port).tap do |http|
           http.ipaddr = address
           http.use_ssl = uri.scheme == "https"
+          http.open_timeout = timeout
+          http.read_timeout = timeout
+          http.write_timeout = timeout
         end
       end
 
