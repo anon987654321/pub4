@@ -111,34 +111,10 @@ ownership:
     purpose: boot-phase assembly (ground, io, personality wiring)
     risk: high
     check: bin/check --profile=agent
-  lib/deploy/:
-    purpose: operator-facing deploy documentation generation
-    risk: medium
-    check: bin/check
-  lib/design/:
-    purpose: design thresholds and platform/mobile profile data
-    risk: medium
-    check: bin/check
-  lib/grok/:
-    purpose: transcript ingestion for the Grok LoRA pipeline
-    risk: medium
-    check: bin/check
-  lib/ops/:
-    purpose: loop ownership, process budget, runtime loop guards
-    risk: high
-    check: bin/check --profile=agent
-  lib/providers/:
-    purpose: external model/provider catalog indexing
-    risk: medium
-    check: ruby -Ilib:spec spec/providers/catalog_index_spec.rb
   lib/operator/:
     purpose: pub4-level (multi-repo) check/status tooling, separate namespace from Master
     risk: medium
     check: MASTER/bin/operator status
-  lib/result/:
-    purpose: Result::Ok/Err chaining and error classification helpers
-    risk: high
-    check: bin/check --profile=agent
   data/soul.yml:
     purpose: constitutional identity
     risk: critical
@@ -193,7 +169,15 @@ ownership:
     purpose: style guide sync and canon generation gates run from Rakefile
     risk: medium
     check: bin/check
-  completions/:
-    purpose: shell completion script for bin/cli
+  loop*.gif:
+    purpose: the README films' posters, made by bin/loops
     risk: low
     check: none
+  loop*.mp4:
+    purpose: the README films, made by bin/loops from the ignored loop.mp4 source
+    risk: low
+    check: none
+  completions/:
+    purpose: zsh completions for bin/master, bin/cli and bin/operator
+    risk: low
+    check: ruby -Ilib:test test/test_completions.rb

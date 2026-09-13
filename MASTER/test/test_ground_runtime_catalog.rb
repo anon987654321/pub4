@@ -83,11 +83,4 @@ class TestRuntimeCatalog < Minitest::Test
     assert registry["namespaces"].is_a?(Array)
     assert registry["established_events"].is_a?(Array)
   end
-
-  def test_face3d_migration_steps
-    migration = Master::Ground::RuntimeCatalog.load("face3d_migration")
-    assert migration["migration_steps"].is_a?(Array)
-    assert migration["blendshape_mapping"].is_a?(Array)
-    assert migration["modules"].is_a?(Array)
-  end
 end

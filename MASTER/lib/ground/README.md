@@ -28,8 +28,7 @@ belongs to ground, whether the table sits in `data/` or in a frozen constant in
 the file itself. `map.rb`, `runtime_catalog.rb`, `maturity_scorecard.rb`,
 `research_thresholds.rb` and `operator_playbook.rb` are all
 that, and all stay. When the table's subject is another directory's declared
-purpose, the subject wins over the shape: a catalogue of reference Rails repositories
-read only by a Rails audit belongs beside that audit, not in ground. And a file that writes the table rather than reading it is not a
+purpose, the subject wins over the shape. And a file that writes the table rather than reading it is not a
 schema at all — `principle_map_repair.rb` repairs `principle_map.yml` for
 `bin/doctor --fix` and went to `fix/`, where repair is the declared purpose.
 
