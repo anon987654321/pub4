@@ -18,7 +18,7 @@ class TestGroundConfig < Minitest::Test
 
   def test_a_near_miss_on_a_known_key_is_named_at_load_and_by_validate
     config_with("budget_mx: 2\n") do |config, err|
-      assert_match(/'budget_mx' is not read; did you mean 'budget_max'/, err)
+      assert_match(/'budget_mx' is not read; did you mean 'budget_max'/, err) # source-assertion: ok — the warning written to stderr, not a source file
       assert_includes config.validate.join, "did you mean 'budget_max'"
       assert_in_delta Master::Ground::Config::BUDGET_MAX_DEFAULT, config.budget_max
     end
