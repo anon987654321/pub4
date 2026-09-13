@@ -176,8 +176,8 @@ end
     bed = Master::Voice::Policy.bed
     skip "no bed declared" unless bed
 
-    assert_equal "all", bed["progressions"],
-                 "a copy of four progressions drifts; the reader does not"
+    assert_equal "artist_verified", bed["progressions"],
+                 "the theory half of the table sounds like an exercise under speech"
     dilla = File.expand_path("../../#{bed["source"]}", __dir__)
     skip "dilla not in this checkout" unless File.file?(dilla)
 
@@ -198,7 +198,7 @@ end
     assert_equal patches.size, patches.map { |patch| patch["name"] }.uniq.size,
                  "two patches share a name"
     patches.each do |patch|
-      assert_includes %w[saw square pulse triangle sine], patch["wave"],
+      assert_includes %w[saw square pulse triangle sine fm_bell fm_wood fm_glass], patch["wave"],
                       "#{patch["name"]}: unknown oscillator"
       assert_operator patch["cutoff"].to_i, :>, 0, "#{patch["name"]}: no ladder cutoff"
     end
@@ -220,9 +220,9 @@ def test_the_bed_drums_keep_conflicting_time_feels
   assert_operator feels.dig("snare", "shift").to_f, :<, 0, "the snare is rushed, not laid back"
   assert_operator feels.dig("kick", "shift").to_f, :>, 0, "the kick lags"
   assert_equal "anoisesrc", drums.dig("hat", "source"),
-               "random() inside an aeval expression is a lookup, not a noise source"
-  refute_equal bed["chain"], drums["bus"],
-               "the pad chain rolls off at 2.6 kHz and would remove the hat"
+               "a declared source states its colour and amplitude"
+  assert_equal "sonitex_sp1200", drums["finish"],
+               "the kit is finished on dillas sampler, not left raw"
   assert_operator drums.dig("hat", "band_hz").last.to_i, :<=, 9000,
                   "a hat above 9 kHz is a modern bright kit, not this one"
 end
@@ -235,8 +235,9 @@ end
     bed = Master::Voice::Policy.bed
     skip "no bed declared" unless bed
 
-    assert_equal "kick", bed.dig("bass", "follows"),
-                 "a bassline written independently of the drums sounds programmed"
+    assert_equal "STUDIO/dilla/samples/drums", bed.dig("drums", "crate"),
+                 "a drum is a recording; you cannot filter your way to one from a sine"
+    assert bed.dig("drums", "samples", "kick"), "the kit must name its files"
     assert_equal "bar_shape", bed.dig("lead", "rhythm_from"),
                  "Ringtone Tools decouple rhythm from pitch; the rhythm is the bars"
     assert_equal "chord_bag", bed.dig("lead", "pitch_from"),
@@ -423,4 +424,30 @@ class TestConstitutionYamlLoading < Minitest::Test
 
     assert_empty offenders, "constitutional YAML must load through Master.load_yaml: #{offenders.join(', ')}"
   end
+# The tilt is the one thing here that was measured rather than chosen, and
+# both facts about it are load-bearing: where it sits in the chain, and that
+# only part of the delta is applied.
+def test_the_bed_tilt_sits_after_the_compressor
+  bed = Master::Voice::Policy.bed
+  skip "no bed declared" unless bed
+  tilt = bed["tilt"]
+  skip "no tilt declared" unless tilt
+
+  assert_equal "after_compressor", tilt["position"],
+               "a compressors makeup gain simply puts a cut midrange back"
+  assert_operator tilt["applied_fraction"].to_f, :<, 1.0,
+                  "a full correction chases the reference into its own arrangement"
+  assert_operator Array(tilt["bells"]).size, :>=, 5, "a tilt is a curve, not a bell"
+end
+
+# A synth is silent between the notes and a record never is.
+def test_the_bed_carries_surface_noise
+  bed = Master::Voice::Policy.bed
+  skip "no bed declared" unless bed
+
+  assert bed["dust"], "the imperfection is the sound, not a garnish on it"
+  assert_operator bed.dig("dust", "hiss_db").to_i, :<, -20,
+                  "audible hiss is a fault; inaudible hiss is the absence of digital silence"
+end
+
 end

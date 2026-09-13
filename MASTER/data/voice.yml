@@ -105,22 +105,26 @@ tts:
   # -14dB, not lower. At -26 it mixed correctly and was inaudible, which is the
   # same as not running.
   bed:
-    # dillas whole CHORD_PROGRESSIONS table, read at render time rather than
-    # copied. 242 progressions; a copy of four drifts, a reader does not. Every
-    # pass picks different ones, so nothing loops.
+    # The chords are dilla's, and only the ones he actually played.
     #
-    # Not all 242 evenly. The table carries whole-tone bridges and chains of bare
-    # dominants alongside the ninth-chord writing, and under speech the bare ones
-    # sound like an exercise. A progression qualifies when three quarters of its
-    # chords are extended.
+    # dilla keeps two tables. CHORD_PROGRESSIONS has 242 entries and most are
+    # theory — cycles, ladders, whole-tone bridges — which under speech sound
+    # like an exercise. ARTIST_VERIFIED_PROGRESSIONS is the short one, and every
+    # row is transcribed from a record with the artist and title attached. Five
+    # of those rows are Fantastic Vol 2: Fall in Love twice, Get Dis Money twice,
+    # Climax. That album and Flying Lotus's Los Angeles are the target.
+    #
+    # It is a smaller world on purpose. Twelve chords drawn from eight verified
+    # progressions repeat far more than twelve drawn from two hundred, and
+    # repetition is what a loop is for.
     source: STUDIO/dilla/dilla.rb
-    progressions: all
-    progression_filter: extended
+    progressions: artist_verified
+    records: ["Slum Village - Fantastic Vol 2", "Flying Lotus - Los Angeles"]
     bpm: 88
-    # Two bars each is a march, and a march is what a machine writes. The
-    # meter runs two, two, one, three, so the harmony arrives early once and
-    # then hangs. The drums keep their own four-bar count underneath, so the
-    # two cycles only line up every twelve bars. That drift is the point.
+    # Two bars each is a march, and a march is what a machine writes. The meter
+    # runs two, two, one, three, so the harmony arrives early once and then
+    # hangs. The drums keep their own four-bar count, so the two cycles only line
+    # up every twelve bars. That drift is the point.
     meter: [2, 2, 1, 3]
     chords_per_pass: 12
     gain_db: -14
@@ -133,109 +137,200 @@ tts:
     # edge, so every harmonic above 22 kHz folds back as an inharmonic tone;
     # sixteen of them is a field of bleeps that moves with the notes.
     oversample: 4
-    # About one chord in six plays backwards. A reversed pad swell is the oldest
-    # trick on a sampler and it still works: the attack arrives where the release
-    # should be.
-    reverse_odds: 0.17
-    # Ringtone Tools on the chord itself. Hocket II routes one line across
-    # many channels; applied to a chord the notes stop arriving together  each
-    # enters on its own sixteenth, its own waveform, its own side, and holds,
-    # so the chord assembles in front of you rather than being struck. MIDI
-    # Bag draws the order from a shuffled bag, so the same chord blooms
-    # differently every time. Every chord doing it would be an arpeggio, and
+    # Treat the progression as a sample, because that is what Dilla did to one.
+    #
+    # He did not play a loop through. He chopped it, put the chops back in a
+    # different order, repeated one, dropped one, ran one backwards, and let a
+    # chop cut a note off where it fell. The result still sits on the grid but
+    # the harmony arrives in an order nobody wrote, which is most of why those
+    # records sound like they do. Chops stay on bar lines so the drums still
+    # land where they should, and the total length is preserved.
+    chop:
+      unit: bar
+      orders: [[0, 1, 2, 3], [0, 0, 1, 2], [0, 1, 0, 1], [0, 2, 1, 3], [0, 1, 3, 2], [3, 1, 2, 0]]
+      reverse_odds: 0.12
+    # Three instruments, not sixteen sounds. A patch list is a menu; a family is
+    # an instrument you recognise across several settings, which is what makes a
+    # record sound like a band rather than a preset browser. The family rotates
+    # chord by chord, not the preset.
+    #
+    #   rhodes   struck, not blown: fast attack, inharmonic partials from the
+    #            tine, no filter sweep. FM is the only honest way to get those
+    #            partials out of an oscillator, which is why every digital
+    #            Rhodes since the DX7 has been FM.
+    #   moog     three detuned saws, a 24 dB ladder, a resonant cutoff low
+    #            enough to hear it move, a slow attack — the character is the
+    #            filter chasing a bowed note and never arriving.
+    #   prophet  the poly answer: two to four detuned oscillators and a pulse
+    #            width never quite square, which is why its pads are wide where
+    #            the Moog is thick.
+    families: [rhodes, moog, prophet]
+    patches:
+      - { name: rhodes mk1,        family: rhodes,  wave: fm_wood,  cutoff: 1400, res: 2.0, attack: 0.04, voices: 2, sub: true }
+      - { name: rhodes suitcase,   family: rhodes,  wave: fm_bell,  cutoff: 1500, res: 1.5, attack: 0.05, voices: 3, sub: true }
+      - { name: rhodes bark,       family: rhodes,  wave: fm_glass, cutoff: 1200, res: 3.5, attack: 0.03, voices: 2, sub: false }
+      - { name: rhodes soft,       family: rhodes,  wave: sine,     cutoff: 1100, res: 1.0, attack: 0.09, voices: 3, sub: true }
+      - { name: moog bowed,        family: moog,    wave: saw,      cutoff: 900,  res: 5.5, attack: 1.4,  voices: 3, sub: true }
+      - { name: moog bassoon,      family: moog,    wave: square,   cutoff: 560,  res: 8.5, attack: 0.6,  voices: 2, sub: true }
+      - { name: moog horn,         family: moog,    wave: saw,      cutoff: 780,  res: 6.5, attack: 1.1,  voices: 3, sub: true }
+      - { name: moog reed,         family: moog,    wave: pulse,    cutoff: 1050, res: 7.0, attack: 0.5,  voices: 3, sub: false }
+      - { name: prophet strings,   family: prophet, wave: saw,      cutoff: 1050, res: 4.0, attack: 2.0,  voices: 4, sub: false }
+      - { name: prophet pwm,       family: prophet, wave: pulse,    cutoff: 1300, res: 3.5, attack: 0.8,  voices: 4, sub: false }
+      - { name: prophet brass,     family: prophet, wave: saw,      cutoff: 1450, res: 5.0, attack: 0.35, voices: 3, sub: true }
+      - { name: prophet choir,     family: prophet, wave: triangle, cutoff: 1200, res: 2.5, attack: 1.7,  voices: 4, sub: false }
+    # Four racks for the pads, one picked per pass. A rack is a whole signal
+    # path, not a setting, and they rotate for the same reason the patches do.
+    # Every one ends in the same tail — lowpass, low-mid lift, limiter — because
+    # whatever happens upstairs the bed has to stay smooth enough to talk over.
+    # The strangeness is in the middle, never at the output.
+    #
+    #   wash      dilla's vocoder formants and chorus. The house sound.
+    #   shimmer   the pad copied, pitched up an octave and sent into a long
+    #             feedback delay under itself. This is the trick behind every
+    #             angelic pad ever made: the same chord an octave up arriving
+    #             late and blurred, which the ear reads as a choir.
+    #   spectral  magnitudes kept, phases thrown away, window by window.
+    #             Discarding phase is what makes a sound lose its attack and its
+    #             place in time — it stops being played and starts being
+    #             remembered.
+    #   alien     the whole spectrum shifted by 3 Hz. Not transposed: every
+    #             partial moves by the same NUMBER of hertz rather than the same
+    #             ratio, so the harmonic series is destroyed and the overtones
+    #             belong to no note at all.
+    # Two racks, not four. A rack that shifts the whole spectrum by a few hertz,
+    # or throws the phases away window by window, is interesting and is wrong on
+    # the chords: both destroy the harmonic series, and the harmony is the
+    # beautiful part. They stay on the lead, which is sparse enough to be strange.
+    pad_racks: [wash, shimmer]
+    # Hocket II, properly: eight channels, each its own oscillator, octave,
+    # stereo position and decay, so a phrase of eight notes is eight instruments
+    # passing a melody between them and no two consecutive notes come from the
+    # same place. Pan is applied as an equal-power pair.
+    hocket_channels: 8
+    # About one chord in three hockets: the notes stop arriving together, each
+    # entering on its own sixteenth and holding, so the chord assembles in front
+    # of you rather than being struck. Every chord doing it is an arpeggio, and
     # an arpeggio under speech is a competing melody.
     hocket_odds: 0.33
-    # The dreamlike half, and it is Flying Lotus rather than Dilla: four echo
-    # taps at uneven spacings so none reads as a delay, a slow phaser, and a
-    # wow that drifts the pitch a hundredth of a percent. The character is in
-    # the wash and the filtering, not in the notes. aphaser speed floors at
-    # 0.1; below it ffmpeg refuses the whole graph with "Result too large".
-    wash: { echo_taps_ms: [57, 131, 223, 349], phaser_speed: 0.1, wow: { hz: 0.21, depth: 0.014 } }
-    chain: "equalizer=f=520:t=q:w=1.1:g=3.0,equalizer=f=1480:t=q:w=1.3:g=2.0,chorus=0.5:0.7:19|27:0.3|0.26:0.24|0.2:0.9|1.4,highpass=f=70,lowpass=f=2600"
-    # One patch per chord, drawn fresh each pass. The recipe is fixed  an
-    # oscillator shape, a detune spread, a ladder cutoff with resonance, an
-    # attack  and only the settings move, which is how a Minimoog reached for
-    # instruments it could not be. Each name is what the patch aims at.
-    patches:
-      - { name: bowed cello,   wave: saw,      cutoff: 900,  res: 5.5, attack: 1.4,  voices: 3, sub: true }
-      - { name: muted brass,   wave: pulse,    cutoff: 1500, res: 7.0, attack: 0.35, voices: 2, sub: true }
-      - { name: wood flute,    wave: triangle, cutoff: 2300, res: 2.0, attack: 0.9,  voices: 3, sub: false }
-      - { name: bassoon,       wave: square,   cutoff: 560,  res: 8.5, attack: 0.6,  voices: 2, sub: true }
-      - { name: glass bells,   wave: sine,     cutoff: 2100, res: 1.5, attack: 0.06, voices: 4, sub: false }
-      - { name: reed organ,    wave: pulse,    cutoff: 1250, res: 6.0, attack: 0.5,  voices: 3, sub: false }
-      - { name: string choir,  wave: saw,      cutoff: 1050, res: 4.0, attack: 2.0,  voices: 4, sub: false }
-      - { name: clavinet,      wave: square,   cutoff: 1850, res: 9.0, attack: 0.06, voices: 2, sub: false }
-      - { name: french horn,   wave: saw,      cutoff: 780,  res: 6.5, attack: 1.1,  voices: 3, sub: true }
-      - { name: harmonica,     wave: square,   cutoff: 1650, res: 7.5, attack: 0.25, voices: 3, sub: false }
-      - { name: vibraphone,    wave: sine,     cutoff: 2000, res: 2.5, attack: 0.08, voices: 3, sub: false }
-      - { name: tuba,          wave: triangle, cutoff: 620,  res: 8.0, attack: 0.8,  voices: 2, sub: true }
-      - { name: oboe,          wave: pulse,    cutoff: 1950, res: 8.0, attack: 0.4,  voices: 2, sub: false }
-      - { name: rhodes,        wave: sine,     cutoff: 1400, res: 3.0, attack: 0.1,  voices: 3, sub: true }
-      - { name: viola section, wave: saw,      cutoff: 1150, res: 4.5, attack: 1.7,  voices: 4, sub: false }
-      - { name: bass clarinet, wave: triangle, cutoff: 700,  res: 6.0, attack: 0.7,  voices: 2, sub: true }
-    # The bass plays the kick. The bar shape is chosen once and handed to both,
-    # so every bass note lands on a kick and the two read as one instrument. A
-    # bassline written independently of the drums is the clearest single way to
-    # make a track sound programmed. Raw: a saw and a square an octave apart,
-    # driven, nothing above 220 Hz, no chorus and no movement.
-    bass: { follows: kick, waves: [saw, square], lowpass_hz: 220, gain_db: -4 }
-    # Ringtone Tools are Max for Live MIDI utilities that decouple rhythm from
-    # pitch. Hocket II splits a line into single-note events across up to eight
-    # channels, so one melody is played by many voices in turn; MIDI Bag stores
-    # notes and triggers whatever is in the bag when new MIDI arrives.
-    #
-    # So the rhythm is the bars own kick and ghost placements, the pitches are a
-    # shuffled bag of the chords upper voices, and every successive note goes to
-    # a different waveform and a different side of the stereo field. One line,
-    # many mouths. It plays on about half the bars, because a lead on every bar
-    # is a melody and a melody competes with speech.
+    reverse_odds: 0.17
+    # MIDI Bag: record, then retrieve. The device stores notes as they are played
+    # and triggers what is stored when new MIDI arrives — so what you hear is not
+    # this chord, it is a chord from earlier retriggered by the rhythm of now. It
+    # is the only thing in the bed with a memory. Filtered to the pitch classes
+    # the current chord and the next one share, so what comes out still belongs
+    # where it lands.
+    bag_depth: 3
     lead:
       reference: ringtone_tools
       rhythm_from: bar_shape
       pitch_from: chord_bag
-      hocket_voices: [saw, square, pulse, triangle]
-      plays_odds: 0.5
-      gain_db: -9
+      # Bach states his figure three times at successively lower pitches. A
+      # three-note shape is taken from the bag and restated lower on each entry,
+      # intervals kept and the start falling. Random pitches are decoration, and
+      # decoration with nothing to follow is what boring sounds like.
+      motive: { notes: 3, statements: 3, direction: descending }
+      plays_odds: 0.25
+      gain_db: -7
+      # Four racks, rotating per bar, and the lead is the one voice allowed to be
+      # strange — it plays one bar in four, so it can afford two of everything.
+      # Two phasers at different rates beating against each other is the
+      # difference between an effect and a texture: one is a sweep you can
+      # follow, two is weather.
+      racks: [tape, weather, octave, inharmonic]
     # The pads and the lead duck under the kick, keyed on the kit itself, so the
     # pumping follows what the drummer just played rather than a fixed rate.
-    # Warping them to the drums is what stops the bed being two records at once.
     sidechain:
       pads: { threshold: 0.055, ratio: 7, attack_ms: 4, release_ms: 190, makeup: 1.6 }
       lead: { threshold: 0.08, ratio: 4, attack_ms: 3, release_ms: 150, makeup: 1.2 }
-    # The drummer is Dilla time, as Dan Charnas sets it out in the book of that
-    # name, on a kit that owes its sound to Karriem Riggins and its finish to
-    # dillas Sonitex.
+    # One master bus, and everything crosses it.
     #
-    # Charnas claim is precise and it is not loose drums. Before Dilla there were
-    # two time-feels: straight, where the beats are even, and swing, where they
-    # are not. What Dilla did with the MPCs swing and shift was run both at once
-    #  leaving some elements rigid on the grid and pulling others off it, so the
-    # parts disagree and the ear cannot resolve them into one feel. He pushed
-    # snares forward so they sounded rushed and let kicks lag. The friction is
-    # the music, and none of it was accidental, which is why feels is a table
-    # rather than a random walk.
+    # Three sources coloured three different ways do not sound like one record —
+    # they sound like three recordings played together. The mix takes dilla's
+    # Sonitex at the subtle preset: the same flow as the kit gets, but 14-bit at
+    # an 18 percent blend instead of 12 at 52, because the kit has already been
+    # through the hard version and running it twice at full strength is mud.
+    # Constants from SONITEX_PRESETS[:subtle] at dilla.rb:10062.
+    master_bus: { preset: subtle, drive: 1.25, crush_bits: 14, crush_mix: 0.18, width: 1.08, limit: 0.92 }
+    # The tilt, measured against a reference rather than chosen by ear.
     #
-    # The patterns are boom bap first: kick on one, snare on two and four, hats
-    # in straight eighths, and the backbeat never in doubt. All the invention is
-    # in the kick and in the placement. A bar with no two and four is not a bar
-    # of hip-hop, so the variation lives in the arrangement instead.
+    # Nine octave bands of this bed were compared with a professional record and
+    # the deltas inverted what the ear said. The problem was never a dull top:
+    # relative to its own sub the bed ran 4 dB hot at 350 Hz, 6.8 at 700, 7.3 at
+    # 1.4 k and 6.4 at 2.8 k while sitting 3.6 dB light at 85 — a thin kick under a
+    # cluttered midrange, which is what an amateur mix is, and which no amount of
+    # choosing filters by ear would have found.
+    #
+    # Seventy percent of each delta is applied. A full correction chases the
+    # reference into its own arrangement, and this one has speech on top of it.
+    #
+    # The tilt sits AFTER the output compressor and before the limiter, which is
+    # the mastering order and not a detail: with the compressor downstream, its
+    # makeup gain simply put the cut midrange back.
+    #
+    # Measuring one render against another measures nothing, because every pass
+    # picks different progressions, patches, racks and shapes. The only comparison
+    # that means anything is the same audio with and without the filter.
+    tilt:
+      applied_fraction: 0.7
+      position: after_compressor
+      bells:
+        - { hz: 85,    octaves: 1.0, gain_db: 2.5 }
+        - { hz: 350,   octaves: 1.2, gain_db: -2.8 }
+        - { hz: 700,   octaves: 1.2, gain_db: -4.8 }
+        - { hz: 1400,  octaves: 1.2, gain_db: -5.1 }
+        - { hz: 2800,  octaves: 1.2, gain_db: -4.5 }
+        - { hz: 5600,  octaves: 1.2, gain_db: 0.5 }
+        - { hz: 11000, octaves: 1.2, gain_db: 5.0 }
+    # Vinyl, under everything, all the time.
+    #
+    # Dilla sampled off records, Madlib works off an SP-303 and a stack of vinyl,
+    # and Theo Parrish is described as lumpy drums, detuned keys, hissing hats,
+    # vinyl noise and very loose loops, his beats finger-drummed in takes rather
+    # than programmed. The imperfection is not a garnish on that sound, it is the
+    # sound, and it is the one thing filtering an oscillator will never produce: a
+    # synth is silent between the notes and a record never is.
+    dust: { hiss_db: -30, crackle_db: -14, band_hz: [900, 7000] }
     drums:
       reference: dilla_time
       kit: karriem_riggins
-      # The records this is tuned toward, and the machines behind them. Dilla
-      # went SP-12, SP-1200, MPC-60, then the MPC3000, which carried most of
-      # the catalogue and is named every time for its gritty low-pass. His
-      # drums were heavily layered, a sampled kick stacked against a machine.
-      records: ["Jay Dee - Another Batch", "Slum Village - Fantastic Vol 2"]
-      machines: [sp1200, mpc3000]
+      # The kit is recordings, not arithmetic.
+      #
+      # Everything else here synthesises — an oscillator, a filter, an envelope —
+      # and that is how you make a sound, not how you make a drum. A real kick is
+      # a beater on a head in a room through a microphone onto tape and then
+      # through a sampler, and every stage is in what you hear. dilla keeps a
+      # crate; these are its files, triggered, each hit delayed to its place and
+      # scaled by its velocity. The pattern stays ours, the sound is a record.
+      crate: STUDIO/dilla/samples/drums
+      samples: { kick: kick.wav, snare: snare.wav, ghost: ghost.wav, hat: hat.wav, open_hat: open_hat.wav, clap: ind_clap.wav }
+      # The accent contour, the other half of why a hand sounds different from a
+      # grid: downbeats hard, the sixteenths between them soft. Not a random
+      # velocity per hit, which is noise. A shape.
+      hat_accents: { downbeat: 0.95, eighth: 0.7, sixteenth: 0.45, jitter: 0.3 }
       finish: sonitex_sp1200
+      machines: [sp1200, mpc3000]
       gain_db: -5
-      # One shape runs four bars and the fourth is its variation. A beat is a
-      # loop held long enough for the conflict inside it to become the groove,
-      # and then broken; re-rolling every bar sounds busy and reads as
-      # indecision.
+      # Three banks, and which one a four-bar block takes is the arrangement.
+      # Techno carries most of it — the kick as a clock rather than an event —
+      # because a rigid floor is what the swing and the lay-back in feels are
+      # heard against. That is the conflict Dilla Time describes with the rigid
+      # part moved from the hats to the kick. Dilla's eight are the relief, and
+      # the Flying Lotus six are rare: a bed made mostly of broken bars is a bed
+      # nobody can talk over.
+      banks: { techno: 4, dilla: 8, flylo: 6 }
       arrangement: { bars_per_shape: 4, variation_bar: 4 }
-      shapes: [so far, workin, runnin, the light, stakes, dont cry, fall in love, two turntables]
+      shapes: [so far, workin, runnin, the light, stakes, dont cry, fall in love, two turntables,
+               flylo triplets, flylo double time, flylo hole, flylo displaced, flylo stagger, flylo drift,
+               techno floor, techno offbeat, techno rolling, techno broken]
+      # Charnas's claim is precise and it is not loose drums. Before Dilla there
+      # were two time-feels: straight, where the beats are even, and swing, where
+      # they are not. What Dilla did with the MPC's swing and shift was run both
+      # at once — some elements rigid on the grid, others pulled off it, so the
+      # parts disagree and the ear cannot resolve them into one feel. He pushed
+      # snares forward so they sounded rushed and let kicks lag. The friction is
+      # the music, and none of it was accidental, which is why this is a table
+      # rather than a random walk.
+      #
       # seconds; shift is negative for early, positive for late
       feels:
         hat:   { swing: 0.0,  shift: 0.0,    drift: 0.0 }
@@ -244,24 +339,23 @@ tts:
         ghost: { swing: 0.17, shift: 0.026,  drift: 0.004 }
       # Three layers, because one oscillator is a tone and three are a drum. The
       # punch is the layer the ear reads as hard; the click is what carries the
-      # hit through speech at bed level.
+      # hit through speech at bed level. What it is not is a bass note: an 808
+      # ring under the sub made it one, because a 42 Hz sine held for three
+      # quarters of a second IS a bass note whatever it is labelled.
       #
       # Every envelope clamps its span at zero. exp() is evaluated across the
       # whole bar including the seconds before the hit, where the exponent is
       # large and positive; at these decay rates it overflows to infinity, the
-      # gate multiplies that by zero, and the bar comes out NaN  silent and
+      # gate multiplies that by zero, and the bar comes out NaN — silent and
       # clipped. Five bars in six were doing exactly that.
       kick:
         envelope_span: clamped
-        sub: { hz: 43, fall_ms: 12, phase: integrated }
-        punch: { hz: 108, fall_ms: 6, phase: integrated }
-        # The 808 ring under the sub, which is the Flying Lotus half of the
-        # stack: a filtered vinyl kick with a short 808 beneath it.
-        tail: { hz: 42, decay: 3.2 }
+        sub: { hz: 45, fall_ms: 11, phase: integrated }
+        punch: { hz: 112, fall_ms: 6, phase: integrated }
         drive_db: 11
         click: { source: anoisesrc, band_hz: [2000, 7000], gain_db: -8 }
-      # The doubled snare  a second hit a sixteenth behind the backbeat, quieter
-      #  is the single most recognisable thing in his drums.
+      # The doubled snare — a second hit a sixteenth behind the backbeat, quieter
+      # — is the single most recognisable thing in his drums.
       snare:
         source: anoisesrc
         body_hz: [120, 340]
@@ -274,11 +368,11 @@ tts:
       # dilla uses it for tape hiss. The old hats were simply far too bright and
       # the snare underneath them was made of sine waves.
       hat: { source: anoisesrc, band_hz: [4000, 9000], gain_db: -17, open_odds: 0.35 }
-      # Sonitex STX-1260, sp1200 preset, with dillas own measured constants from
-      # dilla.rb:10033  compressor, tape saturation between pre- and de-emphasis,
-      # vinyl bandwidth with a resonant head bump, wow and flutter, the sampler
-      # itself at 12 bits and 26.09 kHz, then an output limiter. Its numbers, not
-      # ours: changing them changes a rendered sound.
+      # Sonitex STX-1260, sp1200 preset, with dilla's own measured constants from
+      # dilla.rb:10033 — compressor, tape saturation between pre- and
+      # de-emphasis, vinyl bandwidth with a resonant head bump, wow and flutter,
+      # the sampler at 12 bits and 26.09 kHz, then an output limiter. Its
+      # numbers, not ours: changing them changes a rendered sound.
       sonitex: { preset: sp1200, crush_bits: 12, crush_hz: 26095, crush_mix: 0.52, head_bump_hz: 58, drive: 1.45 }
       # The 12 ms fade is not cosmetic: every envelope is cut at the bar line and
       # a decay truncated mid-flight is a step discontinuity, which is a click on
