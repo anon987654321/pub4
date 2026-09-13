@@ -33,6 +33,18 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ruby /Users/mac/.claude/hooks/speak_reply.rb",
+            "statusMessage": "Speaking the reply",
+            "timeout": 120
+          }
+        ]
+      }
     ]
   },
   "enabledPlugins": {
