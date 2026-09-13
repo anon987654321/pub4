@@ -3,8 +3,9 @@
 require_relative "test_helper"
 require "fileutils"
 
-# Regression guard: the fix-loop committer must never commit a tree where an
-# autofix left Ruby unparseable (the corruption that motivated this guard).
+# The fix-loop committer commits only what its own pass changed: never a path
+# that was already dirty when the pass began, never the shared index, and never
+# a tree where an autofix left Ruby unparseable.
 class TestFixLoopCommitter < Minitest::Test
   class FakeBus
     attr_reader :events
@@ -18,27 +19,24 @@ class TestFixLoopCommitter < Minitest::Test
     end
   end
 
+  # changed_paths answers the baseline first, then the tree after the pass.
   class FakeGit
     attr_reader :commits
 
-    def initialize(lines)
-      @lines = lines
+    def initialize(before, after)
+      @answers = [before, after]
       @commits = []
     end
 
-    def dirty?(_path = ".")
-      !@lines.empty?
+    def changed_paths
+      @answers.size > 1 ? @answers.shift : @answers.first
     end
 
-    def status_lines(_path = nil)
-      @lines
+    def commit(message, paths:)
+      @commits << [message, paths]
     end
 
-    def add_all; end
-
-    def commit(message)
-      @commits << message
-    end
+    def head = "abc1234"
   end
 
   def setup
@@ -55,8 +53,9 @@ class TestFixLoopCommitter < Minitest::Test
     File.write(path, src)
   end
 
-  def run_committer(git, bus, message)
+  def run_committer(git, bus, message, baseline: true)
     committer = Master::Fix::FixLoop::Committer.new(git:, bus:, root: @dir)
+    committer.baseline! if baseline
     committer.commit_if_dirty(message)
   end
 
@@ -66,16 +65,16 @@ class TestFixLoopCommitter < Minitest::Test
 
   def test_commits_when_changed_ruby_parses
     write_file("lib/ok.rb", "FOO = {\n  a: 1,\n}.freeze\n")
-    git = FakeGit.new([" M lib/ok.rb"])
+    git = FakeGit.new([], ["lib/ok.rb"])
     bus = FakeBus.new
     run_committer(git, bus, "fix: ok")
-    assert_equal ["fix: ok"], git.commits
+    assert_equal [["fix: ok", ["lib/ok.rb"]]], git.commits
     refute blocked?(bus)
   end
 
   def test_blocks_commit_on_freeze_corruption
     write_file("lib/bad.rb", "FOO = {.freeze\n  a: 1,\n}.freeze\n")
-    git = FakeGit.new([" M lib/bad.rb"])
+    git = FakeGit.new([], ["lib/bad.rb"])
     bus = FakeBus.new
     run_committer(git, bus, "fix: bad")
     assert_empty git.commits
@@ -84,7 +83,7 @@ class TestFixLoopCommitter < Minitest::Test
 
   def test_blocks_commit_on_missing_end
     write_file("lib/bad2.rb", "def m\n  if x\n  end\n")
-    git = FakeGit.new([" M lib/bad2.rb"])
+    git = FakeGit.new([], ["lib/bad2.rb"])
     bus = FakeBus.new
     run_committer(git, bus, "fix: bad2")
     assert_empty git.commits
@@ -93,10 +92,36 @@ class TestFixLoopCommitter < Minitest::Test
 
   def test_ignores_non_ruby_changes
     write_file("README.md", "# hi\n")
-    git = FakeGit.new([" M README.md"])
+    git = FakeGit.new([], ["README.md"])
     bus = FakeBus.new
     run_committer(git, bus, "docs: update")
-    assert_equal ["docs: update"], git.commits
+    assert_equal [["docs: update", ["README.md"]]], git.commits
     refute blocked?(bus)
+  end
+
+  def test_a_path_dirty_before_the_pass_stays_out_of_the_commit
+    write_file("lib/ok.rb", "OK = 1\n")
+    git = FakeGit.new(["lib/theirs.rb"], ["lib/theirs.rb", "lib/ok.rb"])
+    run_committer(git, FakeBus.new, "fix: ok")
+    assert_equal [["fix: ok", ["lib/ok.rb"]]], git.commits
+  end
+
+  # Another session's unparseable half-edit must neither be committed nor block
+  # the pass's own commit.
+  def test_foreign_broken_ruby_does_not_block_the_pass
+    write_file("lib/theirs.rb", "def m\n")
+    write_file("lib/ok.rb", "OK = 1\n")
+    git = FakeGit.new(["lib/theirs.rb"], ["lib/theirs.rb", "lib/ok.rb"])
+    bus = FakeBus.new
+    run_committer(git, bus, "fix: ok")
+    assert_equal [["fix: ok", ["lib/ok.rb"]]], git.commits
+    refute blocked?(bus)
+  end
+
+  def test_nothing_is_committed_without_a_baseline
+    write_file("lib/ok.rb", "OK = 1\n")
+    git = FakeGit.new(["lib/ok.rb"], ["lib/ok.rb"])
+    run_committer(git, FakeBus.new, "fix: ok", baseline: false)
+    assert_empty git.commits
   end
 end

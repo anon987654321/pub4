@@ -9,13 +9,17 @@ module Master
       # State-changing git commands (add/commit/push/reset/tag/fetch) — kept
       # separate from GitOperations' own read-only status/inspection queries.
       module Mutations
-        def add_all
-          Master::Io::Exec.capture2e("git", "-C", @root_path, "add", "-A")
-        end
+        # Stages and commits the named paths and nothing else, the rule
+        # Core::World#do_git_commit keeps for the fold. The index is shared with
+        # every session in this checkout, so committing it signs their staged
+        # work with this message.
+        def commit(message, paths:)
+          scoped = Array(paths).map(&:to_s).reject(&:empty?)
+          raise ArgumentError, "git commit needs paths: an unscoped commit takes the shared index" if scoped.empty?
 
-        def commit(message)
+          Master::Io::Exec.capture2e("git", "-C", @root_path, "add", "--", *scoped)
           Master::Io::Exec.capture2e("git", "-C", @root_path, "commit", "-m", message.to_s,
-                                     "-m", Master::Core::World::COMMIT_TRAILER)
+                                     "-m", Master::Core::World::COMMIT_TRAILER, "--", *scoped)
         end
 
         def push
@@ -50,6 +54,16 @@ module Master
         args << path if path
         out, = Master::Io::Exec.capture2e(*args)
         out.lines.map(&:chomp)
+      end
+
+      # Modified and untracked paths under the root, relative to it. Porcelain
+      # status names paths from the top of the repository, which is not this
+      # root when the runtime lives in a subdirectory of the checkout, as
+      # MASTER does in pub4.
+      def changed_paths
+        out, _, status = Master::Io::Exec.capture3("git", "-C", @root_path, "ls-files", "--modified", "--others",
+                                                   "--exclude-standard")
+        status.success? ? out.lines.map(&:chomp).uniq : []
       end
 
       def dirty_count(path = nil)

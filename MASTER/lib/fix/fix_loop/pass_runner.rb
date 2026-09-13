@@ -48,6 +48,7 @@ module Master
         def run_pass(files:, target:, pass:, deadline:, history:, seen_snapshots:,
                      recurring_violations:, consecutive_clean:)
           pass_mtimes = mtimes(files)
+          @committer.baseline!
           @bus&.publish("fix_loop:pass_start", pass:, target:, file_count: files.size)
 
           run_fast_stage(files, pass)

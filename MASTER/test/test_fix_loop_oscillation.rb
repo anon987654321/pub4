@@ -83,17 +83,9 @@ class TestFixLoopOscillation < Minitest::Test
   end
 
   class StubGit
-    def dirty?(_)
-      false
-    end
+    def changed_paths = []
 
-    def add_all
-      nil
-    end
-
-    def commit(_)
-      nil
-    end
+    def commit(_message, paths:) = nil
   end
 
   class CountingFixLoop < Master::Fix::FixLoop

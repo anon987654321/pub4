@@ -104,8 +104,7 @@ class GitOperationsTest < Minitest::Test
     assert_equal [0, 0], @git.ahead_behind
 
     write("README.md", "first\nlocal\n")
-    @git.add_all
-    @git.commit("local work")
+    @git.commit("local work", paths: ["README.md"])
 
     assert_equal [1, 0], @git.ahead_behind
   end
@@ -120,20 +119,52 @@ class GitOperationsTest < Minitest::Test
     assert_equal [0, 0], Master::Io::GitOperations.new(solo).ahead_behind
   end
 
-  def test_add_all_and_commit_move_head
+  def test_commit_moves_head
     before = @git.head
     write("lib/added.rb", "# added\n")
-    @git.add_all
-    @git.commit("adds a file")
+    @git.commit("adds a file", paths: ["lib/added.rb"])
 
     refute_equal before, @git.head
     refute @git.dirty?(".")
   end
 
+  # The index is shared with every session in the checkout: a path someone else
+  # staged, and a file nobody named, both stay out of the commit.
+  def test_commit_takes_only_the_named_paths
+    write("lib/mine.rb", "# mine\n")
+    write("lib/staged.rb", "# theirs, staged\n")
+    write("lib/loose.rb", "# theirs, untracked\n")
+    sh("git", "add", "lib/staged.rb", chdir: @repo)
+
+    @git.commit("mine only", paths: ["lib/mine.rb"])
+
+    committed = sh("git", "show", "--name-only", "--format=", "HEAD", chdir: @repo).lines.map(&:chomp)
+    assert_equal ["lib/mine.rb"], committed
+    assert_includes sh("git", "diff", "--cached", "--name-only", chdir: @repo), "lib/staged.rb"
+  end
+
+  def test_commit_refuses_without_paths
+    write("lib/any.rb", "# any\n")
+
+    assert_raises(ArgumentError) { @git.commit("everything", paths: []) }
+  end
+
+  # ls-files names paths from -C's directory, so a runtime living in a
+  # subdirectory of its checkout gets paths it can hand straight back to commit.
+  def test_changed_paths_are_relative_to_a_subdirectory_root
+    write("sub/tracked.rb", "# tracked\n")
+    sh("git", "add", "sub/tracked.rb", chdir: @repo)
+    sh("git", "commit", "-m", "sub", chdir: @repo)
+    write("sub/tracked.rb", "# changed\n")
+    write("sub/lib/new.rb", "# new\n")
+    write("outside.md", "x\n")
+
+    assert_equal ["lib/new.rb", "tracked.rb"], Master::Io::GitOperations.new(File.join(@repo, "sub")).changed_paths.sort
+  end
+
   def test_push_updates_the_remote
     write("lib/pushed.rb", "# pushed\n")
-    @git.add_all
-    @git.commit("pushes")
+    @git.commit("pushes", paths: ["lib/pushed.rb"])
     @git.push
 
     assert_equal [0, 0], @git.ahead_behind
@@ -157,8 +188,7 @@ class GitOperationsTest < Minitest::Test
 
   def test_reset_hard_discards_local_work
     write("README.md", "first\nunwanted\n")
-    @git.add_all
-    @git.commit("unwanted")
+    @git.commit("unwanted", paths: ["README.md"])
 
     @git.reset_hard("origin/main")
 
