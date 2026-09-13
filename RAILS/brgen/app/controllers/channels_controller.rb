@@ -56,9 +56,10 @@ rooms = Conversation.channels.where(city_id: @city&.id).to_a
 
     @rail_conversations = Conversation.for_user(Current.user)
                                       .where(slug: nil)
-                                      .includes(:participants, :messages)
+                                      .includes(:participants)
                                       .order(Conversation::INBOX_ORDER)
                                       .limit(30)
+    @rail_last_messages = Conversation.last_messages_for(@rail_conversations.map(&:id))
     @rail_unread = Conversation.unread_counts_for(Current.user)
   end
 end

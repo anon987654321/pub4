@@ -16,7 +16,7 @@
     that the rail has no space for. %>
 <li role="listitem">
   <% other = (conversation.participants - [ Current.user ]).first %>
-  <% last = conversation.messages.last %>
+  <% last = local_assigns[:last] %>
   <div class="messenger-inbox-row">
     <%= link_to conversation_path(conversation), class: "messenger-inbox-link" do %>
       <span class="messenger-inbox-avatar" aria-hidden="true">

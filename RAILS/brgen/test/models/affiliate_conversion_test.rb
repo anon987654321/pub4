@@ -27,6 +27,19 @@ class AffiliateConversionTest < ActiveSupport::TestCase
     assert_equal "newsletter_weekly", first.epi_parts["surface"]
   end
 
+  test "a postback with no transaction id is idempotent on its soft key" do
+    skip "migration not applied" unless Shared::AffiliateConversion.table_exists?
+
+    params = { "messageTypeId" => "9", "orderNumber" => "ORD-NOID", "publisherCommission" => "40.00" }
+
+    first = Shared::AffiliateConversion.record_from_postback!(params)
+    second = Shared::AffiliateConversion.record_from_postback!(params)
+
+    assert_equal first.id, second.id
+    assert_equal "order:ORD-NOID:msg:9", first.reload.transaction_id
+    assert_equal 1, Shared::AffiliateConversion.where(order_number: "ORD-NOID").count
+  end
+
   test "rejects blank message type" do
     skip "migration not applied" unless Shared::AffiliateConversion.table_exists?
 

@@ -17,9 +17,10 @@ class ConversationsController < ApplicationController
     @pagy, @conversations = pagy(
       Conversation.for_user(Current.user)
                   .where(slug: nil)
-                  .includes(:participants, :messages)
+                  .includes(:participants)
                   .order(Conversation::INBOX_ORDER)
     )
+    @last_messages = Conversation.last_messages_for(@conversations.map(&:id))
     # One grouped COUNT for the whole list. The view used to call
     # unread_count_for per row, which includes(:messages) does not help with —
     # it is a find_by plus its own COUNT, so the preload was paid and ignored.
@@ -132,9 +133,10 @@ end
 def load_rail
   @rail_conversations = Conversation.for_user(Current.user)
                                     .where(slug: nil)
-                                    .includes(:participants, :messages)
+                                    .includes(:participants)
                                     .order(Conversation::INBOX_ORDER)
                                     .limit(30)
+  @rail_last_messages = Conversation.last_messages_for(@rail_conversations.map(&:id))
   @rail_unread = Conversation.unread_counts_for(Current.user)
 end
 

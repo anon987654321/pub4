@@ -97,6 +97,20 @@ class MarketplaceKindsTest < ActionDispatch::IntegrationTest
     assert_nil listing.housing_detail
   end
 
+  test "an update keeps the kind the listing was created with" do
+    sign_in_as(@lister)
+    goods = create_listing("goods")
+
+    patch marketplace.listing_path(goods), params: {
+      listing: { title: "Sofa, fortsatt", kind: "job", job_detail_attributes: { employer: "Smuglet" } }
+    }
+
+    goods.reload
+    assert_equal "Sofa, fortsatt", goods.title, "the update itself must have gone through"
+    assert_equal "goods", goods.kind
+    assert_nil goods.job_detail
+  end
+
   # A bicycle search should not turn up a job.
   test "the index shows one kind at a time, goods unless asked" do
     # A different lister for each: two_factor_required? turns on once an

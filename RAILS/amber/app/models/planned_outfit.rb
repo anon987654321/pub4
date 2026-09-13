@@ -8,7 +8,9 @@ class PlannedOutfit < ApplicationRecord
   validates :planned_date, uniqueness: { scope: :user_id }
 
   scope :upcoming, -> { where("planned_date >= ?", Date.current).order(:planned_date) }
-  scope :this_week, -> { where(planned_date: Date.today..7.days.from_now) }
+  # Date.current is the Oslo day; Date.today is the server's, which is UTC on
+  # vm23 and put the week one day behind between midnight and 02:00.
+  scope :this_week, -> { where(planned_date: Date.current..(Date.current + 7)) }
 
   after_commit :broadcast_live_refresh
 

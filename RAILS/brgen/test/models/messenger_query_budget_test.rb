@@ -66,6 +66,24 @@ class MessengerQueryBudgetTest < ActiveSupport::TestCase
     assert_equal before, after, "re-reading a room moved the first-read times"
   end
 
+  # The inbox and rail show one preview line per thread. They preloaded every
+  # message of every thread to find it.
+  test "last messages load the newest per thread and nothing else" do
+    convo = conversation_with(40)
+    third = create_user("third")
+    quiet = Conversation.find_or_create_direct(@me, third)
+    quiet.messages.create!(sender: third, content: "bare", message_type: "text")
+    empty = Conversation.create_group!(creator: @me, name: "Tom", users: [ @other ])
+
+    last = nil
+    n = count_queries { last = Conversation.last_messages_for([ convo.id, quiet.id, empty.id ]) }
+
+    assert_equal "m39", last[convo.id].content
+    assert_equal "bare", last[quiet.id].content
+    assert_nil last[empty.id]
+    assert_operator n, :<=, 2
+  end
+
   test "channel counts are one query each regardless of how many rooms" do
     rooms = Conversation.channels.to_a
     n = count_queries do

@@ -40,7 +40,8 @@
       <%= render "conversations/conversation_row",
                  conversation: conversation,
                  unread: @unread_counts.fetch(conversation.id, 0),
-                 pinned: @pinned_ids.include?(conversation.id) %>
+                 pinned: @pinned_ids.include?(conversation.id),
+                 last: @last_messages[conversation.id] %>
     <% end %>
   </ul>
   <%= render "shared/pager", pagy: @pagy %>

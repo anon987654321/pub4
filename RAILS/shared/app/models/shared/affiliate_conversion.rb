@@ -61,7 +61,10 @@ module Shared
       }
 
       record = find_or_initialize_by(key)
-      record.assign_attributes(attrs.except(:message_type_id).merge(raw_payload: raw))
+      # The key owns transaction_id. Assigning attrs' own copy wrote nil over the
+      # soft key, so the next retry of an id-less postback found nothing and
+      # inserted a duplicate paid conversion.
+      record.assign_attributes(attrs.except(:message_type_id, :transaction_id).merge(raw_payload: raw))
       record.message_type_id = attrs[:message_type_id]
       record.save!
       record

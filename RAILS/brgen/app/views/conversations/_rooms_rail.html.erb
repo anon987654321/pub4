@@ -17,6 +17,7 @@
     stated twice, and the mark is the brand and nothing else. %>
 <% rail_conversations = @rail_conversations || [] %>
 <% rail_unread = @rail_unread || {} %>
+<% rail_last_messages = @rail_last_messages || {} %>
 <% current_room = defined?(@conversation) ? @conversation : nil %>
 
 <nav class="messenger-rail" aria-label="<%= t("messages.rooms_label") %>">
@@ -67,12 +68,10 @@
     <ul class="messenger-rail-list" role="list">
       <% rail_conversations.each do |room| %>
         <% unread = rail_unread.fetch(room.id, 0) %>
-        <%# messages is preloaded — conversations_controller builds
-            @rail_conversations with .includes(:participants, :messages) — so this
-            reads the loaded association rather than issuing a query per row, and
-            strict loading does not raise. The inbox row below this file has made
-            the same call since it was extracted. %>
-        <% last = room.messages.last %>
+        <%# The newest message per room comes from Conversation.last_messages_for,
+            one grouped query for the rail, rather than preloading every message
+            of every thread to read one preview line. %>
+        <% last = rail_last_messages[room.id] %>
         <li role="listitem">
           <%= link_to conversation_path(room), class: "messenger-rail-room messenger-rail-room--dm",
                       data: { turbo_frame: "messenger-pane" },

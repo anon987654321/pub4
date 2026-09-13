@@ -11,7 +11,9 @@ class UsersController < ApplicationController
     # to the fediverse that 404s in a browser is worse than not federating.
     scope = User.includes(:dating_profile)
     @user = scope.find_by(username: params[:id]) || scope.find(params[:id])
-    @posts = @user.posts.includes(:community, :votes).order(created_at: :desc).limit(20)
+    # The same preloads HomeController gives the same partial: the card reads
+    # post.image.attached?, one query per post without with_attached_image.
+    @posts = @user.posts.includes(:user, :community, :votes).with_attached_image.order(created_at: :desc).limit(20)
     @followers_count = @user.followers.count
     @following_count = @user.following.count
     @active_follow = authenticated? && Current.user.following?(@user)

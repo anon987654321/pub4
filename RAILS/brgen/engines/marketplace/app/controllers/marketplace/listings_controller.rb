@@ -102,7 +102,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
 
   def update
     authorize @listing
-    if @listing.update(listing_params_for_kind)
+    if @listing.update(listing_params_for_kind(locked_kind: @listing.kind))
       Shared::DomainEvent.record!(
         actor: Current.user, action: "listing.updated", subject: @listing,
         source_vertical: "marketplace", locality: @listing.location
@@ -142,8 +142,13 @@ class Marketplace::ListingsController < Marketplace::BaseController
   # Only the detail block for the kind being listed. Permitting all three would
   # let a job advert arrive carrying rent, and the row would sit there with
   # nothing rendering it.
-  def listing_params_for_kind
+  #
+  # An update keeps the kind the listing was created with: the edit form has no
+  # kind field, and a posted kind would turn a sofa into a job advert with no job
+  # details behind it.
+  def listing_params_for_kind(locked_kind: nil)
     permitted = listing_params
+    permitted[:kind] = locked_kind if locked_kind
     kind = permitted[:kind].presence || "goods"
     %w[job housing gig].each do |other_kind|
       permitted.delete("#{other_kind}_detail_attributes") unless kind == other_kind
