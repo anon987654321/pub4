@@ -86,6 +86,15 @@ if [ -f x ]; then echo ok; fi
   refute_empty findings(:DOUBLE_BRACKET, zsh, path: "script.zsh")
 end
 
+# A sourced library declares its dialect in its opening comment, and a comment
+# quoting a test is not one.
+def test_double_bracket_leaves_a_posix_sh_library_and_comments_alone
+  library = "# POSIX sh — sourced by zsh and sh callers alike.\n[ -e lock ] || : > lock\n"
+  assert_empty findings(:DOUBLE_BRACKET, library, path: "lib/ci_lock.sh")
+  comment = "#!/usr/bin/env zsh\n# it guards on `[ -x /usr/local/bin/tool ]`\n"
+  assert_empty findings(:DOUBLE_BRACKET, comment, path: "OPERATOR.sh")
+end
+
   # --- COMPLETION_THEATER -------------------------------------------------
 
   def test_completion_theater_ignores_the_etc_stdlib_and_etc_paths

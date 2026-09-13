@@ -108,9 +108,12 @@ module Master
           fires: "#!/bin/zsh\nif [ -f x ]; then echo y; fi\n",
           does_not_fire: "#!/bin/zsh\nif [[ -f x ]]; then echo y; fi\n",
           description: "use [[ ]] over [ ]" do |src, path:|
-          # POSIX sh shebang — [[ ]] is a keyword only in zsh/bash, not in sh
-          next [] if src.lines.first.to_s.match?(%r{#!/(?:usr/bin/env sh|bin/sh)\b})
-          scan_lines(src, /(?<!\[)\[\s+[^\[]/, message: "[ ] test — use [[ ]] in zsh")
+          # POSIX sh shebang — [[ ]] is a keyword only in zsh/bash/ksh, not in sh.
+          # A sourced library has no shebang, so it declares its dialect in its
+          # opening comment instead, the way lib/ci_lock.sh does.
+          next [] if src.lines.first.to_s.match?(%r{#!/(?:usr/bin/env sh|bin/sh)\b|\A#\s*POSIX sh\b})
+          # A comment quoting `[ -x file ]` describes a test rather than running one.
+          scan_lines(without_comment_lines(src), /(?<!\[)\[\s+[^\[]/, message: "[ ] test — use [[ ]] in zsh")
         end
 
         # NO_VAR lives once, in law/javascript.rb — fixtures attached, any narrowing
