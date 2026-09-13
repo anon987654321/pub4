@@ -89,13 +89,25 @@ private
 
       checkpoint = @world.checkpoint
       observation = @world.perform(admitted)
+      observation = undo(checkpoint, admitted, observation) if observation.err?
       @memory.record(admitted, observation)
-      # The effect goes with the checkpoint: rollback undoes what THIS effect
-      # touched, and without knowing which effect failed it can only guess at the
-      # blast radius — which it used to do with a tree-wide reset.
-      @world.rollback(checkpoint, admitted) if observation.err?
       emit(turn, admitted, observation)
       nil
+    end
+
+    # The effect goes with the checkpoint: rollback undoes what THIS effect
+    # touched, and without knowing which effect failed it can only guess at the
+    # blast radius — which it used to do with a tree-wide reset.
+    #
+    # What rollback reports rides on the failure, because the agent's next move
+    # depends on it: a write that was undone left the tree as it was, and an
+    # effect that could not be undone did not. A clean rollback of anything but
+    # a write says nothing the agent needs.
+    def undo(checkpoint, effect, observation)
+      undone = @world.rollback(checkpoint, effect)
+      return observation if undone.ok? && effect.verb != :write
+
+      Observation.no("#{observation.message} [#{undone.message}]")
     end
 
     def emit(turn, effect, observation)

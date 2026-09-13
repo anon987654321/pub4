@@ -59,6 +59,44 @@ class FoldObserverTest < Minitest::Test
     end
   end
 
+  # A world whose effects fail and whose rollback answers as told.
+  class FailingWorld
+    def initialize(rollback) = @rollback = rollback
+    def verbs = Master::Core::VERBS
+    def checkpoint = { id: "cp1", patch: "" }
+    def perform(_effect) = Master::Core::Observation.no("boom")
+    def rollback(_checkpoint, _effect) = @rollback
+  end
+
+  def failed_observation(effect, rollback)
+    seen = []
+    Master::Core::Fold.new(
+      model: ScriptedModel.new(effect, Master::Core::Effect.done),
+      constitution: Master::Core::Constitution.new(rules: []),
+      world: FailingWorld.new(rollback),
+      memory: Master::Core::Memory.new,
+      observer: ->(turn:, effect:, observation:) { seen << observation },
+    ).run("goal")
+    seen.first
+  end
+
+  # World#rollback reports an effect it could not undo, and the fold used to
+  # drop that report, so the agent believed a failed effect left no trace.
+  def test_a_rollback_that_could_not_undo_rides_on_the_failure
+    skipped = Master::Core::Observation.no("rollback skipped cp1: no path to scope to")
+    observation = failed_observation(Master::Core::Effect.exec(["false"]), skipped)
+
+    refute_predicate observation, :ok?
+    assert_match(/boom \[rollback skipped cp1/, observation.message)
+  end
+
+  def test_an_undone_write_says_so_and_a_clean_exec_adds_nothing
+    undone = Master::Core::Observation.ok("rolled back a.txt cp1")
+
+    assert_match(/rolled back a\.txt/, failed_observation(Master::Core::Effect.write("a.txt", "x"), undone).message)
+    assert_equal "boom", failed_observation(Master::Core::Effect.exec(["false"]), undone).message
+  end
+
   def test_no_observer_still_runs
     Dir.mktmpdir do |root|
       done = build(ScriptedModel.new(Master::Core::Effect.done("ok")), root:).run("g")
