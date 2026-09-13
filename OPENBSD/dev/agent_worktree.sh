@@ -19,6 +19,16 @@
 # Cleanup:  git worktree remove ../pub4-<agent>
 set -eu
 
+case "${1:-}" in
+-h | --help)
+  echo "usage: sh OPENBSD/dev/agent_worktree.sh <agent-name> [base-branch]"
+  echo "         a worktree at ../pub4-<agent> on branch agent/<agent>"
+  echo "       sh OPENBSD/dev/agent_worktree.sh finish"
+  echo "         rebase this branch onto origin/main and push it"
+  exit 0
+  ;;
+esac
+
 if [ "${1:-}" = "finish" ]; then
   # Rebase onto origin/main and push THIS branch. Do not merge to local main
   # and do not push main: that is how another session's push published
@@ -55,7 +65,9 @@ git -C "$repo" fetch -q origin
 # that told them both was "worktree already exists", which reads as success.
 #
 # Dirty means occupied. A clean one is a leftover and is safe to reuse.
-if git -C "$repo" worktree list --porcelain | grep -q "worktree ${dir}$"; then
+# git itself answers whether ${dir} is a checkout, rather than grep over the
+# porcelain list: a registered worktree reports itself as its own top level.
+if [ "$(git -C "${dir}" rev-parse --show-toplevel 2>/dev/null)" = "${dir}" ]; then
   dirt="$(git -C "${dir}" status --porcelain 2>/dev/null)"
   if [ -n "${dirt}" ]; then
     echo "worktree ${dir} is occupied — another session has uncommitted work in it:" >&2

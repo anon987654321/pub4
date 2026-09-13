@@ -6,6 +6,14 @@
 
 set -e
 
+case ${1:-} in
+-h|--help)
+  echo "usage: /usr/local/bin/resource_guard.sh"
+  echo "  shed bsdports, then amber, after GUARD_SHED_STRIKES (2) breaching ticks; restore when pressure clears"
+  exit 0
+  ;;
+esac
+
 # Runs from root's cron, and everything it starts (rcctl -> rc.d scripts,
 # emergency_cpu.sh) inherits this PATH. Cron's own PATH has no /usr/local/bin,
 # which is where curl, bundle34 and ruby34 live — see rc.d/master for what that

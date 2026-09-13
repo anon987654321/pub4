@@ -29,6 +29,14 @@ set -eo pipefail
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
 export PATH
 
+case ${1:-} in
+-h|--help)
+  echo "usage: /usr/local/bin/prune-guests.sh"
+  echo "  prune brgen's and amber's guest rows once the 5-minute load is under PRUNE_GUESTS_LOAD_CEILING"
+  exit 0
+  ;;
+esac
+
 CEILING=${PRUNE_GUESTS_LOAD_CEILING:-3.0}
 WAIT_TICKS=${PRUNE_GUESTS_WAIT_TICKS:-15}
 TICK_SECONDS=${PRUNE_GUESTS_TICK_SECONDS:-120}

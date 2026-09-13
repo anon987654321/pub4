@@ -3,6 +3,12 @@
 # Zone signing and TLSA records: usr/local/bin/nsd-resign (daily.local).
 set -euo pipefail
 
+if [[ ${1:-} == -h || ${1:-} == --help ]]; then
+  print "usage: doas /usr/local/bin/renew-certs.sh"
+  print "  renew each held certificate acme-client.conf names; restart relayd only when one changed"
+  exit 0
+fi
+
 ACME_CONF=/etc/acme-client.conf
 
 # Renew what we hold, not what we hope for.

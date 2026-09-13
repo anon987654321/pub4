@@ -59,6 +59,11 @@ rescue StandardError
   "unknown"
 end
 
+# The first word only: `with-ci-lock bin/cli --help` asks the command for help.
+if %w[-h --help].include?(ARGV.first)
+  puts "usage: ruby34 OPENBSD/bin/with-ci-lock CMD [ARGS...] — run CMD holding #{DEFAULT_LOCK}; exit 1 when it is busy"
+  exit 0
+end
 die "usage: with-ci-lock CMD [ARGS...]" if ARGV.empty?
 
 path = lock_path

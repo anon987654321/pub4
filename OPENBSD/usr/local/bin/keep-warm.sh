@@ -20,6 +20,14 @@
 set -e
 export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 
+case ${1:-} in
+-h|--help)
+  echo "usage: /usr/local/bin/keep-warm.sh"
+  echo "  render brgen's and amber's home over loopback; log only a slow or failed hit"
+  exit 0
+  ;;
+esac
+
 # A heartbeat on every run, because this job logs only when a hit is slow or
 # fails: without it "all warm" and "never ran" are the same empty log.
 # health_check.rb reads the file's age.

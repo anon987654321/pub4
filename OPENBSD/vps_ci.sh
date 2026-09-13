@@ -3,8 +3,14 @@
 # Usage: zsh OPENBSD/vps_ci.sh brgen
 set -euo pipefail
 
+usage="usage: zsh OPENBSD/vps_ci.sh APP — sync APP's copy-tree, then run its bin/ci under the CI lock"
+if [[ ${1:-} == -h || ${1:-} == --help ]]; then
+  print -r -- "$usage"
+  exit 0
+fi
+
 app=${1:-}
-[[ -n $app ]] || { print -u2 "usage: vps_ci.sh APP"; exit 2 }
+[[ -n $app ]] || { print -u2 -r -- "$usage"; exit 2 }
 
 repo=${PUB4_ROOT:-/home/dev/pub4}
 app_dir=/home/${app}/app

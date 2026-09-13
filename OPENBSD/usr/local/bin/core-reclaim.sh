@@ -24,6 +24,14 @@
 
 set -e
 
+case ${1:-} in
+-h|--help)
+  echo "usage: /usr/local/bin/core-reclaim.sh"
+  echo "  restart brgen when its RSS or swap is over the ceiling, at most hourly, never under load"
+  exit 0
+  ;;
+esac
+
 # Same reason resource_guard sets this: cron's PATH has no /usr/local/bin, where
 # rcctl's dependencies and curl live, and everything started here inherits it.
 export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin

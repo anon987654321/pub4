@@ -3,6 +3,12 @@
 # Usage: zsh OPENBSD/vps_master_scan.sh [scan args...]
 set -euo pipefail
 
+if [[ ${1:-} == -h || ${1:-} == --help ]]; then
+  print "usage: zsh OPENBSD/vps_master_scan.sh [scan args...]"
+  print "  MASTER bin/cli under the CI lock, refused while the 5-minute load is over PUB4_CI_MAX_LOAD"
+  exit 0
+fi
+
 repo=${PUB4_ROOT:-/home/dev/pub4}
 # Was `lock=${PUB4_CI_LOCK:-/var/tmp/pub4-ci.lock}`, then root chmod 666'ed exactly
 # that caller-chosen path in a world-writable directory. The helper keeps the lock

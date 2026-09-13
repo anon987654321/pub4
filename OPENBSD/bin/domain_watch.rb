@@ -276,6 +276,13 @@ module Deploy
 end
 
 if $PROGRAM_NAME == __FILE__
+  # Before the scan, which queries whois for every zone.
+  if ARGV.intersect?(%w[-h --help])
+    puts "usage: ruby OPENBSD/bin/domain_watch.rb [--update|--json]"
+    puts "  whois every served zone and diff the answers against data/domain_inventory.yml"
+    exit 0
+  end
+
   current = Deploy::DomainWatch.scan
   previous = Deploy::DomainWatch.snapshot
   diff = Deploy::DomainWatch.compare(current, previous)

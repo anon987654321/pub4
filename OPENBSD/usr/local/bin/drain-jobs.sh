@@ -34,6 +34,14 @@ set -eo pipefail
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
 export PATH
 
+case ${1:-} in
+-h|--help)
+  echo "usage: /usr/local/bin/drain-jobs.sh"
+  echo "  run each app's Solid Queue for DRAIN_JOBS_SECONDS once the 5-minute load is under DRAIN_JOBS_LOAD_CEILING"
+  exit 0
+  ;;
+esac
+
 CEILING=${DRAIN_JOBS_LOAD_CEILING:-3.0}
 SECONDS_PER_APP=${DRAIN_JOBS_SECONDS:-180}
 WAIT_TICKS=${DRAIN_JOBS_WAIT_TICKS:-5}

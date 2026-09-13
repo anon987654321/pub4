@@ -1,5 +1,13 @@
 #!/bin/ksh
 set -euo pipefail
+
+case ${1:-} in
+-h|--help)
+  echo "usage: doas ksh OPENBSD/emergency_cpu.sh"
+  echo "  stop amber and bsdports, kill stale workers, restart master and brgen"
+  exit 0
+  ;;
+esac
 # curl is a package (/usr/local/bin/curl) and resource_guard.sh calls this from
 # root's cron, whose PATH has no /usr/local/bin — so the /up wait below could
 # only ever time out on the path that actually matters, and every crisis

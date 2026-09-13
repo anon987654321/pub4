@@ -123,6 +123,12 @@ def print_deploy_in_progress(status)
   puts "           DEPLOY IN PROGRESS: #{status['step']} (since #{status['started_at']}, #{flag})"
 end
 
+if ARGV.intersect?(%w[-h --help])
+  puts "usage: ruby34 OPENBSD/bin/vps-state [--json]"
+  puts "  master and every apps.yml app: service, port, deployed SHA and last deploy stamp"
+  exit 0
+end
+
 unless Operator::Environment.on_vps?
   warn "vps-state: skip — not on VPS (use: bin/operator vps state --remote)"
   exit 0
