@@ -77,11 +77,11 @@ pkill -f 'ruby34.*53187' 2>/dev/null || true
 pkill -f 'falcon.*38182' 2>/dev/null || true
 pkill -f 'ruby34.*38182' 2>/dev/null || true
 pkill -f '/home/brgen/app' 2>/dev/null || true
-[ "$_master_starting" = "0" ] && pkill -f 'operator/MASTER/web' 2>/dev/null || true
+[[ "$_master_starting" = "0" ]] && pkill -f 'operator/MASTER/web' 2>/dev/null || true
 sleep 2
 
 echo "=== restart core (master then brgen) ==="
-if [ "$_master_starting" = "1" ]; then
+if [[ "$_master_starting" = "1" ]]; then
   echo 'skipping master restart — a start is already running'
 else
   rcctl stop master 2>/dev/null || true

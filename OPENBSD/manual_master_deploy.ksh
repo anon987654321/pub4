@@ -30,7 +30,7 @@ export RAILS_ENV=production
 export SECRET_KEY_BASE="${SECRET_KEY_BASE:-$(openssl rand -hex 16)}"
 
 MANIFEST=/home/dev/pub4/MASTER/web/public/assets/.manifest.json
-if [ -f "$MANIFEST" ] && [ "${FORCE_PRECOMPILE:-0}" != "1" ]; then
+if [[ -f "$MANIFEST" ]] && [[ "${FORCE_PRECOMPILE:-0}" != "1" ]]; then
   echo precompile_skip manifest_exists
 else
   echo precompile_start
@@ -38,7 +38,7 @@ else
   bundle34 exec rails assets:precompile || _fail=1
 fi
 ruby34 /home/dev/pub4/RAILS/gates/runner.rb master_web_assets || _fail=1
-if [ "$_fail" -ne 0 ]; then
+if [[ "$_fail" -ne 0 ]]; then
   echo FAILED precompile_or_gate
   exit 1
 fi
@@ -48,7 +48,7 @@ echo restart_master
 doas rcctl restart master &
 _rc_pid=$!
 _i=0
-while kill -0 "$_rc_pid" 2>/dev/null && [ "$_i" -lt 120 ]; do
+while kill -0 "$_rc_pid" 2>/dev/null && [[ "$_i" -lt 120 ]]; do
   curl -fsS "http://127.0.0.1:53187/up" >/dev/null 2>&1 && break
   _i=$((_i + 1))
   sleep 2
@@ -56,7 +56,7 @@ done
 wait "$_rc_pid" 2>/dev/null || true
 
 i=0
-while [ "$i" -lt 60 ]; do
+while [[ "$i" -lt 60 ]]; do
   curl -fsS "http://127.0.0.1:53187/up" >/dev/null 2>&1 && break
   i=$((i + 1))
   sleep 1

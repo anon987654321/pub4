@@ -102,7 +102,7 @@ ssh -o BatchMode=yes "$backup_host" "
   i=0
   for f in \$(ls -t $remote_dir/priv_*.tar.enc 2>/dev/null); do
     i=\$((i+1))
-    [ \$i -gt 14 ] && rm -f \"\$f\"
+    [ \$i -gt 14 ] && rm -f \"\$f\" # scan: intentional -- the remote shell is sh
   done
   exit 0
 " || true

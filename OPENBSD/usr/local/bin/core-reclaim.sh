@@ -75,20 +75,20 @@ date +%s > /var/db/core_reclaim_seen 2>/dev/null || true
 # old form: both returned 52020 KB for master.
 rss_of_port() {
   _pid=$(pgrep -n -f "127.0.0.1:$1" 2>/dev/null) || return 0
-  [ -n "$_pid" ] || return 0
+  [[ -n "$_pid" ]] || return 0
   ps -o rss= -p "$_pid" 2>/dev/null | tr -d ' '
 }
 
 now=$(date +%s)
-if [ -r "$STATE" ]; then
+if [[ -r "$STATE" ]]; then
   last=$(cat "$STATE" 2>/dev/null || echo 0)
-  if [ "$(( now - last ))" -lt "$MIN_INTERVAL_S" ]; then
+  if [[ "$(( now - last ))" -lt "$MIN_INTERVAL_S" ]]; then
     exit 0
   fi
 fi
 
 rss_kb=$(rss_of_port "$PORT")
-[ -n "$rss_kb" ] || exit 0
+[[ -n "$rss_kb" ]] || exit 0
 rss_mb=$(( rss_kb / 1024 ))
 
 # RSS or swap, because RSS alone could not see the case this exists for.
@@ -101,8 +101,8 @@ rss_mb=$(( rss_kb / 1024 ))
 # one of them relayd. A ceiling that cannot fire under pressure is not a
 # ceiling; the pressure itself has to be readable.
 swap_pct=$(swapctl -l | grep -v Device | head -1 | tr -s ' ' | cut -d' ' -f5 | tr -d '%')
-[ -n "$swap_pct" ] || swap_pct=0
-if [ "$rss_mb" -lt "$CEILING_MB" ] && [ "$swap_pct" -lt "$SWAP_PCT_MAX" ]; then
+[[ -n "$swap_pct" ]] || swap_pct=0
+if [[ "$rss_mb" -lt "$CEILING_MB" ]] && [[ "$swap_pct" -lt "$SWAP_PCT_MAX" ]]; then
   exit 0
 fi
 
@@ -114,7 +114,7 @@ fi
 # wrong, which is why there is no shared helper for this line.
 load=$(sysctl -n vm.loadavg | awk '{print $1}')
 over=$(echo "$load $LOAD_MAX" | awk '{print ($1 > $2) ? 1 : 0}')
-if [ "$over" = "1" ]; then
+if [[ "$over" = "1" ]]; then
   echo "$(date '+%Y-%m-%dT%H:%M:%S') skip $APP ${rss_mb}M — load $load over $LOAD_MAX"
   exit 0
 fi

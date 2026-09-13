@@ -49,7 +49,7 @@ for target in "${TARGETS[@]}"; do
   elapsed=$(( $(date +%s) - start ))
   # Only worth a log line when it was slow or it failed — a warm hit every ten
   # minutes for a month is 4,000 lines saying nothing.
-  if [ "$code" != "200" ] || [ "$elapsed" -ge 3 ]; then
+  if [[ "$code" != "200" ]] || [[ "$elapsed" -ge 3 ]]; then
     echo "$(date '+%Y-%m-%dT%H:%M:%S') $host $code in ${elapsed}s"
   fi
 done

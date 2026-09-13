@@ -29,8 +29,8 @@
 #
 export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 APP_DIR=/home/brgen/app
-[ -r /etc/rails/common.env ] && . /etc/rails/common.env
-[ -r /etc/brgen.env ] && . /etc/brgen.env
+[[ -r /etc/rails/common.env ]] && . /etc/rails/common.env
+[[ -r /etc/brgen.env ]] && . /etc/brgen.env
 : "${SECRET_KEY_BASE:?missing SECRET_KEY_BASE in /etc/brgen.env}"
 
 daemon="/bin/ksh"

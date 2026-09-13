@@ -7,9 +7,9 @@
 export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 PORT=47312
 APP_DIR=/home/bsdports/app
-[ -r /etc/rails/common.env ] && . /etc/rails/common.env
-[ -r /etc/bsdports.env ] && . /etc/bsdports.env
-[ -f /etc/rails/bsdports.env ] && . /etc/rails/bsdports.env
+[[ -r /etc/rails/common.env ]] && . /etc/rails/common.env
+[[ -r /etc/bsdports.env ]] && . /etc/bsdports.env
+[[ -f /etc/rails/bsdports.env ]] && . /etc/rails/bsdports.env
 : "${SECRET_KEY_BASE:?missing SECRET_KEY_BASE in /etc/bsdports.env}"
 daemon="/bin/ksh"
 # SOLID_QUEUE_IN_PUMA is Solid Queue's env name — supervisor runs inside Falcon, not Puma.
@@ -54,18 +54,18 @@ rc_pre() {
 
 rc_cmd $1
 rc=$?
-if [ "$1" = "start" ] || [ "$1" = "restart" ]; then
-  if [ "$rc" = "0" ]; then
+if [[ "$1" = "start" ]] || [[ "$1" = "restart" ]]; then
+  if [[ "$rc" = "0" ]]; then
     # relayd can keep routing to the old (now-dead) backend connection after a
     # restart until it's kicked — same fix already used by MASTER's rc.d script.
     _i=0
     _up_ok=0
-    while [ "$_i" -lt 300 ]; do
+    while [[ "$_i" -lt 300 ]]; do
       curl -fsS "http://127.0.0.1:${PORT}/up" >/dev/null 2>&1 && { _up_ok=1; break; }
       sleep 1
       _i=$((_i + 1))
     done
-    if [ "$_up_ok" = "1" ]; then
+    if [[ "$_up_ok" = "1" ]]; then
       rcctl restart relayd 2>/dev/null || true
     else
       logger -t bsdports "relayd skipped: /up not ready after restart"

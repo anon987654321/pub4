@@ -44,8 +44,8 @@ validate_doas_works() {
 
 ensure_doas_trailing_newline() {
   typeset f=$1
-  [ -f "$f" ] || return 1
-  if [ "$(tail -c1 "$f" | wc -c)" -eq 0 ]; then
+  [[ -f "$f" ]] || return 1
+  if [[ "$(tail -c1 "$f" | wc -c)" -eq 0 ]]; then
     echo >> "$f"
   fi
   return 0
@@ -53,7 +53,7 @@ ensure_doas_trailing_newline() {
 
 rollback_doas_conf() {
   typeset backup=$1
-  [ -n "$backup" ] && [ -f "$backup" ] || return 1
+  [[ -n "$backup" ]] && [[ -f "$backup" ]] || return 1
   cp "$backup" /etc/doas.conf
   logger -t doas-guard "rolled back /etc/doas.conf from $backup"
   return 0
@@ -66,14 +66,14 @@ install_doas_conf_from_repo() {
   typeset bakdir=/var/backups/openbsd_setup
   typeset tmp=""
 
-  [ -r "$src" ] || return 0
-  [ -w /etc/doas.conf ] || return 0
+  [[ -r "$src" ]] || return 0
+  [[ -w /etc/doas.conf ]] || return 0
   cmp -s /etc/doas.conf "$src" 2>/dev/null && return 0
 
   mkdir -p "$bakdir" 2>/dev/null || return 1
   chmod 700 "$bakdir" 2>/dev/null || true
   backup="$bakdir/doas.conf.$(date +%s).bak"
-  [ -f /etc/doas.conf ] && cp /etc/doas.conf "$backup"
+  [[ -f /etc/doas.conf ]] && cp /etc/doas.conf "$backup"
 
   # The staging file was /tmp/doas.conf.install.$$ — a PID-predictable name in a
   # world-writable directory, written and copied by root with no -h/-P
@@ -109,7 +109,7 @@ _run_validate_doas_cli() {
     return $?
     ;;
   install)
-    [ -n "${2:-}" ] || { validate_doas_usage; return 2; }
+    [[ -n "${2:-}" ]] || { validate_doas_usage; return 2; }
     install_doas_conf_from_repo "$2" "${3:-doas-guard}"
     return $?
     ;;

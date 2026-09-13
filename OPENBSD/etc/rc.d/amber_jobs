@@ -28,8 +28,8 @@
 #
 export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 APP_DIR=/home/amber/app
-[ -r /etc/rails/common.env ] && . /etc/rails/common.env
-[ -r /etc/amber.env ] && . /etc/amber.env
+[[ -r /etc/rails/common.env ]] && . /etc/rails/common.env
+[[ -r /etc/amber.env ]] && . /etc/amber.env
 : "${SECRET_KEY_BASE:?missing SECRET_KEY_BASE in /etc/amber.env}"
 
 daemon="/bin/ksh"

@@ -28,8 +28,8 @@
 #
 export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 APP_DIR=/home/bsdports/app
-[ -r /etc/rails/common.env ] && . /etc/rails/common.env
-[ -r /etc/bsdports.env ] && . /etc/bsdports.env
+[[ -r /etc/rails/common.env ]] && . /etc/rails/common.env
+[[ -r /etc/bsdports.env ]] && . /etc/bsdports.env
 : "${SECRET_KEY_BASE:?missing SECRET_KEY_BASE in /etc/bsdports.env}"
 
 daemon="/bin/ksh"
