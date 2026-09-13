@@ -58,3 +58,13 @@ Full Rails 8 app in this directory. `brgen.sh` copy-tree deploys to
 - Do not: enable `force_ssl` behind relayd; edit `OPENBSD/deploy_inventory.json`
   without updating `apps.yml`; add a fourth public Rails app
   (`OPENBSD/DECISIONS.md`).
+
+## BergenDemoSeeder stays one class
+
+`lib/brgen/bergen_demo_seeder.rb` breaches `NO_GOD_CLASS` on length (about 330
+code lines against 300) and is left whole. Its literal Bergen data already lives
+in `bergen_demo_data.rb`; what remains is sixteen private methods, one per
+vertical, driven by one `seed!`, and splitting them makes ten files with one
+caller each, which trades a god class for `FILE_SPRAWL`. The finding is accepted
+here. Models that hold several subjects split the other way, into concerns in a
+directory named after the model, as `Conversation` and `Takeaway::Order` do.

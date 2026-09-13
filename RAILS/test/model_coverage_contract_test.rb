@@ -32,7 +32,10 @@ class ModelCoverageContractTest < Minitest::Test
 
     path = app_path(app, relative)
     assert File.file?(path), "missing #{path.sub("#{ROOT}/", '')}"
-    File.read(path)
+    # A model is its file plus the concerns in the directory named after it, so
+    # a method that moved into Takeaway::Order::Lifecycle is still the model's.
+    concerns = relative.start_with?("app/models/") ? Dir.glob(File.join(path.delete_suffix(".rb"), "*.rb")).sort : []
+    ([ path ] + concerns).map { |file| File.read(file) }.join("\n")
   end
 
   # Vertical tests moved into engines/<vertical>/test/ with everything else.

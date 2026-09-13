@@ -51,12 +51,24 @@ module SourceReader
       engine_routes = Dir.glob(File.join(brgen_dir, "engines", "*", "config", "routes.rb")).sort.map { |f| File.read(f) }
       return ([ File.read(abs) ] + engine_routes).join("\n")
     end
-    return File.read(abs) if File.exist?(abs)
+    return with_model_concerns(abs) if File.exist?(abs)
     rel = abs.sub(%r{\A#{Regexp.escape(File.join(ROOT, "brgen"))}/}, "")
     moved = Dir.glob(File.join(ROOT, "brgen", "engines", "*", rel)).first
-    return File.read(moved) if moved
+    return with_model_concerns(moved) if moved
     flat = Dir.glob(File.join(ROOT, "brgen", "engines", "*", "app", "**", File.basename(abs))).first
     return File.read(flat) if flat
     File.read(abs)
+  end
+
+  # A model is its file plus the concerns in the directory named after it —
+  # app/models/conversation.rb and app/models/conversation/*.rb are one class.
+  # Reading only the first file would fail a "state machine is wired" assertion
+  # the day the state machine moved into Order::Lifecycle, over a spelling.
+  def with_model_concerns(path)
+    parts = [ File.read(path) ]
+    if path.match?(%r{/app/models/.+\.rb\z})
+      parts.concat(Dir.glob(File.join(path.delete_suffix(".rb"), "*.rb")).sort.map { |f| File.read(f) })
+    end
+    parts.join("\n")
   end
 end

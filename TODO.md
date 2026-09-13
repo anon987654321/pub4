@@ -989,15 +989,6 @@ call, and the operator's. The pass's doctrine lives in `WIRING_NOTES.md`.
 
 Wishes and measured proposals not yet shipped; each section is dated.
 
-## Open from the enumerations — 2026-09-09
-
-- **`NO_GOD_CLASS`.** `bergen_demo_seeder.rb` stays at 337 against 300: sixteen
-  private per-vertical methods under one `seed!`, and splitting it is ten
-  one-caller files. `brgen/app/models/conversation.rb` (IRC channels, geo rooms,
-  unread counting) and `takeaway/order.rb` (state machine, delivery and ETA,
-  display formatters) are several subjects each and want splitting.
-
-
 ## The refinement inventory — opened 2026-09-11
 
 `ruby MASTER/tools/refinements.rb` scans every tracked file in the four trees
