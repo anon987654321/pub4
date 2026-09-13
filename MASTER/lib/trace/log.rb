@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "digest"
 require "fileutils"
 require "json"
 require "securerandom"
@@ -8,6 +9,22 @@ require "time"
 module Master
   module Trace
     module Log
+      # The conversation that wrote a line. Several sessions share one checkout
+      # and one log, so a line without it cannot be attributed. A web
+      # conversation id is the cookie that selects a transcript, so the line
+      # carries a digest of it rather than the bearer; a CLI process has no id
+      # and is named by its pid, as Trace::Hooks already names it. Twelve hex
+      # characters tell sessions apart and stay short of the 32 that Redactor
+      # blanks as a key.
+      SESSION_DIGEST_CHARS = 12
+
+      def self.session
+        conversation = Fiber[:master_conversation]
+        return "local-#{Process.pid}" unless conversation
+
+        Digest::SHA256.hexdigest(conversation.to_s)[0, SESSION_DIGEST_CHARS]
+      end
+
       # Append-only tool invocation log; subscribes to tool:before on EventBus.
       class Audit
         LOG_PATH = ".master/audit.ndjson".freeze
@@ -23,9 +40,12 @@ module Master
 
         private
 
+        # The bus stamps its own `ts` (milliseconds since boot) and the raw
+        # conversation id; neither belongs in a log read across processes, so
+        # the wall clock and the session digest take their places.
         def append(event_data)
-          record = { ts: Time.now.utc.iso8601, tool: event_data[:tool] }
-                    .merge(event_data.except(:tool).transform_values { |v| v.to_s[0, MAX_VAL] })
+          fields = event_data.except(:tool, :ts, :conversation).transform_values { |v| v.to_s[0, MAX_VAL] }
+          record = { ts: Time.now.utc.iso8601, session: Log.session, tool: event_data[:tool] }.merge(fields)
           Master::Trace::Telemetry.span("audit.append", tool: event_data[:tool].to_s) do
             @mutex.synchronize do
               rotate! if File.exist?(@path) && File.size(@path) > MAX_BYTES
@@ -99,6 +119,7 @@ module Master
           {
             id: SecureRandom.uuid,
             timestamp: now.iso8601(6),
+            session: Log.session,
             event: event.to_s,
             payload: payload || {},
           }

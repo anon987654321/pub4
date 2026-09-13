@@ -51,4 +51,30 @@ class TestEventBus < Minitest::Test
 
     assert_equal ["ours.rb"], mine
   end
+
+  # Every persisted line names its session, and a web session by a digest: the
+  # conversation id is the cookie that selects a transcript, so it never lands
+  # in a log verbatim.
+  def test_every_log_line_names_its_session_without_the_bearer
+    Master::Trace::Log::Audit.new(root: @dir, event_bus: @bus)
+    Fiber[:master_conversation] = "aabbccddeeff00112233445566778899"
+    @bus.publish("tool:before", tool: "write_file", path: "web.rb")
+    Fiber[:master_conversation] = nil
+    @bus.publish("tool:before", tool: "write_file", path: "cli.rb")
+
+    web, cli = log_lines("runtime/events/activity.jsonl")
+    audit_web, audit_cli = log_lines(".master/audit.ndjson")
+    digest = Digest::SHA256.hexdigest("aabbccddeeff00112233445566778899")[0, Master::Trace::Log::SESSION_DIGEST_CHARS]
+
+    assert_equal [digest, digest], [web["session"], audit_web["session"]]
+    assert_equal ["local-#{Process.pid}"] * 2, [cli["session"], audit_cli["session"]]
+    refute_includes File.read(File.join(@dir, ".master/audit.ndjson")), "aabbccddeeff00112233445566778899"
+    assert Time.iso8601(audit_cli["ts"]), "the audit line keeps its wall clock"
+  end
+
+  private
+
+  def log_lines(relative)
+    File.readlines(File.join(@dir, relative)).map { |line| JSON.parse(line) }
+  end
 end
