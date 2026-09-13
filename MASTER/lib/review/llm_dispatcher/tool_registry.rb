@@ -19,6 +19,8 @@ module Master
           allowed = Ground::Tool::Profile.allowlist(profile)
           tier = @model_router&.tier_for_model(@config.model).to_s
           @tools.filter_map do |tool|
+            next mcp_tool(tool, allowed:, tier:) if tool.is_a?(::RubyLLM::Tool)
+
             wrapper = LLM_TOOL_MAP[tool.class]
             next unless wrapper
             name = tool.class.name.split("::").last
@@ -35,6 +37,16 @@ module Master
         rescue StandardError => err
           @bus&.publish("agent:llm_tools_error", error: err.message)
           []
+        end
+
+        # McpCoordinator hands over tools that are already RubyLLM tools. Each
+        # calls its server directly, past the Governor, undo and paths.immutable,
+        # so it goes out only as an unclassified tool does: to an elevated session
+        # with no restricting profile, on a tier above cheap.
+        def mcp_tool(tool, allowed:, tier:)
+          return if allowed || !Fiber[:master_elevated] || tier == "cheap"
+
+          tool
         end
 
         def load_tool_registry

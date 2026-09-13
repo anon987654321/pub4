@@ -60,6 +60,23 @@ class ToolRegistryElevationTest < Minitest::Test
     Fiber[:master_elevated] = nil
   end
 
+  # An MCP tool arrives as a RubyLLM tool with no LLM_TOOL_MAP row and runs
+  # outside the Governor, so it reaches a model only in an elevated session.
+  def test_an_mcp_tool_reaches_the_model_only_when_elevated
+    harness = RegistryHarness.new
+    mcp = Class.new(RubyLLM::Tool) { description "a server tool" }.new
+    harness.tools << mcp
+    Fiber[:master_visitor] = false
+
+    Fiber[:master_elevated] = true
+    assert_includes harness.send(:build_llm_tools), mcp
+    Fiber[:master_elevated] = false
+    refute_includes harness.send(:build_llm_tools), mcp
+  ensure
+    Fiber[:master_visitor] = nil
+    Fiber[:master_elevated] = nil
+  end
+
   # Exposure is one boolean here and approval is the adapter's TIER, so the two
   # cannot disagree about a word: "safe" meant exposed in tools.yml and
   # unguarded to the governor, and WebFetch was both at once.
