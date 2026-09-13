@@ -151,4 +151,19 @@ def test_ask_also_takes_the_hop_on_budget_errors
   assert_equal "cli answer", @agent.ask("hi")
   assert fake.models.last.to_s.start_with?("claude-cli:"), "ask must land on the claude_code chain head"
 end
+
+def test_a_failed_hard_compaction_refuses_the_turn
+  window = Object.new
+  def window.check_and_compact! = Master::Result.err("context compaction failed: boom", category: :infrastructure)
+  @agent.wire_context_window(window)
+  dispatched = []
+  @agent.define_singleton_method(:prepare_chat_dispatch) { |*args| dispatched << args }
+
+  result = @agent.chat("hello", stream: false)
+
+  assert result.err?
+  assert_match(/compaction failed/, result.message)
+  assert_empty dispatched, "a turn over the window must not go out"
+  assert_empty @agent.instance_variable_get(:@session).messages
+end
 end

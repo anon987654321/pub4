@@ -50,7 +50,9 @@ module Master
       def wire_constitution(constitution) = @constitution = constitution
 
       def chat(message, image: nil, stream: true, escalation_depth: 0, task_type: nil, &blk)
-        prepare_chat_turn(message)
+        compaction = prepare_chat_turn(message)
+        return compaction if compaction.is_a?(Master::Result::Err)
+
         dispatch = prepare_chat_dispatch(message, task_type)
 
         rate_err = check_rate_limit(dispatch[:selected_model])
@@ -203,8 +205,13 @@ end
         Result.ok(text)
       end
 
+      # A hard compaction that failed leaves the window at 90% or more, and a
+      # turn sent over it is cut off by the provider or silently truncated, so
+      # the turn is refused with the compaction's error instead.
       def prepare_chat_turn(message)
-        @context_window&.check_and_compact!
+        compaction = @context_window&.check_and_compact!
+        return compaction if compaction.is_a?(Master::Result::Err)
+
         @tools.each { |t| t.reset! if t.respond_to?(:reset!) }
         @session.add_message(role: :user, content: message)
       end

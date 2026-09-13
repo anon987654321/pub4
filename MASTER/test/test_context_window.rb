@@ -36,6 +36,18 @@ class TestContextWindow < Minitest::Test
     assert_equal ["turn 6", "turn 7", "turn 8", "turn 9", "late turn"], contents.drop(1)
   end
 
+  def test_the_providers_input_count_raises_pressure_past_the_estimate
+    session.add_message(role: :user, content: "short")
+    agent = SlowAgent.new
+    window = Master::CLI::ContextWindow.new(session:, agent:, model_context: 1_000)
+    assert_equal :ok, window.check_and_compact!.value
+
+    session.record_input_tokens(950)
+
+    assert_equal :compacted, window.check_and_compact!.value
+    assert_equal 0, session.token_pressure - session.token_est, "compaction clears the measured count"
+  end
+
   def test_model_context_windows_come_from_registry
     assert_equal 64_000, Master.context_window("deepseek-chat")
     assert_equal 200_000, Master.context_window("anthropic/claude-sonnet-4")

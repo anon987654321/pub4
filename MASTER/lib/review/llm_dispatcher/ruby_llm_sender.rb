@@ -164,6 +164,7 @@ end)
                   (cache_write * input_price * CACHE_WRITE_RATIO) +
                   (output * price_per_token(model, :output))).round(6)
           @session.record_cost(cost, model:, tokens:)
+          @session.record_input_tokens(input) if @session.respond_to?(:record_input_tokens)
           publish_llm_cost(model:, cost:, tokens:, tokens_in: input, tokens_out: output, cached:, cache_write:)
           Trace::CacheEfficiency.record(input:, cached:, cache_write:)
           @bus&.publish("cache:hit", model:, cached:, cache_write:) if cached.positive? || cache_write.positive?

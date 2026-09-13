@@ -104,6 +104,18 @@ module Master
       module Compaction
         def token_est(key = Session.conversation_key) = @mutex.synchronize { conversation(key)[:token_est] }
 
+        # The provider counts the system prompt, tools and the messages it was
+        # sent, which the character estimate never sees, so pressure takes the
+        # larger of the two.
+        def record_input_tokens(count) = @mutex.synchronize { conversation[:input_tokens] = count.to_i }
+
+        def token_pressure(key = Session.conversation_key)
+          @mutex.synchronize do
+            convo = conversation(key)
+            [convo[:token_est].to_i, convo[:input_tokens].to_i].max
+          end
+        end
+
         # Replaces the first `count` messages with one summary, under the mutex,
         # so turns appended while the summary was being written survive it.
         def compact_prefix!(count, summary)
@@ -113,6 +125,7 @@ module Master
             head = { role: :assistant, content: summary, ts: Time.now.to_i }
             convo[:messages].replace([head] + kept)
             convo[:token_est] = convo[:messages].sum { |msg| Session.estimate_tokens(msg[:content]) }
+            convo[:input_tokens] = 0
           end
           self
         end

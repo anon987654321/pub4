@@ -36,7 +36,7 @@ module Master
       private
 
       def pressure_ratio
-        est = session.token_est
+        est = session.respond_to?(:token_pressure) ? session.token_pressure : session.token_est
         return 0.0 unless est.is_a?(Numeric) && model_context.positive?
 
         est.to_f / model_context
