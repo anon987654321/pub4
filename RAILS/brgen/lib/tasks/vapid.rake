@@ -6,6 +6,6 @@ namespace :vapid do
     key = Webpush.generate_key
     puts "VAPID_PUBLIC_KEY=#{key.public_key}"
     puts "VAPID_PRIVATE_KEY=#{key.private_key}"
-    puts "VAPID_SUBJECT=mailto:admin@brgen.no"
+    puts "VAPID_SUBJECT=#{Shared::Vapid.subject}"
   end
 end

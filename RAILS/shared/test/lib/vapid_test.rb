@@ -14,6 +14,22 @@ class VapidTest < Minitest::Test
     end
   end
 
+  def test_subject_defaults_to_the_apps_own_mail_host
+    with_env("VAPID_SUBJECT" => nil) do
+      assert_equal "mailto:admin@bsdports.org", Shared::Vapid.subject("bsdports.org")
+      assert_equal "mailto:admin@amber.brgen.no", Shared::Vapid.subject("amber.brgen.no")
+    end
+  end
+
+  def test_subject_from_env_is_prefixed_once
+    with_env("VAPID_SUBJECT" => "mailto:ops@bsdports.org") do
+      assert_equal "mailto:ops@bsdports.org", Shared::Vapid.subject("bsdports.org")
+    end
+    with_env("VAPID_SUBJECT" => "ops@bsdports.org") do
+      assert_equal "mailto:ops@bsdports.org", Shared::Vapid.subject("bsdports.org")
+    end
+  end
+
   private
 
   def with_env(vars)
