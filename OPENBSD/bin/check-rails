@@ -45,6 +45,7 @@ source_gates = [
   ["production", "production"],
   ["walkthrough", "human_walkthrough"],
   ["phantom fk", "phantom_foreign_keys"],
+  ["engine boundaries", "engine_boundaries"],
   ["domain align", "domain_alignment"],
   ["frontend", "frontend_production"],
   ["schema", "schema_migration"],

@@ -1010,9 +1010,6 @@ Wishes and measured proposals not yet shipped; each section is dated.
 - **Autofix classifies by transform, not per rule.** `Scan::Finding` declares
   `reversibility` and `blast_radius`, `semantic_rules.rb` and `meta_rules.rb` fill
   them, and nothing under `lib/fix` reads either.
-- **Cross-engine references are unmeasured.** One engine reads another's
-  constant (`maps/home_controller.rb` reads `Takeaway::Order`, deliberately);
-  a source gate holding that as its one exemption keeps it at one.
 
 ## From the gem and ruby_llm audit — 2026-09-11
 

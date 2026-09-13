@@ -107,6 +107,13 @@ phantom_foreign_keys:
   class: Deploy::PhantomForeignKeysGate
   pass: "phantom_foreign_keys: clean (%{schemas} schemas)"
 
+# isolate_namespace isolates tables and routes, not constants; this holds the
+# one deliberate cross-engine read at one.
+engine_boundaries:
+  require: lib/source/engine_boundaries
+  class: Deploy::EngineBoundariesGate
+  pass: "engine_boundaries: no engine names another's constants beyond its declared reads"
+
 port_inventory:
   require: OPENBSD/gates/port_inventory
   class: Deploy::PortInventoryGate
