@@ -13,24 +13,36 @@ module Shared
       Shared::WebPushJob.perform_later(user.id, title:, body:, url:)
     end
 
-    # The actual delivery, called by the job. Named so it is obvious at a call
+    # The actual delivery, called by the jobs. Named so it is obvious at a call
     # site which one you are reaching for: anything calling deliver_now inside a
-    # request is doing the thing this split exists to prevent.
-    def deliver_now(user, title:, body: "", url: "/")
+    # request is doing the thing this split exists to prevent. tag lets a newer
+    # push replace an older one of the same kind on the device.
+    def deliver_now(user, title:, body: "", url: "/", tag: nil)
       return unless Shared::Vapid.configured?
       return unless user.respond_to?(:push_subscriptions)
 
+      message = JSON.generate({ title:, body:, url:, tag: }.compact)
       user.push_subscriptions.each do |sub|
         Webpush.payload_send(
-          message:  JSON.generate({ title:, body:, url: }),
+          message:,
           endpoint: sub.endpoint,
           p256dh:   sub.p256dh,
           auth:     sub.auth,
           vapid:    Shared::Vapid.webpush_options,
+          urgency:  "normal",
         )
       rescue Webpush::ExpiredSubscription, Webpush::InvalidSubscription
         # The endpoint is gone for good; the row is what is wrong, so remove it.
         sub.destroy
+      rescue Webpush::Unauthorized => e
+        # NOT a dead subscription. The gem raises this on 401, 403 and FCM's
+        # UnauthorizedRegistration, every one of which says OUR VAPID credentials
+        # are wrong, so it fails identically for every row. Destroying on it would
+        # unsubscribe every browser on one bad key rotation, and a push
+        # subscription cannot be restored from our side. Logging it as a push
+        # service's bad day would hide the rotation, so the job fails loudly.
+        Rails.logger&.error("[push] unauthorized — check the VAPID keys, not the subscription: #{e.message.to_s[0, 120]}")
+        raise
       rescue StandardError => e
         # A timeout or a 5xx from a push service is that service's bad day, not
         # this subscription's. Left in place, logged, and retried the next time
