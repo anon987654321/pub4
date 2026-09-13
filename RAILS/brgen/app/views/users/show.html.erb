@@ -13,12 +13,12 @@
     <%= button_to t("actions.message"), user_conversations_path(@user), method: :post, class: "btn btn-ghost btn-sm" %>
     <% if @active_block %>
       <%# destructive: no-confirm-ok — reversible — the button becomes Block again in place %>
-      <%= button_to t("block.unblock", default: "Unblock"), unblock_user_path(@user), method: :delete, class: "btn btn-ghost btn-sm" %>
+      <%= button_to t("block.unblock"), unblock_user_path(@user), method: :delete, class: "btn btn-ghost btn-sm" %>
     <% else %>
-      <%= button_to t("block.block", default: "Block"), block_user_path(@user), method: :post, class: "btn btn-ghost btn-sm" %>
+      <%= button_to t("block.block"), block_user_path(@user), method: :post, class: "btn btn-ghost btn-sm" %>
     <% end %>
   <% elsif authenticated? && Current.user == @user %>
-    <%= link_to t("profile.edit", default: "Edit profile"), edit_user_path(@user), class: "btn btn-ghost btn-sm" %>
+    <%= link_to t("profile.edit"), edit_user_path(@user), class: "btn btn-ghost btn-sm" %>
   <% end %>
 
   <% if @user.dating_profile.present? %>
@@ -68,7 +68,7 @@
 
 <% if @activity.any? %>
   <section class="profile-activity">
-    <%= tag.h2 t("profile.activity", default: "Recent activity") %>
+    <%= tag.h2 t("profile.activity") %>
     <ul class="activity-list">
       <% @activity.each do |event| %>
         <li>

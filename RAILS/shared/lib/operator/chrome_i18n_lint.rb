@@ -195,8 +195,11 @@ module Operator
       # so marketplace.lsangeles.com announced itself as Markedsplass. The
       # fixed .brgen-logo-mark already names the host on every surface, so both
       # labels went out with the marks rather than being translated.
-      # → 3: amber's colour swatch and outfit composition labels are keys.
-      "aria_label" => 3,
+      # → 0 (2026-09-13): amber's colour swatch and outfit composition, the
+      # marketplace favourite and card, playlist's tunnel, TV's live-stream grid
+      # and messenger's reaction buttons all label through keys. A ratchet at zero
+      # is a ban.
+      "aria_label" => 0,
       # 169 (first run, 2026-08-11: amber 48, brgen engines 48, brgen host 44,
       # shared 28, bsdports 1) → 141. The hand count that opened this debt said 144
       # and was blind to shared/app/controllers, whose sites ship to all three apps
@@ -253,7 +256,10 @@ module Operator
       # all exist in en and nb, so no default there could ever fire. Eight call
       # sites over six lines, and this counts lines — two of them carried both
       # a placeholder and an aria label. Same shape as the 181 entry above.
-      "translate_default" => 171,
+      # -> 82 (2026-09-13). The backlog sweep across marketplace, dating, tv,
+      # playlist, maps, amber's wardrobe and brgen's profile, post and chrome
+      # views dropped the fallbacks of keys that exist in en and nb.
+      "translate_default" => 82,
       # 0, and a ratchet at zero is a ban. Every finding was a sentence written
       # in English inside a view option — an empty state's body, an action's
       # label, a title that does not open with "No" — on apps that default to

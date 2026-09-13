@@ -327,6 +327,7 @@ en:
     total_items: "%{count} wardrobe items"
     with_phase: "%{count} with life phase"
   newsletter:
+    city_letter: City letter
     style_notes: "Style notes"
     style_blurb: "Weekly wardrobe essays, outfit ideas, and capsule tips. No spam."
     get_letter: "Get the letter"

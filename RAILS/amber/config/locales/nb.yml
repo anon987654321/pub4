@@ -326,6 +326,7 @@ nb:
     total_items: "%{count} plagg i garderoben"
     with_phase: "%{count} med livsfase"
   newsletter:
+    city_letter: Bybrev
     style_notes: "Stilnotater"
     style_blurb: "Ukentlige garderobe-essays, antrekkideer og kapselforslag. Ingen spam."
     get_letter: "Få brevet"

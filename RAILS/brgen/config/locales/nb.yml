@@ -101,14 +101,8 @@ nb:
     quick_actions: Hurtighandlinger
     brand_home: Brgen hjem
     main: Hovedinnhold
-    oauth_options: Innloggingsvalg
-    oauth_or_email: eller e-post
-    oauth_vipps: Logg inn med Vipps
     takeaway: takeaway
     marketplace: markedsplass
-    oauth_google: Logg inn med Google
-    oauth_snapchat: Logg inn med Snapchat
-    oauth_github: Logg inn med GitHub
     opens_new_tab: "%{label} (åpnes i ny fane)"
   skip_to_content: Hopp til hovedinnhold
   home:
@@ -132,6 +126,7 @@ nb:
     local_posts: Lokale innlegg
     today_empty: Ingenting nytt i byen ennå.
   auth:
+    honeypot_label: La dette feltet stå tomt
     sign_in: Logg inn
     sign_in_lead: Du kan lese og poste uten konto. Logg inn for å beholde innleggene
       og heve gjestegrensen.
@@ -753,6 +748,9 @@ nb:
     within_a_km: "under 1 km unna"
     km_away: "%{count} km unna"
   posts:
+    community_label: Fellesskap
+    anywhere_in: "Hvor som helst i %{city}"
+    body_label: Tekst
     score: Poengsum
     upvote: Stem opp
     downvote: Stem ned
@@ -1439,6 +1437,7 @@ nb:
     new_community: Nytt fellesskap
     also_in_city: Også i %{city}
   newsletter:
+    city_letter: Bybrev
     unsubscribe_link: "Meld av"
     title: Byoppdateringer
     body: Nyheter og tilbud fra byen din, én gang i uken.

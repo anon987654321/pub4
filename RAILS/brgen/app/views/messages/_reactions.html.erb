@@ -32,8 +32,8 @@
               params: { target_gid: message.to_signed_global_id.to_s, kind: kind },
               data: { turbo_stream: true },
               class: "msg_reaction_add",
-              title: kind,
-              aria: { label: "React #{kind}" } do %>
+              title: t("reactions.kinds.#{kind}"),
+              aria: { label: t("reactions.aria", kind: t("reactions.kinds.#{kind}")) } do %>
           <span aria-hidden="true"><%= Reaction.glyph(kind) %></span>
         <% end %>
       <% end %>

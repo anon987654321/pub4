@@ -10,8 +10,8 @@
         the other three "(optional)" said the same thing three times and made
         the form read as a list of things you need not do. %>
     <div class="field">
-      <%= f.label :community_id, "Community" %>
-      <%= f.collection_select :community_id, Community.order(:name), :id, :name, { include_blank: "Anywhere in Bergen" } %>
+      <%= f.label :community_id, t("posts.community_label") %>
+      <%= f.collection_select :community_id, Community.order(:name), :id, :name, { include_blank: t("posts.anywhere_in", city: Current.city_name) } %>
     </div>
     <div class="field">
       <%= f.label :title %>
@@ -27,7 +27,7 @@
         page background before, so the 160px mount read as a void between a
         stray number and three orphaned buttons. %>
     <div class="field" data-controller="tiptap-editor">
-      <%= f.label :content, "Body" %>
+      <%= f.label :content, t("posts.body_label") %>
       <div class="compose-surface" data-controller="character-counter" data-character-counter-countdown-value="true">
         <%= f.text_area :content, rows: 5, class: "compose-input",
               maxlength: 10000,
@@ -52,12 +52,12 @@
             capture: "environment",
             direct_upload: true,
             class: "media-input-hidden",
-            aria: { label: t("posts.add_photo", default: "Add photo") },
+            aria: { label: t("posts.add_photo") },
             data: { media_picker_target: "input", action: "change->media-picker#pick" } %>
       <div class="media-actions">
         <button type="button" class="media-btn" data-action="click->media-picker#trigger">
           <%= icon :camera, size: 20 %>
-          Add photo
+          <%= t("posts.add_photo") %>
         </button>
       </div>
       <div class="media-preview" data-media-picker-target="preview"></div>
@@ -69,7 +69,7 @@
     <% if authenticated? %>
       <div class="field field--check">
         <%= f.check_box :anonymous %>
-        <%= f.label :anonymous, "Post anonymously" %>
+        <%= f.label :anonymous, t("posts.post_anonymously") %>
       </div>
     <% else %>
       <p class="mb-12"><%= t("post.posting_as_anon") %> <strong>anon</strong>. <%= link_to t("nav.sign_in"), new_session_path %><%= t("post.guest_sign_in") %></p>

@@ -97,12 +97,6 @@ en:
     quick_actions: Quick actions
     brand_home: Brgen home
     main: Main content
-    oauth_options: Sign in options
-    oauth_or_email: or email
-    oauth_vipps: Sign in with Vipps
-    oauth_google: Sign in with Google
-    oauth_snapchat: Sign in with Snapchat
-    oauth_github: Sign in with GitHub
     takeaway: takeaway
     marketplace: marketplace
     opens_new_tab: "%{label} (opens in a new tab)"
@@ -128,6 +122,7 @@ en:
     local_posts: Local posts
     today_empty: Nothing new across the city yet.
   auth:
+    honeypot_label: Leave this field empty
     sign_in: Sign in
     sign_in_lead: You can browse and post without an account. Sign in to keep your
       posts and lift the guest limit.
@@ -747,6 +742,9 @@ en:
     within_a_km: "less than 1 km away"
     km_away: "%{count} km away"
   posts:
+    community_label: Community
+    anywhere_in: "Anywhere in %{city}"
+    body_label: Body
     score: Post score
     upvote: Upvote
     downvote: Downvote
@@ -1432,6 +1430,7 @@ en:
     new_community: New community
     also_in_city: Also in %{city}
   newsletter:
+    city_letter: City letter
     unsubscribe_link: "Unsubscribe"
     title: City updates
     body: News and deals from your city, once a week.

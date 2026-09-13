@@ -1,7 +1,7 @@
-<% content_for :title, t("profile.edit", default: "Edit profile") %>
+<% content_for :title, t("profile.edit") %>
 
 <header class="page-header">
-  <%= tag.h1 t("profile.edit", default: "Edit profile") %>
+  <%= tag.h1 t("profile.edit") %>
 </header>
 
 <%= form_with model: @user, url: main_app.user_path(@user), method: :patch, class: "stack" do |f| %>
@@ -12,17 +12,17 @@
   <% end %>
 
   <div class="field">
-    <%= f.label :display_name, t("profile.display_name", default: "Display name") %>
+    <%= f.label :display_name, t("profile.display_name") %>
     <%= f.text_field :display_name, autocomplete: "name" %>
   </div>
 
   <div class="field">
-    <%= f.label :username, t("profile.username", default: "Username") %>
+    <%= f.label :username, t("profile.username") %>
     <%= f.text_field :username, autocomplete: "username" %>
   </div>
 
   <div class="cluster">
-    <%= f.submit t("actions.save", default: "Save"), class: "btn" %>
-    <%= link_to t("actions.cancel", default: "Cancel"), main_app.user_path(@user), class: "btn btn-ghost" %>
+    <%= f.submit t("actions.save"), class: "btn" %>
+    <%= link_to t("actions.cancel"), main_app.user_path(@user), class: "btn btn-ghost" %>
   </div>
 <% end %>

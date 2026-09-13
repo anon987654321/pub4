@@ -25,4 +25,16 @@ class PagesSmokeTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "offline-page"
     assert_match(/<link[^>]+stylesheet/, response.body, "offline page rendered without the layout, so it has no CSS")
   end
+
+  test "the new post and sign-up forms render their labels from the locale" do
+    get "/posts/new"
+    assert_response :success
+    assert_includes response.body, I18n.t("posts.anywhere_in", city: "Bergen")
+    assert_includes response.body, I18n.t("posts.body_label")
+    refute_includes response.body, "Anywhere in Bergen"
+
+    get "/users/new"
+    assert_response :success
+    assert_includes response.body, I18n.t("auth.honeypot_label")
+  end
 end

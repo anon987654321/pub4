@@ -11,7 +11,7 @@
   <tr>
     <td class="mail-typo-hero">
       <%= tag.h1 edition.city_name %>
-      <%= tag.p edition.kind == :weekly_deals ? "Curated offers" : "City letter" %>
+      <%= tag.p edition.kind == :weekly_deals ? t("newsletter.curated_offers") : t("newsletter.city_letter") %>
     </td>
   </tr>
 <% end %>
