@@ -150,7 +150,7 @@ module Master
             next unless @rule_recurrence[rule_id] >= 3
             @rule_recurrence.delete(rule_id)
             sample = found.select { |v| v[:rule].to_s == rule_id }.first(5)
-            @bus&.publish("fix_loop:soul_proposal", rule: rule_id, sample:)
+            @bus&.publish("fix_loop:soul_proposal", root: @root, rule: rule_id, sample:)
             append_improvement(rule_id, sample)
           end
           (@rule_recurrence.keys - tally.keys).each { |k| @rule_recurrence.delete(k) }
@@ -160,11 +160,11 @@ module Master
           files = sample.map { |v| v[:file] }.uniq.first(3).join(", ")
           @bus&.publish("loop:recurrence", rule: rule_id, files:, at: Time.now.utc.iso8601)
           line = "#{Time.now.utc.strftime("%Y-%m-%d %H:%M")} #{rule_id}: recurring in #{files}\n"
-          %w[runtime/improvements.md runtime/rsi_improvements.md].each do |rel|
-            path = File.join(@root, rel)
-            FileUtils.mkdir_p(File.dirname(path))
-            File.open(path, "a") { |f| f.write(line) }
-          end
+          # runtime/rsi_improvements.md is Ledger::Feedback's, written from the
+          # soul_proposal event above; writing it here too put every line in twice.
+          path = File.join(@root, "runtime", "improvements.md")
+          FileUtils.mkdir_p(File.dirname(path))
+          File.open(path, "a") { |f| f.write(line) }
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "fix_loop.append_improvement", event_bus: @bus, rule_id:)
         end

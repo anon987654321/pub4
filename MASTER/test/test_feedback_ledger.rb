@@ -65,6 +65,30 @@ class TestFeedbackLedger < Minitest::Test
     FileUtils.remove_entry(root) if root && Dir.exist?(root)
   end
 
+  # The fix loop and the ledger both wrote rsi_improvements.md for one
+  # recurrence, so the log read every improvement twice.
+  def test_a_recurring_rule_is_logged_once
+    root = Dir.mktmpdir("recurrence_log")
+    bus = FakeBus.new
+    rsi_log = File.join(root, "runtime", "rsi_improvements.md")
+    runner = Master::Fix::FixLoop::PassRunner.allocate
+    runner.instance_variable_set(:@bus, bus)
+    runner.instance_variable_set(:@root, root)
+    runner.instance_variable_set(:@rule_recurrence, Hash.new(0))
+    recur = -> { 3.times { runner.send(:track_recurrence, [{ rule: "T205", file: "lib/example.rb" }]) } }
+
+    recur.call
+    refute File.exist?(rsi_log), "the fix loop wrote the ledger's log itself"
+
+    Master::Trace::Ledger::Feedback.new(event_bus: bus, learnings: nil).attach
+    recur.call
+
+    assert_equal 1, File.readlines(rsi_log).size, "the ledger did not write to the loop's root"
+    assert_equal 2, File.readlines(File.join(root, "runtime", "improvements.md")).size
+  ensure
+    FileUtils.remove_entry(root) if root && Dir.exist?(root)
+  end
+
   def test_analyze_self_command_reports_ledger_opportunities
     root = Dir.mktmpdir("analyze_self")
     learnings = Master::Ground::KnowledgeStore.new(root:)
