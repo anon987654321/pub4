@@ -17,8 +17,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
   def index
     scope = policy_scope(Marketplace::Listing).with_attached_photos.includes(:user, :category)
     scope = apply_live_search(scope, columns: %w[title description location], vertical: "marketplace", filters: { category_id: params[:category_id] }.compact) if live_search_query.present?
-    # goods unless asked otherwise: a bicycle search should not turn up a job.
-    @kind = Marketplace::Listing::KINDS.include?(params[:kind]) ? params[:kind] : "goods"
+    @kind = Marketplace::Listing.kind_from(params[:kind])
     scope = scope.where(kind: @kind)
     scope = scope.casual if params[:from] == "person"
     scope = scope.from_shops if params[:from] == "shop"
@@ -48,6 +47,10 @@ class Marketplace::ListingsController < Marketplace::BaseController
     @categories = Marketplace::Category.roots.includes(:children)
     @top_offers = top_offers_for_index(@kind)
     @favorited_listing_ids = favorited_listing_ids_for(@listings, @top_offers)
+    # An empty list with nothing narrowing it means the city has none of this
+    # kind yet, which the results say differently from a search that found none.
+    narrowing = params.values_at(:from, :category_id, :condition, :min_price, :max_price, :lat)
+    @narrowed = live_search_query.present? || narrowing.any?(&:present?)
 
     finish_live_search(partial: "marketplace/listings/live_search_results")
   end
@@ -66,7 +69,7 @@ class Marketplace::ListingsController < Marketplace::BaseController
 
   def new
     authorize Marketplace::Listing
-    @kind = Marketplace::Listing::KINDS.include?(params[:kind]) ? params[:kind] : "goods"
+    @kind = Marketplace::Listing.kind_from(params[:kind])
     @listing = Marketplace::Listing.new(kind: @kind)
     @listing.build_job_detail if @kind == "job"
     @listing.build_housing_detail if @kind == "housing"

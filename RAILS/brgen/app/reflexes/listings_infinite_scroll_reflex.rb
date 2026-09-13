@@ -27,9 +27,7 @@ class ListingsInfiniteScrollReflex < Shared::InfiniteScrollReflex
 
   def scope
     scope = Marketplace::Listing.live.includes(:user, :category).recent
-    # The same kind the first page showed, and goods when none is named, the
-    # way ListingsController#index reads it: page two of the jobs list is jobs.
-    scope = scope.where(kind: element.dataset["kind"].presence_in(Marketplace::Listing::KINDS) || "goods")
+    scope = scope.where(kind: Marketplace::Listing.kind_from(element.dataset["kind"]))
     scope = scope.where(category_id: element.dataset["categoryId"]) if element.dataset["categoryId"].present?
     scope = scope.casual if element.dataset["from"] == "person"
     scope = scope.from_shops if element.dataset["from"] == "shop"

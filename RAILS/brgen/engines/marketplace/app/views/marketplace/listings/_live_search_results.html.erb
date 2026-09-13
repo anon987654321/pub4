@@ -10,14 +10,13 @@
   </div>
 <% end %>
 
-<%# Every link that rebuilds the index carries the kind it arrived with, or a
-    category tap on the jobs list lands back on goods. %>
-<% kind = params[:kind].presence_in(Marketplace::Listing::KINDS) %>
 <% if @categories.any? %>
+  <%# Every link that rebuilds the index carries the kind, or a category tap on
+      the jobs list lands back on goods. %>
   <div class="deal-cats" aria-label="<%= t("aria.categories") %>">
-    <%= link_to t("marketplace.all_categories"), listings_path(kind:), class: "deal-cat#{" active" unless params[:category_id]}" %>
+    <%= link_to t("marketplace.all_categories"), listings_path(kind: @kind), class: "deal-cat#{" active" unless params[:category_id]}" %>
     <% @categories.each do |cat| %>
-      <%= link_to cat.name, listings_path(kind:, category_id: cat.id, q: params[:q].presence), class: "deal-cat#{" active" if params[:category_id].to_s == cat.id.to_s}" %>
+      <%= link_to cat.name, listings_path(kind: @kind, category_id: cat.id, q: params[:q].presence), class: "deal-cat#{" active" if params[:category_id].to_s == cat.id.to_s}" %>
     <% end %>
   </div>
 <% end %>
@@ -46,14 +45,13 @@
                kind: @kind,
                from: params[:from] %>
   <% end %>
-<% elsif live_search_query.present? || params.values_at(:from, :category_id, :condition, :min_price, :max_price, :lat).any?(&:present?) %>
+<% elsif @narrowed %>
   <%= render "shared/empty_state",
         title: t("empty.no_listings"),
         body: t("empty.no_listings_search"),
         action: { label: t("actions.sell_something"), path: new_listing_path } %>
 <% else %>
-  <%# Nothing narrows the list, so the city has none of this kind yet: say which
-      kind, and offer the form for that kind rather than for goods. %>
+  <%# Name the kind the city lacks, and offer the form for that kind. %>
   <%= render "shared/empty_state",
         title: t("marketplace.kind_empty.#{@kind}", city: Current.city_name),
         body: t("marketplace.kind_empty_body"),

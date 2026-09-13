@@ -117,6 +117,10 @@ class Marketplace::Listing < ApplicationRecord
     value.to_f.clamp(1.0, MAX_RADIUS_KM)
   end
 
+  # Goods unless a request names another kind: a bicycle search should not turn
+  # up a job. The index, the new-listing form and page two of a list all ask here.
+  def self.kind_from(value) = KINDS.include?(value) ? value : "goods"
+
   # nil stock means one of a kind, which is what a classifieds listing is; a
   # number means a shop with inventory. Defaulting to 1 would have made every
   # private sale read as a shop with one left.

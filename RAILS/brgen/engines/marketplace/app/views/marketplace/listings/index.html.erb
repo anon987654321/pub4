@@ -57,10 +57,9 @@
                     ((params[:sort].present? && params[:sort] != "recent") ? 1 : 0) %>
 <%# The kind rides along on the search and on every link below, or searching
     or narrowing the jobs list lands back on goods. %>
-<% kind = params[:kind].presence_in(Marketplace::Listing::KINDS) %>
 
 <%= live_search_index url: listings_path, results_partial: "marketplace/listings/live_search_results", placeholder: t("search.marketplace_dots"), label: t("search.marketplace_label"), frame_id: "marketplace-listings" do |f| %>
-  <%= f.hidden_field :kind, value: kind if kind %>
+  <%= f.hidden_field :kind, value: @kind %>
   <details class="listing-filters" <%= "open" if active_filters.positive? %>>
     <%# .deal-cat, not a style of its own. This control opens the drawer holding
         the source chips, so it is a sibling of them and wears their geometry —
@@ -80,11 +79,11 @@
       <fieldset class="listing-filter-group">
         <legend><%= t("marketplace.listing_kind") %></legend>
         <div class="listing-filter-controls">
-          <%= link_to t("marketplace.from_anyone"), listings_path(kind:, category_id: params[:category_id], q: params[:q].presence),
+          <%= link_to t("marketplace.from_anyone"), listings_path(kind: @kind, category_id: params[:category_id], q: params[:q].presence),
                 class: "deal-cat#{" active" if params[:from].blank?}" %>
-          <%= link_to t("marketplace.from_a_person"), listings_path(kind:, from: "person", category_id: params[:category_id], q: params[:q].presence),
+          <%= link_to t("marketplace.from_a_person"), listings_path(kind: @kind, from: "person", category_id: params[:category_id], q: params[:q].presence),
                 class: "deal-cat#{" active" if params[:from] == "person"}" %>
-          <%= link_to t("marketplace.from_a_shop"), listings_path(kind:, from: "shop", category_id: params[:category_id], q: params[:q].presence),
+          <%= link_to t("marketplace.from_a_shop"), listings_path(kind: @kind, from: "shop", category_id: params[:category_id], q: params[:q].presence),
                 class: "deal-cat#{" active" if params[:from] == "shop"}" %>
         </div>
       </fieldset>
