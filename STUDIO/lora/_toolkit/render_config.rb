@@ -26,7 +26,7 @@ ALLOWED_DEVICES = %w[mps cuda cuda_t4 cpu].freeze
 DEVICE_YAML = { "cuda_t4" => "cuda" }.freeze
 
 def load_mapping(path)
-  data = YAML.load_file(path)
+  data = YAML.safe_load_file(path)
   abort "warn: expected mapping in #{path}" unless data.is_a?(Hash)
   data
 end

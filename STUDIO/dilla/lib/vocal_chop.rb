@@ -40,6 +40,8 @@ module VocalChop
     return [] unless File.file?(MANIFEST)
 
     JSON.parse(File.read(MANIFEST))["loops"] || []
+  rescue JSON::ParserError => e
+    raise JSON::ParserError, "#{MANIFEST} is not valid JSON: #{e.message}"
   end
 
   # Which thirty-second cut of THIS record contains this moment of it.

@@ -310,6 +310,10 @@ module CrateDig
 
   def manifest
     File.exist?(MANIFEST) ? JSON.parse(File.read(MANIFEST)) : { "items" => [] }
+  rescue JSON::ParserError => e
+    # Refuse rather than start empty: the next save would overwrite the
+    # provenance of every item already dug.
+    raise JSON::ParserError, "#{MANIFEST} is not valid JSON: #{e.message}"
   end
 
   # Provenance is the whole point of digging here rather than from YouTube: every

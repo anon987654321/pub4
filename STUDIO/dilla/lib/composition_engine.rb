@@ -341,7 +341,10 @@ module DillaComposition
       s.instance_variable_set(:@tension_curve, data["tension_curve"] || s.build_tension_curve(n_bars))
       s.instance_variable_set(:@critique_log, data["critique_log"] || [])
       s
-    rescue StandardError
+    rescue StandardError => e
+      # Said out loud: a jam that silently starts over looks exactly like one
+      # that loaded last night's work.
+      warn "dilla: #{SESSION_PATH} unreadable (#{e.class}: #{e.message}) — starting a fresh session"
       # An interrupted save! (crash, kill -9, disk full) can leave session.json
       # truncated/invalid; a fresh session beats a hard crash on every
       # session/jam/evolve/critique/listen_loop command (same fallback style as

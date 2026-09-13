@@ -96,7 +96,7 @@ def shoots(side: nil, only: nil, set: nil)
   file = set_file(set)
   abort "warn: no set #{set.inspect} — have: #{available_sets.join(', ')}" unless file.file?
 
-  doc = YAML.load_file(file)
+  doc = YAML.safe_load_file(file)
   all = doc["selection"] ? resolve_selection(doc.fetch("selection"), file) : doc.fetch("shoots")
   all = all.select { |s| s["side"].casecmp?(side) } if side
   all = all.select { |s| only.include?(s["n"]) } if only

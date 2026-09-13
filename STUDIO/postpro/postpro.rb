@@ -223,7 +223,9 @@ module PostproBootstrap
     return {} unless File.exist?(path)
 
     begin
-      master = JSON.parse(File.read(path).gsub(/^.*\/\/.*$/, ""))
+      # Whole-line // comments only: a pattern matching // anywhere on the line
+      # also erased every line carrying a URL in a string value.
+      master = JSON.parse(File.read(path).gsub(%r{^\s*//.*$}, ""))
       config = master.dig("config", "multimedia", "postpro") || {}
       dmesg "OK loaded defaults from #{path}"
       config

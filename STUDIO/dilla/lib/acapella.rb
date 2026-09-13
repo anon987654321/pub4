@@ -397,6 +397,9 @@ module Acapella
   def index
     path = File.join(DEST, "index.json")
     File.file?(path) ? (JSON.parse(File.read(path))["vocals"] || []) : []
+  rescue JSON::ParserError => e
+    # Named, so a corrupt index is a file to fix rather than a backtrace.
+    raise JSON::ParserError, "#{path} is not valid JSON: #{e.message}"
   end
 
   # Voices to leave out, and voices to reach for first.
