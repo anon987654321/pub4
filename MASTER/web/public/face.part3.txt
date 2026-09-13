@@ -154,7 +154,10 @@ function stepPoolAsync(pool, dtSec) {
   }
   const id = ++particleWorkerSeq;
   particleWorkerPending.set(id, { pool });
-  worker.postMessage({ op: 'step', id, dt: dtSec, ctx, pool: serializePoolForWorker(pool) });
+  // serializePoolForWorker copies each array, so the main thread never reads
+  // those buffers again; transferring them saves a second copy every frame.
+  const payload = serializePoolForWorker(pool);
+  worker.postMessage({ op: 'step', id, dt: dtSec, ctx, pool: payload }, [payload.cells, payload.decay, payload.alive]);
 }
 function spawnEmotionalGhost(mood) {
   if (!isRichMotionProfile()) return;
