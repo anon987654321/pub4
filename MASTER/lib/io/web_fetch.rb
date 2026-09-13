@@ -65,12 +65,13 @@ module Master
       def fetch_one(url)
         uri = URI(url)
         return Result.err("web_fetch: only http(s)", category: :validation) unless %w[http https].include?(uri.scheme)
-        return Result.err("web_fetch: refused internal/reserved address", category: :validation) unless SsrfGuard.safe_uri?(uri)
+        address = SsrfGuard.pinned_address(uri)
+        return Result.err("web_fetch: refused internal/reserved address", category: :validation) unless address
 
         perm = @governor.permit?(NAME, TIER, url)
         return perm if perm.err?
 
-        response = http_get(uri)
+        response = http_get(uri, address)
         deliver(url, response)
       rescue StandardError => e
         Result.err("web_fetch: #{e.message}", category: :infrastructure)
@@ -115,12 +116,11 @@ module Master
         @injection_guard ||= Master::Review::Security::InjectionGuard.new(mode: :permissive)
       end
 
-      def http_get(uri)
-        Net::HTTP.start(uri.host, uri.port,
-                        use_ssl: uri.scheme == "https",
-                        read_timeout: TIMEOUT, open_timeout: TIMEOUT) do |h|
-          h.get(uri.request_uri, "User-Agent" => "MASTER/1 (web_fetch)")
-        end
+      def http_get(uri, address)
+        http = SsrfGuard.http_for(uri, address)
+        http.read_timeout = TIMEOUT
+        http.open_timeout = TIMEOUT
+        http.start { |h| h.get(uri.request_uri, "User-Agent" => "MASTER/1 (web_fetch)") }
       end
 
       def strip_html(body)

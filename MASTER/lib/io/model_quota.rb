@@ -7,6 +7,10 @@ require "time"
 module Master
   module Io
     # Per-model daily request budget for OpenRouter :free slugs (200/day/key typical).
+    # One of three quota objects, each answering a different question: this one
+    # counts calls per free model per day; QuotaGate says whether a paid
+    # provider still has credit (test/test_quota_gate.rb); ModelSkipCache
+    # parks a model that just failed (test/test_model_skip_cache.rb).
     module ModelQuota
       FREE_RE = /:free\z|\Aopenrouter\//.freeze
       DEFAULT_DAILY = 200

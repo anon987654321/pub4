@@ -5,7 +5,7 @@ require "json"
 
 class TestReplicateClientTrain < Minitest::Test
   def test_training_weights_url_from_hash
-    client = Master::Io::ReplicateClient.allocate
+    client = Master::Io::ReplicateClient.new(token: "r8_test")
     training = {
       "output" => {
         "version" => "owner/model:abc",
@@ -19,7 +19,7 @@ class TestReplicateClientTrain < Minitest::Test
   end
 
   def test_training_weights_url_string_output
-    client = Master::Io::ReplicateClient.allocate
+    client = Master::Io::ReplicateClient.new(token: "r8_test")
     assert_equal "owner/model:abc", client.training_weights_url("output" => "owner/model:abc")
   end
 
@@ -28,7 +28,7 @@ class TestReplicateClientTrain < Minitest::Test
   end
 
   def test_create_model_requires_owner_name
-    client = Master::Io::ReplicateClient.allocate
+    client = Master::Io::ReplicateClient.new(token: "r8_test")
     assert_raises(ArgumentError) { client.create_model("noneslash") }
   end
 end

@@ -22,6 +22,17 @@ ingress:
   rate_limit_per_minute: 30
   window_seconds: 60
 
+# Per-IP request budgets for the web face, each over its own window. Read by
+# MASTER/web/app/controllers/application_controller.rb#web_rate_limit.
+web_rate_limits:
+  chat: { per_window: 30, window_seconds: 60 }
+  tts: { per_window: 30, window_seconds: 60 }
+  # Polls of an existing job, not synthesis. pollTTSJob asks every 250ms-1.5s
+  # per utterance, and a 429 here drops the client to the browser voice.
+  tts_poll: { per_window: 300, window_seconds: 60 }
+  read: { per_window: 120, window_seconds: 60 }
+  write: { per_window: 60, window_seconds: 60 }
+
 tools:
   custom:
     # Read by lib/cli/destructive_routes.rb#blocking_review?.

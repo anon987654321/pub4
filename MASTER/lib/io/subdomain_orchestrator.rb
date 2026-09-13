@@ -126,10 +126,10 @@ module Master
         return { ok: false, status: 0, body: "blocked" } if url.to_s.empty?
 
         uri = URI(url)
-        return { ok: false, status: 0, body: "blocked" } unless SsrfGuard.safe_uri?(uri)
+        address = SsrfGuard.pinned_address(uri)
+        return { ok: false, status: 0, body: "blocked" } unless address
 
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = uri.scheme == "https"
+        http = SsrfGuard.http_for(uri, address)
         http.open_timeout = timeout
         http.read_timeout = timeout
         res = http.get(uri.request_uri)

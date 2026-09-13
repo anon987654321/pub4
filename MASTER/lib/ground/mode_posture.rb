@@ -25,8 +25,7 @@ module Master
 
       def current = describe(resolve_name)
 
-      # The resolved settings for any named mode, not only the active one, so
-      # `/mode list` can show what each posture does without switching into it.
+      # The resolved settings for any named mode, not only the active one.
       def describe(name)
         key = name.to_s.strip.downcase
         spec = modes[key] || modes["balanced"] || {}
@@ -53,8 +52,8 @@ module Master
         current
       end
 
-      # Defaults to the active posture; takes a spec so `/mode list` renders
-      # every mode through the same formatter the status line already uses.
+      # Defaults to the active posture; takes a spec so any mode renders through
+      # the formatter the status line uses.
       def line(spec = current)
         council = case spec[:council]
                   when true then "council=on"

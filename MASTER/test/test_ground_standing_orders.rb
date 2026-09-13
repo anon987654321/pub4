@@ -193,6 +193,25 @@ class StandingOrdersTest < Minitest::Test
     assert_match(/no router/, result.message)
   end
 
+  # /orders run executes whatever is due with nobody watching, so a hard reset,
+  # a push or doas written as an order must never reach the router.
+  def test_run_due_refuses_destructive_commands_before_routing
+    routed = []
+    pipeline = ->(input) { routed << input.value![:user_message]; Master::Result.ok("ran") }
+    orders = Orders.new(pipeline:)
+    list = ["git reset --hard origin/main", "git push origin main", "doas rcctl stop master", "scan"]
+             .each_with_index.map { |cmd, i| order("name" => "o#{i}", "command" => cmd) }
+    orders.instance_variable_set(:@orders, list)
+
+    results = orders.run_due!
+
+    assert_equal %w[scan], routed
+    refused = results.reject { |r| r[:result].ok? }.map { |r| r[:name] }
+    assert_equal %w[o0 o1 o2], refused
+    assert_match(/standing order refused/, results.first[:result].message)
+    assert_equal "error", list.first["state"]
+  end
+
   def test_persist_writes_only_the_state_keys
     with_orders([order("state" => "done", "last_run_at" => 42, "last_error" => "e")]) do
       @orders.send(:persist)

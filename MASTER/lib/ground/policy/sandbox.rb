@@ -29,7 +29,7 @@ module Master
         # asks a human, but `check_permit` returns ok on `@auto` before it reaches
         # `needs_human?`, and unattended is exactly when this matters. Denying here
         # covers the fold's path as well as the tool's. MASTER's own restarts are
-        # unaffected: orders.rb, relayd.rb and resync_service.rb spawn doas through
+        # unaffected: orders.rb and relayd.rb spawn doas through
         # Io::Exec and never come past this gate.
         DENY_PATTERNS = [
           /\bdoas\b/, /\bsudo\b/, /(?:\A|[;&|]\s*)su\b/,

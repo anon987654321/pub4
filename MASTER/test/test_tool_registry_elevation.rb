@@ -9,7 +9,8 @@ class ToolRegistryElevationTest < Minitest::Test
     attr_accessor :tools, :tool_registry, :config, :model_router, :session, :bus
 
     def initialize
-      @tools = [Master::Io::Shell.allocate, Master::Io::ReadFile.allocate]
+      root = Master::ROOT
+      @tools = [Master::Io::Shell.new(root:, governor: Object.new), Master::Io::ReadFile.new(root:, undo: nil)]
       @tool_registry = {
         "Shell" => { "tier" => "dangerous" },
         "ReadFile" => { "tier" => "safe" },

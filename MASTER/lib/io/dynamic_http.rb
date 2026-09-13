@@ -53,8 +53,12 @@ module Master
         # A blocked socket read is interruptible, and Net::HTTP.start's block
         # closes the connection as the Timeout::Error unwinds through it.
         Timeout.timeout(TIMEOUT * 2) do
-          Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https",
-                          open_timeout: TIMEOUT, read_timeout: TIMEOUT, write_timeout: TIMEOUT) do |http|
+          address = SsrfGuard.pinned_address(uri) or raise SocketError, "#{uri.host} no longer resolves to a public address"
+          pinned = SsrfGuard.http_for(uri, address)
+          pinned.open_timeout = TIMEOUT
+          pinned.read_timeout = TIMEOUT
+          pinned.write_timeout = TIMEOUT
+          pinned.start do |http|
             case method
             when "POST", "PUT", "PATCH"
               req = Net::HTTP.const_get(method.capitalize).new(uri)

@@ -196,6 +196,8 @@ module Master
           return Result.err("unknown callable: #{callable_key}") unless klass
           return klass.new(container: @container.merge(bus: @bus, root: Master::ROOT, event:)).call
         end
+        refusal = unattended_refusal(order["command"])
+        return refusal if refusal
         return Master::CLI::TurnRouter.call(message: order["command"].to_s, container: @container) if @container[:commands]
 
         return @pipeline.call(Result.ok(user_message: order["command"].to_s)) if @pipeline
@@ -203,6 +205,18 @@ module Master
         Result.err("no router")
       rescue StandardError => e
         Result.err(e.message)
+      end
+
+      # An order runs with nobody watching, so a command the sandbox would deny
+      # or stop to ask a person about — a hard reset, a push, doas — is refused
+      # here rather than routed. Callable orders are code, reviewed as code, and
+      # never reach this.
+      def unattended_refusal(command)
+        decision = Master::Ground::Policy::Sandbox.decide(command.to_s)
+        return unless decision.deny? || decision.recognised_ask?
+
+        Result.err("standing order refused: #{command.to_s[0, 80]} (#{decision.reason}; orders run unattended)",
+                   category: :policy)
       end
 
       def toggle(name, enabled)

@@ -9,6 +9,9 @@ require_relative "semantic_index"
 
 module Master
   module Io
+    # The LLM response cache, and the top of one stack rather than a rival to
+    # the other two: an exact prompt+model key on disk under .master/cache, then
+    # SemanticIndex for a near-hit, which embeds through Review::Embeddings.
     class SemanticCache
       MAX_ENTRIES = 1000
       DEFAULT_TTL = 300

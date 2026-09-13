@@ -31,6 +31,16 @@ class TestSecurityDefaults < Minitest::Test
     %w[pairing allowlist_path] => ["lib/ground/pairing.rb", "allowlist_path"],
     %w[pairing redeem_per_minute] => ["lib/ground/pairing.rb", "redeem_per_minute"],
     %w[pairing redeem_window_seconds] => ["lib/ground/pairing.rb", "redeem_window_seconds"],
+    %w[web_rate_limits chat per_window] => ["web/app/controllers/application_controller.rb", "web_rate_limits"],
+    %w[web_rate_limits chat window_seconds] => ["web/app/controllers/application_controller.rb", "web_rate_limits"],
+    %w[web_rate_limits tts per_window] => ["web/app/controllers/application_controller.rb", "web_rate_limits"],
+    %w[web_rate_limits tts window_seconds] => ["web/app/controllers/application_controller.rb", "web_rate_limits"],
+    %w[web_rate_limits tts_poll per_window] => ["web/app/controllers/application_controller.rb", "web_rate_limits"],
+    %w[web_rate_limits tts_poll window_seconds] => ["web/app/controllers/application_controller.rb", "web_rate_limits"],
+    %w[web_rate_limits read per_window] => ["web/app/controllers/application_controller.rb", "web_rate_limits"],
+    %w[web_rate_limits read window_seconds] => ["web/app/controllers/application_controller.rb", "web_rate_limits"],
+    %w[web_rate_limits write per_window] => ["web/app/controllers/application_controller.rb", "web_rate_limits"],
+    %w[web_rate_limits write window_seconds] => ["web/app/controllers/application_controller.rb", "web_rate_limits"],
   }.freeze
 
   def defaults

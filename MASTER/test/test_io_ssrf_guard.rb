@@ -78,4 +78,31 @@ class SsrfGuardTest < Minitest::Test
       refute Guard.safe_uri?(URI.parse("http://nx.example.invalid/"))
     end
   end
+  # The socket goes to the address the check approved, so a second DNS answer
+  # at connect time cannot move it; the hostname still carries TLS.
+  def test_http_for_pins_the_connection_to_the_checked_address
+    http = Guard.http_for(URI.parse("https://example.com/x"), "93.184.216.34")
+
+    assert_equal "93.184.216.34", http.ipaddr
+    assert_equal "example.com", http.address
+    assert http.use_ssl?
+  end
+
+  def test_web_fetch_connects_through_the_pinned_address
+    pinned = []
+    fake = Object.new
+    def fake.read_timeout=(_); end
+    def fake.open_timeout=(_); end
+    def fake.start = Struct.new(:code, :body).new("200", "<p>hello</p>")
+    governor = Object.new
+    def governor.permit?(*) = Master::Result.ok(true)
+    fetch = Master::Io::WebFetch.new(governor:)
+
+    Resolv.stub(:getaddresses, ["93.184.216.34"]) do
+      Guard.stub(:http_for, ->(_uri, address) { pinned << address; fake }) do
+        assert fetch.send(:fetch_one, "https://example.com/").ok?
+      end
+    end
+    assert_equal ["93.184.216.34"], pinned
+  end
 end

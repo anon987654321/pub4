@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "open3"
+require "yaml"
 
 require "test_helper"
 require "ground/host_budget"
@@ -41,5 +42,36 @@ class TestHostBudget < Minitest::Test
       assert_includes pids, 63_744
       refute_includes pids, 22_489
     end
+  end
+  # HostBudget measures the host; OPENBSD/vm_resource.yml declares it. The two
+  # must agree that the declared box is constrained, or vm23 boots with TTS, the
+  # boot scan and the background loops on.
+  def test_the_declared_vm_is_a_constrained_host
+    budget = Master::Ground::HostBudget
+    previous = budget.instance_variable_get(:@total_mem_mb)
+    budget.instance_variable_set(:@total_mem_mb, Integer(declared_vm.fetch("ram_mb")))
+
+    assert budget.constrained?
+  ensure
+    budget.instance_variable_set(:@total_mem_mb, previous)
+  end
+
+  # RuntimeCatalog reads the same file for the face's Falcon worker budget; a
+  # wrong path falls back to FALCON_COUNT without a word, so FALCON_COUNT is set
+  # to a value the file does not hold.
+  def test_the_web_boot_payload_reads_the_declared_worker_budget
+    previous = ENV["FALCON_COUNT"]
+    ENV["FALCON_COUNT"] = "97"
+
+    assert_equal declared_vm.dig("limits", "master_falcon_workers"),
+                 Master::Ground::RuntimeCatalog.web_boot_payload_minimal[:falcon_worker_budget]
+  ensure
+    ENV["FALCON_COUNT"] = previous
+  end
+
+  private
+
+  def declared_vm
+    YAML.safe_load_file(File.join(Master::REPO_ROOT, "OPENBSD", "vm_resource.yml"))
   end
 end

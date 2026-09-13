@@ -4,8 +4,10 @@ require "time"
 
 module Master
   module Io
-    # OpenClaw OPENCLAW_FALLBACK_SKIP_TTL_MS parity — skip models that recently failed
-    # auth/rate/quota so failover chains do not hammer the same dead endpoint.
+    # Skip models that recently failed auth/rate/quota so failover chains do not
+    # hammer the same dead endpoint. A skip is per model and expires; a spent
+    # paid tier is QuotaGate (test/test_quota_gate.rb), and a free model's daily
+    # count is ModelQuota.
     module ModelSkipCache
       SKIP_CATEGORIES = %i[
         rate_limit quota_exceeded no_api_key timeout auth_error

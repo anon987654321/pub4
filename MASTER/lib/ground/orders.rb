@@ -4,6 +4,9 @@ require "open3"
 
 module Master
   module Ground
+    # The bodies of standing orders. StandingOrders owns the schedule and the
+    # state in data/state.yml; an order whose command names a class here runs
+    # that class, looked up through Orders::Registry.
     module Orders
       # Standing-order callables. Subclass and implement `call`. Returning a
       # Master::Result::Ok marks the order done; Result::Err marks it errored.

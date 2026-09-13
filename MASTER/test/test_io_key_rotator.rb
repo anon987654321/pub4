@@ -1,12 +1,16 @@
 # frozen_string_literal: true
 
 require_relative "test_helper"
+require "minitest/mock"
 
 # TODO.md, Test coverage: no test named KeyRotator. It decides which OpenRouter key
 # every free-tier call uses, and its "single key makes every method a no-op"
 # contract is the kind of thing that quietly becomes false.
 class KeyRotatorTest < Minitest::Test
   Rotator = Master::Io::KeyRotator
+  # Two variables of our own, so the multi-key branches run whatever
+  # models.yml happens to list.
+  TWO_VARS = %w[TEST_ROTATOR_KEY_A TEST_ROTATOR_KEY_B].freeze
 
   def setup
     @index = Rotator.instance_variable_get(:@index)
@@ -40,11 +44,8 @@ class KeyRotatorTest < Minitest::Test
   end
 
   def test_keys_dedupes_identical_values_across_vars
-    vars = Rotator.env_vars
-    skip "needs at least two configured key vars" if vars.size < 2
-
-    with_env(vars.to_h { |var| [var, long("a")] }) do
-      assert_equal 1, Rotator.keys.size
+    with_env(TWO_VARS.to_h { |var| [var, long("a")] }) do
+      Rotator.stub(:env_vars, TWO_VARS) { assert_equal 1, Rotator.keys.size }
     end
   end
 
@@ -79,19 +80,22 @@ class KeyRotatorTest < Minitest::Test
   end
 
   def test_active_key_cycles_through_the_configured_keys
-    vars = Rotator.env_vars
-    skip "needs at least two configured key vars" if vars.size < 2
-
-    values = vars.each_with_index.to_h { |var, i| [var, long((97 + i).chr)] }
+    values = TWO_VARS.each_with_index.to_h { |var, i| [var, long((97 + i).chr)] }
     with_env(values) do
-      Rotator.instance_variable_set(:@index, 0)
-      first = Rotator.active_key
-      Rotator.instance_variable_set(:@index, 1)
-      second = Rotator.active_key
-
-      refute_equal first, second
-      Rotator.instance_variable_set(:@index, Rotator.keys.size)
-      assert_equal first, Rotator.active_key, "index must wrap"
+      Rotator.stub(:env_vars, TWO_VARS) { assert_cycles }
     end
+  end
+
+  private
+
+  def assert_cycles
+    Rotator.instance_variable_set(:@index, 0)
+    first = Rotator.active_key
+    Rotator.instance_variable_set(:@index, 1)
+    second = Rotator.active_key
+
+    refute_equal first, second
+    Rotator.instance_variable_set(:@index, Rotator.keys.size)
+    assert_equal first, Rotator.active_key, "index must wrap"
   end
 end

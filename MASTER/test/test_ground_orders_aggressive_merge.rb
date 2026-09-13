@@ -3,7 +3,9 @@
 require_relative "test_helper"
 require "master"
 
-class TestAggressiveMerge < Minitest::Test
+# Ground::Orders::AggressiveMerge, the standing order that flags thin siblings
+# and low-density names on every write.
+class TestGroundOrdersAggressiveMerge < Minitest::Test
   def setup
     @dir = Dir.mktmpdir("aggressive_merge")
     @bus = Master::Trace::EventBus.new

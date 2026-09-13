@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 require "ipaddr"
+require "net/http"
 require "resolv"
 # Without this, safe_uri?'s `uri.is_a?(URI::HTTP)` raised NameError into its own
 # blanket rescue and the guard answered false for every URL — web_fetch silently off.
@@ -14,15 +15,12 @@ module Master
     # that directs a fetch at the runtime's own internal network must not
     # succeed silently.
     #
-    # Known residual risk: this resolves the hostname once up front, but
-    # Net::HTTP resolves it again when it connects a few
-    # milliseconds later — a DNS-rebinding attacker controlling the target
-    # domain may serve a public IP for this check and a private one for
-    # the real connection. Closing that fully means pinning the connection
-    # to the resolved IP (custom socket + TLS SNI/hostname override), which
-    # is a bigger change than this guard aims to be; this stops the common
-    # case (a payload naming an internal URL directly), not a targeted
-    # rebinding attack.
+    # The connection is pinned to the address this check approved. Net::HTTP
+    # resolves a hostname again when it connects, so a DNS-rebinding domain
+    # could answer public for the check and private for the socket; `http_for`
+    # sets Net::HTTP#ipaddr to the checked address instead, while the hostname
+    # still carries SNI, certificate verification and the Host header. Every
+    # caller connects through `http_for`, never `Net::HTTP.start(uri.host, ...)`.
     module SsrfGuard
       RESERVED_RANGES = %w[
         0.0.0.0/8
@@ -37,17 +35,30 @@ module Master
         2001:db8::/32
       ].map { |cidr| IPAddr.new(cidr) }.freeze
 
-      def self.safe_uri?(uri)
-        return false unless uri.is_a?(URI::HTTP) && uri.host
-        return false if uri.host.strip.casecmp("localhost").zero?
+      def self.safe_uri?(uri) = !pinned_address(uri).nil?
+
+      # The address to connect to, or nil when the host is unsafe. Every answer
+      # must be public: a name with one public and one private address is the
+      # shape of a rebinding setup, not a choice.
+      def self.pinned_address(uri)
+        return unless uri.is_a?(URI::HTTP) && uri.host
+        return if uri.host.strip.casecmp("localhost").zero?
 
         addresses = Resolv.getaddresses(uri.host)
-        return false if addresses.empty?
+        return if addresses.empty?
+        return if addresses.any? { |addr| blocked_ip?(IPAddr.new(addr)) }
 
-        addresses.all? { |addr| !blocked_ip?(IPAddr.new(addr)) }
+        addresses.first
       rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "SsrfGuard.safe_uri?")
-        false
+        Master::Ground::Swallow.log(e, context: "SsrfGuard.pinned_address")
+        nil
+      end
+
+      def self.http_for(uri, address)
+        Net::HTTP.new(uri.host, uri.port).tap do |http|
+          http.ipaddr = address
+          http.use_ssl = uri.scheme == "https"
+        end
       end
 
       def self.blocked_ip?(ip)

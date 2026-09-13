@@ -2,6 +2,9 @@
 
 module Master
   module Ground
+    # Ruby binding for OpenBSD's pledge(2) and unveil(2) through Fiddle, and a
+    # no-op everywhere else. The name is the system call's; OPENBSD/ is the deploy
+    # tree and has nothing to do with this module.
     module Pledge
       module_function
 
