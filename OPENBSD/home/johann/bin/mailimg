@@ -12,6 +12,8 @@
 #
 # in ~/.profile. Leave them unset when connecting from Apple Terminal, which
 # supports no graphics protocol and would print the raw escapes as garbage.
+set -eu
+
 fmt=${MAIL_IMG_FMT:-symbols}
 colors=${MAIL_IMG_COLORS:-256}
 size=${MAIL_IMG_SIZE:-100x30}
@@ -21,5 +23,5 @@ chafa -f "$fmt" -c "$colors" --size "$size" --animate off "$@"
 # mutt has wait_key=no, so without this the image would flash past on the way
 # back to the pager.
 printf '\n[enter] '
-read _
+read _ || true
 exit 0

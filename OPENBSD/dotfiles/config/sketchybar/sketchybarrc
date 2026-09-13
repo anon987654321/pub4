@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+set -euo pipefail
 
 sketchybar --bar height=36 \
                  color=0xff000000 \
