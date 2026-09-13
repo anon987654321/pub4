@@ -1199,7 +1199,7 @@ euclid_sparse: {
   # overwritten by these.
   def self.load_documented_progressions
     paths = [
-      File.expand_path("../dilla_reference.yml", __dir__),
+      File.expand_path("../data/dilla_reference.yml", __dir__),
       File.expand_path("../free_midi_chords.yml", __dir__),
     ].select { |candidate| File.file?(candidate) }
     return {} if paths.empty?

@@ -1,12 +1,9 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
-# frozen_string_literal: true
 
-# Thin wrapper — study logic lives in STUDIO/dilla/dilla.rb (RadioBergenStudy).
-#
-# Was "../dilla/dilla", correct from STUDIO/radio-bergen/. From STUDIO/dilla/scripts/
-# that resolves to STUDIO/dilla/dilla/dilla, one level too deep.
-require_relative "../dilla"
+# Thin wrapper — study logic lives in dilla.rb (RadioBergenStudy). It sits beside
+# the engine because brgen's radio_bergen_study_test requires it from Rails.
+require_relative "dilla"
 
 if $PROGRAM_NAME == __FILE__
   json = ARGV.include?("--json")

@@ -9,7 +9,7 @@ require "open3"
 # Do not reimplement Council::Critique / Ideation here.
 module DillaMaster
   IR_DIR = File.join(File.expand_path("..", __dir__), "samples", "irs")
-  REFERENCE_PATH = File.expand_path("../dilla_reference.yml", __dir__)
+  REFERENCE_PATH = File.expand_path("../data/dilla_reference.yml", __dir__)
 
   module_function
 

@@ -2594,7 +2594,8 @@ class TestDilla < Minitest::Test
 
     assert_empty Dir[File.join(root, "lib", "engine", "*.rb")],
                  "lib/engine/ is back -- the engine is one file, and a part there is required by nothing"
-    on_disk = Dir[File.join(root, "lib", "*.rb")].length + 1
+    # The live scripts share lib/ with the engine's modules and are named apart.
+    on_disk = (Dir[File.join(root, "lib", "*.rb")] - DillaSources.live).length + 1
     assert_equal on_disk, DillaSources.all.length,
                  "DillaSources.all must be every ruby file the engine is made of, or the checks that read it are partial"
 

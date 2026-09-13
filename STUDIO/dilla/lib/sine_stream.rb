@@ -1799,9 +1799,71 @@ ENV["WONKY_HAT_DUCK"] ||= "0.55"
 ENV["DRUM_FIELD_MIX"] ||= "0.18"
 
 # Everything above is the synthesis library; everything below is the endless
-# generator. demo_full.rb requires this file for the library alone, so loading it
+# generator, or with `play` the player that drains its queue. Loading this file
 # from anywhere but the command line stops here rather than starting a stream.
 return unless __FILE__ == $PROGRAM_NAME
+
+# `ruby dilla.rb sines play` drains the generator's queue and never replays a
+# verse. The rule is that a rap vocal is never heard twice: a take that carried
+# a vocal is played once and archived, only instrumental takes are eligible for
+# replay, and when there are none the room waits rather than repeating a bar.
+if ARGV.first == "play"
+  QUEUE = File.join(OUT, "q")
+  ARCHIVE = File.join(OUT, "archive")
+  NOW = File.join(OUT, "now_playing.txt")
+  VOICES = %w[store_p gunnhild jonas_v].freeze
+  KEEP = 60
+  FileUtils.mkdir_p(ARCHIVE)
+
+  def has_vocal?(wav)
+    txt = wav.sub(/\.wav\z/, ".txt")
+    return true unless File.file?(txt) # unknown provenance is treated as vocal
+
+    line = File.read(txt)
+    VOICES.any? { |v| line.include?("+#{v}") }
+  end
+
+  last = nil
+  until File.exist?(STOP)
+    fresh = Dir[File.join(QUEUE, "[0-9]*.wav")].sort.first
+    if fresh && File.size(fresh) > 100_000
+      txt = fresh.sub(/\.wav\z/, ".txt")
+      File.write(NOW, File.read(txt)) if File.file?(txt)
+      system("/usr/bin/afplay", fresh)
+      # The sidecar travels with the take, so the archive knows which ones carry a
+      # verse and are therefore spent.
+      # If the move fails the loop picks the same file again on the next turn and
+      # plays it forever, so this rescue used to turn one bad permission into an
+      # endless repeat with nothing on stderr. The take still is not lost — it
+      # plays again — but the reason is on the terminal now.
+      begin
+        FileUtils.mv(fresh, ARCHIVE, force: true)
+      rescue StandardError => e
+        warn "player: could not archive #{File.basename(fresh)} (#{e.class}: #{e.message}) — " \
+             "it will play again next turn"
+      end
+      FileUtils.mv(txt, ARCHIVE, force: true) if File.file?(txt)
+      old = Dir[File.join(ARCHIVE, "*.wav")].sort_by { |f| -File.mtime(f).to_i }[KEEP..]
+      Array(old).each { |f| FileUtils.rm_f(f); FileUtils.rm_f(f.sub(/\.wav\z/, ".txt")) } # scan: intentional — retention: the player's own archive past KEEP
+      next
+    end
+
+    pool = Dir[File.join(ARCHIVE, "*.wav")].reject { |f| has_vocal?(f) }
+    if pool.any?
+      pick = pool.sample
+      pick = (pool - [last]).sample || pick if pick == last && pool.length > 1
+      last = pick
+      File.write(NOW, "replay (instrumental) #{File.basename(pick)}\n")
+      system("/usr/bin/afplay", pick)
+    else
+      # Nothing new and nothing without a verse on it. The heartbeat holds the
+      # room rather than a repeated bar doing it.
+      File.write(NOW, "waiting — no unheard take, and no instrumental to replay\n")
+      sleep 4
+    end
+  end
+  exit
+end
 
 cfg = dilla_resolve_config
 names = CHORD_PROGRESSIONS.keys

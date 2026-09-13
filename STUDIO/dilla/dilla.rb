@@ -216,7 +216,7 @@ STEM_MIDS = File.join(STEM_DIR, "mids.mp3")
 STEM_HIGHS = File.join(STEM_DIR, "highs_pluck.mp3")
 STEM_SUB = File.join(STEM_DIR, "sub_bass.mp3")
 STEM_CENTER = File.join(STEM_DIR, "center.mp3")
-STEM_MANIFEST = File.join(STEM_DIR, "manifest.json")
+STEM_MANIFEST = File.join(ROOT, "data", "stems.json")
 STEM_EXTS = %w[.mp3 .wav .ogg .flac].freeze
 DEMUX_DIR = SAMPLE_DIR
 DEMUX_MODEL = "htdemucs_6s"
@@ -3348,7 +3348,7 @@ end
 # that directory was removed — brgen's playlist replaced what it served. The
 # file is dilla's own data: it merges over INLINE_RADIO_BERGEN_LEARNINGS and is
 # a write! target, so it moved here rather than being inlined.
-RADIO_BERGEN_SONIC_PATH = File.expand_path("reference_sonic.yml", ROOT).freeze
+RADIO_BERGEN_SONIC_PATH = File.join(ROOT, "data", "reference_sonic.yml").freeze
 # The track manifest is brgen's data, not the studio's — brgen serves the
 # playlist, and RadioBergenManifest already looked in config/radio_bergen/
 # first. It lives there outright now, and dilla reads across to it.
@@ -13456,7 +13456,7 @@ def clean(input, output)
   puts "wrote #{output}"
 end
 
-# --- Stems rack (manifest in stems/) ---
+# --- Stems rack (manifest in data/stems.json) ---
 
 def stems_load_manifest
   return { "active" => "default", "sets" => {} } unless File.exist?(STEM_MANIFEST)
@@ -13488,7 +13488,7 @@ end
 #
 # The two halves of this subsystem never met. `stems scan` wrote
 # samples/manifest.json with sets as an ARRAY and repo-relative stem paths;
-# stems_load_manifest reads STEM_MANIFEST (stems/manifest.json) and every
+# stems_load_manifest reads STEM_MANIFEST (data/stems.json) and every
 # consumer -- render_liveset is the only one -- wants sets as a HASH with
 # `dir` + `files`. STEM_DIR does not exist in the tree either, so the loader
 # always returned its empty default and render_liveset aborted with "no stem
@@ -19547,7 +19547,7 @@ def demo_each? = ENV["DEMO_EACH"] == "1"
 # run log stay in scratch, because those are bookkeeping and this directory is
 # meant to be a listening queue.
 DEMO_EACH_DIR = ROOT
-DEMO_EACH_MANIFEST = File.join(ROOT, "demo_manifest.tsv")
+DEMO_EACH_MANIFEST = File.join(ROOT, "data", "demo_manifest.tsv")
 
 # Each track gets its own pinned seed, written into the manifest beside it.
 #
@@ -28439,7 +28439,6 @@ def help
       RADIO_BERGEN=0 (stream default)  Set 1 to bias TRACK from radio.brgen.no
       radio-bergen-study [--audio-root PATH]  Refresh learnings YAML from manifest
       radio-bergen-analyze [--audio-root PATH]  Per-track dossiers (drums/texture/harmony)
-      radio-bergen-librosa            Librosa deep analysis (optional .venv)
 
     SYNTHESIS
       loose_pocket [out.wav|mp3]         Dirty pocket drums + VLC FX (default on)
@@ -28495,7 +28494,7 @@ def help
       WONKY_DRUM_OVERLAY=1             Wonky overlay; Camel grid on quartal_west_coast / wonky_camel
       clean <in> [out]             Denoise + loudnorm
 
-    STEM RACK (stems/manifest.json)
+    STEM RACK (data/stems.json)
       stems                        Register default rack from stems/
       stems add <name> <dir> [bpm] Add a stem set to manifest
       stems scan [root] [manifest] Legacy directory scan → manifest
@@ -34930,7 +34929,7 @@ DISPATCH = {
   # The continuous stream: every progression in the catalogue, played through the
   # engine's own pad stacks with the kit, the vocal and the full master chain over
   # it, generated into a queue that a separate player drains. It does not stop.
-  "sines" => -> { exec(RbConfig.ruby, File.join(ROOT, "bin", "sine_stream.rb"), *ARGV) },
+  "sines" => -> { exec(RbConfig.ruby, File.join(ROOT, "lib", "sine_stream.rb"), *ARGV) },
   "chords" => -> { chords },
   "vocab-check" => -> { vocab_check },
   "clean" => -> { clean(ARGV.shift, ARGV.shift || File.join(OUTPUT_DIR, "clean.wav")) },
@@ -34968,15 +34967,6 @@ DISPATCH = {
     data = RadioBergenStudy.dossiers!
     puts "wrote #{path}"
     puts "measured #{data.dig('meta', 'measured_local')}/#{data.dig('meta', 'tracks')} tracks"
-  },
-  "radio-bergen-librosa" => lambda {
-    py = File.expand_path("venv-librosa/bin/python3", ROOT)
-    script = File.expand_path("scripts/librosa_analyze.py", ROOT)
-    unless File.executable?(py) && File.file?(script)
-      abort "librosa venv missing — run: cd STUDIO/dilla && python3 -m venv venv-librosa && " \
-            "venv-librosa/bin/pip install librosa pyyaml"
-    end
-    sh! py, script
   },
   "rhythm" => -> { rhythm(ARGV.shift) },
   "melody" => -> { melody(ARGV.shift) },

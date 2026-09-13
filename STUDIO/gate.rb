@@ -94,36 +94,22 @@ module Deploy
 
     PROBE_TIMEOUT = Integer(ENV.fetch("STUDIO_PROBE_TIMEOUT", "60"))
 
-    # dilla's support files are the one place file count can still grow, so this
-    # is the ceiling that replaced ENGINE_PART_CEILING when the 83 engine parts
-    # folded into dilla.rb. A new module fails the gate until its author folds it
-    # into a sibling or raises this with the reason in the commit.
-    #
-    # It used to read `/dilla/lib/[^/]+\.rb\z` — one directory, one level deep —
-    # and both halves of that were an escape hatch. `MASTER/tools/cohesion.rb
-    # STUDIO/dilla/lib` proposes three regroups into engine/, harmony/ and
-    # score/, nine files between them; taking any one moves those files a level
-    # down, out of the pattern, and the guarded count falls from 44 to 35. The
-    # same change relieves the ceiling by making it measure less.
-    # And `dilla/bin`, `dilla/live` and `dilla/scripts` were not
-    # counted at all, so twelve support files sat outside a ceiling written to
-    # stop support files multiplying.
-    #
-    # So the corpus is every first-party Ruby file dilla carries beside the
-    # engine, at any depth: 44 in lib/, 4 in bin/, 6 in live/ and 2 in scripts/.
-    # A regroup is now free and a new file is not, which is the way round this
-    # was always meant to be. Raising it is still allowed and still wants a
-    # reason — 42 to 44 was improvisation.rb, improvised_line.rb and space_fx.rb,
-    # three subjects rather than one split three ways: improvisation writes
-    # progressions once at load, improvised_line writes a lead and a bass over a
-    # progression per render and knows nothing about which progressions exist,
-    # and space_fx is per-sample DSP that knows nothing about music at all.
+    # dilla's support files are the one place file count can still grow. The
+    # engine is dilla.rb; everything else dilla carries is support, counted at any
+    # depth so a regroup into subdirectories cannot make the count measure less:
+    # lib/ and every Ruby file beside the engine at the dilla root (dilla_live.rb,
+    # radio_bergen_study.rb). A new file fails the gate until its author folds it
+    # into a sibling or lowers the count elsewhere; raising the ceiling wants the
+    # reason in the commit.
     #
     # Not the same budget as `growth.studio` in MASTER/tools/ratchets.rb, which
     # counts every tracked file in STUDIO. This one counts dilla's Ruby beside
     # the engine and nothing else.
-    DILLA_SUPPORT = %r{/dilla/(?:lib|bin|live|scripts)/}
-    DILLA_SUPPORT_CEILING = 56
+    DILLA_SUPPORT = %r{/dilla/(?:lib/.+|(?!dilla\.rb\z)[^/]+\.rb)\z}
+    DILLA_SUPPORT_CEILING = 48
+    # Directories support code has left for lib/. Each one coming back is the
+    # sprawl coming back, whatever its file count.
+    DILLA_RETIRED_DIRS = %w[lib/engine bin live scripts].freeze
 
     # VENDORED is matched against the path inside STUDIO, never the absolute
     # one. Matched absolutely it excluded every file in a checkout living under
@@ -164,8 +150,7 @@ module Deploy
     # Every first-party Ruby file in STUDIO, absolute, sorted.
     #
     # An executable with a ruby shebang and no extension is Ruby too, and
-    # dilla/bin/crate is one: 700 lines that fetch, split and register every
-    # sample the engine plays, checked by nothing while the corpus was `*.rb`
+    # A tool written that way is checked by nothing while the corpus is `*.rb`
     # alone. Only extensionless files are opened, so no wav or json is read to
     # ask the question, and vendored paths are excluded before anything is.
     def source_files
@@ -234,11 +219,12 @@ end
     # the support modules growing in its place.
     def check_growth(files)
       @result.checked!(2)
-      returned = files.select { |path| path.include?("/dilla/lib/engine/") }
-      unless returned.empty?
+      DILLA_RETIRED_DIRS.each do |dir|
+        next unless Dir.exist?(File.join(@root, "dilla", dir))
+
         @result.fail(
-          "studio growth: dilla/lib/engine/ is back (#{returned.length} file(s)) — the engine " \
-          "is one file, and a new feature folds into it rather than reopening the split"
+          "studio growth: dilla/#{dir}/ is back — the engine is dilla.rb and its support " \
+          "lives in lib/, so a new file folds into a sibling there"
         )
       end
 

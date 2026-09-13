@@ -30,10 +30,10 @@ require "uri"
 # filtering, pitching and drunk-swinging a public-domain 78 puts you in the same
 # place, and the result clears.
 #
-# "This does not add to that pile" is about this file only. dilla/live/
-# dig_crate.rb is a YouTube ripper and is still here and still run — one word
-# order away from this name, which is how a reader ends up believing the whole
-# tree took the position this paragraph takes. It says so in its own header now.
+# "This does not add to that pile" is about this file only. `dilla_live.rb dig`
+# (Livesets.dig_beds!) is a YouTube ripper and is still here and still run, which
+# is how a reader ends up believing the whole tree took the position this
+# paragraph takes. It says so on stderr on every run.
 # Nothing in either file can clear a recording; what they can do is be legible
 # about which is which.
 module CrateDig

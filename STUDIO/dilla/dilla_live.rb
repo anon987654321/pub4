@@ -26,6 +26,11 @@
 #   COPIES=6                        thicker Copy Machine cloud on the lead
 #   REVERB=0.5 ECHO=0.4             wetter
 #   CHORD_CADENCE=2.6,0.7,0.7,1.5   chord lengths, cycled
+#
+#   ruby dilla_live.rb set <name>   one pass of a liveset (lib/livesets.rb)
+#   ruby dilla_live.rb recall       replay or keep a pass from the journal
+#   ruby dilla_live.rb broadcast    the livesets in rotation, all night
+#   ruby dilla_live.rb dig          refill the beds the sampled sets play
 
 require_relative "dilla"
 require_relative "lib/space_fx"
@@ -218,6 +223,18 @@ if __FILE__ == $PROGRAM_NAME
   # playing perfectly well.
   $stdout.sync = true
   require "fileutils"
+  # The livesets share this entry and nothing else with the synth pass below:
+  # sets, recall, broadcast and the bed digger live in lib/livesets.rb.
+  if %w[set recall broadcast dig].include?(ARGV.first)
+    require_relative "lib/livesets"
+    case ARGV.shift
+    when "set" then Livesets.play_set!(ARGV.shift || abort("usage: dilla_live.rb set <#{Livesets::SETS.join('|')}>"))
+    when "recall" then Livesets.recall!(ARGV)
+    when "broadcast" then Livesets.broadcast!(ARGV.shift)
+    when "dig" then Livesets.dig_beds!
+    end
+    exit
+  end
   dest = nil
   if (i = ARGV.index("--render"))
     dest = ARGV[i + 1] or abort "usage: dilla_live.rb [passes] --render <out.wav>"
