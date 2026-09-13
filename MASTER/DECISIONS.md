@@ -1447,3 +1447,69 @@ assert" as its own instructions, and its fourth rule tells it to add format
 hints, so the user's question comes back asking for a diff. That changes what
 the user asked, which Enhance's seventh rule forbids. The law binds MASTER's
 answer to the message, not the rewording of it.
+
+## The Harness Borrows From Aider And OpenClaw, Measured Against This Checkout (2026-09-14)
+
+Six harness ideas came from the OpenClaw and Aider pass. Three landed: every
+log line names its session, every runtime commit carries the MASTER trailer,
+and the fix loop commits only the paths its own pass changed, naming the
+findings it answered. The rest were refused on what the tree does, and the
+reasons follow.
+
+A session writable set built from git-dirty paths inverts in a shared
+checkout. The dirty files here belong mostly to other sessions and to the
+operator, so a set seeded from them admits exactly the files a session must
+leave alone and refuses the clean ones it came to change. The fold already
+scopes writes the other way round: `new_path_ask` refuses a write to a path the
+turn has not read, at medium risk and above, which is a set of what this
+session has seen rather than what someone else has touched.
+
+The repo map stays out of the fix prompt. A fix call carries one violation and
+one file and asks for that file back, or a diff of it, so a four-thousand-token
+map of other files adds cost to every call and informs no edit the model is
+allowed to make. `Review::RepoMap` exists and is tested; it waits for a
+caller that edits across files.
+
+A client disconnect does not cancel a turn. A phone that locks its screen or
+changes network drops the stream without meaning stop, and a turn that is
+writing is safer finished than cut at an arbitrary frame. The CLI's interrupt
+is a person pressing a key, which is the intent a disconnect lacks. A stop
+control on the face is a change to what the page shows, so it is the
+operator's.
+
+A turn-level /undo that resets the turn's commit is refused. The branch is
+shared, so the turn's commit need not be HEAD by the time anyone asks, and a
+reset would drop what landed after it; `git revert` of a named commit is the
+move, and a person should name it. What /undo does today is file-level: it
+restores the last snapshot the tool path journalled. Fold writes go through
+`Core::World#do_write`, which journals nothing, so after a fold turn /undo
+reverts the newest tool-path snapshot instead, which may belong to an earlier
+session, since the journal survives restarts.
+
+The bus gets no per-subscriber deadline. Ruby can bound a handler only by
+raising into it at whatever line it has reached, and the handlers are inline
+writers of log lines and SSE frames, which a raise mid-write leaves torn. No
+subscriber guards a write, since `publish` swallows every handler's error and
+ignores its answer, so there is nothing to fail closed. The topic prefix for
+plugins has nothing to govern: MCP servers run out of process and publish
+nothing, and MASTER loads no in-process plugin.
+
+`.master/session.json` gets no `schema_version`. It has had one shape, its
+loader reads every field with a default, and a file it cannot parse is already
+quarantined beside a reason. `bin/doctor --fix` has no stale locks to repair:
+the scan and pairing locks are `flock`s, which the kernel releases when their
+holder dies, and the background fix loop is a thread with no pid file.
+`bin/doctor --prompt` would reformat output that already prints variable names
+and never their values. /forget has nothing to tombstone against: no index
+keys a memory by session id, web conversations live in the process and die
+with it, and /clear empties the caller's own transcript.
+
+Of the four tests owed, none is written. No loader reads a foreign
+`AGENTS.md`, so obedience to one planted in a target is the model's behaviour
+after a file read, and no unit test measures a model; the reachable gap is that
+`InjectionGuard` runs on web fetches and not on file reads. A plain /scan
+reaches a model on purpose, and `test_scan_deterministic_mode.rb` holds the
+switch that withholds it. /fix runs no suite, app gate or generic, on any
+tree: it verifies by re-scan, parse and rubocop. It does not refuse a dirty
+main either, and should not: incremental /fix targets exactly the dirty files,
+and the committer no longer takes a path it did not change.
