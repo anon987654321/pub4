@@ -45,18 +45,6 @@ module Master
         }
       end
 
-      # For explicit council events (especially low-reversibility / high-stakes work).
-      def for_council(risk:, reversibility:)
-        weight = (reversibility == :low || risk == :critical) ? 0.35 : 0.12
-        {
-          emotion: emotion_for(mode: :council, risk:, reversibility:),
-          spirit_charge_boost: weight,
-          mouth_pressure: weight * 0.8,
-          eye_confidence_drop: weight * 0.6,
-          terrain_jaggedness: (risk == :critical) ? 0.4 : 0.15,
-        }
-      end
-
       # Maps genuine runtime signals onto the four fields the face renders
       # via deriveBlendFromEmotion (valence, arousal, confidence, focus).
       def emotion_for(mode: nil, risk: nil, reversibility: nil, verdict: nil, score: nil)
@@ -89,11 +77,6 @@ module Master
         elsif verdict == :block || failing then -0.35
         else 0.05
         end
-      end
-
-      # Evidence events carry a rendered emotion patch built from the verdict.
-      def for_evidence(verdict:, score: nil)
-        { emotion: emotion_for(verdict:, score:) }
       end
 
       # Rich visual deltas for a specific Osman creative style (used when tts:style:active fires).

@@ -17,10 +17,6 @@ module Master
         profile.fetch(:timing)
       end
 
-      def lofi_preset
-        ProductionDna.preset(:dilla_drum_bus)
-      end
-
       def sonitex_preset
         ProductionDna.sonitex_preset_for(:dilla_drum_bus)
       end

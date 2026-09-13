@@ -24,10 +24,6 @@ module Master
 
       def openbsd? = RUBY_PLATFORM.include?("openbsd")
 
-      def default_engine_chain
-        openbsd? ? OPENBSD_CHAIN.join(",") : DEFAULT_CHAIN.join(",")
-      end
-
       # Gate preflight; on OpenBSD always attempt Replicate Kokoro and fall through on failure.
       def attempt?(name, cfg)
         return true if name.to_s == "replicate_kokoro" && openbsd?

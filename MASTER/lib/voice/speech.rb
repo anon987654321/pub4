@@ -236,10 +236,6 @@ module Master
         fallback
       end
 
-      def register_for(text)
-        Master::Voice::Expression.for_text(text)[:register]
-      end
-
       # StrunkPass runs after newline->period conversion (preserves TTS pacing
       # for lines with no trailing punctuation) but before the final
       # whitespace collapse, stripping sycophancy/hedges/preambles/endings

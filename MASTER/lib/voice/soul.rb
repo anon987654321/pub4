@@ -49,16 +49,6 @@ module Master
           File.unlink(@proposal_path)
           "proposal rejected"
         end
-
-        def propose_from_violations(rule_id, sample_violations, agent: @agent)
-          return "no agent available" unless agent
-
-          examples = sample_violations.first(3).map { |violation| violation_example(violation) }.join("\n")
-          rationale = "Recurring scan rule '#{rule_id}' flagged #{sample_violations.size} violations " \
-                      "across multiple files and cycles:\n#{examples}\nPropose whether the codebase axioms or soul " \
-                      "principles should acknowledge this pattern or whether the rule needs refinement."
-          propose(rationale, agent:)
-        end
       end
 
       include ProposalLifecycle
@@ -75,8 +65,6 @@ module Master
         @proposal_path = File.join(@root, ".master", "soul_proposal.md")
         @soul = load_soul
       end
-
-      def wire_agent(agent) = @agent = agent
 
       def summary
         voice = extract_field("Voice").to_s.lines.first.to_s.strip[0, 120]
@@ -210,8 +198,6 @@ module Master
       def removed_patterns(old_doc, new_doc, patterns)
         patterns.select { |pattern| old_doc.match?(pattern) && !new_doc.match?(pattern) }.map(&:source)
       end
-
-      def violation_example(violation) = "  L#{violation[:line]}: #{violation[:message]}"
     end
   end
 end
