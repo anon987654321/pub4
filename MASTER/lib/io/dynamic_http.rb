@@ -48,33 +48,45 @@ module Master
       end
 
       def perform_request(uri, method, defn, params)
-        Timeout.timeout(TIMEOUT * 2) do
-          Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", read_timeout: TIMEOUT) do |http|
-            case method
-            when "POST", "PUT", "PATCH"
-              req = Net::HTTP.const_get(method.capitalize).new(uri)
-              body = build_body(defn, params)
-              req["Content-Type"] = defn.fetch("content_type", "application/json")
-              req.body = body
-              http.request(req)
-            else
-              http.get(uri.request_uri)
-            end
+        # Socket-level timeouts rather than Timeout.timeout, which raises into
+        # whatever the thread is doing and can leave the connection half-closed.
+        Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https",
+                        open_timeout: TIMEOUT, read_timeout: TIMEOUT, write_timeout: TIMEOUT) do |http|
+          case method
+          when "POST", "PUT", "PATCH"
+            req = Net::HTTP.const_get(method.capitalize).new(uri)
+            body = build_body(defn, params)
+            req["Content-Type"] = defn.fetch("content_type", "application/json")
+            req.body = body
+            http.request(req)
+          else
+            http.get(uri.request_uri)
           end
         end
       end
 
       private
 
-      def interpolate(template, params)
+      # Params come from the model, so each value is escaped for the slot it
+      # fills: a raw `&admin=1` in a query or a `"` in a JSON body would rewrite
+      # the request around it.
+      def interpolate(template, params, escape: :url)
         sym = params.transform_keys(&:to_sym)
-        template.gsub(/\{(\w+)\}/) { sym[Regexp.last_match(1).to_sym] || sym[Regexp.last_match(1)] || "" }
+        template.gsub(/\{(\w+)\}/) do
+          value = sym[Regexp.last_match(1).to_sym].to_s
+          case escape
+          when :url then URI.encode_uri_component(value)
+          when :json then JSON.generate(value)[1..-2]
+          else URI.encode_www_form_component(value)
+          end
+        end
       end
 
       def build_body(defn, params)
         return JSON.generate(params) unless defn["body_template"]
 
-        interpolate(defn["body_template"].to_s, params)
+        json = defn.fetch("content_type", "application/json").to_s.include?("json")
+        interpolate(defn["body_template"].to_s, params, escape: json ? :json : :form)
       end
     end
   end

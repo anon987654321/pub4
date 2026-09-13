@@ -82,4 +82,15 @@ class DynamicHttpTest < Minitest::Test
       assert_match(/refused internal/, result.message.to_s)
     end
   end
+
+  def test_a_param_is_escaped_for_the_slot_it_fills
+    defn = { "url" => "https://example.com/search?q={q}", "body_template" => %({"q":"{q}"}) }
+    evil = %(x&admin=1"}, "role":"root)
+
+    uri = @http.resolve_and_validate_uri(defn, { q: evil })
+    assert_equal({ "q" => [evil] }, URI.decode_www_form(uri.query).group_by(&:first).transform_values { |v| v.map(&:last) })
+
+    body = @http.send(:build_body, defn, { q: evil })
+    assert_equal({ "q" => evil }, JSON.parse(body))
+  end
 end

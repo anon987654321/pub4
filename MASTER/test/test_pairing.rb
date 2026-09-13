@@ -31,6 +31,14 @@ class TestPairing < Minitest::Test
     assert File.file?(File.join(@root, ".master", "workspace", result[:subject], "USER.md"))
   end
 
+  def test_a_configured_allowlist_outside_the_store_is_not_followed
+    ["../../etc/allow.yml", "/tmp/allow.yml", ".master/elsewhere.yml"].each do |configured|
+      Master::Ground::Pairing.stub(:config, { "allowlist_path" => configured }) do
+        assert_equal File.join(@root, ".master/pairing/allowlist.yml"), Master::Ground::Pairing.allowlist_path(@root)
+      end
+    end
+  end
+
   def test_code_is_single_use_and_case_insensitive
     issued = Master::Ground::Pairing.issue(root: @root)
     assert Master::Ground::Pairing.redeem(issued[:code].downcase, root: @root)

@@ -7,7 +7,8 @@ module Master
     class ContextWindow
       SOFT_THRESHOLD = 0.65
       HARD_THRESHOLD = 0.90
-      private_constant :SOFT_THRESHOLD, :HARD_THRESHOLD
+      KEEP_TAIL = 4
+      private_constant :SOFT_THRESHOLD, :HARD_THRESHOLD, :KEEP_TAIL
 
       attr_reader :session, :agent, :model_context
 
@@ -54,17 +55,23 @@ module Master
         end
       end
 
+      # The summary covers a snapshot minus its last KEEP_TAIL messages. Sending
+      # the whole transcript at 90% of the window leaves no room for the reply,
+      # and the recent turns read better verbatim. The session then swaps only
+      # the summarised prefix, so a soft compaction running beside a turn keeps
+      # whatever that turn appended.
       def compact!(tier)
         est = session.token_est
         threshold = tier == :hard ? HARD_THRESHOLD : SOFT_THRESHOLD
         @bus&.publish("compaction:start", token_est: est, threshold:, tier:, model_context:)
+        snapshot = session.messages.dup
+        head = snapshot.size > KEEP_TAIL ? snapshot[0...-KEEP_TAIL] : snapshot
         summary = agent.ask(
           "Summarize our progress as bullet points. Preserve all file paths, decisions, and remaining tasks.",
-          context: session.messages,
+          context: head,
         )
-        session.clear!
         body = "[Context compacted — #{tier}]\n\n#{summary}"
-        session.add_message(role: :assistant, content: body)
+        session.compact_prefix!(head.size, body)
         @bus&.publish("compaction:done", summary: summary.to_s, token_est: session.token_est, tier:)
         append_daily_log(summary, tier:)
         Result.ok(:compacted)

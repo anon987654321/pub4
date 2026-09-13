@@ -12,7 +12,6 @@ module Master
           @mutex = Mutex.new
           @store = load_store
           @store_version = 0
-          ensure_brain_files!
           import_external!
         end
 
@@ -122,23 +121,6 @@ module Master
           return unless Dir.exist?(dir)
 
           Dir.glob(File.join(dir, "*.md")).each { |path| import_external_file(path) }
-        end
-
-        def ensure_brain_files!
-          dir = File.join(@root, "data")
-          FileUtils.mkdir_p(dir)
-          brain_templates.each do |name, content|
-            path = File.join(dir, name)
-            next if File.exist?(path)
-
-            File.write(path, content, encoding: "UTF-8")
-          end
-        end
-
-        def brain_templates
-          {
-            "IDENTITY.md" => "# IDENTITY\n\nActive persona, voice, and operator preferences.\n",
-          }
         end
 
         def import_brain_files!

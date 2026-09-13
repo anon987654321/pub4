@@ -42,7 +42,13 @@ else
 "operator"
 end
       def redeem_notice(result) = "#{REDEEM_NOTICE} subject=#{result[:subject]}"
-      def allowlist_path(root = Master::ROOT) = File.expand_path(config["allowlist_path"].to_s.empty? ? DEFAULT_ALLOWLIST : config["allowlist_path"], root)
+      # The store holds bearer tokens, so a configured path that leaves
+      # .master/pairing/ falls back to the default rather than following it.
+      def allowlist_path(root = Master::ROOT)
+        store = File.expand_path(File.dirname(DEFAULT_ALLOWLIST), root)
+        wanted = File.expand_path(config["allowlist_path"].to_s.empty? ? DEFAULT_ALLOWLIST : config["allowlist_path"], root)
+        wanted.start_with?(store + File::SEPARATOR) ? wanted : File.join(store, File.basename(DEFAULT_ALLOWLIST))
+      end
       def codes_path(root = Master::ROOT) = File.join(File.dirname(allowlist_path(root)), "codes.yml")
 
       def issue(root: Master::ROOT, label: nil)
@@ -89,14 +95,19 @@ end
       def valid_token?(token, root: Master::ROOT) = token.to_s != "" && load_yaml(allowlist_path(root)).key?(token.to_s)
       def subject_for(token, root: Master::ROOT) = load_yaml(allowlist_path(root)).dig(token.to_s, "subject")
 
+      # Under the store lock like redeem: a revoke that read the allowlist
+      # before a concurrent redeem wrote it would persist the stale copy and
+      # bring a deleted token back.
       def revoke(id, root: Master::ROOT)
-        allow = load_yaml(allowlist_path(root))
-        key = allow.key?(id.to_s) ? id.to_s : allow.find { |_token, row| row["subject"] == id.to_s }&.first
-        return false unless key
+        with_store_lock(root) do
+          allow = load_yaml(allowlist_path(root))
+          key = allow.key?(id.to_s) ? id.to_s : allow.find { |_token, row| row["subject"] == id.to_s }&.first
+          next false unless key
 
-        allow.delete(key)
-        persist(allowlist_path(root), allow)
-        true
+          allow.delete(key)
+          persist(allowlist_path(root), allow)
+          true
+        end
       end
 
       def list(root: Master::ROOT)

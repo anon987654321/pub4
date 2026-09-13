@@ -52,9 +52,18 @@ class TestMemory < Minitest::Test
     assert_equal "i survived", mem2.recall("persist_key")
   end
 
-  def test_brain_files_are_plaintext_and_imported
-    assert File.exist?(File.join(@root, "data", "IDENTITY.md")), "IDENTITY.md should exist"
-    assert @mem.recall("brain/identity").include?("persona")
+  # data/ is the constitution, so the runtime imports what the operator wrote
+  # there and never plants a file of its own.
+  def test_brain_files_are_imported_and_never_created
+    fresh = Dir.mktmpdir("master-mem-brain-")
+    Master::Ground::Memory.new(root: fresh)
+    refute File.exist?(File.join(fresh, "data", "IDENTITY.md"))
+
+    FileUtils.mkdir_p(File.join(fresh, "data"))
+    File.write(File.join(fresh, "data", "IDENTITY.md"), "# IDENTITY\n\nActive persona.\n")
+    assert Master::Ground::Memory.new(root: fresh).recall("brain/identity").include?("persona")
+  ensure
+    FileUtils.rm_rf(fresh)
   end
 
   def test_auto_save_user_pattern

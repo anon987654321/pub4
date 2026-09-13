@@ -191,6 +191,19 @@ module Master
 
       def token_est(key = Session.conversation_key) = @mutex.synchronize { conversation(key)[:token_est] }
 
+      # Replaces the first `count` messages with one summary, under the mutex,
+      # so turns appended while the summary was being written survive it.
+      def compact_prefix!(count, summary)
+        @mutex.synchronize do
+          convo = conversation
+          kept = convo[:messages].drop(count)
+          head = { role: :assistant, content: summary, ts: Time.now.to_i }
+          convo[:messages].replace([head] + kept)
+          convo[:token_est] = convo[:messages].sum { |msg| Session.estimate_tokens(msg[:content]) }
+        end
+        self
+      end
+
       private
 
       # Always call inside @mutex. Created on read rather than up front, so a key

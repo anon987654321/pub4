@@ -13,7 +13,6 @@ module Master
         RUBY_EXT = %w[.rb .rake .gemspec].freeze
         LOCK_DIR = ".constitutional_locks"
         LOCK_TIMEOUT = 30
-        STALE_LOCK_AGE = 300
         MAX_FILE_BYTES = 10 * 1024 * 1024
         MAX_LINES = 10_000
 
@@ -85,33 +84,21 @@ module Master
           Result.err("file validation failed: #{e.message}", category: :validation)
         end
 
+        # flock on a lockfile that is never deleted. The kernel drops the lock
+        # when its holder exits, so a crashed scan frees the file at once and no
+        # mtime guess can delete a lock another process still holds.
         def with_file_lock(path)
           lock_path = lock_path_for(path)
           FileUtils.mkdir_p(File.dirname(lock_path))
           deadline = Time.now + LOCK_TIMEOUT
-          loop do
-            remove_stale_lock(lock_path)
-            begin
-              File.open(lock_path, File::WRONLY | File::CREAT | File::EXCL) { |file| file.write("#{Process.pid}\n") }
-              break
-            rescue Errno::EEXIST
+          File.open(lock_path, File::RDWR | File::CREAT, 0o600) do |file|
+            until file.flock(File::LOCK_EX | File::LOCK_NB)
               raise "lock timeout for #{path}" if Time.now >= deadline
+
               sleep 0.05
             end
+            yield
           end
-          yield
-        ensure
-          File.delete(lock_path) if lock_path && File.exist?(lock_path)
-        end
-
-        def remove_stale_lock(lock_path)
-          return unless File.exist?(lock_path)
-          return unless Time.now - File.mtime(lock_path) > STALE_LOCK_AGE
-
-          File.delete(lock_path)
-          @bus&.publish("scan:stale_lock_removed", path: lock_path)
-        rescue StandardError => e
-          @bus&.publish("scan:lock_error", path: lock_path, error: e.message)
         end
 
         def lock_path_for(path)
