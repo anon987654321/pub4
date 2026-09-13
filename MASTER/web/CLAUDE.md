@@ -65,6 +65,10 @@ code read.
 - `public/face.js`: deferred face loader.
 - `public/face.part*.txt`, `public/face_speech_*.js`: the six sources
   concatenated into `face.runtime.js` at build time. Not fetched at runtime.
+  They stay in `public/` although nothing requests them: they hold nothing the
+  served runtime does not, and a build directory would move the rake task,
+  `/etc/rc.d/master`'s precompile digest, the scanner's path keys and the
+  runtime-matches-sources test for no measured cost.
 - `public/three.face.module.js`: heavy WebGL module, imported only after the
   primer tap and WebGL feature detection. **Generated, not vendored by hand**:
   `script/build_three_face.sh` npm-installs `three` (pinned in

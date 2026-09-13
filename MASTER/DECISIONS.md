@@ -1149,3 +1149,55 @@ a second type scale, Pallasmaa as texture or fog, and a swing retune "because
 Charnas" all change a rendered value, which is the operator's; Venturi is not
 codified because it argues against Rams and Ando, which already are law. A book
 imported as YAML needs a reader the same day, or it becomes `dilla_principles.yml`.
+
+## The CLI Is Already A dmesg (2026-09-13)
+
+A 160-item ChatGPT intake asked MASTER's terminal output to read like OpenBSD's
+dmesg. It does. `Trace::Dmesg` writes `unit at parent: detail` and
+`unit: key=value`, append-only and one line per fact, and `cli/pipeline/pass.rb`
+drives it with numbered units such as `fix0` attached at `mainbus0`. Boot prints
+nothing unless `MASTER_BOOT_STATUS=1`, and then only `master: boot safe=` and
+`master: ready`, which `test_boot_banner` pins. `NO_ASCII_DECORATION` forbids
+banners and box drawing. Colour goes through Pastel, whose tty-color backend
+turns it off when stdout is not a terminal or `NO_COLOR` is set. The one line
+that repaints, the thinking indicator, runs only on a TTY and stands for the
+sparse liveness fact the intake itself allows during a model call that takes
+tens of seconds. The machine form already exists: the event bus carries every
+topic, and the ledgers write JSONL under `runtime/`. `test_bin_master_core`
+holds an exit status.
+
+**Refused.** A second presenter behind `--dmesg`, a JSON mode for the session,
+and a canonical subsystem registry would each give one event stream a second
+spelling to drift from. Golden traces of a run cannot hold, because a model
+call's output and timing are not deterministic, so a golden file either fails
+on noise or proves nothing. The rest of the intake is a style guide, and
+`Trace::Dmesg`'s shape already is one.
+
+## An Audit Prompt With No Path Is Not An Item (2026-09-13)
+
+A 254-item ChatGPT intake titled "pub4 subtraction and entropy" asked for
+repo-wide audits: dead code, duplicate registries, dependencies, rescue
+clauses, security scans, boot benchmarks, OpenBSD rebuilds, git archaeology and
+topology graphs. None named a file. The tree already holds the instruments
+those audits would build: `bin/operator gate` and its ratchets, `FILE_SPRAWL`,
+`tools/code_reach.rb`, `dup_census.rb`, `method_graph.rb`, `cohesion.rb` and
+`sprawl_census.rb`, the swallow ledger, Brakeman and bundler-audit in each app's
+CI, `outbound_http_test` for SSRF, and the rule that performance work starts
+from a measured cost. Declined as a class.
+
+The half that did carry paths became a list of fifty measured candidates. About
+half were real, and they were fixed one commit each: the seven unreached slash
+tables, the Rails audits only their own tests reached, a second path guard and a second atomic write, the
+ChatController's own dmesg, the vote reflexes, the offline memory scaffold, a
+second smoke script, the rc.d template, brgen's local notifications
+controller, a LIKE search beside `LiveSearchable`, a web push loop that
+unsubscribed a whole city on one bad VAPID key, and MixScore's shell strings.
+The other half died on measurement. `futurism` has three readers, `bin/crate`
+writes a directory that is ignored by design, the two uptime checks differ
+because root's cron must not execute the checkout, the four deploy verbs each
+cover a case `vps-deploy` does not, `bin/master` already hands over to
+`bin/cli`, and the three face stores have a boot order in `face_assets.yml`.
+
+So the next intake of this shape closes the same way: a subtraction lands with
+the second caller found and the test that keeps the survivor honest, and a
+question with no path is not yet an item.
