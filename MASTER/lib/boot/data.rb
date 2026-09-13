@@ -12,12 +12,21 @@ module Master
     # should check existence themselves rather than ask this method to go quiet
     # (see load_rules); the signature stays fixed because several tests stub
     # this method, and a new keyword here raises ArgumentError inside the stub.
+    #
+    # Parses are remembered by path, size, inode and mtime, and every call gets
+    # its own copy. rules.yml is 205KB and fifteen constructors read it: one
+    # boot and a /scan of lib/io parsed it 40 times for 724ms. A Marshal copy
+    # costs a tenth of a parse and cannot leak one caller's mutation into
+    # another's, and an edit changes the stat, so the next read parses again.
     def load_yaml(path, symbolize_names: false, default: {})
-      raise "yaml too large: #{path}" if File.exist?(path) && File.size(path) > MAX_CONSTITUTION_BYTES
+      stat = File.stat(path)
+      raise "yaml too large: #{path}" if stat.size > MAX_CONSTITUTION_BYTES
 
-      Timeout.timeout(YAML_LOAD_TIMEOUT_S) do
-        YAML.safe_load_file(path, aliases: true, symbolize_names:, permitted_classes: [Date, Time]) || default
+      key = [File.expand_path(path), symbolize_names, stat.size, stat.ino, stat.mtime.to_r]
+      dump = yaml_parse_cache[key] ||= Timeout.timeout(YAML_LOAD_TIMEOUT_S) do
+        Marshal.dump(YAML.safe_load_file(path, aliases: true, symbolize_names:, permitted_classes: [Date, Time]))
       end
+      Marshal.load(dump) || default
     rescue Errno::ENOENT, Errno::EACCES => e
       warn("load_yaml: #{e.message}")
       default
@@ -91,6 +100,12 @@ module Master
 
     def data_validation_cache
       @data_validation_cache ||= {}
+    end
+
+    # Key to Marshal dump. Several threads load data files, and ||= on a plain
+    # Hash at worst parses one file twice; the dump itself is immutable.
+    def yaml_parse_cache
+      @yaml_parse_cache ||= {}
     end
 
     def yaml_errors(paths, root)
