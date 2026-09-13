@@ -11,6 +11,8 @@
 # The targets are not invented. They are measured from tracks that were kept
 # after listening, which is the only defensible source for a "should sound like"
 # number -- a threshold picked in advance measures the person who picked it.
+require "open3"
+
 module MixScore
   # Measured from demo29 and demo30, the two renders kept on their merits.
   # Ranges span both plus a little tolerance, rather than averaging them into a
@@ -40,13 +42,20 @@ module MixScore
 
   def band(path, lo, hi, stat = :mean)
     key = stat == :peak ? "max_volume" : "mean_volume"
-    out = `ffmpeg -v info -i "#{path}" -af "highpass=f=#{lo},lowpass=f=#{hi},volumedetect" -f null - 2>&1`
+    out = ffmpeg(path, "highpass=f=#{lo},lowpass=f=#{hi},volumedetect")
     out[/#{key}: ([-0-9.]+)/, 1].to_f
   end
 
   def loudness(path)
-    out = `ffmpeg -v info -i "#{path}" -af ebur128=framelog=quiet -f null - 2>&1`
+    out = ffmpeg(path, "ebur128=framelog=quiet")
     [out[/I:\s*([-0-9.]+)/, 1].to_f, out[/LRA:\s*([-0-9.]+)/, 1].to_f]
+  end
+
+  # An argv, not a shell string: a render path holding a quote or a dollar sign
+  # broke the backtick form, and stderr is where ffmpeg prints both summaries.
+  def ffmpeg(path, filter)
+    out, = Open3.capture2e("ffmpeg", "-v", "info", "-i", path.to_s, "-af", filter, "-f", "null", "-")
+    out
   end
 
   def measure(path)
