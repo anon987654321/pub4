@@ -95,8 +95,28 @@ module Master
         end
       end
 
+      # Token accounting and compaction of one conversation, which ContextWindow
+      # drives — separate from Session's transcript, cost and save-load concerns.
+      module Compaction
+        def token_est(key = Session.conversation_key) = @mutex.synchronize { conversation(key)[:token_est] }
+
+        # Replaces the first `count` messages with one summary, under the mutex,
+        # so turns appended while the summary was being written survive it.
+        def compact_prefix!(count, summary)
+          @mutex.synchronize do
+            convo = conversation
+            kept = convo[:messages].drop(count)
+            head = { role: :assistant, content: summary, ts: Time.now.to_i }
+            convo[:messages].replace([head] + kept)
+            convo[:token_est] = convo[:messages].sum { |msg| Session.estimate_tokens(msg[:content]) }
+          end
+          self
+        end
+      end
+
       include Persistence
       include Snapshots
+      include Compaction
 
       TOKENS_PER_CHAR = 4
       SESSION_NAME_MAX = 40
@@ -186,21 +206,6 @@ module Master
       # should zero the operator's spend.
       def clear!
         @mutex.synchronize { @conversations[Session.conversation_key] = blank_conversation; @topic = nil }
-        self
-      end
-
-      def token_est(key = Session.conversation_key) = @mutex.synchronize { conversation(key)[:token_est] }
-
-      # Replaces the first `count` messages with one summary, under the mutex,
-      # so turns appended while the summary was being written survive it.
-      def compact_prefix!(count, summary)
-        @mutex.synchronize do
-          convo = conversation
-          kept = convo[:messages].drop(count)
-          head = { role: :assistant, content: summary, ts: Time.now.to_i }
-          convo[:messages].replace([head] + kept)
-          convo[:token_est] = convo[:messages].sum { |msg| Session.estimate_tokens(msg[:content]) }
-        end
         self
       end
 
