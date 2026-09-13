@@ -20,6 +20,24 @@ class TestSession < Minitest::Test
     end
   end
 
+  # A save that dies before it finishes must leave the last good transcript,
+  # because load! quarantines one it cannot parse and starts empty.
+  def test_a_save_cut_short_leaves_the_previous_transcript
+    Dir.mktmpdir("session_atomic") do |dir|
+      session = Master::Trace::Session.new(root: dir)
+      session.add_message(role: :user, content: "kept")
+      session.save!
+      session.add_message(role: :user, content: "lost")
+
+      File.stub(:rename, ->(*) { raise Errno::ENOSPC }) do
+        assert_raises(Errno::ENOSPC) { session.save! }
+      end
+
+      restored = Master::Trace::Session.new(root: dir).load!
+      assert_equal ["kept"], restored.messages.map { |m| m[:content] }
+    end
+  end
+
   def test_record_cost_bills_the_same_tokens_the_meter_shows
     Dir.mktmpdir("session_cost") do |dir|
       session = Master::Trace::Session.new(root: dir)

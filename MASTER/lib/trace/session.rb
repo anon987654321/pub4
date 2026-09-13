@@ -16,6 +16,10 @@ module Master
       # never be able to persist a visitor's transcript to the operator's disk,
       # and load! must not drop a visitor's turns into the operator's history.
       module Persistence
+        include Master::Io::AtomicWrite
+
+        # Whole or not at all: load! quarantines a transcript it cannot parse,
+        # so a save cut short by a crash would cost every turn, not the last.
         def save!
           FileUtils.mkdir_p(File.dirname(@path))
           data = {
@@ -28,7 +32,7 @@ module Master
             cost: @cost,
             ts: Time.now.to_i,
           }
-          File.write(@path, JSON.generate(data))
+          write_atomic(@path, JSON.generate(data))
         end
 
         def load!
