@@ -1009,8 +1009,7 @@ class TestDilla < Minitest::Test
       # unreachable in exactly the same way the hand-cut ones were.
       loops = TRACK_SAMPLE_LOOPS.keys.map(&:to_s)
       aliases = TRACK_SAMPLE_LOOP_ALIASES.transform_keys(&:to_s).transform_values(&:to_s)
-      excluded = SAMPLE_LOOPS_OUT_OF_ROTATION.map(&:to_s)
-      unreachable = (loops - excluded).reject do |slug|
+      unreachable = loops.reject do |slug|
         presets.include?(slug) || aliases.any? { |a, t| t == slug && presets.include?(a) }
       end
       puts JSON.generate(builtin_count: TRACK_SAMPLE_LOOPS_BUILTIN.length, loops: loops, unreachable: unreachable,
@@ -1036,11 +1035,10 @@ class TestDilla < Minitest::Test
     # on its own as the rebuild lands each file.
     #
     # The list itself went stale in both directions and neither showed, because
-    # the unreachable assertion above fails first and hides this one: rauingar
-    # is back on disk, and semua_untuk_mu is not.
+    # the unreachable assertion above fails first and hides this one.
     #
     # `samples/` is gitignored, so a worktree has no crate and every loop reads as
-    # fileless — this failed on rauingar in a worktree while passing with the real
+    # fileless — this failed in a worktree while passing with the real
     # crate copied in, and the finding was the worktree rather than the engine. A
     # crate that is not there cannot answer this question, so it skips and says
     # so; a crate that IS there and is missing a file is the defect, and that

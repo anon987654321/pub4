@@ -6185,14 +6185,6 @@ TRACK_SAMPLE_LOOPS_BUILTIN = {
   lo_borges: { path: File.join(SAMPLE_DIR, "lo_borges", "loop.wav"), bpm: 114.0,
                hp: 60, sub_db: -3.0, lp: 6000 },
 
-  # 2 bars at 92 BPM from one of the operator's own recordings, restored from
-  # git history. Self-similarity picks 5.22s at 0.509, the clearest loop in
-  # their own catalogue, and 92 is the tempo kembara_rindu already sits at.
-  # C# minor at a Krumhansl fit of 0.70 -- the strongest reading of any of
-  # their own tracks -- so it clears the harmonic guard comfortably.
-  rauingar: { path: File.join(SAMPLE_DIR, "rauingar", "loop.wav"), bpm: 92.0,
-              hp: 60, sub_db: -3.0, lp: 6200 },
-
   # Arat Swost Wolet, Ethiopian. 4 bars from 11.430s of the slowed copy.
   #
   # The de-vocaled stem, not the record: samples/arat_swost_wolet_slow.wav is
@@ -6244,20 +6236,6 @@ TRACK_SAMPLE_LOOPS_BUILTIN = {
 # BUILTIN wins a slug collision. Nothing generated should be able to take a name
 # out from under an entry that was measured by hand.
 TRACK_SAMPLE_LOOPS = RadioChop.registered_loops.merge(TRACK_SAMPLE_LOOPS_BUILTIN).freeze
-
-# Hand-cut loops kept in the rack but deliberately kept OUT of the medley and
-# the stream rotation. Still selectable by name (TRACK=rauingar), never
-# chosen for you.
-#
-# This list exists so "no preset" can mean a decision rather than an oversight.
-# Three of the four builtin loops had no preset and appeared in nothing the
-# engine rendered on its own; that was an oversight, and nothing failed to say
-# so. test_every_hand_cut_sample_loop_is_reachable_as_a_track_preset now holds
-# the line, and reads this constant for the exceptions -- so leaving a loop out
-# is one line here, and forgetting one is a test failure.
-#
-# rauingar: operator's call, 2026-08-07.
-SAMPLE_LOOPS_OUT_OF_ROTATION = %i[rauingar].freeze
 
 # The working names these two were ingested under, kept pointing at the same
 # entries so anything already written against them keeps working. The song
@@ -11951,8 +11929,6 @@ TRACK_PRESETS = {
   # semua_untuk_mu and lo_borges -- each cut, keyed and argued for by hand in the
   # note above its entry -- appeared in nothing the engine renders on its own:
   # not the medley, not the stream rotation, only a hand-typed TRACK=<slug>.
-  # (rauingar is deliberately out of the rotation -- see
-  # SAMPLE_LOOPS_OUT_OF_ROTATION.)
   #
   # BPMs are each loop's own measured tempo, not a choice: a bed at a different
   # tempo to the arrangement has to be stretched, and these were cut to loop.
@@ -13744,7 +13720,6 @@ end
 # Constants read from somewhere this tree cannot see, so absence of a reader
 # here is not absence of a reader.
 WIRING_EXTERNAL_READERS = %w[
-  SAMPLE_LOOPS_OUT_OF_ROTATION
   STREAM_ROTATION
 ].freeze
 
@@ -34574,7 +34549,7 @@ end
 # semua_untuk_mu carries carries_own_harmony in the crate, so its beats mute the
 # tonal layers automatically. Nothing here special-cases it; the flag does.
 DEMO_PROGRESSIONS = %w[pedal_e_descent circle_fifths_descent minor_iv_loop].freeze
-DEMO_SAMPLES = %w[semua_untuk_mu arat_swost_wolet kembara_rindu lo_borges rauingar].freeze
+DEMO_SAMPLES = %w[semua_untuk_mu arat_swost_wolet kembara_rindu lo_borges].freeze
 DEMO_MIN_BYTES = 1_000_000
 
 def generate_demo(bars: ENV.fetch("BARS", "32"), parallel: ENV.fetch("PARALLEL", "3").to_i)

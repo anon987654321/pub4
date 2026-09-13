@@ -231,7 +231,7 @@ symbol names over line numbers.
 
 ### The owner's calls
 
-- **The crate holds `drums`, `dug`, `own` and `rauingar`, and no 124 racks.**
+- **The crate holds `drums`, `dug` and `own`, and no 124 racks.**
   `74d9e4c1b` cleared it on 2026-08-16 on the operator's call; only he can say
   whether he expected the racks back. `samples/dug/` is down to one record, and
   the other 160 sources cannot be re-fetched to the same bytes.
@@ -239,8 +239,8 @@ symbol names over line numbers.
   through `RadioChop.registered_loops`; `lib/crate_dig.rb` writes `samples/dug/`
   from public-domain archives; `ruby dilla_live.rb dig` (`lib/livesets.rb`) rips
   YouTube into `samples/chopped/` and warns on every run. Those two are the crate.
-- **`ruby STUDIO/dilla/dilla.rb assets` exits 1**: three loops missing, eight files
-  changed (seven re-synthesised one-shots, and the `rauingar` re-cut).
+- **`ruby STUDIO/dilla/dilla.rb assets` exits 1**: three loops missing, seven files
+  changed (re-synthesised one-shots).
   `dilla assets record` blesses whatever is on disk, so it is the operator's.
 - **Two staging directories outside the repo.** `~/dilla-crate-incoming` holds two
   source FLACs and their demucs stems from an abandoned 61-track fetch;

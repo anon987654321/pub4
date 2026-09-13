@@ -69,8 +69,7 @@ wrong for whichever loop it was not tuned against.
 `kembara_rindu` is a four-bar Ableton loop at 92 BPM, C minor at fit 0.71,
 corrected 90 / −7 / 5600. `semua_untuk_mu` is 0:36–0:46 of its source at 96, G
 minor at 0.836, corrected 45 / 0 / 5200. `lo_borges` is the first four bars at
-114, D major at 0.697, corrected 60 / −3 / 6000. `rauingar` is an own recording,
-two bars at 92, C♯ minor at 0.70, corrected 60 / −3 / 6200.
+114, D major at 0.697, corrected 60 / −3 / 6000.
 
 Older ingest names (`four_seven`, `nightbus`, `dmaj_open`) still resolve through
 `TRACK_SAMPLE_LOOP_ALIASES`, including for layer-profile lookup.
