@@ -2,12 +2,20 @@
 # Workstation helper: copy vps_install_all.sh to VM via hypervisor jump and run it.
 set -euo pipefail
 
+if [[ ${1:-} == -h || ${1:-} == --help ]]; then
+  print "usage: zsh OPENBSD/vps_run_remote.sh"
+  print "  upload vps_install_all.sh through the server4 hypervisor jump and start it under nohup"
+  exit 0
+fi
+
 SCRIPT_DIR=${0:a:h}
 INSTALL_SH=${SCRIPT_DIR}/vps_install_all.sh
-KEY=${SSH_KEY:-${HOME}/.ssh/id_ed25519_brgen}
+# The VM's login, host and key are lib/ssh_vm23.sh's, the one copy of them.
+source "${SCRIPT_DIR}/lib/ssh_vm23.sh"
+KEY=$SSH_KEY
+VM=${SSH_USER}@${SSH_HOST}
 HYP=${HYPERVISOR:-dev@server4.openbsd.amsterdam}
 HYP_PORT=${HYP_PORT:-31415}
-VM=${VM_HOST:-dev@46.23.89.226}
 REMOTE_LOG=/tmp/pub4_install_latest.log
 
 log() { printf '[vps_run] %s\n' "$*" }
