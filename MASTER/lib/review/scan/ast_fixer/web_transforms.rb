@@ -77,8 +77,7 @@ module Master
 
           # Prose about code contains code. These transforms read raw source, so
           # a JSDoc line quoting `'online' + SW` is a concat chain to
-          # CONCAT_CHAIN, and converting it rewrites documentation
-          # (web/public/offline_memory.js). A comment cannot need a code fix:
+          # CONCAT_CHAIN, and converting it rewrites documentation. A comment cannot need a code fix:
           # decline any match whose line is a `//` comment, a block-comment
           # opener, a `*` continuation, or sits after a whitespace-preceded `//`
           # — the whitespace requirement keeps `http://` inside string URLs

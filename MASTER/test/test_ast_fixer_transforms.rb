@@ -161,7 +161,7 @@ class TestAstFixerTransforms < Minitest::Test
   # Prose about code contains code. A JSDoc continuation line reading
   # `drain queue on 'online' + SW 'sync'` is a concat chain as far as
   # CONCAT_CHAIN can tell, and converting it rewrote documentation into a
-  # template literal in web/public/offline_memory.js on 2026-08-18 — the
+  # template literal in a face module on 2026-08-18 — the
   # comment-reading defect DECISIONS.md's seven ways record first, on the writer
   # side. A comment cannot need a code fix.
   def test_lexical_js_transforms_leave_comments_alone
