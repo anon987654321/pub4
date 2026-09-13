@@ -556,10 +556,10 @@ are listed once, in `RUNBOOK.md` under "Bringing a city domain up", beside the
 order that brings one live; whether each is still registered is
 `data/domain_inventory.yml`'s question.
 
-A second list inside relayd.conf would have no reader. `domain_alignment`
-holds `LIVE_DOMAINS` against the keypair lines, `render_dns.rb` derives the
-zones and acme blocks from `ALL_DOMAINS`, and the waiting set is the
-difference of those two, so a typed copy of it is a fourth place for the same
-names to disagree. It would also sit inside the file that gate parses: the
-gate scans for `tls keypair "…"` with no regard for a leading `#`, so a
-waiting list written in keypair form is read as six live cities.
+Nothing reads a second list there. `domain_alignment` holds `LIVE_DOMAINS`
+against the keypair lines, `render_dns.rb` derives the zones and acme blocks
+from `ALL_DOMAINS`, and the waiting set is the difference of those two, so a
+typed copy of it is a fourth place for the same names to disagree. The copy
+also lands inside the file that gate parses: the gate scans for `tls keypair
+"…"` with no regard for a leading `#`, so a waiting list written in keypair form
+reads as six live cities.
