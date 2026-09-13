@@ -1840,7 +1840,7 @@ if ARGV.first == "play"
         FileUtils.mv(fresh, ARCHIVE, force: true)
       rescue StandardError => e
         warn "player: could not archive #{File.basename(fresh)} (#{e.class}: #{e.message}) — " \
-             "it will play again next turn"
+             "it plays again next turn"
       end
       FileUtils.mv(txt, ARCHIVE, force: true) if File.file?(txt)
       old = Dir[File.join(ARCHIVE, "*.wav")].sort_by { |f| -File.mtime(f).to_i }[KEEP..]

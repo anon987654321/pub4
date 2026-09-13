@@ -67,8 +67,6 @@ module Livesets
 
   module_function
 
-  # --- the room ---------------------------------------------------------------
-
   # A pass has to be nameable, or these are not sets.
   #
   # An Ableton set opens the same way every time; that is most of what a set is.
@@ -305,7 +303,7 @@ module Livesets
     end
   end
 
-  # --- chord_based_beats: the builtin progressions, played ----------------------
+  # chord_based_beats plays the builtin progressions.
   #
   # The other two sets are the crate: everything sounding in them is a record.
   # This one is the opposite and exists for the contrast. Nothing is sampled.
@@ -446,7 +444,7 @@ module Livesets
           "#{symbols.join(' ')}")
   end
 
-  # --- sampled_based_beats: the loop played as an instrument ----------------------
+  # sampled_based_beats plays the loop as an instrument.
   #
   # "Make old things sound new, and new things sound old." Old to new: a slice of
   # a 1970s bed is retriggered as chords the record never played -- asetrate is
@@ -586,7 +584,7 @@ module Livesets
           "#{reverse ? '  REV' : ''}  chop@#{slice_at}s")
   end
 
-  # --- ambient_pads: the same crate, held instead of struck ------------------------
+  # ambient_pads holds the same crate instead of striking it.
   #
   # A chop is a short thing by construction -- best_trim hunts a two-to-fourteen
   # second repeat, and the beat sets play it in eighth-note stabs. Held for two
@@ -718,8 +716,6 @@ module Livesets
           "#{prog.map { |semi, v| "#{semi}#{v}" }.join(' ')}  chop@#{slice_at}s")
   end
 
-  # --- the journal, read back ----------------------------------------------------
-
   def play_set!(name)
     abort "no set #{name.inspect} — have #{SETS.join(', ')}" unless SETS.include?(name.to_s)
 
@@ -746,7 +742,7 @@ module Livesets
 
   def show(rows)
     if rows.empty?
-      puts "no seeded passes yet -- play a set and it will name itself"
+      puts "no seeded passes yet -- a set names itself when it plays"
       return
     end
     rows.last(20).each do |r|
@@ -814,8 +810,6 @@ module Livesets
     end
   end
 
-  # --- the beds ------------------------------------------------------------------
-  #
   # The crate, dug from its manifest — off YouTube, and therefore not cleared.
   #
   # Say that first, because lib/crate_dig.rb takes the opposite position on the
