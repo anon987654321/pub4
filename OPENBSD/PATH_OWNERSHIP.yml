@@ -79,6 +79,15 @@ ownership:
       bin/mailimg), installed by OPERATOR.sh's setup_mail_client
     risk: low
     check: OPENBSD/bin/check-openbsd
+  dev/:
+    purpose: Mac workstation helpers (worktrees, githooks, backups); never
+      installed on vm23
+    risk: low
+    check: none
+  rails/gates/data/layout_snapshots/:
+    purpose: committed layout baselines — evidence, not source
+    risk: low
+    check: ruby RAILS/gates/runner.rb layout_snapshot
   openbsd/sh/vps_ci.sh:
     purpose: serial app CI entrypoint on vm23
     risk: high
