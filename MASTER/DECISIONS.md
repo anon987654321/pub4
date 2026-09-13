@@ -1197,6 +1197,9 @@ writes a directory that is ignored by design, the two uptime checks differ
 because root's cron must not execute the checkout, the four deploy verbs each
 cover a case `vps-deploy` does not, `bin/master` already hands over to
 `bin/cli`, and the three face stores have a boot order in `face_assets.yml`.
+The face tests in `spec/`, `test/` and `web/test/` stay where they are: the
+first two read files, the third needs the web bundle or node, and `bin/check`
+runs all three, so a move would buy tidiness and measure nothing new.
 
 So the next intake of this shape closes the same way: a subtraction lands with
 the second caller found and the test that keeps the survivor honest, and a
