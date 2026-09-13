@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "net/http"
 require "open3"
 require "yaml"
 
@@ -32,6 +33,23 @@ end
 
 def port_listening?(port)
   Operator::Environment.port_open?(port) ? "listening" : "closed"
+end
+
+# The TTS socket is the half of master a green service and an open port do not
+# prove: a worker that dies on EACCES or at Bundler.setup leaves /health up and
+# checks.tts true while no socket answers. /health already reports it, so read
+# it rather than inferring.
+def master_tts_socket(port)
+  http = Net::HTTP.new("127.0.0.1", port)
+  http.open_timeout = 2
+  http.read_timeout = 5
+  response = http.get("/health")
+  return "unknown" unless response.is_a?(Net::HTTPSuccess)
+
+  value = JSON.parse(response.body).dig("deploy", "tts_socket")
+  value.nil? ? "unknown" : value.to_s
+rescue StandardError
+  "unknown"
 end
 
 def deploy_stamp(app)
@@ -117,14 +135,17 @@ ports = apps_yml.fetch("apps").transform_values { |m| m.fetch("port").to_i }
 # it is not under /home/*/app, so it keeps the block of its own below.
 apps = ports.keys
 
+master_port = Integer(ENV.fetch("MASTER_WEB_PORT", "53187"))
+
 payload = {
   host: `hostname`.strip,
   dev_repo: ROOT,
   dev_sha: git_short(ROOT),
   master: {
     service: service_state("master"),
-    port: Integer(ENV.fetch("MASTER_WEB_PORT", "53187")),
-    port_state: port_listening?(Integer(ENV.fetch("MASTER_WEB_PORT", "53187"))),
+    port: master_port,
+    port_state: port_listening?(master_port),
+    tts_socket: master_tts_socket(master_port),
     last_deploy: deploy_stamp("master"),
     deploy_in_progress: deploy_in_progress("master"),
   },
@@ -138,7 +159,7 @@ else
   puts "dev: #{payload[:dev_repo]} @ #{payload[:dev_sha]}"
   puts
   m = payload[:master]
-  puts format("master%-10s service=%-8s port :%-5s %-9s", "", m[:service], m[:port], m[:port_state])
+  puts format("master%-10s service=%-8s port :%-5s %-9s tts_socket=%s", "", m[:service], m[:port], m[:port_state], m[:tts_socket])
   print_deploy_in_progress(m[:deploy_in_progress])
   puts
   payload[:apps].each do |row|
