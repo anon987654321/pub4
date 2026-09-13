@@ -16,6 +16,7 @@ module Master
       # so nothing is committed.
       class Committer
         LINT_TIMEOUT_SECONDS = 20
+        FINDING_LINES = 40
 
         def initialize(git:, bus: nil, root: nil, ground_truth: nil, preserve_user_intent: nil)
           @git = git
@@ -33,7 +34,10 @@ module Master
           @bus&.publish("fix_loop:commit_error", error: e.message)
         end
 
-        def commit_if_dirty(message)
+        # findings are the violations the pass set out to fix; the ones in a
+        # committed file are named in the body, so git log says which rule each
+        # runtime commit answered.
+        def commit_if_dirty(message, findings: [])
           paths = own_changes
           return if paths.empty?
 
@@ -43,13 +47,24 @@ module Master
           return block_commit_ground_truth unless ground_truth_fresh?(paths)
           return unless lint_changed_ruby(paths)
 
-          @git.commit(message, paths:)
+          @git.commit(with_finding_ids(message, findings, paths), paths:)
           @bus&.publish("ops:commit", message: message.to_s[0, 120], head: @git.head, paths:)
         rescue StandardError => e
           @bus&.publish("fix_loop:commit_error", error: e.message)
         end
 
         private
+
+        def with_finding_ids(message, findings, paths)
+          lines = Array(findings).filter_map do |finding|
+            file = finding[:file].to_s.delete_prefix("#{@root}/")
+            "#{finding[:rule]} #{file}:#{finding[:line].to_i}" if paths.include?(file)
+          end.uniq
+          return message.to_s if lines.empty?
+
+          extra = lines.size > FINDING_LINES ? ["and #{lines.size - FINDING_LINES} more"] : []
+          [message.to_s, "", *lines.first(FINDING_LINES), *extra].join("\n")
+        end
 
         def own_changes
           return [] unless @baseline

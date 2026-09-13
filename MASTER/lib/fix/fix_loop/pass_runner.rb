@@ -88,7 +88,7 @@ module Master
           pass_deadline = [Time.now + PASS_BUDGET_SECONDS, deadline].min
           llm_fixed = llm_pass(violations: found, files:, pass:, deadline: pass_deadline)
           Master::Trace::Dmesg.status("fix0", "llm_pass pass=#{pass} violations=#{found.size} fixed=#{llm_fixed}")
-          @committer.commit_if_dirty("fix_loop: llm-fix [pass #{pass}]") if llm_fixed > 0
+          @committer.commit_if_dirty("fix_loop: llm-fix [pass #{pass}]", findings: found) if llm_fixed > 0
           track_recurrence(found)
           llm_fixed
         end

@@ -118,6 +118,21 @@ class TestFixLoopCommitter < Minitest::Test
     refute blocked?(bus)
   end
 
+  def test_the_body_names_the_findings_in_committed_files
+    write_file("lib/ok.rb", "OK = 1\n")
+    git = FakeGit.new(["lib/theirs.rb"], ["lib/theirs.rb", "lib/ok.rb"])
+    findings = [
+      { rule: "NO_PUTS", file: "lib/ok.rb", line: 3 },
+      { rule: "LONG_LINE", file: File.join(@dir, "lib/ok.rb"), line: 9 },
+      { rule: "NO_PUTS", file: "lib/theirs.rb", line: 1 },
+    ]
+    committer = Master::Fix::FixLoop::Committer.new(git:, bus: FakeBus.new, root: @dir)
+    committer.baseline!
+    committer.commit_if_dirty("fix_loop: llm-fix [pass 1]", findings:)
+
+    assert_equal "fix_loop: llm-fix [pass 1]\n\nNO_PUTS lib/ok.rb:3\nLONG_LINE lib/ok.rb:9", git.commits.first.first
+  end
+
   def test_nothing_is_committed_without_a_baseline
     write_file("lib/ok.rb", "OK = 1\n")
     git = FakeGit.new(["lib/ok.rb"], ["lib/ok.rb"])
