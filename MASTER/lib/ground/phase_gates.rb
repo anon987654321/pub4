@@ -103,14 +103,14 @@ module Master
       def automatic_gate_met?(gate)
         case gate.to_s
         when "no_vague_words" then problem_statement? && !problem_statement.match?(VAGUE_WORDS)
-        when "audience_identified" then present?(@state["audience"])
+        when "audience_identified" then recorded?("audience")
         when "success_measurable" then success_measurable?
         when "components_distinct" then components_distinct?
         when "dependencies_acyclic" then dependencies_acyclic?
         when "count_gte_15" then alternatives.size >= 15
         when "trade_offs_documented" then Array(@state["trade_offs"]).size >= 2
         when "interfaces_explicit" then documented_interfaces?
-        when "errors_documented" then present?(@state["errors"]) || present?(@state["error_handling"])
+        when "errors_documented" then recorded?("errors", "error_handling")
         when "tests_pass" then truthy?(@state["tests_pass"]) || status_file_ok?(".master/last_test_status")
         when "zero_violations" then zero_count?(@state["violations"]) || zero_scan_file?
         when "zero_test_failures" then zero_count?(@state["test_failures"]) || truthy?(@state["tests_pass"])
@@ -232,6 +232,8 @@ module Master
       def present?(value)
         !value.nil? && !value.to_s.strip.empty?
       end
+
+      def recorded?(*keys) = keys.any? { |key| present?(@state[key]) }
 
       def load_state
         path = File.join(@root, PHASE_STATE_PATH)

@@ -63,7 +63,7 @@ module Master
                     lib/fix/unfinished_ledger.rb lib/ground/policy/orchestration.rb],
           symbols: %w[Master::CLI::IntentRouter Master::CLI::AttentionContext
                       Master::Fix::UnfinishedLedger Master::Ground::Policy::Orchestration],
-          callers: %w[run_sound_critique run_rebuild run_context run_checkpoint run_verify],
+          callers: %w[run_rebuild run_context run_checkpoint run_verify],
         }
         checker = Master::Fix::DoneChecker.new
         result = checker.call(plan)

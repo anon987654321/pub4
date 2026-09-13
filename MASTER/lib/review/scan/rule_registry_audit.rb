@@ -137,24 +137,23 @@ module Master
         end
 
         def classify_yaml_entries(yaml_entries, registry)
-          yaml_ids = yaml_entries.map { |r| r["id"].to_s.downcase }
-          kernel = yaml_entries.select { |r| r["tier"] == "kernel" }.map { |r| r["id"].to_s.downcase }
-
-          lexical_yaml = yaml_entries.select { |r| r["detect_lexical"] }
-          lexical_wired = lexical_yaml.select { |r| registry.include?(r["id"].to_s.downcase) }
-          lexical_unwired = lexical_yaml.reject { |r| registry.include?(r["id"].to_s.downcase) }
-
+          lexical_wired, lexical_unwired = yaml_entries.select { |r| r["detect_lexical"] }
+                                                       .partition { |r| registry.include?(key_of(r)) }
           semantic_only = yaml_entries.select { |r| r["detect_semantic"] && !r["detect_lexical"] && !r["detect_structural"] }
-          structural_unwired = yaml_entries.select { |r| r["detect_structural"] && !registry.include?(r["id"].to_s.downcase) }
+          structural_unwired = yaml_entries.select { |r| r["detect_structural"] }
+                                           .reject { |r| registry.include?(key_of(r)) }
 
           {
-            yaml_ids:, kernel:,
-            lexical_wired: lexical_wired.map { |r| r["id"] },
-            lexical_unwired: lexical_unwired.map { |r| r["id"] },
-            semantic_only: semantic_only.map { |r| r["id"] },
-            structural_unwired: structural_unwired.map { |r| r["id"] }
+            yaml_ids: yaml_entries.map { |r| key_of(r) },
+            kernel: yaml_entries.select { |r| r["tier"] == "kernel" }.map { |r| key_of(r) },
+            lexical_wired: ids_of(lexical_wired), lexical_unwired: ids_of(lexical_unwired),
+            semantic_only: ids_of(semantic_only), structural_unwired: ids_of(structural_unwired)
           }
         end
+
+        # The registry is keyed by downcased id; the report keeps the id as declared.
+        def key_of(rule) = rule["id"].to_s.downcase
+        def ids_of(rules) = rules.map { |r| r["id"] }
       end
     end
   end
