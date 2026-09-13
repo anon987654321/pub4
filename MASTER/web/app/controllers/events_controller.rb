@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # EventsController — SSE stream of EventBus events to the orb visualizer, at
-# GET /events/stream. It subscribes to every bus topic and writes each event
+# GET /events/stream. It subscribes to every bus topic through `**` and writes each event
 # as an anonymous `data:` line; the orb reads them with
 # `new EventSource("/events/stream")` and `onmessage`.
 #
@@ -15,7 +15,10 @@ class EventsController < ApplicationController
   QUEUE_CAP          = 256
   KEEPALIVE_EVERY_S  = 15.0  # SSE comment cadence — long enough to be silent, short enough to keep proxies happy
   MAX_STREAM_S       = 600   # hard cap — 10 minute stream ceiling
-  VISITOR_SAFE_PREFIX = %r{\A(?:tts:|pipeline:stage|pressure:updated|council:start|link)}i.freeze
+  # `**`, not `*`: the bus compiles `*` to colon-free names, so a single star
+  # streamed `error` and dropped every `tool:`, `pipeline:` and `tts:` event.
+  STREAM_PATTERN = "**"
+  VISITOR_SAFE_PREFIX = %r{\A(?:tts:|pipeline:stage|council:start|link)}i.freeze
 
   def stream
     visitor_tier = request.env["master.tier"].to_s == "visitor"
@@ -30,7 +33,7 @@ class EventsController < ApplicationController
     bus      = container[:bus]
     mine     = conversation_id
     received = SizedQueue.new(QUEUE_CAP)
-    sub      = bus.subscribe("*") { |ev| offer(received, ev, visitor_tier:, mine:) }
+    sub      = bus.subscribe(STREAM_PATTERN) { |ev| offer(received, ev, visitor_tier:, mine:) }
     deadline       = Time.now + MAX_STREAM_S
     next_keepalive = Time.now + KEEPALIVE_EVERY_S
 

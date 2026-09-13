@@ -253,14 +253,10 @@ module Master
           # test_the_allowance_names_lib_root_exactly holds the list to the tree
           # in both directions rather than leaving that to the comment.
           #
-          # design.rb and ops.rb were in lib/ root and not here, so the rule had
-          # been reporting them since they arrived — at :warning, into a report
-          # `rake selfcheck` filters to error and above. They are the shape
-          # pressure_engine.rb already is: a whole subsystem that is one file and
-          # has no directory beside it, each with its own loc_body_budgets key.
-          # That is the deliberate decision this rule asks for, made.
+          # design.rb and ops.rb are each a whole subsystem that is one file with
+          # no directory beside it, and each has its own loc_body_budgets key.
           ALLOWED_ROOT_FILES = %w[
-            builder.rb core.rb design.rb master.rb ops.rb pressure_engine.rb
+            builder.rb core.rb design.rb master.rb ops.rb
             result.rb security_error.rb unwrap_error.rb
           ].freeze
 

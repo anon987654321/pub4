@@ -43,10 +43,6 @@ ownership:
     purpose: persistent perception, salience, affect and reflection
     risk: high
     check: bin/check --profile=agent
-  lib/pressure_engine.rb:
-    purpose: unified event pressure and stability model
-    risk: high
-    check: bin/check --profile=agent
   web/:
     purpose: the Rails face — chat shell, TTS endpoints, WebGL face assets
     risk: high

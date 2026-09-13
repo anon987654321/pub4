@@ -1,12 +1,11 @@
 # Ground
 
 **Ground is where MASTER's law stops being a document and becomes something the
-runtime can ask a question of.** Axioms, law resolution, the memory and evidence
+runtime can ask a question of.** Law resolution, the memory and evidence
 store, and the sandbox policy all live here, and `lib/master.rb` loads them
 before anything else can run.
 
-`rules.rb` and `law_resolver.rb` hold the rule concepts themselves. `axioms.rb`
-carries the Rails doctrine and the platform pillars.
+`rules.rb` and `law_resolver.rb` hold the rule concepts themselves.
 
 Almost nothing here is a rule written in Ruby. The rules are data, in
 `data/rules.yml`, and this directory is the machinery that resolves them.
@@ -37,8 +36,8 @@ schema at all — `principle_map_repair.rb` repairs `principle_map.yml` for
 A move is a constant rename, and it has two traps that bite in this order. Before
 moving a file, look for callers that write the bare constant inside `module Ground`,
 because a bare name resolves by lexical scope and breaks the moment its neighbour
-leaves — `PressureEngine` reads as dead to any census that greps the qualified name
-and is built on every boot. After moving it, read the moved file for its own bare
+leaves: a caller that writes the bare name reads as unreached to any census that
+greps the qualified one. After moving it, read the moved file for its own bare
 references to constants that stayed behind, `Swallow` and `FailureTaxonomy` and
 `Frontmatter` among them, and write them out as `Master::Ground::` in full. The
 first trap breaks the caller and the second breaks the file you just moved; the

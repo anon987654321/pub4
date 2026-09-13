@@ -34,13 +34,6 @@ class MasterBootTest < Minitest::Test
     assert Master.respond_to?(:validate_data!)
   end
 
-  def test_pressure_engine_loads_and_instantiates
-    engine = Master::PressureEngine.new
-    assert_respond_to engine, :ingest
-    assert_respond_to engine, :pressure
-    assert_kind_of Float, engine.pressure
-  end
-
   def test_hash_dig_compat_returns_nil_for_missing_intermediate_keys
     assert_nil({}.dig(:missing, :nested))
     assert_nil({ outer: {} }.dig(:outer, :missing, :nested))

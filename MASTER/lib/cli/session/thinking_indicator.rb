@@ -31,7 +31,8 @@ module Master
         @think_mutex = Mutex.new
         @think_t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         @think_stage = "intake"
-        @think_sub = @refs.bus&.subscribe("*") do |payload|
+        # `**`: a single star is colon-free names only, and every stage event has one.
+        @think_sub = @refs.bus&.subscribe("**") do |payload|
           update_think_stage(payload)
           emit_dmesg_line(payload)
         end

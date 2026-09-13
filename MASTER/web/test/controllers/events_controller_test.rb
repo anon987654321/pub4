@@ -18,7 +18,6 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "visitor_safe_event? passes the orb's public signals" do
-    assert safe?("pressure:updated")
     assert safe?("council:start")
     assert safe?("link")
   end
@@ -51,5 +50,15 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     2.times { assert controller.send(:offer, queue, { event: "link" }, visitor_tier: true, mine: "c1") }
     refute controller.send(:offer, queue, { event: "link" }, visitor_tier: true, mine: "c1")
     assert_equal 2, queue.size
+  end
+
+  test "the stream subscription sees colon-named events" do
+    bus = Master::Trace::EventBus.new(event_log: Class.new { def append(*) = nil }.new)
+    seen = []
+    bus.subscribe(EventsController::STREAM_PATTERN) { |ev| seen << ev[:event] }
+    bus.publish("pipeline:stage_start")
+    bus.publish("tts:started")
+
+    assert_equal %w[pipeline:stage_start tts:started], seen
   end
 end

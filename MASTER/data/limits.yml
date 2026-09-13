@@ -1015,7 +1015,6 @@ loc_body_budgets:
   # snapshot provenance and the boot receipt were all reading that no.
   lib/master.rb: 137
   lib/ops.rb: 234
-  lib/pressure_engine.rb: 115
   lib/result.rb: 95
   lib/security_error.rb: 1
   lib/unwrap_error.rb: 103

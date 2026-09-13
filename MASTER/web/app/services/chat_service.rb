@@ -10,7 +10,7 @@ class ChatService
   WRITE_TOOLS = %w[Write Edit Create FilePatch].freeze
   BUS_DMESG_SKIP = %w[
     infer:resolved infer:confidence tool:before tool:after client_action
-    pipeline:stage_start pipeline:stage_complete felt:sense pressure:updated
+    pipeline:stage_start pipeline:stage_complete felt:sense
   ].freeze
   BUS_THOUGHT_RE = /:(?:done|error|warn|crit|resolved|confidence|detected)\b/.freeze
 
@@ -135,7 +135,6 @@ class ChatService
     subscribe("council:veto") { |ev| write_json_event("dmesg", "council0 at master0: veto #{ev[:message].to_s[0, 120]}") }
     subscribe("infer:resolved") { |ev| write_json_event("dmesg", dmesg_format("infer:resolved", ev)) }
     subscribe("infer:confidence") { |ev| write_json_event("dmesg", dmesg_format("infer:confidence", ev)) }
-    subscribe("pressure:updated") { |ev| write_json_event("pressure", ev.slice(:value, :tokens, :limit, :pct)) }
     subscribe("**") do |ev|
       name = ev[:event].to_s
       next if BUS_DMESG_SKIP.include?(name)
@@ -490,7 +489,6 @@ end
     when "backup:error" then "error #{payload[:error]}"
     when "scan:complete" then "#{payload[:count]} violations"
     when "autoloop:cycle" then "autoloop #{payload[:pass]}/#{payload[:max]}"
-    when "pressure:updated" then "pressure #{payload[:value]}"
     when "cache:hit" then "cache hit #{payload[:key]}"
     when "cache:miss" then "cache miss #{payload[:key]}"
     when "compaction:done" then "compacted ctx to #{payload[:token_est]} tokens"

@@ -156,25 +156,13 @@ module Master
       ecology = Review::RepoEcology.new(root:, event_bus: bus, code_index:)
       subscribe_ecology_reindex(bus:, ecology:)
       diag = Trace::Diag.new(homeostat: loop_c[:homeostat], breaker: reach[:breaker], logging: trace[:logging], event_bus: bus)
-      pressure = PressureEngine.new(event_bus: bus)
-      subscribe_pressure_ingest(bus:, pressure:)
-      { renderer:, output_check:, output_guard:, code_index:, reference_graph:, ecology:, diag:, pressure: }
+      { renderer:, output_check:, output_guard:, code_index:, reference_graph:, ecology:, diag: }
     end
 
     def subscribe_ecology_reindex(bus:, ecology:)
       bus.subscribe("tool:after") do |ev|
         next unless ev[:path] && MUTATING_TOOLS.include?(ev[:tool].to_s)
         ecology.reindex(ev[:path])
-      end
-    end
-
-    def subscribe_pressure_ingest(bus:, pressure:)
-      bus.subscribe("*") do |ev|
-        event_name = ev[:event] || ev["event"] || ev[:type] || ev["type"] || "event"
-        next if event_name.to_s.start_with?("pressure:")
-        pressure.ingest(event: event_name, payload: ev)
-      rescue StandardError => e
-        Ground::Swallow.log(e, context: "builder.pressure_engine", event_bus: bus)
       end
     end
 
