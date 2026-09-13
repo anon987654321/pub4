@@ -10,6 +10,7 @@ require "yaml"
 require_relative "lib/utf8"
 require_relative "lib/guard_state"
 require_relative "lib/permission_audit"
+require_relative "lib/disk_usage"
 
 ROOT = File.expand_path("..", __dir__)
 APPS_YML = File.join(ROOT, "RAILS", "apps.yml")
@@ -360,6 +361,11 @@ if on_box
     daemon_logs: Dir.glob("/home/dev/pub4/MASTER/.master/tts-worker-*.log").map(&stat_entry),
     daemon_user: "master"
   ))
+end
+
+if on_box
+  df_ok, df_out = run("df", "-ik")
+  failures.concat(df_ok ? Deploy::DiskUsage.failures(df_out) : ["disk: #{df_out}"])
 end
 
 up_checks = on_box ? { "master" => 53_187 } : {}
