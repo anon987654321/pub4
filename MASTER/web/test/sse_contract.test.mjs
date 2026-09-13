@@ -3,18 +3,67 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createContext, runInContext } from "node:vm";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const publicDir = join(root, "public");
 
-test("sse_contract defines canonical chat event handlers", () => {
-  const source = readFileSync(join(publicDir, "sse_contract.js"), "utf8");
-  ["thought", "tool", "enhance", "dmesg", "compaction", "ctx_footer", "phantom", "tool_stack", "stage", "btw", "client_action", "pressure"].forEach((event) => {
-    assert.match(source, new RegExp(`\\b${event}\\b`));
-  });
-  assert.match(source, /MASTER_SSE/);
-  assert.match(source, /dispatchNamed/);
-  assert.match(source, /MASTER_LOG/);
+function loadContract() {
+  const logged = [];
+  const window = { MASTER_LOG: { warn: (...args) => logged.push(args), error: (...args) => logged.push(args) } };
+  runInContext(readFileSync(join(publicDir, "sse_contract.js"), "utf8"), createContext({ window }));
+  return { sse: window.MASTER_SSE, window, logged };
+}
+
+// Every name ChatService writes through write_event or write_json_event. The
+// trace event goes straight to the stream, carries an id for the logs, and no
+// client reacts to it.
+function emittedEvents() {
+  const service = readFileSync(join(root, "app", "services", "chat_service.rb"), "utf8");
+  return new Set([...service.matchAll(/write_(?:json_)?event\("([^"]+)"/g)].map((match) => match[1]));
+}
+
+function faceEvents() {
+  const part5 = readFileSync(join(publicDir, "face.part5.txt"), "utf8");
+  const body = part5.slice(part5.indexOf("function handleFaceNamedEvent"), part5.indexOf("\n}\n", part5.indexOf("function handleFaceNamedEvent")));
+  return new Set([...body.matchAll(/event === '([^']+)'/g)].map((match) => match[1]));
+}
+
+test("every named event the chat stream writes has exactly one owner", () => {
+  const { sse } = loadContract();
+  const emitted = emittedEvents();
+  const face = faceEvents();
+  const generic = new Set(Object.keys(sse.NAMED_HANDLERS));
+
+  // The census has to see what it is counting before an empty difference means
+  // anything: council:speech is written through a helper, content_kind from the
+  // chunk path, and the face owns both.
+  assert.ok(emitted.has("council:speech") && emitted.has("content_kind"), `chat_service census missed events: ${[...emitted]}`);
+  assert.ok(face.has("mood") && face.has("felt"), `face census missed events: ${[...face]}`);
+
+  const unhandled = [...emitted].filter((name) => !generic.has(name) && !face.has(name));
+  assert.deepEqual(unhandled, [], "chat stream writes events nothing handles");
+  const unproduced = [...generic, ...face].filter((name) => !emitted.has(name));
+  assert.deepEqual(unproduced, [], "handlers wait for events the chat stream never writes");
+  const doubled = [...generic].filter((name) => face.has(name));
+  assert.deepEqual(doubled, [], "the face shadows these contract handlers, so the contract copy never runs");
+});
+
+test("dispatchNamed runs the contract handler, prefers an extension, and logs a throwing one", () => {
+  const { sse, window, logged } = loadContract();
+  const lines = [];
+  window._chatOnDmesg = (line) => lines.push(line);
+
+  assert.equal(sse.dispatchNamed("dmesg", JSON.stringify("core0 at master0: ok")), true);
+  assert.deepEqual(lines, ["core0 at master0: ok"]);
+
+  const seen = [];
+  assert.equal(sse.dispatchNamed("dmesg", "x", { dmesg: (data) => seen.push(data) }), true);
+  assert.deepEqual(seen, ["x"]);
+
+  assert.equal(sse.dispatchNamed("mood", "calm"), false, "face-owned events are not the contract's");
+  assert.equal(sse.dispatchNamed("dmesg", "x", { dmesg: () => { throw new Error("boom"); } }), false);
+  assert.equal(logged.at(-1)[0], "sse:dmesg");
 });
 
 test("face runtime delegates named SSE events to MASTER_SSE", () => {

@@ -1,10 +1,11 @@
 "use strict";
 
-const SSE_EVENTS = [
-  "thought", "tool", "enhance", "dmesg", "compaction", "ctx_footer", "phantom",
-  "tool_stack", "stage", "btw", "client_action", "felt", "pressure", "mood", "model",
-  "verdict", "confidence", "council:speech"
-];
+// The named events ChatService writes on the chat stream split between two
+// owners. The handlers below need nothing but window hooks, so either transport
+// can use them. mood, model, verdict, confidence, felt, council:speech and
+// content_kind drive the face's own State, so they live in handleFaceNamedEvent
+// in face.part5.txt, which offers every event there first. sse_contract.test.mjs
+// holds the two owners against what ChatService writes.
 
 function parseSseJson(data, fallback) {
   try {
@@ -66,10 +67,6 @@ const NAMED_HANDLERS = {
   stage: (data) => window._chatOnStage?.(parseSseJson(data, {})),
   btw: (data) => window._chatOnBtw?.(parseSseJson(data, {})),
   client_action: (data) => window.MASTERChat?.triggerClientAction?.(parseSseJson(data, {})),
-  pressure: (data) => {
-    const payload = parseSseJson(data, {});
-    window._chatOnDmesg?.(`pressure ${payload.pct ?? payload.value ?? ""}%`.trim());
-  }
 };
 
 function dispatchNamed(event, data, extensions) {
@@ -96,8 +93,7 @@ function dispatchNamed(event, data, extensions) {
 }
 
 window.MASTER_SSE = {
-  EVENTS: SSE_EVENTS,
   dispatchNamed,
   parseSseJson,
-  NAMED_HANDLERS
+  NAMED_HANDLERS,
 };
