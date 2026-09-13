@@ -17,7 +17,7 @@ require "minitest/autorun"
 class AuthNoopIsAudibleTest < Minitest::Test
   SOURCE = File.expand_path("../shared/app/controllers/concerns/shared/authentication.rb", __dir__)
 
-  # TODO.md, Scanner Conventions 1: a rule and the paragraph explaining the rule
+  # A comment outlives its rule (MASTER/DECISIONS.md): a rule and its explanation
   # contain the same words. The comment above the guard says "silent no-op", so an
   # assertion over the raw file would pass on the explanation of the fix rather
   # than the fix.

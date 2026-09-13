@@ -168,7 +168,7 @@ module Operator
 
     # Comments blanked, line numbering preserved.
     #
-    # TODO.md, Scanner Conventions 1, walked into on the first run of this file:
+    # A comment outlives its rule (MASTER/DECISIONS.md), on this file's first run:
     # shared/_responsive.scss opens with a paragraph explaining why a rule is NO
     # LONGER wrapped in `@media (max-width: 768px)`, and the lint reported that
     # sentence as a colliding bound. A check that reads its own documentation
