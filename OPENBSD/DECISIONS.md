@@ -456,3 +456,50 @@ brgen.no ends cross-app sign-in, because the session cookie is `domain: :all`.
 seconds to boot cold behind it. No refused connection has been observed; slow
 restarts have, and a larger queue does not make a booting app answer sooner.
 Raise it the day a restart shows refusals rather than delay.
+
+## The outside intake's deploy and app proposals, refused where built — 2026-09-13
+
+**Status:** accepted. An external session proposed 478 items for the four trees.
+Measured against the tree, most of the deploy and app half already existed under
+other names — the deploy stamp is the receipt, `deploy-diff.sh` and
+`config_drift_gate.rb` are the diff, `health_check.rb` is the read-only verify,
+`OPERATOR.sh` runs `relayd -n` and `pfctl -nf` before installing. The checks it
+lacked were written: file permissions and disk, both in `health_check.rb`. What
+follows is the part refused, so the next intake does not reopen it.
+
+**No repair-plan command, no dry run on every mutating command, no deploy that
+fails closed on revision drift.** A deploy is the only mutation, and it already
+halts on the first failure. Revisions disagree between deploys by design —
+`health_check.rb` warns on commits behind rather than failing, and says why — so
+failing closed would block the deploy that fixes the drift. A planning surface
+beside `vps-deploy` is a third surface where the root contract allows two.
+
+**No platform matrix or OpenBSD-like CI runner.** Production is one host family
+with one Ruby pin. The lock that differs between the Mac and the box differs
+because `rb-kqueue` resolves only on BSD, and a Linux runner cannot reproduce that.
+The fix is the `install_if` change already open in `TODO.md`, applied in a deploy
+window.
+
+**No automated rollback.** Rolling back is deploying the previous SHA through the
+same `vps-deploy`. A second path that runs once a year is untested on the day it
+is needed, which is the argument the three recovery scripts above already carry.
+
+**No unexpected-listener audit.** `pf.conf` is `block log all` with four pass
+rules, and `health_check.rb` confirms the default block on every run. A daemon
+listening on another port is unreachable from outside, and `port_inventory`
+already holds the declared ports against the configs.
+
+**No pledge or unveil for the Rails daemons.** A Ruby interpreter that loads
+native extensions and forks workers cannot name a useful promise set, and
+MASTER's own `Ground::Pledge` covers the one process that can. The apps run as
+their own users with homes closed to other, which `health_check.rb` now checks.
+
+**No idempotency keys, cart expiry, stuck-order alarms or concurrent-edit locks
+for takeaway and marketplace yet.** Turbo disables a submit while it is in
+flight, the order state machine refuses illegal transitions and is tested, and no
+vendor is live. Reopen when one is: the first duplicate order from a real kitchen
+is the measurement these are waiting for.
+
+**No per-component screenshot baselines, density tests or control-distance
+rules.** `layout_snapshot` commits reviewable geometry for the surfaces, and how
+dense a screen should be is the operator's call about how it looks.
