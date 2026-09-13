@@ -5,6 +5,7 @@ require "test_helper"
 class ApplicationHelperTest < ActionView::TestCase
   include ApplicationHelper
   include SchemaHelper
+  include Shared::UiHelper
 
   setup do
     Brgen::CitySeed.sync! if City.table_exists? && City.none?
@@ -322,5 +323,50 @@ class ApplicationHelperTest < ActionView::TestCase
     request.host = "marketplace.lsangeles.com"
 
     assert_equal({ label: "lsangeles.com" }, brand_mark_fragments)
+  end
+
+  # The markup both image helpers emit, spelled out attribute by attribute.
+  # Only the URLs are computed, because a signed blob id changes with the row;
+  # everything else is the literal the views have always shipped, so moving or
+  # folding the helpers cannot change a byte without failing here.
+  test "lazy_image_tag emits the placeholder the lazy-image controller swaps" do
+    blob = image_blob
+    src = main_app.url_for(blob)
+
+    assert_equal %(<img alt="a" width="4" height="3" class="photo-thumb" loading="lazy" data-controller="lazy-image" ) +
+                 %(data-lazy-image-target="image" data-lazy-image-src-value="#{src}" data-lazy-image-blurhash-value="LEHV6nWB2yk8" ) +
+                 %(src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" />),
+                 lazy_image_tag(blob, alt: "a", class: "photo-thumb")
+    assert_equal %(<img alt="b" width="400" height="600" loading="lazy" data-controller="lazy-image" ) +
+                 %(data-lazy-image-target="image" data-lazy-image-src-value="#{src}" data-lazy-image-blurhash-value="zz" ) +
+                 %(src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" />),
+                 lazy_image_tag(blob, alt: "b", width: 400, height: 600, blurhash: "zz")
+  end
+
+  test "responsive_image_tag emits a webp picture resolved through main_app" do
+    blob = image_blob
+    set = lambda do |widths, format|
+      widths.map { |w| "#{main_app.url_for(blob.variant(resize_to_limit: [ w, w ], **format))} #{w}w" }.join(", ")
+    end
+    largest = ->(w) { main_app.url_for(blob.variant(resize_to_limit: [ w, w ])) }
+
+    assert_equal %(<picture><source type="image/webp" srcset="#{set.([ 400, 800, 1200 ], { format: :webp })}" sizes="(max-width: 768px) 100vw, 800px">) +
+                 %(<img alt="c" srcset="#{set.([ 400, 800, 1200 ], {})}" sizes="(max-width: 768px) 100vw, 800px" width="4" height="3" ) +
+                 %(class="post-image" loading="lazy" src="#{largest.(1200)}" /></picture>),
+                 responsive_image_tag(blob, alt: "c", class: "post-image")
+    assert_equal %(<picture><source type="image/webp" srcset="#{set.([ 360, 720 ], { format: :webp })}" sizes="(max-width: 768px) 50vw, 220px">) +
+                 %(<img alt="" srcset="#{set.([ 360, 720 ], {})}" sizes="(max-width: 768px) 50vw, 220px" width="4" height="3" ) +
+                 %(loading="eager" src="#{largest.(720)}" /></picture>),
+                 responsive_image_tag(blob, alt: "", widths: [ 360, 720 ], sizes: "(max-width: 768px) 50vw, 220px", loading: "eager")
+    assert_equal %(<img alt="d" loading="lazy" src="/images/x.png" />), responsive_image_tag("x.png", alt: "d")
+  end
+
+  private
+
+  def image_blob
+    ActiveStorage::Blob.create_and_upload!(
+      io: File.open(file_fixture("tiny.png")), filename: "tiny.png", content_type: "image/png",
+      metadata: { "width" => 4, "height" => 3, "blurhash" => "LEHV6nWB2yk8", "analyzed" => true },
+    )
   end
 end

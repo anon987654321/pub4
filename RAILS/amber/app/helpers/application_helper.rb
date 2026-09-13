@@ -69,8 +69,7 @@ end
   # widths: explicit list keeps the legacy multi-size path (avoid for wardrobe
   # grids — those sizes are not preprocessed).
   def responsive_image_tag(attachment, alt:, preset: :card, widths: nil, sizes: "(max-width: 768px) 100vw, 800px", loading: "lazy", **options)
-    image_options = image_dimensions(attachment).merge(options)
-    image_options[:loading] ||= loading
+    image_options = reserved_image_options(attachment, options, loading)
 
     return image_tag(attachment, alt: alt, **image_options) unless attachment.respond_to?(:variant)
 

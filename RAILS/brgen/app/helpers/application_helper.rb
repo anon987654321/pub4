@@ -8,45 +8,6 @@ module ApplicationHelper
   # which city the request had already resolved to.
   def city_name = Current.city_name
 
-  def lazy_image_tag(source, alt:, blurhash: nil, **options)
-    # Reserved before the bytes arrive: intrinsic dimensions ride every call
-    # through Shared::UiHelper#image_dimensions (caller options win).
-    image_options = image_dimensions(source).merge(options)
-    image_options[:loading] ||= "lazy"
-    blurhash ||= source.try(:blurhash) || source.try(:blob).try(:blurhash) || source.try(:metadata).try(:[], "blurhash")
-    image_options[:data] = (image_options[:data] || {}).merge(
-      controller: "lazy-image",
-      lazy_image_target: "image",
-      lazy_image_src_value: main_app.url_for(source)
-    )
-    image_options[:data][:lazy_image_blurhash_value] = blurhash if blurhash.present?
-
-    image_tag("data:image/gif;base64,R0lGODlhAQABAAAAACw=", alt: alt, **image_options)
-  end
-
-  def responsive_image_tag(attachment, alt:, widths: [ 400, 800, 1_200 ], sizes: "(max-width: 768px) 100vw, 800px", loading: "lazy", **options)
-    image_options = image_dimensions(attachment).merge(options)
-    image_options[:loading] ||= loading
-
-    return image_tag(attachment, alt: alt, **image_options) unless attachment.respond_to?(:variant)
-
-    # main_app.url_for on both hooks: these render inside isolated engines
-    # (tv/marketplace cards), and image_tag would otherwise resolve the variant
-    # against engine routes that do not own ActiveStorage → to_model on
-    # VariantWithRecord. See ENGINES.md. The <picture> itself is
-    # Shared::UiHelper#responsive_picture_tag, which amber renders too.
-    through_main_app = ->(variant) { main_app.url_for(variant) }
-    responsive_picture_tag(
-      attachment,
-      alt: alt,
-      widths: widths,
-      sizes: sizes,
-      srcset_url: through_main_app,
-      img_src: through_main_app,
-      **image_options
-    )
-  end
-
   def safe_http_link(label, url)
     safe_url = safe_http_url(url)
     return unless safe_url

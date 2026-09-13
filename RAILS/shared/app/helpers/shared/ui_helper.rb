@@ -202,6 +202,62 @@ module Shared
       width && height ? { width:, height: } : {}
     end
 
+    # The attributes every image helper here starts from: the reserved box,
+    # the caller's options over it, and a loading policy unless the caller set
+    # one. amber's own responsive_image_tag starts here too.
+    def reserved_image_options(source, options, loading)
+      image_options = image_dimensions(source).merge(options)
+      image_options[:loading] ||= loading
+      image_options
+    end
+
+    # Two image helpers, two techniques, and they stay two methods. This one
+    # ships a transparent pixel that lazy_image_controller swaps for the real
+    # photo, painting a blurhash first; responsive_image_tag below ships a webp
+    # <picture> the browser chooses from. A `lazy:` switch on one of them would
+    # be a selector argument choosing between two bodies (NO_SELECTOR_ARGUMENTS),
+    # so what they share is folded into reserved_image_options instead.
+    #
+    # Here rather than in brgen's ApplicationHelper because the dating engine's
+    # views call it, and an engine view should not depend on its host's helper.
+    # main_app.url_for because those views render inside an isolated engine.
+    def lazy_image_tag(source, alt:, blurhash: nil, **options)
+      image_options = reserved_image_options(source, options, "lazy")
+      blurhash ||= source.try(:blurhash) || source.try(:blob).try(:blurhash) || source.try(:metadata).try(:[], "blurhash")
+      image_options[:data] = (image_options[:data] || {}).merge(
+        controller: "lazy-image",
+        lazy_image_target: "image",
+        lazy_image_src_value: main_app.url_for(source)
+      )
+      image_options[:data][:lazy_image_blurhash_value] = blurhash if blurhash.present?
+
+      image_tag("data:image/gif;base64,R0lGODlhAQABAAAAACw=", alt: alt, **image_options)
+    end
+
+    # brgen's engine views (maps, marketplace, takeaway, tv) call this, so it
+    # lives beside the <picture> it builds. main_app.url_for on both hooks:
+    # isolated engine routes do not own ActiveStorage, and image_tag would
+    # otherwise resolve the variant against them and fail on to_model. amber
+    # defines its own responsive_image_tag in its ApplicationHelper, which
+    # wins over this one: it serves preprocessed named variants first and
+    # resolves through the ambient url_for.
+    def responsive_image_tag(attachment, alt:, widths: [ 400, 800, 1_200 ], sizes: "(max-width: 768px) 100vw, 800px", loading: "lazy", **options)
+      image_options = reserved_image_options(attachment, options, loading)
+
+      return image_tag(attachment, alt: alt, **image_options) unless attachment.respond_to?(:variant)
+
+      through_main_app = ->(variant) { main_app.url_for(variant) }
+      responsive_picture_tag(
+        attachment,
+        alt: alt,
+        widths: widths,
+        sizes: sizes,
+        srcset_url: through_main_app,
+        img_src: through_main_app,
+        **image_options
+      )
+    end
+
     # The <picture> both brgen and amber build over an ActiveStorage attachment:
     # a webp <source> srcset, a fallback srcset on the <img>, and whatever the
     # caller already resolved through image_dimensions above. It lives here

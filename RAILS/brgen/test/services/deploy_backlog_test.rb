@@ -150,7 +150,7 @@ class DeployBacklogTest < Minitest::Test
       assert_includes source, "format: :webp"
     end
 
-    helper_source = read_source(File.join(ROOT, "brgen/app/helpers/application_helper.rb"))
+    helper_source = read_source(File.join(ROOT, "shared/app/helpers/shared/ui_helper.rb"))
     assert_includes helper_source, "lazy_image_blurhash_value"
     assert_includes helper_source, "responsive_image_tag"
   end
