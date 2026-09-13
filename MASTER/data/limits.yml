@@ -1015,7 +1015,6 @@ loc_body_budgets:
   # MASTER-scoped run, one suite against seven, and the clean-tree assertion
   # still covering MASTER whatever was named.
   lib/operator: 713
-  lib/rails: 1017
   # 10460 -> 10469 for MODIFIER_SILENT_RESCUE, which sees `value = parse(raw)
   # rescue nil` — the shape SilentRescue cannot match by construction. Scoped
   # to assignments after measuring: 28 modifier rescues discard fleet-wide and

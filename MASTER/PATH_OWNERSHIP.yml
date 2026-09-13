@@ -139,10 +139,6 @@ ownership:
     purpose: pub4-level (multi-repo) check/status tooling, separate namespace from Master
     risk: medium
     check: MASTER/bin/operator status
-  lib/rails/:
-    purpose: Rails-app audits (PWA, routes/views, Hotwire, face3d policy) for the RAILS/ tree
-    risk: medium
-    check: bin/check
   lib/result/:
     purpose: Result::Ok/Err chaining and error classification helpers
     risk: high

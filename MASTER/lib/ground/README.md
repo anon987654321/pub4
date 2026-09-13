@@ -30,8 +30,7 @@ the file itself. `map.rb`, `runtime_catalog.rb`, `maturity_scorecard.rb`,
 `research_thresholds.rb`, `bootstrap_docs.rb` and `operator_playbook.rb` are all
 that, and all stay. When the table's subject is another directory's declared
 purpose, the subject wins over the shape: a catalogue of reference Rails repositories
-read only by the PWA audit is a Rails audit, so `mobile_web_cluster_catalog.rb`
-went to `rails/`. And a file that writes the table rather than reading it is not a
+read only by a Rails audit belongs beside that audit, not in ground. And a file that writes the table rather than reading it is not a
 schema at all — `principle_map_repair.rb` repairs `principle_map.yml` for
 `bin/doctor --fix` and went to `fix/`, where repair is the declared purpose.
 
