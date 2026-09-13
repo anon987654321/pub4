@@ -14,8 +14,8 @@ daemon_execdir="/home/brgen/app"
 rc_bg=YES
 
 rc_pre() {
-	. /etc/brgen.env 2>/dev/null || true
-	export RAILS_ENV=production HOME=/home/brgen IRC_HOST=127.0.0.1 IRC_PORT=6667
+  . /etc/brgen.env 2>/dev/null || true
+  export RAILS_ENV=production HOME=/home/brgen IRC_HOST=127.0.0.1 IRC_PORT=6667
 }
 
 rc_cmd $1

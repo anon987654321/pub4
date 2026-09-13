@@ -18,10 +18,10 @@ DOAS_ENV_CANARY=${DOAS_ENV_CANARY:-I_UNDERSTAND_DNS_WIPE}
 
 # Usage above the work, not at line 105 under the functions it describes.
 validate_doas_usage() {
-	print -u2 "usage: validate_doas.ksh check            # dev reaches root AND the canary crosses"
-	print -u2 "       validate_doas.ksh install SRC [tag] # install SRC over /etc/doas.conf, rolling back on failure"
-	print -u2 ""
-	print -u2 "Env: DOAS_ENV_CANARY (default I_UNDERSTAND_DNS_WIPE)"
+  print -u2 "usage: validate_doas.ksh check            # dev reaches root AND the canary crosses"
+  print -u2 "       validate_doas.ksh install SRC [tag] # install SRC over /etc/doas.conf, rolling back on failure"
+  print -u2 ""
+  print -u2 "Env: DOAS_ENV_CANARY (default I_UNDERSTAND_DNS_WIPE)"
 }
 
 validate_doas_can_reach_root() {

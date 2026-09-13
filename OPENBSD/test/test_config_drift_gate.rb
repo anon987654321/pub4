@@ -65,9 +65,9 @@ class ConfigDriftGateCrontabTest < Minitest::Test
   # first run: OpenBSD ships root its own crontab and OPERATOR.sh merges onto it.
   def test_the_base_system_crontab_is_not_drift
     stock = <<~CRON
-      0	*	*	*	*	/usr/bin/newsyslog
-      30	1	*	*	*	/bin/sh /etc/daily
-      30	3	*	*	6	/bin/sh /etc/weekly
+      0\t*\t*\t*\t*\t/usr/bin/newsyslog
+      30\t1\t*\t*\t*\t/bin/sh /etc/daily
+      30\t3\t*\t*\t6\t/bin/sh /etc/weekly
     CRON
 
     cron = crontab_report(REPO, REPO + stock)
