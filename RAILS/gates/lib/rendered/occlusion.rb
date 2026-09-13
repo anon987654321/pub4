@@ -159,6 +159,9 @@ module Deploy
       # pass. mobile_flow already counts it this way.
       if measured.zero?
         @result.inconclusive!("occlusion: Chrome reached 0/#{live.size} surface(s) — nothing was pressed")
+      elsif GeometryProbe.too_few_measured?(measured, live.size)
+        @result.inconclusive!("occlusion: Chrome reached #{measured}/#{live.size} surface(s) — too few to " \
+                              "call every control pressable; warm the apps and re-run")
       else
         @result.checked!(measured)
       end

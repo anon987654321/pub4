@@ -85,6 +85,13 @@ module Deploy
         @result.inconclusive!("keyboard_flow: 0/#{live.size} surface(s) yielded a tab order — nothing was walked")
         return @result
       end
+      # Findings from the surfaces that were walked still block; only the pass is
+      # withheld, because two walked pages do not make a tab order sound.
+      if GeometryProbe.too_few_measured?(measured, live.size)
+        @result.inconclusive!("keyboard_flow: walked #{measured}/#{live.size} surface(s) — too few to call " \
+                              "the tab order sound; warm the apps and re-run")
+        return @result
+      end
 
       @result.checked!(measured)
       @result.warn("keyboard_flow: walked tab order on #{measured} surface(s)")

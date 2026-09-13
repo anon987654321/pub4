@@ -134,13 +134,14 @@ module Deploy
           measured += 1 if ok
         end
       end
-      @result.checked!(measured) if measured.positive?
-      if measured.zero? && live.any?
+      # checked! only once enough surfaces were measured: a count recorded first
+      # outranks the inconclusive note, and the gate would pass over two pages.
+      if measured.zero?
         @result.inconclusive!("mobile_flow: Chrome navigated 0/#{live.size} surfaces (timeouts) — retry with warm Falcon")
-      elsif measured.positive? && measured < 3 && live.size >= 5
-        # Too few real phone measurements to claim the floor; don't green-wash.
+      elsif GeometryProbe.too_few_measured?(measured, live.size)
         @result.inconclusive!("mobile_flow: only #{measured}/#{live.size} surfaces measured (CDP timeouts) — warm apps and re-run")
       else
+        @result.checked!(measured)
         @result.warn("mobile_flow: measured #{measured}/#{live.size} mobile surface(s) at #{PHONE.join('×')}")
       end
       @result

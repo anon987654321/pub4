@@ -219,6 +219,18 @@ module Deploy
       status.zero? || status.between?(200, 399)
     end
 
+    # Fewer surfaces than this measured, while more were reachable, is a browser
+    # session that dropped out part way rather than a floor that held. The four
+    # journey gates (keyboard_flow, mobile_flow, occlusion, reflow) share the
+    # line, so one flaking CDP session cannot read green in one of them and
+    # inconclusive in another. A run with fewer reachable surfaces than this has
+    # to measure all of them.
+    MIN_MEASURED_SURFACES = 3
+
+    def self.too_few_measured?(measured, reachable)
+      measured < [MIN_MEASURED_SURFACES, reachable].min
+    end
+
     # Web fonts change every metric on the page. Measuring before they land is
     # the single biggest source of flake in layout assertions.
     def self.wait_for_fonts(cdp, timeout: 3)

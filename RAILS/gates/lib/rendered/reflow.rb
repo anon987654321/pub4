@@ -138,6 +138,11 @@ module Deploy
         @result.inconclusive!("reflow: 0/#{live.size} surface(s) survived the sweep — no width was measured")
         return @result
       end
+      if GeometryProbe.too_few_measured?(measured, live.size)
+        @result.inconclusive!("reflow: #{measured}/#{live.size} surface(s) survived the sweep — too few to " \
+                              "call the width range clean; warm the apps and re-run")
+        return @result
+      end
 
       @result.checked!(measured)
       @result.warn("reflow: swept #{widths.length} widths (#{widths.first}–#{widths.last}px) × #{measured} surface(s)")

@@ -247,4 +247,13 @@ class BrowserFlowGatesTest < Minitest::Test
 
     assert_inconclusive result, %r{navigated 0/1 surfaces}
   end
+
+  # One threshold for all four: a session that drops out part way is not a
+  # floor that held, and a run with fewer reachable surfaces measures them all.
+  def test_too_few_measured_is_one_line_for_the_four_gates
+    assert Deploy::GeometryProbe.too_few_measured?(2, 8)
+    refute Deploy::GeometryProbe.too_few_measured?(3, 8)
+    assert Deploy::GeometryProbe.too_few_measured?(1, 2)
+    refute Deploy::GeometryProbe.too_few_measured?(2, 2)
+  end
 end
