@@ -2,6 +2,7 @@
 
 class GenerateBlurhashJob < ApplicationJob
   queue_as :bulk
+  limits_concurrency to: 1, key: ->(blob_id) { "blurhash-#{blob_id}" }, duration: 10.minutes, on_conflict: :discard
 
   BASE83 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz#$%*+,-.:;=?@[]^_{|}~".freeze
   MAX_DIMENSION = 32

@@ -8,6 +8,7 @@
 # delete_all, precisely so the attachments and their variants go too.
 class ExpiredStoriesSweepJob < ApplicationJob
   queue_as :bulk
+  limits_concurrency to: 1, key: "expired-stories-sweep", duration: 15.minutes, on_conflict: :discard
 
   def perform
     Story.where(expires_at: ..Time.current).find_each(&:destroy)

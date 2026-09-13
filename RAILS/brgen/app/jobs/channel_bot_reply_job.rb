@@ -4,6 +4,8 @@
 # Jobs run tenant-less, which is exactly what city-less bot accounts need.
 class ChannelBotReplyJob < ApplicationJob
   queue_as :default
+  # One model call per message, however many times the message is enqueued.
+  limits_concurrency to: 1, key: ->(message_id) { "channel-bot-#{message_id}" }, duration: 5.minutes, on_conflict: :discard
 
   # Loaded the way Message#broadcast_to_logs loads it, and for the same reason.
   # ApplicationRecord sets strict_loading_by_default = true in every

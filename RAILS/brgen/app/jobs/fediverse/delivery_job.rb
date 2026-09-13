@@ -8,6 +8,10 @@ module Fediverse
   # single job looping over every follower would do.
   class DeliveryJob < ApplicationJob
     queue_as :bulk
+    # One delivery of one activity to one inbox at a time; a retry and a fresh
+    # enqueue of the same activity must not both reach the remote server.
+    limits_concurrency to: 1, duration: 10.minutes, on_conflict: :discard,
+                       key: ->(args) { "fedi-#{Digest::SHA256.hexdigest("#{args[:inbox_url]}|#{args[:payload]}")}" }
 
     # A dead instance is common and permanent often enough that infinite retries
     # would fill the queue. Five attempts over roughly a day, then give up.

@@ -4,6 +4,8 @@
 # target tradedoubler.com do not strip tracking from UGC links.
 class LinkConverterSyncJob < ApplicationJob
   queue_as :bulk
+  # Scheduled every five minutes; a slow fetch must not stack a second one.
+  limits_concurrency to: 1, key: "link-converter-sync", duration: 10.minutes, on_conflict: :discard
 
   RELATIVE_PATH = "js/td-lc.js"
 

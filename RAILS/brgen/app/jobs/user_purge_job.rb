@@ -33,6 +33,7 @@
 #              table has to make the same decision rather than inherit silence.
 class UserPurgeJob < ApplicationJob
   queue_as :default
+  limits_concurrency to: 1, key: "user-purge", duration: 1.hour, on_conflict: :discard
 
   # Rows that exist only to describe the person, with the association to reach
   # them by. Destroyed one at a time rather than delete_all'd: ActiveStorage
