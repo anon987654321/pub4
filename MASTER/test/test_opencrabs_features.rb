@@ -39,6 +39,28 @@ class TestOpenCrabsFeatures < Minitest::Test
     refute_includes names, "WriteFile"
   end
 
+  # plan and explore promise "do not modify files" in their prompt; the allow
+  # list is what keeps the promise when the model ignores it.
+  def test_read_only_subagents_cannot_call_a_writing_tool
+    %i[plan explore].each do |type|
+      %w[WriteFile write_file StrReplace str_replace AstEdit ast_edit BatchReplace Shell zsh].each do |tool|
+        refute Master::Ground::Policy::Subagent.allowed?(type, tool), "#{type} may call #{tool}"
+      end
+    end
+  end
+
+  # No phone-home. A version check or an analytics client added to lib/ or the
+  # face would send the operator's usage somewhere nobody chose.
+  TELEMETRY = /segment\.(io|com)|mixpanel|google-analytics|googletagmanager|sentry\.io|posthog|amplitude\.com|update[._-]check/i
+
+  def test_nothing_phones_home
+    files = Dir.glob(File.join(Master::ROOT, "{lib,web/app,web/config,bin}/**/*.{rb,js,erb}"))
+    assert_operator files.size, :>, 100, "the glob found nothing to read"
+    assert "https://www.google-analytics.com/collect".match?(TELEMETRY)
+    hits = files.reject { |f| f.include?("/test") }.select { |f| File.read(f, encoding: "UTF-8").match?(TELEMETRY) }
+    assert_empty hits.map { |f| f.delete_prefix(Master::ROOT + "/") }
+  end
+
   def test_subagent_context_restricts_tools
     Master::CLI::SubagentContext.run(type: :explore, allowed: %w[ReadFile]) do
       assert Master::CLI::SubagentContext.permits?("ReadFile")
