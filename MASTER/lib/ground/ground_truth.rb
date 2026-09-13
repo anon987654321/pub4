@@ -41,6 +41,18 @@ module Master
         false
       end
 
+      # True only for a file this session read whose bytes differ now. No age
+      # limit, unlike fresh?: a read an hour old is still the version a whole
+      # overwrite was composed against. A file never read answers false.
+      def changed_since_read?(path)
+        resolved = File.expand_path(path)
+        entry = @mutex.synchronize { @reads[resolved] }
+        return false unless entry
+        return true unless File.exist?(resolved)
+
+        Digest::SHA256.hexdigest(File.read(resolved)) != entry.sha256
+      end
+
       def assert_fresh!(path, reason: "claim_task_complete")
         return Result.ok(path) if fresh?(path)
 

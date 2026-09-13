@@ -30,6 +30,8 @@ module Master
         @undo.snapshot(full)
         FileUtils.mkdir_p(File.dirname(full))
         write_atomic(full, content)
+        # This session's own write is the version it now knows.
+        @ground_truth&.record_read!(full, content:)
         Master::Trace::WriteTracker.current&.record(written)
         @bus&.publish("tool:after", tool: self.class::NAME, path: written, bytes:, op: "write")
         Result.ok(full)

@@ -29,11 +29,13 @@ module Master
         offset = [offset.to_i, 0].max
         limit = limit.to_i.clamp(1, MAX_LINES)
         key = [path, offset, limit, hashline]
-        return @cache[key] if @cache.key?(key)
         resolved = resolve(path)
         return resolved if resolved.err?
 
         full_path = resolved.value!
+        # A file changed since its last read is read again: WriteFile refuses it
+        # until it is, so a cached copy would refuse the write for the whole turn.
+        return @cache[key] if @cache.key?(key) && !@ground_truth&.changed_since_read?(full_path)
         return Result.err("not found: #{path}", category: :validation) unless File.exist?(full_path)
 
         result = Result.ok(format_file_slice(full_path, offset:, limit:, hashline:))

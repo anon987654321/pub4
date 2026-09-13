@@ -8,9 +8,9 @@ module Master
       NAME = "str_replace".freeze
       DESCRIPTION = "Replace unique string in a file. Fails if pattern matches 0 or 2+ times.".freeze
 
-      def initialize(root:, undo:, governor:, event_bus: nil, diff_stager: nil)
-        @root, @undo, @governor, @bus, @diff_stager =
-          File.realpath(root), undo, governor, event_bus, diff_stager
+      def initialize(root:, undo:, governor:, event_bus: nil, diff_stager: nil, ground_truth: nil)
+        @root, @undo, @governor, @bus, @diff_stager, @ground_truth =
+          File.realpath(root), undo, governor, event_bus, diff_stager, ground_truth
       end
 
       def call(path:, old_string:, new_string:)

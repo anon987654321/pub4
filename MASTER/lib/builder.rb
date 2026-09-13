@@ -18,11 +18,11 @@ module Master
       },
       "WriteFile" => ->(r, i) {
         Io::WriteFile.new(root: r, undo: i[:undo], governor: i[:governor],
-          event_bus: i[:bus], diff_stager: i[:diff_stager])
+          event_bus: i[:bus], diff_stager: i[:diff_stager], ground_truth: i[:ground_truth])
       },
       "StrReplace" => ->(r, i) {
         Io::StrReplace.new(root: r, undo: i[:undo], governor: i[:governor],
-          event_bus: i[:bus], diff_stager: i[:diff_stager])
+          event_bus: i[:bus], diff_stager: i[:diff_stager], ground_truth: i[:ground_truth])
       },
       "BatchReplace" => ->(r, i) { Io::BatchReplace.new(root: r, governor: i[:governor], event_bus: i[:bus]) },
       "AstEdit" => ->(r, i) {
