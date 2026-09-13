@@ -21,7 +21,6 @@ module Master
           @bus&.subscribe("tool:failed") { |payload| record_tool_failure(payload) }
           @bus&.subscribe("llm:call_complete") { |payload| record_llm(payload) }
           @bus&.subscribe("llm:provider_outcome") { |payload| record_provider(payload) }
-          @bus&.subscribe("user_correction") { |payload| record_user_correction(payload) }
           @bus&.subscribe("fix_loop:soul_proposal") { |payload| record_improvement(payload) }
           @bus&.subscribe("fix_loop:oscillation") { |_payload| trigger_rollback("fix loop oscillation") }
           @bus&.subscribe("fix_loop:cycle_detected") { |_payload| trigger_rollback("fix loop cycle detected") }
@@ -56,11 +55,6 @@ module Master
           model = payload[:model] || payload["model"] || "unknown"
           event_type = status == "success" ? "tool_success" : "provider_error"
           record(event_type:, dimension: model, value: status, metadata: payload)
-        end
-
-        def record_user_correction(payload)
-          action = payload[:action] || payload["action"] || "unknown"
-          record(event_type: "user_correction", dimension: action, metadata: payload)
         end
 
         def record(event_type:, dimension:, value: nil, metadata: nil)

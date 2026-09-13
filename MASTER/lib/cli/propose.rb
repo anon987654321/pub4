@@ -72,7 +72,6 @@ module Master
         @violations = 0
         @bus = container[:bus]
         @git = container.fetch(:git) { Master::Io::GitOperations.new(@root) }
-        @learnings = container[:learnings]
       end
 
       attr_writer :violations
@@ -118,21 +117,6 @@ module Master
 
       def acted(action)
         append_ledger(:acted, action: action.to_s)
-      end
-
-      def reject(action)
-        action = action.to_s.strip
-        return "propose: reject requires an action" if action.empty?
-
-        append_ledger(:rejected, action:)
-        append_corrections_ledger(action)
-        @bus&.publish("user_correction", action:, source: "proposal_rejected")
-        if @learnings&.respond_to?(:record_event)
-          @learnings.record_event(event_type: :proposal_rejected, dimension: action)
-        elsif @learnings&.respond_to?(:record)
-          @learnings.record(trigger: "proposal", strategy: action, outcome: :failed)
-        end
-        "proposal rejected: #{action}"
       end
 
       private
@@ -182,8 +166,7 @@ module Master
 
       def tuned_confidence(confidence, stats)
         bonus = stats[:acted] * 0.05
-        penalty = stats[:rejected] * 0.1
-        [[confidence + bonus - penalty, 0.1].max, 1.0].min
+        [[confidence + bonus, 0.1].max, 1.0].min
       end
 
       def tuned_impact(impact, stats)
@@ -195,7 +178,6 @@ module Master
         entries = ledger_entries.select { |entry| entry["action"] == action.to_s || entry.dig("proposal", "action") == action.to_s }
         {
           acted: entries.count { |entry| entry["event"] == "acted" },
-          rejected: entries.count { |entry| entry["event"] == "rejected" },
           ignored: entries.count { |entry| entry["event"] == "expired" },
         }
       end
@@ -216,7 +198,7 @@ module Master
 
         ledger_entries.none? do |candidate|
           candidate["action"] == action &&
-            %w[acted rejected expired].include?(candidate["event"]) &&
+            %w[acted expired].include?(candidate["event"]) &&
             Time.parse(candidate["ts"].to_s) >= ts
         end
       rescue StandardError => e
@@ -230,15 +212,6 @@ module Master
         File.open(ledger_path, "a") { |file| file.puts(JSON.generate(data)) }
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "propose.append_ledger", event_bus: @bus)
-      end
-
-      def append_corrections_ledger(action)
-        path = File.join(@root, "runtime", "corrections.jsonl")
-        FileUtils.mkdir_p(File.dirname(path))
-        data = { ts: Time.now.utc.iso8601, action: action.to_s }
-        File.open(path, "a") { |file| file.puts(JSON.generate(data)) }
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "propose.append_corrections_ledger", event_bus: @bus)
       end
 
       def ledger_entries

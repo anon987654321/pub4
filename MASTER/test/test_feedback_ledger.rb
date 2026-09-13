@@ -29,7 +29,7 @@ class TestFeedbackLedger < Minitest::Test
     end
   end
 
-  def test_attach_records_tool_success_provider_error_user_correction_and_improvement
+  def test_attach_records_tool_success_provider_error_and_improvement
     root = Dir.mktmpdir("feedback_ledger")
     bus = FakeBus.new
     learnings = Master::Ground::KnowledgeStore.new(root:)
@@ -41,7 +41,6 @@ class TestFeedbackLedger < Minitest::Test
     bus.publish("tool:after", { tool: "write_file", exit_code: 0 })
     bus.publish("llm:call_complete", model: "gpt-4.1", tokens_out: 42)
     bus.publish("llm:provider_outcome", model: "gpt-4.1", status: "provider_error", error: "boom")
-    bus.publish("user_correction", action: "/fix")
     bus.publish("fix_loop:soul_proposal", root:, rule: "T205", sample: [{ file: "lib/example.rb" }])
     bus.publish("fix_loop:oscillation", violations: 1)
 
@@ -52,7 +51,6 @@ class TestFeedbackLedger < Minitest::Test
     types = rows.map { |row| row["event_type"] }
     assert_includes types, "tool_success"
     assert_includes types, "provider_error"
-    assert_includes types, "user_correction"
     assert_operator rows.count { |row| row["event_type"] == "tool_success" }, :>=, 2
     assert_equal 1, rollback_calls.size
     assert_equal :policy, rollback_calls.first.category
