@@ -1,46 +1,33 @@
 # frozen_string_literal: true
 
-# Brgen-specific NotificationsController for city-grouped inbox, match kind,
-# Turbo broadcasts to brgen:notifications:*, and custom presenters.
-# See shared/app/controllers/shared/notifications_controller.rb for the thin
-# engine stub used by amber/bsdports.
-# Duplication intentional until city inbox + vote scoring are unified across apps.
-# See RAILS/shared/WIRING_NOTES.md "Deferred DRY" and "Notification model".
-class NotificationsController < ApplicationController
+# The engine's inbox, grouped. Shared::NotificationsController owns update,
+# read_all's marking and the badge; brgen adds the kind-grouped state its index
+# and read_all stream render, and asks for a real account rather than a guest.
+class NotificationsController < Shared::NotificationsController
+  skip_before_action :require_current_user
   before_action :require_real_user
+
+  GROUP_ORDER = %w[mention match message reply like reaction follow order alert custom].freeze
 
   def index
     load_notification_index_state
   end
 
-  def update
-    @notification = Current.user.notifications.find(params[:id])
-    @notification.update!(read_at: Time.current)
-    respond_to do |f|
-      f.html { redirect_back fallback_location: notifications_path }
-      f.turbo_stream
-    end
-  end
-
   def read_all
-    Current.user.notifications.unread.update_all(read_at: Time.current)
+    notification_scope.unread.update_all(read_at: Time.current, updated_at: Time.current)
     load_notification_index_state
-    respond_to do |f|
-      f.html { redirect_to notifications_path }
-      f.turbo_stream
+    respond_to do |format|
+      format.html { redirect_to notifications_path }
+      format.turbo_stream
     end
-  end
-
-  def badge
-    render json: { unread_count: Current.user.notifications.unread.count }
   end
 
   private
 
   def load_notification_index_state
-    @notifications = Current.user.notifications.recent.includes(:actor, :notifiable).limit(100)
-    @unread_count = Current.user.notifications.unread.count
+    @notifications = notification_scope.recent.includes(:actor, :notifiable).limit(100)
+    @unread_count = notification_scope.unread.count
     @grouped_notifications = @notifications.group_by { |notification| notification.kind.to_s }
-    @group_order = %w[mention match message reply like reaction follow order alert custom]
+    @group_order = GROUP_ORDER
   end
 end

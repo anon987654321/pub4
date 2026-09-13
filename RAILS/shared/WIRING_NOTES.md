@@ -189,11 +189,10 @@ fails.
 **Commentable:** brgen and amber use polymorphic `comments` +
 `Shared::Commentable` on `Post`.
 
-**Deferred DRY:** brgen still has local `NotificationsController` and
-`VotesController` vs shared stubs (see
-brgen/app/controllers/{notifications,votes}_controller.rb headers); Follow
-schema differs across apps. Promote when city inbox grouping and vote karma
-side-effects are unified. Controllers carry comments linking here.
+**Deferred DRY:** brgen still has a local `VotesController` (see its header);
+Follow schema differs across apps. Promote when vote karma side-effects are
+unified. brgen's `NotificationsController` subclasses
+`Shared::NotificationsController` and adds only the kind-grouped inbox state.
 
 **Notification model:** brgen keeps `Notification` (not `Shared::Notification`)
 on the same `notifications` table. Brgen adds `title`/`body` presenters, a
