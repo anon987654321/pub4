@@ -95,8 +95,19 @@ class QueryBudgetTest < ActionDispatch::IntegrationTest
       password: "password123", city: @city,
     )
     channel = Tv::Channel.create!(user: owner, name: "Ch #{SecureRandom.hex(3)}", slug: "ch-#{SecureRandom.hex(4)}")
+    category = Marketplace::Category.find_or_create_by!(name: "Budget", slug: "budget-#{SecureRandom.hex(3)}")
 
     count.times do |i|
+      # Marketplace and maps draw their index from these rows: listings with a
+      # user and category on markedsplass, places on the map. Each place gets
+      # its own neighbourhood, because a nil foreign key never queries and would
+      # hide a dropped preload.
+      Marketplace::Listing.create!(
+        user: owner, category:, title: "Sykkel #{i}", price_cents: 10_000 + i, currency: "NOK", status: "active",
+      )
+      hood = Neighborhood.create!(city: @city, name: "Strok #{i}", slug: "strok-#{i}-#{SecureRandom.hex(2)}")
+      Place.create!(city: @city, neighborhood: hood, name: "Sted #{i}", kind: "attraction",
+                    latitude: 60.39 + (i / 1000.0), longitude: 5.32)
       # active is a nullable boolean with no schema default, and the index
       # scopes to where(active: true) — seeds without it render an empty page,
       # which is how the first version of this test passed while the N+1 it was
@@ -114,7 +125,8 @@ class QueryBudgetTest < ActionDispatch::IntegrationTest
       seed_posts(6)
       seed_vertical_rows(6)
 
-      { "brgen.no" => "/", "tv.brgen.no" => "/", "takeaway.brgen.no" => "/" }.each do |vhost, path|
+      { "brgen.no" => "/", "tv.brgen.no" => "/", "takeaway.brgen.no" => "/",
+        "markedsplass.brgen.no" => "/", "maps.brgen.no" => "/" }.each do |vhost, path|
         host! vhost
         get path
         assert_response :success, "#{vhost}#{path} did not render"
