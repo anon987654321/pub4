@@ -242,9 +242,9 @@ module Master
       end
 
       # The stem is only half the name. A Zeitwerk caller writes
-      # Master::Ground::MemorySearch, which downcases to the single token
-      # `memorysearch` — the stem with its underscores gone — so a check for
-      # `memory_search` finds nothing and every autoloaded file in the tree
+      # Master::Review::Scan::CodeMetrics, which downcases to the single token
+      # `codemetrics` — the stem with its underscores gone — so a check for
+      # `code_metrics` finds nothing and every autoloaded file in the tree
       # reads as dead. Measured 2026-08-27: all forty candidates this produced
       # had live callers, a census that was wrong forty times out of forty.
       def dead_candidate(record, corpus)

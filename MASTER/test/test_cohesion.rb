@@ -182,11 +182,10 @@ class CohesionTest < Minitest::Test
 
 # ---- a shelf that is already occupied -------------------------------------
 #
-# lib/ground has memory.rb, memory_index.rb and memory_search.rb. They read as
-# a family and are not: Memory::Search already exists as a mixin on the Memory
-# class, and MemorySearch is a standalone keyword search over a repo doc index
-# that happens to start with the same word. The generated plan would have moved
-# the second on top of the first, and only executing it would have found out.
+# Three files that share a prefix read as a family, and are not one when a move
+# lands on a file that already sits there: the generated plan moves the second
+# on top of the first, and only executing it finds out. data/proposals.yml
+# memory-is-a-family-in-lib-ground records the case.
 
 def test_a_family_whose_destination_is_taken_is_not_a_family
   write("thing.rb", namespaced("Thing"))

@@ -196,12 +196,11 @@ end
       members = files - [parent].compact
       subdir = File.join(dir, name)
 
-# A destination that is already taken means the family is not one kind.
-# lib/ground has memory.rb, memory_index.rb and memory_search.rb, which
-# read as a family and are not: Memory::Search already exists as a mixin
-# on the Memory class, while MemorySearch is a standalone keyword search
-# over a repo doc index that happens to start with the same word. The
-# generated plan would have moved the second on top of the first.
+# A destination that is already taken means the family is not one kind:
+# three files sharing a prefix, one of whose moves lands on a file that is
+# already there, are different things wearing one word, and the generated
+# plan moves the second on top of the first. data/proposals.yml
+# memory-is-a-family-in-lib-ground records the case that taught it.
 #
 # Cheaper than any similarity heuristic, and it is the check that actually
 # fires: if the shelf already holds something of that name, the two are
