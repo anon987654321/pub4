@@ -73,7 +73,7 @@ class TestSelfTest < Minitest::Test
       class Example
         def risky
           yield
-        rescue
+        rescue => e
           nil
         end
       end

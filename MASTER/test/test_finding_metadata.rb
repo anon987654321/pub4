@@ -54,12 +54,12 @@ end
 class TestFindingRead < Minitest::Test
   F = Master::Review::Scan::Finding
 
-  def finding = F.build(rule: "NO_DEBUG", message: "binding.pry", line: 7)
+  def finding = F.build(rule: "NO_DEBUG", message: "breakpoint left in", line: 7)
 
   def test_reads_a_finding_object
     assert_equal "NO_DEBUG", F.read(finding, :rule)
     assert_equal 7, F.read(finding, :line)
-    assert_equal "binding.pry", F.read(finding, :message)
+    assert_equal "breakpoint left in", F.read(finding, :message)
   end
 
   def test_reads_the_plain_hash_scan_dir_returns

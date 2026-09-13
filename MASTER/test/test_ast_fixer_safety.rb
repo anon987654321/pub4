@@ -141,7 +141,7 @@ class TestAstFixerSafety < Minitest::Test
 
   def test_still_repairs_sql_null_comparison
     fixer = null_fixer_for("db/report.sql")
-    sql = "SELECT * FROM users WHERE deleted_at = NULL AND city_id != NULL;"
+    sql = "SELECT * FROM users WHERE deleted_at = NULL AND city_id != NULL;" # scan: intentional — the defect the fixer repairs
 
     out = fixer.send(:normalise_null_comparison, sql)
 
@@ -160,7 +160,7 @@ class TestAstFixerSafety < Minitest::Test
   # repairs. This asserts the fixer cannot touch it.
   def test_does_not_repair_sql_inside_a_ruby_string_literal
     fixer = null_fixer_for("test/test_ast_fixer_safety.rb")
-    fixture = %(    sql = "SELECT * FROM users WHERE deleted_at = NULL AND city_id != NULL;"\n)
+    fixture = %(    sql = "SELECT * FROM users WHERE deleted_at = NULL AND city_id != NULL;"\n) # scan: intentional — the defect the fixer repairs
 
     assert_equal fixture, fixer.send(:normalise_null_comparison, fixture)
   end

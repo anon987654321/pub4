@@ -14,6 +14,9 @@
 Law.define(:FAIL_VISIBLY) do
   source "Fail Fast (Jim Shore, IEEE Software 2004)"
   severity :error
+  # Ruby only: `rescue` at a line end in Markdown is the English word, as in
+  # "search-and-rescue" closing a sentence in AEGIS.md.
+  languages %i[ruby]
   detect { |line| line.match?(/(?<![\w:.])rescue\s*$|(?<![\w:.])rescue\s+Exception\b/) }
   fix "Catch specific errors, log context, re-raise or return Result."
   bad "rescue Exception"

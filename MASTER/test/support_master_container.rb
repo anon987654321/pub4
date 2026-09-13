@@ -21,7 +21,7 @@ module Master
           absolute:
             golden_rule: PRESERVE_THEN_IMPROVE_NEVER_BREAK
             rules:
-              FAIL_VISIBLY: never rescue Exception silently.
+              FAIL_VISIBLY: never swallow an error silently.
               SIMPLEST_WORKS: refuse god classes.
               PRESERVE_FIRST: read first. preserve behavior. larger changes allowed if safe.
               BE_CONCISE: minimal response.
