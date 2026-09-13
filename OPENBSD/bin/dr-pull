@@ -151,6 +151,6 @@ bad = pulled.reject do |db|
 end
 abort("dr-pull: integrity_check FAILED for #{bad.join(', ')} — do not trust this pull") unless bad.empty?
 
-Dir[File.join(DEST, "*")].select { |d| File.directory?(d) }.sort[0...-KEEP].each { |d| FileUtils.rm_rf(d) }
+Dir[File.join(DEST, "*")].select { |d| File.directory?(d) }.sort[0...-KEEP].each { |d| FileUtils.rm_rf(d) } # scan: intentional — retention: this script's own pulls past KEEP
 puts "dr-pull: #{pulled.size} database(s) -> #{target}, all integrity_check ok " \
      "(#{pulled.sum { |f| File.size(f) } / 1024 / 1024}MB; keeping last #{KEEP})"
