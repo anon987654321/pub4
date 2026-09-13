@@ -97,4 +97,3 @@ gem "pub4-shared", path: "../shared"
 gem "dartsass-rails", "~> 0.5.1"
 
 gem "stimulus_reflex", "~> 3.5"
-gem "futurism", "~> 1.4"

@@ -278,10 +278,6 @@ GEM
     fugit (1.12.1)
       et-orbi (~> 1.4)
       raabro (~> 1.4)
-    futurism (1.4.2)
-      cable_ready (>= 5.0)
-      rack (>= 2, < 4)
-      rails (>= 5.2)
     geocoder (1.8.6)
       base64 (>= 0.1.0)
       csv (>= 3.0.0)
@@ -730,7 +726,6 @@ DEPENDENCIES
   faker
   falcon
   ferrum
-  futurism
   geocoder
   image_processing
   importmap-rails
@@ -840,7 +835,6 @@ CHECKSUMS
   fiber-local (1.1.0) sha256=c885f94f210fb9b05737de65d511136ea602e00c5105953748aa0f8793489f06
   fiber-storage (1.0.1) sha256=f48e5b6d8b0be96dac486332b55cee82240057065dc761c1ea692b2e719240e1
   fugit (1.12.1) sha256=5898f478ede9b415f0804e42b8f3fd53f814bd85eebffceebdbc34e1107aaf68
-  futurism (1.4.2) sha256=ff42672fa75d9e7d9180ed1df72cb44d9c4cfaca9116b3fb5251d71b3a7eb33a
   geocoder (1.8.6) sha256=e0ca1554b499f466de9b003f7dff70f89a5888761c2ca68ed9f86b6e5e24e74c
   globalid (1.4.0) sha256=037f12fbf1d9d7a014d501c2d5c77356fd4ddd96d7a7991d6700bba96706f427
   google-protobuf (4.35.1) sha256=a3a6471331d918f58dfa4d014a8f6286f0af2cf4840216bde52fcf2ea3fe3726

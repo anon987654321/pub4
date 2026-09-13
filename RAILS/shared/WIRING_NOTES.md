@@ -49,7 +49,7 @@ app-owned paths), `bin/rails dartsass:build` in CI.
   minimal-gesture boot
 - `stimulus_boot.js` — full @stimulus-components fleet (incl.
   password-visibility, nested-form, carousel, read-more, checkbox-select-all),
-  StimulusReflex, Futurism, live-search, offline-page, install-prompt,
+  StimulusReflex, live-search, offline-page, install-prompt,
   theme-toggle
 - `Shared::StimulusFormHelper` — `character_counter_field`,
   `password_visibility_field`, `read_more`

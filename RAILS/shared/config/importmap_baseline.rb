@@ -27,9 +27,8 @@ pin "cable_ready"
 # No futurism pin, because nothing consumes it: no ERB in any app carries
 # data-controller="futurism". `pin` defaults to preload: true, so pinning it
 # costs an eager fetch on every page load to register a controller nobody asks
-# for. The `futurism` gem stays in all three Gemfiles for the server-side
-# `futurize` helper; wiring a real paginated index to it is the open lazy-render
-# work in FINAL_TODO P0.4, and that starts by putting this pin back.
+# for. No view calls `futurize` either, so no Gemfile carries the gem; a
+# paginated index that wants the lazy-render boundary adds both back together.
 # No date-fns pin, and unpkg.com is no longer contacted by any app. It existed
 # for one consumer, @stimulus-components/timeago, and that controller is gone:
 # it reads data-timeago-datetime-value, no view in any app ever set one, and its
