@@ -268,3 +268,8 @@ en:
     retry: "Retry"
     loading: "Loading cached items…"
     list_label: "Offline content list"
+  # Shared::AttachmentLimits, which every model inherits through ApplicationRecord.
+  errors:
+    messages:
+      file_too_large: "is too large (max %{count} MB)"
+      file_type_not_allowed: "is a file type not allowed here"

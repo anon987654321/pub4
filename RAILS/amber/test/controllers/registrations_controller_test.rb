@@ -8,7 +8,11 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
   test "a failed signup says why and keeps the email" do
     post registration_url, params: {
       accept_terms: "1", accept_age: "1",
-      user: { email_address: "new-person@example.com", password: "long-enough-pass", password_confirmation: "does-not-match" },
+      user: {
+        email_address: "new-person@example.com",
+        password: "long-enough-pass",
+        password_confirmation: "does-not-match"
+      }
     }
 
     assert_response :unprocessable_entity

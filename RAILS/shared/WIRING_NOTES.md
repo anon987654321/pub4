@@ -201,8 +201,9 @@ Shared::Notification is the thin engine stub for apps that eval
 `shared/config/routes/social.rb`. Same table, different presentation contract —
 duplication beats the wrong abstraction until inbox grouping unifies.
 
-Controllers: `Shared::LiveSearchable`, `StructuredEvents`, `MediaGuard`,
-`ActorIdentity`.
+Controllers: `Shared::LiveSearchable`, `StructuredEvents`, `ActorIdentity`.
+Upload size and type limits are model-side, in `Shared::AttachmentLimits`,
+which `ApplicationRecord` includes.
 
 Emit activity via `Shared::EventEmitter` / `include Shared::StructuredEvents`
 for unified graph + Turbo Stream consumers.

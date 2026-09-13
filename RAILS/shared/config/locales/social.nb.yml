@@ -271,3 +271,8 @@ nb:
     retry: "Prøv igjen"
     loading: "Laster mellomlagret innhold…"
     list_label: "Liste over frakoblet innhold"
+  # Shared::AttachmentLimits, which every model inherits through ApplicationRecord.
+  errors:
+    messages:
+      file_too_large: "er for stor (maks %{count} MB)"
+      file_type_not_allowed: "har en filtype som ikke er tillatt her"

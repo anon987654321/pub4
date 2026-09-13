@@ -10,4 +10,7 @@ class ApplicationRecord < ActiveRecord::Base
   # Lives here because the trap it exists for is created here: strict loading is
   # on for every environment, and production raises. See the concern.
   include Shared::StrictSafeAssociations
+  # Every write path saves a record, so the upload limit sits here rather than
+  # in each controller that might remember it. See the concern.
+  include Shared::AttachmentLimits
 end
