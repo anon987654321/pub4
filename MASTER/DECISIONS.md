@@ -1069,3 +1069,51 @@ and meta rules, whose findings carry `fix: nil` and so never reach `lib/fix`, an
 rule. Reading the fields would gate nothing. Reopen this when a fifth transform
 lands whose risk the add-or-delete split cannot state, and classify that rule in
 `rules.yml` by hand then.
+
+## The Outside Intake's Scanner And Test Proposals, Refused Where Built (2026-09-13)
+
+An external session proposed 478 items across the four trees. Its MASTER half
+asked for machinery this tree already has under other names, and a grep for the
+proposal's own words reports every one of them missing. The rescue taxonomy is
+`SILENT_RESCUE`, `MODIFIER_SILENT_RESCUE`, `BARE_RESCUE`, the `Ground::Swallow`
+ledger read by `tools/swallowed_errors.rb`, and the `scan: intentional — reason`
+marker; typed failure is `Master::Result`. Registry audits are
+`test_rule_ids_unique`, `test_rule_registry_audit`, `test_rule_catalogue` and
+`test_rule_fixtures`. Ratchet integrity is the `unreadable` state in
+`tools/ratchets.rb`, ceilings read back out of history, and `lint:spine`'s raise
+counter. Mutation testing is `tools/mutate.rb`. Backlog hygiene is
+`tools/backlog_claims.rb` and `tools/backlog_triage.rb`. What was missing and
+cheap was written: one test holding all 148 rules stable across runs, CRLF and
+duplicate findings; every `bin/` script executable with a shebang; workflow
+steps that cannot swallow their exit. The rest is refused, for these reasons.
+
+**No per-detector timing, budget or timeout.** All 148 rules were timed over a
+planted file carrying every shape that fools a line scanner, and none took half
+a second. A full scan of `lib/` is 13 seconds, and `Rakefile` already bounds
+each file with `SCAN_TIMEOUT`. A budget without a slow rule is a ceiling nobody
+can breach.
+
+**No visibility, metaprogramming or Liskov corpora beyond what exists.**
+`test_visibility_semantics` covers the scopes that matter, `LiskovRule` has its
+fixtures, and a rule for `private :missing` would restate Ruby, which raises
+`NameError` when the class body runs — a census of the tree's 22 such
+declarations found none dangling. `define_method`, `method_missing`,
+refinements and `prepend` coverage fall under the rule this file already states
+for AST projects: reopen only with a finding in hand.
+
+**No architecture graph with annotated, expiring, owned exceptions.**
+`test_constant_collisions`, `rake lint:autoload` (which proves each ignore still
+necessary), `PATH_PURPOSE` and `test_core_no_lib_backedges` hold the boundaries
+that have broken. An expiry date written beside an exception is a changelog in
+code, which this tree removes on sight.
+
+**No mutation campaigns over whole directories, capability matrices or
+skip-count dashboards.** `tools/mutate.rb` exists for the file a finding names,
+and the habit that caught the retracted report — revert the fix, watch the test
+fail — is the same check at the cost of one run. A campaign over a whole
+directory spends a shared machine's CPU on a question no finding has asked.
+
+**No rules about the shape of backlog entries.** Requiring a path, a metric or a
+screenshot criterion of every item would put law about prose in `rules.yml`,
+which is immutable to effects and read by the runtime. The two tools above check
+what an item cites, and `TODO.md`'s preamble carries the habit.
