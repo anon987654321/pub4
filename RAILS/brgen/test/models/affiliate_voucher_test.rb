@@ -4,8 +4,6 @@ require "test_helper"
 
 class AffiliateVoucherTest < ActiveSupport::TestCase
   test "upserts from API struct" do
-    skip "migration not applied" unless Shared::AffiliateVoucher.table_exists?
-
     voucher = Shared::Tradedoubler::Voucher.new(
       external_id: "v1",
       program_id: "10",

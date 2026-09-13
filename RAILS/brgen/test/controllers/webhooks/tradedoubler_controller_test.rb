@@ -3,10 +3,6 @@
 require "test_helper"
 
 class Webhooks::TradedoublerControllerTest < ActionDispatch::IntegrationTest
-  setup do
-    skip "migration not applied" unless Shared::AffiliateConversion.table_exists?
-  end
-
   test "rejects when webhook secret unset" do
     ENV.delete("TRADEDOUBLER_WEBHOOK_SECRET")
     ENV.delete("TRADEDOUBLER_CONVERSIONS_TOKEN")

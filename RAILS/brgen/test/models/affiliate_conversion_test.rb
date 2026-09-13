@@ -4,8 +4,6 @@ require "test_helper"
 
 class AffiliateConversionTest < ActiveSupport::TestCase
   test "records a postback and is idempotent on transaction+message" do
-    skip "migration not applied" unless Shared::AffiliateConversion.table_exists?
-
     params = {
       "transactionId" => "txn-1",
       "messageTypeId" => "5",
@@ -41,8 +39,6 @@ class AffiliateConversionTest < ActiveSupport::TestCase
   end
 
   test "rejects blank message type" do
-    skip "migration not applied" unless Shared::AffiliateConversion.table_exists?
-
     assert_nil Shared::AffiliateConversion.record_from_postback!({ "orderNumber" => "x" })
   end
 end

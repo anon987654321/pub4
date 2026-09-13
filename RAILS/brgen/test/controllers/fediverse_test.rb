@@ -9,7 +9,7 @@ class FediverseTest < ActionDispatch::IntegrationTest
   setup do
     Brgen::CitySeed.sync! if City.table_exists?
     @city = City.find_by!(domain: "brgen.no")
-    @other_city = City.where.not(id: @city.id).first
+    @other_city = City.where.not(id: @city.id).first!
     @user = User.strict_loading(false).create!(
       email_address: "fedi_kari@brgen.no", password: "password123",
       username: "kari", guest: false, city: @city
@@ -37,7 +37,6 @@ class FediverseTest < ActionDispatch::IntegrationTest
   # The city boundary is the whole point: answering for the wrong city would
   # hand a stranger's posts to whoever asked.
   test "webfinger refuses an account from another city's domain" do
-    skip "needs a second seeded city" if @other_city.nil?
     host! @other_city.domain
 
     get webfinger_path(resource: "acct:kari@brgen.no")
