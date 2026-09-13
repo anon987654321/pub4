@@ -97,7 +97,15 @@ surface. Two surfaces, no third.
    them; deploying by hand, check ports 61352 and 47312.
 4. **The apps default to Norwegian.** Tests assert through I18n keys, never English
    literals, and a hardcoded English string is a defect rather than a placeholder.
-5. **Renders are irreplaceable.** dilla and postpro write real output with rotating
+5. **MASTER speaks, and the settings are data.** `MASTER/data/voice.yml` carries
+the whole of it: `rotation` (the voices, chosen per utterance), `post_chain`
+(the ffmpeg chain applied after synthesis) and `bed` (the pad under the
+speech). `Voice::Policy` reads them, `Speech#shaped` applies the chain,
+`browser_payload` hands them to the face so it sounds like the server. The
+chain and the bed are dillas vocabulary borrowed, never its renderer —
+`MASTER/DECISIONS.md` carries the argument.
+
+**Renders are irreplaceable.** dilla and postpro write real output with rotating
    seeds. Never render over a take that matters, and never change a rendered-sound
    or graded-look default on your own judgement.
 
