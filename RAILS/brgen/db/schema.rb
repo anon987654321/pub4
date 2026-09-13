@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_13_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_13_140000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -672,7 +672,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_13_130000) do
     t.datetime "starts_at"
     t.datetime "updated_at", null: false
     t.index ["listing_id"], name: "idx_gig_details_listing", unique: true
-    t.index ["listing_id"], name: "index_marketplace_gig_details_on_listing_id"
   end
 
   create_table "marketplace_housing_details", force: :cascade do |t|
@@ -686,7 +685,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_13_130000) do
     t.integer "size_sqm"
     t.datetime "updated_at", null: false
     t.index ["listing_id"], name: "idx_housing_details_listing", unique: true
-    t.index ["listing_id"], name: "index_marketplace_housing_details_on_listing_id"
   end
 
   create_table "marketplace_job_details", force: :cascade do |t|
@@ -699,7 +697,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_13_130000) do
     t.integer "salary_min_cents"
     t.datetime "updated_at", null: false
     t.index ["listing_id"], name: "idx_job_details_listing", unique: true
-    t.index ["listing_id"], name: "index_marketplace_job_details_on_listing_id"
   end
 
   create_table "marketplace_listing_favorites", force: :cascade do |t|
@@ -729,14 +726,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_13_130000) do
     t.datetime "renewal_notice_sent_at"
     t.integer "reviews_count", default: 0, null: false
     t.string "slug"
-    t.string "status"
+    t.string "status", default: "active", null: false
     t.integer "stock"
     t.integer "store_id"
     t.string "title"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
-    t.integer "views_count"
+    t.integer "views_count", default: 0, null: false
     t.index ["category_id"], name: "index_marketplace_listings_on_category_id"
+    t.index ["city_id", "kind", "category_id"], name: "index_marketplace_listings_on_city_id_and_kind_and_category_id"
     t.index ["city_id", "slug"], name: "index_marketplace_listings_on_city_and_slug", unique: true
     t.index ["city_id"], name: "index_marketplace_listings_on_city_id"
     t.index ["kind", "city_id"], name: "index_marketplace_listings_on_kind_and_city_id"
@@ -935,6 +933,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_13_130000) do
     t.datetime "updated_at", null: false
     t.index ["conversation_id", "deleted_at"], name: "index_messages_on_conversation_id_and_deleted_at"
     t.index ["conversation_id"], name: "index_messages_on_conversation_id"
+    t.index ["expires_at"], name: "index_messages_on_expires_at", where: "expires_at IS NOT NULL"
     t.index ["forwarded_from_id"], name: "index_messages_on_forwarded_from_id"
     t.index ["link_preview_id"], name: "index_messages_on_link_preview_id"
     t.index ["parent_id"], name: "index_messages_on_parent_id"
@@ -1249,12 +1248,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_13_130000) do
     t.boolean "collaborative", default: false, null: false
     t.datetime "created_at", null: false
     t.text "description"
-    t.integer "likes_count"
+    t.integer "likes_count", default: 0, null: false
     t.string "name"
-    t.integer "plays_count"
+    t.integer "plays_count", default: 0, null: false
     t.boolean "public_access", default: false, null: false
     t.string "slug"
-    t.integer "tracks_count"
+    t.integer "tracks_count", default: 0, null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["city_id", "slug"], name: "index_playlist_playlists_on_city_and_slug", unique: true
@@ -1500,8 +1499,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_13_130000) do
     t.datetime "created_at", null: false
     t.integer "menu_item_id", null: false
     t.integer "order_id", null: false
-    t.integer "quantity"
-    t.integer "unit_price_cents"
+    t.integer "quantity", default: 1, null: false
+    t.integer "unit_price_cents", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id"
     t.index ["menu_item_id"], name: "index_takeaway_order_items_on_menu_item_id"
@@ -1519,7 +1518,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_13_130000) do
     t.integer "restaurant_id", null: false
     t.datetime "scheduled_for"
     t.text "special_instructions"
-    t.string "status"
+    t.string "status", default: "pending", null: false
     t.integer "subtotal_cents"
     t.integer "tip_cents", default: 0, null: false
     t.integer "total_cents"
@@ -1734,7 +1733,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_13_130000) do
     t.integer "tv_channel_id", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
-    t.integer "views_count"
+    t.integer "views_count", default: 0, null: false
     t.index ["duet_of_id"], name: "index_tv_videos_on_duet_of_id"
     t.index ["slug"], name: "index_tv_videos_on_slug", unique: true
     t.index ["sound_id"], name: "index_tv_videos_on_sound_id"
@@ -1761,6 +1760,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_13_130000) do
     t.integer "user_id", null: false
     t.index ["conversation_id", "user_id"], name: "index_typing_indicators_on_pair", unique: true
     t.index ["conversation_id"], name: "index_typing_indicators_on_conversation_id"
+    t.index ["expires_at"], name: "index_typing_indicators_on_expires_at"
     t.index ["user_id"], name: "index_typing_indicators_on_user_id"
   end
 

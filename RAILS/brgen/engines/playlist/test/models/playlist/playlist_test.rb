@@ -48,16 +48,12 @@ class Playlist::PlaylistTest < ActiveSupport::TestCase
     end
   end
 
-  # tracks_count starts nil, not 0: playlist_playlists declares tracks_count,
-  # likes_count and plays_count as nullable integers with no default. increment!
-  # copes — it does `self[attr] ||= 0` first — so this is a trap only for code
-  # that reads or orders by the column before the first write, and `popular`
-  # orders by plays_count. Asserted as it actually is rather than papered over,
-  # so a migration adding the defaults shows up here as a deliberate change.
-  test "tracks_count starts nil and reaches 1 on the first add" do
+  # The counters are NOT NULL DEFAULT 0, so `popular`, which orders by
+  # plays_count, never sorts a fresh playlist after every played one.
+  test "counters start at zero and tracks_count reaches 1 on the first add" do
     ActsAsTenant.with_tenant(@city) do
       list = Playlist::Playlist.create!(name: "Ny liste", user: @user)
-      assert_nil list.reload.tracks_count
+      assert_equal [ 0, 0, 0 ], list.reload.values_at(:tracks_count, :likes_count, :plays_count)
 
       list.add_track!(track("Only"), user: @user)
 
