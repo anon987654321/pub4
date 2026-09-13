@@ -654,3 +654,41 @@ inside the engines, which is worth knowing before assuming it is safe to change.
 - Anything that enumerates brgen's code must glob `brgen/engines/*/app/**`
   alongside `brgen/app/**`, or it is measuring roughly half the app and will
   report the difference as health.
+
+## Declined, with the reason (2026-09-13)
+
+Each of these was proposed as backlog work and measured against the tree. They
+are recorded so the next pass does not reopen them.
+
+**Static error pages stay static and bilingual.** `public/404.html`, `422.html`
+and `500.html` are served when Rails itself cannot render, so they cannot call
+I18n or read the city from `Brgen::DomainRegistry`. The Norwegian line with an
+English gloss marked `lang="en"` is the honest fallback for a page that cannot
+know its reader. A generator for fourteen files that change once a year adds
+machinery without removing a defect, and a skip link on a page with four links
+and no repeated navigation skips nothing. Links on those pages stay relative,
+so no city is sent to another city's host.
+
+**No conditional GET on brgen's show pages.** `fresh_when` works on bsdports'
+`ports#show` because that page is `public: true` and identical for everyone.
+A brgen post, event or listing carries the reader's vote state, a CSRF token and
+the flash, so an ETag keyed on the record would hand a signed-in reader the copy
+the browser cached while signed out.
+
+**The nav swiper is not `data-turbo-permanent`, and feed sort is not a frame.**
+The swiper marks the active vertical on every page; a permanent element keeps the
+mark from the page the reader came from. Turbo Drive already swaps the feed
+without a reload and morphs with scroll preserved, and Turbo 8 prefetches every
+link on hover unless told otherwise, so a frame would add a second navigation
+model for no fewer requests.
+
+**Web vitals are logged, not stored.** `WebVitalsController` writes one log line
+per beacon. On a 1 GB box a table of beacons is a write on every page view for a
+number the operator reads with a log query when a page is slow, and
+Server-Timing on every production response answers the same question per
+request.
+
+**Takeaway's and marketplace's nav bars stay two partials.** They share a top
+row and the SCSS, but marketplace carries a cart link and six sections against
+takeaway's four, so one partial would need injected blocks for both halves. Two
+fifty-line files are plainer than one partial with holes.
