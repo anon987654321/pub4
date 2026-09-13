@@ -52,7 +52,7 @@ until File.exist?(STOP)
     end
     FileUtils.mv(txt, ARCHIVE, force: true) if File.file?(txt)
     old = Dir[File.join(ARCHIVE, "*.wav")].sort_by { |f| -File.mtime(f).to_i }[KEEP..]
-    Array(old).each { |f| FileUtils.rm_f(f); FileUtils.rm_f(f.sub(/\.wav\z/, ".txt")) }
+    Array(old).each { |f| FileUtils.rm_f(f); FileUtils.rm_f(f.sub(/\.wav\z/, ".txt")) } # scan: intentional — retention: the player's own archive past KEEP
     next
   end
 
