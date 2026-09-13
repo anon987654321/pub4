@@ -12,11 +12,14 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
 export PATH
 
 /usr/local/bin/ruby34 /usr/local/bin/nsd-resign
+# Two different questions. config-drift-check: do relayd routes, acme SANs and
+# nsd zones agree with each other on this box? config_drift_gate.rb: does every
+# tracked /etc and /usr/local/bin file match its repo mirror byte for byte?
 /usr/local/bin/config-drift-check || logger -t daily.local "config-drift-check failed"
 # Installed copy only. Root must not execute the writable checkout.
 if [ -x /usr/local/bin/config_drift_gate.rb ]; then
-  /usr/local/bin/ruby34 /usr/local/bin/config_drift_gate.rb >/tmp/config-drift.out 2>&1 || \
-    logger -t daily.local "repo/live config drift — see /tmp/config-drift.out"
+  /usr/local/bin/ruby34 /usr/local/bin/config_drift_gate.rb >/var/log/config-drift.out 2>&1 || \
+    logger -t daily.local "repo/live config drift — see /var/log/config-drift.out"
 fi
 # su without -l, and its failure is now audible. `su -l` runs dev's login profile,
 # which boots MASTER's sqlite store and prints "disk I/O error" and "Must be
@@ -43,10 +46,10 @@ su dev -c 'cd /home/dev/pub4 && zsh OPENBSD/backup_priv.sh' ||
 # the one run that did happen left no line about brgen at all.
 
 if command -v drill >/dev/null 2>&1; then
-  drill @127.0.0.1 brgen.no SOA >/tmp/nsd-check.out 2>&1 || \
+  drill @127.0.0.1 brgen.no SOA >/var/log/nsd-check.out 2>&1 || \
     logger -t daily.local "NSD smoke check failed for brgen.no"
 elif command -v dig >/dev/null 2>&1; then
-  dig @127.0.0.1 brgen.no SOA +short >/tmp/nsd-check.out 2>&1 || \
+  dig @127.0.0.1 brgen.no SOA +short >/var/log/nsd-check.out 2>&1 || \
     logger -t daily.local "NSD smoke check failed for brgen.no"
 else
   logger -t daily.local "NSD smoke check skipped — no drill or dig"

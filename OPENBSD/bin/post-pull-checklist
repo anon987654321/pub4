@@ -7,6 +7,7 @@ ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)"
 cat <<EOF
 post-pull: source updated at ${ROOT}
 post-pull: deployed /home/<app>/app trees are NOT updated by git pull alone.
+post-pull: never git stash to force a pull through; a stashed Gemfile.lock took master down.
 
 Next (serial — one app at a time):
   1. ruby34 OPENBSD/bin/vps-state

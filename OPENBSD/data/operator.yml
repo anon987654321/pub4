@@ -12,7 +12,8 @@ stack:
     The supervisor is its own process, started by the per-app rc.d/<app>_jobs service
     (rake solid_queue:start). brgen_jobs is enabled on vm23 (2026-08-25, e511ccba1);
     amber_jobs and bsdports_jobs are not — vm23 is 1 GB, so enabling each is an
-    operator decision; read the footer of OPENBSD/etc/rc.d/<app>_jobs.
+    operator decision; read the footer of OPENBSD/etc/rc.d/<app>_jobs. Whatever is enabled
+    must also be in pkg_scripts in OPENBSD/etc/rc.conf.local, which is what boot reads.
     SOLID_QUEUE_IN_PUMA is a Puma-plugin variable needing config/puma.rb, which no app
     has, so under Falcon it starts nothing; RAILS/gates/lib/production.rb fails the
     deploy gate if an rc.d sets it.
@@ -51,13 +52,16 @@ recipes:
     expect: run on vm23, or with SSH and operator intent — never casually
   - want: Everything local, then integrity
     run: OPENBSD/bin/check-full
-    expect: the local checks chained ahead of the integrity gate
+    expect: OPENBSD/bin/check, then RAILS/test/run_all.rb, then the integrity gate
   - want: Deployed tree vs dev tree on vm23
     run: OPENBSD/bin/vps-state
     expect: per-app SHA, what a deploy would move
   - want: The repo shape, pruned
     run: zsh OPENBSD/tree.sh . --pub4-overview
     expect: Rails apps collapsed, MASTER/lib subsystems, no vendor or node_modules
+  - want: Refresh the domain expiry snapshot
+    run: ruby OPENBSD/bin/domain_watch.rb --update
+    expect: data/domain_inventory.yml rewritten from whois; commit the diff
   - want: After git pull on vm23
     run: OPENBSD/bin/post-pull-checklist && MASTER/bin/operator vps state
     expect: drift visible; follow deploy list

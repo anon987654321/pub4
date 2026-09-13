@@ -4,9 +4,8 @@
 # inside the 30-day window, fails that test — so the only ways to green it are
 # renewing the domain or writing down that you chose to let it go.
 #
-# Empty on purpose as of 2026-08-07: every expired domain below is still wanted.
-# The five currently failing are brmingham.uk, glasgw.uk, lverpool.uk,
-# mnchester.uk (Nominet grace, deletion around 22-23 September) and dnver.us.
+# Empty on purpose: every expired domain the test names is still wanted, and
+# renewing one is a registrar login, not a code change.
 # Add a domain here only when the answer is "we are letting this one go", never
 # to quiet the alarm.
 #

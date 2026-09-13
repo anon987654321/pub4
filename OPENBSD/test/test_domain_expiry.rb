@@ -54,8 +54,10 @@ class TestDomainExpiry < Minitest::Test
     end
 
     assert_empty expired,
-                 "domains past their expiry date. Renew at the registrar, then refresh the " \
-                 "snapshot with OPENBSD/bin/domain_watch.rb --update:\n  #{expired.join("\n  ")}"
+                 "domains past their expiry date. Renew at the registrar and refresh the " \
+                 "snapshot with OPENBSD/bin/domain_watch.rb --update, or record the decision to " \
+                 "let one go in OPENBSD/data/domain_released.yml. Editing this test is neither:" \
+                 "\n  #{expired.join("\n  ")}"
   end
 
   def test_no_domain_expires_within_the_warning_window
@@ -67,7 +69,8 @@ class TestDomainExpiry < Minitest::Test
     end
 
     assert_empty soon,
-                 "domains expiring within #{WARN_DAYS} days:\n  #{soon.join("\n  ")}"
+                 "domains expiring within #{WARN_DAYS} days (renew, or record the decision in " \
+                 "OPENBSD/data/domain_released.yml):\n  #{soon.join("\n  ")}"
   end
 
   # A snapshot that silently empties would make both assertions above pass.
