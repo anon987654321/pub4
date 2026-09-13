@@ -241,6 +241,34 @@ the lock is poisoned on every boot, even when the resolution is unchanged.
 file loads.** `Rules::AstOmissionRule` raises NameError cold. `require
 "review/scan/rule_dsl"` is the load that defines them.
 
+**A council pass looks exactly like a hang.** On a dev Mac the provider is the
+`claude` CLI, which buffers when stdout is not a TTY, so `/review master` sits
+at 0% CPU with an empty pipe for up to sixteen minutes while personas think.
+Count the `claude --print` subprocesses in `ps` before killing it.
+
+**A gate that passes bare and fails under `bin/check` is an environment leak.**
+`bin/check` runs rake under `bundle exec`, and a child that inherits MASTER's
+bundle cannot load STUDIO's gems. Wrap the child in
+`Bundler.with_unbundled_env`; a hand-kept list of bundler variables is wrong on
+every release that adds one.
+
+**`\b` beside punctuation matches less than it reads.** A trailing `\b` after
+`?` needs a word character next to it, so `/\bis_a\?\b/` misses `is_a?(Foo)`. It has
+disabled a rule clause and hidden callers from a dead-file census.
+
+**A bare top-level `ROOT` is safe only in its own process.** Two files that
+each define one, loaded together, warn once and let the second win, and the
+loser reads the wrong tree without complaint. Name it for the script
+(`SWEEP_ROOT`, `INVENTORY_ROOT`) the day a script becomes requirable.
+`rake lint:constant_collisions` follows `require_relative` only.
+
+**The three rule-id counts answer three questions.** The scanner's `@rules`
+(147) is what weights anything; a `Rule.registry` walk drops bridge classes; a
+regex over `law/` and the rules files (what `tools/rule_hygiene.rb` uses) counts
+more. An unreached-file sweep must include the repo-root `bin/` and filter by no
+extension — `test/test_entrypoint_requires.rb` holds the case that broke
+`bin/operator` for six days.
+
 ## Judging your own work
 
 The task as given is the deliverable, but it is not the whole job. Reason about

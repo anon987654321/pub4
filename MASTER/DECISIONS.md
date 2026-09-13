@@ -341,8 +341,9 @@ Do not "fix" the asymmetry by aligning the three defaults.
 
 ## Transcendent Is Not Wired To The Streaming Path (2026-08-17)
 
-The Transcendent engine chain is unreached — see `TODO.md`, the MASTER debt
-records, "Inert law and config". The obvious repair is to call it from
+The Transcendent engine chain is not on the streaming path — see "An Unread-Key
+Gate Is Not Buildable Here" below for the config it does read. The obvious repair
+is to call it from
 `synthesize_streaming_to_file`, and that is wrong as stated:
 `Transcendent.synthesize` returns a finished file, while the streaming path
 exists to hand `TtsJob` progressive chunks through `on_chunk` so audio starts
@@ -502,7 +503,16 @@ change how a take sounds and are the operator's.
 
 `rake selftest` runs `rules.yml.self_test` against MASTER itself. It is allowed
 to fail while known debt remains; the point is to make debt visible and
-triageable.
+triageable. Nothing gates on the `selftest` count; read it from the task, never
+from prose, because it has read 0 through 7 in one fortnight.
+
+`selfcheck` is different, and a note once had it backwards. `SelfCheck#gate!`
+runs from `builder/ai_boot.rb` and publishes `self_violation`, which the same
+file subscribes to `fix_loop.halt!` — so a red `selfcheck` halts background
+autofix for every session. Triage a new finding as a true violation, a false
+positive, an exemption, a threshold, or known debt. Never drive the count to
+zero by re-exempting the fold: it sits inside `lib/` so the law it applies
+measures it too.
 
 ## The Cross-File Prescan Is Advisory, And Mostly Measures Itself
 
@@ -819,3 +829,132 @@ The documents are named by path in `AGENTS.md`, `START_HERE.md`,
 `PATH_OWNERSHIP.yml`, `data/doc_baselines.yml`, `lib/cognition/` and
 `test_doc_paths.rb`. Moving them buys a tidier listing and
 costs a sweep of every pointer, for no reader who cannot already find them.
+
+## lib/'s Small Files Stay Where They Sit (2026-09-13)
+
+`FILE_SPRAWL` names 23 files in `lib/`: 21 under 25 code lines and two lone
+files in their own directory. Read one by one, each is a single subject with a
+reader, and several must sit exactly where they are. `boot/hash_dig_compat.rb`
+is required by path from dilla, and merging it once silently changed what dilla
+renders. `io/bedrock_stub.rb` must define its constants before ruby_llm loads.
+Zeitwerk looks for `Master::SecurityError` at `security_error.rb` and nowhere
+else. `cli/propose/candidate_sources.rb` and `review/repo_ecology/co_change_graph.rb`
+are mixins drawn out to keep their parents under `NO_GOD_CLASS`, and
+`data/spine.yml` records why.
+
+A merge is not free. `lib/` sits under `push_dir(lib, namespace: Master)`, so
+every merge moves a constant, and `body_lines` excuses a module holding exactly
+one class, so a merged file's scaffold starts counting against
+`spine.lib_body_ceiling`. Merge one only when a reader asks for it, with the
+constant rename in the same commit. The near-limit directories —
+`ground/policy`, `voice/renderer`, `cli/routing/model_router` — would each land
+over 300 lines, and the last two `include` their children above where merged
+bodies would sit, so a naive fold passes `ruby -c` and raises `NameError`.
+Derive a merged scaffold from the path, never from a file's leading `module`
+lines, and prove it by loading the constants. `lib/io` and `lib/ground` are not
+namespace directories; merging there is a rename campaign with no subject.
+
+Declined on the same reading: `gate_chain`'s helpers stay public because
+`test_gate_chain` drives five of them; a constant with one use far below its
+declaration stays when a sibling file reads it or it shares a paragraph with its
+neighbours; the rules files are registries, and splitting one moves lines rather
+than removing them; `sprawl.vague_names` (`boot/data.rb`, `io/base.rb`) and
+`repo_inventory`'s `low_density_slug` rows are names Zeitwerk or a design chose;
+absorbing single-reader files would fold five of them into `boot_phases.rb`,
+whose job is to read everything. No method in `lib/` exceeds 20 code lines.
+
+`voice/emotion.rb#analyze` carries the one `ABC_SIZE` finding left, at 74.7.
+Its size is five weighted sums, and moving the coefficients into a folded table
+reorders float addition in `exaggeration`, `cfg_weight` and `warmth` — the
+controls MASTER's speech is synthesised with. That is a change to how MASTER
+sounds, and it waits for somebody who can A/B the audio.
+
+## An Unread-Key Gate Is Not Buildable Here (2026-09-13)
+
+"Every data key has a reader" is the obvious gate, and it was measured before
+anyone built it. 607 of 1,173 second-level keys under `data/**/*.yml` have no
+literal mention in code, and 49 of 238 top-level sections — wrong more often
+than right. The tree reaches data four ways a grep cannot follow: interpolated
+filenames (`data/prompts/mode_#{mode}.yml`), directory globs, `DATA_ALIASES`,
+and section loaders such as `RuntimeCatalog.load(section)`. `loc_budgets` looked
+dead and is read by the Rakefile; `limits.yml` `guidance` is unread on purpose.
+
+`data_reach`'s remaining misattributions are four families and no defect:
+registry rows chosen by a config value (`personas.yml`, `providers.yml`,
+`prompts.yml`), `schema` and `meta` version keys, archive manifests, and keys
+that are paths rather than identifiers. A ceiling over them needs a written
+reason per row. So an unread key is found by hand, per file, and closed with a
+two-direction test — `test_limits_split.rb` is the shape.
+
+Trace the caller to the end before calling config inert. `data/tts.yml` once
+told its reader that nothing read it while `Playback.speak` →
+`Speech.synthesize` → `Transcendent.load_config` read every key, and a census
+of `Voice::`-prefixed references reported seven `lib/voice` files unreached
+that are reached from inside the directory, three by `include`.
+
+## Seven Ways A Check Certifies What It Did Not Measure (2026-09-13)
+
+Each converts the absence of a property into evidence of it, and each has
+happened here.
+
+1. **A comment outlives its rule.** A check that greps source must strip
+   comments first, with the pattern chosen by extension — a `/*` stripper run
+   over Ruby ate `"etc/rc.d/*"`. A `refute_includes` that reads comments teaches
+   the next author to delete the explanation.
+2. **An exemption outlives its subject.** Check each allow-list entry against
+   the tree, as `rake lint:autoload` does. `NO_PUTS` exempted
+   `gate_chain` at its old directory for months after it moved to `lib/operator/`.
+3. **A build artifact outlives its source.** When behaviour contradicts source,
+   diff what is served against the file it claims to be; Rack::Static serves
+   a stale `public/assets` ahead of propshaft.
+4. **A staleness alarm is silenced by regenerating.** Before running
+   `assets:precompile` to clear a drift message, ask what the drift is evidence
+   of — it once copied broken JavaScript over the good bundle.
+5. **A test punishes the improvement it watches for.** Assert the invariant
+   (`refute_empty findings`), never the instance (`ratio < threshold`); a
+   failure message that describes something good happening points the wrong way.
+6. **A writer reports an edit it did not make.** Read back what was written.
+   In YAML the indentation is the syntax, and a census that cannot parse a file
+   reports it clean.
+7. **A root constant resolves one level too high.** A fallback that ends in
+   "use the last candidate anyway" is not a fallback; assert what the root
+   holds, as `test_root_resolves_to_the_rails_tree` does.
+
+What follows. A new gate's first run is against a known-bad input, because a
+green first run is equally consistent with nothing measured. Registration is not
+execution: a gate listed in `gates.yml` with no class-level `.run` never ran. A
+gate reads the source of truth rather than restating it. And a test that turns
+green while asserting only what every subclass inherits is worse than one that
+errors, because it reads as coverage.
+
+`AstFixer`'s transforms earn a test each for the same reason. `WriteGuard`
+refuses a candidate that introduces a finding, but a template-literal rewrite
+that indexes the wrong string introduces none and passes `node --check`.
+
+## Media Generation Stays Severed
+
+Generation left MASTER in `76b11fec4` and the severance was confirmed permanent
+the next day. If the LoRA loop needs generation again, express it as
+`lib/core/world.rb` handlers; do not restore the deleted LoRA pipeline and
+video chain from history. STUDIO's repligen and lora keep the capability.
+
+## The Execution Roadmap Was Already Built (2026-09-13)
+
+An external roadmap of about ninety items proposed intent → plan → change →
+test → review as MASTER's model. Every claim was checked, and these exist:
+rule applicability (`Rule#applies?`, `languages` in `law/law.rb`), rule
+provenance enforced at `Law.define`, render-before-claim
+(`GateResult#measured_nothing?`), a risk classifier (`cli/fold_risk.rb`), an
+evidence ledger (`trace/ledger.rb`), no false completion (`anti_simulation`),
+provider failover and quota parking (`ModelRouter`, `io/quota_gate`), a
+deterministic boot receipt with offline as a capability
+(`Ground::BootReceipt`), a web-vitals budget, the swarm stage in
+`cli/pipeline/pass.rb`, and the local model tier.
+
+Its one open claim, that intent has several doors, is false today. Every
+surface — the CLI session, the web chat, the gateway and standing orders —
+calls `TurnRouter.call`, and `Stages::Intake` runs only inside it. The branches
+in `call` are an ordered table of one door. What the roadmap underrates is that
+MASTER's gap is discoverability and detector reach, not features: an acceptance
+suite that proves the detectors right is worth more than one that proves the
+features exist.

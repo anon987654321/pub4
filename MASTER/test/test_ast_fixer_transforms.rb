@@ -162,7 +162,7 @@ class TestAstFixerTransforms < Minitest::Test
   # `drain queue on 'online' + SW 'sync'` is a concat chain as far as
   # CONCAT_CHAIN can tell, and converting it rewrote documentation into a
   # template literal in web/public/offline_memory.js on 2026-08-18 — the
-  # comment-reading defect Scanner Conventions #1 records, on the writer
+  # comment-reading defect DECISIONS.md's seven ways record first, on the writer
   # side. A comment cannot need a code fix.
   def test_lexical_js_transforms_leave_comments_alone
     result = fix("queue.js", <<~JS)

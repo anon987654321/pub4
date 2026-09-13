@@ -93,7 +93,8 @@ code read.
 
 **Manual tap test:**
 1. Start the web app on a local port.
-2. Open the chat page in a real browser.
+2. Open the chat page in a real browser — and on an iOS Safari device when boot
+   assets change materially, because nothing in CI drives a real touch event.
 3. Before tapping, confirm the primer is responsive and the prompt is hidden.
 4. Tap or press Enter.
 5. Confirm the primer dismisses, prompt appears, and the face either starts or fails visibly.
@@ -129,6 +130,23 @@ TTS requests should omit `style` unless the user explicitly locks one through
 the UI or `/voice ... <style>`. Server TTS failures may temporarily use browser
 speech, but the cooldown must expire so the Edge/server voice can recover
 without a page reload.
+
+Web wiring can be correct while synthesis is unavailable, because audio depends
+on host binaries. `GET /health` `deploy.tts_socket` is a capability check, not
+proof the box writes an MP3. There is no `edge-tts` executable to look for:
+MASTER runs `bin/tts-worker` under its own bundle, and the gem is spelled
+`rb-edge-tts` in the Gemfile and `rb_edge_tts` in the require, so a grep for one
+misses the other. The ground truth is `echo hi | ruby bin/tts-worker
+en-GB-RyanNeural +0% +0Hz /tmp/x.mp3`. Any post-synthesis step that falls back
+when ffmpeg is missing calls `report_missing_ffmpeg` in `lib/voice/engines.rb`
+rather than
+returning quietly.
+
+The face's `mood` listener (the tint through `fadeColorTo`) and
+`chat_service.rb`'s `agent:mood` subscription have no producer: nothing
+publishes `agent:mood`. `felt:sense` is not one — it echoes the browser's own
+posted state. Wiring a producer makes the face change colour on its own, which
+is the operator's call.
 
 ## RESOLVED 2026-07-11: the real "dead tap" root cause was a MutationObserver loop
 

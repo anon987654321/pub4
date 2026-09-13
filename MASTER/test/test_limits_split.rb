@@ -2,7 +2,7 @@
 
 require_relative "test_helper"
 
-# TODO.md, Inert law and config: "Roughly 28 of data/limits.yml's 39 top-level keys
+# The finding this closed: "Roughly 28 of data/limits.yml's 39 top-level keys
 # have no reader, and the generic accessor workflow_rule(key) has zero call sites —
 # ~70% of 794 lines of Tier-1 'law' is decoration."
 #

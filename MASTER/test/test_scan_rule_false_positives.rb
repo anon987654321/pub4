@@ -432,7 +432,7 @@ end
     relative = "lib/operator/gate_chain.rb"
     source = File.read(File.join(Master::ROOT, relative))
 
-    assert_match(/^\s*puts\b/, source, "gate_chain no longer prints; the exemption has no subject")
+    refute_empty findings(:NO_PUTS, source, path: "lib/operator/elsewhere.rb"), "gate_chain no longer prints"
     assert_empty findings(:NO_PUTS, source, path: relative)
   end
 

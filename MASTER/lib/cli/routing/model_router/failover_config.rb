@@ -23,8 +23,8 @@ module Master
 
           # Categories that stop retrying a model and move on. nil when unconfigured,
           # so the caller supplies its own default rather than this file naming a
-          # constant from lib/review and depending on its load order. See TODO.md,
-          # Inert law and config, for why fallback_policy had no reader.
+          # constant from lib/review and depending on its load order. An unread key is
+          # found by hand and held by a test; MASTER/DECISIONS.md says why.
           def failover_skip_categories
             configured = Array(@rules.dig("fallback_policy", "on"))
                          .map { |name| name.to_s.strip }
