@@ -377,28 +377,15 @@ module DillaTaste
     private
 
     def ffmpeg(path, filter)
-      IO.popen(["ffmpeg", "-hide_banner", "-nostats", "-i", path.to_s, "-af", filter, "-f", "null", "-"],
-               err: %i[child out], &:read).to_s
-    rescue StandardError
+      FfmpegProbe.run(path, filter)
+    rescue FfmpegProbe::Error
       ""
     end
 
+    # The summary, never a running frame: see FfmpegProbe.ebur128_summary.
     def loudness(path)
-      # ebur128 and astats print their summaries at INFO level; -v error drops
-      # them silently and leaves you measuring nothing, which has happened here.
-      out = ffmpeg(path, "ebur128=peak=true")
-      # LAST match, not first. ebur128 prints a running `I:` and `LRA:` for every
-      # frame and then the summary at the end, so the first match is an early
-      # frame -- which for a fade-in is -70 LUFS on everything. Two piles 14 dB
-      # apart in level both read -70.0 and the tool reported no separation in
-      # loudness, on the one dimension it had been handed a guaranteed
-      # difference. Checked against a known case before being believed, which is
-      # the only reason it was caught.
-      {
-        "integrated loudness" => out.scan(/I:\s*(-?[\d.]+)\s*LUFS/).flatten.last&.to_f,
-        "loudness range (LRA)" => out.scan(/LRA:\s*(-?[\d.]+)\s*LU/).flatten.last&.to_f,
-        "true peak" => out.scan(/Peak:\s*(-?[\d.]+)\s*dBFS/).flatten.map(&:to_f).max,
-      }
+      reading = FfmpegProbe.ebur128_summary(ffmpeg(path, "ebur128=peak=true"))
+      { "integrated loudness" => reading[:i], "loudness range (LRA)" => reading[:lra], "true peak" => reading[:tp] }
     end
 
     def bands(path)
@@ -447,6 +434,7 @@ module DillaTaste
   end
 end
 
+require "json"
 require "open3"
 
 # One way to ask ffmpeg for a measurement, for the scoring modules.
@@ -466,22 +454,58 @@ module FfmpegProbe
   # ffmpeg's log for `-af filter` run over path into the null muxer. Argument
   # vector, not a shell string; raises on a non-zero exit or the timeout.
   def run(path, filter, timeout: TIMEOUT)
-    argv = ["ffmpeg", "-nostdin", "-v", "info", "-i", path.to_s, "-af", filter, "-f", "null", "-"]
+    execute(["ffmpeg", "-nostdin", "-v", "info", "-i", path.to_s, "-af", filter, "-f", "null", "-"], path, timeout:)
+  end
+
+  # Seconds of audio in path, from ffprobe. A file ffprobe cannot read raises
+  # rather than lasting zero seconds.
+  def duration(path, timeout: TIMEOUT)
+    out = execute(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=nw=1:nk=1", path.to_s],
+                  path, timeout:)
+    number(out, /\A\s*([\d.]+)/, what: "duration")
+  end
+
+  # ebur128's summary block. The filter also prints a running I, LRA and peak
+  # for every frame unless framelog=quiet is set, and the first of those is the
+  # opening instant of the file -- -70 LUFS on anything that fades in. Anchored
+  # to the summary headings, the reading is the summary whatever the filter's
+  # options were. Values absent from the log are nil.
+  def ebur128_summary(log)
+    { i: log[/Integrated loudness:\s*\n\s*I:\s*(-?[\d.]+)/m, 1]&.to_f,
+      lra: log[/Loudness range:\s*\n\s*LRA:\s*(-?[\d.]+)/m, 1]&.to_f,
+      tp: log[/True peak:\s*\n\s*Peak:\s*(-?[\d.]+)/m, 1]&.to_f }
+  end
+
+  # loudnorm's print_format=json measurement, as a hash with string keys, or
+  # an empty hash when the log holds none.
+  def loudnorm_json(log)
+    json = log[/\{\s*"input_i".*?\}/m]
+    json ? JSON.parse(json) : {}
+  rescue JSON::ParserError
+    {}
+  end
+
+  # volumedetect's mean and max in dB; nil for one the log does not hold.
+  def volumedetect(log)
+    { mean: log[/mean_volume:\s*(-?[\d.]+)/, 1]&.to_f, max: log[/max_volume:\s*(-?[\d.]+)/, 1]&.to_f }
+  end
+
+  def execute(argv, path, timeout:)
     Open3.popen2e(*argv) do |stdin, out, wait|
       stdin.close
       reader = Thread.new { out.read }
       unless wait.join(timeout)
         Process.kill("KILL", wait.pid)
         wait.join
-        raise Error, "ffmpeg timed out after #{timeout}s on #{path}"
+        raise Error, "#{argv.first} timed out after #{timeout}s on #{path}"
       end
       log = reader.value.to_s
-      raise Error, "ffmpeg exited #{wait.value.exitstatus} on #{path}: #{log.lines.last(2).join.strip}" unless wait.value.success?
+      raise Error, "#{argv.first} exited #{wait.value.exitstatus} on #{path}: #{log.lines.last(2).join.strip}" unless wait.value.success?
 
       log
     end
   rescue Errno::ENOENT
-    raise Error, "ffmpeg is not installed or not on PATH"
+    raise Error, "#{argv.first} is not installed or not on PATH"
   end
 
   # The float the pattern's first group captures, or Error when it is absent.

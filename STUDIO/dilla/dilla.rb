@@ -8134,8 +8134,7 @@ def normalise_master!(path, cfg)
     return path
   end
 
-  json = (out + err)[/\{\s*"input_i".*?\}/m]
-  measured = json ? (JSON.parse(json)["input_i"].to_f rescue nil) : nil
+  measured = FfmpegProbe.loudnorm_json(out + err)["input_i"]&.to_f
   if measured.nil? || measured <= -70.0
     warn "master normalise: no usable reading#{measured ? " (#{measured} LUFS)" : ''} — leaving level as rendered"
     return path
@@ -13320,8 +13319,7 @@ def dilla_quality(path, baseline_path = nil)
     "ffmpeg", "-hide_banner", "-i", path, "-af", "loudnorm=I=-14:TP=-1:LRA=11:print_format=json", "-f", "null", "-"
   )
   abort loud_err unless loud_status.success?
-  json_text = (loud_out + loud_err)[/\{\s*"input_i".*?\}/m]
-  loudness = json_text ? JSON.parse(json_text) : {}
+  loudness = FfmpegProbe.loudnorm_json(loud_out + loud_err)
   spectrum = render_spectrum(path)
   mono = band_rms(path, highpass: 28, lowpass: 16_000)
   phase = DillaMaster.min_phase_correlation(path)
@@ -14273,24 +14271,20 @@ AB_BANDS = [[30, 120], [120, 300], [300, 800], [800, 2000], [2000, 5000], [5000,
 def ab_bands(rendered)
   rendered.transform_values do |path|
     AB_BANDS.map do |lo, hi|
-      o = IO.popen(["ffmpeg", "-hide_banner", "-i", path, "-af",
-                    "highpass=f=#{lo},highpass=f=#{lo},lowpass=f=#{hi},lowpass=f=#{hi},volumedetect",
-                    "-f", "null", "-"], err: %i[child out], &:read)
-      o[/mean_volume: (-?[\d.]+)/, 1].to_f
+      log = FfmpegProbe.run(path, "highpass=f=#{lo},highpass=f=#{lo},lowpass=f=#{hi},lowpass=f=#{hi},volumedetect")
+      FfmpegProbe.number(log, /mean_volume:\s*(-?[\d.]+)/, what: "band level")
     end
   end
 end
 
+# A render that cannot be measured raises: an A/B that scored a failed
+# measurement as 0.0 dB would report a difference that is not there.
 def ab_measure(path)
-  o = IO.popen(["ffmpeg", "-hide_banner", "-i", path, "-af", "volumedetect", "-f", "null", "-"],
-               err: %i[child out], &:read)
-  e = IO.popen(["ffmpeg", "-hide_banner", "-i", path, "-af", "ebur128=peak=true", "-f", "null", "-"],
-               err: %i[child out], &:read)
-  peak = o[/max_volume: (-?[\d.]+)/, 1].to_f
-  rms = o[/mean_volume: (-?[\d.]+)/, 1].to_f
-  { peak:, rms:, crest: (peak - rms).round(2),
-    lufs: e.scan(/I:\s*(-?[\d.]+) LUFS/).flatten.last.to_f,
-    lra: e.scan(/LRA:\s*(-?[\d.]+) LU/).flatten.last.to_f }
+  level = FfmpegProbe.volumedetect(FfmpegProbe.run(path, "volumedetect"))
+  loud = FfmpegProbe.ebur128_summary(FfmpegProbe.run(path, "ebur128=peak=true"))
+  raise FfmpegProbe::Error, "no level or loudness reading for #{path}" if [level[:max], level[:mean], loud[:i], loud[:lra]].any?(&:nil?)
+
+  { peak: level[:max], rms: level[:mean], crest: (level[:max] - level[:mean]).round(2), lufs: loud[:i], lra: loud[:lra] }
 end
 
 # --------------------------------------------------------------------------
@@ -14986,9 +14980,7 @@ module Arrangement
     end
   end
 
-  def duration_of(path)
-    `ffprobe -v error -show_entries format=duration -of csv=p=0 "#{path}"`.to_f
-  end
+  def duration_of(path) = FfmpegProbe.duration(path)
 
   def cosine(a, b)
     sum = 0.0
@@ -19668,8 +19660,13 @@ def demo_suspect_parts(parts)
     raw = out[/RMS level dB:\s*(-?(?:[\d.]+|inf))/, 1]
     next if raw.nil?
     rms = raw == "-inf" ? -120.0 : raw.to_f
-    dur = Open3.capture2e("ffprobe", "-v", "error", "-show_entries", "format=duration",
-                          "-of", "default=nw=1:nk=1", p).first.to_f
+    # A part ffprobe cannot read lasts zero seconds here, which names it short
+    # in the report below -- the report is where an unreadable part belongs.
+    dur = begin
+      FfmpegProbe.duration(p)
+    rescue FfmpegProbe::Error
+      0.0
+    end
     { path: p, rms: rms, dur: dur }
   end
   return [] if measured.length < 3
@@ -19701,10 +19698,10 @@ def demo_part_dead?(path)
   # of rendering: keep it and let demo_report_suspect_parts name it instead.
   return false unless status.success?
 
-  peak = out[/max_volume:\s*(-?\d+(?:\.\d+)?)\s*dB/, 1]
+  peak = FfmpegProbe.volumedetect(out)[:max]
   return false if peak.nil?
 
-  peak.to_f <= DEAD_PART_PEAK_DBFS
+  peak <= DEAD_PART_PEAK_DBFS
 end
 
 def demo_reject_dead_parts(parts)
@@ -20668,13 +20665,12 @@ render_dilla(part, bars_count)
          (ENV.fetch("DEMO_ALBUM_NORM", "0") == "1" ? ", then album loudnorm" : "")
   )
   FileUtils.rm_f("#{tmp}#{DillaProvenance::MANIFEST_EXT}")
-  dur = 0.0
-  begin
-    out, = Open3.capture3("ffprobe", "-v", "error", "-show_entries", "format=duration",
-                          "-of", "default=noprint_wrappers=1:nokey=1", dest)
-    dur = out.to_s.strip.to_f
-  rescue StandardError
-    nil
+  # The length only labels the summary line; an unreadable demo is caught by
+  # the encode below, not by this.
+  dur = begin
+    FfmpegProbe.duration(dest)
+  rescue FfmpegProbe::Error
+    0.0
   end
   mp3 = demo_encode_mp3(dest)
   # The mp3 gets its own sidecar, not just the wav.
@@ -34581,17 +34577,15 @@ ALBUM_ENCODER_HEADROOM = 0.6
 def album_side_target = ENV.fetch("SIDE_TARGET", "-7.0")
 def album_target_lufs = ENV.fetch("TARGET_LUFS", "-19.0").to_f
 
+# Argument vectors, and a failed measurement raises: these ran through the
+# shell with the path inside quotes, so a quote in a title became a command,
+# and a file ffmpeg could not open measured 0.0 dB and 0.0 LUFS.
 def album_channel_db(path, pan)
-  `ffmpeg -hide_banner -nostats -i "#{path}" -af "pan=mono|c0=#{pan},volumedetect" -f null - 2>&1`
-    [/mean_volume:\s*(-?[\d.]+)/, 1].to_f
+  FfmpegProbe.number(FfmpegProbe.run(path, "pan=mono|c0=#{pan},volumedetect"), /mean_volume:\s*(-?[\d.]+)/,
+                     what: "channel level")
 end
 
-def album_loudness(path)
-  out = `ffmpeg -hide_banner -nostats -i "#{path}" -af ebur128=peak=true -f null - 2>&1`
-  { i: out[/Integrated loudness:\s*\n\s*I:\s*(-?[\d.]+)/m, 1].to_f,
-    lra: out[/Loudness range:\s*\n\s*LRA:\s*(-?[\d.]+)/m, 1].to_f,
-    tp: out[/True peak:\s*\n\s*Peak:\s*(-?[\d.]+)/m, 1].to_f }
-end
+def album_loudness(path) = FfmpegProbe.ebur128_summary(FfmpegProbe.run(path, "ebur128=peak=true"))
 
 def album_side_over_mid(path)
   (album_channel_db(path, "0.5*c0-0.5*c1") - album_channel_db(path, "0.5*c0+0.5*c1")).round(1)
@@ -34707,7 +34701,7 @@ def album_master(dest)
   album_stitch(album_trim_to_target(stems), dest)
 
   measured = album_loudness(dest)
-  duration = `ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "#{dest}"`.to_f
+  duration = FfmpegProbe.duration(dest)
   puts
   puts "album: #{stems.size} tracks, #{(duration / 60).round(2)} min, #{ALBUM_XFADE}s crossfades"
   puts "  I=#{measured[:i]} LUFS  LRA=#{measured[:lra]}  peak=#{measured[:tp]} dBTP  " \
