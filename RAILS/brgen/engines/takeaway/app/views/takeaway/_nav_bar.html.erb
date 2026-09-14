@@ -1,48 +1,15 @@
-<%# Takeaway header — the same structure as the marketplace one, per the
-    operator: the two storefronts should read as siblings. Reuses #navBar /
-    #topHalf / #bottomHalf and .nav-block from _marketplace_nav_bar.scss, so the
-    geometry cannot drift between the two verticals. Flattened with it on
-    2026-08-10: one line per entry, no stacked label/value blocks. %>
+<%# The storefront header is shared/storefront_nav_bar; this partial supplies
+    takeaway's search and sections. %>
 <% active = local_assigns.fetch(:active, "restaurants") %>
-<% search_url = local_assigns.fetch(:search_url, restaurants_path) %>
-<% search_placeholder = local_assigns.fetch(:search_placeholder, t("search.restaurants")) %>
-<% deliver_to = local_assigns.fetch(:deliver_to, Current.city_record&.name.presence || Current.city_name) %>
 
-<div id="navBar">
-  <div id="topHalf">
-    <%# No second wordmark, for the reason marketplace states: the fixed
-        .brgen-logo-mark already names the host on every surface and the shared
-        nav carries "Takeaway" as the way back here, so a "takeaway.no" logotype
-        put two wordmarks on one page. The sections row keeps its own entry to
-        the restaurants index. %>
-    <%= link_to main_app.nearby_path, class: "nav-block nav-deliver nav-hover",
-                aria: { label: "#{t("storefront.deliver_to")} #{deliver_to}" } do %>
-      <%= icon :nearby, size: 13 %> <%= deliver_to %>
-    <% end %>
-
-    <div class="search marketplace-nav-search" data-controller="search-focus">
-      <%= form_with url: search_url, method: :get, local: true do %>
-        <input type="search" name="q" value="<%= params[:q] %>" class="nav-search-input"
-               placeholder="<%= search_placeholder %>" aria-label="<%= t("search.restaurants_label") %>"
-               data-action="focus->search-focus#focus blur->search-focus#blur" />
-        <button type="submit" class="nav-search-submit" aria-label="<%= t("search.submit") %>"><%= icon :search, size: 20 %></button>
-      <% end %>
-    </div>
-
-    <div id="accountStuff">
-      <%= link_to(authenticated? ? main_app.user_path(Current.user) : main_app.new_session_path,
-                  class: "nav-block nav-hover") do %>
-        <%= authenticated? ? (Current.user.username.presence || t("storefront.account")) : t("storefront.sign_in") %>
-      <% end %>
-    </div>
-  </div>
-
-  <div id="bottomHalf">
-    <div id="sections">
-      <%= link_to t("storefront.restaurants"), restaurants_path, class: "section nav-hover#{" section--active" if active == "restaurants"}" %>
-      <%= link_to t("storefront.your_orders"), orders_path, class: "section nav-hover#{" section--active" if active == "orders"}" %>
-      <%= link_to t("storefront.drivers"), delivery_drivers_path, class: "section nav-hover#{" section--active" if active == "drivers"}" %>
-      <%= link_to t("storefront.add_restaurant"), new_restaurant_path, class: "section nav-hover" if authenticated? %>
-    </div>
-  </div>
-</div>
+<%= render layout: "shared/storefront_nav_bar", locals: {
+      search_url: local_assigns.fetch(:search_url, restaurants_path),
+      search_placeholder: local_assigns.fetch(:search_placeholder, t("search.restaurants")),
+      search_label: t("search.restaurants_label"),
+      **local_assigns.slice(:deliver_to)
+    } do %>
+  <%= link_to t("storefront.restaurants"), restaurants_path, class: "section nav-hover#{" section--active" if active == "restaurants"}" %>
+  <%= link_to t("storefront.your_orders"), orders_path, class: "section nav-hover#{" section--active" if active == "orders"}" %>
+  <%= link_to t("storefront.drivers"), delivery_drivers_path, class: "section nav-hover#{" section--active" if active == "drivers"}" %>
+  <%= link_to t("storefront.add_restaurant"), new_restaurant_path, class: "section nav-hover" if authenticated? %>
+<% end %>

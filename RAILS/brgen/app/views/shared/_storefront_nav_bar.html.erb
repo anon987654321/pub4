@@ -1,0 +1,49 @@
+<%# The storefront header marketplace and takeaway share, so the two read as
+    siblings and their geometry cannot drift. Styles in _marketplace_nav_bar.scss.
+    Each vertical renders it as a layout and yields its own sections row, because
+    those links resolve against that engine's routes. A cart link appears when
+    the vertical passes one.
+
+    No second wordmark. The fixed .brgen-logo-mark already names the host on
+    every surface, and the shared nav carries the vertical's name as the way
+    back to its root, so a logotype here would put two wordmarks on one page. %>
+<% deliver_to = local_assigns.fetch(:deliver_to, Current.city_record&.name.presence || Current.city_name) %>
+<% cart = local_assigns[:cart] %>
+
+<div id="navBar">
+  <div id="topHalf">
+    <%= link_to main_app.nearby_path, class: "nav-block nav-deliver nav-hover",
+                aria: { label: "#{t("storefront.deliver_to")} #{deliver_to}" } do %>
+      <%= icon :nearby, size: 13 %> <%= deliver_to %>
+    <% end %>
+
+    <div class="search marketplace-nav-search" data-controller="search-focus">
+      <%= form_with url: search_url, method: :get, local: true do %>
+        <input type="search" name="q" value="<%= params[:q] %>" class="nav-search-input"
+               placeholder="<%= search_placeholder %>" aria-label="<%= search_label %>"
+               data-action="focus->search-focus#focus blur->search-focus#blur" />
+        <button type="submit" class="nav-search-submit" aria-label="<%= t("search.submit") %>"><%= icon :search, size: 20 %></button>
+      <% end %>
+    </div>
+
+    <div id="accountStuff">
+      <%= link_to(authenticated? ? main_app.user_path(Current.user) : main_app.new_session_path,
+                  class: "nav-block nav-hover") do %>
+        <%= authenticated? ? (Current.user.username.presence || t("storefront.account")) : t("storefront.sign_in") %>
+      <% end %>
+      <% if cart %>
+        <%= link_to cart[:path], id: "cartLink", aria: { label: t("storefront.cart") },
+                    class: "nav-block nav-cart nav-hover#{" nav-cart--active" if cart[:active]}" do %>
+          <%= icon :cart, size: 20, css_class: "nav-cart-icon" %>
+          <span class="nav-cart-count"><%= cart[:count].to_i %></span>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+
+  <div id="bottomHalf">
+    <div id="sections">
+      <%= yield %>
+    </div>
+  </div>
+</div>

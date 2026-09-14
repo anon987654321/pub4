@@ -15,7 +15,8 @@ module Deploy
     ENGINE = File.join(RAILS, "brgen/engines/marketplace")
     CARD = File.join(ENGINE, "app/views/marketplace/listings/_card.html.erb")
     CARDS_CSS = File.join(RAILS, "brgen/app/assets/stylesheets/_marketplace_cards.scss")
-    NAV = File.join(ENGINE, "app/views/marketplace/_nav_bar.html.erb")
+    # The #navBar markup is the storefront header marketplace shares with takeaway.
+    NAV = File.join(RAILS, "brgen/app/views/shared/_storefront_nav_bar.html.erb")
     SEARCH = File.join(RAILS, "shared/app/assets/stylesheets/_search_yep.scss")
 
     def self.run
