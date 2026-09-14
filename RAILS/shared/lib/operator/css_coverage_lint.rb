@@ -224,7 +224,12 @@ module Operator
 # What is left is still not a list of dead rules. The caveat at the top of this
 # file stands — a literal search cannot prove a runtime-composed name dead — and
 # the amber sheets that dominate the remainder belong to amber's own session.
-BASELINES = { "undefined_class" => 0, "unused_selector" => 134 }.freeze
+#
+# 134 -> 125: amber's session deleted nine of them, each searched for across
+# every view, script, helper and test in RAILS first — sustainability-meter and
+# -grade, look-rail and its eyebrow, pairing-rationale, item-photos, btn-joy,
+# display and wordmark.
+BASELINES = { "undefined_class" => 0, "unused_selector" => 125 }.freeze
 
     Finding = Struct.new(:kind, :name, :count, :example)
 
