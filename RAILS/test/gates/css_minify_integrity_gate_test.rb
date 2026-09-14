@@ -14,11 +14,11 @@ require_relative "../../gates/lib/source/css_minify_integrity"
 #
 # Two failures are planted. An entrypoint that does not compile ships no
 # stylesheet at all, and the gate has to say which app rather than crash the
-# run. The selector-loss half cannot be planted: it detects a dart-sass
-# compressed-output bug, and the compiler installed here no longer has it, so
-# nothing this test can write makes a selector disappear. What is provable about
-# that half is the normalisation the comparison rests on, which is where its
-# false positives came from.
+# run. The selector-loss half detects a dart-sass compressed-output bug the
+# installed compiler no longer has, so no SCSS makes a selector disappear; the
+# loss is planted in the compiler's output instead, which proves the comparison
+# and not the compiler. The normalisation it rests on is tested too, because
+# that is where its false positives came from.
 class CssMinifyIntegrityGateTest < Minitest::Test
   include GateFixture
 
@@ -71,6 +71,34 @@ class CssMinifyIntegrityGateTest < Minitest::Test
     result = check("#{selectors.join(",\n")} { width: 32px; }\n")
 
     assert result.ok?, result.failures.join(", ")
+  end
+
+  # The compiler cannot be made to lose a selector, but the comparison can be
+  # handed compressed output that has lost one. This is the shape seen live:
+  # the listing qualifier gone, leaving the bare avatar selector.
+  def test_a_selector_that_loses_its_qualifier_under_compression_fails
+    scss = ".feed-card.listing .feed-card-avatar, .post-card .avatar, .story .avatar { width: 32px; }\n"
+    real = Sass.method(:compile)
+    lossy = lambda do |entry, **options|
+      css = real.call(entry, **options).css
+      css = css.sub(".feed-card.listing .feed-card-avatar", ".feed-card-avatar") if options[:style] == :compressed
+      Struct.new(:css).new(css)
+    end
+
+    result = with_compile(lossy) { check(scss) }
+
+    refute result.ok?, "a selector that lost its qualifier passed"
+    assert_match(/lost selector\(s\) under compression/, result.failures.first)
+    assert_match(/missing after compression: \[".feed-card.listing .feed-card-avatar"\]/, result.failures.first)
+  end
+
+  def with_compile(impl)
+    Sass.singleton_class.send(:alias_method, :__real_compile, :compile)
+    Sass.define_singleton_method(:compile, &impl)
+    yield
+  ensure
+    Sass.singleton_class.send(:alias_method, :compile, :__real_compile)
+    Sass.singleton_class.send(:remove_method, :__real_compile)
   end
 
   def test_a_missing_entrypoint_is_inconclusive_rather_than_clean
