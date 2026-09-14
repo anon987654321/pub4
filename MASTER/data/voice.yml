@@ -3,27 +3,25 @@
 # Persona registries (personas.yml, soul.yml) affect LLM text/style only when persona_affects_text_only is true.
 # Engine chain / transcendent mode: data/tts.yml (not used by web TtsJob). VPS env: OPENBSD/etc/rc.d/master.
 tts:
-  # MASTER speaks English in an American woman's voice. Operator decision
-  # 2026-09-12, asked for as US English and female.
+  # MASTER speaks English in an American woman's voice, on the operator's ask.
   #
   # en-US-JennyNeural is an English (United States) neural voice, so the accent
   # is the locale's own rather than a second language reading English — which is
-  # why soul.yml keeps language.primary: english and moves only `dialect`, to
-  # american.
+  # why soul.yml keeps language.primary: english and sets `dialect` to american.
   #
-  # A name lives in more places than the value, and every earlier voice change
-  # left the tree disagreeing with itself by moving one of them. So this pass
-  # moves the registry with the value: policy.rb's fallbacks, personas.yml's
-  # header, agent_map.yml's note, soul.yml's voice, tts_voice and dialect, the
-  # idle signatures in expression.rb and face.part1.txt, the JS fallback in
-  # face_speech_runtime.js and face.runtime.js, and the assertions in
-  # test_yaml_registries.rb.
+  # These two keys are the decision and everything else reads or cites them:
+  # Policy::FALLBACK (kept in step by hand, for an unreadable file), the browser
+  # through Policy.browser_payload, and soul.yml's voice, tts_voice and dialect,
+  # because the constitution describes the speaker. A voice change moves every
+  # one of those together, and test_yaml_registries asserts the readers agree
+  # rather than naming the voice.
   single_voice: jenny
   neural: en-US-JennyNeural
-  # Two mouths, one script. Operator decision 2026-09-13.
+  # Two mouths, one script, on the operator's ask.
   #
-  # single_voice stays the contract and stays jenny: every reader still agrees
-  # with it, an absent or single-entry rotation changes nothing downstream, and
+  # single_voice stays the contract and stays jenny: every reader agrees with
+  # it, an absent or single-entry rotation changes nothing downstream, so
+  # deleting these lines reverts the rotation whole, and
   # the browser payload carries both so the face rotates with the server rather
   # than drifting from it.
   #
@@ -64,12 +62,10 @@ tts:
   # every utterance (Personality#browser_profile substitutes them for the
   # persona's own).
   #
-  # Neutral, because this voice has not been heard yet. Rate and pitch tuning
-  # does not survive a voice change: -4% was measured on Ezinne, -35Hz on Osman
-  # before her, and the -20Hz before that was picked for en-GB Ryan and then
-  # carried onto a Norwegian voice it had never been heard on. Roughly ±15% rate
-  # and ±50Hz is where Azure neural voices stay natural, so whoever reads the
-  # README aloud on Jenny has room to move these.
+  # Rate and pitch tuning does not survive a voice change, so a new voice starts
+  # from neutral and is retuned by ear. Roughly ±15% rate and ±50Hz is where
+  # Azure neural voices stay natural.
+  #
   # A little slower than edge-tts ships, and no more than that.
   #
   # Past about -30% the synthesiser stretches vowels without stretching the
@@ -80,8 +76,9 @@ tts:
   default_rate: "-18%"
   default_pitch: "+0Hz"
 
-  # What the voice is put through after synthesis. Operator decision 2026-09-13,
-  # chosen by ear on a live session.
+  # What the voice is put through after synthesis, chosen by the operator by ear.
+  # Policy.post_chain reads it, Speech#shaped applies it, and browser_payload
+  # carries it so the face shapes the same way the server does.
   #
   # Edge returns a bare neural voice at roughly broadcast level and no shaping
   # of its own, so everything below is post. The chain is dilla's, borrowed
@@ -105,7 +102,8 @@ tts:
   # The bed under the speech, so a pause is not silence.
   #
   # ~/.claude/hooks/bed.rb renders it and reads every number below; nothing in
-  # it keeps a copy. A key here with no reader in that file is a defect, and
+  # it keeps a copy. The bed borrows dilla's vocabulary and never its renderer,
+  # whose takes are irreplaceable. A key here with no reader in that file is a defect, and
   # MASTER/test/test_yaml_registries.rb pins the decisions that are easiest to
   # undo by accident.
   bed:

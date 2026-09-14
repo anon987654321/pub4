@@ -9,7 +9,8 @@ module Master
     module Policy
       # Keep in step with data/voice.yml: this hash is what a missing or
       # unreadable voice.yml falls back to, so a stale entry here reintroduces
-      # the exact voice/neural mismatch the file's comment describes.
+      # the exact voice/neural mismatch the file's comment describes. post_chain
+      # is nil so an unreadable voice.yml speaks dry rather than failing.
       FALLBACK = {
         "single_voice" => "jenny",
         "neural" => "en-US-JennyNeural",

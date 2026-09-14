@@ -357,6 +357,12 @@ module Master
         bytes
       end
 
+      # The web path, and Transcendent is not on it. Transcendent.synthesize returns a
+      # finished file, while this path hands TtsJob progressive chunks through on_chunk
+      # so audio starts before synthesis ends. Routing one through the other buffers the
+      # whole utterance first, so the choice is progressive playback or
+      # emotion/melody/multi-engine, not a missing call. Measure phrase fan-out (one
+      # Edge round trip per phrase, on one vCPU) before making it.
       def synthesize_streaming_to_file(text, output_path:, on_chunk: nil, **opts)
         @synthesis_mutexes[next_synthesis_slot].synchronize do
           synthesize_streaming_to_file_unlocked(text, output_path:, on_chunk:, **opts)

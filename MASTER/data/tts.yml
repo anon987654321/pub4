@@ -10,19 +10,11 @@
 #
 # The web half does not: health_controller, tts_controller and TtsJob all enter
 # through synthesize_streaming_to_file, which goes socket -> oneshot -> espeak and
-# never reaches Transcendent. MASTER/DECISIONS.md records why it is not simply
-# wired up. On OpenBSD, enabled alone forces transcendent mode and `engine_chain`
+# never reaches Transcendent; the comment on Speech.synthesize_streaming_to_file
+# says why it is not wired up. On OpenBSD, enabled alone forces transcendent mode and `engine_chain`
 # here is overridden by MASTER_TTS_ENGINE_CHAIN or Engines::OPENBSD_CHAIN, so the
-# chain below is the Mac's.
-#
-# The header this replaces said "NOTHING RUNNING READS THIS ... every key below,
-# the engine chain included, is inert", from a caller trace that stopped one frame
-# short of Playback. It was wrong in the direction that costs most: a reader was
-# told the file governs nothing, over the subsystem that speaks. Corrected
-# 2026-09-06 by tracing each caller. An older line above it claimed
-# "OPENBSD/etc/rc.d/master sets MASTER_TTS_MODE=classic", and rc.d sets no such
-# thing; the variable is read at speech.rb's synthesis_mode and offered,
-# commented out, in OPENBSD/etc/master.env.sample.
+# chain below is the Mac's. MASTER_TTS_MODE is read at speech.rb's synthesis_mode
+# and offered, commented out, in OPENBSD/etc/master.env.sample; rc.d sets none.
 transcendent:
   enabled: true
   default_mode: transcendent
@@ -40,7 +32,11 @@ transcendent:
   phrase_rhythm_enabled: true
   # Read a Norwegian clause with a Norwegian voice. Off: data/voice.yml sets
   # single_voice: jenny and persona_affects_text_only: true, and this is the one
-  # thing that contradicts it. See MASTER/DECISIONS.md.
+  # thing that contradicts it. Turning it on is an operator decision about
+  # identity, not a bug fix.
+  #
+  # The three switches differ on purpose: rhythm on, contour by threshold,
+  # language off. Do not align their defaults.
   phrase_language_switching: false
   phrase_language_voices:
     nb: finn
