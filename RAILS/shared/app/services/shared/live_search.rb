@@ -8,8 +8,11 @@ module Shared
       new(scope, query:, columns:, vertical:, app:).search
     end
 
+    # The filtered scope alone, for code matching on a reader's behalf (saved
+    # searches, a scrolled page): no count query and no search.query event,
+    # which belong to a search someone typed.
     def self.call(scope, query:, columns:)
-      search(scope, query:, columns:).scope
+      new(scope, query:, columns:).filtered_scope
     end
 
     def initialize(scope, query:, columns:, vertical: nil, app: nil)
@@ -30,10 +33,6 @@ module Shared
       Result.new(scope: filtered, result_count: count, latency_ms:, suggestions:)
     end
 
-    private
-
-    attr_reader :scope, :query, :columns, :vertical, :app
-
     def filtered_scope
       return scope if query.blank? || columns.empty?
 
@@ -50,9 +49,17 @@ module Shared
       table = scope_model.table_name
       # ESCAPE names the backslash sanitize_sql_like escapes with. SQLite has no
       # default escape character, so without it "50%" searched for a backslash.
-      predicate = columns.map { |column| "#{table}.#{column} #{operator} :query ESCAPE '\\'" }.join(" OR ")
+      # A column already naming its table is a joined one and is used as given.
+      predicate = columns.map do |column|
+        qualified = column.include?(".") ? column : "#{table}.#{column}"
+        "#{qualified} #{operator} :query ESCAPE '\\'"
+      end.join(" OR ")
       scope.where(predicate, query: like)
     end
+
+    private
+
+    attr_reader :scope, :query, :columns, :vertical, :app
 
     def fts_scope?
       scope_model.respond_to?(:search) &&

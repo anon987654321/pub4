@@ -8,7 +8,7 @@ module Marketplace
 
     def index
       scope = Marketplace::Deal.live.includes(listing: { photos_attachments: :blob })
-      scope = scope.matching(live_search_query) if live_search_query.present?
+      scope = apply_live_search(scope.joins(:listing), columns: Marketplace::Deal::SEARCH_COLUMNS, vertical: "deals") if live_search_query.present?
       @featured_deals = scope.featured.limit(12).to_a if live_search_query.blank?
       @pagy, @deals = pagy(scope)
       finish_live_search(partial: "marketplace/deals/live_search_results")

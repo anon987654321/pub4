@@ -52,6 +52,9 @@ class MarketplaceDealsAndAddressesTest < ActionDispatch::IntegrationTest
 
     get marketplace.deals_path(q: "Teakbord")
     assert_includes response.body, @deal.headline
+    result = controller.instance_variable_get(:@live_search_result)
+    assert result, "deals search goes through Shared::LiveSearch, so it is counted like every vertical"
+    assert_equal 1, result.result_count
 
     get marketplace.deals_path(q: "Sofa")
     assert_not_includes response.body, @deal.headline

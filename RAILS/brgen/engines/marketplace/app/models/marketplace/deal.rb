@@ -32,16 +32,13 @@ module Marketplace
 
     scope :featured, -> { where(featured: true) }
 
-    # Headline, badge or the listing's title. Shared::LiveSearch qualifies its
-    # columns with one table, and a deal is found by its listing's title too, so
-    # the controller and the infinite-scroll reflex both search through this.
-    # ESCAPE names the backslash sanitize_sql_like escapes with: SQLite has no
-    # default escape character, so without it a search for "50%" matched nothing.
-    MATCHING_SQL = %w[marketplace_deals.headline marketplace_deals.badge marketplace_listings.title]
-                   .map { |column| "#{column} LIKE :q ESCAPE '\\'" }.join(" OR ").freeze
+    # Headline, badge or the listing's title, through Shared::LiveSearch like
+    # every other vertical. The controller searches with these columns so the
+    # query is counted and suggested; the infinite-scroll reflex uses matching.
+    SEARCH_COLUMNS = %w[headline badge marketplace_listings.title].freeze
 
     scope :matching, ->(query) {
-      joins(:listing).where(MATCHING_SQL, q: "%#{sanitize_sql_like(query.to_s)}%")
+      Shared::LiveSearch.call(joins(:listing), query:, columns: SEARCH_COLUMNS)
     }
 
     def active?
