@@ -162,7 +162,7 @@ module Master
         end
 
         def dmesg_boot(resolved, posture, apply, critique, aesthetic)
-          stages = [("aesthetic" if aesthetic), "scan", ("critique" if critique)].compact.join(", ")
+          stages = [("aesthetic" if aesthetic && run?("scan")), ("scan" if run?("scan")), ("critique" if critique && run?("critique")), ("map" if run?("map"))].compact.join(", ")
           Master::Trace::Dmesg.attach(@unit, "mainbus0",
             "#{resolved}, #{apply ? "writes" : "read-only"}, #{posture[:name]}, #{stages}")
         end
