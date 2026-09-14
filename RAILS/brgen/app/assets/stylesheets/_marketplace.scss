@@ -211,6 +211,15 @@
   color: var(--text-secondary);
 }
 
+/* A chip is a link, and an inline box ignores the shared tap floor's min-height,
+   so the facet chips rendered 24px tall. inline-flex gives the floor a box to
+   act on (LAYOUT_RULES touch 44). */
+.listing-facet .chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
+}
+
 .listing-facet-count {
   margin-inline-start: var(--space-1);
   color: var(--text-secondary);

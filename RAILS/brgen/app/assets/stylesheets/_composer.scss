@@ -110,8 +110,8 @@
   inset-inline-end: var(--space-3);
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: var(--tap-min);
+  height: var(--tap-min);
   border: 0;
   border-radius: var(--radius-pill);
   background: var(--hover);
@@ -162,7 +162,7 @@
 /* One row, two groups pushed to opposite ends: the marks that apply to the text
    on the left, the things you attach to it on the right. They were two stacked
    rows, which read as two unrelated toolbars and spent a whole row of height on
-   a phone for six 32px targets that fit in one.
+   a phone for six targets that fit in one.
 
    Anchored to the bottom of the writing area rather than floating in the middle
    of it: the editor is min-height 120px, so an unattached toolbar sat in ~90px
@@ -195,8 +195,8 @@
 /* Was --text-secondary at default weight against a dark surface: the B, the i
    and the bullet were the dimmest thing in the dialog. */
 .composer-body .tiptap_btn {
-  min-width: 32px;
-  min-height: 32px;
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
   border: 0;
   border-radius: var(--radius-sm);
   background: transparent;
