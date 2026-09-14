@@ -831,8 +831,16 @@ document.querySelectorAll('.tool').forEach(btn => {
     }
   }
 
+  // A closed panel sits off-screen at opacity 0, and Tab from the prompt
+  // landed on its close button: focus on something nobody can see. inert
+  // takes it out of the tab order and the accessibility tree while closed.
+  panel.inert = true;
+
   function setOpen(next) {
+    const hadFocus = panel.contains(document.activeElement);
     open = next;
+    panel.inert = !open;
+    if (!open && hadFocus) input?.focus();
     panel.dataset.open = open ? '1' : '0';
     document.body.dataset.historyOpen = open ? '1' : undefined;
     if (!open) delete document.body.dataset.historyOpen;
