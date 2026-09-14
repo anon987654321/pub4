@@ -4,6 +4,7 @@ require "json"
 require "pathname"
 require_relative "../../OPENBSD/lib/deploy_inventory"
 require_relative "../../OPENBSD/lib/gate_result"
+require_relative "../../OPENBSD/bin/render_dns"
 
 begin
   require_relative "../../RAILS/shared/lib/operator/deploy_paths"
@@ -14,7 +15,6 @@ end
 module Deploy
   class DomainAlignmentGate
     ROOT = Pathname.new(File.expand_path("../..", __dir__))
-    OPENBSD = ROOT.join("OPENBSD", "OPERATOR.sh")
     REGISTRY = ROOT.join("RAILS", "brgen", "lib", "brgen", "domain_registry.rb")
     DEPLOY_INVENTORY = ROOT.join("OPENBSD", "deploy_inventory.json")
     RELAYD = ROOT.join("OPENBSD", "etc", "relayd.conf")
@@ -27,7 +27,9 @@ module Deploy
 
     def run
       result = GateResult.new
-      openbsd = parse_openbsd_domains
+      # The fleet render_dns writes zones for, read by the one parser that a test
+      # holds to how zsh expands the same block.
+      openbsd = RenderDns.city_zones
       registry = parse_registry_entries
       routes = parse_registry_subdomains
 
@@ -164,21 +166,6 @@ module Deploy
       (apps + [face]).compact.uniq
     end
 
-    def parse_openbsd_domains
-      text = OPENBSD.read
-      block = text[/ALL_DOMAINS=\(\n(.*?)\n\)/m, 1]
-      raise "ALL_DOMAINS block not found in #{OPENBSD}" unless block
-
-      block.lines.filter_map do |line|
-        line = line.strip
-        next if line.empty?
-
-        domain, subs = line.split(":", 2)
-        subdomains = subs ? subs.split(",").map(&:strip) : []
-        [domain, subdomains]
-      end.to_h
-    end
-
     def parse_registry_entries
       text = REGISTRY.read
       text.scan(/Entry\.new\("([^"]+)",\s*"[^"]+",\s*"[^"]+",\s*:[^,]+,\s*"[^"]+",\s*"([^"]+)"\)/).to_h
@@ -224,10 +211,10 @@ module Deploy
       { apps: apps, master: master }
     end
 
-    def parse_relayd_keypairs
-      return [] unless RELAYD.exist?
-
-      RELAYD.read.scan(/tls keypair "([^"]+)"/).flatten
+    # A keypair line behind a hash mark is a certificate relayd does not load,
+    # and counting it would call a city live that refuses TLS.
+    def parse_relayd_keypairs(text = RELAYD.exist? ? RELAYD.read : "")
+      text.each_line.flat_map { |line| line.sub(/#.*/, "").scan(/tls keypair "([^"]+)"/) }.flatten
     end
   end
 end

@@ -210,6 +210,28 @@ class DomainAlignmentGateFixtureTest < Minitest::Test
     assert_match(/LIVE_DOMAINS omits #{Regexp.escape(unlisted)}/, alignment_failures(@keys + [unlisted]))
   end
 
+  # A commented-out keypair is a certificate relayd does not load, so the city it
+  # names is linked with nothing serving it.
+  def test_a_commented_out_keypair_does_not_count_as_live
+    commented = GATE::RELAYD.read.sub(/^(\s*)(tls keypair "#{Regexp.escape(@declared.last)}")/, '\1# \2')
+    keys = @gate.send(:parse_relayd_keypairs, commented)
+
+    refute_includes keys, @declared.last
+    assert_equal @keys.size - 1, keys.size
+    assert_match(/LIVE_DOMAINS names #{Regexp.escape(@declared.last)} with no tls keypair/, alignment_failures(keys))
+  end
+
+  # The gate compares the registry against the fleet render_dns writes zones for,
+  # and the zsh expansion test above holds that reader to OPERATOR.sh.
+  def test_the_gate_reads_all_domains_through_render_dns
+    original = RenderDns.method(:city_zones)
+    RenderDns.define_singleton_method(:city_zones) { original.call.except("brgen.no") }
+
+    assert_match(/missing DNS brgen\.no/, GATE.run.failures.join(" | "))
+  ensure
+    RenderDns.define_singleton_method(:city_zones, original)
+  end
+
   def test_the_committed_tree_passes
     result = GATE.run
 
