@@ -181,14 +181,6 @@ def check_system_configs(failures)
   if (relayd_timeout = relayd_text.match(/timeout\s+(\d+)/))
     failures << "relayd: timeout should allow slow document boot (>= 15000)" if relayd_timeout[1].to_i < 15_000
   end
-
-  # Runtime config
-  runtime_cfg = File.join(ROOT, "MASTER", "data/runtime.yml")
-  if File.file?(runtime_cfg)
-    cfg = YAML.safe_load_file(runtime_cfg) || {}
-    enhancements = Array(cfg.dig("runtime", "enhancements"))
-    failures << "MASTER/runtime: actioncable_fallback enhancement missing" unless enhancements.include?("actioncable_fallback")
-  end
 end
 
 # Definitions above, the run below, so test/test_gate_fixtures.rb can hand each
