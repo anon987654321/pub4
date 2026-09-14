@@ -197,14 +197,14 @@ face_root:
     border_strong: "color-mix(in srgb, var(--face-fg) 24%, transparent)"
     hover_tint: "color-mix(in srgb, var(--face-fg) 8%, transparent)"
   layout:
-    # The HUD type ramp and tap floor: face.css cannot read the RAILS --text-*
-    # ladder, so these ARE its ladder. tap-min is also an alias of shared_chrome,
-    # so the face HUD and the RAILS tab chrome share one floor; #photo-button
-    # cites it, and undefined it measured 18px on a compose control.
+    # The face's type scale and tap floor. face.css cannot read the RAILS
+    # --text-* ladder, so these are its ladder under the same names: meta 13px,
+    # body 16px (the root), title 20px, one 1.25 ratio (TYPOGRAPHY.type_scale).
+    # tap-min is an alias of shared_chrome, so the face and the RAILS tab chrome
+    # share one floor; #photo-button cites it.
     tap-min: 44px
-    hud-lg: 13px
-    hud-md: 11px
-    hud-sm: 10px
+    text-meta: "0.8125rem"
+    text-title: "1.25rem"
     radius-xs: "0"
     radius-sm: "0"
     radius-md: "0"
@@ -623,11 +623,12 @@ scale:
       off_scale_line_height: 0
       absolute_line_height: 0
       off_scale_font_weight: 0
-      off_scale_tracking: 14
+      off_scale_tracking: 12
       # Measured 2026-09-05. The face composes almost every colour from
       # --face-fg and --c-text through color-mix, so it carries more of these
-      # than the apps do and they are the medium rather than the debt.
-      off_scale_opacity: 38
+      # than the apps do and they are the medium rather than the debt. Solid
+      # tokens for secondary text and the alert took seven of them.
+      off_scale_opacity: 31
       # Measured 2026-09-03. The face keeps its own timings — .09s and .15s
       # steps(4,end) belong to a terminal that redraws in character cells,
       # not to the apps four-step transition ladder. Recorded so the tail
