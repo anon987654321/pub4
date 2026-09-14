@@ -81,11 +81,15 @@ surfaces:
     path: /privacy
     viewports: [mobile, desktop]
 
-# Surfaces whose content is inherently volatile (feeds, seeded records).
-# Snapshot + pixel comparison skip these regions; geometry still measures them.
+# Content that changes between two captures of an unchanged page: a clock, a
+# relative time, a counter that animates up from zero, a money amount. The
+# visual_contract gate hides these (visibility, so the box keeps its size)
+# before each screenshot, so its pixel diff reports layout rather than the
+# minute; geometry still measures them.
 volatile_selectors:
-  - ".feed-post time"
-  - ".live-item time"
+  - "time"
   - "[data-relative-time]"
+  - "[data-controller~=animated-number]"
+  - "[data-money]"
   - ".deal-card-price"
   - ".post-meta"

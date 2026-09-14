@@ -41,7 +41,6 @@ module Deploy
 
       def viewports(path = DATA) = config(path).fetch("viewports")
       def reflow_widths(path = DATA) = Array(config(path)["reflow_widths"])
-      def volatile_selectors(path = DATA) = Array(config(path)["volatile_selectors"])
 
       # Every declared surface × viewport, brgen verticals included.
       def surfaces(path = DATA, root: ROOT)

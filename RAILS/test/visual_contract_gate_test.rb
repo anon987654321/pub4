@@ -99,6 +99,17 @@ class VisualContractGateTest < Minitest::Test
     assert_includes budgeted[:hard].first, "VISUAL_DRIFT_MAX_RATIO"
   end
 
+  # A clock, a relative time, a counter and a money amount change between two
+  # captures of an unchanged page; the capture hides each before it diffs.
+  def test_capture_hides_volatile_content_before_the_screenshot
+    selectors = VisualContractGate.volatile_selectors
+    %w[time [data-relative-time] [data-controller~=animated-number] [data-money]].each do |needle|
+      assert_includes selectors, needle
+    end
+    script = VisualContractGate.mask_script(%w[time [data-money]])
+    assert_includes script, "time, [data-money] { visibility: hidden !important; }"
+  end
+
   def test_runner_forwards_visual_capture_env_to_gate
     source = File.read(File.expand_path("../gates/runner.rb", __dir__))
     %w[VISUAL_CAPTURE VISUAL_CAPTURE_APP VISUAL_CAPTURE_BASE visual_contract_capture_args].each do |needle|

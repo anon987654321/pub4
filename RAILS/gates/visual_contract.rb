@@ -9,6 +9,7 @@ require "digest"
 require "fileutils"
 require "uri"
 require "time"
+require "yaml"
 
 # Drift past which a run blocks rather than reports. VISUAL_DRIFT_MAX_RATIO
 # overrides it; nothing set it before, so drift_max was nil and drift was purely
@@ -62,7 +63,18 @@ module VisualContractGate
 
   LENSES = %w[task_completion accessibility editorial_character system_trust first_use].freeze
 
+  SURFACES = File.expand_path("data/geometry_surfaces.yml", __dir__)
+
   module_function
+
+  def volatile_selectors = Array(YAML.safe_load_file(SURFACES)["volatile_selectors"])
+
+  # One stylesheet appended after load, so every match is hidden however late
+  # it renders; visibility rather than display, so nothing reflows around it.
+  def mask_script(selectors = volatile_selectors)
+    rule = "#{selectors.join(", ")} { visibility: hidden !important; }"
+    "const s = document.createElement('style'); s.textContent = #{JSON.generate(rule)}; document.head.appendChild(s);"
+  end
 
   def matrix(app)
     ROUTES.fetch(app.to_sym).flat_map do |state, route|
@@ -293,6 +305,7 @@ module VisualContractGate
       slug = [cell[:app], cell[:state], cell[:viewport]].join("-")
       screenshot = File.join(output, "#{slug}.png")
       baseline_bytes = File.binread(screenshot) if File.file?(screenshot)
+      driver.execute_script(mask_script)
       driver.save_screenshot(screenshot)
       diff = baseline_bytes ? pixel_diff(baseline_bytes:, screenshot_path: screenshot, diff_path: File.join(output, "#{slug}-diff.png")) : { pixel_diff_count: nil, pixel_diff_ratio: nil, pixel_diff_image: nil }
       {
