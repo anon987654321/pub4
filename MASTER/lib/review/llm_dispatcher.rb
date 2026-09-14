@@ -98,6 +98,7 @@ module Master
       include OllamaSender
       include RubyLLMSender
       include ToolRegistry
+      include ProviderFailure
 
       def initialize(deps:, system_prompt:)
         @config, @cache, @circuit_breaker = deps.config, deps.cache, deps.circuit_breaker
@@ -211,38 +212,6 @@ module Master
         return Master::Result.err(result.message, category: :rate_limit) if rate_limit_error?(result)
 
         result
-      end
-
-      # The machine cannot reach the provider at all: the name did not resolve
-      # or no route exists. A refused connection is left out, because one
-      # provider refusing says nothing about the network. The local sender
-      # names its own failures and is not offline when its daemon is down.
-      OFFLINE_SIGNS = ["getaddrinfo", "nodename nor servname", "name or service not known",
-                       "temporary failure in name resolution", "network is unreachable",
-                       "no route to host", "enetunreach", "ehostunreach"].freeze
-      OFFLINE_RE = Regexp.new(OFFLINE_SIGNS.map { |sign| Regexp.escape(sign) }.join("|"), Regexp::IGNORECASE)
-
-      def offline_error?(err)
-        message = err.message.to_s
-        !message.start_with?("ollama ") && message.match?(OFFLINE_RE)
-      end
-
-      def billing_error?(err)
-        err.message.to_s.match?(/insufficient credits|credit balance|payment required|\b402\b|billing/i)
-      end
-
-      def rate_limit_error?(err)
-        err.message.to_s.match?(/rate.?limit|too many requests|\b429\b/i)
-      end
-
-      def missing_key_error?(err)
-        return false if Master.keyless_llm_enabled?
-        error_message = err.message.to_s
-        error_message.match?(/missing configuration/i) ||
-          error_message.match?(/api[_\- ]?key/i) ||
-          error_message.match?(/unauthorized/i) ||
-          error_message.match?(/401/) ||
-          !Master.any_api_key_present?
       end
 
       def image_present?(image)
