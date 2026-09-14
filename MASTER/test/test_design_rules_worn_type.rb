@@ -60,18 +60,16 @@ class TestDesignRulesWornType < Minitest::Test
   # When it gains a reader, delete it from here. When another key joins it, this
   # fails and says so instead of the key going quiet.
   #
-  # rhythm_off_max_pct is the larger find, and it was invisible until this test
-  # asked: every one of the seven profiles sets it, and geometry_type.rb reads
-  # it in none of them. A threshold declared seven times and enforced zero times
-  # is not a stricter rule than one declared once — it is the same silence,
-  # written out seven ways.
-  UNREAD_EVERYWHERE = %w[rhythm_off_max_pct].freeze
-  UNREAD_PROFILE_KEYS = Hash.new(UNREAD_EVERYWHERE).merge(
-    "map" => UNREAD_EVERYWHERE + %w[label_min_px],
+  # The profile GeometryType.check builds is returned to rendered_geometry.rb,
+  # whose check_rhythm reads rhythm_off_max_pct from it, so both files are the
+  # reader. Reading geometry_type.rb alone listed that key as unread in all
+  # seven profiles while the rhythm gate enforced it in every one.
+  UNREAD_PROFILE_KEYS = Hash.new([].freeze).merge(
+    "map" => %w[label_min_px],
   ).freeze
 
   def test_profile_keys_have_a_reader_or_are_declared_unread
-    src = File.read(@reader)
+    src = File.read(@reader) + File.read(File.join(File.dirname(@reader), "..", "lib", "rendered", "rendered_geometry.rb"))
     PROFILES.each do |name|
       keys = @worn.dig("profiles", name).to_h.keys
       unread = keys.reject { |key| src.include?(key) }
