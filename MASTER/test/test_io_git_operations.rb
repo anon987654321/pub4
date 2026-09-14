@@ -143,6 +143,17 @@ class GitOperationsTest < Minitest::Test
     assert_includes sh("git", "diff", "--cached", "--name-only", chdir: @repo), "lib/staged.rb"
   end
 
+  # A pre-commit hook that refuses used to read as a commit, and ops:commit
+  # was published for a commit that never happened.
+  def test_a_refused_commit_raises
+    hook = File.join(@repo, ".git", "hooks", "pre-commit")
+    File.write(hook, "#!/bin/sh\nexit 1\n")
+    File.chmod(0o755, hook)
+    write("lib/refused.rb", "# refused\n")
+
+    assert_raises(RuntimeError) { @git.commit("refused", paths: ["lib/refused.rb"]) }
+  end
+
   def test_commit_refuses_without_paths
     write("lib/any.rb", "# any\n")
 

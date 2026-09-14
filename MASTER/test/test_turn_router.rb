@@ -145,6 +145,14 @@ end
     assert_includes Master::CLI::TurnRouter::PIPELINE_COMMANDS, inferred[:command]
   end
 
+  def test_a_sentence_asking_to_fix_reaches_the_writing_stage
+    inferred = Master::CLI::TurnRouter.infer_operator_command("can you fix and commit all these violations?",
+                                                              container: build_container)
+
+    assert_equal "fix", inferred[:command]
+    assert_match(/--apply/, Master::CLI::TurnRouter.rewrite_slash("/#{inferred[:command]} #{inferred[:args]}"))
+  end
+
   def test_an_inferred_word_no_handler_takes_stays_a_sentence
     inferred = Master::CLI::TurnRouter.infer_operator_command("read lib/trace/dmesg.rb and summarise it",
                                                               container: build_container)

@@ -50,8 +50,13 @@ module Master
         @reflexions = Trace::Ledger::Reflexion.new(event_bus: bus, root:) if bus
       end
 
-      def run(target = @root, max_passes: max_passes_default, budget_seconds: RUN_BUDGET_SECONDS, incremental: @incremental)
-        return halted_result if halted?
+      # A halt stops the runs nobody asked for, the background runner and the
+      # watcher, when MASTER's own tree reads red. An operator's /fix is the
+      # request to repair exactly that tree; halting it too refused every fix
+      # while a single violation stood, so "fix and commit" scanned and stopped.
+      def run(target = @root, max_passes: max_passes_default, budget_seconds: RUN_BUDGET_SECONDS,
+              incremental: @incremental, requested: false)
+        return halted_result if halted? && !requested
 
         files = incremental ? @file_collector.collect_changed(target) : @file_collector.collect(target)
         deadline = Time.now + budget_seconds

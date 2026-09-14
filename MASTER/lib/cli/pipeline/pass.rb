@@ -280,7 +280,7 @@ def default_apply?(*) = false
         end
 
         def run_fix(abs)
-          result = @fix_loop.run(abs)
+          result = @fix_loop.run(abs, requested: true)
           msg = result.ok? ? result.value!.to_s : "fix: #{result.message}"
           Master::Trace::Dmesg.status("fix0", result.ok? ? msg[0, 80] : "failed: #{result.message}")
           msg

@@ -84,7 +84,7 @@ module Master
         return if READ_SLASH.include?(command)
         return unless answered?(command, container)
 
-        args = command == "review" ? pass_command_args(value, text) : value.args.to_s
+        args = PIPELINE_COMMANDS.include?(command) ? pass_command_args(value, text) : value.args.to_s
 
         { command:, args:, confidence: conf }
       rescue StandardError => e
@@ -95,10 +95,10 @@ module Master
       # patterns.yml infers words no handler takes, and a sentence that merely
       # named one died there: "read the dmesg module" answered "unknown command:
       # /dmesg". An inferred word becomes a command only when the registry answers
-      # it; /review is the pass this router runs itself.
+      # it; the pipeline words rewrite to /review, the pass this router runs.
       def answered?(command, container)
         commands = container[:commands]
-        command == "review" || !commands.respond_to?(:key?) || commands.key?(command)
+        PIPELINE_WORDS.include?(command) || !commands.respond_to?(:key?) || commands.key?(command)
       end
 
       def infer_command_value(text, container:)
@@ -110,8 +110,12 @@ module Master
         value.intent == :command ? value : nil
       end
 
+      # "fix" keeps its word, and rewrite_slash turns it into the scan stage
+      # with --apply. Read as "review" it lost the write: "can you fix and
+      # commit all these violations?" ran a read-only pass and changed nothing.
       def normalize_inferred_command(command, text)
         return command if text.match?(/--dry-run|--no-autofix|\bpreview\b/i)
+        return command if WRITING_SLASH.include?(command)
         return "review" if PIPELINE_WORDS.include?(command)
 
         command
@@ -155,7 +159,7 @@ module Master
         args = inferred[:args].to_s
         container[:bus]&.publish("infer:auto", command:, args:, confidence: inferred[:confidence])
         slash = args.empty? ? "/#{command}" : "/#{command} #{args}"
-        dispatch_slash(slash, container:, felt_sense:, on_turn:)
+        dispatch_slash(rewrite_slash(slash), container:, felt_sense:, on_turn:)
       end
 
       # Core::Fold's constitution requires exec evidence (test_pass, scan_clean,

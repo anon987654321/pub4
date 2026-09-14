@@ -12,18 +12,23 @@ module Master
         # Stages and commits the named paths and nothing else, the rule
         # Core::World#do_git_commit keeps for the fold. The index is shared with
         # every session in this checkout, so committing it signs their staged
-        # work with this message.
+        # work with this message. A refused add or commit raises: a pre-commit
+        # hook that said no used to read as a commit.
         def commit(message, paths:)
           scoped = Array(paths).map(&:to_s).reject(&:empty?)
           raise ArgumentError, "git commit needs paths: an unscoped commit takes the shared index" if scoped.empty?
 
-          Master::Io::Exec.capture2e("git", "-C", @root_path, "add", "--", *scoped)
-          Master::Io::Exec.capture2e("git", "-C", @root_path, "commit", "-m", message.to_s,
-                                     "-m", Master::Core::World::COMMIT_TRAILER, "--", *scoped)
+          git!("add", "--", *scoped)
+          git!("commit", "-m", message.to_s, "-m", Master::Core::World::COMMIT_TRAILER, "--", *scoped)
         end
 
-        def push
-          Master::Io::Exec.capture2e("git", "-C", @root_path, "push")
+        def push = git!("push")
+
+        def git!(*args)
+          output, status = Master::Io::Exec.capture2e("git", "-C", @root_path, *args)
+          raise "git #{args.first} failed: #{output.strip}" unless status.success?
+
+          output
         end
 
         def reset_hard(ref = "origin/main")

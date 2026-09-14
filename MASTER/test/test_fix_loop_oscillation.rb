@@ -254,6 +254,17 @@ class TestFixLoopOscillation < Minitest::Test
     assert @bus.events.any? { |event| event[:event] == "fix_loop:halt" }
   end
 
+  # The boot scan halts the loop whenever lib/ carries a violation, which is
+  # always; the operator's /fix exists to fix those, so it runs through a halt.
+  def test_a_requested_run_proceeds_through_a_halt
+    loop = build_loop([])
+    loop.halt!(reason: "self_violation 1447 violations")
+
+    result = loop.run(@root, requested: true)
+
+    assert result.ok?, "a requested run was refused: #{result.message if result.err?}"
+  end
+
   def test_fix_loop_streams_per_file_scan_progress
     loop = build_loop([{ rule: "TEST_RULE", line: 1, message: "boom" }])
 

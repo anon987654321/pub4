@@ -1,19 +1,23 @@
 # frozen_string_literal: true
 
 require "open3"
+require "pathname"
 require "timeout"
 
 module Master
   module Fix
     class FixLoop
-      # Commits what one fix-loop pass changed, and only that.
+      # Commits what an explicitly requested fix-loop pass owns, pushes it, and
+      # proves the push landed.
       #
-      # The checkout is shared by several sessions and a human, so a path that
-      # was already modified or untracked when the pass began is someone else's
-      # work in progress. baseline! records those paths at the start of a pass;
-      # commit_if_dirty commits the paths that changed since, path-scoped, and
-      # never the index. With no baseline nothing is known to be the pass's own,
-      # so nothing is committed.
+      # The checkout is shared by several sessions and a human. The owned unit
+      # is the pass's target files: a change inside them belongs to the request
+      # that named them, whenever it was made, and a dirty path outside them is
+      # left alone. Without owned paths the pass owns what changed since
+      # baseline!, and with no baseline nothing is known to be its own.
+      #
+      # A commit or push that fails raises after the event is published: a fix
+      # loop that asked to deliver and could not must stop, not report success.
       class Committer
         LINT_TIMEOUT_SECONDS = 20
         FINDING_LINES = 40
@@ -37,8 +41,8 @@ module Master
         # findings are the violations the pass set out to fix; the ones in a
         # committed file are named in the body, so git log says which rule each
         # runtime commit answered.
-        def commit_if_dirty(message, findings: [])
-          paths = own_changes
+        def commit_if_dirty(message, findings: [], owned_paths: nil)
+          paths = own_changes(owned_paths)
           return if paths.empty?
 
           broken = ruby_files(paths).reject { |path| ruby_parses?(path) }
@@ -49,8 +53,11 @@ module Master
 
           @git.commit(with_finding_ids(message, findings, paths), paths:)
           @bus&.publish("ops:commit", message: message.to_s[0, 120], head: @git.head, paths:)
+          @git.push
+          verify_push!(paths)
         rescue StandardError => e
           @bus&.publish("fix_loop:commit_error", error: e.message)
+          raise
         end
 
         private
@@ -66,10 +73,31 @@ module Master
           [message.to_s, "", *lines.first(FINDING_LINES), *extra].join("\n")
         end
 
-        def own_changes
-          return [] unless @baseline
+        def own_changes(owned_paths)
+          changed = @git.changed_paths
+          return @baseline ? changed - @baseline : [] if owned_paths.nil?
 
-          @git.changed_paths - @baseline
+          changed & Array(owned_paths).filter_map { |path| relative(path) }.uniq
+        end
+
+        # changed_paths are relative to the git -C root, which is @root.
+        def relative(path)
+          value = path.to_s
+          return if value.empty?
+          return value unless Pathname.new(value).absolute?
+
+          Pathname.new(value).relative_path_from(Pathname.new(@root)).to_s
+        rescue ArgumentError
+          nil
+        end
+
+        # Only commits still ahead mean the push missed. Behind is the remote
+        # moving on, which a push that succeeded has no quarrel with.
+        def verify_push!(paths)
+          ahead, = @git.ahead_behind
+          return if ahead.zero?
+
+          raise "git push left #{ahead} commit#{"s" unless ahead == 1} unpushed: #{paths.join(", ")}"
         end
 
         def block_commit(files)
