@@ -39,4 +39,48 @@ class TestDillaLivesets < Minitest::Test
     assert_equal :lydian_augmented_haze, pinned.first
     assert_equal unpinned.last, pinned.last
   end
+
+  # Unset, the sampled set plays the downward tables with every ratio held under
+  # the drag. LIVE_VOICING=up selects the 08-31 tables and lets a chord climb.
+  def test_live_voicing_up_selects_the_upward_tables_and_down_stays_the_default
+    down = with_env("LIVE_VOICING" => nil) { Livesets.voicing }
+    up = with_env("LIVE_VOICING" => "up") { Livesets.voicing }
+
+    assert_equal "down", down
+    assert_equal [Livesets::SAMPLED_VOICINGS, Livesets::SAMPLED_PROGRESSIONS], Livesets::VOICING_TABLES.fetch(down)
+    assert_equal [Livesets::UP_VOICINGS, Livesets::UP_PROGRESSIONS], Livesets::VOICING_TABLES.fetch(up)
+    drag = 0.94
+    assert_equal [drag, drag, drag], Livesets.slice_ratios(3, [0, 4, 14], drag, "down")
+    assert_operator Livesets.slice_ratios(3, Livesets::UP_VOICINGS.fetch(:maj9), drag, "up").max, :>, drag
+  end
+
+  def test_a_sampled_pass_journals_the_voicing_it_played
+    rows = []
+    stubs = {
+      pick_bed: -> { ["/nonexistent/loop.wav", "bed", 0.5] },
+      grid: ->(*) { { raw: 2.0, bars_in_loop: 1, bar: 2.0, beat: 0.5, step: 0.25, sxt: 0.125, bpm: 90.0 } },
+      journal!: ->(row) { rows << row },
+      play!: ->(*) {},
+    }
+    stubs.each { |name, body| Livesets.define_singleton_method(name, &body) }
+    %w[up down].each { |choice| with_env("LIVE_VOICING" => choice, "LIVE_SEED" => "5") { Livesets.sampled_based_beats! } }
+
+    assert_equal %w[up down], rows.map { |r| r[:voicing] }
+    assert_includes Livesets::UP_PROGRESSIONS, rows.first[:progression]
+    assert_includes Livesets::SAMPLED_PROGRESSIONS, rows.last[:progression]
+  ensure
+    stubs.each_key { |name| Livesets.singleton_class.remove_method(name) }
+  end
+
+  def test_a_recalled_pass_replays_the_voicing_it_was_journalled_under
+    handed = nil
+    Livesets.define_singleton_method(:exec) { |*args| handed = args }
+    Livesets.define_singleton_method(:passes) { [{ "seed" => 7, "set" => "sampled_based_beats", "bed" => "b", "voicing" => "up" }] }
+    Livesets.recall!(["7"])
+
+    assert_equal "up", handed.first.fetch("LIVE_VOICING")
+  ensure
+    Livesets.singleton_class.remove_method(:exec)
+    Livesets.singleton_class.remove_method(:passes)
+  end
 end
