@@ -63,8 +63,8 @@ class TestCLI < Minitest::Test
     lines = output.lines.map(&:chomp)
 
     assert_equal "3 total violations", lines[0]
-    assert_equal "evidence: STYLE=2 SECURITY=1", lines[1]
-    assert_operator lines.index("[STYLE]"), :<, lines.find_index { |l| l.start_with?("  L2") }
+    assert_equal "STYLE 2", lines[1]
+    assert_operator lines.index("STYLE 2"), :<, lines.find_index { |l| l.start_with?("  sample.rb:2 style issue") }
   end
 
   def test_scan_dry_run_report_says_no_changes_made
