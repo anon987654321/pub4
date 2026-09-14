@@ -49,7 +49,11 @@ module Master
       # self-mutation: refuse (by returning a non-clean report) when MASTER's
       # own lib/ tree already carries violations, and publish self_violation
       # so any subscriber (e.g. FixLoop#halt!) reacts the same way it would
-      # to a violation discovered mid-run.
+      # to a violation discovered mid-run. AiBoot subscribes halt! to it, so a
+      # red selfcheck stops background autofix for every session. Triage a new
+      # finding as a true violation, a false positive, an exemption, a threshold
+      # or known debt; never clear the count by exempting lib/core, which sits
+      # inside lib/ so the law it applies measures it too.
       def gate!(bus: nil)
         report = quick
         return report if report.clean?

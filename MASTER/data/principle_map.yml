@@ -4,6 +4,12 @@ schema: 1
 # 2026-08-07: closed 8 gaps (circuit_breaker, least_privilege, secure_by_default,
 # composition_over_inheritance, boy_scout_rule, durability, user_control, sovereignty)
 # by linking existing kernel/unit rules.
+#
+# Most rows marked `status: gap` are conduct: how to work, not a shape a line of
+# code can have, which law/practice.rb carries because no detector exists for
+# it. Their rule_ids stay empty. Filling them by matching names against
+# Law.define points a row at a neighbour that shares a word, which is false
+# coverage; a gap closes when a real detector for that principle exists.
 rule_trace_ceiling: 80
 version: v110.0-restored
 source: merged master.yml fossil → MASTER runtime principle_map
@@ -2764,8 +2770,9 @@ principles:
     # No rotator exists. Keys live in /etc/*.env on vm23 and rotate by operator.
     # Io::KeyRotator spreads rate limits across live OpenRouter keys; it expires
     # nothing, so it is not this row's evidence either. SECRET_PROXIMITY is
-    # proximity, not rotation — do not point this row at it. MASTER/DECISIONS.md
-    # "Conduct Principles Keep Empty rule_ids" says why no detector is built.
+    # proximity, not rotation — do not point this row at it. A detector for
+    # unexpiring keys in /etc/*.env has to run on vm23; the header says why the
+    # row keeps empty rule_ids until one exists.
     rule_ids: []
     status: gap
     root: least_authority

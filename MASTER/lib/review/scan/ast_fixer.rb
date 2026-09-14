@@ -55,11 +55,15 @@ module Master
 
         # A transform that takes code out is a different risk from one that puts
         # an attribute in, and this is the one place that knows which is which.
-        # Scanner#should_autofix? has gated the rule-driven path on this list
-        # since the tier was written; nothing gated this one, so any file with
-        # any autofixable finding had every transform for its language run over
-        # it — deletions included — on an unattended `bin/operator gate` across
-        # four trees. The tier was real and covered one of the two ways in.
+        # Both ways in read it: Scanner#should_autofix? for the rule-driven path
+        # and self.fix for a whole file, so a deletion waits for MASTER_AUTOFIX=1
+        # while an addition runs unattended.
+        #
+        # Autofix tiers by transform, not by a finding's reversibility or
+        # blast_radius. Only the semantic and meta rules fill those fields, and
+        # their findings carry fix: nil, so they never reach lib/fix. A transform
+        # whose risk the add-or-delete split cannot state gets its rule classified
+        # in rules.yml by hand.
         DELETING_TRANSFORMS = %w[remove_immediate_dead_code].freeze
 
         # What a person asking looks like from here, and the same signal

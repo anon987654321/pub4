@@ -3,6 +3,10 @@
 module Master
   module Review
     module Scan
+      # No hypothesis-or-measured status. Every finding is measured against the
+      # source its detector read, and one that guesses says so in confidence and
+      # why, which Scanner#should_autofix? reads. test_finding_metadata.rb holds
+      # the shape.
       Finding = Data.define(
         :rule, :rule_id, :message, :line, :severity, :fix, :tags,
         :reversibility, :blast_radius, :confidence, :why, :genealogy,

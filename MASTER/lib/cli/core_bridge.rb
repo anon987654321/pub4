@@ -50,7 +50,9 @@ module Master
       end
 
       # The Fold writes through World, not through the Io tools, so it needs the
-      # same guard handed to it. Returns the blocking findings as strings.
+      # same guard handed to it. Handed in as `verify:` rather than required by
+      # Constitution, because a require puts lib/review/ inside the fold spine
+      # (test_core_no_lib_backedges). Returns the blocking findings as strings.
       def scan_verifier
         lambda do |path:, content:|
           Master::Review::Scan::WriteGuard.default.verdict(path:, content:).blocking

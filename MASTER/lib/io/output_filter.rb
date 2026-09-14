@@ -6,6 +6,10 @@ require "json"
 module Master
   module Io
     # Conservative shell-output compression before context ingest (RTK-inspired).
+    #
+    # Shell and git output only. A JSON tool result stays out: head_tail keeps the
+    # ends of a long text and cuts a JSON document into something that no longer
+    # parses, so each JSON tool caps its own result instead.
     module OutputFilter
       REL_STATS = "runtime/rtk_stats.json".freeze
       GENERIC_COMPRESS_LINE_COUNT = 80

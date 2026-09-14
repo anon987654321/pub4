@@ -25,6 +25,13 @@
 # keys read from another tree (pub_archive_restore.yml by RAILS,
 # radio_bergen_track_dossiers.yml by STUDIO/dilla). A member is a defect only
 # after all three are ruled out.
+#
+# That is also why no gate fails on an unread key. The tree reaches data through
+# interpolated filenames (Ground::Rules joins "#{stem}.yml"), directory globs,
+# DATA_ALIASES and section loaders such as RuntimeCatalog.load(section), none of
+# which a literal search follows, so the unnamed list is wrong more often than
+# right. An unread key is found by hand, per file, traced caller by caller to the
+# end, and closed with a two-direction test; test_limits_split.rb is the shape.
 
 require "set"
 require "yaml"

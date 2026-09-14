@@ -352,6 +352,11 @@ module Master
           nil
         end
 
+        # Warning, always, so a cross-file finding never blocks a write or a gate.
+        # Each family counts literals, words or shapes across files, which is
+        # advice about ownership rather than a verdict: reproduce a count with
+        # CrossFileAnalysis.new(root:).call(paths) and read the findings before
+        # treating it as work.
         def build(rule, message)
           Finding.build(rule:, line: 1, severity: :warning, message:, tags: %i[DRY SPRAWL])
         end

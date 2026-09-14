@@ -24,7 +24,7 @@ module Master
           # Categories that stop retrying a model and move on. nil when unconfigured,
           # so the caller supplies its own default rather than this file naming a
           # constant from lib/review and depending on its load order. An unread key is
-          # found by hand and held by a test; MASTER/DECISIONS.md says why.
+          # found by hand and held by a test; tools/data_reach.rb's header says why.
           def failover_skip_categories
             configured = Array(@rules.dig("fallback_policy", "on"))
                          .map { |name| name.to_s.strip }
