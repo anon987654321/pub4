@@ -13,6 +13,11 @@
 # a Deploy::* class returning a GateResult; three keep a subprocess because they
 # shell out or forward arguments. Composite gates already run their leaves, so
 # --all drops a leaf whose composite is also selected.
+#
+# A new gate ships with a fixture it must flag and one it must not, because a
+# gate never run against a known-bad input is a claim, not an instrument;
+# tap_target_probe and focus_walk_probe are the shape. An existing gate gains its
+# pair when it is next touched.
 
 # Forces Encoding.default_external = UTF_8. Seven of the per-gate scripts this
 # runner replaced required it and it was not delegation: under a C locale --

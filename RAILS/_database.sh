@@ -34,26 +34,14 @@ db_create_migrate_as_app() {
 # rails_prepare_secondary_dbs_as_app APP_NAME APP_DIR — initialise cache/queue/cable
 # databases on copy-tree deploy, once.
 #
-# This used to run db:schema:load:<db> unconditionally on every deploy. Rails
-# schema files create their tables with `force: :cascade` — schema:load DROPS
-# each table and recreates it — so every deploy silently emptied all three
-# secondary databases. For cache and cable that is survivable. For queue it
-# means every enqueued job is destroyed at deploy time: brgen was carrying 1670
-# of them on 2026-08-13 and had 0 an hour later, deleted rather than run.
-#
-# It was invisible because no Solid Queue worker has ever run on this box (see
-# OPENBSD/DECISIONS.md, "Falcon Only"), so nothing was going to execute those
-# jobs anyway. That changes the moment a worker exists, and a deploy that
-# discards the password-reset emails enqueued while it was running is a worse
-# bug than the one this loop was added to fix.
-#
-# The loop was added because the queue schema was not being loaded at all. That
-# was a real gap; the verb was wrong. So it now loads a schema only when the
-# database does not already carry its tables, and otherwise leaves the data
-# alone. `rails db:prepare` on the line above already handles both creation and
-# migration of every configured database (DatabaseTasks.prepare_all walks
-# each_current_configuration, not just primary) — this stays as the explicit
-# backstop it was meant to be.
+# A schema loads only when the database does not already carry its tables. Rails
+# schema files create tables with `force: :cascade`, so db:schema:load DROPS each
+# table and recreates it empty: run on every deploy, it empties all three
+# secondary databases, and for queue that destroys every enqueued job, the
+# password-reset emails queued while the deploy runs included. `rails db:prepare`
+# on the line above already creates and migrates every configured database
+# (DatabaseTasks.prepare_all walks each_current_configuration, not just primary);
+# this loop is the explicit backstop for a queue schema that never loaded.
 rails_prepare_secondary_dbs_as_app() {
   local app_name=$1
   local app_dir=$2

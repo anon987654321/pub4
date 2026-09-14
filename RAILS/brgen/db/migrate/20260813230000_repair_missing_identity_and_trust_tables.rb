@@ -3,7 +3,9 @@
 # 20260514120000 is in schema_migrations on production and created nothing.
 # User#destroy, PruneGuestUsersJob, ModerationWorkflow#penalize_owner and
 # OAuth all raise StatementInvalid against the missing tables. if_not_exists
-# so a healthy schema (this checkout) is a no-op.
+# so a healthy schema (this checkout) is a no-op. db:migrate:status reports a
+# migration like that as applied and nothing pending, so compare schema.rb's
+# create_table list against the live tables instead.
 class RepairMissingIdentityAndTrustTables < ActiveRecord::Migration[8.0]
   def up
     create_table :identity_providers, if_not_exists: true do |t|

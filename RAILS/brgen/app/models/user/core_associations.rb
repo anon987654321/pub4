@@ -11,6 +11,9 @@ class User
       has_many :communities
       has_many :conversation_participants, dependent: :destroy
       has_many :conversations, through: :conversation_participants
+      # Every table with an FK to users needs a has_many here with an explicit
+      # dependent:, or User#destroy fails in SQLite rather than in Rails.
+      #
       # message_receipts and typing_indicators both carry an FK to users and were
       # declared only on Message and Conversation, never here — so destroying a
       # user who had ever been in a conversation raised

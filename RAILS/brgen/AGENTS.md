@@ -57,7 +57,7 @@ Full Rails 8 app in this directory. `brgen.sh` copy-tree deploys to
   other apps).
 - Do not: enable `force_ssl` behind relayd; edit `OPENBSD/deploy_inventory.json`
   without updating `apps.yml`; add a fourth public Rails app
-  (`OPENBSD/DECISIONS.md`).
+  (`OPENBSD/CLAUDE.md`, "Refused, and why").
 
 ## BergenDemoSeeder stays one class
 
