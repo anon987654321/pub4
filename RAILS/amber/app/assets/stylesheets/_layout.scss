@@ -46,14 +46,26 @@ main#main-content header > nav {
   margin-block-start: var(--space-6);
 }
 
-/* Phone first: main carries its own gutter, and the section nav is a single
-   scrolling row rather than wrapping onto several. From md up the family contract
-   takes the gutter back — _layout_chrome zeroes .layout > main's inline padding —
-   and the nav wraps again, which is this file's own base for it.
+/* Phone first: main carries the family gutter, and the section nav is a single
+   scrolling row rather than wrapping onto several. From 640px the 600px column
+   sits inside a wider viewport, whose margin is the gutter, so main gives its
+   padding back and the nav wraps again.
+   The selector names .layout because _layout_chrome zeroes `.layout > main` at
+   every width, and a bare main#main-content loses to it on specificity — which
+   put amber's text against the screen edge at 400px.
    The `flex: 0 0 auto` on the nav's controls stays unconditional: it stops them
    shrinking in the scrolling row and is harmless once the row wraps. */
-main#main-content {
-  padding-inline: var(--space-6);
+.layout > main#main-content {
+  padding-inline: var(--page-gutter);
+}
+
+/* _minimal makes every main a centred flex column, so a short page floated
+   mid-screen and each child shrank to its own width and centred on its own: the
+   demo title, its outfit list and its item grid started at three different x
+   positions. A page reads from one left edge at the top of the column. */
+.layout > main#main-content {
+  align-items: stretch;
+  justify-content: flex-start;
 }
 
 main#main-content header > nav {
@@ -69,7 +81,7 @@ main#main-content header > nav form {
 }
 
 @media (min-width: 640px) {
-  main#main-content {
+  .layout > main#main-content {
     padding-inline: 0;
   }
 
