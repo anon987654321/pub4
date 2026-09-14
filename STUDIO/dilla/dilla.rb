@@ -19266,6 +19266,7 @@ def demo_all_order
   # DEMO_CATALOG=stream reproduces what the broadcast would actually play,
   # including any DILLA_PROGRESSIONS_ONLY filtering.
   return locked if ENV["DEMO_CATALOG"].to_s.strip.downcase == "stream"
+  return demo_wide_order if ENV["DEMO_CATALOG"].to_s.strip.downcase == "curated"
 
   order = demo_curated_order
   # The crate, when it is asked for. The records are material rather than
@@ -19300,6 +19301,16 @@ def demo_curated_order
   VERIFIED_PROGRESSION_SLOTS.map(&:to_sym) + DillaImprovisation.names
 end
 
+# DEMO_CATALOG=curated: the wide catalogue behind the 08-18 86-piece demo and the
+# 08-27 demo the operator called "wonderful" -- the records on disk first, then
+# the stream rotation, the generated styles and the artist-verified
+# progressions. Opt-in, because the operator asked for bare `ruby dilla.rb` to
+# play the short catalogue; this keeps the long one a word away.
+def demo_wide_order
+  extra = GENERATED_STYLES.map(&:to_sym) + ARTIST_VERIFIED_PROGRESSIONS.keys.map(&:to_sym)
+  (demo_sampled_order + STREAM_TRACKS.map(&:to_sym) + extra).uniq
+end
+
 # Catalogue sizes, derived rather than written down.
 #
 # Both counts in the help text were stale, and not by a little: it advertised
@@ -19325,6 +19336,7 @@ def demo_catalog_sizes
     verified: VERIFIED_PROGRESSION_SLOTS.length,
     improvised: DillaImprovisation.names.length,
     crate: demo_sampled_order.length,
+    wide: demo_wide_order.length,
     stream: stream_track_order.length,
   }
 end
@@ -19367,7 +19379,8 @@ end
 #   DEMO_CREATIVE=1 (default) rotate pads/leads/MIDI/analog + sparse rap so chords read
 #   DEMO_TRACK_TIMEOUT=300 max seconds per track (creative stacks need headroom)
 #   DEMO_RAP_EVERY=4 rap only every Nth track (0 = never; 1 = always)
-#   DEMO_CATALOG=stream restrict to the stream rotation; DEMO_CRATE=1 adds the
+#   DEMO_CATALOG=stream restrict to the stream rotation; DEMO_CATALOG=curated
+#     plays the wide catalogue (demo_wide_order); DEMO_CRATE=1 adds the
 #     records on disk. Sizes are in demo_catalog_sizes -- do not write them here,
 #     the two that used to live in this file drifted to 4x wrong.
 #   DEMO_MP3=0 skip the mp3; DEMO_MP3_BITRATE=192k
@@ -28482,6 +28495,8 @@ def knob_help
           DEMO_CRATE=1                     Add the #{sizes[:crate]} records on disk after the catalogue
           IMPROV_SEED=<n>                  Replay one set of improvisations (drawn and logged when unset)
           DEMO_CATALOG=stream              Restrict demo-all to the stream rotation (#{sizes[:stream]})
+          DEMO_CATALOG=curated             The wide catalogue: records, stream, generated, verified (#{sizes[:wide]})
+          DEMO_FX=ringtone                 Print the ringtone chain over the joined demo
           DEMO_MP3=0 / DEMO_MP3_BITRATE    Skip the tracked mp3 / override 128k
           DEMO_TRACK_TIMEOUT=420           Seconds a track gets before the minimal retry
 

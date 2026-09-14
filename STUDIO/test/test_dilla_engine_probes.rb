@@ -2121,6 +2121,32 @@ class TestDilla < Minitest::Test
     assert_empty result.fetch("rap_off")
   end
 
+  # DEMO_CATALOG=curated brings back the wide catalogue, opt-in. Every name in it
+  # must be something a render can resolve, or the slot is a failed part.
+  def test_demo_catalog_curated_is_opt_in_and_every_name_resolves
+    result = eval_in_engine(<<~RUBY)
+      %w[DEMO_TRACKS DEMO_CATALOG DEMO_CRATE STREAM_LOCK STREAM_TRACK].each { |k| ENV.delete(k) }
+      default = demo_all_order
+      ENV["DEMO_CATALOG"] = "curated"
+      wide = demo_all_order
+      resolvable = lambda do |name|
+        CHORD_PROGRESSIONS.key?(name) || GENERATED_STYLES.include?(name) ||
+          DillaLofiMachine.harmony_profile?(name) || TRACK_SAMPLE_LOOPS.key?(name) || TRACK_PRESETS.key?(name)
+      end
+      puts JSON.generate(
+        default: default, wide: wide, curated: demo_curated_order,
+        unresolved: wide.reject { |name| resolvable.call(name) },
+        parts: [STREAM_TRACKS, GENERATED_STYLES, ARTIST_VERIFIED_PROGRESSIONS.keys].map { |t| t.map(&:to_s) }
+      )
+    RUBY
+
+    assert_equal result.fetch("curated"), result.fetch("default"), "the short catalogue stays the default"
+    wide = result.fetch("wide")
+    result.fetch("parts").each { |part| assert_empty part - wide, "the wide catalogue carries every source" }
+    assert_equal wide.uniq, wide
+    assert_empty result.fetch("unresolved"), "every wide catalogue name must resolve"
+  end
+
   # The album's non-device beats used to force COPY_MACHINE=0 and
   # DILLA_MIX_BUSES=0, taking the ringtone effects the operator loves out of
   # three beats in four. They keep the layer's defaults and lose only the wav-map.
