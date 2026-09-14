@@ -61,6 +61,7 @@ module Deploy
       spec = profile(surface.label)
       check_measure(result, surface, data, spec)
       check_wrap(result, surface, data)
+      check_glyphs(result, surface, data)
       check_type_scale(result, surface, data, spec)
       check_baseline(result, surface, data, spec)
       check_tabular(result, surface, data, spec)
@@ -141,6 +142,23 @@ module Deploy
       result.fail(
         "geometry wrap: #{surface.id} breaks #{by_key.size} #{what} at #{surface.width}px — " \
         "#{named.join('; ')} (principle=#{principle})",
+        severity: :soft
+      )
+    end
+
+    # The apps speak Norwegian by default, so a face that cannot draw æøå sets
+    # most sentences in two typefaces, the letters in a fallback beside the
+    # words around them. The probe names the face that renders each stack and
+    # whether it drew the letters itself; a stack with no named face the
+    # browser has renders in a generic, which covers them, and is not reported.
+    def check_glyphs(result, surface, data)
+      missing = Array(data["glyphs"]).select { |row| row["family"] && row["covered"] == false }
+      return if missing.empty?
+
+      families = missing.map { |row| row["family"] }.uniq
+      result.fail(
+        "geometry glyphs: #{surface.id} draws æøå from a fallback face — #{families.first(3).join(', ')} " \
+        "lack#{'s' if families.size == 1} them (principle=ui_polish)",
         severity: :soft
       )
     end

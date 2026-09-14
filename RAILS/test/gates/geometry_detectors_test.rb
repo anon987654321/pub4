@@ -3,6 +3,7 @@
 require "minitest/autorun"
 require_relative "../../gates/lib/rendered/rendered_geometry"
 require_relative "../../../OPENBSD/lib/gate_result"
+require_relative "gate_probe_harness"
 
 # The rendered-geometry detectors that read the probe's element list, proved on
 # planted payloads. Each needs Chrome and a booted app to measure anything real,
@@ -74,6 +75,54 @@ class GeometryDetectorsTest < Minitest::Test
     TYPE.check(result, surface, { "elements" => [element("form>button.btn", tag: "button", lines: 2)] })
 
     assert result.soft_failures.any? { |m| m.start_with?("geometry wrap:") }, result.soft_failures.inspect
+  end
+
+  # --- Norwegian glyphs -----------------------------------------------------
+
+  def glyph_findings(rows)
+    result = Deploy::GateResult.new
+    TYPE.check_glyphs(result, surface, { "glyphs" => rows })
+    result.soft_failures
+  end
+
+  def test_glyphs_names_a_face_that_draws_latin_but_not_aeoa
+    found = glyph_findings([{ "stack" => '"Caprasimo", serif', "family" => "Caprasimo", "covered" => false },
+                            { "stack" => "Inter, sans-serif", "family" => "Inter", "covered" => true }])
+
+    assert_equal 1, found.size, found.inspect
+    assert_match(/draws æøå from a fallback face — Caprasimo lacks them/, found.first)
+  end
+
+  # No named face the browser has means a generic renders the stack, and a generic draws æøå.
+  def test_glyphs_spares_covered_faces_and_stacks_left_to_a_generic
+    assert_empty glyph_findings([{ "stack" => "Inter, sans-serif", "family" => "Inter", "covered" => true },
+                                 { "stack" => "system-ui", "family" => nil, "covered" => nil }])
+    assert_empty glyph_findings([])
+  end
+
+  def walk_with(glyphs)
+    cdp = GateProbe::FakeCdp.new do |js, awaited|
+      next glyphs.call(awaited) if js == Deploy::GeometryProbe::GLYPHS
+      next true if js.include?("document.fonts.status")
+
+      js == Deploy::GeometryProbe::WALK ? { "elements" => [] } : {}
+    end
+    Deploy::GeometryProbe.walk(cdp, surface)
+  end
+
+  def test_walk_awaits_the_glyph_probe_and_merges_its_rows
+    payload = walk_with(->(awaited) { { "glyphs" => [{ "family" => "Inter", "covered" => awaited }] } })
+
+    assert_equal [{ "family" => "Inter", "covered" => true }], payload["glyphs"]
+    assert_equal [], payload["elements"]
+  end
+
+  def test_walk_keeps_the_surface_when_the_glyph_probe_throws
+    payload = walk_with(->(_) { raise Deploy::CdpSession::JsError, "fonts.load rejected" })
+
+    assert_nil payload["error"]
+    assert_equal 200, payload["status"]
+    refute payload.key?("glyphs")
   end
 
   # --- visual weight: the dominant box and the inverted action pair ---------
