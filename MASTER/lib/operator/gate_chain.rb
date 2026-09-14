@@ -203,9 +203,13 @@ module Operator
     end
 
     # GATE_AUTOFIX defaults to on; naming it keeps scan-only honest either way.
+    # Under the Ruby the repo pins, as the app suites below run. runner.rb refuses
+    # any other, so launched with this process's Ruby every gate was skipped and
+    # the stage reported one refusal as its whole result.
     def rails_gates(scan_only:)
-      capture(RUBY, "gates/runner.rb", "--all", chdir: File.join(ROOT, "RAILS"),
-                                                env: { "GATE_AUTOFIX" => scan_only ? "0" : "1" })
+      capture("rbenv", "exec", "ruby", "gates/runner.rb", "--all",
+              chdir: File.join(ROOT, "RAILS"),
+              env: { "GATE_AUTOFIX" => scan_only ? "0" : "1", "RBENV_VERSION" => "3.4.9" })
     end
 
     # Every file runs, then the run fails once with all of them named. Aborting

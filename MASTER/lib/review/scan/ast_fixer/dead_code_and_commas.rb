@@ -10,6 +10,33 @@ module Master
         # share the literal_lines memoization and the small predicate helpers
         # below. Separate concern from AstFixer's own transform dispatch.
         module DeadCodeAndCommas
+          # Whether the RuboCop configuration that governs a file forbids the
+          # comma. brgen, amber and bsdports inherit rubocop-rails-omakase, which
+          # enables the trailing-comma cops at their default, no_comma, and set
+          # nothing over it; their bin/ci fails on the comma this module adds.
+          # shared and MASTER set EnforcedStyleForMultiline: comma. The nearest
+          # .rubocop.yml above the file decides, read once per directory.
+          #
+          # Here rather than beside TRAILING_COMMAS, because the autofix is the
+          # half that writes. The rule consulted it and the fixer did not, so a
+          # RAILS gate run still added 351 commas the apps' own lint rejects.
+          def self.rubocop_forbids_trailing_comma?(path)
+            @rubocop_configs ||= {}
+            dir = File.dirname(File.expand_path(path.to_s))
+            until dir == File.dirname(dir)
+              config = File.join(dir, ".rubocop.yml")
+              return @rubocop_configs[config] ||= omakase_without_comma?(config) if File.file?(config)
+
+              dir = File.dirname(dir)
+            end
+            false
+          end
+
+          def self.omakase_without_comma?(config)
+            text = File.read(config)
+            text.include?("rubocop-rails-omakase") && !text.include?("EnforcedStyleForMultiline: comma")
+          end
+
           private
 
           def remove_immediate_dead_code(src)
@@ -104,6 +131,8 @@ module Master
           def executable_line?(line) = skippable_dead_line?(line)
 
           def add_trailing_commas(src)
+            return src if DeadCodeAndCommas.rubocop_forbids_trailing_comma?(@path)
+
             protected_lines = literal_lines(src)
             lines = src.lines
             changed = false

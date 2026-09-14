@@ -466,6 +466,29 @@ class TestAstFixerTransforms < Minitest::Test
     refute_includes result[:transforms], :trailing_commas
   end
 
+  # The RAILS apps inherit rubocop-rails-omakase, whose trailing-comma cops
+  # forbid the comma, and their bin/ci runs it. The rule already stood down for
+  # them; the fixer did not, and a gate run over RAILS added 351.
+  def test_trailing_commas_leave_an_omakase_app_alone
+    source = <<~RUBY
+      # frozen_string_literal: true
+
+      LIMITS = {
+        thumb: 1
+      }
+    RUBY
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, ".rubocop.yml"), "inherit_gem: { rubocop-rails-omakase: rubocop.yml }\n")
+      path = File.join(dir, "app", "limits.rb")
+      FileUtils.mkdir_p(File.dirname(path))
+      File.write(path, source)
+      result = Master::Review::Scan::AstFixer.fix(path, source)
+
+      assert_equal source, File.read(path)
+      refute_includes result.transforms, :trailing_commas
+    end
+  end
+
   def test_trailing_commas_skip_block_closers
     source = <<~RUBY
       records.map { |rec|
