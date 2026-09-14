@@ -28,7 +28,7 @@
 
 <section>
   <%= tag.h2 t("outfits.items_section") %>
-  <div class="item-grid" data-controller="sortable" data-sortable-update-url-value="<%= reorder_outfit_path(@outfit) %>">
+  <div class="item-grid" data-controller="outfit-sortable" data-outfit-sortable-update-url-value="<%= reorder_outfit_path(@outfit) %>">
     <%= render @outfit.items %>
   </div>
 </section>

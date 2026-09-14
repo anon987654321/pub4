@@ -135,6 +135,23 @@ class StimulusWiringGateTest < Minitest::Test
     assert failures.any? { |f| f.include?(%(names "never-registered", which nothing registers)) }, failures.inspect
   end
 
+  # An app controller named after a shared registration is never loaded, so the
+  # element it was written for runs the shared component instead.
+  def test_reports_an_app_controller_a_shared_registration_shadows
+    failures = with_file("bsdports/app/javascript/controllers/dropdown_controller.js",
+                         %(import { Controller } from "@hotwired/stimulus"\nexport default class extends Controller {}\n)) do
+      Deploy::StimulusWiringGate.run.failures.select { |f| f.include?("never loads") }
+    end
+
+    assert_equal [%(bsdports: controller "dropdown" never loads — stimulus_boot.js registers that identifier first)], failures
+  end
+
+  def test_a_shadow_exemption_fails_once_nothing_is_shadowed
+    failures = Deploy::StimulusWiringGate.new(shadowed_allowed: { "lightbox" => "planted", "toast" => "planted" }).run.failures
+
+    assert failures.any? { |f| f.include?(%(SHADOWED_ALLOWED names "toast")) }, failures.inspect
+  end
+
   private
 
   def mount_failures

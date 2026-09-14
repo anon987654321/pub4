@@ -55,6 +55,17 @@ module Deploy
       "reveal" => "stimulus_boot.js component table entry with no rendered element"
     }.freeze
 
+    # An app controller whose identifier stimulus_boot.js also registers never
+    # loads. bootPub4Stimulus registers synchronously, and eagerLoadControllersFrom
+    # imports each file before registering it and skips an identifier the
+    # application already holds, so the element gets the shared component and the
+    # app's file is dead. Each entry is one that stays shadowed, with the reason.
+    SHADOWED_ALLOWED = {
+      # brgen's subclass turns on lightGallery's download, counter and print
+      # controls. Loading it changes what the gallery shows: the operator's call.
+      "lightbox" => "brgen/app/javascript/controllers/lightbox_controller.js"
+    }.freeze
+
     # Every way this tree puts an identifier on an element: ERB attributes,
     # tag helpers, a hash-rocket attribute, and elements a script builds.
     MOUNT = /(?:data-controller\s*=\s*\\?["']|controller:\s*["']|["']data-controller["']\s*=>\s*["']|dataset\.controller\s*=\s*["'`]|setAttribute\(\s*["']data-controller["']\s*,\s*["'`])([^"'`]*)/
@@ -63,9 +74,10 @@ module Deploy
       new.run
     end
 
-    def initialize(root: RAILS_ROOT, unmounted_allowed: UNMOUNTED_ALLOWED)
+    def initialize(root: RAILS_ROOT, unmounted_allowed: UNMOUNTED_ALLOWED, shadowed_allowed: SHADOWED_ALLOWED)
       @rails_root = root
       @unmounted_allowed = unmounted_allowed
+      @shadowed_allowed = shadowed_allowed
       @boot_text = File.read(File.join(@rails_root, BOOT))
     end
 
@@ -73,7 +85,22 @@ module Deploy
       result = GateResult.new
       APPS.each { |app| audit_app(app, result) }
       audit_mounts(result)
+      audit_shadows(result)
       result
+    end
+
+    def audit_shadows(result)
+      shadowed = APPS.flat_map { |app| (app_identifiers(app) & shared_identifiers).map { |id| [app, id] } }
+      shadowed.each do |app, id|
+        result.checked!
+        next if @shadowed_allowed.key?(id)
+
+        result.fail("#{app}: controller #{id.inspect} never loads — stimulus_boot.js registers that identifier first")
+      end
+
+      (@shadowed_allowed.keys - shadowed.map(&:last)).each do |id|
+        result.fail("SHADOWED_ALLOWED names #{id.inspect}, which no app controller shadows any more — delete the entry")
+      end
     end
 
     # The reverse direction: a registration no element asks for is a controller
