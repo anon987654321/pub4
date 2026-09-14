@@ -80,6 +80,11 @@
   gap: var(--space-2);
 }
 
+.outfit-visual img {
+  max-inline-size: 25rem;
+  block-size: auto;
+}
+
 .luxury-meta {
   display: flex;
   flex-wrap: wrap;
