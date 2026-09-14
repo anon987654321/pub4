@@ -10,7 +10,7 @@
   --c-danger: oklch(60% 0.14 35);
   --c-code: oklch(74% 0.11 275);
   --font-mono: "JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
-  --font-label: "JetBrainsMono Nerd Font","JetBrains Mono","Cascadia Code",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --font-label: "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
   color-scheme: dark;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
@@ -65,28 +65,21 @@
 /* END:generated-face-root */
 
 /* Not a generated token. generate_face_root_css.rb owns the block above, so a
-   hand-added line inside it is drift the deploy gate stops — correctly, since
-   the generator would erase it on its next run. This one belongs to MASTER web
-   alone: matching brgen's wordmark is a property of this surface, not a shared
-   design value. */
+   hand-added line inside it is drift the deploy gate stops. The wordmark
+   names its face as the brand, and the brand is the one sans family the owner
+   set for every surface, so it reads --font-label rather than restating the
+   stack. Helvetica Neue Pro is licensed per seat and cannot ship as a webfont;
+   the stack names it where it is installed and falls to Helvetica Neue, then
+   Arial, which is metrically identical, and downloads nothing. */
 :root {
-  /* The wordmark, and only the wordmark. ai.brgen.no is the same brand as
-   brgen.no, and that brand is set in Helvetica Neue Pro — the face on the
-   printed stock. The Pro cut is licensed per seat and cannot ship as a
-   webfont, so the stack names the printed face where it exists (Apple ships
-   Helvetica Neue, most Linux ships the Nimbus Sans clone) and falls to Arial,
-   which is metrically identical to Helvetica, where it does not. Same value
-   as --font-brand in RAILS/shared _dialect_tokens.scss: matching the stack is
-   what makes the two surfaces agree, and this one downloads nothing.
-   Everything else here stays monospace. */
---font-brand: "Helvetica Neue", Helvetica, "Nimbus Sans", Arial, sans-serif;
+  --font-brand: var(--font-label);
 }
 
 html, body {
   height: 100%;
   background: var(--face-bg);
   color: var(--face-fg);
-  font: 16px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font: 16px/1.5 var(--font-label);
   font-feature-settings: "ss01","ss03","cv05","kern" 1;
   text-rendering: optimizeLegibility;
   overflow: hidden;
@@ -253,7 +246,7 @@ body[data-hidden-tab="1"] #cognition-ecology {
   border-bottom: 1px solid var(--border-faint);
   background: transparent;
   color: var(--face-fg);
-  font: 16px/1.5 var(--font-label);
+  font: 16px/1.5 var(--font-mono);
   padding: 12px 14px;
   outline: none;
 }
@@ -269,7 +262,7 @@ body[data-hidden-tab="1"] #cognition-ecology {
 #cmd-palette-list li {
   padding: 10px 14px;
   min-height: var(--tap-min);
-  font: 16px/1.5 var(--font-label);
+  font: 16px/1.5 var(--font-mono);
   color: color-mix(in srgb, var(--face-fg) 78%, transparent);
   cursor: pointer;
 }
@@ -371,7 +364,7 @@ body[data-council-persona]::after {
   top: calc(14px + var(--safe-top));
   inset-inline-start: calc(14px + var(--safe-left));
   z-index: var(--z-ui);
-  font: 700 clamp(15px,3.8vw,24px)/1 var(--x-font, "Inter",-apple-system,system-ui,sans-serif);
+  font: 700 clamp(15px,3.8vw,24px)/1 var(--font-brand);
   letter-spacing: -.03em;
   text-transform: none; /* brgen wordmark is lowercase */
   color: var(--x-text, var(--c-text));
@@ -543,7 +536,7 @@ body[data-mode="speaking"] #mic-dot {
 
 #primer h1 {
   margin: 0;
-  font: 400 clamp(1.05rem,3.2vw,1.5rem)/1.5 "Inter",Helvetica,Arial,sans-serif;
+  font: 400 clamp(1.05rem,3.2vw,1.5rem)/1.5 var(--font-label);
   letter-spacing: .01em;
   color: var(--face-fg);
   transition: transform var(--transition-fast) var(--ease-out);
@@ -666,7 +659,7 @@ body.mission-control {
            calc(var(--chrome-inset, 0.75rem) + var(--safe-right, 0px))
            calc(var(--chrome-inset, 0.75rem) + var(--safe-bottom, 0px))
            calc(var(--chrome-inset, 0.75rem) + var(--safe-left, 0px));
-  font-family: var(--font-mono, "JetBrains Mono", ui-monospace, monospace);
+  font-family: var(--font-label);
   font-size: var(--hud-lg);
   touch-action: manipulation;
   user-select: text;
@@ -708,6 +701,7 @@ body.mission-control .panel h2 {
   margin-bottom: 8px;
 }
 body.mission-control pre {
+  font-family: var(--font-mono);
   white-space: pre-wrap;
   word-break: break-word;
   opacity: 0.9;
@@ -752,7 +746,7 @@ body.mission-control a:focus-visible {
   min-height: calc(var(--face-bar-height) + var(--safe-bottom));
   height: calc(var(--face-bar-height) + var(--safe-bottom));
   padding: 0 16px var(--safe-bottom);
-  font: 16px/1.5 var(--font-label);
+  font: 16px/1.5 var(--font-mono);
   color: var(--face-fg);
   border: 0;
   background: black;
@@ -883,7 +877,7 @@ body[data-mode="speaking"] #spin-btn { display: block; }
 @keyframes cursorBlink { 0%,100%{opacity:1} 50%{opacity:0} }
 
 /* #37 Code block */
-.msg-body pre, .msg-body code { background:transparent; border-bottom:1px dotted color-mix(in srgb, var(--c-code) 18%, transparent); font-family:var(--font-label); padding:2px 5px; font-size:.88em; }
+.msg-body pre, .msg-body code { background:transparent; border-bottom:1px dotted color-mix(in srgb, var(--c-code) 18%, transparent); font-family:var(--font-mono); padding:2px 5px; font-size:.88em; }
 .msg-body pre { display:block; padding:8px 10px; margin:4px 0; white-space:pre-wrap; }
 .typing-indicator { display:inline-flex; gap:3px; margin-inline-start:6px; vertical-align:middle; }
 .typing-indicator span { width:4px; height:4px; border-radius:50%; background:var(--face-muted); animation:typingPulse 1s infinite var(--ease-in-out); }
@@ -983,7 +977,7 @@ body[data-mode="thinking"] #zsh-status { letter-spacing:.32em; }
 body[data-tts-loading="true"] canvas { filter: none; }
 
 /* FA75 copy button */
-.message.assistant .msg-copy { vertical-align: middle; background:none; border:none; color:var(--face-muted); cursor:pointer; font:12px/1.5 var(--font-label); opacity:0; transition:opacity .15s; padding:8px; min-width: var(--tap-min); min-height: var(--tap-min); }
+.message.assistant .msg-copy { vertical-align: middle; background:none; border:none; color:var(--face-muted); cursor:pointer; font:12px/1.5 var(--font-mono); opacity:0; transition:opacity .15s; padding:8px; min-width: var(--tap-min); min-height: var(--tap-min); }
 .message.assistant:hover .msg-copy,
 .message.assistant:focus-within .msg-copy { opacity:1; }
 .message.assistant .msg-copy:hover { color:var(--c-text); }
@@ -1007,7 +1001,7 @@ body[data-tts-loading="true"] canvas { filter: none; }
   border: 0;
   color: var(--face-muted);
   cursor: pointer;
-  font: 12px/1.5 var(--font-label);
+  font: 12px/1.5 var(--font-mono);
   padding: 8px 10px;
   min-width: var(--tap-min);
   min-height: var(--tap-min);
@@ -1041,7 +1035,7 @@ body[data-tts-loading="true"] canvas { filter: none; }
 
 .compaction-note,
 .message.system {
-  font: 14px/1.5 var(--font-label);
+  font: 14px/1.5 var(--font-mono);
   color: var(--face-muted);
   padding: 6px 0 2px 2px;
   border-inline-start: 2px solid var(--border-strong);
@@ -1062,7 +1056,7 @@ body[data-phantom-glitch="1"] canvas {
 }
 
 .tool-stack {
-  font: 10px/1.35 var(--font-label);
+  font: 10px/1.35 var(--font-mono);
   color: var(--face-muted);
   margin-bottom: 4px;
 }
@@ -1261,13 +1255,13 @@ body[data-history-open="1"] #chat-log {
   background: transparent;
   border: 1px solid var(--border-soft);
   color: var(--face-fg);
-  font: 11px var(--font-label);
+  font: 11px var(--font-mono);
   padding: 6px 8px;
 }
 
 .msg-collapse summary {
   cursor: pointer;
-  font: 10px var(--font-label);
+  font: 10px var(--font-mono);
   color: var(--face-muted);
   margin-bottom: 4px;
 }
@@ -1437,11 +1431,10 @@ body.wscons-mode #face-phosphor-trail {
   gap: 0.75rem;
   text-align: center;
   color: var(--face-fg);
-  font-family: var(--font-mono, ui-monospace, monospace);
+  font-family: var(--font-label);
 }
 #primer-title {
   font-weight: 400;
-  letter-spacing: 0.08em;
   text-transform: lowercase;
 }
 #primer .tagline,
@@ -1480,7 +1473,7 @@ canvas#face,
 }
 #push-enable-btn,
 .permission-prompt button {
-  font-family: var(--font-mono, ui-monospace, monospace);
+  font-family: var(--font-label);
   border-radius: 0;
   border: 1px solid var(--border-strong);
   background: transparent;

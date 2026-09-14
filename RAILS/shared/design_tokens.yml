@@ -173,7 +173,10 @@ face_root:
     c_danger: "oklch(60% 0.14 35)"
     c_code: "oklch(74% 0.11 275)"
   font_mono: '"JetBrainsMono Nerd Font", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace'
-  font_label: '"JetBrainsMono Nerd Font","JetBrains Mono","Cascadia Code",ui-monospace,"SFMono-Regular",Menlo,monospace'
+  # Two families on the face, by the owner's rule: font_label is the one sans
+  # for every label, heading, panel and the wordmark; font_mono stays for the
+  # console, meaning the reply log, the prompt and the name$ scrollback.
+  font_label: '"Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif'
   face_bg: "black"
   derived:
     face_fg: "var(--c-text)"
