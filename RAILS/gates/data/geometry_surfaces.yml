@@ -73,6 +73,13 @@ surfaces:
     path: /ports?q=zzz-no-such-port
     viewports: [desktop]
     snapshot: true
+  # The legal profile's only surface: GeometryType maps privacy to worn_type
+  # legal, and no other entry reaches that profile. The page's running text
+  # carries lists, which is what the hanging-marker probe needs to read.
+  - app: bsdports
+    label: privacy
+    path: /privacy
+    viewports: [mobile, desktop]
 
 # Surfaces whose content is inherently volatile (feeds, seeded records).
 # Snapshot + pixel comparison skip these regions; geometry still measures them.
