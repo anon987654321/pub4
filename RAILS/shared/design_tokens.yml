@@ -616,19 +616,19 @@ scale:
       # or two apart. design_tokens already governs the face -- face_root: is
       # generated into its :root -- so the tokens were shared and the rhythm
       # was not.
-      off_scale_space: 32
+      off_scale_space: 31
       # 999px is a pill written as a number, three lines under a
       # --radius-pill that means the same thing.
       off_scale_radius: 0
       off_scale_line_height: 0
       absolute_line_height: 0
       off_scale_font_weight: 0
-      off_scale_tracking: 12
+      off_scale_tracking: 10
       # Measured 2026-09-05. The face composes almost every colour from
       # --face-fg and --c-text through color-mix, so it carries more of these
       # than the apps do and they are the medium rather than the debt. Solid
       # tokens for secondary text and the alert took seven of them.
-      off_scale_opacity: 31
+      off_scale_opacity: 30
       # Measured 2026-09-03. The face keeps its own timings — .09s and .15s
       # steps(4,end) belong to a terminal that redraws in character cells,
       # not to the apps four-step transition ladder. Recorded so the tail

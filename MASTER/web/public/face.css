@@ -678,32 +678,28 @@ body.mission-control h1 {
   font-size: var(--text-title, 1.25rem);
   font-weight: 600;
   margin: 0;
-  letter-spacing: 0.04em;
 }
+/* Mission control reads as one scrollback, the way dmesg does: sections one
+   under another in an 80-column measure, space between them rather than boxes
+   around them (UI_POLISH.space_not_lines), and each section named in lowercase
+   by brightness rather than tracked capitals (TYPOGRAPHY_DISCIPLINE). */
 body.mission-control .grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--chrome-inset, 0.75rem);
+  display: block;
+  max-inline-size: 80ch;
 }
 body.mission-control .panel {
-  border: 1px solid color-mix(in srgb, var(--c-text) 18%, transparent);
-  padding: 10px 12px;
-  background: #000;
-  border-radius: 0;
-  min-height: var(--tap-min, 44px);
+  margin-block-end: 24px;
 }
 body.mission-control .panel h2 {
   font-size: var(--text-meta);
-  text-transform: uppercase;
-  letter-spacing: .1em;
-  opacity: 0.55;
-  margin-bottom: 8px;
+  font-weight: 400;
+  color: var(--face-muted);
+  margin-bottom: 4px;
 }
 body.mission-control pre {
   font-family: var(--font-mono);
   white-space: pre-wrap;
   word-break: break-word;
-  opacity: 0.9;
 }
 body.mission-control .meta { opacity: 0.65; margin-bottom: 6px; }
 body.mission-control a { color: var(--c-text); }
