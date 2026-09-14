@@ -128,10 +128,13 @@ shortest thing that repeats, which is not necessarily the bar.
 Scan the whole recording, propose windows that are loud, steady and carrying
 more energy outside the speech band than inside it, run **demucs `htdemucs_6s`**
 over those windows, keep `bass + guitar + piano + other` and drop `drums` and
-`vocals`, then find each loop's length and cut it. Results land in
-`samples/chopped/<slug>/loop.wav` with a row in `samples/chopped/loops.json`,
-and `TRACK_SAMPLE_LOOPS` merges that registry over the hand-cut literal — a
-chopped loop is `TRACK=<slug>`-selectable like any other. `CHOP_BED=1` lets the
+`vocals`, then find each loop's length and cut it. Each run writes
+`samples/chopped/<slug>/loop.wav` with a row in `samples/chopped/loops.json`.
+The rack is empty until a chop fills it: the earlier racks were deleted because
+nothing reached them, and a row whose wav is gone drops out of the registry.
+`TRACK_SAMPLE_LOOPS` reads the registry beside the hand-cut literal, and the
+hand-cut entry wins where a slug is in both, so a chopped loop is
+`TRACK=<slug>`-selectable like any other. `CHOP_BED=1` lets the
 engine pick one for any track that has no bed of its own, matched to the
 `KEY_LOCK` tonic. Off by default: switching a bed on under every track in the
 rotation changes the whole catalogue.

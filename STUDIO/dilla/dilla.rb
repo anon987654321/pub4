@@ -203,20 +203,6 @@ DEMUX_VOCAL_MODEL = "htdemucs_ft"
 # and the wiring ratchets read -- see that file for why there is exactly one of
 # them now. The order is load-bearing: constants in these files are computed at
 # load time from ones above them, and reordering silently changes their values.
-# The overlay's knobs were spelled FLYLO_* until the engine stopped naming a
-# competitor in its own source. An operator's shell history, notes and scripts
-# still say the old word, and an env var that is silently ignored is worse than
-# one that errors: the render runs, reports success, and does not do the thing
-# that was asked. So a legacy name is copied onto the new one here, once, before
-# any part reads ENV -- and only when the new name is unset, so the new spelling
-# always wins where both are given.
-ENV.keys.grep(/\AFLYLO_/).each do |legacy|
-  current = legacy.sub("FLYLO_", "WONKY_")
-  next if ENV[current] && !ENV[current].empty?
-  ENV[current] = ENV[legacy]
-  warn "dilla: #{legacy} is the old spelling of #{current} — honoured, but rename it"
-end
-
 # The engine, inline. It was 81 files under lib/engine/ required in a hand-
 # pinned order, and the order was load-bearing: constants are computed at load
 # time from ones above them. Concatenating them in that order is what the order
@@ -5541,10 +5527,10 @@ end
 
 # The whole drum bus, one switch.
 #
-# Off by default, operator instruction 2026-08-27: "kill all the drums". The
-# custom kit carries exactly one snare and it landed on every track of a
-# 451-track demo, which is what that instruction was about. DRUMS=1 brings
-# them back with nothing else changed.
+# Drums play. FullEngine::FULL_ENGINE_DEFAULTS sets DRUMS=1 at load, so the
+# "0" fallback below is reached only under DILLA_FULL=0 -- the operator's
+# standing instruction is fresh drums on every take. DRUMS=0 still silences the
+# bus with nothing else changed.
 #
 # Gated here rather than at the kit, because a kit swap still plays drums.
 def drums_enabled?
@@ -16182,90 +16168,6 @@ ensure
   segments&.each { |s| FileUtils.rm_f(s[:path]) } # scan: intentional — removes only the temp files this method rendered
 end
 
-# The README, spoken. Stripped of the video tag, the fences, and the
-# markdown so Edge TTS reads the argument, not the markup.
-def master_readme_speech_text
-  path = File.expand_path("../../MASTER/README.md", ROOT)
-  body = File.read(path)
-  body = body.sub(/<!--.*?-->/m, "")
-  body = body.sub(/<video[\s\S]*?<\/video>/i, "")
-  body = body.sub(/\A#\s*MASTER\s*/, "")
-  body = body.split(/^#### /).first.to_s
-  body = body.gsub(/```[\s\S]*?```/, "")
-  body = body.gsub(/^\s*#+\s*/, "")
-  body = body.gsub(/\[([^\]]+)\]\([^)]+\)/, '\1')
-  body = body.gsub(/[*_`]/, "")
-  spoken = body.lines.map(&:strip).reject { |line| line.empty? || line.match?(/\A[\p{Emoji}\s.]+\z/) }.join(" ").gsub(/\s+/, " ").strip
-  spoken.gsub(/Innovasjon Norge/i, "Innovation Norway")
-end
-
-def write_readme_tts!(dest)
-  text = master_readme_speech_text
-  abort "dilla: MASTER/README.md produced no speakable prose" if text.length < 40
-  FileUtils.mkdir_p(File.dirname(dest))
-  mp3 = dest.sub(/\.wav\z/i, ".mp3")
-  voice = speech_tts_voice
-  rate = speech_tts_rate
-  pitch = speech_tts_pitch
-  ok = false
-  Open3.popen2(Gem.ruby, TTS_WORKER, voice, rate, pitch, mp3) do |stdin, _stdout, wait|
-    stdin.write(text)
-    stdin.close
-    ok = wait.value.success?
-  end
-  abort "dilla: README TTS failed (#{voice})" unless ok && File.size?(mp3).to_i > 500
-  if dest.end_with?(".wav")
-    sh! "ffmpeg", "-y", "-i", mp3, "-ac", "2", "-ar", "44100", dest
-    FileUtils.rm_f(mp3)
-  else
-    FileUtils.mv(mp3, dest)
-  end
-  dest
-end
-
-# Bare invoke. Every mix/speech/stem knob the README loop needs is on here
-# so `ruby dilla.rb` is the whole command — no flags, no ENV.
-README_LOOP_DEFAULTS = {
-  "SPEAK" => "1",
-  "SCRAMBLE_SPEECH" => "0",
-  "SPEAK_QUIRK" => "0",
-  "SPEAK_RATE" => "-22%",
-  "STEM_EXPORT" => "1",
-  "KEEP_STEMS" => "1",
-  "COMPOSITION" => "1",
-  "DILLA_QUALITY_GATE" => "1",
-  "LISTEN_PASSES" => "2",
-  "MOTIF_RECALL" => "1",
-  "LAYER_KICK" => "1",
-  "BACKBEAT_CLAP" => "1",
-  "HARMONY_LEAD" => "1",
-  "BARS" => "8",
-  "SYNTH_CYCLE" => "1",
-  "SYNTH_MORPH" => "1",
-  "LOOP_PAD_ROTATE" => "1",
-  "ANALOG_PAD" => "1",
-  "SPACE_ECHO" => "1",
-  "PAD_LAYERS" => "1",
-  "LEARNED_PROGRESSION" => "1",
-  # The kit is synthesised, so the readme loop plays it rather than a recording
-  # of somebody else's drums.
-  "DRUM_LOOP" => "0",
-}.freeze
-
-def readme_loop!
-  force_env!(README_LOOP_DEFAULTS, label: "README_LOOP_DEFAULTS")
-  ENV["RENDER_MODE"] = "record" if ENV["RENDER_MODE"].to_s.empty?
-  apply_render_mode!
-  dest = File.join(OUTPUT_DIR, "loop.wav")
-  tts = File.join(OUTPUT_DIR, "tts.wav")
-  n_bars = ENV.fetch("BARS", "8").to_i
-  dmesg("readme TTS -> #{File.basename(tts)}", unit: "speech0", parent: "dilla0")
-  write_readme_tts!(tts)
-  dmesg("readme loop #{n_bars} bars -> #{File.basename(dest)}", unit: "loop0", parent: "dilla0")
-  render_dilla(dest, n_bars)
-  dest
-end
-
 # --------------------------------------------------------------------------
 # engine part: live_play
 # --------------------------------------------------------------------------
@@ -18184,7 +18086,11 @@ def promote_progression_hook!(track, beauty, report: nil, path: nil)
     warn "promoted_profiles.json corrupt (#{e.message}), resetting"
     {}
   end
-  key = track.to_s.downcase.tr("-", "_")
+  # The profile's own spelling, not a downcased one: the stream weights are
+  # matched against rotation names, and gospel_bIII downcased is a name no
+  # rotation carries, so its promotions never counted.
+  spelled = track.to_s.downcase.tr("-", "_")
+  key = DillaLofiMachine::PROFILE_KEY_INDEX.fetch(spelled.to_sym, spelled).to_s
   promoted[key] = (promoted[key] || 0) + 1
   promoted["_last"] = { "track" => key, "beauty" => beauty.round(1), "at" => Time.now.utc.iso8601 }
   DillaFrozen.write_json(PROMOTED_PROFILES_PATH, promoted)
@@ -19096,11 +19002,12 @@ def demo_slot_pad_env(idx)
     "PAD_VOICE" => DEMO_PAD_ROTATION[idx % DEMO_PAD_ROTATION.length],
     "PAD_ARP_MODE" => DEMO_PAD_ARP_ROTATION[idx % DEMO_PAD_ARP_ROTATION.length],
     "VOICING" => DEMO_VOICING_ROTATION[idx % DEMO_VOICING_ROTATION.length],
-    "PAD_LAYERS" => "0",
-    "CHORD_BARS" => "1",
-    # The catalogue is a listening reference, not a pad loudness test. Keep
-    # the documented single voice, but leave room for the pocket, bass and
-    # short lead fragments that define the source records.
+    # A stack_* slot plays as its stack, and each progression keeps its own
+    # chord length rather than a one-bar change forced on every slot.
+    "PAD_LAYERS" => "1",
+    # The catalogue is a listening reference, not a pad loudness test: leave
+    # room for the pocket, bass and short lead fragments that define the
+    # source records.
     "PAD_VOL" => "38",
     "HARM_MIX_WEIGHT" => "0.78",
     "HARM_BUS_VOL" => "0.88",
@@ -19239,24 +19146,38 @@ end
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-# Pad / arp / voicing pools for demo-all — distinct sonic identity per slot
-# (stream DNA alone keeps stack_soul+held+jonas_v and reads as "one song").
-# Rhodes / Prophet first — glass/vapor/neon are spice, not the main course.
-# The pad voices the demo draws from.
+# The pad voices demo-all draws from, one per slot -- a distinct identity per
+# slot, because stream DNA alone keeps stack_soul+held+jonas_v and reads as one
+# song.
 #
-# This was fourteen slots naming nine voices, and three of them -- stack_rhodes,
-# stack_prophet, stack_soul -- filled more than half. Measured across all 86
-# tracks, 13 of the 37 defined pad voices were ever selected and 24 never were,
-# including every one of pad_dilla, pad_wonky and pad_royksopp: voices named for
-# the producers this engine models, which had never been rendered once.
+# This is the rotation behind the 08-27 demo the operator called "wonderful and
+# magical" ("i love the pads and chord progressions now"): 53 slots naming 38
+# voices, so every voice named for a producer the engine models (pad_dilla,
+# pad_wonky, pad_royksopp, pad_madlib) is reached. The repeats are deliberate:
+# the Rhodes and Prophet stacks are the house sound and come up most often, and
+# glass, vapor and neon are spice. A three-voice cut replaced it on 09-12
+# without a listening pass and the next demo was judged "horrible", so the
+# full rotation is the default.
 #
-# Widened to reach all of them. The repeats that remain are deliberate -- the
-# Rhodes and Prophet stacks are the house sound and should still come up most
-# often -- but a catalogue of 86 pieces now draws on 37 voices rather than
-# leaning on three.
-#
+# stack_world, stack_giga, stack_yamaha and stack_vintage are layer stacks
+# rather than single voices, so they arrive with their own internal blend; they
+# are spaced out rather than clustered, because two thick stacks in consecutive
+# slots read as one long stack. demo_slot_pad_env keeps PAD_LAYERS=1 so a
+# stack_* slot renders as the stack it names. `texture` names no preset and
+# plays apply_pad_voice_preset!'s Rhodes/Moog/Prophet soul default, which is
+# what that slot played in the demo the rotation comes from.
 DEMO_PAD_ROTATION = %w[
-  rhodes_solo pad_madlib yamaha_solo
+  stack_rhodes stack_prophet pad_dilla stack_soul rhodes
+  pad_wonky prophet stack_glass rhodes_solo stack_vapor
+  stack_rhodes pad_madlib moog stack_prophet vintage
+  stack_soul pad_royksopp blend stack_yamaha glass
+  stack_rhodes fm stack_vintage prophet nylon_soul
+  stack_prophet vapor stack_giga crystal stack_fm_epiano
+  stack_soul yamaha stack_world ice giga_fm
+  stack_rhodes neon supersaw_bed stack_prophet orchestral
+  pulse stack_soul vintage_choir stack_rhodes
+  harmonica stack_vapor accordion stack_glass yamaha_solo
+  stack_soul giga_stack stack_prophet texture
 ].freeze
 DEMO_PAD_ARP_ROTATION = %w[held held wash shimmer held wash figure held].freeze
 DEMO_VOICING_ROTATION = %w[
@@ -19335,6 +19256,7 @@ def demo_all_order
   # DEMO_CATALOG=stream reproduces what the broadcast would actually play,
   # including any DILLA_PROGRESSIONS_ONLY filtering.
   return locked if ENV["DEMO_CATALOG"].to_s.strip.downcase == "stream"
+  return demo_wide_order if ENV["DEMO_CATALOG"].to_s.strip.downcase == "curated"
 
   order = demo_curated_order
   # The crate, when it is asked for. The records are material rather than
@@ -19369,6 +19291,16 @@ def demo_curated_order
   VERIFIED_PROGRESSION_SLOTS.map(&:to_sym) + DillaImprovisation.names
 end
 
+# DEMO_CATALOG=curated: the wide catalogue behind the 08-18 86-piece demo and the
+# 08-27 demo the operator called "wonderful" -- the records on disk first, then
+# the stream rotation, the generated styles and the artist-verified
+# progressions. Opt-in, because the operator asked for bare `ruby dilla.rb` to
+# play the short catalogue; this keeps the long one a word away.
+def demo_wide_order
+  extra = GENERATED_STYLES.map(&:to_sym) + ARTIST_VERIFIED_PROGRESSIONS.keys.map(&:to_sym)
+  (demo_sampled_order + STREAM_TRACKS.map(&:to_sym) + extra).uniq
+end
+
 # Catalogue sizes, derived rather than written down.
 #
 # Both counts in the help text were stale, and not by a little: it advertised
@@ -19394,6 +19326,7 @@ def demo_catalog_sizes
     verified: VERIFIED_PROGRESSION_SLOTS.length,
     improvised: DillaImprovisation.names.length,
     crate: demo_sampled_order.length,
+    wide: demo_wide_order.length,
     stream: stream_track_order.length,
   }
 end
@@ -19436,7 +19369,8 @@ end
 #   DEMO_CREATIVE=1 (default) rotate pads/leads/MIDI/analog + sparse rap so chords read
 #   DEMO_TRACK_TIMEOUT=300 max seconds per track (creative stacks need headroom)
 #   DEMO_RAP_EVERY=4 rap only every Nth track (0 = never; 1 = always)
-#   DEMO_CATALOG=stream restrict to the stream rotation; DEMO_CRATE=1 adds the
+#   DEMO_CATALOG=stream restrict to the stream rotation; DEMO_CATALOG=curated
+#     plays the wide catalogue (demo_wide_order); DEMO_CRATE=1 adds the
 #     records on disk. Sizes are in demo_catalog_sizes -- do not write them here,
 #     the two that used to live in this file drifted to 4x wrong.
 #   DEMO_MP3=0 skip the mp3; DEMO_MP3_BITRATE=192k
@@ -19949,10 +19883,23 @@ def album_slot_env(idx)
     env.merge!("COPY_MACHINE" => "6", "WAV_MAP" => image, "WAV_MAP_PATH" => "spiral",
                "DILLA_MIX_BUSES" => "1", "BUS_MOD_SYNC" => "1/8")
   else
-    env.merge!("COPY_MACHINE" => "0", "WAV_MAP" => "", "DILLA_MIX_BUSES" => "0")
+    env.merge!(album_undevice_env)
   end
 
   env
+end
+
+# A beat between device slots loses only the wav-map. Copy Machine and the mix
+# buses go back to what the ringtone layer and the full engine default them to,
+# not to off: the operator loves the ringtone effects ("i also love the ringtool
+# effects"), and switching them off on three beats in four took them out of
+# most of the record. An operator pin still wins.
+def album_undevice_env
+  copies = RingtoneLayer.ringtone_layer_enabled? ? RingtoneLayer::RINGTONE_LAYER_DEFAULTS["COPY_MACHINE"] : "0"
+  buses = FullEngine.full_engine_enabled? ? FullEngine::FULL_ENGINE_DEFAULTS["DILLA_MIX_BUSES"] : "0"
+  { "COPY_MACHINE" => USER_PINNED_ENV.fetch("COPY_MACHINE", copies),
+    "WAV_MAP" => "",
+    "DILLA_MIX_BUSES" => USER_PINNED_ENV.fetch("DILLA_MIX_BUSES", buses) }
 end
 
 # The bed is audio, and audio is not in git. A record that names a loop nobody
@@ -20044,8 +19991,17 @@ def demo_part_rendered?(part)
   !demo_part_dead?(part)
 end
 
+# The ringtone post-chain over the joined demo is opt-in: DEMO_FX=ringtone.
+# Every slot already carries its own ringtone layer (copy machine, LPG, voice
+# stack), and printing tremolo, chorus and a crusher over the whole album on
+# top of that went out by default on 09-12 unheard; the demo it produced was
+# called "horrible".
+def demo_fx_ringtone?
+  ENV.fetch("DEMO_FX", "0") == "ringtone"
+end
+
 def demo_ringtone_fx!(path)
-  return path if ENV.fetch("DEMO_FX", "ringtone") == "0"
+  return path unless demo_fx_ringtone?
 
   # The chain is a colour, not a fader, and it has to leave the level where it
   # found it. Its in/out gains multiply to about -21 LU: parts at -18.8 LUFS come
@@ -20088,10 +20044,24 @@ def demo_ringtone_fx!(path)
   path
 end
 
-def demo_all(bars_count = 4, destination = nil)
+# Twelve bars a slot: long enough for a progression to turn round twice and for
+# the arrangement to leave its intro, which four bars never did -- the 09-14
+# four-bar demo ran under three minutes and was stopped as "horrible". Eight for
+# demo-quick, whose job is a fast A/B.
+DEMO_BARS = 12
+DEMO_QUICK_BARS = 8
+
+# The bar count a demo command renders: a numeric first argument, else BARS as
+# the operator pinned it at load (apply_best_defaults! writes BARS=32 into ENV,
+# so ENV cannot tell a pin from a fill), else the command's default.
+def demo_command_bars(default)
+  (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || USER_PINNED_ENV["BARS"] || default.to_s
+end
+
+def demo_all(bars_count = DEMO_BARS, destination = nil)
   acquire_demo_lock! unless ENV["DEMO_NO_LOCK"] == "1"
   bars_count = bars_count.to_i
-  bars_count = 4 unless bars_count.positive?
+  bars_count = DEMO_BARS unless bars_count.positive?
   dest = destination.to_s
   dest = File.join(ROOT, "demo.wav") if dest.empty?
   # each-mode writes its mp3s to the dilla root and its transient wav straight
@@ -20458,7 +20428,9 @@ voice_stack_every = (ENV["DEMO_VOICE_STACK_EVERY"] || "3").to_i
 if demo_techno_slot?(idx, slug)
   force_env!({ "DRUM_PRESET" => "industrial_techno",
                "POCKET_SET" => "industrial",
-               "BPM" => "92",
+               # The slot pad env pins every slot to 92, so a techno slot
+               # re-pins to its kit's own tempo or the kit plays at hip-hop speed.
+               "BPM" => DillaLofiMachine::DRUM_PRESETS[:industrial_techno][:bpm].to_s,
                "SNARE_EARLY" => "0",
                "KICK_LATE" => "0",
                # The four-bar phrase in schedule_eclectic_percussion! plays over
@@ -24499,8 +24471,15 @@ end
 # ANALOG_SYNTH=0 puts the soundfont back, for a take voiced against it and for
 # the sampled instruments an oscillator cannot be -- a choir is a recording of
 # people, and no filter setting gets there.
+#
+# The default is a named constant because provenance records it: every take
+# before d6ab8a0c8 played its pads through soundfonts and its sidecar names no
+# ANALOG_SYNTH, so replaying one silently swapped the instrument. A sidecar now
+# says which instrument played even when nobody set the knob.
+ANALOG_SYNTH_DEFAULT = "1"
+
 def analog_synth_enabled?
-  ENV.fetch("ANALOG_SYNTH", "1") != "0"
+  ENV.fetch("ANALOG_SYNTH", ANALOG_SYNTH_DEFAULT) != "0"
 end
 
 # Struck instruments, which keep their envelope whatever they are asked to
@@ -28331,14 +28310,11 @@ def command_help
       ["demo-all", "[bars] [out.wav]", "The older engine's catalogue: #{sizes[:verified]} verified + #{sizes[:improvised]} improvised -> demo.wav + demo.mp3"],
       ["demo-each", "[bars]", "The same catalogue, one mp3 per track, no concat"],
       ["demo-quick", "[bars]", "An evenly spaced sample of the catalogue, for judging a change"],
-      ["demo", "", "Every record in the demo crate against three progressions"],
       ["showcase", "", "A few bars of each named style -> demo.wav"],
-      ["readme-loop", "", "loop.wav plus a spoken reading of MASTER's README"],
       ["album", "[out.mp3]", "Master data/album_tracks.yml into one crossfaded record"],
       ["setlist", "<file.json> [outdir] | save <file.json>", "Render a set of takes from its recipe, or save one"],
       ["replay", "<file.provenance.json>", "Print the command that rebuilds a render"],
       ["rerender", "<src|sidecar> <dest> [KEY=VAL...]", "A render's own recipe with a fresh seed"],
-      ["balance", "<#{BALANCE_VARIANTS.keys.join('|')}>", "Audition the sample-to-pad balance"],
       ["mix", "[version]", "The Sirkel Sag x Voicemails vocal mix (default v11)"],
       ["v7", "", "That vocal mix generation"],
       ["v8", "", "That vocal mix generation"],
@@ -28516,6 +28492,8 @@ def knob_help
           DEMO_CRATE=1                     Add the #{sizes[:crate]} records on disk after the catalogue
           IMPROV_SEED=<n>                  Replay one set of improvisations (drawn and logged when unset)
           DEMO_CATALOG=stream              Restrict demo-all to the stream rotation (#{sizes[:stream]})
+          DEMO_CATALOG=curated             The wide catalogue: records, stream, generated, verified (#{sizes[:wide]})
+          DEMO_FX=ringtone                 Print the ringtone chain over the joined demo
           DEMO_MP3=0 / DEMO_MP3_BITRATE    Skip the tracked mp3 / override 128k
           DEMO_TRACK_TIMEOUT=420           Seconds a track gets before the minimal retry
 
@@ -28548,7 +28526,7 @@ def knob_help
           WONKY_DRUM_OVERLAY=1             Wonky overlay; Camel grid on quartal_west_coast / wonky_camel
           LA_BEAT_PROGRESSION=1            Long random progressions + variable chord lengths
           RAP_VOCAL=<slug>                 Fit and mix a vocal (RAP_VOCAL_MIX, _WEIGHT, _BED_WEIGHT, _SPARKLE_DB)
-          SPEAK=0|1                        The README reading on readme-loop; SPEAK_VOICE, SPEAK_RATE
+          SPEAK=0|1                        Speech over a render; SPEAK_VOICE, SPEAK_RATE
           CHOP_CANDIDATES / CHOP_KEEP / CHOP_SPAN   Tune chop; TRACK=<slug> renders over one, CHOP_BED=1 picks by key
 
         DEVICES IN A RENDER (all off by default; each replaces or adds a real layer)
@@ -30845,6 +30823,15 @@ def rap_vocal_atempo_chain(ratio)
   parts.map { |t| "atempo=#{t.round(4)}" }.join(",")
 end
 
+# Stage 1 of a rap vocal fit: clean the voice, then fit its tempo with atempo,
+# which keeps pitch. Nothing here resamples. A rapper is never pitch shifted --
+# not into the beat's key, not by a semitone -- because a moved voice stops
+# being that rapper; the operator's golden rule, and the reason no key-align
+# step exists.
+def rap_vocal_segment_filter(voice_chain, tempo_ratio)
+  "#{voice_chain},#{rap_vocal_atempo_chain(tempo_ratio)},asetpts=PTS-STARTPTS"
+end
+
 # Voice-only chain for demucs "vocals" stems.
 # Goal: hear Jonas V (speech/rap), never residual kick/bass/hats from the source beat.
 # Demucs always leaves some kit bleed; we kill it hard then denoise the floor.
@@ -32928,226 +32915,6 @@ def rap_vocal_render_snapped!(stretched, fit_path, placements, duration:, outer:
   fit_path
 end
 
-# --- Vocal key alignment -----------------------------------------------------
-# atempo preserves pitch. That is correct for a tempo fit and it is also why the
-# vocal path has never changed a stem's key: rap_vocal_atempo_chain, asetpts and
-# the crossfade loop all leave pitch alone, and nothing else in the chain touches
-# it. So a stem whose notes sit outside the beat's key stays outside it for the
-# entire render.
-#
-# Measured on gunnhild's 86bpm/32bar fit against db_major_minor_fall (Dbmaj7 Cm7 Fm7
-# Bbm7 — Db major): the three strongest pitch classes in the vocal are A (17.5%
-# of voiced energy), Ab (14.7%) and B (13.1%). A and B are not in Db major. In
-# total 38.3% of the vocal's energy landed on non-key notes against 32.1% on key
-# notes, with A — a major third against the Fm7 the progression sits on — the
-# single loudest thing in the take.
-#
-# This is a key mismatch, not a detuned stem: the same fit measures -0.6 cents
-# mean deviation from equal temperament, so it is in tune with itself and with
-# A=440. Correcting it needs a transpose, not a fine-tune.
-RAP_VOCAL_KEY_OCTAVES = (3..5).freeze
-# ~130-988 Hz. Below C3 a semitone is narrower than the analysis resolution
-# (3.9 Hz at N=2048/8kHz), so those octaves would smear into their neighbours.
-RAP_VOCAL_KEY_SR = 8_000
-RAP_VOCAL_KEY_N = 2_048
-RAP_VOCAL_KEY_HOP = 1_024
-# A transpose is a real cost -- asetrate resampling shifts formants, so a voice
-# moved far reads as pitched-up/down rather than as the same singer in a new
-# key. Cap it at a whole tone and take the smaller of two near-equal wins.
-RAP_VOCAL_KEY_MAX_SHIFT = 2
-# Don't spend a transpose on a coin-flip: the shift has to move at least this
-# much of the vocal's energy onto key notes to be worth the formant cost.
-RAP_VOCAL_KEY_MIN_GAIN = 0.05
-
-# Chroma vector: 12 pitch classes, framewise Goertzel at each class's frequency
-# in each analysed octave. Goertzel rather than a full FFT because only 36 of
-# 1024 bins are ever read, and framewise rather than one pass over the whole
-# take because a 16s window resolves to 0.06 Hz — far narrower than a sung note
-# wanders, so the energy would smear across bins instead of accumulating.
-def audio_chroma(path)
-  raw = pipe_floats(path, "highpass=f=110,lowpass=f=1100," \
-                          "aformat=sample_fmts=flt:channel_layouts=mono:sample_rates=#{RAP_VOCAL_KEY_SR}")
-  return nil if raw.length < RAP_VOCAL_KEY_N
-
-  targets = RAP_VOCAL_KEY_OCTAVES.flat_map do |octave|
-    (0..11).map do |pc|
-      midi = ((octave + 1) * 12) + pc
-      [pc, 440.0 * (2**((midi - 69) / 12.0))]
-    end
-  end
-  # Goertzel coefficient per target frequency, plus a Hann window reused across
-  # frames.
-  coeffs = targets.map { |pc, hz| [pc, 2.0 * Math.cos(2.0 * Math::PI * hz / RAP_VOCAL_KEY_SR)] }
-  han = Array.new(RAP_VOCAL_KEY_N) { |n| 0.5 - (0.5 * Math.cos(2.0 * Math::PI * n / (RAP_VOCAL_KEY_N - 1))) }
-  chroma = Array.new(12, 0.0)
-  frames = 0
-  pos = 0
-  while pos + RAP_VOCAL_KEY_N <= raw.length
-    win = Array.new(RAP_VOCAL_KEY_N) { |n| raw[pos + n] * han[n] }
-    rms = Math.sqrt(win.sum { |v| v * v } / RAP_VOCAL_KEY_N)
-    # Voiced frames only. Silence and breath carry no key, and a gated stem is
-    # mostly silence — including it adds a flat floor to every class.
-    if rms > 0.008
-      coeffs.each do |pc, coeff|
-        s1 = 0.0
-        s2 = 0.0
-        i = 0
-        while i < RAP_VOCAL_KEY_N
-          s0 = win[i] + (coeff * s1) - s2
-          s2 = s1
-          s1 = s0
-          i += 1
-        end
-        chroma[pc] += Math.sqrt((s1 * s1) + (s2 * s2) - (coeff * s1 * s2))
-      end
-      frames += 1
-    end
-    pos += RAP_VOCAL_KEY_HOP
-  end
-  return nil if frames.zero?
-
-  total = chroma.sum
-  return nil unless total.positive?
-
-  chroma.map { |v| v / total }
-end
-
-# Root pitch class of a chord name. PAD_CHORD_LOOKUP only holds the voicings the
-# pad engine registered, and the progressions name chords it never registered:
-# db_major_minor_fall is Dbmaj7/Cm7/Fm7/Bbm7 while the lookup carries the ...maj9/m9
-# forms, so every one of its four chords missed and the whole progression scored
-# as having no harmony at all.
-CHORD_ROOT_RE = /\A([A-G])([b#]?)/
-def chord_name_root_class(name)
-  m = CHORD_ROOT_RE.match(name.to_s)
-  return nil unless m
-
-  base = { "C" => 0, "D" => 2, "E" => 4, "F" => 5, "G" => 7, "A" => 9, "B" => 11 }[m[1]]
-  return nil if base.nil?
-
-  case m[2]
-  when "b" then (base - 1) % 12
-  when "#" then (base + 1) % 12
-  else base
-  end
-end
-
-# Third and fifth implied by the name, so a chord the lookup does not carry still
-# contributes the interval that decides major vs minor -- the distinction the
-# vocal actually clashes with.
-def chord_name_tone_classes(name)
-  root = chord_name_root_class(name)
-  return [] if root.nil?
-
-  body = name.to_s.sub(CHORD_ROOT_RE, "").sub(%r{/.*\z}, "")
-  minor = body.match?(/\Am(?!aj)/)
-  dim = body.match?(/\Adim|\A0/)
-  third = if dim || minor then 3 else 4 end
-  fifth = dim ? 6 : 7
-  [root, (root + third) % 12, (root + fifth) % 12]
-end
-
-# How strongly each pitch class belongs to the progression, as a weight rather
-# than a member/non-member flag. A binary set is useless on the slash-chord
-# progressions: pedal_e_descent (D/E Db/E C/E Bm/E Bbm/E Am/E) unions to all
-# twelve classes, so every shift scored a perfect 100% and the comparison
-# carried no information. Counting how many chords contain a class keeps the
-# tonic centre distinguishable from a passing chromatic tone.
-def progression_pitch_class_weights(progression)
-  names = CHORD_PROGRESSIONS[progression]
-  return nil if names.nil? || names.empty?
-
-  weights = Array.new(12, 0.0)
-  names.each do |name|
-    chord = PAD_CHORD_LOOKUP[name]
-    classes = Array(chord && chord[:hz]).filter_map do |hz|
-      next nil unless hz.to_f.positive?
-      (69 + (12 * Math.log2(hz.to_f / 440.0))).round % 12
-    end
-    classes = chord_name_tone_classes(name) if classes.empty?
-    # Root and third carry the chord's identity; count the whole voicing but
-    # give the root extra weight so the tonic centre wins ties.
-    classes.uniq.each { |c| weights[c] += 1.0 }
-    root = chord_name_root_class(name)
-    weights[root] += 0.5 if root
-  end
-  total = weights.sum
-  return nil unless total.positive?
-
-  weights.map { |w| w / total }
-end
-
-# Pick the transpose that best lines the vocal's energy up with the progression's
-# harmony: the dot product of the vocal chroma against the shifted chord-tone
-# weights. Ties go to the smaller shift, and 0 wins unless a shift clears
-# RAP_VOCAL_KEY_MIN_GAIN relative to it, so a vocal already in key is untouched.
-def rap_vocal_key_shift(chroma, key_weights, max_shift: RAP_VOCAL_KEY_MAX_SHIFT)
-  return 0 if chroma.nil? || key_weights.nil?
-
-  scored = (-max_shift..max_shift).map do |shift|
-    # Shifting the audio up by `shift` moves energy at class c to c+shift, so
-    # compare chroma[c] against the weight of where it lands.
-    fit = (0..11).sum { |c| chroma[c] * key_weights[(c + shift) % 12] }
-    [shift, fit]
-  end
-  base = scored.find { |shift, _| shift.zero? }.last
-  return 0 unless base.positive?
-
-  # The threshold is relative, and it scales with the size of the move. Relative
-  # because the dot product's scale depends on how concentrated the
-  # progression's weights are, so one absolute number would mean different
-  # things for a 4-chord vamp and a 12-class slash cycle. Scaled because the
-  # cost is not flat: a whole tone through asetrate resamples formants by 12%,
-  # which reads as a pitched-up singer rather than the same singer in a new key,
-  # so it has to earn twice what a semitone does. Measured on gunnhild: this is
-  # what separates db_major_minor_fall (+1 at 5.1%, taken) from its own +2 at 8.7%
-  # (rejected — a bigger move on weaker evidence).
-  qualified = scored.select do |shift, fit|
-    next false if shift.zero?
-    (fit - base) / base >= RAP_VOCAL_KEY_MIN_GAIN * shift.abs
-  end
-  return 0 if qualified.empty?
-
-  qualified.max_by { |shift, fit| [fit.round(6), -shift.abs] }.first
-end
-
-# asetrate raises pitch and tempo together; atempo puts the tempo back. That
-# leaves the take its original length in the new key. Formants move with the
-# resample, which is the reason RAP_VOCAL_KEY_MAX_SHIFT is small.
-def rap_vocal_pitch_shift_chain(semitones)
-  return nil if semitones.to_i.zero?
-
-  ratio = 2**(semitones.to_f / 12.0)
-  "asetrate=#{(SAMPLE_RATE * ratio).round},aresample=#{SAMPLE_RATE}," \
-    "#{rap_vocal_atempo_chain(1.0 / ratio)}"
-end
-
-# Resolved once per fit and cached on the catalog entry: the chroma pass costs a
-# full decode plus 36 Goertzel accumulators per frame, and a stem's key does not
-# change between renders.
-def rap_vocal_resolved_key_shift(entry, vocal_path, progression)
-  return 0 if ENV["RAP_VOCAL_KEY_ALIGN"] == "0"
-
-  forced = ENV["RAP_VOCAL_KEY_SHIFT"]
-  return forced.to_i.clamp(-6, 6) if forced && !forced.strip.empty?
-
-  key_weights = progression_pitch_class_weights(progression)
-  return 0 if key_weights.nil?
-
-  chroma = entry.is_a?(Hash) ? entry["chroma"] : nil
-  if chroma.nil? || chroma.length != 12
-    chroma = audio_chroma(vocal_path)
-    return 0 if chroma.nil?
-    if entry.is_a?(Hash)
-      entry["chroma"] = chroma.map { |v| v.round(5) }
-      cat = rap_vocal_load_catalog
-      cat["vocals"] = Array(cat["vocals"]).map { |v| v["slug"] == entry["slug"] ? entry : v }
-      rap_vocal_save_catalog!(cat)
-    end
-  end
-  rap_vocal_key_shift(chroma, key_weights)
-end
-
 # Where in the take this track enters.
 #
 # The offset above is computed from the take alone -- densest region, snapped
@@ -33262,16 +33029,10 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil, progressio
   variant = variant.to_i
   ss = rap_vocal_variant_offset(ss, variant, phrases:, vocal_path:) if variant.positive? && !bar_offset
   out_dir = File.dirname(vocal_path)
-  # Transposed into the beat's key in stage 1 below. Resolved here because the
-  # shift has to be part of the filename: bpm+bars alone named the same file for
-  # two tracks at the same tempo in different keys, so whichever rendered first
-  # won and the second silently reused a fit built for someone else's harmony.
-  key_shift = rap_vocal_resolved_key_shift(entry, vocal_path, progression)
-  key_tag = key_shift.zero? ? "" : format("_key%+d", key_shift)
   # variant is part of the name because the fit is cached on this path: without
-  # it two tracks at one tempo and key were handed the same rendered vocal.
+  # it two tracks at one tempo were handed the same rendered vocal.
   variant_tag = variant.positive? ? "_v#{variant}" : ""
-  fit_path = File.join(out_dir, "fit_#{beat_bpm.round}_#{n_bars}bars#{key_tag}#{variant_tag}.wav")
+  fit_path = File.join(out_dir, "fit_#{beat_bpm.round}_#{n_bars}bars#{variant_tag}.wav")
   # Already-isolated → light polish only (no second heavy makeup that re-lifts bleed).
   # Fresh/unclean → full voice-only isolation.
   voice_chain = isolated ? rap_vocal_voice_polish_filter : rap_vocal_isolation_filter
@@ -33315,18 +33076,8 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil, progressio
   # With gunnhild (11.5s usable from ss) a 32-bar render wrapped ~8 times, which
   # is exactly the "choppy" report.
   seg_path = File.join(out_dir, "seg_#{beat_bpm.round}_#{n_bars}bars.wav")
-  # Transpose in the same pass as the tempo fit and before the loudnorm/limiter
-  # tail, so the level measured downstream is the level of what actually plays.
-  pitch_chain = rap_vocal_pitch_shift_chain(key_shift)
-  if pitch_chain
-    dmesg("rap-vocal key: #{key_shift.positive? ? '+' : ''}#{key_shift} semitone#{key_shift.abs == 1 ? '' : 's'} " \
-          "into #{progression || 'beat'} key",
-          unit: "vox0", parent: "dilla0")
-  end
-  seg_af = ["#{voice_chain},#{rap_vocal_atempo_chain(ratio)}", pitch_chain, "asetpts=PTS-STARTPTS"]
-           .compact.join(",")
   sh! "ffmpeg", "-y", "-ss", ss.round(3).to_s, "-i", vocal_path,
-      "-af", seg_af,
+      "-af", rap_vocal_segment_filter(voice_chain, ratio),
       "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", seg_path
   seg_len = audio_duration_sec(seg_path).to_f
 
@@ -33408,7 +33159,7 @@ def rap_vocal_fit!(slug_or_path, beat_bpm:, n_bars:, bar_offset: nil, progressio
                           "source_bpm" => vocal_bpm, "tempo_ratio" => ratio.round(4),
                           "rms_db" => peak, "sub_bleed_db" => sub_bleed,
                           "snapped_lines" => snapped&.size, "has_pulse" => has_pulse,
-                          "key_shift" => key_shift, "progression" => progression&.to_s,
+                          "progression" => progression&.to_s,
                           "voice_only" => true }
     entry["bpm_estimate"] = vocal_bpm if vocal_bpm.positive?
     entry["voice_only"] = true
@@ -34426,9 +34177,32 @@ def replay_environment(src, overrides = {})
   path = src.end_with?(DillaProvenance::MANIFEST_EXT) ? src : DillaProvenance.manifest_path(src)
   abort "no sidecar at #{path}" unless File.file?(path)
 
-  JSON.parse(File.read(path)).fetch("environment")
-      .reject { |key, _| key.match?(/RENDER_SEED\z/) }
-      .merge(overrides)
+  recorded = JSON.parse(File.read(path)).fetch("environment")
+  replay_renamed(recorded)
+    .reject { |key, _| key.match?(/RENDER_SEED\z/) }
+    .merge(overrides)
+end
+
+# Sidecars from before the wonky rename name knobs and values the engine no
+# longer reads, and a replay that passes them on renders without the thing it
+# claims to reproduce. The translation lives here, at the one reader of old
+# recipes, and nowhere in the engine: a knob has one name.
+REPLAY_RENAMED_PREFIXES = { "FLYLO_" => "WONKY_" }.freeze
+REPLAY_RENAMED_VALUES = {
+  "LEAD_VOICE" => { "flylo" => "wonky" },
+  "PAD_VOICE" => { "pad_flylo" => "pad_wonky" },
+  "LEAD_ARP_MODE" => { "flylo_spiral" => "wonky_spiral" },
+  "SIDECHAIN_STYLE" => { "flylo" => "wonky" },
+}.freeze
+
+# A recipe that carries both spellings keeps the new one.
+def replay_renamed(environment)
+  renamed = environment.each_with_object({}) do |(key, value), out|
+    old_prefix = REPLAY_RENAMED_PREFIXES.keys.find { |prefix| key.start_with?(prefix) }
+    current = old_prefix ? key.sub(old_prefix, REPLAY_RENAMED_PREFIXES[old_prefix]) : key
+    out[current] = value unless old_prefix && environment.key?(current)
+  end
+  renamed.to_h { |key, value| [key, REPLAY_RENAMED_VALUES.fetch(key, {}).fetch(value, value)] }
 end
 
 # KEY=VAL pairs left on the command line. One command covers the fresh-take,
@@ -34451,93 +34225,6 @@ def rerender_from_sidecar(src, dest, overrides = {})
   warn "  #{env.size} vars replayed, seed dropped, BARS=#{bars} " \
        "SAMPLE_LOOP=#{env['SAMPLE_LOOP'].inspect} MASTER_WIDTH=#{env['MASTER_WIDTH'].inspect}"
   exec(env, RbConfig.ruby, File.join(ROOT, "dilla.rb"), "dilla", "--bars=#{bars}", dest)
-end
-
-# Sample-to-pad balance, so it can be chosen by ear rather than by argument.
-#
-# The record carries its own harmony, so nothing else should state one.
-# semua_untuk_mu has vocal chords in it, and a curated progression played by pads
-# on top is a second piece of music in the same bar — which is what the harmonic
-# guard says in as many words. That guard only fires when the loop's key is
-# unreadable; this loop reads G minor at fit 0.75, so the pads played.
-#
-# DRUM_FORWARD=0 throughout: the default carves the bed at 180/3000 Hz to clear
-# room for drums, which removes the sample's body and leaves the noisy middle.
-BALANCE_VARIANTS = {
-  # Mutes exactly the layer list the harmonic guard mutes, plus the synth voices.
-  # FLIP=0 because the chords are IN the record and chopping it destroys them.
-  "chordless" => { "PAD_VOL" => "0", "HARM_MIX_WEIGHT" => "0", "MELODIC_LEAD" => "0",
-                   "SCALE_LEAD" => "0", "LEAD_ARP" => "0", "HARMONY_LEAD" => "0",
-                   "PAD_LAYERS" => "0", "PAD_TEXTURE" => "0", "CHOIR_VOX" => "0",
-                   "LUSH_SYNTH" => "0", "SYNTH_MORPH" => "0", "LEAD_MORPH" => "0",
-                   "SAMPLE_LOOP_VOL" => "1.2", "SAMPLE_LOOP_WEIGHT" => "1.5",
-                   "DRUM_FORWARD" => "0", "FLIP" => "0" },
-  "flip_only" => { "FLIP" => "1", "FLIP_RECORDS" => "1", "VOCAL_CHOPS" => "0", "DRUM_FORWARD" => "0" },
-  "flip" => { "FLIP" => "1", "DRUM_FORWARD" => "0" },
-  "a_sample_forward" => { "SAMPLE_LOOP_VOL" => "1.3", "SAMPLE_LOOP_WEIGHT" => "1.6",
-                          "HARM_BUS_VOL" => "1.4", "DRUM_FORWARD" => "0" },
-  "b_pads_back" => { "SAMPLE_LOOP_VOL" => "1.3", "SAMPLE_LOOP_WEIGHT" => "1.6",
-                     "HARM_BUS_VOL" => "1.0", "DRUM_FORWARD" => "0" },
-  "c_sample_leads" => { "SAMPLE_LOOP_VOL" => "1.5", "SAMPLE_LOOP_WEIGHT" => "1.8",
-                        "HARM_BUS_VOL" => "0.7", "DRUM_FORWARD" => "0" },
-}.freeze
-
-BALANCE_RECIPE = "renders/beats/dilla_semua_96.mp3"
-
-def render_balance(name)
-  overrides = BALANCE_VARIANTS.fetch(name) { abort "unknown variant #{name}" }
-  dest = File.join(ROOT, "semua_#{name}.wav")
-  warn "#{name} -> #{dest}"
-  warn "  sample vol #{overrides['SAMPLE_LOOP_VOL']} weight #{overrides['SAMPLE_LOOP_WEIGHT']}  " \
-       "pads #{overrides['HARM_BUS_VOL']}  bed carve off"
-  rerender_from_sidecar(File.join(ROOT, BALANCE_RECIPE), dest, overrides)
-end
-
-# A demo of dilla is generated, not assembled from whatever is sitting in
-# renders/beats — that would treat old output as the work. SAMPLE_LOOP picks the
-# record and TRACK picks the progression, chosen independently so each record is
-# heard against more than one harmonic setting.
-#
-# semua_untuk_mu carries carries_own_harmony in the crate, so its beats mute the
-# tonal layers automatically. Nothing here special-cases it; the flag does.
-DEMO_PROGRESSIONS = %w[pedal_e_descent circle_fifths_descent minor_iv_loop].freeze
-DEMO_SAMPLES = %w[semua_untuk_mu arat_swost_wolet kembara_rindu lo_borges].freeze
-DEMO_MIN_BYTES = 1_000_000
-
-def generate_demo(bars: ENV.fetch("BARS", "32"), parallel: ENV.fetch("PARALLEL", "3").to_i)
-  out = ROOT
-  FileUtils.mkdir_p(out)
-  base = replay_environment(File.join(ROOT, BALANCE_RECIPE))
-
-  jobs = DEMO_SAMPLES.flat_map do |sample|
-    DEMO_PROGRESSIONS.map do |progression|
-      { sample:, progression:, dest: File.join(out, "#{sample}__#{progression}.wav") }
-    end
-  end
-  jobs.reject! { |job| File.file?(job[:dest]) && File.size(job[:dest]) > DEMO_MIN_BYTES }
-
-  puts "#{jobs.size} beats to render (#{DEMO_SAMPLES.size} records x " \
-       "#{DEMO_PROGRESSIONS.size} progressions), #{bars} bars, #{parallel} at a time"
-
-  jobs.each_slice(parallel) { |batch| demo_render_batch(batch, base, bars) }
-  puts "#{jobs.count { |job| File.file?(job[:dest]) }}/#{jobs.size} beats in #{out}/"
-end
-
-def demo_render_batch(batch, base, bars)
-  pids = batch.map do |job|
-    env = base.merge("SAMPLE_LOOP" => job[:sample], "TRACK" => job[:progression],
-                     "PROGRESSION" => job[:progression], "BARS" => bars)
-    log = File.join(Dir.tmpdir, "demo_#{job[:sample]}__#{job[:progression]}.log")
-    puts "  -> #{File.basename(job[:dest])}"
-    spawn(env, RbConfig.ruby, File.join(ROOT, "dilla.rb"), "dilla", "--bars=#{bars}", job[:dest],
-          out: log, err: log)
-  end
-  pids.each { |pid| Process.wait(pid) }
-  batch.each do |job|
-    ok = File.file?(job[:dest]) && File.size(job[:dest]) > DEMO_MIN_BYTES
-    puts format("  %-46s %s", File.basename(job[:dest]),
-                ok ? "ok #{File.size(job[:dest]) / 1_048_576}MB" : "FAILED")
-  end
 end
 
 # Album master. The chain per track, in this order:
@@ -36715,28 +36402,17 @@ DISPATCH = {
   # bars of each named style finishes in minutes. It is no longer what a bare
   # invoke gives you, because "the demo" means the full catalogue.
 "showcase" => -> { showcase_demo! },
-# What a bare invoke used to do: loop.wav plus a spoken reading of MASTER's
-# README. Kept reachable by name rather than deleted -- it is the one path
-# that exercises the speech overlay end to end.
-"readme-loop" => -> { readme_loop! },
-  # USER_PINNED_ENV, not ENV, for the bar count in all three demo commands.
-  # apply_best_defaults! writes BARS=32 before any of them run, so `ENV["BARS"]`
-  # is always set and the default after it was unreachable: every demo rendered
-  # 32 bars whatever the command promised, and demo-quick took five minutes a
-  # pass to do what it exists to do in one. USER_PINNED_ENV is the environment
-  # as it stood at load, so it answers the question actually being asked --
-  # did the operator set this -- rather than is the key set. Same distinction
-  # stream.rb draws, for the same reason.
+  # demo_command_bars reads USER_PINNED_ENV, not ENV, for the bar count in all
+  # three demo commands: apply_best_defaults! writes BARS=32 before any of them
+  # run, so a default after ENV["BARS"] would be unreachable.
   "demo-all" => lambda do
-    bars = (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || USER_PINNED_ENV["BARS"] || "4"
+    bars = demo_command_bars(DEMO_BARS)
     out = ARGV.shift
     demo_all(bars.to_i, out)
   end,
   # Same catalogue, same settings, one mp3 per track in demos/ and no concat.
-  # BARS is read here rather than left to apply_best_defaults!, which sets 32 and
-  # would otherwise silently override the 12 this and demo-all both default to.
   "demo-each" => lambda do
-    bars = (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || USER_PINNED_ENV["BARS"] || "4"
+    bars = demo_command_bars(DEMO_BARS)
     ENV["DEMO_EACH"] = "1"
     ENV["BARS"] = bars.to_s
     demo_all(bars.to_i)
@@ -36748,7 +36424,7 @@ DISPATCH = {
   # roughly six minutes each way — so a change can be heard while the previous
   # one is still fresh. Use demo-all for a final pass.
   "demo-quick" => lambda do
-    bars = (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || USER_PINNED_ENV["BARS"] || "4"
+    bars = demo_command_bars(DEMO_QUICK_BARS)
     out = ARGV.shift || File.join(ROOT, "demo_quick.wav")
     n = (ENV["DEMO_QUICK_TRACKS"] || "12").to_i.clamp(2, 84)
     order = demo_all_order
@@ -36991,13 +36667,6 @@ DISPATCH = {
     dest = ARGV.shift or abort "usage: ruby dilla.rb rerender <src.mp3|sidecar> <dest> [KEY=VAL...]"
     rerender_from_sidecar(src, dest, replay_overrides(ARGV))
   end,
-  # Audition the sample-to-pad balance by ear rather than by argument.
-  "balance" => lambda do
-    name = ARGV.shift or abort "usage: ruby dilla.rb balance <#{BALANCE_VARIANTS.keys.join("|")}>"
-    render_balance(name)
-  end,
-  # Every record in the demo crate against three progressions.
-  "demo" => -> { generate_demo },
   # Master the tracklist in data/album_tracks.yml into one crossfaded record.
   "album" => -> { album_master(ARGV.shift || File.join(ROOT, "ALBUM.mp3")) },
 }.freeze
@@ -37065,13 +36734,9 @@ if __FILE__ == $PROGRAM_NAME
 
   cmd = ARGV.shift
   if cmd.nil?
-    # Bare invoke renders the catalogue.
-    #
-    # It used to render loop.wav plus a spoken reading of MASTER's README, which
-    # answers a question nobody asks of a beat engine. The catalogue is what
-    # this program is for: nineteen pieces, seven off records and twelve it
-    # wrote, every sound synthesised. `readme_loop` still reaches the old
-    # behaviour by name, and `live` is the version that plays instead of
+    # Bare invoke renders the catalogue, because the catalogue is what this
+    # program is for: nineteen pieces, seven off records and twelve it wrote,
+    # every sound synthesised. `live` is the version that plays instead of
     # writing.
     Bed.catalogue!
   elsif render_output_path?(cmd) && !DISPATCH.key?(cmd)

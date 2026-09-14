@@ -1054,9 +1054,6 @@ require "English"
 # DILLA_NO_PROVENANCE=1 restores the old behaviour completely, seed and all.
 module DillaProvenance
   MANIFEST_EXT = ".provenance.json"
-  # Sidecars written before the rename carry the old suffix. Reading falls back
-  # to it so a render made elsewhere still replays; nothing writes it.
-  LEGACY_MANIFEST_EXT = ".dilla"
   AUDIO = %w[.wav .mp3 .flac .ogg .m4a .aiff .aif].freeze
   SCHEMA = "dilla.render.v1"
 
@@ -1303,7 +1300,7 @@ module DillaProvenance
     ENV_DENY_PATTERN = /KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH|COOKIE|SESSION/i
 
     def recorded_env
-      engine_env_keys.each_with_object({}) do |key, acc|
+      recorded = engine_env_keys.each_with_object({}) do |key, acc|
         next if ENV_DENY.include?(key) || key.match?(ENV_DENY_PATTERN)
         # A knob the engine WRITES is an output of this render, not an input to
         # it. DILLA_RENDER_SEED is set by the drum_kit engine part from the seed that is
@@ -1315,6 +1312,18 @@ module DillaProvenance
         value = ENV[key]
         acc[key] = value unless value.nil? || value.empty?
       end
+      recorded.merge(instrument_env)
+    end
+
+    # Which instrument played the pads, recorded even when unset. An unset knob
+    # is left out of `environment`, and ANALOG_SYNTH is the one whose default
+    # changed under old takes: soundfonts before d6ab8a0c8, oscillators after.
+    # The engine owns the default (ANALOG_SYNTH_DEFAULT in dilla.rb); loaded on
+    # its own, as the tests do, this records only what ENV says.
+    def instrument_env
+      value = ENV["ANALOG_SYNTH"].to_s
+      value = Object.const_get(:ANALOG_SYNTH_DEFAULT) if value.empty? && Object.const_defined?(:ANALOG_SYNTH_DEFAULT)
+      value.to_s.empty? ? {} : { "ANALOG_SYNTH" => value.to_s }
     end
 
     # What the run computed for itself. Kept because it is useful to see, and
@@ -1438,12 +1447,10 @@ module DillaProvenance
       nil
     end
 
-    # The sidecar for an audio file, preferring the current suffix and falling
-    # back to the one written before the rename.
+    # The sidecar for an audio file. One suffix, read and written: pub4 keeps no
+    # fallback for a renamed file, so an old sidecar is renamed on disk instead.
     def manifest_path(audio)
-      current = "#{audio}#{MANIFEST_EXT}"
-      legacy = "#{audio}#{LEGACY_MANIFEST_EXT}"
-      File.file?(current) || !File.file?(legacy) ? current : legacy
+      "#{audio}#{MANIFEST_EXT}"
     end
 
     def part_recipe(part)
