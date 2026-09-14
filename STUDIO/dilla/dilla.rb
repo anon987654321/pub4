@@ -19096,11 +19096,12 @@ def demo_slot_pad_env(idx)
     "PAD_VOICE" => DEMO_PAD_ROTATION[idx % DEMO_PAD_ROTATION.length],
     "PAD_ARP_MODE" => DEMO_PAD_ARP_ROTATION[idx % DEMO_PAD_ARP_ROTATION.length],
     "VOICING" => DEMO_VOICING_ROTATION[idx % DEMO_VOICING_ROTATION.length],
-    "PAD_LAYERS" => "0",
-    "CHORD_BARS" => "1",
-    # The catalogue is a listening reference, not a pad loudness test. Keep
-    # the documented single voice, but leave room for the pocket, bass and
-    # short lead fragments that define the source records.
+    # A stack_* slot plays as its stack, and each progression keeps its own
+    # chord length rather than a one-bar change forced on every slot.
+    "PAD_LAYERS" => "1",
+    # The catalogue is a listening reference, not a pad loudness test: leave
+    # room for the pocket, bass and short lead fragments that define the
+    # source records.
     "PAD_VOL" => "38",
     "HARM_MIX_WEIGHT" => "0.78",
     "HARM_BUS_VOL" => "0.88",
@@ -19239,24 +19240,38 @@ end
 # parts in the file's original order, because several constants are
 # computed at load time from ones declared above them.
 
-# Pad / arp / voicing pools for demo-all — distinct sonic identity per slot
-# (stream DNA alone keeps stack_soul+held+jonas_v and reads as "one song").
-# Rhodes / Prophet first — glass/vapor/neon are spice, not the main course.
-# The pad voices the demo draws from.
+# The pad voices demo-all draws from, one per slot -- a distinct identity per
+# slot, because stream DNA alone keeps stack_soul+held+jonas_v and reads as one
+# song.
 #
-# This was fourteen slots naming nine voices, and three of them -- stack_rhodes,
-# stack_prophet, stack_soul -- filled more than half. Measured across all 86
-# tracks, 13 of the 37 defined pad voices were ever selected and 24 never were,
-# including every one of pad_dilla, pad_wonky and pad_royksopp: voices named for
-# the producers this engine models, which had never been rendered once.
+# This is the rotation behind the 08-27 demo the operator called "wonderful and
+# magical" ("i love the pads and chord progressions now"): 53 slots naming 38
+# voices, so every voice named for a producer the engine models (pad_dilla,
+# pad_wonky, pad_royksopp, pad_madlib) is reached. The repeats are deliberate:
+# the Rhodes and Prophet stacks are the house sound and come up most often, and
+# glass, vapor and neon are spice. A three-voice cut replaced it on 09-12
+# without a listening pass and the next demo was judged "horrible", so the
+# full rotation is the default.
 #
-# Widened to reach all of them. The repeats that remain are deliberate -- the
-# Rhodes and Prophet stacks are the house sound and should still come up most
-# often -- but a catalogue of 86 pieces now draws on 37 voices rather than
-# leaning on three.
-#
+# stack_world, stack_giga, stack_yamaha and stack_vintage are layer stacks
+# rather than single voices, so they arrive with their own internal blend; they
+# are spaced out rather than clustered, because two thick stacks in consecutive
+# slots read as one long stack. demo_slot_pad_env keeps PAD_LAYERS=1 so a
+# stack_* slot renders as the stack it names. `texture` names no preset and
+# plays apply_pad_voice_preset!'s Rhodes/Moog/Prophet soul default, which is
+# what that slot played in the demo the rotation comes from.
 DEMO_PAD_ROTATION = %w[
-  rhodes_solo pad_madlib yamaha_solo
+  stack_rhodes stack_prophet pad_dilla stack_soul rhodes
+  pad_wonky prophet stack_glass rhodes_solo stack_vapor
+  stack_rhodes pad_madlib moog stack_prophet vintage
+  stack_soul pad_royksopp blend stack_yamaha glass
+  stack_rhodes fm stack_vintage prophet nylon_soul
+  stack_prophet vapor stack_giga crystal stack_fm_epiano
+  stack_soul yamaha stack_world ice giga_fm
+  stack_rhodes neon supersaw_bed stack_prophet orchestral
+  pulse stack_soul vintage_choir stack_rhodes
+  harmonica stack_vapor accordion stack_glass yamaha_solo
+  stack_soul giga_stack stack_prophet texture
 ].freeze
 DEMO_PAD_ARP_ROTATION = %w[held held wash shimmer held wash figure held].freeze
 DEMO_VOICING_ROTATION = %w[
@@ -20044,8 +20059,17 @@ def demo_part_rendered?(part)
   !demo_part_dead?(part)
 end
 
+# The ringtone post-chain over the joined demo is opt-in: DEMO_FX=ringtone.
+# Every slot already carries its own ringtone layer (copy machine, LPG, voice
+# stack), and printing tremolo, chorus and a crusher over the whole album on
+# top of that went out by default on 09-12 unheard; the demo it produced was
+# called "horrible".
+def demo_fx_ringtone?
+  ENV.fetch("DEMO_FX", "0") == "ringtone"
+end
+
 def demo_ringtone_fx!(path)
-  return path if ENV.fetch("DEMO_FX", "ringtone") == "0"
+  return path unless demo_fx_ringtone?
 
   # The chain is a colour, not a fader, and it has to leave the level where it
   # found it. Its in/out gains multiply to about -21 LU: parts at -18.8 LUFS come
@@ -20088,10 +20112,24 @@ def demo_ringtone_fx!(path)
   path
 end
 
-def demo_all(bars_count = 4, destination = nil)
+# Twelve bars a slot: long enough for a progression to turn round twice and for
+# the arrangement to leave its intro, which four bars never did -- the 09-14
+# four-bar demo ran under three minutes and was stopped as "horrible". Eight for
+# demo-quick, whose job is a fast A/B.
+DEMO_BARS = 12
+DEMO_QUICK_BARS = 8
+
+# The bar count a demo command renders: a numeric first argument, else BARS as
+# the operator pinned it at load (apply_best_defaults! writes BARS=32 into ENV,
+# so ENV cannot tell a pin from a fill), else the command's default.
+def demo_command_bars(default)
+  (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || USER_PINNED_ENV["BARS"] || default.to_s
+end
+
+def demo_all(bars_count = DEMO_BARS, destination = nil)
   acquire_demo_lock! unless ENV["DEMO_NO_LOCK"] == "1"
   bars_count = bars_count.to_i
-  bars_count = 4 unless bars_count.positive?
+  bars_count = DEMO_BARS unless bars_count.positive?
   dest = destination.to_s
   dest = File.join(ROOT, "demo.wav") if dest.empty?
   # each-mode writes its mp3s to the dilla root and its transient wav straight
@@ -20458,7 +20496,9 @@ voice_stack_every = (ENV["DEMO_VOICE_STACK_EVERY"] || "3").to_i
 if demo_techno_slot?(idx, slug)
   force_env!({ "DRUM_PRESET" => "industrial_techno",
                "POCKET_SET" => "industrial",
-               "BPM" => "92",
+               # The slot pad env pins every slot to 92, so a techno slot
+               # re-pins to its kit's own tempo or the kit plays at hip-hop speed.
+               "BPM" => DillaLofiMachine::DRUM_PRESETS[:industrial_techno][:bpm].to_s,
                "SNARE_EARLY" => "0",
                "KICK_LATE" => "0",
                # The four-bar phrase in schedule_eclectic_percussion! plays over
@@ -36492,24 +36532,17 @@ DISPATCH = {
 # README. Kept reachable by name rather than deleted -- it is the one path
 # that exercises the speech overlay end to end.
 "readme-loop" => -> { readme_loop! },
-  # USER_PINNED_ENV, not ENV, for the bar count in all three demo commands.
-  # apply_best_defaults! writes BARS=32 before any of them run, so `ENV["BARS"]`
-  # is always set and the default after it was unreachable: every demo rendered
-  # 32 bars whatever the command promised, and demo-quick took five minutes a
-  # pass to do what it exists to do in one. USER_PINNED_ENV is the environment
-  # as it stood at load, so it answers the question actually being asked --
-  # did the operator set this -- rather than is the key set. Same distinction
-  # stream.rb draws, for the same reason.
+  # demo_command_bars reads USER_PINNED_ENV, not ENV, for the bar count in all
+  # three demo commands: apply_best_defaults! writes BARS=32 before any of them
+  # run, so a default after ENV["BARS"] would be unreachable.
   "demo-all" => lambda do
-    bars = (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || USER_PINNED_ENV["BARS"] || "4"
+    bars = demo_command_bars(DEMO_BARS)
     out = ARGV.shift
     demo_all(bars.to_i, out)
   end,
   # Same catalogue, same settings, one mp3 per track in demos/ and no concat.
-  # BARS is read here rather than left to apply_best_defaults!, which sets 32 and
-  # would otherwise silently override the 12 this and demo-all both default to.
   "demo-each" => lambda do
-    bars = (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || USER_PINNED_ENV["BARS"] || "4"
+    bars = demo_command_bars(DEMO_BARS)
     ENV["DEMO_EACH"] = "1"
     ENV["BARS"] = bars.to_s
     demo_all(bars.to_i)
@@ -36521,7 +36554,7 @@ DISPATCH = {
   # roughly six minutes each way — so a change can be heard while the previous
   # one is still fresh. Use demo-all for a final pass.
   "demo-quick" => lambda do
-    bars = (ARGV[0]&.match?(/\A\d+\z/) ? ARGV.shift : nil) || USER_PINNED_ENV["BARS"] || "4"
+    bars = demo_command_bars(DEMO_QUICK_BARS)
     out = ARGV.shift || File.join(ROOT, "demo_quick.wav")
     n = (ENV["DEMO_QUICK_TRACKS"] || "12").to_i.clamp(2, 84)
     order = demo_all_order

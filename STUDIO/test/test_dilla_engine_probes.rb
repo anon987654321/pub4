@@ -2117,6 +2117,44 @@ class TestDilla < Minitest::Test
     assert_empty result.fetch("rap_off")
   end
 
+  # demo-all's defaults were cut unheard to four bars, three pad voices, an
+  # album-wide ringtone chain and a 92 BPM techno kit, and the demo that came out
+  # was stopped as "horrible". These are the defaults it renders by now.
+  def test_demo_all_defaults_twelve_bars_full_pad_rotation_no_album_fx_and_techno_tempo
+    result = eval_in_engine(<<~RUBY)
+      ENV.delete("DEMO_FX")
+      fx_default = demo_fx_ringtone?
+      ENV["DEMO_FX"] = "ringtone"
+      pads = PAD_VOICE_PRESETS.keys.map(&:to_s) + PAD_LAYER_STACKS.keys.map(&:to_s)
+      puts JSON.generate(
+        pinned_bars: USER_PINNED_ENV["BARS"],
+        all_bars: demo_command_bars(DEMO_BARS),
+        quick_bars: demo_command_bars(DEMO_QUICK_BARS),
+        fx_default: fx_default,
+        fx_opt_in: demo_fx_ringtone?,
+        techno_bpm: DillaLofiMachine::DRUM_PRESETS[:industrial_techno][:bpm],
+        rotation: DEMO_PAD_ROTATION,
+        unresolved: DEMO_PAD_ROTATION.reject { |voice| pads.include?(voice) },
+        slot_env: demo_slot_pad_env(0)
+      )
+    RUBY
+
+    skip "BARS is pinned in this shell" if result.fetch("pinned_bars")
+    assert_equal "12", result.fetch("all_bars")
+    assert_equal "8", result.fetch("quick_bars")
+    refute result.fetch("fx_default"), "the album ringtone chain is opt-in"
+    assert result.fetch("fx_opt_in"), "DEMO_FX=ringtone still turns it on"
+    assert_equal 128, result.fetch("techno_bpm")
+    rotation = result.fetch("rotation")
+    assert_equal 53, rotation.size
+    assert_equal 38, rotation.uniq.size
+    # texture names no preset and plays the Rhodes/Moog/Prophet soul default,
+    # as it did in the demo this rotation was restored from; nothing else may.
+    assert_equal ["texture"], result.fetch("unresolved"), "every other rotation voice must be a defined pad"
+    assert_equal "1", result.fetch("slot_env").fetch("PAD_LAYERS"), "a stack slot plays as its stack"
+    refute result.fetch("slot_env").key?("CHORD_BARS"), "each progression keeps its own chord length"
+  end
+
   # "No leads" took six rounds to achieve, because each attempt turned off the
   # layer that had been named and the renderer had another one. HATE_TONAL=0 is
   # the single switch; this pins that it reaches every pitched layer and that it
