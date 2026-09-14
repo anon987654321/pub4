@@ -162,7 +162,7 @@ module DillaMusicGems
     return if names.length < 2
 
     # coltrane has hung indefinitely on specific chord symbols (Dm7b5, Cmaj9
-    # — see README / producer_dna.rb#chord_from_symbol); bound it the same
+    # — see README / groove.rb#chord_from_symbol); bound it the same
     # way rather than let a render freeze forever with no exception raised.
     hits = Timeout.timeout(1.5) { ::Coltrane::Progression.find(*names) }
     return if hits.empty?

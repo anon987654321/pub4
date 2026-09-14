@@ -58,7 +58,7 @@ class ConstitutionalScanTargetsTest < Minitest::Test
 
   # A tree selects on its own name, an app on RAILS/<app>.
   def test_a_change_in_a_tree_selects_that_tree
-    gate = build(changed: ["STUDIO/dilla/lib/modulation.rb"])
+    gate = build(changed: ["STUDIO/dilla/lib/sound.rb"])
 
     assert_equal %w[STUDIO], names(gate.targets)
   end

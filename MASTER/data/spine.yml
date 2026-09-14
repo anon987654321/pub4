@@ -955,7 +955,10 @@ pub4_source_ceilings:
   # bin/crate, bin/demo_full.rb, scripts/generate_tts.rb and the librosa script
   # left with nothing reading them. STUDIO/gate.rb fails if any of the three
   # directories returns. 117 -> 108.
-  STUDIO: 108
+  # 108 -> 70: dilla lib/ folds forty-four modules into six subjects -- sound,
+  # sampling, ledger, harmony, groove, listen -- and radio_bergen_study.rb, a
+  # wrapper round a command dilla.rb already had, is gone.
+  STUDIO: 70
 
 # Executable files directly under each tree's own bin/ — the number CLAUDE.md's
 # "two surfaces, no third" makes a claim about while nothing counted it. MASTER

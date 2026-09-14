@@ -145,11 +145,11 @@ reads as "play at native speed".
 
 Off-air radio is **not licensed material**, and chopping it does not clear it.
 Every row carries `rights: unlicensed`, so a beat built on one can be identified
-before release rather than after. `lib/crate_dig.rb` is the route that clears.
+before release rather than after. `lib/sampling.rb` is the route that clears.
 
 ## Drums
 
-~60 presets in `lib/producer_dna.rb`, in categories that are deliberately
+~60 presets in `lib/groove.rb`, in categories that are deliberately
 kept apart. Being able to say which a grid is matters more than having more.
 
 A transcribed grid — `four_seven`, `transcribed_soul_nine` — was measured off a
@@ -243,7 +243,7 @@ were all silent — the code ran, returned success, and did nothing.
   names with no reader: setting any of them changes no sound. `SONITEX` and
   `SONITEX_PRESET` are the two that work. The six were documented before the
   per-section wet controls existed, and the controls never followed.
-- **One console strip is not a console.** `console_strip.rb`'s own header argues
+- **One console strip is not a console.** `sound.rb`'s own header argues
   that the sound people mean by "console" is the sum of thirty slightly
   different channels, and then runs one pass. NastyVCS gets its character from
   transformer circuitry at *both* input and output plus a phase-alignment stage

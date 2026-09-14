@@ -236,7 +236,7 @@ symbol names over line numbers.
   whether he expected the racks back. `samples/dug/` is down to one record, and
   the other 160 sources cannot be re-fetched to the same bytes.
 - **Two ways into the crate.** The engine reads `samples/chopped/loops.json`
-  through `RadioChop.registered_loops`; `lib/crate_dig.rb` writes `samples/dug/`
+  through `RadioChop.registered_loops`; `lib/sampling.rb` writes `samples/dug/`
   from public-domain archives; `ruby dilla_live.rb dig` (`lib/livesets.rb`) rips
   YouTube into `samples/chopped/` and warns on every run. Those two are the crate.
 - **`ruby STUDIO/dilla/dilla.rb assets` exits 1**: three loops missing, seven files
@@ -251,7 +251,7 @@ symbol names over line numbers.
   about 0.012 dB. Routing each changes what that site renders: one site at a
   time, by ear.
 - **The `HARM_VOL` bump stays a pass behind itself**: 2.4 plus 0.05 is the 2.45
-  default, and raising the base is a mix value (`composition_engine.rb`).
+  default, and raising the base is a mix value (`harmony.rb`).
 - **Chop rows in `TRACK_PRESETS`**, when there are chops again. A slug with no row
   falls through to `:timeless`; the `sheger_*` derivation in `dilla.rb` is
   mechanical and whether it sounds right is his.
@@ -259,7 +259,7 @@ symbol names over line numbers.
 ### Blocked while `dilla.rb` is under another session's edit
 
 - **Classify dilla's default-off flags** into additive, exclusive fork and
-  operational, and delete the dead ones. `lib/knobs.rb` is the instrument (727
+  operational, and delete the dead ones. `lib/ledger.rb` is the instrument (727
   knobs, 286 flags, 206 default-off); the counts in `dilla.rb`'s own comments
   are stale.
 
@@ -275,7 +275,7 @@ symbol names over line numbers.
   sounds); blanket rescues in STUDIO (optional probes and teardown); preset reach
   in `postpro`/`lora` (selected by name from argv; `vocab_check` owns it); the 37
   stale `sample_worth.json` slugs (pruned on the next chop); the sample rate
-  declared under three names (all namespaced; `sample_worth.rb`'s 11,025 is
+  declared under three names (all namespaced; `sampling.rb`'s 11,025 is
   deliberate); the `cohesion.rb` regroups; the three engine probes that skip
   under suite load while passing alone; and the four hand-packed RIFF headers
   (`wavefile` loads only when MASTER's bundle is present, so a writer through it
@@ -1452,19 +1452,19 @@ sitting.
 ### STUDIO — dilla
 
 Re-measured 2026-09-13; 190 entries became these. The first group is real and
-blocked only because `STUDIO/dilla/dilla.rb`, `lib/producer_dna.rb`,
+blocked only because `STUDIO/dilla/dilla.rb`, `lib/groove.rb`,
 `README.md` and `ENV_AND_RENDER.md` carry another session's uncommitted work.
 Take them the day those files are clean.
 
 811. **dilla.rb comments that describe the split.** 80 `# engine part:` headers still say "split out of dilla.rb"; `:230` says load order lives in `engine_sources.rb`; `:248`, `:13733`, `:14870`, `:20805` still name `lib/engine/`; `:14900` names the gone `ENGINE_PARTS`; `:14672` hardcodes "35,000 lines / 83 markers" instead of asking `parts_report`. `:35237` should say the gate and tests depend on the CLI guard.
 812. **`ENGINE_SOURCES = DillaSources.all` sits at `:34385`,** after `wiring_dead_constants` and `parts_report` close over it. Move it up to the require at `:36`.
 814. **`scan` probes `dilla.html` (`:13165`),** a file that does not exist. Drop the key.
-815. **`help` is one 170-line dump.** Topic index (`help render|chop|knobs|sample`) with the wall behind `help all`. The topics owe these lines: `industrial`/`techno`/`analog` bypass AudioGraph; `characterize` under READING THE ENGINE; `source` points at `lib/crate_dig.rb` before `project/crate.yml`, and `dilla_live.rb dig` is the YouTube digger; chop lists RadioChop's operations in order; `STREAM_DEMO` overwrites the rolling `demo.wav`, not a take; `DILLA_OVERWRITE=1` is the only overwrite; `SWING=` is the fallback and per-role offsets are the Charnas move.
+815. **`help` is one 170-line dump.** Topic index (`help render|chop|knobs|sample`) with the wall behind `help all`. The topics owe these lines: `industrial`/`techno`/`analog` bypass AudioGraph; `characterize` under READING THE ENGINE; `source` points at `lib/sampling.rb` before `project/crate.yml`, and `dilla_live.rb dig` is the YouTube digger; chop lists RadioChop's operations in order; `STREAM_DEMO` overwrites the rolling `demo.wav`, not a take; `DILLA_OVERWRITE=1` is the only overwrite; `SWING=` is the fallback and per-role offsets are the Charnas move.
 816. **`council` (`:13184`) prints five slogans.** Delete it or make it run a command.
 822. **Lazy requires are undocumented.** Say beside the requires which of `console_strip`, `tape_hysteresis`, `mix_score`, `verify_fx`, `kit_dig` are command-only, so a fold does not pull DSP into boot.
 829. **Locale.** brgen's CI loads dilla.rb as user brgen; set `Encoding.default_external = Encoding::UTF_8` at the top of dilla.rb rather than touching 37 `File.read` sites.
 853. **`dilla stems` should refuse** when `data/stems.json` names `samples/demux/…` paths not on disk, as `dilla assets` does.
-855. **"~60 presets"** in `producer_dna.rb` and the README: count in `dilla knobs` instead of restating.
+855. **"~60 presets"** in `groove.rb` and the README: count in `dilla knobs` instead of restating.
 868. **Chop registry JSON is parsed twice** (`:18223` warns, `registered_loops` rescues again). Parse once; drop bad rows by slug.
 871. **`rap-vocal list`** should mark sidecar-only rows "audio missing", and say `_mislabelled_untitled_flac/` is deliberate so nobody cleans it.
 873. **`dilla assets` exits 0 on an unreadable `data/assets.json`.** The module warns and returns an empty crate; the command should exit non-zero.
@@ -1575,7 +1575,7 @@ race or a rolled-back callback is false until it names a second database.
   from a failed run and applies ~19 dB of make-up; album encode ignores status,
   deletes the staged file and prints loudness from the missing dest;
   `audio_duration_sec` rescues to 0.0 and `build_harmony_loud` then mixes 8 s.
-  First step: route them through `lib/ffmpeg_probe.rb`, which MixScore and
+  First step: route them through `lib/listen.rb`, which MixScore and
   VerifyFx already use.
 - **Scratch names collide.** `harmony_loud.wav`, `live_tmp.wav`,
   `dilla_drums.wav` are not pid-scoped, and the fallback dir is per-uid. The
@@ -1787,8 +1787,8 @@ One decision stays with the operator.
   profile, a mastering stage split from the mix bus, stem-group routing,
   deliberate mono-source widening, per-channel strip variance, MPC-style shift
   timing, and sample-start offsets independent of drum timing each change how a
-  take sounds. Decide which, if any, to try. Seams: `lib/outboard.rb`,
-  `lib/console_strip.rb`, `lib/groove_engine.rb`, `DILLA_STYLE_DEFAULTS`.
+  take sounds. Decide which, if any, to try. Seams: `lib/sound.rb`,
+  `lib/sound.rb`, `lib/groove.rb`, `DILLA_STYLE_DEFAULTS`.
 
 
 ## MASTER web UI — future-human face — ChatGPT intake 2026-09-11
@@ -1836,7 +1836,7 @@ same file. What stays open:
   `topologies.yml:95` names, but `face_assets.yml` does not load it, so the
   topology is never drawn. Delete, gate or load each; both are product calls.
   `diag.html` reads only the visitor's own WebGL and stays.
-- **`ListeningLoop.converge` targets -14.5..-10.5 LUFS** (`composition_engine.rb`)
+- **`ListeningLoop.converge` targets -14.5..-10.5 LUFS** (`harmony.rb`)
   while the critique scores against the house -20..-16. Aligning it changes when
   a render stops raising `HARM_VOL`, so it waits for the operator's ear.
 - **`core-reclaim.sh` parses `swapctl -l` and `vm.loadavg` with head, tail and
@@ -1893,7 +1893,7 @@ default unless marked.
   signature's `HOCKET=3` is a note census, not an ensemble. Fix: pass the hocket
   index into the stack's patch seed or program. Sound change — operator hears the
   A/B.
-- **`VoiceStack` plans `cutoff_scale` and nothing applies it** (`lib/devices.rb`
+- **`VoiceStack` plans `cutoff_scale` and nothing applies it** (`lib/sound.rb`
   plans it; the only other reader is `describe`). Wire it into
   `render_lead_voice!`'s filter or delete the field.
 - **`data/modes.yml` has no reader.** The engine still walks the hardcoded
@@ -1901,7 +1901,7 @@ default unless marked.
   qenit modes are inert and adding hicaz or hüseyni there would be too. Load the
   file into those tables first.
 - **`insert_secondary_dominants` and `insert_backdoor` write one-note chords**
-  (`lib/harmony_engine.rb:351,368`). `apply_voicing` returns any chord without a
+  (`lib/harmony.rb:351,368`). `apply_voicing` returns any chord without a
   third unchanged, and both pass it a single pitch, so `V7/ii` and `bVII7` land
   on soul profiles as a lone note unless `validate_and_fix` repairs them —
   measure that, then voice them fully or delete them. Sound change — operator.
@@ -1995,7 +1995,7 @@ choose. Numbers are for citation, not for order.
 
 ### A · The catalogue: sets to build (1–20)
 
-1. **`vocal_chop_beats.als.rb`** [cheap] — `lib/vocal_chop.rb` already separates
+1. **`vocal_chop_beats.als.rb`** [cheap] — `lib/sampling.rb` already separates
    a vocal stem and refuses any rack that cannot name its source. Thirteen racks
    can. A set built on the voice rather than the instrumental is one new file
    against work already done.
@@ -2017,15 +2017,15 @@ choose. Numbers are for citation, not for order.
 6. **`remix.als.rb`** [cheap] — `samples/own/` holds nine finished recordings by
    the operator and named collaborators. Every set so far plays other people's
    records. One that plays ours is a different thing to own.
-7. **`spoken_word.als.rb`** [deep] — `lib/acapella.rb` exists. A bed under speech
+7. **`spoken_word.als.rb`** [deep] — `lib/sampling.rb` exists. A bed under speech
    is the oldest form in the tradition and the one the crate is best suited to.
 8. **`jazz_trio.als.rb`** [deep] — `chord_based_beats` voices its chords as
-   detuned sines because that was the cheapest honest thing. `lib/harmony_lead.rb`
-   and `lib/analog_synth.rb` and the four cached soundfonts exist. The same
+   detuned sines because that was the cheapest honest thing. `lib/harmony.rb`
+   and `lib/sound.rb` and the four cached soundfonts exist. The same
    progressions through a real instrument is a second set, not a change to the
    first.
 9. **`tape_loop.als.rb`** [deep] — a physical loop degrading each pass:
-   `lib/tape_hysteresis.rb` is already written and the set would be the first
+   `lib/sound.rb` is already written and the set would be the first
    caller that makes its behaviour audible over time rather than statically.
 10. **`long_form.als.rb`** [cheap] — twenty minutes rather than three. The pad
     set is already the shape; only `TOTAL` and the swell period stand in the way,
@@ -2039,9 +2039,9 @@ choose. Numbers are for citation, not for order.
 13. **`minimal.als.rb`** [cheap] — one voice, no kit, no bed, no console stack.
     Useful mostly as a control: everything else in the room is additive and
     nothing measures what each addition is worth.
-14. **`flip.als.rb`** [cheap] — `lib/sample_flip.rb` chops against chords and is
+14. **`flip.als.rb`** [cheap] — `lib/sampling.rb` chops against chords and is
     one of the engine's better ideas. No set reaches it.
-15. **`dfam.als.rb`** [cheap] — `lib/dfam_engine.rb` models a semi-modular drum
+15. **`dfam.als.rb`** [cheap] — `lib/sound.rb` models a semi-modular drum
     voice and is likewise unreached from the livesets.
 16. **`gospel.als.rb`** [cheap] — the eight-bar climb specialised: slower harmonic
     rhythm, the climb as the whole arrangement rather than a row sampled out of a
@@ -2098,14 +2098,14 @@ choose. Numbers are for citation, not for order.
     and `Rack.vcs` are invoked eleven times across three files with literal
     numbers. A named table (`warm`, `dry`, `blown`, `phasy`) turns "which room"
     into a knob, which is what 18 and most of section G need.
-32. **`lib/outboard.rb`** [cheap] — eight emulations, four of which measuring
+32. **`lib/sound.rb`** [cheap] — eight emulations, four of which measuring
     proved dead. The live rack re-implements two of the four that work.
-33. **`lib/producer_dna.rb` and `GROOVE_DNA=donuts`** [deep] — `drunk_kit`'s
+33. **`lib/groove.rb` and `GROOVE_DNA=donuts`** [deep] — `drunk_kit`'s
     jitter figures are hand-chosen constants. A DNA table already describes this
     and would let a set be *in the manner of* rather than *approximately drunk*.
-34. **`lib/knobs.rb`** [cheap] — nineteen documented knobs the sets do not read,
+34. **`lib/ledger.rb`** [cheap] — nineteen documented knobs the sets do not read,
     so a set cannot be steered without editing it.
-35. **`lib/taste.rb` and the scoring modules** [deep] — `mix_score`,
+35. **`lib/listen.rb` and the scoring modules** [deep] — `mix_score`,
     `groove_score`, `harmony_score` and `spectral_audit` can each judge a render.
     Nothing judges a pass. A set that scored itself and refused to journal a bad
     take would make the catalogue self-curating.
@@ -2114,7 +2114,7 @@ choose. Numbers are for citation, not for order.
 
 ### C · Drums (37–46)
 
-37. **Run `lib/kit_dig.rb`** [cheap] — it cuts a kit from `samples/own/` by
+37. **Run `lib/sampling.rb`** [cheap] — it cuts a kit from `samples/own/` by
     running demucs and keeping only the drum stem. It has never been run: there is
     no `provenance.json`, and `samples/drums/custom/` is the downloaded
     `03-soulful-vintage`. Our own drums are one command away and beat re-buying
@@ -2267,7 +2267,7 @@ choose. Numbers are for citation, not for order.
 89. **The 1260 is a sample rate as much as a bit depth** [deep] — `acrusher` also
     carries `samples` (1 to 250, currently 1, meaning off) and an `lfo`. Bit
     reduction alone is the cheapest third of what a 12-bit sampler does.
-90. **Tape before the console** [cheap] — `lib/tape_hysteresis.rb` is written and
+90. **Tape before the console** [cheap] — `lib/sound.rb` is written and
     unused in the livesets, and tape is where the lost chain's *old* came from.
 91. **A dry control** [cheap] — no set can be heard without the room. Nothing
     proves the room is an improvement.

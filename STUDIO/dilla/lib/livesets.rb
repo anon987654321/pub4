@@ -812,7 +812,7 @@ module Livesets
 
   # The crate, dug from its manifest — off YouTube, and therefore not cleared.
   #
-  # Say that first, because lib/crate_dig.rb takes the opposite position on the
+  # Say that first, because lib/sampling.rb takes the opposite position on the
   # same question: it is the engine's archive.org and ccMixter digger, filtered to
   # material that clears, and fills samples/dug/ with material that clears. This
   # fills samples/chopped/ with material that does not. Rights are carried, not
@@ -834,7 +834,7 @@ module Livesets
     # On stderr, every run. A header only warns the reader who opens the file,
     # and the person about to fill a crate with unlicensed material is at a prompt.
     warn "dig: YouTube rips — unlicensed, not cleared for release. " \
-         "lib/crate_dig.rb is the path that clears (Internet Archive, LibriVox, expired copyright)."
+         "lib/sampling.rb is the path that clears (Internet Archive, LibriVox, expired copyright)."
     crate = YAML.safe_load_file("project/crate.yml")["crate"].select { |e| e["available"] }
     slugify = ->(t) { t.to_s.downcase.gsub(/[^a-z0-9]+/, "_").gsub(/\A_|_\z/, "")[0, 44] }
 

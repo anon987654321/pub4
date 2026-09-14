@@ -33,7 +33,7 @@
 #   ruby dilla_live.rb dig          refill the beds the sampled sets play
 
 require_relative "dilla"
-require_relative "lib/space_fx"
+require_relative "lib/sound"
 
 module DillaLive
   RATE = AnalogSynth::RATE

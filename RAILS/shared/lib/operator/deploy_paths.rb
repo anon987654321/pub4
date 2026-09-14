@@ -13,7 +13,6 @@ module Operator
     def postpro_script = first_file(postpro_candidates)
     def repligen_script = first_file(repligen_candidates)
     def dilla_script = first_file(dilla_candidates)
-    def radio_bergen_study_script = first_file(radio_bergen_study_candidates)
     def master_root = master_candidates.map(&:expand_path).uniq.find { |path| File.directory?(path.join("bin")) }
 
     def master_candidates
@@ -47,17 +46,6 @@ module Operator
       ]
     end
 
-    # The study script is a thin wrapper around RadioBergenStudy, which lives in
-    # dilla.rb. It moved with the rest of STUDIO/radio-bergen when that directory
-    # was removed; same three-candidate shape as its neighbours above.
-    def radio_bergen_study_candidates
-      [
-        repo_join("STUDIO/dilla/radio_bergen_study.rb"),
-        Pathname.new("#{DEFAULT_REPO}/STUDIO/dilla/radio_bergen_study.rb"),
-        rails_root.join("../../STUDIO/dilla/radio_bergen_study.rb"),
-      ]
-    end
-
     # MASTER web bridge (ai.brgen.no / loopback :53187) for constitutional turns.
     def master_bridge_base
       env_value("MASTER_BRIDGE_URL") ||
@@ -68,7 +56,7 @@ module Operator
     # Falls back to the checkout this file actually lives in, not to the server
     # path. DEFAULT_RAILS is /home/dev/pub4/RAILS, so with no PUB4_RAILS_ROOT set
     # every candidate below resolved somewhere under /home/dev — which exists
-    # only on the VPS. Locally that made radio_bergen_study_script and friends
+    # only on the VPS. Locally that made dilla_script and friends
     # unresolvable, and `bin/rails test` aborted at load time with a LoadError
     # from radio_bergen_study_test.rb before a single test ran. The test file for
     # this module only ever exercised the with-PUB4_ROOT path, so the gap was

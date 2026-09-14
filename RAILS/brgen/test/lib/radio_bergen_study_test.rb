@@ -4,8 +4,9 @@ require "test_helper"
 require "operator/deploy_paths"
 require "yaml"
 
-script = Operator::DeployPaths.radio_bergen_study_script
-raise LoadError, "radio_bergen_study.rb not found in #{Operator::DeployPaths.radio_bergen_study_candidates.map(&:expand_path)}" unless script
+# RadioBergenStudy lives in dilla.rb.
+script = Operator::DeployPaths.dilla_script
+raise LoadError, "dilla.rb not found in #{Operator::DeployPaths.dilla_candidates.map(&:expand_path)}" unless script
 require script.to_s
 
 class RadioBergenStudyTest < ActiveSupport::TestCase

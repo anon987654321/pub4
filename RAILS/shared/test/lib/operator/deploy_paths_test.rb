@@ -48,7 +48,7 @@ class DeployPathsTest < Minitest::Test
       assert_equal rails_root, Operator::DeployPaths.rails_root.to_s
       assert_equal repo_root, Operator::DeployPaths.repo_root.to_s
 
-      %i[postpro_script repligen_script dilla_script radio_bergen_study_script].each do |script|
+      %i[postpro_script repligen_script dilla_script].each do |script|
         resolved = Operator::DeployPaths.public_send(script)
         assert resolved, "expected #{script} to resolve without PUB4_* env vars"
         assert File.file?(resolved), "#{script} resolved to a non-file: #{resolved}"

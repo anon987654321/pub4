@@ -1,9 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "studio_helper"
-require_relative "../dilla/lib/acapella"
-require_relative "../dilla/lib/kit_dig"
-require_relative "../dilla/lib/sample_worth"
+require_relative "../dilla/lib/sampling"
 
 # Arithmetic in the support modules that render nothing, so a suite without
 # audio or demucs can still hold it.

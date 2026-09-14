@@ -3,9 +3,8 @@
 require_relative "studio_helper"
 require "json"
 require "tmpdir"
-require File.expand_path("../dilla/lib/provenance", __dir__)
-require File.expand_path("../dilla/lib/dilla_dmesg", __dir__)
-require File.expand_path("../dilla/lib/spectral_audit", __dir__)
+require File.expand_path("../dilla/lib/ledger", __dir__)
+require File.expand_path("../dilla/lib/listen", __dir__)
 
 # What a render's record says about it beyond the seed: which toolchain made
 # it, whether a stage gave up along the way, and what it loses in mono. Each is

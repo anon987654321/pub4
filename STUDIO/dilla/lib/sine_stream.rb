@@ -231,7 +231,7 @@ end
 
 # ringtone.tools, reimplemented on the buffer instead of through ffmpeg.
 #
-# lib/devices.rb carries these as file-level devices that shell out. Nothing in
+# lib/sound.rb carries these as file-level devices that shell out. Nothing in
 # this stream is a file until the very end, so the ideas are rebuilt here on the
 # sample arrays directly -- same devices, no subprocess per chord.
 

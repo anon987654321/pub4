@@ -5,8 +5,7 @@ require "fileutils"
 require "json"
 require "rbconfig"
 require "tmpdir"
-require_relative "../dilla/lib/crate_dig"
-require_relative "../dilla/lib/radio_chop"
+require_relative "../dilla/lib/sampling"
 
 # The crate's provenance has to name the HTTP URL that was fetched. The dug
 # file is deleted after the chop, and a sidecar that only names a local path

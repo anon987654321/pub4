@@ -467,7 +467,7 @@ class TestDevices < Minitest::Test
     end
   end
 
-  # Past four is unmeasured, and an unmeasured drive is the thing outboard.rb
+  # Past four is unmeasured, and an unmeasured drive is the thing sound.rb
   # exists not to carry.
   def test_the_stack_clamps_to_what_was_measured
     assert_equal Outboard.console_stack(instances: 4), Outboard.console_stack(instances: 9)
@@ -768,7 +768,7 @@ end
   end
 
   # Same seed, same patch. A generated take nobody can get back is the fault
-  # provenance.rb exists to prevent.
+  # ledger.rb exists to prevent.
   def test_a_random_patch_is_reproducible
     a, = DillaModulation::PatchBay.random(bpm: 88.0, routes: 4, seed: 11)
     b, = DillaModulation::PatchBay.random(bpm: 88.0, routes: 4, seed: 11)
@@ -984,19 +984,19 @@ end
 #
 # The path is the module's OWN file, excluded from the search so a module is
 # never counted as calling itself. Keeping it right matters more than it looks:
-# after the merge into devices.rb these still named copy_machine.rb,
+# after the merge into sound.rb these still named copy_machine.rb,
 # midi_devices.rb, wav_map.rb and macros.rb, none of which exist any more -- so
-# nothing was excluded, devices.rb counted as an external caller of its own
+# nothing was excluded, sound.rb counted as an external caller of its own
 # modules, and the ratchet passed for every one of them without checking
 # anything. A guard keyed on a stale path is a guard that has stopped guarding.
 DEVICE_MODULES = {
-  "CopyMachine" => "lib/devices.rb",
-  "MidiDevices" => "lib/devices.rb",
-  "WavMap" => "lib/devices.rb",
-  "LowPassGate" => "lib/devices.rb",
-  "VoiceStack" => "lib/devices.rb",
-  "DillaModulation" => "lib/modulation.rb",
-  "DillaMacros" => "lib/knobs.rb",
+  "CopyMachine" => "lib/sound.rb",
+  "MidiDevices" => "lib/sound.rb",
+  "WavMap" => "lib/sound.rb",
+  "LowPassGate" => "lib/sound.rb",
+  "VoiceStack" => "lib/sound.rb",
+  "DillaModulation" => "lib/sound.rb",
+  "DillaMacros" => "lib/ledger.rb",
 }.freeze
 
 # device_cmds is the CLI surface and arrangement.rb is an analysis tool; being

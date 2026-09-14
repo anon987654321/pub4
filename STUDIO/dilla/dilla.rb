@@ -19,7 +19,7 @@
 # and Norwegian vowels in comments and track names — and 37 File.read/readlines
 # sites across lib/ ask for no encoding, so they inherit the locale's. Under a C
 # or POSIX locale that is US-ASCII, and the first thing to read a source file
-# raises: `env -i ruby dilla.rb help` died at lib/knobs.rb:228 building the knob
+# raises: `env -i ruby dilla.rb help` died at lib/ledger.rb:228 building the knob
 # table, before printing a word of help.
 #
 # It never bit interactively because a login shell exports a UTF-8 LANG. It bites
@@ -80,46 +80,18 @@ require "tmpdir"
 require_relative "../../MASTER/lib/io/analog_capabilities"
 require "open3"
 require "timeout"
-require_relative "lib/mixer"
-require_relative "lib/crate_dig"
-require_relative "lib/radio_chop"
-require_relative "lib/sample_flip"
-require_relative "lib/vocal_chop"
-require_relative "lib/analog_synth"
-require_relative "lib/improvisation"
-require_relative "lib/improvised_line"
-require_relative "lib/space_fx"
-require_relative "lib/acapella"
-require_relative "lib/outboard"
-require_relative "lib/key_lock"
-require_relative "lib/modal_family"
-require_relative "lib/dilla_dmesg"
-require_relative "lib/composition_engine"
-require_relative "lib/groove_score"
-require_relative "lib/harmony_score"
-require_relative "lib/producer_dna"
-require_relative "lib/harmony_engine"
-require_relative "lib/harmony_lead"
-require_relative "lib/theory_runtime"
-require_relative "lib/groove_engine"
-require_relative "lib/seed_providers"
-require_relative "lib/provenance"
-require_relative "lib/rhythm_macros"
-require_relative "lib/master_heuristics"
-require_relative "lib/spectral_engine"
-require_relative "lib/dilla_ml"
-require_relative "lib/dfam_engine"
-# Parameters that move over time, and the small devices that move them. modulation
-# reads TapeHysteresis for its random walk and requires it itself; macros reads
-# knobs.rb, which is why it comes after.
-require_relative "lib/modulation"
-require_relative "lib/devices"
-require_relative "lib/knobs"
-require_relative "lib/frozen_state"
-require_relative "lib/assets_manifest"
-require_relative "lib/taste"
+# The engine's parts, one file per subject, in the order they load. sampling
+# pulls ledger in for frozen state and harmony pulls groove in for the groove
+# score, so the order below is the order a reader meets them and no file
+# depends on one that has not loaded.
+require_relative "lib/sound"
+require_relative "lib/sampling"
+require_relative "lib/harmony"
+require_relative "lib/ledger"
+require_relative "lib/groove"
+require_relative "lib/listen"
 
-# Terse OpenBSD-style console log (see lib/dilla_dmesg.rb). Prefer dmesg over
+# Terse OpenBSD-style console log (see lib/ledger.rb). Prefer dmesg over
 # decorative banners; set DILLA_DMESG=0 to silence, =2 for verbose argv.
 def dmesg(msg, unit: "dilla0", parent: nil)
   DillaDmesg.ok(msg, unit:, parent:)
@@ -4153,7 +4125,7 @@ end
 # transposition, and the tempo variety that was in the source material comes
 # back for free. Folded into a single octave first, because a detector reports a
 # period and a period reads as half or double its true value -- the same trap
-# acapella.rb's BPM_RANGE fell into. 70-140 has no hole in it.
+# sampling.rb's BPM_RANGE fell into. 70-140 has no hole in it.
 #
 # BPM= and a sonic preset still win: an operator naming a tempo means it.
 SAMPLE_BPM_FLOOR = 70.0
@@ -4393,7 +4365,7 @@ end
 # How many bars each chord is held for.
 #
 # Operator direction on 2026-08-09 was "slower deeper chords always". This is
-# the "slower" half; CHORD_REGISTER_LOW/HIGH in producer_dna.rb is the "deeper".
+# the "slower" half; CHORD_REGISTER_LOW/HIGH in groove.rb is the "deeper".
 #
 # The preset value is MULTIPLIED rather than replaced, so the relative shape of
 # the catalogue survives: a preset that moved twice as fast as its neighbour
@@ -4436,7 +4408,7 @@ end
 
 # RINGTONE_LAYER=1 — the ringtone.tools devices, as one decision.
 #
-# lib/devices.rb carries four primitives ported from ringtone.tools: Copy Machine
+# lib/sound.rb carries four primitives ported from ringtone.tools: Copy Machine
 # (one source played n times at once, the copies drifting in pitch and time), the
 # Low Pass Gate (a note device whose decay darkens), wav_Map (an image read as a
 # wavetable) and P_4L's voice stack (seven Plaits models under one macro knob).
@@ -4741,8 +4713,8 @@ def generate_modal_interchange(root_hz:, mode: :minor, length: 8, seed: nil)
   end
 end
 
-# Delegates to DillaHarmony (harmony_engine.rb) so this and hz_to_midi/midi_to_hz
-# below can't drift into different rounding, the way theory_runtime.rb's copies
+# Delegates to DillaHarmony (harmony.rb) so this and hz_to_midi/midi_to_hz
+# below can't drift into different rounding, the way harmony.rb's copies
 # once did (see its comment) before being fixed the same way.
 def root_motion_semitones(a, b)
   DillaHarmony.root_motion_semitones(a, b)
@@ -6691,7 +6663,7 @@ def build_sample_loop_filter(idx, duration, loop_bpm, target_bpm)
 # reports a value and changes nothing is worse than one that is absent,
 # because it silently absorbs the attempt to use it.
 #
-# A working implementation already exists in lib/tape_hysteresis.rb --
+# A working implementation already exists in lib/sound.rb --
 # Ornstein-Uhlenbeck drift driving a fractional-delay read, in Ruby, verified.
 # Reach for TAPE_WOW_MS instead, which applies it to the master.
 wow = ""
@@ -7848,7 +7820,7 @@ end
 #    low shelf placed high, which lifts air without putting an edge on any one
 #    band. A narrow boost is the slick sound he was avoiding.
 #
-# All five are built in outboard.rb and reached through Outboard.chain below.
+# All five are built in sound.rb and reached through Outboard.chain below.
 # Two constants naming the transformer's corner frequencies lived here until
 # 2026-08-12, left behind when the stage moved into the rack; the rack carries
 # its own, so these described the sound rather than setting it.
@@ -14697,7 +14669,7 @@ PRECEDENCE_ORDER = DillaKnobs::PRECEDENCE
 # lines it holds, longest-first when asked, so the seams worth knowing about
 # announce themselves.
 #
-# Generated rather than written down, for the reason lib/knobs.rb gives about the
+# Generated rather than written down, for the reason lib/ledger.rb gives about the
 # knob count: a table maintained beside the code goes stale against the code, and
 # this engine has proved that twice.
 def parts_report(needle = nil)
@@ -14908,15 +14880,9 @@ end
 
 # ------------------------------------------------------------- arrangement
 #
-# Does a track have sections, and how strongly? Absorbed from arrangement.rb.
+# Does a track have sections, and how strongly? `dilla arrangement` is the same
+# kind of question as `dilla knobs`, asked about audio.
 #
-# It lives here rather than in spectral_audit.rb, which is the other file that
-# reads spectrograms, for a reason worth stating: spectral_audit is not required
-# by dilla.rb -- only by its own runner script -- so merging there would have
-# made a loaded module depend on an unloaded one. This file is the engine's
-# inspection surface, holds knobs_report and where_report, and is already in
-# ENGINE_PARTS. `dilla arrangement` is the same kind of question as `dilla
-# knobs`, asked about audio.
 # Does this track have an arrangement, and how strong is it?
 #
 # The question this exists for is one I could not otherwise answer. dilla's
@@ -14941,13 +14907,13 @@ end
 #             fooled by a track that merely gets louder.
 #
 # The spectrum comes from ffmpeg's showspectrumpic rather than an FFT written
-# here. That is not laziness: spectral_audit.rb already renders spectrograms for
+# here. That is not laziness: listen.rb already renders spectrograms for
 # auditing, WavMap already reads an image as a grid of numbers, and an FFT in
 # Ruby over a five-minute file would be the slowest part of this by an order of
 # magnitude. One ffmpeg pass produces the whole feature matrix.
 #
 # WHAT THIS CANNOT DO, stated plainly because the temptation is to forget it:
-# none of this says whether a track is good. taste.rb makes the argument at
+# none of this says whether a track is good. listen.rb makes the argument at
 # length and it holds here -- a measurement is worth something once it is
 # anchored to material an ear has already sorted. So `compare` exists, and the
 # useful use of this module is measuring a render against records, not against a
@@ -17044,7 +17010,7 @@ DILLA_COMFORT_DEFAULTS = DILLA_STYLE_DEFAULTS.slice(
   "STREAM_EVOLVE_PERFORMER" => "0",
   "VINYL" => "0",
   "CAMEL_NO_REVERB" => "1",
-  # Dilla pocket range (documented at the top of lib/groove_engine.rb),
+  # Dilla pocket range (documented at the top of lib/groove.rb),
   # not the 128 BPM / swing=50 (i.e. literally no swing) techno values
   # that were here -- those alone made anything feel generic regardless
   # of drum EQ. Leave BPM unset so per-track tempo picks its own value
@@ -17126,7 +17092,7 @@ GHOST_TIERS = {
 }.freeze
 
 # Phrase-level compositional archetypes -- each bundle reuses existing,
-# already-tested per-bar-read ENV knobs (groove_engine.rb reads SNARE_EARLY/
+# already-tested per-bar-read ENV knobs (groove.rb reads SNARE_EARLY/
 # KICK_LATE/HATS_LATE/POCKET_KICK_SILENCE/KICK_FREEHAND live at scheduling
 # time, not once at setup, so mutating them mid-render genuinely changes the
 # next bar's feel) rather than new step-array generation. Named after the
@@ -19129,7 +19095,7 @@ end
 # the same value, so the condition never meant anything.
 # The outboard chain each demo slot is printed through.
 #
-# lib/outboard.rb holds seven racks of measured emulations and demo-all was using
+# lib/sound.rb holds seven racks of measured emulations and demo-all was using
 # exactly one of them, 86 times -- the same signal path on every track in a demo
 # whose entire job is to show range. The pads, arps and voicings already rotate
 # per slot (right below); the analog stage did not, so every slot's character
@@ -26905,7 +26871,7 @@ end
 # one inverted so the routes do not all rise together.
 #
 # BUS_PATCH_SEED pins it. A random patch nobody can get back is a take nobody can
-# repeat, which is the fault provenance.rb exists to prevent.
+# repeat, which is the fault ledger.rb exists to prevent.
 def dilla_bus_patch(name, duration)
   return nil unless ENV["BUS_PATCH"].to_s == "random"
 
@@ -28412,8 +28378,8 @@ def help
       SPEAK_RATE=-48%                  Slower speech (default in stream)
       SPEAK=0                          Beat only — skip speech overlay
       RADIO_BERGEN=0 (stream default)  Set 1 to bias TRACK from radio.brgen.no
-      radio-bergen-study [--audio-root PATH]  Refresh learnings YAML from manifest
-      radio-bergen-analyze [--audio-root PATH]  Per-track dossiers (drums/texture/harmony)
+      radio-bergen-study [--audio-root=PATH] [--json]  Refresh learnings YAML from manifest
+      radio-bergen-analyze [--audio-root=PATH]  Per-track dossiers (drums/texture/harmony)
 
     SYNTHESIS
       loose_pocket [out.wav|mp3]         Dirty pocket drums + VLC FX (default on)
@@ -28455,8 +28421,8 @@ def help
                                    Batch radio.brgen.no (YouTube + local MP3) → demucs → analysis
       learn-playlist-agent [--foreground]  Background/resume agent → catalog + promote + calibrate
       learn-promote                  Merge catalog copyable_dna → learned_engine.json (runtime)
-      learn-calibrate [--audio-root] Measured dossiers → global BPM/swing calibration
-      learn-diff [--audio-root]      Curated vs measured vs learned diff report
+      learn-calibrate [--audio-root=PATH] Measured dossiers → global BPM/swing calibration
+      learn-diff [--audio-root=PATH] Curated vs measured vs learned diff report
       learn-wonky <url|path> [track] [apply] [shallow]
                                    yt-dlp → demucs → Wonky 16-step grid → learned_engine
                                    Default track quartal_west_coast; Camel grid baked into engine
@@ -30705,7 +30671,7 @@ end
 # CHOP (long recording → drumless, vocal-less registered sample loops)
 # =============================================================================
 #
-# The analysis lives in lib/radio_chop.rb; this is the wiring. Both external
+# The analysis lives in lib/sampling.rb; this is the wiring. Both external
 # dependencies are injected rather than reached for from inside the module:
 # demucs_cmd because it has three fallbacks and only this file knows them, and
 # sample_key because the Krumhansl tables and the Goertzel chroma are here.
@@ -32200,7 +32166,7 @@ TAPE_BIAS = (ENV["TAPE_BIAS"] || 1.0).to_f.clamp(0.0, 1.0)
 # every existing render. 14000 is the analog starting point.
 TAPE_LOSS_HZ = (ENV["TAPE_LOSS_HZ"] || 0).to_f.clamp(0.0, 20_000.0)
 
-# Per-channel console strip. See lib/console_strip.rb for why this is per
+# Per-channel console strip. See lib/sound.rb for why this is per
 # channel and not on the master, and for the harmonic measurements.
 #
 # CONSOLE_STRIP is the wet amount, 0 disables. Each bus passes its own
@@ -32220,9 +32186,6 @@ CONSOLE_STRIP = (ENV["CONSOLE_STRIP"] || 0.22).to_f.clamp(0.0, 1.0)
 def console_strip!(path, seed: 1, amount: CONSOLE_STRIP)
   return path unless amount.positive? && File.file?(path)
 
-  # ../console_strip, not lib/console_strip: require_relative resolves against
-  # the file it is written in, and this one moved a directory down in the split.
-  require_relative "lib/console_strip"
   started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
   raw = "#{path}.cs_in.raw"
   cooked = "#{path}.cs_out.raw"
@@ -32279,7 +32242,6 @@ end
 def tape_hysteresis!(path)
   return path unless (TAPE_HYSTERESIS.positive? || TAPE_WOW_MS.positive?) && File.file?(path)
 
-  require_relative "lib/tape_hysteresis"
   started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
   raw = "#{path}.pre.raw"
   cooked = "#{path}.post.raw"
@@ -34768,6 +34730,7 @@ end
 # line. ENV still works (flags win when both are set) — the flags exist so the
 # contract is visible in `help` and greppable, not to replace the env interface.
 FLAG_ENV = {
+  "audio-root" => "DILLA_AUDIO_ROOT", "json" => "DILLA_JSON",
   # Not a render setting: read by dilla_detach_if_asked! at the entry point,
   # which re-execs into its own session and returns the shell.
   "detach" => "DILLA_DETACH",
@@ -34830,7 +34793,7 @@ FLAGS_REQUIRING_VALUE = %w[
   bars bpm track progression swing voicing seed-text form section-map render-mode
   drum-preset lead-voice pad-voice pad-arp-mode lead-arp-mode synth-cycle
   external-kit generations listen-passes stream-track pad-vol kick-gain
-  sonitex analog-chain genre sidechain-style
+  sonitex analog-chain genre sidechain-style audio-root
 ].freeze
 
 def apply_flags!(argv)
@@ -34911,12 +34874,10 @@ DISPATCH = {
   "stems" => -> { stems(*ARGV) },
   "study" => -> { study(ARGV.shift, ARGV.shift) },
   "radio-bergen-study" => lambda {
-    audio_root = nil
-    if (idx = ARGV.index("--audio-root"))
-      audio_root = ARGV[idx + 1]
-      ARGV.delete_at(idx + 1)
-      ARGV.delete_at(idx)
-    end
+    audio_root = ENV["DILLA_AUDIO_ROOT"]
+    # --json prints the study and writes nothing.
+    next puts(JSON.pretty_generate(RadioBergenStudy.study!(audio_root:))) if ENV["DILLA_JSON"] == "1"
+
     path = RadioBergenStudy.write!(audio_root:)
     data = RadioBergenStudy.study!(audio_root:)
     remove_instance_variable(:@radio_bergen_learnings) if instance_variable_defined?(:@radio_bergen_learnings)
@@ -34926,12 +34887,7 @@ DISPATCH = {
     puts "rotation weights: #{load_radio_bergen_learnings['stream_rotation_weights']&.keys&.first(6)&.join(', ')}"
   },
   "radio-bergen-analyze" => lambda {
-    audio_root = nil
-    if (idx = ARGV.index("--audio-root"))
-      audio_root = ARGV[idx + 1]
-      ARGV.delete_at(idx + 1)
-      ARGV.delete_at(idx)
-    end
+    audio_root = ENV["DILLA_AUDIO_ROOT"]
     path = RadioBergenStudy.write_dossiers!(audio_root:)
     data = RadioBergenStudy.dossiers!(audio_root:)
     puts "wrote #{path}"
@@ -34949,7 +34905,6 @@ DISPATCH = {
   "beauty" => -> { beauty_report(ARGV.shift) },
   "crate" => -> { build_crate!(ARGV.shift || CRATE_DIR) },
 "mix-score" => lambda {
-    require_relative "lib/mix_score"
     a = ARGV.shift
     b = ARGV.shift
     if b
@@ -34958,10 +34913,7 @@ DISPATCH = {
       exit(MixScore.report(a.to_s) ? 0 : 1)
     end
   },
-  "verify-fx" => lambda {
-    require_relative "lib/verify_fx"
-    exit(VerifyFx.verify! ? 0 : 1)
-  },
+  "verify-fx" => -> { exit(VerifyFx.verify! ? 0 : 1) },
   # What has been built that nothing can select?
   #
   # Six separate faults in one session were the same shape: a capability was
@@ -35179,7 +35131,6 @@ DISPATCH = {
   # A drum kit cut from our own recordings. The inverse of `chop`: that one
   # runs demucs and throws the drum stem away, this one keeps only the drums.
   "kit" => lambda do
-    require_relative "lib/kit_dig"
     cmd = demucs_cmd or abort "demucs required — see `ruby dilla.rb chop` for the venv setup"
     KitDig.build!(demucs: cmd, limit: ENV["KIT_LIMIT"]&.to_i)
   rescue RuntimeError => e
@@ -35225,17 +35176,11 @@ DISPATCH = {
   end,
   "learn-promote" => -> { learn_promote! },
   "learn-calibrate" => lambda do
-    audio_root = nil
-    if (idx = ARGV.index("--audio-root"))
-      audio_root = ARGV[idx + 1]
-    end
+    audio_root = ENV["DILLA_AUDIO_ROOT"]
     learn_calibrate!(audio_root:)
   end,
   "learn-diff" => lambda do
-    audio_root = nil
-    if (idx = ARGV.index("--audio-root"))
-      audio_root = ARGV[idx + 1]
-    end
+    audio_root = ENV["DILLA_AUDIO_ROOT"]
     learn_diff_dossiers!(audio_root:)
   end,
   "rap-vocal" => lambda do

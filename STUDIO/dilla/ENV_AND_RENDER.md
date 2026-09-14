@@ -11,8 +11,8 @@ Sources of truth:
 | Path | Role |
 |------|------|
 | `dilla.rb` | Engine: `DILLA_STYLE_DEFAULTS`, `DILLA_BEST_DEFAULTS`, stream tables, render, DISPATCH |
-| `lib/theory_runtime.rb` | Bach + Dilla voicing operators (not styles) |
-| `lib/groove_engine.rb` | Sparse pocket phrases + micro-timing |
+| `lib/harmony.rb` | Bach + Dilla voicing operators (not styles) |
+| `lib/groove.rb` | Sparse pocket phrases + micro-timing |
 
 There is no separate product wrapper — `RAILS/shared/app/services/shared/dilla_processor.rb`
 shells straight out to this file with `RENDER_MODE=dilla` and `TRACK`/`PROGRESSION`
@@ -289,7 +289,7 @@ SPEAK=0 ruby dilla.rb demo-all 12 demo.wav
 ## Provenance debugging
 
 Every run writes a `<file>.provenance.json` beside each audio file it produced —
-`lib/provenance.rb`, hooked at the CLI entry before anything reads a seed. It
+`lib/ledger.rb`, hooked at the CLI entry before anything reads a seed. It
 carries the render seed, argv, the env knobs that change the output, the engine
 commit, whether the working tree was clean, and a sha256.
 
@@ -326,11 +326,11 @@ SPEAK=0 BARS=4 ruby -e '
 | Path | Role |
 |------|------|
 | `dilla.rb` | Monolith + DISPATCH + ENV tables |
-| `lib/producer_dna.rb` | Chords, timing DNA |
-| `lib/groove_engine.rb` | Pocket phrases, Gaussian jitter, phrase drift |
-| `lib/harmony_engine.rb` | Beautify / insight |
-| `lib/theory_runtime.rb` | Bach + Dilla voicing refine |
-| `lib/composition_engine.rb` | Form, performers |
-| `lib/master_heuristics.rb` | Master FX + loss gates |
+| `lib/groove.rb` | Chords, timing DNA |
+| `lib/groove.rb` | Pocket phrases, Gaussian jitter, phrase drift |
+| `lib/harmony.rb` | Beautify / insight |
+| `lib/harmony.rb` | Bach + Dilla voicing refine |
+| `lib/harmony.rb` | Form, performers |
+| `lib/listen.rb` | Master FX + loss gates |
 | `lib/music_gems.rb` | coltrane / head_music / midilib / wavefile |
 | `README.md` | Usage summary |

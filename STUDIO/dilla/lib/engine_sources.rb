@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 # What "the engine" is, in one place: dilla.rb plus lib/*.rb.
+# sprawl: deliberate -- it has no dependencies, so it cannot fold into a file that has.
 #
 # Provenance, the parse check and the test suite all ask which files the engine
 # is made of, and this file is the only answer, so no caller re-derives a corpus
