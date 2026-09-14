@@ -7259,18 +7259,23 @@ PATCH_ROTATION = %i[e_piano prophet_pad moog_bass poly_strings acid
 #
 # CHORD_HOLD sets how long each chord is held; PATCH= narrows it to one
 # instrument, which is the version to reach for when comparing two takes.
+#
+# One length per chord, or a cadence that cycles through several, read once
+# for the audition and the live catalogue both. Equal chords one after another
+# is a list, not a performance -- and against a long release the difference is
+# the whole character: a chord held 3 seconds has stopped moving by the time
+# the next arrives, while one held 0.6 is still sounding under the next two.
+# CHORD_CADENCE=2.4,0.8,0.8,1.6 cycles those lengths; CHORD_HOLD alone keeps
+# every chord the same.
+def chord_cadence
+  given = ENV["CHORD_CADENCE"].to_s.split(",").map { |v| v.to_f.clamp(0.15, 12.0) }.select(&:positive?)
+  given.empty? ? [(ENV["CHORD_HOLD"] || "1.2").to_f.clamp(0.2, 8.0)] : given
+end
+
 def synth_chord_audition!(patches)
   return puts("no patches to audition") if patches.empty?
 
-  # One length per chord, or a cadence that cycles through several.
-  #
-  # Equal chords one after another is a list, not a performance -- and against a
-  # long release the difference is the whole character: a chord held 3 seconds
-  # has stopped moving by the time the next arrives, while one held 0.6 is still
-  # sounding under the next two. CHORD_CADENCE=2.4,0.8,0.8,1.6 cycles those
-  # lengths; CHORD_HOLD alone keeps every chord the same.
-  cadence = ENV["CHORD_CADENCE"].to_s.split(",").map { |v| v.to_f.clamp(0.15, 12.0) }.select(&:positive?)
-  cadence = [(ENV["CHORD_HOLD"] || "1.2").to_f.clamp(0.2, 8.0)] if cadence.empty?
+  cadence = chord_cadence
   gap = cadence.sum / cadence.length * 0.75
   dir = File.join(SCRATCH_DIR, "synth_chords")
   FileUtils.mkdir_p(dir)
@@ -16438,23 +16443,6 @@ def harmony_now
     end
   end
   play_loop(harm)
-end
-
-# Loop full master — .live_tmp.wav via ffplay.
-def live(bars_count = 32)
-  tmp = File.join(SCRATCH_DIR, "live_tmp.wav")
-  unless File.exist?(tmp)
-    quick = [4, bars_count].min
-    puts "no cache — warming #{quick} bars first (~15s)"
-    render_dilla(tmp, quick)
-    if bars_count > quick
-      puts "rendering full #{bars_count} bars…"
-      render_dilla(tmp, bars_count)
-    end
-  end
-  play_loop(tmp)
-rescue SystemCallError => e
-  abort "playback failed: #{e.message}"
 end
 
 # --------------------------------------------------------------------------
@@ -26018,8 +26006,8 @@ def improvised_lead_enabled? = ENV.fetch("IMPROVISED_LEAD", "1") != "0"
 
 # The improvised line, in the render path.
 #
-# dilla_live.rb has played this since it was written and no render had ever
-# contained it: the live script had the guide-tone lines and the drawn effect
+# The live catalogue has played this since it was written and no render had
+# ever contained it: the live side had the guide-tone lines and the drawn effect
 # chains, the engine had neither, and a ten-minute catalogue went out with the
 # old lead code in it. One generator was the whole point of putting
 # ImprovisedLine in lib/ rather than in the script.
@@ -28442,6 +28430,8 @@ def help
 
     LIVESET
       liveset [set] [minutes]      Long-form WAV from stem rack (LIVESET_MIN=#{LIVESET_MIN})
+      live [passes] [out.wav]     The catalogue played as it is generated, or one pass written
+      live set|recall|broadcast|dig  The livesets: a set, the journal, all night, refill the beds
 
     READING THE ENGINE (no audio, no render — these only look)
       parts [needle]               Every `# engine part:` marker with the line it
@@ -34814,6 +34804,235 @@ def apply_flags!(argv)
   end
 end
 
+# The catalogue, generated and played as it goes.
+#
+# Every decision here is made somewhere else and this section only arranges
+# them: the progressions come from the engine, the lines from ImprovisedLine,
+# the instruments from AnalogSynth, the room from SpaceFx. What is left is
+# pick an instrument, build a bar, hand the samples to a player, repeat.
+#
+# Not a render that is played afterwards. Each progression is synthesised into
+# raw samples and written straight to a player's standard input, so nothing is
+# written to disk unless a file is named. Back-pressure does the timing: the
+# player's buffer fills, the write blocks, and the next bar is rendered only
+# when there is room for it.
+#
+#   ruby dilla.rb live                  the catalogue, one instrument per progression
+#   ruby dilla.rb live 3                three times through
+#   ruby dilla.rb live 1 take.wav       one pass written to a file instead of played
+#   PATCH=surreal_wash                  hold one instrument instead of rotating
+#   LEAD=0 / BASS=0                     drop a layer
+#   LEAD_DENSITY=1.0                    more notes in the line
+#   COPIES=6                            thicker Copy Machine cloud on the lead
+#   REVERB=0.5 ECHO=0.4                 wetter
+#   CHORD_CADENCE=2.6,0.7,0.7,1.5       chord lengths, cycled
+#
+#   ruby dilla.rb live set <name>       one pass of a liveset (lib/livesets.rb)
+#   ruby dilla.rb live recall           replay or keep a pass from the journal
+#   ruby dilla.rb live broadcast        the livesets in rotation, all night
+#   ruby dilla.rb live dig              refill the beds the sampled sets play
+module DillaLive
+  RATE = AnalogSynth::RATE
+
+  class << self
+    # Chord lengths, cycled, from the same reader the audition uses.
+    def cadence = chord_cadence
+
+    # One progression as three layers of notes, plus how long it runs.
+    def build(track, rng)
+      names = CHORD_PROGRESSIONS[track] or return nil
+      # Resolved up front: the bass has to know where the harmony is going
+      # before it can walk toward it, and the lead before it can land on it.
+      chords = names.filter_map do |name|
+        chord = resolve_pad_chord_symbol(name)
+        hz = Array(chord && chord[:hz]).map(&:to_f).select(&:positive?)
+        hz unless hz.empty?
+      end
+      return nil if chords.empty?
+
+      lengths = cadence
+      pad = []
+      lead = []
+      bass = []
+      at = 0.0
+      chords.each_with_index do |hz, i|
+        held = lengths[i % lengths.length]
+        hz.each { |f| pad << { hz: f, at: at.round(4), held:, gain: 0.55 } }
+        lead.concat(ImprovisedLine.lead(hz, chords[i + 1], at, held, rng)) if ENV["LEAD"] != "0"
+        bass.concat(ImprovisedLine.bass(hz, chords[i + 1]&.min, at, held, rng)) if ENV["BASS"] != "0"
+        at += held
+      end
+
+      # The Copy Machine on the line only. On the pad it would double a sound
+      # that is already five oscillators wide; on a sparse line it is the
+      # difference between one note and a cloud arriving after it.
+      copies = (ENV["COPIES"] || "4").to_i
+      lead = ImprovisedLine.copies(lead, copies:, seed: rng.seed % 100_000) if copies > 1
+
+      [pad, lead, bass, at + 4.0]
+    end
+
+    # Pad dry, bass dry, and everything spatial spent on the line.
+    #
+    # Reverb on a pad that is already a wash makes mud, and reverb on a bass
+    # takes away the only thing a bass has to be, which is definite. The lead is
+    # the layer with gaps in it, and a room is only audible in the gaps.
+    def render(pad, lead, bass, patch, duration, seed)
+      layers = []
+      layers << [{ patch:, notes: pad }] unless pad.empty?
+      layers << [{ patch: :dub_bass, notes: bass }] unless bass.empty?
+
+      left = nil
+      right = nil
+      layers.each do |groups|
+        l, r = AnalogSynth.buffers!(groups, duration:, seed:)
+        next unless l
+
+        left ? mix!(left, right, l, r) : (left = l) && (right = r)
+      end
+
+      unless lead.empty?
+        l, r = AnalogSynth.buffers!([{ patch: lead_patch, notes: lead }], duration:, seed:)
+        if l
+          plan = SpaceFx.random_plan(Random.new(seed), wet: (ENV["WET"] || "1.0").to_f,
+                                     max_stages: @max_stages)
+          @last_chain = SpaceFx.describe(plan)
+          # The two channels get different comb lengths, so the room is not the
+          # same room played twice -- which is the whole of why it sounds like a
+          # space rather than like an effect.
+          SpaceFx.apply!(l, plan, spread: 0)
+          SpaceFx.apply!(r, plan, spread: 23)
+          left ? mix!(left, right, l, r) : (left = l) && (right = r)
+        end
+      end
+      return nil unless left
+
+      AnalogSynth.interleave(left, right)
+    end
+
+    attr_reader :last_chain
+
+    # The lead voices, which rotate unless one is named. Saws are deliberately
+    # absent: alone in a high register over a pad there is nothing to mask their
+    # upper partials, and what should read as a voice reads as a fault.
+    LEAD_PATCHES = %i[glass_bell soft_reed vapor_lead ringtone_lead].freeze
+
+    def lead_patch
+      named = ENV["LEAD_PATCH"].to_s.strip.to_sym
+      return named if AnalogSynth::PATCHES.key?(named)
+
+      @lead_index = (@lead_index || -1) + 1
+      LEAD_PATCHES[@lead_index % LEAD_PATCHES.length]
+    end
+
+    def mix!(left, right, add_l, add_r)
+      i = 0
+      while i < left.length && i < add_l.length
+        left[i] += add_l[i]
+        right[i] += add_r[i]
+        i += 1
+      end
+    end
+
+    # sox first, and not as a fallback: ffplay takes no -ac, so the obvious
+    # stereo invocation of it dies on "Option not found" with the pipe already
+    # open, which surfaces as a broken pipe seconds later and looks like
+    # anything but a bad argument.
+    def player_command
+      if (play = which("play"))
+        [play, "-q", "-t", "raw", "-r", RATE.to_s, "-e", "signed", "-b", "16", "-c", "2", "-"]
+      elsif (ffplay = which("ffplay"))
+        [ffplay, "-hide_banner", "-loglevel", "error", "-nodisp", "-autoexit",
+         "-f", "s16le", "-ar", RATE.to_s, "-ch_layout", "stereo", "-i", "-"]
+      end
+    end
+
+    def which(bin)
+      ENV["PATH"].to_s.split(File::PATH_SEPARATOR)
+                 .map { |dir| File.join(dir, bin) }
+                 .find { |path| File.executable?(path) && !File.directory?(path) }
+    end
+
+    # The same signal path, written to a file instead of to the speakers.
+    #
+    # Worth having for one reason: what plays here is not what `dilla.rb`
+    # renders -- different lines, different instruments, an effect chain drawn
+    # per progression -- so without this there is no way to keep a pass you
+    # liked. Same samples, one pipe further.
+    def writer_command(dest)
+      ffmpeg = which("ffmpeg") or abort "dilla live: rendering needs ffmpeg"
+      FileUtils.mkdir_p(File.dirname(dest))
+      [ffmpeg, "-y", "-loglevel", "error", "-f", "s16le", "-ar", RATE.to_s,
+       "-ac", "2", "-i", "-", "-c:a", "pcm_s16le", dest]
+    end
+
+    def run(passes, dest = nil)
+      command = dest ? writer_command(dest) : player_command
+      abort "dilla live: needs sox's play or ffplay on PATH" unless command
+
+      # A render has all the time in the world; playing has until the speaker
+      # wants the next sample. FX_STAGES overrides either way.
+      @max_stages = (ENV["FX_STAGES"] || (dest ? "9" : "3")).to_i
+      order = demo_curated_order
+      held = ENV["PATCH"].to_s.strip.to_sym
+      hold_one = AnalogSynth::PATCHES.key?(held)
+      puts "live: #{order.length} progressions, #{hold_one ? held : 'rotating instruments'} — ctrl-c to stop"
+
+      IO.popen(command, "wb") do |speaker|
+        pass = 0
+        while passes.zero? || pass < passes
+          order.each_with_index do |track, i|
+            patch = hold_one ? held : PATCH_ROTATION[i % PATCH_ROTATION.length]
+            # Seeded on the track and the pass, so the line is different the
+            # second time round and reproducible either time.
+            rng = Random.new(DillaImprovisation.seed + (pass * 1000) + i)
+            built = build(track, rng) or next
+
+            pad, lead, bass, duration = built
+            t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+            pcm = render(pad, lead, bass, patch, duration, DillaImprovisation.seed + i)
+            next unless pcm
+
+            spent = Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0
+            puts format("  %-24s %-13s %5.1fs in %4.1fs (%.2fx)",
+                        track, patch, duration, spent, duration / spent)
+            puts "      #{last_chain}" if last_chain
+            speaker.write(pcm)
+          end
+          pass += 1
+        end
+      end
+    rescue Errno::EPIPE, Interrupt
+      puts "\nstopped"
+    end
+  end
+end
+
+# The live entry. It runs before the defaults tables, the provenance recipe and
+# the asset check, all of which belong to a render that writes a file: the live
+# side reads the caller's environment exactly as it was typed.
+def live!(argv)
+  # Ruby buffers stdout when it is not a terminal, so a redirected run shows
+  # nothing for the first several progressions and looks stalled while it is
+  # playing perfectly well.
+  $stdout.sync = true
+  if %w[set recall broadcast dig].include?(argv.first)
+    require_relative "lib/livesets"
+    case argv.shift
+    when "set" then Livesets.play_set!(argv.shift || abort("usage: ruby dilla.rb live set <#{Livesets::SETS.join('|')}>"))
+    when "recall" then Livesets.recall!(argv)
+    when "broadcast" then Livesets.broadcast!(argv.shift)
+    when "dig" then Livesets.dig_beds!
+    end
+    return
+  end
+  dest = argv.find { |arg| render_output_path?(arg) }
+  argv.delete(dest)
+  # A render has to end, so it defaults to one pass where playing defaults to
+  # forever.
+  DillaLive.run((argv.shift || (dest ? "1" : "0")).to_i, dest)
+end
+
 DISPATCH = {
   "capabilities" => -> { puts Master::Io::AnalogCapabilities.report(:dilla) },
   "quality" => -> { dilla_quality(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3"), ARGV.shift) },
@@ -34941,7 +35160,7 @@ DISPATCH = {
   "semantics" => -> { semantics(ARGV.shift) },
   "ears" => -> { ears(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3")) },
   "play" => -> { play(ARGV.shift, (ARGV.shift || 8).to_i) },
-  "live" => -> { live((ARGV.shift || 32).to_i) },
+  "live" => -> { live!(ARGV) },
   "stream" => -> { stream((ARGV.shift || stream_bars_default).to_i) },
   # The short one, kept because it is genuinely useful when iterating -- a few
   # bars of each named style finishes in minutes. It is no longer what a bare
@@ -35240,6 +35459,12 @@ def render_output_path?(token)
 end
 
 if __FILE__ == $PROGRAM_NAME
+  if ARGV.first == "live"
+    ARGV.shift
+    live!(ARGV)
+    exit
+  end
+
   # Before anything reads a seed. Draws and records RENDER_SEED when it is unset,
   # so every file this run produces gets a recipe beside it and can be
   # made again. DILLA_NO_PROVENANCE=1 restores the old unrecorded behaviour.
@@ -35294,8 +35519,8 @@ if __FILE__ == $PROGRAM_NAME
     # answers a question nobody asks of a beat engine. The catalogue is what
     # this program is for: nineteen pieces, seven off records and twelve it
     # wrote, every sound synthesised. `readme_loop` still reaches the old
-    # behaviour by name, and `dilla_live.rb` is the version that plays instead
-    # of writing.
+    # behaviour by name, and `live` is the version that plays instead of
+    # writing.
     demo_all((USER_PINNED_ENV["BARS"] || "4").to_i)
   elsif render_output_path?(cmd) && !DISPATCH.key?(cmd)
     ARGV.unshift(cmd)

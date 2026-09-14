@@ -246,7 +246,7 @@ symbol names over line numbers.
   the other 160 sources cannot be re-fetched to the same bytes.
 - **Two ways into the crate.** The engine reads `samples/chopped/loops.json`
   through `RadioChop.registered_loops`; `lib/sampling.rb` writes `samples/dug/`
-  from public-domain archives; `ruby dilla_live.rb dig` (`lib/livesets.rb`) rips
+  from public-domain archives; `ruby dilla.rb live dig` (`lib/livesets.rb`) rips
   YouTube into `samples/chopped/` and warns on every run. Those two are the crate.
 - **`ruby STUDIO/dilla/dilla.rb assets` exits 1**: three loops missing, seven files
   changed (re-synthesised one-shots).
@@ -889,7 +889,7 @@ Take them the day those files are clean.
 811. **dilla.rb comments that describe the split.** 80 `# engine part:` headers still say "split out of dilla.rb"; `:230` says load order lives in `engine_sources.rb`; `:248`, `:13733`, `:14870`, `:20805` still name `lib/engine/`; `:14900` names the gone `ENGINE_PARTS`; `:14672` hardcodes "35,000 lines / 83 markers" instead of asking `parts_report`. `:35237` should say the gate and tests depend on the CLI guard.
 812. **`ENGINE_SOURCES = DillaSources.all` sits at `:34385`,** after `wiring_dead_constants` and `parts_report` close over it. Move it up to the require at `:36`.
 814. **`scan` probes `dilla.html` (`:13165`),** a file that does not exist. Drop the key.
-815. **`help` is one 170-line dump.** Topic index (`help render|chop|knobs|sample`) with the wall behind `help all`. The topics owe these lines: `industrial`/`techno`/`analog` bypass AudioGraph; `characterize` under READING THE ENGINE; `source` points at `lib/sampling.rb` before `project/crate.yml`, and `dilla_live.rb dig` is the YouTube digger; chop lists RadioChop's operations in order; `STREAM_DEMO` overwrites the rolling `demo.wav`, not a take; `DILLA_OVERWRITE=1` is the only overwrite; `SWING=` is the fallback and per-role offsets are the Charnas move.
+815. **`help` is one 170-line dump.** Topic index (`help render|chop|knobs|sample`) with the wall behind `help all`. The topics owe these lines: `industrial`/`techno`/`analog` bypass AudioGraph; `characterize` under READING THE ENGINE; `source` points at `lib/sampling.rb` before `project/crate.yml`, and `dilla.rb live dig` is the YouTube digger; chop lists RadioChop's operations in order; `STREAM_DEMO` overwrites the rolling `demo.wav`, not a take; `DILLA_OVERWRITE=1` is the only overwrite; `SWING=` is the fallback and per-role offsets are the Charnas move.
 816. **`council` (`:13184`) prints five slogans.** Delete it or make it run a command.
 822. **Lazy requires are undocumented.** Say beside the requires which of `console_strip`, `tape_hysteresis`, `mix_score`, `verify_fx`, `kit_dig` are command-only, so a fold does not pull DSP into boot.
 829. **Locale.** brgen's CI loads dilla.rb as user brgen; set `Encoding.default_external = Encoding::UTF_8` at the top of dilla.rb rather than touching 37 `File.read` sites.
@@ -898,7 +898,7 @@ Take them the day those files are clean.
 868. **Chop registry JSON is parsed twice** (`:18223` warns, `registered_loops` rescues again). Parse once; drop bad rows by slug.
 871. **`rap-vocal list`** should mark sidecar-only rows "audio missing", and say `_mislabelled_untitled_flac/` is deliberate so nobody cleans it.
 873. **`dilla assets` exits 0 on an unreadable `data/assets.json`.** The module warns and returns an empty crate; the command should exit non-zero.
-965. **dilla README and ENV_AND_RENDER.md.** README names `sample_loops.rb` (it is an engine part), tells a stale restore story, and never says a worktree has no crate so crate tests skip; ENV_AND_RENDER.md says command aliases are gone while `loose_pocket`, `industrial` and `techno` remain as genre renderers. One sentence should name the three ways to hear it: `dilla.html`, `dilla_live.rb`, `bin/sine_stream.rb`.
+965. **dilla README and ENV_AND_RENDER.md.** README names `sample_loops.rb` (it is an engine part), tells a stale restore story, and never says a worktree has no crate so crate tests skip; ENV_AND_RENDER.md says command aliases are gone while `loose_pocket`, `industrial` and `techno` remain as genre renderers. One sentence should name the three ways to hear it: `dilla.html`, `dilla.rb live`, `dilla.rb sines`.
 1000. **Provenance pins.** Confirm a probe asserts the sidecar note carries a non-seed pin when `USER_PINNED_ENV` is set; add one to `test_dilla_engine_probes.rb` if not.
 
 These are the operator's, because each changes a sound or accepts a changed input:
@@ -1112,7 +1112,7 @@ measured costs fixed, the rest declined as unmeasured. The rule for the next
 proposal is `MASTER/DECISIONS.md` "Performance Work Starts From A Measured
 Cost", and for the box `OPENBSD/DECISIONS.md` of the same date.
 
-- **dilla_live is not real-time.** Last measured: synthesis 1.58x real-time,
+- **`dilla.rb live` is not real-time.** Last measured: synthesis 1.58x real-time,
   the effects chain drags it to 0.34x. Re-measure first; any speedup must leave
   the rendered sound identical, and `dilla.rb` is under another session’s edit.
 
@@ -1289,7 +1289,7 @@ choose. Numbers are for citation, not for order.
 10. **`long_form.als.rb`** [cheap] — twenty minutes rather than three. The pad
     set is already the shape; only `TOTAL` and the swell period stand in the way,
     and a set you can leave running is a different use than a set you audition.
-11. **`playlist.als.rb`** [deep] — never ends. ``dilla_live.rb broadcast`` rotates four
+11. **`playlist.als.rb`** [deep] — never ends. `dilla.rb live broadcast` rotates four
     processes with hard cuts between them; a set that crossfades its own
     successor is the thing that was actually wanted.
 12. **`field.als.rb`** [yours] — a bed that is a place rather than a record.

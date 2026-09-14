@@ -97,7 +97,7 @@ module Deploy
     # dilla's support files are the one place file count can still grow. The
     # engine is dilla.rb; everything else dilla carries is support, counted at any
     # depth so a regroup into subdirectories cannot make the count measure less:
-    # lib/ and every Ruby file beside the engine at the dilla root (dilla_live.rb).
+    # lib/ and every Ruby file beside the engine at the dilla root.
     # A new file fails the gate until its author folds it
     # into a sibling or lowers the count elsewhere; raising the ceiling wants the
     # reason in the commit.
@@ -106,7 +106,7 @@ module Deploy
     # counts every tracked file in STUDIO. This one counts dilla's Ruby beside
     # the engine and nothing else.
     DILLA_SUPPORT = %r{/dilla/(?:lib/.+|(?!dilla\.rb\z)[^/]+\.rb)\z}
-    DILLA_SUPPORT_CEILING = 11
+    DILLA_SUPPORT_CEILING = 10
     # Directories support code has left for lib/. Each one coming back is the
     # sprawl coming back, whatever its file count.
     DILLA_RETIRED_DIRS = %w[lib/engine bin live scripts].freeze

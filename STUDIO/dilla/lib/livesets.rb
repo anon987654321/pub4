@@ -3,15 +3,15 @@
 # The livesets: three sets patched into one room, and the journal that makes a
 # pass something you can play again.
 #
-#   ruby dilla_live.rb set chord_based_beats     one pass of a set
-#   ruby dilla_live.rb set sampled_based_beats
-#   ruby dilla_live.rb set ambient_pads
-#   ruby dilla_live.rb recall                    the last twenty passes
-#   ruby dilla_live.rb recall 41205993           play that one again
-#   ruby dilla_live.rb recall 41205993 --keep    render it beside dilla.rb
-#   ruby dilla_live.rb recall --keep             keep the last pass played
-#   ruby dilla_live.rb broadcast [set]           all three in turn, or one all night
-#   ruby dilla_live.rb dig                       fill samples/chopped/ from project/crate.yml
+#   ruby dilla.rb live set chord_based_beats     one pass of a set
+#   ruby dilla.rb live set sampled_based_beats
+#   ruby dilla.rb live set ambient_pads
+#   ruby dilla.rb live recall                    the last twenty passes
+#   ruby dilla.rb live recall 41205993           play that one again
+#   ruby dilla.rb live recall 41205993 keep      render it beside dilla.rb
+#   ruby dilla.rb live recall keep               keep the last pass played
+#   ruby dilla.rb live broadcast [set]           all three in turn, or one all night
+#   ruby dilla.rb live dig                       fill samples/chopped/ from project/crate.yml
 #
 # What the sets share is the room -- the console, the crate, the clock and the
 # journal -- and what differs is the arrangement, which is what a set is. Written
@@ -436,7 +436,7 @@ module Livesets
       progression: symbols, bpm: bpm, bar_s: bar, chord_s: chord_s,
       weights: { phrase: 0.62, kit: 2.9, crackle: 0.30 },
       drums: { kick_ms: hits[:kick], snare_ms: hits[:snare], ghost_ms: hits[:ghost], hat_ms: hits[:hat] },
-      sonitex: [12, 12, 11, 10], vcs: 6, rig: "dilla_live.rb set chord_based_beats"
+      sonitex: [12, 12, 11, 10], vcs: 6, rig: "dilla.rb live set chord_based_beats"
     )
 
     play!(inputs, graph,
@@ -574,7 +574,7 @@ module Livesets
       chop_at: slice_at, reversed: reverse, bar_s: bar,
       weights: { phrase: 0.30, under: 0.14, kit: 3.4 },
       drums: { kick_ms: hits[:kick], snare_ms: hits[:snare], ghost_ms: hits[:ghost], hat_ms: hits[:hat] },
-      sonitex: [13, 12, 12, 11, 10], vcs: 6, rig: "dilla_live.rb set sampled_based_beats"
+      sonitex: [13, 12, 12, 11, 10], vcs: 6, rig: "dilla.rb live set sampled_based_beats"
     )
 
     play!(inputs, graph,
@@ -707,7 +707,7 @@ module Livesets
       bpm: g[:bpm], drag: drag, bars_in_loop: g[:bars_in_loop], progression: prog,
       chop_at: slice_at, hold_s: hold, bar_s: bar, drums: nil,
       weights: { phrase: 1.0, under: 0.5, air: 0.30 },
-      sonitex: [13, 12, 12], vcs: 5, rig: "dilla_live.rb set ambient_pads"
+      sonitex: [13, 12, 12], vcs: 5, rig: "dilla.rb live set ambient_pads"
     )
 
     play!(inputs, graph,
@@ -749,11 +749,11 @@ module Livesets
       puts format("  %-10s %-20s %-28s %6s bpm  %s", r["seed"], r["set"],
                   r["bed"] || r["progression_name"] || "-", r["bpm"], r["at"])
     end
-    puts "\n  ruby dilla_live.rb recall <seed>          play it again"
-    puts "  ruby dilla_live.rb recall <seed> --keep   render it beside dilla.rb"
+    puts "\n  ruby dilla.rb live recall <seed>          play it again"
+    puts "  ruby dilla.rb live recall <seed> keep     render it beside dilla.rb"
   end
 
-  # Play a pass again, or keep one. --keep with no seed means the last pass
+  # Play a pass again, or keep one. keep with no seed means the last pass
   # played, which is the way it is wanted: something goes past, it was good, and
   # reaching for the number is one step too many at that moment.
   #
@@ -762,13 +762,15 @@ module Livesets
   # not, so the take survives this machine even when the audio does not, and the
   # seed rebuilds it.
   def recall!(argv)
-    if (argv & %w[-h --help]).any?
-      puts File.read(__FILE__).lines.grep(/\A#   ruby dilla_live\.rb recall/).map { |l| l.sub(/\A# /, "") }
+    # Words, not flags: dilla.rb reads every --flag as a render knob before a
+    # command sees it, so a recall option spelled as one would never arrive.
+    if argv.include?("help")
+      puts File.read(__FILE__).lines.grep(/\A#   ruby dilla\.rb live recall/).map { |l| l.sub(/\A# /, "") }
       return
     end
-    keep = argv.delete("--keep")
-    unknown = argv.select { |a| a.start_with?("-") }
-    abort("recall: unknown flag #{unknown.join(' ')} -- see dilla_live.rb recall --help") if unknown.any?
+    keep = argv.delete("keep")
+    unknown = argv.reject { |a| a.match?(/\A\d+\z/) }
+    abort("recall: unknown word #{unknown.join(' ')} -- see ruby dilla.rb live recall help") if unknown.any?
     seed = argv.shift
     rows = passes
     return show(rows) if seed.nil? && !keep
@@ -793,7 +795,7 @@ module Livesets
     else
       warn "replaying #{label}"
     end
-    exec(env, RbConfig.ruby, File.join(D, "dilla_live.rb"), "set", row["set"].to_s)
+    exec(env, RbConfig.ruby, File.join(D, "dilla.rb"), "live", "set", row["set"].to_s)
   end
 
   # Pass after pass until interrupted. A pass that exits non-zero moves on to the
@@ -805,7 +807,7 @@ module Livesets
 
     sets = name ? [name] : ROTATION
     sets.cycle do |set|
-      system(RbConfig.ruby, File.join(D, "dilla_live.rb"), "set", set)
+      system(RbConfig.ruby, File.join(D, "dilla.rb"), "live", "set", set)
       sleep 0.2
     end
   end
