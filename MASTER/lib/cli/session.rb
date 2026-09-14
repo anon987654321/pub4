@@ -50,6 +50,7 @@ module Master
 
       def run(initial_message = nil)
         setup_signals
+        @refs.agent.start_on_local_tier_when_offline! if @refs.agent.respond_to?(:start_on_local_tier_when_offline!)
         @refs.session.load! if @refs.session.exists?
         start_background_loop
         first_boot_bar

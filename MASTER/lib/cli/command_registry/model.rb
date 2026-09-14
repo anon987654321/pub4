@@ -10,7 +10,11 @@ module Master
         arg = arg || arg_for(ctx)
         return list_models(root:, metrics:, agent:) if arg == "list"
         return "model: #{agent.model} (use /model list for available models)" if arg.empty?
-        agent.model = arg; config.save!; "model: #{arg}"
+        agent.model = arg
+        config.save!
+        "model: #{agent.model}"
+      rescue ArgumentError => e
+        "model: #{e.message}"
       end
 
       def list_models(root:, metrics:, agent:)

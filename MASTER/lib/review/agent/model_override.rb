@@ -8,24 +8,44 @@ module Master
       # public-method ceiling. Same include pattern as PromptFilter/
       # ModelSelector/PromptBuilder/FallbackChain already on this class.
       module ModelOverride
-        def model = routed_models.first
+        # What the operator may type for "the local tier".
+        LOCAL_TIER_NAMES = %w[local ollama].freeze
+
+        # A model the operator chose leads every chain until another is chosen.
+        # config["model"] alone sat at the tail of the routed chain, so /model
+        # answered "model: ollama" and the next turn still went to agy:auto.
+        def model = @pinned_model || routed_models.first
+
         def model=(val)
-          @config["model"] = val
+          chosen = resolve_model_name(val.to_s)
+          @config["model"] = chosen
+          @pinned_model = chosen
         end
 
         def with_model(override, &blk)
           @model_mutex ||= Mutex.new
           @model_mutex.synchronize do
-            prev = model
+            saved = [@pinned_model, @config["model"]]
             self.model = override
             blk.call
           ensure
-            self.model = prev
+            @pinned_model, @config["model"] = saved
           end
         end
 
+        # Offline, every remote lane costs a resolver timeout before
+        # FallbackChain reaches the local tier, so a session that starts with
+        # no network starts there. Not saved to config: the network coming
+        # back gives the routed chain back on the next boot.
+        def start_on_local_tier_when_offline!
+          return if @pinned_model || Ground::BootReceipt.network?
+
+          local = @model_router.respond_to?(:local_models) ? Array(@model_router.local_models).first : nil
+          @pinned_model = local if local
+        end
+
         def model_for(operation:)
-          @model_router&.constrained_for(operation:) || model
+          @pinned_model || @model_router&.constrained_for(operation:) || model
         end
 
         # The full fallback chain (cheap-first/strong-first as configured),
@@ -33,6 +53,15 @@ module Master
         # health need every candidate this dispatch could actually fall
         # back to, not only the one at the front of the chain.
         def candidate_models(message = nil, task_type: nil) = routed_models(message, task_type:)
+
+        private
+
+        def resolve_model_name(name)
+          return name unless LOCAL_TIER_NAMES.include?(name.downcase)
+
+          local = @model_router.respond_to?(:local_models) ? Array(@model_router.local_models).first : nil
+          local || raise(ArgumentError, "no local model pulled; run ollama pull, then /model local")
+        end
       end
     end
   end

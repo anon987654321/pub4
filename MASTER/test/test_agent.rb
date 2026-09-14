@@ -43,6 +43,50 @@ class TestAgent < Minitest::Test
     assert_operator Master::Review::Agent.public_instance_methods(false).size, :<=, 12
   end
 
+  class LocalRouter
+    def initialize(local) = @local = local
+    def local_models = @local
+    def fallback_chain(**) = %w[agy:auto deepseek-reasoner]
+    def classify_intent(*) = :general
+    def tier_for_model(*) = "default"
+    def constrained_for(**) = "deepseek-reasoner"
+  end
+
+  def agent_routed_by(router)
+    @agent.instance_variable_set(:@model_router, router)
+    @agent
+  end
+
+  # "/model ollama" answered "model: ollama" and the next turn went to agy:auto:
+  # the choice sat at the tail of the routed chain.
+  def test_a_chosen_model_leads_every_chain_until_another_is_chosen
+    agent = agent_routed_by(LocalRouter.new(%w[ollama:qwen2.5-coder:7b]))
+
+    agent.model = "ollama"
+
+    assert_equal "ollama:qwen2.5-coder:7b", agent.model
+    assert_equal "ollama:qwen2.5-coder:7b", agent.candidate_models.first
+    assert_equal "ollama:qwen2.5-coder:7b", agent.model_for(operation: :scan)
+  end
+
+  def test_the_local_tier_name_with_nothing_pulled_says_so
+    agent = agent_routed_by(LocalRouter.new([]))
+
+    error = assert_raises(ArgumentError) { agent.model = "local" }
+    assert_match(/no local model pulled/, error.message)
+  end
+
+  def test_an_offline_session_starts_on_the_local_tier
+    agent = agent_routed_by(LocalRouter.new(%w[ollama:phi4:mini]))
+
+    Master::Ground::BootReceipt.stub(:network?, false) { agent.start_on_local_tier_when_offline! }
+    assert_equal "ollama:phi4:mini", agent.model
+
+    online = agent_routed_by(LocalRouter.new(%w[ollama:phi4:mini])).tap { |a| a.instance_variable_set(:@pinned_model, nil) }
+    Master::Ground::BootReceipt.stub(:network?, true) { online.start_on_local_tier_when_offline! }
+    assert_equal "agy:auto", online.model
+  end
+
   # The filter ran on the operator's own message, so "what would happen if"
   # reached the model as "what happen if".
   def test_ask_once_sends_the_operators_words_unchanged

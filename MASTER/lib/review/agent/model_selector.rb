@@ -15,6 +15,11 @@ module Master
         private
 
         def routed_models(message = nil, task_type: nil)
+          chain = routed_chain(message, task_type:)
+          @pinned_model ? ([@pinned_model] + chain).uniq : chain
+        end
+
+        def routed_chain(message, task_type:)
           return [@config.model] unless @model_router
           task = normalize_task_type(task_type || @config.task_type)
           task = @model_router.classify_intent(message) if task == :general && message
