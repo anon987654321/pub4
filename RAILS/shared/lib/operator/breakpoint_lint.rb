@@ -168,7 +168,7 @@ module Operator
 
     # Comments blanked, line numbering preserved.
     #
-    # A comment outlives its rule (MASTER/DECISIONS.md), on this file's first run:
+    # A comment outlives its rule, as this file's first run showed:
     # shared/_responsive.scss opens with a paragraph explaining why a rule is NO
     # LONGER wrapped in `@media (max-width: 768px)`, and the lint reported that
     # sentence as a colliding bound. A check that reads its own documentation

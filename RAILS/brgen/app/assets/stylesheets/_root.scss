@@ -101,7 +101,7 @@ html, body {
  * to the obvious search: grep for `font-size:` on html and brgen appears to set
  * no root size at all, so rem looks like it resolves against the browser default.
  * It does not — this line is the 18px that thirty-odd comments across the tree,
- * design_tokens.yml, DECISIONS.md and ScaleLint all refer to. */
+ * design_tokens.yml and ScaleLint all refer to. */
 html {
   font: var(--font-size)/var(--line-height) var(--font);
 }
