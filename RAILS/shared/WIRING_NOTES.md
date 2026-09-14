@@ -725,3 +725,32 @@ not vote state or badge counts, which no record's `updated_at` covers.
 In an app without guests, `authenticated?` resumes the session itself, because
 `allow_unauthenticated_access` skips `resume_session` there. A broadcast partial
 renders with no key generator and stays signed-out.
+
+## Toggles redirect, and morph is what makes that cheap (2026-09-14)
+
+Favorite, like, dislike, rewind, collaboration, import, pins and group members
+answer with a redirect, not a Turbo Stream. A redirect back to the page the form
+sat on is a Turbo 8 page refresh, and `turbo_refreshes_with :morph, scroll:
+:preserve` in `Shared::ApplicationSetup` declares that the refresh morphs in
+place. A stream template per action would save one server render per click at
+the cost of a second copy of each button's markup, and dating's swipe deck, the
+import form and the collaboration page move the reader on anyway.
+
+That argument holds only once the declaration reaches a page, and today it does
+not. The bridge in `shared/config/initializers/turbo_refresh.rb` calls
+`helpers.turbo_refreshes_with` in a before_action; `helpers` is a separate view
+context, so the `provide :head` lands nowhere, and measured on brgen.no and
+markedsplass.brgen.no no `turbo-refresh-method` meta tag renders. Every one of
+these redirects is therefore a replace with scroll reset. Making the meta tag
+render changes how every page in three apps refreshes, including tiptap and map
+surfaces, so it waits for a rendered check rather than landing blind.
+
+## System tests stay on Selenium (2026-09-14)
+
+The gates drive Chrome over CDP through `gates/support/cdp_session.rb` because
+they run under bare `ruby` outside any bundle, where no driver gem can be
+loaded. The four system tests run inside each app's bundle, where Capybara needs
+a driver gem either way; Cuprite would add one to three lockfiles, which is a
+change made on vm23, to save nothing on four tests that already run headless
+Chrome. brgen's `assert_accessible` uses axe through Capybara and works under
+either driver.
