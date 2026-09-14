@@ -22,18 +22,18 @@ module Master
           "watch" => :blue,
         }.freeze
 
-          def splash(model)
-            context = splash_context(model)
-            return concise_splash(context) unless ENV["MASTER_VERBOSE_BOOT"] == "1"
+        def splash(model)
+          context = splash_context(model)
+          return concise_splash(context) unless ENV["MASTER_VERBOSE_BOOT"] == "1"
 
-            lines = [*identity_lines(context), *splash_dmesg_lines, *device_lines_for(context),
-                     root_on_line(context)]
-
+          lines = [*identity_lines(context), *splash_dmesg_lines, *device_lines_for(context),
+                   root_on_line(context)]
           host_status = Master::Ground::HostBudget.status_line
           lines << d(host_status) if host_status
           lines.concat(["", splash_ready_line(context)])
           lines.join("\n")
         end
+
 
         alias banner splash
 
@@ -127,6 +127,7 @@ module Master
           ].join("\n")
         end
 
+        def splash_context(model)
           shell = File.basename(ENV["SHELL"] || "zsh")
           {
             now: Time.now,
