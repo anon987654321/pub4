@@ -349,21 +349,24 @@
     })();
   </script>
   <script src="<%= asset_path("face_2d_fallback.js") %>" defer></script>
-  <main id="chat-shell" role="main" aria-label="<%= t("face.chat_aria") %>">
-    <div id="chat-log" aria-live="polite" aria-relevant="additions text" tabindex="-1"></div>
-  </main>
   <div class="ui-status sr-only" id="ui-status" aria-live="polite" aria-atomic="true"></div>
   <div id="mood-live" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+  <%# The prompt lives in main with the log it writes to: LAYOUT.md names #zin
+      the face's main landmark target, and a form outside every landmark is
+      content a screen reader's landmark list cannot reach. It is a form with
+      a name, not a search, so it carries no role of its own (SEMANTIC_ELEMENTS). %>
+  <main id="chat-shell" role="main" aria-label="<%= t("face.chat_aria") %>">
+    <div id="chat-log" aria-live="polite" aria-relevant="additions text" tabindex="-1"></div>
+    <form id="zsh" aria-label="<%= t("face.prompt_aria") %>" autocomplete="off">
+      <button id="photo-button" type="button" aria-label="<%= t("face.attach_photo") %>">+</button>
+      <input id="photo" type="file" accept="image/*" capture="environment" hidden>
+      <span class="pp" aria-hidden="true"><%= t("face.prompt_user") %></span><span class="sep2" aria-hidden="true">$ </span>
+      <textarea id="zin" rows="1" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="<%= t("face.placeholder") %>" aria-label="<%= t("face.message_aria") %>" required></textarea>
+      <span id="zsh-status" aria-live="polite" aria-atomic="true"></span>
 
-  <form id="zsh" role="search" aria-label="<%= t("face.prompt_aria") %>" autocomplete="off">
-    <button id="photo-button" type="button" aria-label="<%= t("face.attach_photo") %>">+</button>
-    <input id="photo" type="file" accept="image/*" capture="environment" hidden>
-    <span class="pp" aria-hidden="true"><%= t("face.prompt_user") %></span><span class="sep2" aria-hidden="true">$ </span>
-    <textarea id="zin" rows="1" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="<%= t("face.placeholder") %>" aria-label="<%= t("face.message_aria") %>" required></textarea>
-    <span id="zsh-status" aria-live="polite" aria-atomic="true"></span>
-
-    <button id="spin-btn" type="button" aria-label="<%= t("face.pause_speech") %>"></button>
-  </form>
+      <button id="spin-btn" type="button" aria-label="<%= t("face.pause_speech") %>"></button>
+    </form>
+  </main>
   <script src="<%= asset_path("container_gate.js") %>" defer></script>
   <script src="<%= asset_path("face_deferred_loader.js") %>" defer></script>
   <%# Deferred boot modules, from config/face_assets.yml#shell_manifest — order is
