@@ -50,7 +50,7 @@ module Master
 
       def run(initial_message = nil)
         setup_signals
-        @refs.agent.start_on_local_tier_when_offline! if @refs.agent.respond_to?(:start_on_local_tier_when_offline!)
+        @refs.agent.pin_boot_model! if @refs.agent.respond_to?(:pin_boot_model!)
         @refs.session.load! if @refs.session.exists?
         start_background_loop
         # One vertical rhythm: the dmesg, a blank line, the ready block, then

@@ -87,6 +87,34 @@ class TestAgent < Minitest::Test
     assert_equal "agy:auto", online.model
   end
 
+  # /model saves its choice to config, and the next boot left it at the tail of
+  # the routed chain, so the choice held for one session only.
+  def test_a_saved_model_choice_leads_again_on_the_next_boot
+    agent = agent_routed_by(LocalRouter.new(%w[ollama:phi4:mini]))
+
+    Master::Ground::BootReceipt.stub(:network?, true) { agent.pin_boot_model! }
+
+    assert_equal "claude-sonnet-4-6", agent.model
+    assert_equal "claude-sonnet-4-6", agent.candidate_models.first
+  end
+
+  def test_a_config_holding_the_default_model_leaves_routing_in_charge
+    agent = agent_routed_by(LocalRouter.new(%w[ollama:phi4:mini]))
+    agent.instance_variable_get(:@config).model = Master::Ground::Config::DEFAULTS["model"]
+
+    Master::Ground::BootReceipt.stub(:network?, true) { agent.pin_boot_model! }
+
+    assert_equal "agy:auto", agent.model
+  end
+
+  def test_an_offline_boot_starts_local_even_with_a_saved_choice
+    agent = agent_routed_by(LocalRouter.new(%w[ollama:phi4:mini]))
+
+    Master::Ground::BootReceipt.stub(:network?, false) { agent.pin_boot_model! }
+
+    assert_equal "ollama:phi4:mini", agent.model
+  end
+
   # The filter ran on the operator's own message, so "what would happen if"
   # reached the model as "what happen if".
   def test_ask_once_sends_the_operators_words_unchanged

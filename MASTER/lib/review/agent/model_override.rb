@@ -33,6 +33,15 @@ module Master
           end
         end
 
+        # The session's model at boot. /model saves its choice to config, so an
+        # online boot puts that choice first again; a config still holding the
+        # default chose nothing and leaves the routed chain in charge.
+        def pin_boot_model!
+          start_on_local_tier_when_offline!
+          saved = @config["model"].to_s
+          @pinned_model ||= saved unless saved.empty? || saved == Ground::Config::DEFAULTS["model"]
+        end
+
         # Offline, every remote lane costs a resolver timeout before
         # FallbackChain reaches the local tier, so a session that starts with
         # no network starts there. Not saved to config: the network coming
