@@ -257,61 +257,6 @@ class ProjectTree
     end
   end
 
-  # Called when --redesign-audit is active
-  def redesign_audit
-    puts "=== MASTER Redesign Audit (KISS/DENSITY focus) ==="
-    puts "Using rules thresholds: small files + fragmented policy dirs are high-priority targets."
-    puts
-
-    lib_root = File.join(@root, "lib")
-    return unless Dir.exist?(lib_root)
-
-    tiny_files = []
-
-    Dir.glob(File.join(lib_root, "**/*.rb")).each do |file|
-      next if should_skip?(file)
-      begin
-        lines = File.readlines(file).size
-        if lines <= 30
-          tiny_files << [file.sub(lib_root + "/", ""), lines]
-        end
-      rescue SystemCallError, ArgumentError => e
-        warn "tree: cannot read #{file} (#{e.class}) — not counted"
-      end
-    end
-
-    puts "Tiny files (≤ 30 lines) — strong KISS/DENSITY violation candidates:"
-    if tiny_files.any?
-      tiny_files.sort_by { |_, l| l }.each do |path, lines|
-        puts "  #{path} (#{lines} lines)"
-      end
-    else
-      puts "  (none found in this scan)"
-    end
-
-    puts
-    puts "Ground/ policy fragmentation check:"
-    ground_dir = File.join(lib_root, "ground")
-    if Dir.exist?(ground_dir)
-      policy_files = Dir.glob(File.join(ground_dir, "*_policy.rb")).size
-      puts "  #{policy_files} separate *_policy.rb files in ground/"
-      if policy_files > 6
-        puts "  → Strong recommendation: Consolidate using Ground::Policy (see recent progress)"
-      end
-    end
-
-    puts
-    puts "now/stages/ check:"
-    stages_dir = File.join(lib_root, "now/stages")
-    if Dir.exist?(stages_dir)
-      stage_files = Dir.glob(File.join(stages_dir, "*.rb")).size
-      puts "  #{stage_files} files in now/stages/"
-      if stage_files > 8
-        puts "  → Good progress with trivial.rb — continue this pattern aggressively."
-      end
-    end
-  end
-
   private
 
   def load_skip_dirs
@@ -451,8 +396,8 @@ if __FILE__ == $PROGRAM_NAME
       options[:max_depth] = 7
       options[:summary] = true
     end
-    opts.on("--stages-hotspots", "Show small-file hotspots specifically in now/stages (KISS target)") do
-      options[:root] = File.join(Dir.pwd, "MASTER/lib/now/stages")
+    opts.on("--stages-hotspots", "Show small-file hotspots specifically in cli/stages (KISS target)") do
+      options[:root] = File.join(Dir.pwd, "MASTER/lib/cli/stages")
       options[:max_depth] = 1
       options[:summary] = true
     end
@@ -460,11 +405,6 @@ if __FILE__ == $PROGRAM_NAME
       options[:root] = File.join(Dir.pwd, "MASTER/lib/ground")
       options[:max_depth] = 2
       options[:summary] = true
-    end
-    opts.on("--redesign-audit", "Deep audit mode: highlight KISS/DENSITY problems (small files, fragmented dirs) using rules thresholds") do
-      options[:max_depth] = 3
-      options[:summary] = true
-      # We'll enhance the summary logic below for this flag
     end
     opts.on("--pub4-overview", "Far-away visual tree: all pillars, Rails apps collapsed, noise pruned") do
       options[:overview] = true
