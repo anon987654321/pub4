@@ -21,7 +21,9 @@ module Shared
     private
 
     def set_current_user
-      session_record = Session.find_by(id: cookies.signed[:session_id])
+      # The user loads with the session, as Shared::Authentication loads it;
+      # strict loading refuses the lazy read the next line makes.
+      session_record = Session.includes(:user).find_by(id: cookies.signed[:session_id])
       return false unless session_record
 
       self.current_user = session_record.user
