@@ -2017,6 +2017,27 @@ class TestDilla < Minitest::Test
     assert_includes result.fetch("chain"), "atempo="
   end
 
+  # The golden rule: a rap vocal is time-stretched, never pitch shifted. Both
+  # voice chains the fit can choose are checked at a slow-down and a speed-up,
+  # and the pitch-shift and key-align helpers must not exist to be called.
+  def test_the_rap_vocal_fit_chain_stretches_time_and_never_moves_pitch
+    result = eval_in_engine(<<~RUBY)
+      chains = [rap_vocal_isolation_filter, rap_vocal_voice_polish_filter].product([0.8, 1.25])
+        .map { |voice, ratio| rap_vocal_segment_filter(voice, ratio) }
+      puts JSON.generate(
+        chains: chains,
+        helpers: %i[rap_vocal_pitch_shift_chain rap_vocal_resolved_key_shift rap_vocal_key_shift]
+          .select { |name| respond_to?(name, true) }
+      )
+    RUBY
+    result.fetch("chains").each do |chain|
+      assert_includes chain, "atempo=", "the fit must still match the beat's tempo"
+      refute_match(/asetrate|rubberband|afreqshift/, chain,
+                   "a rap vocal fit chain must not change pitch")
+    end
+    assert_empty result.fetch("helpers"), "rap vocal pitch-shift helpers must be gone"
+  end
+
   # A part with no signal must not reach the concat. demo_report_suspect_parts
   # names quiet and short parts, but it runs after the join -- twice now a
   # -91 dB placeholder was warned about only once it was already inside the
@@ -2450,130 +2471,6 @@ class TestDilla < Minitest::Test
 
     refute_in_delta at_120, result.fetch("at_92").to_f, 0.001,
                     "gridding at the wrong tempo must not coincidentally agree"
-  end
-
-  # atempo preserves pitch, so nothing in the vocal path used to change a stem's
-  # key and a vocal in the wrong key stayed there for the whole render.
-  def test_progression_pitch_class_weights_cover_unregistered_voicings
-    result = eval_in_engine(<<~RUBY)
-      puts JSON.generate(
-        db_major_minor_fall: progression_pitch_class_weights(:db_major_minor_fall),
-        soul: progression_pitch_class_weights(:soul),
-        lookup_hit: !PAD_CHORD_LOOKUP["Fm9"].nil?,
-        lookup_miss: PAD_CHORD_LOOKUP["Fm7"].nil?
-      )
-    RUBY
-
-    assert result.fetch("lookup_miss"),
-           "test premise: Fm7 is not a registered pad voicing"
-    assert result.fetch("lookup_hit"), "test premise: Fm9 is registered"
-
-    # db_major_minor_fall is Dbmaj7 Cm7 Fm7 Bbm7 — every chord misses PAD_CHORD_LOOKUP,
-    # which is exactly the case that scored as "no harmony at all" before the
-    # root-parsing fallback.
-    weights = result.fetch("db_major_minor_fall")
-    refute_nil weights, "a progression of unregistered voicings must still yield weights"
-    assert_equal 12, weights.length
-    assert_in_delta 1.0, weights.sum, 0.001, "weights must be normalised"
-    names = %w[C Db D Eb E F Gb G Ab A Bb B]
-    # Db major / Bb minor: the roots Db, C, F and Bb must all carry weight, and
-    # E — in none of the four chords — must carry none.
-    %w[Db C F Bb].each do |pc|
-      assert_operator weights[names.index(pc)], :>, 0.0,
-                      "#{pc} is a chord root of db_major_minor_fall but scored zero"
-    end
-    assert_in_delta 0.0, weights[names.index("E")], 0.001,
-                    "E is in no db_major_minor_fall chord and must not score"
-  end
-
-  def test_key_shift_prefers_smaller_moves_and_leaves_in_key_vocals_alone
-    result = eval_in_engine(<<~RUBY)
-      names = %w[C Db D Eb E F Gb G Ab A Bb B]
-      weights = progression_pitch_class_weights(:db_major_minor_fall)
-      # A chroma already sitting on the progression's strongest tones.
-      in_key = Array.new(12, 0.0)
-      %w[F C Db Ab].each { |n| in_key[names.index(n)] = 0.25 }
-      # A chroma one semitone below those tones — a shift of +1 lands it home.
-      one_below = Array.new(12, 0.0)
-      %w[F C Db Ab].each { |n| one_below[(names.index(n) - 1) % 12] = 0.25 }
-      # Two semitones below.
-      two_below = Array.new(12, 0.0)
-      %w[F C Db Ab].each { |n| two_below[(names.index(n) - 2) % 12] = 0.25 }
-      puts JSON.generate(
-        in_key: rap_vocal_key_shift(in_key, weights),
-        one_below: rap_vocal_key_shift(one_below, weights),
-        two_below: rap_vocal_key_shift(two_below, weights),
-        flat_chroma: rap_vocal_key_shift(Array.new(12, 1.0 / 12), weights),
-        no_progression: rap_vocal_key_shift(in_key, nil),
-        max_shift: RAP_VOCAL_KEY_MAX_SHIFT
-      )
-    RUBY
-
-    assert_equal 0, result.fetch("in_key"),
-                 "a vocal already on the chord tones must not be transposed"
-    assert_equal 1, result.fetch("one_below"),
-                 "a vocal a semitone flat of the chord tones must come up one"
-    assert_equal 2, result.fetch("two_below"),
-                 "a whole tone is worth correcting when the evidence is unambiguous"
-    assert_equal 0, result.fetch("flat_chroma"),
-                 "a chroma with no pitch centre gives no shift any evidence"
-    assert_equal 0, result.fetch("no_progression"),
-                 "an unknown progression must not transpose anything"
-
-    # Never exceed the formant budget, whatever the chroma says.
-    assert_operator result.fetch("max_shift"), :<=, 2
-  end
-
-  # asetrate moves pitch and tempo together; without the atempo compensation the
-  # transpose would also re-tempo the vocal off the beat it was just fitted to.
-  def test_pitch_shift_chain_compensates_tempo_and_no_ops_at_zero
-    result = eval_in_engine(<<~RUBY)
-      puts JSON.generate(
-        zero: rap_vocal_pitch_shift_chain(0).inspect,
-        up1: rap_vocal_pitch_shift_chain(1),
-        down2: rap_vocal_pitch_shift_chain(-2),
-        sample_rate: SAMPLE_RATE
-      )
-    RUBY
-
-    assert_equal "nil", result.fetch("zero"),
-                 "no shift must add no filter, not a unity-ratio resample"
-
-    sr = result.fetch("sample_rate").to_f
-    up = result.fetch("up1")
-    ratio = 2**(1 / 12.0)
-    assert_includes up, "asetrate=#{(sr * ratio).round}"
-    assert_includes up, "aresample=#{sr.to_i}"
-    # atempo must undo exactly what asetrate did.
-    tempos = up.scan(/atempo=([0-9.]+)/).flatten.map(&:to_f)
-    refute_empty tempos, "pitch shift must compensate tempo"
-    assert_in_delta 1.0 / ratio, tempos.reduce(1.0, :*), 0.0005,
-                    "atempo product must invert the asetrate ratio"
-
-    down = result.fetch("down2")
-    down_ratio = 2**(-2 / 12.0)
-    assert_includes down, "asetrate=#{(sr * down_ratio).round}"
-    down_tempos = down.scan(/atempo=([0-9.]+)/).flatten.map(&:to_f)
-    assert_in_delta 1.0 / down_ratio, down_tempos.reduce(1.0, :*), 0.0005
-  end
-
-  # bpm+bars named the same fit file for two tracks at the same tempo in
-  # different keys, so the second silently reused a transpose built for the
-  # first one's harmony.
-  def test_fit_filename_encodes_the_key_shift
-    result = eval_in_engine(<<~RUBY)
-      puts JSON.generate(
-        none: format("fit_%d_%dbars%s.wav", 86, 16, 0.zero? ? "" : format("_key%+d", 0)),
-        up: format("fit_%d_%dbars%s.wav", 86, 16, format("_key%+d", 1)),
-        down: format("fit_%d_%dbars%s.wav", 86, 16, format("_key%+d", -2))
-      )
-    RUBY
-
-    assert_equal "fit_86_16bars.wav", result.fetch("none"),
-                 "an untransposed fit keeps the historical filename"
-    assert_equal "fit_86_16bars_key+1.wav", result.fetch("up")
-    assert_equal "fit_86_16bars_key-2.wav", result.fetch("down")
-    refute_equal result.fetch("up"), result.fetch("down")
   end
 
   # The sidecar manifest beside every render claims "Reproduce with: ...", so a
