@@ -2,8 +2,9 @@
 
 **A beat engine that never phones home.** `dilla.rb` and the helpers under
 `lib/` generate harmony, program drums, play sampled loops against them, mix,
-master, and write an mp3 or a wav. Every sound is synthesised by the engine and
-shaped through `ffmpeg`: nothing is uploaded, and nothing is fetched at render
+master, and write an mp3 or a wav. Every instrument is synthesised by the engine
+and shaped through `ffmpeg`; the records it samples and the rap takes it fits are
+material, not instruments. Nothing is uploaded, and nothing is fetched at render
 time.
 
 The suite is `STUDIO/test/test_dilla_*.rb`, which is the glob `rake test:dilla`
@@ -22,18 +23,27 @@ narration and became the engine's render because it sounded better than the
 engine's own catalogue; `ruby dilla.rb bed` still plays it under the narration,
 ducking while a line is spoken, and `STUDIO/dilla/data/bed.yml` holds every
 number it uses. `ruby dilla.rb demo-all` renders the older engine's catalogue.
+Bare `ruby dilla.rb` does not open by asking what you want, as postpro and
+preprompt do: a render is reproduced from its knobs and its seed, and a question
+at the start is a step a script cannot answer.
 
-The native synth recipes follow the physical source rather than treating every
-instrument as a generic pad. Rhodes uses a tine-like FM pair with a bright
-attack and bell partial; Moog uses one oscillator into a resonant low-pass with
-pitch/filter envelopes; Prophet uses two detuned oscillators, a low-pass
-envelope and restrained pulse-width movement; VP-330 uses choir/string
-formants, ensemble modulation and a slow attack, so it remains a vocal/string
-texture rather than pretending to be an FM keyboard. FM is appropriate for the
-Rhodes and transient percussion, not for every instrument in the catalogue.
+The instruments are recipes, not recordings. `AnalogSynth::PATCHES` in
+`lib/sound.rb` builds each one from oscillators, a filter and two envelopes, and
+its comments say what every setting is for: the Minimoog bass is three saws into
+a filter that shuts within a fifth of a second, the Prophet pad a saw with a
+triangle an octave above and a little resonance, the electric piano a triangle
+and a square, struck and never held. The bed plays its own oscillator families,
+declared in `data/bed.yml`.
 
 ENV knobs, the switch reference and the render path in detail are in
-`ENV_AND_RENDER.md`. The catalogue plays live through `ruby dilla.rb live`, and the livesets through `ruby dilla.rb live set` from `lib/livesets.rb`.
+`ENV_AND_RENDER.md`. The catalogue plays live through `ruby dilla.rb live`, and the livesets through
+`ruby dilla.rb live set` from `lib/livesets.rb`.
+
+Renders sit beside `dilla.rb`, never in a folder of their own. `samples/` is the
+one directory named for material: it is the crate, gitignored, and holds the
+records, the grids and the synthesised kit. Nothing new is named `renders`,
+`crate` or `samples`, because those words were read as three places for one
+thing, and the gate refuses the retired directories.
 
 ## What happens during a render
 
@@ -344,20 +354,19 @@ path, or accept that the old seeds are gone and say so where they are recorded.
 
 ## Running it
 
-```sh
-cd STUDIO/dilla
-ruby dilla.rb out.wav 18                 # one render, 18 bars
-TRACK=kembara_rindu ruby dilla.rb out.wav 18
-ruby dilla.rb                            # showcase_demo! → demo.wav
-ruby dilla.rb stream                     # continuous stream
-ruby dilla.rb help
+Run everything from `STUDIO/dilla`. `ruby dilla.rb out.wav 18` renders one
+track of eighteen bars, and naming `TRACK=kembara_rindu` in front of it picks
+the track. Bare `ruby dilla.rb` renders the catalogue through the bed into
+`demo.wav`, `ruby dilla.rb stream` plays without end, and `ruby dilla.rb help`
+prints every command from the table the dispatcher reads.
 
-ruby dilla.rb chop [path]                # default samples/ubrukte_samples.mp3
-ruby dilla.rb chop list
-ruby dilla.rb crate                      # 38 synthesised one-shots and textures
-ruby dilla.rb export-midi                # every grid as GM MIDI, to samples/midi/
-ruby dilla.rb import-midi <dir>          # MIDI drum clips back into 16-step grids
-ruby dilla.rb beauty <file>              # harmony score and recommendations
-ruby dilla.rb quality <file>             # LUFS, true peak, harshness, sub/kick
-ruby dilla.rb separate <file>            # demucs 4-stem
-```
+The crate has its own verbs. `chop` cuts a long recording into beds, reading
+`samples/ubrukte_samples.mp3` when given no path, and `chop list` shows the
+rack. `crate` synthesises the thirty-eight one-shots and textures the kit is
+made of. `export-midi` writes every grid as General MIDI into `samples/midi/`,
+and `import-midi` reads drum clips back into sixteen-step grids.
+
+Four verbs only measure. `beauty` scores a file's harmony and says what to try,
+`quality` reports loudness, true peak, harshness and the sub against the kick,
+`separate` splits a file into four stems with demucs, and `bed check` holds the
+bed's band curve against the reference record.

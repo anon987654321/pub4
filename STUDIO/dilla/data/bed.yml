@@ -140,7 +140,11 @@ drums:
   samples: { kick: kick.wav, snare: snare.wav, ghost: ghost.wav, hat: hat.wav, open_hat: open_hat.wav, clap: ind_clap.wav }
   # Dilla time: the hats rigid, the snare rushed, the kick swung and late,
   # the ghosts later still. The parts disagree, and the disagreement is the
-  # groove.
+  # groove. The engine's own `dilla_drag` feel (lib/groove.rb) drags the
+  # snare late instead. They differ on purpose: this rushed snare is the feel
+  # the operator heard and kept when the bed became the render (2026-09-14),
+  # and the engine's other renders keep the drag he was given on 2026-09-08.
+  # One drum-grid registry (restructuring proposal 9) settles it for both.
   feels:
     hat:   { swing: 0.0,  shift: 0.0,    drift: 0.0 }
     snare: { swing: 0.0,  shift: -0.014, drift: 0.002 }

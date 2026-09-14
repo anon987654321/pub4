@@ -1171,19 +1171,20 @@ default unless marked.
 - **The demo run lies about success.** `acquire_demo_lock!` exits 0 when another
   run holds the lock and checks-then-writes (use `File::EXCL` or flock); an
   unknown command prints help and exits 0; the loop exits 0 with parts missing
-  (exit non-zero unless `parts == order`); the next run wipes a killed run's
-  finished parts unless `DEMO_KEEP_PARTS=1`;
-  `demo_all` sets `DILLA_STREAMING=1`; `DEMO_TRACK_TIMEOUT` defaults to 420 s; help
-  still says bare `ruby dilla.rb` runs `readme_loop!` when it runs `demo_all`.
+  (exit non-zero unless `parts == order`); `demo_all` sets
+  `DILLA_STREAMING=1`; `DEMO_TRACK_TIMEOUT` defaults to 420 s. (A run wiping the
+  last run's parts is the operator's choice of 2026-09-14, "deletes", not a
+  defect.)
 - **Logs and provenance print load-time device ENV.** `ringtone_layer_describe`
   and the sidecar can report `COPY_MACHINE=6` on a slot `apply_album_slot!`
   forced to 0. Snapshot after the last `force_env!`.
 - **Names.** `demo-all` is the catalogue, `demo` is `generate_demo`'s crate matrix,
   `showcase` is a third medley. Rename to `demo` / `demo-crate`, alias `demo-all`
   one release. No MASTER or RAILS caller.
-- **No smoke test for the no-arg path.** `DEMO_TRACKS=<one verified>,<one improv>
-  BARS=4` into a tmpdir, assert files, LUFS range and exit 0 — needs a render, so
-  it runs on a quiet machine.
+- **No smoke test for the no-arg path.** `test_dilla_bed` renders one catalogue
+  piece through the bed; nothing yet runs `Bed.catalogue!` end to end with a
+  two-piece order into a tmpdir and asserts demo.wav, demo.mp3 and the join's
+  length. It needs a render, so it runs on a quiet machine.
 
 ## dilla — operator decisions
 
@@ -1213,6 +1214,75 @@ operator's ear.
   Bach 4–3 and the Dilla hang; `THEORY_BACH` and the Dilla pedal gated by
   language tag instead of track-name regex and `VOICING=drop2`; Picardy and
   Neapolitan on Bach languages only; cap borrowed-chord surprises at one per cell.
+
+## dilla — restructuring, 1–45 — approved 2026-09-13
+
+The operator approved all forty-five ("APPROVE ALL", "dont forget to implement
+all these"). Landed and deleted from this list: 3 (lib/ in six subjects), 11
+(root YAML in data/), 33 (help from the command table), 37 (live/ gone), 38
+(scripts/ gone). Every change here must leave a snapshot identical, which the
+harness in `STUDIO/test/support/dilla_snapshot/` proves; a row that changes
+sound says so. Delete a row when it lands.
+
+- **1. Build tables on first use**, so section order stops mattering. Unblocks
+  every split.
+- **2. The engine in modules**, not ~1,000 methods on `Object`.
+- **4. One settings object per render** instead of ENV (1,200 reads, 224
+  writes); the demo retry saving and restoring ENV is the symptom.
+- **5. One precedence order for defaults**: the twelve `*_DEFAULTS` tables,
+  `apply_best_defaults!`, `apply_dilla_style!`, `force_env!`.
+- **6. Progression tables to YAML.** `module Bed` reads `CHORD_PROGRESSIONS`
+  as a constant now, so the move no longer breaks a text scan.
+- **7. One chord and progression registry**: `CHORD_PROGRESSIONS`,
+  `DEVICE_PROGRESSIONS`, `ARTIST_VERIFIED_PROGRESSIONS`, `DillaImprovisation`,
+  generated styles; `PAD_CHORD_LOOKUP` keeps the first name, hence the `imp`
+  suffix.
+- **8. One synth patch registry**: `SYNTH_PATCH_CATALOG`, the patch section,
+  `lib/sound.rb`, and now the bed's families and patches in `data/bed.yml`.
+- **9. One drum-grid registry**: `DRUM_PATTERN_SETS`, producer DNA, the lofi
+  presets, and the bed's `samples/midi` grid banks. It also settles the snare:
+  the bed rushes it, `dilla_drag` drags it (the reason sits in `data/bed.yml`).
+- **10. One preset lookup**: `TRACK_PRESETS`, `profile_preset`, style defaults.
+- **12. Kept records apart from runtime state in `project/`**; renders still
+  dirty `session.json` and `liveset.jsonl`.
+- **13. One loudness module.** Stage 1 landed (`FfmpegProbe` in lib/listen.rb
+  measures); the ~20 methods that set level remain.
+- **14. One ffmpeg runner.** Stage 2 (timeouts, errors, codecs through one
+  call) waits in branch `ffmpeg-runner`.
+- **15. One output-path function.** Parts still go to `scratch/all_tracks_demo`.
+- **16. One job runner with locks and signals**; `pkill` cannot stop
+  `demo-all` and the lock exits 0 (see measured defects above).
+- **17. A real mixer with dB staging** in place of ENV multipliers.
+- **18. All randomness through `seed_for`** (see "Sound that moves under a
+  pinned seed").
+- **19. A cache policy for `scratch/`.**
+- **20–26. Subsystem homes** for drums, leads, effects, mastering, analysis,
+  rap vocals and the crate. lib/ holds six subjects; the matching sections of
+  `dilla.rb` have not moved into them.
+- **27. MIDI export and speech** leave as self-contained pieces.
+- **28. One sequence runner** under demo, stream, showcase, album, setlist,
+  live and the bed catalogue.
+- **29. `live` on that runner.** It is `ruby dilla.rb live` now, not yet on a
+  runner.
+- **30. Retire overlapping players**: `lib/sine_stream.rb` against `live`.
+- **31. Genres as parameters over one pipeline** (43 `render_*` methods); read
+  all three techno renderers before merging them.
+- **32. Niche renderers** (electronium, punk guitar, organic) to plugins or
+  deleted.
+- **34. Knob tiers**: public, expert, internal.
+- **35. `ENV_AND_RENDER.md` generated from the knob ledger.**
+- **36. Split the probe test file by subject**, behaviour checks over source
+  text.
+- **39. Real-time DSP for `live`**: effects run at 0.36–0.62x; it needs 1x.
+- **40. Score first**: every renderer writes a timed event score that one
+  offline renderer and the live player both play.
+- **41. Text drum patterns** (`"bd*2 [~ sn]"`) in place of 16-step arrays.
+- **42. Effects as chain objects with a text form**, shared by render and live;
+  folds 22.
+- **43. A saved session document as the render recipe**, in place of the ENV
+  snapshot in provenance.
+- **44. `live` as a background player** the CLI sends commands to.
+- **45. Ableton Link tempo sync** for live playback.
 
 ## dilla — unbuilt opt-in devices
 
