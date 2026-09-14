@@ -336,9 +336,6 @@ slices. Each is a hypothesis with its seam.
   `growth.rails` 1995/1980 (model tests and one migration). Slack against main:
   `self_findings`, `data_reach`, `sprawl.lone_dirs`, `lib_body`, `growth.master`.
   Each row wants its fall recorded or its raise named, never absorbed.
-- **Two tests fail on main.** `test_face_asset_paths_script_emits_every_declared_asset`
-  (the script emits `face.css` and `chat_upload.css`, the expected list lacks
-  them) and `test_doc_paths` (`MASTER/DECISIONS.md` still names `bin/crate`).
 - **Readers with no caller.** `Ground::OpenbsdConfig` (its own test only),
   `Ground::Policy::Workflow#phase`, `#workflow`, `#gates` and `#brief`,
   `Design::Thresholds.micro_typography`; `solid_queue` and `solid_cache` sit in
@@ -380,16 +377,13 @@ slices. Each is a hypothesis with its seam.
 
 ### OPENBSD
 
-- **Stale prose.** `OPENBSD/DECISIONS.md` still describes the deleted
-  `rails-app.tmpl`; `RUNBOOK.md` gives `ptr_openbsd_amsterdam.rb` `--ip` and
-  `--apply` where it takes `--ipv4`/`--ipv6` and `APPLY_PTR=1`; the `solid_cable`
-  comments in `vps_deploy_master.sh` and `bin/vps-deploy` describe a pipe that is
-  gone; `tools/tree.rb#redesign_audit` has no flag and looks under the pre-rename
-  `lib/now/stages`.
-- **Three parsers for one thing each.** `gates/domain_alignment.rb` carries its
-  own copy of `render_dns`'s ALL_DOMAINS parser and counts commented-out
-  `tls keypair` lines as live; `reach.rb` is a third cron-line parser beside the
-  drift gate's and installed-targets'.
+- **Stale paths after renames.** `tools/tree.rb --ground-policies` targets
+  `*_policy.rb` files that no longer exist in `MASTER/lib/ground/`, and
+  `RAILS/shared/app/services/shared/strunk_white_pass.rb` names the pre-rename
+  `MASTER/lib/now/stages/prune.rb`. `bin/vps-deploy` and `RAILS/_database.sh`
+  still carry comments that narrate what the code used to do.
+- **`reach.rb` is a third cron-line parser** beside the drift gate's and
+  installed-targets'.
 - **The bare IP lingers** as `lib/ssh_vm23.sh`'s `SSH_HOST` default and
   `data/operator.yml` `meta.vps`, where the contract names `dev@brgen.no`.
 - **`rc.d/*_jobs` scripts carry no login.conf class,** so the job workers run
