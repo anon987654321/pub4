@@ -18,9 +18,6 @@
 .affiliate_feed_unit .sponsored {
   margin: 0 0 var(--space-2);
   font-size: var(--text-xs);
-  text-transform: uppercase;
-  /* All-caps earns tracking; lowercase prose does not. */
-  letter-spacing: var(--tracking-wider);
   color: var(--text-secondary);
 }
 

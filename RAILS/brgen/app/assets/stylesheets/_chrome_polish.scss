@@ -299,8 +299,6 @@ body.vertical-takeaway .sold-out-badge {
   margin-inline-start: 4px;
   font-size: var(--text-xs);
   font-weight: var(--weight-bold);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
   border: 1px solid var(--border);
   padding: var(--space-0-5) 4px;
   border-radius: var(--radius-xs, 4px);
@@ -313,8 +311,6 @@ body.vertical-takeaway [data-available="false"]:not(:has(.sold-out-badge))::afte
   margin-inline-start: 4px;
   font-size: var(--text-xs);
   font-weight: var(--weight-bold);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
   border: 1px solid var(--border);
   padding: var(--space-0-5) 4px;
   border-radius: var(--radius-xs, 4px);

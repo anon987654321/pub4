@@ -46,35 +46,6 @@ main#main-content > header.market-hero h1 {
   color: var(--text);
 }
 
-/* Mono, uppercase, wide — the counterweight that makes the display size read as
-   deliberate rather than merely big. */
-.market-hero-kicker {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-widest);
-  text-transform: uppercase;
-  /* No hue. The mono face, the bold weight, the widest tracking and the caps
-     are four carriers of emphasis already; the taupe was a fifth that could not
-     be made legible. As 12px it needs AA 4.5 and measures 3.48 on #ffffff, and
-     the accent cannot be darkened to reach it — design_tokens records that
-     #80715c took this kicker to 4.74 and broke .compose-btn to 3.70 in the same
-     run, because the fill and ink bounds do not overlap. Same fix .price took.
-     Operator decision 2026-09-08. */
-}
-
-/* --accent is sized to carry #1a1824 ink as a button background (.compose-btn),
-   which puts a floor under its luminance. On the light ground that same taupe is
-   3.48:1 as small text, against 1.4.3's 4.5. Retuning --accent cannot fix it:
-   carrying the ink needs luminance >= 0.2200 and being text on white needs
-   <= 0.1833, so darkening it enough for this kicker drops .compose-btn to 3.70.
-   Only the light theme has the problem — on the dark ground --accent is 5.02:1 —
-   so only the light theme swaps, to the deeper taupe of the same pair at 6.03:1. */
-:root[data-theme="light"] .market-hero-kicker {
-  color: var(--vertical-marketplace-accent-hover, #8d7e66);
-}
-
 .market-hero p:not([class]) {
   margin: 0;
   max-width: 46ch;
@@ -154,7 +125,7 @@ body.vertical-marketplace .deal-cat.active {
 
 /* .deal-rating inherits --text. It wore the taupe at 3.48 on #ffffff, which is
    the accent's fill floor rather than a text one, and a rating is read rather
-   than pressed. Operator decision 2026-09-08, with .market-hero-kicker above. */
+   than pressed. Operator decision 2026-09-08. */
 
 body.vertical-marketplace .marketplace-top-offers .top-offer-card:hover {
   border-color: var(--accent);

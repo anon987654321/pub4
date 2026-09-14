@@ -1065,7 +1065,6 @@ nb:
       accepted: Godtatt
       declined: Avslått
       completed: Fullført
-    hero_kicker: "Kjøp og selg i byen din"
     hero_title: "Markedsplass %{city}"
     hero_lede: "Ting fra folk som bor i nærheten. Ingen frakt over hele landet, ingen mellomledd — bare det som finnes noen gater unna."
     hero_count_suffix: "annonser i %{city} akkurat nå"
