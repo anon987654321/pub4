@@ -65,6 +65,15 @@ $vertical-accent-ink: #110f19;
   }
 }
 
+/* The storefront promotional face, in one line so it can be swapped in one line.
+   Markedsplass and takeaway set it on hero banners, promo headlines and campaign
+   tiles and nowhere else; body, prices and cards keep --font. Instrument Serif
+   is vendored by _fonts_brand.scss. */
+body.vertical-marketplace,
+body.vertical-takeaway {
+  --font-ad: "Instrument Serif", var(--font);
+}
+
 body[class*="vertical-"] main {
   padding-top: 0;
 }

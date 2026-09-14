@@ -56,10 +56,11 @@
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
   <%= yield :head %>
-  <%# The storefront heroes are the first text painted, so their display face
-      is fetched with the stylesheet rather than discovered after it. %>
-  <% if (display_face = { marketplace: "big-shoulders-display", takeaway: "fraunces" }[active_vertical]) %>
-    <link rel="preload" as="font" type="font/woff2" href="/fonts/<%= display_face %>-latin-wght-normal.woff2" crossorigin>
+  <%# The storefront heroes are the first text painted, so their promotional
+      face is fetched with the stylesheet rather than discovered after it. The
+      italic loads on demand: only a campaign line asks for it. %>
+  <% if %i[marketplace takeaway].include?(active_vertical) %>
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/instrument-serif-latin-400-normal.woff2" crossorigin>
   <% end %>
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <link rel="stylesheet" href="/lightgallery.css">

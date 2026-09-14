@@ -6,12 +6,6 @@
    with an Amazon-width nav bar crushed into it. Opt out of the feed column the
    same way dating/maps/messenger/playlist already do. A storefront is a grid,
    not a timeline. */
-/* The vertical's display face, in one place: Big Shoulders Display, vendored
-   by _fonts_brand. */
-body.vertical-marketplace {
-  --font-display: "Big Shoulders Display", var(--font);
-}
-
 body.vertical-marketplace .layout {
   max-width: 100%;
 }
@@ -37,9 +31,9 @@ body.vertical-marketplace .layout {
    on. */
 main#main-content > header.market-hero h1 {
   margin: var(--space-2) 0;
-  font-family: var(--font-display);
+  font-family: var(--font-ad);
   font-size: clamp(2.5rem, 9vw, 5.5rem);
-  font-weight: var(--weight-heavy);
+  font-weight: var(--weight-normal);
   line-height: var(--leading-none);
   letter-spacing: var(--tracking-tighter);
   text-wrap: balance;
