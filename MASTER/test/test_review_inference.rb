@@ -208,6 +208,17 @@ end
     assert_includes line, "no issues"
   end
 
+  # "complete" said nothing about what the pass found or what the fix changed.
+  def test_the_footer_names_the_findings_before_and_after_the_fix
+    result = Master::CLI::Pipeline::Pass::Result.new(
+      target: ".", mode: "balanced", sections: [], ok: true, unit: "review0", failed_stages: [],
+      totals: { before: 567, after: 480 },
+    )
+    Master::Io::QuotaGate.stub(:report, nil) do
+      assert_equal "review0: complete, 567 findings, 480 after the fix", result.footer
+    end
+  end
+
   def test_through_footer_names_a_skipped_tier
     result = Master::CLI::Pipeline::Pass::Result.new(
       target: ".", mode: "balanced", sections: [], ok: true, unit: "review0", failed_stages: [],

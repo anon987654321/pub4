@@ -15,12 +15,15 @@ module Master
 
       # The scan stage of /review. Pipeline::Pass calls it; it is not a verb of
       # its own, because /scan is rewritten to `/review --only scan`.
-      def dispatch_scan(scanner:, root:, ctx: nil)
+      #
+      # on_total hears the final count, for a caller that reports it; the text
+      # stays the report.
+      def dispatch_scan(scanner:, root:, ctx: nil, on_total: nil)
         Scan::Live.ensure_sync!
         _arg, dry_run, no_autofix, clean_arg, do_autofix = parse_scan_args(ctx)
 
         Scan::Live.with_interrupt_dump(root:) do |holder|
-          scan_pass(scanner:, root:, clean_arg:, dry_run:, no_autofix:, do_autofix:, holder:)
+          scan_pass(scanner:, root:, clean_arg:, dry_run:, no_autofix:, do_autofix:, holder:, on_total:)
         end
       end
 
@@ -33,7 +36,7 @@ module Master
         [arg, dry_run, no_autofix, clean_arg, do_autofix]
       end
 
-      def scan_pass(scanner:, root:, clean_arg:, dry_run:, no_autofix:, do_autofix:, holder:)
+      def scan_pass(scanner:, root:, clean_arg:, dry_run:, no_autofix:, do_autofix:, holder:, on_total: nil)
         Scan::Live.banner(target: clean_arg.empty? ? root : clean_arg, profile: nil, dry_run:, autofix: do_autofix)
         scanner.skip_semantic! if dry_run && scanner.respond_to?(:skip_semantic!)
 
@@ -48,7 +51,7 @@ module Master
         )
 
         text = render_final_scan_report(
-          pairs:, profile:, rule_filter:, severity_filter:, dry_run:, autofixes:, do_autofix:, pass1_total:,
+          pairs:, profile:, rule_filter:, severity_filter:, dry_run:, autofixes:, do_autofix:, pass1_total:, on_total:,
         )
         holder[:text] = text
         Scan::Live.snapshot!(text, root:, note: "final")
@@ -98,7 +101,8 @@ module Master
         [pairs, autofixes]
       end
 
-      def render_final_scan_report(pairs:, profile:, rule_filter:, severity_filter:, dry_run:, autofixes:, do_autofix:, pass1_total:)
+      def render_final_scan_report(pairs:, profile:, rule_filter:, severity_filter:, dry_run:, autofixes:, do_autofix:,
+                                   pass1_total:, on_total: nil)
         final = Scan::Report.new(
           pairs:,
           profile:,
@@ -111,6 +115,7 @@ module Master
         )
         text = pairs.empty? && autofixes.empty? ? clean_scan_line(dry_run:, autofixes:) : final.render
         Scan::Live.emit("done, #{final.brief}")
+        on_total&.call(final.total_count)
         text
       end
 
