@@ -6,8 +6,9 @@ require "yaml"
 require "set"
 
 module Operator
-  # Validates every spacing-tagged token in design_tokens.yml and the shared
-  # _tokens.scss/_dialect_tokens.scss custom properties against MASTER's own
+  # Validates every spacing-tagged token in design_tokens.yml and every --space
+  # custom property a stylesheet defines, in shared, each app and each engine
+  # (a token defined beside the view it serves is still a token), against MASTER's own
   # rules.yml design_rules.pixel_perfection.eight_px_rhythm allowlist. Reads that
   # allowlist from MASTER directly rather than duplicating it, so the two
   # can never drift apart the way _tokens.scss and design_tokens.yml did
@@ -55,9 +56,12 @@ module Operator
       File.expand_path("../../design_tokens.yml", __dir__)
     end
 
+    # The directory holding shared: RAILS/ in a checkout, /home/<app>/ in the
+    # copy-tree deploy, where the app and its copy of shared are siblings too.
+    def stylesheet_root = File.expand_path("../../..", __dir__)
+
     def scss_paths
-      base = File.expand_path("../../app/assets/stylesheets", __dir__)
-      [ File.join(base, "_tokens.scss"), File.join(base, "_dialect_tokens.scss") ]
+      Dir.glob(File.join(stylesheet_root, "*", "{app,engines/*/app}", "assets", "stylesheets", "**", "*.{scss,css}")).sort
     end
 
     def to_px(value, unit)
@@ -92,7 +96,7 @@ module Operator
           next unless (m = line.match(SPACE_CSS_VAR))
 
           px = to_px(m[2], m[3])
-          violations << Violation.new(File.basename(path), "--#{m[1]}", px) unless allowed.include?(px)
+          violations << Violation.new(path.delete_prefix("#{stylesheet_root}/"), "--#{m[1]}", px) unless allowed.include?(px)
         end
       end
       violations
