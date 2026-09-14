@@ -533,15 +533,15 @@ correlation and now mono-fold loss and low-end side energy; `MixScore` and
 `Taste` read the rest; `VerifyFx` proves each stage moves its own
 measurement; `DillaProvenance` records the seed, the pins, the commit, the
 toolchain versions and every warning; `DillaKnobs` derives every knob from
-the code; `console_strip.rb` saturates per channel before the sum;
-`tape_hysteresis.rb` carries Ornstein-Uhlenbeck wow and flutter; per-role
+the code; `ConsoleStrip` saturates per channel before the sum;
+`TapeHysteresis` carries Ornstein-Uhlenbeck wow and flutter; per-role
 microtiming and its drift are tested; `reference_sonic.yml` stores derived
 measurements only; and `dilla_principles.yml` already separates documented
 evidence from hypothesis.
 
 **Refused: scores and gates nobody has measured.** `TIMBRAL_FIT`,
 `TIMING_ENTROPY`, `REFERENCE_DISTANCE`, `CHARACTER_PRESERVATION`,
-`MASTER_SAFE` and their kin would each need a threshold, and `mix_score.rb`
+`MASTER_SAFE` and their kin would each need a threshold, and `MixScore`
 states the engine's rule: a threshold picked in advance measures the person
 who picked it, so targets come from takes that were kept after listening. A
 metric with no reader is inert config, which is this tree's dominant defect.
@@ -1300,8 +1300,8 @@ ChatController's own dmesg, the vote reflexes, the offline memory scaffold, a
 second smoke script, the rc.d template, brgen's local notifications
 controller, a LIKE search beside `LiveSearchable`, a web push loop that
 unsubscribed a whole city on one bad VAPID key, and MixScore's shell strings.
-The other half died on measurement. `futurism` has three readers, `bin/crate`
-writes a directory that is ignored by design, the two uptime checks differ
+The other half died on measurement. `futurism` has three readers, dilla's crate
+script wrote only a directory ignored by design, the two uptime checks differ
 because root's cron must not execute the checkout, the four deploy verbs each
 cover a case `vps-deploy` does not, `bin/master` already hands over to
 `bin/cli`, and the three face stores have a boot order in `face_assets.yml`.
