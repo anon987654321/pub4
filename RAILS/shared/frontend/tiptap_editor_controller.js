@@ -24,6 +24,11 @@ export default class extends Controller {
 
     this.mount = this.mount.bind(this)
     this.flush = this.flush.bind(this)
+    this.keepWhileEditing = this.keepWhileEditing.bind(this)
+    // A refresh morphs the page toward server HTML, which has no editor in it:
+    // the contenteditable exists only here. Once mounted, this surface is left
+    // out of the morph so a half-written text survives a broadcast refresh.
+    this.element.addEventListener("turbo:before-morph-element", this.keepWhileEditing)
     // focusin bubbles (focus does not), so one listener on the root covers the
     // textarea and the toolbar buttons.
     this.element.addEventListener("focusin", this.mount, { once: true })
@@ -94,7 +99,12 @@ export default class extends Controller {
     this.element.removeEventListener("focusin", this.mount)
     this.element.removeEventListener("pointerdown", this.mount)
     this.form?.removeEventListener("submit", this.flush, true)
+    this.element.removeEventListener("turbo:before-morph-element", this.keepWhileEditing)
     if (this.editor) { this.editor.destroy(); this.editor = null }
+  }
+
+  keepWhileEditing(event) {
+    if (this.editor && event.target === this.element) event.preventDefault()
   }
 
   flush() {
