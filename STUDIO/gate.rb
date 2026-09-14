@@ -249,6 +249,25 @@ end
         beside = files.select { |path| File.dirname(path) == File.join(@root, tool) && File.basename(path) != "#{tool}.rb" }
         beside.each { |path| @result.fail("studio layout: #{rel(path)} sits beside #{tool}.rb — support belongs in #{tool}/lib/") }
       end
+      check_dilla_root_audio
+    end
+
+    # The operator's call, 2026-09-08: "output only demo.wav in dilla/ root",
+    # "remove all other audio". The catalogue writes demo.wav and its mp3 there.
+    # Soft, because a render named on the command line still lands beside
+    # dilla.rb by default, and the take is the operator's to move or delete.
+    DILLA_ROOT_AUDIO = %w[demo.wav demo.mp3].freeze
+    AUDIO = /\.(?:wav|mp3|flac|aiff?|m4a|ogg)\z/i
+
+    def check_dilla_root_audio
+      dir = File.join(@root, "dilla")
+      return unless Dir.exist?(dir)
+
+      stray = Dir.children(dir).select { |name| name.match?(AUDIO) && File.file?(File.join(dir, name)) } - DILLA_ROOT_AUDIO
+      stray.sort.each do |name|
+        @result.fail("studio layout: dilla/#{name} is audio in the dilla root, which holds only demo.wav and demo.mp3",
+                     severity: :soft)
+      end
     end
 
     def check_orphans(files)

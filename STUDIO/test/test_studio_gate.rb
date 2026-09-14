@@ -123,6 +123,21 @@ class TestStudioGate < Minitest::Test
     end
   end
 
+  # The dilla root holds demo.wav and demo.mp3 and no other audio, on the
+  # operator's call of 2026-09-08; a sidecar or a directory is not audio.
+  def test_audio_in_the_dilla_root_other_than_the_demo_is_reported
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "dilla", "take.wav"))
+      %w[demo.wav demo.mp3 demo.wav.provenance.json beat.mp3 Loop.WAV].each do |name|
+        File.write(File.join(dir, "dilla", name), "")
+      end
+      result = GATE.new(root: dir, trees: [], dilla: nil).send(:run_without_self_check)
+      reported = result.soft_failures.grep(/studio layout: .* is audio in the dilla root/)
+
+      assert_equal ["dilla/Loop.WAV", "dilla/beat.mp3"], reported.map { |finding| finding[%r{dilla/\S+}] }
+    end
+  end
+
   def test_a_probe_timeout_is_bounded_and_finite
     assert_operator GATE::PROBE_TIMEOUT, :>, 0
     assert_operator GATE::PROBE_TIMEOUT, :<=, 600, "a probe that can run ten minutes is not a gate"
