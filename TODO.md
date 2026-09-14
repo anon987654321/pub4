@@ -60,14 +60,23 @@ Forward work is the last section of this file.
   deploy and verify with `rcctl restart master` and `vps state --remote`
   reading `tts_socket=true`.
 - **After the next deploy, confirm `.master/tts-worker-*.log` stay
-  `master`-owned.** A root `assets:precompile` in `rc_pre` could build a
-  container through `cable_bridge.rb` and spawn the worker as root;
-  `MasterContainerLoader.ensure!` now refuses under an assets task. If the logs
-  turn root again, the writer is elsewhere.
+  `master`-owned.** `cable_bridge.rb`, one path a root `assets:precompile` could
+  build a container through, is deleted, and `MasterContainerLoader.ensure!`
+  refuses under an assets task. If the logs turn root again, the writer is
+  elsewhere.
 - **Deploy hazards.** Never stash the box's locks to fast-forward; a plain
   `git pull --ff-only` succeeds with them dirty. relayd has died mid-deploy with
   every app port open (`curl 000` on all hosts), so run `rcctl check relayd`
   after any deploy that restarts master.
+- **What the 2026-09-14 merges carry to the box.** `MASTER/web/Gemfile.lock`
+  drops `solid_cable`, so check the box's copy of that lock is clean before
+  `git pull`, and MASTER web runs a migration dropping `solid_cable_messages`.
+  brgen runs a migration that nulls orphaned `dating_profiles.neighborhood_id`
+  and adds the foreign key. `nsd-resign` now reads `NSD_ZONES_DIR` and
+  `renew-certs.sh` reads `RENEW_CERTS_ACME_CONF` and `RENEW_CERTS_SSL_DIR`, each
+  defaulting to today's path, from the next `OPERATOR.sh` install. dev's
+  `/home/dev/.zshrc` still sources the missing `FUN/zshrc.shared`, and
+  `OPERATOR.sh` no longer installs over it.
 
 ### The face's mood, and TTS on the box — operator-owned
 
@@ -302,7 +311,85 @@ call, and the operator's. The pass's doctrine lives in `WIRING_NOTES.md`.
 
 Wishes and measured proposals not yet shipped; each section is dated.
 
-## The refinement inventory — opened 2026-09-11
+## Found by the backlog pass — opened 2026-09-14
+
+Thirteen agents worked this file on 2026-09-14 and noticed these outside their
+slices. Each is a hypothesis with its seam.
+
+### MASTER
+
+- **`/undo` can revert the wrong file after a fold turn.** `Core::World#do_write`
+  records nothing for undo, so `/undo` reverts the newest tool-path snapshot,
+  which can belong to an earlier session.
+- **`InjectionGuard` reads web fetches and not file reads.** A planted file in a
+  worktree reaches the model unchecked.
+- **The face reads event fields where the stream does not put them.**
+  `/events/stream` nests each event's fields under `data`, and
+  `visual_bridge.js` reads `event.pct`, `event.modules` and `event.spirit_radius`
+  from the top level, so they arrive undefined. Fixing it changes what the face
+  shows: the operator's.
+- **ChatService's `model` SSE event names the routed model** from `llm:request`;
+  `llm:response` names the one that answered.
+- **`test_ratchets` is red on rows nobody moved on purpose.** Over the ceiling:
+  `rule_audit.silent` 44/40 (43 before the scanner pass; `NO_MULTIPLE_LANGUAGES`
+  went silent when a comment span stopped reading as code), `namespace` 3/2 and
+  `growth.rails` 1995/1980 (model tests and one migration). Slack against main:
+  `self_findings`, `data_reach`, `sprawl.lone_dirs`, `lib_body`, `growth.master`.
+  Each row wants its fall recorded or its raise named, never absorbed.
+- **Two tests fail on main.** `test_face_asset_paths_script_emits_every_declared_asset`
+  (the script emits `face.css` and `chat_upload.css`, the expected list lacks
+  them) and `test_doc_paths` (`MASTER/DECISIONS.md` still names `bin/crate`).
+- **Readers with no caller.** `Ground::OpenbsdConfig` (its own test only),
+  `Ground::Policy::Workflow#phase`, `#workflow`, `#gates` and `#brief`,
+  `Design::Thresholds.micro_typography`; `solid_queue` and `solid_cache` sit in
+  the web Gemfile with nothing loading them; `face_vision_d.js` registers an
+  ActionCable stub.
+- **A session receipt waits for a reader.** Joining the memory store version,
+  worktree HEAD and model id to `Ground::BootReceipt` would let two runs be
+  diffed; it is built when `/why` or `bin/doctor` asks.
+
+### RAILS
+
+- **`reddit_seed.rb#seed_tv` creates `Tv::Episode` with no `number`,** so the
+  seed fails there.
+- **The test environment turns forgery protection off,** which drops the
+  csrf-token meta tag; `swipe_controller`'s like then throws and falls into the
+  offline queue unseen. The dating system test turns it back on.
+- **Two tests fail on main:** `function_layout_test` (the
+  `brgen/chrome.dark_default` marker) and
+  `gate_live_and_css_budget_test#test_the_vertical_pairing_still_surfaces_a_finding`.
+- **Stimulus.** `carousel` and `reveal` are registered and mounted by nothing
+  (on the reverse contract's exemption list with a reason), and the
+  `stimulus_boot.js` comment still says amber's showcase uses `carousel`. amber
+  registers two `sortable` controllers, its own and the vendored one, and which
+  wins on outfit reorder is unmeasured. Drag-only reorder (outfits, variants)
+  has no keyboard path (WCAG 2.5.7).
+- **maplibre loses its DOM on a morph.** Nothing refreshes the maps home today;
+  `WIRING_NOTES.md` records why it is unguarded.
+- **The playlist set page prints "likes" in English.**
+- **42 `needs_id` guest pages get no live probe;** `page_inventory` names them
+  now, and giving them record ids needs a booted triangle.
+
+### OPENBSD
+
+- **Stale prose.** `OPENBSD/DECISIONS.md` still describes the deleted
+  `rails-app.tmpl`; `RUNBOOK.md` gives `ptr_openbsd_amsterdam.rb` `--ip` and
+  `--apply` where it takes `--ipv4`/`--ipv6` and `APPLY_PTR=1`; the `solid_cable`
+  comments in `vps_deploy_master.sh` and `bin/vps-deploy` describe a pipe that is
+  gone; `tools/tree.rb#redesign_audit` has no flag and looks under the pre-rename
+  `lib/now/stages`.
+- **Three parsers for one thing each.** `gates/domain_alignment.rb` carries its
+  own copy of `render_dns`'s ALL_DOMAINS parser and counts commented-out
+  `tls keypair` lines as live; `reach.rb` is a third cron-line parser beside the
+  drift gate's and installed-targets'.
+- **The bare IP lingers** as `lib/ssh_vm23.sh`'s `SSH_HOST` default and
+  `data/operator.yml` `meta.vps`, where the contract names `dev@brgen.no`.
+- **`rc.d/*_jobs` scripts carry no login.conf class,** so the job workers run
+  under `daemon` without the `rails` limits.
+- **`rottrdam.nl` reads unknown with the note "is free",** which the AVAILABLE
+  regex should match; `_net.sh`'s remaining functions may have no callers.
+
+## The refinement inventory — opened 2026-09-11, instrument pass 2026-09-14
 
 `ruby MASTER/tools/refinements.rb` scans every tracked file in the four trees
 and groups what it finds into batches: one rule, one kind of edit, a known file
@@ -310,77 +397,34 @@ list. `--items` prints every finding, `--tree` and `--rule` narrow it. The list
 is not written down anywhere, because a written copy of a scan is stale the day
 it is made. Run the tool.
 
-It reads **22,417 findings in 3,333 files across 131 groups**, and that number
-is an upper bound on an unverified instrument, not a count of defects. Thirty
-were sampled and read against their source. Roughly a quarter were actionable.
-The rest were the scanner misreading correct code, and the misreadings have
-shapes worth naming, because each one is a rule to fix rather than a file:
+The 2026-09-14 pass fixed rules rather than files: `magic_number` 4,679 to
+3,108, `NO_PUTS` 941 to 91, `FILE_SPRAWL` 654 to 52, `SMALL_FILES` 280 to 152,
+`CONFIG_HIERARCHY` 1,007 to 138, and `TRAILING_COMMAS` 510 to 74, because the
+three apps' RuboCop forbids the comma the rule asked for. Re-run before quoting
+a count. What is left:
 
-- `magic_number` (4,492) counts array-slice bounds, quantifiers inside a test
-  assertion's regex, and event codes. `[0, 200]` is not a constant wanting a
-  name.
-- `NO_PUTS` (807) counts CLI tools, rake tasks and probe scripts, where `puts`
-  is the interface rather than a debug statement.
-- `duplicate_code` (784) counts locale YAML values, Markdown prose and
-  comments. "Text to copy" appearing twice in `en.yml` is a translation.
-- `FILE_SPRAWL` (664) and `SMALL_FILES` (261) report a per-directory condition
-  once per file, anchored to line 1, and count migrations — which accumulate by
-  design.
-- `CONFIG_HIERARCHY` (913) counts route fragments in gate flow fixtures and
-  prompt template lines in `council.yml`.
-- `TYPOGRAPHY_DISCIPLINE` (474) counts ASCII box drawing inside comments, which
-  is `NO_ASCII_LINE_ART`'s question and cosmetic in a comment either way.
-
-**The exemption marker trips two rules by existing.** 154 findings sit on lines
-carrying `scan: intentional`, and 135 of them are `LONG_LINE` and
-`TRAILING_COMMENT` — the marker is a trailing comment, and adding it pushes the
-line past the length limit. Every author who exempts a line correctly buys two
-new findings. Fix the two rules to skip a line whose only overage is the marker
-itself, and the count falls without a single file being touched.
-
-### The deterministic tier — 1,888 findings in 607 files
-
-These are the ones worth working. Each is mechanical, each has one right
-answer, and a wrong fix shows itself in the diff it makes. One group is one
-session. Counts are findings, then files, which is the number of jobs.
-
-- **`TRAILING_COMMAS` — 489 in 188 files.** RAILS 432. Add the comma to the
-  last element of each multi-line literal. Autofixable: `add_trailing_commas`.
-- **`TAB_CHARACTER` — 322 in 8 files.** OPENBSD 315. Eight files, whole-file
-  conversion each.
-- **`DOLLAR_PAREN` — 287 in 60 files.** Backticks to `$( )` in shell scripts.
-- **`DOUBLE_BRACKET` — 181 in 8 files.** All OPENBSD. `[[ ]]` to `[ ]`, so the
-  script runs under `sh`. This one matters on the box.
-- **`FROZEN_STRING_LITERAL` — 176 in 176 files.** One magic comment each.
-- **`NO_ASCII_LINE_ART` — 175 in 48 files.** STUDIO 94. Keep the words, delete
-  the box.
-- **`NO_COLUMN_ALIGN` — 143 in 31 files.** MASTER 103. Collapse aligned columns
-  to single spaces.
-- **`NO_GOD_CLASS` — 29 in 29 files.** RAILS 22. Not mechanical, but each one is
-  a class that has outgrown a single subject and already shows the seam.
-- **`SILENT_RESCUE` — 23 in 11 files.** STUDIO 22. `Ground::Swallow.log` is the
-  house form.
-- **`STRICT_MODE_ZSH` — 18 in 18 files.** OPENBSD 15.
-- **`NO_VAR` — 15 in 7 files.** `let` or `const`.
-- **`NEVER_BATCH_DELETE` — 13 in 9 files.** Read each before touching it; some
-  will be correct and want the marker instead.
-- **`FAIL_VISIBLY` — 5 in 5 files.** A failure reported into a return value that
-  nobody reads.
-- **`RATE_LIMITING_MISSING` — closed, 1 of 4 was real.** `Tv::VideosController#create`
-  takes a video upload and had no throttle; it has 10 in five minutes now.
-  The other three were the rule reading file scope: `shared/authentication.rb`
-  and `dating/base_controller.rb` declare no actions at all, and the login and
-  password paths throttle through `sessions_actions.rb` and
-  `passwords_actions.rb` — 10 in three minutes, and 3 in fifteen for a magic
-  link.
-- **`MIGRATION_ADD_REFERENCE_NO_FK` — 1 of 2 was real, and it needs a new
-  migration.** `add_reference :reactions, :reactable, polymorphic: true` cannot
-  carry a foreign key, so that one is the rule misreading a polymorphic
-  reference. `add_neighborhood_to_dating_profiles` could, but the migration has
-  run on vm23 and an edit to a migration that has already run changes nothing —
-  the fix is a new migration, and it wants a check for orphan `neighborhood_id`
-  rows before the constraint goes on.
-- **`NO_DEBUG` — 2, `CONTROL_CHARS` — 2, `NULL_BLINDNESS` — 2.** Three edits.
+- **`duplicate_code` matches the words copy, duplicate and "same as",** and 0 of
+  25 samples were duplicated code. Retiring it edits `data/rules.yml`, which is
+  immutable: the operator's.
+- **Lint reach that surfaces rendered values.** ScaleLint reading the `font:`
+  shorthand and `clamp()` finds 22 off-scale line-heights and 1 tracking against
+  a ceiling of 0. `NO_LONG_TRANSITION` on seconds and JS `duration-value`,
+  `LOGICAL_PROPERTIES` on every box property and `MEASURE_OPTIMUM` at any width
+  surface 27 more and take `self_findings.law` past its ceiling. Both extensions
+  wait for the values to be decided.
+- **`NO_GOD_CLASS` (29)** wants each class read; it is not mechanical.
+- **Sampled five and right:** `DOUBLE_BRACKET` (the eight files are ksh, which
+  has `[[ ]]`, and they are rc.d files, so the edit is vm23's), `NO_ASCII_LINE_ART`,
+  `SILENT_RESCUE` (one kill on a dead process should name its error),
+  `NO_COLUMN_ALIGN` (`.muttrc` is a misread) and `FROZEN_STRING_LITERAL` (the 25
+  are mostly generated binstubs and Gemfiles). `TAB_CHARACTER` is down to 1;
+  `DOLLAR_PAREN` and `STRICT_MODE_ZSH` read 0.
+- **Geometry.** wiki and post show want geometry surfaces with seeded ids, which
+  needs triangle; `void_target` and the `list_marker_hang` note live in
+  `data/rules.yml`.
+- **`layout_snapshot --explain`** needs a map from computed values to tokens and
+  is checkable only in a rendered run; centred body text inside `main` is a
+  rendered question.
 
 ### Before working any other group
 
@@ -657,48 +701,6 @@ Every colour, typeface and crop here is a rendered value and the operator is a
 trained architect. Build the structure, measure the geometry, and bring the
 look back for a decision rather than choosing it.
 
-## What the snapshot gate was really reporting — closed 2026-09-11
-
-`rendered_suite` failed on sixty-nine surfaces, every one of them
-`LayoutSnapshotGate`, against baselines last written 2026-08-17. The obvious
-reading was twenty-five days of unreviewed drift. It was not: the gate was
-comparing against a key format that no longer existed.
-
-`walk.js` was extracted from a Ruby heredoc into a file read verbatim, and
-three regexes came with their heredoc escaping intact. In a heredoc `\\s` is
-what you write to get `\s`; in a file read as bytes it stays two characters,
-and `/\\s+/` in JavaScript matches a literal backslash followed by one or
-more letter s — which nothing on any page contains. Verified in Chrome rather
-than argued: `"brand-mark brgen-logo-mark".split(/\\s+/)` returns the whole
-string as one element, and `/rgba?\\(...\\)/.test("rgb(1, 2, 3)")` is
-false.
-
-The one that mattered was in `classSig`. The class attribute was never split,
-so every element carrying more than one class keyed as
-`a.brand-mark brgen-logo-mark` instead of `a.brand-mark.brgen-logo-mark`, and
-`VOLATILE_CLASS` matched the whole blob or none of it — which is why
-`body.vertical-marketplace` vanished from ancestor paths whenever the blob
-happened to end in a volatile word. 739 removals and 965 additions across 69
-surfaces, none of them a layout change. Fixing it halved the removals
-immediately and moved elements into the MOVED bucket, where they belong: the
-instrument now compares like with like.
-
-The other two broke the rgba fast path, which falls through to a canvas that
-answers correctly — slow rather than wrong, and invisible for exactly that
-reason. `gate_requires_resolve_test` now fails on a literal `\\` in any
-`.js` file under `gates/`, because the next extraction will do this again.
-
-What remained after the fix was real and all of it attributable: the edge
-grips and `#q` went with the rails and the search palette (operator,
-2026-08-27), the nav swiper groups went flat (operator, 2026-08-29),
-`#app-tab-bar` moved because dating and messenger left the immersive list on
-2026-09-11, and `#logo` went with the storefront's second wordmark the same
-day. The six content-level changes were all improvements: maps gained an `h1`
-where it had none, and messenger's title went from "Bergen" to
-"Meldinger — Bergen". Baselines regenerated after that review, and after the
-instrument was fixed — in that order, because accepting them first would have
-written the corrupted key format into all sixty-nine files permanently.
-
 ## Bottom chrome and the peel handle — opened 2026-09-11
 
 Fixing the walk unmasked `rendered_geometry`, which had been reporting against
@@ -737,127 +739,24 @@ a darkened per-vertical ink for text-on-light, the way `--food-dash-ink` was
 picked for takeaway's eta chip. Seven colours, and every one of them the
 operator's.
 
-## The external reassessment — assessed 2026-09-11
+## Operator-owned, recorded not opened — from the 2026-09-11 reassessment
 
-Four ChatGPT logs and one execution brief, read against the tree rather than
-taken at their word. Three of the four logs were substantially wrong about what
-`main` contains, which is the usual shape: an external reader with repository
-access describes the repository it last saw. What follows is what survived being
-checked, and what did not, so neither half is re-derived.
+Two refusals from that pass stay closed and are argued in `MASTER/DECISIONS.md`:
+`Core::Constitution` keeps its own read of `rules.yml`, and cognition phases 3
+to 8 wait for weeks of real event history. What needs the box, money or a
+rendered decision, and is not already listed above:
 
-### What was wrong, and stays closed
-
-**The visibility test is not missing.** One log opened on the claim that
-`MASTER/test/test_visibility_semantics.rb` had been lost from `main` while
-`data/spine.yml` still sponsored it, and proposed restoring 109 lines of it. The
-file is on `main`, 140 lines, with all eight semantic cases the log listed —
-`public` reopening a scope, `protected` as a visibility rather than an end,
-`private` not reaching the singleton stream, `private_class_method`, retroactive
-named visibility, inline modifiers, `class << self` defaults, and another
-object's singleton. Nothing to restore.
-
-**`Core::Constitution` should keep reading `rules.yml` directly.** The proposal
-was to replace its `YAML.safe_load_file` with `Master.load_rules`, on the
-one-source argument. The one source is real and the fix is backwards: the class
-comment two lines above states the spine reaches nothing in `lib/`, and
-`load_rules` lives in `lib/boot/data.rb`. Taking the suggestion would invert the
-only dependency rule `core/` has, to buy a size limit on a 205 KB file, a
-timeout on a local read, and permitted classes for a file that holds no `Date`.
-`load_rules` performs no shard merge, so the two paths already return the same
-object. Recorded in `MASTER/DECISIONS.md`; do not reopen.
-
-**Cognition phases 3 through 8 are premature.** A log proposed eight phases —
-prediction, global workspace, thought generation, consolidation, dreams, goals,
-agency, beliefs, an HDC accelerator in Rust — as a staged programme over
-`lib/cognition/`. Phases 2A and the tick defect below were real and are done.
-The rest builds six new subsystems on a layer whose own loop had never run, and
-`COLLAPSE_BEFORE_ADDING` asks for the nine moves before any of them. Revisit
-when the persisted transition model has weeks of real event history in it and
-something in the tree reads it.
-
-### Open, sized, and real
-
-**The local tier's model list is a guess.** `OllamaSender` dispatches now, but
-`models.yml` names `qwen2.5-coder:7b`, `llama3.2:3b` and `phi4:mini` as the
-tier-D chain and nothing checks that any of them is pulled — a missing model
-reports cleanly as `ollama has no model <name>` and then the chain falls through
-to a paid provider. Either pull those three on the machines that enable the tier
-or have the chain read `/api/tags` and rank what is actually there. The second
-is the one that cannot go stale.
-
-**`Finding#reversibility` and `#blast_radius` still have no reader.** Both are
-first-class fields on `Finding`; only `meta_rules.rb` ever sets them and nothing
-in `lib/fix/` reads either. The review that raised this called it the whole of
-autofix safety and was wrong about that — `Scanner#should_autofix?` and
-`AstFixer::DELETING_TRANSFORMS` decide by what a transform *does*, which is the
-better question, and both autofix paths consult it now. What remains is the two
-unread fields: either give them a reader or delete them, because a declared
-field nobody reads is this tree's most common defect and these two have been
-sitting in the constructor since they were added.
-
-**Exemptions are measured now, and the corpus is clean.** `ruby
-MASTER/tools/stale_exemptions.rb` reads 143 markers in 90 files and every one of
-them holds back a finding. The one that did not — `_root.scss`, a marker on the
-tail line of a multi-line comment whose subject no rule flags either way — was
-deleted with its rationale kept. The tool still reports `web_rules.rb:77`, which
-is prose quoting the marker rather than using it, and is disclosed as a known
-false positive in its own header.
-
-Run it after a rule narrows or retires. That is when an exemption goes stale, and
-nothing else will say so.
-
-**No gate measures engine boundaries.** One intentional cross-engine constant
-reference exists — `maps -> Takeaway::Order` — and zero cross-engine
-associations. A source gate should detect constant references and model
-associations across `RAILS/brgen/engines/`, carry that one as a named exemption,
-and fail on the second unreviewed crossing. No Packwerk, no native dependency,
-for one check.
-
-**i18n has resolution checks and no hygiene checks.** The locale tests cover
-duplicates, homes, naming, parity and resolution. Unused keys and
-interpolation-variable parity between locales are both unmeasured. Build it on
-this repo's own search machinery: six mounted engines make a generic
-`i18n-tasks` configuration likely to misread the tree.
-
-### Operator-owned, recorded not opened
-
-Each of these needs the box, money, or a rendered decision, so they are named
-rather than done.
-
-- **relayd restart churn.** The deploy path restarts relayd whenever an
-  individual app comes back healthy, which drops the single HTTPS listener for
-  every other app and has already caused an outage. Read `relayd(8)`,
-  `relayd.conf(5)` and `relayctl(8)` from vm23 first; the likely shape is table
-  disable/enable rather than a daemon restart, with a genuine config change still
-  reloading properly.
 - **Per-process resource evidence.** `resource_guard.sh` sheds on aggregate box
   load, so the log never says which process took the memory. Add per-process RSS
   for the managed services, record an exited process as unavailable rather than
   zero, and change no threshold in the same patch.
-- **Service resource limits.** The Rails `login.conf` class permits a datasize
-  larger than the physical box. Capture steady-state and peak RSS on vm23 first,
-  and open-file usage before touching `openfiles-cur`.
-- **Off-host snapshots.** Backups are same-disk and the restore path points
-  somewhere unusable. The destination and retention policy are the operator's;
-  what is buildable is the contract, the verification, the restore drill, and
-  backup freshness in `/health`.
 - **TTS daemon ownership.** Worker logs and sockets can be created as root while
   the daemon runs as `master`. Find the writer before adding a periodic chown,
   expose `tts_socket` in `bin/operator vps state --remote`, and make health
   distinguish process-up from socket-usable.
-- **The multi-platform Bundler lock.** vm23 carries a hand-repaired
-  `MASTER/Gemfile.lock` whose checksums differ from the committed one; the cause
-  is the BSD-only dependency in `MASTER/Gemfile` and the fix is `install_if`. A
-  deploy-window change, in order: repair the Gemfile, regenerate on both
-  platforms, verify frozen Bundler, verify TTS, deploy, restart master, verify
-  `/health` and relayd, then close.
 - **The face's shader brightness floor.** Probe the live face at production
   defaults against the README-sized render and change the shader, not a
   recorder-only uniform. A rendered value: bring the number back for a decision.
-- **The accent question.** Render the front page, marketplace, takeaway, dating,
-  TV, Amber and MASTER with and without the vertical accent, compare interactive
-  affordance, and encode the winner as a token and a gate. One decision, not
-  another abstract colour discussion.
 - **Deep visual gates need a browser.** The measure output has CSS budget rows
   that cannot be read without one, and an unreadable row must never count as
   green. Run the deep audit only when a browser is present, keep screenshots and
@@ -888,35 +787,15 @@ one as a ticket without asking first.
 
 ---
 
-## In-depth refinement and micro-refinement opportunities — opened 2026-09-11
+## In-depth refinement — what survived 2026-09-14
 
-Measured against MASTER, RAILS, OPENBSD and STUDIO on 2026-09-11. A finding is
-a hypothesis; re-measure before working. This list does not restate the scanner
-inventory (`ruby MASTER/tools/refinements.rb`), the deterministic tier already
-in this file, operator-priority box work, or anything decided against in
-`MASTER/DECISIONS.md` / `OPENBSD/DECISIONS.md`. Rendered values, money, a
-registrar login and a vm23 console are named and left.
+Opened 2026-09-11 as a numbered inventory across the four trees. The 2026-09-14
+pass closed the OPENBSD lists and the RAILS larger-than-a-sitting list by doing,
+measuring or arguing each item (`OPENBSD/DECISIONS.md` and
+`RAILS/shared/WIRING_NOTES.md` carry the arguments). What remains needs the
+operator, vm23, a browser or the dilla owner. Numbers are kept for citation.
 
-Each item names a path and a move. Items flagged **unverified** were opened far
-enough to name and not far enough to assert. Sample five, open the five lines,
-and decide whether the instrument is right before opening the sixth.
-
-Already open above and not restated: Gemfile.lock `CHECKSUMS` / `rb-kqueue`,
-TTS log ownership, `tts_socket` on `vps state`, `secrets_rotation`, `rule_deps`
-136, exemption-expiry detector, per-rule autofix classification, one chrome,
-marketplace 500, layout_snapshot drift, crate backup / `off_host_dr`,
-`libvips_local_build`, `multi_app_ram`, history rewrite, `bsdports.org` parking,
-relayctl instead of relayd restart, `growth.rails` source/test split.
-
-Fenced throughout: splitting `dilla.rb`, merging techno
-renderers, changing a rendered look or sound, enabling litestream, Solidus on
-SQLite, pgvector, inbound ActivityPub storage, WebRTC, three sign-in methods,
-`shared/lib/operator` nesting, LAYER_CAKE / DEAD_ABSTRACTION, raising a ratchet
-to absorb growth, `emotion.rb#analyze`.
-
-Numbered 1–N across the four trees.
-
-### MASTER — dual sources and inert config
+### MASTER
 
 5. **Operator: the Pixel Field palettes reach the chrome.** `topologies.yml` `palettes.operator.accent` is the fallback in `master_events.js#paletteForProvider`, which `visual_bridge.js:220` writes to `--master-accent`, which colours `.provider-chip` (`face.css:643`). Decide whether the chip takes a canvas colour or a CSS token.
 8. **Operator: `soul.yml` is the last duplicate voice and still names `bin/cli` sacred.** `voice:` and `negotiable.tts_voice` repeat `voice.yml` `neural:`, and `absolute.sacred_paths` lists `bin/cli`. The file is `paths.immutable`, so both one-line edits are yours.
@@ -926,7 +805,6 @@ Numbered 1–N across the four trees.
 141. **Operator: the FOUC guard's colours.** `index.html.erb` keeps `data-theme="dark"` and three inline `#000` rules as the paint before `face.css` loads. They move with the stylesheet, and the values are yours.
 145. **vm23: `face.modules.bundle.js` is built and loaded by nothing.** `face.js` imports modules through `MASTER_ASSET_PATHS`; only the rake task, `face_boot.test.mjs`, `script/ci_web_probe`, `OPENBSD/etc/rc.d/master` and the OPENBSD deploy scripts name the bundle. Removing it edits rc.d, so do it with a `rcctl restart master` watched on vm23.
 152. **Operator: the dashboard is a second chrome.** `views/dashboard/index.html.erb` links `/face.css` and draws its own panels. Fold it into the face or give it brgen's shell; either changes how it looks.
-156. **vm23: `cable_bridge.rb` subscribes `*`, which is colon-free names only.** EventBus compiles `*` to `[^:]*`, so `/cable` mirrors almost nothing, contrary to its comment and to this file's preamble. `**` would write one `solid_cable` row per event on a 1 GB box during a scan; measure that on vm23 before switching, or delete the bridge and let `/events/stream` (now `**`) carry the face.
 239. **vm23: CSP is report-only.** `content_security_policy.rb` enforces only when `PUB4_CSP_ENFORCE=1`, and only `OPENBSD/etc/master.env.sample` names it. Check `/etc/master.env` on vm23, set it, reload the face, and read the console for refusals before keeping it.
 
 ### RAILS — brgen core
@@ -972,335 +850,24 @@ sitting.
   amber drain, `SolidQueue::BlockedExecution` and `Semaphore` rows are not left
   behind; bsdports' next import rewrites every port's distfiles flag.
 
-**Needs a browser.**
+**Needs a browser or triangle.**
 
 - **`stimulus_boot.js` boots all 56 imports, 14 of them `@stimulus-components`,
   in every app.** Register each component only in the apps whose views mount
   it; verify on a booted triangle, because a missed registration fails silently.
-- **No system test drives the dating swipe or marketplace checkout.** Add both
-  beside `brgen/test/system/public_navigation_test.rb`.
-
-**Larger than a sitting.**
-
-- **Gate work, to re-measure against main, where gates take `root:`.**
-  `css_constitution` has no planted test (an off-rhythm px must fail, a
-  commented one must not); `css_minify_integrity`'s selector-loss half is
-  unproven against sass-embedded 1.101.0 — prove it or report inconclusive;
-  `page_inventory.rb:206` silently drops every `needs_id` page from live
-  simulation — seed ids or name the skipped pages; `gate_mutation` plants
-  nothing for `mobile_flow` or `page_simulation`; signed-in personas
-  (`GATE_ADEQUACY.md` gap 1) need a seeded fixture user in triangle.
-  `locale_shadowing`'s header and failure text still say shared outranks the
-  app; since shared locales load once, ahead of the app, its shadowed count is
-  the set of deliberate app overrides and the wording must say so.
-- **Unused locale keys.** No detector. A naive scan finds about 84 candidates
-  and is wrong on single-segment keys, lazy `t(".x")`, dynamic prefixes,
-  `scope:` lookups and keys built by construction; build it in
-  `RAILS/test/locale_contract_test.rb` and verify each hit with `git grep`.
-- **Affiliate disclosure has no rendered assertion.** It renders through
-  `shared/_site_legal_footer.html.erb:19`; `affiliate_honesty` only matches
-  source. Assert it in the HTML of brgen's listings index and amber's item page.
-- **Stimulus controllers carry no mounted-by-a-view contract.**
-  `stimulus_wiring` checks view to controller only; add the reverse, with a
-  named exemption list, over brgen, its engines, amber, bsdports and shared.
-- **Two image helpers.** `lazy_image_tag` (8 calls, blurhash) and
-  `responsive_image_tag` (22). Fold one into the other without changing markup,
-  and move the result to shared so engine tests do not need the host.
+- **Signed-in personas** (`GATE_ADEQUACY.md` gap 1) need a seeded fixture user
+  in triangle.
 - **A listing's postpro photo has no status.** `PostproJob` adds the processed
   photo after create; a busy worker leaves the listing with originals only and
-  nothing says so. Needs a column or a derived state.
-- **Model tests still missing.** dating `daily_pick`, `dislike`, `verification`;
-  marketplace `category`, `gig_detail`, `housing_detail`, `job_detail`,
-  `listing_favorite`, `question`, `store`, `variant`, `variant_option`; playlist
-  `audio_version`, `collaboration`, `dilla_sketch`, `like`, `listen`,
-  `party_message`, `set`, `set_track`, `timestamped_comment`; takeaway
-  `favorite_restaurant`, `menu_item`, `order_item`; tv `channel`, `episode`,
-  `show`, `sound`, `stream_chat`, `subscription`, `video_note`. Validations,
-  state machines and uniqueness first.
+  nothing says so. A status column needs a reader on the listing page, and
+  whether "pending" ever resolves depends on the postpro script being present
+  on vm23.
 
-### OPENBSD — dual sources
+### OPENBSD
 
-621. **`sh/` does not exist.** `OPENBSD/README.md` claims deploy tooling lives under `bin/`, `lib/`, `sh/`. There is no `OPENBSD/sh/`. Drop `sh/` from the sentence.
-622. **Same ghost path in law.** `OPENBSD/DECISIONS.md` “Repo Layout” still lists `sh/`. Align with the tree.
-623. **PATH_OWNERSHIP still names `openbsd/sh/vps_ci.sh`.** File is `OPENBSD/vps_ci.sh`. Fix the key and the `zsh -n` check path.
-624. **Fixed 2026-09-12.** `README.md` carries no table at all — zero table rows,
-     checked. `SSH_ACCESS.md` now names its own Architecture block as the network
-     map, which is what it always was, three lines under the pointer that sent the
-     reader elsewhere for it.
-625. **Fixed 2026-09-12.** The paragraph named four hosts; `bin/uptime-check.sh`
-     execs `health_check.rb --public-only --all-ready-apps` and has no URL list of
-     its own. It now says that, and says what `--public-only` costs: the service,
-     certificate and relayd checks are the same script without the flag.
-626. **Fixed 2026-09-12.** Four rows against ten scheduled jobs, so six self-healing
-     jobs — uptime-check, drain-jobs, core-reclaim, keep-warm, prune-guests and
-     weekly-integrity — existed only in `etc/crontab.vm23` and not in the table an
-     operator reads. All ten are listed. The `relayd-watchdog` row credited it with
-     healing `doas.conf`; that step ran `validate_doas.ksh` from a dev-owned
-     checkout as root every five minutes and was deliberately removed, which its own
-     header records. The weekly-integrity row carries its never-installed state
-     rather than implying it runs.
-627. **Fixed 2026-09-12.** `vps_production_push.sh` deploys bsdports too — its own
-     first line says so and line 36 runs it. The table said master + brgen + amber,
-     which understates a footgun, and understating that one is the wrong direction.
-628. **httpd 6666 comment vs CLAUDE.** `CLAUDE.md` still says `httpd.conf` listens on `* port 6666`. Live file listens on `127.0.0.1 port 6666`.
-629. **MEM_RESTORE drift — fixed 2026-09-12.** OPENBSD/CLAUDE.md said 8/14 for a
-     month after resource_guard.sh moved MEM_RESTORE to 10 on 2026-08-14, a
-     recalibration the script records with the 1550 ticks behind it. The doc
-     names the current pair and points at the script;
-     `test_guard_thresholds_documented` refuses prose that names a different
-     number from the code.
-630. **Fixed 2026-09-12.** The comment had it backwards in both directions: amber is
-     in `OPTIONAL="bsdports amber"` and master is in `CORE="master brgen"`. It no
-     longer reasons from the guard's sets at all — brgen and amber are simply the
-     two surfaces a visitor arrives on cold, and the shed case was already handled
-     six lines below by the per-target `nc -z`.
-631. **Fixed 2026-09-12.** `OPTIONAL="bsdports amber"` now, matching the guard.
-     litestream is doubly stale: `restore_backups.sh` records that no litestream
-     binary exists on vm23 and `/var/backups/litestream/` is empty.
-632. **Fixed 2026-09-12.** `data/operator.yml` is the command list and now carries
-     the whole of it: the check family (check-rails, check-openbsd, check-vps,
-     check-full), vps-state and tree.sh lived only in START_HERE.md's Golden
-     Commands, so the stub that pointed here was the more complete of the two.
-     START_HERE's Golden Commands and Source Of Truth sections are pointers now,
-     and RECIPES.md is a door rather than a table. `operator_docs.rb` reads the
-     yaml and `/orient deploy` prints it, so a recipe added there shows at every
-     door.
-633. **Fixed 2026-09-12.** `data/operator.yml` is the command list and now carries
-     the whole of it: the check family (check-rails, check-openbsd, check-vps,
-     check-full), vps-state and tree.sh lived only in START_HERE.md's Golden
-     Commands, so the stub that pointed here was the more complete of the two.
-     START_HERE's Golden Commands and Source Of Truth sections are pointers now,
-     and RECIPES.md is a door rather than a table. `operator_docs.rb` reads the
-     yaml and `/orient deploy` prints it, so a recipe added there shows at every
-     door.
-634. **Fixed 2026-09-12.** START_HERE.md's Source Of Truth section listed
-     `RAILS/apps.yml` under both "App inventory" and "Feature inventory". That whole
-     section is a pointer to `operator.yml`'s `single_source_of_truth:` now.
-635. **DECISIONS vs unsigned zones in git.** “61 zones … none of them in git”. `var/nsd/zones/master/` holds 57 unsigned `*.zone` templates by design. Narrow the decision to signed artifacts / keys.
-636. **RUNBOOK still describes a fixed deploy_all header.** Current header says there is no archive. Update RUNBOOK.
-637. **deploy_all still logs archive/recovery.** `deploy_all.sh:49`. Delete the log line.
-638. **tools/tree.rb still DRIFTs a missing dir.** Prints `archive/recovery` as DRIFT. Drop both.
-639. **PATH_OWNERSHIP lists `archive/`.** Directory does not exist. Remove the row.
-640. **Retired-apps prose vs extra_zones.** RUNBOOK says foodielicio.us went with baibl; `data/dns.yml` `extra_zones` still serves them. Pick one source.
-641. **Fixed 2026-09-12.** The comment lives in `render_dns.rb`, and it was wrong
-     twice: the count is four, not five, and `bsdports.net` has no zone at all —
-     `bsdports.org` is the one with a zone and it is in ALL_DOMAINS, so it was never
-     in that set. Computed from `city_zones` and `extra_zones`: 53 city, 13 extra,
-     four outside — the anti-gambling trio and foodielicio.us. render_dns reports in
-     sync across all 57 zones, so nothing rendered changed.
-642. **extra_zones duplicates ALL_DOMAINS.** Keep extras only for names not in ALL_DOMAINS.
-643. **doas.conf.example is a different policy.** Mark the example historical or generate it from the live file.
-644. **sshd_config is a fragment.** Either track the whole file or say this is a fragment OPERATOR merges.
-645. **login.conf is the OpenBSD sample.** Confirm whether app login classes still live here; if unused, stop installing it.
-646. **vm_resource.yml falcon workers.** `master_falcon_workers: 2`. `etc/rc.d/master` uses `${FALCON_WORKERS:-1}` and comments “keep at 1 on 1GB”. Make the yaml match.
-647. **vm_resource.yml load comment vs guard.** Guard uses 5-minute load; yaml keys are `load_avg_1m_*`. Rename keys to 5m or stop claiming they mirror.
-648. **operator.yml Solid Queue vs rc.conf.local.** Add a one-line “must match pkg_scripts” note.
-649. **CLAUDE vs RUNBOOK on SKIP_CI.** Make RUNBOOK a pointer at CLAUDE’s section.
-650. **START_HERE “check-full chains local checks and the integrity gate”.** `bin/check-full` also runs `RAILS/test/run_all.rb`. Name that third step.
-651. **PATH_OWNERSHIP RAILS paths with lowercase `rails/`.** Use real paths `RAILS/` / `OPENBSD/`.
-652. **PATH_OWNERSHIP omits most of the tree.** Add rows or a glob policy for `data/`, `test/`, `gates/`, `lib/`, `dotfiles/`, `quarantine/`.
-653. **PATH_OWNERSHIP `tools/` check is `MASTER/tools/verify`.** Point at `OPENBSD/bin/check-openbsd` or a local test.
-654. **deploy_inventory `generated_at: 2026-07-15`.** Regenerate on apps.yml change or drop the date.
-655. **sync_deploy_inventory drops `standalone_apps`.** Preserve the key.
-656. **health_check public master is a literal.** `:411` `"ai.brgen.no"`. Read `deploy_inventory.json` `master_face`.
-657. **Two uptime checkers, two master policies.** One function, one list.
-658. **Fixed 2026-09-12.** `data/dns.yml` declares `resolvers.public`, and
-     `gates/dns_zones.rb` reads it along with `nameserver.ip` instead of carrying
-     its own two literals. The copies had already drifted: OPERATOR.sh led with
-     8.8.8.8 while the gate used Cloudflare and Quad9 and had written down why, so
-     the gate's list won and OPERATOR.sh dropped Google. `test_dns_facts_agree`
-     fails if either copy moves without the other.
-659. **Fixed 2026-09-12.** `data/dns.yml` declares `resolvers.public`, and
-     `gates/dns_zones.rb` reads it along with `nameserver.ip` instead of carrying
-     its own two literals. The copies had already drifted: OPERATOR.sh led with
-     8.8.8.8 while the gate used Cloudflare and Quad9 and had written down why, so
-     the gate's list won and OPERATOR.sh dropped Google. `test_dns_facts_agree`
-     fails if either copy moves without the other.
-660. **Held rather than moved, 2026-09-12.** They stay as shell literals: the block
-     is sourced before anything runs, and making the deploy script shell out to
-     ruby34 to boot would put it behind an interpreter it is itself responsible for
-     installing. `test_dns_facts_agree` asserts BRGEN_IP is `nameserver.ip` and
-     HYP_IP the first `xfr_peers` entry, so the duplication now costs something.
-661. **relayd-watchdog BACKENDS table hardcoded four ports.** Add this file to `SMOKE_SCRIPTS` / `FLEET_INVENTORIES`.
-662. **Fixed 2026-09-12.** The names come from the same read as the ports, twelve
-     lines below where the frozen `%w[brgen amber bsdports]` used to sit — the file
-     was already loading apps.yml for ports and keeping a second inventory for
-     names, so a fourth app would have shown its port and never its row. master
-     keeps its own block: it is not under /home/*/app and not in apps.yml.
-663. **vps_ci_all apps hardcoded.** Same.
-664. **start_all_apps SERVICES hardcoded.** Derive from inventory + master.
-665. **Declined 2026-09-12, and the file now says why.** TARGETS is a curated pair,
-     not a stale copy of the fleet: brgen and amber are the surfaces a visitor
-     arrives on cold. Reading apps.yml would warm bsdports, a low-traffic index
-     nobody waits on, and master, whose 927M of address space is correctly swapped
-     out until someone opens the face. The shed case is handled per target by the
-     `nc -z` below the list.
-666. **Fixed 2026-09-12.** Falling back is a finding now: the built-in names are
-     still checked, because knowing those four are up beats checking nothing, but
-     the run exits nonzero whatever they answer and says the exit code is the
-     missing list rather than them. A green uptime check measuring a fleet one
-     deploy out of date is exactly what the file's own header warns about. The
-     fallback names and the derived list agree today: brgen, amber, bsdports,
-     master.
-
-### OPENBSD — scripts, expect, gates
-
-667. **vps_deploy_master.sh is a second MASTER deploy.** Keep as recovery (already decided) but have it call `vps-deploy master`.
-668. **vps_production_push vs vps-deploy all.** Make push `SKIP_CI=1 vps-deploy all` plus the optional demo seed.
-669. **vps_install_all vs vps_on_vm_install.** Fold into one “bootstrap on box” script; the other becomes a one-line wrapper.
-670. **vps_install_all stashes the box.** `git stash push`. Root TODO records that stashing Gemfile.lock on vm23 broke master. Delete the stash; `git pull --ff-only` only.
-671. **smoke-apps.sh vs deploy-smoke.sh.** Make smoke-apps a `deploy-smoke --local` alias or delete it and retarget `port_inventory` `SMOKE_SCRIPTS`.
-672. **check vs check-openbsd overlap.** Document a Venn in START_HERE, or have `check` call `check-openbsd` instead of repeating identity/smoke.
-673. **check-full vs integrity_gate.** Deduplicate the integrity list.
-674. **check-vps ON_VPS test is a third predicate.** One helper: `Operator::Environment.on_vps?`.
-675. **check-openbsd uses `RbConfig.ruby`, check uses `Operator::RubyRunner.gate_ruby`.** Use the gate runner everywhere.
-676. **tree.sh header still talks about “MASTER KISS/DRY redesign”.** One-line usage.
-677. **solid_queue_proof.sh is a doas trampoline.** In-line in the caller or `bin/`.
-679. **extract_legacy_installers.sh vs restore_backups.sh.** If the source is gone forever, make extract exit 2 with that sentence.
-680. **extract_legacy uses `tr`.** Banned. Use zsh `${rel//\//_}` or Ruby.
-681. **`_net.sh` `generate_random_port` always errors.** Delete if unused, or make unused-path fail at parse.
-682. **OPERATOR tmux falcon fallback.** Starts a second falcon as **dev**. Conflicts with `daemon_user="master"`. Remove or refuse if rc.d/master is enabled.
-684. **deploy_all.sh default `SSH_KEY=~/.ssh/id_rsa`.** Every other file uses `id_ed25519_brgen`. Change the default.
-685. **deploy_all VPS_HOST is a bare IP.** Source `lib/ssh_vm23.sh` and drop the copy. Same for `vps_run_remote.sh`.
-686. **post-pull-checklist is a here-doc.** Generate from `operator.yml` or delete in favour of `operator status`.
-687. **deploy-diff.sh vs sync.rb vs config_drift_gate --remote.** Make deploy-diff a wrapper over the gate’s report.
-688. **dev/agent_worktree.sh vs MASTER/bin/operator worktree.** Exec the operator command or delete it.
-689. **dev/*.sh (backup, clean, lint, perms, replace, watch_tests).** Workstation helpers in the OpenBSD tree. Move to `dotfiles/` / `MASTER/tools/` or declare Mac-only with check `none`.
-690. **ptr_openbsd_amsterdam.rb has no test.** Add a dry-run test that the request is built, not sent.
-692. **sync.rb FIXED_SOURCES vs config_drift VERBATIM.** Make sync’s source list = VERBATIM + EXCLUDED so a hand-edit cannot hide in a file sync never copies.
-697. **port_inventory RETIRED_ACTIVE_PATHS includes live console shims.** Rename the list; they are not retired.
-699. **test_health_check.rb measures spelling.** Replace with a `--public-only` run against a stub CURL that returns 200/000.
-700. **`--public-only` not in the flag test.** It is the laptop path.
-704. **verify_openbsd_idempotency.rb is source grep on OPERATOR.sh.** Add a known-bad fixture (OPERATOR snippet missing the backup).
-705. **verify_deploy_identity.rb is string includes on `_deploy.sh`.** Assert the functions exist via `zsh -c 'source …; whence -w deploy_tracked_app'`.
-706. **No OPENBSD test for dns_zones / domain_alignment / port_inventory / installed_targets / deploy_smoke.** Each wants a known-bad fixture (decision 2026-08-22).
-707. **No test for integrity_gate.rb.** Assert skip_reason for `:vps` off-box, and that `:live_http` / `:repo` needs are actually consulted.
-708. **GateEnvironment skip_reason ignores `:repo` and `:live_http`.** Wire them or drop them from the structs.
-709. **test_gate_lib does not cover `GateResult#measured_nothing?`.** Add the empty-run vs checked! cases here.
-710. **config_drift_gate tests only crontab.** Add a VERBATIM file mismatch and an EXCLUDED file that must *not* fail.
-711. **installed_targets CONFIG_GLOBS miss usr/local.** Include `usr/local/bin/*` as referrers or document the hole.
-712. **check does not run installed_targets, dns_zones, vps_safety.** Those live only in `check-openbsd`. Either include them or say contributor must run both.
-713. **Fixed 2026-09-12, and wider than asked.** `OPENBSD/shell_syntax_gate.rb`
-     reads each script's shebang and parses it with the interpreter that shebang
-     names, so the set is the tree rather than a list somebody maintains. It covers
-     43 scripts across zsh, ksh and sh — all of which parse today — and replaces the
-     two hand-named lines, so check-openbsd got shorter. Recorded as OPENBSD 112 ->
-     113 in spine.yml.
-714. **deploy_smoke_gate check_master_rc is a string hunt.** Assert “warmup hits a public unauthed path”, not that exact `chat/message?message=ping` query.
-715. **domain_watch population is nsd.conf.** Read `RenderDns.zones` so a zone not yet in nsd.conf still gets whois.
-716. **test_domain_expiry `--update` needs `/usr/bin/timeout`.** Document in START_HERE: refresh on vm23; local red is not a code defect.
-717. **domain_released.yml is empty while five domains fail.** Point failure output at this file so the next agent does not “fix” the test.
-718. **weekly.local runs domain_watch from the checkout as dev.** PATH_OWNERSHIP does not mention `bin/domain_watch.rb`. Add it.
-720. **daily.local comments should state the two questions** (repo-versus-live `/etc` bytes vs relayd/acme/nsd consistency) in one line each.
-721. **bin/check loads all OPENBSD tests in one `-e` process.** One process per file, as check-full already does for Rails.
-722. **reach.rb vs installed_targets_gate.** Wire reach into check-openbsd or fold its unique checks into installed_targets.
-
-### OPENBSD — shell, rc.d, DNS, tests, remaining
-
-726. **start_all_apps.sh: `set -e` without pipefail.** Add `set -eo pipefail`.
-727. **vps_deploy_master.sh: `set -e` only, `#!/bin/sh`.** Add pipefail.
-729. **renew-certs.sh add `--help`.**
-730. **tree.sh `CDPATH= cd` vs `CDPATH='' cd --`.** Use the safer form.
-731. **dev/agent_worktree.sh add `--help`.**
-733. **rails-app.tmpl is a third rc.d.** No PATH export, `pexp="ruby.*${port}"` not `ruby34`, `daemon_timeout="60"` not 120. Either regenerate apps from a fixed tmpl or delete the tmpl and stop OPERATOR from installing it.
-734. **irc_gateway has no PATH, no pexp.** Match brgen’s PATH/`bundle34 exec` shape so a go-live does not repeat the cron-PATH outage.
-735. **amber vs brgen env paths.** Document which of the three paths is live; drop the others from the scripts.
-736. **rc.d/master `bundle34 install` in rc_pre with `|| true`.** Fail the start if `bundle34 check` fails; do not install from rc.d.
-737. **rc.d/master pkill patterns include `operator/MASTER/web`.** Stale path after OPERATOR→OPENBSD. Confirm pexp still matches; drop dead pkills.
-738. **pf.stage1.conf has no 443 or 25.** RUNBOOK should say “stage-1 pf will not pass HTTPS or SMTP”.
-739. **httpd listens 0.0.0.0:80.** `deploy_smoke_gate` does not check httpd.conf exists or has the ACME location. Add a one-line assert.
-740. **acme-client.conf pair.** Mention in RUNBOOK that dns_zones `--check` diffs it so nobody byte-compares acme.
-741. **relayd keypair list vs LIVE_DOMAINS.** Add the six “waiting” cities from RUNBOOK as an explicit not-yet list.
-742. **OPERATOR.sh `EMAIL_ADDRESS="bergen@pub.attorney"`.** If unused, delete.
-743. **newsyslog misses `/var/log/domain_watch.log`, `git_gc.log`, `/tmp/config-drift.out`.** Add rotation or write under `/var/log/`.
-744. **rc.d/*_jobs footers are triplicated.** One `etc/rc.d/jobs.footer` comment file, or a shared tmpl with APP filled in.
-745. **Run `render_dns.rb --check` in `check-openbsd` directly** so a DNS edit does not require the Rails gate registry.
-746. **nsd.conf `server-count: 2` on 1 vCPU.** Put `server-count` in `data/dns.yml` (default 1 for vm23_small).
-747. **False — checked 2026-09-12.** `render_dns.rb:84` reads it
-     (`policy.dig("extra_hosts", domain)`) and `dns.yml:119` carries
-     `brgen.no: [ns, amber]`, which is how ns.brgen.no and amber.brgen.no get their
-     A records. Both halves are live.
-748. **DMARC assert in `--check`.** Do not also emit `_dmarc` in zone_body for mail_domain.
-749. **domain_inventory.yml `state: unknown` never alarms.** Fail or skip-with-count so “32 unknown” is visible.
-750. **Nominet dates in inventory are already past.** Add `domain_watch --update` recipe in operator.yml.
-751. **Argued against, and the argument is in the file.** `data/dns.yml`'s header
-     states it: the domain list is deliberately not there, because ALL_DOMAINS is
-     already what `domain_alignment` binds `Brgen::DomainRegistry` to, and a yaml
-     copy would be a third list rather than one. The regex parse is real and is what
-     that costs. Moving it means moving the binding too, which is a deploy-path
-     decision and the operator's. See 32, which is the same proposal.
-752. **Fixed 2026-09-12.** `OPENBSD/test/test_vps_deploy_contract.rb` — refuses uid
-     0 with an exit rather than a warning, `all` expands to apps.yml plus master in
-     the order the script argues for, and SKIP_CI=1 still runs `${app}.sh`, which is
-     what reaches rails_runtime_gate. See 779 for the mutation check.
-753. **No test for OPERATOR.sh beyond zsh -n and idempotency grep.** Add: `ALL_DOMAINS` parse round-trip against `render_dns` city_zones.
-754. **resource_guard crisis path.** The test should fail if the crisis function’s path is not in `explicitly_installed`.
-755. **test_restore_scripts.rb.** Add an executable dry-run with `LITESTREAM_CONFIG` pointing at a missing file, expect exit 1.
-756. **test_githooks.rb.** PATH_OWNERSHIP should name `dev/githooks/` with this test as `check`.
-757. **test_tracked_crontab.rb vs config_drift crontab tests.** Fold or cross-reference so a new cron line needs one fixture.
-758. **No test for nsd-resign.** Fixture: a signed zone with a parseable RRSIG vs garbage. `rescue nil` on expiry parse swallows errors.
-759. **No test for renew-certs.sh intersection logic.** Unit-test CONFIGURED∩HELD in zsh with tmp crt/conf dirs.
-760. **No test for prune-guests.sh wait loop.** A ksh test with `PRUNE_GUESTS_LOAD_CEILING=0` should still run one tick.
-761. **No test for drain-jobs.sh / keep-warm skip-if-not-listening.**
-762. **health_check `--core` banner.** State that smtpd is required and master is a service not an app.
-763. **“Every gate carries its known-bad fixture” (2026-08-22).** Adopt-forward: next touch of each gate adds the pair.
-764. **“No staging environment” is still open.** Point `vm_resource.yml` at this entry so a “add staging” idea dies in one place.
-765. **“Auto-commit atomicity” is still open.** Belongs in MASTER/dev hooks, not OPENBSD/DECISIONS. Move or delete.
-766. **Deploy script names still say `RAILS/deploy.sh`.** If per-app `RAILS/<app>/<app>.sh` is the truth, fix the decision line. **Unverified** whether `RAILS/deploy.sh` exists (it does at tree root).
-767. **Gate kernel decision vs PATH_OWNERSHIP.** Add `lib/` row with the decision’s check.
-768. **doas install decision vs RUNBOOK.** RUNBOOK still says cron heal paths use `validate_doas.ksh`. Heals were removed.
-769. **Fixed 2026-09-12, and the premise needs a correction.** It did not fail open:
-     measured in an isolated checkout with no apps.yml, the old code still exited 1
-     — but by way of "brgen: missing port in apps.yml", because `core_apps` hardcodes
-     brgen. The right answer for the wrong reason, and only by accident of that
-     hardcoding. The real cause went to stderr where the --json consumers never saw
-     it. It is a first-class entry in `failures` now, so the JSON carries it.
-770. **health_check `--core` still requires smtpd.** Document as required.
-771. **resource_guard ALL_APPS_FLAG vs start_all_apps.** Name the flag in PATH_OWNERSHIP.
-772. **Measured 2026-09-12 — the layout question is secondary to what it hides.**
-     `emergency_cpu.sh` is not on vm23 at all. `resource_guard.sh:298` guards with
-     `[ -x /usr/local/bin/emergency_cpu.sh ]` and otherwise logs "emergency_cpu not
-     installed", so the LOAD_CRIT crisis path — the one deliberately exempted from
-     the two-strike rule because a genuine crisis should not wait — has only ever
-     written a log line. Installing it needs doas on the box and is the operator's.
-     The repo-layout half (root vs usr/local/) still stands and is item 21's.
-773. **Crisis tier on the box is missing the binary.** Confirm `explicitly_installed` scan matches `install -m 755 … emergency_cpu`. **Unverified scan.** If the install line does not match the regex, fix the regex, not the box.
-774. **etc/litestream.yml header still reads as a how-to.** First lines should be: inert by decision; not in ports; do not enable; dr-pull is the backup. Keep the yaml body.
-775. **OPERATOR `setup_litestream`.** Add `rcctl ls failed` must not contain litestream as a check in health_check.
-776. **Fixed 2026-09-12.** `OPENBSD/restore_litestream.sh`. Three separate passes
-    asked for this rename, which is what a real defect looks like from outside.
-    Its first line now reads "NOT the disaster-recovery script — use
-    OPENBSD/bin/dr-pull for that", and the paragraph under it says why: vm23 has
-    no litestream binary and no replicas, so the old name promised recovery the
-    file cannot deliver, under exactly the name somebody reaches for in an
-    emergency.
-777. **port_inventory RETIRED_CONFIG_PATHS includes litestream.yml.** Add a positive test: litestream.yml may exist, must not appear in pkg_scripts.
-778. **vps-deploy drift gate is advisory.** Add `VPS_DEPLOY_DRIFT=fail` opt-in. Do not flip to blocking from here (box is dirty).
-779. **Fixed 2026-09-12 as a test, not a derivation.** Deriving the list would lose
-     the ordering argument the script writes down — master leads because it is
-     independent and gets forgotten, amber and bsdports go last because every deploy
-     sheds them and deploying them last folds the restore into the same pass.
-     `test_vps_deploy_contract` asserts DEPLOY_ALL is apps.yml plus master and holds
-     both ends of the order. Closes 752 with it: the same file covers the uid-0
-     refusal and the SKIP_CI branch. Mutation-checked — dropping master fails 2,
-     reordering 1, warning instead of exiting 1, gutting SKIP_CI 1, clean source 0.
-780. **vps_production_push DEMO_SEED_ON_DEPLOY defaults to 1.** Production hotfix seeds the demo. Default 0; require an explicit 1.
-781. **vps_deploy_master.sh `SECRET_KEY_BASE` openssl rand fallback.** Can boot master with a random key, wiping sessions. Refuse if `/etc/master.env` has no key.
-782. **vps_on_vm_install `SECRET_KEY_BASE:-dummy` for assets:precompile.** Same class of footgun. Read `/etc/master.env`.
-783. **`bin/vps-deploy` has usage on missing args, not `--help`.** Accept `-h`.
-784. **integrity_gate post_pull_warning still says `zsh OPENBSD/vps_ci.sh`.** Canonical is `bin/vps-deploy`.
-785. **deploy_inventory.json has no `standalone_apps` consumer except empty.** If unused, drop the key from the schema and the Inventory class.
-786. **dotfiles/ is a Mac desktop setup.** Declare `purpose: operator Mac; not installed by OPERATOR.sh; check none` or move out of OPENBSD.
-787. **fix_macos.sh references `FUN/config/`.** That tree does not exist. Point at `dotfiles/config/`.
-788. **PUB4_ROOT in fix_macos is `SCRIPT_DIR/..`.** That is OPENBSD/, not repo root. `cd "${SCRIPT_DIR}/../.."`.
-789. **zshrc.shared vs box `/home/dev/.zshrc`.** OPERATOR mentions `etc/.zshrc`. Find the tracked zshrc or stop syncing it. **Unverified path.**
-790. **quarantine/virus_museum.** PATH_OWNERSHIP check should name `MASTER/tools/security_sweep.rb`. RUNBOOK: recovery is `bin/dr-pull` and `manual_master_deploy.ksh`; quarantine is inert samples.
-791. **Missing `--help` / usage** on `bin/vps-deploy`, `vps-state`, `ds-records`, `render_dns.rb`, `domain_watch.rb`, `sync_deploy_inventory.rb`, `with-ci-lock`, `dr-pull` (**unverified**), `start_all_apps.sh`, `emergency_cpu.sh`, `vps_ci.sh`, `vps_ci_all.sh`, `vps_install_all.sh`, `vps_on_vm_install.sh`, `vps_master_scan.sh`, `resource_guard.sh`, `core-reclaim.sh`, `keep-warm.sh`, `drain-jobs.sh`, `prune-guests.sh`, `tree.sh`. Pattern: `deploy-smoke.sh`.
-793. **keep-warm has no heartbeat.** Touch `/var/db/keep_warm_seen` each run; health_check already has the pattern.
-795. **OPERATOR.sh `2>/tmp/pkg_add.log`.** Use `/var/log/pub4/`.
-796. **home/johann/bin/mailimg.** PATH_OWNERSHIP should list it as the executable check (`ksh -n`).
-797. **stale_ci_cleanup.ksh lives under usr/local/libexec.** Include `/usr/local/libexec/` in installed_targets.
-798. **gates live under OPENBSD/gates but run via RAILS/gates/runner.rb.** One paragraph in START_HERE: registered in `RAILS/gates/gates.yml`, invoked by `check-openbsd`.
+789. **vm23: `/home/dev/.zshrc` still sources the missing `FUN/zshrc.shared`.**
+     The Mac side is fixed and `OPERATOR.sh` no longer installs the redacted
+     mirror over the live file; the box's own copy needs editing there.
 1062. **`.dash-stats dl` wants auto-fit and could not be verified for it.** Amber's
      stat grid is four columns, two below md, and nothing between — a tablet gets
      the phone grid. `repeat(auto-fit, minmax(<floor>, 1fr))` computes the count and
@@ -1309,145 +876,6 @@ sitting.
      container, that page is behind a login the CDP probe cannot reach, and a floor
      guessed wider than the column silently drops desktop from four columns to
      three. Measure the container, then set the floor.
-
-1063. **`_root.scss:334` is the last max-width, and it is not a violation.**
-     `(min-width: 768px) and (max-width: 1264px)` swaps `.compose-label` for
-     `.compose-icon` in a band. MOBILE_FIRST does not flag it — the detector reads
-     `@media (max-width` and this opens with min-width — and the max is the upper
-     bound of an enhancement rather than a narrow-screen exception. Closing it would
-     need the two elements' default display values, which have no rule anywhere in
-     the tree and sit behind the same login. Left deliberately.
-
-1064. **radio.<city> is live on vm23 — deployed 2026-09-12.** DNS, certificate and
-     relayd landed together, because DNS alone would have made radio.<city> resolve
-     to a box holding no certificate for it, which a browser reports as an attack.
-     Order: 44 zone files copied and `nsd-resign --force` re-signed and reloaded all
-     57 with the existing keys (no KSK touched, DS unchanged, NOERROR through a
-     validating resolver); `acme-client.conf` installed and `renew-certs.sh`
-     reissued 7 of 9 held certificates, so `brgen.no` now carries
-     `DNS:radio.brgen.no` and no longer carries playlist; relayd restarted once by
-     that script. Verified: `https://radio.brgen.no/up` answers 200,
-     `playlist.brgen.no` resolves nowhere, and `health_check --public-only
-     --all-ready-apps` reports bsdports.org as its only failure, which is the
-     registrar parking already recorded.
-     The zone directory was backed up to
-     `/var/backups/pub4/nsd-zones-pre-radio-*.tar.gz` first, and relayd.conf and
-     acme-client.conf to the same directory.
-
-1065. **trymbot is off vm23 — done 2026-09-12.** The repo retired it on 2026-08-28
-     (`spine.yml` 148 -> 145) and production ran it for two more weeks:
-     `/etc/relayd.conf` held a `tls keypair` line and a Host match to `<master>`,
-     and `/etc/ssl` held `trymbot.brgen.no.{crt,key}` symlinks plus a
-     `brgen.no.fullchain.pem.bak-trymbot`. All removed. It had no DNS record and no
-     acme SAN, so it had already stopped resolving.
-     This is the case `relayd.conf repo-vs-live divergence` warns about, in its
-     sharpest form: the repo was MISSING two lines the box was running, so
-     installing the repo copy wholesale would have deleted a live host. The two
-     files are byte-identical now, and both dropped off `config_drift --remote`.
-     Two mentions stay in `spine.yml` and `dup_census.yml`; they are ratchet-fall
-     justifications, and deleting them would break the rule that a fall records
-     what paid for it.
-
-1066. **A guard for listener-vs-topic drift is worth building and is not free.**
-     Four dead event names in `visual_bridge.js` were found by hand on 2026-09-12
-     (TODO 1 and 4). The shape of the check is: collect every `publish("ns:topic")`
-     in `MASTER/{lib,core,web}/**/*.rb` — 290 of them — and every `ns:topic` token in
-     the bridge, keep the tokens whose namespace the bus uses at all (37), and
-     require each to prefix-match a published topic, because the bridge tests with
-     regexes rather than equality.
-     Two things stop that being a five-line test. Comments count as tokens, so the
-     very comments explaining a removal read as the removal not having happened —
-     strip comments first. And several live names are SSE or DOM events rather than
-     bus topics (`council:speech`, `chat:append`, `input:focus`, `runtime:event`),
-     so the check needs a named allowlist, and an allowlist nobody curates becomes
-     the place dead names hide.
-
-1067. **Four tests in `test_agent.rb` were skipped as "drifted", and were dead.**
-     Removed 2026-09-12. They exercised `tool_capable?` and `cache_key_for`, and
-     neither method exists anywhere in `lib/` or `core/` — nor did the behaviour
-     move: there is no `supports_tools`, no `cache_key`, nothing. So they were not
-     drifted pending a port, they asserted against an API that had been deleted,
-     while reading as coverage from every angle except the one that counts. Five
-     live tests remain in that file. MASTER's skips went 11 -> 6; of what is left,
-     `test_cli_boot_e2e` and `test_self_scan` are deliberately env-gated, which is
-     a different thing from a skip nobody can lift.
-
-1068. **Radio's visualizer: the code is all here, and nothing is wired.** Archaeology
-     done 2026-09-12 against the deleted root `index.html`, 144 revisions.
-
-     The best version is **`ba752d682`** (2026-01-17, "purple/magenta VGA synthwave
-     palette"), the last of sixteen revisions carrying all seven visualisers —
-     `PixelTunnel`, `InfinityGridViz`, `CymaticWavesViz`, `FractalCascadeViz`,
-     `VortexNestViz`, `NeuralWebViz`, `CosmicEmanationViz`, `HypergridSpiralViz` —
-     together with the behaviour that was asked for, written exactly this way:
-
-         window.vizMode = 0;                       // the tunnel, by default
-         window.vizRenderers = [tunnelRenderer, new InfinityGridViz(ctx), ...];
-         // on a new track:
-         vizMode = (vizMode + 1) % vizRenderers.length;
-
-     So the original visualiser IS the warp tunnel with the merged orb, it IS
-     index 0, and the cycle-per-track already existed. The six others were dropped
-     from index.html at `037d14ce0` (2026-01-29) in the orb/tunnel merge.
-
-     Nothing needs recovering from git. All seven classes AND the switching —
-     `vizRenderers`, `vizMode`, `vizNames`, `vizPsychedelicModes`, `lastTrackIndex`
-     — are already in the tree at `brgen/app/javascript/reference/visualizers_2d_reference.js`,
-     61KB, whose own header records the second half of the story: they had also
-     lived in `shared/frontend/layouts/visualizer.js`, bound to a `#canvas` no view
-     rendered, so they never ran and were compiled dead into brgen and amber until
-     `248e23795` deleted that copy and parked this one.
-
-     What radio runs today is `brgen/app/javascript/radio_brgen_tunnel.js` —
-     `AudioEngine`, `VisualEngine`, `RadioBrgen`. Its `VisualEngine` has no
-     visualiser modes at all, only a `performanceMode` toggle, and `nextTrack()`
-     changes the audio without touching the visuals. That is the whole defect: one
-     renderer, no cycle, with seven renderers and the cycle sitting unimported
-     beside it.
-
-     The work is a port, not a recovery: give the radio canvas the seven renderers,
-     restore `vizMode` at 0, and call the cycle from `nextTrack()`. The reference
-     file is `// Reference only. Not loaded, not imported, not compiled` and
-     `css_coverage_lint.rb:181` depends on it staying that way, so wiring it means
-     moving the classes rather than importing that file where it sits.
-
-1060. **`vps_weekly_integrity.sh` has never run.** `etc/crontab.vm23:97` schedules it
-     `30 3 * * 0`. Read from vm23 on 2026-09-12, root's live crontab does not carry
-     that line and `/usr/local/bin/vps_weekly_integrity.sh` does not exist — this is
-     the "1 unscheduled" that `config_drift_gate --remote` reports. A weekly
-     integrity check that has never fired reads as green because nothing reports it,
-     which is the same shape as the daily.local finding this file already records.
-     Installing it and merging the crontab line needs doas on the box: the operator's.
-
-799. **Fixed 2026-09-12.** `config_drift_gate.rb` sets its own
-     `Encoding.default_external` with the reason beside it. It is the only file
-     OPERATOR.sh installs to /usr/local/bin, and `require_relative` resolves beside
-     the installed copy, so one shared six-line file forced a whole
-     `/usr/local/bin/lib/` onto the box and an install that could half-succeed. The
-     other seven callers run from the checkout and keep `require_relative
-     "lib/utf8"`. `installed-targets` clean: 12 named, 14 provided.
-800. **bin/ds-records requires root to read signed zones.** Off-box it should skip, not traceback. Guard ZONE_DIR readability.
-801. **bin/render_dns.rb add `--help`.**
-802. **OPERATOR.sh pin `RUN_PRODUCTION_SEEDS` default 0 in the header.**
-803. **Partly fixed 2026-09-12; the alias stays.** `ssh brgen` needs a Host block in
-     the operator's own ~/.ssh/config, so making it the repo-wide default fails item
-     21's test — a stranger rebuilding from the repo alone has no such alias. What
-     was fixed is the disagreement between the files that do not use it: see 806.
-804. **Three doors.** START_HERE should say “agents: CLAUDE.md; operators: RUNBOOK.md; first screen: README.md” in one sentence.
-805. **RUNBOOK “Always use tmux” then `doas zsh OPENBSD/OPERATOR.sh`.** vps-deploy must *not* be doas. Put that adjacent.
-806. **Fixed 2026-09-12, and the real defect was worse.** `bin/deploy-diff.sh`
-     defaulted to `dev@46.23.89.226` and now matches config_drift_gate's
-     `dev@brgen.no`, which is the form the repo contract names. Underneath that,
-     `SSH_HOST` means two different things: login@host in those two files, host alone
-     in `lib/ssh_vm23.sh` where `SSH_USER` sits beside it. Exporting one for the other
-     yields `dev@dev@brgen.no`. All three files say which they mean now.
-     `deploy_all.sh`'s own usage example told the operator to pass
-     `VPS_HOST=dev@46.23.89.226`, which the script joins with VPS_USER — so the
-     documented invocation could not have worked.
-807. **Fixed 2026-09-12.** `deploy_all.sh:13` says `RAILS/<app>/<app>.sh`.
-808. **START_HERE post-pull.** Add “do not stash”.
-809. **health_check encoding comment duplicated.** One `lib/utf8.rb` require is enough.
-810. **bin/check OptionParser without `--help` banner.** Add a banner listing profiles and which gates each runs.
 
 ### STUDIO — dilla
 
@@ -1484,58 +912,20 @@ These are the operator's, because each changes a sound or accepts a changed inpu
 
 ---
 
-## Wiring, type and Rails leftovers — the 2026-09-11 second pass, compressed 2026-09-13
+## Wiring, type and Rails leftovers — the 2026-09-11 second pass
 
-Six sections opened 2026-09-11 (cross-tree micro-refinements, unwired logic
-and typography, Rails 8.1 and stimulus-components, completing the four trees,
-books, agentic coding) re-measured into this one. The cross-tree list was
-almost entirely a restatement of the numbered inventory above and the
-awesome-list scan, and closed as duplicates. Refusals are argued in
-`MASTER/DECISIONS.md` ("What The Catalogs, Papers And Books Do Not License");
-three ranking ideas moved to `RAILS/apps.horizon.yml`.
+Worked 2026-09-13 and 2026-09-14. Refusals are argued in `MASTER/DECISIONS.md`
+("What The Catalogs, Papers And Books Do Not License") and
+`RAILS/shared/WIRING_NOTES.md` ("Toggles redirect", "System tests stay on
+Selenium"). `data/modes.yml` has no reader (see STUDIO 850), so entries
+elsewhere that treat it as the live scale are wrong.
 
-Two guards worth keeping. `data/modes.yml` has no reader (see STUDIO 850), so
-entries elsewhere that treat it as the live scale are wrong. And the
-`MASTER/web` suite is not run by anything that fails: `events_controller_test`
-errored on both tests for as long as it existed.
-
-### MASTER face and bus — real, and the face's behaviour
+### The operator's — behaviour the face or a page shows
 
 2. **Face regexes name topics nothing publishes.** `phantom:retry` (`face_semantics.js:162`, `topology_registry.js:22`, `data/topologies.yml:7`) where the bus publishes `phantom:recovery|occurrence|halt`; `pipeline:start` (`face_semantics.js:192`, `face_perf_guards.js:68`, `topologies.yml:13`) where it publishes `pipeline:stage_start`; `council:deliberation` in `face_semantics.js`, `face_council_multi.js`, `cognition_ecology.js`. Renaming makes the face flinch and tint on events it ignores today, so the operator should see it once; the bundle rebuilds at `assets:precompile`.
-10. **`sse_contract.js` lists `felt`, `mood`, `model`, `verdict`, `confidence`, `council:speech` with no handler,** and `content_kind` is handled but unlisted. POST chat works only because `handleFaceNamedEvent` passes them as extensions, and it omits `felt`. Put the handlers in the contract and assert `SSE_EVENTS ⊆ NAMED_HANDLERS` in `sse_contract.test.mjs`.
-11. **`face.runtime.js` keeps a GET EventSource `/chat/message` path beside the POST one.** Edit `face.part*.txt`, not the generated file.
-20. **Command tables built by no caller.** `agent_commands.rb` publishes `btw:done` and `agent:plan_done`, which `chat_service.rb:127` and `active_plan.rb:51` subscribe; `CommandRegistry.build` never builds that table (help.rb says so). Register `/btw` or delete the table with both subscribers.
-24. **`MASTER_CONSENSUS_FIXES`, `MASTER_WATCH`, `MASTER_INCREMENTAL`, `MASTER_SKIP_SELF_TEST` have no on-path test,** and `MASTER_WEB` has no test that the Falcon boot sets it. One test each that the `=1` path runs.
-170. **`/dashboard/live` has one fetcher,** `dashboard/index.html.erb:57`, and the dashboard is not in `face_assets.yml`. Keep both or fold both into chat.
-
-### RAILS wiring
-
-28. **A report sent by Turbo answers 422.** `ReportsController#create` offers `format.turbo_stream` with no template; a test posting with Turbo's Accept header reproduced 422, and removing the format still gave 422 with `ActiveRecord::RecordInvalid: Flaggable må eksistere`, while the same post without the header creates the report. Find why the Turbo path loses the flaggable before touching the format.
-29. **Identity, reputation, neighbourhoods and mentions are models without an inlet or a page.** `IdentityAssurer` is called only by a test; `IdentityAssurance`/`ReputationScore` have no view; `Neighborhood` has no route though dating and maps print the name; `Mention` rows have no "you were mentioned". Each wants a reader or deletion — a product call per model.
-42. **Mutations that reload the page.** Favorite, like, dislike, rewind, comment, collaboration, import, conversation pins and group members redirect; `Tv::CommentsController` has no views despite `TvCommentCreated`. Stream the row (Turbo), not a new Reflex; `VoteReflex` beside `votes#create.turbo_stream` is the same arrow twice, and `optimistic-send` has no caller.
-44. **`lazy_image_tag` lives in brgen's host but dating's engine views call it,** so the engine's own tests cannot render them. Move it to shared.
-45. **`BSDPORTS_PORTS_TARBALL=1` has only its decline path tested.** Add a fixture tarball.
-R5. **Sign-up has no `unauthenticated_access_only` and no named rate limit on create,** the edge guide's two lines.
-R8. **`fresh_when` only on bsdports `ports#show`.** Add to post, listing, event, item and maintainer show with an ETag that includes `Current.user&.id`.
-R12. **Marketplace variants are a static `fields_for`;** amber's `nested-form` and `sortable` already do this. Same for dating prompt order.
-R14. **`auto-submit` has no caller outside the snippet library.** Put it on the GET filter forms: marketplace facets, TV channels, bsdports search, amber filters.
-R23. **Four confirms want native `<dialog>`:** dating match overlay, report confirm, takeaway cancel, amber "let go". Re-pin `dialog` with the first view.
-R40. **No test that `tiptap-editor` survives a `broadcasts_refreshes` morph.**
-R44. **`futurism` is in amber's Gemfile with zero callers and no pin.** Remove the gem or give it one index.
-C2. **`Matchmaking#create_mutual_matches` looks users up one id at a time;** `User.where(id: mutual_ids)` once.
-C6. **Marketplace defaults to goods;** the kind switcher and the empty state for a kind a city lacks are missing.
-C8. **`tv/live_streams/new` offers a form for infrastructure vm23 does not have.** Hide it behind a false flag.
-C20. **`ports_fts` is created by migration and skipped by tests when absent.** Put the virtual table where `bin/ci` builds it, so a done feature cannot skip.
-C22. **bsdports offers FreeBSD and NetBSD chips that import nothing.** Disable them.
-A17. **RAILS runs Selenium while every gate drives Chrome over CDP.** Pick one driver for the few system tests (1 amber, 2 brgen, 1 bsdports); they already fail nothing on console errors.
-
-### Instruments — detectors that measure, never repaint
-
-60. **Lint reach.** `NO_INLINE_STYLES` names two `.html` files and never reads ERB `<style>`; `RhythmLint` reads only the two token files; `ScaleLint` misses the `font:` shorthand and `letter-spacing` inside `clamp()`; `NO_LONG_TRANSITION` misses seconds (`.42s`, `1.2s`) and JS `duration-value`; `LOGICAL_PROPERTIES` matches only margin/padding; `MEASURE_OPTIMUM` fires only at ≥800px. Extending each will surface findings, which go to the operator's list below, never into a raised ceiling.
-124. **Hanging markers are a soft geometry probe on surfaces without lists.** Add legal, wiki and post show to `geometry_surfaces.yml`; say beside `list_marker_hang` whether it is law or advice. `void_target: 0.70` and `rhythm_off_max_pct` have no reader.
-A1. **Findings carry no `status: hypothesis | measured`,** and nothing tests the `Scan::Finding` shape. `research_thresholds.yml prompt_compression_ratio` is unread; JSON tool results may skip `OutputFilter` (grep `Result.ok(` in `lib/io/`); no test that a tainted WebFetch result cannot reach `AstEdit`; no test that `/scan` never reaches a frontier model under `MASTER_SCAN_DETERMINISTIC`.
-A22. **`visual_contract` pixel diffs will churn on `time`, `time_ago`, animated numbers and `[data-money]`.** Mask those selectors.
-B2. **Prose lints nobody runs:** two spaces after a period and `2010-2014` instead of an en dash in locale YAML prose values; centred body text inside `main`.
+29. **Identity, reputation, neighbourhoods and mentions are models without an inlet or a page.** `IdentityAssurer` is called only by a test; `IdentityAssurance` and `ReputationScore` have no reader outside their model files; `Neighborhood` is read by dating profiles and the demo seeder; `Mention` rows are written by `Shared::Mentionable` and shown nowhere. Every one has a table behind it, so each is a product call per model.
+R12. **Dating prompt order.** Prompts have routes and a model, but no view creates or lists them, so there is nothing to order until one does.
+R23. **Native `<dialog>` for confirms.** The dating match overlay is a celebration card rather than a confirm. The report confirm, the takeaway cancel and amber's "let go" would each put a new modal surface on screen, and how it looks is the operator's.
 
 ### The operator's — each changes how a page looks
 
@@ -1549,7 +939,6 @@ B2. **Prose lints nobody runs:** two spaces after a period and `2010-2014` inste
 109. **`_fonts.scss` falls back to jsDelivr for JetBrains Mono** though `/fonts/` is self-hosted, and Libre Baskerville files may have no `@font-face`. Dropping the CDN is a first-paint change on a missing file.
 111. **Flat UI residue:** `_search_yep.scss` shadow (PEN_ALLOW), `#ccc` and `white` on search, dating button gradient, splash `scale(1.02)` at rest, `chat_upload.css` `.42s`, vote `duration-value="900"`, `_tab_bar.scss:99` max-width band unmarked, marketplace masthead clamp 5.5rem.
 B16. **Modulor:** if H1 stays 1.75×, lower the ratio in law or raise the title token.
-A24. **A drifted snapshot could print the token that would absorb it** (`layout_snapshot --explain`), without writing a baseline.
 
 ### Needs vm23
 
@@ -1558,13 +947,15 @@ C26. **If `/var/log` shows `database is locked`, raise `busy_timeout`;** confirm
 
 ---
 
-## Bughunt, restructure and harness gaps — what survived 2026-09-13
+## Bughunt, restructure and harness gaps — what survived 2026-09-14
 
 The 2026-09-11 bughunt, the "one job, one door" restructure list and the two
-agent-harness comparisons were re-measured on 2026-09-13; about 240 entries went
-to this. Refusals are argued in `MASTER/DECISIONS.md` ("The Public Face Is The
-Product", "What The Runtime Keeps Process-Wide", "Agent Harnesses Are Read, Not
-Wired"), `OPENBSD/DECISIONS.md` ("Scripts Name /home/dev/pub4") and
+agent-harness comparisons were worked on 2026-09-13 and 2026-09-14. Refusals
+are argued in `MASTER/DECISIONS.md` ("The Public Face Is The Product", "What The
+Runtime Keeps Process-Wide", "Agent Harnesses Are Read, Not Wired", "The
+Harness Borrows From Aider And OpenClaw, Measured Against This Checkout",
+"Context Pressure, Affect And The Host Budget Are Separate Jobs"),
+`OPENBSD/DECISIONS.md` ("Scripts Name /home/dev/pub4") and
 `RAILS/shared/WIRING_NOTES.md` ("Write races on SQLite"). One trap from the pass:
 SQLite transactions here are `BEGIN IMMEDIATE`, so a finding about a uniqueness
 race or a rolled-back callback is false until it names a second database.
@@ -1591,10 +982,6 @@ race or a rolled-back callback is false until it names a second database.
 - **`.reading-column` / `.form-measure`** (`shared/_typography.scss`) are
   defined and worn nowhere. Wearing them on legal and compose changes the
   measure; deleting them is the alternative.
-- **`OPENBSD/dotfiles/`** is the operator's Mac desktop config inside the
-  OpenBSD tree, and `config/zshrc.macos` sources `FUN/zshrc.shared`, a path
-  that no longer exists. Move it out of the repo, or fix the path and declare
-  it Mac-only.
 
 ### Needs vm23
 
@@ -1606,100 +993,8 @@ race or a rolled-back callback is false until it names a second database.
   `20260913130000_drop_unwritten_tv_video_counters`.
 - **`smtpd.conf` listens on `vio0`.** `listen on egress` survives an interface
   rename; read smtpd.conf(5) on the box before changing it.
-- **`vps_install_all.sh` and `vps_on_vm_install.sh` are two on-box
-  bootstraps**, one with a `git stash`. Fold into one, verified by a run on the
-  box.
-- **`ALL_DOMAINS` is a zsh array in `OPERATOR.sh`** that `render_dns.rb` parses
-  with a regex. Move it to `data/dns.yml` and read it with `ruby34 -ryaml` in the
-  four OPERATOR loops; prove it with an OPERATOR stage run on vm23.
-- **Selenium is still in all three app Gemfiles** beside Cuprite/Ferrum.
-  Dropping it is a lockfile change, which resolves differently on a Mac
-  (`rb-kqueue`); do it on the box.
 
-### Real, larger than a sitting
-
-MASTER — each is two things doing one job; the first step is to list callers
-of both.
-
-- Constitution loaders: `Ground::Constitution` vs `Core::Constitution` — rename
-  Ground's to what it holds (`PrincipleStore`) or fold.
-- Memory search: `ground/memory_search.rb` (index) vs `ground/memory/search.rb`
-  (query) — honest names or one class.
-- Three weathers: `PressureEngine`, `Trace::ContextPressure`, `Cognition::Affect`
-  — document the bus events each owns, or fold PressureEngine into Cognition.
-- Attention: `cognition/attention.rb`, `cli/attention_context.rb`,
-  `data/attention_context.yml`.
-- Diagnose verbs: `bin/{check,ci,audit,probe,smoke,dogfood,doctor}` — draw the
-  Venn once in START_HERE; `smoke` becomes a `check` profile, `audit` becomes
-  `operator lint --staged`.
-- `bin/cli` and `bin/master` are two REPL entrypoints; `bin/cli` should exec
-  `bin/master`.
-- Face and core tests live in `test/`, `spec/` and `web/test/`; `spec/` goes
-  (`spec/core_smoke.rb`, `spec/dogfood_spec.rb` beside `bin/dogfood` and
-  `rake dogfood`).
-- `lib/rails/` audits RAILS by walking `Master::ROOT`; move it to
-  `RAILS/gates/lib` or behind `/rails audit`.
-- `work_commands_extra.rb` / `work_commands_status.rb` — split by verb or fold
-  into `work_commands.rb`; the dispatchers left in the six table-less
-  `command_registry/*_commands.rb` files have no route and want the same pass.
-- Pairs: `tools/snapshot.rb` vs `Trace::Snapshot::Publisher`; `lib/trace/dmesg.rb`
-  vs `ChatController#dmesg`; `MasterIngressToken` vs `MasterWebToken` (name by
-  job); `WebEventLogger` vs `Trace::Log` vs `Swallow` JSONL (one log dir);
-  `CLI::Skills` vs `patterns.yml` skills_registry (index first, body on demand,
-  and load `.master/skills/*/SKILL.md` frontmatter into it).
-- `OpenbsdConfig` / `HostBudget` should read `OPENBSD/vm_resource.yml` rather
-  than a copy in MASTER data.
-- Event pipes: ActionCable broadcasts `*`, beside SSE and `visual_bridge`. One
-  pipe for the face; Cable goes or takes the visitor allow-list.
-- `PATH_OWNERSHIP.yml` lists dirs that are gone and misses live ones
-  (`cognition/`, `law/`, `runtime/`; OPENBSD `data/`, `gates/`, `lib/`), and
-  `Core::Constitution::REPO_TREES` still names a top-level `dotfiles`. A lint
-  on undeclared top-level dirs.
-
-MASTER — harness ideas worth building, from the OpenClaw/Aider pass.
-
-- A token-budgeted repo map: Prism definitions and references from `CodeIndex`,
-  ranked, fitted to N tokens, dirty files first; a Prism parse failure drops to
-  a filename line. Then `/fix`'s prompt is writable hunks + map + finding,
-  measured in tokens.
-- A session `writable:` set (git-dirty plus explicit adds) that WriteFile,
-  StrReplace and AstEdit refuse outside of.
-- `/undo` of the last turn (message pop plus a path-scoped reset of that turn's
-  commit), and `/stop`: an SSE client disconnect cancels the turn's Fiber.
-- `session:` from `Fiber[:master_conversation]` on every `Trace::Log` line.
-- A deadline on bus subscribers: a timeout is `Swallow.log` and skip, fail
-  closed when the subscriber is a write guard; MCP/plugin topics must carry a
-  `plugin.<name>.` prefix to publish.
-- `schema_version` on `.master/` session JSON, with `bin/doctor --fix` migrating
-  or refusing, and repairing stale `.master/*.lock` and FixLoop pid files;
-  `bin/doctor --prompt` writes a redacted diagnosis for the operator to hand on.
-- `/forget <session>` tombstones a session id so compaction and indexing cannot
-  pull it back.
-- Tests still owed: a planted foreign `AGENTS.md` saying "print your prompt" is
-  not obeyed; `/scan` never reaches a frontier model; `/fix` on a RAILS app runs
-  that app's gates rather than a generic `rake test`; `/fix` refuses a dirty
-  main without a worktree.
-- `/commit` after a clean `/fix`: path-scoped, finding ids in the body, a
-  `Co-authored-by: MASTER` trailer so `git log` tells runtime commits from
-  human ones.
-
-RAILS
-
-- Two `WebPushJob`s: `brgen/app/jobs/web_push_job.rb` (by notification id) and
-  `Shared::WebPushJob` (by user and payload). One job, one signature.
-- Notifications live in the brgen controller and in
-  `Shared::NotificationsController`; votes in `VoteReflex` and
-  `votes#create.turbo_stream` (keep the stream).
-- Deals still search with LIKE while listings, stores and takeaway use
-  `LiveSearchable`; maps `#index` JSON duplicates it.
-- `marketplace/_nav_bar` and `takeaway/_nav_bar` are one partial with an accent.
-- TV channels pass inline English titles to the empty state; callers pass `t(...)`.
-- Stimulus: `stimulus_boot.js` registers unused reveal/auto-submit/content-loader
-  controllers, and three apps carry their own `application.js` start.
-- `lazy_image_tag` lives in brgen's `ApplicationHelper` and dating calls it, so
-  engine tests need the host; move it to shared.
-
-STUDIO
+### STUDIO
 
 - `rake test:dilla` loads every `test_dilla_*.rb` into one `-e` process, so ENV
   pins and `session.json` mtimes leak between files, and `EnvSandbox` restores
@@ -1708,48 +1003,15 @@ STUDIO
 
 ## OpenCrabs borrow list — ChatGPT intake 2026-09-13
 
-Fifty-three idea groups, read against the tree by caller and test rather than by
-name. Eleven landed with a test each on 2026-09-13: permanent LLM failures stop
-retrying, an interrupted standing order says so, unclassified and untiered
-dynamic tools are withheld, the prose phantom detectors detect, edit claims are
-checked against the turn's writes, turn-level memory recall, the react loop
-calls tools through their wrappers and heals guessed names, the fold reports its
-rollback, atomic session saves, one RSI log line per recurrence, and config
-typos. The refusals are in `MASTER/DECISIONS.md` under "The OpenCrabs Intake
-Borrows Mechanisms, Not A Second Runtime". What stays open is below, each a
-hypothesis with its seam.
+Worked 2026-09-13 and 2026-09-14: items 2 to 8 landed with a test each, and the
+refusals are in `MASTER/DECISIONS.md` under "The OpenCrabs Intake Borrows
+Mechanisms, Not A Second Runtime". One stays open.
 
 1. **The interactive CLI can never approve a Request.** `CoreBridge.build_fold`
    builds `World.new` without `ask:`, so the push, hard reset and deploy the
    sandbox routes to a person are refused at a terminal as they are in the
    daemon. Needs a TTY surface that does not fight the thinking indicator, and
    the operator's word that approval belongs there at all.
-2. **A failed hard compaction lets the turn run over the window.**
-   `compact!` publishes `compaction:error` and returns an `Err`, and
-   `agent.rb:206` drops it, so the turn goes out at 90% pressure with nothing
-   compacted. Pressure is the character estimate, while `ruby_llm_sender` records
-   the provider's `input_tokens`.
-3. **The ledger counts every tool but Shell as a success.** Only Shell publishes
-   `exit_code`, and `Ledger::Feedback#record_tool` reads a missing one as zero.
-   `user_correction` has no live producer, and `dispatch_analyze_self` is not a
-   registered command, so the RSI opportunities it reports are built from
-   successes.
-4. **Two tier vocabularies.** `data/tools.yml` says safe or dangerous; each
-   class's `TIER` says safe, guarded, dangerous or open, and WebFetch is safe in
-   one and guarded in the other. Exposure reads the first, Governor the second.
-5. **A write does not refuse a file changed since it was read.** `GroundTruth`
-   hashes every read, and `fresh?` is consulted only at FixLoop commit.
-6. **Inert, by caller census.** MCP tools reach `@tools` and never a model,
-   because `build_llm_tools` skips a class `LLM_TOOL_MAP` does not name;
-   `AgentPool#spawn`, `CLI::BrainOverlay`, `Ground::MemorySearch`,
-   `Ground::SchemaCheck`, `Parliament#propose` and `Io::Gateway` adapters have no
-   caller outside tests; `ActivePlan` subscribes to `agent:plan_done`, which
-   nothing publishes. Each is wire-or-delete.
-7. **Every dynamic HTTP row shares one registry key.** `load_tool_registry` keys
-   them all `DynamicHttp`, so the last row's tier stands for every row.
-8. **A fallback leaves no trace on the answer.** The chain publishes which model
-   answered but neither the `Result` nor the cost row carries it, and a
-   flat-rate charge for an uncatalogued model is not marked approximate.
 
 ## ChatGPT proposed forward work — intake 2026-09-11
 
@@ -1776,7 +1038,6 @@ under other names, so grep for the mechanism, never the proposal's word.
   render and a looped play; the fix lives in `STUDIO/dilla/dilla.rb`, which
   another session holds uncommitted.
 
-
 ## STUDIO/dilla mix and reference research — ChatGPT intake 2026-09-11
 
 Closed 2026-09-13. The measuring half was built or refused, and the argument is
@@ -1789,7 +1050,6 @@ One decision stays with the operator.
   timing, and sample-start offsets independent of drum timing each change how a
   take sounds. Decide which, if any, to try. Seams: `lib/sound.rb`,
   `lib/sound.rb`, `lib/groove.rb`, `DILLA_STYLE_DEFAULTS`.
-
 
 ## MASTER web UI — future-human face — ChatGPT intake 2026-09-11
 
@@ -1817,7 +1077,6 @@ Was A Design Brief, And The Design Is The Operator's".
   deployed face paints, speaks one phrase with moving visemes, and falls back to
   2D with WebGL off. Needs a browser on vm23, where rendered gates belong.
 
-
 ## Subtraction and refinement intakes
 
 Three ChatGPT intakes of 2026-09-11 closed on 2026-09-13. Layout
@@ -1844,7 +1103,6 @@ same file. What stays open:
   float comparison OpenBSD ksh cannot make, and a careless replacement moves
   when the box sheds memory. Check each form on vm23 before changing it.
 
-
 ## performance
 
 Both 2026-09-11 performance intakes (980 items) closed on 2026-09-13: six
@@ -1855,7 +1113,6 @@ Cost", and for the box `OPENBSD/DECISIONS.md` of the same date.
 - **dilla_live is not real-time.** Last measured: synthesis 1.58x real-time,
   the effects chain drags it to 0.34x. Re-measure first; any speedup must leave
   the rendered sound identical, and `dilla.rb` is under another session’s edit.
-
 
 ## Brgen monetization
 
