@@ -13160,7 +13160,6 @@ def scan(groove: false)
     seconds: render_seconds,
     files: {
       ruby: File.exist?(ENGINE_FILE),
-      html: File.exist?(File.join(ROOT, "dilla.html")),
       clean_harmonic: File.exist?(SAMPLE_CLEAN),
     },
     tools: {
@@ -13177,15 +13176,6 @@ ensure
     Process.wait(groove_pid) rescue nil
   end
   FileUtils.rm_f(groove_tmp) if groove_tmp
-end
-
-def council
-  puts "MASTER council"
-  puts "preserve existing command surface"
-  puts "separate source capture, demucs, rhythm study, melody study"
-  puts "add harmony and semantic texture evidence"
-  puts "feed ears metrics into MASTER before aesthetic judgment"
-  puts "keep render, clean, stems, chords intact"
 end
 
 def source(input = nil, output = nil)
@@ -28312,289 +28302,302 @@ end
 # HELP
 # =============================================================================
 
-def help
-  puts <<~HELP
-    Dilla Lab — unified audio engine (#{ROOT})
+# The commands, grouped by what they are for, one line each. `help` is printed
+# from this and from nothing else, and test_every_command_has_one_help_line
+# fails when a DISPATCH key has no line here or a line names no command -- the
+# old hand-written wall documented 70 of 125 commands and still said a bare
+# invoke rendered loop.wav.
+#
+# Options are words, not --flags: apply_flags! reads every --flag as a render
+# knob before a command runs, so an option spelled as one never arrives.
+def command_help
+  sizes = demo_catalog_sizes
+  [
+    ["render", "RENDER -- one file from the engine", [
+      ["dilla", "[out.mp3]", "J Dilla beat, TRACK= preset (default pedal_e_descent)"],
+      ["hiphop", "[out.mp3]", "Slum Village engine (default TRACK=syncopated_slash_ninth)"],
+      ["slum", "[dir]", "Batch session_01..14 beside dilla.rb (Sonitex on)"],
+      ["industrial", "[out.mp3]", "Industrial techno (default foundry_pulse.mp3); its own renderer, outside AudioGraph"],
+      ["techno", "[out.mp3]", "Hard distorted techno (#{TECHNO_BPM} BPM); its own renderer, outside AudioGraph"],
+      ["hate", "[out.mp3]", "Long-form industrial techno, layers arriving and leaving (HATE_MIN, HATE_BPM)"],
+      ["analog", "[out.mp3]", "Full analog pad restoration; its own renderer, outside AudioGraph"],
+      ["analog_liveset", "[out] [minutes]", "Long-form analog render"],
+      ["loose_pocket", "[out.wav] | beats [dir]", "Dirty pocket drums and VLC effects; beats batches beat_01..14"],
+      ["render", "[out.mp3]", "Core pad and drum synthesis, a sketch with no master bus"],
+      ["electronium", "[out.mid]", "MIDI (--electronium-classic=1 | --electronium-render=1)"],
+      ["electronium-full", "[out.wav]", "Full engine render of electronium_loop"],
+      ["dfam", "[bars]", "The DFAM voice alone -> dfam_preview.wav"],
+      ["synth", "[patch]", "One file per built-in synth patch"],
+      ["lofi", "", "The lofi machine's state for TRACK, as JSON"],
+      ["bass", "[hz]", "A modulating bass tone, played: a speaker check"],
+    ]],
+    ["demo", "DEMO AND TAKES", [
+      ["demo-all", "[bars] [out.wav]", "#{sizes[:verified]} verified + #{sizes[:improvised]} improvised -> demo.wav + demo.mp3 (a bare invoke)"],
+      ["demo-each", "[bars]", "The same catalogue, one mp3 per track, no concat"],
+      ["demo-quick", "[bars]", "An evenly spaced sample of the catalogue, for judging a change"],
+      ["demo", "", "Every record in the demo crate against three progressions"],
+      ["showcase", "", "A few bars of each named style -> demo.wav"],
+      ["readme-loop", "", "loop.wav plus a spoken reading of MASTER's README"],
+      ["album", "[out.mp3]", "Master data/album_tracks.yml into one crossfaded record"],
+      ["setlist", "<file.json> [outdir] | save <file.json>", "Render a set of takes from its recipe, or save one"],
+      ["replay", "<file.provenance.json>", "Print the command that rebuilds a render"],
+      ["rerender", "<src|sidecar> <dest> [KEY=VAL...]", "A render's own recipe with a fresh seed"],
+      ["balance", "<#{BALANCE_VARIANTS.keys.join('|')}>", "Audition the sample-to-pad balance"],
+      ["mix", "[version]", "The Sirkel Sag x Voicemails vocal mix (default v11)"],
+      ["v7", "", "That vocal mix generation"],
+      ["v8", "", "That vocal mix generation"],
+      ["v9", "", "That vocal mix generation"],
+      ["v10", "", "That vocal mix generation"],
+      ["v11", "", "That vocal mix generation"],
+    ]],
+    ["play", "PLAYING -- speakers, not files", [
+      ["stream", "[bars]", "Non-stop rotation, rendered and played (#{STREAM_BARS_COUNT} bars default)"],
+      ["play", "[preset] [bars]", "Render one preset and play it (default dilla, 8 bars)"],
+      ["live", "[passes] [out.wav] | set|recall|broadcast|dig", "The catalogue played as generated; the livesets (live dig rips YouTube, unlicensed)"],
+      ["sines", "[args]", "The continuous stream through the engine's pads, queued and played"],
+      ["regenerate", "[bars]", "Fresh render and harmony-forward mix, looped"],
+      ["live_now", "", "Loop the cached harmony or full render, no render wait"],
+      ["harmony_now", "", "Loop the harmony-forward mix of the cached stems"],
+      ["liveset", "[set] [minutes]", "Long-form WAV from the stem rack (LIVESET_MIN=#{LIVESET_MIN})"],
+    ]],
+    ["sample", "SAMPLES AND THE CRATE", [
+      ["sample", "", "source -> demucs -> clean harmonic"],
+      ["source", "[url|path] [out]", "Capture audio with yt-dlp or ffmpeg"],
+      ["livestream", "[url] [out]", "Capture LIVE_SECONDS (600) of a live stream"],
+      ["separate", "[path]", "Demucs four stems (htdemucs_ft)"],
+      ["demux", "<url|path> [deep]", "Demucs six stems (htdemucs_6s), deep adds EQ sub-bands"],
+      ["chop", "[path] | list", "A long recording -> bar-aligned loops, drums and vocals stripped; list shows the rack"],
+      ["clean", "<in> [out]", "Denoise and loudnorm"],
+      ["prepare", "[path]", "Drum kit and ffmpeg stem rack (neosoul.mp3 default)"],
+      ["stems", "[add <name> <dir> [bpm] | scan [root] [manifest]]", "The stem rack in data/stems.json"],
+      ["kit", "", "A drum kit cut from our own recordings (KIT_LIMIT=)"],
+      ["vocal-chop", "", "Recover the voices chop separated and discarded"],
+      ["acapella", "", "Measure every separated acapella: tempo and first downbeat"],
+      ["acapella-lay", "<beat.wav> [out.wav] --bpm=N", "Lay an indexed acapella over an existing beat"],
+      ["crate", "[dir]", "Synthesise the crate's chord voices and textures"],
+      ["fetch-assets", "", "Cache CC0 drum WAVs and extra soundfonts"],
+      ["use-external-kit", "<01-hard-trap|02-bounce|03-soulful-vintage>", "Install a fetched kit into samples/drums/custom/"],
+      ["export-midi", "[dir]", "Every DRUM_PRESET as GM MIDI clips (samples/midi/)"],
+      ["import-midi", "<dir>", "MIDI drum clips -> 16-step grids"],
+      ["dig", "<seam> [n]", "Dig n public-domain sides into samples/dug/ (lib/sampling.rb, material that clears)"],
+      ["dig-seams", "", "The seams there are to dig"],
+      ["dig-cc", "<seam> [n]", "Dig CC-BY stems from ccMixter"],
+      ["dug", "", "What has been dug, and under what terms"],
+      ["credits", "", "Attribution owed for CC-BY material in the crate"],
+    ]],
+    ["learn", "LEARNING FROM RECORDS", [
+      ["learn", "<url|path> [apply] [deep]", "Download -> demucs -> harmony and rhythm analysis -> engine hints"],
+      ["learn-apply", "", "Re-apply the hints from the last learn report"],
+      ["learn-wonky", "<url|path> [track] [apply] [shallow]", "A Wonky 16-step grid -> learned_engine"],
+      ["learn-playlist", "[all] [limit N] [force] [no-deep] [no-resume] [no-promote]", "Batch radio.brgen.no -> demucs -> analysis"],
+      ["learn-playlist-agent", "[foreground]", "The batch as a resumable background agent"],
+      ["learn-promote", "", "Merge the catalogue's copyable DNA into learned_engine.json"],
+      ["learn-calibrate", "[--audio-root=PATH]", "Measured dossiers -> global BPM and swing calibration"],
+      ["learn-diff", "[--audio-root=PATH]", "Curated vs measured vs learned"],
+      ["rap-vocal", "ingest <artist> <src> | fit <slug> | list", "Isolated vocals and their phrase catalogue; fit bar-aligns one"],
+      ["study", "rhythm|melody|harmony|semantics <path>", "One of the four readings below, by name"],
+      ["radio-bergen-study", "[--audio-root=PATH] [--json]", "Refresh the learnings YAML from the radio manifest"],
+      ["radio-bergen-analyze", "[--audio-root=PATH]", "Per-track dossiers: drums, texture, harmony"],
+      ["radio-bergen-dossiers", "", "Rewrite the dossiers from what is already measured"],
+    ]],
+    ["compose", "COMPOSITION (session in #{DillaComposition::PROJECT_DIR})", [
+      ["jam", "[bars]", "Render and play with a fresh session: motifs, performers, arrangement"],
+      ["evolve", "[bars] [generations]", "Mutate motifs, performer and groove, score, keep the best"],
+      ["critique", "[path]", "Producer scores and recommendations on the last render"],
+      ["crit", "[path]", "Objective mix meters on demo.wav, for MASTER to judge"],
+      ["session", "[save|load|show|new]", "Persist, load or show composition memory"],
+      ["regenerate-stem", "bass|hats|melody [bars]", "Re-render one layer"],
+      ["listen_loop", "[bars]", "Render -> analyse LUFS and groove -> adjust the mix (LISTEN_PASSES=3)"],
+    ]],
+    ["devices", "DEVICES (options are words: key=value)", [
+      ["macro", "[dust=0.7 weight=0.6 ...] [apply]", "The eight macro words and the knobs each moves"],
+      ["copy-machine", "in out copies=8", "N copies of one sound at once, some reversed"],
+      ["hocket", "voices=4 mode=pendulum", "One line split across voices"],
+      ["midi-bag", "order=cycle", "A melody's pitches on the kit's rhythm"],
+      ["wav-map", "image.png out.wav", "A picture read as a waveform"],
+      ["arrangement", "out.mp3 ref.wav", "Does it have sections? Spectral novelty and loudness spread"],
+      ["ab", "KNOB=value [bars=16]", "Two renders differing in those knobs, with a control arm"],
+      ["modulate", "in out lfo=0.5", "A parameter moved over time via asendcmd"],
+    ]],
+    ["measure", "MEASURING A RENDER", [
+      ["scan", "", "The render settings and files, as JSON"],
+      ["sweep", "", "An 8-bar render, then verify and ears on it"],
+      ["verify", "[path]", "Duration, bitrate and volume"],
+      ["quality", "[path] [baseline]", "Loudness, spectrum and band levels, against a baseline"],
+      ["ears", "[path]", "Metadata and a volume verdict, as JSON"],
+      ["timing", "[file] [bpm]", "Where the drums land per voice against the sixteenth grid"],
+      ["rhythm", "[path]", "Onset peaks, as JSON"],
+      ["melody", "[path]", "Spectral windows, as JSON"],
+      ["harmony", "[path]", "Pitch classes and chord candidates, as JSON"],
+      ["semantics", "[path]", "Loudness, brightness and density tags, as JSON"],
+      ["beauty", "[path]", "The harmony beauty report for a render's progression"],
+      ["mix-score", "<a> [b]", "Score one mix, or compare two"],
+      ["verify-fx", "", "Check every effect does what it claims"],
+      ["phone-preview", "[path]", "The laptop-speaker check, applied to a file"],
+      ["grade", "<in> [out] [preset]", "A file through one of the grade presets"],
+      ["grade_list", "", "The grade presets and their chains"],
+      ["sonitex_list", "", "The STX-1260 subset presets"],
+      ["analog_list", "", "The analog chain variants"],
+    ]],
+    ["read", "READING THE ENGINE (no audio, no render)", [
+      ["help", "[#{%w[render demo play sample learn compose devices measure read knobs all].join('|')}]", "This; a topic prints one section"],
+      ["parts", "[needle]", "Every engine part marker, with its line and size"],
+      ["where", "<name>", "Which file owns a method, a constant or a knob"],
+      ["knobs", "[NAME|conflicts|check]", "Every knob the engine reads, one of them, the ones with two defaults, or what is wrong now"],
+      ["assets", "[record]", "Is the crate the recipes name still here and still itself"],
+      ["tracklist", "[path]", "What a render was actually made of"],
+      ["taste", "", "What the engine has been asked to prefer"],
+      ["config-provenance", "", "Which values the caller pinned and which a style chose"],
+      ["capabilities", "", "The analog capability report"],
+      ["vocab-check", "", "Chord symbols, arp figures and drum grids all resolve, in about a second"],
+      ["chords", "", "The pad chord table with its frequencies"],
+      ["audit", "", "What has been built that nothing can select"],
+      ["debug", "", "scan, the music gems, and a syntax check of every engine source"],
+    ]],
+  ]
+end
 
-    DEFAULT (no command — loop.wav + tts.wav of MASTER/README.md)
-      ruby dilla.rb                    Bare invoke: readme_loop! (stems, speech, quality gate)
-      ruby dilla.rb stream [bars]      Continuous stream (speakers via afplay/ffplay)
-      ruby dilla.rb out.wav [bars]     One-shot render to path (not stream)
-      ruby dilla.rb dilla [out] [bars] One-shot kit-forward render
-      DILLA_DEEP=0                     One-shot: standard render (no quality gate / refine)
-      DILLA_RAW=1                      Skip all best-default ENV
-      PHONE_PREVIEW_GATE=1             Laptop-speaker check in quality gate (opt-in)
+def help(topic = nil)
+  sections = command_help
+  keys = sections.map(&:first) + %w[knobs all]
+  abort "help: no topic #{topic} -- have #{keys.join(', ')}" if topic && !keys.include?(topic)
 
-    STREAM (non-stop rotation — speakers via afplay/ffplay)
-      stream [bars]                    Fast render+play (#{STREAM_BARS_COUNT} bars default)
-      demo-all [bars] [out.wav]        #{demo_catalog_sizes[:verified]} verified + #{demo_catalog_sizes[:improvised]} improvised → demo.wav + demo.mp3 (resumable)
-      DEMO_CRATE=1                     Add the #{demo_catalog_sizes[:crate]} records on disk after them
-      IMPROV_SEED=<n>                  Replay one set of improvisations (drawn and logged when unset)
-      DEMO_CATALOG=stream              Restrict demo-all to the stream rotation (#{demo_catalog_sizes[:stream]})
-      DEMO_MP3=0 / DEMO_MP3_BITRATE    Skip the tracked mp3 / override 128k
-      STREAM_CONTINUOUS=1 (default)    Outer shell auto-restarts; per-track timeout skips hangs
-      STREAM_TRACK_TIMEOUT=420         Max seconds per track before skip (0 = no limit)
-      STREAM_GAP=0.15                  Pause between tracks (0 = back-to-back)
-      STREAM_CROSSFADE=0.12            Crossfade between stream slots
-      STREAM_ITERATE=1 (default)       Auto-refine mix/groove each track; log stream_iterate.log
-      STREAM_DEMO=demo.wav (default)   Each stream track overwrites demo.wav (WAV = no mp3 encode)
-      STREAM_CREATIVE=1                Opt-in wild layer (LA_BEAT/vinyl/hot LUFS) — off by default
-      DILLA_SH_TIMEOUT=900             Kill hung ffmpeg/fluidsynth after N seconds
-      DILLA_FS_DRY=1                   Fluidsynth without its own chorus/reverb (pads go ~mono)
-      GENRE=hiphop|soul|jazz|techno|lofi   One word for the colour bundle; every knob still overrides it
-      GENRE_HARMONY=1                  Techno/industrial/analog take their pitches from the progression
-      RENDER_MODE=dilla                Canonical DNA
-      RENDER_MODE=warp                 Spectral/IDM bias (Brainfeeder-leaning)
-      RENDER_MODE=long_soul|golden     Lush 32-bar soul (FORM + HARMONY_LEAD + bill_evans pads)
-      STREAM_PUNCH=1                   Kit-forward + creative max (off comfort sofa mix)
-      FORM=soul_16|soul_32|donuts_time|camel_32  Section map for drums/arp density
-      CAMEL_DRUM_ENTRY_BAR=4             Bars before Wonky drums enter
-      STREAM_TRACK=chromatic_mediant_drift  Pin progression in stream mode
-      CAMEL_KEEP_WONKY=1                 Keep Wonky overlay on breakdowns
-      HARMONY_LEAD=1                     Chord-tone harmonic arp stem (voiced pads + extensions)
-      STREAM_SOUL=1 (stream default)     Locked Donuts turnaround + harmony lead + soul form
-      STREAM_HARMONY_EVERY=2           Rotate voicing + soul TRACK family every N tracks
-      STREAM_ANALOG_WILD=1             Random wild analog FX mashups (~35% of analog rotates)
-      STREAM_LEARN_BIAS=1              Bias stream toward last learn --apply hints
-      STREAM_CREATIVE_FREEDOM=1        Rotate lead/scale arp patches + stem weights every track
-      STREAM_DEEP=1 stream [bars]      Full deep pipeline + quality gate per track (~1–2 min)
-      DILLA_FORCE_TERMINAL=1         macOS: open Terminal.app for speaker playback
-      KICKS=1 (default in stream)      Layered 808-style kicks in the drum bus
-      KICK_GAIN=0.88 (style DNA wins after stream extra defaults)
-      SPEAK=1 (bare default)           README TTS to tts.wav; SPEAK=0 skips it
-      SPEAK_VOICE=en-US-AndrewNeural   Funny-clear voice (GuyNeural also works)
-      SPEAK_RATE=-48%                  Slower speech (default in stream)
-      SPEAK=0                          Beat only — skip speech overlay
-      RADIO_BERGEN=0 (stream default)  Set 1 to bias TRACK from radio.brgen.no
-      radio-bergen-study [--audio-root=PATH] [--json]  Refresh learnings YAML from manifest
-      radio-bergen-analyze [--audio-root=PATH]  Per-track dossiers (drums/texture/harmony)
+  # A usage longer than the column takes its own line, so one long argument
+  # list does not push every description off the screen.
+  column = 36
+  commands = lambda do |chosen|
+    chosen.each do |_, title, rows|
+      puts "", "    #{title}"
+      rows.each do |name, args, text|
+        usage = "#{name} #{args}".strip
+        if usage.length > column
+          puts "      #{usage}", "      #{' ' * column}  #{text}"
+        else
+          puts format("      %-#{column}s  %s", usage, text)
+        end
+      end
+    end
+  end
+  puts "    Dilla Lab (#{ROOT})"
+  case topic
+  when nil
+    puts "", "      ruby dilla.rb                         the catalogue -> demo.wav (demo-all)",
+         "      ruby dilla.rb out.wav [bars]          one render to that path"
+    commands.call(sections)
+    puts "", "    ruby dilla.rb help <topic> for one section, help knobs for the environment, help all for both."
+  when "knobs" then puts knob_help
+  when "all"
+    commands.call(sections)
+    puts knob_help
+  else
+    commands.call(sections.select { |key, _, _| key == topic })
+  end
+end
 
-    SYNTHESIS
-      loose_pocket [out.wav|mp3]         Dirty pocket drums + VLC FX (default on)
-      loose_pocket beats [dir]           Batch beat_01..14 wav+mp3 beside dilla.rb
-      DELICIOUS=1 (default)        0.72x pocket BPM | VLC=1 (default) all audio effects
-      dilla [out.mp3]              J Dilla beat — TRACK= preset (default pedal_e_descent)
-      hiphop [out.mp3]             Slum Village engine (default TRACK=syncopated_slash_ninth)
-      slum [dir]                   Batch session_01..14 beside dilla.rb (Sonitex on)
-      industrial [out.mp3]         Industrial techno (default foundry_pulse.mp3)
-      techno [out.mp3]             Hard distorted techno (#{TECHNO_BPM} BPM)
-      analog [out.mp3]             Full analog pad restoration renderer
-      analog_liveset [out] [min]   Long-form analog render
-      render [out.mp3]             Core pad + drum synthesis
-      electronium [out.mid]        MIDI (--electronium-classic=1 | --electronium-render=1)
-      electronium-full [out.wav]   Full engine render of electronium_loop (--electronium-classic=1)
+# The environment a render reads. The commands are in command_help; this is
+# the knobs, which are not commands and do not belong in a command table.
+def knob_help
+  sizes = demo_catalog_sizes
+  <<~HELP
 
-    VOCAL MIXES (Sirkel Sag × Voicemails)
-      mix | v11                    Latest mix recipe (default v11)
-      v7 | v8 | v9 | v10           Earlier mix generations
+        RENDERING
+          DILLA_DEEP=0                     One-shot: standard render (no quality gate / refine)
+          DILLA_RAW=1                      Skip all best-default ENV
+          PHONE_PREVIEW_GATE=1             Laptop-speaker check in quality gate (opt-in)
+          DILLA_SH_TIMEOUT=900             Kill hung ffmpeg/fluidsynth after N seconds
+          DILLA_FS_DRY=1                   Fluidsynth without its own chorus/reverb (pads go ~mono)
+          DILLA_OVERWRITE=1                Replace an existing named take; default is to refuse
+          GENRE=hiphop|soul|jazz|techno|lofi   One word for the colour bundle; every knob still overrides it
+          GENRE_HARMONY=1                  Techno/industrial/analog take their pitches from the progression
+          RENDER_MODE=dilla|warp|long_soul|golden  Canonical DNA, spectral/IDM bias, lush 32-bar soul
+          FORM=soul_16|soul_32|donuts_time|camel_32  Section map for drums/arp density
+          HARMONY_LEAD=1                   Chord-tone harmonic arp stem (voiced pads + extensions)
+          DELICIOUS=1 (default)            0.72x pocket BPM | VLC=1 (default) all audio effects
+          COMPOSITION=0                    Disable the arrangement spine (legacy density sections)
 
-    SAMPLE PIPELINE
-      prepare [path]               Drum kit + FFmpeg stem rack (neosoul.mp3 default)
-      sample                       source → demucs → clean harmonic
-      source [url|path] [out]      yt-dlp / ffmpeg capture audio
-      separate [path]              Demucs 4-stem (htdemucs_ft)
-      demux <url|path> [deep]      6-stem demucs (htdemucs_6s) + optional EQ sub-bands
-      chop [path]                  Long recording → bar-aligned sample loops with
-                                   drums and vocals stripped (samples/chopped/).
-                                   Defaults to samples/ubrukte_samples.mp3.
-                                   CHOP_CANDIDATES/CHOP_KEEP/CHOP_SPAN tune it.
-      chop list                    Show the registered rack
-                                   TRACK=<slug> renders over one; CHOP_BED=1 lets
-                                   the engine pick one matching the KEY_LOCK tonic
-      learn | ingest <url|path> [--apply] [--deep]
-                                   Download → demucs → harmony/rhythm analysis → engine hints
-                                   Saves project/learnings/last_learn.json; --apply sets ENV
-      learn-apply                  Re-apply hints from last learn report
-      learn-playlist [--all] [--limit N] [--force] [--no-deep] [--no-resume]
-                                   Batch radio.brgen.no (YouTube + local MP3) → demucs → analysis
-      learn-playlist-agent [--foreground]  Background/resume agent → catalog + promote + calibrate
-      learn-promote                  Merge catalog copyable_dna → learned_engine.json (runtime)
-      learn-calibrate [--audio-root=PATH] Measured dossiers → global BPM/swing calibration
-      learn-diff [--audio-root=PATH] Curated vs measured vs learned diff report
-      learn-wonky <url|path> [track] [apply] [shallow]
-                                   yt-dlp → demucs → Wonky 16-step grid → learned_engine
-                                   Default track quartal_west_coast; Camel grid baked into engine
-      rap-vocal ingest <artist> <url|path>
-                                   yt-dlp → demucs → isolated vocals + phrase/BPM catalog
-      rap-vocal fit <slug>         Time-stretch + bar-align vocals to current BPM/BARS
-      rap-vocal list               Show ingested vocal catalog
-      RAP_VOCAL=<slug> on render/stream  Auto-fit (atempo+bar phase) + mix (RAP_VOCAL_MIX, RAP_VOCAL_WEIGHT, RAP_VOCAL_BED_WEIGHT, RAP_VOCAL_SPARKLE_DB)
-      LA_BEAT_PROGRESSION=1            Long random progressions + variable chord lengths (stream soul)
-      WONKY_DRUM_OVERLAY=1             Wonky overlay; Camel grid on quartal_west_coast / wonky_camel
-      clean <in> [out]             Denoise + loudnorm
+        DEMO
+          DEMO_CRATE=1                     Add the #{sizes[:crate]} records on disk after the catalogue
+          IMPROV_SEED=<n>                  Replay one set of improvisations (drawn and logged when unset)
+          DEMO_CATALOG=stream              Restrict demo-all to the stream rotation (#{sizes[:stream]})
+          DEMO_MP3=0 / DEMO_MP3_BITRATE    Skip the tracked mp3 / override 128k
+          DEMO_TRACK_TIMEOUT=420           Seconds a track gets before the minimal retry
 
-    STEM RACK (data/stems.json)
-      stems                        Register default rack from stems/
-      stems add <name> <dir> [bpm] Add a stem set to manifest
-      stems scan [root] [manifest] Legacy directory scan → manifest
+        STREAM
+          STREAM_CONTINUOUS=1 (default)    Outer shell auto-restarts; per-track timeout skips hangs
+          STREAM_TRACK_TIMEOUT=420         Max seconds per track before skip (0 = no limit)
+          STREAM_GAP=0.15                  Pause between tracks (0 = back-to-back)
+          STREAM_CROSSFADE=0.12            Crossfade between stream slots
+          STREAM_ITERATE=1 (default)       Auto-refine mix/groove each track; log stream_iterate.log
+          STREAM_DEMO=demo.wav (default)   Each stream track overwrites demo.wav (WAV = no mp3 encode)
+          STREAM_CREATIVE=1                Opt-in wild layer (LA_BEAT/vinyl/hot LUFS)
+          STREAM_PUNCH=1                   Kit-forward + creative max
+          STREAM_TRACK=<progression>       Pin the progression in stream mode
+          STREAM_SOUL=1 (stream default)   Locked Donuts turnaround + harmony lead + soul form
+          STREAM_HARMONY_EVERY=2           Rotate voicing + soul TRACK family every N tracks
+          STREAM_ANALOG_WILD=1             Random wild analog FX mashups (~35% of analog rotates)
+          STREAM_LEARN_BIAS=1              Bias stream toward the last learn apply hints
+          STREAM_CREATIVE_FREEDOM=1        Rotate lead/scale arp patches + stem weights every track
+          STREAM_DEEP=1                    Full deep pipeline + quality gate per track (~1-2 min)
+          STREAM_MACROS=1                  Rotate stream slots by macro word instead of by knobs
+          CAMEL_DRUM_ENTRY_BAR=4           Bars before Wonky drums enter
+          CAMEL_KEEP_WONKY=1               Keep the Wonky overlay on breakdowns
+          DILLA_FORCE_TERMINAL=1           macOS: open Terminal.app for speaker playback
+          RADIO_BERGEN=0 (stream default)  Set 1 to bias TRACK from radio.brgen.no
 
-    LIVESET
-      liveset [set] [minutes]      Long-form WAV from stem rack (LIVESET_MIN=#{LIVESET_MIN})
-      live [passes] [out.wav]     The catalogue played as it is generated, or one pass written
-      live set|recall|broadcast|dig  The livesets: a set, the journal, all night, refill the beds
+        DRUMS AND VOCALS
+          KICKS=1 (default) | KICKS=0      Kick drum on or muted
+          KICK_GAIN=0.88 (0.78 on wonky)   Kick/sub level scale
+          FORCE_KIT=1                      Regenerate synth drums; samples/drums/custom/ overrides the kit
+          WONKY_DRUM_OVERLAY=1             Wonky overlay; Camel grid on quartal_west_coast / wonky_camel
+          LA_BEAT_PROGRESSION=1            Long random progressions + variable chord lengths
+          RAP_VOCAL=<slug>                 Fit and mix a vocal (RAP_VOCAL_MIX, _WEIGHT, _BED_WEIGHT, _SPARKLE_DB)
+          SPEAK=0|1                        The README reading on readme-loop; SPEAK_VOICE, SPEAK_RATE
+          CHOP_CANDIDATES / CHOP_KEEP / CHOP_SPAN   Tune chop; TRACK=<slug> renders over one, CHOP_BED=1 picks by key
 
-    READING THE ENGINE (no audio, no render — these only look)
-      parts [needle]               Every `# engine part:` marker with the line it
-                                   starts at and how many it holds. The map has
-                                   always been in dilla.rb; this indexes it.
-      where <name>                 Which file owns a method, a constant or a knob
-      knobs [NAME|conflicts|check] Every knob the engine reads, one it reads, the
-                                   ones read with two defaults, or what is wrong
-                                   with the environment right now
-      assets [record]              Is the crate the recipes name still here and
-                                   still itself
-      tracklist [path]             What a render was actually made of
-      taste                        What the engine has been asked to prefer
+        DEVICES IN A RENDER (all off by default; each replaces or adds a real layer)
+          COPY_MACHINE=6                   The sampled bed played 6 times at once, at different speeds.
+                                           COPY_MACHINE_FAMILY=harmonic|chromatic|spray, _REVERSE, _WIDTH, _DRIFT
+          MIDI_BAG=1                       The lead's pitches on the kit's onsets.
+                                           MIDI_BAG_ORDER=cycle|random|walk, MIDI_BAG_RESTS=0.25, MIDI_BAG_FIT=1
+          HOCKET=3                         The harmony lead split across 3 voices, each a different EP program.
+                                           HOCKET_MODE=round_robin|pendulum|shift_register|random, HOCKET_HOLD=1
+          WAV_MAP=path.png                 A picture read as an oscillator, mixed as texture in the track's key.
+                                           WAV_MAP_PATH=circle|spiral|lissajous|rose, _HZ, _WEIGHT, _HP, _LP, _LOBES
+          BUS_MOD=texture                  An LFO on a mix bus filter; needs DILLA_MIX_BUSES=1.
+                                           BUS_MOD_SYNC=1/4|1/8T|4bar wins over BUS_MOD_HZ=0.25,
+                                           _FILTER=lowpass, _PARAM=frequency, _BASE, _DEPTH, _MODE=modulate|remote
+          BUS_PATCH=random                 A whole modulation patch on the bus; needs BUS_MOD=<bus>.
+                                           BUS_PATCH_ROUTES=4, BUS_PATCH_SEED pins it
+          VOICE_STACK=4                    The lead played by 4 voices at once, each all of it.
+                                           VOICE_STACK_DETUNE=unison|octaves|fifths|spread, _MACRO=0.5,
+                                           _VARIATION=0.25, _DRIFT=9, _KEYTRACK=0.5, _STEMS=1
+          LPG=1                            Buchla low-pass gate on the lead: darker as it decays.
+                                           LPG_BLEND=1.0, LPG_DEPTH, LPG_DECAY_MS=220, LPG_DROOP=2.4
 
-    ANALYSIS & GRADE
-      scan | ears | verify | study | grade | grade_list | chords
-      vocab-check                  Chord symbols, arp figures and drum grids — no audio, ~1s.
-                                   Every chord resolves to the chord it is named after, every
-                                   arp builder returns a real line, every grid fits its bar.
+        ARRANGEMENT AND BUS
+          SECTION_LAYERS=1 (default)       Drums, bass and the sampled bed follow the section map
+          SECTION_LAYERS=full              The harmony bus leaves in intros and in breakdowns of 8s or more
+          FORM_FIT=0|1                     Stretch FORM across the track instead of repeating it (on past 64 bars)
+          DILLA_MIX_BUSES=1                Kit/harmonic/low/texture buses instead of one flat amix
+          DILLA_BUS_<NAME>=<filters>       A filter chain on one of those buses
+          CONSOLE_STACK=3                  Instances in the summing stack (1-4); reached via RACK=summed
+          MOD_RATE_HZ=48                   Modulation command resolution
 
-    COMPOSITION (session in #{DillaComposition::PROJECT_DIR})
-      jam [bars]                   Render + play with fresh session (motifs, performers, arrangement)
-      evolve [bars] [generations]  Mutate motifs/performer/groove, score, keep best (GENERATIONS=5)
-      critique [path]              Producer scores + recommendations on last render
-      session [save|load|show|new] Persist/load/show composition memory
-      regenerate-stem bass|hats|melody [bars]  Re-render one layer (motif/groove mutation)
-      listen_loop [bars]           Render → analyze LUFS/groove → adjust mix (LISTEN_PASSES=3)
-      COMPOSITION=0                Disable arrangement spine (legacy density sections)
+        TONE
+          SONITEX=donuts_warm (default) | classic | heavy | 0 (dry)
+          TAPE_BIAS=1 TAPE_LOSS_HZ=0
+          ANALOG_CHAIN=acetate|sp1200|auto (rotates per session in the slum batch)
+          IBPM=135 BARS=128                Industrial techno length
 
-    SONITEX
-      sonitex_list                   List STX-1260 subset presets
+        ENV: BPM BARS TRACK PROGRESSION SWING KICKS SONITEX SONITEX_PRESET BEAT LIVESET_MIN
+             SWING= is the fallback; the per-role offsets (snare early, kick late) carry the feel
+             PERFORMER=yancey GROOVE_DNA=donuts COMPOSITION=1 GENERATIONS=5 LISTEN_PASSES=3
 
-    DEVICES (options are bare words, not --flags — the global flag parser eats those)
-      macro                          The 8 macro words, and which knobs each moves
-      macro dust=0.7 weight=0.6      What they would set; add `apply` to set it
-      copy-machine in out copies=8   N copies of one sound at once, some reversed
-                                       family=harmonic|chromatic|spray reverse=0..1
-                                       width=0..1 drift=ms duration=S  `describe`
-      hocket voices=4 mode=pendulum  One line split across voices (round_robin|
-                                       pendulum|shift_register|random) hold=N `write`
-      midi-bag order=cycle           Melody's pitches on the kit's rhythm
-                                       order=cycle|random|walk rests=0..1 `fit-chords`
-      wav-map image.png out.wav      A picture read as a waveform (brightness is
-                                       elevation) path=circle|spiral|lissajous|rose
-                                       hz=110 duration=S lobes=N  `describe`
-      arrangement out.mp3 ref.wav    Does it have sections? Foote spectral novelty
-                                       + short-term loudness spread, against a
-                                       reference record.  `detail`
-      ab KNOB=value [bars=16]      Two renders differing in exactly those knobs,
-                                       plus a control arm so the render-to-render
-                                       noise floor is printed beside the result.
-                                       UPPERCASE=knob, lowercase=option.
-                                       track= seed= out= keep detail
-      modulate in out lfo=0.5        A parameter moved over time via asendcmd
-                                       target=filter.param base=N depth=0..1
-                                       mode=modulate|remote family=straight|curved
+        FLAGS (the ENV vars above as --key=value, usable on any command):
+          #{FLAG_ENV.keys.map { |k| "--#{k}=..." }.join(' ')}
 
-DEVICES IN A RENDER (all off by default; each replaces or adds a real layer)
-  COPY_MACHINE=6                 The sampled bed played 6 times at once, at
-                                   different speeds. COPY_MACHINE_FAMILY=
-                                   harmonic|chromatic|spray, _REVERSE, _WIDTH,
-                                   _DRIFT. Needs a track whose bed is on disk.
-  MIDI_BAG=1                     The lead's pitches on the kit's onsets.
-                                   MIDI_BAG_ORDER=cycle|random|walk,
-                                   MIDI_BAG_RESTS=0.25, MIDI_BAG_FIT=1
-                                   (snap each to the chord underneath).
-  HOCKET=3                       The harmony lead split across 3 voices, each
-                                   through a different EP program.
-                                   HOCKET_MODE=round_robin|pendulum|
-                                   shift_register|random, HOCKET_HOLD=1
-  WAV_MAP=path.png               A picture read as an oscillator, mixed as a
-                                   texture channel in the track's key.
-                                   WAV_MAP_PATH=circle|spiral|lissajous|rose,
-                                   _HZ, _WEIGHT, _HP, _LP, _LOBES
-  BUS_MOD=texture                An LFO on a mix bus filter. Needs
-                                   DILLA_MIX_BUSES=1. BUS_MOD_SYNC=1/4|1/8T|
-                                   4bar is tempo-locked and wins over
-                                   BUS_MOD_HZ=0.25,
-                                   _FILTER=lowpass, _PARAM=frequency, _BASE,
-                                   _DEPTH, _MODE=modulate|remote
-  BUS_PATCH=random               A whole modulation patch on the bus instead of
-                                   one LFO: one source per destination, depths
-                                   biased low, at least one inverted. Needs
-                                   BUS_MOD=<bus>. BUS_PATCH_ROUTES=4,
-                                   BUS_PATCH_SEED pins it so a take repeats.
-  VOICE_STACK=4                  The lead played by 4 voices at once — every
-                                   voice plays ALL of it, differing in register,
-                                   tuning and timbre (Hocket splits notes
-                                   BETWEEN voices; these compose).
-                                   VOICE_STACK_DETUNE=unison|octaves|fifths|
-                                   spread, _MACRO=0.5, _VARIATION=0.25 (one knob
-                                   giving each voice a different value),
-                                   _DRIFT=9 cents, _KEYTRACK=0.5,
-                                   _STEMS=1 keeps each voice as its own file.
-                                   The macro picks a MODEL (tine glass analog
-                                   string reed choir blade figure) and the model
-                                   picks a patch from the 212 in the catalogue.
-  LPG=1                          Buchla low-pass gate on the lead: it darkens
-                                   as it decays, which is what makes a note read
-                                   as struck. Measured, the 4-12k band falls
-                                   17.5 dB further than the body over a decay.
-                                   LPG_BLEND=1.0 (0 = plain VCA), LPG_DEPTH,
-                                   LPG_DECAY_MS=220, LPG_DROOP=2.4
-  STREAM_MACROS=1                Rotate stream slots by macro word (dust,
-                                   drift, weight, air…) instead of by knobs.
-
-    ARRANGEMENT AND BUS
-      SECTION_LAYERS=1 (default)     Drums, bass and the sampled bed follow the
-                                       section map; pads and texture play flat
-      SECTION_LAYERS=full            The harmony bus LEAVES in the intro and in
-                                       any breakdown long enough to read as one
-                                       (8s+); shorter ones duck instead, because
-                                       taking the loudest channel out for a bar
-                                       three times in ninety seconds is a
-                                       stutter, not a section. The analog pad and
-                                       the vinyl/rumble texture get section
-                                       shapes too.
-      FORM_FIT                       Stretch FORM/SECTION_MAP across the track
-                                       instead of repeating it. ON by default
-                                       past 64 bars — soul_32 over 128 bars is
-                                       four intros cycling, one fitted.
-                                       FORM_FIT=0 forces cycling, =1 forces
-                                       fitting; with no FORM set it does nothing.
-      DILLA_MIX_BUSES=1              Group the mix into kit/harmonic/low/texture
-                                       buses instead of one flat amix
-      DILLA_BUS_<NAME>=<filters>     A filter chain on one of those buses
-      CONSOLE_STACK=3                Instances in the summing stack (1-4). Measured:
-                                       at matched THD, 3 stages put 23 dB less third
-                                       harmonic in than 1 — a warmth control, not a
-                                       drive one. Reached via RACK=summed.
-      MOD_RATE_HZ=48                 Modulation command resolution
-
-    EXTERNAL ASSETS (opt-in only — engine is pure-Ruby/ffmpeg by default)
-      fetch-assets                   Cache CC0 drum WAVs + extra soundfonts
-                                      (galaxy, supersaw, giga-fm, yamaha-grand + VintageDreams)
-      export-midi [dir]              Write every DRUM_PRESET as GM MIDI clips (default: samples/midi/)
-      import-midi <dir>              MIDI drum clips -> 16-step grids (Ruby hash dump)
-      use-external-kit <name>        Install a fetched kit into samples/drums/custom/
-                                      (01-hard-trap | 02-bounce | 03-soulful-vintage)
-      dig <seam> [n]                 Dig n public-domain sides into samples/dug/
-      dig-seams                      List the seams available to dig
-      dug                            What has been dug, and under what terms
-      dig-cc <seam> [n]              Dig CC-BY stems (dub, roots, breaks) from ccMixter
-      credits                        Attribution owed for CC-BY material in the crate
-    FLAGS (equivalent to the ENV vars below, usable on any command):
-      #{FLAG_ENV.keys.map { |k| "--#{k}=…" }.join(' ')}
-
-    SCRATCH: caches + temp audio in #{SCRATCH_DIR} (DILLA_SCRATCH_DIR overrides).
-      progressions_log.txt there is the only record of generated progressions.
-
-    ENV: BPM BARS TRACK PROGRESSION SWING KICKS SONITEX SONITEX_PRESET BEAT LIVESET_MIN
-         PERFORMER=yancey GROOVE_DNA=donuts COMPOSITION=1 GENERATIONS=5 LISTEN_PASSES=3
-     KICKS=1 (default) enable kicks | KICKS=0 mute kick drum
-         KICK_GAIN=0.88 (0.78 on wonky) kick/sub level scale — lower if still loud
-         SONITEX=donuts_warm (default) | SONITEX=classic | SONITEX=heavy | SONITEX=0 dry
-         SONITEX_MIX/_DISTORTION/_VINYL/_TONE/_NOISE/_SAMPLING are documented but unread
-         TAPE_BIAS=1 TAPE_LOSS_HZ=0
-         DILLA_OVERWRITE=1              Replace an existing named take; default is to refuse
-         ANALOG_CHAIN=acetate|sp1200|auto (rotates per session in slum batch)
-         FORCE_KIT=1 regenerate synth drums
-         samples/drums/custom/ overrides kit
-         TRACK = internal preset id (use session_01..14 outputs via slum command)
-         IBPM=135 BARS=128 for industrial techno length
+        SCRATCH: caches and temp audio in #{SCRATCH_DIR} (DILLA_SCRATCH_DIR overrides).
+          progressions_log.txt there is the only record of generated progressions.
   HELP
 end
 
@@ -35036,10 +35039,9 @@ end
 DISPATCH = {
   "capabilities" => -> { puts Master::Io::AnalogCapabilities.report(:dilla) },
   "quality" => -> { dilla_quality(ARGV.shift || File.join(OUTPUT_DIR, "full_track.mp3"), ARGV.shift) },
-  "help" => -> { help },
+  "help" => -> { help(ARGV.shift) },
   "scan" => -> { scan },
   "sweep" => -> { sweep },
-  "council" => -> { council },
   "debug" => -> { debug },
   "config-provenance" => -> { print_config_provenance },
   "knobs" => -> { knobs_report(ARGV.shift) },
@@ -35221,9 +35223,9 @@ DISPATCH = {
   # with its own render_liveset(name, minutes:). A setlist is the other thing:
   # the recipe for a set of takes, replayable.
   "setlist" => lambda do
-    file = ARGV.shift or abort("usage: setlist <file.json> [outdir]  |  setlist --save <file.json>")
-    if file == "--save"
-      target = ARGV.shift or abort("usage: setlist --save <file.json>")
+    file = ARGV.shift or abort("usage: setlist <file.json> [outdir]  |  setlist save <file.json>")
+    if file == "save"
+      target = ARGV.shift or abort("usage: setlist save <file.json>")
       save_setlist(target)
     else
       render_setlist(file, ARGV.shift)
@@ -35356,9 +35358,9 @@ DISPATCH = {
     abort "kit: #{e.message}"
   end,
   "learn" => lambda do
-    src = ARGV.shift or abort "usage: ruby dilla.rb learn <url-or-path> [--apply] [--deep]"
-    apply = ARGV.delete("--apply")
-    deep = ARGV.delete("--deep")
+    src = ARGV.shift or abort "usage: ruby dilla.rb learn <url-or-path> [apply] [deep]"
+    apply = ARGV.delete("apply")
+    deep = ARGV.delete("deep")
     learn_source!(src, apply: !apply.nil?, deep: !deep.nil?)
   end,
   "learn-wonky" => lambda do
@@ -35377,13 +35379,16 @@ DISPATCH = {
     puts "applied: #{applied.join(', ')}"
   end,
   "learn-playlist" => lambda do
-    youtube_only = !ARGV.delete("--all")
-    deep = !ARGV.delete("--no-deep")
-    resume = !ARGV.delete("--no-resume")
-    force = !ARGV.delete("--force")
-    no_promote = ARGV.delete("--no-promote")
+    # Words: every --flag is a render knob to apply_flags!, which aborted on
+    # these before the command ran. force is false unless named, which is the
+    # method's own default; read as a flag it was inverted to true.
+    youtube_only = ARGV.delete("all").nil?
+    deep = ARGV.delete("no-deep").nil?
+    resume = ARGV.delete("no-resume").nil?
+    force = !ARGV.delete("force").nil?
+    no_promote = ARGV.delete("no-promote")
     limit = nil
-    if (idx = ARGV.index("--limit"))
+    if (idx = ARGV.index("limit"))
       limit = ARGV.delete_at(idx + 1)
       ARGV.delete_at(idx)
     end
@@ -35444,7 +35449,6 @@ DISPATCH = {
     name = ARGV.shift or abort "usage: ruby dilla.rb balance <#{BALANCE_VARIANTS.keys.join("|")}>"
     render_balance(name)
   end,
-  "loop" => -> { readme_loop! },
   # Every record in the demo crate against three progressions.
   "demo" => -> { generate_demo },
   # Master the tracklist in data/album_tracks.yml into one crossfaded record.

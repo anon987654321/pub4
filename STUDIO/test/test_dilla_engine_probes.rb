@@ -1001,6 +1001,20 @@ class TestDilla < Minitest::Test
   # TRACK=<slug> by hand, and never appears in the medley or the rotation.
   # Three of the four measured loops were in that state. Nothing errors when it
   # happens, which is why it needs a test rather than a comment.
+  # help is printed from command_help, so a command cannot exist without a line
+  # there and a line cannot outlive its command. The hand-written help this
+  # replaced documented 70 of 125 commands.
+  def test_every_command_has_one_help_line
+    result = eval_in_engine(<<~RUBY)
+      names = command_help.flat_map { |_, _, rows| rows.map(&:first) }
+      puts JSON.generate(missing: DISPATCH.keys - names, extra: names - DISPATCH.keys,
+                         twice: names.tally.select { |_, n| n > 1 }.keys)
+    RUBY
+    assert_empty result.fetch("missing"), "commands help does not list"
+    assert_empty result.fetch("extra"), "help lines naming no command"
+    assert_empty result.fetch("twice"), "commands listed twice"
+  end
+
   def test_every_hand_cut_sample_loop_is_reachable_as_a_track_preset
     result = eval_in_engine(<<~RUBY)
       presets = TRACK_PRESETS.keys.map(&:to_s)

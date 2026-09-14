@@ -870,9 +870,6 @@ Take them the day those files are clean.
 
 811. **dilla.rb comments that describe the split.** 80 `# engine part:` headers still say "split out of dilla.rb"; `:230` says load order lives in `engine_sources.rb`; `:248`, `:13733`, `:14870`, `:20805` still name `lib/engine/`; `:14900` names the gone `ENGINE_PARTS`; `:14672` hardcodes "35,000 lines / 83 markers" instead of asking `parts_report`. `:35237` should say the gate and tests depend on the CLI guard.
 812. **`ENGINE_SOURCES = DillaSources.all` sits at `:34385`,** after `wiring_dead_constants` and `parts_report` close over it. Move it up to the require at `:36`.
-814. **`scan` probes `dilla.html` (`:13165`),** a file that does not exist. Drop the key.
-815. **`help` is one 170-line dump.** Topic index (`help render|chop|knobs|sample`) with the wall behind `help all`. The topics owe these lines: `industrial`/`techno`/`analog` bypass AudioGraph; `characterize` under READING THE ENGINE; `source` points at `lib/sampling.rb` before `project/crate.yml`, and `dilla.rb live dig` is the YouTube digger; chop lists RadioChop's operations in order; `STREAM_DEMO` overwrites the rolling `demo.wav`, not a take; `DILLA_OVERWRITE=1` is the only overwrite; `SWING=` is the fallback and per-role offsets are the Charnas move.
-816. **`council` (`:13184`) prints five slogans.** Delete it or make it run a command.
 822. **Lazy requires are undocumented.** Say beside the requires which of `console_strip`, `tape_hysteresis`, `mix_score`, `verify_fx`, `kit_dig` are command-only, so a fold does not pull DSP into boot.
 829. **Locale.** brgen's CI loads dilla.rb as user brgen; set `Encoding.default_external = Encoding::UTF_8` at the top of dilla.rb rather than touching 37 `File.read` sites.
 853. **`dilla stems` should refuse** when `data/stems.json` names `samples/demux/…` paths not on disk, as `dilla assets` does.
