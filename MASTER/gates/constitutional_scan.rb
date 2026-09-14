@@ -47,7 +47,7 @@ module Deploy
     # copy here would be a second source that drifts.
     BUDGET_PATH = File.expand_path("../../RAILS/gates/data/constitutional_budget.yml", __dir__)
     # `scan: done [profile: full] 410 violations | top DEAD_CODE=99 …`
-    VIOLATION_LINE = /^scan: done\b[^\n]*?\b(\d+) violations/
+    VIOLATION_LINE = /^scan\d*: done\b[^\n]*?\b(\d+) violations/
     # And the other spelling of the same number: `scan: done [profile: aesthetic]
     # clean -- no violations`. A count regex that only knows the digits skipped
     # the clean line and matched the NEXT `scan: done`, which is the deep pass —
@@ -55,7 +55,7 @@ module Deploy
     # profile's number than a target whose aesthetic pass found something.
     # STUDIO read 317 and OPENBSD 72 against ceilings measured at 0 in the same
     # run that printed "clean".
-    CLEAN_LINE = /^scan: done\b[^\n]*\bclean\b/
+    CLEAN_LINE = /^scan\d*: done\b[^\n]*\bclean\b/
 
     def initialize(targets: nil)
       list = Array(targets).compact
@@ -225,7 +225,9 @@ module Deploy
     # of its spellings count: a number, or "clean -- no violations", which is
     # zero and was being read as "no count here, try the next line".
     def first_pass_count(stdout)
-      line = stdout.to_s.lines.find { |l| l.start_with?("scan: done") }
+      # /scan speaks as a dmesg unit, "scan0: done, …"; "scan: done" is the
+      # spelling the recorded outputs in the tests still carry.
+      line = stdout.to_s.lines.find { |l| l.match?(/\Ascan\d*: done\b/) }
       return unless line
       return 0 if line.match?(CLEAN_LINE)
 
