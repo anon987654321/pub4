@@ -200,7 +200,9 @@ module Master
             next if stripped.start_with?("#", "//", "detect_lexical:", "- id:")
             next unless stripped.gsub(EN_DASH_NOT_A_RANGE, " ").match?(EN_DASH_RANGE_RE)
             next if stripped.match?(/^\s*-\s+\w/) # YAML list item
-            next if data_file && stripped.match?(YAML_MAPPING_LINE)
+            # A locale's values are the copy a reader sees, so there a mapping
+            # line is prose and its value is read.
+            next if data_file && stripped.match?(YAML_MAPPING_LINE) && !path.include?("/config/locales/")
             finding(line: number, message: "numeric range — use en dash: 45–75 not 45-75")
           end
         end

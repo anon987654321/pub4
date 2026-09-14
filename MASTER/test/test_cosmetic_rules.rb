@@ -49,6 +49,12 @@ class TestCosmeticRules < Minitest::Test
     refute_empty rule("EN_DASH_RANGE").check("    4-9 lines total. No preamble.\n", path: "data/council.yml")
   end
 
+  # A locale value is the copy a reader sees, not data a program parses.
+  def test_en_dash_range_reads_a_locale_value_as_prose
+    refute_empty rule("EN_DASH_RANGE").check("    open: Åpent 10-16\n", path: "RAILS/brgen/config/locales/nb.yml")
+    assert_empty rule("EN_DASH_RANGE").check("    open: Åpent 10–16\n", path: "RAILS/brgen/config/locales/nb.yml")
+  end
+
   # CSS specificity is a tuple written 0-1-0, and a two-number pattern reads two
   # ranges in it.
   def test_en_dash_range_ignores_a_hyphenated_triple
