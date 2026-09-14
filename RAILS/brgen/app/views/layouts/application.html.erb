@@ -30,8 +30,11 @@
   <%= tag.meta name: "apple-mobile-web-app-capable", content: "yes" %>
   <%= tag.meta name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" %>
   <%= tag.meta name: "apple-mobile-web-app-title", content: city_name %>
-  <%= tag.meta name: "color-scheme", content: "dark" %>
-  <%= tag.meta name: "theme-color", content: "#000000", data: { light_color: "#ffffff", dark_color: "#000000" } %>
+  <%# The stated theme, not a hardcoded dark: the page paints light by default,
+      and a dark color-scheme hint gave it dark scrollbars and form controls. The
+      browser bar takes each ground's own --bg. %>
+  <%= tag.meta name: "color-scheme", content: surface_theme %>
+  <%= tag.meta name: "theme-color", content: "#efefef", data: { light_color: "#efefef", dark_color: "#000000" } %>
   <%# Must run before first paint and before any stylesheet, which is why it is a
       blocking inline script here rather than a Stimulus controller: theme-toggle
       is mounted on <body> and only reaches the DOM after Stimulus boots, so a
@@ -161,7 +164,7 @@
           Search is the palette now -- / or Cmd-K, or the glyph in the tab bar.
           Operator decision 2026-08-27. %>
 
-      <main id="main-content" aria-label="<%= t("nav.main") %>" data-controller="pull-to-refresh">
+      <main id="main-content" role="main" aria-label="<%= t("nav.main") %>" data-controller="pull-to-refresh">
         <% if !vertical_surface? && current_page?(main_app.root_path) %>
           <div class="feed-header">
             <%# Visual brand is the fixed top-left .brgen-logo-mark (all surfaces).
