@@ -57,6 +57,14 @@ class TestRenderer < Minitest::Test
     assert_empty filled.grep(/[^\x20-\x7e]/), "the boot must stay plain ASCII"
   end
 
+  def test_splash_never_prints_the_web_token
+    secret = "s3cr3t-token-value-that-must-not-print"
+    text = strip_ansi(FakeRenderer.new(config: { "web_token" => secret }).splash("model"))
+
+    refute_includes text, secret
+    assert_includes text, "/pair issue"
+  end
+
   def strip_ansi(text)
     text.to_s.gsub(/\e\[[0-9;]*m/, "")
   end

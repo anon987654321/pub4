@@ -132,10 +132,12 @@ module Master
           }
         end
 
+        # The URL, never the token: a boot line lives in scrollback and saved
+        # transcripts, and a link carrying the token is the credential itself.
+        # A device gets in through a pairing code.
         def splash_web_url
           url = @config["web_public_url"] || Master::Ground::Config::DEFAULTS.fetch("web_public_url")
-          token = @config["web_token"]
-          token ? "#{url}/?token=#{token}" : url
+          @config["web_token"].to_s.empty? ? url : "#{url}, token set, /pair issue for a code"
         end
 
         def splash_dmesg_lines
