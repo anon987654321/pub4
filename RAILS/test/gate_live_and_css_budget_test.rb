@@ -228,11 +228,16 @@ class GateLiveAndCssBudgetTest < Minitest::Test
   # Not a specific colour: an accent that gets fixed should not fail this. What
   # must hold is that the pairing still surfaces something token_pairs missed,
   # which is the reason it was written. Today the hovers are what it catches.
+  #
+  # Called the way DesignMetricsGate calls it. The hover pairs are the accent ink
+  # on the hover fill, and the ink is read from the stylesheets under the RAILS
+  # root, so without the root there are no hover pairs to find.
   def test_the_vertical_pairing_still_surfaces_a_finding
-    below_aa = Deploy::DesignMetrics.vertical_accent_pairs(design_tokens).select { |pair| pair[:ratio] < 4.5 }
+    pairs = Deploy::DesignMetrics.vertical_accent_pairs(design_tokens, Deploy::DesignMetricsGate::RAILS)
+    below_aa = pairs.select { |pair| pair[:ratio] < 4.5 }
 
     refute_empty below_aa, "every vertical accent now clears AA — retire this pairing or lower the bar deliberately"
-    assert below_aa.all? { |pair| pair[:label].include?("_hover/") },
+    assert below_aa.all? { |pair| pair[:bg_key].end_with?("_hover") },
            "an accent, not just a hover, is below AA: #{below_aa.map { |pair| pair[:label] }.join(", ")}"
   end
 
