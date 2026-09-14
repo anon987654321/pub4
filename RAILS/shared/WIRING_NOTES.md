@@ -736,14 +736,21 @@ place. A stream template per action would save one server render per click at
 the cost of a second copy of each button's markup, and dating's swipe deck, the
 import form and the collaboration page move the reader on anyway.
 
-That argument holds only once the declaration reaches a page, and today it does
-not. The bridge in `shared/config/initializers/turbo_refresh.rb` calls
-`helpers.turbo_refreshes_with` in a before_action; `helpers` is a separate view
-context, so the `provide :head` lands nowhere, and measured on brgen.no and
-markedsplass.brgen.no no `turbo-refresh-method` meta tag renders. Every one of
-these redirects is therefore a replace with scroll reset. Making the meta tag
-render changes how every page in three apps refreshes, including tiptap and map
-surfaces, so it waits for a rendered check rather than landing blind.
+The argument holds because the declaration reaches the page.
+`shared/config/initializers/turbo_refresh.rb` applies it to the view context
+that renders the layout, not to the controller's `helpers` proxy, which is a
+separate view context whose `provide :head` lands nowhere. Each app's layout
+yields `:head`, and a rendered assertion per app (brgen and amber home, bsdports
+ports) holds both meta tags in place.
+
+A morph rebuilds the page from server HTML, so a surface whose DOM a library
+builds in the browser loses that DOM unless it sits the morph out. The tiptap
+editor does, once mounted, by cancelling `turbo:before-morph-element` for its
+own element; `test/system/tiptap_morph_test.rb` types into a comment, refreshes,
+and finds the text still there. The maplibre map would need the same guard, and
+does not carry one yet because the one page that mounts it, maps home,
+subscribes to no stream and is the target of no toggle's redirect, so nothing
+refreshes it.
 
 ## System tests stay on Selenium (2026-09-14)
 
