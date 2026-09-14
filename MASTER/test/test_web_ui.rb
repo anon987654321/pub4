@@ -321,7 +321,7 @@ class TestWebUI < Minitest::Test
     assert_includes actions, "window.collectFeltState = collectFeltState"
     assert_includes actions, "function collectFeltState()"
     assert_includes part5, "window.collectFeltState?.()"
-    # compaction, ctx_footer, phantom, tool_stack, stage and btw reach the face
+    # compaction, ctx_footer, phantom, tool_stack and stage reach the face
     # through the SSE contract; web/test/sse_contract.test.mjs proves each has
     # a handler.
     assert_includes part5, "window.MASTER_SSE?.dispatchNamed?.(event, data)"

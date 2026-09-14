@@ -494,15 +494,6 @@ window._chatOnStage = (payload) => {
   if (ui) ui.textContent = text;
 };
 
-window._chatOnBtw = (payload) => {
-  if (!payload?.summary) return;
-  const note = document.createElement('div');
-  note.className = 'message system btw-note';
-  note.textContent = `btw/${payload.type}: ${payload.summary}`;
-  log?.appendChild(note);
-  log.scrollTop = log.scrollHeight;
-};
-
 // Visible "thought trace" block removed (internal event-name clutter). No-op
 // kept since callers use optional chaining.
 window._chatOnThought = () => {};

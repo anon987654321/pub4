@@ -65,7 +65,6 @@ const NAMED_HANDLERS = {
   phantom: (data) => window._chatOnPhantom?.(parseSseJson(data, {})),
   tool_stack: (data) => window._chatOnToolStack?.(parseSseJson(data, {})),
   stage: (data) => window._chatOnStage?.(parseSseJson(data, {})),
-  btw: (data) => window._chatOnBtw?.(parseSseJson(data, {})),
   client_action: (data) => window.MASTERChat?.triggerClientAction?.(parseSseJson(data, {})),
 };
 
