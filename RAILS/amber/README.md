@@ -69,6 +69,6 @@ not one. And the Litestream replicas are on the same disk, so there is no
 off-host copy of the database. That one is tracked, not solved.
 
 `HEIR.md` covers what runs alone, the health checks, the env keys and the honesty
-map. `ARCHITECTURE.md` has the components and layers, `DECISIONS.md` the shapes
-that look like bugs and are not, and `RAILS/shared/WIRING_NOTES.md` the shared
+map. `ARCHITECTURE.md` has the components and layers, the comments on the models
+the shapes that look like bugs and are not, and `RAILS/shared/WIRING_NOTES.md` the shared
 tokens and concerns. The feature matrix is `RAILS/apps.yml` under `amber`.

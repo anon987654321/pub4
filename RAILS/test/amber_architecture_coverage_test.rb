@@ -28,17 +28,16 @@ class AmberArchitectureCoverageTest < Minitest::Test
                  "add them to a layer or the service catalog"
   end
 
+  # A JSON vector column reads like something to migrate. The reason it is not
+  # sits on the model, where the person about to migrate it looks first.
   def test_vector_decision_stays_recorded
-    decisions = File.join(ROOT, "DECISIONS.md")
-
-    assert File.exist?(decisions), "RAILS/amber/DECISIONS.md is missing"
-    text = File.read(decisions)
+    model = File.join(ROOT, "app/models/garment_embedding.rb")
     schema = File.read(File.join(ROOT, "db/schema.rb"))
 
-    return unless schema.include?('t.json "vector"')
+    return unless schema.include?(%(t.json "vector"))
 
-    assert_includes text, "pgvector",
-                    "GarmentEmbedding#vector is still JSON-backed but DECISIONS.md no longer explains why"
+    assert_includes File.read(model), "pgvector",
+                    "GarmentEmbedding#vector is still JSON-backed but garment_embedding.rb no longer says why"
   end
 
   private

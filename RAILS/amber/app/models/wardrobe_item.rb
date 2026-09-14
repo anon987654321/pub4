@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# One owner's care record on an Item, not a second garment model: the Item is
+# what the garment is, and condition belongs to one owner's copy of it.
 class WardrobeItem < ApplicationRecord
   CONDITIONS = %w[new excellent good worn repair retire].freeze
 

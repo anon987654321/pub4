@@ -132,4 +132,5 @@ restoration.
 
 ## Vector direction
 
-Moved to `DECISIONS.md`, where a deliberate shape that looks like a bug belongs.
+`GarmentEmbedding#vector` is a JSON column rather than pgvector, and the comment
+on `app/models/garment_embedding.rb` says why.
