@@ -109,4 +109,19 @@ class TestDesignRulesWornType < Minitest::Test
     # method is deleted and the comment stays, and fails on a rename that broke
     # nothing. It measured a spelling.
   end
+
+  # The reader's caller: the design section of the system prompt.
+  def test_micro_typography_reaches_the_prompt
+    host = Class.new do
+      include Master::Voice::PersonalityPromptBuilder
+
+      def initialize = @rules = Struct.new(:none) { def data(_) = {} }.new
+      def style = {}.tap { |sections| add_design_rules(sections) }.fetch("master_style", "")
+    end
+
+    line = host.new.style.lines.find { |l| l.start_with?("Prose micro-typography") }
+    refute_nil line, "the design section should carry typography.micro"
+    assert_includes line, "oldstyle-nums in body"
+    assert_includes line, "orphans 3 and widows 3"
+  end
 end

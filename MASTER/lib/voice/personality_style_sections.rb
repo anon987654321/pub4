@@ -198,6 +198,7 @@ module Master
           eight_px_rhythm_line(design),
           touch_target_line(design),
           hick_line(design),
+          micro_typography_line,
           forbidden_css_line(design),
           beauty_line,
           markdown_style_line,
@@ -226,6 +227,18 @@ module Master
         return unless max
 
         "Peer choices: group or progressively disclose past #{max} (Hick, design_rules.ux_laws)."
+      end
+
+      # rules.yml names Design::Thresholds.micro_typography as the enforcer of
+      # typography.micro, so the prose CSS a model writes is told its values.
+      def micro_typography_line
+        micro = Master::Design::Thresholds.micro_typography
+        return if micro.empty?
+
+        "Prose micro-typography: features #{Array(micro['default_features']).join('/')}, " \
+          "#{micro['body_numerals']} in body and #{micro['table_numerals']} in tables, " \
+          "hyphens #{micro['hyphens']} limited #{Array(micro['hyphenate_limit_chars']).join(' ')}, " \
+          "orphans #{micro['orphans']} and widows #{micro['widows']} (design_rules.typography.micro)."
       end
 
       def forbidden_css_line(design)
