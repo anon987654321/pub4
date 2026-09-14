@@ -97,9 +97,23 @@
     return true;
   }
 
+  // face_ready is sent from a frame that painted, so it answers an ERROR the
+  // boot watchdog declared on a clock: a slow device that renders at 42s is
+  // up, not failed. The walk back uses only legal edges, so startEverything's
+  // own FACE from ERROR stays refused and no frame means no recovery.
+  function recoverOnPaint(detail) {
+    if (state !== STATES.ERROR) return;
+    const recovery = { ...detail, reason: "face_painted_after_error" };
+    transition(STATES.RECOVERING, recovery);
+    transition(STATES.ASSETS, recovery);
+    transition(STATES.FACE, recovery);
+    if (gates.voiceReady) transition(STATES.VOICE, recovery);
+  }
+
   function signal(kind, detail = {}) {
     switch (kind) {
       case "face_ready":
+        recoverOnPaint(detail);
         return setGate("faceReady", true, detail);
       case "voice_ready":
         return setGate("voiceReady", true, detail);

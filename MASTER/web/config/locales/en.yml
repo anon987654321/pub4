@@ -8,6 +8,7 @@ en:
     heading_mission: "mission control"
     main_label: "Mission control"
     loading: "loading…"
+    auth_required: "mission control needs the operator token"
     empty_none: "(none)"
     empty_empty: "(empty)"
     empty_quiet: "(quiet)"
@@ -44,7 +45,7 @@ en:
       agent_pool: "agent pool"
       breakers_none: "none"
   face:
-    title: "brgen"
+    title: "ai.brgen.no"
     prompt_user: "user"
     face_aria: "MASTER face — visual state mirror"
     chat_aria: "MASTER chat"
@@ -118,3 +119,4 @@ en:
       share_title: "MASTER face"
       retry_face_boot: "retry face boot"
       needs_js: "MASTER particle face requires JavaScript."
+      tighter_question: "try a tighter question"

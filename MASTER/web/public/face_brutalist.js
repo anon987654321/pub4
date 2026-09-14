@@ -52,21 +52,5 @@
     }, 450);
   }
 
-  let idleSince = performance.now();
-  const zin = document.getElementById("zin");
-  setInterval(() => {
-    if (!zin || document.activeElement === zin || zin.value) { idleSince = performance.now(); return; }
-    if (performance.now() - idleSince < 18000) return;
-    const hint = document.getElementById("idle-help-trail");
-    if (!hint) {
-      const el = document.createElement("div");
-      el.id = "idle-help-trail";
-      el.className = "idle-help-trail";
-      el.textContent = "↓ ask";
-      document.body.appendChild(el);
-    }
-    document.body.dataset.longSilence = "1";
-  }, 2000);
-
   window.MASTER_BRUTALIST = Object.freeze({ apply: applyBrutalist });
 })();

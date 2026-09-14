@@ -5,6 +5,12 @@ function chatT(key, fallback, vars) {
   return window.MASTER_T ? window.MASTER_T(key, fallback, vars) : fallback;
 }
 
+// The name the prompt bar prints from face.prompt_user, so the log and the bar
+// use one word for the visitor (CONSISTENCY). master is the runtime's own name.
+function promptUserName() {
+  return document.querySelector('#zsh .pp')?.textContent.trim() || 'user';
+}
+
 function escapeHtml(str) {
   return str.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
@@ -151,7 +157,7 @@ function appendMsg(role, text = '') {
   }
   const prompt = document.createElement('span');
   prompt.className = 'msg-prompt';
-  prompt.textContent = role === 'user' ? 'you$ ' : 'master$ ';
+  prompt.textContent = role === 'user' ? `${promptUserName()}$ ` : 'master$ ';
   d.appendChild(prompt);
   if (role === 'user') {
     d.appendChild(document.createTextNode(text));
@@ -306,7 +312,12 @@ window._chatOnDone  = () => {
   if (finished) window._chatRememberReply?.(finished);
   window._chatCollapseLongBlock?.(_streamEl);
   const lastAsst = log?.querySelector('.message.assistant:last-of-type');
-  if (lastAsst && parseFloat(document.body.dataset.confidence || '1') > 0.75) {
+  // The confidence event arrives mid-stream, after the message was built, so
+  // the band is set here from this turn's value and the value is spent.
+  const conf = parseFloat(document.body.dataset.confidence || '1');
+  delete document.body.dataset.confidence;
+  lastAsst?.style.setProperty('--conf-alpha', (0.08 + conf * 0.3).toFixed(2));
+  if (lastAsst && conf > 0.75) {
     lastAsst.classList.add('msg-settled');
     setTimeout(() => lastAsst.classList.remove('msg-settled'), 1800);
   }
@@ -795,7 +806,7 @@ document.querySelectorAll('.tool').forEach(btn => {
       li.dataset.index = String(index);
       const role = document.createElement('span');
       role.className = 'history-role';
-      role.textContent = entry.role === 'assistant' ? 'master' : 'you';
+      role.textContent = entry.role === 'assistant' ? 'master' : promptUserName();
       const body = document.createElement('span');
       body.className = 'history-body';
       body.textContent = (entry.content || '').slice(0, 240);
@@ -831,8 +842,16 @@ document.querySelectorAll('.tool').forEach(btn => {
     }
   }
 
+  // A closed panel sits off-screen at opacity 0, and Tab from the prompt
+  // landed on its close button: focus on something nobody can see. inert
+  // takes it out of the tab order and the accessibility tree while closed.
+  panel.inert = true;
+
   function setOpen(next) {
+    const hadFocus = panel.contains(document.activeElement);
     open = next;
+    panel.inert = !open;
+    if (!open && hadFocus) input?.focus();
     panel.dataset.open = open ? '1' : '0';
     document.body.dataset.historyOpen = open ? '1' : undefined;
     if (!open) delete document.body.dataset.historyOpen;

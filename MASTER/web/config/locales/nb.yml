@@ -19,6 +19,7 @@ nb:
     heading_mission: "kontrollrom"
     main_label: "Kontrollrom"
     loading: "laster…"
+    auth_required: "kontrollrommet krever operatørnøkkelen"
     empty_none: "(ingen)"
     empty_empty: "(tom)"
     empty_quiet: "(stille)"
@@ -58,7 +59,7 @@ nb:
       agent_pool: "agentpool"
       breakers_none: "ingen"
   face:
-    title: "brgen"
+    title: "ai.brgen.no"
     prompt_user: "bruker"
     face_aria: "MASTER-ansiktet — visuelt speil av tilstanden"
     chat_aria: "MASTER-samtale"
@@ -132,3 +133,4 @@ nb:
       share_title: "MASTER-ansiktet"
       retry_face_boot: "prøv å starte ansiktet igjen"
       needs_js: "MASTER-partikkelansiktet krever JavaScript."
+      tighter_question: "prøv et strammere spørsmål"
