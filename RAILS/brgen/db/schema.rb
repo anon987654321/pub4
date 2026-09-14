@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_13_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_14_120000) do
   create_table "account_merges", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "guest_user_id", null: false
@@ -1857,6 +1857,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_13_140000) do
   add_foreign_key "dating_matches", "users", column: "initiator_id"
   add_foreign_key "dating_matches", "users", column: "receiver_id"
   add_foreign_key "dating_profiles", "cities"
+  add_foreign_key "dating_profiles", "neighborhoods", on_delete: :nullify
   add_foreign_key "dating_profiles", "users"
   add_foreign_key "dating_prompts", "dating_profiles", column: "profile_id"
   add_foreign_key "dating_verifications", "dating_profiles", column: "profile_id"
