@@ -138,7 +138,7 @@ class FileLengthRatchetTest < Minitest::Test
 # — are placement_checks.rb, and they are the only checks in the gate that read
 # ux_laws, layout_rules.reading_patterns and layout_rules.whitespace.
 #
-# It stays at 344, over the 300 rb limit, because what is left does not divide,
+# It stays at 341, over the 300 rb limit, because what is left does not divide,
 # and this row is the place to say so rather than leave the next session hunting
 # a third seam. Two cuts look available and neither survives reading. By the
 # gate's own principle labels, fitts_law and fitts own four of the eleven checks
@@ -151,13 +151,14 @@ class FileLengthRatchetTest < Minitest::Test
 # name. Everything left asks one thing in different units: is this box, as the
 # browser computed it, the size, position, gap or spacing design_rules states.
 # The two things in here that were not that have already gone — colour to
-# token_checks.rb, placement to placement_checks.rb.
+# token_checks.rb, placement to placement_checks.rb. The gate reaches every
+# placement check through check_placement, one call where four stood.
 #
 # Both live under gates/support/rendered_geometry/, and token_checks.rb moved
 # there from gates/lib/ to join it: deploy_gates_contract_test asserts gates/lib/
 # holds exactly the gates gates.yml declares, and a check module is not a gate.
 # That test had been red on token_checks.rb since it was split out.
-"gates/lib/rendered/rendered_geometry.rb" => 344, # type checks live in geometry_type.rb
+"gates/lib/rendered/rendered_geometry.rb" => 341, # type checks live in geometry_type.rb
     # +6 in cf6e56a52 — an error template is not a route, so the manifest stopped
     # being hand-edited and the inventory learned to tell the two apart.
     # page_inventory.rb left this list on 2026-09-06: 444 -> 288 when the five

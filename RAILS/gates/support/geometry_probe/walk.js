@@ -184,6 +184,11 @@
     const fg = parseRgb(cs.color);
     const bg = effectiveBg(el);
     const fgOpaque = fg ? (fg.a >= 0.999 ? fg : over(fg, bg)) : null;
+    // Whether this box paints its own field, and what that field sits on.
+    // `bg` composites every ancestor, so a label inside a white card reports
+    // the card's white; visual weight belongs to the box that painted it.
+    const ownFill = parseRgb(cs.backgroundColor);
+    const fill = !!(ownFill && ownFill.a > 0);
 
     if (ownText && fgOpaque) {
       const ck = hex(fgOpaque);
@@ -252,6 +257,11 @@
       },
       color: hex(fgOpaque),
       bg: hex(bg),
+      fill: fill,
+      under: fill && el.parentElement ? hex(effectiveBg(el.parentElement)) : null,
+      // Siblings are told apart by parent, and a key that starts at an id has
+      // no parent step in it.
+      parent: interactive && el.parentElement ? selFor(el.parentElement) : null,
       font_size: Math.round(parseFloat(cs.fontSize) * 10) / 10,
       font_weight: cs.fontWeight,
       line_height: cs.lineHeight === 'normal' ? null : Math.round(parseFloat(cs.lineHeight) * 10) / 10,
