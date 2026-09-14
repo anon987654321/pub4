@@ -54,12 +54,10 @@ body.vertical-messenger .expiry-chip {
   color: var(--msg-muted);
 }
 
-body.vertical-messenger .expiry-chip[data-expiry="later"] {
-  color: color-mix(in srgb, var(--msg-accent) 55%, var(--msg-muted));
-}
-
+/* Urgency reads from weight, not from the messenger accent: #6b7fd7 is 3.24:1 on
+   the light ground, under TYPOGRAPHY's 7.0 for text this small. */
 body.vertical-messenger .expiry-chip[data-expiry="soon"] {
-  color: var(--msg-accent);
+  color: var(--text);
   font-weight: var(--weight-bold);
 }
 
@@ -116,7 +114,6 @@ body.vertical-messenger #messages article header {
   font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
   font-family: var(--font);
-  opacity: 0.78;
 }
 
 body.vertical-messenger #messages article[data-from="self"] header {
@@ -231,7 +228,7 @@ body.vertical-messenger .msg-actions summary {
 body.vertical-messenger .msg-actions a,
 body.vertical-messenger .msg-actions button {
   margin-inline-end: var(--space-2);
-  color: var(--msg-accent);
+  color: var(--text);
 }
 
 /* What a pasted link is, without opening it. A block link at the thread's own
