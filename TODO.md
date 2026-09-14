@@ -2,8 +2,8 @@
 
 The single backlog for the repo. Authority: `MASTER/data/soul.yml` >
 `MASTER/data/rules.yml` > root `CLAUDE.md` > the per-tree contract. Feature
-truth is `RAILS/apps.yml`; aspiration is `RAILS/apps.horizon.yml`; rationale is
-`MASTER/DECISIONS.md` and `OPENBSD/DECISIONS.md`. A record is deleted when it
+truth is `RAILS/apps.yml`; aspiration is `RAILS/apps.horizon.yml`; rationale sits
+in the comment beside the code and in the Refused lists in `MASTER/AGENTS.md` and `OPENBSD/CLAUDE.md`. A record is deleted when it
 closes, and `git log` keeps the history.
 
 **A finding is a hypothesis.** When 645 entries here were re-measured on
@@ -743,7 +743,7 @@ operator's.
 
 ## Operator-owned, recorded not opened — from the 2026-09-11 reassessment
 
-Two refusals from that pass stay closed and are argued in `MASTER/DECISIONS.md`:
+Two refusals from that pass stay closed, argued beside the code they concern:
 `Core::Constitution` keeps its own read of `rules.yml`, and cognition phases 3
 to 8 wait for weeks of real event history. What needs the box, money or a
 rendered decision, and is not already listed above:
@@ -793,8 +793,8 @@ one as a ticket without asking first.
 
 Opened 2026-09-11 as a numbered inventory across the four trees. The 2026-09-14
 pass closed the OPENBSD lists and the RAILS larger-than-a-sitting list by doing,
-measuring or arguing each item (`OPENBSD/DECISIONS.md` and
-`RAILS/shared/WIRING_NOTES.md` carry the arguments). What remains needs the
+measuring or arguing each item (comments beside the code, the OPENBSD Refused
+list and `RAILS/shared/WIRING_NOTES.md` carry the arguments). What remains needs the
 operator, vm23, a browser or the dilla owner. Numbers are kept for citation.
 
 ### MASTER
@@ -916,8 +916,7 @@ These are the operator's, because each changes a sound or accepts a changed inpu
 
 ## Wiring, type and Rails leftovers — the 2026-09-11 second pass
 
-Worked 2026-09-13 and 2026-09-14. Refusals are argued in `MASTER/DECISIONS.md`
-("What The Catalogs, Papers And Books Do Not License") and
+Worked 2026-09-13 and 2026-09-14. Refusals are in `MASTER/AGENTS.md`, Refused, and
 `RAILS/shared/WIRING_NOTES.md` ("Toggles redirect", "System tests stay on
 Selenium"). `data/modes.yml` has no reader (see STUDIO 850), so entries
 elsewhere that treat it as the live scale are wrong.
@@ -953,11 +952,7 @@ C26. **If `/var/log` shows `database is locked`, raise `busy_timeout`;** confirm
 
 The 2026-09-11 bughunt, the "one job, one door" restructure list and the two
 agent-harness comparisons were worked on 2026-09-13 and 2026-09-14. Refusals
-are argued in `MASTER/DECISIONS.md` ("The Public Face Is The Product", "What The
-Runtime Keeps Process-Wide", "Agent Harnesses Are Read, Not Wired", "The
-Harness Borrows From Aider And OpenClaw, Measured Against This Checkout",
-"Context Pressure, Affect And The Host Budget Are Separate Jobs"),
-`OPENBSD/DECISIONS.md` ("Scripts Name /home/dev/pub4") and
+sit in comments beside the code they concern, in the Refused lists in `MASTER/AGENTS.md` and `OPENBSD/CLAUDE.md`, and in
 `RAILS/shared/WIRING_NOTES.md` ("Write races on SQLite"). One trap from the pass:
 SQLite transactions here are `BEGIN IMMEDIATE`, so a finding about a uniqueness
 race or a rolled-back callback is false until it names a second database.
@@ -1006,8 +1001,7 @@ race or a rolled-back callback is false until it names a second database.
 ## OpenCrabs borrow list — ChatGPT intake 2026-09-13
 
 Worked 2026-09-13 and 2026-09-14: items 2 to 8 landed with a test each, and the
-refusals are in `MASTER/DECISIONS.md` under "The OpenCrabs Intake Borrows
-Mechanisms, Not A Second Runtime". One stays open.
+refusals are in `MASTER/AGENTS.md`, Refused. One stays open.
 
 1. **The interactive CLI can never approve a Request.** `CoreBridge.build_fold`
    builds `World.new` without `ask:`, so the push, hard reset and deploy the
@@ -1019,8 +1013,7 @@ Mechanisms, Not A Second Runtime". One stays open.
 
 478 items, worked 2026-09-13. About 306 were built, false or already open
 elsewhere; 43 were done with a test each; about 110 were refused, with the
-arguments in `MASTER/DECISIONS.md` and `OPENBSD/DECISIONS.md` under the
-2026-09-13 intake headings; seven product wishes went to `RAILS/apps.horizon.yml`.
+arguments in the Refused lists in `MASTER/AGENTS.md` and `OPENBSD/CLAUDE.md` and in comments beside the code; seven product wishes went to `RAILS/apps.horizon.yml`.
 The trap worth keeping: the intake asks for a gate over mechanisms the tree has
 under other names, so grep for the mechanism, never the proposal's word.
 
@@ -1042,8 +1035,8 @@ under other names, so grep for the mechanism, never the proposal's word.
 
 ## STUDIO/dilla mix and reference research — ChatGPT intake 2026-09-11
 
-Closed 2026-09-13. The measuring half was built or refused, and the argument is
-in `MASTER/DECISIONS.md`, "dilla Measures From Kept Takes, Not From An Intake".
+Closed 2026-09-13. The measuring half was built or refused, and the refusal is in
+`MASTER/AGENTS.md`, Refused.
 One decision stays with the operator.
 
 - **Sound changes the intake proposed.** A `ROUGH_HEWN` or `DENSE_EXPERIMENTAL`
@@ -1056,8 +1049,8 @@ One decision stays with the operator.
 ## MASTER web UI — future-human face — ChatGPT intake 2026-09-11
 
 Closed 2026-09-13 except the operator's look and voice and one check that needs
-a browser on vm23. The argument is in `MASTER/DECISIONS.md`, "The Face Intake
-Was A Design Brief, And The Design Is The Operator's".
+a browser on vm23. The refusal is in `MASTER/AGENTS.md`, Refused: the face's design is the
+operator's.
 
 - **Morphology.** Whether the face moves toward a far-future-human form — larger
   cranium, smaller lower face, wider orbits, seeded developmental asymmetry,
@@ -1083,10 +1076,9 @@ Was A Design Brief, And The Design Is The Operator's".
 
 Three ChatGPT intakes of 2026-09-11 closed on 2026-09-13. Layout
 micro-refinement (264 items) is `RAILS/shared/WIRING_NOTES.md` "The layout
-micro-refinement intake"; the CLI dmesg model (160) is `MASTER/DECISIONS.md`
-"The CLI Is Already A dmesg"; subtraction and entropy (254) and its fifty
-measured candidates are "An Audit Prompt With No Path Is Not An Item" in the
-same file. What stays open:
+micro-refinement intake"; the CLI dmesg model (160) is the comment on `Trace::Dmesg`;
+subtraction and entropy (254) is "No audit without a path" in `MASTER/AGENTS.md`,
+Refused. What stays open:
 
 - **`shared/_toast.html.erb` is rendered by no view.** `stimulus_boot.js`
   registers the controller, so the component is wired at one end only. Where a
@@ -1109,8 +1101,8 @@ same file. What stays open:
 
 Both 2026-09-11 performance intakes (980 items) closed on 2026-09-13: six
 measured costs fixed, the rest declined as unmeasured. The rule for the next
-proposal is `MASTER/DECISIONS.md` "Performance Work Starts From A Measured
-Cost", and for the box `OPENBSD/DECISIONS.md` of the same date.
+proposal is "No performance machinery ahead of a measured slowness" in
+the Refused lists in `MASTER/AGENTS.md` and `OPENBSD/CLAUDE.md`.
 
 - **dilla_live is not real-time.** Last measured: synthesis 1.58x real-time,
   the effects chain drags it to 0.34x. Re-measure first; any speedup must leave
@@ -1127,7 +1119,7 @@ whether the shared Commerce/Entitlements domain is worth building before liquidi
 ## Tree grammar
 
 The grammar itself is written in `TREE.md`; the Rakefile split and a MASTER
-`docs/` move are refused in `MASTER/DECISIONS.md`. The `MASTER/bin/` fold lives in
+`docs/` move are refused in `MASTER/AGENTS.md`, Refused. The `MASTER/bin/` fold lives in
 the MASTER sections above. One item survives.
 
 - **The OPENBSD root holds ~60 loose files in three layouts.** Gates at the root

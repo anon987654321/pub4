@@ -102,8 +102,8 @@ the whole of it: `rotation` (the voices, chosen per utterance), `post_chain`
 (the ffmpeg chain applied after synthesis) and `bed` (the pad under the
 speech). `Voice::Policy` reads them, `Speech#shaped` applies the chain,
 `browser_payload` hands them to the face so it sounds like the server. The
-chain and the bed are dillas vocabulary borrowed, never its renderer —
-`MASTER/DECISIONS.md` carries the argument.
+chain and the bed are dillas vocabulary borrowed, never its renderer; the
+comments on `voice.yml` `post_chain` and `Speech#shaped` carry the argument.
 
 **Renders are irreplaceable.** dilla and postpro write real output with rotating
    seeds. Never render over a take that matters, and never change a rendered-sound
@@ -184,7 +184,8 @@ wrote `Master::Ground::ContextProvider`. Before calling config inert, find the
 reader. Before calling code wrong, check what your scan measured.
 
 **A comment states the present-tense reason.** Not what the code used to do —
-that is what `git log` and the decision records are for.
+that is what `git log` is for. A standing refusal with no code to sit beside
+goes under "Refused, and why" in `MASTER/AGENTS.md` or `OPENBSD/CLAUDE.md`.
 
 ## House rules
 
@@ -255,5 +256,5 @@ pointer.
 | Deploy, the VPS, rc.d, relayd | `OPENBSD/CLAUDE.md`, then `OPENBSD/RUNBOOK.md` |
 | RAILS CSS or visual work | `RAILS/shared/WIRING_NOTES.md`, then `RAILS/shared/LAYOUT.md` |
 | brgen's city hosts and verticals | `RAILS/brgen/AGENTS.md` |
-| Why something odd is deliberate | `MASTER/DECISIONS.md`, `OPENBSD/DECISIONS.md` |
+| Why something odd is deliberate | the comment beside it; standing refusals in `MASTER/AGENTS.md` and `OPENBSD/CLAUDE.md`, "Refused, and why" |
 | The backlog: parity gaps, blockers, debt, what not to chase | `TODO.md` (repo root) |
