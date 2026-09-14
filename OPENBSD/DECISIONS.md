@@ -229,9 +229,8 @@ uptime checkers already share `RAILS/apps.yml` as their host list, and
 gates, seconds of work, and answer different questions: the fleet from any
 machine, the box from the box. The five-second relayd restart in
 `start_all_apps.sh` is not a race either, since each app's rc.d start blocks
-in its own `/up` wait before returning. `rails-app.tmpl` is installed only for
-an app that ships no rc.d script of its own, and three jobs footers stay three
-files, since generating them would add a build step to the box for the sake of
+in its own `/up` wait before returning. Every app ships its own rc.d script,
+and the three jobs footers stay three files, since generating them would add a build step to the box for the sake of
 fifty lines each.
 
 `with-ci-lock` honours a private `PUB4_CI_LOCK` directory while `ci_lock.sh`

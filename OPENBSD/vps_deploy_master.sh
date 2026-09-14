@@ -31,10 +31,9 @@ export RAILS_ENV=production
 # mistaken for, or leak into, the real one.
 export SECRET_KEY_BASE_DUMMY=1
 
-# Primary database. This script had no db step at all, and MASTER/web's schema
-# was not even tracked, so production.sqlite3 sat at zero tables while
-# config/cable.yml selected solid_cable — every ActionCable broadcast on
-# ai.brgen.no wrote to a table that did not exist (found 2026-07-29).
+# Primary database. MASTER/web's migrations reach ai.brgen.no's
+# production.sqlite3 through this step and no other, so a deploy without it
+# ships code against a schema that is behind.
 #
 # db:prepare is idempotent: it creates the database when absent, loads the
 # schema when empty, and otherwise applies only pending migrations.
