@@ -69,7 +69,8 @@ module Master::Core
 
     def scope
       { trees: @write_trees.dup, elapsed_s: Time.now - @started_at, write_lines: @write_lines,
-        read_paths: @read_paths.dup, asked: @asked }
+        read_paths: @read_paths.dup, asked: @asked, evidence: evidence_score, proved: proved?,
+        answerable: answered_from_reads? }
     end
 
     def mark_council_pass!(detail: "council pass")
