@@ -2530,6 +2530,20 @@ class TestDilla < Minitest::Test
                     "the engine reads 610 knobs; a sharp drop means the source glob stopped seeing files"
   end
 
+  # The sidecar was renamed from .dilla to .provenance.json, and pub4 keeps no
+  # reader for a renamed file: an old sidecar beside a part is not a recipe.
+  def test_provenance_reads_no_dilla_suffix
+    require File.expand_path("../dilla/lib/ledger", __dir__)
+    Dir.mktmpdir do |dir|
+      part = File.join(dir, "part.wav")
+      File.write("#{part}.dilla", JSON.generate("render_seed" => 7))
+
+      assert_equal "#{part}.provenance.json", DillaProvenance.manifest_path(part)
+      assert_nil DillaProvenance.part_recipe(part), "a .dilla sidecar must not be read"
+      refute DillaProvenance.const_defined?(:LEGACY_MANIFEST_EXT, false)
+    end
+  end
+
   # Five places each answered "which files is the engine made of" separately, and
   # they disagreed: the parse check ran over 80 files while the engine was 116,
   # so all thirty lib/*.rb modules were never syntax-checked at all -- and that is

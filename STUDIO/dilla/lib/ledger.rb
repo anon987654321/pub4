@@ -1054,9 +1054,6 @@ require "English"
 # DILLA_NO_PROVENANCE=1 restores the old behaviour completely, seed and all.
 module DillaProvenance
   MANIFEST_EXT = ".provenance.json"
-  # Sidecars written before the rename carry the old suffix. Reading falls back
-  # to it so a render made elsewhere still replays; nothing writes it.
-  LEGACY_MANIFEST_EXT = ".dilla"
   AUDIO = %w[.wav .mp3 .flac .ogg .m4a .aiff .aif].freeze
   SCHEMA = "dilla.render.v1"
 
@@ -1438,12 +1435,10 @@ module DillaProvenance
       nil
     end
 
-    # The sidecar for an audio file, preferring the current suffix and falling
-    # back to the one written before the rename.
+    # The sidecar for an audio file. One suffix, read and written: pub4 keeps no
+    # fallback for a renamed file, so an old sidecar is renamed on disk instead.
     def manifest_path(audio)
-      current = "#{audio}#{MANIFEST_EXT}"
-      legacy = "#{audio}#{LEGACY_MANIFEST_EXT}"
-      File.file?(current) || !File.file?(legacy) ? current : legacy
+      "#{audio}#{MANIFEST_EXT}"
     end
 
     def part_recipe(part)
