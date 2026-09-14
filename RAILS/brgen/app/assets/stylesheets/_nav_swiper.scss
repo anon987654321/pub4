@@ -13,18 +13,17 @@
    themes, operator choice 2026-08-29: a 3px band is not text, so it needs only
    the 3:1 a boundary does, and it clears that on either ground.
 
-   The "nytt!" badge is text in the same red, and TYPOGRAPHY asks 7.0 of normal
-   text. No red reaches that in both directions, so the badge ink is restated
-   per theme at the lightest step of the same hue that does: #ff6b6b is 7.57:1
-   on #000000 and #991b1b is 7.23:1 on #efefef. */
+   The "nytt!" badge is white bold type on a red fill with no padding, the
+   operator's specification. The fill is #cc2424, the red the tree already
+   carries a step under the rule, and white on it measures 5.46:1, which clears
+   WCAG 1.4.3's 4.5 for small bold text on either ground because the badge
+   brings its own. It stays under TYPOGRAPHY's 7.0 for normal text; #991b1b
+   would reach 8.31 if the operator wants that floor too. */
 :root {
   --nav-rule: #d62828;
   --nav-rule-w: 3px;
-  --nav-badge-ink: #ff6b6b;
-}
-
-:root[data-theme="light"] {
-  --nav-badge-ink: #991b1b;
+  --nav-badge-fill: #cc2424;
+  --nav-badge-ink: #ffffff;
 }
 
 /* Under the wordmark on a phone, beside it from md up. --top-band-block is the
@@ -242,9 +241,9 @@
 
 /* The badge on a new surface.
 
-   It takes the rule's hue at a text-strength step, --nav-badge-ink: "new" and
-   "you are here" are both this bar saying look here. What red must not also
-   mean here is --danger; see the note on the active rule.
+   A red fill carrying white ink: "new" and "you are here" are both this bar
+   saying look here, in one hue. What red must not also mean here is --danger;
+   see the note on the active rule.
 
    <sup> rather than a ::after because it is content: a reader who cannot see
    the colour is still told the surface is new. Sized in em so it tracks the
@@ -253,8 +252,10 @@
 .nav_link_badge {
   margin-inline-start: var(--space-0-5);
   font-size: 0.6em;
+  padding: 0;
   font-weight: var(--weight-bold);
   color: var(--nav-badge-ink);
+  background: var(--nav-badge-fill);
   letter-spacing: 0;
   vertical-align: super;
 }
