@@ -147,6 +147,41 @@ class GateLiveAndCssBudgetTest < Minitest::Test
     assert_equal ["fixture.scss:2"], gate.tally.fetch("important")
   end
 
+  # The rhythm budget, planted both ways: an off-rhythm px is counted, and the
+  # same number in a line comment, a block comment's continuation line, or a
+  # token fallback is not.
+  def test_an_off_rhythm_px_is_counted_and_a_commented_one_is_not
+    gate = rhythm_gate
+    gate.send(:count_budget_rules, "fixture.scss", "fixture.scss", <<~CSS)
+      .card { padding: 13px; }
+      .card { margin-top: -16px; gap: 24px; }
+      // .old { padding: 13px; }
+      /* The previous rule
+         read padding: 13px here. */
+      .tap { min-height: calc(var(--tap-min, 13px) + 4px); padding: var(--space-3, 13px); }
+    CSS
+
+    assert_equal ["fixture.scss:1 13px"], gate.tally.fetch("rhythm")
+  end
+
+  def test_rhythm_over_its_ceiling_fails_the_gate
+    gate = rhythm_gate
+    gate.instance_variable_set(:@result, Deploy::GateResult.new)
+    gate.instance_variable_set(:@budgets, { "rhythm" => 0 })
+    gate.send(:count_budget_rules, "fixture.scss", "fixture.scss", ".card { padding: 13px; }\n")
+    gate.send(:judge_budgets)
+    result = gate.instance_variable_get(:@result)
+
+    assert_includes result.failures, "css_constitution rhythm: 1 exceeds ceiling 0 (+1) — fix them, or record a new ceiling with a reason"
+  end
+
+  def rhythm_gate
+    gate = Deploy::CssConstitutionGate.new
+    gate.instance_variable_set(:@design, Operator::MasterDesign.blocks(Deploy::CssConstitutionGate::MASTER_DESIGN))
+    gate.instance_variable_set(:@tally, { "important" => [], "rhythm" => [], "magic_hex" => [], "type_scale" => [], "weight_ladder" => [] })
+    gate
+  end
+
   def test_contrast_ceilings_exist_for_both_bands
     assert_kind_of Integer, budget["contrast_below_aa"]
     assert_kind_of Integer, budget["contrast_below_aaa"]
