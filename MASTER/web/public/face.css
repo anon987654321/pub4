@@ -138,7 +138,7 @@ body[data-face-flash="1"] canvas {
 body[data-focus-mode="1"] .top-left-logo,
 body[data-focus-mode="1"] .ui-status,
 body[data-focus-mode="1"] .face-controls,
-body[data-focus-mode="1"] #chat-shell,
+body[data-focus-mode="1"] #chat-log,
 body[data-focus-mode="1"] #ascii-star,
 body[data-focus-mode="1"] #spin-btn {
   opacity: 0;
