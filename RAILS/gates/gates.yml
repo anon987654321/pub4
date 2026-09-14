@@ -41,6 +41,14 @@
 # says "unmeasured here" for the ones this machine has never run. A gate whose
 # median moves is visible in `runner.rb --ledger`.
 #
+# A gate is named for what it measures, never for the criterion near it, and owns
+# one assertion. Two gates asserting one property are two places for it to rot,
+# and a gate named after a WCAG criterion invites the criterion's number to be
+# declared again inside it: MASTER names the law and holds the number, and the
+# gate reads it from there. Under lib/, the directory names what a gate needs
+# before it can measure: source/ files only, live/ a booted app, rendered/ a
+# browser, research/ scores rather than verdicts.
+#
 # Order is run order.
 
 production:
