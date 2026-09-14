@@ -117,13 +117,6 @@ doc_paths:
       checked before cutting them.
 
       '
-  OPENBSD/DECISIONS.md:
-  - path: config/puma.rb
-    why: 'The sentence asserts the absence: none of the three apps has a config/puma.rb,
-      because they run Falcon. A gate that fails on a document for correctly reporting
-      that a file is gone has the direction backwards.
-
-      '
   OPENBSD/RUNBOOK.md:
   - path: db/seeds/launch.rb
     why: 'Prescriptive, not stale. The line asks for a launch seed to be written that
