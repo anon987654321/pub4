@@ -6,6 +6,10 @@ module Deploy
   # The RFC 6455 half of CdpSession: masking, frame headers, continuation and
   # control frames, and the blocking reads that assemble a message out of them.
   #
+  # Hand-rolled rather than ferrum: gates run under bare `ruby` with no bundle,
+  # ferrum lives only in the app bundles, and the gates pass Chrome
+  # `host-resolver-rules`, which ferrum does not expose.
+  #
   # Split out when cdp_session.rb passed its file-length ceiling, and the seam
   # was already drawn — the section carried a `--- websocket framing ---`
   # banner. Everything above that line speaks CDP (navigate, evaluate, press,
