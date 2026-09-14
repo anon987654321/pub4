@@ -472,10 +472,26 @@ class TestPostproFilm < Minitest::Test
     assert_operator lean.call(left), :>, lean.call(right), "the key did not move with the azimuth"
   end
 
+  # Near and far in one frame: sharp noise on the left, the same noise softened
+  # on the right, and a ramp top to bottom so both halves carry broad contrast
+  # for haze to take away. The uniform probe has detail everywhere, so it gives
+  # a depth cue nowhere to go.
+  def depth_probe(size = 256)
+    half = size / 2
+    bands = [110, 140, 95].map.with_index do |mean, i|
+      ramp = Vips::Image.xyz(size, size).extract_band(1).linear([80.0 / size], [-40.0])
+      noise = Vips::Image.gaussnoise(size, size, mean: mean, sigma: 40, seed: 11 + i) + ramp
+      far = noise.gaussblur(6.0).extract_area(half, 0, half, size)
+      noise.extract_area(0, 0, half, size).join(far, :horizontal)
+    end
+    Vips::Image.bandjoin(bands).cast("uchar").copy(interpretation: :srgb)
+  end
+
   # Haze belongs where the detail is not, or it is a global wash wearing the name
-  # of a depth cue.
+  # of a depth cue. On depth_probe the real cue moves the fine detail by half a
+  # percent and a wash over the whole frame by forty-four.
   def test_aerial_depth_leaves_the_sharp_parts_alone
-    source = portrait_probe
+    source = depth_probe
     hazed = aerial_depth(source, 1.0)
     assert_in_delta high_frequency(source), high_frequency(hazed), high_frequency(source) * 0.06,
                     "the haze reached the detail"
