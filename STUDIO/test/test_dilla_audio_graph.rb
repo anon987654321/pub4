@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "dilla_helper"
+require "open3"
 
 # The spine has one job at this stage: emit the filter_complex render_dilla
 # already emits. Until that is pinned as text, "it routes the same" is a claim
@@ -134,5 +135,54 @@ class TestAudioGraph < Minitest::Test
 
     refute_includes graph.to_filter_complex, "anull[kit]"
     assert_includes graph.to_filter_complex, "[drums][other]amix"
+  end
+
+  # An aeval that does not name its channel layout leaves every biquad after it
+  # inert: lowpass, highpass, equalizer, bass and treble pass the audio through
+  # untouched, on mono and stereo input alike, with no warning. Measured on
+  # 2026-09-14 against this ffmpeg; :c=same restores them. So each aeval in the
+  # engine names its layout, and the line is held in both halves: the behaviour,
+  # so an ffmpeg that fixes it is noticed, and the source.
+  def test_an_unnamed_aeval_layout_silences_the_filters_after_it
+    skip "ffmpeg not on PATH" unless system("which", "ffmpeg", out: File::NULL, err: File::NULL)
+
+    top = lambda do |chain|
+      out, = Open3.capture2e("ffmpeg", "-hide_banner", "-nostats", "-f", "lavfi", "-i", "anoisesrc=d=1:seed=5", "-af",
+                             "#{chain},highpass=f=4000,highpass=f=4000,astats=metadata=0:measure_perchannel=none:measure_overall=RMS_level",
+                             "-f", "null", "-")
+      out[/RMS level dB:\s*(-?[\d.]+)/, 1].to_f
+    end
+    assert_operator top.call("aeval=exprs='val(0)':c=same,lowpass=f=500"), :<, top.call("aeval=exprs='val(0)',lowpass=f=500") - 20,
+                    "if an unnamed aeval no longer bypasses the lowpass, the :c=same pins can be relaxed"
+  end
+
+  def test_every_engine_aeval_names_its_channel_layout
+    unpinned = DillaSources.all.flat_map do |path|
+      unpinned_aevals(File.read(path)).map { |line| "#{File.basename(path)}:#{line}" }
+    end
+    assert_empty unpinned, "aeval without :c=same bypasses every biquad after it"
+  end
+
+  private
+
+  # The end of each aeval's expression, found the way ffmpeg reads it: a quoted
+  # argument runs to its closing quote, an unquoted one to the next separator.
+  def unpinned_aevals(source)
+    lines = []
+    from = 0
+    while (at = source.index("aeval=", from))
+      from = at + 6
+      next if source[at - 1].to_s.match?(/[a-z]/)
+
+      body = at + 6
+      body += 6 if source[body, 6] == "exprs="
+      stop = source[body] == "'" ? source.index("'", body + 1) + 1 : source.index(/[,\[\]"\n;]/, body)
+      # A quoted expression is followed by its options; an unquoted one carries them.
+      pinned = source[body] == "'" ? source[stop, 16].match?(/\A:(?:c|channel_layout)=/) : source[body...stop].match?(/:(?:c|channel_layout)=/)
+      next if pinned
+
+      lines << (source[0, at].count("\n") + 1)
+    end
+    lines
   end
 end

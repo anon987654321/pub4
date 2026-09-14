@@ -6342,10 +6342,10 @@ def cross_sample_gate!(loop_path, partner, dest, duration:)
   # Rectify and smooth into a control signal, floored so the source never fully
   # disappears in the partner's gaps.
   sh! "ffmpeg", "-y", "-i", partner,
-      "-af", "highpass=f=60,lowpass=f=8000,aeval=abs(val(0))|abs(val(1))," \
+      "-af", "highpass=f=60,lowpass=f=8000,aeval=abs(val(0))|abs(val(1)):c=same," \
              "lowpass=f=#{XGATE_SMOOTH_HZ}," \
              "volume=#{(1.0 - XGATE_FLOOR).round(3)}," \
-             "aeval=val(0)+#{XGATE_FLOOR}|val(1)+#{XGATE_FLOOR}," \
+             "aeval=val(0)+#{XGATE_FLOOR}|val(1)+#{XGATE_FLOOR}:c=same," \
              "atrim=0:#{duration},apad=whole_dur=#{duration}",
       "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", env_path
   sh! "ffmpeg", "-y", "-i", loop_path, "-i", env_path,
@@ -6571,11 +6571,11 @@ SAMPLE_EXCITE_CHARACTER = (ENV["SAMPLE_EXCITE_CHARACTER"] || "even").to_s.downca
 def sample_excite_shaper
   unless SAMPLE_EXCITE_CHARACTER.start_with?("odd")
     k = (SAMPLE_EXCITE_DRIVE * 0.06).round(4)
-    return "aeval=exprs='val(0)+#{k}*val(0)*abs(val(0))|val(1)+#{k}*val(1)*abs(val(1))'"
+    return "aeval=exprs='val(0)+#{k}*val(0)*abs(val(0))|val(1)+#{k}*val(1)*abs(val(1))':c=same"
   end
 
   n = Math.tanh(SAMPLE_EXCITE_DRIVE).round(6)
-  "aeval=exprs='tanh(#{SAMPLE_EXCITE_DRIVE}*val(0))/#{n}|tanh(#{SAMPLE_EXCITE_DRIVE}*val(1))/#{n}'"
+  "aeval=exprs='tanh(#{SAMPLE_EXCITE_DRIVE}*val(0))/#{n}|tanh(#{SAMPLE_EXCITE_DRIVE}*val(1))/#{n}':c=same"
 end
 
 def build_sample_loop_filter(idx, duration, loop_bpm, target_bpm)
@@ -15214,15 +15214,15 @@ def grade_filter(fx, stock)
     # H&D characteristic curve analog: tanh waveshaper, gain-neutral.
     d = stock[:sat_drive]
     n = Math.tanh(d).round(6)
-    "aeval=exprs='tanh(#{d}*val(0))/#{n}|tanh(#{d}*val(1))/#{n}'"
+    "aeval=exprs='tanh(#{d}*val(0))/#{n}|tanh(#{d}*val(1))/#{n}':c=same"
   when "analog_noise"
     # Newson-Delon grain analog: flat Gaussian noise floor at stock amplitude.
     a = stock[:noise_amp]
-    "aeval=exprs='val(0)+#{a}*(random(0)-0.5)|val(1)+#{a}*(random(1)-0.5)'"
+    "aeval=exprs='val(0)+#{a}*(random(0)-0.5)|val(1)+#{a}*(random(1)-0.5)':c=same"
   when "harmonic_bloom"
     # Halation analog: even-harmonic enrichment (tube/transformer bloom).
     # x|x| adds 2nd+3rd order harmonics without DC offset.
-    "aeval=exprs='val(0)+0.07*val(0)*abs(val(0))|val(1)+0.07*val(1)*abs(val(1))'"
+    "aeval=exprs='val(0)+0.07*val(0)*abs(val(0))|val(1)+0.07*val(1)*abs(val(1))':c=same"
   when "spectral_warmth"
     # Color temperature analog: low-shelf boost + high-shelf cut.
     db = stock[:warmth_db].round(1)
@@ -15242,7 +15242,7 @@ def grade_filter(fx, stock)
   when "vinyl_crackle"
     # Faded print analog: stochastic crackle bursts at ~0.08% of samples.
     "aeval=exprs='val(0)+if(lt(random(0),0.0008),(random(1)-0.5)*0.22,0)|" \
-    "val(1)+if(lt(random(2),0.0008),(random(3)-0.5)*0.22,0)'"
+    "val(1)+if(lt(random(2),0.0008),(random(3)-0.5)*0.22,0)':c=same"
   when "transient_sharpen"
     # Micro-contrast analog: presence boost via high-mid shelf.
     "equalizer=f=4000:width_type=o:width=1.5:g=2.0"
@@ -15257,11 +15257,11 @@ def grade_filter(fx, stock)
   when "reel_splice_clicks"
     # Reel splice analog: a physical tape join clicks once per reel length.
     "aeval=exprs='val(0)+if(lt(mod(t,42.5),0.0015),0.4*(random(0)-0.5),0)|" \
-    "val(1)+if(lt(mod(t,42.5),0.0015),0.4*(random(1)-0.5),0)'"
+    "val(1)+if(lt(mod(t,42.5),0.0015),0.4*(random(1)-0.5),0)':c=same"
   when "stylus_mistrack"
     # Groove mistracking analog: extra clipping kicks in only above a peak threshold.
     "aeval=exprs='val(0)+0.5*(tanh(4*val(0))-val(0))*gt(abs(val(0)),0.55)|" \
-    "val(1)+0.5*(tanh(4*val(1))-val(1))*gt(abs(val(1)),0.55)'"
+    "val(1)+0.5*(tanh(4*val(1))-val(1))*gt(abs(val(1)),0.55)':c=same"
   when "platter_wow"
     # Off-centre pressing analog: wow locked to platter speed (33 1/3rpm ≈ 0.556Hz),
     # not tape capstan speed — slower and more periodic than wow_flutter.
@@ -15284,7 +15284,7 @@ def grade_filter(fx, stock)
   when "dub_delay"
     # Dub delay analog: regenerating tape-echo feedback with saturation in the loop.
     "aecho=0.8:0.75:340|680:0.45|0.28,aeval=exprs='tanh(1.6*val(0))/#{Math.tanh(1.6).round(6)}|" \
-    "tanh(1.6*val(1))/#{Math.tanh(1.6).round(6)}'"
+    "tanh(1.6*val(1))/#{Math.tanh(1.6).round(6)}':c=same"
   end
 end
 
@@ -15571,7 +15571,7 @@ def sonitex_tape_filters(input_tag = "mix", out_tag: "snx_out")
     DillaMixer::Device.new(:pre_emphasis,
       "[snx_wet]equalizer=f=2800:t=o:w=1.2:g=#{s[:dist_pre_emph_db]},lowpass=f=#{s[:dist_pre_lp]}[snx_pre]"),
     DillaMixer::Device.new(:saturate,
-      "[snx_pre]aeval=exprs='tanh(#{d}*(val(0)+#{s[:dist_dc]}))/#{n}|tanh(#{d}*(val(1)+#{s[:dist_dc]}))/#{n}'[snx_sat]"),
+      "[snx_pre]aeval=exprs='tanh(#{d}*(val(0)+#{s[:dist_dc]}))/#{n}|tanh(#{d}*(val(1)+#{s[:dist_dc]}))/#{n}':c=same[snx_sat]"),
     DillaMixer::Device.new(:de_emphasis, "[snx_sat]equalizer=f=2800:t=o:w=1.2:g=#{-s[:dist_pre_emph_db]}[snx_de]"),
     DillaMixer::Device.new(:dry_wet_mix, "[snx_dry][snx_de]amix=inputs=2:weights=#{dry_w} #{wet_w}:duration=longest[snx3]"),
     DillaMixer::Device.new(:tone_shape,
@@ -15586,13 +15586,13 @@ def sonitex_tape_filters(input_tag = "mix", out_tag: "snx_out")
       "[snx6]lowpass=f=#{s[:phone_lp]},equalizer=f=#{s[:sibilance_hz]}:t=o:w=1.1:g=#{s[:sibilance_db]}[snx7]"),
     DillaMixer::Device.new(:hiss,
       "[snx7]aeval=exprs='(val(0)+#{s[:hiss_amp]}*(random(0)-0.5))|" \
-      "(val(1)+#{s[:hiss_amp]}*(random(1)-0.5))'[snx8]"),
+      "(val(1)+#{s[:hiss_amp]}*(random(1)-0.5))':c=same[snx8]"),
     DillaMixer::Device.new(:pops_clicks,
       "[snx8]aeval=exprs='val(0)+if(lt(random(2),#{s[:pop_rate]}),(random(3)-0.5)*#{pop_dyn}*max(0.15,1-1.8*abs(val(0))),0)|" \
-      "val(1)+if(lt(random(4),#{s[:click_rate]}),(random(5)-0.5)*#{(pop_dyn * 0.55).round(3)}*max(0.15,1-1.8*abs(val(1))),0)'[snx9]"),
+      "val(1)+if(lt(random(4),#{s[:click_rate]}),(random(5)-0.5)*#{(pop_dyn * 0.55).round(3)}*max(0.15,1-1.8*abs(val(1))),0)':c=same[snx9]"),
     DillaMixer::Device.new(:crush, "[snx9]acrusher=bits=#{s[:crush_bits]}:samples=#{s[:crush_sr]}:mix=#{s[:crush_mix]}[snx10]"),
     DillaMixer::Device.new(:crush_post_lp, "[snx10]lowpass=f=#{s[:crush_post_lp]}[snx11]"),
-    DillaMixer::Device.new(:exciter, "[snx11]aeval=exprs='#{HEDD}'[snx12]"),
+    DillaMixer::Device.new(:exciter, "[snx11]aeval=exprs='#{HEDD}':c=same[snx12]"),
     DillaMixer::Device.new(:output_comp,
       "[snx12]acompressor=threshold=#{s[:out_comp_threshold]}dB:ratio=#{s[:out_comp_ratio]}:attack=22:release=120:makeup=#{s[:out_comp_makeup]}[#{out_tag}]"),
   ])
@@ -15697,7 +15697,7 @@ def synth_impulse_response!(room)
   cfg = CONVOLUTION_ROOMS.fetch(room)
   decay_rate = (3.0 / cfg[:decay]).round(3)
   sh! "ffmpeg", "-y", "-f", "lavfi", "-i", "anoisesrc=color=white:d=#{cfg[:decay] + 0.3}:r=#{SAMPLE_RATE}:seed=#{noise_seed(1)}",
-      "-af", "aeval=exprs='val(0)*exp(-#{decay_rate}*t)|val(1)*exp(-#{decay_rate}*t)',#{cfg[:color]}",
+      "-af", "aeval=exprs='val(0)*exp(-#{decay_rate}*t)|val(1)*exp(-#{decay_rate}*t)':c=same,#{cfg[:color]}",
       "-ac", "2", "-ar", SAMPLE_RATE.to_s, path
   path
 end
@@ -20910,7 +20910,7 @@ def bass(root_hz = 55.0)
   expr_l = "0.45*sin(2*PI*(#{root_hz}+#{lfo_amt}*sin(2*PI*#{lfo_hz}*t))*t)" \
              "+0.08*sin(2*PI*#{(root_hz * 2).round(2)}*t)" \
              "+0.03*sin(2*PI*#{(root_hz * 3).round(2)}*t)"
-  filter = "aeval=exprs='#{expr_l}:#{expr_l}',equalizer=f=80:width_type=o:width=2:g=4,lowpass=f=200"
+  filter = "aeval=exprs='#{expr_l}:#{expr_l}':c=same,equalizer=f=80:width_type=o:width=2:g=4,lowpass=f=200"
   puts "playing bass #{root_hz}Hz (Ctrl-C to stop)"
   exec "ffplay", "-f", "lavfi", "-i", "aevalsrc=0", "-nodisp", "-af", filter
 rescue SystemCallError => e
@@ -22831,41 +22831,41 @@ def generate_drum_kit!
      "lowpass=f=180,acrusher=bits=12:samples=2:mix=0.42,equalizer=f=55:t=o:w=0.8:g=4,acompressor=threshold=-20dB:ratio=3:attack=3:release=50"],
     ["snare.wav",
      ["-f", "lavfi", "-i", "anoisesrc=d=0.32:color=white:amplitude=0.95:seed=#{noise_seed(2)}", "-f", "lavfi", "-i", "sine=f=195:d=0.32"],
-     "[0:a]asplit=2[n][n2];[n]highpass=f=1200,lowpass=f=7000,aeval=exprs='val(0)*exp(-t*32)'[crack];" \
-     "[n2]bandpass=f=350:w=500,aeval=exprs='val(0)*exp(-t*18)'[rattle];[1:a]aeval=exprs='val(0)*exp(-t*22)'[body];" \
+     "[0:a]asplit=2[n][n2];[n]highpass=f=1200,lowpass=f=7000,aeval=exprs='val(0)*exp(-t*32)':c=same[crack];" \
+     "[n2]bandpass=f=350:w=500,aeval=exprs='val(0)*exp(-t*18)':c=same[rattle];[1:a]aeval=exprs='val(0)*exp(-t*22)':c=same[body];" \
      "[crack][rattle][body]amix=inputs=3:weights=0.75 0.35 0.45,acrusher=bits=10:samples=2:mix=0.38"],
     ["ghost.wav",
      ["-f", "lavfi", "-i", "anoisesrc=d=0.14:color=pink:amplitude=0.7:seed=#{noise_seed(3)}"],
-     "highpass=f=900,lowpass=f=5500,aeval=exprs='val(0)*exp(-t*48)',volume=0.55"],
+     "highpass=f=900,lowpass=f=5500,aeval=exprs='val(0)*exp(-t*48)':c=same,volume=0.55"],
     ["hat.wav",
      ["-f", "lavfi", "-i", "anoisesrc=d=0.07:color=white:amplitude=1:seed=#{noise_seed(4)}"],
-     "highpass=f=7500,lowpass=f=15000,aeval=exprs='val(0)*exp(-t*140)',acrusher=bits=8:samples=1:mix=0.55"],
+     "highpass=f=7500,lowpass=f=15000,aeval=exprs='val(0)*exp(-t*140)':c=same,acrusher=bits=8:samples=1:mix=0.55"],
     ["open_hat.wav",
      ["-f", "lavfi", "-i", "anoisesrc=d=0.42:color=white:amplitude=0.85:seed=#{noise_seed(5)}"],
-     "highpass=f=6000,bandpass=f=9000:w=5000,aeval=exprs='val(0)*exp(-t*9)'"],
+     "highpass=f=6000,bandpass=f=9000:w=5000,aeval=exprs='val(0)*exp(-t*9)':c=same"],
     ["bass_43.wav",
      ["-f", "lavfi", "-i", "aevalsrc='0.75*exp(-t*1.1)*sin(2*PI*(43+5*sin(2*PI*0.28*t))*t)':d=1.35:s=#{sr}"],
      "lowpass=f=120,equalizer=f=50:t=o:w=1:g=6"],
     ["ind_kick.wav",
      ["-f", "lavfi", "-i", "aevalsrc='0.95*exp(-t*5.5)*sin(2*PI*(50+520*exp(-t*45))*t)':d=0.65:s=#{sr}"],
-     "aeval=exprs='tanh(5.5*val(0))/tanh(5.5)',lowpass=f=140,equalizer=f=52:t=o:w=0.6:g=9,acompressor=threshold=-16dB:ratio=10:attack=1:release=35"],
+     "aeval=exprs='tanh(5.5*val(0))/tanh(5.5)':c=same,lowpass=f=140,equalizer=f=52:t=o:w=0.6:g=9,acompressor=threshold=-16dB:ratio=10:attack=1:release=35"],
     ["ind_clap.wav",
      ["-f", "lavfi", "-i", "anoisesrc=d=0.22:color=white:amplitude=1:seed=#{noise_seed(6)}"],
-     "[0:a]asplit=3[a][b][c];[a]adelay=0|3,highpass=f=1400,aeval=exprs='val(0)*exp(-t*24)'[c1];" \
-     "[b]adelay=12|15,highpass=f=1800,aeval=exprs='val(0)*exp(-(t-0.012)*30)'[c2];[c]bandpass=f=900:w=1800,aeval=exprs='val(0)*exp(-t*20)'[c3];" \
+     "[0:a]asplit=3[a][b][c];[a]adelay=0|3,highpass=f=1400,aeval=exprs='val(0)*exp(-t*24)':c=same[c1];" \
+     "[b]adelay=12|15,highpass=f=1800,aeval=exprs='val(0)*exp(-(t-0.012)*30)':c=same[c2];[c]bandpass=f=900:w=1800,aeval=exprs='val(0)*exp(-t*20)':c=same[c3];" \
      "[c1][c2][c3]amix=inputs=3,acompressor=threshold=-14dB:ratio=6:attack=1:release=25"],
     ["ind_hat.wav",
      ["-f", "lavfi", "-i", "anoisesrc=d=0.05:color=white:amplitude=1:seed=#{noise_seed(7)}"],
-     "highpass=f=9000,aeval=exprs='val(0)*exp(-t*160)',equalizer=f=12000:t=o:w=2:g=4"],
+     "highpass=f=9000,aeval=exprs='val(0)*exp(-t*160)':c=same,equalizer=f=12000:t=o:w=2:g=4"],
     ["ind_bass_e.wav",
      ["-f", "lavfi", "-i", "aevalsrc='(2*mod(41.2*t,1)-1)*exp(-t*7)*0.8':d=0.24:s=#{sr}"],
-     "lowpass=f=420,aeval=exprs='tanh(2.8*val(0))/tanh(2.8)'"],
+     "lowpass=f=420,aeval=exprs='tanh(2.8*val(0))/tanh(2.8)':c=same"],
     ["ind_bass_bb.wav",
      ["-f", "lavfi", "-i", "aevalsrc='(2*mod(58.27*t,1)-1)*exp(-t*7)*0.8':d=0.24:s=#{sr}"],
-     "lowpass=f=420,aeval=exprs='tanh(2.8*val(0))/tanh(2.8)'"],
+     "lowpass=f=420,aeval=exprs='tanh(2.8*val(0))/tanh(2.8)':c=same"],
     ["ind_stab.wav",
      ["-f", "lavfi", "-i", "anoisesrc=d=0.35:color=white:amplitude=0.9:seed=#{noise_seed(8)}", "-f", "lavfi", "-i", "sine=f=164.81:d=0.35"],
-     "[0:a]bandpass=f=280:w=900,aeval=exprs='val(0)*exp(-t*14)'[m];[1:a]aeval=exprs='val(0)*exp(-t*11)'[t];" \
+     "[0:a]bandpass=f=280:w=900,aeval=exprs='val(0)*exp(-t*14)':c=same[m];[1:a]aeval=exprs='val(0)*exp(-t*11)':c=same[t];" \
      "[m][t]amix=inputs=2:weights=0.7 0.35,lowpass=f=2800"],
   ]
   recipes.each do |name, inputs, chain|
@@ -22902,7 +22902,7 @@ def generate_fm_drum_kit!
      # dusty analog hardware.
      ["-f", "lavfi", "-i", "aevalsrc='0.85*exp(-t*6)*sin(2*PI*55*t+6*exp(-t*30)*sin(2*PI*58*t))+0.35*exp(-t*9)*sin(2*PI*42*t)':d=0.6:s=#{sr}",
       "-f", "lavfi", "-i", "anoisesrc=d=0.6:color=pink:amplitude=0.02:seed=#{noise_seed(9)}"],
-     "[0:a]aeval=exprs='tanh(1.8*val(0))/tanh(1.8)',lowpass=f=240[voice];" \
+     "[0:a]aeval=exprs='tanh(1.8*val(0))/tanh(1.8)':c=same,lowpass=f=240[voice];" \
      "[1:a]lowpass=f=2500[floor];" \
      "[voice][floor]amix=inputs=2:duration=first,acompressor=threshold=-18dB:ratio=3:attack=2:release=45"],
     # Alternate kick voice for the kick/ind_kick alternation cycle
@@ -22913,14 +22913,14 @@ def generate_fm_drum_kit!
     ["ind_kick.wav",
      ["-f", "lavfi", "-i", "aevalsrc='0.85*exp(-t*7)*sin(2*PI*60*t+7*exp(-t*34)*sin(2*PI*46*t))+0.32*exp(-t*10)*sin(2*PI*44*t)':d=0.55:s=#{sr}",
       "-f", "lavfi", "-i", "anoisesrc=d=0.55:color=pink:amplitude=0.02:seed=#{noise_seed(10)}"],
-     "[0:a]aeval=exprs='tanh(2.0*val(0))/tanh(2.0)',lowpass=f=250[voice];" \
+     "[0:a]aeval=exprs='tanh(2.0*val(0))/tanh(2.0)':c=same,lowpass=f=250[voice];" \
      "[1:a]lowpass=f=2500[floor];" \
      "[voice][floor]amix=inputs=2:duration=first,acompressor=threshold=-17dB:ratio=3.5:attack=2:release=40"],
     ["snare.wav",
      ["-f", "lavfi", "-i", "aevalsrc='0.8*exp(-t*18)*sin(2*PI*200*t+7*exp(-t*35)*sin(2*PI*330*t))':d=0.3:s=#{sr}",
       "-f", "lavfi", "-i", "anoisesrc=d=0.3:color=white:amplitude=0.9:seed=#{noise_seed(11)}",
       "-f", "lavfi", "-i", "anoisesrc=d=0.3:color=pink:amplitude=0.015:seed=#{noise_seed(12)}"],
-     "[1:a]highpass=f=1500,lowpass=f=8000,aeval=exprs='val(0)*exp(-t*30)'[crack];" \
+     "[1:a]highpass=f=1500,lowpass=f=8000,aeval=exprs='val(0)*exp(-t*30)':c=same[crack];" \
      "[2:a]lowpass=f=3000[floor];" \
      "[0:a][crack][floor]amix=inputs=3:weights=0.65 0.68 1,acompressor=threshold=-16dB:ratio=4:attack=2:release=40"],
     # Genuinely distinct voice, not just a quieter snare -- lower mod
@@ -22949,7 +22949,7 @@ def generate_fm_drum_kit!
     ["bass_43.wav",
      ["-f", "lavfi", "-i", "aevalsrc='0.9*exp(-t*1.6)*sin(2*PI*(43+67*exp(-t*26))*t)" \
                            "+0.5*exp(-t*140)*sin(2*PI*1800*t)*between(t,0,0.008)':d=1.4:s=#{sr}"],
-     "aeval=exprs='tanh(1.5*val(0))/tanh(1.5)',lowpass=f=320,equalizer=f=45:t=o:w=0.9:g=3"],
+     "aeval=exprs='tanh(1.5*val(0))/tanh(1.5)':c=same,lowpass=f=320,equalizer=f=45:t=o:w=0.9:g=3"],
   ]
   recipes.each do |name, inputs, chain|
     dest = File.join(FM_DRUM_DIR, name)
@@ -28164,7 +28164,7 @@ def render_industrial(destination = File.join(ROOT, "foundry_pulse.mp3"), bars_c
   filt << "[dry2][echo]amix=inputs=2:weights=0.7 0.3[pre]"
   sat = Math.tanh(3.8).round(6)
   filt << "[pre]extrastereo=m=1.18[wide]"
-  filt << "[wide]aeval=exprs='tanh(3.8*val(0))/#{sat}|tanh(3.8*val(1))/#{sat}'[satd]"
+  filt << "[wide]aeval=exprs='tanh(3.8*val(0))/#{sat}|tanh(3.8*val(1))/#{sat}':c=same[satd]"
   filt << "[satd]acompressor=threshold=-14dB:ratio=10:attack=1:release=45:makeup=3.5[comp]"
   filt << "[comp]equalizer=f=52:t=o:w=0.65:g=6,equalizer=f=120:t=o:w=1:g=2,equalizer=f=9500:t=o:w=2:g=-5[eq]"
   filt << "[eq]acrusher=bits=14:samples=2:mix=0.08[pre_master]"
@@ -28836,7 +28836,7 @@ def render_analog(destination, bar_count: bars)
     [music][vinyl]amix=inputs=2:weights=1 0.32:duration=first,
       acompressor=threshold=-18dB:ratio=3.5:attack=25:release=120:makeup=2,
       acrusher=bits=#{ANALOG_CFG[:sp_bits]}:samples=#{ANALOG_CFG[:sp_ratio].round(3)}:mix=0.22,
-      aeval='(tanh((val(0)+#{ANALOG_CFG[:tape_dc]})*1.45)-0.072)/0.87|(tanh((val(1)+#{ANALOG_CFG[:tape_dc]})*1.45)-0.072)/0.87',
+      aeval='(tanh((val(0)+#{ANALOG_CFG[:tape_dc]})*1.45)-0.072)/0.87|(tanh((val(1)+#{ANALOG_CFG[:tape_dc]})*1.45)-0.072)/0.87':c=same,
       highpass=f=30,lowpass=f=12000,equalizer=f=45:t=o:w=1.2:g=1,
       alimiter=level_out=0.96:limit=0.92[out]
   F
@@ -28917,13 +28917,13 @@ def madlib_drum_filters(input_tag = "bed", out_tag: "mad_out")
   [
     "[#{input_tag}]asplit=2[md][sc]",
     "[md]acrusher=bits=10:samples=1.69:mix=0.55[cr]",
-    "[cr]aeval=exprs='tanh(2.6*val(0))/#{sat}|tanh(2.6*val(1))/#{sat}'[sat]",
+    "[cr]aeval=exprs='tanh(2.6*val(0))/#{sat}|tanh(2.6*val(1))/#{sat}':c=same[sat]",
     "[sat]acompressor=threshold=-17dB:ratio=8:attack=2:release=65:makeup=5.5[comp]",
     "[comp]equalizer=f=55:t=o:w=0.75:g=7,equalizer=f=2400:t=o:w=2:g=-5,equalizer=f=9000:t=o:w=2:g=-3[eq]",
     "[eq]extrastereo=m=1.14[wide]",
     "[wide][sc]sidechaincompress=threshold=-19dB:ratio=7:attack=1:release=75:level_sc=0.85[punched]",
     "[punched]vibrato=f=0.22:d=0.005[wow]",
-    "[wow]aeval=exprs='val(0)+0.014*(random(0)-0.5)|val(1)+0.014*(random(1)-0.5)'[#{out_tag}]",
+    "[wow]aeval=exprs='val(0)+0.014*(random(0)-0.5)|val(1)+0.014*(random(1)-0.5)':c=same[#{out_tag}]",
   ]
 end
 
@@ -30072,10 +30072,10 @@ def render_techno(destination = File.join(OUTPUT_DIR, "techno_hate.mp3"))
 
   filt = <<~F
     [0:a]aformat=channel_layouts=stereo,equalizer=f=55:t=o:w=0.7:g=4,
-         aeval='tanh(val(0)*2.5)/tanh(2.5)|tanh(val(1)*2.5)/tanh(2.5)',
+         aeval='tanh(val(0)*2.5)/tanh(2.5)|tanh(val(1)*2.5)/tanh(2.5)':c=same,
          acompressor=threshold=-10dB:ratio=6:attack=1:release=40:makeup=3[kick];
     [1:a]aformat=channel_layouts=stereo,
-         aeval='tanh(val(0)*3.5)/tanh(3.5)|tanh(val(1)*3.5)/tanh(3.5)',
+         aeval='tanh(val(0)*3.5)/tanh(3.5)|tanh(val(1)*3.5)/tanh(3.5)':c=same,
          equalizer=f=300:t=o:w=2:g=3,equalizer=f=1500:t=o:w=2:g=4,
          lowpass=f=4000[acid];
     [2:a]aformat=channel_layouts=stereo,asplit=3[nc][nh][no];
@@ -30085,7 +30085,7 @@ def render_techno(destination = File.join(OUTPUT_DIR, "techno_hate.mp3"))
     [no]volume='#{safe_volume_env(opn_env)}*0.3':eval=frame,bandpass=f=7000:w=5000[open];
     [kick][acid][clap][hat][open]amix=inputs=5:weights=1.4 1.0 0.7 0.5 0.4:duration=longest[drums];
     [drums]highpass=f=30,acompressor=threshold=-14dB:ratio=8:attack=1:release=50:makeup=4[drums_comp];
-    [drums_comp]aeval='tanh(val(0)*1.8)/tanh(1.8)|tanh(val(1)*1.8)/tanh(1.8)'[drums_sat];
+    [drums_comp]aeval='tanh(val(0)*1.8)/tanh(1.8)|tanh(val(1)*1.8)/tanh(1.8)':c=same[drums_sat];
     [drums_sat]equalizer=f=80:t=o:w=0.8:g=2,equalizer=f=8000:t=o:w=2:g=2[master_eq];
     [master_eq]alimiter=level_in=1.0:level_out=0.90:limit=0.85:attack=2:release=20[out]
   F
@@ -30183,7 +30183,7 @@ def mix_v7
     [comp_low]acompressor=threshold=-12dB:ratio=5:attack=2:release=60:makeup=3[comp_mid];
     [comp_mid]acompressor=threshold=-6dB:ratio=10:attack=1:release=30:makeup=2[comp_hi];
     [comp_hi]equalizer=f=55:t=o:w=0.7:g=5,equalizer=f=160:t=o:w=1:g=2,equalizer=f=500:t=o:w=1.5:g=-2,equalizer=f=3000:t=o:w=2:g=-1,equalizer=f=10000:t=o:w=2:g=3[master_eq];
-    [master_eq]aeval='tanh(val(0)*2.5)/tanh(2.5)|tanh(val(1)*2.5)/tanh(2.5)'[tape_sat];
+    [master_eq]aeval='tanh(val(0)*2.5)/tanh(2.5)|tanh(val(1)*2.5)/tanh(2.5)':c=same[tape_sat];
     [tape_sat]aecho=0.3:0.2:18:0.06[air];
     [air]alimiter=level_in=1.0:level_out=0.98:limit=0.92:attack=3:release=25:level=disabled[limited];
     [limited]volume=0.96[out]
@@ -30216,7 +30216,7 @@ def mix_v8
     [0:a]volume=0.85[b];[1:a]volume=1.4[v];[2:a]volume=0.35[c];
     [b][v][c]amix=inputs=3:duration=first:weights=1 1.4 0.35[mix];
     [mix]equalizer=f=60:t=o:w=0.8:g=3,equalizer=f=5000:t=o:w=2:g=2[master_eq];
-    [master_eq]aeval='tanh(val(0)*1.8)/tanh(1.8)|tanh(val(1)*1.8)/tanh(1.8)'[tape];
+    [master_eq]aeval='tanh(val(0)*1.8)/tanh(1.8)|tanh(val(1)*1.8)/tanh(1.8)':c=same[tape];
     [tape]alimiter=level_in=1.0:level_out=0.97:limit=0.94:attack=5:release=80:level=disabled[out]
   F
 end
@@ -30259,7 +30259,7 @@ def mix_v9
     [mix]acompressor=threshold=-22dB:ratio=3:attack=8:release=200:makeup=3[comp1];
     [comp1]acompressor=threshold=-10dB:ratio=6:attack=2:release=60:makeup=2[comp2];
     [comp2]equalizer=f=50:t=o:w=0.7:g=4,equalizer=f=200:t=o:w=1:g=2,equalizer=f=2000:t=o:w=1.5:g=-2,equalizer=f=12000:t=o:w=2:g=3[master_eq];
-    [master_eq]aeval='tanh(val(0)*3.0)/tanh(3.0)|tanh(val(1)*3.0)/tanh(3.0)'[tape];
+    [master_eq]aeval='tanh(val(0)*3.0)/tanh(3.0)|tanh(val(1)*3.0)/tanh(3.0)':c=same[tape];
     [tape]aecho=0.25:0.18:25:0.08[master_air];
     [master_air]alimiter=level_in=1.0:level_out=0.98:limit=0.93:attack=2:release=20:level=disabled[out]
   F
@@ -30272,7 +30272,7 @@ def mix_v10
     [0:a]aformat=sample_rates=44100:channel_layouts=stereo[raw];
     [raw]equalizer=f=50:t=o:w=0.8:g=6,equalizer=f=100:t=o:w=1:g=4,equalizer=f=250:t=o:w=1:g=2,equalizer=f=700:t=o:w=1.5:g=-1,equalizer=f=3000:t=o:w=2:g=1,equalizer=f=8000:t=o:w=2:g=2,equalizer=f=14000:t=o:w=3:g=3[beat_eq];
     [beat_eq]acompressor=threshold=-22dB:ratio=3:attack=15:release=200:makeup=3[tape_comp];
-    [tape_comp]aeval='#{HEDD}'[hedd];
+    [tape_comp]aeval='#{HEDD}':c=same[hedd];
     [hedd]aecho=0.5:0.3:25|50:0.1|0.05[spring];
     [spring]volume=0.82[beat_out]
   F
@@ -30280,7 +30280,7 @@ def mix_v10
     [0:a]aformat=sample_rates=44100:channel_layouts=stereo[vraw];
     [vraw]equalizer=f=160:t=o:w=1:g=-10,equalizer=f=350:t=o:w=1:g=-4,equalizer=f=1000:t=o:w=1.5:g=2,equalizer=f=2500:t=o:w=2:g=6,equalizer=f=5000:t=o:w=2:g=5,equalizer=f=10000:t=o:w=3:g=6,equalizer=f=16000:t=o:w=3:g=5[voc_eq];
     [voc_eq]acompressor=threshold=-16dB:ratio=2.5:attack=6:release=100:makeup=5[voc_comp];
-    [voc_comp]aeval='#{HEDD}'[voc_hedd];
+    [voc_comp]aeval='#{HEDD}':c=same[voc_hedd];
     [voc_hedd]asplit=3[va][vb][vc];[va]volume=1.0[vdry];
     [vb]adelay=#{d8}|#{d8},aecho=0.65:0.55:400|800:0.35|0.15[vplate];
     [vc]chorus=0.5:0.9:18|22:0.08|0.06:0.2|0.25:1.0|1.0[vdouble];
@@ -30297,9 +30297,9 @@ def mix_v10
     [0:a]volume=0.84[b];[1:a]volume=1.22[v];[2:a]volume=0.20[p];[3:a]volume=0.12[c];
     [b][v][p][c]amix=inputs=4:duration=first:weights=1 1.22 0.20 0.12[mix];
     [mix]acompressor=threshold=-24dB:ratio=2:attack=20:release=300:makeup=2[glue];
-    [glue]aeval='#{HEDD}'[bus_hedd];
+    [glue]aeval='#{HEDD}':c=same[bus_hedd];
     [bus_hedd]equalizer=f=45:t=o:w=0.7:g=3,equalizer=f=150:t=o:w=1:g=2,equalizer=f=700:t=o:w=1.5:g=-1,equalizer=f=12000:t=o:w=2:g=2[master_eq];
-    [master_eq]aeval='tanh(val(0)*2.2)/tanh(2.2)|tanh(val(1)*2.2)/tanh(2.2)'[tape_sat];
+    [master_eq]aeval='tanh(val(0)*2.2)/tanh(2.2)|tanh(val(1)*2.2)/tanh(2.2)':c=same[tape_sat];
     [tape_sat]aecho=0.2:0.15:15:0.05[air];
     [air]alimiter=level_in=1.0:level_out=0.98:limit=0.93:attack=4:release=40:level=disabled[out]
   F
@@ -30337,7 +30337,7 @@ def mix_v11
     [b][v][c]amix=inputs=3:duration=first:weights=1 1.25 0.12[mix];
     [mix]acompressor=threshold=-20dB:ratio=2.5:attack=18:release=250:makeup=3[glue];
     [glue]equalizer=f=55:t=o:w=0.8:g=4,equalizer=f=2000:t=o:w=0.6:g=-3,equalizer=f=8000:t=o:w=2:g=1,lowpass=f=16000[master_eq];
-    [master_eq]aeval='tanh(val(0)*2.0)/tanh(2.0)|tanh(val(1)*2.0)/tanh(2.0)'[tape];
+    [master_eq]aeval='tanh(val(0)*2.0)/tanh(2.0)|tanh(val(1)*2.0)/tanh(2.0)':c=same[tape];
     [tape]aphaser=in_gain=0.3:out_gain=0.5:delay=2:decay=0.3:speed=0.15:type=sinusoidal[master_phase];
     [master_phase]alimiter=level_in=1.0:level_out=0.97:limit=0.93:attack=5:release=60:level=disabled[out]
   F
@@ -31408,10 +31408,10 @@ def sample_drives_pads!(harmonic_path, loop_path, duration:)
   begin
     sh! "ffmpeg", "-y", "-stream_loop", "-1", "-i", loop_path,
         "-af", "highpass=f=80,lowpass=f=6000," \
-               "aeval=abs(val(0))|abs(val(1))," \
+               "aeval=abs(val(0))|abs(val(1)):c=same," \
                "lowpass=f=#{SAMPLE_DRIVE_SMOOTH_HZ}," \
                "volume=#{(1.0 - floor).round(4)}," \
-               "aeval=val(0)+#{floor.round(4)}|val(1)+#{floor.round(4)}," \
+               "aeval=val(0)+#{floor.round(4)}|val(1)+#{floor.round(4)}:c=same," \
                "atrim=0:#{duration.round(3)},apad=whole_dur=#{duration.round(3)}",
         "-ar", SAMPLE_RATE.to_s, "-ac", "2", "-c:a", "pcm_s16le", env_path
     sh! "ffmpeg", "-y", "-i", harmonic_path, "-i", env_path,
@@ -33816,7 +33816,7 @@ def liveset_filter(count, periods: LIVESET_PERIODS)
     acrusher=bits=12:samples=1.69:level_in=1:level_out=1:mix=0.35,
     equalizer=f=2200:t=o:w=0.6:g=-2,
     aphaser=in_gain=0.4:out_gain=0.7:delay=2:decay=0.3:speed=0.12:type=sinusoidal,
-    aeval='(tanh((val(0)+0.05)*1.6)-0.0798)/0.853|(tanh((val(1)+0.05)*1.6)-0.0798)/0.853',
+    aeval='(tanh((val(0)+0.05)*1.6)-0.0798)/0.853|(tanh((val(1)+0.05)*1.6)-0.0798)/0.853':c=same,
     alimiter=level_in=1.0:level_out=0.95:limit=0.95:attack=5:release=80[out]
   F
   "#{per_input.join(';')};#{taps}amix=inputs=#{count}:weights=#{'1 ' * count}:duration=longest[mix];#{master}"
