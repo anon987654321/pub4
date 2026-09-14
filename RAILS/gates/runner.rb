@@ -26,8 +26,10 @@
 # or config fails. Dropping it silently broke production, frontend and
 # domain_align inside the integrity chain while they passed standalone.
 require_relative "../../OPENBSD/lib/utf8"
+require_relative "../shared/lib/operator/dmesg"
 require "optparse"
 require "rbconfig"
+require "tempfile"
 require "yaml"
 
 GATES_DIR = __dir__
@@ -66,6 +68,32 @@ GATES = YAML.safe_load_file(ENV.fetch("GATES_FILE", File.join(GATES_DIR, "gates.
 # failed" can be told apart from "this whole run failed". The pid disambiguates
 # two runs started in the same second, which happens in CI.
 RUN_ID = "#{Time.now.utc.strftime('%Y%m%dT%H%M%SZ')}-#{Process.pid}"
+
+# Every line the runner itself prints reads `gates0 at <parent>: <fact>`. A
+# deploy sets PUB4_DEPLOY_APP, so its gate lines name the app being deployed.
+GATE_UNIT = "gates0"
+GATE_PARENT = ENV.fetch("PUB4_DEPLOY_APP", "rails")
+
+def say(detail)
+  clear_progress
+  puts Operator::Dmesg.line(GATE_UNIT, GATE_PARENT, detail)
+end
+
+# One repainting line at a terminal, so a long gate is not silence; nothing
+# anywhere else. It is written to the real stdout, outside any capture.
+def progress(detail)
+  return unless Operator::Dmesg.escapes?(STDOUT)
+
+  STDOUT.print "\r\e[K#{Operator::Dmesg.line(GATE_UNIT, GATE_PARENT, detail)}"
+  @progress = true
+end
+
+def clear_progress
+  STDOUT.print "\r\e[K" if @progress
+  @progress = false
+end
+
+def clock = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
 # Counts the pass lines interpolate. Lambdas, not values: a gate's own constant
 # is only defined once its file has been required, and nothing should pay for a
@@ -123,24 +151,24 @@ def needs(key) = Array(GATES.dig(key, "needs"))
 # figure declared in gates.yml. A declared cost is a fifth hand-maintained table
 # and, worse, it cannot show the failure it is for: a gate that doubles reads the
 # same as a gate that did not. A median over real runs moves when the gate does.
+#
+# One line, and only for a run long enough to be worth deciding about. A
+# deploy's nine gates take forty seconds and need no forecast; --all locally
+# takes tens of minutes and does. The per-gate medians are `--ledger`'s rows.
+PLAN_WORTH_SAYING_S = 60
+
 def plan_for(keys)
   history = ledger.entries.group_by { |row| row["gate"] }
-  rows = keys.map do |key|
+  medians = keys.map do |key|
     times = history.fetch(key, []).filter_map { |row| row["duration_ms"] }.sort
-    median = times.empty? ? nil : times[times.size / 2]
-    [key, median, needs(key)]
+    times.empty? ? nil : times[times.size / 2]
   end
-  known = rows.filter_map { |_, median, _| median }
-  puts "[gates] plan: #{keys.size} gate(s)#{known.empty? ? '' : format(', ~%s of measured wall time', duration(known.sum))}"
-  rows.each do |key, median, wants|
-    cost = median ? duration(median) : "unmeasured here"
-    puts format("[gates]   %-24s %-16s %s", key, cost, wants.empty? ? "" : "needs #{wants.join(', ')}").rstrip
-  end
-  unmeasured = rows.count { |_, median, _| median.nil? }
-  return if unmeasured.zero?
+  known_ms = medians.compact.sum
+  return if known_ms < PLAN_WORTH_SAYING_S * 1000
 
-  puts "[gates]   #{unmeasured} gate(s) have no history on this machine; " \
-       "the ledger fills in as they run (--ledger to read it)"
+  unmeasured = medians.count(&:nil?)
+  say("#{keys.size} gates planned, ~#{duration(known_ms)} measured here" \
+      "#{unmeasured.zero? ? '' : ", #{unmeasured} unmeasured"} (--ledger per gate)")
 end
 
 def duration(ms)
@@ -158,7 +186,8 @@ end
 # argument for saying it out loud: eighteen declared states, three actual pages,
 # and every summary printed above them read PASSED.
 #
-# It never changes an exit code.
+# It never changes an exit code, and a present Chrome is the silent case: a
+# browser gate that ran has its own outcome to report.
 def report_browser_precondition(keys)
   wanted = keys.select { |key| needs(key).include?("browser") }
   return if wanted.empty?
@@ -170,15 +199,12 @@ def report_browser_precondition(keys)
     # Every browser gate is skipped from here, and a skipped gate reads green.
     # Which failure it was decides whether that is a missing Chrome or a broken
     # session file.
-    warn "runner: CDP unavailable (#{e.class}: #{e.message.lines.first.to_s.strip}) — browser gates skipped"
+    say("CDP unavailable (#{e.class}: #{e.message.lines.first.to_s.strip})")
     false
   end
-  if chrome
-    puts "[gates] browser: Chrome present — #{wanted.size} browser-backed gate(s) could measure"
-  else
-    puts "[gates] browser: NO Chrome — #{wanted.size} browser-backed gate(s) degrade to " \
-         "warnings and measure nothing (#{wanted.join(', ')})"
-  end
+  return if chrome
+
+  say("no Chrome, so #{wanted.size} browser gates measured nothing: #{wanted.join(', ')}")
 end
 
 def visual_contract_capture_args
@@ -240,7 +266,7 @@ end
 
 def emit_gate_result(key, result, verbose:)
   unless result.respond_to?(:render)
-    warn "[gates] #{key}: in-process gate did not return Deploy::GateResult"
+    warn "#{key}: in-process gate did not return Deploy::GateResult"
     return :failed
   end
 
@@ -248,9 +274,6 @@ def emit_gate_result(key, result, verbose:)
   # a gate that failed with one finding and one that failed with ninety read the
   # same in the outcome column.
   @last_result = result
-
-  autofix_off = ENV["GATE_AUTOFIX"].to_s.strip.downcase.match?(/\A(0|false|no|off)\z/)
-  warn "[gates] GATE_AUTOFIX #{autofix_off ? 'off (report-only)' : 'on (fix + remeasure)'}"
 
   # GateResult owns both the rendering and the three-way classification. A gate
   # that could not run its check is not a pass: it does not block the suite (off
@@ -266,12 +289,14 @@ end
 def run_subprocess(key, row)
   path = File.join(GATES_DIR, row.fetch("script"))
   unless File.file?(path)
-    warn "[gates] Missing gate script for #{key}: #{path}"
+    warn "missing gate script for #{key}: #{path}"
     return :failed
   end
   extra = gate_extra_args(key)
-  puts "[gates] visual_contract capture enabled (VISUAL_CAPTURE=1)" if key == "visual_contract" && extra.include?("--capture")
-  ok = system(*ruby_cmd, path, *extra)
+  puts "visual_contract capture enabled (VISUAL_CAPTURE=1)" if key == "visual_contract" && extra.include?("--capture")
+  # $stdout and $stderr are the run's capture file here, so the child writes
+  # into the same record an in-process gate's puts and warn do.
+  ok = system(*ruby_cmd, path, *extra, out: $stdout, err: $stderr)
   status = $?
 
   # Three cases, and two of them are easy to conflate.
@@ -304,10 +329,10 @@ def run_subprocess(key, row)
 end
 
 OUTCOME_LABEL = {
-  passed: "PASSED",
-  failed: "FAILED",
-  inconclusive: "INCONCLUSIVE (checked nothing)",
-  errored: "ERRORED (gate broke, blocked nothing)",
+  passed: "passed",
+  failed: "failed",
+  inconclusive: "inconclusive, checked nothing",
+  errored: "errored, blocked nothing",
 }.freeze
 
 def ledger
@@ -315,6 +340,49 @@ def ledger
     require_relative "../../OPENBSD/lib/gate_ledger"
     Deploy::GateLedger.new
   end
+end
+
+# A passing gate's output, when it is not the one gate asked for, goes to a log
+# beside the ledger: a run that points the ledger at a scratch directory keeps
+# it there too, and the ledger already holds each gate's outcome and time. With
+# the ledger off, or a log that will not open, the output prints instead, so
+# retired detail reaches a file or the reader and never neither.
+OUTPUT_LOG_MAX_BYTES = 4_000_000
+
+def output_log
+  return @output_log if defined?(@output_log)
+
+  path = File.join(File.dirname(ledger.path), ".gate_output.log")
+  @output_log = ledger.enabled? ? File.open(path, File.size?(path).to_i > OUTPUT_LOG_MAX_BYTES ? "w" : "a") : nil
+rescue SystemCallError
+  @output_log = nil
+end
+
+# Everything a gate prints, in-process or as a child, into one file, read back
+# once it is done. `system` in run_subprocess hands the child these same two.
+def capture_output
+  saved = [$stdout, $stderr]
+  Tempfile.create("gate-output") do |file|
+    file.sync = true
+    $stdout = $stderr = file
+    outcome = yield
+    $stdout, $stderr = saved
+    file.rewind
+    [outcome, file.read.scrub]
+  ensure
+    $stdout, $stderr = saved
+  end
+end
+
+def report_gate(key, outcome, lines, seconds, verbose:)
+  fact = "#{key} #{OUTCOME_LABEL.fetch(outcome)} in #{Operator::Dmesg.duration(seconds)}"
+  if outcome == :passed && !verbose && output_log
+    output_log.puts(Operator::Dmesg.line(GATE_UNIT, GATE_PARENT, fact), *lines)
+    return
+  end
+  say(fact) unless outcome == :passed && verbose
+  clear_progress
+  lines.each { |line| puts line }
 end
 
 # Why a gate could not measure, kept for the summary rather than only printed
@@ -353,13 +421,13 @@ end
 
 def run_one(key, verbose:)
   row = GATES.fetch(key)
-  source = subprocess?(row) ? row["script"] : row["class"]
-  puts "\n==> [gates] Running #{key} (#{source})"
+  progress("running #{key}")
   @last_result = nil
-  started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-  outcome = subprocess?(row) ? run_subprocess(key, row) : run_in_process(key, row, verbose:)
-  elapsed = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
-  puts "[gates] #{key} #{OUTCOME_LABEL.fetch(outcome)}"
+  started = clock
+  outcome, output = capture_output { subprocess?(row) ? run_subprocess(key, row) : run_in_process(key, row, verbose:) }
+  elapsed = ((clock - started) * 1000).round
+  lines = Operator::Dmesg.collapse(Operator::Dmesg.plain(output).lines)
+  report_gate(key, outcome, lines, elapsed / 1000.0, verbose:)
   record_reasons(key, outcome)
   ledger.record(
     gate: key,
@@ -405,35 +473,25 @@ end
 
 unknown = ARGV.reject { |name| GATES.key?(name) }
 if unknown.any?
-  warn "[gates] unknown gate(s): #{unknown.join(', ')}. Use --list."
+  warn "unknown gate(s): #{unknown.join(', ')}. Use --list."
   exit 1
 end
 
 requested = options[:all] || ARGV.empty? ? GATES.keys : ARGV
 
 gates_to_run = resolve_gates(requested)
-skipped = requested - gates_to_run
-puts "[gates] Skipping #{skipped.join(', ')} (covered by composite gates in this run)" if skipped.any?
+covered = requested - gates_to_run
 
 plan_for(gates_to_run)
-report_browser_precondition(gates_to_run)
 
 # One named gate is the direct-invocation case the per-gate scripts used to
 # serve, so let it print its own success line.
 verbose = gates_to_run.size == 1
-total = gates_to_run.size
-outcomes = {}
-gates_to_run.each_with_index do |key, index|
-  puts "[gates] #{index + 1}/#{total} #{key}" unless verbose
-  outcomes[key] = run_one(key, verbose:)
-end
-
-failed = outcomes.select { |_, o| o == :failed }.keys
-unchecked = outcomes.select { |_, o| o == :inconclusive }.keys
-errored = outcomes.select { |_, o| o == :errored }.keys
-passed = outcomes.count { |_, o| o == :passed }
-
-puts "\n#{'=' * 50}"
+run_started = clock
+outcomes = gates_to_run.to_h { |key| [key, run_one(key, verbose:)] }
+by_outcome = outcomes.keys.group_by { |key| outcomes[key] }
+failed = by_outcome.fetch(:failed, [])
+errored = by_outcome.fetch(:errored, [])
 
 # Whether the browser-backed half of this run measured anything.
 #
@@ -442,52 +500,42 @@ puts "\n#{'=' * 50}"
 # about the tree — but it means a green `--all` says nothing about them unless
 # you separately know Chrome was there. The committed visual manifests are the
 # argument for saying it out loud: eighteen declared states, three actual
-# pages, and every summary printed above them read PASSED.
-#
-# One line, printed with the verdict. It never changes an exit code.
+# pages, and every summary printed above them read passed.
 report_browser_precondition(gates_to_run)
 
 # Printed before the verdict and independently of it, because it is the one line
 # that changes what the rest of the summary means. An errored gate blocked
-# nothing (fail-open), so a run can say ALL PASSED while a gate that would have
+# nothing (fail-open), so a run can read passed while a gate that would have
 # caught the regression never ran — and unlike a failure, nobody goes looking
 # for it. GATE_STRICT_ERRORS=1 turns these into failures on the deploy host.
 if errored.any?
-  puts "[gates] #{errored.size} gate(s) ERRORED and blocked nothing: #{errored.join(', ')}"
-  puts "[gates]   whatever those guard was not checked this run " \
-       "(GATE_STRICT_ERRORS=1 to fail on it; --ledger for how long this has been true)"
+  say("#{errored.join(', ')} errored and blocked nothing; what they guard went unchecked " \
+      "(GATE_STRICT_ERRORS=1 fails on it, --ledger says for how long)")
 end
 
+# Most gates already open the reason with their own name, and printing it twice
+# reads like two gates.
+REASONS.each do |key, reasons|
+  reasons.each { |reason| say("#{key} measured nothing: #{reason.to_s.delete_prefix("#{key}: ")}") }
+end
 unless REASONS.empty?
-  puts "[gates] #{REASONS.size} gate(s) measured nothing, and why:"
-  REASONS.each do |key, reasons|
-    # Most gates already open the reason with their own name, and printing it
-    # twice reads like two gates.
-    reasons.each { |reason| puts "[gates]   #{key}: #{reason.to_s.delete_prefix("#{key}: ")}" }
-  end
-  puts "[gates]   GATE_STRICT_INCONCLUSIVE=1 turns these into failures. A live " \
-       "precondition is satisfied by RAILS/bin/triangle up; a deploy-host one is not."
+  say("GATE_STRICT_INCONCLUSIVE=1 fails on these; RAILS/bin/triangle up satisfies a live precondition, " \
+      "not a deploy-host one")
 end
 
 if EMPTY_FAILURES.any?
-  puts "[gates] #{EMPTY_FAILURES.size} gate(s) failed while naming no finding: #{EMPTY_FAILURES.join(', ')}"
-  puts "[gates]   a red gate with an empty failure list broke before it reached a check — " \
-       "run it alone to see the error"
+  say("#{EMPTY_FAILURES.join(', ')} failed naming no finding, so broke before a check; run each alone")
 end
 
-if failed.any?
-  puts "[gates] SOME GATES FAILED: #{failed.join(', ')}"
-elsif unchecked.any?
-  # Never claim a coverage number the run did not earn. This line is the whole
-  # point of the third state: "ALL PASSED (24)" used to include gates that had
-  # no Chrome, no listening app and nothing to measure.
-  puts "[gates] #{passed} gate(s) passed, #{unchecked.size} inconclusive: #{unchecked.join(', ')}"
-elsif errored.any?
-  # Same rule as the inconclusive line above, for the same reason: "ALL SELECTED
-  # GATES PASSED (46)" over a run where the forty-seventh crashed is a coverage
-  # number the run did not earn, and it is the number people quote.
-  puts "[gates] #{passed} gate(s) passed, #{errored.size} errored: #{errored.join(', ')}"
-else
-  puts "[gates] ALL SELECTED GATES PASSED (#{passed})"
+# The verdict. Never a coverage number the run did not earn: an inconclusive or
+# errored gate is named beside the pass count, never folded into it, because
+# this is the line people quote.
+autofix = ENV["GATE_AUTOFIX"].to_s.strip.downcase.match?(/\A(0|false|no|off)\z/) ? "off" : "on"
+verdict = ["#{by_outcome.fetch(:passed, []).size} of #{outcomes.size} passed in " \
+           "#{Operator::Dmesg.duration(clock - run_started)}, autofix #{autofix}"]
+%i[failed errored inconclusive].each do |outcome|
+  verdict << "#{by_outcome[outcome].join(', ')} #{outcome}" if by_outcome[outcome]
 end
+verdict << "#{covered.size} covered by composites" unless covered.empty?
+say(verdict.join("; "))
 exit failed.any? ? 1 : 0

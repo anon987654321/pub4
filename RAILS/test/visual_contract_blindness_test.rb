@@ -128,8 +128,8 @@ class VisualContractBlindnessTest < Minitest::Test
         RbConfig.ruby, RUNNER, "visual_contract"
       )
 
-      assert_includes out, "visual_contract INCONCLUSIVE (checked nothing)"
-      refute_includes out, "ALL SELECTED GATES PASSED"
+      assert_includes out, "gates0 at rails: visual_contract inconclusive, checked nothing"
+      assert_match(/^gates0 at rails: 0 of 1 passed .*; visual_contract inconclusive$/, out)
       assert_equal 0, status.exitstatus, "an unmeasured gate must not block a run:\n#{out}"
     end
   end

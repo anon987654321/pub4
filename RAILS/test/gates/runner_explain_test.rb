@@ -37,8 +37,7 @@ class RunnerExplainTest < Minitest::Test
   end
 
   def test_it_runs_no_gate
-    refute_includes explain, "==> [gates] Running"
-    refute_includes explain, "[gates] plan:"
+    refute_includes explain, "gates0 at"
   end
 
   # A switch named in --explain that no file reads is documentation of nothing.

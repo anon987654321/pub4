@@ -37,17 +37,20 @@ class GateFailOpenTest < Minitest::Test
         { "GATES_FILE" => FIXTURE_REGISTRY, "GATE_LEDGER" => ledger }.merge(env),
         RbConfig.ruby, RUNNER, "--all"
       )
-      yield out, status, Deploy::GateLedger.new(path: ledger)
+      retired = File.read(File.join(dir, ".gate_output.log")) if File.file?(File.join(dir, ".gate_output.log"))
+      yield out, status, Deploy::GateLedger.new(path: ledger), retired.to_s
     end
   end
 
   # The one that matters. ok_after is declared after the raising gate, so it only
-  # appears in the output if the run survived the crash.
+  # reaches the retired-output log if the run survived the crash. A passing gate
+  # prints nothing, so the log beside the ledger is where it has to be found.
   def test_a_raising_gate_does_not_stop_the_gates_after_it
-    run_fixture_suite do |out, status, _ledger|
-      assert_includes out, "ok_before PASSED", out
-      assert_includes out, "raiser ERRORED", out
-      assert_includes out, "ok_after PASSED", "a gate after the raising one never ran:\n#{out}"
+    run_fixture_suite do |out, status, _ledger, retired|
+      assert_includes retired, "gates0 at rails: ok_before passed", out
+      assert_includes out, "gates0 at rails: raiser errored, blocked nothing", out
+      assert_includes retired, "gates0 at rails: ok_after passed", "a gate after the raising one never ran:\n#{out}"
+      refute_includes out, "ok_after passed", "a passing gate printed to the terminal:\n#{out}"
       assert_equal 0, status.exitstatus, "a crashed gate must not block by default:\n#{out}"
     end
   end
@@ -56,7 +59,7 @@ class GateFailOpenTest < Minitest::Test
   # shapes this has actually taken. Both must land as :errored, not :failed.
   def test_a_missing_gate_class_errors_rather_than_failing
     run_fixture_suite do |out, _status, _ledger|
-      assert_includes out, "missing_class ERRORED", out
+      assert_includes out, "missing_class errored, blocked nothing", out
       assert_includes out, "uninitialized constant", out
     end
   end
@@ -65,9 +68,8 @@ class GateFailOpenTest < Minitest::Test
   # did not earn, and it may not bury the errored gates in a pass total.
   def test_the_summary_names_the_errored_gates_and_does_not_count_them_as_passes
     run_fixture_suite do |out, _status, _ledger|
-      assert_includes out, "2 gate(s) ERRORED and blocked nothing: raiser, missing_class", out
-      refute_includes out, "ALL SELECTED GATES PASSED", out
-      assert_includes out, "2 gate(s) passed, 2 errored", out
+      assert_includes out, "gates0 at rails: raiser, missing_class errored and blocked nothing", out
+      assert_match(/^gates0 at rails: 2 of 4 passed in \S+, autofix on; raiser, missing_class errored$/, out)
     end
   end
 
@@ -75,8 +77,7 @@ class GateFailOpenTest < Minitest::Test
   # news, and the run should stop.
   def test_strict_errors_promotes_a_crash_to_a_blocking_failure
     run_fixture_suite("GATE_STRICT_ERRORS" => "1") do |out, status, _ledger|
-      assert_includes out, "SOME GATES FAILED", out
-      assert_includes out, "raiser", out
+      assert_match(/^gates0 at rails: 2 of 4 passed in \S+, autofix on; raiser, missing_class failed$/, out)
       assert_equal 1, status.exitstatus, out
     end
   end
