@@ -142,12 +142,12 @@ module Operator
     # findings under law/ were laws quoting themselves. With conduct applied it
     # is 0, which is the honest number: those lines declare evidence.
     def considered(path, text)
-base = path.include?("/MASTER/law/") ? ::Law.conduct(text) : text
-# A Ruby law reading a <<~JS or <<~SQL body reports on a language it does
-# not govern. See SourceMasking#without_foreign_heredocs.
-return base unless path.end_with?(".rb", ".rake")
+      base = path.include?("/MASTER/law/") ? ::Law.conduct(text) : text
+      # A Ruby law reading a <<~JS or <<~SQL body reports on a language it does
+      # not govern. See SourceMasking#without_foreign_heredocs.
+      return base unless path.end_with?(".rb", ".rake")
 
-Master::Review::Scan::SourceMasking.without_foreign_heredocs(base)
+      Master::Review::Scan::SourceMasking.without_foreign_heredocs(base)
     end
 
     # Counted from the members rather than tallied alongside them, so the
@@ -202,9 +202,11 @@ Master::Review::Scan::SourceMasking.without_foreign_heredocs(base)
         # same question is how a census and a gate disagree about one file.
         lang = Master.language_for(path)&.to_sym
         relative = path.delete_prefix("#{ROOT}/")
-        rules.each_value do |rule|
-          next if rule.semantic? || !rule.applies?(path, lang)
-
+        
+        # Pre-filter rules by language to avoid O(files × rules) loop.
+        # Reduces from 349k+ rule.applies? checks to ~1 per file.
+        applicable = rules.select { |_, rule| !rule.semantic? && rule.applies?(path, lang) }
+        applicable.each_value do |rule|
           rule.scan(text, file: path).each { |hit| found << "#{rule.id} #{relative}:#{hit.line}" }
         end
       end
