@@ -909,6 +909,22 @@ These are the operator's, because each changes a sound or accepts a changed inpu
    - **lora:** the base model written beside the weights; a secret-leak scan over tracked notebooks and `subject.env`; a per-subject grade knob that defaults to `portrait`.
    
    AMBITION's video section (117–128) is all deep work. Its argument for removing the frame-by-frame path belongs at the orphan comment `postpro.rb:337`. Item 104 contradicts item 35; the code sides with 35, grading after any upscale.
+933. **Photography research for `preprompt/lib/craft.rb`, 2026-09-14.**
+   - **Eye sharpness leads.** Sharpness at the facial landmarks is 4 of the top 5 predictors of portrait ratings, the eyes highest (ar5iv 1501.07304). Add a focus term for the nearest eye, make it the scenario default, and add a conflict against `soft_focus` and `petzval`.
+   - **The rule of thirds barely predicts ratings** (Amirshahi 2014). Content and object emphasis rank first (arXiv 2311.14410). Compose by isolation, layering and clean edges, and never draw thirds by default.
+   - **Close faces are judged worse.** A face shot from 45 cm loses attractiveness (d=0.31) and trust (d=0.24) against one from 135 cm (PMC3448657). This supports scenario distances of 2 m or more.
+   - **FLUX.1 reads 512 tokens through T5.** CLIP gives only a pooled vector (black-forest-labs/flux `conditioner.py`), so `TOKEN_LIMIT = 77` protects the SD-family lane only. The FLUX budget is T5 plus BFL's 30–80 words.
+   - **Lens and bokeh strings act as style cues.** FLUX's response correlates with physically correct behaviour at about 0.20 (arXiv 2412.02168), so the written-out distance geometry is the stronger instruction.
+   - **Quality boosters pull toward illustration.** "8k", "artstation" and "octane render" raised SD 1.x aesthetic scores that way (ar5iv 2212.09611, 2209.11711). Record them as refused.
+   - **Seeds outweigh phrasing** (ar5iv 2109.06977), so vary the seed at a fixed prompt.
+   - **Pick scorers carefully.** Score with HPSv2.1 or PickScore plus pyiqa `qalign`. LAION's aesthetic score alone is random-level on Pick-a-Pic (ar5iv 2305.01569), and multimodal LLMs judge aesthetics poorly (AesBench 2401.08276).
+934. **Melody research for dilla and preprompt, 2026-09-14.**
+   - **Arch or falling phrases dominate.** Arch and falling contours beat V shapes and rises, and phrase-final notes last 1.58× the average (Essen corpus, PMC3174665). dilla's inverted and retrograde motif transforms can produce the rare shapes, and every sustain is gap × 0.82.
+   - **Short, low-surprise, repeated phrases survive oral transmission** (β −0.30, −0.24, +0.09; PMC5403935).
+   - **Surprise pleases after predictable context and displeases in unstable context** (Cheung 2019; Frontiers 2023, fnins.2023.1209398). dilla's melody is scale-locked, with no placed surprise.
+   - **Human melodies are about 0.74 chord tones, not 1.0** (ar5iv 2001.02360). dilla adds a flat +0.3 per chord tone, with no target share and no beat weighting.
+   - **Generated music fails on structure.** Mid- and long-range repetition runs 0.18 and 0.12 against 0.36 and 0.35 real (ar5iv 2008.01307). Raw metric targets track listeners poorly; distance to a reference corpus tracks them better (arXiv 2511.07268).
+   - **Rules to encode:** peak mid-phrase; a held final note; big upward leaps in the low register, then a stepwise descent (jazzomat); one late surprise per phrase; a chord-tone share of 0.65–0.75; judge renders against dilla's own catalogue with MusDr or melody-features.
 
 ---
 
