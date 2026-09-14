@@ -110,10 +110,9 @@ kept at `/var/backups/pub4/{hjerterom,deleted-apps}-20260812`. `foodielicio.us`
 and the `anti{casino,gambling,betting}blog.com` trio were not removed: they stay
 in `data/dns.yml`'s `extra_zones`, and nsd still serves them.
 
-Note the date against the release-history line in `DECISIONS.md` that says baibl
-and blognet were removed: that was written two months earlier and was true of
-the repo, not of the box. `port_inventory` now scans the config files where that
-kind of residue lives, so the next one cannot be half-done quietly.
+The repo recorded baibl and blognet as removed two months before the box lost
+them, which is why `port_inventory` scans the config files where that kind of
+residue lives, so the next removal cannot be half-done quietly.
 
 Seven city apexes serve as of 2026-08-12
 (`Brgen::DomainRegistry::LIVE_DOMAINS`); the rest of `ENTRIES` is either
@@ -221,8 +220,8 @@ exist, and `/var/backups/litestream/` has been empty since the day it was
 created. It is out of `pkg_scripts` and has no `rc.d` script, so it no longer
 keeps `rcctl ls failed` permanently non-empty. `OPENBSD/etc/litestream.yml` is
 kept because the config is correct for the day someone builds the binary from Go
-and adds an off-host bucket; see `DECISIONS.md`, "rcctl owns rc.conf.local, and
-litestream is off the boot list".
+and adds an off-host bucket; its header says why the service stays off the boot
+list.
 
 Nothing on the box is a disaster-recovery replica: dr-pull's copies live on the
 Mac, which is one other disk, not a bucket. An off-host object store is the
@@ -526,8 +525,9 @@ the full installer from macOS.
 
 - Run `ruby34 OPENBSD/health_check.rb --public --all-ready-apps`.
 - Copy any live `/etc` changes back into `OPENBSD/etc/`.
-- Record persistent lessons in the repo-root `TODO.md` or
-  `OPENBSD/DECISIONS.md`.
+- Put a lasting reason in a comment beside the config or script it explains, a
+  standing refusal in `OPENBSD/CLAUDE.md`, and open work in the repo-root
+  `TODO.md`.
 
 ## Launch wipe (demo data -> cold start)
 

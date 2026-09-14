@@ -164,3 +164,53 @@ The check that distinguishes the two cases is
 mem_avail >= MEM_RESTORE && load < LOAD_RESTORE`, the guard is parking those
 apps, not cycling them, and the thresholds need recalibrating against that log
 rather than against a guess.
+
+## Refused, and why
+
+Each of these was proposed and measured against the tree. A reason tied to one
+file sits in a comment on that file; these have no single file to sit on.
+
+- **No fourth public Rails app** beyond brgen, amber and bsdports until brgen's
+  high-churn verticals are engines with their own migrations and tests, money and
+  identity primitives live in `RAILS/shared` with more than one consumer, and CI
+  runs the layout suite and `/up` smoke for all three apps. Every restart before
+  pub4 grew surface before its boundaries held; horizon ideas wait in
+  `RAILS/apps.horizon.yml`.
+- **No staging environment.** vm23 is one vCPU and 1 GB and already sheds apps
+  under load. A staging copy arrives with a second box, not as a second set of
+  services on this one.
+- **No second reference platform.** OpenBSD's behaviour wins over the Mac's for
+  package names, services, relayd, pf, nsd and Ruby command names. Production is
+  one host family with one Ruby pin, so a platform matrix or a Linux runner
+  cannot reproduce what differs: the Mac and box locks disagree because
+  `rb-kqueue` resolves only on BSD, and the fix is the `install_if` entry in
+  `TODO.md`.
+- **No repair-plan command, no dry run on every mutating command, and no deploy
+  that fails closed on revision drift.** A deploy is the only mutation and halts
+  on its first failure. Revisions disagree between deploys by design, which is
+  why `health_check.rb` warns on commits behind, and failing closed blocks the
+  deploy that fixes the drift. A planning surface beside `vps-deploy` is a third
+  surface where the root contract allows two.
+- **No automated rollback.** Rolling back is deploying the previous SHA through
+  `vps-deploy`. A second path that runs once a year is untested on the day it is
+  needed, the same argument the three unrun recovery scripts carry in their
+  headers.
+- **No pledge or unveil for the Rails daemons.** A Ruby interpreter that loads
+  native extensions and forks workers cannot name a useful promise set. MASTER's
+  `Ground::Pledge` covers the one process that can, and each app runs as its own
+  user with its env file and storage closed to others, which `health_check.rb`
+  checks.
+- **No speed work on deploy or health tooling without a symptom.** The box's
+  measured problem is memory, which is why `core-reclaim.sh` and `keep-warm.sh`
+  exist, not the cost of a gate's system calls. A health check made faster by
+  proving less is a regression. Latency work starts from a symptom a visitor or a
+  log names, and is measured on vm23.
+- **No idempotency keys, cart expiry, stuck-order alarms or edit locks for
+  takeaway and marketplace while no vendor is live.** Turbo disables a submit in
+  flight and the order state machine refuses illegal transitions under test. The
+  first duplicate order from a real kitchen is the measurement they wait for.
+- **No per-component screenshot baselines, density tests or control-distance
+  rules.** `layout_snapshot` commits reviewable geometry for the surfaces, and how
+  dense a screen is stays the operator's call about how it looks.
+- **No sweep of `|| true`.** Most are idempotence on `rcctl`, `pkill`, `chmod`,
+  `install` and `rm -f`. Read the exit path before removing one.

@@ -5,7 +5,7 @@
 # a top-level entry here has no key, or when a check names a file that is gone.
 ownership:
   "*.md":
-    purpose: deploy front door, runbook, recipes, decisions and agent gotchas
+    purpose: deploy front door, runbook, recipes, and agent gotchas with the standing refusals
     risk: high
     check: OPENBSD/bin/check
   PATH_OWNERSHIP.yml:
