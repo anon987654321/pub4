@@ -176,7 +176,7 @@ module Master
       def apply(path, new_src, violation)
         old_src = File.read(path, encoding: "UTF-8")
         before = scan_all(path)
-        write_atomic(path, new_src, encoding: "UTF-8")
+        write_atomic(path, new_src)
         after = scan_all(path)
         return reject_fix(path, old_src, "new_violations", before:, after:) if after.size > before.size
         if @conflicts.reject_higher_priority?(original_violation: violation, before:, after:, path:)
@@ -191,7 +191,7 @@ module Master
       end
 
       def reject_fix(path, original, reason, **details)
-        write_atomic(path, original, encoding: "UTF-8")
+        write_atomic(path, original)
         @bus&.publish("rule_loop:fix_rejected", rule: @rule.id, file: path, reason:, **details)
         Master::Trace::Dmesg.status("fix0", "#{@rule.id} fix rejected, #{File.basename(path)}: #{reason}")
         false

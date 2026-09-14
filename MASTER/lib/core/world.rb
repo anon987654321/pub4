@@ -303,6 +303,9 @@ module Master::Core
         file.flush
         file.fsync
       end
+      # The file keeps its own mode: the rename would replace an executable
+      # with a plain file.
+      File.chmod(File.stat(abs).mode & 0o7777, tmp) if File.exist?(abs)
       File.rename(tmp, abs)
     rescue StandardError
       File.delete(tmp) if tmp && File.exist?(tmp)

@@ -70,6 +70,24 @@ class TestRuleLoopPolicy < Minitest::Test
     end
   end
 
+  # apply passed `encoding:` to write_atomic, which takes no such keyword, so
+  # every model fix raised at the write, was logged as a write error, and
+  # nothing a model proposed was ever applied.
+  def test_an_accepted_fix_is_written
+    Dir.mktmpdir do |root|
+      path = File.join(root, "sample.rb")
+      File.write(path, "violation\n")
+      bus = FakeBus.new
+      loop = build_loop(root:, bus:, scanner: RecordingScanner.new, agent: Agent.new)
+
+      applied = loop.send(:apply, path, "clean\n", { rule: "TEST_RULE", file: path, line: 1 })
+
+      assert applied, "the fix was not applied: #{bus.events.last.inspect}"
+      assert_equal "clean\n", File.read(path)
+      refute_includes bus.events.map(&:first), "rule_loop:write_error"
+    end
+  end
+
   def test_prediction_engine_can_skip_autofix
     Dir.mktmpdir do |root|
       path = File.join(root, "sample.rb")

@@ -9,7 +9,10 @@ module Master
     # via fsync, and optionally fsyncs the parent directory on POSIX systems
     # to commit the rename to disk.
     module AtomicWrite
-      def write_atomic(path, content, fsync: true, fsync_dir: true, mode: 0o644)
+      # A rewrite keeps the file's own mode unless one is asked for: the rename
+      # replaced it with 0644, and an executable rewritten here stopped being one.
+      def write_atomic(path, content, fsync: true, fsync_dir: true, mode: nil)
+        mode ||= File.exist?(path) ? File.stat(path).mode & 0o7777 : 0o644
         dir = File.dirname(path)
         FileUtils.mkdir_p(dir)
 
