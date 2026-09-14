@@ -23,6 +23,21 @@ module Master::Core
     EVIDENCE_KINDS = Proof::SCORING.keys.join("|").freeze
     EVIDENCE_WEIGHTS = Proof::SCORING.map { |k, v| "#{k}=#{v}" }.join(", ").freeze
 
+    # The reply as a JSON schema, for a model that can be held to it while it
+    # decodes. `why` precedes `args` so the reason is written before the action
+    # it commits to, and it is bounded: an unbounded string is where a
+    # constrained small model loops.
+    SCHEMA = {
+      type: "object",
+      properties: {
+        verb: { type: "string", enum: VERBS.map(&:to_s) },
+        why: { type: "string", maxLength: 200 },
+        args: { type: "object" },
+      },
+      required: %w[verb why args],
+      additionalProperties: false,
+    }.freeze
+
     SYSTEM = <<~PROMPT.freeze
       You are MASTER, a constitutional coding agent working toward one GOAL. Each
       turn, propose the single next action as ONE JSON object and nothing else:

@@ -350,15 +350,17 @@ three_mirror_redundancy:
   quorum:        2
   on_disagreement: "fall back to council vote with all dissent recorded"
 
-# Tier-D (local ollama) — env-gated; activates only when OLLAMA_BASE_URL is set.
-# Default: http://localhost:11434/v1 (OpenAI-compatible endpoint).
-# Trust starts at 0.40 (below cloud providers) until measured success raises it.
+# Tier-D (local ollama). OLLAMA_BASE_URL offers the tier while online; offline
+# the session starts on it whatever the variable says. The sender speaks
+# Ollama's own /api/chat at the host root, so a /v1 suffix here is read past.
+# keep_alive holds a model in memory between the turns of one fold instead of
+# reloading it for each; max_num_ctx caps the window the sender sizes to each
+# request (ollama_sender.rb).
 ollama:
   enabled_when_env: OLLAMA_BASE_URL
-  default_base_url: "http://localhost:11434/v1"
-  initial_trust: 0.40
-  use_for: [exploration, fallback_default]   # cheapest-acceptable tasks only
-  never_for: [council, sweep, autoloop, file_write, destructive]
+  default_base_url: "http://localhost:11434"
+  keep_alive: 30m
+  max_num_ctx: 16384
 
 # media_providers was deleted here on 2026-08-21: nothing read it. The env
 # vars live in providers.yml replicate.env (ReplicateClient reads ENV

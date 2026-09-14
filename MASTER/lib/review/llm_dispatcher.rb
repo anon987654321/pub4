@@ -82,6 +82,12 @@ module Master
 
       TOOL_CAPABLE_RE = build_tool_capable_re.freeze
 
+      # The local tier's settings, read here with the rest of models.yml rather
+      # than by the sender: one reader per data file.
+      def self.ollama_settings
+        @ollama_settings ||= Master.load_yaml(File.join(Master::ROOT, "data", "models.yml")).fetch("ollama", {})
+      end
+
       # One lookup per model id, held for the process. The registry is 1,170
       # entries parsed from the gem's models.json, and a cost is recorded on
       # every reply. nil means the registry does not carry the model, which the
@@ -117,17 +123,21 @@ module Master
       # semantic rules, the fix loop. With no provider key each one fails slowly
       # somewhere below, so a /review pass sat at "crit0 deliberation" for ten
       # minutes and printed nothing. One refusal, at the one door.
-      def send_with_cache(selected_model, messages, system: nil, stream: false, image: nil, temperature: nil, &blk)
-        return Result.err(Master.no_api_key_message, category: :no_api_key) unless Master.any_api_key_present?
-
+      #
+      # format is a JSON schema a caller needs the reply to obey. The local tier
+      # enforces it while decoding; the other providers ignore it, and the
+      # caller's parser stays the backstop.
+      def send_with_cache(selected_model, messages, system: nil, stream: false, image: nil, temperature: nil, format: nil,
+                          &blk)
         started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-        selected_model = forced_model || selected_model
-        selected_model = vision_model_for(selected_model) if image_present?(image)
+        selected_model = answering_model(selected_model, image)
+        return Result.err(Master.no_api_key_message, category: :no_api_key) unless Master.llm_reachable?(selected_model)
+
         @bus&.publish("llm:send", model: selected_model)
         cache_key = cache_key_for(messages.last[:content], messages[0...-1], selected_model, system, temperature)
         result = breaker_for(selected_model).call(estimate_cost(messages.last[:content])) do
           @cache.fetch(cache_key, selected_model) do
-            send_llm_request(selected_model, messages, system:, stream:, image:, temperature:, &blk)
+            send_llm_request(selected_model, messages, system:, stream:, image:, temperature:, format:, &blk)
           end
         end
         # The circuit breaker returns provider failures as Err(:provider_error)
@@ -168,6 +178,13 @@ module Master
       # a redaction list that exists twice is a list where the next pattern
       # added to one copy leaves the other still printing the key.
       def redact_secrets(text) = Ground::Redactor.text(text)
+
+      # MASTER_MODEL first, then a vision model when an image rides along.
+      def answering_model(selected_model, image)
+        model = forced_model || selected_model
+        image_present?(image) ? vision_model_for(model) : model
+      end
+
 
       # One model for every lane, for one run. Set MASTER_MODEL and the router's
       # choice is overridden at the single door every request passes through —
@@ -236,16 +253,19 @@ module Master
         [result[:static], result[:dynamic]].compact.join("\n\n").then { |s| s.empty? ? nil : s }
       end
 
-      def send_llm_request(selected_model, messages, system: nil, stream: false, image: nil, temperature: nil, &blk)
+      def send_llm_request(selected_model, messages, system: nil, stream: false, image: nil, temperature: nil, format: nil,
+                           &blk)
         sys = system || system_prompt
         return send_agy_cli(selected_model.delete_prefix("agy:"), messages, sys:, stream:, &blk) if agy_model?(selected_model)
         return send_claude_cli(selected_model.delete_prefix("claude-cli:"), messages, sys:) if claude_cli_model?(selected_model)
         return send_web_chat(selected_model.delete_prefix("web-chat:"), messages, sys:) if web_chat_model?(selected_model)
-        return send_ollama(selected_model, messages, sys:, stream:, &blk) if ollama_model?(selected_model)
-        if !tool_capable?(selected_model) && @tools.any?
+        return send_ollama(selected_model, messages, sys:, stream:, temperature:, format:, &blk) if ollama_model?(selected_model)
+        # A schema-bound call wants one object back, not a tool conversation,
+        # which is also all the local tier ever sends.
+        if format.nil? && !tool_capable?(selected_model) && @tools.any?
           return react_tool_loop(selected_model, messages, sys:, stream:, image:, &blk)
         end
-        send_ruby_llm(selected_model, messages, sys:, stream:, image:, temperature:, &blk)
+        send_ruby_llm(selected_model, messages, sys:, stream:, image:, temperature:, format:, &blk)
       end
 
       def send_agy_cli(model_alias, messages, sys:, stream: false, &blk)

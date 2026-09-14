@@ -45,6 +45,10 @@ module Master::Core
         bytes = `sysctl -n hw.physmem 2>/dev/null`.to_i
         return bytes / 1_048_576 if bytes.positive?
       end
+      if RUBY_PLATFORM.include?("darwin")
+        bytes = `sysctl -n hw.memsize 2>/dev/null`.to_i
+        return bytes / 1_048_576 if bytes.positive?
+      end
       if File.readable?("/proc/meminfo")
         kb = File.readlines("/proc/meminfo").find { |l| l.start_with?("MemTotal:") }&.split&.fetch(1, nil).to_i
         return kb / 1024 if kb&.positive?

@@ -25,6 +25,14 @@ module Master
         CHAT_PATH = "/api/chat"
         OPEN_TIMEOUT_S = 5
         READ_TIMEOUT_S = 300
+        CHARS_PER_TOKEN = 4
+        CTX_STEP = 1024
+        MIN_NUM_CTX = 4096
+        REPLY_TOKENS = 2048
+        # An effect object is a verb, a clause and its args. A cap this size
+        # stops the repetition loop a constrained small model falls into on an
+        # unbounded string.
+        FORMAT_REPLY_TOKENS = 512
 
         private
 
@@ -34,9 +42,14 @@ module Master
         # counts still are, because a run's token total is how the session
         # reports what it did and a local model that answered silently would
         # read as a model that never ran.
-        def send_ollama(selected_model, messages, sys:, stream: false, &blk)
+        def send_ollama(selected_model, messages, sys:, stream: false, temperature: nil, format: nil, &blk)
           model = selected_model.to_s.sub(/\Aollama[:\/]/, "")
-          body = { model:, messages: ollama_messages(messages, sys), stream: }
+          rows = ollama_messages(messages, sys)
+          # Ollama Cloud models take no schema, so a :cloud id is asked plainly.
+          format = nil if model.end_with?(":cloud")
+          body = { model:, messages: rows, stream:, keep_alive: ollama_setting("keep_alive", "30m"),
+                   options: ollama_options(rows, temperature:, format:) }
+          body[:format] = format if format
           response = ollama_post(body, stream:, &blk)
           return response unless response.ok?
 
@@ -44,6 +57,23 @@ module Master
           record_local_usage(selected_model, tokens)
           Result.ok(text)
         end
+
+        # Ollama gives an 8 GB machine a 4k window and drops what overflows it
+        # without an error, so a fold transcript lost its goal and the model
+        # answered a question nobody asked. The window is sized to the request,
+        # up to models.yml ollama.max_num_ctx. A schema-bound reply decodes at
+        # temperature 0, as Ollama's structured-output guide advises.
+        def ollama_options(rows, temperature:, format:)
+          reply = format ? FORMAT_REPLY_TOKENS : REPLY_TOKENS
+          wanted = rows.sum { |row| row[:content].size } / CHARS_PER_TOKEN + reply
+          ceiling = ollama_setting("max_num_ctx", 16_384).to_i
+          options = { num_ctx: (wanted.fdiv(CTX_STEP).ceil * CTX_STEP).clamp(MIN_NUM_CTX, [ceiling, MIN_NUM_CTX].max) }
+          options[:temperature] = format ? 0 : temperature unless format.nil? && temperature.nil?
+          options[:num_predict] = FORMAT_REPLY_TOKENS if format
+          options
+        end
+
+        def ollama_setting(key, default) = LLMDispatcher.ollama_settings.fetch(key, default)
 
         def ollama_messages(messages, sys)
           system = sys.to_s
@@ -125,7 +155,7 @@ module Master
         # NDJSON: one object per chunk, the last carrying done and the counts.
         def read_ollama_stream(response)
           text = +""
-          tokens = 0
+          tokens = [0, 0]
           response.read_body do |segment|
             segment.each_line do |line|
               next if line.strip.empty?
@@ -144,15 +174,20 @@ module Master
           Result.err("ollama stream returned unparseable JSON: #{e.message}", category: :llm_failure)
         end
 
+        # [prompt, reply], as Ollama counts them.
         def ollama_tokens(parsed)
-          parsed["prompt_eval_count"].to_i + parsed["eval_count"].to_i
+          [parsed["prompt_eval_count"].to_i, parsed["eval_count"].to_i]
         end
 
-        def record_local_usage(model, tokens)
+        # The reply's own count is the out figure; the prompt's was reported as
+        # part of it, so a 600-token answer read as 1,900 tokens out.
+        def record_local_usage(model, counts)
+          tokens_in, tokens_out = counts
+          tokens = tokens_in + tokens_out
           return unless @session && tokens.positive?
 
           @session.record_cost(0.0, model:, tokens:)
-          publish_llm_cost(model:, cost: 0.0, tokens:, tokens_in: 0, tokens_out: tokens)
+          publish_llm_cost(model:, cost: 0.0, tokens:, tokens_in:, tokens_out:)
         rescue StandardError => e
           @bus&.publish("cost:record_error", error: e.message)
         end
