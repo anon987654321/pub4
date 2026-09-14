@@ -25,7 +25,7 @@ if File.file?(doas_conf)
     failures << "etc/doas.conf has no `dev as root` rule"
   else
     failures << "etc/doas.conf: dev rule must not use keepenv (root RCE via RUBYOPT)" if dev_rule.include?("keepenv")
-    # The whole measured allowlist (DECISIONS.md): each is read by a script run
+    # The whole measured allowlist (etc/doas.conf): each is read by a script run
     # under doas and assigned by none, so dropping one silently breaks that
     # script — --stage-1's DNS-wipe gate, the console gate, production seeds, the
     # deploy scan skip, the mail image format.

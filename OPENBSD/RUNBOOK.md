@@ -202,7 +202,9 @@ OpenBSD rejects `/etc/doas.conf` without a trailing newline — `doas` breaks fo
 everyone. `OPERATOR.sh` fixes the repo copy before install, validates `su dev -c
 'doas id'`, and rolls back on failure. No cron job installs it: the only other
 path is a deliberate `doas ksh OPENBSD/validate_doas.ksh install <file> <reason>`,
-which validates the same way (`DECISIONS.md`).
+which validates the same way. The comment atop `etc/doas.conf` says what dev's
+passwordless rule exposes and why neither command scoping nor a password can
+narrow it.
 
 ## Backups
 
