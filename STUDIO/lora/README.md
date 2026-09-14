@@ -92,14 +92,14 @@ The notebook and dataset are both created private and should stay that way.
 
 There is no API to push to — Colab is a browser — so this writes
 `<subject>/colab.ipynb` and prints the URL that opens it. The notebook clones
-this repo for the toolkit and the captioned dataset, mounts Drive so a
+this repo for the toolkit, takes the captioned dataset from Drive, mounts Drive so a
 disconnect costs the session rather than the training, and hands back to
 `./lora --train`. `--no-drive` keeps everything in `/content`, which dies with
 the runtime.
 
-**The clone is the reason this lane needs no token and the reason to think
-before using it:** `PUB4_REPO` defaults to the public pub4 origin, so the
-dataset it pulls is whatever captioned photographs are committed there.
+The clone carries no photographs. Every `dataset/` is ignored by git, so the
+notebook looks for the set in `MyDrive/lora/<subject>/dataset` and stops with a
+fix line when it is not there.
 
 ### Replicate (`run_train_replicate.rb`)
 
@@ -137,10 +137,11 @@ steps of a 12B model is not a run anyone finishes.
 
 ## Status
 
-**ragnhild**: six captioned pairs, `02` to `07`, in `ragnhild/dataset/`, 1024 on
-the short edge with every original aspect ratio kept, built by `curate.rb`. No
-`.safetensors`. Each caption is a full sentence naming the setting, clothing
-and light after the trigger word.
+**ragnhild**: a captioned set in `ragnhild/dataset/`, kept on this machine and
+nowhere in git, 1024 on the short edge with every original aspect ratio kept.
+Each pair shares a random stem, so no filename names her. No `.safetensors`.
+Each caption is a full sentence naming the setting, clothing and light after
+the trigger word.
 
 The set is below the ten-to-thirty the guidance asks for.
 
@@ -195,9 +196,8 @@ A subject LoRA costs a curated captioned set and a training run up front and is
 then the cheapest per image; multi-reference costs nothing up front and sends
 its references with every request. A LoRA gives the strongest control over one
 subject across many generations; multi-reference gives strong control with
-nothing to retrain when the base moves. And a LoRA dataset is committed and
-permanent in git history, where references are passed per request and committed
-nowhere.
+nothing to retrain when the base moves. A LoRA dataset stays on the machine that
+trains it, and references are passed per request and kept nowhere.
 
 The third row is the one that matters most here. The privacy problem this README
 already states plainly — that committing a face publishes it, and deleting it
@@ -303,14 +303,10 @@ Same reason `train.yaml` is authored and `colab.ipynb` is generated: editing the
 notebook feels faster and is silently thrown away the next time anything
 regenerates it. Every generated file above says so on the line that names it.
 
-**`dataset/` is versioned, and this repo's origin is public.** Twenty captioned
-photographs of two named people — 17 of Ragnhild, 3 of Johann — are committed
-and published, and that is deliberate rather than an oversight: it is what makes
-the Colab lane work without a token, since the notebook clones the origin.
-The consequence is that adding a photograph here
-publishes it, immediately and to anyone, and that removing it later leaves it in
-the history. Curate `sources/` freely; treat a `git add` under `dataset/` as
-consent to publish that face.
+**`dataset/` is ignored by git, and this repo's origin is public.** A
+photograph committed here would be published to anyone, and removing it later
+would leave it in the history, so no subject's photographs are tracked. The
+training lanes read the set from the machine or from Drive instead.
 
 `subject.env` names the three things that differ between one subject and the
 next:

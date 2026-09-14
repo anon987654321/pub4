@@ -9,9 +9,10 @@ require "yaml"
 class TestLora < Minitest::Test
   LORA = File.join(Studio::ROOT, "lora")
 
-  # A subject's photographs are published with the repository. Adding one is a
-  # consent decision, so it has to be a deliberate edit to this list.
-  PUBLISHED_PHOTOGRAPHS = (2..7).map { |n| format("lora/ragnhild/dataset/a_photo_of_ragnhild_%02d.jpg", n) }.freeze
+  # The origin is public, so a tracked photograph of a subject is a published
+  # one. None is tracked, and publishing one is a consent decision that has to
+  # be a deliberate edit to this list.
+  PUBLISHED_PHOTOGRAPHS = [].freeze
 
   def test_no_photograph_is_committed_without_being_named_here
     tracked, status = Open3.capture2("git", "-C", Studio::ROOT, "ls-files", "--", "lora")
