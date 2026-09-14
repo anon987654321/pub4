@@ -4,6 +4,7 @@ require "vips"
 
 require "json"
 require "fileutils"
+require "securerandom"
 require_relative "../../postpro/uncanny"
 
 # Which of these photographs should train a LoRA, and which should not.
@@ -350,12 +351,14 @@ module Lora
 
     def self.prepare(candidates, into:, token:, short_edge: TRAIN_SHORT_EDGE)
       FileUtils.mkdir_p(into)
-      candidates.each_with_index.map do |candidate, index|
+      candidates.map do |candidate|
         image = Vips::Image.new_from_file(candidate.path, access: :random).autorot
         current = [image.width, image.height].min
         out_image = image.resize(short_edge.to_f / current)
 
-        name = format("a_photo_of_%s_%02d", token, index + 1)
+        # A random stem names nobody, and adding or removing a photograph
+        # renumbers nothing.
+        name = SecureRandom.hex(8)
         out = File.join(into, "#{name}.jpg")
         out_image.write_to_file("#{out}[Q=95]")
 

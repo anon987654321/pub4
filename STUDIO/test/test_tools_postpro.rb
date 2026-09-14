@@ -442,10 +442,9 @@ class TestPostproFilm < Minitest::Test
 
   # --- light and depth ----------------------------------------------------
 
-  def portrait_probe
-    path = File.join(Studio::ROOT, "lora", "ragnhild", "dataset", "a_photo_of_ragnhild_02.jpg")
-    File.file?(path) ? rgb_bands(Vips::Image.new_from_file(path)) : build_probe
-  end
+  # Built rather than read: the subjects' photographs are private and local, so a
+  # probe read from them would measure a different picture on every machine.
+  def portrait_probe = build_probe
 
   def low_frequency(image) = image.colourspace("b-w").cast("float").gaussblur(24.0).deviate
   def high_frequency(image)
