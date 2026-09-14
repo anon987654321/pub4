@@ -203,20 +203,6 @@ DEMUX_VOCAL_MODEL = "htdemucs_ft"
 # and the wiring ratchets read -- see that file for why there is exactly one of
 # them now. The order is load-bearing: constants in these files are computed at
 # load time from ones above them, and reordering silently changes their values.
-# The overlay's knobs were spelled FLYLO_* until the engine stopped naming a
-# competitor in its own source. An operator's shell history, notes and scripts
-# still say the old word, and an env var that is silently ignored is worse than
-# one that errors: the render runs, reports success, and does not do the thing
-# that was asked. So a legacy name is copied onto the new one here, once, before
-# any part reads ENV -- and only when the new name is unset, so the new spelling
-# always wins where both are given.
-ENV.keys.grep(/\AFLYLO_/).each do |legacy|
-  current = legacy.sub("FLYLO_", "WONKY_")
-  next if ENV[current] && !ENV[current].empty?
-  ENV[current] = ENV[legacy]
-  warn "dilla: #{legacy} is the old spelling of #{current} — honoured, but rename it"
-end
-
 # The engine, inline. It was 81 files under lib/engine/ required in a hand-
 # pinned order, and the order was load-bearing: constants are computed at load
 # time from ones above them. Concatenating them in that order is what the order
@@ -18100,7 +18086,11 @@ def promote_progression_hook!(track, beauty, report: nil, path: nil)
     warn "promoted_profiles.json corrupt (#{e.message}), resetting"
     {}
   end
-  key = track.to_s.downcase.tr("-", "_")
+  # The profile's own spelling, not a downcased one: the stream weights are
+  # matched against rotation names, and gospel_bIII downcased is a name no
+  # rotation carries, so its promotions never counted.
+  spelled = track.to_s.downcase.tr("-", "_")
+  key = DillaLofiMachine::PROFILE_KEY_INDEX.fetch(spelled.to_sym, spelled).to_s
   promoted[key] = (promoted[key] || 0) + 1
   promoted["_last"] = { "track" => key, "beauty" => beauty.round(1), "at" => Time.now.utc.iso8601 }
   DillaFrozen.write_json(PROMOTED_PROFILES_PATH, promoted)
@@ -34180,9 +34170,32 @@ def replay_environment(src, overrides = {})
   path = src.end_with?(DillaProvenance::MANIFEST_EXT) ? src : DillaProvenance.manifest_path(src)
   abort "no sidecar at #{path}" unless File.file?(path)
 
-  JSON.parse(File.read(path)).fetch("environment")
-      .reject { |key, _| key.match?(/RENDER_SEED\z/) }
-      .merge(overrides)
+  recorded = JSON.parse(File.read(path)).fetch("environment")
+  replay_renamed(recorded)
+    .reject { |key, _| key.match?(/RENDER_SEED\z/) }
+    .merge(overrides)
+end
+
+# Sidecars from before the wonky rename name knobs and values the engine no
+# longer reads, and a replay that passes them on renders without the thing it
+# claims to reproduce. The translation lives here, at the one reader of old
+# recipes, and nowhere in the engine: a knob has one name.
+REPLAY_RENAMED_PREFIXES = { "FLYLO_" => "WONKY_" }.freeze
+REPLAY_RENAMED_VALUES = {
+  "LEAD_VOICE" => { "flylo" => "wonky" },
+  "PAD_VOICE" => { "pad_flylo" => "pad_wonky" },
+  "LEAD_ARP_MODE" => { "flylo_spiral" => "wonky_spiral" },
+  "SIDECHAIN_STYLE" => { "flylo" => "wonky" },
+}.freeze
+
+# A recipe that carries both spellings keeps the new one.
+def replay_renamed(environment)
+  renamed = environment.each_with_object({}) do |(key, value), out|
+    old_prefix = REPLAY_RENAMED_PREFIXES.keys.find { |prefix| key.start_with?(prefix) }
+    current = old_prefix ? key.sub(old_prefix, REPLAY_RENAMED_PREFIXES[old_prefix]) : key
+    out[current] = value unless old_prefix && environment.key?(current)
+  end
+  renamed.to_h { |key, value| [key, REPLAY_RENAMED_VALUES.fetch(key, {}).fetch(value, value)] }
 end
 
 # KEY=VAL pairs left on the command line. One command covers the fresh-take,

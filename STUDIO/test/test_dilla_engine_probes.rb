@@ -2121,6 +2121,45 @@ class TestDilla < Minitest::Test
     assert_empty result.fetch("rap_off")
   end
 
+  # A hundred August sidecars say FLYLO_* and flylo values. Replaying one hands
+  # the engine the names it reads now; nothing else in the engine knows the old
+  # ones.
+  def test_replaying_an_old_sidecar_translates_the_wonky_rename
+    result = eval_in_engine(<<~RUBY)
+      dir = Dir.mktmpdir
+      audio = File.join(dir, "old.wav")
+      File.write(DillaProvenance.manifest_path(audio), JSON.generate("environment" => {
+        "FLYLO_KICK_GAIN" => "0.75", "FLYLO_TOP_MIX" => "0.65", "WONKY_TOP_MIX" => "0.5",
+        "LEAD_ARP_MODE" => "flylo_spiral", "SIDECHAIN_STYLE" => "flylo", "LEAD_VOICE" => "flylo",
+        "PAD_VOICE" => "pad_flylo", "RENDER_SEED" => "1", "BARS" => "32"
+      }))
+      puts JSON.generate(
+        env: replay_environment(audio),
+        voices: [LEAD_VOICE_PRESETS.key?(:wonky), PAD_VOICE_PRESETS.key?(:pad_wonky)],
+        arp: LEAD_ARP_PRESETS.key?(:wonky_spiral)
+      )
+    RUBY
+
+    env = result.fetch("env")
+    assert_equal({ "WONKY_KICK_GAIN" => "0.75", "WONKY_TOP_MIX" => "0.5", "LEAD_ARP_MODE" => "wonky_spiral",
+                   "SIDECHAIN_STYLE" => "wonky", "LEAD_VOICE" => "wonky", "PAD_VOICE" => "pad_wonky",
+                   "BARS" => "32" }, env, "old names become new ones; a recipe with both keeps the new")
+    assert_equal [true, true], result.fetch("voices"), "the translated voices must exist"
+    assert result.fetch("arp"), "the translated arp mode must exist"
+  end
+
+  # The promotion counts are keyed by profile name. A key no profile carries is
+  # a promotion that never weights the rotation, which is what four renamed
+  # profiles and a downcased gospel_bIII were.
+  def test_every_promoted_profile_names_a_profile_the_engine_has
+    result = eval_in_engine(<<~RUBY)
+      counts = JSON.parse(File.read(PROMOTED_PROFILES_PATH)).reject { |key, _| key.start_with?("_") }
+      puts JSON.generate(counts.keys.reject { |key| DillaLofiMachine::HARMONY_PROFILES.key?(key.to_sym) ||
+                                                    CHORD_PROGRESSIONS.key?(key.to_sym) })
+    RUBY
+    assert_empty result, "promoted_profiles.json counts names no profile carries"
+  end
+
   # DEMO_CATALOG=curated brings back the wide catalogue, opt-in. Every name in it
   # must be something a render can resolve, or the slot is a failed part.
   def test_demo_catalog_curated_is_opt_in_and_every_name_resolves
