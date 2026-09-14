@@ -107,9 +107,11 @@ module Deploy
     # the engine and nothing else.
     DILLA_SUPPORT = %r{/dilla/(?:lib/.+|(?!dilla\.rb\z)[^/]+\.rb)\z}
     DILLA_SUPPORT_CEILING = 10
-    # Directories support code has left for lib/. Each one coming back is the
-    # sprawl coming back, whatever its file count.
-    DILLA_RETIRED_DIRS = %w[lib/engine bin live scripts].freeze
+    # Directories dilla has left. Support code went to lib/, and each of those
+    # coming back is the sprawl coming back, whatever its file count; renders/
+    # went because every render lands beside dilla.rb, on the operator's "stop
+    # creating subdirs nest our renders willy nilly".
+    DILLA_RETIRED_DIRS = %w[lib/engine bin live scripts renders].freeze
 
     # VENDORED is matched against the path inside STUDIO, never the absolute
     # one. Matched absolutely it excluded every file in a checkout living under

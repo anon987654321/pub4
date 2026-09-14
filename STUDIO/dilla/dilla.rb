@@ -28287,13 +28287,11 @@ def command_help
       ["demo-all", "[bars] [out.wav]", "The older engine's catalogue: #{sizes[:verified]} verified + #{sizes[:improvised]} improvised -> demo.wav + demo.mp3"],
       ["demo-each", "[bars]", "The same catalogue, one mp3 per track, no concat"],
       ["demo-quick", "[bars]", "An evenly spaced sample of the catalogue, for judging a change"],
-      ["demo", "", "Every record in the demo crate against three progressions"],
       ["showcase", "", "A few bars of each named style -> demo.wav"],
       ["album", "[out.mp3]", "Master data/album_tracks.yml into one crossfaded record"],
       ["setlist", "<file.json> [outdir] | save <file.json>", "Render a set of takes from its recipe, or save one"],
       ["replay", "<file.provenance.json>", "Print the command that rebuilds a render"],
       ["rerender", "<src|sidecar> <dest> [KEY=VAL...]", "A render's own recipe with a fresh seed"],
-      ["balance", "<#{BALANCE_VARIANTS.keys.join('|')}>", "Audition the sample-to-pad balance"],
       ["mix", "[version]", "The Sirkel Sag x Voicemails vocal mix (default v11)"],
       ["v7", "", "That vocal mix generation"],
       ["v8", "", "That vocal mix generation"],
@@ -34181,93 +34179,6 @@ def rerender_from_sidecar(src, dest, overrides = {})
   exec(env, RbConfig.ruby, File.join(ROOT, "dilla.rb"), "dilla", "--bars=#{bars}", dest)
 end
 
-# Sample-to-pad balance, so it can be chosen by ear rather than by argument.
-#
-# The record carries its own harmony, so nothing else should state one.
-# semua_untuk_mu has vocal chords in it, and a curated progression played by pads
-# on top is a second piece of music in the same bar — which is what the harmonic
-# guard says in as many words. That guard only fires when the loop's key is
-# unreadable; this loop reads G minor at fit 0.75, so the pads played.
-#
-# DRUM_FORWARD=0 throughout: the default carves the bed at 180/3000 Hz to clear
-# room for drums, which removes the sample's body and leaves the noisy middle.
-BALANCE_VARIANTS = {
-  # Mutes exactly the layer list the harmonic guard mutes, plus the synth voices.
-  # FLIP=0 because the chords are IN the record and chopping it destroys them.
-  "chordless" => { "PAD_VOL" => "0", "HARM_MIX_WEIGHT" => "0", "MELODIC_LEAD" => "0",
-                   "SCALE_LEAD" => "0", "LEAD_ARP" => "0", "HARMONY_LEAD" => "0",
-                   "PAD_LAYERS" => "0", "PAD_TEXTURE" => "0", "CHOIR_VOX" => "0",
-                   "LUSH_SYNTH" => "0", "SYNTH_MORPH" => "0", "LEAD_MORPH" => "0",
-                   "SAMPLE_LOOP_VOL" => "1.2", "SAMPLE_LOOP_WEIGHT" => "1.5",
-                   "DRUM_FORWARD" => "0", "FLIP" => "0" },
-  "flip_only" => { "FLIP" => "1", "FLIP_RECORDS" => "1", "VOCAL_CHOPS" => "0", "DRUM_FORWARD" => "0" },
-  "flip" => { "FLIP" => "1", "DRUM_FORWARD" => "0" },
-  "a_sample_forward" => { "SAMPLE_LOOP_VOL" => "1.3", "SAMPLE_LOOP_WEIGHT" => "1.6",
-                          "HARM_BUS_VOL" => "1.4", "DRUM_FORWARD" => "0" },
-  "b_pads_back" => { "SAMPLE_LOOP_VOL" => "1.3", "SAMPLE_LOOP_WEIGHT" => "1.6",
-                     "HARM_BUS_VOL" => "1.0", "DRUM_FORWARD" => "0" },
-  "c_sample_leads" => { "SAMPLE_LOOP_VOL" => "1.5", "SAMPLE_LOOP_WEIGHT" => "1.8",
-                        "HARM_BUS_VOL" => "0.7", "DRUM_FORWARD" => "0" },
-}.freeze
-
-BALANCE_RECIPE = "renders/beats/dilla_semua_96.mp3"
-
-def render_balance(name)
-  overrides = BALANCE_VARIANTS.fetch(name) { abort "unknown variant #{name}" }
-  dest = File.join(ROOT, "semua_#{name}.wav")
-  warn "#{name} -> #{dest}"
-  warn "  sample vol #{overrides['SAMPLE_LOOP_VOL']} weight #{overrides['SAMPLE_LOOP_WEIGHT']}  " \
-       "pads #{overrides['HARM_BUS_VOL']}  bed carve off"
-  rerender_from_sidecar(File.join(ROOT, BALANCE_RECIPE), dest, overrides)
-end
-
-# A demo of dilla is generated, not assembled from whatever is sitting in
-# renders/beats — that would treat old output as the work. SAMPLE_LOOP picks the
-# record and TRACK picks the progression, chosen independently so each record is
-# heard against more than one harmonic setting.
-#
-# semua_untuk_mu carries carries_own_harmony in the crate, so its beats mute the
-# tonal layers automatically. Nothing here special-cases it; the flag does.
-DEMO_PROGRESSIONS = %w[pedal_e_descent circle_fifths_descent minor_iv_loop].freeze
-DEMO_SAMPLES = %w[semua_untuk_mu arat_swost_wolet kembara_rindu lo_borges].freeze
-DEMO_MIN_BYTES = 1_000_000
-
-def generate_demo(bars: ENV.fetch("BARS", "32"), parallel: ENV.fetch("PARALLEL", "3").to_i)
-  out = ROOT
-  FileUtils.mkdir_p(out)
-  base = replay_environment(File.join(ROOT, BALANCE_RECIPE))
-
-  jobs = DEMO_SAMPLES.flat_map do |sample|
-    DEMO_PROGRESSIONS.map do |progression|
-      { sample:, progression:, dest: File.join(out, "#{sample}__#{progression}.wav") }
-    end
-  end
-  jobs.reject! { |job| File.file?(job[:dest]) && File.size(job[:dest]) > DEMO_MIN_BYTES }
-
-  puts "#{jobs.size} beats to render (#{DEMO_SAMPLES.size} records x " \
-       "#{DEMO_PROGRESSIONS.size} progressions), #{bars} bars, #{parallel} at a time"
-
-  jobs.each_slice(parallel) { |batch| demo_render_batch(batch, base, bars) }
-  puts "#{jobs.count { |job| File.file?(job[:dest]) }}/#{jobs.size} beats in #{out}/"
-end
-
-def demo_render_batch(batch, base, bars)
-  pids = batch.map do |job|
-    env = base.merge("SAMPLE_LOOP" => job[:sample], "TRACK" => job[:progression],
-                     "PROGRESSION" => job[:progression], "BARS" => bars)
-    log = File.join(Dir.tmpdir, "demo_#{job[:sample]}__#{job[:progression]}.log")
-    puts "  -> #{File.basename(job[:dest])}"
-    spawn(env, RbConfig.ruby, File.join(ROOT, "dilla.rb"), "dilla", "--bars=#{bars}", job[:dest],
-          out: log, err: log)
-  end
-  pids.each { |pid| Process.wait(pid) }
-  batch.each do |job|
-    ok = File.file?(job[:dest]) && File.size(job[:dest]) > DEMO_MIN_BYTES
-    puts format("  %-46s %s", File.basename(job[:dest]),
-                ok ? "ok #{File.size(job[:dest]) / 1_048_576}MB" : "FAILED")
-  end
-end
-
 # Album master. The chain per track, in this order:
 #
 #   1. side-gain correction     The fix. Five tracks measured a SIDE channel
@@ -36708,13 +36619,6 @@ DISPATCH = {
     dest = ARGV.shift or abort "usage: ruby dilla.rb rerender <src.mp3|sidecar> <dest> [KEY=VAL...]"
     rerender_from_sidecar(src, dest, replay_overrides(ARGV))
   end,
-  # Audition the sample-to-pad balance by ear rather than by argument.
-  "balance" => lambda do
-    name = ARGV.shift or abort "usage: ruby dilla.rb balance <#{BALANCE_VARIANTS.keys.join("|")}>"
-    render_balance(name)
-  end,
-  # Every record in the demo crate against three progressions.
-  "demo" => -> { generate_demo },
   # Master the tracklist in data/album_tracks.yml into one crossfaded record.
   "album" => -> { album_master(ARGV.shift || File.join(ROOT, "ALBUM.mp3")) },
 }.freeze

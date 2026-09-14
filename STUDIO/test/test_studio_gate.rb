@@ -123,6 +123,19 @@ class TestStudioGate < Minitest::Test
     end
   end
 
+  # Every render lands beside dilla.rb, so a renders/ directory is the nesting
+  # the operator ordered gone, whatever is inside it.
+  def test_a_renders_directory_beside_dilla_fails_the_gate
+    Dir.mktmpdir do |dir|
+      FileUtils.mkdir_p(File.join(dir, "dilla", "renders", "beats"))
+      File.write(File.join(dir, "dilla", "dilla.rb"), "# frozen_string_literal: true\n")
+      result = GATE.new(root: dir, trees: [], dilla: nil).send(:run_without_self_check)
+
+      assert result.failures.any? { |finding| finding.include?("dilla/renders/ is back") },
+             "the gate must refuse dilla/renders/; observed: #{result.failures.inspect}"
+    end
+  end
+
   def test_a_probe_timeout_is_bounded_and_finite
     assert_operator GATE::PROBE_TIMEOUT, :>, 0
     assert_operator GATE::PROBE_TIMEOUT, :<=, 600, "a probe that can run ten minutes is not a gate"
