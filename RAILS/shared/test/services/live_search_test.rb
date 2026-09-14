@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
-require "minitest/mock"
 require "active_record"
 require "active_support/core_ext/string/filters"
 require_relative "../../app/services/shared/live_search"
@@ -15,6 +14,17 @@ unless defined?(Rails)
 end
 
 class SharedLiveSearchTest < Minitest::Test
+  # By hand rather than Minitest's stub: minitest 6 moved stub into the
+  # minitest-mock gem, and the release gate runs this file under bare ruby
+  # without it, so the require failed and nothing here ran.
+  def with_event_emitter(replacement)
+    original = Shared::EventEmitter.method(:call)
+    Shared::EventEmitter.define_singleton_method(:call, &replacement)
+    yield
+  ensure
+    Shared::EventEmitter.define_singleton_method(:call, original)
+  end
+
   # A real SQLite relation, because the defect was in the SQL: sanitize_sql_like
   # escapes % with a backslash and SQLite ignores that without an ESCAPE clause.
   def test_a_percent_sign_in_the_query_is_literal_on_sqlite
@@ -54,7 +64,7 @@ class SharedLiveSearchTest < Minitest::Test
     scope = Object.new
     def scope.where(*) = :filtered
     reported = []
-    Shared::EventEmitter.stub(:call, ->(*args, **kw) { reported << [ args, kw ] }) do
+    with_event_emitter(->(*args, **kw) { reported << [ args, kw ] }) do
       model = Class.new { def self.table_name = "items" }
       scope.define_singleton_method(:klass) { model }
       scope.define_singleton_method(:connection) { raise "no fts probe needed" }

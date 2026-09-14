@@ -133,6 +133,10 @@ module Deploy
               /(?:^|\s)[A-Z]\w*\.ensure!/,
             ],
             scope_glob: "**/payments/**/*.rb",
+            # A file that defines no method performs no payment, so it cannot
+            # pretend one succeeded. provider_error.rb is a one-line exception
+            # class and was failing a contract it has no way to break.
+            performs_only_if: /^\s*def\s/,
           },
         ]
       end
@@ -206,6 +210,8 @@ module Deploy
 
       def scan_file_contract(path, rel, contract, label)
         body = File.read(path)
+        return if contract[:performs_only_if] && !body.match?(contract[:performs_only_if])
+
         Array(contract[:required_all]).each do |pat|
           @result.fail("#{label}: #{rel} missing #{pat.inspect}") unless body.match?(pat)
         end
