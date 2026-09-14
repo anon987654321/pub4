@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 require_relative "studio_helper"
-require_relative "../repligen/chain"
+require_relative "../preprompt/chain"
 
-# repligen refuses an option a model does not accept rather than letting the API
+# preprompt refuses an option a model does not accept rather than letting the API
 # ignore it, because a request that "works" while silently dropping a setting is
 # much harder to notice than a 422. A chain multiplies that: stage 6 failing
 # because stage 2 could not produce what stage 3 assumed costs an afternoon and
@@ -34,11 +34,11 @@ class TestChain < Minitest::Test
   def capability_for = ->(model) { CAPS.fetch(model, { input_keys: %w[prompt seed] }) }
 
   def chain_from(yaml, name: "probe")
-    Repligen::Chain.parse(YAML.safe_load(yaml), name: name)
+    Preprompt::Chain.parse(YAML.safe_load(yaml), name: name)
   end
 
   def problems_for(yaml)
-    Repligen::Chain.problems(chain_from(yaml), capability_for: capability_for)
+    Preprompt::Chain.problems(chain_from(yaml), capability_for: capability_for)
   end
 
   def test_a_valid_two_stage_chain_has_no_problems
@@ -184,25 +184,25 @@ class TestChain < Minitest::Test
   end
 
   def test_a_malformed_chain_says_so_rather_than_half_running
-    assert_raises(Repligen::Chain::Invalid) { chain_from("description: nothing here") }
-    assert_raises(Repligen::Chain::Invalid) { chain_from("stages: []") }
+    assert_raises(Preprompt::Chain::Invalid) { chain_from("description: nothing here") }
+    assert_raises(Preprompt::Chain::Invalid) { chain_from("stages: []") }
   end
 
   # The shipped chains are part of the tree and have to stay valid, or the first
   # thing anyone runs is broken.
   def test_every_shipped_chain_parses
-    names = Repligen::Chain.available
+    names = Preprompt::Chain.available
     refute_empty names, "no chains found — the glob is wrong, not the tree"
 
     names.each do |name|
-      chain = Repligen::Chain.load(name)
+      chain = Preprompt::Chain.load(name)
       refute_empty chain[:stages], "#{name} has no stages"
       assert chain[:description], "#{name} has no description; `chains --list` would show a blank"
     end
   end
 
   def test_the_plan_names_every_stage_in_order
-    plan = Repligen::Chain.plan(chain_from(<<~YML))
+    plan = Preprompt::Chain.plan(chain_from(<<~YML))
       stages:
         - { name: alpha, model: black-forest-labs/flux-schnell, prompt: one }
         - { name: beta, model: black-forest-labs/flux-kontext-pro, prompt: two, inherits: [image] }
@@ -235,7 +235,7 @@ class TestChain < Minitest::Test
         - { name: c, model: black-forest-labs/flux-kontext-pro, prompt: three, inherits: [image] }
     YML
 
-    produced = Repligen::Chain.run(chain, perform: perform)
+    produced = Preprompt::Chain.run(chain, perform: perform)
 
     assert_nil calls[0][:image], "the first stage has nothing to inherit"
     assert_equal "out-1-a.jpg", calls[1][:image], "stage 2 must be handed stage 1s file"
@@ -252,7 +252,7 @@ class TestChain < Minitest::Test
         - { name: b, model: black-forest-labs/flux-kontext-pro, prompt: two }
     YML
 
-    Repligen::Chain.run(chain, perform: perform)
+    Preprompt::Chain.run(chain, perform: perform)
 
     assert_nil calls[1][:image],
                "a stage that declares no inheritance must not silently receive the previous frame"
@@ -267,7 +267,7 @@ class TestChain < Minitest::Test
         - { name: c, model: black-forest-labs/flux-kontext-pro, prompt: three }
     YML
 
-    Repligen::Chain.run(chain, perform: perform)
+    Preprompt::Chain.run(chain, perform: perform)
 
     assert_equal 1000, calls[1][:seed], "stage 2 inherits the seed stage 1 used"
     assert_nil calls[2][:seed], "stage 3 does not inherit, so it gets none"
@@ -282,7 +282,7 @@ class TestChain < Minitest::Test
         - { name: c, model: black-forest-labs/flux-kontext-pro, prompt: three, inherits: [image] }
     YML
 
-    produced = Repligen::Chain.run(chain, perform: perform, until_stage: "b")
+    produced = Preprompt::Chain.run(chain, perform: perform, until_stage: "b")
 
     assert_equal 2, calls.length, "--until b must not run c"
     assert_equal %w[out-1-a.jpg out-2-b.jpg], produced
@@ -303,7 +303,7 @@ class TestChain < Minitest::Test
       { path: "out-#{index + 1}.jpg", seed: 1 }
     end
 
-    produced = Repligen::Chain.run(chain, perform: perform)
+    produced = Preprompt::Chain.run(chain, perform: perform)
 
     assert_equal %w[out-1.jpg], produced, "stage 1 is kept; nothing after the failure runs"
   end

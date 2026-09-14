@@ -8,19 +8,15 @@ require "json"
 require "time"
 require "digest"
 require "securerandom"
-# ../lib/... resolved correctly at MASTER/tools/repligen/ and has resolved to
-# STUDIO/lib/ -- which does not exist -- since the move to STUDIO/, so every
-# invocation of this file has aborted on line 12 with a LoadError since
-# 687c07a43. There is no ../lib/master_paths anywhere in the repo under any
-# prefix; the module lives in MASTER/lib/boot/paths.rb.
+# Paths into MASTER are spelled from this file up to the repo root. A relative
+# ../lib/ would resolve to STUDIO/lib/, which does not exist, and abort the
+# whole file on its first require.
 require_relative "../../MASTER/lib/io/replicate_client"
 require_relative "../../MASTER/lib/io/script_dispatch"
 require_relative "../../MASTER/lib/io/analog_capabilities"
 require_relative "../../MASTER/lib/boot/paths"
-# Shellwords.escape is called in maybe_handoff_postpro. Nothing required it, so
-# --postpro reached a NameError instead of a handoff -- the one code path in
-# this file that had never run even before the LoadError above made all of them
-# unreachable.
+# Shellwords.escape is called in maybe_handoff_postpro; without this require
+# --postpro reaches a NameError instead of a handoff.
 require "shellwords"
 
 # Structured fields compose onto the free-text --prompt. The docs called an
@@ -351,7 +347,7 @@ MODEL_CAPABILITIES = {
   #
   # Read from Replicate's own documentation rather than from the schema
   # endpoint, which needs a token this machine does not have. `rake
-  # repligen:schema_audit` is what confirms them against the provider, and
+  # preprompt:schema_audit` is what confirms them against the provider, and
   # should be the first thing run once a token is present.
   #
   # No safety_tolerance: that was a FLUX 1.1 field and nothing in the FLUX 2
@@ -394,7 +390,7 @@ DEFAULT_CAPABILITY = { input_keys: %w[prompt aspect_ratio output_format seed], n
 # Sub-second, and the current generation. Explore here, commit to FINAL_MODEL.
 PREVIEW_MODEL = "black-forest-labs/flux-2-klein-4b"
 # What --final asks for. The flag was parsed into options[:final] and nothing
-# ever read it, so `--final` did nothing at all: with REPLIGEN_MODEL set to a
+# ever read it, so `--final` did nothing at all: with PREPROMPT_MODEL set to a
 # preview model it silently kept previewing.
 #
 # Ultra, not Pro: 4 MP and a raw mode that matches the stock/lens vocabulary.
@@ -738,7 +734,7 @@ end
 # was no grade at all, and the house look was whatever anyone remembered to
 # type. A look that has to be remembered is not a house look.
 #
-# `portrait` because repligen mostly makes faces and it is the preset built for
+# `portrait` because preprompt mostly makes faces and it is the preset built for
 # them: kodak_portra with skin_protect, and grain. The grain is not decoration.
 # Generated skin is too clean and its specular response uniform, because models
 # learn from retouched photography and have no account of subsurface scattering
@@ -747,9 +743,9 @@ end
 # generated face after the fact.
 #
 # Changed in one place, here, or per run with --postpro, or per shell with
-# REPLIGEN_POSTPRO. --no-postpro turns it off entirely, which is what you want
+# PREPROMPT_POSTPRO. --no-postpro turns it off entirely, which is what you want
 # when the output is going into another tool that will grade it later.
-HOUSE_POSTPRO = ENV.fetch("REPLIGEN_POSTPRO", "portrait")
+HOUSE_POSTPRO = ENV.fetch("PREPROMPT_POSTPRO", "portrait")
 
 def maybe_handoff_postpro(output, preset)
   return output unless preset
@@ -877,18 +873,18 @@ def vocab_check
   exit(1) if problems.any?
 end
 
-cache = File.expand_path(ENV.fetch("REPLIGEN_CATALOG", "~/.cache/repligen/models.json"))
-blob_cache_dir = File.expand_path(ENV.fetch("REPLIGEN_BLOB_CACHE", "~/.cache/repligen/blobs"))
-options = { model: ENV.fetch("REPLIGEN_MODEL", "black-forest-labs/flux-2-pro"), aspect_ratio: nil, limit: 100, dry_run: false, batch: 1 }
+cache = File.expand_path(ENV.fetch("PREPROMPT_CATALOG", "~/.cache/preprompt/models.json"))
+blob_cache_dir = File.expand_path(ENV.fetch("PREPROMPT_BLOB_CACHE", "~/.cache/preprompt/blobs"))
+options = { model: ENV.fetch("PREPROMPT_MODEL", "black-forest-labs/flux-2-pro"), aspect_ratio: nil, limit: 100, dry_run: false, batch: 1 }
 parser = OptionParser.new do |p|
   p.banner = <<~TXT.chomp
-    Usage: repligen.rb generate|search|sync|stats|capabilities|vocab-check|chains|chain NAME|help [options]
+    Usage: preprompt.rb generate|search|sync|stats|capabilities|vocab-check|chains|chain NAME|help [options]
 
     generate without --output prints the result URLs and writes nothing.
     The token is REPLICATE_API_TOKEN, then REPLICATE_API_KEY, then api_token in
-    ~/.config/repligen/config.json. vocab-check, chains and --dry-run need none.
+    ~/.config/preprompt/config.json. vocab-check, chains and --dry-run need none.
     chain NAME --until STAGE stops after that stage; a chain does not resume.
-    Live schemas: cd STUDIO && rake repligen:schema_audit (skipped without a token).
+    Live schemas: cd STUDIO && rake preprompt:schema_audit (skipped without a token).
   TXT
   p.on("--prompt TEXT") { |v| options[:prompt] = v }
   p.on("--model MODEL") { |v| options[:model] = v; options[:model_explicit] = true }
@@ -941,20 +937,20 @@ end
 
 case command
 when "capabilities"
-  puts Master::Io::AnalogCapabilities.report(:repligen)
+  puts Master::Io::AnalogCapabilities.report(:preprompt)
 when "chains"
   # The chains this tree ships, from the directory rather than a maintained
   # list, so adding one is adding a file.
   require_relative "chain"
-  names = Repligen::Chain.available
+  names = Preprompt::Chain.available
   if names.empty?
-    puts "repligen: no chains in #{Repligen::Chain::DEFAULT_DIR}"
+    puts "preprompt: no chains in #{Preprompt::Chain::DEFAULT_DIR}"
   else
     names.each do |name|
-      chain = Repligen::Chain.load(name)
+      chain = Preprompt::Chain.load(name)
       puts "#{name}  (#{chain[:stages].length} stages)"
       puts "  #{chain[:description].to_s.strip.gsub(/\s+/, ' ')[0, 200]}"
-      puts Repligen::Chain.plan(chain)
+      puts Preprompt::Chain.plan(chain)
       puts
     end
   end
@@ -964,27 +960,27 @@ when "chain"
   # first five, which is why this refuses on the plan rather than on the wire.
   require_relative "chain"
   name = ARGV.shift.to_s
-  abort "usage: repligen chain NAME [--dry-run]" if name.empty?
+  abort "usage: preprompt chain NAME [--dry-run]" if name.empty?
 
   chain = begin
-    Repligen::Chain.load(name)
-  rescue Repligen::Chain::Invalid => e
-    abort "repligen: #{e.message}"
+    Preprompt::Chain.load(name)
+  rescue Preprompt::Chain::Invalid => e
+    abort "preprompt: #{e.message}"
   end
 
-  puts "repligen: chain #{name} — #{chain[:stages].length} stages"
-  puts Repligen::Chain.plan(chain)
+  puts "preprompt: chain #{name} — #{chain[:stages].length} stages"
+  puts Preprompt::Chain.plan(chain)
 
-  problems = Repligen::Chain.problems(chain, capability_for: method(:capability_for))
+  problems = Preprompt::Chain.problems(chain, capability_for: method(:capability_for))
   unless problems.empty?
     warn ""
-    problems.each { |problem| warn "repligen: REFUSED — #{problem}" }
-    abort "repligen: #{problems.length} problem(s); nothing was requested and nothing was spent"
+    problems.each { |problem| warn "preprompt: REFUSED — #{problem}" }
+    abort "preprompt: #{problems.length} problem(s); nothing was requested and nothing was spent"
   end
-  puts "repligen: the chain is satisfiable — every stage can take what the one before it produces"
+  puts "preprompt: the chain is satisfiable — every stage can take what the one before it produces"
 
   if options[:dry_run]
-    puts "repligen: --dry-run, so nothing was requested"
+    puts "preprompt: --dry-run, so nothing was requested"
     exit 0
   end
 
@@ -994,7 +990,7 @@ when "chain"
   # N+1 is given stage N's file. That is the one thing a chain must get
   # right and the one thing that fails silently: a model handed no image
   # generates from the prompt and returns something plausible.
-  abort "repligen: chain #{name} needs REPLICATE_API_TOKEN to run; --dry-run validates without it" if
+  abort "preprompt: chain #{name} needs REPLICATE_API_TOKEN to run; --dry-run validates without it" if
     Master::Io::ReplicateClient.load_token.to_s.strip.empty?
 
   base = options[:output] || "chain-#{name}.jpg"
@@ -1015,38 +1011,38 @@ when "chain"
     stage_seed = seed || options[:seed] || SecureRandom.random_number(2**31)
     input = build_input(compiled, stage_options, seed: stage_seed, negative_prompt: negative)
 
-    puts "repligen: stage #{index + 1}/#{total} #{stage.name} — #{stage.model}"
+    puts "preprompt: stage #{index + 1}/#{total} #{stage.name} — #{stage.model}"
     urls = Array(client.predict(stage.model, input)).flatten.compact
-    abort "repligen: stage #{stage.name} returned no output; earlier stages are kept" if urls.empty?
+    abort "preprompt: stage #{stage.name} returned no output; earlier stages are kept" if urls.empty?
 
     FileUtils.mkdir_p(File.dirname(target))
     client.download_url(urls.first, target)
     digest, = cache_blob(target, blob_cache_dir)
     write_provenance(target, prompt, compiled, negative, stage_options, stage_seed, digest)
-    puts "repligen: stage #{index + 1} wrote #{target}"
+    puts "preprompt: stage #{index + 1} wrote #{target}"
     { path: target, seed: stage_seed }
   end
 
-  produced = Repligen::Chain.run(chain, perform: perform, until_stage: options[:until],
+  produced = Preprompt::Chain.run(chain, perform: perform, until_stage: options[:until],
                                         image: options[:image], seed: options[:seed])
 
   # postpro last, on the final frame only — grading an intermediate would be
   # graded again by every stage after it.
   maybe_handoff_postpro(produced.last, options[:postpro]) if produced.any?
-  puts "repligen: chain #{name} produced #{produced.length} frame(s)"
+  puts "preprompt: chain #{name} produced #{produced.length} frame(s)"
   puts produced
 when "vocab-check"
   vocab_check
 when "generate"
   abort parser.to_s if options[:prompt].to_s.strip.empty?
   if !options[:dry_run] && Master::Io::ReplicateClient.load_token.to_s.strip.empty?
-    abort "repligen: generate needs a token (REPLICATE_API_TOKEN, REPLICATE_API_KEY, or api_token in " \
-          "~/.config/repligen/config.json); --dry-run compiles the prompt without one"
+    abort "preprompt: generate needs a token (REPLICATE_API_TOKEN, REPLICATE_API_KEY, or api_token in " \
+          "~/.config/preprompt/config.json); --dry-run compiles the prompt without one"
   end
   abort "warn: --preview and --final ask for different models" if options[:preview] && options[:final]
 
-  options[:model] = PREVIEW_MODEL if options[:preview] && !ENV.key?("REPLIGEN_MODEL") && !options[:model_explicit]
-  # --final overrides REPLIGEN_MODEL, unlike --preview. That is the asymmetry
+  options[:model] = PREVIEW_MODEL if options[:preview] && !ENV.key?("PREPROMPT_MODEL") && !options[:model_explicit]
+  # --final overrides PREPROMPT_MODEL, unlike --preview. That is the asymmetry
   # the flag is for: the environment variable is how you leave a session in
   # preview, and --final is how you say "not this one, do it properly".
   options[:model] = FINAL_MODEL if options[:final] && !options[:model_explicit]
@@ -1086,19 +1082,19 @@ when "generate"
     input = build_input(varied, options, seed:, negative_prompt:)
 
     if options[:dry_run]
-      puts "ok: repligen dry-run model=#{options[:model]} input=#{input.inspect}"
+      puts "ok: preprompt dry-run model=#{options[:model]} input=#{input.inspect}"
       next nil
     end
 
     urls = Array(client.predict(options[:model], input)).flatten.compact
-    abort "warn: repligen returned no output" if urls.empty?
+    abort "warn: preprompt returned no output" if urls.empty?
 
     target = if options[:output]
                options[:batch] > 1 ? options[:output].sub(/(\.\w+)?\z/) { |ext| "-#{index}#{ext}" } : options[:output]
              end
 
     unless target
-      puts "ok: repligen generated\n#{urls.join("\n")}"
+      puts "ok: preprompt generated\n#{urls.join("\n")}"
       next nil
     end
 
@@ -1108,21 +1104,21 @@ when "generate"
     sidecar = write_provenance(target, options[:prompt], varied, negative_prompt, options, seed, digest)
     append_gallery_manifest(sidecar, alt_text_for(options[:prompt], options, batch_background(index, options[:batch])))
     maybe_handoff_postpro(target, options[:postpro])
-    puts "ok: repligen generated #{target}"
+    puts "ok: preprompt generated #{target}"
     target
   end.compact
 
   outputs
 when "search"
   query = ARGV.join(" ").strip
-  abort "usage: repligen.rb search QUERY [--limit N]" if query.empty?
+  abort "usage: preprompt.rb search QUERY [--limit N]" if query.empty?
   rows = Master::Io::ReplicateClient.new.models(limit: options[:limit], query:)
   puts rows.map { |row| "#{row['owner']}/#{row['name']}\t#{row['description'].to_s.gsub(/\s+/, ' ')[0, 120]}" }
 when "sync"
   rows = Master::Io::ReplicateClient.new.models(limit: options[:limit])
   FileUtils.mkdir_p(File.dirname(cache))
   File.write(cache, JSON.pretty_generate({ synced_at: Time.now.utc.iso8601, models: rows }))
-  puts "ok: repligen synced #{rows.length} models to #{cache}"
+  puts "ok: preprompt synced #{rows.length} models to #{cache}"
 when "stats"
   data = File.file?(cache) ? JSON.parse(File.read(cache)) : { "models" => [] }
   models = Array(data["models"])

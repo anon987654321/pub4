@@ -26,7 +26,7 @@ module Master
         # Fold or the command registry.
         #
         # MediaIntent used to sit above this gate. "generate a photo" / "make me
-        # a beat" / a VHS look on a path then ran repligen/dilla/postpro as the
+        # a beat" / a VHS look on a path then ran preprompt/dilla/postpro as the
         # Falcon user and wrote under ~.
         return casual_reply(text, container:, felt_sense:, on_chunk:, image:) if visitor?
         return Master::Io::MediaIntent.dispatch(text, root: container.fetch(:root, Dir.pwd)) if Master::Io::MediaIntent.handles?(text)

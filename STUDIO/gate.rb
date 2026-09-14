@@ -16,7 +16,7 @@ module Deploy
   # silently broken dilla and postpro before. The only thing standing between
   # that and a broken engine was `dilla debug`, which nobody runs after a fix
   # and which covers dilla alone: the other 13 Ruby files in STUDIO — postpro,
-  # repligen, the nine lora toolkit scripts — had nothing checking them at all.
+  # preprompt, the nine lora toolkit scripts — had nothing checking them at all.
   #
   # Three checks, in increasing order of what they can catch:
   #
@@ -44,7 +44,7 @@ module Deploy
     # dead code accumulates in a tree with no suite.
     #
     # `entry` names a script whose load is probed. nil means the tree has no
-    # loadable entry point — see UNGUARDED below for why repligen is one.
+    # loadable entry point — see UNGUARDED below for why preprompt is one.
     TREES = [
       {
         name: "dilla",
@@ -59,9 +59,9 @@ module Deploy
         owner: "single-file tool",
       },
       {
-        name: "repligen",
-        glob: "repligen/**/*.rb",
-        entry: "repligen/repligen.rb",
+        name: "preprompt",
+        glob: "preprompt/**/*.rb",
+        entry: "preprompt/preprompt.rb",
         owner: "single-file tool",
       },
       {
@@ -97,7 +97,7 @@ module Deploy
     # dilla's support files are the one place file count can still grow. The
     # engine is dilla.rb; everything else dilla carries is support, counted at any
     # depth so a regroup into subdirectories cannot make the count measure less:
-    # lib/ and every Ruby file beside the engine at the dilla root (dilla_live.rb).
+    # lib/ and every Ruby file beside the engine at the dilla root.
     # A new file fails the gate until its author folds it
     # into a sibling or lowers the count elsewhere; raising the ceiling wants the
     # reason in the commit.
@@ -106,7 +106,7 @@ module Deploy
     # counts every tracked file in STUDIO. This one counts dilla's Ruby beside
     # the engine and nothing else.
     DILLA_SUPPORT = %r{/dilla/(?:lib/.+|(?!dilla\.rb\z)[^/]+\.rb)\z}
-    DILLA_SUPPORT_CEILING = 11
+    DILLA_SUPPORT_CEILING = 10
     # Directories support code has left for lib/. Each one coming back is the
     # sprawl coming back, whatever its file count.
     DILLA_RETIRED_DIRS = %w[lib/engine bin live scripts].freeze

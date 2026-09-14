@@ -397,7 +397,7 @@ def surface_theme = DEFAULT_SURFACE_THEME
     name = attachment.filename.to_s.downcase
     classes = []
     classes << "postpro-grade" if POSTPRO_PRESETS.any? { |preset| name.include?("_#{preset}") }
-    classes << "repligen-hero" if name.match?(/masterpiece|repligen|flux|lora/)
+    classes << "preprompt-hero" if name.match?(/masterpiece|preprompt|flux|lora/)
     classes.join(" ")
   end
 

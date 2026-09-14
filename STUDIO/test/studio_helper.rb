@@ -14,7 +14,7 @@
 # in the test.
 #
 # Each subject loads in its own process (see Rakefile): dilla, postpro and
-# repligen all define top-level constants and several of the names collide.
+# preprompt all define top-level constants and several of the names collide.
 
 ENV["MT_NO_PLUGINS"] = "1"
 gem "minitest", "~> 5.25"

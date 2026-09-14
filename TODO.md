@@ -246,7 +246,7 @@ symbol names over line numbers.
   the other 160 sources cannot be re-fetched to the same bytes.
 - **Two ways into the crate.** The engine reads `samples/chopped/loops.json`
   through `RadioChop.registered_loops`; `lib/sampling.rb` writes `samples/dug/`
-  from public-domain archives; `ruby dilla_live.rb dig` (`lib/livesets.rb`) rips
+  from public-domain archives; `ruby dilla.rb live dig` (`lib/livesets.rb`) rips
   YouTube into `samples/chopped/` and warns on every run. Those two are the crate.
 - **`ruby STUDIO/dilla/dilla.rb assets` exits 1**: three loops missing, seven files
   changed (re-synthesised one-shots).
@@ -545,7 +545,7 @@ grep. A list arriving from outside is a hypothesis about this repo.
 - **Disclosure** is its own partial, `shared/_affiliate_disclosure`, and the
   band labels itself `affiliate.sponsored`. Whatever the ad system becomes, it
   inherits that: an ad says it is one.
-- **Photography has a producer.** STUDIO's repligen generates imagery and fills
+- **Photography has a producer.** STUDIO's preprompt generates imagery and fills
   tv; lora trains on real subjects. An ad system needing product photography
   has a generator in this repo rather than a stock budget.
 
@@ -757,7 +757,7 @@ one as a ticket without asking first.
   re-baselines to zero on the next run by design, so a regression reports once
   and then becomes the reference. `layout_snapshot` commits reviewable JSON —
   71 tracked files — and is the candidate for the fleet's only visual baseline.
-- **repligen has no Replicate access, so the whole tool is unreachable.** Fund it
+- **preprompt has no Replicate access, so the whole tool is unreachable.** Fund it
   or retire it; leaving it is the inert-wiring defect with a price tag.
 - **One box per city rather than one box for every city.** brgen's verticals are
   already engines and vm23 sits at its capacity ceiling, so a cell per city is
@@ -871,7 +871,7 @@ Take them the day those files are clean.
 811. **dilla.rb comments that describe the split.** 80 `# engine part:` headers still say "split out of dilla.rb"; `:230` says load order lives in `engine_sources.rb`; `:248`, `:13733`, `:14870`, `:20805` still name `lib/engine/`; `:14900` names the gone `ENGINE_PARTS`; `:14672` hardcodes "35,000 lines / 83 markers" instead of asking `parts_report`. `:35237` should say the gate and tests depend on the CLI guard.
 812. **`ENGINE_SOURCES = DillaSources.all` sits at `:34385`,** after `wiring_dead_constants` and `parts_report` close over it. Move it up to the require at `:36`.
 814. **`scan` probes `dilla.html` (`:13165`),** a file that does not exist. Drop the key.
-815. **`help` is one 170-line dump.** Topic index (`help render|chop|knobs|sample`) with the wall behind `help all`. The topics owe these lines: `industrial`/`techno`/`analog` bypass AudioGraph; `characterize` under READING THE ENGINE; `source` points at `lib/sampling.rb` before `project/crate.yml`, and `dilla_live.rb dig` is the YouTube digger; chop lists RadioChop's operations in order; `STREAM_DEMO` overwrites the rolling `demo.wav`, not a take; `DILLA_OVERWRITE=1` is the only overwrite; `SWING=` is the fallback and per-role offsets are the Charnas move.
+815. **`help` is one 170-line dump.** Topic index (`help render|chop|knobs|sample`) with the wall behind `help all`. The topics owe these lines: `industrial`/`techno`/`analog` bypass AudioGraph; `characterize` under READING THE ENGINE; `source` points at `lib/sampling.rb` before `project/crate.yml`, and `dilla.rb live dig` is the YouTube digger; chop lists RadioChop's operations in order; `STREAM_DEMO` overwrites the rolling `demo.wav`, not a take; `DILLA_OVERWRITE=1` is the only overwrite; `SWING=` is the fallback and per-role offsets are the Charnas move.
 816. **`council` (`:13184`) prints five slogans.** Delete it or make it run a command.
 822. **Lazy requires are undocumented.** Say beside the requires which of `console_strip`, `tape_hysteresis`, `mix_score`, `verify_fx`, `kit_dig` are command-only, so a fold does not pull DSP into boot.
 829. **Locale.** brgen's CI loads dilla.rb as user brgen; set `Encoding.default_external = Encoding::UTF_8` at the top of dilla.rb rather than touching 37 `File.read` sites.
@@ -880,7 +880,7 @@ Take them the day those files are clean.
 868. **Chop registry JSON is parsed twice** (`:18223` warns, `registered_loops` rescues again). Parse once; drop bad rows by slug.
 871. **`rap-vocal list`** should mark sidecar-only rows "audio missing", and say `_mislabelled_untitled_flac/` is deliberate so nobody cleans it.
 873. **`dilla assets` exits 0 on an unreadable `data/assets.json`.** The module warns and returns an empty crate; the command should exit non-zero.
-965. **dilla README and ENV_AND_RENDER.md.** README names `sample_loops.rb` (it is an engine part), tells a stale restore story, and never says a worktree has no crate so crate tests skip; ENV_AND_RENDER.md says command aliases are gone while `loose_pocket`, `industrial` and `techno` remain as genre renderers. One sentence should name the three ways to hear it: `dilla.html`, `dilla_live.rb`, `bin/sine_stream.rb`.
+965. **dilla README and ENV_AND_RENDER.md.** README names `sample_loops.rb` (it is an engine part), tells a stale restore story, and never says a worktree has no crate so crate tests skip; ENV_AND_RENDER.md says command aliases are gone while `loose_pocket`, `industrial` and `techno` remain as genre renderers. One sentence should name the three ways to hear it: `dilla.html`, `dilla.rb live`, `dilla.rb sines`.
 1000. **Provenance pins.** Confirm a probe asserts the sidecar note carries a non-seed pin when `USER_PINNED_ENV` is set; add one to `test_dilla_engine_probes.rb` if not.
 
 These are the operator's, because each changes a sound or accepts a changed input:
@@ -888,7 +888,7 @@ These are the operator's, because each changes a sound or accepts a changed inpu
 850. **`data/modes.yml` has no reader.** Nothing in STUDIO loads it — `tizita`, `bati`, `ambassel` appear only in the file, and the `chord_theory.rb` it names is gone. Wiring it into the harmony spine changes what dilla generates; the other choice is deleting it. Same decision as `dilla_principles.yml`.
 859. **The crate on main disagrees with `data/assets.json`.** `DillaAssets.verify` there: `samples/{kembara_rindu,lo_borges,semua_untuk_mu}/loop.wav` missing, and seven one-shots under `samples/drums/` changed hash at the same size. Restore them, or `dilla assets record` to accept the new drums as the inputs.
 
-### STUDIO — postpro, repligen, lora
+### STUDIO — postpro, preprompt, lora
 
 907. **Chains are ungraded by default.** `generate` applies `HOUSE_POSTPRO` (`portrait`); `chain` grades its final frame only when `--postpro` is given. Whether chains share the house grade is a graded-look call.
 926. **`lora/guides/*.m4a` are tracked TTS output** beside their `.txt` scripts. Keep them in git or untrack them; either is the operator's.
@@ -1086,7 +1086,7 @@ measured costs fixed, the rest declined as unmeasured. The rule for the next
 proposal is "No performance machinery ahead of a measured slowness" in
 the Refused lists in `MASTER/AGENTS.md` and `OPENBSD/CLAUDE.md`.
 
-- **dilla_live is not real-time.** Last measured: synthesis 1.58x real-time,
+- **`dilla.rb live` is not real-time.** Last measured: synthesis 1.58x real-time,
   the effects chain drags it to 0.34x. Re-measure first; any speedup must leave
   the rendered sound identical, and `dilla.rb` is under another session’s edit.
 
@@ -1263,7 +1263,7 @@ choose. Numbers are for citation, not for order.
 10. **`long_form.als.rb`** [cheap] — twenty minutes rather than three. The pad
     set is already the shape; only `TOTAL` and the swell period stand in the way,
     and a set you can leave running is a different use than a set you audition.
-11. **`playlist.als.rb`** [deep] — never ends. ``dilla_live.rb broadcast`` rotates four
+11. **`playlist.als.rb`** [deep] — never ends. `dilla.rb live broadcast` rotates four
     processes with hard cuts between them; a set that crossfades its own
     successor is the thing that was actually wanted.
 12. **`field.als.rb`** [yours] — a bed that is a place rather than a record.
@@ -1468,7 +1468,7 @@ choose. Numbers are for citation, not for order.
 79. **Loudness for the destination** [cheap] — every set ends in `dynaudnorm` and
     a limiter at a hand-picked `volume=`. Integrated LUFS is a solved measurement
     and lies about speech over music, which matters for 7.
-80. **A sleeve** [yours] — `STUDIO/postpro` grades images and `repligen` generates
+80. **A sleeve** [yours] — `STUDIO/postpro` grades images and `preprompt` generates
     them. A catalogue with covers is a release.
 81. **Publish the tracklist** [yours] — `radio.brgen.no` exists and is empty of
     this.

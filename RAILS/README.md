@@ -120,7 +120,7 @@ into each app's `public/` at deploy.
 
 Rails resolves MASTER's media tools through `Operator::DeployPaths`, which handles
 both the source checkout and the VPS copy-tree; never compute those paths from
-`Rails.root`. Newsletter hero rendering can use the same postpro and repligen
+`Rails.root`. Newsletter hero rendering can use the same postpro and preprompt
 pair MASTER uses. Provider tokens belong in the app's `/etc/<app>.env` and not in
 Rails credentials or source. MASTER's natural-language media routing is local to
 the agent runtime, so Rails callers should go through the shared service boundary

@@ -4,13 +4,13 @@ require_relative "test_helper"
 require "open3"
 require "rbconfig"
 
-# The two STUDIO vocab-checks are the real contract for postpro and repligen.
+# The two STUDIO vocab-checks are the real contract for postpro and preprompt.
 # They used to be operator memory. A table that fails quiet is how unread
 # temp: and a costume --final model survive.
 class TestStudioMedia < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
   POSTPRO = File.join(ROOT, "STUDIO", "postpro", "postpro.rb")
-  REPLIGEN = File.join(ROOT, "STUDIO", "repligen", "repligen.rb")
+  PREPROMPT = File.join(ROOT, "STUDIO", "preprompt", "preprompt.rb")
 
   def test_postpro_unread_temp_is_a_vocab_check_error
     source = File.read(POSTPRO)
@@ -73,15 +73,15 @@ class TestStudioMedia < Minitest::Test
   # went red the day 495bb98d8 made FLUX 2 the default — a deliberate upgrade
   # the test read as a regression, which is what a version literal in an
   # assertion always ends up doing. What has to hold is that FINAL_MODEL names a
-  # model repligen actually knows, and vocab-check is the check that proves it:
-  # repligen.rb refuses a FINAL_MODEL with no MODEL_CAPABILITIES entry.
-  def test_repligen_vocab_check_exits_zero_and_final_model_is_known
-    out, status = run_script(REPLIGEN, "vocab-check")
-    assert status.success?, "repligen vocab-check failed:\n#{out}"
+  # model preprompt actually knows, and vocab-check is the check that proves it:
+  # preprompt.rb refuses a FINAL_MODEL with no MODEL_CAPABILITIES entry.
+  def test_preprompt_vocab_check_exits_zero_and_final_model_is_known
+    out, status = run_script(PREPROMPT, "vocab-check")
+    assert status.success?, "preprompt vocab-check failed:\n#{out}"
 
-    source = File.read(REPLIGEN)
+    source = File.read(PREPROMPT)
     final = source[/^FINAL_MODEL = "([^"]+)"/, 1]
-    assert final, "repligen must declare a FINAL_MODEL"
+    assert final, "preprompt must declare a FINAL_MODEL"
     assert_includes source, %("#{final}"), "FINAL_MODEL #{final} has no entry beside it"
     assert_includes source, '"black-forest-labs/flux-kontext-pro"'
     assert_includes source, "input_image"

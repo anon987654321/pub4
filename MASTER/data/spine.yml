@@ -943,7 +943,6 @@ pub4_source_ceilings:
   #   lib/space_fx.rb        reverb, tape echo, phaser, chorus and a wave folder
   #                          as arithmetic, because live playback never becomes
   #                          a file and has nothing to hand ffmpeg.
-  #   dilla_live.rb          the catalogue played rather than written.
   #
   # Three subjects and an entry point, not one subject split four ways: the
   # first writes music, the second plays over it, the third knows nothing about
@@ -963,14 +962,16 @@ pub4_source_ceilings:
   # the other way a ratchet dies.
   # dilla/bin, dilla/live and dilla/scripts are gone. The three livesets, recall,
   # the broadcast loop and the bed digger are lib/livesets.rb behind
-  # dilla_live.rb; the sine stream and its player are lib/sine_stream.rb;
+  # `dilla.rb live`; the sine stream and its player are lib/sine_stream.rb;
   # bin/crate, bin/demo_full.rb, scripts/generate_tts.rb and the librosa script
   # left with nothing reading them. STUDIO/gate.rb fails if any of the three
   # directories returns. 117 -> 108.
   # 108 -> 70: dilla lib/ folds forty-four modules into six subjects -- sound,
   # sampling, ledger, harmony, groove, listen -- and radio_bergen_study.rb, a
   # wrapper round a command dilla.rb already had, is gone.
-  STUDIO: 70
+  # 70 -> 69: dilla_live.rb is `ruby dilla.rb live`, and the old live command,
+  # which looped a cached render, gave its name to it.
+  STUDIO: 69
 
 # Executable files directly under each tree's own bin/ — the number CLAUDE.md's
 # "two surfaces, no third" makes a claim about while nothing counted it. MASTER

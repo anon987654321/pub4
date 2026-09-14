@@ -13,7 +13,7 @@ require "digest"
 # since the move to STUDIO/, where it resolves to STUDIO/lib/io/ -- a directory
 # that does not exist -- so this file has aborted on its first require, every
 # invocation, since 687c07a43. STUDIO/dilla/dilla.rb reaches the same library
-# by the path below; postpro and repligen were never updated with it.
+# by the path below; postpro and preprompt were never updated with it.
 require_relative "../../MASTER/lib/io/analog_capabilities"
 
 require "open3"
@@ -203,7 +203,7 @@ module PostproBootstrap
   end
 
   # Anchored to this file, for the same reason the camera profiles and
-  # REPLIGEN_PATH are: `File.exist?("master.json")` asked the shell's working
+  # PREPROMPT_PATH are: `File.exist?("master.json")` asked the shell's working
   # directory, which is wherever the operator happened to be standing. It has
   # therefore been false on every invocation, so CONFIG has always been {} and
   # all twelve `CONFIG[...]` reads in this file have always taken their
@@ -245,7 +245,7 @@ module PostproBootstrap
     end
 
     # Anchored to this file, not to the shell's working directory, for the same
-    # reason as REPLIGEN_PATH below: a relative path here meant the profiles
+    # reason as PREPROMPT_PATH below: a relative path here meant the profiles
     # were "not found" from every directory except one nobody runs from. The
     # directory does not exist in the repo at all today, so this changes a
     # warning that was wrong in principle into one that is merely accurate --
@@ -349,7 +349,7 @@ POSTPRO_USAGE = <<~TXT
     --random [--count N] [--rough]    three to five chains, into Downloads
     --watch [DIR] [--preset NAME]     grade every new photo that lands in DIR
     --auto                            grade the default globs without prompting
-    --from-repligen                   grade what repligen just wrote
+    --from-preprompt                   grade what preprompt just wrote
     --rescue FILE [--output FILE]     diagnose a photograph, then apply the fix
     --measure FILE [--against AFTER]  read texture numbers, or how a grade moved them
     --set DIR                         which frames repeat, and how far each sits from the set's exposure
@@ -463,7 +463,7 @@ if ARGV.include?("--measure")
   exit 0
 end
 # Anchored to the tool, not to the shell's working directory — the same CWD
-# defect this file already fixes for master.json and repligen.rb. A bare
+# defect this file already fixes for master.json and preprompt.rb. A bare
 # relative path meant even a read-only --vocab-check created a log wherever the
 # operator happened to be standing.
 $logger = Logger.new(File.join(__dir__, "postpro.log"), "daily", level: Logger::DEBUG)
@@ -494,14 +494,14 @@ if BOOTSTRAP[:gems][:vips]
   require_relative "uncanny"
 end
 
-# Was File.exist?("repligen.rb") -- relative to the CURRENT WORKING DIRECTORY,
-# which is wherever the user happened to be, and never the directory repligen
+# Was File.exist?("preprompt.rb") -- relative to the CURRENT WORKING DIRECTORY,
+# which is wherever the user happened to be, and never the directory preprompt
 # lives in. It has been false on every invocation from anywhere, so the
-# --from-repligen branch and the closing hand-off tip were both unreachable.
-# repligen is a sibling of this file, and that relationship does not depend on
+# --from-preprompt branch and the closing hand-off tip were both unreachable.
+# preprompt is a sibling of this file, and that relationship does not depend on
 # where the shell was when it started.
-REPLIGEN_PATH = File.expand_path("../repligen/repligen.rb", __dir__)
-REPLIGEN_PRESENT = File.exist?(REPLIGEN_PATH)
+PREPROMPT_PATH = File.expand_path("../preprompt/preprompt.rb", __dir__)
+PREPROMPT_PRESENT = File.exist?(PREPROMPT_PATH)
 CAMERA_PROFILES = BOOTSTRAP[:camera_profiles]
 CONFIG = BOOTSTRAP[:config]
 $postpro_seed = Integer(ENV.fetch("POSTPRO_SEED", "0"), exception: false) || 0
@@ -3836,18 +3836,18 @@ end
   parts.join(" ")
 end
 
-# Repligen Integration
-def check_repligen
-  return unless REPLIGEN_PRESENT
+# Preprompt Integration
+def check_preprompt
+  return unless PREPROMPT_PRESENT
 
-  $cli_logger.info "Repligen detected! Auto-processing generated images..."
+  $cli_logger.info "Preprompt detected! Auto-processing generated images..."
 
   recent_files = Dir.glob("*_generated_*.{jpg,jpeg,png,webp}")
                     .select { |f| File.mtime(f) > (Time.now - 300) }
 
   return unless recent_files.any?
-    $cli_logger.info "Found #{recent_files.count} recent Repligen outputs"
-    preset_name = PROMPT ? PROMPT.select("Choose preset for Repligen outputs:", PRESETS.keys) : (CONFIG["default_preset"] || "house")
+    $cli_logger.info "Found #{recent_files.count} recent Preprompt outputs"
+    preset_name = PROMPT ? PROMPT.select("Choose preset for Preprompt outputs:", PRESETS.keys) : (CONFIG["default_preset"] || "house")
     recent_files.each { |file| process_file(file, 2, preset_name) }
 
 end
@@ -3930,9 +3930,9 @@ end
 
 # Main Workflow
 def get_input
-  $cli_logger.info "postpro.rb v18.0.0 full-analog#{REPLIGEN_PRESENT ? " repligen=active" : ""}"
+  $cli_logger.info "postpro.rb v18.0.0 full-analog#{PREPROMPT_PRESENT ? " preprompt=active" : ""}"
 
-  check_repligen if REPLIGEN_PRESENT
+  check_preprompt if PREPROMPT_PRESENT
 
   if PROMPT
     workflow = PROMPT.select("Choose workflow:", [
@@ -4272,7 +4272,7 @@ def vocab_check
   # name. Until 2026-08-12 process_file and run_random ran the finishing grain
   # and run_one_shot and run_watch did not, so the same --preset produced a
   # different negative depending on which entry point rendered it — and the thin
-  # side of the split was repligen's --postpro handoff, which is the path that
+  # side of the split was preprompt's --postpro handoff, which is the path that
   # makes the finals. Operator's call: all four grain.
   #
   # Read out of this file rather than asserted in prose, because the split had
@@ -4407,13 +4407,13 @@ def run_one_shot
   processed = preset(image, preset_name)
   # Operator, 2026-08-12: the four entry points now grain identically. This one
   # and run_watch did not, so the same --preset gave a different negative
-  # depending on whether it arrived through a batch or through repligen's
+  # depending on whether it arrived through a batch or through preprompt's
   # --postpro handoff -- and the handoff is the path that produces the finals.
   processed = apply_finishing_grain(processed, preset_name)
   processed = rgb_bands(processed)
   quality = CONFIG["jpeg_quality"] || 95
   # process_file honours --tiff16 and this ignored it, so the one-shot mode
-  # -- the mode repligen's --postpro handoff uses, and the only one with an
+  # -- the mode preprompt's --postpro handoff uses, and the only one with an
   # explicit output path -- quietly wrote 8-bit JPEG when asked for 16-bit TIFF.
   # A grading tool silently halving its bit depth is the kind of thing you find
   # much later, in the file.
@@ -4570,10 +4570,10 @@ def auto_launch
   return run_watch       if watch_mode?
   return run_one_shot    if one_shot_mode?
   return run_random      if random_mode?
-  if ARGV.include?("--auto") || (!$stdin.tty? && ARGV.include?("--from-repligen"))
+  if ARGV.include?("--auto") || (!$stdin.tty? && ARGV.include?("--from-preprompt"))
     input = auto_mode
-  elsif ARGV.include?("--from-repligen") && REPLIGEN_PRESENT
-    check_repligen
+  elsif ARGV.include?("--from-preprompt") && PREPROMPT_PRESENT
+    check_preprompt
     return
   else
     input = get_input
@@ -4624,8 +4624,8 @@ def auto_launch
   duration = (Time.now - start_time).round(2)
   $cli_logger.info "Complete! #{total_processed} files → #{total_variations} masterpieces (#{duration}s)"
 
-  return unless REPLIGEN_PRESENT && total_variations > 0
-    $cli_logger.info "Tip: Run 'ruby repligen.rb' to generate more content!"
+  return unless PREPROMPT_PRESENT && total_variations > 0
+    $cli_logger.info "Tip: Run 'ruby preprompt.rb' to generate more content!"
 
 end
 

@@ -4,7 +4,7 @@ require "json"
 
 module Master
   module Io
-    # Executable contract shared by postpro, repligen and dilla.  Keeping the
+    # Executable contract shared by postpro, preprompt and dilla.  Keeping the
     # contract in code makes every emulation direction discoverable by MASTER,
     # addressable by a stable id, and regression-testable after the design notes
     # that originally described it no longer exist.
@@ -30,7 +30,7 @@ module Master
         temporal_consistency_check codec_artifact_preview reversible_recipe
       ].freeze
 
-      REPLIGEN = %i[
+      PREPROMPT = %i[
         stock_prompt lens_prompt camera_height distance_crop lighting_direction plastic_skin_negative
         identity_first_pass style_second_pass candidate_ranking likeness_confidence face_crop_comparison
         expression_diversity pose_diversity wardrobe_diversity background_diversity duplicate_detection
@@ -63,8 +63,8 @@ module Master
         spectral_regression
       ].freeze
 
-      GROUPS = { postpro: POSTPRO, repligen: REPLIGEN, dilla: DILLA }.freeze
-      OFFSETS = { postpro: 1, repligen: 71, dilla: 131 }.freeze
+      GROUPS = { postpro: POSTPRO, preprompt: PREPROMPT, dilla: DILLA }.freeze
+      OFFSETS = { postpro: 1, preprompt: 71, dilla: 131 }.freeze
 
       module_function
 
@@ -86,7 +86,7 @@ module Master
       def stage_for(component, id)
         case component
         when :postpro then postpro_stage(id)
-        when :repligen then repligen_stage(id)
+        when :preprompt then preprompt_stage(id)
         when :dilla then dilla_stage(id)
         end
       end
@@ -99,7 +99,7 @@ module Master
         end
       end
 
-      def repligen_stage(id)
+      def preprompt_stage(id)
         case id
         when ..78 then :prompt_pipeline
         when ..92 then :identity_review

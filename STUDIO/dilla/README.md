@@ -28,7 +28,7 @@ texture rather than pretending to be an FM keyboard. FM is appropriate for the
 Rhodes and transient percussion, not for every instrument in the catalogue.
 
 ENV knobs, the switch reference and the render path in detail are in
-`ENV_AND_RENDER.md`. The livesets play through `dilla_live.rb` from `lib/livesets.rb`.
+`ENV_AND_RENDER.md`. The catalogue plays live through `ruby dilla.rb live`, and the livesets through `ruby dilla.rb live set` from `lib/livesets.rb`.
 
 ## What happens during a render
 

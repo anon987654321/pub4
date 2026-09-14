@@ -28,7 +28,7 @@ renamed.
 | `MASTER/` | A constitutional AI runtime in pure Ruby. The primary product. | `MASTER/bin/master "<instruction>"` |
 | `RAILS/` | Three Rails 8 apps: **brgen** (a city social network; its verticals are mounted engines), **amber** (wardrobe), **bsdports**. | `RAILS/bin/triangle up` |
 | `OPENBSD/` | The deploy pipeline and the VPS runbook. Production is one box, `vm23`. | `MASTER/bin/operator vps state` |
-| `STUDIO/` | Media tools. **dilla** makes beats, **postpro** grades images, **repligen**/**lora** generate. | `ruby STUDIO/dilla/dilla.rb` |
+| `STUDIO/` | Media tools. **dilla** makes beats, **postpro** grades images, **preprompt**/**lora** generate. | `ruby STUDIO/dilla/dilla.rb` |
 
 Nothing else sits at the repo root but this file, `TODO.md` — the single
 repo-wide backlog (every per-tree debt/TODO/blocker list was folded into it) —

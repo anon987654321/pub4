@@ -157,7 +157,7 @@ proposals:
       Deleted rather than wired, on three findings that only appeared when someone
       tried to wire it. Its REGISTRY names nine tools and exactly one — web_fetch —
       matches a live one: file_read/file_write are inverted from read_file/write_file,
-      shell_exec is zsh, git_op is git_context, and postpro/repligen/scan are no tool
+      shell_exec is zsh, git_op is git_context, and postpro/preprompt/scan are no tool
       at all, while fourteen live tools have no contract. Its injection check fires
       only for :shell_exec and :git_op, names that never occur. And the guard it
       would run is InjectionGuard in :strict mode, which is default-deny — it

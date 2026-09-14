@@ -352,7 +352,7 @@ return if collisions.any?
       RAILS/shared/app RAILS/shared/lib RAILS/gates
       RAILS/brgen/app RAILS/brgen/lib RAILS/amber/app RAILS/amber/lib
       RAILS/bsdports/app RAILS/bsdports/lib
-      STUDIO/dilla/lib STUDIO/lora STUDIO/postpro STUDIO/repligen
+      STUDIO/dilla/lib STUDIO/lora STUDIO/postpro STUDIO/preprompt
       OPENBSD/lib
     ].freeze
 

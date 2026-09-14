@@ -33,7 +33,7 @@ require "uri"
 # filtering, pitching and drunk-swinging a public-domain 78 puts you in the same
 # place, and the result clears.
 #
-# "This does not add to that pile" is about this file only. `dilla_live.rb dig`
+# "This does not add to that pile" is about this file only. `dilla.rb live dig`
 # (Livesets.dig_beds!) is a YouTube ripper and is still here and still run, which
 # is how a reader ends up believing the whole tree took the position this
 # paragraph takes. It says so on stderr on every run.

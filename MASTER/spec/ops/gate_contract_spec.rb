@@ -66,7 +66,7 @@ class GateContractSpec < Minitest::Test
   # The gate must cover every sibling tree CLAUDE.md names, not a subset.
   #
   # It carried RAILS and OPENBSD and reported the repo clean on that basis.
-  # STUDIO — dilla, lora, postpro, repligen — was never scanned, fixed or
+  # STUDIO — dilla, lora, postpro, preprompt — was never scanned, fixed or
   # reviewed, so "gate clean" was a claim about three quarters of the repo.
   #
   # Read out of `--explain` rather than out of the source, because the target

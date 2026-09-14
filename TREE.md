@@ -67,7 +67,7 @@ pub4/
 └── STUDIO/                   media tools
     ├── dilla/                beats — renders land beside dilla.rb
     ├── postpro/              grade
-    ├── repligen/
+    ├── preprompt/
     ├── lora/
     │   └── _toolkit/toolkit.sh              renamed from lib.sh
     ├── isolation.rb          hoisted from tools/

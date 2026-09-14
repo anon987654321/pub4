@@ -79,7 +79,7 @@ module Master
       def exhaustion?(message)
         Master::Ground::FailureTaxonomy.exhausted?(message)
       rescue StandardError
-        # STUDIO/repligen and STUDIO/lora load Io::ReplicateClient standalone,
+        # STUDIO/preprompt and STUDIO/lora load Io::ReplicateClient standalone,
         # without the runtime that gives Master::Ground::FailureTaxonomy its rules.yml. The
         # gate still has to answer there, so it falls back to the pattern the
         # taxonomy would have reached for anyway.

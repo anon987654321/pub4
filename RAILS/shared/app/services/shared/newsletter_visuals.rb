@@ -10,11 +10,11 @@ require "fileutils"
 require "securerandom"
 
 module Shared
-  # Cinematic newsletter hero images via postpro + optional repligen generation.
+  # Cinematic newsletter hero images via postpro + optional preprompt generation.
   class NewsletterVisuals
     Hero = Data.define(:url, :alt, :caption, :source)
 
-    REPLIGEN_MODEL = ENV.fetch("NEWSLETTER_HERO_MODEL", "black-forest-labs/flux-1.1-pro")
+    PREPROMPT_MODEL = ENV.fetch("NEWSLETTER_HERO_MODEL", "black-forest-labs/flux-1.1-pro")
     POSTPRO_PRESET = ENV.fetch("NEWSLETTER_POSTPRO_PRESET", "magic_hour")
     POSTPRO_STOCK = ENV.fetch("NEWSLETTER_POSTPRO_STOCK", "kodak_portra")
 
@@ -33,7 +33,7 @@ module Shared
 source: :postpro) if processed
       end
 
-      generated = repligen_hero(city_name:, theme:)
+      generated = preprompt_hero(city_name:, theme:)
       return generated if generated
 
       nil
@@ -65,8 +65,8 @@ source: :postpro) if processed
       nil
     end
 
-    def repligen_hero(city_name:, theme:)
-      token = ENV["REPLICATE_API_TOKEN"].presence || ENV["REPLIGEN_API_TOKEN"].presence
+    def preprompt_hero(city_name:, theme:)
+      token = ENV["REPLICATE_API_TOKEN"].presence || ENV["PREPROMPT_API_TOKEN"].presence
       return nil if token.blank?
 
       prompt = "Editorial newsletter hero, #{city_name}, #{theme}, cinematic natural light, " \
@@ -74,14 +74,14 @@ source: :postpro) if processed
       output = replicate_predict(token:, prompt:)
       return nil if output.blank?
 
-      Hero.new(url: output, alt: "#{city_name} — #{theme}", caption: "Generated for this edition", source: :repligen)
+      Hero.new(url: output, alt: "#{city_name} — #{theme}", caption: "Generated for this edition", source: :preprompt)
     rescue StandardError => error
-      log("repligen hero failed: #{error.message}")
+      log("preprompt hero failed: #{error.message}")
       nil
     end
 
     def replicate_predict(token:, prompt:)
-      uri = URI("https://api.replicate.com/v1/models/#{REPLIGEN_MODEL}/predictions")
+      uri = URI("https://api.replicate.com/v1/models/#{PREPROMPT_MODEL}/predictions")
       payload = { input: { prompt:, aspect_ratio: "16:9", output_format: "jpg" } }
       response = replicate_post(uri, token, payload)
       prediction = JSON.parse(response)

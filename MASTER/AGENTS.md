@@ -38,7 +38,7 @@ The four trees, and how each is entered:
 - `MASTER/` — a constitutional AI runtime in pure Ruby. `MASTER/bin/master "<instruction>"`.
 - `RAILS/` — brgen (a city social network, verticals as mounted engines), amber, bsdports. `RAILS/bin/triangle up`.
 - `OPENBSD/` — the deploy pipeline and the VPS runbook. Production is one box, vm23.
-- `STUDIO/` — dilla makes beats, postpro grades images, repligen and lora generate.
+- `STUDIO/` — dilla makes beats, postpro grades images, preprompt and lora generate.
 
 Two commands cover most work. `MASTER/bin/operator gate` runs the whole ladder over
 all four trees; `MASTER/bin/operator measure` prints every ratchet with its ceiling.
@@ -570,7 +570,7 @@ in `OPENBSD/CLAUDE.md`.
 - **No docs/ directory.** `AEGIS.md`, `COGNITION.md` and `EXAMPLES.md` stay at
   MASTER's root, where `START_HERE.md`, `PATH_OWNERSHIP.yml`, `lib/cognition/`
   and the doc tests name them by path.
-- **No media generation in MASTER.** STUDIO's repligen and lora keep it. A
+- **No media generation in MASTER.** STUDIO's preprompt and lora keep it. A
   generation need is a `lib/core/world.rb` handler, never the deleted LoRA
   pipeline and video chain restored from history.
 - **No unmeasured gem.** The ruby_llm satellites stay out: `-schema` is
