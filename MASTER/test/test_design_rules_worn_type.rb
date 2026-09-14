@@ -10,11 +10,9 @@ class TestDesignRulesWornType < Minitest::Test
   def setup
     @data = Master::Design::Thresholds.load(root: Master::ROOT)
     @worn = @data.fetch("worn_type")
-    # gates/support/, not gates/lib/. The reader moved and this was the only
-    # reference that did not follow — AGENTS.md, DECISIONS.md, agent_map.yml,
-    # design_rules.yml and rendered_gates_test.rb had all been updated. The test
-    # errored on ENOENT rather than failing, so it reported a missing file where
-    # its subject is "every profile has a reader".
+    # gates/support/, not gates/lib/. A reader path that stops resolving errors
+    # on ENOENT rather than failing, which reports a missing file where this
+    # test's subject is "every profile has a reader".
     @reader = File.join(Master::ROOT, "..", "RAILS", "gates", "support", "geometry_type.rb")
   end
 

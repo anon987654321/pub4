@@ -264,6 +264,11 @@ module Operator
 
     # [ok, body, exitstatus] — the status, because 3 is a third state a boolean
     # cannot carry.
+    #
+    # Every stage is a child process, and that nesting stays. The process is what
+    # gives a stage its own exit status, bin/gate's stage timeouts and a window
+    # for attributing changed files; running stages in-process saves boot time
+    # and loses all three.
     def capture(*cmd, chdir: MASTER, env: {})
       out, status = Open3.capture2e(ENV.to_h.merge(env), *cmd, chdir:)
       [status.success?, out.lines.map(&:rstrip).reject(&:empty?), status.exitstatus]

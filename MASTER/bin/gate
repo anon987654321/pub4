@@ -168,8 +168,8 @@ end
 # out after 60s" outright. The scanners had run, so the gate called it green --
 # but a green gate is a claim that the code was reviewed, and nothing had been.
 #
-# This is the rule DECISIONS already records for gates in general (932195cf8,
-# "inconclusive should mean nothing measured, not something skipped"). The exit
+# This is the rule MASTER/AGENTS.md states for gates in general under
+# "Inconclusive": a gate that measured nothing is neither a pass nor a failure. The exit
 # status is not the only signal a stage emits; when a stage says in its own
 # output that it could not reach a verdict, that is the verdict.
 INCONCLUSIVE = [

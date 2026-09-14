@@ -17,6 +17,10 @@ module Master
 
       module_function
 
+      # ABC_SIZE flags this method, and its size is five weighted sums. Moving the
+      # coefficients into a table reorders float addition in exaggeration,
+      # cfg_weight and warmth, which are the controls speech is synthesised with,
+      # so the refactor changes how MASTER sounds and waits for an A/B by ear.
       def analyze(text)
         t = text.to_s.strip
         scores = SIGNALS.transform_values { |re| score(t, re) }

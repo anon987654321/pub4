@@ -8,10 +8,17 @@ class NoLibBackedgesTest < Minitest::Test
   # ROOT, one of them a String, and load order picked the winner.
   ROOT = Pathname.new(__dir__).join("..").expand_path
   LIB = ROOT.join("lib")
-  # The fold spine moved from core/ into lib/core/ on 2026-08-12. The directory
-  # boundary that used to make this test trivially true is gone, so the test now
-  # does the work that boundary was doing: name the fold's files explicitly and
-  # prove none of them reaches for the application spine around it.
+  # The fold spine shares lib/ and one Zeitwerk loader with the application
+  # spine, so no directory boundary keeps the dependency pointing one way. This
+  # test is that boundary: it names the fold's files, lib/core.rb and
+  # lib/core/**, and proves none of them requires a sibling under lib/.
+  #
+  # It reads `require` lines, so an autoloaded constant slips past it. That is
+  # why Core::Constitution.load calls YAML.safe_load_file on data/rules.yml
+  # itself instead of Master.load_rules: the loader lives in lib/boot/data.rb,
+  # needs no require to reach, and would be the fold's first backedge. The two
+  # reads return the same object; the loader adds a size limit, a timeout and
+  # permitted classes, and rules.yml holds no Date, which keeps them equal.
   CORE = [LIB.join("core.rb"), *LIB.join("core").glob("**/*.rb")].freeze
 
   def test_core_files_do_not_require_lib

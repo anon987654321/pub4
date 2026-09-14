@@ -3,9 +3,12 @@
 # slack the next change grows into is the same defect as debt. This file is the
 # reader that keeps the invariant from being decoration.
 #
-# Two claims, settled in DECISIONS.md ("The invariant"):
-#   - core_files is the real invariant. A new top-level concept in core/ is a
-#     design change, argued for here — not a line-count question.
+# Two claims, and they are different kinds of number:
+#   - core_files is the real invariant. It counts lib/core.rb and lib/core/*.rb,
+#     the entrypoint beside the directory, so a glob of lib/core/ alone does not
+#     hand out a free concept. A new top-level concept in the fold is a design
+#     change, argued for here — not a line-count question, and never a file
+#     added because something felt long.
 #   - lib_body_ceiling is a budget with a sponsor. It may be raised, but only in
 #     a commit that names what the lines buy, and consecutive_raises_allowed
 #     caps how many raises may stand before a genuine fall earns the budget

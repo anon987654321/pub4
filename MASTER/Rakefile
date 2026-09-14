@@ -1,5 +1,10 @@
 # frozen_string_literal: true
 
+# One file on purpose. tools/runs.rb, tools/data_reach.rb, tools/method_graph.rb,
+# test_readme_env_names.rb and test_limits_split.rb read this path to learn who
+# runs a test, who reads a data key and which ENV names are live. Split into
+# tasks/*.rake, each of them stays green and goes blind.
+
 require "rake/testtask"
 require "timeout"
 
@@ -155,6 +160,8 @@ task :constitution do
 end
 
 desc "Run rules.yml self_test laws against MASTER itself"
+# A loud gate: it fails while known debt remains, so the debt stays visible and
+# triageable. Read the count from this task's output, never from prose.
 task :selftest do
   $LOAD_PATH.unshift(File.join(__dir__, "lib"))
   require "master"

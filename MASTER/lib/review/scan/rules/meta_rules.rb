@@ -312,6 +312,12 @@ module Master
         # Zeitwerk names and tests, which is the LLM fix lane's job under its
         # normal accept gates, never a mechanical rewrite.
         #
+        # A finding here is a candidate, not a debt. lib/ sits under
+        # push_dir(lib, namespace: Master), so every merge moves a constant, and a
+        # file that include-s its children above the merged bodies passes ruby -c
+        # and raises NameError. Merge when a reader asks for it, derive the
+        # scaffold from the path, and prove the merge by loading the constants.
+        #
         # Out of scope by design: law/ (one rule per file until the domain-file
         # consolidation decision), lib/core (the spine's file count is a
         # ratcheted invariant in data/spine.yml), test/spec (fixture files are

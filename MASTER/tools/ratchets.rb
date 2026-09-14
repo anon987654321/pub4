@@ -256,7 +256,7 @@ module Operator
       [
         Row.new(name: "spine.lib_body_ceiling", current: lib_code_lines, ceiling: spine["lib_body_ceiling"],
                 direction: :down, source: "MASTER/data/spine.yml",
-                note: "a budget with a sponsor, not a promise (DECISIONS.md)"),
+                note: "a budget with a sponsor, not a promise"),
         Row.new(name: "spine.core_files",
                 current: core_files.size, members: core_files,
                 ceiling: spine["core_files"], direction: :fixed, source: "MASTER/data/spine.yml",

@@ -153,7 +153,7 @@ class TestRatchets < Minitest::Test
   end
 
   # The two spine numbers are not the same kind of thing and must not be reported
-  # as if they were: one is a budget, one is an invariant (DECISIONS.md, 2026-08-11).
+  # as if they were: one is a budget, one is an invariant (data/spine.yml's header).
   def test_the_spine_invariant_is_marked_as_one
     core = rows.find { |row| row.name == "spine.core_files" }
 
