@@ -76,6 +76,16 @@ class TestDillaDirectives < Minitest::Test
   # D5, 2026-09-08: "the leads sound HORRIBLE!!". A copy of the line is an
   # octave of it, never a fifth: a fifth over every note of a lead above a pad
   # is what an unusable lead sounds like.
+  # The same complaint, answered in the voices: a lead patch has no saw and a
+  # filter that does not ring, since nothing above a pad masks either.
+  def test_improvised_lead_patches_have_no_saw_and_a_quiet_filter
+    IMPROVISED_LEAD_PATCHES.each do |name|
+      patch = AnalogSynth::PATCHES.fetch(name)
+      refute_includes patch.fetch(:waves), :saw, "#{name} plays a saw"
+      assert_operator patch.fetch(:resonance), :<=, 0.2, "#{name} rings"
+    end
+  end
+
   def test_lead_copies_are_octaves_only
     ImprovisedLine::LEAD_RATIOS.each do |ratio|
       octaves = Math.log2(ratio)
@@ -101,6 +111,13 @@ class TestDillaDirectives < Minitest::Test
   # loop or a recorded kit: not the kit pick, not the stream rotation, not a
   # role looking for a one-shot. Fifty seeds, because the kit pick once rolled
   # for a sample pack on most renders.
+  # Nor does a default: the table every CLI run applies and the album mode
+  # name no sample pack, so a kit is only ever an operator's EXTERNAL_KIT.
+  def test_no_default_names_a_recorded_kit
+    refute DILLA_BEST_DEFAULTS.key?("EXTERNAL_KIT"), "DILLA_BEST_DEFAULTS names a sample pack"
+    RENDER_MODE_DEFAULTS.each { |mode, table| refute table.key?("EXTERNAL_KIT"), "RENDER_MODE=#{mode} names a sample pack" }
+  end
+
   def test_no_draw_reaches_for_recorded_drums
     define_singleton_method(:ensure_external_assets_lazy!) { true }
     with_env("EXTERNAL_KIT" => nil, "DRUM_LOOP" => nil, "RENDER_SEED" => nil) do

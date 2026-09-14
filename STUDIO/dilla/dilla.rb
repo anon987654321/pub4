@@ -16635,7 +16635,8 @@ DILLA_BEST_DEFAULTS = DILLA_STYLE_DEFAULTS.slice(
   "SONITEX" => "donuts_soul",
   "SONITEX_PRESET" => "donuts_soul",
   "ANALOG_CHAIN" => "broadcast",
-  "EXTERNAL_KIT" => "03-soulful-vintage",
+  # No EXTERNAL_KIT: a sample pack is somebody else's recording, and the
+  # operator asked on 2026-09-08 for every sound to be synthesised here.
   "MARKOV_DRUMS" => "1",
   "FLAM" => "1",
   "GROOVE_LOCK" => "kick",
@@ -16683,9 +16684,9 @@ RENDER_MODE_DEFAULTS = {
   # produces zero lead events and an 8-bar one produces six, against 54 at
   # sixteen. A short render of this mode is silently a different arrangement.
   album: {
-    # Real sampled kit, with the layered kick an external kit otherwise disables
-    # and the backbeat clap that is implemented and off.
-    "EXTERNAL_KIT" => "03-soulful-vintage", "LAYER_KICK" => "1", "BACKBEAT_CLAP" => "1",
+    # The synthesised kit with its kick layered and the backbeat clap that is
+    # implemented and off. No sample pack: every sound is made here.
+    "LAYER_KICK" => "1", "BACKBEAT_CLAP" => "1",
     # Made new things old: 12-bit sampler grit and even-harmonic tube on the kit.
     "DRUM_CRUSH_MIX" => "0.42", "DRUM_CRUSH_BITS" => "12", "DRUM_TUBE_DB" => "6",
     "DRUM_PRESENCE_DB" => "6", "DRUM_AIR_DB" => "5", "DRUM_CRISP_AIR_DB" => "6",

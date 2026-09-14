@@ -322,7 +322,7 @@ module AnalogSynth
       lpg: 0.4,
     },
     vapor_lead: {
-      waves: %i[triangle saw triangle], detune: [-9.0, 0.0, 12.0], octaves: [0, -1, 1],
+      waves: %i[triangle sine triangle], detune: [-9.0, 0.0, 12.0], octaves: [0, -1, 1],
       cutoff: 900.0, env_amount: 1800.0, resonance: 0.2, drive: 0.8,
       amp: Envelope.new(attack: 0.02, decay: 0.8, sustain: 0.45, release: 1.8),
       filter_env: Envelope.new(attack: 0.35, decay: 1.0, sustain: 0.35, release: 1.2),
@@ -343,8 +343,8 @@ module AnalogSynth
     # at related rates lock into a pattern the ear learns in a bar, and the
     # whole reason for two of them is that it should not be able to.
     ringtone_lead: {
-      waves: %i[saw square triangle], detune: [-7.0, 0.0, 11.0], octaves: [0, 0, 1],
-      cutoff: 700.0, env_amount: 3200.0, resonance: 0.41, drive: 1.1,
+      waves: %i[triangle square triangle], detune: [-7.0, 0.0, 11.0], octaves: [0, 0, 1],
+      cutoff: 700.0, env_amount: 3200.0, resonance: 0.2, drive: 1.1,
       amp: Envelope.new(attack: 0.008, decay: 0.3, sustain: 0.5, release: 0.6),
       filter_env: Envelope.new(attack: 0.006, decay: 0.4, sustain: 0.3, release: 0.4),
       vibrato_hz: 5.2, vibrato_cents: 14.0,
