@@ -50,6 +50,22 @@ class RedditSeedTest < ActiveSupport::TestCase
     assert seeded_comments.all? { |comment| comment.content !~ /reddit/i }
   end
 
+  test "a tv subreddit seeds a channel, a show and its first episode" do
+    stub_scrape([ { "title" => "Kveldens serie", "body" => "Hva ser dere på?", "url" => "" } ])
+
+    rewriter = Object.new
+    rewriter.define_singleton_method(:rewrite) do |title:, body:, **_kwargs|
+      Shared::ContentRewriter::Result.new(title: title, body: body, comments: [])
+    end
+
+    ActsAsTenant.with_tenant(@city) do
+      RedditSeed.new(city: @city, domain: "brgen.no", subs: [ "tv" ], rewriter: rewriter).call
+    end
+
+    show = Tv::Show.strict_loading(false).find_by!(title: "Kveldens serie")
+    assert_equal [ 1 ], Tv::Episode.where(show: show).pluck(:number)
+  end
+
   private
 
   def stub_scrape(items)

@@ -175,11 +175,7 @@ class RedditSeed
       record.description = "Local media from #{@city.name}"
     end
     show = Tv::Show.create!(channel: channel, title: title.truncate(60), description: body.truncate(200))
-    Tv::Episode.create!(
-      show: show,
-      title: "Episode 1",
-      description: Faker::Lorem.sentence
-    )
+    Tv::Episode.create!(show: show, number: 1, title: "Episode 1")
   end
 
   def marketplace_signal?(sub, title) = sub =~ /buy|sell|market|oslo|bergen/i || title =~ /sale|selger|kjøp|til salgs/i
