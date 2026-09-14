@@ -101,10 +101,6 @@ class Item < ApplicationRecord
     (price_cents / 100.0 / times_worn).round(2)
   end
 
-  def value_label
-    cost_per_wear ? "#{cost_per_wear} per wear" : "not worn yet"
-  end
-
   def underused?
     times_worn.to_i < 3
   end

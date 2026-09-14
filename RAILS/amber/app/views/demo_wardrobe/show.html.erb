@@ -2,13 +2,13 @@
 <% content_for :json_ld, json_ld_script(demo_garment_schema(@item)) %>
 
 <article class="item-detail">
-  <p><%= link_to "← Demo wardrobe", demo_wardrobe_path %></p>
+  <p><%= link_to t("demo.back_to_wardrobe"), demo_wardrobe_path %></p>
   <% if @item.photos.attached? %>
     <%= responsive_image_tag @item.photos.first, alt: @item.title, preset: :detail, sizes: "(max-width: 768px) 100vw, 600px", class: "item-photo item-photo--detail" %>
   <% end %>
   <%= tag.h1 @item.title %>
   <p><%= [@item.brand, @item.category, @item.color, @item.size].compact.join(" · ") %></p>
-  <p><%= t("items.worn_times_short", count: @item.times_worn.to_i) %> · <%= @item.value_label %></p>
+  <%= tag.p [t("items.worn_times_short", count: @item.times_worn.to_i), cost_per_wear_label(@item)].compact.join(" · ") %>
   <% if @item.spark_joy? %>
     <p class="chip"><%= t("demo.spark_joy") %></p>
   <% end %>

@@ -61,6 +61,15 @@ def media_worker_running?
   end
 end
 
+  # A garment worn at a known price, in kroner and in the reader's language.
+  # nil when either is missing, so the caller leaves the figure out rather
+  # than printing an unpriced garment as unworn.
+  def cost_per_wear_label(item)
+    return unless item.cost_per_wear
+
+    t("items.per_wear", amount: number_to_currency(item.cost_per_wear))
+  end
+
   def live_stream_status_label(status)
     t("live_streams.status.#{status}", default: status.to_s)
   end
