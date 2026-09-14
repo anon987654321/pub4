@@ -744,7 +744,13 @@ function handleFaceNamedEvent(event, data) {
     return true;
   }
   if (event === 'confidence') {
-    const c = parseFloat(raw); if (!isNaN(c)) State.confidence = c;
+    const c = parseFloat(raw);
+    if (!isNaN(c)) {
+      State.confidence = c;
+      // chat.js reads the turn's confidence off the body when the reply ends;
+      // the felt event is not written here because it echoes the browser's own post.
+      rootBody.dataset.confidence = String(c);
+    }
     return true;
   }
   if (event === 'felt') {

@@ -306,7 +306,12 @@ window._chatOnDone  = () => {
   if (finished) window._chatRememberReply?.(finished);
   window._chatCollapseLongBlock?.(_streamEl);
   const lastAsst = log?.querySelector('.message.assistant:last-of-type');
-  if (lastAsst && parseFloat(document.body.dataset.confidence || '1') > 0.75) {
+  // The confidence event arrives mid-stream, after the message was built, so
+  // the band is set here from this turn's value and the value is spent.
+  const conf = parseFloat(document.body.dataset.confidence || '1');
+  delete document.body.dataset.confidence;
+  lastAsst?.style.setProperty('--conf-alpha', (0.08 + conf * 0.3).toFixed(2));
+  if (lastAsst && conf > 0.75) {
     lastAsst.classList.add('msg-settled');
     setTimeout(() => lastAsst.classList.remove('msg-settled'), 1800);
   }
