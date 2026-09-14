@@ -358,6 +358,28 @@ end
     assert_equal 0, children.kill_all, "the child must be gone"
   end
 
+  # A turn printed every bus event, 28,700 lines for one /review. Only a write
+  # reaches the terminal now; the rest stays in the event log.
+  def test_a_turn_prints_its_writes_and_nothing_else
+    bus = Master::Trace::EventBus.new(event_log: Object.new.tap { |log| log.define_singleton_method(:append) { |*| nil } })
+    renderer = Object.new
+    renderer.define_singleton_method(:render) { |text, mode:| text }
+    root = Dir.mktmpdir
+    cli = Master::CLI::Session.new(container: @container.merge(bus:, renderer:, root:))
+
+    out, = capture_io do
+      cli.send(:init_thinking_state!)
+      bus.publish("scan:pass", pass: "lexical", rule_count: 131)
+      bus.publish("error:swallowed", context: "anything")
+      bus.publish("tool:after", tool: "read_file", path: "#{root}/a.rb")
+      bus.publish("tool:after", tool: "write_file", path: "#{root}/lib/b.rb", bytes: 12, op: "write")
+      cli.send(:stop_thinking_indicator)
+    end
+
+    lines = out.split(/[\r\n]/).map { |line| line.delete_prefix("\e[K") }.reject(&:empty?)
+    assert_equal ["write lib/b.rb 12 bytes"], lines
+  end
+
   def test_ctrl_c_at_the_prompt_raises_interrupt_for_repl_loop_to_close
     assert_raises(Interrupt) { @cli.send(:on_int) }
   end

@@ -5,21 +5,21 @@ require_relative "../stream_accumulator"
 module Master
   module CLI
     class Session
-      SPIN_FRAMES = ["\u00B7", "\u2219", "\u2022", "\u25CF"].freeze
-      SPIN_INTERVAL = 0.25
-      DMESG_IGNORE = %w[bus:subscribe bus:unsubscribe ring:write].freeze
+      TICK_SECONDS = 0.25
       STAGE_EVENTS = {
         "infer:resolved" => "infer",
         "infer:confidence" => "infer",
-        "infer:rejected" => "infer-skip",
+        "infer:rejected" => "infer",
         "route:resolved" => "route",
         "llm:routed" => "model",
       }.freeze
-      VERDICT_GLYPH = { ok: "\u2713", fail: "\u00D7", warn: "!", info: "\u00B7" }.freeze
-      MUTATING_TOOLS = %w[WriteFile Edit StrReplace BatchReplace AstEdit FilePatch].freeze
 
       private
 
+      # One line that repaints while a turn runs, and above it one line per file
+      # the turn wrote. Every other bus event is routine: the event log already
+      # holds it, and silence on success keeps it off the terminal; one /review
+      # publishes about 28,700 of them.
       def print_thinking_indicator
         return unless $stdout.isatty
 
@@ -34,21 +34,18 @@ module Master
         # `**`: a single star is colon-free names only, and every stage event has one.
         @think_sub = @refs.bus&.subscribe("**") do |payload|
           update_think_stage(payload)
-          emit_dmesg_line(payload)
+          print_write_line(payload)
         end
       end
 
       def spawn_spinner_thread
         Thread.new do
-          i = 0
           loop do
             @think_mutex.synchronize do
-              frame = SPIN_FRAMES[i % SPIN_FRAMES.size]
-              print "\r\e[K#{@refs.renderer.render("#{frame} thinking #{elapsed_seconds}s #{@think_stage}", mode: :dim)}"
+              print "\r\e[K#{@refs.renderer.render("thinking #{elapsed_seconds}s, #{@think_stage}", mode: :dim)}"
               $stdout.flush
             end
-            sleep SPIN_INTERVAL
-            i += 1
+            sleep TICK_SECONDS
           end
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "cli.spinner", event_bus: @refs.bus)
@@ -66,77 +63,44 @@ module Master
 
       def update_think_stage(payload)
         ev = payload[:event].to_s
-        if ev.start_with?("stage:")
-          @think_stage = ev.delete_prefix("stage:")
-          return
-        end
-        if ev == "pipeline:stage_start" && payload[:stage]
-          @think_stage = payload[:stage].to_s.downcase
-          return
-        end
-        return unless STAGE_EVENTS.key?(ev)
-          @think_stage = STAGE_EVENTS[ev]
-
+        stage = if ev.start_with?("stage:") then ev.delete_prefix("stage:")
+                elsif ev == "pipeline:stage_start" then payload[:stage]&.to_s&.downcase
+                else STAGE_EVENTS[ev]
+                end
+        @think_stage = stage if stage
       end
 
-      def glyph_for_event(ev)
-        case ev
-        when /:(done|ok|success|rendered|synthesis)\b/ then VERDICT_GLYPH[:ok]
-        when /:(error|fail|timeout|veto)\b/ then VERDICT_GLYPH[:fail]
-        when /:(warn|warning|escalat)\b/ then VERDICT_GLYPH[:warn]
-        else VERDICT_GLYPH[:info]
-        end
-      end
+      # `write lib/cli/session.rb 2140 bytes, +12 -3`: the effect, then its size.
+      def print_write_line(payload)
+        return unless payload[:event] == "tool:after"
+        return unless Master::Trace::WriteTracker::MUTATING_TOOLS.include?(payload[:tool].to_s)
 
-      def emit_dmesg_line(payload)
-        ev = payload[:event].to_s
-        return if ev.empty? || DMESG_IGNORE.include?(ev)
-        file_line = format_file_dmesg(ev, payload)
-        kv = payload.reject { |k, _| %i[event ts topic path op bytes tool].include?(k) }
-                    .map { |k, v| "#{k}=#{v.to_s[0, 60]}" }.join(" ")
-        diff = ev == "tool:after" && MUTATING_TOOLS.include?(payload[:tool].to_s) ? diff_stat(payload[:path]) : nil
-        tail = diff ? " #{diff}" : ""
-        body = file_line || ev
-        extras = [kv, tail].reject(&:empty?).join(" ")
-        line = "  %s [%7d] %s%s" % [glyph_for_event(ev), elapsed_ms, body, extras.empty? ? "" : " #{extras}"]
-        @think_mutex&.synchronize do
-          print "\r\e[K"
-          $stdout.puts @refs.renderer.render(line, mode: :dim)
-          $stdout.flush
-        end
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "cli.print_event", event_bus: @refs.bus)
-      end
-
-      def format_file_dmesg(ev, payload)
-        return unless ev.start_with?("tool:")
         path = payload[:path].to_s
         return if path.empty?
 
-        op = payload[:op].to_s
-        op = ev == "tool:before" ? "touch" : "done" if op.empty?
-        bytes = payload[:bytes]
-        size = bytes ? " #{bytes}B" : ""
-        rel = path.delete_prefix("#{@refs.root}/")
-        rel = path if rel == path
-        "#{op} #{rel}#{size}"
+        line = [write_label(payload, path), diff_stat(path)].compact.join(", ")
+        @think_mutex&.synchronize do
+          print "\r\e[K"
+          puts @refs.renderer.render(line, mode: :dim)
+        end
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "cli.print_write_line", event_bus: @refs.bus)
+      end
+
+      def write_label(payload, path)
+        op = payload[:op].to_s.empty? ? "edit" : payload[:op]
+        bytes = payload[:bytes] ? " #{payload[:bytes]} bytes" : ""
+        "#{op} #{path.delete_prefix("#{@refs.root}/")}#{bytes}"
       end
 
       def diff_stat(path)
-        return unless path && !path.empty?
         out, = Master::Io::Exec.capture2e("git", "-C", @refs.root, "diff", "--numstat", "--", path)
         m = out.lines.first&.match(/^(\d+)\s+(\d+)/)
-        m ? "+#{m[1]}/-#{m[2]}" : nil
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "cli.diff_stat", event_bus: @refs.bus)
-      end
-
-      def elapsed_ms
-        ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - @think_t0.to_f) * 1000).round
+        m ? "+#{m[1]} -#{m[2]}" : nil
       end
 
       def elapsed_seconds
-        (elapsed_ms / 1000.0).floor
+        (Process.clock_gettime(Process::CLOCK_MONOTONIC) - @think_t0.to_f).floor
       end
 
       def build_stream_handler(buffer, &on_text)
