@@ -444,8 +444,14 @@ module Master::Core
 
     # An empty selection is not a failure: the path had no uncommitted change at
     # checkpoint time, so HEAD is already the state being restored to.
+    #
+    # The patch names paths from the repository's top, and --include matches
+    # those names. Rooted in a subdirectory, as MASTER is in pub4, a bare path
+    # matched nothing: the file went back to HEAD, the operator's uncommitted
+    # edit went with it, and the rollback reported success.
     def apply_patch_for(path, patch)
-      out, status = bounded_capture2e("git", "-C", @root, "apply", "--binary", "--include=#{path}", "-",
+      include = "#{git_capture("rev-parse", "--show-prefix")}#{path}"
+      out, status = bounded_capture2e("git", "-C", @root, "apply", "--binary", "--include=#{include}", "-",
                                       stdin_data: patch)
       raise out.strip unless status.success? || out.include?("No valid patches")
     end
