@@ -313,62 +313,43 @@ Wishes and measured proposals not yet shipped; each section is dated.
 
 ## Found by the backlog pass — opened 2026-09-14
 
-Thirteen agents worked this file on 2026-09-14 and noticed these outside their
+The agents that worked this file on 2026-09-14 and noticed these outside their
 slices. Each is a hypothesis with its seam.
 
 ### MASTER
 
-- **`/undo` can revert the wrong file after a fold turn.** `Core::World#do_write`
-  records nothing for undo, so `/undo` reverts the newest tool-path snapshot,
-  which can belong to an earlier session.
-- **`InjectionGuard` reads web fetches and not file reads.** A planted file in a
-  worktree reaches the model unchecked.
 - **The face reads event fields where the stream does not put them.**
   `/events/stream` nests each event's fields under `data`, and
   `visual_bridge.js` reads `event.pct`, `event.modules` and `event.spirit_radius`
   from the top level, so they arrive undefined. Fixing it changes what the face
   shows: the operator's.
-- **ChatService's `model` SSE event names the routed model** from `llm:request`;
-  `llm:response` names the one that answered.
 - **`test_ratchets` is red on rows nobody moved on purpose.** Over the ceiling:
-  `rule_audit.silent` 44/40 (43 before the scanner pass; `NO_MULTIPLE_LANGUAGES`
-  went silent when a comment span stopped reading as code), `namespace` 3/2 and
-  `growth.rails` 1995/1980 (model tests and one migration). Slack against main:
-  `self_findings`, `data_reach`, `sprawl.lone_dirs`, `lib_body`, `growth.master`.
-  Each row wants its fall recorded or its raise named, never absorbed.
-- **Readers with no caller.** `Ground::OpenbsdConfig` (its own test only),
-  `Ground::Policy::Workflow#phase`, `#workflow`, `#gates` and `#brief`,
-  `Design::Thresholds.micro_typography`; `solid_queue` and `solid_cache` sit in
-  the web Gemfile with nothing loading them; `face_vision_d.js` registers an
-  ActionCable stub.
-- **The CLI after its 2026-09-14 pass.** Rotate the web token printed at boot
-  on 2026-09-13; it sits in two saved terminal transcripts in `~/Downloads`
-  (operator). A model chosen with `/model` is saved and sticks for the session,
-  but the next boot does not put it first. `/status` still prints its event rows
-  as `key=value`, short of the dmesg grammar the rest of the CLI now keeps. The
-  review report prints its posture twice, once in the `mode0` line and once as a
-  section. `CLI::Propose` and `Ground::OperatorPlaybook` have no caller outside
-  their tests. `/soul approve` bumps a `Version:` line `SOUL.md` does not have.
+  `rule_audit.silent` 44/40, `growth.rails` 1998/1980 (model tests and a
+  migration), and `namespace` 3/2 from `STUDIO/dilla/lib/sine_stream.rb`. Slack
+  on `spine.lib_body_ceiling`, `growth.master`, `self_findings`, `data_reach`
+  and `sprawl.lone_dirs`. Each row wants its fall recorded or its raise named,
+  never absorbed.
+- **The CLI's last seams.** Rotate the web token printed at boot on 2026-09-13;
+  it sits in two saved terminal transcripts in `~/Downloads` (operator).
+  `/status` prints its event rows as `key=value`, short of the dmesg grammar the
+  rest of the CLI keeps. The review report prints its posture twice, in the
+  `mode0` line and as a section. `CLI::Propose` and `Ground::OperatorPlaybook`
+  have no caller outside their tests. `/soul approve` bumps a `Version:` line
+  `SOUL.md` does not have.
+- **`solid_queue` and `solid_cache` sit in the web Gemfile with nothing loading
+  them.** Dropping them is a lockfile change, so it lands with a watched deploy.
+- **`Policy::FALLBACK` speaks at `+0%` where `voice.yml` says `-18%`,** a sound
+  value and the operator's.
 - **A session receipt waits for a reader.** Joining the memory store version,
   worktree HEAD and model id to `Ground::BootReceipt` would let two runs be
   diffed; it is built when `/why` or `bin/doctor` asks.
 
 ### RAILS
 
-- **`reddit_seed.rb#seed_tv` creates `Tv::Episode` with no `number`,** so the
-  seed fails there.
-- **The test environment turns forgery protection off,** which drops the
-  csrf-token meta tag; `swipe_controller`'s like then throws and falls into the
-  offline queue unseen. The dating system test turns it back on.
-- **Two tests fail on main:** `function_layout_test` (the
-  `brgen/chrome.dark_default` marker) and
-  `gate_live_and_css_budget_test#test_the_vertical_pairing_still_surfaces_a_finding`.
-- **Stimulus.** `carousel` and `reveal` are registered and mounted by nothing
-  (on the reverse contract's exemption list with a reason), and the
-  `stimulus_boot.js` comment still says amber's showcase uses `carousel`. amber
-  registers two `sortable` controllers, its own and the vendored one, and which
-  wins on outfit reorder is unmeasured. Drag-only reorder (outfits, variants)
-  has no keyboard path (WCAG 2.5.7).
+- **`reveal` is registered and mounted by no app view,** only by the snippet
+  library, and the reverse Stimulus contract exempts it with that reason.
+  Drag-only reorder (amber outfits, marketplace variants) has no keyboard path
+  (WCAG 2.5.7), and a keyboard path means visible controls: the operator's.
 - **maplibre loses its DOM on a morph.** Nothing refreshes the maps home today;
   `WIRING_NOTES.md` records why it is unguarded.
 - **The playlist set page prints "likes" in English.**
@@ -380,8 +361,9 @@ slices. Each is a hypothesis with its seam.
 - **Stale paths after renames.** `tools/tree.rb --ground-policies` targets
   `*_policy.rb` files that no longer exist in `MASTER/lib/ground/`, and
   `RAILS/shared/app/services/shared/strunk_white_pass.rb` names the pre-rename
-  `MASTER/lib/now/stages/prune.rb`. `bin/vps-deploy` and `RAILS/_database.sh`
-  still carry comments that narrate what the code used to do.
+  `MASTER/lib/now/stages/prune.rb`. `bin/vps-deploy` still carries comments that
+  narrate what the code used to do, and `OPENBSD/solid_queue_proof.rb` says the
+  jobs workers are disabled at boot while `brgen_jobs` sits in `pkg_scripts`.
 - **`reach.rb` is a third cron-line parser** beside the drift gate's and
   installed-targets'.
 - **The bare IP lingers** as `lib/ssh_vm23.sh`'s `SSH_HOST` default and
