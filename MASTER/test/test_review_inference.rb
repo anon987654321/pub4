@@ -69,6 +69,18 @@ end
     end
   end
 
+  # "can you fix and git commit all those violations?" reviewed a directory
+  # named "and". A captured word is a path only when it names one.
+  def test_a_word_after_the_verb_is_not_a_path_unless_it_names_one
+    inferred = Master::CLI::TurnRouter.infer_operator_command(
+      "can you fix and git commit all those violations?", container: { bus: nil, session: nil },
+    )
+    assert_equal "", inferred[:args]
+
+    kept = Master::CLI::TurnRouter.infer_operator_command("fix lib/cli", container: { bus: nil, session: nil })
+    assert_equal "lib/cli", kept[:args]
+  end
+
   def test_turn_router_itself_maps_to_master
     inferred = Master::CLI::TurnRouter.infer_operator_command(
       "run master through itself",

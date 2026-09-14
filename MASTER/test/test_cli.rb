@@ -398,6 +398,24 @@ end
     assert_equal "error: unknown command: /dmesg\n", out
   end
 
+  # The footer counted `git diff HEAD`, every dirty file in a shared checkout,
+  # and a read-only preview printed "13 files changed".
+  def test_the_written_files_footer_counts_this_turns_writes_only
+    renderer = Object.new
+    renderer.define_singleton_method(:render) { |text, mode:| text }
+    cli = Master::CLI::Session.new(container: @container.merge(renderer:, root: Master::ROOT))
+    tracker = Master::Trace::WriteTracker.new
+
+    Master::Trace::WriteTracker.stub(:current, tracker) do
+      silent, = capture_io { cli.send(:print_changed_files_summary) }
+      tracker.record(__FILE__)
+      counted, = capture_io { cli.send(:print_changed_files_summary) }
+
+      assert_empty silent
+      assert_equal "1 file written\n", counted
+    end
+  end
+
   def test_a_cancelled_turn_prints_nothing
     out, = capture_io do
       @cli.send(:display_result, result: Master::Result.err("interrupted", category: :abort), accumulated: "", streamed: false)

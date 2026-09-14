@@ -118,14 +118,14 @@ module Master
         puts @refs.renderer.render(line, mode: :dim)
       end
 
+      # The files this turn wrote, from WriteTracker, which run_input resets.
+      # `git diff HEAD` counted every dirty file in a shared checkout, so a
+      # read-only preview reported "13 files changed" it never touched.
       def print_changed_files_summary
-        out, status = Master::Io::Exec.capture2e("git", "-C", @refs.root, "diff", "--name-only", "HEAD")
-        return unless status.success?
+        count = Master::Trace::WriteTracker.current&.paths.to_a.size
+        return unless count.positive?
 
-        count = out.lines.map(&:strip).reject(&:empty?).size
-        puts @refs.renderer.render("#{count} files changed", mode: :dim) if count.positive?
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "cli.changed_files_summary", event_bus: @refs.bus)
+        puts @refs.renderer.render("#{count} #{count == 1 ? 'file' : 'files'} written", mode: :dim)
       end
 
       def print_chips

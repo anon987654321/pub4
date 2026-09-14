@@ -77,6 +77,7 @@ module Master
 
         @user_active = true
         @last_input = input
+        Master::Trace::WriteTracker.current&.reset!
         paste, state, accumulated = init_turn_state(input)
 
         print_thinking_indicator unless paste

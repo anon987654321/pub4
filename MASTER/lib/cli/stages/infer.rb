@@ -37,6 +37,8 @@ module Master
         }.freeze
 
         INFER_DESTRUCTIVE = %w[clear rebuild resync shell rollback].freeze
+        # The words Pipeline::Pass#resolve_target maps to a tree.
+        TREE_ALIASES = /\A(?:rails|master|itself|self|face)\z/i.freeze
 
         def initialize(bus: nil, session: nil)
           @bus = bus
@@ -209,9 +211,8 @@ module Master
         def extract_args_group1(capture, match, msg)
           case capture
           when "path"
-            path = match&.[](1)&.strip
-            path = nil if path&.match?(/\A(?:all|everything|the|code|codebase)\z/i)
-            path.to_s
+            path = match&.[](1)&.strip.to_s
+            path_like?(path) ? path : ""
           when "cycles"
             (match&.[](1) || msg[/\b(\d+)\s*(?:time|cycle|iteration|gang|syklus)/i, 1]).to_s
           when "on_off"
@@ -221,6 +222,15 @@ module Master
           when "music_sub"
             msg.match?(/\b(?:radio\s+bergen|warp\s+tunnel|flying\s+lotus|madlib)\b/i) ? "radio" : ""
           end
+        end
+
+        # The word after a verb is a path only when it names one. "fix and git
+        # commit" captured "and", and the pass reviewed pub4/and.
+        def path_like?(word)
+          return false if word.empty?
+          return true if word.match?(%r{[/.]}) || word.match?(TREE_ALIASES)
+
+          [Master::ROOT, File.dirname(Master::ROOT)].any? { |base| File.exist?(File.join(base, word)) }
         end
 
         def extract_args_group2(capture, match, msg)
