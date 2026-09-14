@@ -24,7 +24,7 @@ module Master
       DMESG_BUFFER_LINES = CONFIG.fetch("dmesg_buffer_lines", 80)
       MULTILINE_MAX_LINES = CONFIG.fetch("multiline_max_lines", 500)
       HISTORY_LIMIT = CONFIG.fetch("history_limit", 2_000)
-      ERROR_TEXT_MAX_BYTES = 200
+      ERROR_TEXT_MAX_CHARS = 200
       ROUTINE_SUCCESS_MAX_LENGTH = 120
 
       SEVERITY_ICON = {
@@ -107,7 +107,6 @@ module Master
         @last_input = nil
         @last_cost = 0.0
         @last_tokens = 0
-        @seen_error_categories = {}
         @dmesg_sub = nil
         @exit_code = 0
       end

@@ -18,49 +18,17 @@ module Master
 
           @last_ok = false
           @exit_code = exit_code_for(err)
-          if err.category == :shutdown
-            exit_cli
-          else
-            puts
-            error_text = format_error_message(err)
-            puts @refs.renderer.render(error_text, mode: :error)
-            puts
-          end
+          return exit_cli if err.category == :shutdown
+
+          puts @refs.renderer.render(format_error_message(err), mode: :error)
         end
       end
 
-      CATEGORY_PLAYBOOK = {
-        budget: :process,
-        provider_error: :master,
-        llm_failure: :master,
-        validation: :process,
-        policy: :process,
-        axiom_violation: :master,
-      }.freeze
-
+      # The error and nothing else, on one line. The category sets the exit
+      # code; a playbook lesson on another subject is noise beside an error.
       def format_error_message(err)
-        parts = []
-        parts << "[#{err.category}]" if err.respond_to?(:category) && err.category
-        parts << err.message.to_s
-        hint = playbook_hint_for(err)
-        parts << hint if hint
-        error_text = parts.join(" ")
-        return error_text if error_text.bytesize <= ERROR_TEXT_MAX_BYTES
-
-        error_text[0, ERROR_TEXT_MAX_BYTES - 3] + "…"
-      end
-
-      def playbook_hint_for(err)
-        cat = err.category&.to_sym
-        return unless cat
-        return if @seen_error_categories[cat]
-
-        @seen_error_categories[cat] = true
-        area = CATEGORY_PLAYBOOK[cat]
-        lesson = Master::Ground::OperatorPlaybook.for_area(area || :process).first
-        return unless lesson
-
-        Master::Ground::OperatorPlaybook.format_lesson(lesson)
+        text = err.message.to_s
+        text.length <= ERROR_TEXT_MAX_CHARS ? text : "#{text[0, ERROR_TEXT_MAX_CHARS - 1]}…"
       end
 
       def display_ok(ok:, accumulated:, streamed:)

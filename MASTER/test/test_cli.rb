@@ -384,6 +384,20 @@ end
     assert_raises(Interrupt) { @cli.send(:on_int) }
   end
 
+  # Every error carried "[validation] … [ship_proof_not_checkboxes] Backlog
+  # marked done but production gaps remain", a lesson about something else.
+  def test_an_error_prints_its_message_alone
+    renderer = Object.new
+    renderer.define_singleton_method(:render) { |text, mode:| "#{mode}: #{text}" }
+    cli = Master::CLI::Session.new(container: @container.merge(renderer:))
+
+    out, = capture_io do
+      cli.send(:display_result, result: Master::Result.err("unknown command: /dmesg", category: :validation), accumulated: "", streamed: false)
+    end
+
+    assert_equal "error: unknown command: /dmesg\n", out
+  end
+
   def test_a_cancelled_turn_prints_nothing
     out, = capture_io do
       @cli.send(:display_result, result: Master::Result.err("interrupted", category: :abort), accumulated: "", streamed: false)
