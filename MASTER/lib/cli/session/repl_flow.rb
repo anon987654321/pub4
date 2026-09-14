@@ -16,16 +16,32 @@ module Master
         # WebSearch, no ReadFile, and a 45-cent reply asking for the text.
       end
 
+      # ^D reads nil and ^C at the prompt raises Interrupt; both leave here and
+      # close the session. A second ^C while it closes exits at once, so a save
+      # stuck on a full disk cannot hold the terminal.
       def repl_loop
         while @running
           print prompt_for_mode
           line = safe_read_line
-          break if line.nil?
+          if line.nil?
+            puts
+            break
+          end
           handle_repl_line(line)
         end
+      rescue Interrupt
+        puts
+      ensure
+        trap("INT") { exit!(130) }
+        close_session
+      end
+
+      def close_session
         stop_background_loop
         save_cli_history
         @refs.session.save!
+      rescue StandardError => e
+        Master::Ground::Swallow.log(e, context: "cli.close_session", event_bus: @refs.bus)
       end
 
       def prompt_for_mode
@@ -64,28 +80,16 @@ module Master
         true
       end
 
-      def accept_top_suggestion
-        @last_suggestion ||= proposer.call.first&.fetch(:action, nil)
-        return unless @last_suggestion
-        puts @refs.renderer.render("next: #{@last_suggestion}", mode: :dim)
-        proposer.acted(@last_suggestion) if proposer.respond_to?(:acted)
-        handle_repl_line(@last_suggestion)
-      end
-
-      def proposer
-        @proposer ||= Propose.new(container: @container)
-        @proposer.violations = violations_count
-        @proposer
-      end
-
       NL_DISPATCH = [
         [/\A(?:hi|hello|hey|yo|good (?:morning|afternoon|evening))[\s!.?]*\z/i, :run_chitchat],
         [/\bfocus\s+(?:mode|on|off)\b|\btoggle\s+focus\b/i, :toggle_focus],
       ].freeze
 
+      # An empty line does nothing, as in a shell: Enter never runs an action
+      # the operator has not read.
       def handle_repl_line(line)
         stripped = line.strip
-        return accept_top_suggestion if stripped.empty?
+        return if stripped.empty?
         NL_DISPATCH.each { |pat, meth| return send(meth) if stripped.match?(pat) }
 
         handled = dispatch_core_slash_command(stripped)

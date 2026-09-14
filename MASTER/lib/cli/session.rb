@@ -93,7 +93,6 @@ module Master
 
       def init_session_state!
         @running = false
-        @interrupt_at = Time.now
         @last_ok = true
         @violations = 0
         @prev_violations = 0
@@ -156,17 +155,15 @@ module Master
       end
 
       # Thread#value answers nil for a thread that was killed, rather than
-      # raising — and signals.rb kills this one on ^C. So an interrupted turn
-      # handed nil to `result.ok?` and took the REPL down with NoMethodError,
-      # after printing "aborted" for the interrupt before it. Neither rescue
-      # below could have caught it: Interrupt is not a StandardError, and a
-      # killed thread raises nothing at all.
+      # raising, and signals.rb kills this one on ^C. Interrupt is not a
+      # StandardError and a killed thread raises nothing, so the nil is the
+      # only sign of a cancel. A turn that raised is a failure, named as one.
       def fetch_pipeline_result
         @pipeline_thread.value || Result.err("interrupted", category: :abort)
       rescue NoMemoryError
         Result.err(host_oom_message, category: :infrastructure)
-      rescue StandardError => _e
-        Result.err("aborted", category: :abort)
+      rescue StandardError => e
+        Result.err("turn failed: #{e.class}: #{e.message}", category: :infrastructure)
       end
 
       def empty_input(source)

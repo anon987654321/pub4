@@ -17,21 +17,15 @@ module Master
         puts "\n#{@refs.renderer.render("reload failed: #{e.message}", mode: :error)}"
       end
 
+      # ^C cancels a running turn; at the prompt it ends the session. A trap
+      # interrupts the main thread wherever it stands, where taking a mutex
+      # raises ThreadError, so this only kills the turn's thread or raises
+      # Interrupt, and repl_loop saves on the way out in ordinary context.
       def on_int
-        if @pipeline_thread&.alive?
-          @pipeline_thread.kill
-          @pipeline_thread = nil
-          puts "\n#{@refs.renderer.render("aborted", mode: :warning)}"
-          return
-        end
-        if Time.now - @interrupt_at < 1
-          @scan_thread&.kill
-          @refs.session.save!
-          exit(0)
-        end
+        turn = @pipeline_thread
+        return turn.kill if turn&.alive?
 
-        @interrupt_at = Time.now
-        puts "\n#{@refs.renderer.render("^C again to quit", mode: :warning)}"
+        raise Interrupt
       end
     end
   end

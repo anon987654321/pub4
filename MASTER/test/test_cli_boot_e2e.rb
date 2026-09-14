@@ -88,3 +88,60 @@ class TestCliBootE2e < Minitest::Test
           "cli pipe timed out after #{COMMAND_TIMEOUT}s\nstdout:\n#{File.read(out.path)[0, 400]}\nstderr:\n#{File.read(err.path)[0, 400]}"
   end
 end
+
+# The REPL on a real terminal, because the exit path only exists there: Reline
+# owns the line, ^C arrives as SIGINT through the terminal driver, and ^D as an
+# end of file. Every ^C in the 2026-09-13 sessions was the operator trying to
+# leave, and the CLI answered "^C again to quit" and then crashed. Not gated
+# with the pipe tests above: leaving is the one thing a session must never get
+# wrong.
+class TestCliReplExit < Minitest::Test
+  ROOT = File.expand_path("..", __dir__)
+  ENV_FOR_PTY = TestCliBootE2e::BOOT_ENV.merge(
+    "MASTER_FAST" => "0", "MASTER_SKIP_BOOT_SCAN" => "1", "MASTER_SKIP_TTS" => "1", "TERM" => "xterm",
+  ).freeze
+  READY = /% |\$ /
+
+  def test_timeout = 60
+
+  def test_ctrl_c_at_the_prompt_exits_cleanly
+    output, status = drive { |terminal| terminal.write("\x03") }
+
+    assert_equal 0, status.exitstatus, output
+    refute_match(/Error|from .+\.rb:\d+/, output)
+  end
+
+  def test_ctrl_d_at_the_prompt_exits_cleanly
+    output, status = drive { |terminal| terminal.write("\x04") }
+
+    assert_equal 0, status.exitstatus, output
+    refute_match(/Error|from .+\.rb:\d+/, output)
+  end
+
+  private
+
+  def drive
+    require "pty"
+    output = +""
+    PTY.spawn(ENV_FOR_PTY, Master::BUNDLE_BIN, "exec", "ruby", "bin/cli", chdir: ROOT) do |reader, writer, pid|
+      read_until(reader, output, READY, 30)
+      sleep 0.5
+      yield writer
+      read_until(reader, output, nil, 10)
+      _, status = Process.waitpid2(pid)
+      return [output, status]
+    end
+  end
+
+  def read_until(reader, output, pattern, seconds)
+    deadline = Time.now + seconds
+    while Time.now < deadline
+      break if pattern && output.match?(pattern)
+      next unless reader.wait_readable(0.2)
+
+      output << reader.readpartial(4096)
+    end
+  rescue Errno::EIO, EOFError
+    output
+  end
+end

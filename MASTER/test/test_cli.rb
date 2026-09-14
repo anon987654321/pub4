@@ -336,6 +336,33 @@ end
     assert_equal "interrupted", result.message
   end
 
+  def test_ctrl_c_during_a_turn_kills_the_turn_and_keeps_the_session
+    turn = Thread.new { sleep 5 }
+    @cli.instance_variable_set(:@pipeline_thread, turn)
+
+    @cli.send(:on_int)
+
+    assert turn.join(1), "the turn's thread must be dead"
+  end
+
+  def test_ctrl_c_at_the_prompt_raises_interrupt_for_repl_loop_to_close
+    assert_raises(Interrupt) { @cli.send(:on_int) }
+  end
+
+  def test_a_cancelled_turn_prints_nothing
+    out, = capture_io do
+      @cli.send(:display_result, result: Master::Result.err("interrupted", category: :abort), accumulated: "", streamed: false)
+    end
+
+    assert_empty out
+  end
+
+  def test_an_empty_line_runs_nothing
+    @cli.stub(:run_input, ->(*) { flunk "an empty line ran a turn" }) do
+      assert_nil @cli.send(:handle_repl_line, "")
+    end
+  end
+
   def test_routine_success_emits_one_line
     result = Master::Result.ok(output: "saved")
 

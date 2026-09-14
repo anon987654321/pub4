@@ -12,6 +12,10 @@ module Master
           @exit_code = 0
           display_ok(ok:, accumulated:, streamed:)
         in Master::Result::Err => err
+          # A turn the operator cancelled did what was asked; ^C already
+          # echoed, so there is nothing to add.
+          return if err.category == :abort
+
           @last_ok = false
           @exit_code = exit_code_for(err)
           if err.category == :shutdown
