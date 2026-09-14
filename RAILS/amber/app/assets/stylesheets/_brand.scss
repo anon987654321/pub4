@@ -231,14 +231,16 @@
 }
 
 /* ch, not rem: 32rem is 640px at amber's root and the measure the type
-   actually sets is counted in characters, which is what the gate reads. */
+   actually sets is counted in characters, which is what the gate reads.
+   Unitless 1.5 because this is prose: --line-height is the root's absolute
+   20px, which set the 15.75px paragraph at 1.27. */
 .amber-guest-hero .body {
   max-width: var(--measure-narrow);
   margin-inline: auto;
   color: var(--text-secondary);
   margin-block: 0;
   font-size: var(--text-sm);
-  line-height: var(--line-height);
+  line-height: 1.5;
 }
 
 .amber-guest-hero .actions {
