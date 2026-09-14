@@ -75,6 +75,29 @@
   font-weight: var(--weight-bold);
 }
 
+/* A demo card has one destination and the title was its only 26px-tall way
+   there, so the title's hit area covers the card. */
+.item-card--demo {
+  position: relative;
+}
+
+.item-card--demo .item-title::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+/* Text links a thumb aims for on their own: the guest hero's secondary row, the
+   demo item's way back, the widget card's links and a section's closing link. */
+.amber-guest-secondary a,
+.item-detail > p:first-child a,
+.sidebar-card p a,
+.more_link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
+}
+
 .item-card nav {
   display: flex;
   gap: var(--space-2);
@@ -191,8 +214,13 @@
   outline-offset: 2px;
 }
 
+/* inline-flex so the label sits in the middle of the 44px it is given; as an
+   inline link the height grew below the text and "Sign in" hugged the top. */
 .btn-sm,
 .btn.btn-sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: var(--tap-min);
   padding: var(--space-2) var(--space-3);
   font-size: var(--text-xs);
