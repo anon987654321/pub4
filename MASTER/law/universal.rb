@@ -295,8 +295,8 @@ end
 # it. This one is about a comment that records the edit history of the line.
 # Git already holds that, per line, with an author and a message, and never
 # drifts from it; a comment holding the same thing is a second copy that decays
-# the first time someone edits the code and not the paragraph above it. The homes
-# for a reason worth re-reading are DECISIONS.md and TODO.md.
+# the first time someone edits the code and not the paragraph above it. A reason
+# worth re-reading is a present-tense comment; unfinished work goes in TODO.md.
 #
 # Narrow on purpose. "Measured 2026-08-11: /home is at 89%" is evidence for a
 # present claim and stays. What this catches is a dated change verb and the
@@ -311,7 +311,7 @@ Law.define(:NO_CHANGELOG_COMMENT) do
       line.match?(/^\s*(?:#|\/\/|\*)[^\n]{0,60}\b(?:used to be|was previously|were previously|formerly)\b/i) ||
       line.match?(/^\s*(?:#|\/\/|\*)[^\n]{0,60}\bchanged from\b[^\n]{0,40}\bto\b/i)
   end
-  fix "State the present reason. Put the history in the commit message, or in DECISIONS.md if it must be read again."
+  fix "State the present reason. Put the history in the commit message."
   bad "# RENAMED 2026-08-25 from Foo to Bar"
   good "# Bar names what it returns, so a caller can tell it from Baz."
 end
