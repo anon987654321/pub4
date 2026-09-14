@@ -576,7 +576,9 @@ assert_includes haystack, "turbo_prefetch: false",
   def test_bsdports_caches_publicly_and_brgen_checks_cable_health
     ports_controller = read_source(File.join(ROOT, "bsdports/app/controllers/ports_controller.rb"))
     assert_includes ports_controller, "expires_in 10.minutes, public: true"
-    assert_includes ports_controller, "fresh_when(@port, public: true)"
+    # The port page's revalidation is measured by request in bsdports'
+    # ports_controller_test, which also holds that the page is not public, since
+    # a signed-in reader sees their own controls on it.
 
     source = read_source(File.join(ROOT, "brgen/config/recurring.yml"))
     assert_includes source, "cable_health_check:"
