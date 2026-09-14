@@ -63,6 +63,9 @@ module Master
         case transport
         when :stdio
           { command: cfg["command"], args: cfg["args"] || [] }
+        # Not passed through SsrfGuard. mcp_servers.yml is operator configuration that can already
+        # name a stdio command, which is more than a URL can do, and the ordinary SSE server listens
+        # on loopback, which the guard refuses.
         when :sse
           { url: cfg["url"] }
         end

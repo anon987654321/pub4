@@ -199,6 +199,9 @@ class TtsJob
     @style_locked = style_locked
     @bus = bus
     @conversation = conversation.to_s.presence
+    # A hash of voice and text on purpose: identical lines share one synthesis and one cache
+    # entry. Guessing an id requires the utterance, and the mp3 holds nothing beyond it;
+    # TtsController#readable_job still checks ownership of a pending job.
     @fingerprint = Digest::SHA256.hexdigest("#{@voice}|#{@style}|#{@rate}|#{@pitch}|#{@text}")
     @job_id = @fingerprint[0, 32]
   end

@@ -15,6 +15,8 @@ module Master
         @usage = load_usage
       end
 
+      # The index comes from the patterns.yml registry and the workspace skills. No loader reads
+      # .master/skills/: nothing writes that directory, so a reader there has no producer.
       def discover!
         @loaded = []
         load_antigravity_skills

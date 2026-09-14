@@ -41,7 +41,7 @@ function start2DFallback() {
   // that geometry already existed and was more anatomically considered than
   // a first pass would be. face3d's WebGL renderer/blendshape rig around it
   // was not ported -- only the static point layout, which is all a particle
-  // field needs. See DECISIONS.md-adjacent MASTER/web/CLAUDE.md: the real
+  // field needs. See MASTER/web/CLAUDE.md: the real
   // WebGL face is "the wireframe mesh", so tracing wireframe-style anatomy
   // (not a filled illustration) keeps this placeholder visually continuous
   // with what it's standing in for.

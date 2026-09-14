@@ -9,6 +9,9 @@ require "psych"
 # seen MASTER/web. application.rb pointed at it anyway, which is how the
 # face shipped t("face.mic_state", default: "Microphone") on a page whose
 # html lang was still hardcoded "en" after the default locale became :nb.
+#
+# The two stay separate files: a helper shared across two apps with two bundles couples
+# their deploys.
 class LocaleContractTest < ActionDispatch::IntegrationTest
   LOCALES_DIR = File.expand_path("../config/locales", __dir__)
 

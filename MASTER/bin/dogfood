@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# Drives the CLI end to end. spec/dogfood_spec.rb, which `rake dogfood` runs, proves the laws
+# against their fixtures; the two are different checks.
 require "open3"
 require "rbconfig"
 require "timeout"

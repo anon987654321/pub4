@@ -7,6 +7,9 @@ module Master
   module Ground
     # Opens a SQLite DB with WAL → DELETE → :memory: fallback so a read-only
     # filesystem or locked WAL never crashes the store.
+    #
+    # The fallback suits the one includer, KnowledgeStore, a rebuildable ledger under the
+    # gitignored .master/. Pairing and memory are YAML, not SQLite, and never reach it.
     module SqliteStore
       @sqlite_warned = false
       @chmod_warned = false

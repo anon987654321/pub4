@@ -48,6 +48,10 @@ class ApplicationController < ActionController::Base
   # SameSite=Strict is site-scoped (eTLD+1). brgen.no and ai.brgen.no are the
   # same site, so a skipped CSRF token is not an origin check. POST from a
   # sibling host is refused unless Origin matches this host.
+  #
+  # A request carrying neither Origin nor a cross-site Sec-Fetch-Site passes. Every browser
+  # that holds a victim's cookies sends one of the two on a POST; a request with neither is
+  # curl, which has no victim session to ride.
   def require_same_origin!
     origin = request.origin.presence
     if origin
@@ -215,6 +219,8 @@ class ApplicationController < ActionController::Base
     minted
   end
 
+  # Fiber storage is copied into a fiber when it is created, and Falcon serves every request in
+  # its own fiber, so a CLI session's Fiber[:master_visitor] never reaches a web request.
   def with_master_fiber(unlocked: false)
     Fiber[:master_visitor] = visitor?
     Fiber[:master_elevated] = unlocked

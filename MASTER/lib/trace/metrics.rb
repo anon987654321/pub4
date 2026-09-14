@@ -39,6 +39,7 @@ module Master
         append(llm_response: { model: model.to_s, success:, tokens_approx:, escalated: })
       end
 
+      # Counts only, so a zero here is a count of zero calls.
       def summary
         calls = @model_stats.values.sum { |s| s[:calls] }
         {

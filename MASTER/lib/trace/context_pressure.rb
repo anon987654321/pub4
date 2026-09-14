@@ -2,6 +2,9 @@
 
 module Master
   module Trace
+    # A session token estimate turned into a band for the dashboard. Cognition::Affect is the
+    # bounded mood Mind updates from prediction error: one counts tokens and the other scores
+    # surprise, so the two share a word and no formula.
     module ContextPressure
       DEFAULT_LIMIT = Master::CTX_WINDOW_SIZE
 

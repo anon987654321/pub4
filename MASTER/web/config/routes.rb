@@ -2,6 +2,10 @@
 
 Rails.application.routes.draw do
   root "chat#index"
+  # chat/research, chat/enhance, chat/skills and chat/photo stay open to visitors: the face is a public
+  # chatbot, a visitor spends more through chat/message than any of them costs, and each is fetched by
+  # script and linked from nowhere, so no crawler finds it. enhance and photo count against the per-IP
+  # write limit. chat/tts/phrases is public because the phrases are the face's idle lines.
   get "dashboard", to: "dashboard#index"
   get "dashboard/live", to: "dashboard#live"
   get  "chat/message",  to: "chat#message"

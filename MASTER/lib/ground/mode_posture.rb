@@ -41,6 +41,8 @@ module Master
         }
       end
 
+      # Process-wide on purpose: posture is the operator's, not a visitor's, and .master/mode is
+      # shared by every process, so a per-request posture is a second, weaker source.
       def set!(mode)
         name = mode.to_s.strip.downcase
         raise ArgumentError, "unknown mode #{mode.inspect}; use #{MODES.join("|")}" unless MODES.include?(name)

@@ -17,6 +17,8 @@ module Master
     # Deterministic: no timestamps, no host paths. Two boots of the same tree
     # produce the same digest, so a changed digest names a changed constitution
     # rather than a changed clock.
+    #
+    # It describes a full build because bin/doctor, its reader, always does one.
     module BootReceipt
       # Every file that changes what MASTER may do. A digest over these is what
       # makes "the same constitution" checkable, rather than a version string

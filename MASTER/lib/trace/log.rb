@@ -46,6 +46,7 @@ module Master
       end
 
       # Append-only tool invocation log; subscribes to tool:before on EventBus.
+      # Under .master/ because it records tool arguments, which stay out of the served event stream.
       class Audit
         LOG_PATH = ".master/audit.ndjson".freeze
         MAX_VAL = 120

@@ -463,6 +463,9 @@ end
     end
   end
 
+  # Bus events as dmesg-shaped SSE lines. Trace::Dmesg prints CLI progress to stdout behind
+  # MASTER_DMESG; the two share the `unitN at parent: detail` shape and nothing else, so a
+  # shared formatter saves one interpolation.
   def dmesg_format(event, payload)
     sub, rest = event.split(":", 2)
     desc = dmesg_description(event, payload, sub, rest)

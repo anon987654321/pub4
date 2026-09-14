@@ -63,6 +63,7 @@ Rails.application.configure do
   # Only use :id for inspections in production.
   config.active_record.attributes_for_inspect = [ :id ]
 
-  # Host validation handled by relayd; disable Rails-level host authorization.
+  # Any Host is accepted because the allow-list sits one hop earlier: Falcon binds loopback only,
+  # relayd forwards only Host: ai.brgen.no to it, and unmatched hosts go to brgen.
   config.host_authorization = { exclude: ->(request) { true } }
 end

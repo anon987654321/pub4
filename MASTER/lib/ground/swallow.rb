@@ -17,6 +17,9 @@ module Master
     # every swallowed error publishes to the event bus and writes
     # to a structured log for post-mortem analysis.
     module Swallow
+      # Under .master/, not runtime/events/: the record holds unredacted messages and backtraces at
+      # mode 0600, beside the operator token, where nothing is served or packed. It writes with no
+      # bus and no boot because STUDIO loads Swallow alone.
       LOG_PATH = File.join(MasterPaths::ROOT, ".master", "swallowed_errors.jsonl").freeze
 
       # Every swallow this session looked identical from outside -- the

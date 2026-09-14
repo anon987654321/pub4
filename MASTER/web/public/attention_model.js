@@ -1,4 +1,5 @@
 // State-driven gaze, fixation, and blink — replaces random idle timers in face.runtime.
+// The name stays: face_assets.yml, the generated runtime and every loader name this file.
 (() => {
   "use strict";
 

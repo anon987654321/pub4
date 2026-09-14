@@ -2,6 +2,9 @@
 
 namespace :assets do
   desc "Build public/face.runtime.js from face.part*.txt (skips blob assembly in browser)"
+  # The segments stay in public/, as face_vision_a.js to face_vision_d.js do for
+  # script/build_face_vision.sh: both builds and test_face_runtime_matches_its_sources read them
+  # there, and serving a source file gives a visitor nothing the bundle does not.
   task build_face_runtime: :environment do
     out = Rails.root.join("public/face.runtime.js")
     segments = (1..3).map { |part| Rails.root.join("public", "face.part#{part}.txt") }

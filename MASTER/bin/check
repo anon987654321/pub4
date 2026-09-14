@@ -98,6 +98,9 @@ PROFILES = {
   # wearing the other coat. 0.2s.
   "agent"       => [rake["selftest"], rake["lint:data_singularity"], rake["lint:dedup"],
                     rake["lint:word_boundary"], rake["studio"]],
+  # Face tests keep three homes because they need three runtimes: web/test/*_test.rb boots
+  # Rails, test/test_web_*.rb runs in MASTER's bundle, and web/test/*.test.mjs runs under node.
+  #
   # web/test/*.test.mjs evaluate the shipped face sources under node:vm, which is
   # the only way to assert anything about code that only exists inside a browser
   # feature check. Twenty-five of them were in the tree and in no profile, so

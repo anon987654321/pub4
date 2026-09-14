@@ -11,6 +11,8 @@ module Master
       TEXT_EXTENSIONS = %w[.rb .md .txt .yml .yaml .json .sh .conf .html .rst .rdoc].freeze
 
       def initialize(root:, event_bus: nil)
+        # knowledge/ is gitignored and skipped by scanners and snapshots, and this is its reader:
+        # moving the directory starts here.
         @knowledge_root = File.join(File.realpath(root), "knowledge")
         @bus = event_bus
       end

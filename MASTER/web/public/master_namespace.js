@@ -1,4 +1,6 @@
 // Canonical window.MASTER facade — legacy globals remain as shims during migration.
+// This file builds the namespace; four others assign `window.MASTER || {}`, so load order
+// cannot erase it.
 (() => {
   "use strict";
 
