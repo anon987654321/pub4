@@ -52,7 +52,7 @@
 .site-legal .site-verify {
   flex-basis: 100%;
   font-size: 13px;
-  color: var(--text, #16181c);
+  color: var(--text, #333333);
   display: flex;
   flex-wrap: wrap;
   gap: 6px 18px;
@@ -78,12 +78,12 @@
   font-size: 0.72rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--text-secondary, #6b7178);
+  color: var(--text-secondary, #666666);
   margin: 0 0 10px;
 }
 
 .legal-prose .legal-updated {
-  color: var(--text-secondary, #6b7178);
+  color: var(--text-secondary, #666666);
   font-size: 0.85rem;
   margin: 0 0 24px;
 }
@@ -109,7 +109,7 @@
   gap: 16px;
   margin-top: 34px;
   padding-top: 16px;
-  border-top: 1px solid var(--border, #e4e2db);
+  border-top: 1px solid var(--border, #666666);
   font-size: 14px;
 }
 
