@@ -1538,3 +1538,30 @@ that carries the tags, and MASTER has neither. `InjectionGuard` on fetched
 content and the Governor on privileged tools are the defences that run.
 `Ground::ResearchThresholds` went too, since `CLI::BrainOverlay` was its only
 reader.
+
+## The Dashboard, The Two Dmesg Writers And The Three Logs Stay Apart (2026-09-14)
+
+`/dashboard/live` keeps its one fetcher and the dashboard stays out of
+`config/face_assets.yml`. A JSON action read by one page is the normal shape,
+not an orphan. The manifest lists face modules so boot order and the rc.d
+precompile digest cover them; the dashboard loads no module, only an inline
+script and `/face.css`, which the manifest already covers. Folding the page
+into the chat is the second-chrome question, and that one changes how it looks,
+so it is the operator's.
+
+There is no `ChatController#dmesg`. The overlap with `lib/trace/dmesg.rb` is
+`chat_service.rb`, which turns bus events into dmesg-shaped SSE lines, while
+`Trace::Dmesg` prints CLI progress to stdout behind `MASTER_DMESG`. They share a
+string shape, `unitN at parent: detail`, and nothing else: different sinks,
+different switches, different inputs. A shared formatter would be one method
+called from two places to save an interpolation.
+
+The three logs keep their two directories, because the split is privacy.
+`WebEventLogger` writes no file; it publishes `web:log`, so its lines already
+land in `runtime/events/` with every other event, redacted on the way by
+`EventBus#persist_event`. `Ground::Swallow` writes unredacted messages and
+backtraces at mode 0600, and `Trace::Log::Audit` writes tool arguments; both
+belong in `.master/`, beside the operator token and the pairing store, where
+nothing is served or packed. Swallow also has to write with no bus and no boot,
+since STUDIO loads it alone; when a bus exists it publishes `error:swallowed`
+too, so the redacted stream sees every in-process swallow.
