@@ -274,7 +274,8 @@ body.vertical-tv .duration-chip {
   inset-block-end: var(--space-1);
   inset-inline-end: var(--space-1);
   padding: var(--space-0-5) 4px;
-  font: var(--weight-bold) var(--text-xs)/1 var(--font-mono, ui-monospace, monospace);
+  font: var(--weight-bold) var(--text-xs)/1 var(--font);
+  font-variant-numeric: tabular-nums;
   background: var(--scrim-72);
   border-radius: 2px;
 }

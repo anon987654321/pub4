@@ -1,7 +1,7 @@
 // The token scheme every app and every dialect uses. Derived hovers use
 // color-mix over --text, so they follow the ink rather than carrying a value.
 
-// One scheme, seven values: #000 #111 #333 #666 #999 #efefef #fff.
+// One scheme, eight values: #000 #111 #333 #4d4d4d #666 #a3a3a3 #efefef #fff.
 //
 // Every dialect below now forwards here. There were six colour mixins carrying
 // fifty distinct hex literals between them — an indigo, a warm luxury paper, a
@@ -13,7 +13,7 @@
 // wcag_2_2_aa_with_aaa_body_text — AAA for body prose, AA elsewhere, 3.0 for a
 // boundary per WCAG 1.4.11:
 //
-//   text #efefef on #000 18.26:1, on #111 16.42:1     secondary #999 7.37 / 6.63
+//   text #efefef on #000 18.26:1, on #111 16.42:1     secondary #a3a3a3 8.33 / 7.49
 //   border #666 on #000 3.66:1                        accent ink #000 on #efefef 18.26:1
 //
 // #666 is the border in BOTH modes — 4.99:1 on #efefef and 3.66:1 on #000 —
@@ -30,7 +30,7 @@
   $surface-elevated: #111111,
   $search-bg: #111111,
   $text: #efefef,
-  $text-secondary: #999999,
+  $text-secondary: #a3a3a3,
   $border: #666666,
   $accent: #efefef,
   $danger: #e46151,
@@ -105,8 +105,8 @@
 }
 
 // The light half of the one scheme. text #333 on #efefef is 10.99:1 and on #fff
-// 12.63:1; secondary #666 is 4.99 / 5.74, which is AA and deliberately not AAA —
-// the target asks AAA of body prose, and secondary is meta text. The accent is
+// 12.63:1; secondary #4d4d4d is 7.35 / 8.45, because TYPOGRAPHY asks 7.0 of normal
+// text and secondary is set at meta sizes. The accent is
 // #000 rather than a hue, so a link needs an underline to be a link.
 @mixin light-tokens(
   $bg: #efefef,
@@ -114,7 +114,7 @@
   $surface-elevated: #ffffff,
   $search-bg: #ffffff,
   $text: #333333,
-  $text-secondary: #666666,
+  $text-secondary: #4d4d4d,
   $border: #666666,
   $accent: #000000,
   $danger: #a9483c
@@ -171,12 +171,9 @@
   // Every app takes this default; anything that only pins a palette — a
   // vertical, a theme toggle — cannot change the face as a side effect.
   //
-  // system-ui leads. The stack under it is the same one it resolves to, kept
-  // as the fallback chain for engines that predate the keyword: system-ui is
-  // the only entry that reaches the platform UI face on Windows and Android,
-  // where -apple-system means nothing and the browser fell to "Segoe UI" or
-  // Roboto by name.
-  --font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  // One family for every app, from design_tokens.yml shared_chrome.font; the
+  // sync tool keeps this value equal to it.
+  --font: "Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif;
 
   // The wordmark, and only the wordmark. brgen.no and oshlo.no are printed on
   // stock in Helvetica Neue Pro, so the logotype is a fixed piece of the

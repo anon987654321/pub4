@@ -115,7 +115,7 @@ body.vertical-messenger #messages article header {
   margin-bottom: var(--space-1);
   font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
-  font-family: var(--font-mono, ui-monospace, monospace);
+  font-family: var(--font);
   opacity: 0.78;
 }
 

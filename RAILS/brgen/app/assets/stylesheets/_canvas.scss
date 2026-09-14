@@ -25,9 +25,7 @@
   padding: var(--space-1) .75rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
-  font: 10px/1.35 ui-monospace, monospace;
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wider);
+  font: var(--text-xs)/1.4 var(--font);
   color: var(--text-secondary);
   transition: color var(--transition-fast) var(--ease-out), border-color var(--transition-fast) var(--ease-out), background var(--transition-fast) var(--ease-out);
 }

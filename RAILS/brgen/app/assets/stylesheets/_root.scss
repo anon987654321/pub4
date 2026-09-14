@@ -2,28 +2,9 @@
 @use "fonts_brand";
 @use "dialect_tokens" as x;
 
-// One typeface for every brgen surface, written once here and emitted into both
-// token blocks below. Operator decision 2026-08-10, after the verticals were
-// found rendering in three different faces: Inter on dating and maps, "SF Pro
-// Display" on playlist, and Arial (from the BRGEN_OLD palette mixins) on the
-// feed and the commerce verticals — so the font changed as you moved between
-// subapps of one site.
-//
-// Inter rather than a system stack because it is the only real typeface in play:
-// vendored self-hosted in five weights (_fonts_brand.scss, five woff2 under
-// public/fonts), where a system stack resolves to a different font on every
-// operating system — an inconsistency you cannot see from one machine.
-//
-// A SCSS variable rather than a second CSS declaration: both the dark :root and
-// the light toggle block re-include app-root-tokens, which carries the shared
-// default, so each has to override it. This way the stack itself is stated once.
-// The body face is the platform UI face, which is the same default every other
-// app in this tree takes from app-root-tokens. This named Inter first, and
-// Inter is a webfont: five vendored cuts fetched over the wire to render text
-// that system-ui already renders, on a box with 1GB of RAM. The wordmark is
-// what carries the brand, and it has its own token — --font-brand — so the
-// body face no longer has to.
-$brgen-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+// The wordmark keeps the platform UI face it has always been set in. Body text
+// takes --font from app-root-tokens, the one typeface design_tokens.yml names.
+$brgen-logo-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 
 :root {
   // BRGEN_OLD dark — dark-inverted port of the real 2014 desktop.css/
@@ -35,7 +16,6 @@ $brgen-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, H
   // Real 2014 mobile.css body base ("font: 18px sans-serif") -- this app's
   // own deliberate size, distinct from the 16px shared default.
   --font-size: var(--text-lg);
-  --font: #{$brgen-font};
   --upvote: var(--accent);
   --downvote: oklch(58% 0.15 30);
   --z-canvas: 0;
@@ -64,7 +44,6 @@ $brgen-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, H
   @include x.app-root-tokens;
   color-scheme: light;
   --font-size: var(--text-lg);
-  --font: #{$brgen-font};
 }
 
 /* The universal border-box/zero-margin reset is shared/_zen_shell.scss's first
@@ -166,7 +145,7 @@ a:hover { text-decoration: underline; }
 
    0.64 is the measured worst-case glyph advance, and measuring is the only
    reason it is not 0.53. The mark does not render in --font-brand here: the
-   rule below is `a.brgen-logo-mark` at (0,1,1) and sets `font: ... var(--font)`,
+   rule below is `a.brgen-logo-mark` at (0,1,1) and sets `font: ... $brgen-logo-font`,
    which outranks the shared .brand-mark's var(--font-brand) at (0,1,0), so on
    brgen the wordmark is system-ui. system-ui on macOS is SF Pro, which switches
    optical size around 20px — so "brgen.no" measured 83.3px at a 20.25px font and
@@ -176,8 +155,7 @@ a:hover { text-decoration: underline; }
 
    So 0.64 covers 84.1 / (8 x 16.875). It over-reserves on desktop, where there
    is width to spare, and is right on the phone, where there is not. Narrowing it
-   is safe only once the typeface above is settled — that is a live question, not
-   a closed one.
+   is safe only while the wordmark keeps $brgen-logo-font.
 
    The clamp is the same one .brand-mark sets its own type in, so the gutter
    widens and narrows exactly when the mark does rather than being right at one
@@ -252,7 +230,7 @@ a.brgen-logo-mark,
   min-height: var(--tap-min);
   min-width: var(--tap-min);
   padding: 0.25rem 4px;
-  font: var(--weight-heavy) clamp(0.9375rem, 2.8vw, 1.125rem) / 1 var(--font);
+  font: var(--weight-heavy) clamp(0.9375rem, 2.8vw, 1.125rem) / 1 #{$brgen-logo-font};
   letter-spacing: var(--tracking-tightest);
   color: var(--text);
   text-decoration: none;

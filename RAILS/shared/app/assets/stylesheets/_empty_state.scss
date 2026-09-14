@@ -87,12 +87,11 @@
   justify-content: center;
 }
 
-/* bsdports CRT: zero radius, mono */
+/* bsdports: zero radius */
 body.wscons .empty-state,
 body[data-theme="wscons"] .empty-state,
 :root:has(body.bsdports) .empty-state {
   border-radius: 0;
-  font-family: var(--font-mono, ui-monospace, monospace);
   background: transparent;
 }
 

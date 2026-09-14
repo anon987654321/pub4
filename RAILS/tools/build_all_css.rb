@@ -88,7 +88,9 @@ def ensure_fonts!
 end
 
 def sync_static_tokens!
-  social = DesignTokens.load.fetch("social")
+  tokens_yml = DesignTokens.load
+  social = tokens_yml.fetch("social")
+  family = tokens_yml.fetch("shared_chrome").fetch("font")
   tokens = File.join(shared_public_dir, "styles", "tokens.css")
   FileUtils.mkdir_p(File.dirname(tokens))
   unless File.writable?(File.dirname(tokens))
@@ -111,7 +113,7 @@ def sync_static_tokens!
       --hover-subtle: color-mix(in srgb, var(--text) 3%, transparent);
       --accent: #{social.fetch("accent")};
       --danger: #{social.fetch("danger")};
-      --font: "JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, monospace;
+      --font: #{family};
       --weight-normal: 400;
       --weight-medium: 500;
       --weight-bold: 700;
