@@ -338,6 +338,33 @@ class DeploySmokeFixtureTest < Minitest::Test
     assert_empty rc_findings(body)
   end
 
+  # The line rc.d/master carried: a restart printed the operator token into
+  # ~/vps-deploy.log. Placeholders only; no real token belongs in a test.
+  def test_a_script_that_prints_a_token_value_is_refused
+    ruby = %q(puts t ? "web: #{u}/?token=#{t}" : "web: #{u}") + "\n"
+    shell = %(print "web: ${url}/?token=${WEB_TOKEN}"\nlogger -t master "open $url?token=$tok"\n)
+
+    assert_equal ["rc.d/master:1"], token_echoes(ruby, "rc.d/master")
+    assert_equal ["bin/x:1", "bin/x:2"], token_echoes(shell, "bin/x")
+  end
+
+  def test_a_request_that_sends_a_token_prints_nothing
+    body = %(curl -fsS "http://127.0.0.1:${PORT}/chat/metrics?token=${TOKEN}"\n) +
+           %q(middleware.call(env.merge("QUERY_STRING" => "token=#{token}"))) + "\n" +
+           %(puts "web: token set, /pair issue for a code"\n)
+
+    assert_empty token_echoes(body, "bin/smoke")
+  end
+
+  def test_no_tracked_script_prints_a_token_value
+    failures = []
+    check_token_echo(failures)
+
+    assert_empty failures
+    assert_operator token_echo_candidates.size, :>, 100, "the scan read almost nothing, so its silence is not a finding"
+    assert_includes token_echo_candidates, "OPENBSD/etc/rc.d/master"
+  end
+
   def test_the_committed_start_block_passes_against_the_real_middleware
     failures = []
     check_master_rc(failures)

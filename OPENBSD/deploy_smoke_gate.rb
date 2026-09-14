@@ -104,6 +104,49 @@ def check_master_rc(failures, rc_text = (File.read(MASTER_RC) if File.file?(MAST
   end
 end
 
+# A line that writes output and carries a token value in a query string. A
+# restart that prints `web: <url>/?token=<secret>` leaves the operator credential
+# in ~/vps-deploy.log for anyone who reads it. Sending a token stays allowed: a
+# curl or a Rack env builds a request, and no log reads that line.
+TOKEN_ECHO = /token=(?:#\{|\$\{?\w|%s)/
+OUTPUT_VERB = /\b(?:puts|print|printf|echo|warn|logger|tee)\b|\$std(?:out|err)\b|\bSTD(?:OUT|ERR)\b/
+SCRIPT_EXTENSIONS = %w[.rb .sh .ksh .zsh .rake].freeze
+
+def token_echoes(text, path)
+  text.each_line.with_index(1).filter_map do |line, number|
+    "#{path}:#{number}" if line.match?(TOKEN_ECHO) && line.match?(OUTPUT_VERB)
+  end
+end
+
+# Tracked scripts and every Ruby file, tests aside: a test that proves this
+# detector has to spell the line it refuses.
+def token_echo_candidates(root = ROOT)
+  listed = IO.popen(["git", "-C", root, "ls-files", "-z"], err: File::NULL, &:read).to_s.split("\0")
+  listed.select do |rel|
+    next false if rel.match?(%r{(?:\A|/)(?:test|spec)/})
+
+    path = File.join(root, rel)
+    next false unless File.file?(path) && File.size(path) < 1_000_000
+
+    SCRIPT_EXTENSIONS.include?(File.extname(rel)) || rel.include?("/rc.d/") ||
+      (File.extname(rel).empty? && File.open(path) { |f| f.read(2) } == "#!")
+  end
+end
+
+def check_token_echo(failures, root = ROOT)
+  candidates = token_echo_candidates(root)
+  if candidates.empty?
+    failures << "token echo: git ls-files listed no scripts under #{root}, so nothing was read"
+    return
+  end
+
+  candidates.each do |rel|
+    token_echoes(File.read(File.join(root, rel)).scrub, rel).each do |at|
+      failures << "token echo: #{at} prints a token value — print the URL and point at /pair issue"
+    end
+  end
+end
+
 def check_apps_production(failures)
   apps = YAML.safe_load(File.read(APPS_YML)).fetch("apps", {})
   apps.each do |name, metadata|
@@ -191,6 +234,7 @@ failures = []
 check_relayd(failures)
 check_httpd(failures)
 check_master_rc(failures)
+check_token_echo(failures)
 check_apps_production(failures)
 check_master_web(failures)
 check_operator(failures)

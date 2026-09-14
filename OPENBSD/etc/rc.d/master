@@ -194,7 +194,11 @@ rc_cmd $1
 rc=$?
 if [[ "$1" = "start" ]] || [[ "$1" = "restart" ]]; then
   if [[ "$rc" = "0" ]]; then
-    ruby34 -ryaml -e 'c=YAML.load_file("/home/dev/pub4/MASTER/.master/config.yml") rescue {}; u=c["web_public_url"]||"http://127.0.0.1:#{c["web_port"]||53187}"; t=c["web_token"]; puts t ? "web: #{u}/?token=#{t}" : "web: #{u}"' 2>/dev/null
+    # The URL, never the token: rcctl's output lands in ~/vps-deploy.log and in
+    # whatever terminal ran the restart, and a token there is operator access for
+    # anyone who reads either. The line points at /pair issue, which hands out a
+    # one-time code.
+    ruby34 -ryaml -e 'c=YAML.load_file("/home/dev/pub4/MASTER/.master/config.yml") rescue {}; u=c["web_public_url"]||"http://127.0.0.1:#{c["web_port"]||53187}"; t=c["web_token"]; puts t ? "web: #{u}, token set, /pair issue for a code" : "web: #{u}"' 2>/dev/null
     # Wait for Falcon /up, then restart relayd so HTTPS does not stay empty after rcctl restart master.
     _i=0
     _up_ok=0
