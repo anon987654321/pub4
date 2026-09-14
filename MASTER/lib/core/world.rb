@@ -33,10 +33,15 @@ module Master::Core
     end
     TIMED_OUT = TimedOutStatus.new.freeze
 
-    def initialize(root:, ask: nil, critique_runner: nil)
+    # undo is the session's journal, anything answering snapshot(path). /undo
+    # pops that journal's newest entry, so a fold write that records nothing
+    # leaves /undo reverting an older write instead. Injected, because core
+    # reaches nothing in lib/.
+    def initialize(root:, ask: nil, critique_runner: nil, undo: nil)
       @root = File.expand_path(root)
       @ask = ask
       @critique_runner = critique_runner
+      @undo = undo
     end
 
     def verbs = Master::Core::VERBS
@@ -107,6 +112,7 @@ module Master::Core
     def do_write(path:, content:, **)
       abs = within(path)
       FileUtils.mkdir_p(File.dirname(abs))
+      @undo&.snapshot(abs)
       write_atomic(abs, content)
       Observation.ok("wrote #{path} (#{content.bytesize}b)")
     end

@@ -53,6 +53,30 @@ class CoreBridgeTest < Minitest::Test
     end
   end
 
+  # /undo pops the session journal's newest entry. A fold write that journals
+  # nothing leaves an earlier session's snapshot on top, and /undo reverts that
+  # file instead of the one the fold just wrote.
+  def test_undo_after_a_fold_turn_restores_the_folds_file_and_nothing_else
+    Dir.mktmpdir do |root|
+      older = File.join(root, "older.txt")
+      note = File.join(root, "note.txt")
+      File.write(older, "earlier session\n")
+      File.write(note, "before\n")
+      session = Object.new.tap { |s| def s.snapshot(*) = nil }
+      undo = Master::Trace::Undo.new(session:, root:)
+      undo.snapshot(older)
+      File.write(older, "kept\n")
+
+      model = ScriptedModel.new(*evidence_then_done(Master::Core::Effect.write("note.txt", "after\n"), summary: "ok"))
+      Master::CLI::CoreBridge.run("rewrite the note", root:, model:, container: { undo: })
+      assert_equal "after\n", File.read(note)
+
+      undo.undo!
+      assert_equal "before\n", File.read(note), "/undo should restore the file the fold wrote"
+      assert_equal "kept\n", File.read(older), "/undo should leave the earlier session's file alone"
+    end
+  end
+
   def test_run_string_renders_a_transcript
     Dir.mktmpdir do |root|
       model = ScriptedModel.new(*evidence_then_done(summary: "all clear"))

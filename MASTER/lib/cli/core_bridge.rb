@@ -17,8 +17,9 @@ module Master
 
         memory ||= Master::Core::Memory.new(risk:)
         critique_runner = container ? CouncilCrit.runner_for(container) : nil
+        world = Master::Core::World.new(root:, critique_runner:, undo: container&.fetch(:undo, nil))
 
-        done = build_fold(root:, model:, model_id:, memory:, critique_runner:, max_turns:, observer:).run(goal)
+        done = build_fold(model:, model_id:, memory:, world:, max_turns:, observer:).run(goal)
 
         { reason: done.reason, turns: done.turns, summary: done.summary, transcript:, risk: memory.proof.risk }
       end
@@ -37,12 +38,12 @@ module Master
         end
       end
 
-      def build_fold(root:, model:, model_id:, memory:, critique_runner:, max_turns:, observer:)
+      def build_fold(model:, model_id:, memory:, world:, max_turns:, observer:)
         Master::Core::Fold.new(
           model:       model || Master::Core::Model.new(**{ model_id: }.compact),
           constitution: Master::Core::Constitution.load(data_dir: Master.data_path, verify: scan_verifier,
                                                         sandbox: shell_sandbox),
-          world:       Master::Core::World.new(root:, critique_runner:),
+          world:,
           memory:,
           max_turns:,
           observer:,
