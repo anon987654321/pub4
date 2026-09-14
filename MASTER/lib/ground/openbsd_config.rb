@@ -2,13 +2,12 @@
 
 module Master
   module Ground
-    # openbsd.yml — the config validator restored from master.yml v49.75.
+    # The runtime for data/openbsd.yml: given a daemon config's text, it names
+    # the required patterns that are missing and the warnings that apply.
     #
-    # data/openbsd.yml carried the validator table across the v50.9 rewrite but
-    # lost its runtime: nothing read required_patterns / warnings / absent_message.
-    # This is that runtime. Given a daemon config file's text, it asserts the
-    # required patterns are present and surfaces the warning/absent messages —
-    # the same behavior the old cli.rb enforcer performed.
+    # Its caller is test_openbsd_config.rb, which validates every config under
+    # OPENBSD/etc the table knows, so a deployed file that drops a required
+    # pattern fails the MASTER suite rather than surfacing on the box.
     class OpenbsdConfig
       # One validation result line. severity: :missing (a required pattern is
       # absent) or :warning (a discouraged / absent-recommended pattern).
@@ -25,11 +24,7 @@ module Master
         @configs = @config.fetch("configs", {})
       end
 
-      def man_base_url = @config["man_base_url"]
       def known?(name) = @configs.key?(name.to_s)
-      def config_names = @configs.keys
-      def health_checks = Array(@config["system_health_checks"])
-      def service_definitions = @config.fetch("service_definitions", {})
 
       # Validate one named config (e.g. "pf.conf") against its rules. Returns an
       # Array of Finding. Empty array = clean. Unknown config name = [] (nothing

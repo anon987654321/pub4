@@ -8,10 +8,8 @@ class TestOpenbsdConfig < Minitest::Test
   end
 
   def test_loads_validator_table
-    assert_equal "https://man.openbsd.org", @validator.man_base_url
     assert @validator.known?("pf.conf")
     refute @validator.known?("nginx.conf")
-    assert @validator.health_checks.any?
   end
 
   def test_clean_config_has_no_findings

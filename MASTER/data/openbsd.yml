@@ -1,8 +1,6 @@
-# openbsd.yml — OpenBSD config validators
-# Restored from master.yml v49.75; extended for OpenBSD 7.8
-
-man_base_url: "https://man.openbsd.org"
-cache_ttl: 86400
+# openbsd.yml — what each OpenBSD daemon config must and should carry, for
+# OpenBSD 7.8. Ground::OpenbsdConfig reads it, and test_openbsd_config.rb
+# holds every known config under OPENBSD/etc to it.
 
 configs:
   pf.conf:
@@ -85,18 +83,3 @@ configs:
     man: unbound.conf.5
     required_patterns:
       - "server:"
-
-system_health_checks:
-  - name: "patch_level"
-    command: "syspatch -c"
-    expected: ""
-  - name: "disk_usage"
-    command: "df -h /"
-    max_percent: 80
-
-service_definitions:
-  master:
-    service: "master"
-    check: "rcctl check master"
-    restart: "doas rcctl restart master"
-    logs: "/var/log/master.log"
