@@ -33,9 +33,12 @@ require_relative "test_helper"
 # YAML probe result instead of asserting that the source contains `check_yaml`.
 # 215 -> 186: bin/ lifecycle and command-table tests run processes and drive
 # dispatchers instead of reading their source.
+# 186 -> 176: across the 2026-09-14 backlog merges, which deleted classes with
+# their tests (the snapshot publisher, MemoryIndex, Ground::Taint, the ActionCable
+# channel) and turned spelling checks into behaviour checks.
 class TestSourceAssertions < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  BASELINE = 186
+  BASELINE = 176
 
   # An assertion whose subject is the text of a file rather than a value the
   # code produced. `source`, `src` and `body` are this repo's names for that
