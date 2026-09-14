@@ -101,3 +101,25 @@ test("boot fsm does not reach READY until all gates are set", () => {
   boot.signal("container_ready");
   assert.equal(boot.state(), "READY");
 });
+
+test("boot fsm leaves a watchdog ERROR once a frame paints", () => {
+  const { boot, body } = loadBootFsm();
+  boot.transition("PRIMER");
+  boot.transition("ASSETS");
+  boot.signal("container_ready");
+  boot.transition("ERROR", { source: "bootFailed" });
+  assert.equal(boot.transition("FACE", { source: "startEverything" }), false);
+  boot.signal("voice_ready");
+  boot.signal("face_ready", { source: "markFaceReady" });
+  assert.equal(boot.state(), "READY");
+  assert.equal(body.dataset.bootState, "READY");
+});
+
+test("boot fsm stays in ERROR while nothing has painted", () => {
+  const { boot } = loadBootFsm();
+  boot.transition("PRIMER");
+  boot.transition("ASSETS");
+  boot.signal("renderer_failed");
+  boot.signal("voice_ready");
+  assert.equal(boot.state(), "ERROR");
+});

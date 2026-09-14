@@ -162,7 +162,7 @@
     window.MASTER_CACHE_VERSION = <%= ENV.fetch("CACHE_VERSION", "v2").to_json.html_safe %>;
     (function(){
       var p=document.getElementById('primer');
-      var fired=false,timer=null,fallback=null,hintT=null,retryT=null,started=false;
+      var fired=false,timer=null,fallback=null,hintT=null,retryT=null,started=false,failedShown=false;
       function zshEl(){return document.getElementById('zsh');}
       function uiEl(){return document.getElementById('ui-status');}
       function titleEl(){return document.getElementById('primer-title');}
@@ -229,7 +229,17 @@
         if(ui)ui.textContent=i18n('failed','face failed to load — reload or check console');
         var errLive=document.getElementById('error-live');
         if(errLive)errLive.textContent=i18n('failed-live','face failed to load (WebGL/primer timing?). Reload or see browser console for MASTER_FACE errors.');
+        failedShown=true;
       }
+      // A face that paints after the watchdog gave up has disproved the
+      // announcement, and a screen reader must not keep the false one.
+      addEventListener('master:face-ready',function(){
+        if(!failedShown)return;
+        failedShown=false;
+        var ui=uiEl(),errLive=document.getElementById('error-live');
+        if(ui)ui.textContent='';
+        if(errLive)errLive.textContent='';
+      });
       function resetFaceCanvasForWebGL(){
         var cv=document.getElementById('face');
         if(!cv||!cv.parentNode)return;
