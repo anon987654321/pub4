@@ -24,7 +24,7 @@
 #
 # getContext returns NULL for any WebGL request before the primer tap. THREE
 # never initialises, the canvas stays empty, and a capture records the primer
-# screen — which is near-black. DECISIONS.md calls that gate sacred, and it is
+# screen — which is near-black. The guard's own comment names it the deferred-boot contract, and it is
 # in START_HERE's "do not optimize away" list, so the recorder is what has to
 # change.
 #
