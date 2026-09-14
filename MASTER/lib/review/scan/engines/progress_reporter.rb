@@ -7,6 +7,8 @@ module Master
   module Review
     module Scan
       module ProgressReporter
+        SCAN_HITS_MAX_BYTES = 25 * 1024 * 1024
+
         private
 
         def reset_scan_progress(total, unit: nil)
@@ -53,6 +55,7 @@ module Master
 
           file = File.join(Master::ROOT, ".master", "scan_hits.jsonl")
           FileUtils.mkdir_p(File.dirname(file))
+          Master::Trace::Log.rotate(file, SCAN_HITS_MAX_BYTES)
           File.open(file, "a") do |io|
             findings.each do |finding|
               io.puts({

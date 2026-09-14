@@ -24,6 +24,31 @@ class TestEventLogRotation < Minitest::Test
     end
   end
 
+  # On a full disk every append failed alike and each printed a line over the
+  # prompt, alongside a [SWALLOW-CRITICAL] for every swallowed error.
+  def test_a_full_disk_is_reported_once
+    Dir.mktmpdir do |dir|
+      log = Master::Trace::Log::Event.new(root: dir, stream: "enospc_probe#{Process.pid}")
+      File.stub(:open, ->(*) { raise Errno::ENOSPC }) do
+        _, err = capture_io { 3.times { assert_nil log.append("some:event") } }
+
+        assert_equal 1, err.lines.size, err
+      end
+    end
+  end
+
+  def test_scan_hits_rotate_like_the_event_log
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "scan_hits.jsonl")
+      File.write(path, "x" * 11)
+
+      Master::Trace::Log.rotate(path, 10)
+
+      assert File.exist?("#{path}.1")
+      refute File.exist?(path)
+    end
+  end
+
   def test_appends_under_the_size_cap_do_not_rotate
     Dir.mktmpdir do |dir|
       log = Master::Trace::Log::Event.new(root: dir, stream: "activity")

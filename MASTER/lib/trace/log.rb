@@ -25,6 +25,26 @@ module Master
         Digest::SHA256.hexdigest(conversation.to_s)[0, SESSION_DIGEST_CHARS]
       end
 
+      # Renames a log past max_bytes to .1 and starts it fresh. Renaming, not
+      # truncating, means no multi-gigabyte read to keep a tail.
+      def self.rotate(path, max_bytes)
+        return unless File.exist?(path) && File.size(path) > max_bytes
+
+        File.rename(path, "#{path}.1")
+      rescue SystemCallError => e
+        Master::Ground::Swallow.log(e, context: "Trace::Log.rotate", path:)
+      end
+
+      # A failing log says so once per path and error. On a full disk every
+      # event fails the same way, and a line per event lands mid-prompt.
+      def self.warn_once(key, message)
+        @warned ||= {}
+        return if @warned[key]
+
+        @warned[key] = true
+        ::Kernel.warn(message)
+      end
+
       # Append-only tool invocation log; subscribes to tool:before on EventBus.
       class Audit
         LOG_PATH = ".master/audit.ndjson".freeze
@@ -48,27 +68,17 @@ module Master
           record = { ts: Time.now.utc.iso8601, session: Log.session, tool: event_data[:tool] }.merge(fields)
           Master::Trace::Telemetry.span("audit.append", tool: event_data[:tool].to_s) do
             @mutex.synchronize do
-              rotate! if File.exist?(@path) && File.size(@path) > MAX_BYTES
+              Log.rotate(@path, MAX_BYTES)
               File.open(@path, "a") { |f| f.puts(JSON.generate(record)) }
             end
           end
-        end
-
-        def rotate!
-          File.rename(@path, "#{@path}.1")
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "audit_log.rotate", path: @path)
         end
       end
 
       class Event
         DEFAULT_STREAM = "activity"
         STREAM_PATTERN = /\A[a-z0-9_\-]+\z/
-        # Append-only with no cap previously ran unbounded -- activity.jsonl
-        # reached 1.2GB and filled the disk, crashing an in-progress /fix
-        # round with no warning beyond a swallowed ENOSPC on every event.
-        # Rotate (rename to .1, start fresh) rather than truncate-in-place --
-        # avoids ever reading a multi-GB file into memory to keep a tail.
+        # Uncapped, activity.jsonl once reached 1.2GB and filled the disk.
         MAX_BYTES = 25 * 1024 * 1024
 
         def initialize(root: Master::ROOT, stream: DEFAULT_STREAM)
@@ -80,12 +90,12 @@ module Master
         def append(event, payload = {})
           record = build_record(event, payload)
           FileUtils.mkdir_p(File.dirname(@path))
-          rotate_if_oversized!
+          Log.rotate(@path, MAX_BYTES)
           File.open(@path, "a") { |io| io.write(JSON.generate(record), "\n") }
           record
         rescue SystemCallError, JSON::GeneratorError => e
           # Stderr is last resort — cannot route through bus without risking recursion.
-          ::Kernel.warn("event_log: append to #{@path} failed — #{e.class}: #{e.message}")
+          Log.warn_once([@path, e.class], "event_log: #{@path}: #{e.message}")
           nil
         end
 
@@ -123,14 +133,6 @@ module Master
             event: event.to_s,
             payload: payload || {},
           }
-        end
-
-        def rotate_if_oversized!
-          return unless File.exist?(@path) && File.size(@path) > MAX_BYTES
-
-          File.rename(@path, "#{@path}.1")
-        rescue StandardError => e
-          Master::Ground::Swallow.log(e, context: "Log::Event.rotate_if_oversized")
         end
 
         def normalize_stream(stream)

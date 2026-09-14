@@ -41,8 +41,11 @@ module Master
           bus&.publish("error:swallowed", payload)
           write_structured_log(payload)
         rescue StandardError => e
-          # Last resort: stderr if even the logger fails
-          warn "[SWALLOW-CRITICAL] #{e.class}: #{e.message} (while logging #{error.class})"
+          # Last resort: stderr if even the logger fails, once per cause. On a
+          # full disk every swallow fails alike, and each line lands mid-prompt.
+          @unrecorded ||= {}
+          warn "swallow: cannot record errors: #{e.class}: #{e.message}" unless @unrecorded[e.class]
+          @unrecorded[e.class] = true
         end
 
         # Query swallowed errors from structured log. Returns array of hashes.
