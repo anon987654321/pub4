@@ -5,17 +5,16 @@ require "tmpdir"
 require_relative "gate_fixture"
 require_relative "../../gates/lib/source/locale_shadowing"
 
-# An app's own translation, dead because the engine's copy loads after it.
+# An app overriding a shared translation, held to a ceiling.
 #
-# shared/config/locales sits in I18n.load_path twice and the second entry lands
-# after every app, so when both define a key the shared value renders and the
-# app's is unreachable. Nothing in Rails says which one won.
+# shared/config/locales loads once, ahead of each app, so when both define a
+# key the app's value renders and shared's is dead in that app. The count is
+# the app's overrides, and a new one should be a decision.
 #
 # The second half is worse and invisible to the first: a key with no value
 # parses as nil, and nil REPLACES a hash in I18n's deep merge, so one bare
-# `nav:` in shared wipes every navigation label in all three apps. A shadowing
-# check compares values that disagree, and a key resolving to nothing disagrees
-# with nobody.
+# `nav:` wipes every label merged under it before. A shadowing check compares
+# values that disagree, and a key resolving to nothing disagrees with nobody.
 #
 # The fixture tree, app list and budget file are passed as keywords. The app is
 # named brgen because the orphan half walks a hardcoded tree list.
@@ -37,12 +36,12 @@ class LocaleShadowingGateTest < Minitest::Test
     "nb:\n  nav:\n    brand_home: #{value}\n"
   end
 
-  def test_a_key_the_engine_overrides_fails_against_a_zero_ceiling
+  def test_an_app_override_of_a_shared_key_fails_against_a_zero_ceiling
     result = gate_over(shared: locale('"Home"'), app: locale('"Brgen home"'))
 
-    refute result.ok?, "a shadowed key passed a ceiling of zero"
-    assert_match(/1 shadowed key\(s\) exceeds ceiling 0/, result.failures.first)
-    assert_match(/nb\.nav\.brand_home \(app "Brgen home" is dead, shared "Home" renders\)/, result.failures.first)
+    refute result.ok?, "an override passed a ceiling of zero"
+    assert_match(/1 app override\(s\) of shared keys exceeds ceiling 0/, result.failures.first)
+    assert_match(/nb\.nav\.brand_home \(app "Brgen home" renders, shared "Home" is dead here\)/, result.failures.first)
   end
 
   def test_the_same_key_agreeing_with_the_engine_passes
@@ -77,15 +76,13 @@ class LocaleShadowingGateTest < Minitest::Test
     assert(result.failures.any? { |line| line.match?(/nil REPLACES a hash/) }, result.failures.join(", "))
   end
 
-  # Only shared loads last, so only shared can do that damage. The same shape in
-  # an app is a dead declaration, and failing on it would be failing on
-  # something harmless.
-  def test_a_valueless_key_in_an_app_only_warns
+  # The app loads after shared, so its bare key wipes shared's subtree there.
+  def test_a_valueless_key_in_an_app_fails
     result = gate_over(shared: locale('"Home"'), app: "nb:\n  nav:\n")
 
-    assert result.ok?, result.failures.join(", ")
-    assert(result.warnings.any? { |line| line.match?(/brgen.*1 key\(s\) with no value/) },
-           result.warnings.join(", "))
+    refute result.ok?, "a bare key in an app passed"
+    assert(result.failures.any? { |line| line.match?(/brgen.*1 key\(s\) with no value \(nb\.nav\)/) },
+           result.failures.join(", "))
   end
 
   def test_no_shared_locales_at_all_is_inconclusive

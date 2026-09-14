@@ -4,33 +4,26 @@ require "yaml"
 require_relative "../../../../OPENBSD/lib/gate_result"
 
 module Deploy
-  # An app's own translation, overridden by the shared engine, silently.
+  # An app overriding a shared translation, counted so each override is chosen.
   #
   # `shared/` is mounted by every app, and its locale files are merged with the
-  # app's. When both define a key, one value renders and the other is dead — and
-  # nothing anywhere says which. The failure is invisible by construction: the
-  # string is present in the app's own nb.yml, in the app's own repo, and the
-  # page shows something else.
+  # app's. When both define a key, one value renders and the other is dead in
+  # that app, and nothing on the page says which.
   #
-  # Which one wins was measured rather than reasoned about, by booting bsdports
-  # and reading I18n.load_path for a key defined in both:
+  # Which one wins is measured, by booting bsdports and reading I18n.load_path:
   #
-  #   idx 15  shared/config/locales/social.nb.yml   "Hopp til hovedinnhold"
-  #   idx 17  bsdports/config/locales/nb.yml        "Hopp til innholdet"
-  #   idx 24  shared/config/locales/social.nb.yml   "Hopp til hovedinnhold"
+  #   10-15  shared/config/locales/{affiliate,legal,social}.{en,nb}.yml
+  #   16-17  bsdports/config/locales/{en,nb}.yml
   #
-  # The shared engine's locale path is in load_path TWICE, and the second
-  # registration lands after every app's own locales. Last write wins, so shared
-  # always does. The first reasoning attempt — engines load before the app,
-  # therefore the app wins — was correct about Rails and wrong about this tree,
-  # and would have shipped a gate that named the wrong file as dead.
-  #
-  # The visible cost today is nav.brand_home: brgen sets "Brgen home", amber sets
-  # "Amber home", shared sets "Home", and all three render "Home".
+  # shared loads once, ahead of the app, and the last write wins, so the app's
+  # value renders: nb a11y.skip_to_content reads bsdports' "Hopp til innholdet",
+  # not shared's "Hopp til hovedinnhold". The shadowed count is therefore the set
+  # of the app's deliberate overrides, and the ceiling holds it so a new one is
+  # a decision rather than a copy that drifted.
   #
   # Keys where both files agree are not reported. They are redundant rather than
-  # wrong, there are ~180 of them, and a gate whose output is mostly harmless
-  # duplication is one people learn to skip.
+  # wrong, and a gate whose output is mostly harmless duplication is one people
+  # learn to skip.
   class LocaleShadowingGate
     ROOT = File.expand_path("../../../..", __dir__)
     APPS = %w[amber brgen bsdports].freeze
@@ -69,21 +62,18 @@ module Deploy
 
     private
 
-    # A key with no value deletes whatever a later merge would have kept.
+    # A key with no value deletes whatever an earlier merge put under it.
     #
     # Removing the last child of a YAML mapping leaves the parent behind as a
-    # bare `nav:`, which parses as nil — and in I18n's deep merge nil REPLACES a
-    # Hash rather than being ignored. shared/ loads after every app, so one such
-    # key there wiped all 48 nav entries in brgen, 23 in amber and 8 in bsdports.
-    # Every navigation label in every app, from deleting one line.
+    # bare `nav:`, which parses as nil, and in I18n's deep merge nil REPLACES a
+    # Hash rather than being ignored. One such key in shared once wiped every
+    # nav label in all three apps.
     #
-    # The shadowing check above could not see it: it compares values that
-    # disagree, and a key resolving to nothing disagrees with nobody. So it stayed
-    # green while three apps rendered "Translation missing" everywhere.
-    #
-    # Only shared/ can do this damage, because only shared/ loads last. An empty
-    # key in an app's own file is a dead declaration rather than a weapon, so it
-    # warns there and fails here.
+    # The shadowing check cannot see it: it compares values that disagree, and a
+    # key resolving to nothing disagrees with nobody. Every tree fails on it. An
+    # app loads after shared, so an app's bare key wipes shared's subtree in that
+    # app; shared's own files load in sorted order, so a bare key in social wipes
+    # the same subtree from affiliate and legal.
     def judge_orphans
       %w[shared amber brgen bsdports].each do |tree|
         Dir[File.join(@rails_root, tree, "config/locales/**/*.yml")].sort.each do |path|
@@ -106,7 +96,7 @@ module Deploy
           message = "locale_shadowing #{rel}: #{empties.length} key(s) with no value " \
                     "(#{empties.first(4).join(', ')}) — a bare key parses as nil and nil " \
                     "REPLACES a hash in I18n's merge"
-          tree == "shared" ? @result.fail(message) : @result.warn(message)
+          @result.fail(message)
         end
       end
     end
@@ -136,10 +126,10 @@ module Deploy
 
       if shadowed.size > ceiling
         examples = shadowed.sort.first(3)
-                           .map { |key| "#{key} (app #{own[key].inspect} is dead, shared #{shared[key].inspect} renders)" }
-        @result.fail("locale_shadowing #{app}: #{shadowed.size} shadowed key(s) exceeds ceiling #{ceiling} " \
+                           .map { |key| "#{key} (app #{own[key].inspect} renders, shared #{shared[key].inspect} is dead here)" }
+        @result.fail("locale_shadowing #{app}: #{shadowed.size} app override(s) of shared keys exceeds ceiling #{ceiling} " \
                      "(+#{shadowed.size - ceiling}). #{examples.join('; ')} — " \
-                     "delete the app's copy, or change the shared one")
+                     "delete the app's copy to take shared's, or raise the ceiling for an override the app means")
       elsif shadowed.size < ceiling
         @result.warn("locale_shadowing #{app}: #{shadowed.size}, under its #{ceiling} ceiling " \
                      "(-#{ceiling - shadowed.size}) — GATE_LOCALE_RATCHET=1 records the new low")
