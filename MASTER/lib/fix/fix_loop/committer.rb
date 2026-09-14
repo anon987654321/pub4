@@ -145,15 +145,17 @@ module Master
           return skip_lint("missing Gemfile") unless bundle_context?
 
           cmd = [Master::BUNDLE_BIN, "exec", "rubocop", "--fail-level", "E", "--force-exclusion", *files]
-          _out, _err, status = Timeout.timeout(LINT_TIMEOUT_SECONDS) { Master::Io::Exec.capture3(*cmd, chdir: @root) }
+          # Io::Exec's own timeout kills rubocop and answers a failed status, so a
+          # lint that did not finish blocks the commit. Timeout.timeout around it
+          # waited for rubocop anyway, then counted the timeout as a pass, and
+          # the commit went in unlinted.
+          _out, _err, status = Master::Io::Exec.capture3(*cmd, chdir: @root, timeout: LINT_TIMEOUT_SECONDS)
           if status.success?
             true
           else
             @bus&.publish("fix_loop:commit_blocked", reason: "rubocop", files:)
             false
           end
-        rescue Timeout::Error
-          skip_lint("rubocop timed out after #{LINT_TIMEOUT_SECONDS}s")
         rescue Errno::ENOENT, StandardError => e
           skip_lint(e.message)
         end

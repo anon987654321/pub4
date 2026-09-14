@@ -164,6 +164,21 @@ class TestFixLoopCommitter < Minitest::Test
     assert(bus.events.any? { |event, _| event == "fix_loop:commit_error" })
   end
 
+  # A lint that did not pass blocks the commit. Io::Exec answers a timed-out
+  # rubocop with this same failed status; its own tests pin the timeout.
+  def test_a_failed_lint_blocks_the_commit
+    write_file("Gemfile", "source 'https://rubygems.org'\n")
+    write_file("lib/ok.rb", "OK = 1\n")
+    git = FakeGit.new([], ["lib/ok.rb"])
+    bus = FakeBus.new
+    failed = Struct.new(:success?).new(false)
+
+    Master::Io::Exec.stub(:capture3, ["", "", failed]) { run_committer(git, bus, "fix: ok") }
+
+    assert_empty git.commits
+    assert blocked?(bus)
+  end
+
   def test_nothing_is_committed_without_a_baseline
     write_file("lib/ok.rb", "OK = 1\n")
     git = FakeGit.new(["lib/ok.rb"], ["lib/ok.rb"])
