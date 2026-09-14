@@ -1797,8 +1797,15 @@ rules:
     tier: aesthetic
     severity: info
     autofix: false
-    detect_semantic: Is generated imagery clinically perfect with zero texture?
-    fix: Film grain. Vintage lens softness. Subtle color cast.
+    # Audio, which is where this rule comes from. For imagery it prescribed lens
+    # softness, and softness is the one artefact nothing downstream can undo:
+    # simulated defocus on a frame already taken through a lens is invention, not
+    # emulation. STUDIO/postpro carries a measured account of what film did to
+    # light and answers to that instead.
+    detect_semantic: Is generated audio clinically perfect, with no noise floor, no
+      saturation, no drift and timing locked to the grid?
+    fix: Tape saturation. A noise floor. Wow and flutter. Timing that breathes instead
+      of snapping to the grid.
   - id: DOMAIN_LANGUAGE
     source: Domain-Driven Design — Ubiquitous Language (Eric Evans, 2003)
     name: Speak in the vocabulary of the problem, not the implementation
