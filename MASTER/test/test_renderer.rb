@@ -65,6 +65,32 @@ class TestRenderer < Minitest::Test
     assert_includes text, "/pair issue"
   end
 
+  def test_prose_wraps_to_the_measure_at_a_space
+    renderer = FakeRenderer.new(config: {})
+    prose = ("measure " * 20).strip
+    wrapped = renderer.measure("#{prose}\n- #{prose}\n")
+
+    assert(wrapped.lines.all? { |line| line.chomp.length <= 72 }, wrapped)
+    assert(wrapped.split(/\s+/).all? { |word| %w[measure -].include?(word) }, "a word was split")
+    assert(wrapped.lines.any? { |line| line.start_with?("  measure") }, "a list item hangs its continuation")
+  end
+
+  def test_code_tables_and_key_value_lines_keep_their_shape
+    renderer = FakeRenderer.new(config: {})
+    long = "x " * 50
+    text = "```\n#{long}\n```\n    #{long}\n| #{long}|\nkey=#{long}\n"
+
+    assert_equal text, renderer.measure(text)
+  end
+
+  def test_the_boot_has_one_blank_line_and_no_edges
+    lines = strip_ansi(FakeRenderer.new(config: {}).splash("model")).lines.map(&:chomp)
+
+    refute_empty lines.first
+    refute_empty lines.last
+    assert_equal 1, lines.count(&:empty?)
+  end
+
   def strip_ansi(text)
     text.to_s.gsub(/\e\[[0-9;]*m/, "")
   end

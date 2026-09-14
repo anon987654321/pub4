@@ -30,7 +30,7 @@ module Master
       end
 
       def session_line(name)
-        @p.dim("session0: ") + @p.dim.underline(name.to_s.downcase)
+        @p.dim("session0: #{name.to_s.downcase}")
       end
 
       def uptime
@@ -38,12 +38,6 @@ module Master
         hours, remainder = seconds.divmod(3600)
         minutes, = remainder.divmod(60)
         hours.positive? ? "up #{hours}h#{minutes}m" : "up #{minutes}m"
-      end
-
-      def boot_wayfinding(constitution:, agent:, scan:)
-        parts = ["constitution #{constitution ? "ok" : "pending"}", "agent #{agent ? "ok" : "pending"}"]
-        parts << { done: "scan ok", active: "scan active" }.fetch(scan, "scan pending")
-        d("boot0: #{parts.join(", ")}")
       end
 
       def render(content, mode: :plain)

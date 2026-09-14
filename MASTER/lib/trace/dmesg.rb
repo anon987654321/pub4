@@ -47,6 +47,9 @@ module Master
         return unless enabled?
 
         text = line.to_s.gsub(/\s+/, " ").strip
+        # Clears the repainting "thinking" line first, or the unit prints on
+        # the end of it.
+        $stdout.print "\r\e[K" if $stdout.tty?
         $stdout.puts text
         $stdout.flush
         text

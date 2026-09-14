@@ -24,11 +24,11 @@ module Master
 
         def splash(model)
           context = splash_context(model)
-          lines = ["", *identity_lines(context), *splash_dmesg_lines, *device_lines_for(context),
+          lines = [*identity_lines(context), *splash_dmesg_lines, *device_lines_for(context),
                    root_on_line(context)]
           host_status = Master::Ground::HostBudget.status_line
           lines << d(host_status) if host_status
-          lines.concat(["", splash_ready_line(context), ""])
+          lines.concat(["", splash_ready_line(context)])
           lines.join("\n")
         end
 
@@ -73,12 +73,6 @@ module Master
           return "" if amount.round(4).zero?
 
           "cost $#{format('%.4f', amount)}"
-        end
-
-        def speaker_tag(name = "master")
-          return d("#{name}0 at session0:") if Aesthetic.wscons?
-
-          "#{@p.dim('<')}#{@p.bold.red(name)}#{@p.dim('>')}"
         end
 
         def token_label(tokens)
@@ -170,7 +164,7 @@ module Master
             d("aesthetic0 at mode0: #{Aesthetic.mode}"),
             d("module0 at mainbus0: #{module_names.join(' ')}"),
             d("web0 at mainbus0: #{context[:web]}"),
-            d("pledge0 at mainbus0: #{pledge_status}"),
+            d(pledge_line),
           ]
         end
 
@@ -214,8 +208,9 @@ module Master
           "1"
         end
 
-        def pledge_status
-          RUBY_PLATFORM.include?("openbsd") ? "armed" : "unavailable"
+        # dmesg names a device it has no driver for as "not configured".
+        def pledge_line
+          RUBY_PLATFORM.include?("openbsd") ? "pledge0 at mainbus0: armed" : "pledge0 at mainbus0 not configured"
         end
 
         def safe_hostname

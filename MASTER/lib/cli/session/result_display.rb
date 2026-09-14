@@ -32,35 +32,35 @@ module Master
       end
 
       def display_ok(ok:, accumulated:, streamed:)
+        text = streamed ? accumulated : success_text(ok)
         if streamed
-          puts
-          puts
-          spoken = accumulated
+          puts unless text.end_with?("\n")
         else
           print "\r\e[K" if $stdout.isatty
-          text = success_text(ok)
-          if routine_success?(text)
-            puts text
-            return
-          end
+          return puts(text) if routine_success?(text)
+
           # Printed, never paged: a pager takes the terminal from Reline while
           # other threads still write to it, and a ^C there lands in the shell.
-          # Scrollback is the pager.
-          puts @refs.renderer.speaker_tag
-          puts text
-          puts
-          spoken = text
+          # Scrollback is the pager. No speaker tag either: the reply sits under
+          # the line that asked for it, at full weight among dim system lines.
+          puts @refs.renderer.measure(text.chomp, width: reply_measure)
         end
         # The reply is printed before it is spoken, and speaking does not block
         # the prompt. A routine success returns above and stays silent: "ok" is
         # not worth a synthesis.
-        Master::Voice::Playback.speak(spoken)
+        Master::Voice::Playback.speak(text)
         print_reply_footers(ok)
+        puts
+      end
+
+      def reply_measure
+        [Master::Voice::Renderer::MEASURE, TTY::Screen.width - 1].min
+      rescue StandardError
+        Master::Voice::Renderer::MEASURE
       end
 
       def print_reply_footers(ok)
         print_cost_tooltip
-        print_pipeline_timings
         print_parallel_errors_footer(ok)
         print_changed_files_summary
         print_chips if @show_chips
@@ -79,19 +79,6 @@ module Master
         return if lines.empty?
 
         puts @refs.renderer.render("parallel: #{lines.first(3).join(' · ')}", mode: :warning)
-      end
-
-      def print_pipeline_timings
-        timings = @refs.pipeline&.last_timings
-        return if timings.nil? || timings.empty?
-
-        total = timings.values.sum
-        slow = timings.max_by { |_, ms| ms }
-        return unless total.positive?
-
-        line = "pipeline: #{total}ms"
-        line += " (slow: #{slow[0]} #{slow[1]}ms)" if slow
-        puts @refs.renderer.render(line, mode: :dim)
       end
 
       def success_text(ok)
@@ -114,7 +101,7 @@ module Master
         @last_tokens = now_tokens
         cents = (delta * 100).round(2)
         return if cents.zero? && token_delta.zero?
-        line = "cost: +¢#{format('%.2f', cents)} · #{token_delta} tok · #{short_model(@refs.agent.model)}"
+        line = "cost: +¢#{format('%.2f', cents)}, #{token_delta} tokens, #{short_model(@refs.agent.model)}"
         puts @refs.renderer.render(line, mode: :dim)
       end
 

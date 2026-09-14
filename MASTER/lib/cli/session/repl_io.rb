@@ -108,22 +108,25 @@ module Master
       def replay_recent_turns
         tail = @refs.session.messages.last(REPLAY_TURNS * 2)
         return if tail.empty?
-        puts @refs.renderer.render("resume0: replaying last #{tail.size} messages", mode: :dim)
+
+        puts
+        puts @refs.renderer.render("resume0: last #{tail.size} messages", mode: :dim)
         tail.each do |msg|
           # A loaded transcript holds the role as a string.
           tag = msg[:role].to_s == "user" ? "you" : "master"
           snippet = msg[:content].to_s.gsub(TERMINAL_REPLY, "").lines.first.to_s.strip[0, 100]
           puts @refs.renderer.render("  #{tag}: #{snippet}", mode: :dim) unless snippet.empty?
         end
-        puts
       end
 
       def print_repo_tree
         lines = Master::CLI::CommandRegistry.dispatch_tree(@refs.root).to_s.split("\n")
         return if lines.empty?
-        puts @refs.renderer.render("tree0: #{File.basename(@refs.root)} (#{lines.size} entries)", mode: :dim)
-        lines.each { |l| puts @refs.renderer.render(l, mode: :dim) }
+
         puts
+        puts @refs.renderer.render("tree0: #{File.basename(@refs.root)}, #{lines.size} entries", mode: :dim)
+        lines.each { |l| puts @refs.renderer.render(l, mode: :dim) }
+        mark_booted
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.print_repo_tree", event_bus: @refs.bus)
       end
@@ -140,23 +143,8 @@ module Master
         ENV["MASTER_SKIP_BOOT_SCAN"] == "1" || ENV["MASTER_PIPE"] == "1"
       end
 
-      def print_boot_wayfinding
-        puts @refs.renderer.boot_wayfinding(constitution: true, agent: true, scan: :active)
-        start_boot_scan
-      end
-
-      def first_boot_bar
-        return unless $stdout.isatty
+      def mark_booted
         flag = File.join(@refs.root, ".master", "booted_once")
-        return if File.exist?(flag)
-        INIT_FRAMES.times do |i|
-          bar = ("\u25B0" * (i + 1)) + ("\u25B1" * (INIT_FRAMES - i - 1))
-          pct = ((i + 1) * 100 / INIT_FRAMES).to_s.rjust(3)
-          print "\rinit0: #{bar} #{pct}%"
-          $stdout.flush
-          sleep INIT_FRAME_MS
-        end
-        puts
         FileUtils.mkdir_p(File.dirname(flag))
         File.write(flag, Time.now.to_s)
       rescue StandardError => e

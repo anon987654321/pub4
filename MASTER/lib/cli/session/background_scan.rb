@@ -115,9 +115,6 @@ module Master
       def refresh_skills!
         @refs.skills&.discover!
       end
-
-      INIT_FRAMES = 20
-      INIT_FRAME_MS = 0.04
     end
   end
 end

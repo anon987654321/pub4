@@ -97,7 +97,7 @@ module Master
         topic = HELP_TOPICS[name]
         return unknown_command_text(key) unless topic
 
-        (["/#{key} - #{topic[:summary]}"] + topic[:detail]).join("\n")
+        (["/#{key} — #{topic[:summary]}"] + topic[:detail]).join("\n")
       end
 
       # The surface is closed, so a name with no topic is not a documented
@@ -112,8 +112,11 @@ module Master
         (HELP_TOPICS.keys.map { |k| "/#{k}" } + ALIASES.keys.map { |k| "/#{k}" } + %w[/exit /quit]).uniq.sort
       end
 
+      # The list is a table, so its second column is aligned; everywhere else
+      # in the CLI one space separates.
       def help_summary
-        lines = HELP_TOPICS.map { |cmd, topic| "/#{cmd} - #{topic[:summary]}" }
+        width = HELP_TOPICS.keys.map(&:length).max + 1
+        lines = HELP_TOPICS.map { |cmd, topic| "/#{cmd.ljust(width)} #{topic[:summary]}" }
         lines << ""
         lines << "work is a sentence. /review is the one explicit pass, and"
         lines << "/scan reads, /critique asks the council, and /fix is the scan that"

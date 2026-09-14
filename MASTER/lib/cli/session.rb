@@ -53,12 +53,14 @@ module Master
         @refs.agent.start_on_local_tier_when_offline! if @refs.agent.respond_to?(:start_on_local_tier_when_offline!)
         @refs.session.load! if @refs.session.exists?
         start_background_loop
-        first_boot_bar
+        # One vertical rhythm: the dmesg, a blank line, the ready block, then
+        # a blank line before each block that follows and before the prompt.
         puts @refs.renderer.splash(@refs.agent.model)
-        print_boot_wayfinding unless skip_boot_scan?
+        start_boot_scan unless skip_boot_scan?
         puts @refs.renderer.session_line(@refs.session.name) if @refs.session.name
         print_repo_tree unless booted_before?
         replay_recent_turns if @refs.session.messages.any?
+        puts
         run_input(initial_message) if initial_message
         @running = true
         repl_loop
@@ -186,7 +188,6 @@ module Master
           print "\r\e[K"
           state[:thinking_shown] = false
         end
-        puts @refs.renderer.speaker_tag unless state[:streamed]
         print text
         $stdout.flush
         state[:streamed] = true

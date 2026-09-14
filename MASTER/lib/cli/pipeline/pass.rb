@@ -90,7 +90,7 @@ module Master
             title.include?("scan") && body.to_s.match?(/\berror\b|\bcritical\b/i) && body.to_s.match?(/\d{2,}\s+finding/i)
           end
           elapsed = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - @t0).round
-          Master::Trace::Dmesg.status(@unit, "#{ok ? "complete" : "incomplete"}, #{elapsed}s")
+          Master::Trace::Dmesg.status(@unit, "#{ok ? "complete" : "incomplete"}, #{elapsed}s") if elapsed >= 1
           @bus&.publish("review:complete", target: resolved, apply:, ok:, elapsed_s: elapsed,
                                             failed_stages: @failed_stages)
           Result.new(target: resolved, mode: posture[:name], sections:, ok:, unit: @unit,

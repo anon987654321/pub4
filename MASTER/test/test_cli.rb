@@ -225,7 +225,7 @@ class TestCLI < Minitest::Test
     summary = Master::CLI::CommandRegistry.help_text
     detail = Master::CLI::CommandRegistry.help_text("review")
 
-    assert_includes summary, "/review - the whole pass"
+    assert_match(%r{^/review +the whole pass}, summary)
     refute_includes summary, "--dry-run previews"
     assert_includes detail, "/review [path]"
     assert_includes detail, "--dry-run"
@@ -270,6 +270,14 @@ end
     renderer.verify
   end
 
+  def test_model_list_is_one_row_per_model_with_the_current_one_marked
+    agent = Struct.new(:model).new("ollama:phi4:mini")
+    rows = Master::CLI::CommandRegistry.list_models(root: Master::ROOT, metrics: nil, agent:).lines
+
+    assert_equal rows.size, rows.map { |row| row.split[row.start_with?("→") ? 1 : 0] }.uniq.size
+    assert_match(/\A→ ollama:phi4:mini +local\n\z/, rows.find { |row| row.start_with?("→") })
+  end
+
   def test_dispatch_model_switches_active_model
     agent = Struct.new(:model).new("openrouter/auto")
     config = Minitest::Mock.new
@@ -309,11 +317,12 @@ end
   # entry in the list is a second command.
   def test_help_names_the_closed_set
     summary = Master::CLI::CommandRegistry.help_text
+    rows = summary.lines.grep(%r{\A/\w+ {2,}\S}).map { |line| line[%r{\A/(\w+)}, 1] }
     %w[review status undo commit model pair doctor rules why orders soul help clear].each do |name|
-      assert_includes summary, "/#{name} - "
+      assert_includes rows, name
     end
-    refute_includes summary, "/scan - "
-    refute_includes summary, "/fix - "
+    refute_includes rows, "scan"
+    refute_includes rows, "fix"
     refute_includes summary, "/orient"
     assert_includes summary, "/review --only <stage>"
   end

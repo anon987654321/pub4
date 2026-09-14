@@ -9,7 +9,8 @@ module Master
       def dispatch_model(agent:, config:, metrics:, root:, ctx: nil, arg: nil)
         arg = arg || arg_for(ctx)
         return list_models(root:, metrics:, agent:) if arg == "list"
-        return "model: #{agent.model} (use /model list for available models)" if arg.empty?
+        return "model: #{agent.model}; /model list names the others" if arg.empty?
+
         agent.model = arg
         config.save!
         "model: #{agent.model}"
@@ -17,24 +18,21 @@ module Master
         "model: #{e.message}"
       end
 
+      # A table: one row per model, its tiers in the second column, and an
+      # arrow on the one in use. A model listed under five tiers was five rows.
       def list_models(root:, metrics:, agent:)
         yml_path = File.join(root, "data", "models.yml")
         return "model: #{agent.model}" unless File.exist?(yml_path)
-        data = Master.load_yaml(yml_path)
-        tiers = data["models"] || {}
-        current = agent.model.to_s
-        model_lines = tiers.flat_map do |tier, ms|
-          ms.to_a.map do |mod|
-            marker = mod["id"].to_s == current ? "→ " : "  "
-            "#{marker} [#{tier}] #{mod["id"]}"
-          end
+
+        tiers_by_id = (Master.load_yaml(yml_path)["models"] || {}).each_with_object(Hash.new { |h, k| h[k] = [] }) do |(tier, rows), out|
+          rows.to_a.each { |row| out[row["id"].to_s] << tier }
         end
-        quality_lines = Array(metrics&.model_quality&.map do |mod, stat|
-          "  #{mod}: #{stat[:calls]} calls, fail_rate=#{stat[:fail_rate]}"
-        end)
-        sections = ["available models:"] + model_lines
-        sections += ["", "quality (this session):"] + quality_lines unless quality_lines.empty?
-        sections.join("\n")
+        width = tiers_by_id.keys.map(&:length).max.to_i
+        current = agent.model.to_s
+        lines = tiers_by_id.map { |id, tiers| "#{id == current ? '→' : ' '} #{id.ljust(width)}  #{tiers.uniq.join(', ')}" }
+        quality = Array(metrics&.model_quality&.map { |mod, stat| "  #{mod}: #{stat[:calls]} calls, fail rate #{stat[:fail_rate]}" })
+        lines += ["", "this session:"] + quality unless quality.empty?
+        lines.join("\n")
       end
     end
   end

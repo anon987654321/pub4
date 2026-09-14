@@ -10,12 +10,9 @@ class CLIBridgeTest < Minitest::Test
   end
 
   def build_cli(commands: nil, pipeline: Object.new)
-    unless pipeline.respond_to?(:last_timings)
-      pipeline.define_singleton_method(:last_timings) { nil }
-    end
     renderer = Object.new
     renderer.define_singleton_method(:render) { |text, **| text }
-    renderer.define_singleton_method(:speaker_tag) { "agent> " }
+    renderer.define_singleton_method(:measure) { |text, **| text }
     agent = Struct.new(:model).new("test-model")
     session = Struct.new(:budget_max, :cost, :token_est, :tokens_billed, :phase, :messages).new(0, 0.0, 0, 0, :work, [])
     Master::CLI::Session.new(
