@@ -3,6 +3,16 @@
 require "test_helper"
 
 class HomeControllerTest < ActionDispatch::IntegrationTest
+  # Shared::ApplicationSetup declares morph refreshes with the scroll kept. A
+  # declaration the browser never receives is Turbo's default, replace and
+  # reset, so the page is what has to carry it.
+  def test_the_page_tells_turbo_to_morph_refreshes_and_keep_the_scroll
+    host! "brgen.no"
+    get root_url
+    assert_select "head meta[name='turbo-refresh-method'][content='morph']", 1
+    assert_select "head meta[name='turbo-refresh-scroll'][content='preserve']", 1
+  end
+
   def test_guest_root_shows_social_feed
     host! "brgen.no"
     get root_url

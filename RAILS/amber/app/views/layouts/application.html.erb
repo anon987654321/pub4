@@ -29,6 +29,8 @@
                                           "Social fashion. Share outfits, keep a wardrobe, and dress with people you follow." %>
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
+  <%# turbo_refreshes_with in Shared::ApplicationSetup provides its meta tags here. %>
+  <%= yield :head %>
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192">

@@ -29,6 +29,8 @@
                                           "Search OpenBSD ports, dependencies and local advisories." %>
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
+  <%# turbo_refreshes_with in Shared::ApplicationSetup provides its meta tags here. %>
+  <%= yield :head %>
   <link rel="preload" href="/icon.png" as="image">
   <link rel="icon" href="/icon.png" type="image/png">
   <link rel="apple-touch-icon" href="/icon.png">

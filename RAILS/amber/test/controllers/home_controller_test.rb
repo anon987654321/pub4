@@ -4,6 +4,14 @@ require "test_helper"
 require "minitest/mock"
 
 class HomeControllerTest < ActionDispatch::IntegrationTest
+  # Shared::ApplicationSetup declares morph refreshes with the scroll kept, and
+  # the page is what has to carry that to Turbo.
+  def test_the_page_tells_turbo_to_morph_refreshes_and_keep_the_scroll
+    get root_url
+    assert_select "head meta[name='turbo-refresh-method'][content='morph']", 1
+    assert_select "head meta[name='turbo-refresh-scroll'][content='preserve']", 1
+  end
+
   def test_legal_pages_are_public
     %w[/privacy /terms /cookies].each do |path|
       get path
