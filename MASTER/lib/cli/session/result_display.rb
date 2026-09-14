@@ -75,8 +75,11 @@ module Master
             puts text
             return
           end
+          # Printed, never paged: a pager takes the terminal from Reline while
+          # other threads still write to it, and a ^C there lands in the shell.
+          # Scrollback is the pager.
           puts @refs.renderer.speaker_tag
-          output_text(text)
+          puts text
           puts
           spoken = text
         end
@@ -132,22 +135,6 @@ module Master
       def routine_success?(text)
         text = text.to_s
         !text.empty? && text.lines.size == 1 && text.length <= ROUTINE_SUCCESS_MAX_LENGTH
-      end
-
-      def output_text(text)
-        return puts text unless page_output?(text)
-
-        pager = ENV["PAGER"].to_s.empty? ? "less -R" : ENV["PAGER"]
-        IO.popen(pager, "w") { |io| io.write(text) }
-      rescue StandardError
-        puts text
-      end
-
-      def page_output?(text)
-        $stdout.isatty && text.to_s.lines.size > TTY::Screen.height
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "CLI.page_output?")
-        false
       end
 
       def print_cost_tooltip

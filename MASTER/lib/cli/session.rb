@@ -81,6 +81,7 @@ module Master
 
         print_thinking_indicator unless paste
         result = dispatch_turn(input, accumulated, state)
+        stop_thinking_indicator
         print_bridge_footer(result.value[:core], state:) if result.ok? && state[:streamed] && result.value[:core]
         display_result(result:, accumulated:, streamed: state[:streamed])
       ensure

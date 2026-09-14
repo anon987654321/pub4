@@ -30,20 +30,10 @@ module Master
         @bg_thread = nil
       end
 
+      # A blocking pop with a timeout. A non-blocking pop raises ThreadError on
+      # every empty tick, and the swallow ledger would record one a second.
       def background_stop_requested?
-        IDLE_SLEEP_DEFAULT.times do
-          return true if background_control_message == :stop
-
-          sleep 1
-        end
-        false
-      end
-
-      def background_control_message
-        @bg_control.pop(true)
-      rescue ThreadError => e
-        Master::Ground::Swallow.log(e, context: "CLI.background_control_message")
-        nil
+        @bg_control.pop(timeout: IDLE_SLEEP_DEFAULT) == :stop
       end
 
       # The deep self-scan over lib/ runs 181 rules and takes north of a minute.
