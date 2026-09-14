@@ -257,6 +257,54 @@ class PortInventoryFixtureTest < Minitest::Test
   end
 end
 
+# shell_syntax_gate parses each script with the interpreter its shebang names.
+class ShellSyntaxFixtureTest < Minitest::Test
+  GATE = File.expand_path("../shell_syntax_gate.rb", __dir__)
+
+  def scan(files)
+    Dir.mktmpdir("shell-syntax") do |root|
+      files.each do |rel, body|
+        path = File.join(root, "OPENBSD", rel)
+        FileUtils.mkdir_p(File.dirname(path))
+        File.write(path, body)
+      end
+      out, status = Open3.capture2e({ "SHELL_SYNTAX_ROOT" => root }, RbConfig.ruby, GATE)
+      [status.success?, out]
+    end
+  end
+
+  def test_a_script_that_does_not_parse_fails_and_is_named
+    ok, out = scan("bin/broken" => "#!/usr/bin/env zsh\nif [[ -n x ]]; then\n  print hi\n",
+                   "fine.sh" => "#!/bin/sh\necho ok\n")
+
+    refute ok
+    assert_includes out, "1 of 2 scripts do not parse"
+    assert_includes out, "zsh -n OPENBSD/bin/broken"
+  end
+
+  # The shebang picks the parser: `set -A` is ksh and a syntax error to nothing
+  # else that matters here, so a ksh script must not be read by sh.
+  def test_each_script_is_parsed_by_its_own_shebang
+    ok, out = scan("usr/local/bin/warm.sh" => "#!/bin/ksh\nset -A T a b\nfor t in \"${T[@]}\"; do print $t; done\n")
+
+    assert ok, out
+    assert_includes out, "1 scripts parse"
+  end
+
+  def test_a_tree_with_no_shebangs_is_a_broken_scan
+    ok, out = scan("notes.sh" => "echo no shebang\n")
+
+    refute ok
+    assert_includes out, "the scan is broken"
+  end
+
+  def test_the_committed_tree_parses
+    out, status = Open3.capture2e(RbConfig.ruby, GATE)
+
+    assert status.success?, out
+  end
+end
+
 class DeploySmokeFixtureTest < Minitest::Test
   OPENBSD = File.expand_path("..", __dir__)
   require File.join(OPENBSD, "deploy_smoke_gate.rb")

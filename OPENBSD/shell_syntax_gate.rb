@@ -17,7 +17,8 @@
 # `-n` parses without executing, so this is safe to run anywhere, including on the
 # box.
 
-ROOT = File.expand_path("..", __dir__)
+# SHELL_SYNTAX_ROOT points the scan at a fixture tree, so the gate can be shown failing.
+ROOT = ENV.fetch("SHELL_SYNTAX_ROOT", File.expand_path("..", __dir__))
 Dir.chdir(ROOT)
 
 INTERPRETERS = %w[zsh ksh sh bash].freeze
