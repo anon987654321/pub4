@@ -26,7 +26,7 @@ daemon="/bin/ksh"
 # and the variable was read by nothing. It was the only thing that looked like a
 # job worker and it had never started one — 1670 jobs enqueued on brgen and 0
 # finished, measured 2026-08-12. rc.d/<app>_jobs is the real worker; read its
-# footer before enabling it, because vm23 has 1 GB.
+# header before enabling it, because vm23 has 1 GB.
 #
 # RUBY_YJIT_ENABLE=0 is a decision, not a default.
 #

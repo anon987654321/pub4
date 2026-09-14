@@ -2,9 +2,16 @@
 # Solid Queue worker for brgen. Enabled on vm23 since 2026-08-25 (e511ccba1): the one resident worker
 # this box can hold.
 #
-# Why the workers exist, what went unrun before them, how to enable one and
-# how to confirm it took: OPENBSD/DECISIONS.md, "Falcon Only (No Puma)".
-# health_check.rb fails when a queue has due work and no registered process.
+# Falcon runs no Solid Queue supervisor, so a worker is its own service, one
+# rc.d file per app. Without one, drain-jobs.sh runs the queue for a few
+# minutes each hour. To enable one:
+#
+#   doas rcctl enable APP_jobs && doas rcctl start APP_jobs
+#   sqlite3 -readonly /home/APP/app/storage/production_queue.sqlite3 'select count(*) from solid_queue_processes;'
+#
+# A registered process is the only proof it took. Add the service to
+# pkg_scripts in etc/rc.conf.local in the same change, because boot reads that
+# line. health_check.rb fails when a queue has due work and no registered process.
 export PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin
 APP_DIR=/home/brgen/app
 # /etc/brgen.env is the one env file: daemon_flags sources nothing else.
