@@ -25,59 +25,10 @@ doc_paths:
       2026-09-06 and this file says so. Naming it is the point.
 
       '
-  MASTER/DECISIONS.md:
-  - path: core/ABSORPTION.md
-    why: 'A record of a document that was renamed and then deleted. The paragraph
-      exists to say what the deleted file claimed and why the ratchet replaced it.
-
-      '
-  - path: data/biases.yml
-    why: 'A decision record naming the data file this repo folded into data/rules.yml.
-      The record is what says the fold happened, so it has to be able to name what
-      was folded; rewriting it to cite rules.yml would delete the fact it exists to
-      carry.
-
-      '
-  - path: data/design_rules.yml
-    why: 'A decision record naming the file whose fold it records. The path is meant
-      to be dead; the entry explains why proximity to a consumer lost to having one
-      definition. Repairing the reference would erase the decision.
-
-      '
-  - path: data/llm_output_rules.yml
-    why: 'A decision record naming the data file this repo folded into data/rules.yml.
-      The record is what says the fold happened, so it has to be able to name what
-      was folded; rewriting it to cite rules.yml would delete the fact it exists to
-      carry.
-
-      '
-  - path: data/rule_deps.yml
-    why: 'A decision record naming the data file this repo folded into data/rules.yml.
-      The record is what says the fold happened, so it has to be able to name what
-      was folded; rewriting it to cite rules.yml would delete the fact it exists to
-      carry.
-
-      '
-  - path: design_rules.yml
-    why: 'A record of a fold. design_rules.yml was merged into rules.yml on 2026-09-04
-      and this entry is the argument for merging it.
-
-      '
-  - path: docs/SEVERANCE.md
-    why: 'A record of a rename followed by a deletion: core/ABSORPTION.md became docs/SEVERANCE.md
-      and went with the rest of docs/. The paragraph exists to say the standing policy
-      has no second document to consult.
-
-      '
-  - path: style.yml
-    why: 'Same fold, the other side of it: design_rules.yml was split from style.yml
-      before both were folded away.
-
-      '
   MASTER/EXAMPLES.md:
   - path: data/design_rules.yml
-    why: 'The worked example of this judgement, quoting the same file for the same
-      reason as the DECISIONS.md entry above.
+    why: 'The worked example of this judgement: it names the file whose fold it
+      teaches, so the path is meant to be gone.
 
       '
   - path: style.yml
@@ -147,6 +98,7 @@ doc_paths:
 
       '
   - path: style.yml
-    why: 'A record of the same fold MASTER/DECISIONS.md carries.
+    why: 'A record of the fold that took style.yml into data/rules.yml; the path is
+      meant to be gone.
 
       '

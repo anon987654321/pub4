@@ -219,7 +219,7 @@ authority read `RAILS/shared/WIRING_NOTES.md`, which is maintained.
 
 **Target end state:** 4 law YAMLs + 1 patterns + registries + 1 runtime catalog
 + 3 data markdown stubs. Top-level MASTER markdown: this file + `README.md` stub
-+ `DECISIONS.md` / `EXAMPLES.md` only when they hold
++ `EXAMPLES.md` only while it holds
 living entries (the debt register moved to the repo-root `TODO.md`).
 
 OPENBSD mirror: `OPENBSD/START_HERE.md` + `OPENBSD/RUNBOOK.md` — not duplicate
@@ -253,7 +253,8 @@ merging YAML/MD or restructuring folders.
 - Read the target file and nearby tests.
 - Check `PATH_OWNERSHIP.yml` for risk.
 - Prefer small patches; run the smallest check that proves the work.
-- Update `DECISIONS.md` or the repo-root `TODO.md` when settling ambiguity.
+- Settle ambiguity in a present-tense comment beside the code, a bullet under
+  "Refused, and why" in `AGENTS.md`, or the repo-root `TODO.md`.
 - Face boot: read `web/CLAUDE.md` first.
 - RAILS app CSS/visual work: read `RAILS/shared/WIRING_NOTES.md`'s "Visual
   design system" section first — x.com is the base reference, tokens live in

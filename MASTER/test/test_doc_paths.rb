@@ -43,7 +43,6 @@ class TestDocPaths < Minitest::Test
     OPENBSD/SSH_ACCESS.md
     MASTER/START_HERE.md
     MASTER/AGENTS.md
-    MASTER/DECISIONS.md
     MASTER/EXAMPLES.md
     RAILS/shared/WIRING_NOTES.md
   ].freeze
@@ -104,12 +103,11 @@ class TestDocPaths < Minitest::Test
     head = candidate.split("/").first
     return true if TREES.include?(head) || File.exist?(File.join(REPO, head))
 
-    # A head that exists beside the document. MASTER/DECISIONS.md writes
-    # `data/rules.yml` and means MASTER's, which resolved against the repo root
-    # as a `data` tree that does not exist — so every citation a MASTER or
-    # OPENBSD document made of its own subdirectory was dropped before it was
-    # checked. Seven stale ones were sitting behind that, four of them in the
-    # decision records.
+    # A head that exists beside the document. MASTER/START_HERE.md writes
+    # `data/rules.yml` and means MASTER's, which resolves against the repo root
+    # as a `data` tree that does not exist — so without this every citation a
+    # MASTER or OPENBSD document makes of its own subdirectory is dropped before
+    # it is checked.
     dir = File.dirname(@current_doc.to_s)
     return true if dir != "." && File.exist?(File.join(REPO, dir, head))
 
@@ -139,7 +137,7 @@ class TestDocPaths < Minitest::Test
   # as a key no code names and was right: this test carried its own list and
   # three careful paragraphs governed nothing. The rows are still correct — a
   # public key .gitignore explicitly un-ignores and has not been added yet, and
-  # two decision records naming the design_rules.yml they record the folding of.
+  # a worked example naming the design_rules.yml whose folding it teaches.
   BASELINE = File.expand_path("../data/doc_baselines.yml", __dir__)
 
   def exempt_for(doc)

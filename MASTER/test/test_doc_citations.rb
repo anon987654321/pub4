@@ -1,12 +1,8 @@
 # frozen_string_literal: true
 
-# Prose is where the drift always happens, because nothing parses prose.
-#
-# TODO.md held a copy of spine.yml's raise log and drifted from it. The commit
-# that fixed that (f34907d40) says so in its own message — and within a day
-# DECISIONS.md was left claiming a rebaseline to 38823 against spine.yml's
-# 38811, by the session that had just read the fix. Twice in two days, same
-# defect, same file pair.
+# Prose is where the drift always happens, because nothing parses prose. The
+# same defect reached the same file pair twice in two days, once from the
+# session that had just read the fix.
 
 require "minitest/autorun"
 require "yaml"
@@ -30,28 +26,30 @@ class TestDocCitations < Minitest::Test
   # A checker that has stopped finding anything to check reports clean forever.
   def test_the_checker_is_reading_documents_and_data
     assert_operator @report["docs"], :>, 40, "only #{@report['docs']} documents seen"
-    # Floor, not a target. It was 6 until 2026-08-12, when fixing seven stale
-    # `core_files: 6` references removed most of them — rewriting prose to drop
-    # the number is a real loss of coverage, so the floor is asserted rather than
-    # quietly followed downward.
-    #
-    # 4 -> 3 on 2026-08-14, and this is the case that comment is about, so it gets
-    # the argument it asks for. DECISIONS.md carried a `cite:` on the spine ceiling
-    # inside the sentence "It has since been raised three times, to 38869" — a
-    # claim about a past sequence, wearing a marker that holds it to the value
-    # data/ currently has. Every later raise turned a true statement about history
-    # into a failing claim about the present, and it drifted within two days.
-    #
-    # So this is not prose dropping a number to dodge the gate: the citation was
-    # wrong to exist, because the sentence was never asserting a current value.
-    # The story stayed and the figure moved to data/spine.yml, which is the one
-    # place that owns it. Coverage genuinely fell by one and the floor follows,
-    # visibly.
-    assert_operator @report["quotations"] + @report["citations"], :>=, 3,
+    # Floor, not a target: rewriting prose to drop a quoted number is a real loss
+    # of coverage, so the floor is asserted rather than quietly followed downward.
+    # It stands at the one quotation the live documents carry, START_HERE.md's
+    # `core_files`.
+    assert_operator @report["quotations"] + @report["citations"], :>=, 1,
                     "only #{@report['quotations']} quotation(s) and #{@report['citations']} " \
                     "citation(s) found — the checker stopped matching"
     assert_includes Operator::DocCitations.keys.keys, "core_files",
                     "core_files is no longer recognised as a citable key"
+  end
+
+  # With one live quotation the floor above proves little on its own, so the
+  # matcher proves itself on a planted body: a right value passes, a wrong one is
+  # a finding.
+  def test_a_quotation_is_checked_against_data
+    live, = Operator::DocCitations.resolve("data/spine.yml", "spine.core_files")
+    findings = []
+
+    body = "core_files: #{live} and core_files: #{live.to_i + 1}"
+    count = Operator::DocCitations.check_quotations("TEST.md", body, findings)
+
+    assert_equal 2, count
+    assert_equal 1, findings.size
+    assert_includes findings.first["message"], "quotes core_files: #{live.to_i + 1}"
   end
 
   def test_a_citation_resolves_against_data

@@ -2,12 +2,8 @@
 
 # Prose that quotes a number data/ owns must quote the number data/ holds.
 #
-# TODO.md carried a copy of data/spine.yml's raise log — "38,294, allowance 1 of
-# 2" — while spine.yml had ratcheted to 38,285 and cleared the log. Two sources,
-# one drifted, which is the failure that register describes in its own words two
-# sections further down. Within a day of it being fixed, DECISIONS.md was left
-# claiming a rebaseline to 38823 against spine.yml's 38811. Nothing parses prose,
-# so nothing noticed either time.
+# A document that copies a figure out of data/ is a second source, and nothing
+# parses prose, so the copy drifts unnoticed the first time the data moves.
 #
 # Two forms are checked, and neither needs a document rewritten to adopt it:
 #

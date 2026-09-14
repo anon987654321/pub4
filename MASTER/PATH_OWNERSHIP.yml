@@ -8,10 +8,6 @@ ownership:
     purpose: single orientation — agent contract, runtime map, data file budget
     risk: medium
     check: bin/check
-  DECISIONS.md:
-    purpose: intentional architecture decisions
-    risk: medium
-    check: bin/check
   ../TODO.md:
     purpose: consolidated repo-wide backlog (per-tree DEBT.md, RAILS/TODO.md,
       RAILS/BLOCKERS.md and OPENBSD/data/debt.yml were folded in; features live
