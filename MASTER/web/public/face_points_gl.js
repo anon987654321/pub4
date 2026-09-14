@@ -184,7 +184,9 @@ void main() {
 
   // Ink of new_avatar.png (public/face_avatar.png): dark pixels become the
   // skull surface. The tunnel is the radio_brgen rings, laid behind that
-  // mask rather than filling the viewport on their own.
+  // mask rather than filling the viewport on their own. The PNG is Chrome's
+  // own 96px draw of the 1000px drawing, the size sampleAvatarInk reads, so it
+  // yields the same 3,930 ink cells for 14 KB instead of 487.
   //
   // Era is the human-evolution axis this renderer exists to show. -1 is a
   // prognathic vault (ape), 0 is the avatar as drawn, +1 is a globular
