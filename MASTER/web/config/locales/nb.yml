@@ -19,6 +19,7 @@ nb:
     heading_mission: "kontrollrom"
     main_label: "Kontrollrom"
     loading: "laster…"
+    auth_required: "kontrollrommet krever operatørnøkkelen"
     empty_none: "(ingen)"
     empty_empty: "(tom)"
     empty_quiet: "(stille)"

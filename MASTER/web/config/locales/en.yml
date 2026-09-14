@@ -8,6 +8,7 @@ en:
     heading_mission: "mission control"
     main_label: "Mission control"
     loading: "loading…"
+    auth_required: "mission control needs the operator token"
     empty_none: "(none)"
     empty_empty: "(empty)"
     empty_quiet: "(quiet)"
