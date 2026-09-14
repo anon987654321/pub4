@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "open3"
 require "yaml"
+require_relative "../bin/render_dns"
 
 # Four DNS facts were written down twice: data/dns.yml declares them, OPERATOR.sh
 # restates them as shell literals, and gates/dns_zones.rb had its own third copy
@@ -37,6 +39,27 @@ class DnsFactsAgreeTest < Minitest::Test
 
   def test_the_public_resolvers_are_one_list
     assert_equal POLICY.fetch("resolvers").fetch("public"), shell_array("PUBLIC_RESOLVERS")
+  end
+
+  # The domain list is read twice as well, and not in two files but in two
+  # languages. OPERATOR.sh's loops walk ALL_DOMAINS as zsh expands the array;
+  # render_dns.rb splits the same block into lines. A comment, a quoted entry or
+  # two entries on one line inside it splits differently, and then the zones the
+  # generator writes and the domains the installer walks are two fleets. zsh
+  # evaluates the block here so the two readings are compared, not assumed.
+  def test_all_domains_reads_the_same_in_zsh_and_in_render_dns
+    block = OPERATOR[/^ALL_DOMAINS=\(\n.*?\n\)$/m]
+    refute_nil block, "no ALL_DOMAINS block in OPERATOR.sh"
+
+    out, status = Open3.capture2("zsh", "-f", "-c", "#{block}\nprint -rl -- $ALL_DOMAINS")
+    assert status.success?, "zsh could not evaluate the ALL_DOMAINS block"
+    expanded = out.lines.to_h do |entry|
+      domain, subs = entry.chomp.split(":", 2)
+      [domain, subs.to_s.split(",").map(&:strip).reject(&:empty?)]
+    end
+
+    assert_operator expanded.size, :>, 40, "zsh expanded only #{expanded.size} domains"
+    assert_equal expanded, RenderDns.city_zones
   end
 
   # If the two readers above stop finding anything, every assertion passes by
