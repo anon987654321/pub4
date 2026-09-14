@@ -113,7 +113,7 @@ class IngressController < ApplicationController
 
   def ingress_token_valid?
     token = request.headers["Authorization"].to_s.sub(/\ABearer\s+/i, "").strip
-    MasterIngressToken.valid?(token)
+    IngressToken.valid?(token)
   end
 
   def require_ingress_token!

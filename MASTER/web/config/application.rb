@@ -20,7 +20,7 @@ require "rails/test_unit/railtie"
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
-require_relative "../app/services/master_web_token"
+require_relative "../app/services/operator_token"
 require_relative "../app/middleware/auth_tier"
 require_relative "../app/middleware/html_no_store"
 require_relative "../app/middleware/security_headers"
@@ -78,7 +78,7 @@ module Web
 
     config.middleware.use(
       AuthTier,
-      config_path: -> { MasterWebToken.config_path },
+      config_path: -> { OperatorToken.config_path },
     )
     config.middleware.insert_before Rack::ETag, SecurityHeaders
     config.middleware.insert_before Rack::ETag, HtmlNoStore

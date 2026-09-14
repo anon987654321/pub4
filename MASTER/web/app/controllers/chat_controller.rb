@@ -84,7 +84,7 @@ class ChatController < ApplicationController
     cmd = (params[:command] || JSON.parse(request.body.read)["command"]).to_s.strip
     if cmd.start_with?("/unlock ")
       pw = cmd.sub(/^\/unlock\s+/, "").strip
-      token = MasterWebToken.read
+      token = OperatorToken.read
       if token.empty? || pw.bytesize != token.bytesize || !Rack::Utils.secure_compare(pw, token)
         render(json: { output: "unlock denied" }, status: 401) and return
       end

@@ -10,7 +10,7 @@ class IngressControllerTest < ActionDispatch::IntegrationTest
   def setup
     @previous_token = ENV["MASTER_INGRESS_TOKEN"]
     ENV["MASTER_INGRESS_TOKEN"] = TOKEN
-    @token = MasterIngressToken.read
+    @token = IngressToken.read
   end
 
   def teardown
@@ -27,7 +27,7 @@ class IngressControllerTest < ActionDispatch::IntegrationTest
   end
 
   def test_health_lists_job_names_to_the_token_holder
-    token = "t" * MasterIngressToken::MIN_TOKEN_LENGTH
+    token = "t" * IngressToken::MIN_TOKEN_LENGTH
     previous = ENV["MASTER_INGRESS_TOKEN"]
     ENV["MASTER_INGRESS_TOKEN"] = token
     get "/ingress/health", headers: { "Authorization" => "Bearer #{token}" }

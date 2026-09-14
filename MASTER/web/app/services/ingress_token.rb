@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Bearer token for webhook/cron ingress (POST /ingress/*).
-class MasterIngressToken
+class IngressToken
   MIN_TOKEN_LENGTH = 16
 
   def self.read

@@ -38,7 +38,7 @@ module ActiveSupport
   end
 end
 
-TEST_WEB_TOKEN = MasterWebToken.read
+TEST_WEB_TOKEN = OperatorToken.read
 
 def auth_headers
   { "X-Token" => TEST_WEB_TOKEN }

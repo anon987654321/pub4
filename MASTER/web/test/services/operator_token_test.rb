@@ -3,12 +3,12 @@
 require "test_helper"
 require "tmpdir"
 
-# AuthTier seeds the operator token and MasterWebToken reads it back, each with
+# AuthTier seeds the operator token and OperatorToken reads it back, each with
 # its own length floor. If the floors part, a token one side accepts reads as
 # empty on the other, and every authenticated request fails closed.
-class MasterWebTokenTest < ActiveSupport::TestCase
+class OperatorTokenTest < ActiveSupport::TestCase
   test "the reader and the seeder agree on the shortest acceptable token" do
-    assert_equal AuthTier::MIN_TOKEN_LENGTH, MasterWebToken::MIN_LENGTH
+    assert_equal AuthTier::MIN_TOKEN_LENGTH, OperatorToken::MIN_LENGTH
   end
 
   test "a seeded token clears the floor both sides enforce" do
@@ -20,11 +20,11 @@ class MasterWebTokenTest < ActiveSupport::TestCase
   test "a token under the floor reads as empty" do
     Dir.mktmpdir do |dir|
       path = File.join(dir, "config.yml")
-      File.write(path, { "web_token" => "x" * (MasterWebToken::MIN_LENGTH - 1) }.to_yaml)
+      File.write(path, { "web_token" => "x" * (OperatorToken::MIN_LENGTH - 1) }.to_yaml)
       previous = ENV["MASTER_AUTH_CONFIG"]
       ENV["MASTER_AUTH_CONFIG"] = path
 
-      assert_equal "", MasterWebToken.read
+      assert_equal "", OperatorToken.read
     ensure
       ENV["MASTER_AUTH_CONFIG"] = previous
     end

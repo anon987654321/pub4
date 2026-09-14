@@ -131,7 +131,7 @@ class ApplicationController < ActionController::Base
   end
 
   def unlock_cookie_value
-    secret = MasterWebToken.read.to_s
+    secret = OperatorToken.read.to_s
     return "" if secret.empty?
 
     OpenSSL::HMAC.hexdigest("SHA256", secret, "master_unlocked")

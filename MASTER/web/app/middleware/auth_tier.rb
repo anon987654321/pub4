@@ -21,8 +21,8 @@ class AuthTier
   PUBLIC_PREFIX = %w[/assets/].freeze
   # A seeded token is 48 random bytes (64 urlsafe-base64 characters). Any stored
   # token of at least 32 bytes (43 characters) is kept rather than rotated, so a
-  # token seeded before the size rose still works. MasterWebToken::MIN_LENGTH
-  # must equal MIN_TOKEN_LENGTH; test/services/master_web_token_test.rb pins
+  # token seeded before the size rose still works. OperatorToken::MIN_LENGTH
+  # must equal MIN_TOKEN_LENGTH; test/services/operator_token_test.rb pins
   # the pair.
   TOKEN_BYTES = 48
   MIN_TOKEN_LENGTH = 43
