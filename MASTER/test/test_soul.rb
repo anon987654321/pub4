@@ -98,6 +98,15 @@ class TestSoul < Minitest::Test
     assert_equal DOCUMENT, File.read(File.join(@root, "data", "SOUL.md"))
   end
 
+  # /soul printed "SOUL.md v1.0.0 | persona:" while the boot said rev 2.8.0.
+  def test_summary_names_the_booted_revision_and_persona
+    summary = Master::Voice::Soul.new.summary
+    law = Master.load_yaml(Master.data_path("soul.yml"))
+
+    assert summary.start_with?("soul0: rev #{law['version']}, persona #{law['persona']}\n"), summary
+    assert_match(/\ASOUL is the absolute tier/, summary.lines.last)
+  end
+
   def test_approve_updates_version_at_instance_root
     draft = DOCUMENT + "\nA small clarification.\n"
     soul = Master::Voice::Soul.new(root: @root, agent: Agent.new(draft))

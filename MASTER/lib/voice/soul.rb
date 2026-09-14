@@ -71,9 +71,15 @@ module Master
         @soul = load_soul
       end
 
+      # What booted: soul.yml's revision and persona, the ones the boot line
+      # names, then SOUL.md's opening sentence. SOUL.md itself carries no
+      # Version or Persona line; its own fields stand in only without soul.yml.
       def summary
-        voice = extract_field("Voice").to_s.lines.first.to_s.strip[0, 120]
-        "SOUL.md v#{extract_version} | persona: #{extract_field("Persona")}\n#{voice}"
+        law = File.exist?(law_path) ? Master.load_yaml(law_path).to_h : {}
+        version = law["version"] || extract_version
+        persona = law["persona"] || extract_field("Persona")
+        opening = @soul.lines.find { |line| line.match?(/\A[^#\s]/) }.to_s[/\A.*?[.!?](?=\s|\z)/].to_s
+        ["soul0: rev #{version}, persona #{persona.to_s.empty? ? 'none' : persona}", opening].reject(&:empty?).join("\n")
       end
 
       def changelog
@@ -177,6 +183,8 @@ module Master
       end
 
       def proposal = File.read(@proposal_path, encoding: "UTF-8")
+
+      def law_path = File.join(@root, "data", "soul.yml")
 
       def load_soul
         File.exist?(@soul_path) ? File.read(@soul_path, encoding: "UTF-8") : ""
