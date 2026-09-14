@@ -2622,6 +2622,21 @@ class TestDilla < Minitest::Test
                     "the engine reads 610 knobs; a sharp drop means the source glob stopped seeing files"
   end
 
+  # Takes before d6ab8a0c8 played soundfont pads, and their sidecars name no
+  # ANALOG_SYNTH, so a replay silently swapped the instrument. Every sidecar's
+  # environment says which instrument played, set or not.
+  def test_provenance_environment_records_analog_synth_even_when_unset
+    result = eval_in_engine(<<~RUBY)
+      ENV.delete("ANALOG_SYNTH")
+      unset = DillaProvenance.send(:recorded_env)["ANALOG_SYNTH"]
+      ENV["ANALOG_SYNTH"] = "0"
+      puts JSON.generate(unset: unset, soundfont: DillaProvenance.send(:recorded_env)["ANALOG_SYNTH"],
+                         default: ANALOG_SYNTH_DEFAULT)
+    RUBY
+    assert_equal result.fetch("default"), result.fetch("unset"), "an unset knob records the engine's default"
+    assert_equal "0", result.fetch("soundfont"), "a set knob records what was set"
+  end
+
   # The sidecar was renamed from .dilla to .provenance.json, and pub4 keeps no
   # reader for a renamed file: an old sidecar beside a part is not a recipe.
   def test_provenance_reads_no_dilla_suffix

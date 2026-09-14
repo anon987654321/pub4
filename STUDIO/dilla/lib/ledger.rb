@@ -1300,7 +1300,7 @@ module DillaProvenance
     ENV_DENY_PATTERN = /KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH|COOKIE|SESSION/i
 
     def recorded_env
-      engine_env_keys.each_with_object({}) do |key, acc|
+      recorded = engine_env_keys.each_with_object({}) do |key, acc|
         next if ENV_DENY.include?(key) || key.match?(ENV_DENY_PATTERN)
         # A knob the engine WRITES is an output of this render, not an input to
         # it. DILLA_RENDER_SEED is set by the drum_kit engine part from the seed that is
@@ -1312,6 +1312,18 @@ module DillaProvenance
         value = ENV[key]
         acc[key] = value unless value.nil? || value.empty?
       end
+      recorded.merge(instrument_env)
+    end
+
+    # Which instrument played the pads, recorded even when unset. An unset knob
+    # is left out of `environment`, and ANALOG_SYNTH is the one whose default
+    # changed under old takes: soundfonts before d6ab8a0c8, oscillators after.
+    # The engine owns the default (ANALOG_SYNTH_DEFAULT in dilla.rb); loaded on
+    # its own, as the tests do, this records only what ENV says.
+    def instrument_env
+      value = ENV["ANALOG_SYNTH"].to_s
+      value = Object.const_get(:ANALOG_SYNTH_DEFAULT) if value.empty? && Object.const_defined?(:ANALOG_SYNTH_DEFAULT)
+      value.to_s.empty? ? {} : { "ANALOG_SYNTH" => value.to_s }
     end
 
     # What the run computed for itself. Kept because it is useful to see, and

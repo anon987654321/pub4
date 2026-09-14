@@ -24471,8 +24471,15 @@ end
 # ANALOG_SYNTH=0 puts the soundfont back, for a take voiced against it and for
 # the sampled instruments an oscillator cannot be -- a choir is a recording of
 # people, and no filter setting gets there.
+#
+# The default is a named constant because provenance records it: every take
+# before d6ab8a0c8 played its pads through soundfonts and its sidecar names no
+# ANALOG_SYNTH, so replaying one silently swapped the instrument. A sidecar now
+# says which instrument played even when nobody set the knob.
+ANALOG_SYNTH_DEFAULT = "1"
+
 def analog_synth_enabled?
-  ENV.fetch("ANALOG_SYNTH", "1") != "0"
+  ENV.fetch("ANALOG_SYNTH", ANALOG_SYNTH_DEFAULT) != "0"
 end
 
 # Struck instruments, which keep their envelope whatever they are asked to
