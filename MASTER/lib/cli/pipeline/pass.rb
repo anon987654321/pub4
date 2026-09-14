@@ -7,8 +7,11 @@ module Master
       # Progress is OpenBSD dmesg-style (device at bus: detail).
       class Pass
         Result = Data.define(:target, :mode, :sections, :ok, :unit, :failed_stages) do
+          # A section is its title and then its body, one blank line after, with
+          # no "#" in front: a terminal is not Markdown, and the title's place
+          # at the head of the block is the hierarchy.
           def render
-            lines = sections.flat_map { |title, body| ["# #{title}", body.to_s, ""] }
+            lines = sections.flat_map { |title, body| [title, body.to_s.chomp, ""] }
             lines << footer
             lines.join("\n")
           end
@@ -78,7 +81,7 @@ module Master
           shell = shell_target(resolved)
           @apply = apply
 
-          dmesg_boot(resolved, shell, posture, apply, critique, aesthetic)
+          dmesg_boot(resolved, posture, apply, critique, aesthetic)
           @bus&.publish("review:start", target: resolved, mode: posture[:name], apply:)
 
           sections = build_sections(resolved:, shell:, posture:, apply:, critique:, aesthetic:)
@@ -87,7 +90,7 @@ module Master
             title.include?("scan") && body.to_s.match?(/\berror\b|\bcritical\b/i) && body.to_s.match?(/\d{2,}\s+finding/i)
           end
           elapsed = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - @t0).round
-          Master::Trace::Dmesg.kv(@unit, complete: true, ok:, elapsed_s: elapsed, target: shell)
+          Master::Trace::Dmesg.status(@unit, "#{ok ? "complete" : "incomplete"}, #{elapsed}s")
           @bus&.publish("review:complete", target: resolved, apply:, ok:, elapsed_s: elapsed,
                                             failed_stages: @failed_stages)
           Result.new(target: resolved, mode: posture[:name], sections:, ok:, unit: @unit,
@@ -158,39 +161,30 @@ module Master
           sections
         end
 
-        def dmesg_boot(resolved, shell, posture, apply, critique, aesthetic)
+        def dmesg_boot(resolved, posture, apply, critique, aesthetic)
+          stages = [("aesthetic" if aesthetic), "scan", ("critique" if critique)].compact.join(", ")
           Master::Trace::Dmesg.attach(@unit, "mainbus0",
-            "master review target=#{shell} mode=#{posture[:name]} " \
-            "apply=#{apply ? "yes" : "no"} aesthetic=#{aesthetic ? "yes" : "no"} " \
-            "critique=#{critique ? "yes" : "no"} max_passes=#{posture[:max_fix_passes]}")
-          Master::Trace::Dmesg.status(@unit, "root=#{@root}")
-          Master::Trace::Dmesg.status(@unit, "abs=#{resolved}")
+            "#{resolved}, #{apply ? "writes" : "read-only"}, #{posture[:name]}, #{stages}")
         end
 
         def posture_line(_posture)
           Master::Ground::ModePosture.new(root: @root).line
         end
 
+        # The attach line says a stage began and the next one says it ended, as
+        # in a dmesg. A stage earns a second line only by taking a second or
+        # more. The byte, line and "violations" counts it printed measured the
+        # word in its output, so a scan with 1604 findings could read zero.
         def log_phase(unit, kind, detail)
           Master::Trace::Dmesg.attach(unit, @unit, [kind, detail].compact.join(" "))
           t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
           out = yield
           elapsed = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - t0).round(1)
-          summary = summarize_phase(out)
-          Master::Trace::Dmesg.kv(unit, done: true, elapsed_s: elapsed, **summary)
+          Master::Trace::Dmesg.status(unit, "#{elapsed}s") if elapsed >= 1
           out
         rescue StandardError => e
           Master::Trace::Dmesg.status(unit, "error #{e.class}: #{e.message}")
           raise
-        end
-
-        def summarize_phase(out)
-          text = out.to_s
-          {
-            bytes: text.bytesize,
-            lines: text.lines.size,
-            violations: text.scan(/violation/i).size,
-          }
         end
 
 # Measure unless asked to write.
@@ -309,7 +303,7 @@ def default_apply?(*) = false
           result = @fix_loop.preview(abs)
           if result.ok?
             v = result.value!
-            Master::Trace::Dmesg.kv("fix0", preview: true, total: v[:total])
+            Master::Trace::Dmesg.status("fix0", "preview, #{v[:total]} findings")
             "preview total=#{v[:total]} top_rules=#{v[:rules].inspect} top_files=#{v[:files].inspect}"
           else
             Master::Trace::Dmesg.status("fix0", "preview fail #{result.message}")
