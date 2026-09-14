@@ -231,13 +231,6 @@ time {
   max-width: var(--measure);
 }
 
-/* Nav swiper active underline already present — strengthen + peek */
-.nav_link.active {
-  border-bottom-width: 2px;
-  border-bottom-color: var(--accent);
-  font-weight: var(--weight-bold);
-}
-
 /* .nav_swiper_bar's scroll-snap now lives with the rest of the bar in
    _nav_swiper.scss. It was here, later in the @use order, and its
    `scroll-padding-inline: var(--space-1)` outranked the brand inset -- so the
