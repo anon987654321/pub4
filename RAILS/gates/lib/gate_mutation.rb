@@ -4,6 +4,8 @@ require_relative "../../../OPENBSD/lib/gate_result"
 require_relative "../support/dom_surface_schema"
 require_relative "../support/visual_quality"
 require_relative "../support/exemplar_structure"
+require_relative "live/page_simulation"
+require_relative "rendered/mobile_flow"
 
 module Deploy
   # Tests the gates, not the apps.
@@ -141,7 +143,79 @@ module Deploy
       end
 
       report(applied, inapplicable, survived)
+      plant_page_simulation(fixtures)
+      plant_mobile_flow
       @result
+    end
+
+    # page_simulation's live verdict over each good fixture served as a guest
+    # page, then over the same page broken the ways its checks name. Plants
+    # rather than the catalogue above, because each mutation is aimed at one
+    # check and a survivor means that check is gone.
+    PAGE_SIM_PLANTS = [
+      [:drop_main, "remove the main landmark"],
+      [:auth_wall, "put a signup wall on a guest-open surface"],
+    ].freeze
+
+    def plant_page_simulation(fixtures)
+      gate = PageSimulationGate.new
+      fixtures.each do |path|
+        id = File.basename(path, ".html").delete_prefix("good_")
+        page = { id: id, app: "brgen", path: "/", persona: "guest", view: path }
+        html = File.read(path)
+        if hard_count(gate.live_findings(page, 200, html, "fixture")).positive?
+          @result.fail("gate_mutation: page_simulation already rejects good_#{id}.html — its plants measure nothing")
+          next
+        end
+
+        PAGE_SIM_PLANTS.each do |mutation_id, description|
+          mutant = MUTATIONS.find { |row| row[0] == mutation_id }[2].call(html.dup)
+          next if mutant.nil? || mutant == html
+
+          @result.checked!
+          next if hard_count(gate.live_findings(page, 200, mutant, "fixture")).positive?
+
+          @result.fail("gate_mutation: page_simulation passes good_#{id}.html with \"#{description}\"")
+        end
+        @result.checked!
+        next if hard_count(gate.live_findings(page, 500, html, "fixture")).positive?
+
+        @result.fail("gate_mutation: page_simulation passes good_#{id}.html answering HTTP 500")
+      end
+    end
+
+    def hard_count(findings) = findings.count { |f| f[:severity] == :hard }
+
+    # mobile_flow measures in Chrome; its verdict on a measurement does not need
+    # one. A clean phone measurement, then each defect the gate exists to block.
+    MOBILE_CLEAN = {
+      "has_main" => true, "has_skip" => true, "has_tab_bar" => true, "overflow" => false,
+      "scroll_width" => 390, "client_width" => 390,
+      "chrome" => [{ "label" => "btn-primary Post", "w" => 120, "h" => 48, "min" => 48 }],
+    }.freeze
+
+    MOBILE_PLANTS = [
+      ["no main landmark", { "has_main" => false }],
+      ["no skip link", { "has_skip" => false }],
+      ["horizontal overflow", { "overflow" => true, "scroll_width" => 520 }],
+      ["a primary touch target under 44px", { "chrome" => [{ "label" => "btn-primary Post", "w" => 120, "h" => 30, "min" => 30 }] }],
+    ].freeze
+
+    def plant_mobile_flow
+      gate = MobileFlowGate.new
+      baseline = gate.judge(GateResult.new, "brgen", "core", MOBILE_CLEAN)
+      unless baseline.failures.empty?
+        @result.fail("gate_mutation: mobile_flow rejects its clean measurement — #{baseline.failures.first}")
+        return
+      end
+
+      MOBILE_PLANTS.each do |description, change|
+        @result.checked!
+        verdict = gate.judge(GateResult.new, "brgen", "core", MOBILE_CLEAN.merge(change))
+        next unless verdict.failures.empty?
+
+        @result.fail("gate_mutation: mobile_flow passes a phone measurement with #{description}")
+      end
     end
 
     private

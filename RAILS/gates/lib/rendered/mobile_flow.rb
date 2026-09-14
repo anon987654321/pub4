@@ -195,9 +195,21 @@ module Deploy
         return false
       end
 
+      judge(@result, surface.app, surface.label, m, face_in_payload: payload.to_s.include?("face"))
+      true
+    end
+
+    public
+
+    # The verdict on one phone measurement, written into `result`. Separate from
+    # the CDP walk so gate_mutation can hand it a broken measurement.
+    def judge(result, app, surface_label, m, face_in_payload: false)
+      @result = result
+      label = "#{app}/#{surface_label}"
+
       # MASTER face is a full-document special case (id=face / primer).
-      if surface.app == "master"
-        unless m["has_main"] || payload.to_s.include?("face")
+      if app == "master"
+        unless m["has_main"] || face_in_payload
           # re-check via raw evaluate not available; trust measure
           @result.fail("mobile_flow: #{label} missing main/face landmark", severity: :soft) unless m["has_main"]
         end
@@ -226,12 +238,12 @@ module Deploy
       end
 
       # Social shells should expose a progressive tab bar on phone.
-      if %w[brgen amber].include?(surface.app) && %w[core home live wardrobe marketplace].include?(surface.label)
+      if %w[brgen amber].include?(app) && %w[core home live wardrobe marketplace].include?(surface_label)
         unless m["has_tab_bar"]
           @result.fail("mobile_flow: #{label} expected mobile tab bar chrome", severity: :soft)
         end
       end
-      true
+      result
     end
   end
 end

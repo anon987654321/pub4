@@ -129,6 +129,25 @@ module Deploy
       response = CrawlSupport.fetch(url, host: page[:host], accept: "text/html", timeout: 12, open_timeout: 6)
       code = response.code.to_i
       body = response.body.to_s
+      findings = live_findings(page, code, body, url)
+
+      findings.each { |f| apply_finding(entry, f) }
+      entry["http"] = code
+      entry["ok"] = findings.none? { |f| f[:severity] == :hard }
+      entry["findings"] = findings.map { |f| f[:message] }
+      push_entry(entry)
+    rescue StandardError => e
+      entry["ok"] = false
+      entry["findings"] = ["#{e.class}: #{e.message}"]
+      @result.fail("page_sim live:#{page[:id]}: #{e.class}: #{e.message}")
+      push_entry(entry)
+    end
+
+    public
+
+    # The live verdict on one response, without touching the result or the
+    # report, so gate_mutation can feed it a broken page and read the answer.
+    def live_findings(page, code, body, url)
       findings = []
 
       # The header above says auth-only pages are noted rather than hard-failed
@@ -153,7 +172,9 @@ module Deploy
 
       if body.include?("<html")
         static_public = page[:path].to_s.end_with?(".html")
-        has_main = body.match?(/main-content|<main\b|id="face"|id="zin"|role="main"/i)
+        # The element, not the name: every page's skip link says href="#main-content",
+        # so a bare "main-content" was satisfied by a link pointing at nothing.
+        has_main = body.match?(/id=["']main-content["']|<main\b|id=["']face["']|id=["']zin["']|role=["']main["']/i)
         if !has_main
           # MASTER offline.html is a bare public asset, not an app layout.
           findings << (static_public ? soft("static page missing main landmark") : hard("missing main landmark / face root"))
@@ -179,17 +200,10 @@ module Deploy
         findings << soft("live page missing <title> and <h1>")
       end
 
-      findings.each { |f| apply_finding(entry, f) }
-      entry["http"] = code
-      entry["ok"] = findings.none? { |f| f[:severity] == :hard }
-      entry["findings"] = findings.map { |f| f[:message] }
-      push_entry(entry)
-    rescue StandardError => e
-      entry["ok"] = false
-      entry["findings"] = ["#{e.class}: #{e.message}"]
-      @result.fail("page_sim live:#{page[:id]}: #{e.class}: #{e.message}")
-      push_entry(entry)
+      findings
     end
+
+    private
 
     # Source UX checks.
 

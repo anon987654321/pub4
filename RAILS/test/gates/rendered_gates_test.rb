@@ -196,6 +196,41 @@ class RenderedGatesTest < Minitest::Test
     assert_nil mutation(:gut_content).call("<html><body><p>tiny</p></body></html>")
   end
 
+  # --- gate_mutation's plants for page_simulation and mobile_flow ----------
+
+  def test_gate_mutation_passes_with_both_plants_measured
+    result = Deploy::GateMutationGate.run
+
+    assert_equal :passed, result.outcome, result.failures.join(" | ")
+    assert_operator result.checks_ran, :>=, 28 + 5 * 3 + 4
+  end
+
+  # Each plant has to fail the gate when the check it aims at is gone.
+  def test_gate_mutation_fails_when_page_simulation_stops_seeing_a_missing_main
+    failures = with_instance_method(Deploy::PageSimulationGate, :live_findings, ->(_page, code, _body, _url) {
+      code == 200 ? [] : [{ severity: :hard, message: "HTTP #{code}" }]
+    }) { Deploy::GateMutationGate.run.failures }
+
+    assert failures.any? { |f| f.include?(%(page_simulation passes good_brgen_home.html with "remove the main landmark")) }, failures.inspect
+  end
+
+  def test_gate_mutation_fails_when_mobile_flow_stops_judging_overflow
+    original = Deploy::MobileFlowGate.instance_method(:judge)
+    failures = with_instance_method(Deploy::MobileFlowGate, :judge, ->(result, app, label, m, **kw) {
+      original.bind_call(self, result, app, label, m.merge("overflow" => false), **kw)
+    }) { Deploy::GateMutationGate.run.failures }
+
+    assert_equal ["gate_mutation: mobile_flow passes a phone measurement with horizontal overflow"], failures
+  end
+
+  def with_instance_method(klass, name, impl)
+    saved = klass.instance_method(name)
+    klass.send(:define_method, name, impl)
+    yield
+  ensure
+    klass.send(:define_method, name, saved)
+  end
+
   # --- snapshot diffing ----------------------------------------------------
 
   def snapshot(overrides = {})
