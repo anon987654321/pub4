@@ -31,8 +31,6 @@ class GeometryDetectorsTest < Minitest::Test
     result.soft_failures
   end
 
-  # --- wrapped control labels and headings at phone width -------------------
-
   def test_wrap_names_a_button_label_on_two_lines
     found = wrap_findings([element("form>button.btn", tag: "button", lines: 2)])
 
@@ -76,8 +74,6 @@ class GeometryDetectorsTest < Minitest::Test
 
     assert result.soft_failures.any? { |m| m.start_with?("geometry wrap:") }, result.soft_failures.inspect
   end
-
-  # --- Norwegian glyphs -----------------------------------------------------
 
   def glyph_findings(rows)
     result = Deploy::GateResult.new
@@ -125,8 +121,6 @@ class GeometryDetectorsTest < Minitest::Test
     refute payload.key?("glyphs")
   end
 
-  # --- visual weight: the dominant box and the inverted action pair ---------
-
   GATE = Deploy::RenderedGeometryGate
 
   def gate_findings
@@ -138,60 +132,57 @@ class GeometryDetectorsTest < Minitest::Test
     result.soft_failures
   end
 
-  def box(key, x:, y:, w:, h:, fill: "#1a1a1a", under: "#000000", **extra)
+  # rect is [x, y, w, h].
+  def box(key, rect, fill: "#1a1a1a", under: "#000000", **extra)
     { "key" => key, "tag" => extra.delete(:tag) || "div", "visible" => true, "onscreen" => true,
-      "frect" => { "x" => x, "y" => y, "w" => w, "h" => h },
+      "frect" => %w[x y w h].zip(rect).to_h,
       "fill" => !fill.nil?, "bg" => fill || under, "under" => fill && under }.merge(extra.transform_keys(&:to_s))
   end
 
-  def page(*boxes) = [box("header.page-header", x: 0, y: 0, w: 390, h: 56), *boxes]
+  def page(*boxes) = [box("header.page-header", [0, 0, 390, 56]), *boxes]
 
-  def dominance(elements)
-    gate_findings { |gate| gate.check_dominance(surface, elements) }
-  end
+  def dominance(elements) = gate_findings { |gate| gate.check_dominance(surface, elements) }
 
   def test_dominance_names_a_white_banner_that_outweighs_the_screen
-    found = dominance(page(box("div.promo-banner", x: 0, y: 80, w: 390, h: 300, fill: "#ffffff"),
-                           box("button.btn.btn--primary", x: 16, y: 400, w: 120, h: 44, fill: "#f2f2f2")))
+    found = dominance(page(box("div.promo-banner", [0, 80, 390, 300], fill: "#ffffff"),
+                           box("button.btn.btn--primary", [16, 400, 120, 44], fill: "#f2f2f2")))
 
     assert_equal 1, found.size, found.inspect
     assert_match(/div\.promo-banner carries \d+% of the visual weight of 3 painted boxes/, found.first)
   end
 
   def test_dominance_spares_the_primary_action_when_it_is_the_heaviest_box
-    assert_empty dominance(page(box("button.btn.btn--primary", x: 16, y: 400, w: 358, h: 120, fill: "#ffffff"),
-                                box("span.badge", x: 16, y: 80, w: 60, h: 24, fill: "#333333")))
+    assert_empty dominance(page(box("button.btn.btn--primary", [16, 400, 358, 120], fill: "#ffffff"),
+                                box("span.badge", [16, 80, 60, 24], fill: "#333333")))
   end
 
   # The shell or a full-bleed main paints the ground, and a ground always wins.
   def test_dominance_reads_a_viewport_sized_box_as_ground_not_figure
-    assert_empty dominance(page(box("main#main-content", x: 0, y: 0, w: 390, h: 844, fill: "#ffffff"),
-                                box("div.promo-banner", x: 0, y: 80, w: 390, h: 150, fill: "#ffffff"),
-                                box("button.btn.btn--primary", x: 0, y: 400, w: 390, h: 200, fill: "#ffffff")))
+    assert_empty dominance(page(box("main#main-content", [0, 0, 390, 844], fill: "#ffffff"),
+                                box("div.promo-banner", [0, 80, 390, 150], fill: "#ffffff"),
+                                box("button.btn.btn--primary", [0, 400, 390, 200], fill: "#ffffff")))
   end
 
   # A subtle header is most of a page that paints almost nothing, and still light.
   def test_dominance_ignores_a_large_share_of_a_quiet_page
-    assert_empty dominance(page(box("span.badge", x: 16, y: 80, w: 60, h: 24, fill: "#333333"),
-                                box("span.chip", x: 90, y: 80, w: 60, h: 24)))
+    assert_empty dominance(page(box("span.badge", [16, 80, 60, 24], fill: "#333333"),
+                                box("span.chip", [90, 80, 60, 24])))
   end
 
   def test_dominance_needs_three_painted_boxes_to_call_a_share
-    assert_empty dominance([box("div.promo-banner", x: 0, y: 80, w: 390, h: 300, fill: "#ffffff"),
-                            box("span.badge", x: 16, y: 400, w: 60, h: 24)])
+    assert_empty dominance([box("div.promo-banner", [0, 80, 390, 300], fill: "#ffffff"),
+                            box("span.badge", [16, 400, 60, 24])])
   end
 
-  def action(key, parent: "div.actions", font_weight: "400", **geometry)
-    box(key, y: 700, h: 44, tag: "button", parent: parent, font_weight: font_weight, **geometry)
+  def action(key, x, w, fill, parent: "div.actions", font_weight: "400")
+    box(key, [x, 700, w, 44], fill: fill, tag: "button", parent: parent, font_weight: font_weight)
   end
 
-  def action_weight(elements)
-    gate_findings { |gate| gate.check_action_weight(surface, elements) }
-  end
+  def action_weight(elements) = gate_findings { |gate| gate.check_action_weight(surface, elements) }
 
   def test_action_weight_names_a_ghost_heavier_than_its_primary
-    found = action_weight([action("div.actions>button.btn.btn--primary", x: 16, w: 100, fill: "#333333"),
-                           action("div.actions>button.btn.btn-ghost", x: 132, w: 140, fill: "#ffffff")])
+    found = action_weight([action("div.actions>button.btn.btn--primary", 16, 100, "#333333"),
+                           action("div.actions>button.btn.btn-ghost", 132, 140, "#ffffff")])
 
     assert_equal 1, found.size, found.inspect
     assert_match(/button\.btn\.btn-ghost over div\.actions>button\.btn\.btn--primary/, found.first)
@@ -199,26 +190,26 @@ class GeometryDetectorsTest < Minitest::Test
 
   # Larger but paler is a trade, and a trade is the operator's to make.
   def test_action_weight_leaves_a_trade_between_axes_alone
-    assert_empty action_weight([action("div.actions>button.btn.btn--primary", x: 16, w: 100, fill: "#ffffff"),
-                                action("div.actions>button.btn.btn-ghost", x: 132, w: 160, fill: "#333333")])
+    assert_empty action_weight([action("div.actions>button.btn.btn--primary", 16, 100, "#ffffff"),
+                                action("div.actions>button.btn.btn-ghost", 132, 160, "#333333")])
   end
 
   def test_action_weight_compares_siblings_only
-    assert_empty action_weight([action("div.actions>button.btn.btn--primary", x: 16, w: 100, fill: "#333333"),
-                                action("nav>button.btn", parent: "nav", x: 132, w: 140, fill: "#ffffff")])
+    assert_empty action_weight([action("div.actions>button.btn.btn--primary", 16, 100, "#333333"),
+                                action("nav>button.btn", 132, 140, "#ffffff", parent: "nav")])
   end
 
   def test_action_weight_counts_a_heavier_font_as_an_axis
-    found = action_weight([action("div.actions>button.btn.btn--primary", x: 16, w: 100, fill: "#333333"),
-                           action("div.actions>button.btn", x: 132, w: 100, fill: "#ffffff", font_weight: "700")])
+    found = action_weight([action("div.actions>button.btn.btn--primary", 16, 100, "#333333"),
+                           action("div.actions>button.btn", 132, 100, "#ffffff", font_weight: "700")])
 
     assert_match(/button\.btn over/, found.join)
   end
 
   def test_layout_runs_the_weight_and_grammar_checks
-    elements = page(box("div.promo-banner", x: 0, y: 80, w: 390, h: 300, fill: "#ffffff"),
-                    action("div.actions>button.btn.btn--primary", x: 16, w: 100, fill: "#333333"),
-                    action("div.actions>button.btn.btn-ghost", x: 132, w: 140, fill: "#ffffff"),
+    elements = page(box("div.promo-banner", [0, 80, 390, 300], fill: "#ffffff"),
+                    action("div.actions>button.btn.btn--primary", 16, 100, "#333333"),
+                    action("div.actions>button.btn.btn-ghost", 132, 140, "#ffffff"),
                     search_field("header>form>input"), search_field("main>form>input"))
     found = gate_findings { |gate| gate.check_layout(surface, { "elements" => elements }) }
 
@@ -226,8 +217,6 @@ class GeometryDetectorsTest < Minitest::Test
       assert found.any? { |m| m.start_with?("geometry #{check}:") }, "#{check} did not run: #{found.inspect}"
     end
   end
-
-  # --- layout grammar -------------------------------------------------------
 
   def grammar(check, *args)
     gate_findings { |gate| gate.public_send(check, surface, *args) }
@@ -239,21 +228,22 @@ class GeometryDetectorsTest < Minitest::Test
 
   TABS = %w[/ /search /notifications /profile].freeze
 
-  def test_duplicate_nav_names_two_bars_offering_the_same_places
-    found = grammar(:check_duplicate_nav, { "groups" => [bar("nav.tab-bar", TABS), bar("nav.top", TABS + %w[/tv])] })
+  def navs(*bars) = grammar(:check_duplicate_nav, { "groups" => [bar("nav.tab-bar", TABS), *bars] })
 
-    assert_match(/duplicate_nav: .*nav\.tab-bar and nav\.top/, found.join)
+  def test_duplicate_nav_names_two_bars_offering_the_same_places
+    assert_match(/duplicate_nav: .*nav\.tab-bar and nav\.top/, navs(bar("nav.top", TABS + %w[/tv])).join)
   end
 
   # A closed drawer repeats the tab bar by design, and a tablist inside a bar is the bar.
   def test_duplicate_nav_spares_a_drawer_off_screen_and_a_bar_inside_a_bar
-    assert_empty grammar(:check_duplicate_nav, { "groups" => [bar("nav.tab-bar", TABS), bar("aside>nav", TABS, onscreen: false)] })
-    assert_empty grammar(:check_duplicate_nav, { "groups" => [bar("nav.tab-bar", TABS), bar("nav>div", TABS, nested: true)] })
-    assert_empty grammar(:check_duplicate_nav, { "groups" => [bar("nav.tab-bar", TABS), bar("nav.verticals", %w[/tv /dating /maps])] })
+    assert_empty navs(bar("aside>nav", TABS, onscreen: false))
+    assert_empty navs(bar("nav>div", TABS, nested: true))
+    assert_empty navs(bar("nav.verticals", %w[/tv /dating /maps]))
   end
 
   def search_field(key, input_type: "search")
-    { "key" => key, "tag" => "input", "input_type" => input_type, "search" => true, "visible" => true, "onscreen" => true }
+    { "key" => key, "tag" => "input", "input_type" => input_type, "search" => true,
+      "visible" => true, "onscreen" => true }
   end
 
   def test_duplicate_search_names_two_search_fields
@@ -268,38 +258,41 @@ class GeometryDetectorsTest < Minitest::Test
                                                    search_field("header>form>input[2]", input_type: "submit")])
   end
 
-  def block(sel, w) = { "sel" => sel, "x" => (390 - w) / 2, "w" => w }
+  # Each block is [selector, width].
+  def drift(*blocks)
+    grammar(:check_width_drift, { "main_blocks" => blocks.map { |sel, w| { "sel" => sel, "x" => 0, "w" => w } } })
+  end
 
   def test_width_drift_names_a_section_a_few_pixels_off_the_column
-    found = grammar(:check_width_drift, { "main_blocks" => [block("section.feed", 600), block("section.composer", 600),
-                                                            block("section.trending", 584)] })
+    found = drift(["section.feed", 600], ["section.composer", 600], ["section.trending", 584])
 
     assert_match(/600px column and 1 block\(s\).*section\.trending 584px/, found.join)
   end
 
   # A form capped far inside the column is an inset somebody chose; one pixel is rounding.
   def test_width_drift_spares_a_deliberate_inset_and_rounding
-    assert_empty grammar(:check_width_drift, { "main_blocks" => [block("section.feed", 600), block("section.a", 601),
-                                                                 block("form.narrow", 400)] })
+    assert_empty drift(["section.feed", 600], ["section.a", 601], ["form.narrow", 400])
   end
 
-  def control_in(card, key, w:, h:)
+  # size is [w, h]; the card is 358 wide at y, h tall.
+  def control_in(card_sel, key, size, card_y: 64, card_h: 600)
     { "key" => key, "tag" => "button", "interactive" => true, "visible" => true, "onscreen" => true,
-      "card" => card, "frect" => { "x" => 16, "y" => 600, "w" => w, "h" => h } }
+      "card" => { "sel" => card_sel, "x" => 16, "y" => card_y, "w" => 358, "h" => card_h },
+      "frect" => { "x" => 16, "y" => 600, "w" => size[0], "h" => size[1] } }
   end
 
-  def card(sel, y: 64, h: 600) = { "sel" => sel, "x" => 16, "y" => y, "w" => 358, "h" => h }
+  def lost(*controls) = grammar(:check_lost_action, controls)
 
   def test_lost_action_names_a_small_button_alone_in_a_screen_sized_card
-    found = grammar(:check_lost_action, [control_in(card("section.signup-card"), "div>button.btn", w: 44, h: 44)])
+    found = lost(control_in("section.signup-card", "div>button.btn", [44, 44]))
 
     assert_match(/lost_action: .*section\.signup-card \(358x600\) holds div>button\.btn/, found.join)
   end
 
   def test_lost_action_spares_a_full_width_action_a_small_card_and_a_list
-    assert_empty grammar(:check_lost_action, [control_in(card("section.signup-card"), "div>button.btn", w: 326, h: 48)])
-    assert_empty grammar(:check_lost_action, [control_in(card("div.mini-card", h: 120), "div>button.btn", w: 44, h: 44)])
-    assert_empty grammar(:check_lost_action, [control_in(card("article.feed-card"), "footer>button", w: 44, h: 44),
-                                              control_in(card("article.feed-card", y: 700), "footer>button[2]", w: 44, h: 44)])
+    assert_empty lost(control_in("section.signup-card", "div>button.btn", [326, 48]))
+    assert_empty lost(control_in("div.mini-card", "div>button.btn", [44, 44], card_h: 120))
+    assert_empty lost(control_in("article.feed-card", "footer>button", [44, 44]),
+                      control_in("article.feed-card", "footer>button[2]", [44, 44], card_y: 700))
   end
 end

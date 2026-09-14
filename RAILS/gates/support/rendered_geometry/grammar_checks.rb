@@ -107,7 +107,8 @@ module Deploy
 
       def lone_cards(elements)
         controls = elements.select { |el| el["card"] && el["interactive"] && el["visible"] && el["onscreen"] }
-        listed = controls.group_by { |el| el["card"]["sel"] }.select { |_sel, els| els.map { |el| el["card"] }.uniq.size > 1 }
+        by_selector = controls.group_by { |el| el["card"]["sel"] }
+        listed = by_selector.select { |_sel, els| els.map { |el| el["card"] }.uniq.size > 1 }
         controls.reject { |el| listed.key?(el["card"]["sel"]) }.group_by { |el| el["card"] }
       end
     end

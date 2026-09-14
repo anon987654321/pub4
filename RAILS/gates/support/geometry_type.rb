@@ -119,8 +119,16 @@ module Deploy
       shown = Array(data["elements"]).select { |el| el["visible"] && el["onscreen"] && !el["inline_in_text"] }
       labels = shown.select { |el| control_label?(el) && el["text_lines"].to_i >= 2 }
       headings = shown.select { |el| el["tag"].to_s.match?(HEADING_TAG) && el["text_lines"].to_i > HEADING_MAX_LINES }
-      report_wrap(result, surface, labels, "control label(s) onto 2+ lines", "affordance")
-      report_wrap(result, surface, headings, "heading(s) past #{HEADING_MAX_LINES} lines", "hierarchy")
+      {
+        "control label(s) onto 2+ lines" => [labels, "affordance"],
+        "heading(s) past #{HEADING_MAX_LINES} lines" => [headings, "hierarchy"],
+      }.each do |what, (offenders, principle)|
+        next if offenders.empty?
+
+        count, names = wrap_names(offenders)
+        result.fail("geometry wrap: #{surface.id} breaks #{count} #{what} at #{surface.width}px — " \
+                    "#{names} (principle=#{principle})", severity: :soft)
+      end
     end
 
     def control_label?(el)
@@ -132,18 +140,12 @@ module Deploy
 
     # One component wrapping in forty cards is one thing to fix, so the report
     # names distinct keys and counts the instances beside them.
-    def report_wrap(result, surface, offenders, what, principle)
-      return if offenders.empty?
-
+    def wrap_names(offenders)
       by_key = offenders.group_by { |el| el["key"].to_s.sub(/\[\d+\]\z/, "") }
       named = by_key.first(4).map do |key, els|
         "#{key} (#{els.map { |el| el["text_lines"].to_i }.max} lines#{" x#{els.size}" if els.size > 1})"
       end
-      result.fail(
-        "geometry wrap: #{surface.id} breaks #{by_key.size} #{what} at #{surface.width}px — " \
-        "#{named.join('; ')} (principle=#{principle})",
-        severity: :soft
-      )
+      [by_key.size, named.join("; ")]
     end
 
     # The apps speak Norwegian by default, so a face that cannot draw æøå sets

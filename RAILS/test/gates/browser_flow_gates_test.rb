@@ -151,7 +151,7 @@ class BrowserFlowGatesTest < Minitest::Test
   def test_reflow_names_a_fixed_line_height_under_fluid_type
     found = reading_type_findings(reflow_type_run([16.0, 24.0], [16.4, 24.0], [17.2, 24.0], [18.0, 24.0]))
 
-    assert_match(/keeps a fixed line height while its size changes — 16\.0px at 320 → 17\.2px at 768 under 24\.0px/, found.join)
+    assert_match(/fixed line height while its size changes — 16\.0px at 320 → 17\.2px at 768 under 24\.0px/, found.join)
   end
 
   def test_reflow_passes_type_that_grows_with_its_leading

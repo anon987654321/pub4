@@ -202,7 +202,7 @@
     // `bg` composites every ancestor, so a label inside a white card reports
     // the card's white; visual weight belongs to the box that painted it.
     const ownFill = parseRgb(cs.backgroundColor);
-    const fill = !!(ownFill && ownFill.a > 0);
+    const fill = (ownFill?.a ?? 0) > 0;
 
     if (ownText && fgOpaque) {
       const ck = hex(fgOpaque);

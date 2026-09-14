@@ -82,7 +82,7 @@ module Deploy
           .find((p) => p.getClientRects().length && p.textContent.trim()) || document.body;
         const rcs = getComputedStyle(reading);
         return {
-          reading: reading.tagName.toLowerCase() + (reading.className ? '.' + String(reading.className).split(' ')[0] : ''),
+          reading: reading.tagName.toLowerCase() + (reading.classList.length ? '.' + reading.classList[0] : ''),
           reading_size: Math.round(parseFloat(rcs.fontSize) * 10) / 10,
           reading_line_height: rcs.lineHeight === 'normal' ? null : Math.round(parseFloat(rcs.lineHeight) * 10) / 10,
           scroll_width: de.scrollWidth,
@@ -229,37 +229,41 @@ module Deploy
       ordered = ordered.select { |(_w, s)| s["reading"] == ordered.first&.last&.dig("reading") }
       return if ordered.size < 2
 
-      shrinks = ordered.each_cons(2).select do |(_w1, a), (_w2, b)|
-        a["reading_size"].to_f - b["reading_size"].to_f > SIZE_ROUNDING_PX
+      {
+        "gets smaller as the viewport widens" => shrinking_type(ordered),
+        "keeps a fixed line height while its size changes" => fixed_leading(ordered),
+      }.each do |what, steps|
+        next if steps.empty?
+
+        @result.fail(
+          "reflow type: #{surface.app}/#{surface.label} #{ordered.first[1]["reading"]} #{what} — " \
+          "#{steps.first(3).join('; ')} (principle=typography)", severity: :soft
+        )
       end
-      report_reading_type(surface, ordered, shrinks.map { |(w1, a), (w2, b)| size_step(w1, a, w2, b) },
-                          "gets smaller as the viewport widens")
-      report_reading_type(surface, ordered, fixed_leading(ordered), "keeps a fixed line height while its size changes")
+    end
+
+    def shrinking_type(ordered)
+      ordered.each_cons(2).filter_map do |narrow, wide|
+        size_step(narrow, wide) if narrow[1]["reading_size"].to_f - wide[1]["reading_size"].to_f > SIZE_ROUNDING_PX
+      end
     end
 
     # Against the narrowest width rather than the neighbour: fluid type moves
     # a fraction of a pixel per step, which no adjacent pair would show.
     def fixed_leading(ordered)
-      w1, first = ordered.first
-      ordered.drop(1).filter_map do |(w2, sample)|
+      first = ordered.first[1]
+      ordered.drop(1).filter_map do |pair|
+        sample = pair[1]
         next unless first["reading_line_height"] && sample["reading_line_height"]
         next unless (sample["reading_size"].to_f - first["reading_size"].to_f).abs > SIZE_ROUNDING_PX
         next unless (sample["reading_line_height"].to_f - first["reading_line_height"].to_f).abs <= SIZE_ROUNDING_PX
 
-        "#{size_step(w1, first, w2, sample)} under #{sample["reading_line_height"]}px"
+        "#{size_step(ordered.first, pair)} under #{sample["reading_line_height"]}px"
       end
     end
 
-    def size_step(w1, a, w2, b) = "#{a["reading_size"]}px at #{w1} → #{b["reading_size"]}px at #{w2}"
-
-    def report_reading_type(surface, ordered, steps, what)
-      return if steps.empty?
-
-      @result.fail(
-        "reflow type: #{surface.app}/#{surface.label} #{ordered.first[1]["reading"]} #{what} — " \
-        "#{steps.first(3).join('; ')} (principle=typography)", severity: :soft
-      )
-    end
+    # Each argument is one [width, sample] pair from the sweep.
+    def size_step(from, to) = "#{from[1]["reading_size"]}px at #{from[0]} → #{to[1]["reading_size"]}px at #{to[0]}"
 
     # The fingerprint: widths at which a layout property flips. Reported as a
     # warning so it lands in the run output and can be eyeballed against the
