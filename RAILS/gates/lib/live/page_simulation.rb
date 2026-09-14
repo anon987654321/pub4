@@ -87,7 +87,8 @@ module Deploy
         @result.warn("page_simulation: live HTTP on #{live_count} guest surfaces")
       end
 
-      write_report!(pages, ports_open, live_count)
+      unprobed = name_pages_needing_an_id(ports_open)
+      write_report!(pages, ports_open, live_count, unprobed)
       @result.checked!(pages.size)
       @result
     end
@@ -340,7 +341,20 @@ module Deploy
       entry["findings"] = [msg]
     end
 
-    def write_report!(pages, ports_open, live_count)
+    # A guest page whose path names a record is walked as source only. It is a
+    # warning rather than skipped_live: GATE_REQUIRE_LIVE fails a skip, and no
+    # port opening would let this walk find an id. Named per open app, so a green
+    # live run says which pages it did not load.
+    def name_pages_needing_an_id(ports_open)
+      unprobed = PageInventory.guest_needing_id.select { |page| ports_open[page[:app]] }
+      unprobed.group_by { |page| page[:app] }.each do |app, rows|
+        paths = rows.map { |page| page[:path] }.uniq
+        @result.warn("page_simulation: #{app} #{paths.size} guest page(s) need a record id and got no live probe — #{paths.join(", ")}")
+      end
+      unprobed
+    end
+
+    def write_report!(pages, ports_open, live_count, unprobed = [])
       by_app = pages.group_by { |p| p[:app] }.transform_values(&:size)
       hard = @result.failures.size
       soft = @result.soft_failures.size
@@ -350,6 +364,7 @@ module Deploy
         "guest" => pages.count { |p| p[:persona] == "guest" },
         "auth" => pages.count { |p| p[:persona] == "auth" },
         "live_probed" => live_count,
+        "live_unprobed_needs_id" => unprobed.map { |page| page[:id] },
         "ports_open" => ports_open,
         "hard_findings" => hard,
         "soft_findings" => soft,

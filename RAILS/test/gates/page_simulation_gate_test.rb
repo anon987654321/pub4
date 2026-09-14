@@ -50,7 +50,7 @@ class PageSimulationGateTest < Minitest::Test
 
   # Everything the gate reaches the world through: the inventory it walks, the
   # ports it probes, and the two files it writes.
-  def simulate(pages, live: [], open: false, response: Response.new("200", LIVE_HTML))
+  def simulate(pages, live: [], needing_id: [], open: false, response: Response.new("200", LIVE_HTML))
     Dir.mktmpdir("page-sim") do |out|
       with_const(GATE, :REPORT_PATH, File.join(out, "report.yml")) do
         with_const(GATE, :SNAPSHOT_PATH, File.join(out, "inventory.yml")) do
@@ -58,6 +58,7 @@ class PageSimulationGateTest < Minitest::Test
             INVENTORY,
             all: proc { |*, **| pages },
             guest_liveable: proc { |*, **| live },
+            guest_needing_id: proc { |*, **| needing_id },
             uncovered_shared_views: proc { |*, **| [] },
             stale_route_manifests: proc { |*, **| [] },
             write_snapshot!: proc { |*, **| nil }
@@ -150,6 +151,27 @@ class PageSimulationGateTest < Minitest::Test
       GATE::PORTS.each_key { |app| assert_match(/#{app} port \d+ closed — live surfaces skipped/, warnings) }
       assert_match(/live HTTP skipped \(no triangle app listening\) — source checks still ran/, warnings)
     end
+  end
+
+  # A guest page whose path names a record gets no live probe, and a green live
+  # run has to say which ones — without failing a deploy that requires live.
+  def test_a_guest_page_needing_an_id_is_named_when_its_app_is_live
+    Dir.mktmpdir("page-sim-view") do |root|
+      row = page(root)
+      post = page(root, path: "/posts/:id").merge(id: "brgen/posts/show", needs_id: true)
+      result = simulate([row, post], live: [row], needing_id: [post], open: true)
+
+      assert_equal :passed, result.outcome, result.failures.join(" | ")
+      assert_equal 0, result.live_skips
+      assert_match(%r{brgen 1 guest page\(s\) need a record id and got no live probe — /posts/:id}, result.warnings.join(" | "))
+    end
+  end
+
+  def test_the_inventory_hands_over_every_guest_page_the_live_walk_drops
+    guests = INVENTORY.all.select { |p| p[:persona] == "guest" }.reject { |p| INVENTORY.mailer?(p) }
+
+    assert_equal guests.size, INVENTORY.guest_liveable.size + INVENTORY.guest_needing_id.size
+    refute_empty INVENTORY.guest_needing_id, "no guest page needs an id — the split measures nothing"
   end
 
   # The row that was wrong. Nothing in this gate opens a browser.

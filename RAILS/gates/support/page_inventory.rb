@@ -204,6 +204,12 @@ module Deploy
       all.select { |p| p[:persona] == "guest" && !p[:needs_id] && !mailer?(p) }
     end
 
+    # Guest pages the live walk cannot reach, because their path names a record
+    # the inventory has no id for. Returned so the gate can name them.
+    def guest_needing_id
+      all.select { |p| p[:persona] == "guest" && p[:needs_id] && !mailer?(p) }
+    end
+
     def brgen_pages
       root = APPS["brgen"][:views]
       discover(root).filter_map do |abs|
