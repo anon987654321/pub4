@@ -251,15 +251,6 @@ V.register(119, "build version on the root, not on the screen", () => {
     if (has && ctx.detail.vr != null) root.dataset.webxrVr = ctx.detail.vr ? "1" : "0";
   });
 
-  V.register(141, "collaborative ActionCable fanout hook", (ctx) => {
-    if (!window.ActionCable) {
-      root.dataset.actionCableFanout = "stub";
-      return;
-    }
-    window.dispatchEvent(new CustomEvent("master:cable-fanout", { detail: ctx.detail.event || ctx.detail }));
-    root.dataset.actionCableFanout = "hooked";
-  });
-
   V.register(142, "generative topology JSON", (ctx) => {
     const s = Number(ctx.detail.seed) || Date.now();
     const nodes = Array.from({ length: 8 }, (_, i) => ({
@@ -517,10 +508,6 @@ V.register(119, "build version on the root, not on the screen", () => {
       const handler = V.features.get(148)?.handler;
       if (handler) await handler(ctx);
       return ctx.detail.blob;
-    };
-
-    window.MASTER_FACE_VISION.cableFanout = (event) => {
-      V.run(141, { type: "cable:fanout", detail: { event } });
     };
 
     window.MASTER_FACE_VISION.recordBench = (entry) => {
