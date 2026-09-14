@@ -212,21 +212,25 @@ module Law
     # rule already refused the opening line; there was no way for it to refuse
     # the rest.
     #
-    # ERB only. The other multi-line syntaxes this file lists — /* */ and <!-- --
-    # — have not produced a finding of this shape, and a span reader that is
-    # wrong is worse than a leader test that is narrow.
+    # ERB, and a stylesheet's /* */: LOGICAL_PROPERTIES read "(measured at
+    # left: 0)" on the second line of a block comment in _composer.scss as a
+    # declaration. JavaScript and <!-- --> stay on the leader test, because a
+    # glob or a regex in a script can spell /* without opening anything, and a
+    # span reader that is wrong is worse than a leader test that is narrow.
+    COMMENT_SPANS = { ".erb" => ["<%#", "%>"], ".css" => ["/*", "*/"], ".scss" => ["/*", "*/"] }.freeze
+
     def continued_comment_lines(text, file)
-      return [] unless File.extname(file) == ".erb"
-      return [] unless text.include?("<%#")
+      opener, closer = COMMENT_SPANS[File.extname(file)]
+      return [] unless opener && text.include?(opener)
 
       inside = false
       text.each_line.with_index.filter_map do |line, index|
         opened = inside
         unless inside
-          open_at = line.rindex("<%#")
-          inside = true if open_at && !line[open_at..].include?("%>")
+          open_at = line.rindex(opener)
+          inside = true if open_at && !line[open_at..].include?(closer)
         end
-        if inside && line.include?("%>")
+        if inside && line.include?(closer)
           inside = false
           next opened ? index : nil
         end
