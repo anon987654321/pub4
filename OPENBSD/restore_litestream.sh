@@ -32,7 +32,8 @@ discover_apps() {
     print -l -- "${APPS[@]}"
     return
   fi
-  [[ -f $CONFIG ]] || { log "missing litestream config: $CONFIG"; exit 1; }
+  # stderr, because stdout is the app list.
+  [[ -f $CONFIG ]] || { log "FAIL — missing litestream config: $CONFIG" >&2; exit 1; }
   ruby - "$CONFIG" <<'RUBY'
 require 'yaml'
 config = YAML.load_file(ARGV[0])
@@ -91,11 +92,15 @@ restore_app() {
 
 main() {
   [[ $DRY_RUN == 1 ]] || require_litestream
+  # Collected before the loop: a failure inside `< <(discover_apps)` does not
+  # stop the reader, while a failed assignment does under set -e.
+  local -a apps
+  apps=("${(@f)$(discover_apps)}")
   local app
-  while IFS= read -r app; do
+  for app in "${apps[@]}"; do
     [[ -n $app ]] || continue
     restore_app "$app"
-  done < <(discover_apps)
+  done
   log "done"
 }
 

@@ -3,6 +3,7 @@
 require "minitest/autorun"
 require "open3"
 require "rbconfig"
+require "tmpdir"
 # Every read below inspects UTF-8 source. Under a C locale -- which is how the
 # weekly integrity run invokes these on vm23 -- Ruby defaults file reads to
 # US-ASCII and each one raises "invalid byte sequence". Same require, same
@@ -28,6 +29,30 @@ class RestoreScriptsTest < Minitest::Test
     refute_match(/log "skip \$app/, source, "a missing replica must fail, not skip")
     assert_match(/missing replica \$replica"; exit 1/, source)
     assert_includes source, "dr-pull", "the failure must name the backup that does work"
+  end
+
+  # Run, not read. The config failure used to print to stdout, where the loop read
+  # it as an app name and failed later on "/home/[restore] missing…/app/storage".
+  def test_a_dry_run_with_no_config_fails_on_the_config
+    env = { "DRY_RUN" => "1", "LITESTREAM_CONFIG" => File.join(Dir.tmpdir, "no-such-litestream.yml") }
+    out, err, status = Open3.capture3(env, "zsh", File.join(ROOT, "restore_litestream.sh"))
+
+    assert_equal 1, status.exitstatus
+    assert_includes err, "missing litestream config"
+    refute_includes out, "/home/", "a log line was read as an app name"
+    refute_includes out, "done"
+  end
+
+  def test_a_dry_run_of_a_config_plans_only_its_apps
+    Dir.mktmpdir("litestream") do |dir|
+      config = File.join(dir, "litestream.yml")
+      File.write(config, "dbs:\n  - path: /home/ghostapp/app/storage/production.sqlite3\n")
+      out, _, status = Open3.capture3({ "DRY_RUN" => "1", "LITESTREAM_CONFIG" => config },
+                                      "zsh", File.join(ROOT, "restore_litestream.sh"))
+
+      assert_equal 1, status.exitstatus, "the app has no storage here, so the plan must fail rather than skip"
+      assert_includes out, "FAIL ghostapp — missing /home/ghostapp/app/storage"
+    end
   end
 
   def test_vps_deploy_stamps_head_after_the_work
