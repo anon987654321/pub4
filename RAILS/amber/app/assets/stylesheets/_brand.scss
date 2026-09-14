@@ -289,8 +289,6 @@
 .amber-footer-cols h2 {
   font-size: var(--luxury-font-meta);
   font-weight: var(--weight-bold);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
   color: var(--luxury-muted);
   margin-bottom: var(--luxury-space-xs);
 }
@@ -395,9 +393,7 @@ h1, .display, .wordmark {
   color: var(--text-secondary);
   display: grid;
   place-items: center;
-  text-transform: uppercase;
   font-size: var(--text-xs);
-  letter-spacing: var(--tracking-wider);
   min-height: 8rem;
   aspect-ratio: 3 / 4;
   border: var(--elev-1);
@@ -491,8 +487,6 @@ h1, .display, .wordmark {
 }
 .look-rail .eyebrow {
   font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
   color: var(--text-secondary);
 }
 
