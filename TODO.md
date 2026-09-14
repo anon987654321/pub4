@@ -344,6 +344,14 @@ slices. Each is a hypothesis with its seam.
   `Design::Thresholds.micro_typography`; `solid_queue` and `solid_cache` sit in
   the web Gemfile with nothing loading them; `face_vision_d.js` registers an
   ActionCable stub.
+- **The CLI after its 2026-09-14 pass.** Rotate the web token printed at boot
+  on 2026-09-13; it sits in two saved terminal transcripts in `~/Downloads`
+  (operator). A model chosen with `/model` is saved and sticks for the session,
+  but the next boot does not put it first. `/status` still prints its event rows
+  as `key=value`, short of the dmesg grammar the rest of the CLI now keeps. The
+  review report prints its posture twice, once in the `mode0` line and once as a
+  section. `CLI::Propose` and `Ground::OperatorPlaybook` have no caller outside
+  their tests. `/soul approve` bumps a `Version:` line `SOUL.md` does not have.
 - **A session receipt waits for a reader.** Joining the memory store version,
   worktree HEAD and model id to `Ground::BootReceipt` would let two runs be
   diffed; it is built when `/why` or `bin/doctor` asks.
