@@ -778,8 +778,10 @@ body.mission-control a:focus-visible {
   transform: translateY(30%);
 }
 
-body.zen #zsh,
-body.zen #chat-log { opacity: .08; }
+/* The ghost is for the prompt before it goes live. The log is what MASTER
+   said, and TYPOGRAPHY.accessibility asks 7:1 of it, which no opacity under
+   one can give. */
+body.zen #zsh { opacity: .08; }
 body.zen.zen-hidden .face-controls,
 body.zen.zen-hidden #ui-status,
 body.zen[data-edge-hover="1"] .face-controls,
