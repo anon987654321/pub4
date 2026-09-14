@@ -177,9 +177,16 @@ face_root:
   face_bg: "black"
   derived:
     face_fg: "var(--c-text)"
-    face_muted: "color-mix(in srgb, var(--c-text) 35%, transparent)"
+    # Solid, not an alpha over black: TYPOGRAPHY.accessibility asks 7:1 of
+    # secondary text, and 35% alpha gave 2.42:1. 81% lightness of c_text in
+    # oklch measures 7.72:1 on the face ground.
+    face_muted: "color-mix(in oklch, var(--c-text) 81%, black)"
     face_dim: "color-mix(in srgb, var(--c-text) 18%, transparent)"
     face_soft: "color-mix(in srgb, var(--c-text) 8%, transparent)"
+    # The prompt name keeps its red (MASTER_PROMPT_AESTHETIC). c_danger is an
+    # anchor shared with _dialect_tokens.scss and measures 5.0:1, so the face
+    # lifts it here to 70% lightness, 7.54:1, without moving the anchor.
+    face_alert: "color-mix(in oklch, var(--c-danger) 75%, white)"
     mood_accent: "var(--c-accent)"
     canvas_mood_accent: "var(--c-accent)"
     border_faint: "color-mix(in srgb, var(--face-fg) 10%, transparent)"
