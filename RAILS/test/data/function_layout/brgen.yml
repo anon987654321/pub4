@@ -6,7 +6,9 @@ checks:
   - {id: chrome.skip_link, in: brgen/app/views/layouts/application.html.erb, has: [skip-link, 'href="#main-content"']}
   - {id: chrome.main_id, in: brgen/app/views/layouts/application.html.erb, has: ['id="main-content"']}
   - {id: chrome.viewport, in: brgen/app/views/layouts/application.html.erb, has: ["viewport-fit=cover"]}
-  - {id: chrome.dark_default, in: brgen/app/views/layouts/application.html.erb, has: ['data-theme="dark"', 'color-scheme']}
+  # The layout writes data-theme from the helper so the OS gets no vote; which
+  # theme is the default is ApplicationHelper::DEFAULT_SURFACE_THEME's to say.
+  - {id: chrome.theme_written, in: brgen/app/views/layouts/application.html.erb, has: ['data-theme="<%= surface_theme %>"', 'color-scheme']}
   - {id: chrome.theme_bootstrap, in: brgen/app/views/layouts/application.html.erb, has: [theme_bootstrap]}
   - {id: chrome.csrf, in: brgen/app/views/layouts/application.html.erb, has: [csrf_meta_tags]}
   - {id: chrome.importmap, in: brgen/app/views/layouts/application.html.erb, has: [javascript_importmap_tags]}
