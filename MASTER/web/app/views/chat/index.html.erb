@@ -61,13 +61,15 @@
   <%# No prefetch of face.js or THREE — on a 1-CPU VPS it competes with primer tap on the main thread. %>
   <link rel="stylesheet" href="<%= asset_path("face.css") %>">
   <%# chat upload widget CSS isn't needed for the initial primer/face paint --
-      defer it off the render-blocking path (inline onload= is blocked by CSP here). %>
+      defer it off the render-blocking path (inline onload= is blocked by CSP here).
+      DOMContentLoaded applies it too: a preload that finished before the listener
+      was attached never fires load again, and a preload link has no sheet to test. %>
   <link rel="preload" as="style" id="chat-upload-css" href="<%= asset_path("chat_upload.css") %>">
   <noscript><link rel="stylesheet" href="<%= asset_path("chat_upload.css") %>"></noscript>
   <script nonce="<%= content_security_policy_nonce %>">
     (function(){var f=document.getElementById('chat-upload-css');if(!f)return;
       var on=function(){f.rel='stylesheet';};
-      f.addEventListener('load',on);if(f.sheet)on();})();
+      f.addEventListener('load',on);document.addEventListener('DOMContentLoaded',on);})();
   </script>
   <style nonce="<%= content_security_policy_nonce %>">
     html, body { background: #000; color: #d8d6e0; } /* scan: intentional-colors — painted before any stylesheet loads; the FOUC guard cannot cite what has not arrived */

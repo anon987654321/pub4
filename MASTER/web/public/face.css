@@ -147,7 +147,13 @@ body[data-focus-mode="1"] .ui-status,
 body[data-focus-mode="1"] .face-controls,
 body[data-focus-mode="1"] #chat-shell,
 body[data-focus-mode="1"] #ascii-star,
-body[data-focus-mode="1"]
+body[data-focus-mode="1"] #spin-btn {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Here as well as in chat_upload.css, which loads late and can miss: the
+   tap floor (LAYOUT_RULES.touch) must not wait on a deferred stylesheet. */
 #photo-button {
   min-width: var(--tap-min);
   min-height: var(--tap-min);
@@ -167,11 +173,6 @@ body[data-focus-mode="1"]
 .skip-link:focus-visible {
   outline: 2px solid var(--c-accent, var(--accent, #7c6fd6));
   outline-offset: 2px;
-}
-
-#spin-btn {
-  opacity: 0;
-  pointer-events: none;
 }
 
 body[data-focus-mode="1"] #zsh {
