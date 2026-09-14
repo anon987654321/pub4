@@ -88,7 +88,9 @@ const F_FACE_STATE = F_FACE_MINIMAL.State || window.State;
       }, 160);
     } catch (err) { window.MASTER_LOG?.warn?.("face_minimal_ui:cam_tracking", err); }
   }
-  if (F_FACE_STATE.coarsePointer) setTimeout(enableCamTracking, 900);
+  // Only on an explicit call. FAIL_SAFE_DEFAULTS: loading the page on a phone
+  // is not consent to the camera, and a permission prompt nobody asked for is
+  // denied and then remembered for the origin, as face.part5 says of the mic.
 
   window.MASTERMinimalUI = {
     enableCam: enableCamTracking,
