@@ -100,8 +100,8 @@ ownership:
     risk: critical
     check: OPENBSD/bin/check-openbsd
   lib/:
-    purpose: the gate kernel every tree's gates return (DECISIONS.md, "OPENBSD/lib/
-      Owns The Gate Kernel") plus the shared shell helpers
+    purpose: the gate kernel every tree's gates return (why it lives here is the
+      comment atop lib/gate_result.rb) plus the shared shell helpers
     risk: critical
     check: ruby OPENBSD/test/test_gate_lib.rb
   gates/:

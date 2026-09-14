@@ -1,5 +1,14 @@
 # frozen_string_literal: true
 
+# The deploy tree owns the gate kernel. Every gate in the repo returns this
+# type: RAILS/gates, MASTER/gates, OPENBSD/gates and STUDIO/gate.rb require it
+# across the tree boundary and add nothing to it, so adding an outcome is a
+# change with four consumers. A repo-level lib/ would be a fifth top-level tree
+# holding three files. MASTER/lib requires nothing from either sibling — it reads
+# their data and reaches STUDIO's gate through `rake studio` as a subprocess —
+# and a shared kernel is the thing everything ends up requiring. Revisit when a
+# fifth consumer appears.
+
 module Deploy
   # Four outcomes, not two.
   #
