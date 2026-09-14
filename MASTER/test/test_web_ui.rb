@@ -228,11 +228,15 @@ class TestWebUI < Minitest::Test
   def test_face_asset_paths_script_emits_every_declared_asset
     web = File.expand_path("../web", __dir__)
     manifest = YAML.safe_load_file(File.join(web, "config", "face_assets.yml"))
-    declared = %w[face_eager face_runtime_deferred face_vision_deferred
-                  shell_blocking shell_boot shell_early shell_late]
-               .flat_map { |group| Array(manifest[group]) }
-    declared += manifest.fetch("singletons").values
-    declared += Array(manifest["shell_manifest"]).map { |name| "#{name}.js" }
+    # Every group the manifest declares, read from the manifest rather than
+    # named here: a copy of the group list let shell_css join the file and the
+    # script while this expectation stayed a group short.
+    declared = manifest.flat_map do |group, entries|
+      next entries.values if entries.is_a?(Hash)
+      next entries.map { |name| "#{name}.js" } if group == "shell_manifest"
+
+      Array(entries)
+    end
 
     emitted = `#{RbConfig.ruby} #{File.join(web, "script", "face_asset_paths.rb")}`.lines.map { |l| File.basename(l.strip) }
 
