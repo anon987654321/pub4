@@ -14,20 +14,32 @@ class TestDillaLivesets < Minitest::Test
     saved.each { |k, v| ENV[k] = v }
   end
 
+  # Stubs a Livesets function for the block and puts the real one back after.
+  # Removing a stub is not enough: module_function defines each function on the
+  # singleton, so removing the stub removes the function for every later test.
+  def stubbing(stubs)
+    singleton = Livesets.singleton_class
+    originals = stubs.keys.to_h { |name| [name, singleton.method_defined?(name) && singleton.instance_method(name)] }
+    stubs.each { |name, body| Livesets.define_singleton_method(name, &body) }
+    yield
+  ensure
+    originals.each do |name, original|
+      singleton.remove_method(name)
+      singleton.define_method(name, original) if original
+    end
+  end
+
   # The one take kept through `recall keep` before renders/ went. Its journal
   # row is what recall reads, so the seed has to reach the set it names with
   # the kit and the progression it played, not whatever is exported today.
   def test_the_kept_take_recalls_from_the_journal
     handed = nil
-    Livesets.define_singleton_method(:exec) { |*args| handed = args }
-    Livesets.recall!(["1133818290"])
+    stubbing(exec: ->(*args) { handed = args }) { Livesets.recall!(["1133818290"]) }
     env, _ruby, _engine, *command = handed
 
     assert_equal %w[live set chord_based_beats], command
     assert_equal({ "LIVE_SEED" => "1133818290", "LIVE_KIT" => "synth",
                    "LIVE_PROGRESSION" => "lydian_augmented_haze" }, env)
-  ensure
-    Livesets.singleton_class.remove_method(:exec)
   end
 
   # A pin replaces what the seed drew and nothing after it: the draw still
@@ -62,25 +74,20 @@ class TestDillaLivesets < Minitest::Test
       journal!: ->(row) { rows << row },
       play!: ->(*) {},
     }
-    stubs.each { |name, body| Livesets.define_singleton_method(name, &body) }
-    %w[up down].each { |choice| with_env("LIVE_VOICING" => choice, "LIVE_SEED" => "5") { Livesets.sampled_based_beats! } }
+    stubbing(stubs) do
+      %w[up down].each { |choice| with_env("LIVE_VOICING" => choice, "LIVE_SEED" => "5") { Livesets.sampled_based_beats! } }
+    end
 
     assert_equal %w[up down], rows.map { |r| r[:voicing] }
     assert_includes Livesets::UP_PROGRESSIONS, rows.first[:progression]
     assert_includes Livesets::SAMPLED_PROGRESSIONS, rows.last[:progression]
-  ensure
-    stubs.each_key { |name| Livesets.singleton_class.remove_method(name) }
   end
 
   def test_a_recalled_pass_replays_the_voicing_it_was_journalled_under
     handed = nil
-    Livesets.define_singleton_method(:exec) { |*args| handed = args }
-    Livesets.define_singleton_method(:passes) { [{ "seed" => 7, "set" => "sampled_based_beats", "bed" => "b", "voicing" => "up" }] }
-    Livesets.recall!(["7"])
+    row = { "seed" => 7, "set" => "sampled_based_beats", "bed" => "b", "voicing" => "up" }
+    stubbing(exec: ->(*args) { handed = args }, passes: -> { [row] }) { Livesets.recall!(["7"]) }
 
     assert_equal "up", handed.first.fetch("LIVE_VOICING")
-  ensure
-    Livesets.singleton_class.remove_method(:exec)
-    Livesets.singleton_class.remove_method(:passes)
   end
 end
