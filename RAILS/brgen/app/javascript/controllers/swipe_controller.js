@@ -118,59 +118,62 @@ export default class extends Controller {
       card.style.transform = `translateX(${direction * 520}px) rotate(${direction * 22}deg)`
       card.style.opacity = "0.1"
 
-      // Fire backend (AJAX, no full redirect thanks to controller)
-      try {
-        const formData = new FormData()
-        formData.append("user_id", userId)
-        const resp = await fetch(url, {
-          method: "POST",
-          body: formData,
-          headers: { "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content, "Accept": "text/vnd.turbo-stream.html, text/html" }
-        })
-        if (resp.ok) {
-          // Remove immediately
-          setTimeout(() => {
-            if (card?.parentNode) card.parentNode.removeChild(card)
-            this.cards = this.cards.filter(c => c !== card)
-            this.currentCard = this.cards[this.cards.length - 1]
-            if (this.currentCard) {
-              this.currentCard.style.transition = ""
-              this.currentCard.style.transform = ""
-              this.currentCard.style.opacity = ""
-            }
-            // A real match is decided on the server: Dating::Like#check_mutual_match
-            // creates a Dating::Match on a reciprocated like, and Match#announce_match
-            // broadcasts the overlay to both users over the match stream this page
-            // already subscribes to. No client-side guessing — a match appears only
-            // when it is actually mutual.
-          }, 180)
-        }
-      } catch (err) {
-        console.error("swipe commit failed", err)
-        await enqueueSync({ url, method: "POST", body: { user_id: userId } })
-        setTimeout(() => {
-          if (card?.parentNode) card.parentNode.removeChild(card)
-          this.cards = this.cards.filter(c => c !== card)
-          this.currentCard = this.cards[this.cards.length - 1]
-          if (this.currentCard) {
-            this.currentCard.style.transition = ""
-            this.currentCard.style.transform = ""
-            this.currentCard.style.opacity = ""
-          }
-        }, 180)
-      }
+      // A real match is decided on the server: Dating::Like#check_mutual_match
+      // creates a Dating::Match on a reciprocated like, and Match#announce_match
+      // broadcasts the overlay to both users over the match stream this page
+      // already subscribes to. A match appears only when it is actually mutual.
+      const kept = await this._postChoice(url, userId)
+      setTimeout(() => (kept ? this._removeCard(card) : this._springBack(card)), 180)
     } else {
-      // Spring back
-      this.currentCard.style.transition = "transform 380ms cubic-bezier(0.32,0.72,0,1)"
-      this.currentCard.style.transform = ""
-      this.currentCard.classList.remove("liked", "passed")
-
-      setTimeout(() => {
-        if (this.currentCard) this.currentCard.style.transition = ""
-      }, 420)
+      this._springBack(this.currentCard)
     }
 
     this.currentX = 0
+  }
+
+  _springBack(card) {
+    card.style.transition = "transform 380ms cubic-bezier(0.32,0.72,0,1)"
+    card.style.transform = ""
+    card.style.opacity = ""
+    card.classList.remove("liked", "passed")
+    setTimeout(() => { card.style.transition = "" }, 420)
+  }
+
+  _removeCard(card) {
+    card.remove()
+    this.cards = this.cards.filter(c => c !== card)
+    this.currentCard = this.cards[this.cards.length - 1]
+    if (!this.currentCard) return
+    this.currentCard.style.transition = ""
+    this.currentCard.style.transform = ""
+    this.currentCard.style.opacity = ""
+  }
+
+  // True when the choice is recorded or queued. The server is the authority on
+  // the write: one it refuses, a missing csrf token included, returns the card to
+  // the deck, and only a request that never reached the server waits in the
+  // offline queue.
+  async _postChoice(url, userId) {
+    const body = new FormData()
+    body.append("user_id", userId)
+    let response
+    try {
+      response = await fetch(url, {
+        method: "POST",
+        body,
+        headers: { "X-CSRF-Token": this._csrfToken(), "Accept": "text/vnd.turbo-stream.html, text/html" }
+      })
+    } catch (err) {
+      console.error("swipe commit failed", err)
+      await enqueueSync({ url, method: "POST", body: { user_id: userId } })
+      return true
+    }
+    if (!response.ok) console.error(`swipe commit refused: ${response.status}`)
+    return response.ok
+  }
+
+  _csrfToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.content ?? ""
   }
 
   // Button fallbacks
@@ -189,34 +192,17 @@ export default class extends Controller {
   async _commitLike() {
     const isLike = this.currentX > 0
     const url = isLike ? this.likeUrlValue : this.dislikeUrlValue
-    const userId = this.currentCard.dataset.userId
+    const card = this.currentCard
 
-    this.currentCard.style.transition = "transform 220ms cubic-bezier(0.32,0.72,0,1)"
+    card.style.transition = "transform 220ms cubic-bezier(0.32,0.72,0,1)"
     const dir = isLike ? 1 : -1
-    this.currentCard.style.transform = `translateX(${dir * 480}px) rotate(${dir * 20}deg)`
+    card.style.transform = `translateX(${dir * 480}px) rotate(${dir * 20}deg)`
 
-    try {
-      const formData = new FormData()
-      formData.append("user_id", userId)
-      await fetch(url, {
-        method: "POST",
-        body: formData,
-        headers: {
-          "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content,
-          "Accept": "text/vnd.turbo-stream.html, text/html"
-        }
-      })
-    } catch (_) {
-      await enqueueSync({ url, method: "POST", body: { user_id: userId } })
-    }
-
+    const kept = await this._postChoice(url, card.dataset.userId)
     setTimeout(() => {
-      if (this.currentCard) {
-        this.currentCard.remove()
-        this.cards.pop()
-        this.currentCard = this.cards[this.cards.length - 1]
-        if (this.mode === "dating") this._hydrateNextCard()
-      }
+      if (!kept) return this._springBack(card)
+      this._removeCard(card)
+      if (this.mode === "dating") this._hydrateNextCard()
     }, 200)
   }
 
@@ -234,7 +220,7 @@ export default class extends Controller {
       const response = await fetch(this.listenUrlValue, {
         method: "POST",
         headers: {
-          "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content,
+          "X-CSRF-Token": this._csrfToken(),
           "Accept": "application/json"
         }
       })

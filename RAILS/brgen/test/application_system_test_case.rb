@@ -20,9 +20,8 @@ module CityHostSystemTest
                            "MAP checkout.stripe.com ~NOTFOUND, MAP *.vipps.no ~NOTFOUND")
     end
     # The test environment turns forgery protection off, which also drops the
-    # csrf-token meta tag. Scripts that read it, as swipe_controller does before
-    # its fetch, then throw and fall back to the offline queue, which is not the
-    # page production serves.
+    # csrf-token meta tag. A browser test serves the page production serves, so a
+    # script's write carries the token and the server checks it.
     base.setup do
       @forgery_protection_was = ActionController::Base.allow_forgery_protection
       ActionController::Base.allow_forgery_protection = true
