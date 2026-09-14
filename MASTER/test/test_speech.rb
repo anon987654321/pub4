@@ -4,6 +4,16 @@ require_relative "test_helper"
 require "socket"
 
 class TestSpeech < Minitest::Test
+  # Offline, "edge socket produced empty audio" printed fourteen times running.
+  def test_a_tts_failure_prints_once_and_stays_in_last_error
+    speech = Master::Voice::Speech
+    message = "probe failure #{Process.pid}"
+    _, err = capture_io { 3.times { speech.send(:warn_tts, message) } }
+
+    assert_equal 1, err.lines.grep(/#{message}/).size
+    assert_equal message, speech.instance_variable_get(:@last_error)
+  end
+
   def test_daemon_env_strips_web_bundle_pollution
     Dir.mktmpdir("master_tts_env") do |root|
       ENV["BUNDLE_PATH"] = "/wrong/web/vendor/bundle"

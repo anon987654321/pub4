@@ -508,8 +508,15 @@ module Master
         path
       end
 
+      # Every failure is kept in last_error; the terminal hears each kind once.
+      # Offline, every reply fails the same way, and one line per reply is
+      # fourteen lines of the same news.
       def warn_tts(message)
         @last_error = message
+        @warned_tts ||= {}
+        return if @warned_tts[message]
+
+        @warned_tts[message] = true
         ::Kernel.warn("tts: #{message}")
       end
     end
