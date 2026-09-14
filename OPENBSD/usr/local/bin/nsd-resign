@@ -6,11 +6,12 @@
 #
 # Usage: nsd-resign [--force]
 #   --force  re-sign every zone unconditionally
+#   NSD_ZONES_DIR  zones and key files (default /var/nsd/zones/master)
 
 require "date"
 require "open3"
 
-ZONES_DIR = "/var/nsd/zones/master"
+ZONES_DIR = ENV.fetch("NSD_ZONES_DIR", "/var/nsd/zones/master")
 RESIGN_DAYS = 14
 VALIDITY_DAYS = 30
 FORCE = ARGV.include?("--force")
@@ -68,7 +69,14 @@ def sign(zone, zone_file, keys, expiry)
   end
   log "signed #{zone} → expires #{expiry}"
   true
+rescue SystemCallError => e
+  # A missing ldns-signzone is a failed zone, counted below, not a backtrace that
+  # skips the reload of zones already signed.
+  log "FAIL #{zone}: ldns-signzone #{e.class}: #{e.message}"
+  false
 end
+
+return unless $PROGRAM_NAME == __FILE__
 
 changed = []
 failed = []

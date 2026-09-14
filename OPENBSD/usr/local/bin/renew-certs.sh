@@ -9,7 +9,9 @@ if [[ ${1:-} == -h || ${1:-} == --help ]]; then
   exit 0
 fi
 
-ACME_CONF=/etc/acme-client.conf
+# Overridable so the intersection below can be run against a fixture.
+ACME_CONF=${RENEW_CERTS_ACME_CONF:-/etc/acme-client.conf}
+SSL_DIR=${RENEW_CERTS_SSL_DIR:-/etc/ssl}
 
 # Renew what we hold, not what we hope for.
 #
@@ -46,7 +48,7 @@ done < $ACME_CONF
 # (N) nullglob, :t basename, :r strip the final extension -- "amber.brgen.no.crt"
 # becomes "amber.brgen.no". smtp.crt is smtpd's own self-signed certificate and
 # is not ACME's to renew; cert.pem is the trust store.
-HELD=(/etc/ssl/*.crt(N:t:r))
+HELD=($SSL_DIR/*.crt(N:t:r))
 HELD=(${HELD:#smtp})
 
 DOMAINS=(${HELD:*CONFIGURED})
@@ -86,7 +88,7 @@ print -r -- "renew-certs: renewing ${#DOMAINS} of ${#HELD} held certificate(s): 
 # when it actually issues.
 typeset renewed=0
 for domain in $DOMAINS; do
-  typeset chain=/etc/ssl/$domain.fullchain.pem
+  typeset chain=$SSL_DIR/$domain.fullchain.pem
   typeset before=0
   [[ -f $chain ]] && before=$(stat -f %m $chain)
 

@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "date"
+require "fileutils"
+require "open3"
+require "rbconfig"
+require "socket"
+require "tmpdir"
 # See test_restore_scripts.rb: the weekly integrity run on vm23 invokes these
 # under a C locale, where Ruby reads files as US-ASCII and every read of this
 # UTF-8 source raises "invalid byte sequence".
@@ -91,5 +97,138 @@ class TrackedCrontabTest < Minitest::Test
     assert_match(/! -x \$cmdpath/, loop_body, "the merge loop no longer checks the command is executable")
     assert_match(/log WARN .*not installed/, loop_body,
                  "install_tracked_crontab skips a tracked cron job without logging it")
+  end
+end
+
+# The scheduled jobs themselves, run against fixtures rather than read. Each one
+# is run only where it cannot touch a real box: rcctl present means vm23, and a
+# test there would reach the certificates and the zones.
+class ScheduledJobsTest < Minitest::Test
+  BIN = File.expand_path("../usr/local/bin", __dir__)
+
+  def setup
+    skip "on an OpenBSD box these would act on live state" if File.executable?("/usr/sbin/rcctl")
+    @tmp = Dir.mktmpdir("jobs")
+  end
+
+  def teardown
+    FileUtils.remove_entry(@tmp) if @tmp
+  end
+
+  def write(rel, body)
+    path = File.join(@tmp, rel)
+    FileUtils.mkdir_p(File.dirname(path))
+    File.write(path, body)
+    path
+  end
+
+  # ---- nsd-resign -----------------------------------------------------------
+
+  def rrsig(expiry) = "brgen.no. 3600 IN RRSIG SOA 13 2 3600 #{expiry} 20260901000000 4242 brgen.no. c2ln\n"
+
+  def resign(*args)
+    Open3.capture2e({ "NSD_ZONES_DIR" => @tmp }, RbConfig.ruby, File.join(BIN, "nsd-resign"), *args)
+  end
+
+  def test_nsd_resign_reads_the_earliest_signature_expiry
+    load File.join(BIN, "nsd-resign")
+    signed = write("brgen.no.zone.signed", rrsig("20261201000000") + rrsig("20261015120000"))
+
+    assert_equal Date.new(2026, 10, 15), expiry_date(signed)
+  end
+
+  # Garbage has no expiry, and no expiry means re-sign, never "still valid".
+  def test_nsd_resign_treats_an_unparseable_signed_zone_as_due
+    write("brgen.no.zone", "$ORIGIN brgen.no.\n")
+    write("Kbrgen.no.+013+04242.key", "brgen.no. IN DNSKEY 257 3 13 AAAA\n")
+    write("brgen.no.zone.signed", "\x00\xFF not a zone")
+    out, status = resign
+
+    assert_includes out, "brgen.no expires unknown — resigning"
+    refute status.success?, "no ldns-signzone here, so the zone must count as failed: #{out}"
+    assert_includes out, "FAIL 1 zone(s) not signed: brgen.no"
+  end
+
+  def test_nsd_resign_leaves_a_fresh_zone_alone
+    write("brgen.no.zone", "$ORIGIN brgen.no.\n")
+    write("Kbrgen.no.+013+04242.key", "brgen.no. IN DNSKEY 257 3 13 AAAA\n")
+    write("brgen.no.zone.signed", rrsig((Date.today + 25).strftime("%Y%m%d000000")))
+    out, status = resign
+
+    assert status.success?, out
+    assert_includes out, "all 1 zones valid — nothing to do"
+  end
+
+  def test_nsd_resign_with_no_keyed_zones_fails
+    write("brgen.no.zone", "$ORIGIN brgen.no.\n")
+    out, status = resign
+
+    refute status.success?
+    assert_includes out, "FAIL no signable zones"
+  end
+
+  # ---- renew-certs.sh -------------------------------------------------------
+
+  def renew(conf)
+    env = { "RENEW_CERTS_ACME_CONF" => write("acme-client.conf", conf), "RENEW_CERTS_SSL_DIR" => File.join(@tmp, "ssl") }
+    Open3.capture3(env, "zsh", File.join(BIN, "renew-certs.sh"))
+  end
+
+  # CONFIGURED ∩ HELD: a held name acme-client cannot renew is skipped, a
+  # configured name with no certificate is never attempted, smtp is smtpd's own.
+  def test_renew_certs_renews_only_what_is_both_held_and_configured
+    %w[brgen.no amber.brgen.no ai.brgen.no smtp].each { |name| write("ssl/#{name}.crt", "") }
+    out, _, status = renew(%(domain "brgen.no" {\n}\ndomain "amber.brgen.no" {\n}\ndomain "lapsed.uk" {\n}\n))
+
+    assert status.success?, out
+    assert_includes out, "renewing 2 of 3 held certificate(s): amber.brgen.no brgen.no"
+    assert_includes out, "held but not in"
+    assert_includes out, "skipping: ai.brgen.no"
+    refute_includes out, "lapsed.uk"
+    assert_includes out, "nothing renewed, leaving relayd alone"
+  end
+
+  def test_renew_certs_refuses_when_nothing_held_is_configured
+    write("ssl/ai.brgen.no.crt", "")
+    _, err, status = renew(%(domain "brgen.no" {\n}\n))
+
+    assert_equal 1, status.exitstatus
+    assert_includes err, "refusing to run"
+  end
+
+  # ---- the load-waiting wrappers --------------------------------------------
+
+  # No ruby34 here, so the load never reads low: every tick waits and the run
+  # ends in a skip, exit 0, without reaching an app.
+  def test_prune_guests_waits_every_tick_then_skips
+    env = { "PRUNE_GUESTS_LOAD_CEILING" => "0", "PRUNE_GUESTS_WAIT_TICKS" => "2", "PRUNE_GUESTS_TICK_SECONDS" => "1" }
+    started = Time.now
+    out, status = Open3.capture2e(env, "sh", File.join(BIN, "prune-guests.sh"))
+
+    assert status.success?, out
+    assert_operator Time.now - started, :>=, 2, "the wait loop did not sleep once per tick"
+    assert_match(/skipped: load stayed over 0 for 0 minutes/, out)
+    refute_match(/FAILED|removed=/, out)
+  end
+
+  def test_drain_jobs_waits_every_tick_then_skips
+    env = { "DRAIN_JOBS_LOAD_CEILING" => "0", "DRAIN_JOBS_WAIT_TICKS" => "2", "DRAIN_JOBS_TICK_SECONDS" => "1" }
+    started = Time.now
+    out, status = Open3.capture2e(env, "sh", File.join(BIN, "drain-jobs.sh"))
+
+    assert status.success?, out
+    assert_operator Time.now - started, :>=, 2
+    assert_match(/skipped: load stayed over 0/, out)
+  end
+
+  # A shed app is left shed: nothing listening is skipped silently, not warmed
+  # and not logged as a failure every ten minutes.
+  def test_keep_warm_skips_a_target_that_is_not_listening
+    ports = [38_182, 61_352]
+    skip "an app is listening locally" if ports.any? { |port| (TCPSocket.new("127.0.0.1", port).close || true) rescue false }
+    out, status = Open3.capture2e("ksh", File.join(BIN, "keep-warm.sh"))
+
+    assert status.success?, out
+    assert_empty out.strip
   end
 end
