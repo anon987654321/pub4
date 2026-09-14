@@ -805,6 +805,16 @@ end
 
   def test_ascii_dividers_in_lib_prose_still_fire
     refute_empty findings(:NO_ASCII_LINE_ART, "# ===== section =====\n")
+    refute_empty findings(:NO_ASCII_LINE_ART, "# --- moderation panel ---------\n", path: "test/example.rb")
+    assert_empty findings(:NO_ASCII_LINE_ART, "yaml = \"---\\nkey: 1\\n\"\n", path: "test/example.rb")
+  end
+
+  # A divider is NO_ASCII_LINE_ART's; TYPOGRAPHY_DISCIPLINE reads box-drawing
+  # glyphs, so one line is one finding and a Markdown table stays a table.
+  def test_typography_discipline_reads_box_drawing_and_leaves_dividers_to_line_art
+    refute_empty findings(:TYPOGRAPHY_DISCIPLINE, "# ├── lib/\n", path: "lib/example.rb")
+    assert_empty findings(:TYPOGRAPHY_DISCIPLINE, "# ===== section =====\n", path: "lib/example.rb")
+    assert_empty findings(:TYPOGRAPHY_DISCIPLINE, "| a | b |\n|---|---|\n", path: "docs/example.md")
   end
 
   # `===` with an operand each side is an operator, not a decoration: three

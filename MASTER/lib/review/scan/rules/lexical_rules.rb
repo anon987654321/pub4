@@ -300,11 +300,15 @@ module Master
     fires: "# --- section\n", # scan: intentional
     does_not_fire: "# -- section\n",
     description: "ASCII divider decorations" do |src, path:|
-    next [] if path.to_s.match?(%r{(^|/)(test|spec)/})
+    # A test carries dividers as data — a YAML fixture's `---`, an expected
+    # banner — so in a test only a comment line is read, and a section divider
+    # there is the same decoration it is in lib/.
+    in_test = path.to_s.match?(%r{(^|/)(test|spec)/})
 
     scan_lines(src, /(?:^|\s)(?:={3,}|-{3,}|_{3,})(?:\s|$)/, message: "remove ASCII divider decorations").reject do |finding|
       line = src.lines[finding[:line].to_i - 1].to_s
-      path.to_s.end_with?(".yml", ".yaml") && line.strip == "---" ||
+      in_test && !line.lstrip.start_with?("#", "//") ||
+        path.to_s.end_with?(".yml", ".yaml") && line.strip == "---" ||
         line.match?(/\b(assert|refute|expect|must_|wont_)/) ||
         line.match?(IDENTITY_COMPARISON)
     end

@@ -100,21 +100,20 @@ module Master
           end
         end
 
-      # Exclude YAML document separators (---) and data file structural lines;
-      # only flag decorative runs inside code comments or string literals.
+      # Box-drawing glyphs, and only those. A run of dashes or equals signs is
+      # NO_ASCII_LINE_ART's question, and reading it here reported one divider
+      # under two ids while also calling a Markdown table's delimiter row
+      # decoration, when that row is the syntax that makes the table.
+        BOX_DRAWING = /[─-╿]/
+
         RuleDSL.rule :TYPOGRAPHY_DISCIPLINE,
           severity: :info, tags: %i[TYPOGRAPHY],
-          fires: "# ====\n",
-          does_not_fire: "# ===\n",
+          fires: "# ╭──── section ────╮\n",
+          does_not_fire: "| name | purpose |\n|------|---------|\n",
           description: "hierarchy via weight and brightness, not decoration" do |src, path:|
           next [] if path.to_s.include?("/review/scan/rules/")
-          src.each_line.with_index(1).filter_map do |line, n|
-            stripped = line.strip
-            next if stripped == "---" || stripped.start_with?("---") && path.end_with?(".yml", ".yaml")
-            next if stripped.start_with?("//", "/*", "*")
-            next unless stripped.match?(/[-=]{4,}|[╭╮╰╯│─]/)
-            finding(line: n, message: "ASCII decoration — use whitespace and typographic weight instead")
-          end
+
+          scan_lines(src, BOX_DRAWING, message: "box drawing — use whitespace and typographic weight instead")
         end
 
       # NULL_BLINDNESS lives once, in law/ (domain files) — the second
