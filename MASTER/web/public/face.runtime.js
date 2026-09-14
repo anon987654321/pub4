@@ -4112,7 +4112,8 @@ function handleFaceNamedEvent(event, data) {
       morphCurrent = Math.max(0, morphCurrent - 0.8); morphTarget = 1.0;
       State.fracture = 1.0;
       const prevPh = zshIn?.placeholder;
-      if (zshIn) { zshIn.placeholder = 'try a tighter question'; setTimeout(() => { if (zshIn.placeholder === 'try a tighter question') zshIn.placeholder = prevPh || 'ask anything'; }, 9000); }
+      const tighter = window.MASTER_T?.('tighter_question', 'try a tighter question') || 'try a tighter question';
+      if (zshIn) { zshIn.placeholder = tighter; setTimeout(() => { if (zshIn.placeholder === tighter) zshIn.placeholder = prevPh; }, 9000); }
     }
     const tally = (window.MASTER_VOTE_TALLY ||= { pass: 0, veto: 0 });
     if (v === 'pass') tally.pass += 1;
@@ -4602,26 +4603,6 @@ zshIn.addEventListener('focus', () => {
   boostEyeAttention(0.07);
   window.MASTERVisual?.event?.('input:focus', { topology: 'papua-mask', entropy: 0.14, confidence: 0.88, mode: 'attending' });
 });
-
-const PLACEHOLDERS = [
-  'ask anything — type your instruction',
-  'attach photo (+) then describe what to see',
-  'tap mic — speak, I will listen',
-  'paste code — ask for review or explain',
-  'what are you trying to accomplish?',
-  'challenge me — show your work',
-  'explain simply — then go deeper'
-];
-let _phIdx = 0;
-function _cyclePlaceholder() {
-  if (document.activeElement === zshIn || zshIn.value) return;
-  const research = window.MASTER_AGENT_PLACEHOLDERS;
-  const pool = Array.isArray(research) && research.length ? research : PLACEHOLDERS;
-  _phIdx = (_phIdx + 1) % pool.length;
-  zshIn.placeholder = pool[_phIdx];
-}
-setInterval(_cyclePlaceholder, 8000);
-window.addEventListener('master:runtime-config', () => _cyclePlaceholder());
 
 const _charCount = document.getElementById('char-count');
 const _cmdHistKey = 'master:cmd_hist';

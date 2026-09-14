@@ -5,6 +5,12 @@ function chatT(key, fallback, vars) {
   return window.MASTER_T ? window.MASTER_T(key, fallback, vars) : fallback;
 }
 
+// The name the prompt bar prints from face.prompt_user, so the log and the bar
+// use one word for the visitor (CONSISTENCY). master is the runtime's own name.
+function promptUserName() {
+  return document.querySelector('#zsh .pp')?.textContent.trim() || 'user';
+}
+
 function escapeHtml(str) {
   return str.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
@@ -151,7 +157,7 @@ function appendMsg(role, text = '') {
   }
   const prompt = document.createElement('span');
   prompt.className = 'msg-prompt';
-  prompt.textContent = role === 'user' ? 'you$ ' : 'master$ ';
+  prompt.textContent = role === 'user' ? `${promptUserName()}$ ` : 'master$ ';
   d.appendChild(prompt);
   if (role === 'user') {
     d.appendChild(document.createTextNode(text));
@@ -800,7 +806,7 @@ document.querySelectorAll('.tool').forEach(btn => {
       li.dataset.index = String(index);
       const role = document.createElement('span');
       role.className = 'history-role';
-      role.textContent = entry.role === 'assistant' ? 'master' : 'you';
+      role.textContent = entry.role === 'assistant' ? 'master' : promptUserName();
       const body = document.createElement('span');
       body.className = 'history-body';
       body.textContent = (entry.content || '').slice(0, 240);

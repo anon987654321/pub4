@@ -192,7 +192,10 @@ void main() {
   // prognathic vault (ape), 0 is the avatar as drawn, +1 is a globular
   // cranium and a receding jaw — the trend from Australopithecus through
   // sapiens, continued. It breathes; it is not a slider.
+  // Held at the avatar as drawn when the visitor asks for reduced motion
+  // (REDUCED_MOTION): a skull that reshapes itself is motion nobody requested.
   function eraAt(now) {
+    if (reducedMotion) return 0;
     return Math.sin(now * 0.00007);
   }
 
