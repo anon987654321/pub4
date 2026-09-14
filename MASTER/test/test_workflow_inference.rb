@@ -25,7 +25,7 @@ class WorkflowInferenceTest < Minitest::Test
     out = dispatch(critique: false, apply: true)
 
     ["mode", "aesthetic scan", "deep scan", "fix", "re-scan", "principle map"].each do |section|
-      assert_includes out, "# #{section}"
+      assert_includes out.lines.map(&:chomp), section
     end
     assert_match(/review\d+: complete/, out)
   end
@@ -34,8 +34,8 @@ class WorkflowInferenceTest < Minitest::Test
   def test_dry_run_previews_instead_of_fixing
     out = dispatch(critique: false)
 
-    assert_includes out, "# fix preview"
-    refute_includes out, "# re-scan"
+    assert_includes out.lines.map(&:chomp), "fix preview"
+    refute_includes out.lines.map(&:chomp), "re-scan"
   end
 
   def test_dispatch_workflow_reaches_deliberation_when_critique_is_on
@@ -43,7 +43,7 @@ class WorkflowInferenceTest < Minitest::Test
     deliberation = FakeDeliberation.new(asked)
     out = dispatch(critique: true, deliberation:)
 
-    assert_includes out, "# critique"
+    assert_includes out.lines.map(&:chomp), "critique"
     refute_empty asked, "critique stage never reached the deliberation"
     refute_match(/NoMethodError/, out)
   end
