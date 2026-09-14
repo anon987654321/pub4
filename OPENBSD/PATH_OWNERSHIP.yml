@@ -51,8 +51,8 @@ ownership:
     risk: high
     check: ruby OPENBSD/shell_syntax_gate.rb
   deploy_all.sh:
-    purpose: workstation recovery path that reapplies box config (DECISIONS.md,
-      "The three unrun deploy scripts stay")
+    purpose: workstation recovery path that reapplies box config (its header
+      says why it stays unrun)
     risk: critical
     check: ruby OPENBSD/shell_syntax_gate.rb
   vps_ci.sh:

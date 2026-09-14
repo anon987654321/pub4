@@ -1,6 +1,10 @@
 #!/usr/bin/env zsh
 # Workstation orchestrator: sync pub4 to VPS and run OPENBSD/OPERATOR.sh.
 #
+# A recovery path nothing runs. It reapplies box config after drift, which
+# bin/vps-deploy assumes is already right. Unexercised, so read it before running
+# it; removing it decides the capability is unwanted, which is the operator's call.
+#
 # Canonical app list: OPENBSD/deploy_inventory.json (active Rails apps).
 #
 # Usage:

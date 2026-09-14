@@ -1,5 +1,10 @@
 #!/usr/bin/env zsh
 # Workstation helper: copy vps_install_all.sh to VM via hypervisor jump and run it.
+#
+# A recovery path nothing runs. It bootstraps a fresh VM through the hypervisor
+# jump, the only route that exists before ssh to the VM works. Unexercised, so read
+# it before running it; removing it decides the capability is unwanted, which is
+# the operator's call.
 set -euo pipefail
 
 if [[ ${1:-} == -h || ${1:-} == --help ]]; then

@@ -1,6 +1,9 @@
 #!/bin/ksh
-# UNTESTED RECOVERY PATH — read OPENBSD/DECISIONS.md, "The three unrun deploy
-# scripts stay", before running it. Nothing exercises this file.
+# UNTESTED RECOVERY PATH — nothing exercises this file, so read it before running
+# it. It recovers a stalled master deploy, a case bin/vps-deploy does not cover,
+# and it records _fail=1 and exits 1 rather than swallowing the face build.
+# Nothing is meant to call it; removing it decides the capability is unwanted,
+# which is the operator's call.
 #
 # Manual MASTER deploy — use when vps_deploy_master.sh stalls.
 # Run on VPS: tmux new-session -d -s masterdeploy /home/dev/pub4/OPENBSD/manual_master_deploy.ksh
