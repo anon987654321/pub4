@@ -612,6 +612,7 @@ nb:
     capsule_kicker: "Kapseldemo · %{name}"
     create_hint: "Opprett konto for å følge bruk, ryddescore og antrekksforslag i din egen garderobe."
     full_wardrobe: "Hele demogarderoben →"
+    back_to_wardrobe: "← Demogarderobe"
   users:
     recent_items: "Nylige plagg"
     profile_counts: "%{items} plagg · %{followers} følgere · %{following} følger"

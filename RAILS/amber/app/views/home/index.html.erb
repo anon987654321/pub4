@@ -81,9 +81,9 @@
   <% if @recent_items.any? %>
     <%= tag.h2 t("home.recent") %>
     <div class="item-grid"><%= render @recent_items %></div>
-    <p><%= link_to t("home.all_items"), items_path %></p>
+    <p><%= link_to t("home.all_items"), items_path, class: "more_link" %></p>
   <% else %>
-    <p><%= link_to t("home.first_item"), new_item_path %></p>
+    <p><%= link_to t("home.first_item"), new_item_path, class: "more_link" %></p>
   <% end %>
 <% else %>
 <%# The hero leads for a signed-out visitor. It used to sit below the feed,
@@ -151,7 +151,7 @@
       <%= tag.h2 t("home.demo_capsule") %>
       <p><%= t("home.demo_counts", pieces: t("items.pieces", count: @demo_items.size), outfits: t("outfits.count", count: @demo_outfits&.size.to_i)) %></p>
       <div class="item-grid"><%= render partial: "demo_wardrobe/item", collection: @demo_items %></div>
-      <p><%= link_to t("demo.full_wardrobe"), demo_wardrobe_path %></p>
+      <p><%= link_to t("demo.full_wardrobe"), demo_wardrobe_path, class: "more_link" %></p>
     </section>
   <% end %>
 <% end %>

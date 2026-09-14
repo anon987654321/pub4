@@ -613,6 +613,7 @@ en:
     capsule_kicker: "Capsule demo · %{name}"
     create_hint: "Create an account to track wears, declutter scores, and outfit suggestions on your own wardrobe."
     full_wardrobe: "Full demo wardrobe →"
+    back_to_wardrobe: "← Demo wardrobe"
   users:
     recent_items: "Recent pieces"
     profile_counts: "%{items} items · %{followers} followers · %{following} following"

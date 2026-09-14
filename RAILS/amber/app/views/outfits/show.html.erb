@@ -22,7 +22,8 @@
 
 <% if @outfit.image.attached? %>
   <div class="outfit-visual">
-    <%= responsive_image_tag @outfit.image, alt: @outfit.name, preset: :detail, sizes: "(max-width: 768px) 100vw, 400px", style: "max-width: 400px; height: auto;" %>
+    <%# reserved: responsive_image_tag writes the blob's width and height onto the tag %>
+    <%= responsive_image_tag @outfit.image, alt: @outfit.name, preset: :detail, sizes: "(max-width: 768px) 100vw, 400px" %>
   </div>
 <% end %>
 

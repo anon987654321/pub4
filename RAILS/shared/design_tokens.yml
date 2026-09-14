@@ -117,24 +117,26 @@ system:
   # three answers to one question, and neither 14 nor 10 is on scale.radius_px.
   radius_card: "12px"
 
-# Luxury minimalist additions for wardrobe/product UIs (Aesop/Toteme/Nécessaire inspired)
-# Warm neutrals, generous spacing, refined typography. Use in amber + shared product views.
+# amber's wardrobe dialect: the family greyscale, so the garment photographed
+# on it is the only colour on the page. Use in amber + shared product views.
 luxury:
   # Light mode (preferred for calm product viewing)
   light_bg: "#efefef"
   light_surface: "#ffffff"
   light_text: "#333333"
-  light_muted: "#666666"
-  light_border: "#666666"
-  # Darker, not lighter: this is the light theme, so contrast comes from
-  # going down. #8c7a5e was 3.82:1 on light_bg and 4.15 on light_surface.
-  # Darkened by 2 from #7e6e55 to clear APCA Lc 75 on white; it was the only
-  # colour in the tree failing both contrast models rather than WCAG alone.
-  light_accent: "#000000" # warm taupe/gold, WCAG AA on warm paper
-  # The danger tone amber actually renders. It was absent here, so every surface
-  # using it reported a text colour "outside design_tokens.yml" while the value
-  # itself was deliberate.
-  light_danger: "#a7473b"
+  # Secondary ink at the 7:1 TYPOGRAPHY sets for normal text: 7.35 on light_bg
+  # and 8.45 on light_surface. #666666 measured 4.99 on light_bg.
+  light_muted: "#4d4d4d"
+  # A hairline lighter than the ink it separates and still over the 3:1 WCAG
+  # 1.4.11 sets for a boundary: 3.08 on light_bg. At #666666 a rule weighed the
+  # same as secondary text.
+  light_border: "#888888"
+  # The one accent is ink; the garment supplies every hue.
+  light_accent: "#000000"
+  # The danger tone amber renders, and the one non-grey token: 7.21 on light_bg
+  # and 8.29 on light_surface, the same 7:1 as the rest of the copy.
+  # amber/_variables.scss paints it; the contrast census reads it here.
+  light_danger: "#82372d"
   # Dark mode (compatible with existing)
   dark_bg: "#000000"
   dark_surface: "#111111"
@@ -156,9 +158,11 @@ luxury:
   radius_sm: "6px"
   radius_md: "10px"
   radius_lg: "14px"
-  # Typography scale
-  font_size_display: "2rem"
-  font_size_title: "1.5rem"
+  # Typography scale: the major third (1.25) on the 1rem body that TYPOGRAPHY
+  # names as its default ratio. display is the page title, 2.0-2.44x body from
+  # phone to desk; title is a section heading at 1.563x.
+  font_size_display: "clamp(1.953rem, 1.5rem + 2vw, 2.441rem)"
+  font_size_title: "1.563rem"
   font_size_body: "1rem"
   font_size_meta: "0.875rem"
   letter_spacing_tight: "-0.01em"

@@ -42,9 +42,10 @@
 }
 .wardrobe-more-tools .wardrobe-action-group--secondary { background: var(--hover-subtle); }
 .outfit-composition { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; aspect-ratio: 4 / 5; overflow: hidden; background: var(--luxury-border); border-radius: var(--radius-sm); }
-.outfit-composition img { width: 100%; height: 100%; min-height: 0; object-fit: cover; }
+/* contain, not cover: a garment cropped to fill a square is a different garment.
+   The surface behind it keeps a narrow piece from floating on the grey gap. */
+.outfit-composition img { width: 100%; height: 100%; min-height: 0; object-fit: contain; background: var(--surface); }
 .outfit-composition span { display: grid; place-items: center; background: var(--surface-elevated); color: var(--text-secondary); font-weight: var(--weight-bold); }
-.pairing-rationale { padding-inline-start: var(--space-6); border-inline-start: 3px solid var(--accent); }
 .danger-zone { margin-top: var(--space-8); padding-top: var(--space-6); border-top: 0; }
 .danger-zone summary { cursor: pointer; min-height: var(--tap-min); display: flex; align-items: center; }
 
@@ -59,15 +60,41 @@
   background: var(--surface-elevated, var(--surface));
 }
 
+/* The whole garment, letterboxed on the card's own surface. cover cut the
+   cat-eye sunglasses (240x72) into two brown halves and the hoops into arcs. */
 .item-card .item-photo {
   width: 100%;
   aspect-ratio: 1;
-  object-fit: cover;
+  object-fit: contain;
+  background: var(--surface);
   border-radius: var(--radius-sm);
 }
 
 .item-card .item-title {
   font-weight: var(--weight-bold);
+}
+
+/* A demo card has one destination and the title was its only 26px-tall way
+   there, so the title's hit area covers the card. */
+.item-card--demo {
+  position: relative;
+}
+
+.item-card--demo .item-title::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+/* Text links a thumb aims for on their own: the guest hero's secondary row, the
+   demo item's way back, the widget card's links and a section's closing link. */
+.amber-guest-secondary a,
+.item-detail > p:first-child a,
+.sidebar-card p a,
+.more_link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
 }
 
 .item-card nav {
@@ -79,6 +106,16 @@
 
 .item-detail {
   max-width: 700px;
+}
+
+/* One screen of photograph, then the name. Uncapped, a 400x800 garment was drawn
+   at 600x1200 and the title landed at y=1560 on a 900px screen. */
+.item-detail .item-photo--detail,
+.luxury-photo {
+  inline-size: 100%;
+  block-size: auto;
+  max-block-size: calc(100dvh - var(--bar-height) - var(--space-12));
+  object-fit: contain;
 }
 
 /* Dynamic color from wardrobe_color_swatch helper — keep magic color out of ERB */
@@ -101,18 +138,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem; /* 8px */
-}
-
-.item-detail .item-photos {
-  display: flex;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-  margin-bottom: var(--space-6);
-}
-
-.item-detail .item-photos img {
-  width: 200px;
-  border-radius: var(--radius-xs);
 }
 
 /* Light scrolly reveals for timelines and long content (compatible with existing animations) */
@@ -176,8 +201,13 @@
   outline-offset: 2px;
 }
 
+/* inline-flex so the label sits in the middle of the 44px it is given; as an
+   inline link the height grew below the text and "Sign in" hugged the top. */
 .btn-sm,
 .btn.btn-sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: var(--tap-min);
   padding: var(--space-2) var(--space-3);
   font-size: var(--text-xs);
@@ -191,10 +221,6 @@
 .btn-danger,
 .btn.btn-danger {
   background: var(--color-danger);
-}
-
-.btn-joy {
-  background: var(--color-warning, var(--accent));
 }
 
 .badge {

@@ -71,6 +71,17 @@ class HotwireSurfacesTest < ActionDispatch::IntegrationTest
     assert_includes response.body, @other.display_name
   end
 
+  # The profile rendered "Recent pieces" and "Posts" over nothing at all while
+  # its counts said 17 items. An empty section says so and offers the next step.
+  test "user show names its empty sections and offers a way on" do
+    @other.items.create!(title: "Secret coat", category: "Outerwear")
+    get user_path(@other)
+    assert_response :success
+    assert_includes response.body, I18n.t("empty.no_items")
+    assert_includes response.body, I18n.t("home.browse_demo")
+    assert_includes response.body, I18n.t("empty.no_posts_yet")
+  end
+
   test "leftover English is gone from social and planner views" do
     get connections_path
     assert_response :success

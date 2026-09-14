@@ -6,5 +6,5 @@
   <% end %>
   <%= link_to item.title, demo_wardrobe_item_path(item), class: "item-title" %>
   <%= item.category %><%= " · #{item.color}" if item.color.present? %>
-  <%= item.brand %> · worn <%= item.times_worn.to_i %>× · <%= item.value_label %>
+  <%= [item.brand, t("items.worn_times_short", count: item.times_worn.to_i), cost_per_wear_label(item)].compact_blank.join(" · ") %>
 </article>

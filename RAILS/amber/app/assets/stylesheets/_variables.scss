@@ -1,5 +1,17 @@
 @use "dialect_tokens" as x;
 
+// amber's inks over the family light palette, read from design_tokens.yml
+// luxury through the --luxury-* tokens sync_dialect_tokens keeps in step.
+// Secondary text and hairlines were the family #666666 on #efefef, 4.99:1,
+// under the 7:1 TYPOGRAPHY sets for normal text, and a rule weighed as much as
+// the text beside it. --danger has no --luxury-* token to read, so its value
+// is written here and luxury.light_danger records it for the contrast census.
+@mixin amber-light-inks {
+  --text-secondary: var(--luxury-muted);
+  --border: var(--luxury-border);
+  --danger: #82372d;
+}
+
 // Luxury on :root alone loses to stack's social light. _tokens.scss paints
 // light-tokens at [data-theme=light] and at :root:not([data-theme=dark])
 // inside prefers-color-scheme: light — (0,2,0) vs this file's (0,1,0).
@@ -9,6 +21,7 @@
 // so the worn dialect is what a visitor with OS light mode actually sees.
 :root {
   @include x.luxury-light-tokens;
+  @include amber-light-inks;
   @include x.app-root-tokens;
   color-scheme: light;
   // Not inverted. These read as "the ink colour" and "the paper colour", and
@@ -34,12 +47,14 @@
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
     @include x.luxury-light-tokens;
+    @include amber-light-inks;
     color-scheme: light;
   }
 }
 
 [data-theme="light"] {
   @include x.luxury-light-tokens;
+  @include amber-light-inks;
   color-scheme: light;
 }
 
