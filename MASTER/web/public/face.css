@@ -972,14 +972,16 @@ body[data-mode="thinking"] #zsh-status { letter-spacing:.32em; }
 body[data-tts-loading="true"] canvas { filter: none; }
 
 /* FA75 copy button */
-.message.assistant .msg-copy { vertical-align: middle; background:none; border:none; color:var(--face-muted); cursor:pointer; font: var(--text-meta)/1.5 var(--font-mono); opacity:0; transition:opacity .15s; padding:8px; min-width: var(--tap-min); min-height: var(--tap-min); }
+.message.assistant .msg-copy { position:absolute; inset-block-end:0; inset-inline-start:8px; background:none; border:none; color:var(--face-muted); cursor:pointer; font: var(--text-meta)/1.5 var(--font-mono); opacity:0; transition:opacity .15s; padding:8px; min-width: var(--tap-min); min-height: var(--tap-min); }
 .message.assistant:hover .msg-copy,
 .message.assistant:focus-within .msg-copy { opacity:1; }
 .message.assistant .msg-copy:hover { color:var(--c-text); }
 
-/* In flow under the reply. Pinned to the corner of a 66ch box they sat on
-   the first line of text. */
+/* A row under the reply, with the copy button at its head. Pinned to the
+   corner of a 66ch box they sat on the first line of text, and inline after
+   the text the 44px copy target stretched the last line. */
 .message.assistant .msg-actions {
+  margin-inline-start: var(--tap-min);
   display: flex;
   gap: 2px;
   opacity: .42;
