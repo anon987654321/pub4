@@ -149,13 +149,17 @@ class TestDilla < Minitest::Test
       puts JSON.generate(
         commands: COMMANDS,
         dispatch_keys: DISPATCH.keys,
-        has_aliases_const: defined?(COMMAND_ALIASES)
+        has_aliases_const: defined?(COMMAND_ALIASES),
+        readme_loop: respond_to?(:readme_loop!, true)
       )
     RUBY
     assert_equal result.fetch("dispatch_keys").sort, result.fetch("commands")
     refute result.fetch("has_aliases_const"), "COMMAND_ALIASES should be gone"
     assert_includes result.fetch("dispatch_keys"), "dilla"
     assert_includes result.fetch("dispatch_keys"), "demo-all"
+    # loop* was deleted on the operator's word; nothing renders loop.wav.
+    refute_includes result.fetch("dispatch_keys"), "readme-loop"
+    refute result.fetch("readme_loop"), "readme_loop! should be gone"
     refute_includes result.fetch("dispatch_keys"), "comfort"
     refute_includes result.fetch("dispatch_keys"), "warp"
     refute_includes result.fetch("dispatch_keys"), "camel"

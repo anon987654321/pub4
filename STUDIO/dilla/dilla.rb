@@ -16182,90 +16182,6 @@ ensure
   segments&.each { |s| FileUtils.rm_f(s[:path]) } # scan: intentional — removes only the temp files this method rendered
 end
 
-# The README, spoken. Stripped of the video tag, the fences, and the
-# markdown so Edge TTS reads the argument, not the markup.
-def master_readme_speech_text
-  path = File.expand_path("../../MASTER/README.md", ROOT)
-  body = File.read(path)
-  body = body.sub(/<!--.*?-->/m, "")
-  body = body.sub(/<video[\s\S]*?<\/video>/i, "")
-  body = body.sub(/\A#\s*MASTER\s*/, "")
-  body = body.split(/^#### /).first.to_s
-  body = body.gsub(/```[\s\S]*?```/, "")
-  body = body.gsub(/^\s*#+\s*/, "")
-  body = body.gsub(/\[([^\]]+)\]\([^)]+\)/, '\1')
-  body = body.gsub(/[*_`]/, "")
-  spoken = body.lines.map(&:strip).reject { |line| line.empty? || line.match?(/\A[\p{Emoji}\s.]+\z/) }.join(" ").gsub(/\s+/, " ").strip
-  spoken.gsub(/Innovasjon Norge/i, "Innovation Norway")
-end
-
-def write_readme_tts!(dest)
-  text = master_readme_speech_text
-  abort "dilla: MASTER/README.md produced no speakable prose" if text.length < 40
-  FileUtils.mkdir_p(File.dirname(dest))
-  mp3 = dest.sub(/\.wav\z/i, ".mp3")
-  voice = speech_tts_voice
-  rate = speech_tts_rate
-  pitch = speech_tts_pitch
-  ok = false
-  Open3.popen2(Gem.ruby, TTS_WORKER, voice, rate, pitch, mp3) do |stdin, _stdout, wait|
-    stdin.write(text)
-    stdin.close
-    ok = wait.value.success?
-  end
-  abort "dilla: README TTS failed (#{voice})" unless ok && File.size?(mp3).to_i > 500
-  if dest.end_with?(".wav")
-    sh! "ffmpeg", "-y", "-i", mp3, "-ac", "2", "-ar", "44100", dest
-    FileUtils.rm_f(mp3)
-  else
-    FileUtils.mv(mp3, dest)
-  end
-  dest
-end
-
-# Bare invoke. Every mix/speech/stem knob the README loop needs is on here
-# so `ruby dilla.rb` is the whole command — no flags, no ENV.
-README_LOOP_DEFAULTS = {
-  "SPEAK" => "1",
-  "SCRAMBLE_SPEECH" => "0",
-  "SPEAK_QUIRK" => "0",
-  "SPEAK_RATE" => "-22%",
-  "STEM_EXPORT" => "1",
-  "KEEP_STEMS" => "1",
-  "COMPOSITION" => "1",
-  "DILLA_QUALITY_GATE" => "1",
-  "LISTEN_PASSES" => "2",
-  "MOTIF_RECALL" => "1",
-  "LAYER_KICK" => "1",
-  "BACKBEAT_CLAP" => "1",
-  "HARMONY_LEAD" => "1",
-  "BARS" => "8",
-  "SYNTH_CYCLE" => "1",
-  "SYNTH_MORPH" => "1",
-  "LOOP_PAD_ROTATE" => "1",
-  "ANALOG_PAD" => "1",
-  "SPACE_ECHO" => "1",
-  "PAD_LAYERS" => "1",
-  "LEARNED_PROGRESSION" => "1",
-  # The kit is synthesised, so the readme loop plays it rather than a recording
-  # of somebody else's drums.
-  "DRUM_LOOP" => "0",
-}.freeze
-
-def readme_loop!
-  force_env!(README_LOOP_DEFAULTS, label: "README_LOOP_DEFAULTS")
-  ENV["RENDER_MODE"] = "record" if ENV["RENDER_MODE"].to_s.empty?
-  apply_render_mode!
-  dest = File.join(OUTPUT_DIR, "loop.wav")
-  tts = File.join(OUTPUT_DIR, "tts.wav")
-  n_bars = ENV.fetch("BARS", "8").to_i
-  dmesg("readme TTS -> #{File.basename(tts)}", unit: "speech0", parent: "dilla0")
-  write_readme_tts!(tts)
-  dmesg("readme loop #{n_bars} bars -> #{File.basename(dest)}", unit: "loop0", parent: "dilla0")
-  render_dilla(dest, n_bars)
-  dest
-end
-
 # --------------------------------------------------------------------------
 # engine part: live_play
 # --------------------------------------------------------------------------
@@ -28373,7 +28289,6 @@ def command_help
       ["demo-quick", "[bars]", "An evenly spaced sample of the catalogue, for judging a change"],
       ["demo", "", "Every record in the demo crate against three progressions"],
       ["showcase", "", "A few bars of each named style -> demo.wav"],
-      ["readme-loop", "", "loop.wav plus a spoken reading of MASTER's README"],
       ["album", "[out.mp3]", "Master data/album_tracks.yml into one crossfaded record"],
       ["setlist", "<file.json> [outdir] | save <file.json>", "Render a set of takes from its recipe, or save one"],
       ["replay", "<file.provenance.json>", "Print the command that rebuilds a render"],
@@ -28588,7 +28503,7 @@ def knob_help
           WONKY_DRUM_OVERLAY=1             Wonky overlay; Camel grid on quartal_west_coast / wonky_camel
           LA_BEAT_PROGRESSION=1            Long random progressions + variable chord lengths
           RAP_VOCAL=<slug>                 Fit and mix a vocal (RAP_VOCAL_MIX, _WEIGHT, _BED_WEIGHT, _SPARKLE_DB)
-          SPEAK=0|1                        The README reading on readme-loop; SPEAK_VOICE, SPEAK_RATE
+          SPEAK=0|1                        Speech over a render; SPEAK_VOICE, SPEAK_RATE
           CHOP_CANDIDATES / CHOP_KEEP / CHOP_SPAN   Tune chop; TRACK=<slug> renders over one, CHOP_BED=1 picks by key
 
         DEVICES IN A RENDER (all off by default; each replaces or adds a real layer)
@@ -36528,10 +36443,6 @@ DISPATCH = {
   # bars of each named style finishes in minutes. It is no longer what a bare
   # invoke gives you, because "the demo" means the full catalogue.
 "showcase" => -> { showcase_demo! },
-# What a bare invoke used to do: loop.wav plus a spoken reading of MASTER's
-# README. Kept reachable by name rather than deleted -- it is the one path
-# that exercises the speech overlay end to end.
-"readme-loop" => -> { readme_loop! },
   # demo_command_bars reads USER_PINNED_ENV, not ENV, for the bar count in all
   # three demo commands: apply_best_defaults! writes BARS=32 before any of them
   # run, so a default after ENV["BARS"] would be unreachable.
@@ -36871,13 +36782,9 @@ if __FILE__ == $PROGRAM_NAME
 
   cmd = ARGV.shift
   if cmd.nil?
-    # Bare invoke renders the catalogue.
-    #
-    # It used to render loop.wav plus a spoken reading of MASTER's README, which
-    # answers a question nobody asks of a beat engine. The catalogue is what
-    # this program is for: nineteen pieces, seven off records and twelve it
-    # wrote, every sound synthesised. `readme_loop` still reaches the old
-    # behaviour by name, and `live` is the version that plays instead of
+    # Bare invoke renders the catalogue, because the catalogue is what this
+    # program is for: nineteen pieces, seven off records and twelve it wrote,
+    # every sound synthesised. `live` is the version that plays instead of
     # writing.
     Bed.catalogue!
   elsif render_output_path?(cmd) && !DISPATCH.key?(cmd)
