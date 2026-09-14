@@ -86,11 +86,40 @@ class TestOllamaSender < Minitest::Test
       assert_equal 24, session.costs.first[:tokens]
       assert_in_delta 0.0, session.costs.first[:amount], 0.0001, "local inference costs nothing"
       assert(bus.events.any? { |name, _| name == "llm:cost" })
+      done = bus.events.find { |name, _| name == "llm:call_complete" }.last
+      assert_equal [19, 5], [done[:tokens_in], done[:tokens_out]]
       # The prefix is stripped and the system prompt leads, or Ollama answers as
       # a model called `ollama:llama3`.
       sent = stub.requests.first
       assert_equal "llama3:latest", sent["model"]
       assert_equal %w[system user], sent["messages"].map { |row| row["role"] }
+    end
+  end
+
+  # A small model broke the effect JSON at temperature 0.8 in a 4k window
+  # that dropped the transcript's head. A schema-bound call is held to the
+  # schema, decodes at 0, keeps the model loaded and sizes its window.
+  def test_a_schema_bound_call_sends_format_options_and_keep_alive
+    body = JSON.generate("message" => { "content" => "{}" }, "done" => true, "eval_count" => 1)
+    with_stub(body:) do |sender, _session, _bus, stub|
+      long = "x" * 40_000
+      sender.send(:send_ollama, "ollama:gemma3:4b", [{ role: "user", content: long }], sys: "", format: { type: "object" })
+
+      sent = stub.requests.first
+      assert_equal({ "type" => "object" }, sent["format"])
+      assert_equal 0, sent.dig("options", "temperature")
+      assert_equal 512, sent.dig("options", "num_predict")
+      assert_operator sent.dig("options", "num_ctx"), :>=, 10_000, "a 10k-token prompt needs more than the 4k default"
+      refute_nil sent["keep_alive"]
+    end
+  end
+
+  def test_a_cloud_model_is_asked_without_a_schema
+    body = JSON.generate("message" => { "content" => "ok" }, "done" => true)
+    with_stub(body:) do |sender, _session, _bus, stub|
+      sender.send(:send_ollama, "ollama:glm-5.3-flash:cloud", [{ role: "user", content: "hi" }], sys: "", format: { type: "object" })
+
+      assert_nil stub.requests.first["format"]
     end
   end
 

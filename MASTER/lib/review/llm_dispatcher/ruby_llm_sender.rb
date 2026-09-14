@@ -12,8 +12,8 @@ module Master
 
         private
 
-        def send_ruby_llm(selected_model, messages, sys:, stream:, image: nil, temperature: nil, &blk)
-          chat_session = build_chat_session(selected_model, messages, sys:, image:, temperature:)
+        def send_ruby_llm(selected_model, messages, sys:, stream:, image: nil, temperature: nil, format: nil, &blk)
+          chat_session = build_chat_session(selected_model, messages, sys:, image:, temperature:, format:)
           last_text = (messages.last || {})[:content].to_s
           ask_arg, temp_file = build_ask_arg(last_text, image)
 
@@ -32,7 +32,7 @@ module Master
           end
         end
 
-        def build_chat_session(selected_model, messages, sys:, image:, temperature: nil)
+        def build_chat_session(selected_model, messages, sys:, image:, temperature: nil, format: nil)
           # A context copies the configuration, so the key this call sends is the key
           # it started with. KeyRotator swaps the global key under rule groups that
           # run in threads, and a shared config handed that swap to calls in flight.
@@ -45,7 +45,11 @@ module Master
             chat_session.add_message(role: message_entry[:role].to_s, content: message_entry[:content].to_s)
           end
 
-          available_tools = llm_tools(selected_model)
+          # The same contract the local tier holds a model to, wherever the
+          # registry says the model can take it; elsewhere the caller's parser is
+          # the only check, as it always was.
+          chat_session.with_schema(format) if format && structured_output?(selected_model)
+          available_tools = format ? [] : llm_tools(selected_model)
           unless available_tools.empty?
             chat_session.with_tools(*available_tools)
             cap_tool_rounds(chat_session)
@@ -205,9 +209,17 @@ end)
           @bus&.publish("llm:transparency", model:, cost:, tokens:, estimated:, line:)
         end
 
+        def structured_output?(model)
+          info = Master::Review::LLMDispatcher.model_info(model)
+          info.respond_to?(:structured_output?) && info.structured_output?
+        end
+
+        # A schema-bound reply arrives parsed. Hash#to_s is Ruby's inspect, which
+        # no JSON parser reads, so it goes back out as the JSON it came in as.
         def extract_response(reply, selected_model)
           return reply.to_s unless reply.respond_to?(:content)
-          content = reply.content.to_s
+          content = reply.content
+          content = content.is_a?(Hash) || content.is_a?(Array) ? JSON.generate(content) : content.to_s
           thinking = reply.respond_to?(:thinking) ? reply.thinking&.text.to_s.strip : ""
           if NEMOTRON3_RE.match?(selected_model) && !thinking.empty?
             return content.empty? ? thinking : "#{content}\n\n<think>\n#{thinking}\n</think>"

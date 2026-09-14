@@ -114,6 +114,19 @@ class TestKeylessRouting < Minitest::Test
 
   # Offline with no OLLAMA_BASE_URL the daemon is still asked, and a model
   # pulled outside models.yml ranks after the configured ones it holds.
+  # Offline, a :cloud tag needs the network the session found missing, and a
+  # model larger than the machine pages for every token.
+  def test_local_models_offer_only_what_runs_on_this_machine
+    router = Master::CLI::Routing::ModelRouter.new(config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT)
+    router.define_singleton_method(:ollama_installed_models) { %w[glm-5.3-flash:cloud gemma3:4b gemma4:26b llama3:latest] }
+    router.instance_variable_set(:@ollama_sizes, { "glm-5.3-flash:cloud" => 317, "gemma3:4b" => 3_338_801_804,
+                                                   "gemma4:26b" => 18_604_148_513, "llama3:latest" => 4_661_224_676 })
+
+    Master::Core::Memory.stub(:host_memory_mb, 8192) do
+      assert_equal %w[ollama:llama3 ollama:gemma3:4b], router.local_models
+    end
+  end
+
   def test_local_models_rank_what_the_daemon_holds_without_the_env_gate
     ENV.delete("OLLAMA_BASE_URL")
     router = Master::CLI::Routing::ModelRouter.new(

@@ -137,6 +137,13 @@ module Master
       api_key_specs.any? { |_attr, env_var, minimum| key_present?(ENV[env_var], minimum) }
     end
 
+    # A local model needs no key. Offline, the session pins one, and /model
+    # local or MASTER_MODEL=ollama:… chooses one; refusing those for want of a
+    # provider key sent a keyless laptop with Ollama running to "no key".
+    def llm_reachable?(model = nil)
+      [model, ENV["MASTER_MODEL"]].any? { |id| id.to_s.start_with?("ollama:", "ollama/") } || any_api_key_present?
+    end
+
     def context_window(model = nil, root: ROOT)
       entry = provider_models(root:).values.find do |candidate|
         candidate.is_a?(Hash) && candidate["id"].to_s == model.to_s
@@ -157,7 +164,16 @@ module Master
 
       "I'm not wired to any LLM yet. Install Antigravity CLI (agy) or set OPENROUTER_API_KEY / XAI_API_KEY in " \
         "~/.config/master/env (or /etc/master.env on OpenBSD) and restart. " \
+        "Or run a local model: #{local_model_install_hint}, then /model local. " \
         "Or enable keyless mode: MASTER_KEYLESS=1 (browser chat at zero cost)."
+    end
+
+    # Termux packages Ollama for arm64 phones, where 1B to 3B models are what
+    # the memory holds.
+    def local_model_install_hint
+      return "pkg install ollama, ollama serve &, ollama pull qwen3.5:0.8b" if ENV["PREFIX"].to_s.include?("com.termux")
+
+      "ollama pull gemma3:4b"
     end
 
     private

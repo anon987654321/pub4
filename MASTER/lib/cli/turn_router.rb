@@ -176,10 +176,9 @@ module Master
       end
 
       def casual_reply(text, container:, felt_sense: nil, on_chunk: nil, image: nil)
-        return Master::Result.err(Master.no_api_key_message, category: :no_api_key) unless Master.any_api_key_present?
-
         agent = container[:agent]
         return Master::Result.err("agent unavailable", category: :infrastructure) unless agent
+        return Master::Result.err(Master.no_api_key_message, category: :no_api_key) unless Master.llm_reachable?((agent.model if agent.respond_to?(:model)))
 
         result = agent.call({ message: text, on_chunk:, felt_sense:, task_type: "chat", image: })
         return result if result.is_a?(Master::Result::Err)
@@ -196,7 +195,9 @@ module Master
         # casual_reply, but run_fold is also reachable via dispatch_slash when
         # Intake classifies input as :llm. The Fold can exec; visitors cannot.
         return Master::Result.err("fold: not available to visitors", category: :policy) if visitor?
-        return Master::Result.err(Master.no_api_key_message, category: :no_api_key) unless Master.any_api_key_present?
+        unless Master.llm_reachable?(container[:agent]&.model)
+          return Master::Result.err(Master.no_api_key_message, category: :no_api_key)
+        end
 
         Master::Trace::Dmesg.under("fold0") do
           root, risk = assess_fold_risk(goal, container:)
