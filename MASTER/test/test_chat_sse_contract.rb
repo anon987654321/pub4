@@ -35,12 +35,6 @@ class TestChatSseContract < Minitest::Test
     assert_includes enhance, "with_master_fiber"
   end
 
-  def test_cable_rejects_an_empty_web_token
-    source = File.read(File.join(WEB_ROOT, "app", "channels", "application_cable", "connection.rb"))
-    assert_includes source, "return false if tok.empty?"
-    refute_includes source, "return true if tok.empty?"
-  end
-
   def test_visitor_sse_strips_conversation_as_well_as_job_id
     source = File.read(File.join(WEB_ROOT, "app", "controllers", "events_controller.rb"))
     assert_includes source, ':conversation, "conversation"'

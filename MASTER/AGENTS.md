@@ -222,8 +222,9 @@ and never report a check as done without its output.
 
 **A census has more than one end, and the tree has four.** A gem is used by the
 gems that require it in `Gemfile.lock` as well as by code: `tty-prompt` needs
-`tty-reader`, which needs `wisper`. Every bus topic has a consumer, because
-`web/config/initializers/cable_bridge.rb` subscribes `"*"`; published and never
+`tty-reader`, which needs `wisper`. Every bus topic has a consumer while the
+face is open, because `web/app/controllers/events_controller.rb` subscribes
+`"**"`; published and never
 subscribed is all noise, and only subscribed and never published is worth
 reading. An env var set by nobody in `MASTER/` may be set in `RAILS/` or
 `OPENBSD/`. And before recording an orphan, ask what it is a second copy of —

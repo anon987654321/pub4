@@ -2482,7 +2482,6 @@ runtime:
   - cross_pool_influence
   - paralinguistic_tags
   - pressure_sparkline
-  - actioncable_fallback
   - emotional_timeline
   - council_room_ui
   - face_micro_interactions

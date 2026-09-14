@@ -5,11 +5,15 @@ Rails.application.config.x.master_container = nil
 Rails.application.config.x.master_container_mutex = Mutex.new
 Rails.application.config.x.master_bootstrap_started = false
 
+# The test suite stubs the container in its setup. A real one built at boot
+# lands on config.x whenever its thread finishes, over whatever stub the test
+# then running installed, so a test of the warming path would read a live
+# container or not depending on how long the boot took.
 Rails.application.config.after_initialize do
   next if MasterContainerLoader.asset_task?
 
   MasterContainerLoader.warm_shared_namespace!
-  MasterContainerLoader.rearm!
+  MasterContainerLoader.rearm! unless Rails.env.test?
 end
 
 module MasterContainerLoader
@@ -71,8 +75,9 @@ module MasterContainerLoader
     nil
   end
 
-  # The asset-task guard sits here as well as in after_initialize because
-  # cable_bridge.rb calls ensure! from its own after_initialize thread. rc_pre
+  # The asset-task guard sits here as well as in after_initialize because every
+  # path to a container ends in ensure!, including rearm! from
+  # ApplicationController, so the guard cannot be walked around. rc_pre
   # runs assets:precompile as root, so a container built there spawns
   # tts-worker as root and leaves .master/tts-worker-*.log root-owned, which
   # the master user then cannot write.

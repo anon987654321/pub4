@@ -773,8 +773,8 @@ class TestWebUI < Minitest::Test
   # which reads that pipe -- blocks forever on a precompile that already exited.
   # That is master unable to start at all, from a file that looks fine.
   #
-  # ensure! is called directly by cable_bridge.rb's thread too, so the guard is
-  # proved on ensure! itself. The loader runs in a child process under a stub
+  # Every path to a container ends in ensure!, so the guard is proved on ensure!
+  # itself. The loader runs in a child process under a stub
   # Rails whose TtsSupervisor exits 3 when called; the second run, with no asset
   # task in ARGV, proves the stub is reached at all.
   def test_container_does_not_boot_during_an_assets_task

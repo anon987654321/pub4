@@ -4,7 +4,6 @@ Rails.application.routes.draw do
   root "chat#index"
   get "dashboard", to: "dashboard#index"
   get "dashboard/live", to: "dashboard#live"
-  mount ActionCable.server => "/cable"
   get  "chat/message",  to: "chat#message"
   post "chat/message",  to: "chat#message"
   post "chat/photo",    to: "chat#photo"

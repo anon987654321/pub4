@@ -508,7 +508,7 @@ the face and the server cannot resolve a voice differently.
 state enum, a unified timestamped event stream, a synchronisation budget with
 golden traces, and gates matching browser state names against server ones
 all measure a gap the audio clock closes. The event bus forwards every topic
-to the browser through the `cable_bridge` wildcard, so a state "with no
+to the browser through the `/events/stream` wildcard, so a state "with no
 browser representation" cannot be found by comparing names. Pause-length and
 phrase-length distributions, GPU frame-time telemetry, thermal detection and
 an hour-long soak test have no reader, on a face whose one operator sees it

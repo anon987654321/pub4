@@ -218,8 +218,6 @@
 
   let eventSource = null;
   let sseErrorCount = 0;
-  let cableSocket = null;
-  let cableIdent = null;
   const COUNCIL_ROTATOR = ["Architect", "Skeptic", "Pragmatist", "Security", "Mentor"];
   let councilRotatorIdx = 0;
   let councilRotatorTimer = null;
@@ -239,31 +237,6 @@
     if (!councilRotatorTimer) return;
     clearInterval(councilRotatorTimer);
     councilRotatorTimer = null;
-  }
-
-  function connectCableFallback() {
-    if (cableSocket || !window.WebSocket) return;
-    const proto = location.protocol === "https:" ? "wss:" : "ws:";
-    cableSocket = new WebSocket(`${proto}//${location.host}/cable`);
-    cableIdent = JSON.stringify({ channel: "MasterChannel" });
-    cableSocket.onopen = () => {
-      cableSocket.send(JSON.stringify({ command: "subscribe", identifier: cableIdent }));
-      emitVisual("events:connected", { topology: "papua-mask", entropy: 0.16, confidence: 0.88, mode: "cable" });
-    };
-    cableSocket.onmessage = (message) => {
-      try {
-        const frame = JSON.parse(message.data);
-        if (frame.type === "ping") return;
-        if (frame.type === "confirm_subscription") return;
-        const payload = frame.message;
-        if (!payload) return;
-        handleRuntimeEvent(payload.event ? { ...payload, type: payload.event } : payload);
-      } catch (_error) {
-        window.MASTER_LOG?.warn?.("visual_bridge:cable_frame", _error);
-      }
-    };
-    cableSocket.onclose = () => { cableSocket = null; };
-    cableSocket.onerror = () => { try { cableSocket.close(); } catch (err) { window.MASTER_LOG?.warn?.("visual_bridge:cable_close", err); } cableSocket = null; };
   }
 
   function disconnectSse() {
@@ -299,11 +272,7 @@
       document.body.dataset.linkQuiet = "1";
       window._chatOnDmesg?.("link quiet");
       disconnectSse();
-      if (sseErrorCount >= 3 && window.MASTER_RUNTIME?.enhancements?.includes?.("actioncable_fallback")) {
-        connectCableFallback();
-      } else {
-        setTimeout(connectSse, Math.min(8000, 500 * sseErrorCount));
-      }
+      setTimeout(connectSse, Math.min(8000, 500 * sseErrorCount));
     };
   }
 

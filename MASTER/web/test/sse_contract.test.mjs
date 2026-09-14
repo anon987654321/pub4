@@ -108,7 +108,7 @@ test("visual_bridge owns runtime SSE connection", () => {
 test("visual_bridge logs parse failures instead of silent catch", () => {
   const bridge = readFileSync(join(publicDir, "visual_bridge.js"), "utf8");
   assert.match(bridge, /MASTER_LOG\?\.warn\?\.\("visual_bridge:sse_frame"/);
-  assert.match(bridge, /MASTER_LOG\?\.warn\?\.\("visual_bridge:cable_frame"/);
+  assert.doesNotMatch(bridge, /\/cable\b|WebSocket/, "/events/stream is the bridge's one pipe");
 });
 
 test("chat index keeps THREE behind the primer tap", () => {
