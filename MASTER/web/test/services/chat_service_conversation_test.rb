@@ -55,4 +55,14 @@ class ChatServiceConversationTest < ActiveSupport::TestCase
     assert_equal ours, @stream.writes
     refute @stream.writes.join.include?("theirs.rb")
   end
+
+  test "the model event names the model that answered, not the one routed first" do
+    Fiber[:master_conversation] = @mine
+    @bus.publish("llm:request", model: "routed/first-choice", tokens: 3)
+    @bus.publish("llm:response", model: "fallback/answered", success: true, tokens_approx: 9)
+
+    models = @stream.writes.select { |chunk| chunk.start_with?("event: model") }
+    assert_equal 1, models.size
+    assert_includes models.first, "fallback/answered"
+  end
 end

@@ -118,7 +118,9 @@ class ChatService
     subscribe("tool:before") { |ev| write_json_event("tool", tool_payload(ev)) }
     subscribe("react:tool_calls") { |ev| write_json_event("tool_stack", stack_payload(ev)) }
     subscribe("agent:mood") { |ev| write_event("mood", ev[:mood] || ev[:value]) }
-    subscribe("llm:request") { |ev| write_event("model", ev[:model]) }
+    # llm:response, not llm:request: the router names a first choice, and the
+    # fallback chain can hand the turn to another model before one answers.
+    subscribe("llm:response") { |ev| write_event("model", ev[:model]) }
     subscribe("ctx:footer") { |ev| write_json_event("ctx_footer", ctx_footer_payload(ev)) }
     subscribe("compaction:done") { |ev| write_compaction_event(ev) }
     subscribe("phantom:detected") { |ev| write_json_event("phantom", phantom_payload(ev)) }
