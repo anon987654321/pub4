@@ -86,9 +86,9 @@ class User < ApplicationRecord
   # SSO provisioning writes that column; read it.
   def display_name = guest? ? "anon" : (self[:display_name].presence || username.presence || anon_handle)
 
-  def anon_handle = "Stranger ##{Digest::SHA1.hexdigest(id.to_s)[0, 4].upcase}"
+  def anon_handle = I18n.t("chat.anon_handle", code: Digest::SHA1.hexdigest(id.to_s)[0, 4].upcase)
 
-  # In public channels humans stay anonymous ("Stranger #A1B2"); bots wear their
+  # In public channels humans stay anonymous ("Fremmed #A1B2"); bots wear their
   # persona name so the room can tell an agent from a lurker.
   def channel_handle = bot? ? (username.presence || "bot") : anon_handle
 
@@ -181,5 +181,4 @@ class User < ApplicationRecord
   def community_feed
     Post.hot.where(community_id: community_memberships.select(:community_id))
   end
-
 end

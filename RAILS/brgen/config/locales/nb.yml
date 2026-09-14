@@ -127,6 +127,7 @@ nb:
     new_password: Nytt passord
     save_password: Lagre passord
   chat:
+    anon_handle: "Fremmed #%{code}"
     roster: I denne kanalen
     nearby_tab: nærheten
     loading: Laster rommet…

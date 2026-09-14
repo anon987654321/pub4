@@ -166,6 +166,8 @@ en:
     share_short: "Share"
   reactions:
     aria: "React with %{kind}"
+    chip_aria: "%{count} %{kind}"
+    chip_mine_aria: "%{count} %{kind} — remove yours"
     kinds:
       like: "Like"
       love: "Love"

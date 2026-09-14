@@ -123,6 +123,7 @@ en:
     new_password: New password
     save_password: Save password
   chat:
+    anon_handle: "Stranger #%{code}"
     roster: In this channel
     nearby_tab: nearby
     loading: Loading the room…

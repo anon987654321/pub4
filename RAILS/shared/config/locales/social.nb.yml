@@ -164,6 +164,8 @@ nb:
     share_short: "Del"
   reactions:
     aria: "Reager med %{kind}"
+    chip_aria: "%{count} %{kind}"
+    chip_mine_aria: "%{count} %{kind} — fjern din"
     kinds:
       like: "Liker"
       love: "Elsker"
