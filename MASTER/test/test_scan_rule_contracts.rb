@@ -235,6 +235,22 @@ class TestScanRuleContracts < Minitest::Test
     assert_finding rule("TRAILING_COMMAS"), code, "items.rb", "missing trailing comma"
   end
 
+  # An app on rubocop-rails-omakase fails bin/ci on the comma; a tree that sets
+  # the comma style is still asked for it.
+  def test_trailing_commas_defers_to_the_rubocop_config_that_governs_the_file
+    code = "ITEMS = [\n  \"one\",\n  \"two\"\n]\n"
+    Dir.mktmpdir do |root|
+      { "app" => "inherit_gem: { rubocop-rails-omakase: rubocop.yml }\n",
+        "engine" => "inherit_gem: { rubocop-rails-omakase: rubocop.yml }\n" \
+                    "Style/TrailingCommaInArrayLiteral:\n  EnforcedStyleForMultiline: comma\n" }.each do |name, config|
+        FileUtils.mkdir_p(File.join(root, name, "lib"))
+        File.write(File.join(root, name, ".rubocop.yml"), config)
+      end
+      assert_empty rule("TRAILING_COMMAS").check(code, path: File.join(root, "app", "lib", "items.rb"))
+      refute_empty rule("TRAILING_COMMAS").check(code, path: File.join(root, "engine", "lib", "items.rb"))
+    end
+  end
+
   def test_config_hierarchy_rule_flags_deep_duplicate_yaml
     code = <<~YAML
       app:

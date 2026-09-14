@@ -69,6 +69,28 @@ module Master
             gap = src.byteslice(last.end_offset, closing.start_offset - last.end_offset).to_s
             !gap.sub(/#.*/, "").include?(",")
           end
+
+          # Whether the RuboCop configuration that governs a file forbids the
+          # comma. brgen, amber and bsdports inherit rubocop-rails-omakase, which
+          # enables the trailing-comma cops at their default, no_comma, and set
+          # nothing over it; their bin/ci fails on the comma this rule asks for.
+          # shared and MASTER set EnforcedStyleForMultiline: comma. The nearest
+          # .rubocop.yml above the file decides, read once per directory.
+          def self.rubocop_forbids_trailing_comma?(path)
+            @rubocop_configs ||= {}
+            dir = File.dirname(File.expand_path(path.to_s))
+            until dir == File.dirname(dir)
+              config = File.join(dir, ".rubocop.yml")
+              if File.file?(config)
+                return @rubocop_configs[config] ||= begin
+                  text = File.read(config)
+                  text.include?("rubocop-rails-omakase") && !text.include?("EnforcedStyleForMultiline: comma")
+                end
+              end
+              dir = File.dirname(dir)
+            end
+            false
+          end
         end
 
         # Retired registry twins — each lives once, in law/:
@@ -248,6 +270,8 @@ module Master
           fires: %(LIST = [\n  "one"\n]\n),
           does_not_fire: %(LIST = [\n  "one",\n]\n),
           description: "trailing commas in multi-line collections" do |src, path:|
+          next [] if RubyRuleSupport.rubocop_forbids_trailing_comma?(path)
+
           parsed = Prism.parse(src)
           next [] if parsed.failure?
 
