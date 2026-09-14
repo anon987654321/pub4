@@ -1,14 +1,18 @@
 # frozen_string_literal: true
 
 require_relative "../../trace/self_evolution_trigger"
-require_relative "../../trace/snapshot/publisher"
 
 module Master
   module CLI
     module CommandRegistry
       module_function
 
-      SKIP_SEGS = Master::Trace::Snapshot::Publisher::SKIP_SEGS
+      # Directories the boot tree never descends into: dependencies, build output
+      # and runtime state.
+      SKIP_SEGS = %w[
+        .git .master vendor tmp var node_modules .bundle coverage log dist knowledge
+        runtime .venv renders storage quarantine .cache
+      ].freeze
 
       COMMIT_USAGE = "usage: /commit <path>... --confirm — name what goes in. Other sessions " \
                      "edit this checkout, so a commit that sweeps up every change is refused."
