@@ -1,5 +1,5 @@
 :root {
-  /* The mark's own ramp (f75050a6d). Display type does not read the
+  /* The Caprasimo brand ramp (f75050a6d). Display type does not read the
      body ladder anywhere in this tree; these four steps are the mark's own
      scale, values unchanged from the literals they replace. */
   --brand-mark: 200px;
@@ -10,8 +10,18 @@
 
 /* Amber logo — the wordmark on a swoosh, an animated radial gradient and white
    retro lines. Geometry and motion match the canonical logo HTML (viewBox
-   1000×500). The word is set in the one family every app uses, so the mark
-   downloads nothing. */
+   1000×500).
+
+   Caprasimo is amber's brand mark, and the wordmark is the only thing set in
+   it: body, headings, UI and the error pages read the single sans stack in
+   var(--font). */
+@font-face {
+  font-family: "Caprasimo";
+  src: url("/fonts/caprasimo-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
 @property --gradient-x {
   syntax: "<percentage>";
@@ -39,7 +49,7 @@
    one breakpoint, from a token swap that looked like a no-op because at the
    default root size 0.75rem is exactly 12px. */
 .amber-logo-svg .amber-logo-word {
-  font-family: var(--font);
+  font-family: "Caprasimo", Arial, sans-serif;
   font-size: var(--brand-title);
 }
 
@@ -132,7 +142,7 @@
   }
 }
 
-/* Persistent top-nav instance of the amber mark. Hero sizing above is
+/* Persistent top-nav instance of the Caprasimo mark. Hero sizing above is
    500px tall; chrome has to sit in a bar. The home link is width:auto so it
    does not inherit the hero's `a { width: 100% }`. Word size is in viewBox
    units and is raised here so "amber®" still reads at 52px tall. */

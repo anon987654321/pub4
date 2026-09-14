@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-# Contract: Amber logo geometry and gradient match the canonical swoosh design.
+# Contract: Amber logo geometry and gradient match the canonical Caprasimo swoosh design.
 class LogoContractTest < ActionView::TestCase
   test "logo partial matches canonical swoosh path and white hairlines" do
     render partial: "shared/logo", locals: { id_prefix: "test" }
@@ -26,10 +26,7 @@ class LogoContractTest < ActionView::TestCase
     assert_includes html, 'stroke-width="0.5"'
     assert_includes html, 'stroke-width="4"'
     assert_includes html, 'd="M50,238 C200,158 400,258 600,158 S850,218 950,188"'
-    # One family in every app: the word takes var(--font) from _brand.scss and
-    # the markup names no face of its own.
-    refute_includes html, "font-family"
-    refute_includes html, "Caprasimo"
+    assert_includes html, "Caprasimo"
   end
 
   test "logo uses unique ids per instance" do
@@ -44,7 +41,7 @@ class LogoContractTest < ActionView::TestCase
     assert_includes second, "b-text-mask"
   end
 
-  test "chrome uses the amber swoosh mark, not the shared brgen wordmark" do
+  test "chrome uses the Caprasimo mark, not the shared brgen wordmark" do
     layout = Rails.root.join("app/views/layouts/application.html.erb").read
 
     assert_includes layout, 'render "shared/logo"'
