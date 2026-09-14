@@ -17,7 +17,9 @@ require_relative "config_drift_gate"
 # Zone data is not mirrored. /var/nsd/zones/master holds 61 zones, and the signed
 # artifacts (*.zone.signed, K*.key, K*.ds) are regenerated on every re-sign, so a
 # copy would put a churning DNS into every git diff while the nameserver remains
-# the source of truth. DECISIONS.md carries the argument.
+# the source of truth. An audit that finds signed zones or keys absent from git
+# is describing this choice, not a gap. The unsigned *.zone files are different:
+# bin/render_dns.rb generates them and they are committed, so --check can compare.
 SOURCES = (
   VERBATIM.to_a +
   EXCLUDED.map { |repo_rel| [repo_rel, "/#{repo_rel}"] } +

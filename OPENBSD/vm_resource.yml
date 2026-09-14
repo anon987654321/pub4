@@ -1,6 +1,7 @@
 # vm23 resource budget — 1 vCPU, ~1 GiB RAM (OpenBSD Amsterdam).
 # Keep aggregate steady-state under ~60% CPU and ~85% RAM to avoid host complaints.
-# The only environment: DECISIONS.md, "No staging environment".
+# vm23 is the only environment; OPENBSD/CLAUDE.md, "Refused, and why", says why
+# there is no staging copy.
 
 profile: vm23_small
 cpus: 1

@@ -66,6 +66,9 @@ else
   failures << "missing OPENBSD/vps_console.exp"
 end
 
+# Nine two-line shims, each delegating to vps_console.exp. This list names every
+# one and fails when one stops delegating, which is what keeps
+# require_console_risk_ack unbypassable; folding them away drops that proof.
 %w[vps_console_short vps_console_status vps_console_probe vps_console_fix_key
    vps_console_start_install vps_console_poll_install vps_console_install
    vps_console_sync_and_install vps_drop_install].each do |name|

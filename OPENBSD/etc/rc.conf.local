@@ -1,4 +1,4 @@
-# vm23_small: boot core only. rcctl OWNS this file and re-sorts it — one comment line survives, prose does not. Rationale: OPENBSD/DECISIONS.md.
+# vm23_small: boot core only. rcctl OWNS this file and re-sorts it — one comment line survives, prose does not.
 httpd_flags=
 nsd_flags=
 pf=YES

@@ -71,8 +71,8 @@ module Deploy
     # Files that must not name a retired app outside a comment: the scripts and
     # tooling that run, and the config files a retired app leaves itself in. Every
     # entry is a live file; the retired thing is the name. On 2026-08-12, two months after
-    # DECISIONS.md recorded "baibl + blognet removed — apps, relayd, acme, nsd,
-    # litestream, rc.d, inventories", vm23 still had both users, both home
+    # the repo recorded baibl and blognet removed — apps, relayd, acme, nsd,
+    # litestream, rc.d, inventories — vm23 still had both users, both home
     # directories, both rc.d scripts, both /etc/*.env files, both login classes,
     # both certificate symlinks, both DNS zones, and blognet in litestream.yml.
     # The config half of this list is where those leftovers lived.

@@ -63,6 +63,9 @@ VERBATIM = {
   "etc/doas.conf" => "/etc/doas.conf",
   "etc/pf.conf" => "/etc/pf.conf",
   "etc/httpd.conf" => "/etc/httpd.conf",
+  # rcctl enable/disable rewrites this file and sorts every line, so prose in it
+  # scrambles on the next rcctl write rather than on install, and a run straight
+  # after an install compares clean.
   "etc/rc.conf.local" => "/etc/rc.conf.local",
   "etc/login.conf" => "/etc/login.conf",
   "etc/newsyslog.conf" => "/etc/newsyslog.conf",

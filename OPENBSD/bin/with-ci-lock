@@ -31,11 +31,12 @@ end
 
 # An override is honoured only when its directory is not world-writable.
 #
-# The path used to be caller-chosen under /var/tmp and then chmod'ed by root,
-# which is a symlink waiting to happen — any local account could plant one at
-# the name and redirect the chmod. Checking the directory checks the actual
-# property rather than hardcoding one blessed path, so tests can point this at
-# a private tmpdir without reopening the hole.
+# A caller-chosen path under /var/tmp that root then chmods is a symlink waiting
+# to happen: any local account plants one at the name and redirects the chmod.
+# Checking the directory checks that property rather than hardcoding one blessed
+# path, so tests can point this at a private tmpdir without reopening the hole.
+# lib/ci_lock.sh is stricter and honours an override only inside /var/db/pub4;
+# both default to /var/db/pub4/ci.lock, so production holds one mutex.
 def lock_path
   requested = ENV["PUB4_CI_LOCK"].to_s
   return DEFAULT_LOCK if requested.empty?

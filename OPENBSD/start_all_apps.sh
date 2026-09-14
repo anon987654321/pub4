@@ -15,6 +15,9 @@ case ${1:-} in
   ;;
 esac
 
+# Named outright, as the rc.d scripts name it: this runs as root from rc(8) or by
+# hand with no caller environment, so a PUB4_ROOT would have to be set here too.
+# Production has one checkout, and a worktree is never a deploy target.
 ROOT=/home/dev/pub4
 ALL_APPS_FLAG=/var/db/pub4_all_apps
 APPS=$(ruby34 -ryaml -e 'puts YAML.safe_load_file(ARGV[0]).fetch("apps").keys.join(" ")' "$ROOT/RAILS/apps.yml")
@@ -30,6 +33,8 @@ for svc in $SERVICES; do
   rcctl start "$svc" 2>/dev/null || true
 done
 
+# Not a race: each app's rc.d start blocks in its own /up wait, up to 300
+# seconds, before it returns, so this restart follows every backend's wait.
 sleep 5
 rcctl restart relayd
 

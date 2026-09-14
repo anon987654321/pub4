@@ -407,7 +407,7 @@ end
 
 if !on_box
   # /etc/relayd.conf is on vm23; the repo copy is deliberately not a substitute
-  # (OPENBSD/DECISIONS.md and the relayd entries in RUNBOOK.md).
+  # (the relayd entries in RUNBOOK.md).
 elsif File.file?("/etc/relayd.conf")
   relayd_conf = File.read("/etc/relayd.conf")
   unless relayd_conf.include?("forward to <master>") && relayd_conf.include?('check http "/up"')

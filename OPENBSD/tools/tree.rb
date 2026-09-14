@@ -126,7 +126,7 @@ class ProjectTree
 
     if Dir.exist?(File.join(master, "core"))
       note = Dir.exist?(File.join(master, "kernel")) ? "core/ + kernel/" : "core/ only (kernel/ was renamed to core/)"
-      line(:ok, "#{note} — two spines, permanent by DECISIONS.md, not pending a cutover")
+      line(:ok, "#{note} — two spines, permanent, not pending a cutover")
     end
 
     scopes = rule_scopes(master)

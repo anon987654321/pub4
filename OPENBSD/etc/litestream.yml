@@ -1,7 +1,9 @@
 # Inert by decision. litestream is not in OpenBSD ports, so vm23 has no binary,
 # and the service is out of pkg_scripts and rcctl-disabled. Do not enable it.
-# The backup is OPENBSD/bin/dr-pull. DECISIONS.md, "rcctl owns rc.conf.local,
-# and litestream is off the boot list", carries the argument.
+# Enabled, it fails at every boot and keeps `rcctl ls failed`, the list daily.out
+# prints under services that should be running, permanently non-empty, which
+# teaches everyone to skim the list a real outage announces itself in. The
+# backup is OPENBSD/bin/dr-pull.
 #
 # The config stays correct for the day someone builds litestream from Go and
 # adds an off-host replica. Each `dbs` entry names one database file, not a
