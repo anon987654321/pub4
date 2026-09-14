@@ -113,6 +113,27 @@ class MarketplaceVariantsTest < ActionDispatch::IntegrationTest
 
     get marketplace.listing_variants_path(@listing)
     assert_response :forbidden
+
+    patch marketplace.listing_variant_path(@listing, @large), params: { variant: { position: 1 } }
+    assert_response :forbidden
+  end
+
+  # What the sortable list sends when a row is dropped: that row's new 1-based
+  # place, and nothing about its siblings.
+  test "the seller drags a version to a new place and the others close up around it" do
+    small = variant(size: "S", stock: 1)
+    sign_in_as(@seller)
+
+    get marketplace.listing_variants_path(@listing)
+    assert_select "ul[data-controller=sortable] li[data-sortable-update-url='#{marketplace.listing_variant_path(@listing, small)}']"
+
+    patch marketplace.listing_variant_path(@listing, small), params: { variant: { position: 1 } }
+    assert_response :no_content
+    assert_equal [ small, @medium, @large ].map(&:id), @listing.variants.ordered.pluck(:id)
+
+    patch marketplace.listing_variant_path(@listing, small), params: { variant: { position: 99 } }
+    assert_equal [ @medium, @large, small ].map(&:id), @listing.variants.ordered.pluck(:id)
+    assert_equal [ 1, 2, 3 ], @listing.variants.ordered.pluck(:position)
   end
 
   test "the listing page offers the versions in stock" do

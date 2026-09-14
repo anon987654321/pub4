@@ -22,6 +22,13 @@ class Marketplace::VariantsController < Marketplace::BaseController
     end
   end
 
+  # The seller dragged one version to a new place; the buyer's size picker
+  # lists them in the same order.
+  def update
+    @listing.variants.find(params[:id]).move_to!(params.require(:variant).require(:position))
+    head :no_content
+  end
+
   def destroy
     variant = @listing.variants.find(params[:id])
     if variant.destroy

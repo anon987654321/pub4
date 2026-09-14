@@ -37,6 +37,16 @@ class Marketplace::Variant < ApplicationRecord
   def unlimited_stock? = stock.nil?
   def in_stock? = unlimited_stock? || stock.to_i.positive?
 
+  # 1-based, and every sibling renumbered around it, so two versions never
+  # share a place and a drag to the end leaves no gap.
+  def move_to!(place)
+    siblings = self.class.where(listing_id:).where.not(id:).ordered.to_a
+    siblings.insert((place.to_i - 1).clamp(0, siblings.size), self)
+    transaction do
+      siblings.each_with_index { |variant, index| variant.update_columns(position: index + 1, updated_at: Time.current) }
+    end
+  end
+
   def consume_stock!(quantity = 1)
     raise "variant is not in stock" unless in_stock?
     return if unlimited_stock?

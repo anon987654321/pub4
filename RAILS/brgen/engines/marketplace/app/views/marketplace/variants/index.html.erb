@@ -10,9 +10,11 @@
 <p class="form-help"><%= t("marketplace.variants_help") %></p>
 
 <% if @variants.any? %>
-  <ul role="list" class="variant-list">
+  <%# Drag a version to reorder it. Each row PATCHes its own new place, and
+      the buyer's size picker lists them in this order. %>
+  <ul role="list" class="variant-list" data-controller="sortable" data-sortable-resource-name-value="variant">
     <% @variants.each do |variant| %>
-      <li role="listitem">
+      <li role="listitem" data-sortable-update-url="<%= listing_variant_path(@listing, variant) %>">
         <span class="variant-label"><%= variant.label %></span>
         <span class="variant-price"><%= variant.price_display %></span>
         <span class="variant-stock">

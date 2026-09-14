@@ -17,7 +17,7 @@ Marketplace::Engine.routes.draw do
     # Public questions on the listing, answered by whoever is selling it.
     resources :questions, only: %i[create update]
     # Size and colour, the seller's side of it.
-    resources :variants, only: %i[index create destroy]
+    resources :variants, only: %i[index create update destroy]
   end
 resources :orders, only: %i[index show update] do
   # Sending it back. Offered only against a shop — see Marketplace::Return.
