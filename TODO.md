@@ -1215,6 +1215,22 @@ operator's ear.
   language tag instead of track-name regex and `VOICING=drop2`; Picardy and
   Neapolitan on Bach languages only; cap borrowed-chord surprises at one per cell.
 
+- **Which of the live player's progressions to keep.** "dilla_live.rb had some
+  nice chord progressions though (and some not so nice)" (2026-09-14). It played
+  the catalogue: the seven verified slots, then the twelve improvisations, each
+  slot on a fixed pad patch (slots 3 and 12 on `moog_bass`, 5 and 14 on `acid`,
+  9 and 18 on `poly_lead`), so a progression that sounded bad may have been its
+  patch. No record names one he liked or disliked. The indirect evidence favours
+  `db_major_minor_fall`, `pedal_e_descent` and `d_add9_soul_arc` (promoted,
+  kept takes), and among the improvisations the minor-ninth ones —
+  `dilla_planing_m9`, `dilla_maj9_walk`, `dilla_slash_pedal`,
+  `royksopp_dorian_lift` — which match the 08-31 cells he said "i like it" to.
+  Against: the two Bach rules (plain triads), the two Flying Lotus quartal
+  stacks, and slots 1 and 2 playing the same two chords back to back. His ear
+  marks the keepers; a `keep` flag per slot in `VERIFIED_PROGRESSION_SLOTS` and
+  per language in `DillaImprovisation`, with a pinned `IMPROV_SEED`, is where
+  the answer goes.
+
 ## dilla — restructuring, 1–45 — approved 2026-09-13
 
 The operator approved all forty-five ("APPROVE ALL", "dont forget to implement
