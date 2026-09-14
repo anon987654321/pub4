@@ -317,9 +317,11 @@ module Master::Core
     end
 
     # The agent may not declare success without evidence (no completion theater).
+    # A fold that only read is answering, not claiming a change; see
+    # Proof#answered_from_reads?.
     def self.evidence_for_done_rule
       Rule.new(id: :evidence_for_done, verbs: %i[done], judge: lambda { |_effect, memory|
-        next nil if memory.proof.proved?
+        next nil if memory.proof.proved? || memory.proof.answered_from_reads?
 
         Verdict::Block.new(reason: "no passing evidence on record", by: :evidence_for_done)
       })
