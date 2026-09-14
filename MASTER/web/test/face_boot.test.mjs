@@ -347,7 +347,7 @@ test("face.css meets MASTER design_rules typography and touch baselines", () => 
   assert.match(css, /"ss03"/);
   assert.match(css, /--face-bar-height:\s*44px/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
-  assert.match(css, /#chat-log[\s\S]*font:\s*12px\/1\.42/);
+  assert.match(css, /#chat-log[\s\S]*font:\s*1rem\/1\.5 var\(--font-mono\)/);
   assert.match(css, /body\.face-loading #zsh:not\(\.live\)/);
   assert.match(css, /body\[data-boot-state="ERROR"\] #zsh-status/);
 });
