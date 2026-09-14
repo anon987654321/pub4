@@ -14,7 +14,15 @@ module Master
           declare id: "CONFIG_HIERARCHY", severity: :warning, tags: %i[CONFIG HIERARCHY],
                   description: "config keys are grouped, non-duplicated, and shallow"
 
+          # A file whose shape another program's schema dictates: Rails looks a
+          # translation up by a key path that mirrors the view it serves, GitHub
+          # Actions puts a step's inputs five keys down, and npm writes its
+          # lockfile. Grouping or flattening any of them breaks the reader.
+          FOREIGN_SCHEMA = %r{/config/locales/|(?:\A|/)\.github/workflows/|package-lock\.json\z}
+
           def check(code, path:)
+            return [] if path.to_s.match?(FOREIGN_SCHEMA)
+
             ext = File.extname(path).downcase
             return json_findings(code) if ext == ".json"
             return yaml_findings(code) if %w[.yml .yaml].include?(ext)
@@ -27,16 +35,49 @@ module Master
           def yaml_findings(code)
             top = []
             findings = []
-            code.each_line.with_index(1) do |line, line_number|
-              next unless (match = line.match(/\A(\s*)([A-Za-z0-9_.-]+):/))
+            code.each_line do |line|
+              next unless (match = line.match(/\A([A-Za-z0-9_.-]+):/))
 
-              top << match[2] if match[1].size.zero?
-              depth = (match[1].size / 2) + 1
-              findings << finding(line: line_number, message: "configuration nesting depth #{depth} exceeds #{MAX_DEPTH}") if depth > MAX_DEPTH
+              top << match[1]
             end
+            findings.concat(depth_findings(code))
             findings.concat(duplicate_key_findings(code))
             findings << finding(line: 1, message: "#{top.size} top-level configuration keys — group related settings") if top.uniq.size > TOP_LEVEL_LIMIT
             findings
+          end
+
+          # Depth is the length of a key's path, which only a parser can read:
+          # indentation also grows inside a list of records, where flows.yml's
+          # `steps:` puts `get:` eight spaces in and three keys deep, and a
+          # block scalar's prose lines look like keys to a line regex. A
+          # one-line `{ name: …, status: … }` is a mapping too. One finding per
+          # key at the limit that has keys below it, at the first of those, so
+          # a list of sixty records at depth five is one shape to fix, not sixty.
+          def depth_findings(code)
+            document = Psych.parse(code)
+            return [] unless document
+
+            first_line = {}
+            walk_depth(document, []) { |path, line| first_line[path.first(MAX_DEPTH)] ||= line }
+            first_line.map do |path, line|
+              finding(line:, message: "configuration nesting depth exceeds #{MAX_DEPTH} below #{path.join(".")}")
+            end
+          rescue Psych::SyntaxError => e
+            Master::Ground::Swallow.log(e, context: "depth_findings", severity: :load_bearing)
+            []
+          end
+
+          def walk_depth(node, path, &block)
+            unless node.is_a?(Psych::Nodes::Mapping)
+              node.children&.each { |child| walk_depth(child, path, &block) }
+              return
+            end
+
+            node.children.each_slice(2) do |key, value|
+              key_path = path + [key.respond_to?(:value) ? key.value : "?"]
+              yield key_path, key.start_line + 1 if key_path.size > MAX_DEPTH
+              walk_depth(value, key_path, &block) if value
+            end
           end
 
           # A duplicate key is the same key twice in the SAME mapping, which only
@@ -97,7 +138,7 @@ module Master
           def json_depth(value)
             case value
             when Hash then 1 + value.values.map { |child| json_depth(child) }.max.to_i
-            when Array then 1 + value.map { |child| json_depth(child) }.max.to_i
+            when Array then value.map { |child| json_depth(child) }.max.to_i
             else 0
             end
           end

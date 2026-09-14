@@ -250,6 +250,32 @@ class TestScanRuleContracts < Minitest::Test
     assert_finding Rules::ConfigHierarchyRule.new, code, "config.yml", "duplicate configuration key"
   end
 
+  # Depth is a key path. A list of records and a block scalar's prose both
+  # indent without nesting, and a locale's depth is Rails' lookup scheme.
+  def test_config_hierarchy_measures_key_paths_not_indentation
+    flows = <<~YAML
+      flows:
+        - id: maps
+          steps:
+            - name: root
+              get: /
+              forbid_body:
+                - "Sign in to continue"
+          prompt: |
+            Review: boundaries
+              Coupling: interface shapes
+    YAML
+    assert_empty Rules::ConfigHierarchyRule.new.check(flows, path: "gates/data/flows.yml")
+
+    locale = "en:\n  brgen:\n    posts:\n      form:\n        title: Title\n"
+    assert_empty Rules::ConfigHierarchyRule.new.check(locale, path: "brgen/config/locales/en.yml")
+    refute_empty Rules::ConfigHierarchyRule.new.check(locale, path: "data/settings.yml")
+
+    rows = "apps:\n  brgen:\n    features:\n      core:\n" + ("        - { name: a, status: done }\n" * 3)
+    hits = Rules::ConfigHierarchyRule.new.check(rows, path: "apps.yml")
+    assert_equal ["configuration nesting depth exceeds 4 below apps.brgen.features.core"], hits.map { |h| h[:message] }
+  end
+
   def test_code_hierarchy_rule_flags_many_top_level_constants
     code = %w[Alpha Beta Gamma Delta Epsilon Zeta].map { |name| "class #{name}; end" }.join("\n")
 
