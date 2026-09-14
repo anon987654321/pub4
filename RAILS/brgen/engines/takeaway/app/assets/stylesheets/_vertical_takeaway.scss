@@ -22,6 +22,7 @@ body.vertical-takeaway {
      and 4.99 on #f2f2f2. This fill/ink split is the shape the other six
      verticals want — see TODO.md. */
   --food-dash-ink: #c62b1b;
+  --font-display: "Fraunces", var(--font);
 }
 
 /* Dark mode puts that same meta text on a dark card, where the darkened red
@@ -56,6 +57,15 @@ body.vertical-takeaway .page-header h1 {
   font-weight: var(--weight-heavy);
   letter-spacing: var(--tracking-tightest);
   color: var(--text);
+}
+
+/* The one display line on takeaway: the restaurants hero, set in Fraunces. A
+   serif carries its weight in the strokes, so it stands at 700 and at normal
+   tracking where the grotesk headings above tighten to heavy. */
+body.vertical-takeaway main#main-content > header.vertical-purpose h1 {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0;
 }
 
 body.vertical-takeaway .deal-search,

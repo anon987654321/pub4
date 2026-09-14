@@ -1,9 +1,7 @@
-/* Top offers rail. Shares the vertical's display face with the front-page hero;
-   --offer-display is kept as its own name because every rule below already
-   reads it. */
+/* Top offers rail. Set in the family face: the display face belongs to the hero
+   headline alone. */
 
 .marketplace-top-offers {
-  --offer-display: var(--font-display);
   padding: var(--space-4) 0;
 }
 
@@ -14,7 +12,7 @@
 
 .top-offers-kicker {
   margin: 0 0 var(--space-1);
-  font-family: var(--offer-display);
+  font-family: var(--font);
   font-size: var(--text-xs);
   font-weight: var(--weight-bold);
   letter-spacing: var(--tracking-wider);
@@ -24,7 +22,7 @@
 
 .top-offers-heading {
   margin: 0 0 var(--space-2);
-  font-family: var(--offer-display);
+  font-family: var(--font);
   font-size: clamp(1.35rem, 3.5vw, 1.75rem);
   font-weight: var(--weight-bold);
   letter-spacing: var(--tracking-tightest);
@@ -107,7 +105,7 @@
 
 .top-offer-title {
   margin: 0;
-  font-family: var(--offer-display);
+  font-family: var(--font);
   font-size: var(--text-base);
   font-weight: var(--weight-bold);
   letter-spacing: var(--tracking-tighter);
