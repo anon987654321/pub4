@@ -99,6 +99,7 @@ drum chops, `GROOVE_DNA=cosmogramma`, quartal voicing, dub_chamber chain.
 | `RAP_VOCAL` | Vocal slug or `0` |
 | `SONITEX` / `ANALOG_CHAIN` | Master character |
 | `STREAM_NORMALIZE` / `STREAM_LUFS` | Loudnorm target |
+| `STREAM_TRUE_PEAK` / `STREAM_LRA` | Retired, no reader: August sidecars (RELEASE's included) carry them, but each loudnorm path sets its own TP and LRA, so replaying them changes nothing |
 | `SPEAK` | TTS over beat (`0` product default) |
 | `STREAM_DRUM_ROTATE` | Cycle drum preset/pocket each stream slot |
 | `WONKY_DRUM_OVERLAY` / `DRUM_CHOPS` | Off by default (sparse soul kit) |
