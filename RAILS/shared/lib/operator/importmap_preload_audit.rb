@@ -30,8 +30,6 @@ module Operator
 #
 #   web-vitals          sampled at 1%, with a local PerformanceObserver
 #                       fallback, so 99 visitors in 100 never fetch it
-#   swiper/bundle       imported on demand by @stimulus-components/carousel,
-#                       which appears on one surface in the whole family
 #
 # @tiptap/core and @tiptap/starter-kit were here and are not any more: they
 # are vendored to shared/vendor/javascript/tiptap.js by
@@ -45,7 +43,7 @@ module Operator
 #
 # date-fns remains the standing example of a pin that cannot be flattened.
 ALLOWED_EXTERNAL_PINS = %w[
-  web-vitals swiper/bundle
+  web-vitals
 ].freeze
 
     module_function

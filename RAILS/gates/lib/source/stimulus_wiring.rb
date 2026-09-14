@@ -50,10 +50,6 @@ module Deploy
     # entry whose identifier is mounted again, or no longer registered, fails:
     # an exemption that outlives its subject certifies nothing.
     UNMOUNTED_ALLOWED = {
-      # Its one element left amber's wardrobe showcase, which now slides with
-      # wardrobe-carousel; the lazy entry and the swiper pin wait on the Stimulus
-      # owner deciding whether any surface adopts the package again.
-      "carousel" => "stimulus_boot.js LAZY_COMPONENTS entry with no element asking for it",
       # @stimulus-components/reveal. Its one element is in shared/frontend/examples,
       # a snippet library nothing renders.
       "reveal" => "stimulus_boot.js component table entry with no rendered element"

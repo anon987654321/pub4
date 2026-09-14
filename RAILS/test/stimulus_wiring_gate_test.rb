@@ -53,7 +53,7 @@ class StimulusWiringGateTest < Minitest::Test
   # Vendored @stimulus-components controllers have no first-party source to read,
   # so an action against one must not be guessed at.
   def test_does_not_guess_at_vendored_component_methods
-    assert_empty with_probe(%(<div data-controller="carousel" data-action="click->carousel#whatever"></div>))
+    assert_empty with_probe(%(<div data-controller="lightbox" data-action="click->lightbox#whatever"></div>))
   end
 
   # The third leg: a data-*-value the controller never declares. This is the

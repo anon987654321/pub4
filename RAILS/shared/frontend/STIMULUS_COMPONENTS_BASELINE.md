@@ -13,17 +13,16 @@ This document explains it; it does not redefine it.
 
 ## Packages are vendored, not fetched
 
-All 19 `@stimulus-components/*` packages live in `shared/vendor/javascript/` as
+All 16 `@stimulus-components/*` packages live in `shared/vendor/javascript/` as
 `@stimulus-components--<name>.js` and pin to those local files through
 `shared/config/importmap_baseline.rb`. The gate fails if the baseline stops
 pinning `vendor/javascript`, and fails on any vendored file under 100 bytes — an
 empty vendor file pins successfully and breaks only at runtime.
 
-Vendored: `animated-number`, `auto-submit`, `carousel`, `character-counter`,
-`checkbox-select-all`, `clipboard`, `content-loader`, `dropdown`, `hotkey`,
-`lightbox`, `notification`, `password-visibility`, `popover`,
-`rails-nested-form`, `read-more`, `reveal`, `sortable`, `textarea-autogrow`,
-`timeago`.
+Vendored: `animated-number`, `auto-submit`, `character-counter`,
+`checkbox-select-all`, `clipboard`, `content-loader`, `dropdown`, `lightbox`,
+`notification`, `password-visibility`, `popover`, `rails-nested-form`,
+`read-more`, `reveal`, `sortable`, `textarea-autogrow`.
 
 **Do not reintroduce CDN pins for these.** `pin` defaults to `preload: true`, so
 every pin emits a `modulepreload` and the browser fetches it eagerly on first
@@ -39,7 +38,7 @@ Tiptap pair from esm.sh at `preload: false`.
 
 `shared/frontend/stimulus_boot.js` registers the controllers. The gate requires
 these names to appear in it: `password-visibility`, `nested-form`,
-`rails-nested-form`, `carousel`, `character-counter`, `checkbox-select-all`,
+`rails-nested-form`, `character-counter`, `checkbox-select-all`,
 `dialog`, `read-more`, `textarea-autogrow`.
 
 **The gate fails on two of those today, for different reasons.** It looks for

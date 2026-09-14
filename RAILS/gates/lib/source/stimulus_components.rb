@@ -21,11 +21,11 @@ module Deploy
     # was fetched eagerly on every page load to register a controller no ERB
     # referenced. Add dialog back here when a view actually asks for it.
     REQUIRED_CONTROLLERS = %w[
-      password-visibility nested-form carousel character-counter
+      password-visibility nested-form character-counter
       checkbox-select-all read-more textarea-autogrow
     ].freeze
 
-    REQUIRED_PACKAGES = %w[password-visibility rails-nested-form carousel].freeze
+    REQUIRED_PACKAGES = %w[password-visibility rails-nested-form].freeze
 
     FORBIDDEN_VIEW_PATTERNS = [
       /data-controller="char-counter"/,

@@ -48,7 +48,7 @@ app-owned paths), `bin/rails dartsass:build` in CI.
 - `hotwire.js` — Turbo, theme-meta, PWA SW, nav-reveal (idempotent),
   minimal-gesture boot
 - `stimulus_boot.js` — full @stimulus-components fleet (incl.
-  password-visibility, nested-form, carousel, read-more, checkbox-select-all),
+  password-visibility, nested-form, read-more, checkbox-select-all),
   StimulusReflex, live-search, offline-page, install-prompt,
   theme-toggle
 - `Shared::StimulusFormHelper` — `character_counter_field`,

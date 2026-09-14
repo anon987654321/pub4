@@ -3,8 +3,8 @@
 # Shared importmap pins for the pub4 Rails family.
 # Include from each app: eval(File.read(Shared::Engine.root.join("config/importmap_baseline.rb")), binding)
 
-sc_pin = lambda do |name, preload: true|
-  pin("@stimulus-components/#{name}", to: "@stimulus-components--#{name}.js", preload:)
+sc_pin = lambda do |name|
+  pin("@stimulus-components/#{name}", to: "@stimulus-components--#{name}.js")
 end
 
 pin "@hotwired/turbo-rails", to: "turbo.min.js"
@@ -42,9 +42,7 @@ pin "cable_ready"
 # preload: false on every CDN-backed pin from here down. `pin` defaults to
 # preload: true, so each emitted a <link rel="modulepreload"> on every page of
 # every app -- jsDelivr and esm.sh on the first-paint critical path whether or
-# not any code on the page imported them. stimulus_boot.js registers carousel on
-# demand; without this the preload fetched it anyway and the deferral bought
-# nothing.
+# not any code on the page imported them.
 pin "sortablejs"
 # Tiptap, vendored rather than fetched — the rule this tree states in
 # STIMULUS_COMPONENTS_BASELINE.md and enforces for @stimulus-components. It was
@@ -104,10 +102,6 @@ pin "pub4/haptics", to: "haptics_controller.js"
 pin "pub4/geolocation", to: "geolocation_controller.js"
 pin "pub4/viewport_aware", to: "viewport_aware_controller.js"
 pin "pwa/offline_store", to: "pwa_offline_store.js"
-# Only @stimulus-components/carousel imports this, and carousel appears on one
-# surface in the whole family (amber shared/_wardrobe_showcase). Lazy-registered
-# in stimulus_boot.js.
-pin "swiper/bundle", to: "https://cdn.jsdelivr.net/npm/swiper@11.1.15/swiper-bundle.min.mjs", preload: false
 # @stimulus-components/lightbox imports this; only brgen pinned it locally,
 # so every other app using this shared baseline couldn't resolve it.
 pin "lightgallery", to: "lightgallery.js"
@@ -125,10 +119,6 @@ pin "idb-keyval", to: "idb-keyval.js"
   dropdown lightbox notification read-more
   reveal sortable password-visibility popover rails-nested-form
 ].each { |name| sc_pin.call(name) }
-
-# Registered on demand by stimulus_boot.js -- its dependency is the swiper CDN
-# pin above. Pinned so the dynamic import() can resolve, not preloaded.
-%w[carousel].each { |name| sc_pin.call(name, preload: false) }
 
 # One pin, and it is the specifier stimulus_boot.js actually imports. The second
 # name — "stimulus-textarea-autogrow", the package's pre-scope spelling — pointed

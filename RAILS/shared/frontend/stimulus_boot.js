@@ -68,6 +68,9 @@ const COMPONENT_REGISTRATIONS = [
   ["lightbox", Lightbox],
   ["toast", Notification],
   ["read-more", ReadMore],
+  // No view mounts reveal. It stays because shared/frontend/examples.html.erb
+  // offers it as a snippet, and SharedStimulusComponentsTest holds every
+  // snippet to this table: a copied snippet must name a live controller.
   ["reveal", Reveal],
   ["sortable", Sortable],
   ["textarea-autogrow", TextareaAutogrow],
@@ -78,85 +81,6 @@ const COMPONENT_REGISTRATIONS = [
   ["popover", Popover],
   ["nested-form", RailsNestedForm],
 ]
-
-// The one component whose dependency is a third-party CDN, registered only on
-// pages that actually contain it.
-//
-// carousel pulls swiper from cdn.jsdelivr.net, and it was a static import here
-// -- so every page of all three apps put that host on its first-paint critical
-// path. Measured on the brgen front page: 537 requests for one load, including
-// the whole swiper@11.1.15/shared + modules tree. ES modules fail as a graph,
-// so one slow or blocked CDN left window.Turbo undefined and all 169
-// data-controller elements on that page inert.
-//
-// The importmap pin stays on the CDN deliberately: importmap_baseline.rb
-// documents why (swiper cross-references siblings by *relative* path, so a
-// single vendored file breaks every one of those paths). Keeping the pin and
-// deferring the import fixes the critical path without reopening that decision.
-//
-// "carousel" here means this one swiper-backed package, and the only element
-// asking for it is amber's shared/_wardrobe_showcase. It does NOT mean brgen has
-// no carousels -- brgen's are hand-rolled and touch neither this controller nor
-// swiper: the media gallery and dating swipe (swipe_controller,
-// data-swipe-mode-value="carousel"). So the deferral costs brgen nothing today,
-// but adopting this package on any brgen surface puts jsdelivr back on that
-// page -- vendor swiper first if that happens.
-//
-// timeago was the second entry here until 2026-08-12. It read
-// data-timeago-datetime-value; no view in any app ever set that attribute, so
-// on the eighteen surfaces that declared the controller it replaced the
-// server's text with the empty string -- or would have, had it registered.
-// Measured over CDP on the live post page: all three elements kept their
-// server-rendered text. Its only possible effect was to overwrite localised
-// Norwegian with date-fns English, so the controller, the eighteen
-// declarations and the date-fns pin all went together.
-const LAZY_COMPONENTS = [
-  ["carousel", () => import("@stimulus-components/carousel")]
-]
-
-// Register `name` the first time the document contains an element asking for it.
-// Checks now, on every Turbo navigation, and on DOM mutation, so controllers
-// arriving by turbo-stream are covered too.
-const registerWhenPresent = (application, name, load) => {
-  const selector = `[data-controller~="${name}"]`
-  let done = false
-  let observer = null
-
-  const stop = () => {
-    document.removeEventListener("turbo:load", attempt)
-    document.removeEventListener("turbo:frame-load", attempt)
-    if (observer) { observer.disconnect(); observer = null }
-  }
-
-  function attempt() {
-    if (done || !document.querySelector(selector)) return
-    done = true
-    stop()
-    load()
-      .then((mod) => {
-        const constructor = mod?.default || mod
-        if (constructor) application.register(name, constructor)
-      })
-      .catch(() => {
-        // Optional: the surface degrades to its server-rendered markup. Allow a
-        // later attempt rather than latching the failure for the session.
-        done = false
-        listen()
-      })
-  }
-
-  function listen() {
-    document.addEventListener("turbo:load", attempt)
-    document.addEventListener("turbo:frame-load", attempt)
-    if (!observer && typeof MutationObserver === "function") {
-      observer = new MutationObserver(attempt)
-      observer.observe(document.documentElement, { childList: true, subtree: true })
-    }
-  }
-
-  attempt()
-  if (!done) listen()
-}
 
 export function bootPub4Stimulus(application) {
   // Counted once per boot, before any controller connects, so the three
@@ -208,8 +132,6 @@ export function bootPub4Stimulus(application) {
   COMPONENT_REGISTRATIONS.forEach(([name, component]) => {
     if (component) application.register(name, component)
   })
-
-  LAZY_COMPONENTS.forEach(([name, load]) => registerWhenPresent(application, name, load))
 
   StimulusReflex.initialize(application, {
     applicationController: ApplicationController,

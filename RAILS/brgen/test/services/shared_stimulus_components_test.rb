@@ -37,23 +37,14 @@ class SharedStimulusComponentsTest < Minitest::Test
       assert_includes source, component
     end
 
-    # carousel is registered on demand, not statically imported: its dependency
-    # is swiper (cdn.jsdelivr.net), and importing it here put that host on the
-    # first-paint critical path of every page in all three apps. Assert the lazy
-    # registration by name.
-    assert_includes source, "LAZY_COMPONENTS"
-    %w[carousel].each do |name|
-      assert_match(/\["#{name}",\s*\(\)\s*=>\s*import\(/, source,
-                   "#{name} should be lazily imported, not statically")
+    # timeago read data-timeago-datetime-value, which no view ever set, so its
+    # only possible effect was to replace localised Norwegian with date-fns
+    # English. carousel's one element left amber's wardrobe showcase, which is a
+    # CSS marquee, and it pulled swiper from cdn.jsdelivr.net. Matched on the
+    # registration form, not the bare word, so prose naming either passes.
+    %w[timeago carousel].each do |name|
+      refute_match(/\["#{name}",/, source, "#{name} has no consumer in any app")
     end
-
-    # timeago was the other lazy component until 2026-08-12. It read
-    # data-timeago-datetime-value, which no view ever set, so its only possible
-    # effect was to replace localised Norwegian with date-fns English. Gone with
-    # its pin, its vendored file and the unpkg.com host it needed. Matched on
-    # the registration form, not the bare word: the comment above LAZY_COMPONENTS
-    # explains the removal and has to keep naming it.
-    refute_match(/\["timeago",/, source, "timeago has no consumer in any app")
 
     # Dialog, ScrollTo, Sound and SpeechRecognition were imported, registered,
     # pinned and vendored with no data-controller for them in any of the four
