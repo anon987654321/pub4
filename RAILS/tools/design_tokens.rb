@@ -17,6 +17,8 @@ module DesignTokens
     "color_success" => "color-success",
     "color_warning" => "color-warning",
     "color_info" => "color-info",
+    "font" => "font",
+    "font_code" => "font-mono",
     "transition_fast" => "transition-fast",
     "transition_normal" => "transition-normal",
     "ease_out" => "ease-out",

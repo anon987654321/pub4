@@ -25,7 +25,13 @@
   --tracking-normal: 0;
   --tracking-wide: 0.05em;
   --tracking-wider: 0.08em;
-  --tracking-widest: 0.14em;   /* uppercase eyebrows over a hero */
+  --tracking-widest: 0.14em;
+}
+
+/* Code is the one place a second family earns its keep (TYPOGRAPHY allows two):
+   a code block, a key name or program output inside a post or a comment. */
+:where(pre, code, kbd, samp) {
+  font-family: var(--font-mono);
 }
 
 .prose,

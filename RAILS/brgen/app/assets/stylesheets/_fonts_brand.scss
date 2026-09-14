@@ -1,72 +1,42 @@
-// Self-hosted brand fonts — replaces the render-blocking Google Fonts CDN.
-// Latin-subset woff2 from @fontsource, vendored to public/fonts/. Pattern mirrors
-// shared _fonts.scss: local() first, self-hosted next, CDN fallback last.
-// font-display: optional preserves the prior `display=optional` behaviour (no
-// FOIT/FOUT — system fallback shows immediately, brand font swaps in on the
-// next load once cached), which suits the flat, text-first surfaces here.
-$fs: "https://cdn.jsdelivr.net/npm/@fontsource";
-// The vendored woff2 are the fontsource "latin" subset. Declaring its
-// unicode-range (verified against fontsource) keeps the browser from fetching
-// these faces on pages with only non-latin glyphs, and reserves room to layer a
-// latin-ext subset later. Latin-1 (U+0000-00FF) covers Norwegian æ ø å.
+// The two display faces, one per storefront vertical, each on its hero headline
+// and nowhere else. Every other line of brgen sets the family face, --font.
+//
+// Latin-subset variable woff2, vendored to public/fonts/ from fontsource 5.3.0,
+// which builds them from the Google Fonts upstream. Both are SIL Open Font
+// Licence 1.1, so they ship in the repo rather than per seat. local() first,
+// the vendored file second, the pinned CDN copy last.
+//
+// font-display: swap, because a hero is the first thing painted and the face is
+// the point of it; a late swap there does not reflow text anyone is reading.
+$fs: "https://cdn.jsdelivr.net/npm/@fontsource-variable";
+// Latin-1 (U+0000-00FF) covers Norwegian æ ø å; the rest is fontsource's own
+// latin range, so a page without those glyphs never fetches the file.
 $latin: "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD";
 
-// Inter is gone. It was five vendored cuts loaded to set text that system-ui
-// already sets, and since --font-brand took over the wordmark nothing named the
-// family at all — five @font-face blocks and five woff2 files that no rule
-// could ever pull.
-
-// Bricolage Grotesque — the display face, marketplace hero first.
-//
-// Chosen 2026-08-17 as the free stand-in for the Pangram Pangram grotesques the
-// operator asked for: a contemporary neo-grotesque with actual character in the
-// heavy weights, which is what a headline needs and what Inter deliberately
-// does not have. OFL-1.1, so it ships in the repo rather than being licensed
-// per seat.
-//
-// One variable file for the whole 200-800 range, 41KB — less than the five
-// static Inter cuts above it together, and the hero can sit at any weight
-// between them without another request.
-//
-// font-display: swap here rather than optional. optional is right for body text
-// on a text-first surface, where a late swap reflows a paragraph you are already
-// reading; a hero is the first thing painted and the whole point is the face, so
-// it is worth the swap.
+// Big Shoulders Display — markedsplass. A condensed poster grotesk drawn after
+// Chicago's signage: it reads like a price board, and its narrow set keeps
+// "Markedsplass Bergen" on one line at phone width. OFL-1.1, 35KB.
 @font-face {
-  font-family: "Bricolage Grotesque";
-  src: local("Bricolage Grotesque"),
-       url("/fonts/bricolage-grotesque-latin-wght-normal.woff2") format("woff2-variations"),
-       url("#{$fs}/bricolage-grotesque:vf/files/bricolage-grotesque-latin-wght-normal.woff2") format("woff2-variations");
-  font-weight: 200 800;
+  font-family: "Big Shoulders Display";
+  src: local("Big Shoulders Display"),
+       url("/fonts/big-shoulders-display-latin-wght-normal.woff2") format("woff2-variations"),
+       url("#{$fs}/big-shoulders-display@5.3.0/files/big-shoulders-display-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight: 100 900;
   font-style: normal;
   font-display: swap;
   unicode-range: #{$latin};
 }
 
-// Libre Baskerville is gone too, and was never real here: the three faces
-// pointed at /fonts/libre-baskerville-*.woff2, none of which exist in this
-// app, so every one fell through to the jsdelivr CDN — a live third-party
-// dependency for a family no brgen rule names. amber keeps its own copy in
-// _fonts_editorial.scss, where --amber-editorial-serif does name it.
-
-// Pangram Pangram — marketplace TOP OFFERS only. --font-display in
-// _vertical_marketplace.scss names the family first, so a visitor who owns
-// the font wears it and everyone else falls to Bricolage.
-//
-// local() only. The three url()s pointed at
-// /fonts/pp-neue-montreal-latin-<w>-normal.woff2 and public/fonts/ holds one
-// file, which is Bricolage — so each weight cost a 404 on top of its bytes,
-// for a face that cannot be served anyway: the licence is App/Web from
-// pangrampangram.com and not free for production. Drop the licensed woff2 in
-// and add the url()s back with it.
-@each $w in (400, 600, 700) {
-  @font-face {
-    font-family: "PP Neue Montreal";
-    src: local("PP Neue Montreal"),
-         local("Neue Montreal");
-    font-weight: $w;
-    font-style: normal;
-    font-display: optional;
-    unicode-range: #{$latin};
-  }
+// Fraunces — takeaway. A soft, old-style display serif with the warmth of a
+// hand-lettered menu board, and the one face on brgen that is not a grotesk, so
+// the vertical is told apart by its headline alone. OFL-1.1, 37KB.
+@font-face {
+  font-family: "Fraunces";
+  src: local("Fraunces"),
+       url("/fonts/fraunces-latin-wght-normal.woff2") format("woff2-variations"),
+       url("#{$fs}/fraunces@5.3.0/files/fraunces-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: #{$latin};
 }

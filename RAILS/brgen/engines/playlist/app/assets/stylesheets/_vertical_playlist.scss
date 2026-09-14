@@ -11,9 +11,8 @@ body.vertical-playlist {
   --edge-strong: rgba(255, 255, 255, 0.12);
 }
 
-/* Playlist — immersive vertical branding (SF Pro, radio tunnel). Core x shell hidden via _vertical_shell. */
+/* Playlist — immersive vertical branding (radio tunnel). Core shell hidden via _vertical_shell. */
 body.vertical-playlist {
-  --font-mono: "SF Mono", Monaco, "Cascadia Code", monospace;
   /* Token-backed — vertical shell sets --accent to playlist teal */
   --color-bg: var(--bg);
   --color-text: var(--text);
@@ -185,9 +184,7 @@ body.vertical-playlist .playlist-index {
 
 .playlist-top-eyebrow {
   margin: 0 0 4px;
-  font: 10px/1.4 var(--font-mono);
-  letter-spacing: var(--tracking-widest);
-  text-transform: uppercase;
+  font: 10px/1.4 var(--font);
   color: var(--color-muted);
 }
 
@@ -245,7 +242,7 @@ body.vertical-playlist .playlist-index {
 }
 
 .playlist-transport-time {
-  font: 0.75rem/1 var(--font-mono);
+  font: 0.75rem/1 var(--font);
   color: var(--color-muted);
   min-width: 2.5rem;
   text-align: center;
@@ -286,13 +283,11 @@ body.vertical-playlist .playlist-index {
 .playlist-queue-heading {
   margin: var(--space-6) 0 var(--space-4);
   font-size: var(--text-sm);
-  letter-spacing: var(--tracking-wider);
-  text-transform: uppercase;
   color: var(--color-muted);
 }
 
 .playlist-queue-index {
-  font: 0.75rem/1 var(--font-mono);
+  font: 0.75rem/1 var(--font);
   color: var(--color-muted);
   text-align: center;
 }
@@ -344,7 +339,7 @@ body.vertical-playlist .playlist-index {
 }
 
 .playlist-comment .time {
-  font: 0.75rem/1.4 var(--font-mono);
+  font: 0.75rem/1.4 var(--font);
   color: var(--color-accent);
   flex-shrink: 0;
 }

@@ -54,7 +54,8 @@ class UserVisibilityTest < ActiveSupport::TestCase
       message = channel.messages.create!(sender: @author, content: "hei", message_type: "text")
 
       assert_equal @author, Message.strict_loading(false).find(message.id).sender
-      assert_match(/Stranger #/, Message.strict_loading(false).find(message.id).sender.channel_handle)
+      code = Digest::SHA1.hexdigest(@author.id.to_s)[0, 4].upcase
+      assert_equal I18n.t("chat.anon_handle", code:), Message.strict_loading(false).find(message.id).sender.channel_handle
     end
   end
 

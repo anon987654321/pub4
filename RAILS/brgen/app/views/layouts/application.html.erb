@@ -30,8 +30,11 @@
   <%= tag.meta name: "apple-mobile-web-app-capable", content: "yes" %>
   <%= tag.meta name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" %>
   <%= tag.meta name: "apple-mobile-web-app-title", content: city_name %>
-  <%= tag.meta name: "color-scheme", content: "dark" %>
-  <%= tag.meta name: "theme-color", content: "#000000", data: { light_color: "#ffffff", dark_color: "#000000" } %>
+  <%# The stated theme, not a hardcoded dark: the page paints light by default,
+      and a dark color-scheme hint gave it dark scrollbars and form controls. The
+      browser bar takes each ground's own --bg. %>
+  <%= tag.meta name: "color-scheme", content: surface_theme %>
+  <%= tag.meta name: "theme-color", content: "#efefef", data: { light_color: "#efefef", dark_color: "#000000" } %>
   <%# Must run before first paint and before any stylesheet, which is why it is a
       blocking inline script here rather than a Stimulus controller: theme-toggle
       is mounted on <body> and only reaches the DOM after Stimulus boots, so a
@@ -56,15 +59,10 @@
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
   <%= yield :head %>
-  <%# Brand fonts are self-hosted (see _fonts_brand.scss); preload only the face
-      this surface actually uses so it is ready before first text paint.
-
-      Inter is gone -- _fonts_brand says so -- and its five cuts went with it,
-      but the preload for inter-latin-400 stayed and pointed at a 404 on dating,
-      maps and messenger. The File.file? guard below is the shape that survives
-      a font being retired; a bare href is not. %>
-  <% if active_vertical == :marketplace && File.file?(Rails.root.join("public/fonts/pp-neue-montreal-latin-700-normal.woff2")) %>
-    <link rel="preload" as="font" type="font/woff2" href="/fonts/pp-neue-montreal-latin-700-normal.woff2" crossorigin>
+  <%# The storefront heroes are the first text painted, so their display face
+      is fetched with the stylesheet rather than discovered after it. %>
+  <% if (display_face = { marketplace: "big-shoulders-display", takeaway: "fraunces" }[active_vertical]) %>
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/<%= display_face %>-latin-wght-normal.woff2" crossorigin>
   <% end %>
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <link rel="stylesheet" href="/lightgallery.css">
@@ -166,7 +164,7 @@
           Search is the palette now -- / or Cmd-K, or the glyph in the tab bar.
           Operator decision 2026-08-27. %>
 
-      <main id="main-content" aria-label="<%= t("nav.main") %>" data-controller="pull-to-refresh">
+      <main id="main-content" role="main" aria-label="<%= t("nav.main") %>" data-controller="pull-to-refresh">
         <% if !vertical_surface? && current_page?(main_app.root_path) %>
           <div class="feed-header">
             <%# Visual brand is the fixed top-left .brgen-logo-mark (all surfaces).

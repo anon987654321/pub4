@@ -123,6 +123,7 @@ en:
     new_password: New password
     save_password: Save password
   chat:
+    anon_handle: "Stranger #%{code}"
     roster: In this channel
     nearby_tab: nearby
     loading: Loading the room…
@@ -1059,7 +1060,6 @@ en:
       accepted: Accepted
       declined: Declined
       completed: Completed
-    hero_kicker: "Buy and sell in your city"
     hero_title: "Marketplace %{city}"
     hero_lede: "Things from people who live nearby. No nationwide shipping, no middlemen — just what is a few streets away."
     hero_count_suffix: "listings in %{city} right now"

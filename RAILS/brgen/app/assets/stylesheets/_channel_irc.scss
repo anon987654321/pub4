@@ -100,7 +100,6 @@ body.vertical-messenger #messages.channel-log article > header time {
   order: -1;
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
-  opacity: 0.75;
 }
 
 /* Every message in a channel expires on the same CHANNEL_TTL (6h, and the room

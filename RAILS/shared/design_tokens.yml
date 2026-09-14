@@ -66,6 +66,13 @@ shared_chrome:
   font_size_title: "1.25rem"
   font_size_display: "1.75rem"
   measure_body: "66ch"
+  # The one typeface, for every app and every surface: Helvetica Neue Pro where
+  # it is licensed, Helvetica Neue where macOS ships it, Arial where neither is. TYPOGRAPHY hierarchy allows two
+  # families; the second is font_code, for code blocks and the chat logs.
+  font: '"Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif'
+  # Code blocks and syntax inside posts and comments, and the live chat logs
+  # (channel rooms, the nearby and anonymous widgets). Nowhere else.
+  font_code: '"JetBrainsMono Nerd Font", "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, monospace'
   # Family layout chrome (12px = face inset-t/r/b/l base; 44px = WCAG + face-bar)
   # Absolute, not rem: brgen sets its root to 18px, where 0.75rem resolves
   # to 13.5px and puts every corner-anchored element on a fractional pixel.
@@ -250,16 +257,13 @@ brgen_old_dark:
   surface_elevated: "#111111"
   search_bg: "#111111"
   text: "#efefef"
-  # #969696 -> #cfcfcf: APCA Lc 44.3 against the 75 floor on this palette's
-  # own #1a1a1a and #222222 surfaces, and the most-repeated contrast finding
-  # in the tree. Still a clear step under text #e0e0e0 (Lc 86.5). #b4b4b4 is
-  # the Lc 60 tier if this reads too bright.
-  text_secondary: "#999999"
+  # 8.33:1 on bg and 7.49:1 on surface: TYPOGRAPHY accessibility asks 7.0 of
+  # normal text, and secondary is set at meta sizes.
+  text_secondary: "#a3a3a3"
   border: "#666666"
   accent: "#efefef"
   accent_hover: "#d0d0d0"
   danger: "#e46151"
-  font: "Arial, Helvetica, sans-serif"
   chrome_bg: "#0d0d0d"
   radius_xs: "4px"
   radius_sm: "8px"
@@ -274,15 +278,13 @@ brgen_old_light:
   surface_elevated: "#ffffff"
   search_bg: "#ffffff"
   text: "#333333"
-  # #666666 -> #545454: APCA Lc 71.0 on this palette's own #f2f2f2 elevated
-  # surface against a 75 floor, WCAG 5.13 against AAA 7.0. #545454 clears both
-  # on white, #f8f8f8 and #f2f2f2 and stays under text #222222.
-  text_secondary: "#666666"
+  # 7.35:1 on bg and 8.45:1 on surface, the TYPOGRAPHY 7.0 floor for normal
+  # text, and still a visible step under text #333333.
+  text_secondary: "#4d4d4d"
   border: "#666666"
   accent: "#000000"
   accent_hover: "#000000"
   danger: "#b24c3f"
-  font: "Arial, Helvetica, sans-serif"
   chrome_bg: "#333333"
   radius_xs: "4px"
   radius_sm: "8px"
@@ -324,7 +326,6 @@ openbsd_wscons:
   accent: "#63c363"
   accent_hover: "#4fa34f"
   danger: "#ff6b6b"
-  font: '"JetBrains Mono", ui-monospace, monospace'
   font_size: "12px"
   line_height: "16px"
   radius_pill: "0"
@@ -339,7 +340,7 @@ social:
   surface_elevated: "#111111"
   search_bg: "#111111"
   text: "#efefef"
-  text_secondary: "#999999"
+  text_secondary: "#a3a3a3"
   border: "#666666"
   hover: "rgba(216, 214, 224, 0.1)"
   hover_subtle: "rgba(216, 214, 224, 0.03)"
@@ -349,7 +350,6 @@ social:
   accent: "#efefef"
   accent_hover: "#9686e8"
   danger: "#e46151"
-  font: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
   font_size: "16px"
   line_height: "20px"
   radius_xs: "4px"
@@ -384,7 +384,7 @@ light:
   surface_elevated: "#ffffff"
   search_bg: "#ffffff"
   text: "#333333"
-  text_secondary: "#666666"
+  text_secondary: "#4d4d4d"
   border: "#666666"
   hover: "rgba(26, 24, 36, 0.1)"
   hover_subtle: "rgba(26, 24, 36, 0.03)"

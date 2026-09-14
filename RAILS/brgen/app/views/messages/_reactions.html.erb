@@ -20,7 +20,7 @@
           data: { turbo_stream: true },
           class: "msg_reaction_chip#{' is_mine' if mine}",
           aria: { pressed: mine ? "true" : "false",
-                  label: "#{n} #{kind}#{' — remove yours' if mine}" } do %>
+                  label: t(mine ? "reactions.chip_mine_aria" : "reactions.chip_aria", count: n, kind: t("reactions.kinds.#{kind}")) } do %>
       <span aria-hidden="true"><%= Reaction.glyph(kind) %></span><span class="msg_reaction_count"><%= n %></span>
     <% end %>
   <% end %>

@@ -9,27 +9,21 @@
    nothing starts underneath it. Content still scrolls *under* the bar, which is
    what the opaque background is for. */
 /* The active rule's colour and weight, declared here because they are this
-   bar's own and nothing else in the app draws them. Both themes take the same
-   red: #d62828 is dark enough to hold against #ffffff and saturated enough to
-   read against #000000, which a lighter coral does not do in both directions.
-   Operator choice, 2026-08-29. */
+   bar's own and nothing else in the app draws them. The rule is #d62828 in both
+   themes, operator choice 2026-08-29: a 3px band is not text, so it needs only
+   the 3:1 a boundary does, and it clears that on either ground.
+
+   The "nytt!" badge is white bold type on a red fill with no padding, the
+   operator's specification. The fill is #cc2424, the red the tree already
+   carries a step under the rule, and white on it measures 5.46:1, which clears
+   WCAG 1.4.3's 4.5 for small bold text on either ground because the badge
+   brings its own. It stays under TYPOGRAPHY's 7.0 for normal text; #991b1b
+   would reach 8.31 if the operator wants that floor too. */
 :root {
   --nav-rule: #d62828;
   --nav-rule-w: 3px;
-}
-
-/* Light restates rather than carries, which is the shape $vertical-accents
-   already uses for this exact problem: a hue tuned to read in both directions
-   lands short of the text floor in one of them.
-
-   The rule under the active entry is a 3px band and has no text floor, but
-   .nav_link_badge paints "nytt!" in this colour at 12.15px, where AA wants
-   4.5:1. #d62828 measures 4.36 on #efefef and 4.19 on #000000 — short in both,
-   and no single red clears 4.5 both ways. So dark keeps the brand red and light
-   takes the smallest darkening that clears it: #cc2424, measured 4.75 on
-   #efefef. Same hue, same decision, one step down. */
-:root[data-theme="light"] {
-  --nav-rule: #cc2424;
+  --nav-badge-fill: #cc2424;
+  --nav-badge-ink: #ffffff;
 }
 
 /* Under the wordmark on a phone, beside it from md up. --top-band-block is the
@@ -168,10 +162,8 @@
    whether it is first — which is what breaks the moment the order changes,
    and the order here has changed twice.
 
-   --border is the token, not a literal: it is #333 on the black ground and
-   #d9d9d9 on the light one, which is the dark-grey / light-grey pair the
-   separator wants, and it is already the colour every other hairline in the
-   app draws in. Operator, 2026-08-29.
+   --border is the token, not a literal: it is #666 on both grounds, the colour
+   every other hairline in the app draws in. Operator, 2026-08-29.
 
    The pipe sits in the padding rather than adding width, so the 44px tap
    target the run is tuned around is untouched. */
@@ -227,10 +219,8 @@
 .nav_link:hover { color: var(--text); background: var(--hover); text-decoration: none; }
 
 /* Active state is a thick red rule under the entry, and exactly one entry
-   wears it — operator, 2026-08-29. This reverses the note that used to sit
-   here arguing weight and colour over a line: with eight peers all set in
-   --weight-bold, weight cannot mark one of them, and colour alone was doing
-   the job at --text against --text-dim, which is a contrast step a reader
+   wears it — operator, 2026-08-29. With eight peers all set in --weight-bold,
+   weight cannot mark one of them, and colour alone is a contrast step a reader
    scanning a row does not register.
 
    #d62828 is a token rather than a literal because it is a brand decision and
@@ -238,23 +228,22 @@
    the destructive-action colour, and a nav marker sharing it would make "you
    are here" and "this deletes something" say the same thing.
 
-   box-shadow, not border-bottom: a border adds 3px to the box and would push
-   the eight links 3px off the vertical centre they share with the wordmark,
-   which is the alignment rendered_invariants measures. An inset shadow paints
-   inside the box the link already has. */
+   Painted as a background band rather than a border or a shadow. A border adds
+   3px to the box and pushes the eight links off the centre they share with the
+   wordmark, which is what rendered_invariants measures; a shadow is what
+   PIXEL_PERFECTION forbids. A gradient sized to the rule's width and pinned to
+   the bottom paints inside the box the link already has, inset by its padding
+   so the rule is as wide as the word. */
 .nav_link.active {
   color: var(--text);
-  /* autofix: removed box-shadow (flat UI) */
+  background: linear-gradient(var(--nav-rule), var(--nav-rule)) center bottom / calc(100% - var(--space-3) * 2) var(--nav-rule-w) no-repeat;
 }
 
 /* The badge on a new surface.
 
-   It takes --nav-rule rather than a colour of its own, and that is worth
-   stating because the rule under the active entry is the same red: "new" and
-   "you are here" are both this bar saying look here, and the two only ever
-   land on one entry together when the new surface is also the one being read
-   — where one red is the right answer. What red must not also mean here is
-   --danger; see the note on the active rule.
+   A red fill carrying white ink: "new" and "you are here" are both this bar
+   saying look here, in one hue. What red must not also mean here is --danger;
+   see the note on the active rule.
 
    <sup> rather than a ::after because it is content: a reader who cannot see
    the colour is still told the surface is new. Sized in em so it tracks the
@@ -263,8 +252,10 @@
 .nav_link_badge {
   margin-inline-start: var(--space-0-5);
   font-size: 0.6em;
+  padding: 0;
   font-weight: var(--weight-bold);
-  color: var(--nav-rule);
+  color: var(--nav-badge-ink);
+  background: var(--nav-badge-fill);
   letter-spacing: 0;
   vertical-align: super;
 }

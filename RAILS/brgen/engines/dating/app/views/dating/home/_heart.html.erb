@@ -9,15 +9,14 @@
     _vertical_dating_intro.scss, so the grid follows the stage instead.
 
     frame: is what makes it read — the hearts are outlines, not fills, and each
-    one is filled by its own rotating gradient stripe via :after. The glow is
-    two drop-shadows rather than a box-shadow, so it is not what the flat-UI
-    rule forbids. css-doodle is self-hosted at /vendor/css-doodle.min.js and
+    one is filled by its own rotating gradient stripe via :after. The original's
+    two drop-shadow halos are left out: PIXEL_PERFECTION forbids soft glow by
+    name, whatever property draws it. css-doodle is self-hosted at /vendor/css-doodle.min.js and
     loaded by dating/home/index.html.erb; nothing here reaches a CDN. %>
 <div class="dating-heart-stage" aria-hidden="true">
   <css-doodle class="dating-heart-doodle">
     :doodle {
       @grid: 1x10 / 100% 100%;
-      filter: drop-shadow(0 0 10px #ff360e) drop-shadow(0 0 20px #ff360e);
     }
 
     @size: calc(100% - @i * 3%);

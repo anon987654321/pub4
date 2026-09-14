@@ -93,7 +93,7 @@
      gave 1.30:1 for the track title and 3.59:1 for the note icon, both below AA.
      A solid #14141a gives 12.77 and 7.44 and cannot drift with the animation. */
   color: #d8d6e0; // scan: intentional — stage type on glass, not theme text
-  font-family: var(--font-mono);
+  font-family: var(--font);
   background: #14141a; // scan: intentional — the tunnel floor, not a theme surface
   border-radius: 0;
   padding: clamp(var(--space-1), 1vw, 0.25rem) clamp(0.5rem, 2vw, 0.75rem);
@@ -144,9 +144,7 @@
 
 .radio-start-eyebrow {
   margin: 0;
-  font: 10px/1.4 var(--font-mono);
-  letter-spacing: var(--tracking-widest);
-  text-transform: uppercase;
+  font: 10px/1.4 var(--font);
   color: var(--color-accent);
   pointer-events: none;
 }
@@ -162,7 +160,7 @@
 
 .radio-start-hint {
   margin: 0;
-  font: var(--text-sm)/1.5 var(--font-mono);
+  font: var(--text-sm)/1.5 var(--font);
   color: var(--color-muted);
   pointer-events: none;
 }
@@ -177,7 +175,7 @@
   background: color-mix(in srgb, var(--color-bg) 88%, transparent);
   border: 1px solid color-mix(in srgb, var(--color-accent) 28%, transparent);
   border-radius: 0;
-  font: 10px/1.45 var(--font-mono);
+  font: 10px/1.45 var(--font);
   color: var(--color-accent);
   pointer-events: none;
 }
@@ -238,8 +236,6 @@
 .radio-library-header h2 {
   margin: 0;
   font-size: var(--text-base);
-  letter-spacing: var(--tracking-wider);
-  text-transform: uppercase;
   color: var(--color-muted);
 }
 

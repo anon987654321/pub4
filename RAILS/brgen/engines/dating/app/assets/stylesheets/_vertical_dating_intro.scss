@@ -76,10 +76,9 @@
 .dating-intro-vipps {
   font-weight: var(--weight-bold);
   letter-spacing: var(--tracking-tighter);
-  /* Vipps orange, their one brand constant. A literal because it is a
-     trademark value rather than a palette choice: no theme may recolour it and
-     no token should invite one to. */
-  color: #ff5b24;
+  /* In ink, not Vipps orange: #ff5b24 measures 2.7:1 on the light ground, and a
+     trademark colour does not exempt a word from TYPOGRAPHY's 7.0. */
+  color: var(--text);
 }
 
 /* Which way to swipe, at the two edges the thumb travels between. Dark grey and

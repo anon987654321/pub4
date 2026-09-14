@@ -36,7 +36,7 @@ Social primitives (shared engine):
 
 | Surface | Body attributes | Main landmark | Chrome |
 |---------|-----------------|---------------|--------|
-| MASTER chat | `data-layout="face" data-surface="face"` | `#zin` (prompt) | CRT HUD, radius 0 |
+| MASTER chat | `data-layout="face" data-surface="face"` | `main#chat-shell`, holding the `#zin` prompt form | CRT HUD, radius 0 |
 | MASTER dashboard | `data-layout="document" data-surface="face"` | `#main-content` | mono panels |
 | brgen | `data-layout="document" data-surface="social"` | `#main-content` | app-shell + tab-bar |
 | amber | `data-layout="document" data-surface="luxury"` | `#main-content` | app-shell + tab-bar |
@@ -67,7 +67,12 @@ Social primitives (shared engine):
 
 - Color dialect and radius (face/wscons = 0; social soft; luxury warm)
 - Presence of tab-bar vs top nav vs face HUD
-- Font stack (Inter / mono / Caprasimo / Arial verticals)
+- Nothing about the typeface. Every app sets one family, `shared_chrome.font` in
+  `design_tokens.yml` ("Helvetica Neue Pro", "Helvetica Neue", Arial, sans-serif).
+  Monospace (`shared_chrome.font_code`, `--font-mono`) is for code blocks inside
+  posts and comments, brgen's live chat logs and MASTER's web chat. brgen keeps
+  its wordmark's own stack, and marketplace and takeaway each set one display
+  face on their hero headline.
 
 ## Verify
 

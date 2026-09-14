@@ -231,13 +231,6 @@ time {
   max-width: var(--measure);
 }
 
-/* Nav swiper active underline already present — strengthen + peek */
-.nav_link.active {
-  border-bottom-width: 2px;
-  border-bottom-color: var(--accent);
-  font-weight: var(--weight-bold);
-}
-
 /* .nav_swiper_bar's scroll-snap now lives with the rest of the bar in
    _nav_swiper.scss. It was here, later in the @use order, and its
    `scroll-padding-inline: var(--space-1)` outranked the brand inset -- so the
@@ -274,7 +267,8 @@ body.vertical-tv .duration-chip {
   inset-block-end: var(--space-1);
   inset-inline-end: var(--space-1);
   padding: var(--space-0-5) 4px;
-  font: var(--weight-bold) var(--text-xs)/1 var(--font-mono, ui-monospace, monospace);
+  font: var(--weight-bold) var(--text-xs)/1 var(--font);
+  font-variant-numeric: tabular-nums;
   background: var(--scrim-72);
   border-radius: 2px;
 }
@@ -298,8 +292,6 @@ body.vertical-takeaway .sold-out-badge {
   margin-inline-start: 4px;
   font-size: var(--text-xs);
   font-weight: var(--weight-bold);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
   border: 1px solid var(--border);
   padding: var(--space-0-5) 4px;
   border-radius: var(--radius-xs, 4px);
@@ -312,8 +304,6 @@ body.vertical-takeaway [data-available="false"]:not(:has(.sold-out-badge))::afte
   margin-inline-start: 4px;
   font-size: var(--text-xs);
   font-weight: var(--weight-bold);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
   border: 1px solid var(--border);
   padding: var(--space-0-5) 4px;
   border-radius: var(--radius-xs, 4px);
