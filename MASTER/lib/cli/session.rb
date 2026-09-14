@@ -143,8 +143,10 @@ module Master
       end
 
       def spawn_pipeline_thread(input, on_turn)
+        @turn_children = Master::Io::Exec::Children.new
         Thread.new do
           Thread.current.report_on_exception = false
+          Fiber[:master_children] = @turn_children
           TurnRouter.call(
             message: input,
             container: @container,

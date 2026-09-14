@@ -15,6 +15,7 @@ module Master
         evidence_log = Trace::Log::Evidence.new(root: @root)
         bus = Trace::EventBus.new(event_log:, evidence_log:)
         Ground::Swallow.event_bus = bus
+        subscribe_interrupt(bus)
         ring = Trace::RingBuffer.new(RING_SIZE)
         logging = Trace::Logging.new(ring_buffer: ring, event_bus: bus)
         session = Trace::Session.new(root: @root, budget_max: @config.budget_max, req_max: @config.req_max)
@@ -34,6 +35,14 @@ module Master
         Trace::WriteTracker.current = write_tracker
         { event_log:, bus:, ring:, logging:, session:, undo:, metrics:, trace: recorder,
           write_tracker: }
+      end
+
+      private
+
+      # A cancel carries the turn's children; a publisher with none to name,
+      # such as the web face starting a new turn, stops nothing.
+      def subscribe_interrupt(bus)
+        bus.subscribe("user:interrupt") { |event| event[:children]&.kill_all }
       end
     end
 

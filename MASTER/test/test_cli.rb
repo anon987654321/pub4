@@ -336,13 +336,26 @@ end
     assert_equal "interrupted", result.message
   end
 
-  def test_ctrl_c_during_a_turn_kills_the_turn_and_keeps_the_session
-    turn = Thread.new { sleep 5 }
-    @cli.instance_variable_set(:@pipeline_thread, turn)
+  # user:interrupt had a publisher and no subscriber, so a cancelled turn's
+  # subprocesses ran on. The event now carries the turn's children, and the
+  # boot subscriber kills them.
+  def test_ctrl_c_during_a_turn_kills_the_turn_and_its_children
+    bus = Master::Trace::EventBus.new(event_log: Object.new.tap { |log| log.define_singleton_method(:append) { |*| nil } })
+    Master::Builder::TraceBoot.allocate.send(:subscribe_interrupt, bus)
+    children = Master::Io::Exec::Children.new
+    cli = Master::CLI::Session.new(container: @container.merge(bus:))
+    turn = Thread.new do
+      Fiber[:master_children] = children
+      Master::Io::Exec.capture2e("sh", "-c", "sleep 30")
+    end
+    sleep 0.3
+    cli.instance_variable_set(:@pipeline_thread, turn)
+    cli.instance_variable_set(:@turn_children, children)
 
-    @cli.send(:on_int)
+    cli.send(:on_int).join(3)
 
-    assert turn.join(1), "the turn's thread must be dead"
+    assert turn.join(3), "the turn's thread must be dead"
+    assert_equal 0, children.kill_all, "the child must be gone"
   end
 
   def test_ctrl_c_at_the_prompt_raises_interrupt_for_repl_loop_to_close

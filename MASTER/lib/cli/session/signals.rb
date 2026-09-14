@@ -19,13 +19,20 @@ module Master
 
       # ^C cancels a running turn; at the prompt it ends the session. A trap
       # interrupts the main thread wherever it stands, where taking a mutex
-      # raises ThreadError, so this only kills the turn's thread or raises
-      # Interrupt, and repl_loop saves on the way out in ordinary context.
+      # raises ThreadError, so the cancel runs on a thread of its own and the
+      # prompt raises Interrupt for repl_loop to close in ordinary context.
       def on_int
         turn = @pipeline_thread
-        return turn.kill if turn&.alive?
+        return Thread.new { cancel_turn(turn, @turn_children) } if turn&.alive?
 
         raise Interrupt
+      end
+
+      # The thread first, so the turn takes no next step, then its children,
+      # which the thread is otherwise left waiting on.
+      def cancel_turn(turn, children)
+        turn.kill
+        @refs.bus&.publish("user:interrupt", reason: "ctrl_c", source: "cli", children:)
       end
     end
   end

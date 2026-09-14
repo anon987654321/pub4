@@ -33,8 +33,8 @@ module Master
         stdin_data, spawn_opts = split_opts(opts)
         Open3.popen3(*cmd, pgroup: true, **spawn_opts) do |stdin, stdout, stderr, wait_thr|
           feed(stdin, stdin_data)
-          out_reader = Thread.new { stdout.read }
-          err_reader = Thread.new { stderr.read }
+          out_reader = reader_for(stdout)
+          err_reader = reader_for(stderr)
           status = bounded_wait(wait_thr, timeout, [out_reader, err_reader])
           [reap(out_reader), reap(err_reader), status]
         end
@@ -44,7 +44,7 @@ module Master
         stdin_data, spawn_opts = split_opts(opts)
         Open3.popen2e(*cmd, pgroup: true, **spawn_opts) do |stdin, stdout_err, wait_thr|
           feed(stdin, stdin_data)
-          reader = Thread.new { stdout_err.read }
+          reader = reader_for(stdout_err)
           status = bounded_wait(wait_thr, timeout, [reader])
           [reap(reader), status]
         end
@@ -54,7 +54,7 @@ module Master
         stdin_data, spawn_opts = split_opts(opts)
         Open3.popen2(*cmd, pgroup: true, **spawn_opts) do |stdin, stdout, wait_thr|
           feed(stdin, stdin_data)
-          reader = Thread.new { stdout.read }
+          reader = reader_for(stdout)
           status = bounded_wait(wait_thr, timeout, [reader])
           [reap(reader), status]
         end
@@ -77,8 +77,33 @@ module Master
         nil
       end
 
+      # The children one turn spawned. The CLI puts one in Fiber[:master_children]
+      # for each turn, and every thread the turn starts inherits fiber storage, so
+      # a user:interrupt kills that turn's processes and no one else's. Without it
+      # a cancelled turn's thread sits in popen's ensure waiting for its child,
+      # and the prompt waits with it for up to DEFAULT_TIMEOUT.
+      class Children
+        def initialize
+          @pids = []
+          @lock = Mutex.new
+        end
+
+        def track(pid)
+          @lock.synchronize { @pids << pid }
+          yield
+        ensure
+          @lock.synchronize { @pids.delete(pid) }
+        end
+
+        def kill_all
+          @lock.synchronize { @pids.dup }.each { |pid| Exec.kill_group(pid) }.size
+        end
+      end
+
       def bounded_wait(wait_thr, timeout, readers)
-        Timeout.timeout(timeout) { wait_thr.value }
+        children = Fiber[:master_children]
+        wait = -> { Timeout.timeout(timeout) { wait_thr.value } }
+        children ? children.track(wait_thr.pid, &wait) : wait.call
       rescue Timeout::Error
         kill_group(wait_thr.pid)
         readers.each(&:kill)
@@ -93,6 +118,13 @@ module Master
       rescue Errno::ESRCH, Errno::EPERM => e
         Master::Ground::Swallow.log(e, context: "Exec.kill_group")
         nil
+      end
+
+      # A cancelled turn closes the pipes under a reader mid-read. reap reads
+      # the IOError as empty output, so it must not also print a backtrace over
+      # the operator's prompt.
+      def reader_for(io)
+        Thread.new { io.read }.tap { |thread| thread.report_on_exception = false }
       end
 
       def reap(reader)
