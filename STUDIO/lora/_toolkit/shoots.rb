@@ -13,9 +13,13 @@
 #   ruby _toolkit/shoots.rb ragnhild            # every prompt, numbered
 #   ruby _toolkit/shoots.rb ragnhild --side=Weather
 #   ruby _toolkit/shoots.rb ragnhild --only=3,7,12
+#   ruby _toolkit/shoots.rb ragnhild --set=scenarios
 
 require "yaml"
 require "pathname"
+# preprompt composes the prompt and counts its tokens; this file chooses the
+# sittings and the subject.
+require_relative "../../preprompt/craft"
 
 LORA_ROOT = Pathname.new(__dir__).join("..").expand_path
 
@@ -27,7 +31,10 @@ LORA_ROOT = Pathname.new(__dir__).join("..").expand_path
 # one thing neither brief wants.
 #
 # A set is any shoots*.yml beside this directory, so adding a third is adding a
-# file.
+# file. scenarios is the one set with no file: preprompt draws its sittings.
+SCENARIOS = "scenarios"
+SCENARIO_COUNT = 24
+
 def set_file(name)
   return LORA_ROOT.join("shoots.yml") if name.nil? || name == "shoots"
 
@@ -35,21 +42,8 @@ def set_file(name)
 end
 
 def available_sets
-  LORA_ROOT.glob("shoots*.yml").map { |p| p.basename(".yml").to_s.sub(/\Ashoots_?/, "").then { |s| s.empty? ? "shoots" : s } }.sort
-end
-
-# CLIP's text encoder takes 77 tokens and discards the rest without saying so, so
-# a prompt that runs long loses its tail — which is where the film stock and the
-# focal length are. Counted here rather than hoped about.
-#
-# This is an approximation of BPE, not BPE: roughly one token per word plus one
-# per punctuation mark, which runs slightly high on ordinary English. Erring high
-# is the right direction for a ceiling. The 12 training prompts measured 39-48
-# under it and none were truncated.
-TOKEN_LIMIT = 77
-
-def approximate_tokens(prompt)
-  prompt.scan(/[\w'-]+|[[:punct:]]/).length + 2 # +2 for CLIP's start and end markers
+  stems = LORA_ROOT.glob("shoots*.yml").map { |path| path.basename(".yml").to_s.sub(/\Ashoots_?/, "") }
+  (stems.map { |stem| stem.empty? ? "shoots" : stem } + [SCENARIOS]).sort
 end
 
 def subject_env(subject)
@@ -79,20 +73,16 @@ def unquote(value)
   text
 end
 
-# The order is deliberate: who, then what they look like, then where they are,
-# then how it is lit, then how it was shot. CLIP weights earlier tokens more
-# heavily, so identity comes before scenery and scenery before equipment.
-def prompt_for(shoot, trigger:, descriptor:)
-  [trigger,
-   descriptor,
-   shoot.fetch("scene"),
-   "key light #{shoot.fetch('key')}",
-   "#{shoot.fetch('distance')} from camera",
-   shoot.fetch("lens"),
-   shoot.fetch("stock")].join(", ")
+# Scenarios are numbered from one without end, so --only=30 is scenario 30 even
+# though the unfiltered set stops at SCENARIO_COUNT.
+def scenario_sittings(side: nil, only: nil)
+  all = (only || (1..SCENARIO_COUNT)).map { |number| scenario_sitting(number) }
+  side ? all.select { |s| s["side"].casecmp?(side) } : all
 end
 
 def shoots(side: nil, only: nil, set: nil)
+  return scenario_sittings(side: side, only: only) if set == SCENARIOS
+
   file = set_file(set)
   abort "warn: no set #{set.inspect} — have: #{available_sets.join(', ')}" unless file.file?
 
@@ -129,7 +119,7 @@ def prompts_for(subject, side: nil, only: nil, set: nil)
   descriptor = env.fetch("DESCRIPTOR") do
     raise "#{subject}/subject.env has no DESCRIPTOR — a set needs one to anchor age and appearance"
   end
-  shoots(side: side, only: only, set: set).map { |s| [s, prompt_for(s, trigger: trigger, descriptor: descriptor)] }
+  shoots(side: side, only: only, set: set).map { |s| [s, sitting_prompt(s, trigger: trigger, descriptor: descriptor)] }
 end
 
 if $PROGRAM_NAME == __FILE__

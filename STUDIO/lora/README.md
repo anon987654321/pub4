@@ -244,7 +244,7 @@ lora/
 │   ├── install_seed_media.rb — rendered frames in, graded catalogue entries out
 │   ├── setup_runpod.sh — provisions a rented GPU box
 │   ├── check_hf_flux_access.rb — is the HF token good and the licence accepted?
-│   ├── shoots.rb — turns shoots.yml into prompts for whichever subject is rendering
+│   ├── shoots.rb — picks the sittings, written or drawn by preprompt, for a subject
 │   ├── judge.rb — refuses a frame worse than a real photograph of the subject
 │   ├── judge_thresholds.yml — the numbers judge.rb refuses against
 │   ├── contact_sheet.rb — lays a directory of frames out as one sheet

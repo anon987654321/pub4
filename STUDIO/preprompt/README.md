@@ -99,6 +99,23 @@ give 20 distinct combinations and the tuple does not repeat for 504 images. The
 previous version read four same-length pools at the same index: `--batch 20`
 returned each of five combinations four times, every time.
 
+## Scenarios, and lora
+
+The vocabularies, the pools and the composers live in `craft.rb`, which makes no
+request and loads nothing from MASTER, so lora can compose on a rented GPU that
+has only the repository. lora's sittings go through `sitting_prompt` there, and
+its token count against CLIP's 77 does too, so a subject adapter and a
+generation read one vocabulary and one budget.
+
+A scenario is a sitting drawn rather than written: expression, pose, wardrobe
+and place from the batch pools, a light from `--lighting`, a portrait lens, a
+distance of two metres or more, and a film stock by name. Each field turns at
+its own stride, so neighbouring scenarios change the light and the place
+together. A number is the same sitting on every run. A place never gets a light
+it cannot have — no golden hour in a car park at night — because the model
+keeps one of the two and drops the other. lora asks for them as a prompt
+set named `scenarios`, twenty-four by default or any numbers you name.
+
 ## Everything else
 
 Credentials resolve from `REPLICATE_API_TOKEN`, `REPLICATE_API_KEY`, or

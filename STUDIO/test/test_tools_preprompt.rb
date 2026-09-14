@@ -364,4 +364,68 @@ class TestPreprompt < Minitest::Test
       assert_empty uploads, "a URL or data: URI must not be re-uploaded"
     end
   end
+
+  # --- scenarios ----------------------------------------------------------
+
+  # lora's longest descriptor, so the budget is measured against the subject
+  # that spends the most of it.
+  DESCRIPTOR = "47 year old Norwegian woman, slender, fine-boned, fair Nordic blonde, west coast Norway"
+
+  def test_a_scenario_is_the_same_sitting_every_time_it_is_asked_for
+    assert_equal send(:scenario_sitting, 7), send(:scenario_sitting, 7)
+  end
+
+  def test_a_run_of_scenarios_repeats_no_sitting
+    scenes = (1..200).map { |n| send(:scenario_sitting, n).except("n", "title") }
+    assert_equal scenes.length, scenes.uniq.length
+  end
+
+  # Neighbours must differ in the light as well as the place, or a set reads as
+  # one sitting in different clothes.
+  def test_neighbouring_scenarios_change_the_light_and_the_place
+    (1..200).each do |n|
+      one = send(:scenario_sitting, n)
+      other = send(:scenario_sitting, n + 1)
+      refute_equal one["key"], other["key"], "scenarios #{n} and #{n + 1} share a light"
+      refute_equal one["scene"], other["scene"]
+    end
+  end
+
+  def test_no_scenario_asks_a_background_for_a_light_it_cannot_have
+    (1..200).each do |n|
+      sitting = send(:scenario_sitting, n)
+      background = BACKGROUND_POOL.find { |b| sitting["scene"].end_with?(b) }
+      refused = BACKGROUND_LIGHT_CONFLICTS.fetch(background, []).map { |light| light.tr("_", " ") }
+      refute_includes refused, sitting["key"], "scenario #{n}: #{background} lit by #{sitting['key']}"
+    end
+  end
+
+  def test_every_scenario_names_a_real_lens_distance_and_stock
+    (1..60).each do |n|
+      sitting = send(:scenario_sitting, n)
+      assert_includes LENS_VOCAB.keys, sitting["lens"]
+      assert_includes SUBJECT_DISTANCE_VOCAB.keys, sitting["distance"].delete(" ")
+      assert STOCK_VOCAB.values.any? { |d| d.start_with?(sitting["stock"]) }, "no stock is called #{sitting['stock']}"
+      refute_includes sitting["stock"], ",", "a sitting names the stock; its look is the grade's business"
+    end
+  end
+
+  def test_a_composed_scenario_fits_inside_clip
+    (1..200).each do |n|
+      prompt = send(:sitting_prompt, send(:scenario_sitting, n), trigger: "ragnhild", descriptor: DESCRIPTOR)
+      assert_operator send(:approximate_tokens, prompt), :<=, TOKEN_LIMIT, prompt
+    end
+  end
+
+  def test_the_sitting_prompt_puts_identity_before_scenery_before_equipment
+    sitting = { "scene" => "at a window", "key" => "sky", "distance" => "3 m", "lens" => "85mm", "stock" => "Portra 400" }
+    assert_equal "t, d, at a window, key light sky, 3 m from camera, 85mm, Portra 400",
+                 send(:sitting_prompt, sitting, trigger: "t", descriptor: "d")
+  end
+
+  def test_a_conflict_naming_a_background_that_does_not_exist_is_a_problem
+    table = BACKGROUND_LIGHT_CONFLICTS.merge("a moon base" => %w[soft])
+    assert(send(:scenario_problems, conflicts: table).any? { |line| line.include?("a moon base") })
+    assert_empty send(:scenario_problems)
+  end
 end

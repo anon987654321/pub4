@@ -23,6 +23,19 @@ class TestLora < Minitest::Test
     assert_empty Dir[File.join(LORA, "johann", "dataset", "*")], "johann has no consented dataset"
   end
 
+  # Written sittings and drawn scenarios go through the one composer preprompt
+  # owns, and the drawn set has no file for a glob to find.
+  def test_scenarios_are_a_set_that_preprompt_draws
+    require_relative "../lora/_toolkit/shoots"
+
+    assert_includes available_sets, "scenarios"
+    shoot, prompt = prompts_for("ragnhild", set: "scenarios", only: [3]).first
+    assert_equal scenario_sitting(3), shoot
+    assert prompt.start_with?("ragnhild, "), prompt
+    assert_includes prompt, shoot.fetch("scene")
+    assert_equal 50, prompts_for("ragnhild").length, "the written record is untouched"
+  end
+
   def test_judge_thresholds_load_and_every_one_is_a_number
     thresholds = YAML.safe_load_file(File.join(LORA, "_toolkit", "judge_thresholds.yml")).fetch("thresholds")
 
