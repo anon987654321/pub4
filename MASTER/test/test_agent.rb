@@ -43,6 +43,19 @@ class TestAgent < Minitest::Test
     assert_operator Master::Review::Agent.public_instance_methods(false).size, :<=, 12
   end
 
+  # The filter ran on the operator's own message, so "what would happen if"
+  # reached the model as "what happen if".
+  def test_ask_once_sends_the_operators_words_unchanged
+    sent = nil
+    dispatcher = Object.new
+    dispatcher.define_singleton_method(:send_with_cache) { |_model, messages, **| sent = messages; Master::Result.ok("ok") }
+    @agent.instance_variable_set(:@dispatcher, dispatcher)
+
+    @agent.ask_once("what would happen if it might fail?", law: false)
+
+    assert_equal "what would happen if it might fail?", sent.last[:content]
+  end
+
   def test_prompt_filter_removes_anti_simulation_words_outside_code_fences
     filtered = @agent.send(:filter_prompt, "This will pass and might help.\n```ruby\nwill = :kept\n```")
 

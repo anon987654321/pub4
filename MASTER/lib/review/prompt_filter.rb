@@ -2,6 +2,9 @@
 
 module Master
   module Review
+    # Strips the anti-simulation words from the system prompt MASTER writes.
+    # anti_simulation governs what MASTER asserts, so it never touches a user
+    # message: "what would happen if" has to reach the model as asked.
     module PromptFilter
       DEFAULT_ANTI_SIMULATION_WORDS = ["wil#{?l}", "woul#{?d}", "coul#{?d}", "migh#{?t}"].freeze
       PROMPT_FENCE_RE = /(```.*?```)/m.freeze

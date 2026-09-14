@@ -93,7 +93,7 @@ module Master
         def dispatch_retry(selected_model:, mode:, prompt:, context:, stream:, image:, retry_index:, retry_count:, &blk)
           @bus&.publish("llm:retry_attempt", model: selected_model, mode:, attempt: retry_index + 1,
                                           max: retry_count + 1)
-          wrapped = filter_prompt(apply_reasoning_mode(prompt, mode:))
+          wrapped = apply_reasoning_mode(prompt, mode:)
           @dispatcher.send_with_cache(
             selected_model,
             context + [{ role: "user", content: wrapped }],

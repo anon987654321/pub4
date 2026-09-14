@@ -38,7 +38,6 @@ class TestFallbackChain < Minitest::Test
     agent.instance_variable_set(:@config,
       Struct.new(:reasoning_mode, :task_type, :model).new("direct", :general, "cheap-model"))
     agent.instance_variable_set(:@bus, nil)
-    agent.define_singleton_method(:filter_prompt) { |msg| msg }
     agent.define_singleton_method(:apply_reasoning_mode) { |msg, **| msg }
     agent
   end

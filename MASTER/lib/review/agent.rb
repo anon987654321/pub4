@@ -67,7 +67,7 @@ module Master
       end
 
       def ask(prompt, context: nil, operation: nil, image: nil, temperature: nil)
-        messages = Array(context) + [{ role: "user", content: filter_prompt(apply_reasoning_mode(prompt)) }]
+        messages = Array(context) + [{ role: "user", content: apply_reasoning_mode(prompt) }]
         selected_model = live_model(operation ? model_for(operation:) : routed_models.first)
         result = @dispatcher.send_with_cache(selected_model, messages, stream: false, image:, temperature:)
         result = retry_on_broke_lane(result, selected_model, messages, image:, temperature:)
@@ -83,7 +83,7 @@ module Master
 SINGLE_CALL_FAILOVER = %i[budget rate_limit timeout no_api_key].freeze
 
       def ask_once(prompt, system: nil, law: true, model: nil, image: nil, temperature: nil)
-        messages = [{ role: "user", content: filter_prompt(prompt) }]
+        messages = [{ role: "user", content: prompt }]
         chosen = live_model(model || self.model)
         sys = role_system(system, law:)
         result = @dispatcher.send_with_cache(chosen, messages, system: sys, stream: false, image:, temperature:)
