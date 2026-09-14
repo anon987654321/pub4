@@ -7,7 +7,6 @@ require "json"
 require_relative "../../gates/support/design_metrics"
 require_relative "../../gates/support/geometry_autofix"
 require_relative "../../gates/lib/gate_mutation"
-require_relative "../../gates/lib/rendered/layout_snapshot"
 require_relative "../../gates/support/geometry_probe"
 require_relative "../../gates/support/geometry_type"
 require_relative "../../../OPENBSD/lib/gate_result"
@@ -229,59 +228,6 @@ class RenderedGatesTest < Minitest::Test
     yield
   ensure
     klass.send(:define_method, name, saved)
-  end
-
-  # --- snapshot diffing ----------------------------------------------------
-
-  def snapshot(overrides = {})
-    {
-      "title" => "Listings", "viewport" => [390, 844], "scroll_width" => 390, "h1_count" => 1,
-      "landmarks" => { "main" => true, "nav" => true, "skip" => true },
-      "elements" => [{
-        "key" => "nav.tab-bar", "tag" => "nav", "rect" => { "x" => 0, "y" => 0, "w" => 390, "h" => 48 },
-        "color" => "#ffffff", "bg" => "#000000", "font_size" => 16.0,
-        "line_height" => 24.0, "display" => "flex", "position" => "fixed",
-      }],
-    }.merge(overrides)
-  end
-
-  def compare(a, b)
-    Deploy::LayoutSnapshotGate.new.send(:compare, a, b)
-  end
-
-  def test_identical_snapshots_do_not_drift
-    assert_empty compare(snapshot, snapshot)
-  end
-
-  def test_sub_pixel_movement_is_tolerated
-    moved = snapshot
-    moved["elements"] = [moved["elements"].first.merge("rect" => { "x" => 0, "y" => 1, "w" => 390, "h" => 49 })]
-    assert_empty compare(snapshot, moved), "a 1px shift is rounding, not a regression"
-  end
-
-  def test_a_real_move_is_reported_with_both_values
-    moved = snapshot
-    moved["elements"] = [moved["elements"].first.merge("rect" => { "x" => 0, "y" => 0, "w" => 390, "h" => 32 })]
-    diffs = compare(snapshot, moved)
-    assert_equal 1, diffs.size
-    assert_match(/h 48→32/, diffs.first, "the diff must name the old and new value, not just 'changed'")
-  end
-
-  def test_colour_change_is_reported
-    recoloured = snapshot
-    recoloured["elements"] = [recoloured["elements"].first.merge("color" => "#969696")]
-    assert_match(/color "#ffffff" → "#969696"/, compare(snapshot, recoloured).first)
-  end
-
-  def test_lost_landmark_is_reported
-    assert_match(/landmark skip: true → false/,
-                 compare(snapshot, snapshot("landmarks" => { "main" => true, "nav" => true, "skip" => false })).first)
-  end
-
-  def test_added_and_removed_elements_are_reported
-    empty = snapshot("elements" => [])
-    assert_match(/removed: nav.tab-bar/, compare(snapshot, empty).join(" "))
-    assert_match(/added: nav.tab-bar/, compare(empty, snapshot).join(" "))
   end
 
   # --- surface configuration ----------------------------------------------

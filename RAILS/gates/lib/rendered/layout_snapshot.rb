@@ -5,6 +5,7 @@ require "fileutils"
 require_relative "../../../../OPENBSD/lib/gate_result"
 require_relative "../../support/geometry_probe"
 require_relative "../../support/gate_autofix"
+require_relative "../../support/layout_snapshot_drift"
 
 module Deploy
   # Structural pixel-perfect: a committed, diffable JSON baseline of what the
@@ -100,7 +101,7 @@ module Deploy
         elsif self.class.update?
           write(path, current)
           written += 1
-          @result.warn("layout_snapshot: #{surface.id} baseline updated (#{diffs.size} change(s) accepted)")
+          @result.warn("layout_snapshot: #{surface.id} baseline updated (#{diffs.size} change(s) accepted: #{tally(diffs)})")
         else
           report(surface, diffs, path)
         end
@@ -194,50 +195,21 @@ module Deploy
       }
     end
 
-    def compare(baseline, current)
-      diffs = []
-      %w[title h1_count scroll_width].each do |field|
-        next if baseline[field] == current[field]
+    # Each difference reads "class: detail", most severe class first; Drift
+    # holds the classes and why they run in that order.
+    def compare(baseline, current) = Drift.new(baseline, current).differences
 
-        diffs << "#{field}: #{baseline[field].inspect} → #{current[field].inspect}"
-      end
-      (baseline["landmarks"] || {}).each do |mark, was|
-        now = current.dig("landmarks", mark)
-        diffs << "landmark #{mark}: #{was} → #{now}" if was != now
-      end
-
-      old_by_key = (baseline["elements"] || {}).to_h { |el| [el["key"], el] }
-      new_by_key = (current["elements"] || {}).to_h { |el| [el["key"], el] }
-
-      (old_by_key.keys - new_by_key.keys).first(6).each { |k| diffs << "removed: #{k}" }
-      (new_by_key.keys - old_by_key.keys).first(6).each { |k| diffs << "added: #{k}" }
-
-      (old_by_key.keys & new_by_key.keys).each do |key|
-        was = old_by_key[key]
-        now = new_by_key[key]
-        moved = %w[x y w h].select do |axis|
-          (was.dig("rect", axis).to_i - now.dig("rect", axis).to_i).abs > TOLERANCE_PX
-        end
-        unless moved.empty?
-          detail = moved.map { |a| "#{a} #{was.dig("rect", a)}→#{now.dig("rect", a)}" }.join(", ")
-          diffs << "#{key}: #{detail}"
-        end
-        %w[color bg font_size line_height display position].each do |field|
-          next if was[field] == now[field]
-
-          diffs << "#{key}: #{field} #{was[field].inspect} → #{now[field].inspect}"
-        end
-      end
-      diffs
-    end
-
+    # The tally leads, so a hierarchy change is named in the first words of the
+    # line even when the eight entries shown are not enough to reach all of it.
     def report(surface, diffs, path)
       shown = diffs.first(8)
       more = diffs.size > shown.size ? " (+#{diffs.size - shown.size} more)" : ""
       @result.fail(
-        "layout_snapshot: #{surface.id} drifted from #{rel(path)} — #{shown.join("; ")}#{more}"
+        "layout_snapshot: #{surface.id} drifted from #{rel(path)} — #{tally(diffs)} — #{shown.join("; ")}#{more}"
       )
     end
+
+    def tally(diffs) = diffs.map { |diff| diff[/\A\w+/] }.tally.map { |name, count| "#{name} #{count}" }.join(", ")
 
     def write(path, data)
       File.write(path, JSON.pretty_generate(data) + "\n")
