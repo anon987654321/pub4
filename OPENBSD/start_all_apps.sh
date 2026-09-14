@@ -16,7 +16,7 @@ case ${1:-} in
 esac
 
 # Named outright, as the rc.d scripts name it: this runs as root from rc(8) or by
-# hand with no caller environment, so a PUB4_ROOT would have to be set here too.
+# hand with no caller environment, so a PUB4_ROOT needs setting here too.
 # Production has one checkout, and a worktree is never a deploy target.
 ROOT=/home/dev/pub4
 ALL_APPS_FLAG=/var/db/pub4_all_apps

@@ -110,7 +110,7 @@ MEM_RESTORE=10
 # only on the next tick, so this guard reads the smoothed figure and not the
 # 1-minute one core-reclaim.sh:65 reads for its own, opposite question. The two
 # have to disagree, so the scripts that read the load share no library; a shared
-# file would also be one more root-owned install target, since root sources only
+# file also means one more root-owned install target, since root sources only
 # root-owned absolute paths.
 load=$(sysctl -n vm.loadavg 2>/dev/null | awk '{print $2}')
 # Failing toward 9.9 sheds. A guard that cannot read the load must assume the
