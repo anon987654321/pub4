@@ -19880,10 +19880,23 @@ def album_slot_env(idx)
     env.merge!("COPY_MACHINE" => "6", "WAV_MAP" => image, "WAV_MAP_PATH" => "spiral",
                "DILLA_MIX_BUSES" => "1", "BUS_MOD_SYNC" => "1/8")
   else
-    env.merge!("COPY_MACHINE" => "0", "WAV_MAP" => "", "DILLA_MIX_BUSES" => "0")
+    env.merge!(album_undevice_env)
   end
 
   env
+end
+
+# A beat between device slots loses only the wav-map. Copy Machine and the mix
+# buses go back to what the ringtone layer and the full engine default them to,
+# not to off: the operator loves the ringtone effects ("i also love the ringtool
+# effects"), and switching them off on three beats in four took them out of
+# most of the record. An operator pin still wins.
+def album_undevice_env
+  copies = RingtoneLayer.ringtone_layer_enabled? ? RingtoneLayer::RINGTONE_LAYER_DEFAULTS["COPY_MACHINE"] : "0"
+  buses = FullEngine.full_engine_enabled? ? FullEngine::FULL_ENGINE_DEFAULTS["DILLA_MIX_BUSES"] : "0"
+  { "COPY_MACHINE" => USER_PINNED_ENV.fetch("COPY_MACHINE", copies),
+    "WAV_MAP" => "",
+    "DILLA_MIX_BUSES" => USER_PINNED_ENV.fetch("DILLA_MIX_BUSES", buses) }
 end
 
 # The bed is audio, and audio is not in git. A record that names a loop nobody

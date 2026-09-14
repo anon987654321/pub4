@@ -2121,6 +2121,29 @@ class TestDilla < Minitest::Test
     assert_empty result.fetch("rap_off")
   end
 
+  # The album's non-device beats used to force COPY_MACHINE=0 and
+  # DILLA_MIX_BUSES=0, taking the ringtone effects the operator loves out of
+  # three beats in four. They keep the layer's defaults and lose only the wav-map.
+  def test_album_beats_between_device_slots_keep_the_ringtone_layer
+    result = eval_in_engine(<<~RUBY)
+      puts JSON.generate(
+        pinned: USER_PINNED_ENV.slice("COPY_MACHINE", "DILLA_MIX_BUSES", "RINGTONE_LAYER", "DILLA_FULL"),
+        plain: (0...ALBUM_DEVICE_EVERY - 1).map { |idx| album_slot_env(idx) },
+        copies: RingtoneLayer::RINGTONE_LAYER_DEFAULTS["COPY_MACHINE"],
+        buses: FullEngine::FULL_ENGINE_DEFAULTS["DILLA_MIX_BUSES"]
+      )
+    RUBY
+
+    skip "the ringtone keys are pinned in this shell" unless result.fetch("pinned").empty?
+    refute_equal "0", result.fetch("copies")
+    assert_equal "1", result.fetch("buses")
+    result.fetch("plain").each do |env|
+      assert_equal result.fetch("copies"), env.fetch("COPY_MACHINE"), "Copy Machine stays on between devices"
+      assert_equal result.fetch("buses"), env.fetch("DILLA_MIX_BUSES"), "the mix buses stay on between devices"
+      assert_equal "", env.fetch("WAV_MAP"), "only the wav-map belongs to a device slot"
+    end
+  end
+
   # demo-all's defaults were cut unheard to four bars, three pad voices, an
   # album-wide ringtone chain and a 92 BPM techno kit, and the demo that came out
   # was stopped as "horrible". These are the defaults it renders by now.
