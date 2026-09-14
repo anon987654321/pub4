@@ -28351,7 +28351,7 @@ def command_help
       ["play", "[preset] [bars]", "Render one preset and play it (default dilla, 8 bars)"],
       ["bed", "[render [seed N] [out.wav] | check [seeds 1,2,3] | stop]", "The bed under the narration: passes rendered and played, ducking under speech"],
       ["live", "[passes] [out.wav] | set|recall|broadcast|dig", "The catalogue played as generated; the livesets (live dig rips YouTube, unlicensed)"],
-      ["sines", "[args]", "The continuous stream through the engine's pads, queued and played"],
+      ["sines", "[play | demo | beat]", "The continuous stream through the engine's pads, queued and played; demo and beat render the two kept 08-28 takes' rows -> sines_demo.mp3, sines_beat.wav"],
       ["regenerate", "[bars]", "Fresh render and harmony-forward mix, looped"],
       ["live_now", "", "Loop the cached harmony or full render, no render wait"],
       ["harmony_now", "", "Loop the harmony-forward mix of the cached stems"],
