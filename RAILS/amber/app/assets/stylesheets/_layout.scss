@@ -72,15 +72,12 @@ main#main-content header > nav {
    put amber's text against the screen edge at 400px.
    The `flex: 0 0 auto` on the nav's controls stays unconditional: it stops them
    shrinking in the scrolling row and is harmless once the row wraps. */
-.layout > main#main-content {
-  padding-inline: var(--page-gutter);
-}
-
 /* _minimal makes every main a centred flex column, so a short page floated
    mid-screen and each child shrank to its own width and centred on its own: the
    demo title, its outfit list and its item grid started at three different x
    positions. A page reads from one left edge at the top of the column. */
 .layout > main#main-content {
+  padding-inline: var(--page-gutter);
   align-items: stretch;
   justify-content: flex-start;
 }

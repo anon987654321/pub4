@@ -239,15 +239,15 @@ main#main-content .amber-guest-hero .title {
 
 /* ch, not rem: 32rem is 640px at amber's root and the measure the type
    actually sets is counted in characters, which is what the gate reads.
-   Unitless 1.5 because this is prose: --line-height is the root's absolute
-   20px, which set the 15.75px paragraph at 1.27. */
+   --leading-normal (1.5) because this is prose: --line-height is the root's
+   absolute 20px, which set the 15.75px paragraph at 1.27. */
 .amber-guest-hero .body {
   max-width: var(--measure-narrow);
   margin-inline: auto;
   color: var(--text-secondary);
   margin-block: 0;
   font-size: var(--text-sm);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
 }
 
 .amber-guest-hero .actions {
@@ -352,13 +352,6 @@ body {
   border-bottom: 1px solid var(--border, var(--color-extra-light-grey));
 }
 
-/* Display type: the same family as the text beside it. */
-h1, .display, .wordmark {
-  font-family: var(--font);
-  letter-spacing: var(--letter-display);
-  font-weight: var(--weight-normal);
-}
-
 /* Editorial grid: first card larger */
 .items-grid,
 .wardrobe-grid {
@@ -460,41 +453,6 @@ h1, .display, .wordmark {
 .edge-swiper-grip:focus-visible {
   outline: var(--focus-ring);
   outline-offset: 2px;
-}
-
-/* Sustainability meter */
-.sustainability-meter,
-.sustainability-grade {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-}
-.sustainability-grade {
-  font-weight: var(--weight-bold);
-  color: var(--accent);
-  border: var(--elev-1);
-  padding: var(--space-0-5) var(--space-2);
-  border-radius: var(--radius-sm, 6px);
-}
-
-/* Look rail */
-.look-rail {
-  display: flex;
-  gap: var(--space-3);
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  padding-block: var(--space-3);
-}
-.look-rail > * {
-  flex: 0 0 auto;
-  scroll-snap-align: start;
-  max-width: 12rem;
-}
-.look-rail .eyebrow {
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
 }
 
 /* Swiper peek */
