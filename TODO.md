@@ -42,9 +42,7 @@ Forward work is the last section of this file.
 - **tv and maps hover fills fail AA under the vertical ink** (3.34 and 4.31
   against 4.5) and reach no pixel until their hover is wired. Pick the colours
   before wiring them; `_vertical_shell.scss` records the measurement.
-- **dilla is fenced, because it renders audio.** Whether
-  `STUDIO/dilla/data/dilla_principles.yml` gets a reader (it has none, and
-  wiring it changes what dilla generates) or goes; narrowing dilla's
+- **dilla is fenced, because it renders audio.** Narrowing dilla's
   `SILENT_RESCUE` sites.
 
 ### Needs vm23
@@ -882,7 +880,7 @@ Take them the day those files are clean.
 
 These are the operator's, because each changes a sound or accepts a changed input:
 
-850. **`data/modes.yml` has no reader.** Nothing in STUDIO loads it — `tizita`, `bati`, `ambassel` appear only in the file, and the `chord_theory.rb` it names is gone. Wiring it into the harmony spine changes what dilla generates; the other choice is deleting it. Same decision as `dilla_principles.yml`.
+850. **`data/modes.yml` has no reader.** Nothing in STUDIO loads it — `tizita`, `bati`, `ambassel` appear only in the file, and the `chord_theory.rb` it names is gone. Wiring it into the harmony spine changes what dilla generates; the other choice is deleting it. (The principles file went the third way: it is the `principles` section of `dilla_reference.yml`, kept as the argument a sound change answers to, with no reader by design.)
 859. **The crate on main disagrees with `data/assets.json`.** `DillaAssets.verify` there: `samples/{kembara_rindu,lo_borges,semua_untuk_mu}/loop.wav` missing, and seven one-shots under `samples/drums/` changed hash at the same size. Restore them, or `dilla assets record` to accept the new drums as the inputs.
 
 ### STUDIO — postpro, preprompt, lora

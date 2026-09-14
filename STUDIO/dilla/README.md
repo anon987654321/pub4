@@ -2,8 +2,9 @@
 
 **A beat engine that never phones home.** `dilla.rb` and the helpers under
 `lib/` generate harmony, program drums, play sampled loops against them, mix,
-master, and write an mp3 or a wav. Everything runs locally through `ffmpeg` and
-`fluidsynth`: nothing is uploaded, and nothing is fetched at render time.
+master, and write an mp3 or a wav. Every sound is synthesised by the engine and
+shaped through `ffmpeg`: nothing is uploaded, and nothing is fetched at render
+time.
 
 The suite is `STUDIO/test/test_dilla_*.rb`, which is the glob `rake test:dilla`
 expands in `STUDIO/Rakefile`; bare `rake` runs the gate and every suite. Check
@@ -12,11 +13,15 @@ twice — once naming a file that had not existed for months, once naming a
 directory that has never existed — and both times it sent an operator to
 validate nothing and read the result as passing.
 
-Bare `ruby dilla.rb` renders the catalogue at four bars per track and applies
-the local `DEMO_FX=ringtone` post-chain: tremolo, chorus, crusher and stereo
-widening, with the phaser and echo back only under `HATE_TUNNEL=1`. Set
-`DEMO_FX=0` for a dry catalogue render. Techno tracks alternate with hip-hop
-ones and play a four-bar drum phrase over the same pads and leads.
+Bare `ruby dilla.rb` plays the catalogue through the bed and writes `demo.wav`
+and `demo.mp3` beside it. The catalogue is the seven verified recordings and the
+twelve improvisations. The bed voices each piece on one instrument, voice-led,
+with the drums on top, a lead and a bass under it, and sets every piece to the
+same loudness under a true-peak ceiling. The bed began as the pad under MASTER's
+narration and became the engine's render because it sounded better than the
+engine's own catalogue; `ruby dilla.rb bed` still plays it under the narration,
+ducking while a line is spoken, and `STUDIO/dilla/data/bed.yml` holds every
+number it uses. `ruby dilla.rb demo-all` renders the older engine's catalogue.
 
 The native synth recipes follow the physical source rather than treating every
 instrument as a generic pad. Rhodes uses a tine-like FM pair with a bright
