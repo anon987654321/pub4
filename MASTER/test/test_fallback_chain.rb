@@ -83,6 +83,30 @@ class TestFallbackChain < Minitest::Test
     assert_equal "z-ai/glm-4.5-air:free", response.model, "the answer names the routed head, not the model that spoke"
   end
 
+  # Offline, the paid head fails once without retry or backoff, the rest of the
+  # remote chain is dropped, and the local model the daemon holds answers.
+  def test_an_offline_head_fails_over_to_the_local_tier
+    offline = -> { Master::Result.err("Failed to open TCP connection: getaddrinfo", category: :offline) }
+    dispatcher = CountingDispatcher.new(
+      "anthropic/claude-opus-4" => offline,
+      "google/gemini-2.5-flash" => offline,
+      "ollama:llama3.2:3b" => -> { Master::Result.ok("local ok") },
+    )
+    agent = build_agent(dispatcher)
+    router = FakeRouter.new
+    router.define_singleton_method(:local_models) { ["ollama:llama3.2:3b"] }
+    agent.instance_variable_set(:@model_router, router)
+    agent.define_singleton_method(:backoff_before_retry) { |*| flunk "slept with no network" }
+
+    response = agent.send(:attempt_chat_with_fallbacks, candidate_models: %w[anthropic/claude-opus-4 google/gemini-2.5-flash],
+                                                        prompt: "hi", context: [], stream: false)
+
+    assert_equal "local ok", response.value!
+    assert_equal %w[anthropic/claude-opus-4 ollama:llama3.2:3b], dispatcher.calls
+    assert_equal "ollama:llama3.2:3b", response.model
+    refute Master::Io::ModelSkipCache.skipped?("anthropic/claude-opus-4"), "a lane parked for the network's absence"
+  end
+
   def test_failover_skip_model_identifies_transient_errors
     agent = build_agent(CountingDispatcher.new({}))
     timeout = Master::Result.err("timed out", category: :timeout)

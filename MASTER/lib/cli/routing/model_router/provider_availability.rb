@@ -140,11 +140,39 @@ def ollama_installed_models
   @ollama_installed_models = fetch_ollama_tags
 end
 
+# The local tier as the daemon holds it, best first: the models.yml chain in
+# its own order where pulled, then whatever else is pulled, so a machine that
+# pulled a different model still has a local lane. Embedding models are left
+# out because /api/chat refuses them. When the daemon cannot say, the
+# configured chain stands if the tier is enabled and nothing is offered if not.
+#
+# This is the method the CLI agent calls for an offline default, and the one
+# FallbackChain walks when a paid lane fails with no network.
+def local_models
+  configured = Array(@rules.dig("models", "local")).filter_map { |row| row["id"] }
+  installed = ollama_installed_models
+  return ollama_enabled? ? configured : [] if installed.nil?
+
+  pulled = configured.select { |id| ollama_pulled?(id) }
+  extra = installed.reject { |name| name.match?(/embed/i) }
+                   .map { |name| "ollama:#{name.delete_suffix(':latest')}" }
+  (pulled + extra).uniq
+end
+
 OLLAMA_TAGS_TIMEOUT_S = 2
 
+# OLLAMA_BASE_URL decides whether the tier is offered while online. The
+# daemon's address does not depend on it, so an unset variable still asks the
+# default one, which is what an offline laptop has.
+def ollama_tags_base_url
+  base = ENV["OLLAMA_BASE_URL"].to_s.strip
+  base = @rules.dig("ollama", "default_base_url").to_s if base.empty?
+  base = "http://localhost:11434" if base.empty?
+  base.chomp("/").delete_suffix("/v1")
+end
+
 def fetch_ollama_tags
-  base = ENV["OLLAMA_BASE_URL"].to_s.strip.chomp("/").delete_suffix("/v1")
-  uri = URI("#{base}/api/tags")
+  uri = URI("#{ollama_tags_base_url}/api/tags")
   response = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https",
                                                  open_timeout: OLLAMA_TAGS_TIMEOUT_S,
                                                  read_timeout: OLLAMA_TAGS_TIMEOUT_S) do |http|

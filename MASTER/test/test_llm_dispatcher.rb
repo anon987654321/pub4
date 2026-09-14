@@ -125,6 +125,22 @@ class TestLLMDispatcher < Minitest::Test
     refute dispatcher.send(:rate_limit_error?, StandardError.new("connection reset"))
   end
 
+  # The breaker turns a resolver failure into :provider_error; with no network
+  # it is :offline, while a refused connection and the local sender's own
+  # failure stay what they were.
+  def test_a_network_failure_classifies_as_offline
+    dispatcher, = build_dispatcher
+    dns = Master::Result.err("Failed to open TCP connection to openrouter.ai:443 (getaddrinfo: nodename nor servname provided, or not known)",
+                             category: :provider_error)
+    refused = Master::Result.err("Failed to open TCP connection to openrouter.ai:443 (Connection refused)", category: :provider_error)
+    local = Master::Result.err("ollama unreachable at http://gpu.lan:11434: getaddrinfo failed", category: :provider_error)
+
+    assert_equal :offline, dispatcher.send(:reclassify_provider_error, dns).category
+    assert_equal :provider_error, dispatcher.send(:reclassify_provider_error, refused).category
+    assert_equal :provider_error, dispatcher.send(:reclassify_provider_error, local).category
+    assert_equal :offline, dispatcher.send(:classified_call_failure, SocketError.new("Network is unreachable")).category
+  end
+
   def test_send_claude_cli_returns_timeout_error
     dispatcher, _session, _bus = build_dispatcher
     def dispatcher.capture3_with_timeout(_timeout_s, *_args, **)

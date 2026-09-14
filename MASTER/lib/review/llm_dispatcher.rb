@@ -196,6 +196,7 @@ module Master
       # and :llm_call_failure is not in fallback_policy.on — classified as
       # :budget / :rate_limit, the chain and the single-shot hop walk on.
       def classified_call_failure(err)
+        return Result.err(redact_secrets(err.message.to_s), category: :offline) if offline_error?(err)
         return Result.err(Master.no_api_key_message, category: :no_api_key) if missing_key_error?(err)
         return Result.err(redact_secrets(err.message.to_s), category: :budget) if billing_error?(err)
         return Result.err(redact_secrets(err.message.to_s), category: :rate_limit) if rate_limit_error?(err)
@@ -205,10 +206,25 @@ module Master
 
       def reclassify_provider_error(result)
         return result unless result.is_a?(Master::Result::Err) && result.category == :provider_error
+        return Master::Result.err(result.message, category: :offline) if offline_error?(result)
         return Master::Result.err(result.message, category: :budget) if billing_error?(result)
         return Master::Result.err(result.message, category: :rate_limit) if rate_limit_error?(result)
 
         result
+      end
+
+      # The machine cannot reach the provider at all: the name did not resolve
+      # or no route exists. A refused connection is left out, because one
+      # provider refusing says nothing about the network. The local sender
+      # names its own failures and is not offline when its daemon is down.
+      OFFLINE_SIGNS = ["getaddrinfo", "nodename nor servname", "name or service not known",
+                       "temporary failure in name resolution", "network is unreachable",
+                       "no route to host", "enetunreach", "ehostunreach"].freeze
+      OFFLINE_RE = Regexp.new(OFFLINE_SIGNS.map { |sign| Regexp.escape(sign) }.join("|"), Regexp::IGNORECASE)
+
+      def offline_error?(err)
+        message = err.message.to_s
+        !message.start_with?("ollama ") && message.match?(OFFLINE_RE)
       end
 
       def billing_error?(err)

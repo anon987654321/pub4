@@ -112,6 +112,24 @@ class TestKeylessRouting < Minitest::Test
     ENV.delete("OLLAMA_BASE_URL")
   end
 
+  # Offline with no OLLAMA_BASE_URL the daemon is still asked, and a model
+  # pulled outside models.yml ranks after the configured ones it holds.
+  def test_local_models_rank_what_the_daemon_holds_without_the_env_gate
+    ENV.delete("OLLAMA_BASE_URL")
+    router = Master::CLI::Routing::ModelRouter.new(
+      config: FakeConfig.new(model: Master.free_primary_model), root: Master::ROOT,
+    )
+    router.define_singleton_method(:ollama_installed_models) do
+      ["mistral:latest", "qwen2.5-coder:7b", "nomic-embed-text:latest"]
+    end
+
+    assert_equal "http://localhost:11434", router.ollama_tags_base_url
+    assert_equal ["ollama:qwen2.5-coder:7b", "ollama:mistral"], router.local_models
+
+    router.define_singleton_method(:ollama_installed_models) { nil }
+    assert_empty router.local_models, "a silent daemon offered models while the tier is off"
+  end
+
   # The daemon's own answer, read over a real socket.
   def test_ollama_tags_are_read_from_the_daemon
     server = TCPServer.new("127.0.0.1", 0)

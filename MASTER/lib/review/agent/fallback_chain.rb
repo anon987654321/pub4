@@ -14,11 +14,12 @@ module Master
 
         def attempt_chat_with_fallbacks(candidate_models:, prompt:, context:, stream:, image: nil, &blk)
           stage_warnings = []
-          fallback_modes = mode_chain_for(candidate_models)
+          queue = mode_chain_for(candidate_models)
           last_response = nil
           timed_out_models = Set.new
 
-          fallback_modes.each do |attempt|
+          until queue.empty?
+            attempt = queue.shift
             response = try_fallback_attempt(attempt, timed_out_models:, stage_warnings:, prompt:, context:, stream:, image:, &blk)
             next unless response
 
@@ -29,6 +30,7 @@ module Master
               return response.with_model(answered)
             end
             last_response = response
+            queue = offline_queue(attempt.fetch(:model), queue) if offline?(response)
           end
 
           @bus&.publish("agent:all_fallbacks_exhausted", warnings: stage_warnings)
@@ -81,7 +83,7 @@ module Master
             return response if response.is_a?(Master::Result::Ok)
 
             last_response = response
-            break if failover_skip_model?(response) || permanent_failure?(response)
+            break if failover_skip_model?(response) || permanent_failure?(response) || offline?(response)
 
             backoff_before_retry(selected_model, mode, retry_index) if retry_index < retry_count
           end
@@ -109,6 +111,22 @@ module Master
         # spends the 30s and 60s backoff. The next model or mode still gets a turn.
         def permanent_failure?(response)
           response.is_a?(Master::Result::Err) && response.permanent?
+        end
+
+        def offline?(response)
+          response.is_a?(Master::Result::Err) && response.category == :offline
+        end
+
+        # With no network every remote lane fails the same way, and each one
+        # tried costs a resolver timeout, so what is left of the chain becomes
+        # the local tier the daemon holds, in its ranked order. The failed
+        # models are not parked in the skip cache: they come back with the
+        # network. With no local model there is nothing left worth trying.
+        def offline_queue(failed_model, queue)
+          local = @model_router.respond_to?(:local_models) ? Array(@model_router.local_models) : []
+          local = local.reject { |id| id == failed_model }
+          @bus&.publish("llm:offline_failover", from: failed_model, to: local, dropped: queue.size)
+          local.map { |id| { model: id, mode: "direct" } }
         end
 
         def skip_categories

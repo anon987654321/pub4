@@ -23,7 +23,7 @@ module Master
     module ErrClassification
       # Worth trying again as-is, or after a wait: the failure is in the
       # environment rather than in what was asked.
-      RETRIABLE = %i[infrastructure timeout provider_error llm_failure llm_call_failure rate_limit exhausted].freeze
+      RETRIABLE = %i[infrastructure timeout provider_error llm_failure llm_call_failure rate_limit exhausted offline].freeze
 
       # Retrying reproduces it. Either the request is wrong, the answer is no, or
       # the operation is over.
@@ -62,6 +62,7 @@ module Master
       infrastructure: "system / disk / git error",
       handler_exception: "unexpected error during handler execution",
       timeout: "operation exceeded deadline",
+      offline: "no network route to the provider — a local model can still answer",
       rate_limit: "tier rate limit exceeded",
       budget: "cost limit hit",
       exhausted: "paid provider spend limit — the tier could not run (Io::QuotaGate)",
