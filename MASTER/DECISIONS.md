@@ -1005,7 +1005,7 @@ that indexes the wrong string introduces none and passes `node --check`.
 Generation left MASTER in `76b11fec4` and the severance was confirmed permanent
 the next day. If the LoRA loop needs generation again, express it as
 `lib/core/world.rb` handlers; do not restore the deleted LoRA pipeline and
-video chain from history. STUDIO's repligen and lora keep the capability.
+video chain from history. STUDIO's preprompt and lora keep the capability.
 
 ## The Execution Roadmap Was Already Built (2026-09-13)
 

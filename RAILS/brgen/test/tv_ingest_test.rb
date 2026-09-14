@@ -3,7 +3,7 @@
 require "test_helper"
 require "rake"
 
-# tv:ingest is how the empty vertical gets content — repligen output or the
+# tv:ingest is how the empty vertical gets content — preprompt output or the
 # test cards — so it carries the two properties an ingest must have: it is
 # idempotent (a re-run adds nothing), and it is tenant-correct, because the
 # tv channel tenancy asymmetry has already produced one production 500

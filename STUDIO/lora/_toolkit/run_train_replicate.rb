@@ -14,7 +14,7 @@
 #   LORA_REPLICATE_DEST=you/#{SUBJECT}-flux ./run_train_replicate.rb
 #
 # Env:
-#   REPLICATE_API_TOKEN / REPLICATE_API_KEY / ~/.config/repligen/config.json
+#   REPLICATE_API_TOKEN / REPLICATE_API_KEY / ~/.config/preprompt/config.json
 #   LORA_REPLICATE_DEST   owner/name (default: $username/#{SUBJECT}-flux)
 #   LORA_TRIGGER          default #{SUBJECT}
 #   LORA_REPLICATE_STEPS  default 1000 (Replicate sweet spot; local YAML uses 1800)

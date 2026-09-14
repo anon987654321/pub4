@@ -19,16 +19,16 @@ class TestScriptDispatch < Minitest::Test
 
   def test_finds_media_tool_moved_out_to_studio
     workspace = File.expand_path("../..", __dir__)
-    path = Master::Io::ScriptDispatch.script_path(workspace, "repligen")
+    path = Master::Io::ScriptDispatch.script_path(workspace, "preprompt")
 
-    assert_equal File.join(MasterPaths.repo, "STUDIO", "repligen", "repligen.rb"), path
+    assert_equal File.join(MasterPaths.repo, "STUDIO", "preprompt", "preprompt.rb"), path
   end
 
   def test_uses_own_directory_as_working_directory_for_studio_tool
     workspace = File.expand_path("../..", __dir__)
-    script = Master::Io::ScriptDispatch.script_path(workspace, "repligen")
+    script = Master::Io::ScriptDispatch.script_path(workspace, "preprompt")
 
-    assert_equal File.join(MasterPaths.repo, "STUDIO", "repligen"), Master::Io::ScriptDispatch.working_directory(workspace, script)
+    assert_equal File.join(MasterPaths.repo, "STUDIO", "preprompt"), Master::Io::ScriptDispatch.working_directory(workspace, script)
   end
 
   # Regression test: dilla is the one media tool where STUDIO/dilla/ also

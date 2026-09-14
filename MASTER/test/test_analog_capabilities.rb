@@ -8,7 +8,7 @@ class AnalogCapabilitiesTest < Minitest::Test
 
   def test_contract_covers_every_original_direction
     assert_equal((1..200).to_a, Contract.all.map { |entry| entry[:id] })
-    assert_equal({ postpro: 70, repligen: 60, dilla: 70 }, Contract::GROUPS.transform_values(&:length))
+    assert_equal({ postpro: 70, preprompt: 60, dilla: 70 }, Contract::GROUPS.transform_values(&:length))
     assert Contract.all.all? { |entry| entry[:enabled] }
     assert Contract.all.all? { |entry| entry[:stage] }
   end

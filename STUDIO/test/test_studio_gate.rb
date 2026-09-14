@@ -78,7 +78,7 @@ class TestStudioGate < Minitest::Test
       /STUDIO/dilla/dilla.rb
       /STUDIO/dilla/lib/engine/chord_theory.rb
       /STUDIO/postpro/postpro.rb
-      /STUDIO/repligen/repligen.rb
+      /STUDIO/preprompt/preprompt.rb
       /STUDIO/gate.rb
     ].each { |path| refute_match GATE::VENDORED, path, "#{path} is first-party and is being skipped" }
   end

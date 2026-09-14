@@ -14,11 +14,11 @@ class DeployPathsTest < Minitest::Test
     end
   end
 
-  def test_repligen_resolves_under_studio
+  def test_preprompt_resolves_under_studio
     with_env("PUB4_ROOT" => repo_root, "PUB4_RAILS_ROOT" => rails_root) do
-      script = Operator::DeployPaths.repligen_script
-      assert script, "expected repligen script"
-      assert_includes script.to_s, "/STUDIO/repligen/repligen.rb"
+      script = Operator::DeployPaths.preprompt_script
+      assert script, "expected preprompt script"
+      assert_includes script.to_s, "/STUDIO/preprompt/preprompt.rb"
       assert File.file?(script)
     end
   end
@@ -48,7 +48,7 @@ class DeployPathsTest < Minitest::Test
       assert_equal rails_root, Operator::DeployPaths.rails_root.to_s
       assert_equal repo_root, Operator::DeployPaths.repo_root.to_s
 
-      %i[postpro_script repligen_script dilla_script].each do |script|
+      %i[postpro_script preprompt_script dilla_script].each do |script|
         resolved = Operator::DeployPaths.public_send(script)
         assert resolved, "expected #{script} to resolve without PUB4_* env vars"
         assert File.file?(resolved), "#{script} resolved to a non-file: #{resolved}"

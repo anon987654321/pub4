@@ -9,7 +9,7 @@ require_relative "exec"
 
 module Master
   module Io
-    # Single Open3 entrypoint for MASTER/tools/*.rb scripts (repligen, postpro, …).
+    # Single Open3 entrypoint for MASTER/tools/*.rb scripts (preprompt, postpro, …).
     module ScriptDispatch
       module_function
 
@@ -39,7 +39,7 @@ module Master
       def script_path(requested_root, tool)
         # A tool entrypoint is either tools/<tool>.rb or, once it grows its own
         # directory, tools/<tool>/<tool>.rb (e.g. postpro/postpro.rb). Media
-        # tools (dilla, postpro, repligen) were extracted out of MASTER/tools/
+        # tools (dilla, postpro, preprompt) were extracted out of MASTER/tools/
         # into the sibling STUDIO/<tool>/<tool>.rb — checked last so anything
         # still living under MASTER/tools/ keeps taking priority.
         candidates = [requested_root, MasterPaths.root].uniq.flat_map do |candidate|

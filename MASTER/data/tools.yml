@@ -38,4 +38,4 @@
 - { name: MemoryRecord, elevated: false, visitor: false, default: true, description: Append durable context to data/project_context.yml }
 - { name: SubdomainOrchestrator, elevated: false, visitor: true, default: true, description: "Inspect or synchronize a pub4 subdomain cluster (marketplace, maps, amber, bsdports, etc.)" }
 - { name: DynamicHttp, elevated: false, visitor: false, default: true, description: Call HTTP endpoints declared in data/tools.dynamic.yml (name + params) }
-# Postpro and Repligen are not adapters: Io::MediaIntent shells STUDIO for them.
+# Postpro and Preprompt are not adapters: Io::MediaIntent shells STUDIO for them.

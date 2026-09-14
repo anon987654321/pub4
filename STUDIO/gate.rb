@@ -16,7 +16,7 @@ module Deploy
   # silently broken dilla and postpro before. The only thing standing between
   # that and a broken engine was `dilla debug`, which nobody runs after a fix
   # and which covers dilla alone: the other 13 Ruby files in STUDIO — postpro,
-  # repligen, the nine lora toolkit scripts — had nothing checking them at all.
+  # preprompt, the nine lora toolkit scripts — had nothing checking them at all.
   #
   # Three checks, in increasing order of what they can catch:
   #
@@ -44,7 +44,7 @@ module Deploy
     # dead code accumulates in a tree with no suite.
     #
     # `entry` names a script whose load is probed. nil means the tree has no
-    # loadable entry point — see UNGUARDED below for why repligen is one.
+    # loadable entry point — see UNGUARDED below for why preprompt is one.
     TREES = [
       {
         name: "dilla",
@@ -59,9 +59,9 @@ module Deploy
         owner: "single-file tool",
       },
       {
-        name: "repligen",
-        glob: "repligen/**/*.rb",
-        entry: "repligen/repligen.rb",
+        name: "preprompt",
+        glob: "preprompt/**/*.rb",
+        entry: "preprompt/preprompt.rb",
         owner: "single-file tool",
       },
       {

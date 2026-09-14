@@ -1,6 +1,6 @@
-# Repligen
+# Preprompt
 
-**A photograph is a set of decisions, and repligen makes each of them
+**A photograph is a set of decisions, and preprompt makes each of them
 nameable.** It is MASTER's noninteractive Replicate boundary: it generates
 images, downloads a result when an output path is asked for, searches the
 provider catalog, synchronises a bounded local one, and reports statistics on
@@ -75,7 +75,7 @@ claimed support for one model, that was the only entry whose positive fallback
 was suppressed, so a `negative_prompt` key the model does not have went out and
 the sidecar recorded `negative_prompt_sent: true` for it.
 
-Repligen assembles an anti-plastic-skin negative anyway, so it asks for the
+Preprompt assembles an anti-plastic-skin negative anyway, so it asks for the
 opposite in the affirmative (`POSITIVE_SKIN_GUIDANCE`) and says on stderr that
 it is doing so. The provenance sidecar records `negative_prompt_sent` alongside
 the text, because recording the negative on its own says nothing about whether
@@ -84,8 +84,8 @@ the text, because recording the negative on its own says nothing about whether
 ## Preview and final
 
 `--preview` swaps in `flux-schnell` unless a model was named explicitly or
-`REPLIGEN_MODEL` is set. `--final` forces `flux-1.1-pro-ultra` and **does**
-override `REPLIGEN_MODEL`, which is the asymmetry it exists for: the
+`PREPROMPT_MODEL` is set. `--final` forces `flux-1.1-pro-ultra` and **does**
+override `PREPROMPT_MODEL`, which is the asymmetry it exists for: the
 environment variable is how a session stays in preview, and `--final` is how
 one image leaves it — now at 4 MP, with raw mode when the request is a
 photograph. `vocab-check` covers it, because `--final` spent a while parsed into
@@ -102,8 +102,8 @@ returned each of five combinations four times, every time.
 ## Everything else
 
 Credentials resolve from `REPLICATE_API_TOKEN`, `REPLICATE_API_KEY`, or
-`~/.config/repligen/config.json`. Catalog state defaults to
-`~/.cache/repligen/models.json`. MASTER routes explicit image-generation
+`~/.config/preprompt/config.json`. Catalog state defaults to
+`~/.cache/preprompt/models.json`. MASTER routes explicit image-generation
 requests through this boundary; it does not claim a separate local
 identity-model path.
 
@@ -119,7 +119,7 @@ compiled prompt, which is how the image was made rather than what it is of.
 
 `--postpro PRESET` hands the finished file straight to
 `STUDIO/postpro/postpro.rb`. The `capabilities` command emits the executable
-60-item Repligen/LoRA contract as JSON.
+60-item Preprompt/LoRA contract as JSON.
 
 ## Keeping the model table honest
 
@@ -157,20 +157,20 @@ makes the table worth keeping.
 ## Running it
 
 ```sh
-ruby STUDIO/repligen/repligen.rb generate --prompt "Bergen rain, 35mm documentary photograph" --output .master/media/bergen.webp
-ruby STUDIO/repligen/repligen.rb search flux --limit 100
-ruby STUDIO/repligen/repligen.rb sync --limit 250
-ruby STUDIO/repligen/repligen.rb stats
-ruby STUDIO/repligen/repligen.rb capabilities
-ruby STUDIO/repligen/repligen.rb vocab-check
+ruby STUDIO/preprompt/preprompt.rb generate --prompt "Bergen rain, 35mm documentary photograph" --output .master/media/bergen.webp
+ruby STUDIO/preprompt/preprompt.rb search flux --limit 100
+ruby STUDIO/preprompt/preprompt.rb sync --limit 250
+ruby STUDIO/preprompt/preprompt.rb stats
+ruby STUDIO/preprompt/preprompt.rb capabilities
+ruby STUDIO/preprompt/preprompt.rb vocab-check
 
-ruby STUDIO/repligen/repligen.rb generate \
+ruby STUDIO/preprompt/preprompt.rb generate \
   --prompt "a fisherman on a dock" \
   --stock hp5 --lens 85mm --distance portrait --camera-height eye \
   --lighting rembrandt --weather drizzle --time-of-day blue_hour \
   --batch 6 --dry-run
 
 cd STUDIO
-rake repligen:schema_audit                                        # table vs. live schemas
-rake repligen:schema_suggest MODEL=black-forest-labs/flux-2-max   # an entry to paste
+rake preprompt:schema_audit                                        # table vs. live schemas
+rake preprompt:schema_suggest MODEL=black-forest-labs/flux-2-max   # an entry to paste
 ```

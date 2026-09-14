@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
 require_relative "tools_helper"
-Studio::Tools.load_tool("repligen/repligen.rb")
+Studio::Tools.load_tool("preprompt/preprompt.rb")
 
-# repligen builds an API request out of seven controlled vocabularies and a
+# preprompt builds an API request out of seven controlled vocabularies and a
 # per-model capability table. Everything below the network call is pure, and
 # none of it was covered -- including the part that decides which keys reach
 # Replicate, where sending a key the model does not take is a 422 and dropping
 # one it does take is a silently different picture.
-class TestRepligenPrompt < Minitest::Test
+class TestPreprompt < Minitest::Test
   ULTRA = "black-forest-labs/flux-1.1-pro-ultra"
   DEV = "black-forest-labs/flux-dev"
   SCHNELL = "black-forest-labs/flux-schnell"
@@ -17,7 +17,7 @@ class TestRepligenPrompt < Minitest::Test
   # The house grade is a graded-look default, so a change to it has to be a
   # deliberate edit that fails here first.
   def test_every_generation_is_graded_portrait_unless_the_shell_says_otherwise
-    skip "REPLIGEN_POSTPRO is set in this shell" if ENV.key?("REPLIGEN_POSTPRO")
+    skip "PREPROMPT_POSTPRO is set in this shell" if ENV.key?("PREPROMPT_POSTPRO")
 
     assert_equal "portrait", HOUSE_POSTPRO
   end
@@ -320,12 +320,12 @@ class TestRepligenPrompt < Minitest::Test
     end
   end
 
-  # repligen carries its own self-check over all seven vocabularies, the six
+  # preprompt carries its own self-check over all seven vocabularies, the six
   # capability rows and the batch strides. It lived below the CLI guard, so no
   # gate and no test could reach it and its only caller was a subcommand a human
   # had to remember to type. Running it here is what makes it a check.
   def test_the_tools_own_self_check_passes
-    assert_empty vocab_problems, "repligen's vocab-check reports problems"
+    assert_empty vocab_problems, "preprompt's vocab-check reports problems"
   end
 
   # Top-level defs land as private methods on Object, so the `true` is what

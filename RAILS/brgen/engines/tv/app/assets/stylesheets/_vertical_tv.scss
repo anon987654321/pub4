@@ -1,4 +1,4 @@
-/* TV — Odyssey-style cinematic watch + postpro/repligen media polish */
+/* TV — Odyssey-style cinematic watch + postpro/preprompt media polish */
 body.vertical-tv {
   --tv-stage: var(--bg);
   --tv-accent: var(--accent);
@@ -41,8 +41,8 @@ body.vertical-tv .video-player {
 }
 
 /* Grade is server-side (postpro); no CSS filter ornament (flat rule) */
-body.vertical-tv .repligen-hero,
-body.vertical-tv .tv-media-image.repligen-hero {
+body.vertical-tv .preprompt-hero,
+body.vertical-tv .tv-media-image.preprompt-hero {
   object-fit: cover;
   background: var(--tv-stage);
   border: 1px solid var(--border);

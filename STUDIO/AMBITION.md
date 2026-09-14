@@ -2,7 +2,7 @@
 
 Proposals against three stated goals, 2026-08-25:
 
-1. **repligen** composes long chains of radically different models, toward
+1. **preprompt** composes long chains of radically different models, toward
    visuals unlike anything seen before — new cinematography, new colour.
 2. **lora** produces stunning selfies that are actually good photography, on
    FLUX 2 or whatever is current.
@@ -10,18 +10,18 @@ Proposals against three stated goals, 2026-08-25:
    rescues what can be rescued.
 
 Grounded in `PHOTOGRAPHY.md` (the four layers), the Replicate survey in
-`repligen/README.md` and `lora/README.md`, and what the three tools verifiably
+`preprompt/README.md` and `lora/README.md`, and what the three tools verifiably
 do today. Marked **[cheap]** when it is an afternoon, **[deep]** when it is a
 project, **[yours]** when it is a decision rather than work.
 
-## A. The chain engine — repligen's missing spine (1–24)
+## A. The chain engine — preprompt's missing spine (1–24)
 
-The spine exists: `repligen/chain.rb` runs the YAML chains under
-`repligen/chains/` with `--until` and a validating `--dry-run`. Running one still
+The spine exists: `preprompt/chain.rb` runs the YAML chains under
+`preprompt/chains/` with `--until` and a validating `--dry-run`. Running one still
 needs a Replicate token. Items 1, 2, 6 and 9 are built.
 
 1. A `Chain` object: an ordered list of stages, each `{model, inputs, inherits}`. **[deep]**
-2. Declarative chains as YAML under `repligen/chains/`, so a look is a file, not a shell history. **[deep]**
+2. Declarative chains as YAML under `preprompt/chains/`, so a look is a file, not a shell history. **[deep]**
 3. `Stage#inherits` — name what carries forward: `:image`, `:seed`, `:palette`, `:references`, `:mask`, `:depth`.
 4. Content-addressed intermediates, so re-running a chain re-uses stages whose inputs did not change. **[deep]**
 5. `--from STAGE` to resume a chain at any stage against a cached intermediate. **[cheap]**
@@ -39,7 +39,7 @@ needs a Replicate token. Items 1, 2, 6 and 9 are built.
 17. Cache the provider schema per model+version so a chain does not re-fetch it per stage.
 18. Chain linting: warn when two adjacent stages both do global colour, which is usually a mistake.
 19. Warn when a chain has no structure-preserving stage — pure generation chains drift (see §B).
-20. `repligen chains --list` with a one-line description of each, generated from the YAML.
+20. `preprompt chains --list` with a one-line description of each, generated from the YAML.
 21. Named chains callable as one word: `--chain nordic_winter`.
 22. Chain composition: a chain that includes another chain as a stage. **[deep]**
 23. A seed policy per chain — pinned, derived-from-previous, or free — because reproducibility and exploration want different things.
@@ -149,7 +149,7 @@ no account of subsurface scattering.
 
 99. Make it the **default**, not `--postpro` opt-in. This is the stated goal and is currently one flag on one command. **[yours]**
 100. A named house preset every surface uses, so output is recognisable as yours. **[yours]**
-101. Apply it at the end of every repligen chain automatically, with an opt-out rather than an opt-in.
+101. Apply it at the end of every preprompt chain automatically, with an opt-out rather than an opt-in.
 102. Wire it into the LoRA generation lane, which does not touch it today.
 103. Per-subject grade profiles — Ragnhild and Johann do not need the same treatment.
 104. Grade *before* any upscale, never after (35).
@@ -234,7 +234,7 @@ are the proxies that are not.
 161. A wall of failures kept as prominently as successes.
 162. Cost per keeper, tracked — it decides how long chains can afford to be.
 163. Time-to-first-look, since exploration dies at the wrong latency.
-164. A monthly re-survey of the provider catalogue, since today's list is already a generation behind and will be again. `rake repligen:schema_audit` exists for the mechanical half.
+164. A monthly re-survey of the provider catalogue, since today's list is already a generation behind and will be again. `rake preprompt:schema_audit` exists for the mechanical half.
 165. Version the house look, so past work stays reproducible when it changes.
 166. Keep one frame from each era as a reference of where the look has been.
 167. Write down what "spectacular" turned out to mean, once there are examples — it will not be what it sounds like now.

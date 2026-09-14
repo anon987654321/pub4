@@ -563,7 +563,7 @@ grep. A list arriving from outside is a hypothesis about this repo.
 - **Disclosure** is its own partial, `shared/_affiliate_disclosure`, and the
   band labels itself `affiliate.sponsored`. Whatever the ad system becomes, it
   inherits that: an ad says it is one.
-- **Photography has a producer.** STUDIO's repligen generates imagery and fills
+- **Photography has a producer.** STUDIO's preprompt generates imagery and fills
   tv; lora trains on real subjects. An ad system needing product photography
   has a generator in this repo rather than a stock budget.
 
@@ -775,7 +775,7 @@ one as a ticket without asking first.
   re-baselines to zero on the next run by design, so a regression reports once
   and then becomes the reference. `layout_snapshot` commits reviewable JSON —
   71 tracked files — and is the candidate for the fleet's only visual baseline.
-- **repligen has no Replicate access, so the whole tool is unreachable.** Fund it
+- **preprompt has no Replicate access, so the whole tool is unreachable.** Fund it
   or retire it; leaving it is the inert-wiring defect with a price tag.
 - **One box per city rather than one box for every city.** brgen's verticals are
   already engines and vm23 sits at its capacity ceiling, so a cell per city is
@@ -906,7 +906,7 @@ These are the operator's, because each changes a sound or accepts a changed inpu
 850. **`data/modes.yml` has no reader.** Nothing in STUDIO loads it — `tizita`, `bati`, `ambassel` appear only in the file, and the `chord_theory.rb` it names is gone. Wiring it into the harmony spine changes what dilla generates; the other choice is deleting it. Same decision as `dilla_principles.yml`.
 859. **The crate on main disagrees with `data/assets.json`.** `DillaAssets.verify` there: `samples/{kembara_rindu,lo_borges,semua_untuk_mu}/loop.wav` missing, and seven one-shots under `samples/drums/` changed hash at the same size. Restore them, or `dilla assets record` to accept the new drums as the inputs.
 
-### STUDIO — postpro, repligen, lora
+### STUDIO — postpro, preprompt, lora
 
 907. **Chains are ungraded by default.** `generate` applies `HOUSE_POSTPRO` (`portrait`); `chain` grades its final frame only when `--postpro` is given. Whether chains share the house grade is a graded-look call.
 926. **`lora/guides/*.m4a` are tracked TTS output** beside their `.txt` scripts. Keep them in git or untrack them; either is the operator's.
@@ -1494,7 +1494,7 @@ choose. Numbers are for citation, not for order.
 79. **Loudness for the destination** [cheap] — every set ends in `dynaudnorm` and
     a limiter at a hand-picked `volume=`. Integrated LUFS is a solved measurement
     and lies about speech over music, which matters for 7.
-80. **A sleeve** [yours] — `STUDIO/postpro` grades images and `repligen` generates
+80. **A sleeve** [yours] — `STUDIO/postpro` grades images and `preprompt` generates
     them. A catalogue with covers is a release.
 81. **Publish the tracklist** [yours] — `radio.brgen.no` exists and is empty of
     this.

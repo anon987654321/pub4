@@ -2,7 +2,7 @@
 
 Research note, 2026-08-25. Written because three STUDIO tools now depend on the
 answer and none of them had it written down: **lora** decides what a dataset
-should contain, **repligen** decides what to ask a model for, and **postpro**
+should contain, **preprompt** decides what to ask a model for, and **postpro**
 decides what to do to the result.
 
 The useful finding is that these four layers fail independently, and only one of
@@ -122,8 +122,8 @@ signature to the grade, where there is a real emulation stack already built.
 
 ## What is true of the grade today
 
-repligen grades every generation with the `portrait` preset unless
-`--no-postpro` or `REPLIGEN_POSTPRO` says otherwise, so the house look is a
+preprompt grades every generation with the `portrait` preset unless
+`--no-postpro` or `PREPROMPT_POSTPRO` says otherwise, so the house look is a
 default rather than a flag. A chain grades only its final frame, and only when
 `--postpro` names a preset; whether chains should share the house default is
 the operator's call.

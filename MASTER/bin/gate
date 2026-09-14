@@ -131,7 +131,7 @@ COMMANDS = {
   # OPENBSD).
   #
   # STUDIO added 2026-08-11. CLAUDE.md names four sibling trees and this list
-  # carried two, so dilla, lora, postpro and repligen -- 57 tracked Ruby files
+  # carried two, so dilla, lora, postpro and preprompt -- 57 tracked Ruby files
   # including the whole beat engine -- were never scanned, fixed or reviewed,
   # and the gate reported the repo clean on the strength of three quarters of
   # it. A gate whose target list is shorter than the repo is not a gate.
@@ -199,7 +199,7 @@ INCONCLUSIVE = [
 # capture2e has no timeout, so the gate simply stops — no output, no failure,
 # no exit code, indefinitely.
 #
-# Measured 2026-08-11: `/critique ../STUDIO/repligen` ran 16 minutes at 0% CPU
+# Measured 2026-08-11: `/critique ../STUDIO/preprompt` ran 16 minutes at 0% CPU
 # and produced zero bytes before being killed by hand, and `/review` the same,
 # on a runtime where a plain prompt answers in under two seconds. Both go
 # through the council's LLM agent; the ordinary reply lane does not. So this is

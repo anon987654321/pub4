@@ -11,7 +11,7 @@ module Operator
     module_function
 
     def postpro_script = first_file(postpro_candidates)
-    def repligen_script = first_file(repligen_candidates)
+    def preprompt_script = first_file(preprompt_candidates)
     def dilla_script = first_file(dilla_candidates)
     def master_root = master_candidates.map(&:expand_path).uniq.find { |path| File.directory?(path.join("bin")) }
 
@@ -30,11 +30,11 @@ module Operator
       ]
     end
 
-    def repligen_candidates
+    def preprompt_candidates
       [
-        repo_join("STUDIO/repligen/repligen.rb"),
-        Pathname.new("#{DEFAULT_REPO}/STUDIO/repligen/repligen.rb"),
-        rails_root.join("../../STUDIO/repligen/repligen.rb"),
+        repo_join("STUDIO/preprompt/preprompt.rb"),
+        Pathname.new("#{DEFAULT_REPO}/STUDIO/preprompt/preprompt.rb"),
+        rails_root.join("../../STUDIO/preprompt/preprompt.rb"),
       ]
     end
 

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 #
-# repligen and postpro are single-file tools. Both guard their CLI, so `load`
+# preprompt and postpro are single-file tools. Both guard their CLI, so `load`
 # under a changed $PROGRAM_NAME defines everything and runs nothing. They load
 # in a separate process from dilla (see Rakefile) because all three define
 # top-level constants and several names collide.

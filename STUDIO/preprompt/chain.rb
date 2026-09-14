@@ -5,7 +5,7 @@ require "yaml"
 # A chain is several models in a row, where each stage's output is the next
 # stage's input.
 #
-# repligen was single-shot: one model, one prompt, optionally one --postpro
+# preprompt was single-shot: one model, one prompt, optionally one --postpro
 # handoff at the end. That is enough to make a picture and not enough to make
 # one nobody has seen, because a single model produces the look it was trained
 # to produce. What produces an unfamiliar image is passing a frame through
@@ -21,13 +21,13 @@ require "yaml"
 # what a chain needs, because a chain of stages that each preserve nothing
 # converges on mush by stage four.
 #
-# The validation here matters more than the execution. repligen's whole design
+# The validation here matters more than the execution. preprompt's whole design
 # is to refuse an option a model does not accept rather than let the API ignore
 # it, because a request that "works" while silently dropping a setting is far
 # harder to notice than a 422. A chain multiplies that: stage 6 failing because
 # stage 2 could not produce what stage 3 assumed is a bad afternoon and a real
 # bill. So a chain is validated whole, before anything is spent.
-module Repligen
+module Preprompt
   module Chain
     Stage = Struct.new(:name, :model, :prompt, :inherits, :options, keyword_init: true)
 
@@ -98,7 +98,7 @@ module Repligen
     #
     # `capability_for` is passed in rather than reached for: this file is loaded
     # by the tests without loading the CLI, and a hard reference to a top-level
-    # method defined in repligen.rb would make that impossible.
+    # method defined in preprompt.rb would make that impossible.
     def self.problems(chain, capability_for:)
       found = []
       stages = chain.fetch(:stages)
@@ -127,11 +127,11 @@ module Repligen
         # the failure this whole file exists to prevent, so it may not be
         # introduced by the file's own reference data.
         #
-        # `rake repligen:schema_audit` clears the flag by asking the provider.
+        # `rake preprompt:schema_audit` clears the flag by asking the provider.
         if cap[:unverified]
           found << "#{position} uses #{stage.model}, whose input_keys are declared from " \
                    "documentation and have never been confirmed against the provider. " \
-                   "Run `rake repligen:schema_audit` with REPLICATE_API_TOKEN set, then " \
+                   "Run `rake preprompt:schema_audit` with REPLICATE_API_TOKEN set, then " \
                    "remove `unverified: true` from its entry."
         end
 

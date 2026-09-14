@@ -2,7 +2,7 @@
 
 # The tv content pipeline. The vertical has been fully built — channels,
 # uploads, the watch-time feed, sounds, shows — and completely EMPTY, because
-# "tv content comes from repligen" was a sentence, not a path. These two tasks
+# "tv content comes from preprompt" was a sentence, not a path. These two tasks
 # are the path.
 #
 #   bin/rails "tv:starter_pack[out_dir]"   # write clips + posters + manifest
@@ -73,7 +73,7 @@ namespace :tv do
       end
       generate_test_cards(out)
     else
-      abort "tv:starter_pack: the Replicate lane is wired for stills via repligen; " \
+      abort "tv:starter_pack: the Replicate lane is wired for stills via preprompt; " \
             "video model selection (kling et al) is the next sitting once the key is present. " \
             "Use TV_TEST_CARDS=1 meanwhile."
     end
@@ -104,7 +104,7 @@ namespace :tv do
       system("ffmpeg", "-y", "-loglevel", "error", "-i", mp4, "-vframes", "1", "-vf", "scale=1280:720", png, exception: true)
       { "title" => label, "file" => File.basename(mp4), "thumbnail" => File.basename(png),
         "duration_seconds" => secs, "status" => "published",
-        "description" => "Testbilde — ekte innhold kommer fra repligen når nøkkelen er på plass." }
+        "description" => "Testbilde — ekte innhold kommer fra preprompt når nøkkelen er på plass." }
     end
     manifest = {
       "city" => ENV.fetch("TV_CITY", "brgen.no"),
