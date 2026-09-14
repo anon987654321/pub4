@@ -5,11 +5,7 @@
 # START_HERE.md lists limits.yml as Tier 1, "Law". Measured 2026-08-02: of 38
 # top-level keys, 9 had a reader and 29 had none — 485 of 794 lines. Both generic
 # accessors that might have reached the rest (`Rules#workflow` and
-# `Rules#workflow_rule(key)`) had zero call sites and are deleted. Worse than
-# unread, two of the largest are contradicted: `phases` and `code_principles`
-# describe the same concepts as `Ground::Policy::Workflow::PHASES` and `::PRINCIPLES`,
-# which are hardcoded Ruby constants that never consult this file. Editing the YAML
-# changed nothing; the Ruby is what ran.
+# `Rules#workflow_rule(key)`) had zero call sites and are deleted.
 #
 # So the split is a relabelling, not a deletion. Everything under `guidance:` is
 # still in this file for humans to read — it is

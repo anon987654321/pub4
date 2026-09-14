@@ -57,8 +57,8 @@ Law.define(:GUARD_EXPENSIVE_OPS) do
   # — or prose in a runbook. This law is the database sweep.
   #
   # A symbol list names the operations; it does not perform them.
-  # Ground::Policy::Workflow's CONFIRM is exactly that, and reading it as a
-  # drop_table is reading a menu as a meal.
+  # `%i[drop_table force_push]` is a list of what needs confirming, and reading
+  # it as a drop_table is reading a menu as a meal.
   detect do |line|
     next false if line.match?(/%[iw]\[/)
 
