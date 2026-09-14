@@ -58,12 +58,17 @@ module Master
         # REACT_MAX_STEPS already bounds the emulated loop, so it bounds this one.
         def cap_tool_rounds(chat_session)
           rounds = 0
-          chat_session.on_end_message do |message|
+          # RubyLLM 1.15 renamed the hook and warns on the old name, a line that
+          # lands in the middle of the prompt; 1.13 knows only the old one.
+          count = lambda do |message|
             next unless message.respond_to?(:tool_call?) && message.tool_call?
 
             rounds += 1
             raise ToolRoundLimit, "tool calling passed #{REACT_MAX_STEPS} rounds" if rounds > REACT_MAX_STEPS
           end
+          return chat_session.after_message(&count) if chat_session.respond_to?(:after_message)
+
+          chat_session.on_end_message(&count)
         end
 
         def build_ask_arg(last_text, image)
