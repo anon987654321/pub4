@@ -340,6 +340,20 @@ module Livesets
     (CURATED_PROGRESSIONS + ARTIST_VERIFIED_PROGRESSIONS.keys).uniq
   end
 
+  # The progression a pass plays, pinned by LIVE_PROGRESSION the way LIVE_BED
+  # pins a bed. The pool is the catalogue's shortlist and the shortlist changes,
+  # so a seed alone lands on a different progression once it has. The draw is
+  # made either way, so pinning it leaves every later choice on the same stream.
+  def pick_progression
+    drawn = chord_pool.select { |k| v = CHORD_PROGRESSIONS[k]; v && [4, 8].include?(v.length) }.sample
+    want = ENV["LIVE_PROGRESSION"].to_s
+    return drawn if want.empty?
+
+    abort "no such progression: #{want}" unless CHORD_PROGRESSIONS.key?(want.to_sym)
+
+    want.to_sym
+  end
+
   def chord_based_beats!
     total = 96
     seed = seed!
@@ -347,7 +361,7 @@ module Livesets
     # register and a ceiling -- a synthesised chord voiced high is the one thing in
     # this room that would sound like a plugin.
     root_a = 110.0
-    name = chord_pool.select { |k| v = CHORD_PROGRESSIONS[k]; v && [4, 8].include?(v.length) }.sample
+    name = pick_progression
     symbols = CHORD_PROGRESSIONS.fetch(name)
     chords = symbols.filter_map { |s| [s, parse_chord(s)] if parse_chord(s) }
 
@@ -784,6 +798,7 @@ module Livesets
     # pass under whatever LIVE_KIT happens to be exported would come back with
     # different drums and the same seed printed over them.
     env["LIVE_KIT"] = row["kit"].to_s if row["kit"]
+    env["LIVE_PROGRESSION"] = row["progression_name"].to_s if row["progression_name"]
     label = "#{row['set']} #{row['seed']}"
     if keep
       take = File.join(D, "#{row['set']}_#{row['seed']}")
