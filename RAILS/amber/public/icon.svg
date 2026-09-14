@@ -17,8 +17,8 @@
   <rect width="512" height="512" fill="#FFFFFF"/>
   <!-- Brand disc -->
   <circle cx="256" cy="256" r="220" fill="url(#amberGrad)"/>
-  <!-- Caprasimo-style wordmark (system fallback if Caprasimo missing at rasterize) -->
-  <text x="256" y="292" text-anchor="middle" font-family="Caprasimo, Georgia, serif" font-size="200" font-weight="400" fill="#FFFFFF" letter-spacing="-6">a</text>
+  <!-- The wordmark's initial, in the family every app uses -->
+  <text x="256" y="292" text-anchor="middle" font-family="'Helvetica Neue Pro', 'Helvetica Neue', Arial, sans-serif" font-size="200" font-weight="400" fill="#FFFFFF" letter-spacing="-6">a</text>
   <!-- Retro hairlines (white, matching logo strokes) -->
   <g fill="none" stroke="#FFFFFF" stroke-opacity="0.95">
     <path stroke-width="1" d="M70,180 C160,120 280,220 400,130 S470,160 490,140"/>
