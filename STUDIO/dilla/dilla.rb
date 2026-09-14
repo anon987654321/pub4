@@ -5527,10 +5527,10 @@ end
 
 # The whole drum bus, one switch.
 #
-# Off by default, operator instruction 2026-08-27: "kill all the drums". The
-# custom kit carries exactly one snare and it landed on every track of a
-# 451-track demo, which is what that instruction was about. DRUMS=1 brings
-# them back with nothing else changed.
+# Drums play. FullEngine::FULL_ENGINE_DEFAULTS sets DRUMS=1 at load, so the
+# "0" fallback below is reached only under DILLA_FULL=0 -- the operator's
+# standing instruction is fresh drums on every take. DRUMS=0 still silences the
+# bus with nothing else changed.
 #
 # Gated here rather than at the kit, because a kit swap still plays drums.
 def drums_enabled?
