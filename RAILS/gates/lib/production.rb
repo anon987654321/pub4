@@ -201,7 +201,7 @@ module Deploy
         # "rubocop" being present in the file — which it was, inside the branch that
         # skipped it.
         fail_app!(app_failures, "shared CI must run RuboCop on the VPS too") if
-          ci_text.match?(/rubocop[^\n]*unless vps_host|step\("Style: Ruby"[^\n]*unless vps_host/)
+          ci_text.match?(/rubocop[^\n]*unless vps_host|step[ (]"rubocop"[^\n]*unless vps_host/)
         # Two facts, checked separately, because the regex that checked them
         # together was measuring the order they happen to appear in.
         #
