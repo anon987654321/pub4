@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../../cli/routing/model_catalog"
+
 module Master
   module Review
     class Agent
@@ -65,12 +67,19 @@ module Master
 
         private
 
-        def resolve_model_name(name)
-          return name unless LOCAL_TIER_NAMES.include?(name.downcase)
+          def resolve_model_name(name)
+            local = if @model_router.respond_to?(:local_models)
+                      Array(@model_router.local_models)
+                    else
+                      []
+                    end
+            Master::CLI::Routing::ModelCatalog.resolve(
+              name,
+              root: Master::ROOT,
+              local_models: local
+            )
+          end
 
-          local = @model_router.respond_to?(:local_models) ? Array(@model_router.local_models).first : nil
-          local || raise(ArgumentError, "no local model pulled; run ollama pull, then /model local")
-        end
       end
     end
   end

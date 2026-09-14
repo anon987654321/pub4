@@ -110,7 +110,7 @@ module Master
         return if tail.empty?
 
         puts
-        puts @refs.renderer.render("resume0: last #{tail.size} messages", mode: :dim)
+        puts @refs.renderer.render("history0: last #{tail.size} messages (display only)", mode: :dim)
         tail.each do |msg|
           # A loaded transcript holds the role as a string.
           tag = msg[:role].to_s == "user" ? "you" : "master"

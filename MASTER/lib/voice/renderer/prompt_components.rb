@@ -22,10 +22,13 @@ module Master
           "watch" => :blue,
         }.freeze
 
-        def splash(model)
-          context = splash_context(model)
-          lines = [*identity_lines(context), *splash_dmesg_lines, *device_lines_for(context),
-                   root_on_line(context)]
+          def splash(model)
+            context = splash_context(model)
+            return concise_splash(context) unless ENV["MASTER_VERBOSE_BOOT"] == "1"
+
+            lines = [*identity_lines(context), *splash_dmesg_lines, *device_lines_for(context),
+                     root_on_line(context)]
+
           host_status = Master::Ground::HostBudget.status_line
           lines << d(host_status) if host_status
           lines.concat(["", splash_ready_line(context)])
@@ -111,7 +114,19 @@ module Master
           @p.bold.red("master") + @p.dim("@#{context[:host]} ready")
         end
 
-        def splash_context(model)
+        def concise_splash(context)
+          [
+            d("MASTER #{soul_version} (CONSTITUTIONAL) ##{context[:build]}"),
+            d("#{context[:user]}@#{context[:host]} ready"),
+            d("model: #{short_model(context[:model])}"),
+            d("provider: #{provider_for(context[:model])}"),
+            d("ctx: #{token_label(Master.context_window(@config['model']))}"),
+            d("mode: #{Master::CLI::RuntimeMode.summary(config: @config)}"),
+            d("web: #{context[:web]}"),
+            "",
+          ].join("\n")
+        end
+
           shell = File.basename(ENV["SHELL"] || "zsh")
           {
             now: Time.now,
@@ -169,10 +184,12 @@ module Master
         end
 
         def model_device_lines(context)
+          model = context[:model].to_s
+          provider = provider_for(model)
           [
-            d("model0 at mainbus0: #{short_model(context[:model])}"),
-            d("model0: #{provider_for(context[:model])}, " \
-              "#{token_label(Master.context_window(@config['model']))} context"),
+            d("model0 at mainbus0: #{short_model(model)}"),
+            d("model0: provider #{provider}, " \
+              "#{token_label(Master.context_window(model))} context"),
           ]
         end
 

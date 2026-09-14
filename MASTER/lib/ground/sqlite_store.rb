@@ -5,8 +5,8 @@ require "fileutils"
 
 module Master
   module Ground
-    # Opens a SQLite DB with WAL → DELETE → :memory: fallback so a read-only
-    # filesystem or locked WAL never crashes the store.
+    # Opens a SQLite DB with WAL → DELETE. Ephemeral memory is opt-in because
+    # silently losing persistence violates evidence and continuity guarantees.
     #
     # The fallback suits the one includer, KnowledgeStore, a rebuildable ledger under the
     # gitignored .master/. Pairing and memory are YAML, not SQLite, and never reach it.
@@ -32,18 +32,29 @@ module Master
         prepare_sqlite_path(path)
         database = SQLite3::Database.new(path)
         journal_ok = set_journal_mode(database, path, "WAL") || set_journal_mode(database, path, "DELETE")
-        unless journal_ok
-          database.close rescue SQLite3::Exception
-          sqlite_warn_once("file DB unavailable at #{path} — using :memory:")
-          database = SQLite3::Database.new(":memory:")
-        end
-        database
-      rescue SQLite3::Exception => e
-        sqlite_warn_once("#{e.message} — using :memory:")
-        SQLite3::Database.new(":memory:")
-      end
+         unless journal_ok
+           database.close rescue nil
+           return ephemeral_database(path)
+           end
 
-      def prepare_sqlite_path(path)
+        database
+       rescue SQLite3::Exception => e
+         return ephemeral_database(path) if ENV["MASTER_ALLOW_EPHEMERAL_DB"] == "1"
+         raise
+       end
+ 
+       def ephemeral_database(path)
+         unless ENV["MASTER_ALLOW_EPHEMERAL_DB"] == "1"
+           raise SQLite3::Exception,
+                 "persistent database unavailable at #{path}; set MASTER_ALLOW_EPHEMERAL_DB=1 only for disposable runs"
+         end
+ 
+         sqlite_warn_once("persistent DB unavailable at #{path} — using :memory: (explicitly allowed)")
+         SQLite3::Database.new(":memory:")
+       end
+ 
+       def prepare_sqlite_path(path)
+
         dir = File.dirname(path)
         FileUtils.mkdir_p(dir, mode: 0o700)
         harden_sqlite_directory(dir)
@@ -73,11 +84,10 @@ module Master
         statement = JOURNAL_MODES.fetch(mode)
         database.execute(statement)
         true
-      rescue SQLite3::IOException
-        clear_wal_sidecars(path)
-        database.execute(statement)
-        true
-      rescue KeyError, SQLite3::Exception => e
+       rescue SQLite3::IOException
+         false
+       rescue KeyError, SQLite3::Exception => e
+
         Master::Ground::Swallow.log(e, context: "SqliteStore.set_journal_mode")
         false
       end
