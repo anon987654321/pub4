@@ -3,7 +3,7 @@
 require_relative "studio_helper"
 require "vips"
 require "tmpdir"
-require_relative "../postpro/uncanny"
+require_relative "../postpro/lib/uncanny"
 
 # A metric is worth exactly as much as the case where you already know the
 # answer. These build images whose correct reading is not in doubt — a

@@ -101,7 +101,7 @@ returned each of five combinations four times, every time.
 
 ## Scenarios, and lora
 
-The vocabularies, the pools and the composers live in `craft.rb`, which makes no
+The vocabularies, the pools and the composers live in `lib/craft.rb`, which makes no
 request and loads nothing from MASTER, so lora can compose on a rented GPU that
 has only the repository. lora's sittings go through `sitting_prompt` there, and
 its token count against CLIP's 77 does too, so a subject adapter and a

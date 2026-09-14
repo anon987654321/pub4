@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "studio_helper"
-require_relative "../preprompt/chain"
+require_relative "../preprompt/lib/chain"
 
 # preprompt refuses an option a model does not accept rather than letting the API
 # ignore it, because a request that "works" while silently dropping a setting is

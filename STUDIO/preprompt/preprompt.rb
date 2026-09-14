@@ -18,7 +18,7 @@ require_relative "../../MASTER/lib/boot/paths"
 # Shellwords.escape is called in maybe_handoff_postpro; without this require
 # --postpro reaches a NameError instead of a handoff.
 require "shellwords"
-require_relative "craft"
+require_relative "lib/craft"
 
 # What each Replicate model actually accepts, checked against the live schemas
 # rather than remembered.
@@ -613,7 +613,7 @@ when "capabilities"
 when "chains"
   # The chains this tree ships, from the directory rather than a maintained
   # list, so adding one is adding a file.
-  require_relative "chain"
+  require_relative "lib/chain"
   names = Preprompt::Chain.available
   if names.empty?
     puts "preprompt: no chains in #{Preprompt::Chain::DEFAULT_DIR}"
@@ -630,7 +630,7 @@ when "chain"
   # Validated whole, before anything is spent. A chain that fails at stage 6
   # because stage 2 could not produce what stage 3 assumed has already cost the
   # first five, which is why this refuses on the plan rather than on the wire.
-  require_relative "chain"
+  require_relative "lib/chain"
   name = ARGV.shift.to_s
   abort "usage: preprompt chain NAME [--dry-run]" if name.empty?
 

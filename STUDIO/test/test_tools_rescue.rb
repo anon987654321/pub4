@@ -3,7 +3,7 @@
 require_relative "studio_helper"
 require "vips"
 require "tmpdir"
-require_relative "../postpro/rescue"
+require_relative "../postpro/lib/rescue"
 
 # "Make any bad photo look good", with "although I realize that's a stretch"
 # attached. The stretch is not uniform, and that is the whole design:

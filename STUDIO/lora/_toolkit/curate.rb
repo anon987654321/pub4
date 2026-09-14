@@ -5,7 +5,7 @@ require "vips"
 require "json"
 require "fileutils"
 require "securerandom"
-require_relative "../../postpro/uncanny"
+require_relative "../../postpro/lib/uncanny"
 
 # Which of these photographs should train a LoRA, and which should not.
 #

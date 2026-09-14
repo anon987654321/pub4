@@ -16,7 +16,7 @@ project, **[yours]** when it is a decision rather than work.
 
 ## A. The chain engine — preprompt's missing spine (1–24)
 
-The spine exists: `preprompt/chain.rb` runs the YAML chains under
+The spine exists: `preprompt/lib/chain.rb` runs the YAML chains under
 `preprompt/chains/` with `--until` and a validating `--dry-run`. Running one still
 needs a Replicate token. Items 1, 2, 6 and 9 are built.
 

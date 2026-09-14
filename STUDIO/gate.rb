@@ -228,6 +228,7 @@ end
         )
       end
 
+      check_layout(files)
       support = files.count { |path| path =~ DILLA_SUPPORT }
       return if support <= DILLA_SUPPORT_CEILING
 
@@ -236,6 +237,18 @@ end
         "#{DILLA_SUPPORT_CEILING} — fold the new one into a sibling, or raise " \
         "DILLA_SUPPORT_CEILING in gate.rb with why in the commit"
       )
+    end
+
+    # Each tool is <name>/<name>.rb, <name>/lib/ and a README. Ruby beside the
+    # entry point is the shape the three trees were moved out of, so a reader
+    # finds the tool in one file and its support in one directory.
+    LAID_OUT_TOOLS = %w[dilla postpro preprompt].freeze
+
+    def check_layout(files)
+      LAID_OUT_TOOLS.each do |tool|
+        beside = files.select { |path| File.dirname(path) == File.join(@root, tool) && File.basename(path) != "#{tool}.rb" }
+        beside.each { |path| @result.fail("studio layout: #{rel(path)} sits beside #{tool}.rb — support belongs in #{tool}/lib/") }
+      end
     end
 
     def check_orphans(files)

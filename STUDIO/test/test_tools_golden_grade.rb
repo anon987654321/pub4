@@ -6,7 +6,7 @@ require "tmpdir"
 require "open3"
 require "rbconfig"
 require "digest"
-require_relative "../postpro/uncanny"
+require_relative "../postpro/lib/uncanny"
 
 # What a grade DOES, not merely that it did something.
 #
@@ -17,7 +17,7 @@ require_relative "../postpro/uncanny"
 #
 # So these run real presets over fixtures whose correct behaviour is not in
 # doubt, and assert direction and bounds on the measurements in
-# postpro/uncanny.rb. A highlight ramp must not come back clipped. A flat field
+# postpro/lib/uncanny.rb. A highlight ramp must not come back clipped. A flat field
 # must come back with more texture than it went in with, because grain is what
 # the portrait preset is for.
 #

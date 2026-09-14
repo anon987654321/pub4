@@ -19,7 +19,7 @@ require "yaml"
 require "pathname"
 # preprompt composes the prompt and counts its tokens; this file chooses the
 # sittings and the subject.
-require_relative "../../preprompt/craft"
+require_relative "../../preprompt/lib/craft"
 
 LORA_ROOT = Pathname.new(__dir__).join("..").expand_path
 

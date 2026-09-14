@@ -372,7 +372,7 @@ end
 # three of the four layers a photograph fails on are beyond any grade, and a
 # tool that quietly tries everything and reports success is lying about them.
 if ARGV.include?("--rescue")
-  require_relative "rescue"
+  require_relative "lib/rescue"
   subject = ARGV[ARGV.index("--rescue") + 1]
   if subject.nil? || !File.file?(subject)
     PostproBootstrap.dmesg("ERROR --rescue needs a readable file")
@@ -402,7 +402,7 @@ if ARGV.include?("--rescue")
     exit 1
   end
 
-  require_relative "uncanny"
+  require_relative "lib/uncanny"
   comparison = Postpro::Uncanny.compare(subject, target)
   Postpro::Uncanny.verdict(comparison).each { |line| PostproBootstrap.dmesg("rescue: #{line}") }
   PostproBootstrap.dmesg("rescue: wrote #{target}")
@@ -414,7 +414,7 @@ end
 # are readings, and the set is left as it was — moving a frame toward the
 # median changes the graded look, which is the operator's decision.
 if ARGV.include?("--set")
-  require_relative "frame_set"
+  require_relative "lib/frame_set"
   dir = ARGV[ARGV.index("--set") + 1]
   unless dir && File.directory?(dir)
     PostproBootstrap.dmesg("ERROR --set needs a directory of frames")
@@ -438,7 +438,7 @@ if ARGV.include?("--set")
 end
 
 if ARGV.include?("--measure")
-  require_relative "uncanny"
+  require_relative "lib/uncanny"
   subject = ARGV[ARGV.index("--measure") + 1]
   if subject.nil? || !File.file?(subject)
     PostproBootstrap.dmesg("ERROR --measure needs a readable file")
@@ -491,7 +491,7 @@ if BOOTSTRAP[:gems][:vips]
   # would raise during load and take the whole tool down instead of degrading.
   # The grade reads it now — shadow_lift asks where the blacks already sit, and
   # preset() asks how much texture and contrast the source arrived with.
-  require_relative "uncanny"
+  require_relative "lib/uncanny"
 end
 
 # Was File.exist?("preprompt.rb") -- relative to the CURRENT WORKING DIRECTORY,

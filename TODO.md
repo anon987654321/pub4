@@ -893,6 +893,25 @@ These are the operator's, because each changes a sound or accepts a changed inpu
 907. **Chains are ungraded by default.** `generate` applies `HOUSE_POSTPRO` (`portrait`); `chain` grades its final frame only when `--postpro` is given. Whether chains share the house grade is a graded-look call.
 926. **`lora/guides/*.m4a` are tracked TTS output** beside their `.txt` scripts. Keep them in git or untrack them; either is the operator's.
 931. **`lora/_toolkit/judge_thresholds.yml` was calibrated on seven images;** `ragnhild/dataset/` now holds six. Recalibrating moves the quality floors.
+932. **AMBITION.md and PHOTOGRAPHY.md are triaged, not yet folded.** All 168 items were checked against the code on 2026-09-14. Before either document is deleted, each open item lands in its owner or in this list, and the reasons that code cites move beside that code. Defects first:
+   - preprompt hands its output path to postpro, whose one-shot grade overwrites the provenance sidecar `<out>.json`. Prompt, model and seed then survive only in `gallery.jsonl`, which chains never write.
+   - `Chain.run` accepts a `references` inherit and carries nothing for it.
+   - `chains/relight_portrait.yml` has three faults. It claims an `unverified: true` flag that no table row sets, it sets a stage `postpro:` that nothing reads, and it would feed IC-Light the depth map as its image.
+   - `rescue.rb` says `spectral_temp` neutralises a cast. The `portrait` preset it applies warms the frame instead.
+   - `curate.rb` writes the caption stub `"<token>, woman, "` for every subject, johann included.
+   - `preprompt/README.md` still names flux-schnell, 1.1-pro-ultra and 1.1-pro where the code uses klein-4b, flux-2-max and flux-2-pro.
+   - postpro's one-shot path, which is the one preprompt uses, skips the camera-profile pass that `process_file` runs.
+   
+   Cheap open items, grouped by owner:
+   - **chain/preprompt:** `--from STAGE`; the chain name, stage and YAML sha in each stage sidecar; duration and model version in provenance; a per-stage timeout; chain frames in `gallery.jsonl`; a registry of failed chains; a lint for two adjacent global-colour stages.
+   - **craft:** conflict rows for selfie_geometry against a near subject_distance; a warning on "flawless"; the moment after a laugh rather than "smile"; terms for key-to-fill ratio, negative fill, micro-expression, hands and the arm.
+   - **postpro:** the before and after `Uncanny` readings in the grade sidecar; sidecars from `process_file`, `run_watch` and `uplift`; a house-version constant; a contact sheet of one frame through every stock; a palette histogram under `--measure`.
+   - **rescue:** honest cast-remedy text, and an underexposure diagnosis.
+   - **golden_grade:** a luminance band and ΔE on a patch, measured first.
+   - **curate:** `FrameSet.near_duplicates` in the report; a holdout split in `prepare`.
+   - **lora:** the base model written beside the weights; a secret-leak scan over tracked notebooks and `subject.env`; a per-subject grade knob that defaults to `portrait`.
+   
+   AMBITION's video section (117–128) is all deep work. Its argument for removing the frame-by-frame path belongs at the orphan comment `postpro.rb:337`. Item 104 contradicts item 35; the code sides with 35, grading after any upscale.
 
 ---
 

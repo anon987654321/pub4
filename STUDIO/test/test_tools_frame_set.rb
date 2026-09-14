@@ -3,7 +3,7 @@
 require_relative "studio_helper"
 require "vips"
 require "tmpdir"
-require_relative "../postpro/frame_set"
+require_relative "../postpro/lib/frame_set"
 
 # A set reading is only worth its known cases. Near-duplicates: the same frame
 # brighter, recompressed or trimmed at the edges is one photograph, and a frame

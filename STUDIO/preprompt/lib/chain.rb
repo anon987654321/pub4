@@ -59,7 +59,7 @@ module Preprompt
     # empty string to satisfy a validator, which is worse than no check.
     def self.promptless?(keys) = !Array(keys).map(&:to_s).include?("prompt")
 
-    DEFAULT_DIR = File.join(__dir__, "chains")
+    DEFAULT_DIR = File.expand_path("../chains", __dir__)
 
     class Invalid < StandardError; end
 
