@@ -82,6 +82,7 @@ module Master
 
         command = normalize_inferred_command(command, text)
         return if READ_SLASH.include?(command)
+        return unless answered?(command, container)
 
         args = command == "review" ? pass_command_args(value, text) : value.args.to_s
 
@@ -89,6 +90,15 @@ module Master
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "TurnRouter.infer_operator_command")
         nil
+      end
+
+      # patterns.yml infers words no handler takes, and a sentence that merely
+      # named one died there: "read the dmesg module" answered "unknown command:
+      # /dmesg". An inferred word becomes a command only when the registry answers
+      # it; /review is the pass this router runs itself.
+      def answered?(command, container)
+        commands = container[:commands]
+        command == "review" || !commands.respond_to?(:key?) || commands.key?(command)
       end
 
       def infer_command_value(text, container:)
@@ -184,11 +194,13 @@ module Master
         return Master::Result.err("fold: not available to visitors", category: :policy) if visitor?
         return Master::Result.err(Master.no_api_key_message, category: :no_api_key) unless Master.any_api_key_present?
 
-        root, risk = assess_fold_risk(goal, container:)
-        memory = prepare_fold_memory(goal:, container:, risk:)
-        fold_to_result(run_fold_pipeline(goal, root:, container:, on_turn:, memory:, risk:))
+        Master::Trace::Dmesg.under("fold0") do
+          root, risk = assess_fold_risk(goal, container:)
+          memory = prepare_fold_memory(goal:, container:, risk:)
+          fold_to_result(run_fold_pipeline(goal, root:, container:, on_turn:, memory:, risk:))
+        end
       rescue StandardError => e
-        Master::Result.err("core: #{e.message}", category: :infrastructure)
+        Master::Result.err("fold0: #{e.message}", category: :infrastructure)
       end
 
       def assess_fold_risk(goal, container:)
@@ -311,8 +323,8 @@ module Master
       end
 
       def fold_output_text(fold)
-        header = "core: #{fold[:reason]} turns=#{fold[:turns]}"
-        header += " risk=#{fold[:risk]}" if fold[:risk]
+        header = "fold0: #{fold[:reason]}, #{fold[:turns]} turns"
+        header += ", risk #{fold[:risk]}" if fold[:risk]
         [header, *fold[:transcript], fold[:summary]].compact.join("\n")
       end
 

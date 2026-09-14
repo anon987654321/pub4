@@ -24,7 +24,7 @@ module Master
             started_at: Process.clock_gettime(Process::CLOCK_MONOTONIC),
           }
           $stdout.sync = true
-          Master::Trace::Dmesg.attach(name, "mainbus0", "files=#{total} stream=on")
+          Master::Trace::Dmesg.attach(name, "master0", Master::Trace::Dmesg.counted(total, "file"))
         end
 
         def emit_scan_progress(dir:, path:, file_result:)
@@ -92,25 +92,18 @@ module Master
         def log_scan_hit(unit:, done:, total:, rel:, count:, eta_s:)
           return unless count.positive?
 
-          Master::Trace::Dmesg.status(
-            unit,
-            "hit #{done}/#{total} #{rel} +#{count}" \
-            "#{eta_s&.positive? ? " eta=#{eta_s}s" : ""}",
-          )
+          Master::Trace::Dmesg.status(unit, "#{done}/#{total} #{rel}, #{Master::Trace::Dmesg.counted(count, "finding")}")
         end
 
         def log_scan_checkpoint(unit:, done:, total:, viol_total:, dirty:, top:, elapsed:, eta_s:)
           step = checkpoint_step(total)
           return unless done == total || (done % step).zero?
 
-          top_s = top.map { |rule, n| "#{rule}=#{n}" }.join(" ")
-          Master::Trace::Dmesg.status(
-            unit,
-            "checkpoint #{done}/#{total} violations=#{viol_total} dirty_files=#{dirty}" \
-            "#{eta_s&.positive? ? " eta=#{eta_s}s" : ""}" \
-            " elapsed=#{elapsed.round}s" \
-            "#{top_s.empty? ? "" : " top #{top_s}"}",
-          )
+          parts = ["#{done}/#{total} files", tally(viol_total, dirty), "#{elapsed.round}s"]
+          parts << "eta #{eta_s}s" if eta_s&.positive?
+          line = parts.join(", ")
+          line += "; top #{top.map { |rule, n| "#{rule} #{n}" }.join(", ")}" unless top.empty?
+          Master::Trace::Dmesg.status(unit, line)
           write_progress_snapshot(unit:, done:, total:, viol_total:, dirty:, top:, elapsed:, eta_s:)
         end
 
@@ -120,13 +113,14 @@ module Master
         # prints the same "complete=yes violations=0" as a scan that
         # actually looked.
         def log_scan_completion(unit:, done:, total:, viol_total:, dirty:, elapsed:)
-          fields = {
-            complete: true, files: total, violations: viol_total,
-            dirty_files: dirty, elapsed_s: elapsed.round
-          }
+          parts = ["done", Master::Trace::Dmesg.counted(total, "file"), tally(viol_total, dirty), "#{elapsed.round}s"]
           skipped = Master::Io::QuotaGate.report
-          fields[:skipped] = skipped if skipped
-          Master::Trace::Dmesg.kv(unit, **fields)
+          parts << skipped if skipped
+          Master::Trace::Dmesg.status(unit, parts.join(", "))
+        end
+
+        def tally(violations, dirty)
+          "#{Master::Trace::Dmesg.counted(violations, "violation")} in #{Master::Trace::Dmesg.counted(dirty, "file")}"
         end
 
         def checkpoint_step(total)

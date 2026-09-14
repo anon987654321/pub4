@@ -60,7 +60,7 @@ module Master
           pairs:, profile:, rule_filter:, severity_filter:,
           dry_run:, phase: "pass1"
         )
-        Scan::Live.emit("pass1 #{pass1.brief}")
+        Scan::Live.emit("pass 1, #{pass1.brief}")
         holder[:text] = pass1.render
         Scan::Live.snapshot!(holder[:text], root:, note: "pass1 before autofix")
         pass1.total_count
@@ -70,29 +70,29 @@ module Master
         streamed = scanner.respond_to?(:stream_autofixes) ? Array(scanner.stream_autofixes) : []
         if streamed.any?
           autofixes = streamed.map { |applied| { path: applied.path, transforms: applied.transforms } }
-          Scan::Live.emit("autofix applied during scan files=#{autofixes.size}")
+          Scan::Live.emit("autofix applied during scan, #{Master::Trace::Dmesg.counted(autofixes.size, "file")}")
           return [pairs, autofixes]
         end
 
         return apply_and_rescan(scanner:, root:, clean_arg:, pairs:) if pairs.any? && do_autofix
 
-        Scan::Live.emit(dry_run ? "autofix skipped dry_run=yes" : "autofix skipped --no-autofix") if dry_run || no_autofix
+        Scan::Live.emit(dry_run ? "autofix skipped, dry run" : "autofix skipped, --no-autofix") if dry_run || no_autofix
         [pairs, []]
       end
 
       # Pass 2: the findings the fixer wrote are the reason to look again, so a
       # rescan only happens when something was actually applied.
       def apply_and_rescan(scanner:, root:, clean_arg:, pairs:)
-        Scan::Live.emit("autofix applying on auto_fix findings…")
+        Scan::Live.emit("autofix applying")
         autofixes = apply_scan_autofixes(scanner:, root:, pairs:)
         if autofixes.empty?
-          Scan::Live.emit("autofix none applied (no auto_fix hits or no transforms)")
+          Scan::Live.emit("autofix applied nothing, no finding had a transform")
           return [pairs, autofixes]
         end
 
-        transforms = autofixes.flat_map { |a| Array(a[:transforms]) }.uniq.first(8).join(" ")
-        Scan::Live.emit("autofixed files=#{autofixes.size} transforms=#{transforms}")
-        Scan::Live.emit("pass2 re-scan after autofix…")
+        transforms = autofixes.flat_map { |a| Array(a[:transforms]) }.uniq.first(8).join(", ")
+        Scan::Live.emit("autofixed #{Master::Trace::Dmesg.counted(autofixes.size, "file")}: #{transforms}")
+        Scan::Live.emit("pass 2, rescanning after autofix")
         rescanned = Scan::Request.new(scanner:, root:, arg: clean_arg).call
         pairs = rescanned.pairs unless rescanned.pairs.is_a?(String)
         [pairs, autofixes]
@@ -110,7 +110,7 @@ module Master
           prior_total: do_autofix ? pass1_total : nil,
         )
         text = pairs.empty? && autofixes.empty? ? clean_scan_line(dry_run:, autofixes:) : final.render
-        Scan::Live.emit("done #{final.brief}")
+        Scan::Live.emit("done, #{final.brief}")
         text
       end
 

@@ -33,15 +33,15 @@ module Master
         # way per-file rubocop output already did earlier this session. Every
         # outcome appears, not just the skips: a pass that proposes nothing and
         # a pass whose proposals all die in review are different problems, and
-        # `fixed=0` says neither.
+        # "0 fixed" says neither.
         def log_outcome_breakdown(results)
           @batch_breakdown = {}
           return if results.empty?
 
           tally = results.tally
           @batch_breakdown = tally
-          parts = tally.filter_map { |outcome, count| "#{outcome}=#{count}" if count.positive? }
-          Master::Trace::Dmesg.status("fix0", "outcome rule=#{@rule.id} total=#{results.size} #{parts.join(" ")}")
+          parts = tally.filter_map { |outcome, count| "#{count} #{outcome}" if count.positive? }
+          Master::Trace::Dmesg.status("fix0", "#{@rule.id}, #{results.size} tried: #{parts.join(", ")}")
         end
 
         def pass_outcome(fixed)

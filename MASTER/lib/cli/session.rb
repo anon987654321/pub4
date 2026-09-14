@@ -91,6 +91,7 @@ module Master
       ensure
         @pipeline_thread = nil
         stop_thinking_indicator
+        close_unit_console
         @user_active = false
       end
 
@@ -107,12 +108,8 @@ module Master
         @seen_violations = {}
         @user_active = false
         @focus_mode = false
-        @show_chips = false
-        @last_input = nil
-        @last_cost = 0.0
-        @last_tokens = 0
-        @dmesg_sub = nil
-        @exit_code = 0
+                @last_input = nil
+                        @exit_code = 0
       end
 
       def init_turn_state(input)
@@ -141,6 +138,10 @@ module Master
 
       def build_on_turn_handler(accumulated, state)
         lambda do |line|
+          # The units console printed this turn as it ran; the transcript line
+          # would say it twice.
+          next state[:streamed] = true if @unit_sub
+
           accumulated << line << "\n"
           handle_stream_text(line + "\n", state) if $stdout.isatty
         end

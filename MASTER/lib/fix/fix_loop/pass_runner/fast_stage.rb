@@ -28,7 +28,7 @@ module Master
               fixed += analyze_ruby_file(path)
             rescue StandardError => e
               @bus&.publish("fix_loop:fast_error", file: path, error: e.message)
-              Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "fast_error file=#{path.delete_prefix("#{@root}/")} #{e.message}")
+              Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "#{path.delete_prefix("#{@root}/")}: #{e.message}")
             end
             fixed
           end
@@ -51,9 +51,9 @@ module Master
 
           def rubocop_pass(files, root)
             rel_root = root == @root ? "." : root.delete_prefix("#{@root}/")
-            Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop autocorrect files=#{files.size} root=#{rel_root}")
+            Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop autocorrect, #{Master::Trace::Dmesg.counted(files.size, "file")} in #{rel_root}")
             _, status = Master::Io::Exec.capture2e(Master::BUNDLE_BIN, "exec", "rubocop", "-A", "--no-color", *files, chdir: root)
-            Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop #{status.success? ? "ok" : "partial"} files=#{files.size}")
+            Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop #{status.success? ? "ok" : "partial"}, #{Master::Trace::Dmesg.counted(files.size, "file")}")
             status.success? ? files.size : rubocop_each_file(files, root)
           end
 
@@ -62,10 +62,10 @@ module Master
               _, status = Master::Io::Exec.capture2e(Master::BUNDLE_BIN, "exec", "rubocop", "-A", "--no-color", path, chdir: root)
               rel = path.delete_prefix("#{@root}/")
               if status.success?
-                Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop file=#{rel} ok")
+                Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop ok, #{rel}")
               else
                 @bus&.publish("fix_loop:rubocop_file_failed", file: path)
-                Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop file=#{rel} failed")
+                Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "rubocop failed, #{rel}")
               end
               status.success?
             end
@@ -88,7 +88,7 @@ module Master
               src = File.read(path, encoding: "UTF-8")
               fixed += ast_result.transforms.size
               @bus&.publish("fix_loop:ast_fixed", file: rel, transforms: ast_result.transforms)
-              Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "ast_fix file=#{rel} transforms=#{ast_result.transforms.join(" ")}")
+              Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "ast fix, #{rel}: #{ast_result.transforms.join(", ")}")
             end
             [fixed, src]
           end
@@ -96,7 +96,7 @@ module Master
           def report_type_errors(path, src, rel)
             errors = Ground::TypeChecker.check(path, src)
             errors.each { |te| @bus&.publish("fix_loop:type_error", file: rel, rule: te.rule, message: te.message) }
-            Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "type_check file=#{rel} errors=#{errors.size}") if errors.any?
+            Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "type check, #{rel}: #{Master::Trace::Dmesg.counted(errors.size, "error")}") if errors.any?
           end
 
           def report_datalog_findings(path, src, rel)
@@ -104,7 +104,7 @@ module Master
             dl.rule(:BARE_RESCUE_DATALOG, :bare_rescue) { |f| "bare rescue at line #{f.args[1]} — use rescue StandardError" }
             findings = dl.evaluate
             findings.each { |finding| @bus&.publish("fix_loop:datalog_finding", file: rel, rule: finding.rule_id, message: finding.message) }
-            Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "datalog file=#{rel} findings=#{findings.size}") if findings.any?
+            Master::Trace::Dmesg.status(FAST_STAGE_UNIT, "datalog, #{rel}: #{Master::Trace::Dmesg.counted(findings.size, "finding")}") if findings.any?
           end
         end
       end

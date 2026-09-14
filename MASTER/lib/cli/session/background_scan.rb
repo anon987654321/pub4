@@ -40,7 +40,7 @@ module Master
       # Inline it held the prompt hostage for the whole boot, so the operator sat
       # at "scan…" with no way to type. It reports when it lands instead.
       def start_boot_scan
-        @boot_scan_thread = Thread.new { @scan_gate.synchronize { boot_scan } }
+        @boot_scan_thread = Thread.new { @scan_gate.synchronize { Master::Trace::Dmesg.under("scan0") { boot_scan } } }
       end
 
       def boot_scan
@@ -88,7 +88,7 @@ module Master
         return unless @scan_gate.try_lock
 
         begin
-          background_cycle!
+          Master::Trace::Dmesg.under("scan0") { background_cycle! }
         ensure
           @scan_gate.unlock
         end

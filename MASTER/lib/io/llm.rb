@@ -28,14 +28,31 @@ module Master
         # A tool publishes tool:after only once it has succeeded, so a failure
         # is published here, where every model-called tool returns: without it
         # the feedback ledger recorded successes and nothing else.
+        #
+        # tool:call and tool:return bracket every call, reads and fetches
+        # included, so the operator sees each one the model makes.
         def forward(**args)
+          @bus&.publish("tool:call", tool: tool_name, subject: subject_of(args))
+          started = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond)
           result = @tool.call(**args)
+          ms = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond) - started
           unless result.ok?
             @bus&.publish("tool:failed", tool: tool_name, category: result.category, error: result.message.to_s[0, 200])
+            @bus&.publish("tool:return", tool: tool_name, ok: false, ms:, error: result.message.to_s[0, 200])
             return "Error: #{result.message}"
           end
 
+          @bus&.publish("tool:return", tool: tool_name, ok: true, ms:, bytes: result.value!.to_s.bytesize)
           block_given? ? yield(result.value!) : result.value!
+        end
+
+        # What the call is about, in the order a person would name it. Content
+        # and replacement text stay out: they are the payload, not the subject.
+        SUBJECT_KEYS = %i[path url command query pattern name domain key operation prompt].freeze
+
+        def subject_of(args)
+          key = SUBJECT_KEYS.find { |name| !args[name].to_s.empty? }
+          key ? args[key].to_s : ""
         end
 
         def tool_name = @tool.class.const_defined?(:NAME) ? @tool.class::NAME : @tool.class.name.split("::").last

@@ -49,7 +49,7 @@ module Master
         # the prompt. A routine success returns above and stays silent: "ok" is
         # not worth a synthesis.
         Master::Voice::Playback.speak(text)
-        print_reply_footers(ok)
+        print_parallel_errors_footer(ok)
         puts
       end
 
@@ -57,13 +57,6 @@ module Master
         [Master::Voice::Renderer::MEASURE, TTY::Screen.width - 1].min
       rescue StandardError
         Master::Voice::Renderer::MEASURE
-      end
-
-      def print_reply_footers(ok)
-        print_cost_tooltip
-        print_parallel_errors_footer(ok)
-        print_changed_files_summary
-        print_chips if @show_chips
       end
 
       def print_parallel_errors_footer(ok)
@@ -78,7 +71,7 @@ module Master
         lines << stage_err unless stage_err.empty?
         return if lines.empty?
 
-        puts @refs.renderer.render("parallel: #{lines.first(3).join(' · ')}", mode: :warning)
+        puts @refs.renderer.render("parallel0: #{lines.first(3).join("; ")}", mode: :warning)
       end
 
       def success_text(ok)
@@ -92,45 +85,6 @@ module Master
         !text.empty? && text.lines.size == 1 && text.length <= ROUTINE_SUCCESS_MAX_LENGTH
       end
 
-      def print_cost_tooltip
-        now_cost = @refs.session.cost.to_f
-        now_tokens = @refs.session.tokens_billed.to_i
-        delta = now_cost - @last_cost
-        token_delta = now_tokens - @last_tokens.to_i
-        @last_cost = now_cost
-        @last_tokens = now_tokens
-        cents = (delta * 100).round(2)
-        return if cents.zero? && token_delta.zero?
-        line = "cost: +¢#{format('%.2f', cents)}, #{token_delta} tokens, #{short_model(@refs.agent.model)}"
-        puts @refs.renderer.render(line, mode: :dim)
-      end
-
-      # The files this turn wrote, from WriteTracker, which run_input resets.
-      # `git diff HEAD` counts every dirty file in a shared checkout, other
-      # sessions' work included, whatever this turn did.
-      def print_changed_files_summary
-        count = Master::Trace::WriteTracker.current&.paths.to_a.size
-        return unless count.positive?
-
-        puts @refs.renderer.render("#{count} #{count == 1 ? 'file' : 'files'} written", mode: :dim)
-      end
-
-      def print_chips
-        chips = next_action_chips
-        return if chips.empty?
-        puts @refs.renderer.render("  next: #{chips.join(" ")}", mode: :dim)
-      end
-
-      # Only commands the registry answers. This offered [/fix], [/why] and [/last]
-      # unconditionally and three of the four were unknown commands, so the line
-      # whose whole job is to name the next open door named three closed ones.
-      # Filtering against the live list keeps it honest as commands move.
-      def next_action_chips
-        offered = %w[fix undo why last].select { |name| SLASH_COMMANDS.include?("/#{name}") }
-        current = violations_count
-        offered.map { |name| name == "fix" ? "[/fix #{current}v]" : "[/#{name}]" }
-      end
-
       def violations_count
         @violations_mutex.synchronize { @violations }
       end
@@ -140,10 +94,6 @@ module Master
           @violations = count
           @prev_violations = count
         end
-      end
-
-      def short_model(model)
-        model.to_s.sub(/\Aclaude-cli:/, "").sub(/\Aweb-chat:/, "").split("/").last.to_s.sub(/:free$/, "")
       end
 
       def exit_code_for(err)

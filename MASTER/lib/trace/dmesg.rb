@@ -3,7 +3,8 @@
 module Master
   module Trace
     # OpenBSD dmesg-style kernel lines for operator progress.
-    # Shape: "unitN at parent: detail" / "unitN: status key=val"
+    # Shape: "unitN at parent: detail" / "unitN: status". Prose, not key=value:
+    # "scan0: 3 violations in 2 files", as the kernel says "sd0: 244198MB".
     # Config: data/limits.yml#dmesg (enabled: true). ENV MASTER_DMESG=0|1 overrides.
     #
     # This shape is the CLI's whole style guide: append-only, one line per fact,
@@ -42,9 +43,24 @@ module Master
         emit("#{unit}: #{msg}")
       end
 
-      def kv(unit, **fields)
-        body = fields.compact.map { |k, v| "#{k}=#{format_val(v)}" }.join(" ")
-        status(unit, body)
+      # Work that calls a model names itself, and the calls attach under it.
+      # Fiber storage reaches the threads the work spawns, and is put back after.
+      def under(unit)
+        previous = Fiber[:master_unit]
+        Fiber[:master_unit] = unit
+        yield
+      ensure
+        Fiber[:master_unit] = previous
+      end
+
+      # Once per process, for a fact every lane would otherwise repeat.
+      def once(unit, msg)
+        @once ||= {}
+        line = "#{unit}: #{msg}"
+        return if @once[line]
+
+        @once[line] = true
+        emit(line)
       end
 
       def emit(line)
@@ -53,8 +69,10 @@ module Master
         text = line.to_s.gsub(/\s+/, " ").strip
         # Clears the repainting "thinking" line first, or the unit prints on
         # the end of it.
+        # Dim like the boot lines above it: kernel lines recede, and the reply
+        # is the one thing at full weight.
         $stdout.print "\r\e[K" if $stdout.tty?
-        $stdout.puts text
+        $stdout.puts($stdout.tty? ? pastel.dim(text) : text)
         $stdout.flush
         text
       rescue StandardError => e
@@ -62,13 +80,160 @@ module Master
         nil
       end
 
-      def format_val(value)
-        case value
-        when Float then format("%.1f", value)
-        when true then "yes"
-        when false then "no"
-        when nil then "-"
-        else value.to_s.tr("\n", " ")[0, 120]
+      def counted(number, noun) = "#{number} #{noun}#{"s" unless number == 1}"
+
+      def pastel
+        require "pastel"
+        @pastel ||= Pastel.new
+      end
+
+      # A turn as the kernel would print it. Every model call, file, command
+      # and request attaches as a numbered unit under its parent, the way sd1 is
+      # the second disk, then reports once on what it did. A parent attaches
+      # before its first child. An event with no unit renders nothing and stays
+      # in the event log.
+      class Console
+        TOOL_UNITS = {
+          "read_file" => %w[read io0], "list_dir" => %w[list io0], "search_files" => %w[grep io0],
+          "search_knowledge" => %w[grep io0], "symbol_lookup" => %w[grep io0], "write_file" => %w[write io0],
+          "str_replace" => %w[edit io0], "replace" => %w[edit io0], "ast_edit" => %w[edit io0],
+          "zsh" => %w[exec io0], "git_context" => %w[git io0], "web_fetch" => %w[fetch net0],
+          "web_search" => %w[search net0], "dynamic_http" => %w[http net0], "ask_llm" => %w[ask io0],
+        }.freeze
+        FOLD_UNITS = { "read" => "read", "write" => "write", "exec" => "exec", "git" => "git",
+                       "ask" => "ask", "critique" => "crit" }.freeze
+        PARENT_DETAIL = { "io0" => "files and commands", "net0" => "network", "fold0" => "coding loop" }.freeze
+        DETAIL_CHARS = 96
+        MS_PER_SECOND = 1000.0
+        CENTS_PER_DOLLAR = 100
+
+        def initialize
+          @count = Hash.new(0)
+          @open = {}
+          @attached = {}
+          @usage = nil
+        end
+
+        def lines(payload)
+          case payload[:event].to_s
+          when "llm:send" then llm_send(payload)
+          when "llm:call_complete" then remember_usage(payload)
+          when "llm:provider_outcome" then llm_outcome(payload)
+          when "tool:call" then tool_call(payload)
+          when "tool:return" then tool_return(payload)
+          when "fold:risk" then parent("fold0", "master0", "risk #{payload[:risk]}")
+          when "core:reason" then ["fold0: #{clip(payload[:why])}"]
+          when "core:turn" then fold_turn(payload)
+          else []
+          end
+        end
+
+        private
+
+        # Lanes ask in parallel, often of one model, so a call is its model on
+        # its thread: the bus publishes in the caller's thread, and a call's
+        # send and outcome happen on the same one.
+        #
+        # A call attaches to the unit that asked for it, fold0 or scan0, named
+        # by Dmesg.under; anything else asks from master0.
+        def llm_send(payload)
+          unit = open_unit("llm", llm_key(payload))
+          ["#{unit} at #{Fiber[:master_unit] || "master0"}: #{model_name(payload[:model])}"]
+        end
+
+        def llm_outcome(payload)
+          unit = @open.delete(llm_key(payload)) || "llm0"
+          usage, @usage = @usage, nil
+          return ["#{unit}: #{payload[:status]}, #{clip(payload[:error])}"] unless payload[:status].to_s == "success"
+
+          ["#{unit}: #{[tokens(usage), seconds(payload[:latency_ms]), cents(usage)].compact.join(', ')}"]
+        end
+
+        # Tokens and cost arrive inside the call; the outcome that closes the
+        # unit arrives after it.
+        def remember_usage(payload)
+          @usage = payload
+          []
+        end
+
+        def tool_call(payload)
+          kind, parent_unit = TOOL_UNITS.fetch(payload[:tool].to_s, [payload[:tool].to_s, "io0"])
+          unit = open_unit(kind, "tool:#{payload[:tool]}")
+          [*parent(parent_unit, "master0"), "#{unit} at #{parent_unit}: #{clip(payload[:subject])}"]
+        end
+
+        def tool_return(payload)
+          unit = @open.delete("tool:#{payload[:tool]}")
+          return [] unless unit
+          return ["#{unit}: #{clip(payload[:error])}"] unless payload[:ok]
+
+          ["#{unit}: #{[size(payload[:bytes]), seconds(payload[:ms])].compact.join(', ')}"]
+        end
+
+        def fold_turn(payload)
+          verb = payload[:verb].to_s
+          lines = parent("fold0", "master0")
+          return lines << "fold0: done, #{counted(payload[:turn].to_i + 1, "turn")}" if verb == "done"
+          return lines << "fold0: #{verb}, #{clip(payload[:subject])}" unless FOLD_UNITS.key?(verb)
+
+          unit = next_unit(FOLD_UNITS[verb])
+          lines << "#{unit} at fold0: #{clip(payload[:subject])}"
+          lines << "#{unit}: #{fold_result(verb, payload)}"
+        end
+
+        def fold_result(verb, payload)
+          detail = payload[:detail].to_s
+          lines = detail.lines
+          return clip(lines.last) unless payload[:ok]
+          return "#{size(detail.bytesize)}, #{counted(lines.size, "line")}" if verb == "read"
+          return "ok, #{counted(lines.size, "line")}" if verb == "exec"
+
+          clip(lines.first || "ok")
+        end
+
+        def parent(unit, grandparent, detail = PARENT_DETAIL[unit])
+          return [] if @attached[unit]
+
+          @attached[unit] = true
+          ["#{unit} at #{grandparent}: #{detail}"]
+        end
+
+        def open_unit(kind, key)
+          @open[key] = next_unit(kind)
+        end
+
+        def next_unit(kind)
+          number = @count[kind]
+          @count[kind] += 1
+          "#{kind}#{number}"
+        end
+
+        def llm_key(payload) = "llm:#{Thread.current.object_id}:#{payload[:model]}"
+
+        def model_name(model) = model.to_s.delete_suffix(":free")
+
+        def tokens(usage)
+          return unless usage
+
+          return "#{usage[:tokens_out].to_i} tokens out" if usage[:tokens_in].to_i.zero?
+
+          "#{usage[:tokens_in].to_i} tokens in, #{usage[:tokens_out].to_i} out"
+        end
+
+        def cents(usage)
+          cost = usage && usage[:cost_usd].to_f
+          cost&.positive? ? format("%.2f cents", cost * CENTS_PER_DOLLAR) : nil
+        end
+
+        def seconds(ms) = ms ? format("%.1fs", ms.to_f / MS_PER_SECOND) : nil
+
+        def size(bytes) = bytes ? counted(bytes.to_i, "byte") : nil
+
+        def counted(number, noun) = Dmesg.counted(number, noun)
+
+        def clip(text)
+          flat = text.to_s.gsub(/\s+/, " ").strip
+          flat.length > DETAIL_CHARS ? "#{flat[0, DETAIL_CHARS - 1]}…" : flat
         end
       end
     end

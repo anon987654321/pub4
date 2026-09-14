@@ -113,7 +113,7 @@ module Master
         @bus&.publish("rule_loop:error", rule: @rule.id, error: e.message)
         # Bus-only meant a crashed rule pass was indistinguishable from a
         # quiet one in the dmesg stream the operator actually reads.
-        Master::Trace::Dmesg.status("fix0", "rule_error rule=#{@rule.id} #{e.class}: #{e.message[0, 90]}")
+        Master::Trace::Dmesg.status("fix0", "#{@rule.id}: #{e.class}: #{e.message[0, 90]}")
         { fixed: 0, status: :error, breakdown: { error: 1 } }
       end
 
@@ -193,7 +193,7 @@ module Master
       def reject_fix(path, original, reason, **details)
         write_atomic(path, original, encoding: "UTF-8")
         @bus&.publish("rule_loop:fix_rejected", rule: @rule.id, file: path, reason:, **details)
-        Master::Trace::Dmesg.status("fix0", "fix_rejected rule=#{@rule.id} file=#{File.basename(path)} reason=#{reason}")
+        Master::Trace::Dmesg.status("fix0", "#{@rule.id} fix rejected, #{File.basename(path)}: #{reason}")
         false
       end
 
@@ -321,7 +321,7 @@ module Master
                                     allow_deletions: deletions_allowed?)
         unless allowed
           @bus&.publish("rule_loop:autofix_skipped", rule: violation[:rule], confidence:)
-          Master::Trace::Dmesg.status("fix0", "autofix_skipped rule=#{violation[:rule]} confidence=#{confidence}")
+          Master::Trace::Dmesg.status("fix0", "#{violation[:rule]} autofix skipped, confidence #{confidence}")
         end
         allowed
       end
@@ -332,8 +332,8 @@ module Master
         publish_fix_failure(info[:category], event, violation, message)
         Master::Trace::Dmesg.status(
           "fix0",
-          "fix_error rule=#{violation[:rule]} file=#{violation[:file].to_s.delete_prefix("#{@root}/")} " \
-          "category=#{info[:category]} #{error.class}: #{message[0, 160]}",
+          "#{violation[:rule]} fix failed, #{violation[:file].to_s.delete_prefix("#{@root}/")}: " \
+          "#{info[:category]}, #{error.class}: #{message[0, 160]}",
         )
         info[:category] == :transient ? :retry : :stop
       end

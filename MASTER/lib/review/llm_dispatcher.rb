@@ -123,6 +123,7 @@ module Master
         started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         selected_model = forced_model || selected_model
         selected_model = vision_model_for(selected_model) if image_present?(image)
+        @bus&.publish("llm:send", model: selected_model)
         cache_key = cache_key_for(messages.last[:content], messages[0...-1], selected_model, system, temperature)
         result = breaker_for(selected_model).call(estimate_cost(messages.last[:content])) do
           @cache.fetch(cache_key, selected_model) do
@@ -185,10 +186,9 @@ module Master
         value = ENV["MASTER_MODEL"].to_s.strip
         return if value.empty?
 
-        unless @forced_announced
-          Master::Trace::Dmesg.status("llm0", "MASTER_MODEL=#{value} — every lane forced to this model")
-          @forced_announced = true
-        end
+        # Once per process: every lane builds its own dispatcher, and a flag on
+        # each printed the line eight times before the first reply.
+        Master::Trace::Dmesg.once("master0", "MASTER_MODEL forces #{value} on every lane")
         value
       end
 

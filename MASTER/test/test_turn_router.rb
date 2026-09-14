@@ -133,7 +133,7 @@ end
       Master::CLI::CoreBridge.stub(:run, fold) do
         result = Master::CLI::TurnRouter.call(message: "implement pagination for posts", container: build_container)
         assert result.ok?, -> { "fold errored: #{result.message}" }
-        assert_match(/core: complete/, result.value[:rendered])
+        assert_match(/fold0: complete/, result.value[:rendered])
       end
     end
   end
@@ -143,6 +143,13 @@ end
 
     refute_nil inferred, "expected Infer to promote 'fix the bug' to an operator command"
     assert_includes Master::CLI::TurnRouter::PIPELINE_COMMANDS, inferred[:command]
+  end
+
+  def test_an_inferred_word_no_handler_takes_stays_a_sentence
+    inferred = Master::CLI::TurnRouter.infer_operator_command("read lib/trace/dmesg.rb and summarise it",
+                                                              container: build_container)
+
+    assert_nil inferred, "no handler answers /dmesg, so the sentence must reach the model"
   end
 
   def test_slash_routes_to_command_registry

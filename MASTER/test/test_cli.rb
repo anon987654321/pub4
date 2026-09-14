@@ -367,27 +367,43 @@ end
     assert_equal 0, children.kill_all, "the child must be gone"
   end
 
-  # A turn printed every bus event, 28,700 lines for one /review. Only a write
-  # reaches the terminal now; the rest stays in the event log.
-  def test_a_turn_prints_its_writes_and_nothing_else
-    bus = Master::Trace::EventBus.new(event_log: Object.new.tap { |log| log.define_singleton_method(:append) { |*| nil } })
-    renderer = Object.new
-    renderer.define_singleton_method(:render) { |text, mode:| text }
-    root = Dir.mktmpdir
-    cli = Master::CLI::Session.new(container: @container.merge(bus:, renderer:, root:))
+# A turn printed every bus event, 28,700 lines for one /review, and then
+# nothing but its writes. Now it prints what the model does, as dmesg units:
+# each call, file and request attaches and reports; scan chatter stays out.
+def publish_a_call_and_a_fetch(bus)
+  model = "nvidia/nemotron-3-super-120b-a12b:free"
+  bus.publish("scan:pass", pass: "lexical", rule_count: 131)
+  bus.publish("error:swallowed", context: "anything")
+  bus.publish("llm:send", model:)
+  bus.publish("llm:call_complete", model:, tokens_in: 900, tokens_out: 40)
+  bus.publish("llm:provider_outcome", model:, status: :success, latency_ms: 2100)
+  bus.publish("tool:call", tool: "web_fetch", subject: "https://www.openbsd.org/")
+  bus.publish("tool:return", tool: "web_fetch", ok: true, bytes: 14_203, ms: 310)
+end
 
-    out, = capture_io do
-      cli.send(:init_thinking_state!)
-      bus.publish("scan:pass", pass: "lexical", rule_count: 131)
-      bus.publish("error:swallowed", context: "anything")
-      bus.publish("tool:after", tool: "read_file", path: "#{root}/a.rb")
-      bus.publish("tool:after", tool: "write_file", path: "#{root}/lib/b.rb", bytes: 12, op: "write")
-      cli.send(:stop_thinking_indicator)
-    end
+def test_a_turn_prints_its_units_and_nothing_else
+  silent_log = Object.new.tap { |log| log.define_singleton_method(:append) { |*| nil } }
+  bus = Master::Trace::EventBus.new(event_log: silent_log)
+  logging = Master::Trace::Logging.new(ring_buffer: [], event_bus: bus)
+  renderer = Object.new
+  renderer.define_singleton_method(:render) { |text, mode:| text }
+  cli = Master::CLI::Session.new(container: @container.merge(bus:, renderer:, logging:, root: Dir.mktmpdir))
 
-    lines = out.split(/[\r\n]/).map { |line| line.delete_prefix("\e[K") }.reject(&:empty?)
-    assert_equal ["write lib/b.rb 12 bytes"], lines
+  out, err = capture_io do
+    cli.send(:init_thinking_state!)
+    publish_a_call_and_a_fetch(bus)
+    cli.send(:close_unit_console)
   end
+
+  lines = (out + err).split(/[\r\n]/).map { |line| line.delete_prefix("\e[K") }.reject(&:empty?)
+  assert_equal [
+    "llm0 at master0: nvidia/nemotron-3-super-120b-a12b",
+    "llm0: 900 tokens in, 40 out, 2.1s",
+    "net0 at master0: network",
+    "fetch0 at net0: https://www.openbsd.org/",
+    "fetch0: 14203 bytes, 0.3s",
+  ], lines
+end
 
   def test_ctrl_c_at_the_prompt_raises_interrupt_for_repl_loop_to_close
     assert_raises(Interrupt) { @cli.send(:on_int) }
@@ -405,24 +421,6 @@ end
     end
 
     assert_equal "error: unknown command: /dmesg\n", out
-  end
-
-  # The footer counted `git diff HEAD`, every dirty file in a shared checkout,
-  # and a read-only preview printed "13 files changed".
-  def test_the_written_files_footer_counts_this_turns_writes_only
-    renderer = Object.new
-    renderer.define_singleton_method(:render) { |text, mode:| text }
-    cli = Master::CLI::Session.new(container: @container.merge(renderer:, root: Master::ROOT))
-    tracker = Master::Trace::WriteTracker.new
-
-    Master::Trace::WriteTracker.stub(:current, tracker) do
-      silent, = capture_io { cli.send(:print_changed_files_summary) }
-      tracker.record(__FILE__)
-      counted, = capture_io { cli.send(:print_changed_files_summary) }
-
-      assert_empty silent
-      assert_equal "1 file written\n", counted
-    end
   end
 
   def test_a_cancelled_turn_prints_nothing

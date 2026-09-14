@@ -107,9 +107,9 @@ class TestFeedbackLedger < Minitest::Test
     failures = learnings.opportunities.select { |row| row[:category] == :high_failure }
     assert_equal %w[dynamic_http web_fetch], failures.map { |row| row[:dimension] }.sort
     status = Master::CLI::CommandRegistry.render_status_lines(
-      { ahead_behind: [0, 0], svc: {}, evts: [], failures: [], rsi: learnings.opportunities },
+      { ahead_behind: [0, 0], svc: {}, failures: [], rsi: learnings.opportunities },
     )
-    assert_includes status, "rsi     high_failure web_fetch 100% of 3"
+    assert_includes status, "learn0: web_fetch failed 100% of 3 calls"
   ensure
     learnings&.close
     FileUtils.remove_entry(root) if root && Dir.exist?(root)

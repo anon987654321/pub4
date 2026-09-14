@@ -22,7 +22,7 @@ module Master
           $stderr.sync = true if $stderr.respond_to?(:sync=)
         end
 
-        def emit(msg, unit: "scan")
+        def emit(msg, unit: "scan0")
           ensure_sync!
           text = msg.to_s.gsub(/\s+/, " ").strip
           Master::Trace::Dmesg.status(unit, text)
@@ -30,10 +30,7 @@ module Master
         end
 
         def banner(target:, profile:, dry_run:, autofix:)
-          emit(
-            "begin target=#{target.inspect} profile=#{profile || "full"} " \
-            "dry_run=#{dry_run ? "yes" : "no"} autofix=#{autofix ? "yes" : "no"}",
-          )
+          emit("#{target}, #{profile || "full"} profile#{", dry run" if dry_run}, autofix #{autofix ? "on" : "off"}")
         end
 
         def snapshot!(text, root:, note: nil, announce: true)
@@ -47,7 +44,7 @@ module Master
           FileUtils.mkdir_p(File.dirname(path))
           write_atomic(path, body)
           write_atomic(TMP_SNAPSHOT, body)
-          emit("snapshot path=#{path} also=#{TMP_SNAPSHOT}") if announce
+          emit("snapshot in #{path} and #{TMP_SNAPSHOT}") if announce
           path
         rescue StandardError => e
           Master::Ground::Swallow.log(e, context: "Scan::Live.snapshot!")
@@ -69,9 +66,9 @@ module Master
           previous = Signal.trap(sig) do
             dump = holder[:text].to_s
             if dump.empty?
-              emit("interrupted — no partial report yet", unit: "scan")
+              emit("interrupted, no partial report yet")
             else
-              emit("interrupted — writing partial snapshot", unit: "scan")
+              emit("interrupted, writing partial snapshot")
               snapshot!(dump, root: holder[:root], note: "partial after #{sig}")
               $stdout.puts dump
               $stdout.flush

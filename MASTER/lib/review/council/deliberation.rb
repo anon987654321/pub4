@@ -363,7 +363,7 @@ module Master
           )
           unless limited
             Master::Trace::Dmesg.status(
-              "council0", "persona_error persona=#{persona.name} #{error.class}: #{error.message}"
+              "council0", "#{persona.name}: #{error.class}: #{error.message}"
             )
           end
           @persona_failures_lock.synchronize { @persona_failures << failure_reason(error.message) }

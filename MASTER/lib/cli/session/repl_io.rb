@@ -123,9 +123,9 @@ module Master
         lines = Master::CLI::CommandRegistry.dispatch_tree(@refs.root).to_s.split("\n")
         return if lines.empty?
 
-        puts
-        puts @refs.renderer.render("tree0: #{File.basename(@refs.root)}, #{lines.size} entries", mode: :dim)
-        lines.each { |l| puts @refs.renderer.render(l, mode: :dim) }
+        # One line, as a disk attaches: the entries are `/tree` away, and two
+        # hundred of them buried the prompt on a first boot.
+        puts @refs.renderer.render("tree0 at master0: #{File.basename(@refs.root)}, #{lines.size} entries", mode: :dim)
         mark_booted
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.print_repo_tree", event_bus: @refs.bus)

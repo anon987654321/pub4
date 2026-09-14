@@ -41,20 +41,14 @@ module Master
         end
 
         # Compact one-screen summary for checkpoints / interrupt dumps / pass1.
+        # One dmesg line: "12 violations; top LONG_LINE 5, DEAD_CODE 2".
         def brief
-          if total.zero?
-            parts = ["#{prefix}#{header}clean -- no violations#{suffix}"]
-            parts << autofix_line if autofix_line
-            parts << delta_line if delta_line
-            return parts.compact.join(" | ")
-          end
-
-          top = ranked.first(8).map { |rule, vs| "#{rule}=#{vs.size}" }.join(" ")
-          parts = ["#{prefix}#{header}#{total} violations"]
+          top = ranked.first(8).map { |rule, vs| "#{rule} #{vs.size}" }.join(", ")
+          parts = [total.zero? ? "#{prefix}#{header}clean#{suffix}" : "#{prefix}#{header}#{total} violations"]
           parts << "top #{top}" unless top.empty?
-          parts << autofix_line if autofix_line
-          parts << delta_line if delta_line
-          parts.compact.join(" | ")
+          parts << autofix_line
+          parts << delta_line
+          parts.compact.join("; ")
         end
 
         def total_count

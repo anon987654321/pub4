@@ -163,7 +163,7 @@ module Master
 
         def dmesg_boot(resolved, posture, apply, critique, aesthetic)
           stages = [("aesthetic" if aesthetic && run?("scan")), ("scan" if run?("scan")), ("critique" if critique && run?("critique")), ("map" if run?("map"))].compact.join(", ")
-          Master::Trace::Dmesg.attach(@unit, "mainbus0",
+          Master::Trace::Dmesg.attach(@unit, "master0",
             "#{resolved}, #{apply ? "writes" : "read-only"}, #{posture[:name]}, #{stages}")
         end
 
@@ -183,7 +183,7 @@ module Master
           Master::Trace::Dmesg.status(unit, "#{elapsed}s") if elapsed >= 1
           out
         rescue StandardError => e
-          Master::Trace::Dmesg.status(unit, "error #{e.class}: #{e.message}")
+          Master::Trace::Dmesg.status(unit, "#{e.class}: #{e.message}")
           raise
         end
 
@@ -282,7 +282,7 @@ def default_apply?(*) = false
         def run_fix(abs)
           result = @fix_loop.run(abs)
           msg = result.ok? ? result.value!.to_s : "fix: #{result.message}"
-          Master::Trace::Dmesg.status("fix0", result.ok? ? "ok #{msg[0, 80]}" : "fail #{result.message}")
+          Master::Trace::Dmesg.status("fix0", result.ok? ? msg[0, 80] : "failed: #{result.message}")
           msg
         rescue StandardError => e
           stage_failure("fix", "fix0", e)
@@ -295,7 +295,7 @@ def default_apply?(*) = false
           raise error if DEFECT_ERRORS.any? { |klass| error.is_a?(klass) }
 
           @failed_stages << label
-          Master::Trace::Dmesg.status(unit, "error #{error.class}: #{error.message}")
+          Master::Trace::Dmesg.status(unit, "#{error.class}: #{error.message}")
           "#{label} failed: #{error.class}: #{error.message}"
         end
 
@@ -306,7 +306,7 @@ def default_apply?(*) = false
             Master::Trace::Dmesg.status("fix0", "preview, #{v[:total]} findings")
             "preview total=#{v[:total]} top_rules=#{v[:rules].inspect} top_files=#{v[:files].inspect}"
           else
-            Master::Trace::Dmesg.status("fix0", "preview fail #{result.message}")
+            Master::Trace::Dmesg.status("fix0", "preview failed: #{result.message}")
             "preview: #{result.message}"
           end
         rescue StandardError => e

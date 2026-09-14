@@ -8,54 +8,49 @@ module Master
     module CommandRegistry
       module_function
 
-      # /status — one-frame health panel. Replaces seven probing tool calls.
+      # /status — one frame of health, as dmesg lines. What is fine or does not
+      # apply on this host says nothing: no "rcctl absent" on a Mac, no bundle row
+      # when the bundle is satisfied, no raw bus events.
       def dispatch_status(root:, fix_loop:, bus:, git: Io::GitOperations.new(File.expand_path("..", root)), trace: nil,
                           learnings: nil, ctx: nil)
-        gather_status_data(root:, fix_loop:, git:, trace:)
+        gather_status_data(root:, fix_loop:, git:)
           .merge(rsi: rsi_opportunities(learnings))
           .then { |data| render_status_lines(data) }.join("\n")
       rescue StandardError => e
-        "status: #{e.message}"
+        "status0: #{e.message}"
       end
 
-      def gather_status_data(root:, fix_loop:, git:, trace:)
-        stage_rec = last_event(root, "pipeline:stage_complete")
-        verdict_rec = last_event(root, "review:verdict")
+      def gather_status_data(root:, fix_loop:, git:)
         {
-          ahead_behind: git.ahead_behind,
-          head: git.head || "?",
-          dirty: git.dirty?("."),
+          ahead_behind: git.ahead_behind, head: git.head || "?", dirty: git.dirty?("."), branch: git.branch || "?",
           svc: service_status,
           bg: fix_loop&.background_alive? ? "running" : "stopped",
           af: ENV["MASTER_AUTOFIX"] == "1" ? "on" : "off",
           bndl: bundle_status(File.expand_path("..", root)),
-          evts: recent_events(root, 5),
           failures: failure_events(root, 3),
-          branch: git.branch || "?",
-          turn_hint: trace&.last_turn ? "turn=#{trace.last_turn[:id]}" : "turn=none",
-          stage_name: stage_rec&.dig("payload", "stage") || "none",
-          verdict_line: format_verdict(verdict_rec),
+          stage: last_event(root, "pipeline:stage_complete")&.dig("payload", "stage"),
+          verdict: format_verdict(last_event(root, "review:verdict")),
           config: (Master::Ground::Config.new(root) rescue {}),
         }
       end
 
       def render_status_lines(d)
+        lines = ["master0: #{Master::CLI::RuntimeMode.summary(config: d[:config])}", git_line(d)]
+        lines << "service0: master #{d[:svc][:state]}" if d.dig(:svc, :state)
+        lines << "fix0: background #{d[:bg]}, autofix #{d[:af]}" if d[:bg]
+        lines << "review0: last stage #{d[:stage]}#{d[:verdict]}" if d[:stage]
+        lines << "bundle0: #{d[:bndl]}" if d[:bndl]
+        Array(d[:failures]).each { |e| lines << "trace0: #{e}" }
+        Array(d[:rsi]).each { |row| lines << "learn0: #{format_opportunity(row)}" }
+        lines.compact
+      end
+
+      def git_line(d)
         ahead, behind = d[:ahead_behind]
-        lines = [
-          "status",
-          "mode    #{Master::CLI::RuntimeMode.summary(config: d[:config])}",
-          "service master/#{d[:svc][:state]} #{d[:svc][:detail]}",
-          "git     #{d[:branch]}@#{d[:head]} ahead=#{ahead} behind=#{behind} #{d[:dirty] ? "dirty" : "clean"}",
-          "fix     bg=#{d[:bg]} autofix=#{d[:af]}",
-          "bundle  #{d[:bndl]}",
-          "trace   #{d[:turn_hint]}",
-          "pipeline last=#{d[:stage_name]} #{d[:verdict_line]}",
-          "events  (last #{d[:evts].size})",
-        ]
-        d[:evts].each { |e| lines << "  #{e[:ago]} #{e[:event]} #{e[:summary]}" }
-        d[:failures].each { |e| lines << "  !#{e[:ago]} #{e[:event]} #{e[:summary]}" }
-        Array(d[:rsi]).each { |row| lines << "rsi     #{format_opportunity(row)}" }
-        lines
+        counts = [("#{ahead} ahead" if ahead.to_i.positive?), ("#{behind} behind" if behind.to_i.positive?)]
+        return unless d[:branch]
+
+        ["git0: #{d[:branch]} at #{d[:head]}", *counts.compact, d[:dirty] ? "dirty" : "clean"].join(", ")
       end
 
       # The feedback ledger's reading of the last week: a tool failing a fifth
@@ -68,9 +63,10 @@ module Master
       end
 
       def format_opportunity(row)
-        return "#{row[:category]} #{row[:dimension]} x#{row[:count]}" unless row[:fail_rate]
+        kind = row[:category].to_s.tr("_", " ")
+        return "#{row[:dimension]}, #{row[:count]} #{kind}" unless row[:fail_rate]
 
-        "#{row[:category]} #{row[:dimension]} #{(row[:fail_rate] * 100).round}% of #{row[:total]}"
+        "#{row[:dimension]} failed #{(row[:fail_rate] * 100).round}% of #{row[:total]} calls"
       end
 
       def last_event(root, pattern)
@@ -81,36 +77,31 @@ module Master
       end
 
       def format_verdict(rec)
-        return "" unless rec
-
-        pay = rec["payload"]
+        pay = rec && rec["payload"]
         return "" unless pay.is_a?(Hash)
 
-        pass = pay["pass"] ? "pass" : "fail"
-        score = pay["score"]
-        score ? "review=#{pass} score=#{score}" : "review=#{pass}"
+        ", review #{pay["pass"] ? "pass" : "fail"}#{", score #{pay["score"]}" if pay["score"]}"
       end
 
+      # Only a host with rcctl has a master service to report.
       def service_status
-        out, _, st = Master::Io::Exec.capture3("/usr/sbin/rcctl", "check", "master")
-        { state: st.success? ? "ok" : "down", detail: out.strip }
+        _, _, st = Master::Io::Exec.capture3("/usr/sbin/rcctl", "check", "master")
+        { state: st.success? ? "ok" : "down" }
       rescue Errno::ENOENT
-        { state: "n/a", detail: "rcctl absent — not OpenBSD" }
+        {}
       rescue StandardError => e
-        { state: "?", detail: "rcctl err: #{e.class}: #{e.message[0, 60]}" }
+        { state: "unknown, #{e.class}" }
       end
 
-      def bundle_ok?(dir)
-        out, = Master::Io::Exec.capture2e("bundle34", "check", chdir: dir)
-        out.match?(/dependencies.*satisfied/)
-      end
-
+      # Silent when satisfied, and where bundle34 does not exist.
       def bundle_status(repo)
-        mas_ok = bundle_ok?(File.join(repo, "MASTER"))
-        web_ok = bundle_ok?(File.join(repo, "MASTER/web"))
-        mas_ok && web_ok ? "ok (MASTER+web satisfied)" : "drift — run bundle install"
-      rescue StandardError => e
-        "unknown (#{e.class})"
+        drift = %w[MASTER MASTER/web].reject do |dir|
+          out, = Master::Io::Exec.capture2e("bundle34", "check", chdir: File.join(repo, dir))
+          out.match?(/dependencies.*satisfied/)
+        end
+        "#{drift.join(", ")} drift, run bundle install" unless drift.empty?
+      rescue Errno::ENOENT
+        nil
       end
 
       def format_ago(secs)
@@ -119,27 +110,16 @@ module Master
         secs < 3600 ? "#{secs / 60}m" : "#{secs / 3600}h"
       end
 
-      def event_summary(rec, key_count)
-        pay = rec["payload"]
-        sum = pay.is_a?(Hash) ? pay.first(key_count).map { |k, v| "#{k}=#{v.to_s.tr('"', "")[0, 24]}" }.join(" ") : pay.to_s
-        now = Time.now.utc
-        ts = (Time.parse(rec["timestamp"]) rescue now)
-        { ago: format_ago((now - ts).to_i.abs).rjust(4), event: rec["event"].to_s, summary: sum[0, 80] }
-      end
-
+      # "tool:failed 4m ago: timeout", the event and what it said.
       def failure_events(root, n)
         records = Trace::Log::Event.new(root:).recent(40)
-        records = records.select { |rec| rec["event"].to_s.match?(Trace::ReplayReader::FAILURE_PATTERN) }
-        records.last(n).map { |rec| event_summary(rec, 2) }
+        records.select { |rec| rec["event"].to_s.match?(Trace::ReplayReader::FAILURE_PATTERN) }.last(n).map do |rec|
+          said = rec["payload"].is_a?(Hash) ? rec["payload"].values_at("error", "message").compact.first : nil
+          ago = format_ago((Time.now.utc - (Time.parse(rec["timestamp"]) rescue Time.now.utc)).to_i.abs)
+          "#{rec["event"]} #{ago} ago#{": #{said.to_s[0, 80]}" if said}"
+        end
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "CommandRegistry.failure_events")
-        []
-      end
-
-      def recent_events(root, n)
-        Trace::Log::Event.new(root:).recent(n).map { |rec| event_summary(rec, 3) }.compact
-      rescue StandardError => e
-        Master::Ground::Swallow.log(e, context: "CommandRegistry.recent_events")
         []
       end
     end

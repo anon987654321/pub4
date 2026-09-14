@@ -51,8 +51,11 @@ module Master
           validate_depth!(depth)
           paths = Dir.glob(File.join(dir, glob)).select { |path| scannable_path?(path, dir) }
           reset_scan_progress(paths.size) if stream
-          pairs = parallel_map(paths) do |path, idx|
-            scan_one(dir:, path:, depth:, stream:, index: idx, autofix:, autofix_root:, rules:)
+          unit = stream ? @scan_progress[:unit] : Fiber[:master_unit]
+          pairs = Master::Trace::Dmesg.under(unit) do
+            parallel_map(paths) do |path, idx|
+              scan_one(dir:, path:, depth:, stream:, index: idx, autofix:, autofix_root:, rules:)
+            end
           end
           pairs.concat(cross_file_pairs(dir, paths))
           Result.ok(prune_violation_objects(pairs))

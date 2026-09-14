@@ -9,6 +9,9 @@ module Master
       def initialize(ring_buffer:, event_bus:)
         @buffer = ring_buffer
         @bus = event_bus
+        @console = Dmesg::Console.new
+        @listeners = []
+        @mutex = Mutex.new
         wire_events
       end
 
@@ -16,10 +19,26 @@ module Master
         @buffer.to_a.last(lines).join("\n")
       end
 
+      # The terminal hears the same lines the ring holds, numbered once: two
+      # consoles on one bus would call the same disk sd0 and sd3.
+      def listen(&block)
+        @mutex.synchronize { @listeners << block }
+        -> { @mutex.synchronize { @listeners.delete(block) } }
+      end
+
       private
 
       def wire_events
-        @bus.subscribe("**") { |payload| @buffer.push(format_entry(payload)) }
+        @bus.subscribe("**") { |payload| record(payload) }
+      end
+
+      def record(payload)
+        units = @mutex.synchronize { @console.lines(payload) }.map { |line| Master::Ground::Redactor.text(line) }
+        return @buffer.push(format_entry(payload)) if units.empty?
+
+        units.each { |line| @buffer.push(line) }
+        listeners = @mutex.synchronize { @listeners.dup }
+        units.each { |line| listeners.each { |listener| listener.call(line) } }
       end
 
       def format_entry(payload)

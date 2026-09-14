@@ -18,8 +18,8 @@ module Master
             if runnable.empty? && rule_violations.any?
               Master::Trace::Dmesg.status(
                 "fix0",
-                "runnable_empty violation_rule_ids=#{rule_violations.keys.first(5).join(" ")} " \
-                "registered_rule_ids=#{ordered.map { |r| r.id.to_s }.first(5).join(" ")}",
+                "no registered rule fixes #{rule_violations.keys.first(5).join(", ")}; " \
+                "registered: #{ordered.map { |r| r.id.to_s }.first(5).join(", ")}",
               )
             end
             fixed = run_dependency_levels(runnable, files:, pass:, rule_violations:, deadline:)
@@ -59,8 +59,8 @@ module Master
           def report_skip_breakdown(breakdown, pass:)
             return if breakdown.empty?
 
-            parts = breakdown.map { |status, count| "#{status}=#{count}" }.join(" ")
-            Master::Trace::Dmesg.status("fix0", "llm_skip_breakdown pass=#{pass} #{parts}")
+            parts = breakdown.map { |status, count| "#{count} #{status}" }.join(", ")
+            Master::Trace::Dmesg.status("fix0", "pass #{pass}, #{parts}")
             @bus&.publish("fix_loop:skip_breakdown", pass:, **breakdown.transform_keys(&:to_sym))
           end
 

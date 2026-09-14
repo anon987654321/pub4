@@ -103,6 +103,64 @@ class TestTraceSupport < Minitest::Test
     refute_includes lines[2], "0123456789abcdef0123456789abcdef"
   end
 
+  # The coding loop prints like the kernel: a parent attaches once, each effect
+  # is a numbered unit under it, and a failure reports its last line.
+  FOLD_EVENTS = [
+    { event: "fold:risk", risk: :low },
+    { event: "core:reason", why: "read the logger before describing it" },
+    { event: "core:turn", verb: :read, subject: "lib/trace/logging.rb", ok: true, detail: "a\nb\n" },
+    { event: "core:turn", verb: :exec, subject: "rake test", ok: false, detail: "run\n1 failure\n" },
+    { event: "core:turn", verb: :read, subject: "lib/trace/dmesg.rb", ok: true, detail: "c\n" },
+    { event: "core:turn", turn: 3, verb: :done, subject: "both described", ok: true, detail: "done" },
+    { event: "scan:pass", pass: "lexical" },
+  ].freeze
+
+  def test_console_renders_a_fold_turn_as_dmesg_units
+    console = Master::Trace::Dmesg::Console.new
+    lines = FOLD_EVENTS.flat_map { |payload| console.lines(payload) }
+
+    assert_equal [
+      "fold0 at master0: risk low",
+      "fold0: read the logger before describing it",
+      "read0 at fold0: lib/trace/logging.rb",
+      "read0: 4 bytes, 2 lines",
+      "exec0 at fold0: rake test",
+      "exec0: 1 failure",
+      "read1 at fold0: lib/trace/dmesg.rb",
+      "read1: 2 bytes, 1 line",
+      "fold0: done, 4 turns",
+    ], lines
+  end
+
+  def test_console_reports_a_failed_model_call_and_a_failed_tool
+    console = Master::Trace::Dmesg::Console.new
+    lines = [
+      { event: "llm:send", model: "nvidia/nemotron-3-super-120b-a12b:free" },
+      { event: "llm:provider_outcome", model: "nvidia/nemotron-3-super-120b-a12b:free", status: :provider_error,
+        error: "Upstream error from Nvidia: Service temporarily overloaded" },
+      { event: "tool:call", tool: "read_file", subject: "missing.rb" },
+      { event: "tool:return", tool: "read_file", ok: false, error: "no such file" },
+    ].flat_map { |payload| console.lines(payload) }
+
+    assert_equal [
+      "llm0 at master0: nvidia/nemotron-3-super-120b-a12b",
+      "llm0: provider_error, Upstream error from Nvidia: Service temporarily overloaded",
+      "io0 at master0: files and commands",
+      "read0 at io0: missing.rb",
+      "read0: no such file",
+    ], lines
+  end
+
+  # A scan's model calls and the fold's must not both read "at master0".
+  def test_a_model_call_attaches_to_the_work_that_asked_for_it
+    console = Master::Trace::Dmesg::Console.new
+    inside = Master::Trace::Dmesg.under("scan0") { Thread.new { console.lines(event: "llm:send", model: "m") }.value }
+    outside = console.lines(event: "llm:send", model: "m")
+
+    assert_equal ["llm0 at scan0: m"], inside
+    assert_equal ["llm1 at master0: m"], outside
+  end
+
   def test_triggers_isolate_a_failing_handler
     bus = Bus.new
     triggers = Master::Trace::Triggers.new(event_bus: bus).install_defaults!

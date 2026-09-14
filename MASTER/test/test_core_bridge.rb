@@ -90,6 +90,29 @@ class CoreBridgeTest < Minitest::Test
     assert_equal "core: no goal", Master::CLI::CoreBridge.run_string("   ", root: Dir.pwd)
   end
 
+  # The fold asked RubyLLM directly, so MASTER_MODEL and the failover hop never
+  # reached it: forced to a local model, a turn still went to OpenRouter.
+  class RecordingAgent
+    attr_reader :calls
+    def initialize = @calls = []
+
+    def ask_once(prompt, system:, law:)
+      @calls << { prompt:, system:, law: }
+      '{"verb": "note", "args": {"kind": "probe", "text": "asked"}}'
+    end
+  end
+
+  def test_the_fold_asks_through_the_agent_dispatcher
+    Dir.mktmpdir do |root|
+      agent = RecordingAgent.new
+      Master::CLI::CoreBridge.run("goal", root:, container: { agent: }, max_turns: 1)
+
+      refute_empty agent.calls
+      assert_equal Master::Core::Model::SYSTEM, agent.calls.first[:system]
+      refute agent.calls.first[:law], "Core::Model's prompt is the whole contract"
+    end
+  end
+
   def test_on_turn_callback_fires_per_turn
     Dir.mktmpdir do |root|
       lines = []

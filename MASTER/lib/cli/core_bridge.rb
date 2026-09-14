@@ -19,9 +19,46 @@ module Master
         critique_runner = container ? CouncilCrit.runner_for(container) : nil
         world = Master::Core::World.new(root:, critique_runner:, undo: container&.fetch(:undo, nil))
 
-        done = build_fold(model:, model_id:, memory:, world:, max_turns:, observer:).run(goal)
+        model ||= Master::Core::Model.new(**{ model_id:, chat: agent_chat(container, bus:) }.compact)
+        done = build_fold(model:, memory:, world:, max_turns:, observer:).run(goal)
 
         { reason: done.reason, turns: done.turns, summary: done.summary, transcript:, risk: memory.proof.risk }
+      end
+
+      # Core::Model speaks RubyLLM's chat shape and, left alone, calls RubyLLM
+      # itself. The agent's dispatcher is the door every other call passes:
+      # MASTER_MODEL, ollama, the circuit breaker, the failover hop and the cost
+      # ledger all live there, and a fold that went round it had none of them —
+      # forced to a local model, it still asked OpenRouter and died on a 503.
+      #
+      # The reply's `why` is the model's reason for the effect, and the bus
+      # carries it to the operator before the effect runs.
+      AgentChat = Struct.new(:agent, :bus, :system) do
+        def with_instructions(text) = AgentChat.new(agent, bus, text)
+
+        def ask(prompt)
+          reply = agent.ask_once(prompt, system:, law: false)
+          why = CoreBridge.reason_in(reply)
+          bus&.publish("core:reason", why:) if why
+          Reply.new(reply)
+        end
+      end
+      Reply = Struct.new(:content)
+
+      # Read the way Core::Model.parse reads the object: first brace to last.
+      def reason_in(reply)
+        json = reply.to_s.gsub(/```[a-z]*/i, "")[/\{.*\}/m]
+        why = json && JSON.parse(json)["why"].to_s.strip
+        why unless why.to_s.empty?
+      rescue JSON::ParserError, TypeError => e
+        # No reason is a reply without one, not a failed turn: Model.parse
+        # reports the malformed object itself.
+        Master::Ground::Swallow.log(e, context: "CoreBridge.reason_in")
+      end
+
+      def agent_chat(container, bus:)
+        agent = container && container[:agent]
+        AgentChat.new(agent, bus) if agent.respond_to?(:ask_once)
       end
 
       # The Fold writes through World rather than the Io tools, so the turn's
@@ -33,14 +70,26 @@ module Master
           if effect.verb == :write && observation.ok?
             Master::Trace::WriteTracker.current&.record(File.expand_path(effect.args[:path].to_s, root))
           end
-          bus&.publish("core:turn", turn:, effect: effect.to_s, ok: observation.ok?, detail: observation.message)
+          bus&.publish("core:turn", turn:, effect: effect.to_s, verb: effect.verb, subject: effect_subject(effect),
+                                    ok: observation.ok?, detail: observation.message)
           on_turn&.call(line)
         end
       end
 
-      def build_fold(model:, model_id:, memory:, world:, max_turns:, observer:)
+      # The part of an effect a person names it by: the file, the command, the
+      # question. Written content stays out; it is the payload.
+      def effect_subject(effect)
+        args = effect.args
+        case effect.verb
+        when :exec then Array(args[:argv]).join(" ")
+        when :git then [args[:operation], *Array(args[:paths])].join(" ")
+        else (args[:path] || args[:prompt] || args[:text] || args[:summary] || args[:scope]).to_s
+        end
+      end
+
+      def build_fold(model:, memory:, world:, max_turns:, observer:)
         Master::Core::Fold.new(
-          model:       model || Master::Core::Model.new(**{ model_id: }.compact),
+          model:,
           constitution: Master::Core::Constitution.load(data_dir: Master.data_path, verify: scan_verifier,
                                                         sandbox: shell_sandbox),
           world:,
