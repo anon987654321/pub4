@@ -10,6 +10,11 @@
   <% end %>
 </header>
 <%= tag.h2 t("users.recent_items") %>
+<% if @items.empty? && Current.user == @user %>
+  <%= render "shared/empty_state", title: t("empty.no_items"), action: { label: t("home.first_item"), path: new_item_path } %>
+<% elsif @items.empty? %>
+  <%= render "shared/empty_state", title: t("empty.no_items"), action: { label: t("home.browse_demo"), path: demo_wardrobe_path } %>
+<% end %>
 <div class="item-grid">
   <% @items.each do |item| %>
     <%= link_to item_path(item) do %>
@@ -23,4 +28,10 @@
   <% end %>
 </div>
 <%= tag.h2 t("users.posts") %>
-<%= render @posts %>
+<% if @posts.any? %>
+  <%= render @posts %>
+<% else %>
+  <%= render "shared/empty_state",
+        title: t("empty.no_posts_yet"),
+        action: { label: t("empty.first_post"), path: new_post_path } %>
+<% end %>
