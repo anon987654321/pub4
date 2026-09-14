@@ -16,7 +16,7 @@
 .item-card--luxury .item-photo {
   width: 100%;
   aspect-ratio: 4 / 5; /* better for clothing than square */
-  object-fit: cover;
+  object-fit: contain;
   background: var(--luxury-bg);
 }
 

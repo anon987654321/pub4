@@ -110,10 +110,11 @@ animation: wardrobe_showcase_drift 46s var(--ease-linear) infinite;
   background: color-mix(in srgb, var(--text) 4%, var(--surface));
 }
 
+/* contain: a slide shows the whole garment, not the middle of it. */
 .wardrobe_slide_image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 /* No photo: the garment's own colour, with its initial over it. A grey box
