@@ -51,7 +51,7 @@ class TestLawBridgeRule < Minitest::Test
   # A stylesheet's block comment is prose on every line it spans, not only the
   # one that opens it; the declaration after it is still read.
   def test_a_stylesheet_block_comment_is_read_as_prose_to_its_end
-    css = "/* the bar sat\n   (measured at left: 0) here */\n.bar { left: 0; }\n"
+    css = "/* the bar sat\n   (measured at margin-left: 0) here */\n.bar { margin-left: 0; }\n"
     lines = rule.check(css, path: "app/bar.scss").select { |f| f.message.include?("LOGICAL_PROPERTIES") }.map(&:line)
     assert_equal [3], lines
   end

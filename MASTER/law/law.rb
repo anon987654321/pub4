@@ -212,12 +212,17 @@ module Law
     # rule already refused the opening line; there was no way for it to refuse
     # the rest.
     #
-    # ERB, and a stylesheet's /* */: LOGICAL_PROPERTIES read "(measured at
-    # left: 0)" on the second line of a block comment in _composer.scss as a
-    # declaration. JavaScript and <!-- --> stay on the leader test, because a
+    # ERB, and a stylesheet's /* */, whose prose names declarations as often as
+    # an ERB comment names tags: _composer.scss explains a fix "(measured at
+    # left: 0)" on a comment's second line, and _shell.scss quotes `left: 50%`
+    # on another. JavaScript and <!-- --> stay on the leader test, because a
     # glob or a regex in a script can spell /* without opening anything, and a
     # span reader that is wrong is worse than a leader test that is narrow.
-    COMMENT_SPANS = { ".erb" => ["<%#", "%>"], ".css" => ["/*", "*/"], ".scss" => ["/*", "*/"] }.freeze
+    COMMENT_SPANS = {
+      ".erb" => ["<%#", "%" + ">"],
+      ".css" => ["/*", "*/"],
+      ".scss" => ["/*", "*/"],
+    }.freeze
 
     def continued_comment_lines(text, file)
       opener, closer = COMMENT_SPANS[File.extname(file)]
