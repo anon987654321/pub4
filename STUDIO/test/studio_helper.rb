@@ -24,6 +24,23 @@ require "timeout"
 module Studio
   ROOT = File.expand_path("..", __dir__)
 
+  # A synthetic photograph: noise summed across six octaves, so it holds detail at
+  # every scale the way a recorded frame does. Built here because the postpro
+  # suites that need it would otherwise each carry their own copy. Vips is named
+  # only inside the method, so suites that never call it — dilla's — never load it.
+  #
+  # The mean is set explicitly. gaussnoise defaults to 128, and six layers of that
+  # clip every pixel to white, which reads as a perfectly flat frame and passes
+  # any test that expects nothing.
+  def self.octave_scene(width, height = width, seed: 1)
+    random = Random.new(seed)
+    layers = (0..5).map do |octave|
+      noise = Vips::Image.gaussnoise(width, height, mean: 0, sigma: 40, seed: random.rand(1 << 30))
+      noise.gaussblur([0.5 * 2**octave, 0.4].max)
+    end
+    (layers.reduce(:+) / 3 + 128).cast(:uchar)
+  end
+
   # Running dilla rewrites tracked files.
   #
   # Not rendering — loading. `require`ing dilla.rb rewrites project/session.json

@@ -352,6 +352,7 @@ POSTPRO_USAGE = <<~TXT
     --from-repligen                   grade what repligen just wrote
     --rescue FILE [--output FILE]     diagnose a photograph, then apply the fix
     --measure FILE [--against AFTER]  read texture numbers, or how a grade moved them
+    --set DIR                         which frames repeat, and how far each sits from the set's exposure
     --vocab-check                     are the tables consistent?
     --capabilities                    what this build can do
     --list-presets | --list-stocks | --list-lenses
@@ -408,6 +409,34 @@ if ARGV.include?("--rescue")
   exit 0
 end
 
+# What a set of frames says about itself: which frames are one photograph taken
+# twice, and how far each frame's exposure sits from the set's own median. Both
+# are readings, and the set is left as it was — moving a frame toward the
+# median changes the graded look, which is the operator's decision.
+if ARGV.include?("--set")
+  require_relative "frame_set"
+  dir = ARGV[ARGV.index("--set") + 1]
+  unless dir && File.directory?(dir)
+    PostproBootstrap.dmesg("ERROR --set needs a directory of frames")
+    exit 1
+  end
+
+  paths = Postpro::FrameSet.frames(dir)
+  if paths.size < 2
+    PostproBootstrap.dmesg("set #{dir}: #{paths.size} frame, and a set needs two")
+    exit 0
+  end
+
+  Postpro::FrameSet.near_duplicates(paths).each do |pair|
+    PostproBootstrap.dmesg("set duplicate: #{File.basename(pair.first)} ~ #{File.basename(pair.second)} " \
+                           "(#{pair.distance}/64 bits differ)")
+  end
+  Postpro::FrameSet.exposure_offsets(paths).each do |path, stops|
+    PostproBootstrap.dmesg(format("set exposure: %+.2f stops  %s", stops, File.basename(path)))
+  end
+  exit 0
+end
+
 if ARGV.include?("--measure")
   require_relative "uncanny"
   subject = ARGV[ARGV.index("--measure") + 1]
@@ -419,6 +448,9 @@ if ARGV.include?("--measure")
   against = ARGV.include?("--against") ? ARGV[ARGV.index("--against") + 1] : nil
   if against.nil?
     PostproBootstrap.dmesg("measure #{File.basename(subject)}: #{Postpro::Uncanny.read(subject)}")
+    image = Vips::Image.new_from_file(subject, access: :random)
+    PostproBootstrap.dmesg(format("measure %s: finest_octave=%.2f squint=%.2f", File.basename(subject),
+                                  Postpro::Uncanny.finest_octave(image), Postpro::Uncanny.squint_image(image)))
   elsif !File.file?(against)
     PostproBootstrap.dmesg("ERROR --against #{against} is not a file")
     exit 1

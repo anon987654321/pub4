@@ -98,4 +98,44 @@ class TestUncanny < Minitest::Test
              "a metric that only reports improvement is not a metric")
     end
   end
+
+  # LEVELS_OF_SCALE on the two failures it exists for. The same scene recorded
+  # at full resolution holds detail in its finest octave; upscaled from half size
+  # it holds almost none, because interpolation adds pixels and not detail.
+  def test_an_upscaled_frame_has_lost_its_finest_octave
+    native = Studio.octave_scene(512)
+    upscaled = native.shrink(2, 2).resize(2.0, kernel: :linear).crop(0, 0, 512, 512)
+
+    assert_operator Postpro::Uncanny.finest_octave(native), :>, 1.5,
+                    "a frame at its own resolution carries detail in its finest octave"
+    assert_operator Postpro::Uncanny.finest_octave(upscaled), :<, 0.7,
+                    "interpolation adds pixels without adding detail"
+  end
+
+  def test_a_flat_frame_reads_zero_rather_than_dividing_by_it
+    flat = (Vips::Image.black(128, 128) + 128).cast(:uchar)
+    assert_equal 0.0, Postpro::Uncanny.finest_octave(flat)
+  end
+
+  # SQUINT_TEST against frames whose composition is not in doubt: a lit disc on a
+  # dark field is structure a squint cannot erase, and fine noise is exactly the
+  # detail a squint removes.
+  def lit_disc
+    size = 384
+    field = Vips::Image.black(size, size).draw_circle(230, size / 2, size / 2, size / 4, fill: true) + 10
+    (field + Vips::Image.gaussnoise(size, size, mean: 0, sigma: 6)).cast(:uchar)
+  end
+
+  def test_a_clear_subject_survives_the_squint_and_fine_detail_does_not
+    noise = (Vips::Image.gaussnoise(384, 384, mean: 0, sigma: 40) + 128).cast(:uchar)
+
+    assert_operator Postpro::Uncanny.squint_image(lit_disc), :>, 0.8,
+                    "a lit disc on a dark field is structure a squint cannot erase"
+    assert_operator Postpro::Uncanny.squint_image(noise), :<, 0.1,
+                    "noise is detail, and detail is exactly what a squint removes"
+  end
+
+  def test_a_flat_frame_squints_to_zero_rather_than_dividing_by_it
+    assert_equal 0.0, Postpro::Uncanny.squint_image((Vips::Image.black(64, 64) + 128).cast(:uchar))
+  end
 end

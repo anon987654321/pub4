@@ -17,6 +17,10 @@ require "vips"
 # the right direction for the right reasons. They are proxies and are named as
 # proxies.
 #
+# Two more readings sit beside the four, outside Reading because the grade calls
+# read_image and has no use for them: finest_octave and squint_image answer two
+# of the rules PHOTOGRAPHY.md refits to pictures, and print under --measure.
+#
 # The number to watch is not any single score. It is the DELTA across postpro:
 # if the grade is doing what §4 claims, texture rises and clipping falls, and if
 # it is not, that shows up here rather than in an argument.
@@ -109,6 +113,56 @@ module Postpro
     # frequently clips, and a grade cannot recover what was never there.
     def self.clipping_percent(luma)
       ((luma >= CLIPPING_FLOOR).avg / 255.0) * 100.0
+    end
+
+    # The finest octave's energy against the next octave down.
+    #
+    # PHOTOGRAPHY.md's LEVELS_OF_SCALE: a photograph resolves at every distance,
+    # from the silhouette at a glance to the pores up close. A frame recorded at
+    # its own resolution carries detail in every octave, and the finest holds
+    # about twice the next, so this reads near 2. An upscaled frame holds almost
+    # nothing in its finest octave — interpolation adds pixels between the
+    # recorded ones without adding detail — and heavy denoise strips it, which is
+    # the picture that looks right as a thumbnail and wrong at full size.
+    #
+    # On cases whose answer is known, native detail reads 1.85 to 2.0, a median
+    # denoise 0.89 and a 2x upscale 0.49. Those cases are synthetic, and a real
+    # frame with a shallow depth of field reads lower than its sharpness deserves,
+    # so this is a reading for --measure rather than a rescue finding.
+    #
+    # Deliberately outside Reading: read_image runs inside every grade, and the
+    # grade has no use for a second pyramid level.
+    def self.finest_octave(image)
+      luma = image.bands >= 3 ? image.colourspace("b-w") : image
+      luma = luma.cast(:float) / 255.0
+      coarser = texture_energy(luma.shrink(2, 2))
+      return 0.0 if coarser.zero?
+
+      texture_energy(luma) / coarser
+    end
+
+    # Whether a frame's structure survives a squint.
+    #
+    # PHOTOGRAPHY.md's SQUINT_TEST, in its original photographic use: squint until
+    # detail disappears, and if the subject no longer separates from its
+    # surroundings, the composition depends on detail a viewer will not always have.
+    # The squint is a gaussian blur a fortieth of the long edge wide — a face in a
+    # portrait survives it as a light oval and its features do not — and the
+    # reading is the share of the frame's tonal deviation still present after it.
+    #
+    # On cases whose answer is known, a bright disc on a dark field keeps 0.94 and a
+    # field of uniform noise keeps 0.03. There is no measured line yet between a
+    # strong composition and a weak one, so this is a reading and not a verdict: a
+    # rule that cannot be checked is a principle, not a gate.
+    SQUINT_DIVISOR = 40.0
+
+    def self.squint_image(image)
+      luma = (image.bands >= 3 ? image.colourspace("b-w") : image).cast(:float)
+      whole = luma.deviate
+      return 0.0 if whole.zero?
+
+      sigma = [image.width, image.height].max / SQUINT_DIVISOR
+      luma.gaussblur(sigma).deviate / whole
     end
 
     # Before and after, with the direction each number should move if the grade

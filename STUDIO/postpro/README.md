@@ -225,6 +225,34 @@ it, so the next run differs and any run can be had again by setting
 `POSTPRO_SEED`. `uplift` still stacks two presets over every file in the folder,
 which asks a different and narrower question.
 
+### Reading a frame, and a set
+
+A grade answers one of the four ways a photograph fails, and `--measure` and
+`--rescue` exist to say which one is in front of it. Two more readings come
+from the rules `STUDIO/PHOTOGRAPHY.md` refits to pictures.
+
+The finest octave asks whether detail steps smoothly across scales. A frame at
+its own resolution holds about twice as much energy in its finest octave as in
+the next, so it reads near two; an upscaled frame reads under one, because
+interpolation adds pixels between the recorded ones without adding detail, and
+heavy denoise lands in between. It catches the picture that looks right as a
+thumbnail and wrong at full size. The squint blurs a frame until features go
+and masses stay, and reports how much tonal separation survives: a clear
+subject against its ground keeps most of it, and a frame whose only structure
+is fine detail keeps almost none. Both print under `--measure` beside the
+texture numbers. Neither diagnoses anything yet, because the lines between a
+good reading and a bad one were drawn on synthetic frames, and a real portrait
+with a shallow depth of field reads lower on the octave than its sharpness
+deserves.
+
+`--set DIR` reads a folder as one set. It names every pair of frames that are
+one photograph taken twice, matched on a difference hash that follows the
+arrangement of light and ignores exposure, compression and size, and it states
+each frame's exposure in stops from the set's median frame. It changes nothing.
+Moving a frame toward the median before grading is what makes a set read as a
+set rather than a pile, and it also changes the look, so that step stays with
+the operator.
+
 ### What this does not model
 
 It is not a spectral simulation. The published work that is — agx-emulsion and
@@ -329,6 +357,8 @@ ruby STUDIO/postpro/postpro.rb --random              # three to five chains, int
 ruby STUDIO/postpro/postpro.rb --random --rough      # the same, with the wear shelf in
 ruby STUDIO/postpro/postpro.rb --vocab-check         # are the tables consistent?
 ruby STUDIO/postpro/postpro.rb --fit-grain scan.tif  # what grain does this scan carry?
+ruby STUDIO/postpro/postpro.rb --measure photo.jpg   # texture, finest octave, squint
+ruby STUDIO/postpro/postpro.rb --set ~/Pictures/trip # repeats, and exposure spread in stops
 ruby STUDIO/postpro/postpro.rb --list-presets        # every preset and its chain
 ruby STUDIO/postpro/postpro.rb --list-stocks
 ruby STUDIO/postpro/postpro.rb --list-lenses
