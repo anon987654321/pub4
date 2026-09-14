@@ -129,7 +129,7 @@ module Deploy
       check_chrome_occlusion(surface, elements)
       check_contrast(surface, elements)
       check_token_conformance(surface, data)
-      check_placement(surface, data)
+      check_layout(surface, data)
       check_input_zoom(surface, elements)
       check_subpixel(surface, elements)
       check_edge_alignment(surface, elements)

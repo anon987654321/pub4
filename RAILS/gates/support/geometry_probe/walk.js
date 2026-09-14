@@ -140,6 +140,20 @@
     return lines;
   };
 
+  // The card a control sits in, with its position: two cards sharing a
+  // selector at two rects are a list, and a list item's size is the list's.
+  const CARD_SEL = 'article, .card, [class*="-card"], [class*="_card"]';
+  const cardOf = (el) => {
+    const card = el.parentElement?.closest(CARD_SEL);
+    if (!card) return null;
+    const cr = card.getBoundingClientRect();
+    return { sel: selFor(card), x: Math.round(cr.left), y: Math.round(cr.top),
+             w: Math.round(cr.width), h: Math.round(cr.height) };
+  };
+  // A search field by what it does rather than by class: a search input, a
+  // field inside a search landmark, or the conventional q parameter.
+  const SEARCH_SEL = 'input[type=search], [role=search] input, input[name=q]';
+
   const out = [];
   const colors = Object.create(null);
   const overflow = [];
@@ -262,6 +276,8 @@
       // Siblings are told apart by parent, and a key that starts at an id has
       // no parent step in it.
       parent: interactive && el.parentElement ? selFor(el.parentElement) : null,
+      card: interactive ? cardOf(el) : null,
+      search: el.tagName === 'INPUT' && el.matches(SEARCH_SEL),
       font_size: Math.round(parseFloat(cs.fontSize) * 10) / 10,
       font_weight: cs.fontWeight,
       line_height: cs.lineHeight === 'normal' ? null : Math.round(parseFloat(cs.lineHeight) * 10) / 10,
@@ -312,7 +328,8 @@
   // so this counts direct interactive children of each menu-ish container
   // rather than every link inside it.
   const groups = [];
-  document.querySelectorAll('nav, [role=navigation], [role=menu], [role=tablist], .tab-bar')
+  const GROUP_SEL = 'nav, [role=navigation], [role=menu], [role=tablist], .tab-bar';
+  document.querySelectorAll(GROUP_SEL)
     .forEach(container => {
       const cs = getComputedStyle(container);
       if (cs.display === 'none' || cs.visibility === 'hidden') return;
@@ -334,8 +351,16 @@
       const chunks = [...container.querySelectorAll('[role=group]')]
         .map(g => g.querySelectorAll('a[href], button, [role=tab], [role=menuitem]').length)
         .filter(n => n > 0);
+      // Where each choice goes, whether the bar is on the first screen, and
+      // whether it sits inside another bar — so two bars offering the same
+      // destinations can be told from one bar and its own tablist, and from
+      // a closed drawer repeating the tab bar.
+      const hrefs = [...new Set(choices.filter(k => k.href).map(k => k.pathname + k.search))].sort();
       groups.push({ sel: selFor(container), count: choices.length, chunks,
-                    scrollable: container.scrollWidth > container.clientWidth + 4 });
+                    scrollable: container.scrollWidth > container.clientWidth + 4,
+                    hrefs: hrefs.slice(0, 40),
+                    onscreen: r.right > 0 && r.left < vw && r.bottom > 0 && r.top < vh,
+                    nested: !!container.parentElement?.closest(GROUP_SEL) });
     });
 
   // Gestalt proximity, measured correctly: the space *between an element's

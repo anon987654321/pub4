@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "grammar_checks"
+
 module Deploy
   class RenderedGeometryGate
     # Placement and weight, not size: whether a control is anywhere a person
@@ -23,6 +25,10 @@ module Deploy
     # css_budget.yml path one directory deeper and silently ran that gate
     # unbudgeted.
     module PlacementChecks
+      # The layout grammar asks the same kind of question — is this part where
+      # and as often as it should be — so it runs from check_layout as well.
+      include GrammarChecks
+
       # Placement is about *the* primary action, not every control. CRITICAL is
       # deliberately broad — it matches any `btn` — which is right for "did this
       # control get occluded" and wrong here, where it would flag a secondary
@@ -46,7 +52,7 @@ module Deploy
       # corners. Only meaningful on a phone-sized viewport held in one hand.
       THUMB_ZONE_MAX_WIDTH = 480
 
-      def check_placement(surface, data)
+      def check_layout(surface, data)
         elements = Array(data["elements"])
         check_choice_overload(surface, data)
         check_proximity(surface, data)
@@ -54,6 +60,7 @@ module Deploy
         check_scan_path(surface, elements)
         check_dominance(surface, elements)
         check_action_weight(surface, elements)
+        check_grammar(surface, data)
       end
 
       # Hick's law: time to choose grows with the number of peer choices. The rule

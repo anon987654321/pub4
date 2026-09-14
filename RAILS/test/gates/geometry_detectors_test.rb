@@ -166,12 +166,91 @@ class GeometryDetectorsTest < Minitest::Test
     assert_match(/button\.btn over/, found.join)
   end
 
-  def test_placement_runs_both_weight_checks
+  def test_layout_runs_the_weight_and_grammar_checks
     elements = page(box("div.promo-banner", x: 0, y: 80, w: 390, h: 300, fill: "#ffffff"),
                     action("div.actions>button.btn.btn--primary", x: 16, w: 100, fill: "#333333"),
-                    action("div.actions>button.btn.btn-ghost", x: 132, w: 140, fill: "#ffffff"))
-    found = gate_findings { |gate| gate.check_placement(surface, { "elements" => elements }) }
+                    action("div.actions>button.btn.btn-ghost", x: 132, w: 140, fill: "#ffffff"),
+                    search_field("header>form>input"), search_field("main>form>input"))
+    found = gate_findings { |gate| gate.check_layout(surface, { "elements" => elements }) }
 
-    assert(%w[dominance action_weight].all? { |check| found.any? { |m| m.start_with?("geometry #{check}:") } }, found.inspect)
+    %w[dominance action_weight duplicate_search].each do |check|
+      assert found.any? { |m| m.start_with?("geometry #{check}:") }, "#{check} did not run: #{found.inspect}"
+    end
+  end
+
+  # --- layout grammar -------------------------------------------------------
+
+  def grammar(check, *args)
+    gate_findings { |gate| gate.public_send(check, surface, *args) }
+  end
+
+  def bar(sel, hrefs, onscreen: true, nested: false)
+    { "sel" => sel, "hrefs" => hrefs, "onscreen" => onscreen, "nested" => nested }
+  end
+
+  TABS = %w[/ /search /notifications /profile].freeze
+
+  def test_duplicate_nav_names_two_bars_offering_the_same_places
+    found = grammar(:check_duplicate_nav, { "groups" => [bar("nav.tab-bar", TABS), bar("nav.top", TABS + %w[/tv])] })
+
+    assert_match(/duplicate_nav: .*nav\.tab-bar and nav\.top/, found.join)
+  end
+
+  # A closed drawer repeats the tab bar by design, and a tablist inside a bar is the bar.
+  def test_duplicate_nav_spares_a_drawer_off_screen_and_a_bar_inside_a_bar
+    assert_empty grammar(:check_duplicate_nav, { "groups" => [bar("nav.tab-bar", TABS), bar("aside>nav", TABS, onscreen: false)] })
+    assert_empty grammar(:check_duplicate_nav, { "groups" => [bar("nav.tab-bar", TABS), bar("nav>div", TABS, nested: true)] })
+    assert_empty grammar(:check_duplicate_nav, { "groups" => [bar("nav.tab-bar", TABS), bar("nav.verticals", %w[/tv /dating /maps])] })
+  end
+
+  def search_field(key, input_type: "search")
+    { "key" => key, "tag" => "input", "input_type" => input_type, "search" => true, "visible" => true, "onscreen" => true }
+  end
+
+  def test_duplicate_search_names_two_search_fields
+    found = grammar(:check_duplicate_search, [search_field("header>form>input"), search_field("main>form>input")])
+
+    assert_match(/lays out 2 search fields — header>form>input; main>form>input/, found.join)
+  end
+
+  # A search form's own submit button is not a second field.
+  def test_duplicate_search_counts_fields_not_their_buttons
+    assert_empty grammar(:check_duplicate_search, [search_field("header>form>input"),
+                                                   search_field("header>form>input[2]", input_type: "submit")])
+  end
+
+  def block(sel, w) = { "sel" => sel, "x" => (390 - w) / 2, "w" => w }
+
+  def test_width_drift_names_a_section_a_few_pixels_off_the_column
+    found = grammar(:check_width_drift, { "main_blocks" => [block("section.feed", 600), block("section.composer", 600),
+                                                            block("section.trending", 584)] })
+
+    assert_match(/600px column and 1 block\(s\).*section\.trending 584px/, found.join)
+  end
+
+  # A form capped far inside the column is an inset somebody chose; one pixel is rounding.
+  def test_width_drift_spares_a_deliberate_inset_and_rounding
+    assert_empty grammar(:check_width_drift, { "main_blocks" => [block("section.feed", 600), block("section.a", 601),
+                                                                 block("form.narrow", 400)] })
+  end
+
+  def control_in(card, key, w:, h:)
+    { "key" => key, "tag" => "button", "interactive" => true, "visible" => true, "onscreen" => true,
+      "card" => card, "frect" => { "x" => 16, "y" => 600, "w" => w, "h" => h } }
+  end
+
+  def card(sel, y: 64, h: 600) = { "sel" => sel, "x" => 16, "y" => y, "w" => 358, "h" => h }
+
+  def test_lost_action_names_a_small_button_alone_in_a_screen_sized_card
+    found = grammar(:check_lost_action, [control_in(card("section.signup-card"), "div>button.btn", w: 44, h: 44)])
+
+    assert_match(/lost_action: .*section\.signup-card \(358x600\) holds div>button\.btn/, found.join)
+  end
+
+  def test_lost_action_spares_a_full_width_action_a_small_card_and_a_list
+    assert_empty grammar(:check_lost_action, [control_in(card("section.signup-card"), "div>button.btn", w: 326, h: 48)])
+    assert_empty grammar(:check_lost_action, [control_in(card("div.mini-card", h: 120), "div>button.btn", w: 44, h: 44)])
+    assert_empty grammar(:check_lost_action, [control_in(card("article.feed-card"), "footer>button", w: 44, h: 44),
+                                              control_in(card("article.feed-card", y: 700), "footer>button[2]", w: 44, h: 44)])
   end
 end

@@ -152,7 +152,7 @@ class FileLengthRatchetTest < Minitest::Test
 # browser computed it, the size, position, gap or spacing design_rules states.
 # The two things in here that were not that have already gone — colour to
 # token_checks.rb, placement to placement_checks.rb. The gate reaches every
-# placement check through check_placement, one call where four stood.
+# placement check through check_layout, one call where four stood.
 #
 # Both live under gates/support/rendered_geometry/, and token_checks.rb moved
 # there from gates/lib/ to join it: deploy_gates_contract_test asserts gates/lib/
