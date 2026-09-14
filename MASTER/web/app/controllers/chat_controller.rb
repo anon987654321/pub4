@@ -184,6 +184,10 @@ class ChatController < ApplicationController
       pair_token: cookies[:master_paired].to_s,
       conversation: conversation_id,
     ).call
+  # A disconnect ends the stream, not the turn: ChatService's writers rescue a dead
+  # socket and the turn runs on. A phone that locks or changes network drops the
+  # stream without meaning stop, and a turn that is writing is safer finished than
+  # cut at an arbitrary frame. A stop control on the face is the operator's.
   rescue IOError, ActionController::Live::ClientDisconnected
     nil
   ensure
