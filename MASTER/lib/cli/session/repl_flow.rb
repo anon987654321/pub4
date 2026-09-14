@@ -21,8 +21,7 @@ module Master
       # stuck on a full disk cannot hold the terminal.
       def repl_loop
         while @running
-          print prompt_for_mode
-          line = safe_read_line
+          line = safe_read_line(prompt_for_mode)
           if line.nil?
             puts
             break
@@ -53,14 +52,18 @@ module Master
         @refs.renderer.render("#{@refs.renderer.prompt_token} ", mode: :dim)
       end
 
-      # One zsh line, and above it a state line only when the state moved.
+      # One zsh line, and above it a state line only when the state moved. The
+      # state line prints here and the prompt goes to Reline, which redraws
+      # the prompt it owns; a prompt printed around it is erased by its
+      # cursor probe and leaves the probe glyph behind.
       def normal_prompt
         state, prompt = @refs.renderer.prompt_line(
           @refs.agent.model, @refs.session.phase,
           last_ok: @last_ok, violations: violations_count,
           tokens: @refs.session.token_est, cost: @refs.session.cost
         )
-        [(state if state_changed?), prompt].compact.join("\n")
+        puts state if state_changed?
+        prompt
       end
 
       # Context grows every turn, so it counts as movement only by the step —

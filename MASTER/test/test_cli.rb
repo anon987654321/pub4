@@ -424,6 +424,25 @@ end
     assert_empty out
   end
 
+  # A late cursor-position reply was saved as "[38;51Rh" and replayed each boot.
+  def test_terminal_replies_never_reach_the_transcript
+    Reline.stub(:readline, "[38;51Rhi\e[38;51R") do
+      Reline::IOGate.stub(:in_pasting?, false) do
+        assert_equal "hi", @cli.send(:safe_read_line, "% ")
+      end
+    end
+  end
+
+  def test_a_paste_arrives_as_one_message
+    lines = ["second", "third"]
+    Reline.stub(:readline, ->(*) { lines.shift || "first" }) do
+      Reline::IOGate.stub(:in_pasting?, -> { !lines.empty? }) do
+        lines.unshift("first")
+        assert_equal "first\nsecond\nthird", @cli.send(:safe_read_line, "% ")
+      end
+    end
+  end
+
   def test_an_empty_line_runs_nothing
     @cli.stub(:run_input, ->(*) { flunk "an empty line ran a turn" }) do
       assert_nil @cli.send(:handle_repl_line, "")

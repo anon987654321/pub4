@@ -14,10 +14,29 @@ module Master
         puts @refs.renderer.render("<< for multiline. anything else is a prompt.", mode: :dim) if arg.empty?
       end
 
-      def safe_read_line
-        Reline.readline("", true)&.chomp
+      # Reline asks the terminal where the cursor is, and a reply that arrives
+      # late lands in the input as text: "[38;51R" became a user message and
+      # replayed on every boot. A paste the terminal did not bracket arrives
+      # as lines already waiting, and those join the first rather than
+      # becoming prompts of their own.
+      TERMINAL_REPLY = /\e?\[?\d{1,4};\d{1,4}R|\e\[[\d;?]*[A-Za-z~]/
+
+      def safe_read_line(prompt = "")
+        line = Reline.readline(prompt, false)
+        return nil if line.nil?
+
+        line = [line, *pasted_lines].join("\n")
+        clean = line.gsub(TERMINAL_REPLY, "").chomp
+        Reline::HISTORY << clean unless clean.strip.empty?
+        clean
       rescue StandardError => e
         Master::Ground::Swallow.log(e, context: "cli.safe_read_line", event_bus: @refs.bus)
+      end
+
+      def pasted_lines
+        lines = []
+        lines << Reline.readline("", false).to_s while lines.size < MULTILINE_MAX_LINES && Reline::IOGate.in_pasting?
+        lines
       end
 
       def setup_completion
@@ -75,8 +94,7 @@ module Master
         lines = []
         puts @refs.renderer.render("enter lines, blank line to send", mode: :dim)
         loop do
-          print "  "
-          inner = safe_read_line
+          inner = safe_read_line("  ")
           break if inner.nil? || inner.strip.empty?
           lines << inner
           if lines.size >= MULTILINE_MAX_LINES
@@ -92,11 +110,10 @@ module Master
         return if tail.empty?
         puts @refs.renderer.render("resume0: replaying last #{tail.size} messages", mode: :dim)
         tail.each do |msg|
-          tag = msg[:role] == :user ? "you" : "master"
-          content = msg[:content].to_s
-          first_line = content.lines.first.to_s
-          snippet = first_line.strip[0, 100]
-          puts @refs.renderer.render("  #{tag}: #{snippet}", mode: :dim)
+          # A loaded transcript holds the role as a string.
+          tag = msg[:role].to_s == "user" ? "you" : "master"
+          snippet = msg[:content].to_s.gsub(TERMINAL_REPLY, "").lines.first.to_s.strip[0, 100]
+          puts @refs.renderer.render("  #{tag}: #{snippet}", mode: :dim) unless snippet.empty?
         end
         puts
       end
