@@ -443,6 +443,12 @@ end
     end
   end
 
+  def test_the_boot_scan_names_the_command_that_repairs_what_it_found
+    summary = Struct.new(:violation_count, :rule_count).new(1604, 148)
+
+    assert_equal "scan0: lib/ 1604 violations, 148 rules; /fix lib repairs them", @cli.send(:boot_scan_line, summary)
+  end
+
   def test_an_empty_line_runs_nothing
     @cli.stub(:run_input, ->(*) { flunk "an empty line ran a turn" }) do
       assert_nil @cli.send(:handle_repl_line, "")

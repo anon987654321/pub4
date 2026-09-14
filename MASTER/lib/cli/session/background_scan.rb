@@ -49,11 +49,20 @@ module Master
 
         summary = result.value!
         set_violations(summary.violation_count)
-        $stdout.puts "\n#{@refs.renderer.render(summary.line, mode: :dim)}"
-        $stdout.puts @refs.renderer.boot_wayfinding(constitution: true, agent: true, scan: :done)
+        $stdout.puts "\n#{@refs.renderer.render(boot_scan_line(summary), mode: :dim)}"
         $stdout.flush
       rescue StandardError => e
         @refs.bus&.publish("cli:warn", error: e.message)
+      end
+
+      # The count and the command that acts on it, in one line. "judge: lib/
+      # 148 rules, 1604 violations" invited "fix them", and a sentence reaches
+      # the read-only preview; /fix is the stage that writes.
+      def boot_scan_line(summary)
+        count = summary.violation_count
+        return "scan0: lib/ clean, #{summary.rule_count} rules" if count.zero?
+
+        "scan0: lib/ #{count} #{count == 1 ? 'violation' : 'violations'}, #{summary.rule_count} rules; /fix lib repairs them"
       end
 
       def run_self_scan
