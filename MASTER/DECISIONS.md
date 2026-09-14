@@ -1513,3 +1513,28 @@ switch that withholds it. /fix runs no suite, app gate or generic, on any
 tree: it verifies by re-scan, parse and rubocop. It does not refuse a dirty
 main either, and should not: incremental /fix targets exactly the dirty files,
 and the committer no longer takes a path it did not change.
+
+## Findings Carry No Hypothesis Status, And Taint Waits For A Planner (2026-09-14)
+
+A `Scan::Finding` gets no `status: hypothesis | measured` field. Every finding
+a detector emits is measured against the source it read, and the ones that
+guess already say so: `confidence` and `why` carry the doubt, and
+`Scanner#should_autofix?` reads confidence. A status nothing reads would be one
+more declared field with no reader, and `test_finding_metadata.rb` already
+holds the shape.
+
+JSON tool results do not pass through `Io::OutputFilter`. The filter compresses
+shell output by command, and its fallback keeps the head and tail of a long
+text, which cuts a JSON document into something that no longer parses. Each
+tool caps its own result instead: WebFetch at 16,000 bytes, DynamicHttp at
+32,000, SearchFiles at 200 matches, ReadFile at 2,000 lines.
+
+`Ground::Taint` is deleted, and no test claims a tainted WebFetch result cannot
+reach AstEdit. Nothing wrapped a tool result, and nothing could: a WebFetch
+result reaches the model as text, and AstEdit's arguments come back as JSON the
+model wrote, so no `Tainted` value ever reaches a privileged call. CaMeL-style
+tracking needs a planner that never reads untrusted text and an interpreter
+that carries the tags, and MASTER has neither. `InjectionGuard` on fetched
+content and the Governor on privileged tools are the defences that run.
+`Ground::ResearchThresholds` went too, since `CLI::BrainOverlay` was its only
+reader.
