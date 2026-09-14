@@ -115,7 +115,7 @@
 # and the eighteenth does not match the detector. rule_audit.silent rose to 40
 # in the same pass and for the same reason, which is the trade that row's own
 # comment describes.
-findings: 244
+findings: 242
 by_rule:
   BARE_DIV_WRAPPER: 2
   BLANK_LINE_RUN: 1
@@ -130,13 +130,13 @@ by_rule:
   NO_INLINE_SCRIPT_BLOCK: 15
   NO_INLINE_STYLES: 1
   NO_MULTIPLE_LANGUAGES: 23
-  NULLISH_COALESCING: 76
+  NULLISH_COALESCING: 75
   OPTIONAL_CHAINING: 2
   PROSE_ACTIVE_VOICE: 5
   PROSE_ACTIVE_VOICE_NB: 1
   PROSE_OMIT_QUALIFIERS: 19
   RUBY_NUMERIC_UNDERSCORE: 3
-  SQUINT_TEST: 4
+  SQUINT_TEST: 3
   USE_THEN: 6
   WHY_NOT_WHAT: 1
 finding_members:
@@ -326,7 +326,6 @@ finding_members:
   - NULLISH_COALESCING RAILS/brgen/app/javascript/controllers/swipe_controller.js:53
   - NULLISH_COALESCING RAILS/brgen/app/javascript/controllers/typing_input_controller.js:63
   - NULLISH_COALESCING RAILS/brgen/app/javascript/radio_brgen_tunnel.js:757
-  - NULLISH_COALESCING RAILS/brgen/app/javascript/reference/visualizers_2d_reference.js:448
   - NULLISH_COALESCING RAILS/brgen/engines/playlist/app/javascript/controllers/playlist_player_controller.js:185
   - NULLISH_COALESCING RAILS/brgen/engines/playlist/app/javascript/controllers/playlist_player_controller.js:192
   - NULLISH_COALESCING RAILS/brgen/engines/playlist/app/javascript/controllers/playlist_player_controller.js:237
@@ -375,7 +374,6 @@ finding_members:
   - RUBY_NUMERIC_UNDERSCORE OPENBSD/test/test_disk_usage.rb:9
   - SQUINT_TEST RAILS/brgen/app/assets/stylesheets/_vertical_shell.scss:1
   - SQUINT_TEST RAILS/brgen/app/assets/stylesheets/_widgets.scss:1
-  - SQUINT_TEST RAILS/brgen/app/javascript/reference/visualizers_2d_reference.js:1
   - SQUINT_TEST RAILS/shared/app/assets/stylesheets/_search_yep.scss:1
   - USE_THEN MASTER/web/script/browser_probe_support.rb:1
   - USE_THEN RAILS/brgen/test/controllers/paginated_index_test.rb:1

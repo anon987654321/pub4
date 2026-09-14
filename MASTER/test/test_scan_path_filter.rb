@@ -31,6 +31,25 @@ class TestScanPathFilter < Minitest::Test
     refute Scanner.skip_path?(File.join(PUBLIC, "visual_bridge.js"), root: Master::ROOT)
   end
 
+  # EXEMPTIONS_EXPIRE: an exemption outliving its subject excuses whatever next
+  # takes the name. Each entry must reach a tracked file, or be build output a
+  # .gitignore rule already names.
+  def test_every_path_exemption_names_something_that_exists
+    tracked = IO.popen(["git", "-C", Master::REPO_ROOT, "ls-files"], &:read).split("\n")
+    filter = Master::Review::Scan::PathFilter
+    entries = filter::SKIP_PATH_PREFIXES.map { |prefix| "#{prefix}/" } + filter::SKIP_PATH_FRAGMENTS
+    stale = entries.reject do |entry|
+      tracked.any? { |path| path.start_with?(entry) || path.include?("/#{entry}") } || ignored_output?(entry)
+    end
+    assert_empty stale, "path exemptions naming nothing in the tree"
+  end
+
+  def ignored_output?(entry)
+    probe = "RAILS/brgen/#{entry}probe"
+    system("git", "-C", Master::REPO_ROOT, "check-ignore", "-q", probe) ||
+      system("git", "-C", Master::REPO_ROOT, "check-ignore", "-q", "#{entry}probe")
+  end
+
   def test_a_path_outside_master_is_judged_by_its_own_root
     rails_file = File.join(Master::REPO_ROOT, "RAILS", "brgen", "app", "models", "post.rb")
     refute Scanner.skip_path?(rails_file, root: Master::REPO_ROOT)

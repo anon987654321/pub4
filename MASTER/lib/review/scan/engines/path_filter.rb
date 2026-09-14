@@ -65,21 +65,18 @@ module Master
         # `bin/rails css:build`. shared/reference holds the original CodePen
         # sources kept for provenance and shipped by nothing, and lightgallery
         # arrived minified from jsDelivr.
+        #
+        # Each entry names a path that is tracked or gitignored build output;
+        # test_scan_path_filter holds that, because an exemption whose subject is
+        # gone excuses whatever next takes its name.
         SKIP_PATH_PREFIXES = %w[
           RAILS/shared/reference
-          STUDIO/dilla/archive
         ].freeze
-        # `reference/` is the same claim SKIP_PATH_PREFIXES makes about
-        # RAILS/shared/reference, at the path brgen actually uses.
-        # visualizers_2d_reference.js opens with "Reference only. Not loaded,
-        # not imported, not compiled into anything" and already carries an
-        # opt-out marker for a second linter that read it as live.
         # public/assets/ is what Propshaft precompiles into, gitignored in every
         # app, and a finding there is a finding against a digest copy.
         SKIP_PATH_FRAGMENTS = %w[
           public/assets/
           app/assets/builds/
-          app/javascript/reference/
         ].freeze
 
         # Third-party assets checked in under public/ rather than vendor/, so the
