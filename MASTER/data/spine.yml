@@ -231,7 +231,12 @@ spine:
 # Boot built it into the CLI container and nothing ever called advance!,
 # meet_gate! or status; the seven phases it gated are Policy::Workflow::PHASES,
 # the copy the brain overlay reads.
-  lib_body_ceiling: 35558
+# 35558 -> 35196: Trace::Snapshot::Publisher, Collector and AgentGuide, 362 body
+# lines net of the skip list moving into CommandRegistry. Their route went with
+# the slash surface and nothing else called them; tools/snapshot.rb is the
+# writer bin/operator runs. The fall is exactly the deletion, so the row keeps
+# the overage it had.
+  lib_body_ceiling: 35196
   # Raw-line anchors from before the 2026-08-10 code-line unit change, kept only
   # so the old numbers stay legible. Not comparable to lib_body_ceiling.
   lib_raw_at_switch: 47753
@@ -606,7 +611,11 @@ pub4_source_ceilings:
 # socket — every case is refused before the request, which is the point. Deleting
 # the guard fails three of them.
   # 680 -> 675: five lib files nothing reached, named under lib_body_ceiling.
-  MASTER: 653
+  # 653 -> 646: the three Trace::Snapshot files, and the four ActionCable files
+  # (cable_bridge, MasterChannel, ApplicationCable channel and connection) that
+  # went when /events/stream became the face's one pipe. cable.yml leaves too
+  # and a drop migration arrives, which nets to zero.
+  MASTER: 646
 
   # 2359 -> 2360 for RAILS/gates/probes/face_capture_probe.rb, which gets the
   # MASTER face past its primer gate so it can be recorded. A probe, not a gate:
