@@ -892,8 +892,9 @@ body[data-mode="speaking"] #spin-btn { display: block; }
 
 @keyframes msgIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
 
-/* #35 User message right-align */
-.message.user { flex-direction:row-reverse; text-align:right; border:0; padding-inline-end:8px; padding-inline-start:0; }
+/* One column, ragged right (LAYOUT_RULES.alignment). The you$ and master$
+   prefixes already say who speaks, so the side of the screen does not have to. */
+.message.user { border:0; padding-inline-start:0; }
 
 /* #36 Streaming cursor blink */
 @keyframes cursorBlink { 0%,100%{opacity:1} 50%{opacity:0} }
