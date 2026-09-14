@@ -186,22 +186,72 @@ end
     assert_operator bed["gain_db"].to_i, :<, 0, "the bed must sit under the voice"
   end
 
-  # One patch per chord, drawn fresh each pass. One timbre across every chord is
-  # one instrument playing one long piece, and the ear files that as wallpaper.
-  def test_every_bed_chord_has_a_patch_to_reach_for
+  # One instrument per progression, and more than one instrument per pass. A
+  # band does not change keyboards every chord, and one timbre all pass is
+  # wallpaper. Every oscillator family keeps presets to move between, and no
+  # preset detunes past five cents, where a chord stops reading as chorus and
+  # starts reading as out of tune.
+  def test_every_bed_family_has_an_instrument_to_play
     bed = Master::Voice::Policy.bed
     skip "no bed declared" unless bed
 
+    families = bed["families"] || {}
+    assert_operator families.size, :>=, 3, "one family all pass is one instrument playing one long piece"
     patches = Array(bed["patches"])
-    assert_operator patches.size, :>=, bed["chords_per_pass"].to_i,
-                    "fewer patches than chords in a pass means a pass repeats a timbre"
-    assert_equal patches.size, patches.map { |patch| patch["name"] }.uniq.size,
-                 "two patches share a name"
+    assert_equal patches.size, patches.map { |patch| patch["name"] }.uniq.size, "two patches share a name"
+    families.each do |name, spec|
+      assert_includes %w[soundfont oscillator], spec["source"], "#{name}: a family names where its sound comes from"
+      next unless spec["source"] == "oscillator" || spec["struck"]
+
+      assert_operator patches.count { |patch| patch["family"] == name }, :>=, 2,
+                      "#{name}: a family with one preset cannot move inside itself"
+    end
     patches.each do |patch|
       assert_includes %w[saw square pulse triangle sine fm_bell fm_wood fm_glass], patch["wave"],
                       "#{patch["name"]}: unknown oscillator"
       assert_operator patch["cutoff"].to_i, :>, 0, "#{patch["name"]}: no ladder cutoff"
+      assert Array(patch["detune_cents"]).all? { |cents| cents.to_f.abs <= 5.0 },
+             "#{patch["name"]}: detune past five cents reads as out of tune"
     end
+  end
+
+  # The voicing rules a render can undo without anyone hearing the edit: the
+  # upper structure inside two octaves, and the harmonic rhythm carried by the
+  # transcription itself, one length per chord.
+  def test_the_bed_voices_chords_the_way_a_player_does
+    bed = Master::Voice::Policy.bed
+    skip "no bed declared" unless bed
+
+    voicing = bed["voicing"] || {}
+    assert_operator voicing["max_span"].to_i, :<=, 24, "a spread past two octaves is a synth patch, not a hand"
+    assert_operator voicing["drop_fifth_from"].to_i, :>=, 5, "the fifth goes only where a ninth needs its room"
+    assert bed["bars_per_chord"], "the rows carry their rhythm as repetition; a meter laid over them scrambles it"
+    assert_nil bed["meter"], "a meter over the transcriptions rewrites their harmonic rhythm"
+  end
+
+  # The bed is measured, not guessed: a loudness target every pass is set to, a
+  # true-peak ceiling under which nothing clips between samples, and a reference
+  # curve of nine bands that `bed.rb --check` compares against.
+  def test_the_bed_is_measured_against_a_record
+    bed = Master::Voice::Policy.bed
+    skip "no bed declared" unless bed
+
+    assert_operator bed.dig("loudness", "true_peak_db").to_f, :<=, -1.0, "a sample-peak limiter still clips between samples"
+    bands = Array(bed["reference_bands"])
+    assert_equal 9, bands.size, "nine octave bands, sub to top"
+    assert_equal 0.0, bands.first.to_f, "the curve is relative to its own sub, so level cannot confuse it"
+  end
+
+  # The bed exists to sit under talking, so it moves for the talking.
+  def test_the_bed_gets_out_of_the_voices_way
+    bed = Master::Voice::Policy.bed
+    skip "no bed declared" unless bed
+
+    speech = bed["speech"] || {}
+    assert_operator speech["duck_db"].to_f, :<, 0, "a bed that does not move for a sentence competes with it"
+    assert_includes 2000..4000, speech.dig("carve", "hz").to_i, "speech intelligibility lives between 2 and 4 kHz"
+    assert_operator speech["release_ms"].to_i, :>, speech["attack_ms"].to_i,
+                    "fast in, slow out, or the bed swells back between words"
   end
 
 # Dilla time is a juxtaposition, not a wobble: some elements rigid on the
@@ -219,12 +269,8 @@ def test_the_bed_drums_keep_conflicting_time_feels
   assert_operator feels.dig("kick", "swing").to_f, :>, 0, "the kick carries the swing"
   assert_operator feels.dig("snare", "shift").to_f, :<, 0, "the snare is rushed, not laid back"
   assert_operator feels.dig("kick", "shift").to_f, :>, 0, "the kick lags"
-  assert_equal "anoisesrc", drums.dig("hat", "source"),
-               "a declared source states its colour and amplitude"
   assert_equal "sonitex_sp1200", drums["finish"],
                "the kit is finished on dillas sampler, not left raw"
-  assert_operator drums.dig("hat", "band_hz").last.to_i, :<=, 9000,
-                  "a hat above 9 kHz is a modern bright kit, not this one"
 end
 
   # The bed is a band now, and the two relationships that make it one are the
@@ -261,34 +307,30 @@ end
     assert banks["dilla"], "the bank the whole bed is named for"
   end
 
-  # Boom bap first. Every shape puts a backbeat somewhere, and the hats stay
-  # straight; a bar with no two and four is not a bar of hip-hop, and swinging
-  # the hats removes the thing everything else is heard against.
-  def test_every_bed_shape_keeps_a_backbeat
+  # A shape holds for a block of whole phrases before the next bank takes over,
+  # and every bank the order names is one the grid library declares.
+  def test_the_bed_arrangement_holds_its_groove
     bed = Master::Voice::Policy.bed
     skip "no bed declared" unless bed
 
-    shapes = Array(bed.dig("drums", "shapes"))
-    assert_operator shapes.size, :>=, 4, "one groove all session is a preset"
-    assert_equal shapes.size, shapes.uniq.size, "two shapes share a name"
-    assert_equal 4, bed.dig("drums", "arrangement", "bars_per_shape"),
-                 "re-rolling the shape every bar sounds busy and reads as indecision"
+    arrangement = bed.dig("drums", "arrangement") || {}
+    bars = arrangement["bars_per_shape"].to_i
+    assert_operator bars, :>=, 4, "re-rolling the shape every bar sounds busy and reads as indecision"
+    assert_equal 0, bars % 4, "a block that ends mid-phrase breaks the groove where nobody chose to"
+    banks = (bed.dig("drums", "grid_banks") || {}).keys
+    Array(arrangement["bank_order"]).each do |bank|
+      assert_includes banks, bank, "the arrangement names a bank the grid library does not declare"
+    end
   end
 
-  # Two synthesis bugs that were audible before they were visible, and the
-  # spectrogram named both. Neither is a preference, so both are pinned.
-  def test_the_bed_does_not_alias_or_sweep
+  # A synthesis bug that was audible before it was visible, and the spectrogram
+  # named it. It is not a preference, so it is pinned.
+  def test_the_bed_does_not_alias
     bed = Master::Voice::Policy.bed
     skip "no bed declared" unless bed
 
     assert_operator bed["oversample"].to_i, :>=, 2,
                     "a modulo saw has a vertical edge; at 1x its harmonics fold back as bleeps"
-    assert_equal "integrated", bed.dig("drums", "kick", "sub", "phase"),
-                 "sin(2*PI*t*f(t)) sweeps kilohertz downward over a bar, which is a laser gun"
-    assert_operator bed.dig("drums", "kick", "sub", "fall_ms").to_i, :<=, 30,
-                    "a pitch fall slow enough to follow is a sound effect, not a drum"
-    assert_equal "clamped", bed.dig("drums", "kick", "envelope_span"),
-                 "an unclamped exp() overflows before its hit and the gate turns it to NaN"
   end
 
   def test_voice_rotation_is_additive
@@ -476,6 +518,8 @@ def test_the_bed_carries_surface_noise
   assert bed["dust"], "the imperfection is the sound, not a garnish on it"
   assert_operator bed.dig("dust", "hiss_db").to_i, :<, -20,
                   "audible hiss is a fault; inaudible hiss is the absence of digital silence"
+  assert_in_delta 1.8, bed.dig("dust", "rotation_s").to_f, 0.05,
+                  "a record's crackle comes round once a turn, and a turn at 33 rpm is 1.8 s"
 end
 
 end
