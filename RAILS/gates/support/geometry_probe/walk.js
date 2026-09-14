@@ -118,6 +118,28 @@
     return seen[sel] === 1 ? sel : sel + '[' + seen[sel] + ']';
   };
 
+  // Rendered lines of an element's own text: the distinct line boxes its text
+  // nodes occupy. Height over line-height cannot answer this for a control,
+  // because padding and min-height are most of a button's box, and a 44px
+  // button around one 20px line divides out as two.
+  const textLines = (el, fontSize) => {
+    const tops = [];
+    el.childNodes.forEach(n => {
+      if (n.nodeType !== 3 || !n.textContent.trim()) return;
+      const range = document.createRange();
+      range.selectNodeContents(n);
+      for (const box of range.getClientRects()) {
+        if (box.width > 0 && box.height > 0) tops.push(box.top);
+      }
+    });
+    tops.sort((a, b) => a - b);
+    let lines = 0, last = -Infinity;
+    for (const top of tops) {
+      if (top - last > fontSize / 2) { lines++; last = top; }
+    }
+    return lines;
+  };
+
   const out = [];
   const colors = Object.create(null);
   const overflow = [];
@@ -236,6 +258,7 @@
       position: cs.position,
       display: cs.display,
       text_align: cs.textAlign,
+      text_lines: ownText ? textLines(el, parseFloat(cs.fontSize)) : 0,
       // Needed to tell a text field from a submit button: both are
       // <input>, only one takes a caret, and only one triggers the iOS
       // focus zoom. The selector alone cannot say which.

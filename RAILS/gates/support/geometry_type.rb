@@ -60,6 +60,7 @@ module Deploy
     def check(result, surface, data)
       spec = profile(surface.label)
       check_measure(result, surface, data, spec)
+      check_wrap(result, surface, data)
       check_type_scale(result, surface, data, spec)
       check_baseline(result, surface, data, spec)
       check_tabular(result, surface, data, spec)
@@ -90,6 +91,56 @@ module Deploy
       result.fail(
         "geometry measure: #{surface.id} #{bad.size} prose run(s) outside #{min.to_i}–#{max.to_i}ch " \
         "(profile=#{spec["name"]}) — #{sample} (principle=bringhurst)",
+        severity: :soft
+      )
+    end
+
+    # The phone width is where a label runs out of room, so that is the only
+    # width asked. A control label is the button's own text or a span inside
+    # it: the key's last two steps carry the control's name either way.
+    PHONE_MAX_WIDTH = 480
+    CONTROL_TAGS = %w[button summary].freeze
+    CONTROL_ROLES = %w[button tab menuitem switch].freeze
+    CONTROL_KEY = /\b(?:btn|button|tab-item|chip)\b/
+    HEADING_TAG = /\Ah[1-6]\z/
+
+    # A heading past three lines at phone width reads as a paragraph set large,
+    # and the page loses the one line that was meant to be scanned.
+    HEADING_MAX_LINES = 3
+
+    # A control label broken onto a second line no longer reads as one word on
+    # one target, and the break usually lands mid-phrase. The probe counts the
+    # line boxes the label's own text occupies, so padding and min-height do
+    # not pass for a second line.
+    def check_wrap(result, surface, data)
+      return if surface.width.to_i > PHONE_MAX_WIDTH
+
+      shown = Array(data["elements"]).select { |el| el["visible"] && el["onscreen"] && !el["inline_in_text"] }
+      labels = shown.select { |el| control_label?(el) && el["text_lines"].to_i >= 2 }
+      headings = shown.select { |el| el["tag"].to_s.match?(HEADING_TAG) && el["text_lines"].to_i > HEADING_MAX_LINES }
+      report_wrap(result, surface, labels, "control label(s) onto 2+ lines", "affordance")
+      report_wrap(result, surface, headings, "heading(s) past #{HEADING_MAX_LINES} lines", "hierarchy")
+    end
+
+    def control_label?(el)
+      return false if el["tag"].to_s.match?(HEADING_TAG)
+
+      CONTROL_TAGS.include?(el["tag"]) || CONTROL_ROLES.include?(el["role"]) ||
+        el["key"].to_s.split(">").last(2).join(">").match?(CONTROL_KEY)
+    end
+
+    # One component wrapping in forty cards is one thing to fix, so the report
+    # names distinct keys and counts the instances beside them.
+    def report_wrap(result, surface, offenders, what, principle)
+      return if offenders.empty?
+
+      by_key = offenders.group_by { |el| el["key"].to_s.sub(/\[\d+\]\z/, "") }
+      named = by_key.first(4).map do |key, els|
+        "#{key} (#{els.map { |el| el["text_lines"].to_i }.max} lines#{" x#{els.size}" if els.size > 1})"
+      end
+      result.fail(
+        "geometry wrap: #{surface.id} breaks #{by_key.size} #{what} at #{surface.width}px — " \
+        "#{named.join('; ')} (principle=#{principle})",
         severity: :soft
       )
     end
