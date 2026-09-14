@@ -13,6 +13,16 @@ class TestScanRuleContracts < Minitest::Test
     assert_finding Rules::SmallFilesRule.new, code, "large.rb", "file"
   end
 
+  def test_small_files_rule_reads_code_with_modules_and_leaves_data_and_javascript
+    long = Array.new(Rules::SmallFilesRule::LIMIT + 1, "x").join("\n")
+    %w[bin/operator app.scss deploy.sh].each do |path|
+      refute_empty Rules::SmallFilesRule.new.check(long, path:), path
+    end
+    %w[nb.yml snapshot.json TODO.md Gemfile.lock app.js face.part1.txt].each do |path|
+      assert_empty Rules::SmallFilesRule.new.check(long, path:), path
+    end
+  end
+
   def test_small_functions_rule_flags_long_methods
     body = Array.new(Rules::SmallFunctionsRule::MAX + 1, "  puts :x").join("\n")
     code = "def oversized\n#{body}\nend\n"

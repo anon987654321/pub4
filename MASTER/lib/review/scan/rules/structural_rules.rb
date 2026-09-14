@@ -293,12 +293,23 @@ module Master
       # All also implement check(code, path:) as fallback for non-Ruby files.
 
       # B01 SMALL_FILES — files over 300 lines (detect_structural: file_silhouette).
+      #
+      # The fix it names is a split at module boundaries, so it reads files that
+      # have modules. A locale, a layout snapshot, a lockfile, a notebook or a
+      # document has no such boundary, and its length is its content. JavaScript
+      # is JS_MODULE_SIZE's, which asks the same question with the vendored
+      # bundles set aside, so reading it here reported every long script twice.
         class SmallFilesRule < Rule
           LIMIT = 300
+          NOT_MODULAR = %w[json yaml markdown javascript].freeze
+          DATA_EXTENSIONS = %w[.lock .txt .conf .ipynb .csv].freeze
 
           declare id: "SMALL_FILES", severity: :warning, tags: %i[SMALL_PARTS], description: "files under 300 lines"
 
           def check(code, path:)
+            return [] if NOT_MODULAR.include?(language(path.to_s).to_s)
+            return [] if DATA_EXTENSIONS.include?(File.extname(path.to_s))
+
             count = code.lines.size
             return [] if count <= LIMIT
             [finding(line: 1, message: "file #{count} lines (limit #{LIMIT}) — split at module boundaries")]
