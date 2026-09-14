@@ -64,6 +64,36 @@ require "fileutils"
 require "open3"
 require "securerandom"
 
+# Connect over IPv4 when the host has an IPv4 address.
+#
+# EventMachine connects to the first address the resolver returns and never
+# tries another, and the resolver returns IPv6 first. On a network that
+# publishes AAAA records and an IPv6 default route but does not carry IPv6
+# traffic, that single attempt fails with ENETUNREACH, the websocket closes
+# before any audio arrives, and synthesis writes an empty file without
+# raising — MASTER goes silent while --selftest stays green. curl and
+# Net::HTTP survive the same network because they fall back to IPv4.
+#
+# Only the socket address changes. Faye takes SNI and certificate
+# verification from the URL's hostname, so TLS is checked exactly as before,
+# and a host with no IPv4 address connects the way it always did.
+module Ipv4First
+  def connect(server, *rest, &block)
+    super(ipv4_for(server), *rest, &block)
+  end
+
+  private
+
+  def ipv4_for(server)
+    return server unless server.is_a?(String) && !server.match?(/\A[\d.]+\z/) && !server.include?(":")
+
+    Addrinfo.getaddrinfo(server, nil, Socket::AF_INET).first&.ip_address || server
+  rescue SocketError
+    server
+  end
+end
+EventMachine.singleton_class.prepend(Ipv4First)
+
 # OpenBSD verify failed because worker_env wiped SSL_CERT_FILE. Keep
 # verification on and point at the system bundle.
 Faye::WebSocket::Client.singleton_class.prepend(Module.new do
