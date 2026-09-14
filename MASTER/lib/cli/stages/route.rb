@@ -45,6 +45,10 @@ module Master
           Result.ok(ctx.merge(handler: cmd, destructive_route: destructive))
         end
 
+        # A Levenshtein matrix rather than DidYouMean::SpellChecker. The two
+        # disagree on one-edit typos of the command list: SpellChecker catches
+        # transpositions this misses, and misses the first-letter slips and short
+        # commands this catches. That is a trade, not a fold.
         def closest_command(name)
           best = @commands.keys.min_by { |k| levenshtein(k, name) }
           return unless best && levenshtein(best, name) <= [name.length, 3].min

@@ -7,6 +7,12 @@ module Master
   module Trace
   # Persistent undo: snapshots file content before writes, restores on demand.
   # Journal survives restarts via .master/undo_journal.jsonl.
+  #
+  # File-level, not turn-level. The branch is shared, so a turn's commit need
+  # not be HEAD by the time anyone asks, and resetting it drops what landed after;
+  # `git revert` of a commit a person names is that move. Fold writes go through
+  # Core::World#do_write, which journals nothing, so after a fold turn undo!
+  # restores the newest tool-path snapshot, which may be an earlier session's.
     class Undo
       include Master::Io::AtomicWrite
 

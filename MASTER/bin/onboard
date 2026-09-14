@@ -6,6 +6,10 @@ require "optparse"
 require "securerandom"
 require "yaml"
 
+# Writes .master/config.yml and runs no check, and that is the whole job. The
+# path from clone to green check is the contract chain: CLAUDE.md and its
+# generated siblings point at START_HERE.md, and `bin/operator gate --explain`
+# prints the ladder. A third onboarding surface restates both and drifts.
 ROOT = File.expand_path("..", __dir__)
 CONFIG_DIR = File.expand_path("../.master", ROOT)
 CONFIG_PATH = File.join(CONFIG_DIR, "config.yml")

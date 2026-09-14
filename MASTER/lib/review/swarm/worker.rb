@@ -70,6 +70,11 @@ module Master
         #
         # nil means no object was found. A caller that treats absence as consent
         # has to say so in its own words.
+        #
+        # Extracted rather than asked for through ruby_llm's with_schema: free
+        # models ignore response_format often enough that this regex is the path
+        # that works. consensus.rb, stages/enhance.rb and core/model.rb extract
+        # the same way for the same reason.
         def json_object(raw)
           match = raw.to_s.match(/\{.*\}/m)
           return nil unless match

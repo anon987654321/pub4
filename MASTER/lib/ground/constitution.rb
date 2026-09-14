@@ -2,6 +2,10 @@
 
 module Master
   module Ground
+    # Operator-declared prompt text from data/principles/*.md. Core::Constitution
+    # judges effects; the namespace already separates the two, and renaming this
+    # one PrincipleStore brings back `principle`, a word the tree retired in
+    # favour of `rule`.
     class Constitution
       def initialize(dir: DIR, max_principles: nil, max_body_chars: nil)
         @dir = dir

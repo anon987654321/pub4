@@ -23,8 +23,8 @@
 #   ruby MASTER/tools/sweep.rb --all --json
 #
 # It measures and proposes. It does not land: a ratchet can be moved
-# mechanically, a regroup cannot, and a tool that edits on its own judgement is
-# the thing DECISIONS.md spent six stages removing. The ledger is what makes the
+# mechanically, a regroup cannot, and a tool that edits on its own judgement
+# lands changes no person and no WriteGuard has judged. The ledger is what makes the
 # loop convergent — see data/proposals.yml.
 
 require "json"

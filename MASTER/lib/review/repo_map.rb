@@ -8,7 +8,10 @@ module Master
   # token window. Aider-style repo map. Files with many incoming references
   # rank higher; focus[] biases the random surfer toward chat-mentioned files.
   #
-  # Wiring is left to the operator. Typical use:
+  # It stays out of the fix prompt. A fix call carries one violation and one
+  # file and asks for that file back, so a map of other files adds cost to every
+  # call and informs no edit the model may make. It waits for a caller that
+  # edits across files. Typical use:
   #   map = Master::Review::RepoMap.new(code_index: ai[:code_index], root: root)
   #   prompt_context << map.render(focus: [current_file])
     class RepoMap

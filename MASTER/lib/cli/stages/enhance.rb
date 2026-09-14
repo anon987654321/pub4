@@ -95,6 +95,12 @@ module Master
           msg.match?(SKIP_RE) || msg.split.size < MIN_WORDS
         end
 
+        # law: false, the one caller that passes it. The output is the user's own
+        # message tightened, not MASTER speaking, and the real turn that follows
+        # carries the persona prompt and the law. Composed with the law, this
+        # rewriter reads "show diff or file content" as its own instruction, rule 4
+        # adds it as a format hint, and the question comes back asking for a diff,
+        # which changes what the user asked and breaks rule 7.
         def enhance(msg)
           raw = @agent.ask_once(msg, system: SYSTEM, law: false)
           parsed = JSON.parse(raw.to_s.strip)

@@ -7,8 +7,8 @@ module Master
         # Matches OpenCrabs' skill-level `review_gate: true`: a command
         # opts in to requiring an explicit, deliberate confirmation before
         # its side effects run, even under otherwise-autonomous operation.
-        # /commit is the first consumer -- it currently runs `git add -u`
-        # + `git commit` with an LLM-written message and zero confirmation.
+        # /commit is the consumer: it commits the named paths under a
+        # model-written message, so a person confirms before git runs.
         CONFIRM_FLAG = "--confirm"
 
         # The dispatcher a built verb reaches, so a test can prove it exists

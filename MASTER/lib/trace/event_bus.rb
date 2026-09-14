@@ -4,6 +4,9 @@ require "monitor"
 
 module Master
   module Trace
+    # Not wisper: this bus matches topics by glob, redacts what it persists,
+    # stamps each event with the Fiber's conversation and wraps delivery in a
+    # telemetry span, where wisper broadcasts to listeners.
     class EventBus
       include MonitorMixin
 
@@ -36,6 +39,11 @@ module Master
 
         persist_event(event, enriched)
 
+        # No per-subscriber deadline. Ruby bounds a handler only by raising into
+        # it at whatever line it reached, and the handlers are inline writers of
+        # log lines and SSE frames that a raise mid-write leaves torn. A handler's
+        # error is swallowed and its answer ignored, so no subscriber guards a
+        # write and there is nothing to fail closed.
         Master::Trace::Telemetry.span("event_bus.publish", event:, n_handlers: handlers.size) do
           handlers.each do |h|
             h.call(enriched)

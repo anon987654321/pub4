@@ -10,6 +10,9 @@ module Master
     # Every row names an event something in the tree publishes. A weight for an
     # event nobody publishes is a salience the layer never computes, so a new
     # row lands with its publisher.
+    #
+    # CLI::AttentionContext shares the word and not the job: it renders the
+    # map/zoom/act breadcrumb into the prompt and carries no weights.
     class Attention
       EVENT_WEIGHTS = {
         "error:swallowed" => 0.95,

@@ -6,6 +6,8 @@ module Master
   module Rules
   # Lexical rules defined via RuleDSL — pure Ruby, no YAML.
   # Each auto-registers in Rule.registry and runs on every scan.
+  # Several are RuboCop-shaped and stay here rather than delegating to RuboCop:
+  # each id is a name the law addresses, and delegating renames the law.
 
   RuleDSL.rule :NO_DEBUG,
     severity: :error, tags: %i[CLEAN_CODE], applies_to: %i[ruby],

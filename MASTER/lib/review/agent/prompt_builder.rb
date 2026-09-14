@@ -25,11 +25,12 @@ module Master
         # persona prompt, so a role sent bare leaves a swarm worker or an
         # ideation round with no constitution. The law comes first, where the
         # priority order puts it, and the role last, where it sets the output
-        # contract.
+        # contract. That is also why law_prompt leaves out the persona's identity,
+        # output format and style corpus: the role owns those.
         #
         # `law: false` is for a transform whose output is the user's own words
-        # rather than MASTER's assertion or effect. DECISIONS.md, "A Role Prompt
-        # Rides Under The Law, Except Enhance's", carries why.
+        # rather than MASTER's assertion or effect. Stages::Enhance#enhance is the
+        # one caller, and its comment says why the law breaks that rewrite.
         def role_system(role, law:)
           return filter_prompt(role) unless role && law
 

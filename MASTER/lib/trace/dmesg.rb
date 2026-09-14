@@ -5,6 +5,10 @@ module Master
     # OpenBSD dmesg-style kernel lines for operator progress.
     # Shape: "unitN at parent: detail" / "unitN: status key=val"
     # Config: data/limits.yml#dmesg (enabled: true). ENV MASTER_DMESG=0|1 overrides.
+    #
+    # This shape is the CLI's whole style guide: append-only, one line per fact,
+    # no banner. The machine-readable form of the same facts is the event bus
+    # and the JSONL ledgers under runtime/, not a second presenter here.
     module Dmesg
       module_function
 

@@ -32,6 +32,12 @@ module Master
       # under command_registry/ holds the dispatchers these verbs reach or the
       # stages Pipeline::Pass calls. Scan and critique stay as methods the pass
       # calls; they are not slash verbs.
+      #
+      # The surface is closed on purpose. Work is a sentence: TurnRouter reaches
+      # the Fold and MediaIntent reaches STUDIO from plain language, and every
+      # verb added is one more thing a reader learns before knowing which of them
+      # writes. A dispatcher this hash does not return is unreachable, and
+      # test_command_registry_dispatch.rb fails on a `*_commands` table it misses.
       def build(infra:, ai:, root:)
         d = command_deps(ai:, root:, infra:)
         undo = infra[:undo]

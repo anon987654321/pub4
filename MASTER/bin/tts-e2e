@@ -1,6 +1,10 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# Speaks one line through a running face over HTTP and polls the job to an mp3.
+# It stays outside bin/check, as bin/smoke's web ping does: a check profile that
+# needs a live server is red on every machine without one.
+
 require "json"
 require "net/http"
 require "uri"

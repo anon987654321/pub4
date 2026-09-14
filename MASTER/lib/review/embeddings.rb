@@ -54,6 +54,9 @@ module Master
         mag.zero? ? 0.0 : dot / mag
       end
 
+      # Net::HTTP rather than ruby_llm, for the reason OllamaSender gives: a
+      # local daemon has no price or capability row, and the gem's Ollama
+      # provider speaks the OpenAI-compatible /v1 surface, not /api/embeddings.
       def ollama_embed(text)
         uri = URI.join(ENV["OLLAMA_BASE_URL"], "/api/embeddings")
         http = Net::HTTP.new(uri.host, uri.port)

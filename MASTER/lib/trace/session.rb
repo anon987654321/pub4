@@ -35,6 +35,9 @@ module Master
           write_atomic(@path, JSON.generate(data))
         end
 
+        # No schema_version in the file: it has one shape, every field below is
+        # read with a default, and a file that fails to parse is quarantined
+        # beside its reason, so a version key has nothing to decide.
         def load!
           return self unless File.exist?(@path)
 
@@ -135,6 +138,8 @@ module Master
       include Snapshots
       include Compaction
 
+      # An estimate, on purpose: the exact count needs tiktoken_ruby, a Rust
+      # extension, and this repo deploys to OpenBSD.
       TOKENS_PER_CHAR = 4
       SESSION_NAME_MAX = 40
       # 100 KB session cost log cap
