@@ -52,6 +52,76 @@ class TestMasterLoop < Minitest::Test
     end
   end
 
+  # MASTER_INCREMENTAL=1 is the only way the boot builds an incremental fix loop.
+  def test_incremental_reaches_the_fix_loop_only_when_set
+    seen = []
+    build = lambda do
+      Master::Fix::FixLoop.stub(:new, ->(**kwargs) { seen << kwargs[:incremental] }) do
+        Master::Builder.build_fix_loop(root: Master::ROOT, infra: {}, agent: nil, scanner: nil, axioms: nil,
+                                       rules: nil, learnings: nil, rollback: nil, bus: nil, git: nil)
+      end
+    end
+
+    with_env("MASTER_INCREMENTAL" => nil, "MASTER_AUTOFIX" => nil) { build.call }
+    with_env("MASTER_INCREMENTAL" => "1", "MASTER_AUTOFIX" => nil) { build.call }
+
+    assert_equal [false, true], seen
+  end
+
+  # MASTER_WATCH=1 builds the watch loop and runs it on a watched thread.
+  def test_watch_starts_the_watch_loop_only_when_set
+    started = []
+    watch_loop = Object.new
+    build = lambda do
+      Master::Fix::WatchLoop.stub(:new, watch_loop) do
+        Master::Builder.stub(:watched_thread, ->(_bus, where) { started << where }) do
+          Master::Builder.build_watch_loop(rules: nil, agent: nil, scanner: nil, root: Master::ROOT, bus: nil, learnings: nil)
+        end
+      end
+    end
+
+    assert_nil with_env("MASTER_WATCH" => nil) { build.call }
+    assert_same watch_loop, with_env("MASTER_WATCH" => "1") { build.call }
+    assert_equal ["watch_loop"], started
+  end
+
+  # MASTER_SKIP_SELF_TEST=1 is the only thing that keeps boot from running the
+  # scanner's self-test.
+  def test_skip_self_test_keeps_boot_from_running_it
+    ran = []
+    self_test = Object.new
+    self_test.define_singleton_method(:call) { ran << :self_test }
+    ledger = Object.new
+    ledger.define_singleton_method(:attach) { nil }
+    standing = Object.new
+    standing.define_singleton_method(:wire_container) { |**| nil }
+    finalize = lambda do
+      Master::Trace::Ledger::Feedback.stub(:new, ledger) do
+        Master::Trace::Ledger::Reflexion.stub(:new, ledger) do
+          Master::Review::Scan::SelfTest.stub(:new, ->(**) { self_test }) do
+            Master::Builder.stub(:publish_self_test, nil) do
+              Master::Builder.finalize_ai_boot(bus: nil, root: Master::ROOT, infra: {}, agent: nil,
+                                               autonomous: { standing:, learnings: nil }, scanner: nil, lean_boot: true)
+            end
+          end
+        end
+      end
+    end
+
+    with_env("MASTER_SKIP_SELF_TEST" => "1") { finalize.call }
+    assert_empty ran
+    with_env("MASTER_SKIP_SELF_TEST" => nil) { finalize.call }
+    assert_equal [:self_test], ran
+  end
+
+  def with_env(pairs)
+    saved = pairs.keys.to_h { |key| [key, ENV[key]] }
+    pairs.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
+    yield
+  ensure
+    saved.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
+  end
+
   # The early-boot mode map and data/limits.yml#process are the same fact in two
   # places; this pins them so heartbeat->env and the "fix"/"autofix" alias cannot
   # drift the way they had ("MASTER_BACKGROUND" vs "MASTER_HEARTBEAT").

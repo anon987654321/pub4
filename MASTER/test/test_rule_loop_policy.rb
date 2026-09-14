@@ -275,6 +275,31 @@ class TestRuleLoopPolicy < Minitest::Test
     assert_equal [false], deletions_asked_with(nil)
   end
 
+  # The quorum is asked only under MASTER_CONSENSUS_FIXES=1, and its answer
+  # decides; unset, a fix lands without three model calls.
+  def test_consensus_is_asked_only_when_consensus_fixes_is_set
+    Dir.mktmpdir do |root|
+      asked = []
+      consensus = Object.new
+      consensus.define_singleton_method(:approve_fix?) { |**kwargs| asked << kwargs[:candidate]; false }
+      agent = Agent.new
+      agent.define_singleton_method(:consensus) { consensus }
+      loop = build_loop(root:, bus: FakeBus.new, scanner: Scanner.new, agent:)
+      violation = { file: File.join(root, "sample.rb"), rule: "TEST_RULE" }
+      previous = ENV["MASTER_CONSENSUS_FIXES"]
+
+      ENV.delete("MASTER_CONSENSUS_FIXES")
+      assert loop.send(:consensus_approves?, violation, "new source")
+      assert_empty asked
+
+      ENV["MASTER_CONSENSUS_FIXES"] = "1"
+      refute loop.send(:consensus_approves?, violation, "new source")
+      assert_equal ["new source"], asked
+    ensure
+      previous.nil? ? ENV.delete("MASTER_CONSENSUS_FIXES") : ENV["MASTER_CONSENSUS_FIXES"] = previous
+    end
+  end
+
   # reversibility and blast_radius travel from the finding to the violation, and
   # an irreversible or multi-file fix waits for a person like a deletion does.
   def test_an_irreversible_or_wide_fix_waits_for_a_person
