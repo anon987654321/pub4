@@ -41,7 +41,8 @@ class CoverageRatchetTest < Minitest::Test
     # foreign_key_dependency_test.rb holds the remaining fifteen.
     # controllers 1 -> 2 on 2026-08-23: declutter_controller_test covers the
     # strict-loading preloads on the declutter box.
-    "amber" => { "controllers" => 2, "models" => 10 },
+    # controllers 2 -> 4: the ratchet found two tested controllers above the floor.
+    "amber" => { "controllers" => 4, "models" => 10 },
     # models raised 10 -> 11 on 2026-08-03; the ratchet asked for it.
     # 11 -> 13 on 2026-08-12: engines/playlist got its first tests, covering
     # Playlist::Playlist and Playlist::ListeningParty. It was the only one of the
@@ -64,7 +65,9 @@ class CoverageRatchetTest < Minitest::Test
     # onto the basename this ratchet resolves, and the floor did not move with
     # it — the same direction the 19 above was caught in.
     # models 23 -> 24: mention_test.rb arrived with the Mention writer.
-    "brgen" => { "controllers" => 21, "models" => 24 },
+    # models 24 -> 55: every dating, marketplace, playlist, takeaway and tv model
+    # has its own test in its engine.
+    "brgen" => { "controllers" => 21, "models" => 55 },
     # models 1 -> 8 on 2026-08-16. bsdports had one model test (user) against
     # thirteen models, and it was the smallest tree in the repo — Port, the record
     # everything else hangs off, had nothing naming it. Writing them found two
