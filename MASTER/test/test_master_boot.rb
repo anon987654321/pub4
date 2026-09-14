@@ -66,6 +66,15 @@ class MasterBootTest < Minitest::Test
   def test_the_suite_runs_on_mris_dig
     refute_includes Hash.ancestors.map(&:to_s), "Master::HashDigCompat"
   end
+  def test_a_missing_yaml_file_warns_once
+    Dir.mktmpdir do |dir|
+      missing = File.join(dir, "PATH_OWNERSHIP.yml")
+      _, err = capture_io { 3.times { assert_equal({}, Master.load_yaml(missing)) } }
+
+      assert_equal 1, err.lines.grep(/load_yaml: /).size, err
+    end
+  end
+
   # rules.yml needs aliases, which is why load_yaml allows them. Aliases are
   # references inside the document; a Ruby object tag is still refused.
   def test_load_yaml_follows_aliases_and_refuses_ruby_objects

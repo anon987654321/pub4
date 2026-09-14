@@ -30,7 +30,7 @@ module Master
       end
       yaml_copy(parsed) || default
     rescue Errno::ENOENT, Errno::EACCES => e
-      warn("load_yaml: #{e.message}")
+      warn_unreadable_once(path, e)
       default
     rescue Psych::Exception, Timeout::Error => e
       warn("load_yaml: #{path}: #{e.message}")
@@ -102,6 +102,20 @@ module Master
 
     def data_validation_cache
       @data_validation_cache ||= {}
+    end
+
+    # Once per path. A scan rule reads its optional file once per scanned file,
+    # and a missing one would print over the prompt on every read.
+    def warn_unreadable_once(path, error)
+      key = File.expand_path(path)
+      return if yaml_unreadable.key?(key)
+
+      yaml_unreadable[key] = true
+      warn("load_yaml: #{error.message}")
+    end
+
+    def yaml_unreadable
+      @yaml_unreadable ||= {}
     end
 
     # Key to a frozen parse. Several threads load data files, and ||= on a plain
