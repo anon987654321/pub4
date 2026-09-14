@@ -49,6 +49,18 @@ module Master
         end
       end
 
+      # The guard stands where text written outside the tree becomes prompt:
+      # web_fetch, and search_knowledge, whose knowledge/ holds cloned
+      # third-party docs and prompt collections.
+      #
+      # read_file and Core::World#do_read do not pass through it. Both refuse a
+      # path outside the root, so what they return is the tree itself, and a
+      # file planted there is already code the fold runs: Proof asks for
+      # test_pass before `done`, so every completing fold loads every test file.
+      # Screening its text while executing it guards nothing. Its false-positive
+      # rate is the other half: 7 of 4,271 tracked files match these patterns,
+      # every one of them the patterns' own definitions or tests, and redacting
+      # a read corrupts the write composed from it.
       class InjectionGuard
 
         DEFAULTS = {
@@ -93,6 +105,15 @@ module Master
         end
 
         def safe?(text) = scan(text.to_s).ok?
+
+        # Redact, do not refuse. A page carrying an injection string is often a
+        # page about injection, so the matched spans go and the rest arrives.
+        def screen(text, tool:, source:, bus: nil)
+          return text if safe?(text)
+
+          bus&.publish("security:injection_redacted", tool:, source:)
+          clean!(text).value!
+        end
 
         def clean!(content)
           prompt_cleaned = @patterns[:prompt_injection].reduce(content) { |c, p| c.gsub(p, "[REDACTED]") }

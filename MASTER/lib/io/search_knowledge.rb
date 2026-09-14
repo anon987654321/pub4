@@ -24,7 +24,7 @@ module Master
         return directory if directory.err?
 
         results = collect_results(directory.value!, query_regexp(query))
-        Result.ok(format_results(results, query, topic))
+        Result.ok(guarded(format_results(results, query, topic), topic))
       rescue StandardError => e
         Result.err("search_knowledge: #{e.message}", category: :unknown)
       end
@@ -38,6 +38,13 @@ module Master
       end
 
       private
+
+      # knowledge/ is cloned from outside the tree, prompt collections among it,
+      # so its lines reach the model through the guard web_fetch uses.
+      def guarded(text, topic)
+        @injection_guard ||= Master::Review::Security::InjectionGuard.new(mode: :permissive)
+        @injection_guard.screen(text, tool: NAME, source: ["knowledge", topic].compact.join("/"), bus: @bus)
+      end
 
       def resolve_search_directory(topic)
         directory = topic ? File.join(@knowledge_root, topic.to_s) : @knowledge_root
