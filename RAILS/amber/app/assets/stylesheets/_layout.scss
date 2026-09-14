@@ -21,13 +21,30 @@ main[role="main"] {
 
 h1,
 h2 {
-  /* On-scale leading only (1.25). PRESERVE existing weights/faces. */
   margin-bottom: var(--space-3);
   font-family: var(--font);
-  font-weight: var(--weight-heavy);
+  font-weight: var(--weight-bold);
   line-height: var(--leading-tight, 1.25);
   letter-spacing: var(--tracking-tight, -0.01em);
   max-width: var(--measure-wide);
+}
+
+/* A page title and a section heading on the luxury scale, both at 600: the
+   shared page-title rule set 800 and 1.75rem, which made four weights on one
+   page and an h1 1.75x body. :not([class]) outranks that rule's
+   main#main-content > header h1 and leaves classed headings (the hero
+   sentence, feed titles, empty states, showcase labels) on their own rules.
+   The h2 rule reads only a section's own heading, so a heading nested in a
+   header's action group keeps its size. */
+main#main-content h1:not([class]) {
+  font-size: var(--luxury-font-display);
+  font-weight: var(--weight-bold);
+}
+
+main#main-content > section > h2:not([class]),
+main#main-content > h2:not([class]) {
+  font-size: var(--luxury-font-title);
+  font-weight: var(--weight-bold);
 }
 
 main#main-content > :first-child:not(.flash) {

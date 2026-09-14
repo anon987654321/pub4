@@ -201,7 +201,8 @@
     --luxury-space-md: 1.5rem;
     --luxury-space-lg: 2rem;
     --luxury-space-xl: 3rem;
-    --luxury-font-display: 2rem;
+    --luxury-font-display: clamp(1.953rem, 1.5rem + 2vw, 2.441rem);
+    --luxury-font-title: 1.563rem;
     --luxury-font-meta: 0.875rem;
     --luxury-letter-tight: -0.01em;
     --luxury-line-relaxed: 1.6;

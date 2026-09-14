@@ -92,7 +92,7 @@
   font-size: var(--luxury-font-display);
   font-weight: var(--weight-bold);
   letter-spacing: var(--luxury-letter-tight);
-  line-height: var(--luxury-line-relaxed);
+  line-height: var(--leading-tight, 1.25);
   margin: 0.25rem 0;
 }
 

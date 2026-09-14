@@ -158,9 +158,11 @@ luxury:
   radius_sm: "6px"
   radius_md: "10px"
   radius_lg: "14px"
-  # Typography scale
-  font_size_display: "2rem"
-  font_size_title: "1.5rem"
+  # Typography scale: the major third (1.25) on the 1rem body that TYPOGRAPHY
+  # names as its default ratio. display is the page title, 2.0-2.44x body from
+  # phone to desk; title is a section heading at 1.563x.
+  font_size_display: "clamp(1.953rem, 1.5rem + 2vw, 2.441rem)"
+  font_size_title: "1.563rem"
   font_size_body: "1rem"
   font_size_meta: "0.875rem"
   letter_spacing_tight: "-0.01em"
