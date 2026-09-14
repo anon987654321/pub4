@@ -98,6 +98,28 @@ class ReachPrimitivesTest < Minitest::Test
     assert_includes result.value!, "reach-smoke"
   end
 
+  class RecordingBus
+    attr_reader :events
+    def initialize = @events = []
+    def publish(name, payload = {}) = @events << [name, payload]
+  end
+
+  # With a bus wired, as the runtime always wires it, every call raised reading
+  # an exit status off the stdout string, and a failing command read as success.
+  def test_shell_with_a_bus_reports_success_and_failure_honestly
+    bus = RecordingBus.new
+    tool = Master::Io::Shell.new(root: @dir, governor: @governor, event_bus: bus)
+
+    ok = tool.call(command: "echo reach-smoke")
+    failed = tool.call(command: "echo broke >&2; exit 3")
+
+    assert ok.ok?, (ok.message if ok.err?).to_s
+    assert_includes ok.value!, "reach-smoke"
+    assert failed.err?
+    assert_match(/exit 3: broke/, failed.message)
+    assert_equal [0, 3], bus.events.select { |name, _| name == "tool:after" }.map { |_, payload| payload[:exit_code] }
+  end
+
   def test_shell_blocks_destructive_command
     tool = Master::Io::Shell.new(root: @dir, governor: @governor)
     result = tool.call(command: "rm -rf /tmp/master-reach-smoke-should-never-run")

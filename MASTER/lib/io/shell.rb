@@ -64,7 +64,7 @@ module Master
         return perm if perm.err?
 
         capture_output(command)
-      rescue Timeout::Error
+      rescue Timeout::Error, TTY::Command::TimeoutExceeded
         failed_result("timed out after #{TIMEOUT}s")
       rescue TTY::Command::ExitError => e
         failed_result(e.message)
@@ -128,9 +128,21 @@ module Master
       def capture_output(command)
         executable = strip_force_sentinel(command)
         publish_before(command)
-        output, = Timeout.timeout(TIMEOUT) { @cmd.run!("zsh", input: wrapped_command(executable)) }
-        @bus&.publish("tool:after", tool: NAME, exit_code: output.exit_status)
-        successful_result(executable, output.to_s.strip)
+        # run! returns a result that destructures to [out, err], so `output, =`
+        # took the stdout string and reading its exit status raised whenever a
+        # bus was wired, which is every call the runtime makes. A non-zero exit
+        # read as success with stderr dropped. TTY::Command's own timeout kills
+        # the child, where Timeout.timeout around it left zsh running.
+        result = @cmd.run!("zsh", input: wrapped_command(executable), timeout: TIMEOUT)
+        @bus&.publish("tool:after", tool: NAME, exit_code: result.exit_status)
+        return failed_result("exit #{result.exit_status}: #{tail(result)}") unless result.success?
+
+        successful_result(executable, result.out.to_s.strip)
+      end
+
+      def tail(result)
+        text = "#{result.err}#{result.out}".strip
+        text.length > 400 ? text[-400..] : text
       end
 
       def wrapped_command(command)
