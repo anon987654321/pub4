@@ -26,6 +26,9 @@ module Deploy
   #      when the identifier maps to a first-party file we can read. Vendored
   #      components are registered from node_modules-style bundles and are not
   #      introspected; claiming a missing method there would be a guess.
+  #
+  #   3. The reverse: every registration is mounted by some element a view,
+  #      helper or script produces, unless UNMOUNTED_ALLOWED names it and why.
   class StimulusWiringGate
     ROOT = File.expand_path("../../../..", __dir__)
     RAILS_ROOT = File.join(ROOT, "RAILS")
@@ -43,19 +46,78 @@ module Deploy
     # is deliberately broad about modifiers and strict about nothing else.
     METHOD_DEF = /^\s{2}(?:static\s+)?(?:async\s+)?(?:get\s+|set\s+)?(#?[a-zA-Z_$][\w$]*)\s*\(/
 
+    # Registered and deliberately mounted by nothing, each with the reason. An
+    # entry whose identifier is mounted again, or no longer registered, fails:
+    # an exemption that outlives its subject certifies nothing.
+    UNMOUNTED_ALLOWED = {
+      # Its one element left amber's wardrobe showcase, which now slides with
+      # wardrobe-carousel; the lazy entry and the swiper pin wait on the Stimulus
+      # owner deciding whether any surface adopts the package again.
+      "carousel" => "stimulus_boot.js LAZY_COMPONENTS entry with no element asking for it",
+      # @stimulus-components/reveal. Its one element is in shared/frontend/examples,
+      # a snippet library nothing renders.
+      "reveal" => "stimulus_boot.js component table entry with no rendered element"
+    }.freeze
+
+    # Every way this tree puts an identifier on an element: ERB attributes,
+    # tag helpers, a hash-rocket attribute, and elements a script builds.
+    MOUNT = /(?:data-controller\s*=\s*\\?["']|controller:\s*["']|["']data-controller["']\s*=>\s*["']|dataset\.controller\s*=\s*["'`]|setAttribute\(\s*["']data-controller["']\s*,\s*["'`])([^"'`]*)/
+
     def self.run
       new.run
     end
 
-    def initialize(root: RAILS_ROOT)
+    def initialize(root: RAILS_ROOT, unmounted_allowed: UNMOUNTED_ALLOWED)
       @rails_root = root
+      @unmounted_allowed = unmounted_allowed
       @boot_text = File.read(File.join(@rails_root, BOOT))
     end
 
     def run
       result = GateResult.new
       APPS.each { |app| audit_app(app, result) }
+      audit_mounts(result)
       result
+    end
+
+    # The reverse direction: a registration no element asks for is a controller
+    # shipped and parsed on every page for nothing, and it is usually the half
+    # left behind when a view moved to something else.
+    def audit_mounts(result)
+      mounted = APPS.to_h { |app| [app, mounted_identifiers(mount_sources(app))] }
+      everywhere = mounted.values.reduce(:|)
+
+      registrations = shared_identifiers.map { |id| [id, nil] } +
+                      APPS.flat_map { |app| app_identifiers(app).map { |id| [id, app] } }
+      registrations.uniq.each do |id, app|
+        result.checked!
+        live = app ? mounted.fetch(app).include?(id) : everywhere.include?(id)
+        next if live || @unmounted_allowed.key?(id)
+
+        result.fail("#{app || "stimulus_boot"}: controller #{id.inspect} is registered and no view, helper or script mounts it")
+      end
+
+      @unmounted_allowed.each_key do |id|
+        registered = registrations.any? { |candidate, _| candidate == id }
+        if !registered
+          result.fail("UNMOUNTED_ALLOWED names #{id.inspect}, which nothing registers any more — delete the entry")
+        elsif everywhere.include?(id)
+          result.fail("UNMOUNTED_ALLOWED names #{id.inspect}, which is mounted now — delete the entry")
+        end
+      end
+    end
+
+    def mounted_identifiers(sources)
+      sources.each_with_object(Set.new) do |path, ids|
+        File.read(path).scan(MOUNT) { |(group)| group.gsub(DYNAMIC, " ").split(/\s+/).each { |id| ids << id } }
+      end
+    end
+
+    # Where an app's elements can come from: its views and its engines' views,
+    # its helpers and scripts, and everything shared renders or ships.
+    def mount_sources(app)
+      views(app) + Dir.glob(File.join(@rails_root, "{#{app},#{app}/engines/*,shared}/app/{helpers,components,javascript}/**/*.{rb,js,erb}")) +
+        Dir.glob(File.join(@rails_root, "shared/frontend/**/*.js"))
     end
 
     # Identifiers stimulus_boot registers for every app that calls it.

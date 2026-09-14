@@ -98,7 +98,61 @@ class StimulusWiringGateTest < Minitest::Test
     assert_empty with_probe(%(<div data-controller="character-counter" data-character-counter-countdown-value="true"></div>))
   end
 
+  # The reverse leg: a controller registered and mounted by nothing.
+  def test_reports_a_registered_controller_nothing_mounts
+    failures = with_controller_probe { mount_failures }
+
+    assert_equal 1, failures.size, failures.inspect
+    assert_includes failures.first, %(amber: controller "stimulus-mount-probe")
+  end
+
+  def test_a_view_a_tag_helper_or_a_script_mounts_a_controller
+    [
+      ["amber/app/views/items/_stimulus_mount_probe.html.erb", %(<div data-controller="toast stimulus-mount-probe"></div>)],
+      ["amber/app/helpers/stimulus_mount_probe_helper.rb", %(tag.div(data: { controller: "stimulus-mount-probe" }))],
+      ["amber/app/javascript/stimulus_mount_probe.js", %(el.setAttribute("data-controller", "stimulus-mount-probe"))],
+    ].each do |path, text|
+      failures = with_controller_probe { with_file(path, text) { mount_failures } }
+
+      assert_empty failures, "#{path}: #{failures.inspect}"
+    end
+  end
+
+  # Another app's element does not load an app-local controller.
+  def test_a_mount_in_another_app_does_not_count
+    failures = with_controller_probe do
+      with_file("bsdports/app/views/ports/_stimulus_mount_probe.html.erb", %(<div data-controller="stimulus-mount-probe"></div>)) { mount_failures }
+    end
+
+    assert_includes failures, %(amber: controller "stimulus-mount-probe" is registered and no view, helper or script mounts it)
+  end
+
+  def test_an_exemption_fails_once_its_controller_is_mounted_or_gone
+    gate = Deploy::StimulusWiringGate.new(unmounted_allowed: { "scroll-chrome" => "planted", "never-registered" => "planted" })
+    failures = gate.run.failures
+
+    assert failures.any? { |f| f.include?(%(names "scroll-chrome", which is mounted now)) }, failures.inspect
+    assert failures.any? { |f| f.include?(%(names "never-registered", which nothing registers)) }, failures.inspect
+  end
+
   private
+
+  def mount_failures
+    Deploy::StimulusWiringGate.run.failures.select { |f| f.include?("stimulus-mount-probe") }
+  end
+
+  def with_controller_probe(&)
+    with_file("amber/app/javascript/controllers/stimulus_mount_probe_controller.js",
+              %(import { Controller } from "@hotwired/stimulus"\nexport default class extends Controller {}\n), &)
+  end
+
+  def with_file(relative, text)
+    path = File.join(ROOT, relative)
+    File.write(path, text)
+    yield
+  ensure
+    FileUtils.rm_f(path)
+  end
 
   # The gate reads the real tree; a probe file is the only way to exercise the
   # failure paths without a second fixture copy of three Rails apps.
