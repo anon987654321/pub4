@@ -106,8 +106,8 @@ module Master
       end
 
       # The files this turn wrote, from WriteTracker, which run_input resets.
-      # `git diff HEAD` counted every dirty file in a shared checkout, so a
-      # read-only preview reported "13 files changed" it never touched.
+      # `git diff HEAD` counts every dirty file in a shared checkout, other
+      # sessions' work included, whatever this turn did.
       def print_changed_files_summary
         count = Master::Trace::WriteTracker.current&.paths.to_a.size
         return unless count.positive?

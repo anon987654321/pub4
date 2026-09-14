@@ -224,8 +224,8 @@ module Master
           end
         end
 
-        # The word after a verb is a path only when it names one. "fix and git
-        # commit" captured "and", and the pass reviewed pub4/and.
+        # The word after a verb is a path only when it names one: in "fix and
+        # git commit", "and" is a word, not a directory.
         def path_like?(word)
           return false if word.empty?
           return true if word.match?(%r{[/.]}) || word.match?(TREE_ALIASES)

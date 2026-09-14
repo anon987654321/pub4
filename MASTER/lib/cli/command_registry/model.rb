@@ -19,7 +19,7 @@ module Master
       end
 
       # A table: one row per model, its tiers in the second column, and an
-      # arrow on the one in use. A model listed under five tiers was five rows.
+      # arrow on the one in use.
       def list_models(root:, metrics:, agent:)
         yml_path = File.join(root, "data", "models.yml")
         return "model: #{agent.model}" unless File.exist?(yml_path)

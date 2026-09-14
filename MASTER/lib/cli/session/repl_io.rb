@@ -15,9 +15,9 @@ module Master
       end
 
       # Reline asks the terminal where the cursor is, and a reply that arrives
-      # late lands in the input as text: "[38;51R" became a user message and
-      # replayed on every boot. A paste the terminal did not bracket arrives
-      # as lines already waiting, and those join the first rather than
+      # late lands in the input as text, "[38;51R", which would be saved and
+      # replayed as the operator's words. A paste the terminal did not bracket
+      # arrives as lines already waiting, and those join the first rather than
       # becoming prompts of their own.
       TERMINAL_REPLY = /\e?\[?\d{1,4};\d{1,4}R|\e\[[\d;?]*[A-Za-z~]/
 

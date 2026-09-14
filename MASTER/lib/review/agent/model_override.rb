@@ -12,8 +12,8 @@ module Master
         LOCAL_TIER_NAMES = %w[local ollama].freeze
 
         # A model the operator chose leads every chain until another is chosen.
-        # config["model"] alone sat at the tail of the routed chain, so /model
-        # answered "model: ollama" and the next turn still went to agy:auto.
+        # config["model"] alone sits at the tail of the routed chain, where no
+        # turn reaches it while an earlier lane answers.
         def model = @pinned_model || routed_models.first
 
         def model=(val)

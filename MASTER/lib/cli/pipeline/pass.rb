@@ -173,8 +173,8 @@ module Master
 
         # The attach line says a stage began and the next one says it ended, as
         # in a dmesg. A stage earns a second line only by taking a second or
-        # more. The byte, line and "violations" counts it printed measured the
-        # word in its output, so a scan with 1604 findings could read zero.
+        # more. It prints no counts: the only ones at hand measure the word
+        # "violation" in the stage's text, not the findings.
         def log_phase(unit, kind, detail)
           Master::Trace::Dmesg.attach(unit, @unit, [kind, detail].compact.join(" "))
           t0 = Process.clock_gettime(Process::CLOCK_MONOTONIC)
